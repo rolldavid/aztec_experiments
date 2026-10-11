@@ -66,12 +66,11 @@ export async function runRollingBokFixture(ctx) {
         let receipt; const deadline = Date.now() + 60000;
         while (Date.now() < deadline) {
           receipt = await node.getTxReceipt(tx.getTxHash());
-          assert.notEqual(receipt.status, TxStatus.DROPPED); assert.notEqual(receipt.executionResult, TxExecutionResult.REVERTED);
+          assert.notEqual(receipt.status, TxStatus.DROPPED);
           if ([TxStatus.CHECKPOINTED, TxStatus.PROVEN, TxStatus.FINALIZED].includes(receipt.status)) break;
           await mineL1();
         }
         assert(receipt && [TxStatus.CHECKPOINTED, TxStatus.PROVEN, TxStatus.FINALIZED].includes(receipt.status));
-        assert.equal(receipt.executionResult, TxExecutionResult.SUCCESS);
         assert.equal(String((await node.getBlock(receipt.blockNumber)).hash), String(receipt.blockHash));
         const effect = await node.getTxEffect(tx.getTxHash());
         assert(effect?.data); assert.equal(String(effect.l2BlockHash), String(receipt.blockHash));
@@ -79,10 +78,11 @@ export async function runRollingBokFixture(ctx) {
         assert(receipt.transactionFee != null && BigInt(receipt.transactionFee) > 0n);
         if (actor.equals(owner)) ownerFees += BigInt(receipt.transactionFee);
         report.humanActualFees.owner = String(ownerFees);
-        Object.assign(row, {submission: 'included', blockNumber: Number(receipt.blockNumber), blockHash: String(receipt.blockHash),
+        Object.assign(row, {submission: 'included', executionResult: receipt.executionResult, blockNumber: Number(receipt.blockNumber), blockHash: String(receipt.blockHash),
           transactionFee: String(receipt.transactionFee), effectSha256: sha(effect.data.toBuffer())});
         await fs.writeFile(path.join(outputDirectory, `effect-${label}.bin`), effect.data.toBuffer(), {flag: 'wx', mode: 0o600});
-        await save(); // Preserve the actual receipt before acceptance checks.
+        await save(); // Preserve charged fees even when canonical execution reverted.
+        assert.equal(receipt.executionResult, TxExecutionResult.SUCCESS);
         assert.equal(effect.data.l2ToL1Msgs.length, expectedLeaf ? 1 : 0);
         if (expectedLeaf) assert(effect.data.l2ToL1Msgs[0].equals(expectedLeaf));
         if (actor.equals(owner)) {

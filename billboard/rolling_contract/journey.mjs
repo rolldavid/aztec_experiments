@@ -189,7 +189,6 @@ export async function runRollingBokJourney({node, wallet, owner, operator, board
         assert.notEqual(receipt.status, TxStatus.DROPPED); await mineL1();
       }
       assert(receipt && accepted.includes(receipt.status), 'Inclusion unknown; reconcile saved hash before any retry');
-      assert.equal(receipt.executionResult, TxExecutionResult.SUCCESS);
       assert(receipt.txHash.equals(tx.getTxHash()));
       assert((await node.getBlock(receipt.blockNumber)).hash.equals(receipt.blockHash));
       const found = await node.getTxEffect(tx.getTxHash()), effect = found?.data;
@@ -201,9 +200,10 @@ export async function runRollingBokJourney({node, wallet, owner, operator, board
       }
       report.humanActualFees = feeSummary();
       const bytes = effect.toBuffer(); await fs.writeFile(path.join(outputDirectory, `${label}-effect.bin`), bytes, {flag: 'wx', mode: 0o600});
-      Object.assign(row, {submission: 'canonical success', transactionFee: String(receipt.transactionFee),
+      Object.assign(row, {submission: 'canonical inclusion', executionResult: receipt.executionResult, transactionFee: String(receipt.transactionFee),
         blockNumber: Number(receipt.blockNumber), blockHash: String(receipt.blockHash), effectSha256: sha(bytes)});
-      await save(); // A policy failure does not erase canonical inclusion or charged fees.
+      await save(); // Reverted execution or policy failure cannot erase charged fees.
+      assert.equal(receipt.executionResult, TxExecutionResult.SUCCESS);
       if (selected.role !== 'operator') assert(BigInt(proof.maximumFee) >= receipt.transactionFee);
       row.footprint = inspect(tx, effect, selected.role !== 'operator', gas);
       observedPublic.push({tx, effect});

@@ -124,11 +124,12 @@ export async function runPrivateBokExperiment({node, wallet, owner, operator, ot
       const sent = performance.now(); await node.sendTx(tx); // The sole submission attempt.
       let receipt; const deadline = Date.now() + 60000;
       while (Date.now() < deadline) {
-        receipt = await node.getTxReceipt(tx.getTxHash()); if (included(receipt)) break;
-        assert.notEqual(receipt.status, TxStatus.DROPPED); assert.notEqual(receipt.executionResult, TxExecutionResult.REVERTED);
+        receipt = await node.getTxReceipt(tx.getTxHash());
+        if ([TxStatus.CHECKPOINTED, TxStatus.PROVEN, TxStatus.FINALIZED].includes(receipt.status)) break;
+        assert.notEqual(receipt.status, TxStatus.DROPPED);
         await mineL1();
       }
-      assert(receipt && included(receipt), 'Inclusion unknown; reconcile the recorded hash before any retry');
+      assert(receipt && [TxStatus.CHECKPOINTED, TxStatus.PROVEN, TxStatus.FINALIZED].includes(receipt.status), 'Inclusion unknown; reconcile the recorded hash before any retry');
       assert.equal((await node.getBlock(receipt.blockNumber)).hash.toString(), receipt.blockHash.toString());
       const effect = await node.getTxEffect(tx.getTxHash()); assert(effect?.data);
       assert.equal(Number(effect.l2BlockNumber), Number(receipt.blockNumber));
@@ -137,13 +138,14 @@ export async function runPrivateBokExperiment({node, wallet, owner, operator, ot
       if (selected.role !== 'operator') humanActualFees[selected.role] += BigInt(receipt.transactionFee);
       const effectBytes = effect.data.toBuffer();
       await fs.writeFile(path.join(outputDirectory, `effect-${label}.bin`), effectBytes, {flag: 'wx', mode: 0o600});
-      Object.assign(row, {submission: 'included', inclusionMs: Math.round(performance.now() - sent),
+      Object.assign(row, {submission: 'included', executionResult: receipt.executionResult, inclusionMs: Math.round(performance.now() - sent),
         blockNumber: receipt.blockNumber, blockHash: receipt.blockHash.toString(), transactionFee: String(receipt.transactionFee),
         effectBytes: effectBytes.length, effectSha256: sha(effectBytes), blobFields: effect.data.toBlobFields().length,
         publicWrites: effect.data.publicDataWrites.length, publicLogFields: effect.data.publicLogs.reduce((sum, log) => sum + log.sizeInFields(), 0),
         noteHashes: effect.data.noteHashes.length, nullifiers: effect.data.nullifiers.length});
       report.humanActualFees = Object.fromEntries(Object.entries(humanActualFees).map(([role, amount]) => [role, String(amount)]));
-      await save(); // Canonical inclusion is evidence even if a later policy assertion fails.
+      await save(); // Canonical inclusion is evidence even if execution or a later policy assertion fails.
+      assert.equal(receipt.executionResult, TxExecutionResult.SUCCESS);
       if (payerMode === 'private') {
         row.publicFootprint = classifyT03PublicFootprint({tx, effect: effect.data, roles: {author: owner, otherAuthor: otherUser, sharedPayer: sharedFeePayer, moderator: operator}});
         for (const category of ['feePayer', 'publicCallSenders', 'publicCallTargets', 'publicCallCalldata', 'publicWriteSlots', 'publicWriteValues', 'publicLogContracts', 'publicLogFields']) {
