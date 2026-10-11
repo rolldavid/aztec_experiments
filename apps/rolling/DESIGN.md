@@ -47,6 +47,12 @@ Rejected boards retain directory tombstones; posting is blocked. Local rule upda
 and appeals have no claimed permission. Account and moderation forms are explicit
 previews; cost figures are illustrative, never quotes or account balances.
 
+The lead selected an ASCII name policy for the first release: 1–32 characters per
+component, letters/spaces/apostrophes/hyphens, first and last characters letters;
+case-insensitive comparison with collapsed spaces; first name Bok reserved. This
+replaces any earlier Unicode working default. The prototype explains this policy
+but does not pretend to enforce authenticated registration.
+
 ## Verification and handoff
 
 Run `node apps/rolling/serve.mjs` (loopback port 4317) and

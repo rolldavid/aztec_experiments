@@ -8,6 +8,7 @@ export const boards = [
   {id:'no-rules', name:'No rules', icon:'⊘', color:'peach', description:'Rejected subboard. Content is unavailable.', rules:[], rejected:true, reason:'The proposed local rules contradicted the main board policy on private personal information.', curated:false}
 ];
 export const profiles = {
+  'Ellis Moss': {initials:'EM', color:'blue', bio:'Learning by making. Sharing a few things along the way.'},
   'Mira Vale': {initials:'MV', color:'lilac', bio:'Making small tools for a more interesting internet.'},
   'Rowan Lake': {initials:'RL', color:'mint', bio:'Collecting questions. Sometimes finding answers.'},
   'Jules Reed': {initials:'JR', color:'peach', bio:'Cities, maps, and the spaces between.'},

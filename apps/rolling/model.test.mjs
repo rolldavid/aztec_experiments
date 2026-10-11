@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {allowance,safeURL,rankPosts,searchBoards} from './model.mjs';
-import {boards,posts} from './fixtures.mjs';
+import {boards,posts,ownNames,profiles} from './fixtures.mjs';
 test('992-byte boundary rejects oversized input without truncating',()=>{
  assert.equal(allowance('a'.repeat(992)).valid,true);
  assert.equal(allowance('a'.repeat(993)).valid,false);
@@ -34,4 +34,8 @@ test('directory includes rejected tombstones and searches case insensitively',()
 });
 test('every fixture reply has a canonical parent and existing root',()=>{
  for(const p of posts){assert(posts.some(r=>r.id===p.root&&!r.parent));if(p.parent)assert(posts.some(parent=>parent.id===p.parent&&parent.root===p.root));}
+});
+
+test('each selectable name has its own public profile with no ownership grouping',()=>{
+ for(const name of ownNames){assert(profiles[name], `Missing profile for ${name}`);assert.equal(profiles[name].bot,undefined);assert.deepEqual(Object.keys(profiles[name]).sort(),['bio','color','initials']);}
 });

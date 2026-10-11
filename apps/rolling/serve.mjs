@@ -4,7 +4,7 @@ import {fileURLToPath} from 'node:url';
 import path from 'node:path';
 const root=fileURLToPath(new URL('.',import.meta.url));
 const port=Number(process.env.ROLLING_PREVIEW_PORT||4317);
-const allowed=new Set(['index.html','style.css','app.mjs','model.mjs','fixtures.mjs']);
+const allowed=new Set(['index.html','style.css','app.mjs','model.mjs','fixtures.mjs','navigation.mjs']);
 const types={'.html':'text/html; charset=utf-8','.css':'text/css; charset=utf-8','.mjs':'text/javascript; charset=utf-8'};
 http.createServer(async(req,res)=>{
   let name;try{name=decodeURIComponent(new URL(req.url,'http://localhost').pathname).replace(/^\//,'')||'index.html';}catch{res.writeHead(400);res.end();return;}
