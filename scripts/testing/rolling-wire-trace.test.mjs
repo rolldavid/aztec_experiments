@@ -201,3 +201,87 @@ test('synthetic header accessor remains untouched, original call still receives 
  const init={...options(),headers};await trace.wrapFetch((url,value)=>{assert.equal(value,init);assert.equal(value.headers['X-Account'],a);return Promise.resolve(new Response());})(origin+'/',init);
  assert.equal(reads,1);assert.equal(trace.snapshot().observerErrors,1);assert.equal(trace.snapshot().requestCoverageComplete,false);
 });
+
+// Real installed client serializers with labelled synthetic responses; no chain.
+test('installed viem zero-argument actions omit params and remain completely observed',async()=>{
+ const {createPublicClient,createWalletClient,http}=await import('viem');
+ const trace=make();trace.registerEndpoint('public-l1',origin);const seen=[];
+ const transport=http(origin,{retryCount:0,fetchFn:trace.wrapFetch(async(url,init)=>{
+  const body=JSON.parse(init.body);seen.push(body);assert.equal(Object.hasOwn(body,'params'),false);
+  const result=['eth_accounts','eth_requestAccounts'].includes(body.method)?['0x'+'12'.repeat(20)]:'0x1';
+  return Response.json({jsonrpc:'2.0',id:body.id,result});
+ })});
+ const client=createPublicClient({transport}),wallet=createWalletClient({transport});
+ await client.getChainId();await client.getBlockNumber({cacheTime:0});await client.getGasPrice();await client.estimateMaxPriorityFeePerGas();await wallet.getAddresses();await wallet.requestAddresses();
+ assert.deepEqual(seen.map(x=>x.method),['eth_chainId','eth_blockNumber','eth_gasPrice','eth_maxPriorityFeePerGas','eth_accounts','eth_requestAccounts']);
+ const result=trace.snapshot();assert.equal(result.requests,6);assert.equal(result.completed,6);assert.equal(result.requestCoverageComplete,true);assert.equal(result.unknown,0);
+});
+for(const [method,params,hasParams]of [['eth_chainId',null,true],['eth_chainId',{},true],['eth_getBalance',null,false],['net_version',null,false],['node_getContract',null,false]])test('synthetic params exception rejects unsupported '+method+' '+String(hasParams)+' '+JSON.stringify(params),async()=>{
+ const trace=make();trace.registerEndpoint(method.startsWith('node_')?'ordinary-node':'public-l1',origin);
+ await sent(trace,origin+'/',options(JSON.stringify({jsonrpc:'2.0',id:a,method,...(hasParams?{params}:{})})));
+ assert.equal(trace.snapshot().unknown,1);assert.equal(trace.snapshot().requestCoverageComplete,false);assert.deepEqual(trace.snapshot().rows[0].roles,['a']);
+});
+test('synthetic zero-argument method extra params cannot hide a human field',async()=>{
+ const trace=make();trace.registerEndpoint('public-l1',origin);await sent(trace,origin+'/',options(rpc('eth_chainId',[a])));
+ assert.equal(trace.snapshot().unsupported,1);assert.deepEqual(trace.snapshot().rows[0].roles,['a']);
+});
+test('installed viem estimateGas serializes large data; only exact calldata path is opaque',async()=>{
+ const {createPublicClient,http}=await import('viem');const trace=make();trace.registerEndpoint('public-l1',origin);let calls=0;
+ const client=createPublicClient({transport:http(origin,{retryCount:0,fetchFn:trace.wrapFetch(async(url,init)=>{
+  calls++;const body=JSON.parse(init.body);assert.equal(body.method,'eth_estimateGas');assert.equal(body.params[0].data,'0x'+'ab'.repeat(8192));
+  return Response.json({jsonrpc:'2.0',id:body.id,result:'0x5208'});
+ })})});
+ assert.equal(await client.estimateGas({account:'0x'+'12'.repeat(20),to:'0x'+'34'.repeat(20),data:'0x'+'ab'.repeat(8192)}),21000n);
+ const result=trace.snapshot();assert.equal(calls,1);assert.equal(result.opaqueTransactions,1);assert.equal(result.unsupported,0);assert.equal(result.unknown,0);assert.equal(result.requestCoverageComplete,false);
+});
+test('installed SDK client and default fetch serialize actual Tx buffers without a proof job',async()=>{
+ const {Tx,TxHash}=await import('@aztec-labs/stdlib/tx');
+ const {PrivateKernelTailCircuitPublicInputs}=await import('@aztec-labs/stdlib/kernel');
+ const {ChonkProof}=await import('@aztec-labs/stdlib/proofs');
+ const {AztecNodeApiSchema}=await import('@aztec-labs/stdlib/interfaces/client');
+ const {createSafeJsonRpcClient}=await import('@aztec-labs/foundation/json-rpc/client');
+ // Actual SDK buffer encoding; empty kernel/proof is a synthetic unproved Tx.
+ const tx=new Tx(TxHash.fromString(a),PrivateKernelTailCircuitPublicInputs.empty(),ChonkProof.empty(),[],[]);
+ const trace=make();trace.registerEndpoint('ordinary-node',origin);let calls=0;const original=globalThis.fetch;
+ globalThis.fetch=trace.wrapFetch(async(url,init)=>{
+  calls++;const body=JSON.parse(init.body);const batch=Array.isArray(body)?body:[body];assert.equal(batch.length,1);
+  assert.equal(batch[0].method,'aztec_isValidTx');assert.equal(typeof batch[0].params[0].data,'string');assert(batch[0].params[0].data.length>4096);assert.equal(batch[0].params[0].chonkProof,'AAAAAA==');
+  return Response.json(batch.map(r=>({jsonrpc:'2.0',id:r.id,result:{result:'valid'}})));
+ });
+ try{const client=createSafeJsonRpcClient(origin,AztecNodeApiSchema,{namespaceMethods:'aztec',log:{debug(){},warn(){}}});assert.deepEqual(await client.isValidTx(tx,{isSimulation:true}),{result:'valid'});}
+ finally{globalThis.fetch=original;}
+ const result=trace.snapshot();assert.equal(calls,1);assert.equal(result.opaqueTransactions,1);assert.equal(result.unsupported,0);assert.equal(result.unknown,0);assert.equal(result.observerErrors,0);assert.equal(result.requestCoverageComplete,false);
+});
+const encodedTx=()=>({data:Buffer.alloc(8192,7).toString('base64'),chonkProof:'AAAAAA==',txHash:tag,contractClassLogFields:[],publicFunctionCalldata:[]});
+for(const method of ['node_sendTx','aztec_sendTx','node_simulatePublicCalls','aztec_simulatePublicCalls','node_isValidTx','aztec_isValidTx'])test('synthetic '+method+' inspects envelope, all public Tx fields and options around opaque buffers',async()=>{
+ const trace=make();trace.registerEndpoint('ordinary-node',origin);const tx=encodedTx();tx.publicFunctionCalldata=[{values:[a],hash:tag}];tx[b]='visible';
+ await sent(trace,origin+'/',options(JSON.stringify({jsonrpc:'2.0',id:a,method,params:[tx,{actor:b}]})));
+ const result=trace.snapshot();assert.deepEqual(result.rows[0].roles,['a','b']);assert.equal(result.opaqueTransactions,1);assert.equal(result.unsupported,0);assert.equal(result.requestCoverageComplete,false);
+ assert(!JSON.stringify(result).includes(a));assert(!JSON.stringify(result).includes(tx.data));
+});
+for(const path of ['data','chonkProof'])for(const invalid of ['PRIVATE_SENTINEL','AB==',{},null])test('synthetic Tx '+path+' rejects malformed buffer '+JSON.stringify(invalid),async()=>{
+ const trace=make();trace.registerEndpoint('ordinary-node',origin);const tx=encodedTx();tx[path]=invalid;
+ await sent(trace,origin+'/',options(rpc('aztec_isValidTx',[tx])));assert(trace.snapshot().unsupported>0);assert.equal(trace.snapshot().requestCoverageComplete,false);
+});
+for(const kind of ['tx-extra','tx-option','estimate-extra','estimate-override','other-method'])test('synthetic large arbitrary strings remain unsupported at '+kind,async()=>{
+ const trace=make(),l1=kind.startsWith('estimate');trace.registerEndpoint(l1?'public-l1':'ordinary-node',origin);const large='PRIVATE_SENTINEL'.repeat(1000);let method,params;
+ if(kind==='other-method'){method='node_getContract';params=[{data:large}];}
+ else if(l1){method='eth_estimateGas';params=[{data:'0x'+'ab'.repeat(8192),from:a}];if(kind==='estimate-extra')params[0].extra=large;else params.push('latest',{[b]:{data:large}});}
+ else{method='node_isValidTx';params=[encodedTx()];if(kind==='tx-extra')params[0].extra=large;else params.push({data:large});}
+ await sent(trace,origin+'/',options(rpc(method,params)));assert(trace.snapshot().unsupported>0);assert.equal(trace.snapshot().requestCoverageComplete,false);assert(!JSON.stringify(trace.snapshot()).includes('PRIVATE_SENTINEL'));
+});
+for(const data of ['0xabc','PRIVATE_SENTINEL',{},null])test('synthetic estimateGas malformed data is not a recognized opaque encoding '+JSON.stringify(data),async()=>{
+ const trace=make();trace.registerEndpoint('public-l1',origin);await sent(trace,origin+'/',options(rpc('eth_estimateGas',[{data,from:a,to:b}])));
+ const result=trace.snapshot();assert(result.unsupported>0);assert.deepEqual(result.rows[0].roles,['a','b']);assert.equal(result.requestCoverageComplete,false);
+});
+test('synthetic valid estimateGas calldata keeps actor-bearing envelope, keys, headers and state overrides visible',async()=>{
+ const trace=make();trace.registerEndpoint('public-l1',origin);
+ await sent(trace,origin+'/',{...options(JSON.stringify({jsonrpc:'2.0',id:a,method:'eth_estimateGas',params:[{from:a,to:b,data:'0x'+'ab'.repeat(8192),[b]:a},'latest',{[a]:{balance:'0x1'}}]})),headers:{'X-Account':b}});
+ const result=trace.snapshot();assert.deepEqual(result.rows[0].roles,['a','b']);assert.equal(result.opaqueTransactions,1);assert.equal(result.unsupported,1);assert.equal(result.requestCoverageComplete,false);
+});
+test('synthetic opaque transactions still inspect unexpected extra arguments',async()=>{
+ const trace=make();trace.registerEndpoint('public-l1',origin);
+ await sent(trace,origin+'/',options(rpc('eth_sendRawTransaction',['0x1234',{actor:a}])));
+ await sent(trace,origin+'/',options(rpc('eth_sendTransaction',[{from:b,data:'0x1234'},{actor:a}])));
+ for(const row of trace.snapshot().rows)assert(row.roles.includes('a'));assert.equal(trace.snapshot().opaqueTransactions,2);
+});

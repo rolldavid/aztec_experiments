@@ -11,6 +11,14 @@ const nodeMethods=new Set(Object.keys(AztecNodeApiSchema).map(m=>'node_'+m));
 for(const m of Object.keys(AztecNodeApiSchema))nodeMethods.add('aztec_'+m);
 // Three Anvil methods are the existing C01 parent miner's fixed control RPCs.
 const l1Methods=new Set(['anvil_getAutomine','evm_setAutomine','evm_mine','eth_chainId','net_version','eth_blockNumber','eth_getBlockByNumber','eth_getBlockByHash','eth_getBalance','eth_getCode','eth_getStorageAt','eth_call','eth_estimateGas','eth_gasPrice','eth_maxPriorityFeePerGas','eth_feeHistory','eth_getTransactionCount','eth_getTransactionByHash','eth_getTransactionReceipt','eth_getLogs','eth_sendTransaction','eth_sendRawTransaction','eth_accounts','eth_requestAccounts']);
+// Installed viem actions/public/{getChainId,getBlockNumber,getGasPrice,
+// estimateMaxPriorityFeePerGas} and actions/wallet/{getAddresses,requestAddresses}
+// send these methods without params. Missing params is not generally an array.
+const omittedL1Params=new Set(['eth_chainId','eth_blockNumber','eth_gasPrice','eth_maxPriorityFeePerGas','eth_accounts','eth_requestAccounts']);
+const txMethods=new Set(['node_sendTx','aztec_sendTx','node_simulatePublicCalls','aztec_simulatePublicCalls','node_isValidTx','aztec_isValidTx']);
+const object=v=>v!==null&&typeof v==='object'&&!Array.isArray(v);
+const base64=v=>typeof v==='string'&&v.length>0&&v.length%4===0&&/^[A-Za-z0-9+/]*={0,2}$/.test(v)&&Buffer.from(v,'base64').toString('base64')===v;
+const hexBytes=v=>typeof v==='string'&&/^0x(?:[a-fA-F0-9]{2})*$/.test(v);
 const readerParams={status:[],feed:['limit','cursor'],directory:['query','limit','cursor'],thread:['root','limit','cursor'],profile:['nameId','limit','cursor'],post:['id']};
 const configError=()=>Error('Invalid wire observer configuration');
 const actor=phase=>phase.startsWith('a-')||phase.endsWith('-a')?'a':phase.startsWith('b-')||phase.endsWith('-b')?'b':null;
@@ -122,10 +130,45 @@ export function createRollingWireTrace({roles,limits={}}={}){
    const parsed=JSON.parse(body),batch=Array.isArray(parsed)?parsed:[parsed];
    if(batch.length<1||batch.length>32){counts.truncated++;return record;}
    for(const rpc of batch){
-    if(!rpc||rpc.jsonrpc!=='2.0'||typeof rpc.method!=='string'||!Array.isArray(rpc.params)||Object.keys(rpc).some(k=>!['jsonrpc','id','method','params'].includes(k))||!(label==='public-l1'?l1Methods:nodeMethods).has(rpc.method)){counts.unknown++;continue;}
+    if(!object(rpc)||rpc.jsonrpc!=='2.0'||typeof rpc.method!=='string'||Object.keys(rpc).some(k=>!['jsonrpc','id','method','params'].includes(k))||!(label==='public-l1'?l1Methods:nodeMethods).has(rpc.method)){counts.unknown++;continue;}
     record.methods.push(rpc.method);walk(rpc.id);
-    if(/_(?:sendTx|simulatePublicCalls|sendRawTransaction|sendTransaction)$/.test(rpc.method)){counts.opaqueTransactions++;continue;}
-    walk(rpc.params);
+    const absent=!Object.hasOwn(rpc,'params');
+    if(absent&&label==='public-l1'&&omittedL1Params.has(rpc.method))continue;
+    if(!Array.isArray(rpc.params)){counts.unknown++;walk(rpc.params);continue;}
+    const params=rpc.params;
+    if(label==='public-l1'&&omittedL1Params.has(rpc.method)&&params.length!==0)counts.unsupported++;
+    if(txMethods.has(rpc.method)){
+     // Installed stdlib Tx serializes only data (kernel inputs) and chonkProof
+     // as base64 buffers. Neither is decoded here. Tx hash, public calldata,
+     // class logs, every additional key/value and simulation options still walk.
+     counts.opaqueTransactions++;
+     const tx=params[0];
+     if(!object(tx)||!Object.hasOwn(tx,'data')||!Object.hasOwn(tx,'chonkProof')){counts.unsupported++;walk(tx);}
+     else for(const [key,value]of Object.entries(tx)){
+      walk(key);
+      if(key==='data'||key==='chonkProof'){if(!base64(value)){counts.unsupported++;walk(value);}}
+      else walk(value);
+     }
+     for(const value of params.slice(1))walk(value);
+    }else if(label==='public-l1'&&['eth_estimateGas','eth_sendTransaction'].includes(rpc.method)){
+     // viem's transaction formatter sends calldata in params[0].data only.
+     // The rest of the transaction, block and state overrides are observable.
+     const tx=params[0];
+     if(rpc.method==='eth_sendTransaction')counts.opaqueTransactions++;
+     if(!object(tx)){counts.unsupported++;walk(tx);}
+     else for(const [key,value]of Object.entries(tx)){
+      walk(key);
+      if(key==='data'){
+       if(rpc.method==='eth_estimateGas')counts.opaqueTransactions++;
+       if(!hexBytes(value)){counts.unsupported++;walk(value);}
+      }else walk(value);
+     }
+     for(const value of params.slice(1))walk(value);
+    }else if(label==='public-l1'&&rpc.method==='eth_sendRawTransaction'){
+     counts.opaqueTransactions++;
+     if(!hexBytes(params[0])||params[0]==='0x'){counts.unsupported++;walk(params[0]);}
+     for(const value of params.slice(1))walk(value);
+    }else walk(params);
    }
   }
   if(limited)counts.truncated++;
