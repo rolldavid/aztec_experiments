@@ -27,7 +27,7 @@ pub fn invocation_target(chain: Field, rollup: Field, board: AztecAddress, adapt
 #[aztec]
 pub contract InvocationProbeBoard {
     use aztec::{macros::functions::{external, initializer, view}, protocol::{address::AztecAddress, abis::function_selector::FunctionSelector}, context::gas::GasOpts};
-    use crate::probe_board::invocation_target;
+    use crate::invocation_target;
 
     #[external("public")]
     #[initializer]

@@ -1,7 +1,7 @@
 // TXE unit evidence only: Inbox leaves are inserted by the official TestEnvironment.
 // These tests are not token deposits, L1 settlement, genuine proofs or privacy qualification.
-use crate::{PrivateBok, words, recipient_commitment};
-use crate::probe_board::InvocationProbeBoard;
+use private_bok::{PrivateBok, words, recipient_commitment};
+use invocation_probe_board::InvocationProbeBoard;
 use uint_note::PartialUintNote;
 use aztec::{test::helpers::test_environment::TestEnvironment,
     protocol::{address::{AztecAddress, EthAddress}, hash::sha256_to_field, traits::{FromField, ToField}}};
@@ -314,7 +314,7 @@ unconstrained fn zero_cost_still_requires_a_receipt() {
 
 unconstrained fn bound_waiting_request() -> (TestEnvironment, AztecAddress, AztecAddress, AztecAddress, AztecAddress) {
     let mut env = TestEnvironment::new(); let alice = env.create_light_account(); let bob = env.create_light_account();
-    let board = env.deploy("@private_bok/InvocationProbeBoard").with_public_initializer(alice, InvocationProbeBoard::interface().init());
+    let board = env.deploy("@invocation_probe_board/InvocationProbeBoard").with_public_initializer(alice, InvocationProbeBoard::interface().init());
     let a = env.deploy("@private_bok/PrivateBok").with_public_initializer(alice, PrivateBok::interface().init(board, bob, 1, 1));
     env.call_public(alice, PrivateBok::at(a).set_portal(EthAddress::from_field(123)));
     fund(env, a, alice, 1000, 101, 201);
@@ -365,7 +365,7 @@ unconstrained fn zero_normal_refund_closes_both_channels() {
 fn invocation_target_matches_shared_javascript_vector() {
     let mut packed = [0; 32];
     packed[0] = 117422252807265179391402504499916356085208843223731522392806657831697645568;
-    let actual = crate::probe_board::invocation_target(11155111, 2914217885,
+    let actual = invocation_probe_board::invocation_target(11155111, 2914217885,
         AztecAddress::from_field(10), AztecAddress::from_field(20), [30, 40, 50, 2, 60, 70, 80, 15], packed);
     assert_eq(actual, 0x27c89f3dda5aee1d8928d5186add9cc35c4134934c16023801e4371b43763d6d);
 }

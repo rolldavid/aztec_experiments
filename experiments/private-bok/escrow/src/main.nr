@@ -1,7 +1,4 @@
-use aztec::macros::aztec;
-use aztec::protocol::{address::{AztecAddress, EthAddress}, hash::poseidon2_hash_with_separator, traits::ToField};
-mod tests;
-mod probe_board;
+use aztec::{macros::aztec, protocol::{address::{AztecAddress, EthAddress}, hash::poseidon2_hash_with_separator, traits::ToField}};
 
 pub fn words<let N: u32, let D: u32>(domain: str<D>, fields: [Field; N]) -> [u8; 32 + N * 32] {
     let mut out = [0; 32 + N * 32];
