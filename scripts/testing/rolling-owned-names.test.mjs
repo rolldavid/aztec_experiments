@@ -10,12 +10,17 @@ import {exerciseRollingOwnedNames} from './rolling-owned-names.mjs';
 after(async()=>{await BarretenbergSync.destroySingleton();});
 const copy=v=>structuredClone(v),pack=bytes=>[String(bytes.slice(0,31).reduce((n,b)=>(n<<8n)|BigInt(b),0n)),String(BigInt(bytes[31])<<240n)];
 function fixture(fault){
- const names={a:[],b:[]},calls=[],reopened={a:false,b:false};let steps=0;
- function actor(role){const counters={authWitnesses:0,proofJobs:0,walletSubmissions:0,transportSends:0};return {journal:{},
+ const names={a:[],b:[]},calls=[],reopened={a:false,b:false},activityCounters={};let steps=0;
+ function actor(role){const counters={authWitnesses:0,proofJobs:0,walletSubmissions:0,transportSends:0};activityCounters[role]=counters;return {journal:{},
   get owner(){throw Error('PRIVATE_SENTINEL owner must never be read');},
   application:{async readAccountStatus(){return {status:fault==='wrong-status'?'fee-ready':'collateral-pending',privateFeeCredit:fault==='no-fees'?'0':'100',depositIds:fault==='has-collateral'?['9']:[]};},
    async ownedIdentities({cursor}){
     assert([0,8].includes(cursor));let records=copy(names[role]);
+    if(reopened.b&&role==='b'&&cursor===0){
+     for(const [bad,key]of [['reread-proof','proofJobs'],['reread-wallet-send','walletSubmissions'],['reread-transport-send','transportSends'],['reread-auth','authWitnesses']])if(fault===bad)counters[key]++;
+     if(fault==='reread-inactive-actor')activityCounters.a.walletSubmissions++;
+    }
+    if(reopened.b&&role==='b'&&cursor===8&&fault==='tail-reread-send')counters.transportSends++;
     if(cursor===8)return {identities:fault==='nonempty-tail'&&steps?[records[0]?.id]:[],records:fault==='nonempty-tail'&&steps?[records[0]]:[],nextCursor:null};
     if(fault==='swapped-ownership'&&steps)records=copy(names[role==='a'?'b':'a']);
     if(fault==='cross-account-leak'&&steps)records=copy([...names.a,...names.b]);
@@ -34,6 +39,7 @@ function fixture(fault){
    }},
   activity:()=>fault==='invalid-counter'?{...counters,authWitnesses:-1}:counters,
   async reopenJournal(){calls.push('reopen');reopened[role]=true;if(fault!=='no-journal-reopen')this.journal={};
+   if(fault==='reopen-inactive-actor')activityCounters[role==='a'?'b':'a'].walletSubmissions++;
    for(const [bad,key]of [['reopen-proof','proofJobs'],['reopen-wallet-send','walletSubmissions'],['reopen-transport-send','transportSends'],['reopen-auth','authWitnesses']])if(fault===bad)counters[key]++;
   },
  };}
@@ -66,3 +72,5 @@ test('one actor or action cannot stand in for two accounts',async()=>{
  const f=fixture();f.actorB=f.actorA;await assert.rejects(exerciseRollingOwnedNames(f));assert.deepEqual(f.calls,[]);
  const g=fixture();g.actionB=g.actionA;await assert.rejects(exerciseRollingOwnedNames(g));assert.deepEqual(g.calls,[]);
 });
+for(const fault of ['reread-proof','reread-wallet-send','reread-transport-send','reread-auth','reread-inactive-actor','tail-reread-send','reopen-inactive-actor'])
+ test('complete recovery observation rejects '+fault,async()=>{await assert.rejects(exerciseRollingOwnedNames(fixture(fault)));});

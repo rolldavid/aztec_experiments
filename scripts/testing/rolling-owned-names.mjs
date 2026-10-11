@@ -53,9 +53,9 @@ export async function exerciseRollingOwnedNames({actorA,actorB,actionA,actionB})
  }
  await collateralPending(actorB);
  for(const actor of [actorA,actorB]){
-  const before=activity(actor),journal=actor.journal;await actor.reopenJournal();assert(actor.journal&&actor.journal!==journal,'Journal must actually be reopened');
-  assert.deepEqual(activity(actor),before,'Journal reopen must not create witnesses, proofs or submissions');
+  const before=[activity(actorA),activity(actorB)],journal=actor.journal;await actor.reopenJournal();assert(actor.journal&&actor.journal!==journal,'Journal must actually be reopened');
   await owned(actorA,a);await owned(actorB,b);
+  assert.deepEqual([activity(actorA),activity(actorB)],before,'Complete journal reopen and both ownership rereads must not create witnesses, proofs or submissions in either actor');
  }
  return {scenario:'private-owned-names',privateTransactions:3,registeredNames:3,privateOwnershipExact:true,readableMetadataExact:true,
   collateralFreeRegistration:true,journalReopenPreserved:true,
