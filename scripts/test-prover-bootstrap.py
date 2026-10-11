@@ -32,6 +32,13 @@ def qualifier_fixture():
             'publicScope':{'chainId':scope['chainId'],'version':scope['rollupVersion'],'rollup':scope['queryNode']['rollupAddress'],'applicationProfile':'legacy','board':scope['board'],'proofs':'real','maxLagSeconds':120}}
 
 class Bootstrap(unittest.TestCase):
+    def test_current_reviewed_catalog_matches_bootstrap_pin(self):
+        # A newly packaged profile catalog must not reach a paid host with the
+        # historical catalog pin. The immutable runtime validator still rejects
+        # substituted bytes; updates require explicit source review.
+        catalog=ROOT/'prover/rolling-artifacts.json'
+        self.assertEqual(hashlib.sha256(catalog.read_bytes()).hexdigest(),b.CATALOG_SHA)
+
     def test_valid_input_frozen_and_bounded_userdata_shell_syntax(self):
         c=config();text=b.generate(c,NOW)
         self.assertEqual(c,config());self.assertNotIn('PRIVATE_SENTINEL',text)
