@@ -130,7 +130,7 @@ unconstrained fn fragmented_private_credit_uses_more_than_initial_two_notes() {
     assert_eq(env.execute_utility(PrivateBok::at(a).balance_of(user)), 300);
 }
 
-#[test(should_fail_with = "failed with duplicate nullifiers")]
+#[test(should_fail_with = "No non-nullified L1 to L2 message found for message hash")]
 unconstrained fn claim_replay_rejected() {
     let (env, a, user, _, _) = empty(); let leaf = message(env, a, user, 1000, 101, 201);
     env.call_private(user, PrivateBok::at(a).claim(1000, 101, 201, leaf));
@@ -258,7 +258,7 @@ unconstrained fn wrong_bridge_secret_rejected() {
 unconstrained fn direct_public_cancellation_cannot_bypass_control_note() {
     let (env, a, user, _, _) = active(); env.call_public(user, PrivateBok::at(a)._cancel(10));
 }
-#[test(should_fail_with = "failed with duplicate nullifiers")]
+#[test(should_fail_with = "EMITNULLIFIER: Attempted to emit duplicate nullifier")]
 unconstrained fn receipt_cannot_charge_two_calls() {
     let (env, a, _, op, _) = active(); env.call_public(op, PrivateBok::at(a).reserve(10, 0, 10));
     env.call_public(op, PrivateBok::at(a).settle(10, 0, 1, 99));
@@ -345,7 +345,7 @@ unconstrained fn forged_operator_settle_rejected() {
 }
 #[test(should_fail_with = "Only operator")]
 unconstrained fn forged_operator_finish_rejected() { let (env, a, user, _, _) = active(); env.call_public(user, PrivateBok::at(a).finish(10)); }
-#[test(should_fail_with = "failed with duplicate nullifiers")]
+#[test(should_fail_with = "EMITNULLIFIER: Attempted to emit duplicate nullifier")]
 unconstrained fn receipt_cannot_charge_two_requests() {
     let (env, a, user, op, board) = active();
     env.call_private(user, PrivateBok::at(a).authorize_request(11, 43, 400));
