@@ -81,3 +81,6 @@ export async function exerciseRollingRepostReactions({deposit,action,waitPostAdm
   expectedHTTP:httpOracle(projection,[root.id,repost.id],[[root.id,[root.id]],[repost.id,[repost.id]]]),
   scope:'Canonical empty-comment repost and same-actor cross-post like separation. Two-account duplicate resistance and full observer unlinkability remain separate.'};
 }
+
+// Public anonymous route snapshots reused by the two-account campaign.
+export {httpOracle as captureRollingAnonymousHTTPViews};

@@ -3,7 +3,6 @@
 // two HTTP adapters and its private wallet state.
 // No fake node, proof, freshness, receipt, event or production factory is injected.
 import assert from 'node:assert/strict';
-import {createSynchronizedRollingApplication} from '../../shared/rolling/synchronized-application.mjs';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import http from 'node:http';
@@ -17,7 +16,7 @@ const discard=()=>{};
 const silent=Object.assign(discard,Object.fromEntries(['trace','debug','verbose','info','warn','error','fatal'].map(k=>[k,discard])),
   {level:'silent',isLevelEnabled:()=>false,getBindings:()=>({}),createChild:()=>silent});
 const PERSONAL=['feePayer','publicCallSenders','publicCallTargets','publicCallCalldata','publicWriteSlots','publicWriteValues','publicLogContracts','publicLogFields'];
-const SOURCES=['scripts/testing/rolling-social-acceptance.mjs','scripts/testing/rolling-profile-acceptance.mjs','experiments/avatar/raster-fixture.mjs','scripts/prove-application-action.mjs','scripts/testing/rolling-native-artifacts.mjs','scripts/testing/rolling-application-fixture.mjs','scripts/testing/scenarios.mjs','scripts/testing/scenario-flows.mjs',
+const SOURCES=['scripts/testing/rolling-removed-like.mjs','scripts/testing/rolling-application-actor.mjs','scripts/testing/rolling-account-reactions.mjs','scripts/testing/rolling-social-acceptance.mjs','scripts/testing/rolling-profile-acceptance.mjs','experiments/avatar/raster-fixture.mjs','scripts/prove-application-action.mjs','scripts/testing/rolling-native-artifacts.mjs','scripts/testing/rolling-application-fixture.mjs','scripts/testing/scenarios.mjs','scripts/testing/scenario-flows.mjs',
   'scripts/c01-real-node.mjs','scripts/c01-board-flow.mjs','scripts/c01-deposit-flow.mjs','scripts/c01-client-mining.mjs',
   'scripts/w01-private-fee-flow.mjs','scripts/w01-unfunded-wallet.mjs','scripts/w01-private-funding.mjs',
   'shared/sdk-entry.mjs','shared/private-pxe.mjs','shared/trusted-private-node.mjs','shared/routed-kernel-prover.mjs','shared/remote-prover-client.mjs',
@@ -96,10 +95,11 @@ async function closedPort(port) {
     socket.once('error',error=>error.code==='ECONNREFUSED'?resolve():reject(Error('Listener cleanup unknown')));
   });
 }
-async function startNodeRpc(node) {
+async function startNodeRpc(node,onSend=()=>{}) {
   const {createNamespacedSafeJsonRpcServer}=await import('@aztec-labs/foundation/json-rpc/server');
   const {AztecNodeApiSchema}=await import('@aztec-labs/stdlib/interfaces/client');
-  const rpc=createNamespacedSafeJsonRpcServer({aztec:[node,AztecNodeApiSchema]},
+  const api=Object.fromEntries(Object.keys(AztecNodeApiSchema).map(name=>[name,(...args)=>{if(name==='sendTx')onSend();return node[name](...args);} ]));
+  const rpc=createNamespacedSafeJsonRpcServer({aztec:[api,AztecNodeApiSchema]},
     {maxBatchSize:8,maxBodySizeBytes:8*1024*1024,corsAllowedOrigins:[],log:silent});
   const callback=rpc.getApp().callback();
   const server=http.createServer((req,res)=>{
@@ -135,8 +135,8 @@ export async function loadRollingFixtureSDK() {
 }
 
 export async function runRollingApplicationFixture(ctx,scenario='conversation') {
-  assert(['conversation','profiles','anonymous-thread','repost-reactions'].includes(scenario));
-  const social=['anonymous-thread','repost-reactions'].includes(scenario);
+  assert(['conversation','profiles','anonymous-thread','repost-reactions','account-reactions'].includes(scenario));
+  const multi=scenario==='account-reactions',social=['anonymous-thread','repost-reactions','account-reactions'].includes(scenario);
   const {ROOT,assertNodeVersion,assertAztecPackages}=await import('../toolchain.mjs');
   const directory=path.join(ROOT,'execution/evidence/G06','application-port-'+randomUUID());
   await fs.mkdir(directory,{mode:0o700});
@@ -148,9 +148,10 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
   const save=()=>fs.writeFile(path.join(directory,'observation.json'),json(report),{mode:0o600});
   const mark=async stage=>{if(ctx.applicationDeadlineAt!==undefined)assert(Date.now()<ctx.applicationDeadlineAt,'Parent campaign budget exhausted');report.stage=stage;ctx.mark?.('rolling-application:'+stage);await save();};
   const sourceBinding=async()=>Object.fromEntries(await Promise.all(SOURCES.map(async name=>[name,sha(await fs.readFile(path.join(ROOT,name)))])));
-  let fees,pxe,store,rpc,service,failure,restoreIndexedDB,nativeArtifacts,owner,appWallet,journal,locked=false;
+  let fees,feesB,actorA,actorB,activeActor,pxe,rpc,service,failure,restoreIndexedDB,nativeArtifacts,owner,appWallet,journal;
+  let transportSends=0,feeTotalB=0n;
   let feeTotal=0n;const accounted=new Set();
-  const accountFee=(hash,fee)=>{if(!accounted.has(hash)){assert(BigInt(fee)>0n);feeTotal+=BigInt(fee);accounted.add(hash);}report.actualHumanFees=String(feeTotal);};
+  const accountFee=(hash,fee,other=false)=>{if(!accounted.has(hash)){assert(BigInt(fee)>0n);if(other)feeTotalB+=BigInt(fee);else feeTotal+=BigInt(fee);accounted.add(hash);}report.actualHumanFees=String(feeTotal+feeTotalB);};
   try {
     assertNodeVersion();assertAztecPackages();assert.equal(ctx.preparation.boardProfile,'rolling');
     assert(ctx.settlement.passed&&ctx.settlement.activation.depositsEnabled);
@@ -184,17 +185,16 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
     const {drainT04Checkpoints,createT04CheckpointScope}=await import('../u01-browser-flow.mjs');
     const {proveApplicationAction}=await import('../prove-application-action.mjs');
     const {startProverService}=await import('../../prover/service.mjs');
-    const {createFileJournalStorage}=await import('../../apps/src/billboard/user/transaction-journal-store.mjs');
-    const {createRollingApplication}=await import('../../shared/rolling/application.mjs');
     const {createRollingEventDecoder,isRollingEvent}=await import('../../shared/rolling/public-events.mjs');
     const {createRollingProjection}=await import('../../shared/rolling/public-projection.mjs');
     const {classifyT03PublicFootprint}=await import('../t03-public-footprint.mjs');
     let claim,bokInstance;report.setupMining={};
     await withC01ClientMining({rpcUrl:ctx.config.l1RpcUrls[0],dateProvider:ctx.dateProvider,observation:report.setupMining},async mineL1=>{
       await mark('private-fee-funding');
-      fees=await prepareW01PrivateFees({...ctx,rpcUrl:ctx.config.l1RpcUrls[0],mineL1,standalone:true,
+      fees=await prepareW01PrivateFees({...ctx,rpcUrl:ctx.config.l1RpcUrls[0],mineL1,standalone:!multi,
         fundingDirectory:path.join(ctx.directory,'rolling-app-funding'),reportStage:ctx.mark});
       report.privateFees=fees;owner=fees.authorAccount.address;
+      if(multi){feesB=await prepareW01PrivateFees({...ctx,rpcUrl:ctx.config.l1RpcUrls[0],mineL1,standalone:true,fundingDirectory:path.join(ctx.directory,'rolling-app-funding-b'),reportStage:ctx.mark});report.secondPrivateFees=feesB;assert(!feesB.authorAccount.address.equals(owner));assert(feesB.browserFixture.instance.address.equals(fees.browserFixture.instance.address));}
       const setupWallet=fees.browserFixture.wallet;
       await mark('collateral-claim');
       claim=await depositAndClaimC01({...ctx,node:setupWallet.aztecNode,rpcUrl:ctx.config.l1RpcUrls[0],mineL1,reportStage:ctx.mark,
@@ -250,7 +250,7 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
       try{
       await observe('after-first-wall-mine');
       await mark('node-rpc-startup');
-      rpc=await startNodeRpc(ctx.node);
+      rpc=await startNodeRpc(ctx.node,()=>{assert(transportSends<Number.MAX_SAFE_INTEGER);transportSends++;});
       await mark('trusted-service-startup');
       service=await startProverService({host:'127.0.0.1',port:0,board:String(ctx.instance.address),chainId:31337,rollupVersion:info.rollupVersion,
         applicationProfile:'rolling',privateBokAddress:String(bokInstance.address),privateFeeAddress:String(fees.browserFixture.instance.address),
@@ -271,36 +271,15 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
       const previous=keys.map(k=>[k,Object.getOwnPropertyDescriptor(globalThis,k)]);
       restoreIndexedDB=()=>{for(const [key,descriptor] of previous)if(descriptor)Object.defineProperty(globalThis,key,descriptor);else delete globalThis[key];};
       for(const k of keys)Object.defineProperty(globalThis,k,{value:k==='indexedDB'?new idb.IDBFactory():idb[k],writable:true,configurable:true});
-      store=await sdk.openPXEStore({l1ChainId:31337,rollupAddress:network.rollup,accountAddress:String(owner),dataDirectory:'rolling-application-test'},undefined,silent);
-      pxe=await sdk.createPXE(node,{proverEnabled:true,autoSync:false,syncChainTip:'checkpointed'},
-        {store,remoteProver:{url:endpoint,board:String(ctx.instance.address),timeoutMs:120000,pollMs:100}});
-      const account=fees.authorAccount,accountContract=new sdk.SchnorrInitializerlessAccountContract(account.signingKey);
-      const derived=await sdk.deriveKeys(account.secret),accountArtifact=await accountContract.getContractArtifact();
-      const accountInstance=await sdk.getContractInstanceFromInstantiationParams(accountArtifact,{salt:account.salt,publicKeys:derived.publicKeys,
-        constructorArtifact:undefined,constructorArgs:undefined,immutablesHash:await accountContract.getImmutablesHash()});
-      assert(accountInstance.address.equals(owner));
-      await pxe.registerAccount(derived,await sdk.computePartialAddress(accountInstance));
-      await pxe.registerContractClass(accountArtifact);await pxe.registerContract(accountInstance);
-      await pxe.registerContractClass(checked.artifact);await pxe.registerContract(ctx.instance);
-      await pxe.registerContractClass(fees.browserFixture.artifact);await pxe.registerContract(fees.browserFixture.instance);
-      await pxe.sync();
-      const contextGuard=()=>{assert(!locked,'Fixture session locked');assert.equal(String(owner),String(accountInstance.address));};
-      const storageDirectory=path.join(ctx.directory,'rolling-application-journals');
-      let privateStore=createFileJournalStorage(storageDirectory);
-      const scope={account:String(owner),...network,board:String(ctx.instance.address),portal:ctx.ready.portalAddress.toLowerCase()};
-      const journalOptions={walletSecret:account.secret.toString(),walletSalt:account.salt.toString(),scope,Tx:sdk.Tx,node,contextGuard};
-      journal=await sdk.createL2Journal({...journalOptions,storage:privateStore});
-      appWallet=routing.createAztecWallet(sdk,pxe,node,node,discard,account.secret,{contextGuard,transactionJournal:journal});
-      appWallet._accountManager=await sdk.AccountManager.create(appWallet,account.secret,accountContract,{salt:account.salt});
-      assert(appWallet._accountManager.address.equals(owner));
-      const signingPublicKey=await accountContract.getSigningPublicKey(),constructor=accountArtifact.functions.find(fn=>fn.name==='constructor');
-      if(constructor)await new sdk.ContractFunctionInteraction(appWallet,owner,constructor,[signingPublicKey.x,signingPublicKey.y]).simulate({from:owner});
-      const portOptions={sdk,deployment:{board:{address:ctx.instance.address,artifact:checked.artifact},network,portal:scope.portal,proofsEnabled:real,
-        privateFee:{address:fees.browserFixture.instance.address,artifact:fees.browserFixture.artifact,gasSettings:fees.browserFixture.gas}},
-        contextGuard,privateStore,accountSession:{owner,wallet:appWallet,node,journal,walletSecret:journalOptions.walletSecret,walletSalt:journalOptions.walletSalt}};
-      const synchronized=application=>createSynchronizedRollingApplication({application,synchronize:pxe.sync.bind(pxe),contextGuard});
-      let app=synchronized(createRollingApplication(portOptions));
+      const {createRollingApplicationActor}=await import('./rolling-application-actor.mjs');
+      const makeActor=(funding,role)=>createRollingApplicationActor({sdk,routing,node,endpoint,network,proofsEnabled:real,
+        board:{instance:ctx.instance,artifact:checked.artifact},fees:funding,portal:ctx.ready.portalAddress,
+        storageDirectory:path.join(ctx.directory,'rolling-application-journals-'+role),dataDirectory:'rolling-application-test-'+role,
+        log:discard,externalActivity:()=>({proofJobs:service.stats().submitted,transportSends})});
+      actorA=await makeActor(fees,'a');activeActor=actorA;
+      pxe=actorA.pxe;appWallet=actorA.wallet;journal=actorA.journal;let app=actorA.application;
       assert.equal((await app.readAccountStatus()).status,'fee-ready');
+      if(multi){actorB=await makeActor(feesB,'b');const state=await actorB.application.readAccountStatus();assert.equal(state.status,'collateral-pending');assert(BigInt(state.privateFeeCredit)>0n);}
       const decoder=await createRollingEventDecoder({artifact:checked.artifact,scope:{chainId:network.chainId,rollupVersion:network.version,rollupAddress:network.rollup,
         boardAddress:String(ctx.instance.address),classId:String((await sdk.getContractClassFromArtifact(checked.artifact)).id)}});
       const projection=createRollingProjection({isValidatedEvent:isRollingEvent});
@@ -308,25 +287,26 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
       const initialEvents=await decoder.decodeTransaction(ctx.node,hashes[0]);
       assert.equal(initialEvents.length,1);assert.equal(initialEvents[0].type,'MainPolicyPublished');
       report.initialPublicAnchor=initialEvents[0].position;projection.stage(initialEvents).apply();
-      const ids={};let lastIntent;
-      async function action(input,type) {
+      const ids={};const actorIntents=new Map();
+      async function action(input,type,selected=actorA) {
+        activeActor=selected;const app=selected.application,journal=selected.journal;
         await mark(type);
         const row={action:type,startedAt:Date.now(),submission:'not attempted'};report.transactions.push(row);await save();
-        const prepared=await app.prepare(input);lastIntent=prepared.intentId;row.maximumFee=prepared.maximumFee;
+        const prepared=await app.prepare(input);actorIntents.set(selected,prepared.intentId);row.maximumFee=prepared.maximumFee;
         row.submission='outcome unknown';await save();
         const result=await app.submitPrepared(prepared.intentId);
         const outcome=await journal.inspectOutcome();assert(outcome?.receipt);
         const receipt=outcome.receipt,effect=await ctx.node.getTxEffect(TxHash.fromString(outcome.txHash));
         Object.assign(row,{txHash:outcome.txHash,status:receipt.status,executionResult:receipt.executionResult,blockNumber:Number(receipt.blockNumber),
           blockHash:String(receipt.blockHash),transactionFee:String(receipt.transactionFee),elapsedMs:Date.now()-row.startedAt});
-        accountFee(outcome.txHash,receipt.transactionFee);
+        accountFee(outcome.txHash,receipt.transactionFee,activeActor===actorB);
         if(effect?.data){row.effectSha256=sha(effect.data.toBuffer());await fs.writeFile(path.join(directory,type+'-effect.bin'),effect.data.toBuffer(),{flag:'wx',mode:0o600});}
         await save(); // Keep actual included fees/effects before semantic acceptance.
         assert.equal(result.status,'confirmed');assert.equal(receipt.executionResult,'success');assert(BigInt(receipt.transactionFee)>0n);
         assert(effect?.data);assert.equal(String(effect.l2BlockHash),String(receipt.blockHash));assert.equal(Number(effect.l2BlockNumber),Number(receipt.blockNumber));
         const saved=await journal.assertCanStart();assert.equal(String(saved.tx.getTxHash()),outcome.txHash);
-        row.publicFootprint=classifyT03PublicFootprint({tx:saved.tx,effect:effect.data,roles:{author:owner,sharedPayer:fees.browserFixture.instance.address,board:ctx.instance.address}});
-        await save();assertRollingPublicFootprint(row.publicFootprint);
+        row.publicFootprint=classifyT03PublicFootprint({tx:saved.tx,effect:effect.data,roles:{author:owner,...(actorB?{otherHuman:actorB.owner}:{}),sharedPayer:fees.browserFixture.instance.address,board:ctx.instance.address}});
+        await save();assertRollingPublicFootprint(row.publicFootprint);if(actorB)for(const category of PERSONAL)assert.equal(row.publicFootprint.rolePresence[category].otherHuman,false);
         const events=await decoder.decodeTransaction(ctx.node,outcome.txHash);projection.stage(events).apply();hashes.push(outcome.txHash);
         row.events=events.map(e=>e.type);row.submission='included';await save();return events;
       }
@@ -372,8 +352,8 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
           // Preserve actual inclusion and paid effects even when execution reverted.
           assert.equal(receipt.executionResult,'success');
           assert.equal(before-after,BigInt(receipt.transactionFee));assert(BigInt(receipt.transactionFee)>0n);
-          row.publicFootprint=classifyT03PublicFootprint({tx,effect:effect.data,roles:{author:owner,sharedPayer:fees.browserFixture.instance.address,board:ctx.instance.address}});
-          for(const category of PERSONAL)assert.equal(row.publicFootprint.rolePresence[category].author,false);
+          row.publicFootprint=classifyT03PublicFootprint({tx,effect:effect.data,roles:{author:owner,...(actorB?{otherHuman:actorB.owner}:{}),sharedPayer:fees.browserFixture.instance.address,board:ctx.instance.address}});
+          for(const category of PERSONAL){assert.equal(row.publicFootprint.rolePresence[category].author,false);if(actorB)assert.equal(row.publicFootprint.rolePresence[category].otherHuman,false);}
           const events=await decoder.decodeTransaction(ctx.node,String(hash));projection.stage(events).apply();hashes.push(String(hash));row.events=events.map(e=>e.type);await save();return events;
         }
       if(scenario==='profiles'){
@@ -381,7 +361,7 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
         report.profiles=await exerciseRollingProfileActions({nameId:ids.nameId,application:app,action,moderate:args=>moderate({kind:'avatar',id:args.nameId,expectedVersion:args.avatarVersion,...args}),projection});
         report.publicViews=projection.profile(ids.nameId,{limit:100});assert.equal(report.publicViews.posts.length,0);await save();
       }else if(social){
-        const {exerciseRollingAnonymousThread,exerciseRollingRepostReactions}=await import('./rolling-social-acceptance.mjs');
+        const {exerciseRollingAnonymousThread,exerciseRollingRepostReactions,captureRollingAnonymousHTTPViews}=await import('./rolling-social-acceptance.mjs');
         const deposit=String(claim.claim.depositChainId);
         async function waitPostAdmission(){
           await pxe.sync();
@@ -394,7 +374,16 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
           }finally{checkpoints.restore();}
         }
         const options={deposit,action,projection,waitPostAdmission,moderatePost:args=>moderate({kind:'post',id:args.postId,...args})};
-        report.social=await (scenario==='anonymous-thread'?exerciseRollingAnonymousThread:exerciseRollingRepostReactions)(options);
+        if(multi){
+          await waitPostAdmission();const root=await action({type:'post',deposit,name:'0',subboard:'0',content:'One public post, two private accounts.'},'account-reactions-root');
+          assert.equal(root.length,1);assert.equal(root[0].type,'PostPublished');const postId=root[0].payload.id;
+          const {createRemovedLikeClassifier}=await import('./rolling-removed-like.mjs');
+          const isRemovedPostRejection=await createRemovedLikeClassifier({artifact:checked.artifact,boardAddress:ctx.instance.address});
+          const actorOptions=actor=>({action:(input,label)=>action(input,label,actor),prepare:async input=>{await mark('removed-like-rejection');return actor.application.prepare(input);},activity:actor.activity,isRemovedPostRejection});
+          const {exerciseRollingAccountReactions}=await import('./rolling-account-reactions.mjs');
+          const result=await exerciseRollingAccountReactions({postId,actorA:actorOptions(actorA),actorB:actorOptions(actorB),moderatePost:options.moderatePost,projection});
+          report.social={...result,privateTransactions:6,expectedHTTP:captureRollingAnonymousHTTPViews(projection,[postId],[[postId,[postId]]])};
+        }else report.social=await (scenario==='anonymous-thread'?exerciseRollingAnonymousThread:exerciseRollingRepostReactions)(options);
         report.publicViews=report.social.expectedHTTP;await save();
       }else{
       const created=await action({type:'subboard',slug:'application-test',name:'Application test',description:'Real application acceptance',rules:'Be helpful.'},'subboard');
@@ -417,11 +406,16 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
       report.publicViews=assertRollingApplicationViews(projection,ids);await save();
       }
       await mark('encrypted-journal-reopen');
-      const jobsBefore=service.stats().submitted,feeBefore=appWallet._actualFees;
-      privateStore=createFileJournalStorage(storageDirectory);journal=await sdk.createL2Journal({...journalOptions,storage:privateStore});
-      app=synchronized(createRollingApplication({...portOptions,privateStore,accountSession:{...portOptions.accountSession,journal}}));
-      const reconciled=await app.reconcile(lastIntent);assert.equal(reconciled.status,'confirmed');assert.equal(reconciled.txHash,report.transactions.at(-1).txHash);
-      assert.equal(service.stats().submitted,jobsBefore);assert.equal(appWallet._actualFees,feeBefore);report.journalReopen={sameHash:true,newProofJobs:0,transactionBytesRetained:true};
+      const jobsBefore=service.stats().submitted;
+      report.journalReopen={sameHash:true,newProofJobs:0,transactionBytesRetained:true,actors:[]};
+      for(const actor of [actorA,...(actorB?[actorB]:[])]){
+        const before=await actor.journal.inspectOutcome(),activity=actor.activity();
+        await actor.reopenJournal();const reconciled=await actor.application.reconcile(actorIntents.get(actor));
+        assert.equal(reconciled.status,'confirmed');assert.equal(reconciled.txHash,before.txHash);
+        assert.deepEqual(actor.activity(),activity);assert((await actor.journal.assertCanStart()).tx);
+        report.journalReopen.actors.push({sameHash:true,newProofJobs:0,transactionBytesRetained:true});
+      }
+      journal=actorA.journal;assert.equal(service.stats().submitted,jobsBefore);
       await mark('canonical-projection-rebuild');
       const rebuilt=createRollingProjection({isValidatedEvent:isRollingEvent});
       for(const hash of hashes)rebuilt.stage(await decoder.decodeTransaction(ctx.node,hash)).apply();
@@ -436,8 +430,8 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
         scope:{chainId:network.chainId,rollupVersion:network.version,rollupAddress:network.rollup,boardAddress:String(ctx.instance.address),classId:String((await sdk.getContractClassFromArtifact(checked.artifact)).id)},
         deployment:{blockNumber:Number(report.initialPublicAnchor.blockNumber),blockHash:report.initialPublicAnchor.blockHash,txHash:report.initialPublicAnchor.txHash},
         cacheDirectory:path.join(ctx.directory,'rolling-public-index'),ids,scenario,expectedProfile:report.profiles?.expectedIdentity,expectedHTTP:report.social?.expectedHTTP,deadlineAt:ctx.applicationDeadlineAt,observation:report.publicReader});await save();
-      await fees.verify(feeTotal);report.actualHumanFees=String(feeTotal);report.proverJobs=service.stats();
-      assert.equal(report.proverJobs.failed,0);if(social){const expectedJobs=scenario==='anonymous-thread'?3:4;assert.equal(report.proverJobs.completed,expectedJobs);assert.equal(report.proverJobs.submitted,expectedJobs);}
+      if(multi){const bStandalone=BigInt(feesB.standalone.transactionFee);await fees.verify(feeTotal,feesB.browserFixture.fundedAmount-bStandalone-feeTotalB);await feesB.verify(feeTotalB,fees.browserFixture.fundedAmount-feeTotal);assert.equal(fees.poolBefore,feesB.poolBefore);report.accountFees={a:String(feeTotal),b:String(feeTotalB)};}else await fees.verify(feeTotal);report.actualHumanFees=String(feeTotal+feeTotalB);report.proverJobs=service.stats();
+      assert.equal(report.proverJobs.failed,0);if(social){const expectedJobs=scenario==='anonymous-thread'?3:multi?6:4;assert.equal(report.proverJobs.completed,expectedJobs);assert.equal(report.proverJobs.submitted,expectedJobs);}
       else{assert.equal(report.proverJobs.completed,5);assert.equal(report.proverJobs.submitted,5);}
       assert.equal(report.proverJobs.running,false);
       nativeArtifacts.verify();report.nativeArtifacts=nativeArtifacts.observation();
@@ -458,13 +452,13 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
     if(error.privateFeeObservation)report.privateFees=error.privateFeeObservation;
     // Failed submit can still have consumed a fee. Read-only canonical observation,
     // no replacement, reproof or resend. Never treat this as application success.
-    if(journal)try{
-      const outcome=await journal.inspectOutcome();
+    if(activeActor)try{
+      const outcome=await activeActor.journal.inspectOutcome();
       if(outcome?.receipt){
         const receipt=outcome.receipt;
         report.lastJournalOutcome={txHash:outcome.txHash,outcome:outcome.outcome,transactionFee:String(receipt.transactionFee),
           blockNumber:Number(receipt.blockNumber),blockHash:String(receipt.blockHash)};
-        accountFee(outcome.txHash,receipt.transactionFee);await save();
+        accountFee(outcome.txHash,receipt.transactionFee,activeActor===actorB);await save();
         const {TxHash}=await import('@aztec-labs/stdlib/tx');
         const effect=await ctx.node.getTxEffect(TxHash.fromString(outcome.txHash));
         if(effect?.data&&String(effect.l2BlockHash)===String(receipt.blockHash)&&Number(effect.l2BlockNumber)===Number(receipt.blockNumber)){
@@ -474,10 +468,11 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
       }
     }catch{report.failureEvidenceAvailability='incomplete';}
   }finally{
-    locked=true;
     try{await closeRollingResources([
-      ...(pxe?[['applicationPXE',()=>pxe.stop()]]:store?[['applicationStore',()=>store.close()]]:[]),
+      ...(actorA?[['applicationActorA',()=>actorA.close()]]:[]),
+      ...(actorB?[['applicationActorB',()=>actorB.close()]]:[]),
       ...(fees?[['fundingWallet',()=>fees.close()]]:[]),
+      ...(feesB?[['fundingWalletB',()=>feesB.close()]]:[]),
       ...(service?[['proverAndQuery',async()=>{const port=service.address.port;await service.close();await closedPort(port);}]]:[]),
       ...(rpc?[['nodeRPC',()=>rpc.close()]]:[]),
       ...(restoreIndexedDB?[['indexedDBGlobals',restoreIndexedDB]]:[]),

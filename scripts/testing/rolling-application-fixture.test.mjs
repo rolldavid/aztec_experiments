@@ -77,9 +77,11 @@ test('fixture uses sole real journal send path, five actions and canonical decod
   assert.equal((source.match(/await withC01ClientMining\(/g)||[]).length,2);
   assert(source.indexOf('report.setupMining.clientMining.stopped,true')<source.indexOf("await mark('real-wall-clock-readiness')"));
   assert(source.indexOf("await mark('real-wall-clock-readiness')")<source.indexOf('observation:report.applicationMining'));
-  assert.equal((source.match(/await prepareW01PrivateFees\(/g)||[]).length,1);
+  assert.equal((source.match(/await prepareW01PrivateFees\(/g)||[]).length,2);
+  assert(source.includes("if(multi){feesB=await prepareW01PrivateFees"));
+  assert(source.includes("assert(!feesB.authorAccount.address.equals(owner))"));
   for(const type of ['name','subboard','post','reply','like'])assert(source.includes(`await action({type:'${type}'`));
-  assert(source.includes('app.submitPrepared(prepared.intentId)'));assert(source.includes('app.reconcile(lastIntent)'));
+  assert(source.includes('app.submitPrepared(prepared.intentId)'));assert(source.includes('actor.application.reconcile(actorIntents.get(actor))'));
   assert(source.includes('for(const hash of hashes)rebuilt.stage(await decoder.decodeTransaction(ctx.node,hash)).apply()'));
   assert(!source.includes('setTime('));assert(!source.includes('nowSeconds:'));assert(!source.includes('runPrivateBokFixture('));
   assert(source.includes('proofsEnabled:real,allowLocalDev:true'));
@@ -124,7 +126,7 @@ test('native loader cleanup remains after PXE and prover owners, including their
   const source=await fs.readFile(new URL('./rolling-application-fixture.mjs',import.meta.url),'utf8');
   assert(source.indexOf('nativeArtifacts=installRollingNativeArtifacts()')<source.indexOf('const sdkModule=await loadRollingFixtureSDK()'));
   assert(source.includes("'scripts/testing/rolling-native-artifacts.mjs'"));
-  assert(source.indexOf("['applicationPXE'")<source.indexOf("['nativeArtifactLoader'"));
+  assert(source.indexOf("['applicationActorA'")<source.indexOf("['nativeArtifactLoader'"));
   assert(source.indexOf("['proverAndQuery'")<source.indexOf("['nativeArtifactLoader'"));
   assert(source.includes('nativeArtifacts.verify();report.nativeArtifacts=nativeArtifacts.observation()'));
   const {installRollingNativeArtifacts}=await import('./rolling-native-artifacts.mjs'),adapter=installRollingNativeArtifacts();

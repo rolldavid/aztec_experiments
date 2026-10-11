@@ -364,3 +364,5 @@ export async function trustedQueryPolicy(ctx) {
 export async function rollingProfilePort(ctx){return (await import('./rolling-application-fixture.mjs')).runRollingApplicationFixture(ctx,'profiles');}
 export async function rollingAnonymousThread(ctx){return (await import('./rolling-application-fixture.mjs')).runRollingApplicationFixture(ctx,'anonymous-thread');}
 export async function rollingRepostReactions(ctx){return (await import('./rolling-application-fixture.mjs')).runRollingApplicationFixture(ctx,'repost-reactions');}
+
+export async function rollingAccountReactions(ctx){return (await import('./rolling-application-fixture.mjs')).runRollingApplicationFixture(ctx,'account-reactions');}

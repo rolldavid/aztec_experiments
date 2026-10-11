@@ -23,8 +23,8 @@ export function assertSocialHTTPView(actual,expected){
  assert.deepEqual(Object.fromEntries(Object.keys(expected).map(key=>[key,actual[key]])),expected);
 }
 export async function verifyRollingPublicReader({node,artifact,scope,deployment,cacheDirectory,ids,scenario='conversation',expectedProfile,expectedHTTP,deadlineAt,observation}){
- assert(['conversation','profiles','anonymous-thread','repost-reactions'].includes(scenario));
- const social=['anonymous-thread','repost-reactions'].includes(scenario);
+ assert(['conversation','profiles','anonymous-thread','repost-reactions','account-reactions'].includes(scenario));
+ const social=['anonymous-thread','repost-reactions','account-reactions'].includes(scenario);
  if(social)assert(Array.isArray(expectedHTTP)&&expectedHTTP.length>0);
  if(scenario==='profiles')assert(expectedProfile&&expectedProfile.id===ids.nameId);
  assert(Number.isSafeInteger(deadlineAt)&&deadlineAt>Date.now());
