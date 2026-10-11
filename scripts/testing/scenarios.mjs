@@ -3,6 +3,7 @@ const run = name => async ctx => (await import('./scenario-flows.mjs'))[name](ct
 
 // Explicit named scenarios. Unknown names fail; there are no compatibility aliases.
 const records = [
+  Object.freeze({name:'private-bok-provider',deadlineMs:540000,evidenceTask:'G14',controlledSettlement:true,observeNodeCalls:true,providerRecovery:true,description:'One real model call with private escrow, durable process recovery and actual refund redemption',fixture:'included-board',authors:1,applicationThreads:1,browser:'none',run:run('privateBokProvider')}),
   Object.freeze({name:'rolling-bok-post',deadlineMs:540000,fixtureHeapMiB:768,observeNodeCalls:true,evidenceTask:'G06',description:'Funded private RollingBoard post with actual Bok activation and mined rollback',fixture:'activated-board',boardProfile:'rolling',authors:1,applicationThreads:1,browser:'none',run:run('rollingBokPost')}),
   ...['Normal', 'Uncertain'].map(kind => Object.freeze({name:'private-bok-private-' + kind.toLowerCase(),deadlineMs:540000,evidenceTask:'G14',controlledSettlement:true,observeNodeCalls:true,description:'Private fee funded Bok ' + kind.toLowerCase() + ' local accounting',fixture:'included-board',authors:1,applicationThreads:1,browser:'none',run:run('privateBokPrivate' + kind)})),
   Object.freeze({name:'private-bok',deadlineMs:540000,evidenceTask:'G14',controlledSettlement:true,description:'Private Bok escrow with real local portal accounting and controlled settlement',fixture:'included-board',authors:3,applicationThreads:1,browser:'none',run:run('privateBok')}),

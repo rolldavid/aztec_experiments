@@ -18,13 +18,19 @@ export async function runApplication(name) {
   await fs.mkdir(path.dirname(evidence),{recursive:true});
   const directory=await fs.mkdtemp('/private/tmp/board-test-');
   const supervisor=new Supervisor({report,deadlineMs:scenario.deadlineMs});
-  let browserRun,control;
+  let browserRun,providerRun,control,runtime;
+  const providerDeadlineAt=scenario.providerRecovery===true?Date.now()+scenario.deadlineMs-15000:null;
   const readResult=async name=>JSON.parse(await fs.readFile(path.join(directory,name+'-result.json'),'utf8'));
   const stage=role=>record=>{
     assert.deepEqual(Object.keys(record).filter(key=>!['stage','elapsedMs'].includes(key)),[]);
     assert(typeof record.stage==='string'&&/^[a-zA-Z0-9:_-]{1,80}$/.test(record.stage));
     const item={role,stage:record.stage,elapsedMs:Math.round(performance.now()-supervisor.started)};
     report.stages.push(item);console.log(JSON.stringify(item));
+    if(record.stage==='provider-ready'){
+      assert(scenario.providerRecovery===true&&role==='fixture'&&!providerRun,'Unexpected provider launch');
+      providerRun=launchProvider().catch(error=>{report.providerRecovery=error.providerRecoveryObservation;supervisor.fail('provider-recovery',Error('Provider recovery failed; retain paid journal'));throw error;});
+      providerRun.catch(()=>{});
+    }
     if(record.stage==='browser-ready'){
       assert(browser&&role==='fixture'&&!browserRun,'Unexpected browser launch');
       browserRun=launchBrowser().catch(error=>{supervisor.fail('browser-setup',error);throw error;});
@@ -32,6 +38,18 @@ export async function runApplication(name) {
       browserRun.catch(()=>{});
     }
   };
+  async function launchProvider(){
+    assert(runtime,'Runtime not prepared');
+    const evidenceDirectory=path.join(ROOT,'execution/evidence/G14','provider-'+randomUUID());
+    await fs.mkdir(evidenceDirectory,{mode:0o700});
+    report.providerEvidenceDirectory=path.relative(ROOT,evidenceDirectory);
+    const {runPrivateBokProviderRecovery}=await import('./private-bok-provider-coordinator.mjs');
+    report.providerRecovery=await runPrivateBokProviderRecovery({supervisor,directory,evidenceDirectory,
+      crs:runtime.crs,nativeDirectory:directory,proofMode:report.applicationProofs?'real':'disabled',
+      providerEnvFile:path.join(process.env.HOME,'Library/Application Support/AnonymousMessageBoard/V6/private/plugin.env'),
+      onRecord:stage('provider')});
+    assert.equal(report.providerRecovery.passed,true);
+  }
   async function launchBrowser(){
     const {validateBrowserHandoff}=await import('../t04-browser-journey.mjs');
     const handoff=JSON.parse(await fs.readFile(path.join(directory,'browser-ready.json'),'utf8'));
@@ -57,7 +75,8 @@ export async function runApplication(name) {
       const port=reservation.address().port;await new Promise(resolve=>reservation.close(resolve));
       control={ethereumWallet:scenario.ethereumWallet??'disposable',browserEngine:scenario.browserEngine,browserMode:scenario.browser,origin:'https://127.0.0.1:'+port,rpcToken:randomBytes(32).toString('hex'),backupPassword:randomBytes(32).toString('base64url')};
     }
-    const {crs,profile}=await prepareRuntime(directory,scenario,report);
+    runtime=await prepareRuntime(directory,scenario,report);
+    const {crs,profile}=runtime;
     // The combined Rolling/escrow fixture outgrew the legacy 384MiB V8 heap.
     // This allocation stays inside the independently enforced whole-tree RSS gate.
     const fixtureHeapMiB=scenario.fixtureHeapMiB??384;
@@ -65,10 +84,11 @@ export async function runApplication(name) {
     report.fixtureHeapMiB=fixtureHeapMiB;
     const exit=await supervisor.start('fixture','/usr/bin/sandbox-exec',['-f',profile,process.execPath,'--max-old-space-size='+fixtureHeapMiB,ENTRY,'fixture-worker',name,directory],{
       cwd:ROOT,env:{BOARD_TEST_PROOFS:process.env.BOARD_TEST_PROOFS??'real',BOARD_TEST_REMOTE:process.env.BOARD_TEST_REMOTE??'0',HOME:directory,TMPDIR:directory,PATH:path.dirname(process.execPath)+':/usr/bin:/bin',LOG_LEVEL:'silent',LOG_JSON:'1',LANG:'C',HARDWARE_CONCURRENCY:'1',C01_APPLICATION_BB_THREADS:String(scenario.applicationThreads),NODE_BACKEND:'js',FORGE_BIN:'/Users/zac/.foundry/bin/forge',C01_NETWORK_ROOT:directory,C01_ACVM_ROOT:path.join(directory,'acvm'),CRS_PATH:crs,FORGE_BROADCAST_TIMEOUT_MS:'240000',FOUNDRY_SOLC:'/Users/zac/Library/Application Support/svm/0.8.30/solc-0.8.30'},
-      input:{browserControl:control??null,operatorPackage:operatorPackage??null},onRecord:stage('fixture')});
+      input:{browserControl:control??null,operatorPackage:operatorPackage??null,providerDeadlineAt},onRecord:stage('fixture')});
     report.worker=await readResult('worker');
     assert.equal(exit.code,0);assert.equal(report.worker.passed,true);
     if(browser){assert(browserRun,'Browser was never launched');await browserRun;}
+    if(scenario.providerRecovery===true){assert(providerRun,'Provider was never launched');await providerRun;}
     const finalHashes=await fingerprints();if(browser)Object.assign(finalHashes,await browserFingerprints());
     if(scenario.ethereumWallet==='metamask'){const name='.build/metamask-13.49.0/metamask-chrome-13.49.0.zip';finalHashes[name]=createHash('sha256').update(await fs.readFile(path.join(ROOT,name))).digest('hex');}
     assert.deepEqual(finalHashes,report.sourceHashes,'Sources changed during test');
@@ -76,6 +96,7 @@ export async function runApplication(name) {
   }catch(error){supervisor.fail('scenario',error);}
   finally {
     await supervisor.close();
+    if(providerRun)try{await providerRun;}catch{report.providerRecoveryFailure={category:'campaign-failed',paidOutcome:'reconcile retained journal; do not replay'};}
     if(browserRun)try{await browserRun;}catch(error){report.browserFailure=describeFailure(error);}
     if(report.ownedTreeAbsent){
       try{await fs.rm(directory,{recursive:true});report.temporaryDirectoryRemoved=true;}

@@ -11,7 +11,7 @@ import {initTelemetryClient} from '@aztec-labs/telemetry-client';
 import {RollupContract} from '@aztec-labs/ethereum/contracts/rollup';
 import {RunningPromise} from '@aztec-labs/foundation/running-promise';
 import {withC01ClientMining} from './c01-client-mining.mjs';
-export async function qualifyC01RealNode({config,deployment,genesis,directory,privateKey,address,preparation,mark,browserControl,scenario,operatorPackage}){
+export async function qualifyC01RealNode({config,deployment,genesis,directory,privateKey,address,preparation,mark,browserControl,scenario,operatorPackage,providerDeadlineAt}){
   assert(scenario&&typeof scenario.run==='function');
   assert(['node','included-board','activated-board'].includes(scenario.fixture));
   const nodeConfig={...config,...deployment.l1ContractAddresses,rollupVersion:deployment.rollupVersion,
@@ -49,7 +49,7 @@ export async function qualifyC01RealNode({config,deployment,genesis,directory,pr
     observation.realProofs=applicationProofsEnabled();observation.proverSubsystemCreated=false;
     observation.ordinarySequencerConstructed=true;observation.sequencerStarted=false;
     observation.rollupVersion=Number(info.rollupVersion);
-    const ctx={node,config:nodeConfig,deployment,preparation,directory,dateProvider,browserControl,scenario,mark,l1Client:deployment.l1Client,rollupAddress:deployment.l1ContractAddresses.rollupAddress,packageRoot:operatorPackage?.root};
+    const ctx={node,config:nodeConfig,deployment,preparation,directory,dateProvider,browserControl,scenario,mark,providerDeadlineAt,l1Client:deployment.l1Client,rollupAddress:deployment.l1ContractAddresses.rollupAddress,packageRoot:operatorPackage?.root};
     if(include){
       assert(preparation);mark('prove-board-deployment');
       const {proveC01BoardDeployment}=await import('./c01-board-flow.mjs');

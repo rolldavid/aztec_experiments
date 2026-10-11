@@ -24,7 +24,8 @@ const sha = bytes => createHash('sha256').update(bytes).digest('hex');
 const same = (a, b) => assert.equal(String(a).toLowerCase(), String(b).toLowerCase());
 
 export async function runPrivateBokFixture(ctx, caseProfile = 'both', payerMode = 'genesis', consumer) {
-  assert(['both', 'normal', 'uncertain'].includes(caseProfile));
+  assert(['both', 'normal', 'uncertain', 'provider'].includes(caseProfile));
+  if(caseProfile==='provider'){assert.equal(payerMode,'private');assert.equal(ctx.scenario?.providerRecovery,true);}
   assert(['genesis', 'private'].includes(payerMode));
   if (consumer !== undefined) {
     assert.equal(typeof consumer, 'function');
@@ -264,7 +265,8 @@ export async function runPrivateBokFixture(ctx, caseProfile = 'both', payerMode 
         } finally { restore(); }
       };
       const run = consumer ?? (await import('../../experiments/private-bok/measure.mjs')).runPrivateBokExperiment;
-      observation.experiment = await run({node: ctx.node, wallet, owner, operator, otherUser, privateFees,
+      const providerRecovery=caseProfile==='provider'?(await import('./private-bok-provider-fixture.mjs')).createPrivateBokProviderRecovery({ctx,mark:ctx.mark}):undefined;
+      observation.experiment = await run({providerRecovery,node: ctx.node, wallet, owner, operator, otherUser, privateFees,
         deployPortal, activatePortal, funding, redeem, mineL1, advanceTo, realProofs, payerMode,
         ...(privateFees ? {paymentFor: privateFees.paymentFor, sharedFeePayer: privateFees.funding.owner.recipient} : {}),
         outputDirectory: path.join(directory, 'experiment'), caseProfile, mark: ctx.mark,

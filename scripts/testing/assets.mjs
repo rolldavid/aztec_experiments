@@ -14,6 +14,8 @@ export async function fingerprints() {
     'node_modules/@aztec-labs/ethereum/dest/deploy_aztec_l1_contracts.js']) {
     result[name] = sha(await fs.readFile(path.join(ROOT, name)));
   }
+  for(const name of await fs.readdir(path.join(ROOT,'plugins')))if(name.endsWith('.mjs'))result['plugins/'+name]=sha(await fs.readFile(path.join(ROOT,'plugins',name)));
+  for(const name of ['shared/aztec-node-client.mjs','shared/routed-kernel-prover.mjs'])result[name]=sha(await fs.readFile(path.join(ROOT,name)));
   for(const name of await fs.readdir(path.join(ROOT,'prover')))if(name.endsWith('.mjs'))result['prover/'+name]=sha(await fs.readFile(path.join(ROOT,'prover',name)));
   for(const name of await fs.readdir(path.join(ROOT,'scripts/testing'))){
     if(name.endsWith('.mjs'))result['scripts/testing/'+name]=sha(await fs.readFile(path.join(ROOT,'scripts/testing',name)));
@@ -68,6 +70,8 @@ export async function prepareRuntime(directory,scenario,report) {
     report.applicationBBThreads=applicationThreads;report.nodeBBThreads=1;report.worldStateHardwareConcurrency=1;
     await fs.mkdir(path.join(directory,'acvm'),{mode:0o700});
     const profile=path.join(directory,'local-only.sb');
-    await fs.writeFile(profile, '(version 1)\n(allow default)\n(deny network-outbound (remote ip "*:*"))\n(allow network-outbound (remote ip "localhost:*"))\n(deny network-inbound (local ip "*:*"))\n(allow network-inbound (local ip "localhost:*"))\n');
+    const privatePaths=[path.join(process.env.HOME,'.aws'),path.join(process.env.HOME,'Library/Application Support/AnonymousMessageBoard/V6/private')];
+    const denyPrivate=privatePaths.map(value=>'(deny file-read* file-write* (subpath '+JSON.stringify(value)+'))\n').join('');
+    await fs.writeFile(profile, '(version 1)\n(allow default)\n(deny network-outbound (remote ip "*:*"))\n(allow network-outbound (remote ip "localhost:*"))\n(deny network-inbound (local ip "*:*"))\n(allow network-inbound (local ip "localhost:*"))\n'+denyPrivate);
     return {crs,profile};
 }
