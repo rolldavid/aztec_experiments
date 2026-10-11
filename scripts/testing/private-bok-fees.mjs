@@ -3,6 +3,38 @@ import assert from 'node:assert/strict';
 import path from 'node:path';
 import {mkdir} from 'node:fs/promises';
 
+function publicFunding(record, amount, payer) {
+  assert(record && typeof record === 'object', 'Public fee funding evidence required');
+  const result = {};
+  for (const flag of ['passed', 'realL1Deposit', 'independentL1Sender', 'testFaucetFunding',
+    'productionFundingHelper', 'productionRecoveryHelper', 'publicRecoveryPersistedBeforeDeposit']) {
+    assert(record[flag] === true, `Missing successful public funding flag: ${flag}`);
+    result[flag] = record[flag];
+  }
+  assert(record.privateSecretsStored === false && record.depositSends === 1, 'Invalid funding secret/send evidence');
+  assert(typeof record.amount === 'string' && /^[1-9][0-9]*$/.test(record.amount)
+    && BigInt(record.amount) === amount, 'Funding amount evidence mismatch');
+  assert(typeof record.l1TxHash === 'string' && /^0x[0-9a-fA-F]{64}$/.test(record.l1TxHash), 'Invalid L1 funding hash');
+  assert(typeof record.recipient === 'string' && /^0x[0-9a-fA-F]{64}$/.test(record.recipient)
+    && record.recipient === payer, 'Funding recipient must be the shared FPC');
+  return Object.assign(result, {amount: record.amount, l1TxHash: record.l1TxHash, recipient: record.recipient,
+    depositSends: record.depositSends, privateSecretsStored: record.privateSecretsStored});
+}
+
+function publicStandalone(record, payer) {
+  assert(record.passed === true && record.canonicalCheckpoint === true && record.executionResult === 'success'
+    && record.nodeValidation === 'valid', 'Canonical standalone funding evidence required');
+  assert(typeof record.applicationProof === 'boolean' && record.networkProof === false, 'Explicit standalone proof mode required');
+  assert(typeof record.txHash === 'string' && /^0x[0-9a-fA-F]{64}$/.test(record.txHash), 'Invalid standalone transaction hash');
+  assert(['checkpointed', 'proven', 'finalized'].includes(record.status), 'Standalone receipt must be included');
+  assert(record.payer === payer, 'Standalone payer must be the shared FPC');
+  assert(typeof record.transactionFee === 'string' && /^[1-9][0-9]*$/.test(record.transactionFee), 'Standalone actual fee required');
+  // Never copy future helper keys.
+  return {passed: true, txHash: record.txHash, status: record.status, transactionFee: record.transactionFee,
+    payer: record.payer, applicationProof: record.applicationProof, networkProof: false,
+    proofMode: record.applicationProof ? 'real' : 'proofs-disabled', canonicalCheckpoint: true};
+}
+
 export async function preparePrivateBokFees(ctx) {
   const {prepareW01PrivateFees} = await import('../w01-private-fee-flow.mjs');
   return createPrivateBokFeesPreparer({prepareFees: prepareW01PrivateFees, mkdir})(ctx);
@@ -13,8 +45,10 @@ export function createPrivateBokFeesPreparer({prepareFees, mkdir: makeDirectory}
   return async function prepare(ctx) {
     const {node, preparation, l1Client, directory, rpcUrl, mineL1, mark} = ctx;
     assert(path.isAbsolute(directory), 'Fee fixture directory must be absolute');
-    const observation = {passed: false, ownerless: true, operatorFunding: false,
-      humanPublicFeeFallback: false, privateCreditAndPoolReconciled: false, walletCleanupComplete: false};
+    // operatorFunding concerns product fee issuance. The disposable L1 user still
+    // receives local ETH/token faucet funding, explicitly retained below.
+    const observation = {passed: false, ownerless: true, operatorFunding: false, testFaucetFunding: true,
+      humanPublicFeeFallback: false, privateCreditAndPoolReconciled: false, walletCleanupComplete: false, funding: {}};
     const helpers = [];
     let closePromise;
     const close = () => {
@@ -35,8 +69,14 @@ export function createPrivateBokFeesPreparer({prepareFees, mkdir: makeDirectory}
       for (const [role, standalone] of [['owner', false], ['otherUser', true]]) {
         const fundingDirectory = path.join(directory, `private-bok-fees-${role}`);
         await makeDirectory(fundingDirectory, {mode: 0o700});
-        helpers.push(await prepareFees({node, preparation, l1Client, directory, fundingDirectory,
-          rpcUrl, mineL1, reportStage: mark, standalone}));
+        const helper = await prepareFees({node, preparation, l1Client, directory, fundingDirectory,
+          rpcUrl, mineL1, reportStage: mark, standalone});
+        helpers.push(helper);
+        // Persist only validated public receipt fields as soon as each helper
+        // returns, so a later setup failure cannot erase completed funding.
+        const payer = helper.browserFixture.instance.address.toString();
+        observation.funding[role] = publicFunding(helper.funding, helper.browserFixture.fundedAmount, payer);
+        if (standalone) observation.standaloneB = publicStandalone(helper.standalone, payer);
       }
       const [a, b] = helpers, wallet = a.browserFixture.wallet;
       const owner = a.authorAccount.address, otherUser = b.authorAccount.address, operator = preparation.account.address;
@@ -95,10 +135,12 @@ export function createPrivateBokFeesPreparer({prepareFees, mkdir: makeDirectory}
         operator: {value: operator}, otherUser: {value: otherUser}, paymentFor: {value: paymentFor},
         verify: {value: verify}, close: {value: close}});
     } catch (error) {
+      let failure = error instanceof Error ? error : new Error('Private Bok fee setup failed');
       try { await close(); } catch (cleanupError) {
-        throw new AggregateError([error, cleanupError], 'Private Bok fee setup and cleanup failed');
+        failure = new AggregateError([failure, cleanupError], 'Private Bok fee setup and cleanup failed');
       }
-      throw error;
+      failure.privateBokFeesObservation = observation;
+      throw failure;
     }
   };
 }

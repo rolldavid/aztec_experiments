@@ -3,7 +3,8 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {createPrivateBokFeesPreparer} from './private-bok-fees.mjs';
 
-const address = id => ({id, equals: other => other?.id === id});
+const address = id => ({id, equals: other => other?.id === id, toString: () => id});
+const payer = '0x' + '12'.repeat(32);
 function fixture({failSetup, failRegister = false, failClose = [], badBaseline = false} = {}) {
   const calls = [], directories = [], registrations = [], closed = [0, 0], verified = [], paid = [];
   const owner = address('human-A'), otherUser = address('human-B'), operator = address('operator');
@@ -12,8 +13,12 @@ function fixture({failSetup, failRegister = false, failClose = [], badBaseline =
   }};
   const helpers = [owner, otherUser].map((account, index) => ({
     authorAccount: {address: account, secret: `fake-secret-${index}`, salt: `fake-salt-${index}`, signingKey: `fake-key-${index}`},
-    browserFixture: {wallet: index ? {} : wallet, instance: {address: address('FPC')}, fundedAmount: index ? 200n : 100n},
-    ...(index ? {standalone: {passed: true, transactionFee: '7'}} : {}),
+    browserFixture: {wallet: index ? {} : wallet, instance: {address: address(payer)}, fundedAmount: index ? 200n : 100n},
+    funding: {passed: true, realL1Deposit: true, amount: index ? '200' : '100', l1TxHash: '0x' + String(index + 1).repeat(64),
+      recipient: payer, independentL1Sender: true, testFaucetFunding: true, productionFundingHelper: true,
+      productionRecoveryHelper: true, publicRecoveryPersistedBeforeDeposit: true, depositSends: 1, privateSecretsStored: false},
+    ...(index ? {standalone: {passed: true, transactionFee: '7', txHash: '0x' + '33'.repeat(32), status: 'checkpointed',
+      payer, applicationProof: false, networkProof: false, canonicalCheckpoint: true, nodeValidation: 'valid', executionResult: 'success'}} : {}),
     privateFeeAction: async args => {paid.push({index, args}); return `payment-${index}`;},
     verify: async (fees, netOther) => {
       verified.push({index, fees, netOther});
@@ -125,4 +130,55 @@ test('pure fake: real-verifier failure cannot produce a passing observation', as
   await assert.rejects(result.verify({owner: 1n, otherUser: 1n}), /private balance mismatch/);
   assert.equal(result.passed, false); assert.equal(result.privateCreditAndPoolReconciled, false);
   await result.close();
+});
+
+test('pure fake: public receipts survive cleanup and future secret fields are never copied', async () => {
+  const f = fixture();
+  const expected = structuredClone({owner: f.helpers[0].funding, otherUser: f.helpers[1].funding});
+  for (const helper of f.helpers) {
+    helper.funding.secret = 'DO-NOT-PUBLISH-secret';
+    helper.funding.recoveryRecord = {salt: 'DO-NOT-PUBLISH-salt'};
+    Object.defineProperty(helper.funding, 'futurePrivateField', {enumerable: true, get: () => {throw Error('Read future private field');}});
+  }
+  f.helpers[1].standalone.walletSecret = 'DO-NOT-PUBLISH-wallet';
+  const result = await f.prepare();
+  await result.close();
+  const report = JSON.parse(JSON.stringify(result));
+  assert.deepEqual(report.funding, expected);
+  assert.deepEqual(report.standaloneB, {passed: true, transactionFee: '7', txHash: '0x' + '33'.repeat(32),
+    status: 'checkpointed', payer, applicationProof: false, networkProof: false,
+    proofMode: 'proofs-disabled', canonicalCheckpoint: true});
+  assert.equal(report.operatorFunding, false); assert.equal(report.testFaucetFunding, true);
+  assert(!JSON.stringify(report).includes('DO-NOT-PUBLISH'));
+  assert.equal(report.walletCleanupComplete, true);
+});
+
+test('pure fake: malformed public evidence fails closed and cleans both helpers', async () => {
+  for (const mutate of [f => {f.helpers[0].funding.amount = 100;},
+    f => {f.helpers[0].funding.recipient = 'human-A';}, f => {f.helpers[0].funding.depositSends = 2;},
+    f => {f.helpers[1].standalone.applicationProof = 'false';},
+    f => {f.helpers[1].standalone.status = 'pending';}, f => {f.helpers[1].standalone.txHash = 'not-a-hash';}]) {
+    const f = fixture(); mutate(f); await assert.rejects(f.prepare());
+    assert.equal(f.closed[0], 1); assert.equal(f.closed[1], f.calls.length === 2 ? 1 : 0);
+  }
+});
+
+test('pure fake: partial funding evidence survives setup and cleanup failures without handles', async () => {
+  for (const failClose of [[], [0]]) {
+    const f = fixture({failSetup: 1, failClose});
+    f.helpers[0].funding.secret = 'DO-NOT-PUBLISH';
+    let failure;
+    try {await f.prepare();} catch (error) {failure = error;}
+    assert(failure instanceof Error);
+    if (failClose.length) assert(failure instanceof AggregateError);
+    const report = JSON.parse(JSON.stringify(failure.privateBokFeesObservation));
+    assert.equal(report.passed, false);
+    assert.equal(report.funding.owner.l1TxHash, '0x' + '1'.repeat(64));
+    assert.equal(report.funding.otherUser, undefined);
+    assert.equal(report.standaloneB, undefined);
+    assert.equal(report.walletCleanupComplete, !failClose.length);
+    assert.deepEqual(f.closed, [1, 0]);
+    assert(!/DO-NOT-PUBLISH|fake-secret|fake-key|human-A|human-B/.test(JSON.stringify(report)));
+    assert(!Object.hasOwn(failure.privateBokFeesObservation, 'wallet'));
+  }
 });
