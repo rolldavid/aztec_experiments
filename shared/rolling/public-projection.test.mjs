@@ -128,14 +128,14 @@ async function avatar(nameId,version,bytes,tx='4') {
 }
 test('profile exact binary bytes and independent current versions appear on existing posts at read time',async()=>{
  const {events,nameId}=await fixture(),p=createRollingProjection({isValidatedEvent:isRollingEvent});p.stage(events).apply();
- const previous=p.post('10');assert.equal(previous.identity.profile.avatar.version,'0');assert.equal(p.post('20').identity,null);
+ const previous=p.identity(nameId);assert.equal(previous.profile.avatar.version,'0');assert.equal(Object.hasOwn(p.post('20'),'identity'),false);
  const bytes=Buffer.from([0xff,0xc0,0x80,0,0x89,0]); // deliberately invalid UTF-8 and trailing zeros
  const b=await bio(nameId,'1','A short bio'),a=await avatar(nameId,'1',bytes);
  p.stage([b,a]).apply();
  assert.equal(p.identity(nameId).profile.bio.text,'A short bio');
- const image=p.post('10').identity.profile.avatar;assert.equal(image.data,bytes.toString('base64'));assert.equal(image.length,'6');assert.equal(image.digest,a.payload.digest);
- assert.equal(p.profile(nameId).identity.profile.avatar.data,image.data);assert.equal(p.thread('10').posts[0].identity.profile.avatar.data,image.data);
- assert.equal(previous.identity.profile.avatar.version,'0');
+ const image=p.identity(p.post('10').record.name_id).profile.avatar;assert.equal(image.data,bytes.toString('base64'));assert.equal(image.length,'6');assert.equal(image.digest,a.payload.digest);
+ assert.equal(p.profile(nameId).identity.profile.avatar.data,image.data);assert.equal(p.identity(p.thread('10').posts[0].record.name_id).profile.avatar.data,image.data);assert.equal(Object.hasOwn(p.post('10'),'identity'),false);
+ assert.equal(previous.profile.avatar.version,'0');
  const publicCopy=p.identity(nameId);publicCopy.profile.avatar.data='mutated';assert.equal(p.identity(nameId).profile.avatar.data,image.data);
  assert(!JSON.stringify(p.feed()).includes('owner'));
 });
@@ -145,7 +145,7 @@ test('profile clears, independent updates, reverse undo and redecoding rebuild p
  const clearBio=await bio(nameId,'2','','5'),clearAvatar=await avatar(nameId,'2',Buffer.alloc(0),'6');
  const second=p.stage([clearBio,clearAvatar]);second.apply();assert.equal(p.identity(nameId).profile.bio.text,'');assert.equal(p.identity(nameId).profile.avatar.data,'');assert.equal(p.identity(nameId).profile.avatar.width,'0');assert.equal(p.identity(nameId).profile.avatar.version,'2');
  assert.notEqual(p.identity(nameId).profile.avatar.digest,'0');
- second.undo();assert.deepEqual(p.identity(nameId),original);assert.deepEqual(p.post('10').identity,original);
+ second.undo();assert.deepEqual(p.identity(nameId),original);assert.deepEqual(p.identity(p.post('10').record.name_id),original);
  const replacement=await avatar(nameId,'2',Buffer.from([9,0,8,0]),'5'),third=p.stage([replacement]);third.apply();
  assert.equal(p.identity(nameId).profile.bio.version,'1');assert.equal(p.identity(nameId).profile.avatar.data,'CQAIAA==');
  const rebuilt=createRollingProjection({isValidatedEvent:isRollingEvent});const validated=[];

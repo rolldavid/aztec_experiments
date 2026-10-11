@@ -138,22 +138,38 @@ export async function createRollingPublicIndex({node,artifact,scope,deployment,s
   function query(view,params={}){
     check(ready&&!busy&&!unavailable,'ROLLING_PUBLIC_NOT_READY');
     let cursor=params.cursor??null;if(cursor!==null){check(typeof cursor==='string'&&cursor.startsWith(epoch+':')&&cursor.length<=120,'ROLLING_PUBLIC_CURSOR_STALE');cursor=cursor.slice(epoch.length+1);check(/^[0-9]+:[0-9]+$/.test(cursor)&&Number(cursor.split(':')[0])===projectionRevision,'ROLLING_PUBLIC_CURSOR_STALE');}
-    const options={limit:params.limit??50,cursor};let result;
-    if(view==='feed')result=projection.feed(options);
-    else if(view==='directory')result=projection.directory({...options,query:params.query??''});
-    else if(view==='thread'){check(field(params.root));result=projection.thread(params.root,options);}
-    else if(view==='profile'){check(field(params.nameId));result=projection.profile(params.nameId,options);}
-    else if(view==='post'){check(field(params.id));result={post:projection.post(params.id)};}
-    else throw fail('ROLLING_PUBLIC_INVALID');
-    if(result.nextCursor)result.nextCursor=epoch+':'+result.nextCursor;
-    const envelope={schemaVersion:1,scope,checkpoint:checkpoint(),complete:true,...result,revision:`${epoch}:${revision}`};
-    if(view!=='directory'){
-      const names={},boards={};for(const post of result.posts??(result.post?[result.post]:[])){
-        if(post.record.name_id!=='0'){const name=projection.identity(post.record.name_id);check(name);names[name.id]=name;}
-        if(post.record.subboard!=='0'){const board=projection.board(post.record.subboard);check(board);boards[board.id]={id:board.id,name:board.name,slug:board.slug};}
-      }envelope.names=names;envelope.boards=boards;
+    const requested=params.limit??50;check(Number.isSafeInteger(requested)&&requested>=1&&requested<=100);
+    function envelopeFor(limit){
+      const options={limit,cursor};let result;
+      if(view==='feed')result=projection.feed(options);
+      else if(view==='directory')result=projection.directory({...options,query:params.query??''});
+      else if(view==='thread'){check(field(params.root));result=projection.thread(params.root,options);}
+      else if(view==='profile'){check(field(params.nameId));result=projection.profile(params.nameId,options);}
+      else if(view==='post'){check(field(params.id));result={post:projection.post(params.id)};}
+      else throw fail('ROLLING_PUBLIC_INVALID');
+      if(result.nextCursor)result.nextCursor=epoch+':'+result.nextCursor;
+      const envelope={schemaVersion:1,scope,checkpoint:checkpoint(),complete:true,...result,revision:`${epoch}:${revision}`};
+      if(view!=='directory'){
+        const names={},boards={};for(const post of result.posts??(result.post?[result.post]:[])){
+          // Current profile content is resolved once per distinct name at query
+          // time, not embedded again in every historical post.
+          if(post.record.name_id!=='0'&&!Object.hasOwn(names,post.record.name_id)){const name=projection.identity(post.record.name_id);check(name);names[name.id]=name;}
+          if(post.record.subboard!=='0'&&!Object.hasOwn(boards,post.record.subboard)){const board=projection.board(post.record.subboard);check(board);boards[board.id]={id:board.id,name:board.name,slug:board.slug};}
+        }envelope.names=names;envelope.boards=boards;
+      }
+      return envelope;
     }
-    return copy(envelope);
+    // Match the unchanged HTTP and reader 1MiB cap including all metadata,
+    // current avatars, checkpoint and epoch-prefixed cursor. Re-query rather
+    // than slicing: the projection alone determines the correct next cursor.
+    const fits=value=>bytes(JSON.stringify(value))<=1048576;
+    const initial=envelopeFor(requested);if(fits(initial))return copy(initial);
+    check(view!=='post','ROLLING_PUBLIC_CAPACITY');
+    let low=1,high=requested-1,best=null;
+    while(low<=high){const limit=Math.floor((low+high)/2),candidate=envelopeFor(limit);
+      if(fits(candidate)){best=candidate;low=limit+1;}else high=limit-1;
+    }
+    check(best,'ROLLING_PUBLIC_CAPACITY');return copy(best);
   }
   return Object.freeze({key,scope,sync,status,query});
 }

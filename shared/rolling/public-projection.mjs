@@ -93,7 +93,7 @@ export function createRollingProjection({isValidatedEvent,maxEvents=50000}={}) {
     tip=baseTip;revision++;undone=true;
    }};
  }
- const visible=post=>{const p=copy(post),board=state.boards.get(p.record.subboard);if(p.removal||board?.rejected)p.text=null;p.identity=p.record.name_id==='0'?null:copy(state.names.get(p.record.name_id));return p;};
+ const visible=post=>{const p=copy(post),board=state.boards.get(p.record.subboard);if(p.removal||board?.rejected)p.text=null;return p;};
  function select(ids,{limit=50,cursor=null}={}){
   check(Number.isSafeInteger(limit)&&limit>=1&&limit<=100);let offset=0;
   if(cursor!==null){check(typeof cursor==='string'&&/^[0-9]+:[0-9]+$/.test(cursor));const [r,n]=cursor.split(':').map(Number);check(r===revision&&Number.isSafeInteger(n)&&n<=ids.length);offset=n;}

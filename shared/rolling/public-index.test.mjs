@@ -112,3 +112,43 @@ test('bounded capacity, read timeout and concurrent sync cannot produce partial 
  const g=await fixture(t);let release;g.node.getNodeInfo=()=>new Promise(resolve=>{release=resolve;});const slow=await g.create({timeoutMs:15});
  const pending=slow.sync();await new Promise(r=>setImmediate(r));await assert.rejects(slow.sync(),{code:'ROLLING_PUBLIC_BUSY'});await assert.rejects(pending,{code:'ROLLING_PUBLIC_TIMEOUT'});assert.ok(release);assert.equal(slow.status().complete,false);
 });
+
+// Controlled canonical SDK-data fixture through the actual HTTP server and
+// browser transport. This is bounded local unit evidence, not a live chain.
+async function fullAvatarPageFixture(t,distinct){
+ const f=await fixture(t),expected=[];
+ for(let i=0;i<100;i++){
+  const n=i+3,id=BigInt(500+i),last='Person'+String.fromCharCode(65+Math.floor(i/26),65+i%26);
+  const nameId=distinct?(await poseidon2HashWithSeparator(nameRegistration('Reader',last).preimage,NAME_DOMAIN)).toBigInt():BigInt(f.nameId),logs=[];
+  if(distinct)logs.push(await log('NameRegistered',{schema:1,name_id:nameId,first_length:6,first:pack('Reader',2),last_length:last.length,last:pack(last,2)}));
+  if(distinct||i===0){
+   const image=Buffer.alloc(8192,i%255+1);image[8191]=0;const data=pack(image,265),content=pack('b'.repeat(992),32);
+   logs.push(await log('BioPublished',{schema:1,name_id:nameId,version:1,length:992,content,digest:await poseidon2HashWithSeparator([1n,nameId,1n,992n,...content],0x52434231),trailer:1}));
+   logs.push(await log('AvatarPublished',{schema:1,name_id:nameId,version:1,width:100,height:100,length:8192,data,digest:await poseidon2HashWithSeparator([1n,nameId,1n,100n,100n,8192n,...data],0x52434131),trailer:1}));
+  }
+  const body='x'.repeat(992);
+  logs.push(await log('PostPublished',{schema:1,id,record:{subboard:BigInt(f.boardId),parent:0,root:id,kind:1,name_id:nameId,reference:0,content_digest:await digest(body,32)},timestamp:n,main_policy_version:1,local_policy_version:1,length:992,message:pack(body,32)}));
+  f.put(n,logs);expected.unshift(String(id));
+ }
+ f.setHead(102);const index=await f.create();for(let page=0;page<6&&!index.status().complete;page++)await index.sync();assert.equal(index.status().state,'ready');
+ return {...f,index,expected};
+}
+for(const distinct of [false,true])test(`labelled actual HTTP/reader: 100 maximum avatars, ${distinct?'distinct authors paginate by bytes':'same author deduplicates'}`,{timeout:30000},async t=>{
+ const {startRollingPublicServer}=await import('../../scripts/rolling-public-server.mjs');
+ const {createPublicReader}=await import('../../apps/rolling/reader-client.mjs');
+ const f=await fullAvatarPageFixture(t,distinct),server=await startRollingPublicServer({index:f.index,pollMs:30000});t.after(()=>server.close());
+ const sizes=[];const read=createPublicReader({fetch:async(url,options)=>{const response=await fetch(server.url+url,options);assert.equal(response.status,200);const size=(await response.clone().arrayBuffer()).byteLength;sizes.push(size);assert(size<=1048576);return response;}});
+ const first=await read('feed',{limit:100});assert(first.posts.every(p=>!Object.hasOwn(p,'identity')));
+ assert.equal(Object.keys(first.names).length,distinct?first.posts.length:1);
+ for(const name of Object.values(first.names)){assert.equal(Buffer.from(name.profile.avatar.data,'base64').length,8192);assert.equal(name.profile.avatar.version,'1');}
+ if(distinct){assert(first.posts.length<100);assert(first.nextCursor);}
+ else{assert.equal(first.posts.length,100);assert.equal(first.nextCursor,null);assert(sizes[0]<250000);}
+ const seen=first.posts.map(p=>p.id);let cursor=first.nextCursor,requests=1;
+ while(cursor){assert(requests++<5);const page=await read('feed',{limit:100,cursor});seen.push(...page.posts.map(p=>p.id));cursor=page.nextCursor;}
+ assert.deepEqual(seen,f.expected);assert.equal(new Set(seen).size,100);
+ // Querying the projection again generated the cursor; epochs/revisions remain
+ // authoritative, and an unrelated append invalidates the bounded page cursor.
+ if(distinct){f.put(103,[await f.post(900,103,'New')]);f.setHead(103);await f.index.sync();assert.throws(()=>f.index.query('feed',{cursor:first.nextCursor}),{code:'ROLLING_PUBLIC_CURSOR_STALE'});}
+ const nameId=first.posts[0].record.name_id,profile=await read('profile',{nameId,limit:100});
+ assert.equal(profile.identity.profile.avatar.version,'1');assert.equal(profile.identity.profile.avatar.length,'8192');assert(sizes.every(size=>size<=1048576));
+});
