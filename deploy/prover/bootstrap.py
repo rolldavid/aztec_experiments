@@ -50,10 +50,80 @@ def validate(config, now=None):
 
 # Executed only on the future Linux host, never while generating or testing.
 HOST = r'''
-import datetime as dt, fcntl, hashlib, ipaddress, json, os, pathlib, platform, re, shutil, subprocess, sys, tarfile, time, urllib.request
+import datetime as dt, fcntl, hashlib, ipaddress, json, os, pathlib, platform, re, shutil, stat, subprocess, sys, tarfile, time, urllib.request
 BASE = pathlib.Path('/var/lib/rolling-bootstrap')
 RELEASE = pathlib.Path('/opt/board-prover/releases') / ('rolling-'+PINS['manifest'][:16])
 STAGE = 'initial'
+
+DIAGNOSTICS_ACTIVE = False
+STEP = 'entry'
+STEPS = frozenset(('entry','host-preflight','state-directory','writer-lock','deadline','timer-files','timer-reload','budget-timer','commissioning-timer','mask-prover','inspect-prover','stop-prover','route-read','shaper-files','shaper-start','verify-budget','tc-version','tc-package','tc-classes','tc-class-parse','tc-qdisc','tc-qdisc-parse','monitor-install','runtime-download','runtime-verify','native-checks','node-install','egress-exercise','qualification-install','complete'))
+
+def diagnostic(error=None, status='failed', facts=None):
+    # Diagnostic output must never prevent shutdown. No raw exception attributes,
+    # command arguments, configuration, or provider responses are serialized.
+    try:
+        out={'schemaVersion':1,'step':STEP if STEP in STEPS else 'entry','status':status if status in ('started','passed','failed','observed') else 'failed'}
+        for key,label in [('manifest','manifestSha256'),('bootstrap','bootstrapSourceSha256'),('node','nodeSha256'),('bb','bbSha256'),('catalog','catalogSha256')]:
+            v=PINS.get(key)
+            if type(v) is str and re.fullmatch('[a-f0-9]{64}',v):out[label]=v
+        category={subprocess.CalledProcessError:'command-exit',subprocess.TimeoutExpired:'command-timeout',FileNotFoundError:'missing-file',PermissionError:'permission',OSError:'io',ValueError:'validation',json.JSONDecodeError:'invalid-json',UnicodeDecodeError:'invalid-encoding'}.get(type(error),'internal')
+        if error is not None:
+            out['category']=category
+            if type(error) is subprocess.CalledProcessError:
+                code=vars(error).get('returncode')
+                if type(code) is int and -255<=code<=255:out['returnCode']=code
+        if type(facts) is dict:
+            for key in ('tcVersion','libbpfVersion','packageVersion'):
+                value=facts.get(key)
+                if type(value) is list and 2<=len(value)<=6 and all(type(x) is int and 0<=x<=999 for x in value):out[key]=value
+            for key in ('tcAccepted','packageAccepted'):
+                if type(facts.get(key)) is bool:out[key]=facts[key]
+            if facts.get('classFormat') in ('class-text','json','empty','other'):out['classFormat']=facts['classFormat']
+        data=('ROLLING_BOOTSTRAP_DIAGNOSTIC '+json.dumps(out,separators=(',',':'))+'\n').encode()
+        if len(data)>2048:return
+        emit_diagnostic(data)
+    except Exception:pass
+
+def emit_diagnostic(data):
+    # Fixed local character devices only; no create, follow, fsync, blocking retry,
+    # permissions, serial getty or bootloader changes. Missing sinks are harmless.
+    for device in ('/dev/ttyS0','/dev/console'):
+        fd=None
+        try:
+            fd=os.open(device,os.O_WRONLY|os.O_NONBLOCK|os.O_NOFOLLOW|os.O_CLOEXEC)
+            if stat.S_ISCHR(os.fstat(fd).st_mode):os.write(fd,data)
+        except Exception:pass
+        finally:
+            if fd is not None:
+                try:os.close(fd)
+                except Exception:pass
+
+def mark(step):
+    global STEP
+    STEP=step if step in STEPS else 'entry'
+    if DIAGNOSTICS_ACTIVE:diagnostic(status='started')
+
+def version_facts(text, package=False):
+    if type(text) is not str or len(text)>256:return {}
+    if package:
+        m=re.fullmatch(r'([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})-([0-9]{1,3})ubuntu([0-9]{1,3})(?:\.([0-9]{1,3}))?',text)
+        return {'packageVersion':[int(x) for x in m.groups() if x is not None]} if m else {}
+    m=re.fullmatch(r'tc utility, iproute2-([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3})(?:, libbpf ([0-9]{1,3}\.[0-9]{1,3}(?:\.[0-9]{1,3})?))?',text)
+    if not m:return {}
+    result={'tcVersion':[int(x) for x in m[1].split('.')]}
+    if m[2]:result['libbpfVersion']=[int(x) for x in m[2].split('.')]
+    return result
+
+def shutdown_failure(error):
+    diagnostic(error)
+    try:write(BASE/'stage','failed')
+    except Exception:pass
+    try:run(['systemctl','start','rolling-budget.service'],timeout=10)
+    except Exception:
+        try:run(['/usr/sbin/poweroff'],timeout=10)
+        except Exception:pass
+    raise SystemExit(1) from None
 
 def run(args, timeout=120, capture=False, cwd=None):
     result = subprocess.run(args, check=True, timeout=timeout, cwd=cwd, stdin=subprocess.DEVNULL,
@@ -88,29 +158,32 @@ def immutable_deadline(config):
         raise ValueError('Budget expired')
 
 def install_controls(config):
-    immutable_deadline(config)
+    mark('deadline');immutable_deadline(config)
+    mark('timer-files')
     for name, stop in [('budget',config['budgetStop']),('commissioning',config['commissioningStop'])]:
         write('/etc/systemd/system/rolling-'+name+'.service', '[Unit]\nDescription=Rolling bounded shutdown\n[Service]\nType=oneshot\nExecStart=/usr/sbin/poweroff\n', 0o644)
         write('/etc/systemd/system/rolling-'+name+'.timer', '[Unit]\nDescription=Rolling absolute shutdown\n[Timer]\nOnCalendar='+stop.replace('T',' ').replace('Z',' UTC')+'\nPersistent=true\nAccuracySec=1s\nRandomizedDelaySec=0\n[Install]\nWantedBy=timers.target\n', 0o644)
-    run(['systemctl','daemon-reload'])
+    mark('timer-reload');run(['systemctl','daemon-reload'])
     for name in ('budget','commissioning'):
-        run(['systemctl','enable','--now','rolling-'+name+'.timer'])
+        mark(name+'-timer');run(['systemctl','enable','--now','rolling-'+name+'.timer'])
         run(['systemctl','is-active','--quiet','rolling-'+name+'.timer'])
     # No proof server can start accidentally during bootstrap or a reboot.
-    run(['systemctl','mask','board-prover.service','board-prover-proxy.service'])
+    mark('mask-prover');run(['systemctl','mask','board-prover.service','board-prover-proxy.service'])
     for service in ('board-prover.service','board-prover-proxy.service'):
+        mark('inspect-prover')
         try: run(['systemctl','is-active','--quiet',service])
         except subprocess.CalledProcessError as error:
             if error.returncode not in (3,4): raise
-        else: run(['systemctl','stop',service])
+        else: mark('stop-prover');run(['systemctl','stop',service])
     # One physical interface: forwarded Docker traffic also traverses this root qdisc.
+    mark('route-read')
     routes = json.loads(run(['ip','-j','route','show','default'], capture=True))
     devices = {r['dev'] for r in routes if 'dev' in r}
     if len(devices) != 1: raise ValueError('Expected single egress interface')
     dev = devices.pop()
     if not dev or not all(c.isalnum() or c in '_-.' for c in dev): raise ValueError('Invalid interface')
     # Root ceiling is mandatory even if class classification changes. All IP families covered.
-    write(BASE/'interface', dev)
+    mark('shaper-files');write(BASE/'interface', dev)
     shaper = '#!/bin/sh\nset -eu\nDEV='+dev+'\n'
     shaper += 'tc qdisc replace dev "$DEV" root handle 1: htb default 10\n'
     shaper += 'tc class replace dev "$DEV" parent 1: classid 1:1 htb rate 50mbit ceil 50mbit burst 1mb cburst 1mb\n'
@@ -120,7 +193,7 @@ def install_controls(config):
     shaper += 'tc filter replace dev "$DEV" parent 1: protocol all prio 1 handle 20 fw classid 1:20\n'
     write('/usr/local/sbin/rolling-egress', shaper, 0o700)
     write('/etc/systemd/system/rolling-egress.service', '[Unit]\nDescription=Whole host egress ceiling\nAfter=network-online.target\nWants=network-online.target\nBefore=docker.service rolling-node.service\n[Service]\nType=oneshot\nExecStart=/usr/local/sbin/rolling-egress\nRemainAfterExit=yes\n[Install]\nWantedBy=multi-user.target\n', 0o644)
-    run(['systemctl','daemon-reload']);run(['systemctl','enable','--now','rolling-egress.service'])
+    mark('shaper-start');run(['systemctl','daemon-reload']);run(['systemctl','enable','--now','rolling-egress.service'])
     verify_controls()
 
 def class_bytes(text):
@@ -148,17 +221,24 @@ def class_bytes(text):
     return records['1:1']
 
 def verify_controls():
-    run(['systemctl','is-active','--quiet','rolling-budget.timer'])
+    mark('verify-budget');run(['systemctl','is-active','--quiet','rolling-budget.timer'])
     config = json.loads((BASE/'deadline.json').read_text())
     if dt.datetime.now(dt.timezone.utc) >= dt.datetime.fromisoformat(config['budgetStop'].replace('Z','+00:00')): raise ValueError('Expired')
     dev = (BASE/'interface').read_text()
-    if not re.fullmatch(r'tc utility, iproute2-6\.1\.0(?:, libbpf [0-9]+\.[0-9]+\.[0-9]+)?', run(['tc','-V'], capture=True)):
-        raise ValueError('Unreviewed tc version')
-    # Pin the reviewed Ubuntu patch families too: neither backports class JSON.
-    if run(['dpkg-query','-W','-f=${Version}','iproute2'], capture=True) not in ('6.1.0-1ubuntu6','6.1.0-1ubuntu6.4'):
-        raise ValueError('Unreviewed iproute2 package')
-    byte_count = class_bytes(run(['tc','-s','class','show','dev',dev], capture=True))
-    qdisc = json.loads(run(['tc','-j','qdisc','show','dev',dev],capture=True))
+    mark('tc-version');tc=run(['tc','-V'],capture=True)
+    accepted=bool(re.fullmatch(r'tc utility, iproute2-6\.1\.0(?:, libbpf [0-9]+\.[0-9]+\.[0-9]+)?',tc))
+    if DIAGNOSTICS_ACTIVE or not accepted:diagnostic(status='observed',facts={**version_facts(tc),'tcAccepted':accepted})
+    if not accepted:raise ValueError('Unreviewed tc version')
+    mark('tc-package');package=run(['dpkg-query','-W','-f=${Version}','iproute2'],capture=True)
+    accepted=package in ('6.1.0-1ubuntu6','6.1.0-1ubuntu6.4')
+    if DIAGNOSTICS_ACTIVE or not accepted:diagnostic(status='observed',facts={**version_facts(package,True),'packageAccepted':accepted})
+    if not accepted:raise ValueError('Unreviewed iproute2 package')
+    mark('tc-classes');classes=run(['tc','-s','class','show','dev',dev],capture=True)
+    mark('tc-class-parse')
+    if DIAGNOSTICS_ACTIVE:diagnostic(status='observed',facts={'classFormat':'class-text' if classes.startswith('class ') else 'json' if classes.startswith('[') else 'empty' if not classes else 'other'})
+    byte_count=class_bytes(classes)
+    mark('tc-qdisc');qdisc_raw=run(['tc','-j','qdisc','show','dev',dev],capture=True)
+    mark('tc-qdisc-parse');qdisc=json.loads(qdisc_raw)
     roots = [q for q in qdisc if q.get('root') is True]
     if len(roots)!=1 or roots[0].get('kind')!='htb' or roots[0].get('handle')!='1:' or roots[0].get('options',{}).get('default')!='0x10':
         raise ValueError('Wrong root qdisc')
@@ -433,47 +513,51 @@ def install_attestation(source):
     run(['systemctl','daemon-reload']);run(['systemctl','enable','--now','rolling-attest.timer'])
 
 def execute(config, attestation_source):
+    global DIAGNOSTICS_ACTIVE
+    DIAGNOSTICS_ACTIVE=True;mark('entry')
+    try:_execute(config,attestation_source)
+    except Exception as error:shutdown_failure(error)
+    finally:DIAGNOSTICS_ACTIVE=False
+
+def _execute(config, attestation_source):
     global STAGE
+    mark('host-preflight')
     if platform.system()!='Linux' or platform.machine()!='x86_64' or os.geteuid()!=0: raise ValueError('Linux x64 root required')
-    BASE.mkdir(parents=True,exist_ok=True,mode=0o700)
+    mark('state-directory');BASE.mkdir(parents=True,exist_ok=True,mode=0o700)
+    mark('writer-lock')
     with open(BASE/'lock','a') as lock:
         fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
         try:
             STAGE='controls';install_controls(config);write(BASE/'stage',STAGE)
             egress_before=verify_controls()
-            install_attestation(attestation_source)
+            mark('monitor-install');install_attestation(attestation_source)
             if not RELEASE.exists():
                 STAGE='package';write(BASE/'stage',STAGE)
                 archive=BASE/'runtime.tar.gz'
+                mark('runtime-download')
                 if not archive.exists(): fetch_package(config['runtimeUrl'],archive)
-                extract_verified(archive,RELEASE,config['runtimeArchiveSha256'])
-            else: verify_release(RELEASE)
-            node=str(RELEASE/'node/bin/node');bb=str(RELEASE/'node_modules/@aztec-foundation/bb.js/build/amd64-linux/bb')
+                mark('runtime-verify');extract_verified(archive,RELEASE,config['runtimeArchiveSha256'])
+            else: mark('runtime-verify');verify_release(RELEASE)
+            mark('native-checks');node=str(RELEASE/'node/bin/node');bb=str(RELEASE/'node_modules/@aztec-foundation/bb.js/build/amd64-linux/bb')
             if run([node,'--version'],capture=True)!='v24.21.0': raise ValueError('Wrong Node')
             if '6.0.0-rc.1' not in run([bb,'--version'],capture=True): raise ValueError('Wrong BB')
             run([node,'--input-type=module','--eval',"import {loadRollingArtifacts} from '"+(RELEASE/'prover/rolling-artifacts.mjs').as_uri()+"';loadRollingArtifacts();"],timeout=120)
-            STAGE='node';write(BASE/'stage',STAGE);install_node();verify_controls()
-            egress_after=verify_controls()
+            STAGE='node';write(BASE/'stage',STAGE);mark('node-install');install_node();verify_controls()
+            egress_after=verify_controls();mark('egress-exercise')
             if type(egress_before) is not int or type(egress_after) is not int or egress_after<=egress_before: raise ValueError('Egress counter exercise failed')
             write(BASE/'egress-exercise.json',json.dumps({'beforeBytes':egress_before,'afterBytes':egress_after,'deltaBytes':egress_after-egress_before,'exercise':'installation-egress-not-throughput'}))
             STAGE='installed';write(BASE/'stage',STAGE)
             # Only commissioning protection is retired; fixed budget control remains enabled.
-            run(['systemctl','disable','--now','rolling-commissioning.timer']);install_qualification();attest()
-        except Exception:
-            write(BASE/'stage','failed')
-            try: attest()
-            except Exception: pass
-            try: run(['systemctl','start','rolling-budget.service'])
-            except Exception: run(['/usr/sbin/poweroff'])
-            raise SystemExit(1) from None
+            mark('qualification-install');run(['systemctl','disable','--now','rolling-commissioning.timer']);install_qualification();attest();mark('complete');diagnostic(status='passed')
+        except Exception as error:shutdown_failure(error)
 '''
 
 
 def generate(config, now=None):
     config = validate(config, now)
-    pins = {'image':IMAGE, 'manifest':config['manifestSha256'], 'node':NODE_SHA, 'bb':BB_SHA, 'catalog':CATALOG_SHA}
+    pins = {'image':IMAGE, 'manifest':config['manifestSha256'], 'node':NODE_SHA, 'bb':BB_SHA, 'catalog':CATALOG_SHA, 'bootstrap':hashlib.sha256(HOST.encode()).hexdigest()}
     prefix = 'PINS = '+repr(pins)+'\nNETWORK = '+repr(NETWORK)+'\nQUALIFICATION = '+repr(QUALIFICATION)+'\n'
-    dispatch = "\ntry:\n    if '--qualify' in sys.argv: qualify()\n    elif '--qualification-stop' in sys.argv:\n        qualify(aborted=True);run(['systemctl','start','rolling-attest.service'])\n        result=json.loads((BASE/'qualification/result.json').read_text())\n        if result.get('passed') is not True: run(['systemctl','start','--no-block','rolling-budget.service'])\n    else: attest('--check' in sys.argv)\nexcept Exception:\n    run(['/usr/sbin/poweroff']); raise SystemExit(1) from None\n"
+    dispatch = "\ntry:\n    if '--qualify' in sys.argv: qualify()\n    elif '--qualification-stop' in sys.argv:\n        qualify(aborted=True);run(['systemctl','start','rolling-attest.service'])\n        result=json.loads((BASE/'qualification/result.json').read_text())\n        if result.get('passed') is not True: run(['systemctl','start','--no-block','rolling-budget.service'])\n    else: attest('--check' in sys.argv)\nexcept Exception as error:\n    shutdown_failure(error)\n"
     program = 'SOURCE = '+repr(prefix+HOST)+'\nCONFIG = '+repr(config)+'\nATTESTATION = SOURCE + '+repr(dispatch)+'\nexec(SOURCE)\nexecute(CONFIG, ATTESTATION)\n'
     encoded = base64.b64encode(gzip.compress(program.encode(),mtime=0)).decode()
     return "#!/bin/sh\nset -eu\numask 077\nexec /usr/bin/python3 - <<'ROLLING_BOOTSTRAP_PY'\nimport base64,gzip\nexec(compile(gzip.decompress(base64.b64decode('"+encoded+"')), '<private-bootstrap>', 'exec'))\nROLLING_BOOTSTRAP_PY\n"

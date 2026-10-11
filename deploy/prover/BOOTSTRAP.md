@@ -243,3 +243,41 @@ allowed, and IP access remains loopback-only. The regression models these exact
 source-backed socket dependencies while executing the real control verifier;
 it is not evidence of Linux seccomp/netlink operation. Actual Linux commissioning
 must confirm that read-only traffic-control inspection succeeds under this unit.
+
+### Early failure diagnostics
+
+The first remote commissioning attempt terminated with the EC2 reason
+`Client.InstanceInitiatedShutdown`, before any readable bootstrap record. Both
+latest and cached console output were empty. Its exact failing step remains
+unknown; these diagnostics do not assert a root cause or authorize a repeat launch.
+
+Before checking the platform, creating state, acquiring the writer lock or
+installing controls, the host emits `ROLLING_BOOTSTRAP_DIAGNOSTIC`. Subsequent
+fixed step names identify deadline/timer creation, timer activation, masking,
+route inspection, shaper activation, tc version/package checks, class parsing,
+qdisc parsing, download/verification and qualification installation. Failure
+records contain only a fixed category and, for an actual subprocess exit, an
+integer return code in −255..255. Numeric tc/libbpf/Ubuntu package version
+components are parsed from whole matching strings; unrecognized text is omitted.
+The class output is labelled only class-text/json/empty/other. No raw output,
+commands, arguments, exception messages, URLs, configuration or user-data content
+is emitted. Bootstrap HOST source SHA256, manifest and native/catalog hashes
+bind the bounded evidence to reviewed code and artifacts.
+
+The sink attempts `/dev/ttyS0` and `/dev/console` as existing character devices
+using nonblocking, no-follow opens, one bounded write and no retry/fsync. It does
+not create devices, change a getty, modify GRUB, enable interactive serial access
+or alter account permissions. AWS documents ttyS0 as the Linux EC2 serial port:
+[EC2 serial console ports](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/connect-to-serial-console.html)
+and [EC2 console output retrieval](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-console.html).
+The target remains the inspected Canonical Ubuntu Noble x64 AMI; delivery on that
+host still requires live evidence. Unsupported/missing/full sinks are tolerated,
+and sink errors never replace the original failure or prevent shutdown attempts.
+
+Failures before the deadline/interface files exist now reach the same safe
+shutdown path. A missing/unavailable budget service causes direct poweroff to be
+attempted; both subprocess attempts have ten-second limits. The independent
+cloud expiry remains unchanged. Tests inject timer, mask, shaper, version/parser,
+early filesystem and diagnostic-device failures without running Linux services.
+They demonstrate projection and control flow, not successful remote commissioning.
+A subsequent launch requires independent source review and a reconciled forecast.

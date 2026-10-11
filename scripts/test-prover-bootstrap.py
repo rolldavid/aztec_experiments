@@ -10,9 +10,10 @@ def config():
     return dict(createdAt='2026-10-11T18:00:00Z',budgetStop='2026-10-12T02:00:00Z',commissioningStop='2026-10-11T18:30:00Z',
                 runtimeUrl='https://anonymous-message-board-testnet-backups-nvdhcyurtoga.s3.us-east-1.amazonaws.com/releases/test/runtime.tar.gz?X-Amz-Signature=PRIVATE_SENTINEL',
                 runtimeArchiveSha256='a'*64,manifestSha256='b'*64)
-def host():
+def host(diagnostic_devices=False):
     ns={'PINS':{'manifest':'b'*64,'node':b.NODE_SHA,'bb':b.BB_SHA,'catalog':b.CATALOG_SHA,'image':b.IMAGE},'NETWORK':b.NETWORK,'QUALIFICATION':b.QUALIFICATION}
     exec(b.HOST,ns)
+    if not diagnostic_devices:ns['emit_diagnostic']=lambda data:None # never write Mac device output
     return ns
 
 def ready_fixture():
@@ -168,6 +169,7 @@ class htb 1:20 parent 1:1 prio 0 rate 25Mbit ceil 50Mbit burst 4725b cburst 7850
                             ('qdisc',original['qdisc']*2),('qdisc',[dict(original['qdisc'][0],options={'default':'0x20'})])]:
                 values.update(original);values[key]=bad
                 with self.subTest(key=key),self.assertRaises(ValueError):ns['verify_controls']()
+                self.assertEqual(ns['STEP'],{'version':'tc-version','package':'tc-package','class':'tc-class-parse','qdisc':'tc-qdisc-parse'}[key])
 
     def test_fail_closed_pipeline_controls_before_download_no_retry(self):
         ns=host();events=[]
@@ -401,6 +403,83 @@ await probe(false);await probe(true);
             families.remove('AF_NETLINK')
             with self.assertRaises(PermissionError):ns['verify_controls']()
             self.assertEqual(reads,['class','qdisc']) # rejection cannot become success or bypass tc
+
+    def test_early_diagnostics_classify_failures_without_raw_data(self):
+        ns=host();records=[];ns['emit_diagnostic']=lambda data:records.append(json.loads(data.decode().removeprefix('ROLLING_BOOTSTRAP_DIAGNOSTIC ')))
+        ns['DIAGNOSTICS_ACTIVE']=True
+        for step,error,category,code in [('budget-timer',subprocess.CalledProcessError(1,['PRIVATE_SENTINEL'],output='PRIVATE_SENTINEL'),'command-exit',1),
+                                         ('mask-prover',subprocess.CalledProcessError(5,['PRIVATE_SENTINEL']),'command-exit',5),
+                                         ('shaper-start',subprocess.TimeoutExpired('PRIVATE_SENTINEL',10),'command-timeout',None),
+                                         ('tc-version',ValueError('PRIVATE_SENTINEL'),'validation',None),
+                                         ('tc-class-parse',ValueError('PRIVATE_SENTINEL'),'validation',None),
+                                         ('state-directory',PermissionError('PRIVATE_SENTINEL'),'permission',None)]:
+            ns['mark'](step);ns['diagnostic'](error)
+            self.assertEqual(records[-1]['step'],step);self.assertEqual(records[-1]['category'],category)
+            self.assertEqual(records[-1].get('returnCode'),code)
+        class HostileError(Exception):
+            @property
+            def returncode(self):raise AssertionError('must not read arbitrary getter')
+            def __str__(self):raise AssertionError('must not format raw error')
+        ns['diagnostic'](HostileError());self.assertEqual(records[-1]['category'],'internal')
+        ns['diagnostic'](subprocess.CalledProcessError(99999,'PRIVATE_SENTINEL'))
+        self.assertNotIn('returnCode',records[-1]);self.assertNotIn('PRIVATE_SENTINEL',json.dumps(records))
+        facts=ns['version_facts']('tc utility, iproute2-6.1.0, libbpf 1.3')
+        self.assertEqual(facts,{'tcVersion':[6,1,0],'libbpfVersion':[1,3]})
+        self.assertEqual(ns['version_facts']('6.1.0-1ubuntu6.4',True),{'packageVersion':[6,1,0,1,6,4]})
+        self.assertEqual(ns['version_facts']('tc utility, iproute2-6.1.0, PRIVATE_SENTINEL'),{})
+        ns['diagnostic'](status='observed',facts={**facts,'classFormat':'PRIVATE_SENTINEL','secret':'PRIVATE_SENTINEL','packageVersion':[True,1]})
+        self.assertEqual(records[-1]['tcVersion'],[6,1,0]);self.assertNotIn('packageVersion',records[-1]);self.assertNotIn('PRIVATE_SENTINEL',json.dumps(records))
+
+    def test_first_timer_mask_shaper_faults_record_real_control_step(self):
+        for boundary,expected in [('budget','budget-timer'),('mask','mask-prover'),('shaper','shaper-start')]:
+            with self.subTest(boundary=boundary):
+                ns=host();records=[]
+                ns['immutable_deadline']=lambda _:None;ns['write']=lambda *a:None;ns['verify_controls']=lambda:0
+                ns['emit_diagnostic']=lambda data:records.append(json.loads(data.decode().removeprefix('ROLLING_BOOTSTRAP_DIAGNOSTIC ')))
+                calls=[]
+                def command(args,**kwargs):
+                    calls.append(args)
+                    matches=(boundary=='budget' and args==['systemctl','enable','--now','rolling-budget.timer']) or (boundary=='mask' and args[1]=='mask') or (boundary=='shaper' and 'rolling-egress.service' in args)
+                    if matches:raise subprocess.CalledProcessError(7,args,output='PRIVATE_SENTINEL')
+                    if args[0]=='ip':return '[{"dev":"ens5"}]'
+                    if args[:3]==['systemctl','is-active','--quiet'] and args[-1].endswith('.service'):raise subprocess.CalledProcessError(3,args)
+                ns['run']=command
+                with self.assertRaises(subprocess.CalledProcessError) as failure:ns['install_controls'](config())
+                ns['diagnostic'](failure.exception)
+                self.assertEqual(records[-1]['step'],expected);self.assertEqual(records[-1]['returnCode'],7)
+                self.assertNotIn('PRIVATE_SENTINEL',json.dumps(records))
+
+    def test_early_failure_and_failed_diagnostics_still_request_shutdown(self):
+        for stage in ('preflight','directory','lock'):
+            with self.subTest(stage=stage),tempfile.TemporaryDirectory() as t:
+                ns=host();ns['BASE']=pathlib.Path(t)/'state';calls=[]
+                ns['emit_diagnostic']=lambda _:(_ for _ in ()).throw(OSError('PRIVATE_SENTINEL'))
+                ns['write']=lambda *a:(_ for _ in ()).throw(OSError('PRIVATE_SENTINEL'))
+                def command(args,**kw):
+                    calls.append(args)
+                    if args[0]=='systemctl':raise subprocess.TimeoutExpired('PRIVATE_SENTINEL',10)
+                ns['run']=command
+                with patch.object(ns['platform'],'system',return_value='Darwin' if stage=='preflight' else 'Linux'),patch.object(ns['platform'],'machine',return_value='x86_64'),patch.object(ns['os'],'geteuid',return_value=0):
+                    if stage=='directory':ns['BASE'].write_text('not directory')
+                    if stage=='lock':ns['BASE'].mkdir();(ns['BASE']/'lock').mkdir()
+                    with self.assertRaises(SystemExit):ns['execute'](config(),'unused')
+                self.assertIn(['systemctl','start','rolling-budget.service'],calls)
+                self.assertIn(['/usr/sbin/poweroff'],calls)
+                self.assertFalse((ns['BASE']/'deadline.json').exists())
+
+    def test_diagnostic_sinks_nonblocking_character_devices_no_create_or_follow(self):
+        ns=host(diagnostic_devices=True);opened=[];writes=[];closed=[]
+        def opening(device,flags):opened.append((device,flags));return len(opened)
+        class Device:st_mode=0o020600
+        with patch.object(ns['os'],'open',side_effect=opening),patch.object(ns['os'],'fstat',return_value=Device()),patch.object(ns['os'],'write',side_effect=lambda fd,data:writes.append(fd)),patch.object(ns['os'],'close',side_effect=lambda fd:closed.append(fd)):
+            ns['diagnostic'](ValueError('PRIVATE_SENTINEL'))
+        self.assertEqual([x[0] for x in opened],['/dev/ttyS0','/dev/console']);self.assertEqual(writes,[1,2]);self.assertEqual(closed,[1,2])
+        for _,flags in opened:
+            self.assertTrue(flags&ns['os'].O_NONBLOCK);self.assertTrue(flags&ns['os'].O_NOFOLLOW);self.assertFalse(flags&ns['os'].O_CREAT)
+        with patch.object(ns['os'],'open',side_effect=OSError('PRIVATE_SENTINEL')):ns['diagnostic'](ValueError('PRIVATE_SENTINEL'))
+        class RegularFile:st_mode=0o100600
+        with patch.object(ns['os'],'open',return_value=1),patch.object(ns['os'],'fstat',return_value=RegularFile()),patch.object(ns['os'],'write') as write,patch.object(ns['os'],'close'):
+            ns['diagnostic'](ValueError('PRIVATE_SENTINEL'));write.assert_not_called()
 
     def test_cli_private_compressed_output_and_no_overwrite(self):
         with tempfile.TemporaryDirectory() as t:
