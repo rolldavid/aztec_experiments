@@ -328,3 +328,8 @@ export async function rollingBokPost(ctx) {
 export async function privateBokProvider(ctx) {
   return (await import('./private-bok-fixture.mjs')).runPrivateBokFixture(ctx, 'provider', 'private');
 }
+
+export async function trustedQueryPolicy(ctx) {
+  const {runTrustedQueryFixture}=await import('./trusted-query-fixture.mjs');
+  return runTrustedQueryFixture(ctx);
+}
