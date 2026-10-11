@@ -7,8 +7,10 @@ import http from 'node:http';
 import fs from 'node:fs/promises';
 import {chromium} from 'playwright';
 const fixture=`import {mountRollingWalletPanel} from '/wallet-panel.mjs';
-const state={loads:0,sessions:0,prepares:0,sends:0,reconciles:0,cancels:0,closes:0,creates:0,imports:0,exports:0,effects:0,ended:0,owned:0,unlocked:true,options:null,failure:null,hold:null,release:null,fee:'fee-ready'};
+const state={loads:0,sessions:0,prepares:0,sends:0,reconciles:0,cancels:0,closes:0,creates:0,imports:0,exports:0,effects:0,ended:0,owned:0,unlocked:true,options:null,failure:null,hold:null,release:null,fee:'fee-ready',profileCalls:0,bioVersion:'3',avatarVersion:'4'};
 window.test=state;
+state.previewBlobs=new Map();state.revoked=[];const createURL=URL.createObjectURL.bind(URL),revokeURL=URL.revokeObjectURL.bind(URL);
+URL.createObjectURL=blob=>{const url=createURL(blob);state.previewBlobs.set(url,blob);return url;};URL.revokeObjectURL=url=>{state.revoked.push(url);state.previewBlobs.delete(url);revokeURL(url);};
 const envelope={schemaVersion:1,kind:'aztec-billboard-encrypted-wallet',kdf:'PBKDF2-SHA256',iterations:600000,salt:'aa'.repeat(16),iv:'bb'.repeat(12),ciphertext:'cc'.repeat(16)};
 const read=()=>JSON.parse(sessionStorage.getItem('labelled-ui-intent')||'null');
 const write=value=>sessionStorage.setItem('labelled-ui-intent',JSON.stringify(value));
@@ -16,8 +18,9 @@ const error=()=>{throw Object.defineProperty(Error('PRIVATE_SENTINEL'), 'code',{
 async function boundary(name){if(state.hold===name)await new Promise(resolve=>state.release=resolve);if(state.failure===name)error();}
 const application={
  async readAccountStatus(){await boundary('status');const intent=read();return intent&&!['confirmed','reverted','cancelled'].includes(intent.status)?{status:'recovering',intent}:{status:state.fee,privateFeeCredit:'1000',depositIds:state.fee==='fee-ready'?['9']:[]};},
- async ownedIdentities({cursor}){state.owned++;return cursor===0?{identities:['7'],nextCursor:8}:{identities:['8'],nextCursor:null};},
- async prepare(action){state.prepares++;write({intentId:'42',action,maximumFee:'123',status:'prepared'});await boundary('prepare');return read();},
+ async ownedIdentities({cursor}){state.owned++;return cursor===0?{identities:['7'],records:[{id:'7',first:'River',last:'Lane'}],nextCursor:8}:{identities:['8'],records:[{id:'8',first:'Ellis',last:'Moss'}],nextCursor:null};},
+ async readProfile({name}){state.profileCalls++;await boundary('profile');return {name:'0x'+BigInt(name).toString(16).padStart(64,'0'),bioVersion:state.bioVersion,avatarVersion:state.avatarVersion};},
+ async prepare(action){state.prepares++;if(['bio','avatar'].includes(action.type)&&action.expectedVersion!==state[action.type+'Version'])error();write({intentId:'42',action,maximumFee:'123',status:'prepared'});await boundary('prepare');return read();},
  async submitPrepared(id){state.sends++;write({...read(),status:'submitting'});await boundary('submit');const intent={...read(),status:'confirmed'};write(intent);return intent;},
  async cancelPrepared(){state.cancels++;write({...read(),status:'cancelled'});return read();},
  async reconcile(){state.reconciles++;await boundary('reconcile');const intent=read();if(state.resolveOutcome){intent.status=state.resolveOutcome;write(intent);}return intent;}
@@ -31,9 +34,9 @@ document.getElementById('open').onclick=()=>window.panel.open(window.defaults);
 window.ready=true;`;
 async function browserFixture(t){
  const server=http.createServer(async(req,res)=>{
-  if(req.url==='/'){res.writeHead(200,{'content-type':'text/html','Content-Security-Policy':"default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'none'; base-uri 'none'; form-action 'none'"});res.end('<!doctype html><meta name="viewport" content="width=device-width"><link rel="stylesheet" href="/style.css"><button id="open">Open account</button><div id="reader">Public reader</div><script type="module" src="/fixture.mjs"></script>');return;}
+  if(req.url==='/'){res.writeHead(200,{'content-type':'text/html','Content-Security-Policy':"default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'none'; img-src blob:; base-uri 'none'; form-action 'none'"});res.end('<!doctype html><meta name="viewport" content="width=device-width"><link rel="stylesheet" href="/style.css"><button id="open">Open account</button><div id="reader">Public reader</div><script type="module" src="/fixture.mjs"></script>');return;}
   if(req.url==='/fixture.mjs'){res.writeHead(200,{'content-type':'text/javascript'});res.end(fixture);return;}
-  if(!['/wallet-panel.mjs','/model.mjs','/style.css'].includes(req.url)){res.writeHead(404);res.end();return;}
+  if(!['/wallet-panel.mjs','/avatar-upload.mjs','/model.mjs','/style.css'].includes(req.url)){res.writeHead(404);res.end();return;}
   res.writeHead(200,{'content-type':req.url.endsWith('.css')?'text/css':'text/javascript'});res.end(await fs.readFile(new URL('.'+req.url,import.meta.url)));
  });await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));t.after(()=>new Promise(resolve=>server.close(resolve)));
  const browser=await chromium.launch({headless:true});t.after(()=>browser.close());const page=await browser.newPage({viewport:{width:390,height:844},acceptDownloads:true});
@@ -136,4 +139,54 @@ test('failed export without a private connection is not misreported as a connect
  assert.match(await page.getByRole('alert').innerText(),/This operation could not be completed/);
  assert.doesNotMatch(await page.getByRole('alert').innerText(),/private connection|PRIVATE_SENTINEL|GETTER_SENTINEL/);
  assert.equal((await counts(page)).sessions,1);assert.equal((await counts(page)).sends,0);
+});
+
+async function selectProfile(page,type){await page.getByLabel('Action',{exact:true}).selectOption(type);await page.getByLabel('Profile name',{exact:true}).selectOption('7');await page.waitForFunction(()=>!document.querySelector('dialog').matches('[aria-busy="true"]'));}
+async function imageFile(page){const bytes=await page.evaluate(async()=>{const c=document.createElement('canvas');c.width=180;c.height=120;const ctx=c.getContext('2d');ctx.fillStyle='#43775c';ctx.fillRect(0,0,180,120);const blob=await new Promise(r=>c.toBlob(r,'image/png'));c.width=c.height=0;return [...new Uint8Array(await blob.arrayBuffer())];});return {name:'generated-pattern.png',mimeType:'image/png',buffer:Buffer.from(bytes)};}
+async function previewData(page){return page.locator('img[alt="Exact avatar bytes to publish"]').evaluate(async img=>{const blob=test.previewBlobs.get(img.src);return {data:btoa(String.fromCharCode(...new Uint8Array(await blob.arrayBuffer()))),size:blob.size,width:img.naturalWidth,height:img.naturalHeight};});}
+
+test('owned names are readable and profile version is fetched only by explicit selection/check',async t=>{
+ const {page,requests}=await browserFixture(t);await open(page);await unlock(page);assert.equal(await page.getByLabel('Posting identity').locator('option').allTextContents().then(x=>x.join('|')),'Anonymous|River Lane');
+ assert.equal(await page.evaluate(()=>test.profileCalls),0);await page.getByLabel('Action').selectOption('bio');assert.equal(await page.evaluate(()=>test.profileCalls),0);assert(await page.getByRole('button',{name:'Check action and review fee'}).isDisabled());
+ await page.getByLabel('Profile name').selectOption('7');await page.waitForFunction(()=>test.profileCalls===1&&!document.querySelector('dialog').matches('[aria-busy="true"]'));
+ await page.getByLabel('Bio (empty to clear)',{exact:true}).fill('😀'.repeat(249));assert(await page.getByRole('button',{name:'Check action and review fee'}).isDisabled());assert.equal(await page.getByLabel('Bio (empty to clear)').inputValue(),'😀'.repeat(249));
+ await page.getByLabel('Bio (empty to clear)').fill('<script>literal()</script>');await page.getByRole('button',{name:'Check action and review fee'}).click();await page.getByRole('button',{name:'Confirm and send'}).waitFor();
+ assert.deepEqual(await page.evaluate(()=>JSON.parse(sessionStorage.getItem('labelled-ui-intent')).action),{type:'bio',content:'<script>literal()</script>',name:'7',expectedVersion:'3'});assert.equal(await page.locator('dialog script').count(),0);assert.equal(await page.evaluate(()=>test.profileCalls),1);assert.equal((await counts(page)).sends,0);
+ assert(requests.every(url=>!url.includes('/api/')&&!url.includes('owned_')));
+});
+test('stale bio version fails without rereading or overwriting; empty bio clear requires explicit review',async t=>{
+ const {page}=await browserFixture(t);await open(page);await unlock(page);await selectProfile(page,'bio');await page.evaluate(()=>test.bioVersion='5');
+ await page.getByRole('button',{name:'Check action and review fee'}).click();await page.getByRole('button',{name:'Check account recovery'}).waitFor();assert.equal(await page.evaluate(()=>test.profileCalls),1);assert.equal((await counts(page)).sends,0);assert.equal(await page.evaluate(()=>sessionStorage.getItem('labelled-ui-intent')),null);
+ await page.getByRole('button',{name:'Check account recovery'}).click();await page.getByRole('button',{name:'Check current profile version'}).click();await page.waitForFunction(()=>test.profileCalls===2&&!document.querySelector('dialog').matches('[aria-busy="true"]'));
+ await page.getByRole('button',{name:'Check action and review fee'}).click();await page.getByRole('button',{name:'Confirm and send'}).waitFor();assert.deepEqual(await page.evaluate(()=>JSON.parse(sessionStorage.getItem('labelled-ui-intent')).action),{type:'bio',name:'7',expectedVersion:'5',content:''});assert.equal((await counts(page)).sends,0);
+});
+test('avatar exact immutable preview bytes survive confirmation and recovered prepared intent',async t=>{
+ const {page}=await browserFixture(t);await open(page);await unlock(page);await selectProfile(page,'avatar');await page.getByLabel('Avatar image',{exact:true}).setInputFiles(await imageFile(page));
+ await page.waitForFunction(()=>document.querySelector('dialog img')?.naturalWidth===100&&!document.querySelector('dialog').matches('[aria-busy="true"]'));const first=await previewData(page);assert.equal(first.width,100);assert.equal(first.height,100);assert(first.size<=8192);
+ assert(await page.getByText(/Centre-square crop, resized to 100/).isVisible());await page.getByRole('button',{name:'Check action and review fee'}).click();await page.waitForFunction(()=>{const b=[...document.querySelectorAll('button')].find(b=>b.textContent==='Confirm and send');return b&&!b.disabled;});
+ const saved=await page.evaluate(()=>JSON.parse(sessionStorage.getItem('labelled-ui-intent')).action);assert.deepEqual(saved,{type:'avatar',name:'7',expectedVersion:'4',width:100,height:100,data:first.data});assert.equal((await previewData(page)).data,first.data);assert.equal((await counts(page)).sends,0);
+ await page.getByRole('button',{name:'Close account panel'}).click();assert.equal(await page.evaluate(()=>test.previewBlobs.size),0);
+ await page.reload();await page.waitForFunction(()=>window.ready);await open(page);await page.getByRole('button',{name:'Unlock',exact:true}).click();await page.waitForFunction(()=>{const b=[...document.querySelectorAll('button')].find(b=>b.textContent==='Confirm and send');return b&&!b.disabled;});
+ assert.equal((await previewData(page)).data,first.data);assert.equal((await counts(page)).prepares,0);assert.equal((await counts(page)).sends,0);assert.equal(await page.evaluate(()=>test.profileCalls),0);
+ await page.getByRole('button',{name:'Confirm and send'}).click();await page.getByText('Transaction confirmed on the verified chain.',{exact:true}).waitFor();assert.equal((await counts(page)).sends,1);
+});
+test('avatar clear, rejected uploads and failed profile connection never auto-send',async t=>{
+ const {page}=await browserFixture(t);await open(page);await unlock(page);await page.evaluate(()=>test.failure='profile');await selectProfile(page,'avatar');await page.getByRole('alert').waitFor();assert(await page.getByRole('button',{name:'Check action and review fee'}).isDisabled());assert.equal(await page.evaluate(()=>test.profileCalls),1);
+ await page.evaluate(()=>test.failure=null);await page.getByRole('button',{name:'Check current profile version'}).click();await page.waitForFunction(()=>test.profileCalls===2&&!document.querySelector('dialog').matches('[aria-busy="true"]'));
+ for(const file of [{name:'active.svg',mimeType:'image/svg+xml',buffer:Buffer.from('<svg onload="PRIVATE_SENTINEL"/>')},{name:'large.png',mimeType:'image/png',buffer:Buffer.alloc(8*1024*1024+1)}]){
+  await page.getByLabel('Avatar image').setInputFiles(file);await page.getByRole('alert').waitFor();assert(await page.getByRole('button',{name:'Check action and review fee'}).isDisabled());assert.equal((await counts(page)).prepares,0);
+ }
+ await page.getByRole('button',{name:'Clear avatar',exact:true}).click();await page.getByRole('button',{name:'Check action and review fee'}).click();await page.getByRole('button',{name:'Confirm and send'}).waitFor();assert.deepEqual(await page.evaluate(()=>JSON.parse(sessionStorage.getItem('labelled-ui-intent')).action),{type:'avatar',name:'7',expectedVersion:'4',width:0,height:0,data:''});assert.equal((await counts(page)).sends,0);assert(!(await page.locator('body').innerText()).includes('PRIVATE_SENTINEL'));
+});
+test('invalid recovered avatar disables send and lock invalidates/revokes existing previews',async t=>{
+ const {page}=await browserFixture(t);await page.evaluate(()=>sessionStorage.setItem('labelled-ui-intent',JSON.stringify({intentId:'42',status:'prepared',maximumFee:'123',action:{type:'avatar',name:'7',expectedVersion:'4',width:100,height:100,data:btoa('<svg onload="bad()"/>')}})));
+ await open(page);await page.getByRole('button',{name:'Unlock',exact:true}).click();await page.getByText(/saved avatar cannot be previewed safely/).waitFor();assert(await page.getByRole('button',{name:'Confirm and send'}).isDisabled());assert.equal((await counts(page)).sends,0);
+ await page.getByRole('button',{name:'Cancel prepared action'}).click();await selectProfile(page,'avatar');await page.getByLabel('Avatar image').setInputFiles(await imageFile(page));await page.waitForFunction(()=>document.querySelector('dialog img')?.naturalWidth===100&&!document.querySelector('dialog').matches('[aria-busy="true"]'));
+ assert.equal(await page.evaluate(()=>test.previewBlobs.size),1);await page.evaluate(()=>test.options.onChange({invalidated:true}));assert.equal(await page.evaluate(()=>test.previewBlobs.size),0);assert.equal(await page.locator('dialog img').count(),0);assert.equal(await page.getByRole('button',{name:'Confirm and send'}).count(),0);
+});
+test('random names remain editable local proposals until an explicit action check',async t=>{
+ const {page}=await browserFixture(t);await open(page);await unlock(page);await page.getByLabel('Action').selectOption('name');const before=await counts(page),owned=await page.evaluate(()=>test.owned);
+ await page.getByRole('button',{name:'Suggest a random name'}).click();assert.match(await page.getByLabel('First name',{exact:true}).inputValue(),/^(River|Ellis|Mira|Rowan|Sage|Robin|Avery|Quinn)$/);assert.match(await page.getByLabel('Last name',{exact:true}).inputValue(),/^(Lane|Moss|Reed|Vale|Stone|Brook|Finch|Wren)$/);
+ assert.deepEqual(await counts(page),before);assert.equal(await page.evaluate(()=>test.owned),owned);assert.equal(await page.evaluate(()=>test.profileCalls),0);assert(await page.getByText(/random suggestion is not a reservation/).isVisible());
+ await page.getByLabel('First name',{exact:true}).fill('Edited');await page.getByRole('button',{name:'Check action and review fee'}).click();await page.getByRole('button',{name:'Confirm and send'}).waitFor();assert.equal(await page.evaluate(()=>JSON.parse(sessionStorage.getItem('labelled-ui-intent')).action.first),'Edited');assert.equal((await counts(page)).sends,0);
 });
