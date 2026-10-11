@@ -121,10 +121,20 @@
     return {contractAddress:address(value.contractAddress,32),gasSettings:out};
   }
   function remote(value){exact(value,['url']);const url=endpoint(value.url),u=new URL(url);check(u.protocol==='https:'||['localhost','127.0.0.1','[::1]'].includes(u.hostname),'Prover requires HTTPS');return {url};}
+  // This endpoint asserts the same disclosed prover trust boundary; chain identity
+  // checks cannot establish operator identity. It never replaces public feed RPC.
+  function trustedNode(value,network){
+    exact(value,['url'],['proofs']);const url=endpoint(value.url),u=new URL(url),proofs=value.proofs===undefined?'real':value.proofs;
+    const local=network.chainId==='31337'&&['localhost','127.0.0.1','[::1]'].includes(u.hostname);
+    check(proofs==='real'||proofs==='disabled','Invalid trusted node proof policy');
+    check(u.protocol==='https:'||local,'Trusted node requires HTTPS');
+    check(proofs!=='disabled'||local,'Disabled proofs require an explicit local development node');
+    return {url,proofs};
+  }
   function validate(value){
-    exact(value,['schemaVersion','network','board'],['privateFee','remoteProver']);check(value.schemaVersion===1,'Unsupported configuration version');
+    exact(value,['schemaVersion','network','board'],['privateFee','remoteProver','trustedProverNode']);check(value.schemaVersion===1,'Unsupported configuration version');
     const n=value.network,b=value.board;exact(n,['nodeUrl','ethRpcUrl','chainId','rollupVersion','rollupAddress']);exact(b,['portalAddress','contractAddress']);
-    return freeze({schemaVersion:1,network:{nodeUrl:endpoint(n.nodeUrl),ethRpcUrl:endpoint(n.ethRpcUrl),chainId:uint(n.chainId,64,true),rollupVersion:uint(n.rollupVersion,32,true),rollupAddress:address(n.rollupAddress,20)},board:{portalAddress:address(b.portalAddress,20),contractAddress:address(b.contractAddress,32)},privateFee:fee(value.privateFee),...(value.remoteProver===undefined?{}:{remoteProver:remote(value.remoteProver)})});
+    return freeze({schemaVersion:1,network:{nodeUrl:endpoint(n.nodeUrl),ethRpcUrl:endpoint(n.ethRpcUrl),chainId:uint(n.chainId,64,true),rollupVersion:uint(n.rollupVersion,32,true),rollupAddress:address(n.rollupAddress,20)},board:{portalAddress:address(b.portalAddress,20),contractAddress:address(b.contractAddress,32)},privateFee:fee(value.privateFee),...(value.remoteProver===undefined?{}:{remoteProver:remote(value.remoteProver)}),...(value.trustedProverNode===undefined?{}:{trustedProverNode:trustedNode(value.trustedProverNode,n)})});
   }
   function parse(text){check(typeof text==='string'&&new TextEncoder().encode(text).length<=MAX_BYTES,'Configuration exceeds size limit');let value;try{value=JSON.parse(text);}catch{throw new Error('Invalid configuration JSON');}return validate(value);}
   function maximumFee(config){const f=validate(config).privateFee;if(!f)return null;const g=f.gasSettings;return (BigInt(g.gasLimits.daGas)*BigInt(g.maxFeesPerGas.feePerDaGas)+BigInt(g.gasLimits.l2Gas)*BigInt(g.maxFeesPerGas.feePerL2Gas)).toString();}
@@ -200,7 +210,7 @@
     if(match&&match[1]!==networkId)throw Object.assign(Error('Unsupported network'),{code:'BB_BOARD_NETWORK_UNSUPPORTED'});
     const boardAddress=match?match[2]:hosted.board.contractAddress;
     const result=await root.BillboardPublic.connectPublicBoard({network:hosted.network,boardAddress,metadata:root.BillboardPublic.metadata,storage:root.BillboardPublic.browserPublicFeedStorage()});
-    return {...result,config:root.BillboardConfig.validate({...result.config,privateFee:hosted.privateFee,...(boardAddress===hosted.board.contractAddress&&hosted.remoteProver?{remoteProver:hosted.remoteProver}:{})}),fragment:'network='+networkId+'&board='+boardAddress};
+    return {...result,config:root.BillboardConfig.validate({...result.config,privateFee:hosted.privateFee,...(hosted.trustedProverNode?{trustedProverNode:hosted.trustedProverNode}:{}),...(boardAddress===hosted.board.contractAddress&&hosted.remoteProver?{remoteProver:hosted.remoteProver}:{})}),fragment:'network='+networkId+'&board='+boardAddress};
   };
   root.boardConnectionFailure=error=>({BB_BOARD_LINK_INVALID:{message:'This board link is incomplete or invalid. Choose a board from the directory.',retry:false},BB_BOARD_NETWORK_UNSUPPORTED:{message:'This site does not serve the network in that link. Open it on the board operator’s site.',retry:false},BB_BOARD_INCOMPATIBLE:{message:'This board uses a different contract version. Ask its operator for the matching app.',retry:false},BB_BOARD_NOT_FOUND:{message:'No board was found at this address. Check the link with its operator.',retry:false}}[error?.code]||{message:'The board could not be reached. Your account and messages are unchanged. Try again.',retry:true});
   if(document.body?.hasAttribute('data-public-board-reader'))return;
@@ -18962,7 +18972,7 @@ const FEE_JUICE_SIGN_MSG = 'Aztec fee-juice deposit claim secret v1\n\n' +
         claim = undefined;
         return result;
       } catch (error) {
-        if (['PRIVATE_FEE_BALANCE_INSUFFICIENT','BB_FEE_ESTIMATION_UNSTABLE','BB_GAS_LIMIT_EXCEEDED','BB_SIMULATION_FAILED','BB_SUBMISSION_UNKNOWN', 'BB_TRANSACTION_FAILED', 'BB_RECOVERY_REQUIRED', 'BB_JOURNAL_INVALID', 'BB_BROWSER_PROOF_FAILED', 'BB_REMOTE_PROVER_TIMEOUT','BB_REMOTE_PROVER_OFFLINE','BB_REMOTE_PROVER_BUSY','BB_REMOTE_PROVER_REJECTED','BB_REMOTE_PROVER_RESPONSE','BB_REMOTE_PROVER_FAILED'].includes(error?.code)) {const failure=privateFeeFailure(error.code);if(['read','catalog','decompress','board-binding','prove','native-init','native-prove','native-srs','native-constraint','native-verification','native-process','worker'].includes(error.stage))failure.stage=error.stage;throw failure;}
+        if (['PRIVATE_FEE_BALANCE_INSUFFICIENT','BB_FEE_ESTIMATION_UNSTABLE','BB_GAS_LIMIT_EXCEEDED','BB_SIMULATION_FAILED','BB_SUBMISSION_UNKNOWN', 'BB_TRANSACTION_FAILED', 'BB_TRANSACTION_FINALITY_PENDING', 'BB_RECOVERY_REQUIRED', 'BB_JOURNAL_INVALID', 'BB_BROWSER_PROOF_FAILED', 'BB_REMOTE_PROVER_TIMEOUT','BB_REMOTE_PROVER_OFFLINE','BB_REMOTE_PROVER_BUSY','BB_REMOTE_PROVER_REJECTED','BB_REMOTE_PROVER_RESPONSE','BB_REMOTE_PROVER_FAILED'].includes(error?.code)) {const failure=privateFeeFailure(error.code);if(['read','catalog','decompress','board-binding','prove','native-init','native-prove','native-srs','native-constraint','native-verification','native-process','worker'].includes(error.stage))failure.stage=error.stage;throw failure;}
         if (error?.code === 'BB_STATE_CONFLICT') {
           const allowed = ['Existing nullifier', 'Block header not found'];
           if (Array.isArray(error.stateReasons) && error.stateReasons.length > 0 && error.stateReasons.every(reason => allowed.includes(reason))) {
@@ -18976,7 +18986,25 @@ const FEE_JUICE_SIGN_MSG = 'Aztec fee-juice deposit claim secret v1\n\n' +
       }
     };
   }
-  g.BillboardPrivateFeeRouting = Object.freeze({ requirePrivateFeeConfiguration, createPrivateFeeSender, createAztecWallet });
+  // One connection for all personalized operations, independent of proof location.
+  // A cache hit is re-inspected, never silently replaced with the public feed node.
+  async function connectTrustedPrivateNode(a,config,existing) {
+    const invalid=()=>Object.assign(new Error('Trusted private node configuration is required.'),{code:'BB_TRUSTED_NODE_CONFIG'});
+    const selected=config.trustedProverNode,scope=config.expectedNetworkScope;
+    if(!selected||!scope||typeof a.createTrustedPrivateNode!=='function'||typeof a.isTrustedPrivateNode!=='function')throw invalid();
+    const proofs=selected.proofs===undefined?'real':selected.proofs;let endpoint;
+    try {endpoint=new URL(selected.url);}catch{throw invalid();}
+    const local=String(scope.chainId)==='31337'&&['localhost','127.0.0.1','[::1]'].includes(endpoint.hostname);
+    if(!['real','disabled'].includes(proofs)||(proofs==='disabled'&&!local))throw invalid();
+    const options={url:selected.url,expectedNetworkScope:scope,proofsEnabled:proofs==='real',allowLocalDev:local};
+    if(existing) {
+      if(!a.isTrustedPrivateNode(existing)||typeof a.inspectTrustedNode!=='function')throw invalid();
+      await a.inspectTrustedNode(existing,options);return existing;
+    }
+    const node=await a.createTrustedPrivateNode(options);
+    if(!a.isTrustedPrivateNode(node))throw invalid();return node;
+  }
+  g.BillboardPrivateFeeRouting = Object.freeze({ requirePrivateFeeConfiguration, createPrivateFeeSender, createAztecWallet, connectTrustedPrivateNode });
 
   // Read-only readiness check at a refreshed current PXE anchor. Proving may refresh it again.
   // Missing messages never allocate fees, prove, submit, or repeat an L1 deposit.
@@ -19057,8 +19085,12 @@ const FEE_JUICE_SIGN_MSG = 'Aztec fee-juice deposit claim secret v1\n\n' +
   // repeated calls with the same config (used by web app pages)
   // ============================================================
   const _setupCache = new Map();
+  function _connectionKey(config,address) {
+    return JSON.stringify([config.trustedProverNode?.url,config.trustedProverNode?.proofs??'real',config.expectedNetworkScope,
+      config.ethRpcUrl,address.toString(),config.portalAddress,config.dataDirPrefix||'pxe_bb_']);
+  }
   function _setupKey(config, address, nodeInfo, rollup, board) {
-    return JSON.stringify([config.aztecNodeUrl, config.ethRpcUrl, address.toString(),
+    return JSON.stringify([_connectionKey(config,address), config.ethRpcUrl, address.toString(),
       String(nodeInfo.l1ChainId), String(nodeInfo.rollupVersion), rollup.toLowerCase(),
       board.toLowerCase(), config.portalAddress.toLowerCase(), config.dataDirPrefix || 'pxe_bb_']);
   }
@@ -19113,8 +19145,9 @@ const FEE_JUICE_SIGN_MSG = 'Aztec fee-juice deposit claim secret v1\n\n' +
     // Step 2: Connect to Aztec node
     // ============================================================
     log('Step 2: Connecting to Aztec node...', 'info');
-    const nodeUrl = config.aztecNodeUrl;
-    const rawNode = a.createAztecNodeClient(nodeUrl);
+    const connectionKey=_connectionKey(config,address);
+    const priorSetup=[..._setupCache.values()].find(entry=>entry.connectionKey===connectionKey);
+    const rawNode = await connectTrustedPrivateNode(a,config,priorSetup?.rawNode);
     const aztecNode = rawNode;
     const nodeInfo = await aztecNode.getNodeInfo();
     log('  Chain ID: ' + nodeInfo.l1ChainId, 'info');
@@ -19474,7 +19507,7 @@ const FEE_JUICE_SIGN_MSG = 'Aztec fee-juice deposit claim secret v1\n\n' +
         }
 
         // Cache the setup for reuse by subsequent engine calls
-        _setupCache.set(sKey, { pxe, wallet, contract, aztecNode, rawNode });
+        _setupCache.set(sKey, { pxe, wallet, contract, aztecNode, rawNode, connectionKey });
       }
 
       // Now check the L2 deposit note (always re-check, state may have changed)
@@ -20624,7 +20657,7 @@ const FEE_JUICE_SIGN_MSG = 'Aztec fee-juice deposit claim secret v1\n\n' +
       constructorArtifact:undefined,constructorArgs:undefined,salt,publicKeys:keys.publicKeys,
       immutablesHash:await accountContract.getImmutablesHash(),
     });
-    const owner=instance.address,node=a.createAztecNodeClient(config.aztecNodeUrl),info=await node.getNodeInfo();
+    const owner=instance.address,node=await g.BillboardPrivateFeeRouting.connectTrustedPrivateNode(a,config),info=await node.getNodeInfo();
     if(config.expectedNetworkScope) {
       const network=await node.getL1ContractAddresses(),expected=config.expectedNetworkScope;
       if(String(info.l1ChainId)!==String(expected.chainId) || String(info.rollupVersion)!==String(expected.version) || network.rollupAddress.toString().toLowerCase()!==expected.rollup.toLowerCase()) throw new Error('Fee network does not match the imported configuration.');
@@ -20731,7 +20764,7 @@ const FEE_JUICE_SIGN_MSG = 'Aztec fee-juice deposit claim secret v1\n\n' +
       log('Your private fee balance is ready for board transactions.','success');
       return {ok:true,receipt:result.receipt,lastL2TxHash:transactionJournal.lastTxHash};
     },true);}catch(error){
-      const code=['PRIVATE_FEE_BALANCE_INSUFFICIENT','BB_FEE_ESTIMATION_UNSTABLE','BB_GAS_LIMIT_EXCEEDED','BB_SIMULATION_FAILED','BB_OPERATION_PAUSED','BB_REMOTE_PROVER_TIMEOUT','BB_REMOTE_PROVER_OFFLINE','BB_REMOTE_PROVER_BUSY','BB_REMOTE_PROVER_REJECTED','BB_REMOTE_PROVER_RESPONSE','BB_REMOTE_PROVER_FAILED','PRIVATE_FEE_CAP_TOO_LOW','BB_SUBMISSION_UNKNOWN','BB_TRANSACTION_FAILED','BB_STATE_CONFLICT','BB_RECOVERY_REQUIRED','BB_JOURNAL_INVALID'].includes(error?.code)?error.code:'BB_PRIVATE_FEE_CLAIM_FAILED';
+      const code=['PRIVATE_FEE_BALANCE_INSUFFICIENT','BB_FEE_ESTIMATION_UNSTABLE','BB_GAS_LIMIT_EXCEEDED','BB_SIMULATION_FAILED','BB_OPERATION_PAUSED','BB_REMOTE_PROVER_TIMEOUT','BB_REMOTE_PROVER_OFFLINE','BB_REMOTE_PROVER_BUSY','BB_REMOTE_PROVER_REJECTED','BB_REMOTE_PROVER_RESPONSE','BB_REMOTE_PROVER_FAILED','PRIVATE_FEE_CAP_TOO_LOW','BB_SUBMISSION_UNKNOWN','BB_TRANSACTION_FAILED','BB_TRANSACTION_FINALITY_PENDING','BB_STATE_CONFLICT','BB_RECOVERY_REQUIRED','BB_JOURNAL_INVALID'].includes(error?.code)?error.code:'BB_PRIVATE_FEE_CLAIM_FAILED';
       const safe=new Error(code==='BB_SUBMISSION_UNKNOWN'?'Submission outcome is unknown. Check the transaction before retrying.':'Private fee claim did not complete. Keep the recovery file and check the deposit before retrying.',{cause:error});safe.code=code;if(['read','catalog','decompress','board-binding','prove','native-init','native-prove','native-srs','native-constraint','native-verification','native-process','worker'].includes(error?.stage))safe.stage=error.stage;throw safe;
     }
     } finally {ethProvider.destroy();}
@@ -21142,7 +21175,7 @@ function _connectionConfig() {
   return {aztecNodeUrl:config.network.nodeUrl,ethRpcUrl:config.network.ethRpcUrl,
     portalAddress:config.board.portalAddress,expectedBoardAddress:config.board.contractAddress,
     expectedNetworkScope:{chainId:config.network.chainId,version:config.network.rollupVersion,rollup:config.network.rollupAddress},
-    privateFee:config.privateFee,remoteProver:config.remoteProver?{url:config.remoteProver.url,board:config.board.contractAddress}:undefined};
+    privateFee:config.privateFee,trustedProverNode:config.trustedProverNode,remoteProver:config.remoteProver?{url:config.remoteProver.url,board:config.board.contractAddress}:undefined};
 }
 function _getEthRpcUrl() { return _connectionConfig().ethRpcUrl; }
 window.billboardConfigStore?.subscribe(()=>{
@@ -21261,6 +21294,12 @@ function buildConfig(action, extra, connection=_connectionConfig()) {
 // ============================================================
 function publicOperationFailure(error) {
   const messages={
+    BB_TRUSTED_NODE_CONFIG:'Configure the trusted prover node before using your wallet.',
+    BB_TRUSTED_NODE_IDENTITY:'The trusted node does not match this network or proof policy.',
+    BB_TRUSTED_NODE_UNAVAILABLE:'The trusted node is unavailable. Public browsing remains available.',
+    BB_TRUSTED_NODE_UNSYNCED:'The trusted node is synchronizing. Try the wallet again when it is ready.',
+    BB_TRUSTED_NODE_STALE:'The trusted node is behind the network. Try the wallet again when it is ready.',
+
     BB_PLUGIN_UNKNOWN:'This plugin is not registered on this board.',
     BB_SCREENING_NO_PROGRESS:'Withdrawal preparation paused because the network did not advance screening. No further preparation fees will be spent. Refresh your account before continuing.',
     BB_SCREENING_HISTORY_UNAVAILABLE:'Your message history could not be verified. Refresh your account before continuing withdrawal.',
@@ -21334,6 +21373,7 @@ function publicOperationFailure(error) {
     BB_SUBMISSION_UNKNOWN:'Submission outcome is unknown. Keep the transaction record and check its receipt before retrying.',
     PRIVATE_FEE_FUNDING_SUBMISSION_UNKNOWN:'Fee funding outcome is unknown. Keep its recovery file and check the transaction before retrying.',
     BB_PRIVATE_FEE_AMOUNT:'Deposit more than the configured maximum claim fee.',
+    BB_TRANSACTION_FINALITY_PENDING:'The previous transaction failed and is awaiting network finality. Keep its saved record and try again once it is finalized.',
     BB_TRANSACTION_FAILED:'The transaction did not execute successfully. Check its receipt before trying again.',
     BB_STATE_CONFLICT:'Transaction state changed. Refresh the account before creating a new proof.',
     BB_NO_SAVED_ETHEREUM_TRANSACTION:'No saved Ethereum request exists for this wallet and portal.',
@@ -21371,6 +21411,7 @@ function makeCallEngine(engineFn, envExtra, {deployment=false,connection=_connec
     const operationConnection=structuredClone(connection());
     operationConnection.remoteProver=(extra?.provingMode??window.BillboardProving.snapshot())==='remote' ? operationConnection.remoteProver : undefined;
     if(operationConnection.remoteProver)operationConnection.remoteProver=Object.freeze({...operationConnection.remoteProver,onStatus:state=>extra?.onStage?.(state==='queued'?'queued':'proving')});
+    if(operationConnection.trustedProverNode)Object.freeze(operationConnection.trustedProverNode);
     Object.freeze(operationConnection);
     async function guard() {
       if(extra?.pauseRequested?.())throw Object.assign(Error('Paused.'),{code:'BB_OPERATION_PAUSED'});
