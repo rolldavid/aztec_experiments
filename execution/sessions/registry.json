@@ -38,7 +38,7 @@
       "branch": "codex/rolling-query-local-qualification",
       "history_locator": "collaboration runtime /root/controls, parent 01a12a75-1b50-7871-a73b-4253a1010194",
       "role": "implementation worker",
-      "state": "read-only diagnosis actual query future timestamp; source writer claim released",
+      "state": "read-only nextfrontend slice analysis; no writer claim",
       "worktree": "../rolling-controls",
       "allowed_paths": [
         "scripts/testing/trusted-query-fixture.mjs",
@@ -60,7 +60,7 @@
       "branch": "read-only candidate refs",
       "history_locator": "collaboration runtime /root/reviewer, parent 01a12a75-1b50-7871-a73b-4253a1010194",
       "role": "independent reviewer",
-      "state": "review bootstrap a212 and final candidate"
+      "state": "completed exactbfbb boundedintegration approval"
     },
     {
       "logical_id": "design-20261011",
@@ -72,7 +72,7 @@
       "branch": "codex/rolling-bootstrap-qualification",
       "history_locator": "collaboration runtime /root/design, parent01a12a75-1b50-7871-a73b-4253a1010194",
       "role": "implementation worker",
-      "state": "frozen5674e7c; writer claim released pending review",
+      "state": "completed57e; writer claim released",
       "worktree": "../rolling-design",
       "allowed_paths": [
         "deploy/prover/bootstrap.py",
@@ -118,6 +118,17 @@
       "evidence": "evidence/G14/integration-5235-evidence.json",
       "gate_result": "evidence/G14/integration-5235-result.json",
       "limits": "Full product/privacy/Linux/provider/release gates remain open; no push."
+    },
+    {
+      "task": "G14 bounded development",
+      "candidate": "bfbbf4c7b3d669714efe99a03c07cc7d6394335f",
+      "base": "5235f497a80f52b5e1a9a797d2c92824618ca7c4",
+      "integrator_session": "lead-20261011",
+      "reviewer": "reviewer-20261011",
+      "policy_sha256": "ca2adb14c95a81bb341a6faeeaa51b2941abe59df5de7759a6c82d809258c185",
+      "evidence": "evidence/G14/integration-bfbb-evidence.json",
+      "gate_result": "evidence/G14/integration-bfbb-result.json",
+      "limits": "Linux/provider/fullproduct/privacy/release open"
     }
   ],
   "candidate_transfers": [
