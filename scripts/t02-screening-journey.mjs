@@ -1,3 +1,4 @@
+import {applicationProofsEnabled} from './testing/proof-policy.mjs';
 // TEST ONLY: real application post/screening proofs on the parent's disposable fixture.
 import assert from 'node:assert/strict';
 import {describeFailure} from './testing/supervisor.mjs';
@@ -30,7 +31,7 @@ import {exactApplicationDeposit,eligibleApplicationAnchor,includeApplicationActi
 export async function proveAndIncludeT02Screening({node,preparation,instance,claimResult,l1Client,
  directory,rpcUrl,mineL1,reportStage,authorAccount,privateFeeAction,discardUnsubmittedFee,flagged=true}) {
  let wallet,stage='preflight';
- const observation={passed:false,flagged,applicationProofs:true,networkProofs:false,transactions:[]};
+ const observation={passed:false,flagged,applicationProofs:applicationProofsEnabled(),networkProofs:false,transactions:[]};
  const mark=name=>{stage=name;reportStage?.('journey:'+name);};
  try {
   assertNodeVersion();assertAztecPackages();assert(claimResult.passed&&claimResult.exactDeliveredNoteChecked);

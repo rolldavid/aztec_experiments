@@ -51,7 +51,7 @@ export async function proveAndIncludeC03Contention({node,preparation,instance,au
   const started=performance.now();
   const listeners=[];
   const observation={passed:false,scope:payerMode==='private'?'one author genuine private-fee posting; not concurrency qualification':'ten real distinct-author post proofs prepared at one canonical anchor',
-    applicationProofs:true,networkProofs:false,authorCount:count,contentionQualified:false,posts:[],allPreparedBeforeSubmission:false};
+    applicationProofs:applicationProofsEnabled(),networkProofs:false,authorCount:count,contentionQualified:false,posts:[],allPreparedBeforeSubmission:false};
   // Atomically replace only sanitized observations; no accounts, note preimages or transaction bytes.
   const persist=async()=>{if(!progressPath)return;
     const bytes=JSON.stringify({...observation,stage,elapsedMs:Math.round(performance.now()-started)},null,2)+'\n';
