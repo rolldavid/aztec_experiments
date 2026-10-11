@@ -1,7 +1,7 @@
 // Development-only injected ports. No service, chain proof or paid provider acceptance.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {mkdtemp,rm} from 'node:fs/promises';
+import fs,{mkdtemp,rm} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {privateBokMetering} from './private-bok-metering.mjs';
@@ -210,4 +210,80 @@ test('unknown fencing and finish receipts do not become success or replay after 
   if(method==='close_uncertain')await assert.rejects(run(),/outcome unknown/);else await run();
   assert.equal(h.counts[method],1);
  }
+});
+
+// Real filesystem writes with narrow syscall-boundary injection; no durability stubs.
+function observePersistence(t,onEvent){
+ const open=fs.open.bind(fs),rename=fs.rename.bind(fs);
+ let fence=false;
+ t.mock.method(fs,'open',async(path,flags,mode)=>{
+  const handle=await open(path,flags,mode),kind=flags==='wx'?'file':'directory';
+  return {
+   async writeFile(data){fence=JSON.parse(data).privateBok?.calls[0]?.phase==='possibly-sent';await onEvent('write:before',fence);await handle.writeFile(data);await onEvent('write:after',fence);},
+   async sync(){await onEvent(kind+'-sync:before',fence);await handle.sync();await onEvent(kind+'-sync:after',fence);},
+   close:()=>handle.close(),
+  };
+ });
+ t.mock.method(fs,'rename',async(...args)=>{await onEvent('rename:before',fence);await rename(...args);await onEvent('rename:after',fence);});
+}
+test('fileState acknowledges only after file sync, rename, directory sync; ordinary reopen recovers',async t=>{
+ const directory=await mkdtemp(join(tmpdir(),'bok-durable-'));try{
+  const path=join(directory,'state.json'),store=await fileState(path),events=[];
+  observePersistence(t,async event=>events.push(event));
+  await store.write({operations:{saved:1}});events.push('acknowledged');
+  assert.deepEqual(events,['write:before','write:after','file-sync:before','file-sync:after','rename:before','rename:after','directory-sync:before','directory-sync:after','acknowledged']);
+  assert.deepEqual((await fileState(path)).read(),{operations:{saved:1}});
+  assert.equal((await fs.stat(path)).mode&0o777,0o600);
+ }finally{t.mock.restoreAll();await rm(directory,{recursive:true,force:true});}
+});
+test('new journal directory entries also sync through their existing parent',async t=>{
+ const directory=await mkdtemp(join(tmpdir(),'bok-new-directory-'));try{
+  const path=join(directory,'new','nested','state.json'),store=await fileState(path),events=[];
+  observePersistence(t,async event=>events.push(event));await store.write({operations:{}});
+  assert.equal(events.filter(x=>x==='directory-sync:after').length,3);
+  assert.deepEqual((await fileState(path)).read(),{operations:{}});
+ }finally{t.mock.restoreAll();await rm(directory,{recursive:true,force:true});}
+});
+for(const boundary of ['write:before','write:after','file-sync:before','file-sync:after','rename:before','rename:after','directory-sync:before','directory-sync:after'])test('uncertain persistence at '+boundary+' preserves memory and blocks another write',async t=>{
+ const directory=await mkdtemp(join(tmpdir(),'bok-write-fault-'));try{
+  const path=join(directory,'state.json'),store=await fileState(path);await store.write({operations:{old:1}});
+  observePersistence(t,async event=>{if(event===boundary)throw Error('injected private filesystem detail');});
+  await assert.rejects(store.write({operations:{new:2}}),{code:'STATE_PERSISTENCE_UNCERTAIN'});
+  assert.deepEqual(store.read(),{operations:{old:1}});
+  await assert.rejects(store.write({operations:{third:3}}),{code:'STATE_PERSISTENCE_UNCERTAIN'});
+  t.mock.restoreAll();const recovered=(await fileState(path)).read();
+  assert.deepEqual(recovered,boundary.startsWith('directory')||boundary==='rename:after'?{operations:{new:2}}:{operations:{old:1}});
+ }finally{t.mock.restoreAll();await rm(directory,{recursive:true,force:true});}
+});
+for(const boundary of ['file-sync:before','file-sync:after','rename:before','rename:after','directory-sync:before','directory-sync:after'])test('paid call forbidden when send-fence persistence fails at '+boundary,async t=>{
+ const directory=await mkdtemp(join(tmpdir(),'bok-fence-fault-'));try{
+  const store=await fileState(join(directory,'state.json')),h=fixture({store});
+  observePersistence(t,async(event,fence)=>{if(fence&&event===boundary)throw Error('injected failure');});
+  await assert.rejects(h.create().complete(0,input),{code:'STATE_PERSISTENCE_UNCERTAIN'});
+  assert.equal(h.counts.execute,0);assert.equal(store.read().privateBok.calls[0].phase,'reserved');
+  await assert.rejects(h.create().complete(0,input),{code:'STATE_PERSISTENCE_UNCERTAIN'});assert.equal(h.counts.execute,0);
+ }finally{t.mock.restoreAll();await rm(directory,{recursive:true,force:true});}
+});
+test('provider waits for durable fence acknowledgement, then rechecks canonical usability',async t=>{
+ const directory=await mkdtemp(join(tmpdir(),'bok-sync-delay-'));let release;try{
+  const store=await fileState(join(directory,'state.json')),h=fixture({store});let entered;
+  const blocked=new Promise(resolve=>entered=resolve),hold=new Promise(resolve=>release=resolve),events=[];
+  observePersistence(t,async(event,fence)=>{if(fence){events.push(event);if(event==='directory-sync:before'){entered();await hold;}}});
+  h.controls.execute=async()=>{events.push('provider');const billing=bill();return {billing,charge:6n,receipt:billing.receipt};};
+  const completion=h.create().complete(0,input);await blocked;assert.equal(h.counts.execute,0);
+  release();await completion;
+  assert.ok(events.indexOf('provider')>events.indexOf('directory-sync:after'));
+ }finally{release?.();t.mock.restoreAll();await rm(directory,{recursive:true,force:true});}
+});
+test('disk delay or suspension crossing reservation start margin forbids paid call',async()=>{
+ const h=fixture(),write=h.store.write;
+ h.store.write=async next=>{await write(next);if(next.privateBok.calls[0]?.phase==='possibly-sent')h.controls.unusable=true;};
+ await assert.rejects(h.create().complete(0,input),/deadline/);assert.equal(h.counts.execute,0);
+ assert.equal(h.store.read().privateBok.calls[0].phase,'possibly-sent');
+ h.controls.unusable=false;await assert.rejects(h.create().resume(0),/outcome unknown/);assert.equal(h.counts.execute,0);
+});
+test('canonical reservation changed during durable fence write forbids paid call',async()=>{
+ const h=fixture(),write=h.store.write;
+ h.store.write=async next=>{await write(next);if(next.privateBok.calls[0]?.phase==='possibly-sent'){h.r.refunded=h.r.available;h.r.available=0n;h.r.state=3;}};
+ await assert.rejects(h.create().complete(0,input),/changed after fence/);assert.equal(h.counts.execute,0);
 });

@@ -172,6 +172,10 @@ export function privateBokMetering({provider,escrow,store,identity,limits={}}){
    const current=await read();if(current.state!==2||!reservedMatches(current,c))throw Error('Reservation changed');
    await escrow.assertUsable(binding.requestId,id,amount(c.quote.maximum));
    await setCall(id,{phase:'possibly-sent'});
+   // A disk sync or suspended process may cross the start margin. The paid call
+   // must follow a fresh canonical check, with no journal I/O between them.
+   const afterFence=await read();if(afterFence.state!==2||!reservedMatches(afterFence,c))throw Error('Reservation changed after fence');
+   await escrow.assertUsable(binding.requestId,id,amount(c.quote.maximum));
    let result;
    try{
     result=await provider.execute(frozen,qFor(c));
