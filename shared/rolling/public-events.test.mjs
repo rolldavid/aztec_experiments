@@ -57,3 +57,12 @@ test('labelled fixture: final class change and different in-block effect cannot 
  other.getBlock=async()=>{const block=await getBlock();block.body.txEffects=[{txHash,toBuffer:()=>Buffer.from('different effect')}];return block;};
  await assert.rejects(()=>decoder.decodeTransaction(other,txHash.toString()));
 });
+test('labelled fixture: reordered authenticated log bytes cannot match retained block effect',async()=>{
+ const n=nodeFixture(),getBlock=n.getBlock,getEffect=n.getTxEffect;
+ const first=log(),second=log();second.fields[2]=new Fr(2n);
+ const serialize=logs=>Buffer.concat(logs.map(item=>item.toBuffer()));
+ const returned=await getEffect();returned.data={...returned.data,publicLogs:[first,second],toBuffer:()=>serialize([first,second])};
+ n.getTxEffect=async()=>returned;
+ n.getBlock=async()=>{const block=await getBlock();block.body.txEffects=[{...returned.data,publicLogs:[second,first],toBuffer:()=>serialize([second,first])}];return block;};
+ await assert.rejects(()=>decoder.decodeTransaction(n,txHash.toString()));
+});
