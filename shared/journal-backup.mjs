@@ -1,18 +1,34 @@
 import {createEncryptedJournalSlot,journalRecoveryIdentity,decryptJournalDescriptor} from './journal-record.mjs';
+import {l2JournalScopeText} from './l2-journal.mjs';
 import {transactionError} from './transaction-outcomes.mjs';
 const fail=()=>transactionError('BB_JOURNAL_INVALID','Recovery records could not be authenticated or conflict with newer local records. Preserve both copies.');
 const domains=new Map([
  ['AZTEC_BB_L2_JOURNAL_KEY_V1','AZTEC_BB_L2_JOURNAL_V1'],
  ['AZTEC_BB_ETH_JOURNAL_KEY_V1','AZTEC_BB_ETH_JOURNAL_V1'],
+ ['ROLLING_WORKFLOW_V1','ROLLING_WORKFLOW_V1'],
 ]);
 const LIMIT=16*1024*1024;
+function validDescriptor(descriptor) {
+ if(!descriptor||Object.keys(descriptor).sort().join()!=='keyDomain,scopeText'||!domains.has(descriptor.keyDomain)||typeof descriptor.scopeText!=='string')throw fail();
+ const frame=JSON.parse(descriptor.scopeText);
+ if(frame[0]!==domains.get(descriptor.keyDomain))throw fail();
+ if(descriptor.keyDomain==='ROLLING_WORKFLOW_V1') {
+  // Match createRollingApplication's two-level scope exactly. The nested scope
+  // remains the complete canonical L2 identity; a domain label alone is not enough.
+  if(!Array.isArray(frame)||frame.length!==2||typeof frame[1]!=='string')throw fail();
+  const nested=JSON.parse(frame[1]),names=['account','chainId','rollup','version','board','portal'];
+  if(!Array.isArray(nested)||nested.length!==7||nested[0]!=='AZTEC_BB_L2_JOURNAL_V1'||nested.some(value=>typeof value!=='string'))throw fail();
+  const canonical=l2JournalScopeText(Object.fromEntries(names.map((name,index)=>[name,nested[index+1]])));
+  if(frame[1]!==canonical||descriptor.scopeText!==JSON.stringify(['ROLLING_WORKFLOW_V1',canonical]))throw fail();
+ }
+}
 export async function createJournalBackup({storage,walletSecret,walletSalt}) {
  const identity=await journalRecoveryIdentity({walletSecret,walletSalt});
  async function authenticate(record) {
   try {
    if(!record||typeof record.key!=='string'||!/^[0-9a-f]{64}$/.test(record.key)||typeof record.encoded!=='string'||record.encoded.length>LIMIT)throw fail();
    const envelope=JSON.parse(record.encoded),descriptor=await decryptJournalDescriptor(envelope.recovery,identity);
-   if(Object.keys(descriptor).sort().join()!=='keyDomain,scopeText'||!domains.has(descriptor.keyDomain)||typeof descriptor.scopeText!=='string'||JSON.parse(descriptor.scopeText)[0]!==domains.get(descriptor.keyDomain))throw fail();
+   validDescriptor(descriptor);
    const slot=await createEncryptedJournalSlot({walletSecret,walletSalt,...descriptor,storage:{read:async key=>{if(key!==record.key)throw fail();return record.encoded;}}});
    if(slot.storageKey!==record.key)throw fail();await slot.read();
    return record;
