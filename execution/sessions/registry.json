@@ -35,15 +35,12 @@
       "task": [
         "G14"
       ],
-      "branch": "codex/rolling-private-bok-port",
+      "branch": "codex/rolling-trusted-query-composition",
       "history_locator": "collaboration runtime /root/controls, parent 01a12a75-1b50-7871-a73b-4253a1010194",
       "role": "implementation worker",
-      "state": "completed772ec5f; approved independentreview; candidatecherries6195edd/a701751",
+      "state": "sourceccb approved awaiting transferrecord",
       "worktree": "../rolling-controls",
-      "allowed_paths": [
-        "plugins/private-bok-escrow.mjs",
-        "plugins/test/private-bok-escrow.test.mjs"
-      ],
+      "allowed_paths": [],
       "commit_trailer_aliases": {
         "Agent-Session": "controls",
         "Parent-Session": "lead"
@@ -60,7 +57,7 @@
       "branch": "read-only candidate refs",
       "history_locator": "collaboration runtime /root/reviewer, parent 01a12a75-1b50-7871-a73b-4253a1010194",
       "role": "independent reviewer",
-      "state": "approveda701751 source; preparing privacy evidence gaps"
+      "state": "genuine918c approved boundedmilestone; trustedqueryccb sourceapproved"
     },
     {
       "logical_id": "design-20261011",
@@ -69,10 +66,10 @@
       "task": [
         "G14"
       ],
-      "branch": "codex/rolling-bok-provider",
+      "branch": "codex/rolling-query-package",
       "history_locator": "collaboration runtime /root/design, parent01a12a75-1b50-7871-a73b-4253a1010194",
       "role": "implementation worker",
-      "state": "read-only actualprovider campaign integration design",
+      "state": "sourcea694 approved/transferred6d61376; read-only fullnode feasibility",
       "worktree": "../rolling-design",
       "allowed_paths": []
     }

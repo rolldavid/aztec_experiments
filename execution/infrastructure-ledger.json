@@ -2,7 +2,7 @@
   "schema_version": 1,
   "budget_usd": 300,
   "scope": "Cumulative prover campaign plus at most one additional rolling.chat server; existing moderator costs remain separate.",
-  "as_of": "2026-10-11T15:00:40.605210+00:00",
+  "as_of": "2026-10-11T15:41:18.741522+00:00",
   "billing_evidence": "evidence/G02/aws-costs.json",
   "historical_campaign_bound_usd": 83.27,
   "historical_bound_method": "Retain the full earlier conservative bound including unused planned compute through13Oct, rather than subtracting unverified savings. Includes49.47 prior allowance,28.80 revival maximum and5 ancillary.",
@@ -47,8 +47,8 @@
     "https://docs.aztec.network/operate/testnet/operators/full-node/overview",
     "https://docs.aztec.network/operate/testnet/operators/setup/running_a_node"
   ],
-  "node_requirements": "Current official V6 testnet overview:8cores/16vCPU,8GB RAM,1TB NVMe,25Mbps. The older running_a_node URL redirected to legacy mainnetV5 guidance (16GB), not a conflicting current requirement. Provisioning remains held pending workload measurements and a complete forecast.",
-  "latest_live_check": "evidence/G14/live-prerequisites-latest.json",
+  "node_requirements": "CurrentV6 full-node overview8cores/16vCPU,8GB RAM,1TBNVMe25Mbps; setup/running_a_node currently6rc1 says16GB. Plan32GiB meetsboth memoryminima. Existingrecoveryproposal isprover-only40GBdisk, NOTfullnodebudget. Additionalnode completeforecast pendingverifiedblob/trace/sourcebootstrap.",
+  "latest_live_check": "evidence/G14/live-prerequisites-1535.json",
   "recovery_proposal": {
     "checked_by": "design-20261011",
     "checked_at": "2026-10-11T15:00:00Z",
@@ -85,5 +85,6 @@
       "Host independent shutdown timer verified",
       "Reviewed rolling catalog replaces obsolete archivedcatalog"
     ]
-  }
+  },
+  "shutdown_prerequisite_evidence": "evidence/G02/fleet-shutdown-prerequisites.json"
 }
