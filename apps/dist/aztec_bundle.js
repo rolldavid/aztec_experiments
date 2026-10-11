@@ -272933,6 +272933,7 @@ pub contract MultiCallEntrypoint {
     initializeCliProver: () => initializeCliProver,
     inspectTrustedNode: () => inspectTrustedNode,
     isPrivateFeeClaimConsumed: () => isPrivateFeeClaimConsumed,
+    isPrivatePXEForNode: () => isPrivatePXEForNode,
     isTrustedPrivateNode: () => isTrustedPrivateNode,
     loadContractArtifact: () => loadContractArtifact,
     normalizePrivateFeeGasSettings: () => normalizePrivateFeeGasSettings,
@@ -399255,6 +399256,11 @@ See docs for context: https://docs.aztec.network/errors/14`);
     getBindings: () => ({})
   });
   var browserCrsInitializations = /* @__PURE__ */ new WeakMap();
+  var privatePXERoutes = /* @__PURE__ */ new WeakMap();
+  function isPrivatePXEForNode(pxe, node2) {
+    const route = privatePXERoutes.get(pxe);
+    return Boolean(route && route.source === node2 && route.cached && pxe.node === route.cached);
+  }
   var cliProverInitialization;
   var cliFailure = () => Object.assign(new Error("Local CLI proving setup could not be verified."), { code: "BB_CLI_PROVER_CONFIGURATION" });
   var cliOptions = Object.freeze({ backend: BackendType.Wasm, threads: 1, skipSrsInit: true });
@@ -399352,6 +399358,7 @@ See docs for context: https://docs.aztec.network/errors/14`);
       selected = { ...options, simulator, proverOrOptions: new BrowserPrivateKernelProver(simulator, { ...initialized.options, logger: privateLogger }, { proofsEnabled: true, transport: null }) };
     }
     const pxe = await createPXE(node2, config9, { ...selected, loggers: { store: privateLogger, pxe: privateLogger, prover: privateLogger } });
+    privatePXERoutes.set(pxe, { source: node2, cached: pxe.node });
     if (readOnly) pxe.proveTx = async () => {
       throw new Error("Read-only PXE cannot prove transactions");
     };

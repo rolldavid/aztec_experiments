@@ -36,35 +36,34 @@
         "G06",
         "G14"
       ],
-      "branch": "codex/rolling-public-projection",
+      "branch": "codex/rolling-application-fixture",
       "history_locator": "collaboration runtime /root/controls, parent 01a12a75-1b50-7871-a73b-4253a1010194",
       "role": "implementation worker",
-      "state": "8db5 SDK/memory repairs frozen awaiting independent review",
+      "state": "running actual application-port fixture",
       "worktree": "../rolling-controls",
       "allowed_paths": [
-        "shared/rolling/public-events.mjs",
-        "shared/rolling/public-events.test.mjs",
-        "shared/rolling/public-projection.mjs",
-        "shared/rolling/public-projection.test.mjs"
+        "scripts/testing/rolling-application-fixture.mjs",
+        "scripts/testing/rolling-application-fixture.test.mjs"
       ],
       "commit_trailer_aliases": {
         "Agent-Session": "controls",
         "Parent-Session": "lead"
       },
-      "base": "8db5c9fb5de1b6d95dbc95385759630f46ddeb88"
+      "base": "4414ced4f5b55d364bba3965d1ced9db7730ec4b"
     },
     {
       "logical_id": "reviewer-20261011",
       "runtime_id": "/root/reviewer",
       "parent_id": "lead-20261011",
       "task": [
+        "G05",
         "G06",
         "G14"
       ],
       "branch": "read-only candidate refs",
       "history_locator": "collaboration runtime /root/reviewer, parent 01a12a75-1b50-7871-a73b-4253a1010194",
       "role": "independent reviewer",
-      "state": "1319407 changes requested P2; waiting repaired source"
+      "state": "ae67 bounded source approved; actual app integration pending"
     },
     {
       "logical_id": "design-20261011",
@@ -76,13 +75,10 @@
       "branch": "codex/rolling-wallet-application",
       "history_locator": "collaboration runtime /root/design, parent01a12a75-1b50-7871-a73b-4253a1010194",
       "role": "implementation worker",
-      "state": "changes requested; real journal restart acknowledgment and pre-simulation guard plus new lead PXE provenance predicate",
+      "state": "0d05 approved and transferred; source claim released; read-only AWS monitoring",
       "worktree": "../rolling-design",
-      "allowed_paths": [
-        "shared/rolling/application.mjs",
-        "shared/rolling/application.test.mjs"
-      ],
-      "base": "ed1b406b827d8cfcfbad772c688a5e78b7b8f878"
+      "allowed_paths": [],
+      "base": "0d05cc2910780a26f561d208d24bf012a2d40933"
     }
   ],
   "integrations": [
@@ -133,6 +129,17 @@
       "evidence": "evidence/G14/integration-bfbb-evidence.json",
       "gate_result": "evidence/G14/integration-bfbb-result.json",
       "limits": "Linux/provider/fullproduct/privacy/release open"
+    },
+    {
+      "task": "G06/G14 bounded genuine reply and actual provider recovery",
+      "candidate": "3c802500ba787c49baa79f205e1aee6f34e2175d",
+      "base": "bfbbf4c7b3d669714efe99a03c07cc7d6394335f",
+      "integrator_session": "lead-20261011",
+      "reviewer": "reviewer-20261011",
+      "policy_sha256": "71f61942cf2e985df63886863156bc4bcfa0d8189b61a39157882dcc2ca86fb3",
+      "evidence": "evidence/G14/integration-3c802-evidence.json",
+      "gate_result": "evidence/G14/integration-3c802-result.json",
+      "limits": "Fullproduct/privacy/Linux/releaseopen; no push"
     }
   ],
   "candidate_transfers": [
@@ -150,6 +157,22 @@
       "reviewer": "reviewer-20261011",
       "review": "evidence/G14/adapter-observer-source-review.json",
       "status": "reviewed source oncandidate; sharedintegration andactualruntimepending"
+    },
+    {
+      "task": "G06",
+      "worker": "controls-20261011",
+      "worker_revision": "8db5c9fb5de1b6d95dbc95385759630f46ddeb88",
+      "candidate_revision": "25e2297",
+      "review": "evidence/G06/public-projection-8db5-review.json",
+      "status": "approved source; actual app acceptance pending"
+    },
+    {
+      "task": "G05",
+      "worker": "design-20261011",
+      "worker_revision": "0d05cc2910780a26f561d208d24bf012a2d40933",
+      "candidate_revision": "b92be57",
+      "review": "evidence/G05/application-0d05-review.json",
+      "status": "approved source; actual app acceptance pending"
     }
   ]
 }
