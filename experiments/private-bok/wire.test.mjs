@@ -51,3 +51,22 @@ test('unknown diagnostic messages and unresolved locations never become evidence
     getCallStack: () => [{functionName: 'arbitrary message with spaces', contractAddress: 'secret'}]};
   assert.deepEqual(failureDiagnostic(error), {category: 'unclassified', frames: [], functions: []});
 });
+
+test('diagnostics reject arbitrary source names, excessive lengths and invalid coordinates', () => {
+  const frames = [{filePath: '/tmp/private_fixture_sentinel.nr', line: 1, column: 1},
+    {filePath: 'a'.repeat(100000) + '.nr', line: 1, column: 1},
+    {filePath: 'main.nr', line: -1, column: 1}, {filePath: 'main.nr', line: 1, column: Number.MAX_SAFE_INTEGER}];
+  const result = failureDiagnostic({message: 'secret', getNoirCallStack: () => frames,
+    getCallStack: () => [{functionName: 'private_fixture_sentinel'}]});
+  assert.deepEqual(result, {category: 'unclassified', frames: [], functions: []});
+});
+
+test('throwing diagnostic getters and methods cannot replace the original failure', () => {
+  for (const error of [
+    {get message() {throw Error('private sentinel');}},
+    {get getNoirCallStack() {throw Error('private sentinel');}},
+    {getNoirCallStack() {throw Error('private sentinel');}},
+    {getNoirCallStack() {return {};}}]) {
+    assert.deepEqual(failureDiagnostic(error), {category: 'unclassified', frames: [], functions: []});
+  }
+});

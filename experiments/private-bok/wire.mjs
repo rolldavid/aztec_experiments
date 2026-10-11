@@ -30,21 +30,34 @@ export const json = value => JSON.stringify(value, (_, item) => typeof item === 
 // SDK SimulationError replaces its JS stack with Noir frames; never serialize
 // its raw message, revertData, source text, argument values or contract addresses.
 export function failureDiagnostic(error) {
-  const message = String(error?.actual?.message ?? error?.message ?? '');
-  const categories = ['Request not expirable', 'Request not expired', 'Out of gas', 'Insufficient fee',
-    'Could not price the next block at slot', 'Cannot predict the next block',
-    'Cannot simulate public calls: world state and archiver disagree',
-    'Transaction expired', 'Fee provider not started', 'Contract not found',
-    'Contract instance not found', 'Contract class not found'];
-  const sourceError = error?.actual?.getNoirCallStack ? error.actual : error;
-  const frames = (sourceError?.getNoirCallStack?.() ?? []).slice(0, 8).flatMap(frame => {
-    if (!frame || typeof frame !== 'object' || !Number.isInteger(frame.line) || !Number.isInteger(frame.column)) return [];
-    const file = String(frame.filePath).split(/[\\/]/).at(-1);
-    return /^[a-zA-Z0-9_-]+\.nr$/.test(file) ? [{file, line: frame.line, column: frame.column}] : [];
-  });
-  const functions = (sourceError?.getCallStack?.() ?? []).slice(0, 8).flatMap(frame => {
-    const name = frame?.functionName;
-    return typeof name === 'string' && /^[a-zA-Z_][a-zA-Z0-9_]{0,63}$/.test(name) ? [name] : [];
-  });
-  return {category: categories.find(value => message.includes(value)) ?? 'unclassified', frames, functions};
+  const empty = () => ({category: 'unclassified', frames: [], functions: []});
+  try {
+    const message = String(error?.actual?.message ?? error?.message ?? '').slice(0, 8192);
+    const categories = ['Request not expirable', 'Request not expired', 'Out of gas', 'Insufficient fee',
+      'Could not price the next block at slot', 'Cannot predict the next block',
+      'Cannot simulate public calls: world state and archiver disagree',
+      'Transaction expired', 'Fee provider not started', 'Contract not found',
+      'Contract instance not found', 'Contract class not found'];
+    const files = new Set(['main.nr', 'public_mutable.nr', 'public_immutable.nr', 'private_context.nr',
+      'public_context.nr', 'map.nr', 'mod.nr', 'utils.nr', 'serialize.nr', 'note_getter.nr']);
+    const names = new Set(['request', 'balance_of', 'earned', 'expire', 'reserve', 'settle', 'reconcile',
+      'claim', 'authorize_request', 'cancel', 'finish', 'withdraw', 'withdraw_earnings', 'subtract_more',
+      '_open_escrow', '_cancel', 'on_invocation', 'invoke', 'target_hash', 'entrypoint']);
+    const sourceError = error?.actual?.getNoirCallStack ? error.actual : error;
+    const rawFrames = sourceError?.getNoirCallStack?.() ?? [];
+    const rawFunctions = sourceError?.getCallStack?.() ?? [];
+    if (!Array.isArray(rawFrames) || !Array.isArray(rawFunctions)) return empty();
+    const coordinate = value => Number.isInteger(value) && value > 0 && value <= 1000000;
+    const frames = rawFrames.slice(0, 8).flatMap(frame => {
+      if (!frame || typeof frame !== 'object' || !coordinate(frame.line) || !coordinate(frame.column)) return [];
+      const file = typeof frame.filePath === 'string' ? frame.filePath.split(/[\\/]/).at(-1) : '';
+      return files.has(file) ? [{file, line: frame.line, column: frame.column}] : [];
+    });
+    const functions = rawFunctions.slice(0, 8).flatMap(frame => names.has(frame?.functionName) ? [frame.functionName] : []);
+    return {category: categories.find(value => message.includes(value)) ?? 'unclassified', frames, functions};
+  } catch {
+    // Diagnostics must never replace the original failure, even if an SDK
+    // accessor fails while attempting to resolve source locations.
+    return empty();
+  }
 }
