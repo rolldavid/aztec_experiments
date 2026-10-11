@@ -1,6 +1,24 @@
 import {sha256,toUtf8Bytes} from 'ethers';
 import {quoteCall,usageCharge,ceilDiv} from './metering.mjs';
 const fieldMod=21888242871839275222246405745257275088548364400416034343698204186575808495617n;
+// Public billing facts only. Unknown response metadata and message content never enter this record.
+const idPattern=/^[A-Za-z0-9][A-Za-z0-9._:/-]{0,127}$/;
+const integer=(n,max=Number.MAX_SAFE_INTEGER)=>Number.isSafeInteger(n)&&n>=0&&n<=max;
+const money=n=>typeof n==='string'&&/^(0|[1-9][0-9]{0,38})$/.test(n)&&BigInt(n)<2n**128n;
+export function validateVeniceBilling(value,quote){
+ const {providerId,modelId,promptTokens,completionTokens,cachedTokens,inputPrice,outputPrice,cachePrice,charge,receipt}=value??{};
+ if(typeof providerId!=='string'||!idPattern.test(providerId)||modelId!==quote.modelId||
+  !integer(promptTokens,quote.inputBound)||!integer(completionTokens,quote.maxTokens)||!integer(cachedTokens,promptTokens)||
+  !money(inputPrice)||!money(outputPrice)||(cachePrice!==null&&!money(cachePrice))||!money(charge))throw Error('Invalid provider billing record');
+ if(BigInt(inputPrice)!==quote.inputPrice||BigInt(outputPrice)!==quote.outputPrice||
+  (cachePrice===null?null:BigInt(cachePrice))!==quote.cachePrice||(cachedTokens>0&&cachePrice===null))throw Error('Provider billing prices changed');
+ const actual=ceilDiv(BigInt(promptTokens-cachedTokens)*quote.inputPrice+BigInt(cachedTokens)*(quote.cachePrice??0n)+BigInt(completionTokens)*quote.outputPrice,1000000000n);
+ if(actual!==BigInt(charge)||actual>quote.maximum)throw Error('Provider billing charge mismatch');
+ const facts={providerId,modelId,promptTokens,completionTokens,cachedTokens,inputPrice,outputPrice,cachePrice,charge};
+ const expected='0x'+(BigInt(sha256(toUtf8Bytes(JSON.stringify(facts))))%fieldMod).toString(16).padStart(64,'0');
+ if(BigInt(expected)===0n||(receipt!==undefined&&receipt!==expected))throw Error('Provider billing receipt mismatch');
+ return {...facts,receipt:expected};
+}
 export function veniceMeteredProvider({client,model='kimi-k2-5',autoTopUp=false,maxTopUpUsd=5}){
  let readiness=Promise.resolve();
  const ensureCredits=maximum=>{
@@ -33,8 +51,8 @@ export function veniceMeteredProvider({client,model='kimi-k2-5',autoTopUp=false,
    if(!Number.isSafeInteger(cached)||cached<0||cached>u.prompt_tokens||(cached>0&&quote.cachePrice===null))throw Error('Invalid cached-token billing');
    usageCharge(u.prompt_tokens,u.completion_tokens,quote.inputPrice,quote.outputPrice);
    const charge=ceilDiv(BigInt(u.prompt_tokens-cached)*quote.inputPrice+BigInt(cached)*(quote.cachePrice??0n)+BigInt(u.completion_tokens)*quote.outputPrice,1000000000n);
-   const receipt='0x'+(BigInt(sha256(toUtf8Bytes(JSON.stringify({id:result.id,model:quote.modelId,usage:u}))))%fieldMod).toString(16).padStart(64,'0');
-   return {message,charge,receipt};
+   const billing=validateVeniceBilling({providerId:result.id,modelId:quote.modelId,promptTokens:u.prompt_tokens,completionTokens:u.completion_tokens,cachedTokens:cached,inputPrice:String(quote.inputPrice),outputPrice:String(quote.outputPrice),cachePrice:quote.cachePrice===null?null:String(quote.cachePrice),charge:String(charge)},quote);
+   return {message,charge,receipt:billing.receipt,billing};
   },
  };
 }
