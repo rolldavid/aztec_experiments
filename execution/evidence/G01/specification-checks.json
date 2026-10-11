@@ -25,6 +25,18 @@
     "missing_graph_catalog": [
       "graph product catalog differs from Draft3",
       "RC46: graph/catalog mismatch"
+    ],
+    "both_hashes_None": [
+      "missing/invalid specification source hash"
+    ],
+    "both_hashes_": [
+      "missing/invalid specification source hash"
+    ],
+    "both_hashes_nonsense": [
+      "missing/invalid specification source hash"
+    ],
+    "both_hashes_AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA": [
+      "missing/invalid specification source hash"
     ]
   }
 }

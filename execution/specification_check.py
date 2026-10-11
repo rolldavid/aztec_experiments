@@ -2,6 +2,7 @@
 """Check the Draft 3 item-to-task map without claiming product acceptance."""
 import argparse
 import json
+import re
 from pathlib import Path
 
 REQUIREMENTS = {f"RC{i:02}" for i in range(1, 47)}
@@ -18,7 +19,12 @@ def check(graph, mapping):
     catalog = {r["id"]: r for r in graph.get("product_requirements", [])}
     if set(catalog) != REQUIREMENTS:
         errors.append("graph product catalog differs from Draft3")
-    if mapping.get("source", {}).get("sha256") != graph.get("specification", {}).get("sha256"):
+    source_hash = mapping.get("source", {}).get("sha256")
+    graph_hash = graph.get("specification", {}).get("sha256")
+    if any(not isinstance(value, str) or not re.fullmatch(r"[0-9a-f]{64}", value)
+           for value in (source_hash, graph_hash)):
+        errors.append("missing/invalid specification source hash")
+    elif source_hash != graph_hash:
         errors.append("specification source hash mismatch")
     for row in rows:
         ident = row.get("id")
