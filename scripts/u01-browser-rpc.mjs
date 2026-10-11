@@ -1,5 +1,6 @@
 // TEST ONLY. Never expose this fixture as a production RPC proxy.
 import http from 'node:http';
+import {describeFailure} from './testing/supervisor.mjs';
 import {timingSafeEqual} from 'node:crypto';
 import {Transaction} from 'ethers';
 import {createNamespacedSafeJsonRpcServer} from '@aztec-labs/foundation/json-rpc/server';
@@ -25,10 +26,25 @@ export async function startU01BrowserRpc({node,anvilUrl,ethereumAccount,origin,t
  // Observation is optional and must never change transport or application outcomes.
  function begin(channel,method,args){try{return observer?.begin(channel,method,args)??(()=>{});}catch{return ()=>{};}}
  function finish(done,success){try{done(success);}catch{}}
- const observedNode=(observer||beforeNodeCall)?new Proxy(node,{get(target,key){const value=Reflect.get(target,key,target);if(typeof value!=='function')return value;
+ const failures=[];
+ // Keep only the existing sanitizer's class/code/frame projection. Its optional
+ // process-snapshot details, messages, arguments and error data are not RPC evidence.
+ function safeFailure(error){
+  try{const {errorClass,code,frames}=describeFailure(error);return {errorClass,code,frames};}
+  catch{return {errorClass:'Error',code:null,frames:[]};}
+ }
+ function recordFailure(method,phase,error){
+  if(failures.length>=8)return;
+  const entry={method,phase,...safeFailure(error)};failures.push(entry);
+  try{const causes=[],seen=new Set([error]);let cause=error?.cause;
+   while(cause&&causes.length<3&&!seen.has(cause)){seen.add(cause);causes.push(safeFailure(cause));cause=cause.cause;}
+   if(causes.length)entry.causes=causes;
+  }catch{} // Diagnostic getters must not change the original failure.
+ }
+ const observedNode=new Proxy(node,{get(target,key){const value=Reflect.get(target,key,target);if(typeof value!=='function')return value;
   if(!Object.hasOwn(AztecNodeApiSchema,key))return value.bind(target);
-  return async(...args)=>{const done=begin('aztec',key,args);try{await beforeNodeCall?.(key);const result=await value.apply(target,args);finish(done,true);return result;}catch(error){finish(done,false);throw error;}};
- }}):node;
+  return async(...args)=>{const done=begin('aztec',key,args);let phase='before-node-call';try{await beforeNodeCall?.(key);phase='node-call';const result=await value.apply(target,args);finish(done,true);return result;}catch(error){recordFailure(key,phase,error);finish(done,false);throw error;}};
+ }});
  const rpc=createNamespacedSafeJsonRpcServer({node:[observedNode,AztecNodeApiSchema],aztec:[observedNode,AztecNodeApiSchema]},{maxBatchSize:100,maxBodySizeBytes:10*1024*1024,corsAllowedOrigins:[origin],corsAllowedHeaders:['content-type','x-u01-test-token'],log:silent});
  const callback=rpc.getApp().callback();let nodeServer,ethereumServer;
  try{
@@ -53,5 +69,5 @@ export async function startU01BrowserRpc({node,anvilUrl,ethereumAccount,origin,t
    else {const result=await execute(payload);respond(res,result.error?.message==='Fixture request rejected'?400:200,result);}
   }catch{if(!res.headersSent)respond(res,400,{jsonrpc:'2.0',id:null,error:{code:-32600,message:'Fixture request rejected'}});else res.destroy();}});
  }catch(error){if(nodeServer)await stop(nodeServer);throw error;}
- return {nodeUrl:`http://127.0.0.1:${nodeServer.address().port}/`,ethereumUrl:`http://127.0.0.1:${ethereumServer.address().port}/`,async close(){if(closed)return;closed=true;for(const controller of controllers)controller.abort();await Promise.all([stop(nodeServer),stop(ethereumServer)]);}};
+ return {failureSnapshot:()=>structuredClone(failures),nodeUrl:`http://127.0.0.1:${nodeServer.address().port}/`,ethereumUrl:`http://127.0.0.1:${ethereumServer.address().port}/`,async close(){if(closed)return;closed=true;for(const controller of controllers)controller.abort();await Promise.all([stop(nodeServer),stop(ethereumServer)]);}};
 }

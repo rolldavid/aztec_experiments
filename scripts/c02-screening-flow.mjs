@@ -1,3 +1,4 @@
+import {applicationProofsEnabled} from './testing/proof-policy.mjs';
 // TEST ONLY: real application post/screening proofs on the parent's disposable fixture.
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
@@ -36,7 +37,7 @@ export async function proveAndIncludeC02Screening({node,preparation,instance,cla
   directory,rpcUrl,mineL1,reportStage}){
   let wallet,sequencer,previousConfig,stage='preflight';
   const observation={passed:false,scope:'genuine application post and authenticated screening',
-    applicationProofs:true,networkProofs:false,syntheticMessages:false,posts:[]};
+    applicationProofs:applicationProofsEnabled(),networkProofs:false,syntheticMessages:false,posts:[]};
   const mark=name=>{stage=name;reportStage?.('screening:'+name);};
   try{
     assertNodeVersion();assertAztecPackages();
