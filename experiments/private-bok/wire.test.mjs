@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {encodeV1, assertRequest, FIELD_MODULUS} from './wire.mjs';
+import {encodeV1, assertRequest, FIELD_MODULUS, failureDiagnostic} from './wire.mjs';
 
 test('portal V1 preserves domain padding, word order and commitment position', () => {
   const bytes = encodeV1('PLUGIN_CREDIT_V1', [1n, 2n, 3n, 4n, 5n, 6n]);
@@ -32,4 +32,22 @@ test('fenced liabilities remain conserved and exact flags are required', () => {
   assert.throws(() => assertRequest({...fenced, reserved: 0n}, {}));
   assert.throws(() => assertRequest(fenced, {secondary_done: true}));
   assert.throws(() => assertRequest({...fenced, available: -1n, refunded: 201n}, {}));
+});
+
+test('diagnostics retain only fixed categories and source coordinates', () => {
+  const secret = 'do-not-persist-this-private-value';
+  const actual = {message: 'Request not expired ' + secret, revertData: [secret],
+    getNoirCallStack: () => [{filePath: '/private/' + secret + '/main.nr', line: 212, column: 9,
+      fileSource: secret, locationText: secret}],
+    getCallStack: () => [{functionName: 'expire', contractAddress: secret}]};
+  assert.deepEqual(failureDiagnostic({actual}), {category: 'Request not expired',
+    frames: [{file: 'main.nr', line: 212, column: 9}], functions: ['expire']});
+  assert(!JSON.stringify(failureDiagnostic({actual})).includes(secret));
+});
+
+test('unknown diagnostic messages and unresolved locations never become evidence text', () => {
+  const error = {message: 'unrecognized secret payload',
+    getNoirCallStack: () => ['opaque opcode witness', {filePath: 'not-a-source', line: 1, column: 1}],
+    getCallStack: () => [{functionName: 'arbitrary message with spaces', contractAddress: 'secret'}]};
+  assert.deepEqual(failureDiagnostic(error), {category: 'unclassified', frames: [], functions: []});
 });

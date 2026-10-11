@@ -23,9 +23,10 @@ const json = value => JSON.stringify(value, (_, item) => typeof item === 'bigint
 const sha = bytes => createHash('sha256').update(bytes).digest('hex');
 const same = (a, b) => assert.equal(String(a).toLowerCase(), String(b).toLowerCase());
 
-export async function runPrivateBokFixture(ctx) {
+export async function runPrivateBokFixture(ctx, caseProfile = 'both') {
+  assert(['both', 'normal', 'uncertain'].includes(caseProfile));
   const realProofs = applicationProofsEnabled();
-  const observation = {passed: false, applicationProofs: realProofs, networkProofs: false,
+  const observation = {passed: false, caseProfile, applicationProofs: realProofs, networkProofs: false,
     controlledSettlement: true, fundingMode: 'real-portal-deposit',
     payerMode: 'genesis', privacyAcceptance: 'missing: public genesis fee payer', l1: []};
   const directory = path.join(ROOT, 'execution/evidence/G14', 'portal-' + randomUUID());
@@ -226,7 +227,7 @@ export async function runPrivateBokFixture(ctx) {
       const {runPrivateBokExperiment} = await import('../../experiments/private-bok/measure.mjs');
       observation.experiment = await runPrivateBokExperiment({node: ctx.node, wallet, owner, operator, otherUser,
         deployPortal, activatePortal, funding, redeem, mineL1, advanceTo, realProofs, payerMode: 'genesis',
-        outputDirectory: path.join(directory, 'experiment'), mark: ctx.mark,
+        outputDirectory: path.join(directory, 'experiment'), caseProfile, mark: ctx.mark,
         harnessFiles: ['scripts/testing/private-bok-fixture.mjs', 'scripts/testing/scenarios.mjs', 'scripts/testing/scenario-flows.mjs']});
       assert(observation.experiment.passed);
     });

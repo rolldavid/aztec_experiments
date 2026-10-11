@@ -18,7 +18,7 @@ import {ROOT, assertNodeVersion, assertAztecPackages} from '../../scripts/toolch
 import {proveApplicationAction, measureApplicationGas} from '../../scripts/prove-application-action.mjs';
 import {invocationPreimage, invocationHash} from '../../shared/rolling/invocation.mjs';
 import {ARTIFACT, BOARD_ARTIFACT, MANIFEST, buildInputs, sha} from './build.mjs';
-import {encodeV1, assertRequest, json} from './wire.mjs';
+import {encodeV1, assertRequest, json, failureDiagnostic} from './wire.mjs';
 
 const included = receipt => [TxStatus.CHECKPOINTED, TxStatus.PROVEN, TxStatus.FINALIZED].includes(receipt.status)
   && receipt.executionResult === TxExecutionResult.SUCCESS && receipt.blockNumber != null && receipt.blockHash != null;
@@ -27,8 +27,9 @@ const field = value => typeof value === 'bigint' ? value : value.toField().toBig
 
 export async function runPrivateBokExperiment({node, wallet, owner, operator, otherUser, mineL1, advanceTo,
   deployPortal, activatePortal, redeem, funding, outputDirectory, realProofs, payerMode,
-  privateFeeAction, harnessFiles, mark = () => {}}) {
+  privateFeeAction, harnessFiles, caseProfile = 'both', mark = () => {}}) {
   assert.equal(typeof realProofs, 'boolean', 'Explicit proof mode required');
+  assert(['both', 'normal', 'uncertain'].includes(caseProfile), 'Explicit known case profile required');
   assert(['private', 'genesis'].includes(payerMode), 'Explicit payer mode required');
   assert(path.isAbsolute(outputDirectory));
   for (const fn of [mineL1, advanceTo, deployPortal, activatePortal, redeem, funding?.submit]) assert.equal(typeof fn, 'function');
@@ -36,7 +37,7 @@ export async function runPrivateBokExperiment({node, wallet, owner, operator, ot
   assert(!owner.equals(operator) && !owner.equals(otherUser) && !operator.equals(otherUser), 'Separate disposable actors required');
   assert(Array.isArray(harnessFiles) && harnessFiles.length > 0, 'Bind the parent fixture sources');
   await fs.mkdir(outputDirectory, {mode: 0o700}); // Existing output forbids automatic resubmission.
-  const report = {passed: false, proofMode: realProofs ? 'real' : 'proofs-disabled', realProofs,
+  const report = {passed: false, caseProfile, completedCases: [], proofMode: realProofs ? 'real' : 'proofs-disabled', realProofs,
     realProofAcceptance: 'missing', fundingMode: funding.mode, payerMode, measurements: [], states: [], negativeChecks: [],
     limitations: ['Disposable local tokens and identities only', 'Synthetic provider receipt identifiers; no model call or provider billing acceptance',
       'Probe board does not implement product admission, ownership, UTF-8 or full relationship policy',
@@ -95,10 +96,7 @@ export async function runPrivateBokExperiment({node, wallet, owner, operator, ot
       catch (error) {
         // Gas measurement fails closed. Retain only the public revert's bounded
         // category, never the full simulation/error object or private witnesses.
-        const publicMessage = String(error.actual?.message ?? '');
-        const category = ['Request not expirable', 'Request not expired', 'Out of gas', 'Insufficient fee']
-          .find(reason => publicMessage.includes(reason)) ?? 'unknown-public-revert';
-        row.publicSimulationFailure = {errorClass: error.name, category};
+        row.publicSimulationFailure = {errorClass: error.name, ...failureDiagnostic(error)};
         await save(); throw error;
       }
       assert.equal((await node.isValidTx(tx)).result, 'valid');
@@ -154,7 +152,9 @@ export async function runPrivateBokExperiment({node, wallet, owner, operator, ot
     const request = async id => (await contract.methods.request(id).simulate({from: operator})).result;
     const earned = async () => (await contract.methods.earned().simulate({from: operator})).result;
     async function state(id, label, expected, expectedBalance, expectedEarnings) {
-      const current = await request(id), privateBalance = await balance(), earnings = await earned();
+      stage = label + ':request'; const current = await request(id);
+      stage = label + ':balance'; const privateBalance = await balance();
+      stage = label + ':earnings'; const earnings = await earned();
       assertRequest(current, expected); assert.equal(privateBalance, expectedBalance); assert.equal(earnings, expectedEarnings);
       report.states.push({label, request: current, privateBalance, earnings}); await save(); return current;
     }
@@ -239,53 +239,65 @@ export async function runPrivateBokExperiment({node, wallet, owner, operator, ot
       return record;
     }
 
-    await claim('normal'); assert.equal(await balance(), 1000n);
-    const normal = await authorize('normal');
-    await state(normal.id, 'waiting', {state: 1n, invocation_hash: normal.hash.toBigInt(), budget: 600n, available: 600n, reserved: 0n, charged: 0n, refunded: 0n}, 400n, 0n);
-    const wrongTarget = [...normal.target]; wrongTarget[6] = new Fr(normal.target[6].toBigInt() === 1n ? 2n : 1n);
-    await rejects(normal.id, board.methods.invoke(escrow, normal.id, wrongTarget, normal.message), otherUser, 'Invocation target mismatch', 'waiting-target-hijack');
-    await activate(normal, 'normal');
-    await send(contract.methods.reserve(normal.id, 0, 400n), operator, 'normal-reserve');
-    await state(normal.id, 'reserved', {state: 2n, available: 200n, reserved: 400n, charged: 0n, refunded: 0n}, 400n, 0n);
-    const normalReceipt = nonzero();
-    await send(contract.methods.settle(normal.id, 0, 120n, normalReceipt), operator, 'normal-settle');
-    await state(normal.id, 'settled', {sequence: 1n, available: 480n, reserved: 0n, charged: 120n, refunded: 0n}, 400n, 120n);
-    const finished = await send(contract.methods.finish(normal.id), operator, 'normal-finish');
-    const closed = await state(normal.id, 'normal-closed', {state: 4n, available: 0n, reserved: 0n, charged: 120n, refunded: 480n, primary_done: true, secondary_done: true}, 880n, 120n);
-    await completion(finished.effect, closed.primary_refund, 480n);
-    await rejects(normal.id, contract.methods.finish(normal.id), operator, 'Request not active', 'normal-finish-replay');
-    await rejects(normal.id, contract.methods.reconcile(normal.id, 0, 0n, nonzero()), operator, 'Request not fenced', 'normal-secondary-replay');
-    // Spending 880 requires consuming the returned 480-credit note, not merely observing its log.
-    const withdrawals = [await withdraw(880n, recipient, owner, false, 'private-withdraw')];
-    assert.equal(await balance(), 0n);
-    withdrawals.push(await withdraw(120n, operatorRecipient, operator, true, 'operator-withdraw'));
-    assert.equal(await earned(), 0n);
+    const withdrawals = [];
+    if (caseProfile === 'both' || caseProfile === 'normal') {
+      await claim('normal'); assert.equal(await balance(), 1000n);
+      const normal = await authorize('normal');
+      await state(normal.id, 'waiting', {state: 1n, invocation_hash: normal.hash.toBigInt(), budget: 600n, available: 600n, reserved: 0n, charged: 0n, refunded: 0n}, 400n, 0n);
+      const wrongTarget = [...normal.target]; wrongTarget[6] = new Fr(normal.target[6].toBigInt() === 1n ? 2n : 1n);
+      await rejects(normal.id, board.methods.invoke(escrow, normal.id, wrongTarget, normal.message), otherUser, 'Invocation target mismatch', 'waiting-target-hijack');
+      await activate(normal, 'normal');
+      await send(contract.methods.reserve(normal.id, 0, 400n), operator, 'normal-reserve');
+      await state(normal.id, 'reserved', {state: 2n, available: 200n, reserved: 400n, charged: 0n, refunded: 0n}, 400n, 0n);
+      const normalReceipt = nonzero();
+      await send(contract.methods.settle(normal.id, 0, 120n, normalReceipt), operator, 'normal-settle');
+      await state(normal.id, 'settled', {sequence: 1n, available: 480n, reserved: 0n, charged: 120n, refunded: 0n}, 400n, 120n);
+      const finished = await send(contract.methods.finish(normal.id), operator, 'normal-finish');
+      const closed = await state(normal.id, 'normal-closed', {state: 4n, available: 0n, reserved: 0n, charged: 120n, refunded: 480n, primary_done: true, secondary_done: true}, 880n, 120n);
+      await completion(finished.effect, closed.primary_refund, 480n);
+      await rejects(normal.id, contract.methods.finish(normal.id), operator, 'Request not active', 'normal-finish-replay');
+      await rejects(normal.id, contract.methods.reconcile(normal.id, 0, 0n, nonzero()), operator, 'Request not fenced', 'normal-secondary-replay');
+      // Spending 880 requires consuming the returned 480-credit note, not merely observing its log.
+      withdrawals.push(await withdraw(880n, recipient, owner, false, 'private-withdraw'));
+      assert.equal(await balance(), 0n);
+      withdrawals.push(await withdraw(120n, operatorRecipient, operator, true, 'operator-withdraw'));
+      assert.equal(await earned(), 0n);
 
-    await claim('uncertain'); const uncertain = await authorize('uncertain'); await activate(uncertain, 'uncertain');
-    const reservation = await send(contract.methods.reserve(uncertain.id, 0, 400n), operator, 'uncertain-reserve');
-    const pending = await state(uncertain.id, 'uncertain-before-expiry', {state: 2n, available: 200n, reserved: 400n}, 400n, 0n);
-    stage = 'advance-deadline'; await advanceTo(pending.deadline, reservation.row); await wallet.pxe.sync();
-    // A later timestamp alone is insufficient: the request must survive the
-    // network proof-window boundary with its exact accounting unchanged.
-    assert.deepEqual(await request(uncertain.id), pending, 'Request changed during deadline advancement');
-    await state(uncertain.id, 'uncertain-after-advance', pending, 400n, 0n);
-    assert(BigInt((await wallet.pxe.getSyncedBlockHeader()).globalVariables.timestamp) >= pending.deadline);
-    const expired = await send(contract.methods.expire(uncertain.id), otherUser, 'uncertain-expire');
-    await state(uncertain.id, 'fenced', {state: 3n, available: 0n, reserved: 400n, charged: 0n, refunded: 200n, primary_done: true, secondary_done: false}, 600n, 0n);
-    await completion(expired.effect, pending.primary_refund, 200n);
-    await rejects(uncertain.id, contract.methods.reserve(uncertain.id, 0, 1n), operator, 'Request not active', 'fenced-new-call');
-    await rejects(uncertain.id, contract.methods.settle(uncertain.id, 0, 1n, nonzero()), operator, 'Request not active', 'fenced-normal-settle');
-    await rejects(uncertain.id, contract.methods.cancel(uncertain.id), owner, 'Request not cancellable', 'fenced-owner-cancel');
-    await rejects(uncertain.id, contract.methods.expire(uncertain.id), otherUser, 'Request not expirable', 'fenced-expiry-replay');
-    const lateReceipt = nonzero();
-    const reconciled = await send(contract.methods.reconcile(uncertain.id, 0, 120n, lateReceipt), operator, 'uncertain-reconcile');
-    await state(uncertain.id, 'late-closed', {state: 4n, sequence: 1n, available: 0n, reserved: 0n, charged: 120n, refunded: 480n, primary_done: true, secondary_done: true}, 880n, 120n);
-    await completion(reconciled.effect, pending.secondary_refund, 280n);
-    await rejects(uncertain.id, contract.methods.reconcile(uncertain.id, 0, 120n, lateReceipt), operator, 'Request not fenced', 'late-same-receipt-replay');
-    await rejects(uncertain.id, contract.methods.reconcile(uncertain.id, 0, 120n, nonzero()), operator, 'Request not fenced', 'late-new-receipt-replay');
-    withdrawals.push(await withdraw(880n, recipient, owner, false, 'late-private-withdraw'));
-    withdrawals.push(await withdraw(120n, operatorRecipient, operator, true, 'late-operator-withdraw'));
-    assert.equal(await balance(), 0n); assert.equal(await earned(), 0n);
+      report.completedCases.push('normal');
+    }
+
+    if (caseProfile === 'both' || caseProfile === 'uncertain') {
+      await claim('uncertain'); const uncertain = await authorize('uncertain'); await activate(uncertain, 'uncertain');
+      const reservation = await send(contract.methods.reserve(uncertain.id, 0, 400n), operator, 'uncertain-reserve');
+      const pending = await state(uncertain.id, 'uncertain-before-expiry', {state: 2n, available: 200n, reserved: 400n}, 400n, 0n);
+      stage = 'advance-deadline'; await advanceTo(pending.deadline, reservation.row);
+      stage = 'advance-return-sync'; await wallet.pxe.sync();
+      stage = 'request-continuity';
+      // A later timestamp alone is insufficient: the request must survive the
+      // network proof-window boundary with its exact accounting unchanged.
+      assert.deepEqual(await request(uncertain.id), pending, 'Request changed during deadline advancement');
+      await state(uncertain.id, 'uncertain-after-advance', pending, 400n, 0n);
+      assert(BigInt((await wallet.pxe.getSyncedBlockHeader()).globalVariables.timestamp) >= pending.deadline);
+      const expired = await send(contract.methods.expire(uncertain.id), otherUser, 'uncertain-expire');
+      await state(uncertain.id, 'fenced', {state: 3n, available: 0n, reserved: 400n, charged: 0n, refunded: 200n, primary_done: true, secondary_done: false}, 600n, 0n);
+      await completion(expired.effect, pending.primary_refund, 200n);
+      await rejects(uncertain.id, contract.methods.reserve(uncertain.id, 0, 1n), operator, 'Request not active', 'fenced-new-call');
+      await rejects(uncertain.id, contract.methods.settle(uncertain.id, 0, 1n, nonzero()), operator, 'Request not active', 'fenced-normal-settle');
+      await rejects(uncertain.id, contract.methods.cancel(uncertain.id), owner, 'Request not cancellable', 'fenced-owner-cancel');
+      await rejects(uncertain.id, contract.methods.expire(uncertain.id), otherUser, 'Request not expirable', 'fenced-expiry-replay');
+      const lateReceipt = nonzero();
+      const reconciled = await send(contract.methods.reconcile(uncertain.id, 0, 120n, lateReceipt), operator, 'uncertain-reconcile');
+      await state(uncertain.id, 'late-closed', {state: 4n, sequence: 1n, available: 0n, reserved: 0n, charged: 120n, refunded: 480n, primary_done: true, secondary_done: true}, 880n, 120n);
+      await completion(reconciled.effect, pending.secondary_refund, 280n);
+      await rejects(uncertain.id, contract.methods.reconcile(uncertain.id, 0, 120n, lateReceipt), operator, 'Request not fenced', 'late-same-receipt-replay');
+      await rejects(uncertain.id, contract.methods.reconcile(uncertain.id, 0, 120n, nonzero()), operator, 'Request not fenced', 'late-new-receipt-replay');
+      withdrawals.push(await withdraw(880n, recipient, owner, false, 'late-private-withdraw'));
+      withdrawals.push(await withdraw(120n, operatorRecipient, operator, true, 'late-operator-withdraw'));
+      assert.equal(await balance(), 0n); assert.equal(await earned(), 0n);
+
+      report.completedCases.push('uncertain');
+    }
+    assert.deepEqual(report.completedCases, caseProfile === 'both' ? ['normal', 'uncertain'] : [caseProfile]);
 
     assert.deepEqual(manifest.inputs, buildInputs(), 'Sources changed during measurement');
     assert.deepEqual(report.driverAndHarness, await sourceHashes(), 'Driver/harness changed during measurement');
@@ -295,6 +307,6 @@ export async function runPrivateBokExperiment({node, wallet, owner, operator, ot
     report.withdrawals = withdrawals.map(record => ({...record, expectedLeaf: record.expectedLeaf.toString(), recipient: record.recipient.toString(), nonce: record.nonce.toString()}));
     await save(); return report;
   } catch (error) {
-    report.failure = {stage, errorClass: error.name}; error.privateBokObservation = report; throw error;
+    report.failure = {stage, errorClass: error.name, ...failureDiagnostic(error)}; error.privateBokObservation = report; throw error;
   } finally { await save(); }
 }

@@ -306,3 +306,10 @@ export async function avatarLog(ctx){
 export async function privateBok(ctx) {
   return (await import('./private-bok-fixture.mjs')).runPrivateBokFixture(ctx);
 }
+
+export async function privateBokNormal(ctx) {
+  return (await import('./private-bok-fixture.mjs')).runPrivateBokFixture(ctx, 'normal');
+}
+export async function privateBokUncertain(ctx) {
+  return (await import('./private-bok-fixture.mjs')).runPrivateBokFixture(ctx, 'uncertain');
+}
