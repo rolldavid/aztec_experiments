@@ -74,7 +74,7 @@ export async function buildRollingWalletAssets(){
  const raw=JSON.parse(await fs.readFile(path.join(ROOT,sources['/wallet/board.json']),'utf8'));
  if(raw.name!=='RollingBoard'||raw.transpiled!==true||!raw.functions.filter(f=>f.custom_attributes?.includes('abi_private')).every(f=>f.verification_key))throw invalid();
  checkNoirEmbeddedSources(raw);
- for(const name of ['main.nr','admission.nr','posting.nr','encoding.nr']){
+ for(const name of ['main.nr','admission.nr','profiles.nr', 'posting.nr','encoding.nr']){
   const file='billboard/rolling_contract/src/'+name,embedded=Object.values(raw.file_map).find(entry=>entry.path===file);
   if(embedded?.source!==await fs.readFile(path.join(ROOT,file),'utf8'))throw invalid();
  }

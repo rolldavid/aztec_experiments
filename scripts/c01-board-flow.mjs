@@ -43,7 +43,7 @@ export async function checkedC01BoardArtifact(boardProfile = 'legacy') {
     checkNoirEmbeddedSources(raw);
     const privateFunctions = raw.functions.filter(fn => fn.custom_attributes?.includes('abi_private'));
     assert(privateFunctions.length && privateFunctions.every(fn => fn.verification_key), 'Missing RollingBoard private verification keys');
-    for (const name of ['main.nr', 'admission.nr', 'posting.nr', 'encoding.nr']) {
+    for (const name of ['main.nr', 'admission.nr', 'profiles.nr', 'posting.nr', 'encoding.nr']) {
       const relative = `billboard/rolling_contract/src/${name}`;
       const embedded = Object.values(raw.file_map).find(entry => entry.path === relative);
       assert.equal(embedded?.source, await fs.readFile(path.join(ROOT, relative), 'utf8'), 'Stale RollingBoard local source');

@@ -43,7 +43,7 @@ export function assertRollingApplicationViews(projection,{nameId,subboardId,root
   assert.equal(root.bot,null);assert.equal(reply.bot,null);assert.equal(reply.likes,'1');
   const thread=projection.thread(rootId,{limit:100}),profile=projection.profile(nameId,{limit:100}),directory=projection.directory({limit:100});
   assert.deepEqual(thread.posts.map(p=>p.id),[rootId,replyId]);assert.equal(thread.nextCursor,null);
-  assert.deepEqual(profile.posts.map(p=>p.id),[replyId,rootId]);assert.deepEqual(profile.identity,{id:nameId,first:'River',last:'Stone'});
+  assert.deepEqual(profile.posts.map(p=>p.id),[replyId,rootId]);assert.deepEqual(profile.identity,{id:nameId,first:'River',last:'Stone',profile:{bio:{version:'0',digest:'0',length:'0',text:''},avatar:{version:'0',digest:'0',width:'0',height:'0',length:'0',encoding:'base64',data:'',removal:null}}});
   assert.equal(directory.boards.length,1);assert.equal(directory.boards[0].id,subboardId);
   assert.equal(directory.boards[0].slug,'application-test');assert.equal(directory.boards[0].rejected,false);
   assert.equal(directory.boards[0].mainRules,'No threats.');assert.equal(directory.boards[0].rules,'Be helpful.');
@@ -336,6 +336,8 @@ export async function runRollingApplicationFixture(ctx) {
         registeredNamePresent:identities.identities.some(v=>String(BigInt(v))===ids.nameId),nextCursor:identities.nextCursor});await save();
       assert(report.ownedNameRecovery.afterBlock>=report.ownedNameRecovery.requiredBlock);
       assert.deepEqual(identities.identities.map(v=>String(BigInt(v))),[ids.nameId]);assert.equal(identities.nextCursor,null);
+      assert.deepEqual(identities.records.map(record=>({...record,id:String(BigInt(record.id))})),[{id:ids.nameId,first:'River',last:'Stone'}]);
+      report.ownedNameRecovery.readableMetadataRecovered=true;await save();
       const created=await action({type:'subboard',slug:'application-test',name:'Application test',description:'Real application acceptance',rules:'Be helpful.'},'subboard');
       assert.equal(created.length,1);assert.equal(created[0].type,'SubboardCreated');ids.subboardId=created[0].payload.subboard_id;
       const deposit=String(claim.claim.depositChainId);
