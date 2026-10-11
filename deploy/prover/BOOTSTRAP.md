@@ -74,7 +74,7 @@ Before any package or image download, the host:
    Shutdown invokes poweroff; the launch template must make that terminate EC2.
 3. Masks and stops any prover/proxy, then installs the whole physical ENI HTB
    egress ceiling of50Mbps. This covers Docker forwarding and IPv4/IPv6. It
-   verifies the actual root qdisc and configured rate/ceiling using JSON tc output.
+   verifies the actual root qdisc and configured rate/ceiling using version-guarded C-locale class text and qdisc JSON.
 4. Installs a five-second monitor emitting only fixed public console fields once per minute or stage change.
    Missing controls stop services and trigger shutdown. No raw service logs,
    URLs, environment, private account information or exception messages are emitted.
@@ -145,3 +145,34 @@ These are labelled unit fakes plus real shell/Python syntax and archive/file
 validation. They do not execute Linux services, cloud operations, Docker, proofs,
 private credentials or model calls. An actual Linux bootstrap remains a separate
 reviewed commissioning exercise.
+
+### Traffic-control format provenance
+
+Ubuntu 24.04's reviewed iproute2 packages are `6.1.0-1ubuntu6` and
+`6.1.0-1ubuntu6.4`; the host checks both the package version and `tc -V`.
+Contrary to current upstream main, these packages do not support JSON class
+output. The parser uses `tc -s class show dev ENI`, requires all three exact HTB
+class identities/parents, 50/25/25Mbit rates and 50Mbit ceilings, and requires an
+unsigned 64-bit `Sent` byte counter for every class. Missing counters never become
+zero. Qdisc JSON must report the unique root `1:` HTB and default class `0x10`.
+Unknown versions/formats fail commissioning; there is no alternate guessed format.
+
+Source evidence: [Ubuntu source archive](https://archive.ubuntu.com/ubuntu/pool/main/i/iproute2/),
+`iproute2_6.1.0.orig.tar.xz` SHA256
+`5ce12a0fec6b212725ef218735941b2dab76244db7e72646a76021b0537b43ab`,
+`iproute2_6.1.0-1ubuntu6.4.debian.tar.xz` SHA256
+`d127ad985c91e0cc4192876721e533efc893deed08e256b3662205d8401552cd`.
+The Ubuntu patch series changes HTB burst parsing, not its class output.
+Upstream matching sources: [tc_class.c](https://raw.githubusercontent.com/iproute2/iproute2/v6.1.0/tc/tc_class.c)
+(print_class), [q_htb.c](https://raw.githubusercontent.com/iproute2/iproute2/v6.1.0/tc/q_htb.c)
+(htb_print_opt), [tc_util.c](https://raw.githubusercontent.com/iproute2/iproute2/v6.1.0/tc/tc_util.c)
+(print_tcstats2_attr), and [tc_qdisc.c](https://raw.githubusercontent.com/iproute2/iproute2/v6.1.0/tc/tc_qdisc.c).
+The root class relationship follows Linux6.8 `htb_dump_class`.
+
+Fixtures are source-derived development cases, **not captured Linux evidence**.
+The default rate formatter rounds below 1Kbit/s at these rates; the installation
+sets exact rates but text readback cannot distinguish that sub-Kbit variation.
+Reserve this small tolerance in the forecast and verify actual Linux shaping and
+counters before workload acceptance. The five-second monitor interval is not a
+hard five-second shutdown bound: scheduling and command/poweroff latency also
+need budget allowance. This repair does not waive either commissioning gate.

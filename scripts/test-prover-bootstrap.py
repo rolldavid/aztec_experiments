@@ -100,18 +100,59 @@ class Bootstrap(unittest.TestCase):
         self.assertTrue(any(e[:2]==['systemctl','mask'] for e in events if type(e)==list))
         self.assertFalse(any('curl' in e or 'docker' in e for e in events if type(e)==list))
 
-    def test_lost_or_overwide_shaping_fails_controls(self):
+    def test_noble_source_derived_class_fixture_and_mandatory_accounting(self):
+        # Source-derived, NOT Linux-captured. Noble 6.1.0 tc_class.c:347-375,
+        # q_htb.c:292-330, tc_util.c:671-725, sch_htb.c:htb_dump_class.
         ns=host()
+        fixture = """class htb 1:1 root rate 50Mbit ceil 50Mbit burst 1Mb cburst 1Mb
+ Sent 123456789012 bytes 1234 pkt (dropped 0, overlimits 56 requeues 0)
+ backlog 0b 0p requeues 0
+ lended: 12 borrowed: 0 giants: 0
+ tokens: -43 ctokens: 22
+class htb 1:10 parent 1:1 prio 0 rate 25Mbit ceil 50Mbit burst 4725b cburst 7850b
+ Sent 123456789000 bytes 1233 pkt (dropped 0, overlimits 0 requeues 0)
+ backlog 0b 0p requeues 0
+ lended: 12 borrowed: 0 giants: 0
+ tokens: 120 ctokens: 220
+class htb 1:20 parent 1:1 prio 0 rate 25Mbit ceil 50Mbit burst 4725b cburst 7850b
+ Sent 12 bytes 1 pkt (dropped 0, overlimits 0 requeues 0)
+ backlog 0b 0p requeues 0
+ lended: 0 borrowed: 1 giants: 0
+ tokens: 1 ctokens: 2"""
+        self.assertEqual(ns['class_bytes'](fixture),123456789012)
+        self.assertEqual(ns['class_bytes'](fixture.replace('123456789012 bytes','0 bytes')),0)
+        self.assertEqual(ns['class_bytes'](fixture.replace('parent 1:1 prio','parent 1:1 leaf 8001: prio',1)),123456789012)
+        invalid=[fixture.replace('rate 50Mbit','rate 100Mbit',1), fixture.replace('ceil 50Mbit','ceil 100Mbit',1),
+                 fixture.replace('class htb 1:1 root','class htb 1:1 parent 1:1'),
+                 fixture.replace('1:20 parent 1:1','1:20 root'),fixture.replace('1:20','1:10'),
+                 fixture[:fixture.index('class htb 1:20')],fixture+"\n"+fixture,
+                 fixture.replace(' Sent 123456789012 bytes 1234 pkt (dropped 0, overlimits 56 requeues 0)\n',''),
+                 fixture.replace('123456789012 bytes','18446744073709551616 bytes'),
+                 fixture.replace('123456789012 bytes','-1 bytes'),fixture.replace('123456789012 bytes','null bytes'),
+                 '[{"class":"htb","handle":"1:1","rate":6250000,"ceil":6250000}]']
+        for sample in invalid:
+            with self.subTest(sample=sample[:90]),self.assertRaises(ValueError):ns['class_bytes'](sample)
         with tempfile.TemporaryDirectory() as t:
             ns['BASE']=pathlib.Path(t);(pathlib.Path(t)/'interface').write_text('ens5')
             (pathlib.Path(t)/'deadline.json').write_text(json.dumps({'budgetStop':'2099-01-01T00:00:00Z'}))
-            rate=[6250000]
+            values={'class':fixture,'version':'tc utility, iproute2-6.1.0, libbpf 1.3.0','package':'6.1.0-1ubuntu6.4',
+                    'qdisc':[{'kind':'htb','handle':'1:','root':True,'refcnt':2,
+                              'options':{'r2q':10,'default':'0x10','direct_packets_stat':0,'direct_qlen':1000}}]}
+            calls=[]
             def run(args,**kw):
-                if 'class' in args:return json.dumps([{'classid':'1:1','kind':'htb','bytes':123,'options':{'rate':rate[0],'ceil':rate[0]}}])
-                if 'qdisc' in args:return '[{"kind":"htb","handle":"1:","root":true}]'
-            ns['run']=run;self.assertEqual(ns['verify_controls'](),123)
-            rate[0]=12500000
-            with self.assertRaises(ValueError):ns['verify_controls']()
+                calls.append(args)
+                if args==['tc','-V']:return values['version']
+                if args[0]=='dpkg-query':return values['package']
+                if 'class' in args:return values['class']
+                if 'qdisc' in args:return json.dumps(values['qdisc'])
+            ns['run']=run;self.assertEqual(ns['verify_controls'](),123456789012)
+            self.assertIn(['tc','-s','class','show','dev','ens5'],calls)
+            original=json.loads(json.dumps(values))
+            for key,bad in [('version','tc utility, iproute2-6.14.0'),('package','6.1.0-1ubuntu6.5'),
+                            ('class',invalid[0]),('qdisc',[]),('qdisc',[{'kind':'htb','handle':'1:','root':True}]),
+                            ('qdisc',original['qdisc']*2),('qdisc',[dict(original['qdisc'][0],options={'default':'0x20'})])]:
+                values.update(original);values[key]=bad
+                with self.subTest(key=key),self.assertRaises(ValueError):ns['verify_controls']()
 
     def test_fail_closed_pipeline_controls_before_download_no_retry(self):
         ns=host();events=[]

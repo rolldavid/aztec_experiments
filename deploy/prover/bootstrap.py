@@ -42,7 +42,7 @@ def validate(config, now=None):
 
 # Executed only on the future Linux host, never while generating or testing.
 HOST = r'''
-import datetime as dt, fcntl, hashlib, ipaddress, json, os, pathlib, platform, shutil, subprocess, sys, tarfile, urllib.request
+import datetime as dt, fcntl, hashlib, ipaddress, json, os, pathlib, platform, re, shutil, subprocess, sys, tarfile, urllib.request
 BASE = pathlib.Path('/var/lib/rolling-bootstrap')
 RELEASE = pathlib.Path('/opt/board-prover/releases') / ('rolling-'+PINS['manifest'][:16])
 STAGE = 'initial'
@@ -50,7 +50,7 @@ STAGE = 'initial'
 def run(args, timeout=120, capture=False):
     result = subprocess.run(args, check=True, timeout=timeout, stdin=subprocess.DEVNULL,
                             stdout=subprocess.PIPE if capture else subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-                            env={'PATH':'/usr/sbin:/usr/bin:/sbin:/bin', 'HOME':'/root', 'LANG':'C.UTF-8'})
+                            env={'PATH':'/usr/sbin:/usr/bin:/sbin:/bin', 'HOME':'/root', 'LANG':'C', 'LC_ALL':'C'})
     return result.stdout.decode().strip() if capture else None
 
 def write(path, text, mode=0o600):
@@ -115,18 +115,46 @@ def install_controls(config):
     run(['systemctl','daemon-reload']);run(['systemctl','enable','--now','rolling-egress.service'])
     verify_controls()
 
+def class_bytes(text):
+    # Noble iproute2 6.1.0 has no class JSON support. These are its C-locale
+    # tc_class.c/q_htb.c/tc_util.c outputs, not the newer upstream JSON schema.
+    if type(text) is not str or len(text) > 16384: raise ValueError('Invalid class output')
+    records = {}
+    current = None
+    for line in text.splitlines():
+        if not line.strip(): continue
+        if line.startswith('class '):
+            header = re.fullmatch(r'class htb (1:(?:1|10|20)) (root|parent 1:1) (?:leaf [0-9a-f]+: )?(?:prio 0 )?rate (25|50)Mbit ceil 50Mbit burst [0-9]+(?:[KM])?b cburst [0-9]+(?:[KM])?b *', line)
+            if not header: raise ValueError('Unexpected class topology or ceiling')
+            handle, parent, rate = header.groups()
+            if handle in records or parent != ('root' if handle == '1:1' else 'parent 1:1') or rate != ('50' if handle == '1:1' else '25'):
+                raise ValueError('Unexpected class topology or ceiling')
+            records[handle] = None; current = handle
+        elif line.lstrip().startswith('Sent '):
+            stats = re.fullmatch(r' Sent ([0-9]{1,20}) bytes [0-9]+ pkt \(dropped [0-9]+, overlimits [0-9]+ requeues [0-9]+\) *', line)
+            if current is None or records[current] is not None or not stats or int(stats[1]) > 2**64-1: raise ValueError('Missing class byte accounting')
+            records[current] = int(stats[1])
+        elif not re.fullmatch(r' (?:backlog [0-9]+(?:[KM])?b [0-9]+p requeues [0-9]+|lended: [0-9]+ borrowed: [0-9]+ giants: [0-9]+|tokens: -?[0-9]+ ctokens: -?[0-9]+) *', line) or current is None:
+            raise ValueError('Unexpected class statistics')
+    if set(records) != {'1:1','1:10','1:20'} or any(v is None for v in records.values()): raise ValueError('Missing class byte accounting')
+    return records['1:1']
+
 def verify_controls():
     run(['systemctl','is-active','--quiet','rolling-budget.timer'])
     config = json.loads((BASE/'deadline.json').read_text())
     if dt.datetime.now(dt.timezone.utc) >= dt.datetime.fromisoformat(config['budgetStop'].replace('Z','+00:00')): raise ValueError('Expired')
     dev = (BASE/'interface').read_text()
-    classes = json.loads(run(['tc','-j','-s','class','show','dev',dev], capture=True))
-    parent = [c for c in classes if c.get('classid') == '1:1' and c.get('kind') == 'htb']
-    if len(parent) != 1 or parent[0].get('options',{}).get('rate') != 6250000 or parent[0].get('options',{}).get('ceil') != 6250000:
-        raise ValueError('Missing egress ceiling')
+    if not re.fullmatch(r'tc utility, iproute2-6\.1\.0(?:, libbpf [0-9]+\.[0-9]+\.[0-9]+)?', run(['tc','-V'], capture=True)):
+        raise ValueError('Unreviewed tc version')
+    # Pin the reviewed Ubuntu patch families too: neither backports class JSON.
+    if run(['dpkg-query','-W','-f=${Version}','iproute2'], capture=True) not in ('6.1.0-1ubuntu6','6.1.0-1ubuntu6.4'):
+        raise ValueError('Unreviewed iproute2 package')
+    byte_count = class_bytes(run(['tc','-s','class','show','dev',dev], capture=True))
     qdisc = json.loads(run(['tc','-j','qdisc','show','dev',dev],capture=True))
-    if not any(q.get('kind')=='htb' and q.get('handle')=='1:' and q.get('root') is True for q in qdisc): raise ValueError('Wrong root qdisc')
-    return parent[0].get('bytes',0)
+    roots = [q for q in qdisc if q.get('root') is True]
+    if len(roots)!=1 or roots[0].get('kind')!='htb' or roots[0].get('handle')!='1:' or roots[0].get('options',{}).get('default')!='0x10':
+        raise ValueError('Wrong root qdisc')
+    return byte_count
 
 def fetch_package(url, path):
     # urllib refuses redirects: no capability may escape to a different destination.
