@@ -47,5 +47,5 @@
     "https://docs.aztec.network/operate/testnet/operators/full-node/overview",
     "https://docs.aztec.network/operate/testnet/operators/setup/running_a_node"
   ],
-  "node_requirements": "Official pages differ at8 vs16GB RAM, agree8cores/16vCPU,1TB NVMe,25Mbps. Use at least16GB and measured storage/sync before choosing extra server."
+  "node_requirements": "Current official V6 testnet overview:8cores/16vCPU,8GB RAM,1TB NVMe,25Mbps. The older running_a_node URL redirected to legacy mainnetV5 guidance (16GB), not a conflicting current requirement. Provisioning remains held pending workload measurements and a complete forecast."
 }

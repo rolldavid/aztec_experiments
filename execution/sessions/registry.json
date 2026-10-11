@@ -6,10 +6,10 @@
       "runtime_id": "01a12a75-1b50-7871-a73b-4253a1010194",
       "parent_id": null,
       "task": [
-        "G01",
-        "G02"
+        "G02",
+        "G03"
       ],
-      "branch": "codex/rolling-chat-draft3",
+      "branch": "codex/rolling-interfaces-candidate",
       "history_locator": "Codex runtime thread 01a12a75-1b50-7871-a73b-4253a1010194",
       "role": "lead",
       "state": "running"
@@ -31,17 +31,15 @@
       "runtime_id": "/root/controls",
       "parent_id": "lead-20261011",
       "task": [
-        "G01"
+        "G03"
       ],
       "branch": "codex/rolling-controls",
       "history_locator": "collaboration runtime /root/controls, parent 01a12a75-1b50-7871-a73b-4253a1010194",
       "role": "implementation worker",
-      "state": "running",
+      "state": "completed",
       "worktree": "../rolling-controls",
       "allowed_paths": [
-        "execution/integration_gate.py",
-        "execution/tests/test_integration_gate.py",
-        "execution/INTEGRATION.md"
+        "experiments/avatar/"
       ]
     },
     {
@@ -49,13 +47,26 @@
       "runtime_id": "/root/reviewer",
       "parent_id": "lead-20261011",
       "task": [
-        "G01",
-        "G02"
+        "G03"
       ],
       "branch": "read-only candidate refs",
       "history_locator": "collaboration runtime /root/reviewer, parent 01a12a75-1b50-7871-a73b-4253a1010194",
       "role": "independent reviewer",
-      "state": "running"
+      "state": "ready"
+    },
+    {
+      "logical_id": "design-20261011",
+      "runtime_id": "/root/design",
+      "parent_id": "lead-20261011",
+      "task": [
+        "G02"
+      ],
+      "branch": "codex/rolling-design",
+      "history_locator": "collaboration runtime /root/design, parent01a12a75-1b50-7871-a73b-4253a1010194",
+      "role": "implementation worker",
+      "state": "running read-only diagnosis",
+      "worktree": "../rolling-design",
+      "allowed_paths": []
     }
   ]
 }
