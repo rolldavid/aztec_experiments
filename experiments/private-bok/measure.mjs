@@ -10,15 +10,16 @@ import {EthAddress} from '@aztec-labs/foundation/eth-address';
 import {poseidon2HashWithSeparator} from '@aztec-labs/foundation/crypto/poseidon';
 import {sha256ToField} from '@aztec-labs/foundation/crypto/sha256';
 import {loadContractArtifact} from '@aztec-labs/stdlib/abi';
-import {computeSecretHash, computeL2ToL1MessageHash} from '@aztec-labs/stdlib/hash';
+import {computeSecretHash, computeL2ToL1MessageHash, deriveStorageSlotInMap} from '@aztec-labs/stdlib/hash';
 import {L1Actor, L2Actor, L1ToL2Message} from '@aztec-labs/stdlib/messaging';
-import {TxStatus, TxExecutionResult} from '@aztec-labs/stdlib/tx';
+import {TxHash, TxStatus, TxExecutionResult} from '@aztec-labs/stdlib/tx';
 import {MAX_PUBLIC_DATA_UPDATE_REQUESTS_PER_TX, FLAT_PUBLIC_LOGS_PAYLOAD_LENGTH, MAX_PUBLIC_LOG_SIZE_IN_FIELDS, MAX_TX_BLOB_DATA_SIZE_IN_FIELDS, DomainSeparator, L1_TO_L2_MSG_TREE_HEIGHT} from '@aztec-labs/constants';
 import {ROOT, assertNodeVersion, assertAztecPackages} from '../../scripts/toolchain.mjs';
 import {proveApplicationAction, measureApplicationGas} from '../../scripts/prove-application-action.mjs';
 import {invocationPreimage, invocationHash} from '../../shared/rolling/invocation.mjs';
 import {ARTIFACT, BOARD_ARTIFACT, MANIFEST, buildInputs, sha} from './build.mjs';
 import {classifyT03PublicFootprint} from '../../scripts/t03-public-footprint.mjs';
+import {validateProviderCompletion} from '../../scripts/testing/private-bok-provider-fixture.mjs';
 import {matchesContractRejection} from './rejection.mjs';
 import {encodeV1, assertRequest, json, failureDiagnostic} from './wire.mjs';
 
@@ -29,9 +30,11 @@ const field = value => typeof value === 'bigint' ? value : value.toField().toBig
 
 export async function runPrivateBokExperiment({node, wallet, owner, operator, otherUser, mineL1, advanceTo,
   deployPortal, activatePortal, redeem, funding, outputDirectory, realProofs, payerMode,
-  paymentFor, sharedFeePayer, harnessFiles, caseProfile = 'both', mark = () => {}}) {
+  paymentFor, sharedFeePayer, harnessFiles, caseProfile = 'both', providerRecovery, mark = () => {}}) {
   assert.equal(typeof realProofs, 'boolean', 'Explicit proof mode required');
-  assert(['both', 'normal', 'uncertain'].includes(caseProfile), 'Explicit known case profile required');
+  assert(['both', 'normal', 'uncertain', 'provider'].includes(caseProfile), 'Explicit known case profile required');
+  if (caseProfile === 'provider') { assert.equal(typeof providerRecovery, 'function'); assert.equal(payerMode, 'private'); }
+  else assert.equal(providerRecovery, undefined, 'Provider callback belongs only to explicit provider profile');
   assert(['private', 'genesis'].includes(payerMode), 'Explicit payer mode required');
   if (payerMode === 'private') {
     assert.equal(typeof paymentFor, 'function');
@@ -57,7 +60,7 @@ export async function runPrivateBokExperiment({node, wallet, owner, operator, ot
   await fs.mkdir(outputDirectory, {mode: 0o700}); // Existing output forbids automatic resubmission.
   const report = {passed: false, caseProfile, completedCases: [], proofMode: realProofs ? 'real' : 'proofs-disabled', realProofs,
     realProofAcceptance: 'missing', fundingMode: funding.mode, payerMode, measurements: [], states: [], negativeChecks: [],
-    limitations: ['Disposable local tokens and identities only', 'Synthetic provider receipt identifiers; no model call or provider billing acceptance',
+    limitations: ['Disposable local tokens and identities only', caseProfile === 'provider' ? 'Actual provider-reported receipt; no independent account-debit reconciliation or production qualification' : 'Synthetic provider receipt identifiers; no model call or provider billing acceptance',
       'Probe board does not implement product admission, ownership, UTF-8 or full relationship policy',
       'No node observer or independent privacy qualification', 'Compiler diagnostic disposition is a separate gate'],
     privacyAcceptance: 'missing', publicHumanFeePayer: payerMode === 'genesis'};
@@ -94,7 +97,8 @@ export async function runPrivateBokExperiment({node, wallet, owner, operator, ot
     report.build = manifest;
     const sourceFiles = [...new Set(['experiments/private-bok/measure.mjs', 'experiments/private-bok/wire.mjs', 'experiments/private-bok/rejection.mjs',
       'shared/rolling/invocation.mjs', 'scripts/prove-application-action.mjs', 'scripts/c01-settle-application-message.mjs',
-      'scripts/c01-client-mining.mjs', 'scripts/testing/proof-policy.mjs', 'scripts/u01-browser-flow.mjs', ...harnessFiles])];
+      'scripts/c01-client-mining.mjs', 'scripts/testing/proof-policy.mjs', 'scripts/u01-browser-flow.mjs',
+      'scripts/testing/private-bok-provider-fixture.mjs', ...harnessFiles])];
     const sourceHashes = async () => Object.fromEntries(await Promise.all(sourceFiles.map(async relative => {
       assert(typeof relative === 'string' && !path.isAbsolute(relative));
       const resolved = path.resolve(ROOT, relative); assert(resolved.startsWith(ROOT + path.sep), 'Harness path escapes repository');
@@ -212,8 +216,9 @@ export async function runPrivateBokExperiment({node, wallet, owner, operator, ot
       await save();
     }
 
-    async function claim(label) {
-      stage = label + '-fund'; const amount = 1000n, salt = nonzero(), secret = nonzero(), secretHash = await computeSecretHash(secret);
+    async function claim(label, amount = 1000n) {
+      assert(typeof amount === 'bigint' && amount > 0n && amount <= 1000000n);
+      stage = label + '-fund'; const salt = nonzero(), secret = nonzero(), secretHash = await computeSecretHash(secret);
       const commitment = await poseidon2HashWithSeparator([...scope, field(owner), salt.toBigInt()], 0x424b4301);
       assert(!commitment.isZero()); assert.notEqual(commitment.toBigInt(), field(owner));
       const content = sha256ToField([encodeV1('PLUGIN_CREDIT_V1', [...scope, commitment.toBigInt(), amount])]);
@@ -247,14 +252,15 @@ export async function runPrivateBokExperiment({node, wallet, owner, operator, ot
       await save(); await send(contract.methods.claim(amount, salt, secret, new Fr(deposited.leafIndex)), owner, label + '-claim');
     }
 
-    async function authorize(label) {
+    async function authorize(label, budget = 600n) {
+      assert(typeof budget === 'bigint' && budget > 0n && budget <= 1000000n);
       const id = nonzero(), nonce = nonzero();
       const targetInput = {chainId, rollupVersion, board: field(boardInstance.address), plugin: field(escrow),
         kind: 3, reference: 99n, nonce: nonce.toBigInt(), content: ''};
       const preimage = invocationPreimage(targetInput), target = preimage.slice(5, 13).map(x => new Fr(x)), message = preimage.slice(13).map(x => new Fr(x));
       assert.equal(preimage.length, 45); const hash = await invocationHash(targetInput);
       assert.equal((await board.methods.target_hash(escrow, target, message).simulate({from: operator})).result, hash.toBigInt());
-      await send(contract.methods.authorize_request(id, hash, 600n), owner, label + '-authorize');
+      await send(contract.methods.authorize_request(id, hash, budget), owner, label + '-authorize');
       return {id, hash, target, message};
     }
     async function activate(item, label) { await send(board.methods.invoke(escrow, item.id, item.target, item.message), operator, label + '-activate'); }
@@ -341,6 +347,75 @@ export async function runPrivateBokExperiment({node, wallet, owner, operator, ot
       assert.equal(await balance(), 0n); assert.equal(await earned(), 0n);
 
       report.completedCases.push('uncertain');
+    }
+    if (caseProfile === 'provider') {
+      const budget = 1000000n;
+      await claim('provider', budget); assert.equal(await balance(), budget);
+      const item = await authorize('provider', budget); await activate(item, 'provider');
+      const active = await state(item.id, 'provider-active', {state: 2n, sequence: 0n,
+        invocation_hash: item.hash.toBigInt(), budget, available: budget, reserved: 0n, charged: 0n, refunded: 0n}, 0n, 0n);
+      stage = 'provider-recovery'; await intent(stage, {requestId: String(item.id), target: String(item.hash), budget});
+      const recovery = validateProviderCompletion(await providerRecovery({node, escrow, board: boardInstance.address,
+        requestId: item.id, target: item.hash, operator, realProofs, artifactSha256: manifest.artifactSha256}));
+      assert.equal(recovery.passed, true);
+      const charge = BigInt(recovery.charge), refund = budget - charge, hash = TxHash.fromString(recovery.finishTxHash);
+      report.providerRecovery = {...recovery, billingEvidence: 'provider-reported receipt', independentAccountDebit: false}; await save();
+      const receipt = await node.getTxReceipt(hash), effect = await node.getTxEffect(hash);
+      assert(included(receipt), 'Actual successful provider finish required');
+      assert.equal(String(receipt.txHash), recovery.finishTxHash);
+      assert(effect?.data && String(effect.data.txHash) === recovery.finishTxHash);
+      assert.equal(String(effect.l2BlockHash), String(receipt.blockHash));
+      assert.equal(Number(effect.l2BlockNumber), Number(receipt.blockNumber));
+      assert.equal(String((await node.getBlock(receipt.blockNumber)).hash), String(receipt.blockHash));
+      assert(typeof receipt.transactionFee === 'bigint' && receipt.transactionFee > 0n);
+      const bytes = effect.data.toBuffer();
+      await fs.writeFile(path.join(outputDirectory, 'effect-provider-finish.bin'), bytes, {flag: 'wx', mode: 0o600});
+      report.measurements.push({label: 'provider-finish', actorRole: 'operator', txHash: recovery.finishTxHash,
+        submission: 'included', executionResult: receipt.executionResult, transactionFee: String(receipt.transactionFee),
+        blockNumber: receipt.blockNumber, blockHash: String(receipt.blockHash), effectBytes: bytes.length, effectSha256: sha(bytes)});
+      await save();
+      // Read the exact V6 unpacked Request layout at one current checkpoint, then
+      // compare private-note discovery against it. The coordinator's success flag
+      // cannot substitute for these independent canonical accounting checks.
+      const anchor = await node.getBlock('checkpointed'); assert(anchor?.header);
+      assert(Number(anchor.number) >= Number(receipt.blockNumber));
+      const at = {number: anchor.number, hash: anchor.hash};
+      const slot = await deriveStorageSlotInMap(artifact.storageLayout.requests.slot, item.id);
+      const names = ['state','invocation_hash','sequence','deadline','budget','available','reserved','charged','refunded',
+        'primary_refund','secondary_refund','primary_done','secondary_done','receipt'];
+      const closed = {};
+      for (const [i, name] of names.entries()) {
+        const value = (await node.getPublicStorageAt(at, escrow, new Fr(slot.toBigInt() + BigInt(i)))).toBigInt();
+        if (name.endsWith('_done')) {assert(value === 0n || value === 1n); closed[name] = value === 1n;}
+        else closed[name] = value;
+      }
+      assert.equal(String((await node.getBlock(anchor.number)).hash), String(anchor.hash));
+      assertRequest(closed, {state: 4n, sequence: 1n, invocation_hash: item.hash.toBigInt(), budget,
+        available: 0n, reserved: 0n, charged: charge, refunded: refund, primary_done: true, secondary_done: true,
+        deadline: active.deadline, primary_refund: active.primary_refund, secondary_refund: active.secondary_refund,
+        receipt: Fr.fromString(recovery.receiptId).toBigInt()});
+      await state(item.id, 'provider-closed', closed, refund, charge);
+      const accountingFields = [item.id.toBigInt(), 4n, 1n, budget, 0n, 0n, charge, refund, 1n];
+      const accountingLogs = effect.data.publicLogs.filter(log => log.contractAddress.equals(escrow)
+        && log.getEmittedFieldsWithoutTag().length === accountingFields.length
+        && log.getEmittedFieldsWithoutTag().every((value, i) => value.toBigInt() === accountingFields[i]));
+      assert.equal(accountingLogs.length, 1, 'Finish effect must authenticate this request and exact closed accounting');
+      assert.equal(effect.data.l2ToL1Msgs.length, 0);
+      if (refund > 0n) await completion(effect, closed.primary_refund, refund);
+      else {
+        const tag = await poseidon2HashWithSeparator([closed.primary_refund], 3372669888);
+        assert.equal(effect.data.publicLogs.filter(log => log.contractAddress.equals(escrow) && log.fields[0]?.equals(tag)).length, 0,
+          'Zero refund must not create a completion');
+      }
+      report.providerRecovery.canonicalRequest = {blockNumber: Number(anchor.number), blockHash: String(anchor.hash),
+        receiptMatched: true, charge: String(charge), refunded: String(refund), sequence: '1'};
+      await save();
+      if (refund > 0n) withdrawals.push(await withdraw(refund, recipient, owner, false, 'provider-private-withdraw'));
+      else report.measurements.push({label: 'provider-private-withdraw', notRequired: 'zero refund'});
+      if (charge > 0n) withdrawals.push(await withdraw(charge, operatorRecipient, operator, true, 'provider-operator-withdraw'));
+      else report.measurements.push({label: 'provider-operator-withdraw', notRequired: 'zero actual charge'});
+      assert.equal(await balance(), 0n); assert.equal(await earned(), 0n);
+      report.completedCases.push('provider');
     }
     assert.deepEqual(report.completedCases, caseProfile === 'both' ? ['normal', 'uncertain'] : [caseProfile]);
 
