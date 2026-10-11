@@ -54,7 +54,9 @@ export async function prepareC01BoardFlow({ bbBinaryPath, directory, authorCount
   assertNodeVersion(); assertAztecPackages();
   await nativeClientOptions(bbBinaryPath, directory);
   const prepared = await boardArtifact();
-  assert([1,10].includes(authorCount));
+  // Explicit scenarios: ordinary author, distinct owner/operator/adversary for
+  // private Bok accounting, or the ten-author contention qualification.
+  assert([1,3,10].includes(authorCount));
   assert.deepEqual(Object.keys(boardTiming).sort(),['baseCooldown','censorWindow']);
   assert(Object.values(boardTiming).every(value=>Number.isSafeInteger(value)&&value>0&&value<=600));
   const authorAccounts = await generateSchnorrAccounts(authorCount, 'schnorr_initializerless');
