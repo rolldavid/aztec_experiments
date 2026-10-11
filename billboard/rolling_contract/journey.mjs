@@ -31,6 +31,7 @@ import {nameRegistration, NAME_DOMAIN} from '../../shared/rolling/name-policy.mj
 import {invocationPreimage, invocationHash} from '../../shared/rolling/invocation.mjs';
 import {createRollingNoteMembership} from '../../scripts/testing/rolling-note-membership.mjs';
 import {assertMinedCallbackRollback} from './callback-rollback.mjs';
+import {assertReplyAcceptance, assertReplyAccounting} from './reply-acceptance.mjs';
 
 const n = value => typeof value === 'bigint' ? value : typeof value === 'number' ? BigInt(value)
   : value.toBigInt?.() ?? value.toField().toBigInt();
@@ -77,7 +78,7 @@ export async function runRollingBokJourney({node, wallet, owner, operator, board
     return fs.writeFile(path.join(outputDirectory, 'journey.json'), json(report), {mode: 0o600});
   };
   const stage = async label => { report.stage = label; await mark('rolling-bok:' + label); await save(); };
-  const sourcePaths = [...new Set(['billboard/rolling_contract/journey.mjs', 'billboard/rolling_contract/callback-rollback.mjs',
+  const sourcePaths = [...new Set(['billboard/rolling_contract/journey.mjs', 'billboard/rolling_contract/reply-acceptance.mjs', 'billboard/rolling_contract/callback-rollback.mjs',
     'billboard/rolling_contract/src/main.nr', 'billboard/rolling_contract/src/posting.nr', 'billboard/rolling_contract/src/admission.nr',
     'billboard/rolling_contract/src/encoding.nr', 'experiments/private-bok/escrow/src/main.nr',
     'scripts/testing/private-bok-fees.mjs', 'scripts/w01-private-fee-flow.mjs', 'scripts/prove-application-action.mjs',
@@ -210,6 +211,12 @@ export async function runRollingBokJourney({node, wallet, owner, operator, board
       await save(); // Reverted execution or policy failure cannot erase charged fees.
       assert.equal(receipt.executionResult, TxExecutionResult.SUCCESS);
       if (selected.role !== 'operator') assert(BigInt(proof.maximumFee) >= receipt.transactionFee);
+      row.publicObservation = {publicWrites: effect.publicDataWrites.length,
+        logFields: effect.publicLogs.reduce((sum, log) => sum + log.sizeInFields(), 0),
+        blobFields: effect.toBlobFields().length,
+        footprint: classifyT03PublicFootprint({tx, effect, roles: {author: owner, otherAuthor: privateFee.otherUser,
+          sharedPayer: feeInstance.address, board: board.address, moderator: operator}})};
+      await save(); // Preserve bounded public diagnostics before privacy/limit assertions.
       row.footprint = inspect(tx, effect, selected.role !== 'operator', gas);
       observedPublic.push({tx, effect});
       await wallet.pxe.sync(); await save(); return {tx, effect, receipt};
@@ -317,11 +324,15 @@ export async function runRollingBokJourney({node, wallet, owner, operator, board
     assert(n(await query(board, 'get_post_count')) === countBefore + 1n && n(await query(board, 'get_post_id', countBefore)) === n(postId));
     const publishedAt = n((await node.getBlock(posted.receipt.blockNumber)).header.globalVariables.timestamp);
     assert(n(publicPost[3]) === publishedAt);
-    async function event(name) {
+    async function event(name, effect = posted.effect) {
       const abi = board.artifact.outputs.structs.events.find(item => item.path === `RollingBoard::${name}`); assert(abi);
       const selector = await EventSelector.fromSignature(decodeFunctionSignature(name, abi.fields));
       const tag = await computeLogTag(selector.toField(), DomainSeparator.EVENT_LOG_TAG);
-      const logs = posted.effect.publicLogs.filter(log => log.contractAddress.equals(board.address) && log.fields[0]?.equals(tag));
+      const logs = effect.publicLogs.filter(log => log.contractAddress.equals(board.address) && log.fields[0]?.equals(tag));
+      if (effect !== posted.effect) {
+        report.reply.authenticatedEventCounts ??= {};
+        report.reply.authenticatedEventCounts[name] = logs.length; await save();
+      }
       assert.equal(logs.length, 1, 'Exactly one authenticated event required');
       return decodeFromAbi(abi, logs[0].getEmittedFieldsWithoutTag());
     }
@@ -352,6 +363,84 @@ export async function runRollingBokJourney({node, wallet, owner, operator, board
       scopes: [owner], storageSlot: board.artifact.storageLayout.posts.slot})).filter(note => note.txHash.equals(posted.tx.getTxHash()));
     assert(postNotes.length === 1, 'Exactly one authenticated private posting history note required');
     equalPrivate(postNotes[0].note.items.map(n), [1n, n(depositId), 1n, n(postId), now, 0n, 0n], 'Private history note differs');
+    // Real chain transactions, explicitly synthetic provider billing. The separate
+    // actual provider campaign owns its paid-call journal and must never be replayed here.
+    const numberFields = object => Object.fromEntries(Object.entries(object).map(([key, value]) => [key,
+      typeof value === 'boolean' ? value : String(n(value))]));
+    const accounting = request => numberFields(Object.fromEntries(['state', 'invocation_hash', 'sequence', 'budget',
+      'available', 'reserved', 'charged', 'refunded', 'receipt', 'primary_done', 'secondary_done'].map(key => [key, request[key]])));
+    report.reply = {passed: false, billing: 'synthetic-provider-fixture', actualProviderCall: false,
+      independentProviderDebitVerified: false, reservedMaximum: '200', fixtureCharge: '120'};
+    await save();
+    const initialEarnings = n(await query(bok, 'earned'));
+    report.reply.initialOperatorEarnings = String(initialEarnings); await save(); assert.equal(initialEarnings, 0n);
+    await send('bok-reserve', bok.methods.reserve(requestId, 0, 200n), operator);
+    const reserved = await query(bok, 'request', requestId);
+    report.reply.reserved = accounting(reserved); await save();
+    assert(n(reserved.state) === 2n && n(reserved.invocation_hash) === n(target) && n(reserved.budget) === 400n
+      && n(reserved.available) === 200n && n(reserved.reserved) === 200n && n(reserved.charged) === 0n && n(reserved.refunded) === 0n);
+    const syntheticReceipt = fresh();
+    report.reply.syntheticReceipt = String(syntheticReceipt); await save();
+    await send('bok-settle', bok.methods.settle(requestId, 0, 120n, syntheticReceipt), operator);
+    const settled = await query(bok, 'request', requestId);
+    report.reply.settled = accounting(settled); await save();
+    assert(n(settled.state) === 2n && n(settled.invocation_hash) === n(target) && n(settled.sequence) === 1n
+      && n(settled.available) === 280n && n(settled.reserved) === 0n && n(settled.charged) === 120n
+      && n(settled.refunded) === 0n && n(settled.receipt) === n(syntheticReceipt));
+    const replyContent = 'Fixture reply: the quiet reading page is ready.';
+    // Reuse only the canonical UTF-8 packing; no second invocation is authorized.
+    const packedReply = invocationPreimage({...input, content: replyContent});
+    const replyMessage = packedReply.slice(13).map(value => new Fr(value)), replyLength = Number(packedReply[12]);
+    const [replyMainVersion] = await query(board, 'main_policy');
+    const replyLocalVersion = 0, replyCountBefore = n(await query(board, 'get_post_count'));
+    const replyArgs = [requestId, pluginId, replyMessage, replyLength, Number(replyMainVersion), replyLocalVersion];
+    const replied = await send('bok-publish-reply', bok.methods.publish_reply(...replyArgs), operator);
+    const invocationKey = await poseidon2HashWithSeparator([n(bok.address), n(requestId)], 0x52434249);
+    const replyId = await poseidon2HashWithSeparator([n(board.address), n(invocationKey)], 0x52434252);
+    const replyDigest = await poseidon2HashWithSeparator([BigInt(replyLength), ...replyMessage.map(n)], 0x52435431);
+    const replyPublic = await query(board, 'get_post', replyId), replyAt = n((await node.getBlock(replied.receipt.blockNumber)).header.globalVariables.timestamp);
+    const replyPublished = await event('PostPublished', replied.effect), replyLinked = await event('PluginReplyPublished', replied.effect);
+    const expectedReplyRecord = {subboard: '0', parent: String(n(postId)), root: String(n(postId)), kind: '4',
+      name_id: '0', reference: '0', content_digest: String(n(replyDigest))};
+    const requestAfterReply = await query(bok, 'request', requestId);
+    report.reply.observed = {requestUnchanged: isDeepStrictEqual(settled, requestAfterReply), exists: replyPublic[0], removed: String(n(replyPublic[2])), reason: String(n(replyPublic[4])),
+      record: numberFields(replyPublic[1]), count: String(n(await query(board, 'get_post_count'))),
+      atOrder: String(n(await query(board, 'get_post_id', replyCountBefore))), timestamp: String(n(replyPublic[3])),
+      published: {...numberFields(Object.fromEntries(['schema', 'id', 'timestamp', 'main_policy_version', 'local_policy_version', 'length'].map(key => [key, replyPublished[key]]))),
+        record: numberFields(replyPublished.record), message: replyPublished.message.map(value => String(n(value)))},
+      linked: numberFields(replyLinked), requestBeforeReply: accounting(settled), requestAfterReply: accounting(requestAfterReply)};
+    report.reply.expected = {id: String(n(replyId)), record: expectedReplyRecord, count: String(replyCountBefore + 1n),
+      timestamp: String(replyAt), mainVersion: String(n(replyMainVersion)), localVersion: '0', length: String(replyLength),
+      message: replyMessage.map(value => String(n(value))), pluginId: String(n(pluginId)), requestId: String(n(requestId)),
+      parentId: String(n(postId)), target: String(n(target))};
+    report.reply.content = replyContent; await save();
+    assertReplyAcceptance(report.reply.observed, report.reply.expected);
+    // SDK simulation only: no extra send, proof/finality owner or paid provider call.
+    for (const [label, actor, expected] of [['replay', operator, 'Already replied'], ['wrong-operator', owner, 'Only operator']]) {
+      await stage('bok-negative-' + label);
+      const observation = {method: 'SDK simulation', submitted: false, rejected: false, expectedReasonMatched: false};
+      report.reply[label] = observation; await save();
+      let rejection;
+      try {
+        // Keep the full SDK simulation result: ContractFunctionInteraction.simulate
+        // decodes only return values and can omit a returned public revert reason.
+        const simulation = await wallet.simulateTx(await bok.methods.publish_reply(...replyArgs).request(), {from: actor});
+        rejection = simulation.publicOutput?.revertReason;
+        observation.rejected = Boolean(rejection) && !simulation.publicOutput?.txEffect?.revertCode?.isOK();
+      } catch (error) { observation.rejected = true; rejection = error; }
+      // Inspect in memory only; raw SDK errors can contain private data.
+      const message = rejection?.getOriginalMessage?.() ?? rejection?.message;
+      observation.expectedReasonMatched = typeof message === 'string' && message.includes(expected);
+      await save(); assert(observation.rejected && observation.expectedReasonMatched, 'Expected reply rejection not established');
+    }
+    await send('bok-finish', bok.methods.finish(requestId), operator);
+    const completed = await query(bok, 'request', requestId);
+    report.reply.accounting = {...accounting(completed), ownerBalance: String(n(await query(bok, 'balance_of', owner))),
+      operatorEarnings: String(n(await query(bok, 'earned')))};
+    await save(); assertReplyAccounting(report.reply.accounting, {target: String(n(target)), receipt: String(n(syntheticReceipt))});
+    equalPrivate((await query(board, 'get_deposit_info', owner, depositId)).map(n), after, 'Bok reply changed human collateral');
+    equalPrivate((await query(board, 'owned_names', owner, 0)).map(n), names, 'Bok reply changed private name ownership');
+    report.reply.passed = true; await save();
     // Compare sensitive link markers in memory only. Public opaque note hashes,
     // nullifiers and ciphertext are deliberately outside this direct-field test.
     const markers = new Set([n(depositId), before[3], after[4]].map(String));
@@ -369,7 +458,8 @@ export async function runRollingBokJourney({node, wallet, owner, operator, board
       nameId: String(nameId), content, bodyDigest: String(digest), humanActualFees: feeSummary(),
       checks: ['actual-claimed-collateral', 'private-fee-human', 'name-owned', 'immutable-plugin-bound',
         'mined-mismatch-rollback', 'same-request-success', 'authenticated-post-body', 'exact-ten-field-deposit-transition',
-        'active-request-400-budget', 'private-bok-credit-600', 'canonical-fee-conservation', 'public-footprint-smoke']});
+        'active-request-400-budget', 'private-bok-credit-600', 'authenticated-bok-reply', 'synthetic-charge-120-private-refund-280',
+        'private-bok-final-880-operator-120', 'reply-replay-and-authorization-rejected', 'canonical-fee-conservation', 'public-footprint-smoke']});
     await save(); return report;
   } catch (error) {
     // Only stage and completed public observations are persisted. SDK errors may
