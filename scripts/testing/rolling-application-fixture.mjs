@@ -3,6 +3,7 @@
 // two HTTP adapters and its private wallet state.
 // No fake node, proof, freshness, receipt, event or production factory is injected.
 import assert from 'node:assert/strict';
+import {createSynchronizedRollingApplication} from '../../shared/rolling/synchronized-application.mjs';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import http from 'node:http';
@@ -20,7 +21,7 @@ const SOURCES=['scripts/testing/rolling-native-artifacts.mjs','scripts/testing/r
   'scripts/c01-real-node.mjs','scripts/c01-board-flow.mjs','scripts/c01-deposit-flow.mjs','scripts/c01-client-mining.mjs',
   'scripts/w01-private-fee-flow.mjs','scripts/w01-unfunded-wallet.mjs','scripts/w01-private-funding.mjs',
   'shared/sdk-entry.mjs','shared/private-pxe.mjs','shared/trusted-private-node.mjs','shared/routed-kernel-prover.mjs','shared/remote-prover-client.mjs',
-  'shared/rolling/application.mjs','shared/rolling/public-events.mjs','shared/rolling/public-projection.mjs',
+  'shared/rolling/application.mjs','shared/rolling/synchronized-application.mjs','shared/rolling/public-events.mjs','shared/rolling/public-projection.mjs',
   'shared/private-fee-client.mjs','shared/private-fee-estimation.mjs','shared/private-fee-simulation.mjs','shared/l2-journal.mjs','shared/journal-record.mjs',
   'shared/sdk-store.mjs','shared/transaction-outcomes.mjs','apps/src/billboard/user/engine.js','apps/src/billboard/user/transaction-journal-store.mjs',
   'prover/service.mjs','prover/server.mjs','prover/private-query.mjs','prover/catalog.mjs','prover/rolling-artifacts.mjs','prover/rolling-artifacts.json',
@@ -294,7 +295,8 @@ export async function runRollingApplicationFixture(ctx) {
       const portOptions={sdk,deployment:{board:{address:ctx.instance.address,artifact:checked.artifact},network,portal:scope.portal,proofsEnabled:real,
         privateFee:{address:fees.browserFixture.instance.address,artifact:fees.browserFixture.artifact,gasSettings:fees.browserFixture.gas}},
         contextGuard,privateStore,accountSession:{owner,wallet:appWallet,node,journal,walletSecret:journalOptions.walletSecret,walletSalt:journalOptions.walletSalt}};
-      let app=createRollingApplication(portOptions);
+      const synchronized=application=>createSynchronizedRollingApplication({application,synchronize:pxe.sync.bind(pxe),contextGuard});
+      let app=synchronized(createRollingApplication(portOptions));
       assert.equal((await app.readAccountStatus()).status,'fee-ready');
       const decoder=await createRollingEventDecoder({artifact:checked.artifact,scope:{chainId:network.chainId,rollupVersion:network.version,rollupAddress:network.rollup,
         boardAddress:String(ctx.instance.address),classId:String((await sdk.getContractClassFromArtifact(checked.artifact)).id)}});
@@ -305,7 +307,7 @@ export async function runRollingApplicationFixture(ctx) {
       report.initialPublicAnchor=initialEvents[0].position;projection.stage(initialEvents).apply();
       const ids={};let lastIntent;
       async function action(input,type) {
-        await mark(type);await pxe.sync();
+        await mark(type);
         const row={action:type,startedAt:Date.now(),submission:'not attempted'};report.transactions.push(row);await save();
         const prepared=await app.prepare(input);lastIntent=prepared.intentId;row.maximumFee=prepared.maximumFee;
         row.submission='outcome unknown';await save();
@@ -327,13 +329,20 @@ export async function runRollingApplicationFixture(ctx) {
       }
       const registered=await action({type:'name',first:'River',last:'Stone'},'name');
       assert.equal(registered.length,1);assert.equal(registered[0].type,'NameRegistered');ids.nameId=registered[0].payload.name_id;
-      const identities=await app.ownedIdentities();assert.deepEqual(identities.identities.map(v=>String(BigInt(v))),[ids.nameId]);assert.equal(identities.nextCursor,null);
+      await mark('owned-name-recovery');
+      report.ownedNameRecovery={beforeBlock:Number((await pxe.getSyncedBlockHeader()).globalVariables.blockNumber),requiredBlock:report.transactions.at(-1).blockNumber};
+      const identities=await app.ownedIdentities();
+      Object.assign(report.ownedNameRecovery,{afterBlock:Number((await pxe.getSyncedBlockHeader()).globalVariables.blockNumber),count:identities.identities.length,
+        registeredNamePresent:identities.identities.some(v=>String(BigInt(v))===ids.nameId),nextCursor:identities.nextCursor});await save();
+      assert(report.ownedNameRecovery.afterBlock>=report.ownedNameRecovery.requiredBlock);
+      assert.deepEqual(identities.identities.map(v=>String(BigInt(v))),[ids.nameId]);assert.equal(identities.nextCursor,null);
       const created=await action({type:'subboard',slug:'application-test',name:'Application test',description:'Real application acceptance',rules:'Be helpful.'},'subboard');
       assert.equal(created.length,1);assert.equal(created[0].type,'SubboardCreated');ids.subboardId=created[0].payload.subboard_id;
       const deposit=String(claim.claim.depositChainId);
       const rootEvents=await action({type:'post',deposit,content:'A real application root',name:ids.nameId,subboard:ids.subboardId},'post');
       assert.equal(rootEvents.length,1);assert.equal(rootEvents[0].type,'PostPublished');ids.rootId=rootEvents[0].payload.id;
       // Wait using real checkpoint production, never mutate the deposit's time.
+      await pxe.sync(); // Direct utility below also requires the newly included post anchor.
       const nextTime=(await Contract.at(ctx.instance.address,checked.artifact,appWallet).methods.get_deposit_info(owner,new Fr(BigInt(deposit))).simulate({from:owner})).result;
       assert.equal(nextTime.length,10);
       const replyCheckpoints=createT04CheckpointScope(ctx.node.getSequencer()),replyDeadline=Math.min(Date.now()+90000,ctx.applicationDeadlineAt);
@@ -348,7 +357,7 @@ export async function runRollingApplicationFixture(ctx) {
       await mark('encrypted-journal-reopen');
       const jobsBefore=service.stats().submitted,feeBefore=appWallet._actualFees;
       privateStore=createFileJournalStorage(storageDirectory);journal=await sdk.createL2Journal({...journalOptions,storage:privateStore});
-      app=createRollingApplication({...portOptions,privateStore,accountSession:{...portOptions.accountSession,journal}});
+      app=synchronized(createRollingApplication({...portOptions,privateStore,accountSession:{...portOptions.accountSession,journal}}));
       const reconciled=await app.reconcile(lastIntent);assert.equal(reconciled.status,'confirmed');assert.equal(reconciled.txHash,hashes.at(-1));
       assert.equal(service.stats().submitted,jobsBefore);assert.equal(appWallet._actualFees,feeBefore);report.journalReopen={sameHash:true,newProofJobs:0,transactionBytesRetained:true};
       await mark('canonical-projection-rebuild');

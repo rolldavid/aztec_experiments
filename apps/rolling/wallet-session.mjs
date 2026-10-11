@@ -1,5 +1,6 @@
 // Load after explicit unlock. All SDK and custody dependencies are supplied by
 // the authenticated application bundle; no fixture or ordinary-node fallback.
+import {createSynchronizedRollingApplication} from '../../shared/rolling/synchronized-application.mjs';
 import {createRollingApplication} from '../../shared/rolling/application.mjs';
 import {verifyRollingDeployment} from '../../shared/rolling/deployment.mjs';
 const fail=code=>Object.assign(Error('The private account is unavailable. Preserve recovery records.'),{code});
@@ -63,10 +64,11 @@ export async function createRollingWalletSession({sdk,routing,ethers,config,boar
     accountSession:{owner:instance.address,wallet,node,journal,walletSecret:captured.secretKey,walletSalt:captured.salt}});
   }catch(error){closed=true;try{await dispose();}catch(cleanupError){throw new AggregateError([error,cleanupError],'Private session initialization and cleanup failed');}throw error;}
  });
- const application=Object.freeze(Object.fromEntries(['readAccountStatus','ownedIdentities','prepare','submitPrepared','cancelPrepared','reconcile'].map(name=>[
-  name,(...args)=>locked(async()=>{
-   if(!sdk.isTrustedPrivateNode(privateNode)||!sdk.isPrivatePXEForNode(pxe,privateNode)||privateWallet.aztecNode!==privateNode||privateWallet.pxe!==pxe||!routing.isPrivateWalletForNode(privateWallet,privateNode))throw fail('ROLLING_PRIVATE_ROUTE');
-   await pxe.sync();await guard();return app[name](...args);})])));
+ const synchronized=createSynchronizedRollingApplication({application:app,synchronize:pxe.sync.bind(pxe),contextGuard:async()=>{
+  await guard();
+  if(!sdk.isTrustedPrivateNode(privateNode)||!sdk.isPrivatePXEForNode(pxe,privateNode)||privateWallet.aztecNode!==privateNode||privateWallet.pxe!==pxe||!routing.isPrivateWalletForNode(privateWallet,privateNode))throw fail('ROLLING_PRIVATE_ROUTE');
+ }});
+ const application=Object.freeze(Object.fromEntries(Object.entries(synchronized).map(([name,call])=>[name,(...args)=>locked(()=>call(...args))])));
  return Object.freeze({application,get busy(){return busy;},close(){
   if(closing)return closing;
   if(busy)return Promise.reject(fail('ROLLING_BUSY'));
