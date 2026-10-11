@@ -22,16 +22,26 @@ export function assertCanonicalSocialViews(projection,rows){
 export function assertSocialHTTPView(actual,expected){
  assert.deepEqual(Object.fromEntries(Object.keys(expected).map(key=>[key,actual[key]])),expected);
 }
-export async function verifyRollingPublicReader({node,artifact,scope,deployment,cacheDirectory,ids,scenario='conversation',expectedProfile,expectedHTTP,deadlineAt,observation}){
- assert(['conversation','profiles','anonymous-thread','repost-reactions','account-reactions'].includes(scenario));
+export function assertCanonicalOwnedNameProfiles(projection,profiles){
+ assert(Array.isArray(profiles)&&profiles.length===3);
+ const seen=new Set();for(const expected of profiles){
+  assert(expected?.identity?.id&&!seen.has(expected.identity.id));seen.add(expected.identity.id);
+  assert.deepEqual(expected.posts,[]);assert.equal(expected.nextCursor,null);
+  assert.deepEqual(projection.profile(expected.identity.id,{limit:100}),expected);
+ }
+}
+export async function verifyRollingPublicReader({node,artifact,scope,deployment,cacheDirectory,ids,scenario='conversation',expectedProfile,expectedProfiles,expectedHTTP,deadlineAt,observation}){
+ assert(['conversation','profiles','anonymous-thread','repost-reactions','account-reactions','owned-names'].includes(scenario));
+ const names=scenario==='owned-names';
  const social=['anonymous-thread','repost-reactions','account-reactions'].includes(scenario);
+ if(names){assert(Array.isArray(expectedProfiles)&&expectedProfiles.length===3);assert.equal(new Set(expectedProfiles.map(p=>p.identity.id)).size,3);}
  if(social)assert(Array.isArray(expectedHTTP)&&expectedHTTP.length>0);
  if(scenario==='profiles')assert(expectedProfile&&expectedProfile.id===ids.nameId);
  assert(Number.isSafeInteger(deadlineAt)&&deadlineAt>Date.now());
  const deadline=Math.min(deadlineAt,Date.now()+30000);
  const storage=()=>publicFeedFileStorage(cacheDirectory,{maxRecordBytes:1048576,maxSnapshotBytes:67108864});
  const make=timeoutMs=>createRollingPublicIndex({node,artifact,scope,deployment,storage:storage(),rangeSize:10,pagesPerSync:20,timeoutMs});
- const routes=social?expectedHTTP.map(row=>[row.route,row.parameters,row.expected]):scenario==='profiles'?[['profile',{nameId:ids.nameId}],['feed',{}],['directory',{}]]:[['feed',{}],['thread',{root:ids.rootId}],['profile',{nameId:ids.nameId}],['directory',{}],['post',{id:ids.replyId}]];
+ const routes=names?[...expectedProfiles.map(p=>['profile',{nameId:p.identity.id,limit:100},{...p,names:{},boards:{}}]),['feed',{}, {posts:[],nextCursor:null,names:{},boards:{}}],['directory',{}, {boards:[],nextCursor:null}]]:social?expectedHTTP.map(row=>[row.route,row.parameters,row.expected]):scenario==='profiles'?[['profile',{nameId:ids.nameId}],['feed',{}],['directory',{}]]:[['feed',{}],['thread',{root:ids.rootId}],['profile',{nameId:ids.nameId}],['directory',{}],['post',{id:ids.replyId}]];
  let first;
  observation.passed=false;observation.sessions=[];
  for(const phase of ['fresh','reopened']){
@@ -48,10 +58,10 @@ export async function verifyRollingPublicReader({node,artifact,scope,deployment,
    }
    const read=createPublicReader({timeoutMs:Math.max(1,deadline-Date.now()),fetch:(url,options)=>fetch(server.url+url,{...options,signal:AbortSignal.any([options.signal,AbortSignal.timeout(Math.max(1,deadline-Date.now()))])})});
    const views={};
-   for(const [i,[route,params,expected]]of routes.entries()){assert(Date.now()<deadline);const key=social?String(i):route;views[key]=await read(route,params);assert.deepEqual(views[key].scope,scope);
-    if(social)assertSocialHTTPView(views[key],expected);}
+   for(const [i,[route,params,expected]]of routes.entries()){assert(Date.now()<deadline);const key=social||names?String(i):route;views[key]=await read(route,params);assert.deepEqual(views[key].scope,scope);
+    if(social||names)assertSocialHTTPView(views[key],expected);}
    if(scenario==='profiles'){assert.deepEqual(views.profile.identity,expectedProfile);assert.deepEqual(views.profile.posts,[]);assert.deepEqual(views.feed.posts,[]);assert.deepEqual(views.directory.boards,[]);}
-   else if(!social){
+   else if(!social&&!names){
    assert.deepEqual(views.thread.posts.map(p=>p.id),[ids.rootId,ids.replyId]);
    assert.deepEqual(views.profile.posts.map(p=>p.id).sort(),[ids.rootId,ids.replyId].sort());
    assert.equal(views.post.post.id,ids.replyId);assert.equal(views.post.post.likes,'1');assert.equal(views.post.post.bot,null);
@@ -63,7 +73,7 @@ export async function verifyRollingPublicReader({node,artifact,scope,deployment,
    }
    const content=Object.fromEntries(Object.entries(views).map(([key,{revision,checkpoint,...value}])=>[key,value]));
    if(first)assert.deepEqual(content,first);else first=content;
-   session.checkpoint=(social?views['0']:scenario==='profiles'?views.profile:views.post).checkpoint;session.views=routes.map(([route])=>route);session.authenticatedRanges=index.status().authenticatedRanges;
+   session.checkpoint=(social||names?views['0']:scenario==='profiles'?views.profile:views.post).checkpoint;session.views=routes.map(([route])=>route);session.authenticatedRanges=index.status().authenticatedRanges;
    assert(session.authenticatedRanges>0);
   }catch(error){failure=error;throw error;}finally{
    try{await server.close();

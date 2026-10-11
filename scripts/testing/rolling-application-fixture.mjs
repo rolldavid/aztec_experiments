@@ -17,7 +17,7 @@ const discard=()=>{};
 const silent=Object.assign(discard,Object.fromEntries(['trace','debug','verbose','info','warn','error','fatal'].map(k=>[k,discard])),
   {level:'silent',isLevelEnabled:()=>false,getBindings:()=>({}),createChild:()=>silent});
 const PERSONAL=['feePayer','publicCallSenders','publicCallTargets','publicCallCalldata','publicWriteSlots','publicWriteValues','publicLogContracts','publicLogFields'];
-const SOURCES=['scripts/t03-public-footprint.mjs','scripts/testing/rolling-removed-like.mjs','scripts/testing/rolling-application-actor.mjs','scripts/testing/rolling-account-reactions.mjs','scripts/testing/rolling-social-acceptance.mjs','scripts/testing/rolling-profile-acceptance.mjs','experiments/avatar/raster-fixture.mjs','scripts/prove-application-action.mjs','scripts/testing/rolling-native-artifacts.mjs','scripts/testing/rolling-application-fixture.mjs','scripts/testing/scenarios.mjs','scripts/testing/scenario-flows.mjs',
+const SOURCES=['scripts/testing/rolling-owned-names.mjs','scripts/t03-public-footprint.mjs','scripts/testing/rolling-removed-like.mjs','scripts/testing/rolling-application-actor.mjs','scripts/testing/rolling-account-reactions.mjs','scripts/testing/rolling-social-acceptance.mjs','scripts/testing/rolling-profile-acceptance.mjs','experiments/avatar/raster-fixture.mjs','scripts/prove-application-action.mjs','scripts/testing/rolling-native-artifacts.mjs','scripts/testing/rolling-application-fixture.mjs','scripts/testing/scenarios.mjs','scripts/testing/scenario-flows.mjs',
   'scripts/c01-real-node.mjs','scripts/c01-board-flow.mjs','scripts/c01-deposit-flow.mjs','scripts/c01-client-mining.mjs',
   'scripts/w01-private-fee-flow.mjs','scripts/w01-unfunded-wallet.mjs','scripts/w01-private-funding.mjs',
   'shared/sdk-entry.mjs','shared/private-pxe.mjs','shared/trusted-private-node.mjs','shared/routed-kernel-prover.mjs','shared/remote-prover-client.mjs',
@@ -147,13 +147,13 @@ export async function loadRollingFixtureSDK() {
 }
 
 export async function runRollingApplicationFixture(ctx,scenario='conversation') {
-  assert(['conversation','profiles','anonymous-thread','repost-reactions','account-reactions'].includes(scenario));
-  const multi=scenario==='account-reactions',social=['anonymous-thread','repost-reactions','account-reactions'].includes(scenario);
+  assert(['conversation','profiles','anonymous-thread','repost-reactions','account-reactions','owned-names'].includes(scenario));
+  const names=scenario==='owned-names',multi=scenario==='account-reactions'||names,social=['anonymous-thread','repost-reactions','account-reactions'].includes(scenario);
   const {ROOT,assertNodeVersion,assertAztecPackages}=await import('../toolchain.mjs');
   const directory=path.join(ROOT,'execution/evidence/G06','application-port-'+randomUUID());
   await fs.mkdir(directory,{mode:0o700});
   const report={schemaVersion:1,scenario,passed:false,stage:'preflight',transactions:[],cleanup:{},
-    scope:social?'Actual anonymous social transactions and canonical removal/repost/reaction reconstruction':scenario==='profiles'?'Actual private profile updates and public moderator removal; fixed test moderation decision, no image-model acceptance':'Actual funded application port and authenticated public projection; human threaded reply, no composite Bok action',
+    scope:names?'Actual separate private accounts registering and recovering readable owned names without publishing owner groups':social?'Actual anonymous social transactions and canonical removal/repost/reaction reconstruction':scenario==='profiles'?'Actual private profile updates and public moderator removal; fixed test moderation decision, no image-model acceptance':'Actual funded application port and authenticated public projection; human threaded reply, no composite Bok action',
     networkProofs:false,controlledPortalSettlement:true,privacyAcceptance:'Public-field equality checks only; independent privacy qualification remains',
     storage:{pxe:'Actual SDK store with CLI in-memory IndexedDB adaptation; no browser persistence claim',journal:'Real authenticated encrypted file journals; reopen measured'},
     sourceRevision:execFileSync('git',['rev-parse','HEAD'],{cwd:ROOT,encoding:'utf8'}).trim()};
@@ -298,7 +298,7 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
       const initialEvents=await decoder.decodeTransaction(ctx.node,hashes[0]);
       assert.equal(initialEvents.length,1);assert.equal(initialEvents[0].type,'MainPolicyPublished');
       report.initialPublicAnchor=initialEvents[0].position;projection.stage(initialEvents).apply();
-      const ids={};const actorIntents=new Map();
+      const ids={},publicNameIds=[];const actorIntents=new Map();
       async function action(input,type,selected=actorA) {
         activeActor=selected;const app=selected.application,journal=selected.journal;
         await mark(type);
@@ -319,9 +319,10 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
         row.publicFootprint=classifyRollingApplicationFootprint({tx:saved.tx,effect:effect.data,owner,otherOwner:actorB?.owner,payer:fees.browserFixture.instance.address,board:ctx.instance.address});
         await save();assertRollingPublicFootprint(row.publicFootprint);if(actorB)for(const category of PERSONAL)assert.equal(row.publicFootprint.rolePresence[category].otherAuthor,false);
         const events=await decoder.decodeTransaction(ctx.node,outcome.txHash);projection.stage(events).apply();hashes.push(outcome.txHash);
+        for(const event of events)if(event.type==='NameRegistered')publicNameIds.push(event.payload.name_id);
         row.events=events.map(e=>e.type);row.submission='included';await save();return events;
       }
-      if(!social){
+      if(!social&&!names){
       const registered=await action({type:'name',first:'River',last:'Stone'},'name');
       assert.equal(registered.length,1);assert.equal(registered[0].type,'NameRegistered');ids.nameId=registered[0].payload.name_id;
       await mark('owned-name-recovery');
@@ -367,7 +368,13 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
           for(const category of PERSONAL){assert.equal(row.publicFootprint.rolePresence[category].author,false);if(actorB)assert.equal(row.publicFootprint.rolePresence[category].otherAuthor,false);}
           const events=await decoder.decodeTransaction(ctx.node,String(hash));projection.stage(events).apply();hashes.push(String(hash));row.events=events.map(e=>e.type);await save();return events;
         }
-      if(scenario==='profiles'){
+      if(names){
+        const {exerciseRollingOwnedNames}=await import('./rolling-owned-names.mjs');
+        report.names=await exerciseRollingOwnedNames({actorA,actorB,actionA:(input,label)=>action(input,label,actorA),actionB:(input,label)=>action(input,label,actorB)});
+        assert.equal(publicNameIds.length,3);assert.equal(new Set(publicNameIds).size,3);
+        report.publicViews=publicNameIds.slice().sort().map(id=>projection.profile(id,{limit:100}));
+        const {assertCanonicalOwnedNameProfiles}=await import('./rolling-public-acceptance.mjs');assertCanonicalOwnedNameProfiles(projection,report.publicViews);await save();
+      }else if(scenario==='profiles'){
         const {exerciseRollingProfileActions}=await import('./rolling-profile-acceptance.mjs');
         report.profiles=await exerciseRollingProfileActions({nameId:ids.nameId,application:app,action,moderate:args=>moderate({kind:'avatar',id:args.nameId,expectedVersion:args.avatarVersion,...args}),projection});
         report.publicViews=projection.profile(ids.nameId,{limit:100});assert.equal(report.publicViews.posts.length,0);await save();
@@ -430,7 +437,8 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
       await mark('canonical-projection-rebuild');
       const rebuilt=createRollingProjection({isValidatedEvent:isRollingEvent});
       for(const hash of hashes)rebuilt.stage(await decoder.decodeTransaction(ctx.node,hash)).apply();
-      if(social){const {assertCanonicalSocialViews}=await import('./rolling-public-acceptance.mjs');assertCanonicalSocialViews(rebuilt,report.social.expectedHTTP);}
+      if(names){const {assertCanonicalOwnedNameProfiles}=await import('./rolling-public-acceptance.mjs');assertCanonicalOwnedNameProfiles(rebuilt,report.publicViews);}
+      else if(social){const {assertCanonicalSocialViews}=await import('./rolling-public-acceptance.mjs');assertCanonicalSocialViews(rebuilt,report.social.expectedHTTP);}
       else assert.deepEqual(scenario==='profiles'?rebuilt.profile(ids.nameId,{limit:100}):assertRollingApplicationViews(rebuilt,ids),report.publicViews);
       for(const row of [...report.transactions,...(report.avatarModeration?[report.avatarModeration]:[]),...(report.postModeration?[report.postModeration]:[])])assert.equal(String((await ctx.node.getBlockData(row.blockNumber)).blockHash),row.blockHash);
       assert.equal(String((await ctx.node.getBlockData(Number(report.initialPublicAnchor.blockNumber))).blockHash),report.initialPublicAnchor.blockHash);
@@ -440,9 +448,10 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
       await verifyRollingPublicReader({node:ctx.node,artifact:checked.artifact,
         scope:{chainId:network.chainId,rollupVersion:network.version,rollupAddress:network.rollup,boardAddress:String(ctx.instance.address),classId:String((await sdk.getContractClassFromArtifact(checked.artifact)).id)},
         deployment:{blockNumber:Number(report.initialPublicAnchor.blockNumber),blockHash:report.initialPublicAnchor.blockHash,txHash:report.initialPublicAnchor.txHash},
-        cacheDirectory:path.join(ctx.directory,'rolling-public-index'),ids,scenario,expectedProfile:report.profiles?.expectedIdentity,expectedHTTP:report.social?.expectedHTTP,deadlineAt:ctx.applicationDeadlineAt,observation:report.publicReader});await save();
+        cacheDirectory:path.join(ctx.directory,'rolling-public-index'),ids,scenario,expectedProfiles:names?report.publicViews:undefined,expectedProfile:report.profiles?.expectedIdentity,expectedHTTP:report.social?.expectedHTTP,deadlineAt:ctx.applicationDeadlineAt,observation:report.publicReader});await save();
       if(multi){const bStandalone=BigInt(feesB.standalone.transactionFee);await fees.verify(feeTotal,feesB.browserFixture.fundedAmount-bStandalone-feeTotalB);await feesB.verify(feeTotalB,fees.browserFixture.fundedAmount-feeTotal);assert.equal(fees.poolBefore,feesB.poolBefore);report.accountFees={a:String(feeTotal),b:String(feeTotalB)};}else await fees.verify(feeTotal);report.actualHumanFees=String(feeTotal+feeTotalB);report.proverJobs=service.stats();
-      assert.equal(report.proverJobs.failed,0);if(social){const expectedJobs=scenario==='anonymous-thread'?3:multi?6:4;assert.equal(report.proverJobs.completed,expectedJobs);assert.equal(report.proverJobs.submitted,expectedJobs);}
+      assert.equal(report.proverJobs.failed,0);if(names){assert.equal(report.proverJobs.completed,3);assert.equal(report.proverJobs.submitted,3);}
+      else if(social){const expectedJobs=scenario==='anonymous-thread'?3:multi?6:4;assert.equal(report.proverJobs.completed,expectedJobs);assert.equal(report.proverJobs.submitted,expectedJobs);}
       else{assert.equal(report.proverJobs.completed,5);assert.equal(report.proverJobs.submitted,5);}
       assert.equal(report.proverJobs.running,false);
       nativeArtifacts.verify();report.nativeArtifacts=nativeArtifacts.observation();
