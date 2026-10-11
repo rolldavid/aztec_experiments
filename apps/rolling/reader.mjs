@@ -4,6 +4,14 @@ import {focusRoute,skipToContent} from './navigation.mjs';
 
 const read=createPublicReader(),app=document.querySelector('#app'),positions=new Map();
 let controller,sequence=0,route=location.hash.slice(1)||'/home',main,loadedPages=1;
+let walletPanel;
+async function openWallet(defaults={}){
+ try{
+  walletPanel??=import('./wallet-panel.mjs').then(({mountRollingWalletPanel})=>mountRollingWalletPanel({
+   loadRuntime:async()=>{const runtime=await import('/wallet/runtime.mjs');return runtime.loadRollingWalletRuntime();},onPublicEffect:()=>render()}));
+  (await walletPanel).open(defaults);
+ }catch{announce('Account tools could not load. Reload the page before trying again.');}
+}
 const narrow=matchMedia('(max-width:700px)');
 const el=(tag,attrs={},...children)=>{
  const node=document.createElement(tag);for(const [key,value]of Object.entries(attrs)){
@@ -35,7 +43,10 @@ function postCard(post,data){
  if(post.text===null){article.append(el('p',{class:'removed'},'This post is unavailable under the board’s moderation policy. ',link('View thread','/thread/'+r.root)));return article;}
  if(r.parent!=='0')article.append(el('p',{class:'reply-line'},'In reply to ',link('an earlier post','/thread/'+r.root+'/'+r.parent)));
  if(r.reference!=='0')article.append(el('p',{class:'reply-line'},r.kind==='3'?'Reposted from ':'Quoted from ',link('the original post','/post/'+r.reference)));
- article.append(richText(post.text),el('div',{class:'post-actions'},link('View conversation','/thread/'+r.root,{class:'post-link'}),el('span',{class:'action'},`${text(post.likes)} ${post.likes==='1'?'like':'likes'}`)));
+ article.append(richText(post.text),el('div',{class:'post-actions'},link('View conversation','/thread/'+r.root,{class:'post-link'}),el('span',{class:'action'},`${text(post.likes)} ${post.likes==='1'?'like':'likes'}`),
+  button('Reply',()=>openWallet({type:'reply',parent:post.id,root:r.root,subboard:r.subboard})),
+  button('Like',()=>openWallet({type:'like',post:post.id})),button('Quote',()=>openWallet({type:'quote',reference:post.id,subboard:r.subboard})),
+  button('Repost',()=>openWallet({type:'repost',reference:post.id,subboard:r.subboard}))));
  return article;
 }
 function timestamp(value){const n=Number(value);if(!Number.isSafeInteger(n)||n<0)return '';const date=new Date(n*1000);return Number.isFinite(date.getTime())?date.toLocaleString(undefined,{dateStyle:'medium',timeStyle:'short'}):'';}
@@ -46,8 +57,9 @@ function shell(title){
  rail.append(button('×',closeMenu,{class:'mobile-close','aria-label':'Close navigation'}));rail.inert=narrow.matches;
  rail.addEventListener('keydown',event=>{if(event.key==='Escape')closeMenu();if(event.key==='Tab'&&rail.classList.contains('open')){const targets=[...rail.querySelectorAll('a,button')],first=targets[0],last=targets.at(-1);if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus();}else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus();}}});
  main=el('main',{id:'content',tabindex:'-1'},el('header',{class:'page-head'},el('div',{},el('h1',{tabindex:'-1'},title),el('p',{class:'intro'},'Read the conversation without connecting an account.'))));
- const context=el('aside',{class:'context'},el('section',{},el('h2',{},'About this board'),el('p',{},'Posts and reactions are recorded onchain. Named identities and authenticated Bok replies are shown with their conversations.'),el('p',{class:'quiet'},'Public reader · account actions are not yet connected in this development build.')));
- app.replaceChildren(el('div',{class:'shell'},rail,el('div',{class:'workspace'},el('header',{class:'topbar'},menu,el('p',{},'rolling.chat'),link('Explore subboards','/directory',{class:'search-link'})),el('div',{class:'layout'},main,context))));
+ const context=el('aside',{class:'context'},el('section',{},el('h2',{},'Join the conversation'),el('p',{},'Posts and reactions are recorded onchain. Named identities and authenticated Bok replies are shown with their conversations.'),
+  button('Write a post',()=>openWallet({type:'post'})),button('Register a name',()=>openWallet({type:'name'})),button('Create a subboard',()=>openWallet({type:'subboard'}))));
+ app.replaceChildren(el('div',{class:'shell'},rail,el('div',{class:'workspace'},el('header',{class:'topbar'},menu,el('p',{},'rolling.chat'),link('Explore subboards','/directory',{class:'search-link'}),button('Your account',()=>openWallet())),el('div',{class:'layout'},main,context))));
  return main;
 }
 function boardCard(board){

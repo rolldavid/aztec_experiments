@@ -99,12 +99,12 @@ loopback port and prints the URL. No credentials or wallet keys belong here.
 The server authenticates cached events again against canonical public blocks
 before displaying them. An unavailable or incomplete index shows an explicit
 unavailable state. It serves only the fixed reader assets and public GET API;
-no wallet, private query, configuration, or repository-file route is exposed.
+no private-query proxy or arbitrary repository-file route is exposed. Wallet assets are unavailable unless the separate public wallet configuration below is supplied.
 Stop with Ctrl-C; the server joins the bounded active sync before closing. To
 rebuild a cache, stop first and remove only that deployment's cache directory.
 
 This interface currently supports public conversations, linked replies, profiles,
-subboard discovery and pagination. Wallet actions are not yet connected. The
+subboard discovery and pagination. The account panel connects to the production private wallet session when configured. Funding is still under implementation and is not presented as successful. The
 separate `index.html` preview still uses labelled fixtures. Synthetic browser
 checks qualify rendering and navigation only; full chain, wallet, privacy and
 production acceptance remain separate requirements.
@@ -112,3 +112,56 @@ production acceptance remain separate requirements.
 ```sh
 .build/A02-node/node-v24.21.0-darwin-arm64/bin/node --test apps/rolling/start.test.mjs apps/rolling/reader-client.test.mjs apps/rolling/reader.browser.test.mjs
 ```
+
+
+## Private account composition (development)
+
+After the repository's pinned dependency, contract, CRS, SDK and app builds (see
+`TESTING.md`), build the wallet entry and its source-bound asset manifest:
+
+```sh
+.build/A02-node/node-v24.21.0-darwin-arm64/bin/node scripts/rolling-wallet-assets.mjs
+.build/A02-node/node-v24.21.0-darwin-arm64/bin/node apps/rolling/start.mjs /absolute/path/rolling-public.json /absolute/path/rolling-wallet-public.json
+```
+
+The optional wallet file has exactly `config`, `trustedQuery`, `remoteProver`, and
+`proofsEnabled`. `config` contains `network` (`chainId`, `rollupVersion`,
+`rollupAddress`, `ethRpcUrl`), `board` (`contractAddress`, `portalAddress`), and
+`privateFee` (`contractAddress`, `gasSettings`). Integers are decimal strings;
+addresses are canonical lowercase hex. Gas settings contain `gasLimits` and
+`teardownGasLimits` (`daGas`, `l2Gas`), plus `maxFeesPerGas` and
+`maxPriorityFeesPerGas` (`feePerDaGas`, `feePerL2Gas`). Use measured deployment
+settings, not invented values. Reader and wallet network/board must match.
+
+`trustedQuery` is `{url, allowLocalDev}` for the explicitly trusted private-node
+boundary. `remoteProver` is either null (local proving) or
+`{url, board, chainId, rollupVersion, proofsEnabled}` bound to that same deployment.
+Real proofs are required outside disposable chain31337. No credentials, headers,
+wallet keys, token-bearing URLs, ordinary private-query fallback or extra fields
+are accepted. A matching network is not proof of who operates the trusted node;
+operator trust and the required privacy analysis remain separate gates.
+
+Public reading and opening the account panel load no SDK. Explicit Unlock loads
+only the pinned wallet assets; private account creation exports encrypted recovery.
+The real deployment is verified before private PXE use. Account actions use the
+existing encrypted journals, show the maximum fee before confirmation, and offer
+reconciliation for uncertain outcomes. An unavailable node preserves recovery and
+never fabricates a completed action. The panel currently supports names,
+subboards, posts, replies, quotes, reposts and likes; initial aggregate funding,
+Bok workspace integration and complete recovery qualification remain open.
+
+The wallet-enabled server adds cross-origin isolation and the SDK's required WASM,
+worker and data-URI permissions. Connections are restricted to the exact configured
+Ethereum/private-node/prover origins. Source, SDK, CRS and artifact hashes are
+checked before startup and served asset bytes are checked again before response.
+There is no public access to operator configuration or private storage.
+
+```sh
+.build/A02-node/node-v24.21.0-darwin-arm64/bin/node --test --test-concurrency=1 apps/rolling/start.test.mjs scripts/rolling-wallet-assets.test.mjs apps/rolling/wallet-runtime.browser.test.mjs
+```
+
+The last test uses the real browser SDK and custody/backup code with a synthetic
+public feed and deliberately unavailable private endpoint. It proves encrypted
+account creation and failure handling; it does not prove funding or chain actions.
+Browser test identities live only in disposable Chromium contexts. Normal wallet
+recovery remains in the user's browser and must be exported before storage cleanup.
