@@ -71,12 +71,29 @@ export class Supervisor {
     return new Promise(resolve=>{
       child.once('error',error=>{outcome.failure=describeFailure(error);this.fail(role+'-spawn',error);resolve(outcome);});
       child.once('close',(code,signal)=>{
-        Object.assign(outcome,{code,signal});
+        Object.assign(outcome,{code,signal,closed:true});
         if(text.trim())this.fail(role+'-incomplete-output');
         if(code!==0)this.fail(role+'-exit');
         resolve(outcome);
       });
     });
+  }
+  async cleanupRole(role) {
+    const matches=this.children.filter(child=>child.role===role);
+    assert.equal(matches.length,1,'Exactly one owned role required');
+    const child=matches[0];
+    assert.equal(child.outcome.closed,true,'Worker must exit before replacement handoff');
+    assert(!this.closed,'Supervisor already closed');
+    if(!child.cleanupPromise)child.cleanupPromise=(async()=>{
+      try {
+        await child.tree.cleanup();child.outcome.cleanupComplete=true;
+        return {cleanupComplete:true};
+      }catch(error){
+        child.outcome.cleanupComplete=false;this.fail(role+'-cleanup',error);
+        throw Error('Owned worker cleanup failed; replacement forbidden');
+      }
+    })();
+    return child.cleanupPromise;
   }
   async close() {
     this.closed=true;clearTimeout(this.timer);clearTimeout(this.sampler);await this.pending;
