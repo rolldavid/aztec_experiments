@@ -167,36 +167,103 @@ x86-64 against that exact release:
    `resolveNativeProver()` from `prover/native-binary.mjs`; it checks the Linux BB
    SHA256 before executing `--version` and requires the pinned version. For rolling
    candidates call `loadRollingArtifacts()` from `prover/rolling-artifacts.mjs`.
-3. Under the existing test supervisor, start a labelled disposable local **actual
-   pinned SDK node** with proofs disabled and chain 31337. Keep all its accounts,
-   state and ports isolated. Start the packaged `prover/start.mjs` using a private
-   temporary config with `proofs: "disabled"`, matching network scope and
-   `queryNode.url` pointing to that node. Do not inject an inspector or replace SDK
-   dependencies in this gate. The production adapter must dynamically load the
-   packaged helper, and `/healthz` must report query enabled/ready.
-4. From a separate process using the packaged Node and modules, call
-   `createTrustedPrivateNode` from `shared/trusted-private-node.mjs` with the
-   packaged service's loopback `/v1/node` URL, the exact expected network scope,
-   `proofsEnabled: false` and `allowLocalDev: true`. Query public node info and a
-   canonical block. This exercises the real client, service, inspector and SDK node
-   together without claiming genuine proof or privacy acceptance.
-5. In isolated negative cases change expected rollup/chain/version; require client
-   rejection. A real-proof policy against the disabled local node must reject.
-   Stop/pause L1 ingestion using the fixture's supported controls, wait beyond its
-   configured freshness bound, and require unready health and rejected queries.
-   Resume supported ingestion and verify recovery. Never edit observed timestamps
-   or substitute a passing inspector. Check there is no ordinary-node fallback.
-6. Use a disposable **copy** of the candidate for the missing-file control: remove
-   `shared/trusted-private-node.mjs` and start with queries enabled. Startup must
-   fail before accepting requests. A disabled-query startup is not this test.
-   Preserve failure output, then discard the altered copy; do not remove or restore
-   files in the active release. Recheck the intact candidate's manifest.
-7. Stop the fixture and verify all owned processes are absent. Record package
-   manifest hash, source revision, Linux/Node/BB identities, exact config public
-   fields, commands, outcomes and cleanup. Exclude credentials and RPC bodies.
+3. Run the reviewed `prover/qualify-runtime.mjs` against the installed, synchronized
+   **actual pinned network full node**, with genuine proof verification enabled.
+   The helper starts the actual service on an ephemeral loopback port, then uses
+   a separate packaged-Node process for the production trusted client. It checks
+   public node identity and a canonical block; no proof jobs are submitted.
+   Use an explicit verified historical **legacy** deployment configuration for
+   this query-only exercise. Rolling artifacts/catalog are checked separately.
+   Legacy addresses are not evidence of a deployed Rolling application.
+4. Require rejection for each incorrect expected chain/version/rollup. The helper
+   first checks the correct policy against the actual service, preventing a simple
+   outage from passing an identity negative. A disabled-proof preference on
+   Sepolia must fail the configuration floor; this is explicitly **not** an
+   observed node proof-mode mismatch test.
+5. Through the unexposed loopback admin interface, invoke the installed SDK's
+   `aztecAdmin.pauseSync()`; this pauses archiver/world-state synchronization,
+   leaving RPC available. Wait genuine elapsed time beyond the configured bound,
+   require the unchanged actual L1 timestamp, direct inspector `STALE`, unready
+   query health and rejected client calls. Always call `resumeSync()` and require
+   readiness plus timestamp advancement. An `UNSYNCED` or `UNAVAILABLE` result
+   cannot substitute for the specific stale case. Do not alter timestamps,
+   inject an inspector, or disable network verification.
+6. The helper makes an independent disposable copy of the candidate, removes its
+   `shared/trusted-private-node.mjs`, and uses the copied Node executable to attempt
+   query-enabled service startup. Require missing-module rejection before serving.
+   The active release is never modified; all original manifest hashes are checked
+   again after the control. Reserve disk/time for this full copy.
+7. Require closed service listeners, exited client children and removed temporary
+   queue/CRS/copy files. Preserve the node's persistent archive. The existing host
+   commissioning systemd unit owns the overall deadline, `KillMode=control-group`,
+   and verification that no owned process remains after exit. The helper is not a
+   new supervisor and does not relax the host's shutdown deadline. Restrict this
+   qualification unit's network to loopback (`IPAddressDeny=any` with the loopback
+   exception, where supported and verified), separately from the full-node unit,
+   to prevent an ordinary-node fallback. Do not expose admin RPC or unmask the
+   public prover/proxy before qualification and review.
 
-Only after this gate should the intended synchronized network node replace the
-local qualification fixture. Verify its archive completeness and storage recovery,
-then collect the required two-account cold/warm/restoration/reorg traces and
-upstream capture with both proof preferences. Independent privacy review and
-production release gates remain open until their actual evidence exists.
+### Linux qualification invocation and evidence
+
+Bootstrap must externally authenticate `manifestSha256` and verify **all** release
+file hashes before executing any packaged script. The helper repeats manifest
+verification, but cannot establish its own trust from inside unverified code.
+Its import has no service or native execution side effects. Rebuild the release
+so the helper itself appears in the externally pinned manifest.
+
+The private configuration has exactly these top-level keys:
+
+- `service`: the verified legacy configuration with `applicationProfile: "legacy"`,
+  `proofs: "real"`, `host: "127.0.0.1"`, `port: 0`, Sepolia `chainId: "11155111"`,
+  actual `rollupVersion`, actual `board`, `origins`, optional `privateFeeAddress`,
+  `pluginAddresses`, `threads`, and `queryNode`.
+- `queryNode` inside `service`: fixed loopback root URL, actual `rollupAddress`,
+  `maxLagSeconds` from 1 through 120 (default 120).
+- `adminUrl`: fixed loopback root URL for the installed node admin API. Container
+  loopback is not host loopback: supply an explicitly reviewed host-loopback-only
+  binding or invoke qualification within the existing trusted network namespace.
+- Optional `recoveryTimeoutMs`: 1,000 through 180,000, default 180,000.
+
+No keys, wallets, credentials, custom BB path, persistent CRS path, or queue
+location belong in this configuration. The helper owns disposable runtime paths.
+Use only the packaged Node, with stdout restricted to its safe result summary:
+
+```sh
+env -u NODE_PATH -u NODE_OPTIONS -u BB LOG_LEVEL=silent \
+  RELEASE/node/bin/node RELEASE/prover/qualify-runtime.mjs \
+  /private/qualification.json MANIFEST_SHA256 /private/qualification-result.json
+```
+
+The output is a newly created mode-0600 allowlisted report: manifest/source/runtime
+identity, public network/deployment scope, case outcomes, partial freshness state,
+and cleanup. It contains no RPC bodies, raw errors or private account material.
+A passing Linux report means **runtime/query composition qualified**; its explicit
+`remainingGates` remain outstanding. The helper and bootstrap policy changes need
+independent review before these results are accepted.
+
+### Separate actual disabled-node mismatch gate
+
+The previous local-chain Linux procedure combined runtime and proof-mode mismatch
+coverage. A synchronized genuine network node strengthens runtime/query evidence
+and avoids adding another network/Anvil lifecycle on the remote host. This split
+is requirement-based, not removal of the proof-policy failure case. The trusted
+client rejects `proofsEnabled: false` off chain 31337 before transport, so the
+Sepolia configuration-floor case cannot establish observed-node mismatch.
+
+Retain an explicit existing-C01-supervised Mac scenario using the actual pinned
+SDK proofs-disabled node on chain 31337, the actual service/client/helper and
+matching network scope. Reuse the existing private-Bok fixture's official
+`createNamespacedSafeJsonRpcServer` node API adapter and parent-owned lifecycle;
+exercise healthy disabled policy, then require real-proof policy rejection for
+that same actual node. Do not replace the node/inspector with fake objects.
+Record this as separate source-bound evidence. Its minimal scenario wiring and
+cross-platform gate split require independent review before acceptance; the Linux
+helper deliberately lists `actual-proof-disabled-node-mismatch` as outstanding.
+The full Linux disabled-node procedure remains an alternative if this split is
+not approved. Never disable verification on the network full node for the test.
+
+Before Rolling proof work, install separately reviewed real Rolling addresses and
+network configuration. Verify archive completeness and storage recovery, then
+collect the required two-account cold/warm/restoration/reorg traces and upstream
+capture with both proof preferences. Genuine proofs, independent privacy review
+and production release gates remain open until their actual evidence exists.

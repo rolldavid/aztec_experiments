@@ -1,0 +1,209 @@
+// Linux package qualification only. No proof jobs, wallets, fake SDK, or network
+// verification changes. The bootstrap must verify this code BEFORE executing it.
+import assert from 'node:assert/strict';
+import fs from 'node:fs/promises';
+import {createReadStream} from 'node:fs';
+import path from 'node:path';
+import {fileURLToPath} from 'node:url';
+import {createHash} from 'node:crypto';
+import {spawn} from 'node:child_process';
+import {createConnection} from 'node:net';
+import {setTimeout as sleep} from 'node:timers/promises';
+const ROOT=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
+const sha=bytes=>createHash('sha256').update(bytes).digest('hex');
+const silent=Object.fromEntries(['trace','debug','verbose','info','warn','error','fatal'].map(k=>[k,()=>{}]));
+const requireCondition=(condition)=>assert(condition,'Qualification condition failed');
+const scopeOf=s=>({chainId:String(s.chainId),version:String(s.rollupVersion),rollup:s.queryNode.rollupAddress});
+
+export async function verifyRelease(root,digest){
+  requireCondition(typeof digest==='string'&&/^[a-f0-9]{64}$/.test(digest));
+  const raw=await fs.readFile(path.join(root,'prover-release.json'));
+  requireCondition(sha(raw)===digest);
+  const manifest=JSON.parse(raw);
+  requireCondition(manifest.schemaVersion===1&&manifest.platform==='linux-x64'&&manifest.applicationProfile==='rolling');
+  requireCondition(/^[a-f0-9]{40}$/.test(manifest.sourceCommit)&&manifest.files&&typeof manifest.files==='object'&&!Array.isArray(manifest.files));
+  for(const name of ['prover/qualify-runtime.mjs','node/bin/node','toolchain.json','shared/trusted-private-node.mjs','prover/service.mjs','prover/rolling-artifacts.json'])requireCondition(Object.hasOwn(manifest.files,name));
+  const realRoot=await fs.realpath(root);
+  for(const [relative,expected] of Object.entries(manifest.files)){
+    requireCondition(relative.length>0&&!path.isAbsolute(relative)&&!relative.includes('\\')&&!relative.split('/').some(p=>p==='..'||p==='.'||p===''));
+    requireCondition(typeof expected==='string'&&/^[a-f0-9]{64}$/.test(expected));
+    const file=path.join(realRoot,relative);
+    // Official Node archives contain internal npm/npx symlinks. Permit only
+    // regular targets inside this release; external dependency fallback fails.
+    const resolved=await fs.realpath(file);
+    requireCondition(resolved.startsWith(realRoot+path.sep)&&(await fs.stat(file)).isFile());
+    const hash=createHash('sha256');for await(const chunk of createReadStream(file))hash.update(chunk);
+    requireCondition(hash.digest('hex')===expected);
+  }
+  return {manifestSha256:digest,sourceCommit:manifest.sourceCommit,fileCount:Object.keys(manifest.files).length};
+}
+export function loopback(value){
+  const url=new URL(value);
+  requireCondition(url.protocol==='http:'&&['127.0.0.1','[::1]'].includes(url.hostname)&&!url.username&&!url.password&&!url.search&&!url.hash&&url.pathname==='/');
+  return url.href;
+}
+export function validateQualification(config){
+  requireCondition(config&&Object.keys(config).every(k=>['service','adminUrl','recoveryTimeoutMs'].includes(k)));
+  const s=config.service;
+  requireCondition(s&&Object.keys(s).every(k=>['applicationProfile','proofs','host','port','chainId','rollupVersion','board','privateFeeAddress','pluginAddresses','origins','threads','queryNode'].includes(k)));
+  requireCondition(s&&s.applicationProfile==='legacy'&&s.proofs==='real'&&s.host==='127.0.0.1'&&s.port===0);
+  requireCondition(String(s.chainId)==='11155111'&&/^[1-9][0-9]*$/.test(String(s.rollupVersion)));
+  requireCondition(/^0x[a-f0-9]{64}$/.test(s.board)&&BigInt(s.board)!==0n);
+  requireCondition(s.queryNode&&/^0x[a-f0-9]{40}$/.test(s.queryNode.rollupAddress)&&BigInt(s.queryNode.rollupAddress)!==0n);
+  const lag=s.queryNode.maxLagSeconds??120;
+  requireCondition(Number.isSafeInteger(lag)&&lag>=1&&lag<=120);
+  const recovery=config.recoveryTimeoutMs??180000;
+  requireCondition(Number.isSafeInteger(recovery)&&recovery>=1000&&recovery<=180000);
+  loopback(s.queryNode.url);loopback(config.adminUrl);
+  // Runtime directories belong to qualification, not release or persistent node.
+  requireCondition(s.bbPath===undefined&&s.crsPath===undefined&&s.queueDirectory===undefined);
+  return {maxLagSeconds:lag,recoveryTimeoutMs:recovery};
+}
+
+/** Labelled pure-fake unit tests exercise scheduling/cleanup here. Production
+ * supplies only the actual SDK inspector, HTTP health and supported admin APIs. */
+export async function exerciseFreshness({node,admin,inspect,health,rejectedQuery,maxLagSeconds,recoveryTimeoutMs,now=Date.now,wait=sleep,observation={}}){
+  const result=Object.assign(observation,{paused:false,stale:false,queriesRejected:false,resumed:false,recovered:false});
+  const before=await inspect();requireCondition(before.ready);
+  let pauseAttempted=false;
+  try{
+    pauseAttempted=true;await admin.pauseSync();result.paused=true;
+    const frozen=await node.getSyncedL1Timestamp();requireCondition(typeof frozen==='bigint');
+    // Genuine elapsed time; no observed timestamp edits or wall-clock override.
+    const delay=Math.max(0,(Number(frozen)+maxLagSeconds+1)*1000-now());
+    requireCondition(Number.isSafeInteger(delay)&&delay<= (maxLagSeconds+2)*1000);
+    await wait(delay);
+    requireCondition(await node.getSyncedL1Timestamp()===frozen);
+    await assert.rejects(inspect,e=>e.code==='BB_TRUSTED_NODE_STALE');result.stale=true;
+    const unavailable=await health();requireCondition(unavailable.query.enabled===true&&unavailable.query.ready===false);
+    await rejectedQuery();result.queriesRejected=true;
+  }finally{if(pauseAttempted){await admin.resumeSync();result.resumed=true;}}
+  const deadline=now()+recoveryTimeoutMs;
+  while(now()<deadline){
+    try{
+      const after=await inspect(),h=await health();
+      if(after.ready&&BigInt(after.syncedL1Timestamp)>BigInt(before.syncedL1Timestamp)&&h.query.ready===true){result.recovered=true;break;}
+    }catch{/* Public readiness can be transient during supported resynchronization. */}
+    await wait(1000);
+  }
+  requireCondition(result.recovered);return result;
+}
+
+async function publicRpc(url,schema,namespace){
+  const {createSafeJsonRpcClient}=await import('@aztec-labs/foundation/json-rpc/client');
+  const {jsonStringify}=await import('@aztec-labs/foundation/json-rpc');
+  return createSafeJsonRpcClient(loopback(url),schema,{namespaceMethods:namespace,log:silent,maxBatchSize:1,fetch:async(host,body)=>{
+    const response=await fetch(host,{method:'POST',headers:{'content-type':'application/json'},body:jsonStringify(body),redirect:'error',credentials:'omit',signal:AbortSignal.timeout(30000)});
+    requireCondition(response.ok);const chunks=[];let bytes=0;
+    for await(const chunk of response.body){bytes+=chunk.length;requireCondition(bytes<=4*1024*1024);chunks.push(chunk);}
+    return {response:JSON.parse(Buffer.concat(chunks).toString('utf8')),headers:response.headers};
+  }});
+}
+async function child(input,root=ROOT){
+  // This helper owns only its immediate child; systemd owns the enclosing cgroup.
+  const child=spawn(path.join(root,'node/bin/node'),[path.join(root,'prover/qualify-runtime.mjs'),'--client'],{cwd:root,
+    env:{PATH:'/usr/bin:/bin',LOG_LEVEL:'silent'},stdio:['pipe','pipe','ignore']});
+  let output='',overflow=false;
+  child.stdout.on('data',data=>{output+=data;if(output.length>16384){overflow=true;child.kill('SIGKILL');}});
+  const timer=setTimeout(()=>child.kill('SIGKILL'),90000);
+  const exit=new Promise((resolve,reject)=>{child.once('error',reject);child.once('close',(code,signal)=>resolve({code,signal}));});
+  child.stdin.on('error',()=>{});child.stdin.end(JSON.stringify(input));
+  try{const status=await exit;requireCondition(!overflow&&status.code===0&&!status.signal);return JSON.parse(output);}
+  finally{clearTimeout(timer);}
+}
+async function assertPortClosed(port){
+  await new Promise((resolve,reject)=>{
+    const socket=createConnection({host:'127.0.0.1',port});
+    socket.setTimeout(2000,()=>{socket.destroy();reject(Error('Listener cleanup unverified'));});
+    socket.once('connect',()=>{socket.destroy();reject(Error('Listener still active'));});
+    socket.once('error',error=>error.code==='ECONNREFUSED'?resolve():reject(Error('Listener cleanup unverified')));
+  });
+}
+async function client(input){
+  if(input.case==='missing-helper'){
+    try{const {startProverService}=await import('./service.mjs');const service=await startProverService(input.service);await service.close();}
+    catch(error){if(error.code==='ERR_MODULE_NOT_FOUND'&&String(error.url).endsWith('/shared/trusted-private-node.mjs'))return {missingHelperRejected:true};}
+    throw Error('Missing helper control failed');
+  }
+  const {createTrustedPrivateNode}=await import('../shared/trusted-private-node.mjs');
+  const options={url:input.url,expectedNetworkScope:input.scope,proofsEnabled:input.case!=='proof-config-floor',allowLocalDev:true,maxLagSeconds:input.maxLagSeconds};
+  if(input.case!=='healthy'){
+    // A wrong-identity/config rejection must not pass just because the actual
+    // service is unavailable. The stale case intentionally requires unready.
+    if(input.case!=='stale')await createTrustedPrivateNode({...options,expectedNetworkScope:input.scope,proofsEnabled:true});
+    if(input.case==='wrong-chain')options.expectedNetworkScope={...input.scope,chainId:'1'};
+    if(input.case==='wrong-version')options.expectedNetworkScope={...input.scope,version:String(BigInt(input.scope.version)===1n?2:1)};
+    if(input.case==='wrong-rollup')options.expectedNetworkScope={...input.scope,rollup:'0x'+(input.scope.rollup==='0x'+'01'.repeat(20)?'02':'01').repeat(20)};
+    requireCondition(['wrong-chain','wrong-version','wrong-rollup','proof-config-floor','stale'].includes(input.case));
+    await assert.rejects(()=>createTrustedPrivateNode(options),e=>input.case==='proof-config-floor'?e.code==='BB_TRUSTED_NODE_CONFIG':/^BB_TRUSTED_NODE_(IDENTITY|UNAVAILABLE)$/.test(e.code));
+    return {rejected:true};
+  }
+  const node=await createTrustedPrivateNode(options),tips=await node.getChainTips();
+  const block=await node.getBlockData(tips.checkpointed.block.number);
+  requireCondition(block&&String(block.blockHash)===String(tips.checkpointed.block.hash));
+  return {ready:true,blockNumber:block.header.globalVariables.blockNumber,blockHash:String(block.blockHash)};
+}
+
+export async function qualifyRuntime(config,digest,output){
+  const report={schemaVersion:1,passed:false,stage:'manifest',checks:{},cleanup:{serviceClosed:false,temporaryFilesRemoved:false},
+    qualification:'Linux runtime and real-network query composition only',proofJobs:0,
+    remainingGates:['actual-proof-disabled-node-mismatch','genuine-Rolling-proofs','archive-storage-recovery','human-account-privacy-traces','independent-privacy-review']};
+  let directory,service;
+  // Only a fixed allowlisted report is written; raw exception/config/RPC bodies
+  // never enter this output or stdout, even when native/import operations fail.
+  try{
+    report.release=await verifyRelease(ROOT,digest);const bounds=validateQualification(config);
+    requireCondition(process.platform==='linux'&&process.arch==='x64');
+    requireCondition(!process.env.NODE_PATH&&!process.env.NODE_OPTIONS&&!process.env.BB&&process.env.LOG_LEVEL==='silent');
+    requireCondition(await fs.realpath(process.execPath)===await fs.realpath(path.join(ROOT,'node/bin/node')));
+    const pins=JSON.parse(await fs.readFile(path.join(ROOT,'toolchain.json'),'utf8'));requireCondition(process.versions.node===pins.node);
+    report.runtime={platform:process.platform,architecture:process.arch,node:process.versions.node,bbVersion:pins.nativeProver['linux-x64'].version};
+    report.stage='native-and-catalog';
+    const {resolveNativeProver}=await import('./native-binary.mjs');resolveNativeProver();
+    const {loadRollingArtifacts}=await import('./rolling-artifacts.mjs');loadRollingArtifacts();
+    const {loadCircuitCatalog}=await import('./catalog.mjs');const catalog=await loadCircuitCatalog({applicationProfile:'rolling'});
+    report.checks.nativeAndRollingCatalog={passed:true,circuitCount:catalog.size};
+    directory=await fs.mkdtemp('/tmp/board-linux-qualification-');
+    const {startProverService}=await import('./service.mjs');
+    service=await startProverService({...config.service,queueDirectory:directory,crsPath:path.join(directory,'crs')});
+    const url='http://127.0.0.1:'+service.address.port;
+    const health=async()=>{const r=await fetch(url+'/healthz',{redirect:'error',signal:AbortSignal.timeout(30000)});requireCondition(r.ok);return r.json();};
+    report.publicScope={...scopeOf(config.service),applicationProfile:'legacy',board:config.service.board,proofs:'real',maxLagSeconds:bounds.maxLagSeconds};
+    report.stage='healthy-composition';requireCondition((await health()).query.ready===true);
+    const input={url:url+'/v1/node',scope:scopeOf(config.service),maxLagSeconds:bounds.maxLagSeconds};
+    report.checks.healthy=await child({...input,case:'healthy'});
+    for(const name of ['wrong-chain','wrong-version','wrong-rollup','proof-config-floor']){report.stage=name;report.checks[name]=await child({...input,case:name});}
+    report.stage='stale-and-recovery';
+    const {AztecNodeApiSchema,AztecNodeAdminApiSchema}=await import('@aztec-labs/stdlib/interfaces/client');
+    const node=await publicRpc(config.service.queryNode.url,AztecNodeApiSchema,'aztec');
+    const admin=await publicRpc(config.adminUrl,AztecNodeAdminApiSchema,'aztecAdmin');
+    const {inspectTrustedNode}=await import('../shared/trusted-private-node.mjs');
+    report.checks.freshness={};
+    await exerciseFreshness({observation:report.checks.freshness,node,admin,inspect:()=>inspectTrustedNode(node,{expectedNetworkScope:input.scope,proofsEnabled:true,maxLagSeconds:bounds.maxLagSeconds}),health,
+      rejectedQuery:async()=>{requireCondition((await child({...input,case:'stale'})).rejected);},...bounds});
+    report.checks.recovered=await child({...input,case:'healthy'});
+    report.stage='missing-helper';
+    const copy=path.join(directory,'missing-helper-release');await fs.cp(ROOT,copy,{recursive:true,dereference:false,verbatimSymlinks:true,errorOnExist:true,force:false});
+    await verifyRelease(copy,digest);
+    await fs.unlink(path.join(copy,'shared/trusted-private-node.mjs'));
+    report.checks.missingHelper=await child({case:'missing-helper',service:{...config.service,queueDirectory:directory,crsPath:path.join(directory,'crs')}},copy);
+    requireCondition(service.stats().submitted===0);const port=service.address.port;await service.close();service=undefined;await assertPortClosed(port);report.cleanup.serviceClosed=true;report.cleanup.childProcessesExited=true;
+    report.stage='recheck-manifest';await verifyRelease(ROOT,digest);report.checks.manifestUnchanged=true;
+    report.stage='complete';report.passed=true;
+  }catch{report.passed=false;}
+  finally{
+    try{if(service){const port=service.address.port;await service.close();await assertPortClosed(port);report.cleanup.serviceClosed=true;}if(directory)await fs.rm(directory,{recursive:true,force:true});report.cleanup.temporaryFilesRemoved=true;}
+    catch{report.passed=false;report.stage='cleanup';}
+    await fs.writeFile(output,JSON.stringify(report,null,2)+'\n',{mode:0o600,flag:'wx'});
+  }
+  return report;
+}
+if(process.argv[1]&&path.resolve(process.argv[1])===fileURLToPath(import.meta.url)){
+  if(process.argv[2]==='--client'){
+    try{let raw='';for await(const chunk of process.stdin){raw+=chunk;requireCondition(raw.length<=16384);}process.stdout.write(JSON.stringify(await client(JSON.parse(raw))));}
+    catch{process.exitCode=1;}
+  }else{
+    try{requireCondition(process.argv.length===5);const config=JSON.parse(await fs.readFile(process.argv[2],'utf8'));const report=await qualifyRuntime(config,process.argv[3],process.argv[4]);process.stdout.write(JSON.stringify({passed:report.passed,stage:report.stage})+'\n');if(!report.passed)process.exitCode=1;}
+    catch{process.stdout.write('{"passed":false,"stage":"qualification-entry"}\n');process.exitCode=1;}
+  }
+}
