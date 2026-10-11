@@ -9,7 +9,7 @@ import {AztecAddress} from '@aztec-labs/stdlib/aztec-address';
 import {TxHash, TxStatus, TxExecutionResult} from '@aztec-labs/stdlib/tx';
 import {nameRegistration, NAME_DOMAIN} from './name-policy.mjs';
 export const ROLLING_EVENTS = Object.freeze(['NameRegistered','MainPolicyPublished','SubboardCreated','SubboardRejected',
-  'PostPublished','PostRemoved','PluginConfigured','PluginInvoked','PluginReplyPublished','LikeChanged']);
+  'PostPublished','PostRemoved','PluginConfigured','PluginInvoked','PluginReplyPublished','LikeChanged','BioPublished','AvatarPublished']);
 const verified = new WeakSet();
 export const isRollingEvent = event => verified.has(event);
 export const rollingError = () => Object.assign(Error('Rolling public history is invalid or unavailable.'), {code:'ROLLING_PUBLIC_INVALID'});
@@ -28,13 +28,23 @@ export function unpackRollingText(fields,length,maximum,required=true) {
   check(bytes.slice(count).every(v=>v===0) && bytes.slice(0,count).every(v=>v!==0));
   return new TextDecoder('utf-8',{fatal:true,ignoreBOM:true}).decode(bytes.slice(0,count));
 }
+// A separate binary boundary: never relax the 32-field text decoder or decode
+// image bytes as UTF-8. Length distinguishes content zeros from canonical padding.
+export function unpackRollingAvatar(fields,length) {
+  check(Array.isArray(fields)&&fields.length===265);const count=Number(integer(length,16));check(count<=8192);
+  const bytes=new Uint8Array(265*31);
+  fields.forEach((field,i)=>{let n=scalar(field);check(n<1n<<248n);for(let j=30;j>=0;j--){bytes[i*31+j]=Number(n&255n);n>>=8n;}});
+  check(bytes.subarray(count).every(v=>v===0));return bytes.slice(0,count);
+}
 const shapes={NameRegistered:['schema','name_id','first_length','first','last_length','last'],MainPolicyPublished:['schema','version','digest','length','rules'],
  SubboardCreated:['schema','subboard_id','slug_length','slug','name_length','name','description_length','description','local_policy_version','rules_length','rules','rules_digest','main_policy_version','metadata_digest'],
  SubboardRejected:['schema','subboard_id','main_policy_version','local_policy_version','reason_length','reason','reason_digest'],
  PostPublished:['schema','id','record','timestamp','main_policy_version','local_policy_version','length','message'],
  PostRemoved:['schema','id','policy_version','penalized','reason_length','reason'],PluginConfigured:['schema','plugin_id','adapter','enabled'],
  PluginInvoked:['schema','plugin_id','post_id','request_id','target'],PluginReplyPublished:['schema','plugin_id','request_id','post_id','parent_id','target'],
- LikeChanged:['schema','post','tag','active','count']};
+ LikeChanged:['schema','post','tag','active','count'],
+ BioPublished:['schema','name_id','version','length','digest','content','trailer'],
+ AvatarPublished:['schema','name_id','version','width','height','length','digest','data','trailer']};
 export function validateRollingScope(scope) {
   exact(scope,['chainId','rollupVersion','rollupAddress','boardAddress','classId']);
   check(integer(scope.chainId,64)>0n && integer(scope.rollupVersion,32)>0n && hex(scope.rollupAddress,20) && BigInt(scope.rollupAddress)>0n);
@@ -56,6 +66,13 @@ export async function validateRollingEvent(input,expectedScope) {
    arr(p.first,2);arr(p.last,2);const first=unpackRollingText(p.first,p.first_length,32),last=unpackRollingText(p.last,p.last_length,32);
    const registration=nameRegistration(first,last);check(registration.name.first===first&&registration.name.last===last);
    check(p.name_id===await hash(registration.preimage,NAME_DOMAIN));nonzero(p.name_id);
+  } else if(input.type==='BioPublished') {
+   nonzero(p.name_id);check(integer(p.version,32)>0n&&p.trailer==='1');await text(p.content,p.length,32,false);
+   check(p.digest===await hash(['1',p.name_id,p.version,p.length,...p.content],0x52434231));
+  } else if(input.type==='AvatarPublished') {
+   nonzero(p.name_id);check(integer(p.version,32)>0n&&p.trailer==='1');integer(p.width,16);integer(p.height,16);
+   unpackRollingAvatar(p.data,p.length);check(p.length==='0'?p.width==='0'&&p.height==='0':p.width==='100'&&p.height==='100');
+   check(p.digest===await hash(['1',p.name_id,p.version,p.width,p.height,p.length,...p.data],0x52434131));
   } else if(input.type==='MainPolicyPublished') {
    check(integer(p.version,32)>0n);check(p.digest===(await text(p.rules,p.length,32)).digest);
   } else if(input.type==='SubboardCreated') {
@@ -82,10 +99,10 @@ export async function validateRollingEvent(input,expectedScope) {
   const result=freeze({...structuredClone(input),scope});verified.add(result);return result;
  } catch {throw rollingError();}
 }
-function flattenTypes(type) {
+function flattenTypes(type,eventType,path='') {
  if(type.kind==='field'||type.kind==='boolean'||type.kind==='integer')return [type];
- if(type.kind==='array'){check(Number.isInteger(type.length)&&type.length>0&&type.length<=32);return Array.from({length:type.length},()=>flattenTypes(type.type)).flat();}
- if(type.kind==='struct'){check(type.fields.length<=20);return type.fields.flatMap(f=>flattenTypes(f.type));}throw rollingError();
+ if(type.kind==='array'){const avatar=eventType==='AvatarPublished'&&path==='data'&&type.length===265&&type.type.kind==='field';check(Number.isInteger(type.length)&&type.length>0&&(type.length<=32||avatar));return Array.from({length:type.length},()=>flattenTypes(type.type,eventType,path+'[]')).flat();}
+ if(type.kind==='struct'){check(type.fields.length<=20);return type.fields.flatMap(f=>flattenTypes(f.type,eventType,path?path+'.'+f.name:f.name));}throw rollingError();
 }
 const normalize = value => typeof value==='bigint'?String(value):typeof value==='boolean'?value:Array.isArray(value)?value.map(normalize):value?.toField?String(value.toField().toBigInt()):Object.fromEntries(Object.entries(value).map(([k,v])=>[k,normalize(v)]));
 export async function createRollingEventDecoder({artifact,scope}) {
@@ -93,7 +110,7 @@ export async function createRollingEventDecoder({artifact,scope}) {
  const definitions=new Map();
  for(const type of ROLLING_EVENTS){const abis=artifact.outputs.structs.events.filter(e=>e.path===`RollingBoard::${type}`);check(abis.length===1);const abi=structuredClone(abis[0]);
   const selector=await EventSelector.fromSignature(decodeFunctionSignature(type,abi.fields));const tag=await computeLogTag(selector.toField(),DomainSeparator.EVENT_LOG_TAG);
-  check(!definitions.has(tag.toString()));definitions.set(tag.toString(),{type,abi,types:flattenTypes(abi)});
+  check(!definitions.has(tag.toString()));definitions.set(tag.toString(),{type,abi,types:flattenTypes(abi,type)});
  }
  async function decodeLog(log,position) {
   try {check(log.contractAddress.toString()===scope.boardAddress);const def=definitions.get(log.fields[0]?.toString());check(def&&log.fields.length===def.types.length+1);

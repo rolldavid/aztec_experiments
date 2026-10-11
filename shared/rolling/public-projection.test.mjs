@@ -25,7 +25,7 @@ async function modified(e,changes){return validateRollingEvent({...e,payload:{..
 test('staged apply/undo/rebuild, names, anonymous authenticated bot and thread',async()=>{
  const {events,nameId}=await fixture(),p=createRollingProjection({isValidatedEvent:isRollingEvent});const a=p.stage(events);assert.equal(p.postCount,0);a.apply();assert.equal(p.postCount,2);
  assert.equal(p.thread('10').posts[1].bot.pluginId,'7');assert.equal(p.profile(nameId).posts.length,1);assert(!JSON.stringify(p.feed()).includes('owner'));
- assert.deepEqual(p.identity(nameId),{id:nameId,first:'John',last:'Doe'});assert.equal(p.identity('0'),null);
+ assert.deepEqual(p.identity(nameId),{id:nameId,first:'John',last:'Doe',profile:{bio:{version:'0',digest:'0',length:'0',text:''},avatar:{version:'0',digest:'0',width:'0',height:'0',length:'0',encoding:'base64',data:''}}});assert.equal(p.identity('0'),null);
  const named=p.identity(nameId);named.first='Mutated';assert.equal(p.identity(nameId).first,'John');
  const before=p.feed().posts;const rebuilt=createRollingProjection({isValidatedEvent:isRollingEvent});rebuilt.stage(events).apply();assert.deepEqual(rebuilt.feed().posts,before);
  a.undo();assert.equal(p.postCount,0);assert.equal(p.identity(nameId),null);assert.throws(()=>a.undo());assert.throws(()=>a.apply());
@@ -114,4 +114,65 @@ test('labelled performance fixture: retained two-thousand-range undo fits finite
  const result=spawnSync(process.execPath,['--expose-gc','--max-old-space-size=128','--input-type=module','-e',script],{encoding:'utf8',timeout:15000,maxBuffer:4096});
  assert.equal(result.status,0,result.stderr);const observed=JSON.parse(result.stdout);
  assert.equal(observed.empty,true);assert(observed.retainedBytes<40*1024*1024,'Retained undo exceeds predeclared 40MiB fixture budget');
+});
+
+// Profile fixtures are synthetic events; the real SDK computes hashes. They do
+// not qualify actual-chain receipt/emitter validation or image decoding.
+async function bio(nameId,version,body,tx='3') {
+ const length=String(Buffer.byteLength(body)),content=pack(body,32);
+ return event('BioPublished',{name_id:nameId,version,length,content,digest:await h(['1',nameId,version,length,...content],0x52434231),trailer:'1'},0,tx);
+}
+async function avatar(nameId,version,bytes,tx='4') {
+ const length=String(bytes.length),data=pack(bytes,265),width=bytes.length?'100':'0',height=width;
+ return event('AvatarPublished',{name_id:nameId,version,width,height,length,data,digest:await h(['1',nameId,version,width,height,length,...data],0x52434131),trailer:'1'},0,tx);
+}
+test('profile exact binary bytes and independent current versions appear on existing posts at read time',async()=>{
+ const {events,nameId}=await fixture(),p=createRollingProjection({isValidatedEvent:isRollingEvent});p.stage(events).apply();
+ const previous=p.post('10');assert.equal(previous.identity.profile.avatar.version,'0');assert.equal(p.post('20').identity,null);
+ const bytes=Buffer.from([0xff,0xc0,0x80,0,0x89,0]); // deliberately invalid UTF-8 and trailing zeros
+ const b=await bio(nameId,'1','A short bio'),a=await avatar(nameId,'1',bytes);
+ p.stage([b,a]).apply();
+ assert.equal(p.identity(nameId).profile.bio.text,'A short bio');
+ const image=p.post('10').identity.profile.avatar;assert.equal(image.data,bytes.toString('base64'));assert.equal(image.length,'6');assert.equal(image.digest,a.payload.digest);
+ assert.equal(p.profile(nameId).identity.profile.avatar.data,image.data);assert.equal(p.thread('10').posts[0].identity.profile.avatar.data,image.data);
+ assert.equal(previous.identity.profile.avatar.version,'0');
+ const publicCopy=p.identity(nameId);publicCopy.profile.avatar.data='mutated';assert.equal(p.identity(nameId).profile.avatar.data,image.data);
+ assert(!JSON.stringify(p.feed()).includes('owner'));
+});
+test('profile clears, independent updates, reverse undo and redecoding rebuild preserve exact versions',async()=>{
+ const {events,nameId}=await fixture(),p=createRollingProjection({isValidatedEvent:isRollingEvent});p.stage(events).apply();
+ const b=await bio(nameId,'1','Bio'),a=await avatar(nameId,'1',Buffer.from([1,2,0]));const first=p.stage([b,a]);first.apply();const original=p.identity(nameId);
+ const clearBio=await bio(nameId,'2','','5'),clearAvatar=await avatar(nameId,'2',Buffer.alloc(0),'6');
+ const second=p.stage([clearBio,clearAvatar]);second.apply();assert.equal(p.identity(nameId).profile.bio.text,'');assert.equal(p.identity(nameId).profile.avatar.data,'');assert.equal(p.identity(nameId).profile.avatar.width,'0');assert.equal(p.identity(nameId).profile.avatar.version,'2');
+ assert.notEqual(p.identity(nameId).profile.avatar.digest,'0');
+ second.undo();assert.deepEqual(p.identity(nameId),original);assert.deepEqual(p.post('10').identity,original);
+ const replacement=await avatar(nameId,'2',Buffer.from([9,0,8,0]),'5'),third=p.stage([replacement]);third.apply();
+ assert.equal(p.identity(nameId).profile.bio.version,'1');assert.equal(p.identity(nameId).profile.avatar.data,'CQAIAA==');
+ const rebuilt=createRollingProjection({isValidatedEvent:isRollingEvent});const validated=[];
+ for(const e of [...events,b,a,replacement])validated.push(await validateRollingEvent(JSON.parse(JSON.stringify(e)),scope));
+ rebuilt.stage(validated).apply();assert.deepEqual(rebuilt.identity(nameId),p.identity(nameId));assert.deepEqual(rebuilt.feed().posts,p.feed().posts);
+ third.undo();first.undo();assert.equal(p.identity(nameId).profile.avatar.version,'0');
+});
+test('unregistered identity, skipped/stale profile versions and atomic partial range rejected',async()=>{
+ const {events,nameId}=await fixture(),p=createRollingProjection({isValidatedEvent:isRollingEvent});p.stage(events).apply();
+ for(const bad of [await bio('99','1','Fake'),await bio(nameId,'2','Skipped'),await avatar(nameId,'2',Buffer.from([1]))])assert.throws(()=>p.stage([bad]));
+ const original=p.identity(nameId),valid=await bio(nameId,'1','First'),invalid=await avatar(nameId,'2',Buffer.from([1]));
+ assert.throws(()=>p.stage([valid,invalid]));assert.deepEqual(p.identity(nameId),original);
+ p.stage([valid]).apply();const stale=await bio(nameId,'1','Replay','4');assert.throws(()=>p.stage([stale]));assert.equal(p.identity(nameId).profile.bio.text,'First');
+});
+
+test('profile validation rejects bad digest, padding, lengths, dimensions, trailers and bot identity',async()=>{
+ const {nameId}=await fixture(),goodBio=await bio(nameId,'1','A'),goodAvatar=await avatar(nameId,'1',Buffer.from([0xff,0]));
+ const modify=(e,patch)=>validateRollingEvent({...e,payload:{...e.payload,...patch}},scope);
+ for(const patch of [{digest:'1'},{name_id:'0'},{version:'0'},{version:'4294967296'},{length:'993'},{trailer:'0'},{content:pack('AB',32)},{content:pack(Buffer.from([0xc0]),32)}])await assert.rejects(()=>modify(goodBio,patch));
+ for(const patch of [{digest:'1'},{name_id:'0'},{version:'0'},{length:'8193'},{length:'1'},{width:'99'},{height:'0'},{trailer:'0'},{data:pack(Buffer.from([255,0,1]),265)},{data:[(1n<<248n).toString(),...Array(264).fill('0')]},{data:Array(264).fill('0')}])await assert.rejects(()=>modify(goodAvatar,patch));
+ const cleared=await avatar(nameId,'1',Buffer.alloc(0));await assert.rejects(()=>modify(cleared,{width:'100'}));await assert.rejects(()=>modify(cleared,{data:pack(Buffer.from([1]),265)}));
+});
+test('8192 byte profile content round trips, standard base64 padding is exact for all remainders',async()=>{
+ const {events,nameId}=await fixture(),p=createRollingProjection({isValidatedEvent:isRollingEvent});p.stage(events).apply();
+ for(const [i,length] of [8192,1,2,3].entries()){
+  const bytes=Buffer.alloc(length,0xff);bytes[length-1]=0;const a=await avatar(nameId,String(i+1),bytes,String(i+3));p.stage([a]).apply();
+  const result=p.identity(nameId).profile.avatar;assert.equal(result.data,bytes.toString('base64'));assert.deepEqual(Buffer.from(result.data,'base64'),bytes);assert.equal(result.length,String(length));
+ }
+ const body='z'.repeat(992),b=await bio(nameId,'1',body,'7');p.stage([b]).apply();assert.equal(p.identity(nameId).profile.bio.text,body);
 });

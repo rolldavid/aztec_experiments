@@ -78,3 +78,47 @@ test('installed NodeBlockProvider requires explicit transactions and decoder req
  n.getBlock=(number,options)=>{requested=options;return provider.getBlock(number,options);};
  const events=await decoder.decodeTransaction(n,txHash.toString());assert.equal(events.length,1);assert.deepEqual(requested,{includeTransactions:true});
 });
+
+// Requires the normally processed profile candidate artifact, never a synthetic
+// appended ABI. The payload is a labelled fixture, not a mined profile event.
+async function profileLog(type,{nameId=7n,version=1n,bytes=Buffer.from([0xff,0]),clear=false}={}){
+ const definition=artifact.outputs.structs.events.find(e=>e.path===`RollingBoard::${type}`);assert(definition,'Build the profile contract normally before running SDK event tests');
+ const selector=await EventSelector.fromSignature(decodeFunctionSignature(type,definition.fields));
+ const tag=await computeLogTag(selector.toField(),DomainSeparator.EVENT_LOG_TAG),isAvatar=type==='AvatarPublished';
+ const content=clear?Buffer.alloc(0):isAvatar?bytes:Buffer.from('Bio'),storage=Buffer.alloc((isAvatar?265:32)*31);content.copy(storage);
+ const words=Array.from({length:isAvatar?265:32},(_,i)=>new Fr(BigInt('0x'+storage.subarray(i*31,(i+1)*31).toString('hex'))));
+ const length=BigInt(content.length),width=clear?0n:100n;
+ const metadata=isAvatar?[1n,nameId,version,width,width,length]:[1n,nameId,version,length];
+ const digest=await poseidon2HashWithSeparator([...metadata,...words],isAvatar?0x52434131:0x52434231);
+ return new PublicLog(board,[tag,...metadata.map(v=>new Fr(v)),digest,...words,Fr.ONE]);
+}
+test('labelled actual profile ABI decodes binary avatar and bio logs with a nonzero trailer',async()=>{
+ for(const type of ['BioPublished','AvatarPublished'])for(const clear of [false,true]){
+  const l=await profileLog(type,{clear}),e=await decoder.decodeLog(l,position);assert.equal(e.type,type);assert.equal(e.payload.trailer,'1');assert.equal(e.payload.version,'1');
+  assert.equal(e.payload.length,clear?'0':type==='BioPublished'?'3':'2');
+  const n=nodeFixture(),effect=(await n.getTxEffect()).data,block=await n.getBlock();effect.publicLogs=[l];
+  n.getTxEffect=async()=>({data:effect,l2BlockNumber:1,l2BlockHash:block.hash});
+  n.getBlock=async()=>({...block,body:{txEffects:[effect]}});
+  assert.deepEqual(await decoder.decodeTransaction(n,txHash.toString()),[e]);
+ }
+});
+test('actual avatar ABI remains bounded at265 fields and preserves8192 binary bytes',async()=>{
+ const bytes=Buffer.alloc(8192,255);bytes[8191]=0;const e=await decoder.decodeLog(await profileLog('AvatarPublished',{bytes}),position);
+ assert.equal(e.payload.data.length,265);assert.equal(e.payload.length,'8192');
+ for(const [label,mutate] of [
+  ['wrong emitter',l=>{l.contractAddress=AztecAddress.fromBigIntUnsafe(43n);}],
+  ['trailer',l=>{l.fields[l.fields.length-1]=Fr.ZERO;}],
+  ['oversize',l=>{l.fields[6]=new Fr(8193n);}],
+  ['digest',l=>{l.fields[7]=Fr.ZERO;}],
+  ['word overflow',l=>{l.fields[8]=new Fr(1n<<248n);}],
+  ['padding',l=>{l.fields[l.fields.length-2]=Fr.ONE;}],
+ ]){const l=await profileLog('AvatarPublished',{bytes});mutate(l);await assert.rejects(()=>decoder.decodeLog(l,position),label);}
+});
+test('265-field exception cannot broaden text arrays or another event ABI',async()=>{
+ for(const [eventName,fieldName,length] of [['MainPolicyPublished','rules',265],['BioPublished','content',265],['AvatarPublished','data',266]]){
+  const changed=structuredClone(artifact),definition=changed.outputs.structs.events.find(e=>e.path===`RollingBoard::${eventName}`);
+  definition.fields.find(f=>f.name===fieldName).type.length=length;
+  await assert.rejects(()=>createRollingEventDecoder({artifact:changed,scope}));
+ }
+ assert.throws(()=>unpackRollingText(Array(265).fill('0'),'0',8192,false));
+});

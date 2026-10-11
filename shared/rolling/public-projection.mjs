@@ -5,6 +5,10 @@ const copy=v=>structuredClone(v);
 const pos=e=>[e.position.blockNumber,e.position.txIndexWithinBlock,e.position.logIndexWithinTx].map(BigInt);
 const compare=(a,b)=>{for(let i=0;i<3;i++)if(a[i]!==b[i])return a[i]<b[i]?-1:1;return 0;};
 const text=(p,field,length)=>{const bytes=new Uint8Array(p[field].length*31);p[field].forEach((word,i)=>{let n=BigInt(word);for(let j=30;j>=0;j--){bytes[i*31+j]=Number(n&255n);n>>=8n;}});return new TextDecoder('utf-8',{fatal:true,ignoreBOM:true}).decode(bytes.slice(0,Number(p[length])));};
+// Reversible JSON representation for exact raster bytes. Standard padded base64
+// keeps public JSON bounded; MIME/image decoding is a separate consumer duty.
+const binaryBase64=(fields,length)=>{const bytes=[];for(const word of fields){let n=BigInt(word),chunk=new Array(31);for(let j=30;j>=0;j--){chunk[j]=Number(n&255n);n>>=8n;}bytes.push(...chunk);}const data=bytes.slice(0,Number(length)),alphabet='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';let encoded='';for(let i=0;i<data.length;i+=3){const a=data[i],b=data[i+1],c=data[i+2],n=(a<<16)|((b??0)<<8)|(c??0);encoded+=alphabet[(n>>>18)&63]+alphabet[(n>>>12)&63]+(b===undefined?'=':alphabet[(n>>>6)&63])+(c===undefined?'=':alphabet[n&63]);}return encoded;};
+const emptyProfile=()=>({bio:{version:'0',digest:'0',length:'0',text:''},avatar:{version:'0',digest:'0',width:'0',height:'0',length:'0',encoding:'base64',data:''}});
 // stage changes nothing; apply and reverse-order undo are single-use and reject
 // stale candidates. Private ownership and like-tag membership are never returned.
 export function createRollingProjection({isValidatedEvent,maxEvents=50000}={}) {
@@ -37,7 +41,13 @@ export function createRollingProjection({isValidatedEvent,maxEvents=50000}={}) {
    check(!next.last||compare(pos(next.last),coordinate)<0);if(next.last?.position.blockNumber===e.position.blockNumber){check(next.last.position.blockHash===e.position.blockHash);if(next.last.position.txIndexWithinBlock===e.position.txIndexWithinBlock)check(next.last.position.txHash===e.position.txHash);}
    next.last=e;
    if(e.type==='MainPolicyPublished'){check(BigInt(p.version)===BigInt(next.version)+1n);next.policies.set(p.version,{...p,text:text(p,'rules','length')});next.version=p.version;}
-   else if(e.type==='NameRegistered'){check(!next.names.has(p.name_id));next.names.set(p.name_id,{id:p.name_id,first:text(p,'first','first_length'),last:text(p,'last','last_length')});}
+   else if(e.type==='NameRegistered'){check(!next.names.has(p.name_id));next.names.set(p.name_id,{id:p.name_id,first:text(p,'first','first_length'),last:text(p,'last','last_length'),profile:emptyProfile()});}
+   else if(e.type==='BioPublished'||e.type==='AvatarPublished'){
+    const name=next.names.get(p.name_id);check(name);const part=e.type==='BioPublished'?'bio':'avatar';
+    check(BigInt(p.version)===BigInt(name.profile[part].version)+1n);
+    const value=part==='bio'?{version:p.version,digest:p.digest,length:p.length,text:text(p,'content','length')}:{version:p.version,digest:p.digest,width:p.width,height:p.height,length:p.length,encoding:'base64',data:binaryBase64(p.data,p.length)};
+    next.names.set(p.name_id,{...name,profile:{...name.profile,[part]:value}});
+   }
    else if(e.type==='SubboardCreated'){check(!next.boards.has(p.subboard_id)&&p.main_policy_version===next.version);next.boards.set(p.subboard_id,{id:p.subboard_id,slug:text(p,'slug','slug_length'),name:text(p,'name','name_length'),description:text(p,'description','description_length'),rules:text(p,'rules','rules_length'),creationVersion:p.main_policy_version,rejected:false,rejection:null});}
    else if(e.type==='SubboardRejected'){const board=next.boards.get(p.subboard_id);check(board&&!board.rejected&&p.main_policy_version===next.version);next.boards.set(p.subboard_id,{...board,rejected:true,rejection:{reason:text(p,'reason','reason_length'),mainVersion:p.main_policy_version,position:e.position}});}
    else if(e.type==='PluginConfigured'){const old=next.plugins.get(p.plugin_id);check(!old||old.adapter===p.adapter);next.plugins.set(p.plugin_id,{...p});}
@@ -83,7 +93,7 @@ export function createRollingProjection({isValidatedEvent,maxEvents=50000}={}) {
     tip=baseTip;revision++;undone=true;
    }};
  }
- const visible=post=>{const p=copy(post),board=state.boards.get(p.record.subboard);if(p.removal||board?.rejected)p.text=null;return p;};
+ const visible=post=>{const p=copy(post),board=state.boards.get(p.record.subboard);if(p.removal||board?.rejected)p.text=null;p.identity=p.record.name_id==='0'?null:copy(state.names.get(p.record.name_id));return p;};
  function select(ids,{limit=50,cursor=null}={}){
   check(Number.isSafeInteger(limit)&&limit>=1&&limit<=100);let offset=0;
   if(cursor!==null){check(typeof cursor==='string'&&/^[0-9]+:[0-9]+$/.test(cursor));const [r,n]=cursor.split(':').map(Number);check(r===revision&&Number.isSafeInteger(n)&&n<=ids.length);offset=n;}
