@@ -84,12 +84,16 @@ export class Supervisor {
     const child=matches[0];
     assert.equal(child.outcome.closed,true,'Worker must exit before replacement handoff');
     assert(!this.closed,'Supervisor already closed');
+    return this.cleanupChild(child);
+  }
+  cleanupChild(child) {
     if(!child.cleanupPromise)child.cleanupPromise=(async()=>{
       try {
         await child.tree.cleanup();child.outcome.cleanupComplete=true;
         return {cleanupComplete:true};
       }catch(error){
-        child.outcome.cleanupComplete=false;this.fail(role+'-cleanup',error);
+        child.outcome.cleanupComplete=false;const stage=child.role+'-cleanup';this.fail(stage,error);
+        if(!this.report.failures.some(item=>item.stage===stage))this.report.failures.push({stage,...describeFailure(error)});
         throw Error('Owned worker cleanup failed; replacement forbidden');
       }
     })();
@@ -100,8 +104,7 @@ export class Supervisor {
     for(const [signal,fn]of this.signals)process.removeListener(signal,fn);
     // Preserve command outcomes even if cleanup fails. Never turn cleanup failure into success.
     for(const child of this.children){
-      try {await child.tree.cleanup();child.outcome.cleanupComplete=true;}
-      catch(error){child.outcome.cleanupComplete=false;this.report.failures.push({stage:child.role+'-cleanup',...describeFailure(error)});}
+      try {await this.cleanupChild(child);}catch{} // The single attempt already retained its failure.
     }
     this.report.elapsedMs=Math.round(performance.now()-this.started);
     this.report.ownedTreeAbsent=this.children.every(child=>child.outcome.cleanupComplete===true);

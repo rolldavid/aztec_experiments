@@ -113,3 +113,14 @@ test('failed handoff cleanup prevents any replacement and preserves failure',{ti
  }finally{await owner.close();}
  assert.equal(report.ownedTreeAbsent,false);
 });
+
+
+test('close cannot retry or overwrite a failed handoff cleanup',{timeout:10000},async()=>{
+ const report={},owner=new Supervisor({report,deadlineMs:5000});let attempts=0;
+ await owner.start('initial',process.execPath,['-e','process.exit(0)'],options);
+ owner.children[0].tree.cleanup=async()=>{if(++attempts===1)throw Error('snapshot unavailable');};
+ await assert.rejects(owner.cleanupRole('initial'),/replacement forbidden/);
+ await owner.close();
+ assert.equal(attempts,1);assert.equal(report.children[0].cleanupComplete,false);
+ assert.equal(report.ownedTreeAbsent,false);assert.equal(report.failures.filter(item=>item.stage==='initial-cleanup').length,1);
+});
