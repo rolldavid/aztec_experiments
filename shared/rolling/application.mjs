@@ -1,6 +1,6 @@
 import {createEncryptedJournalSlot} from '../journal-record.mjs';
 import {l2JournalScopeText} from '../l2-journal.mjs';
-import {nameRegistration} from './name-policy.mjs';
+import {nameRegistration,NAME_DOMAIN} from './name-policy.mjs';
 import {FIELD_MODULUS} from './invocation.mjs';
 
 const fail=code=>Object.assign(new Error(code),{code});
@@ -47,13 +47,30 @@ function utilityPlain(value,type,depth=0){
 function text(value,count,required=true){
   check(typeof value==='string'&&value.isWellFormed()&&!value.includes('\0'));
   const bytes=new TextEncoder().encode(value);check(bytes.length<=count*31&&(!required||bytes.length));
-  const packed=Array(count).fill(0n);for(let i=0;i<bytes.length;i++)packed[Math.floor(i/31)]|=BigInt(bytes[i])<<BigInt(8*(30-i%31));
-  return [packed.map(n=>field(n.toString())),bytes.length];
+  return [pack(bytes,count),bytes.length];
 }
-const keys={name:['first','last'],subboard:['slug','name','description','rules'],like:['post'],unlike:['post'],withdraw:['deposit'],
+function pack(bytes,count){
+  const packed=Array(count).fill(0n);for(let i=0;i<bytes.length;i++)packed[Math.floor(i/31)]|=BigInt(bytes[i])<<BigInt(8*(30-i%31));
+  return packed.map(n=>field(n.toString()));
+}
+function version(value){check(typeof value==='string'&&/^(?:0|[1-9][0-9]{0,9})$/.test(value)&&BigInt(value)<=0xffffffffn);return Number(value);}
+function avatar(action){
+  check(typeof action.data==='string'&&action.data.length<=10924&&/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(action.data));
+  const binary=atob(action.data);check(btoa(binary)===action.data&&binary.length<=8192);
+  check(binary.length===0?action.width===0&&action.height===0:action.width===100&&action.height===100);
+  return [field(action.name,true),version(action.expectedVersion),action.width,action.height,binary.length,pack(Uint8Array.from(binary,c=>c.charCodeAt(0)),265)];
+}
+function component(fields,length){
+  check(Array.isArray(fields)&&fields.length===2&&Number.isInteger(length)&&length>=1&&length<=32,'ROLLING_INVALID_RESPONSE');
+  const words=fields.map(value=>{check(typeof value==='string'&&/^0x[0-9a-f]{64}$/.test(value)&&BigInt(value)<(1n<<248n),'ROLLING_INVALID_RESPONSE');return BigInt(value);});
+  check((words[1]&((1n<<240n)-1n))===0n,'ROLLING_INVALID_RESPONSE');
+  const bytes=Array.from({length:31},(_,i)=>Number((words[0]>>BigInt((30-i)*8))&255n));bytes.push(Number(words[1]>>240n));
+  check(bytes.slice(length).every(n=>n===0),'ROLLING_INVALID_RESPONSE');return String.fromCharCode(...bytes.slice(0,length));
+}
+const keys={bio:['name','expectedVersion','content'],avatar:['name','expectedVersion','width','height','data'],name:['first','last'],subboard:['slug','name','description','rules'],like:['post'],unlike:['post'],withdraw:['deposit'],
   post:['deposit','content','name','subboard'],reply:['deposit','content','name','subboard','parent','root'],
   quote:['deposit','content','name','subboard','reference'],repost:['deposit','content','name','subboard','reference']};
-const methods={name:'register_name',subboard:'create_subboard',like:'set_like',unlike:'set_like',withdraw:'withdraw',post:'post',reply:'post',quote:'post',repost:'post'};
+const methods={bio:'set_bio',avatar:'set_avatar',name:'register_name',subboard:'create_subboard',like:'set_like',unlike:'set_like',withdraw:'withdraw',post:'post',reply:'post',quote:'post',repost:'post'};
 
 /** Wallet-only port; import after unlock. No SDK, network or public-reader work at import.
  * deployment: {board:{address,artifact}, network:{chainId,version,rollup},portal,
@@ -74,7 +91,12 @@ const methods={name:'register_name',subboard:'create_subboard',like:'set_like',u
  * The loaded RollingBoard artifact must be the processed, manifest-verified artifact.
  * Tests require that normal generated artifact; mocks do not qualify live funding.
  * Inputs are strict plain actions; field identifiers are decimal or 32-byte lowercase
- * hex strings. ownedIdentities returns private IDs, never a public ownership grouping.
+ * hex strings; profile expectedVersion is a canonical decimal uint32 string.
+ * ownedIdentities returns private IDs and display records only from owned_name_records;
+ * there is no public per-name lookup or legacy fallback. Bios allow992UTF8 bytes,
+ * including empty clear. Avatars accept canonical padded base64<=8192bytes,100x100,
+ * or empty data with0x0 to clear. The upload UI must validate/decode/moderate pixels
+ * and bind confirmed preview bytes before preparing this binary contract action.
  * A prepared post includes authenticated-wallet screening hints and live policy versions.
  * submit delegates the sole prove/journal/send lifecycle to wallet.sendTx. Once its
  * durable fence exists, only read-only reconcile is allowed, including after a crash
@@ -147,6 +169,8 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
   async function argumentsFor(action,board,nonce){
     const allowed=keys[action?.type];check(allowed&&Object.keys(action).every(k=>k==='type'||allowed.includes(k)));
     switch(action.type){
+      case 'bio':return [field(action.name,true),version(action.expectedVersion),...text(action.content,32,false)];
+      case 'avatar':return avatar(action);
       case 'name':return nameRegistration(action.first,action.last).arguments;
       case 'subboard':{
         check(typeof action.slug==='string'&&/^[a-z0-9](?:[a-z0-9]|-(?!-)){1,38}[a-z0-9]$/.test(action.slug));
@@ -192,8 +216,21 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
       });
     },
     async ownedIdentities({cursor=0}={}){return exclusive(async()=>{await guard();check(Number.isInteger(cursor)&&cursor>=0&&cursor<=0xffffffff-8);
-      const ids=await utility(await contract(),'owned_names',[session.owner,cursor]);check(Array.isArray(ids)&&ids.length===8,'ROLLING_INVALID_RESPONSE');
-      return {identities:ids.filter(id=>BigInt(id)!==0n),nextCursor:ids.every(id=>BigInt(id)!==0n)?cursor+8:null};});},
+      const values=await utility(await contract(),'owned_name_records',[session.owner,cursor]);check(Array.isArray(values)&&values.length===8,'ROLLING_INVALID_RESPONSE');
+      const records=[],seen=new Set();let empty=false;
+      try{for(const value of values){
+        check(value&&Object.keys(value).sort().join()===['name_id','schema','first_length','first','last_length','last'].sort().join(),'ROLLING_INVALID_RESPONSE');
+        const id=field(value.name_id),schema=Number(BigInt(value.schema)),firstLength=Number(BigInt(value.first_length)),lastLength=Number(BigInt(value.last_length));
+        if(id===zero){
+          check(schema===0&&firstLength===0&&lastLength===0&&[value.first,value.last].every(words=>Array.isArray(words)&&words.length===2&&words.every(word=>word===zero)),'ROLLING_INVALID_RESPONSE');empty=true;continue;
+        }
+        check(!empty&&schema===1&&!seen.has(id),'ROLLING_INVALID_RESPONSE');
+        const first=component(value.first,firstLength),last=component(value.last,lastLength),registration=nameRegistration(first,last);
+        check(registration.name.first===first&&registration.name.last===last,'ROLLING_INVALID_RESPONSE');
+        const expected=await sdk.poseidon2HashWithSeparator(registration.preimage.map(n=>new sdk.Fr(n)),NAME_DOMAIN);
+        check(field(expected.toString(),true)===id,'ROLLING_INVALID_RESPONSE');seen.add(id);records.push({id,first,last});
+      }}catch{throw fail('ROLLING_INVALID_RESPONSE');}
+      await guard();return {identities:records.map(record=>record.id),records,nextCursor:empty?null:cursor+8};});},
     async prepare(input){return exclusive(async()=>{await guard();const action=clone(input),store=await slot();let prior=await store.read();
       if(prior.value&&prior.value.status!=='cancelled'){check(['confirmed','reverted'].includes(prior.value.status),'ROLLING_RECOVERY_REQUIRED');
         const final=await outcome(prior);check(['confirmed','reverted'].includes(final.status),'ROLLING_RECOVERY_REQUIRED');prior=await store.read();}

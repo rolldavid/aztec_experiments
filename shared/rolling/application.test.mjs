@@ -3,6 +3,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import {poseidon2HashWithSeparator} from '@aztec-labs/foundation/crypto/poseidon';
+import {BarretenbergSync} from '@aztec-foundation/bb.js';
+import {after} from 'node:test';
+import {nameRegistration,NAME_DOMAIN} from './name-policy.mjs';
 import {Fr} from '@aztec-labs/foundation/curves/bn254';
 import {AztecAddress} from '@aztec-labs/stdlib/aztec-address';
 import {encodeArguments,loadContractArtifact,decodeFromAbi,getFunctionReturnType} from '@aztec-labs/stdlib/abi';
@@ -12,6 +16,21 @@ import {FIELD_MODULUS} from './invocation.mjs';
 import {createRollingApplication} from './application.mjs';
 const hex=n=>'0x'+BigInt(n).toString(16).padStart(64,'0');
 const artifact=loadContractArtifact(JSON.parse(fs.readFileSync(new URL('../../billboard/target/rolling_contract-RollingBoard.json',import.meta.url))));
+// REQUIRED: run only after normal profile-protocol build/processing. Never invent
+// or patch an ABI to make these cases pass against an older application artifact.
+const ownedRecordAbi=artifact.functions.find(f=>f.name==='owned_name_records');
+const displayPack=value=>{const bytes=new TextEncoder().encode(value),words=[0n,0n];for(let i=0;i<bytes.length;i++)words[Math.floor(i/31)]|=BigInt(bytes[i])<<BigInt(8*(30-i%31));return words;};
+async function ownershipPage(names=[['Jane','Smith']]){
+ assert(ownedRecordAbi,'Normal processed profile ABI required');const fields=[];
+ for(let i=0;i<8;i++){
+  if(i>=names.length){fields.push(...Array(8).fill(0n));continue;}
+  const [first,last]=names[i],registration=nameRegistration(first,last),id=await poseidon2HashWithSeparator(registration.preimage.map(n=>new Fr(n)),NAME_DOMAIN);
+  fields.push(id.toBigInt(),1n,BigInt(first.length),...displayPack(first),BigInt(last.length),...displayPack(last));
+ }
+ return decodeFromAbi(getFunctionReturnType(ownedRecordAbi),fields.map(n=>new Fr(n)));
+}
+after(async()=>{await BarretenbergSync.destroySingleton();});
+
 function fixture(){
   const state={calls:[],sends:0,fee:10n,outcome:null,privateReads:[],failSend:false,failCAS:false,guard:true,policy:1,estimates:0};
   const values=new Map();const privateStore={read:async k=>values.get(k)??null,compareAndSwap:async(k,old,next)=>{
@@ -19,7 +38,7 @@ function fixture(){
   }};
   const board={methods:new Proxy({},{get:(_,name)=>(...args)=>({name,args,simulate:async()=>{
     state.privateReads.push({name,args});
-    const replies={owned_names:[5n,0n,0n,0n,0n,0n,0n,0n],get_deposit_ids:[9n,0n,0n,0n,0n,0n,0n,0n,0n,0n],
+    const replies={owned_name_records:('records' in state)?state.records:await ownershipPage(),get_deposit_ids:[9n,0n,0n,0n,0n,0n,0n,0n,0n,0n],
       main_policy:[BigInt(state.policy),1n],effective_policy:[BigInt(state.policy),1n,1n,2n,false],get_screen_hints:state.hints??decodeFromAbi(getFunctionReturnType(artifact.functions.find(f=>f.name==='get_screen_hints')),Array.from({length:28},()=>Fr.ZERO))};
     return {result:replies[name]};
   }})})};
@@ -31,10 +50,11 @@ function fixture(){
     state.outcome={operation:opts.journalOperation,outcome:'success',txHash:hex(77),receipt:{txHash:hex(77)}};return {receipt:{}};
   }};
   const node={};wallet.aztecNode=node;wallet.pxe={};let random=100n;
-  const sdk={Fr:class extends Fr {static random(){return new Fr(random++);}},AztecAddress,encodeArguments,Contract:{at:()=>board},isTrustedPrivateNode:n=>n===node,isPrivateWalletForNode:(w,n)=>w===wallet&&n===node,isPrivatePXEForNode:(p,n)=>p===wallet.pxe&&n===node,
+  const sdk={poseidon2HashWithSeparator,Fr:class extends Fr {static random(){return new Fr(random++);}},AztecAddress,encodeArguments,Contract:{at:()=>board},isTrustedPrivateNode:n=>n===node,isPrivateWalletForNode:(w,n)=>w===wallet&&n===node,isPrivatePXEForNode:(p,n)=>p===wallet.pxe&&n===node,
     inspectTrustedNode:async()=>{if(!state.guard)throw Error('stale trusted node');},
     preparePrivateFeePayment:async()=>({availableCredit:100n}),estimatePrivateFeeTransaction:async input=>{
       await input.guard();state.estimates++;state.calls.push(input.interaction);
+      if(['set_bio','set_avatar'].includes(input.interaction.name)){assert.equal(input.interaction.args[1],state.profileVersion??0,'stale profile version');assert((state.profileVersion??0)<0xffffffff,'profile version exhausted');}
       if(input.interaction.name==='post')assert.equal(input.interaction.args[2].expected_main_policy_version,state.policy,'policy changed');
       return {maximumFee:state.fee,payload:input.interaction,gasSettings:{ceiling:state.fee}};
     }};
@@ -94,7 +114,8 @@ test('rejects arbitrary calls, fabricated Bok flow and oversized content without
   }
 });
 test('private ownership and status reads never invoke publicReader, and do not overclaim eligibility',async()=>{
-  const f=fixture();assert.deepEqual(await f.app.ownedIdentities({cursor:8}),{identities:[hex(5)],nextCursor:null});
+  const f=fixture(),id=hex((await ownershipPage())[0].name_id);assert.deepEqual(await f.app.ownedIdentities({cursor:8}),{identities:[id],records:[{id,first:'Jane',last:'Smith'}],nextCursor:null});
+  assert.equal(f.state.privateReads[0].name,'owned_name_records');
   assert.equal(f.state.privateReads[0].args[1],8);
   const status=await f.app.readAccountStatus();assert.equal(status.status,'fee-ready');assert.equal(status.postEligibility,'requires-action-simulation');
   f.state.guard=false;await assert.rejects(f.app.ownedIdentities());await assert.rejects(f.app.readAccountStatus());
@@ -274,4 +295,61 @@ test('utility ABI rejects missing required hint fields and malformed tuples befo
   await assert.rejects(f.app.prepare({type:'post',deposit:'9',content:'Must reject'}),{code:'ROLLING_INVALID_RESPONSE'});
   assert.equal(f.state.estimates,0);assert.equal(f.state.sends,0);assert.equal(f.values.size,0);
  }
+});
+
+// G05-A09/A10 cases bind to the normal processed protocol ABI above. RPC/session
+// doubles model stale-version simulation; they do not replace actual proof acceptance.
+test('profile actions encode with actual private ABI and survive encrypted restart',async()=>{
+ const cases=[{type:'bio',name:'5',expectedVersion:'0',content:'é'.repeat(496)},
+  {type:'bio',name:'5',expectedVersion:'0',content:''},
+  {type:'avatar',name:'5',expectedVersion:'0',width:100,height:100,data:Buffer.alloc(8192,0xa5).toString('base64')},
+  {type:'avatar',name:'5',expectedVersion:'0',width:0,height:0,data:''}];
+ for(const action of cases){const f=fixture(),p=await f.app.prepare(action),call=f.state.calls.at(-1);assert.equal(f.state.sends,0);
+  const abi=artifact.functions.find(fn=>fn.name===call.name);assert.equal(abi.functionType,'private');
+  const encoded=encodeArguments(abi,call.args).map(value=>value.toBigInt());assert.equal(encoded.length,action.type==='bio'?35:270);assert.equal(encoded[0],5n);assert.equal(encoded[1],0n);
+  const packed=action.type==='bio'?encoded.slice(2,34):encoded.slice(5);const recovered=Buffer.concat(packed.map(n=>Buffer.from(n.toString(16).padStart(64,'0'),'hex').subarray(1)));
+  const expected=action.type==='bio'?Buffer.from(action.content):Buffer.from(action.data,'base64');assert.deepEqual(recovered.subarray(0,expected.length),expected);assert(recovered.subarray(expected.length).every(byte=>byte===0));
+  const args=structuredClone(call.args);if(action.type==='bio'){assert.equal(args[2].length,32);assert.equal(args[3],new TextEncoder().encode(action.content).length);}
+  else{assert.equal(args[5].length,265);assert.equal(args[4],Buffer.from(action.data,'base64').length);assert(BigInt(args[5][264])<(1n<<248n));assert.equal(BigInt(args[5][264])&((1n<<184n)-1n),0n);}
+  assert.equal((await f.restart().submitPrepared(p.intentId)).status,'confirmed');assert.deepEqual(f.state.sent.payload.args,args);
+ }
+});
+test('profile byte/version/dimension validation rejects without fee estimation or journal writes',async()=>{
+ const bio={type:'bio',name:'5',expectedVersion:'0',content:'hi'},avatar={type:'avatar',name:'5',expectedVersion:'0',width:100,height:100,data:'AA=='};
+ const actions=[{...bio,content:'é'.repeat(497)},{...bio,content:'\ud800'},{...bio,content:'x\0y'},{...bio,name:'0'},
+  ...['01','-1','4294967296',' 0','1.0',0,null,undefined].map(expectedVersion=>({...bio,expectedVersion})),
+  {...avatar,data:Buffer.alloc(8193).toString('base64')},...['AB==','AAB=','AA','AA==\n','__==','A==='].map(data=>({...avatar,data})),
+  {...avatar,width:99},{...avatar,width:'100'},{...avatar,data:''},{...avatar,width:0,height:0},
+  {...avatar,expectedVersion:'4294967296'}];
+ for(const action of actions){const f=fixture();await assert.rejects(f.app.prepare(action));assert.equal(f.state.estimates,0);assert.equal(f.state.sends,0);assert.equal(f.values.size,0);}
+});
+test('stale profile version cannot be silently refreshed or sent after preparation',async()=>{
+ for(const action of [{type:'bio',name:'5',expectedVersion:'0',content:'immutable'},
+  {type:'avatar',name:'5',expectedVersion:'0',width:100,height:100,data:'AA=='}]){
+  const f=fixture(),p=await f.app.prepare(action);f.state.profileVersion=1;
+  await assert.rejects(f.restart().submitPrepared(p.intentId),/stale profile version/);assert.equal(f.state.sends,0);
+  assert.equal((await f.app.reconcile(p.intentId)).status,'prepared');assert.equal(f.state.calls.at(-1).args[1],0);
+ }
+ const f=fixture();f.state.profileVersion=0xffffffff;await assert.rejects(f.app.prepare({type:'bio',name:'5',expectedVersion:'4294967295',content:''}),/profile version exhausted/);
+ assert.equal(f.state.calls.at(-1).args[1],0xffffffff);assert.equal(f.state.sends,0);assert.equal(f.values.size,0);
+});
+test('owned metadata preserves display case, 32-byte boundary and cursor with only private utility calls',async()=>{
+ const f=fixture(),names=Array.from({length:8},(_,i)=>['A'.repeat(32),`Last ${String.fromCharCode(65+i)}`]);f.state.records=await ownershipPage(names);
+ const result=await f.app.ownedIdentities({cursor:16});assert.equal(result.nextCursor,24);assert.deepEqual(result.records.map(r=>[r.first,r.last]),names);assert.equal(result.identities.length,8);
+ assert.deepEqual(f.state.privateReads.map(r=>r.name),['owned_name_records']);assert.equal(f.state.privateReads[0].args[1],16);
+});
+test('owned metadata rejects forged IDs, bad schema, missing fields, padding, reserved/unsupported names and duplicates',async()=>{
+ const mutations=[page=>{page[0].name_id=6n;},page=>{page[0].schema=2;},page=>{delete page[0].first;},page=>{page[0].first[0]+=1n;},page=>{page[0].first[1]=1n;},
+  page=>{page[0].first[0]=1n<<248n;},page=>{page[0].first_length=33;},page=>{page[0].first[0]=255n<<240n;},
+  page=>{page[0].first_length=3;page[0].first=displayPack('Bok');},page=>{page[1]=structuredClone(page[0]);},
+  page=>{page[1].schema=1;},page=>{page[1].last[0]=1n;},page=>{page[2]=page[0];page[0]=structuredClone(page[1]);}];
+ for(const mutate of mutations){const f=fixture();f.state.records=await ownershipPage();mutate(f.state.records);await assert.rejects(f.app.ownedIdentities(),{code:'ROLLING_INVALID_RESPONSE'});assert.equal(f.state.sends,0);assert.deepEqual(f.state.privateReads.map(r=>r.name),['owned_name_records']);}
+});
+test('missing new metadata ABI fails closed without legacy or public lookup',async()=>{
+ const f=fixture();f.options.deployment.board.artifact={...artifact,functions:artifact.functions.filter(fn=>fn.name!=='owned_name_records')};
+ await assert.rejects(f.app.ownedIdentities(),{code:'ROLLING_ABI_MISMATCH'});assert.deepEqual(f.state.privateReads,[]);
+});
+test('account lock during local metadata hashing suppresses the private result',async()=>{
+ const f=fixture();f.options.sdk.poseidon2HashWithSeparator=async(...args)=>{const value=await poseidon2HashWithSeparator(...args);f.state.guard=false;return value;};
+ await assert.rejects(f.app.ownedIdentities());assert.deepEqual(f.state.privateReads.map(r=>r.name),['owned_name_records']);
 });
