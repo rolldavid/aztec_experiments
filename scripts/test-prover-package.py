@@ -42,5 +42,71 @@ class PackagePreflight(unittest.TestCase):
         # release directory. The only entries here were installed by setUp.
         self.assertEqual(sorted(p.name for p in self.root.iterdir()), ['prover', 'toolchain.json'])
 
+class PackagedQueryImports(unittest.TestCase):
+    """Actual copied adapter + inspector, deliberately fake SDK; no service/prover.
+
+    A disabled-query import alone missed the production defect. Exercise the
+    enabled dynamic import outside every repository ancestor and remove its file
+    as a negative control. This is not Linux dependency/runtime acceptance.
+    """
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory(prefix='isolated-prover-sources-')
+        self.release = pathlib.Path(self.temp.name) / 'release'
+        self.release.mkdir()
+        self.assertNotIn(ROOT, self.release.parents)
+        package.copy_sources(ROOT, self.release)
+        self.node = os.environ.get('PROVER_VALIDATION_NODE', 'node')
+        # Only the SDK is fake. Both createPrivateQuery and inspectTrustedNode are
+        # unmodified source copied by the same function main() uses for releases.
+        sdk = """
+const h='0x'+'01'.repeat(32),rollup='0x'+'11'.repeat(20);
+const node={
+ getNodeInfo:async()=>({l1ChainId:31337,rollupVersion:1,realProofs:globalThis.fixtureProofs!==false,l1ContractAddresses:{rollupAddress:rollup}}),
+ getChainTips:async()=>({proposed:{number:1,hash:h},...Object.fromEntries(['checkpointed','proven','finalized'].map(k=>[k,{block:{number:1,hash:h},checkpoint:{number:1,hash:h}}]))}),
+ getWorldStateSyncStatus:async()=>({treesAreSynched:true,latestBlockNumber:1,latestBlockHash:h,finalizedBlockNumber:1,oldestHistoricBlockNumber:0}),
+ getBlockData:async n=>({blockHash:h,header:{globalVariables:{blockNumber:n}}}),
+ getSyncedL1Timestamp:async()=>BigInt(Math.floor(Date.now()/1000)-(globalThis.fixtureLag??0)),
+};
+export const createSafeJsonRpcClient=()=>node;
+export const jsonStringify=JSON.stringify;
+export const getSchemaParameters=()=>{},getSchemaReturnType=()=>{},parseWithOptionals=()=>{},schemaHasMethod=()=>false;
+export const AztecNodeApiSchema={};
+export const getVersioningResponseHandler=()=>()=>{};
+"""
+        for name, exports in [('@aztec-labs/foundation', ['json-rpc/client', 'json-rpc', 'schemas']),
+                              ('@aztec-labs/stdlib', ['interfaces/client', 'versioning'])]:
+            target = self.release / 'node_modules' / name
+            target.mkdir(parents=True)
+            (target / 'package.json').write_text(json.dumps({'name':name,'type':'module','exports':{'./'+key:'./fixture.mjs' for key in exports}}))
+            (target / 'fixture.mjs').write_text(sdk)
+
+    def tearDown(self):
+        self.temp.cleanup()
+
+    def run_isolated(self, script):
+        env = {'PATH': os.defpath, 'NODE_PATH': '', 'NODE_OPTIONS': ''}
+        prelude = "import assert from 'node:assert/strict';import {createPrivateQuery} from './prover/private-query.mjs';globalThis.fetch=()=>{throw Error('Network forbidden in packaging unit test');};"
+        return subprocess.run([self.node, '--input-type=module', '--eval', prelude+script],cwd=self.release,env=env,capture_output=True,text=True,check=True)
+
+    def test_enabled_query_loads_copied_inspector_and_checks_public_state(self):
+        self.assertEqual((self.release/'shared/trusted-private-node.mjs').read_bytes(),(ROOT/'shared/trusted-private-node.mjs').read_bytes())
+        self.run_isolated("""
+const options={queryNode:{url:'http://127.0.0.1:9000/',rollupAddress:'0x'+'11'.repeat(20)},chainId:'31337',rollupVersion:'1',proofsEnabled:true};
+const query=await createPrivateQuery(options);
+assert.deepEqual(await query.health(),{enabled:true,ready:true});
+const wrong=await createPrivateQuery({...options,chainId:'1'});
+assert.equal((await wrong.health()).ready,false);
+globalThis.fixtureLag=121;assert.equal((await query.health()).ready,false);globalThis.fixtureLag=0;
+globalThis.fixtureProofs=false;assert.equal((await query.health()).ready,false);
+const disabled=await createPrivateQuery({...options,proofsEnabled:false});assert.equal((await disabled.health()).ready,true);
+""")
+
+    def test_missing_dynamic_dependency_fails_enabled_query_without_ancestor_fallback(self):
+        (self.release/'shared/trusted-private-node.mjs').unlink()
+        self.run_isolated("""
+assert.equal(await createPrivateQuery({}),undefined);
+await assert.rejects(createPrivateQuery({queryNode:{url:'http://127.0.0.1:9000/',rollupAddress:'0x'+'11'.repeat(20)},chainId:'31337',rollupVersion:'1',proofsEnabled:true}),e=>e.code==='ERR_MODULE_NOT_FOUND'&&e.url.endsWith('/shared/trusted-private-node.mjs'));
+""")
+
 if __name__ == '__main__':
     unittest.main()
