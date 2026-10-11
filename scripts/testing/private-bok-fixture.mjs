@@ -174,7 +174,14 @@ export async function runPrivateBokFixture(ctx, caseProfile = 'both') {
         const advance = {target: String(target), reservationTxHash: reservation.txHash,
           reservationBlock: reservation.blockNumber, reservationBlockHash: reservation.blockHash,
           testControlled: true, epochProof: false, passed: false};
-        observation.deadlineAdvance = advance; await save();
+        observation.deadlineAdvance = advance;
+        const publicTips = async () => {
+          const tips = await ctx.node.getChainTips(), anchor = await wallet.pxe.getSyncedBlockHeader();
+          return {checkpointed: Number(tips.checkpointed.block.number), proven: Number(tips.proven.block.number),
+            finalized: Number(tips.finalized.block.number), anchorBlock: Number(anchor.getBlockNumber()),
+            anchorTimestamp: String(anchor.globalVariables.timestamp)};
+        };
+        advance.tipsBefore = await publicTips(); await save();
         const canonicalReservation = async () => {
           const receipt = await ctx.node.getTxReceipt(TxHash.fromString(reservation.txHash));
           assert([TxStatus.CHECKPOINTED, TxStatus.PROVEN, TxStatus.FINALIZED].includes(receipt.status));
@@ -221,6 +228,7 @@ export async function runPrivateBokFixture(ctx, caseProfile = 'both') {
           await canonicalReservation();
           advance.pendingAfter = Number(await rollup.getCheckpointNumber());
           advance.provenAfter = Number(await rollup.getProvenCheckpointNumber());
+          advance.tipsAfter = await publicTips();
           advance.passed = true; await save();
         } finally { restore(); }
       };

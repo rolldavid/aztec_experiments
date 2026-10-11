@@ -48,7 +48,7 @@ export function failureDiagnostic(error) {
       'Speculative syncs failed, so the operation must discard its staged writes instead of committing',
       'Cannot sync contract'];
     const files = new Set(['main.nr', 'public_mutable.nr', 'public_immutable.nr', 'private_context.nr',
-      'public_context.nr', 'map.nr', 'mod.nr', 'utils.nr', 'serialize.nr', 'note_getter.nr']);
+      'public_context.nr', 'map.nr', 'mod.nr', 'utils.nr', 'serialize.nr', 'note_getter.nr', 'balance_set.nr', 'private_set.nr']);
     const names = new Set(['request', 'balance_of', 'earned', 'expire', 'reserve', 'settle', 'reconcile',
       'claim', 'authorize_request', 'cancel', 'finish', 'withdraw', 'withdraw_earnings', 'subtract_more',
       '_open_escrow', '_cancel', 'on_invocation', 'invoke', 'target_hash', 'entrypoint']);
@@ -71,7 +71,8 @@ export function failureDiagnostic(error) {
     // Emit fixed installed filenames and bounded coordinates, never stack text.
     const sdkFiles = new Set(['note_service.js', 'note_store.js', 'contract_sync_service.js',
       'operation_lifecycle.js', 'operation_queue.js', 'contract_class_service.js',
-      'pxe.js', 'utility_execution_oracle.js', 'oracle.js', 'unconstrained_execution.js']);
+      'pxe.js', 'utility_execution_oracle.js', 'oracle.js', 'unconstrained_execution.js',
+      'sync_tagged_private_logs.js', 'find_highest_indexes.js']);
     for (const line of stack.split('\n').slice(1, 17)) {
       if (frames.length >= 8) break;
       const match = line.match(/(?:^|[\/])([a-z_]+\.js):(\d{1,7}):(\d{1,7})\)?$/);
@@ -79,7 +80,9 @@ export function failureDiagnostic(error) {
       const row = Number(match[2]), column = Number(match[3]);
       if (coordinate(row) && coordinate(column)) frames.push({file: match[1], line: row, column});
     }
-    return {category: categories.find(value => message.includes(value)) ?? 'unclassified', frames, functions};
+    return {category: message.includes('Highest aged index (') && message.includes('must not exceed highest finalized index')
+      ? 'PXE aged tagging index exceeds finalized index'
+      : categories.find(value => message.includes(value)) ?? 'unclassified', frames, functions};
   } catch {
     // Diagnostics must never replace the original failure, even if an SDK
     // accessor fails while attempting to resolve source locations.

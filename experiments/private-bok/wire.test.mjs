@@ -105,3 +105,13 @@ test('ordinary diagnostic accessors are captured once and source coordinates are
   assert.deepEqual(failureDiagnostic({get stack() {throw Error('private');}}),
     {category: 'unclassified', frames: [], functions: []});
 });
+
+test('tagging age/finality classification omits private tagging indices', () => {
+  const result = failureDiagnostic({message: 'Highest aged index (1234567) must not exceed highest finalized index (7654321)',
+    stack: 'Error\n    at x (/sdk/sync_tagged_private_logs.js:226:15)'});
+  assert.deepEqual(result, {category: 'PXE aged tagging index exceeds finalized index',
+    frames: [{file: 'sync_tagged_private_logs.js', line: 226, column: 15}], functions: []});
+  assert(!JSON.stringify(result).includes('1234567'));
+  assert(!JSON.stringify(result).includes('7654321'));
+  assert.equal(failureDiagnostic({message: 'Highest aged index (private)'}).category, 'unclassified');
+});
