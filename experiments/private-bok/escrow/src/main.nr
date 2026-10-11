@@ -205,8 +205,15 @@ pub contract PrivateBok {
         Accounting::fence(self.context, self.storage, request_id, request);
     }
 
-    #[external("public")]
+    // Anyone may trigger expiry without exposing their account as a public caller.
+    #[external("private")]
     fn expire(request_id: Field) {
+        self.enqueue_self._expire(request_id);
+    }
+
+    #[external("public")]
+    #[only_self]
+    fn _expire(request_id: Field) {
         let request = self.storage.requests.at(request_id).read();
         assert((request.state == WAITING) | (request.state == ACTIVE), "Request not expirable");
         assert(self.context.timestamp() >= request.deadline, "Request not expired");

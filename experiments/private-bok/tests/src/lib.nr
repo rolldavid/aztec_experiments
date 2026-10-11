@@ -45,7 +45,7 @@ unconstrained fn expired_reserved() -> (TestEnvironment, AztecAddress, AztecAddr
     let (env, a, user, op, _) = active();
     env.call_public(op, PrivateBok::at(a).reserve(10, 0, 400));
     let before = env.view_public(PrivateBok::at(a).request(10));
-    env.mine_block_at(before.deadline); env.call_public(user, PrivateBok::at(a).expire(10));
+    env.mine_block_at(before.deadline); env.call_private(user, PrivateBok::at(a).expire(10));
     let after = env.view_public(PrivateBok::at(a).request(10));
     assert_eq(after.state, 3); assert_eq(after.reserved, 400); assert_eq(after.refunded, 200);
     assert_eq(after.available, 0); assert(after.primary_done); assert(!after.secondary_done);
@@ -185,7 +185,7 @@ unconstrained fn owner_cannot_cancel_unknown_spending() {
 #[test(should_fail_with = "Request not active")]
 unconstrained fn finish_replay_rejected() { let (env, a, _, op, _) = active(); env.call_public(op, PrivateBok::at(a).finish(10)); env.call_public(op, PrivateBok::at(a).finish(10)); }
 #[test(should_fail_with = "Request not expirable")]
-unconstrained fn expiry_replay_cannot_complete_primary_again() { let (env, a, user, _) = expired_reserved(); env.call_public(user, PrivateBok::at(a).expire(10)); }
+unconstrained fn expiry_replay_cannot_complete_primary_again() { let (env, a, user, _) = expired_reserved(); env.call_private(user, PrivateBok::at(a).expire(10)); }
 #[test(should_fail_with = "Request not fenced")]
 unconstrained fn late_reconciliation_replay_cannot_complete_secondary_again() {
     let (env, a, _, op) = expired_reserved(); env.call_public(op, PrivateBok::at(a).reconcile(10, 0, 1, 98)); env.call_public(op, PrivateBok::at(a).reconcile(10, 0, 1, 99));
@@ -238,7 +238,7 @@ unconstrained fn successive_settled_calls_conserve_credit() {
 unconstrained fn unreserved_waiting_expiry_returns_all_credit() {
     let (env, a, user, _, _) = funded(); env.call_private(user, PrivateBok::at(a).authorize_request(10, 42, 600));
     let r = env.view_public(PrivateBok::at(a).request(10)); env.mine_block_at(r.deadline);
-    env.call_public(user, PrivateBok::at(a).expire(10));
+    env.call_private(user, PrivateBok::at(a).expire(10));
     assert_eq(env.execute_utility(PrivateBok::at(a).balance_of(user)), 1000);
     let r = env.view_public(PrivateBok::at(a).request(10));
     assert_eq(r.state, 4); assert(r.primary_done & r.secondary_done);
@@ -277,7 +277,7 @@ unconstrained fn finish_after_private_cancel_rejected() {
 #[test(should_fail_with = "Request not expirable")]
 unconstrained fn expiry_after_finish_rejected() {
     let (env, a, user, op, _) = active(); env.call_public(op, PrivateBok::at(a).finish(10));
-    env.call_public(user, PrivateBok::at(a).expire(10));
+    env.call_private(user, PrivateBok::at(a).expire(10));
 }
 #[test(should_fail_with = "Request not fenced")]
 unconstrained fn ordinary_completion_cannot_use_secondary_channel() {
@@ -387,4 +387,78 @@ unconstrained fn wrong_bridge_leaf_rejected() {
 unconstrained fn forged_public_open_cannot_create_unfunded_escrow() {
     let (env, a, user, _, _) = empty();
     env.call_public(user, PrivateBok::at(a)._open_escrow(10, 42, 600, PartialUintNote::from_field(123), PartialUintNote::from_field(456)));
+}
+
+
+#[test]
+unconstrained fn unrelated_unfunded_user_can_expire_active_request() {
+    let (mut env, a, user, op, board) = active();
+    let other = env.create_light_account();
+    assert((other != user) & (other != op) & (other != board));
+    assert_eq(env.execute_utility(PrivateBok::at(a).balance_of(other)), 0);
+    let before = env.view_public(PrivateBok::at(a).request(10));
+    env.mine_block_at(before.deadline + 1);
+    env.call_private(other, PrivateBok::at(a).expire(10));
+    let after = env.view_public(PrivateBok::at(a).request(10));
+    assert_eq(after.state, 4); assert_eq(after.available, 0); assert_eq(after.reserved, 0);
+    assert_eq(after.charged, 0); assert_eq(after.refunded, 600);
+    assert(after.primary_done & after.secondary_done);
+    assert_eq(env.execute_utility(PrivateBok::at(a).balance_of(user)), 1000);
+    assert_eq(env.execute_utility(PrivateBok::at(a).balance_of(other)), 0);
+    assert_eq(env.view_public(PrivateBok::at(a).earned()), 0);
+}
+
+#[test]
+unconstrained fn unrelated_unfunded_user_can_expire_reserved_request_at_deadline() {
+    let (mut env, a, user, op, board) = active();
+    let other = env.create_light_account();
+    assert((other != user) & (other != op) & (other != board));
+    env.call_public(op, PrivateBok::at(a).reserve(10, 0, 400));
+    let before = env.view_public(PrivateBok::at(a).request(10));
+    env.mine_block_at(before.deadline);
+    env.call_private(other, PrivateBok::at(a).expire(10));
+    let after = env.view_public(PrivateBok::at(a).request(10));
+    assert_eq(after.state, 3); assert_eq(after.available, 0); assert_eq(after.reserved, 400);
+    assert_eq(after.charged, 0); assert_eq(after.refunded, 200);
+    assert(after.primary_done); assert(!after.secondary_done);
+    assert_eq(env.execute_utility(PrivateBok::at(a).balance_of(user)), 600);
+    assert_eq(env.execute_utility(PrivateBok::at(a).balance_of(other)), 0);
+    env.call_public(op, PrivateBok::at(a).reconcile(10, 0, 120, 305));
+    assert_eq(env.execute_utility(PrivateBok::at(a).balance_of(user)), 880);
+    assert_eq(env.execute_utility(PrivateBok::at(a).balance_of(other)), 0);
+    assert_eq(env.view_public(PrivateBok::at(a).earned()), 120);
+}
+
+#[test(should_fail_with = "Request not expired")]
+unconstrained fn waiting_expiry_before_deadline_rejected() {
+    let (env, a, user, _, _) = funded();
+    env.call_private(user, PrivateBok::at(a).authorize_request(10, 42, 600));
+    let r = env.view_public(PrivateBok::at(a).request(10));
+    env.mine_block_at(r.deadline - 1);
+    env.call_private(user, PrivateBok::at(a).expire(10));
+}
+
+#[test(should_fail_with = "Request not expired")]
+unconstrained fn active_expiry_before_deadline_rejected() {
+    let (env, a, user, _, _) = active();
+    let r = env.view_public(PrivateBok::at(a).request(10));
+    env.mine_block_at(r.deadline - 1);
+    env.call_private(user, PrivateBok::at(a).expire(10));
+}
+
+#[test(should_fail_with = "Request not expired")]
+unconstrained fn reserved_expiry_before_deadline_rejected() {
+    let (env, a, user, op, _) = active();
+    env.call_public(op, PrivateBok::at(a).reserve(10, 0, 400));
+    let r = env.view_public(PrivateBok::at(a).request(10));
+    env.mine_block_at(r.deadline - 1);
+    env.call_private(user, PrivateBok::at(a).expire(10));
+}
+
+#[test(should_fail_with = "Function _expire can only be called by the same contract")]
+unconstrained fn direct_public_expiry_cannot_bypass_private_entry() {
+    let (env, a, user, _, _) = active();
+    let r = env.view_public(PrivateBok::at(a).request(10));
+    env.mine_block_at(r.deadline);
+    env.call_public(user, PrivateBok::at(a)._expire(10));
 }
