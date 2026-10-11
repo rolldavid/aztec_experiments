@@ -108,7 +108,12 @@ export async function runAvatarLogExperiment({node, wallet, owner, mineL1, outpu
       const restoredHash = await poseidon2HashWithSeparator(digestInputs(event.version, event.bytes), HASH_DOMAIN);
       assert.equal(restoredHash.toBigInt(), event.digest);
       const {result: current} = await contract.methods.current().simulate({from: owner});
-      assert.equal(Number(current[0]), version); assert.equal(current[1].toString(), expectedHash.toString());
+      Object.assign(row, {currentVersion: current[0]?.toString() ?? null, currentVersionType: typeof current[0],
+        currentDigest: current[1]?.toString() ?? null, currentDigestType: typeof current[1],
+        expectedDigestDecimal: expectedHash.toBigInt().toString()});
+      await save();
+      // V6 ABI decoding returns bigint for both u32 and Field; Fr.toString() is hexadecimal.
+      assert.equal(current[0], BigInt(version)); assert.equal(current[1], expectedHash.toBigInt());
       await fs.writeFile(path.join(outputDirectory, `avatar-v${version}.png`), event.bytes);
       await fs.writeFile(path.join(outputDirectory, `avatar-v${version}-log.json`), JSON.stringify(log.toFields().map(field => field.toString())) + '\n');
       Object.assign(row, {rasterBytes: png.length, noisyPixels, rasterSha256: sha(event.bytes), poseidonDigest: expectedHash.toString(),
