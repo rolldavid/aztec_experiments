@@ -27,14 +27,14 @@ export async function runRollingBokFixture(ctx) {
   assert(ctx.settlement.passed && ctx.settlement.activation.depositsEnabled);
   return runPrivateBokFixture(ctx, 'normal', 'private', async setup => {
     const {node, wallet, owner, operator, privateFees, mineL1, outputDirectory, mark,
-      deployPortal, activatePortal, funding, realProofs} = setup;
+      deployPortal, activatePortal, funding, finalizeReverted, realProofs} = setup;
     await fs.mkdir(outputDirectory, {mode: 0o700});
     const report = {passed: false, applicationProofs: realProofs, networkProofs: false,
       sourceRevision: execFileSync('git', ['rev-parse', 'HEAD'], {cwd: ROOT, encoding: 'utf8'}).trim(),
       controlledSettlement: true, localTestAssets: true, transactions: [], humanActualFees: {owner: '0', otherUser: '0'}};
     const save = () => fs.writeFile(path.join(outputDirectory, 'rolling-setup.json'), evidenceJson(report));
     let stage = 'preflight', ownerFees = 0n;
-    const files = ['scripts/testing/rolling-bok-fixture.mjs', 'scripts/testing/private-bok-fixture.mjs',
+    const files = ['scripts/testing/reverted-finality.mjs', 'scripts/testing/rolling-bok-fixture.mjs', 'scripts/testing/private-bok-fixture.mjs',
       'scripts/testing/private-bok-fees.mjs', 'scripts/c01-board-flow.mjs', 'scripts/c01-ready-flow.mjs',
       'scripts/c01-deposit-flow.mjs', 'scripts/testing/fixture-worker.mjs', 'scripts/testing/scenarios.mjs',
       'scripts/testing/scenario-flows.mjs'];
@@ -133,7 +133,7 @@ export async function runRollingBokFixture(ctx) {
       report.journey = await runRollingBokJourney({node, wallet, owner, operator, board: Contract.at(ctx.instance.address, ctx.preparation.artifact, wallet), bok,
         privateFee: privateFees, claimedDeposit: {depositId: claim.claim.depositChainId, logicalFields: claim.claim.logicalFields,
           txHash: claim.claimTxHash, evidenceRef: claimEvidence, economics: c01BoardEconomics(ctx.preparation)},
-        pluginId: new Fr(1n), initialHumanFees: {owner: ownerFees, otherUser: 0n}, outputDirectory: path.join(outputDirectory, 'journey'), mineL1, mark, harnessFiles: files});
+        pluginId: new Fr(1n), initialHumanFees: {owner: ownerFees, otherUser: 0n}, outputDirectory: path.join(outputDirectory, 'journey'), mineL1, finalizeReverted, mark, harnessFiles: files});
       assert(report.journey.passed);
       report.humanActualFees = report.journey.humanActualFees;
       assert.deepEqual(report.sourceHashes, await sources()); assert.deepEqual(manifest.inputs, buildInputs());

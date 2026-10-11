@@ -51,9 +51,9 @@ const fresh = () => { let result; do { result = Fr.random(); } while (result.isZ
  * actual 1000 private Bok credits are required. No synthetic funding accepted.
  */
 export async function runRollingBokJourney({node, wallet, owner, operator, board, bok, privateFee,
-  claimedDeposit, pluginId, initialHumanFees, outputDirectory, mineL1, mark = () => {}, harnessFiles = []}) {
+  claimedDeposit, pluginId, initialHumanFees, outputDirectory, mineL1, finalizeReverted, mark = () => {}, harnessFiles = []}) {
   assertNodeVersion(); assertAztecPackages();
-  assert(path.isAbsolute(outputDirectory)); assert.equal(typeof mineL1, 'function');
+  assert(path.isAbsolute(outputDirectory)); assert.equal(typeof mineL1, 'function'); assert.equal(typeof finalizeReverted, 'function');
   assert(wallet === privateFee.wallet && owner.equals(privateFee.owner) && operator.equals(privateFee.operator));
   assert.equal(privateFee.paymentFor(owner).payerMode, 'private');
   assert(n(pluginId) > 0n); assert.equal(board.artifact.name, 'RollingBoard'); assert.equal(bok.artifact.name, 'PrivateBok');
@@ -81,7 +81,7 @@ export async function runRollingBokJourney({node, wallet, owner, operator, board
     'billboard/rolling_contract/src/main.nr', 'billboard/rolling_contract/src/posting.nr', 'billboard/rolling_contract/src/admission.nr',
     'billboard/rolling_contract/src/encoding.nr', 'experiments/private-bok/escrow/src/main.nr',
     'scripts/testing/private-bok-fees.mjs', 'scripts/w01-private-fee-flow.mjs', 'scripts/prove-application-action.mjs',
-    'scripts/testing/rolling-note-membership.mjs', 'scripts/testing/proof-policy.mjs', 'scripts/t03-public-footprint.mjs', 'shared/private-fee-payment.mjs',
+    'scripts/testing/reverted-finality.mjs', 'scripts/testing/rolling-note-membership.mjs', 'scripts/testing/proof-policy.mjs', 'scripts/t03-public-footprint.mjs', 'shared/private-fee-payment.mjs',
     'shared/private-fee-estimation.mjs', 'shared/rolling/name-policy.mjs', 'shared/rolling/invocation.mjs', ...harnessFiles])];
   const sourceHashes = async () => Object.fromEntries(await Promise.all(sourcePaths.map(async relative => {
     const resolved = path.resolve(ROOT, relative);
@@ -291,6 +291,13 @@ export async function runRollingBokJourney({node, wallet, owner, operator, board
     observedPublic.push({tx: rejected.tx, effect: rejected.effect});
     await privateFee.verify(humanFees);
 
+    await stage('finalize-exact-reverted-transaction');
+    report.revertedFinality = await finalizeReverted({txHash: rejected.txHash, blockNumber: rejected.blockNumber,
+      blockHash: rejected.blockHash, effectSha256: rejected.effectSha256, transactionFee: String(rejected.receipt.transactionFee)});
+    assert(report.revertedFinality.passed && report.revertedFinality.controlledSettlement && !report.revertedFinality.epochProof);
+    await save();
+    // Ordinary PXE reconciliation now sees FINALIZED+REVERTED and can resolve
+    // constrained-delivery predecessors. No cache, note or pending-tx mutation.
     await wallet.pxe.sync();
     await noteMembership.capture('after-rollback-old-anchor', beforeRollbackAnchor);
     await noteMembership.capture('after-rollback'); await save();

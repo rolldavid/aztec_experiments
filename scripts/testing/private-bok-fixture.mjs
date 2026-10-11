@@ -17,6 +17,7 @@ import {applicationNativeProfile} from '../c01-native-profile.mjs';
 import {applicationProofsEnabled, applicationProver} from './proof-policy.mjs';
 import {withC01ClientMining} from '../c01-client-mining.mjs';
 import {settleC01ApplicationMessage} from '../c01-settle-application-message.mjs';
+import {createFinalizeReverted} from './reverted-finality.mjs';
 import {drainT04Checkpoints} from '../u01-browser-flow.mjs';
 
 export const evidenceJson = value => JSON.stringify(value, (_, item) => typeof item === 'bigint' ? String(item) : item, 2) + '\n';
@@ -176,6 +177,12 @@ export async function runPrivateBokFixture(ctx, caseProfile = 'both', payerMode 
         await fs.writeFile(result.evidenceRef, evidenceJson(result), {flag: 'wx', mode: 0o600});
         return result;
       };
+      const rollup = new RollupContract(ctx.l1Client, String(ctx.rollupAddress));
+      const cheats = new RollupCheatCodes(new EthCheatCodes(ctx.config.l1RpcUrls, ctx.dateProvider),
+        {rollupAddress: EthAddress.fromString(String(ctx.rollupAddress))});
+      const finalizeReverted = createFinalizeReverted({node: ctx.node, rollup, cheats,
+        sequencer: ctx.node.getSequencer(), mineL1,
+        record: async value => {observation.revertedFinality = structuredClone(value); await save();}});
       const advanceTo = async (target, reservation) => {
         assert(Number.isSafeInteger(Number(target)) && Number(target) > 0);
         // The ordinary network prunes unproven checkpoints across this 24-hour
@@ -183,9 +190,6 @@ export async function runPrivateBokFixture(ctx, caseProfile = 'both', payerMode 
         // retention control; this is neither an epoch proof nor real finality.
         const sequencer = ctx.node.getSequencer(), prior = sequencer.getSequencer().getConfig();
         const restore = () => sequencer.updateConfig({minTxsPerBlock: prior.minTxsPerBlock, buildCheckpointIfEmpty: prior.buildCheckpointIfEmpty});
-        const rollup = new RollupContract(ctx.l1Client, String(ctx.rollupAddress));
-        const cheats = new RollupCheatCodes(new EthCheatCodes(ctx.config.l1RpcUrls, ctx.dateProvider),
-          {rollupAddress: EthAddress.fromString(String(ctx.rollupAddress))});
         const advance = {target: String(target), reservationTxHash: reservation.txHash,
           reservationBlock: reservation.blockNumber, reservationBlockHash: reservation.blockHash,
           testControlled: true, epochProof: false, passed: false};
@@ -267,10 +271,10 @@ export async function runPrivateBokFixture(ctx, caseProfile = 'both', payerMode 
       const run = consumer ?? (await import('../../experiments/private-bok/measure.mjs')).runPrivateBokExperiment;
       const providerRecovery=caseProfile==='provider'?(await import('./private-bok-provider-fixture.mjs')).createPrivateBokProviderRecovery({ctx,mark:ctx.mark}):undefined;
       observation.experiment = await run({providerRecovery,node: ctx.node, wallet, owner, operator, otherUser, privateFees,
-        deployPortal, activatePortal, funding, redeem, mineL1, advanceTo, realProofs, payerMode,
+        deployPortal, activatePortal, funding, redeem, mineL1, advanceTo, finalizeReverted, realProofs, payerMode,
         ...(privateFees ? {paymentFor: privateFees.paymentFor, sharedFeePayer: privateFees.funding.owner.recipient} : {}),
         outputDirectory: path.join(directory, 'experiment'), caseProfile, mark: ctx.mark,
-        harnessFiles: ['scripts/testing/private-bok-fees.mjs', 'scripts/w01-private-fee-flow.mjs', 'scripts/w01-unfunded-wallet.mjs', 'scripts/testing/private-bok-fixture.mjs', 'scripts/testing/scenarios.mjs', 'scripts/testing/scenario-flows.mjs']});
+        harnessFiles: ['scripts/testing/reverted-finality.mjs', 'scripts/testing/private-bok-fees.mjs', 'scripts/w01-private-fee-flow.mjs', 'scripts/w01-unfunded-wallet.mjs', 'scripts/testing/private-bok-fixture.mjs', 'scripts/testing/scenarios.mjs', 'scripts/testing/scenario-flows.mjs']});
       assert(observation.experiment.passed);
       if (privateFees) {
         const totals = observation.experiment.humanActualFees;
