@@ -14,7 +14,7 @@ const pause=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 // Explicit local timing, shared by protocol deployment and its node. Keep the
 // normal two-checkpoint Inbox delay within the application's readiness window.
 export const LOCAL_TIMING=Object.freeze({ethereumSlotDuration:1,aztecSlotDuration:5,blockDurationMs:1000,aztecEpochDuration:4,inboxLag:2});
-export async function runFixture(directory, scenario, browserControl, operatorPackage, providerDeadlineAt) {
+export async function runFixture(directory, scenario, browserControl, operatorPackage, providerDeadlineAt, applicationDeadlineAt) {
   let stage='startup', anvil, identity;
   const originalStdout=process.stdout.write.bind(process.stdout), originalStderr=process.stderr.write.bind(process.stderr);
   const capture=(chunk,encoding,callback)=>{if(typeof encoding==='function')encoding();else if(callback)callback();return true;};
@@ -103,7 +103,7 @@ export async function runFixture(directory, scenario, browserControl, operatorPa
     {
       mark('start-application-node');
       const {qualifyC01RealNode}=await import('../c01-real-node.mjs');
-      output.node=await qualifyC01RealNode({config,deployment:result.deployment,genesis,directory,privateKey:identity.privateKey,address:identity.address,preparation,mark,browserControl,scenario,operatorPackage,providerDeadlineAt});
+      output.node=await qualifyC01RealNode({config,deployment:result.deployment,genesis,directory,privateKey:identity.privateKey,address:identity.address,preparation,mark,browserControl,scenario,operatorPackage,providerDeadlineAt,applicationDeadlineAt});
       assert(output.node.passed);
     }
     output.passed=true;
