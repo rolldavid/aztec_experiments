@@ -2,7 +2,7 @@
   "schema_version": 1,
   "budget_usd": 300,
   "scope": "Cumulative prover campaign plus at most one additional rolling.chat server; existing moderator costs remain separate.",
-  "as_of": "2026-10-11T10:25:59.974114+00:00",
+  "as_of": "2026-10-11T15:00:40.605210+00:00",
   "billing_evidence": "evidence/G02/aws-costs.json",
   "historical_campaign_bound_usd": 83.27,
   "historical_bound_method": "Retain the full earlier conservative bound including unused planned compute through13Oct, rather than subtracting unverified savings. Includes49.47 prior allowance,28.80 revival maximum and5 ancillary.",
@@ -31,7 +31,7 @@
       "id": "anonymous-message-board-testnet-backups-nvdhcyurtoga/releases/v6-20261010/",
       "purpose": "recovery archives",
       "retention_deadline": "2026-11-10",
-      "state": "historical deployment records; reverify object versions before restore",
+      "state": "Worker verified current pinned versions/hash and10November retention at15:00UTC",
       "forecast_included_usd": 5
     },
     {
@@ -42,10 +42,48 @@
       "limitation": "Mac awake and logged in; no remote replacement verified"
     }
   ],
-  "launch_hold": "No launch yet. Reconcile live routing, current archived recovery assets, instance pricing and complete forecast/independent shutdown before provisioning.",
+  "launch_hold": "No paid action. Read-only recovery assets/prices reconciled; prepare installation and independently enforced host/cloud shutdown, then lead recheck resource/forecast before serialized launch.",
   "node_requirement_sources": [
     "https://docs.aztec.network/operate/testnet/operators/full-node/overview",
     "https://docs.aztec.network/operate/testnet/operators/setup/running_a_node"
   ],
-  "node_requirements": "Current official V6 testnet overview:8cores/16vCPU,8GB RAM,1TB NVMe,25Mbps. The older running_a_node URL redirected to legacy mainnetV5 guidance (16GB), not a conflicting current requirement. Provisioning remains held pending workload measurements and a complete forecast."
+  "node_requirements": "Current official V6 testnet overview:8cores/16vCPU,8GB RAM,1TB NVMe,25Mbps. The older running_a_node URL redirected to legacy mainnetV5 guidance (16GB), not a conflicting current requirement. Provisioning remains held pending workload measurements and a complete forecast.",
+  "latest_live_check": "evidence/G14/live-prerequisites-latest.json",
+  "recovery_proposal": {
+    "checked_by": "design-20261011",
+    "checked_at": "2026-10-11T15:00:00Z",
+    "observations": {
+      "instances_volumes_snapshots_addresses_fleets_us_east_1": 0,
+      "health": 504,
+      "distribution": "E3BMCK3MOVYK1K",
+      "stale_origin": "vo_1ni7Gt8asXQDAMJVsKkcPg",
+      "archived_runtime_version": "uX8HjolM50hiDUiEWtxbeuFMeGXT4gCz",
+      "archived_host_version": ".NeGYl7ejSh6p6FnQulsTzY.1EOhaRRy",
+      "archives_current_and_hash_verified": true,
+      "subnet_correction": "subnet-a705ce88 is us-east-1c; subnet-aa91f4ce is us-east-1b"
+    },
+    "proposed_instance": "c7a.4xlarge on-demand 16physicalcores32GiB",
+    "compute_rate_usd_hour": 0.82112,
+    "hours": 4,
+    "shutdown_overrun_hours": 0.5,
+    "incremental_forecast_usd": {
+      "compute": 3.28448,
+      "overrun_compute": 0.41056,
+      "ipv4": 0.0225,
+      "ebs_including_24h_retention": 0.06333,
+      "archive_retention": 0.05,
+      "network_requests": 1.02,
+      "additional_buffer": 2
+    },
+    "rounded_reservation_if_launched_usd": 7,
+    "projected_total_if_launched_usd": 115.28,
+    "remaining_if_launched_usd": 184.72,
+    "status": "proposal only; no paid action",
+    "prerequisites": [
+      "Installation channel prepared without new ingress",
+      "AWS-side absolute expiration verified",
+      "Host independent shutdown timer verified",
+      "Reviewed rolling catalog replaces obsolete archivedcatalog"
+    ]
+  }
 }

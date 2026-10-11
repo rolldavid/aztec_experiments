@@ -7,12 +7,14 @@
       "parent_id": null,
       "task": [
         "G05",
+        "G06",
         "G14"
       ],
       "branch": "codex/rolling-chat-draft3",
       "history_locator": "Codex runtime thread 01a12a75-1b50-7871-a73b-4253a1010194",
       "role": "lead",
-      "state": "running"
+      "state": "running integration and actualcampaign setup",
+      "working_branch": "codex/rolling-private-bok-candidate"
     },
     {
       "logical_id": "recovery-probe-20261011",
@@ -33,14 +35,19 @@
       "task": [
         "G14"
       ],
-      "branch": "codex/rolling-controls",
+      "branch": "codex/rolling-private-bok-port",
       "history_locator": "collaboration runtime /root/controls, parent 01a12a75-1b50-7871-a73b-4253a1010194",
       "role": "implementation worker",
-      "state": "running",
+      "state": "completed772ec5f; approved independentreview; candidatecherries6195edd/a701751",
       "worktree": "../rolling-controls",
       "allowed_paths": [
-        "experiments/private-bok"
-      ]
+        "plugins/private-bok-escrow.mjs",
+        "plugins/test/private-bok-escrow.test.mjs"
+      ],
+      "commit_trailer_aliases": {
+        "Agent-Session": "controls",
+        "Parent-Session": "lead"
+      }
     },
     {
       "logical_id": "reviewer-20261011",
@@ -53,25 +60,66 @@
       "branch": "read-only candidate refs",
       "history_locator": "collaboration runtime /root/reviewer, parent 01a12a75-1b50-7871-a73b-4253a1010194",
       "role": "independent reviewer",
-      "state": "ready"
+      "state": "approveda701751 source; preparing privacy evidence gaps"
     },
     {
       "logical_id": "design-20261011",
       "runtime_id": "/root/design",
       "parent_id": "lead-20261011",
       "task": [
-        "G05"
+        "G14"
       ],
-      "branch": "codex/rolling-design",
+      "branch": "codex/rolling-bok-provider",
       "history_locator": "collaboration runtime /root/design, parent01a12a75-1b50-7871-a73b-4253a1010194",
       "role": "implementation worker",
-      "state": "running",
+      "state": "read-only actualprovider campaign integration design",
       "worktree": "../rolling-design",
-      "allowed_paths": [
-        "billboard/rolling_contract",
-        "billboard/Nargo.toml",
-        "noir-dependencies.json"
-      ]
+      "allowed_paths": []
+    }
+  ],
+  "integrations": [
+    {
+      "task": "G15",
+      "worker_revision": "0ddbeb71c7f0c86446385b4d0f283c4df315d953",
+      "candidate": "f9911f0fe3021275242211d4ddfcc64f40bf990b",
+      "worker_session": "design-20261011",
+      "integrator_session": "lead-20261011",
+      "reviewer": "reviewer-20261011",
+      "evidence": "evidence/G05/foundation-integration.json"
+    },
+    {
+      "task": "G14 bounded development",
+      "candidate": "a9ea6c1d738d3bfd944eadbc006443d998201b25",
+      "base": "f9911f0fe3021275242211d4ddfcc64f40bf990b",
+      "integrator_session": "lead-20261011",
+      "reviewer": "reviewer-20261011",
+      "evidence": "evidence/G14/development-integration.json"
+    },
+    {
+      "task": "G06 boundedprotocolfoundation",
+      "candidate": "daa59d284779b2c0348064ec125d0d53b5a6a8db",
+      "base": "a9ea6c1d738d3bfd944eadbc006443d998201b25",
+      "worker_revision": "caebabfb2282ece459879810ba4016493b634cae",
+      "integrator_session": "lead-20261011",
+      "reviewer": "reviewer-20261011",
+      "evidence": "evidence/G06/development-integration.json"
+    }
+  ],
+  "candidate_transfers": [
+    {
+      "task": "G14",
+      "worker": "controls-20261011",
+      "worker_revisions": [
+        "9c1108cb805aedf952bfb270b264433d0adcca3f",
+        "772ec5f8ede094474bdf603d82b3561342ddb952"
+      ],
+      "candidate_revisions": [
+        "6195edd",
+        "a70175140faa7ad97bce08d8f4526fbcdaddd9b9"
+      ],
+      "reviewer": "reviewer-20261011",
+      "review": "evidence/G14/adapter-observer-source-review.json",
+      "status": "reviewed source oncandidate; sharedintegration andactualruntimepending"
     }
   ]
 }
