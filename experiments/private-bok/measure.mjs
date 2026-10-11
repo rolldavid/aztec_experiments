@@ -148,12 +148,16 @@ export async function runPrivateBokExperiment({node, wallet, owner, operator, ot
     assert(activation?.activated === true && typeof activation.evidenceRef === 'string' && activation.evidenceRef.length > 0);
     report.portalActivation = activation; await save();
 
-    const balance = async () => { await wallet.pxe.sync(); const {result} = await contract.methods.balance_of(owner).simulate({from: owner}); assert.equal(typeof result, 'bigint'); return result; };
+    const balance = async (label = 'private-balance') => {
+      stage = label + ':sync'; await wallet.pxe.sync();
+      stage = label + ':utility'; const {result} = await contract.methods.balance_of(owner).simulate({from: owner});
+      assert.equal(typeof result, 'bigint'); return result;
+    };
     const request = async id => (await contract.methods.request(id).simulate({from: operator})).result;
     const earned = async () => (await contract.methods.earned().simulate({from: operator})).result;
     async function state(id, label, expected, expectedBalance, expectedEarnings) {
       stage = label + ':request'; const current = await request(id);
-      stage = label + ':balance'; const privateBalance = await balance();
+      stage = label + ':balance'; const privateBalance = await balance(stage);
       stage = label + ':earnings'; const earnings = await earned();
       assertRequest(current, expected); assert.equal(privateBalance, expectedBalance); assert.equal(earnings, expectedEarnings);
       report.states.push({label, request: current, privateBalance, earnings}); await save(); return current;
