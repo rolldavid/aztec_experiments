@@ -73,9 +73,27 @@ export function createRollingWireTrace({roles,limits={}}={}){
   let nodes=0,limited=false;
   function walk(v,depth=0){if(++nodes>cap.maxNodes||depth>cap.maxDepth){limited=true;return;}
    if(typeof v==='string'){if(v.length>4096){counts.unsupported++;return;}token(v,label,at,found);return;}
-   if(typeof v==='number'&&Number.isSafeInteger(v)&&v>=0){token(String(v),label,at,found);return;}
-   if(v&&typeof v==='object')for(const value of Object.values(v)){if(limited)break;walk(value,depth+1);}
+   if(typeof v==='number'){if(Number.isSafeInteger(v)&&v>=0)token(String(v),label,at,found);else counts.unsupported++;return;}
+   if(v&&typeof v==='object')for(const [key,value]of Object.entries(v)){if(limited)break;if(!Array.isArray(v))walk(key,depth+1);walk(value,depth+1);}
   }
+  // Observe only explicit, bounded fetch headers. Browser-added cookies and
+  // transport-added fields remain the parent's receiver-reconciliation boundary.
+  const headers=init?own(init,'headers'):undefined;let headerBytes=0,headerCount=0;
+  const header=(key,value)=>{
+   if(++headerCount>64||typeof key!=='string'||typeof value!=='string')throw Error();
+   if(key.length>256||value.length>4096){counts.truncated++;return;}
+   headerBytes+=Buffer.byteLength(key)+Buffer.byteLength(value);if(headerBytes>16384){counts.truncated++;return;}
+   walk(key);walk(value);
+   const k=key.toLowerCase();
+   if(!(k==='accept'&&value==='application/json')&&!(k==='content-type'&&['application/json','application/octet-stream'].includes(value)))counts.unsupported++;
+  };
+  if(headers!==undefined){
+   if(headers instanceof Headers&&Object.getPrototypeOf(headers)===Headers.prototype){for(const [key,value]of Headers.prototype.entries.call(headers))header(key,value);}
+   else if(Array.isArray(headers)){if(headers.length>64)throw Error();for(let i=0;i<headers.length;i++){const pair=own(headers,String(i));if(!Array.isArray(pair)||pair.length!==2)throw Error();header(own(pair,'0'),own(pair,'1'));}}
+   else if(headers&&typeof headers==='object'&&[Object.prototype,null].includes(Object.getPrototypeOf(headers))){const keys=Object.keys(headers);if(keys.length>64)throw Error();for(const key of keys)header(key,own(headers,key));}
+   else counts.unsupported++;
+  }
+  if(init&&own(init,'referrer')!==undefined)counts.unsupported++;
   if(label==='public-reader'){
    if(body!==undefined&&body!==null){counts.unsupported++;return record;}
    if(Buffer.byteLength(u.search)>4096){counts.truncated++;return record;}
@@ -105,8 +123,8 @@ export function createRollingWireTrace({roles,limits={}}={}){
    if(batch.length<1||batch.length>32){counts.truncated++;return record;}
    for(const rpc of batch){
     if(!rpc||rpc.jsonrpc!=='2.0'||typeof rpc.method!=='string'||!Array.isArray(rpc.params)||Object.keys(rpc).some(k=>!['jsonrpc','id','method','params'].includes(k))||!(label==='public-l1'?l1Methods:nodeMethods).has(rpc.method)){counts.unknown++;continue;}
-    record.methods.push(rpc.method);
-    if(/_(?:sendTx|simulatePublicCalls)$/.test(rpc.method)){counts.opaqueTransactions++;continue;}
+    record.methods.push(rpc.method);walk(rpc.id);
+    if(/_(?:sendTx|simulatePublicCalls|sendRawTransaction|sendTransaction)$/.test(rpc.method)){counts.opaqueTransactions++;continue;}
     walk(rpc.params);
    }
   }
@@ -126,13 +144,15 @@ export function createRollingWireTrace({roles,limits={}}={}){
     }}catch{counts.observerErrors++;}
    };
    let result;try{result=Reflect.apply(original,this,args);}catch(error){complete('rejected');throw error;}
-   if(result instanceof Promise)Promise.prototype.then.call(result,value=>complete('resolved',value),()=>complete('rejected'));
-   else{counts.unsupported++;complete('non-promise');}
+   try{
+    if(result instanceof Promise)Promise.prototype.then.call(result,value=>complete('resolved',value),()=>complete('rejected'));
+    else{counts.unsupported++;complete('non-promise');}
+   }catch{counts.observerErrors++;} // Never replace the original result if attachment fails; pending stays unknown.
    return result;
   };
  }
  return Object.freeze({wrapFetch,registerEndpoint,setPhase(value){if(!WIRE_PHASES.includes(value))throw configError();phase=value;},snapshot(){
-  return {schemaVersion:1,privacyAcceptance:'not-evaluated',scope:'Serialized fetch request boundary only; response bodies, native/undici transports and other processes excluded',
+  return {schemaVersion:1,privacyAcceptance:'not-evaluated',scope:'Explicit serialized fetch request components only; runtime-added headers, response bodies, native/undici transports and other processes excluded',
    ...counts,requestCoverageComplete:counts.requests>0&&counts.pending===0&&['unknown','unsupported','truncated','observerErrors','opaqueTransactions'].every(k=>counts[k]===0),
    externalAcceptanceRequired:['frozen-source-transport-inventory','actual-ingress-positive-controls','decoded-public-effects','deployed-trust-topology'],
    relationships:{...repeated,meaning:'Whole scalar equality aggregates only; constants/content may repeat. No ownership or anonymity inference.'},

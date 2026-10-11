@@ -77,7 +77,8 @@ test('synthetic scalar relations normalize decimal and hex and expose aggregates
  trace.setPhase('a-name-1');await sent(trace,undefined,options(rpc('node_getContract',[tag])));
  trace.setPhase('a-name-2');await sent(trace,undefined,options(rpc('node_getContract',[BigInt(tag).toString()])));
  trace.setPhase('b-name-1');await sent(trace,'http://127.0.0.1:8090/',options(rpc('node_getContract',[tag])));
- const s=trace.snapshot();assert.equal(s.relationships.sameActorAcrossPhases,1);assert.equal(s.relationships.acrossActors,1);assert.equal(s.relationships.acrossEndpoints,1);
+ const s=trace.snapshot();// Both the repeated scalar and the now-observed JSON-RPC id=1 recur.
+ assert.equal(s.relationships.sameActorAcrossPhases,2);assert.equal(s.relationships.acrossActors,2);assert.equal(s.relationships.acrossEndpoints,2);
  assert(!JSON.stringify(s).includes(tag));assert(!JSON.stringify(s).includes(BigInt(tag).toString()));
  assert.throws(()=>trace.setPhase('PRIVATE_SENTINEL'));
 });
@@ -166,4 +167,37 @@ test('synthetic fixed C01 parent miner methods are classified without accepting 
  for(const [method,params]of [['anvil_getAutomine',[]],['evm_setAutomine',[false]],['evm_mine',[12345]]])await sent(trace,origin+'/',options(rpc(method,params)));
  assert.equal(trace.snapshot().requestCoverageComplete,true);await sent(trace,origin+'/',options(rpc('anvil_PRIVATE_SENTINEL',[])));
  assert.equal(trace.snapshot().unknown,1);assert.equal(trace.snapshot().requestCoverageComplete,false);
+});
+for(const component of ['id','key','header-object','header-tuples','header-instance'])test('synthetic ordinary-node human identity in '+component+' is observed or explicitly incomplete',async()=>{
+ const trace=make();trace.registerEndpoint('ordinary-node',origin);
+ const value=JSON.parse(rpc('node_getContract',[tag]));let headers;
+ if(component==='id')value.id=a;
+ if(component==='key')value.params=[{[a]:tag}];
+ if(component==='header-object')headers={'X-Account':a};
+ if(component==='header-tuples')headers=[['X-Account',a]];
+ if(component==='header-instance')headers=new Headers({'X-Account':a});
+ await sent(trace,origin+'/',{...options(JSON.stringify(value)),...(headers?{headers}:{})});
+ const result=trace.snapshot();assert.deepEqual(result.rows[0].roles,['a']);if(component.startsWith('header'))assert.equal(result.requestCoverageComplete,false);
+ assert(!JSON.stringify(result).includes(a));assert(!JSON.stringify(result).includes('X-Account'));
+});
+test('synthetic Promise constructor getter cannot replace original return identity',async()=>{
+ const trace=make();trace.registerEndpoint('trusted-query',origin);const original=Promise.resolve(new Response());let reads=0;
+ Object.defineProperty(original,'constructor',{configurable:true,get(){reads++;throw Error('PRIVATE_SENTINEL');}});
+ let returned;assert.doesNotThrow(()=>{returned=trace.wrapFetch(()=>original)(origin+'/v1/node',options());});assert.equal(returned,original);assert.equal(reads,1);
+ const result=trace.snapshot();assert.equal(result.observerErrors,1);assert.equal(result.pending,1);assert.equal(result.requestCoverageComplete,false);assert(!JSON.stringify(result).includes('PRIVATE_SENTINEL'));
+ delete original.constructor;await original;
+});
+for(const n of ['9007199254740993','1e400','-1','0.5'])test('synthetic unsupported numeric JSON leaf '+n+' cannot claim complete traversal',async()=>{
+ const trace=make();trace.registerEndpoint('ordinary-node',origin);await sent(trace,origin+'/',options('{"jsonrpc":"2.0","id":1,"method":"node_getContract","params":['+n+']}'));
+ assert.equal(trace.snapshot().unsupported,1);assert.equal(trace.snapshot().requestCoverageComplete,false);
+});
+test('synthetic signed and unsigned L1 transaction payloads are explicitly opaque',async()=>{
+ const trace=make();trace.registerEndpoint('public-l1',origin);
+ for(const method of ['eth_sendRawTransaction','eth_sendTransaction'])await sent(trace,origin+'/',options(rpc(method,['0x123456'])));
+ assert.equal(trace.snapshot().opaqueTransactions,2);assert.equal(trace.snapshot().requestCoverageComplete,false);
+});
+test('synthetic header accessor remains untouched, original call still receives exact options',async()=>{
+ const trace=make();trace.registerEndpoint('ordinary-node',origin);let reads=0;const headers={get 'X-Account'(){reads++;return a;}};
+ const init={...options(),headers};await trace.wrapFetch((url,value)=>{assert.equal(value,init);assert.equal(value.headers['X-Account'],a);return Promise.resolve(new Response());})(origin+'/',init);
+ assert.equal(reads,1);assert.equal(trace.snapshot().observerErrors,1);assert.equal(trace.snapshot().requestCoverageComplete,false);
 });
