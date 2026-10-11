@@ -373686,13 +373686,16 @@ ${val.stack}`;
       log: silent,
       onResponse: getVersioningResponseHandler({ l1ChainId: Number(p.chainId), rollupVersion: Number(p.version), l1RollupAddress: p.rollup })
     });
-    const node2 = Object.freeze(Object.fromEntries(Object.keys(AztecNodeApiSchema).map((name) => [name, async (...args) => {
-      try {
-        return await rpc[name](...args);
-      } catch {
-        throw fail2("UNAVAILABLE");
-      }
-    }])));
+    const node2 = Object.freeze(Object.defineProperties({}, Object.fromEntries(Object.keys(AztecNodeApiSchema).map((name) => {
+      const method = async (...args) => {
+        try {
+          return await rpc[name](...args);
+        } catch {
+          throw fail2("UNAVAILABLE");
+        }
+      };
+      return [name, { enumerable: true, get: () => method }];
+    }))));
     await inspectTrustedNode(node2, { expectedNetworkScope, proofsEnabled, maxLagSeconds });
     trusted.add(node2);
     return node2;

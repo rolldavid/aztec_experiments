@@ -127,14 +127,18 @@
         "vol-0e6826325aa884889"
       ],
       "evidence_reference": "evidence/G02/rolling-node-03-installation-observations.json",
-      "last_observed_at": "2026-10-11T20:05:24.860213+00:00",
+      "last_observed_at": "2026-10-11T20:12:11.187680+00:00",
       "latest_safe_observation": {
         "stage": "installed",
         "controlsVerified": true,
         "budgetStop": "2026-10-12T02:41:10Z",
-        "egressBytes": 3149025,
+        "egressBytes": 3151041,
         "linuxQueryQualified": false
-      }
+      },
+      "latest_live_state": "terminated",
+      "termination_evidence": "evidence/G02/rolling-node-03-termination.json",
+      "remaining_volumes": [],
+      "qualification_status": "Not qualified; final qualification receipt unavailable in console. No replay authorized by missing receipt."
     }
   ],
   "launch_hold": "Reviewedregionrepair launch onlyafteractualboundedGET206preflight/zerooldresources/cloudexpiry controls. NoLinuxacceptanceclaim.",

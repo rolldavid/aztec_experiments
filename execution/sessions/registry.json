@@ -33,25 +33,23 @@
       "runtime_id": "/root/controls",
       "parent_id": "lead-20261011",
       "task": [
-        "G06",
         "G14"
       ],
-      "branch": "codex/rolling-native-artifacts",
+      "branch": "codex/rolling-node-receipts",
       "history_locator": "collaboration runtime /root/controls, parent 01a12a75-1b50-7871-a73b-4253a1010194",
       "role": "implementation worker",
-      "state": "implementing explicit native lazy-artifact JSON compatibility after actualc551diagnosis",
+      "state": "claimed bounded commissioning observability repair; no cloud actions",
       "worktree": "../rolling-controls",
       "allowed_paths": [
-        "scripts/testing/rolling-native-artifacts.mjs",
-        "scripts/testing/rolling-native-artifacts.test.mjs",
-        "scripts/testing/rolling-application-fixture.mjs",
-        "scripts/testing/rolling-application-fixture.test.mjs"
+        "deploy/prover/bootstrap.py",
+        "scripts/test-prover-bootstrap.py",
+        "deploy/prover/BOOTSTRAP.md"
       ],
       "commit_trailer_aliases": {
         "Agent-Session": "controls",
         "Parent-Session": "lead"
       },
-      "base": "13ac43a"
+      "base": "582652fb9bb04e84e9e162026e0355bd20c9c829"
     },
     {
       "logical_id": "reviewer-20261011",
@@ -64,26 +62,26 @@
       "branch": "read-only candidate refs",
       "history_locator": "collaboration runtime /root/reviewer, parent 01a12a75-1b50-7871-a73b-4253a1010194",
       "role": "independent reviewer",
-      "state": "reviewing session307ae91; deploymente410 and graphcomponentcoverage approved"
+      "state": "native527 approved17checks; actualcampaign pending"
     },
     {
       "logical_id": "design-20261011",
       "runtime_id": "/root/design",
       "parent_id": "lead-20261011",
       "task": [
-        "G06",
-        "G14"
+        "G05",
+        "G06"
       ],
-      "branch": "codex/rolling-wallet-session",
+      "branch": "codex/rolling-wallet-panel",
       "history_locator": "collaboration runtime /root/design, parent01a12a75-1b50-7871-a73b-4253a1010194",
       "role": "implementation worker",
-      "state": "session307ae91 frozen awaiting independent re-review",
+      "state": "claimed wallet panel implementation",
       "worktree": "../rolling-design",
       "allowed_paths": [
-        "apps/rolling/wallet-session.mjs",
-        "apps/rolling/wallet-session.test.mjs"
+        "apps/rolling/wallet-panel.mjs",
+        "apps/rolling/wallet-panel.browser.test.mjs"
       ],
-      "base": "1812cea4bc58aca25958c62bc7275fb6eb8b7a2b"
+      "base": "582652f"
     }
   ],
   "integrations": [
@@ -219,6 +217,30 @@
       "candidate_revision": "ba7fe8f",
       "review": "evidence/G05/real-wall-2b416-review.json",
       "status": "clock repair source approved and actualtrustedHTTPready infailedc551; fulljourneystillpending"
+    },
+    {
+      "task": "G05",
+      "worker": "design-20261011",
+      "worker_revisions": [
+        "cf3144c1acc4386b8508e16d9bdf60c42af747bb",
+        "307ae91777b421c0951c325794abfdea57c03436",
+        "956b453e4be6b83c3d03e10c936d2db745f8ce39"
+      ],
+      "candidate_revisions": [
+        "141f915",
+        "a09b1d3",
+        "cf62df7"
+      ],
+      "review": "evidence/G05/wallet-session-956-review.json",
+      "status": "source approved;20combinedtests; actualbrowserpending"
+    },
+    {
+      "task": "G05",
+      "worker": "controls-20261011",
+      "worker_revision": "527abbea8923b0d81b78792960b815b3d3f1ffed",
+      "candidate_revision": "582652f",
+      "review": "evidence/G05/native-artifacts-527-review.json",
+      "status": "source approved; actualcampaign pending; outer directory inventory includes helper"
     }
   ]
 }
