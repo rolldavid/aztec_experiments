@@ -139,7 +139,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{}}){
    const value=intent.action?.[key];if(typeof value==='string'&&value)content.append(el('p',{class:'post-body'},`${key}: ${key==='name'&&intent.action.type!=='subboard'?ownedLabel(value):value}`));
   }
   if(typeof intent.maximumFee==='string'&&/^[0-9]+$/.test(intent.maximumFee))content.append(paragraph(`Maximum network fee: ${intent.maximumFee} fee-juice units. This is a maximum, not a guaranteed final charge.`));
-  if(intent.action?.type==='bio'&&intent.action.content==='')content.append(paragraph('Clear bio. No bio text will remain published.'));
+  if(intent.action?.type==='bio'&&intent.action.content==='')content.append(paragraph('Clear the current profile bio. Historical versions remain public.'));
   let avatarReady=intent.action?.type!=='avatar'||intent.action.data==='';
   const avatarArea=el('div',{'aria-label':'Saved avatar preview'});
   if(intent.action?.type==='avatar'){
@@ -167,6 +167,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{}}){
  }
  async function receive(result){
   intent=result;blocked=false;
+  if(['confirmed','reverted'].includes(result.status)&&['bio','avatar'].includes(result.action?.type))profileSnapshot=null;
   if(result.status==='confirmed'){
    notice='Transaction confirmed on the verified chain.';
    try{await onPublicEffect();}catch{notice+=' Public feed refresh is unavailable; the transaction remains confirmed.';}
@@ -239,7 +240,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{}}){
    else if(fields.has('content'))Object.assign(action,{name:draft.name,deposit:draft.deposit});
    const selectedAvatar=avatarDraft;
    void work(async()=>{if(kind==='avatar')Object.assign(action,selectedAvatar?.clear?{width:0,height:0,data:''}:{width:100,height:100,data:await blobData(selectedAvatar.blob)});
-    blocked=true;intent=await session.application.prepare(action);blocked=false;note('Review the saved action and maximum fee before sending.');});
+    blocked=true;try{intent=await session.application.prepare(action);}catch(failure){if(kind==='bio'||kind==='avatar')profileSnapshot=null;throw failure;}blocked=false;note('Review the saved action and maximum fee before sending.');});
   },true);
   content.append(review);
   function validate(){
