@@ -1,5 +1,5 @@
 use crate::{RollingBoard, encoding::{canonical_component, name_preimage, name_id, pack_bytes, subboard_id, text_hash, validate_text}};
-use aztec::{test::helpers::test_environment::TestEnvironment, protocol::{address::AztecAddress, traits::FromField}};
+use aztec::{test::helpers::test_environment::TestEnvironment, protocol::{address::{AztecAddress, EthAddress}, traits::FromField}};
 
 fn fixed<let N: u32, let SIZE: u32>(value: str<N>) -> [u8; SIZE] {
     std::static_assert(N <= SIZE, "Fixture length");
@@ -106,7 +106,7 @@ unconstrained fn setup() -> (TestEnvironment, AztecAddress, AztecAddress, AztecA
     let moderator = env.create_light_account();
     let alice = env.create_light_account();
     let bob = env.create_light_account();
-    let board = env.deploy("@rolling_contract/RollingBoard").with_public_initializer(moderator, RollingBoard::interface().init(text("No threats"), 10));
+    let board = env.deploy("@rolling_contract/RollingBoard").with_public_initializer(moderator, RollingBoard::interface().init(text("No threats"), 10, 1, EthAddress::from_field(0x1111), 1, 10, 1000, 10, 3, 100, 10));
     (env, board, moderator, alice, bob)
 }
 

@@ -1,6 +1,6 @@
 # RollingBoard protocol foundation
 
-G05 implementation candidate for Draft 3 names, subboards and policy authority.
+G05 integrated foundation with a G06 candidate extension for collateral-backed posts.
 This package is a **new, undeployed contract**, pinned to Aztec 6.0.0-rc.1. It does
 not replace the existing funded board, and it does not yet meet all G05, G08 or
 G13 acceptance criteria. The assigned changes outside this package are its entry in the parent Nargo
@@ -45,7 +45,7 @@ public-effect inspection and RPC trace analysis still require G08/G13 execution.
 
 ## Subboards and effective policy
 
-`init(main_rules[32], length)` records the public moderator and main policy v1.
+`init(main_rules[32], length, l1_chain_id, rollup_address, rollup_version, min_deposit, max_deposit, base_cooldown, k, censor_window, max_save_up)` records the moderator, main policy v1 and immutable V1 bridge/admission configuration.
 The moderator can publish a new main policy through `set_main_policy`; each update
 increments its version and emits the complete policy bytes and digest.
 
@@ -78,12 +78,7 @@ Repeated rejection cannot silently replace a reason. `subboard_state(id)` return
 Rejected state is terminal in this foundation; reversal/appeals need an explicit
 later decision. The frontend must show the directory tombstone and reason.
 
-**Limits:** no posting endpoint exists here yet. Later posting/Bok integration must
-reject rejected boards and bind each decision to the effective policy version.
-This foundation holds no funds and touches no existing collateral or exit state.
-It therefore cannot claim a tested withdrawal from a rejected board. Existing
-admission, moderation windows, private fee accounting and withdrawals remain
-required and must be integrated rather than bypassed.
+**Limits:** G06 publication checks active subboards and live parent/local versions atomically. Private withdrawal depends on deposit screening and its timelock, never a subboard status. Real bridge and rejected-board exit acceptance still require the later integrated journey. No existing deployed state is reused.
 
 ## Bounded storage and archive format
 
@@ -100,8 +95,8 @@ overlong encodings, surrogates and code points above U+10FFFF).
 | Each global-name component | 32 | 2 |
 | Subboard slug | 40 | 2 |
 
-Public writes per operation, excluding protocol/deployment overhead: init 3,
-registration 1, creation 4, main-policy update 2, rejection 2. Private ownership
+Public writes per operation, excluding protocol/deployment overhead: init 14,
+registration 1, creation 6, main-policy update 2, rejection 6. Private ownership
 refresh creates a note/nullifier and no public-storage writes. All are structurally
 below V6's 63 public writes; this is not measured gas or inclusion acceptance.
 Largest event (`SubboardCreated`) has fewer than 80 payload fields, well below the
@@ -151,8 +146,7 @@ The correction changes no type or function selector. Earlier failing logs are
 retained as diagnostic evidence; no SDK source was changed.
 
 Follow-on APIs belong in this same contract for private ownership to remain local:
-profile bio/current avatar; private named/anonymous posting with real admission;
-thread/social state; local and parent policy binding; encrypted preferences.
+profile bio/current avatar; likes and remaining social state; encrypted preferences.
 Specialist privacy review, real wallets/proofs, chain rebuild/reorg, load testing,
 elapsed soak and target-network clearance remain required.
 
@@ -171,3 +165,60 @@ safety flags, assertions, runtime guards, pins or dependency source were weakene
 Local TXE executes application constraints and public simulation, not real proofs.
 Normal verification uses no diagnostic wrapper; `ROLLING_NOTE_DIAGNOSTIC=1` enables
 the counts-only wrapper solely to reproduce the retained development diagnosis.
+
+## G06 funded publication candidate
+
+`admission.nr` ports the original V1 configuration, bridge framing, cooldown,
+penalty and recovery-horizon arithmetic. `ADMISSION_PROVENANCE.md` identifies the
+source revision. `main.nr` retains exact scoped historical-note authentication,
+constrained encrypted delivery, private eligibility and guarded withdrawal. Claim
+requires an authenticated L1-to-L2 receipt; a public deposit ID is never sufficient.
+The new deployment needs a fresh configured portal and Ready activation. PrivateFPC
+payment remains a sibling call in the account batch; there is no public payer fallback.
+
+`post(deposit_chain_id, nonce, draft, child, grandchild)` accepts canonical UTF-8
+up to 992 bytes. Draft fields are subboard (0 for main), parent, root_reference,
+kind (1 ordinary, 2 quote, 3 repost), name_id (0 Anonymous), reference, message[32],
+length and expected main/local policy versions. Named posts consume/recreate the
+same private ownership note. No owner, deposit ID, note link or stable anonymous
+identifier enters publication state, logs or callback. Fresh nonce generation is a
+wallet obligation; replay of an existing post ID fails. This source slice does not
+claim full transaction-graph, RPC or timing unlinkability.
+
+The public gate derives the post ID and canonical root, rejects stale policies,
+unknown/rejected boards, foreign-board replies, forged roots and missing/removed
+references. Empty bodies are allowed only for reposts (reversible first-release
+default). New replies/quotes/reposts cannot target a removed post. Existing records
+and their relationships survive removal. Complete content is authenticated event
+data; seven metadata fields plus order/existence/time/deadline/policy require 13
+public writes per post (before external callback), not 32 additional body writes.
+
+`screen` creates a private dummy history step with the original admission checks.
+`remove_post` is moderator-only with complete reason events, live policy version
+checks and original timely penalty semantics: flag 3 only before the deadline
+under the same policy; changed-policy/late removal uses flag 1 without penalty.
+`get_post` returns existence, metadata, flag, timestamp and reason digest. Indexers
+must replay authenticated events to reconstruct bodies and reason text.
+
+`configure_plugin` binds a stable nonzero plugin ID to one immutable nonzero
+adapter; disabling never changes historical identity. `post_with_bok` publishes
+through the same admission gate, derives the exact frozen 45-field invocation
+preimage from validated content/scope and calls only
+`on_invocation(Field request_id, Field derived_invocation_hash)`. Neither caller
+hash nor human account is accepted. G14 must atomically authorize the funded
+request; this candidate contains no fake successful adapter or free invocation.
+Bot reply publication is intentionally absent until the G10 interface is reviewed.
+
+G06 test evidence is pending. Added TXE cases use actual constrained receipt and
+private note paths inside TestEnvironment; they are development constraint tests,
+not network deposits or generated proofs. Likes, browser wallet integration,
+plugin execution/accounting, authenticated index reconstruction and the complete
+G05/G06/G08/G13 acceptance journey remain outstanding.
+
+The G06 predeployment storage schema consolidates six subboard maps into one typed
+`SubboardRecord`. The pinned macro expands each storage context into its generated
+private-self type; separate maps exceeded the fixed compiler complexity cap.
+This changes neither external ABI nor semantics. Rejection reads the entire record,
+changes only rejection flag/reason and writes it back, preserving immutable rules,
+metadata and creation version. Username storage and admission historical slots
+remain before this grouped record and are unchanged by this consolidation.

@@ -15,7 +15,7 @@ checkNoirEmbeddedSources(artifact);
 assert.equal(artifact.transpiled, true, 'Build the candidate artifact first');
 const privateFunctions = artifact.functions.filter(fn => fn.custom_attributes?.includes('abi_private'));
 assert(privateFunctions.length > 0 && privateFunctions.every(fn => fn.verification_key), 'Missing private verification keys');
-for (const name of ['encoding.nr', 'main.nr']) {
+for (const name of ['encoding.nr', 'admission.nr', 'posting.nr', 'main.nr']) {
   const relative = `billboard/rolling_contract/src/${name}`;
   const embedded = Object.values(artifact.file_map).find(entry => entry.path === relative);
   assert.equal(embedded?.source, fs.readFileSync(path.join(ROOT, relative), 'utf8'), `Stale artifact source: ${name}`);
