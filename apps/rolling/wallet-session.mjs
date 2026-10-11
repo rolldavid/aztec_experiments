@@ -42,20 +42,22 @@ export async function createRollingWalletSession({sdk,routing,ethers,config,boar
     accountAddress:captured.address,dataDirectory:'rolling-wallet-v1'},undefined,logger);
    pxe=await sdk.createPXE(node,{proverEnabled:true,autoSync:false,syncChainTip:'checkpointed'},{store,remoteProver:remote});await guard();
    if(!sdk.isPrivatePXEForNode(pxe,node))throw fail('ROLLING_PRIVATE_ROUTE');
-   await pxe.registerAccount(keys,await sdk.computePartialAddress(instance));
+   const partialAddress=await sdk.computePartialAddress(instance);await guard();
+   await pxe.registerAccount(keys,partialAddress);
    for(const [contractArtifact,contractInstance]of [[artifact,instance],[boardArtifact,deployment.board.instance],[privateFeeArtifact,deployment.privateFee.instance]]){
-    await guard();await pxe.registerContractClass(contractArtifact);await pxe.registerContract(contractInstance);
+    await guard();await pxe.registerContractClass(contractArtifact);
+    await guard();await pxe.registerContract(contractInstance);
    }
-   await pxe.sync();await guard();
+   await guard();await pxe.sync();await guard();
    const privateStore=sdk.createBrowserJournalStorage();
-   const journal=await sdk.createL2Journal({storage:privateStore,walletSecret:captured.secretKey,walletSalt:captured.salt,
+   await guard();const journal=await sdk.createL2Journal({storage:privateStore,walletSecret:captured.secretKey,walletSalt:captured.salt,
     scope:{account:captured.address,...network,board:deployment.board.address.toString(),portal:deployment.portal},Tx:sdk.Tx,node,contextGuard:guard});
-   const wallet=routing.createAztecWallet(sdk,pxe,node,node,silent,secret,{contextGuard:guard,transactionJournal:journal});
+   await guard();const wallet=routing.createAztecWallet(sdk,pxe,node,node,silent,secret,{contextGuard:guard,transactionJournal:journal});
    if(wallet.aztecNode!==node||wallet.pxe!==pxe||!routing.isPrivateWalletForNode(wallet,node))throw fail('ROLLING_PRIVATE_ROUTE');
-   wallet._accountManager=await sdk.AccountManager.create(wallet,secret,accountContract,{salt});
+   await guard();wallet._accountManager=await sdk.AccountManager.create(wallet,secret,accountContract,{salt});
    if(wallet._accountManager.address.toString()!==captured.address)throw fail('ROLLING_ACCOUNT_MISMATCH');
-   const signingPublicKey=await accountContract.getSigningPublicKey(),constructor=artifact.functions.find(fn=>fn.name==='constructor');
-   if(constructor)await new sdk.ContractFunctionInteraction(wallet,instance.address,constructor,[signingPublicKey.x,signingPublicKey.y]).simulate({from:instance.address});
+   await guard();const signingPublicKey=await accountContract.getSigningPublicKey(),constructor=artifact.functions.find(fn=>fn.name==='constructor');
+   if(constructor){await guard();await new sdk.ContractFunctionInteraction(wallet,instance.address,constructor,[signingPublicKey.x,signingPublicKey.y]).simulate({from:instance.address});}
    privateNode=node;privateWallet=wallet;
    await guard();app=createRollingApplication({sdk:{...sdk,isPrivateWalletForNode:routing.isPrivateWalletForNode},deployment,contextGuard:guard,privateStore,onProgress,
     accountSession:{owner:instance.address,wallet,node,journal,walletSecret:captured.secretKey,walletSalt:captured.salt}});

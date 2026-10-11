@@ -162,3 +162,33 @@ test('failed close leaves session unusable, preserves error, and permits explici
  await assert.rejects(other.close(),{code:'ROLLING_OTHER_TAB'});assert.equal(g.state.stops,0);
  g.state.otherTab=false;await other.close();assert.equal(g.state.stops,1);
 });
+
+test('account mutation during each awaited initialization step blocks the next private operation',async()=>{
+ for(const stage of ['partial-address','class-registration','last-registration','account-manager','signing-key']){
+  const f=await sessionFixture();let forbidden=0;
+  const change=()=>{f.input.account.salt='9';};
+  if(stage==='partial-address'){
+   const original=f.input.sdk.computePartialAddress;f.input.sdk.computePartialAddress=async(...args)=>{const result=await original(...args);change();return result;};
+   f.pxe.registerAccount=async()=>{forbidden++;};
+  }
+  if(stage==='class-registration'){
+   const original=f.pxe.registerContractClass;f.pxe.registerContractClass=async(...args)=>{await original(...args);change();};
+   f.pxe.registerContract=async()=>{forbidden++;};
+  }
+  if(stage==='last-registration'){
+   const original=f.pxe.registerContract;let calls=0;f.pxe.registerContract=async(...args)=>{await original(...args);if(++calls===3)change();};
+   f.pxe.sync=async()=>{forbidden++;};
+  }
+  if(stage==='account-manager'){
+   const original=f.input.sdk.AccountManager.create;f.input.sdk.AccountManager.create=async(...args)=>{const result=await original(...args);change();return result;};
+   f.input.sdk.SchnorrInitializerlessAccountContract=class extends SchnorrInitializerlessAccountContract{async getSigningPublicKey(){if(f.input.account.salt==='9')forbidden++;return super.getSigningPublicKey();}};
+  }
+  if(stage==='signing-key'){
+   f.input.sdk.SchnorrInitializerlessAccountContract=class extends SchnorrInitializerlessAccountContract{async getSigningPublicKey(){const result=await super.getSigningPublicKey();if(f.state.events.includes('account-manager'))change();return result;}};
+   f.input.sdk.ContractFunctionInteraction=class{async simulate(){forbidden++;}};
+  }
+  await assert.rejects(createRollingWalletSession(f.input),{code:'ROLLING_CONTEXT_CHANGED'},stage);
+  assert.equal(forbidden,0,stage);assert.equal(f.state.stops,1,stage);assert.equal(f.state.closes,1,stage);
+  assert.ok(f.state.events.indexOf('store-close')<f.state.events.lastIndexOf('unlock'),stage);
+ }
+});
