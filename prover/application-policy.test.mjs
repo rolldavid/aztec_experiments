@@ -129,3 +129,12 @@ test('actual private expiry is allowed but public expiry and direct callback are
     assert.throws(() => validateRollingPayload(forged, actualOptions), /Unapproved/);
   }
 });
+
+test('actual authenticated Bok reply entrypoint requires configured escrow and private fee, never direct board callback',async()=>{
+ const raw=loadRollingArtifacts(),selected=await rollingSelectors(raw);
+ const selector=async(contract,name)=>{const a=loadContractArtifact(raw.find(x=>x.name===contract));const fn=[...a.functions,...a.nonDispatchPublicFunctions].find(x=>x.name===name);assert(fn);return BigInt((await FunctionSelector.fromNameAndParameters(fn)).toString());};
+ const reply=await selector('PrivateBok','publish_reply'),callback=await selector('RollingBoard','publish_plugin_reply');
+ const fee=[...selected.fee.fee][0];const p=payload();p.app_payload.function_calls=[call(2,reply,true),call(3,fee)];
+ assert.deepEqual(validateRollingPayload(p,{...options,selectors:selected}),{applications:1,fees:1});
+ for(const bad of [[call(1,callback,true),call(3,fee)],[call(99,reply,true),call(3,fee)],[call(2,reply,true)]]){p.app_payload.function_calls=bad;assert.throws(()=>validateRollingPayload(p,{...options,selectors:selected}),/Unapproved|Private fee/);}
+});

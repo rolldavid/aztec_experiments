@@ -5,9 +5,8 @@
 `privateFeeAddress`, plus the existing chain, rollup version, origins and proving
 mode. No private configuration or credentials belong in these public fields.
 
-This revision deliberately ships `rolling-artifacts.json` with `status: "pending"`.
-The profile cannot start until normal processed RollingBoard and PrivateBok
-artifacts have been independently reviewed and pinned. Raw compile output is not
+The profile starts only with a ready `rolling-artifacts.json` whose normal processed
+RollingBoard and PrivateBok artifacts have been reviewed and pinned. Raw compile output is not
 eligible. The release operator, using pinned Node after both normal builds, runs:
 
 ```
@@ -59,3 +58,8 @@ withdrawal, public expiry/operator settlement, and combined board+Bok activation
 Check client verification, canonical node effects and exact balances. Pure policy
 tests and disabled-proof jobs do not qualify cryptographic or privacy acceptance.
 No remote availability, resource spending, production or release gate is waived.
+
+Authenticated Bok replies permit only the configured PrivateBok `publish_reply`
+entrypoint in a signed payload with private fee payment. The board callback remains
+forbidden as a top-level payload. Contract operator, activation, policy and replay
+checks still execute; the prover allowlist does not grant operator authority.
