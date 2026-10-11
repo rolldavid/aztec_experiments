@@ -1,4 +1,5 @@
 import {createPublicReader} from './reader-client.mjs';
+import {createPublicAvatar,createPublicProfile} from './profile-view.mjs';
 import {safeURL} from './model.mjs';
 import {focusRoute,skipToContent} from './navigation.mjs';
 
@@ -35,11 +36,11 @@ function richText(value){
 }
 function postCard(post,data){
  if(!post||!field(post.id)||!post.record||!field(post.record.root))throw Error('Invalid public post');
- const r=post.record,named=data.names?.[r.name_id],board=data.boards?.[r.subboard],isBot=Boolean(post.bot);
+ const r=post.record,isBot=Boolean(post.bot),named=!isBot&&r.name_id!=='0'?data.names?.[r.name_id]:null,board=data.boards?.[r.subboard];
  const author=isBot?'Bok':r.name_id==='0'?'Anonymous':named?`${text(named.first)} ${text(named.last)}`:'Registered name';
  const article=el('article',{class:'post',id:'post-'+post.id,'aria-label':'Post by '+author});
  const who=isBot||r.name_id==='0'?el('span',{class:'author'},author):link(author,'/profile/'+r.name_id,{class:'author'});
- article.append(el('div',{class:'post-top'},el('span',{class:'avatar '+(isBot?'bot':'anonymous'),'aria-hidden':'true'},isBot?'B':'◌'),el('div',{},who,isBot?el('span',{class:'bot-badge'},'Authenticated bot'):null,el('div',{class:'post-context'},board?text(board.name):'Main board',' · ',timestamp(post.timestamp)))));
+ article.append(el('div',{class:'post-top'},named?createPublicAvatar(named,{signal:controller.signal}):el('span',{class:'avatar '+(isBot?'bot':'anonymous'),'aria-hidden':'true'},isBot?'B':'◌'),el('div',{},who,isBot?el('span',{class:'bot-badge'},'Authenticated bot'):null,el('div',{class:'post-context'},board?text(board.name):'Main board',' · ',timestamp(post.timestamp)))));
  if(post.text===null){article.append(el('p',{class:'removed'},'This post is unavailable under the board’s moderation policy. ',link('View thread','/thread/'+r.root)));return article;}
  if(r.parent!=='0')article.append(el('p',{class:'reply-line'},'In reply to ',link('an earlier post','/thread/'+r.root+'/'+r.parent)));
  if(r.reference!=='0')article.append(el('p',{class:'reply-line'},r.kind==='3'?'Reposted from ':'Quoted from ',link('the original post','/post/'+r.reference)));
@@ -96,7 +97,7 @@ async function render(){
    const page=await read(api,{...parameters,cursor},restoreSignal);if(current!==sequence)return;append(page);cursor=page.nextCursor;loadedPages++;
   }
   loading.remove();
-  if(api==='profile'&&data.identity){main.querySelector('h1').textContent=text(data.identity.first)+' '+text(data.identity.last);}
+  if(api==='profile'&&data.identity){main.querySelector('h1').textContent=text(data.identity.first)+' '+text(data.identity.last);main.append(createPublicProfile(data.identity,{signal}));}
   if(!container.childElementCount)container.append(el('div',{class:'empty'},el('h2',{},'A little quiet here'),el('p',{},api==='directory'?'No subboards match this search.':'No posts to show yet.')));
   main.append(container);
   if(expectedRoot)main.append(el('p',{},link('Read the conversation from the beginning','/thread/'+expectedRoot)));
