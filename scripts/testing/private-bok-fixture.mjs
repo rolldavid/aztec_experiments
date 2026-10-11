@@ -23,14 +23,18 @@ export const evidenceJson = value => JSON.stringify(value, (_, item) => typeof i
 const sha = bytes => createHash('sha256').update(bytes).digest('hex');
 const same = (a, b) => assert.equal(String(a).toLowerCase(), String(b).toLowerCase());
 
-export async function runPrivateBokFixture(ctx, caseProfile = 'both', payerMode = 'genesis') {
+export async function runPrivateBokFixture(ctx, caseProfile = 'both', payerMode = 'genesis', consumer) {
   assert(['both', 'normal', 'uncertain'].includes(caseProfile));
   assert(['genesis', 'private'].includes(payerMode));
+  if (consumer !== undefined) {
+    assert.equal(typeof consumer, 'function');
+    assert.equal(payerMode, 'private'); assert.equal(caseProfile, 'normal');
+  }
   const realProofs = applicationProofsEnabled();
   const observation = {passed: false, caseProfile, applicationProofs: realProofs, networkProofs: false,
     controlledSettlement: true, fundingMode: 'real-portal-deposit',
     payerMode, privacyAcceptance: payerMode === 'private' ? 'pending public-effect checks; independent qualification missing' : 'missing: public genesis fee payer', l1: []};
-  const directory = path.join(ROOT, 'execution/evidence/G14', 'portal-' + randomUUID());
+  const directory = path.join(ROOT, consumer ? 'execution/evidence/G06' : 'execution/evidence/G14', 'portal-' + randomUUID());
   await fs.mkdir(directory, {mode: 0o700});
   const save = () => fs.writeFile(path.join(directory, 'fixture.json'), evidenceJson(observation));
   let wallet, provider, privateFees, owner, operator, otherUser;
@@ -259,8 +263,8 @@ export async function runPrivateBokFixture(ctx, caseProfile = 'both', payerMode 
           advance.passed = true; await save();
         } finally { restore(); }
       };
-      const {runPrivateBokExperiment} = await import('../../experiments/private-bok/measure.mjs');
-      observation.experiment = await runPrivateBokExperiment({node: ctx.node, wallet, owner, operator, otherUser,
+      const run = consumer ?? (await import('../../experiments/private-bok/measure.mjs')).runPrivateBokExperiment;
+      observation.experiment = await run({node: ctx.node, wallet, owner, operator, otherUser, privateFees,
         deployPortal, activatePortal, funding, redeem, mineL1, advanceTo, realProofs, payerMode,
         ...(privateFees ? {paymentFor: privateFees.paymentFor, sharedFeePayer: privateFees.funding.owner.recipient} : {}),
         outputDirectory: path.join(directory, 'experiment'), caseProfile, mark: ctx.mark,

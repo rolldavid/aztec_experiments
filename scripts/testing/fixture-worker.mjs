@@ -66,7 +66,7 @@ export async function runFixture(directory, scenario, browserControl, operatorPa
     const [{getGenesisValues},{getConfigEnvVars},{deployC01ApplicationProtocol}]=await Promise.all([
       import('@aztec-labs/world-state/testing'),import('@aztec-labs/aztec-node/config'),import('../c01-application-deployment.mjs')]);
     let preparation;
-    if(scenario.fixture !== 'node'){const {prepareC01BoardFlow}=await import('../c01-board-flow.mjs');preparation=await prepareC01BoardFlow({bbBinaryPath:applicationNativeProfile(directory).bbPath,directory,authorCount:scenario.authors,boardTiming:scenario.boardTiming});}
+    if(scenario.fixture !== 'node'){const {prepareC01BoardFlow}=await import('../c01-board-flow.mjs');preparation=await prepareC01BoardFlow({bbBinaryPath:applicationNativeProfile(directory).bbPath,directory,authorCount:scenario.authors,boardProfile:scenario.boardProfile,boardTiming:scenario.boardTiming});}
     if(scenario.name === 'censor-commands'){const {restoreApplicationAuthor}=await import('../w02-wallet-restore.mjs');const restored=await restoreApplicationAuthor(preparation.account);preparation.account=restored.author;preparation.authorAccounts[0]=restored.author;preparation.fundingAddresses=preparation.authorAccounts.map(account=>account.address);output.censorIdentity=restored.observation;}
     const {genesisArchiveRoot,fundingNeeded,genesis}=await getGenesisValues(preparation?.fundingAddresses??[]);
     const {SecretValue}=await import('@aztec-labs/foundation/config');

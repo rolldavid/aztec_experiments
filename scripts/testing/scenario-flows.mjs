@@ -320,3 +320,7 @@ export async function privateBokPrivateNormal(ctx) {
 export async function privateBokPrivateUncertain(ctx) {
   return (await import('./private-bok-fixture.mjs')).runPrivateBokFixture(ctx, 'uncertain', 'private');
 }
+
+export async function rollingBokPost(ctx) {
+  return (await import('./rolling-bok-fixture.mjs')).runRollingBokFixture(ctx);
+}
