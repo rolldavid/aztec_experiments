@@ -13,6 +13,7 @@ import {poseidon2HashWithSeparator} from '@aztec-labs/foundation/crypto/poseidon
 import {TxStatus, TxExecutionResult} from '@aztec-labs/stdlib/tx';
 import {ROOT, assertNodeVersion, assertAztecPackages} from '../../scripts/toolchain.mjs';
 import {proveApplicationAction} from '../../scripts/prove-application-action.mjs';
+import {matchesContractRejection} from '../../experiments/private-bok/rejection.mjs';
 import {applicationProofsEnabled} from '../../scripts/testing/proof-policy.mjs';
 
 const reasons = Object.freeze({mismatch: 'Invocation target mismatch', disabled: 'Plugin disabled', expired: 'Request expired'});
@@ -41,7 +42,7 @@ export async function assertMinedCallbackRollback({node, wallet, owner, board, b
   const postId = await poseidon2HashWithSeparator([1n, bigint(board.address), bigint(nonce)], 0x42420102);
   const sourcePaths = ['billboard/rolling_contract/callback-rollback.mjs', 'billboard/rolling_contract/src/main.nr',
     'billboard/rolling_contract/src/posting.nr', 'billboard/rolling_contract/src/admission.nr',
-    'experiments/private-bok/escrow/src/main.nr', 'scripts/prove-application-action.mjs', 'scripts/testing/proof-policy.mjs'];
+    'experiments/private-bok/escrow/src/main.nr', 'experiments/private-bok/rejection.mjs', 'scripts/prove-application-action.mjs', 'scripts/testing/proof-policy.mjs'];
   const sourceHashes = async () => Object.fromEntries(await Promise.all(sourcePaths.map(async relative =>
     [relative, sha(await fs.readFile(path.join(ROOT, relative)))])));
   const artifactHashes = {};
@@ -93,7 +94,7 @@ export async function assertMinedCallbackRollback({node, wallet, owner, board, b
       ...(payerMode === 'private' ? {privateFeeAction} : {})});
     const simulation = await node.simulatePublicCalls(tx, false);
     assert(simulation.revertReason, 'Exact prepared transaction must reject');
-    assert(String(simulation.revertReason.message).includes(reasons[reason]), 'Unexpected public rejection');
+    assert(matchesContractRejection(simulation.revertReason, reason === 'disabled' ? board : bok, reasons[reason]), 'Unexpected public rejection');
     assert.equal((await node.isValidTx(tx)).result, 'valid', 'Revert must not hide an invalid private transaction');
     report.txHash = String(tx.getTxHash());
     // Exclusive durable intent BEFORE the one send. Existing intent means stop:

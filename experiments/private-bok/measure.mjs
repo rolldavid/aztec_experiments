@@ -19,6 +19,7 @@ import {proveApplicationAction, measureApplicationGas} from '../../scripts/prove
 import {invocationPreimage, invocationHash} from '../../shared/rolling/invocation.mjs';
 import {ARTIFACT, BOARD_ARTIFACT, MANIFEST, buildInputs, sha} from './build.mjs';
 import {classifyT03PublicFootprint} from '../../scripts/t03-public-footprint.mjs';
+import {matchesContractRejection} from './rejection.mjs';
 import {encodeV1, assertRequest, json, failureDiagnostic} from './wire.mjs';
 
 const included = receipt => [TxStatus.CHECKPOINTED, TxStatus.PROVEN, TxStatus.FINALIZED].includes(receipt.status)
@@ -91,7 +92,7 @@ export async function runPrivateBokExperiment({node, wallet, owner, operator, ot
     assert(privateFunctions.length > 0 && privateFunctions.every(fn => fn.verification_key), 'Private verification keys required');
     const artifact = loadContractArtifact(raw), boardArtifact = loadContractArtifact(boardRaw);
     report.build = manifest;
-    const sourceFiles = [...new Set(['experiments/private-bok/measure.mjs', 'experiments/private-bok/wire.mjs',
+    const sourceFiles = [...new Set(['experiments/private-bok/measure.mjs', 'experiments/private-bok/wire.mjs', 'experiments/private-bok/rejection.mjs',
       'shared/rolling/invocation.mjs', 'scripts/prove-application-action.mjs', 'scripts/c01-settle-application-message.mjs',
       'scripts/c01-client-mining.mjs', 'scripts/testing/proof-policy.mjs', 'scripts/u01-browser-flow.mjs', ...harnessFiles])];
     const sourceHashes = async () => Object.fromEntries(await Promise.all(sourceFiles.map(async relative => {
@@ -190,16 +191,21 @@ export async function runPrivateBokExperiment({node, wallet, owner, operator, ot
       report.states.push({label, request: current, privateBalance, earnings}); await save(); return current;
     }
     async function rejects(id, interaction, actor, reason, label) {
-      stage = label; const before = {request: await request(id), balance: await balance(), earnings: await earned()};
+      const before = {request: await request(id), balance: await balance(), earnings: await earned()};
+      stage = label;
       let failure;
       try {
         const selected = payment(actor);
         if (selected.payerMode === 'private') await selected.privateFeeAction({wallet, owner: actor, interaction});
         else await interaction.simulate({from: actor});
       } catch (error) { failure = error; }
-      assert(failure && String(failure.message).includes(reason), `Expected specific contract rejection: ${reason}`);
+      const matched = matchesContractRejection(failure, contract, reason);
+      report.negativeChecks.push({label, expected: reason, outcome: matched ? 'rejected' : 'unexpected',
+        failureKind: !failure ? 'returned-without-rejection' : matched ? 'expected-public-guard' : 'unexpected-error', ...failureDiagnostic(failure)});
+      await save();
+      assert(matched, `Expected specific contract rejection: ${reason}`);
       assert.deepEqual({request: await request(id), balance: await balance(), earnings: await earned()}, before, 'Rejected simulation changed canonical state');
-      report.negativeChecks.push({label, expected: reason, outcome: 'rejected', errorClass: failure.name}); await save();
+      await save();
     }
 
     async function claim(label) {
