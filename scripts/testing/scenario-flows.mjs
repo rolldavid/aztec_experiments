@@ -313,3 +313,10 @@ export async function privateBokNormal(ctx) {
 export async function privateBokUncertain(ctx) {
   return (await import('./private-bok-fixture.mjs')).runPrivateBokFixture(ctx, 'uncertain');
 }
+
+export async function privateBokPrivateNormal(ctx) {
+  return (await import('./private-bok-fixture.mjs')).runPrivateBokFixture(ctx, 'normal', 'private');
+}
+export async function privateBokPrivateUncertain(ctx) {
+  return (await import('./private-bok-fixture.mjs')).runPrivateBokFixture(ctx, 'uncertain', 'private');
+}

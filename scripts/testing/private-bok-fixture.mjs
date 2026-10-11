@@ -23,16 +23,17 @@ export const evidenceJson = value => JSON.stringify(value, (_, item) => typeof i
 const sha = bytes => createHash('sha256').update(bytes).digest('hex');
 const same = (a, b) => assert.equal(String(a).toLowerCase(), String(b).toLowerCase());
 
-export async function runPrivateBokFixture(ctx, caseProfile = 'both') {
+export async function runPrivateBokFixture(ctx, caseProfile = 'both', payerMode = 'genesis') {
   assert(['both', 'normal', 'uncertain'].includes(caseProfile));
+  assert(['genesis', 'private'].includes(payerMode));
   const realProofs = applicationProofsEnabled();
   const observation = {passed: false, caseProfile, applicationProofs: realProofs, networkProofs: false,
     controlledSettlement: true, fundingMode: 'real-portal-deposit',
-    payerMode: 'genesis', privacyAcceptance: 'missing: public genesis fee payer', l1: []};
+    payerMode, privacyAcceptance: payerMode === 'private' ? 'pending public-effect checks; independent qualification missing' : 'missing: public genesis fee payer', l1: []};
   const directory = path.join(ROOT, 'execution/evidence/G14', 'portal-' + randomUUID());
   await fs.mkdir(directory, {mode: 0o700});
   const save = () => fs.writeFile(path.join(directory, 'fixture.json'), evidenceJson(observation));
-  let wallet, provider;
+  let wallet, provider, privateFees, owner, operator, otherUser;
   try {
     const url = new URL(ctx.config.l1RpcUrls[0]);
     assert.equal(url.protocol, 'http:'); assert.equal(url.hostname, '127.0.0.1');
@@ -43,16 +44,18 @@ export async function runPrivateBokFixture(ctx, caseProfile = 'both') {
     const signer = Wallet.createRandom().connect(provider);
     // The chain and identity are disposable; no existing developer account enters the fixture.
     await provider.send('anvil_setBalance', [signer.address, '0x56bc75e2d63100000']);
-    wallet = await EmbeddedWallet.create(ctx.node, {ephemeral: true, pxe: {
-      proverEnabled: true, autoSync: false, syncChainTip: 'checkpointed',
-      proverOrOptions: applicationProver({backend: BackendType.NativeUnixSocket, ...applicationNativeProfile(ctx.directory)}),
-    }});
-    assert.equal(ctx.preparation.authorAccounts.length, 3);
-    for (const [i, actor] of ctx.preparation.authorAccounts.entries()) {
-      const manager = await wallet.createSchnorrInitializerlessAccount(actor.secret, actor.salt, actor.signingKey, 'bok-fixture-' + i);
-      assert(manager.address.equals(actor.address));
+    if (payerMode === 'genesis') {
+      wallet = await EmbeddedWallet.create(ctx.node, {ephemeral: true, pxe: {
+        proverEnabled: true, autoSync: false, syncChainTip: 'checkpointed',
+        proverOrOptions: applicationProver({backend: BackendType.NativeUnixSocket, ...applicationNativeProfile(ctx.directory)}),
+      }});
+      assert.equal(ctx.preparation.authorAccounts.length, 3);
+      for (const [i, actor] of ctx.preparation.authorAccounts.entries()) {
+        const manager = await wallet.createSchnorrInitializerlessAccount(actor.secret, actor.salt, actor.signingKey, 'bok-fixture-' + i);
+        assert(manager.address.equals(actor.address));
+      }
+      [owner, operator, otherUser] = ctx.preparation.authorAccounts.map(actor => actor.address);
     }
-    const [owner, operator, otherUser] = ctx.preparation.authorAccounts.map(actor => actor.address);
     const artifacts = {};
     for (const name of ['DevUSDC', 'PluginPortal']) {
       const relative = `billboard/portal/out/${name}.sol/${name}.json`;
@@ -97,6 +100,13 @@ export async function runPrivateBokFixture(ctx, caseProfile = 'both') {
         w.siblingPath.toBufferArray().map(bytes => '0x' + bytes.toString('hex'))];
     };
     await withC01ClientMining({rpcUrl: url.href, dateProvider: ctx.dateProvider, observation}, async mineL1 => {
+      if (payerMode === 'private') {
+        const {preparePrivateBokFees} = await import('./private-bok-fees.mjs');
+        privateFees = await preparePrivateBokFees({...ctx, rpcUrl: url.href, mineL1});
+        observation.privateFees = privateFees;
+        ({wallet, owner, operator, otherUser} = privateFees);
+        await save();
+      }
       const deployPortal = async ({escrow, chainId, rollupVersion}) => {
         assert.equal(BigInt(chainId), 31337n); assert.equal(BigInt(rollupVersion), BigInt(info.rollupVersion));
         assert(!portal, 'One portal per disposable experiment'); escrowAddress = escrow;
@@ -251,18 +261,30 @@ export async function runPrivateBokFixture(ctx, caseProfile = 'both') {
       };
       const {runPrivateBokExperiment} = await import('../../experiments/private-bok/measure.mjs');
       observation.experiment = await runPrivateBokExperiment({node: ctx.node, wallet, owner, operator, otherUser,
-        deployPortal, activatePortal, funding, redeem, mineL1, advanceTo, realProofs, payerMode: 'genesis',
+        deployPortal, activatePortal, funding, redeem, mineL1, advanceTo, realProofs, payerMode,
+        ...(privateFees ? {paymentFor: privateFees.paymentFor, sharedFeePayer: privateFees.funding.owner.recipient} : {}),
         outputDirectory: path.join(directory, 'experiment'), caseProfile, mark: ctx.mark,
-        harnessFiles: ['scripts/testing/private-bok-fixture.mjs', 'scripts/testing/scenarios.mjs', 'scripts/testing/scenario-flows.mjs']});
+        harnessFiles: ['scripts/testing/private-bok-fees.mjs', 'scripts/w01-private-fee-flow.mjs', 'scripts/w01-unfunded-wallet.mjs', 'scripts/testing/private-bok-fixture.mjs', 'scripts/testing/scenarios.mjs', 'scripts/testing/scenario-flows.mjs']});
       assert(observation.experiment.passed);
+      if (privateFees) {
+        const totals = observation.experiment.humanActualFees;
+        await privateFees.verify({owner: BigInt(totals.owner), otherUser: BigInt(totals.otherUser)});
+        assert(privateFees.passed); await save();
+      }
     });
     observation.passed = true;
   } catch (error) {
+    if (error.privateBokFeesObservation) observation.privateFees = error.privateBokFeesObservation;
     if (error.privateBokObservation) observation.experiment = error.privateBokObservation;
     observation.failure = {errorClass: error.name}; error.privateBokFixtureObservation = observation; throw error;
   } finally {
-    try { if (wallet) { await wallet.stop(); observation.walletStopped = true; } }
-    finally { provider?.destroy(); await save(); }
+    try {
+      if (privateFees) { await privateFees.close(); observation.walletStopped = privateFees.walletCleanupComplete; }
+      else if (wallet) { await wallet.stop(); observation.walletStopped = true; }
+    } catch (error) {
+      observation.passed = false; observation.cleanupFailure = {errorClass: error.name};
+      error.privateBokFixtureObservation = observation; throw error;
+    } finally { provider?.destroy(); await save(); }
   }
   // The generic worker accepts JSON observations. Normalize only after cleanup
   // so its report retains the same exact amounts and flags as fixture.json.

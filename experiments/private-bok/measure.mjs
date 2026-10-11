@@ -18,6 +18,7 @@ import {ROOT, assertNodeVersion, assertAztecPackages} from '../../scripts/toolch
 import {proveApplicationAction, measureApplicationGas} from '../../scripts/prove-application-action.mjs';
 import {invocationPreimage, invocationHash} from '../../shared/rolling/invocation.mjs';
 import {ARTIFACT, BOARD_ARTIFACT, MANIFEST, buildInputs, sha} from './build.mjs';
+import {classifyT03PublicFootprint} from '../../scripts/t03-public-footprint.mjs';
 import {encodeV1, assertRequest, json, failureDiagnostic} from './wire.mjs';
 
 const included = receipt => [TxStatus.CHECKPOINTED, TxStatus.PROVEN, TxStatus.FINALIZED].includes(receipt.status)
@@ -27,10 +28,26 @@ const field = value => typeof value === 'bigint' ? value : value.toField().toBig
 
 export async function runPrivateBokExperiment({node, wallet, owner, operator, otherUser, mineL1, advanceTo,
   deployPortal, activatePortal, redeem, funding, outputDirectory, realProofs, payerMode,
-  privateFeeAction, harnessFiles, caseProfile = 'both', mark = () => {}}) {
+  paymentFor, sharedFeePayer, harnessFiles, caseProfile = 'both', mark = () => {}}) {
   assert.equal(typeof realProofs, 'boolean', 'Explicit proof mode required');
   assert(['both', 'normal', 'uncertain'].includes(caseProfile), 'Explicit known case profile required');
   assert(['private', 'genesis'].includes(payerMode), 'Explicit payer mode required');
+  if (payerMode === 'private') {
+    assert.equal(typeof paymentFor, 'function');
+    assert.equal(typeof sharedFeePayer, 'string');
+  } else { assert.equal(paymentFor, undefined); assert.equal(sharedFeePayer, undefined); }
+  const humanActualFees = {owner: 0n, otherUser: 0n};
+  const payment = actor => {
+    const role = actor.equals(owner) ? 'owner' : actor.equals(otherUser) ? 'otherUser' : actor.equals(operator) ? 'operator' : null;
+    assert(role, 'Unknown transaction actor');
+    if (payerMode === 'genesis') return {role, payerMode: 'genesis'};
+    const selected = paymentFor(actor);
+    assert.equal(selected.role, role);
+    assert.equal(selected.payerMode, role === 'operator' ? 'genesis' : 'private');
+    if (role !== 'operator') assert.equal(typeof selected.privateFeeAction, 'function');
+    else assert.equal(selected.privateFeeAction, undefined);
+    return selected;
+  };
   assert(path.isAbsolute(outputDirectory));
   for (const fn of [mineL1, advanceTo, deployPortal, activatePortal, redeem, funding?.submit]) assert.equal(typeof fn, 'function');
   assert.equal(funding.mode, 'real-portal-deposit', 'This consumer requires real local portal deposits');
@@ -88,8 +105,9 @@ export async function runPrivateBokExperiment({node, wallet, owner, operator, ot
     async function send(interaction, actor, label, {expectedLeaf, messageCount = 0} = {}) {
       stage = label; mark('private-bok:' + label); await wallet.pxe.sync();
       const started = performance.now();
-      const {tx} = await proveApplicationAction({wallet, owner: actor, interaction, payerMode, ...(payerMode === 'private' ? {privateFeeAction} : {})});
-      const row = {label, proofMode: report.proofMode, prepareMs: Math.round(performance.now() - started),
+      const selected = payment(actor);
+      const {tx} = await proveApplicationAction({wallet, owner: actor, interaction, ...selected});
+      const row = {label, actorRole: selected.role, payerMode: selected.payerMode, proofMode: report.proofMode, prepareMs: Math.round(performance.now() - started),
         txHash: tx.getTxHash().toString(), serializedTxBytes: tx.toBuffer().length, submission: 'not attempted'};
       report.measurements.push(row);
       try { row.gas = await measureApplicationGas(node, tx); }
@@ -115,6 +133,15 @@ export async function runPrivateBokExperiment({node, wallet, owner, operator, ot
       assert.equal(Number(effect.l2BlockNumber), Number(receipt.blockNumber));
       assert.equal(effect.l2BlockHash.toString(), receipt.blockHash.toString());
       assert(receipt.transactionFee != null && BigInt(receipt.transactionFee) >= 0n);
+      if (selected.role !== 'operator') humanActualFees[selected.role] += BigInt(receipt.transactionFee);
+      if (payerMode === 'private') {
+        row.publicFootprint = classifyT03PublicFootprint({tx, effect: effect.data, roles: {author: owner, otherAuthor: otherUser, sharedPayer: sharedFeePayer, moderator: operator}});
+        for (const category of ['feePayer', 'publicCallSenders', 'publicCallTargets', 'publicCallCalldata', 'publicWriteSlots', 'publicWriteValues', 'publicLogContracts', 'publicLogFields']) {
+          assert.equal(row.publicFootprint.rolePresence[category].author, false, 'Human owner exposed in ' + category);
+          assert.equal(row.publicFootprint.rolePresence[category].otherAuthor, false, 'Other human exposed in ' + category);
+        }
+        if (selected.role !== 'operator') assert.equal(row.publicFootprint.sharedFeePayer, true);
+      }
       assert.equal(effect.data.l2ToL1Msgs.length, messageCount, 'Unexpected portal message count');
       if (expectedLeaf) assert.equal(effect.data.l2ToL1Msgs.filter(value => value.equals(expectedLeaf)).length, 1, 'Exact portal envelope leaf required');
       const effectBytes = effect.data.toBuffer();
@@ -165,7 +192,11 @@ export async function runPrivateBokExperiment({node, wallet, owner, operator, ot
     async function rejects(id, interaction, actor, reason, label) {
       stage = label; const before = {request: await request(id), balance: await balance(), earnings: await earned()};
       let failure;
-      try { await interaction.simulate({from: actor}); } catch (error) { failure = error; }
+      try {
+        const selected = payment(actor);
+        if (selected.payerMode === 'private') await selected.privateFeeAction({wallet, owner: actor, interaction});
+        else await interaction.simulate({from: actor});
+      } catch (error) { failure = error; }
       assert(failure && String(failure.message).includes(reason), `Expected specific contract rejection: ${reason}`);
       assert.deepEqual({request: await request(id), balance: await balance(), earnings: await earned()}, before, 'Rejected simulation changed canonical state');
       report.negativeChecks.push({label, expected: reason, outcome: 'rejected', errorClass: failure.name}); await save();
@@ -306,6 +337,7 @@ export async function runPrivateBokExperiment({node, wallet, owner, operator, ot
     assert.deepEqual(manifest.inputs, buildInputs(), 'Sources changed during measurement');
     assert.deepEqual(report.driverAndHarness, await sourceHashes(), 'Driver/harness changed during measurement');
     assert.equal(sha(await fs.readFile(ARTIFACT)), manifest.artifactSha256); assert.equal(sha(await fs.readFile(BOARD_ARTIFACT)), manifest.boardArtifactSha256);
+    report.humanActualFees = Object.fromEntries(Object.entries(humanActualFees).map(([role, amount]) => [role, String(amount)]));
     report.passed = true; report.realProofAcceptance = realProofs ? 'local protocol probe only; product acceptance outstanding' : 'missing';
     report.remainingActualChainCases = ['zero normal/late refunds', 'waiting cancellation and unreserved expiry', 'global receipt replay', 'all operator and only-self forgeries', 'claim tampering/replay'];
     report.withdrawals = withdrawals.map(record => ({...record, expectedLeaf: record.expectedLeaf.toString(), recipient: record.recipient.toString(), nonce: record.nonce.toString()}));

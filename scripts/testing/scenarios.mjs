@@ -3,6 +3,7 @@ const run = name => async ctx => (await import('./scenario-flows.mjs'))[name](ct
 
 // Explicit named scenarios. Unknown names fail; there are no compatibility aliases.
 const records = [
+  ...['Normal', 'Uncertain'].map(kind => Object.freeze({name:'private-bok-private-' + kind.toLowerCase(),deadlineMs:540000,evidenceTask:'G14',description:'Private fee funded Bok ' + kind.toLowerCase() + ' local accounting',fixture:'included-board',authors:1,applicationThreads:1,browser:'none',run:run('privateBokPrivate' + kind)})),
   Object.freeze({name:'private-bok',deadlineMs:540000,evidenceTask:'G14',description:'Private Bok escrow with real local portal accounting and controlled settlement',fixture:'included-board',authors:3,applicationThreads:1,browser:'none',run:run('privateBok')}),
   Object.freeze({name:'private-bok-normal',deadlineMs:540000,evidenceTask:'G14',description:'Private Bok normal charge/refund and real local token redemption',fixture:'included-board',authors:3,applicationThreads:1,browser:'none',run:run('privateBokNormal')}),
   Object.freeze({name:'private-bok-uncertain',deadlineMs:540000,evidenceTask:'G14',description:'Private Bok expiry fencing, late charge/refund and real local token redemption',fixture:'included-board',authors:3,applicationThreads:1,browser:'none',run:run('privateBokUncertain')}),
