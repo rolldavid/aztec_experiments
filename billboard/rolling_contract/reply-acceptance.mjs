@@ -1,6 +1,13 @@
 // Pure assertions over public, canonical SDK observations. Unit fixtures are not
 // chain/proof/provider evidence; journey.mjs supplies the actual authenticated logs.
 import assert from 'node:assert/strict';
+import {matchesContractRejection} from '../../experiments/private-bok/rejection.mjs';
+
+export function matchesReplyRejection(error, {board, bok}, label) {
+  if (label === 'replay') return matchesContractRejection(error, board, 'Already replied');
+  if (label === 'wrong-operator') return matchesContractRejection(error, bok, 'Only operator');
+  return false;
+}
 
 export function assertReplyAcceptance(observed, expected) {
   assert.equal(observed.exists, true);

@@ -31,7 +31,7 @@ import {nameRegistration, NAME_DOMAIN} from '../../shared/rolling/name-policy.mj
 import {invocationPreimage, invocationHash} from '../../shared/rolling/invocation.mjs';
 import {createRollingNoteMembership} from '../../scripts/testing/rolling-note-membership.mjs';
 import {assertMinedCallbackRollback} from './callback-rollback.mjs';
-import {assertReplyAcceptance, assertReplyAccounting} from './reply-acceptance.mjs';
+import {assertReplyAcceptance, assertReplyAccounting, matchesReplyRejection} from './reply-acceptance.mjs';
 
 const n = value => typeof value === 'bigint' ? value : typeof value === 'number' ? BigInt(value)
   : value.toBigInt?.() ?? value.toField().toBigInt();
@@ -78,7 +78,7 @@ export async function runRollingBokJourney({node, wallet, owner, operator, board
     return fs.writeFile(path.join(outputDirectory, 'journey.json'), json(report), {mode: 0o600});
   };
   const stage = async label => { report.stage = label; await mark('rolling-bok:' + label); await save(); };
-  const sourcePaths = [...new Set(['billboard/rolling_contract/journey.mjs', 'billboard/rolling_contract/reply-acceptance.mjs', 'billboard/rolling_contract/callback-rollback.mjs',
+  const sourcePaths = [...new Set(['billboard/rolling_contract/journey.mjs', 'billboard/rolling_contract/reply-acceptance.mjs', 'experiments/private-bok/rejection.mjs', 'billboard/rolling_contract/callback-rollback.mjs',
     'billboard/rolling_contract/src/main.nr', 'billboard/rolling_contract/src/posting.nr', 'billboard/rolling_contract/src/admission.nr',
     'billboard/rolling_contract/src/encoding.nr', 'experiments/private-bok/escrow/src/main.nr',
     'scripts/testing/private-bok-fees.mjs', 'scripts/w01-private-fee-flow.mjs', 'scripts/prove-application-action.mjs',
@@ -416,7 +416,7 @@ export async function runRollingBokJourney({node, wallet, owner, operator, board
     report.reply.content = replyContent; await save();
     assertReplyAcceptance(report.reply.observed, report.reply.expected);
     // SDK simulation only: no extra send, proof/finality owner or paid provider call.
-    for (const [label, actor, expected] of [['replay', operator, 'Already replied'], ['wrong-operator', owner, 'Only operator']]) {
+    for (const [label, actor] of [['replay', operator], ['wrong-operator', owner]]) {
       await stage('bok-negative-' + label);
       const observation = {method: 'SDK simulation', submitted: false, rejected: false, expectedReasonMatched: false};
       report.reply[label] = observation; await save();
@@ -429,8 +429,7 @@ export async function runRollingBokJourney({node, wallet, owner, operator, board
         observation.rejected = Boolean(rejection) && !simulation.publicOutput?.txEffect?.revertCode?.isOK();
       } catch (error) { observation.rejected = true; rejection = error; }
       // Inspect in memory only; raw SDK errors can contain private data.
-      const message = rejection?.getOriginalMessage?.() ?? rejection?.message;
-      observation.expectedReasonMatched = typeof message === 'string' && message.includes(expected);
+      observation.expectedReasonMatched = matchesReplyRejection(rejection, {board, bok}, label);
       await save(); assert(observation.rejected && observation.expectedReasonMatched, 'Expected reply rejection not established');
     }
     await send('bok-finish', bok.methods.finish(requestId), operator);
