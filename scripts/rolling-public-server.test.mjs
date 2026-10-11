@@ -1,7 +1,7 @@
 // Labelled HTTP-boundary doubles; ephemeral loopback HTTP only, no chain/wallet.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {startRollingPublicServer} from './rolling-public-server.mjs';
+import {startRollingPublicServer,createRollingPublicIndexFromConfig} from './rolling-public-server.mjs';
 async function fixture(t){const state={ready:true,calls:[],syncs:0,active:0,peak:0};
  const index={status:()=>({schemaVersion:1,state:state.ready?'ready':'authenticating',complete:state.ready}),
   sync:async()=>{state.syncs++;state.active++;state.peak=Math.max(state.peak,state.active);await new Promise(r=>setTimeout(r,3));state.active--;},
@@ -36,4 +36,44 @@ test('JSON content cannot execute, missing CORS and fixed error bodies omit upst
 test('sync has one owner, close joins current update, no externally bound host',async t=>{
  const f=await fixture(t);await new Promise(r=>setTimeout(r,220));assert.ok(f.state.syncs>=2);assert.equal(f.state.peak,1);
  await assert.rejects(startRollingPublicServer({index:f.index,host:'0.0.0.0'}));
+});
+
+for(const succeeds of [true,false])test(`data HTTP joins one delayed ${succeeds?'successful':'failed'} canonical sync; status stays immediate`,async t=>{
+ let release,started,queries=0,syncs=0,state='syncing';
+ const begun=new Promise(resolve=>{started=resolve;}),gate=new Promise(resolve=>{release=resolve;});
+ const index={status:()=>({schemaVersion:1,state}),sync:async()=>{syncs++;started();await gate;
+   state=succeeds?'ready':'unavailable';if(!succeeds)throw Error('PRIVATE_SENTINEL');},
+   query:()=>{queries++;return {schemaVersion:1,posts:[]};}};
+ const server=await startRollingPublicServer({index,pollMs:30000});t.after(()=>server.close());await begun;
+ let completed=false;const request=fetch(server.url+'/api/feed').then(response=>{completed=true;return response;});
+ const status=await fetch(server.url+'/api/status');assert.equal(status.status,200);assert.equal((await status.json()).state,'syncing');
+ await new Promise(resolve=>setTimeout(resolve,30));assert.equal(completed,false);assert.equal(queries,0);assert.equal(syncs,1);
+ release();const response=await request;assert.equal(response.status,succeeds?200:503);
+ assert.equal(queries,succeeds?1:0);assert.equal(syncs,1);assert.ok(!(await response.text()).includes('PRIVATE_SENTINEL'));
+});
+test('shared config factory rejects invalid port/extras/private URL before artifact or storage I/O',async()=>{
+ const config={nodeUrl:'http://127.0.0.1:1',get artifactPath(){throw Error('UNEXPECTED_ARTIFACT_ACCESS');},scope:{},deployment:{},
+  get cacheDirectory(){throw Error('UNEXPECTED_STORAGE_ACCESS');},port:0};
+ for(const port of [-1,65536,1.5,'0',null]){
+  const candidate=Object.defineProperties({},Object.getOwnPropertyDescriptors(config));candidate.port=port;
+  await assert.rejects(createRollingPublicIndexFromConfig(candidate),{message:'Invalid public index configuration'});
+ }
+ for(const nodeUrl of ['https://user:secret@example.com','https://example.com/?secret=x','https://example.com/#key','http://example.com']){
+  const candidate=Object.defineProperties({},Object.getOwnPropertyDescriptors(config));candidate.nodeUrl=nodeUrl;
+  await assert.rejects(createRollingPublicIndexFromConfig(candidate),{message:'Invalid public index configuration'});
+ }
+ const extra=Object.defineProperties({},Object.getOwnPropertyDescriptors(config));extra.wallet={};
+ await assert.rejects(createRollingPublicIndexFromConfig(extra),{message:'Invalid public index configuration'});
+});
+test('shared factory constructs real decoder and bounded storage without starting public RPC or listener',async t=>{
+ const [{readFile,mkdtemp,rm},{tmpdir},{join},{loadContractArtifact},{getContractClassFromArtifact}]=await Promise.all([
+  import('node:fs/promises'),import('node:os'),import('node:path'),import('@aztec-labs/stdlib/abi'),import('@aztec-labs/stdlib/contract')]);
+ const artifactPath=process.env.ROLLING_TEST_ARTIFACT??new URL('../billboard/target/rolling_contract-RollingBoard.json',import.meta.url);
+ const artifact=loadContractArtifact(JSON.parse(await readFile(artifactPath,'utf8'))),classId=(await getContractClassFromArtifact(artifact)).id.toString();
+ const cacheDirectory=await mkdtemp(join(tmpdir(),'rolling-server-config-'));t.after(()=>rm(cacheDirectory,{recursive:true,force:true}));
+ const hex=n=>'0x'+BigInt(n).toString(16).padStart(64,'0');
+ const {index,port}=await createRollingPublicIndexFromConfig({nodeUrl:'http://127.0.0.1:1',artifactPath,cacheDirectory,port:0,
+  scope:{chainId:'31337',rollupVersion:'1',rollupAddress:'0x'+'11'.repeat(20),boardAddress:hex(42),classId},
+  deployment:{blockNumber:1,blockHash:hex(1),txHash:hex(2)}});
+ assert.equal(port,0);assert.equal(index.status().state,'authenticating');assert.throws(()=>index.query('feed'),{code:'ROLLING_PUBLIC_NOT_READY'});
 });

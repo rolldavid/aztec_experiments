@@ -33,6 +33,8 @@ export async function startRollingPublicServer({index,host='127.0.0.1',port=0,st
       if(params.query!==undefined&&(params.query.length>120||params.query.includes('\0')))return reply(400,{schemaVersion:1,error:'invalid-request'});
       const idKey={thread:'root',profile:'nameId',post:'id'}[view];if(idKey&&!field(params[idKey]))return reply(400,{schemaVersion:1,error:'invalid-request'});
       if(view==='status')return reply(200,index.status());
+      // Join the current canonical read only; never start a request-owned sync.
+      await active;
       if(index.status().state!=='ready')return reply(503,{schemaVersion:1,error:'not-ready'});
       try{return reply(200,index.query(view,params));}
       catch(error){return reply(error?.code==='ROLLING_PUBLIC_CURSOR_STALE'?409:400,{schemaVersion:1,error:error?.code==='ROLLING_PUBLIC_CURSOR_STALE'?'cursor-stale':'invalid-request'});}
@@ -44,18 +46,17 @@ export async function startRollingPublicServer({index,host='127.0.0.1',port=0,st
     await new Promise((resolve,reject)=>server.close(error=>error?reject(error):resolve()));}};
 }
 
-// API-only CLI. Private configuration, credentials and arbitrary RPC forwarding
-// are deliberately absent. Compose assets with the exported function in the lead's
-// renderer server. Operator-provided paths never come from an HTTP request.
-if(process.argv[1]&&import.meta.url===pathToFileURL(process.argv[1]).href){
-  try{
-    const {readFile}=await import('node:fs/promises');
-    const config=JSON.parse(await readFile(process.argv[2],'utf8'));
+/** Public operator configuration shared by the API-only CLI and same-origin
+ * renderer. No listener or polling starts here. The exact six-key configuration
+ * retains the bounded public RPC and storage setup; no private SDK is exposed.
+ */
+export async function createRollingPublicIndexFromConfig(config){
     const keys=['nodeUrl','artifactPath','scope','deployment','cacheDirectory','port'];
-    if(!config||Object.keys(config).sort().join()!==keys.sort().join())throw Error();
-    const url=new URL(config.nodeUrl);if(url.username||url.password||url.hash||url.search||!(url.protocol==='https:'||url.protocol==='http:'&&['127.0.0.1','localhost','[::1]'].includes(url.hostname)))throw Error();
-    const [{createRollingPublicIndex},{publicFeedFileStorage},{loadContractArtifact},{createAztecNodeClient},{jsonStringify}]=await Promise.all([
-      import('../shared/rolling/public-index.mjs'),import('../shared/public-feed-file-storage.mjs'),import('@aztec-labs/stdlib/abi'),
+    if(!config||typeof config!=='object'||Array.isArray(config)||Object.keys(config).sort().join()!==keys.sort().join()||
+      !Number.isInteger(config.port)||config.port<0||config.port>65535)throw Error('Invalid public index configuration');
+    const url=new URL(config.nodeUrl);if(url.username||url.password||url.hash||url.search||!(url.protocol==='https:'||url.protocol==='http:'&&['127.0.0.1','localhost','[::1]'].includes(url.hostname)))throw Error('Invalid public index configuration');
+    const [{readFile},{createRollingPublicIndex},{publicFeedFileStorage},{loadContractArtifact},{createAztecNodeClient},{jsonStringify}]=await Promise.all([
+      import('node:fs/promises'),import('../shared/rolling/public-index.mjs'),import('../shared/public-feed-file-storage.mjs'),import('@aztec-labs/stdlib/abi'),
       import('../shared/aztec-node-client.mjs'),import('@aztec-labs/foundation/json-rpc')]);
     const node=createAztecNodeClient(url.href,{maxBatchSize:1,fetch:async(host,body)=>{
       const response=await fetch(host,{method:'POST',headers:{'content-type':'application/json'},body:jsonStringify(body),redirect:'error',signal:AbortSignal.timeout(20000)});
@@ -66,7 +67,17 @@ if(process.argv[1]&&import.meta.url===pathToFileURL(process.argv[1]).href){
     const artifact=loadContractArtifact(JSON.parse(await readFile(config.artifactPath,'utf8')));
     const index=await createRollingPublicIndex({node,artifact,scope:config.scope,deployment:config.deployment,
       storage:publicFeedFileStorage(config.cacheDirectory,{maxRecordBytes:1048576,maxSnapshotBytes:67108864})});
-    const server=await startRollingPublicServer({index,port:config.port});process.stdout.write(JSON.stringify({publicFeedUrl:server.url})+'\n');
+    return {index,port:config.port};
+}
+
+// API-only CLI. Operator paths never come from HTTP. The renderer composes its
+// exact asset allowlist with the same exported factory and server functions.
+if(process.argv[1]&&import.meta.url===pathToFileURL(process.argv[1]).href){
+  try{
+    const {readFile}=await import('node:fs/promises');
+    const config=JSON.parse(await readFile(process.argv[2],'utf8'));
+    const {index,port}=await createRollingPublicIndexFromConfig(config);
+    const server=await startRollingPublicServer({index,port});process.stdout.write(JSON.stringify({publicFeedUrl:server.url})+'\n');
     for(const signal of ['SIGINT','SIGTERM'])process.once(signal,()=>{server.close().then(()=>process.exit(0),()=>process.exit(1));});
   }catch{process.stderr.write('Rolling public server could not start.\n');process.exitCode=1;}
 }
