@@ -75,3 +75,40 @@ links; arbitrary HTML remains text. No author edit/hide controls exist. Authenti
 bot appearance is fixture-labelled; the preview does not assert cryptographic
 verification. Future adapters must provide real authenticated state and explicit
 pending/failure statuses; they must not convert fixture success into real success.
+
+## Connected public reader (development)
+
+`live.html` and `reader.mjs` are the public chain reader. Start its single-origin
+server with the pinned Node runtime and a local public deployment configuration:
+
+```sh
+.build/A02-node/node-v24.21.0-darwin-arm64/bin/node apps/rolling/start.mjs /absolute/path/rolling-public.json
+```
+
+The configuration has exactly six keys: `nodeUrl`, `artifactPath`, `scope`,
+`deployment`, `cacheDirectory`, and `port`. Use an HTTPS public Aztec RPC or a
+loopback development RPC; URLs with credentials, queries or fragments are refused.
+`artifactPath` points to the normally built RollingBoard artifact.
+`scope` contains decimal strings `chainId`, `rollupVersion`, and the canonical
+`rollupAddress`, `boardAddress`, `classId`. `deployment` contains the actual
+`blockNumber` (integer), `blockHash`, and `txHash` of board deployment. These must
+come from the deployment receipt, not invented defaults. `cacheDirectory` is a
+separate mutable local directory per deployment; `port: 0` selects an available
+loopback port and prints the URL. No credentials or wallet keys belong here.
+
+The server authenticates cached events again against canonical public blocks
+before displaying them. An unavailable or incomplete index shows an explicit
+unavailable state. It serves only the fixed reader assets and public GET API;
+no wallet, private query, configuration, or repository-file route is exposed.
+Stop with Ctrl-C; the server joins the bounded active sync before closing. To
+rebuild a cache, stop first and remove only that deployment's cache directory.
+
+This interface currently supports public conversations, linked replies, profiles,
+subboard discovery and pagination. Wallet actions are not yet connected. The
+separate `index.html` preview still uses labelled fixtures. Synthetic browser
+checks qualify rendering and navigation only; full chain, wallet, privacy and
+production acceptance remain separate requirements.
+
+```sh
+.build/A02-node/node-v24.21.0-darwin-arm64/bin/node --test apps/rolling/start.test.mjs apps/rolling/reader-client.test.mjs apps/rolling/reader.browser.test.mjs
+```

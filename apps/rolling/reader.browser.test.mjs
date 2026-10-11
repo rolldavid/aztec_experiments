@@ -41,7 +41,7 @@ test('public reader: navigation, unsafe content, failure recovery and narrow key
  assert.equal(await page.locator('.workspace').evaluate(node=>node.inert),true);await page.keyboard.press('Escape');assert.equal(await page.locator('.workspace').evaluate(node=>node.inert),false);
  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
  unavailable=true;await page.evaluate(()=>location.hash='/home');await page.getByRole('heading',{name:'Conversations are being checked'}).waitFor();
- unavailable=false;await page.getByRole('button',{name:'Try again',exact:true}).click();await page.getByRole('article').waitFor();
+ unavailable=false;await page.getByRole('button',{name:'Try again',exact:true}).click();await page.locator('#post-20').waitFor();assert.equal(await page.getByRole('article').count(),2);
  await page.keyboard.press('Tab');await page.locator('.skip').focus();await page.keyboard.press('Enter');assert.equal(await page.evaluate(()=>document.activeElement.id),'content');
  if(process.env.ROLLING_READER_SCREENSHOT){await page.screenshot({path:process.env.ROLLING_READER_SCREENSHOT,fullPage:true});}
  assert.deepEqual(errors,[]);assert(requests.every(url=>url.startsWith(`http://127.0.0.1:${server.address().port}/`)));assert(requests.every(url=>!url.includes('aztec_bundle')&&!url.includes('/wallet')));
