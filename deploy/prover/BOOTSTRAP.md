@@ -94,7 +94,10 @@ bootnodes, snapshot URLs and read-only blob/transaction stores. It never fetches
 mutable network defaults at boot. The node receives this via NETWORK_CONFIG_LOCATION.
 Trace and blob-source bypasses remain false and proofs remain real.
 
-RPC is mapped only at127.0.0.1:8082; admin8880 is not mapped. Only40400TCP/UDP is
+RPC is mapped only at127.0.0.1:8082. Admin8880 is mapped only at127.0.0.1:8882
+for trusted host qualification pauseSync/resumeSync calls; its exact URL is
+`http://127.0.0.1:8882/`. It remains inaccessible externally. The prover user
+receives no Docker access. Only40400TCP/UDP is
 published for P2P. Security groups must preserve private CloudFront routing and
 must not expose node RPC, admin, Docker or SSH. IMDSv2 is used only to read the
 host's public IPv4, not credentials. Require IMDSv2/hop limit1 in the launch template.

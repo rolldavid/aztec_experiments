@@ -129,6 +129,23 @@ class Bootstrap(unittest.TestCase):
             self.assertIn(['systemctl','start','rolling-budget.service'],events)
             self.assertEqual((pathlib.Path(t)/'stage').read_text(),'failed')
 
+    def test_actual_node_unit_maps_admin_and_rpc_to_loopback_only(self):
+        ns=host();writes={};calls=[]
+        ns['prepare_data']=lambda:None;ns['verify_controls']=lambda:0
+        ns['write']=lambda p,s,*_:writes.update({str(p):s})
+        ns['public_ip']=lambda:'203.0.113.10'
+        ns['run']=lambda args,**kw:calls.append(args)
+        with patch.object(ns['shutil'],'which',return_value='/usr/bin/docker'):
+            ns['install_node']()
+        unit=writes['/etc/systemd/system/rolling-node.service']
+        command=next(line for line in unit.splitlines() if line.startswith('ExecStart='))
+        import shlex
+        args=shlex.split(command.removeprefix('ExecStart='))
+        mappings=[args[i+1] for i,arg in enumerate(args) if arg=='-p']
+        self.assertEqual(mappings,['127.0.0.1:8082:8080','127.0.0.1:8882:8880','40400:40400/tcp','40400:40400/udp'])
+        self.assertNotIn('/var/run/docker.sock',command)
+        self.assertNotIn('--privileged',args)
+
     def test_controls_failure_never_downloads_and_requests_shutdown(self):
         ns=host();events=[]
         with tempfile.TemporaryDirectory() as t:

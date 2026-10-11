@@ -217,7 +217,7 @@ def install_node():
     run(['docker','pull','--platform','linux/amd64',PINS['image']],timeout=600)
     ip=public_ip()
     args=['/usr/bin/docker','run','--rm','--name','rolling-node','--platform','linux/amd64','--memory','24g','--memory-swap','24g','--pids-limit','512','--cap-drop','ALL','--security-opt','no-new-privileges',
-          '-p','127.0.0.1:8082:8080','-p','40400:40400/tcp','-p','40400:40400/udp',
+          '-p','127.0.0.1:8082:8080','-p','127.0.0.1:8882:8880','-p','40400:40400/tcp','-p','40400:40400/udp',
           '-v','/var/lib/rolling-node/data:/var/lib/data','-v','/etc/rolling-node/network.json:/etc/aztec/network.json:ro',
           '-e','DATA_DIRECTORY=/var/lib/data','-e','NETWORK_CONFIG_LOCATION=/etc/aztec/network.json',
           '-e','ETHEREUM_HOSTS=https://ethereum-sepolia-rpc.publicnode.com','-e','ETHEREUM_DEBUG_HOSTS=https://ethereum-sepolia-rpc.publicnode.com',
