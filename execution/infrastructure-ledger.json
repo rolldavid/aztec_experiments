@@ -2,7 +2,7 @@
   "schema_version": 1,
   "budget_usd": 300,
   "scope": "Cumulative prover campaign plus at most one additional rolling.chat server; existing moderator costs remain separate.",
-  "as_of": "2026-10-11T20:50:33.030218+00:00",
+  "as_of": "2026-10-11T21:08:46.973586+00:00",
   "billing_evidence": "evidence/G02/aws-costs.json",
   "historical_campaign_bound_usd": 83.27,
   "historical_bound_method": "Retain the full earlier conservative bound including unused planned compute through13Oct, rather than subtracting unverified savings. Includes49.47 prior allowance,28.80 revival maximum and5 ancillary.",
@@ -162,7 +162,7 @@
     {
       "id": "rolling-node-commissioning-20261011-04",
       "purpose": "Diagnose prior unknown Linux node readiness through reviewed safe final receipt; historical5235 runtime only",
-      "state": "running; cloud termination and encrypted volume deletion verified; host controls pending console",
+      "state": "installed; host/cloudshutdown controls verified; real node readiness/query qualification pending",
       "reservation_usd": 105,
       "reservation_includes": {
         "compute": 7.89,
@@ -200,16 +200,37 @@
       "launch_time": "2026-10-11T20:48:36Z",
       "cloud_termination_verified": true,
       "delete_on_termination_verified": true,
-      "instance_shutdown_terminate_verified": true
+      "instance_shutdown_terminate_verified": true,
+      "host_termination_verified": true,
+      "host_controls_verified_at": "2026-10-11T20:52:03Z",
+      "qualification_status": "Not yet qualified; exact final receipt404, no console final marker. Readinessdeadline22:12:35 not elapsed.",
+      "qualification_readiness_deadline": "2026-10-11T22:12:35Z",
+      "qualification_deadline": "2026-10-11T22:27:35Z",
+      "evidence_reference": "evidence/G02/rolling-node-04-launch-controls.json",
+      "last_observed_at": "2026-10-11T21:33:50Z",
+      "latest_live_state": "running",
+      "latest_safe_observation": {
+        "marker": "ROLLING_BOOTSTRAP",
+        "schemaVersion": 1,
+        "stage": "installed",
+        "controlsVerified": true,
+        "budgetStop": "2026-10-12T04:42:35Z",
+        "egressBytes": 3532997,
+        "runtimeArchiveSha256": "7cc015042e19de67cf442c35aef401faed0604f5a924d94165798b9ed2a71dfc",
+        "manifestSha256": "7ec9ba5d35cefcf998ac002ed4bed247b36c777f3595dd50c75ff6e87952e9ed",
+        "proverPolicy": "masked-pending-qualification",
+        "linuxQueryQualified": false
+      },
+      "latest_observation_evidence": "evidence/G02/rolling-node-04-readonly-215445.json"
     }
   ],
-  "launch_hold": "04 reviewed source3ce, exactv2payload15961 and206 preflight satisfied. One scoped delegated launch after final fleet/resource reconciliation; abort if commissioning deadline too near. No routing changes.",
+  "launch_hold": "04 launched exactly once; no further launch authorized by missing receipt. Current node query qualification pending; no public proof route.",
   "node_requirement_sources": [
     "https://docs.aztec.network/operate/testnet/operators/full-node/overview",
     "https://docs.aztec.network/operate/testnet/operators/setup/running_a_node"
   ],
   "node_requirements": "Fullnode documented8cores/16vCPU,8GB or16GB RAM,1TBstorage25Mbps; existingproverMemoryMax24G makes32GiB insufficient for cohostOSheadroom. Proposedm7a.4xlarge16physicalcores64GiB, nodebounded separately. Actualsync/load unverified.",
-  "latest_live_check": "evidence/G14/live-prerequisites-1800.json",
+  "latest_live_check": "evidence/G02/rolling-node-04-observation-current.json",
   "recovery_proposal": {
     "checked_by": "design-20261011",
     "checked_at": "2026-10-11T15:00:00Z",

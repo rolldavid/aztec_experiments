@@ -13,8 +13,19 @@
       "branch": "codex/rolling-chat-draft3",
       "history_locator": "Codex runtime thread 01a12a75-1b50-7871-a73b-4253a1010194",
       "role": "lead",
-      "state": "running integration and actualcampaign setup",
-      "working_branch": "codex/rolling-private-bok-candidate"
+      "state": "gated43f9 integrated; profileproofcampaignimplementation after reviewedbuild151TXE",
+      "working_branch": "codex/rolling-private-bok-candidate",
+      "active_edit_paths": [
+        "scripts/testing/rolling-profile-acceptance.mjs",
+        "scripts/testing/rolling-profile-acceptance.test.mjs",
+        "scripts/testing/rolling-application-fixture.mjs",
+        "scripts/testing/rolling-public-acceptance.mjs",
+        "scripts/testing/scenarios.mjs",
+        "scripts/testing/scenario-flows.mjs",
+        "prover/application-policy.mjs",
+        "prover/application-policy.test.mjs",
+        "prover/rolling-artifacts.json"
+      ]
     },
     {
       "logical_id": "recovery-probe-20261011",
@@ -33,19 +44,19 @@
       "runtime_id": "/root/controls",
       "parent_id": "lead-20261011",
       "task": [
-        "G14"
+        "G05"
       ],
-      "branch": "codex/rolling-node-receipts",
+      "branch": "codex/rolling-profile-limit-raster",
       "history_locator": "collaboration runtime /root/controls, parent 01a12a75-1b50-7871-a73b-4253a1010194",
       "role": "implementation worker",
-      "state": "trustedoperator04 one scoped launch+shutdown verification; no sourcewriterclaim",
+      "state": "completedf6a approvedexactlimitfixture; writerreleased",
       "worktree": "../rolling-controls",
       "allowed_paths": [],
       "commit_trailer_aliases": {
         "Agent-Session": "controls",
         "Parent-Session": "lead"
       },
-      "base": "582652fb9bb04e84e9e162026e0355bd20c9c829"
+      "base": "05ccd65803ef9860c54ad075e36416faf5bf3ce9"
     },
     {
       "logical_id": "reviewer-20261011",
@@ -58,26 +69,25 @@
       "branch": "read-only candidate refs",
       "history_locator": "collaboration runtime /root/reviewer, parent 01a12a75-1b50-7871-a73b-4253a1010194",
       "role": "independent reviewer",
-      "state": "independent read-only attempt4 diagnosis"
+      "state": "reviewing1c320be profilecampaign and independent profile/editor browser; exclusiveheavy slot"
     },
     {
       "logical_id": "design-20261011",
       "runtime_id": "/root/design",
       "parent_id": "lead-20261011",
       "task": [
-        "G05",
-        "G14"
+        "G05"
       ],
-      "branch": "codex/rolling-funding-receipts",
+      "branch": "codex/rolling-profile-editor",
       "history_locator": "collaboration runtime /root/design, parent01a12a75-1b50-7871-a73b-4253a1010194",
       "role": "implementation worker",
-      "state": "claimed bounded canonical funding receipts",
+      "state": "fa0 sourceapproved and17workerbrowserpass; independent browser review running",
       "worktree": "../rolling-design",
       "allowed_paths": [
-        "shared/rolling/funding-receipts.mjs",
-        "shared/rolling/funding-receipts.test.mjs"
+        "apps/rolling/wallet-panel.mjs",
+        "apps/rolling/wallet-panel.browser.test.mjs"
       ],
-      "base": "3ce246dfbd02579f64884ad79246154136d309dc"
+      "base": "90a1b3e"
     }
   ],
   "integrations": [
@@ -139,6 +149,17 @@
       "evidence": "evidence/G14/integration-3c802-evidence.json",
       "gate_result": "evidence/G14/integration-3c802-result.json",
       "limits": "Fullproduct/privacy/Linux/releaseopen; no push"
+    },
+    {
+      "task": "G05/G06/G14 bounded wallet application and canonical reader",
+      "candidate": "43f9e424e0f1c69962ad55b7c97edd1513c7baf0",
+      "base": "3c802500ba787c49baa79f205e1aee6f34e2175d",
+      "integrator_session": "lead-20261011",
+      "reviewer": "reviewer-20261011",
+      "policy_sha256": "6e6c20b9eb45fd2b59a84a44dfded767e7fd149921d85badb69723c94882f020",
+      "evidence": "evidence/G05/integration-43f9-evidence.json",
+      "gate_result": "evidence/G05/integration-43f9-result.json",
+      "limits": "Full product/profile/browser/privacy/remote qualification/release open"
     }
   ],
   "candidate_transfers": [
@@ -253,6 +274,47 @@
       "candidate_revision": "3ce246d",
       "review": "evidence/G14/bootstrap-receipt-e51-review.json",
       "status": "36independentPythonchecks; actualLinuxreceiptpending"
+    },
+    {
+      "task": "G05/G14",
+      "worker": "design-20261011",
+      "worker_revisions": [
+        "fce70cbeb23d7010eaf2fa59c65d3cf015752dcd",
+        "be936e1aeebb2db5ee8370ac1e9c87599df1b486"
+      ],
+      "candidate_revisions": [
+        "a108e56",
+        "8a1e585"
+      ],
+      "review": "evidence/G05/funding-receipts-be936-review.json",
+      "status": "approvedsource30rootchecks; actualclaimintegrationpending"
+    },
+    {
+      "task": "G05 profiles",
+      "worker_revisions": [
+        "b9e0ea518b5f9150a9a82ec8a60b16cb40b73325",
+        "e4fc06a8a037d9943d62aa7308760145be270207",
+        "f92e5a0aabc3cc692f47f43cf9ca0921259cd3d3",
+        "1bb94d11e3ea3c1efa30ebbb59535878e403fd54",
+        "d3cd85f9c5a31d5df5c2deef2bb243ffdbbbf8ba",
+        "51c60fb9d15213c73c0289956754a2ff5050ca75"
+      ],
+      "candidate_revisions": [
+        "b9c9bd5",
+        "a4f5e2e",
+        "e138017",
+        "f5bb869",
+        "c4a5dcf",
+        "739c998"
+      ],
+      "reviews": [
+        "evidence/G05/profile-b9e-review.json",
+        "evidence/G05/profile-projection-f92-review.json",
+        "evidence/G05/profile-application-1bb94d-review.json",
+        "evidence/G05/avatar-upload-d3cd-review.json",
+        "evidence/G05/avatar-moderation-51c-review.json"
+      ],
+      "status": "source approved; normal combined build and acceptance pending"
     }
   ]
 }
