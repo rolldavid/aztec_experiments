@@ -19,3 +19,16 @@ test('labelled acceptance mutations reject detector failure, missing ingress, un
  assert.equal(assertRollingWireCampaign(observation()).passed,true);
  for(const mutate of [s=>s.receiver.requests['ordinary-node']=0,s=>s.rows[0].roles=[],s=>s.rows[3].roles=['a'],s=>s.rows[4].roles=['b'],s=>s.rows[1].outcome='rejected',s=>s.rows[1].status=500,s=>s.pending=1,s=>s.unknown=1,s=>s.unsupported=1,s=>s.truncated=1,s=>s.observerErrors=1,s=>s.receiver.errors=1]){const s=observation();mutate(s);assert.throws(()=>assertRollingWireCampaign(s));}
 });
+
+test('labelled transport double: measured request volume fits and the explicit campaign bound still rejects overflow',async()=>{
+ const original=globalThis.fetch;globalThis.fetch=()=>Promise.resolve({status:200});
+ const trace=installRollingWireCampaign({roles});
+ try{
+  trace.registerEndpoint('public-reader','http://127.0.0.1:12345');
+  for(let i=0;i<14341;i++)await fetch('http://127.0.0.1:12345/api/status');
+  assert.equal(trace.snapshot().requests,14341);assert.equal(trace.snapshot().truncated,0);
+  for(let i=14341;i<30001;i++)await fetch('http://127.0.0.1:12345/api/status');
+  const observed=trace.snapshot();assert.equal(observed.requests,30001);assert.equal(observed.truncated,1);
+  assert.throws(()=>assertRollingWireCampaign(observed),/truncated/);
+ }finally{trace.close();globalThis.fetch=original;}
+});

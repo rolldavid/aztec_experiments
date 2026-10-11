@@ -6,7 +6,9 @@ import {createRollingWireTrace} from './rolling-wire-trace.mjs';
 const labels=['trusted-query','trusted-proof','trusted-upstream','ordinary-node','public-reader'];
 const channel='http.server.request.start';
 export function installRollingWireCampaign({roles}){
- const trace=createRollingWireTrace({roles}),original=globalThis.fetch,wrapped=trace.wrapFetch(original);
+ // The measured four-name campaign issued 14,341 requests. Keep a bounded
+ // 30,000-request inventory; overflow remains an acceptance failure.
+ const trace=createRollingWireTrace({roles,limits:{maxRequests:30000}}),original=globalThis.fetch,wrapped=trace.wrapFetch(original);
  const ports=new Map(),ingress=Object.fromEntries(labels.map(k=>[k,0]));let errors=0,closed=false;
  function receive({request,socket}){
   // The pinned Node24 diagnostic channel reports real server ingress before

@@ -22,6 +22,23 @@ export function assertCanonicalSocialViews(projection,rows){
 export function assertSocialHTTPView(actual,expected){
  assert.deepEqual(Object.fromEntries(Object.keys(expected).map(key=>[key,actual[key]])),expected);
 }
+// Projection revisions and public index epochs are different contracts. Preserve
+// every profile-content field while checking transport metadata independently.
+export function ownedNameHTTPExpectation(profile){
+ const {revision,...content}=profile;
+ assert(Number.isSafeInteger(revision)&&revision>=0);
+ return {...content,names:{},boards:{}};
+}
+export function assertRollingHTTPMetadata(actual,status){
+ assert.equal(status.state,'ready');assert.equal(status.complete,true);
+ assert.equal(actual.schemaVersion,1);assert.equal(actual.complete,true);
+ assert.deepEqual(actual.scope,status.scope);
+ assert.match(actual.revision,/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}:[0-9]+$/);
+ assert.equal(actual.revision,status.revision);
+ assert(Number.isSafeInteger(actual.checkpoint?.number)&&actual.checkpoint.number>=1);
+ assert.match(actual.checkpoint.hash,/^0x[0-9a-f]{64}$/);
+ assert.deepEqual(actual.checkpoint,status.checkpoint);
+}
 export function assertCanonicalOwnedNameProfiles(projection,profiles){
  assert(Array.isArray(profiles)&&profiles.length===4);
  const seen=new Set();for(const expected of profiles){
@@ -41,7 +58,7 @@ export async function verifyRollingPublicReader({node,artifact,scope,deployment,
  const deadline=Math.min(deadlineAt,Date.now()+30000);
  const storage=()=>publicFeedFileStorage(cacheDirectory,{maxRecordBytes:1048576,maxSnapshotBytes:67108864});
  const make=async timeoutMs=>wire?(await createRollingPublicIndexFromConfig({nodeUrl:wire.nodeUrl,artifactPath:wire.artifactPath,scope,deployment,cacheDirectory,port:0})).index:createRollingPublicIndex({node,artifact,scope,deployment,storage:storage(),rangeSize:10,pagesPerSync:20,timeoutMs});
- const routes=names?[...expectedProfiles.map(p=>['profile',{nameId:p.identity.id,limit:100},{...p,names:{},boards:{}}]),['feed',{}, {posts:[],nextCursor:null,names:{},boards:{}}],['directory',{}, {boards:[],nextCursor:null}]]:social?expectedHTTP.map(row=>[row.route,row.parameters,row.expected]):scenario==='profiles'?[['profile',{nameId:ids.nameId}],['feed',{}],['directory',{}]]:[['feed',{}],['thread',{root:ids.rootId}],['profile',{nameId:ids.nameId}],['directory',{}],['post',{id:ids.replyId}]];
+ const routes=names?[...expectedProfiles.map(p=>['profile',{nameId:p.identity.id,limit:100},ownedNameHTTPExpectation(p)]),['feed',{}, {posts:[],nextCursor:null,names:{},boards:{}}],['directory',{}, {boards:[],nextCursor:null}]]:social?expectedHTTP.map(row=>[row.route,row.parameters,row.expected]):scenario==='profiles'?[['profile',{nameId:ids.nameId}],['feed',{}],['directory',{}]]:[['feed',{}],['thread',{root:ids.rootId}],['profile',{nameId:ids.nameId}],['directory',{}],['post',{id:ids.replyId}]];
  let first,readerPort=0;
  observation.passed=false;observation.sessions=[];
  for(const phase of ['fresh','reopened']){
@@ -59,7 +76,7 @@ export async function verifyRollingPublicReader({node,artifact,scope,deployment,
    }
    const read=createPublicReader({timeoutMs:Math.max(1,deadline-Date.now()),fetch:(url,options)=>fetch(server.url+url,{...options,signal:AbortSignal.any([options.signal,AbortSignal.timeout(Math.max(1,deadline-Date.now()))])})});
    const views={};
-   for(const [i,[route,params,expected]]of routes.entries()){assert(Date.now()<deadline);const key=social||names?String(i):route;views[key]=await read(route,params);assert.deepEqual(views[key].scope,scope);
+   for(const [i,[route,params,expected]]of routes.entries()){assert(Date.now()<deadline);const key=social||names?String(i):route;const statusBefore=index.status();views[key]=await read(route,params);assert.deepEqual(index.status(),statusBefore,'Index changed during bounded acceptance read');assertRollingHTTPMetadata(views[key],statusBefore);assert.deepEqual(views[key].scope,scope);
     if(social||names)assertSocialHTTPView(views[key],expected);}
    if(scenario==='profiles'){assert.deepEqual(views.profile.identity,expectedProfile);assert.deepEqual(views.profile.posts,[]);assert.deepEqual(views.feed.posts,[]);assert.deepEqual(views.directory.boards,[]);}
    else if(!social&&!names){

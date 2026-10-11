@@ -177,3 +177,27 @@ test('labelled actual HTTP/reader: every public profile route redacts removed av
  const reopened=await f.create();await reopened.sync();await inspect(reopened,true);
  const replacement=await image(2,Buffer.from([9,0,7]));f.put(5,[await log('AvatarPublished',replacement)],100);await reopened.sync();await inspect(reopened,false);
 });
+
+test('labelled actual HTTP: owned-name content and index metadata use separate revision contracts',async t=>{
+ const {startRollingPublicServer}=await import('../../scripts/rolling-public-server.mjs');
+ const {createPublicReader}=await import('../../apps/rolling/reader-client.mjs');
+ const {ownedNameHTTPExpectation,assertSocialHTTPView,assertRollingHTTPMetadata}=await import('../../scripts/testing/rolling-public-acceptance.mjs');
+ const f=await fixture(t);f.setHead(1);const index=await f.create();await index.sync();
+ const server=await startRollingPublicServer({index,pollMs:30000});t.after(()=>server.close());
+ const read=createPublicReader({fetch:(url,options)=>fetch(server.url+url,options)});
+ const actual=await read('profile',{nameId:f.nameId,limit:100}),status=index.status();
+ const raw={revision:5,posts:[],nextCursor:null,identity:{id:f.nameId,first:'John',last:'Doe',profile:{
+  bio:{version:'0',digest:'0',length:'0',text:''},avatar:{version:'0',digest:'0',width:'0',height:'0',length:'0',encoding:'base64',data:'',removal:null}}}};
+ // Reproduce the old failure against the real server's epoch-prefixed envelope.
+ assert.throws(()=>assertSocialHTTPView(actual,{...raw,names:{},boards:{}}));
+ const expected=ownedNameHTTPExpectation(raw);assert.equal(raw.revision,5);assert(!Object.hasOwn(expected,'revision'));
+ assertSocialHTTPView(actual,expected);assertRollingHTTPMetadata(actual,status);
+ for(const mutate of [v=>v.identity.first='Wrong',v=>v.identity.profile.bio.text='changed',v=>v.posts.push({id:'unexpected'}),v=>v.nextCursor='unexpected',v=>v.names.extra={},v=>v.boards.extra={}]){
+  const changed=structuredClone(actual);mutate(changed);assert.throws(()=>assertSocialHTTPView(changed,expected));
+ }
+ for(const mutate of [v=>v.revision=5,v=>v.revision='bad',v=>v.revision=v.revision.replace(/:[0-9]+$/,':999'),v=>v.checkpoint.number++,v=>v.checkpoint.hash=hex(9),v=>v.checkpoint=null,v=>v.complete=false,v=>v.schemaVersion=2,v=>v.scope.chainId='1']){
+  const changed=structuredClone(actual);mutate(changed);assert.throws(()=>assertRollingHTTPMetadata(changed,status));
+ }
+ assert.throws(()=>assertRollingHTTPMetadata(actual,{...status,state:'syncing'}));
+ assert.throws(()=>ownedNameHTTPExpectation({...raw,revision:'5'}));
+});
