@@ -13,19 +13,31 @@
       "branch": "codex/rolling-chat-draft3",
       "history_locator": "Codex runtime thread 01a12a75-1b50-7871-a73b-4253a1010194",
       "role": "lead",
-      "state": "gated43f9 integrated; profileproofcampaignimplementation after reviewedbuild151TXE",
+      "state": "Profile f30 independently reviewed and gated; transferring reviewed social consumers and wiring for real acceptance",
       "working_branch": "codex/rolling-private-bok-candidate",
       "active_edit_paths": [
-        "scripts/testing/rolling-profile-acceptance.mjs",
-        "scripts/testing/rolling-profile-acceptance.test.mjs",
+        "execution/",
+        "scripts/testing/rolling-social-acceptance.mjs",
+        "scripts/testing/rolling-social-acceptance.test.mjs",
         "scripts/testing/rolling-application-fixture.mjs",
         "scripts/testing/rolling-public-acceptance.mjs",
         "scripts/testing/scenarios.mjs",
-        "scripts/testing/scenario-flows.mjs",
-        "prover/application-policy.mjs",
-        "prover/application-policy.test.mjs",
-        "prover/rolling-artifacts.json"
-      ]
+        "scripts/testing/scenario-flows.mjs"
+      ],
+      "additional_worktree": {
+        "path": "../rolling-lead-social",
+        "branch": "codex/rolling-social-wiring",
+        "base": "f30a8e3",
+        "runtime": "01a12a75-1b50-7871-a73b-4253a1010194",
+        "purpose": "Prepare next G06 candidate while current profile campaign source is frozen",
+        "allowed_paths": [
+          "scripts/testing/rolling-application-fixture.mjs",
+          "scripts/testing/rolling-public-acceptance.mjs",
+          "scripts/testing/scenarios.mjs",
+          "scripts/testing/scenario-flows.mjs"
+        ],
+        "no_concurrent_heavy_tests": true
+      }
     },
     {
       "logical_id": "recovery-probe-20261011",
@@ -44,19 +56,19 @@
       "runtime_id": "/root/controls",
       "parent_id": "lead-20261011",
       "task": [
-        "G05"
+        "G14"
       ],
-      "branch": "codex/rolling-profile-limit-raster",
+      "branch": "codex/rolling-fee-acquisition",
       "history_locator": "collaboration runtime /root/controls, parent 01a12a75-1b50-7871-a73b-4253a1010194",
       "role": "implementation worker",
-      "state": "completedf6a approvedexactlimitfixture; writerreleased",
+      "state": "Fee acquisition c11 independently approved; writer released. Read-only commissioning diagnostic preparation.",
       "worktree": "../rolling-controls",
       "allowed_paths": [],
       "commit_trailer_aliases": {
         "Agent-Session": "controls",
         "Parent-Session": "lead"
       },
-      "base": "05ccd65803ef9860c54ad075e36416faf5bf3ce9"
+      "base": "55e0772"
     },
     {
       "logical_id": "reviewer-20261011",
@@ -69,25 +81,25 @@
       "branch": "read-only candidate refs",
       "history_locator": "collaboration runtime /root/reviewer, parent 01a12a75-1b50-7871-a73b-4253a1010194",
       "role": "independent reviewer",
-      "state": "reviewing1c320be profilecampaign and independent profile/editor browser; exclusiveheavy slot"
+      "state": "Profile f30 actual acceptance approved; available for social combined source binding"
     },
     {
       "logical_id": "design-20261011",
       "runtime_id": "/root/design",
       "parent_id": "lead-20261011",
       "task": [
-        "G05"
+        "G06"
       ],
-      "branch": "codex/rolling-profile-editor",
+      "branch": "codex/rolling-account-reactions",
       "history_locator": "collaboration runtime /root/design, parent01a12a75-1b50-7871-a73b-4253a1010194",
       "role": "implementation worker",
-      "state": "fa0 sourceapproved and17workerbrowserpass; independent browser review running",
+      "state": "Remote startup source diagnosis complete. Claimed two-account reaction helper in isolated worktree.",
       "worktree": "../rolling-design",
       "allowed_paths": [
-        "apps/rolling/wallet-panel.mjs",
-        "apps/rolling/wallet-panel.browser.test.mjs"
+        "scripts/testing/rolling-account-reactions.mjs",
+        "scripts/testing/rolling-account-reactions.test.mjs"
       ],
-      "base": "90a1b3e"
+      "base": "f30a8e3"
     }
   ],
   "integrations": [
@@ -160,6 +172,17 @@
       "evidence": "evidence/G05/integration-43f9-evidence.json",
       "gate_result": "evidence/G05/integration-43f9-result.json",
       "limits": "Full product/profile/browser/privacy/remote qualification/release open"
+    },
+    {
+      "task": "G05/G06 bounded genuine profiles",
+      "candidate": "f30a8e3f44092d3452db836969b65861d40efb4b",
+      "base": "43f9e424e0f1c69962ad55b7c97edd1513c7baf0",
+      "integrator_session": "lead-20261011",
+      "reviewer": "reviewer-20261011",
+      "policy_sha256": "09e15342af3c211b340a0af14cafba6931b0a7b47c021f0d9a27ed1d6e1b7e7a",
+      "evidence": "evidence/G05/integration-f30-evidence.json",
+      "gate_result": "evidence/G05/integration-f30-result.json",
+      "limits": "Full product and release gates remain open."
     }
   ],
   "candidate_transfers": [
@@ -315,6 +338,34 @@
         "evidence/G05/avatar-moderation-51c-review.json"
       ],
       "status": "source approved; normal combined build and acceptance pending"
+    },
+    {
+      "task": "G05",
+      "worker": "design-20261011",
+      "worker_revisions": [
+        "9f70d7299753ea31799c17d8126dde0a6847a83b",
+        "fa0cef01a9798d9e61ec4fd5fe76964b21cb6a07"
+      ],
+      "candidate_revisions": [
+        "892b3e6",
+        "4bd642e"
+      ],
+      "review": "evidence/G05/profile-editor-fa0-browser-review.json",
+      "status": "17independenteditor browserchecks plus10publicreader/start checks; sourceapproved, realbrowserfunding remainsopen"
+    },
+    {
+      "task": "G05",
+      "worker": "controls-20261011",
+      "worker_revision": "f6a9f8fb07297859f0d353f722a38839cd5bd967",
+      "candidate_revision": "b5a71cd",
+      "review": "evidence/G05/exact-raster-f6a-review.json",
+      "status": "valid8192PNG fixture approved6independentchecks; actualpublicationpending"
+    },
+    {
+      "task": "G05",
+      "lead_revision": "55e07721498cd87c781c05ea9508794bdc8da79c",
+      "review": "evidence/G05/profile-campaign-55e0772-review.json",
+      "status": "26independentchecks andnormalwalletassetsverified; actualprofilecampaignrunning"
     }
   ]
 }

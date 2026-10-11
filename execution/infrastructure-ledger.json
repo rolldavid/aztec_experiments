@@ -2,7 +2,7 @@
   "schema_version": 1,
   "budget_usd": 300,
   "scope": "Cumulative prover campaign plus at most one additional rolling.chat server; existing moderator costs remain separate.",
-  "as_of": "2026-10-11T21:08:46.973586+00:00",
+  "as_of": "2026-10-11T22:17:17.645406+00:00",
   "billing_evidence": "evidence/G02/aws-costs.json",
   "historical_campaign_bound_usd": 83.27,
   "historical_bound_method": "Retain the full earlier conservative bound including unused planned compute through13Oct, rather than subtracting unverified savings. Includes49.47 prior allowance,28.80 revival maximum and5 ancillary.",
@@ -12,8 +12,8 @@
   "new_spend_description": "One Cost Explorer query; include in reconciliation.",
   "billing_delay_cleanup_reserve_usd": 20,
   "retained_storage_network_forecast_usd": 5,
-  "conservative_committed_and_reserved_usd": 225.28,
-  "remaining_before_new_launch_usd": 74.72,
+  "conservative_committed_and_reserved_usd": 130.28,
+  "remaining_before_new_launch_usd": 169.72,
   "resources": [
     {
       "id": "i-0025eb05db3c2491c",
@@ -162,8 +162,8 @@
     {
       "id": "rolling-node-commissioning-20261011-04",
       "purpose": "Diagnose prior unknown Linux node readiness through reviewed safe final receipt; historical5235 runtime only",
-      "state": "installed; host/cloudshutdown controls verified; real node readiness/query qualification pending",
-      "reservation_usd": 105,
+      "state": "terminated after authenticated readiness failure",
+      "reservation_usd": 10,
       "reservation_includes": {
         "compute": 7.89,
         "ebs": 3.85,
@@ -203,12 +203,12 @@
       "instance_shutdown_terminate_verified": true,
       "host_termination_verified": true,
       "host_controls_verified_at": "2026-10-11T20:52:03Z",
-      "qualification_status": "Not yet qualified; exact final receipt404, no console final marker. Readinessdeadline22:12:35 not elapsed.",
+      "qualification_status": "failed: node/container exited1, OOMfalse,314readinessattempts UNAVAILABLE",
       "qualification_readiness_deadline": "2026-10-11T22:12:35Z",
       "qualification_deadline": "2026-10-11T22:27:35Z",
       "evidence_reference": "evidence/G02/rolling-node-04-launch-controls.json",
-      "last_observed_at": "2026-10-11T21:33:50Z",
-      "latest_live_state": "running",
+      "last_observed_at": "2026-10-11T22:16:21Z",
+      "latest_live_state": "terminated",
       "latest_safe_observation": {
         "marker": "ROLLING_BOOTSTRAP",
         "schemaVersion": 1,
@@ -221,16 +221,38 @@
         "proverPolicy": "masked-pending-qualification",
         "linuxQueryQualified": false
       },
-      "latest_observation_evidence": "evidence/G02/rolling-node-04-readonly-215445.json"
+      "latest_observation_evidence": "evidence/G02/rolling-node-04-readonly-221621.json",
+      "termination_observed_at": "2026-10-11T22:16:21Z",
+      "remaining_volumes": [],
+      "termination_evidence": "evidence/G02/rolling-node-04-cleanup-result.json",
+      "accrual_bound": {
+        "hours": 1.6,
+        "compute_rate_usd_hour": 0.92736,
+        "compute_usd": 1.483776,
+        "ebs_gib": 1064,
+        "ebs_usd_bound": 0.2,
+        "public_ipv4_usd_bound": 0.01,
+        "shaped_egress_gb_bound": 36,
+        "network_usd_bound": 3.24,
+        "rounded_total_with_cleanup_buffer_usd": 10
+      },
+      "reservation_disposition": "Replace105 planned8hreservation with10 conservative terminated-hostbound only after EC2 termination and both EBS volumes absent. Global20 delayedbilling and5 retainedarchive reserves remain. No new server launch; independent startup diagnosis required.",
+      "final_receipt": {
+        "evidence": "evidence/G02/rolling-node-04-readonly-221236.json",
+        "sha256": "d0159859bf0025dd3d86f1f763cc024ec30083ee5840fe54cf77343172da367e",
+        "version": "xkHk2Laj0kL7XmUUap5d5Fs.zVPN4tP5",
+        "manifestBinding": true,
+        "bootstrapBinding": true
+      }
     }
   ],
-  "launch_hold": "04 launched exactly once; no further launch authorized by missing receipt. Current node query qualification pending; no public proof route.",
+  "launch_hold": "04 terminated after authenticated node startup failure; no launch until independently diagnosed and validated changed startup path plus reconciled forecast and shutdown controls.",
   "node_requirement_sources": [
     "https://docs.aztec.network/operate/testnet/operators/full-node/overview",
     "https://docs.aztec.network/operate/testnet/operators/setup/running_a_node"
   ],
   "node_requirements": "Fullnode documented8cores/16vCPU,8GB or16GB RAM,1TBstorage25Mbps; existingproverMemoryMax24G makes32GiB insufficient for cohostOSheadroom. Proposedm7a.4xlarge16physicalcores64GiB, nodebounded separately. Actualsync/load unverified.",
-  "latest_live_check": "evidence/G02/rolling-node-04-observation-current.json",
+  "latest_live_check": "evidence/G02/rolling-node-04-readonly-221621.json",
   "recovery_proposal": {
     "checked_by": "design-20261011",
     "checked_at": "2026-10-11T15:00:00Z",
@@ -270,7 +292,7 @@
   },
   "shutdown_prerequisite_evidence": "evidence/G02/fleet-shutdown-prerequisites.json",
   "fullnode_recovery_proposal": {
-    "status": "04reserved105 prior03terminated; forecast225.28/300 beforelaunch",
+    "status": "Historical105 full-run proposal;04terminated, current cumulativebound130.28. New forecast required before another paidlaunch.",
     "checked_by": "design-20261011",
     "checked_at": "2026-10-11T17:50:56.331671+00:00",
     "live_instances_volumes_fleets_us_east_1": {
@@ -342,5 +364,17 @@
     "spending_limit_usd": 300,
     "no_new_launch": true,
     "forecast_note": "Future105reservation would total225.28; requires exactreviewedbootstrap/preflight andindependentshutdowncontrols before paidaction."
+  },
+  "reconciliation_20261011_2216": {
+    "prior_bound_usd": 225.28,
+    "released_unused_reservation_usd": 95,
+    "current_bound_usd": 130.28,
+    "remaining_usd": 169.72,
+    "compute": "No live04 compute or volumes; priorresources retained historical dispositions",
+    "evidence": [
+      "evidence/G02/rolling-node-04-cleanup-result.json",
+      "evidence/G02/rolling-node-04-readonly-221621.json",
+      "evidence/G02/rolling-node-04-volumes-after-cleanup.json"
+    ]
   }
 }
