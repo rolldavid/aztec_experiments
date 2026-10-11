@@ -331,5 +331,28 @@ export async function privateBokProvider(ctx) {
 
 export async function trustedQueryPolicy(ctx) {
   const {runTrustedQueryFixture}=await import('./trusted-query-fixture.mjs');
-  return runTrustedQueryFixture(ctx);
+  const {setTimeout:wait}=await import('node:timers/promises');
+  const started=Date.now(),clock={sequencerPaused:false,elapsedMs:0};
+  try {
+    // The existing fixture owns the sequencer. Stop its ordinary L1 submissions
+    // after canonical inclusion, then let real wall time catch up with setup's
+    // accelerated validator epochs. Product clocks and freshness stay unchanged.
+    ctx.mark('trusted-query-pause-sequencer');
+    await ctx.node.getSequencer().pause();clock.sequencerPaused=true;
+    ctx.mark('trusted-query-real-clock-wait');
+    const stamp=await ctx.node.getSyncedL1Timestamp();
+    assert(typeof stamp==='bigint'&&stamp>=0n&&stamp<=BigInt(Number.MAX_SAFE_INTEGER));
+    clock.initialSyncedL1Timestamp=String(stamp);clock.initialWallSeconds=Math.floor(Date.now()/1000);
+    while(BigInt(Math.floor(Date.now()/1000))<await ctx.node.getSyncedL1Timestamp()){
+      assert(Date.now()-started<110000,'Disposable setup clock did not catch up within110seconds');
+      await wait(250);
+    }
+    clock.finalSyncedL1Timestamp=String(await ctx.node.getSyncedL1Timestamp());
+    clock.finalWallSeconds=Math.floor(Date.now()/1000);clock.elapsedMs=Date.now()-started;
+    const result=await runTrustedQueryFixture(ctx);result.fixtureClock=clock;return result;
+  } catch(error) {
+    clock.elapsedMs=Date.now()-started;
+    error.trustedQueryObservation={...(error.trustedQueryObservation??{passed:false,stage:'fixture-clock'}),fixtureClock:clock};
+    throw error;
+  }
 }

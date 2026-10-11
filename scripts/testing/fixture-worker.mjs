@@ -45,16 +45,7 @@ export async function runFixture(directory, scenario, browserControl, operatorPa
     const port=reservation.address().port;await new Promise(resolve=>reservation.close(resolve));
     const rpcUrl='http://127.0.0.1:'+port;
     mark('start-disposable-l1');
-    // This query-policy scenario needs real wall-clock freshness after the local
-    // protocol's fast deployment/validator advances. Begin its NEW chain in the
-    // recent past; do not override any service clock or mutate existing history.
-    const genesisArgs=[];
-    if(scenario.name==='trusted-query-policy'){
-      const observedWallSeconds=Math.floor(Date.now()/1000),genesisSeconds=observedWallSeconds-120;
-      output.l1GenesisClock={observedWallSeconds,genesisSeconds,ageSeconds:120};
-      genesisArgs.push('--timestamp',String(genesisSeconds));
-    }
-    anvil=spawn(anvilPath,['--host','127.0.0.1','--port',String(port),'--chain-id','31337','--mnemonic',identity.mnemonic.phrase,'--silent',...genesisArgs],{cwd:directory,env:process.env,stdio:'ignore'});
+    anvil=spawn(anvilPath,['--host','127.0.0.1','--port',String(port),'--chain-id','31337','--mnemonic',identity.mnemonic.phrase,'--silent'],{cwd:directory,env:process.env,stdio:'ignore'});
     anvilClosed=new Promise(resolve=>{anvil.once('error',error=>resolve({errorClass:error.name}));anvil.once('close',(code,signal)=>resolve({code,signal}));});
     let ready=false;
     for(let i=0;i<60;i++){
