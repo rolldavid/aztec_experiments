@@ -19,7 +19,7 @@ import {withC01ClientMining} from '../c01-client-mining.mjs';
 import {settleC01ApplicationMessage} from '../c01-settle-application-message.mjs';
 import {drainT04Checkpoints} from '../u01-browser-flow.mjs';
 
-const json = value => JSON.stringify(value, (_, item) => typeof item === 'bigint' ? String(item) : item, 2) + '\n';
+export const evidenceJson = value => JSON.stringify(value, (_, item) => typeof item === 'bigint' ? String(item) : item, 2) + '\n';
 const sha = bytes => createHash('sha256').update(bytes).digest('hex');
 const same = (a, b) => assert.equal(String(a).toLowerCase(), String(b).toLowerCase());
 
@@ -31,7 +31,7 @@ export async function runPrivateBokFixture(ctx, caseProfile = 'both') {
     payerMode: 'genesis', privacyAcceptance: 'missing: public genesis fee payer', l1: []};
   const directory = path.join(ROOT, 'execution/evidence/G14', 'portal-' + randomUUID());
   await fs.mkdir(directory, {mode: 0o700});
-  const save = () => fs.writeFile(path.join(directory, 'fixture.json'), json(observation));
+  const save = () => fs.writeFile(path.join(directory, 'fixture.json'), evidenceJson(observation));
   let wallet, provider;
   try {
     const url = new URL(ctx.config.l1RpcUrls[0]);
@@ -67,7 +67,7 @@ export async function runPrivateBokFixture(ctx, caseProfile = 'both') {
       assert.equal(populated.chainId, 31337n);
       const signed = await signer.signTransaction(populated), hash = keccak256(signed);
       const row = {label, txHash: hash, submission: 'outcome unknown'};
-      await fs.writeFile(path.join(directory, `intent-${label}.json`), json({label, txHash: hash, chainId: 31337}), {flag: 'wx', mode: 0o600});
+      await fs.writeFile(path.join(directory, `intent-${label}.json`), evidenceJson({label, txHash: hash, chainId: 31337}), {flag: 'wx', mode: 0o600});
       observation.l1.push(row); await save();
       const sent = await provider.broadcastTransaction(signed); same(sent.hash, hash);
       const receipt = await provider.waitForTransaction(hash, 1, 60000);
@@ -145,7 +145,7 @@ export async function runPrivateBokFixture(ctx, caseProfile = 'both') {
           secretHash: String(secretHash), content: String(content), leafIndex: event.index, messageHash: String(message.hash()),
           txHash: receipt.hash, blockHash: receipt.blockHash, blockNumber: receipt.blockNumber, canonical: true,
           evidenceRef: path.join(directory, operationId + '-deposit.json')};
-        await fs.writeFile(record.evidenceRef, json(record), {flag: 'wx', mode: 0o600});
+        await fs.writeFile(record.evidenceRef, evidenceJson(record), {flag: 'wx', mode: 0o600});
         return record;
       }};
       const redeem = async record => {
@@ -158,7 +158,7 @@ export async function runPrivateBokFixture(ctx, caseProfile = 'both') {
         const result = {passed: true, amount, recipientBalanceBefore: before, recipientBalanceAfter: await token.balanceOf(address),
           portalBalanceBefore: locked, portalBalanceAfter: await token.balanceOf(await portal.getAddress()), controlledSettlement: true,
           evidenceRef: path.join(directory, record.label + '-redemption.json')};
-        await fs.writeFile(result.evidenceRef, json(result), {flag: 'wx', mode: 0o600});
+        await fs.writeFile(result.evidenceRef, evidenceJson(result), {flag: 'wx', mode: 0o600});
         return result;
       };
       const advanceTo = async (target, reservation) => {
@@ -231,7 +231,7 @@ export async function runPrivateBokFixture(ctx, caseProfile = 'both') {
         harnessFiles: ['scripts/testing/private-bok-fixture.mjs', 'scripts/testing/scenarios.mjs', 'scripts/testing/scenario-flows.mjs']});
       assert(observation.experiment.passed);
     });
-    observation.passed = true; return observation;
+    observation.passed = true;
   } catch (error) {
     if (error.privateBokObservation) observation.experiment = error.privateBokObservation;
     observation.failure = {errorClass: error.name}; error.privateBokFixtureObservation = observation; throw error;
@@ -239,4 +239,7 @@ export async function runPrivateBokFixture(ctx, caseProfile = 'both') {
     try { if (wallet) { await wallet.stop(); observation.walletStopped = true; } }
     finally { provider?.destroy(); await save(); }
   }
+  // The generic worker accepts JSON observations. Normalize only after cleanup
+  // so its report retains the same exact amounts and flags as fixture.json.
+  return JSON.parse(evidenceJson(observation));
 }
