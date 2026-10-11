@@ -13,12 +13,15 @@ export async function startProverService(config){
  if(!/^0x[0-9a-f]{64}$/.test(config.board)||!['real','disabled'].includes(config.proofs))throw Error('Invalid board/proofs configuration');
  if(config.privateFeeAddress!==undefined&&!/^0x[0-9a-f]{64}$/.test(config.privateFeeAddress))throw Error('Invalid private fee address');
  if(config.pluginAddresses!==undefined&&(!Array.isArray(config.pluginAddresses)||config.pluginAddresses.length>32||config.pluginAddresses.some(address=>!/^0x[0-9a-f]{64}$/.test(address)||BigInt(address)===0n)))throw Error('Invalid plugin address allowlist');
+ const applicationProfile=config.applicationProfile??'legacy';
+ if(!['legacy','rolling'].includes(applicationProfile))throw Error('Invalid application profile');
+ if(applicationProfile==='rolling'&&(!/^0x[0-9a-f]{64}$/.test(config.privateBokAddress)||BigInt(config.privateBokAddress)===0n||!config.privateFeeAddress||BigInt(config.privateFeeAddress)===0n||BigInt(config.board)===0n||new Set([config.board,config.privateBokAddress,config.privateFeeAddress]).size!==3))throw Error('Distinct rolling board, Bok and private fee addresses required');
  const host=config.host??'127.0.0.1',proofsEnabled=config.proofs==='real';
  if(!proofsEnabled&&(!['127.0.0.1','::1','localhost'].includes(host)||String(config.chainId)!=='31337'))throw Error('Disabled proofs require loopback local devnet');
  const runtime=proofsEnabled?await prepareNativeRuntime(config):{};
- await loadCircuitCatalog();
+ await loadCircuitCatalog({applicationProfile});
  const directory=await fs.mkdtemp(path.join(config.queueDirectory??'/tmp','board-prover-'));
- const worker=createProcessWorker({proofsEnabled,threads:config.threads??1,privateFeeAddress:config.privateFeeAddress,pluginAddresses:config.pluginAddresses,...runtime});
+ const worker=createProcessWorker({applicationProfile,privateBokAddress:config.privateBokAddress,proofsEnabled,threads:config.threads??1,privateFeeAddress:config.privateFeeAddress,pluginAddresses:config.pluginAddresses,...runtime});
  let queue,server,closing;
  const close=()=>closing??=(async()=>{if(server){server.close();server.closeAllConnections();}await (queue?queue.close():worker.close());await fs.rm(directory,{recursive:true,force:true});})();
  try{

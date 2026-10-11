@@ -1,4 +1,6 @@
 // Single disposable worker: never log witnesses or SDK exceptions.
+import {loadRollingArtifacts} from './rolling-artifacts.mjs';
+import {rollingSelectors,validateRollingJob} from './application-policy.mjs';
 import {pluginSelectors,validatePluginPayload} from './plugin-policy.mjs';
 import fs from 'node:fs/promises';
 import {gunzipSync} from 'node:zlib';
@@ -16,10 +18,17 @@ const setStage=value=>{stage=value;process.send?.({progress:stage});};
 try{
  const {metadata,witnesses}=decodeJob(await fs.readFile(process.argv[2]));
  setStage("catalog");
- const catalog=await loadCircuitCatalog(),circuits=metadata.circuits.map(id=>{const c=catalog.get(id);if(!c)throw Error('Unknown circuit');return c;});
+ const applicationProfile=process.env.PROVER_APPLICATION_PROFILE??'legacy';
+ const catalog=await loadCircuitCatalog({applicationProfile}),circuits=metadata.circuits.map(id=>{const c=catalog.get(id);if(!c)throw Error('Unknown circuit');return c;});
  setStage("decompress");
  let total=0;const raw=witnesses.map(w=>{const r=gunzipSync(w,{maxOutputLength:16*1024*1024});total+=r.length;if(total>64*1024*1024)throw Error('Witness limit');return r;});
  setStage("board-binding");
+ if(applicationProfile==='rolling'){
+  const options={metadata,privateBokAddress:process.env.PROVER_PRIVATE_BOK,privateFeeAddress:process.env.PROVER_PRIVATE_FEE};
+  const decoded=circuits.map((c,i)=>/^(RollingBoard|PrivateBok|PrivateFPC|SchnorrInitializerlessAccount):/.test(c.functionName)?abiDecode(c.abi,decompressWitness(witnesses[i])).inputs:undefined);
+  const selectors=await rollingSelectors(loadRollingArtifacts());
+  validateRollingJob(circuits,decoded,{...options,selectors});
+ }else{
  let boardCalls=0,feeClaims=0;
  for(let i=0;i<circuits.length;i++)if(circuits[i].functionName.startsWith('Billboard:')){
   const inputs=abiDecode(circuits[i].abi,decompressWitness(witnesses[i])).inputs;
@@ -41,6 +50,7 @@ try{
   const selectors=await pluginSelectors();let authorized=0;
   for(let i=0;i<circuits.length;i++)if(circuits[i].functionName==='SchnorrInitializerlessAccount:entrypoint')authorized+=validatePluginPayload(abiDecode(circuits[i].abi,decompressWitness(witnesses[i])).inputs,{metadata,pluginAddresses,privateFeeAddress:process.env.PROVER_PRIVATE_FEE,selectors,allowFeeOnly:feeClaims>0});
   if(!authorized&&!feeClaims)throw Error('Board operation or authorized plugin/fee claim required');
+ }
  }
  setStage('prove');
  if(metadata.mode==='disabled'){

@@ -13,3 +13,9 @@ test('service health and failed bind use production lifecycle without leaking qu
   await assert.rejects(startProverService({...config,port:service.address.port}),e=>e.code==='EADDRINUSE');assert.equal((await fs.readdir(directory)).length,1);
  }finally{await service.close();await service.close();assert.deepEqual(await fs.readdir(directory),[]);await fs.rm(directory,{recursive:true});}
 });
+test('rolling configuration rejects missing fee/Bok, aliases and unknown profiles before listening',async()=>{
+ const address=n=>'0x'+String(n).padStart(64,'0');
+ const config={host:'127.0.0.1',port:0,board:address(1),chainId:'31337',rollupVersion:'1',proofs:'disabled',origins:[],applicationProfile:'rolling',privateFeeAddress:address(2),privateBokAddress:address(3)};
+ for(const patch of [{privateFeeAddress:undefined},{privateBokAddress:undefined},{privateBokAddress:address(0)},{privateBokAddress:address(1)},{privateFeeAddress:address(3)}])await assert.rejects(startProverService({...config,...patch}),/Distinct rolling/);
+ await assert.rejects(startProverService({...config,applicationProfile:'arbitrary'}),/Invalid application profile/);
+});
