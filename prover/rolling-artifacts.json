@@ -5,7 +5,7 @@
     {
       "name": "RollingBoard",
       "path": "billboard/target/rolling_contract-RollingBoard.json",
-      "sha256": "8c431f1458a2ae47e0773db820e551a4df4a7a10a82938cbb4b82cb84d56967e"
+      "sha256": "6553d89d4ab0b576ad8d80c0833f0b05cbedff175102beb8f335fdef98807ace"
     },
     {
       "name": "PrivateBok",
@@ -29,8 +29,9 @@
     "experiments/private-bok/build.mjs": "813b1b41c66b0f6ff255d23a1ac45541a4d87042fe9521f135c203f4cfb89da0",
     "billboard/rolling_contract/src/admission.nr": "83868ff1dd7b5f7841fdff2f1252d76d96c68db9554d9bb93e65b6a6a7011b38",
     "billboard/rolling_contract/src/encoding.nr": "32d1ddbca7c6cdf607a24ad1ecdf7ab4be6667877cf7c34b3cf370a02efcfd07",
-    "billboard/rolling_contract/src/main.nr": "a87ab982d0cbe95ffd2dc86c2ed323e123eb45538c300f544ce7206e6e57e8d8",
+    "billboard/rolling_contract/src/main.nr": "32ebdead7ef12c68c16e2d3dcf871ce521d1ddb33c5ae7955756ecd6d0817660",
     "billboard/rolling_contract/src/posting.nr": "1bac8187638522892d6389a6d4b34185c4bd46297dddcba6102b2a3b81098bda",
+    "billboard/rolling_contract/src/profiles.nr": "b12124ca50d181f9798c24e3373f9ba358697fdb433cc7d696c3a69ac9d53efd",
     "experiments/private-bok/escrow/src/main.nr": "948ca452f8974e1933d5898c8b5210cc504c3b9224e53115da70dbbd913ef8f9"
   }
 }

@@ -8,12 +8,14 @@ import {serveRollingReaderAsset} from '../../apps/rolling/start.mjs';
 import {startRollingPublicServer} from '../rolling-public-server.mjs';
 import {createPublicReader} from '../../apps/rolling/reader-client.mjs';
 const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
-export async function verifyRollingPublicReader({node,artifact,scope,deployment,cacheDirectory,ids,deadlineAt,observation}){
+export async function verifyRollingPublicReader({node,artifact,scope,deployment,cacheDirectory,ids,scenario='conversation',expectedProfile,deadlineAt,observation}){
+ assert(['conversation','profiles'].includes(scenario));
+ if(scenario==='profiles')assert(expectedProfile&&expectedProfile.id===ids.nameId);
  assert(Number.isSafeInteger(deadlineAt)&&deadlineAt>Date.now());
  const deadline=Math.min(deadlineAt,Date.now()+30000);
  const storage=()=>publicFeedFileStorage(cacheDirectory,{maxRecordBytes:1048576,maxSnapshotBytes:67108864});
  const make=timeoutMs=>createRollingPublicIndex({node,artifact,scope,deployment,storage:storage(),rangeSize:10,pagesPerSync:20,timeoutMs});
- const routes=[['feed',{}],['thread',{root:ids.rootId}],['profile',{nameId:ids.nameId}],['directory',{}],['post',{id:ids.replyId}]];
+ const routes=scenario==='profiles'?[['profile',{nameId:ids.nameId}],['feed',{}],['directory',{}]]:[['feed',{}],['thread',{root:ids.rootId}],['profile',{nameId:ids.nameId}],['directory',{}],['post',{id:ids.replyId}]];
  let first;
  observation.passed=false;observation.sessions=[];
  for(const phase of ['fresh','reopened']){
@@ -31,6 +33,8 @@ export async function verifyRollingPublicReader({node,artifact,scope,deployment,
    const read=createPublicReader({timeoutMs:Math.max(1,deadline-Date.now()),fetch:(url,options)=>fetch(server.url+url,{...options,signal:AbortSignal.any([options.signal,AbortSignal.timeout(Math.max(1,deadline-Date.now()))])})});
    const views={};
    for(const [route,params]of routes){assert(Date.now()<deadline);views[route]=await read(route,params);assert.deepEqual(views[route].scope,scope);}
+   if(scenario==='profiles'){assert.deepEqual(views.profile.identity,expectedProfile);assert.deepEqual(views.profile.posts,[]);assert.deepEqual(views.feed.posts,[]);assert.deepEqual(views.directory.boards,[]);}
+   else{
    assert.deepEqual(views.thread.posts.map(p=>p.id),[ids.rootId,ids.replyId]);
    assert.deepEqual(views.profile.posts.map(p=>p.id).sort(),[ids.rootId,ids.replyId].sort());
    assert.equal(views.post.post.id,ids.replyId);assert.equal(views.post.post.likes,'1');assert.equal(views.post.post.bot,null);
@@ -39,9 +43,10 @@ export async function verifyRollingPublicReader({node,artifact,scope,deployment,
    assert.equal(views.post.boards[ids.subboardId].slug,'application-test');
    assert(views.directory.boards.some(board=>board.id===ids.subboardId&&board.slug==='application-test'));
    assert(views.feed.posts.some(post=>post.id===ids.rootId));
+   }
    const content=Object.fromEntries(Object.entries(views).map(([key,{revision,checkpoint,...value}])=>[key,value]));
    if(first)assert.deepEqual(content,first);else first=content;
-   session.checkpoint=views.post.checkpoint;session.views=routes.map(([route])=>route);session.authenticatedRanges=index.status().authenticatedRanges;
+   session.checkpoint=(scenario==='profiles'?views.profile:views.post).checkpoint;session.views=routes.map(([route])=>route);session.authenticatedRanges=index.status().authenticatedRanges;
    assert(session.authenticatedRanges>0);
   }catch(error){failure=error;throw error;}finally{
    try{await server.close();

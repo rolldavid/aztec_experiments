@@ -2,8 +2,8 @@ import {FunctionSelector, FunctionType, loadContractArtifact} from '@aztec-labs/
 import {ProtocolContractAddress} from '@aztec-labs/protocol-contracts';
 import {pluginSelectors} from './plugin-policy.mjs';
 
-const boardPrivate = ['register_name', 'authenticate_name', 'create_subboard', 'claim_deposit', 'withdraw', 'post', 'post_with_bok', 'screen', 'set_like'];
-const boardPublic = ['set_main_policy', 'reject_subboard', 'configure_plugin', 'remove_post'];
+const boardPrivate = ['register_name', 'authenticate_name', 'create_subboard', 'claim_deposit', 'withdraw', 'post', 'post_with_bok', 'screen', 'set_like', 'set_bio', 'set_avatar'];
+const boardPublic = ['set_main_policy', 'reject_subboard', 'configure_plugin', 'remove_post', 'remove_avatar'];
 const bokPrivate = ['claim', 'authorize_request', 'cancel', 'expire', 'withdraw'];
 const bokPublic = ['publish_reply', 'reserve', 'settle', 'finish', 'close_uncertain', 'reconcile', 'withdraw_earnings'];
 export async function rollingSelectors(rawArtifacts) {

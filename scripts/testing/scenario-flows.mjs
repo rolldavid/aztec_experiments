@@ -360,3 +360,5 @@ export async function trustedQueryPolicy(ctx) {
     throw error;
   }
 }
+
+export async function rollingProfilePort(ctx){return (await import('./rolling-application-fixture.mjs')).runRollingApplicationFixture(ctx,'profiles');}

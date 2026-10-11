@@ -138,3 +138,18 @@ test('actual authenticated Bok reply entrypoint requires configured escrow and p
  assert.deepEqual(validateRollingPayload(p,{...options,selectors:selected}),{applications:1,fees:1});
  for(const bad of [[call(1,callback,true),call(3,fee)],[call(99,reply,true),call(3,fee)],[call(2,reply,true)]]){p.app_payload.function_calls=bad;assert.throws(()=>validateRollingPayload(p,{...options,selectors:selected}),/Unapproved|Private fee/);}
 });
+
+
+test('normal profile entrypoints are narrowly allowed, with private fees and no direct setters',async()=>{
+ const raw=loadRollingArtifacts(),selected=await rollingSelectors(raw),a=loadContractArtifact(raw.find(a=>a.name==='RollingBoard'));
+ const fn=name=>[...a.functions,...a.nonDispatchPublicFunctions].find(f=>f.name===name);
+ const selector=async name=>BigInt((await FunctionSelector.fromNameAndParameters(fn(name))).toString());
+ const policy={...options,selectors:selected},fee=call(3,[...selected.fee.fee][0]);
+ for(const [name,isPublic]of [['set_bio',false],['set_avatar',false],['remove_avatar',true]]){
+  const id=await selector(name),p={inputs:context('4'),app_payload:{function_calls:[call(1,id,isPublic),fee]}};
+  assert.deepEqual(validateRollingPayload(p,policy),{applications:1,fees:1});
+  for(const calls of [[call(99,id,isPublic),fee],[call(1,id,!isPublic),fee],[call(1,id,isPublic)]])assert.throws(()=>validateRollingPayload({...p,app_payload:{function_calls:calls}},policy),/Unapproved|Private fee/);
+  if(!isPublic){assert(fn(name).verificationKey);bindRollingCircuit('RollingBoard:'+name,{inputs:context('1')},policy);assert.throws(()=>bindRollingCircuit('RollingBoard:'+name,{inputs:context('9')},policy),/contract/);}
+ }
+ for(const name of ['_set_bio','_set_avatar']){const id=await selector(name);for(const visibility of [false,true])assert.throws(()=>validateRollingPayload({inputs:context('4'),app_payload:{function_calls:[call(1,id,visibility),fee]}},policy),/Unapproved/);}
+});
