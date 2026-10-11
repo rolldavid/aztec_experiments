@@ -272892,6 +272892,7 @@ pub contract MultiCallEntrypoint {
     TxHash: () => TxHash,
     boundedTransactionRead: () => boundedTransactionRead,
     classifyDroppedTransaction: () => classifyDroppedTransaction,
+    computeContractAddressFromInstance: () => computeContractAddressFromInstance,
     computeFeeJuiceMessageNullifier: () => computeFeeJuiceMessageNullifier,
     computeL1ToL2MessageNullifier: () => computeFeeJuiceMessageNullifier,
     computePartialAddress: () => computePartialAddress,
@@ -470478,16 +470479,29 @@ mod tests {
   var fail4 = () => transactionError("BB_JOURNAL_INVALID", "Recovery records could not be authenticated or conflict with newer local records. Preserve both copies.");
   var domains = /* @__PURE__ */ new Map([
     ["AZTEC_BB_L2_JOURNAL_KEY_V1", "AZTEC_BB_L2_JOURNAL_V1"],
-    ["AZTEC_BB_ETH_JOURNAL_KEY_V1", "AZTEC_BB_ETH_JOURNAL_V1"]
+    ["AZTEC_BB_ETH_JOURNAL_KEY_V1", "AZTEC_BB_ETH_JOURNAL_V1"],
+    ["ROLLING_WORKFLOW_V1", "ROLLING_WORKFLOW_V1"]
   ]);
   var LIMIT = 16 * 1024 * 1024;
+  function validDescriptor(descriptor) {
+    if (!descriptor || Object.keys(descriptor).sort().join() !== "keyDomain,scopeText" || !domains.has(descriptor.keyDomain) || typeof descriptor.scopeText !== "string") throw fail4();
+    const frame = JSON.parse(descriptor.scopeText);
+    if (frame[0] !== domains.get(descriptor.keyDomain)) throw fail4();
+    if (descriptor.keyDomain === "ROLLING_WORKFLOW_V1") {
+      if (!Array.isArray(frame) || frame.length !== 2 || typeof frame[1] !== "string") throw fail4();
+      const nested = JSON.parse(frame[1]), names = ["account", "chainId", "rollup", "version", "board", "portal"];
+      if (!Array.isArray(nested) || nested.length !== 7 || nested[0] !== "AZTEC_BB_L2_JOURNAL_V1" || nested.some((value) => typeof value !== "string")) throw fail4();
+      const canonical2 = l2JournalScopeText(Object.fromEntries(names.map((name, index) => [name, nested[index + 1]])));
+      if (frame[1] !== canonical2 || descriptor.scopeText !== JSON.stringify(["ROLLING_WORKFLOW_V1", canonical2])) throw fail4();
+    }
+  }
   async function createJournalBackup({ storage, walletSecret, walletSalt }) {
     const identity = await journalRecoveryIdentity({ walletSecret, walletSalt });
     async function authenticate(record7) {
       try {
         if (!record7 || typeof record7.key !== "string" || !/^[0-9a-f]{64}$/.test(record7.key) || typeof record7.encoded !== "string" || record7.encoded.length > LIMIT) throw fail4();
         const envelope = JSON.parse(record7.encoded), descriptor = await decryptJournalDescriptor(envelope.recovery, identity);
-        if (Object.keys(descriptor).sort().join() !== "keyDomain,scopeText" || !domains.has(descriptor.keyDomain) || typeof descriptor.scopeText !== "string" || JSON.parse(descriptor.scopeText)[0] !== domains.get(descriptor.keyDomain)) throw fail4();
+        validDescriptor(descriptor);
         const slot = await createEncryptedJournalSlot({ walletSecret, walletSalt, ...descriptor, storage: { read: async (key) => {
           if (key !== record7.key) throw fail4();
           return record7.encoded;

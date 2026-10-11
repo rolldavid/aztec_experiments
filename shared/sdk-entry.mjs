@@ -30,7 +30,7 @@ export { createBrowserJournalStorage } from './journal-indexeddb.mjs';
 export { Tx, TxContext } from '@aztec-labs/stdlib/tx';
 export { Gas, GasSettings } from '@aztec-labs/stdlib/gas';
 export { MerkleTreeId } from '@aztec-labs/stdlib/trees';
-export { computePartialAddress } from '@aztec-labs/stdlib/contract';
+export { computePartialAddress, computeContractAddressFromInstance } from '@aztec-labs/stdlib/contract';
 export { deriveKeys, deriveKeysFromMasterSecretKeys, deriveMasterMessageSigningSecretKey,
   deriveMasterMessageSigningSecretKey as deriveSigningKey,
   deriveMasterMessageSigningSecretKey as deriveMasterMessageSigningSecretKeyAlias } from '@aztec-labs/stdlib/keys';
