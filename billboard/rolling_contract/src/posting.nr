@@ -62,3 +62,11 @@ pub fn like_tag(chain: Field, version: Field, board: AztecAddress, post: Field, 
     assert((chain != 0) & (version != 0) & (board.to_field() != 0) & (post != 0), "Like scope required");
     poseidon2_hash_with_separator([1, chain, version, board.to_field(), post, nhk], 0x52434c31)
 }
+
+/// Storage namespace is separate from the private tag domain. A macro-assigned
+/// root then goes through standard Map slot derivation, separating other state.
+pub fn like_storage_key(kind: u8, post: Field, tag: Field) -> Field {
+    assert((kind == 1) | (kind == 2), "Invalid like namespace");
+    assert((post != 0) & ((kind == 1) == (tag == 0)), "Invalid like storage key");
+    poseidon2_hash_with_separator([kind as Field, post, tag], 0x52434c53)
+}

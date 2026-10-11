@@ -155,8 +155,7 @@ pub contract RollingBoard {
         registered_names: Map<Field, PublicMutable<bool, Context>, Context>,
         names: Owned<PrivateSet<UsernameNote, Context>, Context>,
         subboards: Map<Field, PublicMutable<SubboardRecord, Context>, Context>,
-        like_counts: Map<Field, PublicMutable<u64, Context>, Context>,
-        active_likes: Map<Field, PublicMutable<bool, Context>, Context>,
+        like_state: LikeStorageRoot,
     }
 
     #[event]
@@ -834,6 +833,28 @@ pub contract RollingBoard {
     fn get_config_hash() -> pub Field { self.storage.config.read().hash(self.address) }
 
 
+    // Same public-only slot-root pattern as Billboard PluginStorageRoot. A root
+    // occupies one macro-assigned slot without copying a private Context type.
+    struct LikeStorageRoot { slot: Field }
+    impl<Context> StateVariable<1, Context> for LikeStorageRoot {
+        fn new(_context: Context, storage_slot: Field) -> Self {
+            assert(storage_slot != 0, "Zero like storage root");
+            Self { slot: storage_slot }
+        }
+        fn get_storage_slot(self) -> Field { self.slot }
+    }
+    struct LikeState {}
+    impl LikeState {
+        unconstrained fn count(context: aztec::context::PublicContext, slot: Field, post: Field) -> PublicMutable<u64, aztec::context::PublicContext> {
+            Map::<Field, PublicMutable<u64, aztec::context::PublicContext>, aztec::context::PublicContext>::new(context, slot)
+                .at(crate::posting::like_storage_key(1, post, 0))
+        }
+        unconstrained fn active(context: aztec::context::PublicContext, slot: Field, post: Field, tag: Field) -> PublicMutable<bool, aztec::context::PublicContext> {
+            Map::<Field, PublicMutable<bool, aztec::context::PublicContext>, aztec::context::PublicContext>::new(context, slot)
+                .at(crate::posting::like_storage_key(2, post, tag))
+        }
+    }
+
     #[event]
     struct LikeChanged { schema: u32, post: Field, tag: Field, active: bool, count: u64 }
 
@@ -853,22 +874,23 @@ pub contract RollingBoard {
     fn _set_like(post: Field, tag: Field, active: bool) {
         assert(self.storage.post_exists.at(post).read(), "Unknown post");
         assert(tag != 0, "Zero like tag");
-        let previous = self.storage.active_likes.at(tag).read();
+        let previous = LikeState::active(self.context, self.storage.like_state.slot, post, tag).read();
         if active != previous {
-            let old_count = self.storage.like_counts.at(post).read();
+            let old_count = LikeState::count(self.context, self.storage.like_state.slot, post).read();
             let count = if active {
                 assert(self.storage.post_flagged.at(post).read() == 0, "Post removed");
+                assert(old_count < 0xffffffffffffffff, "Like count overflow");
                 old_count + 1
             } else {
                 assert(old_count > 0, "Invalid like count");
                 old_count - 1
             };
-            self.storage.active_likes.at(tag).write(active);
-            self.storage.like_counts.at(post).write(count);
+            LikeState::active(self.context, self.storage.like_state.slot, post, tag).write(active);
+            LikeState::count(self.context, self.storage.like_state.slot, post).write(count);
             self.emit(LikeChanged { schema: 1, post, tag, active, count });
         }
     }
     #[external("public")]
     #[view]
-    fn get_like_count(post: Field) -> pub u64 { self.storage.like_counts.at(post).read() }
+    fn get_like_count(post: Field) -> pub u64 { LikeState::count(self.context, self.storage.like_state.slot, post).read() }
 }

@@ -95,7 +95,7 @@ overlong encodings, surrogates and code points above U+10FFFF).
 | Each global-name component | 32 | 2 |
 | Subboard slug | 40 | 2 |
 
-Public writes per operation, excluding protocol/deployment overhead: init 14,
+Public writes per operation, excluding protocol/deployment overhead: init 15 (including immutable value hashes),
 registration 1, creation 6, main-policy update 2, rejection 6. Private ownership
 refresh creates a note/nullifier and no public-storage writes. All are structurally
 below V6's 63 public writes; this is not measured gas or inclusion acceptance.
@@ -146,7 +146,7 @@ The correction changes no type or function selector. Earlier failing logs are
 retained as diagnostic evidence; no SDK source was changed.
 
 Follow-on APIs belong in this same contract for private ownership to remain local:
-profile bio/current avatar; likes and remaining social state; encrypted preferences.
+profile bio/current avatar; remaining social state; encrypted preferences.
 Specialist privacy review, real wallets/proofs, chain rebuild/reorg, load testing,
 elapsed soak and target-network clearance remain required.
 
@@ -211,7 +211,7 @@ Bot reply publication is intentionally absent until the G10 interface is reviewe
 
 G06 test evidence is pending. Added TXE cases use actual constrained receipt and
 private note paths inside TestEnvironment; they are development constraint tests,
-not network deposits or generated proofs. Likes, browser wallet integration,
+not network deposits or generated proofs. Like acceptance, browser wallet integration,
 plugin execution/accounting, authenticated index reconstruction and the complete
 G05/G06/G08/G13 acceptance journey remain outstanding.
 
@@ -235,3 +235,11 @@ state atomically. New likes on removed posts fail; an existing like can be remov
 Likes require ordinary transaction fees but no posting collateral (approved,
 reversible first-release default). PrivateFPC and RPC privacy remain integration
 requirements. Pure tag-domain and constrained behavior tests are pending execution.
+
+Review additions use the actual `private_bok` contract as a relative package
+dependency, not a callback stub. TXE adds exact callback success and mismatch,
+disabled and expired rejection cases. Noir's TestEnvironment cannot catch a
+failed call and then inspect state; those rejection cases therefore do not prove
+rollback. `callback-rollback.mjs` and `CALLBACK_HANDOFF.md` define the pending
+mined-revert acceptance checks using the lead's existing chain fixture. All
+original 74 test cases remain. Raw compile 7 passes with 83 retained diagnostics (75 manual-constraint and 8 subgraph); test execution and normal artifact processing remain pending. The later test-only deployment-path correction is recorded separately from that frozen compile. The test helper also requires the real processed PrivateBok artifact in its sibling workspace and verifies its embedded sources and private VKs before service startup.

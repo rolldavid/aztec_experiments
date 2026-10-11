@@ -20,6 +20,17 @@ for (const name of ['encoding.nr', 'admission.nr', 'posting.nr', 'main.nr']) {
   const embedded = Object.values(artifact.file_map).find(entry => entry.path === relative);
   assert.equal(embedded?.source, fs.readFileSync(path.join(ROOT, relative), 'utf8'), `Stale artifact source: ${name}`);
 }
+// Actual callback tests deploy the sibling G14 workspace's processed contract.
+// Missing, stale or unprocessed dependencies fail before starting a service.
+const bokRelative = 'experiments/private-bok/target/private_bok-PrivateBok.json';
+const bokArtifact = JSON.parse(fs.readFileSync(path.join(ROOT, bokRelative)));
+checkNoirEmbeddedSources(bokArtifact);
+assert.equal(bokArtifact.transpiled, true, 'Build the actual PrivateBok dependency first');
+const bokPrivate = bokArtifact.functions.filter(fn => fn.custom_attributes?.includes('abi_private'));
+assert(bokPrivate.length > 0 && bokPrivate.every(fn => fn.verification_key), 'Missing PrivateBok verification keys');
+const bokSource = 'experiments/private-bok/escrow/src/main.nr';
+assert.equal(Object.values(bokArtifact.file_map).find(entry => entry.path === bokSource)?.source,
+  fs.readFileSync(path.join(ROOT, bokSource), 'utf8'), 'Stale PrivateBok source');
 const args = process.argv.slice(2);
 if (args.length && (args.length !== 2 || args[0] !== '--filter' || !/^[a-zA-Z0-9_:]+$/.test(args[1]))) throw new Error('Usage: test.mjs [--filter test_name]');
 const filter = args.length ? [args[1], '--exact'] : [];

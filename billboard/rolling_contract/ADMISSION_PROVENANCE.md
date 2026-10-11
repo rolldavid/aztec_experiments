@@ -27,10 +27,30 @@ are not waived or characterized as harmless, and the specialist constraint/priva
 review gate remains open. G05 validation.json is historical evidence for its named
 revision; G06_CHECKPOINT.json identifies this unprocessed, untested extension.
 
-G05 stored the username Owned set at slot 2. G06 inserts admission storage before
+The retained G05 artifact stores the username Owned set at slot 6; G06 compile 3 stores it at slot 31. G06 inserts admission storage before
 that set, so this fresh contract schema changes its slot. It must never be deployed
 as an in-place update over G05 state. The constrained ownership helper and utility
 viewer both obtain the same generated `storage.names` slot; no hard-coded G05 slot
 is reused. The earlier statement about unchanged username placement referred only
 to the subsequent subboard consolidation relative to the initial G06 candidate,
 not compatibility with the G05 deployment schema. No G05 deployment exists.
+
+Independent diagnosis approved the existing Billboard `PluginStorageRoot` pattern
+for likes: `LikeStorageRoot` reserves one normal macro-allocated slot without
+embedding a PrivateContext. Public-only accessors construct normal typed
+Map/PublicMutable containers; no raw storage oracle or SDK changes are introduced.
+Keys are Poseidon2([1,post,0],0x52434c53) for u64 counts and
+Poseidon2([2,post,tag],0x52434c53) for bool active state. The standard Map then
+derives slots under the unique allocated root. Distinct type fields prevent
+structural count/active aliasing; post framing prevents cross-post aliasing;
+remaining hash-collision risk is the standard Map/Poseidon assumption. The tag
+itself remains separately domain-separated under 0x52434c31.
+
+Raw compile 7 passes with 83 retained diagnostics (75 manual-constraint, 8
+subgraph), 98.73 s and 1,831,518,208-byte max RSS. Frozen source/output and the
+compiled layout comparison are in evidence/g06. Every compile 3 storage root is
+preserved; the new like root is 33. The only subsequent Noir change before review
+is the TXE deployment string for the real PrivateBok artifact: the installed
+resolver requires `../experiments/private-bok@private_bok/PrivateBok` across
+workspaces. Current and compiled hashes are distinct in G06_CHECKPOINT.json.
+No 89-test execution, processed-artifact or mined-rollback claim is made here.

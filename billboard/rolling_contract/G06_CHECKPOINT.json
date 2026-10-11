@@ -3,11 +3,12 @@
   "rawCompileExitCode": 0,
   "command": "/usr/bin/time -l <pinned-nargo> compile --package rolling_contract --force",
   "cwd": "billboard",
-  "seconds": 88.54,
-  "maximumResidentBytes": 1983709184,
-  "peakMemoryFootprintBytes": 1668040504,
+  "seconds": 98.73,
+  "maximumResidentBytes": 1831518208,
+  "peakMemoryFootprintBytes": 1650051016,
   "compilerDiagnostics": {
-    "manualConstraintCount": 71,
+    "manualConstraintCount": 75,
+    "subgraphCount": 8,
     "paths": [
       "/Users/zac/nargo/github.com/aztec-labs-eng/aztec-nr/v6.0.0-rc.1/aztec/src/context/private_context.nr:1188:13",
       "/Users/zac/nargo/github.com/aztec-labs-eng/aztec-nr/v6.0.0-rc.1/aztec/src/context/private_context.nr:561:38",
@@ -27,26 +28,20 @@
   },
   "artifact": {
     "path": "billboard/target/rolling_contract-RollingBoard.json",
-    "sha256": "4a30ce5011c5a8b746cad3c8468210bcaa2beea3024ddeb32efafbd9f76973cf",
+    "sha256": "d25b2155100b9ef5b4d76f2ce93bde610b91ba2c600aaacf9dd16bceed696a7b",
     "processed": false
   },
-  "sourceHashes": {
-    "billboard/rolling_contract/src/admission.nr": "83868ff1dd7b5f7841fdff2f1252d76d96c68db9554d9bb93e65b6a6a7011b38",
-    "billboard/rolling_contract/src/encoding.nr": "32d1ddbca7c6cdf607a24ad1ecdf7ab4be6667877cf7c34b3cf370a02efcfd07",
-    "billboard/rolling_contract/src/main.nr": "2e730b64b18843aaaed1af49d569375c3dd217ef16b5b425445bb4677d21143a",
-    "billboard/rolling_contract/src/posting.nr": "25e1f491d36d9c1499b79fba2b2740489ac95b272b742e66b841bcf6e9c2e40b",
-    "billboard/rolling_contract/src/posting_tests.nr": "fafc2381ea7ce0b5992aacb2c25dcd2f07ecf023e5deb71852d98300bd308cbb",
-    "billboard/rolling_contract/src/tests.nr": "a5a50346d645d4d90ffea0e3df2b6ceb311449176c63a48bec05d1f0b20f8002"
-  },
   "pending": [
-    "embedded source inventory verification",
+    "test-only cross-workspace deploy path correction requires normal build",
+    "global embedded source inventory verification",
     "normal artifact processing",
-    "all constraint tests",
+    "89 constraint tests",
+    "mined callback rollback consumer execution",
     "independent exact-revision review",
     "real proof/bridge/wallet acceptance"
   ],
-  "compileLog": "evidence/g06/raw-compile-3.log",
-  "compileSourceSnapshot": "evidence/g06/raw-compile-source-3.json",
+  "compileLog": "evidence/g06/raw-compile-7.log",
+  "compileSourceSnapshot": "evidence/g06/raw-compile-source-7.json",
   "attempts": [
     {
       "attempt": 1,
@@ -69,8 +64,59 @@
       "result": "raw compile exit 0; unresolved manual-constraint diagnostics retained",
       "seconds": 88.54,
       "log": "evidence/g06/raw-compile-3.log"
+    },
+    {
+      "attempt": 4,
+      "result": "failed",
+      "cause": "Function-local use unsupported; moved to module import",
+      "seconds": 4.52,
+      "maximumResidentBytes": 424722432,
+      "log": "evidence/g06/raw-compile-4.log"
+    },
+    {
+      "attempt": 5,
+      "result": "failed",
+      "cause": "Actual callback fixture deploy helper env needed mutability",
+      "seconds": 4.53,
+      "maximumResidentBytes": 422871040,
+      "log": "evidence/g06/raw-compile-5.log"
+    },
+    {
+      "attempt": 6,
+      "result": "failed",
+      "cause": "Two added like maps re-expanded private Context above cap; independently diagnosed slot-only root approved",
+      "seconds": 7.75,
+      "maximumResidentBytes": 471875584,
+      "log": "evidence/g06/raw-compile-6.log"
+    },
+    {
+      "attempt": 7,
+      "result": "raw compile exit0;83 retained diagnostics; prior storage slots preserved",
+      "seconds": 98.73,
+      "maximumResidentBytes": 1831518208,
+      "log": "evidence/g06/raw-compile-7.log"
     }
   ],
-  "testsPresent": 74,
-  "testsRun": false
+  "testsPresent": 89,
+  "testsRun": false,
+  "slotConsistency": "evidence/g06/storage-layout-compile7.json",
+  "normalProcessingRun": false,
+  "status": "review repair candidate; raw compile7 success precedes test-only artifact path correction",
+  "compiledSourceHashes": {
+    "billboard/rolling_contract/src/admission.nr": "83868ff1dd7b5f7841fdff2f1252d76d96c68db9554d9bb93e65b6a6a7011b38",
+    "billboard/rolling_contract/src/encoding.nr": "32d1ddbca7c6cdf607a24ad1ecdf7ab4be6667877cf7c34b3cf370a02efcfd07",
+    "billboard/rolling_contract/src/main.nr": "d9a95b1df3e764072019c94cf574cc39e57795cd159b2b6c915d6e455e958499",
+    "billboard/rolling_contract/src/posting.nr": "ee9864837ba6ea243afbf65779e7bb7cf5c49e41fe60c4443ff2b623051dd2e5",
+    "billboard/rolling_contract/src/posting_tests.nr": "32608994f13c6da58458da54f5490f51d09c3cac0fd4e039ee0fab9f929e9177",
+    "billboard/rolling_contract/src/tests.nr": "a5a50346d645d4d90ffea0e3df2b6ceb311449176c63a48bec05d1f0b20f8002"
+  },
+  "candidateSourceHashesAfterTestPathCorrection": {
+    "billboard/rolling_contract/src/admission.nr": "83868ff1dd7b5f7841fdff2f1252d76d96c68db9554d9bb93e65b6a6a7011b38",
+    "billboard/rolling_contract/src/encoding.nr": "32d1ddbca7c6cdf607a24ad1ecdf7ab4be6667877cf7c34b3cf370a02efcfd07",
+    "billboard/rolling_contract/src/main.nr": "d9a95b1df3e764072019c94cf574cc39e57795cd159b2b6c915d6e455e958499",
+    "billboard/rolling_contract/src/posting.nr": "ee9864837ba6ea243afbf65779e7bb7cf5c49e41fe60c4443ff2b623051dd2e5",
+    "billboard/rolling_contract/src/posting_tests.nr": "a1905434c5acf419d2b8eb0eeeb46391d624d908bff8ab2459097142f251ef4f",
+    "billboard/rolling_contract/src/tests.nr": "a5a50346d645d4d90ffea0e3df2b6ceb311449176c63a48bec05d1f0b20f8002"
+  },
+  "postCompileChange": "Only TestEnvironment deployment string changed to installed cross-workspace resolver form; all89 tests retained and unexecuted."
 }
