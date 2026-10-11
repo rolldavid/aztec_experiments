@@ -17,6 +17,7 @@ const message='This operation could not be completed. Recovery records were pres
  */
 export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{}}){
  if(typeof loadRuntime!=='function'||typeof onPublicEffect!=='function')throw Error('Wallet panel configuration unavailable.');
+ const connectionFailure=Object.freeze({});
  let runtime,session,busy=false,blocked=false,invalidated=false,reloadRequired=false,returnFocus;
  let status=null,intent=null,identities=[],cursor=0,error='',notice='',draft={type:'post',subboard:'0',content:''};
  const dialog=el('dialog',{'aria-labelledby':'rolling-wallet-title','aria-describedby':'rolling-wallet-description'});
@@ -29,7 +30,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{}}){
  function note(text){live.textContent=text;}
  async function work(fn){
   if(busy)return;busy=true;error='';controlsBusy(true);
-  try{await fn();}catch{note('');error=!session&&unlocked()?'The private connection is unavailable. Your encrypted recovery is preserved. Reconnect when the service returns.':message;}finally{busy=false;render();}
+  try{await fn();}catch(failure){note('');error=failure===connectionFailure?'The private connection is unavailable. Your encrypted recovery is preserved. Reconnect when the service returns.':message;}finally{busy=false;render();}
  }
  function unlocked(){return runtime&&!invalidated&&!reloadRequired&&!!runtime.getAccount();}
  async function refresh(){
@@ -44,11 +45,13 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{}}){
   blocked=false;
  }
  async function connect(){
+  try{
   if(!session)session=await runtime.createSession({onProgress:progress=>{
    const stages={estimating:'Checking the action and its maximum fee…',submitting:'Proving and submitting. Keep this page open; do not send again.'};
    note(stages[progress?.stage]??'Checking the private account…');
   }});
   await refresh();
+  }catch{throw connectionFailure;}
  }
  async function unlock(){await work(async()=>{
   note('Loading private account tools…');

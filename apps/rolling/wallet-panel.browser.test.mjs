@@ -123,3 +123,17 @@ test('recovery import is explicit; quote, repost, like and unlike retain exact s
  }
  assert.equal((await counts(page)).sends,0);
 });
+
+
+test('failed export without a private connection is not misreported as a connection failure',async t=>{
+ const {page}=await browserFixture(t);await page.evaluate(()=>test.failure='session');await open(page);
+ await page.getByRole('button',{name:'Unlock',exact:true}).click();await page.getByRole('button',{name:'Connect private account'}).waitFor();
+ assert.match(await page.getByRole('alert').innerText(),/private connection is unavailable/);
+ await page.getByText('Backup and account security',{exact:true}).click();
+ await page.getByLabel('New recovery password',{exact:true}).fill('a new test-only password');
+ await page.evaluate(()=>test.failure='export');await page.getByRole('button',{name:'Download encrypted recovery'}).click();
+ await page.waitForFunction(()=>test.exports===1);
+ assert.match(await page.getByRole('alert').innerText(),/This operation could not be completed/);
+ assert.doesNotMatch(await page.getByRole('alert').innerText(),/private connection|PRIVATE_SENTINEL|GETTER_SENTINEL/);
+ assert.equal((await counts(page)).sessions,1);assert.equal((await counts(page)).sends,0);
+});
