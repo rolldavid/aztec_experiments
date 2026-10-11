@@ -39,21 +39,21 @@ function activity(actor){const value=actor.activity();exact(value,['authWitnesse
 /** Four sequential registrations; no simultaneous collision or global privacy
  * claim. Journal reopening reconstructs the application over its existing PXE;
  * it is not a device-loss, cold-PXE or seed-recovery exercise. */
-export async function exerciseRollingOwnedNames({actorA,actorB,actionA,actionB}){
+export async function exerciseRollingOwnedNames({actorA,actorB,actionA,actionB,onPhase=()=>{}}){
  assert(actorA&&actorB&&actorA!==actorB&&actorA.application!==actorB.application);assert.notEqual(actionA,actionB);
  for(const action of [actionA,actionB])assert.equal(typeof action,'function');
  for(const actor of [actorA,actorB]){for(const fn of ['activity','reopenJournal'])assert.equal(typeof actor[fn],'function');
   for(const fn of ['ownedIdentities','readAccountStatus'])assert.equal(typeof actor.application?.[fn],'function');assert(actor.journal);}
  const proposals=await Promise.all([expected('River','Stone'),expected('Ellis','Moss'),expected('Juniper','Vale'),expected('Morgan','Reed')]);
  assert.equal(new Set(proposals.map(n=>n.id)).size,4);
- const a=[],b=[];await owned(actorA,a);await owned(actorB,b);await collateralPending(actorB);
+ onPhase('setup');const a=[],b=[];await owned(actorA,a);await owned(actorB,b);await collateralPending(actorB);
  for(const [index,action,collection]of [[0,actionA,a],[1,actionA,a],[2,actionB,b],[3,actionB,b]]){
-  const name=proposals[index];event(await action({type:'name',first:name.first,last:name.last},'owned-name-'+(index+1)),name);collection.push(name);
+  onPhase(['a-name-1','a-name-2','b-name-1','b-name-2'][index]);const name=proposals[index];event(await action({type:'name',first:name.first,last:name.last},'owned-name-'+(index+1)),name);collection.push(name);
   await owned(actorA,a);await owned(actorB,b);
  }
  await collateralPending(actorB);
  for(const actor of [actorA,actorB]){
-  const before=[activity(actorA),activity(actorB)],journal=actor.journal;await actor.reopenJournal();assert(actor.journal&&actor.journal!==journal,'Journal must actually be reopened');
+  onPhase(actor===actorA?'recovery-a':'recovery-b');const before=[activity(actorA),activity(actorB)],journal=actor.journal;await actor.reopenJournal();assert(actor.journal&&actor.journal!==journal,'Journal must actually be reopened');
   await owned(actorA,a);await owned(actorB,b);
   assert.deepEqual([activity(actorA),activity(actorB)],before,'Complete journal reopen and both ownership rereads must not create witnesses, proofs or submissions in either actor');
  }

@@ -17,7 +17,7 @@ const discard=()=>{};
 const silent=Object.assign(discard,Object.fromEntries(['trace','debug','verbose','info','warn','error','fatal'].map(k=>[k,discard])),
   {level:'silent',isLevelEnabled:()=>false,getBindings:()=>({}),createChild:()=>silent});
 const PERSONAL=['feePayer','publicCallSenders','publicCallTargets','publicCallCalldata','publicWriteSlots','publicWriteValues','publicLogContracts','publicLogFields'];
-const SOURCES=['scripts/testing/rolling-owned-names.mjs','scripts/t03-public-footprint.mjs','scripts/testing/rolling-removed-like.mjs','scripts/testing/rolling-application-actor.mjs','scripts/testing/rolling-account-reactions.mjs','scripts/testing/rolling-social-acceptance.mjs','scripts/testing/rolling-profile-acceptance.mjs','experiments/avatar/raster-fixture.mjs','scripts/prove-application-action.mjs','scripts/testing/rolling-native-artifacts.mjs','scripts/testing/rolling-application-fixture.mjs','scripts/testing/scenarios.mjs','scripts/testing/scenario-flows.mjs',
+const SOURCES=['scripts/testing/rolling-wire-campaign.mjs','scripts/testing/rolling-wire-trace.mjs','scripts/testing/rolling-owned-names.mjs','scripts/t03-public-footprint.mjs','scripts/testing/rolling-removed-like.mjs','scripts/testing/rolling-application-actor.mjs','scripts/testing/rolling-account-reactions.mjs','scripts/testing/rolling-social-acceptance.mjs','scripts/testing/rolling-profile-acceptance.mjs','experiments/avatar/raster-fixture.mjs','scripts/prove-application-action.mjs','scripts/testing/rolling-native-artifacts.mjs','scripts/testing/rolling-application-fixture.mjs','scripts/testing/scenarios.mjs','scripts/testing/scenario-flows.mjs',
   'scripts/c01-real-node.mjs','scripts/c01-board-flow.mjs','scripts/c01-deposit-flow.mjs','scripts/c01-client-mining.mjs',
   'scripts/w01-private-fee-flow.mjs','scripts/w01-unfunded-wallet.mjs','scripts/w01-private-funding.mjs',
   'shared/sdk-entry.mjs','shared/private-pxe.mjs','shared/trusted-private-node.mjs','shared/routed-kernel-prover.mjs','shared/remote-prover-client.mjs',
@@ -147,8 +147,8 @@ export async function loadRollingFixtureSDK() {
 }
 
 export async function runRollingApplicationFixture(ctx,scenario='conversation') {
-  assert(['conversation','profiles','anonymous-thread','repost-reactions','account-reactions','owned-names'].includes(scenario));
-  const names=scenario==='owned-names',multi=scenario==='account-reactions'||names,social=['anonymous-thread','repost-reactions','account-reactions'].includes(scenario);
+  assert(['conversation','profiles','anonymous-thread','repost-reactions','account-reactions','owned-names','owned-names-wire'].includes(scenario));
+  const captureWire=scenario==='owned-names-wire',names=scenario==='owned-names'||captureWire,multi=scenario==='account-reactions'||names,social=['anonymous-thread','repost-reactions','account-reactions'].includes(scenario);
   const {ROOT,assertNodeVersion,assertAztecPackages}=await import('../toolchain.mjs');
   const directory=path.join(ROOT,'execution/evidence/G06','application-port-'+randomUUID());
   await fs.mkdir(directory,{mode:0o700});
@@ -161,6 +161,7 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
   const mark=async stage=>{if(ctx.applicationDeadlineAt!==undefined)assert(Date.now()<ctx.applicationDeadlineAt,'Parent campaign budget exhausted');report.stage=stage;ctx.mark?.('rolling-application:'+stage);await save();};
   const sourceBinding=async()=>Object.fromEntries(await Promise.all(SOURCES.map(async name=>[name,sha(await fs.readFile(path.join(ROOT,name)))])));
   let fees,feesB,actorA,actorB,activeActor,pxe,rpc,service,failure,restoreIndexedDB,nativeArtifacts,owner,appWallet,journal;
+  let wire,ordinaryRpc;
   let transportSends=0,feeTotalB=0n,fundingRole;
   let feeTotal=0n;const accounted=new Set();
   const accountFee=(hash,fee,other=false)=>{if(!accounted.has(hash)){assert(BigInt(fee)>0n);if(other)feeTotalB+=BigInt(fee);else feeTotal+=BigInt(fee);accounted.add(hash);}report.actualHumanFees=String(feeTotal+feeTotalB);};
@@ -268,6 +269,12 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
         proofs:real?'real':'disabled',origins:[],threads:1,queueDirectory:ctx.directory,crsPath:process.env.CRS_PATH,
         queryNode:{url:rpc.url,rollupAddress:network.rollup,maxLagSeconds:120}});
       endpoint=`http://127.0.0.1:${service.address.port}`;
+      if(captureWire){
+        ordinaryRpc=await startNodeRpc(ctx.node);
+        const {installRollingWireCampaign}=await import('./rolling-wire-campaign.mjs');
+        wire=installRollingWireCampaign({roles:{a:String(owner),b:String(feesB.authorAccount.address)}});
+        for(const [label,url]of [['trusted-query',endpoint],['trusted-proof',endpoint],['trusted-upstream',rpc.url],['ordinary-node',ordinaryRpc.url],['public-l1',ctx.config.l1RpcUrls[0]]])wire.registerEndpoint(label,url);
+      }
       await observe('adapters-started');
       await mark('trusted-client-construction');
       // HTTP is authorized only for this asserted chain31337 loopback fixture;
@@ -370,7 +377,7 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
         }
       if(names){
         const {exerciseRollingOwnedNames}=await import('./rolling-owned-names.mjs');
-        report.names=await exerciseRollingOwnedNames({actorA,actorB,actionA:(input,label)=>action(input,label,actorA),actionB:(input,label)=>action(input,label,actorB)});
+        report.names=await exerciseRollingOwnedNames({actorA,actorB,actionA:(input,label)=>action(input,label,actorA),actionB:(input,label)=>action(input,label,actorB),onPhase:phase=>wire?.setPhase(phase)});
         assert.equal(publicNameIds.length,4);assert.equal(new Set(publicNameIds).size,4);
         report.publicViews=publicNameIds.slice().sort().map(id=>projection.profile(id,{limit:100}));
         const {assertCanonicalOwnedNameProfiles}=await import('./rolling-public-acceptance.mjs');assertCanonicalOwnedNameProfiles(projection,report.publicViews);await save();
@@ -427,7 +434,7 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
       const jobsBefore=service.stats().submitted;
       report.journalReopen={sameHash:true,newProofJobs:0,transactionBytesRetained:true,actors:[]};
       for(const actor of [actorA,...(actorB?[actorB]:[])]){
-        const before=await actor.journal.inspectOutcome(),activity=actor.activity();
+        wire?.setPhase(actor===actorA?'recovery-a':'recovery-b');const before=await actor.journal.inspectOutcome(),activity=actor.activity();
         await actor.reopenJournal();const reconciled=await actor.application.reconcile(actorIntents.get(actor));
         assert.equal(reconciled.status,'confirmed');assert.equal(reconciled.txHash,before.txHash);
         assert.deepEqual(actor.activity(),activity);assert((await actor.journal.assertCanStart()).tx);
@@ -443,12 +450,12 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
       for(const row of [...report.transactions,...(report.avatarModeration?[report.avatarModeration]:[]),...(report.postModeration?[report.postModeration]:[])])assert.equal(String((await ctx.node.getBlockData(row.blockNumber)).blockHash),row.blockHash);
       assert.equal(String((await ctx.node.getBlockData(Number(report.initialPublicAnchor.blockNumber))).blockHash),report.initialPublicAnchor.blockHash);
       report.rebuild={passed:true,canonicalTransactionsRefetched:hashes.length,normalizedCacheTreatedAsAuthority:false};
-      await mark('canonical-public-http-reopen');report.publicReader={};await save();
+      wire?.setPhase('public-read');await mark('canonical-public-http-reopen');report.publicReader={};await save();
       const {verifyRollingPublicReader}=await import('./rolling-public-acceptance.mjs');
       await verifyRollingPublicReader({node:ctx.node,artifact:checked.artifact,
         scope:{chainId:network.chainId,rollupVersion:network.version,rollupAddress:network.rollup,boardAddress:String(ctx.instance.address),classId:String((await sdk.getContractClassFromArtifact(checked.artifact)).id)},
         deployment:{blockNumber:Number(report.initialPublicAnchor.blockNumber),blockHash:report.initialPublicAnchor.blockHash,txHash:report.initialPublicAnchor.txHash},
-        cacheDirectory:path.join(ctx.directory,'rolling-public-index'),ids,scenario,expectedProfiles:names?report.publicViews:undefined,expectedProfile:report.profiles?.expectedIdentity,expectedHTTP:report.social?.expectedHTTP,deadlineAt:ctx.applicationDeadlineAt,observation:report.publicReader});await save();
+        cacheDirectory:path.join(ctx.directory,'rolling-public-index'),ids,scenario:names?'owned-names':scenario,wire:wire?{nodeUrl:ordinaryRpc.url,artifactPath:path.join(ROOT,'billboard/target/rolling_contract-RollingBoard.json'),onReader:url=>wire.registerEndpoint('public-reader',url)}:undefined,expectedProfiles:names?report.publicViews:undefined,expectedProfile:report.profiles?.expectedIdentity,expectedHTTP:report.social?.expectedHTTP,deadlineAt:ctx.applicationDeadlineAt,observation:report.publicReader});await save();
       if(multi){const bStandalone=BigInt(feesB.standalone.transactionFee);await fees.verify(feeTotal,feesB.browserFixture.fundedAmount-bStandalone-feeTotalB);await feesB.verify(feeTotalB,fees.browserFixture.fundedAmount-feeTotal);assert.equal(fees.poolBefore,feesB.poolBefore);report.accountFees={a:String(feeTotal),b:String(feeTotalB)};}else await fees.verify(feeTotal);report.actualHumanFees=String(feeTotal+feeTotalB);report.proverJobs=service.stats();
       assert.equal(report.proverJobs.failed,0);if(names){assert.equal(report.proverJobs.completed,4);assert.equal(report.proverJobs.submitted,4);}
       else if(social){const expectedJobs=scenario==='anonymous-thread'?3:multi?6:4;assert.equal(report.proverJobs.completed,expectedJobs);assert.equal(report.proverJobs.submitted,expectedJobs);}
@@ -488,6 +495,7 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
       }
     }catch{report.failureEvidenceAvailability='incomplete';}
   }finally{
+    wire?.setPhase('cleanup');
     try{await closeRollingResources([
       ...(actorA?[['applicationActorA',()=>actorA.close()]]:[]),
       ...(actorB?[['applicationActorB',()=>actorB.close()]]:[]),
@@ -495,9 +503,12 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
       ...(feesB?[['fundingWalletB',()=>feesB.close()]]:[]),
       ...(service?[['proverAndQuery',async()=>{const port=service.address.port;await service.close();await closedPort(port);}]]:[]),
       ...(rpc?[['nodeRPC',()=>rpc.close()]]:[]),
+      ...(ordinaryRpc?[['ordinaryRPC',()=>ordinaryRpc.close()]]:[]),
+      ...(wire?[['wireCapture',()=>wire.close()]]:[]),
       ...(restoreIndexedDB?[['indexedDBGlobals',restoreIndexedDB]]:[]),
       ...(nativeArtifacts?[['nativeArtifactLoader',()=>{try{nativeArtifacts.close();}finally{report.nativeArtifacts=nativeArtifacts.observation();}}]]:[]),
     ],report.cleanup);}catch(error){report.passed=false;failure=failure?new AggregateError([failure,error],'Rolling fixture and cleanup failed'):error;}
+    if(wire){report.wire=wire.snapshot();try{if(!failure){const {assertRollingWireCampaign}=await import('./rolling-wire-campaign.mjs');report.wireAcceptance=assertRollingWireCampaign(report.wire);}}catch(error){report.passed=false;failure=error;}}
     try{await save();}catch(error){report.passed=false;failure=failure?new AggregateError([failure,error],'Rolling evidence failed'):error;}
   }
   if(failure){failure.rollingApplicationObservation=report;throw failure;}

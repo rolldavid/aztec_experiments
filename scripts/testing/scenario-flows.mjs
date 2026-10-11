@@ -368,3 +368,5 @@ export async function rollingRepostReactions(ctx){return (await import('./rollin
 export async function rollingAccountReactions(ctx){return (await import('./rolling-application-fixture.mjs')).runRollingApplicationFixture(ctx,'account-reactions');}
 
 export async function rollingOwnedNames(ctx){return (await import('./rolling-application-fixture.mjs')).runRollingApplicationFixture(ctx,'owned-names');}
+
+export async function rollingOwnedNamesWire(ctx){return (await import('./rolling-application-fixture.mjs')).runRollingApplicationFixture(ctx,'owned-names-wire');}

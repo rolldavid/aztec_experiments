@@ -5,7 +5,7 @@ import {createConnection} from 'node:net';
 import {createRollingPublicIndex} from '../../shared/rolling/public-index.mjs';
 import {publicFeedFileStorage} from '../../shared/public-feed-file-storage.mjs';
 import {serveRollingReaderAsset} from '../../apps/rolling/start.mjs';
-import {startRollingPublicServer} from '../rolling-public-server.mjs';
+import {startRollingPublicServer,createRollingPublicIndexFromConfig} from '../rolling-public-server.mjs';
 import {createPublicReader} from '../../apps/rolling/reader-client.mjs';
 const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 export function assertCanonicalSocialViews(projection,rows){
@@ -30,7 +30,7 @@ export function assertCanonicalOwnedNameProfiles(projection,profiles){
   assert.deepEqual(projection.profile(expected.identity.id,{limit:100}),expected);
  }
 }
-export async function verifyRollingPublicReader({node,artifact,scope,deployment,cacheDirectory,ids,scenario='conversation',expectedProfile,expectedProfiles,expectedHTTP,deadlineAt,observation}){
+export async function verifyRollingPublicReader({node,artifact,scope,deployment,cacheDirectory,ids,scenario='conversation',expectedProfile,expectedProfiles,expectedHTTP,deadlineAt,observation,wire}){
  assert(['conversation','profiles','anonymous-thread','repost-reactions','account-reactions','owned-names'].includes(scenario));
  const names=scenario==='owned-names';
  const social=['anonymous-thread','repost-reactions','account-reactions'].includes(scenario);
@@ -40,9 +40,9 @@ export async function verifyRollingPublicReader({node,artifact,scope,deployment,
  assert(Number.isSafeInteger(deadlineAt)&&deadlineAt>Date.now());
  const deadline=Math.min(deadlineAt,Date.now()+30000);
  const storage=()=>publicFeedFileStorage(cacheDirectory,{maxRecordBytes:1048576,maxSnapshotBytes:67108864});
- const make=timeoutMs=>createRollingPublicIndex({node,artifact,scope,deployment,storage:storage(),rangeSize:10,pagesPerSync:20,timeoutMs});
+ const make=async timeoutMs=>wire?(await createRollingPublicIndexFromConfig({nodeUrl:wire.nodeUrl,artifactPath:wire.artifactPath,scope,deployment,cacheDirectory,port:0})).index:createRollingPublicIndex({node,artifact,scope,deployment,storage:storage(),rangeSize:10,pagesPerSync:20,timeoutMs});
  const routes=names?[...expectedProfiles.map(p=>['profile',{nameId:p.identity.id,limit:100},{...p,names:{},boards:{}}]),['feed',{}, {posts:[],nextCursor:null,names:{},boards:{}}],['directory',{}, {boards:[],nextCursor:null}]]:social?expectedHTTP.map(row=>[row.route,row.parameters,row.expected]):scenario==='profiles'?[['profile',{nameId:ids.nameId}],['feed',{}],['directory',{}]]:[['feed',{}],['thread',{root:ids.rootId}],['profile',{nameId:ids.nameId}],['directory',{}],['post',{id:ids.replyId}]];
- let first;
+ let first,readerPort=0;
  observation.passed=false;observation.sessions=[];
  for(const phase of ['fresh','reopened']){
   const remaining=deadline-Date.now()-1500;assert(remaining>0,'No bounded public index budget remains');
@@ -50,8 +50,9 @@ export async function verifyRollingPublicReader({node,artifact,scope,deployment,
   if(phase==='reopened'){const stored=await storage().load(index.key,20000);assert(stored.head!==null&&stored.ranges.length>0);observation.persistedRangesBeforeReopen=stored.ranges.length;}
   assert.throws(()=>index.query('feed'),{code:'ROLLING_PUBLIC_NOT_READY'});
   const session={phase,closed:false};observation.sessions.push(session);
-  const server=await startRollingPublicServer({index,staticHandler:serveRollingReaderAsset,pollMs:30000});let failure;
+  const server=await startRollingPublicServer({index,staticHandler:serveRollingReaderAsset,pollMs:30000,port:readerPort});let failure;
   try{
+   if(wire){if(!readerPort){readerPort=Number(new URL(server.url).port);wire.onReader(server.url);}else assert.equal(Number(new URL(server.url).port),readerPort);}
    while(index.status().state!=='ready'){
     assert(Date.now()<deadline-1500,'Actual public index readiness deadline');
     assert.notEqual(index.status().state,'unavailable','Actual canonical index failed');await sleep(25);
