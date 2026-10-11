@@ -32,18 +32,26 @@ export const json = value => JSON.stringify(value, (_, item) => typeof item === 
 export function failureDiagnostic(error) {
   const empty = () => ({category: 'unclassified', frames: [], functions: []});
   try {
-    const message = String(error?.actual?.message ?? error?.message ?? '').slice(0, 8192);
+    const actual = error?.actual;
+    const sourceError = actual && typeof actual === 'object' ? actual : error;
+    const messageValue = sourceError?.message;
+    const message = typeof messageValue === 'string' ? messageValue.slice(0, 8192) : '';
+    const stackValue = sourceError?.stack;
+    const stack = typeof stackValue === 'string' ? stackValue.slice(0, 16384) : '';
     const categories = ['Request not expirable', 'Request not expired', 'Out of gas', 'Insufficient fee',
       'Could not price the next block at slot', 'Cannot predict the next block',
       'Cannot simulate public calls: world state and archiver disagree',
       'Transaction expired', 'Fee provider not started', 'Contract not found',
-      'Contract instance not found', 'Contract class not found'];
+      'Contract instance not found', 'Contract class not found',
+      'PXE note database is corrupted.', 'Attempted to mark a note as nullified which does not exist in PXE DB:',
+      'Could not find tx effect for tx hash', 'Obtained a newer tx effect',
+      'Speculative syncs failed, so the operation must discard its staged writes instead of committing',
+      'Cannot sync contract'];
     const files = new Set(['main.nr', 'public_mutable.nr', 'public_immutable.nr', 'private_context.nr',
       'public_context.nr', 'map.nr', 'mod.nr', 'utils.nr', 'serialize.nr', 'note_getter.nr']);
     const names = new Set(['request', 'balance_of', 'earned', 'expire', 'reserve', 'settle', 'reconcile',
       'claim', 'authorize_request', 'cancel', 'finish', 'withdraw', 'withdraw_earnings', 'subtract_more',
       '_open_escrow', '_cancel', 'on_invocation', 'invoke', 'target_hash', 'entrypoint']);
-    const sourceError = error?.actual?.getNoirCallStack ? error.actual : error;
     const rawFrames = sourceError?.getNoirCallStack?.() ?? [];
     const rawFunctions = sourceError?.getCallStack?.() ?? [];
     if (!Array.isArray(rawFrames) || !Array.isArray(rawFunctions)) return empty();
@@ -59,6 +67,18 @@ export function failureDiagnostic(error) {
       const name = frame?.functionName;
       return names.has(name) ? [name] : [];
     });
+    // Ordinary PXE errors precede Noir execution and have only a JS stack.
+    // Emit fixed installed filenames and bounded coordinates, never stack text.
+    const sdkFiles = new Set(['note_service.js', 'note_store.js', 'contract_sync_service.js',
+      'operation_lifecycle.js', 'operation_queue.js', 'contract_class_service.js',
+      'pxe.js', 'utility_execution_oracle.js', 'oracle.js', 'unconstrained_execution.js']);
+    for (const line of stack.split('\n').slice(1, 17)) {
+      if (frames.length >= 8) break;
+      const match = line.match(/(?:^|[\/])([a-z_]+\.js):(\d{1,7}):(\d{1,7})\)?$/);
+      if (!match || !sdkFiles.has(match[1])) continue;
+      const row = Number(match[2]), column = Number(match[3]);
+      if (coordinate(row) && coordinate(column)) frames.push({file: match[1], line: row, column});
+    }
     return {category: categories.find(value => message.includes(value)) ?? 'unclassified', frames, functions};
   } catch {
     // Diagnostics must never replace the original failure, even if an SDK

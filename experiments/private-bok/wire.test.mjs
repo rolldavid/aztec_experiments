@@ -84,3 +84,24 @@ test('changing getters cannot exchange validated diagnostic values for private d
     assert.deepEqual([lineReads, columnReads, fileReads, nameReads], [1, 1, 1, 1]);
   }
 });
+
+test('ordinary PXE note failures expose only fixed categories and installed source locations', () => {
+  const secret = 'private-account-and-note-sentinel';
+  const error = {message: 'Could not find tx effect for tx hash ' + secret,
+    stack: 'Error: ' + secret + '\n    at validate (/private/' + secret + '/note_service.js:137:23)\n    at ' + secret + ' (/tmp/' + secret + '.js:1:2)'};
+  assert.deepEqual(failureDiagnostic(error), {category: 'Could not find tx effect for tx hash',
+    frames: [{file: 'note_service.js', line: 137, column: 23}], functions: []});
+  assert(!JSON.stringify(failureDiagnostic(error)).includes(secret));
+});
+
+test('ordinary diagnostic accessors are captured once and source coordinates are bounded', () => {
+  let actualReads = 0, messageReads = 0, stackReads = 0;
+  const actual = {get message() {messageReads++; return 'PXE note database is corrupted.';},
+    get stack() {stackReads++; return 'Error\n    at x (/tmp/note_store.js:123:21)\n    at x (/tmp/pxe.js:9999999:2)';}};
+  const error = {get actual() {actualReads++; return actual;}};
+  assert.deepEqual(failureDiagnostic(error), {category: 'PXE note database is corrupted.',
+    frames: [{file: 'note_store.js', line: 123, column: 21}], functions: []});
+  assert.deepEqual([actualReads, messageReads, stackReads], [1, 1, 1]);
+  assert.deepEqual(failureDiagnostic({get stack() {throw Error('private');}}),
+    {category: 'unclassified', frames: [], functions: []});
+});
