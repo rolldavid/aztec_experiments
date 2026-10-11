@@ -218,7 +218,8 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
     async readProfile({name}={}){return exclusive(async()=>{
       await guard();const id=field(name,true),record=await utility(await contract(),'profile_state',[id]);
       let bioVersion,avatarVersion;
-      try{bioVersion=BigInt(record.bio_version);avatarVersion=BigInt(record.avatar_version);
+      try{check([record.bio_version,record.avatar_version].every(value=>typeof value==='string'&&/^0x[0-9a-f]{64}$/.test(value)),'ROLLING_INVALID_RESPONSE');
+        bioVersion=BigInt(record.bio_version);avatarVersion=BigInt(record.avatar_version);
         check(bioVersion>=0n&&bioVersion<=0xffffffffn&&avatarVersion>=0n&&avatarVersion<=0xffffffffn,'ROLLING_INVALID_RESPONSE');
       }catch{throw fail('ROLLING_INVALID_RESPONSE');}
       await guard();return {name:id,bioVersion:String(bioVersion),avatarVersion:String(avatarVersion)};

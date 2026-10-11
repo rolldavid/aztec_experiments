@@ -362,8 +362,8 @@ test('selected profile versions use the guarded private utility without public o
 });
 test('profile snapshots reject anonymous names and malformed or overflowing versions without saving an action',async()=>{
  for(const name of ['0','01',undefined]){const f=fixture();await assert.rejects(f.app.readProfile({name}));assert.equal(f.state.privateReads.length,0);}
- for(const value of [undefined,-1,4294967296]){
-  const f=fixture();f.state.profileState={bio_version:value,bio_digest:0n,bio_length:0,avatar_version:0,avatar_digest:0n,avatar_width:0,avatar_height:0,avatar_length:0};
+ for(const key of ['bio_version','avatar_version'])for(const value of [undefined,-1,4294967296,true,false,'',' ','0','01','+1','0x1',0,1]){
+  const f=fixture();f.state.profileState={bio_version:0n,bio_digest:0n,bio_length:0,avatar_version:0n,avatar_digest:0n,avatar_width:0,avatar_height:0,avatar_length:0,[key]:value};
   await assert.rejects(f.app.readProfile({name:'9'}));assert.equal(f.state.sends,0);assert.equal(f.values.size,0);
  }
 });
