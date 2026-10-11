@@ -214,7 +214,9 @@ export async function runRollingApplicationFixture(ctx) {
         proofs:real?'real':'disabled',origins:[],threads:1,queueDirectory:ctx.directory,crsPath:process.env.CRS_PATH,
         queryNode:{url:rpc.url,rollupAddress:network.rollup,maxLagSeconds:120}});
       const endpoint=`http://127.0.0.1:${service.address.port}`;
-      const node=await sdk.createTrustedPrivateNode({url:endpoint+'/v1/node',expectedNetworkScope:network,proofsEnabled:real,allowLocalDev:!real});
+      // HTTP is authorized only for this asserted chain31337 loopback fixture;
+      // transport permission is independent of the actual real-proof policy.
+      const node=await sdk.createTrustedPrivateNode({url:endpoint+'/v1/node',expectedNetworkScope:network,proofsEnabled:real,allowLocalDev:true});
       // Existing CLI storage adaptation: account keys remain in memory. This is
       // not a browser persistence/recovery qualification or a fake chain adapter.
       const idb=await import('fake-indexeddb');

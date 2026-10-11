@@ -81,5 +81,9 @@ test('fixture uses sole real journal send path, five actions and canonical decod
   assert(source.includes('app.submitPrepared(prepared.intentId)'));assert(source.includes('app.reconcile(lastIntent)'));
   assert(source.includes('for(const hash of hashes)rebuilt.stage(await decoder.decodeTransaction(ctx.node,hash)).apply()'));
   assert(!source.includes('setTime('));assert(!source.includes('nowSeconds:'));assert(!source.includes('runPrivateBokFixture('));
+  assert(source.includes('proofsEnabled:real,allowLocalDev:true'));
+  assert(source.includes('assert.equal(info.l1ChainId,31337);assert.equal(info.realProofs,real)'));
+  assert(source.includes("proofs:real?'real':'disabled'"));
+  assert(!source.includes('allowLocalDev:!real'));
   assert(source.includes('proverJobs.completed,5'));assert(source.includes('rollingApplicationObservation=report'));
 });
