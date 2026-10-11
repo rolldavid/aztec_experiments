@@ -120,3 +120,27 @@ test('RPC diagnostic frames reject secret and giant basenames and oversized coor
   const serialized=JSON.stringify(snapshot);assert(!serialized.includes(sentinel));assert(!serialized.includes('x'.repeat(100)));assert(Buffer.byteLength(serialized)<16384);
  }finally{await fixture?.close();await new Promise(resolve=>{upstream.close(resolve);upstream.closeAllConnections();});}
 });
+
+test('changing name and code getters cannot inject private or noncloneable diagnostic values',async()=>{
+ const upstream=http.createServer((req,res)=>{req.resume();res.end(JSON.stringify({jsonrpc:'2.0',id:1,result:'0x7a69'}));});
+ await new Promise(resolve=>upstream.listen(0,'127.0.0.1',resolve));
+ const sentinel='PRIVATE_SENTINEL';
+ let injected=sentinel,nameReads=0,codeReads=0,calls=0,fixture;
+ const original={message:'original getter failure',data:{unchanged:true},stack:'Error\n at f (/tmp/avm_simulator.js:8:3)'};
+ Object.defineProperties(original,{
+  name:{get(){return ++nameReads%2?'TypeError':injected;}},
+  code:{get(){return ++codeReads%2?'ENOENT':injected;}}
+ });
+ try{
+  fixture=await startU01BrowserRpc({node:{getBlockNumber:async()=>{calls++;throw original;}},anvilUrl:`http://127.0.0.1:${upstream.address().port}/`,ethereumAccount:account,origin,token});
+  for(const value of [sentinel,()=>sentinel]){
+   injected=value;nameReads=0;codeReads=0;
+   const response=await fetch(fixture.nodeUrl,{method:'POST',headers:{origin,'x-u01-test-token':token,'content-type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:1,method:'node_getBlockNumber',params:[]})});
+   assert.deepEqual((await response.json()).error,{code:-32702,message:'original getter failure',data:{unchanged:true}});
+   assert(nameReads>=2);assert(codeReads>=2);
+   const snapshot=fixture.failureSnapshot();assert.equal(snapshot.at(-1).errorClass,'Error');assert.equal(snapshot.at(-1).code,null);
+   assert.deepEqual(snapshot.at(-1).frames,['avm_simulator.js:8:3']);assert(!JSON.stringify(snapshot).includes(sentinel));
+  }
+  assert.equal(calls,2);assert.equal(fixture.failureSnapshot().length,2);
+ }finally{await fixture?.close();await new Promise(resolve=>{upstream.close(resolve);upstream.closeAllConnections();});}
+});

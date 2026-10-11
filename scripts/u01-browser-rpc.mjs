@@ -49,7 +49,13 @@ export async function startU01BrowserRpc({node,anvilUrl,ethereumAccount,origin,t
  // Keep only the existing sanitizer's class/code/frame projection. Its optional
  // process-snapshot details, messages, arguments and error data are not RPC evidence.
  function safeFailure(error){
-  try{const {errorClass,code,frames}=describeFailure(error);return {errorClass,code,frames:boundedFailureFrames(frames)};}
+  try{const {errorClass,code,frames}=describeFailure(error);
+   // The shared sanitizer may read accessor properties more than once. Validate
+   // captured values again so a changing getter cannot inject text or objects.
+   return {errorClass:['Error','AssertionError','TypeError','RangeError','SyntaxError'].includes(errorClass)?errorClass:'Error',
+    code:['HARNESS_SAMPLING_GAP','HARNESS_CLEANUP_TIMEOUT','BB_PROCESS_SNAPSHOT_FORMAT','ENOENT','EACCES','EPIPE'].includes(code)?code:null,
+    frames:boundedFailureFrames(frames)};
+  }
   catch{return {errorClass:'Error',code:null,frames:[]};}
  }
  function recordFailure(method,phase,error){
