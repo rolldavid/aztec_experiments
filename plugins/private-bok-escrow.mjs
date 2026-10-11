@@ -16,12 +16,14 @@ const requestFields = ['state','invocation_hash','sequence','deadline','budget',
 
 /** Existing pinned V6 SDK only; no wallet/node/service lifecycle is created here. */
 export async function createPrivateBokEscrow(options) {
- const [{Contract}, {Fr}, {AztecAddress}, {TxHash}, {getContractClassFromArtifact}, {deriveStorageSlotInMap}, {getFunctionReturnType}] = await Promise.all([
+ const [{Contract}, {Fr}, {AztecAddress}, {TxHash}, {getContractClassFromArtifact}, {deriveStorageSlotInMap}, {getFunctionReturnType}, {BBBundlePrivateKernelProver}, {BBLazyPrivateKernelProver}] = await Promise.all([
   import('@aztec-labs/aztec.js/contracts'), import('@aztec-labs/foundation/curves/bn254'),
   import('@aztec-labs/stdlib/aztec-address'), import('@aztec-labs/stdlib/tx'),
   import('@aztec-labs/stdlib/contract'), import('@aztec-labs/stdlib/hash'), import('@aztec-labs/stdlib/abi'),
+  import('@aztec-labs/bb-prover/client/bundle'), import('@aztec-labs/bb-prover/client/lazy'),
  ]);
- return createPrivateBokEscrowFactory({Contract, Fr, AztecAddress, TxHash, getContractClassFromArtifact, deriveStorageSlotInMap, getFunctionReturnType})(options);
+ return createPrivateBokEscrowFactory({Contract, Fr, AztecAddress, TxHash, getContractClassFromArtifact, deriveStorageSlotInMap, getFunctionReturnType,
+  isTrustedProver: prover => prover instanceof BBBundlePrivateKernelProver || prover instanceof BBLazyPrivateKernelProver})(options);
 }
 
 /** Dependency seam for labelled unit fakes. Production callers use createPrivateBokEscrow.
@@ -37,7 +39,7 @@ export async function createPrivateBokEscrow(options) {
 export function createPrivateBokEscrowFactory(sdk) {
  return async function({node,wallet,artifact,address,operator,board,network,requestId,target,store,lease,
   development=false,proofMode='real',timeoutMs=60000,pollMs=1000}) {
-  const {Contract,Fr,AztecAddress,TxHash,getContractClassFromArtifact,deriveStorageSlotInMap,getFunctionReturnType} = sdk;
+  const {Contract,Fr,AztecAddress,TxHash,getContractClassFromArtifact,deriveStorageSlotInMap,getFunctionReturnType,isTrustedProver} = sdk;
   assert.equal(typeof lease?.assertHeld, 'function'); assert.equal(typeof store?.read, 'function'); assert.equal(typeof store?.write, 'function');
   assert.equal(typeof development, 'boolean'); assert(['real','disabled'].includes(proofMode));
   assert(proofMode === 'real' || development, 'Disabled proofs require explicit local development');
@@ -78,7 +80,14 @@ export function createPrivateBokEscrowFactory(sdk) {
   const scope=value=>assert.equal(String(value),id,'Escrow request mismatch');
   const checkNetwork=async()=>{
    await held();const info=await node.getNodeInfo();
-   if(!development)assert.equal(info.realProofs,true,'Production node must verify real proofs');
+   // Pinned PXE private-in-TypeScript fields remain ordinary JS properties. Do not
+   // accept an unknown/custom prover or mistake a nonempty development blob for a proof.
+   assert.equal(wallet.pxe?.proverEnabled,true,'PXE proving pipeline must be enabled');
+   const prover=wallet.pxe.proofCreator;
+   assert(isTrustedProver(prover),'Unsupported local proof creator');
+   const configuredMode=prover.proofsEnabled===undefined?'real':prover.proofsEnabled===true?'real':prover.proofsEnabled===false?'disabled':null;
+   assert.equal(configuredMode,proofMode,'PXE proof mode mismatch');
+   assert.equal(info.realProofs,proofMode==='real','Node proof verification mode mismatch');
    assert.equal(String(info.l1ChainId),chainId,'Chain changed'); assert.equal(String(info.rollupVersion),version,'Rollup version changed');
    assert.equal(String(info.l1ContractAddresses.rollupAddress).toLowerCase(),rollup,'Rollup changed');
   };
@@ -103,10 +112,14 @@ export function createPrivateBokEscrowFactory(sdk) {
   const initial=await anchored();await wallet.registerContract(initial.instance,artifact);
   const contract=await Contract.at(addr,artifact,wallet); if(!store.read().privateBokEscrow)await save(journal());else journal();
   const inspect=async operationId=>{
-   assert(/^[0-9a-f]{64}$/.test(operationId));await checkNetwork();
-   const record=journal().operations[operationId];if(!record)return {status:'absent'};
+   assert(/^[0-9a-f]{64}$/.test(operationId));await held();
+   const record=journal().operations[operationId];if(!record){await checkNetwork();return {status:'absent'};}
    assert(methods.includes(record.method) && record.args?.[0]===id,'Invalid recorded operation');
    assert.equal(digest(record.args),record.argsDigest,'Recorded arguments changed');
+   // Current authority expires before the new read. Historical rows are evidence,
+   // never a substitute for receipt availability, canonicality or finality now.
+   await update(operationId,{result:{status:'pending',canonical:false},observation:{status:'inspecting'}});
+   await checkNetwork();
    if(!record.txHash)return {status:'pending',method:record.method,argsDigest:record.argsDigest,canonical:false};
    let receipt;
    try{receipt=await node.getTxReceipt(TxHash.fromString(record.txHash));}
@@ -128,6 +141,14 @@ export function createPrivateBokEscrowFactory(sdk) {
    assert(typeof receipt.transactionFee==='bigint'&&receipt.transactionFee>=0n,'Missing actual fee');
    assert.equal(effect.data.transactionFee.toBigInt(),receipt.transactionFee,'Effect fee mismatch');
    assert(['success','reverted'].includes(receipt.executionResult));assert.equal(effect.data.revertCode.isOK(),receipt.executionResult==='success','Effect result mismatch');
+   assert.equal(String((await node.getBlock(receipt.blockNumber))?.hash),String(receipt.blockHash),'Receipt block changed during inspection');
+   const included={...observation,txHash:record.txHash,canonicalAtObservation:true};
+   const history=journal().operations[operationId].includedHistory??[];
+   if(!history.some(row=>digest(row)===digest(included))){
+    // Stop on excessive distinct observations instead of silently dropping fees.
+    assert(history.length<8,'Included receipt history limit; retain journal for reconciliation');
+    await update(operationId,{includedHistory:[...history,included]});
+   }
    if(finality==='finalized'?receipt.status!=='finalized':!['checkpointed','proven','finalized'].includes(receipt.status))return {status:'pending',canonical:false,method:record.method,argsDigest:record.argsDigest};
    const tip=await node.getBlock(finality);assert(tip&&Number(tip.number)>=Number(receipt.blockNumber),'Finality unavailable');
    // Recheck the configured class and state against the same required finality.
@@ -185,7 +206,7 @@ export function createPrivateBokEscrowFactory(sdk) {
     return {status:'pending',canonical:false,method,argsDigest,txHash:hash};
    }catch{if(!poisoned)await update(operationId,{failure:'operation-unresolved'});throw Error('Escrow operation unresolved; inspect original intent');}
   };
-  const port={identity,mode:Object.freeze({proofMode,finality,controlledSettlement:development}),
+  const port={identity,mode:Object.freeze({proofMode,nodeVerifiesProofs:proofMode==='real',pxeProofMode:proofMode,finality,controlledSettlement:development}),
    request:exclusive(async value=>{scope(value);const {instance,...result}=await anchored();return result;}),
    assertUsable:exclusive(usable),inspectOperation:exclusive(inspect),
    reserve:exclusive((request,callId,maximum,operation)=>send('reserve',[request,sequence(callId),amount(maximum)],operation)),
