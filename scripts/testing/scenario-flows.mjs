@@ -325,6 +325,10 @@ export async function rollingBokPost(ctx) {
   return (await import('./rolling-bok-fixture.mjs')).runRollingBokFixture(ctx);
 }
 
+export async function rollingApplicationPort(ctx) {
+  return (await import('./rolling-application-fixture.mjs')).runRollingApplicationFixture(ctx);
+}
+
 export async function privateBokProvider(ctx) {
   return (await import('./private-bok-fixture.mjs')).runPrivateBokFixture(ctx, 'provider', 'private');
 }

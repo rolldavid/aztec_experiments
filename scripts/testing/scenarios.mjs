@@ -3,6 +3,7 @@ const run = name => async ctx => (await import('./scenario-flows.mjs'))[name](ct
 
 // Explicit named scenarios. Unknown names fail; there are no compatibility aliases.
 const records = [
+  Object.freeze({name:'rolling-application-port',deadlineMs:540000,fixtureHeapMiB:768,evidenceTask:'G05',description:'Actual trusted wallet application actions, encrypted recovery and canonical public projection',fixture:'activated-board',boardProfile:'rolling',authors:1,applicationThreads:1,browser:'none',run:run('rollingApplicationPort')}),
   Object.freeze({name:'trusted-query-policy',deadlineMs:180000,evidenceTask:'G14',description:'Actual disabled SDK node through HTTP trusted-query service rejects mismatched real-proof policy',fixture:'included-board',authors:1,applicationThreads:1,browser:'none',run:run('trustedQueryPolicy')}),
   Object.freeze({name:'private-bok-provider',deadlineMs:540000,evidenceTask:'G14',controlledSettlement:true,observeNodeCalls:true,providerRecovery:true,description:'One real model call with private escrow, durable process recovery and actual refund redemption',fixture:'included-board',authors:1,applicationThreads:1,browser:'none',run:run('privateBokProvider')}),
   Object.freeze({name:'rolling-bok-post',deadlineMs:540000,fixtureHeapMiB:768,observeNodeCalls:true,evidenceTask:'G06',description:'Funded private RollingBoard post with actual Bok activation and mined rollback',fixture:'activated-board',boardProfile:'rolling',authors:1,applicationThreads:1,browser:'none',run:run('rollingBokPost')}),

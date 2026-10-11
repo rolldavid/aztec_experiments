@@ -83,6 +83,7 @@ export async function qualifyC01RealNode({config,deployment,genesis,directory,pr
       else observation.inclusion=error.inclusionObservation;
     }
     if(error.trustedQueryObservation)observation.scenario=error.trustedQueryObservation;
+    if(error.rollingApplicationObservation)observation.bridge=error.rollingApplicationObservation;
     error.nodeObservation=observation;throw error;
   }finally{
     try{if(node){await node.stop();observation.nodeStopped=true;}}
