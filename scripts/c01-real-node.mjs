@@ -55,7 +55,7 @@ export async function qualifyC01RealNode({config,deployment,genesis,directory,pr
       const {proveC01BoardDeployment}=await import('./c01-board-flow.mjs');
       observation.board=await proveC01BoardDeployment(node,preparation,{rollupAddress:ctx.rollupAddress,rollupVersion:deployment.rollupVersion,directory,reportStage:mark});assert(observation.board.passed);
       const {includeC01Board}=await import('./c01-board-inclusion.mjs');
-      mark('board-inclusion');observation.inclusion=await includeC01Board({node,tx:observation.board.tx,rpcUrl:config.l1RpcUrls[0],dateProvider});assert(observation.inclusion.passed);
+      mark('board-inclusion');observation.inclusion=await includeC01Board({node,tx:observation.board.tx,rpcUrl:config.l1RpcUrls[0],dateProvider,diagnostic:scenario.name==='sequencer-inclusion-diagnostic'});assert(observation.inclusion.passed);
       Object.assign(ctx,{instance:observation.board.instance,inclusion:observation.inclusion});observation.sequencerStarted=true;
       if(scenario.fixture==='activated-board'){
         const {prepareAndProveC01Ready}=await import('./c01-ready-flow.mjs');

@@ -42,6 +42,7 @@ const records = [
     fixture: 'node', authors: 1, applicationThreads: 1, browser: 'none',
     run: run('fixtureOnly'),
   }),
+  Object.freeze({name:'sequencer-inclusion-diagnostic',deadlineMs:120000,evidenceTask:'G14',description:'Bounded sequencer baseline diagnostic; no funding or product acceptance',fixture:'included-board',authors:1,applicationThreads:1,browser:'none',run:run('fixtureOnly')}),
   Object.freeze({
     name: 'included-board', deadlineMs: 120000, evidenceTask: 'C01',
     description: 'Genuine board deployment and ordinary inclusion',

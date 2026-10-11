@@ -1,17 +1,20 @@
 // TEST ONLY: ordinary sequencer inclusion. Does not mark/prove/finalize any checkpoint.
 import assert from 'node:assert/strict';
+import {observeSequencer} from './testing/sequencer-observation.mjs';
 import {synchronizeC01MinedClock} from './c01-client-mining.mjs';
 import {createPublicClient,http} from 'viem';
 import {foundry} from 'viem/chains';
 import {TxStatus,TxExecutionResult} from '@aztec-labs/stdlib/tx';
 const pause=ms=>new Promise(resolve=>setTimeout(resolve,ms));
-export async function includeC01Board({node,tx,rpcUrl,dateProvider,startSequencer=true}){
+export async function includeC01Board({node,tx,rpcUrl,dateProvider,startSequencer=true,diagnostic=false}){
   const rpc=new URL(rpcUrl);assert.equal(rpc.hostname,'127.0.0.1');
   const client=createPublicClient({chain:foundry,transport:http(rpcUrl,{retryCount:0,timeout:5000})});
   assert.equal(await client.getChainId(),31337);
   const start=await client.getBlock();
   const observation={passed:false,txHash:tx.getTxHash().toString(),adjustments:[],
     initialClockLeadSeconds:synchronizeC01MinedClock(dateProvider,Number(start.timestamp))};
+  const probe=diagnostic?observeSequencer(node):undefined;
+  if(probe)observation.diagnostic=probe.observation;
   try{
   assert(node.validatorClient,'Actual validator client absent');
   await node.validatorClient.registerHandlers();
@@ -19,9 +22,10 @@ export async function includeC01Board({node,tx,rpcUrl,dateProvider,startSequence
   await node.sendTx(tx);
   if(startSequencer)await node.getSequencer().start();
   const adjustments=observation.adjustments;
-  const deadline=Date.now()+120000;
+  const deadline=Date.now()+(diagnostic?60000:120000);
   let receipt;
   while(Date.now()<deadline){
+    if(probe)await probe.sample();
     receipt=await node.getTxReceipt(tx.getTxHash());
     observation.status=receipt.status;observation.executionResult=receipt.executionResult;
     observation.sequencerState=node.getSequencer().getSequencer().getState();
@@ -41,5 +45,5 @@ export async function includeC01Board({node,tx,rpcUrl,dateProvider,startSequence
     blockNumber:String(receipt.blockNumber),transactionFee:String(receipt.transactionFee),
     ordinarySequencer:true,syntheticSettlement:false,epochProofAccepted:false,
     clockProfile:'controlled disposable L1 mining and node clock synchronization; no throughput/finality claim',adjustments});
-  }catch(error){error.inclusionObservation=observation;throw error;}
+  }catch(error){error.inclusionObservation=observation;throw error;}finally{probe?.stop();}
 }
