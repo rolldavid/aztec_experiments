@@ -25,6 +25,8 @@ const SOURCES=['scripts/testing/rolling-application-fixture.mjs','scripts/testin
   'shared/sdk-store.mjs','shared/transaction-outcomes.mjs','apps/src/billboard/user/engine.js','apps/src/billboard/user/transaction-journal-store.mjs',
   'prover/service.mjs','prover/server.mjs','prover/private-query.mjs','prover/catalog.mjs','prover/rolling-artifacts.mjs','prover/rolling-artifacts.json',
   'apps/src/billboard/private_fee_artifact.json',
+  'scripts/testing/rolling-public-acceptance.mjs','shared/rolling/public-index.mjs','shared/public-feed-file-storage.mjs',
+  'scripts/rolling-public-server.mjs','apps/rolling/start.mjs','apps/rolling/reader-client.mjs',
   'toolchain.json','package-lock.json'];
 
 // Small pure acceptance seams; unit fixtures are explicitly development-only.
@@ -354,6 +356,12 @@ export async function runRollingApplicationFixture(ctx) {
       for(const row of report.transactions)assert.equal(String((await ctx.node.getBlockData(row.blockNumber)).blockHash),row.blockHash);
       assert.equal(String((await ctx.node.getBlockData(Number(report.initialPublicAnchor.blockNumber))).blockHash),report.initialPublicAnchor.blockHash);
       report.rebuild={passed:true,canonicalTransactionsRefetched:hashes.length,normalizedCacheTreatedAsAuthority:false};
+      await mark('canonical-public-http-reopen');report.publicReader={};await save();
+      const {verifyRollingPublicReader}=await import('./rolling-public-acceptance.mjs');
+      await verifyRollingPublicReader({node:ctx.node,artifact:checked.artifact,
+        scope:{chainId:network.chainId,rollupVersion:network.version,rollupAddress:network.rollup,boardAddress:String(ctx.instance.address),classId:String((await sdk.getContractClassFromArtifact(checked.artifact)).id)},
+        deployment:{blockNumber:Number(report.initialPublicAnchor.blockNumber),blockHash:report.initialPublicAnchor.blockHash,txHash:report.initialPublicAnchor.txHash},
+        cacheDirectory:path.join(ctx.directory,'rolling-public-index'),ids,deadlineAt:ctx.applicationDeadlineAt,observation:report.publicReader});await save();
       await fees.verify(feeTotal);report.actualHumanFees=String(feeTotal);report.proverJobs=service.stats();
       assert.equal(report.proverJobs.failed,0);assert.equal(report.proverJobs.completed,5);assert.equal(report.proverJobs.submitted,5);
       assert.equal(report.proverJobs.running,false);
