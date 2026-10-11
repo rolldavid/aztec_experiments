@@ -5,7 +5,7 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import http from 'node:http';
 import path from 'node:path';
-import {assertRollingApplicationViews,assertRollingPublicFootprint,closeRollingResources,loadRollingFixtureSDK,observeRollingReadiness} from './rolling-application-fixture.mjs';
+import {classifyRollingApplicationFootprint,recordRollingFundingFailure,assertRollingApplicationViews,assertRollingPublicFootprint,closeRollingResources,loadRollingFixtureSDK,observeRollingReadiness} from './rolling-application-fixture.mjs';
 import {createRollingProjection} from '../../shared/rolling/public-projection.mjs';
 import {createFileJournalStorage} from '../../apps/src/billboard/user/transaction-journal-store.mjs';
 import {createEncryptedJournalSlot} from '../../shared/journal-record.mjs';
@@ -78,7 +78,7 @@ test('fixture uses sole real journal send path, five actions and canonical decod
   assert(source.indexOf('report.setupMining.clientMining.stopped,true')<source.indexOf("await mark('real-wall-clock-readiness')"));
   assert(source.indexOf("await mark('real-wall-clock-readiness')")<source.indexOf('observation:report.applicationMining'));
   assert.equal((source.match(/await prepareW01PrivateFees\(/g)||[]).length,2);
-  assert(source.includes("if(multi){feesB=await prepareW01PrivateFees"));
+  assert(source.includes("if(multi){fundingRole='b';feesB=await prepareW01PrivateFees"));
   assert(source.includes("assert(!feesB.authorAccount.address.equals(owner))"));
   for(const type of ['name','subboard','post','reply','like'])assert(source.includes(`await action({type:'${type}'`));
   assert(source.includes('app.submitPrepared(prepared.intentId)'));assert(source.includes('actor.application.reconcile(actorIntents.get(actor))'));
@@ -133,4 +133,25 @@ test('native loader cleanup remains after PXE and prover owners, including their
   const sentinel=Error('labelled PXE cleanup failure'),observation={};
   await assert.rejects(closeRollingResources([['pxe',async()=>{throw sentinel;}],['nativeArtifacts',()=>adapter.close()]],observation),e=>e.errors[0]===sentinel);
   assert.equal(adapter.observation().closed,true);assert.equal(observation.nativeArtifacts,true);
+});
+
+// Fault-injected public funding evidence; no actual payment in this unit test.
+test('second actor paid setup failure retains first funding history and all cleanup attempts',async()=>{
+ const paidA={funding:{l1TxHash:'synthetic-paid-a'},passed:true},paidB={funding:{l1TxHash:'synthetic-paid-b'},walletCleanup:'closed',passed:false};
+ const report={privateFees:paidA,cleanup:{}};recordRollingFundingFailure(report,'b',paidB);
+ assert.equal(report.privateFees,paidA);assert.equal(report.secondPrivateFees,paidB);assert.equal(report.fundingFailure.observation,paidB);
+ const seen=[];await closeRollingResources([['fundingWallet',async()=>seen.push('a')],['remainingService',async()=>seen.push('service')]],report.cleanup);
+ assert.deepEqual(seen,['a','service']);assert.deepEqual(report.cleanup,{fundingWallet:true,remainingService:true});
+ const later={passed:false};recordRollingFundingFailure(report,undefined,later);assert.equal(report.privateFees,paidA);assert.equal(report.secondPrivateFees,paidB);
+});
+
+test('actual SDK footprint composition uses both supported human roles',async()=>{
+ const {Tx,TxEffect,HashedValues}=await import('@aztec-labs/stdlib/tx');
+ const {AztecAddress}=await import('@aztec-labs/stdlib/aztec-address');const {Fr}=await import('@aztec-labs/foundation/curves/bn254');
+ const tx=Tx.random(),effect=TxEffect.empty(),owner=AztecAddress.fromBigIntUnsafe(101n),otherOwner=AztecAddress.fromBigIntUnsafe(102n),payer=AztecAddress.fromBigIntUnsafe(202n),board=AztecAddress.fromBigIntUnsafe(303n);
+ effect.txHash=tx.getTxHash();tx.data.feePayer=payer;
+ tx.publicFunctionCalldata.push(new HashedValues([owner.toField(),otherOwner.toField()],new Fr(600)));
+ const result=classifyRollingApplicationFootprint({tx,effect,owner,otherOwner,payer,board});
+ assert.equal(result.sharedFeePayer,true);assert.equal(result.rolePresence.publicCallCalldata.author,true);assert.equal(result.rolePresence.publicCallCalldata.otherAuthor,true);
+ for(const key of ['author','otherAuthor'])assert.equal(result.rolePresence.feePayer[key],false);
 });

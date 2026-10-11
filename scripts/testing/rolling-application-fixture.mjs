@@ -3,6 +3,7 @@
 // two HTTP adapters and its private wallet state.
 // No fake node, proof, freshness, receipt, event or production factory is injected.
 import assert from 'node:assert/strict';
+import {classifyT03PublicFootprint} from '../t03-public-footprint.mjs';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import http from 'node:http';
@@ -30,6 +31,17 @@ const SOURCES=['scripts/testing/rolling-removed-like.mjs','scripts/testing/rolli
   'toolchain.json','package-lock.json'];
 
 // Small pure acceptance seams; unit fixtures are explicitly development-only.
+export function classifyRollingApplicationFootprint({tx,effect,owner,otherOwner,payer,board}){
+  return classifyT03PublicFootprint({tx,effect,roles:{author:owner,...(otherOwner?{otherAuthor:otherOwner}:{}),sharedPayer:payer,board}});
+}
+export function recordRollingFundingFailure(report,role,observation){
+  assert(role===undefined||role==='a'||role==='b');
+  assert(observation&&typeof observation==='object');
+  const key=role==='a'?'privateFees':role==='b'?'secondPrivateFees':null;
+  if(key&&!Object.hasOwn(report,key))report[key]=observation;
+  // Never replace completed public funding history when a later role fails.
+  report.fundingFailure={role:role??'unattributed',observation};
+}
 export function assertRollingApplicationViews(projection,{nameId,subboardId,rootId,replyId}) {
   const root=projection.post(rootId),reply=projection.post(replyId);
   assert.equal(projection.postCount,2);
@@ -149,7 +161,7 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
   const mark=async stage=>{if(ctx.applicationDeadlineAt!==undefined)assert(Date.now()<ctx.applicationDeadlineAt,'Parent campaign budget exhausted');report.stage=stage;ctx.mark?.('rolling-application:'+stage);await save();};
   const sourceBinding=async()=>Object.fromEntries(await Promise.all(SOURCES.map(async name=>[name,sha(await fs.readFile(path.join(ROOT,name)))])));
   let fees,feesB,actorA,actorB,activeActor,pxe,rpc,service,failure,restoreIndexedDB,nativeArtifacts,owner,appWallet,journal;
-  let transportSends=0,feeTotalB=0n;
+  let transportSends=0,feeTotalB=0n,fundingRole;
   let feeTotal=0n;const accounted=new Set();
   const accountFee=(hash,fee,other=false)=>{if(!accounted.has(hash)){assert(BigInt(fee)>0n);if(other)feeTotalB+=BigInt(fee);else feeTotal+=BigInt(fee);accounted.add(hash);}report.actualHumanFees=String(feeTotal+feeTotalB);};
   try {
@@ -187,15 +199,14 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
     const {startProverService}=await import('../../prover/service.mjs');
     const {createRollingEventDecoder,isRollingEvent}=await import('../../shared/rolling/public-events.mjs');
     const {createRollingProjection}=await import('../../shared/rolling/public-projection.mjs');
-    const {classifyT03PublicFootprint}=await import('../t03-public-footprint.mjs');
     let claim,bokInstance;report.setupMining={};
     await withC01ClientMining({rpcUrl:ctx.config.l1RpcUrls[0],dateProvider:ctx.dateProvider,observation:report.setupMining},async mineL1=>{
       await mark('private-fee-funding');
-      fees=await prepareW01PrivateFees({...ctx,rpcUrl:ctx.config.l1RpcUrls[0],mineL1,standalone:!multi,
+      fundingRole='a';fees=await prepareW01PrivateFees({...ctx,rpcUrl:ctx.config.l1RpcUrls[0],mineL1,standalone:!multi,
         fundingDirectory:path.join(ctx.directory,'rolling-app-funding'),reportStage:ctx.mark});
       report.privateFees=fees;owner=fees.authorAccount.address;
-      if(multi){feesB=await prepareW01PrivateFees({...ctx,rpcUrl:ctx.config.l1RpcUrls[0],mineL1,standalone:true,fundingDirectory:path.join(ctx.directory,'rolling-app-funding-b'),reportStage:ctx.mark});report.secondPrivateFees=feesB;assert(!feesB.authorAccount.address.equals(owner));assert(feesB.browserFixture.instance.address.equals(fees.browserFixture.instance.address));}
-      const setupWallet=fees.browserFixture.wallet;
+      if(multi){fundingRole='b';feesB=await prepareW01PrivateFees({...ctx,rpcUrl:ctx.config.l1RpcUrls[0],mineL1,standalone:true,fundingDirectory:path.join(ctx.directory,'rolling-app-funding-b'),reportStage:ctx.mark});report.secondPrivateFees=feesB;assert(!feesB.authorAccount.address.equals(owner));assert(feesB.browserFixture.instance.address.equals(fees.browserFixture.instance.address));}
+      fundingRole=undefined;const setupWallet=fees.browserFixture.wallet;
       await mark('collateral-claim');
       claim=await depositAndClaimC01({...ctx,node:setupWallet.aztecNode,rpcUrl:ctx.config.l1RpcUrls[0],mineL1,reportStage:ctx.mark,
         authorAccount:fees.authorAccount,claimWallet:setupWallet,payerMode:'private',privateFeeAction:fees.privateFeeAction});
@@ -305,8 +316,8 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
         assert.equal(result.status,'confirmed');assert.equal(receipt.executionResult,'success');assert(BigInt(receipt.transactionFee)>0n);
         assert(effect?.data);assert.equal(String(effect.l2BlockHash),String(receipt.blockHash));assert.equal(Number(effect.l2BlockNumber),Number(receipt.blockNumber));
         const saved=await journal.assertCanStart();assert.equal(String(saved.tx.getTxHash()),outcome.txHash);
-        row.publicFootprint=classifyT03PublicFootprint({tx:saved.tx,effect:effect.data,roles:{author:owner,...(actorB?{otherHuman:actorB.owner}:{}),sharedPayer:fees.browserFixture.instance.address,board:ctx.instance.address}});
-        await save();assertRollingPublicFootprint(row.publicFootprint);if(actorB)for(const category of PERSONAL)assert.equal(row.publicFootprint.rolePresence[category].otherHuman,false);
+        row.publicFootprint=classifyRollingApplicationFootprint({tx:saved.tx,effect:effect.data,owner,otherOwner:actorB?.owner,payer:fees.browserFixture.instance.address,board:ctx.instance.address});
+        await save();assertRollingPublicFootprint(row.publicFootprint);if(actorB)for(const category of PERSONAL)assert.equal(row.publicFootprint.rolePresence[category].otherAuthor,false);
         const events=await decoder.decodeTransaction(ctx.node,outcome.txHash);projection.stage(events).apply();hashes.push(outcome.txHash);
         row.events=events.map(e=>e.type);row.submission='included';await save();return events;
       }
@@ -352,8 +363,8 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
           // Preserve actual inclusion and paid effects even when execution reverted.
           assert.equal(receipt.executionResult,'success');
           assert.equal(before-after,BigInt(receipt.transactionFee));assert(BigInt(receipt.transactionFee)>0n);
-          row.publicFootprint=classifyT03PublicFootprint({tx,effect:effect.data,roles:{author:owner,...(actorB?{otherHuman:actorB.owner}:{}),sharedPayer:fees.browserFixture.instance.address,board:ctx.instance.address}});
-          for(const category of PERSONAL){assert.equal(row.publicFootprint.rolePresence[category].author,false);if(actorB)assert.equal(row.publicFootprint.rolePresence[category].otherHuman,false);}
+          row.publicFootprint=classifyRollingApplicationFootprint({tx,effect:effect.data,owner,otherOwner:actorB?.owner,payer:fees.browserFixture.instance.address,board:ctx.instance.address});
+          for(const category of PERSONAL){assert.equal(row.publicFootprint.rolePresence[category].author,false);if(actorB)assert.equal(row.publicFootprint.rolePresence[category].otherAuthor,false);}
           const events=await decoder.decodeTransaction(ctx.node,String(hash));projection.stage(events).apply();hashes.push(String(hash));row.events=events.map(e=>e.type);await save();return events;
         }
       if(scenario==='profiles'){
@@ -379,7 +390,7 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
           assert.equal(root.length,1);assert.equal(root[0].type,'PostPublished');const postId=root[0].payload.id;
           const {createRemovedLikeClassifier}=await import('./rolling-removed-like.mjs');
           const isRemovedPostRejection=await createRemovedLikeClassifier({artifact:checked.artifact,boardAddress:ctx.instance.address});
-          const actorOptions=actor=>({action:(input,label)=>action(input,label,actor),prepare:async input=>{await mark('removed-like-rejection');return actor.application.prepare(input);},activity:actor.activity,isRemovedPostRejection});
+          const actorOptions=actor=>({action:(input,label)=>action(input,label,actor),prepare:async input=>{activeActor=actor;await mark('removed-like-rejection');return actor.application.prepare(input);},activity:actor.activity,isRemovedPostRejection});
           const {exerciseRollingAccountReactions}=await import('./rolling-account-reactions.mjs');
           const result=await exerciseRollingAccountReactions({postId,actorA:actorOptions(actorA),actorB:actorOptions(actorB),moderatePost:options.moderatePost,projection});
           report.social={...result,privateTransactions:6,expectedHTTP:captureRollingAnonymousHTTPViews(projection,[postId],[[postId,[postId]]])};
@@ -449,7 +460,7 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
     // Keep only fixed/public observation schemas. Never raw SDK error/cause/stack.
     report.failure={stage:report.stage,code:['BB_TRUSTED_NODE_CONFIG','BB_TRUSTED_NODE_UNAVAILABLE','BB_TRUSTED_NODE_STALE','BB_TRUSTED_NODE_UNSYNCED','BB_TRUSTED_NODE_IDENTITY','BB_REMOTE_PROVER_TIMEOUT','BB_REMOTE_PROVER_FAILED','ROLLING_FEE_CHANGED'].includes(error?.code)?error.code:'UNCLASSIFIED'};
     if(error.depositObservation)report.collateral=error.depositObservation;
-    if(error.privateFeeObservation)report.privateFees=error.privateFeeObservation;
+    if(error.privateFeeObservation)recordRollingFundingFailure(report,fundingRole,error.privateFeeObservation);
     // Failed submit can still have consumed a fee. Read-only canonical observation,
     // no replacement, reproof or resend. Never treat this as application success.
     if(activeActor)try{
