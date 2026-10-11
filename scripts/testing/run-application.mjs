@@ -58,7 +58,12 @@ export async function runApplication(name) {
       control={ethereumWallet:scenario.ethereumWallet??'disposable',browserEngine:scenario.browserEngine,browserMode:scenario.browser,origin:'https://127.0.0.1:'+port,rpcToken:randomBytes(32).toString('hex'),backupPassword:randomBytes(32).toString('base64url')};
     }
     const {crs,profile}=await prepareRuntime(directory,scenario,report);
-    const exit=await supervisor.start('fixture','/usr/bin/sandbox-exec',['-f',profile,process.execPath,'--max-old-space-size=384',ENTRY,'fixture-worker',name,directory],{
+    // The combined Rolling/escrow fixture outgrew the legacy 384MiB V8 heap.
+    // This allocation stays inside the independently enforced whole-tree RSS gate.
+    const fixtureHeapMiB=scenario.fixtureHeapMiB??384;
+    assert(Number.isSafeInteger(fixtureHeapMiB)&&fixtureHeapMiB>=384&&fixtureHeapMiB<=768);
+    report.fixtureHeapMiB=fixtureHeapMiB;
+    const exit=await supervisor.start('fixture','/usr/bin/sandbox-exec',['-f',profile,process.execPath,'--max-old-space-size='+fixtureHeapMiB,ENTRY,'fixture-worker',name,directory],{
       cwd:ROOT,env:{BOARD_TEST_PROOFS:process.env.BOARD_TEST_PROOFS??'real',BOARD_TEST_REMOTE:process.env.BOARD_TEST_REMOTE??'0',HOME:directory,TMPDIR:directory,PATH:path.dirname(process.execPath)+':/usr/bin:/bin',LOG_LEVEL:'silent',LOG_JSON:'1',LANG:'C',HARDWARE_CONCURRENCY:'1',C01_APPLICATION_BB_THREADS:String(scenario.applicationThreads),NODE_BACKEND:'js',FORGE_BIN:'/Users/zac/.foundry/bin/forge',C01_NETWORK_ROOT:directory,C01_ACVM_ROOT:path.join(directory,'acvm'),CRS_PATH:crs,FORGE_BROADCAST_TIMEOUT_MS:'240000',FOUNDRY_SOLC:'/Users/zac/Library/Application Support/svm/0.8.30/solc-0.8.30'},
       input:{browserControl:control??null,operatorPackage:operatorPackage??null},onRecord:stage('fixture')});
     report.worker=await readResult('worker');
