@@ -3,8 +3,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import os from 'node:os';
+import http from 'node:http';
 import path from 'node:path';
-import {assertRollingApplicationViews,assertRollingPublicFootprint,closeRollingResources,loadRollingFixtureSDK} from './rolling-application-fixture.mjs';
+import {assertRollingApplicationViews,assertRollingPublicFootprint,closeRollingResources,loadRollingFixtureSDK,observeRollingReadiness} from './rolling-application-fixture.mjs';
 import {createRollingProjection} from '../../shared/rolling/public-projection.mjs';
 import {createFileJournalStorage} from '../../apps/src/billboard/user/transaction-journal-store.mjs';
 import {createEncryptedJournalSlot} from '../../shared/journal-record.mjs';
@@ -82,8 +83,39 @@ test('fixture uses sole real journal send path, five actions and canonical decod
   assert(source.includes('for(const hash of hashes)rebuilt.stage(await decoder.decodeTransaction(ctx.node,hash)).apply()'));
   assert(!source.includes('setTime('));assert(!source.includes('nowSeconds:'));assert(!source.includes('runPrivateBokFixture('));
   assert(source.includes('proofsEnabled:real,allowLocalDev:true'));
+  assert(source.includes("observation:report.applicationMining,mode:'real-wall',deadlineAt:ctx.applicationDeadlineAt"));
+  for(const phase of ['node-rpc-startup','trusted-service-startup','trusted-client-construction','application-pxe'])assert(source.includes("mark('"+phase+"')"));
   assert(source.includes('assert.equal(info.l1ChainId,31337);assert.equal(info.realProofs,real)'));
   assert(source.includes("proofs:real?'real':'disabled'"));
   assert(!source.includes('allowLocalDev:!real'));
   assert(source.includes('proverJobs.completed,5'));assert(source.includes('rollingApplicationObservation=report'));
+});
+
+// These injected nodes/inspectors are diagnostic-only unit fixtures, not SDK acceptance.
+test('public readiness observations retain actual wall/lag and fixed reason, omit arbitrary error fields',async()=>{
+  const secret='UNIT_SECRET_NOT_FOR_EVIDENCE',node={getSyncedL1Timestamp:async()=>BigInt(Math.floor(Date.now()/1000)+5)};
+  const before=Math.floor(Date.now()/1000);let seen;
+  const row=await observeRollingReadiness({node,network:{chainId:'31337'},proofsEnabled:true},async(n,options)=>{assert.equal(n,node);seen=options;throw Object.assign(Error(secret),{code:'BB_TRUSTED_NODE_STALE',cause:secret});});
+  assert(row.wallSeconds>=before);assert(row.lagSeconds<0);assert.equal(row.inspectorCode,'BB_TRUSTED_NODE_STALE');
+  assert.equal(seen.nowSeconds,undefined);assert.equal(seen.maxLagSeconds,undefined);assert.equal(seen.proofsEnabled,true);
+  assert(!JSON.stringify(row).includes(secret));
+  const absent=await observeRollingReadiness({node:{getSyncedL1Timestamp:async()=>{throw Error(secret);}},network:{}},async()=>{throw Object.assign(Error(secret),{code:secret});});
+  assert.equal(absent.timestampAvailable,false);assert.equal(absent.inspectorCode,'UNCLASSIFIED');assert(!JSON.stringify(absent).includes(secret));
+});
+test('readiness diagnostics do not project arbitrary inspector outputs or accept nonlocal health URLs',async()=>{
+  const row=await observeRollingReadiness({node:{getSyncedL1Timestamp:async()=>1n},network:{},endpoint:'https://example.invalid'},async()=>({private:'UNIT_SECRET'}));
+  assert.equal(row.inspectorCode,'READY');assert.equal(row.healthUnavailable,true);assert(!JSON.stringify(row).includes('UNIT_SECRET'));
+});
+
+test('labelled local HTTP health fixture projects only public flags and bounds response size',async()=>{
+  const secret='UNIT_PRIVATE_NEVER_PERSIST';let oversized=false;
+  const server=http.createServer((req,res)=>{res.setHeader('Content-Type','application/json');res.end(JSON.stringify(oversized?{extra:secret.repeat(2000)}:{ready:true,proofs:'real',query:{enabled:true,ready:false,reason:'unavailable',secret},private:secret}));});
+  await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
+  try{
+    const input={node:{getSyncedL1Timestamp:async()=>1n},network:{},endpoint:`http://127.0.0.1:${server.address().port}`};
+    const row=await observeRollingReadiness(input,async()=>{});
+    assert.deepEqual(row.health,{status:200,ready:true,proofs:'real',queryEnabled:true,queryReady:false,queryReason:'unavailable'});
+    assert(!JSON.stringify(row).includes(secret));oversized=true;
+    const bounded=await observeRollingReadiness(input,async()=>{});assert.equal(bounded.healthUnavailable,true);assert(!JSON.stringify(bounded).includes(secret));
+  }finally{await new Promise(resolve=>{server.close(resolve);server.closeAllConnections();});}
 });

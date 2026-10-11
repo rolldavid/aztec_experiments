@@ -56,6 +56,35 @@ export async function closeRollingResources(steps,observation) {
   for(const [name,close] of steps)try{await close();observation[name]=true;}catch(error){observation[name]=false;errors.push(error);}
   if(errors.length)throw new AggregateError(errors,'Rolling fixture cleanup failed');
 }
+// Public, bounded diagnostic only. It never supplies a clock override, accepts a
+// failed readiness gate, or serializes an SDK error/response into evidence.
+export async function observeRollingReadiness({node,network,proofsEnabled,endpoint},inspect) {
+  const row={wallSeconds:Math.floor(Date.now()/1000),timestampAvailable:false,inspectorCode:'UNOBSERVED'};
+  try{
+    const stamp=await node.getSyncedL1Timestamp();
+    if(typeof stamp==='bigint'&&stamp>=0n&&stamp<=BigInt(Number.MAX_SAFE_INTEGER)){
+      row.syncedL1Timestamp=String(stamp);row.wallSeconds=Math.floor(Date.now()/1000);
+      row.lagSeconds=row.wallSeconds-Number(stamp);row.timestampAvailable=true;
+    }
+  }catch{}
+  try{await inspect(node,{expectedNetworkScope:network,proofsEnabled});row.inspectorCode='READY';}
+  catch(error){const code=error?.code;row.inspectorCode=['BB_TRUSTED_NODE_CONFIG','BB_TRUSTED_NODE_IDENTITY','BB_TRUSTED_NODE_UNAVAILABLE','BB_TRUSTED_NODE_UNSYNCED','BB_TRUSTED_NODE_STALE'].includes(code)?code:'UNCLASSIFIED';}
+  if(endpoint)try{
+    const url=new URL(endpoint);assert.equal(url.hostname,'127.0.0.1');assert.equal(url.protocol,'http:');assert(!url.username&&!url.password);
+    const response=await fetch(new URL('/healthz',url),{redirect:'error',credentials:'omit',signal:AbortSignal.timeout(3000)});
+    row.health={status:response.status};
+    const reader=response.body.getReader();let length=0;const chunks=[];
+    try{for(;;){const {value,done}=await reader.read();if(done)break;length+=value.length;if(length>16384)throw Error('Bounded health');chunks.push(value);}}
+    finally{await reader.cancel();}
+    const value=JSON.parse(Buffer.concat(chunks).toString('utf8'));
+    if(typeof value.ready==='boolean')row.health.ready=value.ready;
+    if(['real','disabled'].includes(value.proofs))row.health.proofs=value.proofs;
+    if(typeof value.query?.enabled==='boolean')row.health.queryEnabled=value.query.enabled;
+    if(typeof value.query?.ready==='boolean')row.health.queryReady=value.query.ready;
+    if(['busy','unavailable'].includes(value.query?.reason))row.health.queryReason=value.query.reason;
+  }catch{row.healthUnavailable=true;}
+  return row;
+}
 async function closedPort(port) {
   await new Promise((resolve,reject)=>{
     const socket=createConnection({host:'127.0.0.1',port});
@@ -206,17 +235,27 @@ export async function runRollingApplicationFixture(ctx) {
       report.clock.elapsedMs=Date.now()-clockStart;await save();
     }finally{await ctx.node.getSequencer().start();}
     report.applicationMining={};
-    await withC01ClientMining({rpcUrl:ctx.config.l1RpcUrls[0],dateProvider:ctx.dateProvider,observation:report.applicationMining},async mineL1=>{
-      await mark('trusted-http-session');
+    await withC01ClientMining({rpcUrl:ctx.config.l1RpcUrls[0],dateProvider:ctx.dateProvider,observation:report.applicationMining,mode:'real-wall',deadlineAt:ctx.applicationDeadlineAt},async mineL1=>{
+      report.readiness=[];
+      let endpoint;
+      const observe=async phase=>{report.readiness.push({phase,...await observeRollingReadiness({node:ctx.node,network,proofsEnabled:real,endpoint},sdk.inspectTrustedNode)});await save();};
+      try{
+      await observe('after-first-wall-mine');
+      await mark('node-rpc-startup');
       rpc=await startNodeRpc(ctx.node);
+      await mark('trusted-service-startup');
       service=await startProverService({host:'127.0.0.1',port:0,board:String(ctx.instance.address),chainId:31337,rollupVersion:info.rollupVersion,
         applicationProfile:'rolling',privateBokAddress:String(bokInstance.address),privateFeeAddress:String(fees.browserFixture.instance.address),
         proofs:real?'real':'disabled',origins:[],threads:1,queueDirectory:ctx.directory,crsPath:process.env.CRS_PATH,
         queryNode:{url:rpc.url,rollupAddress:network.rollup,maxLagSeconds:120}});
-      const endpoint=`http://127.0.0.1:${service.address.port}`;
+      endpoint=`http://127.0.0.1:${service.address.port}`;
+      await observe('adapters-started');
+      await mark('trusted-client-construction');
       // HTTP is authorized only for this asserted chain31337 loopback fixture;
       // transport permission is independent of the actual real-proof policy.
       const node=await sdk.createTrustedPrivateNode({url:endpoint+'/v1/node',expectedNetworkScope:network,proofsEnabled:real,allowLocalDev:true});
+      await observe('trusted-client-created');
+      await mark('application-pxe');
       // Existing CLI storage adaptation: account keys remain in memory. This is
       // not a browser persistence/recovery qualification or a fake chain adapter.
       const idb=await import('fake-indexeddb');
@@ -320,12 +359,17 @@ export async function runRollingApplicationFixture(ctx) {
       assert.equal(report.proverJobs.running,false);
       assert.deepEqual(await sourceBinding(),report.sourceHashes);assert.deepEqual(buildInputs(),manifest.inputs);
       report.passed=true;await mark('complete');
+      }catch(error){
+        // Keep the exact failure; diagnostic failures must not replace it.
+        try{await observe('application-failed');}catch{report.readinessIncomplete=true;}
+        throw error;
+      }
     });
     assert.equal(report.applicationMining.clientMining.stopped,true);assert.equal(report.applicationMining.clientMining.passed,true);
   }catch(error){
     failure=error;report.passed=false;
     // Keep only fixed/public observation schemas. Never raw SDK error/cause/stack.
-    report.failure={stage:report.stage,code:['BB_TRUSTED_NODE_STALE','BB_TRUSTED_NODE_UNSYNCED','BB_TRUSTED_NODE_IDENTITY','BB_REMOTE_PROVER_TIMEOUT','BB_REMOTE_PROVER_FAILED','ROLLING_FEE_CHANGED'].includes(error?.code)?error.code:'UNCLASSIFIED'};
+    report.failure={stage:report.stage,code:['BB_TRUSTED_NODE_CONFIG','BB_TRUSTED_NODE_UNAVAILABLE','BB_TRUSTED_NODE_STALE','BB_TRUSTED_NODE_UNSYNCED','BB_TRUSTED_NODE_IDENTITY','BB_REMOTE_PROVER_TIMEOUT','BB_REMOTE_PROVER_FAILED','ROLLING_FEE_CHANGED'].includes(error?.code)?error.code:'UNCLASSIFIED'};
     if(error.depositObservation)report.collateral=error.depositObservation;
     if(error.privateFeeObservation)report.privateFees=error.privateFeeObservation;
     // Failed submit can still have consumed a fee. Read-only canonical observation,
