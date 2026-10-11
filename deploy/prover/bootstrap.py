@@ -11,6 +11,14 @@ BB_SHA = "ba8bbb2b82c573153511e638c97100791f0186ef40ee5dd41e911bb5286b29d9"
 CATALOG_SHA = "e7eb93bf9aeed96ec5acd7c8fad09f385177a87b05f96b9a5aa5321bfe70edf3"
 NETWORK = {'testnet': {'bootnodes': ['enr:-LO4QA4kHKdUJOirQ4NxtI-gjBNLRK1GPeKtmz664Uph-EqLW1B3EkCqu6ul5C7dejOBWbEWMOPZc07I0Bl8bmW5Vn0EhWF6dGVjqDAwLTExMTU1MTExLTAwMDAwMDAwLTAtMjI3ODAyMzktMmRhOWY4MDGCaWSCdjSCaXCEIlCfmYlzZWNwMjU2azGhAoRffgRFcK_rV5ddbmtUW9cyXrPwrDFL18OFRVejOOXDg3VkcIKd0A', 'enr:-LO4QO3-kuKH3c-RgaxYBWk0PiV-97B4wnvHcgMxYpB-1WjoctKlpY3Fuh29AESLhBn1WtQXE-1G0Umo_VhTcu7bLloEhWF6dGVjqDAwLTExMTU1MTExLTAwMDAwMDAwLTAtMjI3ODAyMzktMmRhOWY4MDGCaWSCdjSCaXCEIicStolzZWNwMjU2azGhAxUvKI8xXnGpkj2VjRZk9VmMbtfHZUoszOvvl76qFrGeg3VkcIKd0A', 'enr:-LO4QNTdBJe-2tIfXpzJmu4Tise0rRdPSn2gwQMtkVPe40szAdpWRgixGub2iUXMcxSQuQ8nkKh-GSvQpRKqw2XzUhQEhWF6dGVjqDAwLTExMTU1MTExLTAwMDAwMDAwLTAtMjI3ODAyMzktMmRhOWY4MDGCaWSCdjSCaXCEIrZz14lzZWNwMjU2azGhApwZiWnsA8TFqvz-sGDrgbi1AypT4QXJfFWdYOz2yeVtg3VkcIKd0A', 'enr:-Nu4QLjG2KMKvsVOjnhELmYmUO-auKssB_HPKNJitPOwXN0IYC5XPwUwZucnlAE0towcJ9lemeu4gmZkRnYWiGL_lkIHhWF6dGVjsDAwLTExMTU1MTExLWViZDk5ZmYwLTg0NTIzMTcxMy0xMmU5YWEzNi0yMjllYWRiN4JpZIJ2NINpcDaQKgEE-AJiEJUAAAAAAAAAAolzZWNwMjU2azGhA5_JMPCAGUHSS3vWQU3LlQoXnUOaO7AUNylXu2ieLTlKhHRjcDaCnJCEdWRwNoKckIN2ZXKFMi4xLjI', 'enr:-Ku4QHA70JBzwsnhlg-Y-Ud_vH_xAJtaoIAGpEGwvBFu8jHxEEVBrzMCrgRTqYpwDgPgyWPEtEGg-pWlxsK3Gq1VGa4EhWF6dGVjoDAwLS0wMDAwMDAwMC0wLTIyNzgwMjM5LTBjNzU3NmQzgmlkgnY0gmlwhNU65vmJc2VjcDI1NmsxoQLj0Km-mQSLz-0Wz8JBhBv9r0AhFbctdeO0yuT-gqUlPYN1ZHCCndA'], 'snapshots': ['https://aztec-labs-snapshots.com/testnet/', 'https://files5.blacknodes.net/Aztec/', 'https://snapshots-data.aztec.graphops.xyz/'], 'blobFileStoreUrls': ['https://aztec-labs-snapshots.com/testnet/blobs'], 'txCollectionFileStoreUrls': ['https://aztec-labs-snapshots.com/testnet/txs'], 'registryAddress': '0xa0bfb1b494fb49041e5c6e8c2c1be09cd171c6ba', 'feeAssetHandlerAddress': '0x5602c39a6e9c5ace589f64f754927bcda4f4bfc9', 'l1ChainId': 11155111}}
 
+# Public historical deployment identity; qualification is explicitly legacy,
+# never a Rolling deployment. Source: deploy/prover/live-deployment.json.
+QUALIFICATION = {'service': {'applicationProfile':'legacy','proofs':'real','host':'127.0.0.1','port':0,
+    'chainId':'11155111','rollupVersion':'2914217885',
+    'board':'0x0346558fcce04c4bf0b0907c1ef20858b9583123ef55bceb7125cb3fc3fb3752',
+    'queryNode':{'url':'http://127.0.0.1:8082/','rollupAddress':'0x8c2fb2a68a3d362ab1de99e06f83f8903160bbd9','maxLagSeconds':120}},
+    'adminUrl':'http://127.0.0.1:8882/','recoveryTimeoutMs':180000}
+
 class Invalid(ValueError):
     pass
 
@@ -42,15 +50,15 @@ def validate(config, now=None):
 
 # Executed only on the future Linux host, never while generating or testing.
 HOST = r'''
-import datetime as dt, fcntl, hashlib, ipaddress, json, os, pathlib, platform, re, shutil, subprocess, sys, tarfile, urllib.request
+import datetime as dt, fcntl, hashlib, ipaddress, json, os, pathlib, platform, re, shutil, subprocess, sys, tarfile, time, urllib.request
 BASE = pathlib.Path('/var/lib/rolling-bootstrap')
 RELEASE = pathlib.Path('/opt/board-prover/releases') / ('rolling-'+PINS['manifest'][:16])
 STAGE = 'initial'
 
-def run(args, timeout=120, capture=False):
-    result = subprocess.run(args, check=True, timeout=timeout, stdin=subprocess.DEVNULL,
+def run(args, timeout=120, capture=False, cwd=None):
+    result = subprocess.run(args, check=True, timeout=timeout, cwd=cwd, stdin=subprocess.DEVNULL,
                             stdout=subprocess.PIPE if capture else subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-                            env={'PATH':'/usr/sbin:/usr/bin:/sbin:/bin', 'HOME':'/root', 'LANG':'C', 'LC_ALL':'C'})
+                            env={'PATH':'/usr/sbin:/usr/bin:/sbin:/bin', 'HOME':'/root', 'LANG':'C', 'LC_ALL':'C', 'LOG_LEVEL':'silent'})
     return result.stdout.decode().strip() if capture else None
 
 def write(path, text, mode=0o600):
@@ -257,6 +265,124 @@ def install_node():
     write('/etc/systemd/system/rolling-node.service',unit,0o644)
     run(['systemctl','daemon-reload']);run(['systemctl','enable','--now','rolling-node'])
 
+def exclusive_record(path, value):
+    # An acknowledged intent survives reboot. Even an incomplete file forbids replay.
+    fd=os.open(path,os.O_WRONLY|os.O_CREAT|os.O_EXCL|os.O_NOFOLLOW,0o600)
+    with os.fdopen(fd,'w') as f:
+        f.write(json.dumps(value,separators=(',',':')));f.flush();os.fsync(f.fileno())
+    fd=os.open(pathlib.Path(path).parent,os.O_RDONLY|os.O_DIRECTORY)
+    try: os.fsync(fd)
+    finally: os.close(fd)
+
+def qualification_projection(report, process_exited=False):
+    # Fixed booleans only: no messages, configuration, reply, logs or arbitrary keys.
+    checks=report.get('checks',{});cleanup=report.get('cleanup',{})
+    result={'processExitVerified':process_exited is True}
+    for name in ('wrong-chain','wrong-version','wrong-rollup','proof-config-floor'):
+        result[name]=checks.get(name,{}).get('rejected') is True
+    for name in ('healthy','recovered'):
+        r=checks.get(name,{})
+        result[name]=r.get('ready') is True and type(r.get('blockNumber')) is int and r['blockNumber']>=0 and bool(re.fullmatch('0x[a-f0-9]{64}',str(r.get('blockHash'))))
+    result['nativeAndRollingCatalog']=checks.get('nativeAndRollingCatalog',{}).get('passed') is True
+    result['missingHelper']=checks.get('missingHelper',{}).get('missingHelperRejected') is True
+    result['manifestUnchanged']=checks.get('manifestUnchanged') is True
+    for name in ('paused','stale','queriesRejected','resumed','recovered'):
+        result['freshness-'+name]=checks.get('freshness',{}).get(name) is True
+    for name in ('serviceClosed','temporaryFilesRemoved','childProcessesExited'):
+        result['cleanup-'+name]=cleanup.get(name) is True
+    scope=QUALIFICATION['service'];expected={'chainId':scope['chainId'],'rollupVersion':scope['rollupVersion']}
+    public=report.get('publicScope',{})
+    result['scope']=public=={'chainId':expected['chainId'],'version':expected['rollupVersion'],
+        'rollup':scope['queryNode']['rollupAddress'],'applicationProfile':'legacy','board':scope['board'],'proofs':'real','maxLagSeconds':120}
+    result['release']=report.get('release',{}).get('manifestSha256')==PINS['manifest']
+    result['noProofJobs']=type(report.get('proofJobs')) is int and report['proofJobs']==0
+    result['complete']=report.get('passed') is True and report.get('stage')=='complete'
+    return result
+
+def qualification_anchors(checks):
+    anchors={}
+    for name in ('healthy','recovered'):
+        value=checks[name]
+        if type(value.get('blockNumber')) is not int or not 0<=value['blockNumber']<=2**53-1 or type(value.get('blockHash')) is not str or not re.fullmatch('0x[a-f0-9]{64}',value['blockHash']): raise ValueError('Invalid qualification anchor')
+        anchors[name]={'blockNumber':value['blockNumber'],'blockHash':value['blockHash']}
+    return anchors
+
+def readiness_projection(value):
+    scope=QUALIFICATION['service']
+    exact={'ready':True,'chainId':scope['chainId'],'rollupVersion':scope['rollupVersion'],
+           'rollupAddress':scope['queryNode']['rollupAddress'],'proofsEnabled':True}
+    if any(value.get(k)!=v or type(value.get(k)) is not type(v) for k,v in exact.items()): raise ValueError('Readiness identity')
+    for name in ('latestBlockNumber','checkpointedBlockNumber','finalizedBlockNumber','oldestHistoricBlockNumber','checkedAtSeconds','lagSeconds'):
+        number=value.get(name)
+        if type(number) is not int or not 0<=number<=2**53-1: raise ValueError('Readiness number')
+        exact[name]=number
+    if exact['lagSeconds']>120 or not exact['oldestHistoricBlockNumber']<=exact['checkpointedBlockNumber']<=exact['latestBlockNumber'] or exact['finalizedBlockNumber']>exact['checkpointedBlockNumber']: raise ValueError('Readiness ordering')
+    for name,pattern in [('latestBlockHash','0x[a-f0-9]{64}'),('syncedL1Timestamp','[0-9]{1,16}')]:
+        if type(value.get(name)) is not str or not re.fullmatch(pattern,value[name]): raise ValueError('Readiness anchor')
+        exact[name]=value[name]
+    if exact['checkedAtSeconds']-int(exact['syncedL1Timestamp'])!=exact['lagSeconds']: raise ValueError('Readiness timestamp')
+    return exact
+
+def qualification_failure(stage):
+    return {'schemaVersion':1,'passed':False,'stage':stage,'scope':'legacy-query-only','manifestSha256':PINS['manifest']}
+
+def qualify(aborted=False):
+    directory=BASE/'qualification';directory.mkdir(mode=0o700,exist_ok=True)
+    result_path=directory/'result.json';intent=directory/'intent.json'
+    with open(directory/'lock','a') as lock:
+        fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
+        if result_path.exists(): return
+        if aborted or intent.exists():
+            exclusive_record(result_path,qualification_failure('interrupted-unknown'));return
+        deadline_record=json.loads((BASE/'deadline.json').read_text())
+        epoch=lambda key:dt.datetime.fromisoformat(deadline_record[key].replace('Z','+00:00')).timestamp()
+        deadline=min(epoch('budgetStop')-60,epoch('createdAt')+105*60)
+        exclusive_record(intent,{'schemaVersion':1,'manifestSha256':PINS['manifest'],'deadline':int(deadline),'attempts':1})
+        stage='readiness';result=qualification_failure(stage)
+        try:
+            verify_release(RELEASE);verify_controls()
+            if not (RELEASE/'prover/qualify-runtime.mjs').is_file(): raise ValueError('Qualifier absent')
+            config=directory/'config.json';exclusive_record(config,QUALIFICATION)
+            scope=QUALIFICATION['service']
+            options={'url':scope['queryNode']['url'],'expectedNetworkScope':{'chainId':scope['chainId'],'version':scope['rollupVersion'],'rollup':scope['queryNode']['rollupAddress']},'proofsEnabled':True,'allowLocalDev':True,'maxLagSeconds':120}
+            readiness="import {createAztecNodeClient} from '@aztec-labs/stdlib/interfaces/client';import {jsonStringify} from '@aztec-labs/foundation/json-rpc';import {inspectTrustedNode} from '"+(RELEASE/'shared/trusted-private-node.mjs').as_uri()+"';try {const opts="+json.dumps(options)+";const node=createAztecNodeClient(opts.url,{maxBatchSize:1,fetch:async(host,body)=>{const r=await fetch(host,{method:'POST',headers:{'content-type':'application/json'},body:jsonStringify(body),redirect:'error',signal:AbortSignal.timeout(10000)});if(!r.ok)throw Error();let n=0;const c=[];for await(const b of r.body){n+=b.length;if(n>33554432)throw Error();c.push(b);}return {response:JSON.parse(Buffer.concat(c).toString('utf8')),headers:r.headers};}});process.stdout.write(JSON.stringify(await inspectTrustedNode(node,opts)));} catch {process.exitCode=1;}"
+            ready=False;poll_deadline=min(deadline-900,epoch('createdAt')+90*60)
+            while time.time()<poll_deadline:
+                verify_controls()
+                try:
+                    raw=run([str(RELEASE/'node/bin/node'),'--input-type=module','--eval',readiness],timeout=min(60,max(1,poll_deadline-time.time())),capture=True,cwd=RELEASE)
+                    if len(raw)>16384: raise ValueError('Readiness output limit')
+                    snapshot=readiness_projection(json.loads(raw))
+                    ready=True;break
+                except (subprocess.CalledProcessError,subprocess.TimeoutExpired): pass
+                time.sleep(min(15,max(0,poll_deadline-time.time())))
+            if not ready: raise ValueError('Readiness deadline')
+            exclusive_record(directory/'ready.json',snapshot)
+            stage='qualifier';verify_controls()
+            output=directory/'report.json'
+            # Exactly one attempt. The qualifier's nonzero result can still contain
+            # useful fixed checks; timeout is unknown and never resumes or repeats it.
+            process_exited=False
+            try:
+                run([str(RELEASE/'node/bin/node'),str(RELEASE/'prover/qualify-runtime.mjs'),str(config),PINS['manifest'],str(output)],timeout=min(900,max(1,deadline-time.time())))
+                process_exited=True
+            except subprocess.CalledProcessError: pass
+            if output.is_symlink() or not output.is_file() or output.stat().st_size>16384: raise ValueError('Missing bounded result')
+            report=json.loads(output.read_text());checks=qualification_projection(report,process_exited)
+            result={'schemaVersion':1,'passed':all(checks.values()),'stage':'complete' if all(checks.values()) else 'qualification-failed',
+                    'scope':'legacy-query-only','manifestSha256':PINS['manifest'],'reportSha256':digest(output),'checks':checks,'readiness':snapshot}
+            if checks['healthy'] and checks['recovered']: result['anchors']=qualification_anchors(report['checks'])
+            # Preserve the actual bounded report durably before acknowledging result.
+            with open(output,'rb') as f: os.fsync(f.fileno())
+        except Exception: result=qualification_failure(stage+'-failed')
+        exclusive_record(result_path,result)
+
+def install_qualification():
+    unit='[Unit]\nDescription=One bounded Linux query qualification\nRequires=rolling-node.service rolling-egress.service\nAfter=rolling-node.service rolling-egress.service\n[Service]\nType=oneshot\nExecStart=/usr/bin/python3 /usr/local/lib/rolling-attest.py --qualify\nExecStopPost=/usr/bin/python3 /usr/local/lib/rolling-attest.py --qualification-stop\nTimeoutStartSec=6300\nTimeoutStopSec=45\nKillMode=control-group\nRestart=no\nUMask=0077\nEnvironment=LOG_LEVEL=silent\nUnsetEnvironment=NODE_PATH NODE_OPTIONS BB\nPrivateTmp=yes\nPrivateDevices=yes\nNoNewPrivileges=yes\nCapabilityBoundingSet=\nProtectSystem=strict\nProtectHome=yes\nReadWritePaths=/var/lib/rolling-bootstrap\nIPAddressDeny=any\nIPAddressAllow=localhost\nRestrictAddressFamilies=AF_UNIX AF_INET AF_INET6\nStandardOutput=null\nStandardError=null\n[Install]\nWantedBy=multi-user.target\n'
+    write('/etc/systemd/system/rolling-qualification.service',unit,0o644)
+    run(['systemctl','daemon-reload']);run(['systemctl','enable','rolling-qualification.service'])
+    run(['systemctl','start','--no-block','rolling-qualification.service'])
+
 def attest(check=False):
     good=False;count=0
     try: count=verify_controls();good=True
@@ -271,9 +397,28 @@ def attest(check=False):
             'egressBytes':count if type(count)==int and count>=0 else 0,
             'runtimeArchiveSha256':record['runtimeArchiveSha256'],'manifestSha256':record['manifestSha256'],
             'proverPolicy':'masked-pending-qualification','linuxQueryQualified':False}
+    exercise=BASE/'egress-exercise.json'
+    if exercise.exists():
+        e=json.loads(exercise.read_text())
+        if set(e)=={'beforeBytes','afterBytes','deltaBytes','exercise'} and e['exercise']=='installation-egress-not-throughput' and all(type(e[k]) is int and 0<=e[k]<2**64 for k in ('beforeBytes','afterBytes','deltaBytes')) and e['afterBytes']-e['beforeBytes']==e['deltaBytes'] and e['deltaBytes']>0:
+            output['egressExercise']=e
+    result_path=BASE/'qualification/result.json'
+    if result_path.exists():
+        try:
+            q=json.loads(result_path.read_text())
+            allowed={'schemaVersion','passed','stage','scope','manifestSha256','reportSha256','checks','readiness','anchors'}
+            if type(q.get('schemaVersion')) is not int or q['schemaVersion']!=1 or type(q.get('passed')) is not bool or set(q)-allowed or q.get('manifestSha256')!=PINS['manifest'] or q.get('scope')!='legacy-query-only': raise ValueError('Bad result')
+            if q.get('stage') not in ('complete','qualification-failed','readiness-failed','qualifier-failed','interrupted-unknown'): raise ValueError('Bad stage')
+            if 'checks' in q and (set(q['checks'])!=set(qualification_projection({})) or any(type(v) is not bool for v in q['checks'].values())): raise ValueError('Bad checks')
+            if 'reportSha256' in q and not re.fullmatch('[a-f0-9]{64}',q['reportSha256']): raise ValueError('Bad hash')
+            if 'readiness' in q: q['readiness']=readiness_projection(q['readiness'])
+            if 'anchors' in q: q['anchors']=qualification_anchors(q['anchors'])
+            output['qualification']=q
+            output['linuxQueryQualified']=q.get('passed') is True and q.get('stage')=='complete' and bool(q.get('checks')) and all(q['checks'].values()) and 'readiness' in q and 'anchors' in q
+        except Exception: output['qualification']=qualification_failure('interrupted-unknown')
     minute=str(int(dt.datetime.now(dt.timezone.utc).timestamp())//60)
     last=BASE/'last-attestation'
-    marker=minute+':'+status+':'+str(good)
+    marker=minute+':'+status+':'+str(good)+':'+str(output.get('qualification',{}).get('stage','pending'))
     if not last.exists() or last.read_text()!=marker:
         with open('/dev/console','w') as f: f.write('ROLLING_BOOTSTRAP '+json.dumps(output,separators=(',',':'))+'\n')
         write(last,marker)
@@ -295,6 +440,7 @@ def execute(config, attestation_source):
         fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
         try:
             STAGE='controls';install_controls(config);write(BASE/'stage',STAGE)
+            egress_before=verify_controls()
             install_attestation(attestation_source)
             if not RELEASE.exists():
                 STAGE='package';write(BASE/'stage',STAGE)
@@ -307,9 +453,12 @@ def execute(config, attestation_source):
             if '6.0.0-rc.1' not in run([bb,'--version'],capture=True): raise ValueError('Wrong BB')
             run([node,'--input-type=module','--eval',"import {loadRollingArtifacts} from '"+(RELEASE/'prover/rolling-artifacts.mjs').as_uri()+"';loadRollingArtifacts();"],timeout=120)
             STAGE='node';write(BASE/'stage',STAGE);install_node();verify_controls()
+            egress_after=verify_controls()
+            if type(egress_before) is not int or type(egress_after) is not int or egress_after<=egress_before: raise ValueError('Egress counter exercise failed')
+            write(BASE/'egress-exercise.json',json.dumps({'beforeBytes':egress_before,'afterBytes':egress_after,'deltaBytes':egress_after-egress_before,'exercise':'installation-egress-not-throughput'}))
             STAGE='installed';write(BASE/'stage',STAGE)
             # Only commissioning protection is retired; fixed budget control remains enabled.
-            run(['systemctl','disable','--now','rolling-commissioning.timer']);attest()
+            run(['systemctl','disable','--now','rolling-commissioning.timer']);install_qualification();attest()
         except Exception:
             write(BASE/'stage','failed')
             try: attest()
@@ -323,9 +472,9 @@ def execute(config, attestation_source):
 def generate(config, now=None):
     config = validate(config, now)
     pins = {'image':IMAGE, 'manifest':config['manifestSha256'], 'node':NODE_SHA, 'bb':BB_SHA, 'catalog':CATALOG_SHA}
-    prefix = 'PINS = '+repr(pins)+'\nNETWORK = '+repr(NETWORK)+'\n'
-    attestation = prefix + HOST + "\ntry: attest('--check' in sys.argv)\nexcept Exception:\n    run(['/usr/sbin/poweroff']); raise SystemExit(1) from None\n"
-    program = prefix + HOST + '\nCONFIG = '+repr(config)+'\nATTESTATION = '+repr(attestation)+'\nexecute(CONFIG, ATTESTATION)\n'
+    prefix = 'PINS = '+repr(pins)+'\nNETWORK = '+repr(NETWORK)+'\nQUALIFICATION = '+repr(QUALIFICATION)+'\n'
+    dispatch = "\ntry:\n    if '--qualify' in sys.argv: qualify()\n    elif '--qualification-stop' in sys.argv:\n        qualify(aborted=True);run(['systemctl','start','rolling-attest.service'])\n        result=json.loads((BASE/'qualification/result.json').read_text())\n        if result.get('passed') is not True: run(['systemctl','start','--no-block','rolling-budget.service'])\n    else: attest('--check' in sys.argv)\nexcept Exception:\n    run(['/usr/sbin/poweroff']); raise SystemExit(1) from None\n"
+    program = 'SOURCE = '+repr(prefix+HOST)+'\nCONFIG = '+repr(config)+'\nATTESTATION = SOURCE + '+repr(dispatch)+'\nexec(SOURCE)\nexecute(CONFIG, ATTESTATION)\n'
     encoded = base64.b64encode(gzip.compress(program.encode(),mtime=0)).decode()
     return "#!/bin/sh\nset -eu\numask 077\nexec /usr/bin/python3 - <<'ROLLING_BOOTSTRAP_PY'\nimport base64,gzip\nexec(compile(gzip.decompress(base64.b64decode('"+encoded+"')), '<private-bootstrap>', 'exec'))\nROLLING_BOOTSTRAP_PY\n"
 

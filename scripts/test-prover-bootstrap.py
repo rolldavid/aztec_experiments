@@ -11,9 +11,24 @@ def config():
                 runtimeUrl='https://anonymous-message-board-testnet-backups-nvdhcyurtoga.s3.us-east-1.amazonaws.com/releases/test/runtime.tar.gz?X-Amz-Signature=PRIVATE_SENTINEL',
                 runtimeArchiveSha256='a'*64,manifestSha256='b'*64)
 def host():
-    ns={'PINS':{'manifest':'b'*64,'node':b.NODE_SHA,'bb':b.BB_SHA,'catalog':b.CATALOG_SHA,'image':b.IMAGE},'NETWORK':b.NETWORK}
+    ns={'PINS':{'manifest':'b'*64,'node':b.NODE_SHA,'bb':b.BB_SHA,'catalog':b.CATALOG_SHA,'image':b.IMAGE},'NETWORK':b.NETWORK,'QUALIFICATION':b.QUALIFICATION}
     exec(b.HOST,ns)
     return ns
+
+def ready_fixture():
+    scope=b.QUALIFICATION['service']
+    return {'ready':True,'chainId':scope['chainId'],'rollupVersion':scope['rollupVersion'],'rollupAddress':scope['queryNode']['rollupAddress'],'proofsEnabled':True,
+            'latestBlockNumber':100,'latestBlockHash':'0x'+'a'*64,'checkpointedBlockNumber':99,'finalizedBlockNumber':98,'oldestHistoricBlockNumber':0,
+            'syncedL1Timestamp':'1791741600','checkedAtSeconds':1791741630,'lagSeconds':30}
+def qualifier_fixture():
+    scope=b.QUALIFICATION['service']
+    anchor={'ready':True,'blockNumber':99,'blockHash':'0x'+'b'*64}
+    checks={k:{'rejected':True} for k in ('wrong-chain','wrong-version','wrong-rollup','proof-config-floor')}
+    checks.update(healthy=anchor,recovered=anchor,nativeAndRollingCatalog={'passed':True,'circuitCount':16},missingHelper={'missingHelperRejected':True},manifestUnchanged=True,
+                  freshness={k:True for k in ('paused','stale','queriesRejected','resumed','recovered')})
+    return {'schemaVersion':1,'passed':True,'stage':'complete','checks':checks,'cleanup':{k:True for k in ('serviceClosed','temporaryFilesRemoved','childProcessesExited')},
+            'release':{'manifestSha256':'b'*64},'proofJobs':0,
+            'publicScope':{'chainId':scope['chainId'],'version':scope['rollupVersion'],'rollup':scope['queryNode']['rollupAddress'],'applicationProfile':'legacy','board':scope['board'],'proofs':'real','maxLagSeconds':120}}
 
 class Bootstrap(unittest.TestCase):
     def test_valid_input_frozen_and_bounded_userdata_shell_syntax(self):
@@ -158,7 +173,7 @@ class htb 1:20 parent 1:1 prio 0 rate 25Mbit ceil 50Mbit burst 4725b cburst 7850
         ns=host();events=[]
         with tempfile.TemporaryDirectory() as t:
             ns['BASE']=pathlib.Path(t);ns['RELEASE']=pathlib.Path(t)/'release'
-            ns['install_controls']=lambda _:events.append('controls')
+            ns['install_controls']=lambda _:events.append('controls');ns['verify_controls']=lambda:0
             ns['install_attestation']=lambda _:events.append('attestation')
             def fetch(*_):events.append('download');raise ValueError('PRIVATE_SENTINEL')
             ns['fetch_package']=fetch;ns['attest']=lambda:events.append('safe-attestation')
@@ -198,6 +213,122 @@ class htb 1:20 parent 1:1 prio 0 rate 25Mbit ceil 50Mbit burst 4725b cburst 7850
                 with self.assertRaises(SystemExit):ns['execute'](config(),'static')
             self.assertNotIn('download',events)
             self.assertIn(['systemctl','start','rolling-budget.service'],events)
+
+    def qualification_environment(self,directory):
+        ns=host();ns['BASE']=pathlib.Path(directory);ns['RELEASE']=pathlib.Path(directory)/'release'
+        (ns['RELEASE']/'prover').mkdir(parents=True);(ns['RELEASE']/'prover/qualify-runtime.mjs').write_text('// labelled test fake')
+        (ns['BASE']/'deadline.json').write_text(json.dumps(config()))
+        ns['verify_release']=lambda _:None;ns['verify_controls']=lambda:123
+        return ns
+
+    def test_once_only_qualification_actual_ready_projection_and_safe_report(self):
+        with tempfile.TemporaryDirectory() as t:
+            ns=self.qualification_environment(t);calls=[]
+            def run(args,**kwargs):
+                calls.append((args,kwargs))
+                if '--eval' in args:return json.dumps(ready_fixture())
+                # Intent must be on disk before executing the sole qualifier.
+                self.assertTrue((ns['BASE']/'qualification/intent.json').is_file())
+                report=qualifier_fixture();report['PRIVATE_SENTINEL']='PRIVATE_SENTINEL'
+                pathlib.Path(args[-1]).write_text(json.dumps(report));return None
+            ns['run']=run
+            with patch.object(ns['time'],'time',return_value=NOW.timestamp()):
+                ns['qualify']();ns['qualify']();ns['qualify'](aborted=True)
+            self.assertEqual(len(calls),2)
+            self.assertIn('createAztecNodeClient',calls[0][0][-1]);self.assertIn('inspectTrustedNode',calls[0][0][-1])
+            self.assertNotIn('createTrustedPrivateNode',calls[0][0][-1])
+            self.assertEqual(calls[0][1]['cwd'],ns['RELEASE'])
+            # Actual JS syntax check only; imports/network never execute here.
+            subprocess.run(['node','--input-type=module','--check'],input=calls[0][0][-1],text=True,check=True)
+            result=json.loads((ns['BASE']/'qualification/result.json').read_text())
+            self.assertTrue(result['passed']);self.assertTrue(all(result['checks'].values()))
+            self.assertEqual(result['readiness'],ready_fixture());self.assertNotIn('PRIVATE_SENTINEL',json.dumps(result))
+            self.assertEqual(result['reportSha256'],hashlib.sha256((ns['BASE']/'qualification/report.json').read_bytes()).hexdigest())
+            self.assertEqual((ns['BASE']/'qualification/intent.json').stat().st_mode&0o777,0o600)
+
+    def test_qualification_interrupt_or_fsync_failure_never_replays(self):
+        for boundary in ('existing-intent','fsync-after-intent','systemd-abort'):
+            with self.subTest(boundary=boundary),tempfile.TemporaryDirectory() as t:
+                ns=self.qualification_environment(t);calls=[];ns['run']=lambda *a,**k:calls.append(a)
+                directory=ns['BASE']/'qualification';directory.mkdir(mode=0o700)
+                if boundary=='existing-intent':(directory/'intent.json').write_text('{') # partial record still prohibits replay
+                if boundary=='fsync-after-intent':
+                    with patch.object(ns['os'],'fsync',side_effect=OSError('PRIVATE_SENTINEL')):
+                        with self.assertRaises(OSError):ns['qualify']()
+                ns['qualify'](aborted=boundary=='systemd-abort');ns['qualify']()
+                self.assertEqual(calls,[])
+                result=json.loads((directory/'result.json').read_text())
+                self.assertFalse(result['passed']);self.assertEqual(result['stage'],'interrupted-unknown')
+                self.assertNotIn('PRIVATE_SENTINEL',json.dumps(result))
+
+    def test_qualification_failures_and_deadline_are_never_retried(self):
+        for boundary in ('readiness-deadline','identity','qualifier-timeout','missing-report','failed-check','wrong-scope','nonzero-with-passed-report'):
+            with self.subTest(boundary=boundary),tempfile.TemporaryDirectory() as t:
+                ns=self.qualification_environment(t);calls=[]
+                def run(args,**kwargs):
+                    calls.append(args)
+                    if '--eval' in args:
+                        r=ready_fixture()
+                        if boundary=='identity':r['rollupVersion']='1'
+                        return json.dumps(r)
+                    if boundary=='qualifier-timeout':raise subprocess.TimeoutExpired('PRIVATE_SENTINEL',900)
+                    if boundary=='missing-report':return
+                    r=qualifier_fixture()
+                    if boundary=='failed-check':r['checks']['freshness']['recovered']=False
+                    if boundary=='wrong-scope':r['publicScope']['board']='0x'+'0'*64
+                    pathlib.Path(args[-1]).write_text(json.dumps(r))
+                    if boundary=='nonzero-with-passed-report':raise subprocess.CalledProcessError(1,args)
+                ns['run']=run
+                now=NOW.timestamp()+(91*60 if boundary=='readiness-deadline' else 0)
+                with patch.object(ns['time'],'time',return_value=now):ns['qualify']();ns['qualify']()
+                result=json.loads((ns['BASE']/'qualification/result.json').read_text())
+                self.assertFalse(result['passed']);self.assertLessEqual(len(calls),2)
+                if boundary=='readiness-deadline':self.assertEqual(calls,[])
+                self.assertNotIn('PRIVATE_SENTINEL',json.dumps(result))
+
+    def test_readiness_public_fields_are_validated_and_no_unknowns_projected(self):
+        ns=host();r=ready_fixture();r['secret']='PRIVATE_SENTINEL'
+        self.assertEqual(ns['readiness_projection'](r),ready_fixture())
+        for name,value in [('proofsEnabled',1),('lagSeconds',121),('latestBlockNumber',True),('syncedL1Timestamp','0'),('latestBlockHash','PRIVATE_SENTINEL')]:
+            r=ready_fixture();r[name]=value
+            with self.subTest(name=name),self.assertRaises(ValueError):ns['readiness_projection'](r)
+
+    def test_console_qualification_projection_rejects_unknown_fields(self):
+        ns=host()
+        with tempfile.TemporaryDirectory() as t:
+            ns['BASE']=pathlib.Path(t);ns['verify_controls']=lambda:99
+            (ns['BASE']/'deadline.json').write_text(json.dumps(config()));(ns['BASE']/'stage').write_text('installed')
+            directory=ns['BASE']/'qualification';directory.mkdir()
+            result={'schemaVersion':1,'passed':True,'stage':'complete','scope':'legacy-query-only','manifestSha256':'b'*64,
+                    'checks':ns['qualification_projection'](qualifier_fixture(),True),'readiness':ready_fixture(),
+                    'anchors':ns['qualification_anchors'](qualifier_fixture()['checks']),'reportSha256':'d'*64}
+            captured=[]
+            class Console(io.StringIO):
+                def close(self):captured.append(self.getvalue());super().close()
+            original_open=open
+            ns['open']=lambda p,*a,**k:Console() if p=='/dev/console' else original_open(p,*a,**k)
+            for mode in ('valid','unknown','bad-boolean'):
+                sample=dict(result)
+                if mode=='unknown':sample['secret']='PRIVATE_SENTINEL'
+                if mode=='bad-boolean':sample['passed']='PRIVATE_SENTINEL'
+                (directory/'result.json').write_text(json.dumps(sample))
+                (ns['BASE']/'last-attestation').unlink(missing_ok=True)
+                ns['attest']()
+                output=json.loads(captured[-1].removeprefix('ROLLING_BOOTSTRAP '))
+                self.assertEqual(output['linuxQueryQualified'],mode=='valid')
+                self.assertNotIn('PRIVATE_SENTINEL',captured[-1])
+                if mode=='valid':self.assertEqual(output['qualification']['anchors'],result['anchors'])
+
+    def test_qualification_unit_enforces_process_and_network_boundary(self):
+        ns=host();written={};calls=[]
+        ns['write']=lambda p,s,*_:written.update({str(p):s});ns['run']=lambda a,**k:calls.append(a)
+        ns['install_qualification']()
+        unit=written['/etc/systemd/system/rolling-qualification.service']
+        for line in ('TimeoutStartSec=6300','KillMode=control-group','Restart=no','IPAddressDeny=any','IPAddressAllow=localhost','PrivateTmp=yes','ProtectSystem=strict','ReadWritePaths=/var/lib/rolling-bootstrap','UnsetEnvironment=NODE_PATH NODE_OPTIONS BB','Environment=LOG_LEVEL=silent'):
+            self.assertIn(line+'\n',unit)
+        self.assertIn('--qualification-stop',unit)
+        self.assertNotIn('docker.sock',unit)
+        self.assertEqual(calls[-1],['systemctl','start','--no-block','rolling-qualification.service'])
 
     def test_cli_private_compressed_output_and_no_overwrite(self):
         with tempfile.TemporaryDirectory() as t:

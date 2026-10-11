@@ -3,7 +3,8 @@
 This generator prepares one private EC2 user-data payload. It makes no cloud
 calls and starts nothing on the development computer. It installs the reviewed
 Linux runtime and a testnet fullnode; **the prover and its proxy remain masked**.
-It neither supplies Rolling contract addresses nor qualifies a running service.
+It supplies no Rolling contract addresses. It automatically attempts the reviewed
+Linux query qualification against the explicitly labelled historical legacy board.
 Existing legacy addresses may only be used later in an explicitly labelled
 legacy qualification. The existing prover service's 24GiB limit is unchanged.
 
@@ -86,7 +87,8 @@ Before any package or image download, the host:
    invocation. Unexpected filesystems, mounts or multiple candidates stop bootstrap.
 7. Installs Docker if necessary and pulls the exact Linux amd64 image digest.
    Starts only the fullnode. After verifying the budget/egress controls, disables
-   the commissioning timer; the absolute budget timer remains active.
+   the commissioning timer; the absolute budget timer remains active. Then it starts
+   the separate bounded qualification job described below.
 
 The image is `azteclabs/aztec@sha256:e5bc218e326b4f3b1cd06b0309cb98e87fef5dfda3330157ce1e393d89416c32`.
 The generator embeds the inspected11October network configuration: registry,
@@ -114,13 +116,13 @@ include that failure-window allowance in the lead's launch forecast.
 
 ## Qualification and recovery gate
 
-Console stage `installed` means installation only, never synchronization,
-accounting acceptance, or Linux qualification. `linuxQueryQualified` remains
-false. The lead reads sanitized console output using the supported EC2 API,
+Console stage `installed` means installation only, never synchronization or
+accounting acceptance. `linuxQueryQualified` remains false until the single
+qualification attempt passes every required check and cleanup. The lead reads sanitized console output using the supported EC2 API,
 verifies Fleet expiry and volume deletion controls, and checks actual canonical
 identity/sync through the reviewed runtime qualification procedure. The bootstrap
-does not unmask the prover or install an application config. The later reviewed
-qualification helper must be included in a freshly hash-bound runtime archive.
+does not unmask the prover or install an application config. The reviewed
+`prover/qualify-runtime.mjs` must be included in a freshly hash-bound runtime archive.
 
 The compressed Docker image is about540MB; the inspected snapshot objects total
 68,390,965bytes. Decompression, catch-up, RPC throttling and shared CPU/I/O remain
@@ -176,3 +178,58 @@ Reserve this small tolerance in the forecast and verify actual Linux shaping and
 counters before workload acceptance. The five-second monitor interval is not a
 hard five-second shutdown bound: scheduling and command/poweroff latency also
 need budget allowance. This repair does not waive either commissioning gate.
+
+### Automatic Linux qualification, without a remote shell
+
+`rolling-qualification.service` starts once after installation and uses the
+packaged Node24.21.0 and reviewed qualifier. Its cgroup allows loopback networking
+only; node P2P/L1 synchronization runs in the separate node service. The job has a
+private temporary directory, read-only system/release, empty capabilities,
+`LOG_LEVEL=silent`, no `NODE_PATH`, `NODE_OPTIONS`, `BB`, Docker socket, host IAM
+role or wallet. The process group is terminated at 105minutes at the latest;
+readiness is additionally bounded by creation+90minutes and the complete job by
+budgetStop−60seconds. The original 30minute timer protects installation; it is
+retired only after installation and verified controls, never extended for sync.
+
+The direct node readiness probe uses installed `createAztecNodeClient` with a
+bounded, no-redirect/no-retry transport and `inspectTrustedNode`; it does not
+mistake raw node RPC for the trusted service `/healthz` interface. Each poll
+checks actual network/proof identity, coherent canonical anchors, world-state
+synchronization and ≤120second L1 lag. Only public readiness data is queried.
+The loopback addresses are RPC8082 and admin8882.
+
+Scope is fixed from the repository's `deploy/prover/live-deployment.json`:
+Sepolia11155111, rollupVersion2914217885,
+rollup`0x8c2fb2a68a3d362ab1de99e06f83f8903160bbd9`, legacy board
+`0x0346558fcce04c4bf0b0907c1ef20858b9583123ef55bceb7125cb3fc3fb3752`.
+The config explicitly says `applicationProfile: legacy`, `proofs: real` and
+zero public listener port. These historical addresses do not identify a Rolling
+application. No proof job, model call or wallet action is submitted.
+
+An exclusive fsynced intent is recorded before readiness polling. Then exactly
+one qualifier invocation has at most 15minutes. It tests actual healthy client
+composition, wrong chain/version/rollup rejection, proof configuration floor,
+elapsed staleness after supported pauseSync, rejected stale queries, resumeSync
+and recovered canonical queries, removed-helper startup rejection, unchanged
+manifest and child/service/file cleanup. No second attempt follows a failure,
+reboot, timeout, lost receipt or incomplete journal. The systemd post-stop action
+turns an interrupted attempt into `interrupted-unknown`; qualification failure
+requests the existing budget shutdown. If killed during pauseSync, there is no
+claim that the node recovered: the host shuts down and remains unqualified.
+
+Durable owner-only records live under `/var/lib/rolling-bootstrap/qualification`:
+intent, fixed config, canonical readiness, original bounded qualifier report and
+safe projected result. The existing console channel emits only validated
+booleans, public network/canonical anchors, fixed stages, manifest and report
+hashes. The lead can independently compare the canonical hashes and every check
+via the AWS console-output API. No raw logs/errors/configuration or capability
+URL enter the console. A success remains **legacy Linux query qualification**,
+not genuine Rolling proofs, privacy acceptance or production release.
+
+The host also records HTB parent bytes before and after its bounded installation
+transfers and requires a positive, nonreset delta. Console `egressExercise`
+identifies this as `installation-egress-not-throughput`. It observes actual
+traffic accounting, including transport acknowledgments; it neither measures a
+50Mbps throughput limit nor proves the complete future networking budget bound.
+The lead must retain latency/failure allowances and perform separate bounded
+throughput commissioning before asserting that bound.
