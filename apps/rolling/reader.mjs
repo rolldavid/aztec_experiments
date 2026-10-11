@@ -3,7 +3,7 @@ import {safeURL} from './model.mjs';
 import {focusRoute,skipToContent} from './navigation.mjs';
 
 const read=createPublicReader(),app=document.querySelector('#app'),positions=new Map();
-let controller,sequence=0,route=location.hash.slice(1)||'/home',main;
+let controller,sequence=0,route=location.hash.slice(1)||'/home',main,loadedPages=1;
 const narrow=matchMedia('(max-width:700px)');
 const el=(tag,attrs={},...children)=>{
  const node=document.createElement(tag);for(const [key,value]of Object.entries(attrs)){
@@ -56,9 +56,14 @@ function boardCard(board){
 }
 async function render(){
  controller?.abort();controller=new AbortController();const signal=controller.signal,current=++sequence;
- const parts=route.split('/').filter(Boolean);let api='feed',parameters={limit:30},title='Conversations';
+ // Back navigation reloads the same number of pages against the current index.
+ // The whole restoration has one deadline, rather than an unbounded request chain.
+ const restoreSignal=AbortSignal.any([signal,AbortSignal.timeout(20000)]),saved=positions.get(route);loadedPages=1;
+ const parts=route.split('/').filter(Boolean);let api='feed',parameters={limit:30},title='Conversations',expectedRoot;
  if(parts[0]==='directory'){api='directory';title='Explore subboards';try{parameters.query=parts[1]?decodeURIComponent(parts[1]):'';}catch{shell('Page not found');return;}}
- else if(['thread','profile','post'].includes(parts[0])){if(!field(parts[1])){shell('Page not found');return;}api=parts[0];parameters=api==='post'?{id:parts[1]}:{limit:30,[api==='thread'?'root':'nameId']:parts[1]};title=api==='thread'?'Conversation':api==='profile'?'Profile':'Post';}
+ else if(['thread','profile','post'].includes(parts[0])){if(!field(parts[1])||parts[2]&&!field(parts[2])){shell('Page not found');return;}api=parts[0];parameters=api==='post'?{id:parts[1]}:{limit:30,[api==='thread'?'root':'nameId']:parts[1]};title=api==='thread'?'Conversation':api==='profile'?'Profile':'Post';
+  if(api==='thread'&&parts[2]){expectedRoot=parts[1];api='post';parameters={id:parts[2]};title='Linked post';}
+ }
  else if(parts[0]!=='home'){shell('Page not found');return;}
  shell(title);const loading=el('p',{role:'status','aria-busy':'true'},'Loading conversations…');main.append(loading);
  if(api==='directory'){
@@ -71,14 +76,21 @@ async function render(){
   else{const posts=api==='post'?(response.post?[response.post]:[]):response.posts;if(!Array.isArray(posts))throw Error('Invalid feed');container.append(...posts.map(post=>postCard(post,response)));}
  }
  try{
-  data=await read(api,parameters,signal);if(current!==sequence)return;append(data);loading.remove();
+  data=await read(api,parameters,restoreSignal);if(current!==sequence)return;
+  if(expectedRoot&&(!data.post||data.post.record?.root!==expectedRoot))throw Error('Linked post does not belong to this conversation');
+  append(data);
+  let cursor=data.nextCursor;
+  while(cursor&&loadedPages<(saved?.pages??1)){
+   const page=await read(api,{...parameters,cursor},restoreSignal);if(current!==sequence)return;append(page);cursor=page.nextCursor;loadedPages++;
+  }
+  loading.remove();
   if(api==='profile'&&data.identity){main.querySelector('h1').textContent=text(data.identity.first)+' '+text(data.identity.last);}
   if(!container.childElementCount)container.append(el('div',{class:'empty'},el('h2',{},'A little quiet here'),el('p',{},api==='directory'?'No subboards match this search.':'No posts to show yet.')));
   main.append(container);
-  let cursor=data.nextCursor;
+  if(expectedRoot)main.append(el('p',{},link('Read the conversation from the beginning','/thread/'+expectedRoot)));
   const more=button('Load more',async()=>{
    more.disabled=true;
-   try{const page=await read(api,{...parameters,cursor},signal);if(current!==sequence)return;append(page);cursor=page.nextCursor;if(!cursor)more.remove();else more.disabled=false;announce('More conversations loaded.');}
+   try{const page=await read(api,{...parameters,cursor},signal);if(current!==sequence)return;append(page);cursor=page.nextCursor;loadedPages++;if(!cursor)more.remove();else more.disabled=false;announce('More conversations loaded.');}
    catch(error){if(signal.aborted)return;more.remove();main.append(el('p',{role:'alert'},'The conversation changed or could not load. ',button('Refresh',()=>render())));}
   });if(cursor)main.append(more);
   main.append(el('p',{class:'quiet'},'Checked against chain block '+String(data.checkpoint?.number??'')));
@@ -86,6 +98,6 @@ async function render(){
  }catch(error){if(signal.aborted)return;loading.remove();main.append(el('div',{class:'empty',role:'alert'},el('h2',{},error.code==='READER_SYNCING'?'Conversations are being checked':'Conversations could not load'),el('p',{},'No account or transaction has changed.'),button('Try again',()=>render())));}
 }
 document.querySelector('.skip').addEventListener('click',skipToContent);
-addEventListener('hashchange',()=>{positions.set(route,{y:scrollY,focus:document.activeElement?.getAttribute('href')});route=location.hash.slice(1)||'/home';render();});
+addEventListener('hashchange',()=>{positions.set(route,{y:scrollY,pages:loadedPages,focus:document.activeElement?.getAttribute('href')});if(positions.size>40)positions.delete(positions.keys().next().value);route=location.hash.slice(1)||'/home';render();});
 narrow.addEventListener('change',()=>{const rail=document.querySelector('.rail'),workspace=document.querySelector('.workspace');if(rail){rail.classList.remove('open');rail.inert=narrow.matches;workspace.inert=false;document.querySelector('.menu-toggle')?.setAttribute('aria-expanded','false');}});
 render();

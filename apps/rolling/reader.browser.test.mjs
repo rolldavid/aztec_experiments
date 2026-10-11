@@ -12,12 +12,13 @@ test('public reader: navigation, unsafe content, failure recovery and narrow key
  const files=new Set(['live.html','reader.mjs','reader-client.mjs','model.mjs','navigation.mjs','style.css']);let unavailable=false;
  const scope={boardAddress:'0x'+'1'.repeat(64)},identity={id:'7',first:'River',last:'Lane'};
  const post={id:'10',record:{root:'10',parent:'0',reference:'0',kind:'1',subboard:'0',name_id:'7'},text:'A real interface, tested with synthetic public data. [Unsafe](javascript:alert(1)) <script>private()</script>',timestamp:'1791734400',likes:'2',bot:null};
+ const later={...post,id:'20',record:{...post.record,parent:'10'},text:'The linked reply is outside the first page.'};
  const server=http.createServer(async(req,res)=>{
   const url=new URL(req.url,'http://localhost');
   if(url.pathname.startsWith('/api/')){
    res.writeHead(unavailable?503:200,{'content-type':'application/json'});
    const kind=url.pathname.slice(5),base={schemaVersion:1,scope,complete:true,checkpoint:{number:3,hash:'public'},revision:'1',names:{'7':identity},boards:{},nextCursor:null};
-   res.end(JSON.stringify(kind==='directory'?{...base,boards:[{id:'20',slug:'workshop',name:'Workshop',description:'Build together',mainRules:'Respect people',rules:'Show your work',rejected:false}]}:kind==='profile'?{...base,identity,posts:[post]}:kind==='post'?{...base,post}:{...base,posts:[post]}));return;
+   res.end(JSON.stringify(kind==='directory'?{...base,boards:[{id:'20',slug:'workshop',name:'Workshop',description:'Build together',mainRules:'Respect people',rules:'Show your work',rejected:false}]}:kind==='profile'?{...base,identity,posts:[post]}:kind==='post'?{...base,post:url.searchParams.get('id')==='20'?later:post}:kind==='feed'?{...base,posts:[url.searchParams.has('cursor')?later:post],nextCursor:url.searchParams.has('cursor')?null:'2:1'}:{...base,posts:[post]}));return;
   }
   const name=url.pathname==='/'?'live.html':url.pathname.slice(1);if(!files.has(name)){res.writeHead(404);res.end();return;}
   res.writeHead(200,{'content-type':name.endsWith('.mjs')?'text/javascript':name.endsWith('.css')?'text/css':'text/html','Content-Security-Policy':"default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'"});res.end(await fs.readFile(path.join(root,name)));
@@ -26,7 +27,13 @@ test('public reader: navigation, unsafe content, failure recovery and narrow key
  page.on('pageerror',error=>errors.push(error.message));page.on('request',request=>requests.push(request.url()));
  await page.goto(`http://127.0.0.1:${server.address().port}/`);await page.getByRole('article').waitFor();
  assert.equal(await page.locator('article script').count(),0);assert.equal(await page.locator('a[href^="javascript:"]').count(),0);
- await page.getByRole('link',{name:'River Lane',exact:true}).click();await page.getByRole('heading',{name:'River Lane',exact:true}).waitFor();
+ await page.setViewportSize({width:1440,height:500});await page.getByRole('button',{name:'Load more',exact:true}).click();await page.locator('#post-20').waitFor();
+ await page.locator('#post-20').scrollIntoViewIfNeeded();const savedY=await page.evaluate(()=>scrollY);
+ await page.locator('#post-20').getByRole('link',{name:'River Lane',exact:true}).click();await page.getByRole('heading',{name:'River Lane',exact:true}).waitFor();
+ await page.goBack();await page.locator('#post-20').waitFor();assert.equal(await page.getByRole('article').count(),2);assert(Math.abs(await page.evaluate(()=>scrollY)-savedY)<3);
+ await page.evaluate(()=>location.hash='/thread/10/20');await page.getByRole('heading',{name:'Linked post',exact:true}).waitFor();await page.locator('#post-20').waitFor();
+ assert.equal(await page.evaluate(()=>document.activeElement.id),'post-20');assert.equal(await page.getByRole('article').count(),1);
+ await page.getByRole('link',{name:'Read the conversation from the beginning',exact:true}).click();await page.getByRole('heading',{name:'Conversation',exact:true}).waitFor();
  await page.getByRole('link',{name:'View conversation',exact:true}).click();await page.getByRole('heading',{name:'Conversation',exact:true}).waitFor();
  await page.getByRole('link',{name:'Explore subboards',exact:true}).first().click();await page.getByRole('heading',{name:'Workshop',exact:true}).waitFor();
  await page.getByText('Effective rules',{exact:true}).click();assert(await page.getByText('Respect people',{exact:true}).isVisible());
