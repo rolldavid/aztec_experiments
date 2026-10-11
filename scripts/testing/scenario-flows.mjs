@@ -274,3 +274,31 @@ export function browserFunding(ctx){
   assert(s.observation.browserFunding.passed);return complete;
  });
 }
+
+// Reuses the ordinary fixture's genesis identity and single service supervisor.
+export async function avatarLog(ctx){
+  const {EmbeddedWallet}=await import('@aztec-labs/wallets/embedded');
+  const {BackendType}=await import('@aztec-foundation/bb.js');
+  const {applicationNativeProfile}=await import('../c01-native-profile.mjs');
+  const {applicationProofsEnabled,applicationProver}=await import('./proof-policy.mjs');
+  const {withC01ClientMining}=await import('../c01-client-mining.mjs');
+  const {runAvatarLogExperiment}=await import('../../experiments/avatar/measure.mjs');
+  const {ROOT}=await import('../toolchain.mjs');
+  const {randomUUID}=await import('node:crypto');
+  const observation={passed:false,applicationProofs:applicationProofsEnabled(),networkProofs:false};
+  let wallet;
+  try{
+    wallet=await EmbeddedWallet.create(ctx.node,{ephemeral:true,pxe:{proverEnabled:true,autoSync:false,syncChainTip:'checkpointed',
+      proverOrOptions:applicationProver({backend:BackendType.NativeUnixSocket,...applicationNativeProfile(ctx.directory)})}});
+    const account=ctx.preparation.account;
+    const manager=await wallet.createSchnorrInitializerlessAccount(account.secret,account.salt,account.signingKey,'avatar-disposable');
+    assert(manager.address.equals(account.address));
+    await withC01ClientMining({rpcUrl:ctx.config.l1RpcUrls[0],dateProvider:ctx.dateProvider,observation},async mineL1=>{
+      observation.avatar=await runAvatarLogExperiment({node:ctx.node,wallet,owner:account.address,mineL1,
+        outputDirectory:path.join(ROOT,'execution/evidence/G03','avatar-'+randomUUID()),realProofs:applicationProofsEnabled(),mark:ctx.mark});
+    });
+    assert(observation.avatar.passed);observation.passed=true;return observation;
+  }finally{
+    if(wallet){await wallet.stop();observation.walletStopped=true;}
+  }
+}
