@@ -56,6 +56,17 @@ export function createNearLimitRaster() {
   return best;
 }
 
+export function createExactLimitRaster() {
+  // Fixed parameters found by a bounded pixel search on the pinned Node/zlib.
+  // Change the red channel of pixel (46,25), immediately after the noisy area.
+  // These are actual raster bytes: no metadata, extra chunks or deflate padding.
+  const {rgb, noisyPixels} = createRasterFixture(2546);
+  rgb[2546 * 3] = 5;
+  const png = makePng(rgb);
+  assert.equal(png.length, 8192, 'Exact-limit fixture changed under the pinned compressor');
+  return {png, rgb, noisyPixels};
+}
+
 // Strict decoder for this fixture's canonical subset; not a general user-upload parser.
 export function decodeFixturePng(png) {
   assert(Buffer.isBuffer(png) && png.length <= 8192);
