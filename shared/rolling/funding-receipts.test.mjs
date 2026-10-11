@@ -4,6 +4,10 @@ import test,{before,after} from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {AbiCoder,Interface,encodeBytes32String,getBytes} from 'ethers';
+import {BlockHeader} from '@aztec-labs/stdlib/tx';
+import {AppendOnlyTreeSnapshot} from '@aztec-labs/stdlib/trees';
+import {L1ContractsNames} from '@aztec-labs/ethereum/l1-contract-addresses';
+import {createTrustedPrivateNode,isTrustedPrivateNode} from '../trusted-private-node.mjs';
 import {jsonStringify} from '@aztec-labs/foundation/json-rpc';
 import {Fr} from '@aztec-labs/foundation/curves/bn254';
 import {EthAddress} from '@aztec-labs/foundation/eth-address';
@@ -26,7 +30,17 @@ const boardAbi=new Interface([...common,'function L1_CHAIN_ID() view returns(uin
 const feeAbi=new Interface([...common,'function UNDERLYING() view returns(address)','function L2_TOKEN_ADDRESS() view returns(bytes32)','function depositToAztecPublic(bytes32 to,uint256 amount,bytes32 secretHash)','event DepositToAztecPublic(bytes32 indexed to,uint256 amount,bytes32 secretHash,bytes32 key,uint256 index)']);
 const bokAbi=new Interface(['function token() view returns(address)','function escrow() view returns(bytes32)','function version() view returns(uint256)','function chainId() view returns(uint256)','function inbox() view returns(address)','function outbox() view returns(address)','function deposit(bytes32 account,uint128 amount,bytes32 secretHash)','event Deposited(bytes32 indexed account,uint128 amount,bytes32 key,uint256 index)']);
 const rollupAbi=new Interface(['function getInbox() view returns(address)','function getOutbox() view returns(address)']);
-let artifact,canonical;
+let artifact,canonical,originalFetch;
+const transports=new Map();let transportId=0;
+before(()=>{originalFetch=globalThis.fetch;globalThis.fetch=async(url,init)=>{
+ const transport=transports.get(String(url));assert(transport,'Only labelled fixture transport is permitted');
+ const result=await Promise.all(JSON.parse(init.body).map(async request=>{
+  const name=request.method.replace(/^aztec_/,'');let params=request.params;
+  if(name==='getL1ToL2MessageMembershipWitness')params=[BlockParameterSchema.parse(params[0]),Fr.fromString(params[1])];
+  return {id:request.id,jsonrpc:'2.0',result:await transport[name](...params)};
+ }));return new Response(jsonStringify(result),{headers:{'content-type':'application/json'}});
+};});
+after(()=>{globalThis.fetch=originalFetch;});
 before(async()=>{artifact=JSON.parse(fs.readFileSync(new URL('../../apps/src/billboard/private_fee_artifact.json',import.meta.url)));canonical=await derivePrivateFeeInstance(artifact);});
 after(async()=>{await BarretenbergSync.destroySingleton();});
 async function fixture(kind='collateral') {
@@ -61,15 +75,22 @@ async function fixture(kind='collateral') {
   tx:{hash:r.txHash,from:r.sender,to:s.portal,chainId:BigInt(s.chainId),nonce:Number(r.nonce),value:kind==='collateral'?BigInt(r.amount):0n,data:abi.encodeFunctionData(kind==='private-fee'?'depositToAztecPublic':'deposit',args)},
   blockHash:r.blockHash,finalized:{number:8,hash:h(102)},l2Hash:anchor.hash,root:anchor.root,witness:[BigInt(r.leafIndex),new SiblingPath(L1_TO_L2_MSG_TREE_HEIGHT,siblings.map(x=>x.toBuffer()))],
   bindings:{ROLLUP:s.rollup,VERSION:2n,L1_CHAIN_ID:31337n,L2_CONTRACT:s.recipient,UNDERLYING:s.token,L2_TOKEN_ADDRESS:ProtocolContractAddress.FeeJuice.toString(),token:s.token,escrow:s.recipient,version:2n,chainId:31337n,inbox:addr(40),outbox:addr(41),getInbox:addr(40),getOutbox:addr(41)}};
- const node={getNodeInfo:async()=>({l1ChainId:31337,rollupVersion:2,l1ContractAddresses:{rollupAddress:s.rollup,feeJuicePortalAddress:s.portal,feeJuiceAddress:s.token}}),
+ const node={getNodeInfo:async()=>({nodeVersion:'6.0.0-rc.1',l1ChainId:31337,rollupVersion:2,realProofs:true,
+  l1ContractAddresses:{...Object.fromEntries(L1ContractsNames.map(name=>[name,s.rollup])),rollupAddress:s.rollup,feeJuicePortalAddress:s.portal,feeJuiceAddress:s.token??addr(13)},
+  protocolContractAddresses:Object.fromEntries(['classRegistry','feeJuice','instanceRegistry','multiCallEntrypoint'].map(name=>[name,h(1)])),txsLimits:{gas:{daGas:100,l2Gas:100}}}),
+  getChainTips:async()=>{const block={number:3,hash:anchor.hash},tip={block,checkpoint:{number:1,hash:h(300)}};return {proposed:block,checkpointed:tip,proven:tip,finalized:tip};},
+  getWorldStateSyncStatus:async()=>({latestBlockNumber:3,latestBlockHash:anchor.hash,finalizedBlockNumber:3,oldestHistoricBlockNumber:0,treesAreSynched:true}),
+  getSyncedL1Timestamp:async()=>BigInt(Math.floor(Date.now()/1000)),
   getContract:async()=>canonical,
-  getBlockData:async parameter=>{assert.equal(parameter,anchor.number,'Canonical lookup must be by height, not orphan hash');state.reads.push('l2');return {blockHash:BlockHash.fromString(state.l2Hash),header:{globalVariables:{blockNumber:3},state:{l1ToL2MessageTree:{root:Fr.fromString(state.root)}}}};},
+  getBlockData:async parameter=>{assert.equal(parameter,anchor.number,'Canonical lookup must be by height, not orphan hash');state.reads.push('l2');const header=BlockHeader.empty();header.globalVariables.blockNumber=3;header.state.l1ToL2MessageTree.root=Fr.fromString(state.root);return {blockHash:BlockHash.fromString(state.l2Hash),header,archive:AppendOnlyTreeSnapshot.empty(),checkpointNumber:1,indexWithinCheckpoint:0};},
   getL1ToL2MessageMembershipWitness:async(parameter,key)=>{BlockParameterSchema.parse(JSON.parse(jsonStringify(parameter)));assert(parameter.hash instanceof BlockHash);assert.equal(key.toString(),r.messageKey);state.reads.push('witness');return state.witness;}};
  const provider={getNetwork:async()=>({chainId:31337n}),getTransactionReceipt:async()=>state.receipt,getTransaction:async()=>state.tx,
   getBlock:async number=>{state.reads.push('l1');return number==='finalized'||number===8?state.finalized:{number,hash:state.blockHash};},
   call:async request=>{const contract=request.to===s.rollup?rollupAbi:abi;const name=contract.parseTransaction(request).name;state.reads.push([name,request.blockTag]);return contract.encodeFunctionResult(name,[state.bindings[name]]);}};
- const input={kind,scope:s,receipt:r,anchor,owner,secrets,privateFeeArtifact:artifact,node,ethProvider:provider,contextGuard:async()=>{state.guardCalls++;if(state.guardError)throw Error('PRIVATE_SENTINEL');}};
- return {input,state,abi,eventArgs,eventName,secret,content};
+ const url='https://funding-fixture.example/'+(++transportId);transports.set(url,node);
+ const trusted=await createTrustedPrivateNode({url,expectedNetworkScope:{chainId:s.chainId,version:s.version,rollup:s.rollup}});assert(isTrustedPrivateNode(trusted));
+ const input={kind,scope:s,receipt:r,anchor,owner,secrets,privateFeeArtifact:artifact,node:trusted,ethProvider:provider,contextGuard:async()=>{state.guardCalls++;if(state.guardError)throw Error('PRIVATE_SENTINEL');}};
+ return {input,state,backend:node,abi,eventArgs,eventName,secret,content};
 }
 for(const kind of ['collateral','private-fee','bok'])test(`labelled RPC ${kind}: real ABI/hash/witness produces private immutable claim and public evidence`,async()=>{
  const f=await fixture(kind),result=await prepareFundingClaim(f.input);assert.equal(result.status,'claim-ready');assert.equal(result.evidence.content,f.content);
@@ -92,7 +113,7 @@ for(const [label,change,code] of [
  ['wrong path',f=>{f.state.witness[1]=new SiblingPath(L1_TO_L2_MSG_TREE_HEIGHT,Array(L1_TO_L2_MSG_TREE_HEIGHT).fill(Fr.ZERO.toBuffer()));},'MISMATCH'],
  ['wrong secret account',f=>{f.input.owner=h(77);},'MISMATCH'],
  ['duplicate receipt event',f=>{f.state.receipt.logs.push(f.state.receipt.logs[0]);},'MISMATCH'],
- ['RPC private error',f=>{f.input.node.getNodeInfo=async()=>{throw Error('PRIVATE_SENTINEL');};},'UNKNOWN'],
+ ['RPC private error',f=>{f.backend.getNodeInfo=async()=>{throw Error('PRIVATE_SENTINEL');};},'UNKNOWN'],
  ['context changed',f=>{f.state.guardError=true;},'UNKNOWN'],
 ])test(`reject ${label} without raw diagnostic or claim`,async()=>{const f=await fixture();change(f);await assert.rejects(()=>prepareFundingClaim(f.input),error=>{assert.equal(error.code,'ROLLING_FUNDING_'+code);assert(!JSON.stringify(error).includes('PRIVATE_SENTINEL'));return true;});});
 test('Bok binds recipient commitment, token and exact hidden-secret calldata',async()=>{
@@ -101,7 +122,7 @@ test('Bok binds recipient commitment, token and exact hidden-secret calldata',as
 test('FPC recovery rejects foreign owner, token and altered public amount',async()=>{
  for(const mutate of [f=>{f.input.owner=h(25);},f=>{f.state.bindings.UNDERLYING=addr(99);},f=>{f.input.receipt.amount='5001';}]){const f=await fixture('private-fee');mutate(f);await assert.rejects(()=>prepareFundingClaim(f.input));}
 });
-test('reorg after witness invalidates ready result',async()=>{const f=await fixture();const original=f.input.node.getL1ToL2MessageMembershipWitness;f.input.node.getL1ToL2MessageMembershipWitness=async(...args)=>{const result=await original(...args);f.state.blockHash=h(999);return result;};await assert.rejects(()=>prepareFundingClaim(f.input),{code:'ROLLING_FUNDING_REORG'});});
+test('reorg after witness invalidates ready result',async()=>{const f=await fixture();const original=f.backend.getL1ToL2MessageMembershipWitness;f.backend.getL1ToL2MessageMembershipWitness=async(...args)=>{const result=await original(...args);f.state.blockHash=h(999);return result;};await assert.rejects(()=>prepareFundingClaim(f.input),{code:'ROLLING_FUNDING_REORG'});});
 test('input descriptors reject accessors and snapshots resist changes during awaits',async()=>{const f=await fixture();Object.defineProperty(f.input.receipt,'amount',{get:()=>{throw Error('PRIVATE_SENTINEL');},enumerable:true});await assert.rejects(()=>prepareFundingClaim(f.input),{code:'ROLLING_FUNDING_INVALID'});
  const g=await fixture();const old=g.input.ethProvider.getNetwork;g.input.ethProvider.getNetwork=async()=>{g.input.receipt.amount='1';g.input.secrets.walletSecret=h(99);return old();};assert.equal((await prepareFundingClaim(g.input)).claim.args[1],'5000');});
 test('canonical finalized block changing during verification is not accepted',async()=>{const f=await fixture();const original=f.input.ethProvider.getBlock;f.input.ethProvider.getBlock=async n=>n===8?{number:8,hash:h(400)}:original(n);await assert.rejects(()=>prepareFundingClaim(f.input),{code:'ROLLING_FUNDING_REORG'});});
@@ -111,9 +132,39 @@ test('missing token and changed network are rejected',async()=>{const f=await fi
 test('malformed event, amount, content/key or leaf never reaches claim preparation',async()=>{for(const mutate of [f=>{f.state.receipt.logs[0].data='0x1234';},f=>{f.eventArgs[1]='5001';f.state.receipt.logs[0]={address:f.input.scope.portal,...f.abi.encodeEventLog(f.abi.getEvent(f.eventName),f.eventArgs)};},f=>{f.input.receipt.messageKey=h(2);},f=>{f.input.receipt.leafIndex='8';}]){const f=await fixture();mutate(f);await assert.rejects(()=>prepareFundingClaim(f.input),{code:'ROLLING_FUNDING_MISMATCH'});}});
 
 test('20-second whole-operation deadline prevents a delayed guard starting an RPC afterwards',async t=>{
- const f=await fixture();let release,calls=0;const gate=new Promise(resolve=>{release=resolve;});f.input.contextGuard=()=>gate;f.input.node.getNodeInfo=async()=>{calls++;throw Error('Should not run');};
+ const f=await fixture();let release,calls=0;const gate=new Promise(resolve=>{release=resolve;});f.input.contextGuard=()=>gate;f.backend.getNodeInfo=async()=>{calls++;throw Error('Should not run');};
  t.mock.timers.enable({apis:['setTimeout','Date']});const pending=prepareFundingClaim(f.input);const rejected=assert.rejects(pending,{code:'ROLLING_FUNDING_UNKNOWN'});t.mock.timers.tick(20001);await rejected;release();await Promise.resolve();await Promise.resolve();assert.equal(calls,0);t.mock.timers.reset();
 });
 test('FPC helper RPC uncertainty is not relabelled a receipt mismatch',async()=>{
  const f=await fixture('private-fee');let calls=0;const original=f.input.ethProvider.getTransaction;f.input.ethProvider.getTransaction=async(...args)=>{if(++calls>1)throw Error('PRIVATE_SENTINEL');return original(...args);};await assert.rejects(()=>prepareFundingClaim(f.input),{code:'ROLLING_FUNDING_UNKNOWN'});
+});
+
+test('unbranded node is rejected before guard or membership, even if it copies trusted methods',async()=>{
+ const f=await fixture();let guards=0,membership=0;
+ f.input.node={...f.input.node,getL1ToL2MessageMembershipWitness:async()=>{membership++;}};
+ f.input.contextGuard=async()=>{guards++;};
+ await assert.rejects(()=>prepareFundingClaim(f.input),{code:'ROLLING_FUNDING_UNTRUSTED_NODE'});
+ assert.equal(guards,0);assert.equal(membership,0);
+});
+test('mutation during guard await cannot replace captured trusted route, L1 reads, guard or artifact',async()=>{
+ const f=await fixture('private-fee');let release,entered,guards=0,ordinary=0,replacement=0;
+ const gate=new Promise(resolve=>{release=resolve;}),started=new Promise(resolve=>{entered=resolve;});
+ f.input.contextGuard=async()=>{guards++;if(guards===1){entered();await gate;}};
+ const provider=f.input.ethProvider;
+ const pending=prepareFundingClaim(f.input);await started;
+ f.input.node={getL1ToL2MessageMembershipWitness:async()=>{ordinary++;throw Error('Wrong route');}};
+ f.input.contextGuard=async()=>{replacement++;throw Error('Replaced guard');};
+ f.input.ethProvider={getNetwork:async()=>{replacement++;throw Error('Replaced provider');}};
+ provider.getTransactionReceipt=async()=>{replacement++;throw Error('Replaced method');};
+ f.input.privateFeeArtifact={};release();
+ assert.equal((await pending).status,'claim-ready');assert.equal(ordinary,0);assert.equal(replacement,0);assert(guards>10);
+});
+test('mutation during guard await cannot replace captured custody-store capability',async()=>{
+ const f=await fixture();let release,entered,calls=0,wrong=0,first=true;
+ const gate=new Promise(resolve=>{release=resolve;}),started=new Promise(resolve=>{entered=resolve;});
+ const store={load:async()=>{calls++;return {secret:f.secret,secretHash:f.input.receipt.secretHash};}};f.input.claimStore=store;
+ f.input.contextGuard=async()=>{if(first){first=false;entered();await gate;}};
+ const pending=prepareFundingClaim(f.input);await started;
+ store.load=async()=>{wrong++;throw Error('Replaced store method');};f.input.claimStore={load:async()=>{wrong++;throw Error('Replaced store');}};
+ release();assert.equal((await pending).status,'claim-ready');assert.equal(calls,1);assert.equal(wrong,0);
 });

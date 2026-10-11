@@ -11,6 +11,7 @@ import {computeSecretHash} from '@aztec-labs/stdlib/hash';
 import {deriveBoardDepositSecret} from '../deposit-custody.mjs';
 import {recoverPrivateFeeClaim, PrivateFeeFundingError} from '../private-fee-funding.mjs';
 import {verifyEthereumIntentReceipt} from '../ethereum-journal.mjs';
+import {isTrustedPrivateNode} from '../trusted-private-node.mjs';
 import {encodeEscrowCommitment, sha256Field} from '../protocol-commitments.mjs';
 
 const boardAbi = new Interface([
@@ -84,18 +85,27 @@ export async function prepareFundingClaim(input) {
     const {kind,scope:s,receipt:r,anchor:a,owner}=validated(input);
     const secrets=object(input.secrets,kind==='collateral'?['walletSecret','walletSalt']:kind==='private-fee'?['walletSecret']:['recipientSalt','bridgeSecret']);
     for(const [key,value] of Object.entries(secrets))field(value,key==='walletSalt');
+    // Capture every capability before the first await. Retaining an options
+    // object must not permit a route or guard change during verification.
+    const guard=input.contextGuard, privateFeeArtifact=input.privateFeeArtifact;
+    const suppliedNode=input.node, suppliedProvider=input.ethProvider, suppliedStore=input.claimStore;
+    requireThat(isTrustedPrivateNode(suppliedNode),'UNTRUSTED_NODE');
+    const capture=(source,names)=>Object.freeze(Object.fromEntries(names.map(name=>{const fn=source?.[name];requireThat(typeof fn==='function','INVALID');return [name,fn.bind(source)];})));
+    const nodeReads=capture(suppliedNode,['getNodeInfo','getContract','getBlockData','getL1ToL2MessageMembershipWitness']);
+    const providerReads=capture(suppliedProvider,['getNetwork','getTransactionReceipt','getTransaction','getBlock','call']);
+    const loadClaim=suppliedStore===undefined ? null : capture(suppliedStore,['load']).load;
     const deadline=Date.now()+20000;
     const read=async fn=>{
       let timer;try {
         requireThat(Date.now()<deadline,'UNKNOWN');
-        return await Promise.race([(async()=>{await input.contextGuard();requireThat(Date.now()<deadline,'UNKNOWN');const value=await fn();await input.contextGuard();requireThat(Date.now()<deadline,'UNKNOWN');return value;})(),
+        return await Promise.race([(async()=>{await guard();requireThat(Date.now()<deadline,'UNKNOWN');const value=await fn();await guard();requireThat(Date.now()<deadline,'UNKNOWN');return value;})(),
           new Promise((_,reject)=>{timer=setTimeout(()=>reject(fail('UNKNOWN')),Math.max(1,deadline-Date.now()));})]);
       } catch {readFailed=true;throw fail('UNKNOWN');} finally {clearTimeout(timer);}
     };
     // Guarded capabilities expose reads only, including when an existing recovery
     // helper calls them internally. No signer or send method is ever passed through.
-    const provider=Object.fromEntries(['getNetwork','getTransactionReceipt','getTransaction','getBlock','call'].map(name=>[name,(...args)=>read(()=>input.ethProvider[name](...args))]));
-    const node=Object.fromEntries(['getNodeInfo','getContract'].map(name=>[name,(...args)=>read(()=>input.node[name](...args))]));
+    const provider=Object.fromEntries(['getNetwork','getTransactionReceipt','getTransaction','getBlock','call'].map(name=>[name,(...args)=>read(()=>providerReads[name](...args))]));
+    const node=Object.fromEntries(['getNodeInfo','getContract'].map(name=>[name,(...args)=>read(()=>nodeReads[name](...args))]));
     const info=await node.getNodeInfo(), network=await provider.getNetwork();
     requireThat(String(info.l1ChainId)===s.chainId && String(info.rollupVersion)===s.version && equal(info.l1ContractAddresses?.rollupAddress,s.rollup) && String(network.chainId)===s.chainId);
     const receipt=await provider.getTransactionReceipt(r.txHash);
@@ -118,7 +128,7 @@ export async function prepareFundingClaim(input) {
     if(kind==='collateral') {
       for(const [name,value] of [['ROLLUP',s.rollup],['L2_CONTRACT',s.recipient],['VERSION',s.version],['L1_CHAIN_ID',s.chainId]])requireThat(equal(await call(s.portal,boardAbi,name),value));
       const custodyScope={...boardScope,depositor:r.sender};
-      const saved=input.claimStore ? await read(()=>input.claimStore.load(custodyScope,r.secretHash)) : null;
+      const saved=loadClaim ? await read(()=>loadClaim(custodyScope,r.secretHash)) : null;
       const derived=saved ?? await deriveBoardDepositSecret({...secrets,scope:custodyScope,owner,nonce:r.nonce});
       secret=field(derived.secret);requireThat(derived.secretHash===r.secretHash);
       const record={from:r.sender,to:s.portal,nonce:Number(r.nonce),chainId:s.chainId,data:boardAbi.encodeFunctionData('deposit',[r.secretHash]).toLowerCase(),value:r.amount,
@@ -130,7 +140,7 @@ export async function prepareFundingClaim(input) {
     } else if(kind==='private-fee') {
       const record={schema:'private-fee-funding-v1',chainId:s.chainId,version:s.version,rollupAddress:s.rollup,portalAddress:s.portal,tokenAddress:s.token,privateFeeAddress:s.recipient,
         sender:r.sender,nonce:r.nonce,amount:r.amount,txHash:r.txHash,leafIndex:r.leafIndex};
-      const recovered=await recoverPrivateFeeClaim({node,ethProvider:provider,owner:new AztecAddress(Fr.fromString(owner)),walletSecret:secrets.walletSecret,privateFeeArtifact:input.privateFeeArtifact,record,expectedChainId:s.chainId,expectedVersion:s.version});
+      const recovered=await recoverPrivateFeeClaim({node,ethProvider:provider,owner:new AztecAddress(Fr.fromString(owner)),walletSecret:secrets.walletSecret,privateFeeArtifact,record,expectedChainId:s.chainId,expectedVersion:s.version});
       requireThat(equal(recovered.messageKey,r.messageKey));secret=recovered.secret.toString();
       // The existing helper owns deterministic FPC verification and derivation;
       // repeat only immutable L1 bindings at the receipt anchor (helper uses latest).
@@ -156,11 +166,11 @@ export async function prepareFundingClaim(input) {
     const message=new L1ToL2Message(new L1Actor(EthAddress.fromString(s.portal),Number(s.chainId)),new L2Actor(new AztecAddress(Fr.fromString(messageRecipient)),Number(s.version)),Fr.fromString(content),Fr.fromString(r.secretHash),new Fr(BigInt(r.leafIndex)));
     requireThat(message.hash().toString()===r.messageKey);
     const checkL2=async()=>{
-      const block=await read(()=>input.node.getBlockData(a.number));
+      const block=await read(()=>nodeReads.getBlockData(a.number));
       requireThat(block && equal(block.blockHash,a.hash) && block.header?.globalVariables?.blockNumber===a.number && equal(block.header?.state?.l1ToL2MessageTree?.root,a.root),'REORG');
     };
     await checkL2();
-    const witness=await read(()=>input.node.getL1ToL2MessageMembershipWitness({number:a.number,hash:BlockHash.fromString(a.hash)},message.hash()));
+    const witness=await read(()=>nodeReads.getL1ToL2MessageMembershipWitness({number:a.number,hash:BlockHash.fromString(a.hash)},message.hash()));
     if(!witness){await checkL1();await checkL2();return frozen({status:'waiting',reason:'l2-delivery'});}
     requireThat(Array.isArray(witness) && witness.length===2 && witness[0]===BigInt(r.leafIndex) && witness[1].pathSize===L1_TO_L2_MSG_TREE_HEIGHT);
     const path=witness[1].toFields();requireThat(Array.isArray(path) && path.length===L1_TO_L2_MSG_TREE_HEIGHT);
