@@ -38,7 +38,10 @@ const methods={name:'register_name',subboard:'create_subboard',like:'set_like',u
  *              privateFee:{address,artifact,gasSettings},proofsEnabled?}.
  * accountSession: {owner,wallet,node,journal,walletSecret,walletSalt}; node is the
  * branded trusted node; wallet is createAztecWallet with this SAME scoped L2 journal
- * and contextGuard. Parent verifies deployment artifacts/publication before binding.
+ * and contextGuard. Parent constructs PXE with that same node: the installed PXE
+ * wraps it in an opaque SDK caching proxy, so .pxe.node equality cannot prove this.
+ * The wallet's public .aztecNode identity is checked before personalized calls.
+ * Parent verifies deployment artifacts/publication before binding.
  * privateStore: existing ciphertext read(key)/atomic compareAndSwap(key,prior,next).
  * contextGuard must reject a locked/replaced account or changed deployment.
  * Gas limits/prices may use JSON decimal strings or bigint; they are detached.
@@ -68,7 +71,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
   async function guard(){
     check(session&&typeof contextGuard==='function','ROLLING_LOCKED');await contextGuard();
     check(owner===session.owner.toString()&&sdk.isTrustedPrivateNode(session.node)&&
-      fixed.board===deployment.board.address.toString()&&fixed.fee===deployment.privateFee.address.toString()&&
+      session.wallet.aztecNode===session.node&&fixed.board===deployment.board.address.toString()&&fixed.fee===deployment.privateFee.address.toString()&&
       JSON.stringify(fixed.network)===JSON.stringify(deployment.network)&&fixed.portal===deployment.portal,'ROLLING_CONTEXT_CHANGED');
     await sdk.inspectTrustedNode(session.node,{expectedNetworkScope:fixed.network,proofsEnabled:fixed.proofsEnabled});
     const chain=await session.wallet.getChainInfo();check(String(chain.chainId)===scope.chainId&&String(chain.version)===scope.version,'ROLLING_CONTEXT_CHANGED');

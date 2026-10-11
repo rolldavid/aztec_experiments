@@ -27,7 +27,7 @@ function fixture(){
     assert.equal(opts.transactionJournal,journal);if(state.failSend)throw Error('unknown after send');
     state.outcome={operation:opts.journalOperation,outcome:'success',txHash:hex(77)};return {receipt:{}};
   }};
-  const node={};let random=100n;
+  const node={};wallet.aztecNode=node;let random=100n;
   const sdk={Fr:class extends Fr {static random(){return new Fr(random++);}},AztecAddress,encodeArguments,Contract:{at:()=>board},isTrustedPrivateNode:n=>n===node,
     inspectTrustedNode:async()=>{if(!state.guard)throw Error('stale trusted node');},
     preparePrivateFeePayment:async()=>({availableCredit:100n}),estimatePrivateFeeTransaction:async input=>{
@@ -133,4 +133,14 @@ test('canonical receipt lost after a reported success returns recovering; change
   f.state.outcome=null;assert.equal((await f.app.readAccountStatus()).status,'recovering');
   await assert.rejects(f.app.prepare({type:'unlike',post:'5'}),{code:'ROLLING_RECOVERY_REQUIRED'});
   f.options.deployment.network.version='2';await assert.rejects(f.app.ownedIdentities(),{code:'ROLLING_CONTEXT_CHANGED'});
+});
+
+test('wrong wallet node fails before any personalized wallet/utility call',async()=>{
+  const f=fixture();f.options.accountSession.wallet.aztecNode={};
+  f.options.accountSession.wallet.getChainInfo=()=>{assert.fail('must not query mismatched wallet');};
+  f.options.accountSession.wallet.getAccounts=()=>{assert.fail('must not query mismatched wallet');};
+  for(const action of [()=>f.app.readAccountStatus(),()=>f.app.ownedIdentities(),()=>f.app.prepare({type:'like',post:'5'})]){
+    await assert.rejects(action(),{code:'ROLLING_CONTEXT_CHANGED'});
+  }
+  assert.equal(f.state.privateReads.length,0);assert.equal(f.state.estimates,0);assert.equal(f.state.sends,0);
 });
