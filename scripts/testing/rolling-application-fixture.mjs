@@ -124,6 +124,7 @@ export async function loadRollingFixtureSDK() {
     import('@aztec-labs/aztec.js/addresses'),import('@aztec-labs/aztec.js/abi'),
     import('@aztec-labs/aztec.js/wallet'),import('@aztec-labs/wallet-sdk/base-wallet'),
     import('@aztec-labs/accounts/schnorr'),import('@aztec-labs/stdlib/keys'),
+    import('@aztec-labs/foundation/crypto/poseidon'),
     import('@aztec-labs/stdlib/contract'),import('@aztec-labs/stdlib/tx'),import('@aztec-labs/stdlib/gas'),
     import('../../shared/private-pxe.mjs'),import('../../shared/trusted-private-node.mjs'),
     import('../../shared/sdk-store.mjs'),import('../../shared/private-fee-client.mjs'),

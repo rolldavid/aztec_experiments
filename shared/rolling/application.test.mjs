@@ -338,6 +338,18 @@ test('owned metadata preserves display case, 32-byte boundary and cursor with on
  const result=await f.app.ownedIdentities({cursor:16});assert.equal(result.nextCursor,24);assert.deepEqual(result.records.map(r=>[r.first,r.last]),names);assert.equal(result.identities.length,8);
  assert.deepEqual(f.state.privateReads.map(r=>r.name),['owned_name_records']);assert.equal(f.state.privateReads[0].args[1],16);
 });
+test('native campaign SDK recovers an actual ABI-decoded nonempty ownership page',async()=>{
+ const {loadRollingFixtureSDK}=await import('../../scripts/testing/rolling-application-fixture.mjs');
+ const native=await loadRollingFixtureSDK(),f=fixture();
+ f.state.records=await ownershipPage([['River','Stone']]);
+ f.options.sdk.poseidon2HashWithSeparator=native.poseidon2HashWithSeparator;
+ const id='0x2682de94a1e9e9ebdc321ce593be34853b1587f715bc9f147e8daae17c7cf76b';
+ assert.deepEqual(await f.app.ownedIdentities(),{identities:[id],records:[{id,first:'River',last:'Stone'}],nextCursor:null});
+ assert.equal(native.poseidon2HashWithSeparator,poseidon2HashWithSeparator);
+ const {preimage}=nameRegistration('River','Stone');
+ assert.equal((await native.poseidon2HashWithSeparator(preimage.map(n=>new native.Fr(n)),NAME_DOMAIN)).toString(),id);
+ assert.equal(f.state.sends,0);assert.deepEqual(f.state.privateReads.map(r=>r.name),['owned_name_records']);
+});
 test('owned metadata rejects forged IDs, bad schema, missing fields, padding, reserved/unsupported names and duplicates',async()=>{
  const mutations=[page=>{page[0].name_id=6n;},page=>{page[0].schema=2;},page=>{delete page[0].first;},page=>{page[0].first[0]+=1n;},page=>{page[0].first[1]=1n;},
   page=>{page[0].first[0]=1n<<248n;},page=>{page[0].first_length=33;},page=>{page[0].first[0]=255n<<240n;},
