@@ -233,3 +233,13 @@ traffic accounting, including transport acknowledgments; it neither measures a
 50Mbps throughput limit nor proves the complete future networking budget bound.
 The lead must retain latency/failure allowances and perform separate bounded
 throughput commissioning before asserting that bound.
+
+The qualification socket allowlist includes `AF_NETLINK` solely so its mandatory
+`tc` class/qdisc readback can open a local routing netlink socket. This follows
+[iproute2 v6.1.0 libnetlink.c, rtnl_open](https://raw.githubusercontent.com/iproute2/iproute2/v6.1.0/lib/libnetlink.c)
+and [systemd v255 RestrictAddressFamilies](https://raw.githubusercontent.com/systemd/systemd/v255/man/systemd.exec.xml).
+`CapabilityBoundingSet` remains empty (no `CAP_NET_ADMIN`); `AF_PACKET` is not
+allowed, and IP access remains loopback-only. The regression models these exact
+source-backed socket dependencies while executing the real control verifier;
+it is not evidence of Linux seccomp/netlink operation. Actual Linux commissioning
+must confirm that read-only traffic-control inspection succeeds under this unit.

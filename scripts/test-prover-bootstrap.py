@@ -366,6 +366,42 @@ await probe(false);await probe(true);
         self.assertNotIn('docker.sock',unit)
         self.assertEqual(calls[-1],['systemctl','start','--no-block','rolling-qualification.service'])
 
+    def test_qualification_tc_readback_has_required_netlink_socket_family(self):
+        # Source-derived dependency model, NOT Linux seccomp execution:
+        # iproute2 v6.1.0 lib/libnetlink.c:182-243 rtnl_open uses
+        # socket(AF_NETLINK, SOCK_RAW|SOCK_CLOEXEC, NETLINK_ROUTE).
+        # systemd v255 systemd.exec.xml:1850-1868 filters socket() by family.
+        ns=host();written={};ns['write']=lambda p,s,*_:written.update({str(p):s})
+        ns['run']=lambda *a,**k:None;ns['install_qualification']()
+        unit=written['/etc/systemd/system/rolling-qualification.service']
+        settings=dict(line.split('=',1) for line in unit.splitlines() if '=' in line)
+        families=set(settings['RestrictAddressFamilies'].split())
+        self.assertEqual(settings['CapabilityBoundingSet'],'') # no CAP_NET_ADMIN
+        self.assertEqual(settings['IPAddressDeny'],'any');self.assertEqual(settings['IPAddressAllow'],'localhost')
+        self.assertEqual(families-{'AF_NETLINK'},{'AF_UNIX','AF_INET','AF_INET6'})
+        classes='\n'.join('class htb '+h+' '+parent+' rate '+rate+'Mbit ceil 50Mbit burst 1Mb cburst 1Mb\n Sent 123 bytes 1 pkt (dropped 0, overlimits 0 requeues 0)' for h,parent,rate in [('1:1','root','50'),('1:10','parent 1:1','25'),('1:20','parent 1:1','25')])
+        reads=[]
+        def command(args,**kwargs):
+            if args[0]=='systemctl':
+                self.assertIn('AF_UNIX',families);return
+            if args==['tc','-V']:return 'tc utility, iproute2-6.1.0, libbpf 1.3.0'
+            if args[0]=='dpkg-query':return '6.1.0-1ubuntu6.4'
+            if args[0]=='tc' and ('class' in args or 'qdisc' in args):
+                if 'AF_NETLINK' not in families:raise PermissionError('model: socket family denied')
+                reads.append('class' if 'class' in args else 'qdisc')
+                if 'class' in args:return classes
+                return json.dumps([{'kind':'htb','handle':'1:','root':True,'options':{'default':'0x10'}}])
+            self.fail('Unexpected command dependency')
+        ns['run']=command
+        with tempfile.TemporaryDirectory() as t:
+            ns['BASE']=pathlib.Path(t)
+            (ns['BASE']/'deadline.json').write_text(json.dumps({'budgetStop':'2099-01-01T00:00:00Z'}))
+            (ns['BASE']/'interface').write_text('ens5')
+            self.assertEqual(ns['verify_controls'](),123);self.assertEqual(reads,['class','qdisc'])
+            families.remove('AF_NETLINK')
+            with self.assertRaises(PermissionError):ns['verify_controls']()
+            self.assertEqual(reads,['class','qdisc']) # rejection cannot become success or bypass tc
+
     def test_cli_private_compressed_output_and_no_overwrite(self):
         with tempfile.TemporaryDirectory() as t:
             directory=pathlib.Path(t).resolve();directory.chmod(0o700)
