@@ -2,7 +2,7 @@
   "schema_version": 1,
   "budget_usd": 300,
   "scope": "Cumulative prover campaign plus at most one additional rolling.chat server; existing moderator costs remain separate.",
-  "as_of": "2026-10-11T18:59:08.236104+00:00",
+  "as_of": "2026-10-11T20:50:33.030218+00:00",
   "billing_evidence": "evidence/G02/aws-costs.json",
   "historical_campaign_bound_usd": 83.27,
   "historical_bound_method": "Retain the full earlier conservative bound including unused planned compute through13Oct, rather than subtracting unverified savings. Includes49.47 prior allowance,28.80 revival maximum and5 ancillary.",
@@ -12,8 +12,8 @@
   "new_spend_description": "One Cost Explorer query; include in reconciliation.",
   "billing_delay_cleanup_reserve_usd": 20,
   "retained_storage_network_forecast_usd": 5,
-  "conservative_committed_and_reserved_usd": 215.28,
-  "remaining_before_new_launch_usd": 84.72,
+  "conservative_committed_and_reserved_usd": 225.28,
+  "remaining_before_new_launch_usd": 74.72,
   "resources": [
     {
       "id": "i-0025eb05db3c2491c",
@@ -102,8 +102,8 @@
     {
       "id": "rolling-node-commissioning-20261011-03",
       "purpose": "VerifiedS3regionrepair; historical5235Linuxqueryqualification only",
-      "state": "installed, controls verified; bounded automatic Linuxquery qualification pending; publicprover masked",
-      "reservation_usd": 105,
+      "state": "terminated; volumes absent; request fleet deletion acknowledged; final qualification unknown",
+      "reservation_usd": 10,
       "reservation_includes": "Fullsame8h+.5hcompute/40+1024GiBstorage/250GBegress/backups/requests/taxcleanup forecast, pluspriorattemptsseparately2USD",
       "runtime_archive_key": "releases/rolling-5235-20261011/runtime.tar.gz",
       "runtime_archive_version": "5sJL2qArC3lcnmSCR8OPK5O.u09Nao95",
@@ -138,10 +138,72 @@
       "latest_live_state": "terminated",
       "termination_evidence": "evidence/G02/rolling-node-03-termination.json",
       "remaining_volumes": [],
-      "qualification_status": "Not qualified; final qualification receipt unavailable in console. No replay authorized by missing receipt."
+      "qualification_status": "Not qualified; final qualification receipt unavailable in console. No replay authorized by missing receipt.",
+      "termination_observed_at": "2026-10-11T20:11:39Z",
+      "network_out_observed_bytes": 1593617,
+      "network_evidence": "evidence/G02/rolling-node-03-network-out.json",
+      "accrual_bound": {
+        "compute_hours": 1.6,
+        "compute_rate_usd_hour": 0.92736,
+        "compute_usd": 1.484,
+        "storage_gib": 1064,
+        "storage_rate_usd_gib_month": 0.08,
+        "storage_hours": 1.6,
+        "storage_usd": 0.187,
+        "network_upper_gb": 36,
+        "network_usd_gb": 0.09,
+        "network_usd": 3.24,
+        "public_ipv4_usd": 0.008,
+        "requests_backups_tax_delay_cleanup_buffer_usd": 5.081,
+        "total_usd": 10
+      },
+      "reservation_disposition": "Replace105 planned8hreservation with10 conservative terminated-hostbound; 19 CloudWatch datapoints total1.59MB corroborate lowactualegress but budgetuses50Mbps whole1.6h bound36GB. No retained disks observed. Global20delayedbilling and5archive retention remain; no forecast treats billing delay aszero."
+    },
+    {
+      "id": "rolling-node-commissioning-20261011-04",
+      "purpose": "Diagnose prior unknown Linux node readiness through reviewed safe final receipt; historical5235 runtime only",
+      "state": "running; cloud termination and encrypted volume deletion verified; host controls pending console",
+      "reservation_usd": 105,
+      "reservation_includes": {
+        "compute": 7.89,
+        "ebs": 3.85,
+        "ipv4": 0.05,
+        "outbound_conservative_multiple_path_charges": 48.75,
+        "cloudfront_upload": 0.43,
+        "https_requests": 0.24,
+        "backups": 0.5,
+        "operator_s3_downloads": 3.87,
+        "s3_requests": 0.1,
+        "tax20percent_and_extra_cleanup_buffer": 28.14
+      },
+      "bootstrap_revision": "3ce246dfbd02579f64884ad79246154136d309dc",
+      "payload_sha256": "a487604f332e56c0f8128eed1f3ce50907ece84c026fbc24701c4c118869f325",
+      "payload_bytes": 15961,
+      "runtime_source": "5235f497a80f52b5e1a9a797d2c92824618ca7c4",
+      "archive_retention_deadline": "2026-11-10",
+      "deadlines": {
+        "createdAt": "2026-10-11T20:42:35Z",
+        "budgetStop": "2026-10-12T04:42:35Z",
+        "commissioningStop": "2026-10-11T21:12:35Z",
+        "credentialExpiration": "2026-10-12T04:42:34.000Z"
+      },
+      "independent_shutdown": "requestFleet ValidUntil terminate plus host budget and commissioning timers; mandatory actual readback",
+      "no_overlap_observed": true,
+      "paid_action_intent": "Private04 launch-intent must be exclusive before launch; missing receipt never licenses replay",
+      "fleet_id": "fleet-fb355b06-10a4-4688-9ed5-36bb68ef7945",
+      "launch_template_id": "lt-0206e70712a49165d",
+      "instance_id": "i-0dc273607f11cedb7",
+      "volume_ids": [
+        "vol-0d52c339556efda66",
+        "vol-048a9b54f9cf32848"
+      ],
+      "launch_time": "2026-10-11T20:48:36Z",
+      "cloud_termination_verified": true,
+      "delete_on_termination_verified": true,
+      "instance_shutdown_terminate_verified": true
     }
   ],
-  "launch_hold": "Reviewedregionrepair launch onlyafteractualboundedGET206preflight/zerooldresources/cloudexpiry controls. NoLinuxacceptanceclaim.",
+  "launch_hold": "04 reviewed source3ce, exactv2payload15961 and206 preflight satisfied. One scoped delegated launch after final fleet/resource reconciliation; abort if commissioning deadline too near. No routing changes.",
   "node_requirement_sources": [
     "https://docs.aztec.network/operate/testnet/operators/full-node/overview",
     "https://docs.aztec.network/operate/testnet/operators/setup/running_a_node"
@@ -187,7 +249,7 @@
   },
   "shutdown_prerequisite_evidence": "evidence/G02/fleet-shutdown-prerequisites.json",
   "fullnode_recovery_proposal": {
-    "status": "Active third commissioning host i-09258d7eef0311a2c; installed and controls verified, automatic Linux query qualification pending. First two attempts terminated and storage absent; cumulative forecast215.28/300.",
+    "status": "04reserved105 prior03terminated; forecast225.28/300 beforelaunch",
     "checked_by": "design-20261011",
     "checked_at": "2026-10-11T17:50:56.331671+00:00",
     "live_instances_volumes_fleets_us_east_1": {
@@ -226,8 +288,8 @@
       "tax20percent_and_extra_cleanup_buffer": 28.14
     },
     "round_up_reservation_usd": 105,
-    "projected_total_usd": 215.28,
-    "projected_remaining_usd": 84.72,
+    "projected_total_usd": 225.28,
+    "projected_remaining_usd": 74.72,
     "controls": [
       "AWSrequestFleet absoluteValidUntil withTerminateInstancesWithExpiration",
       "IndependentpersistenthostUTCtimer installedbeforedownloads",
@@ -250,5 +312,14 @@
     ],
     "egress_forecast_gb": 250,
     "egress_forecast_reason": "50Mbps over8.5h is191.25GB;250GB reserves58.75GB for rate formatting tolerance, bursts and non-realtime loss detection/termination. This is a conservative forecast, not proof of a hard fault-time network bound. Commissioning must verify shaping and counters; no external prover proxy before request/upload controls."
+  },
+  "reconciliation_20261011_2033": {
+    "prior_total_usd": 215.28,
+    "released_unused_reservation_usd": 95,
+    "new_total_usd": 120.28,
+    "receipt": "evidence/G02/rolling-node-03-termination.json",
+    "spending_limit_usd": 300,
+    "no_new_launch": true,
+    "forecast_note": "Future105reservation would total225.28; requires exactreviewedbootstrap/preflight andindependentshutdowncontrols before paidaction."
   }
 }

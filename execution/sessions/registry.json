@@ -38,13 +38,9 @@
       "branch": "codex/rolling-node-receipts",
       "history_locator": "collaboration runtime /root/controls, parent 01a12a75-1b50-7871-a73b-4253a1010194",
       "role": "implementation worker",
-      "state": "claimed bounded commissioning observability repair; no cloud actions",
+      "state": "trustedoperator04 one scoped launch+shutdown verification; no sourcewriterclaim",
       "worktree": "../rolling-controls",
-      "allowed_paths": [
-        "deploy/prover/bootstrap.py",
-        "scripts/test-prover-bootstrap.py",
-        "deploy/prover/BOOTSTRAP.md"
-      ],
+      "allowed_paths": [],
       "commit_trailer_aliases": {
         "Agent-Session": "controls",
         "Parent-Session": "lead"
@@ -62,7 +58,7 @@
       "branch": "read-only candidate refs",
       "history_locator": "collaboration runtime /root/reviewer, parent 01a12a75-1b50-7871-a73b-4253a1010194",
       "role": "independent reviewer",
-      "state": "native527 approved17checks; actualcampaign pending"
+      "state": "independent read-only attempt4 diagnosis"
     },
     {
       "logical_id": "design-20261011",
@@ -70,18 +66,18 @@
       "parent_id": "lead-20261011",
       "task": [
         "G05",
-        "G06"
+        "G14"
       ],
-      "branch": "codex/rolling-wallet-panel",
+      "branch": "codex/rolling-funding-receipts",
       "history_locator": "collaboration runtime /root/design, parent01a12a75-1b50-7871-a73b-4253a1010194",
       "role": "implementation worker",
-      "state": "claimed wallet panel implementation",
+      "state": "claimed bounded canonical funding receipts",
       "worktree": "../rolling-design",
       "allowed_paths": [
-        "apps/rolling/wallet-panel.mjs",
-        "apps/rolling/wallet-panel.browser.test.mjs"
+        "shared/rolling/funding-receipts.mjs",
+        "shared/rolling/funding-receipts.test.mjs"
       ],
-      "base": "582652f"
+      "base": "3ce246dfbd02579f64884ad79246154136d309dc"
     }
   ],
   "integrations": [
@@ -241,6 +237,22 @@
       "candidate_revision": "582652f",
       "review": "evidence/G05/native-artifacts-527-review.json",
       "status": "source approved; actualcampaign pending; outer directory inventory includes helper"
+    },
+    {
+      "task": "G05",
+      "worker": "design-20261011",
+      "worker_revision": "1186d297be4a4ef09c2d635d02ed0ca2b6fe607c",
+      "candidate_revision": "cddb3f0",
+      "review": "evidence/G05/wallet-panel-1186-review.json",
+      "status": "source approved and7browserUIchecks; actualwalletchainpending"
+    },
+    {
+      "task": "G14",
+      "worker": "controls-20261011",
+      "worker_revision": "e51fa6896fc35f3884c160c58ad913e815a6602f",
+      "candidate_revision": "3ce246d",
+      "review": "evidence/G14/bootstrap-receipt-e51-review.json",
+      "status": "36independentPythonchecks; actualLinuxreceiptpending"
     }
   ]
 }
