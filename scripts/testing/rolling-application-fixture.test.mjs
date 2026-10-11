@@ -155,3 +155,13 @@ test('actual SDK footprint composition uses both supported human roles',async()=
  assert.equal(result.sharedFeePayer,true);assert.equal(result.rolePresence.publicCallCalldata.author,true);assert.equal(result.rolePresence.publicCallCalldata.otherAuthor,true);
  for(const key of ['author','otherAuthor'])assert.equal(result.rolePresence.feePayer[key],false);
 });
+
+import {rollingClockDeadline} from './rolling-application-fixture.mjs';
+test('measured fixture catchup covers the observed 111-second lead without changing the campaign limit',()=>{
+ const now=1791761013786,target=1791761124n,end=now+350000;
+ assert.equal(rollingClockDeadline({now,chainSeconds:target,campaignDeadlineAt:end}),1791761126000);
+ assert(rollingClockDeadline({now,chainSeconds:target,campaignDeadlineAt:end})<=end-180000);
+ assert.equal(rollingClockDeadline({now,chainSeconds:BigInt(Math.floor(now/1000)-1),campaignDeadlineAt:end}),now+2000);
+ assert.throws(()=>rollingClockDeadline({now,chainSeconds:target,campaignDeadlineAt:now+290000}),/Insufficient campaign budget/);
+ assert.throws(()=>rollingClockDeadline({now,chainSeconds:2n**100n,campaignDeadlineAt:end}));
+});

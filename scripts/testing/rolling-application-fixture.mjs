@@ -72,6 +72,16 @@ export async function closeRollingResources(steps,observation) {
 }
 // Public, bounded diagnostic only. It never supplies a clock override, accepts a
 // failed readiness gate, or serializes an SDK error/response into evidence.
+export function rollingClockDeadline({now,chainSeconds,campaignDeadlineAt}) {
+  assert(Number.isSafeInteger(now)&&Number.isSafeInteger(campaignDeadlineAt)&&campaignDeadlineAt>now);
+  assert(typeof chainSeconds==='bigint'&&chainSeconds>=0n&&chainSeconds<=BigInt(Math.floor(Number.MAX_SAFE_INTEGER/1000)));
+  // Controlled settlement can lead wall time by more than a fixed 110 seconds.
+  // Wait for the measured prerequisite, keeping the absolute campaign limit and
+  // 180 seconds of application headroom. Never alter node clocks or freshness.
+  const deadline=Math.max(now,Number(chainSeconds)*1000)+2000;
+  assert(deadline<=campaignDeadlineAt-180000,'Insufficient campaign budget for natural clock catchup and application');
+  return deadline;
+}
 export async function observeRollingReadiness({node,network,proofsEnabled,endpoint},inspect) {
   const row={wallSeconds:Math.floor(Date.now()/1000),timestampAvailable:false,inspectorCode:'UNOBSERVED'};
   try{
@@ -243,11 +253,13 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
     // Catch up AFTER controlled READY and funding setup; the setup miner has stopped. There is no mining loop
     // during this wait and no change to production clocks or maxLagSeconds.
     await mark('real-wall-clock-readiness');
-    const clockStart=Date.now(),clockDeadline=Math.min(clockStart+110000,ctx.applicationDeadlineAt);
-    report.clock={initialWallSeconds:Math.floor(clockStart/1000),deadlineAt:clockDeadline};
+    const clockStart=Date.now();let clockDeadline;
+    report.clock={initialWallSeconds:Math.floor(clockStart/1000)};
     await ctx.node.getSequencer().pause();
     try {
-      report.clock.initialSyncedL1Timestamp=String(await ctx.node.getSyncedL1Timestamp());await save();
+      report.clock.initialSyncedL1Timestamp=String(await ctx.node.getSyncedL1Timestamp());
+      clockDeadline=rollingClockDeadline({now:Date.now(),chainSeconds:BigInt(report.clock.initialSyncedL1Timestamp),campaignDeadlineAt:ctx.applicationDeadlineAt});
+      report.clock.deadlineAt=clockDeadline;report.clock.applicationReserveMs=180000;await save();
       while(BigInt(Math.floor(Date.now()/1000))<await ctx.node.getSyncedL1Timestamp()) {
         assert(Date.now()<clockDeadline,'Fixture clock catchup exceeded remaining bounded budget');await sleep(250);
       }
@@ -290,9 +302,9 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
       restoreIndexedDB=()=>{for(const [key,descriptor] of previous)if(descriptor)Object.defineProperty(globalThis,key,descriptor);else delete globalThis[key];};
       for(const k of keys)Object.defineProperty(globalThis,k,{value:k==='indexedDB'?new idb.IDBFactory():idb[k],writable:true,configurable:true});
       const {createRollingApplicationActor}=await import('./rolling-application-actor.mjs');
-      const makeActor=(funding,role)=>createRollingApplicationActor({sdk,routing,node,endpoint,network,proofsEnabled:real,
+      const makeActor=(funding,role,dataDirectory='rolling-application-test-'+role)=>createRollingApplicationActor({sdk,routing,node,endpoint,network,proofsEnabled:real,
         board:{instance:ctx.instance,artifact:checked.artifact},fees:funding,portal:ctx.ready.portalAddress,
-        storageDirectory:path.join(ctx.directory,'rolling-application-journals-'+role),dataDirectory:'rolling-application-test-'+role,
+        storageDirectory:path.join(ctx.directory,'rolling-application-journals-'+role),dataDirectory,
         log:discard,externalActivity:()=>({proofJobs:service.stats().submitted,transportSends})});
       actorA=await makeActor(fees,'a');activeActor=actorA;
       pxe=actorA.pxe;appWallet=actorA.wallet;journal=actorA.journal;let app=actorA.application;
@@ -378,6 +390,39 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
       if(names){
         const {exerciseRollingOwnedNames}=await import('./rolling-owned-names.mjs');
         report.names=await exerciseRollingOwnedNames({actorA,actorB,actionA:(input,label)=>action(input,label,actorA),actionB:(input,label)=>action(input,label,actorB),onPhase:phase=>wire?.setPhase(phase)});
+        if(wire){
+          await mark('fresh-pxe-owned-name-recovery');
+          const started=Date.now(),expected=[await actorA.application.ownedIdentities(),await actorB.application.ownedIdentities()];
+          const cipher=async role=>{
+            const directory=path.join(ctx.directory,'rolling-application-journals-'+role),files=(await fs.readdir(directory)).sort();
+            assert(files.length>0&&files.every(name=>/^[0-9a-f]{64}\.json$/.test(name)));
+            return Promise.all(files.map(async name=>[name,sha(await fs.readFile(path.join(directory,name)))]));
+          };
+          report.coldPXE={passed:false,actors:[],scope:'Fresh IndexedDB PXE namespaces with retained disposable secrets and unchanged encrypted journals; no seed/device/process-cold claim'};
+          for(const role of ['a','b']){
+            wire.setPhase('recovery-'+role);
+            const old=role==='a'?actorA:actorB,other=role==='a'?actorB:actorA,funding=role==='a'?fees:feesB;
+            const before=old.activity(),otherBefore=other.activity(),oldPXE=old.pxe,oldJournal=old.journal,oldIntent=actorIntents.get(old),beforeCipher=await cipher(role);
+            const dataDirectory='rolling-application-cold-'+role+'-'+randomUUID();
+            const identity=sdk.getPXEStoreIdentity({l1ChainId:Number(network.chainId),rollupAddress:network.rollup,accountAddress:String(old.owner),dataDirectory});
+            assert(!(await indexedDB.databases()).some(db=>db.name===identity.name));
+            await old.close();assert.throws(()=>old.contextGuard());
+            const replacement=await makeActor(funding,role,dataDirectory);
+            if(role==='a')actorA=replacement;else actorB=replacement;
+            activeActor=replacement;actorIntents.delete(old);actorIntents.set(replacement,oldIntent);
+            assert(replacement.pxe!==oldPXE&&replacement.journal!==oldJournal);assert.equal(String(replacement.owner),String(old.owner));
+            assert((await indexedDB.databases()).some(db=>db.name===identity.name));
+            for(const [i,current]of [actorA,actorB].entries()){
+              assert.deepEqual(await current.application.ownedIdentities(),expected[i]);
+              assert.deepEqual(await current.application.ownedIdentities({cursor:8}),{identities:[],records:[],nextCursor:null});
+            }
+            const after=replacement.activity();assert.equal(after.walletSubmissions,0);assert.equal(after.proofJobs,before.proofJobs);assert.equal(after.transportSends,before.transportSends);
+            assert.deepEqual(other.activity(),otherBefore);assert.deepEqual(await cipher(role),beforeCipher);
+            report.coldPXE.actors.push({freshStoreVerified:true,oldActorClosed:true,sameOwner:true,exactNamesRecovered:true,journalCiphertextUnchanged:true,newProofJobs:0,newWalletSubmissions:0,newTransportSends:0,constructorAuthWitnesses:after.authWitnesses});await save();
+          }
+          pxe=actorA.pxe;appWallet=actorA.wallet;journal=actorA.journal;app=actorA.application;
+          report.coldPXE.passed=true;report.coldPXE.elapsedMs=Date.now()-started;await save();
+        }
         assert.equal(publicNameIds.length,4);assert.equal(new Set(publicNameIds).size,4);
         report.publicViews=publicNameIds.slice().sort().map(id=>projection.profile(id,{limit:100}));
         const {assertCanonicalOwnedNameProfiles}=await import('./rolling-public-acceptance.mjs');assertCanonicalOwnedNameProfiles(projection,report.publicViews);await save();
