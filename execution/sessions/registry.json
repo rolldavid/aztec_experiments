@@ -33,21 +33,24 @@
       "runtime_id": "/root/controls",
       "parent_id": "lead-20261011",
       "task": [
+        "G06",
         "G14"
       ],
-      "branch": "codex/rolling-query-local-qualification",
+      "branch": "codex/rolling-bok-reply-journey",
       "history_locator": "collaboration runtime /root/controls, parent 01a12a75-1b50-7871-a73b-4253a1010194",
       "role": "implementation worker",
-      "state": "read-only nextfrontend slice analysis; no writer claim",
+      "state": "claimed actualauthenticatedreply journey extension; oldprotocol sourcefrozen",
       "worktree": "../rolling-controls",
       "allowed_paths": [
-        "scripts/testing/trusted-query-fixture.mjs",
-        "scripts/testing/trusted-query-fixture.test.mjs"
+        "billboard/rolling_contract/journey.mjs",
+        "billboard/rolling_contract/reply-acceptance.mjs",
+        "billboard/rolling_contract/reply-acceptance.test.mjs"
       ],
       "commit_trailer_aliases": {
         "Agent-Session": "controls",
         "Parent-Session": "lead"
-      }
+      },
+      "base": "47cb0a0"
     },
     {
       "logical_id": "reviewer-20261011",
@@ -69,16 +72,17 @@
       "task": [
         "G14"
       ],
-      "branch": "codex/rolling-bootstrap-qualification",
+      "branch": "codex/rolling-bootstrap-diagnostics",
       "history_locator": "collaboration runtime /root/design, parent01a12a75-1b50-7871-a73b-4253a1010194",
       "role": "implementation worker",
-      "state": "completed57e; writer claim released",
+      "state": "claimedregionrepair afteractualS3HTTP301eu-west-2; onlysame3bootstrap paths",
       "worktree": "../rolling-design",
       "allowed_paths": [
         "deploy/prover/bootstrap.py",
         "scripts/test-prover-bootstrap.py",
         "deploy/prover/BOOTSTRAP.md"
-      ]
+      ],
+      "base": "f5c7f6a"
     }
   ],
   "integrations": [
