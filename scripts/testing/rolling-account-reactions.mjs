@@ -1,8 +1,10 @@
 // Acceptance consumer only: the parent owns distinct genuine actor sessions,
 // authenticated event decoding/application, proofs, journals, funding and cleanup.
 // action must return ONLY RollingBoard events after canonical confirmation.
-// activity must count actual wallet signing and submission boundaries, not action
-// invocations. prepare must call the real application prepare without any send.
+// activity counts actual auth-witness creation, native proof jobs, wallet send
+// attempts and transport sends separately. SDK fee simulation creates local auth
+// witnesses; the product does not prohibit those. Failed prepare must not prove
+// or submit. Parent instrumentation preserves the original calls and errors.
 // isRemovedPostRejection must attribute the actual simulator failure to the
 // installed RollingBoard _set_like "Post removed" assertion, not broad text/code
 // matching or an unrelated transport failure. Missing attribution blocks proof.
@@ -23,7 +25,9 @@ function post(p){
 }
 function single(events,type,keys){assert(Array.isArray(events));assert.deepEqual(events.map(e=>e.type),[type]);const event=events[0];position(event.position);exact(event.payload,keys);assert.equal(event.payload.schema,'1');return event;}
 function packed(text){const b=Buffer.from(text),out=Array(7).fill(0n);assert(b.length<=217);for(let i=0;i<b.length;i++)out[Math.floor(i/31)]|=BigInt(b[i])<<BigInt(8*(30-i%31));return out.map(String);}
-async function counters(actor){const value=await actor.activity();exact(value,['signatures','submissions']);for(const v of Object.values(value))assert(Number.isSafeInteger(v)&&v>=0);return copy(value);}
+const COUNTERS=['authWitnesses','proofJobs','walletSubmissions','transportSends'];
+async function counters(actor){const value=await actor.activity();exact(value,COUNTERS);for(const v of Object.values(value))assert(Number.isSafeInteger(v)&&v>=0);return copy(value);}
+function deltas(before,after){return Object.fromEntries(COUNTERS.map(key=>{assert(after[key]>=before[key],'Activity counters must be monotonic');return [key,after[key]-before[key]];}));}
 
 /** The board must contain an existing unremoved Anonymous main-board root with
  * zero likes. mainVersion=1/localVersion=0 are explicit fixture assumptions.
@@ -62,9 +66,11 @@ export async function exerciseRollingAccountReactions({postId,actorA,actorB,mode
  // Catch locally: assertion output must not print an arbitrary wallet exception.
  let rejected=false;try{await actorB.prepare({type:'like',post:postId});}catch(error){rejected=(await actorB.isRemovedPostRejection(error))===true;}
  assert(rejected,'New like on a removed post must fail preparation');
- assert.deepEqual(await counters(actorA),beforeA,'Rejected preparation must not sign or send through either actor');
- assert.deepEqual(await counters(actorB),beforeB,'Rejected preparation must not sign or send');unchanged('0');
+ const deltaA=deltas(beforeA,await counters(actorA)),deltaB=deltas(beforeB,await counters(actorB));
+ assert.deepEqual(deltaA,{authWitnesses:0,proofJobs:0,walletSubmissions:0,transportSends:0},'The other actor must remain entirely inactive');
+ for(const key of ['proofJobs','walletSubmissions','transportSends'])assert.equal(deltaB[key],0,'Rejected preparation must not prove or submit');
+ unchanged('0');
  return {scenario:'two-account-reactions',postId,counts,privateTransactions:5,moderatorTransactions:1,
-  duplicateEventFree:true,distinctPerPostTags:true,unlikeAfterRemoval:true,removedLikeRejectedBeforeSigningAndSending:true,
+  duplicateEventFree:true,distinctPerPostTags:true,unlikeAfterRemoval:true,removedLikeRejectedBeforeProvingAndSending:true,removedPreparationActivity:deltaB,
   scope:'Two parent-owned account closures and canonical reaction/removal effects. Broader observer privacy and independently verified account provisioning remain separate.'};
 }
