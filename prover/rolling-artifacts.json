@@ -1,6 +1,36 @@
 {
   "schemaVersion": 1,
-  "status": "pending",
-  "artifacts": [],
-  "inputs": {}
+  "status": "ready",
+  "artifacts": [
+    {
+      "name": "RollingBoard",
+      "path": "billboard/target/rolling_contract-RollingBoard.json",
+      "sha256": "5efc8d3063717355bf04f81bfac568f5cf58e1c7a7ee5c17d00eef814815abe8"
+    },
+    {
+      "name": "PrivateBok",
+      "path": "experiments/private-bok/target/private_bok-PrivateBok.json",
+      "sha256": "f8bea66c1673579ad66943d899f15d391e3deb88ceeba82ed44ff7fb7eb907ee"
+    }
+  ],
+  "inputs": {
+    "apps/src/billboard/private_fee_artifact.json": "bf53168a2bc4e3f7c4ec58aa31bd771868dd5f880689048b6e5ac5cacb1b5497",
+    "noir-dependencies.json": "7d7d9db800156399d12ea966b10d0f8699165c0ac17e08a4de540a668ca09c7e",
+    "toolchain.json": "7edd16d508bada5e5d7bbeefb0445d09975ac838985b2ce61ac821729dcb4458",
+    "package-lock.json": "d8c43be2eea22e1a19c184206bf3ee16b7d2ed0503c0dfc4489f57f4dbee832a",
+    "scripts/build-contracts.mjs": "6f1424b76685082dd5edbf06a2153d9cbc3ff8ba9fd713627b0f5839770c1895",
+    "scripts/check-noir-dependencies.mjs": "17be15dc0297b52fe959b9581067284c19e8426ecfc72463c1bd36c963123549",
+    "scripts/normalize-noir.mjs": "d1dc22ad5e50d016e9e1fce6d8c5d3cadc21db431b4eb94717a347f5c0c69a5d",
+    "billboard/Nargo.toml": "c2ebd5861978eb15cf7f0f7501c1a849d1db8907ad17f9c8e2082128046b3973",
+    "billboard/rolling_contract/Nargo.toml": "19fde4c2b8a48f8fa59966f7803a573fb3b03b4705b619c43e2395ae23b4ecf3",
+    "billboard/rolling_contract/build.mjs": "15d1e661f625f9acc5fc11f36024d5bc83e960f9f75d334fb99c292ca24222ea",
+    "experiments/private-bok/Nargo.toml": "fdfdce9b51ea0d14e2b84bb4b9be0f173a1bef1a01713889ec103b291b9d7f59",
+    "experiments/private-bok/escrow/Nargo.toml": "8a83e1f7dc7e5043fa2332b698a1e6dde6ddd9c79e32b2c6bfc2ece05fac6e4c",
+    "experiments/private-bok/build.mjs": "813b1b41c66b0f6ff255d23a1ac45541a4d87042fe9521f135c203f4cfb89da0",
+    "billboard/rolling_contract/src/admission.nr": "83868ff1dd7b5f7841fdff2f1252d76d96c68db9554d9bb93e65b6a6a7011b38",
+    "billboard/rolling_contract/src/encoding.nr": "32d1ddbca7c6cdf607a24ad1ecdf7ab4be6667877cf7c34b3cf370a02efcfd07",
+    "billboard/rolling_contract/src/main.nr": "d9a95b1df3e764072019c94cf574cc39e57795cd159b2b6c915d6e455e958499",
+    "billboard/rolling_contract/src/posting.nr": "ee9864837ba6ea243afbf65779e7bb7cf5c49e41fe60c4443ff2b623051dd2e5",
+    "experiments/private-bok/escrow/src/main.nr": "e4cc533c8c8f3e0ef69e488fa04bb5914629e9454c0b6327c2e82a2bddd006d0"
+  }
 }
