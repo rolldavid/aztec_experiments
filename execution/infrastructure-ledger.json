@@ -2,7 +2,7 @@
   "schema_version": 1,
   "budget_usd": 300,
   "scope": "Cumulative prover campaign plus at most one additional rolling.chat server; existing moderator costs remain separate.",
-  "as_of": "2026-10-11T18:40:31.976099+00:00",
+  "as_of": "2026-10-11T18:59:08.236104+00:00",
   "billing_evidence": "evidence/G02/aws-costs.json",
   "historical_campaign_bound_usd": 83.27,
   "historical_bound_method": "Retain the full earlier conservative bound including unused planned compute through13Oct, rather than subtracting unverified savings. Includes49.47 prior allowance,28.80 revival maximum and5 ancillary.",
@@ -44,7 +44,7 @@
     {
       "id": "rolling-node-commissioning-20261011",
       "purpose": "One additional private testnet fullnode and isolated Linux runtime qualification; public prover masked",
-      "state": "terminated itself before acceptance; exactbootstrapcause unknown; Fleet deleted, volumes absent",
+      "state": "Terminated at package download; delayedconsole confirms controlsVerified, independent exactURL HTTP301 duewrongbucketregion; Fleetdeleted volumesabsent",
       "reservation_usd": 1,
       "reservation_includes": "8h m7a4xl plus0.5hcleanup,40+1024GiB encryptedgp3 deletion plus24horphancontingency,250GBegressforecast,backup/upload/request/tax/delayedcleanup buffers",
       "runtime_archive_key": "releases/rolling-5235-20261011/runtime.tar.gz",
@@ -57,7 +57,7 @@
       "compute_deadline": "2026-10-12T02:20:37Z",
       "commissioning_deadline": "2026-10-11T18:50:37Z",
       "cloud_termination_verified": true,
-      "host_termination_verified": false,
+      "host_termination_verified": true,
       "instance_id": "i-0b898476b2a8f5f7f",
       "volume_ids": [
         "vol-0e76826daf7e40da8",
@@ -70,7 +70,8 @@
       "termination_observed_at": "2026-10-11T18:24:08Z",
       "paid_attempts": 1,
       "prior_attempt_conservative_accrual_usd": 1,
-      "reservation_disposition": "Retain1USD conservative terminatedattempt accrual; originalfull105 reservation superseded by newreplacement105 plus this1; S3archive retention countednewcampaign."
+      "reservation_disposition": "Retain1USD conservative terminatedattempt accrual; originalfull105 reservation superseded by newreplacement105 plus this1; S3archive retention countednewcampaign.",
+      "diagnosis_evidence": "evidence/G02/package-region-diagnosis.json"
     },
     {
       "id": "rolling-node-commissioning-20261011-02",
@@ -101,7 +102,7 @@
     {
       "id": "rolling-node-commissioning-20261011-03",
       "purpose": "VerifiedS3regionrepair; historical5235Linuxqueryqualification only",
-      "state": "activecommissioning",
+      "state": "installed, controls verified; bounded automatic Linuxquery qualification pending; publicprover masked",
       "reservation_usd": 105,
       "reservation_includes": "Fullsame8h+.5hcompute/40+1024GiBstorage/250GBegress/backups/requests/taxcleanup forecast, pluspriorattemptsseparately2USD",
       "runtime_archive_key": "releases/rolling-5235-20261011/runtime.tar.gz",
@@ -117,7 +118,16 @@
       "cloud_termination_verified": true,
       "instance_ids": [
         "i-09258d7eef0311a2c"
-      ]
+      ],
+      "host_termination_verified": true,
+      "host_controls_verified_at": "2026-10-11T18:42:37Z",
+      "delete_on_termination_verified": true,
+      "volume_ids": [
+        "vol-05d0db668f3b93045",
+        "vol-0e6826325aa884889"
+      ],
+      "evidence_reference": "evidence/G02/rolling-node-03-installation-observations.json",
+      "last_observed_at": "2026-10-11T18:56:45.766264+00:00"
     }
   ],
   "launch_hold": "Reviewedregionrepair launch onlyafteractualboundedGET206preflight/zerooldresources/cloudexpiry controls. NoLinuxacceptanceclaim.",
@@ -166,10 +176,14 @@
   },
   "shutdown_prerequisite_evidence": "evidence/G02/fleet-shutdown-prerequisites.json",
   "fullnode_recovery_proposal": {
-    "status": "lead approved reservation105USD for one bounded commissioning campaign; compute not yet launched",
+    "status": "Active third commissioning host i-09258d7eef0311a2c; installed and controls verified, automatic Linux query qualification pending. First two attempts terminated and storage absent; cumulative forecast215.28/300.",
     "checked_by": "design-20261011",
     "checked_at": "2026-10-11T17:50:56.331671+00:00",
-    "live_instances_volumes_fleets_us_east_1": 0,
+    "live_instances_volumes_fleets_us_east_1": {
+      "instances": 1,
+      "volumes": 2,
+      "fleets": 1
+    },
     "instance": "m7a.4xlarge",
     "vcpus": 16,
     "physical_cores": 16,

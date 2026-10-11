@@ -36,34 +36,35 @@
         "G06",
         "G14"
       ],
-      "branch": "codex/rolling-bok-reply-journey",
+      "branch": "codex/rolling-public-projection",
       "history_locator": "collaboration runtime /root/controls, parent 01a12a75-1b50-7871-a73b-4253a1010194",
       "role": "implementation worker",
-      "state": "claimed actualauthenticatedreply journey extension; oldprotocol sourcefrozen",
+      "state": "8db5 SDK/memory repairs frozen awaiting independent review",
       "worktree": "../rolling-controls",
       "allowed_paths": [
-        "billboard/rolling_contract/journey.mjs",
-        "billboard/rolling_contract/reply-acceptance.mjs",
-        "billboard/rolling_contract/reply-acceptance.test.mjs"
+        "shared/rolling/public-events.mjs",
+        "shared/rolling/public-events.test.mjs",
+        "shared/rolling/public-projection.mjs",
+        "shared/rolling/public-projection.test.mjs"
       ],
       "commit_trailer_aliases": {
         "Agent-Session": "controls",
         "Parent-Session": "lead"
       },
-      "base": "47cb0a0"
+      "base": "8db5c9fb5de1b6d95dbc95385759630f46ddeb88"
     },
     {
       "logical_id": "reviewer-20261011",
       "runtime_id": "/root/reviewer",
       "parent_id": "lead-20261011",
       "task": [
-        "G05",
+        "G06",
         "G14"
       ],
       "branch": "read-only candidate refs",
       "history_locator": "collaboration runtime /root/reviewer, parent 01a12a75-1b50-7871-a73b-4253a1010194",
       "role": "independent reviewer",
-      "state": "completed exactbfbb boundedintegration approval"
+      "state": "1319407 changes requested P2; waiting repaired source"
     },
     {
       "logical_id": "design-20261011",
@@ -72,17 +73,16 @@
       "task": [
         "G14"
       ],
-      "branch": "codex/rolling-bootstrap-diagnostics",
+      "branch": "codex/rolling-wallet-application",
       "history_locator": "collaboration runtime /root/design, parent01a12a75-1b50-7871-a73b-4253a1010194",
       "role": "implementation worker",
-      "state": "claimedregionrepair afteractualS3HTTP301eu-west-2; onlysame3bootstrap paths",
+      "state": "changes requested; real journal restart acknowledgment and pre-simulation guard plus new lead PXE provenance predicate",
       "worktree": "../rolling-design",
       "allowed_paths": [
-        "deploy/prover/bootstrap.py",
-        "scripts/test-prover-bootstrap.py",
-        "deploy/prover/BOOTSTRAP.md"
+        "shared/rolling/application.mjs",
+        "shared/rolling/application.test.mjs"
       ],
-      "base": "f5c7f6a"
+      "base": "ed1b406b827d8cfcfbad772c688a5e78b7b8f878"
     }
   ],
   "integrations": [
