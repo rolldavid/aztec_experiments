@@ -421,3 +421,13 @@ this wrapper sees only the configured hash in the trusted unit arguments.
 Tests use adversarial byte streams and short disposable Python children, including
 signal termination; they do not run Docker or qualify a Linux node. Package tests
 check exact copied source and manifest-inventory inclusion without private inputs.
+
+If observation I/O or another wrapper operation fails after spawning the child,
+the wrapper sends at most one TERM, waits at most2seconds, then sends at most one
+KILL and waits at most2seconds. It re-raises the original failure, with separate
+fixed cleanup flags; a cleanup failure cannot replace that exception. When
+storage still works, the sanitized observation also retains those flags and the
+actual reaped child exit/signal. Failed storage may prevent this record; systemd's
+unchanged cgroup/stop budget remains the last resort. Regression tests inject
+ENOSPC at the third fsync after a real disposable child starts, covering ordinary
+termination and a child that ignores TERM. No Docker process is used by tests.

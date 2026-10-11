@@ -844,4 +844,43 @@ raise SystemExit(code)
                 self.assertIn('process-spawned',observed['stages']);self.assertNotIn('PRIVATE_SENTINEL',json.dumps(observed))
                 self.assertEqual(observed['exitCode'],7 if expected==7 else None);self.assertEqual(observed['signal'],15 if expected<0 else None)
 
+    def test_real_child_fsync_enospc_is_reaped_and_original_error_preserved(self):
+        import errno,sys,time
+        original_spawn=subprocess.Popen;original_fsync=b.os.fsync
+        for ignore_term in [False,True]:
+            with self.subTest(ignore_term=ignore_term),tempfile.TemporaryDirectory() as t:
+                children=[];syncs=0;failure=OSError(errno.ENOSPC,'PRIVATE_SENTINEL')
+                def spawn(args,**kw):
+                    code="import signal,time;"+("signal.signal(signal.SIGTERM,signal.SIG_IGN);" if ignore_term else '')+"print('ready',flush=True);time.sleep(30)"
+                    child=original_spawn([sys.executable,'-c',code],**kw);children.append(child)
+                    self.assertEqual(child.stdout.readline(),b'ready\n');return child
+                def fsync(fd):
+                    nonlocal syncs
+                    syncs+=1
+                    if syncs==3:raise failure
+                    return original_fsync(fd)
+                started=time.monotonic()
+                try:
+                    with patch.object(b.subprocess,'Popen',side_effect=spawn),patch.object(b.os,'fsync',side_effect=fsync):
+                        with self.assertRaises(OSError) as caught:b.node_wrapper(['/usr/bin/docker','run',b.IMAGE,'testnet'],pathlib.Path(t))
+                    self.assertIs(caught.exception,failure);self.assertLess(time.monotonic()-started,5)
+                    self.assertEqual(len(children),1);self.assertIsNotNone(children[0].poll())
+                    self.assertTrue(failure.node_cleanup['reaped']);self.assertEqual(failure.node_cleanup['killSent'],ignore_term);self.assertFalse(failure.node_cleanup['failed'])
+                    observed=b.node_startup_observation(pathlib.Path(t));self.assertTrue(observed['available']);self.assertEqual(observed['cleanup'],failure.node_cleanup)
+                    self.assertNotIn('PRIVATE_SENTINEL',json.dumps(observed));self.assertEqual(observed['signal'],9 if ignore_term else 15)
+                finally:
+                    for child in children:
+                        if child.poll() is None:child.kill();child.wait(timeout=2)
+
+    def test_cleanup_failure_remains_separate_and_bounded(self):
+        class Unreapable:
+            def __init__(self):self.waits=[];self.kills=0
+            def poll(self):return None
+            def terminate(self):raise OSError('PRIVATE_SENTINEL')
+            def kill(self):self.kills+=1
+            def wait(self,timeout):self.waits.append(timeout);raise subprocess.TimeoutExpired('PRIVATE_SENTINEL',timeout)
+        child=Unreapable();result,code=b.reap_failed_node(child)
+        self.assertTrue(result['failed']);self.assertFalse(result['reaped']);self.assertEqual(child.waits,[2,2]);self.assertEqual(child.kills,1);self.assertIsNone(code)
+        self.assertNotIn('PRIVATE_SENTINEL',json.dumps(result))
+
 if __name__=='__main__':unittest.main()

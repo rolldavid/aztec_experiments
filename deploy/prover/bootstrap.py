@@ -754,7 +754,8 @@ NODE_ERRORS=('native-load','module-load','permission','disk-full','memory','fetc
 def node_startup_observation(base):
     try:
         v=private_file(base/'node-startup.json')
-        if set(v)!={'schemaVersion','stages','errors','oversizedLines','complete','exitCode','signal'} or type(v['schemaVersion']) is not int or v['schemaVersion']!=1 or type(v['complete']) is not bool: raise ValueError()
+        if set(v)-{'cleanup'}!={'schemaVersion','stages','errors','oversizedLines','complete','exitCode','signal'} or type(v['schemaVersion']) is not int or v['schemaVersion']!=1 or type(v['complete']) is not bool: raise ValueError()
+        if 'cleanup' in v and (type(v['cleanup']) is not dict or set(v['cleanup'])!={'attempted','reaped','terminateSent','killSent','failed'} or any(type(x) is not bool for x in v['cleanup'].values())):raise ValueError()
         for key,allowed in [('stages',NODE_STAGES),('errors',NODE_ERRORS)]:
             if type(v[key]) is not list or len(v[key])>len(allowed) or any(type(x) is not str or x not in allowed for x in v[key]) or len(set(v[key]))!=len(v[key]): raise ValueError()
         if type(v['oversizedLines']) is not int or not 0<=v['oversizedLines']<=2**32-1: raise ValueError()
@@ -795,6 +796,24 @@ class NodeOutput:
         if code and not self.value['errors']:self.value['errors'].append('unknown')
         self.value.update(complete=True,exitCode=code if code>=0 else None,signal=-code if code<0 else None)
 
+def reap_failed_node(process):
+    # One TERM, then one KILL on timeout. systemd retains the outer cgroup limit.
+    result={'attempted':process is not None,'reaped':False,'terminateSent':False,'killSent':False,'failed':False};code=None
+    if process is None:return result,code
+    try:
+        if process.poll() is None:
+            try:process.terminate();result['terminateSent']=True
+            except ProcessLookupError:pass
+            except Exception:result['failed']=True
+        try:code=process.wait(timeout=2)
+        except subprocess.TimeoutExpired:
+            try:process.kill();result['killSent']=True
+            except ProcessLookupError:pass
+            code=process.wait(timeout=2)
+        result['reaped']=True
+    except Exception:result['failed']=True
+    return result,code
+
 def node_wrapper(args,base):
     # Fixed generated systemd argv; never network/caller-selected commands.
     if args[:2]!=['/usr/bin/docker','run'] or args[-1]!='testnet' or IMAGE not in args:raise ValueError('Node command')
@@ -815,6 +834,7 @@ def node_wrapper(args,base):
         if process is not None:
             try:process.send_signal(number)
             except ProcessLookupError:pass
+    original_failure=None
     previous={n:signal.signal(n,stop) for n in (signal.SIGTERM,signal.SIGINT)}
     try:
         persist()
@@ -829,9 +849,22 @@ def node_wrapper(args,base):
             output.feed(chunk)
             if before!=(len(output.value['stages']),len(output.value['errors'])):persist()
         code=process.wait();output.finish(code);persist();return code
+    except BaseException as error:
+        original_failure=error
+        cleanup,code=reap_failed_node(process);output.value['cleanup']=cleanup
+        if code is not None:output.finish(code)
+        try:persist()
+        except Exception:pass # Failed storage cannot replace the original failure.
+        try:error.node_cleanup=dict(cleanup)
+        except Exception:pass
+        raise
     finally:
-        if process is not None:process.stdout.close()
-        for n,handler in previous.items():signal.signal(n,handler)
+        try:
+            if process is not None:process.stdout.close()
+        except Exception:
+            if original_failure is None:raise
+        finally:
+            for n,handler in previous.items():signal.signal(n,handler)
 
 
 def generate(config, now=None):
