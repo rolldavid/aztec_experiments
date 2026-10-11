@@ -6,6 +6,9 @@ import {randomUUID, createHash} from 'node:crypto';
 import {Wallet, JsonRpcProvider, Contract, ContractFactory, keccak256, getCreateAddress} from 'ethers';
 import {EmbeddedWallet} from '@aztec-labs/wallets/embedded';
 import {BackendType} from '@aztec-foundation/bb.js';
+import {RollupCheatCodes, EthCheatCodes} from '@aztec-labs/ethereum/test';
+import {RollupContract} from '@aztec-labs/ethereum/contracts';
+import {TxHash, TxStatus, TxExecutionResult} from '@aztec-labs/stdlib/tx';
 import {EthAddress} from '@aztec-labs/foundation/eth-address';
 import {Fr} from '@aztec-labs/foundation/curves/bn254';
 import {L1Actor, L2Actor, L1ToL2Message} from '@aztec-labs/stdlib/messaging';
@@ -157,18 +160,50 @@ export async function runPrivateBokFixture(ctx) {
         await fs.writeFile(result.evidenceRef, json(result), {flag: 'wx', mode: 0o600});
         return result;
       };
-      const advanceTo = async target => {
+      const advanceTo = async (target, reservation) => {
         assert(Number.isSafeInteger(Number(target)) && Number(target) > 0);
-        const current = await ctx.l1Client.getBlock({blockTag: 'latest'});
-        if (BigInt(target) > current.timestamp) {
-          await ctx.l1Client.request({method: 'evm_setNextBlockTimestamp', params: [Number(target)]});
-        }
-        await mineL1();
-        assert((await ctx.l1Client.getBlock({blockTag: 'latest'})).timestamp >= BigInt(target));
-        // Publish an ordinary empty checkpoint so private simulation observes the
-        // new canonical L2 time, not merely a warped L1 or local wall clock.
+        // The ordinary network prunes unproven checkpoints across this 24-hour
+        // jump. Preserve the exact reservation with the existing official local
+        // retention control; this is neither an epoch proof nor real finality.
         const sequencer = ctx.node.getSequencer(), prior = sequencer.getSequencer().getConfig();
         const restore = () => sequencer.updateConfig({minTxsPerBlock: prior.minTxsPerBlock, buildCheckpointIfEmpty: prior.buildCheckpointIfEmpty});
+        const rollup = new RollupContract(ctx.l1Client, String(ctx.rollupAddress));
+        const cheats = new RollupCheatCodes(new EthCheatCodes(ctx.config.l1RpcUrls, ctx.dateProvider),
+          {rollupAddress: EthAddress.fromString(String(ctx.rollupAddress))});
+        const advance = {target: String(target), reservationTxHash: reservation.txHash,
+          reservationBlock: reservation.blockNumber, reservationBlockHash: reservation.blockHash,
+          testControlled: true, epochProof: false, passed: false};
+        observation.deadlineAdvance = advance; await save();
+        const canonicalReservation = async () => {
+          const receipt = await ctx.node.getTxReceipt(TxHash.fromString(reservation.txHash));
+          assert([TxStatus.CHECKPOINTED, TxStatus.PROVEN, TxStatus.FINALIZED].includes(receipt.status));
+          assert.equal(receipt.executionResult, TxExecutionResult.SUCCESS);
+          assert.equal(Number(receipt.blockNumber), Number(reservation.blockNumber));
+          assert.equal(String(receipt.blockHash), reservation.blockHash);
+          const block = await ctx.node.getBlock(receipt.blockNumber);
+          assert(block); assert.equal(String(block.hash), reservation.blockHash);
+          return block;
+        };
+        await sequencer.pause();
+        try {
+          const block = await canonicalReservation();
+          const pending = await rollup.getCheckpointNumber();
+          advance.pendingBefore = Number(pending);
+          advance.provenBefore = Number(await rollup.getProvenCheckpointNumber());
+          assert(Number(pending) >= Number(block.checkpointNumber));
+          await cheats.markAsProven(pending);
+          advance.testControlledProvenCheckpoint = Number(await rollup.getProvenCheckpointNumber());
+          assert(advance.testControlledProvenCheckpoint >= Number(pending));
+          await save();
+          const current = await ctx.l1Client.getBlock({blockTag: 'latest'});
+          if (BigInt(target) > current.timestamp) {
+            await ctx.l1Client.request({method: 'evm_setNextBlockTimestamp', params: [Number(target)]});
+          }
+          await mineL1();
+          assert((await ctx.l1Client.getBlock({blockTag: 'latest'})).timestamp >= BigInt(target));
+        } finally { await sequencer.start(); }
+        // Publish an ordinary empty checkpoint so private simulation observes
+        // canonical L2 time, not merely a warped L1 or local wall clock.
         const deadline = Date.now() + 60000;
         let reached = false;
         try {
@@ -182,6 +217,10 @@ export async function runPrivateBokFixture(ctx) {
           await drainT04Checkpoints({node: ctx.node, l1Client: ctx.l1Client, rollupAddress: String(ctx.rollupAddress), checkpoints: {restore}, deadline});
           await wallet.pxe.sync();
           assert((await wallet.pxe.getSyncedBlockHeader()).globalVariables.timestamp >= BigInt(target));
+          await canonicalReservation();
+          advance.pendingAfter = Number(await rollup.getCheckpointNumber());
+          advance.provenAfter = Number(await rollup.getProvenCheckpointNumber());
+          advance.passed = true; await save();
         } finally { restore(); }
       };
       const {runPrivateBokExperiment} = await import('../../experiments/private-bok/measure.mjs');

@@ -90,7 +90,17 @@ export async function runPrivateBokExperiment({node, wallet, owner, operator, ot
       const {tx} = await proveApplicationAction({wallet, owner: actor, interaction, payerMode, ...(payerMode === 'private' ? {privateFeeAction} : {})});
       const row = {label, proofMode: report.proofMode, prepareMs: Math.round(performance.now() - started),
         txHash: tx.getTxHash().toString(), serializedTxBytes: tx.toBuffer().length, submission: 'not attempted'};
-      report.measurements.push(row); row.gas = await measureApplicationGas(node, tx);
+      report.measurements.push(row);
+      try { row.gas = await measureApplicationGas(node, tx); }
+      catch (error) {
+        // Gas measurement fails closed. Retain only the public revert's bounded
+        // category, never the full simulation/error object or private witnesses.
+        const publicMessage = String(error.actual?.message ?? '');
+        const category = ['Request not expirable', 'Request not expired', 'Out of gas', 'Insufficient fee']
+          .find(reason => publicMessage.includes(reason)) ?? 'unknown-public-revert';
+        row.publicSimulationFailure = {errorClass: error.name, category};
+        await save(); throw error;
+      }
       assert.equal((await node.isValidTx(tx)).result, 'valid');
       await intent(label, {txHash: row.txHash, artifactSha256: manifest.artifactSha256});
       row.submission = 'outcome unknown'; await save();
@@ -252,9 +262,13 @@ export async function runPrivateBokExperiment({node, wallet, owner, operator, ot
     assert.equal(await earned(), 0n);
 
     await claim('uncertain'); const uncertain = await authorize('uncertain'); await activate(uncertain, 'uncertain');
-    await send(contract.methods.reserve(uncertain.id, 0, 400n), operator, 'uncertain-reserve');
+    const reservation = await send(contract.methods.reserve(uncertain.id, 0, 400n), operator, 'uncertain-reserve');
     const pending = await state(uncertain.id, 'uncertain-before-expiry', {state: 2n, available: 200n, reserved: 400n}, 400n, 0n);
-    stage = 'advance-deadline'; await advanceTo(pending.deadline); await wallet.pxe.sync();
+    stage = 'advance-deadline'; await advanceTo(pending.deadline, reservation.row); await wallet.pxe.sync();
+    // A later timestamp alone is insufficient: the request must survive the
+    // network proof-window boundary with its exact accounting unchanged.
+    assert.deepEqual(await request(uncertain.id), pending, 'Request changed during deadline advancement');
+    await state(uncertain.id, 'uncertain-after-advance', pending, 400n, 0n);
     assert(BigInt((await wallet.pxe.getSyncedBlockHeader()).globalVariables.timestamp) >= pending.deadline);
     const expired = await send(contract.methods.expire(uncertain.id), otherUser, 'uncertain-expire');
     await state(uncertain.id, 'fenced', {state: 3n, available: 0n, reserved: 400n, charged: 0n, refunded: 200n, primary_done: true, secondary_done: false}, 600n, 0n);
