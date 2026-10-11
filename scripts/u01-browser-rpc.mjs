@@ -7,6 +7,25 @@ import {createNamespacedSafeJsonRpcServer} from '@aztec-labs/foundation/json-rpc
 import {AztecNodeApiSchema} from '@aztec-labs/stdlib/interfaces/client';
 const LIMIT=4*1024*1024;
 const METHODS=new Set(['eth_chainId','net_version','eth_blockNumber','eth_getBlockByNumber','eth_getBlockByHash','eth_getBalance','eth_getCode','eth_getStorageAt','eth_call','eth_estimateGas','eth_gasPrice','eth_maxPriorityFeePerGas','eth_feeHistory','eth_getTransactionCount','eth_getTransactionByHash','eth_getTransactionReceipt','eth_getLogs','eth_sendTransaction','eth_sendRawTransaction']);
+// Fixed diagnostic vocabulary, checked against this repository and pinned installed
+// Aztec/viem modules. Never admit an arbitrary basename from an error stack.
+const FAILURE_MODULES=new Set([
+ 'u01-browser-rpc.mjs','u01-browser-flow.mjs','test-u01-browser-rpc.mjs',
+ 'node_public_calls_simulator.js','server.js','public_data_overrides.js',
+ 'avm_simulator.js','avm_simulator_pool.js','cdb_ipc_server.js',
+ 'public_errors.js','side_effect_errors.js','public_db_sources.js',
+ 'public_processor.js','public_tx_simulator.js','public_tx_simulator_base.js',
+ 'dumping_public_tx_simulator.js','contracts_db_checkpoint.js',
+ 'call.js','readContract.js','simulateContract.js','multicall.js',
+ 'encodeAbiParameters.js','encodeFunctionData.js','encodeFunctionResult.js',
+ 'decodeAbiParameters.js','decodeFunctionData.js','decodeFunctionResult.js',
+ 'decodeErrorResult.js','decodeEventLog.js','safe_json_rpc_server.js',
+]);
+function boundedFailureFrames(frames){return frames.filter(frame=>{
+ if(typeof frame!=='string'||frame.length>96)return false;
+ const match=/^([A-Za-z0-9_-]+\.m?js):([1-9]\d{0,5}):([1-9]\d{0,5})$/.exec(frame);
+ return !!match&&FAILURE_MODULES.has(match[1]);
+}).slice(0,4);}
 const silent=Object.assign(()=>{},{trace(){},debug(){},verbose(){},info(){},warn(){},error(){},fatal(){}});
 async function boundedBody(stream){let size=0;const parts=[];for await(const part of stream){const data=Buffer.from(part);size+=data.length;if(size>LIMIT)throw Error('Body exceeds fixture bound');parts.push(data);}return Buffer.concat(parts).toString('utf8');}
 function respond(res,status,value){res.writeHead(status,{'content-type':'application/json','cache-control':'no-store'});res.end(JSON.stringify(value));}
@@ -30,7 +49,7 @@ export async function startU01BrowserRpc({node,anvilUrl,ethereumAccount,origin,t
  // Keep only the existing sanitizer's class/code/frame projection. Its optional
  // process-snapshot details, messages, arguments and error data are not RPC evidence.
  function safeFailure(error){
-  try{const {errorClass,code,frames}=describeFailure(error);return {errorClass,code,frames};}
+  try{const {errorClass,code,frames}=describeFailure(error);return {errorClass,code,frames:boundedFailureFrames(frames)};}
   catch{return {errorClass:'Error',code:null,frames:[]};}
  }
  function recordFailure(method,phase,error){
