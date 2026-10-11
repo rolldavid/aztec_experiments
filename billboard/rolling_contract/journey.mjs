@@ -72,8 +72,8 @@ export async function runRollingBokJourney({node, wallet, owner, operator, board
   try { await lease.writeFile(json({scope: 'rolling-bok-journey', createdAt: new Date().toISOString()})); await lease.sync(); }
   finally { await lease.close(); }
   let noteMembership;
-  const save = () => {
-    if (noteMembership) report.noteMembership = noteMembership.snapshot();
+  const save = async () => {
+    if (noteMembership) {await noteMembership.flush(); report.noteMembership = noteMembership.snapshot();}
     return fs.writeFile(path.join(outputDirectory, 'journey.json'), json(report), {mode: 0o600});
   };
   const stage = async label => { report.stage = label; await mark('rolling-bok:' + label); await save(); };
@@ -237,7 +237,10 @@ export async function runRollingBokJourney({node, wallet, owner, operator, board
       && n(waiting.available) === 400n && n(waiting.reserved) === 0n && n(waiting.charged) === 0n && n(waiting.refunded) === 0n);
     assert(n(await query(bok, 'balance_of', owner)) === 600n);
 
-    noteMembership = createRollingNoteMembership({node, wallet, owner, categories: [
+    noteMembership = createRollingNoteMembership({node, wallet, owner, contracts: [
+      {role: 'board', address: board.address, configSlot: board.artifact.storageLayout.config.slot, portalSlot: board.artifact.storageLayout.portal_address.slot},
+      {role: 'FPC', address: feeInstance.address}, {role: 'Bok', address: bok.address}, {role: 'owner-account', address: owner},
+    ], categories: [
       {role: 'board-name', contractAddress: board.address, storageSlot: board.artifact.storageLayout.names.slot},
       {role: 'board-deposit', contractAddress: board.address, storageSlot: board.artifact.storageLayout.deposits.slot},
       {role: 'FPC-balance', contractAddress: feeInstance.address, storageSlot: feeContract.artifact.storageLayout.balances.slot},
@@ -253,7 +256,7 @@ export async function runRollingBokJourney({node, wallet, owner, operator, board
     // changed reservation, note selection, SDK override or negative-case bypass.
     await privateFee.paymentFor(owner).privateFeeAction({wallet, owner,
       interaction: board.methods.post_with_bok(depositId, nonce, draft, preflightHints[0], preflightHints[1], pluginId, requestId)});
-    report.matchingPreflight.passed = true; await save();
+    noteMembership.markPreflightSucceeded(); report.matchingPreflight.passed = true; await save();
     const beforeRollbackAnchor = await noteMembership.capture('before-rollback'); await save();
 
     // Deliberate local negative only: fixed signed reservation after cold claims
@@ -366,6 +369,6 @@ export async function runRollingBokJourney({node, wallet, owner, operator, board
     // contain identities, note material or witness values; never serialize them.
     await save(); error.rollingJourneyObservation = report; throw error;
   } finally {
-    if (noteMembership) {noteMembership.close(); await save();}
+    if (noteMembership) {await noteMembership.flush(); noteMembership.close(); await save();}
   }
 }

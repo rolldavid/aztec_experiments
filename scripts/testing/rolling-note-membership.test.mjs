@@ -10,12 +10,12 @@ function fixture(options = {}) {
   const notes = roles.map((role,i) => ({role,contractAddress: value(10+i),noteHash: value(20+i),noteNonce: value(30+i),
     txHash: value(40+i),l2BlockNumber: 4,l2BlockHash: hex(4),privateWitness: 'secret note contents'}));
   const unique = note => value(1000 + note.contractAddress.n + note.noteHash.n + note.noteNonce.n);
-  const missing = new Set(), calls = [], hashCalls = [];
+  const nullifiers = new Set(), missing = new Set(), calls = [], hashCalls = [];
   const original = function(anchor,tree,leaves) {
     receiver = this; calls.push({anchor,tree,leaves});
     return lastPromise = Promise.resolve(leaves.map(leaf => {
       const note = notes.find(n => unique(n).equals(leaf));
-      return !missing.has(String(leaf)) && note && note.l2BlockNumber <= Number(anchor.number) ? {data: 0n} : undefined;
+      return !missing.has(String(leaf)) && ((note && note.l2BlockNumber <= Number(anchor.number)) || nullifiers.has(String(leaf))) ? {data: 0n} : undefined;
     }));
   };
   const node = Object.create({findLeavesIndexes: original});
@@ -24,14 +24,19 @@ function fixture(options = {}) {
     const note = notes.find(n => n.txHash.equals(tx));
     return {data: {txHash:note.txHash,noteHashes: [unique(note)]},l2BlockNumber: note.l2BlockNumber,l2BlockHash: note.l2BlockHash};
   };
-  const wallet = {pxe: {getSyncedBlockHeader: async () => ({getBlockNumber: () => 5,hash: async () => value(5)}),
+  const wallet = {pxe: {getContractInstance: async () => ({initializationHash: value(7)}),getSyncedBlockHeader: async () => ({getBlockNumber: () => 5,hash: async () => value(5)}),
     debug: {getNotes: async filter => notes.filter(note => note.contractAddress.equals(filter.contractAddress))}}};
   const categories = notes.map(note => ({role: note.role,contractAddress: note.contractAddress,storageSlot: value(1)}));
   const helper = createRollingNoteMembershipFactory({noteTree: 1,activeStatus: 1,
     siloNoteHash: async (contract,hash) => {hashCalls.push(['silo',contract,hash]); return value(contract.n+hash.n);},
     computeUniqueNoteHash: async (nonce,siloed) => {hashCalls.push(['unique',nonce,siloed]); return value(1000+nonce.n+siloed.n);},
+    nullifierTree: 0, siloNullifier: async(address,inner)=>value(10000+address.n+inner.n),
+    computeSiloedPrivateInitializationNullifier: async address=>value(3000+address.n),
+    computeSiloedPublicInitializationNullifier: async address=>value(4000+address.n),
+    poseidon2HashWithSeparator: async([slot],domain)=>{assert.equal(domain,1653084894);return value(2000+slot.n);},
+    ...options.sdk,
   })({node,wallet,owner: value(99),categories,...options});
-  return {helper,node,notes,missing,calls,hashCalls,wallet,original,unique,
+  return {helper,node,notes,missing,nullifiers,calls,hashCalls,wallet,original,unique,
     receiver: () => receiver,lastPromise: () => lastPromise};
 }
 
@@ -122,4 +127,64 @@ test('pure fake: source effect membership and canonical source failures stay vis
   const note=f.helper.snapshot().captures[0].categories[0].notes[0];
   assert.equal(note.present,true); assert.equal(note.sourceCanonical,false); assert.equal(note.sourceEffectMembership,false);
   f.helper.close();
+});
+
+
+test('pure fake: nullifier zero/unknown/init/config flags and successful preflight membership are distinct',async()=>{
+  const f=fixture({contracts:[{role:'board',address:value(10),configSlot:value(2),portalSlot:value(3)}]});
+  await f.helper.capture('before-preflight'); f.helper.setPhase('preflight');
+  f.nullifiers.add(hex(12012));
+  await f.node.findLeavesIndexes({number:5,hash:value(5)},0,[value(12012)]);
+  f.helper.markPreflightSucceeded(); f.nullifiers.clear(); f.helper.setPhase('matching-post');
+  await f.node.findLeavesIndexes({number:6,hash:value(6)},0,[value(0),value(12012),value(3010),value(4010),value(12013),value(99999)]);
+  const facts=f.helper.snapshot().phases.at(-1).missing.map(row=>row.nullifier);
+  assert(facts[0].zero && !facts[0].nonzero); assert(facts[1].nonzero && facts[1].matchedSuccessfulPreflightRead && facts[1].successfulPreflightReadFound);
+  assert(facts[1].initializationKinds['config-init'] && facts[1].contractRoles.board);
+  assert(facts[2].initializationKinds['private-contract-init']);assert(facts[3].initializationKinds['public-contract-init']);assert(facts[4].initializationKinds['portal-init']);
+  assert(!facts[5].oracleMatch && !facts[5].matchedSuccessfulPreflightRead && Object.values(facts[5].initializationKinds).every(v=>!v));
+  const saved=JSON.stringify(f.helper.snapshot());for(const n of [12012,3010,4010,12013,99999])assert(!saved.includes(hex(n)));
+  f.helper.close();assert.deepEqual(f.helper.snapshot().phases.at(-1).missing.map(row=>row.nullifier),facts);
+});
+
+test('pure fake: oracle receiver/promise/result identity and later siloed-match flags survive restoration',async()=>{
+  let seen,returned;
+  const prototype={isNullifierPending(...args){seen={receiver:this,args};return returned=Promise.resolve(false);},notifyCreatedNullifier(){return returned=Promise.resolve(undefined);}};
+  const before=Object.getOwnPropertyDescriptors(prototype);
+  const f=fixture({contracts:[{role:'board',address:value(10)}],sdk:{oraclePrototype:prototype}});
+  f.helper.setPhase('matching-post');const oracle=Object.create(prototype);oracle.callContext={contractAddress:value(10)};
+  const inner=value(33),promise=oracle.isNullifierPending(inner,value(10));assert.equal(promise,returned);assert.equal(seen.receiver,oracle);assert.equal(seen.args[0],inner);assert.equal(await promise,false);
+  const creation=oracle.notifyCreatedNullifier(inner);assert.equal(creation,returned);await creation;
+  await f.node.findLeavesIndexes({number:5,hash:value(5)},0,[value(10043)]);await f.helper.flush();
+  const snapshot=f.helper.snapshot(),facts=snapshot.phases.at(-1).missing[0].nullifier;
+  assert(facts.oracleMatch && facts.samePhasePendingFalse && !facts.samePhasePendingTrue && facts.samePhaseCreated && facts.oracleContractRoles.board);
+  assert.deepEqual(snapshot.oracleEvents.map(e=>e.role),['board','board']);assert(!JSON.stringify(snapshot).includes(hex(10043)));assert(!JSON.stringify(snapshot).includes(hex(33)));
+  f.helper.close();assert.deepEqual(Object.getOwnPropertyDescriptors(prototype),before);
+});
+
+test('pure fake: oracle synchronous return, original throw/rejection and private error omission',async()=>{
+  for(const mode of ['sync','throw','reject']) {
+    const error=Error('private-inner-nullifier');let returned;
+    const prototype={isNullifierPending(){if(mode==='throw')throw error;if(mode==='reject')return returned=Promise.reject(error);return true;},notifyCreatedNullifier(){}};
+    const f=fixture({sdk:{oraclePrototype:prototype}}),oracle=Object.create(prototype);oracle.callContext={contractAddress:value(10)};
+    if(mode==='throw')assert.throws(()=>oracle.isNullifierPending(value(33),value(10)),e=>e===error);
+    else if(mode==='reject'){const promise=oracle.isNullifierPending(value(33),value(10));assert.equal(promise,returned);await assert.rejects(promise,e=>e===error);}
+    else assert.equal(oracle.isNullifierPending(value(33),value(10)),true);
+    await f.helper.flush();const event=f.helper.snapshot().oracleEvents[0];assert.equal(event.outcome,mode==='sync'?'returned':'failed');assert.equal(event.pending,mode==='sync'?true:null);
+    assert(!JSON.stringify(f.helper.snapshot()).includes(error.message));f.helper.close();
+  }
+});
+
+test('pure fake: failed preflight never becomes successful and bounded nullifier/oracle capture reports truncation',async()=>{
+  const prototype={isNullifierPending(){return false;},notifyCreatedNullifier(){}};
+  const f=fixture({maxRows:1,maxLeaves:1,sdk:{oraclePrototype:prototype}}),oracle=Object.create(prototype);oracle.callContext={contractAddress:value(10)};
+  f.helper.setPhase('preflight');await f.node.findLeavesIndexes({number:5,hash:value(5)},0,[value(999)]);
+  for(let i=0;i<6;i++)oracle.isNullifierPending(value(33),value(10));await f.helper.flush();
+  const snapshot=f.helper.snapshot();assert(!snapshot.preflightPassed);assert(!snapshot.phases[0].missing[0].nullifier.matchedSuccessfulPreflightRead);assert.equal(snapshot.truncatedOracles,2);assert.equal(snapshot.oracleEvents.length,4);f.helper.close();
+});
+
+test('pure fake: prototype ownership conflict is refused without clobbering newer writer',()=>{
+  const prototype={isNullifierPending(){return false;},notifyCreatedNullifier(){}};
+  const f=fixture({sdk:{oraclePrototype:prototype}}),other=()=>true;const owned=prototype.isNullifierPending;prototype.isNullifierPending=other;
+  assert.throws(()=>f.helper.close(),/ownership changed/);assert.equal(prototype.isNullifierPending,other);
+  prototype.isNullifierPending=owned;f.helper.close();
 });
