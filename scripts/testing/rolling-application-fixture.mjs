@@ -211,7 +211,7 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
       let receipt;const includeDeadline=Math.min(Date.now()+60000,ctx.applicationDeadlineAt);
       do{receipt=await ctx.node.getTxReceipt(bokHash);assert.notEqual(receipt.status,TxStatus.DROPPED);
         if(['checkpointed','proven','finalized'].includes(receipt.status))break;await mineL1();}while(Date.now()<includeDeadline);
-      assert(['checkpointed','proven','finalized'].includes(receipt.status));assert.equal(receipt.executionResult,'success');
+      assert(['checkpointed','proven','finalized'].includes(receipt.status));
       assert.equal(String((await ctx.node.getBlockData(receipt.blockNumber)).blockHash),String(receipt.blockHash));
       const actualBok=await ctx.node.getContract(bokInstance.address);assert(actualBok);
       assert.equal(String(actualBok.currentContractClassId),String(bokInstance.currentContractClassId));
@@ -359,14 +359,17 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
           do{receipt=await ctx.node.getTxReceipt(hash);assert.notEqual(receipt.status,TxStatus.DROPPED);
             if(['checkpointed','proven','finalized'].includes(receipt.status))break;await mineL1();}while(Date.now()<deadline);
           Object.assign(row,{status:receipt.status,executionResult:receipt.executionResult,blockNumber:receipt.blockNumber,blockHash:String(receipt.blockHash),transactionFee:String(receipt.transactionFee)});await save();
-          assert(['checkpointed','proven','finalized'].includes(receipt.status));assert.equal(receipt.executionResult,'success');
+          assert(['checkpointed','proven','finalized'].includes(receipt.status));
           const effect=await ctx.node.getTxEffect(hash);assert(effect?.data);assert.equal(String(effect.l2BlockHash),String(receipt.blockHash));
           assert.equal(String((await ctx.node.getBlockData(receipt.blockNumber)).blockHash),String(receipt.blockHash));
           await fs.writeFile(path.join(directory,'avatar-moderation-effect.bin'),effect.data.toBuffer(),{flag:'wx',mode:0o600});row.effectSha256=sha(effect.data.toBuffer());
+          const after=await getFeeJuiceBalance(operator,ctx.node);
+          Object.assign(row,{before:String(before),after:String(after),submission:'included'});await save();
+          // Preserve actual inclusion and paid effects even when execution reverted.
+          assert.equal(receipt.executionResult,'success');
+          assert.equal(before-after,BigInt(receipt.transactionFee));assert(BigInt(receipt.transactionFee)>0n);
           row.publicFootprint=classifyT03PublicFootprint({tx,effect:effect.data,roles:{author:owner,sharedPayer:fees.browserFixture.instance.address,board:ctx.instance.address}});
           for(const category of PERSONAL)assert.equal(row.publicFootprint.rolePresence[category].author,false);
-          const after=await getFeeJuiceBalance(operator,ctx.node);assert.equal(before-after,BigInt(receipt.transactionFee));assert(BigInt(receipt.transactionFee)>0n);
-          Object.assign(row,{before:String(before),after:String(after),submission:'included'});
           const events=await decoder.decodeTransaction(ctx.node,String(hash));projection.stage(events).apply();hashes.push(String(hash));row.events=events.map(e=>e.type);await save();return events;
         }
         report.profiles=await exerciseRollingProfileActions({nameId:ids.nameId,application:app,action,moderate,projection});
