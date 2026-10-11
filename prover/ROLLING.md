@@ -39,7 +39,10 @@ Every signed account payload is checked, including mixed board/Bok/fee calls;
 each needs configured private fee payment, with no genesis/public fee fallback.
 Top-level self-only callbacks, arbitrary targets, multicall wrappers and unknown
 selectors are rejected. PrivateBok `subtract_more` is accepted only as a self-call
-continuation. Administrative deployment/configuration is a separate trusted local
+continuation, as is PrivateFPC `recurse_subtract_balance_internal` when fragmented
+fee credit requires more notes. Neither is permitted directly in a signed account
+payload. `set_like` is explicitly allowed only when present as a private function
+in the reviewed RollingBoard artifact. Administrative deployment/configuration is a separate trusted local
 operation; `init`, `set_portal`, `update_portal` and direct board callbacks are not
 enabled by this consumer profile. Operator lifecycle methods still enforce their
 contract authentication. No job gains provider, signing, AWS, or filesystem access.

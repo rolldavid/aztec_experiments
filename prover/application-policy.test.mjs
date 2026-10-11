@@ -6,6 +6,8 @@ import os from 'node:os';
 import path from 'node:path';
 import {bindRollingCircuit, validateRollingPayload} from './application-policy.mjs';
 import {ARTIFACTS, COMMON_INPUTS, loadRollingArtifacts, sha} from './rolling-artifacts.mjs';
+import {pluginSelectors} from './plugin-policy.mjs';
+import {FunctionSelector, loadContractArtifact} from '@aztec-labs/stdlib/abi';
 
 const metadata = {board: '1', chainId: '31337', rollupVersion: '1'};
 const selectors = {RollingBoard: {private: new Set([11n]), public: new Set([12n])},
@@ -37,7 +39,7 @@ test('all padding and fee/network conditions fail closed', () => {
   assert.deepEqual(validateRollingPayload(feeOnly,{...options,allowFeeClaim:true}),{applications:0,fees:1});
 });
 test('every private application circuit is address/network/function bound, including continuations', () => {
-  for(const [fn,address] of [['RollingBoard:post','1'],['PrivateBok:claim','2'],['PrivateFPC:pay_fee','3']]) {
+  for(const [fn,address] of [['RollingBoard:post','1'],['RollingBoard:set_like','1'],['PrivateBok:claim','2'],['PrivateFPC:pay_fee','3']]) {
     bindRollingCircuit(fn,{inputs:context(address)},options);
     assert.throws(()=>bindRollingCircuit(fn,{inputs:context('99')},options),/contract/);
     const input={inputs:context(address)};input.inputs.tx_context.version='2';assert.throws(()=>bindRollingCircuit(fn,input,options),/network/);
@@ -47,6 +49,30 @@ test('every private application circuit is address/network/function bound, inclu
   for(const fn of ['PrivateBok:_open_escrow','RollingBoard:update_portal','PrivateFPC:mint'])assert.throws(()=>bindRollingCircuit(fn,{inputs:context(fn.startsWith('Rolling')?'1':fn.startsWith('PrivateFPC')?'3':'2')},options),/Unapproved/);
   for(const fn of ['Billboard:post','PluginAdapter:claim','MultiCallEntrypoint:entrypoint'])assert.throws(()=>bindRollingCircuit(fn,undefined,options),/Foreign/);
   bindRollingCircuit('PrivateKernelInitArtifact',undefined,options);
+});
+
+test('fragmented private fee balance permits only bound self-recursion, never a direct payload call', async () => {
+  const fn='PrivateFPC:recurse_subtract_balance_internal';
+  bindRollingCircuit(fn,{inputs:context('3','3')},options);
+  assert.throws(()=>bindRollingCircuit(fn,{inputs:context('99','3')},options),/contract/);
+  assert.throws(()=>bindRollingCircuit(fn,{inputs:context('3','4')},options),/self-called/);
+  for(const field of ['chain_id','version']) {
+    const input={inputs:context('3','3')};input.inputs.tx_context[field]='999';
+    assert.throws(()=>bindRollingCircuit(fn,input,options),/network/);
+  }
+  assert.throws(()=>bindRollingCircuit(fn,{inputs:context('3','3')},{...options,privateFeeAddress:undefined}),/contract/);
+  const raw=JSON.parse(fs.readFileSync(new URL('../apps/src/billboard/private_fee_artifact.json',import.meta.url)));
+  const artifact=loadContractArtifact(raw), continuation=artifact.functions.find(f=>f.name==='recurse_subtract_balance_internal');
+  assert(continuation?.verificationKey,'Installed normal fee continuation must have a VK');
+  const selector=BigInt((await FunctionSelector.fromNameAndParameters(continuation)).toString());
+  const fee=await pluginSelectors();assert(!fee.fee.has(selector));
+  const actualOptions={...options,selectors:{...selectors,fee}}, input=payload();
+  input.app_payload.function_calls[2].function_selector.inner=String([...fee.fee][0]);
+  validateRollingPayload(input,actualOptions);
+  for(const isPublic of [false,true]) {
+    const direct=structuredClone(input);direct.app_payload.function_calls.push(call(3,selector,isPublic));
+    assert.throws(()=>validateRollingPayload(direct,actualOptions),/Unapproved/);
+  }
 });
 
 function artifactFixture() {

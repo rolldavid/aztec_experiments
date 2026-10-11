@@ -2,7 +2,7 @@ import {FunctionSelector, FunctionType, loadContractArtifact} from '@aztec-labs/
 import {ProtocolContractAddress} from '@aztec-labs/protocol-contracts';
 import {pluginSelectors} from './plugin-policy.mjs';
 
-const boardPrivate = ['register_name', 'authenticate_name', 'create_subboard', 'claim_deposit', 'withdraw', 'post', 'post_with_bok', 'screen'];
+const boardPrivate = ['register_name', 'authenticate_name', 'create_subboard', 'claim_deposit', 'withdraw', 'post', 'post_with_bok', 'screen', 'set_like'];
 const boardPublic = ['set_main_policy', 'reject_subboard', 'configure_plugin', 'remove_post'];
 const bokPrivate = ['claim', 'authorize_request', 'cancel', 'withdraw'];
 const bokPublic = ['reserve', 'settle', 'finish', 'close_uncertain', 'expire', 'reconcile', 'withdraw_earnings'];
@@ -39,9 +39,10 @@ export function bindRollingCircuit(functionName, decoded, {metadata, privateBokA
     network(input, metadata);
     const address = contract === 'RollingBoard' ? metadata.board : contract === 'PrivateBok' ? privateBokAddress : privateFeeAddress;
     if (!equal(input.call_context.contract_address.inner, address)) throw Error('Wrong rolling contract');
-    const allowed = contract === 'RollingBoard' ? boardPrivate : contract === 'PrivateBok' ? [...bokPrivate, 'subtract_more'] : ['pay_fee', 'mint_and_pay_fee'];
+    const allowed = contract === 'RollingBoard' ? boardPrivate : contract === 'PrivateBok' ? [...bokPrivate, 'subtract_more'] : ['pay_fee', 'mint_and_pay_fee', 'recurse_subtract_balance_internal'];
     if (!allowed.includes(name)) throw Error('Unapproved rolling private function');
     if (contract === 'PrivateBok' && name === 'subtract_more' && !equal(input.call_context.msg_sender.inner, privateBokAddress)) throw Error('Bok continuation must be self-called');
+    if (contract === 'PrivateFPC' && name === 'recurse_subtract_balance_internal' && !equal(input.call_context.msg_sender.inner, privateFeeAddress)) throw Error('Fee continuation must be self-called');
     return;
   }
   if (contract === 'Billboard' || contract === 'PluginAdapter' || contract === 'MultiCallEntrypoint') throw Error('Foreign application circuit');
