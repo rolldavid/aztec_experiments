@@ -273,3 +273,89 @@ unconstrained fn grouped_subboard_rejection_preserves_rules_metadata_and_creatio
     let (main_version, _, after_local_version, after_rules, policy_rejected) = env.view_public(RollingBoard::at(board).effective_policy(id));
     assert_eq(main_version, 2); assert_eq(after_local_version, local_version); assert_eq(after_rules, rules); assert(policy_rejected);
 }
+#[test]
+fn like_tag_is_account_secret_and_post_scope_bound() {
+    use crate::posting::like_tag;
+    let board = AztecAddress::from_field(3);
+    let tag = like_tag(1, 1, board, 10, 100);
+    assert_eq(tag, like_tag(1, 1, board, 10, 100));
+    assert(tag != like_tag(1, 1, board, 11, 100));
+    assert(tag != like_tag(1, 1, board, 10, 101));
+    assert(tag != like_tag(2, 1, board, 10, 100));
+    assert(tag != like_tag(1, 2, board, 10, 100));
+    assert(tag != like_tag(1, 1, AztecAddress::from_field(4), 10, 100));
+}
+#[test]
+unconstrained fn private_likes_are_idempotent_across_names_and_need_no_collateral() {
+    let (env, board, _, alice, bob) = setup(); let chain = fund(env, board, alice, 101);
+    let id = publish(env, board, alice, chain, 201, draft());
+    env.call_private(bob, RollingBoard::at(board).set_like(id, true));
+    env.call_private(bob, RollingBoard::at(board).set_like(id, true));
+    assert_eq(env.view_public(RollingBoard::at(board).get_like_count(id)), 1);
+    env.call_private(bob, RollingBoard::at(board).register_name(fixed("John"), 4, fixed("Doe"), 3));
+    env.call_private(bob, RollingBoard::at(board).register_name(fixed("Jane"), 4, fixed("Doe"), 3));
+    env.call_private(bob, RollingBoard::at(board).authenticate_name(name_id(fixed("John"), 4, fixed("Doe"), 3)));
+    env.call_private(bob, RollingBoard::at(board).set_like(id, true));
+    env.call_private(bob, RollingBoard::at(board).authenticate_name(name_id(fixed("Jane"), 4, fixed("Doe"), 3)));
+    env.call_private(bob, RollingBoard::at(board).set_like(id, true));
+    assert_eq(env.view_public(RollingBoard::at(board).get_like_count(id)), 1);
+    env.call_private(alice, RollingBoard::at(board).set_like(id, true));
+    assert_eq(env.view_public(RollingBoard::at(board).get_like_count(id)), 2);
+    env.call_private(bob, RollingBoard::at(board).set_like(id, false));
+    env.call_private(bob, RollingBoard::at(board).set_like(id, false));
+    assert_eq(env.view_public(RollingBoard::at(board).get_like_count(id)), 1);
+    env.call_private(bob, RollingBoard::at(board).set_like(id, true));
+    assert_eq(env.view_public(RollingBoard::at(board).get_like_count(id)), 2);
+}
+#[test]
+unconstrained fn unlike_after_removal_is_allowed() {
+    let (env, board, moderator, alice, bob) = setup(); let chain = fund(env, board, alice, 101);
+    let id = publish(env, board, alice, chain, 201, draft());
+    env.call_private(bob, RollingBoard::at(board).set_like(id, true));
+    env.call_public(moderator, RollingBoard::at(board).remove_post(id, 1, 0, text("Threat"), 6));
+    env.call_private(bob, RollingBoard::at(board).set_like(id, false));
+    assert_eq(env.view_public(RollingBoard::at(board).get_like_count(id)), 0);
+}
+#[test(should_fail_with="Post removed")]
+unconstrained fn new_like_after_removal_is_rejected() {
+    let (env, board, moderator, alice, bob) = setup(); let chain = fund(env, board, alice, 101);
+    let id = publish(env, board, alice, chain, 201, draft());
+    env.call_public(moderator, RollingBoard::at(board).remove_post(id, 1, 0, text("Threat"), 6));
+    env.call_private(bob, RollingBoard::at(board).set_like(id, true));
+}
+#[test(should_fail_with="Function _set_like can only be called by the same contract")]
+unconstrained fn caller_cannot_choose_tag_or_impersonate_another_liker() {
+    let (env, board, _, alice, bob) = setup(); let chain = fund(env, board, alice, 101);
+    let id = publish(env, board, alice, chain, 201, draft());
+    env.call_public(bob, RollingBoard::at(board)._set_like(id, 123, true));
+}
+#[test]
+unconstrained fn late_removal_under_unchanged_policy_has_no_penalty() {
+    let (env, board, moderator, alice, _) = setup(); let chain = fund(env, board, alice, 101);
+    let id = publish(env, board, alice, chain, 201, draft());
+    let (_, _, _, published_at, _) = env.view_public(RollingBoard::at(board).get_post(id));
+    env.mine_block_at(published_at + 100);
+    env.call_public(moderator, RollingBoard::at(board).remove_post(id, 1, 0, text("Threat"), 6));
+    let (_, _, status, _, _) = env.view_public(RollingBoard::at(board).get_post(id)); assert_eq(status, 1);
+}
+#[test]
+unconstrained fn mature_flagged_post_adds_exact_penalty_debt() {
+    let (env, board, moderator, alice, _) = setup(); let chain = fund(env, board, alice, 101);
+    let id = publish(env, board, alice, chain, 201, draft());
+    env.call_public(moderator, RollingBoard::at(board).remove_post(id, 1, 0, text("Threat"), 6));
+    let before = env.execute_utility(RollingBoard::at(board).get_deposit_info(alice, chain));
+    let (_, _, _, published_at, _) = env.view_public(RollingBoard::at(board).get_post(id));
+    let screen_at = published_at + 100; env.mine_block_at(screen_at);
+    let (child, grandchild) = env.execute_utility(RollingBoard::at(board).get_screen_hints(alice, chain));
+    env.call_private(alice, RollingBoard::at(board).screen(chain, child, grandchild));
+    let after = env.execute_utility(RollingBoard::at(board).get_deposit_info(alice, chain));
+    let floor = screen_at - 90; let previous = before[9] as u64;
+    let effective = if previous > floor { previous } else { floor };
+    assert_eq(after[9], (effective + 30) as Field); // 10 * k(3), one flagged entry.
+    assert_eq(after[7], 1); assert_eq(after[8], 1);
+}
+#[test(should_fail_with="Too early to withdraw -- time lock not expired")]
+unconstrained fn newly_claimed_deposit_cannot_exit_before_cooldown() {
+    let (env, board, _, alice, _) = setup(); let chain = fund(env, board, alice, 101);
+    env.call_private(alice, RollingBoard::at(board).withdraw(chain));
+}

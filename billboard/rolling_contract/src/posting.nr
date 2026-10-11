@@ -55,3 +55,10 @@ pub fn invocation_target(chain: Field, version: Field, board: AztecAddress,
 pub fn policy_identity(main_version: u32, local_version: u32) -> Field {
     main_version as Field + local_version as Field * 0x100000000
 }
+
+/// Only a proven app NHK enters this preimage. One account has one tag per post,
+/// independently of which owned name is selected elsewhere in the application.
+pub fn like_tag(chain: Field, version: Field, board: AztecAddress, post: Field, nhk: Field) -> Field {
+    assert((chain != 0) & (version != 0) & (board.to_field() != 0) & (post != 0), "Like scope required");
+    poseidon2_hash_with_separator([1, chain, version, board.to_field(), post, nhk], 0x52434c31)
+}

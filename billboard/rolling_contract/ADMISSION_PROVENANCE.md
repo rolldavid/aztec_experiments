@@ -21,8 +21,16 @@ enqueued after that same transition; no original eligibility/screening/exit guar
 was removed. Grouped subboard storage leaves the newly ported historical maps and
 username storage positions unchanged relative to the initial G06 candidate.
 
-Raw compile 3 exits 0 with 71 retained manual-constraint diagnostics in 14 pinned
-external dependency locations. This is compilation evidence only. Those diagnostics
+Raw compile 3 exits 0 with 79 diagnostics: 71 retained manual-constraint diagnostics in 14 pinned
+external dependency locations and 8 disconnected-subgraph warnings. This is compilation evidence only. Those diagnostics
 are not waived or characterized as harmless, and the specialist constraint/privacy
 review gate remains open. G05 validation.json is historical evidence for its named
 revision; G06_CHECKPOINT.json identifies this unprocessed, untested extension.
+
+G05 stored the username Owned set at slot 2. G06 inserts admission storage before
+that set, so this fresh contract schema changes its slot. It must never be deployed
+as an in-place update over G05 state. The constrained ownership helper and utility
+viewer both obtain the same generated `storage.names` slot; no hard-coded G05 slot
+is reused. The earlier statement about unchanged username placement referred only
+to the subsequent subboard consolidation relative to the initial G06 candidate,
+not compatibility with the G05 deployment schema. No G05 deployment exists.

@@ -222,3 +222,16 @@ This changes neither external ABI nor semantics. Rejection reads the entire reco
 changes only rejection flag/reason and writes it back, preserving immutable rules,
 metadata and creation version. Username storage and admission historical slots
 remain before this grouped record and are unchanged by this consolidation.
+
+### Private likes (review repair candidate)
+
+`set_like(post, active)` derives a Poseidon2 tag under domain `0x52434c31` from
+`[1, chain, version, board, post, authenticated_app_NHK]`. The private caller cannot
+supply the tag or another account's secret. Only the tag and post cross the public
+boundary; no human account, name or reusable cross-post identifier is included.
+A single account therefore has one active like per post across all of its names.
+Repeated like/unlike calls are idempotent; a transition updates count and active
+state atomically. New likes on removed posts fail; an existing like can be removed.
+Likes require ordinary transaction fees but no posting collateral (approved,
+reversible first-release default). PrivateFPC and RPC privacy remain integration
+requirements. Pure tag-domain and constrained behavior tests are pending execution.

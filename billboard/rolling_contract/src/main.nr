@@ -155,6 +155,8 @@ pub contract RollingBoard {
         registered_names: Map<Field, PublicMutable<bool, Context>, Context>,
         names: Owned<PrivateSet<UsernameNote, Context>, Context>,
         subboards: Map<Field, PublicMutable<SubboardRecord, Context>, Context>,
+        like_counts: Map<Field, PublicMutable<u64, Context>, Context>,
+        active_likes: Map<Field, PublicMutable<bool, Context>, Context>,
     }
 
     #[event]
@@ -831,4 +833,42 @@ pub contract RollingBoard {
     #[view]
     fn get_config_hash() -> pub Field { self.storage.config.read().hash(self.address) }
 
+
+    #[event]
+    struct LikeChanged { schema: u32, post: Field, tag: Field, active: bool, count: u64 }
+
+    /// Fee-paid social action; posting collateral and names are not inputs. The
+    /// kernel authenticates the owner's app-siloed nullifier hiding key.
+    #[external("private")]
+    fn set_like(post: Field, active: bool) {
+        let owner_key_hash = get_public_keys(self.msg_sender()).npk_m_hash;
+        let nhk = self.context.request_nhk_app(owner_key_hash);
+        let tag = crate::posting::like_tag(self.context.chain_id(), self.context.version(), self.address, post, nhk);
+        assert(tag != 0, "Zero like tag");
+        self.enqueue_self._set_like(post, tag, active);
+    }
+
+    #[external("public")]
+    #[only_self]
+    fn _set_like(post: Field, tag: Field, active: bool) {
+        assert(self.storage.post_exists.at(post).read(), "Unknown post");
+        assert(tag != 0, "Zero like tag");
+        let previous = self.storage.active_likes.at(tag).read();
+        if active != previous {
+            let old_count = self.storage.like_counts.at(post).read();
+            let count = if active {
+                assert(self.storage.post_flagged.at(post).read() == 0, "Post removed");
+                old_count + 1
+            } else {
+                assert(old_count > 0, "Invalid like count");
+                old_count - 1
+            };
+            self.storage.active_likes.at(tag).write(active);
+            self.storage.like_counts.at(post).write(count);
+            self.emit(LikeChanged { schema: 1, post, tag, active, count });
+        }
+    }
+    #[external("public")]
+    #[view]
+    fn get_like_count(post: Field) -> pub u64 { self.storage.like_counts.at(post).read() }
 }
