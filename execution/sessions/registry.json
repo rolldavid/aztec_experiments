@@ -35,12 +35,15 @@
       "task": [
         "G14"
       ],
-      "branch": "codex/rolling-trusted-query-composition",
+      "branch": "codex/rolling-query-local-qualification",
       "history_locator": "collaboration runtime /root/controls, parent 01a12a75-1b50-7871-a73b-4253a1010194",
       "role": "implementation worker",
-      "state": "sourceccb approved awaiting transferrecord",
+      "state": "read-only diagnosis actual query future timestamp; source writer claim released",
       "worktree": "../rolling-controls",
-      "allowed_paths": [],
+      "allowed_paths": [
+        "scripts/testing/trusted-query-fixture.mjs",
+        "scripts/testing/trusted-query-fixture.test.mjs"
+      ],
       "commit_trailer_aliases": {
         "Agent-Session": "controls",
         "Parent-Session": "lead"
@@ -57,7 +60,7 @@
       "branch": "read-only candidate refs",
       "history_locator": "collaboration runtime /root/reviewer, parent 01a12a75-1b50-7871-a73b-4253a1010194",
       "role": "independent reviewer",
-      "state": "genuine918c approved boundedmilestone; trustedqueryccb sourceapproved"
+      "state": "review bootstrap a212 and final candidate"
     },
     {
       "logical_id": "design-20261011",
@@ -66,12 +69,16 @@
       "task": [
         "G14"
       ],
-      "branch": "codex/rolling-query-package",
+      "branch": "codex/rolling-bootstrap-qualification",
       "history_locator": "collaboration runtime /root/design, parent01a12a75-1b50-7871-a73b-4253a1010194",
       "role": "implementation worker",
-      "state": "sourcea694 approved/transferred6d61376; read-only fullnode feasibility",
+      "state": "frozen5674e7c; writer claim released pending review",
       "worktree": "../rolling-design",
-      "allowed_paths": []
+      "allowed_paths": [
+        "deploy/prover/bootstrap.py",
+        "scripts/test-prover-bootstrap.py",
+        "deploy/prover/BOOTSTRAP.md"
+      ]
     }
   ],
   "integrations": [
@@ -100,6 +107,17 @@
       "integrator_session": "lead-20261011",
       "reviewer": "reviewer-20261011",
       "evidence": "evidence/G06/development-integration.json"
+    },
+    {
+      "task": "G05/G06/G14 bounded development",
+      "candidate": "5235f497a80f52b5e1a9a797d2c92824618ca7c4",
+      "base": "daa59d284779b2c0348064ec125d0d53b5a6a8db",
+      "integrator_session": "lead-20261011",
+      "reviewer": "reviewer-20261011",
+      "policy_sha256": "bf8aa294b051ad099d90e42b5879ce0e764dcf2d66263337b6104b3c36316b60",
+      "evidence": "evidence/G14/integration-5235-evidence.json",
+      "gate_result": "evidence/G14/integration-5235-result.json",
+      "limits": "Full product/privacy/Linux/provider/release gates remain open; no push."
     }
   ],
   "candidate_transfers": [

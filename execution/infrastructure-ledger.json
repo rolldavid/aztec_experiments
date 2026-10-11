@@ -2,7 +2,7 @@
   "schema_version": 1,
   "budget_usd": 300,
   "scope": "Cumulative prover campaign plus at most one additional rolling.chat server; existing moderator costs remain separate.",
-  "as_of": "2026-10-11T15:41:18.741522+00:00",
+  "as_of": "2026-10-11T17:50:56.331671+00:00",
   "billing_evidence": "evidence/G02/aws-costs.json",
   "historical_campaign_bound_usd": 83.27,
   "historical_bound_method": "Retain the full earlier conservative bound including unused planned compute through13Oct, rather than subtracting unverified savings. Includes49.47 prior allowance,28.80 revival maximum and5 ancillary.",
@@ -47,8 +47,8 @@
     "https://docs.aztec.network/operate/testnet/operators/full-node/overview",
     "https://docs.aztec.network/operate/testnet/operators/setup/running_a_node"
   ],
-  "node_requirements": "CurrentV6 full-node overview8cores/16vCPU,8GB RAM,1TBNVMe25Mbps; setup/running_a_node currently6rc1 says16GB. Plan32GiB meetsboth memoryminima. Existingrecoveryproposal isprover-only40GBdisk, NOTfullnodebudget. Additionalnode completeforecast pendingverifiedblob/trace/sourcebootstrap.",
-  "latest_live_check": "evidence/G14/live-prerequisites-1535.json",
+  "node_requirements": "Fullnode documented8cores/16vCPU,8GB or16GB RAM,1TBstorage25Mbps; existingproverMemoryMax24G makes32GiB insufficient for cohostOSheadroom. Proposedm7a.4xlarge16physicalcores64GiB, nodebounded separately. Actualsync/load unverified.",
+  "latest_live_check": "evidence/G14/live-prerequisites-1800.json",
   "recovery_proposal": {
     "checked_by": "design-20261011",
     "checked_at": "2026-10-11T15:00:00Z",
@@ -86,5 +86,66 @@
       "Reviewed rolling catalog replaces obsolete archivedcatalog"
     ]
   },
-  "shutdown_prerequisite_evidence": "evidence/G02/fleet-shutdown-prerequisites.json"
+  "shutdown_prerequisite_evidence": "evidence/G02/fleet-shutdown-prerequisites.json",
+  "fullnode_recovery_proposal": {
+    "status": "proposal only;105USD reserve forecast, no paid launch",
+    "checked_by": "design-20261011",
+    "checked_at": "2026-10-11T17:50:56.331671+00:00",
+    "live_instances_volumes_fleets_us_east_1": 0,
+    "instance": "m7a.4xlarge",
+    "vcpus": 16,
+    "physical_cores": 16,
+    "ram_gib": 64,
+    "rate_usd_hour": 0.92736,
+    "operating_hours": 8,
+    "termination_allowance_hours": 0.5,
+    "root_gp3_gib": 40,
+    "node_gp3_gib": 1024,
+    "gp3_usd_gib_month": 0.08,
+    "delete_on_termination": true,
+    "orphan_volume_cleanup_contingency_hours": 24,
+    "aggregate_egress_mbps": 50,
+    "campaign_max_upload_gib": 20,
+    "campaign_max_https_requests": 100000,
+    "new_backups_max_gib": 20,
+    "backup_retention_days": 30,
+    "operator_s3_download_max_gib": 40,
+    "forecast_usd": {
+      "compute": 7.89,
+      "ebs": 3.85,
+      "ipv4": 0.05,
+      "outbound_conservative_multiple_path_charges": 48.75,
+      "cloudfront_upload": 0.43,
+      "https_requests": 0.24,
+      "backups": 0.5,
+      "operator_s3_downloads": 3.87,
+      "s3_requests": 0.1,
+      "tax20percent_and_extra_cleanup_buffer": 28.14
+    },
+    "round_up_reservation_usd": 105,
+    "projected_total_usd": 213.28,
+    "projected_remaining_usd": 86.72,
+    "controls": [
+      "AWSrequestFleet absoluteValidUntil withTerminateInstancesWithExpiration",
+      "IndependentpersistenthostUTCtimer installedbeforedownloads",
+      "30mincommissioningshutdown withdeadlinepersistedonce",
+      "WholeENI50Mbpsshaping beforeDocker/services; verifycounters",
+      "Campaignrequest/uploadlimits enforced beforeexternalproxytraffic"
+    ],
+    "prerequisites": [
+      "Reviewedimmutablebootstrap andlaunchargs",
+      "Actualcloudandhostcontrols verified",
+      "ActualLinuxpackageacceptance",
+      "Nodecanonicalreadiness/storage/recovery",
+      "ExactRollingdeploymentaddressesbeforeRollingproverjobs"
+    ],
+    "not_claimed": [
+      "Linuxcontaineracceptance",
+      "Fullnodesyncperformance",
+      "Publicendpointavailability",
+      "Independentprivacyqualification"
+    ],
+    "egress_forecast_gb": 250,
+    "egress_forecast_reason": "50Mbps over8.5h is191.25GB;250GB reserves58.75GB for rate formatting tolerance, bursts and non-realtime loss detection/termination. This is a conservative forecast, not proof of a hard fault-time network bound. Commissioning must verify shaping and counters; no external prover proxy before request/upload controls."
+  }
 }
