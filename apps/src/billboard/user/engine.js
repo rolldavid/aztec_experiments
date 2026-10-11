@@ -143,6 +143,13 @@
   // ============================================================
   // Aztec Wallet (gas estimation + prove/submit split, with retry)
   // ============================================================
+  const privateWalletRoutes = new WeakMap();
+  function isPrivateWalletForNode(wallet, node) {
+    const route = privateWalletRoutes.get(wallet);
+    return Boolean(route && route.node === node && route.rawNode === node &&
+      wallet.aztecNode === node && wallet.pxe === route.pxe &&
+      route.sdk.isPrivatePXEForNode?.(route.pxe, node));
+  }
   function createAztecWallet(a, pxe, aztecNode, rawNode, log, secretKey, opts = {}) {
     class AztecWallet extends a.BaseWallet {
       constructor(pxe, aztecNode) {
@@ -260,6 +267,7 @@
     }
 
     const wallet = new AztecWallet(pxe, aztecNode);
+    privateWalletRoutes.set(wallet, {sdk:a, pxe, node:aztecNode, rawNode});
     wallet._progress = opts.progress || (()=>{});
     wallet._preProveHook = opts.preProveHook || null;
     wallet._contextGuard = opts.contextGuard || null;
@@ -532,7 +540,7 @@
     const node=await a.createTrustedPrivateNode(options);
     if(!a.isTrustedPrivateNode(node))throw invalid();return node;
   }
-  g.BillboardPrivateFeeRouting = Object.freeze({ requirePrivateFeeConfiguration, createPrivateFeeSender, createAztecWallet, connectTrustedPrivateNode });
+  g.BillboardPrivateFeeRouting = Object.freeze({ requirePrivateFeeConfiguration, createPrivateFeeSender, createAztecWallet, isPrivateWalletForNode, connectTrustedPrivateNode });
 
   // Read-only readiness check at a refreshed current PXE anchor. Proving may refresh it again.
   // Missing messages never allocate fees, prove, submit, or repeat an L1 deposit.
