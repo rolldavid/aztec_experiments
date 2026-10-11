@@ -5,12 +5,12 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import {createHash} from 'node:crypto';
-import {verifyRelease,validateQualification,loopback,exerciseFreshness,expectedClientRejection} from './qualify-runtime.mjs';
+import {verifyRelease,validateQualification,loopback,exerciseFreshness,expectedClientRejection,adminRpc,publicRpc,readAdminKey,ADMIN_URL,ADMIN_KEY_FILE} from './qualify-runtime.mjs';
 const sha=x=>createHash('sha256').update(x).digest('hex');
-const config=()=>({service:{applicationProfile:'legacy',proofs:'real',host:'127.0.0.1',port:0,chainId:'11155111',rollupVersion:'2914217885',board:'0x'+'01'.repeat(32),origins:[],queryNode:{url:'http://127.0.0.1:8080',rollupAddress:'0x'+'02'.repeat(20),maxLagSeconds:2}},adminUrl:'http://127.0.0.1:8880'});
+const config=()=>({service:{applicationProfile:'legacy',proofs:'real',host:'127.0.0.1',port:0,chainId:'11155111',rollupVersion:'2914217885',board:'0x'+'01'.repeat(32),origins:[],queryNode:{url:'http://127.0.0.1:8080',rollupAddress:'0x'+'02'.repeat(20),maxLagSeconds:2}},adminUrl:ADMIN_URL,adminKeyFile:ADMIN_KEY_FILE});
 test('pure configuration: only actual-network legacy real query qualification',()=>{
   assert.deepEqual(validateQualification(config()),{maxLagSeconds:2,recoveryTimeoutMs:180000});
-  for(const change of [c=>c.service.proofs='disabled',c=>c.service.applicationProfile='rolling',c=>c.service.host='0.0.0.0',c=>c.service.port=8081,c=>c.service.chainId='31337',c=>c.service.queryNode.maxLagSeconds=121,c=>c.service.board='0x'+'00'.repeat(32),c=>c.service.bbPath='/override',c=>c.service.apiKey='PRIVATE_SENTINEL',c=>c.adminUrl='https://example.com/',c=>c.recoveryTimeoutMs=180001]){const c=config();change(c);assert.throws(()=>validateQualification(c));}
+  for(const change of [c=>c.service.proofs='disabled',c=>c.service.applicationProfile='rolling',c=>c.service.host='0.0.0.0',c=>c.service.port=8081,c=>c.service.chainId='31337',c=>c.service.queryNode.maxLagSeconds=121,c=>c.service.board='0x'+'00'.repeat(32),c=>c.service.bbPath='/override',c=>c.service.apiKey='PRIVATE_SENTINEL',c=>c.adminKeyFile='/var/lib/rolling-bootstrap-private/config.json',c=>c.adminUrl='http://127.0.0.1:8880/',c=>c.adminUrl='https://example.com/',c=>c.recoveryTimeoutMs=180001]){const c=config();change(c);assert.throws(()=>validateQualification(c));}
 });
 test('pure configuration: reject external, authenticated and redirected-path admin/upstream endpoints',()=>{
   for(const url of ['http://example.com','http://127.0.0.1/a','http://secret@127.0.0.1','http://127.0.0.1?token=secret','http://127.0.0.1#x','file:///tmp/x'])assert.throws(()=>loopback(url));
@@ -81,4 +81,64 @@ test('pure rejection policy: identity must never pass for transient unavailable 
   assert(expectedClientRejection('proof-config-floor',{code:'BB_TRUSTED_NODE_CONFIG'}));
   assert.equal(expectedClientRejection('proof-config-floor',{code:'BB_TRUSTED_NODE_UNAVAILABLE'}),false);
   assert.equal(expectedClientRejection('unknown',{}),false);
+});
+
+async function capability(t,key='ab'.repeat(32)){
+  const dir=await fs.mkdtemp(path.join(os.tmpdir(),'qualification-admin-'));await fs.chmod(dir,0o700);
+  t.after(()=>fs.rm(dir,{recursive:true,force:true}));const file=path.join(dir,'key');await fs.writeFile(file,key,{mode:0o600});return {dir,file,key};
+}
+test('private capability: missing, malformed, broad mode and symlink fail with safe errors',async t=>{
+  const c=await capability(t);
+  assert.equal(await readAdminKey(c.file),c.key);
+  for(const change of [async()=>fs.chmod(c.file,0o644),async()=>{await fs.chmod(c.file,0o600);await fs.writeFile(c.file,'PRIVATE_SENTINEL');},async()=>{await fs.unlink(c.file);await fs.symlink('/not/a/key/PRIVATE_SENTINEL',c.file);},async()=>fs.unlink(c.file)]){
+    await change();await assert.rejects(readAdminKey(c.file),e=>e.message==='Admin capability unavailable'&&!JSON.stringify(e).includes('PRIVATE_SENTINEL'));
+  }
+  await fs.writeFile(c.file,c.key,{mode:0o600});await fs.chmod(c.dir,0o755);await assert.rejects(readAdminKey(c.file));
+});
+// Real pinned SDK auth middleware/client, fake in-memory HTTP transport only.
+async function authTransport(expectedKey,calls){
+  const {getApiKeyAuthMiddleware,sha256Hash}=await import('@aztec-labs/foundation/json-rpc/server');
+  const auth=getApiKeyAuthMiddleware(sha256Hash(expectedKey));
+  return async(url,options)=>{
+    const body=JSON.parse(options.body)[0];calls.push({url,method:body.method,redirect:options.redirect,credentials:options.credentials,hasKey:Object.hasOwn(options.headers,'x-api-key')});
+    const ctx={method:'POST',path:'/',get:name=>options.headers[name]??'',status:200};
+    await auth(ctx,async()=>{ctx.body=[{jsonrpc:'2.0',id:body.id,result:null}];});
+    return new Response(JSON.stringify(ctx.body),{status:ctx.status});
+  };
+}
+test('SDK fake transport: exact right key authenticates pause/resume; wrong key fails once without leakage',async t=>{
+  const c=await capability(t),calls=[];
+  const admin=await adminRpc(ADMIN_URL,c.file,{fetchImpl:await authTransport(c.key,calls)});
+  await admin.pauseSync();await admin.resumeSync();assert.deepEqual(calls.map(x=>x.method),['aztecAdmin_pauseSync','aztecAdmin_resumeSync']);
+  assert(calls.every(x=>x.url===ADMIN_URL&&x.redirect==='error'&&x.credentials==='omit'&&x.hasKey));
+  const wrong=[];const rejected=await adminRpc(ADMIN_URL,c.file,{fetchImpl:await authTransport('cd'.repeat(32),wrong)});
+  await assert.rejects(rejected.pauseSync(),e=>!String(e).includes(c.key)&&!String(e).includes('PRIVATE_SENTINEL'));assert.equal(wrong.length,1);
+  assert(!JSON.stringify(calls).includes(c.key));
+});
+test('SDK fake transport: ordinary query has no admin header; target/redirect/errors cannot leak capability',async t=>{
+  const c=await capability(t);let calls=0;
+  for(const target of ['http://127.0.0.1:8082/','http://localhost:8882/',ADMIN_URL+'other','https://example.com/']){
+    await assert.rejects(adminRpc(target,c.file,{fetchImpl:async()=>{calls++;}}));
+  }
+  assert.equal(calls,0);
+  for(const fetchImpl of [async()=>new Response(null,{status:302,headers:{location:'https://example.com/'}}),async()=>{throw Error(c.key);},async()=>new Response(JSON.stringify({error:{message:c.key}}))]){
+    const client=await adminRpc(ADMIN_URL,c.file,{fetchImpl});await assert.rejects(client.resumeSync(),e=>!String(e).includes(c.key));
+  }
+  const {AztecNodeApiSchema}=await import('@aztec-labs/stdlib/interfaces/client');
+  const query=await publicRpc('http://127.0.0.1:8082/',AztecNodeApiSchema,'aztec',{fetchImpl:async(url,options)=>{
+    assert.deepEqual(options.headers,{'content-type':'application/json'});assert(!options.body.includes(c.key));
+    return new Response(JSON.stringify([{jsonrpc:'2.0',id:JSON.parse(options.body)[0].id,result:'public-enr'}]));
+  }});assert.equal(await query.getEncodedEnr(),'public-enr');
+});
+
+test('SDK fake transport: missing admin header rejected; freshness recovery uses authenticated calls and safe observations',async t=>{
+  const c=await capability(t),calls=[];
+  const fetchImpl=await authTransport(c.key,calls);
+  const {AztecNodeAdminApiSchema}=await import('@aztec-labs/stdlib/interfaces/client');
+  const missing=await publicRpc(ADMIN_URL,AztecNodeAdminApiSchema,'aztecAdmin',{fetchImpl});
+  await assert.rejects(missing.pauseSync());assert.equal(calls.length,1);assert.equal(calls[0].hasKey,false);
+  const admin=await adminRpc(ADMIN_URL,c.file,{fetchImpl}),f=fakeFreshness(),original=f.args.admin;
+  f.args.admin={pauseSync:async()=>{await admin.pauseSync();return original.pauseSync();},resumeSync:async()=>{await admin.resumeSync();return original.resumeSync();}};
+  await exerciseFreshness(f.args);assert(f.observation.recovered);assert(f.observation.resumed);
+  assert(!JSON.stringify(f.observation).includes(c.key));assert.deepEqual(calls.slice(1).map(x=>x.method),['aztecAdmin_pauseSync','aztecAdmin_resumeSync']);
 });

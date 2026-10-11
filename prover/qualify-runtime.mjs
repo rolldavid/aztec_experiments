@@ -2,7 +2,7 @@
 // verification changes. The bootstrap must verify this code BEFORE executing it.
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
-import {createReadStream} from 'node:fs';
+import {createReadStream,constants} from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {createHash} from 'node:crypto';
@@ -63,8 +63,10 @@ export function loopback(value){
   requireCondition(url.protocol==='http:'&&['127.0.0.1','[::1]'].includes(url.hostname)&&!url.username&&!url.password&&!url.search&&!url.hash&&url.pathname==='/');
   return url.href;
 }
+export const ADMIN_URL='http://127.0.0.1:8882/';
+export const ADMIN_KEY_FILE='/var/lib/rolling-admin/qualification-key';
 export function validateQualification(config){
-  requireCondition(config&&Object.keys(config).every(k=>['service','adminUrl','recoveryTimeoutMs'].includes(k)));
+  requireCondition(config&&Object.keys(config).every(k=>['service','adminUrl','adminKeyFile','recoveryTimeoutMs'].includes(k)));
   const s=config.service;
   requireCondition(s&&Object.keys(s).every(k=>['applicationProfile','proofs','host','port','chainId','rollupVersion','board','privateFeeAddress','pluginAddresses','origins','threads','queryNode'].includes(k)));
   requireCondition(s&&s.applicationProfile==='legacy'&&s.proofs==='real'&&s.host==='127.0.0.1'&&s.port===0);
@@ -75,7 +77,8 @@ export function validateQualification(config){
   requireCondition(Number.isSafeInteger(lag)&&lag>=1&&lag<=120);
   const recovery=config.recoveryTimeoutMs??180000;
   requireCondition(Number.isSafeInteger(recovery)&&recovery>=1000&&recovery<=180000);
-  loopback(s.queryNode.url);loopback(config.adminUrl);
+  loopback(s.queryNode.url);requireCondition(config.adminUrl===ADMIN_URL&&config.adminKeyFile===ADMIN_KEY_FILE);
+  requireCondition(loopback(s.queryNode.url)!==ADMIN_URL);
   // Runtime directories belong to qualification, not release or persistent node.
   requireCondition(s.bbPath===undefined&&s.crsPath===undefined&&s.queueDirectory===undefined);
   return {maxLagSeconds:lag,recoveryTimeoutMs:recovery};
@@ -110,14 +113,44 @@ export async function exerciseFreshness({node,admin,inspect,health,rejectedQuery
   requireCondition(result.recovered);return result;
 }
 
-async function publicRpc(url,schema,namespace){
+// The capability never enters service config, child input, logs or observations.
+export async function readAdminKey(file){
+  let handle;
+  try{
+    const parent=await fs.lstat(path.dirname(file));
+    requireCondition(parent.isDirectory()&&!parent.isSymbolicLink()&&(parent.mode&0o777)===0o700&&parent.uid===process.getuid());
+    handle=await fs.open(file,constants.O_RDONLY|constants.O_NOFOLLOW|constants.O_NONBLOCK);
+    const stat=await handle.stat();requireCondition(stat.isFile()&&(stat.mode&0o777)===0o600&&stat.uid===process.getuid()&&stat.size===64);
+    const key=await handle.readFile('utf8');requireCondition(/^[a-f0-9]{64}$/.test(key));return key;
+  }catch{throw Error('Admin capability unavailable');}
+  finally{await handle?.close();}
+}
+export async function adminRpc(url,file,{fetchImpl=fetch}={}){
+  requireCondition(url===ADMIN_URL);
+  const key=await readAdminKey(file);
+  const {AztecNodeAdminApiSchema}=await import('@aztec-labs/stdlib/interfaces/client');
+  const client=await rpc(url,AztecNodeAdminApiSchema,'aztecAdmin',fetchImpl,key);
+  return Object.freeze({pauseSync:()=>client.pauseSync(),resumeSync:()=>client.resumeSync()});
+}
+export async function publicRpc(url,schema,namespace,{fetchImpl=fetch}={}){
+  return rpc(url,schema,namespace,fetchImpl);
+}
+async function rpc(url,schema,namespace,fetchImpl,key){
+  const target=loopback(url);
   const {createSafeJsonRpcClient}=await import('@aztec-labs/foundation/json-rpc/client');
   const {jsonStringify}=await import('@aztec-labs/foundation/json-rpc');
-  return createSafeJsonRpcClient(loopback(url),schema,{namespaceMethods:namespace,log:silent,maxBatchSize:1,fetch:async(host,body)=>{
-    const response=await fetch(host,{method:'POST',headers:{'content-type':'application/json'},body:jsonStringify(body),redirect:'error',credentials:'omit',signal:AbortSignal.timeout(30000)});
-    requireCondition(response.ok);const chunks=[];let bytes=0;
-    for await(const chunk of response.body){bytes+=chunk.length;requireCondition(bytes<=4*1024*1024);chunks.push(chunk);}
-    return {response:JSON.parse(Buffer.concat(chunks).toString('utf8')),headers:response.headers};
+  return createSafeJsonRpcClient(target,schema,{namespaceMethods:namespace,log:silent,maxBatchSize:1,fetch:async(host,body)=>{
+    try{
+      requireCondition(host===target);
+      const headers={'content-type':'application/json'};
+      if(key){requireCondition(target===ADMIN_URL&&Array.isArray(body)&&body.length===1&&['aztecAdmin_pauseSync','aztecAdmin_resumeSync'].includes(body[0].method));headers['x-api-key']=key;}
+      const response=await fetchImpl(host,{method:'POST',headers,body:jsonStringify(body),redirect:'error',credentials:'omit',referrerPolicy:'no-referrer',signal:AbortSignal.timeout(30000)});
+      requireCondition(response.ok&&!response.redirected);const chunks=[];let bytes=0;
+      for await(const chunk of response.body){bytes+=chunk.length;requireCondition(bytes<=4*1024*1024);chunks.push(chunk);}
+      const parsed=JSON.parse(Buffer.concat(chunks).toString('utf8'));
+      if(key)requireCondition(Array.isArray(parsed)&&parsed.length===1&&parsed[0]?.id===body[0].id&&parsed[0]?.jsonrpc==='2.0'&&!parsed[0]?.error&&parsed[0]?.result===null); // Never reflect an admin error body.
+      return {response:key?[{id:body[0].id,jsonrpc:'2.0',result:null}]:parsed,headers:response.headers};
+    }catch{throw Error('Qualification RPC unavailable');}
   }});
 }
 async function child(input,root=ROOT){
@@ -201,9 +234,9 @@ export async function qualifyRuntime(config,digest,output){
     report.checks.healthy=await child({...input,case:'healthy'});
     for(const name of ['wrong-chain','wrong-version','wrong-rollup','proof-config-floor']){report.stage=name;report.checks[name]=await child({...input,case:name});}
     report.stage='stale-and-recovery';
-    const {AztecNodeApiSchema,AztecNodeAdminApiSchema}=await import('@aztec-labs/stdlib/interfaces/client');
+    const {AztecNodeApiSchema}=await import('@aztec-labs/stdlib/interfaces/client');
     const node=await publicRpc(config.service.queryNode.url,AztecNodeApiSchema,'aztec');
-    const admin=await publicRpc(config.adminUrl,AztecNodeAdminApiSchema,'aztecAdmin');
+    const admin=await adminRpc(config.adminUrl,config.adminKeyFile);
     const {inspectTrustedNode}=await import('../shared/trusted-private-node.mjs');
     report.checks.freshness={};
     await exerciseFreshness({observation:report.checks.freshness,node,admin,inspect:()=>inspectTrustedNode(node,{expectedNetworkScope:input.scope,proofsEnabled:true,maxLagSeconds:bounds.maxLagSeconds}),health,

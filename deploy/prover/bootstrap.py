@@ -17,7 +17,7 @@ QUALIFICATION = {'service': {'applicationProfile':'legacy','proofs':'real','host
     'chainId':'11155111','rollupVersion':'2914217885',
     'board':'0x0346558fcce04c4bf0b0907c1ef20858b9583123ef55bceb7125cb3fc3fb3752',
     'queryNode':{'url':'http://127.0.0.1:8082/','rollupAddress':'0x8c2fb2a68a3d362ab1de99e06f83f8903160bbd9','maxLagSeconds':120}},
-    'adminUrl':'http://127.0.0.1:8882/','recoveryTimeoutMs':180000}
+    'adminUrl':'http://127.0.0.1:8882/','adminKeyFile':'/var/lib/rolling-admin/qualification-key','recoveryTimeoutMs':180000}
 
 class Invalid(ValueError):
     pass
@@ -72,6 +72,7 @@ import datetime as dt, fcntl, hashlib, ipaddress, json, os, pathlib, platform, r
 BASE = pathlib.Path('/var/lib/rolling-bootstrap')
 RELEASE = pathlib.Path('/opt/board-prover/releases') / ('rolling-'+PINS['manifest'][:16])
 PRIVATE = pathlib.Path('/var/lib/rolling-bootstrap-private')
+ADMIN_HASH_FILE = pathlib.Path('/var/lib/rolling-node/data/admin/api_key_hash')
 def receipt_url(value):
     if type(value) is not str or len(value)>4096 or any(ord(c)<33 or ord(c)>126 for c in value): raise ValueError('Invalid receipt capability')
     try:
@@ -354,6 +355,33 @@ def public_ip():
     if not address.is_global: raise ValueError('Expected public IPv4')
     return str(address)
 
+def prepare_admin_key():
+    # Trusted installer only. Never rotate an existing capability or node hash.
+    keyfile=pathlib.Path(QUALIFICATION['adminKeyFile']);directory=keyfile.parent
+    directory.mkdir(mode=0o700,exist_ok=True)
+    info=directory.lstat()
+    if not stat.S_ISDIR(info.st_mode) or stat.S_IMODE(info.st_mode)!=0o700 or info.st_uid!=os.getuid(): raise ValueError('Unsafe admin capability')
+    prior=ADMIN_HASH_FILE
+    if not keyfile.exists() and (prior.exists() or prior.is_symlink()): raise ValueError('Existing admin authority needs retained capability')
+    try:
+        fd=os.open(keyfile,os.O_WRONLY|os.O_CREAT|os.O_EXCL|os.O_NOFOLLOW,0o600)
+    except FileExistsError: pass
+    else:
+        with os.fdopen(fd,'w') as f:
+            f.write(os.urandom(32).hex());f.flush();os.fsync(f.fileno())
+        fd=os.open(directory,os.O_RDONLY|os.O_DIRECTORY)
+        try: os.fsync(fd)
+        finally: os.close(fd)
+    fd=os.open(keyfile,os.O_RDONLY|os.O_NOFOLLOW|os.O_NONBLOCK)
+    with os.fdopen(fd) as f:
+        info=os.fstat(f.fileno())
+        if not stat.S_ISREG(info.st_mode) or stat.S_IMODE(info.st_mode)!=0o600 or info.st_uid!=os.getuid() or info.st_size!=64: raise ValueError('Unsafe admin capability')
+        key=f.read(65)
+    if not re.fullmatch('[a-f0-9]{64}',key): raise ValueError('Unsafe admin capability')
+    value=hashlib.sha256(key.encode()).hexdigest()
+    if (prior.exists() or prior.is_symlink()) and (prior.is_symlink() or not prior.is_file() or prior.stat().st_size>65 or prior.read_text().strip()!=value): raise ValueError('Existing admin authority mismatch')
+    return value
+
 def install_node():
     prepare_data()
     write('/etc/rolling-node/network.json',json.dumps(NETWORK),0o644)
@@ -365,14 +393,14 @@ def install_node():
     run(['systemctl','daemon-reload']);run(['systemctl','enable','--now','docker'])
     verify_controls()
     run(['docker','pull','--platform','linux/amd64',PINS['image']],timeout=600)
-    ip=public_ip()
+    ip=public_ip();admin_hash=prepare_admin_key()
     args=['/usr/bin/docker','run','--log-driver','none','--name','rolling-node','--platform','linux/amd64','--memory','24g','--memory-swap','24g','--pids-limit','512','--cap-drop','ALL','--security-opt','no-new-privileges',
           '-p','127.0.0.1:8082:8080','-p','127.0.0.1:8882:8880','-p','40400:40400/tcp','-p','40400:40400/udp',
           '-v','/var/lib/rolling-node/data:/var/lib/data','-v','/etc/rolling-node/network.json:/etc/aztec/network.json:ro',
           '-e','DATA_DIRECTORY=/var/lib/data','-e','NETWORK_CONFIG_LOCATION=/etc/aztec/network.json',
           '-e','ETHEREUM_HOSTS=https://ethereum-sepolia-rpc.publicnode.com','-e','ETHEREUM_DEBUG_HOSTS=https://ethereum-sepolia-rpc.publicnode.com',
           '-e','L1_CONSENSUS_HOST_URLS=https://ethereum-sepolia-beacon-api.publicnode.com','-e','ETHEREUM_ALLOW_NO_DEBUG_HOSTS=false','-e','BLOB_ALLOW_EMPTY_SOURCES=false',
-          '-e','PROVER_REAL_PROOFS=true','-e','SYNC_MODE=snapshot','-e','P2P_IP='+ip,'-e','P2P_PORT=40400','-e','AZTEC_PORT=8080','-e','AZTEC_ADMIN_PORT=8880',
+          '-e','PROVER_REAL_PROOFS=true','-e','SYNC_MODE=snapshot','-e','P2P_IP='+ip,'-e','P2P_PORT=40400','-e','AZTEC_PORT=8080','-e','AZTEC_ADMIN_PORT=8880','-e','AZTEC_ADMIN_API_KEY_HASH='+admin_hash,
           '--entrypoint','node',PINS['image'],'--no-warnings','/usr/src/yarn-project/aztec/dest/bin/index.js','start','--node','--network','testnet']
     # All arguments above are fixed or strict IPv4/digest; no shell is involved.
     unit='[Unit]\nDescription=Bounded private query fullnode\nRequires=docker.service rolling-egress.service\nAfter=docker.service rolling-egress.service\nRequiresMountsFor=/var/lib/rolling-node\n[Service]\nExecStartPre=/usr/bin/python3 /usr/local/lib/rolling-attest.py --check\nExecStart='+ ' '.join(args)+'\nExecStop=/usr/bin/docker stop -t 30 rolling-node\nRestart=no\nTimeoutStartSec=0\nTimeoutStopSec=45\nStandardOutput=null\nStandardError=null\n[Install]\nWantedBy=multi-user.target\n'
@@ -613,7 +641,7 @@ def qualify(aborted=False):
         exclusive_record(result_path,result)
 
 def install_qualification():
-    unit='[Unit]\nDescription=One bounded Linux query qualification\nRequires=rolling-node.service rolling-egress.service\nAfter=rolling-node.service rolling-egress.service\n[Service]\nType=oneshot\nExecStart=/usr/bin/python3 /usr/local/lib/rolling-attest.py --qualify\nExecStopPost=/usr/bin/python3 /usr/local/lib/rolling-attest.py --qualification-stop\nTimeoutStartSec=6300\nTimeoutStopSec=45\nKillMode=control-group\nRestart=no\nUMask=0077\nEnvironment=LOG_LEVEL=silent\nUnsetEnvironment=NODE_PATH NODE_OPTIONS BB\nPrivateTmp=yes\nPrivateDevices=yes\nNoNewPrivileges=yes\nCapabilityBoundingSet=\nProtectSystem=strict\nProtectHome=yes\nReadWritePaths=/var/lib/rolling-bootstrap\nInaccessiblePaths=-/var/lib/rolling-bootstrap-private -/var/lib/cloud\nIPAddressDeny=any\nIPAddressAllow=localhost\nRestrictAddressFamilies=AF_UNIX AF_INET AF_INET6 AF_NETLINK\nStandardOutput=null\nStandardError=null\n[Install]\nWantedBy=multi-user.target\n'
+    unit='[Unit]\nDescription=One bounded Linux query qualification\nRequires=rolling-node.service rolling-egress.service\nAfter=rolling-node.service rolling-egress.service\n[Service]\nType=oneshot\nExecStart=/usr/bin/python3 /usr/local/lib/rolling-attest.py --qualify\nExecStopPost=/usr/bin/python3 /usr/local/lib/rolling-attest.py --qualification-stop\nTimeoutStartSec=6300\nTimeoutStopSec=45\nKillMode=control-group\nRestart=no\nUMask=0077\nEnvironment=LOG_LEVEL=silent\nUnsetEnvironment=NODE_PATH NODE_OPTIONS BB\nPrivateTmp=yes\nPrivateDevices=yes\nNoNewPrivileges=yes\nCapabilityBoundingSet=\nProtectSystem=strict\nProtectHome=yes\nReadWritePaths=/var/lib/rolling-bootstrap\nReadOnlyPaths=/var/lib/rolling-admin/qualification-key\nInaccessiblePaths=-/var/lib/rolling-bootstrap-private -/var/lib/cloud\nIPAddressDeny=any\nIPAddressAllow=localhost\nRestrictAddressFamilies=AF_UNIX AF_INET AF_INET6 AF_NETLINK\nStandardOutput=null\nStandardError=null\n[Install]\nWantedBy=multi-user.target\n'
     write('/etc/systemd/system/rolling-qualification.service',unit,0o644)
     write('/etc/systemd/system/rolling-qualification-receipt.service','[Unit]\nDescription=Trusted bounded final receipt publisher\n[Service]\nType=oneshot\nExecStart=/usr/bin/python3 /usr/local/lib/rolling-attest.py --qualification-receipt\nTimeoutStartSec=35\nTimeoutStopSec=3\nRestart=no\nUMask=0077\nStandardOutput=null\nStandardError=null\n',0o644)
     run(['systemctl','daemon-reload']);run(['systemctl','enable','rolling-qualification.service'])

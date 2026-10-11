@@ -209,6 +209,7 @@ class htb 1:20 parent 1:1 prio 0 rate 25Mbit ceil 50Mbit burst 4725b cburst 7850
         ns['prepare_data']=lambda:None;ns['verify_controls']=lambda:0
         ns['write']=lambda p,s,*_:writes.update({str(p):s})
         ns['public_ip']=lambda:'203.0.113.10'
+        ns['prepare_admin_key']=lambda:'a'*64
         ns['run']=lambda args,**kw:calls.append(args)
         with patch.object(ns['shutil'],'which',return_value='/usr/bin/docker'):
             ns['install_node']()
@@ -218,6 +219,9 @@ class htb 1:20 parent 1:1 prio 0 rate 25Mbit ceil 50Mbit burst 4725b cburst 7850
         args=shlex.split(command.removeprefix('ExecStart='))
         mappings=[args[i+1] for i,arg in enumerate(args) if arg=='-p']
         self.assertEqual(mappings,['127.0.0.1:8082:8080','127.0.0.1:8882:8880','40400:40400/tcp','40400:40400/udp'])
+        self.assertIn('AZTEC_ADMIN_API_KEY_HASH='+'a'*64,args)
+        self.assertNotIn('qualification-key',command)
+        self.assertNotIn('AZTEC_DISABLE_ADMIN_API_KEY',command)
         self.assertNotIn('/var/run/docker.sock',command)
         self.assertNotIn('--privileged',args)
 
@@ -721,5 +725,46 @@ class FinalReceipt(unittest.TestCase):
         self.assertIn('--qualification-receipt',publisher);self.assertIn('TimeoutStartSec=35',publisher)
         self.assertIn('Restart=no',publisher);self.assertNotIn('receiptPutUrl',publisher)
         self.assertIn("'--log-driver','none'",b.HOST);self.assertNotIn("'run','--rm'",b.HOST)
+
+class AdminCapability(unittest.TestCase):
+    def environment(self,t):
+        ns=host();ns['QUALIFICATION']={**b.QUALIFICATION,'adminKeyFile':str(pathlib.Path(t)/'admin/key')}
+        ns['ADMIN_HASH_FILE']=pathlib.Path(t)/'existing-hash'
+        return ns
+
+    def test_private_generation_reuse_hash_and_existing_authority(self):
+        with tempfile.TemporaryDirectory() as t:
+            ns=self.environment(t);value=ns['prepare_admin_key']();keyfile=pathlib.Path(ns['QUALIFICATION']['adminKeyFile']);key=keyfile.read_text()
+            self.assertEqual(len(key),64);self.assertEqual(value,hashlib.sha256(key.encode()).hexdigest())
+            self.assertEqual(keyfile.stat().st_mode&0o777,0o600);self.assertEqual(keyfile.parent.stat().st_mode&0o777,0o700)
+            self.assertEqual(ns['prepare_admin_key'](),value);self.assertEqual(keyfile.read_text(),key)
+            ns['ADMIN_HASH_FILE'].write_text(value);self.assertEqual(ns['prepare_admin_key'](),value)
+            ns['ADMIN_HASH_FILE'].write_text('f'*64)
+            with self.assertRaises(ValueError):ns['prepare_admin_key']()
+            self.assertEqual(keyfile.read_text(),key);self.assertEqual(ns['ADMIN_HASH_FILE'].read_text(),'f'*64)
+            keyfile.unlink()
+            with self.assertRaises(ValueError):ns['prepare_admin_key']()
+            self.assertFalse(keyfile.exists())
+
+    def test_corrupt_or_unsafe_capability_is_never_replaced(self):
+        for mode in ['short','permissions','symlink','directory']:
+            with self.subTest(mode=mode),tempfile.TemporaryDirectory() as t:
+                ns=self.environment(t);ns['prepare_admin_key']();keyfile=pathlib.Path(ns['QUALIFICATION']['adminKeyFile'])
+                if mode=='short':keyfile.write_text('PRIVATE_SENTINEL')
+                if mode=='permissions':keyfile.chmod(0o644)
+                if mode=='directory':keyfile.parent.chmod(0o755)
+                if mode=='symlink':
+                    keyfile.unlink();keyfile.symlink_to(pathlib.Path(t)/'missing')
+                with self.assertRaises((ValueError,OSError)):ns['prepare_admin_key']()
+                if mode=='short':self.assertEqual(keyfile.read_text(),'PRIVATE_SENTINEL')
+                if mode=='symlink':self.assertTrue(keyfile.is_symlink())
+
+    def test_qualifier_can_read_only_dedicated_capability_private_transport_stays_hidden(self):
+        ns=host();writes={};ns['write']=lambda p,s,*_:writes.update({str(p):s});ns['run']=lambda *a,**k:None
+        ns['install_qualification']();unit=writes['/etc/systemd/system/rolling-qualification.service']
+        self.assertIn('ReadOnlyPaths=/var/lib/rolling-admin/qualification-key\n',unit)
+        self.assertIn('InaccessiblePaths=-/var/lib/rolling-bootstrap-private -/var/lib/cloud',unit)
+        self.assertIn('IPAddressDeny=any\nIPAddressAllow=localhost',unit)
+        self.assertNotIn('ReadWritePaths=/var/lib/rolling-admin',unit)
 
 if __name__=='__main__':unittest.main()
