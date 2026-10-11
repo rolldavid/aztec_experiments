@@ -83,7 +83,7 @@ test('mock transport: one request on failure; no retry or secret cause, strict r
   let calls=0;set(async(url,init)=>{calls++;assert.equal(url,'https://trusted.example/prover/v1/node');assert.equal(init.redirect,'error');assert.equal(init.credentials,'omit');assert.equal(init.referrerPolicy,'no-referrer');throw Error('PRIVATE_SENTINEL');});
   await rejects(()=>create(),'UNAVAILABLE');assert.equal(calls,1);
 }));
-for(const [label,response] of [['redirect',()=>new Response('',{status:302,headers:{location:'https://ordinary.example'}})],['invalid JSON',()=>new Response('PRIVATE_SENTINEL')],['HTTP failure',()=>new Response('PRIVATE_SENTINEL',{status:503})],['response size',()=>new Response('x'.repeat(16*1024*1024+1))]])test('mock transport: '+label+' fails without retry',async()=>withFetch(async set=>{let calls=0;set(async()=>{calls++;return response();});await rejects(()=>create(),'UNAVAILABLE');assert.equal(calls,1);}));
+for(const [label,response] of [['redirect',()=>new Response('',{status:302,headers:{location:'https://ordinary.example'}})],['invalid JSON',()=>new Response('PRIVATE_SENTINEL')],['HTTP failure',()=>new Response('PRIVATE_SENTINEL',{status:503})]])test('mock transport: '+label+' fails without retry',async()=>withFetch(async set=>{let calls=0;set(async()=>{calls++;return response();});await rejects(()=>create(),'UNAVAILABLE');assert.equal(calls,1);}));
 test('mock transport with real SDK schema: brand, public inspection, no submission retries',async()=>withFetch(async set=>{
   const f=fixture();f.node.getSyncedL1Timestamp=async()=>BigInt(Math.floor(Date.now()/1000));let sends=0;
   set(async(url,init)=>{
@@ -98,4 +98,21 @@ test('mock transport with real SDK schema: brand, public inspection, no submissi
 test('mock transport: explicit loopback development allowed, version header mismatch rejected',async()=>withFetch(async set=>{
   const f=fixture();set(async(url,init)=>new Response(jsonStringify(await responseFor(f,JSON.parse(init.body))),{headers:{'x-aztec-l1ChainId':'1'}}));
   await rejects(()=>create({url:'http://127.0.0.1:1234',allowLocalDev:true}),'UNAVAILABLE');
+}));
+
+
+test('mock transport: 32 MiB client cap cancels bounded stream before reading remaining chunks, once',async()=>withFetch(async set=>{
+  let requests=0,pulls=0,cancels=0;
+  // One reusable 16 MiB chunk. The fourth/fifth chunks must never be requested;
+  // this distinguishes the byte guard from eventual JSON/schema rejection.
+  const chunk=new Uint8Array(16*1024*1024);
+  set(async()=>{
+    requests++;
+    return new Response(new ReadableStream({
+      pull(controller){pulls++;if(pulls<=5)controller.enqueue(chunk);else controller.close();},
+      cancel(){cancels++;}
+    },{highWaterMark:0}));
+  });
+  await rejects(()=>create(),'UNAVAILABLE');
+  assert.equal(requests,1);assert.equal(pulls,3);assert.equal(cancels,1);
 }));

@@ -35,9 +35,10 @@ async function composition(t) {
     txsLimits:{gas:{daGas:100,l2Gas:100}}};
   const state = {latestBlockNumber:8,latestBlockHash:hex(8),finalizedBlockNumber:3,oldestHistoricBlockNumber:0,treesAreSynched:true};
   const tips = {proposed:id(8),checkpointed:tip(7),proven:tip(4),finalized:tip(3)};
-  let lagSeconds = 0, upstreamFailure = false, frontRequests = 0;
+  let lagSeconds = 0, upstreamFailure = false, frontRequests = 0, encodedEnr;
   const calls = [], errors = [];
   const handlers = {
+    getEncodedEnr:()=>encodedEnr,
     getNodeInfo:()=>info,
     getChainTips:()=>tips,
     getWorldStateSyncStatus:()=>state,
@@ -79,6 +80,7 @@ async function composition(t) {
   const reset = () => {calls.length=0;frontRequests=0;};
   t.after(()=>assert.deepEqual(errors,[],'Controlled upstream must accept every forwarded SDK request'));
   return {info,state,tips,calls,create,reset,url,get frontRequests(){return frontRequests;},
+    setEncodedEnrBytes:bytes=>{assert(Number.isSafeInteger(bytes)&&bytes>=0&&bytes<=33*1024*1024);encodedEnr='e'.repeat(bytes);},
     setLag:value=>{lagSeconds=value;},setFailure:value=>{upstreamFailure=value;}};
 }
 
@@ -114,4 +116,26 @@ test('development HTTP composition: unhealthy bootstrap refuses branded client b
   const f=await composition(t);f.setLag(121);f.reset();await assert.rejects(f.create(),unavailable);
   assert.equal(f.frontRequests,1);assert.deepEqual(f.calls,publicGate.slice(0,6));assert(!f.calls.includes('getContract'));
   const health=await(await fetch(f.url+'/healthz')).json();assert.equal(health.ready,true);assert.deepEqual(health.query,{enabled:true,ready:false,reason:'unavailable'});
+});
+
+
+test('development HTTP composition: schema-valid response above 16 MiB passes aligned 32 MiB limits',async t=>{
+  const f=await composition(t),node=await f.create();f.setEncodedEnrBytes(17*1024*1024);f.reset();
+  const result=await node.getEncodedEnr();
+  assert.equal(result.length,17*1024*1024);assert.equal(result[0],'e');assert.equal(result.at(-1),'e');
+  assert.deepEqual(f.calls,[...publicGate,'getEncodedEnr']);assert.equal(f.frontRequests,1);
+});
+
+test('development HTTP composition: response above 32 MiB rejects with one attempt',async t=>{
+  const f=await composition(t),node=await f.create();f.setEncodedEnrBytes(33*1024*1024);f.reset();
+  await assert.rejects(node.getEncodedEnr(),unavailable);
+  assert.deepEqual(f.calls,[...publicGate,'getEncodedEnr']);assert.equal(f.frontRequests,1);
+});
+
+test('development HTTP composition: aggregate batch above 32 MiB rejects both individually bounded responses',async t=>{
+  const f=await composition(t),node=await f.create();f.setEncodedEnrBytes(17*1024*1024);f.reset();
+  // Each individual result is below the bound; their single SDK batch exceeds it.
+  const results=await Promise.allSettled([node.getEncodedEnr(),node.getEncodedEnr()]);
+  assert(results.every(result=>result.status==='rejected'&&unavailable(result.reason)));
+  assert.deepEqual(f.calls,[...publicGate,'getEncodedEnr','getEncodedEnr']);assert.equal(f.frontRequests,1);
 });
