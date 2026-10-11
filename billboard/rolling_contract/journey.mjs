@@ -29,6 +29,7 @@ import {PrivateFeePaymentMethod} from '../../shared/private-fee-payment.mjs';
 import {encodeConfigCommitment} from '../../shared/protocol-commitments.mjs';
 import {nameRegistration, NAME_DOMAIN} from '../../shared/rolling/name-policy.mjs';
 import {invocationPreimage, invocationHash} from '../../shared/rolling/invocation.mjs';
+import {createRollingNoteMembership} from '../../scripts/testing/rolling-note-membership.mjs';
 import {assertMinedCallbackRollback} from './callback-rollback.mjs';
 
 const n = value => typeof value === 'bigint' ? value : typeof value === 'number' ? BigInt(value)
@@ -70,13 +71,17 @@ export async function runRollingBokJourney({node, wallet, owner, operator, board
   const lease = await fs.open(path.join(outputDirectory, 'journey-intent.json'), 'wx', 0o600);
   try { await lease.writeFile(json({scope: 'rolling-bok-journey', createdAt: new Date().toISOString()})); await lease.sync(); }
   finally { await lease.close(); }
-  const save = () => fs.writeFile(path.join(outputDirectory, 'journey.json'), json(report), {mode: 0o600});
+  let noteMembership;
+  const save = () => {
+    if (noteMembership) report.noteMembership = noteMembership.snapshot();
+    return fs.writeFile(path.join(outputDirectory, 'journey.json'), json(report), {mode: 0o600});
+  };
   const stage = async label => { report.stage = label; await mark('rolling-bok:' + label); await save(); };
   const sourcePaths = [...new Set(['billboard/rolling_contract/journey.mjs', 'billboard/rolling_contract/callback-rollback.mjs',
     'billboard/rolling_contract/src/main.nr', 'billboard/rolling_contract/src/posting.nr', 'billboard/rolling_contract/src/admission.nr',
     'billboard/rolling_contract/src/encoding.nr', 'experiments/private-bok/escrow/src/main.nr',
     'scripts/testing/private-bok-fees.mjs', 'scripts/w01-private-fee-flow.mjs', 'scripts/prove-application-action.mjs',
-    'scripts/testing/proof-policy.mjs', 'scripts/t03-public-footprint.mjs', 'shared/private-fee-payment.mjs',
+    'scripts/testing/rolling-note-membership.mjs', 'scripts/testing/proof-policy.mjs', 'scripts/t03-public-footprint.mjs', 'shared/private-fee-payment.mjs',
     'shared/private-fee-estimation.mjs', 'shared/rolling/name-policy.mjs', 'shared/rolling/invocation.mjs', ...harnessFiles])];
   const sourceHashes = async () => Object.fromEntries(await Promise.all(sourcePaths.map(async relative => {
     const resolved = path.resolve(ROOT, relative);
@@ -232,6 +237,25 @@ export async function runRollingBokJourney({node, wallet, owner, operator, board
       && n(waiting.available) === 400n && n(waiting.reserved) === 0n && n(waiting.charged) === 0n && n(waiting.refunded) === 0n);
     assert(n(await query(bok, 'balance_of', owner)) === 600n);
 
+    noteMembership = createRollingNoteMembership({node, wallet, owner, categories: [
+      {role: 'board-name', contractAddress: board.address, storageSlot: board.artifact.storageLayout.names.slot},
+      {role: 'board-deposit', contractAddress: board.address, storageSlot: board.artifact.storageLayout.deposits.slot},
+      {role: 'FPC-balance', contractAddress: feeInstance.address, storageSlot: feeContract.artifact.storageLayout.balances.slot},
+      {role: 'Bok-balance', contractAddress: bok.address, storageSlot: bok.artifact.storageLayout.balances.slot},
+    ]});
+    await stage('matching-post-preflight'); await wallet.pxe.sync();
+    await noteMembership.capture('before-preflight');
+    noteMembership.setPhase('preflight');
+    report.matchingPreflight = {passed: false, method: 'W01 privateFeeAction', submitted: false}; await save();
+    const preflightHints = await query(board, 'get_screen_hints', owner, depositId);
+    assert(preflightHints.length === 2 && !preflightHints[0] && !preflightHints[1]);
+    // Same successful-path estimator as the later post; no proof/send and no
+    // changed reservation, note selection, SDK override or negative-case bypass.
+    await privateFee.paymentFor(owner).privateFeeAction({wallet, owner,
+      interaction: board.methods.post_with_bok(depositId, nonce, draft, preflightHints[0], preflightHints[1], pluginId, requestId)});
+    report.matchingPreflight.passed = true; await save();
+    const beforeRollbackAnchor = await noteMembership.capture('before-rollback'); await save();
+
     // Deliberate local negative only: fixed signed reservation after cold claims
     // have mined. Success paths continue to use the unchanged W01 estimator.
     const authorizedGas = authorization.tx.getGasSettings();
@@ -248,6 +272,7 @@ export async function runRollingBokJourney({node, wallet, owner, operator, board
         options: {from: owner, additionalScopes: [owner], fee: {gasSettings: negativeGas}}, expectedFeePayer: feeInstance.address};
     };
     const mismatched = {...draft, message: [...draft.message]}; mismatched.message[0] = new Fr(n(mismatched.message[0]) ^ (1n << 240n));
+    noteMembership.setPhase('rollback');
     await stage('mined-target-mismatch');
     report.rollback = await assertMinedCallbackRollback({node, wallet, owner, board, bok, depositId, nonce,
       draft: mismatched, requestId, pluginId, reason: 'mismatch', outputDirectory: path.join(outputDirectory, 'rollback'),
@@ -263,6 +288,10 @@ export async function runRollingBokJourney({node, wallet, owner, operator, board
     observedPublic.push({tx: rejected.tx, effect: rejected.effect});
     await privateFee.verify(humanFees);
 
+    await wallet.pxe.sync();
+    await noteMembership.capture('after-rollback-old-anchor', beforeRollbackAnchor);
+    await noteMembership.capture('after-rollback'); await save();
+    noteMembership.setPhase('matching-post');
     await stage('matching-post'); await wallet.pxe.sync();
     const countBefore = n(await query(board, 'get_post_count'));
     equalPrivate((await query(board, 'get_deposit_info', owner, depositId)).map(n), before, 'Rollback changed deposit');
@@ -336,5 +365,7 @@ export async function runRollingBokJourney({node, wallet, owner, operator, board
     // Only stage and completed public observations are persisted. SDK errors may
     // contain identities, note material or witness values; never serialize them.
     await save(); error.rollingJourneyObservation = report; throw error;
+  } finally {
+    if (noteMembership) {noteMembership.close(); await save();}
   }
 }
