@@ -2,6 +2,8 @@ use aztec::macros::aztec;
 pub mod encoding;
 pub mod admission;
 pub mod posting;
+pub mod profiles;
+mod profiles_tests;
 mod posting_tests;
 mod tests;
 
@@ -21,6 +23,7 @@ pub contract RollingBoard {
     };
     use crate::admission::{Config, SequenceState, compute_cooldown, checked_time_add, deposit_chain_id, post_id, post_link, get_ready_msg_hash, get_deposit_msg_hash, get_withdraw_msg_hash};
     use crate::posting::{PostDraft, PostRecord, PluginRecord, validate_draft, invocation_target, InvocationRecord, invocation_key, bot_reply_id};
+    use crate::profiles::{OwnedNameRecord, ProfileRecord, next_version, bio_digest, avatar_digest};
     global SENTINEL: Field = 0;
     use crate::encoding::{name_id, pack_bytes, subboard_id, text_hash, validate_text};
 
@@ -29,6 +32,17 @@ pub contract RollingBoard {
     pub struct UsernameNote {
         pub name_id: Field,
         pub schema: u32,
+        pub first_length: u8,
+        pub first: [Field; 2],
+        pub last_length: u8,
+        pub last: [Field; 2],
+    }
+    impl UsernameNote {
+        fn record(self) -> OwnedNameRecord {
+            OwnedNameRecord { name_id: self.name_id, schema: self.schema,
+                first_length: self.first_length, first: self.first,
+                last_length: self.last_length, last: self.last }
+        }
     }
 
     #[derive(Deserialize, Eq, Serialize, Packable)]
@@ -157,6 +171,7 @@ pub contract RollingBoard {
         subboards: Map<Field, PublicMutable<SubboardRecord, Context>, Context>,
         like_state: LikeStorageRoot,
         invocation_state: InvocationStorageRoot,
+        profile_state: ProfileStorageRoot,
     }
 
     #[event]
@@ -228,9 +243,12 @@ pub contract RollingBoard {
 
     #[external("private")]
     fn register_name(first: [u8; 32], first_length: u8, last: [u8; 32], last_length: u8) {
-        let id = name_id(first, first_length, last, last_length);
+        let record = OwnedNameRecord::new(first, first_length, last, last_length);
         let owner = self.msg_sender();
-        self.storage.names.at(owner).insert(UsernameNote { name_id: id, schema: 1 }).deliver(
+        self.storage.names.at(owner).insert(UsernameNote {
+            name_id: record.name_id, schema: record.schema, first_length: record.first_length,
+            first: record.first, last_length: record.last_length, last: record.last,
+        }).deliver(
             MessageDelivery::onchain_constrained(),
         );
         // Kernel links private mint to this public uniqueness gate. Rejection rolls
@@ -254,12 +272,13 @@ pub contract RollingBoard {
     fn _assert_name_owner(id: Field) {
         assert(id != 0, "Name required");
         let owner = self.msg_sender();
-        let options = NoteGetterOptions::<UsernameNote, 2, Field, Field>::new()
+        let options = NoteGetterOptions::<UsernameNote, 8, Field, Field>::new()
             .select(UsernameNote::properties().name_id, Comparator.EQ, id).set_limit(1);
         let notes = self.storage.names.at(owner).pop_notes(options);
         assert(notes.len() == 1, "No owned name");
         let note = notes.get_unchecked(0);
         assert((note.schema == 1) & (note.name_id == id), "Invalid ownership note");
+        note.record().validate();
         self.storage.names.at(owner).insert(note).deliver(MessageDelivery::onchain_constrained());
     }
 
@@ -271,11 +290,96 @@ pub contract RollingBoard {
     /// Avoid `offset`: the pinned generated call serializer uses that local name.
     #[external("utility")]
     unconstrained fn owned_names(owner: AztecAddress, page_offset: u32) -> pub [Field; 8] {
-        let options = NoteViewerOptions::<UsernameNote, 2>::new().set_limit(8).set_offset(page_offset);
+        let options = NoteViewerOptions::<UsernameNote, 8>::new().set_limit(8).set_offset(page_offset);
         let notes = self.storage.names.at(owner).view_notes(options);
         let mut result = [0; 8];
         for i in 0..8 { if i < notes.len() { result[i] = notes.get_unchecked(i).name_id; } }
         result
+    }
+
+    /// Private wallet-local metadata; trusted PXE only, never a public index API.
+    #[external("utility")]
+    unconstrained fn owned_name_records(owner: AztecAddress, page_offset: u32) -> pub [OwnedNameRecord; 8] {
+        let options = NoteViewerOptions::<UsernameNote, 8>::new().set_limit(8).set_offset(page_offset);
+        let notes = self.storage.names.at(owner).view_notes(options);
+        let mut result = [OwnedNameRecord::empty(); 8];
+        for i in 0..8 { if i < notes.len() { result[i] = notes.get_unchecked(i).record(); } }
+        result
+    }
+
+    // Appended single slot keeps every pre-existing slot stable and avoids a
+    // further Map<PrivateContext> expansion in the pinned macro.
+    struct ProfileStorageRoot { slot: Field }
+    impl<Context> StateVariable<1, Context> for ProfileStorageRoot {
+        fn new(_context: Context, storage_slot: Field) -> Self {
+            assert(storage_slot != 0, "Zero profile storage root");
+            Self { slot: storage_slot }
+        }
+        fn get_storage_slot(self) -> Field { self.slot }
+    }
+    struct ProfileState {}
+    impl ProfileState {
+        unconstrained fn entry(context: aztec::context::PublicContext, slot: Field, name: Field)
+            -> PublicMutable<ProfileRecord, aztec::context::PublicContext> {
+            Map::<Field, PublicMutable<ProfileRecord, aztec::context::PublicContext>, aztec::context::PublicContext>::new(context, slot).at(name)
+        }
+    }
+
+    #[event]
+    struct BioPublished {
+        schema: u32, name_id: Field, version: u32, length: u16,
+        digest: Field, content: [Field; 32], trailer: Field,
+    }
+    #[event]
+    struct AvatarPublished {
+        schema: u32, name_id: Field, version: u32, width: u16, height: u16,
+        length: u16, digest: Field, data: [Field; 265], trailer: Field,
+    }
+
+    #[external("private")]
+    fn set_bio(name_id: Field, expected_version: u32, content: [Field; 32], length: u16) {
+        self.internal._assert_name_owner(name_id);
+        self.enqueue_self._set_bio(name_id, expected_version, content, length);
+    }
+    #[external("public")]
+    #[only_self]
+    fn _set_bio(name_id: Field, expected_version: u32, content: [Field; 32], length: u16) {
+        assert(self.storage.registered_names.at(name_id).read(), "Unknown profile name");
+        let entry = ProfileState::entry(self.context, self.storage.profile_state.slot, name_id);
+        let mut current = entry.read();
+        let version = next_version(current.bio_version, expected_version);
+        let digest = bio_digest(name_id, version, content, length);
+        current.bio_version = version; current.bio_digest = digest; current.bio_length = length;
+        entry.write(current);
+        self.emit(BioPublished { schema: 1, name_id, version, length, digest, content, trailer: 1 });
+    }
+
+    #[external("private")]
+    fn set_avatar(name_id: Field, expected_version: u32, width: u16, height: u16,
+        length: u16, data: [Field; 265]) {
+        self.internal._assert_name_owner(name_id);
+        self.enqueue_self._set_avatar(name_id, expected_version, width, height, length, data);
+    }
+    #[external("public")]
+    #[only_self]
+    fn _set_avatar(name_id: Field, expected_version: u32, width: u16, height: u16,
+        length: u16, data: [Field; 265]) {
+        assert(self.storage.registered_names.at(name_id).read(), "Unknown profile name");
+        let entry = ProfileState::entry(self.context, self.storage.profile_state.slot, name_id);
+        let mut current = entry.read();
+        let version = next_version(current.avatar_version, expected_version);
+        let digest = avatar_digest(name_id, version, width, height, length, data);
+        current.avatar_version = version; current.avatar_digest = digest;
+        current.avatar_width = width; current.avatar_height = height; current.avatar_length = length;
+        entry.write(current);
+        self.emit(AvatarPublished { schema: 1, name_id, version, width, height, length, digest, data, trailer: 1 });
+    }
+
+    #[external("public")]
+    #[view]
+    fn profile_state(name_id: Field) -> pub ProfileRecord {
+        assert(self.storage.registered_names.at(name_id).read(), "Unknown profile name");
+        ProfileState::entry(self.context, self.storage.profile_state.slot, name_id).read()
     }
 
     #[external("public")]

@@ -99,6 +99,9 @@ fn owned_names_call_preserves_requested_page_offset() {
     assert_eq(RollingBoard::at(owner).owned_names(owner, 0).args, [42, 0]);
     assert_eq(RollingBoard::at(owner).owned_names(owner, 1).args, [42, 1]);
     assert_eq(RollingBoard::at(owner).owned_names(owner, 2).args, [42, 2]);
+    assert_eq(RollingBoard::at(owner).owned_name_records(owner, 0).args, [42, 0]);
+    assert_eq(RollingBoard::at(owner).owned_name_records(owner, 1).args, [42, 1]);
+    assert_eq(RollingBoard::at(owner).owned_name_records(owner, 2).args, [42, 2]);
 }
 
 unconstrained fn setup() -> (TestEnvironment, AztecAddress, AztecAddress, AztecAddress, AztecAddress) {
