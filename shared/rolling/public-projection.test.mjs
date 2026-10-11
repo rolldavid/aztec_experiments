@@ -87,3 +87,28 @@ test('unknown parent and unregistered named identity never mutate the projection
   const e=await event('PostPublished',{...published.payload,id:'30',record},0,'3');assert.throws(()=>p.stage([e]));assert.equal(p.postCount,2);
  }
 });
+test('touched-entry undo restores first value after multiple writes in a range',async()=>{
+ const {events}=await fixture(),p=createRollingProjection({isValidatedEvent:isRollingEvent});p.stage(events).apply();const before=p.feed().posts;
+ const like=await event('LikeChanged',{post:'10',tag:'77',active:true,count:'1'},0,'3');
+ const unlike=await event('LikeChanged',{post:'10',tag:'77',active:false,count:'0'},0,'4');
+ const change=p.stage([like,unlike]);assert.deepEqual(p.feed().posts,before);change.apply();assert.equal(p.post('10').likes,'0');change.undo();assert.deepEqual(p.feed().posts,before);
+ // A branch prepared before a later apply/undo cannot become valid again.
+ const stale=p.stage([like]),other=p.stage([like]);other.apply();other.undo();assert.throws(()=>stale.apply());
+ const fresh=p.stage([like]);fresh.apply();assert.equal(p.post('10').likes,'1');
+});
+test('labelled performance fixture: retained two-thousand-range undo fits finite heap budget',async()=>{
+ const {spawnSync}=await import('node:child_process');
+ const moduleUrl=new URL('./public-projection.mjs',import.meta.url).href;
+ const script=`import {createRollingProjection} from ${JSON.stringify(moduleUrl)};
+ const p=createRollingProjection({isValidatedEvent:()=>true}),history=[],scope={fixture:true},word=(65n<<240n).toString();
+ const position=i=>({blockNumber:String(i+1),blockHash:'fixture'+i,txHash:'fixture'+i,txIndexWithinBlock:'0',logIndexWithinTx:'0'});
+ global.gc();const start=process.memoryUsage().heapUsed;
+ const initial=p.stage([{type:'MainPolicyPublished',scope,position:position(0),payload:{version:'1',rules:[word],length:'1'}}]);initial.apply();history.push(initial);
+ for(let i=1;i<=2000;i++){const change=p.stage([{type:'PostPublished',scope,position:position(i),payload:{id:String(i),record:{subboard:'0',parent:'0',root:String(i),kind:'1',name_id:'0',reference:'0',content_digest:'1'},timestamp:'1',main_policy_version:'1',local_policy_version:'0',message:[word],length:'1'}}]);change.apply();history.push(change);}
+ global.gc();const retainedBytes=process.memoryUsage().heapUsed-start;
+ for(let i=history.length-1;i>=0;i--)history[i].undo();
+ console.log(JSON.stringify({retainedBytes,empty:p.postCount===0}));`;
+ const result=spawnSync(process.execPath,['--expose-gc','--max-old-space-size=128','--input-type=module','-e',script],{encoding:'utf8',timeout:15000,maxBuffer:4096});
+ assert.equal(result.status,0,result.stderr);const observed=JSON.parse(result.stdout);
+ assert.equal(observed.empty,true);assert(observed.retainedBytes<40*1024*1024,'Retained undo exceeds predeclared 40MiB fixture budget');
+});

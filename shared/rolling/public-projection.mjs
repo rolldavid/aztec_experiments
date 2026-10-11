@@ -9,10 +9,25 @@ const text=(p,field,length)=>{const bytes=new Uint8Array(p[field].length*31);p[f
 // stale candidates. Private ownership and like-tag membership are never returned.
 export function createRollingProjection({isValidatedEvent,maxEvents=50000}={}) {
  check(typeof isValidatedEvent==='function'&&Number.isSafeInteger(maxEvents)&&maxEvents>0&&maxEvents<=1000000);
- let state={posts:new Map(),names:new Map(),boards:new Map(),policies:new Map(),plugins:new Map(),requests:new Map(),likes:new Map(),order:[],version:'0',last:null,scope:null,eventCount:0},revision=0;
+ let state={posts:new Map(),names:new Map(),boards:new Map(),policies:new Map(),plugins:new Map(),requests:new Map(),likes:new Map(),order:[],version:'0',last:null,scope:null,eventCount:0},revision=0,tip=Symbol('initial');
  function stage(events){
-  check(Array.isArray(events)&&events.length<=10000&&state.eventCount+events.length<=maxEvents);const base=state,expectedRevision=revision;
-  const next={...state,posts:new Map(state.posts),names:new Map(state.names),boards:new Map(state.boards),policies:new Map(state.policies),plugins:new Map(state.plugins),requests:new Map(state.requests),likes:new Map(state.likes),order:[...state.order],eventCount:state.eventCount+events.length};
+  check(Array.isArray(events)&&events.length<=10000&&state.eventCount+events.length<=maxEvents);
+  const expectedRevision=revision,baseTip=tip,ownTip=Symbol('range'),oldLength=state.order.length,appended=[];
+  // Retain only touched values. Never retain a cloned Map or full order array
+  // per checkpoint: the cache keeps these undo closures for its whole suffix.
+  const scalarKeys=['version','last','scope','eventCount'];
+  const beforeScalars=Object.fromEntries(scalarKeys.map(key=>[key,state[key]]));
+  const deltas=[];
+  function overlay(map){
+   const before=new Map(),after=new Map();
+   const get=key=>after.has(key)?after.get(key):map.get(key);
+   const draft={get,has:key=>after.has(key)||map.has(key),set(key,value){if(!before.has(key))before.set(key,{exists:map.has(key),value:map.get(key)});after.set(key,value);}};
+   deltas.push({apply(){for(const [key,value] of after)map.set(key,value);},undo(){for(const [key,prior] of before)if(prior.exists)map.set(key,prior.value);else map.delete(key);}});
+   return draft;
+  }
+  const next={...beforeScalars,eventCount:state.eventCount+events.length,
+   order:{get length(){return oldLength+appended.length;},push(id){appended.push(id);}}};
+  for(const key of ['posts','names','boards','policies','plugins','requests','likes'])next[key]=overlay(state[key]);
   const awaiting=new Set();
   const sameTx=(a,b)=>a.position.txHash===b.position.txHash&&a.position.blockHash===b.position.blockHash;
   const putPost=(id,patch)=>{check(next.posts.has(id));next.posts.set(id,{...next.posts.get(id),...patch});};
@@ -57,8 +72,16 @@ export function createRollingProjection({isValidatedEvent,maxEvents=50000}={}) {
   // Cache ranges must include whole transactions; never display an unauthenticated
   // kind-4 post while waiting for a later fragment with its linkage event.
   check(awaiting.size===0);let applied=false,undone=false;
-  return {apply(){check(!applied&&!undone&&revision===expectedRevision&&state===base);state=next;revision++;applied=true;},
-   undo(){check(applied&&!undone&&state===next);state=base;revision++;undone=true;}};
+  const afterScalars=Object.fromEntries(scalarKeys.map(key=>[key,next[key]]));
+  return {apply(){
+    check(!applied&&!undone&&revision===expectedRevision&&tip===baseTip);
+    for(const delta of deltas)delta.apply();state.order.push(...appended);Object.assign(state,afterScalars);
+    tip=ownTip;revision++;applied=true;
+   },undo(){
+    check(applied&&!undone&&tip===ownTip);
+    for(const delta of deltas)delta.undo();state.order.length=oldLength;Object.assign(state,beforeScalars);
+    tip=baseTip;revision++;undone=true;
+   }};
  }
  const visible=post=>{const p=copy(post),board=state.boards.get(p.record.subboard);if(p.removal||board?.rejected)p.text=null;return p;};
  function select(ids,{limit=50,cursor=null}={}){

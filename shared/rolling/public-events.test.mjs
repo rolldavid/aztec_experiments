@@ -66,3 +66,15 @@ test('labelled fixture: reordered authenticated log bytes cannot match retained 
  n.getBlock=async()=>{const block=await getBlock();block.body.txEffects=[{...returned.data,publicLogs:[second,first],toBuffer:()=>serialize([second,first])}];return block;};
  await assert.rejects(()=>decoder.decodeTransaction(n,txHash.toString()));
 });
+test('installed NodeBlockProvider requires explicit transactions and decoder requests them',async()=>{
+ const {NodeBlockProvider}=await import(new URL('./modules/node_block_provider.js',import.meta.resolve('@aztec-labs/aztec-node')));
+ const n=nodeFixture(),response=await n.getBlock();
+ const full={...response,hash:async()=>response.hash,archive:{},number:1,checkpointNumber:1,indexWithinCheckpoint:0};
+ full.header={...full.header,getBlockNumber:()=>1};
+ const provider=new NodeBlockProvider({}, {getBlock:async()=>full,getBlockData:async()=>({header:full.header,blockHash:response.hash,archive:{},checkpointNumber:1,indexWithinCheckpoint:0})});
+ const metadata=await provider.getBlock(1);assert.equal(metadata.body,undefined);
+ assert.equal((await provider.getBlock(1,{includeTransactions:true})).body.txEffects.length,1);
+ let requested;
+ n.getBlock=(number,options)=>{requested=options;return provider.getBlock(number,options);};
+ const events=await decoder.decodeTransaction(n,txHash.toString());assert.equal(events.length,1);assert.deepEqual(requested,{includeTransactions:true});
+});
