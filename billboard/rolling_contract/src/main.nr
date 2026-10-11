@@ -20,7 +20,7 @@ pub contract RollingBoard {
         utils::comparison::Comparator,
     };
     use crate::admission::{Config, SequenceState, compute_cooldown, checked_time_add, deposit_chain_id, post_id, post_link, get_ready_msg_hash, get_deposit_msg_hash, get_withdraw_msg_hash};
-    use crate::posting::{PostDraft, PostRecord, PluginRecord, validate_draft, invocation_target};
+    use crate::posting::{PostDraft, PostRecord, PluginRecord, validate_draft, invocation_target, InvocationRecord, invocation_key, bot_reply_id};
     global SENTINEL: Field = 0;
     use crate::encoding::{name_id, pack_bytes, subboard_id, text_hash, validate_text};
 
@@ -156,6 +156,7 @@ pub contract RollingBoard {
         names: Owned<PrivateSet<UsernameNote, Context>, Context>,
         subboards: Map<Field, PublicMutable<SubboardRecord, Context>, Context>,
         like_state: LikeStorageRoot,
+        invocation_state: InvocationStorageRoot,
     }
 
     #[event]
@@ -778,10 +779,82 @@ pub contract RollingBoard {
             let plugin = self.storage.plugins.at(plugin_id).read();
             assert(plugin.enabled & (plugin.adapter.to_field() != 0), "Plugin disabled");
             let target = invocation_target(self.context.chain_id(), self.context.version(), self.address, plugin.adapter, nonce, draft);
+            let saved = InvocationState::entry(self.context, self.storage.invocation_state.slot, plugin.adapter, request_id);
+            assert(saved.read().parent == 0, "Invocation already activated");
             let selector = comptime { aztec::protocol::abis::function_selector::FunctionSelector::from_signature("on_invocation(Field,Field)") };
             let _ = self.context.call_public_function(plugin.adapter, selector, [request_id, target], aztec::context::gas::GasOpts::default());
+            saved.write(InvocationRecord { plugin_id, adapter: plugin.adapter, parent: id, target, replied: false });
             self.emit(PluginInvoked { schema: 1, plugin_id, post_id: id, request_id, target });
         }
+    }
+
+    // One slot in Storage, with public-only map construction: no additional
+    // Map<PrivateContext> type expansion in private admission/name circuits.
+    struct InvocationStorageRoot { slot: Field }
+    impl<Context> StateVariable<1, Context> for InvocationStorageRoot {
+        fn new(_context: Context, storage_slot: Field) -> Self {
+            assert(storage_slot != 0, "Zero invocation storage root");
+            Self { slot: storage_slot }
+        }
+        fn get_storage_slot(self) -> Field { self.slot }
+    }
+    struct InvocationState {}
+    impl InvocationState {
+        unconstrained fn entry(context: aztec::context::PublicContext, slot: Field, adapter: AztecAddress, request: Field)
+            -> PublicMutable<InvocationRecord, aztec::context::PublicContext> {
+            Map::<Field, PublicMutable<InvocationRecord, aztec::context::PublicContext>, aztec::context::PublicContext>::new(context, slot)
+                .at(invocation_key(adapter, request))
+        }
+    }
+    #[event]
+    struct PluginReplyPublished {
+        schema: u32, plugin_id: Field, request_id: Field, post_id: Field, parent_id: Field, target: Field,
+    }
+
+    /// Only the activated adapter may publish. Its operator identity is public;
+    /// no human name ownership or collateral history is exposed by this path.
+    #[external("public")]
+    fn publish_plugin_reply(request_id: Field, plugin_id: Field, message: [Field; 32], length: u16,
+        expected_main_version: u32, expected_local_version: u32) {
+        let adapter = self.msg_sender();
+        let plugin = self.storage.plugins.at(plugin_id).read();
+        assert(plugin.enabled & (plugin.adapter == adapter), "Only enabled plugin adapter");
+        let slot = InvocationState::entry(self.context, self.storage.invocation_state.slot, adapter, request_id);
+        let mut invocation = slot.read();
+        assert((invocation.parent != 0) & (invocation.adapter == adapter) & (invocation.plugin_id == plugin_id), "Unknown activated invocation");
+        assert(!invocation.replied, "Already replied");
+        validate_text(message, length, true);
+        let parent_id = invocation.parent;
+        assert(self.storage.post_exists.at(parent_id).read(), "Unknown parent");
+        assert(self.storage.post_flagged.at(parent_id).read() == 0, "Parent removed");
+        let parent = self.storage.post_records.at(parent_id).read();
+        if parent.subboard != 0 {
+            let subboard = self.storage.subboards.at(parent.subboard).read();
+            assert(subboard.exists & !subboard.rejected, "Subboard rejected");
+        }
+        let main_version = self.storage.main_version.read();
+        let local_version: u32 = if parent.subboard == 0 { 0 } else { 1 };
+        assert((main_version == expected_main_version) & (local_version == expected_local_version), "Policy changed");
+        let config = self.storage.config.read();
+        config.validate(self.context.chain_id(), self.context.version());
+        let id = bot_reply_id(self.address, adapter, request_id);
+        assert(id != 0, "Zero post identity");
+        assert(!self.storage.post_exists.at(id).read(), "Post already exists");
+        let record = PostRecord { subboard: parent.subboard, parent: parent_id, root: parent.root,
+            kind: 4, name_id: 0, reference: 0, content_digest: text_hash(message, length) };
+        let now = self.context.timestamp();
+        let count = self.storage.post_count.read();
+        invocation.replied = true; slot.write(invocation);
+        self.storage.post_count.write(count + 1);
+        self.storage.post_id_by_order.at(count).write(id);
+        self.storage.post_records.at(id).write(record);
+        self.storage.post_exists.at(id).write(true);
+        self.storage.post_time.at(id).write(now);
+        self.storage.post_flag_deadline.at(id).write(checked_time_add(now, config.censor_window as u64));
+        self.storage.post_policy_version.at(id).write(crate::posting::policy_identity(main_version, local_version));
+        self.emit(PostPublished { schema: 1, id, record, timestamp: now, main_policy_version: main_version,
+            local_policy_version: local_version, length, message });
+        self.emit(PluginReplyPublished { schema: 1, plugin_id, request_id, post_id: id, parent_id, target: invocation.target });
     }
 
     #[external("public")]

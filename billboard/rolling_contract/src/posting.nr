@@ -70,3 +70,18 @@ pub fn like_storage_key(kind: u8, post: Field, tag: Field) -> Field {
     assert((post != 0) & ((kind == 1) == (tag == 0)), "Invalid like storage key");
     poseidon2_hash_with_separator([kind as Field, post, tag], 0x52434c53)
 }
+
+/// Public adapter identity is allowed; never a human account or note identifier.
+#[derive(Deserialize, Serialize, Eq, Packable)]
+pub struct InvocationRecord {
+    pub plugin_id: Field, pub adapter: AztecAddress, pub parent: Field,
+    pub target: Field, pub replied: bool,
+}
+pub fn invocation_key(adapter: AztecAddress, request: Field) -> Field {
+    assert((adapter.to_field() != 0) & (request != 0), "Invocation identity required");
+    poseidon2_hash_with_separator([adapter.to_field(), request], 0x52434249)
+}
+pub fn bot_reply_id(board: AztecAddress, adapter: AztecAddress, request: Field) -> Field {
+    assert(board.to_field() != 0, "Board identity required");
+    poseidon2_hash_with_separator([board.to_field(), invocation_key(adapter, request)], 0x52434252)
+}

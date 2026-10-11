@@ -187,6 +187,21 @@ pub contract PrivateBok {
         Accounting::save(self.context, self.storage, request_id, updated);
     }
 
+    /// Publishing is separate from settlement and finish. A failed publication
+    /// cannot authorize another model call or erase uncertain reserved liability.
+    #[external("public")]
+    fn publish_reply(request_id: Field, plugin_id: Field, message: [Field; 32], length: u16,
+        expected_main_version: u32, expected_local_version: u32) {
+        assert(self.msg_sender() == self.storage.operator.read(), "Only operator");
+        let request = self.storage.requests.at(request_id).read();
+        assert(request.state == ACTIVE, "Request not active");
+        assert(self.context.timestamp() < request.deadline, "Request expired");
+        assert(request.reserved == 0, "Reservation unresolved");
+        let selector = comptime { aztec::protocol::abis::function_selector::FunctionSelector::from_signature("publish_plugin_reply(Field,Field,[Field;32],u16,u32,u32)") };
+        let args = [request_id, plugin_id].concat(message).concat([length as Field, expected_main_version as Field, expected_local_version as Field]);
+        let _ = self.context.call_public_function(self.storage.board.read(), selector, args, aztec::context::gas::GasOpts::default());
+    }
+
     #[external("public")]
     fn finish(request_id: Field) {
         assert(self.msg_sender() == self.storage.operator.read(), "Only operator");
