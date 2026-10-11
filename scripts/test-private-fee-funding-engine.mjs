@@ -179,3 +179,11 @@ test('development doubles: fee balance read-only PXE and wallet use trusted node
 test('development doubles: missing trusted fee configuration blocks every private path before funding',async()=>{
  for(const action of ['status','balance','deposit','claim','recover-l2','recover-eth']){const h=harness();delete h.config.trustedProverNode;await assert.rejects(h.run(action),{code:'BB_TRUSTED_NODE_CONFIG'});assert(!h.calls.some(x=>['trusted-node','fund','journal','prepare','recover'].includes(x[0])));}
 });
+
+test('pending reverted finality blocks fee claim before wallet, proof or payment',async()=>{
+ const h=harness(),code='BB_TRANSACTION_FINALITY_PENDING';
+ for(const name of ['initCRS','createStore','getBrowserSigner','fundPrivateFees'])h.env[name]=async()=>assert.fail(name+' must not run before finality');
+ h.a.createPXE=async()=>assert.fail('PXE must not start before finality');
+ h.env.createTransactionJournal=async()=>({assertCanStart:async()=>{throw Object.assign(Error('Awaiting finality'),{code});}});
+ await assert.rejects(h.run('claim'),{code});assert(!h.calls.some(c=>['recover','prepare','send','pxe','store'].includes(Array.isArray(c)?c[0]:c)));
+});

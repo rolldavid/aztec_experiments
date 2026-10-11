@@ -87,10 +87,27 @@ for(const backend of ['file','indexeddb']) {
   const j=await f.newSession();await j.prepare(f.tx,await j.assertCanStart());f.setStatus('checkpointed');f.setExecution('reverted');
   assert.equal((await (await f.newSession()).recover()).executionResult,'reverted');
   await assert.rejects((await f.newSession()).assertCanStart(),{code:'BB_RECOVERY_REQUIRED'});
-  await (await f.newSession({acknowledgeTx:f.tx.getTxHash().toString()})).assertCanStart();
+  await assert.rejects((await f.newSession({acknowledgeTx:f.tx.getTxHash().toString()})).assertCanStart(),{code:'BB_TRANSACTION_FINALITY_PENDING'});
   f.setStatus('dropped');f.node.isValidTx=async()=>({result:'invalid',reason:['Existing nullifier']});await assert.rejects((await f.newSession()).recover(),{code:'BB_RECOVERY_REQUIRED'});
   f.node.getTxReceipt=async()=>{throw new Error('private diagnostic');};await assert.rejects((await f.newSession()).recover(),e=>e.code==='BB_RECOVERY_REQUIRED'&&!e.message.includes('private diagnostic'));
   f.node.getTxReceipt=async()=>({txHash:TxHash.random(),status:'checkpointed'});await assert.rejects((await f.newSession()).recover(),{code:'BB_RECOVERY_REQUIRED'});assert.equal(f.sent.length,0);
+ }));
+ test(`${backend}: reverted sender sequence waits for canonical finality without changing saved intent`,()=>withStorage(async (f,{storage})=>{
+  const journal=await f.newSession();journal.setOperation('post');await journal.prepare(f.tx,await journal.assertCanStart());
+  f.setExecution('reverted');f.setStatus('checkpointed');
+  const recovered=await f.newSession();assert.equal((await recovered.recover()).executionResult,'reverted');
+  const original=await recovered.inspect();
+  storage.compareAndSwap=async()=>{throw new Error('No journal writes permitted during finality reconciliation');};
+  for(const status of ['checkpointed','proven']) {
+   f.setStatus(status);
+   await assert.rejects(recovered.assertCanStart(),{code:'BB_TRANSACTION_FINALITY_PENDING'});
+   const restarted=await f.newSession({acknowledgeTx:f.tx.getTxHash().toString()});
+   await assert.rejects(restarted.assertCanStart(),{code:'BB_TRANSACTION_FINALITY_PENDING'});
+   assert.deepEqual(await restarted.inspect(),original);assert.equal(f.sent.length,0);
+  }
+  f.setStatus('finalized');await recovered.assertCanStart();assert.deepEqual(await recovered.inspect(),original);
+  f.setStatus('proven');await assert.rejects(recovered.assertCanStart(),{code:'BB_TRANSACTION_FINALITY_PENDING'});
+  f.setStatus('finalized');f.reorg();await assert.rejects(recovered.assertCanStart(),{code:'BB_SUBMISSION_UNKNOWN'});assert.equal(f.sent.length,0);
  }));
  test(`${backend}: wallet context change prevents recovery broadcast`,()=>withStorage(async f=>{
   const j=await f.newSession();await j.prepare(f.tx,await j.assertCanStart());

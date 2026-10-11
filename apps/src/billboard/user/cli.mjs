@@ -576,6 +576,7 @@ function formatCliPrivateFeeFailure(error) {
     BB_PRIVATE_FEE_PREPARATION_FAILED: 'Private fee preparation failed before submission.',
     BB_PRIVATE_FEE_ACTION_FAILED: 'Private fee action failed. Check the saved transaction outcome.',
     BB_SUBMISSION_UNKNOWN: 'Transaction submission outcome is unknown. Check its outcome before another attempt.',
+    BB_TRANSACTION_FINALITY_PENDING: 'The previous transaction reverted and is awaiting network finality. Preserve its saved record; retry the lookup after finalization.',
     BB_TRANSACTION_FAILED: 'The transaction did not complete successfully. Check its receipt before another attempt.',
     BB_STATE_CONFLICT: 'Transaction state changed. Refresh and create a new proof before another attempt.',
     BB_NO_SAVED_ETHEREUM_TRANSACTION: 'No saved Ethereum request exists for this wallet and portal.',
@@ -605,7 +606,7 @@ function formatCliFailure(error) {
     'Invalid wallet salt', 'Invalid Aztec key', 'Invalid Censor key', 'Invalid Ethereum key',
   ]);
   if (safeMessages.has(error?.message)) return error.message;
-  if (args['private-fee-config'] || args['private-fee-claim-file'] || ['BB_NO_SAVED_ETHEREUM_TRANSACTION','BB_ETH_RECOVERY_REQUIRED','BB_ETH_SUBMISSION_UNKNOWN','BB_ETH_TRANSACTION_FAILED','BB_RECOVERY_REQUIRED','BB_JOURNAL_INVALID','BB_NO_SAVED_TRANSACTION','BB_RECOVERY_UNKNOWN','BB_SETTLEMENT_PENDING','BB_SUBMISSION_UNKNOWN','BB_TRANSACTION_FAILED','BB_STATE_CONFLICT'].includes(error?.code)) return formatCliPrivateFeeFailure(error);
+  if (args['private-fee-config'] || args['private-fee-claim-file'] || ['BB_NO_SAVED_ETHEREUM_TRANSACTION','BB_ETH_RECOVERY_REQUIRED','BB_ETH_SUBMISSION_UNKNOWN','BB_ETH_TRANSACTION_FAILED','BB_RECOVERY_REQUIRED','BB_JOURNAL_INVALID','BB_NO_SAVED_TRANSACTION','BB_RECOVERY_UNKNOWN','BB_SETTLEMENT_PENDING','BB_SUBMISSION_UNKNOWN','BB_TRANSACTION_FINALITY_PENDING','BB_TRANSACTION_FAILED','BB_STATE_CONFLICT'].includes(error?.code)) return formatCliPrivateFeeFailure(error);
   return 'Command failed. Preserve wallet/cache and check any transaction outcome before retrying.';
 }
 function cliFailureLocations(error) {

@@ -39,7 +39,7 @@ test('normal author calls carry only private payment method and bootstrap claim 
  assert.equal(h.prepared[0].claim.salt,'secret-salt');assert.equal(h.prepared[1].claim,undefined);assert.equal(h.prepared[2].claim,undefined);
 });
 test('unknown submission is preserved without retry and private errors are redacted',async()=>{
- for(const code of ['BB_SUBMISSION_UNKNOWN','BB_TRANSACTION_FAILED','BB_STATE_CONFLICT','BB_RECOVERY_REQUIRED','BB_JOURNAL_INVALID','BB_BROWSER_PROOF_FAILED','UNTRUSTED']){
+ for(const code of ['BB_SUBMISSION_UNKNOWN','BB_TRANSACTION_FAILED','BB_TRANSACTION_FINALITY_PENDING','BB_STATE_CONFLICT','BB_RECOVERY_REQUIRED','BB_JOURNAL_INVALID','BB_BROWSER_PROOF_FAILED','UNTRUSTED']){
   const failure=Object.assign(new Error('secret input details'),{code,stateReasons:['Block header not found']});const h=fixture(failure);
   await assert.rejects(h.sender('post',['message']),e=>e.code===(code==='UNTRUSTED'?'BB_PRIVATE_FEE_ACTION_FAILED':code)&&!e.message.includes('secret'));
   assert.equal(h.sends.length,1);assert.equal(h.prepared.length,1);
@@ -809,4 +809,18 @@ test('development doubles: cached node is re-inspected across proof toggle and r
 test('development doubles: new private connection outage never creates journal or prepares fees',async()=>{
  const h=mainHarness('post');h.env.createTransactionJournal=()=>assert.fail('journal must not start');let calls=0;h.env.aztec.createTrustedPrivateNode=async()=>{calls++;throw Object.assign(Error('Unavailable'),{code:'BB_TRUSTED_NODE_UNAVAILABLE'});};
  await assert.rejects(h.run(),{code:'BB_TRUSTED_NODE_UNAVAILABLE'});assert.equal(calls,1);assert.equal(h.requests.length,0);
+});
+
+for(const action of ['post','claim','withdraw','auto']) test(`pending reverted finality blocks ${action} before wallet or payment work`,async()=>{
+ const h=mainHarness(action),code='BB_TRANSACTION_FINALITY_PENDING';
+ for(const name of ['initCRS','createStore','getBrowserSigner'])h.env[name]=async()=>assert.fail(name+' must not run before finality');
+ h.env.createTransactionJournal=async()=>({assertCanStart:async()=>{throw Object.assign(Error('Awaiting finality'),{code});},prepare:async()=>{throw Error('must not prepare');},confirmed(){}});
+ await assert.rejects(h.run(),{code});assert.equal(h.requests.length,0);assert.equal(h.operations.length,0);
+});
+test('wallet rechecks pending reverted finality before simulation, proof or submission',async()=>{
+ const c=context(),calls=[];class BaseWallet{constructor(pxe){this.pxe=pxe;}async completeFeeOptions(){calls.push('fees');}async simulateViaEntrypoint(){calls.push('simulate');}}
+ const journal={assertCanStart:async()=>{throw Object.assign(Error('Awaiting finality'),{code:'BB_TRANSACTION_FINALITY_PENDING'});}};
+ const node={sendTx:async()=>calls.push('send')},pxe={proveTx:async()=>calls.push('prove')};
+ const wallet=c.BillboardPrivateFeeRouting.createAztecWallet({BaseWallet,GasSettings},pxe,node,node,()=>{},Fr.ONE,{transactionJournal:journal});
+ await assert.rejects(wallet.sendTx({}, {from:owner,fee:{gasSettings:gas()}}),{code:'BB_TRANSACTION_FINALITY_PENDING'});assert.deepEqual(calls,[]);
 });
