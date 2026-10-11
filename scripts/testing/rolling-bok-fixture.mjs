@@ -114,7 +114,7 @@ export async function runRollingBokFixture(ctx) {
       await send(bok.methods.claim(amount, salt, secret, new Fr(deposited.leafIndex)), owner, 'claim-bok-credit');
       await wallet.pxe.sync(); assert.equal((await bok.methods.balance_of(owner).simulate({from: owner})).result, 1000n);
       stage = 'collateral-claim';
-      const claim = await depositAndClaimC01({...ctx, rpcUrl: ctx.config.l1RpcUrls[0], mineL1, reportStage: mark,
+      const claim = await depositAndClaimC01({...ctx, node: wallet.aztecNode, rpcUrl: ctx.config.l1RpcUrls[0], mineL1, reportStage: mark,
         authorAccount: {address: owner}, claimWallet: wallet, payerMode: 'private', privateFeeAction: privateFees.paymentFor(owner).privateFeeAction});
       assert(claim.passed); ownerFees += BigInt(claim.fee);
       const claimEvidence = path.join(outputDirectory, 'collateral-claim.json');
