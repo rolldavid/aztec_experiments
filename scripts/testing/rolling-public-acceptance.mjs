@@ -4,24 +4,28 @@ import assert from 'node:assert/strict';
 import {createConnection} from 'node:net';
 import {createRollingPublicIndex} from '../../shared/rolling/public-index.mjs';
 import {publicFeedFileStorage} from '../../shared/public-feed-file-storage.mjs';
-import {startRollingReader} from '../../apps/rolling/start.mjs';
+import {serveRollingReaderAsset} from '../../apps/rolling/start.mjs';
+import {startRollingPublicServer} from '../rolling-public-server.mjs';
 import {createPublicReader} from '../../apps/rolling/reader-client.mjs';
 const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 export async function verifyRollingPublicReader({node,artifact,scope,deployment,cacheDirectory,ids,deadlineAt,observation}){
  assert(Number.isSafeInteger(deadlineAt)&&deadlineAt>Date.now());
  const deadline=Math.min(deadlineAt,Date.now()+30000);
  const storage=()=>publicFeedFileStorage(cacheDirectory,{maxRecordBytes:1048576,maxSnapshotBytes:67108864});
- const make=()=>createRollingPublicIndex({node,artifact,scope,deployment,storage:storage(),rangeSize:10,pagesPerSync:20});
+ const make=timeoutMs=>createRollingPublicIndex({node,artifact,scope,deployment,storage:storage(),rangeSize:10,pagesPerSync:20,timeoutMs});
  const routes=[['feed',{}],['thread',{root:ids.rootId}],['profile',{nameId:ids.nameId}],['directory',{}],['post',{id:ids.replyId}]];
  let first;
  observation.passed=false;observation.sessions=[];
  for(const phase of ['fresh','reopened']){
-  const index=await make();assert.throws(()=>index.query('feed'),{code:'ROLLING_PUBLIC_NOT_READY'});
+  const remaining=deadline-Date.now()-1500;assert(remaining>0,'No bounded public index budget remains');
+  const index=await make(Math.min(20000,remaining));
+  if(phase==='reopened'){const stored=await storage().load(index.key,20000);assert(stored.head!==null&&stored.ranges.length>0);observation.persistedRangesBeforeReopen=stored.ranges.length;}
+  assert.throws(()=>index.query('feed'),{code:'ROLLING_PUBLIC_NOT_READY'});
   const session={phase,closed:false};observation.sessions.push(session);
-  const server=await startRollingReader({index});let failure;
+  const server=await startRollingPublicServer({index,staticHandler:serveRollingReaderAsset,pollMs:30000});let failure;
   try{
    while(index.status().state!=='ready'){
-    assert(Date.now()<deadline,'Actual public index readiness deadline');
+    assert(Date.now()<deadline-1500,'Actual public index readiness deadline');
     assert.notEqual(index.status().state,'unavailable','Actual canonical index failed');await sleep(25);
    }
    const read=createPublicReader({timeoutMs:Math.max(1,deadline-Date.now()),fetch:(url,options)=>fetch(server.url+url,{...options,signal:AbortSignal.any([options.signal,AbortSignal.timeout(Math.max(1,deadline-Date.now()))])})});
