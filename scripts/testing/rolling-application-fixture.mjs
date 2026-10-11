@@ -17,7 +17,7 @@ const discard=()=>{};
 const silent=Object.assign(discard,Object.fromEntries(['trace','debug','verbose','info','warn','error','fatal'].map(k=>[k,discard])),
   {level:'silent',isLevelEnabled:()=>false,getBindings:()=>({}),createChild:()=>silent});
 const PERSONAL=['feePayer','publicCallSenders','publicCallTargets','publicCallCalldata','publicWriteSlots','publicWriteValues','publicLogContracts','publicLogFields'];
-const SOURCES=['scripts/testing/rolling-profile-acceptance.mjs','experiments/avatar/raster-fixture.mjs','scripts/prove-application-action.mjs','scripts/testing/rolling-native-artifacts.mjs','scripts/testing/rolling-application-fixture.mjs','scripts/testing/scenarios.mjs','scripts/testing/scenario-flows.mjs',
+const SOURCES=['scripts/testing/rolling-social-acceptance.mjs','scripts/testing/rolling-profile-acceptance.mjs','experiments/avatar/raster-fixture.mjs','scripts/prove-application-action.mjs','scripts/testing/rolling-native-artifacts.mjs','scripts/testing/rolling-application-fixture.mjs','scripts/testing/scenarios.mjs','scripts/testing/scenario-flows.mjs',
   'scripts/c01-real-node.mjs','scripts/c01-board-flow.mjs','scripts/c01-deposit-flow.mjs','scripts/c01-client-mining.mjs',
   'scripts/w01-private-fee-flow.mjs','scripts/w01-unfunded-wallet.mjs','scripts/w01-private-funding.mjs',
   'shared/sdk-entry.mjs','shared/private-pxe.mjs','shared/trusted-private-node.mjs','shared/routed-kernel-prover.mjs','shared/remote-prover-client.mjs',
@@ -135,12 +135,13 @@ export async function loadRollingFixtureSDK() {
 }
 
 export async function runRollingApplicationFixture(ctx,scenario='conversation') {
-  assert(['conversation','profiles'].includes(scenario));
+  assert(['conversation','profiles','anonymous-thread','repost-reactions'].includes(scenario));
+  const social=['anonymous-thread','repost-reactions'].includes(scenario);
   const {ROOT,assertNodeVersion,assertAztecPackages}=await import('../toolchain.mjs');
   const directory=path.join(ROOT,'execution/evidence/G06','application-port-'+randomUUID());
   await fs.mkdir(directory,{mode:0o700});
   const report={schemaVersion:1,scenario,passed:false,stage:'preflight',transactions:[],cleanup:{},
-    scope:scenario==='profiles'?'Actual private profile updates and public moderator removal; fixed test moderation decision, no image-model acceptance':'Actual funded application port and authenticated public projection; human threaded reply, no composite Bok action',
+    scope:social?'Actual anonymous social transactions and canonical removal/repost/reaction reconstruction':scenario==='profiles'?'Actual private profile updates and public moderator removal; fixed test moderation decision, no image-model acceptance':'Actual funded application port and authenticated public projection; human threaded reply, no composite Bok action',
     networkProofs:false,controlledPortalSettlement:true,privacyAcceptance:'Public-field equality checks only; independent privacy qualification remains',
     storage:{pxe:'Actual SDK store with CLI in-memory IndexedDB adaptation; no browser persistence claim',journal:'Real authenticated encrypted file journals; reopen measured'},
     sourceRevision:execFileSync('git',['rev-parse','HEAD'],{cwd:ROOT,encoding:'utf8'}).trim()};
@@ -329,6 +330,7 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
         const events=await decoder.decodeTransaction(ctx.node,outcome.txHash);projection.stage(events).apply();hashes.push(outcome.txHash);
         row.events=events.map(e=>e.type);row.submission='included';await save();return events;
       }
+      if(!social){
       const registered=await action({type:'name',first:'River',last:'Stone'},'name');
       assert.equal(registered.length,1);assert.equal(registered[0].type,'NameRegistered');ids.nameId=registered[0].payload.name_id;
       await mark('owned-name-recovery');
@@ -340,20 +342,20 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
       assert.deepEqual(identities.identities.map(v=>String(BigInt(v))),[ids.nameId]);assert.equal(identities.nextCursor,null);
       assert.deepEqual(identities.records.map(record=>({...record,id:String(BigInt(record.id))})),[{id:ids.nameId,first:'River',last:'Stone'}]);
       report.ownedNameRecovery.readableMetadataRecovered=true;await save();
-      if(scenario==='profiles'){
-        const {exerciseRollingProfileActions}=await import('./rolling-profile-acceptance.mjs');
-        async function moderate({nameId,avatarVersion,mainVersion,reason}){
-          await mark('avatar-moderation');const wallet=fees.browserFixture.wallet,operator=ctx.preparation.account.address;
+      }
+        async function moderate({kind,id,expectedVersion,mainVersion,localVersion=0,reason}){
+          assert(['avatar','post'].includes(kind));await mark(kind+'-moderation');const wallet=fees.browserFixture.wallet,operator=ctx.preparation.account.address;
           assert(!operator.equals(owner));await wallet.pxe.sync();
           const {getFeeJuiceBalance}=await import('@aztec-labs/aztec.js/utils');
           const before=await getFeeJuiceBalance(operator,ctx.node),bytes=Buffer.from(reason),packed=Array(7).fill(0n);
           assert(bytes.length>0&&bytes.length<=217);
           for(let i=0;i<bytes.length;i++)packed[Math.floor(i/31)]|=BigInt(bytes[i])<<BigInt(8*(30-i%31));
-          const row={submission:'not attempted',operatorIdentityPublic:true};report.avatarModeration=row;await save();
-          const interaction=Contract.at(ctx.instance.address,checked.artifact,wallet).methods.remove_avatar(new Fr(BigInt(nameId)),avatarVersion,mainVersion,packed.map(n=>new Fr(n)),bytes.length);
+          const row={submission:'not attempted',operatorIdentityPublic:true};report[kind+'Moderation']=row;await save();
+          const methods=Contract.at(ctx.instance.address,checked.artifact,wallet).methods,reasonFields=packed.map(n=>new Fr(n));
+          const interaction=kind==='avatar'?methods.remove_avatar(new Fr(BigInt(id)),expectedVersion,mainVersion,reasonFields,bytes.length):methods.remove_post(new Fr(BigInt(id)),mainVersion,localVersion,reasonFields,bytes.length);
           const {tx}=await proveApplicationAction({wallet,owner:operator,interaction,payerMode:'genesis'}),hash=tx.getTxHash();
           row.txHash=String(hash);row.submission='outcome unknown';
-          const intent=await fs.open(path.join(directory,'avatar-moderation-intent.json'),'wx',0o600);
+          const intent=await fs.open(path.join(directory,kind+'-moderation-intent.json'),'wx',0o600);
           try{await intent.writeFile(json({txHash:row.txHash,purpose:'Disposable public moderator removal; exactly one send'}));await intent.sync();}finally{await intent.close();}
           await save();await ctx.node.sendTx(tx);
           let receipt;const deadline=Math.min(Date.now()+60000,ctx.applicationDeadlineAt);
@@ -363,7 +365,7 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
           assert(['checkpointed','proven','finalized'].includes(receipt.status));
           const effect=await ctx.node.getTxEffect(hash);assert(effect?.data);assert.equal(String(effect.l2BlockHash),String(receipt.blockHash));
           assert.equal(String((await ctx.node.getBlockData(receipt.blockNumber)).blockHash),String(receipt.blockHash));
-          await fs.writeFile(path.join(directory,'avatar-moderation-effect.bin'),effect.data.toBuffer(),{flag:'wx',mode:0o600});row.effectSha256=sha(effect.data.toBuffer());
+          await fs.writeFile(path.join(directory,kind+'-moderation-effect.bin'),effect.data.toBuffer(),{flag:'wx',mode:0o600});row.effectSha256=sha(effect.data.toBuffer());
           Object.assign(row,{before:String(before),submission:'included'});await save();
           const after=await getFeeJuiceBalance(operator,ctx.node);
           row.after=String(after);await save();
@@ -374,8 +376,26 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
           for(const category of PERSONAL)assert.equal(row.publicFootprint.rolePresence[category].author,false);
           const events=await decoder.decodeTransaction(ctx.node,String(hash));projection.stage(events).apply();hashes.push(String(hash));row.events=events.map(e=>e.type);await save();return events;
         }
-        report.profiles=await exerciseRollingProfileActions({nameId:ids.nameId,application:app,action,moderate,projection});
+      if(scenario==='profiles'){
+        const {exerciseRollingProfileActions}=await import('./rolling-profile-acceptance.mjs');
+        report.profiles=await exerciseRollingProfileActions({nameId:ids.nameId,application:app,action,moderate:args=>moderate({kind:'avatar',id:args.nameId,expectedVersion:args.avatarVersion,...args}),projection});
         report.publicViews=projection.profile(ids.nameId,{limit:100});assert.equal(report.publicViews.posts.length,0);await save();
+      }else if(social){
+        const {exerciseRollingAnonymousThread,exerciseRollingRepostReactions}=await import('./rolling-social-acceptance.mjs');
+        const deposit=String(claim.claim.depositChainId);
+        async function waitPostAdmission(){
+          await pxe.sync();
+          const state=(await Contract.at(ctx.instance.address,checked.artifact,appWallet).methods.get_deposit_info(owner,new Fr(BigInt(deposit))).simulate({from:owner})).result;
+          assert.equal(state.length,10);
+          const checkpoints=createT04CheckpointScope(ctx.node.getSequencer()),deadline=Math.min(Date.now()+90000,ctx.applicationDeadlineAt);
+          try{checkpoints.enable();while((await pxe.getSyncedBlockHeader()).globalVariables.timestamp<BigInt(state[9])){
+            assert(Date.now()<deadline);await mineL1();await pxe.sync();}
+            await drainT04Checkpoints({node:ctx.node,l1Client:ctx.l1Client,rollupAddress:network.rollup,checkpoints,deadline});
+          }finally{checkpoints.restore();}
+        }
+        const options={deposit,action,projection,waitPostAdmission,moderatePost:args=>moderate({kind:'post',id:args.postId,...args})};
+        report.social=await (scenario==='anonymous-thread'?exerciseRollingAnonymousThread:exerciseRollingRepostReactions)(options);
+        report.publicViews=report.social.expectedHTTP;await save();
       }else{
       const created=await action({type:'subboard',slug:'application-test',name:'Application test',description:'Real application acceptance',rules:'Be helpful.'},'subboard');
       assert.equal(created.length,1);assert.equal(created[0].type,'SubboardCreated');ids.subboardId=created[0].payload.subboard_id;
@@ -400,13 +420,16 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
       const jobsBefore=service.stats().submitted,feeBefore=appWallet._actualFees;
       privateStore=createFileJournalStorage(storageDirectory);journal=await sdk.createL2Journal({...journalOptions,storage:privateStore});
       app=synchronized(createRollingApplication({...portOptions,privateStore,accountSession:{...portOptions.accountSession,journal}}));
-      const reconciled=await app.reconcile(lastIntent);assert.equal(reconciled.status,'confirmed');assert.equal(reconciled.txHash,hashes.at(-1));
+      const reconciled=await app.reconcile(lastIntent);assert.equal(reconciled.status,'confirmed');assert.equal(reconciled.txHash,report.transactions.at(-1).txHash);
       assert.equal(service.stats().submitted,jobsBefore);assert.equal(appWallet._actualFees,feeBefore);report.journalReopen={sameHash:true,newProofJobs:0,transactionBytesRetained:true};
       await mark('canonical-projection-rebuild');
       const rebuilt=createRollingProjection({isValidatedEvent:isRollingEvent});
       for(const hash of hashes)rebuilt.stage(await decoder.decodeTransaction(ctx.node,hash)).apply();
-      assert.deepEqual(scenario==='profiles'?rebuilt.profile(ids.nameId,{limit:100}):assertRollingApplicationViews(rebuilt,ids),report.publicViews);
-      for(const row of [...report.transactions,...(report.avatarModeration?[report.avatarModeration]:[])])assert.equal(String((await ctx.node.getBlockData(row.blockNumber)).blockHash),row.blockHash);
+      if(social){for(const {route,parameters,expected}of report.social.expectedHTTP){
+        const actual=route==='post'?{post:rebuilt.post(parameters.id),names:{},boards:{}}:route==='thread'?rebuilt.thread(parameters.root,parameters):rebuilt.feed(parameters);
+        assert.deepEqual(Object.fromEntries(Object.keys(expected).map(key=>[key,actual[key]])),expected);
+      }}else assert.deepEqual(scenario==='profiles'?rebuilt.profile(ids.nameId,{limit:100}):assertRollingApplicationViews(rebuilt,ids),report.publicViews);
+      for(const row of [...report.transactions,...(report.avatarModeration?[report.avatarModeration]:[]),...(report.postModeration?[report.postModeration]:[])])assert.equal(String((await ctx.node.getBlockData(row.blockNumber)).blockHash),row.blockHash);
       assert.equal(String((await ctx.node.getBlockData(Number(report.initialPublicAnchor.blockNumber))).blockHash),report.initialPublicAnchor.blockHash);
       report.rebuild={passed:true,canonicalTransactionsRefetched:hashes.length,normalizedCacheTreatedAsAuthority:false};
       await mark('canonical-public-http-reopen');report.publicReader={};await save();
@@ -414,9 +437,10 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
       await verifyRollingPublicReader({node:ctx.node,artifact:checked.artifact,
         scope:{chainId:network.chainId,rollupVersion:network.version,rollupAddress:network.rollup,boardAddress:String(ctx.instance.address),classId:String((await sdk.getContractClassFromArtifact(checked.artifact)).id)},
         deployment:{blockNumber:Number(report.initialPublicAnchor.blockNumber),blockHash:report.initialPublicAnchor.blockHash,txHash:report.initialPublicAnchor.txHash},
-        cacheDirectory:path.join(ctx.directory,'rolling-public-index'),ids,scenario,expectedProfile:report.profiles?.expectedIdentity,deadlineAt:ctx.applicationDeadlineAt,observation:report.publicReader});await save();
+        cacheDirectory:path.join(ctx.directory,'rolling-public-index'),ids,scenario,expectedProfile:report.profiles?.expectedIdentity,expectedHTTP:report.social?.expectedHTTP,deadlineAt:ctx.applicationDeadlineAt,observation:report.publicReader});await save();
       await fees.verify(feeTotal);report.actualHumanFees=String(feeTotal);report.proverJobs=service.stats();
-      assert.equal(report.proverJobs.failed,0);assert.equal(report.proverJobs.completed,5);assert.equal(report.proverJobs.submitted,5);
+      assert.equal(report.proverJobs.failed,0);if(social){const expectedJobs=scenario==='anonymous-thread'?3:4;assert.equal(report.proverJobs.completed,expectedJobs);assert.equal(report.proverJobs.submitted,expectedJobs);}
+      else{assert.equal(report.proverJobs.completed,5);assert.equal(report.proverJobs.submitted,5);}
       assert.equal(report.proverJobs.running,false);
       nativeArtifacts.verify();report.nativeArtifacts=nativeArtifacts.observation();
       assert.deepEqual(await sourceBinding(),report.sourceHashes);assert.deepEqual(buildInputs(),manifest.inputs);
