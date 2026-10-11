@@ -203,6 +203,23 @@ export async function runPrivateBokFixture(ctx, caseProfile = 'both') {
           advance.testControlledProvenCheckpoint = Number(await rollup.getProvenCheckpointNumber());
           assert(advance.testControlledProvenCheckpoint >= Number(pending));
           await save();
+          // The recipient tagger assumes notes aged by MAX_TX_LIFETIME have
+          // finalized. A day jump while L1 finality still covers only an older
+          // prefix violates that assumption, even when the request is proven.
+          // Let the existing miner advance ordinary blocks until the exact
+          // preserved reservation is observably finalized; never alter PXE.
+          const finalityStarted = Date.now(), finalityDeadline = finalityStarted + 90000;
+          let finality = await publicTips();
+          while (finality.finalized < Number(reservation.blockNumber) && Date.now() < finalityDeadline) {
+            await mineL1(); finality = await publicTips();
+          }
+          advance.finalityBeforeWarp = finality;
+          advance.finalityWaitMs = Date.now() - finalityStarted;
+          await save();
+          assert(finality.finalized >= Number(reservation.blockNumber), 'Local reservation finality timed out before time advance');
+          await canonicalReservation();
+          assert.equal((await ctx.node.getTxReceipt(TxHash.fromString(reservation.txHash))).status, TxStatus.FINALIZED);
+          await wallet.pxe.sync();
           const current = await ctx.l1Client.getBlock({blockTag: 'latest'});
           if (BigInt(target) > current.timestamp) {
             await ctx.l1Client.request({method: 'evm_setNextBlockTimestamp', params: [Number(target)]});
