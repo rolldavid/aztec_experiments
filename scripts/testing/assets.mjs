@@ -60,7 +60,7 @@ export async function prepareRuntime(directory,scenario,report) {
     }
     const bb=bbBinary();
     const binarySha=sha(await fs.readFile(bb));
-    report.networkProofs=false;report.controlledSettlement=scenario.fixture==='activated-board';report.binarySha256=binarySha;
+    report.networkProofs=false;report.controlledSettlement=scenario.controlledSettlement===true||scenario.fixture==='activated-board';report.binarySha256=binarySha;
     assert(!bb.includes("'"));
     await fs.writeFile(path.join(directory,'bb-one-thread'),"#!/bin/sh\nHARDWARE_CONCURRENCY=1 exec '"+bb+"' \"$@\"\n",{flag:'wx',mode:0o700});
     const applicationThreads=scenario.applicationThreads;

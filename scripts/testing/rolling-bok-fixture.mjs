@@ -76,19 +76,21 @@ export async function runRollingBokFixture(ctx) {
         const effect = await node.getTxEffect(tx.getTxHash());
         assert(effect?.data); assert.equal(String(effect.l2BlockHash), String(receipt.blockHash));
         assert.equal(Number(effect.l2BlockNumber), Number(receipt.blockNumber));
+        assert(receipt.transactionFee != null && BigInt(receipt.transactionFee) > 0n);
+        if (actor.equals(owner)) ownerFees += BigInt(receipt.transactionFee);
+        report.humanActualFees.owner = String(ownerFees);
+        Object.assign(row, {submission: 'included', blockNumber: Number(receipt.blockNumber), blockHash: String(receipt.blockHash),
+          transactionFee: String(receipt.transactionFee), effectSha256: sha(effect.data.toBuffer())});
+        await fs.writeFile(path.join(outputDirectory, `effect-${label}.bin`), effect.data.toBuffer(), {flag: 'wx', mode: 0o600});
+        await save(); // Preserve the actual receipt before acceptance checks.
         assert.equal(effect.data.l2ToL1Msgs.length, expectedLeaf ? 1 : 0);
         if (expectedLeaf) assert(effect.data.l2ToL1Msgs[0].equals(expectedLeaf));
-        assert(receipt.transactionFee != null && BigInt(receipt.transactionFee) > 0n);
         if (actor.equals(owner)) {
-          ownerFees += BigInt(receipt.transactionFee);
           row.publicFootprint = classifyT03PublicFootprint({tx, effect: effect.data, roles: {author: owner, sharedPayer: privateFees.funding.owner.recipient, moderator: operator}});
           assert.equal(row.publicFootprint.sharedFeePayer, true);
           for (const category of ['feePayer','publicCallSenders','publicCallTargets','publicCallCalldata','publicWriteSlots','publicWriteValues','publicLogContracts','publicLogFields'])
             assert.equal(row.publicFootprint.rolePresence[category].author, false);
         }
-        Object.assign(row, {submission: 'included', blockNumber: Number(receipt.blockNumber), blockHash: String(receipt.blockHash),
-          transactionFee: String(receipt.transactionFee), effectSha256: sha(effect.data.toBuffer())});
-        await fs.writeFile(path.join(outputDirectory, `effect-${label}.bin`), effect.data.toBuffer(), {flag: 'wx', mode: 0o600});
         await save(); return row;
       }
       const deployment = Contract.deploy(wallet, artifact, [ctx.instance.address, operator, new Fr(chainId), new Fr(version)],

@@ -135,6 +135,15 @@ export async function runPrivateBokExperiment({node, wallet, owner, operator, ot
       assert.equal(effect.l2BlockHash.toString(), receipt.blockHash.toString());
       assert(receipt.transactionFee != null && BigInt(receipt.transactionFee) >= 0n);
       if (selected.role !== 'operator') humanActualFees[selected.role] += BigInt(receipt.transactionFee);
+      const effectBytes = effect.data.toBuffer();
+      await fs.writeFile(path.join(outputDirectory, `effect-${label}.bin`), effectBytes, {flag: 'wx', mode: 0o600});
+      Object.assign(row, {submission: 'included', inclusionMs: Math.round(performance.now() - sent),
+        blockNumber: receipt.blockNumber, blockHash: receipt.blockHash.toString(), transactionFee: String(receipt.transactionFee),
+        effectBytes: effectBytes.length, effectSha256: sha(effectBytes), blobFields: effect.data.toBlobFields().length,
+        publicWrites: effect.data.publicDataWrites.length, publicLogFields: effect.data.publicLogs.reduce((sum, log) => sum + log.sizeInFields(), 0),
+        noteHashes: effect.data.noteHashes.length, nullifiers: effect.data.nullifiers.length});
+      report.humanActualFees = Object.fromEntries(Object.entries(humanActualFees).map(([role, amount]) => [role, String(amount)]));
+      await save(); // Canonical inclusion is evidence even if a later policy assertion fails.
       if (payerMode === 'private') {
         row.publicFootprint = classifyT03PublicFootprint({tx, effect: effect.data, roles: {author: owner, otherAuthor: otherUser, sharedPayer: sharedFeePayer, moderator: operator}});
         for (const category of ['feePayer', 'publicCallSenders', 'publicCallTargets', 'publicCallCalldata', 'publicWriteSlots', 'publicWriteValues', 'publicLogContracts', 'publicLogFields']) {
@@ -145,13 +154,6 @@ export async function runPrivateBokExperiment({node, wallet, owner, operator, ot
       }
       assert.equal(effect.data.l2ToL1Msgs.length, messageCount, 'Unexpected portal message count');
       if (expectedLeaf) assert.equal(effect.data.l2ToL1Msgs.filter(value => value.equals(expectedLeaf)).length, 1, 'Exact portal envelope leaf required');
-      const effectBytes = effect.data.toBuffer();
-      await fs.writeFile(path.join(outputDirectory, `effect-${label}.bin`), effectBytes, {flag: 'wx', mode: 0o600});
-      Object.assign(row, {submission: 'included', inclusionMs: Math.round(performance.now() - sent),
-        blockNumber: receipt.blockNumber, blockHash: receipt.blockHash.toString(), transactionFee: String(receipt.transactionFee),
-        effectBytes: effectBytes.length, effectSha256: sha(effectBytes), blobFields: effect.data.toBlobFields().length,
-        publicWrites: effect.data.publicDataWrites.length, publicLogFields: effect.data.publicLogs.reduce((sum, log) => sum + log.sizeInFields(), 0),
-        noteHashes: effect.data.noteHashes.length, nullifiers: effect.data.nullifiers.length});
       assert(row.publicWrites <= MAX_PUBLIC_DATA_UPDATE_REQUESTS_PER_TX); assert(row.publicLogFields <= FLAT_PUBLIC_LOGS_PAYLOAD_LENGTH);
       assert(effect.data.publicLogs.every(log => log.fields.length <= MAX_PUBLIC_LOG_SIZE_IN_FIELDS)); assert(row.blobFields <= MAX_TX_BLOB_DATA_SIZE_IN_FIELDS);
       await save(); return {row, effect};

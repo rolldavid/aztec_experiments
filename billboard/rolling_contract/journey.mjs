@@ -197,14 +197,16 @@ export async function runRollingBokJourney({node, wallet, owner, operator, board
         && Number(found.l2BlockNumber) === Number(receipt.blockNumber), 'Canonical effect mismatch');
       assert(typeof receipt.transactionFee === 'bigint' && receipt.transactionFee > 0n);
       if (selected.role !== 'operator') {
-        assert(BigInt(proof.maximumFee) >= receipt.transactionFee); humanFees[selected.role] += receipt.transactionFee;
+        humanFees[selected.role] += receipt.transactionFee;
       }
       report.humanActualFees = feeSummary();
-      row.footprint = inspect(tx, effect, selected.role !== 'operator', gas);
-      observedPublic.push({tx, effect});
       const bytes = effect.toBuffer(); await fs.writeFile(path.join(outputDirectory, `${label}-effect.bin`), bytes, {flag: 'wx', mode: 0o600});
       Object.assign(row, {submission: 'canonical success', transactionFee: String(receipt.transactionFee),
         blockNumber: Number(receipt.blockNumber), blockHash: String(receipt.blockHash), effectSha256: sha(bytes)});
+      await save(); // A policy failure does not erase canonical inclusion or charged fees.
+      if (selected.role !== 'operator') assert(BigInt(proof.maximumFee) >= receipt.transactionFee);
+      row.footprint = inspect(tx, effect, selected.role !== 'operator', gas);
+      observedPublic.push({tx, effect});
       await wallet.pxe.sync(); await save(); return {tx, effect, receipt};
     }
 
@@ -256,6 +258,7 @@ export async function runRollingBokJourney({node, wallet, owner, operator, board
     humanFees.owner += rejected.receipt.transactionFee;
     report.humanActualFees = feeSummary();
     report.rollbackFee = String(rejected.receipt.transactionFee);
+    await save();
     report.rollbackFootprint = inspect(rejected.tx, rejected.effect, true);
     observedPublic.push({tx: rejected.tx, effect: rejected.effect});
     await privateFee.verify(humanFees);

@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import {bindRollingCircuit, validateRollingPayload} from './application-policy.mjs';
+import {bindRollingCircuit, validateRollingPayload, rollingSelectors} from './application-policy.mjs';
 import {ARTIFACTS, COMMON_INPUTS, loadRollingArtifacts, sha} from './rolling-artifacts.mjs';
 import {pluginSelectors} from './plugin-policy.mjs';
 import {FunctionSelector, loadContractArtifact} from '@aztec-labs/stdlib/abi';
@@ -106,4 +106,26 @@ test('artifact provenance rejects missing, stale, raw and symlinked release inpu
     fs.unlinkSync(path.join(f.root,'toolchain.json'));fs.symlinkSync('package-lock.json',path.join(f.root,'toolchain.json'));
     assert.throws(()=>loadRollingArtifacts(f.root),/symlink/);
   }finally{f.close();}
+});
+
+
+test('actual private expiry is allowed but public expiry and direct callback are refused', async () => {
+  const raw = [JSON.parse(fs.readFileSync(new URL('../billboard/target/rolling_contract-RollingBoard.json', import.meta.url))),
+    JSON.parse(fs.readFileSync(new URL('../experiments/private-bok/target/private_bok-PrivateBok.json', import.meta.url)))];
+  const actual = await rollingSelectors(raw), artifact = loadContractArtifact(raw[1]);
+  const expiry = artifact.functions.find(fn => fn.name === 'expire');
+  assert(expiry?.verificationKey, 'Private expiry must have a normal VK');
+  const selector = BigInt((await FunctionSelector.fromNameAndParameters(expiry)).toString());
+  const callback = artifact.nonDispatchPublicFunctions.find(fn => fn.name === '_expire');
+  const callbackSelector = BigInt((await FunctionSelector.fromNameAndParameters(callback)).toString());
+  const actualOptions = {...options, selectors: actual};
+  const input = {inputs: context('4'), app_payload: {function_calls: [call(2, selector), call(3, [...actual.fee.fee][0])]}};
+  assert.deepEqual(validateRollingPayload(input, actualOptions), {applications: 1, fees: 1});
+  bindRollingCircuit('PrivateBok:expire', {inputs: context('2')}, actualOptions);
+  const publicExpiry = structuredClone(input); publicExpiry.app_payload.function_calls[0].is_public = true;
+  assert.throws(() => validateRollingPayload(publicExpiry, actualOptions), /Unapproved/);
+  for (const publicCall of [false, true]) {
+    const forged = structuredClone(input); forged.app_payload.function_calls[0] = call(2, callbackSelector, publicCall);
+    assert.throws(() => validateRollingPayload(forged, actualOptions), /Unapproved/);
+  }
 });
