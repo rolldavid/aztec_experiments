@@ -4,6 +4,7 @@ import {prepareNativeRuntime} from './runtime.mjs';
 import {createProofQueue} from './queue.mjs';
 import {createProcessWorker} from './process-worker.mjs';
 import {createProverServer} from './server.mjs';
+import {createPrivateQuery,validateQueryNode} from './private-query.mjs';
 import {loadCircuitCatalog} from './catalog.mjs';
 
 // Composition root: owns only the resources it creates. Tests and the host use
@@ -18,6 +19,8 @@ export async function startProverService(config){
  if(applicationProfile==='rolling'&&(!/^0x[0-9a-f]{64}$/.test(config.privateBokAddress)||BigInt(config.privateBokAddress)===0n||!config.privateFeeAddress||BigInt(config.privateFeeAddress)===0n||BigInt(config.board)===0n||new Set([config.board,config.privateBokAddress,config.privateFeeAddress]).size!==3))throw Error('Distinct rolling board, Bok and private fee addresses required');
  const host=config.host??'127.0.0.1',proofsEnabled=config.proofs==='real';
  if(!proofsEnabled&&(!['127.0.0.1','::1','localhost'].includes(host)||String(config.chainId)!=='31337'))throw Error('Disabled proofs require loopback local devnet');
+ validateQueryNode(config.queryNode);
+ const privateQuery=await createPrivateQuery({...config,proofsEnabled});
  const runtime=proofsEnabled?await prepareNativeRuntime(config):{};
  await loadCircuitCatalog({applicationProfile});
  const directory=await fs.mkdtemp(path.join(config.queueDirectory??'/tmp','board-prover-'));
@@ -26,7 +29,7 @@ export async function startProverService(config){
  const close=()=>closing??=(async()=>{if(server){server.close();server.closeAllConnections();}await (queue?queue.close():worker.close());await fs.rm(directory,{recursive:true,force:true});})();
  try{
   queue=await createProofQueue({directory,worker,maxJobs:1000,maxBytes:config.maxQueueBytes??2*1024**3});
-  server=createProverServer({...config,queue,proofsEnabled});
+  server=createProverServer({...config,queue,proofsEnabled,privateQuery});
   await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(config.port??8081,host,()=>{server.removeListener('error',reject);resolve();});});
   return {address:server.address(),close,stats:()=>queue.stats()};
  }catch(error){await close();throw error;}
