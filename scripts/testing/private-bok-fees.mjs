@@ -56,7 +56,7 @@ export function createPrivateBokFeesPreparer({prepareFees, mkdir: makeDirectory}
     const observation = {passed: false, ownerless: true, operatorFunding: false, testFaucetFunding: true,
       humanPublicFeeFallback: false, privateCreditAndPoolReconciled: false, walletCleanupComplete: false, funding: {}};
     const helpers = [];
-    let closePromise, activeRole, failedSetupCleanup = true;
+    let closePromise, activeRole, preparingRole, failedSetupCleanup = true;
     const close = () => {
       if (!closePromise) closePromise = (async () => {
         const results = await Promise.allSettled(helpers.map(helper => Promise.resolve().then(() => helper.close())));
@@ -77,9 +77,11 @@ export function createPrivateBokFeesPreparer({prepareFees, mkdir: makeDirectory}
         activeRole = role;
         const fundingDirectory = path.join(directory, `private-bok-fees-${role}`);
         await makeDirectory(fundingDirectory, {mode: 0o700});
+        preparingRole = role;
         const helper = await prepareFees({node, preparation, l1Client, directory, fundingDirectory,
           rpcUrl, mineL1, reportStage: mark, standalone});
         helpers.push(helper);
+        preparingRole = undefined;
         // Persist only validated public receipt fields as soon as each helper
         // returns, so a later setup failure cannot erase completed funding.
         const payer = helper.browserFixture.instance.address.toString();
@@ -151,6 +153,9 @@ export function createPrivateBokFeesPreparer({prepareFees, mkdir: makeDirectory}
         if (activeRole === 'otherUser' && partial.standalone) observation.standaloneB = partial.standalone;
         observation.setupFailure = {role: activeRole, walletCleanup: partial.walletCleanup};
         failedSetupCleanup = ['closed','not-created'].includes(partial.walletCleanup);
+      } else if (preparingRole) {
+        observation.setupFailure = {role: preparingRole, walletCleanup: 'unknown'};
+        failedSetupCleanup = false;
       }
       let failure = error instanceof Error ? error : new Error('Private Bok fee setup failed');
       try { await close(); } catch (cleanupError) {

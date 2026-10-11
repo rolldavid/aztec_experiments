@@ -105,13 +105,33 @@ export function createPrivateFeeRecoveryEvidence() {
   };
 }
 
+// The account/publication helper may fail before returning its wallet handle.
+// Only that inner owner can distinguish successful cleanup from an unknown creation.
+export async function failPrivateFeeWalletSetup(error, close, creationState) {
+  assert(['created','not-created','unknown'].includes(creationState), 'Explicit wallet creation state required');
+  let failure = error instanceof Error ? error : new Error('Private fee wallet setup failed');
+  let walletCleanup = creationState === 'not-created' ? 'not-created' : 'unknown';
+  if (creationState === 'created') {
+    try { await close(); walletCleanup = 'closed'; }
+    catch (cleanupError) {
+      walletCleanup = 'failed';
+      failure = new AggregateError([failure, cleanupError], 'Private fee wallet setup and cleanup failed');
+    }
+  }
+  if (!Object.isExtensible(failure)) failure = new AggregateError([failure], 'Private fee wallet setup failed');
+  failure.privateFeeWalletCleanup = walletCleanup;
+  throw failure;
+}
+
 // Preserve the action failure even when closing its owned wallet also fails.
 export async function failPrivateFeeSetup(error, observation, close) {
   const fundingFailure = read(error, 'privateFeeFundingObservation');
   const standaloneFailure = read(error, 'privateFeeStandaloneObservation');
   const funding = capturePublicFeeFunding(fundingFailure ?? read(observation, 'funding'));
   const standalone = capturePublicFeeStandalone(standaloneFailure ?? read(observation, 'standalone'));
-  const snapshot = {passed: false, ...(funding ? {funding} : {}), ...(standalone ? {standalone} : {}), walletCleanup: 'not-created'};
+  const innerCleanup = read(error, 'privateFeeWalletCleanup');
+  const snapshot = {passed: false, ...(funding ? {funding} : {}), ...(standalone ? {standalone} : {}),
+    walletCleanup: ['not-created','closed','failed'].includes(innerCleanup) ? innerCleanup : 'unknown'};
   let failure = error instanceof Error ? error : new Error('Private fee setup failed');
   if (close) {
     try { await close(); snapshot.walletCleanup = 'closed'; }

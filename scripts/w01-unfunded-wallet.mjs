@@ -1,3 +1,4 @@
+import {failPrivateFeeWalletSetup} from './private-fee-evidence.mjs';
 import {applicationProofsEnabled,applicationProver} from './testing/proof-policy.mjs';
 // TEST ONLY. Publish canonical FPC using funded deployer; author remains unfunded.
 import assert from 'node:assert/strict';
@@ -48,5 +49,9 @@ export async function prepareW01UnfundedWallet({node,preparation,directory,persi
    wallet:{get:()=>wallet},close:{value:close},
    reopen:{value:async()=>{assert(persistentDirectory!==undefined&&!wallet);wallet=await open();}},
   });
- }catch(error){await close();throw error;}
+ }catch(error){
+  // If open() rejected before returning a handle, allocation/cleanup is unknown.
+  // Never infer that no wallet was created from an absent local assignment.
+  return failPrivateFeeWalletSetup(error,close,wallet?'created':'unknown');
+ }
 }

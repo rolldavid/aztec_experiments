@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {capturePublicFeeRecovery,capturePublicFeeFunding,capturePublicFeeStandalone,
-  capturePrivateFeeSetupFailure,createPrivateFeeRecoveryEvidence,failPrivateFeeSetup} from './private-fee-evidence.mjs';
+  capturePrivateFeeSetupFailure,createPrivateFeeRecoveryEvidence,failPrivateFeeSetup,failPrivateFeeWalletSetup} from './private-fee-evidence.mjs';
 const a = byte => '0x' + byte.repeat(20), h = byte => '0x' + byte.repeat(32);
 const recovery = () => ({schema:'private-fee-funding-v1',chainId:'31337',version:'6',rollupAddress:a('11'),
   portalAddress:a('22'),tokenAddress:a('33'),privateFeeAddress:h('12'),sender:a('44'),nonce:'7',amount:'1000'});
@@ -93,4 +93,44 @@ test('no receipt data invents success and unknown cleanup stays explicit',()=>{
   const result=capturePrivateFeeSetupFailure({privateFeeObservation:{funding:{passed:true},standalone:{passed:true},walletCleanup:'PRIVATE_SENTINEL'}});
   assert.equal(result.funding.passed,false);assert.equal(result.funding.outcome,'unverified');
   assert.equal(result.standalone.passed,false);assert.equal(result.standalone.outcome,'unverified');assert.equal(result.walletCleanup,'unknown');
+});
+
+
+test('injected inner boundary: created wallet registration/publication failure and failed close survive outer setup',async()=>{
+  for(const stage of ['registration','publication']) {
+    const action=Error(stage+' failed'),cleanup=Error('close failed');let creates=0,closes=0;
+    const inner=async()=>{
+      let wallet;
+      try {wallet=await (async()=>{creates++;return {};})();throw action;}
+      catch(error){return failPrivateFeeWalletSetup(error,async()=>{closes++;throw cleanup;},wallet?'created':'unknown');}
+    };
+    const innerError=await caught(inner);
+    assert(innerError instanceof AggregateError);assert.deepEqual(innerError.errors,[action,cleanup]);
+    assert.equal(innerError.privateFeeWalletCleanup,'failed');
+    const outer=await caught(()=>failPrivateFeeSetup(innerError,{},undefined));
+    assert.equal(outer,innerError);assert.equal(outer.privateFeeObservation.walletCleanup,'failed');
+    assert.equal(capturePrivateFeeSetupFailure(outer).walletCleanup,'failed');assert.equal(creates,1);assert.equal(closes,1);
+  }
+});
+
+test('injected inner boundary: explicit closed/not-created survive; missing creation result remains unknown',async()=>{
+  for(const state of ['created','not-created','unknown']){
+    let closes=0;const action=Error('setup failed');
+    const inner=await caught(()=>failPrivateFeeWalletSetup(action,async()=>{closes++;},state));
+    const outer=await caught(()=>failPrivateFeeSetup(inner,{},undefined));
+    assert.equal(outer.privateFeeObservation.walletCleanup,state==='created'?'closed':state);
+    assert.equal(closes,state==='created'?1:0);
+  }
+  const missing=await caught(()=>failPrivateFeeSetup(Error('open failed without owner evidence'),{},undefined));
+  assert.equal(missing.privateFeeObservation.walletCleanup,'unknown');
+});
+
+test('inner cleanup evidence getter is captured once and invalid values stay unknown',async()=>{
+  for(const value of ['failed','PRIVATE_SENTINEL',()=>{}]){
+    let reads=0;const action=Error('failure');
+    Object.defineProperty(action,'privateFeeWalletCleanup',{get(){return ++reads===1?value:'PRIVATE_SENTINEL';}});
+    const outer=await caught(()=>failPrivateFeeSetup(action,{},undefined));
+    assert.equal(reads,1);assert.equal(outer.privateFeeObservation.walletCleanup,value==='failed'?'failed':'unknown');
+    assert(!JSON.stringify(outer.privateFeeObservation).includes('PRIVATE_SENTINEL'));
+  }
 });

@@ -176,7 +176,8 @@ test('pure fake: partial funding evidence survives setup and cleanup failures wi
     assert.equal(report.funding.owner.l1TxHash, '0x' + '1'.repeat(64));
     assert.equal(report.funding.otherUser, undefined);
     assert.equal(report.standaloneB, undefined);
-    assert.equal(report.walletCleanupComplete, !failClose.length);
+    assert.equal(report.walletCleanupComplete, false);
+    assert.deepEqual(report.setupFailure, {role: 'otherUser', walletCleanup: 'unknown'});
     assert.deepEqual(f.closed, [1, 0]);
     assert(!/DO-NOT-PUBLISH|fake-secret|fake-key|human-A|human-B/.test(JSON.stringify(report)));
     assert(!Object.hasOwn(failure.privateBokFeesObservation, 'wallet'));
@@ -248,7 +249,7 @@ test('pure fake: pool baseline getters use the same captured value for checks an
 
 
 test('pure fake: B completed bridge and unknown standalone survive a prepare rejection', async () => {
-  for (const cleanup of ['closed','failed']) {
+  for (const cleanup of ['closed','failed','unknown','not-created']) {
     const setupError = Error('PRIVATE_SENTINEL original');
     const f = fixture({failSetup: 1, setupError});
     setupError.privateFeeObservation = {passed: false, funding: f.helpers[1].funding,
@@ -263,7 +264,7 @@ test('pure fake: B completed bridge and unknown standalone survive a prepare rej
     assert.equal(report.standaloneB.txHash, '0x' + '66'.repeat(32));
     assert.equal(report.standaloneB.passed, false); assert.equal(report.standaloneB.outcome, 'unknown');
     assert.equal(report.setupFailure.role, 'otherUser'); assert.equal(report.setupFailure.walletCleanup, cleanup);
-    assert.equal(report.walletCleanupComplete, cleanup === 'closed'); assert.deepEqual(f.closed, [1,0]);
+    assert.equal(report.walletCleanupComplete, ['closed','not-created'].includes(cleanup)); assert.deepEqual(f.closed, [1,0]);
     assert(!JSON.stringify(report).includes('PRIVATE_SENTINEL'));
   }
 });
@@ -286,4 +287,15 @@ test('pure fake: failing current-role evidence captured once before prior-helper
   for(const fields of [recoveryReads,fundingReads])assert([...fields.values()].every(count=>count===1));
   assert.equal(recordReads.get('funding'),1);assert.equal(recordReads.get('walletCleanup'),1);
   assert(!JSON.stringify(report).includes('PRIVATE_SENTINEL'));assert(!JSON.stringify(report).includes('FAKE-PRIVATE'));
+});
+
+
+test('pure fake: absent inner cleanup evidence never certifies setup wallet cleanup', async()=>{
+  for(const failSetup of [0,1]){
+    const f=fixture({failSetup});let failure;
+    try{await f.prepare();}catch(error){failure=error;}
+    const report=failure.privateBokFeesObservation;
+    assert.equal(report.walletCleanupComplete,false);
+    assert.deepEqual(report.setupFailure,{role:failSetup?'otherUser':'owner',walletCleanup:'unknown'});
+  }
 });
