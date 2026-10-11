@@ -301,3 +301,89 @@ capability URL private; retain only status, region and safe object/hash facts.
 HTTP301/307 or any other unexpected response blocks launch for diagnosis rather
 than changing the host's redirect policy. The compute region can remain us-east-1;
 account for this cross-region archive transfer in the existing forecast.
+
+### Final commissioning receipt and optional private retention
+
+The third host reached its readiness deadline without a retained final receipt.
+The read-only diagnosis did **not** establish a node startup cause. The next
+reviewed bootstrap records fixed inspector categories (`CONFIG`, `IDENTITY`,
+`UNAVAILABLE`, `UNSYNCED`, `STALE`, process exit or timeout), poll count, and the
+last fully validated ready network/anchor snapshot. A failure category is not a
+partial successful synchronization check. No raw RPC error or request is kept.
+
+`rolling-qualification.service` retains its loopback-only policy, empty
+capabilities and existing deadlines. Its namespace additionally hides
+`/var/lib/rolling-bootstrap-private` and cloud-init's `/var/lib/cloud` tree.
+The post-stop command first seals an interrupted result, then synchronously
+starts the **separate trusted root** `rolling-qualification-receipt.service`.
+It does not give the qualifier external network access or a PUT capability.
+The trusted publisher has a35second service deadline; the caller waits at most
+40seconds inside the unchanged45second stop budget. The independent cloud and
+budget shutdown controls remain active throughout.
+
+The publisher reads only bounded, no-follow JSON records. It projects exact
+qualification fields and inspects two fixed systemd units plus the fixed
+`rolling-node` container, each with a3second command limit. Service evidence is
+limited to load/active/substate/result and integer main exit code/status/restarts;
+container evidence is status/running/restarting/OOM/exit code. Unknown or malformed
+responses become `available:false`, never healthy. No Docker config, environment,
+`State.Error`, logs or journal is read. The single-start container is retained
+until host termination so an exited/OOM State can be inspected; `--log-driver
+none` prevents retained Docker logs. No restart or extra storage resource is added.
+
+Before any shutdown request, the publisher exclusively creates and fsyncs
+`/var/lib/rolling-bootstrap-private/final-receipt.json` and its directory, then
+synchronously attempts the existing bounded serial/console sinks under
+`ROLLING_QUALIFICATION_RECEIPT`. Receipt scope remains `legacy-query-only`.
+Only a fully checked complete result qualifies; a receipt is never permission to
+unmask the prover. Reinvocation does not replace/re-emit the receipt or upload it
+again. Disk failures produce only a fixed `FINALIZATION_FAILED` console attempt
+and preserve failure shutdown. Hard power loss, forced cloud expiry and console
+sink failure can still prevent external delivery; missing evidence never proves
+health and never authorizes replay or a paid replacement.
+
+The lead may supply optional **private** input `receiptPutUrl`: an AWS4-HMAC-SHA256
+presigned PUT with only the `host` signed header, at most8hours validity, to the
+exact existing bucket endpoint:
+
+`https://anonymous-message-board-testnet-backups-nvdhcyurtoga.s3.eu-west-2.amazonaws.com/receipts/CAMPAIGN/FINAL.json`
+
+Campaign and filename stems allow only letters, digits, underscore and hyphen,
+1–80characters each. The lead creates a fresh object-scoped capability for the
+reviewed campaign; it must not be copied into source or evidence. Credentials,
+fragments, path escapes, other buckets/regions, arbitrary query fields and
+redirects are rejected. The URL is stored only in the root private directory,
+never the qualifier config, attestation script or output. It has no host IAM role
+or general S3 privileges. URL signing is not performed by this generator.
+
+The publisher uploads only the sealed sanitized receipt (maximum16KiB). Before
+one request it exclusively writes/fsyncs `upload-intent.json` with receipt hash
+and attempt count1. A partial/existing intent blocks another upload, even with
+no result. The5second HTTP request uses no ambient proxy, redirect, credential
+provider, cookie or retry. Response bodies are not read. A fixed acknowledged,
+rejected or unknown outcome is persisted separately; errors and URLs are never
+serialized. HTTP acknowledgement alone is not independently verified receipt
+retention: the trusted lead must read the private object and compare its hash.
+Upload uncertainty does not replace the durable receipt or replay the request.
+Failure shutdown follows the bounded publication attempt; the upload does not
+extend any deadline. Temporary capability and node state disappear with the
+already required DeleteOnTermination volumes. Retained receipt-object storage
+belongs in the shared spending ledger.
+
+Development tests exercise strict schema projection, secret-bearing/malformed
+inputs, state/timeout/exit paths, receipt ordering and fsync boundaries, redirect
+rejection and once-only upload with explicitly labelled fakes. They do not claim
+Linux systemd namespace enforcement, actual S3 delivery or remote node readiness.
+
+The private shell embeds its Python program using standard-library LZMA; AWS
+user-data remains an outer gzip file. The selected Canonical image must have
+Python3's `lzma` module available (verify this image dependency before launch).
+Generation removes Python comment tokens only, preserving executable tokens and
+string bytes, then hashes that actual decoded HOST source as
+`bootstrapSourceSha256`. Encoding round-trip tests execute the generated
+function definitions and verify that source hash, without executing host actions.
+Tests include two capabilities with a shared synthetic1024byte session token and
+reject oversized4096byte capability pairs through the real CLI. Size depends on
+actual private inputs: the unchanged16KiB output gate fails before creating
+user-data, never truncates a URL, and never removes a check to fit. A generator
+failure is a local packaging blocker, not permission to launch with altered data.

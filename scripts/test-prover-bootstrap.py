@@ -1,5 +1,5 @@
 """Development unit tests; no Linux services, cloud calls, or proof jobs are run."""
-import base64, datetime as dt, gzip, hashlib, importlib.util, io, json, pathlib, subprocess, tarfile, tempfile, unittest
+import base64, datetime as dt, gzip, hashlib, importlib.util, io, json, lzma, pathlib, subprocess, tarfile, tempfile, unittest
 from unittest.mock import patch
 
 ROOT=pathlib.Path(__file__).resolve().parents[1]
@@ -38,7 +38,7 @@ class Bootstrap(unittest.TestCase):
         self.assertLess(len(gzip.compress(text.encode(),mtime=0)),16384)
         subprocess.run(['/bin/sh','-n'],input=text,text=True,check=True)
         encoded=text.split("base64.b64decode('")[1].split("')")[0]
-        source=gzip.decompress(base64.b64decode(encoded)).decode();compile(source,'generated','exec')
+        source=lzma.decompress(base64.b64decode(encoded)).decode();compile(source,'generated','exec')
         self.assertIn('PRIVATE_SENTINEL',source) # private artifact, never public evidence
         self.assertNotIn('PRIVATE_SENTINEL',source.split('ATTESTATION = ')[1])
 
@@ -344,7 +344,7 @@ class htb 1:20 parent 1:1 prio 0 rate 25Mbit ceil 50Mbit burst 4725b cburst 7850
         import ast
         generated=b.generate(config(),NOW)
         encoded=generated.split("base64.b64decode('")[1].split("')")[0]
-        program=gzip.decompress(base64.b64decode(encoded)).decode()
+        program=lzma.decompress(base64.b64decode(encoded)).decode()
         assignment=ast.parse(program).body[0]
         self.assertEqual(assignment.targets[0].id,'SOURCE')
         namespace={};exec(ast.literal_eval(assignment.value),namespace)
@@ -525,5 +525,201 @@ await probe(false);await probe(true);
             with self.assertRaises(b.Invalid):b.private_file(p)
             link=pathlib.Path(t)/'link';link.symlink_to(p)
             with self.assertRaises(OSError):b.private_file(link)
+
+
+class FinalReceipt(unittest.TestCase):
+    """Labelled development transport/process fakes, not Linux evidence."""
+    def capability(self):
+        return ('https://anonymous-message-board-testnet-backups-nvdhcyurtoga.s3.eu-west-2.amazonaws.com/receipts/campaign-04/final.json?'
+                'X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=ABCDEFGHIJKLMNOP%2F20261011%2Feu-west-2%2Fs3%2Faws4_request&'
+                'X-Amz-Date=20261011T180000Z&X-Amz-Expires=28800&X-Amz-SignedHeaders=host&X-Amz-Signature='+('c'*64))
+
+    def environment(self,directory):
+        ns=host();ns['BASE']=pathlib.Path(directory)/'public';ns['PRIVATE']=pathlib.Path(directory)/'private'
+        (ns['BASE']/'qualification').mkdir(parents=True);ns['PRIVATE'].mkdir(mode=0o700)
+        return ns
+
+    def test_capability_scope_and_private_generation(self):
+        c=config();c['receiptPutUrl']=self.capability();self.assertEqual(b.validate(c,NOW),c)
+        self.assertEqual(host()['receipt_url'](self.capability()),self.capability())
+        for old,new in [('/receipts/','/releases/'),('final.json','../final.json'),('final.json','final%2ejson'),('.s3.eu-west-2.','.s3.us-east-1.'),('https:','http:'),('X-Amz-Expires=28800','X-Amz-Expires=28801'),('X-Amz-SignedHeaders=host','X-Amz-SignedHeaders=host%3Bauthorization')]:
+            bad=dict(c,receiptPutUrl=c['receiptPutUrl'].replace(old,new))
+            with self.subTest(new=new),self.assertRaises(b.Invalid):b.validate(bad,NOW)
+        bad=dict(c,receiptPutUrl=c['receiptPutUrl']+'&unexpected=PRIVATE_SENTINEL')
+        with self.assertRaises(b.Invalid):b.validate(bad,NOW)
+        text=b.generate(c,NOW);self.assertLess(len(gzip.compress(text.encode())),16384)
+        source=lzma.decompress(base64.b64decode(text.split("base64.b64decode('")[1].split("')")[0])).decode()
+        self.assertNotIn(self.capability(),source.split('ATTESTATION = ')[1])
+        compile(source,'generated-private','exec')
+
+    def test_lzma_roundtrip_executes_definitions_and_binds_runtime_hash(self):
+        # Actual stdlib decompression/compilation; only the final host entry is a
+        # labelled stub. No host command or installed service runs in this test.
+        c=config();c['receiptPutUrl']=self.capability()
+        # Realistic-sized synthetic capabilities, never real tokens.
+        import random,string
+        rng=random.Random(14)
+        token=''.join(rng.choice(string.ascii_letters+string.digits) for _ in range(1024))
+        c['runtimeUrl']+='&X-Amz-Security-Token='+token
+        c['receiptPutUrl']+='&X-Amz-Security-Token='+token
+        text=b.generate(c,NOW);self.assertLess(len(gzip.compress(text.encode())),16384)
+        encoded=text.split("base64.b64decode('")[1].split("')")[0]
+        source=lzma.decompress(base64.b64decode(encoded)).decode()
+        definitions,entry=source.rsplit('execute(CONFIG, ATTESTATION)',1)
+        self.assertEqual(entry.strip(),'');ns={};exec(compile(definitions,'generated','exec'),ns)
+        calls=[];ns['execute']=lambda conf,script:calls.append((conf,script))
+        exec('execute(CONFIG, ATTESTATION)',ns)
+        self.assertEqual(calls[0][0],c);compile(calls[0][1],'attestor','exec')
+        runtime=ns['SOURCE'][ns['SOURCE'].index('\nimport datetime as dt, fcntl'):]
+        self.assertEqual(ns['PINS']['bootstrap'],hashlib.sha256(runtime.encode()).hexdigest())
+        self.assertNotIn(token,calls[0][1])
+        # Worst-case permitted URL lengths can exceed AWS storage; no truncation.
+        c['runtimeUrl']+=''.join(rng.choice(string.ascii_letters+string.digits) for _ in range(4096-len(c['runtimeUrl'])))
+        c['receiptPutUrl']+=''.join(rng.choice(string.ascii_letters+string.digits) for _ in range(4096-len(c['receiptPutUrl'])))
+        self.assertEqual(len(b.validate(c,NOW)['receiptPutUrl']),4096)
+        with tempfile.TemporaryDirectory() as t:
+            directory=pathlib.Path(t);directory.chmod(0o700)
+            now=dt.datetime.now(dt.timezone.utc)
+            for key,delta in [('createdAt',dt.timedelta()),('budgetStop',dt.timedelta(hours=8)),('commissioningStop',dt.timedelta(minutes=30))]:c[key]=(now+delta).strftime('%Y-%m-%dT%H:%M:%SZ')
+            source=directory/'input.json';source.write_text(json.dumps(c));source.chmod(0o600)
+            output=directory/'output.gz'
+            result=subprocess.run(['python3',str(ROOT/'deploy/prover/bootstrap.py'),'--config',str(source),'--output',str(output)],capture_output=True,text=True)
+            self.assertEqual(result.returncode,1);self.assertFalse(output.exists());self.assertNotIn(token,result.stdout+result.stderr)
+
+    def test_success_and_persistence_failure_do_not_masquerade_as_receipts(self):
+        for boundary in ('success','disk-failure'):
+            with self.subTest(boundary=boundary),tempfile.TemporaryDirectory() as t:
+                ns=self.environment(t);events=[]
+                report=qualifier_fixture();q={'schemaVersion':1,'passed':True,'stage':'complete','scope':'legacy-query-only','manifestSha256':'b'*64,
+                    'checks':ns['qualification_projection'](report,True),'readiness':ready_fixture(),'anchors':ns['qualification_anchors'](report['checks'])}
+                ns['exclusive_record'](ns['BASE']/'qualification/result.json',q)
+                ns['service_observations']=lambda:{};ns['emit_diagnostic']=lambda data:events.append(data)
+                ns['upload_receipt']=lambda data:events.append('upload');ns['run']=lambda *a,**k:events.append('shutdown')
+                if boundary=='disk-failure':
+                    with patch.object(ns['os'],'fsync',side_effect=OSError('PRIVATE_SENTINEL')):
+                        with self.assertRaises(OSError):ns['final_receipt']()
+                    self.assertNotIn('upload',events);self.assertEqual(events[-1],'shutdown')
+                    self.assertIn(b'FINALIZATION_FAILED',events[0]);self.assertNotIn('PRIVATE_SENTINEL',str(events))
+                else:
+                    ns['final_receipt']();ns['final_receipt']()
+                    self.assertNotIn('shutdown',events);self.assertEqual(events[-1],'upload');self.assertEqual(len(events),2)
+
+    def test_service_state_projection_and_failures(self):
+        good='LoadState=loaded\nActiveState=failed\nSubState=failed\nResult=oom-kill\nExecMainCode=2\nExecMainStatus=9\nNRestarts=0'
+        for boundary in ('healthy','timeout','malformed','secret','missing-container'):
+            with self.subTest(boundary=boundary):
+                ns=host();calls=[]
+                def run(args,**kwargs):
+                    calls.append((args,kwargs));self.assertEqual(kwargs['timeout'],3)
+                    if boundary=='timeout':raise subprocess.TimeoutExpired('PRIVATE_SENTINEL',3)
+                    if args[0]=='systemctl':return good+('\nSECRET=PRIVATE_SENTINEL' if boundary=='secret' else '')
+                    self.assertNotIn('.State.Error',args[3]);self.assertNotIn('.Config',args[3])
+                    if boundary=='missing-container':raise subprocess.CalledProcessError(1,args)
+                    return json.dumps({'status':'exited','running':False,'restarting':False,'oomKilled':True,'exitCode':137 if boundary!='malformed' else True})
+                ns['run']=run;v=ns['service_observations']();self.assertEqual(len(calls),3)
+                self.assertNotIn('PRIVATE_SENTINEL',json.dumps(v))
+                if boundary=='healthy':self.assertTrue(v['container']['oomKilled']);self.assertEqual(v['node']['ExecMainStatus'],9)
+                if boundary in ('timeout','secret'):self.assertFalse(v['node']['available'])
+                if boundary in ('timeout','malformed','missing-container'):self.assertFalse(v['container']['available'])
+
+    def test_readiness_categories_exact_and_unknown_rejected(self):
+        ns=host()
+        for category in ('CONFIG','IDENTITY','UNAVAILABLE','UNSYNCED','STALE','TIMEOUT','PROCESS_EXIT'):
+            value={'ready':False,'category':category,'attempts':1}
+            self.assertEqual(ns['readiness_observation'](value),value)
+        for value in ({'ready':False,'category':'PRIVATE_SENTINEL','attempts':1},
+                      {'ready':False,'category':'STALE','attempts':True},
+                      {'ready':False,'category':'STALE','attempts':1,'error':'PRIVATE_SENTINEL'}):
+            with self.assertRaises(ValueError):ns['readiness_observation'](value)
+        value={'ready':True,'snapshot':ready_fixture(),'attempts':9}
+        self.assertEqual(ns['readiness_observation'](value),value)
+
+    def test_failed_poll_retains_fixed_category_before_deadline(self):
+        with tempfile.TemporaryDirectory() as t:
+            ns=Bootstrap().qualification_environment(t)
+            ns['run']=lambda *a,**k:json.dumps({'ready':False,'category':'UNSYNCED'})
+            times=iter([NOW.timestamp(),NOW.timestamp(),NOW.timestamp()+91*60,NOW.timestamp()+91*60])
+            with patch.object(ns['time'],'time',side_effect=lambda:next(times)),patch.object(ns['time'],'sleep'):
+                ns['qualify']()
+            value=json.loads((ns['BASE']/'qualification/readiness-observation.json').read_text())
+            self.assertEqual(value,{'ready':False,'category':'UNSYNCED','attempts':1})
+            self.assertFalse(json.loads((ns['BASE']/'qualification/result.json').read_text())['passed'])
+
+    def test_final_receipt_durable_emit_upload_shutdown_order(self):
+        with tempfile.TemporaryDirectory() as t:
+            ns=self.environment(t);events=[]
+            ns['exclusive_record'](ns['BASE']/'qualification/result.json',ns['qualification_failure']('readiness-failed'))
+            ns['service_observations']=lambda:{'node':{'available':False},'qualification':{'available':False},'container':{'available':False}}
+            def emit(data):
+                self.assertTrue((ns['PRIVATE']/'final-receipt.json').is_file());events.append('emit')
+                self.assertNotIn(b'PRIVATE_SENTINEL',data)
+            ns['emit_diagnostic']=emit
+            ns['upload_receipt']=lambda data:events.append('upload')
+            ns['run']=lambda args,**kw:events.append('shutdown')
+            ns['final_receipt']();self.assertEqual(events,['emit','upload','shutdown'])
+            frozen=(ns['PRIVATE']/'final-receipt.json').read_bytes()
+            ns['final_receipt']();self.assertEqual(events,['emit','upload','shutdown','shutdown'])
+            self.assertEqual((ns['PRIVATE']/'final-receipt.json').read_bytes(),frozen)
+            self.assertEqual((ns['PRIVATE']/'final-receipt.json').stat().st_mode&0o777,0o600)
+
+    def test_malformed_or_secret_qualification_never_reaches_receipt(self):
+        for change in ('extra','stage','checks','symlink','size'):
+            with self.subTest(change=change),tempfile.TemporaryDirectory() as t:
+                ns=self.environment(t);p=ns['BASE']/'qualification/result.json'
+                q=ns['qualification_failure']('readiness-failed')
+                if change=='extra':q['secret']='PRIVATE_SENTINEL'
+                if change=='stage':q['stage']='PRIVATE_SENTINEL'
+                if change=='checks':q['checks']={'secret':'PRIVATE_SENTINEL'}
+                if change=='symlink':p.symlink_to(ns['PRIVATE']/'secret');(ns['PRIVATE']/'secret').write_text('PRIVATE_SENTINEL')
+                else:p.write_text('PRIVATE_SENTINEL'*2000 if change=='size' else json.dumps(q))
+                (ns['BASE']/'qualification/readiness-observation.json').write_text('{"secret":"PRIVATE_SENTINEL"}')
+                ns['service_observations']=lambda:{};ns['run']=lambda *a,**k:None
+                ns['final_receipt']();raw=(ns['PRIVATE']/'final-receipt.json').read_text()
+                self.assertNotIn('PRIVATE_SENTINEL',raw)
+                self.assertEqual(json.loads(raw)['qualification']['stage'],'interrupted-unknown')
+
+    def test_single_put_unknown_redirect_and_success_never_repeat(self):
+        for boundary in ('success','timeout','redirect','rejected','partial-intent','fsync'):
+            with self.subTest(boundary=boundary),tempfile.TemporaryDirectory() as t:
+                ns=self.environment(t);calls=[];data=b'{"schemaVersion":1}'
+                ns['exclusive_record'](ns['PRIVATE']/'receipt-put.json',{'url':self.capability()})
+                if boundary=='partial-intent':(ns['PRIVATE']/'upload-intent.json').write_text('{')
+                class Reply:
+                    status=200 if boundary=='success' else 403
+                    def __enter__(self):return self
+                    def __exit__(self,*args):pass
+                class Opener:
+                    def open(inner,request,timeout):
+                        calls.append(request);self.assertEqual(timeout,5);self.assertEqual(request.method,'PUT');self.assertEqual(request.data,data)
+                        self.assertTrue((ns['PRIVATE']/'upload-intent.json').is_file())
+                        if boundary=='timeout':raise TimeoutError('PRIVATE_SENTINEL')
+                        if boundary=='redirect':raise ValueError('PRIVATE_SENTINEL')
+                        return Reply()
+                def build(*handlers):
+                    self.assertEqual(handlers[0].proxies,{})
+                    with self.assertRaisesRegex(ValueError,'^Redirect rejected$'):handlers[1].redirect_request(None,None,307,'secret',{},self.capability())
+                    return Opener()
+                with patch.object(ns['urllib'].request,'build_opener',side_effect=build):
+                    if boundary=='fsync':
+                        with patch.object(ns['os'],'fsync',side_effect=OSError('PRIVATE_SENTINEL')):
+                            with self.assertRaises(OSError):ns['upload_receipt'](data)
+                    else:ns['upload_receipt'](data)
+                    ns['upload_receipt'](data)
+                self.assertEqual(len(calls),0 if boundary in ('partial-intent','fsync') else 1)
+                result=ns['PRIVATE']/'upload-result.json'
+                if result.exists():
+                    value=json.loads(result.read_text());self.assertNotIn('PRIVATE_SENTINEL',json.dumps(value))
+                    self.assertEqual(value['status'],'acknowledged' if boundary=='success' else 'rejected' if boundary=='rejected' else 'unknown')
+
+    def test_qualifier_cannot_read_capabilities_and_publisher_is_separate(self):
+        ns=host();files={};ns['write']=lambda path,data,*mode:files.update({str(path):data});ns['run']=lambda *a,**k:None
+        ns['install_qualification']();unit=files['/etc/systemd/system/rolling-qualification.service']
+        self.assertIn('IPAddressDeny=any\nIPAddressAllow=localhost',unit)
+        self.assertIn('InaccessiblePaths=-/var/lib/rolling-bootstrap-private -/var/lib/cloud',unit)
+        self.assertIn('TimeoutStopSec=45',unit)
+        publisher=files['/etc/systemd/system/rolling-qualification-receipt.service']
+        self.assertIn('--qualification-receipt',publisher);self.assertIn('TimeoutStartSec=35',publisher)
+        self.assertIn('Restart=no',publisher);self.assertNotIn('receiptPutUrl',publisher)
+        self.assertIn("'--log-driver','none'",b.HOST);self.assertNotIn("'run','--rm'",b.HOST)
 
 if __name__=='__main__':unittest.main()

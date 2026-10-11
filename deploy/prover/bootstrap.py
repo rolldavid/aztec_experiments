@@ -1,9 +1,9 @@
 """Generate private, immutable cloud-init shell input; never calls AWS itself.
 
-Host implementation is embedded verbatim and unit-tested through injected commands.
+Host executable tokens are embedded and unit-tested through injected commands.
 Only public pins are committed. Capability URLs belong in owner-only external files.
 """
-import argparse, base64, datetime as dt, gzip, hashlib, ipaddress, json, os, pathlib, re, stat, sys, urllib.parse
+import argparse, base64, datetime as dt, gzip, hashlib, ipaddress, io, json, lzma, os, pathlib, re, stat, sys, tokenize, urllib.parse
 
 IMAGE = "azteclabs/aztec@sha256:e5bc218e326b4f3b1cd06b0309cb98e87fef5dfda3330157ce1e393d89416c32"
 NODE_SHA = "7fde7b8afa198da66257f42ee2001d874c7355631e6d1579a5fb5ef1f246df4c"
@@ -28,9 +28,24 @@ def timestamp(value):
     try: return dt.datetime.strptime(value, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=dt.timezone.utc)
     except ValueError: raise Invalid("Invalid UTC deadline") from None
 
+def receipt_url(value):
+    if type(value) is not str or len(value)>4096 or any(ord(c)<33 or ord(c)>126 for c in value): raise ValueError('Invalid receipt capability')
+    try:
+        u=urllib.parse.urlsplit(value)
+        if u.scheme!='https' or u.hostname!='anonymous-message-board-testnet-backups-nvdhcyurtoga.s3.eu-west-2.amazonaws.com' or u.port not in (None,443) or u.username or u.password or u.fragment: raise ValueError()
+        if not re.fullmatch(r'/receipts/[a-zA-Z0-9_-]{1,80}/[a-zA-Z0-9_-]{1,80}\.json',u.path): raise ValueError()
+        q=urllib.parse.parse_qs(u.query,strict_parsing=True)
+        required={'X-Amz-Algorithm','X-Amz-Credential','X-Amz-Date','X-Amz-Expires','X-Amz-SignedHeaders','X-Amz-Signature'}
+        if not required<=set(q) or set(q)-required-{'X-Amz-Security-Token'} or any(len(v)!=1 for v in q.values()): raise ValueError()
+        if q['X-Amz-Algorithm']!=['AWS4-HMAC-SHA256'] or q['X-Amz-SignedHeaders']!=['host'] or not re.fullmatch('[a-f0-9]{64}',q['X-Amz-Signature'][0]): raise ValueError()
+        if not re.fullmatch('[0-9]{8}T[0-9]{6}Z',q['X-Amz-Date'][0]) or not re.fullmatch('[0-9]{1,6}',q['X-Amz-Expires'][0]) or not 1<=int(q['X-Amz-Expires'][0])<=28800: raise ValueError()
+        if not re.fullmatch('[A-Z0-9]{16,128}/[0-9]{8}/eu-west-2/s3/aws4_request',q['X-Amz-Credential'][0]): raise ValueError()
+    except Exception: raise ValueError('Invalid receipt capability') from None
+    return value
+
 def validate(config, now=None):
     keys = {"createdAt", "budgetStop", "commissioningStop", "runtimeUrl", "runtimeArchiveSha256", "manifestSha256"}
-    if type(config) is not dict or set(config) != keys: raise Invalid("Invalid bootstrap fields")
+    if type(config) is not dict or not keys <= set(config) or set(config)-keys-{"receiptPutUrl"}: raise Invalid("Invalid bootstrap fields")
     created, stop, commission = (timestamp(config[k]) for k in ("createdAt", "budgetStop", "commissioningStop"))
     now = now or dt.datetime.now(dt.timezone.utc)
     if not now - dt.timedelta(minutes=5) <= created <= now + dt.timedelta(minutes=5): raise Invalid("Stale creation time")
@@ -46,13 +61,32 @@ def validate(config, now=None):
     except ValueError: good = False
     if not good or not re.fullmatch(r"/releases/[a-zA-Z0-9._/-]+\.tar\.gz", u.path) or ".." in u.path.split("/"):
         raise Invalid("Invalid package URL")
+    if "receiptPutUrl" in config:
+        try: receipt_url(config["receiptPutUrl"])
+        except ValueError: raise Invalid("Invalid receipt capability") from None
     return dict(config)
 
 # Executed only on the future Linux host, never while generating or testing.
 HOST = r'''
-import datetime as dt, fcntl, hashlib, ipaddress, json, os, pathlib, platform, re, shutil, stat, subprocess, sys, tarfile, time, urllib.request
+import datetime as dt, fcntl, hashlib, ipaddress, json, os, pathlib, platform, re, shutil, stat, subprocess, sys, tarfile, time, urllib.request, urllib.parse
 BASE = pathlib.Path('/var/lib/rolling-bootstrap')
 RELEASE = pathlib.Path('/opt/board-prover/releases') / ('rolling-'+PINS['manifest'][:16])
+PRIVATE = pathlib.Path('/var/lib/rolling-bootstrap-private')
+def receipt_url(value):
+    if type(value) is not str or len(value)>4096 or any(ord(c)<33 or ord(c)>126 for c in value): raise ValueError('Invalid receipt capability')
+    try:
+        u=urllib.parse.urlsplit(value)
+        if u.scheme!='https' or u.hostname!='anonymous-message-board-testnet-backups-nvdhcyurtoga.s3.eu-west-2.amazonaws.com' or u.port not in (None,443) or u.username or u.password or u.fragment: raise ValueError()
+        if not re.fullmatch(r'/receipts/[a-zA-Z0-9_-]{1,80}/[a-zA-Z0-9_-]{1,80}\.json',u.path): raise ValueError()
+        q=urllib.parse.parse_qs(u.query,strict_parsing=True)
+        required={'X-Amz-Algorithm','X-Amz-Credential','X-Amz-Date','X-Amz-Expires','X-Amz-SignedHeaders','X-Amz-Signature'}
+        if not required<=set(q) or set(q)-required-{'X-Amz-Security-Token'} or any(len(v)!=1 for v in q.values()): raise ValueError()
+        if q['X-Amz-Algorithm']!=['AWS4-HMAC-SHA256'] or q['X-Amz-SignedHeaders']!=['host'] or not re.fullmatch('[a-f0-9]{64}',q['X-Amz-Signature'][0]): raise ValueError()
+        if not re.fullmatch('[0-9]{8}T[0-9]{6}Z',q['X-Amz-Date'][0]) or not re.fullmatch('[0-9]{1,6}',q['X-Amz-Expires'][0]) or not 1<=int(q['X-Amz-Expires'][0])<=28800: raise ValueError()
+        if not re.fullmatch('[A-Z0-9]{16,128}/[0-9]{8}/eu-west-2/s3/aws4_request',q['X-Amz-Credential'][0]): raise ValueError()
+    except Exception: raise ValueError('Invalid receipt capability') from None
+    return value
+
 STAGE = 'initial'
 
 DIAGNOSTICS_ACTIVE = False
@@ -332,7 +366,7 @@ def install_node():
     verify_controls()
     run(['docker','pull','--platform','linux/amd64',PINS['image']],timeout=600)
     ip=public_ip()
-    args=['/usr/bin/docker','run','--rm','--name','rolling-node','--platform','linux/amd64','--memory','24g','--memory-swap','24g','--pids-limit','512','--cap-drop','ALL','--security-opt','no-new-privileges',
+    args=['/usr/bin/docker','run','--log-driver','none','--name','rolling-node','--platform','linux/amd64','--memory','24g','--memory-swap','24g','--pids-limit','512','--cap-drop','ALL','--security-opt','no-new-privileges',
           '-p','127.0.0.1:8082:8080','-p','127.0.0.1:8882:8880','-p','40400:40400/tcp','-p','40400:40400/udp',
           '-v','/var/lib/rolling-node/data:/var/lib/data','-v','/etc/rolling-node/network.json:/etc/aztec/network.json:ro',
           '-e','DATA_DIRECTORY=/var/lib/data','-e','NETWORK_CONFIG_LOCATION=/etc/aztec/network.json',
@@ -353,6 +387,120 @@ def exclusive_record(path, value):
     fd=os.open(pathlib.Path(path).parent,os.O_RDONLY|os.O_DIRECTORY)
     try: os.fsync(fd)
     finally: os.close(fd)
+
+def read_bounded_json(path):
+    fd=os.open(path,os.O_RDONLY|os.O_NOFOLLOW)
+    try:
+        info=os.fstat(fd)
+        if not stat.S_ISREG(info.st_mode) or info.st_size>16384: raise ValueError('Invalid bounded record')
+        with os.fdopen(fd,'rb',closefd=False) as f:
+            data=f.read(16385)
+        if len(data)>16384: raise ValueError('Invalid bounded record')
+        value=json.loads(data)
+        if type(value) is not dict: raise ValueError('Invalid bounded record')
+        return value
+    finally: os.close(fd)
+
+def readiness_observation(value):
+    if type(value) is not dict or type(value.get('attempts')) is not int or not 1<=value['attempts']<=10000: raise ValueError('Invalid readiness observation')
+    if value.get('ready') is True and set(value)=={'attempts','ready','snapshot'}:
+        return {'attempts':value['attempts'],'ready':True,'snapshot':readiness_projection(value['snapshot'])}
+    if value.get('ready') is False and set(value)=={'attempts','ready','category'} and value.get('category') in ('CONFIG','IDENTITY','UNAVAILABLE','UNSYNCED','STALE','TIMEOUT','PROCESS_EXIT'):
+        return {'attempts':value['attempts'],'ready':False,'category':value['category']}
+    raise ValueError('Invalid readiness observation')
+
+def service_observations():
+    # Only explicit State properties. Never inspect container config, Error,
+    # command lines, environment, journal/log output, or exception messages.
+    result={}
+    enums={'LoadState':('loaded','not-found','error','masked'),
+        'ActiveState':('active','inactive','failed','activating','deactivating','reloading'),
+        'SubState':('running','exited','dead','failed','start','start-pre','start-post','stop','stop-sigterm','stop-sigkill','stop-post','auto-restart'),
+        'Result':('success','exit-code','signal','core-dump','timeout','watchdog','oom-kill','resources','start-limit-hit','protocol')}
+    numeric=('ExecMainCode','ExecMainStatus','NRestarts')
+    for role,unit in [('node','rolling-node.service'),('qualification','rolling-qualification.service')]:
+        try:
+            raw=run(['systemctl','show',unit,'--property='+','.join((*enums,*numeric))],timeout=3,capture=True)
+            if len(raw)>4096: raise ValueError()
+            lines=raw.splitlines();values=dict(line.split('=',1) for line in lines)
+            if len(lines)!=len(values) or set(values)!=set(enums)|set(numeric): raise ValueError()
+            if any(values[k] not in allowed for k,allowed in enums.items()): raise ValueError()
+            if any(not re.fullmatch('[0-9]{1,10}',values[k]) or int(values[k])>2**32-1 for k in numeric): raise ValueError()
+            result[role]={'available':True,**{k:values[k] for k in enums},**{k:int(values[k]) for k in numeric}}
+        except Exception: result[role]={'available':False}
+    try:
+        fmt='{"status":{{json .State.Status}},"running":{{json .State.Running}},"restarting":{{json .State.Restarting}},"oomKilled":{{json .State.OOMKilled}},"exitCode":{{json .State.ExitCode}}}'
+        raw=run(['/usr/bin/docker','inspect','--format',fmt,'rolling-node'],timeout=3,capture=True)
+        if len(raw)>1024: raise ValueError()
+        v=json.loads(raw)
+        if set(v)!={'status','running','restarting','oomKilled','exitCode'} or v['status'] not in ('created','running','paused','restarting','removing','exited','dead'): raise ValueError()
+        if any(type(v[k]) is not bool for k in ('running','restarting','oomKilled')) or type(v['exitCode']) is not int or not 0<=v['exitCode']<=255: raise ValueError()
+        result['container']={'available':True,**v}
+    except Exception: result['container']={'available':False}
+    return result
+
+def upload_receipt(data):
+    # Intent is outside the qualifier-writable tree. Once present, even an
+    # absent/unknown outcome forbids a second request. No SDK retry machinery.
+    if not (PRIVATE/'receipt-put.json').exists(): return
+    intent=PRIVATE/'upload-intent.json'
+    if intent.exists(): return
+    capability=read_bounded_json(PRIVATE/'receipt-put.json')
+    if set(capability)!={'url'}: raise ValueError('Invalid receipt capability')
+    url=receipt_url(capability['url'])
+    if type(data) is not bytes or len(data)>16384: raise ValueError('Receipt limit')
+    exclusive_record(intent,{'schemaVersion':1,'receiptSha256':hashlib.sha256(data).hexdigest(),'attempts':1})
+    class NoRedirect(urllib.request.HTTPRedirectHandler):
+        def redirect_request(self,*args,**kwargs): raise ValueError('Redirect rejected')
+    outcome={'schemaVersion':1,'receiptSha256':hashlib.sha256(data).hexdigest(),'status':'unknown'}
+    try:
+        # No ambient proxy/credentials/cookies and no redirect. Ignore the
+        # response body entirely; even a hostile response cannot fill memory.
+        opener=urllib.request.build_opener(urllib.request.ProxyHandler({}),NoRedirect())
+        request=urllib.request.Request(url,data=data,method='PUT',headers={'Content-Type':'application/json'})
+        with opener.open(request,timeout=5) as response:
+            if response.status in (200,204): outcome['status']='acknowledged'
+            else: outcome['status']='rejected'
+    except Exception: pass
+    exclusive_record(PRIVATE/'upload-result.json',outcome)
+
+def final_receipt():
+    # Runs in a separate trusted root unit, never inside the qualifier's
+    # loopback-only cgroup. Public receipt survives a lost/unknown upload.
+    passed=False
+    try:
+        PRIVATE.mkdir(mode=0o700,parents=True,exist_ok=True)
+        with open(PRIVATE/'receipt-lock','a') as lock:
+            fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
+            path=PRIVATE/'final-receipt.json'
+            if path.exists():
+                # Previously sealed bytes are immutable, not a new attempt.
+                receipt=read_bounded_json(path)
+                q=validated_qualification(receipt.get('qualification',{}))
+                passed=q.get('passed') is True and q.get('stage')=='complete' and bool(q.get('checks')) and all(q['checks'].values()) and 'readiness' in q and 'anchors' in q
+                return
+            else:
+                try: q=validated_qualification(read_bounded_json(BASE/'qualification/result.json'))
+                except Exception: q=qualification_failure('interrupted-unknown')
+                try: observation=readiness_observation(read_bounded_json(BASE/'qualification/readiness-observation.json'))
+                except Exception: observation={'available':False}
+                receipt={'schemaVersion':1,'manifestSha256':PINS['manifest'],'qualification':q,
+                         'readinessObservation':observation,'services':service_observations()}
+                if type(PINS.get('bootstrap')) is str and re.fullmatch('[a-f0-9]{64}',PINS['bootstrap']): receipt['bootstrapSourceSha256']=PINS['bootstrap']
+                exclusive_record(path,receipt)
+            data=json.dumps(receipt,separators=(',',':')).encode()
+            if len(data)>16384: raise ValueError('Receipt limit')
+            q=receipt['qualification']
+            passed=q.get('passed') is True and q.get('stage')=='complete' and bool(q.get('checks')) and all(q['checks'].values()) and 'readiness' in q and 'anchors' in q
+            emit_diagnostic(b'ROLLING_QUALIFICATION_RECEIPT '+data+b'\n')
+            upload_receipt(data)
+    except Exception:
+        # Disk/transport setup failure must still leave a bounded console attempt.
+        # This diagnostic is explicitly not a durable qualification receipt.
+        emit_diagnostic(b'ROLLING_QUALIFICATION_RECEIPT_ERROR {"schemaVersion":1,"category":"FINALIZATION_FAILED"}\n')
+        raise
+    finally:
+        if not passed: run(['systemctl','start','--no-block','rolling-budget.service'],timeout=5)
 
 def qualification_projection(report, process_exited=False):
     # Fixed booleans only: no messages, configuration, reply, logs or arbitrary keys.
@@ -425,16 +573,23 @@ def qualify(aborted=False):
             config=directory/'config.json';exclusive_record(config,QUALIFICATION)
             scope=QUALIFICATION['service']
             options={'url':scope['queryNode']['url'],'expectedNetworkScope':{'chainId':scope['chainId'],'version':scope['rollupVersion'],'rollup':scope['queryNode']['rollupAddress']},'proofsEnabled':True,'allowLocalDev':True,'maxLagSeconds':120}
-            readiness="import {createAztecNodeClient} from '@aztec-labs/stdlib/interfaces/client';import {jsonStringify} from '@aztec-labs/foundation/json-rpc';import {inspectTrustedNode} from '"+(RELEASE/'shared/trusted-private-node.mjs').as_uri()+"';try {const opts="+json.dumps(options)+";const node=createAztecNodeClient(opts.url,{maxBatchSize:1,fetch:async(host,body)=>{const r=await fetch(host,{method:'POST',headers:{'content-type':'application/json'},body:jsonStringify(body),redirect:'error',signal:AbortSignal.timeout(10000)});if(!r.ok)throw Error();let n=0;const c=[];for await(const b of r.body){n+=b.length;if(n>33554432)throw Error();c.push(b);}return {response:JSON.parse(Buffer.concat(c).toString('utf8')),headers:r.headers};}});process.stdout.write(JSON.stringify(await inspectTrustedNode(node,opts)));} catch {process.exitCode=1;}"
-            ready=False;poll_deadline=min(deadline-900,epoch('createdAt')+90*60)
+            readiness="import {createAztecNodeClient} from '@aztec-labs/stdlib/interfaces/client';import {jsonStringify} from '@aztec-labs/foundation/json-rpc';import {inspectTrustedNode} from '"+(RELEASE/'shared/trusted-private-node.mjs').as_uri()+"';try {const opts="+json.dumps(options)+";const node=createAztecNodeClient(opts.url,{maxBatchSize:1,fetch:async(host,body)=>{const r=await fetch(host,{method:'POST',headers:{'content-type':'application/json'},body:jsonStringify(body),redirect:'error',signal:AbortSignal.timeout(10000)});if(!r.ok)throw Error();let n=0;const c=[];for await(const b of r.body){n+=b.length;if(n>33554432)throw Error();c.push(b);}return {response:JSON.parse(Buffer.concat(c).toString('utf8')),headers:r.headers};}});process.stdout.write(JSON.stringify(await inspectTrustedNode(node,opts)));} catch(e) {const codes=['CONFIG','IDENTITY','UNAVAILABLE','UNSYNCED','STALE'];const category=codes.find(x=>e?.code==='BB_TRUSTED_NODE_'+x)||'UNAVAILABLE';process.stdout.write(JSON.stringify({ready:false,category}));}"
+            attempts=0;ready=False;poll_deadline=min(deadline-900,epoch('createdAt')+90*60)
             while time.time()<poll_deadline:
-                verify_controls()
+                verify_controls();attempts+=1
                 try:
                     raw=run([str(RELEASE/'node/bin/node'),'--input-type=module','--eval',readiness],timeout=min(60,max(1,poll_deadline-time.time())),capture=True,cwd=RELEASE)
                     if len(raw)>16384: raise ValueError('Readiness output limit')
-                    snapshot=readiness_projection(json.loads(raw))
-                    ready=True;break
-                except (subprocess.CalledProcessError,subprocess.TimeoutExpired): pass
+                    observed=json.loads(raw)
+                    if observed.get('ready') is False:
+                        observation=readiness_observation({'attempts':attempts,**observed})
+                        write(directory/'readiness-observation.json',json.dumps(observation))
+                    else:
+                        snapshot=readiness_projection(observed)
+                        write(directory/'readiness-observation.json',json.dumps({'attempts':attempts,'ready':True,'snapshot':snapshot}))
+                        ready=True;break
+                except (subprocess.CalledProcessError,subprocess.TimeoutExpired) as error:
+                    write(directory/'readiness-observation.json',json.dumps({'attempts':attempts,'ready':False,'category':'TIMEOUT' if type(error) is subprocess.TimeoutExpired else 'PROCESS_EXIT'}))
                 time.sleep(min(15,max(0,poll_deadline-time.time())))
             if not ready: raise ValueError('Readiness deadline')
             exclusive_record(directory/'ready.json',snapshot)
@@ -458,10 +613,21 @@ def qualify(aborted=False):
         exclusive_record(result_path,result)
 
 def install_qualification():
-    unit='[Unit]\nDescription=One bounded Linux query qualification\nRequires=rolling-node.service rolling-egress.service\nAfter=rolling-node.service rolling-egress.service\n[Service]\nType=oneshot\nExecStart=/usr/bin/python3 /usr/local/lib/rolling-attest.py --qualify\nExecStopPost=/usr/bin/python3 /usr/local/lib/rolling-attest.py --qualification-stop\nTimeoutStartSec=6300\nTimeoutStopSec=45\nKillMode=control-group\nRestart=no\nUMask=0077\nEnvironment=LOG_LEVEL=silent\nUnsetEnvironment=NODE_PATH NODE_OPTIONS BB\nPrivateTmp=yes\nPrivateDevices=yes\nNoNewPrivileges=yes\nCapabilityBoundingSet=\nProtectSystem=strict\nProtectHome=yes\nReadWritePaths=/var/lib/rolling-bootstrap\nIPAddressDeny=any\nIPAddressAllow=localhost\nRestrictAddressFamilies=AF_UNIX AF_INET AF_INET6 AF_NETLINK\nStandardOutput=null\nStandardError=null\n[Install]\nWantedBy=multi-user.target\n'
+    unit='[Unit]\nDescription=One bounded Linux query qualification\nRequires=rolling-node.service rolling-egress.service\nAfter=rolling-node.service rolling-egress.service\n[Service]\nType=oneshot\nExecStart=/usr/bin/python3 /usr/local/lib/rolling-attest.py --qualify\nExecStopPost=/usr/bin/python3 /usr/local/lib/rolling-attest.py --qualification-stop\nTimeoutStartSec=6300\nTimeoutStopSec=45\nKillMode=control-group\nRestart=no\nUMask=0077\nEnvironment=LOG_LEVEL=silent\nUnsetEnvironment=NODE_PATH NODE_OPTIONS BB\nPrivateTmp=yes\nPrivateDevices=yes\nNoNewPrivileges=yes\nCapabilityBoundingSet=\nProtectSystem=strict\nProtectHome=yes\nReadWritePaths=/var/lib/rolling-bootstrap\nInaccessiblePaths=-/var/lib/rolling-bootstrap-private -/var/lib/cloud\nIPAddressDeny=any\nIPAddressAllow=localhost\nRestrictAddressFamilies=AF_UNIX AF_INET AF_INET6 AF_NETLINK\nStandardOutput=null\nStandardError=null\n[Install]\nWantedBy=multi-user.target\n'
     write('/etc/systemd/system/rolling-qualification.service',unit,0o644)
+    write('/etc/systemd/system/rolling-qualification-receipt.service','[Unit]\nDescription=Trusted bounded final receipt publisher\n[Service]\nType=oneshot\nExecStart=/usr/bin/python3 /usr/local/lib/rolling-attest.py --qualification-receipt\nTimeoutStartSec=35\nTimeoutStopSec=3\nRestart=no\nUMask=0077\nStandardOutput=null\nStandardError=null\n',0o644)
     run(['systemctl','daemon-reload']);run(['systemctl','enable','rolling-qualification.service'])
     run(['systemctl','start','--no-block','rolling-qualification.service'])
+
+def validated_qualification(q):
+    allowed={'schemaVersion','passed','stage','scope','manifestSha256','reportSha256','checks','readiness','anchors'}
+    if type(q.get('schemaVersion')) is not int or q['schemaVersion']!=1 or type(q.get('passed')) is not bool or set(q)-allowed or q.get('manifestSha256')!=PINS['manifest'] or q.get('scope')!='legacy-query-only': raise ValueError('Bad result')
+    if q.get('stage') not in ('complete','qualification-failed','readiness-failed','qualifier-failed','interrupted-unknown'): raise ValueError('Bad stage')
+    if 'checks' in q and (set(q['checks'])!=set(qualification_projection({})) or any(type(v) is not bool for v in q['checks'].values())): raise ValueError('Bad checks')
+    if 'reportSha256' in q and not re.fullmatch('[a-f0-9]{64}',q['reportSha256']): raise ValueError('Bad hash')
+    if 'readiness' in q: q['readiness']=readiness_projection(q['readiness'])
+    if 'anchors' in q: q['anchors']=qualification_anchors(q['anchors'])
+    return q
 
 def attest(check=False):
     good=False;count=0
@@ -485,14 +651,7 @@ def attest(check=False):
     result_path=BASE/'qualification/result.json'
     if result_path.exists():
         try:
-            q=json.loads(result_path.read_text())
-            allowed={'schemaVersion','passed','stage','scope','manifestSha256','reportSha256','checks','readiness','anchors'}
-            if type(q.get('schemaVersion')) is not int or q['schemaVersion']!=1 or type(q.get('passed')) is not bool or set(q)-allowed or q.get('manifestSha256')!=PINS['manifest'] or q.get('scope')!='legacy-query-only': raise ValueError('Bad result')
-            if q.get('stage') not in ('complete','qualification-failed','readiness-failed','qualifier-failed','interrupted-unknown'): raise ValueError('Bad stage')
-            if 'checks' in q and (set(q['checks'])!=set(qualification_projection({})) or any(type(v) is not bool for v in q['checks'].values())): raise ValueError('Bad checks')
-            if 'reportSha256' in q and not re.fullmatch('[a-f0-9]{64}',q['reportSha256']): raise ValueError('Bad hash')
-            if 'readiness' in q: q['readiness']=readiness_projection(q['readiness'])
-            if 'anchors' in q: q['anchors']=qualification_anchors(q['anchors'])
+            q=validated_qualification(read_bounded_json(result_path))
             output['qualification']=q
             output['linuxQueryQualified']=q.get('passed') is True and q.get('stage')=='complete' and bool(q.get('checks')) and all(q['checks'].values()) and 'readiness' in q and 'anchors' in q
         except Exception: output['qualification']=qualification_failure('interrupted-unknown')
@@ -530,6 +689,7 @@ def _execute(config, attestation_source):
         try:
             STAGE='controls';install_controls(config);write(BASE/'stage',STAGE)
             egress_before=verify_controls()
+            if 'receiptPutUrl' in config: write(PRIVATE/'receipt-put.json',json.dumps({'url':receipt_url(config['receiptPutUrl'])}))
             mark('monitor-install');install_attestation(attestation_source)
             if not RELEASE.exists():
                 STAGE='package';write(BASE/'stage',STAGE)
@@ -555,12 +715,15 @@ def _execute(config, attestation_source):
 
 def generate(config, now=None):
     config = validate(config, now)
-    pins = {'image':IMAGE, 'manifest':config['manifestSha256'], 'node':NODE_SHA, 'bb':BB_SHA, 'catalog':CATALOG_SHA, 'bootstrap':hashlib.sha256(HOST.encode()).hexdigest()}
+    # Remove comments only to stay within AWS's 16KiB compressed user-data cap.
+    # Tokenization preserves every string, executable token and line boundary.
+    runtime=tokenize.untokenize(t._replace(string='') if t.type==tokenize.COMMENT else t for t in tokenize.generate_tokens(io.StringIO(HOST).readline))
+    pins = {'image':IMAGE, 'manifest':config['manifestSha256'], 'node':NODE_SHA, 'bb':BB_SHA, 'catalog':CATALOG_SHA, 'bootstrap':hashlib.sha256(runtime.encode()).hexdigest()}
     prefix = 'PINS = '+repr(pins)+'\nNETWORK = '+repr(NETWORK)+'\nQUALIFICATION = '+repr(QUALIFICATION)+'\n'
-    dispatch = "\ntry:\n    if '--qualify' in sys.argv: qualify()\n    elif '--qualification-stop' in sys.argv:\n        qualify(aborted=True);run(['systemctl','start','rolling-attest.service'])\n        result=json.loads((BASE/'qualification/result.json').read_text())\n        if result.get('passed') is not True: run(['systemctl','start','--no-block','rolling-budget.service'])\n    else: attest('--check' in sys.argv)\nexcept Exception as error:\n    shutdown_failure(error)\n"
-    program = 'SOURCE = '+repr(prefix+HOST)+'\nCONFIG = '+repr(config)+'\nATTESTATION = SOURCE + '+repr(dispatch)+'\nexec(SOURCE)\nexecute(CONFIG, ATTESTATION)\n'
-    encoded = base64.b64encode(gzip.compress(program.encode(),mtime=0)).decode()
-    return "#!/bin/sh\nset -eu\numask 077\nexec /usr/bin/python3 - <<'ROLLING_BOOTSTRAP_PY'\nimport base64,gzip\nexec(compile(gzip.decompress(base64.b64decode('"+encoded+"')), '<private-bootstrap>', 'exec'))\nROLLING_BOOTSTRAP_PY\n"
+    dispatch = "\ntry:\n    if '--qualify' in sys.argv: qualify()\n    elif '--qualification-stop' in sys.argv:\n        qualify(aborted=True);run(['systemctl','start','rolling-qualification-receipt.service'],timeout=40)\n    elif '--qualification-receipt' in sys.argv: final_receipt()\n    else: attest('--check' in sys.argv)\nexcept Exception as error:\n    shutdown_failure(error)\n"
+    program = 'SOURCE = '+repr(prefix+runtime)+'\nCONFIG = '+repr(config)+'\nATTESTATION = SOURCE + '+repr(dispatch)+'\nexec(SOURCE)\nexecute(CONFIG, ATTESTATION)\n'
+    encoded = base64.b64encode(lzma.compress(program.encode(),preset=6)).decode()
+    return "#!/bin/sh\nset -eu\numask 077\nexec /usr/bin/python3 - <<'ROLLING_BOOTSTRAP_PY'\nimport base64,lzma\nexec(compile(lzma.decompress(base64.b64decode('"+encoded+"')), '<private-bootstrap>', 'exec'))\nROLLING_BOOTSTRAP_PY\n"
 
 
 def private_file(path):
