@@ -42,7 +42,7 @@ export function veniceMeteredProvider({client,model='kimi-k2-5',autoTopUp=false,
    return quote;
   },
   async execute(input,quote){
-   const result=await client.json('/api/v1/chat/completions',{method:'POST',body:{model:quote.modelId,messages:input.messages,tools:input.tools,max_completion_tokens:quote.maxTokens,n:1,stream:false,
+   const result=await client.json('/api/v1/chat/completions',{method:'POST',body:{model:quote.modelId,messages:input.messages,...(input.tools===undefined||(Array.isArray(input.tools)&&input.tools.length===0)?{}:{tools:input.tools}),max_completion_tokens:quote.maxTokens,n:1,stream:false,
     venice_parameters:{include_venice_system_prompt:false,enable_web_search:'off',enable_web_scraping:false,enable_x_search:false}}});
    let stage='missing-result/usage';
    try {

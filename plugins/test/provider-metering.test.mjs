@@ -10,7 +10,7 @@ test('reasoning cap, disabled billable extras and measured usage are preserved',
  let body;const client={balance:async()=>({canConsume:true,balanceUsd:10}),json:async(path,options)=>{
   if(path==='/api/v1/models')return {data:[{id:'kimi-k2-5',model_spec:spec}]};body=options.body;return {id:'r',choices:[{message:{role:'assistant',content:'Hello'}}],usage:{prompt_tokens:20,completion_tokens:10}};
  }};const provider=veniceMeteredProvider({client}),q=await provider.quote(input,1000000n),result=await provider.execute(input,q);
- assert.deepEqual(body,{model:'kimi-k2-5',messages:input.messages,tools:input.tools,max_completion_tokens:20,n:1,stream:false,venice_parameters:{include_venice_system_prompt:false,enable_web_search:'off',enable_web_scraping:false,enable_x_search:false}});assert.equal(body.max_completion_tokens,20);assert.equal(body.venice_parameters.enable_web_search,'off');assert.equal(body.venice_parameters.include_venice_system_prompt,false);assert.equal(result.charge,47n);
+ assert.deepEqual(body,{model:'kimi-k2-5',messages:input.messages,max_completion_tokens:20,n:1,stream:false,venice_parameters:{include_venice_system_prompt:false,enable_web_search:'off',enable_web_scraping:false,enable_x_search:false}});assert.equal(body.max_completion_tokens,20);assert.equal(body.venice_parameters.enable_web_search,'off');assert.equal(body.venice_parameters.include_venice_system_prompt,false);assert.equal(result.charge,47n);
 });
 test('concurrent low-credit quotes share one replenishment and recheck credits',async()=>{
  let credits=0,topUps=0,release;const entered=new Promise(r=>release=r);
@@ -48,3 +48,20 @@ test('mock HTTP200 malformed billing preserves actual HTTP status and stops afte
  const provider=veniceMeteredProvider({client}),q=await provider.quote(input,1000000n);
  await assert.rejects(provider.execute(input,q),error=>{assert.deepEqual(getVeniceDiagnostic(error),{category:'billing-validation',httpStatus:200,code:null,param:null,billingStage:'cap'});return true;});assert.equal(completions,1);
 });
+
+// Real operator-only HTTP400 diagnosis confirmed that an empty tools array is
+// rejected; do not change the model, output cap or billing flags to address it.
+for(const tools of [undefined,[],[{type:'function',function:{name:'lookup',description:'Read a public record',parameters:{type:'object',properties:{}}}}]])
+ test('outgoing model request omits empty tools and preserves real tools: '+(tools?.length??0)+(tools===undefined?' absent':''),async()=>{
+  let attempts=0;let body;
+  const client={balance:async()=>({canConsume:true,balanceUsd:10}),json:async(path,options)=>{
+   if(path.endsWith('/models'))return {data:[{id:'kimi-k2-5',model_spec:spec}]};
+   attempts++;body=JSON.parse(JSON.stringify(options.body));
+   assert(!(Object.hasOwn(body,'tools')&&Array.isArray(body.tools)&&body.tools.length===0),'Provider rejects empty tools');
+   return valid();
+  }};
+  const request={...input,...(tools===undefined?{}:{tools})};if(tools===undefined)delete request.tools;
+  const p=veniceMeteredProvider({client}),q=await p.quote(request,1000000n);await p.execute(request,q);
+  assert.equal(attempts,1);assert.equal(body.max_completion_tokens,20);
+  if(tools?.length)assert.deepEqual(body.tools,tools);else assert.equal(Object.hasOwn(body,'tools'),false);
+ });
