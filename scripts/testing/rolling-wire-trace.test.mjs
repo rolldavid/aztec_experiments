@@ -1,0 +1,169 @@
+// Labelled synthetic transport fixtures. No proof, wallet or privacy acceptance.
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import http from 'node:http';
+import {once} from 'node:events';
+import {createRollingWireTrace,WIRE_LABELS,WIRE_PHASES} from './rolling-wire-trace.mjs';
+import {encodeJob} from '../../shared/remote-prover-wire.mjs';
+const a='0x'+'11'.repeat(32),b='0x'+'22'.repeat(32),tag='0x'+'33'.repeat(32);
+const make=limits=>createRollingWireTrace({roles:{a,b},limits});
+const rpc=(method='node_getContract',params=[a])=>JSON.stringify({jsonrpc:'2.0',id:1,method,params});
+const options=(body=rpc())=>({method:'POST',body});
+const origin='http://127.0.0.1:8089';
+async function sent(trace,url=origin+'/v1/node',init=options()){
+ return trace.wrapFetch(()=>Promise.resolve(new Response('{}')))(url,init);
+}
+
+test('synthetic real HTTP: unchanged serialized bytes, response/Promise identity, one request and caller-owned stream',async()=>{
+ const requests=[];const server=http.createServer((req,res)=>{const chunks=[];req.on('data',x=>chunks.push(x));req.on('end',()=>{requests.push({url:req.url,body:Buffer.concat(chunks).toString()});res.setHeader('content-type','application/json');res.end('{"fixture":true}');});});
+ server.listen(0,'127.0.0.1');await once(server,'listening');
+ try{
+  const base='http://127.0.0.1:'+server.address().port,trace=make();trace.registerEndpoint('trusted-query',base);
+  const receiver={},url=new URL(base+'/v1/node'),init=options();let underlying,promise,actual;
+  const wrapped=trace.wrapFetch(function(...args){assert.equal(this,receiver);assert.equal(args[0],url);assert.equal(args[1],init);underlying=fetch(...args);underlying.then(x=>actual=x);return underlying;});
+  promise=wrapped.call(receiver,url,init);assert.equal(promise,underlying);
+  const response=await promise;assert.equal(response,actual);assert.equal(response.bodyUsed,false);assert.deepEqual(await response.json(),{fixture:true});
+  assert.deepEqual(requests,[{url:'/v1/node',body:init.body}]);const result=trace.snapshot();assert.equal(result.requestCoverageComplete,true);assert.deepEqual(result.rows[0].roles,['a']);assert.equal(result.rows[0].status,200);assert.equal(result.requests,1);
+ }finally{server.closeAllConnections();await new Promise(r=>server.close(r));}
+});
+test('synthetic forwarded synchronous throw and rejection preserve identity without error inspection',async()=>{
+ for(const sync of [true,false]){const trace=make();trace.registerEndpoint('trusted-query',origin);let calls=0;
+ const error=Object.create(null);Object.defineProperty(error,'message',{get(){throw Error('secret getter');}});
+ const wrapped=trace.wrapFetch(()=>{calls++;if(sync)throw error;return Promise.reject(error);});
+ if(sync)assert.throws(()=>wrapped(origin+'/v1/node',options()),v=>v===error);else await assert.rejects(wrapped(origin+'/v1/node',options()),v=>v===error);
+ assert.equal(calls,1);assert.equal(trace.snapshot().rows[0].outcome,'rejected');assert.equal(trace.snapshot().pending,0);
+ }
+});
+test('synthetic pending request cannot pass, non-Promise forwards untouched and is unsupported',async()=>{
+ const trace=make();trace.registerEndpoint('trusted-query',origin);let resolve;const p=new Promise(r=>resolve=r);
+ assert.equal(trace.wrapFetch(()=>p)(origin+'/v1/node',options()),p);assert.equal(trace.snapshot().requestCoverageComplete,false);resolve(new Response());await p;assert.equal(trace.snapshot().pending,0);
+ const value={};assert.equal(trace.wrapFetch(()=>value)(origin+'/v1/node',options()),value);assert.equal(trace.snapshot().unsupported,1);
+});
+test('synthetic no observations never pass',()=>assert.equal(make().snapshot().requestCoverageComplete,false));
+test('synthetic exact endpoint labels distinguish topology and reject ambiguous aliases',async()=>{
+ const trace=make();trace.registerEndpoint('trusted-query',origin);trace.registerEndpoint('trusted-proof',origin);
+ assert.throws(()=>trace.registerEndpoint('ordinary-node',origin));assert.throws(()=>trace.registerEndpoint('trusted-query',origin));
+ const labels=['trusted-upstream','ordinary-node','public-l1','public-reader'];
+ for(const [i,label]of labels.entries()){
+  const url='http://127.0.0.1:'+(8090+i);trace.registerEndpoint(label,url);
+  await sent(trace,url+(label==='public-reader'?'/api/feed':'/'),label==='public-reader'?{method:'GET'}:options(label==='public-l1'?rpc('eth_chainId',[]):rpc()));
+ }
+ assert.deepEqual(trace.snapshot().rows.map(x=>x.label),labels);assert.equal(trace.snapshot().requestCoverageComplete,true);
+ for(const invalid of ['http://user:secret@localhost','http://localhost/?secret=yes','http://localhost/path','file:///tmp/x'])assert.throws(()=>make().registerEndpoint('trusted-query',invalid));
+});
+for(const [name,url,init]of [
+ ['unknown origin','http://127.0.0.1:8999/v1/node',options()],
+ ['unknown path',origin+'/elsewhere?PRIVATE_SENTINEL',options()],
+ ['query on private RPC',origin+'/v1/node?PRIVATE_SENTINEL',options()],
+ ['wrong verb',origin+'/v1/node',{method:'GET'}],
+ ['credentials',origin.replace('http://','http://user:PRIVATE_SENTINEL@')+'/v1/node',options()],
+ ['unknown method',origin+'/v1/node',options(rpc('node_PRIVATE_SENTINEL',[]))],
+ ['unknown envelope field',origin+'/v1/node',options(JSON.stringify({jsonrpc:'2.0',id:1,method:'node_getContract',params:[a],secret:'PRIVATE_SENTINEL'}))],
+ ['unsupported body',origin+'/v1/node',options(new ReadableStream())],
+ ['invalid JSON',origin+'/v1/node',options('PRIVATE_SENTINEL')],
+ ['Request object',new Request(origin+'/v1/node'),options()],
+])test('synthetic coverage fails closed: '+name,async()=>{
+ const trace=make();trace.registerEndpoint('trusted-query',origin);let calls=0;await trace.wrapFetch(()=>{calls++;return Promise.resolve(new Response());})(url,init);
+ const snapshot=trace.snapshot();assert.equal(calls,1);assert.equal(snapshot.requestCoverageComplete,false);assert(!JSON.stringify(snapshot).includes('PRIVATE_SENTINEL'));
+});
+test('synthetic batches aggregate known methods and exact human roles without persisting addresses',async()=>{
+ const trace=make();trace.registerEndpoint('trusted-query',origin);
+ await sent(trace,undefined,options(JSON.stringify([JSON.parse(rpc()),JSON.parse(rpc('node_getContract',[b])),JSON.parse(rpc('node_getPrivateLogsByTags',[{tags:[tag]}]))])));
+ const result=trace.snapshot();assert.equal(result.requestCoverageComplete,true);assert.deepEqual(result.rows[0].roles,['a','b']);assert.equal(result.rows[0].methods.length,3);
+ assert(!JSON.stringify(result).includes(a));assert(!JSON.stringify(result).includes(b));assert(!JSON.stringify(result).includes(tag));
+});
+test('synthetic scalar relations normalize decimal and hex and expose aggregates only',async()=>{
+ const trace=make();trace.registerEndpoint('trusted-query',origin);trace.registerEndpoint('trusted-upstream','http://127.0.0.1:8090');
+ trace.setPhase('a-name-1');await sent(trace,undefined,options(rpc('node_getContract',[tag])));
+ trace.setPhase('a-name-2');await sent(trace,undefined,options(rpc('node_getContract',[BigInt(tag).toString()])));
+ trace.setPhase('b-name-1');await sent(trace,'http://127.0.0.1:8090/',options(rpc('node_getContract',[tag])));
+ const s=trace.snapshot();assert.equal(s.relationships.sameActorAcrossPhases,1);assert.equal(s.relationships.acrossActors,1);assert.equal(s.relationships.acrossEndpoints,1);
+ assert(!JSON.stringify(s).includes(tag));assert(!JSON.stringify(s).includes(BigInt(tag).toString()));
+ assert.throws(()=>trace.setPhase('PRIVATE_SENTINEL'));
+});
+test('synthetic public reader query checked, exact scalar observed and duplicate/unknown parameters fail',async()=>{
+ const trace=make();trace.registerEndpoint('public-reader',origin);
+ await sent(trace,origin+'/api/profile?nameId='+a,{method:'GET'});assert.deepEqual(trace.snapshot().rows[0].roles,['a']);assert.equal(trace.snapshot().requestCoverageComplete,true);
+ for(const suffix of ['?nameId=x&nameId=y','?owner=PRIVATE_SENTINEL'])await sent(trace,origin+'/api/profile'+suffix,{method:'GET'});
+ assert.equal(trace.snapshot().unknown,2);assert(!JSON.stringify(trace.snapshot()).includes('PRIVATE_SENTINEL'));
+});
+test('synthetic proof frame counts bounded opaque witnesses without retaining metadata or witness data',async()=>{
+ const trace=make();trace.registerEndpoint('trusted-proof',origin);
+ const body=encodeJob({board:a,chainId:'31337',rollupVersion:'1',mode:'real',circuits:['a'.repeat(64)]},[new TextEncoder().encode('PRIVATE_SENTINEL')]);
+ await sent(trace,origin+'/v1/jobs',options(body));await sent(trace,origin+'/v1/jobs/'+'b'.repeat(64),{});
+ const s=trace.snapshot();assert.equal(s.requestCoverageComplete,true);assert.equal(s.rows[0].witnessCount,1);assert(!JSON.stringify(s).includes('PRIVATE_SENTINEL'));assert(!JSON.stringify(s).includes(a));
+});
+test('synthetic malformed proof length cannot pass and does not prevent original call',async()=>{
+ const trace=make();trace.registerEndpoint('trusted-proof',origin);await sent(trace,origin+'/v1/jobs',options(new Uint8Array([0,0,0,250])));
+ assert.equal(trace.snapshot().observerErrors,1);assert.equal(trace.snapshot().requests,1);
+});
+test('synthetic transaction requests are explicitly incomplete pending separate decoded public effects',async()=>{
+ const trace=make();trace.registerEndpoint('trusted-query',origin);await sent(trace,undefined,options(rpc('node_sendTx',[{PRIVATE_SENTINEL:'opaque'}])));
+ assert.equal(trace.snapshot().opaqueTransactions,1);assert.equal(trace.snapshot().requestCoverageComplete,false);assert(!JSON.stringify(trace.snapshot()).includes('PRIVATE_SENTINEL'));
+});
+for(const [name,limits,body]of [
+ ['body',{maxBodyBytes:10},rpc()],['nodes',{maxNodes:2},rpc('node_getContract',[[[[a]]]])],
+ ['depth',{maxDepth:2},rpc('node_getContract',[[[[a]]]])],['relations',{maxRelations:1},rpc('node_getContract',[a,b])],
+ ['batch',{},JSON.stringify(Array.from({length:33},()=>JSON.parse(rpc())))],
+])test('synthetic '+name+' cap marks incomplete coverage',async()=>{
+ const trace=make(limits);trace.registerEndpoint('trusted-query',origin);await sent(trace,undefined,options(body));assert(trace.snapshot().truncated>0);assert.equal(trace.snapshot().requestCoverageComplete,false);
+});
+test('synthetic request cap bounds stored rows while forwarding all original requests once',async()=>{
+ const trace=make({maxRequests:1});trace.registerEndpoint('trusted-query',origin);let count=0;
+ const f=trace.wrapFetch(()=>{count++;return Promise.resolve(new Response());});await f(origin+'/v1/node',options());await f(origin+'/v1/node',options());
+ assert.equal(count,2);assert.equal(trace.snapshot().rows.length,1);assert.equal(trace.snapshot().truncated,1);
+});
+test('synthetic accessor is never invoked by observer; original may read it exactly once',async()=>{
+ const trace=make();trace.registerEndpoint('trusted-query',origin);let reads=0;const init={method:'POST',get body(){reads++;return 'PRIVATE_SENTINEL';}};
+ await trace.wrapFetch((url,value)=>{assert.equal(value,init);assert.equal(value.body,'PRIVATE_SENTINEL');return Promise.resolve(new Response());})(origin+'/v1/node',init);
+ assert.equal(reads,1);assert.equal(trace.snapshot().observerErrors,1);assert(!JSON.stringify(trace.snapshot()).includes('PRIVATE_SENTINEL'));
+});
+test('synthetic mutable snapshot cannot change internal evidence',async()=>{
+ const trace=make();trace.registerEndpoint('trusted-query',origin);await sent(trace);const s=trace.snapshot();s.rows[0].roles.push('PRIVATE_SENTINEL');s.rows[0].methods.push('PRIVATE_SENTINEL');s.relationships.acrossActors=999;
+ assert(!JSON.stringify(trace.snapshot()).includes('PRIVATE_SENTINEL'));assert.equal(trace.snapshot().relationships.acrossActors,0);
+});
+test('synthetic exact bounded configuration and fixed labels/phases',()=>{
+ assert(WIRE_LABELS.includes('ordinary-node'));assert(WIRE_PHASES.includes('recovery-b'));
+ for(const config of [{roles:{a,b:a}},{roles:{a,b:'PRIVATE_SENTINEL'}},{roles:{a,b},limits:{maxRequests:Infinity}},{roles:{a,b},limits:{arbitrary:1}}])assert.throws(()=>createRollingWireTrace(config));
+});
+
+test('synthetic proof metadata unknown fields fail coverage without reading witnesses',async()=>{
+ const trace=make();trace.registerEndpoint('trusted-proof',origin);
+ const body=encodeJob({board:a,chainId:'31337',rollupVersion:'1',mode:'real',circuits:['a'.repeat(64)],extra:'PRIVATE_SENTINEL'},[new Uint8Array([1])]);
+ await sent(trace,origin+'/v1/jobs',options(body));assert.equal(trace.snapshot().requestCoverageComplete,false);assert.equal(trace.snapshot().observerErrors,1);assert(!JSON.stringify(trace.snapshot()).includes('PRIVATE_SENTINEL'));
+});
+test('synthetic inherited request fields fail observation without invoking getters',async()=>{
+ const trace=make();trace.registerEndpoint('trusted-query',origin);let reads=0;const init=Object.create({get method(){reads++;return 'POST';}});init.body=rpc();
+ await trace.wrapFetch((url,value)=>{assert.equal(value.method,'POST');return Promise.resolve(new Response());})(origin+'/v1/node',init);
+ assert.equal(reads,1);assert.equal(trace.snapshot().observerErrors,1);
+});
+test('synthetic URL/parameter and scalar bounds cannot return complete coverage',async()=>{
+ for(const [url,init]of [[origin+'/v1/node?x='+ 'x'.repeat(8200),options()],[origin+'/api/directory?query='+'x'.repeat(4100),{method:'GET'}],[origin+'/v1/node',options(rpc('node_getContract',['x'.repeat(4100)]))]]){
+  const trace=make();trace.registerEndpoint(url.includes('/api/')?'public-reader':'trusted-query',origin);await sent(trace,url,init);assert.equal(trace.snapshot().requestCoverageComplete,false);
+ }
+});
+test('synthetic queue with actual prover HTTP adapter binds /healthz, not a guessed alias',async()=>{
+ const {createProverServer}=await import('../../prover/server.mjs');
+ const server=createProverServer({queue:{stats:()=>({running:0})},board:a,chainId:31337,rollupVersion:1});
+ server.listen(0,'127.0.0.1');await once(server,'listening');
+ try{const base='http://127.0.0.1:'+server.address().port,trace=make();trace.registerEndpoint('trusted-query',base);const fetchObserved=trace.wrapFetch(fetch);
+  const good=await fetchObserved(base+'/healthz');assert.equal(good.status,200);assert.equal(good.bodyUsed,false);await good.json();assert.equal(trace.snapshot().requestCoverageComplete,true);
+  const bad=await fetchObserved(base+'/health');assert.equal(bad.status,404);await bad.json();assert.equal(trace.snapshot().unknown,1);
+ }finally{server.closeAllConnections();await new Promise(r=>server.close(r));}
+});
+test('synthetic API data through actual public reader uses /api and caller-owned stream',async()=>{
+ const {createPublicReader}=await import('../../apps/rolling/reader-client.mjs');let received;
+ const server=http.createServer((req,res)=>{received=req.url;res.setHeader('content-type','application/json');res.end(JSON.stringify({schemaVersion:1,scope:{boardAddress:a},complete:true}));});
+ server.listen(0,'127.0.0.1');await once(server,'listening');
+ try{const base='http://127.0.0.1:'+server.address().port,trace=make();trace.registerEndpoint('public-reader',base);const observed=trace.wrapFetch(fetch);
+  const read=createPublicReader({fetch:(url,init)=>observed(base+url,init)});await read('profile',{nameId:a});
+  assert.equal(received,'/api/profile?nameId='+a);assert.equal(trace.snapshot().requestCoverageComplete,true);assert.deepEqual(trace.snapshot().rows[0].roles,['a']);
+ }finally{server.closeAllConnections();await new Promise(r=>server.close(r));}
+});
+
+test('synthetic fixed C01 parent miner methods are classified without accepting arbitrary development commands',async()=>{
+ const trace=make();trace.registerEndpoint('public-l1',origin);
+ for(const [method,params]of [['anvil_getAutomine',[]],['evm_setAutomine',[false]],['evm_mine',[12345]]])await sent(trace,origin+'/',options(rpc(method,params)));
+ assert.equal(trace.snapshot().requestCoverageComplete,true);await sent(trace,origin+'/',options(rpc('anvil_PRIVATE_SENTINEL',[])));
+ assert.equal(trace.snapshot().unknown,1);assert.equal(trace.snapshot().requestCoverageComplete,false);
+});
