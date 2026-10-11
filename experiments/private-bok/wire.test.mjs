@@ -70,3 +70,17 @@ test('throwing diagnostic getters and methods cannot replace the original failur
     assert.deepEqual(failureDiagnostic(error), {category: 'unclassified', frames: [], functions: []});
   }
 });
+
+test('changing getters cannot exchange validated diagnostic values for private data', () => {
+  for (const replacement of ['private_sentinel', () => 'private_sentinel']) {
+    let lineReads = 0, columnReads = 0, fileReads = 0, nameReads = 0;
+    const error = {getNoirCallStack: () => [{
+      get line() {return lineReads++ === 0 ? 1 : replacement;},
+      get column() {return columnReads++ === 0 ? 2 : replacement;},
+      get filePath() {return fileReads++ === 0 ? 'main.nr' : replacement;}}],
+      getCallStack: () => [{get functionName() {return nameReads++ === 0 ? 'request' : replacement;}}]};
+    assert.deepEqual(failureDiagnostic(error), {category: 'unclassified',
+      frames: [{file: 'main.nr', line: 1, column: 2}], functions: ['request']});
+    assert.deepEqual([lineReads, columnReads, fileReads, nameReads], [1, 1, 1, 1]);
+  }
+});

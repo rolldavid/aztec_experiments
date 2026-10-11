@@ -49,11 +49,16 @@ export function failureDiagnostic(error) {
     if (!Array.isArray(rawFrames) || !Array.isArray(rawFunctions)) return empty();
     const coordinate = value => Number.isInteger(value) && value > 0 && value <= 1000000;
     const frames = rawFrames.slice(0, 8).flatMap(frame => {
-      if (!frame || typeof frame !== 'object' || !coordinate(frame.line) || !coordinate(frame.column)) return [];
-      const file = typeof frame.filePath === 'string' ? frame.filePath.split(/[\\/]/).at(-1) : '';
-      return files.has(file) ? [{file, line: frame.line, column: frame.column}] : [];
+      if (!frame || typeof frame !== 'object') return [];
+      const {line, column, filePath} = frame;
+      if (!coordinate(line) || !coordinate(column)) return [];
+      const file = typeof filePath === 'string' ? filePath.split(/[\\/]/).at(-1) : '';
+      return files.has(file) ? [{file, line, column}] : [];
     });
-    const functions = rawFunctions.slice(0, 8).flatMap(frame => names.has(frame?.functionName) ? [frame.functionName] : []);
+    const functions = rawFunctions.slice(0, 8).flatMap(frame => {
+      const name = frame?.functionName;
+      return names.has(name) ? [name] : [];
+    });
     return {category: categories.find(value => message.includes(value)) ?? 'unclassified', frames, functions};
   } catch {
     // Diagnostics must never replace the original failure, even if an SDK
