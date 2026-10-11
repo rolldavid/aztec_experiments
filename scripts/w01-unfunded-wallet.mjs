@@ -22,14 +22,16 @@ export async function publishTestPrivateFee({wallet,node,owner,artifact}) {
  await requirePublishedPrivateFee(node,instance);
 }
 
-export async function prepareW01UnfundedWallet({node,preparation,directory,persistentDirectory}) {
+export async function prepareW01UnfundedWallet({node,preparation,directory,persistentDirectory,observeNode}) {
  assert(path.isAbsolute(directory));
  if(persistentDirectory!==undefined){assert(path.isAbsolute(persistentDirectory));assert.equal(path.dirname(persistentDirectory),directory);}
  const raw=JSON.parse(await fs.readFile(path.join(ROOT,'apps/src/billboard/private_fee_artifact.json')));
  const artifact=loadContractArtifact(raw),instance=await derivePrivateFeeInstance(raw),info=await node.getNodeInfo();
  const [generated]=await generateSchnorrAccounts(1,'schnorr_initializerless');
  const restored=await restoreApplicationAuthor(generated),author=restored.author;
- assert(!author.address.equals(preparation.account.address));assert.equal(await getFeeJuiceBalance(author.address,node),0n);
+ assert(!author.address.equals(preparation.account.address));
+ if(observeNode) node=await observeNode({node,human:author.address,operator:preparation.account.address});
+ assert.equal(await getFeeJuiceBalance(author.address,node),0n);
  let wallet;
  const open=()=>EmbeddedWallet.create(node,{ephemeral:persistentDirectory===undefined,pxe:{
   ...(persistentDirectory===undefined?{}:{dataDirectory:persistentDirectory}),proverEnabled:true,
@@ -45,7 +47,7 @@ export async function prepareW01UnfundedWallet({node,preparation,directory,persi
   await wallet.registerContract(instance,artifact);
   // Private preparation material never enters JSON evidence.
   return Object.defineProperties({walletRestore:restored.observation},{
-   raw:{value:raw},artifact:{value:artifact},instance:{value:instance},info:{value:info},author:{value:author},
+   node:{value:node},raw:{value:raw},artifact:{value:artifact},instance:{value:instance},info:{value:info},author:{value:author},
    wallet:{get:()=>wallet},close:{value:close},
    reopen:{value:async()=>{assert(persistentDirectory!==undefined&&!wallet);wallet=await open();}},
   });

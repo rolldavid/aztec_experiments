@@ -9,10 +9,11 @@ import {GasFees} from '@aztec-labs/stdlib/gas';
 import {estimatePrivateFeeTransaction} from '../shared/private-fee-estimation.mjs';
 import {preparePrivateFeePayment} from '../shared/private-fee-client.mjs';
 import {bridgePrivateFeeCredit} from './w01-private-funding.mjs';
-export async function prepareW01PrivateFees({node,preparation,l1Client,directory,fundingDirectory,rpcUrl,mineL1,standalone=false,persistentDirectory,gasSettings,reportStage:mark}){
+export async function prepareW01PrivateFees({node,preparation,l1Client,directory,fundingDirectory,rpcUrl,mineL1,standalone=false,persistentDirectory,gasSettings,reportStage:mark,observeNode}){
   const observation={passed:false,ownerless:true,offchainIssuer:false,operatorFunding:false,chargesMaximumFee:false};let setup;
   try{
-    setup=await prepareW01UnfundedWallet({node,preparation,directory,persistentDirectory});
+    setup=await prepareW01UnfundedWallet({node,preparation,directory,persistentDirectory,observeNode});
+    node=setup.node;
     const {raw,artifact,instance,info,author}=setup;observation.walletRestore=setup.walletRestore;
     assert(path.isAbsolute(fundingDirectory));
     const poolBefore=await getFeeJuiceBalance(instance.address,node);

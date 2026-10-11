@@ -1,5 +1,6 @@
 // TEST ONLY. The parent fixture owns chain, mining, proof policy and transactions.
 import assert from 'node:assert/strict';
+import {createPrivateBokNodeObserver} from './private-bok-node-observer.mjs';
 import path from 'node:path';
 import {mkdir} from 'node:fs/promises';
 import {capturePrivateFeeSetupFailure, capturePublicFeeRecovery} from '../private-fee-evidence.mjs';
@@ -55,11 +56,15 @@ export function createPrivateBokFeesPreparer({prepareFees, mkdir: makeDirectory}
     // receives local ETH/token faucet funding, explicitly retained below.
     const observation = {passed: false, ownerless: true, operatorFunding: false, testFaucetFunding: true,
       humanPublicFeeFallback: false, privateCreditAndPoolReconciled: false, walletCleanupComplete: false, funding: {}};
+    assert(ctx.observeNodeCalls === undefined || typeof ctx.observeNodeCalls === 'boolean');
+    const nodeObserver = ctx.observeNodeCalls ? createPrivateBokNodeObserver() : undefined;
+    const refreshObserver = () => { if(nodeObserver) observation.nodeObserver = nodeObserver.snapshot(); };
     const helpers = [];
     let closePromise, activeRole, preparingRole, failedSetupCleanup = true;
     const close = () => {
       if (!closePromise) closePromise = (async () => {
         const results = await Promise.allSettled(helpers.map(helper => Promise.resolve().then(() => helper.close())));
+        refreshObserver();
         const helpersClosed = results.every(result => result.status === 'fulfilled');
         observation.walletCleanupComplete = helpersClosed && failedSetupCleanup;
         if (!helpersClosed) {
@@ -79,7 +84,8 @@ export function createPrivateBokFeesPreparer({prepareFees, mkdir: makeDirectory}
         await makeDirectory(fundingDirectory, {mode: 0o700});
         preparingRole = role;
         const helper = await prepareFees({node, preparation, l1Client, directory, fundingDirectory,
-          rpcUrl, mineL1, reportStage: mark, standalone});
+          rpcUrl, mineL1, reportStage: mark, standalone,
+          ...(nodeObserver ? {observeNode: args => nodeObserver.observeNode({...args, role})} : {})});
         helpers.push(helper);
         preparingRole = undefined;
         // Persist only validated public receipt fields as soon as each helper
@@ -141,6 +147,7 @@ export function createPrivateBokFeesPreparer({prepareFees, mkdir: makeDirectory}
             poolAfter: String(BigInt(ownerPoolBefore) + ownerRemaining + otherRemaining),
           }});
       };
+      refreshObserver();
       return Object.defineProperties(observation, {wallet: {value: wallet}, owner: {value: owner},
         operator: {value: operator}, otherUser: {value: otherUser}, paymentFor: {value: paymentFor},
         verify: {value: verify}, close: {value: close}});
