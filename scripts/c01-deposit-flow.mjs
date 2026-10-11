@@ -12,7 +12,6 @@ import {Fr} from '@aztec-labs/foundation/curves/bn254';
 import {EthAddress} from '@aztec-labs/foundation/eth-address';
 import {poseidon2HashWithSeparator} from '@aztec-labs/foundation/crypto/poseidon';
 import {sha256ToField} from '@aztec-labs/foundation/crypto/sha256';
-import {loadContractArtifact} from '@aztec-labs/stdlib/abi';
 import {computeSecretHash,siloNullifier} from '@aztec-labs/stdlib/hash';
 import {NoteStatus} from '@aztec-labs/stdlib/note';
 import {L1Actor,L2Actor,L1ToL2Message} from '@aztec-labs/stdlib/messaging';
@@ -23,7 +22,7 @@ import {contractInputs} from './artifact-provenance.mjs';
 import {ROOT,assertNodeVersion,assertAztecPackages} from './toolchain.mjs';
 import {proveApplicationAction,measureApplicationGas} from './prove-application-action.mjs';
 import {drainT04Checkpoints} from './u01-browser-flow.mjs';
-const BOARD='apps/src/billboard/billboard_artifact.json';
+import {checkedC01BoardArtifact,c01BoardEconomics,c01BoardConfigHash} from './c01-board-flow.mjs';
 const PORTAL='billboard/portal/out/BillboardPortal.sol/BillboardPortal.json';
 const sha=bytes=>createHash('sha256').update(bytes).digest('hex');
 const integer=value=>BigInt(value.toString());
@@ -34,13 +33,14 @@ async function artifacts(preparation,ready){
   const bytes=await fs.readFile(path.join(ROOT,'.build/contracts-manifest.json')),manifest=JSON.parse(bytes);
   assert.equal(sha(bytes),preparation.artifactHashes['.build/contracts-manifest.json']);
   assert.deepEqual(contractInputs(ROOT),manifest.inputs);
-  const boardBytes=await fs.readFile(path.join(ROOT,BOARD)),portalBytes=await fs.readFile(path.join(ROOT,PORTAL));
-  assert.equal(sha(boardBytes),manifest.noir);assert.equal(sha(boardBytes),preparation.artifactHashes[BOARD]);
+  const checked=await checkedC01BoardArtifact(preparation.boardProfile);
+  assert.deepEqual(checked.artifactHashes,preparation.artifactHashes);
+  const portalBytes=await fs.readFile(path.join(ROOT,PORTAL));
   assert.equal(sha(portalBytes),ready.artifactHashes[PORTAL]);
   const portal=JSON.parse(portalBytes);assert.equal(sha(portal.bytecode.object),manifest.portal);
-  const board=loadContractArtifact(JSON.parse(boardBytes));
+  const board=checked.artifact;
   assert(board.storageLayout.deposits?.slot instanceof Fr,'Generated deposit storage slot missing');
-  return {board,portal,hashes:{[BOARD]:sha(boardBytes),[PORTAL]:sha(portalBytes),'.build/contracts-manifest.json':sha(bytes)}};
+  return {board,portal,hashes:{...checked.artifactHashes,[PORTAL]:sha(portalBytes)}};
 }
 
 /** Result's enumerable fields are evidence-safe. `claim` is nonenumerable, in-memory only,
@@ -86,6 +86,15 @@ export async function depositAndClaimC01({node,preparation,instance,l1Client,rea
     const manager=await wallet.createSchnorrInitializerlessAccount(account.secret,account.salt,account.signingKey,'c01-disposable');
     assert(manager.address.equals(account.address));await wallet.registerContract(instance,checked.board);await wallet.pxe.sync();
     const board=Contract.at(instance.address,checked.board,wallet);
+    const economics=c01BoardEconomics(preparation);
+    const expectedConfig=c01BoardConfigHash(preparation,{rollupAddress,rollupVersion:info.rollupVersion,boardAddress:instance.address});
+    const assertConfig=async()=>{
+      assert.equal(integer((await board.methods.get_config_hash().simulate({from:account.address})).result),expectedConfig.toBigInt(),'Board configuration differs from deployment');
+      assert.equal((await read('CONFIG_HASH')).toLowerCase(),expectedConfig.toString());
+      assert.equal(integer(await read('MIN_DEPOSIT')),BigInt(economics.minDeposit));
+      assert.equal(integer(await read('MAX_DEPOSIT')),BigInt(economics.maxDeposit));
+    };
+    await assertConfig();
     const amount=integer(await read('MIN_DEPOSIT'));assert(amount>0n&&amount<=integer(await read('MAX_DEPOSIT')));
     const depositor=l1Client.account.address.toLowerCase();
     const before=await read('getDeposit',[depositor]);assert.equal(integer(before),0n);
@@ -190,7 +199,9 @@ export async function depositAndClaimC01({node,preparation,instance,l1Client,rea
     await canonicalDeposit();await wallet.pxe.sync();mark('check-delivered-deposit-note');
     const logical=(await board.methods.get_deposit_info(account.address,chain).simulate({from:account.address})).result;
     assert(Array.isArray(logical)&&logical.length===10);const fields=logical.map(integer);
-    const base=integer((await board.methods.get_base_cooldown().simulate({from:account.address})).result);
+    await assertConfig();
+    const base=preparation.boardProfile==='rolling'?BigInt(economics.baseCooldown):integer((await board.methods.get_base_cooldown().simulate({from:account.address})).result);
+    assert.equal(base,BigInt(economics.baseCooldown));
     const nextAllowed=integer(anchor.globalVariables.timestamp)+base; // Deposited exactly MIN_DEPOSIT.
     assert.deepEqual(fields,[1n,chain.toBigInt(),amount,BigInt(depositor),0n,0n,0n,0n,0n,nextAllowed]);
     // This is a test-only diagnostic read. The application continues to use its typed logical utility.
