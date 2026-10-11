@@ -302,3 +302,7 @@ export async function avatarLog(ctx){
     if(wallet){await wallet.stop();observation.walletStopped=true;}
   }
 }
+
+export async function privateBok(ctx) {
+  return (await import('./private-bok-fixture.mjs')).runPrivateBokFixture(ctx);
+}
