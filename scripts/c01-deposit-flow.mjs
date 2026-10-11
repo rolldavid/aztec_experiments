@@ -43,23 +43,39 @@ async function artifacts(preparation,ready){
   return {board,portal,hashes:{...checked.artifactHashes,[PORTAL]:sha(portalBytes)}};
 }
 
+// Pinned EmbeddedWallet keeps its actual AztecNode on BaseWallet.aztecNode.
+// A borrowed wallet cannot be retargeted to the owned boundary-test oracle proxy.
+export async function assertC01BorrowedClaimWallet({claimWallet, node, authorAccount, qualifyWrongOrigin = false}) {
+  assert(claimWallet && authorAccount?.address, 'Borrowed claim wallet and author required');
+  assert.equal(qualifyWrongOrigin, false, 'Inbox boundary probes require a helper-owned wallet');
+  assert(claimWallet.aztecNode === node, 'Borrowed claim wallet must use this exact node');
+  assert.equal(typeof claimWallet.getAccounts, 'function', 'Registered wallet accounts required');
+  const accounts = await claimWallet.getAccounts();
+  assert(accounts.some(account => account.item.equals(authorAccount.address)), 'Claim author is not registered in borrowed wallet');
+}
+
 /** Result's enumerable fields are evidence-safe. `claim` is nonenumerable, in-memory only,
  * and includes private note/identity/secret material for a later no-post withdrawal.
- * Owns one ephemeral PXE wallet; caller owns sequencer/node/prover shutdown.
+ * By default owns one ephemeral PXE wallet. An explicit claimWallet remains parent-owned;
+ * only its already registered author address is required. Caller owns node/prover shutdown.
  */
-export async function depositAndClaimC01({node,preparation,instance,l1Client,ready,settlement,directory,rpcUrl,dateProvider,mineL1,reportStage,authorAccount,privateFeeAction,payerMode,qualifyWrongOrigin=false}){
+export async function depositAndClaimC01({node,preparation,instance,l1Client,ready,settlement,directory,rpcUrl,dateProvider,mineL1,reportStage,authorAccount,claimWallet,privateFeeAction,payerMode,qualifyWrongOrigin=false}){
   assert(['private','genesis'].includes(payerMode),'Explicit fixture payer mode required');
   if(payerMode==='private')assert.equal(typeof privateFeeAction,'function');
   else assert.equal(privateFeeAction,undefined,'Genesis fixture must not receive private fee route');
+  const ownsWallet=claimWallet===undefined;
   let stage='preflight',wallet,sequencer,previousSequencerConfig;
   const observation={passed:false,scope:'local real deposit and genuine private claim with ordinary checkpoint inclusion',
-    syntheticMessages:false,syntheticProofs:false,claimEpochProofAccepted:false};
+    syntheticMessages:false,syntheticProofs:false,claimEpochProofAccepted:false,
+    walletOwnership:ownsWallet?'claim-helper':'parent',walletCleanup:ownsWallet?'not-created':'retained-by-parent'};
   const mark=name=>{stage=name;reportStage?.('claim:'+name);process.stdout.write(`C01_DEPOSIT_STAGE ${name}\n`);};
   assert.equal(typeof mineL1,'function','Explicit fixture miner required');
   assert(authorAccount?.address,'Explicit fixture author required');
   const mine=mineL1;
   try{
-    assertNodeVersion();assertAztecPackages();assert(settlement.passed&&settlement.activation?.depositsEnabled);
+    assertNodeVersion();assertAztecPackages();
+    if(!ownsWallet)await assertC01BorrowedClaimWallet({claimWallet,node,authorAccount,qualifyWrongOrigin});
+    assert(settlement.passed&&settlement.activation?.depositsEnabled);
     assert(ready.passed&&ready.readyEmitted);assert(path.isAbsolute(directory));
     const url=new URL(rpcUrl);assert.equal(url.protocol,'http:');assert.equal(url.hostname,'127.0.0.1');
     assert(!url.username&&!url.password);assert.equal(await l1Client.getChainId(),31337);assert(l1Client.account);
@@ -78,13 +94,17 @@ export async function depositAndClaimC01({node,preparation,instance,l1Client,rea
     assert.equal(rollupAddress,info.l1ContractAddresses.rollupAddress.toString().toLowerCase());
     const native={backend:BackendType.NativeUnixSocket,bbPath:path.join(directory,'bb-one-thread'),threads:1};
     for(const key of ['backend','bbPath','threads'])assert.equal(Barretenberg.getSingleton().options[key],native[key]);
-    mark('reopen-claim-wallet');
+    mark(ownsWallet?'reopen-claim-wallet':'reuse-parent-claim-wallet');
     const boundaryModule=qualifyWrongOrigin?await import('./t02-claim-boundary.mjs'):undefined;
     const probe=boundaryModule?.createT02InboxProbeNode(node);
-    wallet=await EmbeddedWallet.create(probe?.node??node,{ephemeral:true,pxe:{proverEnabled:true,proverOrOptions:applicationProver(native),autoSync:false,syncChainTip:'checkpointed'}});
     const account=authorAccount;
-    const manager=await wallet.createSchnorrInitializerlessAccount(account.secret,account.salt,account.signingKey,'c01-disposable');
-    assert(manager.address.equals(account.address));await wallet.registerContract(instance,checked.board);await wallet.pxe.sync();
+    if(ownsWallet){
+      wallet=await EmbeddedWallet.create(probe?.node??node,{ephemeral:true,pxe:{proverEnabled:true,proverOrOptions:applicationProver(native),autoSync:false,syncChainTip:'checkpointed'}});
+      observation.walletCleanup='pending';
+      const manager=await wallet.createSchnorrInitializerlessAccount(account.secret,account.salt,account.signingKey,'c01-disposable');
+      assert(manager.address.equals(account.address));
+    }else wallet=claimWallet;
+    await wallet.registerContract(instance,checked.board);await wallet.pxe.sync();
     const board=Contract.at(instance.address,checked.board,wallet);
     const economics=c01BoardEconomics(preparation);
     const expectedConfig=c01BoardConfigHash(preparation,{rollupAddress,rollupVersion:info.rollupVersion,boardAddress:instance.address});
@@ -299,11 +319,12 @@ export async function depositAndClaimC01({node,preparation,instance,l1Client,rea
     if(error.originObservation)observation.origin=error.originObservation;
     if(error.boundaryObservation)observation.boundary=error.boundaryObservation;
     const failure=new Error(`C01_DEPOSIT_FAILED:${stage}:${error?.name??'Error'}`);
-    failure.depositObservation={...observation,passed:false,stage,errorClass:error?.name??'Error',location:error?.stack?.split('\n').filter(line=>line.trimStart().startsWith('at ')).slice(0,3).join('\n')};throw failure;
+    Object.assign(observation,{passed:false,stage,errorClass:error?.name??'Error',location:error?.stack?.split('\n').filter(line=>line.trimStart().startsWith('at ')).slice(0,3).join('\n')});
+    failure.depositObservation=observation;throw failure;
   }finally{
     try{if(sequencer&&previousSequencerConfig)sequencer.updateConfig(previousSequencerConfig);}
-    finally{if(wallet){try{await wallet.stop();observation.walletStopped=true;}
-      catch{observation.passed=false;const failure=new Error('C01_DEPOSIT_WALLET_CLEANUP_FAILED');
+    finally{if(wallet&&ownsWallet){try{await wallet.stop();observation.walletStopped=true;observation.walletCleanup='stopped';}
+      catch{observation.passed=false;observation.walletCleanup='stop-failed';const failure=new Error('C01_DEPOSIT_WALLET_CLEANUP_FAILED');
         failure.depositObservation={...observation,walletStopped:false};throw failure;}}}
   }
 }
