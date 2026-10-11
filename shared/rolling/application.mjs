@@ -72,13 +72,23 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
     rollup:fixed.network.rollup,board:fixed.board,portal:fixed.portal};
   const slot=()=>slotPromise??=createEncryptedJournalSlot({storage:privateStore,walletSecret:session.walletSecret,walletSalt:session.walletSalt,
     scopeText:JSON.stringify(['ROLLING_WORKFLOW_V1',l2JournalScopeText(scope)]),keyDomain:'ROLLING_WORKFLOW_V1'});
+  function chainValue(value){
+    try{
+      if(value&&typeof value==='object'&&typeof value.toBigInt==='function')value=value.toBigInt();
+      if(typeof value==='number'){check(Number.isSafeInteger(value),'ROLLING_CONTEXT_CHANGED');value=BigInt(value);}
+      if(typeof value==='string'){
+        check(/^(?:0x[0-9a-f]{64}|0|[1-9][0-9]{0,76})$/.test(value),'ROLLING_CONTEXT_CHANGED');value=BigInt(value);
+      }
+      check(typeof value==='bigint'&&value>=0n&&value<FIELD_MODULUS,'ROLLING_CONTEXT_CHANGED');return value;
+    }catch{throw fail('ROLLING_CONTEXT_CHANGED');}
+  }
   async function guard(){
     check(session&&typeof contextGuard==='function','ROLLING_LOCKED');await contextGuard();
     check(owner===session.owner.toString()&&sdk.isTrustedPrivateNode(session.node)&&
       session.wallet.aztecNode===session.node&&sdk.isPrivateWalletForNode(session.wallet,session.node)&&sdk.isPrivatePXEForNode(session.wallet.pxe,session.node)&&fixed.board===deployment.board.address.toString()&&fixed.fee===deployment.privateFee.address.toString()&&
       JSON.stringify(fixed.network)===JSON.stringify(deployment.network)&&fixed.portal===deployment.portal,'ROLLING_CONTEXT_CHANGED');
     await sdk.inspectTrustedNode(session.node,{expectedNetworkScope:fixed.network,proofsEnabled:fixed.proofsEnabled});
-    const chain=await session.wallet.getChainInfo();check(String(chain.chainId)===scope.chainId&&String(chain.version)===scope.version,'ROLLING_CONTEXT_CHANGED');
+    const chain=await session.wallet.getChainInfo();check(chainValue(chain?.chainId)===chainValue(scope.chainId)&&chainValue(chain?.version)===chainValue(scope.version),'ROLLING_CONTEXT_CHANGED');
     const accounts=await session.wallet.getAccounts();check(accounts.some(a=>(a.address??a).toString()===owner),'ROLLING_CONTEXT_CHANGED');
   }
   async function exclusive(fn){check(!busy,'ROLLING_BUSY');busy=true;try{return await fn();}finally{busy=false;}}

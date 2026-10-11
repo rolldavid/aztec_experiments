@@ -23,13 +23,13 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{}}){
  const title=el('h2',{id:'rolling-wallet-title'},'Your private account');
  const closeButton=button('Close account panel',()=>close());
  const content=el('div'),live=el('p',{role:'status','aria-live':'polite',class:'quiet'});
- dialog.append(el('div',{class:'dialog-top'},title,closeButton),el('p',{id:'rolling-wallet-description',class:'quiet'},'Names and balances stay in this private panel. Posts and onchain actions become public.'),live,content);
+ dialog.append(el('div',{class:'dialog-top'},title,closeButton),el('p',{id:'rolling-wallet-description',class:'quiet'},'Your balances and list of owned names stay in this panel. Published names, posts and actions are public.'),live,content);
  document.body.append(dialog);
  function controlsBusy(value){dialog.setAttribute('aria-busy',String(value));for(const node of dialog.querySelectorAll('button,input,select,textarea'))node.disabled=value||node.dataset.unavailable==='true';}
  function note(text){live.textContent=text;}
  async function work(fn){
   if(busy)return;busy=true;error='';controlsBusy(true);
-  try{await fn();}catch{error=message;}finally{busy=false;render();}
+  try{await fn();}catch{note('');error=!session&&unlocked()?'The private connection is unavailable. Your encrypted recovery is preserved. Reconnect when the service returns.':message;}finally{busy=false;render();}
  }
  function unlocked(){return runtime&&!invalidated&&!reloadRequired&&!!runtime.getAccount();}
  async function refresh(){

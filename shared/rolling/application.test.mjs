@@ -7,6 +7,8 @@ import {Fr} from '@aztec-labs/foundation/curves/bn254';
 import {AztecAddress} from '@aztec-labs/stdlib/aztec-address';
 import {encodeArguments,loadContractArtifact} from '@aztec-labs/stdlib/abi';
 import {createL2Journal} from '../l2-journal.mjs';
+import {BaseWallet} from '@aztec-labs/wallet-sdk/base-wallet';
+import {FIELD_MODULUS} from './invocation.mjs';
 import {createRollingApplication} from './application.mjs';
 const hex=n=>'0x'+BigInt(n).toString(16).padStart(64,'0');
 const artifact=loadContractArtifact(JSON.parse(fs.readFileSync(new URL('../../billboard/target/rolling_contract-RollingBoard.json',import.meta.url))));
@@ -217,4 +219,29 @@ test('newly acknowledged but non-final reverted transaction blocks pre-estimatio
   const estimates=f.state.estimates;
   await assert.rejects(f.app.submitPrepared(p.intentId),{code:'BB_TRANSACTION_FINALITY_PENDING'});
   assert.equal(f.state.estimates,estimates);assert.equal(f.state.sends,0);
+});
+
+// Actual SDK chain conversion, with only getNodeInfo replaced by a local value source.
+test('installed BaseWallet field-valued chain identity passes strict application binding',async()=>{
+  const f=fixture();let chainId=31337,rollupVersion=1;
+  let installed=new BaseWallet({}, {getNodeInfo:async()=>({l1ChainId:chainId,rollupVersion})});
+  f.options.accountSession.wallet.getChainInfo=()=>installed.getChainInfo();
+  assert.ok((await installed.getChainInfo()).chainId instanceof Fr);
+  assert.equal((await f.app.readAccountStatus()).status,'fee-ready');
+  for(const change of [()=>{chainId=31338;},()=>{chainId=31337;rollupVersion=2;}]){
+    change();installed=new BaseWallet({}, {getNodeInfo:async()=>({l1ChainId:chainId,rollupVersion})});
+    const reads=f.state.privateReads.length;
+    await assert.rejects(f.app.readAccountStatus(),{code:'ROLLING_CONTEXT_CHANGED'});
+    assert.equal(f.state.privateReads.length,reads);assert.equal(f.state.sends,0);
+  }
+});
+test('chain binding rejects malformed, missing and out-of-field identities before private reads',async()=>{
+  for(const value of [undefined,null,true,-1,1.5,Number.MAX_SAFE_INTEGER+1,' 31337','031337','0x7a69',FIELD_MODULUS,{},
+    {toBigInt:()=>FIELD_MODULUS},{toBigInt:()=>{throw Error('private detail');}}]){
+    for(const key of ['chainId','version']){
+      const f=fixture();f.options.accountSession.wallet.getChainInfo=async()=>({...{chainId:31337,version:1},[key]:value});
+      await assert.rejects(f.app.readAccountStatus(),{code:'ROLLING_CONTEXT_CHANGED',message:'ROLLING_CONTEXT_CHANGED'});
+      assert.equal(f.state.privateReads.length,0);assert.equal(f.state.sends,0);
+    }
+  }
 });
