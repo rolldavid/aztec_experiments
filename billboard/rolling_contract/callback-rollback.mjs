@@ -98,10 +98,12 @@ export async function assertMinedCallbackRollback({node, wallet, owner, board, b
     report.txHash = String(tx.getTxHash());
     // Exclusive durable intent BEFORE the one send. Existing intent means stop:
     // the lead must reconcile it; this consumer never retries or regenerates.
-    await fs.writeFile(intentPath, json({
-      txHash: report.txHash, reason, applicationProofs: report.applicationProofs,
-      sourceHashes: beforeHashes, contractClasses: report.contractClasses,
-    }), {flag: 'wx', mode: 0o600});
+    const intent = await fs.open(intentPath, 'wx', 0o600);
+    try {
+      await intent.writeFile(json({txHash: report.txHash, reason, applicationProofs: report.applicationProofs,
+        sourceHashes: beforeHashes, contractClasses: report.contractClasses}));
+      await intent.sync();
+    } finally {await intent.close();}
     report.submission = 'outcome unknown'; await save();
     await node.sendTx(tx);
     const deadline = Date.now() + 60000; let receipt;
