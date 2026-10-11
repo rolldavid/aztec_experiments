@@ -25,7 +25,7 @@ Create an owner-only directory outside every checkout, with a600 JSON input:
   "createdAt": "YYYY-MM-DDTHH:MM:SSZ",
   "budgetStop": "YYYY-MM-DDTHH:MM:SSZ",
   "commissioningStop": "YYYY-MM-DDTHH:MM:SSZ",
-  "runtimeUrl": "https://anonymous-message-board-testnet-backups-nvdhcyurtoga.s3.us-east-1.amazonaws.com/releases/REVIEWED/runtime.tar.gz?REDACTED",
+  "runtimeUrl": "https://anonymous-message-board-testnet-backups-nvdhcyurtoga.s3.eu-west-2.amazonaws.com/releases/REVIEWED/runtime.tar.gz?REDACTED",
   "runtimeArchiveSha256": "64 lowercase hex characters",
   "manifestSha256": "64 lowercase hex characters"
 }
@@ -281,3 +281,23 @@ cloud expiry remains unchanged. Tests inject timer, mask, shaper, version/parser
 early filesystem and diagnostic-device failures without running Linux services.
 They demonstrate projection and control flow, not successful remote commissioning.
 A subsequent launch requires independent source review and a reconciled forecast.
+
+### Runtime bucket region preflight
+
+The actual archive bucket is in **eu-west-2**, independently read via
+`GetBucketLocation`. The earlier us-east-1 endpoint returned HTTP301 with the
+bucket region header eu-west-2. Delayed console evidence showed controls passed
+before package-stage failure; the stopped attempts are not evidence of Linux
+qualification. The generator now accepts only the bucket's correct eu-west-2
+HTTPS hostname. Its no-redirect/no-retry download policy is unchanged, and tests
+explicitly reject the former us-east-1 hostname.
+
+Before a replacement launch, the trusted lead must reconcile the bucket region,
+create the object-scoped GET capability using that actual region, and perform a
+single bounded `Range: bytes=0-0` GET **without following redirects**. Require
+HTTP206 with the expected one-byte Content-Range/object length, and bind the
+intended object to the independently verified archive SHA256/manifest. Keep the
+capability URL private; retain only status, region and safe object/hash facts.
+HTTP301/307 or any other unexpected response blocks launch for diagnosis rather
+than changing the host's redirect policy. The compute region can remain us-east-1;
+account for this cross-region archive transfer in the existing forecast.

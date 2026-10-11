@@ -8,7 +8,7 @@ b=importlib.util.module_from_spec(spec);spec.loader.exec_module(b)
 NOW=dt.datetime(2026,10,11,18,0,tzinfo=dt.timezone.utc)
 def config():
     return dict(createdAt='2026-10-11T18:00:00Z',budgetStop='2026-10-12T02:00:00Z',commissioningStop='2026-10-11T18:30:00Z',
-                runtimeUrl='https://anonymous-message-board-testnet-backups-nvdhcyurtoga.s3.us-east-1.amazonaws.com/releases/test/runtime.tar.gz?X-Amz-Signature=PRIVATE_SENTINEL',
+                runtimeUrl='https://anonymous-message-board-testnet-backups-nvdhcyurtoga.s3.eu-west-2.amazonaws.com/releases/test/runtime.tar.gz?X-Amz-Signature=PRIVATE_SENTINEL',
                 runtimeArchiveSha256='a'*64,manifestSha256='b'*64)
 def host(diagnostic_devices=False):
     ns={'PINS':{'manifest':'b'*64,'node':b.NODE_SHA,'bb':b.BB_SHA,'catalog':b.CATALOG_SHA,'image':b.IMAGE},'NETWORK':b.NETWORK,'QUALIFICATION':b.QUALIFICATION}
@@ -44,8 +44,8 @@ class Bootstrap(unittest.TestCase):
 
     def test_malicious_inputs_rejected_without_echo(self):
         bad=[('runtimeUrl','https://evil.example/releases/runtime.tar.gz'),('runtimeUrl',config()['runtimeUrl']+'\n$(id)'),
-             ('runtimeUrl','https://user:pass@anonymous-message-board-testnet-backups-nvdhcyurtoga.s3.us-east-1.amazonaws.com/releases/a.tar.gz'),
-             ('runtimeUrl','https://anonymous-message-board-testnet-backups-nvdhcyurtoga.s3.us-east-1.amazonaws.com/releases/../a.tar.gz'),
+             ('runtimeUrl','https://user:pass@anonymous-message-board-testnet-backups-nvdhcyurtoga.s3.eu-west-2.amazonaws.com/releases/a.tar.gz'),
+             ('runtimeUrl','https://anonymous-message-board-testnet-backups-nvdhcyurtoga.s3.eu-west-2.amazonaws.com/releases/../a.tar.gz'),
              ('runtimeArchiveSha256','a'*63+';'),('manifestSha256',None),('budgetStop','2026-10-12T02:00:01Z'),
              ('commissioningStop','2026-10-11T18:31:00Z'),('createdAt','2026-10-11T15:00:00Z'),('budgetStop','tomorrow; poweroff')]
         for key,value in bad:
@@ -55,6 +55,23 @@ class Bootstrap(unittest.TestCase):
                 self.assertNotIn('PRIVATE_SENTINEL',str(e.exception))
         c=config();c['command']='id'
         with self.assertRaises(b.Invalid):b.generate(c,NOW)
+
+    def test_bucket_region_binding_and_redirect_rejection(self):
+        actual=config();self.assertEqual(b.validate(actual,NOW),actual)
+        wrong=config();wrong['runtimeUrl']=wrong['runtimeUrl'].replace('.s3.eu-west-2.','.s3.us-east-1.')
+        with self.assertRaises(b.Invalid):b.validate(wrong,NOW)
+        # Labelled transport fake: invoke the actual NoRedirect handler with the
+        # observed S3 wrong-region301 shape. No network, redirect follow or retry.
+        ns=host();calls=[]
+        class Opener:
+            def __init__(self,handler):self.handler=handler
+            def open(self,url,**kwargs):
+                calls.append(url)
+                return self.handler.redirect_request(None,None,301,'Moved',{'x-amz-bucket-region':'eu-west-2'},actual['runtimeUrl'])
+        with tempfile.TemporaryDirectory() as t,patch.object(ns['urllib'].request,'build_opener',side_effect=lambda handler:Opener(handler)):
+            destination=pathlib.Path(t)/'archive.tar.gz'
+            with self.assertRaisesRegex(ValueError,'^Redirect rejected$'):ns['fetch_package'](wrong['runtimeUrl'],destination)
+            self.assertEqual(calls,[wrong['runtimeUrl']]);self.assertFalse(destination.exists())
 
     def test_deadline_cannot_be_extended_or_package_replaced(self):
         ns=host()

@@ -42,7 +42,7 @@ def validate(config, now=None):
     if not isinstance(url, str) or len(url) > 4096 or any(ord(c) < 33 or ord(c) > 126 for c in url): raise Invalid("Invalid package URL")
     try:
         u = urllib.parse.urlsplit(url)
-        good = u.scheme == "https" and u.hostname == "anonymous-message-board-testnet-backups-nvdhcyurtoga.s3.us-east-1.amazonaws.com" and u.port in (None,443) and not u.username and not u.password and not u.fragment
+        good = u.scheme == "https" and u.hostname == "anonymous-message-board-testnet-backups-nvdhcyurtoga.s3.eu-west-2.amazonaws.com" and u.port in (None,443) and not u.username and not u.password and not u.fragment
     except ValueError: good = False
     if not good or not re.fullmatch(r"/releases/[a-zA-Z0-9._/-]+\.tar\.gz", u.path) or ".." in u.path.split("/"):
         raise Invalid("Invalid package URL")
