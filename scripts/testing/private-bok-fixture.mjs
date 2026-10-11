@@ -106,7 +106,7 @@ export async function runPrivateBokFixture(ctx, caseProfile = 'both', payerMode 
     await withC01ClientMining({rpcUrl: url.href, dateProvider: ctx.dateProvider, observation}, async mineL1 => {
       if (payerMode === 'private') {
         const {preparePrivateBokFees} = await import('./private-bok-fees.mjs');
-        privateFees = await preparePrivateBokFees({...ctx, rpcUrl: url.href, mineL1});
+        privateFees = await preparePrivateBokFees({...ctx, rpcUrl: url.href, mineL1, observeNodeCalls: ctx.scenario?.observeNodeCalls === true});
         observation.privateFees = privateFees;
         ({wallet, owner, operator, otherUser} = privateFees);
         await save();
