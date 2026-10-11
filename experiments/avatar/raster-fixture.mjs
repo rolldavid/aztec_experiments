@@ -1,6 +1,10 @@
 // Deterministic, metadata-free 100x100 RGB PNG fixtures. No image/network dependency.
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import {pathToFileURL} from 'node:url';
 import {deflateSync, inflateSync} from 'node:zlib';
+import {assertNodeVersion} from '../../scripts/toolchain.mjs';
+export const FIXTURE_ZLIB_VERSION = '1.3.2.1-motley-8002e91';
 const signature = Buffer.from('89504e470d0a1a0a', 'hex');
 function crc32(bytes) {
   let crc = 0xffffffff;
@@ -24,6 +28,8 @@ function makePng(rgb) {
   return Buffer.concat([signature, chunk('IHDR', header), chunk('IDAT', deflateSync(scanlines, {level: 9})), chunk('IEND', Buffer.alloc(0))]);
 }
 export function createRasterFixture(noisyPixels = 0) {
+  assertNodeVersion();
+  assert.equal(process.versions.zlib, FIXTURE_ZLIB_VERSION, 'Fixture generation requires the recorded zlib version');
   assert(Number.isInteger(noisyPixels) && noisyPixels >= 0 && noisyPixels <= 10000);
   const rgb = Buffer.alloc(30000);
   let random = 0x12345678;
@@ -79,4 +85,13 @@ export function decodeFixturePng(png) {
     raw.copy(rgb, row * 300, row * 301 + 1, (row + 1) * 301);
   }
   return rgb;
+}
+
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  assert.deepEqual(process.argv.slice(2), ['--write-fixtures']);
+  const smile = createRasterFixture(), stress = createNearLimitRaster();
+  fs.writeFileSync(new URL('fixtures/smile.png', import.meta.url), smile.png);
+  fs.writeFileSync(new URL('fixtures/stress.png', import.meta.url), stress.png);
+  console.log(JSON.stringify({node: process.version, zlib: process.versions.zlib,
+    smileBytes: smile.png.length, stressBytes: stress.png.length, noisyPixels: stress.noisyPixels}));
 }

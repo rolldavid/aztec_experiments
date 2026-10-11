@@ -19,6 +19,20 @@ node --test experiments/avatar/codec.test.mjs
 node experiments/avatar/build.mjs
 ```
 
+The committed PNG byte fixtures use **Node24.21.0 / zlib
+1.3.2.1-motley-8002e91**. Compression bytes differ under the system Node25.8.1 /
+zlib1.2.12 even when decoded pixels match. Generation enforces the repository
+Node pin and this zlib version; the exact-byte fixture assertions remain required.
+To regenerate deliberately with the pinned runtime:
+
+```sh
+node experiments/avatar/raster-fixture.mjs --write-fixtures
+node --test experiments/avatar/codec.test.mjs
+```
+
+Both fixture sizes and the stress-image noise count are printed by generation.
+Record and review any runtime/pin change before replacing reference PNGs.
+
 Only the first command is a cheap unit check. The build compiles this package with
 the pinned Nargo and processes its artifact with the existing `processArtifact`
 helper, preserving dependency-origin checks. The lead must serialize that build
