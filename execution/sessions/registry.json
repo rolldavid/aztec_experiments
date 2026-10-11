@@ -68,7 +68,9 @@
       "state": "running",
       "worktree": "../rolling-design",
       "allowed_paths": [
-        "billboard/rolling_contract"
+        "billboard/rolling_contract",
+        "billboard/Nargo.toml",
+        "noir-dependencies.json"
       ]
     }
   ]
