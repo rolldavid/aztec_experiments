@@ -211,7 +211,7 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
       let receipt;const includeDeadline=Math.min(Date.now()+60000,ctx.applicationDeadlineAt);
       do{receipt=await ctx.node.getTxReceipt(bokHash);assert.notEqual(receipt.status,TxStatus.DROPPED);
         if(['checkpointed','proven','finalized'].includes(receipt.status))break;await mineL1();}while(Date.now()<includeDeadline);
-      assert(['checkpointed','proven','finalized'].includes(receipt.status));
+      assert(['checkpointed','proven','finalized'].includes(receipt.status));assert.equal(receipt.executionResult,'success');
       assert.equal(String((await ctx.node.getBlockData(receipt.blockNumber)).blockHash),String(receipt.blockHash));
       const actualBok=await ctx.node.getContract(bokInstance.address);assert(actualBok);
       assert.equal(String(actualBok.currentContractClassId),String(bokInstance.currentContractClassId));
@@ -363,8 +363,9 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
           const effect=await ctx.node.getTxEffect(hash);assert(effect?.data);assert.equal(String(effect.l2BlockHash),String(receipt.blockHash));
           assert.equal(String((await ctx.node.getBlockData(receipt.blockNumber)).blockHash),String(receipt.blockHash));
           await fs.writeFile(path.join(directory,'avatar-moderation-effect.bin'),effect.data.toBuffer(),{flag:'wx',mode:0o600});row.effectSha256=sha(effect.data.toBuffer());
+          Object.assign(row,{before:String(before),submission:'included'});await save();
           const after=await getFeeJuiceBalance(operator,ctx.node);
-          Object.assign(row,{before:String(before),after:String(after),submission:'included'});await save();
+          row.after=String(after);await save();
           // Preserve actual inclusion and paid effects even when execution reverted.
           assert.equal(receipt.executionResult,'success');
           assert.equal(before-after,BigInt(receipt.transactionFee));assert(BigInt(receipt.transactionFee)>0n);
