@@ -1,3 +1,4 @@
+import {failPrivateFeeSetup} from './private-fee-evidence.mjs';
 import {prepareW01UnfundedWallet} from './w01-unfunded-wallet.mjs';
 // TEST ONLY: user-funded ownerless FPC, canonical instance, cold start then private-balance fees.
 import assert from 'node:assert/strict';
@@ -40,5 +41,5 @@ export async function prepareW01PrivateFees({node,preparation,l1Client,directory
     };
     Object.defineProperties(observation,{fundingSender:{value:funded.sender},browserFixture:{value:{instance,artifact,gas,fundedAmount:BigInt(funded.claim.amount),get allocated(){return allocated;},get wallet(){return setup.wallet;}}},discardUnsubmittedFee:{value:maximum=>{assert(BigInt(maximum)>0n&&allocated>=BigInt(maximum));allocated-=BigInt(maximum);}},authorAccount:{value:author},privateFeeAction:{value:privateFeeAction},verify:{value:verify},reopen:{value:setup.reopen},close:{value:setup.close}});
     return observation;
-  }catch(error){if(error.privateFeeFundingObservation)observation.funding=error.privateFeeFundingObservation;if(error.privateFeeStandaloneObservation)observation.standalone=error.privateFeeStandaloneObservation;if(setup)await setup.close();error.privateFeeObservation=observation;throw error;}
+  }catch(error){return failPrivateFeeSetup(error,observation,setup?()=>setup.close():undefined);}
 }

@@ -5,7 +5,7 @@ import {createPrivateBokFeesPreparer} from './private-bok-fees.mjs';
 
 const address = id => ({id, equals: other => other?.id === id, toString: () => id});
 const payer = '0x' + '12'.repeat(32);
-function fixture({failSetup, failRegister = false, failClose = [], badBaseline = false} = {}) {
+function fixture({failSetup, setupError, failRegister = false, failClose = [], badBaseline = false} = {}) {
   const calls = [], directories = [], registrations = [], closed = [0, 0], verified = [], paid = [];
   const owner = address('human-A'), otherUser = address('human-B'), operator = address('operator');
   const wallet = {createSchnorrInitializerlessAccount: async (...args) => {
@@ -30,7 +30,7 @@ function fixture({failSetup, failRegister = false, failClose = [], badBaseline =
     mkdir: async (...args) => directories.push(args),
     prepareFees: async options => {
       const index = calls.length; calls.push(options);
-      if (failSetup === index) throw Error('setup failure');
+      if (failSetup === index) throw setupError ?? Error('setup failure');
       return helpers[index];
     },
   });
@@ -244,4 +244,46 @@ test('pure fake: pool baseline getters use the same captured value for checks an
   const result = await f.prepare(); await result.verify({owner: 11n, otherUser: 13n});
   assert.equal(result.amounts.poolBefore, '50'); assert.equal(result.amounts.poolAfter, '319');
   assert.deepEqual(reads, [1, 1]); await result.close();
+});
+
+
+test('pure fake: B completed bridge and unknown standalone survive a prepare rejection', async () => {
+  for (const cleanup of ['closed','failed']) {
+    const setupError = Error('PRIVATE_SENTINEL original');
+    const f = fixture({failSetup: 1, setupError});
+    setupError.privateFeeObservation = {passed: false, funding: f.helpers[1].funding,
+      standalone: {passed: false, txHash: '0x' + '66'.repeat(32), payer,
+        applicationProof: false, networkProof: false, nodeValidation: 'valid', secret: 'PRIVATE_SENTINEL'}, walletCleanup: cleanup};
+    let failure;
+    try {await f.prepare();} catch (error) {failure = error;}
+    assert.equal(failure, setupError);
+    const report = structuredClone(failure.privateBokFeesObservation);
+    assert.equal(report.funding.owner.passed, true); assert.equal(report.funding.otherUser.passed, true);
+    assert.equal(report.funding.otherUser.l1TxHash, '0x' + '2'.repeat(64));
+    assert.equal(report.standaloneB.txHash, '0x' + '66'.repeat(32));
+    assert.equal(report.standaloneB.passed, false); assert.equal(report.standaloneB.outcome, 'unknown');
+    assert.equal(report.setupFailure.role, 'otherUser'); assert.equal(report.setupFailure.walletCleanup, cleanup);
+    assert.equal(report.walletCleanupComplete, cleanup === 'closed'); assert.deepEqual(f.closed, [1,0]);
+    assert(!JSON.stringify(report).includes('PRIVATE_SENTINEL'));
+  }
+});
+
+test('pure fake: failing current-role evidence captured once before prior-helper cleanup', async () => {
+  const recovery = {schema:'private-fee-funding-v1',chainId:'31337',version:'6',rollupAddress:'0x'+'11'.repeat(20),
+    portalAddress:'0x'+'22'.repeat(20),tokenAddress:'0x'+'33'.repeat(20),privateFeeAddress:payer,sender:'0x'+'44'.repeat(20),nonce:'9',amount:'200'};
+  const funding = {passed:false,depositSends:1,recoverySaves:1,publicRecoveryPersistedBeforeDeposit:true,privateSecretsStored:false,publicRecovery:recovery};
+  const record = {passed:false,funding,walletCleanup:'closed'}, setupError = Error('PRIVATE_SENTINEL action');
+  Object.defineProperty(funding,'futureSecret',{get(){throw Error('PRIVATE_SENTINEL getter');}});
+  const recoveryReads=changingFields(recovery),fundingReads=changingFields(funding),recordReads=changingFields(record);
+  let reads=0;Object.defineProperty(setupError,'privateFeeObservation',{get(){return ++reads===1?record:'PRIVATE_SENTINEL';}});
+  const f = fixture({failSetup:1,setupError,failClose:[0]});let failure;
+  try {await f.prepare();} catch (error) {failure=error;}
+  assert(failure instanceof AggregateError);assert.equal(failure.errors[0],setupError);
+  const report=failure.privateBokFeesObservation;
+  assert.equal(report.funding.otherUser.publicRecovery.nonce,'9');assert.equal(report.funding.otherUser.depositSends,1);
+  assert.equal(report.funding.otherUser.outcome,'unknown');assert.equal(report.walletCleanupComplete,false);
+  assert.equal(reads,1);
+  for(const fields of [recoveryReads,fundingReads])assert([...fields.values()].every(count=>count===1));
+  assert.equal(recordReads.get('funding'),1);assert.equal(recordReads.get('walletCleanup'),1);
+  assert(!JSON.stringify(report).includes('PRIVATE_SENTINEL'));assert(!JSON.stringify(report).includes('FAKE-PRIVATE'));
 });

@@ -2,6 +2,7 @@
 import assert from 'node:assert/strict';
 import path from 'node:path';
 import {mkdir} from 'node:fs/promises';
+import {capturePrivateFeeSetupFailure, capturePublicFeeRecovery} from '../private-fee-evidence.mjs';
 
 function publicFunding(record, amount, payer) {
   assert(record && typeof record === 'object', 'Public fee funding evidence required');
@@ -19,7 +20,9 @@ function publicFunding(record, amount, payer) {
   assert(typeof l1TxHash === 'string' && /^0x[0-9a-fA-F]{64}$/.test(l1TxHash), 'Invalid L1 funding hash');
   assert(typeof recipient === 'string' && /^0x[0-9a-fA-F]{64}$/.test(recipient)
     && recipient === payer, 'Funding recipient must be the shared FPC');
-  return Object.assign(result, {amount: publicAmount, l1TxHash, recipient, depositSends, privateSecretsStored});
+  const recovery = capturePublicFeeRecovery(record.publicRecovery);
+  return Object.assign(result, {amount: publicAmount, l1TxHash, recipient, depositSends, privateSecretsStored},
+    recovery ? {publicRecovery: recovery} : {});
 }
 
 function publicStandalone(record, payer) {
@@ -53,12 +56,13 @@ export function createPrivateBokFeesPreparer({prepareFees, mkdir: makeDirectory}
     const observation = {passed: false, ownerless: true, operatorFunding: false, testFaucetFunding: true,
       humanPublicFeeFallback: false, privateCreditAndPoolReconciled: false, walletCleanupComplete: false, funding: {}};
     const helpers = [];
-    let closePromise;
+    let closePromise, activeRole, failedSetupCleanup = true;
     const close = () => {
       if (!closePromise) closePromise = (async () => {
         const results = await Promise.allSettled(helpers.map(helper => Promise.resolve().then(() => helper.close())));
-        observation.walletCleanupComplete = results.every(result => result.status === 'fulfilled');
-        if (!observation.walletCleanupComplete) {
+        const helpersClosed = results.every(result => result.status === 'fulfilled');
+        observation.walletCleanupComplete = helpersClosed && failedSetupCleanup;
+        if (!helpersClosed) {
           observation.passed = false;
           throw new AggregateError(results.filter(result => result.status === 'rejected').map(result => result.reason),
             'Private Bok fee wallet cleanup failed');
@@ -70,6 +74,7 @@ export function createPrivateBokFeesPreparer({prepareFees, mkdir: makeDirectory}
       // Both bridges precede A's cold claim; B's standalone claim starts from the
       // same public pool baseline as A. Distinct journals must never be reused.
       for (const [role, standalone] of [['owner', false], ['otherUser', true]]) {
+        activeRole = role;
         const fundingDirectory = path.join(directory, `private-bok-fees-${role}`);
         await makeDirectory(fundingDirectory, {mode: 0o700});
         const helper = await prepareFees({node, preparation, l1Client, directory, fundingDirectory,
@@ -138,6 +143,15 @@ export function createPrivateBokFeesPreparer({prepareFees, mkdir: makeDirectory}
         operator: {value: operator}, otherUser: {value: otherUser}, paymentFor: {value: paymentFor},
         verify: {value: verify}, close: {value: close}});
     } catch (error) {
+      // prepareFees may have paid L1 before its standalone L2 step failed. Capture
+      // only whitelisted evidence before cleanup/AggregateError changes the error.
+      const partial = capturePrivateFeeSetupFailure(error);
+      if (partial && activeRole) {
+        if (partial.funding) observation.funding[activeRole] = partial.funding;
+        if (activeRole === 'otherUser' && partial.standalone) observation.standaloneB = partial.standalone;
+        observation.setupFailure = {role: activeRole, walletCleanup: partial.walletCleanup};
+        failedSetupCleanup = ['closed','not-created'].includes(partial.walletCleanup);
+      }
       let failure = error instanceof Error ? error : new Error('Private Bok fee setup failed');
       try { await close(); } catch (cleanupError) {
         failure = new AggregateError([failure, cleanupError], 'Private Bok fee setup and cleanup failed');
