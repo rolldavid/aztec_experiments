@@ -22,7 +22,7 @@ export async function includeC01Board({node,tx,rpcUrl,dateProvider,startSequence
   await node.sendTx(tx);
   if(startSequencer)await node.getSequencer().start();
   const adjustments=observation.adjustments;
-  const deadline=Date.now()+(diagnostic?60000:120000);
+  const deadline=Date.now()+(diagnostic?45000:120000);
   let receipt;
   while(Date.now()<deadline){
     if(probe)await probe.sample();
