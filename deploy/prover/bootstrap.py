@@ -13,7 +13,7 @@ NETWORK = {'testnet': {'bootnodes': ['enr:-LO4QA4kHKdUJOirQ4NxtI-gjBNLRK1GPeKtmz
 
 # Public historical deployment identity; qualification is explicitly legacy,
 # never a Rolling deployment. Source: deploy/prover/live-deployment.json.
-QUALIFICATION = {'service': {'applicationProfile':'legacy','proofs':'real','host':'127.0.0.1','port':0,
+QUALIFICATION = {'service': {'applicationProfile':'legacy','proofs':'real','host':'127.0.0.1','port':0,'origins':[],
     'chainId':'11155111','rollupVersion':'2914217885',
     'board':'0x0346558fcce04c4bf0b0907c1ef20858b9583123ef55bceb7125cb3fc3fb3752',
     'queryNode':{'url':'http://127.0.0.1:8082/','rollupAddress':'0x8c2fb2a68a3d362ab1de99e06f83f8903160bbd9','maxLagSeconds':120}},

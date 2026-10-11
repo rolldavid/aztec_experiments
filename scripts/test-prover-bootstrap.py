@@ -319,6 +319,42 @@ class htb 1:20 parent 1:1 prio 0 rate 25Mbit ceil 50Mbit burst 4725b cburst 7850
                 self.assertNotIn('PRIVATE_SENTINEL',captured[-1])
                 if mode=='valid':self.assertEqual(output['qualification']['anchors'],result['anchors'])
 
+    def test_generated_config_passes_actual_service_preflight_without_startup(self):
+        # Extract exact public config from the generated payload; execute only
+        # definitions, never bootstrap or a service. No mirrored validator.
+        import ast
+        generated=b.generate(config(),NOW)
+        encoded=generated.split("base64.b64decode('")[1].split("')")[0]
+        program=gzip.decompress(base64.b64decode(encoded)).decode()
+        assignment=ast.parse(program).body[0]
+        self.assertEqual(assignment.targets[0].id,'SOURCE')
+        namespace={};exec(ast.literal_eval(assignment.value),namespace)
+        actual=namespace['QUALIFICATION']
+        script="""
+import assert from 'node:assert/strict';
+import {startProverService} from SERVICE_URI;
+import {validateQualification} from QUALIFIER_URI;
+let raw='';for await(const chunk of process.stdin)raw+=chunk;
+const config=JSON.parse(raw);validateQualification(config);
+assert.deepEqual(config.service.origins,[]);
+const boundary=new Error('development pre-start boundary');
+async function probe(includeOrigins){
+  let reads=0;const s={...config.service};
+  if(!includeOrigins)delete s.origins;
+  Object.defineProperty(s,'queryNode',{enumerable:true,get(){
+    if(++reads===1)return config.service.queryNode;
+    throw boundary;
+  }});
+  // Actual service validates queryNode first; its next access is the config
+  // spread immediately before createPrivateQuery. Throw before any I/O starts.
+  await assert.rejects(()=>startProverService(s),e=>includeOrigins?e===boundary:e.message==='Invalid network, origins or threads');
+  assert.equal(reads,includeOrigins?2:0);
+}
+await probe(false);await probe(true);
+""".replace('SERVICE_URI',json.dumps((ROOT/'prover/service.mjs').as_uri())).replace('QUALIFIER_URI',json.dumps((ROOT/'prover/qualify-runtime.mjs').as_uri()))
+        subprocess.run(['node','--input-type=module','--eval',script],input=json.dumps(actual),text=True,check=True,
+                       env={'PATH':'/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin','LOG_LEVEL':'silent'})
+
     def test_qualification_unit_enforces_process_and_network_boundary(self):
         ns=host();written={};calls=[]
         ns['write']=lambda p,s,*_:written.update({str(p):s});ns['run']=lambda a,**k:calls.append(a)

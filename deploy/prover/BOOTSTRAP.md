@@ -203,7 +203,7 @@ Sepolia11155111, rollupVersion2914217885,
 rollup`0x8c2fb2a68a3d362ab1de99e06f83f8903160bbd9`, legacy board
 `0x0346558fcce04c4bf0b0907c1ef20858b9583123ef55bceb7125cb3fc3fb3752`.
 The config explicitly says `applicationProfile: legacy`, `proofs: real` and
-zero public listener port. These historical addresses do not identify a Rolling
+zero public listener port and an explicit empty `origins` list. These historical addresses do not identify a Rolling
 application. No proof job, model call or wallet action is submitted.
 
 An exclusive fsynced intent is recorded before readiness polling. Then exactly
