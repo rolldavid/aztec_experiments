@@ -3,6 +3,9 @@
 import test,{after} from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
+import {execFile} from 'node:child_process';
+import {promisify} from 'node:util';
+import {fileURLToPath} from 'node:url';
 import {BarretenbergSync} from '@aztec-foundation/bb.js';
 import {Fr} from '@aztec-labs/foundation/curves/bn254';
 import {AztecAddress} from '@aztec-labs/stdlib/aztec-address';
@@ -64,4 +67,29 @@ for(const mutate of [a=>{a.nonDispatchPublicFunctions=[];},a=>{a.functions=a.fun
  test('incomplete artifact rejects classifier setup with fixed message',async()=>{const a=structuredClone(artifact);mutate(a);await assert.rejects(createRemovedLikeClassifier({artifact:a,boardAddress}),{message:'Removed-like classifier configuration is invalid.'});});
 test('assertion metadata is detached from later caller mutation',async()=>{
  const a=structuredClone(artifact),classify=await createRemovedLikeClassifier({artifact:a,boardAddress});a.functions.find(f=>f.name==='public_dispatch').errorTypes={};assert.equal(classify(fixture()),true);
+});
+test('real decoder boundary emits no stdout or stderr for unknown selectors',async()=>{
+ const source=`
+ import fs from 'node:fs/promises';
+ import assert from 'node:assert/strict';
+ import {BarretenbergSync} from '@aztec-foundation/bb.js';
+ import {Fr} from '@aztec-labs/foundation/curves/bn254';
+ import {FunctionSelector,loadContractArtifact} from '@aztec-labs/stdlib/abi';
+ import {AztecAddress} from '@aztec-labs/stdlib/aztec-address';
+ import {SimulationError} from '@aztec-labs/stdlib/errors';
+ import {createRemovedLikeClassifier} from './scripts/testing/rolling-removed-like.mjs';
+ try {
+  const artifact=loadContractArtifact(JSON.parse(await fs.readFile(${JSON.stringify(process.env.ROLLING_TEST_ARTIFACT??fileURLToPath(new URL('../../billboard/target/rolling_contract-RollingBoard.json',import.meta.url)))},'utf8')));
+  const boardAddress=AztecAddress.fromBigIntUnsafe(44n);
+  const classify=await createRemovedLikeClassifier({artifact,boardAddress});
+  const functionSelector=await FunctionSelector.fromNameAndParameters(artifact.nonDispatchPublicFunctions.find(f=>f.name==='_set_like'));
+  const error=new SimulationError('PRIVATE_SENTINEL',[{contractAddress:boardAddress,functionSelector}],[Fr.ZERO]);
+  assert.equal(classify(error),false);
+  const guard=Object.entries(artifact.functions.find(f=>f.name==='public_dispatch').errorTypes).find(([,v])=>v.error_kind==='string'&&v.string==='Post removed')[0];
+  error.revertData=[new Fr(BigInt(guard))];assert.equal(classify(error),true);
+ } finally { await BarretenbergSync.destroySingleton(); }
+ `;
+ const {stdout,stderr}=await promisify(execFile)(process.execPath,['--input-type=module','-e',source],{
+  cwd:fileURLToPath(new URL('../../',import.meta.url)),env:{LOG_LEVEL:'silent'},timeout:10000,maxBuffer:65536});
+ assert.equal(stdout,'');assert.equal(stderr,'');
 });

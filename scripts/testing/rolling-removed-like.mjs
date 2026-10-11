@@ -14,7 +14,7 @@ function address(value){if(Object.getPrototypeOf(value)!==AztecAddress.prototype
 function selector(value){if(Object.getPrototypeOf(value)!==FunctionSelector.prototype)throw invalid();const n=data(value,'value');if(!Number.isSafeInteger(n)||n<0||n>0xffffffff)throw invalid();return n;}
 
 export async function createRemovedLikeClassifier({artifact,boardAddress}){
- let expectedAddress,expectedSelector,dispatch;
+ let expectedAddress,expectedSelector,assertionSelector,dispatch;
  try{
   expectedAddress=typeof boardAddress==='string'?boardAddress:address(boardAddress);
   if(!/^0x[0-9a-f]{64}$/.test(expectedAddress)||new Fr(BigInt(expectedAddress)).toString()!==expectedAddress||BigInt(expectedAddress)===0n)throw invalid();
@@ -22,7 +22,9 @@ export async function createRemovedLikeClassifier({artifact,boardAddress}){
   const dispatchers=artifact.functions?.filter(fn=>fn.name==='public_dispatch');
   if(functions?.length!==1||dispatchers?.length!==1||functions[0].functionType!=='public'||functions[0].isOnlySelf!==true)throw invalid();
   dispatch={errorTypes:structuredClone(dispatchers[0].errorTypes)};
-  const guards=Object.values(dispatch.errorTypes).filter(v=>v.error_kind==='string'&&v.string==='Post removed');if(guards.length!==1)throw invalid();
+  const guards=Object.entries(dispatch.errorTypes).filter(([,v])=>v.error_kind==='string'&&v.string==='Post removed');if(guards.length!==1)throw invalid();
+  if(!/^(?:0|[1-9][0-9]*)$/.test(guards[0][0]))throw invalid();
+  assertionSelector=new Fr(BigInt(guards[0][0])).toBigInt();
   expectedSelector=selector(await FunctionSelector.fromNameAndParameters(functions[0]));
  }catch{throw invalid();}
  return error=>{
@@ -40,6 +42,9 @@ export async function createRemovedLikeClassifier({artifact,boardAddress}){
    // variable payload. Missing/trailing data cannot qualify the guard.
    if(!Array.isArray(raw)||raw.length!==1)return false;
    const revertData=[field(data(raw,'0'))];
+   // Unknown selectors can make the Noir WASM decoder print a panic before
+   // throwing. Only the artifact-bound static guard may reach that decoder.
+   if(revertData[0].toBigInt()!==assertionSelector)return false;
    return resolveAssertionMessageFromRevertData(revertData,dispatch)==='Post removed';
   }catch{return false;}
  };
