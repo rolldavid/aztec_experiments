@@ -101,5 +101,7 @@ export function createRollingProjection({isValidatedEvent,maxEvents=50000}={}) {
    let start=0;if(cursor!==null){check(typeof cursor==='string'&&/^[0-9]+:[0-9]+$/.test(cursor));const [r,n]=cursor.split(':').map(Number);check(r===revision&&Number.isSafeInteger(n)&&n<=boards.length);start=n;}
    return {boards:boards.slice(start,start+limit).map(b=>({...copy(b),mainVersion:state.version,mainRules:state.policies.get(state.version)?.text})),nextCursor:start+limit<boards.length?`${revision}:${start+limit}`:null,revision};},
   post(id){const p=state.posts.get(id);return p?visible(p):null;},
+  identity(id){const name=state.names.get(id);return name?copy(name):null;},
+  board(id){const board=state.boards.get(id);return board?{...copy(board),mainVersion:state.version,mainRules:state.policies.get(state.version)?.text}:null;},
  };
 }

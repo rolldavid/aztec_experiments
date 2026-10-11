@@ -25,8 +25,10 @@ async function modified(e,changes){return validateRollingEvent({...e,payload:{..
 test('staged apply/undo/rebuild, names, anonymous authenticated bot and thread',async()=>{
  const {events,nameId}=await fixture(),p=createRollingProjection({isValidatedEvent:isRollingEvent});const a=p.stage(events);assert.equal(p.postCount,0);a.apply();assert.equal(p.postCount,2);
  assert.equal(p.thread('10').posts[1].bot.pluginId,'7');assert.equal(p.profile(nameId).posts.length,1);assert(!JSON.stringify(p.feed()).includes('owner'));
+ assert.deepEqual(p.identity(nameId),{id:nameId,first:'John',last:'Doe'});assert.equal(p.identity('0'),null);
+ const named=p.identity(nameId);named.first='Mutated';assert.equal(p.identity(nameId).first,'John');
  const before=p.feed().posts;const rebuilt=createRollingProjection({isValidatedEvent:isRollingEvent});rebuilt.stage(events).apply();assert.deepEqual(rebuilt.feed().posts,before);
- a.undo();assert.equal(p.postCount,0);assert.throws(()=>a.undo());assert.throws(()=>a.apply());
+ a.undo();assert.equal(p.postCount,0);assert.equal(p.identity(nameId),null);assert.throws(()=>a.undo());assert.throws(()=>a.apply());
 });
 test('forged bot without linkage and mismatched target are atomic failures',async()=>{
  const {events}=await fixture(),p=createRollingProjection({isValidatedEvent:isRollingEvent});assert.throws(()=>p.stage(events.slice(0,-1)));assert.equal(p.postCount,0);
@@ -63,6 +65,7 @@ test('subboard metadata hashes, policy inheritance and rejection tombstone',asyn
  const {events}=await fixture(),p=createRollingProjection({isValidatedEvent:isRollingEvent});p.stage(events).apply();const slug=pack('build',2),id=await h(['5',...slug],0x52435331);
  const create=await event('SubboardCreated',{subboard_id:id,slug_length:'5',slug,name_length:'5',name:pack('Build',3),description_length:'5',description:pack('Tools',16),local_policy_version:'1',rules_length:'0',rules:pack('',32),rules_digest:await digest('',32),main_policy_version:'1',metadata_digest:await h([id,await digest('Build',3),await digest('Tools',16)],0x52434d31)},0,'3');p.stage([create]).apply();
  assert.equal(p.directory({query:'tools'}).boards[0].mainRules,'Rules');
+ assert.equal(p.board('0'),null);assert.deepEqual(p.board(id),p.directory().boards[0]);const metadata=p.board(id);metadata.name='Mutated';assert.equal(p.board(id).name,'Build');
  const policy=await event('MainPolicyPublished',{version:'2',digest:await digest('New',32),length:'3',rules:pack('New',32)},0,'4');p.stage([policy]).apply();assert.equal(p.directory().boards[0].mainRules,'New');
  const reject=await event('SubboardRejected',{subboard_id:id,main_policy_version:'2',local_policy_version:'1',reason_length:'3',reason:pack('Bad',7),reason_digest:await digest('Bad',7)},0,'5');p.stage([reject]).apply();assert.equal(p.directory().boards[0].rejected,true);assert.equal(p.directory().boards[0].rejection.reason,'Bad');
  await assert.rejects(()=>modified(create,{metadata_digest:'1'}));await assert.rejects(()=>modified(events[1],{name_id:'1'}));
