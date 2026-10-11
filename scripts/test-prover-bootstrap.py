@@ -219,6 +219,10 @@ class htb 1:20 parent 1:1 prio 0 rate 25Mbit ceil 50Mbit burst 4725b cburst 7850
         args=shlex.split(command.removeprefix('ExecStart='))
         mappings=[args[i+1] for i,arg in enumerate(args) if arg=='-p']
         self.assertEqual(mappings,['127.0.0.1:8082:8080','127.0.0.1:8882:8880','40400:40400/tcp','40400:40400/udp'])
+        self.assertEqual(args[:3],['/usr/bin/python3',str(ns['RELEASE']/'deploy/prover/bootstrap.py'),'--node-wrapper'])
+        self.assertEqual(args[3:5],['/usr/bin/docker','run'])
+        self.assertIn('ExecStop=/usr/bin/docker stop -t 30 rolling-node',unit)
+        self.assertIn('Restart=no',unit);self.assertIn('TimeoutStopSec=45',unit)
         self.assertIn('AZTEC_ADMIN_API_KEY_HASH='+'a'*64,args)
         self.assertNotIn('qualification-key',command)
         self.assertNotIn('AZTEC_DISABLE_ADMIN_API_KEY',command)
@@ -576,6 +580,7 @@ class FinalReceipt(unittest.TestCase):
         self.assertEqual(calls[0][0],c);compile(calls[0][1],'attestor','exec')
         runtime=ns['SOURCE'][ns['SOURCE'].index('\nimport datetime as dt, fcntl'):]
         self.assertEqual(ns['PINS']['bootstrap'],hashlib.sha256(runtime.encode()).hexdigest())
+        self.assertEqual(ns['PINS']['startup'],hashlib.sha256(pathlib.Path(b.__file__).read_bytes()).hexdigest())
         self.assertNotIn(token,calls[0][1])
         # Worst-case permitted URL lengths can exceed AWS storage; no truncation.
         c['runtimeUrl']+=''.join(rng.choice(string.ascii_letters+string.digits) for _ in range(4096-len(c['runtimeUrl'])))
@@ -766,5 +771,77 @@ class AdminCapability(unittest.TestCase):
         self.assertIn('InaccessiblePaths=-/var/lib/rolling-bootstrap-private -/var/lib/cloud',unit)
         self.assertIn('IPAddressDeny=any\nIPAddressAllow=localhost',unit)
         self.assertNotIn('ReadWritePaths=/var/lib/rolling-admin',unit)
+
+class NodeStartup(unittest.TestCase):
+    def test_stream_bounds_unknown_and_secret_output_are_not_evidence(self):
+        ns=host();output=b.NodeOutput()
+        secret=b'https://secret.example/?token=PRIVATE_SENTINEL x-api-key=PRIVATE_SENTINEL'
+        for chunk in [b'Downloading CRS of size ',secret,b'\nGenesis archive ',b'root: PRIVATE_SENTINEL\n',b'Error: arbitrary PRIVATE_SENTINEL\n']:
+            output.feed(chunk)
+        for _ in range(20):output.feed(b'PRIVATE_SENTINEL'*200)
+        self.assertLessEqual(len(output.pending),8192);self.assertTrue(output.dropping)
+        output.feed(b'Aztec Server listening on port 8080\n');self.assertNotIn('public-rpc',output.value['stages'])
+        output.feed(b'Aztec Server listening on port 8080\n');output.finish(1)
+        self.assertEqual(output.value['errors'],['unknown']);self.assertEqual(output.value['oversizedLines'],1)
+        self.assertIn('public-rpc',output.value['stages']);self.assertNotIn('PRIVATE_SENTINEL',json.dumps(output.value))
+        self.assertNotIn('secret.example',json.dumps(output.value));self.assertEqual(output.pending,b'')
+        with self.assertRaises(ValueError):output.feed(b'x'*4097)
+
+    def test_fixed_error_flags_deduplicated_and_validated_before_receipt(self):
+        ns=host();output=b.NodeOutput();output.feed(b'Error: ERR_DLOPEN_FAILED PRIVATE_SENTINEL\nEACCES PRIVATE_SENTINEL\nEACCES\n');output.finish(-15)
+        self.assertEqual(output.value['errors'],['native-load','permission']);self.assertIsNone(output.value['exitCode']);self.assertEqual(output.value['signal'],15)
+        with tempfile.TemporaryDirectory() as t:
+            ns['BASE']=pathlib.Path(t);p=ns['BASE']/'node-startup.json';p.write_text(json.dumps(output.value));p.chmod(0o600)
+            self.assertTrue(b.node_startup_observation(ns['BASE'])['available'])
+            for bad in [dict(output.value,extra='PRIVATE_SENTINEL'),dict(output.value,errors=['PRIVATE_SENTINEL']),dict(output.value,complete=False),dict(output.value,exitCode=1),dict(output.value,oversizedLines=-1)]:
+                p.write_text(json.dumps(bad));self.assertEqual(b.node_startup_observation(ns['BASE']),{'available':False})
+
+    def test_final_receipt_helper_hash_is_checked_before_execution(self):
+        with tempfile.TemporaryDirectory() as t:
+            ns=host();ns['RELEASE']=pathlib.Path(t);helper=ns['RELEASE']/'deploy/prover/bootstrap.py';helper.parent.mkdir(parents=True);helper.write_bytes(pathlib.Path(b.__file__).read_bytes())
+            ns['PINS']['startup']=hashlib.sha256(helper.read_bytes()).hexdigest();calls=[]
+            ns['run']=lambda args,**kw:(calls.append((args,kw)) or '{"available":false}')
+            self.assertEqual(ns['startup_observation'](),{'available':False});self.assertEqual(len(calls),1);self.assertEqual(calls[0][1]['timeout'],3)
+            helper.write_text('PRIVATE_SENTINEL');self.assertEqual(ns['startup_observation'](),{'available':False});self.assertEqual(len(calls),1)
+
+    def test_forwarded_termination_reaps_exact_child_and_retains_signal(self):
+        import sys,time,signal
+        with tempfile.TemporaryDirectory() as t:
+            script="""import importlib.util,pathlib,subprocess,sys,signal,os
+spec=importlib.util.spec_from_file_location('b',sys.argv[1]);b=importlib.util.module_from_spec(spec);spec.loader.exec_module(b)
+base=pathlib.Path(sys.argv[2]);original=subprocess.Popen
+def spawn(args,**kw):
+ return original([sys.executable,'-c',"import pathlib,sys,time;pathlib.Path(sys.argv[1]).write_text('ready');time.sleep(20)",str(base/'ready')],**kw)
+b.subprocess.Popen=spawn
+code=b.node_wrapper(['/usr/bin/docker','run',b.IMAGE,'testnet'],base)
+if code<0:signal.signal(-code,signal.SIG_DFL);os.kill(os.getpid(),-code)
+raise SystemExit(code)
+"""
+            process=subprocess.Popen([sys.executable,'-c',script,b.__file__,t],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+            try:
+                deadline=time.monotonic()+3
+                while not (pathlib.Path(t)/'ready').exists() and time.monotonic()<deadline:time.sleep(.01)
+                self.assertTrue((pathlib.Path(t)/'ready').exists());process.send_signal(signal.SIGTERM)
+                stdout,stderr=process.communicate(timeout=3);self.assertEqual(process.returncode,-15);self.assertEqual(stdout,b'');self.assertEqual(stderr,b'')
+                observed=b.node_startup_observation(pathlib.Path(t));self.assertEqual(observed['signal'],15);self.assertTrue(observed['complete'])
+            finally:
+                if process.poll() is None:process.kill();process.communicate()
+
+    def test_real_disposable_process_exit_and_signal_are_preserved_without_raw_output(self):
+        # Real short Python children stand in for Docker; no Docker/service runs.
+        import sys
+        original=subprocess.Popen
+        for ending,expected in [('raise SystemExit(7)',7),('os.kill(os.getpid(),signal.SIGTERM)',-15)]:
+            with self.subTest(ending=ending),tempfile.TemporaryDirectory() as t:
+                ns=host();ns['BASE']=pathlib.Path(t);calls=[]
+                def spawn(args,**kw):
+                    calls.append(args)
+                    return original([sys.executable,'-c',"import os,signal;print('Genesis archive root: PRIVATE_SENTINEL',flush=True);"+ending],**kw)
+                with patch.object(ns['subprocess'],'Popen',side_effect=spawn):
+                    code=b.node_wrapper(['/usr/bin/docker','run',b.IMAGE,'testnet'],ns['BASE'])
+                self.assertEqual(code,expected);self.assertEqual(len(calls),1)
+                observed=b.node_startup_observation(ns['BASE']);self.assertTrue(observed['complete']);self.assertTrue(observed['available'])
+                self.assertIn('process-spawned',observed['stages']);self.assertNotIn('PRIVATE_SENTINEL',json.dumps(observed))
+                self.assertEqual(observed['exitCode'],7 if expected==7 else None);self.assertEqual(observed['signal'],15 if expected<0 else None)
 
 if __name__=='__main__':unittest.main()

@@ -3,7 +3,7 @@
 Host executable tokens are embedded and unit-tested through injected commands.
 Only public pins are committed. Capability URLs belong in owner-only external files.
 """
-import argparse, base64, datetime as dt, gzip, hashlib, ipaddress, io, json, lzma, os, pathlib, re, stat, sys, tokenize, urllib.parse
+import argparse, base64, datetime as dt, gzip, hashlib, ipaddress, io, json, lzma, os, pathlib, re, signal, stat, subprocess, sys, tokenize, urllib.parse
 
 IMAGE = "azteclabs/aztec@sha256:e5bc218e326b4f3b1cd06b0309cb98e87fef5dfda3330157ce1e393d89416c32"
 NODE_SHA = "7fde7b8afa198da66257f42ee2001d874c7355631e6d1579a5fb5ef1f246df4c"
@@ -68,7 +68,7 @@ def validate(config, now=None):
 
 # Executed only on the future Linux host, never while generating or testing.
 HOST = r'''
-import datetime as dt, fcntl, hashlib, ipaddress, json, os, pathlib, platform, re, shutil, stat, subprocess, sys, tarfile, time, urllib.request, urllib.parse
+import datetime as dt, fcntl, hashlib, ipaddress, json, os, pathlib, platform, re, shutil, signal, stat, subprocess, sys, tarfile, time, urllib.request, urllib.parse
 BASE = pathlib.Path('/var/lib/rolling-bootstrap')
 RELEASE = pathlib.Path('/opt/board-prover/releases') / ('rolling-'+PINS['manifest'][:16])
 PRIVATE = pathlib.Path('/var/lib/rolling-bootstrap-private')
@@ -403,7 +403,7 @@ def install_node():
           '-e','PROVER_REAL_PROOFS=true','-e','SYNC_MODE=snapshot','-e','P2P_IP='+ip,'-e','P2P_PORT=40400','-e','AZTEC_PORT=8080','-e','AZTEC_ADMIN_PORT=8880','-e','AZTEC_ADMIN_API_KEY_HASH='+admin_hash,
           '--entrypoint','node',PINS['image'],'--no-warnings','/usr/src/yarn-project/aztec/dest/bin/index.js','start','--node','--network','testnet']
     # All arguments above are fixed or strict IPv4/digest; no shell is involved.
-    unit='[Unit]\nDescription=Bounded private query fullnode\nRequires=docker.service rolling-egress.service\nAfter=docker.service rolling-egress.service\nRequiresMountsFor=/var/lib/rolling-node\n[Service]\nExecStartPre=/usr/bin/python3 /usr/local/lib/rolling-attest.py --check\nExecStart='+ ' '.join(args)+'\nExecStop=/usr/bin/docker stop -t 30 rolling-node\nRestart=no\nTimeoutStartSec=0\nTimeoutStopSec=45\nStandardOutput=null\nStandardError=null\n[Install]\nWantedBy=multi-user.target\n'
+    unit='[Unit]\nDescription=Bounded private query fullnode\nRequires=docker.service rolling-egress.service\nAfter=docker.service rolling-egress.service\nRequiresMountsFor=/var/lib/rolling-node\n[Service]\nExecStartPre=/usr/bin/python3 /usr/local/lib/rolling-attest.py --check\nExecStart=/usr/bin/python3 '+str(RELEASE/'deploy/prover/bootstrap.py')+' --node-wrapper '+ ' '.join(args)+'\nExecStop=/usr/bin/docker stop -t 30 rolling-node\nRestart=no\nTimeoutStartSec=0\nTimeoutStopSec=45\nStandardOutput=null\nStandardError=null\n[Install]\nWantedBy=multi-user.target\n'
     write('/etc/systemd/system/rolling-node.service',unit,0o644)
     run(['systemctl','daemon-reload']);run(['systemctl','enable','--now','rolling-node'])
 
@@ -436,6 +436,13 @@ def readiness_observation(value):
     if value.get('ready') is False and set(value)=={'attempts','ready','category'} and value.get('category') in ('CONFIG','IDENTITY','UNAVAILABLE','UNSYNCED','STALE','TIMEOUT','PROCESS_EXIT'):
         return {'attempts':value['attempts'],'ready':False,'category':value['category']}
     raise ValueError('Invalid readiness observation')
+
+def startup_observation():
+    try:
+        helper=RELEASE/'deploy/prover/bootstrap.py'
+        if digest(helper)!=PINS['startup']:raise ValueError()
+        return json.loads(run(['/usr/bin/python3',str(helper),'--startup-observation'],timeout=3,capture=True))
+    except Exception:return {'available':False}
 
 def service_observations():
     # Only explicit State properties. Never inspect container config, Error,
@@ -513,7 +520,7 @@ def final_receipt():
                 try: observation=readiness_observation(read_bounded_json(BASE/'qualification/readiness-observation.json'))
                 except Exception: observation={'available':False}
                 receipt={'schemaVersion':1,'manifestSha256':PINS['manifest'],'qualification':q,
-                         'readinessObservation':observation,'services':service_observations()}
+                         'readinessObservation':observation,'services':service_observations(),'startup':startup_observation()}
                 if type(PINS.get('bootstrap')) is str and re.fullmatch('[a-f0-9]{64}',PINS['bootstrap']): receipt['bootstrapSourceSha256']=PINS['bootstrap']
                 exclusive_record(path,receipt)
             data=json.dumps(receipt,separators=(',',':')).encode()
@@ -662,7 +669,7 @@ def attest(check=False):
     try: count=verify_controls();good=True
     except Exception: pass
     if check:
-        if not good: raise ValueError('Control verification failed')
+        if not good or digest(RELEASE/'deploy/prover/bootstrap.py')!=PINS['startup']: raise ValueError('Control verification failed')
         return
     record=json.loads((BASE/'deadline.json').read_text())
     status=(BASE/'stage').read_text() if (BASE/'stage').exists() else 'initial'
@@ -741,12 +748,98 @@ def _execute(config, attestation_source):
 '''
 
 
+NODE_STAGES=('process-spawned','crs','genesis','rollup-standby','node-construction','public-rpc','admin-rpc')
+NODE_ERRORS=('native-load','module-load','permission','disk-full','memory','fetch','unknown')
+
+def node_startup_observation(base):
+    try:
+        v=private_file(base/'node-startup.json')
+        if set(v)!={'schemaVersion','stages','errors','oversizedLines','complete','exitCode','signal'} or type(v['schemaVersion']) is not int or v['schemaVersion']!=1 or type(v['complete']) is not bool: raise ValueError()
+        for key,allowed in [('stages',NODE_STAGES),('errors',NODE_ERRORS)]:
+            if type(v[key]) is not list or len(v[key])>len(allowed) or any(type(x) is not str or x not in allowed for x in v[key]) or len(set(v[key]))!=len(v[key]): raise ValueError()
+        if type(v['oversizedLines']) is not int or not 0<=v['oversizedLines']<=2**32-1: raise ValueError()
+        for key,limit in [('exitCode',255),('signal',64)]:
+            if v[key] is not None and (type(v[key]) is not int or not 0<=v[key]<=limit): raise ValueError()
+        if v['signal']==0:raise ValueError()
+        if v['complete']!=(sum(v[k] is not None for k in ('exitCode','signal'))==1) or (not v['complete'] and (v['exitCode'] is not None or v['signal'] is not None)): raise ValueError()
+        return {'available':True,**v}
+    except Exception:return {'available':False}
+
+class NodeOutput:
+    def __init__(self):
+        self.pending=b'';self.dropping=False
+        self.value={'schemaVersion':1,'stages':[],'errors':[],'oversizedLines':0,'complete':False,'exitCode':None,'signal':None}
+    def line(self,line):
+        # Matches are never copied. These are observed log signatures, not health.
+        for prefix,stage in [(b'Downloading CRS of size ','crs'),(b'Downloading Grumpkin CRS of size ','crs'),(b'Using cached ','crs'),(b'Genesis archive root: ','genesis')]:
+            if line.startswith(prefix) and stage not in self.value['stages']:self.value['stages'].append(stage)
+        for phrase,stage in [(b'Entering standby mode.','rollup-standby'),(b'Aztec Node version: ','node-construction'),(b'Aztec Server listening on port ','public-rpc'),(b'Aztec Server admin API listening on port ','admin-rpc')]:
+            if phrase in line and stage not in self.value['stages']:self.value['stages'].append(stage)
+        for token,category in [(b'ERR_DLOPEN_FAILED','native-load'),(b'ERR_MODULE_NOT_FOUND','module-load'),(b'EACCES','permission'),(b'ENOSPC','disk-full'),(b'ENOMEM','memory'),(b'fetch failed','fetch')]:
+            if token in line and category not in self.value['errors']:self.value['errors'].append(category)
+    def feed(self,chunk):
+        # Caller reads <=4096 bytes. An oversized line is discarded in full.
+        if len(chunk)>4096:raise ValueError('Chunk bound')
+        parts=chunk.split(b'\n')
+        for i,part in enumerate(parts):
+            if not self.dropping:
+                if len(self.pending)+len(part)>8192:
+                    self.pending=b'';self.dropping=True;self.value['oversizedLines']=min(2**32-1,self.value['oversizedLines']+1)
+                else:self.pending+=part
+            if i<len(parts)-1:
+                if not self.dropping:self.line(self.pending)
+                self.pending=b'';self.dropping=False
+    def finish(self,code):
+        if not self.dropping:self.line(self.pending)
+        self.pending=b''
+        if code and not self.value['errors']:self.value['errors'].append('unknown')
+        self.value.update(complete=True,exitCode=code if code>=0 else None,signal=-code if code<0 else None)
+
+def node_wrapper(args,base):
+    # Fixed generated systemd argv; never network/caller-selected commands.
+    if args[:2]!=['/usr/bin/docker','run'] or args[-1]!='testnet' or IMAGE not in args:raise ValueError('Node command')
+    output=NodeOutput();saved=None;process=None;requested=None
+    def persist():
+        nonlocal saved
+        value=json.dumps(output.value,separators=(',',':'))
+        if value!=saved:
+            target=base/'node-startup.json';fd=os.open(target,os.O_WRONLY|os.O_CREAT|os.O_TRUNC|os.O_NOFOLLOW,0o600)
+            with os.fdopen(fd,'w') as f:f.write(value);f.flush();os.fsync(f.fileno())
+            fd=os.open(base,os.O_RDONLY|os.O_DIRECTORY)
+            try:os.fsync(fd)
+            finally:os.close(fd)
+            saved=value
+    def stop(number,frame):
+        nonlocal requested
+        requested=number
+        if process is not None:
+            try:process.send_signal(number)
+            except ProcessLookupError:pass
+    previous={n:signal.signal(n,stop) for n in (signal.SIGTERM,signal.SIGINT)}
+    try:
+        persist()
+        if requested is not None:output.finish(-requested);persist();return -requested
+        process=subprocess.Popen(args,stdin=subprocess.DEVNULL,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,bufsize=0)
+        output.value['stages'].append('process-spawned');persist()
+        if requested is not None:stop(requested,None)
+        while True:
+            chunk=process.stdout.read(4096)
+            if not chunk:break
+            before=(len(output.value['stages']),len(output.value['errors']))
+            output.feed(chunk)
+            if before!=(len(output.value['stages']),len(output.value['errors'])):persist()
+        code=process.wait();output.finish(code);persist();return code
+    finally:
+        if process is not None:process.stdout.close()
+        for n,handler in previous.items():signal.signal(n,handler)
+
+
 def generate(config, now=None):
     config = validate(config, now)
     # Remove comments only to stay within AWS's 16KiB compressed user-data cap.
     # Tokenization preserves every string, executable token and line boundary.
     runtime=tokenize.untokenize(t._replace(string='') if t.type==tokenize.COMMENT else t for t in tokenize.generate_tokens(io.StringIO(HOST).readline))
-    pins = {'image':IMAGE, 'manifest':config['manifestSha256'], 'node':NODE_SHA, 'bb':BB_SHA, 'catalog':CATALOG_SHA, 'bootstrap':hashlib.sha256(runtime.encode()).hexdigest()}
+    pins = {'image':IMAGE, 'manifest':config['manifestSha256'], 'node':NODE_SHA, 'bb':BB_SHA, 'catalog':CATALOG_SHA, 'bootstrap':hashlib.sha256(runtime.encode()).hexdigest(),'startup':hashlib.sha256(pathlib.Path(__file__).read_bytes()).hexdigest()}
     prefix = 'PINS = '+repr(pins)+'\nNETWORK = '+repr(NETWORK)+'\nQUALIFICATION = '+repr(QUALIFICATION)+'\n'
     dispatch = "\ntry:\n    if '--qualify' in sys.argv: qualify()\n    elif '--qualification-stop' in sys.argv:\n        qualify(aborted=True);run(['systemctl','start','rolling-qualification-receipt.service'],timeout=40)\n    elif '--qualification-receipt' in sys.argv: final_receipt()\n    else: attest('--check' in sys.argv)\nexcept Exception as error:\n    shutdown_failure(error)\n"
     program = 'SOURCE = '+repr(prefix+runtime)+'\nCONFIG = '+repr(config)+'\nATTESTATION = SOURCE + '+repr(dispatch)+'\nexec(SOURCE)\nexecute(CONFIG, ATTESTATION)\n'
@@ -788,4 +881,13 @@ def main():
         return 1
     return 0
 
-if __name__=='__main__': sys.exit(main())
+if __name__=='__main__':
+    if sys.argv[1:2] in (['--node-wrapper'],['--startup-observation']):
+        try:
+            base=pathlib.Path('/var/lib/rolling-bootstrap')
+            if sys.argv[1]=='--startup-observation':print(json.dumps(node_startup_observation(base)));sys.exit(0)
+            code=node_wrapper(sys.argv[2:],base)
+            if code<0:signal.signal(-code,signal.SIG_DFL);os.kill(os.getpid(),-code)
+            sys.exit(code)
+        except Exception:sys.exit(1)
+    sys.exit(main())

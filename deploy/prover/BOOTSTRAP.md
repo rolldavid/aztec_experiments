@@ -387,3 +387,37 @@ reject oversized4096byte capability pairs through the real CLI. Size depends on
 actual private inputs: the unchanged16KiB output gate fails before creating
 user-data, never truncates a URL, and never removes a check to fit. A generator
 failure is a local packaging blocker, not permission to launch with altered data.
+
+### Bounded startup observations
+
+The node unit now invokes the reviewed, packaged `deploy/prover/bootstrap.py`
+wrapper around the same single foreground Docker command. Docker flags, mounted
+paths, network, hash-only admin configuration, `ExecStop`, restart policy and
+45-second stop budget remain unchanged. No extra service or retry is introduced.
+The public wrapper source enters the runtime manifest; its exact hash is also
+pinned by generated bootstrap controls and checked before node execution and
+receipt inspection. Rebuild the runtime package before using this bootstrap:
+older archives lack the wrapper and fail closed. Private generated configuration
+and capabilities never enter the runtime package.
+
+The wrapper drains combined stdout/stderr in chunks of at most4096bytes, retaining
+at most8192bytes of one line in memory. Longer lines are discarded completely.
+Only fixed stage/error enums, a bounded oversized-line count and exit code or
+signal reach the owner-only `node-startup.json`. Raw lines, matched values, URLs,
+keys, arguments, stack traces and errors never enter durable evidence. Repeated
+markers do not cause repeated writes. Shutdown signals are forwarded to the
+single child, which is reaped; its exit code/signal is retained and propagated.
+Existing systemd controls remain responsible for stopping a hung process/container.
+Hard termination can leave an explicitly incomplete observation.
+
+Final receipts add a bounded `startup` object read by the hash-verified helper,
+with a3-second inspection limit. Missing, malformed or changed helper/data yields
+`available:false`. Stages identify observed SDK log signatures only; they neither
+prove readiness nor establish an error's cause. Unknown failures remain unknown.
+This diagnostic does not repair or explain the earlier remote node exit1.
+The raw admin capability handoff from the preceding reviewed change is unchanged;
+this wrapper sees only the configured hash in the trusted unit arguments.
+
+Tests use adversarial byte streams and short disposable Python children, including
+signal termination; they do not run Docker or qualify a Linux node. Package tests
+check exact copied source and manifest-inventory inclusion without private inputs.

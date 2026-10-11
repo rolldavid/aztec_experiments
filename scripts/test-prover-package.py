@@ -80,6 +80,18 @@ export const getVersioningResponseHandler=()=>()=>{};
             (target / 'package.json').write_text(json.dumps({'name':name,'type':'module','exports':{'./'+key:'./fixture.mjs' for key in exports}}))
             (target / 'fixture.mjs').write_text(sdk)
 
+    def test_startup_wrapper_exact_public_source_enters_isolated_hash_inventory(self):
+        import hashlib
+        source=ROOT/'deploy/prover/bootstrap.py';copied=self.release/'deploy/prover/bootstrap.py'
+        self.assertEqual(copied.read_bytes(),source.read_bytes())
+        inventory={str(p.relative_to(self.release)):hashlib.sha256(p.read_bytes()).hexdigest() for p in self.release.rglob('*') if p.is_file()}
+        self.assertEqual(inventory['deploy/prover/bootstrap.py'],hashlib.sha256(source.read_bytes()).hexdigest())
+        self.assertEqual(sorted(str(p.relative_to(self.release)) for p in (self.release/'deploy').rglob('*') if p.is_file()),['deploy/prover/bootstrap.py'])
+        self.assertNotIn('CONFIG = {',copied.read_text())
+        isolated=importlib.util.spec_from_file_location('isolated_startup',copied);module=importlib.util.module_from_spec(isolated);isolated.loader.exec_module(module)
+        output=module.NodeOutput();output.feed(b'PRIVATE_SENTINEL\n');output.finish(1)
+        self.assertEqual(output.value['errors'],['unknown']);self.assertNotIn('PRIVATE_SENTINEL',json.dumps(output.value))
+
     def tearDown(self):
         self.temp.cleanup()
 
