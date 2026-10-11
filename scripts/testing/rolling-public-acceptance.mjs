@@ -23,7 +23,7 @@ export function assertSocialHTTPView(actual,expected){
  assert.deepEqual(Object.fromEntries(Object.keys(expected).map(key=>[key,actual[key]])),expected);
 }
 export function assertCanonicalOwnedNameProfiles(projection,profiles){
- assert(Array.isArray(profiles)&&profiles.length===3);
+ assert(Array.isArray(profiles)&&profiles.length===4);
  const seen=new Set();for(const expected of profiles){
   assert(expected?.identity?.id&&!seen.has(expected.identity.id));seen.add(expected.identity.id);
   assert.deepEqual(expected.posts,[]);assert.equal(expected.nextCursor,null);
@@ -34,7 +34,7 @@ export async function verifyRollingPublicReader({node,artifact,scope,deployment,
  assert(['conversation','profiles','anonymous-thread','repost-reactions','account-reactions','owned-names'].includes(scenario));
  const names=scenario==='owned-names';
  const social=['anonymous-thread','repost-reactions','account-reactions'].includes(scenario);
- if(names){assert(Array.isArray(expectedProfiles)&&expectedProfiles.length===3);assert.equal(new Set(expectedProfiles.map(p=>p.identity.id)).size,3);}
+ if(names){assert(Array.isArray(expectedProfiles)&&expectedProfiles.length===4);assert.equal(new Set(expectedProfiles.map(p=>p.identity.id)).size,4);}
  if(social)assert(Array.isArray(expectedHTTP)&&expectedHTTP.length>0);
  if(scenario==='profiles')assert(expectedProfile&&expectedProfile.id===ids.nameId);
  assert(Number.isSafeInteger(deadlineAt)&&deadlineAt>Date.now());

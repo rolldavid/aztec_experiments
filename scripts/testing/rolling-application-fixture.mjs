@@ -371,7 +371,7 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
       if(names){
         const {exerciseRollingOwnedNames}=await import('./rolling-owned-names.mjs');
         report.names=await exerciseRollingOwnedNames({actorA,actorB,actionA:(input,label)=>action(input,label,actorA),actionB:(input,label)=>action(input,label,actorB)});
-        assert.equal(publicNameIds.length,3);assert.equal(new Set(publicNameIds).size,3);
+        assert.equal(publicNameIds.length,4);assert.equal(new Set(publicNameIds).size,4);
         report.publicViews=publicNameIds.slice().sort().map(id=>projection.profile(id,{limit:100}));
         const {assertCanonicalOwnedNameProfiles}=await import('./rolling-public-acceptance.mjs');assertCanonicalOwnedNameProfiles(projection,report.publicViews);await save();
       }else if(scenario==='profiles'){
@@ -450,7 +450,7 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
         deployment:{blockNumber:Number(report.initialPublicAnchor.blockNumber),blockHash:report.initialPublicAnchor.blockHash,txHash:report.initialPublicAnchor.txHash},
         cacheDirectory:path.join(ctx.directory,'rolling-public-index'),ids,scenario,expectedProfiles:names?report.publicViews:undefined,expectedProfile:report.profiles?.expectedIdentity,expectedHTTP:report.social?.expectedHTTP,deadlineAt:ctx.applicationDeadlineAt,observation:report.publicReader});await save();
       if(multi){const bStandalone=BigInt(feesB.standalone.transactionFee);await fees.verify(feeTotal,feesB.browserFixture.fundedAmount-bStandalone-feeTotalB);await feesB.verify(feeTotalB,fees.browserFixture.fundedAmount-feeTotal);assert.equal(fees.poolBefore,feesB.poolBefore);report.accountFees={a:String(feeTotal),b:String(feeTotalB)};}else await fees.verify(feeTotal);report.actualHumanFees=String(feeTotal+feeTotalB);report.proverJobs=service.stats();
-      assert.equal(report.proverJobs.failed,0);if(names){assert.equal(report.proverJobs.completed,3);assert.equal(report.proverJobs.submitted,3);}
+      assert.equal(report.proverJobs.failed,0);if(names){assert.equal(report.proverJobs.completed,4);assert.equal(report.proverJobs.submitted,4);}
       else if(social){const expectedJobs=scenario==='anonymous-thread'?3:multi?6:4;assert.equal(report.proverJobs.completed,expectedJobs);assert.equal(report.proverJobs.submitted,expectedJobs);}
       else{assert.equal(report.proverJobs.completed,5);assert.equal(report.proverJobs.submitted,5);}
       assert.equal(report.proverJobs.running,false);

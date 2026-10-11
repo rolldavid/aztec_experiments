@@ -34,10 +34,10 @@ import {assertCanonicalOwnedNameProfiles} from './rolling-public-acceptance.mjs'
 function namesFixture(){
  const words=text=>[String(BigInt('0x'+Buffer.from(text).toString('hex').padEnd(62,'0'))),'0'];
  const projection=createRollingProjection({isValidatedEvent:()=>true});
- for(const [index,[first,last]]of [['River','Stone'],['Ellis','Moss'],['Juniper','Vale']].entries())projection.stage([{type:'NameRegistered',payload:{schema:'1',name_id:String(index+1),first_length:String(first.length),first:words(first),last_length:String(last.length),last:words(last)},position:{blockNumber:String(index+1),blockHash:'mock-block-'+index,txHash:'mock-tx-'+index,txIndexWithinBlock:'0',logIndexWithinTx:'0'}}]).apply();
- return {projection,profiles:['1','2','3'].map(id=>projection.profile(id,{limit:100}))};
+ for(const [index,[first,last]]of [['River','Stone'],['Ellis','Moss'],['Juniper','Vale'],['Morgan','Reed']].entries())projection.stage([{type:'NameRegistered',payload:{schema:'1',name_id:String(index+1),first_length:String(first.length),first:words(first),last_length:String(last.length),last:words(last)},position:{blockNumber:String(index+1),blockHash:'mock-block-'+index,txHash:'mock-tx-'+index,txIndexWithinBlock:'0',logIndexWithinTx:'0'}}]).apply();
+ return {projection,profiles:['1','2','3','4'].map(id=>projection.profile(id,{limit:100}))};
 }
-test('owned-name canonical profiles retain all three full public identities without posts',()=>{
+test('owned-name canonical profiles retain all four full public identities without posts',()=>{
  const {projection,profiles}=namesFixture();assertCanonicalOwnedNameProfiles(projection,profiles);
  for(const expected of profiles)assertSocialHTTPView({...expected,names:{},boards:{},checkpoint:{number:1}},{...expected,names:{},boards:{}});
 });
