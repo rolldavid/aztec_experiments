@@ -6,6 +6,7 @@ import fs from 'node:fs';
 import {Fr} from '@aztec-labs/foundation/curves/bn254';
 import {AztecAddress} from '@aztec-labs/stdlib/aztec-address';
 import {encodeArguments,loadContractArtifact} from '@aztec-labs/stdlib/abi';
+import {createL2Journal} from '../l2-journal.mjs';
 import {createRollingApplication} from './application.mjs';
 const hex=n=>'0x'+BigInt(n).toString(16).padStart(64,'0');
 const artifact=loadContractArtifact(JSON.parse(fs.readFileSync(new URL('../../billboard/target/rolling_contract-RollingBoard.json',import.meta.url))));
@@ -20,15 +21,15 @@ function fixture(){
       main_policy:[BigInt(state.policy),1n],effective_policy:[BigInt(state.policy),1n,1n,2n,false],get_screen_hints:state.hints??[null,null]};
     return {result:replies[name]};
   }})})};
-  const journal={assertCanStart:async()=>{},inspectOutcome:async()=>state.outcome,inspect:async()=>state.outcome};
+  const journal={assertCanStart:async()=>{},inspectOutcome:async()=>state.outcome,inspect:async()=>state.outcome,confirmed:()=>{}};
   const owner=new AztecAddress(new Fr(3n));
   const wallet={getAccounts:async()=>[owner],getChainInfo:async()=>({chainId:31337,version:1}),sendTx:async(payload,opts)=>{
     state.sends++;state.sent={payload,opts};assert.ok([...values.values()].every(x=>!x.includes('Private Sentinel')));
     assert.equal(opts.transactionJournal,journal);if(state.failSend)throw Error('unknown after send');
-    state.outcome={operation:opts.journalOperation,outcome:'success',txHash:hex(77)};return {receipt:{}};
+    state.outcome={operation:opts.journalOperation,outcome:'success',txHash:hex(77),receipt:{txHash:hex(77)}};return {receipt:{}};
   }};
-  const node={};wallet.aztecNode=node;let random=100n;
-  const sdk={Fr:class extends Fr {static random(){return new Fr(random++);}},AztecAddress,encodeArguments,Contract:{at:()=>board},isTrustedPrivateNode:n=>n===node,
+  const node={};wallet.aztecNode=node;wallet.pxe={};let random=100n;
+  const sdk={Fr:class extends Fr {static random(){return new Fr(random++);}},AztecAddress,encodeArguments,Contract:{at:()=>board},isTrustedPrivateNode:n=>n===node,isPrivateWalletForNode:(w,n)=>w===wallet&&n===node,isPrivatePXEForNode:(p,n)=>p===wallet.pxe&&n===node,
     inspectTrustedNode:async()=>{if(!state.guard)throw Error('stale trusted node');},
     preparePrivateFeePayment:async()=>({availableCredit:100n}),estimatePrivateFeeTransaction:async input=>{
       await input.guard();state.estimates++;state.calls.push(input.interaction);
@@ -99,7 +100,7 @@ test('private ownership and status reads never invoke publicReader, and do not o
 test('reconcile uses exact operation identity and preserves reverted outcomes',async()=>{
   const f=fixture(),p=await f.app.prepare({type:'like',post:'5'});f.state.failSend=true;await assert.rejects(f.app.submitPrepared(p.intentId));
   f.state.outcome={operation:'different',outcome:'success',txHash:hex(88)};assert.equal((await f.app.reconcile(p.intentId)).status,'unknown');
-  f.state.outcome={operation:`ROLLING_WORKFLOW_V1:${p.intentId}`,outcome:'reverted',txHash:hex(77)};
+  f.state.outcome={operation:`ROLLING_WORKFLOW_V1:${p.intentId}`,outcome:'reverted',txHash:hex(77),receipt:{txHash:hex(77)}};
   assert.equal((await f.app.reconcile(p.intentId)).status,'reverted');assert.equal(f.state.sends,1);
 });
 test('CAS excludes concurrent writers from sending the same prepared intent twice',async()=>{
@@ -143,4 +144,77 @@ test('wrong wallet node fails before any personalized wallet/utility call',async
     await assert.rejects(action(),{code:'ROLLING_CONTEXT_CHANGED'});
   }
   assert.equal(f.state.privateReads.length,0);assert.equal(f.state.estimates,0);assert.equal(f.state.sends,0);
+});
+
+class JournalTx {
+  constructor(hash){this.hash=hash;}
+  getTxHash(){return {toString:()=>this.hash};}
+  toBuffer(){return Buffer.from(this.hash);}
+  static fromBuffer(buffer){return new JournalTx(buffer.toString());}
+}
+async function realJournalFixture(){
+  const f=fixture(),receipts=new Map();let sequence=700;
+  const node=f.options.accountSession.node;
+  node.getTxReceipt=async hash=>receipts.get(hash.toString());
+  node.getBlock=async()=>({hash:{toString:()=>hex(42)}});
+  const scope={account:hex(3),chainId:'31337',version:'1',rollup:'0x'+'11'.repeat(20),board:hex(1),portal:'0x'+'22'.repeat(20)};
+  const newJournal=()=>createL2Journal({storage:f.options.privateStore,walletSecret:hex(8),walletSalt:'0',scope,Tx:JournalTx,node,waitOptions:{timeoutMs:1000,intervalMs:1}});
+  f.options.accountSession.journal=await newJournal();
+  async function install(operation,status='checkpointed',result='success'){
+    const journal=f.options.accountSession.journal,previous=await journal.assertCanStart();
+    const tx=new JournalTx(hex(sequence++));journal.setOperation(operation);await journal.prepare(tx,previous);
+    const receipt={txHash:tx.getTxHash(),status,executionResult:result,blockNumber:1,blockHash:{toString:()=>hex(42)}};
+    receipts.set(tx.hash,receipt);return receipt;
+  }
+  f.options.accountSession.wallet.sendTx=async(_,opts)=>{
+    f.state.sends++;const receipt=await install(opts.journalOperation);opts.transactionJournal.confirmed(receipt);return {receipt};
+  };
+  f.app=f.restart();
+  return {...f,receipts,install,restartJournal:async()=>{f.options.accountSession.journal=await newJournal();return f.restart();}};
+}
+test('actual encrypted L2 journal and workflow coexist; restart acknowledges only canonical predecessor',async()=>{
+  const f=await realJournalFixture(),first=await f.app.prepare({type:'like',post:'5'});
+  await f.app.submitPrepared(first.intentId);assert.equal(f.values.size,2,'distinct authenticated ciphertext slots');
+  let replacement=await f.restartJournal();
+  assert.equal((await replacement.reconcile(first.intentId)).status,'confirmed');
+  const second=await replacement.prepare({type:'unlike',post:'5'});
+  replacement=await f.restartJournal(); // prepared next action survives another loss of in-memory acknowledgement
+  assert.equal((await replacement.submitPrepared(second.intentId)).status,'confirmed');assert.equal(f.state.sends,2);
+});
+test('actual journal pending transaction arriving after prepare blocks before private simulation',async()=>{
+  const f=await realJournalFixture(),p=await f.app.prepare({type:'like',post:'5'});
+  await f.install('OTHER_OPERATION','pending');const estimates=f.state.estimates;
+  await assert.rejects(f.app.submitPrepared(p.intentId),{code:'BB_RECOVERY_REQUIRED'});
+  assert.equal(f.state.estimates,estimates);assert.equal(f.state.sends,0);
+});
+test('actual restarted reverted journal still requires finality, and reorg prevents acknowledgement',async()=>{
+  const f=await realJournalFixture(),p=await f.app.prepare({type:'like',post:'5'});
+  f.options.accountSession.wallet.sendTx=async(_,opts)=>{await f.install(opts.journalOperation,'checkpointed','reverted');throw Error('reverted');};
+  await assert.rejects(f.app.submitPrepared(p.intentId));let replacement=await f.restartJournal();
+  assert.equal((await replacement.reconcile(p.intentId)).status,'reverted');
+  await assert.rejects(replacement.prepare({type:'unlike',post:'5'}),{code:'BB_TRANSACTION_FINALITY_PENDING'});
+  const receipt=[...f.receipts.values()][0];receipt.status='finalized';
+  replacement=await f.restartJournal();assert.equal((await replacement.prepare({type:'unlike',post:'5'})).status,'prepared');
+  const g=await realJournalFixture(),q=await g.app.prepare({type:'like',post:'5'});await g.app.submitPrepared(q.intentId);
+  g.options.accountSession.node.getBlock=async()=>({hash:{toString:()=>hex(999)}});
+  await assert.rejects((await g.restartJournal()).reconcile(q.intentId),{code:'BB_SUBMISSION_UNKNOWN'});
+});
+test('missing factory PXE provenance rejects before private wallet calls',async()=>{
+  const f=fixture();f.options.sdk.isPrivatePXEForNode=()=>false;
+  f.options.accountSession.wallet.getChainInfo=()=>assert.fail('private call before provenance');
+  await assert.rejects(f.app.readAccountStatus(),{code:'ROLLING_CONTEXT_CHANGED'});
+});
+
+test('unverified captured wallet submission route is rejected before personalized calls',async()=>{
+  const f=fixture();f.options.sdk.isPrivateWalletForNode=()=>false;
+  f.options.accountSession.wallet.getChainInfo=()=>assert.fail('private call before raw submission provenance');
+  await assert.rejects(f.app.prepare({type:'like',post:'5'}),{code:'ROLLING_CONTEXT_CHANGED'});
+  assert.equal(f.state.estimates,0);assert.equal(f.state.sends,0);
+});
+test('newly acknowledged but non-final reverted transaction blocks pre-estimation too',async()=>{
+  const f=await realJournalFixture(),p=await f.app.prepare({type:'like',post:'5'});
+  const receipt=await f.install('OTHER_OPERATION','checkpointed','reverted');f.options.accountSession.journal.confirmed(receipt);
+  const estimates=f.state.estimates;
+  await assert.rejects(f.app.submitPrepared(p.intentId),{code:'BB_TRANSACTION_FINALITY_PENDING'});
+  assert.equal(f.state.estimates,estimates);assert.equal(f.state.sends,0);
 });

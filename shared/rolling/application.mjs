@@ -39,8 +39,12 @@ const methods={name:'register_name',subboard:'create_subboard',like:'set_like',u
  * accountSession: {owner,wallet,node,journal,walletSecret,walletSalt}; node is the
  * branded trusted node; wallet is createAztecWallet with this SAME scoped L2 journal
  * and contextGuard. Parent constructs PXE with that same node: the installed PXE
- * wraps it in an opaque SDK caching proxy, so .pxe.node equality cannot prove this.
- * The wallet's public .aztecNode identity is checked before personalized calls.
+ * wraps it in an opaque SDK caching proxy; sdk.isPrivatePXEForNode verifies the
+ * repository factory's private WeakMap provenance rather than proxy equality.
+ * sdk.isPrivateWalletForNode is supplied by the SDK facade from
+ * BillboardPrivateFeeRouting.isPrivateWalletForNode in the repository wallet factory;
+ * it verifies captured submission-node provenance. The wallet's public .aztecNode
+ * identity and factory PXE provenance are also checked before personalized calls.
  * Parent verifies deployment artifacts/publication before binding.
  * privateStore: existing ciphertext read(key)/atomic compareAndSwap(key,prior,next).
  * contextGuard must reject a locked/replaced account or changed deployment.
@@ -67,11 +71,11 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
   const scope=session&&fixed&&{account:owner,chainId:String(fixed.network.chainId),version:String(fixed.network.version),
     rollup:fixed.network.rollup,board:fixed.board,portal:fixed.portal};
   const slot=()=>slotPromise??=createEncryptedJournalSlot({storage:privateStore,walletSecret:session.walletSecret,walletSalt:session.walletSalt,
-    scopeText:l2JournalScopeText(scope),keyDomain:'ROLLING_WORKFLOW_V1'});
+    scopeText:JSON.stringify(['ROLLING_WORKFLOW_V1',l2JournalScopeText(scope)]),keyDomain:'ROLLING_WORKFLOW_V1'});
   async function guard(){
     check(session&&typeof contextGuard==='function','ROLLING_LOCKED');await contextGuard();
     check(owner===session.owner.toString()&&sdk.isTrustedPrivateNode(session.node)&&
-      session.wallet.aztecNode===session.node&&fixed.board===deployment.board.address.toString()&&fixed.fee===deployment.privateFee.address.toString()&&
+      session.wallet.aztecNode===session.node&&sdk.isPrivateWalletForNode(session.wallet,session.node)&&sdk.isPrivatePXEForNode(session.wallet.pxe,session.node)&&fixed.board===deployment.board.address.toString()&&fixed.fee===deployment.privateFee.address.toString()&&
       JSON.stringify(fixed.network)===JSON.stringify(deployment.network)&&fixed.portal===deployment.portal,'ROLLING_CONTEXT_CHANGED');
     await sdk.inspectTrustedNode(session.node,{expectedNetworkScope:fixed.network,proofsEnabled:fixed.proofsEnabled});
     const chain=await session.wallet.getChainInfo();check(String(chain.chainId)===scope.chainId&&String(chain.version)===scope.version,'ROLLING_CONTEXT_CHANGED');
@@ -87,10 +91,18 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
   function summary(record){return {intentId:record.id,action:clone(record.action),status:record.status,maximumFee:record.maximumFee,
     nonce:record.nonce,txHash:record.txHash??null,stage:'single-transaction'};}
   async function savedIntent(id){const saved=await (await slot()).read();check(saved.value?.id===id,'ROLLING_INTENT_NOT_FOUND');return saved;}
+  function acknowledge(found,expected){
+    check(found&&found.operation===expected.operation&&found.txHash===expected.txHash&&
+      ['success','reverted'].includes(found.outcome)&&found.receipt?.txHash?.toString()===found.txHash,'ROLLING_RECOVERY_REQUIRED');
+    // inspectOutcome verified this exact receipt canonically. assertCanStart still
+    // rechecks canonicality and rejects non-final reverted sender-tagging ranges.
+    session.journal.confirmed(found.receipt);
+  }
   async function outcome(saved){
     const found=await session.journal.inspectOutcome();
     if(!found||found.operation!==operation(saved.value.id))return {...summary(saved.value),status:'unknown'};
     if(!['success','reverted'].includes(found.outcome))return {...summary(saved.value),status:'unknown',txHash:found.txHash};
+    acknowledge(found,{operation:operation(saved.value.id),txHash:saved.value.txHash??found.txHash});
     const next={...saved.value,status:found.outcome==='success'?'confirmed':'reverted',txHash:found.txHash};
     await (await slot()).write(saved,next);return summary(next);
   }
@@ -147,16 +159,21 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
     async prepare(input){return exclusive(async()=>{await guard();const action=clone(input),store=await slot();let prior=await store.read();
       if(prior.value&&prior.value.status!=='cancelled'){check(['confirmed','reverted'].includes(prior.value.status),'ROLLING_RECOVERY_REQUIRED');
         const final=await outcome(prior);check(['confirmed','reverted'].includes(final.status),'ROLLING_RECOVERY_REQUIRED');prior=await store.read();}
-      await session.journal.assertCanStart();
+      const previousTx=await session.journal.assertCanStart();
+      const predecessor=previousTx?.value?{operation:previousTx.value.operation??null,txHash:previousTx.value.txHash}:null;
       const nonce=field(sdk.Fr.random().toString(),true),id=field(sdk.Fr.random().toString(),true),board=await contract();
       const args=plain(await argumentsFor(action,board,nonce));
-      const record={version:1,id,action,args,method:methods[action.type],nonce,status:'prepared'};
+      const record={version:1,id,action,args,method:methods[action.type],nonce,predecessor,status:'prepared'};
       const selected=interaction(board,record);record.encoded=selected.encoded;
       progress('estimating');const estimated=await sdk.estimatePrivateFeeTransaction({wallet:session.wallet,node:session.node,interaction:selected.call,
         prepared:await payment(),from:session.owner,guard});
       record.maximumFee=estimated.maximumFee.toString();await guard();await store.write(prior,record);return summary(record);
     });},
     async submitPrepared(id){return exclusive(async()=>{await guard();const saved=await savedIntent(id);check(saved.value.status==='prepared','ROLLING_RECOVERY_REQUIRED');
+      if(saved.value.predecessor){
+        const found=await session.journal.inspectOutcome();acknowledge(found,saved.value.predecessor);
+      }
+      await session.journal.assertCanStart(); // Before private simulation, not merely before send.
       const selected=interaction(await contract(),saved.value);progress('estimating');
       const estimated=await sdk.estimatePrivateFeeTransaction({wallet:session.wallet,node:session.node,interaction:selected.call,prepared:await payment(),from:session.owner,guard});
       check(estimated.maximumFee<=BigInt(saved.value.maximumFee),'ROLLING_FEE_CHANGED');await guard();
