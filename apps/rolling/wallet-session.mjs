@@ -40,7 +40,7 @@ export async function createRollingWalletSession({sdk,routing,ethers,config,boar
    if(instance.address.toString()!==captured.address)throw fail('ROLLING_ACCOUNT_MISMATCH');
    await guard();store=await sdk.openPXEStore({l1ChainId:Number(network.chainId),rollupAddress:network.rollup,
     accountAddress:captured.address,dataDirectory:'rolling-wallet-v1'},undefined,logger);
-   pxe=await sdk.createPXE(node,{proverEnabled:true,autoSync:false,syncChainTip:'checkpointed'},{store,remoteProver:remote});await guard();
+   await guard();pxe=await sdk.createPXE(node,{proverEnabled:true,autoSync:false,syncChainTip:'checkpointed'},{store,remoteProver:remote});await guard();
    if(!sdk.isPrivatePXEForNode(pxe,node))throw fail('ROLLING_PRIVATE_ROUTE');
    const partialAddress=await sdk.computePartialAddress(instance);await guard();
    await pxe.registerAccount(keys,partialAddress);

@@ -192,3 +192,12 @@ test('account mutation during each awaited initialization step blocks the next p
   assert.ok(f.state.events.indexOf('store-close')<f.state.events.lastIndexOf('unlock'),stage);
  }
 });
+
+test('account mutation while opening storage prevents PXE creation and closes only the acquired store',async()=>{
+ const f=await sessionFixture(),original=f.input.sdk.openPXEStore;let creates=0;
+ f.input.sdk.openPXEStore=async(...args)=>{const store=await original(...args);f.input.account.salt='9';return store;};
+ f.input.sdk.createPXE=async()=>{creates++;throw Error('must not construct private PXE');};
+ await assert.rejects(createRollingWalletSession(f.input),{code:'ROLLING_CONTEXT_CHANGED'});
+ assert.equal(creates,0);assert.equal(f.state.stops,0);assert.equal(f.state.closes,1);
+ assert.ok(f.state.events.indexOf('store-close')<f.state.events.lastIndexOf('unlock'));
+});
