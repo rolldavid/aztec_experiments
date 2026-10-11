@@ -21,3 +21,19 @@ test('read failure is visible and instrumentation does not consume or replace ev
  const {node,sequencer}=fixture();let seen;sequencer.on('checkpoint-error',x=>seen=x);const probe=observeSequencer(node),value={error:Error('PRIVATE')};sequencer.emit('checkpoint-error',value);assert.equal(seen,value);
  node.getPendingTxCount=async()=>{throw Error('READ_FAILED');};try{await assert.rejects(probe.sample(),/READ_FAILED/);}finally{probe.stop();}assert.equal(sequencer.listenerCount('checkpoint-error'),1);
 });
+test('changing or throwing event getters cannot leak or interrupt logger forwarding',()=>{
+ const {node,sequencer,calls}=fixture(),probe=observeSequencer(node);let reads=0;
+ try{
+  sequencer.emit('state-changed',{get oldState(){return ++reads===1?'IDLE':'PRIVATE';}});
+  assert.equal(reads,1);assert.equal(probe.observation.recent.at(-1).oldState,'IDLE');
+  const bad={get slot(){throw Error('PRIVATE');}};
+  assert.doesNotThrow(()=>sequencer.log.debug('Past start deadline for slot 2, abandoning block building',bad));
+  assert.equal(calls.length,1);assert.equal(calls[0].args[1],bad);
+  assert.doesNotThrow(()=>sequencer.emit('checkpoint-error',null));
+  assert(!JSON.stringify(probe.observation).includes('PRIVATE'));
+ }finally{probe.stop();}
+});
+test('original logger failure is preserved exactly once',()=>{
+ const {node,sequencer}=fixture();let calls=0;const original=Error('original');sequencer.log.debug=()=>{calls++;throw original;};const probe=observeSequencer(node);
+ try{assert.throws(()=>sequencer.log.debug('Past start deadline for slot 2, abandoning block building',null),e=>e===original);assert.equal(calls,1);}finally{probe.stop();}
+});

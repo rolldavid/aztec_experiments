@@ -15,7 +15,14 @@ const patterns=[
   ['already-processed',/^Target slot \d+ has already been processed$/],
 ];
 function numeric(value){if(typeof value==='bigint'&&value>=-9007199254740991n&&value<=9007199254740991n)return Number(value);if(typeof value==='number'&&Number.isFinite(value)&&Math.abs(value)<=Number.MAX_SAFE_INTEGER)return value;}
-function fields(input={}){const out={};for(const key of numbers){const n=numeric(input[key]);if(n!==undefined)out[key]=n;}for(const key of ['oldState','newState'])if(states.has(input[key]))out[key]=input[key];return out;}
+function fields(input){
+  try{
+    if(input===null||typeof input!=='object')return {};
+    const out={};for(const key of numbers){const value=input[key],n=numeric(value);if(n!==undefined)out[key]=n;}
+    for(const key of ['oldState','newState']){const value=input[key];if(states.has(value))out[key]=value;}
+    return out;
+  }catch{return {};} // Malformed observations must not interrupt the sequencer.
+}
 export function observeSequencer(node){
   const sequencer=node.getSequencer().getSequencer();
   const observation={events:{},skips:{},recent:[],samples:[]};
