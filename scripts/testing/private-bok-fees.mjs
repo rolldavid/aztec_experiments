@@ -8,31 +8,34 @@ function publicFunding(record, amount, payer) {
   const result = {};
   for (const flag of ['passed', 'realL1Deposit', 'independentL1Sender', 'testFaucetFunding',
     'productionFundingHelper', 'productionRecoveryHelper', 'publicRecoveryPersistedBeforeDeposit']) {
-    assert(record[flag] === true, `Missing successful public funding flag: ${flag}`);
-    result[flag] = record[flag];
+    const value = record[flag];
+    assert(value === true, `Missing successful public funding flag: ${flag}`);
+    result[flag] = value;
   }
-  assert(record.privateSecretsStored === false && record.depositSends === 1, 'Invalid funding secret/send evidence');
-  assert(typeof record.amount === 'string' && /^[1-9][0-9]*$/.test(record.amount)
-    && BigInt(record.amount) === amount, 'Funding amount evidence mismatch');
-  assert(typeof record.l1TxHash === 'string' && /^0x[0-9a-fA-F]{64}$/.test(record.l1TxHash), 'Invalid L1 funding hash');
-  assert(typeof record.recipient === 'string' && /^0x[0-9a-fA-F]{64}$/.test(record.recipient)
-    && record.recipient === payer, 'Funding recipient must be the shared FPC');
-  return Object.assign(result, {amount: record.amount, l1TxHash: record.l1TxHash, recipient: record.recipient,
-    depositSends: record.depositSends, privateSecretsStored: record.privateSecretsStored});
+  const {privateSecretsStored, depositSends, amount: publicAmount, l1TxHash, recipient} = record;
+  assert(privateSecretsStored === false && depositSends === 1, 'Invalid funding secret/send evidence');
+  assert(typeof publicAmount === 'string' && /^[1-9][0-9]*$/.test(publicAmount)
+    && BigInt(publicAmount) === amount, 'Funding amount evidence mismatch');
+  assert(typeof l1TxHash === 'string' && /^0x[0-9a-fA-F]{64}$/.test(l1TxHash), 'Invalid L1 funding hash');
+  assert(typeof recipient === 'string' && /^0x[0-9a-fA-F]{64}$/.test(recipient)
+    && recipient === payer, 'Funding recipient must be the shared FPC');
+  return Object.assign(result, {amount: publicAmount, l1TxHash, recipient, depositSends, privateSecretsStored});
 }
 
 function publicStandalone(record, payer) {
-  assert(record.passed === true && record.canonicalCheckpoint === true && record.executionResult === 'success'
-    && record.nodeValidation === 'valid', 'Canonical standalone funding evidence required');
-  assert(typeof record.applicationProof === 'boolean' && record.networkProof === false, 'Explicit standalone proof mode required');
-  assert(typeof record.txHash === 'string' && /^0x[0-9a-fA-F]{64}$/.test(record.txHash), 'Invalid standalone transaction hash');
-  assert(['checkpointed', 'proven', 'finalized'].includes(record.status), 'Standalone receipt must be included');
-  assert(record.payer === payer, 'Standalone payer must be the shared FPC');
-  assert(typeof record.transactionFee === 'string' && /^[1-9][0-9]*$/.test(record.transactionFee), 'Standalone actual fee required');
-  // Never copy future helper keys.
-  return {passed: true, txHash: record.txHash, status: record.status, transactionFee: record.transactionFee,
-    payer: record.payer, applicationProof: record.applicationProof, networkProof: false,
-    proofMode: record.applicationProof ? 'real' : 'proofs-disabled', canonicalCheckpoint: true};
+  assert(record && typeof record === 'object', 'Public standalone evidence required');
+  const {passed, canonicalCheckpoint, executionResult, nodeValidation, applicationProof, networkProof,
+    txHash, status, payer: publicPayer, transactionFee} = record;
+  assert(passed === true && canonicalCheckpoint === true && executionResult === 'success'
+    && nodeValidation === 'valid', 'Canonical standalone funding evidence required');
+  assert(typeof applicationProof === 'boolean' && networkProof === false, 'Explicit standalone proof mode required');
+  assert(typeof txHash === 'string' && /^0x[0-9a-fA-F]{64}$/.test(txHash), 'Invalid standalone transaction hash');
+  assert(['checkpointed', 'proven', 'finalized'].includes(status), 'Standalone receipt must be included');
+  assert(typeof publicPayer === 'string' && publicPayer === payer, 'Standalone payer must be the shared FPC');
+  assert(typeof transactionFee === 'string' && /^[1-9][0-9]*$/.test(transactionFee), 'Standalone actual fee required');
+  // Validate and publish the same captured primitives, even for accessor fields.
+  return {passed, txHash, status, transactionFee, payer: publicPayer, applicationProof, networkProof,
+    proofMode: applicationProof ? 'real' : 'proofs-disabled', canonicalCheckpoint};
 }
 
 export async function preparePrivateBokFees(ctx) {
@@ -82,11 +85,8 @@ export function createPrivateBokFeesPreparer({prepareFees, mkdir: makeDirectory}
       const owner = a.authorAccount.address, otherUser = b.authorAccount.address, operator = preparation.account.address;
       assert(!owner.equals(otherUser) && !owner.equals(operator) && !otherUser.equals(operator), 'Fee roles must be distinct');
       assert(a.browserFixture.instance.address.equals(b.browserFixture.instance.address), 'Private fee pool mismatch');
-      const ownerFunding = a.browserFixture.fundedAmount, otherFunding = b.browserFixture.fundedAmount;
-      assert(typeof ownerFunding === 'bigint' && ownerFunding > 0n && typeof otherFunding === 'bigint' && otherFunding > 0n);
-      assert.equal(b.standalone?.passed, true, 'Other user standalone funding must pass');
-      assert.match(b.standalone.transactionFee, /^[1-9][0-9]*$/, 'Standalone actual fee required');
-      const standaloneFee = BigInt(b.standalone.transactionFee);
+      const ownerFunding = BigInt(observation.funding.owner.amount), otherFunding = BigInt(observation.funding.otherUser.amount);
+      const standaloneFee = BigInt(observation.standaloneB.transactionFee);
       assert(standaloneFee <= otherFunding, 'Standalone fee exceeds funding');
       // Trusted fixture memory only: never expose either account record in evidence.
       await wallet.createSchnorrInitializerlessAccount(b.authorAccount.secret, b.authorAccount.salt,
@@ -121,14 +121,17 @@ export function createPrivateBokFeesPreparer({prepareFees, mkdir: makeDirectory}
         // FeeJuice, and the public FPC pool. B's standalone fee is counted once.
         await a.verify(ownerFees, otherRemaining);
         await b.verify(otherFees, ownerRemaining);
-        assert.equal(a.poolBefore, b.poolBefore, 'Fee pool baselines differ');
+        const ownerPoolBefore = a.poolBefore, otherPoolBefore = b.poolBefore;
+        assert(typeof ownerPoolBefore === 'string' && /^(0|[1-9][0-9]*)$/.test(ownerPoolBefore)
+          && typeof otherPoolBefore === 'string' && /^(0|[1-9][0-9]*)$/.test(otherPoolBefore), 'Invalid fee pool baseline');
+        assert(ownerPoolBefore === otherPoolBefore, 'Fee pool baselines differ');
         Object.assign(observation, {passed: true, privateCreditAndPoolReconciled: true,
           humanPublicBalancesZero: true, amounts: {
             ownerFunding: String(ownerFunding), otherUserFunding: String(otherFunding),
             ownerActualFees: String(ownerFees), otherUserActualFees: String(otherFees),
             otherUserStandaloneFee: String(standaloneFee), ownerPrivateBalance: String(ownerRemaining),
-            otherUserPrivateBalance: String(otherRemaining), poolBefore: a.poolBefore,
-            poolAfter: String(BigInt(a.poolBefore) + ownerRemaining + otherRemaining),
+            otherUserPrivateBalance: String(otherRemaining), poolBefore: ownerPoolBefore,
+            poolAfter: String(BigInt(ownerPoolBefore) + ownerRemaining + otherRemaining),
           }});
       };
       return Object.defineProperties(observation, {wallet: {value: wallet}, owner: {value: owner},

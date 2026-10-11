@@ -182,3 +182,66 @@ test('pure fake: partial funding evidence survives setup and cleanup failures wi
     assert(!Object.hasOwn(failure.privateBokFeesObservation, 'wallet'));
   }
 });
+
+function changingFields(record) {
+  const reads = new Map();
+  for (const [key, value] of Object.entries(record)) {
+    reads.set(key, 0);
+    Object.defineProperty(record, key, {enumerable: true, configurable: true, get() {
+      const count = reads.get(key) + 1; reads.set(key, count);
+      return count === 1 ? value : 'FAKE-PRIVATE-SECOND-READ';
+    }});
+  }
+  return reads;
+}
+
+test('pure fake: changing receipt getters are read once and sanitized fee drives accounting', async () => {
+  const f = fixture();
+  const expectedFunding = structuredClone({owner: f.helpers[0].funding, otherUser: f.helpers[1].funding});
+  const reads = [changingFields(f.helpers[0].funding), changingFields(f.helpers[1].funding),
+    changingFields(f.helpers[1].standalone)];
+  const result = await f.prepare();
+  await result.verify({owner: 11n, otherUser: 13n}); await result.close();
+  const report = JSON.parse(JSON.stringify(result));
+  assert.deepEqual(report.funding, expectedFunding);
+  assert.equal(report.standaloneB.transactionFee, '7');
+  assert.equal(report.standaloneB.proofMode, 'proofs-disabled');
+  assert.equal(report.amounts.otherUserStandaloneFee, '7');
+  assert.equal(report.amounts.poolAfter, '319');
+  assert.deepEqual(f.verified, [{index: 0, fees: 11n, netOther: 180n}, {index: 1, fees: 13n, netOther: 89n}]);
+  assert(reads.every(fields => [...fields.values()].every(count => count === 1)));
+  assert(!JSON.stringify(report).includes('FAKE-PRIVATE'));
+});
+
+test('pure fake: changing getters cannot leak into partial-failure evidence', async () => {
+  for (const options of [{failSetup: 1}, {failRegister: true, failClose: [0]}]) {
+    const f = fixture(options);
+    const reads = [changingFields(f.helpers[0].funding), changingFields(f.helpers[1].funding),
+      changingFields(f.helpers[1].standalone)];
+    let failure;
+    try {await f.prepare();} catch (error) {failure = error;}
+    const report = JSON.parse(JSON.stringify(failure.privateBokFeesObservation));
+    assert.equal(report.funding.owner.amount, '100');
+    assert.equal(report.funding.owner.passed, true);
+    assert.equal(report.funding.owner.privateSecretsStored, false);
+    if (options.failRegister) {
+      assert.equal(report.funding.otherUser.amount, '200');
+      assert.equal(report.standaloneB.transactionFee, '7');
+      assert.equal(report.standaloneB.applicationProof, false);
+    }
+    assert(reads.every((fields, index) => [...fields.values()].every(count => count === (options.failRegister || index === 0 ? 1 : 0))));
+    assert(!JSON.stringify(report).includes('FAKE-PRIVATE'));
+    assert.equal(report.passed, false);
+  }
+});
+
+test('pure fake: pool baseline getters use the same captured value for checks and report', async () => {
+  const f = fixture(), reads = [0, 0];
+  f.helpers.forEach((helper, index) => {
+    helper.verify = async () => {};
+    Object.defineProperty(helper, 'poolBefore', {get() {return ++reads[index] === 1 ? '50' : 'FAKE-PRIVATE-POOL';}});
+  });
+  const result = await f.prepare(); await result.verify({owner: 11n, otherUser: 13n});
+  assert.equal(result.amounts.poolBefore, '50'); assert.equal(result.amounts.poolAfter, '319');
+  assert.deepEqual(reads, [1, 1]); await result.close();
+});
