@@ -65,8 +65,9 @@ export async function depositAndClaimC01({node,preparation,instance,l1Client,rea
   else assert.equal(privateFeeAction,undefined,'Genesis fixture must not receive private fee route');
   const ownsWallet=claimWallet===undefined;
   let stage='preflight',wallet,sequencer,previousSequencerConfig;
-  const observation={passed:false,scope:'local real deposit and genuine private claim with ordinary checkpoint inclusion',
-    syntheticMessages:false,syntheticProofs:false,claimEpochProofAccepted:false,
+  const observation={passed:false,scope:'local real deposit and private claim with ordinary checkpoint inclusion',
+    applicationProofs:applicationProofsEnabled(),proofMode:applicationProofsEnabled()?'real':'proofs-disabled',networkProofs:false,
+    syntheticMessages:false,syntheticProofs:!applicationProofsEnabled(),claimEpochProofAccepted:false,
     walletOwnership:ownsWallet?'claim-helper':'parent',walletCleanup:ownsWallet?'not-created':'retained-by-parent'};
   const mark=name=>{stage=name;reportStage?.('claim:'+name);process.stdout.write(`C01_DEPOSIT_STAGE ${name}\n`);};
   assert.equal(typeof mineL1,'function','Explicit fixture miner required');

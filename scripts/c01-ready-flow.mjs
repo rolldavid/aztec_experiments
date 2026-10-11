@@ -42,7 +42,8 @@ async function checkedArtifacts(preparation) {
 export async function prepareAndProveC01Ready({ node, preparation, instance, deploymentReceipt,
   l1Client, directory, rollupAddress, rollupVersion, mark:reportStage=()=>{} }) {
   let stage = 'preflight', wallet, result;
-  const observation = { passed: false, scope: 'disabled portal deployment and genuine update_portal client proof',
+  const observation = { passed: false, scope: 'disabled portal deployment and update_portal client execution',
+    applicationProofs: applicationProofsEnabled(), proofMode: applicationProofsEnabled() ? 'real' : 'proofs-disabled', networkProofs: false,
     bindingSubmitted: false, readyEmitted: false, epochProofAccepted: false, portalActivated: false };
   const mark = name => { stage = name; reportStage('ready-'+name); };
   try {
