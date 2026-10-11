@@ -18,7 +18,7 @@ export async function verifyRollingPublicReader({node,artifact,scope,deployment,
  for(const phase of ['fresh','reopened']){
   const index=await make();assert.throws(()=>index.query('feed'),{code:'ROLLING_PUBLIC_NOT_READY'});
   const session={phase,closed:false};observation.sessions.push(session);
-  const server=await startRollingReader({index});
+  const server=await startRollingReader({index});let failure;
   try{
    while(index.status().state!=='ready'){
     assert(Date.now()<deadline,'Actual public index readiness deadline');
@@ -39,11 +39,12 @@ export async function verifyRollingPublicReader({node,artifact,scope,deployment,
    if(first)assert.deepEqual(content,first);else first=content;
    session.checkpoint=views.post.checkpoint;session.views=routes.map(([route])=>route);session.authenticatedRanges=index.status().authenticatedRanges;
    assert(session.authenticatedRanges>0);
-  }finally{
-   await server.close();
-   await new Promise((resolve,reject)=>{const socket=createConnection(new URL(server.url).port,'127.0.0.1');socket.setTimeout(1000,()=>{socket.destroy();reject(Error('Public reader close unconfirmed'));});
+  }catch(error){failure=error;throw error;}finally{
+   try{await server.close();
+   await new Promise((resolve,reject)=>{const socket=createConnection({port:Number(new URL(server.url).port),host:'127.0.0.1'});socket.setTimeout(1000,()=>{socket.destroy();reject(Error('Public reader close unconfirmed'));});
     socket.once('connect',()=>{socket.destroy();reject(Error('Public reader still open'));});socket.once('error',error=>error.code==='ECONNREFUSED'?resolve():reject(error));});
    session.closed=true;
+   }catch(cleanupError){session.closed=false;if(failure)throw new AggregateError([failure,cleanupError],'Public reader failed and cleanup unconfirmed');throw cleanupError;}
   }
  }
  observation.passed=true;observation.scope='Actual canonical public index, SQLite reopen, HTTP API and browser transport; no DOM or browser-wallet claim';
