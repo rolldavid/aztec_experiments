@@ -70,15 +70,21 @@
       "runtime_id": "/root/design",
       "parent_id": "lead-20261011",
       "task": [
+        "G06",
         "G14"
       ],
-      "branch": "codex/rolling-wallet-application",
+      "branch": "codex/rolling-public-index",
       "history_locator": "collaboration runtime /root/design, parent01a12a75-1b50-7871-a73b-4253a1010194",
       "role": "implementation worker",
-      "state": "0d05 approved and transferred; source claim released; read-only AWS monitoring",
+      "state": "running canonical public index and bounded local server; read-only AWS monitor",
       "worktree": "../rolling-design",
-      "allowed_paths": [],
-      "base": "0d05cc2910780a26f561d208d24bf012a2d40933"
+      "allowed_paths": [
+        "shared/rolling/public-index.mjs",
+        "shared/rolling/public-index.test.mjs",
+        "scripts/rolling-public-server.mjs",
+        "scripts/rolling-public-server.test.mjs"
+      ],
+      "base": "fc033e96"
     }
   ],
   "integrations": [

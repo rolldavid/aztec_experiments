@@ -17,6 +17,7 @@ export async function fingerprints() {
   for(const name of await fs.readdir(path.join(ROOT,'plugins')))if(name.endsWith('.mjs'))result['plugins/'+name]=sha(await fs.readFile(path.join(ROOT,'plugins',name)));
   for(const name of ['shared/aztec-node-client.mjs','shared/routed-kernel-prover.mjs'])result[name]=sha(await fs.readFile(path.join(ROOT,name)));
   for(const name of ['shared/private-pxe.mjs','shared/trusted-private-node.mjs','shared/remote-prover-client.mjs','shared/proving-policy.mjs',
+    'shared/private-fee-estimation.mjs','shared/private-fee-simulation.mjs','shared/sdk-entry.mjs','shared/sdk-store.mjs',
     'apps/src/billboard/user/engine.js'])result[name]=sha(await fs.readFile(path.join(ROOT,name)));
   for(const name of await fs.readdir(path.join(ROOT,'shared/rolling')))if(name.endsWith('.mjs'))result['shared/rolling/'+name]=sha(await fs.readFile(path.join(ROOT,'shared/rolling',name)));
   for(const name of await fs.readdir(path.join(ROOT,'prover')))if(name.endsWith('.mjs'))result['prover/'+name]=sha(await fs.readFile(path.join(ROOT,'prover',name)));
