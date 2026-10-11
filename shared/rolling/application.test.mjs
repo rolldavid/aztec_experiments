@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {Fr} from '@aztec-labs/foundation/curves/bn254';
 import {AztecAddress} from '@aztec-labs/stdlib/aztec-address';
-import {encodeArguments,loadContractArtifact} from '@aztec-labs/stdlib/abi';
+import {encodeArguments,loadContractArtifact,decodeFromAbi,getFunctionReturnType} from '@aztec-labs/stdlib/abi';
 import {createL2Journal} from '../l2-journal.mjs';
 import {BaseWallet} from '@aztec-labs/wallet-sdk/base-wallet';
 import {FIELD_MODULUS} from './invocation.mjs';
@@ -20,7 +20,7 @@ function fixture(){
   const board={methods:new Proxy({},{get:(_,name)=>(...args)=>({name,args,simulate:async()=>{
     state.privateReads.push({name,args});
     const replies={owned_names:[5n,0n,0n,0n,0n,0n,0n,0n],get_deposit_ids:[9n,0n,0n,0n,0n,0n,0n,0n,0n,0n],
-      main_policy:[BigInt(state.policy),1n],effective_policy:[BigInt(state.policy),1n,1n,2n,false],get_screen_hints:state.hints??[null,null]};
+      main_policy:[BigInt(state.policy),1n],effective_policy:[BigInt(state.policy),1n,1n,2n,false],get_screen_hints:state.hints??decodeFromAbi(getFunctionReturnType(artifact.functions.find(f=>f.name==='get_screen_hints')),Array.from({length:28},()=>Fr.ZERO))};
     return {result:replies[name]};
   }})})};
   const journal={assertCanStart:async()=>{},inspectOutcome:async()=>state.outcome,inspect:async()=>state.outcome,confirmed:()=>{}};
@@ -244,4 +244,34 @@ test('chain binding rejects malformed, missing and out-of-field identities befor
       assert.equal(f.state.privateReads.length,0);assert.equal(f.state.sends,0);
     }
   }
+});
+
+// These fixtures use the installed decoder, not a hand-written null substitute.
+test('actual SDK Option None and Some preserve post ABI bytes across encrypted reopen',async()=>{
+ const hintsType=getFunctionReturnType(artifact.functions.find(f=>f.name==='get_screen_hints'));
+ const post=artifact.functions.find(f=>f.name==='post');
+ const hintAbi={...post,parameters:post.parameters.slice(-2)};
+ for(const some of [false,true]){
+  const fields=Array.from({length:28},()=>Fr.ZERO);
+  if(some){fields[0]=new Fr(1n);fields[1]=new Fr(1n);fields[2]=new Fr(9n);fields[3]=new Fr(1n);fields[4]=new Fr(8n);fields[5]=new Fr(100n);fields[6]=new Fr(3n);fields[8]=new Fr(1n);fields[9]=new Fr(3n);fields[10]=new Fr(20n);fields[11]=new Fr(21n);fields[12]=new Fr(1n);fields[13]=new Fr(22n);}
+  const decoded=decodeFromAbi(hintsType,fields);assert.equal(decoded[1],undefined);assert.equal(decoded[0]===undefined,!some);
+  const f=fixture();f.state.hints=decoded;
+  const p=await f.app.prepare({type:'post',deposit:'9',content:'Optional hint roundtrip'});
+  const prepared=f.state.calls.at(-1).args.slice(-2);assert.equal(prepared[1],null);
+  assert.deepEqual(encodeArguments(hintAbi,prepared).map(String),fields.map(String));
+  assert.equal((await f.restart().submitPrepared(p.intentId)).status,'confirmed');
+  assert.deepEqual(f.state.sent.payload.args.slice(-2),prepared);
+  assert.deepEqual(encodeArguments(hintAbi,f.state.sent.payload.args.slice(-2)).map(String),fields.map(String));
+ }
+});
+test('utility ABI rejects missing required hint fields and malformed tuples before saving',async()=>{
+ const hintsType=getFunctionReturnType(artifact.functions.find(f=>f.name==='get_screen_hints'));
+ const fields=Array.from({length:28},()=>Fr.ZERO);fields[0]=new Fr(1n);
+ const decoded=decodeFromAbi(hintsType,fields);
+ const badField=structuredClone(decoded);badField[0].note.schema_version=undefined;
+ for(const hints of [[undefined],[undefined,undefined,undefined],badField,[{},undefined]]){
+  const f=fixture();f.state.hints=hints;
+  await assert.rejects(f.app.prepare({type:'post',deposit:'9',content:'Must reject'}),{code:'ROLLING_INVALID_RESPONSE'});
+  assert.equal(f.state.estimates,0);assert.equal(f.state.sends,0);assert.equal(f.values.size,0);
+ }
 });

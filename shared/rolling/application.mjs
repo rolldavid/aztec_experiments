@@ -22,6 +22,28 @@ function plain(value,depth=0){
   check(value&&Object.getPrototypeOf(value)===Object.prototype,'ROLLING_INVALID_RESPONSE');
   return Object.fromEntries(Object.entries(value).map(([k,v])=>[k,plain(v,depth+1)]));
 }
+// The installed ABI decoder returns undefined for Option::None. Only the
+// verified return ABI may grant absence; required values remain fail-closed.
+function utilityPlain(value,type,depth=0){
+  check(type&&depth<24,'ROLLING_INVALID_RESPONSE');
+  if(type.kind==='struct'&&type.path==='std::option::Option'){
+    check(type.fields?.length===2&&type.fields[0].name==='_is_some'&&type.fields[0].type.kind==='boolean'&&type.fields[1].name==='_value','ROLLING_ABI_MISMATCH');
+    return value===undefined||value===null?null:utilityPlain(value,type.fields[1].type,depth+1);
+  }
+  check(value!==undefined&&value!==null,'ROLLING_INVALID_RESPONSE');
+  if(type.kind==='array'||type.kind==='tuple'){
+    const size=type.kind==='array'?type.length:type.fields.length;
+    check(Number.isSafeInteger(size)&&size<=1024&&Array.isArray(value)&&value.length===size,'ROLLING_INVALID_RESPONSE');
+    return Array.from({length:size},(_,i)=>utilityPlain(value[i],type.kind==='array'?type.type:type.fields[i],depth+1));
+  }
+  if(type.kind==='struct'&&!value?.toField&&!value?.toBigInt){
+    check(Object.getPrototypeOf(value)===Object.prototype&&Array.isArray(type.fields)&&type.fields.length<=64,'ROLLING_INVALID_RESPONSE');
+    check(Object.keys(value).sort().join()===type.fields.map(f=>f.name).sort().join(),'ROLLING_INVALID_RESPONSE');
+    return Object.fromEntries(type.fields.map(f=>[f.name,utilityPlain(value[f.name],f.type,depth+1)]));
+  }
+  if(type.kind==='boolean')check(typeof value==='boolean','ROLLING_INVALID_RESPONSE');
+  return plain(value,depth);
+}
 function text(value,count,required=true){
   check(typeof value==='string'&&value.isWellFormed()&&!value.includes('\0'));
   const bytes=new TextEncoder().encode(value);check(bytes.length<=count*31&&(!required||bytes.length));
@@ -94,7 +116,13 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
   async function exclusive(fn){check(!busy,'ROLLING_BUSY');busy=true;try{return await fn();}finally{busy=false;}}
   const progress=stage=>{try{onProgress({stage});}catch{/* display errors cannot alter transaction control */}};
   const contract=()=>sdk.Contract.at(new sdk.AztecAddress(new sdk.Fr(BigInt(fixed.board))),deployment.board.artifact,session.wallet);
-  async function utility(board,name,args){const out=await board.methods[name](...args).simulate({from:session.owner});return plain(out.result??out);}
+  async function utility(board,name,args){
+    const matches=[...deployment.board.artifact.functions,...(deployment.board.artifact.nonDispatchPublicFunctions??[])].filter(f=>f.name===name);
+    check(matches.length===1,'ROLLING_ABI_MISMATCH');const abi=matches[0];
+    check(!abi.returnTypes||abi.returnTypes.length<=1,'ROLLING_ABI_MISMATCH');
+    const out=await board.methods[name](...args).simulate({from:session.owner});
+    return utilityPlain(out.result??out,abi.returnType??abi.returnTypes?.[0]);
+  }
   async function payment(){return sdk.preparePrivateFeePayment({wallet:session.wallet,node:session.node,owner:session.owner,
     privateFeeAddress:fixed.fee,privateFeeArtifact:deployment.privateFee.artifact,expectedChainId:scope.chainId,expectedVersion:scope.version,gasSettings:fixed.gas});}
   const operation=id=>`ROLLING_WORKFLOW_V1:${id}`;
