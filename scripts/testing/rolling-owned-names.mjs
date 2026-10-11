@@ -24,7 +24,7 @@ async function owned(actor,values){
  }
  const sorted=items=>items.map(({id,first,last})=>({id,first,last})).sort((a,b)=>a.id.localeCompare(b.id));
  assert(JSON.stringify(sorted(value.records))===JSON.stringify(sorted(values)),'Private owned names differ from the exact expected set');
- // Three names cannot fill an eight-record page. A later nonempty page is not
+ // Four names cannot fill an eight-record page. A later nonempty page is not
  // acceptable recovery or an excuse to silently omit an unexpected private name.
  const tail=await actor.application.ownedIdentities({cursor:8});
  assert.deepEqual(tail,{identities:[],records:[],nextCursor:null});
@@ -36,7 +36,7 @@ async function collateralPending(actor){
 function activity(actor){const value=actor.activity();exact(value,['authWitnesses','proofJobs','walletSubmissions','transportSends']);
  for(const n of Object.values(value))assert(Number.isSafeInteger(n)&&n>=0);return structuredClone(value);}
 
-/** Three sequential registrations; no simultaneous collision or global privacy
+/** Four sequential registrations; no simultaneous collision or global privacy
  * claim. Journal reopening reconstructs the application over its existing PXE;
  * it is not a device-loss, cold-PXE or seed-recovery exercise. */
 export async function exerciseRollingOwnedNames({actorA,actorB,actionA,actionB}){
@@ -44,10 +44,10 @@ export async function exerciseRollingOwnedNames({actorA,actorB,actionA,actionB})
  for(const action of [actionA,actionB])assert.equal(typeof action,'function');
  for(const actor of [actorA,actorB]){for(const fn of ['activity','reopenJournal'])assert.equal(typeof actor[fn],'function');
   for(const fn of ['ownedIdentities','readAccountStatus'])assert.equal(typeof actor.application?.[fn],'function');assert(actor.journal);}
- const proposals=await Promise.all([expected('River','Stone'),expected('Ellis','Moss'),expected('Juniper','Vale')]);
- assert.equal(new Set(proposals.map(n=>n.id)).size,3);
+ const proposals=await Promise.all([expected('River','Stone'),expected('Ellis','Moss'),expected('Juniper','Vale'),expected('Morgan','Reed')]);
+ assert.equal(new Set(proposals.map(n=>n.id)).size,4);
  const a=[],b=[];await owned(actorA,a);await owned(actorB,b);await collateralPending(actorB);
- for(const [index,action,collection]of [[0,actionA,a],[1,actionA,a],[2,actionB,b]]){
+ for(const [index,action,collection]of [[0,actionA,a],[1,actionA,a],[2,actionB,b],[3,actionB,b]]){
   const name=proposals[index];event(await action({type:'name',first:name.first,last:name.last},'owned-name-'+(index+1)),name);collection.push(name);
   await owned(actorA,a);await owned(actorB,b);
  }
@@ -57,7 +57,7 @@ export async function exerciseRollingOwnedNames({actorA,actorB,actionA,actionB})
   await owned(actorA,a);await owned(actorB,b);
   assert.deepEqual([activity(actorA),activity(actorB)],before,'Complete journal reopen and both ownership rereads must not create witnesses, proofs or submissions in either actor');
  }
- return {scenario:'private-owned-names',privateTransactions:3,registeredNames:3,privateOwnershipExact:true,readableMetadataExact:true,
+ return {scenario:'private-owned-names',privateTransactions:4,registeredNames:4,privateOwnershipExact:true,readableMetadataExact:true,
   collateralFreeRegistration:true,journalReopenPreserved:true,
   scope:'Exact private owned-name sets and labels after sequential registration and application/journal reopen. Concurrent uniqueness, cold PXE recovery and broader observer privacy remain separate.'};
 }

@@ -57,10 +57,10 @@ function fixture(fault){
  };}
  return {actorA,actorB,actionA:action('a'),actionB:action('b'),calls,names};
 }
-test('synthetic three registrations preserve exact private ownership through journal reopen only',async()=>{
+test('synthetic four registrations preserve exact private ownership through journal reopen only',async()=>{
  const f=fixture(),result=await exerciseRollingOwnedNames(f);
- assert.deepEqual(f.calls,['owned-name-1','owned-name-2','owned-name-3','reopen','reopen']);
- assert.equal(f.names.a.length,2);assert.equal(f.names.b.length,1);assert.equal(result.privateTransactions,3);assert.equal(result.journalReopenPreserved,true);
+ assert.deepEqual(f.calls,['owned-name-1','owned-name-2','owned-name-3','owned-name-4','reopen','reopen']);
+ assert.equal(f.names.a.length,2);assert.equal(f.names.b.length,2);assert.equal(result.privateTransactions,4);assert.equal(result.journalReopenPreserved,true);
  assert.deepEqual(Object.keys(result).sort(),['scenario','privateTransactions','registeredNames','privateOwnershipExact','readableMetadataExact','collateralFreeRegistration','journalReopenPreserved','scope'].sort());
  const evidence=JSON.stringify(result);for(const name of [...f.names.a,...f.names.b])for(const value of [name.id,name.first,name.last])assert(!evidence.includes(value));assert(!evidence.includes('PRIVATE_SENTINEL'));
  assert(result.scope.includes('cold PXE recovery'));assert(result.scope.includes('remain separate'));
