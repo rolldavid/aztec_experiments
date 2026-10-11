@@ -132,7 +132,10 @@ export async function assertMinedCallbackRollback({node, wallet, owner, board, b
       effectFile: `${reason}-effect.bin`,
       checks: ['post-count-unchanged', 'no-post-record', 'private-deposit-unchanged', 'owned-names-unchanged',
         'request-unchanged', 'private-credit-unchanged', 'canonical-revert', 'no-exit-message']});
-    await save(); return report;
+    await save();
+    // Trusted parent may reconcile the exact fee and public footprint in memory.
+    // Native transaction objects never enter the serialized evidence report.
+    return Object.defineProperties(report, {tx: {value: tx}, effect: {value: effect.data}, receipt: {value: receipt}});
   } catch (error) {
     // Do not serialize errors: prove/wallet exceptions may contain private data.
     await save(); throw error;
