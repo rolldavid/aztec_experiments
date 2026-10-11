@@ -36,12 +36,14 @@
         "G06",
         "G14"
       ],
-      "branch": "codex/rolling-application-fixture",
+      "branch": "codex/rolling-native-artifacts",
       "history_locator": "collaboration runtime /root/controls, parent 01a12a75-1b50-7871-a73b-4253a1010194",
       "role": "implementation worker",
-      "state": "running actual application-port fixture",
+      "state": "implementing explicit native lazy-artifact JSON compatibility after actualc551diagnosis",
       "worktree": "../rolling-controls",
       "allowed_paths": [
+        "scripts/testing/rolling-native-artifacts.mjs",
+        "scripts/testing/rolling-native-artifacts.test.mjs",
         "scripts/testing/rolling-application-fixture.mjs",
         "scripts/testing/rolling-application-fixture.test.mjs"
       ],
@@ -49,7 +51,7 @@
         "Agent-Session": "controls",
         "Parent-Session": "lead"
       },
-      "base": "4414ced4f5b55d364bba3965d1ced9db7730ec4b"
+      "base": "13ac43a"
     },
     {
       "logical_id": "reviewer-20261011",
@@ -57,13 +59,12 @@
       "parent_id": "lead-20261011",
       "task": [
         "G05",
-        "G06",
-        "G14"
+        "G06"
       ],
       "branch": "read-only candidate refs",
       "history_locator": "collaboration runtime /root/reviewer, parent 01a12a75-1b50-7871-a73b-4253a1010194",
       "role": "independent reviewer",
-      "state": "ae67 bounded source approved; actual app integration pending"
+      "state": "reviewing session307ae91; deploymente410 and graphcomponentcoverage approved"
     },
     {
       "logical_id": "design-20261011",
@@ -73,18 +74,16 @@
         "G06",
         "G14"
       ],
-      "branch": "codex/rolling-public-index",
+      "branch": "codex/rolling-wallet-session",
       "history_locator": "collaboration runtime /root/design, parent01a12a75-1b50-7871-a73b-4253a1010194",
       "role": "implementation worker",
-      "state": "running canonical public index and bounded local server; read-only AWS monitor",
+      "state": "session307ae91 frozen awaiting independent re-review",
       "worktree": "../rolling-design",
       "allowed_paths": [
-        "shared/rolling/public-index.mjs",
-        "shared/rolling/public-index.test.mjs",
-        "scripts/rolling-public-server.mjs",
-        "scripts/rolling-public-server.test.mjs"
+        "apps/rolling/wallet-session.mjs",
+        "apps/rolling/wallet-session.test.mjs"
       ],
-      "base": "fc033e96"
+      "base": "1812cea4bc58aca25958c62bc7275fb6eb8b7a2b"
     }
   ],
   "integrations": [
@@ -179,6 +178,47 @@
       "candidate_revision": "b92be57",
       "review": "evidence/G05/application-0d05-review.json",
       "status": "approved source; actual app acceptance pending"
+    },
+    {
+      "task": "G06",
+      "worker": "design-20261011",
+      "worker_revisions": [
+        "53dcb61699bf319d532b27a1d1c256a9e523a6b9",
+        "10201287fd4c104b322af3d7d9613d0821e73a3c"
+      ],
+      "candidate_revisions": [
+        "f7c7d9a",
+        "fb80d47"
+      ],
+      "review": "evidence/G06/public-index-102-review.json",
+      "status": "approved source and16checks; actual index acceptance pending"
+    },
+    {
+      "task": "G05",
+      "worker": "design-20261011",
+      "worker_revisions": [
+        "1b21614533b57708fafb52d8c21accff79b7c46d",
+        "0d051db5412b1bb95aaa616d5193a1b61224e016",
+        "e410b2df5b09cba29619b6830136371b58fea072"
+      ],
+      "candidate_revisions": [
+        "7fc4c34",
+        "afebef9",
+        "13ac43a"
+      ],
+      "reviews": [
+        "evidence/G05/workflow-backup-1b216-review.json",
+        "evidence/G05/deployment-e410-review.json"
+      ],
+      "status": "reviewed source; real browser acceptance pending"
+    },
+    {
+      "task": "G05",
+      "worker": "controls-20261011",
+      "worker_revision": "2b416da60234b308615488d09ff1a8246487a577",
+      "candidate_revision": "ba7fe8f",
+      "review": "evidence/G05/real-wall-2b416-review.json",
+      "status": "clock repair source approved and actualtrustedHTTPready infailedc551; fulljourneystillpending"
     }
   ]
 }

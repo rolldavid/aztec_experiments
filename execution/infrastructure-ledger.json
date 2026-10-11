@@ -127,7 +127,14 @@
         "vol-0e6826325aa884889"
       ],
       "evidence_reference": "evidence/G02/rolling-node-03-installation-observations.json",
-      "last_observed_at": "2026-10-11T18:56:45.766264+00:00"
+      "last_observed_at": "2026-10-11T20:05:24.860213+00:00",
+      "latest_safe_observation": {
+        "stage": "installed",
+        "controlsVerified": true,
+        "budgetStop": "2026-10-12T02:41:10Z",
+        "egressBytes": 3149025,
+        "linuxQueryQualified": false
+      }
     }
   ],
   "launch_hold": "Reviewedregionrepair launch onlyafteractualboundedGET206preflight/zerooldresources/cloudexpiry controls. NoLinuxacceptanceclaim.",
