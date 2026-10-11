@@ -9,6 +9,7 @@ import {pathToFileURL} from 'node:url';
 import {fileState} from '../../plugins/operations.mjs';
 import {privateBokMetering} from '../../plugins/private-bok-metering.mjs';
 import {validateVeniceBilling} from '../../plugins/venice-metered.mjs';
+import {getVeniceDiagnostic} from '../../plugins/venice-diagnostics.mjs';
 
 const sha = bytes => createHash('sha256').update(bytes).digest('hex');
 const hashPattern = /^[a-f0-9]{64}$/;
@@ -205,7 +206,13 @@ export async function runWorker(rawInput, dependencies = {}) {
     const provider = {quote: (...args) => selected.quote(...args), execute: async (...args) => {
       assert.equal(input.mode, 'execute-to-received');
       assert.equal(report.modelCallsAttemptedInProcess, 0, 'Only one model call permitted');
-      report.modelCallsAttemptedInProcess = 1; return selected.execute(...args);
+      report.modelCallsAttemptedInProcess = 1;
+      try {return await selected.execute(...args);}
+      catch(error) {
+        const diagnostic=getVeniceDiagnostic(error);
+        if(diagnostic)report.providerDiagnostic=diagnostic;
+        throw error; // Metering still fences every unknown provider outcome.
+      }
     }};
     const meteringStore = {read: () => store.read(), write: async next => {
       await lease.assertHeld(); await store.write(next);

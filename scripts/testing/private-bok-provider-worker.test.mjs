@@ -1,3 +1,4 @@
+import {getVeniceDiagnostic,veniceDiagnosticError} from '../../plugins/venice-diagnostics.mjs';
 // Labelled unit fakes. Real OS process/file recovery, but NO chain, model or proving acceptance.
 import assert from 'node:assert/strict';
 import test from 'node:test';
@@ -59,6 +60,7 @@ async function fakes(input, options = {}) {
         counts.execute++; assert.deepEqual(value, PROVIDER_INPUT);
         const attempts = await fileState(providerFile); await attempts.write({attempts: (attempts.read().attempts ?? 0) + 1});
         if (options.providerFailure) throw Error('PRIVATE_PROVIDER_SENTINEL');
+        if (options.providerError) throw options.providerError;
         if (options.loseLeaseAfterProvider) await grant({...input, workerId: 'replacement-not-authorized'});
         return {billing: {...billing, unknown: 'PRIVATE_BILLING_SENTINEL'}, charge: 13n, receipt: billing.receipt, message: {content: 'PRIVATE_MESSAGE_SENTINEL'}};
       },
@@ -158,6 +160,23 @@ if (process.argv[2] === 'unit-process') {
     assert.equal(result.code, 1); assert.equal(result.err, '');
     assert.deepEqual(JSON.parse(result.out), {stage: 'provider-worker-failed'});
   });
+  test('unit fake: branded HTTP rejection survives replacement error while accounting remains fenced',()=>temporary(async directory=>{
+    const input=control(directory);await grant(input);
+    const failure=veniceDiagnosticError('http-rejection',{httpStatus:400,body:{error:{code:'INVALID_REQUEST',param:'max_completion_tokens',message:'PRIVATE_SENTINEL'}}});
+    const h=await fakes(input,{providerError:failure});
+    await assert.rejects(runWorker(input,h.seams),/worker failed/);
+    const report=JSON.parse(await fs.readFile(input.paths.output)),saved=JSON.parse(await fs.readFile(input.paths.journal));
+    assert.deepEqual(report.providerDiagnostic,getVeniceDiagnostic(failure));assert.equal(report.accounting.phase,'fenced');assert.equal(report.accountingPassed,false);assert.equal(report.checkpointSuccess,false);
+    assert.equal(report.modelCallsAttemptedInProcess,1);assert.equal(h.counts.execute,1);assert.equal(h.counts.fence,1);assert.equal(h.counts.settle,0);assert.equal(h.counts.finish,0);assert.equal(saved.privateBok.calls[0].billing,undefined);
+    const chain=JSON.parse(await fs.readFile(h.chainFile)).request;assert.equal(chain.charged,'0');assert.equal(BigInt(chain.refunded)+BigInt(chain.reserved),1000000n);assert(BigInt(chain.reserved)>0n);
+    assert(!JSON.stringify(report).includes('PRIVATE_SENTINEL'));assert.equal(report.walletCleanup,'closed');
+  }));
+  test('unit fake: unknown provider errors are never inspected for diagnostic properties',()=>temporary(async directory=>{
+    const input=control(directory);await grant(input);let reads=0;
+    const failure=new Proxy({}, {get(){reads++;throw Error('PRIVATE_SENTINEL');}}),h=await fakes(input,{providerError:failure});
+    await assert.rejects(runWorker(input,h.seams),/worker failed/);
+    const report=JSON.parse(await fs.readFile(input.paths.output));assert.equal(reads,0);assert.equal(report.providerDiagnostic,undefined);assert.equal(h.counts.execute,1);assert.equal(h.counts.fence,1);assert.equal(report.accounting.phase,'fenced');
+  }));
   test('unit fake: changed lease prevents all runtime and provider work', () => temporary(async directory => {
     const input = control(directory); await grant(input); const h = await fakes(input);
     await grant({...input, workerId: 'other'});

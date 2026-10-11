@@ -1,5 +1,6 @@
 import {sha256,toUtf8Bytes} from 'ethers';
 import {quoteCall,usageCharge,ceilDiv} from './metering.mjs';
+import {veniceDiagnosticError,getVeniceResponseStatus} from './venice-diagnostics.mjs';
 const fieldMod=21888242871839275222246405745257275088548364400416034343698204186575808495617n;
 // Public billing facts only. Unknown response metadata and message content never enter this record.
 const idPattern=/^[A-Za-z0-9][A-Za-z0-9._:/-]{0,127}$/;
@@ -43,16 +44,23 @@ export function veniceMeteredProvider({client,model='kimi-k2-5',autoTopUp=false,
   async execute(input,quote){
    const result=await client.json('/api/v1/chat/completions',{method:'POST',body:{model:quote.modelId,messages:input.messages,tools:input.tools,max_completion_tokens:quote.maxTokens,n:1,stream:false,
     venice_parameters:{include_venice_system_prompt:false,enable_web_search:'off',enable_web_scraping:false,enable_x_search:false}}});
-   const message=result.choices?.[0]?.message,u=result.usage;
-   if(message?.role!=='assistant'||!u)throw Error('Missing provider result/usage');
-   if(u.prompt_tokens>quote.inputBound||u.completion_tokens>quote.maxTokens)throw Error('Provider exceeded token cap');
-   // Do not silently overcharge cached inputs without their applicable price.
-   const cached=u.prompt_tokens_details?.cached_tokens??0;
-   if(!Number.isSafeInteger(cached)||cached<0||cached>u.prompt_tokens||(cached>0&&quote.cachePrice===null))throw Error('Invalid cached-token billing');
-   usageCharge(u.prompt_tokens,u.completion_tokens,quote.inputPrice,quote.outputPrice);
-   const charge=ceilDiv(BigInt(u.prompt_tokens-cached)*quote.inputPrice+BigInt(cached)*(quote.cachePrice??0n)+BigInt(u.completion_tokens)*quote.outputPrice,1000000000n);
-   const billing=validateVeniceBilling({providerId:result.id,modelId:quote.modelId,promptTokens:u.prompt_tokens,completionTokens:u.completion_tokens,cachedTokens:cached,inputPrice:String(quote.inputPrice),outputPrice:String(quote.outputPrice),cachePrice:quote.cachePrice===null?null:String(quote.cachePrice),charge:String(charge)},quote);
-   return {message,charge,receipt:billing.receipt,billing};
+   let stage='missing-result/usage';
+   try {
+    // Capture billing primitives once; never re-read a changing response getter.
+    const message=result?.choices?.[0]?.message,u=result?.usage;
+    const prompt=u?.prompt_tokens,completion=u?.completion_tokens;
+    if(message?.role!=='assistant'||!integer(prompt)||!integer(completion))throw Error();
+    stage='cap';
+    if(prompt>quote.inputBound||completion>quote.maxTokens)throw Error();
+    usageCharge(prompt,completion,quote.inputPrice,quote.outputPrice);
+    stage='cached-billing';
+    const cached=u.prompt_tokens_details?.cached_tokens??0;
+    if(!Number.isSafeInteger(cached)||cached<0||cached>prompt||(cached>0&&quote.cachePrice===null))throw Error();
+    stage='final-receipt-validation';
+    const charge=ceilDiv(BigInt(prompt-cached)*quote.inputPrice+BigInt(cached)*(quote.cachePrice??0n)+BigInt(completion)*quote.outputPrice,1000000000n);
+    const billing=validateVeniceBilling({providerId:result.id,modelId:quote.modelId,promptTokens:prompt,completionTokens:completion,cachedTokens:cached,inputPrice:String(quote.inputPrice),outputPrice:String(quote.outputPrice),cachePrice:quote.cachePrice===null?null:String(quote.cachePrice),charge:String(charge)},quote);
+    return {message,charge,receipt:billing.receipt,billing};
+   }catch{throw veniceDiagnosticError('billing-validation',{httpStatus:getVeniceResponseStatus(result),billingStage:stage});}
   },
  };
 }
