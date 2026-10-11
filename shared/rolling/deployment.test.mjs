@@ -19,7 +19,7 @@ const hex=n=>'0x'+BigInt(n).toString(16).padStart(64,'0'),eth=n=>'0x'+BigInt(n).
 async function fixture(){
  const deployer=AztecAddress.fromBigIntUnsafe(3n),rollup=eth(11),portal=eth(22);
  const board=await getContractInstanceFromInstantiationParams(artifact,{salt:new Fr(7),deployer,constructorArtifact:'init',constructorArgs:[Array(32).fill(0n),0,31337,rollup,1,100,200,60,2,120,3]});
- const fee=await derivePrivateFeeInstance(feeArtifact),state={destroyed:0,guards:0,reads:[],ethReads:[],inspection:0};
+ const fee=await derivePrivateFeeInstance(feeArtifact),state={destroyed:0,guards:0,reads:[],ethReads:[],inspection:0,enabled:true};
  const config={network:{chainId:'31337',rollupVersion:'1',rollupAddress:rollup,nodeUrl:'http://127.0.0.1:1',ethRpcUrl:'http://127.0.0.1:2'},
   board:{contractAddress:String(board.address),portalAddress:portal},privateFee:{contractAddress:String(fee.address),gasSettings:{gasLimits:{daGas:'1000',l2Gas:'1000'},teardownGasLimits:{daGas:'1',l2Gas:'1'},maxFeesPerGas:{feePerDaGas:'1',feePerL2Gas:'1'},maxPriorityFeesPerGas:{feePerDaGas:'0',feePerL2Gas:'0'}}}};
  const economics={minDeposit:'100',maxDeposit:'200',baseCooldown:'60',kMultiplier:'2',censorWindow:'120',maxSaveUp:'3'};
@@ -31,7 +31,7 @@ async function fixture(){
   getPublicStorageAt:async(reference,address,slot)=>{state.reads.push(['storage',reference]);return new Fr(storage.get(slot.toBigInt()));},
   getL1ContractAddresses:async()=>({rollupAddress:rollup,inboxAddress:eth(33),outboxAddress:eth(44)})};
  const provider={getNetwork:async()=>({chainId:31337n}),getBlock:async n=>({number:20,hash:hex(66)}),getCode:async(address,n)=>{state.ethReads.push(n);return expectedPortalRuntime(metadata,immutables);},destroy:()=>{state.destroyed++;}};
- const ethers={JsonRpcProvider:class{constructor(){return provider;}},Contract:class{constructor(){return Object.fromEntries(Object.keys(immutables).map(name=>[name,async opts=>{state.ethReads.push(opts.blockTag);return immutables[name];}]));}}};
+ const ethers={JsonRpcProvider:class{constructor(){return provider;}},Contract:class{constructor(){return {...Object.fromEntries(Object.keys(immutables).map(name=>[name,async opts=>{state.ethReads.push(opts.blockTag);return immutables[name];}])),depositsEnabled:async opts=>{state.ethReads.push(opts.blockTag);return state.enabled;}};}}};
  const sdk={Fr,AztecAddress,getContractClassFromArtifact,computeContractAddressFromInstance,derivePrivateFeeInstance,normalizePrivateFeeGasSettings,sha256ToField,verifyPortalRuntime,portalRuntimeMetadata:metadata,
   isTrustedPrivateNode:n=>n===node,inspectTrustedNode:async(n,opts)=>{state.inspection++;assert.deepEqual(opts.expectedNetworkScope,{chainId:'31337',version:'1',rollup});assert.equal(opts.proofsEnabled,true);}};
  const options={sdk,node,ethers,config,boardArtifact:artifact,privateFeeArtifact:feeArtifact,contextGuard:async()=>{state.guards++;}};
@@ -73,4 +73,16 @@ test('context changed after canonical reads rejects; whole operation has a fixed
  const stalled=await fixture();stalled.options.contextGuard=()=>new Promise(()=>{});
  t.mock.timers.enable({apis:['Date','setTimeout']});const pending=verifyRollingDeployment(stalled.options);
  const rejected=assert.rejects(pending,{code:'ROLLING_DEPLOYMENT_INVALID'});t.mock.timers.tick(20000);await rejected;
+});
+
+test('unactivated canonical portal cannot authorize funding, and activation must remain canonically anchored',async()=>{
+ for(const enabled of [false,undefined,1,'true']){
+  const f=await fixture();f.state.enabled=enabled;
+  await assert.rejects(verifyRollingDeployment(f.options),{code:'ROLLING_DEPLOYMENT_INVALID'});
+  assert.equal(f.state.destroyed,1);assert.ok(f.state.ethReads.every(number=>number===20));
+ }
+ const f=await fixture();let rereads=0;
+ f.provider.getBlock=async tag=>{if(tag==='latest')return {number:20,hash:hex(66)};rereads++;f.state.enabled=false;return {number:20,hash:hex(67)};};
+ await assert.rejects(verifyRollingDeployment(f.options),{code:'ROLLING_DEPLOYMENT_INVALID'});
+ assert.equal(rereads,1);assert.equal(f.state.destroyed,1);
 });

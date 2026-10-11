@@ -6,7 +6,7 @@ const same=(a,b)=>number(a)===number(b);
 const canonical=(value,length)=>typeof value==='string'&&new RegExp(`^0x[0-9a-f]{${length}}$`).test(value)&&BigInt(value)>0n;
 const hash=value=>typeof value==='string'&&/^0x[0-9a-f]{64}$/.test(value);
 const immutableNames=['MIN_DEPOSIT','MAX_DEPOSIT','L2_CONTRACT','ROLLUP','INBOX','OUTBOX','VERSION','L1_CHAIN_ID','CONFIG_HASH'];
-const abi=immutableNames.map(name=>`function ${name}() view returns (${['ROLLUP','INBOX','OUTBOX'].includes(name)?'address':name==='L2_CONTRACT'||name==='CONFIG_HASH'?'bytes32':'uint256'})`);
+const abi=[...immutableNames.map(name=>`function ${name}() view returns (${['ROLLUP','INBOX','OUTBOX'].includes(name)?'address':name==='L2_CONTRACT'||name==='CONFIG_HASH'?'bytes32':'uint256'})`),'function depositsEnabled() view returns (bool)'];
 // Detached SDK values retain their prototype methods. Freeze plain containers;
 // typed byte arrays and SDK value objects are copied, not shared with inputs.
 function detach(value){
@@ -70,7 +70,8 @@ export async function verifyRollingDeployment({sdk,node,ethers,config,boardArtif
   check(same(l1Network.chainId,network.chainId)&&Number.isSafeInteger(l1Head?.number)&&l1Head.number>=0&&hash(l1Head.hash));
   check(same(contracts.rollupAddress,network.rollup));
   const portalContract=new ethers.Contract(b.portalAddress,abi,provider);
-  const [code,immutableValues]=await read(()=>Promise.all([provider.getCode(b.portalAddress,l1Head.number),Promise.all(immutableNames.map(name=>portalContract[name]({blockTag:l1Head.number})))]));
+  const [code,immutableValues,depositsEnabled]=await read(()=>Promise.all([provider.getCode(b.portalAddress,l1Head.number),Promise.all(immutableNames.map(name=>portalContract[name]({blockTag:l1Head.number}))),portalContract.depositsEnabled({blockTag:l1Head.number})]));
+  check(depositsEnabled===true); // V1 Ready activation is mandatory before funding or composing.
   const expected={MIN_DEPOSIT:min,MAX_DEPOSIT:max,L2_CONTRACT:BigInt(b.contractAddress),ROLLUP:rollup,INBOX:number(contracts.inboxAddress),OUTBOX:number(contracts.outboxAddress),VERSION:version,L1_CHAIN_ID:chain,CONFIG_HASH:number(configHash)};
   check(expected.INBOX>0n&&expected.OUTBOX>0n&&immutableValues.every((value,index)=>same(value,expected[immutableNames[index]])));
   check(sdk.verifyPortalRuntime(code,sdk.portalRuntimeMetadata,expected)===true);
