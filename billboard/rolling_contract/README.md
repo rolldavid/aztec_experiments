@@ -207,7 +207,7 @@ preimage from validated content/scope and calls only
 `on_invocation(Field request_id, Field derived_invocation_hash)`. Neither caller
 hash nor human account is accepted. G14 must atomically authorize the funded
 request; this candidate contains no fake successful adapter or free invocation.
-Bot reply publication is intentionally absent until the G10 interface is reviewed.
+The authenticated reply path is now implemented as described below; full G10 model/workspace execution remains separate.
 
 G06 test evidence is pending. Added TXE cases use actual constrained receipt and
 private note paths inside TestEnvironment; they are development constraint tests,
@@ -243,3 +243,43 @@ failed call and then inspect state; those rejection cases therefore do not prove
 rollback. `callback-rollback.mjs` and `CALLBACK_HANDOFF.md` define the pending
 mined-revert acceptance checks using the lead's existing chain fixture. All
 original 74 test cases remain. Raw compile 7 passes with 83 retained diagnostics (75 manual-constraint and 8 subgraph); test execution and normal artifact processing remain pending. The later test-only deployment-path correction is recorded separately from that frozen compile. The test helper also requires the real processed PrivateBok artifact in its sibling workspace and verifies its embedded sources and private VKs before service startup.
+
+## Current development verification and build order
+
+On 11 October 2026, the reply candidate passed normal processed builds and all
+106 RollingBoard / 69 PrivateBok TXE cases. The genuine local journey
+`execution/evidence/G06/application-e58a6efc-ddbb-4327-9cc2-cb6d06fda1c2.json`
+at source `5e68c221625afa494134bbea11ad28fe2243e25e` passed all original eight
+rollback checks, an authenticated reply, exact replay/operator guard checks and
+settlement/refund accounting in 524494 ms, with 1657408 KiB peak process-tree RSS.
+Independent review is `execution/evidence/G06/reply-e58-runtime-review.json`.
+This leaves little deadline headroom and is not reliability qualification.
+The reply's billing receipt is explicitly synthetic; the distinct actual provider
+accounting/recovery run is recorded under G14/application-28b68e72. Ordinary-node
+query privacy, the connected interface and release gates remain open. Current
+compiler manual-constraint diagnostics (75 Rolling / 44 Bok) still need specialist
+disposition; older counts above describe historical candidates.
+
+`PrivateBok.publish_reply` permits only its configured public bot operator, an
+active unexpired request and no unsettled reservation. The board authenticates
+the exact adapter, plugin, successful request activation and parent, then emits
+complete `PostPublished` and `PluginReplyPublished` events. The reply has kind 4,
+no human name and canonical parent/root/subboard linkage. One reply per request
+is a reversible development default. Human `post` inputs cannot claim kind 4.
+
+Run builds serially with the pinned Node executable from repository root:
+
+```sh
+node scripts/build-contracts.mjs
+node billboard/rolling_contract/build.mjs
+node experiments/private-bok/build.mjs
+```
+
+The canonical build fingerprints the entire Billboard workspace, including Rolling
+Noir sources, and its compilation can replace the Rolling target with raw output.
+Therefore run the Rolling processed build afterwards. Never edit the manifest to
+bypass a stale-input failure. Verify `loadRollingArtifacts()` against the lead-owned
+`prover/rolling-artifacts.json`; changed hashes require reviewed catalog regeneration.
+Then build SDK/apps and run the selected acceptance scenario using TESTING.md.
+Do not rerun a provider campaign to repair a build failure unless its retained
+report establishes that no model call occurred; uncertain calls stay fenced.

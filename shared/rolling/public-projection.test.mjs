@@ -49,7 +49,7 @@ test('removed post hides body and remains in canonical thread; undo restores',as
 });
 test('like transitions deduplicate tags without returning membership and reverse with reorg',async()=>{
  const {events}=await fixture(),p=createRollingProjection({isValidatedEvent:isRollingEvent});p.stage(events).apply();
- const like=await event('LikeChanged',{post:'10',tag:'77',active:true,count:'1'},0,'3');const a=p.stage([like]);a.apply();assert.equal(p.post('10').likes,'1');assert(!Object.hasOwn(p.post('10'),'tag'));assert(!Object.hasOwn(p.post('10'),'members'));assert(!Object.hasOwn(p.post('10'),'likesByAccount')); 
+ const like=await event('LikeChanged',{post:'10',tag:'77',active:true,count:'1'},0,'3');const a=p.stage([like]);a.apply();assert.equal(p.post('10').likes,'1');assert(!Object.hasOwn(p.post('10'),'tag'));assert(!Object.hasOwn(p.post('10'),'members'));assert(!Object.hasOwn(p.post('10'),'likesByAccount'));
  assert.throws(()=>p.stage([{...like}]));
  const dup=await event('LikeChanged',{post:'10',tag:'77',active:true,count:'2'},0,'4');assert.throws(()=>p.stage([dup]));
  const unlike=await event('LikeChanged',{post:'10',tag:'77',active:false,count:'0'},0,'4');const b=p.stage([unlike]);b.apply();assert.equal(p.post('10').likes,'0');b.undo();assert.equal(p.post('10').likes,'1');
