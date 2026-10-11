@@ -49,6 +49,34 @@ class Bootstrap(unittest.TestCase):
         self.assertIn('PRIVATE_SENTINEL',source) # private artifact, never public evidence
         self.assertNotIn('PRIVATE_SENTINEL',source.split('ATTESTATION = ')[1])
 
+    def test_alone_encoding_preserves_exact_program_and_executes_real_wrapper(self):
+        # Encoding comparison uses the same source hash and config. Only the
+        # final host entry is a labelled stub; no cloud or host operation runs.
+        compressor=lzma.compress;captured=[]
+        def legacy_encoding(data,**kwargs):
+            captured.append(data)
+            return compressor(data,preset=6)
+        c=config()
+        with patch.object(b.lzma,'compress',side_effect=legacy_encoding):legacy=b.generate(c,NOW)
+        current=b.generate(c,NOW)
+        def decode(text):
+            encoded=text.split("base64.b64decode('")[1].split("')")[0]
+            return lzma.decompress(base64.b64decode(encoded))
+        self.assertEqual(decode(current),decode(legacy));self.assertEqual(decode(current),captured[0])
+        # Exercise the actual new shell/Python wrapper, rather than only its
+        # decompressor. Replace exactly the final entry in its decoded payload.
+        program=decode(current)
+        self.assertEqual(program.count(b'\nexecute(CONFIG, ATTESTATION)\n'),1)
+        harmless=program.replace(b'\nexecute(CONFIG, ATTESTATION)\n',b'\nprint("WRAPPER_DEFINITIONS_READY")\n')
+        encoded=current.split("base64.b64decode('")[1].split("')")[0]
+        replacement=base64.b64encode(compressor(harmless,format=lzma.FORMAT_ALONE,
+            filters=[{'id':lzma.FILTER_LZMA1,'preset':6,'pb':0}])).decode()
+        wrapper=current.replace(encoded,replacement)
+        result=subprocess.run(['/bin/sh'],input=wrapper,text=True,capture_output=True,timeout=5)
+        self.assertEqual(result.returncode,0);self.assertEqual(result.stdout,'WRAPPER_DEFINITIONS_READY\n')
+        self.assertEqual(result.stderr,'');self.assertNotIn('PRIVATE_SENTINEL',result.stdout)
+        self.assertIn('set -eu\numask 077\n',wrapper)
+
     def test_malicious_inputs_rejected_without_echo(self):
         bad=[('runtimeUrl','https://evil.example/releases/runtime.tar.gz'),('runtimeUrl',config()['runtimeUrl']+'\n$(id)'),
              ('runtimeUrl','https://user:pass@anonymous-message-board-testnet-backups-nvdhcyurtoga.s3.eu-west-2.amazonaws.com/releases/a.tar.gz'),

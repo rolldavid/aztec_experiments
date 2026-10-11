@@ -876,8 +876,9 @@ def generate(config, now=None):
     prefix = 'PINS = '+repr(pins)+'\nNETWORK = '+repr(NETWORK)+'\nQUALIFICATION = '+repr(QUALIFICATION)+'\n'
     dispatch = "\ntry:\n    if '--qualify' in sys.argv: qualify()\n    elif '--qualification-stop' in sys.argv:\n        qualify(aborted=True);run(['systemctl','start','rolling-qualification-receipt.service'],timeout=40)\n    elif '--qualification-receipt' in sys.argv: final_receipt()\n    else: attest('--check' in sys.argv)\nexcept Exception as error:\n    shutdown_failure(error)\n"
     program = 'SOURCE = '+repr(prefix+runtime)+'\nCONFIG = '+repr(config)+'\nATTESTATION = SOURCE + '+repr(dispatch)+'\nexec(SOURCE)\nexecute(CONFIG, ATTESTATION)\n'
-    encoded = base64.b64encode(lzma.compress(program.encode(),preset=6)).decode()
-    return "#!/bin/sh\nset -eu\numask 077\nexec /usr/bin/python3 - <<'ROLLING_BOOTSTRAP_PY'\nimport base64,lzma\nexec(compile(lzma.decompress(base64.b64decode('"+encoded+"')), '<private-bootstrap>', 'exec'))\nROLLING_BOOTSTRAP_PY\n"
+    encoded = base64.b64encode(lzma.compress(program.encode(),format=lzma.FORMAT_ALONE,
+        filters=[{'id':lzma.FILTER_LZMA1,'preset':6,'pb':0}])).decode()
+    return "#!/bin/sh\nset -eu\numask 077\nexec /usr/bin/python3 - <<'B'\nimport base64,lzma\nexec(lzma.decompress(base64.b64decode('"+encoded+"')))\nB\n"
 
 
 def private_file(path):

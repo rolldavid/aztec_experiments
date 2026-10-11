@@ -376,7 +376,18 @@ rejection and once-only upload with explicitly labelled fakes. They do not claim
 Linux systemd namespace enforcement, actual S3 delivery or remote node readiness.
 
 The private shell embeds its Python program using standard-library LZMA; AWS
-user-data remains an outer gzip file. The selected Canonical image must have
+user-data remains an outer gzip file. The inner representation uses LZMA's
+standard `FORMAT_ALONE`, preset6 with byte-position bits0, and a short quoted
+heredoc. Python executes the decompressed bytes directly. This changes encoding
+only: decoded program bytes, shell fail-fast/umask, capabilities, source hashes
+and every control remain intact. Outer gzip retains its checksum; archive and
+manifest SHA256 verification remain mandatory. Stronger default presets did not
+fit the measured private05 inputs. The measured representation had only49bytes
+of headroom before the required changed source-hash binding, so no future input
+is assumed to fit: every actual payload must pass the unchanged16,384byte gate.
+A source change still requires a fresh hash-bound runtime package.
+
+The selected Canonical image must have
 Python3's `lzma` module available (verify this image dependency before launch).
 Generation removes Python comment tokens only, preserving executable tokens and
 string bytes, then hashes that actual decoded HOST source as
