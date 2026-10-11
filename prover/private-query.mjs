@@ -102,7 +102,11 @@ export function createPrivateQueryWithInspector({queryNode, chainId, rollupVersi
       try {await inspect();} catch {reply(503, errorResponse(null)); return;}
       const results = await Promise.all(prepared.map(async ({id, method, args}) => {
         try {
-          const result = await getSchemaReturnType(AztecNodeApiSchema[method]).parseAsync(await node[method](...args));
+          const result = await node[method](...args);
+          // The pinned safe client already validates/decodes defined outputs.
+          // Its null shortcut bypasses validation, so check only that case:
+          // required values must fail, genuine optional/void absence may pass.
+          if (result === undefined) await getSchemaReturnType(AztecNodeApiSchema[method]).parseAsync(undefined);
           return {jsonrpc: '2.0', id, result: result ?? null};
         }
         catch {return errorResponse(id);}
