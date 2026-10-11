@@ -131,7 +131,8 @@ function accountingEvidence(value) {
     const q = call.quote;
     const quote = {modelId: q.modelId, inputBound: q.inputBound, maxTokens: q.maxTokens, inputPrice: BigInt(q.inputPrice),
       outputPrice: BigInt(q.outputPrice), cachePrice: q.cachePrice === null ? null : BigInt(q.cachePrice), maximum: BigInt(q.maximum)};
-    assert.equal(quote.modelId, 'kimi-k2-5'); assert.equal(quote.maxTokens, 64);
+    assert.equal(quote.modelId, 'kimi-k2-5');
+    assert(Number.isSafeInteger(quote.maxTokens) && quote.maxTokens >= 1 && quote.maxTokens <= 64);
     assert(Number.isSafeInteger(quote.inputBound) && quote.inputBound > 0 && quote.inputBound <= 1000000000);
     for (const n of [quote.inputPrice, quote.outputPrice, quote.cachePrice ?? 0n, quote.maximum]) assert(n >= 0n && n < 2n ** 128n);
     result.quote = {...quote, inputPrice: String(quote.inputPrice), outputPrice: String(quote.outputPrice), cachePrice: quote.cachePrice === null ? null : String(quote.cachePrice), maximum: String(quote.maximum)};

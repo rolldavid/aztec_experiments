@@ -36,6 +36,9 @@ async function temporary(fn) {
 }
 
 async function fakes(input, options = {}) {
+  const selectedQuote = {...quote, maxTokens: options.maxTokens ?? 64};
+  selectedQuote.maximum = (BigInt(selectedQuote.inputBound) * selectedQuote.inputPrice +
+    BigInt(selectedQuote.maxTokens) * selectedQuote.outputPrice + 999999999n) / 1000000000n;
   const chainFile = input.paths.journal + '.fake-chain', providerFile = input.paths.journal + '.fake-provider';
   const chain = await fileState(chainFile);
   if (!chain.read().request) await chain.write({request: {state: 2, sequence: 0, invocation_hash: input.target,
@@ -51,7 +54,7 @@ async function fakes(input, options = {}) {
       return {node: {}, wallet: {}, artifact: {name: 'unit-fake'}};
     },
     provider: async () => ({
-      quote: async value => {counts.quote++; assert.deepEqual(value, PROVIDER_INPUT); return quote;},
+      quote: async value => {counts.quote++; assert.deepEqual(value, PROVIDER_INPUT); return selectedQuote;},
       execute: async value => {
         counts.execute++; assert.deepEqual(value, PROVIDER_INPUT);
         const attempts = await fileState(providerFile); await attempts.write({attempts: (attempts.read().attempts ?? 0) + 1});
@@ -90,16 +93,16 @@ if (process.argv[2] === 'unit-process') {
   // A new OS process exercises the real runWorker checkpoint exit and fsync-backed
   // store. Only SDK/provider dependencies are fake, and parent lease checks are real.
   const input = JSON.parse(await fs.readFile(process.argv[3]));
-  const {seams} = await fakes(input, {parentPid: process.ppid});
+  const {seams} = await fakes(input, {parentPid: process.ppid, maxTokens: Number(process.argv[4] ?? 64)});
   await runWorker(input, seams);
 } else {
-  test('unit fake: distinct process resumes retained billing without second provider call', () => temporary(async directory => {
+  for (const maxTokens of [64, 32]) test(`unit fake: distinct process resumes ${maxTokens}-token quote billing without second provider call`, () => temporary(async directory => {
     const first = control(directory), second = control(directory, 'resume');
     async function child(input) {
       await grant(input); const file = path.join(directory, input.workerId + '-control.json');
       await fs.writeFile(file, JSON.stringify(input), {mode: 0o600});
       const processResult = await new Promise((resolve, reject) => {
-        const child = spawn(process.execPath, [fileURLToPath(import.meta.url), 'unit-process', file], {stdio: ['ignore', 'pipe', 'pipe']});
+        const child = spawn(process.execPath, [fileURLToPath(import.meta.url), 'unit-process', file, String(maxTokens)], {stdio: ['ignore', 'pipe', 'pipe']});
         let out = '', err = ''; const timer = setTimeout(() => {child.kill('SIGKILL'); reject(Error('Unit child deadline'));}, 15000);
         child.stdout.on('data', x => {out += x;}); child.stderr.on('data', x => {err += x;}); child.on('error', reject);
         child.once('close', (code, signal) => {clearTimeout(timer); resolve({pid: child.pid, code, signal, out, err});});
@@ -112,6 +115,7 @@ if (process.argv[2] === 'unit-process') {
     assert.equal(a.report.checkpointSuccess, true); assert.equal(a.report.accountingPassed, false);
     assert.equal(a.report.modelCallsAttemptedInProcess, 1);
     assert.equal(a.report.walletCleanup, 'parent-required'); assert.equal(a.report.accounting.phase, 'received');
+    assert.equal(a.report.accounting.quote.maxTokens, maxTokens);
     assert.deepEqual(a.report.accounting.operations.map(x => x.method), ['reserve']);
     const b = await child(second);
     assert.notEqual(a.processResult.pid, b.processResult.pid); assert.equal(b.report.accountingPassed, true);
@@ -119,6 +123,7 @@ if (process.argv[2] === 'unit-process') {
     assert.equal(b.report.modelCallsAttemptedInProcess, 0);
     assert.deepEqual(b.report.accounting.operations.map(x => x.method), ['reserve', 'settle', 'finish']);
     assert.equal(b.report.accounting.billing.charge, '13'); assert.equal(b.report.accounting.billing.receipt, billing.receipt);
+    assert.equal(b.report.accounting.quote.maxTokens, maxTokens);
     assert.equal(JSON.parse(await fs.readFile(first.paths.journal + '.fake-provider')).attempts, 1);
     const request = JSON.parse(await fs.readFile(first.paths.journal + '.fake-chain')).request;
     assert.equal(request.charged, '13'); assert.equal(request.refunded, '999987'); assert.equal(request.reserved, '0');
