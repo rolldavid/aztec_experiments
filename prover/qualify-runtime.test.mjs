@@ -5,7 +5,7 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import {createHash} from 'node:crypto';
-import {verifyRelease,validateQualification,loopback,exerciseFreshness} from './qualify-runtime.mjs';
+import {verifyRelease,validateQualification,loopback,exerciseFreshness,expectedClientRejection} from './qualify-runtime.mjs';
 const sha=x=>createHash('sha256').update(x).digest('hex');
 const config=()=>({service:{applicationProfile:'legacy',proofs:'real',host:'127.0.0.1',port:0,chainId:'11155111',rollupVersion:'2914217885',board:'0x'+'01'.repeat(32),origins:[],queryNode:{url:'http://127.0.0.1:8080',rollupAddress:'0x'+'02'.repeat(20),maxLagSeconds:2}},adminUrl:'http://127.0.0.1:8880'});
 test('pure configuration: only actual-network legacy real query qualification',()=>{
@@ -59,5 +59,26 @@ test('pure fake freshness: failed resume remains failure with bounded safe obser
 });
 
 test('fake package: official-style internal symlink remains hash-bound within release',async t=>{
-  const f=await packageFixture(t);await fs.mkdir(path.join(f.root,'node/lib'),{recursive:true});await fs.writeFile(path.join(f.root,'node/lib/npm.mjs'),'FAKE NPM');await fs.symlink('../lib/npm.mjs',path.join(f.root,'node/bin/npm'));f.manifest.files['node/bin/npm']=sha('FAKE NPM');assert.equal((await verifyRelease(f.root,await f.write())).fileCount,7);
+  const f=await packageFixture(t);await fs.mkdir(path.join(f.root,'node/lib'),{recursive:true});await fs.writeFile(path.join(f.root,'node/lib/npm.mjs'),'FAKE NPM');await fs.symlink('../lib/npm.mjs',path.join(f.root,'node/bin/npm'));f.manifest.files['node/bin/npm']=sha('FAKE NPM');f.manifest.files['node/lib/npm.mjs']=sha('FAKE NPM');assert.equal((await verifyRelease(f.root,await f.write())).fileCount,8);
+});
+
+test('fake package: added nested dependency invalidates complete file set after a passing check',async t=>{
+  const f=await packageFixture(t);await verifyRelease(f.root,f.digest);
+  const extra=path.join(f.root,'prover/node_modules/extra/index.mjs');await fs.mkdir(path.dirname(extra),{recursive:true});await fs.writeFile(extra,'UNMANIFESTED RUNTIME');
+  await assert.rejects(verifyRelease(f.root,f.digest));await fs.rm(extra);await verifyRelease(f.root,f.digest);
+});
+test('fake package: actual inventory walk rejects directory symlinks and excessive depth',async t=>{
+  const f=await packageFixture(t);await fs.symlink('../prover',path.join(f.root,'node/alias'));await assert.rejects(verifyRelease(f.root,f.digest));await fs.unlink(path.join(f.root,'node/alias'));
+  await fs.mkdir(path.join(f.root,...Array(65).fill('d')),{recursive:true});await assert.rejects(verifyRelease(f.root,f.digest));
+});
+test('pure rejection policy: identity must never pass for transient unavailable errors',()=>{
+  for(const kind of ['wrong-chain','wrong-version','wrong-rollup']){
+    assert(expectedClientRejection(kind,{code:'BB_TRUSTED_NODE_IDENTITY'}));
+    for(const code of ['BB_TRUSTED_NODE_UNAVAILABLE','BB_TRUSTED_NODE_CONFIG','BB_TRUSTED_NODE_STALE',undefined])assert.equal(expectedClientRejection(kind,{code}),false);
+  }
+  assert(expectedClientRejection('stale',{code:'BB_TRUSTED_NODE_UNAVAILABLE'}));
+  assert.equal(expectedClientRejection('stale',{code:'BB_TRUSTED_NODE_IDENTITY'}),false);
+  assert(expectedClientRejection('proof-config-floor',{code:'BB_TRUSTED_NODE_CONFIG'}));
+  assert.equal(expectedClientRejection('proof-config-floor',{code:'BB_TRUSTED_NODE_UNAVAILABLE'}),false);
+  assert.equal(expectedClientRejection('unknown',{}),false);
 });

@@ -160,7 +160,9 @@ x86-64 against that exact release:
    Clear `NODE_PATH`, `NODE_OPTIONS` and any external `BB` override. Use only
    `RELEASE/node/bin/node`. Verify `process.platform === 'linux'`,
    `process.arch === 'x64'` and its version against `toolchain.json`.
-2. Verify **every** `prover-release.json.files` SHA256 before executing package
+2. Compare the complete actual runtime file set with `prover-release.json.files`
+   (excluding only the manifest itself), and verify **every** SHA256 before
+   executing package
    code, including `shared/trusted-private-node.mjs`, the packaged Node executable,
    artifacts and dependencies. Reconcile the recorded source commit and manifest
    with the reviewed candidate. With the packaged Node, call
@@ -176,8 +178,9 @@ x86-64 against that exact release:
    this query-only exercise. Rolling artifacts/catalog are checked separately.
    Legacy addresses are not evidence of a deployed Rolling application.
 4. Require rejection for each incorrect expected chain/version/rollup. The helper
-   first checks the correct policy against the actual service, preventing a simple
-   outage from passing an identity negative. A disabled-proof preference on
+   first checks the correct policy against the actual service, and accepts only
+   the exact `BB_TRUSTED_NODE_IDENTITY` error for these cases.
+   A transient disconnect/`UNAVAILABLE` fails rather than passing an identity negative. A disabled-proof preference on
    Sepolia must fail the configuration floor; this is explicitly **not** an
    observed node proof-mode mismatch test.
 5. Through the unexposed loopback admin interface, invoke the installed SDK's
@@ -206,8 +209,11 @@ x86-64 against that exact release:
 ### Linux qualification invocation and evidence
 
 Bootstrap must externally authenticate `manifestSha256` and verify **all** release
-file hashes before executing any packaged script. The helper repeats manifest
-verification, but cannot establish its own trust from inside unverified code.
+file hashes before executing any packaged script. The helper repeats complete
+file-set and hash
+verification (100,000 files, 200,000 total directory entries, depth 64; internal
+regular-file symlinks permitted, directory/external symlinks rejected), but cannot
+establish its own trust from inside unverified code.
 Its import has no service or native execution side effects. Rebuild the release
 so the helper itself appears in the externally pinned manifest.
 

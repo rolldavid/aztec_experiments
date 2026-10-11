@@ -17,13 +17,34 @@ const scopeOf=s=>({chainId:String(s.chainId),version:String(s.rollupVersion),rol
 
 export async function verifyRelease(root,digest){
   requireCondition(typeof digest==='string'&&/^[a-f0-9]{64}$/.test(digest));
-  const raw=await fs.readFile(path.join(root,'prover-release.json'));
+  const realRoot=await fs.realpath(root),manifestPath=path.join(realRoot,'prover-release.json');
+  const manifestStat=await fs.lstat(manifestPath);
+  requireCondition(manifestStat.isFile()&&manifestStat.size<=32*1024*1024);
+  const raw=await fs.readFile(manifestPath);
   requireCondition(sha(raw)===digest);
   const manifest=JSON.parse(raw);
   requireCondition(manifest.schemaVersion===1&&manifest.platform==='linux-x64'&&manifest.applicationProfile==='rolling');
   requireCondition(/^[a-f0-9]{40}$/.test(manifest.sourceCommit)&&manifest.files&&typeof manifest.files==='object'&&!Array.isArray(manifest.files));
   for(const name of ['prover/qualify-runtime.mjs','node/bin/node','toolchain.json','shared/trusted-private-node.mjs','prover/service.mjs','prover/rolling-artifacts.json'])requireCondition(Object.hasOwn(manifest.files,name));
-  const realRoot=await fs.realpath(root);
+  const declared=Object.keys(manifest.files);requireCondition(declared.length<=100000);
+  const actual=new Set();let entries=0;
+  async function walk(relative='',depth=0){
+    requireCondition(depth<=64);
+    const directory=await fs.opendir(path.join(realRoot,relative));
+    for await(const entry of directory){
+      requireCondition(++entries<=200000);
+      const name=relative?relative+'/'+entry.name:entry.name;
+      if(entry.isDirectory()){await walk(name,depth+1);continue;}
+      if(name==='prover-release.json')continue;
+      // Do not follow directory symlinks or permit external targets. Official
+      // npm executable/manpage symlinks have regular in-release targets.
+      const file=path.join(realRoot,name),resolved=await fs.realpath(file);
+      requireCondition(resolved.startsWith(realRoot+path.sep)&&(await fs.stat(file)).isFile());
+      requireCondition(actual.size<100000);actual.add(name);
+    }
+  }
+  await walk();
+  requireCondition(actual.size===declared.length&&declared.every(name=>actual.has(name)));
   for(const [relative,expected] of Object.entries(manifest.files)){
     requireCondition(relative.length>0&&!path.isAbsolute(relative)&&!relative.includes('\\')&&!relative.split('/').some(p=>p==='..'||p==='.'||p===''));
     requireCondition(typeof expected==='string'&&/^[a-f0-9]{64}$/.test(expected));
@@ -119,6 +140,12 @@ async function assertPortClosed(port){
     socket.once('error',error=>error.code==='ECONNREFUSED'?resolve():reject(Error('Listener cleanup unverified')));
   });
 }
+export function expectedClientRejection(kind,error){
+  const code=kind==='proof-config-floor'?'BB_TRUSTED_NODE_CONFIG'
+    :kind==='stale'?'BB_TRUSTED_NODE_UNAVAILABLE'
+    :['wrong-chain','wrong-version','wrong-rollup'].includes(kind)?'BB_TRUSTED_NODE_IDENTITY':undefined;
+  return code!==undefined&&error?.code===code;
+}
 async function client(input){
   if(input.case==='missing-helper'){
     try{const {startProverService}=await import('./service.mjs');const service=await startProverService(input.service);await service.close();}
@@ -135,7 +162,7 @@ async function client(input){
     if(input.case==='wrong-version')options.expectedNetworkScope={...input.scope,version:String(BigInt(input.scope.version)===1n?2:1)};
     if(input.case==='wrong-rollup')options.expectedNetworkScope={...input.scope,rollup:'0x'+(input.scope.rollup==='0x'+'01'.repeat(20)?'02':'01').repeat(20)};
     requireCondition(['wrong-chain','wrong-version','wrong-rollup','proof-config-floor','stale'].includes(input.case));
-    await assert.rejects(()=>createTrustedPrivateNode(options),e=>input.case==='proof-config-floor'?e.code==='BB_TRUSTED_NODE_CONFIG':/^BB_TRUSTED_NODE_(IDENTITY|UNAVAILABLE)$/.test(e.code));
+    await assert.rejects(()=>createTrustedPrivateNode(options),e=>expectedClientRejection(input.case,e));
     return {rejected:true};
   }
   const node=await createTrustedPrivateNode(options),tips=await node.getChainTips();
