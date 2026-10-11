@@ -13,12 +13,13 @@ export async function includeC01Board({node,tx,rpcUrl,dateProvider,startSequence
   const start=await client.getBlock();
   const observation={passed:false,txHash:tx.getTxHash().toString(),adjustments:[],
     initialClockLeadSeconds:synchronizeC01MinedClock(dateProvider,Number(start.timestamp))};
-  const probe=diagnostic?observeSequencer(node):undefined;
-  if(probe)observation.diagnostic=probe.observation;
+  let probe;
   try{
   assert(node.validatorClient,'Actual validator client absent');
   await node.validatorClient.registerHandlers();
   node.getSequencer().updateConfig({minTxsPerBlock:1});
+  // updateConfig replaces the SDK timetable; attach to the final live instance.
+  probe=observeSequencer(node);observation.diagnostic=probe.observation;
   await node.sendTx(tx);
   if(startSequencer)await node.getSequencer().start();
   const adjustments=observation.adjustments;
@@ -41,6 +42,7 @@ export async function includeC01Board({node,tx,rpcUrl,dateProvider,startSequence
   }
   assert([TxStatus.CHECKPOINTED,TxStatus.PROVEN,TxStatus.FINALIZED].includes(receipt.status),'Board checkpoint inclusion timed out');
   assert.equal(receipt.executionResult,TxExecutionResult.SUCCESS);
+  if(diagnostic)assert(probe.observation.timing.length>0,'Actual sequencer selection was not observed');
   return Object.assign(observation,{passed:true,txHash:tx.getTxHash().toString(),status:receipt.status,executionResult:receipt.executionResult,
     blockNumber:String(receipt.blockNumber),transactionFee:String(receipt.transactionFee),
     ordinarySequencer:true,syntheticSettlement:false,epochProofAccepted:false,

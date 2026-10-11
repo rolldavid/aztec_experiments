@@ -2,7 +2,7 @@
 // This hook observes the existing sequencer; it changes no clock or retry policy.
 const events=['state-changed','preparing-checkpoint','proposer-rollup-check-failed','block-tx-count-check-failed','block-build-failed','checkpoint-empty','header-validation-failed','checkpoint-publish-failed','checkpoint-published','checkpoint-error'];
 const states=new Set(['STOPPED','STOPPING','IDLE','SYNCHRONIZING','PROPOSER_CHECK','INITIALIZING_CHECKPOINT','WAITING_FOR_TXS','CREATING_BLOCK','WAITING_UNTIL_NEXT_BLOCK','ASSEMBLING_CHECKPOINT','COLLECTING_ATTESTATIONS','PUBLISHING_CHECKPOINT']);
-const numbers=['slot','targetSlot','checkpointNumber','checkpoint','secondsIntoBuildFrame','nowForStartGate','startDeadline','syncedL2Slot','minTxs','now','index','deadline','buildStartDeadline','lastBlockBuildTime','maxBlocksPerCheckpoint'];
+const numbers=['slot','targetSlot','checkpointNumber','checkpoint','secondsIntoBuildFrame','nowForStartGate','startDeadline','syncedL2Slot','minTxs','now','index','deadline','buildStartDeadline','lastBlockBuildTime','maxBlocksPerCheckpoint','minBlockDuration','finalSubslotDeadline'];
 const patterns=[
   ['missing-committee',/^No committee (?:found )?for slot \d+(?:;|:| yet:)/],
   ['past-start-deadline',/^Past start deadline for slot \d+, abandoning block building$/],
@@ -45,7 +45,7 @@ export function observeSequencer(node){
     const result=select.call(this,slot,now);
     try{
       observation.timing.push(fields({slot,now,index:result.index,deadline:result.deadline,canStart:result.canStart,
-        buildStartDeadline:this.getBuildStartDeadline(slot),lastBlockBuildTime:this.getLastBlockBuildTime(slot),maxBlocksPerCheckpoint:this.getMaxBlocksPerCheckpoint()}));
+        buildStartDeadline:this.getBuildStartDeadline(slot),lastBlockBuildTime:this.getLastBlockBuildTime(slot),maxBlocksPerCheckpoint:this.getMaxBlocksPerCheckpoint(),minBlockDuration:this.minBlockDuration,finalSubslotDeadline:this.getBlockBuildDeadline(slot,this.getMaxBlocksPerCheckpoint()-1)}));
       if(observation.timing.length>32)observation.timing.shift();
     }catch{} // An observation must never replace SDK results or failures.
     return result;
