@@ -5,6 +5,7 @@ import {BlockHeader} from '@aztec-labs/stdlib/tx';
 import {AppendOnlyTreeSnapshot} from '@aztec-labs/stdlib/trees';
 import {L1ContractsNames} from '@aztec-labs/ethereum/l1-contract-addresses';
 import {jsonStringify} from '@aztec-labs/foundation/json-rpc';
+import {withCache} from '../node_modules/@aztec-labs/pxe/dest/node/caching_aztec_node.js';
 
 // Development fakes only. These do not qualify a real trusted fullnode or traces.
 const h=n=>'0x'+n.toString(16).padStart(64,'0');
@@ -98,6 +99,31 @@ test('mock transport with real SDK schema: brand, public inspection, no submissi
 test('mock transport: explicit loopback development allowed, version header mismatch rejected',async()=>withFetch(async set=>{
   const f=fixture();set(async(url,init)=>new Response(jsonStringify(await responseFor(f,JSON.parse(init.body))),{headers:{'x-aztec-l1ChainId':'1'}}));
   await rejects(()=>create({url:'http://127.0.0.1:1234',allowLocalDev:true}),'UNAVAILABLE');
+}));
+
+test('actual installed PXE cache and recording wrappers accept immutable branded facade',async()=>withFetch(async set=>{
+ const f=fixture();f.node.getSyncedL1Timestamp=async()=>BigInt(Math.floor(Date.now()/1000));
+ f.node.getBlock=async()=>undefined;let failedRequests=0;
+ set(async(url,init)=>{
+  const body=JSON.parse(init.body);
+  if(body.some(r=>r.method==='aztec_sendTx')){failedRequests++;throw Error('PRIVATE_SENTINEL');}
+  return new Response(jsonStringify(await responseFor(f,body)),{headers:{'content-type':'application/json'}});
+ });
+ const node=await create(),wrapped=withCache(node);
+ assert.equal(isTrustedPrivateNode(node),true);assert.equal(isTrustedPrivateNode(wrapped),false);
+ assert.ok(Object.isFrozen(node));assert.equal(node.getBlockData,node.getBlockData);
+ for(const name of ['getBlockData','getBlock']){
+  assert.equal(Reflect.set(node,name,()=>{}),false);assert.equal(Reflect.deleteProperty(node,name),false);
+  assert.throws(()=>Object.defineProperty(node,name,{value:()=>{}}),TypeError);
+ }
+ assert.equal((await wrapped.getBlockData(0)).header.globalVariables.blockNumber,0);
+ assert.equal(await wrapped.getBlock(8),undefined);
+ assert.equal(Reflect.set(node,'newMethod',()=>{}),false);
+ await rejects(()=>wrapped.sendTx({fixture:'PRIVATE_SENTINEL'}),'UNAVAILABLE');assert.equal(failedRequests,1);
+ // The exact old shape fails before any RPC; keep the regression tied to the
+ // unchanged SDK rather than a substitute Proxy implementation.
+ const old=withCache(Object.freeze({getBlockData:async()=>{},getBlock:async()=>{}}));
+ assert.throws(()=>old.getBlockData,TypeError);assert.throws(()=>old.getBlock,TypeError);
 }));
 
 

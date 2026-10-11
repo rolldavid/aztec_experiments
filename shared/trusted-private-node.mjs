@@ -121,9 +121,16 @@ export async function createTrustedPrivateNode({url,expectedNetworkScope,proofsE
   const p=policy({expectedNetworkScope,proofsEnabled,maxLagSeconds}),host=endpoint(url,allowLocalDev);
   const rpc=createSafeJsonRpcClient(host,AztecNodeApiSchema,{namespaceMethods:'aztec',maxBatchSize:3,fetch:privateFetch,log:silent,
     onResponse:getVersioningResponseHandler({l1ChainId:Number(p.chainId),rollupVersion:Number(p.version),l1RollupAddress:p.rollup})});
-  const node=Object.freeze(Object.fromEntries(Object.keys(AztecNodeApiSchema).map(name=>[name,async(...args)=>{
+  // The installed PXE wraps this facade with recording and caching Proxies.
+  // A frozen data property forbids their get traps from returning a bound or
+  // cached function. Getter-only properties preserve immutable routing while
+  // allowing those unmodified SDK wrappers to return their own functions.
+  const node=Object.freeze(Object.defineProperties({},Object.fromEntries(Object.keys(AztecNodeApiSchema).map(name=>{
+   const method=async(...args)=>{
     try{return await rpc[name](...args);}catch{throw fail('UNAVAILABLE');}
-  }])));
+   };
+   return [name,{enumerable:true,get:()=>method}];
+  }))));
   await inspectTrustedNode(node,{expectedNetworkScope,proofsEnabled,maxLagSeconds});
   trusted.add(node);return node;
 }
