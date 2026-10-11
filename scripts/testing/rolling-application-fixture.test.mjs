@@ -119,3 +119,16 @@ test('labelled local HTTP health fixture projects only public flags and bounds r
     const bounded=await observeRollingReadiness(input,async()=>{});assert.equal(bounded.healthUnavailable,true);assert(!JSON.stringify(bounded).includes(secret));
   }finally{await new Promise(resolve=>{server.close(resolve);server.closeAllConnections();});}
 });
+
+test('native loader cleanup remains after PXE and prover owners, including their failures',async()=>{
+  const source=await fs.readFile(new URL('./rolling-application-fixture.mjs',import.meta.url),'utf8');
+  assert(source.indexOf('nativeArtifacts=installRollingNativeArtifacts()')<source.indexOf('const sdkModule=await loadRollingFixtureSDK()'));
+  assert(source.includes("'scripts/testing/rolling-native-artifacts.mjs'"));
+  assert(source.indexOf("['applicationPXE'")<source.indexOf("['nativeArtifactLoader'"));
+  assert(source.indexOf("['proverAndQuery'")<source.indexOf("['nativeArtifactLoader'"));
+  assert(source.includes('nativeArtifacts.verify();report.nativeArtifacts=nativeArtifacts.observation()'));
+  const {installRollingNativeArtifacts}=await import('./rolling-native-artifacts.mjs'),adapter=installRollingNativeArtifacts();
+  const sentinel=Error('labelled PXE cleanup failure'),observation={};
+  await assert.rejects(closeRollingResources([['pxe',async()=>{throw sentinel;}],['nativeArtifacts',()=>adapter.close()]],observation),e=>e.errors[0]===sentinel);
+  assert.equal(adapter.observation().closed,true);assert.equal(observation.nativeArtifacts,true);
+});

@@ -16,7 +16,7 @@ const discard=()=>{};
 const silent=Object.assign(discard,Object.fromEntries(['trace','debug','verbose','info','warn','error','fatal'].map(k=>[k,discard])),
   {level:'silent',isLevelEnabled:()=>false,getBindings:()=>({}),createChild:()=>silent});
 const PERSONAL=['feePayer','publicCallSenders','publicCallTargets','publicCallCalldata','publicWriteSlots','publicWriteValues','publicLogContracts','publicLogFields'];
-const SOURCES=['scripts/testing/rolling-application-fixture.mjs','scripts/testing/scenarios.mjs','scripts/testing/scenario-flows.mjs',
+const SOURCES=['scripts/testing/rolling-native-artifacts.mjs','scripts/testing/rolling-application-fixture.mjs','scripts/testing/scenarios.mjs','scripts/testing/scenario-flows.mjs',
   'scripts/c01-real-node.mjs','scripts/c01-board-flow.mjs','scripts/c01-deposit-flow.mjs','scripts/c01-client-mining.mjs',
   'scripts/w01-private-fee-flow.mjs','scripts/w01-unfunded-wallet.mjs','scripts/w01-private-funding.mjs',
   'shared/sdk-entry.mjs','shared/private-pxe.mjs','shared/trusted-private-node.mjs','shared/routed-kernel-prover.mjs','shared/remote-prover-client.mjs',
@@ -144,7 +144,7 @@ export async function runRollingApplicationFixture(ctx) {
   const save=()=>fs.writeFile(path.join(directory,'observation.json'),json(report),{mode:0o600});
   const mark=async stage=>{if(ctx.applicationDeadlineAt!==undefined)assert(Date.now()<ctx.applicationDeadlineAt,'Parent campaign budget exhausted');report.stage=stage;ctx.mark?.('rolling-application:'+stage);await save();};
   const sourceBinding=async()=>Object.fromEntries(await Promise.all(SOURCES.map(async name=>[name,sha(await fs.readFile(path.join(ROOT,name)))])));
-  let fees,pxe,store,rpc,service,failure,restoreIndexedDB,owner,appWallet,journal,locked=false;
+  let fees,pxe,store,rpc,service,failure,restoreIndexedDB,nativeArtifacts,owner,appWallet,journal,locked=false;
   let feeTotal=0n;const accounted=new Set();
   const accountFee=(hash,fee)=>{if(!accounted.has(hash)){assert(BigInt(fee)>0n);feeTotal+=BigInt(fee);accounted.add(hash);}report.actualHumanFees=String(feeTotal);};
   try {
@@ -164,6 +164,8 @@ export async function runRollingApplicationFixture(ctx) {
     const bokBytes=await fs.readFile(ARTIFACT),manifest=JSON.parse(await fs.readFile(MANIFEST));
     assert.deepEqual(manifest.inputs,buildInputs());assert.equal(sha(bokBytes),manifest.artifactSha256);
     report.bokArtifactSha256=manifest.artifactSha256;report.bokBuildInputs=manifest.inputs;
+    const {installRollingNativeArtifacts}=await import('./rolling-native-artifacts.mjs');
+    nativeArtifacts=installRollingNativeArtifacts();report.nativeArtifacts=nativeArtifacts.observation();await save();
     const sdkModule=await loadRollingFixtureSDK();
     await import('../../apps/src/billboard/user/engine.js');
     const routing=globalThis.BillboardPrivateFeeRouting;
@@ -365,6 +367,7 @@ export async function runRollingApplicationFixture(ctx) {
       await fees.verify(feeTotal);report.actualHumanFees=String(feeTotal);report.proverJobs=service.stats();
       assert.equal(report.proverJobs.failed,0);assert.equal(report.proverJobs.completed,5);assert.equal(report.proverJobs.submitted,5);
       assert.equal(report.proverJobs.running,false);
+      nativeArtifacts.verify();report.nativeArtifacts=nativeArtifacts.observation();
       assert.deepEqual(await sourceBinding(),report.sourceHashes);assert.deepEqual(buildInputs(),manifest.inputs);
       report.passed=true;await mark('complete');
       }catch(error){
@@ -405,6 +408,7 @@ export async function runRollingApplicationFixture(ctx) {
       ...(service?[['proverAndQuery',async()=>{const port=service.address.port;await service.close();await closedPort(port);}]]:[]),
       ...(rpc?[['nodeRPC',()=>rpc.close()]]:[]),
       ...(restoreIndexedDB?[['indexedDBGlobals',restoreIndexedDB]]:[]),
+      ...(nativeArtifacts?[['nativeArtifactLoader',()=>{try{nativeArtifacts.close();}finally{report.nativeArtifacts=nativeArtifacts.observation();}}]]:[]),
     ],report.cleanup);}catch(error){report.passed=false;failure=failure?new AggregateError([failure,error],'Rolling fixture and cleanup failed'):error;}
     try{await save();}catch(error){report.passed=false;failure=failure?new AggregateError([failure,error],'Rolling evidence failed'):error;}
   }
