@@ -8,6 +8,20 @@ import {serveRollingReaderAsset} from '../../apps/rolling/start.mjs';
 import {startRollingPublicServer} from '../rolling-public-server.mjs';
 import {createPublicReader} from '../../apps/rolling/reader-client.mjs';
 const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+export function assertCanonicalSocialViews(projection,rows){
+ for(const {route,parameters,expected}of rows){
+  assert(['feed','thread','post'].includes(route));
+  const actual=route==='post'?{post:projection.post(parameters.id)}:route==='thread'?projection.thread(parameters.root,parameters):projection.feed(parameters);
+  // Raw projection owns canonical posts and cursors. The HTTP index enriches
+  // names/boards; those remain mandatory in assertSocialHTTPView below.
+  const keys=route==='post'?['post']:['posts','nextCursor'];
+  assert(keys.every(key=>Object.hasOwn(expected,key)&&Object.hasOwn(actual,key)));
+  assert.deepEqual(Object.fromEntries(keys.map(key=>[key,actual[key]])),Object.fromEntries(keys.map(key=>[key,expected[key]])));
+ }
+}
+export function assertSocialHTTPView(actual,expected){
+ assert.deepEqual(Object.fromEntries(Object.keys(expected).map(key=>[key,actual[key]])),expected);
+}
 export async function verifyRollingPublicReader({node,artifact,scope,deployment,cacheDirectory,ids,scenario='conversation',expectedProfile,expectedHTTP,deadlineAt,observation}){
  assert(['conversation','profiles','anonymous-thread','repost-reactions'].includes(scenario));
  const social=['anonymous-thread','repost-reactions'].includes(scenario);
@@ -35,7 +49,7 @@ export async function verifyRollingPublicReader({node,artifact,scope,deployment,
    const read=createPublicReader({timeoutMs:Math.max(1,deadline-Date.now()),fetch:(url,options)=>fetch(server.url+url,{...options,signal:AbortSignal.any([options.signal,AbortSignal.timeout(Math.max(1,deadline-Date.now()))])})});
    const views={};
    for(const [i,[route,params,expected]]of routes.entries()){assert(Date.now()<deadline);const key=social?String(i):route;views[key]=await read(route,params);assert.deepEqual(views[key].scope,scope);
-    if(social)assert.deepEqual(Object.fromEntries(Object.keys(expected).map(k=>[k,views[key][k]])),expected);}
+    if(social)assertSocialHTTPView(views[key],expected);}
    if(scenario==='profiles'){assert.deepEqual(views.profile.identity,expectedProfile);assert.deepEqual(views.profile.posts,[]);assert.deepEqual(views.feed.posts,[]);assert.deepEqual(views.directory.boards,[]);}
    else if(!social){
    assert.deepEqual(views.thread.posts.map(p=>p.id),[ids.rootId,ids.replyId]);

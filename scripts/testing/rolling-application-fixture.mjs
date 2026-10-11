@@ -425,10 +425,8 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
       await mark('canonical-projection-rebuild');
       const rebuilt=createRollingProjection({isValidatedEvent:isRollingEvent});
       for(const hash of hashes)rebuilt.stage(await decoder.decodeTransaction(ctx.node,hash)).apply();
-      if(social){for(const {route,parameters,expected}of report.social.expectedHTTP){
-        const actual=route==='post'?{post:rebuilt.post(parameters.id),names:{},boards:{}}:route==='thread'?rebuilt.thread(parameters.root,parameters):rebuilt.feed(parameters);
-        assert.deepEqual(Object.fromEntries(Object.keys(expected).map(key=>[key,actual[key]])),expected);
-      }}else assert.deepEqual(scenario==='profiles'?rebuilt.profile(ids.nameId,{limit:100}):assertRollingApplicationViews(rebuilt,ids),report.publicViews);
+      if(social){const {assertCanonicalSocialViews}=await import('./rolling-public-acceptance.mjs');assertCanonicalSocialViews(rebuilt,report.social.expectedHTTP);}
+      else assert.deepEqual(scenario==='profiles'?rebuilt.profile(ids.nameId,{limit:100}):assertRollingApplicationViews(rebuilt,ids),report.publicViews);
       for(const row of [...report.transactions,...(report.avatarModeration?[report.avatarModeration]:[]),...(report.postModeration?[report.postModeration]:[])])assert.equal(String((await ctx.node.getBlockData(row.blockNumber)).blockHash),row.blockHash);
       assert.equal(String((await ctx.node.getBlockData(Number(report.initialPublicAnchor.blockNumber))).blockHash),report.initialPublicAnchor.blockHash);
       report.rebuild={passed:true,canonicalTransactionsRefetched:hashes.length,normalizedCacheTreatedAsAuthority:false};
