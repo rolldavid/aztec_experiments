@@ -9,7 +9,7 @@ import {AztecAddress} from '@aztec-labs/stdlib/aztec-address';
 import {TxHash, TxStatus, TxExecutionResult} from '@aztec-labs/stdlib/tx';
 import {nameRegistration, NAME_DOMAIN} from './name-policy.mjs';
 export const ROLLING_EVENTS = Object.freeze(['NameRegistered','MainPolicyPublished','SubboardCreated','SubboardRejected',
-  'PostPublished','PostRemoved','PluginConfigured','PluginInvoked','PluginReplyPublished','LikeChanged','BioPublished','AvatarPublished']);
+  'PostPublished','PostRemoved','PluginConfigured','PluginInvoked','PluginReplyPublished','LikeChanged','BioPublished','AvatarPublished','AvatarRemoved']);
 const verified = new WeakSet();
 export const isRollingEvent = event => verified.has(event);
 export const rollingError = () => Object.assign(Error('Rolling public history is invalid or unavailable.'), {code:'ROLLING_PUBLIC_INVALID'});
@@ -44,7 +44,8 @@ const shapes={NameRegistered:['schema','name_id','first_length','first','last_le
  PluginInvoked:['schema','plugin_id','post_id','request_id','target'],PluginReplyPublished:['schema','plugin_id','request_id','post_id','parent_id','target'],
  LikeChanged:['schema','post','tag','active','count'],
  BioPublished:['schema','name_id','version','length','digest','content','trailer'],
- AvatarPublished:['schema','name_id','version','width','height','length','digest','data','trailer']};
+ AvatarPublished:['schema','name_id','version','width','height','length','digest','data','trailer'],
+ AvatarRemoved:['schema','name_id','avatar_version','avatar_digest','main_policy_version','reason_digest','length','reason']};
 export function validateRollingScope(scope) {
   exact(scope,['chainId','rollupVersion','rollupAddress','boardAddress','classId']);
   check(integer(scope.chainId,64)>0n && integer(scope.rollupVersion,32)>0n && hex(scope.rollupAddress,20) && BigInt(scope.rollupAddress)>0n);
@@ -73,6 +74,9 @@ export async function validateRollingEvent(input,expectedScope) {
    nonzero(p.name_id);check(integer(p.version,32)>0n&&p.trailer==='1');integer(p.width,16);integer(p.height,16);
    unpackRollingAvatar(p.data,p.length);check(p.length==='0'?p.width==='0'&&p.height==='0':p.width==='100'&&p.height==='100');
    check(p.digest===await hash(['1',p.name_id,p.version,p.width,p.height,p.length,...p.data],0x52434131));
+  } else if(input.type==='AvatarRemoved') {
+   nonzero(p.name_id);check(integer(p.avatar_version,32)>0n&&integer(p.main_policy_version,32)>0n);scalar(p.avatar_digest);
+   check(p.reason_digest===(await text(p.reason,p.length,7)).digest);
   } else if(input.type==='MainPolicyPublished') {
    check(integer(p.version,32)>0n);check(p.digest===(await text(p.rules,p.length,32)).digest);
   } else if(input.type==='SubboardCreated') {

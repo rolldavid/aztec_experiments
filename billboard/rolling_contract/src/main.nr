@@ -23,7 +23,7 @@ pub contract RollingBoard {
     };
     use crate::admission::{Config, SequenceState, compute_cooldown, checked_time_add, deposit_chain_id, post_id, post_link, get_ready_msg_hash, get_deposit_msg_hash, get_withdraw_msg_hash};
     use crate::posting::{PostDraft, PostRecord, PluginRecord, validate_draft, invocation_target, InvocationRecord, invocation_key, bot_reply_id};
-    use crate::profiles::{OwnedNameRecord, ProfileRecord, next_version, bio_digest, avatar_digest};
+    use crate::profiles::{OwnedNameRecord, ProfileRecord, AvatarModerationRecord, next_version, bio_digest, avatar_digest};
     global SENTINEL: Field = 0;
     use crate::encoding::{name_id, pack_bytes, subboard_id, text_hash, validate_text};
 
@@ -172,6 +172,7 @@ pub contract RollingBoard {
         like_state: LikeStorageRoot,
         invocation_state: InvocationStorageRoot,
         profile_state: ProfileStorageRoot,
+        avatar_moderation_state: AvatarModerationStorageRoot,
     }
 
     #[event]
@@ -373,6 +374,59 @@ pub contract RollingBoard {
         current.avatar_width = width; current.avatar_height = height; current.avatar_length = length;
         entry.write(current);
         self.emit(AvatarPublished { schema: 1, name_id, version, width, height, length, digest, data, trailer: 1 });
+    }
+
+    // Separate appended root leaves every existing profile/portal slot and
+    // ProfileRecord ABI unchanged. No private ownership is inspected here.
+    struct AvatarModerationStorageRoot { slot: Field }
+    impl<Context> StateVariable<1, Context> for AvatarModerationStorageRoot {
+        fn new(_context: Context, storage_slot: Field) -> Self {
+            assert(storage_slot != 0, "Zero avatar moderation root");
+            Self { slot: storage_slot }
+        }
+        fn get_storage_slot(self) -> Field { self.slot }
+    }
+    struct AvatarModerationState {}
+    impl AvatarModerationState {
+        unconstrained fn entry(context: aztec::context::PublicContext, slot: Field, name: Field)
+            -> PublicMutable<AvatarModerationRecord, aztec::context::PublicContext> {
+            Map::<Field, PublicMutable<AvatarModerationRecord, aztec::context::PublicContext>, aztec::context::PublicContext>::new(context, slot).at(name)
+        }
+        unconstrained fn view(context: aztec::context::UtilityContext, slot: Field, name: Field)
+            -> AvatarModerationRecord {
+            Map::<Field, PublicMutable<AvatarModerationRecord, aztec::context::UtilityContext>, aztec::context::UtilityContext>::new(context, slot).at(name).read()
+        }
+    }
+    #[event]
+    struct AvatarRemoved {
+        schema: u32, name_id: Field, avatar_version: u32, avatar_digest: Field,
+        main_policy_version: u32, reason_digest: Field, length: u16, reason: [Field; 7],
+    }
+    #[external("public")]
+    fn remove_avatar(name_id: Field, expected_avatar_version: u32, expected_main_version: u32,
+        reason: [Field; 7], length: u16) {
+        assert(self.msg_sender() == self.storage.moderator.read(), "Only moderator");
+        assert(self.storage.registered_names.at(name_id).read(), "Unknown profile name");
+        let current = ProfileState::entry(self.context, self.storage.profile_state.slot, name_id).read();
+        assert(current.avatar_length > 0, "No current avatar");
+        assert(current.avatar_version == expected_avatar_version, "Avatar changed");
+        let main_version = self.storage.main_version.read();
+        assert(main_version == expected_main_version, "Policy changed");
+        validate_text(reason, length, true);
+        let entry = AvatarModerationState::entry(self.context, self.storage.avatar_moderation_state.slot, name_id);
+        assert(entry.read().avatar_version != current.avatar_version, "Avatar already removed");
+        let reason_digest = text_hash(reason, length);
+        entry.write(AvatarModerationRecord { avatar_version: current.avatar_version,
+            avatar_digest: current.avatar_digest, main_policy_version: main_version, reason_digest });
+        self.emit(AvatarRemoved { schema: 1, name_id, avatar_version: current.avatar_version,
+            avatar_digest: current.avatar_digest, main_policy_version: main_version, reason_digest, length, reason });
+    }
+    /// Public metadata queried locally. Compare the returned version to current
+    /// profile_state: old removal history does not remove a later owner upload.
+    #[external("utility")]
+    unconstrained fn avatar_moderation(name_id: Field) -> pub AvatarModerationRecord {
+        assert(self.storage.registered_names.at(name_id).read(), "Unknown profile name");
+        AvatarModerationState::view(self.context, self.storage.avatar_moderation_state.slot, name_id)
     }
 
     #[external("public")]

@@ -91,3 +91,13 @@ pub fn avatar_digest(name: Field, version: u32, width: u16, height: u16,
         [1, name, version as Field, width as Field, height as Field, length as Field].concat(data), 0x52434131,
     )
 }
+
+/// Last authenticated removal for one selected avatar version. A later upload
+/// retains this history but makes it inapplicable by advancing avatar_version.
+#[derive(Deserialize, Serialize, Eq, Packable)]
+pub struct AvatarModerationRecord {
+    pub avatar_version: u32,
+    pub avatar_digest: Field,
+    pub main_policy_version: u32,
+    pub reason_digest: Field,
+}

@@ -8,7 +8,7 @@ const text=(p,field,length)=>{const bytes=new Uint8Array(p[field].length*31);p[f
 // Reversible JSON representation for exact raster bytes. Standard padded base64
 // keeps public JSON bounded; MIME/image decoding is a separate consumer duty.
 const binaryBase64=(fields,length)=>{const bytes=[];for(const word of fields){let n=BigInt(word),chunk=new Array(31);for(let j=30;j>=0;j--){chunk[j]=Number(n&255n);n>>=8n;}bytes.push(...chunk);}const data=bytes.slice(0,Number(length)),alphabet='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';let encoded='';for(let i=0;i<data.length;i+=3){const a=data[i],b=data[i+1],c=data[i+2],n=(a<<16)|((b??0)<<8)|(c??0);encoded+=alphabet[(n>>>18)&63]+alphabet[(n>>>12)&63]+(b===undefined?'=':alphabet[(n>>>6)&63])+(c===undefined?'=':alphabet[n&63]);}return encoded;};
-const emptyProfile=()=>({bio:{version:'0',digest:'0',length:'0',text:''},avatar:{version:'0',digest:'0',width:'0',height:'0',length:'0',encoding:'base64',data:''}});
+const emptyProfile=()=>({bio:{version:'0',digest:'0',length:'0',text:''},avatar:{version:'0',digest:'0',width:'0',height:'0',length:'0',encoding:'base64',data:'',removal:null}});
 // stage changes nothing; apply and reverse-order undo are single-use and reject
 // stale candidates. Private ownership and like-tag membership are never returned.
 export function createRollingProjection({isValidatedEvent,maxEvents=50000}={}) {
@@ -45,8 +45,14 @@ export function createRollingProjection({isValidatedEvent,maxEvents=50000}={}) {
    else if(e.type==='BioPublished'||e.type==='AvatarPublished'){
     const name=next.names.get(p.name_id);check(name);const part=e.type==='BioPublished'?'bio':'avatar';
     check(BigInt(p.version)===BigInt(name.profile[part].version)+1n);
-    const value=part==='bio'?{version:p.version,digest:p.digest,length:p.length,text:text(p,'content','length')}:{version:p.version,digest:p.digest,width:p.width,height:p.height,length:p.length,encoding:'base64',data:binaryBase64(p.data,p.length)};
+    const value=part==='bio'?{version:p.version,digest:p.digest,length:p.length,text:text(p,'content','length')}:{version:p.version,digest:p.digest,width:p.width,height:p.height,length:p.length,encoding:'base64',data:binaryBase64(p.data,p.length),removal:null};
     next.names.set(p.name_id,{...name,profile:{...name.profile,[part]:value}});
+   }
+   else if(e.type==='AvatarRemoved'){
+    const name=next.names.get(p.name_id),avatar=name?.profile.avatar;
+    check(avatar&&avatar.length!=='0'&&avatar.version===p.avatar_version&&avatar.digest===p.avatar_digest&&p.main_policy_version===next.version&&!avatar.removal);
+    const removal={avatarVersion:p.avatar_version,avatarDigest:p.avatar_digest,mainPolicyVersion:p.main_policy_version,reasonDigest:p.reason_digest,reason:text(p,'reason','length'),position:e.position};
+    next.names.set(p.name_id,{...name,profile:{...name.profile,avatar:{...avatar,removal}}});
    }
    else if(e.type==='SubboardCreated'){check(!next.boards.has(p.subboard_id)&&p.main_policy_version===next.version);next.boards.set(p.subboard_id,{id:p.subboard_id,slug:text(p,'slug','slug_length'),name:text(p,'name','name_length'),description:text(p,'description','description_length'),rules:text(p,'rules','rules_length'),creationVersion:p.main_policy_version,rejected:false,rejection:null});}
    else if(e.type==='SubboardRejected'){const board=next.boards.get(p.subboard_id);check(board&&!board.rejected&&p.main_policy_version===next.version);next.boards.set(p.subboard_id,{...board,rejected:true,rejection:{reason:text(p,'reason','reason_length'),mainVersion:p.main_policy_version,position:e.position}});}
@@ -93,6 +99,9 @@ export function createRollingProjection({isValidatedEvent,maxEvents=50000}={}) {
     tip=baseTip;revision++;undone=true;
    }};
  }
+ // Preserve immutable event bytes/history internally, redact only every public
+ // identity accessor. Replacement versions carry no applicable removal.
+ const publicIdentity=name=>{const value=copy(name);if(value.profile.avatar.removal)value.profile.avatar.data=null;return value;};
  const visible=post=>{const p=copy(post),board=state.boards.get(p.record.subboard);if(p.removal||board?.rejected)p.text=null;return p;};
  function select(ids,{limit=50,cursor=null}={}){
   check(Number.isSafeInteger(limit)&&limit>=1&&limit<=100);let offset=0;
@@ -106,12 +115,12 @@ export function createRollingProjection({isValidatedEvent,maxEvents=50000}={}) {
    const posts=ids.slice(0,limit).map(id=>visible(state.posts.get(id))),needed=new Set([state.version,...posts.map(p=>p.mainVersion),...posts.filter(p=>p.removal).map(p=>String(BigInt(p.removal.policy)&0xffffffffn))]);return {posts,policies:[...needed].filter(v=>state.policies.has(v)).map(v=>copy(state.policies.get(v))),hasMore:ids.length>limit};},
   feed:options=>select([...state.order].reverse(),options),
   thread(root,options){check(state.posts.get(root)?.record.root===root);return select(state.order.filter(id=>state.posts.get(id).record.root===root),options);},
-  profile(nameId,options){check(state.names.has(nameId));return {...select([...state.order].reverse().filter(id=>state.posts.get(id).record.name_id===nameId),options),identity:copy(state.names.get(nameId))};},
+  profile(nameId,options){check(state.names.has(nameId));return {...select([...state.order].reverse().filter(id=>state.posts.get(id).record.name_id===nameId),options),identity:publicIdentity(state.names.get(nameId))};},
   directory({query='',limit=50,cursor=null}={}){check(typeof query==='string'&&query.length<=120&&Number.isSafeInteger(limit)&&limit>=1&&limit<=100);const q=query.trim().toLowerCase(),boards=[...state.boards.values()].filter(b=>[b.slug,b.name,b.description].some(v=>v.toLowerCase().includes(q))).sort((a,b)=>a.slug<b.slug?-1:a.slug>b.slug?1:0);
    let start=0;if(cursor!==null){check(typeof cursor==='string'&&/^[0-9]+:[0-9]+$/.test(cursor));const [r,n]=cursor.split(':').map(Number);check(r===revision&&Number.isSafeInteger(n)&&n<=boards.length);start=n;}
    return {boards:boards.slice(start,start+limit).map(b=>({...copy(b),mainVersion:state.version,mainRules:state.policies.get(state.version)?.text})),nextCursor:start+limit<boards.length?`${revision}:${start+limit}`:null,revision};},
   post(id){const p=state.posts.get(id);return p?visible(p):null;},
-  identity(id){const name=state.names.get(id);return name?copy(name):null;},
+  identity(id){const name=state.names.get(id);return name?publicIdentity(name):null;},
   board(id){const board=state.boards.get(id);return board?{...copy(board),mainVersion:state.version,mainRules:state.policies.get(state.version)?.text}:null;},
  };
 }

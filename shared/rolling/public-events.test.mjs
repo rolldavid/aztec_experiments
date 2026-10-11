@@ -122,3 +122,13 @@ test('265-field exception cannot broaden text arrays or another event ABI',async
  }
  assert.throws(()=>unpackRollingText(Array(265).fill('0'),'0',8192,false));
 });
+
+test('labelled actual AvatarRemoved ABI authenticates exact avatar version/digest and canonical reason',async()=>{
+ const image=await decoder.decodeLog(await profileLog('AvatarPublished'),position),definition=artifact.outputs.structs.events.find(e=>e.path==='RollingBoard::AvatarRemoved');assert(definition);
+ const selector=await EventSelector.fromSignature(decodeFunctionSignature('AvatarRemoved',definition.fields)),tag=await computeLogTag(selector.toField(),DomainSeparator.EVENT_LOG_TAG);
+ const bytes=Buffer.alloc(7*31);bytes.write('Unsafe');const reason=Array.from({length:7},(_,i)=>new Fr(BigInt('0x'+bytes.subarray(i*31,(i+1)*31).toString('hex'))));
+ const reasonDigest=await poseidon2HashWithSeparator([6n,...reason],0x52435431);
+ const make=()=>new PublicLog(board,[tag,Fr.ONE,new Fr(7n),Fr.ONE,new Fr(BigInt(image.payload.digest)),Fr.ONE,reasonDigest,new Fr(6n),...reason]);
+ const event=await decoder.decodeLog(make(),position);assert.equal(event.type,'AvatarRemoved');assert.equal(event.payload.avatar_digest,image.payload.digest);assert.equal(event.payload.main_policy_version,'1');
+ for(const mutate of [l=>{l.contractAddress=AztecAddress.fromBigIntUnsafe(43n);},l=>{l.fields[3]=Fr.ZERO;},l=>{l.fields[6]=Fr.ZERO;},l=>{l.fields[7]=Fr.ZERO;},l=>{l.fields[l.fields.length-1]=Fr.ONE;}]){const bad=make();mutate(bad);await assert.rejects(()=>decoder.decodeLog(bad,position));}
+});

@@ -25,7 +25,7 @@ async function modified(e,changes){return validateRollingEvent({...e,payload:{..
 test('staged apply/undo/rebuild, names, anonymous authenticated bot and thread',async()=>{
  const {events,nameId}=await fixture(),p=createRollingProjection({isValidatedEvent:isRollingEvent});const a=p.stage(events);assert.equal(p.postCount,0);a.apply();assert.equal(p.postCount,2);
  assert.equal(p.thread('10').posts[1].bot.pluginId,'7');assert.equal(p.profile(nameId).posts.length,1);assert(!JSON.stringify(p.feed()).includes('owner'));
- assert.deepEqual(p.identity(nameId),{id:nameId,first:'John',last:'Doe',profile:{bio:{version:'0',digest:'0',length:'0',text:''},avatar:{version:'0',digest:'0',width:'0',height:'0',length:'0',encoding:'base64',data:''}}});assert.equal(p.identity('0'),null);
+ assert.deepEqual(p.identity(nameId),{id:nameId,first:'John',last:'Doe',profile:{bio:{version:'0',digest:'0',length:'0',text:''},avatar:{version:'0',digest:'0',width:'0',height:'0',length:'0',encoding:'base64',data:'',removal:null}}});assert.equal(p.identity('0'),null);
  const named=p.identity(nameId);named.first='Mutated';assert.equal(p.identity(nameId).first,'John');
  const before=p.feed().posts;const rebuilt=createRollingProjection({isValidatedEvent:isRollingEvent});rebuilt.stage(events).apply();assert.deepEqual(rebuilt.feed().posts,before);
  a.undo();assert.equal(p.postCount,0);assert.equal(p.identity(nameId),null);assert.throws(()=>a.undo());assert.throws(()=>a.apply());
@@ -175,4 +175,45 @@ test('8192 byte profile content round trips, standard base64 padding is exact fo
   const result=p.identity(nameId).profile.avatar;assert.equal(result.data,bytes.toString('base64'));assert.deepEqual(Buffer.from(result.data,'base64'),bytes);assert.equal(result.length,String(length));
  }
  const body='z'.repeat(992),b=await bio(nameId,'1',body,'7');p.stage([b]).apply();assert.equal(p.identity(nameId).profile.bio.text,body);
+});
+
+async function removeAvatar(image,tx='5',mainVersion='1') {
+ const reason=pack('Unsafe image',7),length='12';return event('AvatarRemoved',{name_id:image.payload.name_id,avatar_version:image.payload.version,avatar_digest:image.payload.digest,main_policy_version:mainVersion,length,reason,reason_digest:await digest('Unsafe image',7)},0,tx);
+}
+test('authenticated avatar removal redacts every identity accessor while canonical bytes and undo remain intact',async()=>{
+ const {events,nameId}=await fixture(),p=createRollingProjection({isValidatedEvent:isRollingEvent});p.stage(events).apply();
+ const b=await bio(nameId,'1','Retain biography'),a=await avatar(nameId,'1',Buffer.from([0xff,0,7,0]));p.stage([b,a]).apply();
+ const original=p.identity(nameId),serialized=JSON.stringify(a),removed=await removeAvatar(a),change=p.stage([removed]);change.apply();
+ for(const identity of [p.identity(nameId),p.profile(nameId).identity]){assert.equal(identity.profile.avatar.data,null);assert.equal(identity.profile.avatar.removal.reason,'Unsafe image');assert.equal(identity.profile.avatar.removal.avatarDigest,a.payload.digest);assert.equal(identity.profile.bio.text,'Retain biography');}
+ assert.equal(Object.hasOwn(p.post('10'),'identity'),false);assert.equal(Object.hasOwn(p.feed().posts[0],'identity'),false);
+ assert.equal(JSON.stringify(a),serialized); // log/canonical-cache source retained, never rewritten
+ const rebuilt=createRollingProjection({isValidatedEvent:isRollingEvent});rebuilt.stage([...events,b,a,removed]).apply();assert.deepEqual(rebuilt.profile(nameId).identity,p.profile(nameId).identity);
+ change.undo();assert.deepEqual(p.identity(nameId),original);
+ const replacement=await avatar(nameId,'2',Buffer.from([8,0,9]),'5'),updated=p.stage([replacement]);updated.apply();assert.equal(p.identity(nameId).profile.avatar.removal,null);assert.equal(p.identity(nameId).profile.avatar.data,'CAAJ');
+ updated.undo();assert.deepEqual(p.identity(nameId),original);
+});
+test('removal is version scoped: new upload visible, stale race/duplicate/wrong digest/current-policy mismatch rejected',async()=>{
+ const {events,nameId}=await fixture(),p=createRollingProjection({isValidatedEvent:isRollingEvent});p.stage(events).apply();const a=await avatar(nameId,'1',Buffer.from([1]),'3');p.stage([a]).apply();
+ const removed=await removeAvatar(a,'4');
+ for(const patch of [{name_id:'99'},{avatar_version:'2'},{avatar_digest:'1'},{main_policy_version:'2'}]){const bad=await modified(removed,patch);assert.throws(()=>p.stage([bad]));}
+ p.stage([removed]).apply();const replay=await removeAvatar(a,'5');assert.throws(()=>p.stage([replay]));
+ const second=await avatar(nameId,'2',Buffer.from([2]),'5');p.stage([second]).apply();assert.equal(p.identity(nameId).profile.avatar.data,'Ag==');assert.equal(p.identity(nameId).profile.avatar.removal,null);
+ const stale=await removeAvatar(a,'6');assert.throws(()=>p.stage([stale]));
+ const policy=await event('MainPolicyPublished',{version:'2',digest:await digest('Changed',32),length:'7',rules:pack('Changed',32)},0,'6');p.stage([policy]).apply();
+ assert.throws(()=>p.stage([replay]));const stalePolicy=await removeAvatar(second,'7');assert.throws(()=>p.stage([stalePolicy]));
+ const current=await removeAvatar(second,'7','2');p.stage([current]).apply();assert.equal(p.identity(nameId).profile.avatar.data,null);
+});
+test('unset/cleared avatars cannot be removed and another name remains untouched',async()=>{
+ const {events,nameId}=await fixture(),p=createRollingProjection({isValidatedEvent:isRollingEvent});p.stage(events).apply();
+ const registration=nameRegistration('Jane','Doe'),jane=await h(registration.preimage,NAME_DOMAIN);
+ const name=await event('NameRegistered',{name_id:jane,first_length:'4',first:pack('Jane',2),last_length:'3',last:pack('Doe',2)},0,'3');p.stage([name]).apply();
+ const a=await avatar(nameId,'1',Buffer.from([7]),'4'),other=await avatar(jane,'1',Buffer.from([8]),'5');
+ const unset=await removeAvatar(other,'4');assert.throws(()=>p.stage([unset]));
+ p.stage([a,other]).apply();const before=p.identity(jane);p.stage([await removeAvatar(a,'6')]).apply();assert.deepEqual(p.identity(jane),before);
+ const cleared=await avatar(nameId,'2',Buffer.alloc(0),'7');p.stage([cleared]).apply();assert.equal(p.identity(nameId).profile.avatar.data,'');assert.equal(p.identity(nameId).profile.avatar.removal,null);
+ const badClear=await removeAvatar(cleared,'8');assert.throws(()=>p.stage([badClear]));
+});
+test('avatar removal event requires nonempty canonical UTF8 reason and exact reason hash',async()=>{
+ const {nameId}=await fixture(),a=await avatar(nameId,'1',Buffer.from([7])),removed=await removeAvatar(a);
+ for(const patch of [{name_id:'0'},{avatar_version:'0'},{main_policy_version:'0'},{reason_digest:'1'},{length:'0',reason:pack('',7)},{length:'218'},{reason:pack('Unsafe image!',7)},{length:'1',reason:pack(Buffer.from([0xc0]),7)}])await assert.rejects(()=>modified(removed,patch));
 });

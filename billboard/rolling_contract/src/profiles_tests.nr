@@ -24,6 +24,7 @@ fn private_name_record_retains_case_and_has_expected_packed_layout() {
     std::static_assert(<OwnedNameRecord as Packable>::N == 8, "Name record packed layout");
     std::static_assert(<RollingBoard::UsernameNote as Packable>::N == 8, "Name note packed layout");
     std::static_assert(<ProfileRecord as Packable>::N == 8, "Profile storage packed layout");
+    std::static_assert(<crate::profiles::AvatarModerationRecord as Packable>::N == 4, "Avatar moderation packed layout");
 }
 #[test]
 fn private_name_record_exact_32_byte_components_roundtrip() {
@@ -219,4 +220,99 @@ unconstrained fn avatar_previous_version_cannot_be_replayed() {
 #[test(should_fail_with="Unknown profile name")]
 unconstrained fn unknown_profile_read_is_distinct_from_empty_registered_profile() {
     let (env, board, _, _) = setup(); let _ = env.view_public(RollingBoard::at(board).profile_state(0));
+}
+
+unconstrained fn moderation_setup() -> (TestEnvironment, AztecAddress, AztecAddress, AztecAddress, AztecAddress) {
+    let mut env = TestEnvironment::new();
+    let moderator = env.create_light_account(); let alice = env.create_light_account(); let bob = env.create_light_account();
+    let board = env.deploy("@rolling_contract/RollingBoard").with_public_initializer(moderator,
+        RollingBoard::interface().init(text("No threats"), 10, 1, EthAddress::from_field(0x1111), 1, 10, 1000, 10, 3, 100, 10));
+    env.call_private(alice, RollingBoard::at(board).register_name(fixed("JoHN"), 4, fixed("Doe"), 3));
+    env.call_private(alice, RollingBoard::at(board).set_avatar(john(), 0, 100, 100, 4, avatar()));
+    (env, board, moderator, alice, bob)
+}
+fn removal_reason() -> [Field; 7] { pack_bytes("Threat".as_bytes()) }
+#[test]
+unconstrained fn moderator_removes_only_selected_current_avatar_without_mutating_profile_or_private_ownership() {
+    let (env, board, moderator, alice, bob) = moderation_setup();
+    let jane = name_id(fixed("Jane"), 4, fixed("Doe"), 3);
+    env.call_private(bob, RollingBoard::at(board).register_name(fixed("Jane"), 4, fixed("Doe"), 3));
+    env.call_private(bob, RollingBoard::at(board).set_avatar(jane, 0, 100, 100, 4, avatar()));
+    env.call_private(alice, RollingBoard::at(board).set_bio(john(), 0, text("Bio"), 3));
+    let profile = env.view_public(RollingBoard::at(board).profile_state(john()));
+    let unrelated = env.view_public(RollingBoard::at(board).profile_state(jane));
+    let owned = env.execute_utility(RollingBoard::at(board).owned_name_records(alice, 0));
+    assert_eq(env.execute_utility(RollingBoard::at(board).avatar_moderation(john())).avatar_version, 0);
+    env.call_public(moderator, RollingBoard::at(board).remove_avatar(john(), 1, 1, removal_reason(), 6));
+    let removal = env.execute_utility(RollingBoard::at(board).avatar_moderation(john()));
+    assert_eq(removal.avatar_version, 1); assert_eq(removal.avatar_digest, profile.avatar_digest);
+    assert_eq(removal.main_policy_version, 1); assert_eq(removal.reason_digest, crate::encoding::text_hash(removal_reason(), 6));
+    assert_eq(env.view_public(RollingBoard::at(board).profile_state(john())), profile);
+    assert_eq(env.view_public(RollingBoard::at(board).profile_state(jane)), unrelated);
+    assert_eq(env.execute_utility(RollingBoard::at(board).owned_name_records(alice, 0)), owned);
+    assert_eq(env.execute_utility(RollingBoard::at(board).avatar_moderation(jane)).avatar_version, 0);
+    // An authenticated replacement makes the old version's removal inapplicable.
+    env.call_private(alice, RollingBoard::at(board).set_avatar(john(), 1, 100, 100, 4, avatar()));
+    let replaced = env.view_public(RollingBoard::at(board).profile_state(john()));
+    assert_eq(replaced.avatar_version, 2); assert_eq(replaced.bio_digest, profile.bio_digest);
+    assert_eq(env.execute_utility(RollingBoard::at(board).avatar_moderation(john())), removal);
+    env.call_public(moderator, RollingBoard::at(board).set_main_policy(text("New rules"), 9));
+    env.call_public(moderator, RollingBoard::at(board).remove_avatar(john(), 2, 2, removal_reason(), 6));
+    let next = env.execute_utility(RollingBoard::at(board).avatar_moderation(john()));
+    assert_eq(next.avatar_version, 2); assert_eq(next.avatar_digest, replaced.avatar_digest); assert_eq(next.main_policy_version, 2);
+}
+#[test(should_fail_with="Only moderator")]
+unconstrained fn avatar_owner_cannot_impersonate_moderator() {
+    let (env, board, _, alice, _) = moderation_setup();
+    env.call_public(alice, RollingBoard::at(board).remove_avatar(john(), 1, 1, removal_reason(), 6));
+}
+#[test(should_fail_with="Unknown profile name")]
+unconstrained fn moderator_cannot_remove_unknown_avatar() {
+    let (env, board, moderator, _, _) = moderation_setup();
+    env.call_public(moderator, RollingBoard::at(board).remove_avatar(99, 1, 1, removal_reason(), 6));
+}
+#[test(should_fail_with="No current avatar")]
+unconstrained fn moderator_cannot_remove_unset_avatar() {
+    let (env, board, moderator, alice, _) = moderation_setup();
+    env.call_private(alice, RollingBoard::at(board).register_name(fixed("Mary"), 4, fixed("Lee"), 3));
+    env.call_public(moderator, RollingBoard::at(board).remove_avatar(name_id(fixed("Mary"), 4, fixed("Lee"), 3), 0, 1, removal_reason(), 6));
+}
+#[test(should_fail_with="No current avatar")]
+unconstrained fn moderator_cannot_remove_cleared_avatar() {
+    let (env, board, moderator, alice, _) = moderation_setup();
+    env.call_private(alice, RollingBoard::at(board).set_avatar(john(), 1, 0, 0, 0, [0; 265]));
+    env.call_public(moderator, RollingBoard::at(board).remove_avatar(john(), 2, 1, removal_reason(), 6));
+}
+#[test(should_fail_with="Text required")]
+unconstrained fn avatar_removal_requires_nonempty_reason() {
+    let (env, board, moderator, _, _) = moderation_setup();
+    env.call_public(moderator, RollingBoard::at(board).remove_avatar(john(), 1, 1, [0; 7], 0));
+}
+#[test(should_fail_with="Text padding")]
+unconstrained fn avatar_removal_requires_canonical_reason_padding() {
+    let (env, board, moderator, _, _) = moderation_setup();
+    env.call_public(moderator, RollingBoard::at(board).remove_avatar(john(), 1, 1, removal_reason(), 1));
+}
+#[test(should_fail_with="Avatar already removed")]
+unconstrained fn same_avatar_removal_cannot_replay() {
+    let (env, board, moderator, _, _) = moderation_setup();
+    env.call_public(moderator, RollingBoard::at(board).remove_avatar(john(), 1, 1, removal_reason(), 6));
+    env.call_public(moderator, RollingBoard::at(board).remove_avatar(john(), 1, 1, removal_reason(), 6));
+}
+#[test(should_fail_with="Avatar changed")]
+unconstrained fn stale_moderation_cannot_remove_owner_replacement() {
+    let (env, board, moderator, alice, _) = moderation_setup();
+    env.call_private(alice, RollingBoard::at(board).set_avatar(john(), 1, 100, 100, 4, avatar()));
+    env.call_public(moderator, RollingBoard::at(board).remove_avatar(john(), 1, 1, removal_reason(), 6));
+}
+#[test(should_fail_with="Policy changed")]
+unconstrained fn avatar_removal_requires_current_main_policy() {
+    let (env, board, moderator, _, _) = moderation_setup();
+    env.call_public(moderator, RollingBoard::at(board).set_main_policy(text("New rules"), 9));
+    env.call_public(moderator, RollingBoard::at(board).remove_avatar(john(), 1, 1, removal_reason(), 6));
+}
+#[test(should_fail_with="Unknown profile name")]
+unconstrained fn unknown_avatar_moderation_is_not_empty_known_history() {
+    let (env, board, _, _, _) = moderation_setup();
+    let _ = env.execute_utility(RollingBoard::at(board).avatar_moderation(0));
 }

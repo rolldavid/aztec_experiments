@@ -152,3 +152,28 @@ for(const distinct of [false,true])test(`labelled actual HTTP/reader: 100 maximu
  const nameId=first.posts[0].record.name_id,profile=await read('profile',{nameId,limit:100});
  assert.equal(profile.identity.profile.avatar.version,'1');assert.equal(profile.identity.profile.avatar.length,'8192');assert(sizes.every(size=>size<=1048576));
 });
+
+test('labelled actual HTTP/reader: every public profile route redacts removed avatar, reopen and replacement preserve history',{timeout:30000},async t=>{
+ const {startRollingPublicServer}=await import('../../scripts/rolling-public-server.mjs');const {createPublicReader}=await import('../../apps/rolling/reader-client.mjs');
+ const f=await fixture(t),nameId=BigInt(f.nameId),bytes=Buffer.alloc(8192,0xf7);bytes[8191]=0;
+ const image=async(version,dataBytes)=>{const data=pack(dataBytes,265);return {schema:1,name_id:nameId,version,width:100,height:100,length:dataBytes.length,data,digest:await poseidon2HashWithSeparator([1n,nameId,BigInt(version),100n,100n,BigInt(dataBytes.length),...data],0x52434131),trailer:1};};
+ const original=await image(1,bytes);f.put(4,[await log('AvatarPublished',original)]);
+ f.put(5,[await log('AvatarRemoved',{schema:1,name_id:nameId,avatar_version:1,avatar_digest:original.digest,main_policy_version:1,reason_digest:await digest('Unsafe',7),length:6,reason:pack('Unsafe',7)})]);f.setHead(5);
+ const index=await f.create();await index.sync();
+ async function inspect(current,removed){
+  const server=await startRollingPublicServer({index:current,pollMs:30000});
+  try{const read=createPublicReader({fetch:(url,options)=>fetch(server.url+url,options)});
+   for(const [route,params]of [['feed',{}],['thread',{root:'10'}],['profile',{nameId:f.nameId}],['post',{id:'10'}]]){
+    const page=await read(route,params),identities=[...Object.values(page.names),...(page.identity?[page.identity]:[])];assert(identities.length>0);
+    for(const identity of identities){if(removed){assert.equal(identity.profile.avatar.data,null);assert.equal(identity.profile.avatar.removal.reason,'Unsafe');assert.equal(identity.profile.avatar.version,'1');}else{assert.equal(identity.profile.avatar.removal,null);assert.equal(identity.profile.avatar.version,'2');assert.equal(identity.profile.avatar.data,'CQAH');}}
+    assert.equal(JSON.stringify(page).includes(bytes.toString('base64')),false);assert((page.posts??[page.post]).every(post=>!Object.hasOwn(post,'identity')));
+   }
+   assert.equal(JSON.stringify(await read('directory')).includes(bytes.toString('base64')),false);
+  }finally{await server.close();}
+ }
+ await inspect(index,true);
+ // Canonical snapshot still retains the original authenticated packed bytes.
+ const snapshot=await f.storage.load(index.key,20000);assert(snapshot.ranges.some(range=>JSON.parse(range.value).events.some(event=>event.type==='AvatarPublished'&&event.payload.length==='8192')));
+ const reopened=await f.create();await reopened.sync();await inspect(reopened,true);
+ const replacement=await image(2,Buffer.from([9,0,7]));f.put(5,[await log('AvatarPublished',replacement)],100);await reopened.sync();await inspect(reopened,false);
+});
