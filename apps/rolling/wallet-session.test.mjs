@@ -33,7 +33,9 @@ test('query construction receives captured scope and preserves failure without f
 import fs from 'node:fs';
 import {Fr} from '@aztec-labs/foundation/curves/bn254';
 import {AztecAddress} from '@aztec-labs/stdlib/aztec-address';
-import {loadContractArtifact} from '@aztec-labs/stdlib/abi';
+import {loadContractArtifact,decodeFromAbi,getFunctionReturnType} from '@aztec-labs/stdlib/abi';
+import {poseidon2HashWithSeparator} from '@aztec-labs/foundation/crypto/poseidon';
+import {nameRegistration,NAME_DOMAIN} from '../../shared/rolling/name-policy.mjs';
 import {getContractClassFromArtifact,getContractInstanceFromInstantiationParams,computeContractAddressFromInstance} from '@aztec-labs/stdlib/contract';
 import {sha256ToField} from '@aztec-labs/foundation/crypto/sha256';
 import {derivePrivateFeeInstance,normalizePrivateFeeGasSettings} from '../../shared/private-fee-client.mjs';
@@ -74,8 +76,13 @@ import {encodeArguments} from '@aztec-labs/stdlib/abi';
 import {IDBFactory} from 'fake-indexeddb';
 import {createBrowserJournalStorage} from '../../shared/journal-indexeddb.mjs';
 import {createL2Journal} from '../../shared/l2-journal.mjs';
+const ownedIdString=value=>hex(value.toBigInt());
 async function sessionFixture(){
  const f=await deploymentFixture(),state={active:false,events:[],stops:0,closes:0,syncs:0,sends:0,registrations:0};
+ const registered=nameRegistration('River','Stone'),ownedId=await poseidon2HashWithSeparator(registered.preimage.map(n=>new Fr(n)),NAME_DOMAIN);
+ const ownedAbi=artifact.functions.find(fn=>fn.name==='owned_name_records');assert(ownedAbi,'Normal profile artifact required');
+ const packed=bytes=>[new Fr(bytes.slice(0,31).reduce((n,b)=>(n<<8n)|BigInt(b),0n)),new Fr(BigInt(bytes[31])<<240n)];
+ const ownedRecords=decodeFromAbi(getFunctionReturnType(ownedAbi),[ownedId,Fr.ONE,new Fr(5),...packed(registered.arguments[0]),new Fr(5),...packed(registered.arguments[2]),...Array.from({length:56},()=>Fr.ZERO)]);
  const secret=new Fr(8n),salt=Fr.ZERO,accountContract=new SchnorrInitializerlessAccountContract(deriveSigningKey(secret));
  const keys=await deriveKeys(secret),accountArtifact=await accountContract.getContractArtifact();
  const accountInstance=await getContractInstanceFromInstantiationParams(accountArtifact,{salt,publicKeys:keys.publicKeys,constructorArgs:undefined,constructorArtifact:undefined,immutablesHash:await accountContract.getImmutablesHash()});
@@ -89,7 +96,7 @@ async function sessionFixture(){
  const wallet={aztecNode:f.node,pxe,getAccounts:async()=>[accountInstance.address],getChainInfo:async()=>({chainId:31337,version:1}),sendTx:async()=>{held('send');state.sends++;throw Error('unknown send');}};
  const routing={createAztecWallet:(_sdk,p,n,raw)=>{held('create-wallet');assert.equal(p,pxe);assert.equal(n,f.node);assert.equal(raw,f.node);return wallet;},
   isPrivateWalletForNode:(w,n)=>!state.wrongWallet&&w===wallet&&n===f.node};
- const sdk={...f.options.sdk,Fr,deriveKeys,deriveSigningKey,SchnorrInitializerlessAccountContract,getContractInstanceFromInstantiationParams,computePartialAddress,Tx,encodeArguments,
+ const sdk={...f.options.sdk,poseidon2HashWithSeparator,Fr,deriveKeys,deriveSigningKey,SchnorrInitializerlessAccountContract,getContractInstanceFromInstantiationParams,computePartialAddress,Tx,encodeArguments,
   createTrustedPrivateNode:async options=>{held('trusted-node');assert.equal(options.url,'http://127.0.0.1:3/v1/node');return f.node;},
   openPXEStore:async options=>{held('open-store');assert.equal(options.accountAddress,account.address);assert.equal(options.dataDirectory,'rolling-wallet-v1');return store;},
   createPXE:async(n,c,o)=>{held('create-pxe');assert.equal(n,f.node);assert.equal(o.store,store);assert.deepEqual(o.remoteProver,{url:'http://127.0.0.1:3',board:String(f.board.address)});if(state.failCreatePXE)throw Error('pxe failed');return pxe;},
@@ -97,16 +104,16 @@ async function sessionFixture(){
   createBrowserJournalStorage:()=>privateStore,createL2Journal,
   AccountManager:{create:async()=>{held('account-manager');return {address:accountInstance.address};}},
   ContractFunctionInteraction:class{async simulate(){held('signing-capsule');}},
-  Contract:{at:()=>({methods:{register_name:(...args)=>({args}),get_deposit_ids:()=>({simulate:async()=>({result:[9n,...Array(9).fill(0n)]})}),owned_names:()=>({simulate:async()=>({result:[5n,...Array(7).fill(0n)]})})}})},
+  Contract:{at:()=>({methods:{register_name:(...args)=>({args}),get_deposit_ids:()=>({simulate:async()=>({result:[9n,...Array(9).fill(0n)]})}),owned_name_records:()=>({simulate:async()=>({result:ownedRecords})})}})},
   preparePrivateFeePayment:async()=>({availableCredit:100n}),estimatePrivateFeeTransaction:async()=>({maximumFee:10n,payload:{},gasSettings:{}})};
  const locks={request:async(name,options,run)=>{assert.equal(name,'billboard-wallet:'+account.address);assert.deepEqual(options,{ifAvailable:true});
   if(state.active||state.otherTab)return run(null);state.active=true;state.events.push('lock');try{return await run({});}finally{state.active=false;state.events.push('unlock');}}};
- return {...f,state,privateStore,pxe,store,wallet,input:{...f.options,sdk,routing,account,locks,trustedQuery:{url:'http://127.0.0.1:3/v1/node',allowLocalDev:true},remoteProver:{url:'http://127.0.0.1:3',board:String(f.board.address)},contextGuard:async()=>{held('guard');}}};
+ return {...f,state,ownedId,privateStore,pxe,store,wallet,input:{...f.options,sdk,routing,account,locks,trustedQuery:{url:'http://127.0.0.1:3/v1/node',allowLocalDev:true},remoteProver:{url:'http://127.0.0.1:3',board:String(f.board.address)},contextGuard:async()=>{held('guard');}}};
 }
 test('constructs verified deployment/account, registers with one trusted PXE, and guards every application operation',async()=>{
  const f=await sessionFixture(),session=await createRollingWalletSession(f.input);
  assert.equal(f.state.registrations,1);assert.equal(f.state.events.filter(x=>x==='register-contract').length,3);
- assert.deepEqual((await session.application.ownedIdentities()).identities,[hex(5)]);
+ const names=await session.application.ownedIdentities();assert.deepEqual(names.identities,[ownedIdString(f.ownedId)]);assert.deepEqual(names.records,[{id:ownedIdString(f.ownedId),first:'River',last:'Stone'}]);
  assert.equal((await session.application.readAccountStatus()).status,'fee-ready');
  const intent=await session.application.prepare({type:'name',first:'River',last:'Stone'});assert.equal(intent.status,'prepared');
  assert.equal((await session.application.cancelPrepared(intent.intentId)).status,'cancelled');

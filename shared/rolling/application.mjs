@@ -215,6 +215,14 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
           depositIds:ids.filter(id=>BigInt(id)!==0n),postEligibility:'requires-action-simulation'};
       });
     },
+    async readProfile({name}={}){return exclusive(async()=>{
+      await guard();const id=field(name,true),record=await utility(await contract(),'profile_state',[id]);
+      let bioVersion,avatarVersion;
+      try{bioVersion=BigInt(record.bio_version);avatarVersion=BigInt(record.avatar_version);
+        check(bioVersion>=0n&&bioVersion<=0xffffffffn&&avatarVersion>=0n&&avatarVersion<=0xffffffffn,'ROLLING_INVALID_RESPONSE');
+      }catch{throw fail('ROLLING_INVALID_RESPONSE');}
+      await guard();return {name:id,bioVersion:String(bioVersion),avatarVersion:String(avatarVersion)};
+    });},
     async ownedIdentities({cursor=0}={}){return exclusive(async()=>{await guard();check(Number.isInteger(cursor)&&cursor>=0&&cursor<=0xffffffff-8);
       const values=await utility(await contract(),'owned_name_records',[session.owner,cursor]);check(Array.isArray(values)&&values.length===8,'ROLLING_INVALID_RESPONSE');
       const records=[],seen=new Set();let empty=false;

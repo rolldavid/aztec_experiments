@@ -9,7 +9,7 @@ import {fileURLToPath} from 'node:url';
 import {chromium} from 'playwright';
 const root=fileURLToPath(new URL('.',import.meta.url));
 test('public reader: navigation, unsafe content, failure recovery and narrow keyboard menu',async t=>{
- const files=new Set(['live.html','reader.mjs','reader-client.mjs','model.mjs','navigation.mjs','style.css']);let unavailable=false;
+ const files=new Set(['live.html','reader.mjs','reader-client.mjs','profile-view.mjs','model.mjs','navigation.mjs','style.css']);let unavailable=false;
  const scope={boardAddress:'0x'+'1'.repeat(64)},identity={id:'7',first:'River',last:'Lane'};
  const post={id:'10',record:{root:'10',parent:'0',reference:'0',kind:'1',subboard:'0',name_id:'7'},text:'A real interface, tested with synthetic public data. [Unsafe](javascript:alert(1)) <script>private()</script>',timestamp:'1791734400',likes:'2',bot:null};
  const later={...post,id:'20',record:{...post.record,parent:'10'},text:'The linked reply is outside the first page.'};

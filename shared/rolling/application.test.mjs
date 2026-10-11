@@ -38,7 +38,7 @@ function fixture(){
   }};
   const board={methods:new Proxy({},{get:(_,name)=>(...args)=>({name,args,simulate:async()=>{
     state.privateReads.push({name,args});
-    const replies={owned_name_records:('records' in state)?state.records:await ownershipPage(),get_deposit_ids:[9n,0n,0n,0n,0n,0n,0n,0n,0n,0n],
+    const replies={profile_state:state.profileState??decodeFromAbi(getFunctionReturnType([...artifact.functions,...artifact.nonDispatchPublicFunctions].find(f=>f.name==='profile_state')),Array.from({length:8},()=>Fr.ZERO)),owned_name_records:('records' in state)?state.records:await ownershipPage(),get_deposit_ids:[9n,0n,0n,0n,0n,0n,0n,0n,0n,0n],
       main_policy:[BigInt(state.policy),1n],effective_policy:[BigInt(state.policy),1n,1n,2n,false],get_screen_hints:state.hints??decodeFromAbi(getFunctionReturnType(artifact.functions.find(f=>f.name==='get_screen_hints')),Array.from({length:28},()=>Fr.ZERO))};
     return {result:replies[name]};
   }})})};
@@ -352,4 +352,18 @@ test('missing new metadata ABI fails closed without legacy or public lookup',asy
 test('account lock during local metadata hashing suppresses the private result',async()=>{
  const f=fixture();f.options.sdk.poseidon2HashWithSeparator=async(...args)=>{const value=await poseidon2HashWithSeparator(...args);f.state.guard=false;return value;};
  await assert.rejects(f.app.ownedIdentities());assert.deepEqual(f.state.privateReads.map(r=>r.name),['owned_name_records']);
+});
+
+test('selected profile versions use the guarded private utility without public ownership queries or mutations',async()=>{
+ const f=fixture();f.state.profileState=decodeFromAbi(getFunctionReturnType([...artifact.functions,...artifact.nonDispatchPublicFunctions].find(fn=>fn.name==='profile_state')),[2n,0n,0n,3n,0n,100n,100n,8192n].map(n=>new Fr(n)));
+ assert.deepEqual(await f.app.readProfile({name:'9'}),{name:hex(9),bioVersion:'2',avatarVersion:'3'});
+ assert.deepEqual(f.state.privateReads.map(read=>read.name),['profile_state']);assert.equal(f.state.sends,0);assert.equal(f.state.estimates,0);assert.equal(f.values.size,0);
+ f.state.guard=false;await assert.rejects(f.app.readProfile({name:'9'}));assert.equal(f.state.privateReads.length,1);
+});
+test('profile snapshots reject anonymous names and malformed or overflowing versions without saving an action',async()=>{
+ for(const name of ['0','01',undefined]){const f=fixture();await assert.rejects(f.app.readProfile({name}));assert.equal(f.state.privateReads.length,0);}
+ for(const value of [undefined,-1,4294967296]){
+  const f=fixture();f.state.profileState={bio_version:value,bio_digest:0n,bio_length:0,avatar_version:0,avatar_digest:0n,avatar_width:0,avatar_height:0,avatar_length:0};
+  await assert.rejects(f.app.readProfile({name:'9'}));assert.equal(f.state.sends,0);assert.equal(f.values.size,0);
+ }
 });

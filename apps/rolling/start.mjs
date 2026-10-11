@@ -4,13 +4,13 @@ import {fileURLToPath,pathToFileURL} from 'node:url';
 import {startRollingPublicServer,createRollingPublicIndexFromConfig} from '../../scripts/rolling-public-server.mjs';
 import {loadRollingWalletAssets} from '../../scripts/rolling-wallet-assets.mjs';
 const root=fileURLToPath(new URL('.',import.meta.url));
-const files=new Map([['/','live.html'],['/reader.mjs','reader.mjs'],['/reader-client.mjs','reader-client.mjs'],
+const files=new Map([['/','live.html'],['/reader.mjs','reader.mjs'],['/reader-client.mjs','reader-client.mjs'],['/profile-view.mjs','profile-view.mjs'],['/avatar-upload.mjs','avatar-upload.mjs'],
  ['/model.mjs','model.mjs'],['/navigation.mjs','navigation.mjs'],['/style.css','style.css'],['/wallet-panel.mjs','wallet-panel.mjs']]);
 const headers={'Cache-Control':'no-store','X-Content-Type-Options':'nosniff','Referrer-Policy':'no-referrer',
- 'Content-Security-Policy':"default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'"};
+ 'Content-Security-Policy':"default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self' blob:; frame-ancestors 'none'; base-uri 'none'; form-action 'none'"};
 export function createRollingReaderAssetHandler(wallet){
  const selectedHeaders=wallet?{...headers,'Cross-Origin-Opener-Policy':'same-origin','Cross-Origin-Embedder-Policy':'require-corp','Cross-Origin-Resource-Policy':'same-origin',
-  'Content-Security-Policy':`default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self'; connect-src 'self' data: ${wallet.connectOrigins.join(' ')}; worker-src 'self' blob:; img-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'`}:headers;
+  'Content-Security-Policy':`default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self'; connect-src 'self' data: ${wallet.connectOrigins.join(' ')}; worker-src 'self' blob:; img-src 'self' blob:; frame-ancestors 'none'; base-uri 'none'; form-action 'none'`}:headers;
  return async function(req,res){
  const reply=(status,body='')=>{res.writeHead(status,selectedHeaders);res.end(body);};
  if(!['GET','HEAD'].includes(req.method)){res.setHeader('Allow','GET, HEAD');reply(405);return;}
