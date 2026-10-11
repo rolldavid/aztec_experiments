@@ -15,7 +15,7 @@
       constructorArtifact:undefined,constructorArgs:undefined,salt,publicKeys:keys.publicKeys,
       immutablesHash:await accountContract.getImmutablesHash(),
     });
-    const owner=instance.address,node=a.createAztecNodeClient(config.aztecNodeUrl),info=await node.getNodeInfo();
+    const owner=instance.address,node=await g.BillboardPrivateFeeRouting.connectTrustedPrivateNode(a,config),info=await node.getNodeInfo();
     if(config.expectedNetworkScope) {
       const network=await node.getL1ContractAddresses(),expected=config.expectedNetworkScope;
       if(String(info.l1ChainId)!==String(expected.chainId) || String(info.rollupVersion)!==String(expected.version) || network.rollupAddress.toString().toLowerCase()!==expected.rollup.toLowerCase()) throw new Error('Fee network does not match the imported configuration.');

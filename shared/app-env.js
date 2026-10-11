@@ -24,7 +24,7 @@ function _connectionConfig() {
   return {aztecNodeUrl:config.network.nodeUrl,ethRpcUrl:config.network.ethRpcUrl,
     portalAddress:config.board.portalAddress,expectedBoardAddress:config.board.contractAddress,
     expectedNetworkScope:{chainId:config.network.chainId,version:config.network.rollupVersion,rollup:config.network.rollupAddress},
-    privateFee:config.privateFee,remoteProver:config.remoteProver?{url:config.remoteProver.url,board:config.board.contractAddress}:undefined};
+    privateFee:config.privateFee,trustedProverNode:config.trustedProverNode,remoteProver:config.remoteProver?{url:config.remoteProver.url,board:config.board.contractAddress}:undefined};
 }
 function _getEthRpcUrl() { return _connectionConfig().ethRpcUrl; }
 window.billboardConfigStore?.subscribe(()=>{
@@ -143,6 +143,12 @@ function buildConfig(action, extra, connection=_connectionConfig()) {
 // ============================================================
 function publicOperationFailure(error) {
   const messages={
+    BB_TRUSTED_NODE_CONFIG:'Configure the trusted prover node before using your wallet.',
+    BB_TRUSTED_NODE_IDENTITY:'The trusted node does not match this network or proof policy.',
+    BB_TRUSTED_NODE_UNAVAILABLE:'The trusted node is unavailable. Public browsing remains available.',
+    BB_TRUSTED_NODE_UNSYNCED:'The trusted node is synchronizing. Try the wallet again when it is ready.',
+    BB_TRUSTED_NODE_STALE:'The trusted node is behind the network. Try the wallet again when it is ready.',
+
     BB_PLUGIN_UNKNOWN:'This plugin is not registered on this board.',
     BB_SCREENING_NO_PROGRESS:'Withdrawal preparation paused because the network did not advance screening. No further preparation fees will be spent. Refresh your account before continuing.',
     BB_SCREENING_HISTORY_UNAVAILABLE:'Your message history could not be verified. Refresh your account before continuing withdrawal.',
@@ -253,6 +259,7 @@ function makeCallEngine(engineFn, envExtra, {deployment=false,connection=_connec
     const operationConnection=structuredClone(connection());
     operationConnection.remoteProver=(extra?.provingMode??window.BillboardProving.snapshot())==='remote' ? operationConnection.remoteProver : undefined;
     if(operationConnection.remoteProver)operationConnection.remoteProver=Object.freeze({...operationConnection.remoteProver,onStatus:state=>extra?.onStage?.(state==='queued'?'queued':'proving')});
+    if(operationConnection.trustedProverNode)Object.freeze(operationConnection.trustedProverNode);
     Object.freeze(operationConnection);
     async function guard() {
       if(extra?.pauseRequested?.())throw Object.assign(Error('Paused.'),{code:'BB_OPERATION_PAUSED'});

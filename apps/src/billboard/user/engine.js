@@ -514,7 +514,25 @@
       }
     };
   }
-  g.BillboardPrivateFeeRouting = Object.freeze({ requirePrivateFeeConfiguration, createPrivateFeeSender, createAztecWallet });
+  // One connection for all personalized operations, independent of proof location.
+  // A cache hit is re-inspected, never silently replaced with the public feed node.
+  async function connectTrustedPrivateNode(a,config,existing) {
+    const invalid=()=>Object.assign(new Error('Trusted private node configuration is required.'),{code:'BB_TRUSTED_NODE_CONFIG'});
+    const selected=config.trustedProverNode,scope=config.expectedNetworkScope;
+    if(!selected||!scope||typeof a.createTrustedPrivateNode!=='function'||typeof a.isTrustedPrivateNode!=='function')throw invalid();
+    const proofs=selected.proofs===undefined?'real':selected.proofs;let endpoint;
+    try {endpoint=new URL(selected.url);}catch{throw invalid();}
+    const local=String(scope.chainId)==='31337'&&['localhost','127.0.0.1','[::1]'].includes(endpoint.hostname);
+    if(!['real','disabled'].includes(proofs)||(proofs==='disabled'&&!local))throw invalid();
+    const options={url:selected.url,expectedNetworkScope:scope,proofsEnabled:proofs==='real',allowLocalDev:local};
+    if(existing) {
+      if(!a.isTrustedPrivateNode(existing)||typeof a.inspectTrustedNode!=='function')throw invalid();
+      await a.inspectTrustedNode(existing,options);return existing;
+    }
+    const node=await a.createTrustedPrivateNode(options);
+    if(!a.isTrustedPrivateNode(node))throw invalid();return node;
+  }
+  g.BillboardPrivateFeeRouting = Object.freeze({ requirePrivateFeeConfiguration, createPrivateFeeSender, createAztecWallet, connectTrustedPrivateNode });
 
   // Read-only readiness check at a refreshed current PXE anchor. Proving may refresh it again.
   // Missing messages never allocate fees, prove, submit, or repeat an L1 deposit.
@@ -595,8 +613,12 @@
   // repeated calls with the same config (used by web app pages)
   // ============================================================
   const _setupCache = new Map();
+  function _connectionKey(config,address) {
+    return JSON.stringify([config.trustedProverNode?.url,config.trustedProverNode?.proofs??'real',config.expectedNetworkScope,
+      config.ethRpcUrl,address.toString(),config.portalAddress,config.dataDirPrefix||'pxe_bb_']);
+  }
   function _setupKey(config, address, nodeInfo, rollup, board) {
-    return JSON.stringify([config.aztecNodeUrl, config.ethRpcUrl, address.toString(),
+    return JSON.stringify([_connectionKey(config,address), config.ethRpcUrl, address.toString(),
       String(nodeInfo.l1ChainId), String(nodeInfo.rollupVersion), rollup.toLowerCase(),
       board.toLowerCase(), config.portalAddress.toLowerCase(), config.dataDirPrefix || 'pxe_bb_']);
   }
@@ -651,8 +673,9 @@
     // Step 2: Connect to Aztec node
     // ============================================================
     log('Step 2: Connecting to Aztec node...', 'info');
-    const nodeUrl = config.aztecNodeUrl;
-    const rawNode = a.createAztecNodeClient(nodeUrl);
+    const connectionKey=_connectionKey(config,address);
+    const priorSetup=[..._setupCache.values()].find(entry=>entry.connectionKey===connectionKey);
+    const rawNode = await connectTrustedPrivateNode(a,config,priorSetup?.rawNode);
     const aztecNode = rawNode;
     const nodeInfo = await aztecNode.getNodeInfo();
     log('  Chain ID: ' + nodeInfo.l1ChainId, 'info');
@@ -1012,7 +1035,7 @@
         }
 
         // Cache the setup for reuse by subsequent engine calls
-        _setupCache.set(sKey, { pxe, wallet, contract, aztecNode, rawNode });
+        _setupCache.set(sKey, { pxe, wallet, contract, aztecNode, rawNode, connectionKey });
       }
 
       // Now check the L2 deposit note (always re-check, state may have changed)

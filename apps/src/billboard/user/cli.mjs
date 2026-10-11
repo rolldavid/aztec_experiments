@@ -49,6 +49,8 @@ if(process.env.BILLBOARD_OPERATOR_PROFILE==='1')assertOperatorEnvironment();
 //   --censor-wallet <file>   Path to censor Aztec wallet JSON (for declare-immoral/transfer-censor)
 //   --new-censor <addr>      New censor address (for transfer-censor)
 //   --node-url <url>         Explicit Aztec node URL (required)
+//   --trusted-node-url <url> Same trusted prover boundary; required for private actions
+//   --trusted-node-proofs <mode> real (default), or disabled for loopback chain 31337
 //   --eth-rpc <url>          Explicit Ethereum RPC URL (required)
 //   --aztec-wallet <file>    Path to Aztec wallet.json
 //   --eth-wallet <file>      Path to ETH wallet JSON
@@ -366,6 +368,7 @@ async function main() {
     else for(const post of result.posts)console.log('#'+post.index+' '+(post.flagged?'[flagged] ':'')+post.text);
     return;
   }
+  if(typeof args['trusted-node-url']!=='string'||!['real','disabled'].includes(args['trusted-node-proofs']??'real'))throw Object.assign(new Error('Private actions require --trusted-node-url and a valid proof policy.'),{code:'BB_TRUSTED_NODE_CONFIG'});
   if (Object.hasOwn(args, 'sponsor-config') || Object.hasOwn(args, 'sponsor-provider')) {
     throw new Error('Coupon sponsorship has been removed. Use --private-fee-config.');
   }
@@ -457,6 +460,7 @@ async function main() {
     acknowledgeEthereumTx: args['acknowledge-ethereum-tx'],
     retryEthereum: args['retry-ethereum']===true,
     aztecNodeUrl: AZTEC_NODE_URL,
+    trustedProverNode:{url:args['trusted-node-url'],proofs:args['trusted-node-proofs']??'real'},
     ethRpcUrl: ETH_RPC_URL,
     contractSalt: 0, // not used when portalAddress is provided
     portalAddress: PORTAL_ADDRESS,
@@ -483,6 +487,17 @@ async function main() {
     jsonOutput: !!args['json'],
   };
 
+  // Public identity preflight also binds the journal-inspection path.
+  const node = a.createAztecNodeClient(AZTEC_NODE_URL);
+  const provider = new ethers.JsonRpcProvider(ETH_RPC_URL);
+  let nodeInfo, l1Network;
+  try { [nodeInfo, l1Network] = await Promise.all([node.getNodeInfo(), provider.getNetwork()]); }
+  finally { provider.destroy(); }
+  if (BigInt(nodeInfo.l1ChainId) !== l1Network.chainId) throw new Error('Aztec and Ethereum RPC chain identities differ');
+  const chainId = String(nodeInfo.l1ChainId), version = String(nodeInfo.rollupVersion);
+  const rollup = nodeInfo.l1ContractAddresses.rollupAddress.toString().toLowerCase();
+  config.expectedNetworkScope = { chainId, rollup, version };
+
   if(config.inspectOnly) {
     if(ACTION!=='declare-immoral'||args.json!==true)throw new Error('Journal inspection requires declare-immoral --json.');
     console.log(JSON.stringify(await globalThis.runBillboardUser(env,config)));
@@ -503,15 +518,6 @@ async function main() {
       salt: new a.Fr(BigInt(aztecWallet.salt)), publicKeys, immutablesHash,
     });
     const account = inst.address.toString().toLowerCase();
-    const node = a.createAztecNodeClient(AZTEC_NODE_URL);
-    const provider = new ethers.JsonRpcProvider(ETH_RPC_URL);
-    let nodeInfo, l1Network;
-    try { [nodeInfo, l1Network] = await Promise.all([node.getNodeInfo(), provider.getNetwork()]); }
-    finally { provider.destroy(); }
-    if (BigInt(nodeInfo.l1ChainId) !== l1Network.chainId) throw new Error('Aztec and Ethereum RPC chain identities differ');
-    const chainId = String(nodeInfo.l1ChainId), version = String(nodeInfo.rollupVersion);
-    const rollup = nodeInfo.l1ContractAddresses.rollupAddress.toString().toLowerCase();
-    config.expectedNetworkScope = { chainId, rollup, version };
     const directory = PXE_DIR_PREFIX + account.slice(0, 16) + '_' + nodeInfo.l1ContractAddresses.rollupAddress;
     const identity = a.getPXEStoreIdentity({ l1ChainId: nodeInfo.l1ChainId, rollupAddress: rollup,
       accountAddress: account, dataDirectory: directory });
@@ -559,6 +565,11 @@ function readPrivateFeeJson(filename, secret) {
 
 function formatCliPrivateFeeFailure(error) {
   const messages = {
+    BB_TRUSTED_NODE_CONFIG: 'Private actions require --trusted-node-url within the disclosed prover boundary; disabled proofs require loopback chain 31337.',
+    BB_TRUSTED_NODE_IDENTITY: 'Trusted node network or proof policy differs from the selected network.',
+    BB_TRUSTED_NODE_UNAVAILABLE: 'Trusted node is unavailable; preserve pending actions and retry lookup later.',
+    BB_TRUSTED_NODE_UNSYNCED: 'Trusted node state is not synchronized.',
+    BB_TRUSTED_NODE_STALE: 'Trusted node synchronization is stale.',
     PRIVATE_FEE_CAP_TOO_LOW: 'The configured transaction fee cap is below the network current minimum. Update the fee settings before continuing.',
     BB_PRIVATE_FEE_CONFIGURATION: 'Private fee configuration or claim file could not be loaded.',
     BB_CLI_PROVER_CONFIGURATION: 'Local CLI proving setup could not be verified.',
