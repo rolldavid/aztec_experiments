@@ -45,8 +45,8 @@ async function sourceBinding(){
 }
 export async function runTrustedQueryFixture(ctx){
   const {startProverService}=await import('../../prover/service.mjs');
-  const {createTrustedPrivateNode}=await import('../../shared/trusted-private-node.mjs');
-  return createTrustedQueryFixtureForTests({sourceBinding,startNodeRpc,createTrustedPrivateNode,
+  const {createTrustedPrivateNode,inspectTrustedNode}=await import('../../shared/trusted-private-node.mjs');
+  return createTrustedQueryFixtureForTests({sourceBinding,startNodeRpc,createTrustedPrivateNode,inspectTrustedNode,now:Date.now,
     startService:async config=>{
       const service=await startProverService(config),port=service.address.port;
       return {url:`http://127.0.0.1:${port}`,stats:service.stats,close:async()=>{await service.close();await portClosed(port);}};
@@ -61,7 +61,7 @@ export function createTrustedQueryFixtureForTests(deps){
     assert(path.isAbsolute(ctx.directory));
     const observation={schemaVersion:1,passed:false,scope:'Actual local SDK disabled-node proof-policy mismatch; separate from Linux runtime qualification',
       boardDeployed:true,proofJobScope:'parent included-board address; no proof jobs',proofModeMutated:false,proofJobs:0,checks:{},
-      cleanup:{nodeRpcClosed:false,queryServiceClosed:false},stage:'preflight'};
+      cleanup:{nodeRpcClosed:false,queryServiceClosed:false},publicReadiness:{},stage:'preflight'};
     let rpc,service,failure;
     const stage=async value=>{observation.stage=value;await deps.save(ctx.directory,observation);await ctx.mark?.('trusted-query-'+value);};
     const noJobs=()=>{const stats=service.stats();for(const key of ['submitted','completed','failed','jobs','bytes'])assert.equal(stats[key],0);assert.equal(stats.running,false);return {submitted:0,completed:0,failed:0,jobs:0};};
@@ -85,20 +85,37 @@ export function createTrustedQueryFixtureForTests(deps){
         applicationProfile:'legacy',proofs:'disabled',origins:[],threads:1,queueDirectory:ctx.directory,
         queryNode:{url:rpc.url,rollupAddress:scope.rollup,maxLagSeconds:120}});
       const options={url:service.url+'/v1/node',expectedNetworkScope:scope,proofsEnabled:false,allowLocalDev:true,maxLagSeconds:120};
+      const captureReadiness=async label=>{
+        const row={scope:'public node timestamp and production readiness inspector',ready:false};
+        observation.publicReadiness[label]=row;
+        try{
+          const timestamp=await ctx.node.getSyncedL1Timestamp();
+          assert(typeof timestamp==='bigint'&&timestamp>=0n&&timestamp<=BigInt(Number.MAX_SAFE_INTEGER));
+          const wallTimeMs=deps.now();assert(Number.isSafeInteger(wallTimeMs)&&wallTimeMs>=0);
+          Object.assign(row,{syncedL1Timestamp:String(timestamp),wallTimeMs,wallTimeSeconds:Math.floor(wallTimeMs/1000),lagSeconds:Math.floor(wallTimeMs/1000)-Number(timestamp)});
+          // No nowSeconds option: production inspector uses its actual wall clock.
+          const result=await deps.inspectTrustedNode(ctx.node,{expectedNetworkScope:scope,proofsEnabled:false,maxLagSeconds:120});
+          assert.equal(result.ready,true);row.ready=true;
+        }catch(error){
+          const codes=['BB_TRUSTED_NODE_CONFIG','BB_TRUSTED_NODE_IDENTITY','BB_TRUSTED_NODE_UNAVAILABLE','BB_TRUSTED_NODE_UNSYNCED','BB_TRUSTED_NODE_STALE'];
+          row.code=codes.includes(error?.code)?error.code:'UNCLASSIFIED';throw error;
+        }
+        await deps.save(ctx.directory,observation);
+      };
       const healthy=async()=>{
         const health=await deps.health(service.url);assert.equal(health.proofs,'disabled');assert.deepEqual(health.query,{enabled:true,ready:true});
         const client=await deps.createTrustedPrivateNode(options),observed=await client.getNodeInfo();assert.equal(observed.realProofs,false);assert.equal(observed.l1ChainId,31337);
         const actual=await client.getBlockData(anchor.number);assert(actual);assert.equal(String(actual.blockHash),String(anchor.hash));assert.equal(actual.header.globalVariables.blockNumber,anchor.number);
         noJobs();return {passed:true,actualNodeProofs:false,expectedProofs:false,canonicalAnchorVerified:true};
       };
-      await stage('healthy-before');observation.checks.healthyBefore=await healthy();
+      await stage('healthy-before');await captureReadiness('beforeHttp');observation.checks.healthyBefore=await healthy();
       await stage('observed-policy-mismatch');
       let mismatch;
       try{await deps.createTrustedPrivateNode({...options,proofsEnabled:true});}
       catch(error){if(error.code!=='BB_TRUSTED_NODE_IDENTITY')throw error;mismatch=error.code;}
       assert.equal(mismatch,'BB_TRUSTED_NODE_IDENTITY','Expected observed proof-mode mismatch was accepted');
       observation.checks.mismatch={passed:true,actualNodeProofs:false,expectedProofs:true,code:'BB_TRUSTED_NODE_IDENTITY'};
-      await stage('healthy-after');observation.checks.healthyAfter=await healthy();observation.jobs=noJobs();
+      await stage('healthy-after');observation.checks.healthyAfter=await healthy();await captureReadiness('afterHttp');observation.jobs=noJobs();
       assert.deepEqual(await deps.sourceBinding(),observation.source,'Qualification source changed');
       observation.passed=true;observation.stage='complete';
     }catch(error){failure=error;observation.passed=false;}
