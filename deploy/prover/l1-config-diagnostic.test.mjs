@@ -69,3 +69,49 @@ test('actual disposable child timeout preserves partial phase and kills/reaps TE
 test('spawn failure rejects promptly and retains initial safe receipt',async()=>{
  const dir=fs.mkdtempSync(path.join(os.tmpdir(),'l1-config-diagnostic-'));try{const output=path.join(dir,'report.json');await assert.rejects(supervise(output,{spawnWorker(fd){return spawn('/nonexistent/l1-config-diagnostic-child',[],{stdio:['ignore','ignore','ignore',fd]});}}));const report=JSON.parse(fs.readFileSync(output));assert.equal(report.passed,false);assert.deepEqual(report.stages,[]);}finally{fs.rmSync(dir,{recursive:true,force:true});}
 });
+
+import {SPLIT_MODE,SPLIT_PHASES,providerConfig} from './l1-config-diagnostic.mjs';
+const D='0x'+'b'.repeat(64);
+const historyLog=()=>({address:SCOPE.rollup,blockNumber:50n,blockHash:D,removed:false,eventName:'OwnershipTransferred',privateExtra:SECRET});
+function splitFixture(overrides={}){return fixture({historyChain:async()=>SCOPE.chainId,historyBlock:async n=>({number:n,timestamp:n===50n?500n:1000n,hash:n===50n?D:H}),historyLogs:async()=>[historyLog()],...overrides});}
+async function runSplit(overrides={}){const f=splitFixture(overrides),snapshots=[];const report=await runDiagnostic(f.ops,r=>snapshots.push(JSON.parse(JSON.stringify(r))),SPLIT_MODE);assert(!JSON.stringify(report).includes(SECRET));return {...f,report,snapshots};}
+test('explicit split roles are immutable; default Tenderly mode is preserved; unsupported selectors fail before work',async()=>{
+ const a=providerConfig(),b=providerConfig(SPLIT_MODE);assert.equal(a.history,null);assert.deepEqual(a.configuration.l1RpcUrls,[ENDPOINT]);assert.deepEqual(b.configuration.l1RpcUrls,['https://ethereum-sepolia-rpc.publicnode.com']);assert.deepEqual(b.history.l1RpcUrls,[ENDPOINT]);assert.throws(()=>b.configuration.l1RpcUrls.push('https://private.invalid'));
+ for(const mode of ['https://other.invalid','publicnode','auto',null,{}]){assert.throws(()=>providerConfig(mode));let calls=0;await assert.rejects(runDiagnostic({source(){calls++;}},()=>{},mode));assert.equal(calls,0);}
+ assert.equal((await run()).report.mode,'tenderly-only');assert.equal((await run()).report.configurationProvider,'tenderly');
+});
+test('split full config plus actual historical seam pass only after both before/after common anchors',async()=>{
+ const {report,calls,snapshots}=await runSplit();assert.equal(report.passed,true);assert.equal(report.mode,SPLIT_MODE);assert.equal(report.configurationProvider,'publicnode');assert.equal(report.historyProvider,'tenderly');assert.deepEqual(report.stages.map(s=>s.name),SPLIT_PHASES);assert.equal(calls.filter(s=>s==='contractsConfig').length,1);assert.equal(calls.filter(s=>s==='historyLogs').length,1);assert.equal(calls.filter(s=>s==='historyBlock').length,3);assert(calls.indexOf('contractsConfig')<calls.indexOf('historyLogs'));assert.equal(report.nodeStartupQualified,false);for(const phase of SPLIT_PHASES)assert(snapshots.some(r=>r.stages.some(s=>s.name===phase&&s.status==='running')));
+});
+test('split wrong chain/common anchor fails before address collection or any history request',async()=>{
+ for(const [override,category]of [[{historyChain:async()=>1},'HISTORY_CHAIN_MISMATCH'],[{historyBlock:async n=>({number:n,timestamp:1000n,hash:D})},'HISTORY_ANCHOR_MISMATCH']]){const {report,calls}=await runSplit(override);assert.equal(report.passed,false);assert.equal(report.stages.at(-1).category,category);assert(!calls.includes('collectAddresses'));assert(!calls.includes('historyLogs'));}
+});
+test('split config429 and historical4444 stay errors without retry/fallback',async()=>{
+ for(const [method,error,category]of [['contractsConfig',http(429),'HTTP_ERROR'],['historyLogs',rpc(4444),'RPC_ERROR']]){const {report,calls}=await runSplit({[method]:async()=>{throw error;}});assert.equal(report.passed,false);assert.equal(report.stages.at(-1).category,category);assert.equal(calls.filter(s=>s===method).length,1);assert.equal(calls.at(-1),method);assert.equal(report.configurationProvider,'publicnode');assert.equal(report.historyProvider,'tenderly');}
+});
+test('split logs require nonempty <=128 actual SDK event name and exact deployment/address/removal binding',async()=>{
+ for(const logs of [[],Array(129).fill(historyLog()),[{...historyLog(),blockNumber:51n}],[{...historyLog(),blockHash:H}],[{...historyLog(),address:'0x'+'1'.repeat(40)}],[{...historyLog(),removed:true}],[{...historyLog(),eventName:'Other'}]]){const {report,calls}=await runSplit({historyLogs:async()=>logs});assert.equal(report.passed,false);assert.equal(report.stages.at(-1).name,'history-logs');assert(!calls.includes('block'));}
+ const {report}=await runSplit({historyBlock:async n=>({number:n===50n?51n:n,timestamp:1000n,hash:n===50n?D:H})});assert.equal(report.stages.at(-1).category,'HISTORY_DEPLOY_MISMATCH');
+});
+test('split post-history reorg on either provider rejects all preceding successful checks',async()=>{
+ const a=await runSplit({block:async n=>({number:n,timestamp:1000n,hash:D})});assert.equal(a.report.stages.at(-1).category,'ANCHOR_CHANGED');
+ let calls=0;const b=await runSplit({historyBlock:async n=>({number:n,timestamp:n===50n?500n:1000n,hash:++calls===3?D:n===50n?D:H})});assert.equal(b.report.stages.at(-1).category,'HISTORY_ANCHOR_CHANGED');assert.equal(b.report.stages.find(s=>s.name==='history-logs').status,'passed');
+});
+test('split labels survive child failure and invalid mode refuses receipt creation',async()=>{
+ const dir=fs.mkdtempSync(path.join(os.tmpdir(),'l1-config-split-'));try{const report=await supervise(path.join(dir,'partial.json'),{mode:SPLIT_MODE,spawnWorker:fd=>spawn(process.execPath,['-e','process.exit(1)'],{stdio:['ignore','ignore','ignore',fd]})});assert.equal(report.passed,false);assert.equal(report.mode,SPLIT_MODE);assert.equal(report.configurationProvider,'publicnode');assert.equal(report.historyProvider,'tenderly');assert.equal(report.process.deadlineMs,59000);const invalid=path.join(dir,'invalid');await assert.rejects(supervise(invalid,{mode:'auto'}));assert.equal(fs.existsSync(invalid),false);}finally{fs.rmSync(dir,{recursive:true,force:true});}
+});
+test('actual installed SDK full configuration and history use distinct fixed transports against labelled fetch doubles only',async()=>{
+ const saved=globalThis.fetch,calls=[];globalThis.fetch=async(url,init)=>{
+  const body=JSON.parse(init.body);calls.push({url,method:body.method});let result;
+  if(url==='https://ethereum-sepolia-rpc.publicnode.com'){
+   assert.equal(body.method,'eth_call');result='0x'+'0'.repeat(64);
+  }else{
+   assert.equal(url,ENDPOINT);
+   if(body.method==='eth_call')result='0x'+50n.toString(16).padStart(64,'0');
+   else{assert.equal(body.method,'eth_getLogs');assert.equal(body.params[0].fromBlock,'0x32');assert.equal(body.params[0].toBlock,'0x32');assert.equal(body.params[0].address,SCOPE.rollup);result=[{address:SCOPE.rollup,blockNumber:'0x32',blockHash:D,removed:false,transactionHash:H,transactionIndex:'0x0',logIndex:'0x0',data:'0x',topics:['0x8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0','0x'+'0'.repeat(64),'0x'+'0'.repeat(24)+'1'.repeat(40)]}];}
+  }
+  return new Response(JSON.stringify({jsonrpc:'2.0',id:body.id,result}),{status:200,headers:{'content-type':'application/json'}});
+ };
+ try{const ops=actualOperations(SPLIT_MODE),addresses=await ops.collectAddresses();assert(calls.length>=10);assert(calls.every(c=>c.url==='https://ethereum-sepolia-rpc.publicnode.com'));const before=calls.length;await ops.contractsConfig(addresses);assert(calls.length>before+15);assert(calls.every(c=>c.url==='https://ethereum-sepolia-rpc.publicnode.com'));const historyStart=calls.length,logs=await ops.historyLogs();assert.equal(logs.length,1);assert.equal(logs[0].eventName,'OwnershipTransferred');assert.equal(logs[0].blockNumber,50n);assert.deepEqual(calls.slice(historyStart).map(c=>c.url),[ENDPOINT,ENDPOINT]);assert.deepEqual(calls.slice(historyStart).map(c=>c.method),['eth_call','eth_getLogs']);}
+ finally{globalThis.fetch=saved;}
+});
