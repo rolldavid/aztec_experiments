@@ -6,7 +6,8 @@ import fs from 'node:fs/promises';
 import {gunzipSync} from 'node:zlib';
 import {decompressWitness} from '@aztec-foundation/noir-acvm_js';
 import {abiDecode} from '@aztec-foundation/noir-noirc_abi';
-import {Barretenberg,BackendType,AztecClientBackend} from '@aztec-foundation/bb.js';
+import {Barretenberg,AztecClientBackend} from '@aztec-foundation/bb.js';
+import {workerNativeProfile,initializeWorkerNative,assertWorkerNativeProfile} from './worker-native-profile.mjs';
 import {loadCircuitCatalog} from './catalog.mjs';
 import {decodeJob} from '../shared/remote-prover-wire.mjs';
 // Native BB unrefs its process/socket between requests. Keep the job owner
@@ -17,6 +18,10 @@ let stage="read";
 const setStage=value=>{stage=value;process.send?.({progress:stage});};
 try{
  const {metadata,witnesses}=decodeJob(await fs.readFile(process.argv[2]));
+ if(metadata.mode!==process.env.PROVER_PROOFS)throw Error('Mode mismatch');
+ setStage('native-init');
+ const nativeProfile=workerNativeProfile();
+ await initializeWorkerNative(nativeProfile);
  setStage("catalog");
  const applicationProfile=process.env.PROVER_APPLICATION_PROFILE??'legacy';
  const catalog=await loadCircuitCatalog({applicationProfile}),circuits=metadata.circuits.map(id=>{const c=catalog.get(id);if(!c)throw Error('Unknown circuit');return c;});
@@ -58,8 +63,7 @@ try{
   await send({mode:'disabled'});
  }else{
   if(process.env.PROVER_PROOFS!=='real')throw Error('Mode mismatch');
-  setStage("native-init");
-  const api=await Barretenberg.initSingleton({backend:BackendType.NativeUnixSocket,bbPath:process.env.PROVER_BB,threads:Number(process.env.PROVER_THREADS),logger:()=>{}});
+  const api=assertWorkerNativeProfile(nativeProfile);
   // The SDK pipelines these calls without awaiting their promises. Observe
   // rejected calls so one invalid job cannot crash before the final error handler.
   let firstFailure;
