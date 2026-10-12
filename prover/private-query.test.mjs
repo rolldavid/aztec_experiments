@@ -142,3 +142,28 @@ test('compact single flight owns pending readiness even after client abort',asyn
  let result;for(let i=0;i<30;i++){await new Promise(r=>setTimeout(r,5));result=await f.post();if(result.status!==429)break;}
  assert.equal(result.status,200);assert.equal(f.received.length,1);
 });
+
+test('compact origin configuration rejects object before any coercion',()=>{
+ let coercions=0;const hostile={toString(){coercions++;throw Error('PRIVATE sentinel');}};
+ assert.throws(()=>createPrivateQueryWithInspector({queryNode:{url:'http://127.0.0.1',rollupAddress},chainId:'31337',rollupVersion:'1',proofsEnabled:false,
+  compactBlocks:{tier:'checkpointed',origins:[hostile]}},async()=>{}),/Invalid compact gateway configuration/);
+ assert.equal(coercions,0);
+});
+test('compact oversized unfinished chunked upload closes socket before releasing ownership',async t=>{
+ let inspections=0;const f=await compactFixture(t,{inspect:async()=>{inspections++;}});
+ let request,socket,responseStatus,connection;
+ await new Promise((resolve,reject)=>{
+  const timer=setTimeout(()=>{request?.destroy();reject(Error('Test socket cleanup deadline'));},2000);
+  const fail=error=>{clearTimeout(timer);reject(error);};
+  request=http.request(f.origin+'/v1/compact-block',{method:'POST',headers:{'content-type':'application/json','transfer-encoding':'chunked','connection':'keep-alive'}},res=>{
+   responseStatus=res.statusCode;connection=res.headers.connection;res.resume();res.on('error',fail);
+  });
+  request.on('error',error=>{if(!responseStatus)fail(error);});
+  request.on('socket',value=>{socket=value;socket.once('close',()=>{clearTimeout(timer);resolve();});});
+  // Deliberately never end the request: the server must not wait for more body.
+  request.write(Buffer.alloc(1025,32));
+ });
+ assert.equal(responseStatus,413);assert.equal(connection,'close');assert.equal(socket.destroyed,true);assert.equal(request.writableEnded,false);
+ assert.equal(inspections,0);assert.equal(f.received.length,0);
+ assert.equal((await f.post()).status,200);
+});

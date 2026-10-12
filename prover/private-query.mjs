@@ -50,8 +50,10 @@ export function createPrivateQueryWithInspector({queryNode, chainId, rollupVersi
     if(!Array.isArray(supplied)||supplied.length>64)throw Error('Invalid compact gateway configuration');
     const origins=[];
     for(let i=0;i<supplied.length;i++){
-      const value=own(supplied,String(i));let url;try{url=new URL(value);}catch{throw Error('Invalid compact gateway configuration');}
-      if(typeof value!=='string'||value.length>2048||!['http:','https:'].includes(url.protocol)||url.origin!==value||url.username||url.password||origins.includes(value))throw Error('Invalid compact gateway configuration');
+      const value=own(supplied,String(i));
+      if(typeof value!=='string'||value.length>2048)throw Error('Invalid compact gateway configuration');
+      let url;try{url=new URL(value);}catch{throw Error('Invalid compact gateway configuration');}
+      if(!['http:','https:'].includes(url.protocol)||url.origin!==value||url.username||url.password||origins.includes(value))throw Error('Invalid compact gateway configuration');
       origins.push(value);
     }
     if(Reflect.ownKeys(supplied).length!==origins.length+1)throw Error('Invalid compact gateway configuration');
@@ -139,15 +141,28 @@ export function createPrivateQueryWithInspector({queryNode, chainId, rollupVersi
   };
   let compactActive=false;
   const handleCompact=compact?async(req,res)=>{
-    const reply=(status,value)=>{if(!res.destroyed&&!res.writableEnded){res.writeHead(status,{'Content-Type':'application/json','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});res.end(JSON.stringify(value));}};
+    const reply=(status,value)=>{if(!res.destroyed&&!res.writableEnded){res.writeHead(status,{'Content-Type':'application/json','Cache-Control':'no-store','X-Content-Type-Options':'nosniff',...(status===413?{'Connection':'close'}:{})});res.end(JSON.stringify(value));}};
     const rejected=status=>reply(status,{error:'Compact block unavailable'});
+    // Never drain an attacker-controlled unfinished body. Flush the small fixed
+    // rejection, close this connection, and keep ownership through socket close.
+    const rejectAndClose=async()=>{
+      const socket=req.socket;
+      if(socket.closed){rejected(413);return;}
+      await new Promise(resolve=>{
+        const finish=()=>socket.destroy();
+        const closed=()=>{res.off('finish',finish);socket.off('close',closed);resolve();};
+        socket.once('close',closed);res.once('finish',finish);
+        rejected(413);
+        if(res.destroyed||res.writableFinished)finish();
+      });
+    };
     if(req.url!==COMPACT_GATEWAY_ROUTE){rejected(404);return;}
     if(req.method!=='POST'){rejected(405);return;}
     const origin=req.headers.origin;
     if(origin!==undefined&&(typeof origin!=='string'||!compact.origins.includes(origin))){rejected(403);return;}
     if(!/^application\/json(?:\s*;\s*charset=utf-8)?$/i.test(req.headers['content-type']??'')){rejected(415);return;}
     const length=req.headers['content-length'];
-    if(length!==undefined&&(typeof length!=='string'||!/^(0|[1-9][0-9]{0,9})$/.test(length)||Number(length)>COMPACT_TRANSPORT_LIMITS.requestBytes)){rejected(413);return;}
+    if(length!==undefined&&(typeof length!=='string'||!/^(0|[1-9][0-9]{0,9})$/.test(length)||Number(length)>COMPACT_TRANSPORT_LIMITS.requestBytes)){await rejectAndClose();return;}
     if(compactActive||active>=QUERY_LIMITS.concurrent){rejected(429);return;}
     compactActive=true;active++;
     const controller=new AbortController();const abort=()=>controller.abort();
@@ -167,7 +182,7 @@ export function createPrivateQueryWithInspector({queryNode, chainId, rollupVersi
         body:JSON.stringify(selector),redirect:'error',credentials:'omit',referrerPolicy:'no-referrer',signal:controller.signal});
       const value=await readCompactResponse(response,selector);alive();await inspect();alive();
       reply(200,value);
-    }catch{rejected(status);}
+    }catch{if(status===413)await rejectAndClose();else rejected(status);}
     finally{clearTimeout(timer);req.off('aborted',abort);res.off('close',close);active--;compactActive=false;}
   }:undefined;
   return Object.freeze({health,handle,...(handleCompact?{handleCompact}:{})});
