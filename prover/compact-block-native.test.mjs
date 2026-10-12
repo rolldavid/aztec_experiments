@@ -105,6 +105,7 @@ test('canonical: wrong native response hash and header network are rejected',asy
 });
 test('tier: a block above configured tier is unavailable even with synchronized proposed tip',async()=>{
  const f=await fixture();const original=f.node.getChainTips;f.node.getChainTips=async()=>{const tips=await original();tips.finalized.block={number:6,hash:f.hash};return tips;};
+ const originalWorldState=f.node.getWorldStateSyncStatus;f.node.getWorldStateSyncStatus=async()=>({...await originalWorldState(),finalizedBlockNumber:6});
  f.config.tier='finalized';f.request.tier='finalized';await server(f,async({send})=>{await denied(await send(),503);assert.equal(f.state.reads,0);});
 });
 test('bounds: oversized transaction array rejects before reading an element or flattening',async()=>{
