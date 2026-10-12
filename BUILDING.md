@@ -133,6 +133,47 @@ a browser build is public; never put a private credential there. Use identical
 configuration for reproducibility comparisons. The default does not deploy or
 start a local chain.
 
+## Rolling Chat development assets
+
+The Rolling Chat application and its PrivateBok dependency have additional normal
+builds. After installing the pinned tools and dependencies above, run these in
+order, with no application test or wallet using the generated assets concurrently:
+
+```sh
+node scripts/build-contracts.mjs
+node billboard/rolling_contract/build.mjs
+node experiments/private-bok/build.mjs
+node scripts/build-sdk.mjs
+node scripts/build-crs.mjs
+node scripts/rolling-wallet-assets.mjs
+```
+
+The canonical contract build comes first because its workspace compilation can
+replace the Rolling artifact with raw compiler output. The Rolling build then
+transpiles it and generates every private verification key. PrivateBok has its own
+manifest and two processed artifacts; changes to the shared Noir dependency
+inventory require its normal rebuild even when the escrow source is unchanged.
+The wallet build checks the canonical contract and SDK input manifests before
+assembling its own assets. Never refresh a manifest by hand to accept stale files.
+
+Application tests reject stale PrivateBok inputs and either stale output before
+starting the chain, and repeat the fixture's checks at use. The two preference
+campaigns use disposable identities, genuine application proofs, the local HTTP
+prover and controlled local portal settlement:
+
+```sh
+NODE_BACKEND=js BOARD_TEST_PROOFS=real BOARD_TEST_REMOTE=1 node scripts/test-c01-application.mjs rolling-preference-relationships
+NODE_BACKEND=js BOARD_TEST_PROOFS=real BOARD_TEST_REMOTE=1 node scripts/test-c01-application.mjs rolling-preference-notifications
+```
+
+Run them serially under the existing 540-second / 4 GiB supervisor. On macOS,
+prefix the command with `caffeinate -i` (after the environment assignments) to
+prevent idle sleep during the foreground run; this does not protect against lid
+closure, manual sleep, session termination or a disconnected host. Failed results
+and cleanup are recorded under `execution/evidence/G07`. A successful local run
+does not establish testnet service availability, browser key recovery, independent
+privacy review or production qualification.
+
 ## Compare clean builds
 
 After the first successful build, capture its output inventory:

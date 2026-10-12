@@ -68,6 +68,10 @@ export async function runApplication(name) {
   }
   try {
     report.sourceHashes=await fingerprints();
+    if(scenario.boardProfile==='rolling'||scenario.name.startsWith('private-bok')) {
+      const {verifyPrivateBokBuild}=await import('./private-bok-build-preflight.mjs');
+      report.privateBokBuild=await verifyPrivateBokBuild();
+    }
     const operatorPackage=name==='censor-commands'?await verifyCensorPackage():undefined;
     if(operatorPackage)report.operatorPackage=operatorPackage;
     if(browser){
