@@ -1,5 +1,6 @@
 // Load after explicit unlock. All SDK and custody dependencies are supplied by
 // the authenticated application bundle; no fixture or ordinary-node fallback.
+import {createRollingPreferenceReader} from '../../shared/rolling/preference-reader.mjs';
 import {createSynchronizedRollingApplication} from '../../shared/rolling/synchronized-application.mjs';
 import {createRollingApplication} from '../../shared/rolling/application.mjs';
 import {verifyRollingDeployment} from '../../shared/rolling/deployment.mjs';
@@ -13,7 +14,7 @@ export async function createRollingWalletSession({sdk,routing,ethers,config,boar
  const captured={secretKey:account.secretKey,salt:String(account.salt),address:String(account.address)};
  const selected=structuredClone(config),query=structuredClone(trustedQuery),remote=remoteProver?structuredClone(remoteProver):undefined;
  const lockName='billboard-wallet:'+captured.address;
- let pxe,store,closed=false,busy=false,app,closing,privateNode,privateWallet;
+ let pxe,store,closed=false,busy=false,app,closing,privateNode,privateWallet,readPreferences;
  const assertCaptured=()=>{
   if(closed||captured.secretKey!==account.secretKey||captured.salt!==String(account.salt)||captured.address!==String(account.address))throw fail('ROLLING_CONTEXT_CHANGED');
  };
@@ -62,13 +63,25 @@ export async function createRollingWalletSession({sdk,routing,ethers,config,boar
    privateNode=node;privateWallet=wallet;
    await guard();app=createRollingApplication({sdk:{...sdk,isPrivateWalletForNode:routing.isPrivateWalletForNode},deployment,contextGuard:guard,privateStore,onProgress,
     accountSession:{owner:instance.address,wallet,node,journal,walletSecret:captured.secretKey,walletSalt:captured.salt}});
+   // The reader owns synchronization, but the session owns this same account
+   // lock and PXE lifetime. Its head capability is the raw guarded application
+   // method, never the lock-taking public facade (which would nest the lock).
+   let preferenceReader;
+   readPreferences=options=>{
+    preferenceReader??=createRollingPreferenceReader({sdk,pxe,node,owner:instance.address,deployment,
+      readHead:app.readPreferenceHead.bind(app),contextGuard:guardRoute,privateStore,
+      walletSecret:captured.secretKey,walletSalt:captured.salt});
+    return preferenceReader.read(options);
+   };
   }catch(error){closed=true;try{await dispose();}catch(cleanupError){throw new AggregateError([error,cleanupError],'Private session initialization and cleanup failed');}throw error;}
  });
- const synchronized=createSynchronizedRollingApplication({application:app,synchronize:pxe.sync.bind(pxe),contextGuard:async()=>{
+ async function guardRoute(){
   await guard();
   if(!sdk.isTrustedPrivateNode(privateNode)||!sdk.isPrivatePXEForNode(pxe,privateNode)||privateWallet.aztecNode!==privateNode||privateWallet.pxe!==pxe||!routing.isPrivateWalletForNode(privateWallet,privateNode))throw fail('ROLLING_PRIVATE_ROUTE');
- }});
- const application=Object.freeze(Object.fromEntries(Object.entries(synchronized).map(([name,call])=>[name,(...args)=>locked(()=>call(...args))])));
+ }
+ const synchronized=createSynchronizedRollingApplication({application:app,synchronize:pxe.sync.bind(pxe),contextGuard:guardRoute});
+ const application=Object.freeze({...Object.fromEntries(Object.entries(synchronized).map(([name,call])=>[name,(...args)=>locked(()=>call(...args))])),
+  readPreferences:options=>locked(()=>readPreferences(options))});
  return Object.freeze({application,get busy(){return busy;},close(){
   if(closing)return closing;
   if(busy)return Promise.reject(fail('ROLLING_BUSY'));

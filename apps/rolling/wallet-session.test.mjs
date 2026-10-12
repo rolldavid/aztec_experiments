@@ -32,8 +32,9 @@ test('query construction receives captured scope and preserves failure without f
 
 import fs from 'node:fs';
 import {Fr} from '@aztec-labs/foundation/curves/bn254';
+import {BlockHash} from '@aztec-labs/stdlib/block';
 import {AztecAddress} from '@aztec-labs/stdlib/aztec-address';
-import {loadContractArtifact,decodeFromAbi,getFunctionReturnType} from '@aztec-labs/stdlib/abi';
+import {loadContractArtifact,decodeFromAbi,getFunctionReturnType,EventSelector,decodeFunctionSignature} from '@aztec-labs/stdlib/abi';
 import {poseidon2HashWithSeparator} from '@aztec-labs/foundation/crypto/poseidon';
 import {nameRegistration,NAME_DOMAIN} from '../../shared/rolling/name-policy.mjs';
 import {getContractClassFromArtifact,getContractInstanceFromInstantiationParams,computeContractAddressFromInstance} from '@aztec-labs/stdlib/contract';
@@ -91,12 +92,14 @@ async function sessionFixture(){
  const store={close:async()=>{held('store-close');state.closes++;if(state.failClose)throw Error('close failed');}};
  const pxe={registerAccount:async()=>{held('register-account');state.registrations++;},registerContractClass:async()=>{held('register-class');},registerContract:async()=>{held('register-contract');},
   sync:async()=>{held('sync');state.syncs++;if(state.waitSync)await state.waitSync;if(state.failSync)throw Error('sync failed');},
+  getSyncedBlockHeader:async()=>{held('preference-header');return {globalVariables:{blockNumber:10},hash:async()=>BlockHash.fromString(hex(55))};},
+  getPrivateEvents:async()=>{held('preference-events');if(state.waitEvents)await state.waitEvents;if(state.failEvents)throw Error('PRIVATE_SENTINEL');return [];},
   stop:async()=>{held('stop');state.stops++;if(state.waitStop)await state.waitStop;if(state.failStop)throw Error('stop failed');await store.close();}};
  const privateStore=createBrowserJournalStorage(new IDBFactory());
  const wallet={aztecNode:f.node,pxe,getAccounts:async()=>[accountInstance.address],getChainInfo:async()=>({chainId:31337,version:1}),sendTx:async()=>{held('send');state.sends++;throw Error('unknown send');}};
  const routing={createAztecWallet:(_sdk,p,n,raw)=>{held('create-wallet');assert.equal(p,pxe);assert.equal(n,f.node);assert.equal(raw,f.node);return wallet;},
   isPrivateWalletForNode:(w,n)=>!state.wrongWallet&&w===wallet&&n===f.node};
- const sdk={...f.options.sdk,poseidon2HashWithSeparator,Fr,deriveKeys,deriveSigningKey,SchnorrInitializerlessAccountContract,getContractInstanceFromInstantiationParams,computePartialAddress,Tx,encodeArguments,
+ const sdk={...f.options.sdk,poseidon2HashWithSeparator,EventSelector,decodeFunctionSignature,Fr,deriveKeys,deriveSigningKey,SchnorrInitializerlessAccountContract,getContractInstanceFromInstantiationParams,computePartialAddress,Tx,encodeArguments,
   createTrustedPrivateNode:async options=>{held('trusted-node');assert.equal(options.url,'http://127.0.0.1:3/v1/node');return f.node;},
   openPXEStore:async options=>{held('open-store');assert.equal(options.accountAddress,account.address);assert.equal(options.dataDirectory,'rolling-wallet-v1');return store;},
   createPXE:async(n,c,o)=>{held('create-pxe');assert.equal(n,f.node);assert.equal(o.store,store);assert.deepEqual(o.remoteProver,{url:'http://127.0.0.1:3',board:String(f.board.address)});if(state.failCreatePXE)throw Error('pxe failed');return pxe;},
@@ -104,7 +107,7 @@ async function sessionFixture(){
   createBrowserJournalStorage:()=>privateStore,createL2Journal,
   AccountManager:{create:async()=>{held('account-manager');return {address:accountInstance.address};}},
   ContractFunctionInteraction:class{async simulate(){held('signing-capsule');}},
-  Contract:{at:()=>({methods:{register_name:(...args)=>({args}),get_deposit_ids:()=>({simulate:async()=>({result:[9n,...Array(9).fill(0n)]})}),owned_name_records:()=>({simulate:async()=>({result:ownedRecords})})}})},
+  Contract:{at:()=>({methods:{preference_head:()=>({simulate:async()=>{held('preference-head');return {result:decodeFromAbi(getFunctionReturnType(artifact.functions.find(fn=>fn.name==='preference_head')),[Fr.ZERO,Fr.ONE,Fr.ZERO,Fr.ZERO])};}}),register_name:(...args)=>({args}),get_deposit_ids:()=>({simulate:async()=>({result:[9n,...Array(9).fill(0n)]})}),owned_name_records:()=>({simulate:async()=>({result:ownedRecords})})}})},
   preparePrivateFeePayment:async()=>({availableCredit:100n}),estimatePrivateFeeTransaction:async()=>({maximumFee:10n,payload:{},gasSettings:{}})};
  const locks={request:async(name,options,run)=>{assert.equal(name,'billboard-wallet:'+account.address);assert.deepEqual(options,{ifAvailable:true});
   if(state.active||state.otherTab)return run(null);state.active=true;state.events.push('lock');try{return await run({});}finally{state.active=false;state.events.push('unlock');}}};
@@ -207,4 +210,44 @@ test('account mutation while opening storage prevents PXE creation and closes on
  await assert.rejects(createRollingWalletSession(f.input),{code:'ROLLING_CONTEXT_CHANGED'});
  assert.equal(creates,0);assert.equal(f.state.stops,0);assert.equal(f.state.closes,1);
  assert.ok(f.state.events.indexOf('store-close')<f.state.events.lastIndexOf('unlock'));
+});
+
+// Real session/application/AEAD/ABI; PXE and node above are explicitly synthetic.
+async function waitForPreferenceEvents(f){
+ const deadline=Date.now()+2000;
+ while(!f.state.events.includes('preference-events')){assert(Date.now()<deadline,'Preference event read did not start');await new Promise(r=>setTimeout(r,1));}
+}
+test('preferences initialize lazily and read under the one existing lock with one synchronization',async()=>{
+ const f=await sessionFixture(),session=await createRollingWalletSession(f.input);
+ assert(!f.state.events.includes('preference-events'));const syncs=f.state.syncs,start=f.state.events.length;
+ const result=await session.application.readPreferences();assert.equal(result.status,'complete');assert.deepEqual(result.preferences.bookmarks,[]);
+ assert.equal(f.state.syncs,syncs+1);const events=f.state.events.slice(start);
+ assert.equal(events.filter(v=>v==='lock').length,1);assert.equal(events.filter(v=>v==='unlock').length,1);
+ assert(events.includes('preference-head'));assert(events.includes('preference-events'));assert.equal(f.state.sends,0);await session.close();
+});
+test('preference cancellation retains account lock until unabortable SDK read settles',async()=>{
+ const f=await sessionFixture(),session=await createRollingWalletSession(f.input);let release;
+ f.state.waitEvents=new Promise(r=>{release=r;});const controller=new AbortController();
+ const pending=session.application.readPreferences({signal:controller.signal}),observed=assert.rejects(pending,{code:'ROLLING_PREFERENCE_READER_UNAVAILABLE'});
+ await waitForPreferenceEvents(f);controller.abort();
+ assert(session.busy&&f.state.active);await assert.rejects(session.close(),{code:'ROLLING_BUSY'});
+ await assert.rejects(session.application.readAccountStatus(),{code:'ROLLING_BUSY'});assert.equal(f.state.stops,0);
+ release();await observed;assert.equal(session.busy,false);assert.equal(f.state.active,false);assert.equal(f.state.sends,0);await session.close();
+});
+test('different active tab rejects preference read before synchronization or event lookup',async()=>{
+ const f=await sessionFixture(),session=await createRollingWalletSession(f.input);const syncs=f.state.syncs;
+ f.state.otherTab=true;await assert.rejects(session.application.readPreferences(),{code:'ROLLING_OTHER_TAB'});
+ assert.equal(f.state.syncs,syncs);assert(!f.state.events.includes('preference-events'));f.state.otherTab=false;await session.close();
+});
+test('account change during private preference event read prevents publication without a send',async()=>{
+ const f=await sessionFixture(),session=await createRollingWalletSession(f.input);let release;
+ f.state.waitEvents=new Promise(r=>{release=r;});const pending=session.application.readPreferences(),observed=assert.rejects(pending,{code:'ROLLING_PREFERENCE_READER_UNAVAILABLE'});
+ await waitForPreferenceEvents(f);f.input.account.secretKey=hex(99);release();await observed;
+ assert.equal(f.state.sends,0);assert.equal(f.state.active,false);await session.close();
+});
+test('failed preference read preserves session and existing prepared financial intent',async()=>{
+ const f=await sessionFixture(),session=await createRollingWalletSession(f.input),intent=await session.application.prepare({type:'name',first:'River',last:'Stone'});
+ f.state.failEvents=true;await assert.rejects(session.application.readPreferences(),{code:'ROLLING_PREFERENCE_READER_UNAVAILABLE'});
+ const restored=await session.application.readAccountStatus();assert.equal(restored.intent.intentId,intent.intentId);assert.equal(f.state.sends,0);
+ f.state.failEvents=false;assert.equal((await session.application.readPreferences()).status,'complete');await session.close();
 });
