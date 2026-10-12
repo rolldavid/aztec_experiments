@@ -69,21 +69,9 @@
     }
   },
   "nativeProver": {
-    "linux-x64": {
-      "version": "6.0.0-rc.1",
-      "sha256": "ba8bbb2b82c573153511e638c97100791f0186ef40ee5dd41e911bb5286b29d9"
-    },
-    "linux-arm64": {
-      "version": "6.0.0-rc.1",
-      "sha256": "a208718a80691d8c6dec69d134e21a04f5e2fea5816aad686c5015efaa3f56fb"
-    },
-    "darwin-x64": {
-      "version": "6.0.0-rc.1",
-      "sha256": "9fb05bb1f1e7bfdc99c899a59ae15eff99abd55b6ffd18d1895d83d006d8e091"
-    },
     "darwin-arm64": {
-      "version": "6.0.0-rc.1",
-      "sha256": "0c0661547b0e8a856090627c51673bb72db0f34da88166281c5fb080d508b953"
+      "version": "6.0.0-rc.6",
+      "sha256": "8acdba0ecf928087e60bdca0206a508f109e7b62ca621b08fa62263509090217"
     }
   },
   "aztecPackages": {
@@ -103,7 +91,7 @@
     "@aztec-labs/txe": "6.0.0-rc.3",
     "@aztec-labs/wallet-sdk": "6.0.0-rc.3"
   },
-  "nativeProverPackage": "6.0.0-rc.1",
+  "nativeProverPackage": "6.0.0-rc.6",
   "aztecLockPackages": {
     "@aztec-foundation/bb-avm-sim": "6.0.0-rc.6",
     "@aztec-foundation/bb-avm-sim-darwin-arm64": "6.0.0-rc.6",
@@ -166,5 +154,25 @@
     "@aztec-labs/wallet-sdk": "6.0.0-rc.3",
     "@aztec-labs/wallets": "6.0.0-rc.3",
     "@aztec-labs/world-state": "6.0.0-rc.3"
+  },
+  "nativeProverHistory": {
+    "6.0.0-rc.1": {
+      "linux-x64": {
+        "version": "6.0.0-rc.1",
+        "sha256": "ba8bbb2b82c573153511e638c97100791f0186ef40ee5dd41e911bb5286b29d9"
+      },
+      "linux-arm64": {
+        "version": "6.0.0-rc.1",
+        "sha256": "a208718a80691d8c6dec69d134e21a04f5e2fea5816aad686c5015efaa3f56fb"
+      },
+      "darwin-x64": {
+        "version": "6.0.0-rc.1",
+        "sha256": "9fb05bb1f1e7bfdc99c899a59ae15eff99abd55b6ffd18d1895d83d006d8e091"
+      },
+      "darwin-arm64": {
+        "version": "6.0.0-rc.1",
+        "sha256": "0c0661547b0e8a856090627c51673bb72db0f34da88166281c5fb080d508b953"
+      }
+    }
   }
 }

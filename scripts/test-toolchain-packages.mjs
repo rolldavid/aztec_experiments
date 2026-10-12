@@ -64,8 +64,62 @@ test('unsupported optional native platform may be absent, current platform may n
   entry.os = [process.platform]; assert.throws(f.check, /ENOENT/);
   entry.os = []; assert.throws(f.check, /Invalid optional/);
 });
-test('Node pin remains exact and old native qualification cannot run with new SDK', () => {
+test('only measured Darwin-arm64 native rc6 is qualified; old evidence remains historical', () => {
   assert.equal(pins.node, '24.21.0');
-  assert.notEqual(pins.nativeProverPackage, pins.aztecPackages[bb]);
-  assert.throws(bbBinary, /not qualified/); // Throws before filesystem/native execution.
+  assert.equal(pins.nativeProverPackage, pins.aztecPackages[bb]);
+  assert.deepEqual(Object.keys(pins.nativeProver), ['darwin-arm64']);
+  assert.deepEqual(pins.nativeProver['darwin-arm64'], {version:'6.0.0-rc.6', sha256:'8acdba0ecf928087e60bdca0206a508f109e7b62ca621b08fa62263509090217'});
+  assert.equal(Object.keys(pins.nativeProverHistory['6.0.0-rc.1']).length, 4);
+  assert.equal(pins.nativeProverHistory['6.0.0-rc.1']['darwin-arm64'].sha256, '0c0661547b0e8a856090627c51673bb72db0f34da88166281c5fb080d508b953');
+});
+
+// These guards execute no native binary. Override the process identity only
+// inside this synchronous test, restoring descriptors even if an assertion fails.
+test('unmeasured platforms cannot use native historical pins or BB overrides', () => {
+  const platform = Object.getOwnPropertyDescriptor(process, 'platform');
+  const arch = Object.getOwnPropertyDescriptor(process, 'arch');
+  const previousBB = process.env.BB;
+  try {
+    process.env.BB = '/nonexistent/native-must-not-be-inspected';
+    for (const [os, cpu] of [['linux', 'x64'], ['linux', 'arm64'], ['darwin', 'x64']]) {
+      Object.defineProperty(process, 'platform', {...platform, value:os});
+      Object.defineProperty(process, 'arch', {...arch, value:cpu});
+      assert.throws(bbBinary, /Unsupported native prover platform/);
+    }
+  } finally {
+    Object.defineProperty(process, 'platform', platform);
+    Object.defineProperty(process, 'arch', arch);
+    if (previousBB === undefined) delete process.env.BB; else process.env.BB = previousBB;
+  }
+});
+
+function onMeasuredPlatform(check) {
+  const platform = Object.getOwnPropertyDescriptor(process, 'platform');
+  const arch = Object.getOwnPropertyDescriptor(process, 'arch');
+  try {
+    Object.defineProperty(process, 'platform', {...platform, value:'darwin'});
+    Object.defineProperty(process, 'arch', {...arch, value:'arm64'});
+    return check();
+  } finally {
+    Object.defineProperty(process, 'platform', platform);
+    Object.defineProperty(process, 'arch', arch);
+  }
+}
+
+test('historical package binding cannot authorize current platform execution', () => {
+  const previous = pins.nativeProverPackage;
+  try {
+    pins.nativeProverPackage = '6.0.0-rc.1';
+    onMeasuredPlatform(() => assert.throws(bbBinary, /not qualified/));
+  } finally { pins.nativeProverPackage = previous; }
+});
+
+test('current platform rejects a wrong binary checksum before execution', t => {
+  const f = fixture(t), binary = path.join(f.root, 'wrong-bb');
+  fs.writeFileSync(binary, 'labelled non-executable binary fixture');
+  const previousBB = process.env.BB;
+  try {
+    process.env.BB = binary;
+    onMeasuredPlatform(() => assert.throws(bbBinary, /Native prover checksum mismatch/));
+  } finally { if (previousBB === undefined) delete process.env.BB; else process.env.BB = previousBB; }
 });
