@@ -112,6 +112,34 @@ test('labelled boundary double calls exactly one existing queue after valid capt
 if(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1') {
   const {pathToFileURL}=await import('node:url');
   const {after}=await import('node:test');
+  // Optional source-bound artifact prerequisite checks. They do NOT run ACIR or
+  // replace class registration: raw utility extraction is distinct from a usable
+  // normal artifact. Enable only with the retained exact raw compile-2 fixture.
+  if(process.env.ROLLING_PREFERENCE_PAGE_ARTIFACT_PREFLIGHT==='1') {
+    const {loadContractArtifact,loadContractArtifactForPublic,FunctionType}=await import('@aztec-labs/stdlib/abi');
+    const {computeVerificationKeyHash}=await import('@aztec-labs/stdlib/contract');
+    const rawBytes=await readFile(join(root,'execution/evidence/G07/preference-page/raw-RollingBoard.json'));
+    assert.equal(sha(rawBytes),'bdd685dc8fe525e2b813c6c7e46312a37317d85f4b914b8aac871ad9420bb649','Wrong raw utility fixture');
+    const raw=JSON.parse(rawBytes),rawFunction=raw.functions.find(fn=>fn.name==='__aztec_nr_internals__recover_preference_page');
+    test('actual official loader rejects unprocessed candidate rather than claiming normal artifact authority',()=>{
+      assert.equal(raw.transpiled,undefined);
+      assert.throws(()=>loadContractArtifact(raw),/public bytecode has not been transpiled/);
+    });
+    test('actual public loader preserves raw utility bytes but cannot supply missing private verification keys',async()=>{
+      const artifact=loadContractArtifactForPublic(raw);
+      const utility=artifact.functions.find(fn=>fn.name===rawFunction.name);
+      assert.equal(utility.functionType,FunctionType.UTILITY);
+      assert.deepEqual(utility.bytecode,Buffer.from(rawFunction.bytecode,'base64'));
+      assert.equal(artifact.functions.some(fn=>fn.name==='recover_preference_page'),false);
+      assert.equal(utility.parameters.length,6);
+      const privateFunctions=artifact.functions.filter(fn=>fn.functionType===FunctionType.PRIVATE);
+      assert(privateFunctions.length>0);
+      for(const fn of privateFunctions) {
+        assert.equal(fn.verificationKey,undefined);
+        await assert.rejects(computeVerificationKeyHash(fn),/must have a verification key/);
+      }
+    });
+  }
   const {Fr}=await import('@aztec-labs/foundation/curves/bn254');
   const {AztecAddress}=await import('@aztec-labs/stdlib/aztec-address');
   const {BlockHash,Body,L2Block}=await import('@aztec-labs/stdlib/block');
