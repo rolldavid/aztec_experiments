@@ -782,3 +782,39 @@ for(const predecessor of ['pending','unknown','canonical'])test(`saved replaceme
  await assert.rejects(f.app.resumeSaved(f.prepared.intentId,{expectedTxHash:f.hash}));
  assert.equal(f.state.sends,sends);assert.equal(f.state.estimates,estimates);assert.deepEqual([...f.values],before);
 });
+
+for(const mutation of ['head','marker'])test(`saved-byte late predecessor ${mutation} change prevents broadcast`,async()=>{
+ const f=await savedResumeFixture({marker:true,replacement:true}),node=f.options.accountSession.node,original=node.isValidTx;
+ let changed=false;
+ node.isValidTx=async tx=>{
+  const result=await original(tx);
+  // After the first app context check, during recover's retained predecessor
+  // validation. The final app callback must observe this updated state.
+  if(f.state.syncs>=1&&String(tx.getTxHash())===f.originalHash){changed=true;
+   if(mutation==='head')f.state.preferenceHead=preferenceHead(true,1,1,999);
+   else node.getBlockData=async height=>({header:{globalVariables:{blockNumber:height}},blockHash:hex(999)});
+  }
+  return result;
+ };
+ const sends=f.state.sends,estimates=f.state.estimates,proofs=f.transactions.length;
+ await assert.rejects(f.app.resumeSaved(f.prepared.intentId,{expectedTxHash:f.hash}),{code:'ROLLING_RECOVERY_CONTEXT_CHANGED'});
+ assert.equal(changed,true);assert.equal(f.state.sends,sends);assert.equal(f.state.estimates,estimates);assert.equal(f.transactions.length,proofs);
+});
+
+for(const mutation of ['head','marker'])test(`replacement late predecessor ${mutation} change prevents first broadcast`,async()=>{
+ const f=await replacementFixture({marker:true});f.fork();await f.reopen();await f.app.prepareReplacement(f.prepared.intentId,f.review());
+ const node=f.options.accountSession.node,original=node.isValidTx;let atFinalChecks=false,changed=false;
+ f.state.beforeSubmit=async()=>{atFinalChecks=true;};
+ node.isValidTx=async tx=>{
+  const result=await original(tx);
+  if(atFinalChecks&&String(tx.getTxHash())===f.originalHash){changed=true;
+   if(mutation==='head')f.state.preferenceHead=preferenceHead(true,1,1,999);
+   else node.getBlockData=async height=>({header:{globalVariables:{blockNumber:height}},blockHash:hex(999)});
+  }
+  return result;
+ };
+ const sends=f.state.sends;
+ await assert.rejects(f.app.submitPrepared(f.prepared.intentId),{code:'ROLLING_RECOVERY_CONTEXT_CHANGED'});
+ assert.equal(changed,true);assert.equal(f.state.sends,sends);assert.equal(f.transactions.length,2,'The proved candidate remains in the actual encrypted journal');
+ assert.equal((await f.options.accountSession.journal.inspect()).txHash,String(f.transactions[1].getTxHash()));
+});

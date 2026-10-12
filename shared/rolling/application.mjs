@@ -442,8 +442,10 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
       await guard();progress('submitting');
       await session.wallet.sendTx(estimated.payload,{from:session.owner,fee:{gasSettings:estimated.gasSettings},
         transactionJournal:session.journal,journalOperation:operation(id),...(replacing?{beforeSubmit:async hash=>{
-          await checkReplacementReview(saved.value,{synchronize:true});
-          await session.journal.assertReplacementPredecessors(operation(id),hash,{requireMissingAnchor:true});await guard();
+          await session.journal.assertReplacementPredecessors(operation(id),hash,{requireMissingAnchor:true});
+          // Predecessor validation itself awaits the node. Refresh the signed
+          // action's context afterwards, not before that asynchronous window.
+          await checkReplacementReview(saved.value,{synchronize:true});await guard();
         }}:{})});
       return outcome(await savedIntent(id));
     });},

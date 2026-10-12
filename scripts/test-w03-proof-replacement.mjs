@@ -300,3 +300,21 @@ test('G07 exact saved inspection timeout is unknown and does not resume delayed 
  f.node.getTxReceipt=()=>new Promise(resolve=>release=()=>resolve({txHash:hash,status:'dropped'}));f.node.isValidTx=async()=>{validations++;return {result:'valid'};};
  const result=await(await f.open({waitOptions:{readTimeoutMs:5}})).inspectSavedRecovery(f.operation,hash);assert.equal(result.status,'unknown');release();await new Promise(resolve=>setTimeout(resolve,10));assert.equal(validations,0);assert.deepEqual(f.sent,[]);
 });
+
+for(const method of ['recover','reconcilePrevious']){
+ test(`G07 ${method} fresh app callback follows predecessor reads and precedes single send`,async()=>{
+  const f=await strictReplacement(),hash=String(f.second.getTxHash()),old=String(f.first.getTxHash()),order=[];
+  f.states.set(hash,{validation:{result:'valid'}});const validate=f.node.isValidTx;
+  f.node.isValidTx=async tx=>{const result=await validate(tx);if(String(tx.getTxHash())===old)order.push('predecessor');return result;};
+  f.node.sendTx=async tx=>{assert.deepEqual(Buffer.from(tx.toBuffer()),Buffer.from(f.second.toBuffer()));order.push('send');f.sent.push(hash);f.states.set(hash,{status:'checkpointed'});};
+  await(await f.open())[method]({expectedOperation:f.operation,expectedTxHash:hash,beforeSubmit:async()=>{assert.deepEqual(order,['predecessor']);order.push('callback');}});
+  assert.deepEqual(order,['predecessor','callback','send']);assert.deepEqual(f.sent,[hash]);
+ });
+ test(`G07 ${method} fresh app callback cannot bypass later ciphertext authentication`,async()=>{
+  const f=await strictReplacement(),hash=String(f.second.getTxHash());f.states.set(hash,{validation:{result:'valid'}});
+  const storage=f.options.storage;
+  await assert.rejects((await f.open())[method]({expectedOperation:f.operation,expectedTxHash:hash,beforeSubmit:async()=>{
+   const [key]=await storage.keys();await storage.compareAndSwap(key,await storage.read(key),'changed-during-callback');
+  }}),{code:'BB_JOURNAL_INVALID'});assert.deepEqual(f.sent,[]);
+ });
+}

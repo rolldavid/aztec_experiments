@@ -191,12 +191,15 @@ export async function createL2Journal({storage,walletSecret,walletSalt,scope,Tx,
         // A crash before broadcast is safe to recover: identical bytes, hash and
         // nullifiers, never a newly generated proof or a new logical operation.
         if(contextGuard)await contextGuard();
-        if(binding?.beforeSubmit)await binding.beforeSubmit(saved.value.txHash);
         if(saved.value.replacementPolicy==='missing-anchor') {
           // Recovery is another send boundary, not a bypass around replacement
           // policy. Authenticate every predecessor from the retained exact bytes.
           await rejectedAttempts(saved,{requireMissingAnchor:true,priorOnly:true});
         }
+        // App context must be fresh after all asynchronous predecessor checks.
+        // Keep the later ciphertext reauthentication: the trusted callback may
+        // await, and the caller retains its exclusive wallet lease until send.
+        if(binding?.beforeSubmit)await binding.beforeSubmit(saved.value.txHash);
           if((await read()).encoded!==saved.encoded)throw fail();
           if(contextGuard)await contextGuard();
           // An account guard can await; a concurrent writer must not replace the
