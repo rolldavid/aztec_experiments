@@ -272,6 +272,14 @@ export async function loadRollingFixtureSDK() {
   return Object.assign({},...modules);
 }
 
+export async function createRollingEvidenceDirectory(root) {
+  const parent=path.join(root,'execution/evidence/G06');
+  await fs.mkdir(parent,{recursive:true,mode:0o700});
+  const directory=path.join(parent,'application-port-'+randomUUID());
+  await fs.mkdir(directory,{mode:0o700});
+  return directory;
+}
+
 export async function runRollingApplicationFixture(ctx,scenario='conversation') {
   assert(['conversation','profiles','anonymous-thread','repost-reactions','account-reactions','owned-names','owned-names-wire','composer','social-wire','reaction-wire','trusted-recovery','name-race','subboard-policy','rejected-subboard-withdrawal','preference-relationships','preference-notifications','preference-browser','preference-reorg-initial','preference-reorg-marker','preference-saved','notification-browser'].includes(scenario));
   const notificationBrowser=scenario==='notification-browser';
@@ -279,8 +287,7 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
   const preferences=['preference-relationships','preference-notifications','preference-browser','preference-reorg-initial','preference-reorg-marker','preference-saved','notification-browser'].includes(scenario);
   const rejectedWithdrawal=scenario==='rejected-subboard-withdrawal',subboards=scenario==='subboard-policy',race=scenario==='name-race',recovery=scenario==='trusted-recovery',composer=scenario==='composer',socialWire=scenario==='social-wire',reactionWire=scenario==='reaction-wire',wireSocial=socialWire||reactionWire,captureWire=scenario==='owned-names-wire'||wireSocial||recovery,names=['owned-names','owned-names-wire','composer'].includes(scenario),multi=notificationBrowser||scenario==='account-reactions'||names||wireSocial||recovery||race||subboards,social=['anonymous-thread','repost-reactions','account-reactions'].includes(scenario)||wireSocial||subboards||rejectedWithdrawal;
   const {ROOT,assertNodeVersion,assertAztecPackages}=await import('../toolchain.mjs');
-  const directory=path.join(ROOT,'execution/evidence/G06','application-port-'+randomUUID());
-  await fs.mkdir(directory,{mode:0o700});
+  const directory=await createRollingEvidenceDirectory(ROOT);
   const report={schemaVersion:1,scenario,passed:false,stage:'preflight',transactions:[],cleanup:{},
     scope:race?'Actual simultaneous normalized-name registration with canonical winner/revert, private ownership rollback and both paid fees':names?'Actual separate private accounts registering and recovering readable owned names without publishing owner groups':social?'Actual anonymous social transactions and canonical removal/repost/reaction reconstruction':scenario==='profiles'?'Actual private profile updates and public moderator removal; fixed test moderation decision, no image-model acceptance':'Actual funded application port and authenticated public projection; human threaded reply, no composite Bok action',
     networkProofs:false,controlledPortalSettlement:true,privacyAcceptance:'Public-field equality checks only; independent privacy qualification remains',

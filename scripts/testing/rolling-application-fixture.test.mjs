@@ -5,7 +5,7 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import http from 'node:http';
 import path from 'node:path';
-import {classifyRollingApplicationFootprint,recordRollingFundingFailure,assertRollingApplicationViews,assertRollingPublicFootprint,closeRollingResources,loadRollingFixtureSDK,observeRollingReadiness} from './rolling-application-fixture.mjs';
+import {createRollingEvidenceDirectory,classifyRollingApplicationFootprint,recordRollingFundingFailure,assertRollingApplicationViews,assertRollingPublicFootprint,closeRollingResources,loadRollingFixtureSDK,observeRollingReadiness} from './rolling-application-fixture.mjs';
 import {createRollingProjection} from '../../shared/rolling/public-projection.mjs';
 import {createFileJournalStorage} from '../../apps/src/billboard/user/transaction-journal-store.mjs';
 import {createEncryptedJournalSlot} from '../../shared/journal-record.mjs';
@@ -548,4 +548,44 @@ test('paid pre-handoff root failure still verifies both balances; unknown pendin
  await assert.rejects(runAfter(undefined,lateReport,[],async()=>{},settleNotificationEvidence,assert,
   {verify:async()=>lateCalls.push('a')},{verify:async()=>lateCalls.push('b')},0n,0n));
  assert.deepEqual(lateCalls,[]);assert.equal(lateReport.notificationBrowser.accountingVerified,false);
+});
+
+// Reproduces the fresh-worktree parent-directory omission without starting a chain.
+test('fresh checkout creates private unique evidence directories and preserves prior evidence',async()=>{
+  const root=await fs.mkdtemp(path.join(os.tmpdir(),'rolling-fresh-evidence-'));
+  try {
+    const first=await createRollingEvidenceDirectory(root);
+    assert.equal(path.dirname(first),path.join(root,'execution/evidence/G06'));
+    assert.equal((await fs.stat(first)).mode&0o777,0o700);
+    await fs.writeFile(path.join(first,'retained.json'),'retained',{flag:'wx'});
+    const second=await createRollingEvidenceDirectory(root);
+    assert.notEqual(first,second);assert.deepEqual(await fs.readdir(second),[]);
+    assert.equal((await fs.stat(second)).mode&0o777,0o700);
+    assert.equal(await fs.readFile(path.join(first,'retained.json'),'utf8'),'retained');
+  } finally {await fs.rm(root,{recursive:true,force:true});}
+});
+
+test('evidence setup rejects an obstructing parent file',async()=>{
+  const root=await fs.mkdtemp(path.join(os.tmpdir(),'rolling-evidence-file-'));
+  try {
+    await fs.mkdir(path.join(root,'execution/evidence'),{recursive:true});
+    await fs.writeFile(path.join(root,'execution/evidence/G06'),'retained');
+    await assert.rejects(createRollingEvidenceDirectory(root),error=>error.code==='EEXIST');
+    assert.equal(await fs.readFile(path.join(root,'execution/evidence/G06'),'utf8'),'retained');
+  } finally {await fs.rm(root,{recursive:true,force:true});}
+});
+test('evidence setup rejects a child collision without replacing existing data',async(t)=>{
+  const root=await fs.mkdtemp(path.join(os.tmpdir(),'rolling-evidence-collision-'));
+  const mkdir=fs.mkdir.bind(fs);let collided;
+  const injected=t.mock.method(fs,'mkdir',async(directory,options)=>{
+    if(path.basename(directory).startsWith('application-port-')){
+      collided=directory;await mkdir(directory,{mode:0o700});
+      await fs.writeFile(path.join(directory,'retained.json'),'retained');
+    }
+    return mkdir(directory,options);
+  });
+  try {
+    await assert.rejects(createRollingEvidenceDirectory(root),error=>error.code==='EEXIST');
+    assert.equal(await fs.readFile(path.join(collided,'retained.json'),'utf8'),'retained');
+  } finally {injected.mock.restore();await fs.rm(root,{recursive:true,force:true});}
 });
