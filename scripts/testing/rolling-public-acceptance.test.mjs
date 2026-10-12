@@ -76,3 +76,10 @@ test('canonical board oracle requires content, policies, identity and continuati
   const changed=structuredClone(row);mutate(changed);assert.throws(()=>assertCanonicalSocialViews(projection,[changed]));
  }
 });
+
+test('saved preference public acceptance requires the same full canonical post views',async()=>{
+ const {rows,projection}=fixture();assertCanonicalSocialViews(projection,rows);for(const row of rows)assertSocialHTTPView(structuredClone(row.expected),row.expected);
+ const fs=await import('node:fs/promises'),source=await fs.readFile(new URL('./rolling-public-acceptance.mjs',import.meta.url),'utf8');
+ assert.equal((source.match(/'preference-saved'/g)||[]).length,2); // Both scenario admission and mandatory expectedHTTP branch.
+ const leaked=structuredClone(rows[0].expected);leaked.posts.push({type:'PreferenceChanged'});assert.throws(()=>assertSocialHTTPView(leaked,rows[0].expected));
+});

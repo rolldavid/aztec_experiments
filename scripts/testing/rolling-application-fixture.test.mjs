@@ -371,3 +371,29 @@ test('preference campaigns keep real proof limits, actual decoder and fresh empt
  assert(cold.includes('actorIntents.delete(old)'));assert(!cold.includes('copyFile'));assert(!cold.includes('submitPrepared'));
  assert(source.indexOf("await mark('encrypted-journal-reopen')")<source.indexOf("await mark('preference-keys-only-recovery')"));
 });
+
+test('saved preference scenario retains genuine two-proof limits and exact-byte recovery path',async()=>{
+ const {getScenario}=await import('./scenarios.mjs');const s=getScenario('rolling-preference-saved');
+ assert.equal(s.deadlineMs,540000);assert.equal(s.fixtureHeapMiB,768);assert.equal(s.boardProfile,'rolling');assert.equal(s.evidenceTask,'G07');assert.equal(s.applicationThreads,1);assert.equal(s.browser,'none');
+ const source=await fs.readFile(new URL('./rolling-application-fixture.mjs',import.meta.url),'utf8');
+ const part=source.slice(source.indexOf('if(preferenceSaved){\n'),source.indexOf('}else if(preferenceReorg){'));
+ assert(part.includes('exerciseRollingSavedPreference'));assert(part.includes('actorA.application.resumeSaved(id,options)'));
+ assert(part.includes("await makeActor(fees,'a',dataDirectory)"));assert(part.includes('namesBefore'));
+ assert(part.includes('ctx.node.isValidTx(rpc.deniedTransaction())'));assert(part.includes('await fees.verify(feeTotal)'));
+ assert(part.indexOf('accountFee(outcome.txHash,receipt.transactionFee)')<part.indexOf('assert.equal(outcome.txHash,expectedHash)'));
+ assert(part.includes('deniedBytes'));assert(part.includes('saved.tx.toBuffer()'));assert(part.includes('forwardedBytes'));
+ assert(!part.includes('prepareReplacement'));assert(!part.includes('deleteTx'));assert(!part.includes('keys-only'));
+ assert(source.includes('if(preferences&&!preferenceBrowser&&!preferenceReorg&&!preferenceSaved)'));
+ assert(source.includes('else if(preferenceSaved){assert.equal(report.proverJobs.completed,2);assert.equal(report.proverJobs.submitted,2);}'));
+});
+test('actual SDK serialized Tx is persistently denied before forward, then forwarded unchanged exactly once',async()=>{
+ const {startNodeRpc}=await import('./rolling-application-fixture.mjs');const {Tx}=await import('@aztec-labs/stdlib/tx');
+ const {jsonStringify}=await import('@aztec-labs/foundation/json-rpc');const tx=Tx.random(),calls=[],observed=[];await tx.recomputeHash(); // Tx.random intentionally assigns an unrelated hash; RPC schema authenticates the real hash.
+ const rpc=await startNodeRpc({sendTx:async value=>{calls.push(value);}},value=>observed.push(value),{faults:true});
+ const send=async()=>{const response=await fetch(rpc.url,{method:'POST',headers:{'content-type':'application/json'},body:jsonStringify({jsonrpc:'2.0',id:1,method:'aztec_sendTx',params:[tx]})});return {status:response.status,body:await response.json()};};
+ try{rpc.setFault('send-before-forward');for(let i=0;i<2;i++){const result=await send();assert(result.body.error);assert.equal(calls.length,0);assert.equal(observed.length,0);}
+  assert.equal(rpc.snapshot().sendDenied,2);assert.equal(rpc.snapshot().forwarded.sendTx,undefined);assert(Buffer.from(rpc.deniedTransaction().toBuffer()).equals(tx.toBuffer()));
+  rpc.setFault('healthy');assert.equal((await send()).status,200);assert.equal(calls.length,1);assert.equal(observed.length,1);assert(Buffer.from(calls[0].toBuffer()).equals(tx.toBuffer()));assert.equal(String(observed[0].getTxHash()),String(tx.getTxHash()));
+ }finally{await rpc.close();}
+ await assert.rejects(fetch(rpc.url));
+});

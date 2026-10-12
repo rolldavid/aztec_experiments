@@ -17,7 +17,7 @@ const discard=()=>{};
 const silent=Object.assign(discard,Object.fromEntries(['trace','debug','verbose','info','warn','error','fatal'].map(k=>[k,discard])),
   {level:'silent',isLevelEnabled:()=>false,getBindings:()=>({}),createChild:()=>silent});
 const PERSONAL=['feePayer','publicCallSenders','publicCallTargets','publicCallCalldata','publicWriteSlots','publicWriteValues','publicLogContracts','publicLogFields'];
-const SOURCES=['scripts/testing/rolling-preference-reorg.mjs','scripts/testing/rolling-preference-browser-fixture.mjs','scripts/testing/rolling-preference-browser.mjs','scripts/testing/rolling-preference-recovery.mjs','shared/rolling/preference-reader.mjs','shared/rolling/preference-events.mjs','shared/rolling/preferences.mjs','scripts/testing/rolling-rejected-withdrawal.mjs','scripts/application-post.mjs','scripts/c01-settle-application-message.mjs','scripts/c01-withdraw-l1.mjs','scripts/t04-browser-journey-verify.mjs','scripts/testing/rolling-subboard-acceptance.mjs','scripts/testing/rolling-name-collision.mjs','scripts/testing/rolling-collision-observer.mjs','scripts/testing/rolling-trusted-recovery.mjs','scripts/testing/rolling-social-wire.mjs','scripts/testing/rolling-wire-campaign.mjs','scripts/testing/rolling-wire-trace.mjs','scripts/testing/rolling-owned-names.mjs','scripts/t03-public-footprint.mjs','scripts/testing/rolling-removed-like.mjs','scripts/testing/rolling-application-actor.mjs','scripts/testing/rolling-account-reactions.mjs','scripts/testing/rolling-social-acceptance.mjs','scripts/testing/rolling-profile-acceptance.mjs','experiments/avatar/raster-fixture.mjs','scripts/prove-application-action.mjs','scripts/testing/rolling-native-artifacts.mjs','scripts/testing/rolling-application-fixture.mjs','scripts/testing/scenarios.mjs','scripts/testing/scenario-flows.mjs',
+const SOURCES=['scripts/testing/rolling-preference-saved.mjs','scripts/testing/rolling-preference-reorg.mjs','scripts/testing/rolling-preference-browser-fixture.mjs','scripts/testing/rolling-preference-browser.mjs','scripts/testing/rolling-preference-recovery.mjs','shared/rolling/preference-reader.mjs','shared/rolling/preference-events.mjs','shared/rolling/preferences.mjs','scripts/testing/rolling-rejected-withdrawal.mjs','scripts/application-post.mjs','scripts/c01-settle-application-message.mjs','scripts/c01-withdraw-l1.mjs','scripts/t04-browser-journey-verify.mjs','scripts/testing/rolling-subboard-acceptance.mjs','scripts/testing/rolling-name-collision.mjs','scripts/testing/rolling-collision-observer.mjs','scripts/testing/rolling-trusted-recovery.mjs','scripts/testing/rolling-social-wire.mjs','scripts/testing/rolling-wire-campaign.mjs','scripts/testing/rolling-wire-trace.mjs','scripts/testing/rolling-owned-names.mjs','scripts/t03-public-footprint.mjs','scripts/testing/rolling-removed-like.mjs','scripts/testing/rolling-application-actor.mjs','scripts/testing/rolling-account-reactions.mjs','scripts/testing/rolling-social-acceptance.mjs','scripts/testing/rolling-profile-acceptance.mjs','experiments/avatar/raster-fixture.mjs','scripts/prove-application-action.mjs','scripts/testing/rolling-native-artifacts.mjs','scripts/testing/rolling-application-fixture.mjs','scripts/testing/scenarios.mjs','scripts/testing/scenario-flows.mjs',
   'scripts/c01-real-node.mjs','scripts/c01-board-flow.mjs','scripts/c01-deposit-flow.mjs','scripts/c01-client-mining.mjs',
   'scripts/w01-private-fee-flow.mjs','scripts/w01-unfunded-wallet.mjs','scripts/w01-private-funding.mjs',
   'shared/sdk-entry.mjs','shared/private-pxe.mjs','shared/trusted-private-node.mjs','shared/routed-kernel-prover.mjs','shared/remote-prover-client.mjs',
@@ -190,13 +190,17 @@ export function assertRollingRecoveryWire(observation,recovery){
 }
 
 export async function startNodeRpc(node,onSend=()=>{},{faults=false}={}) {
-  let fault='healthy';const diagnostic={unavailableRequests:0,personalizedDenied:0,forwarded:{}};
-  const setFault=value=>{assert(faults&&['healthy','unavailable','personalized-once'].includes(value));fault=value;};
+  let fault='healthy',deniedTransaction;const diagnostic={unavailableRequests:0,personalizedDenied:0,sendDenied:0,forwarded:{}};
+  const setFault=value=>{assert(faults&&['healthy','unavailable','personalized-once','send-before-forward'].includes(value));fault=value;};
   const {createNamespacedSafeJsonRpcServer}=await import('@aztec-labs/foundation/json-rpc/server');
   const {AztecNodeApiSchema}=await import('@aztec-labs/stdlib/interfaces/client');
   const api=Object.fromEntries(Object.keys(AztecNodeApiSchema).map(name=>[name,(...args)=>{
     if(fault==='personalized-once'&&name==='getContract'){fault='healthy';diagnostic.personalizedDenied++;throw Error('Controlled upstream unavailable');}
-    diagnostic.forwarded[name]=(diagnostic.forwarded[name]??0)+1;if(name==='sendTx')onSend();return node[name](...args);
+    // Keep this fault armed until explicit recovery. An HTTP client's retry must
+    // never accidentally turn an intentionally unsent signed transaction into
+    // a submitted one. Preserve the real decoded SDK transaction for evidence.
+    if(fault==='send-before-forward'&&name==='sendTx'){diagnostic.sendDenied++;deniedTransaction=args[0];throw Error('Controlled upstream unavailable');}
+    diagnostic.forwarded[name]=(diagnostic.forwarded[name]??0)+1;if(name==='sendTx')onSend(args[0]);return node[name](...args);
   } ]));
   const rpc=createNamespacedSafeJsonRpcServer({aztec:[api,AztecNodeApiSchema]},
     {maxBatchSize:8,maxBodySizeBytes:8*1024*1024,corsAllowedOrigins:[],log:silent});
@@ -210,7 +214,7 @@ export async function startNodeRpc(node,onSend=()=>{},{faults=false}={}) {
   try{await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(0,'127.0.0.1',resolve);});}
   catch(error){server.close();server.closeAllConnections();throw error;}
   const port=server.address().port;
-  return {url:`http://127.0.0.1:${port}/`,...(faults?{setFault,snapshot:()=>structuredClone(diagnostic)}:{}),close:async()=>{
+  return {url:`http://127.0.0.1:${port}/`,...(faults?{setFault,snapshot:()=>structuredClone(diagnostic),deniedTransaction:()=>deniedTransaction}:{}),close:async()=>{
     await new Promise((resolve,reject)=>{server.close(error=>error?reject(error):resolve());server.closeAllConnections();});await closedPort(port);
   }};
 }
@@ -235,9 +239,9 @@ export async function loadRollingFixtureSDK() {
 }
 
 export async function runRollingApplicationFixture(ctx,scenario='conversation') {
-  assert(['conversation','profiles','anonymous-thread','repost-reactions','account-reactions','owned-names','owned-names-wire','composer','social-wire','reaction-wire','trusted-recovery','name-race','subboard-policy','rejected-subboard-withdrawal','preference-relationships','preference-notifications','preference-browser','preference-reorg-initial','preference-reorg-marker'].includes(scenario));
-  const preferenceBrowser=scenario==='preference-browser',preferenceReorg=['preference-reorg-initial','preference-reorg-marker'].includes(scenario),markerReorg=scenario==='preference-reorg-marker';
-  const preferences=['preference-relationships','preference-notifications','preference-browser','preference-reorg-initial','preference-reorg-marker'].includes(scenario);
+  assert(['conversation','profiles','anonymous-thread','repost-reactions','account-reactions','owned-names','owned-names-wire','composer','social-wire','reaction-wire','trusted-recovery','name-race','subboard-policy','rejected-subboard-withdrawal','preference-relationships','preference-notifications','preference-browser','preference-reorg-initial','preference-reorg-marker','preference-saved'].includes(scenario));
+  const preferenceSaved=scenario==='preference-saved',preferenceBrowser=scenario==='preference-browser',preferenceReorg=['preference-reorg-initial','preference-reorg-marker','preference-saved'].includes(scenario),markerReorg=scenario==='preference-reorg-marker';
+  const preferences=['preference-relationships','preference-notifications','preference-browser','preference-reorg-initial','preference-reorg-marker','preference-saved'].includes(scenario);
   const rejectedWithdrawal=scenario==='rejected-subboard-withdrawal',subboards=scenario==='subboard-policy',race=scenario==='name-race',recovery=scenario==='trusted-recovery',composer=scenario==='composer',socialWire=scenario==='social-wire',reactionWire=scenario==='reaction-wire',wireSocial=socialWire||reactionWire,captureWire=scenario==='owned-names-wire'||wireSocial||recovery,names=['owned-names','owned-names-wire','composer'].includes(scenario),multi=scenario==='account-reactions'||names||wireSocial||recovery||race||subboards,social=['anonymous-thread','repost-reactions','account-reactions'].includes(scenario)||wireSocial||subboards||rejectedWithdrawal;
   const {ROOT,assertNodeVersion,assertAztecPackages}=await import('../toolchain.mjs');
   const directory=path.join(ROOT,'execution/evidence/G06','application-port-'+randomUUID());
@@ -278,6 +282,8 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
     await import('../../apps/src/billboard/user/engine.js');
     const routing=globalThis.BillboardPrivateFeeRouting;
     const sdk={...sdkModule,isPrivateWalletForNode:routing.isPrivateWalletForNode};
+    const savedCalls={estimates:0,payments:0};
+    if(preferenceSaved)for(const [method,key]of [['estimatePrivateFeeTransaction','estimates'],['preparePrivateFeePayment','payments']]){const original=sdk[method];assert.equal(typeof original,'function');sdk[method]=function(...args){savedCalls[key]++;return original.apply(this,args);};}
     const {Fr,Contract,TxHash,loadContractArtifact}=sdk;
     const {TxStatus}=await import('@aztec-labs/stdlib/tx');
     const bokRaw=JSON.parse(bokBytes);assert.equal(bokRaw.name,'PrivateBok');assert.equal(bokRaw.transpiled,true);
@@ -372,7 +378,8 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
       try{
       await observe('after-first-wall-mine');
       await mark('node-rpc-startup');
-      rpc=await startNodeRpc(ctx.node,()=>{assert(transportSends<Number.MAX_SAFE_INTEGER);transportSends++;},{faults:recovery});
+      const forwardedSaved=[];
+      rpc=await startNodeRpc(ctx.node,tx=>{assert(transportSends<Number.MAX_SAFE_INTEGER);transportSends++;if(preferenceSaved){assert(forwardedSaved.length<3);forwardedSaved.push(tx);};},{faults:recovery||preferenceSaved});
       await mark('trusted-service-startup');
       service=await startProverService({host:'127.0.0.1',port:0,board:String(ctx.instance.address),chainId:31337,rollupVersion:info.rollupVersion,
         applicationProfile:'rolling',privateBokAddress:String(bokInstance.address),privateFeeAddress:String(fees.browserFixture.instance.address),
@@ -509,7 +516,43 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
         const published=await action({type:'post',deposit:String(claim.claim.depositChainId),name:ids.nameId??'0',subboard:'0',content:'A genuine preference recovery post.'},'preference-root');
         assert.equal(published.length,1);assert.equal(published[0].type,'PostPublished');ids.rootId=published[0].payload.id;
         const rootPosition=published[0].position;
-        if(preferenceReorg){
+        if(preferenceSaved){
+          assert(real,'Saved transaction acceptance requires genuine proofs');
+          const {exerciseRollingSavedPreference}=await import('./rolling-preference-saved.mjs');
+          const row={action:'preference-saved',startedAt:Date.now(),submission:'not attempted'};report.transactions.push(row);
+          const sentBefore=forwardedSaved.length;let savedId,deniedBytes;
+          const journalDirectory=path.join(ctx.directory,'rolling-application-journals-a'),dataDirectory='rolling-application-test-a';
+          const scopeText=sdk.l2JournalScopeText({account:String(actorA.owner),...network,board:String(ctx.instance.address),portal:ctx.ready.portalAddress});
+          const cipherKeys={workflow:sha(Buffer.from(JSON.stringify(['ROLLING_WORKFLOW_V1',scopeText]))),l2Journal:sha(Buffer.from(scopeText))};
+          const readCiphertext=async()=>{const out={};for(const [key,digest]of Object.entries(cipherKeys)){const file=path.join(journalDirectory,digest+'.json'),stat=await fs.lstat(file);assert(stat.isFile()&&!stat.isSymbolicLink()&&(stat.mode&0o777)===0o600&&stat.size>0&&stat.size<=32*1024*1024+16384);out[key]=new Uint8Array(await fs.readFile(file));}return out;};
+          const getIntent=async()=>(await actorA.application.inspectRecovery(savedId)).intent;
+          const expectedDigest=String((await sdk.poseidon2HashWithSeparator([BigInt(network.chainId),BigInt(network.version),BigInt(String(ctx.instance.address)),1n,1n,1n,BigInt(ids.rootId),1n,0n,0n,0n].map(n=>new Fr(n)),0x52435031)).toBigInt());
+          report.preferenceSaved=await exerciseRollingSavedPreference({root:ids.rootId,expectedDigest,deadlineAt:ctx.applicationDeadlineAt-15000,
+            activity:()=>({...actorA.activity(),...savedCalls}),
+            prepare:async input=>{await mark('preference-save-before-forward');const prepared=await actorA.application.prepare(input);savedId=prepared.intentId;actorIntents.set(actorA,savedId);row.maximumFee=prepared.maximumFee;row.submission='outcome unknown';await save();return prepared;},
+            submit:async id=>{try{return await actorA.application.submitPrepared(id);}catch(error){row.originalSubmitRejected=true;await save();throw error;}},
+            setSendFault:async armed=>{rpc.setFault(armed?'send-before-forward':'healthy');},
+            snapshotSaved:async()=>{const tx=rpc.deniedTransaction();assert(tx);deniedBytes??=Buffer.from(tx.toBuffer());const saved=await actorA.journal.inspect();assert.equal(saved.txHash,String(tx.getTxHash()));row.savedTxHash=saved.txHash;row.sendFault={deniedCount:rpc.snapshot().sendDenied,forwardedCount:forwardedSaved.length-sentBefore};await save();return {...saved,bytes:Buffer.from(tx.toBuffer()),deniedCount:rpc.snapshot().sendDenied,forwardedCount:forwardedSaved.length-sentBefore,ciphertext:await readCiphertext(),intent:await getIntent()};},
+            readUnsent:async hash=>{const receipt=await ctx.node.getTxReceipt(TxHash.fromString(hash)),effect=await ctx.node.getTxEffect(TxHash.fromString(hash)),validation=await ctx.node.isValidTx(rpc.deniedTransaction());await fees.verify(feeTotal);
+              row.preResume={status:receipt.status,effectAbsent:effect===undefined,validation:validation.result,feesUnchanged:true};await save();return row.preResume;},
+            reopenSameStores:async()=>{await mark('preference-same-store-reopen');const old=actorA,identity=sdk.getPXEStoreIdentity({l1ChainId:Number(network.chainId),rollupAddress:network.rollup,accountAddress:String(old.owner),dataDirectory});
+              const databases=await indexedDB.databases();assert(databases.some(db=>db.name===identity.name));const namesBefore=databases.map(db=>db.name).sort();
+              await old.close();assert.throws(()=>old.contextGuard());actorA=activeActor=await makeActor(fees,'a',dataDirectory);actorIntents.delete(old);actorIntents.set(actorA,savedId);pxe=actorA.pxe;appWallet=actorA.wallet;journal=actorA.journal;app=actorA.application;
+              assert.notEqual(actorA,old);assert.notEqual(actorA.pxe,old.pxe);assert.deepEqual((await indexedDB.databases()).map(db=>db.name).sort(),namesBefore);assert.equal(String(actorA.owner),String(old.owner));return {oldClosed:true,freshActor:true,samePXEStore:true,sameJournalStore:true};},
+            inspectRecovery:id=>actorA.application.inspectRecovery(id),resumeSaved:(id,options)=>actorA.application.resumeSaved(id,options),
+            readPreferences:options=>actorA.application.readPreferences(options),
+            collectIncluded:async expectedHash=>{
+              const outcome=await actorA.journal.inspectOutcome(),receipt=outcome?.receipt;assert(receipt);accountFee(outcome.txHash,receipt.transactionFee);
+              Object.assign(row,{txHash:outcome.txHash,status:receipt.status,executionResult:receipt.executionResult,blockNumber:Number(receipt.blockNumber),blockHash:String(receipt.blockHash),transactionFee:String(receipt.transactionFee),elapsedMs:Date.now()-row.startedAt});await save();
+              const effect=await ctx.node.getTxEffect(TxHash.fromString(outcome.txHash));assert(effect?.data);row.effectSha256=sha(effect.data.toBuffer());await fs.writeFile(path.join(directory,'saved-preference-effect.bin'),effect.data.toBuffer(),{flag:'wx',mode:0o600});await save();
+              assert.equal(outcome.txHash,expectedHash);assert.equal(String(effect.l2BlockHash),row.blockHash);assert.equal(Number(effect.l2BlockNumber),row.blockNumber);
+              const saved=await actorA.journal.assertCanStart(),events=await decoder.decodeTransaction(ctx.node,outcome.txHash);
+              row.publicFootprint=classifyRollingApplicationFootprint({tx:saved.tx,effect:effect.data,owner,payer:fees.browserFixture.instance.address,board:ctx.instance.address});assertRollingPublicFootprint(row.publicFootprint);
+              projection.stage(events).apply();hashes.push(outcome.txHash);row.events=events.map(event=>event.type);row.submission='included';await save();
+              const sent=forwardedSaved.slice(sentBefore);assert.equal(sent.length,1);assert.equal(String(sent[0].getTxHash()),expectedHash);assert(Buffer.from(saved.tx.toBuffer()).equals(deniedBytes));
+              return {txHash:outcome.txHash,operation:saved.value.operation,bytes:Buffer.from(saved.tx.toBuffer()),forwardedBytes:Buffer.from(sent[0].toBuffer()),forwardedCount:sent.length,canonical:true,executionResult:receipt.executionResult,transactionFee:String(receipt.transactionFee),events,intent:await getIntent()};
+            }});await save();
+        }else if(preferenceReorg){
           assert(real,'Reorg acceptance requires genuine proofs');
           const {RollupAbi}=await import('@aztec-foundation/l1-artifacts/RollupAbi');
           const {EthCheatCodes}=await import('@aztec-labs/ethereum/test');
@@ -964,7 +1007,7 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
         report.journalReopen.actors.push({sameHash:true,newProofJobs:0,transactionBytesRetained:true});
       }
       journal=actorA.journal;assert.equal(service.stats().submitted,jobsBefore);
-      if(preferences&&!preferenceBrowser&&!preferenceReorg){
+      if(preferences&&!preferenceBrowser&&!preferenceReorg&&!preferenceSaved){
         await mark('preference-keys-only-recovery');
         const {compareRecoveredRollingPreferences}=await import('./rolling-preference-recovery.mjs');
         const old=actorA,dataDirectory='rolling-preference-cold-'+randomUUID(),role='preference-cold-'+randomUUID();
@@ -1023,6 +1066,7 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
       if(multi){const bStandalone=BigInt(feesB.standalone?.transactionFee??0);await fees.verify(feeTotal,feesB.browserFixture.fundedAmount-bStandalone-feeTotalB);await feesB.verify(feeTotalB,fees.browserFixture.fundedAmount-feeTotal);assert.equal(fees.poolBefore,feesB.poolBefore);report.accountFees={a:String(feeTotal),b:String(feeTotalB)};}else await fees.verify(feeTotal);report.actualHumanFees=String(feeTotal+feeTotalB);report.proverJobs=service.stats();
       assert.equal(report.proverJobs.failed,0);if(recovery){assert.equal(report.proverJobs.completed,1);assert.equal(report.proverJobs.submitted,1);}
       else if(preferenceReorg){const expected=markerReorg?3:2;assert.equal(report.proverJobs.completed,expected);assert.equal(report.proverJobs.submitted,expected);}
+      else if(preferenceSaved){assert.equal(report.proverJobs.completed,2);assert.equal(report.proverJobs.submitted,2);}
       else if(preferenceBrowser){assert.equal(report.proverJobs.completed,3);assert.equal(report.proverJobs.submitted,3);}
       else if(race){assert.equal(report.proverJobs.completed,2);assert.equal(report.proverJobs.submitted,2);}
       else if(names){assert.equal(report.proverJobs.completed,4);assert.equal(report.proverJobs.submitted,4);}
