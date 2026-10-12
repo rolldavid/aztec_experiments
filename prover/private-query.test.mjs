@@ -200,3 +200,21 @@ for(const declared of [false,true])test(`compact ${declared?'declared':'chunked'
  t.mock.timers.tick(QUERY_LIMITS.timeoutMs);await pending;
  assert.equal(held.req.destroyCalls,1);assert.equal(held.socket.closed,true);assert.equal(held.req.listenerCount('aborted'),0);assert.equal(held.socket.listenerCount('close'),0);assert.equal(held.res.listenerCount('finish'),0);
 });
+
+test('compact deadline closes a consumed IncomingMessage socket while retaining readiness ownership',async t=>{
+ let entered,release;const started=new Promise(r=>{entered=r;}),heldInspection=new Promise(r=>{release=r;});
+ const query=controlledCompactQuery(async()=>{entered();await heldInspection;throw Error('PRIVATE');});
+ const held=compactSocketControl();
+ const req=new http.IncomingMessage(held.socket);req.complete=true;req.url='/v1/compact-block';req.method='POST';req.headers={'content-type':'application/json'};
+ req.push(Buffer.from(JSON.stringify(compactSelector)));req.push(null);
+ t.mock.timers.enable({apis:['setTimeout']});
+ const pending=query.handleCompact(req,held.res);await started;
+ assert.equal(req.readableEnded,true);assert.equal(held.socket.destroyCalls,0);
+ t.mock.timers.tick(QUERY_LIMITS.timeoutMs);assert.equal(req.destroyed,true);assert.equal(held.socket.destroyCalls,1);
+ const second=compactSocketControl();await query.handleCompact(second.req,second.res);assert.equal(second.res.status,429);
+ // Model actual response destruction after socket close; no late response may publish.
+ held.res.destroyed=true;release();await pending;assert.equal(held.res.status,undefined);
+ assert.equal(req.listenerCount('aborted'),0);assert.equal(held.res.listenerCount('close'),0);
+ const third=compactSocketControl({declared:true});const next=query.handleCompact(third.req,third.res);await third.end;
+ assert.equal(third.res.status,413);third.socket.completeClose();await next;
+});

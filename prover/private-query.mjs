@@ -167,7 +167,7 @@ export function createPrivateQueryWithInspector({queryNode, chainId, rollupVersi
     const controller=new AbortController();const abort=()=>controller.abort();
     const close=()=>{if(!res.writableFinished)abort();};
     req.once('aborted',abort);res.once('close',close);
-    const timer=setTimeout(()=>{abort();req.destroy();},QUERY_LIMITS.timeoutMs);
+    const timer=setTimeout(()=>{abort();req.destroy();req.socket.destroy();},QUERY_LIMITS.timeoutMs);
     const alive=()=>{if(controller.signal.aborted||req.aborted||res.destroyed)throw unavailable();};
     let status=400;
     try{
