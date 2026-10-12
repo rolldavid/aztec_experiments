@@ -8,17 +8,17 @@ import {join,resolve} from 'node:path';
 import {spawnSync} from 'node:child_process';
 import {registerHooks} from 'node:module';
 import {pathToFileURL} from 'node:url';
-import {SOURCE_PLAN,PHASES,transformSource,createRecorder,readRecord,validateRecord,MAX_RECORD_BYTES,RECORD_NAME,createLoadHook,RUNTIME_ADAPTER,CONFIG_CALL,SELECTED_CONFIG_CALL,selectConfigurationProvider} from './startup-stages.mjs';
+import {SOURCE_PLAN,PHASES,transformSource,createRecorder,readRecord,validateRecord,MAX_RECORD_BYTES,RECORD_NAME,createLoadHook,RUNTIME_ADAPTER,CONFIG_CALL,SELECTED_CONFIG_CALL,selectConfigurationProvider,emptyProgress,validateProgress,classifyError} from './startup-stages.mjs';
 const sha=x=>createHash('sha256').update(x).digest('hex');
 const digest='a'.repeat(64);
 const temporary=fn=>{const dir=mkdtempSync(join(tmpdir(),'rolling-stages-'));chmodSync(dir,0o700);try{return fn(dir);}finally{rmSync(dir,{recursive:true,force:true});}};
-const record=history=>({schemaVersion:1,instrumented:true,runtimeAdapter:RUNTIME_ADAPTER,helperSha256:digest,history});
+const record=history=>({schemaVersion:2,instrumented:true,runtimeAdapter:RUNTIME_ADAPTER,helperSha256:digest,history,archiver:emptyProgress()});
 
 test('all exact pinned SDK modules hash-bind; only selected complete config call changes, and modules parse without execution',()=>temporary(dir=>{
  for(const plan of SOURCE_PLAN){
   const local=resolve('node_modules/@aztec-labs',plan.path.replace('/usr/src/yarn-project/',''));
   const source=readFileSync(local,'utf8'); const transformed=transformSource(source,plan);
-  assert.equal(transformed.replace(/^import \{ mark as __rollingStartupStage \}[^\n]*\n/,'').replace(/__rollingStartupStage\("[a-z0-9-]+","(?:begin|complete)"\);\n/g,'').replace(SELECTED_CONFIG_CALL,CONFIG_CALL),source);
+  let restored=transformed.replace(/^import \{ mark as __rollingStartupStage[^\n]*\n/,'');if(plan.extraImport)restored=restored.replace(plan.extraImport,'');for(const insertion of plan.insertions??[])restored=restored.replace(insertion.text,'');restored=restored.replace(/__rollingStartupStage\("[a-z0-9-]+","(?:begin|complete)"\);\n/g,'').replace(SELECTED_CONFIG_CALL,CONFIG_CALL);assert.equal(restored,source);
   const file=join(dir,'module.mjs');writeFileSync(file,transformed);
   const result=spawnSync(process.execPath,['--check',file],{encoding:'utf8',timeout:3000});
   assert.equal(result.status,0,'actual Node syntax check failed');
@@ -34,7 +34,7 @@ test('source hash, duplicate/missing anchors, reversed offsets and unknown phase
 test('synthetic awaited operation preserves receiver, argument identity, pending state, result and exact rejection',async()=>{
  const source='export async function run(object,value) {\n const result = await object.call(value);\n return result;\n}\n';
  const plan={sha256:sha(source),points:[{phase:'factory',before:' const result',after:' return result'}]};
- const sink='data:text/javascript,export function mark(p,s){globalThis.__stageTest.push([p,s]);}';
+ const sink='data:text/javascript,export function mark(p,s){globalThis.__stageTest.push([p,s]);}export function observe(){}export function classifyError(){}';
  const code=transformSource(source,plan,sink);const {run}=await import('data:text/javascript;base64,'+Buffer.from(code).toString('base64'));
  globalThis.__stageTest=[];
  try {
@@ -49,7 +49,7 @@ test('real dedicated atomic record retains nested begin/complete and no caller d
  const write=createRecorder(dir,digest);assert.equal(write('factory','begin'),true);assert.equal(write('factory-bb','begin'),true);assert.equal(write('factory-bb','complete'),true);
  assert.deepEqual(readRecord(dir,digest),record([['factory','begin'],['factory-bb','begin'],['factory-bb','complete']]));
  assert.equal(write('factory','complete'),true);assert.ok(readFileSync(join(dir,RECORD_NAME)).length<MAX_RECORD_BYTES);
- assert.equal(write('SECRET_TOKEN','begin'),false);assert.equal(write('admin-auth','begin'),false);assert.equal(readRecord(dir,digest).history.length,4);
+ assert.equal(write('SECRET_TOKEN','begin'),false);assert.equal(write('admin-auth','begin'),false);assert.throws(()=>readRecord(dir,digest),'sticky recording failure is visible');
  assert.throws(()=>createRecorder(dir,digest));
 }));
 
@@ -134,3 +134,62 @@ test('attestation requires the exact semantic runtime adapter label rather than 
  const write=createRecorder(dir,digest);assert.equal(write('l1-config','begin'),true);const observation=readRecord(dir,digest);assert.equal(observation.runtimeAdapter,'publicnode-config-v1');
  const missing={...observation};delete missing.runtimeAdapter;assert.throws(()=>validateRecord(missing,digest));assert.throws(()=>validateRecord({...observation,runtimeAdapter:'PRIVATE_SENTINEL'},digest));
 }));
+
+test('actual pinned sync method preserves pending work, receiver, error identity and no retries while observing failures',async()=>{
+ const plan=SOURCE_PLAN.find(p=>p.path.endsWith('/archiver/dest/archiver.js'));
+ const original=readFileSync(resolve('node_modules/@aztec-labs',plan.path.replace('/usr/src/yarn-project/','')),'utf8');
+ const transformed=transformSource(original,plan),anchor='   */ async sync() {';
+ const body=transformed.slice(transformed.indexOf(anchor)+anchor.length,transformed.indexOf('    }\n    /**\n   * Prunes a block-only local tip'));
+ const AsyncFunction=Object.getPrototypeOf(async function(){}).constructor;
+ const run=new AsyncFunction('__rollingStartupObserve','__rollingStartupClassify','__rollingHttpError','__rollingRpcError','NoBlobBodiesFoundError','BlockTagTooOldError','l2TipsEqual','L2BlockSourceEvents',body);
+ class HTTP extends Error{} class RPC extends Error{} class BlobError extends Error{} class OldBlock extends Error{}
+ const observations=[];const observe=(...args)=>observations.push(args);let resume,calls=0;
+ const ctx={async getL2Tips(){assert.equal(this,ctx);return {};},async processInboundQueue(){return [];},async syncFromL1(){assert.equal(this,ctx);calls++;return new Promise(resolve=>resume=resolve);},async pruneOrphanProposedBlocks(){},events:{emit(){throw Error('unexpected event');}}};
+ const pending=run.call(ctx,observe,classifyError,HTTP,RPC,BlobError,OldBlock,()=>true,{});
+ await new Promise(resolve=>setImmediate(resolve));assert.deepEqual(observations,[['started']]);resume([]);assert.equal(await pending,undefined);assert.equal(calls,1);assert.deepEqual(observations,[['started'],['completed']]);
+ for(const synchronous of [false,true]){
+  observations.length=0;const failure=new HTTP('PRIVATE_URL_OR_KEY');failure.status=429;let count=0;
+  ctx.syncFromL1=function(){count++;if(synchronous)throw failure;return Promise.reject(failure);};
+  await assert.rejects(run.call(ctx,observe,classifyError,HTTP,RPC,BlobError,OldBlock,()=>true,{}),e=>e===failure);
+  assert.equal(count,1);assert.deepEqual(observations,[['started'],['failed',{category:'http',httpStatus:429,rpcCode:null}]]);assert(!JSON.stringify(observations).includes('PRIVATE'));
+ }
+ assert.equal(readFileSync(resolve('node_modules/@aztec-labs',plan.path.replace('/usr/src/yarn-project/','')),'utf8'),original);
+});
+
+test('progress snapshots distinguish advancing checkpoints, an in-flight wait and repeated errors; writes throttle and final flush',()=>temporary(dir=>{
+ let now=0;const write=createRecorder(dir,digest,()=>now);write('factory','begin');write.observe('started');write.observe('head',1000n);write.observe('checkpoint',7n);
+ assert.equal(readRecord(dir,digest).archiver.inFlight,false,'progress was not fsynced for every event');
+ now=30000;write.observe('checkpoint',8);let p=readRecord(dir,digest).archiver;assert.equal(p.inFlight,true);assert.equal(p.lastCheckpoint,8);assert.equal(p.observedHeadL1Block,1000);assert.equal(p.lastProgressMs,30000);
+ now=30001;write.observe('head',1001n);write.flush(false);assert.equal(readRecord(dir,digest).archiver.observedHeadL1Block,1000,'timer flush cannot bypass the 30-second write throttle');
+ now=60000;write.flush();p=readRecord(dir,digest).archiver;assert.equal(p.lastObservationMs,30001,'durable heartbeat does not fabricate progress');
+ write.observe('failed',{category:'rpc',httpStatus:null,rpcCode:-32005});now=60001;write.observe('started');write.observe('failed',{category:'blob',httpStatus:null,rpcCode:null});write.observe('started');write.observe('local',999);write.observe('completed');write.flush();
+ p=readRecord(dir,digest).archiver;assert.deepEqual([p.passesStarted,p.passesCompleted,p.passesFailed,p.inFlight],[3,1,2,false]);assert.equal(p.localL1Block,999);assert.equal(p.error.category,'blob','last failure retained across later success');
+ write.observe('head',2n**80n);write.flush();assert.equal(readRecord(dir,digest).archiver.droppedObservations,1);assert(readFileSync(join(dir,RECORD_NAME)).length<=8192);
+}));
+
+test('actual viem numeric errors, bounded cause chains and malicious accessors never disclose raw errors',async()=>{
+ const {HttpRequestError,RpcRequestError}=await import('viem');class BlobError extends Error{}class OldBlock extends Error{}
+ const types={HttpRequestError,RpcRequestError,NoBlobBodiesFoundError:BlobError,BlockTagTooOldError:OldBlock};
+ const http=new HttpRequestError({url:'https://PRIVATE.invalid/?secret=PRIVATE',status:429,details:'PRIVATE'});
+ assert.deepEqual(classifyError(new Error('PRIVATE',{cause:http}),types),{category:'http',httpStatus:429,rpcCode:null});
+ const rpc=new RpcRequestError({url:'https://PRIVATE.invalid',body:{method:'PRIVATE'},error:{code:-32005,message:'PRIVATE'}});
+ assert.deepEqual(classifyError(rpc,types),{category:'rpc',httpStatus:null,rpcCode:-32005});
+ assert.equal(classifyError(new BlobError('PRIVATE'),types).category,'blob');assert.equal(classifyError(new OldBlock('PRIVATE'),types).category,'old-block');
+ let reads=0;Object.defineProperty(http,'status',{get(){reads++;throw Error('PRIVATE');}});Object.defineProperty(http,'cause',{get(){reads++;throw Error('PRIVATE');}});
+ assert.deepEqual(classifyError(http,types),{category:'unknown',httpStatus:null,rpcCode:null});assert.equal(reads,0);
+ const cycle=new Error('PRIVATE');cycle.cause=cycle;assert.equal(classifyError(cycle,types).category,'unknown');let deep=rpc;for(let i=0;i<9;i++)deep=new Error('PRIVATE',{cause:deep});assert.equal(classifyError(deep,types).category,'unknown');
+ assert.equal(classifyError({name:'HttpRequestError',status:429},types).httpStatus,null,'untyped spoof is not a provider status');
+ assert(!JSON.stringify(classifyError(rpc,types)).includes('PRIVATE'));
+});
+
+test('progress schema rejects nonfinite, unsafe, incoherent, private and extra fields',()=>{
+ for(const v of [{passesStarted:NaN},{localL1Block:2**53},{lastCheckpoint:-1},{lastObservationMs:Infinity},{passesStarted:1},{inFlight:1},{lastProgressMs:1},{error:{category:'PRIVATE',httpStatus:429,rpcCode:null}},{error:{category:'http',httpStatus:700,rpcCode:null}},{error:{category:'rpc',httpStatus:null,rpcCode:2**31}},{error:{category:'unknown',httpStatus:null,rpcCode:null,message:'PRIVATE'}},{secret:'PRIVATE'}])assert.throws(()=>validateProgress({...emptyProgress(),...v}));
+});
+
+test('new repeated-operation anchors are unique and mandatory, successful checkpoint observation is after actual persistence',()=>{
+ for(const plan of SOURCE_PLAN.filter(p=>p.insertions)){
+  const source=readFileSync(resolve('node_modules/@aztec-labs',plan.path.replace('/usr/src/yarn-project/','')),'utf8');
+  for(const insertion of plan.insertions){assert.equal(source.split(insertion.anchor).length,2);assert.throws(()=>transformSource(source.replace(insertion.anchor,''),plan));assert.throws(()=>transformSource(source+'\n'+insertion.anchor,plan));}
+  if(plan.path.endsWith('/l1_synchronizer.js')){const transformed=transformSource(source,plan);assert(transformed.indexOf('__rollingStartupObserve("checkpoint"')>transformed.indexOf('await elapsed(()=>execInSpan(this.tracer, \'Archiver.addCheckpoints\''));}
+ }
+});

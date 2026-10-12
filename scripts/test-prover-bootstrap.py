@@ -955,23 +955,36 @@ raise SystemExit(code)
         with tempfile.TemporaryDirectory() as t:
             base=pathlib.Path(t);directory=base/'startup-stages';directory.mkdir(mode=0o700)
             helper=pathlib.Path(b.__file__).parent/'startup-stages.mjs'
-            code="import {createRecorder,PHASES} from "+json.dumps(helper.as_uri())+";const record=createRecorder(process.argv[1],process.argv[2]);if(!record('factory','begin')||!record('factory-bb','begin')||!record('factory-bb','complete'))throw Error('fixture');process.stdout.write(JSON.stringify(PHASES));"
+            code="import {createRecorder,PHASES} from "+json.dumps(helper.as_uri())+";const record=createRecorder(process.argv[1],process.argv[2]);if(!record('factory','begin')||!record('factory-bb','begin')||!record('factory-bb','complete'))throw Error('fixture');record.observe('started');record.observe('head',100n);record.observe('local',99n);record.observe('checkpoint',7);record.observe('failed',{category:'http',httpStatus:429,rpcCode:null});if(!record.flush())throw Error('fixture');process.stdout.write(JSON.stringify(PHASES));"
             result=subprocess.run([node,'--input-type=module','--eval',code,str(directory),b.STARTUP_HELPER_SHA],capture_output=True,text=True,timeout=3,check=True)
             self.assertEqual(json.loads(result.stdout),list(b.DIAGNOSTIC_PHASES))
             observation=b.stage_observation(base);self.assertTrue(observation['available']);self.assertEqual(observation['runtimeAdapter'],'publicnode-config-v1')
             self.assertEqual(observation['history'],[['factory','begin'],['factory-bb','begin'],['factory-bb','complete']])
+            self.assertEqual(observation['schemaVersion'],2)
+            self.assertEqual(observation['archiver']['error'],{'category':'http','httpStatus':429,'rpcCode':None})
+            self.assertEqual(observation['archiver']['passesFailed'],1)
+            self.assertEqual(observation['archiver']['lastCheckpoint'],7)
+            self.assertEqual(observation['archiver']['localL1Block'],99)
+            self.assertEqual(observation['archiver']['observedHeadL1Block'],100)
 
     def test_stage_projection_independent_of_native_output_and_rejects_forged_records(self):
         import os
         with tempfile.TemporaryDirectory() as t:
             base=pathlib.Path(t);directory=base/'startup-stages';directory.mkdir(mode=0o700);file=directory/'stages.json'
-            good={'schemaVersion':1,'instrumented':True,'runtimeAdapter':b.STARTUP_ADAPTER,'helperSha256':b.STARTUP_HELPER_SHA,'history':[['factory','begin'],['factory-bb','begin'],['factory-bb','complete']]}
+            good={'schemaVersion':2,'archiver':{'passesStarted':0,'passesCompleted':0,'passesFailed':0,'inFlight':False,'lastObservationMs':0,'lastProgressMs':0,'localL1Block':None,'observedHeadL1Block':None,'lastCheckpoint':None,'error':None,'droppedObservations':0},'instrumented':True,'runtimeAdapter':b.STARTUP_ADAPTER,'helperSha256':b.STARTUP_HELPER_SHA,'history':[['factory','begin'],['factory-bb','begin'],['factory-bb','complete']]}
             file.write_text(json.dumps(good));file.chmod(0o600)
             self.assertEqual(b.stage_observation(base),{'available':True,**good})
             output=b.NodeOutput();output.feed(b'__rollingStartupStage("admin-auth","complete"); PRIVATE_SENTINEL\n');output.finish(1)
             self.assertEqual(output.value['stages'],[])
             for bad in [{k:v for k,v in good.items() if k!='runtimeAdapter'},{**good,'runtimeAdapter':'diagnostic-only'},{**good,'extra':'PRIVATE_SENTINEL'},{**good,'helperSha256':'a'*64},{**good,'history':[['factory','complete']]},{**good,'history':[['factory','begin'],['factory-bb','begin'],['factory','complete']]},{**good,'history':[['PRIVATE_SENTINEL','begin']]},{**good,'schemaVersion':True}]:
                 file.write_text(json.dumps(bad));self.assertEqual(b.stage_observation(base),{'available':False})
+            for patch in [{'passesStarted':True},{'passesFailed':1},{'lastCheckpoint':2**32},{'lastObservationMs':float('nan')},{'lastProgressMs':1},{'inFlight':1},{'secret':'PRIVATE_SENTINEL'},{'error':{'category':'PRIVATE_SENTINEL','httpStatus':None,'rpcCode':None}},{'error':{'category':'http','httpStatus':True,'rpcCode':None}},{'error':{'category':'http','httpStatus':600,'rpcCode':None}},{'error':{'category':'rpc','httpStatus':None,'rpcCode':2**31}},{'error':{'category':'unknown','httpStatus':None,'rpcCode':None,'message':'PRIVATE_SENTINEL'}}]:
+                file.write_text(json.dumps({**good,'archiver':{**good['archiver'],**patch}}));self.assertEqual(b.stage_observation(base),{'available':False})
+            file.write_text(json.dumps(good))
+            for name in ('.stages.failed','.stages.tmp'):
+                marker=directory/name;marker.write_text('1');marker.chmod(0o600)
+                self.assertEqual(b.stage_observation(base),{'available':False});marker.unlink()
+                marker.symlink_to(directory/'absent');self.assertEqual(b.stage_observation(base),{'available':False});marker.unlink()
             file.write_text('x'*8193);self.assertEqual(b.stage_observation(base),{'available':False})
             file.unlink();file.symlink_to(base/'elsewhere');self.assertEqual(b.stage_observation(base),{'available':False})
             file.unlink();os.mkfifo(file,0o600);self.assertEqual(b.stage_observation(base),{'available':False})

@@ -461,7 +461,7 @@ The helper requires Node 24.21.0 and uses the official synchronous
 Offline extraction from the pinned image found the 24.21.0 public header and
 byte-identical startup/factory modules. A real Mac Node 24 hook test validates
 replacement, untouched unrelated imports and deregistration; this is not a
-Linux node startup test. Before the CLI imports, all three exact module hashes
+Linux node startup test. Before the CLI imports, all six exact module hashes
 and unique insertion anchors must match. At load time the original returned
 bytes are checked again. Fixed begin/complete markers and one import are inserted.
 The one complete CLI `getL1Config` call also selects the fixed PublicNode URL
@@ -472,14 +472,15 @@ recovers the exact original module bytes. SDK/image files on disk are unchanged.
 This execution has an explicit **semantic configuration-provider adapter plus
 instrumentation**; it is not an unmodified-image qualification or merely logging.
 
-The 25 intervals cover registry validation, rollup compatibility, L1 configuration,
+The 35 intervals cover registry validation, rollup compatibility, L1 configuration,
 genesis comparison, telemetry, factory crypto/key-store/address/blob/snapshot/
 world-state/AVM/archiver/verifier/fee/P2P startup, and public/admin RPC binding.
 A begin without completion identifies an interval, not its error's cause. Marker
 I/O failure is sticky and cannot replace the application's result or thrown
-object. The helper emits no stdout/stderr diagnostics. Its recorder never receives an
-error object, URL, runtime configuration, identity or return value; provider
-selection is a fixed source-level literal rather than a runtime input.
+object. The helper emits no stdout/stderr diagnostics. Its recorder never receives a raw error, URL, runtime configuration or identity;
+a separate bounded classifier inspects only actual typed errors for numeric
+HTTP/RPC status or fixed blob/old-block categories. Provider selection remains
+a fixed source-level literal rather than a runtime input.
 
 `startup.instrumentation` reads only `startup-stages/stages.json`: an owner-only
 regular file, maximum 8192 bytes, with strict schema, helper digest and a bounded,
@@ -579,3 +580,56 @@ by this source change. A future package needs a fresh complete manifest and
 actual <=16384-byte payload check, while all shutdown/masking/isolation controls
 remain unchanged. Reversal requires a reviewed explicit provider choice and new
 helper/package pins, never automatic fallback.
+
+
+### Archiver progress observations (schema 2)
+
+The failed operator08 receipt established completed configuration, genesis,
+world-state and AVM setup but only the beginning of `factory-archiver`. It did
+not distinguish an active historical backlog from a pre-loop wait or errors
+caught by the SDK's existing polling loop. Schema 2 adds ten fixed subphases:
+store creation, protocol registration, constants, initial header, archiver start,
+blob/clock/trace/history checks and initial synchronization. Begin/complete
+markers remain around the actual awaited operations and retain all source
+conditions and returned values. The exact `Archiver.sync` body is observed with
+a catch that rethrows the identical error; the existing `RunningPromise` error
+handler, retries, timing and blob behavior are unchanged.
+
+The additional `archiver` snapshot retains started/completed/failed pass counts,
+in-flight state, latest observed L1 head, committed local L1 height, last
+persisted checkpoint, monotonic elapsed observation/progress times and the last
+bounded error category. Counters, times and heights are uint32; a larger or
+invalid height increases a bounded dropped-observation counter instead of being
+rounded. Error inspection is limited to eight typed causes, own data properties,
+HTTP status 100–599 and signed 32-bit RPC codes. Accessors, cycles and unrecognized
+errors produce fixed `unknown` information; messages, URLs, stacks and response
+bodies are never recorded. A previous failure remains visible after a later
+successful pass. A heartbeat never invents progress.
+
+Progress snapshots are written at most once per 30 seconds, with additional
+forced writes for finite stage transitions and normal process exit. The pinned
+CLI's SIGTERM/SIGINT handlers call `process.exit`, allowing this final flush;
+SIGKILL, power loss or an early unhandled signal can retain only the most recent
+snapshot. No new signal handler changes the SDK lifecycle. An unfinished
+`.stages.tmp` or sticky `.stages.failed` marker makes the Python/JS projection
+unavailable, preventing an older valid record from concealing a known write
+failure. If the filesystem cannot persist even the failure marker, durable
+failure evidence cannot be guaranteed; shutdown controls remain independent.
+
+The same 8192-byte cap, owner-only directory/file and exact helper digest apply.
+Python and JavaScript both reject unknown keys, malformed numbers, incoherent
+pass counts, old schemas and invalid stage nesting. Ordinary stdout can never
+supply this record. These fields describe a trusted, explicitly instrumented
+runtime, not a malicious-process attestation, anonymity result or readiness
+pass. No observation alters timeout or release gates.
+
+All six installed source modules are hash-bound and syntax-tested without
+executing the node. The new `archiver/dest/modules/l1_synchronizer.js` binding is
+currently installed-source evidence only; its exact pinned-image byte equality
+must be independently verified before paid execution. Existing image bindings
+cover the other modules. A future operator receipt projector must validate and
+retain schema 2 and its finite `archiver` snapshot, including the unchanged
+`runtimeAdapter: "publicnode-config-v1"` label. New packaging, an actual
+<=16384-byte capability payload check and independent review remain prerequisites
+for a separately authorized run. This source change does not extend a runtime,
+rotate providers, retry a campaign or establish Linux qualification.

@@ -750,9 +750,9 @@ def _execute(config, attestation_source):
 
 
 # Dedicated records from the exact pinned process with an explicit configuration-provider adapter; not adversarial attestation.
-STARTUP_HELPER_SHA = '5903627ac22e4746e27c5fe0326a63be6004e391bbae82a2d3bed26d7d14c3f9'
+STARTUP_HELPER_SHA = '259fc1463fe0731b76739ff851e68ad50c65884ea3c3e1f12beb3ac1e3c13c6c'
 STARTUP_ADAPTER = 'publicnode-config-v1'
-DIAGNOSTIC_PHASES = ('registry-guard', 'rollup-compatibility', 'l1-config', 'genesis-compare', 'telemetry', 'factory', 'factory-bb', 'factory-kzg', 'factory-keystore', 'factory-addresses', 'factory-l1-constants', 'factory-blob', 'factory-snapshot', 'factory-epoch-cache', 'factory-world-state', 'factory-avm', 'factory-archiver', 'factory-world-state-sync', 'factory-verifiers', 'factory-fee-provider', 'factory-p2p', 'factory-start', 'public-rpc-bind', 'admin-auth', 'admin-rpc-bind')
+DIAGNOSTIC_PHASES = ('registry-guard', 'rollup-compatibility', 'l1-config', 'genesis-compare', 'telemetry', 'factory', 'factory-bb', 'factory-kzg', 'factory-keystore', 'factory-addresses', 'factory-l1-constants', 'factory-blob', 'factory-snapshot', 'factory-epoch-cache', 'factory-world-state', 'factory-avm', 'factory-archiver', 'factory-world-state-sync', 'factory-verifiers', 'factory-fee-provider', 'factory-p2p', 'factory-start', 'public-rpc-bind', 'admin-auth', 'admin-rpc-bind', 'archiver-store', 'archiver-protocol-register', 'archiver-constants', 'archiver-start-header', 'archiver-start', 'archiver-blob-test', 'archiver-clock-test', 'archiver-trace-test', 'archiver-history-test', 'archiver-initial-sync')
 
 def stage_directory(base):
     directory=base/'startup-stages'
@@ -772,9 +772,28 @@ def instrument_node_args(args,base):
     i=args.index(IMAGE)
     return args[:i]+['-v',str(helper)+':/etc/rolling-node/startup-stages.mjs:ro','-v',str(directory)+':/rolling-startup']+args[i:i+1]+['--import','/etc/rolling-node/startup-stages.mjs']+args[i+1:]
 
+def validate_archiver_progress(p):
+    counters=('passesStarted','passesCompleted','passesFailed','lastObservationMs','lastProgressMs','droppedObservations')
+    heights=('localL1Block','observedHeadL1Block','lastCheckpoint')
+    if type(p) is not dict or set(p)!=set(counters+heights+('inFlight','error')):raise ValueError()
+    def uint(n):return type(n) is int and 0<=n<=4294967295
+    if any(not uint(p[k]) for k in counters) or any(p[k] is not None and not uint(p[k]) for k in heights):raise ValueError()
+    if type(p['inFlight']) is not bool or p['passesCompleted']+p['passesFailed']+int(p['inFlight'])!=p['passesStarted'] or p['lastProgressMs']>p['lastObservationMs']:raise ValueError()
+    e=p['error']
+    if e is not None:
+        if type(e) is not dict or set(e)!={'category','httpStatus','rpcCode'} or e['category'] not in ('http','rpc','blob','old-block','unknown'):raise ValueError()
+        if e['httpStatus'] is not None and (type(e['httpStatus']) is not int or not 100<=e['httpStatus']<=599):raise ValueError()
+        if e['rpcCode'] is not None and (type(e['rpcCode']) is not int or not -(2**31)<=e['rpcCode']<2**31):raise ValueError()
+    return p
+
 def stage_observation(base):
     try:
-        directory=stage_directory(base);fd=os.open(directory/'stages.json',os.O_RDONLY|os.O_NOFOLLOW|os.O_NONBLOCK)
+        directory=stage_directory(base)
+        for name in ('.stages.failed','.stages.tmp'):
+            try:(directory/name).lstat()
+            except FileNotFoundError:continue
+            raise ValueError()
+        fd=os.open(directory/'stages.json',os.O_RDONLY|os.O_NOFOLLOW|os.O_NONBLOCK)
         try:
             info=os.fstat(fd)
             if not stat.S_ISREG(info.st_mode) or stat.S_IMODE(info.st_mode)!=0o600 or info.st_uid!=os.getuid() or info.st_size>8192:raise ValueError()
@@ -782,7 +801,8 @@ def stage_observation(base):
             if len(data)>8192:raise ValueError()
             v=json.loads(data)
         finally:os.close(fd)
-        if type(v) is not dict or set(v)!={'schemaVersion','instrumented','runtimeAdapter','helperSha256','history'} or type(v['schemaVersion']) is not int or v['schemaVersion']!=1 or v['instrumented'] is not True or v['runtimeAdapter']!=STARTUP_ADAPTER or v['helperSha256']!=STARTUP_HELPER_SHA:raise ValueError()
+        if type(v) is not dict or set(v)!={'schemaVersion','instrumented','runtimeAdapter','helperSha256','history','archiver'} or type(v['schemaVersion']) is not int or v['schemaVersion']!=2 or v['instrumented'] is not True or v['runtimeAdapter']!=STARTUP_ADAPTER or v['helperSha256']!=STARTUP_HELPER_SHA:raise ValueError()
+        validate_archiver_progress(v['archiver'])
         if type(v['history']) is not list or len(v['history'])>2*len(DIAGNOSTIC_PHASES):raise ValueError()
         stack=[];started=set()
         for pair in v['history']:

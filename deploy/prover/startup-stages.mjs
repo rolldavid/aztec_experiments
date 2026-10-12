@@ -2,7 +2,7 @@
  * for the pinned trusted node CLI. Only its full getL1Config call selects
  * PublicNode; ordinary/history and debug settings are preserved. No fallback.
  * No SDK file is modified. This is not malicious-process attestation or health.
- * No arguments, values, error objects, stdout or network responses enter records.
+ * Only fixed phases, bounded public progress and typed numeric error categories enter records; no arguments, raw errors, stdout or network responses.
  */
 import { createHash } from 'node:crypto';
 import { constants, openSync, closeSync, readSync, fstatSync, lstatSync, realpathSync, writeFileSync, fsyncSync, renameSync } from 'node:fs';
@@ -165,7 +165,104 @@ export const SOURCE_PLAN = Object.freeze([
       }
     ]
   }
-]);
+,
+{
+  "path": "/usr/src/yarn-project/archiver/dest/factory.js",
+  "sha256": "62396b38f5d6e66cad045fd2e058cfa8c77c60db14c377fc35a0c1796f6752c0",
+  "points": [
+    {
+      "phase": "archiver-store",
+      "before": "    const archiverStore = await createArchiverStore",
+      "after": "    await registerProtocolContracts"
+    },
+    {
+      "phase": "archiver-protocol-register",
+      "before": "    await registerProtocolContracts",
+      "after": "    if (config.testPreloadStandardContracts)"
+    },
+    {
+      "phase": "archiver-constants",
+      "before": "    const [l1StartBlock, l1GenesisTime",
+      "after": "    const l1StartBlockHash ="
+    },
+    {
+      "phase": "archiver-start-header",
+      "before": "    const l1StartBlockHash =",
+      "after": "    const { aztecEpochDuration:"
+    },
+    {
+      "phase": "archiver-start",
+      "before": "    await archiver.start(opts.blockUntilSync);",
+      "after": "    return archiver;"
+    }
+  ]
+},
+{
+  "path": "/usr/src/yarn-project/archiver/dest/archiver.js",
+  "sha256": "1a3bd29d0d314de82b7ce1e8072f173f5a1a363eb312e9f6c7570bc4f7a95e18",
+  "points": [
+    {
+      "phase": "archiver-blob-test",
+      "before": "        await this.blobClient.testSources();",
+      "after": "        await this.synchronizer.testEthereumNodeSynced();"
+    },
+    {
+      "phase": "archiver-clock-test",
+      "before": "        await this.synchronizer.testEthereumNodeSynced();",
+      "after": "        await validateAndLogTraceAvailability"
+    },
+    {
+      "phase": "archiver-trace-test",
+      "before": "        await validateAndLogTraceAvailability",
+      "after": "        await validateAndLogHistoricalLogsAvailability"
+    },
+    {
+      "phase": "archiver-history-test",
+      "before": "        await validateAndLogHistoricalLogsAvailability",
+      "after": "        // Log initial state for the archiver"
+    },
+    {
+      "phase": "archiver-initial-sync",
+      "before": "        // Start sync loop, and return the wait",
+      "after": "                this.initialSyncPromise.resolve();"
+    }
+  ],
+  "insertions": [
+    {
+      "anchor": "   */ async sync() {",
+      "after": true,
+      "text": "\n__rollingStartupObserve(\"started\");\ntry {\n"
+    },
+    {
+      "anchor": "    }\n    /**\n   * Prunes a block-only local tip",
+      "after": false,
+      "text": "__rollingStartupObserve(\"completed\");\n} catch (__rollingStartupError) {\n__rollingStartupObserve(\"failed\",__rollingStartupClassify(__rollingStartupError,{HttpRequestError:__rollingHttpError,RpcRequestError:__rollingRpcError,NoBlobBodiesFoundError,BlockTagTooOldError}));\nthrow __rollingStartupError;\n}\n"
+    }
+  ],
+  "extraImport": "import {HttpRequestError as __rollingHttpError,RpcRequestError as __rollingRpcError} from 'viem';\n"
+},
+{
+  "path": "/usr/src/yarn-project/archiver/dest/modules/l1_synchronizer.js",
+  "sha256": "118889e3b8a157aa748ffd3b4977c6c2fa87d8149d6668862c673fa0b71e7d7a",
+  "points": [],
+  "insertions": [
+    {
+      "anchor": "        const currentL1BlockNumber = currentL1Block.number;",
+      "after": true,
+      "text": "\n__rollingStartupObserve(\"head\",currentL1BlockNumber);\n"
+    },
+    {
+      "anchor": "        this.l1BlockNumber = currentL1BlockNumber;",
+      "after": true,
+      "text": "\n__rollingStartupObserve(\"local\",currentL1BlockNumber);\n"
+    },
+    {
+      "anchor": "            for (const checkpoint of validCheckpoints){",
+      "after": true,
+      "text": "\n__rollingStartupObserve(\"checkpoint\",checkpoint.checkpoint.number);\n"
+    }
+  ]
+}]);
 export const PHASES = Object.freeze(SOURCE_PLAN.flatMap(module => module.points.map(point => point.phase)));
 
 /** Pure single-call rewrite. transformSource supplies the independent whole-file
@@ -189,11 +286,15 @@ export function transformSource(source, plan, helperUrl = HOOK_URL) {
     if (start >= end) throw failure();
     changes.push({at:start, state:'begin', phase}, {at:end, state:'complete', phase});
   }
+  for (const item of plan.insertions??[]) {
+    if (!item.anchor || source.split(item.anchor).length!==2 || typeof item.text!=='string') throw failure();
+    changes.push({at:source.indexOf(item.anchor)+(item.after?item.anchor.length:0),text:item.text});
+  }
   // At a shared boundary the previous operation completes before the next starts.
   changes.sort((a,b) => a.at - b.at || (a.state === 'complete' ? -1 : 1));
-  let result = `import { mark as __rollingStartupStage } from ${JSON.stringify(helperUrl)};\n`, previous = 0;
-  for (const {at,state,phase} of changes) {
-    result += source.slice(previous,at) + `__rollingStartupStage(${JSON.stringify(phase)},${JSON.stringify(state)});\n`;
+  let result = `import { mark as __rollingStartupStage, observe as __rollingStartupObserve, classifyError as __rollingStartupClassify } from ${JSON.stringify(helperUrl)};\n`+(plan.extraImport??''), previous = 0;
+  for (const {at,state,phase,text} of changes) {
+    result += source.slice(previous,at) + (text??`__rollingStartupStage(${JSON.stringify(phase)},${JSON.stringify(state)});\n`);
     previous = at;
   }
   result += source.slice(previous);
@@ -215,8 +316,43 @@ function boundedFile(path, limit, privateMode = false) {
     return bytes.subarray(0,length);
   } finally { closeSync(fd); }
 }
+export const MAX_COUNTER = 4294967295;
+export const emptyProgress = () => ({passesStarted:0,passesCompleted:0,passesFailed:0,inFlight:false,lastObservationMs:0,lastProgressMs:0,localL1Block:null,observedHeadL1Block:null,lastCheckpoint:null,error:null,droppedObservations:0});
+const uint = n => Number.isSafeInteger(n) && n>=0 && n<=MAX_COUNTER;
+const keys = (v,expected) => v && Object.getPrototypeOf(v)===Object.prototype && Object.keys(v).sort().join()===expected.sort().join();
+export function validateProgress(v) {
+  if (!keys(v,Object.keys(emptyProgress()))) throw failure();
+  for (const k of ['passesStarted','passesCompleted','passesFailed','lastObservationMs','lastProgressMs','droppedObservations']) if(!uint(v[k]))throw failure();
+  if(typeof v.inFlight!=='boolean' || v.passesCompleted+v.passesFailed+(v.inFlight?1:0)!==v.passesStarted || v.lastProgressMs>v.lastObservationMs)throw failure();
+  for(const k of ['localL1Block','observedHeadL1Block','lastCheckpoint'])if(v[k]!==null&&!uint(v[k]))throw failure();
+  if(v.error!==null) {
+    if(!keys(v.error,['category','httpStatus','rpcCode'])||!['http','rpc','blob','old-block','unknown'].includes(v.error.category))throw failure();
+    if(v.error.httpStatus!==null&&(!Number.isInteger(v.error.httpStatus)||v.error.httpStatus<100||v.error.httpStatus>599))throw failure();
+    if(v.error.rpcCode!==null&&(!Number.isInteger(v.error.rpcCode)||v.error.rpcCode<-(2**31)||v.error.rpcCode>=2**31))throw failure();
+  }
+  return v;
+}
+/** Bounded typed cause inspection. Property accessors, messages and stacks are
+ * never evaluated. Classes come from the same pinned module's actual imports. */
+export function classifyError(error, types) {
+  const unknown=()=>({category:'unknown',httpStatus:null,rpcCode:null});
+  try {
+    const seen=new Set(),out=unknown();let current=error;
+    for(let depth=0;current!==undefined&&current!==null;depth++) {
+      if(depth===8||typeof current!=='object'||seen.has(current))return unknown();seen.add(current);
+      const own=k=>{const d=Object.getOwnPropertyDescriptor(current,k);return d&&Object.hasOwn(d,'value')?d.value:undefined;};
+      if(current instanceof types.HttpRequestError){const n=own('status');if(Number.isInteger(n)&&n>=100&&n<=599&&out.httpStatus===null){out.httpStatus=n;out.category='http';}}
+      if(current instanceof types.RpcRequestError){const n=own('code');if(Number.isInteger(n)&&n>=-(2**31)&&n<2**31&&out.rpcCode===null){out.rpcCode=n;if(out.category==='unknown')out.category='rpc';}}
+      if(current instanceof types.NoBlobBodiesFoundError&&out.category==='unknown')out.category='blob';
+      if(current instanceof types.BlockTagTooOldError&&out.category==='unknown')out.category='old-block';
+      const cause=Object.getOwnPropertyDescriptor(current,'cause');if(cause&&!Object.hasOwn(cause,'value'))return unknown();current=cause?.value;
+    }
+    return out;
+  }catch{return unknown();}
+}
 export function validateRecord(value, helperSha256) {
-  if (!value || Object.getPrototypeOf(value) !== Object.prototype || Object.keys(value).sort().join() !== 'helperSha256,history,instrumented,runtimeAdapter,schemaVersion' || value.schemaVersion !== 1 || value.instrumented !== true || value.runtimeAdapter !== RUNTIME_ADAPTER || !/^[a-f0-9]{64}$/.test(helperSha256) || value.helperSha256 !== helperSha256 || !Array.isArray(value.history) || value.history.length > PHASES.length * 2) throw failure();
+  if (!keys(value,['helperSha256','history','instrumented','runtimeAdapter','schemaVersion','archiver']) || value.schemaVersion !== 2 || value.instrumented !== true || value.runtimeAdapter !== RUNTIME_ADAPTER || !/^[a-f0-9]{64}$/.test(helperSha256) || value.helperSha256 !== helperSha256 || !Array.isArray(value.history) || value.history.length > PHASES.length * 2) throw failure();
+  validateProgress(value.archiver);
   const started = new Set(), stack = [];
   for (const pair of value.history) {
     if (!Array.isArray(pair) || pair.length !== 2 || !PHASES.includes(pair[0]) || !['begin','complete'].includes(pair[1])) throw failure();
@@ -229,37 +365,51 @@ export function validateRecord(value, helperSha256) {
 }
 export function readRecord(directory, helperSha256) {
   privateDirectory(directory);
+  if(existsEntry(join(directory,'.stages.failed'))||existsEntry(join(directory,'.stages.tmp')))throw failure();
   return validateRecord(JSON.parse(boundedFile(join(directory,RECORD_NAME),MAX_RECORD_BYTES,true)), helperSha256);
 }
 function existsEntry(path) {
   try { lstatSync(path); return true; } catch (error) { if (error?.code === 'ENOENT') return false; throw failure(); }
 }
-export function createRecorder(directory, helperSha256) {
+export function createRecorder(directory, helperSha256, now=()=>performance.now()) {
   privateDirectory(directory);
-  if (!/^[a-f0-9]{64}$/.test(helperSha256) || existsEntry(join(directory, RECORD_NAME)) || existsEntry(join(directory, '.stages.tmp'))) throw failure();
-  const value = {schemaVersion:1,instrumented:true,runtimeAdapter:RUNTIME_ADAPTER,helperSha256,history:[]};
-  let unavailable = false;
-  return (phase,state) => {
-    if (unavailable) return false;
+  if (!/^[a-f0-9]{64}$/.test(helperSha256) || [RECORD_NAME,'.stages.tmp','.stages.failed'].some(name=>existsEntry(join(directory,name)))) throw failure();
+  const value = {schemaVersion:2,instrumented:true,runtimeAdapter:RUNTIME_ADAPTER,helperSha256,history:[],archiver:emptyProgress()};
+  let unavailable=false,lastFlush=-Infinity;const began=now();
+  const fault=()=>{unavailable=true;try{const fd=openSync(join(directory,'.stages.failed'),constants.O_WRONLY|constants.O_CREAT|constants.O_EXCL|constants.O_NOFOLLOW,0o600);try{writeFileSync(fd,'1');fsyncSync(fd);}finally{closeSync(fd);}}catch{}return false;};
+  function flush(force=false) {
+    if(unavailable)return false;
     let fd;
     try {
-      value.history.push([phase,state]); validateRecord(value,helperSha256);
-      const bytes = Buffer.from(JSON.stringify(value));
-      if (bytes.length > MAX_RECORD_BYTES) throw failure();
-      privateDirectory(directory);
-      fd = openSync(join(directory,'.stages.tmp'), constants.O_WRONLY | constants.O_CREAT | constants.O_EXCL | constants.O_NOFOLLOW,0o600);
-      writeFileSync(fd,bytes); fsyncSync(fd); closeSync(fd); fd = undefined;
-      renameSync(join(directory,'.stages.tmp'),join(directory,RECORD_NAME));
-      fd = openSync(directory,constants.O_RDONLY | constants.O_DIRECTORY | constants.O_NOFOLLOW); fsyncSync(fd);
-      return true;
-    } catch {
-      // Evidence failure must never replace the application's original outcome.
-      unavailable = true; return false;
-    } finally { if (fd !== undefined) { try { closeSync(fd); } catch { unavailable = true; } } }
+      if(!force&&now()-lastFlush<30000)return true;
+      validateRecord(value,helperSha256);const bytes=Buffer.from(JSON.stringify(value));if(bytes.length>MAX_RECORD_BYTES)throw failure();
+      privateDirectory(directory);fd=openSync(join(directory,'.stages.tmp'),constants.O_WRONLY|constants.O_CREAT|constants.O_EXCL|constants.O_NOFOLLOW,0o600);
+      writeFileSync(fd,bytes);fsyncSync(fd);closeSync(fd);fd=undefined;renameSync(join(directory,'.stages.tmp'),join(directory,RECORD_NAME));
+      fd=openSync(directory,constants.O_RDONLY|constants.O_DIRECTORY|constants.O_NOFOLLOW);fsyncSync(fd);lastFlush=now();return true;
+    }catch{return fault();}finally{if(fd!==undefined){try{closeSync(fd);}catch{fault();}}}
+  }
+  const record=(phase,state)=>{if(unavailable)return false;try{value.history.push([phase,state]);return flush(true);}catch{return fault();}};
+  record.observe=(kind,datum)=>{
+    if(unavailable)return false;
+    try{
+      const p=value.archiver,elapsed=Math.floor(now()-began);if(!uint(elapsed))return fault();p.lastObservationMs=elapsed;
+      if(kind==='started'){if(p.inFlight||p.passesStarted===MAX_COUNTER)throw failure();p.passesStarted++;p.inFlight=true;}
+      else if(kind==='completed'||kind==='failed'){if(!p.inFlight)throw failure();p.inFlight=false;if(kind==='completed')p.passesCompleted++;else{p.passesFailed++;validateProgress({...p,error:datum});p.error={category:datum.category,httpStatus:datum.httpStatus,rpcCode:datum.rpcCode};}}
+      else{
+        const key={head:'observedHeadL1Block',local:'localL1Block',checkpoint:'lastCheckpoint'}[kind];if(!key)throw failure();
+        const n=typeof datum==='bigint'&&datum>=0n&&datum<=BigInt(MAX_COUNTER)?Number(datum):datum;
+        if(!uint(n)){p.droppedObservations=Math.min(MAX_COUNTER,p.droppedObservations+1);return flush();}
+        if(key!=='observedHeadL1Block'&&(p[key]===null||n>p[key]))p.lastProgressMs=elapsed;p[key]=n;
+      }
+      return flush();
+    }catch{return fault();}
   };
+  record.flush=(force=true)=>flush(force);
+  return record;
 }
 let recorder;
 export function mark(phase,state) { return recorder?.(phase,state) ?? false; }
+export function observe(kind,datum) { return recorder?.observe(kind,datum) ?? false; }
 export function installRuntimeAdapter() {
   if (process.version !== 'v24.21.0' || import.meta.url !== HOOK_URL) throw failure();
   const prepared = new Map();
@@ -271,6 +421,9 @@ export function installRuntimeAdapter() {
     prepared.set(pathToFileURL(canonical).href, {plan, transformed:transformSource(bytes.toString('utf8'),plan)});
   }
   recorder = createRecorder(RECORD_DIRECTORY,sha256(boundedFile(fileURLToPath(import.meta.url),1024*1024)));
+  // One unrefed flush timer, no network/process lifecycle or SDK scheduling change.
+  const timer=setInterval(()=>recorder.flush(false),30000);timer.unref();
+  process.once('exit',()=>{clearInterval(timer);recorder.flush();});
   return registerHooks({load:createLoadHook(prepared)});
 }
 export function createLoadHook(prepared) {
