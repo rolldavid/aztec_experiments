@@ -14,6 +14,7 @@ import {poseidon2HashWithSeparator} from '@aztec-labs/foundation/crypto/poseidon
 import {BarretenbergSync} from '@aztec-foundation/bb.js';
 import {createPreferenceEventDecoder} from '../../shared/rolling/preference-events.mjs';
 after(()=>BarretenbergSync.destroySingleton());
+import {computeArtifactHash} from '@aztec-labs/stdlib/contract';
 import {Tx,TxHash} from '@aztec-labs/stdlib/tx';
 import {PrivateKernelTailCircuitPublicInputs} from '@aztec-labs/stdlib/kernel';
 import {ChonkProof} from '@aztec-labs/stdlib/proofs';
@@ -401,9 +402,10 @@ test('metrics retains account-change fencing after awaited head read',async t=>{
 });
 
 test('explicit cold actor defers account signing and never falls back when extension is unavailable',async t=>{
- const f=await fixture(t),actor=await createRollingApplicationActor({...f.input,coldPreferences:true});
+ const f=await fixture(t);let hashes=0;f.input.sdk.computeArtifactHash=async artifact=>{hashes++;return computeArtifactHash(artifact);};
+ const actor=await createRollingApplicationActor({...f.input,coldPreferences:true});
  try{
-  assert(!f.state.calls.includes('signing-key'));await assert.rejects(actor.application.readColdPreferences());
+  assert(!f.state.calls.includes('signing-key'));await assert.rejects(actor.application.readColdPreferences(),{code:'ROLLING_COLD_PREFERENCES_INVALID'});assert.equal(hashes,1);
   assert(!f.state.calls.includes('signing-key'));assert.equal(actor.activity().walletSubmissions,0);
   await actor.application.readAccountStatus();assert.equal(f.state.calls.filter(x=>x==='signing-key').length,1);
   await actor.application.readAccountStatus();assert.equal(f.state.calls.filter(x=>x==='signing-key').length,1);
