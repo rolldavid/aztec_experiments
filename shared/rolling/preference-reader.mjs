@@ -61,6 +61,8 @@ export function createRollingPreferenceReader(input){
   const artifact=structuredClone(deployment.board.artifact);
   const decoderSdk=Object.freeze({EventSelector:sdk.EventSelector,decodeFunctionSignature:sdk.decodeFunctionSignature});
   let active=null,slot=null,decoder=null;
+  // Keep the SDK BlockHash in RAM only; cache/public anchors contain canonical hex.
+  const anchorHashes=new WeakMap();
   function current(){
    assert(trusted(node)&&routed(pxe,node)&&hex(owner)===account&&hex(deployment.board.address)===board&&
     hex(deployment.board.instance.currentContractClassId)===classId&&hex(deployment.board.instance.originalContractClassId)===classId&&equal(deployment.network,network)&&(deployment.proofsEnabled!==false)===proofsEnabled);
@@ -75,15 +77,17 @@ export function createRollingPreferenceReader(input){
   }
   async function captureAnchor(){
    const value=await checked(header),blockNumber=natural(Number(value?.globalVariables?.blockNumber));
-   const blockHash=hex(await checked(()=>value.hash()));
-   assert(await canonical(blockNumber)===blockHash);return Object.freeze({blockNumber,blockHash});
+   const typedHash=await checked(()=>value.hash()),blockHash=hex(typedHash);
+   assert(await canonical(blockNumber)===blockHash);
+   const anchor=Object.freeze({blockNumber,blockHash});anchorHashes.set(anchor,typedHash);return anchor;
   }
   async function captureHead(){
    const head=Object.freeze(exact(await checked(readHead),['initialized','schema','revision','digest']));
    createPreferenceFold({scope,head,hash});return head; // strict shared head validation, no events/hashes.
   }
   async function checkClass(anchor){
-   const instance=await checked(()=>getContract(address,{hash:anchor.blockHash}));
+   const typedHash=anchorHashes.get(anchor);assert(typedHash&&hex(typedHash)===anchor.blockHash);
+   const instance=await checked(()=>getContract(address,{hash:typedHash}));
    assert(instance&&hex(instance.address)===board&&hex(instance.currentContractClassId)===classId&&hex(instance.originalContractClassId)===classId);
   }
   async function recheck(anchor,head){

@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {Fr} from '@aztec-labs/foundation/curves/bn254';
 import {AztecAddress} from '@aztec-labs/stdlib/aztec-address';
-import {BlockHash} from '@aztec-labs/stdlib/block';
+import {BlockHash,BlockParameterSchema} from '@aztec-labs/stdlib/block';
 import {TxHash} from '@aztec-labs/stdlib/tx';
 import {EventSelector,decodeFunctionSignature,loadContractArtifact} from '@aztec-labs/stdlib/abi';
 import {poseidon2HashWithSeparator} from '@aztec-labs/foundation/crypto/poseidon';
@@ -13,6 +13,9 @@ import {BarretenbergSync} from '@aztec-foundation/bb.js';
 import {createEncryptedJournalSlot} from '../journal-record.mjs';
 import {createPreferenceEventDecoder} from './preference-events.mjs';
 import {createRollingPreferenceReader} from './preference-reader.mjs';
+const nodeEntry=import.meta.resolve('@aztec-labs/aztec-node');
+const {normalizeBlockParameter}=await import(new URL('./modules/block_parameter.js',nodeEntry));
+const {UnseenBlockHoldOff}=await import(new URL('./modules/unseen_block_hold_off.js',nodeEntry));
 after(()=>BarretenbergSync.destroySingleton());
 const artifact=loadContractArtifact(JSON.parse(fs.readFileSync(new URL('../../billboard/target/rolling_contract-RollingBoard.json',import.meta.url))));
 const h=n=>'0x'+BigInt(n).toString(16).padStart(64,'0');
@@ -24,9 +27,9 @@ async function fixture(changes=[changed(2),changed(40,3,'8')],height=64){
  const values=new Map(),calls=[],state={height,guard:true,route:true,failCAS:false,hook:null,hashOverrides:new Map(),rows:[],head:null};
  const run=async(name,fn)=>{calls.push(name);const result=await fn();if(state.hook)await state.hook(name);return result;};
  const blockHash=block=>state.hashOverrides.get(block)??h(block+100);
- const getHeader=()=>({globalVariables:{blockNumber:state.height},hash:async()=>new Fr(BigInt(blockHash(state.height)))});
+ const getHeader=()=>({globalVariables:{blockNumber:state.height},hash:async()=>BlockHash.fromString(blockHash(state.height))});
  const node={getBlockData:block=>run('block:'+block,()=>({header:{globalVariables:{blockNumber:block}},blockHash:BlockHash.fromString(blockHash(block))})),
-  getContract:(_,ref)=>run('class',()=>{assert(ref.hash);return{address:board,currentContractClassId:classId,originalContractClassId:classId};})};
+  getContract:(_,ref)=>run('class',()=>{assert(BlockHash.isBlockHash(ref.hash));return{address:board,currentContractClassId:classId,originalContractClassId:classId};})};
  const pxe={sync:()=>run('sync',()=>{}),getSyncedBlockHeader:()=>run('header',getHeader),
   getPrivateEvents:(selector,filter)=>run('events',()=>{
    state.lastFilter=filter;assert.equal(filter.contractAddress.toString(),board.toString());assert.deepEqual(filter.scopes.map(x=>x.toString()),[owner.toString()]);
@@ -180,4 +183,30 @@ test('marker continuation metadata is strictly bound and cannot skip beyond the 
  const f=await fixture([changed(2,6,'4',true,1,'101')],4);await f.reader.read();
  const slot=await f.slot(),saved=await slot.read(),bad=structuredClone(saved.value);bad.markers={nextIndex:2,canonical:[true,true]};
  await slot.write(saved,bad);const bytes=[...f.values.values()][0];await invalid(f.restart().read());assert.equal([...f.values.values()][0],bytes);
+});
+
+// Installed native hold-off and RPC schema; the backing block source alone is a labelled fixture.
+test('native class lookup retains the exact SDK BlockHash while RPC parsing and persisted anchors stay compatible',async()=>{
+ const f=await fixture([changed(2)],4),typed=BlockHash.fromString(f.blockHash(4));
+ const silent={verbose(){}};
+ const source={getBlockData:async query=>query.hash?.equals(typed)?{blockHash:typed}:undefined,
+  getGenesisBlockHash:()=>BlockHash.fromString(h(0))};
+ const holdoff=new UnseenBlockHoldOff(source,{byHashWaitMs:0,byNumberWaitMs:0},silent);
+ // Native normalization does not perform the RPC schema's string-to-BlockHash conversion.
+ const missingSource={...source,getBlockData:async()=>undefined};
+ const nativeMiss=new UnseenBlockHoldOff(missingSource,{byHashWaitMs:0,byNumberWaitMs:0},silent);
+ await assert.rejects(nativeMiss.getBlockData(normalizeBlockParameter({hash:typed.toString()})),TypeError);
+ const parsed=BlockParameterSchema.parse({hash:typed.toString()});assert(BlockHash.isBlockHash(parsed.hash));
+ assert.equal(await nativeMiss.getBlockData(normalizeBlockParameter(parsed)),undefined);
+ f.input.pxe.getSyncedBlockHeader=async()=>({globalVariables:{blockNumber:4},hash:async()=>typed});
+ let calls=0;
+ f.input.node.getContract=async(_,ref)=>{
+  calls++;assert.equal(ref.hash,typed);assert.equal((await holdoff.getBlockData(normalizeBlockParameter(ref))).blockHash,typed);
+  return {address:f.input.deployment.board.address,...f.input.deployment.board.instance};
+ };
+ const result=await f.restart().read();assert.equal(result.status,'complete');assert(calls>=3);
+ assert.deepEqual(result.anchor,{blockNumber:4,blockHash:typed.toString()});
+ const cache=(await (await f.slot()).read()).value;
+ assert.deepEqual(cache.checkpoint,{blockNumber:4,blockHash:typed.toString()});
+ assert.equal(typeof cache.checkpoint.blockHash,'string');
 });
