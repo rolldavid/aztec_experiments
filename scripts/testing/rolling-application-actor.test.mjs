@@ -23,6 +23,7 @@ import * as outcomes from '../../shared/transaction-outcomes.mjs';
 import {SchnorrInitializerlessAccountContract} from '@aztec-labs/accounts/schnorr';
 import {createL2Journal} from '../../shared/l2-journal.mjs';
 import {createRollingApplicationActor} from './rolling-application-actor.mjs';
+import {createRollingPrivateRecoveryMetrics} from './rolling-private-recovery-metrics.mjs';
 const artifact=loadContractArtifact(JSON.parse(await fs.readFile(process.env.ROLLING_TEST_ARTIFACT??new URL('../../billboard/target/rolling_contract-RollingBoard.json',import.meta.url),'utf8')));
 const hex=n=>'0x'+BigInt(n).toString(16).padStart(64,'0'),address=n=>AztecAddress.fromBigIntUnsafe(BigInt(n));
 async function fixture(t,options={}){
@@ -295,4 +296,106 @@ test('separate replacement namespace and empty encrypted store rebuilds from lab
  const second=await preferenceFixture(t);assert.notEqual(second.input.storageDirectory,first.input.storageDirectory);assert.notEqual(second.input.dataDirectory,first.input.dataDirectory);
  const b=await createRollingApplicationActor(second.input);
  try{assert.deepEqual(await fs.readdir(second.input.storageDirectory),[]);const result=await b.application.readPreferences();assert.deepEqual(result.preferences,prior.preferences);assert.deepEqual(second.state.ranges,[[1,5]]);assert.deepEqual(b.activity(),{authWitnesses:0,proofJobs:0,walletSubmissions:0,transportSends:0});}finally{await b.close();}
+});
+
+
+// Optional observation integration: labelled SDK/PXE/node doubles only. The
+// production reader, processed ABI, Poseidon and file AEAD remain real; these
+// cases do not qualify chain recovery, native discovery or transport coverage.
+test('metrics captures construction and owned calls before reader binding without changing node or PXE identity',async t=>{
+ const f=await preferenceFixture(t),metrics=createRollingPrivateRecoveryMetrics(),originalCreate=f.input.sdk.createPXE;
+ let constructionCalls=0;
+ f.input.sdk.createPXE=function(...args){assert.equal(this,f.input.sdk);constructionCalls++;return Reflect.apply(originalCreate,this,args);};
+ const actor=await createRollingApplicationActor({...f.input,metrics});
+ try{
+  assert.equal(constructionCalls,1);assert.equal(actor.pxe,f.pxe);assert.equal(actor.wallet.pxe,f.pxe);assert.equal(actor.wallet.aztecNode,f.input.node);
+  let report=metrics.snapshot();assert.equal(report.phases['pxe-construct'].calls,1);assert.equal(report.phases['block-sync'].calls,1);assert.equal(report.phases.events.calls,0);assert.equal(report.phases['head-utility'].calls,0);
+  assert.equal((await actor.application.readPreferences()).status,'complete');
+  report=metrics.snapshot();assert.equal(report.phases['block-sync'].calls,2);assert.equal(report.phases.events.calls,1);assert(report.phases['head-utility'].calls>=2);assert.equal(report.counters.eventRows,1);
+  for(const phase of ['discovery','fold']){assert.equal(report.phases[phase].calls,0);assert(report.unobservedPhases.includes(phase));}
+  assert.equal(report.transportBytesObserved,false);assert.equal(report.endToEndWorkBoundQualified,false);assert.equal(report.encryptedRecoveryQualified,false);
+  assert.deepEqual(actor.activity(),{authWitnesses:0,proofJobs:0,walletSubmissions:0,transportSends:0});
+ }finally{await actor.close();}
+});
+test('metrics preserves original instance receivers, exact arguments and Promise/error identities',async t=>{
+ const f=await preferenceFixture(t),metrics=createRollingPrivateRecoveryMetrics();let lastSync,lastEvents,answer,thrown;
+ f.pxe.sync=function(...args){assert.equal(this,f.pxe);lastSync=args;if(thrown)throw thrown;return answer??Promise.resolve();};
+ f.pxe.getPrivateEvents=function(...args){assert.equal(this,f.pxe);lastEvents=args;if(thrown)throw thrown;return answer;};
+ const actor=await createRollingApplicationActor({...f.input,metrics});
+ try{
+  const a={},b={};answer=Promise.resolve([]);assert.equal(actor.pxe.sync(a,b),answer);assert.equal(lastSync[0],a);assert.equal(lastSync[1],b);
+  assert.equal(actor.pxe.getPrivateEvents(a,b),answer);assert.equal(lastEvents[0],a);assert.equal(lastEvents[1],b);await answer;
+  thrown=Error('PRIVATE_SENTINEL');assert.throws(()=>actor.pxe.sync(a),e=>e===thrown);assert.throws(()=>actor.pxe.getPrivateEvents(b),e=>e===thrown);thrown=undefined;
+  const rejection=Error('PRIVATE_SENTINEL');answer=Promise.reject(rejection);const result=actor.pxe.getPrivateEvents(a,b);assert.equal(result,answer);await assert.rejects(result,e=>e===rejection);
+  assert(!JSON.stringify(metrics.snapshot()).includes('PRIVATE_SENTINEL'));
+ }finally{await actor.close();}
+});
+test('metrics rebuild observes the new raw head callback without nested sync or double instance wrapping',async t=>{
+ const f=await preferenceFixture(t),metrics=createRollingPrivateRecoveryMetrics(),captured=[];
+ const observer={wrapCall(phase,fn){assert.equal(this,observer);captured.push({phase,fn});return metrics.wrapCall(phase,fn);}};
+ const actor=await createRollingApplicationActor({...f.input,metrics:observer});
+ try{
+  await actor.application.readPreferences();const first=metrics.snapshot(),firstHead=captured.find(x=>x.phase==='head-utility').fn;
+  await actor.reopenJournal();const reopened=metrics.snapshot();assert.equal(reopened.phases['block-sync'].calls,first.phases['block-sync'].calls);
+  await actor.application.readPreferences();const last=metrics.snapshot(),heads=captured.filter(x=>x.phase==='head-utility');
+  assert.equal(heads.length,2);assert.notEqual(heads[1].fn,firstHead);assert.equal(last.phases['block-sync'].calls-first.phases['block-sync'].calls,1);
+  for(const phase of ['pxe-construct','block-sync','events'])assert.equal(captured.filter(x=>x.phase===phase).length,1);
+  assert.equal(last.phases['head-utility'].calls-first.phases['head-utility'].calls,f.state.calls.filter(x=>x==='preference-head').length-first.phases['head-utility'].calls);
+ }finally{await actor.close();}
+});
+test('metrics capability is captured before awaits; changing observer property never changes later wrapping',async t=>{
+ const f=await preferenceFixture(t),metrics=createRollingPrivateRecoveryMetrics(),observer={wrapCall:metrics.wrapCall};
+ f.state.hook=label=>{if(label==='open-store')observer.wrapCall=()=>{throw Error('PRIVATE_SENTINEL');};};
+ const actor=await createRollingApplicationActor({...f.input,metrics:observer});
+ try{assert.equal((await actor.application.readPreferences()).status,'complete');assert(metrics.snapshot().phases['head-utility'].calls>0);}finally{await actor.close();}
+});
+for(const invalid of [null,{}, {wrapCall:1},Object.defineProperty({},'wrapCall',{get(){throw Error('PRIVATE_SENTINEL');}})])test('metrics rejects invalid observer before allocating resources',async t=>{
+ const f=await fixture(t);await assert.rejects(createRollingApplicationActor({...f.input,metrics:invalid}),/Invalid actor metrics/);assert.equal(f.state.calls.length,0);
+ const actor=await createRollingApplicationActor(f.input);await actor.close();
+});
+test('metrics disabled leaves original owned method identities and default behavior unchanged',async t=>{
+ const f=await preferenceFixture(t),sync=f.pxe.sync,events=f.pxe.getPrivateEvents,actor=await createRollingApplicationActor(f.input);
+ try{assert.equal(actor.pxe.sync,sync);assert.equal(actor.pxe.getPrivateEvents,events);assert.equal((await actor.application.readPreferences()).status,'complete');}finally{await actor.close();}
+});
+for(const phase of ['create-pxe','sync','preference-head','preference-events'])test('metrics counts failed '+phase+' without replay, lost cleanup or sensitive diagnostics',async t=>{
+ const f=await preferenceFixture(t),metrics=createRollingPrivateRecoveryMetrics(),error=Error('PRIVATE_SENTINEL');let attempts=0;
+ f.state.hook=label=>{if(label===phase){attempts++;throw error;}};
+ if(['create-pxe','sync'].includes(phase)){
+  await assert.rejects(createRollingApplicationActor({...f.input,metrics}),e=>e===error);assert.equal(f.state.stops,phase==='create-pxe'?0:1);assert.equal(f.state.closes,1);
+ }else{
+  const actor=await createRollingApplicationActor({...f.input,metrics});try{await assert.rejects(actor.application.readPreferences(),{code:'ROLLING_PREFERENCE_READER_UNAVAILABLE'});}finally{await actor.close();}
+  assert.equal(f.state.stops,1);assert.equal(f.state.closes,1);
+ }
+ assert.equal(attempts,1);const report=metrics.snapshot();const label={'create-pxe':'pxe-construct',sync:'block-sync','preference-head':'head-utility','preference-events':'events'}[phase];
+ assert.equal(report.phases[label].rejected,1);assert(!JSON.stringify(report).includes('PRIVATE_SENTINEL'));assert.equal(report.counters.pending,0);
+});
+test('metrics preserves close draining an unfinished event call and prevents later private writes',async t=>{
+ const f=await preferenceFixture(t),metrics=createRollingPrivateRecoveryMetrics(),actor=await createRollingApplicationActor({...f.input,metrics});
+ let release,enter;const entered=new Promise(r=>enter=r),pending=new Promise(r=>release=r);
+ f.state.hook=async label=>{if(label==='preference-events'){enter();await pending;}};
+ const reading=actor.application.readPreferences(),failure=assert.rejects(reading,{code:'ROLLING_PREFERENCE_READER_UNAVAILABLE'});await entered;
+ assert.equal(metrics.snapshot().phases.events.pending,1);const closing=actor.close();assert.equal(f.state.stops,0);
+ release();await failure;await closing;assert.equal(metrics.snapshot().phases.events.pending,0);assert.equal(f.state.stops,1);assert.equal(f.state.closes,1);assert.deepEqual(await fs.readdir(f.input.storageDirectory),[]);
+});
+test('metrics observer attachment failure cannot replace an owned Promise',async t=>{
+ const f=await preferenceFixture(t),metrics=createRollingPrivateRecoveryMetrics(),actor=await createRollingApplicationActor({...f.input,metrics});
+ try{
+  const original=Promise.resolve([]);Object.defineProperty(original,'constructor',{get(){throw Error('PRIVATE_SENTINEL');}});
+  // The original fixture method is replaced BEFORE a second actor is built,
+  // exercising the real instance installation rather than a private SDK hook.
+  await actor.close();f.pxe.getPrivateEvents=()=>original;f.pxe.sync=async()=>{};
+  const replacement=await createRollingApplicationActor({...f.input,metrics});
+  try{assert.equal(replacement.pxe.getPrivateEvents(),original);const report=metrics.snapshot();assert(report.counters.observerErrors>0);assert.equal(report.phases.events.unobserved,1);assert(!JSON.stringify(report).includes('PRIVATE_SENTINEL'));}finally{await replacement.close();}
+ }finally{await actor.close();}
+});
+
+test('metrics cannot wrap a PXE that fails provenance validation',async t=>{
+ const f=await preferenceFixture(t),metrics=createRollingPrivateRecoveryMetrics(),sync=f.pxe.sync,events=f.pxe.getPrivateEvents;f.state.wrongPXE=true;
+ await assert.rejects(createRollingApplicationActor({...f.input,metrics}),{code:'ROLLING_ACTOR_CONTEXT'});
+ assert.equal(f.pxe.sync,sync);assert.equal(f.pxe.getPrivateEvents,events);assert.equal(metrics.snapshot().phases['block-sync'].calls,0);assert.equal(f.state.stops,1);assert.equal(f.state.closes,1);
+});
+test('metrics retains account-change fencing after awaited head read',async t=>{
+ const f=await preferenceFixture(t),metrics=createRollingPrivateRecoveryMetrics(),actor=await createRollingApplicationActor({...f.input,metrics});
+ f.state.hook=label=>{if(label==='preference-head')f.account.secret=new Fr(99);};
+ try{await assert.rejects(actor.application.readPreferences(),{code:'ROLLING_PREFERENCE_READER_UNAVAILABLE'});assert.equal(metrics.snapshot().phases.events.calls,0);assert.deepEqual(await fs.readdir(f.input.storageDirectory),[]);}finally{await actor.close();}
 });

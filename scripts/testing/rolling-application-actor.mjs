@@ -15,9 +15,19 @@ const quiet=Object.freeze({trace:discard,debug:discard,verbose:discard,info:disc
  level:'silent',module:'rolling-actor',isLevelEnabled:()=>false,createChild:()=>quiet,getBindings:()=>({})});
 
 export async function createRollingApplicationActor({sdk,routing,node,endpoint,network,proofsEnabled,board,fees,portal,
- storageDirectory,dataDirectory,log=discard,externalActivity,confirmationDeadlineAt}){
+ storageDirectory,dataDirectory,log=discard,externalActivity,confirmationDeadlineAt,metrics}){
  assert(sdk.isTrustedPrivateNode(node));assert.equal(typeof proofsEnabled,'boolean');
  assert.equal(typeof externalActivity,'function');assert.equal(typeof log,'function');
+ // Optional trusted harness observer only. Capture its capability before any
+ // await; never wrap node identity, SDK prototypes or internal sync services.
+ // Head utility includes discovery; raw discovery/fold/transport remain absent.
+ let observe;
+ if(metrics!==undefined){
+  const descriptor=metrics&&Object.getOwnPropertyDescriptor(metrics,'wrapCall');
+  assert(descriptor&&Object.hasOwn(descriptor,'value')&&typeof descriptor.value==='function','Invalid actor metrics');
+  const wrap=descriptor.value;observe=(phase,fn)=>Reflect.apply(wrap,metrics,[phase,fn]);
+ }
+ const createPXE=observe?observe('pxe-construct',sdk.createPXE):sdk.createPXE;
  // Optional race-only absolute bound, validated before acquiring either lease.
  if(confirmationDeadlineAt!==undefined)assert(Number.isSafeInteger(confirmationDeadlineAt)&&confirmationDeadlineAt>Date.now()&&confirmationDeadlineAt<=Date.now()+540000,'Invalid actor confirmation deadline');
  assert(path.isAbsolute(storageDirectory));assert(typeof dataDirectory==='string'&&dataDirectory.length>0);
@@ -81,7 +91,7 @@ export async function createRollingApplicationActor({sdk,routing,node,endpoint,n
   let preferenceReader;
   readPreferences=options=>{
    preferenceReader??=createRollingPreferenceReader({sdk,pxe,node,owner,deployment,
-    readHead:next.readPreferenceHead.bind(next),contextGuard,privateStore,
+    readHead:(observe?observe('head-utility',next.readPreferenceHead):next.readPreferenceHead).bind(next),contextGuard,privateStore,
     walletSecret:journalOptions.walletSecret,walletSalt:journalOptions.walletSalt});
    return preferenceReader.read(options);
   };
@@ -90,8 +100,14 @@ export async function createRollingApplicationActor({sdk,routing,node,endpoint,n
  try{
   activity();await sdk.inspectTrustedNode(node,{expectedNetworkScope:capturedNetwork,proofsEnabled});contextGuard();
   store=await sdk.openPXEStore({l1ChainId:Number(capturedNetwork.chainId),rollupAddress:capturedNetwork.rollup,accountAddress:ownerText,dataDirectory},undefined,quiet);contextGuard();
-  pxe=await sdk.createPXE(node,{proverEnabled:true,autoSync:false,syncChainTip:'checkpointed'},
-   {store,remoteProver:{url:endpoint,board:scope.board,timeoutMs:120000,pollMs:100}});contextGuard();
+  pxe=await Reflect.apply(createPXE,sdk,[node,{proverEnabled:true,autoSync:false,syncChainTip:'checkpointed'},
+   {store,remoteProver:{url:endpoint,board:scope.board,timeoutMs:120000,pollMs:100}}]);contextGuard();
+  if(observe){
+   // Owned instance only, installed once before any application/reader binds.
+   // The approved wrappers return the original Promise/value/error unchanged.
+   pxe.sync=observe('block-sync',pxe.sync);
+   pxe.getPrivateEvents=observe('events',pxe.getPrivateEvents);
+  }
   const accountContract=new sdk.SchnorrInitializerlessAccountContract(signingKey),originalProvider=accountContract.getAuthWitnessProvider;
   assert.equal(typeof originalProvider,'function');const seen=new WeakSet();
   accountContract.getAuthWitnessProvider=function(...args){contextGuard();const provider=originalProvider.apply(this,args);
