@@ -2,7 +2,7 @@
   "schema_version": 1,
   "budget_usd": 300,
   "scope": "Cumulative prover campaign plus at most one additional rolling.chat server; existing moderator costs remain separate.",
-  "as_of": "2026-10-12T12:19:54.782575+00:00",
+  "as_of": "2026-10-12T13:11:06.612203+00:00",
   "billing_evidence": "evidence/G02/aws-costs.json",
   "historical_campaign_bound_usd": 83.27,
   "historical_bound_method": "Retain the full earlier conservative bound including unused planned compute through13Oct, rather than subtracting unverified savings. Includes49.47 prior allowance,28.80 revival maximum and5 ancillary.",
@@ -12,8 +12,8 @@
   "new_spend_description": "One Cost Explorer query; include in reconciliation.",
   "billing_delay_cleanup_reserve_usd": 20,
   "retained_storage_network_forecast_usd": 5,
-  "conservative_committed_and_reserved_usd": 215.28,
-  "remaining_before_new_launch_usd": 84.72,
+  "conservative_committed_and_reserved_usd": 205.28,
+  "remaining_before_new_launch_usd": 94.72,
   "resources": [
     {
       "id": "i-0025eb05db3c2491c",
@@ -638,8 +638,8 @@
     {
       "id": "rolling-node-commissioning-20261012-09",
       "purpose": "One changed instrumented nativeAMD64 archiver-startup/query-only qualification campaign09 using reviewed schema2 progress and preserved config-provider adapter; measure08unknown wait, not blind capacity retry. No proofjobs/publicrouting/release.",
-      "state": "running; actualcloudandhostshutdown controlsverified, bootstrapcomplete, Linuxnodequalificationpending",
-      "reservation_usd": 25,
+      "state": "terminated; both volumes absent; Fleet deleted verified; readiness failed at rollup compatibility",
+      "reservation_usd": 15,
       "source": "1ec67f406645442965ced41e56b4e93c7097a050",
       "forecast": {
         "schemaVersion": 1,
@@ -827,13 +827,16 @@
       "fleet_submission_finished_at": "2026-10-12T12:13:49Z",
       "delete_on_termination_verified": true,
       "instance_shutdown_terminate_verified": true,
-      "latest_live_evidence": "evidence/G02/operator09-readonly-121847.json",
+      "latest_live_evidence": "evidence/G02/operator09-fleet-final-readback-130614.json",
       "compute_rate_usd_hour": 0.92736,
       "host_controls_verified_at": "2026-10-12T12:18:47.696767+00:00",
-      "control_evidence": "evidence/G02/operator09-readonly-121847.json"
+      "control_evidence": "evidence/G02/operator09-readonly-121847.json",
+      "remaining_volumes": [],
+      "termination_observed_at": "2026-10-12T12:49:21Z",
+      "qualification_status": "failed: rollup compatibility wait before archiver; no remote proof acceptance"
     }
   ],
-  "launch_hold": "09 running withinreserved25 and13:03:58absolute stop; no additionalcompute/replacement. Actualhostcontrols andLinuxreadiness qualification required; no publicrouting/proofjobs.",
+  "launch_hold": "No live09 compute/disks/Fleet. No replacement until exact image/config compatibility diagnosis and all unchanged paid launch gates. Retained15 includes network/storage/tax/cleanup; no zero-cost or invoice claim.",
   "node_requirement_sources": [
     "https://docs.aztec.network/operate/testnet/operators/full-node/overview",
     "https://docs.aztec.network/operate/testnet/operators/setup/running_a_node"
@@ -1020,5 +1023,16 @@
     "cleanup_evidence": "evidence/G02/operator08-cleanup-reconciliation.json",
     "final_fleet_evidence": "evidence/G02/operator08-fleet-readback-0947.json",
     "basis": "Leadaccepts conservative fullhour andall retainedarchive/network/buffers after finaldeleted readback; no newpaidaction or zero-costassumption."
+  },
+  "operator09_cleanup_reconciliation": {
+    "at": "2026-10-12T13:11:06.612203+00:00",
+    "prior_bound_usd": 215.28,
+    "revised_bound_usd": 205.28,
+    "released_unused_reservation_usd": 10,
+    "retained_campaign_bound_usd": 15,
+    "cost_evidence": "evidence/G02/operator09-cost-reconciliation-proposal.json",
+    "cleanup_evidence": "evidence/G02/operator09-cleanup-readback.json",
+    "final_fleet_evidence": "evidence/G02/operator09-fleet-final-readback-130614.json",
+    "basis": "Full-hour compute/storage/network plus 30-day archive, tax, delayed billing and cleanup buffer retained after final deleted readback; no paid action."
   }
 }

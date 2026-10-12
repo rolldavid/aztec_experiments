@@ -13,7 +13,7 @@
       "branch": "codex/rolling-private-bok-candidate",
       "history_locator": "Codex runtime thread 01a12a75-1b50-7871-a73b-4253a1010194",
       "role": "lead",
-      "state": "active source repair after independently reproduced browser selector defect; sole integrator",
+      "state": "notification timing and pre-handoff accounting repair; sole integrator",
       "working_branch": "codex/rolling-private-bok-candidate",
       "active_edit_paths": [
         "execution/"
@@ -22,12 +22,15 @@
         "path": "../rolling-lead-social",
         "branch": "codex/rolling-notification-funding-order",
         "owner": "lead-20261011",
-        "base": "e7214b9710724546dc1758d7ff271b3d3a21cf9b",
-        "state": "notification message selector repair; sole writer",
+        "base": "6acf92d7d0acb9460392a01a81bb9819589b848b",
+        "state": "profile/accounting repair sole writer",
         "allowed_paths": [
-          "scripts/testing/rolling-notification-browser.mjs",
-          "scripts/testing/rolling-notification-browser.test.mjs",
-          "apps/rolling/reader.browser.test.mjs"
+          "scripts/testing/scenarios.mjs",
+          "scripts/test-c01-native-profile.mjs",
+          "scripts/testing/rolling-application-fixture.mjs",
+          "scripts/testing/rolling-application-fixture.test.mjs",
+          "scripts/testing/rolling-notification-fixture.mjs",
+          "scripts/testing/rolling-notification-fixture.test.mjs"
         ]
       },
       "trusted_sender_claim": {
@@ -88,7 +91,7 @@
         ],
         "purpose": "Compose reviewed207+7867; explicit stopped-consumer PXE patch and normal SDK/walletbuild before realinitialreorg"
       },
-      "last_reconciled_at": "2026-10-12T12:40:36.790645+00:00"
+      "last_reconciled_at": "2026-10-12T13:11:06.612203+00:00"
     },
     {
       "logical_id": "recovery-probe-20261011",
@@ -109,15 +112,15 @@
       "task": [
         "G14"
       ],
-      "branch": "codex/rolling-archiver-startup-observation",
+      "branch": "codex/rolling-rollup-compatibility-diagnostic",
       "history_locator": "collaboration runtime /root/controls, parent 01a12a75-1b50-7871-a73b-4253a1010194",
       "role": "implementation worker",
-      "state": "sole live09 watch78374/PID28234 and reviewed once-only terminalcleanup; no extension/replacement",
+      "state": "09 cleanup complete; source-only compatibility diagnostic",
       "worktree": "../rolling-controls",
       "allowed_paths": [
-        ".build/rolling-node-09-operator.py",
-        ".build/private09 staging",
-        "execution/evidence/G02/operator09 evidence"
+        "deploy/prover/rollup-compatibility-diagnostic.mjs",
+        "deploy/prover/rollup-compatibility-diagnostic.test.mjs",
+        "execution/evidence/G02/"
       ],
       "commit_trailer_aliases": {
         "Agent-Session": "controls",
@@ -125,8 +128,9 @@
       },
       "base": "1070a8fad6cb2b1b0068fe6b9f73267475b55b90",
       "active_edit_paths": [
-        ".build/rolling-node-09-operator.py",
-        "execution/evidence/G02/operator09 evidence"
+        "deploy/prover/rollup-compatibility-diagnostic.mjs",
+        "deploy/prover/rollup-compatibility-diagnostic.test.mjs",
+        "execution/evidence/G02/"
       ],
       "writer_released": false
     },
@@ -141,7 +145,7 @@
       "branch": "read-only candidate refs",
       "history_locator": "collaboration runtime /root/reviewer, parent 01a12a75-1b50-7871-a73b-4253a1010194",
       "role": "independent reviewer",
-      "state": "notification5815 diagnosed/reproduced790348; design434 source review, actualtests failing",
+      "state": "5c2 timing diagnosis complete; available for independent source review",
       "active_edit_paths": [
         "execution/evidence/G07/*independent*",
         "execution/evidence/G07/*review*",
@@ -158,7 +162,7 @@
       "branch": "codex/rolling-compact-block-prototype",
       "history_locator": "collaboration runtime /root/design, parent01a12a75-1b50-7871-a73b-4253a1010194",
       "role": "implementation worker",
-      "state": "434 prototype test32/34; source-backed installedaddressAPI repair, isolated SDK/LMDB slot granted",
+      "state": "normal processing321 passed; actual utility ACIR test source only",
       "worktree": "../rolling-design",
       "allowed_paths": [
         "billboard/rolling_contract/src/main.nr",
@@ -171,11 +175,8 @@
       "reference_candidate": "1351ea1b180b11475250463c9c40fdd2e342ab13",
       "writer_released": false,
       "active_edit_paths": [
-        "billboard/rolling_contract/src/main.nr",
-        "billboard/rolling_contract/src/preference_recovery.nr",
-        "billboard/rolling_contract/src/lib.nr",
-        "scripts/patch-pxe-preference-page.mjs",
-        "scripts/test-pxe-preference-page.mjs"
+        "scripts/test-pxe-preference-page.mjs",
+        "execution/evidence/G07/"
       ]
     }
   ],
