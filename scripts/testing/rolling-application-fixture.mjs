@@ -104,6 +104,8 @@ export function assertClosedCollisionObserver(observation,matched){
  assert.equal(observation.closed,true);assert.equal(observation.restored,true);
  for(const key of ['pending','errors','truncated','conflicts','ownershipLost'])assert.equal(observation[key],0,key);
  assert(observation.calls>=2&&observation.observations>=2&&observation.classified>=1);
+ assert.equal(observation.metadataEnabled,observation.calls);assert.equal(observation.metadataRestored,observation.calls);
+ assert.equal(observation.reasonAbsent,0);assert.equal(observation.reasonNotSimulationError,0);assert.equal(observation.classifierRejected,0);
  assert.equal(matched,true,'Canonical loser no longer matches the closed observer');
 }
 export function rollingClockDeadline({now,chainSeconds,campaignDeadlineAt}) {

@@ -5,7 +5,7 @@ import {createHash} from 'node:crypto';
 import {PublicProcessor} from '@aztec-labs/simulator/server';
 import {Tx,TxHash,TxEffect,GlobalVariables} from '@aztec-labs/stdlib/tx';
 import {Fr} from '@aztec-labs/foundation/curves/bn254';
-import {RevertCode} from '@aztec-labs/stdlib/avm';
+import {RevertCode,PublicSimulatorConfig} from '@aztec-labs/stdlib/avm';
 import {SimulationError} from '@aztec-labs/stdlib/errors';
 const key='processTxWithPublicCalls',limit=128;
 let active=false;
@@ -29,10 +29,31 @@ export function installRollingCollisionObserver({classify}={}){
  if(active||typeof classify!=='function')throw invalid();
  const proto=PublicProcessor.prototype,descriptor=Object.getOwnPropertyDescriptor(proto,key);
  if(!descriptor||typeof descriptor.value!=='function'||!descriptor.configurable||!descriptor.writable)throw invalid();
- const original=descriptor.value,records=new Map();let closed=false,restored=false;
- const counts={calls:0,pending:0,observations:0,classified:0,rejected:0,duplicates:0,conflicts:0,errors:0,truncated:0,ownershipLost:0};
+ const original=descriptor.value,records=new Map(),metadataLeases=new WeakSet();let closed=false,restored=false;
+ const counts={calls:0,pending:0,observations:0,classified:0,rejected:0,duplicates:0,conflicts:0,errors:0,truncated:0,ownershipLost:0,metadataEnabled:0,metadataRestored:0,reasonAbsent:0,reasonNotSimulationError:0,classifierRejected:0};
  function owns(){const d=Object.getOwnPropertyDescriptor(proto,key);return !!d&&d.value===wrapped&&d.writable===descriptor.writable&&d.configurable===descriptor.configurable&&d.enumerable===descriptor.enumerable;}
  function checkOwner(){if(!closed&&!owns()){counts.ownershipLost=1;return false;}return counts.ownershipLost===0;}
+ // Block building normally disables call metadata. Enable only that diagnostic
+ // bit on the SAME simulator for its one execution, then restore its descriptor.
+ // No fee, gas, proof, hints, debug logs or state behavior is changed.
+ function collectMetadata(receiver){
+  const simulator=data(receiver,'publicTxSimulator'),config=data(simulator,'config');
+  if(Object.getPrototypeOf(config)!==PublicSimulatorConfig.prototype||metadataLeases.has(config))throw invalid();
+  const prior=Object.getOwnPropertyDescriptor(config,'collectCallMetadata');
+  if(!prior||!Object.hasOwn(prior,'value')||typeof prior.value!=='boolean'||!prior.writable||!prior.configurable)throw invalid();
+  if(data(config,'skipFeeEnforcement')!==false)throw invalid();
+  const all=Object.getOwnPropertyDescriptors(config);
+  metadataLeases.add(config);Object.defineProperty(config,'collectCallMetadata',{...prior,value:true});counts.metadataEnabled++;
+  return ()=>{
+   metadataLeases.delete(config);
+   const current=Object.getOwnPropertyDescriptors(config);
+   const untouched=Object.keys(all).length===Object.keys(current).length&&Object.keys(all).every(k=>{
+    const a=all[k],b=current[k];return b&&a.writable===b.writable&&a.configurable===b.configurable&&a.enumerable===b.enumerable&&a.get===b.get&&a.set===b.set&&(k==='collectCallMetadata'?b.value===true:a.value===b.value);
+   });
+   if(data(receiver,'publicTxSimulator')!==simulator||data(simulator,'config')!==config||!untouched){counts.ownershipLost++;throw invalid();}
+   Object.defineProperty(config,'collectCallMetadata',prior);counts.metadataRestored++;
+  };
+ }
  function observe(inputHash,inputBlock,result){
   if(!Array.isArray(result)||result.length!==3)throw invalid();
   const processed=data(result,'0'),effect=data(processed,'txEffect'),globals=data(processed,'globalVariables');
@@ -54,8 +75,8 @@ export function installRollingCollisionObserver({classify}={}){
      if(answer instanceof Promise)try{Promise.prototype.then.call(answer,()=>{},()=>{});}catch{}
      throw invalid();
     }
-    matched=answer;
-   }
+    matched=answer;if(!answer)counts.classifierRejected++;
+   }else if(reason===undefined)counts.reasonAbsent++;else counts.reasonNotSimulationError++;
   }
   const entry={effectSha256,blockNumber:inputBlock,matched,reverted};
   const old=records.get(inputHash);
@@ -64,7 +85,7 @@ export function installRollingCollisionObserver({classify}={}){
   counts.observations++;if(matched)counts.classified++;
  }
  function wrapped(...args){
-  counts.calls++;counts.pending++;let inputHash,inputBlock,valid=false,done=false;
+  counts.calls++;counts.pending++;let inputHash,inputBlock,restoreMetadata,valid=false,done=false;
   try{
    if(!checkOwner())throw invalid();
    if(counts.calls>limit)counts.truncated++;
@@ -72,11 +93,12 @@ export function installRollingCollisionObserver({classify}={}){
     const tx=args[0];if(Object.getPrototypeOf(tx)!==Tx.prototype)throw invalid();
     // Installed Tx.getTxHash is its own txHash data field; reject accessors first.
     const stored=data(tx,'txHash');if(Tx.prototype.getTxHash.call(tx)!==stored)throw invalid();inputHash=hash(stored);
-    const globals=data(this,'globalVariables');if(Object.getPrototypeOf(globals)!==GlobalVariables.prototype)throw invalid();inputBlock=block(data(globals,'blockNumber'));valid=true;
+    const globals=data(this,'globalVariables');if(Object.getPrototypeOf(globals)!==GlobalVariables.prototype)throw invalid();inputBlock=block(data(globals,'blockNumber'));restoreMetadata=collectMetadata(this);valid=true;
    }
   }catch{counts.errors++;}
   const finish=(result,rejected)=>{
    if(done)return;done=true;counts.pending--;
+   try{restoreMetadata?.();}catch{counts.errors++;}
    try{if(!checkOwner())throw invalid();if(rejected){counts.rejected++;counts.errors++;}else if(valid)observe(inputHash,inputBlock,result);}catch{counts.errors++;}
   };
   let result;try{result=Reflect.apply(original,this,args);}catch(error){finish(undefined,true);throw error;}

@@ -276,11 +276,12 @@ test('partial race barrier failure preserves started actors canonical fees befor
 });
 test('terminal collision acceptance rejects late observer errors, conflicts, pending work or changed canonical match',async()=>{
  const {assertClosedCollisionObserver}=await import('./rolling-application-fixture.mjs');
- const clean={closed:true,restored:true,pending:0,errors:0,truncated:0,conflicts:0,ownershipLost:0,calls:2,observations:2,classified:1};
+ const clean={closed:true,restored:true,pending:0,errors:0,truncated:0,conflicts:0,ownershipLost:0,calls:2,observations:2,classified:1,metadataEnabled:2,metadataRestored:2,reasonAbsent:0,reasonNotSimulationError:0,classifierRejected:0};
  assertClosedCollisionObserver(clean,true);
  for(const key of ['pending','errors','truncated','conflicts','ownershipLost'])assert.throws(()=>assertClosedCollisionObserver({...clean,[key]:1},true));
  for(const key of ['closed','restored'])assert.throws(()=>assertClosedCollisionObserver({...clean,[key]:false},true));
  for(const key of ['calls','observations','classified'])assert.throws(()=>assertClosedCollisionObserver({...clean,[key]:0},true));
+ for(const key of ['metadataEnabled','metadataRestored','reasonAbsent','reasonNotSimulationError','classifierRejected'])assert.throws(()=>assertClosedCollisionObserver({...clean,[key]:1},true));
  assert.throws(()=>assertClosedCollisionObserver(clean,false));
 });
 

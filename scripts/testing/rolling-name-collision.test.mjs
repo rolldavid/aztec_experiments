@@ -174,3 +174,25 @@ for(const [name,mutate]of Object.entries(badOutcomes))test('synthetic outcome re
 test('synthetic payload property order is irrelevant but its actual fields remain exact',()=>{
  const f=outcomeFixture();f.events[0][0].payload=Object.fromEntries(Object.entries(f.events[0][0].payload).reverse());assert.equal(assertNameCollisionOutcome(f).privateOwnershipExact,true);
 });
+
+test('installed block factory omits reasons until real SDK metadata conversion receives the exact leaf and guard',async()=>{
+ const {createPublicTxSimulatorForBlockBuilding}=await import('@aztec-labs/simulator/server');
+ const {CallStackMetadata,PublicTxResult,RevertCode}=await import('@aztec-labs/stdlib/avm');
+ const {GlobalVariables,TxExecutionPhase}=await import('@aztec-labs/stdlib/tx');
+ const {Gas}=await import('@aztec-labs/stdlib/gas');
+ const simulator=createPublicTxSimulatorForBlockBuilding({},GlobalVariables.empty(),{},1);
+ assert.equal(simulator.config.collectCallMetadata,false);assert.equal(simulator.config.skipFeeEnforcement,false);
+ const result=PublicTxResult.empty();result.revertCode=RevertCode.REVERTED;
+ assert.equal(result.findRevertReason(),undefined);assert.equal(predicate(result.findRevertReason()),false);
+ // Metadata below is labelled synthetic, converted by the actual pinned SDK.
+ // The separate observer regression tests toggling on the installed factory;
+ // only a genuine race can qualify AVM metadata and canonical inclusion.
+ for(const disposition of ['exact','wrong-contract','wrong-selector','wrong-guard']){
+  const metadata=new CallStackMetadata(TxExecutionPhase.APP_LOGIC,
+   (disposition==='wrong-contract'?other:boardAddress).toField(),0,
+   [new Fr(disposition==='wrong-selector'?0n:BigInt(functionSelector.value))],false,Gas.empty(),
+   [errorField(disposition==='wrong-guard'?'Post removed':'Name already registered')],[],undefined,true,[],0);
+  result.callStackMetadata=[metadata];const reason=result.findRevertReason();
+  assert(reason instanceof SimulationError);assert.equal(predicate(reason),disposition==='exact');
+ }
+});
