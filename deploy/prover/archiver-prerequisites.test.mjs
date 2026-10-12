@@ -40,3 +40,36 @@ test('response envelope, JSON, UTF8, count and exact canonical log bindings fail
 test('bounded streamed response rejects oversize, cancels and releases stream with no raw output',async()=>{let cancelled=false;const response=new Response(new ReadableStream({start(c){c.enqueue(new Uint8Array(16384));c.enqueue(new Uint8Array(1));},cancel(){cancelled=true;}}));const r=await diagnoseHistoricalLogs({fetchImpl:async()=>response});assert.equal(r.status,'RESPONSE_TOO_LARGE');assert.equal(cancelled,true);assert.equal(response.body.locked,false);});
 test('timeout aborts the sole request or streaming read, preserving fixed status and cleanup',async()=>{for(const stream of [false,true]){let calls=0,aborted=false;const r=await diagnoseHistoricalLogs({timeoutMs:10,fetchImpl:async(_,init)=>{calls++;if(!stream)return new Promise((_,reject)=>init.signal.addEventListener('abort',()=>{aborted=true;reject(Error('PRIVATE_SENTINEL'));},{once:true}));return new Response(new ReadableStream({start(c){init.signal.addEventListener('abort',()=>{aborted=true;c.error(Error('PRIVATE_SENTINEL'));},{once:true});}}));}});assert.equal(r.status,'TIMEOUT');assert.equal(r.passed,false);assert.equal(calls,1);assert.equal(aborted,true);assert(!JSON.stringify(r).includes('PRIVATE_SENTINEL'));}});
 test('same-response strict ABI stage rejects noncanonical indexed address padding after SDK parser',async()=>{const log=rawLog();log.topics[1]='0x'+'f'.repeat(64);const r=await rawProbe(envelope([log]));assert.equal(r.rawCount,1);assert.equal(r.sdkCount,1);assert.equal(r.strictDecodedCount,null);assert.equal(r.status,'STRICT_DECODE_FAILED');assert.equal(r.passed,false);});
+test('named Tenderly mode selects exact keyless endpoint, preserves identical query and offline decoding',async()=>{
+ let count=0;let body;
+ const pub=await rawProbe(envelope([rawLog()]));assert.equal(pub.provider,'publicnode');
+ const result=await diagnoseHistoricalLogs({provider:'tenderly',fetchImpl:async(url,options)=>{
+  count++;assert.equal(url,'https://sepolia.gateway.tenderly.co');const parsed=new URL(url);assert.equal(parsed.username,'');assert.equal(parsed.password,'');assert.equal(parsed.search,'');assert.equal(parsed.pathname,'/');
+  assert.deepEqual(options.headers,{'content-type':'application/json'});assert.equal(options.credentials,'omit');assert.equal(options.redirect,'error');assert.equal(options.referrerPolicy,'no-referrer');
+  body=JSON.parse(options.body);return new Response(JSON.stringify(envelope([rawLog()])));
+ }});
+ assert.equal(count,1);assert.equal(result.provider,'tenderly');assert.equal(result.passed,true);assert.equal(result.sdkCount,1);assert.equal(result.strictDecodedCount,1);
+ assert.deepEqual(body,{jsonrpc:'2.0',id:1,method:'eth_getLogs',params:[{address:SCOPE.rollup,topics:[topic],fromBlock:'0xb3d474',toBlock:'0xb3d474'}]});
+});
+test('unsupported provider rejected before request or receipt creation, without coercing hostile selectors',async()=>{
+ let requests=0,coercions=0;const hostile={toString(){coercions++;throw Error('PRIVATE_SENTINEL');}};
+ const dir=fs.mkdtempSync(path.join(os.tmpdir(),'archive-provider-'));
+ try{for(const provider of ['https://sepolia.gateway.tenderly.co','tenderly?key=PRIVATE_SENTINEL','TENDERLY','toString','__proto__','',null,hostile]){
+  await assert.rejects(diagnoseHistoricalLogs({provider,fetchImpl:async()=>{requests++;}}));
+  const output=path.join(dir,'must-not-exist');await assert.rejects(supervise(output,{historicalOnly:true,historicalProvider:provider,spawnWorker(){requests++;}}));assert.equal(fs.existsSync(output),false);
+ }assert.equal(requests,0);assert.equal(coercions,0);}finally{fs.rmSync(dir,{recursive:true,force:true});}
+});
+test('Tenderly failure records selected provider and numeric status only; never falls back or retries',async()=>{
+ for(const type of ['rpc','http','exception']){let calls=0;const result=await diagnoseHistoricalLogs({provider:'tenderly',fetchImpl:async url=>{
+  calls++;assert.equal(url,'https://sepolia.gateway.tenderly.co');if(type==='exception')throw Error('PRIVATE_SENTINEL');
+  if(type==='http')return new Response('PRIVATE_SENTINEL',{status:429});
+  return new Response(JSON.stringify({jsonrpc:'2.0',id:1,error:{code:-32602,message:'PRIVATE_SENTINEL',data:'PRIVATE_SENTINEL'}}));
+ }});assert.equal(calls,1);assert.equal(result.requests,1);assert.equal(result.provider,'tenderly');assert.equal(result.passed,false);assert.equal(result.status,{rpc:'RPC_ERROR',http:'HTTP_ERROR',exception:'UNAVAILABLE'}[type]);assert.equal(result.rpcCode,type==='rpc'?-32602:null);assert(!JSON.stringify(result).includes('PRIVATE_SENTINEL'));}
+});
+test('supervisor retains selected provider in partial receipt if worker fails before diagnostic and forbids changing full prerequisite provider',async()=>{
+ const dir=fs.mkdtempSync(path.join(os.tmpdir(),'archive-provider-'));try{
+  const report=await supervise(path.join(dir,'partial.json'),{historicalOnly:true,historicalProvider:'tenderly',spawnWorker(fd){return spawn(process.execPath,['-e','process.exit(1)'],{stdio:['ignore','ignore','ignore',fd]});}});
+  assert.equal(report.provider,'tenderly');assert.equal(report.status,'NOT_STARTED');assert.equal(report.requests,0);assert.equal(report.passed,false);assert.equal(report.processCategory,'WORKER_FAILED');
+  const invalid=path.join(dir,'wrongmode.json');await assert.rejects(supervise(invalid,{historicalProvider:'tenderly'}));assert.equal(fs.existsSync(invalid),false);
+ }finally{fs.rmSync(dir,{recursive:true,force:true});}
+});
