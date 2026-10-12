@@ -80,7 +80,7 @@ function captureFixture() {
     constructor(){this.proverEnabled=false;this.queued=0;this.operationQueue={runSynced:()=>{this.queued++;return Promise.reject(Error('fixture stop'));}};}
     #executeUtility() {throw Error('must not execute');}
     ${body}
-  }`)({MODULUS:1n<<254n,fromString:x=>x},{fromString:x=>x},{fromString:x=>({hash:x})},64);
+  }`)({MODULUS:1n<<254n,fromString:x=>x},{fromFieldUnsafe:x=>x},{fromString:x=>({hash:x})},64);
   return new Class();
 }
 const hex=n=>'0x'+BigInt(n).toString(16).padStart(64,'0');
@@ -186,7 +186,7 @@ if(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1') {
       RollingPageHeader:BlockHeader,RollingPageEffect:TxEffect,RollingPageReceipt:MinedTxReceipt,RollingPageSiblingPath:SiblingPath,
       rollingPageVerifyWitness:verifyTxEffectMembershipWitness,rollingPageCompact:authenticateCompactBlock,
       rollingPageArtifactHash:async()=>Fr.fromString(p.expectedArtifactHash),rollingPageClass:async()=>({id:Fr.fromString(p.expectedClassId)}),
-      computeContractAddressFromInstance:async()=>AztecAddress.fromString(p.contractAddress),BlockNumber:x=>x,FunctionType:{UTILITY:'utility'},
+      computeContractAddressFromInstance:async()=>AztecAddress.fromFieldUnsafe(Fr.fromString(p.contractAddress)),BlockNumber:x=>x,FunctionType:{UTILITY:'utility'},
       ContractFunctionSimulator:class {constructor(args){Object.assign(this,args);}},
       RollingPageInstance:class {constructor(value){this.value=value;}toBuffer(){return this.value;}static fromBuffer(value){return value;}},
       RP_NOTES:constants.MAX_NOTE_HASHES_PER_TX,RP_NULLIFIERS:constants.MAX_NULLIFIERS_PER_TX,RP_MESSAGES:constants.MAX_L2_TO_L1_MSGS_PER_TX,

@@ -11,8 +11,8 @@ import { fileURLToPath } from 'node:url';
 // last-check/commit chain-change window remain separate qualification gates.
 const sha = value => createHash('sha256').update(value).digest('hex');
 export const PREFERENCE_PAGE_PINS = Object.freeze([
-  Object.freeze({path:'src/pxe.ts', before:'514cf7905733732522db9f301437d9ec5a1fd3b4a5ee3939980f76ffb4396ebd', after:'39c4648034884b8b58fcf4b85b2aa084302b26bad6b7ae4e0fd05dec7edeabb2'}),
-  Object.freeze({path:'dest/pxe.js', before:'94d98c0a13a0d6a2724ecf03f790461e13328b8aebac3d243f373e982d76a360', after:'7f655a6dbeedf66a01a81b247bcccec8b43f85a33a62f56f9350968e4081d74d'}),
+  Object.freeze({path:'src/pxe.ts', before:'514cf7905733732522db9f301437d9ec5a1fd3b4a5ee3939980f76ffb4396ebd', after:'15263737c819057cd42c47556800363e51afa28fa87c49e0092c49fb5f5c0abc'}),
+  Object.freeze({path:'dest/pxe.js', before:'94d98c0a13a0d6a2724ecf03f790461e13328b8aebac3d243f373e982d76a360', after:'1c126691eadfa3abfe7e235705f8b2fa1ae17b7c6487400def5a99178f7e40df'}),
 ]);
 
 export const PREFERENCE_PAGE_COMPACT_PIN = Object.freeze({
@@ -87,7 +87,7 @@ function method(ts) {
       check(typeof p.proofsEnabled === 'boolean' && p.proofsEnabled === this.proverEnabled);
       natural(p.blockNumber, 0xffffffff, 1); natural(p.firstLog, RP_LOGS - 1);
       natural(p.logCount, 8, 1); check(p.firstLog + p.logCount <= RP_LOGS);
-      const address = RollingPageAddress.fromString(p.contractAddress), scope = RollingPageAddress.fromString(p.scope);
+      const address = RollingPageAddress.fromFieldUnsafe(RollingPageFr.fromString(p.contractAddress)), scope = RollingPageAddress.fromFieldUnsafe(RollingPageFr.fromString(p.scope));
       const classId = RollingPageFr.fromString(p.expectedClassId), txHash = RollingPageTxHash.fromString(p.txHash);
       await guard();
       return await this.operationQueue.runSynced(async ({changeSetId, anchorBlockHeader}) => {
