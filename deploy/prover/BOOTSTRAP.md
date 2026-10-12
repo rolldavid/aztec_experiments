@@ -501,3 +501,34 @@ real disposable-child termination/escalation cases, now injecting failure at
 the first post-spawn fsync (after the additional directory sync). Package tests
 check exact helper bytes in the complete runtime inventory. Actual Linux
 instrumented startup, real readiness and any new paid launch remain pending.
+
+
+### Explicit Sepolia ordinary and debug providers
+
+The bootstrap now sets `ETHEREUM_HOSTS=https://sepolia.gateway.tenderly.co`
+for ordinary reads, historical logs and the blob client's L1 checks, and
+`ETHEREUM_DEBUG_HOSTS=https://ethereum-sepolia-rpc.publicnode.com` for the
+archiver's debug client. Each list contains exactly one endpoint; neither is a
+fallback. Beacon sourcing, `ETHEREUM_ALLOW_NO_DEBUG_HOSTS=false`,
+`BLOB_ALLOW_EMPTY_SOURCES=false`, real proofs, isolation and shutdown gates are
+unchanged. The pinned archiver factory uses an explicit nonempty debug list
+instead of its ordinary list.
+
+This is a reversible engineering configuration, supported by the 12-stage Mac
+SDK split-provider probe (`split-prerequisites-72e-live-1.json`) and all eight
+installed/image module bindings, including
+`archiver-six-image-equivalence-20261012.json`. PublicNode rejected the exact
+historical log query with code 4444; Tenderly returned the required event but
+failed the SDK trace checks alone. The explicit pair passed history, trace,
+blob, network identity and canonical continuity checks. These observations do
+not establish sustained free endpoint capacity or Linux node startup. The
+prior failed commissioning receipts remain failures. A provider change must
+repeat the complete prerequisite checks and changed Linux startup qualification;
+reversal is a reviewed explicit configuration change, never automatic fallback.
+
+The generated-unit and decoded-payload tests exercise this exact pair, including
+realistic-sized synthetic capabilities. The strict 16,384-byte compressed user
+data cap remains enforced. Every actual new capability/deadline combination
+must be regenerated and measured before launch; historical near-limit payloads
+are not reusable approval. Changing bootstrap bytes also requires a fresh
+manifest-bound runtime archive. No new launch is authorized by this change.

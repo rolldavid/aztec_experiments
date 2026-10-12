@@ -263,6 +263,18 @@ class htb 1:20 parent 1:1 prio 0 rate 25Mbit ceil 50Mbit burst 4725b cburst 7850
         self.assertNotIn('AZTEC_DISABLE_ADMIN_API_KEY',command)
         self.assertNotIn('/var/run/docker.sock',command)
         self.assertNotIn('--privileged',args)
+        # Labelled generated-unit test: ordinary/history and debug are explicit,
+        # single endpoints. No automatic fallback or permissive validation.
+        environment=[args[i+1] for i,arg in enumerate(args) if arg=='-e']
+        keys=[item.split('=',1)[0] for item in environment]
+        self.assertEqual(len(keys),len(set(keys)))
+        env=dict(item.split('=',1) for item in environment)
+        self.assertEqual(env['ETHEREUM_HOSTS'],'https://sepolia.gateway.tenderly.co')
+        self.assertEqual(env['ETHEREUM_DEBUG_HOSTS'],'https://ethereum-sepolia-rpc.publicnode.com')
+        self.assertEqual(env['L1_CONSENSUS_HOST_URLS'],'https://ethereum-sepolia-beacon-api.publicnode.com')
+        self.assertEqual(env['ETHEREUM_ALLOW_NO_DEBUG_HOSTS'],'false')
+        self.assertEqual(env['BLOB_ALLOW_EMPTY_SOURCES'],'false')
+        self.assertEqual(env['PROVER_REAL_PROOFS'],'true')
 
     def test_controls_failure_never_downloads_and_requests_shutdown(self):
         ns=host();events=[]
@@ -617,6 +629,24 @@ class FinalReceipt(unittest.TestCase):
         self.assertEqual(ns['PINS']['bootstrap'],hashlib.sha256(runtime.encode()).hexdigest())
         self.assertEqual(ns['PINS']['startup'],hashlib.sha256(pathlib.Path(b.__file__).read_bytes()).hexdigest())
         self.assertNotIn(token,calls[0][1])
+        # Verify the executed decoded payload, not just the generator's source.
+        writes={};ns['prepare_data']=lambda:None;ns['verify_controls']=lambda:0
+        ns['write']=lambda p,s,*_:writes.update({str(p):s})
+        ns['public_ip']=lambda:'203.0.113.10';ns['prepare_admin_key']=lambda:'a'*64
+        ns['run']=lambda *args,**kwargs:None
+        with patch.object(ns['shutil'],'which',return_value='/usr/bin/docker'):
+            ns['install_node']()
+        unit=writes['/etc/systemd/system/rolling-node.service']
+        import shlex
+        command=next(line for line in unit.splitlines() if line.startswith('ExecStart='))
+        args=shlex.split(command.removeprefix('ExecStart='))
+        environment=[args[i+1] for i,arg in enumerate(args) if arg=='-e']
+        self.assertEqual([v for v in environment if v.startswith('ETHEREUM_HOSTS=')],
+                         ['ETHEREUM_HOSTS=https://sepolia.gateway.tenderly.co'])
+        self.assertEqual([v for v in environment if v.startswith('ETHEREUM_DEBUG_HOSTS=')],
+                         ['ETHEREUM_DEBUG_HOSTS=https://ethereum-sepolia-rpc.publicnode.com'])
+        self.assertIn('ETHEREUM_ALLOW_NO_DEBUG_HOSTS=false',environment)
+        self.assertIn('BLOB_ALLOW_EMPTY_SOURCES=false',environment)
         # Worst-case permitted URL lengths can exceed AWS storage; no truncation.
         c['runtimeUrl']+=''.join(rng.choice(string.ascii_letters+string.digits) for _ in range(4096-len(c['runtimeUrl'])))
         c['receiptPutUrl']+=''.join(rng.choice(string.ascii_letters+string.digits) for _ in range(4096-len(c['receiptPutUrl'])))
