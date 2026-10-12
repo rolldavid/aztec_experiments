@@ -47,7 +47,7 @@ test('isolated helper is exact reviewed source and a missing/tampered copy fails
   await rm(join(dir,PREFERENCE_PAGE_COMPACT_PIN.generated));await assert.rejects(inspectPreferencePage(dir),/PATCH_STATE/);
 });
 test('added method does not rewrite original executeUtility, discovery, private calls or event retrieval',()=>{
-  for(const pin of PREFERENCE_PAGE_PINS){
+  for(const pin of PREFERENCE_PAGE_PINS.filter(p=>p.path.endsWith('/pxe.ts')||p.path.endsWith('/pxe.js'))){
     const original=source[pin.path],output=transformPreferencePage(original,pin.path);
     const needle=pin.path.endsWith('.ts')?'  public executeUtility(':'executeUtility(call, {';
     assert.equal(output.slice(output.indexOf(needle)),original.slice(original.indexOf(needle)));
@@ -59,8 +59,10 @@ test('added method does not rewrite original executeUtility, discovery, private 
 });
 test('transformed JS parses without importing SDK or starting native work',async t=>{
   const dir=await copy(t);await patchPreferencePage(dir);
-  const result=spawnSync(process.execPath,['--check',join(dir,'dest/pxe.js')],{encoding:'utf8',timeout:5000});
-  assert.equal(result.status,0,result.stderr);
+  for(const pin of PREFERENCE_PAGE_PINS.filter(p=>p.path.endsWith('.js'))){
+    const result=spawnSync(process.execPath,['--check',join(dir,pin.path)],{encoding:'utf8',timeout:5000});
+    assert.equal(result.status,0,result.stderr);
+  }
 });
 test('Noir page uses original dispatcher and original validator, has no direct store or sync frontier',async()=>{
   const text=await readFile(join(root,'billboard/rolling_contract/src/preference_recovery.nr'),'utf8');
@@ -107,11 +109,37 @@ test('labelled boundary double calls exactly one existing queue after valid capt
 // Explicit separate invocation, ONLY after the lead grants the native slot:
 // ROLLING_PREFERENCE_PAGE_NATIVE=1 LOG_LEVEL=silent node --test this-file
 // Uses actual SDK Poseidon/membership, EventService, OperationQueue/coordinator,
-// PrivateEventStore and LMDB. Transactions/events are labelled synthetic fixtures;
-// this does not exercise compiled new Noir ACIR or qualify real cold recovery.
+// PrivateEventStore and the actual application IndexedDB adapter on explicitly
+// labelled fake-indexeddb. This is not native Chromium storage qualification.
+// Transactions/inclusion are synthetic; processed ACIR is a separate opt-in.
 if(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1') {
   const {pathToFileURL}=await import('node:url');
   const {after}=await import('node:test');
+  // Bind the reviewed b440 atomicity repair before importing the adapter. No
+  // shared dependency is patched by this test. Historical v1 failures remain
+  // unresolved evidence; selecting the application's store does not fix v1.
+  for(const [path,expected] of [
+    ['shared/sdk-store.mjs','474807edf283d8166f93442ccfe4485ccaa7c056fefa5d4e9b2a4669554a5bfa'],
+    ['node_modules/@aztec-labs/kv-store/src/deprecated/indexeddb/store.ts','e71b52af584c9e2285c80f635503c1f4d1989948a3b8b21db860d8178f7ae0f6'],
+    ['node_modules/@aztec-labs/kv-store/dest/deprecated/indexeddb/store.js','e6efed86ab1f05b268cf11bfe02ecd0e9fe6462e6747585285090d00232c3100'],
+  ])assert.equal(sha(await readFile(join(root,path))),expected,'Unreviewed application store fixture');
+  // Match the CLI actor's platform setup, preserving every previous descriptor.
+  // One fresh factory belongs to this test process; every receiver owns a unique
+  // full network/account/schema namespace and must delete it before restoration.
+  const idb=await import('fake-indexeddb'),factory=new idb.IDBFactory();
+  const idbKeys=Object.keys(idb).filter(key=>key.startsWith('IDB')||key==='indexedDB');
+  const previousGlobals=idbKeys.map(key=>[key,Object.getOwnPropertyDescriptor(globalThis,key)]);
+  for(const [,descriptor] of previousGlobals)assert(!descriptor||descriptor.configurable,'IndexedDB global is not owned');
+  after(async()=>{
+    try {
+      for(const key of idbKeys)assert.equal(globalThis[key],key==='indexedDB'?factory:idb[key],'IndexedDB global ownership changed');
+      assert.equal((await factory.databases()).length,0,'Application fixture database leaked');
+    } finally {
+      for(const [key,descriptor] of previousGlobals)if(descriptor)Object.defineProperty(globalThis,key,descriptor);else delete globalThis[key];
+    }
+  });
+  for(const key of idbKeys)Object.defineProperty(globalThis,key,{value:key==='indexedDB'?factory:idb[key],writable:true,configurable:true});
+  const {openPXEStore,getPXEStoreIdentity}=await import('../shared/sdk-store.mjs');
   // Optional source-bound artifact prerequisite checks. They do NOT run ACIR or
   // replace class registration: raw utility extraction is distinct from a usable
   // normal artifact. Enable only with the retained exact raw compile-2 fixture.
@@ -152,25 +180,80 @@ if(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1') {
   const {BlockHeader,TxHash,TxEffect,MinedTxReceipt,computeTxEffectMembershipWitness,verifyTxEffectMembershipWitness}=await import('@aztec-labs/stdlib/tx');
   const {EventSelector}=await import('@aztec-labs/stdlib/abi');
   const {computePrivateEventCommitment,siloNullifier}=await import('@aztec-labs/stdlib/hash');
-  const {AztecLmdbStore}=await import('@aztec-labs/kv-store/lmdb');
   const {BarretenbergSync}=await import('@aztec-foundation/bb.js');
   const imp=p=>import(pathToFileURL(join(installed,'dest',p)));
-  const {OperationQueue}=await imp('operation_queue.js');
+  const {OperationQueue:PristineOperationQueue}=await imp('operation_queue.js');
+  // Import exact transformed queue/lifecycle from an isolated directory. Their
+  // original SDK imports resolve normally; shared installed files stay untouched.
+  const queueDirectory=await realpath(await mkdtemp(join(root,'.build/preference-page-queue-')));
+  after(()=>rm(queueDirectory,{recursive:true,force:true}));
+  await writeFile(join(queueDirectory,'package.json'),JSON.stringify({type:'module'}));
+  for(const path of ['dest/operation_queue.js','dest/operation_lifecycle.js']){
+    await writeFile(join(queueDirectory,path.slice(5)),transformPreferencePage(source[path],path));
+  }
+  const {OperationQueue}=await import(pathToFileURL(join(queueDirectory,'operation_queue.js')));
+  const {BlockSynchronizer}=await imp('block_synchronizer/block_synchronizer.js');
   const {StagedWriteCoordinator}=await imp('storage/staged_write_coordinator.js');
   const {PrivateEventStore}=await imp('storage/private_event_store/private_event_store.js');
   const {EventService}=await imp('events/event_service.js');
   after(()=>BarretenbergSync.destroySingleton());
   const quiet={debug(){},verbose(){},info(){},warn(){},error(){}};
   const address=n=>new AztecAddress(new Fr(n));
-  async function stores(t) {
-    const directory=await realpath(await mkdtemp(join(tmpdir(),'rolling-preference-page-native-')));
-    const db=AztecLmdbStore.open(join(directory,'db'),64*1024,true,quiet);
+  async function applicationStore(t,owner,stop,log=quiet) {
+    const directory=await realpath(await mkdtemp(join(tmpdir(),'rolling-preference-page-application-')));
+    let db,identity;
+    // Register ownership before open/metadata initialization can fail. No fake
+    // transaction/coordinator is inserted: delete() drains the real adapter.
+    t.after(async()=>{
+      try {await stop();}
+      finally {
+        try {
+          if(db)await db.delete();
+          else if(identity)await new Promise((resolve,reject)=>{
+            const removal=factory.deleteDatabase(identity.name);
+            removal.onsuccess=()=>resolve();removal.onerror=()=>reject(Error('Fixture database deletion failed'));
+            removal.onblocked=()=>reject(Error('Fixture database deletion blocked'));
+          });
+          if(identity)assert(!(await factory.databases()).some(entry=>entry.name===identity.name),'Owned application database remained');
+        } finally {await rm(directory,{recursive:true,force:true});}
+      }
+    });
+    const config={l1ChainId:31337,rollupAddress:request().network.rollup,accountAddress:owner.toString(),dataDirectory:directory};
+    identity=getPXEStoreIdentity(config);
+    assert(!(await factory.databases()).some(entry=>entry.name===identity.name),'Application namespace was not fresh');
+    db=await openPXEStore(config,undefined,log);
+    assert.equal(await db.openSingleton('billboardStoreIdentity').getAsync(),identity.metadata);
+    return db;
+  }
+  test('application store fixture owns full isolated namespaces and deletes them after settled hooks',async t=>{
+    const before=(await factory.databases()).map(entry=>entry.name).sort();let stops=0;
+    await t.test('real application metadata and isolated data on labelled Node IndexedDB',async sub=>{
+      const first=await applicationStore(sub,address(2),async()=>{stops++;});
+      const second=await applicationStore(sub,address(2),async()=>{stops++;});
+      const foreign=await applicationStore(sub,address(3),async()=>{stops++;});
+      const identities=await Promise.all([first,second,foreign].map(db=>db.openSingleton('billboardStoreIdentity').getAsync()));
+      assert.equal(new Set(identities).size,3);
+      const parsed=identities.map(text=>JSON.parse(text));
+      for(const identity of parsed){assert.equal(identity[4],31337);assert.equal(identity[5],request().network.rollup);}
+      assert.equal(parsed[0][7],address(2).toString());assert.equal(parsed[2][7],address(3).toString());
+      await first.openMap('labelled-fixture-isolation').set('value',17);
+      assert.equal(await second.openMap('labelled-fixture-isolation').getAsync('value'),undefined);
+      assert.equal(await foreign.openMap('labelled-fixture-isolation').getAsync('value'),undefined);
+    });
+    assert.equal(stops,3);assert.deepEqual((await factory.databases()).map(entry=>entry.name).sort(),before);
+    await t.test('failed identity preparation retains cleanup ownership without opening a database',async sub=>{
+      await assert.rejects(applicationStore(sub,{toString:()=> 'invalid'},async()=>{stops++;}),/valid account address/);
+    });
+    assert.equal(stops,4);assert.deepEqual((await factory.databases()).map(entry=>entry.name).sort(),before);
+  });
+  async function stores(t, contributors=[]) {
+    const scope=address(2);let queue;
+    const db=await applicationStore(t,scope,async()=>{if(queue)await queue.stop();});
     const events=new PrivateEventStore(db);events.logger=quiet;
     const coordinator=new StagedWriteCoordinator({kvStore:db,stagedStores:[events]});
     const header=BlockHeader.empty();header.globalVariables.blockNumber=5;
-    const queue=new OperationQueue({node:{startRecording:()=>({stop(){}})},synchronizer:{sync:async()=>{}},anchorBlockStore:{getBlockHeader:async()=>header},stagedWriteCoordinator:coordinator,contributors:[],autoSync:false,log:quiet});queue.start();
-    t.after(async()=>{await queue.stop();await db.delete();await rm(directory,{recursive:true,force:true});});
-    const scope=address(2),contract=address(1),selector=new EventSelector(11),txHash=TxHash.fromBigInt(22n),blockHash=new BlockHash(new Fr(33));
+    queue=new OperationQueue({node:{startRecording:()=>({stop(){}})},synchronizer:{sync:async()=>{}},anchorBlockStore:{getBlockHeader:async()=>header},stagedWriteCoordinator:coordinator,contributors,autoSync:false,log:quiet});queue.start();
+    const contract=address(1),selector=new EventSelector(11),txHash=TxHash.fromBigInt(22n),blockHash=new BlockHash(new Fr(33));
     const content=[1,1,1,4,1,0,0,0].map(n=>new Fr(n)),randomness=new Fr(99);
     const commitment=await computePrivateEventCommitment(randomness,selector.toField(),content);
     const request={contractAddress:contract,eventTypeId:selector,randomness,serializedEvent:content,eventCommitment:commitment,txHash};
@@ -316,23 +399,24 @@ if(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1') {
       };
       const node=new Proxy(api,{get(target,key){if(key==='then')return undefined;if(key in target)return Reflect.get(target,key);
         return ()=>{counters.unexpectedCalls++;throw Error('UNIMPLEMENTED_SYNTHETIC_CHAIN_METHOD');};}});
-      async function receiver({withKeys=true,completeAddress,contributor}={}) {
-        const directory=await realpath(await mkdtemp(join(root,'.build/preference-page-acir-')));
-        const db=AztecLmdbStore.open(join(directory,'db'),64*1024,true,log);let queue;
-        t.after(async()=>{try{if(queue)await queue.stop();}finally{try{await db.delete();}finally{await rm(directory,{recursive:true,force:true});}}});
+      async function receiver({withKeys=true,completeAddress,contributor,pristine=false,extraStore}={}) {
+        const expectedComplete=withKeys?await CompleteAddress.fromPublicKeysAndPartialAddress(derived.publicKeys,partialAddress):completeAddress;
+        assert(expectedComplete);let queue;
+        const db=await applicationStore(t,expectedComplete.address,async()=>{if(queue)await queue.stop();},log);
         const stores=openPxeStores(db,await header.hash());
         await stores.contractStore.addContractArtifact(artifact);await stores.contractStore.addContractInstance(instance);
         await stores.contractStore.addContractArtifact(registry.artifact);await stores.contractStore.addContractInstance(registry.instance);
         const complete=withKeys?await stores.keyStore.addAccount(keys,partialAddress):completeAddress;
-        assert(complete);await stores.addressStore.addCompleteAddress(complete);
+        assert(complete);assert(complete.address.equals(expectedComplete.address),'Application store owner differs from actual key registration');
+        await stores.addressStore.addCompleteAddress(complete);
         const classService=new ContractClassService(node,stores.contractStore);
         const syncService=new ContractSyncService(node,stores.contractStore,classService,stores.noteStore,log,{concurrentContractSyncEnabled:false});
         const simulator=new WASMSimulator();
         const args={...stores,contractClassService:classService,contractSyncService:syncService,
           aztecNode:node,txResolver:new TxResolverService(node),simulator};
         const functionSimulator=new ContractFunctionSimulator(args);
-        const stagedStores=[stores.capsuleStore,stores.senderTaggingStore,stores.recipientTaggingStore,stores.privateEventStore,stores.noteStore,stores.factStore];
-        queue=new OperationQueue({node:{startRecording:()=>({stop(){}})},synchronizer:{sync:async()=>{throw Error('UNEXPECTED_FULL_SYNC');}},
+        const stagedStores=[stores.capsuleStore,stores.senderTaggingStore,stores.recipientTaggingStore,stores.privateEventStore,stores.noteStore,stores.factStore,...(extraStore?[extraStore]:[])];
+        queue=new (pristine?PristineOperationQueue:OperationQueue)({node:{startRecording:()=>({stop(){}})},synchronizer:{sync:async()=>{throw Error('UNEXPECTED_FULL_SYNC');}},
           anchorBlockStore:{getBlockHeader:async()=>BlockHeader.fromBuffer(header.toBuffer())},
           stagedWriteCoordinator:new StagedWriteCoordinator({kvStore:db,stagedStores}),contributors:[syncService,...(contributor?[contributor]:[])],autoSync:false,log});
         queue.start();
@@ -366,7 +450,7 @@ if(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1') {
           events:await stores.privateEventStore.getPrivateEvents(selector,{contractAddress:board,scopes:[complete.address],fromBlock:1,toBlock:header.getBlockNumber()+1},changeSetId),
           notes:await stores.noteStore.getNotes({contractAddress:board,owner:complete.address,scopes:[complete.address]},changeSetId),
         }));
-        return {stores,queue,complete,functionSimulator,page,read,syncService};
+        return {stores,queue,complete,functionSimulator,page,read,syncService,db,stagedStores};
       }
       const sender=await receiver();
       const call=await sender.stores.contractStore.getFunctionCall('set_preference',[0n,1,new Fr(77),true],board,contractClass.id);
@@ -393,7 +477,7 @@ if(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1') {
         blockHash:(await header.hash()).toString(),txHash:effect.txHash.toString(),firstLog:0,logCount:effect.privateLogs.length,
         compactFields:block.toBlobFields().map(x=>x.toString()),headerFields:header.toFields().map(x=>x.toString())};
       const tagsBefore=counters.tagQueries;
-      return {receiver,sender,input,header,board,contractClass,counters,tagsBefore,
+      return {receiver,sender,input,header,board,contractClass,counters,tagsBefore,node,block,
         invalidate:()=>{canonicalChanged=true;},restore:()=>{canonicalChanged=false;}};
     }
     test('real processed ACIR: emitted encrypted preference head/event, scoped keys, validators and atomic discard',async t=>{
@@ -440,8 +524,80 @@ if(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1') {
         assert.equal(guards,8);assert.equal(settled,2);fail=false;
         const state=await r.read();assert.equal(state.events.length,0);assert.equal(state.notes.length,0);assert.equal(r.syncService.syncedContracts.size,0);
       });
+      for(const race of ['canonical','account'])await t.test(`successful settlement ${race} race: pristine commits, patched discards actual ACIR rows`,async()=>{
+        for(const pristine of [true,false]){
+          let enabled=true,locked=false,settled=0;
+          const contributor={onOperationEnd(){},settle:async()=>{if(enabled){settled++;if(race==='canonical')f.invalidate();else locked=true;}}};
+          const r=await f.receiver({pristine,contributor});
+          const run=r.page.processRollingPreferencePage(f.input,{contextGuard:async()=>{if(locked)throw Error('SYNTHETIC_ACCOUNT_LOCK');}});
+          try{
+            if(pristine)assert.equal((await run).admitted,2);
+            else await assert.rejects(run,/PXE_PREFERENCE_PAGE_FAILED/);
+            assert.equal(r.page.acirCompleted,1);assert.equal(r.page.stagedNoteCount,1);
+            assert.equal(settled,pristine?1:2);
+          }finally{enabled=false;locked=false;f.restore();}
+          const state=await r.read();assert.equal(state.events.length,pristine?1:0);assert.equal(state.notes.length,pristine?1:0);
+        }
+      });
+      await t.test('receipt mutation during successful settlement is rejected by original-node revalidation',async()=>{
+        let enabled=true,changed=false;
+        const original=f.node.getTxReceipt;
+        f.node.getTxReceipt=async(...args)=>{const receipt=await original(...args);if(changed)receipt.transactionFee+=1n;return receipt;};
+        const contributor={onOperationEnd(){},settle:async()=>{if(enabled)changed=true;}};
+        const r=await f.receiver({contributor});
+        try{await assert.rejects(r.page.processRollingPreferencePage(f.input,{contextGuard:async()=>{}}),/PXE_PREFERENCE_PAGE_FAILED/);}
+        finally{enabled=false;changed=false;f.node.getTxReceipt=original;}
+        const state=await r.read();assert.equal(state.events.length,0);assert.equal(state.notes.length,0);
+      });
+      await t.test('held successful contributor prevents commit and next operation until fresh context veto and complete drain',async()=>{
+        let enter,release,enabled=true,settled=0,secondEntered=false;
+        const entered=new Promise(r=>enter=r),gate=new Promise(r=>release=r);
+        const contributor={onOperationEnd(_id,outcome){if(outcome==='discarded'){enabled=false;f.restore();}},settle:async()=>{if(enabled){settled++;enter();await gate;}}};
+        const r=await f.receiver({contributor});
+        const first=r.page.processRollingPreferencePage(f.input,{contextGuard:async()=>{}});
+        const rejection=assert.rejects(first,/PXE_PREFERENCE_PAGE_FAILED/);
+        await entered;
+        const second=r.queue.runSynced(async()=>{secondEntered=true;});
+        await Promise.resolve();assert.equal(secondEntered,false);assert.equal(r.page.stagedNoteCount,1);
+        f.invalidate();release();await rejection;enabled=false;f.restore();await second;
+        assert.equal(settled,2);assert.equal(secondEntered,true);
+        const state=await r.read();assert.equal(state.events.length,0);assert.equal(state.notes.length,0);
+      });
+      await t.test('failure in a later staged store rolls back actual note and event database writes',async()=>{
+        let fail=true,commits=0;
+        const extraStore={storeName:'labelled-late-failure',beginChangeSet(){},discardChangeSet(){},async commitChangeSet(){commits++;if(fail)throw Error('SYNTHETIC_LATE_STORE');}};
+        const r=await f.receiver({extraStore});
+        await assert.rejects(r.page.processRollingPreferencePage(f.input,{contextGuard:async()=>{}}),/PXE_PREFERENCE_PAGE_FAILED/);
+        assert.equal(r.page.acirCompleted,1);assert.equal(commits,1);fail=false;
+        const state=await r.read();assert.equal(state.events.length,0);assert.equal(state.notes.length,0);
+      });
+      await t.test('actual BlockSynchronizer prunes committed ACIR head and event with indexes on canonical reorg',async()=>{
+        const r=await f.receiver();await r.page.processRollingPreferencePage(f.input,{contextGuard:async()=>{}});
+        let state=await r.read();assert.equal(state.notes.length,1);assert.equal(state.events.length,1);
+        await r.stores.anchorBlockStore.setHeader(f.header);
+        const canonical=BlockHeader.fromBuffer(f.header.toBuffer());canonical.globalVariables.blockNumber=3;canonical.txEffectsTreeRoot=Fr.ZERO;
+        const hash=(await canonical.hash()).toString(),id={number:3,hash};
+        const checkpoint={block:id,checkpoint:{number:1,hash}};
+        const tips={proposed:id,checkpointed:checkpoint,proven:checkpoint,finalized:checkpoint};let cacheWipes=0;
+        const node={getChainTips:async()=>tips,getBlock:async parameter=>{
+          assert(parameter===3||parameter.hash instanceof BlockHash);return {header:canonical,hash:BlockHash.fromString(hash)};
+        },wipeCache(){cacheWipes++;}};
+        const synchronizer=new BlockSynchronizer(node,r.db,r.stores.anchorBlockStore,r.stagedStores,
+          r.stores.l2TipsStore,r.syncService,{syncChainTip:'proposed'});
+        try{
+          await synchronizer.handleBlockStreamEvent({type:'chain-pruned',block:id,checkpointed:checkpoint,proven:checkpoint});
+          state=await r.read();assert.equal(state.notes.length,0);assert.equal(state.events.length,0);
+          assert.equal((await r.stores.anchorBlockStore.getBlockHeader()).getBlockNumber(),3);assert.equal(cacheWipes,1);
+          assert.equal(r.syncService.syncedContracts.size,0);
+          for(const name of ['note_nullifiers_by_block','note_nullifiers_by_contract','events_by_block_number','events_by_contract_selector']){
+            const rows=[];for await(const entry of r.db.openMultiMap(name).entriesAsync())rows.push(entry);assert.deepEqual(rows,[]);
+          }
+        }finally{await synchronizer.stop();}
+      });
       await t.test('canonical encrypted head and event commit without contract-sync completion',async()=>{
-        const r=await f.receiver();assert.deepEqual(await r.page.processRollingPreferencePage(f.input,{contextGuard:async()=>{}}),{schemaVersion:1,processed:f.input.logCount,admitted:2});
+        let settled=false,postSettleGuards=0;const contributor={onOperationEnd(){},settle:async()=>{settled=true;}};
+        const r=await f.receiver({contributor});assert.deepEqual(await r.page.processRollingPreferencePage(f.input,{contextGuard:async()=>{if(settled)postSettleGuards++;}}),{schemaVersion:1,processed:f.input.logCount,admitted:2});
+        assert.equal(postSettleGuards,2,'One post-settle canonical guard plus final account guard');
         const state=await r.read();assert.equal(state.events.length,1);assert.equal(state.notes.length,1);
         assert.deepEqual(state.events[0].packedEvent.map(x=>x.toBigInt()),[1n,1n,1n,77n,1n,0n,0n,0n]);
         assert(state.notes[0].owner.equals(r.complete.address));assert.equal(state.notes[0].note.items.length,4);
@@ -451,6 +607,21 @@ if(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1') {
       });
     });
   }
+  test('patched real queue: post-settle hook once, callback capture, no-hook defaults and failure drainage',async t=>{
+    const order=[];let calls=0;const contributor={onOperationEnd(){order.push('end');},settle:async()=>{order.push('settle');}};
+    const f=await stores(t,[contributor]);
+    const options={beforeCommit:async()=>{calls++;order.push('guard');}};
+    let release,entered;const gate=new Promise(r=>release=r),start=new Promise(r=>entered=r);
+    const first=f.queue.runSynced(async()=>{order.push('work');entered();await gate;return 17;},options);
+    await start;options.beforeCommit=()=>{throw Error('MUTATED_CALLBACK');};release();assert.equal(await first,17);
+    assert.equal(calls,1);assert.deepEqual(order,['work','settle','guard','end']);
+    assert.equal(await f.queue.runSynced(async()=>29),29);
+    let getter=0;const invalid=Object.defineProperty({},'beforeCommit',{get(){getter++;return ()=>{};}});
+    assert.throws(()=>f.queue.runSynced(async()=>{throw Error('MUST_NOT_RUN');},invalid),/PXE_OPERATION_COMMIT_GUARD/);assert.equal(getter,0);
+    assert.throws(()=>f.queue.runSynced(async()=>{}, {beforeCommit:null}),/PXE_OPERATION_COMMIT_GUARD/);
+    await assert.rejects(f.queue.runSynced(({changeSetId})=>f.validate(changeSetId),{beforeCommit:async()=>{throw Error('GUARD_VETO');}}),/GUARD_VETO/);
+    assert.equal((await f.read()).length,0);
+  });
   test('actual SDK synthetic complete effect membership rejects changed ciphertext and changed root',async()=>{
     const effect=await TxEffect.random({numNoteHashes:1,numNullifiers:1,numL2ToL1Msgs:0,numPublicDataWrites:0,numPrivateLogs:1,numPublicCallsPerTx:0,numPublicLogsPerCall:0,numContractClassLogs:0});
     const witness=await computeTxEffectMembershipWitness([effect],0);
@@ -462,7 +633,7 @@ if(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1') {
     assert.equal(await verifyTxEffectMembershipWitness(await changed.computeTxEffectsTreeLeaf(),witness,witness.root),false);
     assert.equal(await verifyTxEffectMembershipWitness(leaf,witness,new Fr(88)),false);
   });
-  test('actual LMDB/SDK validator: valid event commits, forged payload/missing nullifier does not',async t=>{
+  test('actual application store/SDK on labelled Node IndexedDB: valid event commits, forged payload/missing nullifier does not',async t=>{
     const f=await stores(t);
     const forged={...f.request,serializedEvent:[new Fr(999),...f.request.serializedEvent.slice(1)]};
     await f.queue.runSynced(({changeSetId})=>f.validate(changeSetId,[forged]));assert.equal((await f.read()).length,0);
@@ -470,7 +641,7 @@ if(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1') {
     await f.queue.runSynced(({changeSetId})=>f.validate(changeSetId,[f.request],absent));assert.equal((await f.read()).length,0);
     await f.queue.runSynced(({changeSetId})=>f.validate(changeSetId));assert.equal((await f.read()).length,1);
   });
-  test('actual LMDB/SDK queue: staged valid event discarded on final context or canonical receipt failure',async t=>{
+  test('actual application store/SDK on labelled Node IndexedDB: staged valid event discarded on final context or canonical receipt failure',async t=>{
     const f=await stores(t);
     for(const label of ['context changed','canonical receipt changed']){
       await assert.rejects(f.queue.runSynced(async({changeSetId})=>{await f.validate(changeSetId);throw Error(label);}),new RegExp(label));
@@ -479,7 +650,7 @@ if(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1') {
     await f.queue.runSynced(({changeSetId})=>f.validate(changeSetId));assert.equal((await f.read()).length,1);
     await f.db.transactionAsync(()=>f.events.rollbackToBlock(3));assert.equal((await f.read()).length,0);
   });
-  test('actual LMDB/SDK queue retains operation until awaited validator settles; no detached write',async t=>{
+  test('actual application store/SDK on labelled Node IndexedDB retains operation until awaited validator settles; no detached write',async t=>{
     const f=await stores(t);let release,entered;const gate=new Promise(r=>release=r),started=new Promise(r=>entered=r);let finished=false;
     const run=f.queue.runSynced(async({changeSetId})=>{entered();await gate;await f.validate(changeSetId);throw Error('late context');});
     const caught=run.catch(e=>{assert.equal(e.message,'late context');finished=true;});

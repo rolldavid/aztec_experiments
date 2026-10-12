@@ -6,13 +6,17 @@ import { fileURLToPath } from 'node:url';
 // ISOLATED EXPERIMENT ONLY. No build/install hook. Normal sync is unchanged;
 // this adds exactly one closed utility operation, never a generic skip-sync flag.
 // Caller supplies manifest-approved pins and holds the account lease. Its guard
-// is before callback return, NOT inside the later atomic store commit. Existing
-// contributors settle/commit normally. Full enumeration, cold recovery and the
-// last-check/commit chain-change window remain separate qualification gates.
+// runs again AFTER contributor settlement, before the original atomic commit.
+// It does not freeze an external chain or revoke an already-started KV commit.
+// Full enumeration, publication and cold recovery remain separate gates.
 const sha = value => createHash('sha256').update(value).digest('hex');
 export const PREFERENCE_PAGE_PINS = Object.freeze([
-  Object.freeze({path:'src/pxe.ts', before:'514cf7905733732522db9f301437d9ec5a1fd3b4a5ee3939980f76ffb4396ebd', after:'15263737c819057cd42c47556800363e51afa28fa87c49e0092c49fb5f5c0abc'}),
-  Object.freeze({path:'dest/pxe.js', before:'94d98c0a13a0d6a2724ecf03f790461e13328b8aebac3d243f373e982d76a360', after:'1c126691eadfa3abfe7e235705f8b2fa1ae17b7c6487400def5a99178f7e40df'}),
+  Object.freeze({path:'src/pxe.ts', before:'514cf7905733732522db9f301437d9ec5a1fd3b4a5ee3939980f76ffb4396ebd', after:'abed0b82e32b3a59bac13a86068b6c175713dd71db4d4b70023cb217182425bf'}),
+  Object.freeze({path:'dest/pxe.js', before:'94d98c0a13a0d6a2724ecf03f790461e13328b8aebac3d243f373e982d76a360', after:'1aaddc8886723dc42543baa3faffae6b8416ee9ee48aaa50fcc021ed2ea15bae'}),
+  Object.freeze({path:'src/operation_queue.ts', before:'96ead2127505711319430a525c3a12604e25936cda330ab04e57d6e36fb17409', after:'3903e7c681e60a5fda1c3652913dc7186ebea7cc55f54bb3778c870307eb379a'}),
+  Object.freeze({path:'dest/operation_queue.js', before:'7123d9643a620c189e704051e053a48d9d6214e62b57b51ec285ed5c2ae567d7', after:'a9e7998f7607e91ca97381daf8b0d1d2336f4177b0a8552a11209b4f9377b211'}),
+  Object.freeze({path:'src/operation_lifecycle.ts', before:'c25936606b1076606e06f9d50e611112806aa5ecddc07ab583c39bb0b858ab3d', after:'52211b30b977c07b7ed4ea8fe074aa8a35c879ea195a29182e9746305f98eb99'}),
+  Object.freeze({path:'dest/operation_lifecycle.js', before:'80386b7b1ead5fefe23bec2197728d28a22a1c12eca5fda0fa06adb80b119114', after:'68e5faed050ede1602d2bed598f77c795cf75de37c4e7edfef420678d835c0e7'}),
 ]);
 
 export const PREFERENCE_PAGE_COMPACT_PIN = Object.freeze({
@@ -89,6 +93,11 @@ function method(ts) {
       natural(p.logCount, 8, 1); check(p.firstLog + p.logCount <= RP_LOGS);
       const address = RollingPageAddress.fromFieldUnsafe(RollingPageFr.fromString(p.contractAddress)), scope = RollingPageAddress.fromFieldUnsafe(RollingPageFr.fromString(p.scope));
       const classId = RollingPageFr.fromString(p.expectedClassId), txHash = RollingPageTxHash.fromString(p.txHash);
+      let validateCommit${t(': (() => Promise<void>) | undefined')};
+      const beforeCommit = async () => {
+        check(typeof validateCommit === 'function');
+        await validateCommit${t('!')}();
+      };
       await guard();
       return await this.operationQueue.runSynced(async ({changeSetId, anchorBlockHeader}) => {
         await guard();
@@ -214,31 +223,74 @@ function method(ts) {
         const result = await this.#executeUtility(simulator, call, [], [scope], anchor, changeSetId);
         check(result.offchainEffects.length === 0 && result.result.length === 1);
         const admitted = Number(result.result[0].toBigInt()); natural(admitted, p.logCount);
-        await canonical();
-        const after = await this.node.getTxReceipt(txHash, {includeTxEffect:true});
-        check(after.isMined() && after.blockNumber === p.blockNumber && after.blockHash${t('!')}.toString() === p.blockHash &&
-          after.txIndexInBlock === receiptFields.txIndexInBlock && after.slotNumber === receiptFields.slotNumber &&
-          after.transactionFee === receiptFields.transactionFee && after.executionResult === receiptFields.executionResult && effectBytes(after.txEffect).equals(bytes));
-        await guard();
-        // Existing contributor settle + atomic staged commit FOLLOW this return.
-        // This guard is not represented as a literal atomic-commit recheck.
+        validateCommit = async () => {
+          await canonical();
+          const after = await this.node.getTxReceipt(txHash, {includeTxEffect:true});
+          check(after instanceof RollingPageReceipt && after.isMined() && after.txHash.equals(txHash) &&
+            after.blockNumber === p.blockNumber && after.blockHash${t('!')}.toString() === p.blockHash &&
+            after.txIndexInBlock === receiptFields.txIndexInBlock && after.slotNumber === receiptFields.slotNumber &&
+            after.transactionFee === receiptFields.transactionFee && after.executionResult === receiptFields.executionResult && effectBytes(after.txEffect).equals(bytes));
+          await guard();
+        };
+        await validateCommit();
+        // The existing lifecycle repeats this closure AFTER all contributors
+        // settle. No network await enters the KV transaction; a subsequent reorg
+        // still requires canonical publication checks and normal orphan pruning.
         return Object.freeze({schemaVersion:1, processed:p.logCount, admitted});
-      });
+      }, {beforeCommit});
     } catch { throw new Error('PXE_PREFERENCE_PAGE_FAILED'); }
   }
 `;
 }
 
+function replaceOnce(source, from, to) {
+  if(source.indexOf(from)<0 || source.indexOf(from)!==source.lastIndexOf(from))throw Error('PREFERENCE_PAGE_PATCH_LAYOUT');
+  return source.replace(from,to);
+}
+function transformQueue(source, ts) {
+  if(ts) {
+    source=replaceOnce(source,
+      '    { errorContext, forceSync = false }: { errorContext?: () => string[]; forceSync?: boolean } = {},',
+      '    options: { errorContext?: () => string[]; forceSync?: boolean; beforeCommit?: () => Promise<void> } = {},');
+    source=replaceOnce(source,'    return this.run(async () => {',`    const { errorContext, forceSync = false } = options;
+    const descriptor = Object.getOwnPropertyDescriptor(options, 'beforeCommit');
+    if (descriptor && (!('value' in descriptor) || typeof descriptor.value !== 'function')) throw new Error('PXE_OPERATION_COMMIT_GUARD');
+    const beforeCommit = descriptor?.value as (() => Promise<void>) | undefined;
+    return this.run(async () => {`);
+    return replaceOnce(source,'          contributors: this.contributors,','          contributors: this.contributors,\n          beforeCommit,');
+  }
+  source=replaceOnce(source,'runSynced(fn, { errorContext, forceSync = false } = {}) {',`runSynced(fn, options = {}) {
+        const { errorContext, forceSync = false } = options;
+        const descriptor = Object.getOwnPropertyDescriptor(options, 'beforeCommit');
+        if (descriptor && (!('value' in descriptor) || typeof descriptor.value !== 'function')) throw new Error('PXE_OPERATION_COMMIT_GUARD');
+        const beforeCommit = descriptor?.value;`);
+  return replaceOnce(source,'                    contributors: this.contributors,','                    contributors: this.contributors,\n                    beforeCommit,');
+}
+function transformLifecycle(source, ts) {
+  source=replaceOnce(source,'const { stagedWriteCoordinator, contributors, changeSetId, log } = args;',
+    'const { stagedWriteCoordinator, contributors, changeSetId, log, beforeCommit } = args;');
+  const settle=ts?'    await allToCompletion(contributors.map(contributor => contributor.settle?.(changeSetId)));':'        await allToCompletion(contributors.map((contributor)=>contributor.settle?.(changeSetId)));';
+  source=replaceOnce(source,settle,settle+'\n'+(ts?'    ':'        ')+`// Read-only validation AFTER all contributors; never inside the KV transaction.
+${ts?'    ':'        '}if (beforeCommit !== undefined) await beforeCommit();`);
+  if(ts)source=replaceOnce(source,'  log: Logger;','  log: Logger;\n  beforeCommit?: () => Promise<void>;');
+  return source;
+}
 export function transformPreferencePage(source, path) {
   const pin=PREFERENCE_PAGE_PINS.find(p=>p.path===path);
   if(!pin || typeof source!=='string' || sha(source)!==pin.before) throw Error('PREFERENCE_PAGE_PATCH_SOURCE');
-  const ts=path.endsWith('.ts'),needle=ts?'  public executeUtility(':'executeUtility(call, {';
-  const at=source.indexOf(needle),offset=source.lastIndexOf('/**',at);
-  if(offset<0)throw Error('PREFERENCE_PAGE_PATCH_LAYOUT');
-  const output=imports()+source.slice(0,offset)+method(ts)+source.slice(offset);
+  const ts=path.endsWith('.ts');let output;
+  if(path.includes('operation_queue.'))output=transformQueue(source,ts);
+  else if(path.includes('operation_lifecycle.'))output=transformLifecycle(source,ts);
+  else {
+    const needle=ts?'  public executeUtility(':'executeUtility(call, {';
+    const at=source.indexOf(needle),offset=source.lastIndexOf('/**',at);
+    if(offset<0)throw Error('PREFERENCE_PAGE_PATCH_LAYOUT');
+    output=imports()+source.slice(0,offset)+method(ts)+source.slice(offset);
+  }
   if(sha(output)!==pin.after)throw Error('PREFERENCE_PAGE_PATCH_OUTPUT');
   return output;
 }
+
 async function paths(root) {
   root=resolve(root);
   if(await realpath(root)!==root)throw Error('PREFERENCE_PAGE_PATCH_SYMLINK');
