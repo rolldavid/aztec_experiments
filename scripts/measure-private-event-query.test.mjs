@@ -1,17 +1,19 @@
 // Small actual LMDB query fixtures plus labelled report/cleanup fault injection.
 // These tests do not run the retained-size campaign, Chromium, or cold PXE sync.
 import test,{after} from 'node:test';
+import {createHash} from 'node:crypto';
 import assert from 'node:assert/strict';
 import {mkdtemp,rm,readFile,realpath} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
-import {QUERY_CAPACITY_TARGETS,parseCapacityArguments,prepareCapacityStores,runLmdbCapacity,measureStorePair,assessCapacity,ownedProcessMemory} from './measure-private-event-query.mjs';
+import {createCapacityProgress,QUERY_CAPACITY_TARGETS,parseCapacityArguments,prepareCapacityStores,runLmdbCapacity,measureStorePair,assessCapacity,ownedProcessMemory} from './measure-private-event-query.mjs';
 const directory=await realpath(await mkdtemp(join(tmpdir(),'rolling-capacity-unit-')));
 after(()=>rm(directory,{recursive:true,force:true}));
 const roots=(await prepareCapacityStores(directory)).roots;
-let actual;
+let actual;const progress=[];
+const sourceSha256=createHash('sha256').update(await readFile(new URL('./measure-private-event-query.mjs',import.meta.url))).digest('hex');
 test('tiny real pinned upstream versus patched LMDB stores: full result equality, serial range reads and numeric-only report',async()=>{
- actual=await runLmdbCapacity({retained:16,directory,roots});
+ actual=await runLmdbCapacity({retained:16,directory,roots,onProgress:createCapacityProgress({platform:'lmdb',retained:16,sourceSha256,write:row=>progress.push(row)})});
  const report=assessCapacity(actual,{nodePeakRssBytes:process.resourceUsage().maxRSS*1024,browserProcessPeakRssBytes:[]});
  assert.equal(report.correctnessPassed,true);
  assert.equal(actual.variants[0].queries.every(q=>q.reads===16&&q.historicalRows===16),true);
@@ -69,4 +71,52 @@ test('browser source uses actual IndexedDB and blocks external network; no fake-
  const source=await readFile(new URL('./measure-private-event-query.mjs',import.meta.url),'utf8');
  assert(source.includes("import {AztecIndexedDBStore} from '@aztec-labs/kv-store/deprecated/indexeddb'"));
  assert(!source.includes("from 'fake-indexeddb"));assert(source.includes("url.origin===origin?route.continue():route.abort()"));
+});
+
+test('real tiny-store progress is ordered, source-bound and keeps completed seed/query metrics before final report',()=>{
+ const phases=['variant-start','seed-complete','warmup-complete',...Array(5).fill('warm-query-complete'),'variant-cleanup'];
+ assert.deepEqual(progress.map(x=>x.phase),[...phases,...phases]);
+ for(let i=0;i<progress.length;i++){
+  const row=progress[i];assert.equal(row.sourceSha256,sourceSha256);assert.equal(row.sequence,i+1);assert.equal(row.platform,'lmdb');assert.equal(row.retained,16);
+  assert.equal(row.variant,i<9?'upstream':'patched');assert(Number.isSafeInteger(row.wallTimeMs));assert(row.elapsedMs>=0);
+  if(i)assert(row.elapsedMs>=progress[i-1].elapsedMs);
+  assert(!JSON.stringify(row).includes('fields'));assert(!JSON.stringify(row).includes('0x'));
+ }
+ for(const v of actual.variants){
+  assert.equal(progress.find(x=>x.variant===v.variant&&x.phase==='seed-complete').seedMs,v.seedMs);
+  const measured=progress.filter(x=>x.variant===v.variant&&x.phase==='warm-query-complete');
+  measured.forEach((row,i)=>{assert.equal(row.query,i);for(const [key,value]of Object.entries(v.queries[i]))assert.equal(row[key],value);});
+ }
+});
+test('progress projection rejects unsupported fields, unsafe numeric values and getters without invoking them',async()=>{
+ const rows=[],sink=createCapacityProgress({platform:'chromium',retained:50000,sourceSha256,write:row=>rows.push(row)});let accessed=0;
+ const getter={phase:'variant-start'};Object.defineProperty(getter,'variant',{enumerable:true,get(){accessed++;throw Error('PRIVATE_SENTINEL');}});
+ const badPhase={toString(){accessed++;throw Error('PRIVATE_SENTINEL');}};
+ for(const value of [{phase:'unknown'},{phase:'variant-start',variant:'upstream',secret:'PRIVATE_SENTINEL'},getter,{phase:badPhase},
+  {phase:'seed-complete',variant:'upstream',seedMs:NaN},{phase:'seed-complete',variant:'upstream',seedMs:-1},
+  {phase:'variant-cleanup',variant:'upstream',status:'PRIVATE_SENTINEL'},
+  {phase:'warm-query-complete',variant:'upstream',query:5,durationMs:1,resultCount:8,reads:8,pending:0,peak:1,blockRows:8,historicalRows:0}]){
+  await assert.rejects(sink(value),{message:'PRIVATE_EVENT_CAPACITY_FAILED'});
+ }
+ assert.equal(accessed,0);assert.deepEqual(rows,[]);
+ await sink({phase:'experiment-start'});assert.equal(rows[0].sequence,1);
+});
+test('progress capture detaches caller fields before an awaited output and limits record count',async()=>{
+ let release;const pending=new Promise(r=>release=r),rows=[];
+ const sink=createCapacityProgress({platform:'lmdb',retained:1000,sourceSha256,write:async row=>{rows.push(row);await pending;}});
+ const value={phase:'variant-start',variant:'upstream'},writing=sink(value);value.variant='PRIVATE_SENTINEL';release();await writing;
+ assert.equal(rows[0].variant,'upstream');assert(Object.isFrozen(rows[0]));
+ for(let i=1;i<64;i++)await sink({phase:'experiment-start'});
+ await assert.rejects(sink({phase:'experiment-start'}),{message:'PRIVATE_EVENT_CAPACITY_FAILED'});assert.equal(rows.length,64);
+});
+test('progress rejects absent source binding and cleanup can report failure without fabricating completion',async()=>{
+ assert.throws(()=>createCapacityProgress({platform:'lmdb',retained:1000,sourceSha256:'unknown',write(){}}),/PRIVATE_EVENT_CAPACITY_FAILED/);
+ const rows=[],sink=createCapacityProgress({platform:'lmdb',retained:1000,sourceSha256,write:row=>rows.push(row)});
+ await sink({phase:'experiment-cleanup',status:'failed'});assert.equal(rows[0].status,'failed');assert(!Object.hasOwn(rows[0],'passed'));
+});
+
+test('failure after completed seeding retains its metrics and cleanup, without a partial successful measurement',async()=>{
+ const rows=[],sink=createCapacityProgress({platform:'lmdb',retained:16,sourceSha256,write:row=>rows.push(row)});
+ await assert.rejects(runLmdbCapacity({retained:16,directory,roots,onProgress:async row=>{await sink(row);if(row.phase==='seed-complete')throw Error('PRIVATE_SENTINEL');}}),{message:'PRIVATE_EVENT_CAPACITY_FAILED'});
+ assert.deepEqual(rows.map(x=>x.phase),['variant-start','seed-complete','variant-cleanup']);assert.equal(rows.at(-1).status,'complete');assert(Number.isFinite(rows[1].seedMs));assert(!JSON.stringify(rows).includes('PRIVATE_SENTINEL'));
 });
