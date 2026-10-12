@@ -46,3 +46,11 @@ test('owned-name profile reconstruction rejects missing duplicate altered and un
   const {projection,profiles}=namesFixture();change(profiles);assert.throws(()=>assertCanonicalOwnedNameProfiles(projection,profiles));
  }
 });
+
+test('social canonical profile checks identity posts and cursors independently of index metadata',()=>{
+ const make=()=>{const {projection,profiles}=namesFixture();return {projection,rows:profiles.map(expected=>({route:'profile',parameters:{nameId:expected.identity.id,limit:100},expected:{...structuredClone(expected),names:{},boards:{},checkpoint:{number:8}}}))};};
+ const {projection,rows}=make();assertCanonicalSocialViews(projection,rows);
+ for(const change of [row=>row.expected.identity.first='Changed',row=>row.expected.posts.push({id:'9'}),row=>row.expected.nextCursor='unexpected',row=>delete row.expected.identity]){
+  const {projection,rows}=make();change(rows[0]);assert.throws(()=>assertCanonicalSocialViews(projection,rows));
+ }
+});

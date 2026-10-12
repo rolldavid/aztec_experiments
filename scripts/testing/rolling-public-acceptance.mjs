@@ -10,11 +10,11 @@ import {createPublicReader} from '../../apps/rolling/reader-client.mjs';
 const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 export function assertCanonicalSocialViews(projection,rows){
  for(const {route,parameters,expected}of rows){
-  assert(['feed','thread','post'].includes(route));
-  const actual=route==='post'?{post:projection.post(parameters.id)}:route==='thread'?projection.thread(parameters.root,parameters):projection.feed(parameters);
+  assert(['feed','thread','post','profile'].includes(route));
+  const actual=route==='post'?{post:projection.post(parameters.id)}:route==='thread'?projection.thread(parameters.root,parameters):route==='profile'?projection.profile(parameters.nameId,parameters):projection.feed(parameters);
   // Raw projection owns canonical posts and cursors. The HTTP index enriches
   // names/boards; those remain mandatory in assertSocialHTTPView below.
-  const keys=route==='post'?['post']:['posts','nextCursor'];
+  const keys=route==='post'?['post']:route==='profile'?['identity','posts','nextCursor']:['posts','nextCursor'];
   assert(keys.every(key=>Object.hasOwn(expected,key)&&Object.hasOwn(actual,key)));
   assert.deepEqual(Object.fromEntries(keys.map(key=>[key,actual[key]])),Object.fromEntries(keys.map(key=>[key,expected[key]])));
  }
@@ -48,9 +48,9 @@ export function assertCanonicalOwnedNameProfiles(projection,profiles){
  }
 }
 export async function verifyRollingPublicReader({node,artifact,scope,deployment,cacheDirectory,ids,scenario='conversation',expectedProfile,expectedProfiles,expectedHTTP,deadlineAt,observation,wire}){
- assert(['conversation','profiles','anonymous-thread','repost-reactions','account-reactions','owned-names'].includes(scenario));
+ assert(['conversation','profiles','anonymous-thread','repost-reactions','account-reactions','owned-names','social-wire','reaction-wire'].includes(scenario));
  const names=scenario==='owned-names';
- const social=['anonymous-thread','repost-reactions','account-reactions'].includes(scenario);
+ const social=['anonymous-thread','repost-reactions','account-reactions','social-wire','reaction-wire'].includes(scenario);
  if(names){assert(Array.isArray(expectedProfiles)&&expectedProfiles.length===4);assert.equal(new Set(expectedProfiles.map(p=>p.identity.id)).size,4);}
  if(social)assert(Array.isArray(expectedHTTP)&&expectedHTTP.length>0);
  if(scenario==='profiles')assert(expectedProfile&&expectedProfile.id===ids.nameId);

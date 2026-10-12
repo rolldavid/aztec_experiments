@@ -17,7 +17,7 @@ const discard=()=>{};
 const silent=Object.assign(discard,Object.fromEntries(['trace','debug','verbose','info','warn','error','fatal'].map(k=>[k,discard])),
   {level:'silent',isLevelEnabled:()=>false,getBindings:()=>({}),createChild:()=>silent});
 const PERSONAL=['feePayer','publicCallSenders','publicCallTargets','publicCallCalldata','publicWriteSlots','publicWriteValues','publicLogContracts','publicLogFields'];
-const SOURCES=['scripts/testing/rolling-wire-campaign.mjs','scripts/testing/rolling-wire-trace.mjs','scripts/testing/rolling-owned-names.mjs','scripts/t03-public-footprint.mjs','scripts/testing/rolling-removed-like.mjs','scripts/testing/rolling-application-actor.mjs','scripts/testing/rolling-account-reactions.mjs','scripts/testing/rolling-social-acceptance.mjs','scripts/testing/rolling-profile-acceptance.mjs','experiments/avatar/raster-fixture.mjs','scripts/prove-application-action.mjs','scripts/testing/rolling-native-artifacts.mjs','scripts/testing/rolling-application-fixture.mjs','scripts/testing/scenarios.mjs','scripts/testing/scenario-flows.mjs',
+const SOURCES=['scripts/testing/rolling-social-wire.mjs','scripts/testing/rolling-wire-campaign.mjs','scripts/testing/rolling-wire-trace.mjs','scripts/testing/rolling-owned-names.mjs','scripts/t03-public-footprint.mjs','scripts/testing/rolling-removed-like.mjs','scripts/testing/rolling-application-actor.mjs','scripts/testing/rolling-account-reactions.mjs','scripts/testing/rolling-social-acceptance.mjs','scripts/testing/rolling-profile-acceptance.mjs','experiments/avatar/raster-fixture.mjs','scripts/prove-application-action.mjs','scripts/testing/rolling-native-artifacts.mjs','scripts/testing/rolling-application-fixture.mjs','scripts/testing/scenarios.mjs','scripts/testing/scenario-flows.mjs',
   'scripts/c01-real-node.mjs','scripts/c01-board-flow.mjs','scripts/c01-deposit-flow.mjs','scripts/c01-client-mining.mjs',
   'scripts/w01-private-fee-flow.mjs','scripts/w01-unfunded-wallet.mjs','scripts/w01-private-funding.mjs',
   'shared/sdk-entry.mjs','shared/private-pxe.mjs','shared/trusted-private-node.mjs','shared/routed-kernel-prover.mjs','shared/remote-prover-client.mjs',
@@ -157,8 +157,8 @@ export async function loadRollingFixtureSDK() {
 }
 
 export async function runRollingApplicationFixture(ctx,scenario='conversation') {
-  assert(['conversation','profiles','anonymous-thread','repost-reactions','account-reactions','owned-names','owned-names-wire','composer'].includes(scenario));
-  const composer=scenario==='composer',captureWire=scenario==='owned-names-wire',names=scenario==='owned-names'||captureWire||composer,multi=scenario==='account-reactions'||names,social=['anonymous-thread','repost-reactions','account-reactions'].includes(scenario);
+  assert(['conversation','profiles','anonymous-thread','repost-reactions','account-reactions','owned-names','owned-names-wire','composer','social-wire','reaction-wire'].includes(scenario));
+  const composer=scenario==='composer',socialWire=scenario==='social-wire',reactionWire=scenario==='reaction-wire',wireSocial=socialWire||reactionWire,captureWire=scenario==='owned-names-wire'||wireSocial,names=['owned-names','owned-names-wire','composer'].includes(scenario),multi=scenario==='account-reactions'||names||wireSocial,social=['anonymous-thread','repost-reactions','account-reactions'].includes(scenario)||wireSocial;
   const {ROOT,assertNodeVersion,assertAztecPackages}=await import('../toolchain.mjs');
   const directory=path.join(ROOT,'execution/evidence/G06','application-port-'+randomUUID());
   await fs.mkdir(directory,{mode:0o700});
@@ -172,7 +172,7 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
   const sourceBinding=async()=>Object.fromEntries(await Promise.all(SOURCES.map(async name=>[name,sha(await fs.readFile(path.join(ROOT,name)))])));
   let fees,feesB,actorA,actorB,activeActor,pxe,rpc,service,failure,restoreIndexedDB,nativeArtifacts,owner,appWallet,journal;
   let wire,ordinaryRpc;
-  let transportSends=0,feeTotalB=0n,fundingRole;
+  let transportSends=0,feeTotalB=0n,fundingRole,collateralRole;
   let feeTotal=0n;const accounted=new Set();
   const accountFee=(hash,fee,other=false)=>{if(!accounted.has(hash)){assert(BigInt(fee)>0n);if(other)feeTotalB+=BigInt(fee);else feeTotal+=BigInt(fee);accounted.add(hash);}report.actualHumanFees=String(feeTotal+feeTotalB);};
   try {
@@ -210,18 +210,36 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
     const {startProverService}=await import('../../prover/service.mjs');
     const {createRollingEventDecoder,isRollingEvent}=await import('../../shared/rolling/public-events.mjs');
     const {createRollingProjection}=await import('../../shared/rolling/public-projection.mjs');
-    let claim,bokInstance;report.setupMining={};
+    let claim,claimB,bokInstance;report.setupMining={};
     await withC01ClientMining({rpcUrl:ctx.config.l1RpcUrls[0],dateProvider:ctx.dateProvider,observation:report.setupMining},async mineL1=>{
       await mark('private-fee-funding');
       fundingRole='a';fees=await prepareW01PrivateFees({...ctx,rpcUrl:ctx.config.l1RpcUrls[0],mineL1,standalone:!multi,
         fundingDirectory:path.join(ctx.directory,'rolling-app-funding'),reportStage:ctx.mark});
       report.privateFees=fees;owner=fees.authorAccount.address;
-      if(multi){fundingRole='b';feesB=await prepareW01PrivateFees({...ctx,rpcUrl:ctx.config.l1RpcUrls[0],mineL1,standalone:true,fundingDirectory:path.join(ctx.directory,'rolling-app-funding-b'),reportStage:ctx.mark});report.secondPrivateFees=feesB;assert(!feesB.authorAccount.address.equals(owner));assert(feesB.browserFixture.instance.address.equals(fees.browserFixture.instance.address));}
+      if(multi){fundingRole='b';feesB=await prepareW01PrivateFees({...ctx,rpcUrl:ctx.config.l1RpcUrls[0],mineL1,standalone:!socialWire,fundingDirectory:path.join(ctx.directory,'rolling-app-funding-b'),reportStage:ctx.mark});report.secondPrivateFees=feesB;assert(!feesB.authorAccount.address.equals(owner));assert(feesB.browserFixture.instance.address.equals(fees.browserFixture.instance.address));}
       fundingRole=undefined;const setupWallet=fees.browserFixture.wallet;
       await mark('collateral-claim');
-      claim=await depositAndClaimC01({...ctx,node:setupWallet.aztecNode,rpcUrl:ctx.config.l1RpcUrls[0],mineL1,reportStage:ctx.mark,
+      collateralRole='a';claim=await depositAndClaimC01({...ctx,node:setupWallet.aztecNode,rpcUrl:ctx.config.l1RpcUrls[0],mineL1,reportStage:ctx.mark,
         authorAccount:fees.authorAccount,claimWallet:setupWallet,payerMode:'private',privateFeeAction:fees.privateFeeAction});
       report.collateral=claim;accountFee(claim.claimTxHash,claim.fee);await save();assert(claim.passed);
+      collateralRole=undefined;
+      if(socialWire){
+        await mark('second-collateral-claim');collateralRole='b';
+        const {createWalletClient,http,publicActions}=await import('viem'),{generatePrivateKey,privateKeyToAccount}=await import('viem/accounts');
+        const account=privateKeyToAccount(generatePrivateKey());
+        assert.notEqual(account.address.toLowerCase(),ctx.l1Client.account.address.toLowerCase());
+        // Fresh local-only depositor; never reuse A's occupied portal deposit.
+        const value=10n**18n;report.secondDepositorFunding={value:String(value),submission:'outcome unknown'};await save();
+        const hash=await ctx.l1Client.sendTransaction({to:account.address,value});report.secondDepositorFunding.txHash=hash;await save();
+        const receipt=await ctx.l1Client.waitForTransactionReceipt({hash,timeout:60000});
+        Object.assign(report.secondDepositorFunding,{status:receipt.status,gasUsed:String(receipt.gasUsed),effectiveGasPrice:String(receipt.effectiveGasPrice)});await save();assert.equal(receipt.status,'success');
+        const depositor=createWalletClient({account,chain:ctx.l1Client.chain,transport:http(ctx.config.l1RpcUrls[0],{retryCount:0})}).extend(publicActions),wallet=feesB.browserFixture.wallet;
+        claimB=await depositAndClaimC01({...ctx,l1Client:depositor,node:wallet.aztecNode,rpcUrl:ctx.config.l1RpcUrls[0],mineL1,reportStage:ctx.mark,
+          authorAccount:feesB.authorAccount,claimWallet:wallet,payerMode:'private',privateFeeAction:feesB.privateFeeAction});
+        report.secondCollateral=claimB;accountFee(claimB.claimTxHash,claimB.fee,true);await save();assert(claimB.passed);
+        assert.notEqual(claim.claim.depositor,claimB.claim.depositor);assert.notEqual(String(claim.claim.depositChainId),String(claimB.claim.depositChainId));collateralRole=undefined;
+      }
+
       await mark('deploy-unused-bok-scope');
       const operator=ctx.preparation.account.address;
       const deployment=Contract.deploy(setupWallet,loadContractArtifact(bokRaw),[ctx.instance.address,operator,new Fr(31337n),new Fr(BigInt(info.rollupVersion))],
@@ -309,7 +327,7 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
       actorA=await makeActor(fees,'a');activeActor=actorA;
       pxe=actorA.pxe;appWallet=actorA.wallet;journal=actorA.journal;let app=actorA.application;
       assert.equal((await app.readAccountStatus()).status,'fee-ready');
-      if(multi){actorB=await makeActor(feesB,'b');const state=await actorB.application.readAccountStatus();assert.equal(state.status,'collateral-pending');assert(BigInt(state.privateFeeCredit)>0n);}
+      if(multi){actorB=await makeActor(feesB,'b');const state=await actorB.application.readAccountStatus();assert.equal(state.status,socialWire?'fee-ready':'collateral-pending');assert(BigInt(state.privateFeeCredit)>0n);}
       const decoder=await createRollingEventDecoder({artifact:checked.artifact,scope:{chainId:network.chainId,rollupVersion:network.version,rollupAddress:network.rollup,
         boardAddress:String(ctx.instance.address),classId:String((await sdk.getContractClassFromArtifact(checked.artifact)).id)}});
       const projection=createRollingProjection({isValidatedEvent:isRollingEvent});
@@ -390,7 +408,7 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
       if(names){
         const {exerciseRollingOwnedNames}=await import('./rolling-owned-names.mjs');
         report.names=await exerciseRollingOwnedNames({actorA,actorB,actionA:(input,label)=>action(input,label,actorA),actionB:(input,label)=>action(input,label,actorB),onPhase:phase=>wire?.setPhase(phase)});
-        if(wire){
+        if(scenario==='owned-names-wire'){
           await mark('fresh-pxe-owned-name-recovery');
           const started=Date.now(),expected=[await actorA.application.ownedIdentities(),await actorB.application.ownedIdentities()];
           const cipher=async role=>{
@@ -433,9 +451,10 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
       }else if(social){
         const {exerciseRollingAnonymousThread,exerciseRollingRepostReactions,captureRollingAnonymousHTTPViews}=await import('./rolling-social-acceptance.mjs');
         const deposit=String(claim.claim.depositChainId);
-        async function waitPostAdmission(){
+        async function waitPostAdmission(selected=actorA,selectedDeposit=deposit){
+          const pxe=selected.pxe,appWallet=selected.wallet,owner=selected.owner;
           await pxe.sync();
-          const state=(await Contract.at(ctx.instance.address,checked.artifact,appWallet).methods.get_deposit_info(owner,new Fr(BigInt(deposit))).simulate({from:owner})).result;
+          const state=(await Contract.at(ctx.instance.address,checked.artifact,appWallet).methods.get_deposit_info(owner,new Fr(BigInt(selectedDeposit))).simulate({from:owner})).result;
           assert.equal(state.length,10);
           const checkpoints=createT04CheckpointScope(ctx.node.getSequencer()),deadline=Math.min(Date.now()+90000,ctx.applicationDeadlineAt);
           try{checkpoints.enable();while((await pxe.getSyncedBlockHeader()).globalVariables.timestamp<BigInt(state[9])){
@@ -444,7 +463,12 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
           }finally{checkpoints.restore();}
         }
         const options={deposit,action,projection,waitPostAdmission,moderatePost:args=>moderate({kind:'post',id:args.postId,...args})};
-        if(multi){
+        if(wireSocial){
+          const {exerciseRollingSocialWire,exerciseRollingReactionWire}=await import('./rolling-social-wire.mjs');
+          const actorOptions=(selected,selectedClaim)=>({action:(input,label)=>action(input,label,selected),ownedIdentities:options=>selected.application.ownedIdentities(options),
+            ...(selectedClaim?{deposit:String(selectedClaim.claim.depositChainId),waitPostAdmission:()=>waitPostAdmission(selected,String(selectedClaim.claim.depositChainId))}:{})});
+          report.social=await (socialWire?exerciseRollingSocialWire:exerciseRollingReactionWire)({actorA:actorOptions(actorA,claim),actorB:actorOptions(actorB,claimB),projection,onPhase:phase=>wire.setPhase(phase)});
+        }else if(multi){
           await waitPostAdmission();const root=await action({type:'post',deposit,name:'0',subboard:'0',content:'One public post, two private accounts.'},'account-reactions-root');
           assert.equal(root.length,1);assert.equal(root[0].type,'PostPublished');const postId=root[0].payload.id;
           const {createRemovedLikeClassifier}=await import('./rolling-removed-like.mjs');
@@ -507,12 +531,12 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
         try{await runRollingComposerFixture({ctx,actors:[actorA,actorB],fees:[fees,feesB],claim:claim.claim,endpoint,network,artifact:checked.artifact,
           scope:{chainId:network.chainId,rollupVersion:network.version,rollupAddress:network.rollup,boardAddress:String(ctx.instance.address),classId:String((await sdk.getContractClassFromArtifact(checked.artifact)).id)},
           deployment:{blockNumber:Number(report.initialPublicAnchor.blockNumber),blockHash:report.initialPublicAnchor.blockHash,txHash:report.initialPublicAnchor.txHash},service,sendCount:()=>transportSends,observation:report.composer,persist:save,verifyFees:[
-            ()=>fees.verify(feeTotal,feesB.browserFixture.fundedAmount-BigInt(feesB.standalone.transactionFee)-feeTotalB),
+            ()=>fees.verify(feeTotal,feesB.browserFixture.fundedAmount-BigInt(feesB.standalone?.transactionFee??0)-feeTotalB),
             ()=>feesB.verify(feeTotalB,fees.browserFixture.fundedAmount-feeTotal)
           ]});}
         finally{await save();}
       }
-      if(multi){const bStandalone=BigInt(feesB.standalone.transactionFee);await fees.verify(feeTotal,feesB.browserFixture.fundedAmount-bStandalone-feeTotalB);await feesB.verify(feeTotalB,fees.browserFixture.fundedAmount-feeTotal);assert.equal(fees.poolBefore,feesB.poolBefore);report.accountFees={a:String(feeTotal),b:String(feeTotalB)};}else await fees.verify(feeTotal);report.actualHumanFees=String(feeTotal+feeTotalB);report.proverJobs=service.stats();
+      if(multi){const bStandalone=BigInt(feesB.standalone?.transactionFee??0);await fees.verify(feeTotal,feesB.browserFixture.fundedAmount-bStandalone-feeTotalB);await feesB.verify(feeTotalB,fees.browserFixture.fundedAmount-feeTotal);assert.equal(fees.poolBefore,feesB.poolBefore);report.accountFees={a:String(feeTotal),b:String(feeTotalB)};}else await fees.verify(feeTotal);report.actualHumanFees=String(feeTotal+feeTotalB);report.proverJobs=service.stats();
       assert.equal(report.proverJobs.failed,0);if(names){assert.equal(report.proverJobs.completed,4);assert.equal(report.proverJobs.submitted,4);}
       else if(social){const expectedJobs=scenario==='anonymous-thread'?3:multi?6:4;assert.equal(report.proverJobs.completed,expectedJobs);assert.equal(report.proverJobs.submitted,expectedJobs);}
       else{assert.equal(report.proverJobs.completed,5);assert.equal(report.proverJobs.submitted,5);}
@@ -531,7 +555,7 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
     failure=error;report.passed=false;
     // Keep only fixed/public observation schemas. Never raw SDK error/cause/stack.
     report.failure={stage:report.stage,code:['BB_TRUSTED_NODE_CONFIG','BB_TRUSTED_NODE_UNAVAILABLE','BB_TRUSTED_NODE_STALE','BB_TRUSTED_NODE_UNSYNCED','BB_TRUSTED_NODE_IDENTITY','BB_REMOTE_PROVER_TIMEOUT','BB_REMOTE_PROVER_FAILED','ROLLING_FEE_CHANGED'].includes(error?.code)?error.code:'UNCLASSIFIED'};
-    if(error.depositObservation)report.collateral=error.depositObservation;
+    if(error.depositObservation){if(collateralRole==='b')report.secondCollateral=error.depositObservation;else report.collateral=error.depositObservation;}
     if(error.privateFeeObservation)recordRollingFundingFailure(report,fundingRole,error.privateFeeObservation);
     // Failed submit can still have consumed a fee. Read-only canonical observation,
     // no replacement, reproof or resend. Never treat this as application success.
