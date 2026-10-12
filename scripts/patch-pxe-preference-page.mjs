@@ -13,8 +13,9 @@ const sha = value => createHash('sha256').update(value).digest('hex');
 export const PREFERENCE_PAGE_PINS = Object.freeze([
   Object.freeze({path:'src/pxe.ts', before:'514cf7905733732522db9f301437d9ec5a1fd3b4a5ee3939980f76ffb4396ebd', after:'abed0b82e32b3a59bac13a86068b6c175713dd71db4d4b70023cb217182425bf'}),
   Object.freeze({path:'dest/pxe.js', before:'94d98c0a13a0d6a2724ecf03f790461e13328b8aebac3d243f373e982d76a360', after:'1aaddc8886723dc42543baa3faffae6b8416ee9ee48aaa50fcc021ed2ea15bae'}),
-  Object.freeze({path:'src/operation_queue.ts', before:'96ead2127505711319430a525c3a12604e25936cda330ab04e57d6e36fb17409', after:'3903e7c681e60a5fda1c3652913dc7186ebea7cc55f54bb3778c870307eb379a'}),
-  Object.freeze({path:'dest/operation_queue.js', before:'7123d9643a620c189e704051e053a48d9d6214e62b57b51ec285ed5c2ae567d7', after:'a9e7998f7607e91ca97381daf8b0d1d2336f4177b0a8552a11209b4f9377b211'}),
+  // rc3 adds queue-pressure timing and warnings; the transform preserves them.
+  Object.freeze({path:'src/operation_queue.ts', before:'a78c45878393d8713fdce1de1cda326ec3af6772b092215c8096044d3ab61246', after:'d46768a384214ea5786a60e83b3c417fd788547904cf65f1a0c756616b91d5db'}),
+  Object.freeze({path:'dest/operation_queue.js', before:'f8856a4145c38e831d077bc33c5e67f778ea1ad367b3ff93c486175d4c9019b6', after:'a2373a39553acc1ffc6f4cf9be0cc6eb07cefdb033881492601dd92abd15e360'}),
   Object.freeze({path:'src/operation_lifecycle.ts', before:'c25936606b1076606e06f9d50e611112806aa5ecddc07ab583c39bb0b858ab3d', after:'52211b30b977c07b7ed4ea8fe074aa8a35c879ea195a29182e9746305f98eb99'}),
   Object.freeze({path:'dest/operation_lifecycle.js', before:'80386b7b1ead5fefe23bec2197728d28a22a1c12eca5fda0fa06adb80b119114', after:'68e5faed050ede1602d2bed598f77c795cf75de37c4e7edfef420678d835c0e7'}),
 ]);

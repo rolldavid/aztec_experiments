@@ -22,6 +22,21 @@ async function copy(t) {
 test('source pin is exact installed original; transformed TS and JS are exact output pins',()=>{
   for(const pin of PREFERENCE_PAGE_PINS){assert.equal(sha(source[pin.path]),pin.before);assert.equal(sha(transformPreferencePage(source[pin.path],pin.path)),pin.after);}
 });
+test('rc3 queue pressure, wait timer cleanup and error handling remain byte-identical',()=>{
+  for(const pin of PREFERENCE_PAGE_PINS.filter(p=>p.path.includes('operation_queue.'))){
+    const original=source[pin.path],output=transformPreferencePage(original,pin.path);
+    const synced=pin.path.endsWith('.ts')?'public runSynced<T>(':'runSynced(fn,';
+    const before=original.slice(0,original.indexOf(synced));
+    assert.match(before,/pxe_operation_queue_pressure/);
+    assert.match(before,/pxe_operation_started/);
+    assert.match(before,/clearTimeout\(waitWarning\)/);
+    assert.match(before,/\.finally\(/);
+    assert.equal(output.slice(0,output.indexOf(synced)),before);
+    const contextualize='#contextualizeError(';
+    assert.equal(output.slice(output.lastIndexOf(contextualize)),original.slice(original.lastIndexOf(contextualize)));
+    assert.match(output,/beforeCommit,/);
+  }
+});
 test('unknown source and already transformed source cannot be transformed again',()=>{
   for(const pin of PREFERENCE_PAGE_PINS){assert.throws(()=>transformPreferencePage(source[pin.path]+' ',pin.path),/PATCH_SOURCE/);assert.throws(()=>transformPreferencePage(transformPreferencePage(source[pin.path],pin.path),pin.path),/PATCH_SOURCE/);}
 });
