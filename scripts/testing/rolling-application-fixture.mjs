@@ -55,8 +55,9 @@ export async function claimRollingDeferredPrivateFees({funding,claim,persist}) {
   try {
     const observed=await claim();
     const captured=capturePublicFeeStandalone(observed);
+    const proofMilliseconds=captured?Object.getOwnPropertyDescriptor(observed,'proofMilliseconds')?.value:undefined;
     if(captured)funding.standalone={...captured,attempted:true,
-      ...(Number.isSafeInteger(observed.proofMilliseconds)&&observed.proofMilliseconds>=0?{proofMilliseconds:observed.proofMilliseconds}:{})};
+      ...(Number.isSafeInteger(proofMilliseconds)&&proofMilliseconds>=0?{proofMilliseconds}:{})};
     assert.equal(funding.standalone.passed,true);
   }catch(error){
     failed=true;failure=error;

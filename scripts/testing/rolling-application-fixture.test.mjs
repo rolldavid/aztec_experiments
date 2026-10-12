@@ -506,3 +506,18 @@ test('deferred fee claim propagates falsy failures and never reports success',as
   assert(caught);assert.equal(funding.standalone.passed,false);
  }
 });
+
+test('deferred fee evidence never invokes an optional timing getter',async()=>{
+ for(const throwing of [false,true]){
+  const observed=standaloneReceipt(),funding={};let reads=0;
+  Object.defineProperty(observed,'proofMilliseconds',{get(){reads++;if(throwing)throw Error('private');return reads<3?17:'private sentinel';}});
+  await claimRollingDeferredPrivateFees({funding,claim:async()=>observed,persist:async()=>{}});
+  assert.equal(reads,0);assert.equal(funding.standalone.passed,true);assert(!Object.hasOwn(funding.standalone,'proofMilliseconds'));
+ }
+});
+test('deferred fee evidence copies only a captured nonnegative safe timing integer',async()=>{
+ for(const value of [-1,1.5,Infinity,NaN,'17',17n,{},Number.MAX_SAFE_INTEGER+1]){
+  const funding={};await claimRollingDeferredPrivateFees({funding,claim:async()=>({...standaloneReceipt(),proofMilliseconds:value}),persist:async()=>{}});
+  assert.equal(funding.standalone.passed,true);assert(!Object.hasOwn(funding.standalone,'proofMilliseconds'));
+ }
+});
