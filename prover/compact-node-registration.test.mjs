@@ -15,7 +15,7 @@ const versions={l1ChainId:'31337',rollupVersion:'1'},opts={packageVersion:'6.0.0
 function fixture(){
  const calls=[];const node=Object.fromEntries(['getNodeInfo','getChainTips','getWorldStateSyncStatus','getSyncedL1Timestamp','getBlockData','getBlock'].map(name=>[name,async function(){calls.push({name,receiver:this});throw Error('PRIVATE sentinel');}]));
  node.ping=async()=> 'pong';
- return {node,calls,services:{aztec:[node,{ping:z.function().args().returns(z.string())}]}};
+ return {node,calls,services:{aztec:[node,{ping:z.function({input:z.tuple([]),output:z.string()})}]}};
 }
 async function server(f,middlewares,fn,maxBodySizeBytes=4096){
  const rpc=createNamespacedSafeJsonRpcServer(f.services,{middlewares,maxBodySizeBytes,corsAllowedOrigins:['https://app.example']});
@@ -44,7 +44,7 @@ test('actual official server routes raw compact body before its one-byte parser;
  c.l1ChainId=1;f.services.aztec[0]={};
  // The ordinary RPC proxy receives a separate copy; the adapter retains the
  // originally registered receiver and captured methods/configuration.
- f.services={aztec:[f.node,{ping:z.function().args().returns(z.string())}]};
+ f.services={aztec:[f.node,{ping:z.function({input:z.tuple([]),output:z.string()})}]};
  await server(f,[getVersioningMiddleware(versions,opts),...middleware],async url=>{
   const r=await fetch(url+route,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(selector)});
   assert.equal(r.status,503);assert.deepEqual(await r.json(),{error:'Compact block unavailable'});
