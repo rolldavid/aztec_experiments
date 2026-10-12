@@ -338,7 +338,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
    else if(intent)showIntent();
    else if(blocked)content.append(paragraph('Check retained recovery before preparing any new action.'),button('Check account recovery',()=>void work(refresh)));
    else{
-    const messages={'fee-needed':'Funds for transaction fees are needed.','collateral-pending':'No posting balance is available.','fee-ready':'Your posting balance is available. We’ll check the funds needed when you review an action.'};
+    const messages={'fee-needed':'Funds for transaction fees are needed.','collateral-pending':'No posting deposit was found.','fee-ready':'A posting deposit was found. We’ll check whether it can be used when you review an action.'};
     content.append(paragraph(messages[status?.status]??'The private account has not been verified.'));
     if(status?.privateFeeCredit&&/^[0-9]+$/.test(status.privateFeeCredit))content.append(paragraph(status.privateFeeCredit==='0'?'No funds for transaction fees are available.':'Funds for transaction fees are available.'));
     content.append(paragraph('Funding is not connected in this panel yet. No funds are requested here.'));
