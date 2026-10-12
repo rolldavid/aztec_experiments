@@ -13,6 +13,15 @@ export function notificationBrowserBudget(deadlineAt,now=Date.now()){
  assert(Number.isSafeInteger(deadlineAt)&&Number.isSafeInteger(now));
  assert(deadlineAt-now>=180000,'Insufficient remaining notification browser and accounting budget');return 150000;
 }
+// This guard applies only before handoff. A complete proof is not a settled
+// transaction: every forwarded hash must already have an observed charge.
+export function assertNotificationAccountingQuiescent({stats,txHashes,accounted}){
+ assert.equal(stats.running,false);
+ for(const key of ['submitted','completed','failed'])assert(Number.isSafeInteger(stats[key])&&stats[key]>=0);
+ assert.equal(stats.submitted,stats.completed+stats.failed);assert(stats.submitted<=1);
+ assert(Array.isArray(txHashes)&&txHashes.length<=1&&accounted instanceof Set);
+ for(const hash of txHashes)assert(accounted.has(hash),'Forwarded transaction charge is still unknown');
+}
 // Used on success AND failure. A rejected receipt or one unavailable balance
 // cannot prevent independent already-paid outcomes from being collected.
 export async function settleNotificationEvidence({transactions,balances,observation,persist}){
@@ -87,7 +96,7 @@ export async function awaitNotificationRootVisibility({index,expected,rootPositi
   await sleep(25);
  }
 }
-export async function runRollingNotificationFixture({ctx,actor,fees,endpoint,network,artifact,scope,deployment,prepareRoot,observation,persist,onSubscription,collectAfterBrowser}){
+export async function runRollingNotificationFixture({ctx,actor,fees,endpoint,network,artifact,scope,deployment,prepareRoot,observation,persist,onSubscription,collectBeforeBrowser,collectAfterBrowser}){
  const {loadRollingWalletAssets}=await import('../rolling-wallet-assets.mjs');
  const control=ctx.browserControl;assert.equal(control?.browserMode,'rolling-notifications');assert.equal(control.browserEngine,'chromium');
  notificationBrowserBudget(ctx.applicationDeadlineAt);
@@ -146,6 +155,7 @@ export async function runRollingNotificationFixture({ctx,actor,fees,endpoint,net
   // Collect canonical outcomes/charges even when a later UI assertion failed.
   // This callback is read-only and cannot replay either browser transaction.
   if(handedOff)try{await collectAfterBrowser(result,l1.stats(),async()=>{const response=await fetch(reader.url+'/api/feed?limit=100',{signal:AbortSignal.timeout(3000)});assert(response.ok);return response.json();});}catch(error){errors.push(error);}
+  else try{await collectBeforeBrowser();}catch(error){errors.push(error);}
   for(const [name,resource]of [['reader',reader],['l1',l1]])if(resource)try{await resource.close();observation.cleanup[name]=true;}catch(error){observation.cleanup[name]=false;errors.push(error);}
   observation.passed=!failed&&errors.length===0;await persist();
   if(result)await fs.writeFile(path.join(ctx.directory,'composer-observed.json'),JSON.stringify({schemaVersion:1,observed:true}),{flag:'wx',mode:0o600});

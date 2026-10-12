@@ -427,9 +427,10 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
       const forwardedSaved=[];
       rpc=await startNodeRpc(ctx.node,tx=>{assert(transportSends<Number.MAX_SAFE_INTEGER);transportSends++;if(preferenceSaved||notificationBrowser){assert(forwardedSaved.length<(notificationBrowser?4:3));forwardedSaved.push(tx);};},{faults:recovery||preferenceSaved,recoveryMetrics:()=>coldRecoveryMetrics});
       await mark('trusted-service-startup');
+      const trustedProofThreads=notificationBrowser?2:1;report.trustedProofThreads=trustedProofThreads;
       service=await startProverService({host:'127.0.0.1',port:0,board:String(ctx.instance.address),chainId:31337,rollupVersion:info.rollupVersion,
         applicationProfile:'rolling',privateBokAddress:String(bokInstance.address),privateFeeAddress:String(fees.browserFixture.instance.address),
-        proofs:real?'real':'disabled',origins:(composer||preferenceBrowser||notificationBrowser)?[ctx.browserControl.origin]:[],threads:1,queueDirectory:ctx.directory,crsPath:process.env.CRS_PATH,
+        proofs:real?'real':'disabled',origins:(composer||preferenceBrowser||notificationBrowser)?[ctx.browserControl.origin]:[],threads:trustedProofThreads,queueDirectory:ctx.directory,crsPath:process.env.CRS_PATH,
         queryNode:{url:rpc.url,rollupAddress:network.rollup,maxLagSeconds:120}});
       endpoint=`http://127.0.0.1:${service.address.port}`;
       if(captureWire){
@@ -558,7 +559,7 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
           }finally{checkpoints.restore();}
         }
       async function runNotifications(publishRoot){
-        const {runRollingNotificationFixture,settleNotificationEvidence,observeNotificationTransaction}=await import('./rolling-notification-fixture.mjs');
+        const {runRollingNotificationFixture,settleNotificationEvidence,assertNotificationAccountingQuiescent,observeNotificationTransaction}=await import('./rolling-notification-fixture.mjs');
         const {assertRollingNotificationAcceptance}=await import('./rolling-notification-acceptance.mjs');
         const scope=decoder.scope,initialHead=await actorB.application.readPreferenceHead();
         assert.deepEqual(initialHead,{initialized:false,schema:1,revision:'0',digest:'0'});
@@ -617,6 +618,20 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
             assert.equal(events.length,1);assert.equal(events[0].type,'PostPublished');ids.replyId=events[0].payload.id;
             assert.equal(forwardedSaved.length,3);reply=await collect(forwardedSaved[2],false,'notification-reply');
             return {schemaVersion:1,rootId:ids.rootId,replyId:ids.replyId,replyText:'A genuine notification reply.',replyBlock:reply.blockNumber};
+          },
+          collectBeforeBrowser:async()=>{
+            // No handoff means no browser can still issue writes. The trusted
+            // proof queue and every forwarded charge must also be settled.
+            report.notificationBrowser.browserOutcome='not-launched';
+            report.notificationBrowser.submittedHashes=forwardedSaved.map(tx=>String(tx.getTxHash()));
+            const quiet=()=>assertNotificationAccountingQuiescent({stats:service.stats(),
+              txHashes:report.notificationBrowser.submittedHashes,accounted});
+            await settleNotificationEvidence({observation:report.notificationBrowser,persist:save,
+              transactions:forwardedSaved[0]?[{label:'root',run:()=>collect(forwardedSaved[0],false,'notification-root')}]:[],
+              balances:[
+                {label:'a',run:async()=>{quiet();await fees.verify(feeTotal,feesB.browserFixture.fundedAmount-BigInt(feesB.standalone?.transactionFee??0)-feeTotalB);}},
+                {label:'b',run:async()=>{quiet();await feesB.verify(feeTotalB,fees.browserFixture.fundedAmount-feeTotal);}}
+              ]});
           },
           collectAfterBrowser:async(browser,l1,readPublicPage)=>{
             // Canonical effects and their charges are retained before requiring

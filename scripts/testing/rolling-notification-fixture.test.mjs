@@ -4,10 +4,10 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
-import {notificationBridgeProgress,awaitNotificationRootVisibility,notificationBrowserBudget,readNotificationSubscriptionSignal,settleNotificationEvidence,observeNotificationTransaction} from './rolling-notification-fixture.mjs';
+import {assertNotificationAccountingQuiescent,notificationBridgeProgress,awaitNotificationRootVisibility,notificationBrowserBudget,readNotificationSubscriptionSignal,settleNotificationEvidence,observeNotificationTransaction} from './rolling-notification-fixture.mjs';
 import {getScenario} from './scenarios.mjs';
 test('browser campaign retains 540s/4GiB parent and reserves 30s beyond 150s browser',()=>{
- const s=getScenario('rolling-notification-browser');assert.equal(s.deadlineMs,540000);assert.equal(s.fixtureHeapMiB,768);assert.equal(s.browser,'rolling-notifications');assert.equal(s.browserEngine,'chromium');assert.equal(s.applicationThreads,1);assert.equal(s.evidenceTask,'G07');
+ const s=getScenario('rolling-notification-browser');assert.equal(s.deadlineMs,540000);assert.equal(s.fixtureHeapMiB,768);assert.equal(s.browser,'rolling-notifications');assert.equal(s.browserEngine,'chromium');assert.equal(s.applicationThreads,2);assert.equal(s.evidenceTask,'G07');
  assert.equal(notificationBrowserBudget(180001,1),150000);assert.throws(()=>notificationBrowserBudget(180000,1));
  for(const x of [NaN,Infinity,'180001',180001.1])assert.throws(()=>notificationBrowserBudget(x,1));
 });
@@ -80,4 +80,31 @@ test('handoff root check requires exact canonical position and text, not merely 
 test('unavailable index and spent browser reserve cannot admit a root or invoke publication',async()=>{
  const f=visibilityFixture();f.state.state='unavailable';await assert.rejects(awaitNotificationRootVisibility(f));
  f.state.state='ready';f.deadlineAt=Date.now()+179999;await assert.rejects(awaitNotificationRootVisibility(f));
+});
+
+// Labelled lifecycle doubles execute the unchanged production finally block.
+// They establish dispatch and cleanup, not proof or canonical-chain acceptance.
+test('pre-handoff paid failure collects before-browser balances and closes owned resources even if accounting fails',async()=>{
+ const source=await fs.readFile(new URL('./rolling-notification-fixture.mjs',import.meta.url),'utf8');
+ const body=source.slice(source.indexOf('  const errors=[];',source.indexOf('export async function runRollingNotificationFixture')),
+  source.lastIndexOf('\n }\n}'));
+ assert(body.includes('else try{await collectBeforeBrowser();}'));
+ const AsyncFunction=Object.getPrototypeOf(async()=>{}).constructor;
+ const run=new AsyncFunction('handedOff','collectBeforeBrowser','collectAfterBrowser','result','l1','reader','observation','persist','failed','failure','fs','path','ctx',body);
+ for(const handedOff of [false,true]){
+  const calls=[],cause=Error('original failure'),accounting=Error('accounting failure'),observation={cleanup:{}};
+  const before=async()=>{calls.push('before');throw accounting;},after=async()=>{calls.push('after');throw accounting;};
+  await assert.rejects(run(handedOff,before,after,undefined,{stats:()=>({}),close:async()=>calls.push('l1')},
+   {url:'http://127.0.0.1',close:async()=>calls.push('reader')},observation,async()=>calls.push('persist'),true,cause,{},path,{}),
+   e=>e instanceof AggregateError&&e.errors[0]===cause&&e.errors[1]===accounting);
+  assert.deepEqual(calls,[handedOff?'after':'before','reader','l1','persist']);assert.deepEqual(observation.cleanup,{reader:true,l1:true});assert.equal(observation.passed,false);
+ }
+});
+test('pre-handoff accounting requires an idle drained proof queue and known forwarded charges',()=>{
+ const base=()=>({stats:{running:false,submitted:1,completed:1,failed:0},txHashes:['root'],accounted:new Set(['root'])});
+ assert.doesNotThrow(()=>assertNotificationAccountingQuiescent(base()));
+ assert.doesNotThrow(()=>assertNotificationAccountingQuiescent({stats:{running:false,submitted:0,completed:0,failed:0},txHashes:[],accounted:new Set()}));
+ for(const change of [x=>x.stats.running=true,x=>x.stats.completed=0,x=>x.stats.submitted=2,x=>x.stats.failed=-1,x=>x.accounted.clear(),x=>x.txHashes.push('unexpected')]){
+  const value=base();change(value);assert.throws(()=>assertNotificationAccountingQuiescent(value));
+ }
 });

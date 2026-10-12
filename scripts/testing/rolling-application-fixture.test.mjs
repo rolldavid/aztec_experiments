@@ -521,3 +521,31 @@ test('deferred fee evidence copies only a captured nonnegative safe timing integ
   assert.equal(funding.standalone.passed,true);assert(!Object.hasOwn(funding.standalone,'proofMilliseconds'));
  }
 });
+
+// Actual callback body with labelled receipt/balance doubles. No chain acceptance.
+test('paid pre-handoff root failure still verifies both balances; unknown pending charge admits neither',async()=>{
+ const source=await fs.readFile(new URL('./rolling-application-fixture.mjs',import.meta.url),'utf8');
+ const body=source.split('          collectBeforeBrowser:async()=>{')[1]?.split('\n          },\n          collectAfterBrowser:')[0];assert(body);
+ const {assertNotificationAccountingQuiescent,settleNotificationEvidence}=await import('./rolling-notification-fixture.mjs');
+ const AsyncFunction=Object.getPrototypeOf(async()=>{}).constructor;
+ const run=new AsyncFunction('report','forwardedSaved','service','accounted','settleNotificationEvidence','assertNotificationAccountingQuiescent','save','collect','fees','feesB','feeTotal','feeTotalB',body);
+ for(const pending of [false,true]){
+  const calls=[],report={notificationBrowser:{}},accounted=new Set(),semantic=Error('root semantic failure');
+  const fees={browserFixture:{fundedAmount:100n},verify:async(...values)=>{calls.push(['a',...values]);throw Error('A unavailable');}};
+  const feesB={browserFixture:{fundedAmount:200n},standalone:{transactionFee:3n},verify:async(...values)=>calls.push(['b',...values])};
+  await assert.rejects(run(report,[{getTxHash:()=> 'root'}],{stats:()=>({running:false,submitted:1,completed:1,failed:0})},accounted,
+   settleNotificationEvidence,assertNotificationAccountingQuiescent,async()=>{},async()=>{calls.push('root');if(!pending)accounted.add('root');throw semantic;},fees,feesB,9n,7n));
+  assert.deepEqual(calls,pending?['root']:['root',['a',9n,190n],['b',7n,91n]]);
+  assert.equal(report.notificationBrowser.browserOutcome,'not-launched');assert.equal(report.notificationBrowser.accountingVerified,false);
+  assert.deepEqual(report.notificationBrowser.outcomes.balances.map(x=>x.passed),pending?[false,false]:[false,true]);
+ }
+ // Existing post-handoff path must still wait for browser termination before
+ // balance snapshots; pre-handoff repair cannot remove the write-race fence.
+ const after=source.split('          collectAfterBrowser:async(browser,l1,readPublicPage)=>{')[1];assert(after);
+ const afterBody=after.split('            assert(browser?.passed')[0];
+ const runAfter=new AsyncFunction('browser','report','forwardedSaved','save','settleNotificationEvidence','assert','fees','feesB','feeTotal','feeTotalB',afterBody);
+ const lateCalls=[],lateReport={notificationBrowser:{}};
+ await assert.rejects(runAfter(undefined,lateReport,[],async()=>{},settleNotificationEvidence,assert,
+  {verify:async()=>lateCalls.push('a')},{verify:async()=>lateCalls.push('b')},0n,0n));
+ assert.deepEqual(lateCalls,[]);assert.equal(lateReport.notificationBrowser.accountingVerified,false);
+});
