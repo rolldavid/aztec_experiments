@@ -74,7 +74,9 @@ test('native fixture facade imports genuine shared factories and rejects unconst
 });
 test('fixture uses sole real journal send path, five actions and canonical decoder rebuild',async()=>{
   const source=await fs.readFile(new URL('./rolling-application-fixture.mjs',import.meta.url),'utf8');
-  assert.equal((source.match(/await withC01ClientMining\(/g)||[]).length,2);
+  assert.equal((source.match(/await withC01ClientMining\(/g)||[]).length,3); // Separate awaited recovery scope after the original miner stops.
+  assert(source.includes('assert(report.applicationMining.clientMining.stopped&&report.applicationMining.clientMining.passed&&report.applicationMining.clientMining.autominingRestored)'));
+  assert(source.includes('if(recovery){await completeTrustedRecovery();'));
   assert(source.indexOf('report.setupMining.clientMining.stopped,true')<source.indexOf("await mark('real-wall-clock-readiness')"));
   assert(source.indexOf("await mark('real-wall-clock-readiness')")<source.indexOf('observation:report.applicationMining'));
   assert.equal((source.match(/await prepareW01PrivateFees\(/g)||[]).length,2);
@@ -164,4 +166,65 @@ test('measured fixture catchup covers the observed 111-second lead without chang
  assert.equal(rollingClockDeadline({now,chainSeconds:BigInt(Math.floor(now/1000)-1),campaignDeadlineAt:end}),now+2000);
  assert.throws(()=>rollingClockDeadline({now,chainSeconds:target,campaignDeadlineAt:now+290000}),/Insufficient campaign budget/);
  assert.throws(()=>rollingClockDeadline({now,chainSeconds:2n**100n,campaignDeadlineAt:end}));
+});
+
+test('actual loopback upstream fault seam rejects before forwarding and restores the same listener',async()=>{
+  const {startNodeRpc}=await import('./rolling-application-fixture.mjs');
+  let calls=0;const node={getBlockNumber:async()=>{calls++;return 7;},getContract:async()=>{calls++;return undefined;}};
+  const rpc=await startNodeRpc(node,()=>{throw Error('Unexpected transaction');},{faults:true});
+  const request=async(method,params=[])=>{const r=await fetch(rpc.url,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:1,method:'aztec_'+method,params})});return {status:r.status,text:await r.text()};};
+  try{
+    assert.equal(JSON.parse((await request('getBlockNumber')).text).result,7);assert.equal(calls,1);
+    rpc.setFault('unavailable');assert.equal((await request('getBlockNumber')).status,503);assert.equal(calls,1);
+    assert.equal(rpc.snapshot().unavailableRequests,1);assert.equal(rpc.snapshot().forwarded.getBlockNumber,1);
+    rpc.setFault('healthy');assert.equal(JSON.parse((await request('getBlockNumber')).text).result,7);assert.equal(calls,2);
+    rpc.setFault('personalized-once');const address='0x'+'1'.padStart(64,'0');
+    const denied=await request('getContract',[address]);assert.equal(denied.status,400);assert(JSON.parse(denied.text).error);assert.equal(calls,2);
+    assert.equal(rpc.snapshot().personalizedDenied,1);assert.equal(rpc.snapshot().forwarded.getContract,undefined);
+    assert.equal(JSON.parse((await request('getContract',[address])).text).result,null);assert.equal(calls,3);
+    assert.equal(rpc.snapshot().forwarded.getContract,1);assert.throws(()=>rpc.setFault('fallback'));
+  }finally{await rpc.close();}
+  await assert.rejects(()=>fetch(rpc.url));
+});
+
+test('upstream fault control is absent from ordinary fixture listeners',async()=>{
+  const {startNodeRpc}=await import('./rolling-application-fixture.mjs');const rpc=await startNodeRpc({});
+  try{assert.equal(rpc.setFault,undefined);assert.equal(rpc.snapshot,undefined);}finally{await rpc.close();}
+});
+
+function recoveryWireFixture(){
+  const labels=['trusted-query','trusted-proof','trusted-upstream','ordinary-node','public-reader'];
+  const rows=labels.map(label=>({label,count:1,outcome:'resolved',status:200,phase:'setup',roles:label==='trusted-query'?['a','b']:[]}));
+  rows.push({label:'trusted-query',count:2,outcome:'resolved',status:503,phase:'outage',roles:[]});
+  rows.push({label:'trusted-upstream',count:1,outcome:'resolved',status:400,phase:'outage',roles:[],methods:['aztec_getContract']});
+  return {requests:8,completed:8,pending:0,unknown:0,unsupported:0,truncated:0,observerErrors:0,privacyAcceptance:'not-evaluated',rows,
+    receiver:{errors:0,requests:Object.fromEntries(labels.map(label=>[label,label==='trusted-query'?3:label==='trusted-upstream'?2:1]))}};
+}
+test('labelled recovery observation accepts only explicit outage503 with complete receiver accounting',async()=>{
+ const {assertRollingRecoveryWire}=await import('./rolling-application-fixture.mjs');assert.equal(assertRollingRecoveryWire(recoveryWireFixture()).intentionalRejections,2);
+});
+for(const mutation of ['ordinary-failure','wrong-phase','missing-receiver','hidden-error','pending','human-public','missing-role','absent-fault','bad-status','rejected-transport'])test('recovery observer refuses '+mutation,async()=>{
+ const {assertRollingRecoveryWire}=await import('./rolling-application-fixture.mjs');const value=recoveryWireFixture();
+ const bad=value.rows.at(-2);
+ if(mutation==='ordinary-failure')bad.label='ordinary-node';
+ if(mutation==='wrong-phase')bad.phase='setup';
+ if(mutation==='missing-receiver')value.receiver.requests['trusted-query']--;
+ if(mutation==='hidden-error')value.observerErrors=1;
+ if(mutation==='pending')value.pending=1;
+ if(mutation==='human-public')value.rows[3].roles=['a'];
+ if(mutation==='missing-role')value.rows[0].roles=['a'];
+ if(mutation==='absent-fault')bad.status=200;
+ if(mutation==='bad-status')bad.status=500;
+ if(mutation==='rejected-transport')bad.outcome='rejected';
+ assert.throws(()=>assertRollingRecoveryWire(value));
+});
+
+for(const mutation of ['method','phase','count','duplicate','missing'])test('personalized denial accounting refuses '+mutation,async()=>{
+ const {assertRollingRecoveryWire}=await import('./rolling-application-fixture.mjs');const value=recoveryWireFixture(),row=value.rows.at(-1);
+ if(mutation==='method')row.methods=['aztec_getNotes'];
+ if(mutation==='phase')row.phase='setup';
+ if(mutation==='count'){row.count=2;value.receiver.requests['trusted-upstream']++;value.requests++;value.completed++;}
+ if(mutation==='duplicate'){value.rows.push({...row});value.receiver.requests['trusted-upstream']++;value.requests++;value.completed++;}
+ if(mutation==='missing'){value.rows.pop();value.receiver.requests['trusted-upstream']--;value.requests--;value.completed--;}
+ assert.throws(()=>assertRollingRecoveryWire(value));
 });

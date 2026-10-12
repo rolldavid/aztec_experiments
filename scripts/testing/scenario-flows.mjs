@@ -375,3 +375,5 @@ export async function rollingComposer(ctx){return (await import('./rolling-appli
 
 export async function rollingSocialWire(ctx){return (await import('./rolling-application-fixture.mjs')).runRollingApplicationFixture(ctx,'social-wire');}
 export async function rollingReactionWire(ctx){return (await import('./rolling-application-fixture.mjs')).runRollingApplicationFixture(ctx,'reaction-wire');}
+
+export async function rollingTrustedRecovery(ctx){return (await import('./rolling-application-fixture.mjs')).runRollingApplicationFixture(ctx,'trusted-recovery');}

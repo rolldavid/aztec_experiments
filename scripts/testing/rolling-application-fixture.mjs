@@ -17,7 +17,7 @@ const discard=()=>{};
 const silent=Object.assign(discard,Object.fromEntries(['trace','debug','verbose','info','warn','error','fatal'].map(k=>[k,discard])),
   {level:'silent',isLevelEnabled:()=>false,getBindings:()=>({}),createChild:()=>silent});
 const PERSONAL=['feePayer','publicCallSenders','publicCallTargets','publicCallCalldata','publicWriteSlots','publicWriteValues','publicLogContracts','publicLogFields'];
-const SOURCES=['scripts/testing/rolling-social-wire.mjs','scripts/testing/rolling-wire-campaign.mjs','scripts/testing/rolling-wire-trace.mjs','scripts/testing/rolling-owned-names.mjs','scripts/t03-public-footprint.mjs','scripts/testing/rolling-removed-like.mjs','scripts/testing/rolling-application-actor.mjs','scripts/testing/rolling-account-reactions.mjs','scripts/testing/rolling-social-acceptance.mjs','scripts/testing/rolling-profile-acceptance.mjs','experiments/avatar/raster-fixture.mjs','scripts/prove-application-action.mjs','scripts/testing/rolling-native-artifacts.mjs','scripts/testing/rolling-application-fixture.mjs','scripts/testing/scenarios.mjs','scripts/testing/scenario-flows.mjs',
+const SOURCES=['scripts/testing/rolling-trusted-recovery.mjs','scripts/testing/rolling-social-wire.mjs','scripts/testing/rolling-wire-campaign.mjs','scripts/testing/rolling-wire-trace.mjs','scripts/testing/rolling-owned-names.mjs','scripts/t03-public-footprint.mjs','scripts/testing/rolling-removed-like.mjs','scripts/testing/rolling-application-actor.mjs','scripts/testing/rolling-account-reactions.mjs','scripts/testing/rolling-social-acceptance.mjs','scripts/testing/rolling-profile-acceptance.mjs','experiments/avatar/raster-fixture.mjs','scripts/prove-application-action.mjs','scripts/testing/rolling-native-artifacts.mjs','scripts/testing/rolling-application-fixture.mjs','scripts/testing/scenarios.mjs','scripts/testing/scenario-flows.mjs',
   'scripts/c01-real-node.mjs','scripts/c01-board-flow.mjs','scripts/c01-deposit-flow.mjs','scripts/c01-client-mining.mjs',
   'scripts/w01-private-fee-flow.mjs','scripts/w01-unfunded-wallet.mjs','scripts/w01-private-funding.mjs',
   'shared/sdk-entry.mjs','shared/private-pxe.mjs','shared/trusted-private-node.mjs','shared/routed-kernel-prover.mjs','shared/remote-prover-client.mjs',
@@ -117,22 +117,51 @@ async function closedPort(port) {
     socket.once('error',error=>error.code==='ECONNREFUSED'?resolve():reject(Error('Listener cleanup unknown')));
   });
 }
-async function startNodeRpc(node,onSend=()=>{}) {
+// Failure-campaign acceptance keeps intentional rejection separate from missing
+// or failed observations. No rows are discarded to reuse a positive-only gate.
+export function assertRollingRecoveryWire(observation){
+  for(const key of ['pending','unknown','unsupported','truncated','observerErrors'])assert.equal(observation[key],0,key);
+  assert.equal(observation.receiver.errors,0);assert(observation.requests>0);assert.equal(observation.requests,observation.completed);
+  let intentionalRejections=0,personalizedRejections=0;
+  for(const label of ['trusted-query','trusted-proof','trusted-upstream','ordinary-node','public-reader']){
+    const rows=observation.rows.filter(row=>row.label===label),sent=rows.reduce((n,row)=>n+row.count,0);
+    assert(sent>0);assert.equal(observation.receiver.requests[label],sent);
+    for(const row of rows){
+      assert.equal(row.outcome,'resolved');
+      if(row.status===503){assert.equal(row.phase,'outage');assert(['trusted-query','trusted-upstream'].includes(label));intentionalRejections+=row.count;}
+      else if(row.status===400){assert.equal(row.phase,'outage');assert.equal(label,'trusted-upstream');assert.deepEqual(row.methods,['aztec_getContract']);assert.equal(row.count,1);personalizedRejections+=row.count;}
+      else assert(row.status>=200&&row.status<300);
+      if(['ordinary-node','public-reader'].includes(label))assert.deepEqual(row.roles,[]);
+    }
+  }
+  assert(intentionalRejections>=2);assert.equal(personalizedRejections,1);
+  for(const role of ['a','b'])assert(observation.rows.some(row=>row.label==='trusted-query'&&row.roles.includes(role)));
+  assert.equal(observation.privacyAcceptance,'not-evaluated');
+  return {passed:true,intentionalRejections,personalizedRejections,scope:'Explicit unavailable/stale transport failures plus bounded request/receiver reconciliation. Not complete transport or deployed privacy qualification.'};
+}
+
+export async function startNodeRpc(node,onSend=()=>{},{faults=false}={}) {
+  let fault='healthy';const diagnostic={unavailableRequests:0,personalizedDenied:0,forwarded:{}};
+  const setFault=value=>{assert(faults&&['healthy','unavailable','personalized-once'].includes(value));fault=value;};
   const {createNamespacedSafeJsonRpcServer}=await import('@aztec-labs/foundation/json-rpc/server');
   const {AztecNodeApiSchema}=await import('@aztec-labs/stdlib/interfaces/client');
-  const api=Object.fromEntries(Object.keys(AztecNodeApiSchema).map(name=>[name,(...args)=>{if(name==='sendTx')onSend();return node[name](...args);} ]));
+  const api=Object.fromEntries(Object.keys(AztecNodeApiSchema).map(name=>[name,(...args)=>{
+    if(fault==='personalized-once'&&name==='getContract'){fault='healthy';diagnostic.personalizedDenied++;throw Error('Controlled upstream unavailable');}
+    diagnostic.forwarded[name]=(diagnostic.forwarded[name]??0)+1;if(name==='sendTx')onSend();return node[name](...args);
+  } ]));
   const rpc=createNamespacedSafeJsonRpcServer({aztec:[api,AztecNodeApiSchema]},
     {maxBatchSize:8,maxBodySizeBytes:8*1024*1024,corsAllowedOrigins:[],log:silent});
   const callback=rpc.getApp().callback();
   const server=http.createServer((req,res)=>{
     if(req.method!=='POST'||req.url!=='/'||req.headers.origin!==undefined||!/^application\/json(?:;|$)/i.test(req.headers['content-type']??'')){res.writeHead(403);res.end();return;}
+    if(fault==='unavailable'){diagnostic.unavailableRequests++;res.writeHead(503);res.end();return;}
     callback(req,res);
   });
   server.requestTimeout=30000;server.headersTimeout=10000;
   try{await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(0,'127.0.0.1',resolve);});}
   catch(error){server.close();server.closeAllConnections();throw error;}
   const port=server.address().port;
-  return {url:`http://127.0.0.1:${port}/`,close:async()=>{
+  return {url:`http://127.0.0.1:${port}/`,...(faults?{setFault,snapshot:()=>structuredClone(diagnostic)}:{}),close:async()=>{
     await new Promise((resolve,reject)=>{server.close(error=>error?reject(error):resolve());server.closeAllConnections();});await closedPort(port);
   }};
 }
@@ -157,8 +186,8 @@ export async function loadRollingFixtureSDK() {
 }
 
 export async function runRollingApplicationFixture(ctx,scenario='conversation') {
-  assert(['conversation','profiles','anonymous-thread','repost-reactions','account-reactions','owned-names','owned-names-wire','composer','social-wire','reaction-wire'].includes(scenario));
-  const composer=scenario==='composer',socialWire=scenario==='social-wire',reactionWire=scenario==='reaction-wire',wireSocial=socialWire||reactionWire,captureWire=scenario==='owned-names-wire'||wireSocial,names=['owned-names','owned-names-wire','composer'].includes(scenario),multi=scenario==='account-reactions'||names||wireSocial,social=['anonymous-thread','repost-reactions','account-reactions'].includes(scenario)||wireSocial;
+  assert(['conversation','profiles','anonymous-thread','repost-reactions','account-reactions','owned-names','owned-names-wire','composer','social-wire','reaction-wire','trusted-recovery'].includes(scenario));
+  const recovery=scenario==='trusted-recovery',composer=scenario==='composer',socialWire=scenario==='social-wire',reactionWire=scenario==='reaction-wire',wireSocial=socialWire||reactionWire,captureWire=scenario==='owned-names-wire'||wireSocial||recovery,names=['owned-names','owned-names-wire','composer'].includes(scenario),multi=scenario==='account-reactions'||names||wireSocial||recovery,social=['anonymous-thread','repost-reactions','account-reactions'].includes(scenario)||wireSocial;
   const {ROOT,assertNodeVersion,assertAztecPackages}=await import('../toolchain.mjs');
   const directory=path.join(ROOT,'execution/evidence/G06','application-port-'+randomUUID());
   await fs.mkdir(directory,{mode:0o700});
@@ -171,7 +200,7 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
   const mark=async stage=>{if(ctx.applicationDeadlineAt!==undefined)assert(Date.now()<ctx.applicationDeadlineAt,'Parent campaign budget exhausted');report.stage=stage;ctx.mark?.('rolling-application:'+stage);await save();};
   const sourceBinding=async()=>Object.fromEntries(await Promise.all(SOURCES.map(async name=>[name,sha(await fs.readFile(path.join(ROOT,name)))])));
   let fees,feesB,actorA,actorB,activeActor,pxe,rpc,service,failure,restoreIndexedDB,nativeArtifacts,owner,appWallet,journal;
-  let wire,ordinaryRpc;
+  let wire,ordinaryRpc,completeTrustedRecovery;
   let transportSends=0,feeTotalB=0n,fundingRole,collateralRole;
   let feeTotal=0n;const accounted=new Set();
   const accountFee=(hash,fee,other=false)=>{if(!accounted.has(hash)){assert(BigInt(fee)>0n);if(other)feeTotalB+=BigInt(fee);else feeTotal+=BigInt(fee);accounted.add(hash);}report.actualHumanFees=String(feeTotal+feeTotalB);};
@@ -292,7 +321,7 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
       try{
       await observe('after-first-wall-mine');
       await mark('node-rpc-startup');
-      rpc=await startNodeRpc(ctx.node,()=>{assert(transportSends<Number.MAX_SAFE_INTEGER);transportSends++;});
+      rpc=await startNodeRpc(ctx.node,()=>{assert(transportSends<Number.MAX_SAFE_INTEGER);transportSends++;},{faults:recovery});
       await mark('trusted-service-startup');
       service=await startProverService({host:'127.0.0.1',port:0,board:String(ctx.instance.address),chainId:31337,rollupVersion:info.rollupVersion,
         applicationProfile:'rolling',privateBokAddress:String(bokInstance.address),privateFeeAddress:String(fees.browserFixture.instance.address),
@@ -444,6 +473,9 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
         assert.equal(publicNameIds.length,4);assert.equal(new Set(publicNameIds).size,4);
         report.publicViews=publicNameIds.slice().sort().map(id=>projection.profile(id,{limit:100}));
         const {assertCanonicalOwnedNameProfiles}=await import('./rolling-public-acceptance.mjs');assertCanonicalOwnedNameProfiles(projection,report.publicViews);await save();
+      }else if(recovery){
+        report.publicViews=projection.profile(ids.nameId,{limit:100});report.profiles={expectedIdentity:report.publicViews.identity};
+        assert.equal(report.publicViews.posts.length,0);
       }else if(scenario==='profiles'){
         const {exerciseRollingProfileActions}=await import('./rolling-profile-acceptance.mjs');
         report.profiles=await exerciseRollingProfileActions({nameId:ids.nameId,application:app,action,moderate:args=>moderate({kind:'avatar',id:args.nameId,expectedVersion:args.avatarVersion,...args}),projection});
@@ -502,7 +534,7 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
       await mark('encrypted-journal-reopen');
       const jobsBefore=service.stats().submitted;
       report.journalReopen={sameHash:true,newProofJobs:0,transactionBytesRetained:true,actors:[]};
-      for(const actor of [actorA,...(actorB?[actorB]:[])]){
+      for(const actor of [actorA,...(actorB&&!recovery?[actorB]:[])]){
         wire?.setPhase(actor===actorA?'recovery-a':'recovery-b');const before=await actor.journal.inspectOutcome(),activity=actor.activity();
         await actor.reopenJournal();const reconciled=await actor.application.reconcile(actorIntents.get(actor));
         assert.equal(reconciled.status,'confirmed');assert.equal(reconciled.txHash,before.txHash);
@@ -515,7 +547,7 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
       for(const hash of hashes)rebuilt.stage(await decoder.decodeTransaction(ctx.node,hash)).apply();
       if(names){const {assertCanonicalOwnedNameProfiles}=await import('./rolling-public-acceptance.mjs');assertCanonicalOwnedNameProfiles(rebuilt,report.publicViews);}
       else if(social){const {assertCanonicalSocialViews}=await import('./rolling-public-acceptance.mjs');assertCanonicalSocialViews(rebuilt,report.social.expectedHTTP);}
-      else assert.deepEqual(scenario==='profiles'?rebuilt.profile(ids.nameId,{limit:100}):assertRollingApplicationViews(rebuilt,ids),report.publicViews);
+      else assert.deepEqual((scenario==='profiles'||recovery)?rebuilt.profile(ids.nameId,{limit:100}):assertRollingApplicationViews(rebuilt,ids),report.publicViews);
       for(const row of [...report.transactions,...(report.avatarModeration?[report.avatarModeration]:[]),...(report.postModeration?[report.postModeration]:[])])assert.equal(String((await ctx.node.getBlockData(row.blockNumber)).blockHash),row.blockHash);
       assert.equal(String((await ctx.node.getBlockData(Number(report.initialPublicAnchor.blockNumber))).blockHash),report.initialPublicAnchor.blockHash);
       report.rebuild={passed:true,canonicalTransactionsRefetched:hashes.length,normalizedCacheTreatedAsAuthority:false};
@@ -524,7 +556,7 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
       await verifyRollingPublicReader({node:ctx.node,artifact:checked.artifact,
         scope:{chainId:network.chainId,rollupVersion:network.version,rollupAddress:network.rollup,boardAddress:String(ctx.instance.address),classId:String((await sdk.getContractClassFromArtifact(checked.artifact)).id)},
         deployment:{blockNumber:Number(report.initialPublicAnchor.blockNumber),blockHash:report.initialPublicAnchor.blockHash,txHash:report.initialPublicAnchor.txHash},
-        cacheDirectory:path.join(ctx.directory,'rolling-public-index'),ids,scenario:names?'owned-names':scenario,wire:wire?{nodeUrl:ordinaryRpc.url,artifactPath:path.join(ROOT,'billboard/target/rolling_contract-RollingBoard.json'),onReader:url=>wire.registerEndpoint('public-reader',url)}:undefined,expectedProfiles:names?report.publicViews:undefined,expectedProfile:report.profiles?.expectedIdentity,expectedHTTP:report.social?.expectedHTTP,deadlineAt:ctx.applicationDeadlineAt,observation:report.publicReader});await save();
+        cacheDirectory:path.join(ctx.directory,'rolling-public-index'),ids,scenario:names?'owned-names':recovery?'profiles':scenario,wire:wire?{nodeUrl:ordinaryRpc.url,artifactPath:path.join(ROOT,'billboard/target/rolling_contract-RollingBoard.json'),onReader:url=>wire.registerEndpoint('public-reader',url)}:undefined,expectedProfiles:names?report.publicViews:undefined,expectedProfile:report.profiles?.expectedIdentity,expectedHTTP:report.social?.expectedHTTP,deadlineAt:ctx.applicationDeadlineAt,observation:report.publicReader});await save();
       if(composer){
         assert(real,'Genuine browser acceptance requires real proof setup');await mark('production-browser-composer');report.composer={};
         const {runRollingComposerFixture}=await import('./rolling-composer-fixture.mjs');
@@ -537,13 +569,110 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
         finally{await save();}
       }
       if(multi){const bStandalone=BigInt(feesB.standalone?.transactionFee??0);await fees.verify(feeTotal,feesB.browserFixture.fundedAmount-bStandalone-feeTotalB);await feesB.verify(feeTotalB,fees.browserFixture.fundedAmount-feeTotal);assert.equal(fees.poolBefore,feesB.poolBefore);report.accountFees={a:String(feeTotal),b:String(feeTotalB)};}else await fees.verify(feeTotal);report.actualHumanFees=String(feeTotal+feeTotalB);report.proverJobs=service.stats();
-      assert.equal(report.proverJobs.failed,0);if(names){assert.equal(report.proverJobs.completed,4);assert.equal(report.proverJobs.submitted,4);}
+      assert.equal(report.proverJobs.failed,0);if(recovery){assert.equal(report.proverJobs.completed,1);assert.equal(report.proverJobs.submitted,1);}
+      else if(names){assert.equal(report.proverJobs.completed,4);assert.equal(report.proverJobs.submitted,4);}
       else if(social){const expectedJobs=scenario==='anonymous-thread'?3:multi?6:4;assert.equal(report.proverJobs.completed,expectedJobs);assert.equal(report.proverJobs.submitted,expectedJobs);}
       else{assert.equal(report.proverJobs.completed,5);assert.equal(report.proverJobs.submitted,5);}
       assert.equal(report.proverJobs.running,false);
+      if(recovery){
+        const {captureRollingRecoveryState,expectRollingPrivateFailure,recoverRollingPrivateState}=await import('./rolling-trusted-recovery.mjs');
+        await mark('trusted-prepare-before-outage');
+        const prepared=await app.prepare({type:'name',first:'Ellis',last:'Moss'});
+        const scopeText=sdk.l2JournalScopeText({account:String(actorA.owner),chainId:network.chainId,version:network.version,rollup:network.rollup,board:String(ctx.instance.address),portal:ctx.ready.portalAddress});
+        const keys={workflow:sha(Buffer.from(JSON.stringify(['ROLLING_WORKFLOW_V1',scopeText]))),l2Journal:sha(Buffer.from(scopeText))};
+        const journalDirectory=path.join(ctx.directory,'rolling-application-journals-a');
+        const readCiphertext=async()=>{
+          const files=(await fs.readdir(journalDirectory)).sort();assert.deepEqual(files,Object.values(keys).map(key=>key+'.json').sort());
+          const result={};for(const [kind,key]of Object.entries(keys)){
+            const file=path.join(journalDirectory,key+'.json'),stat=await fs.lstat(file);
+            assert(stat.isFile()&&!stat.isSymbolicLink()&&(stat.mode&0o777)===0o600&&stat.size>0&&stat.size<=32*1024*1024+16384);
+            result[kind]=new Uint8Array(await fs.readFile(file));
+          }return result;
+        };
+        const original=await actorA.journal.assertCanStart();assert(original?.tx);const signedHash=sha(original.tx.toBuffer()),originalTxHash=String(original.tx.getTxHash());
+        assert.equal(originalTxHash,report.transactions[0].txHash);
+        const traffic=()=>{const r=wire.snapshot().receiver.requests;return {ordinaryNode:r['ordinary-node'],publicReader:r['public-reader'],trustedProof:r['trusted-proof']};};
+        const capture=()=>captureRollingRecoveryState({actor:actorA,intentId:prepared.intentId,readCiphertext,traffic});
+        report.trustedRecovery={passed:false,defaultMaxLagSeconds:120,unavailable:[],afterReadiness:[],stale:[],recoveries:[],signedPredecessorRetained:false};
+        const observation=report.trustedRecovery;
+        wire.setPhase('outage');let checkpoint=await capture();
+        const beforeUnavailable=rpc.snapshot();rpc.setFault('unavailable');
+        try{
+          observation.unavailable.push(await expectRollingPrivateFailure(checkpoint,{kind:'owned',operation:()=>app.ownedIdentities()}));
+          observation.unavailable.push(await expectRollingPrivateFailure(checkpoint,{kind:'submit',operation:()=>app.submitPrepared(prepared.intentId)}));
+          const after=rpc.snapshot();assert(after.unavailableRequests>beforeUnavailable.unavailableRequests);assert.deepEqual(after.forwarded,beforeUnavailable.forwarded);
+          observation.unavailableNoUpstreamForward=true;
+        }finally{rpc.setFault('healthy');}
+        observation.recoveries.push(await recoverRollingPrivateState(checkpoint));await save();
+        checkpoint=await capture();const beforePersonalized=rpc.snapshot();rpc.setFault('personalized-once');
+        try{
+          observation.afterReadiness.push(await expectRollingPrivateFailure(checkpoint,{kind:'personalized',operation:()=>node.getContract(actorA.owner)}));
+          const after=rpc.snapshot();assert.equal(after.personalizedDenied,beforePersonalized.personalizedDenied+1);
+          assert.equal(after.forwarded.getContract??0,beforePersonalized.forwarded.getContract??0);
+          assert(after.forwarded.getNodeInfo>beforePersonalized.forwarded.getNodeInfo);assert(after.forwarded.getSyncedL1Timestamp>beforePersonalized.forwarded.getSyncedL1Timestamp);
+          observation.readinessPassedBeforePersonalizedDenial=true;
+        }finally{rpc.setFault('healthy');}
+        observation.recoveries.push(await recoverRollingPrivateState(checkpoint));
+        checkpoint=await capture();await save();
+        completeTrustedRecovery=async()=>{
+          assert(report.applicationMining.clientMining.stopped&&report.applicationMining.clientMining.passed&&report.applicationMining.clientMining.autominingRestored);
+          await mark('trusted-natural-staleness');
+          const {createPublicClient,http:transport}=await import('viem'),{foundry}=await import('viem/chains');
+          const l1=createPublicClient({chain:foundry,transport:transport(ctx.config.l1RpcUrls[0],{retryCount:0,timeout:5000})});
+          let oldAutomine,restore=false,paused=false,agingFailure;
+          try{
+            await ctx.node.getSequencer().pause();paused=true;
+            oldAutomine=await l1.request({method:'anvil_getAutomine',params:[]});assert.equal(typeof oldAutomine,'boolean');restore=true;
+            await l1.request({method:'evm_setAutomine',params:[false]});assert.equal(await l1.request({method:'anvil_getAutomine',params:[]}),false);
+            // Wait for the real archiver to consume the already-mined final L1 block.
+            const last=await l1.getBlock({blockTag:'latest'}),settleDeadline=Math.min(Date.now()+15000,ctx.applicationDeadlineAt-180000);
+            while(await ctx.node.getSyncedL1Timestamp()!==last.timestamp){assert(Date.now()<settleDeadline,'Insufficient budget for genuine stale state');await sleep(100);}
+            const stamp=await ctx.node.getSyncedL1Timestamp();assert(stamp===last.timestamp);
+            const target=Number(stamp+121n)*1000;
+            assert(Number.isSafeInteger(target)&&ctx.applicationDeadlineAt-Math.max(Date.now(),target)>=60000,'Do not begin aging without recovery and cleanup reserve');
+            observation.aging={startedAt:Date.now(),syncedL1Timestamp:String(stamp),requiredAfter:target,recoveryReserveMs:60000};await save();
+            while(Date.now()<target){assert(Date.now()<ctx.applicationDeadlineAt-60000);assert.equal(await ctx.node.getSyncedL1Timestamp(),stamp);assert.equal((await l1.getBlock({blockTag:'latest'})).number,last.number);await sleep(250);}
+            assert.equal(await ctx.node.getSyncedL1Timestamp(),stamp);assert.equal((await l1.getBlock({blockTag:'latest'})).number,last.number);
+            await assert.rejects(()=>sdk.inspectTrustedNode(ctx.node,{expectedNetworkScope:network,proofsEnabled:real}),error=>error?.code==='BB_TRUSTED_NODE_STALE');
+            observation.aging.observedAt=Date.now();observation.aging.actualLagSeconds=Math.floor(Date.now()/1000)-Number(stamp);assert(observation.aging.actualLagSeconds>120);
+            // Public chain/index queries remain independent of private readiness.
+            observation.stalePublicReader={};
+            await verifyRollingPublicReader({node:ctx.node,artifact:checked.artifact,
+              scope:{chainId:network.chainId,rollupVersion:network.version,rollupAddress:network.rollup,boardAddress:String(ctx.instance.address),classId:String((await sdk.getContractClassFromArtifact(checked.artifact)).id)},
+              deployment:{blockNumber:Number(report.initialPublicAnchor.blockNumber),blockHash:report.initialPublicAnchor.blockHash,txHash:report.initialPublicAnchor.txHash},
+              cacheDirectory:path.join(ctx.directory,'rolling-stale-public-index'),ids,scenario:'profiles',expectedProfile:report.profiles.expectedIdentity,
+              wire:{nodeUrl:ordinaryRpc.url,artifactPath:path.join(ROOT,'billboard/target/rolling_contract-RollingBoard.json'),onReader:url=>wire.registerEndpoint('public-reader',url)},
+              deadlineAt:ctx.applicationDeadlineAt,observation:observation.stalePublicReader});
+            const beforeStale=rpc.snapshot();
+            observation.stale.push(await expectRollingPrivateFailure(checkpoint,{kind:'owned',operation:()=>app.ownedIdentities()}));
+            observation.stale.push(await expectRollingPrivateFailure(checkpoint,{kind:'submit',operation:()=>app.submitPrepared(prepared.intentId)}));
+            const afterStale=rpc.snapshot(),readinessOnly=new Set(['getNodeInfo','getChainTips','getWorldStateSyncStatus','getBlockData','getSyncedL1Timestamp']);
+            for(const method of new Set([...Object.keys(beforeStale.forwarded),...Object.keys(afterStale.forwarded)]))if(!readinessOnly.has(method))assert.equal(afterStale.forwarded[method]??0,beforeStale.forwarded[method]??0);
+            observation.staleNoPersonalizedForward=true;await save();
+          }catch(error){agingFailure=error;throw error;}finally{
+            const errors=[];
+            if(restore)try{await l1.request({method:'evm_setAutomine',params:[oldAutomine]});assert.equal(await l1.request({method:'anvil_getAutomine',params:[]}),oldAutomine);observation.autominingRestored=true;}catch(error){errors.push(error);observation.autominingRestored=false;}
+            if(paused)try{await ctx.node.getSequencer().start();observation.sequencerResumed=true;}catch(error){errors.push(error);observation.sequencerResumed=false;}
+            if(errors.length)throw new AggregateError([...(agingFailure?[agingFailure]:[]),...errors],'Trusted aging and restoration failed');
+          }
+          await mark('trusted-canonical-recovery');observation.recoveryMining={};
+          await withC01ClientMining({rpcUrl:ctx.config.l1RpcUrls[0],dateProvider:ctx.dateProvider,observation:observation.recoveryMining,mode:'real-wall',deadlineAt:ctx.applicationDeadlineAt},async tick=>{
+            const deadline=Math.min(Date.now()+30000,ctx.applicationDeadlineAt-15000);
+            for(;;){try{await sdk.inspectTrustedNode(ctx.node,{expectedNetworkScope:network,proofsEnabled:real});break;}catch(error){assert(['BB_TRUSTED_NODE_STALE','BB_TRUSTED_NODE_UNSYNCED'].includes(error?.code));assert(Date.now()<deadline);await tick();}}
+            observation.recoveries.push(await recoverRollingPrivateState(checkpoint));
+            const restored=await actorA.journal.assertCanStart();assert.equal(String(restored.tx.getTxHash()),originalTxHash);assert.equal(sha(restored.tx.toBuffer()),signedHash);
+            observation.signedPredecessorRetained=true;
+            assert.equal((await app.cancelPrepared(prepared.intentId)).status,'cancelled');observation.preparedCancelledAfterRecovery=true;
+            const bStandalone=BigInt(feesB.standalone.transactionFee);await fees.verify(feeTotal,feesB.browserFixture.fundedAmount-bStandalone-feeTotalB);await feesB.verify(feeTotalB,fees.browserFixture.fundedAmount-feeTotal);
+            assert.equal(service.stats().submitted,1);assert.equal(service.stats().completed,1);assert.equal(service.stats().failed,0);assert.equal(service.stats().running,false);
+          });
+          assert(observation.recoveryMining.clientMining.stopped&&observation.recoveryMining.clientMining.passed&&observation.recoveryMining.clientMining.autominingRestored);
+          observation.passed=true;await save();
+        };
+      }
       nativeArtifacts.verify();report.nativeArtifacts=nativeArtifacts.observation();
       assert.deepEqual(await sourceBinding(),report.sourceHashes);assert.deepEqual(buildInputs(),manifest.inputs);
-      report.passed=true;await mark('complete');
+      report.passed=!recovery;await mark(recovery?'trusted-recovery-prepared':'complete');
       }catch(error){
         // Keep the exact failure; diagnostic failures must not replace it.
         try{await observe('application-failed');}catch{report.readinessIncomplete=true;}
@@ -551,6 +680,7 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
       }
     });
     assert.equal(report.applicationMining.clientMining.stopped,true);assert.equal(report.applicationMining.clientMining.passed,true);
+    if(recovery){await completeTrustedRecovery();assert.deepEqual(await sourceBinding(),report.sourceHashes);nativeArtifacts.verify();report.passed=true;await mark('complete');}
   }catch(error){
     failure=error;report.passed=false;
     // Keep only fixed/public observation schemas. Never raw SDK error/cause/stack.
@@ -588,7 +718,7 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
       ...(restoreIndexedDB?[['indexedDBGlobals',restoreIndexedDB]]:[]),
       ...(nativeArtifacts?[['nativeArtifactLoader',()=>{try{nativeArtifacts.close();}finally{report.nativeArtifacts=nativeArtifacts.observation();}}]]:[]),
     ],report.cleanup);}catch(error){report.passed=false;failure=failure?new AggregateError([failure,error],'Rolling fixture and cleanup failed'):error;}
-    if(wire){report.wire=wire.snapshot();try{if(!failure){const {assertRollingWireCampaign}=await import('./rolling-wire-campaign.mjs');report.wireAcceptance=assertRollingWireCampaign(report.wire);}}catch(error){report.passed=false;failure=error;}}
+    if(wire){report.wire=wire.snapshot();try{if(!failure){const {assertRollingWireCampaign}=await import('./rolling-wire-campaign.mjs');report.wireAcceptance=recovery?assertRollingRecoveryWire(report.wire):assertRollingWireCampaign(report.wire);}}catch(error){report.passed=false;failure=error;}}
     try{await save();}catch(error){report.passed=false;failure=failure?new AggregateError([failure,error],'Rolling evidence failed'):error;}
   }
   if(failure){failure.rollingApplicationObservation=report;throw failure;}
