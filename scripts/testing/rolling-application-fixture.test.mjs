@@ -397,3 +397,24 @@ test('actual SDK serialized Tx is persistently denied before forward, then forwa
  }finally{await rpc.close();}
  await assert.rejects(fetch(rpc.url));
 });
+
+// Execute the actual checked-in dispatch fragments, not a duplicated model of
+// their flags. Continuations are labelled test doubles; this is not chain work.
+test('actual saved-versus-reorg dispatch selects job counts and only initialized continuations',async()=>{
+ const source=await fs.readFile(new URL('./rolling-application-fixture.mjs',import.meta.url),'utf8');
+ const modes=source.match(/  const preferenceSaved=.*\n  const preferences=.*\n  const rejectedWithdrawal=.*\n/);assert(modes);
+ const start=source.indexOf('      assert.equal(report.proverJobs.failed,0);if(recovery)');
+ const end=source.indexOf('      assert.equal(report.proverJobs.running,false);',start);assert(start>0&&end>start);
+ const jobs=source.slice(start,end)+'assert.equal(report.proverJobs.running,false);';
+ const terminal=source.match(/if\(preferenceReorg\)await pausePreferenceBoundary\(\);report\.passed=.*?await mark\(preferenceReorg\?[^\n]+?\);/);assert(terminal);
+ const completion=source.match(/    if\(preferenceReorg\)\{await completePreferenceReorg\(\);[^\n]+\}/);assert(completion);
+ const AsyncFunction=Object.getPrototypeOf(async()=>{}).constructor;
+ const run=new AsyncFunction('scenario','assert','report','pausePreferenceBoundary','completePreferenceReorg','mark','sourceBinding','nativeArtifacts',modes[0]+jobs+terminal[0]+completion[0]+'return {preferences,preferenceSaved,preferenceReorg,markerReorg};');
+ for(const [scenario,count,reorg]of [['preference-saved',2,false],['preference-reorg-initial',2,true],['preference-reorg-marker',3,true]]){
+  const calls=[],report={proverJobs:{failed:0,completed:count,submitted:count,running:false},sourceHashes:{}};
+  const flags=await run(scenario,assert,report,reorg?async()=>calls.push('pause'):undefined,reorg?async()=>calls.push('complete'):undefined,async stage=>calls.push(stage),async()=>({}),{verify:()=>calls.push('verify')});
+  assert.equal(flags.preferences,true);assert.equal(flags.preferenceSaved,!reorg);assert.equal(flags.preferenceReorg,reorg);assert.equal(flags.markerReorg,scenario==='preference-reorg-marker');
+  assert.equal(report.passed,true);assert.deepEqual(calls,reorg?['pause','preference-reorg-prepared','complete','verify','complete']:['complete']);
+  report.proverJobs.completed=count+1;await assert.rejects(run(scenario,assert,report,async()=>{},async()=>{},async()=>{},async()=>({}),{verify(){}}));
+ }
+});
