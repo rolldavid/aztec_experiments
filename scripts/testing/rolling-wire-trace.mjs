@@ -10,10 +10,13 @@ const nodeMethods=new Set(Object.keys(AztecNodeApiSchema).map(m=>'node_'+m));
 // Pinned clients use node or aztec namespaces; no arbitrary method strings.
 for(const m of Object.keys(AztecNodeApiSchema))nodeMethods.add('aztec_'+m);
 // Three Anvil methods are the existing C01 parent miner's fixed control RPCs.
-const l1Methods=new Set(['anvil_getAutomine','evm_setAutomine','evm_mine','eth_chainId','net_version','eth_blockNumber','eth_getBlockByNumber','eth_getBlockByHash','eth_getBalance','eth_getCode','eth_getStorageAt','eth_call','eth_estimateGas','eth_gasPrice','eth_blobBaseFee','eth_maxPriorityFeePerGas','eth_feeHistory','eth_getTransactionCount','eth_getTransactionByHash','eth_getTransactionReceipt','eth_getLogs','eth_sendTransaction','eth_sendRawTransaction','eth_accounts','eth_requestAccounts']);
+const l1Methods=new Set(['anvil_getAutomine','evm_setAutomine','evm_mine','eth_chainId','net_version','eth_blockNumber','eth_getBlockByNumber','eth_getBlockByHash','eth_getBalance','eth_getCode','eth_getStorageAt','eth_call','eth_simulateV1','eth_estimateGas','eth_gasPrice','eth_blobBaseFee','eth_maxPriorityFeePerGas','eth_feeHistory','eth_getTransactionCount','eth_getTransactionByHash','eth_getTransactionReceipt','eth_getLogs','eth_sendTransaction','eth_sendRawTransaction','eth_accounts','eth_requestAccounts']);
 // Installed viem actions/public/{getChainId,getBlockNumber,getGasPrice,
 // estimateMaxPriorityFeePerGas,getBlobBaseFee} and actions/wallet/{getAddresses,requestAddresses}
 // send these methods without params. Missing params is not generally an array.
+// Fixed method labels extracted from installed viem public actions; never retain
+// arbitrary unknown method text. This is diagnostic vocabulary, not acceptance.
+const diagnosticMethods=new Set(['eth_blobBaseFee', 'eth_blockNumber', 'eth_call', 'eth_chainId', 'eth_createAccessList', 'eth_estimateGas', 'eth_feeHistory', 'eth_gasPrice', 'eth_getBalance', 'eth_getBlockByHash', 'eth_getBlockByNumber', 'eth_getBlockTransactionCountByHash', 'eth_getBlockTransactionCountByNumber', 'eth_getCode', 'eth_getFilterChanges', 'eth_getFilterLogs', 'eth_getLogs', 'eth_getProof', 'eth_getStorageAt', 'eth_getTransactionByBlockHashAndIndex', 'eth_getTransactionByBlockNumberAndIndex', 'eth_getTransactionByHash', 'eth_getTransactionCount', 'eth_getTransactionReceipt', 'eth_maxPriorityFeePerGas', 'eth_newBlockFilter', 'eth_newFilter', 'eth_newPendingTransactionFilter', 'eth_simulateV1', 'eth_uninstallFilter']);
 const omittedL1Params=new Set(['eth_chainId','eth_blockNumber','eth_gasPrice','eth_blobBaseFee','eth_maxPriorityFeePerGas','eth_accounts','eth_requestAccounts']);
 const txMethods=new Set(['node_sendTx','aztec_sendTx','node_simulatePublicCalls','aztec_simulatePublicCalls','node_isValidTx','aztec_isValidTx']);
 const object=v=>v!==null&&typeof v==='object'&&!Array.isArray(v);
@@ -35,6 +38,8 @@ export function createRollingWireTrace({roles,limits={}}={}){
  const cap={};for(const [key,[fallback,max]]of Object.entries(bounds)){const value=own(limits,key)??fallback;if(!Number.isSafeInteger(value)||value<1||value>max)throw configError();cap[key]=value;}
  const salt=randomBytes(32),endpoints=new Map(),relations=new Map(),rows=new Map();let phase='setup';
  const counts={requests:0,completed:0,pending:0,unknown:0,unsupported:0,truncated:0,observerErrors:0,opaqueTransactions:0};
+ const unknownReasons={'endpoint':0,'reader-parameter':0,'invalid-envelope':0,'unsupported-method':0,'params-shape':0},unknownMethods={};
+ function unknown(reason,method){counts.unknown++;unknownReasons[reason]++;if(reason==='unsupported-method'){const key=diagnosticMethods.has(method)?method:'unrecognized';unknownMethods[key]=(unknownMethods[key]??0)+1;return key;}}
  const repeated={withinPhase:0,sameActorAcrossPhases:0,acrossActors:0,acrossEndpoints:0};
  function registerEndpoint(label,url){
   if(!WIRE_LABELS.includes(label)||endpoints.has(label)||typeof url!=='string')throw configError();
@@ -77,7 +82,7 @@ export function createRollingWireTrace({roles,limits={}}={}){
   const method=init?own(init,'method')??'GET':'GET',body=init?own(init,'body'):undefined;
   const u=new URL(text),label=endpoint(u,method),found=new Set();
   const record={label:label??'unknown',methods:[],roles:[],size:'empty'};
-  if(!label){counts.unknown++;record.methods=['unknown'];return record;}
+  if(!label){unknown('endpoint');record.methods=['unknown'];return record;}
   let nodes=0,limited=false;
   function walk(v,depth=0){if(++nodes>cap.maxNodes||depth>cap.maxDepth){limited=true;return;}
    if(typeof v==='string'){if(v.length>4096){counts.unsupported++;return;}token(v,label,at,found);return;}
@@ -105,7 +110,7 @@ export function createRollingWireTrace({roles,limits={}}={}){
   if(label==='public-reader'){
    if(body!==undefined&&body!==null){counts.unsupported++;return record;}
    if(Buffer.byteLength(u.search)>4096){counts.truncated++;return record;}
-   const route=u.pathname.slice(5),seen=new Set();for(const [key,value]of u.searchParams){if(!readerParams[route].includes(key)||seen.has(key)){counts.unknown++;continue;}seen.add(key);walk(value);}
+   const route=u.pathname.slice(5),seen=new Set();for(const [key,value]of u.searchParams){if(!readerParams[route].includes(key)||seen.has(key)){unknown('reader-parameter');continue;}seen.add(key);walk(value);}
    record.methods=['reader_'+route];record.size=bucket(Buffer.byteLength(u.search));
   }else if(method==='GET'){
    if(body!==undefined&&body!==null)counts.unsupported++;
@@ -130,11 +135,12 @@ export function createRollingWireTrace({roles,limits={}}={}){
    const parsed=JSON.parse(body),batch=Array.isArray(parsed)?parsed:[parsed];
    if(batch.length<1||batch.length>32){counts.truncated++;return record;}
    for(const rpc of batch){
-    if(!object(rpc)||rpc.jsonrpc!=='2.0'||typeof rpc.method!=='string'||Object.keys(rpc).some(k=>!['jsonrpc','id','method','params'].includes(k))||!(label==='public-l1'?l1Methods:nodeMethods).has(rpc.method)){counts.unknown++;continue;}
+    if(!object(rpc)||rpc.jsonrpc!=='2.0'||typeof rpc.method!=='string'||Object.keys(rpc).some(k=>!['jsonrpc','id','method','params'].includes(k))){unknown('invalid-envelope');continue;}
+    if(!(label==='public-l1'?l1Methods:nodeMethods).has(rpc.method)){record.methods.push('unsupported:'+unknown('unsupported-method',rpc.method));continue;}
     record.methods.push(rpc.method);walk(rpc.id);
     const absent=!Object.hasOwn(rpc,'params');
     if(absent&&label==='public-l1'&&omittedL1Params.has(rpc.method))continue;
-    if(!Array.isArray(rpc.params)){counts.unknown++;walk(rpc.params);continue;}
+    if(!Array.isArray(rpc.params)){unknown('params-shape');walk(rpc.params);continue;}
     const params=rpc.params;
     if(label==='public-l1'&&omittedL1Params.has(rpc.method)&&params.length!==0)counts.unsupported++;
     if(txMethods.has(rpc.method)){
@@ -204,7 +210,7 @@ export function createRollingWireTrace({roles,limits={}}={}){
  }
  return Object.freeze({wrapFetch,registerEndpoint,setPhase(value){if(!WIRE_PHASES.includes(value))throw configError();phase=value;},snapshot(){
   return {schemaVersion:1,privacyAcceptance:'not-evaluated',scope:'Explicit serialized fetch request components only; runtime-added headers, response bodies, native/undici transports and other processes excluded',
-   ...counts,requestCoverageComplete:counts.requests>0&&counts.pending===0&&['unknown','unsupported','truncated','observerErrors','opaqueTransactions'].every(k=>counts[k]===0),
+   ...counts,unknownReasons:{...unknownReasons},unknownMethods:{...unknownMethods},requestCoverageComplete:counts.requests>0&&counts.pending===0&&['unknown','unsupported','truncated','observerErrors','opaqueTransactions'].every(k=>counts[k]===0),
    externalAcceptanceRequired:['frozen-source-transport-inventory','actual-ingress-positive-controls','decoded-public-effects','deployed-trust-topology'],
    relationships:{...repeated,meaning:'Whole scalar equality aggregates only; constants/content may repeat. No ownership or anonymity inference.'},
    rows:[...rows.values()].map(row=>({...row,methods:[...row.methods],roles:[...row.roles]}))};

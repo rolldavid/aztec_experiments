@@ -327,3 +327,29 @@ test('synthetic blob fee extra params stay unsupported and observable',async()=>
  const trace=make();trace.registerEndpoint('public-l1',origin);await sent(trace,origin+'/',options(rpc('eth_blobBaseFee',[a])));
  assert.equal(trace.snapshot().unsupported,1);assert.deepEqual(trace.snapshot().rows[0].roles,['a']);
 });
+
+test('installed viem simulateBlocks traverses actual nested calls and state overrides',async()=>{
+ const {createPublicClient,http}=await import('viem');const trace=make();trace.registerEndpoint('public-l1',origin);let calls=0;
+ const client=createPublicClient({transport:http(origin,{retryCount:0,fetchFn:trace.wrapFetch(async(url,init)=>{
+  calls++;const body=JSON.parse(init.body);assert.equal(body.method,'eth_simulateV1');assert.equal(body.params.length,2);
+  assert.equal(body.params[0].blockStateCalls[0].calls[0].data,'0x1234');
+  return Response.json({jsonrpc:'2.0',id:body.id,result:[]});
+ })})});
+ await client.simulateBlocks({blocks:[{calls:[{account:'0x'+'12'.repeat(20),to:'0x'+'34'.repeat(20),data:'0x1234'}]}]});
+ let result=trace.snapshot();assert.equal(calls,1);assert.equal(result.unknown,0);assert.equal(result.unsupported,0);
+ await sent(trace,origin+'/',options(rpc('eth_simulateV1',[{blockStateCalls:[{calls:[{from:a,to:b,data:'0x1234'}],stateOverrides:{[a]:{balance:b}}}]}])));
+ assert.deepEqual(trace.snapshot().rows.at(-1).roles,['a','b']);
+});
+test('simulateV1 large nested data remains unsupported rather than opaque by default',async()=>{
+ const trace=make();trace.registerEndpoint('public-l1',origin);await sent(trace,origin+'/',options(rpc('eth_simulateV1',[{blockStateCalls:[{calls:[{data:'0x'+'ab'.repeat(4096)}]}]}])));
+ const result=trace.snapshot();assert.equal(result.unsupported,1);assert.equal(result.opaqueTransactions,0);assert.equal(result.requestCoverageComplete,false);
+});
+test('unknown diagnostics retain fixed reasons and known SDK method labels only, never arbitrary method text',async()=>{
+ const trace=make();trace.registerEndpoint('public-l1',origin);
+ for(const method of ['eth_getProof','PRIVATE_SENTINEL_'+a])await sent(trace,origin+'/',options(rpc(method,[])));
+ await sent(trace,origin+'/',options(JSON.stringify({jsonrpc:'1.0',method:'eth_call',id:a,params:[]})));
+ await sent(trace,origin+'/',options(rpc('eth_call',null)));
+ const result=trace.snapshot();assert.equal(result.unknown,4);assert.deepEqual(result.unknownMethods,{eth_getProof:1,unrecognized:1});
+ assert.equal(result.unknownReasons['unsupported-method'],2);assert.equal(result.unknownReasons['invalid-envelope'],1);assert.equal(result.unknownReasons['params-shape'],1);
+ assert(!JSON.stringify(result).includes('PRIVATE_SENTINEL'));assert(!JSON.stringify(result).includes(a));assert.equal(result.requestCoverageComplete,false);
+});
