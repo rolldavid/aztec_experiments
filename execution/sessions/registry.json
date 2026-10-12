@@ -7,36 +7,82 @@
       "parent_id": null,
       "task": [
         "G05",
-        "G06",
+        "G07",
         "G14"
       ],
       "branch": "codex/rolling-chat-draft3",
       "history_locator": "Codex runtime thread 01a12a75-1b50-7871-a73b-4253a1010194",
       "role": "lead",
-      "state": "Profile f30 independently reviewed and gated; transferring reviewed social consumers and wiring for real acceptance",
+      "state": "50ff component gate integrated; claims reviewed e28 transfer to root, normal build and combined verification next",
       "working_branch": "codex/rolling-private-bok-candidate",
       "active_edit_paths": [
-        "execution/",
-        "scripts/testing/rolling-social-acceptance.mjs",
-        "scripts/testing/rolling-social-acceptance.test.mjs",
+        "scripts/test-w03-journal.mjs",
+        "scripts/test-w03-proof-replacement.mjs",
         "scripts/testing/rolling-application-fixture.mjs",
+        "scripts/testing/rolling-application-fixture.test.mjs",
+        "scripts/testing/rolling-preference-reorg.mjs",
+        "scripts/testing/rolling-preference-reorg.test.mjs",
         "scripts/testing/rolling-public-acceptance.mjs",
+        "scripts/testing/scenario-flows.mjs",
         "scripts/testing/scenarios.mjs",
-        "scripts/testing/scenario-flows.mjs"
+        "shared/l2-journal.mjs",
+        "shared/rolling/application.mjs",
+        "shared/rolling/application.test.mjs",
+        "shared/rolling/synchronized-application.mjs",
+        "shared/rolling/synchronized-application.test.mjs",
+        "execution/"
       ],
       "additional_worktree": {
         "path": "../rolling-lead-social",
-        "branch": "codex/rolling-social-wiring",
-        "base": "f30a8e3",
-        "runtime": "01a12a75-1b50-7871-a73b-4253a1010194",
-        "purpose": "Prepare next G06 candidate while current profile campaign source is frozen",
+        "branch": "codex/rolling-preference-reorg-combined",
+        "base": "50ff963e26877a94bf8379e97b90e52863e3ab6f",
         "allowed_paths": [
+          "scripts/test-w03-journal.mjs",
+          "scripts/test-w03-proof-replacement.mjs",
           "scripts/testing/rolling-application-fixture.mjs",
+          "scripts/testing/rolling-application-fixture.test.mjs",
+          "scripts/testing/rolling-preference-reorg.mjs",
+          "scripts/testing/rolling-preference-reorg.test.mjs",
           "scripts/testing/rolling-public-acceptance.mjs",
+          "scripts/testing/scenario-flows.mjs",
           "scripts/testing/scenarios.mjs",
-          "scripts/testing/scenario-flows.mjs"
+          "shared/l2-journal.mjs",
+          "shared/rolling/application.mjs",
+          "shared/rolling/application.test.mjs",
+          "shared/rolling/synchronized-application.mjs",
+          "shared/rolling/synchronized-application.test.mjs"
         ],
-        "no_concurrent_heavy_tests": true
+        "state": "reviewed9commits transferred withoutconflict to e28b121; combined checks running, no genuine/build"
+      },
+      "trusted_sender_claim": {
+        "chainId": 11155111,
+        "address": "0x374f2eeb49a9cc4a8bb732bb45b3c1fd751fdfc7",
+        "owner": "lead-20261011",
+        "runtime": "01a12a75-1b50-7871-a73b-4253a1010194",
+        "scope": "Single testnet fee mint only; no other agent may sign/send from this sender",
+        "state": "Mint daed763 finalized and fully accounted; permanent lease retained, no further send authorization assumed for this journal",
+        "evidence": "evidence/G04/fee-mint-1791758790202.json"
+      },
+      "frozen_candidate": "50ff963",
+      "allowed_paths": [
+        "execution/",
+        "scripts/testing/rolling-trusted-recovery.mjs",
+        "scripts/testing/rolling-trusted-recovery.test.mjs",
+        "scripts/testing/rolling-application-fixture.mjs",
+        "scripts/testing/rolling-application-fixture.test.mjs",
+        "scripts/testing/rolling-public-acceptance.mjs",
+        "shared/rolling/public-index.test.mjs",
+        "scripts/testing/scenario-flows.mjs",
+        "scripts/testing/scenarios.mjs"
+      ],
+      "browser_repair_claim": {
+        "base": "842683a17e8e9b670a87148422f0c5c0dd2d6bfc",
+        "paths": [
+          "scripts/testing/rolling-preference-browser.mjs",
+          "scripts/testing/rolling-preference-browser.test.mjs",
+          "apps/rolling/wallet-panel.browser.test.mjs"
+        ],
+        "status": "source approved and genuine passed; writer released"
       }
     },
     {
@@ -58,17 +104,21 @@
       "task": [
         "G14"
       ],
-      "branch": "codex/rolling-fee-acquisition",
+      "branch": "codex/rolling-l1-config-diagnostic",
       "history_locator": "collaboration runtime /root/controls, parent 01a12a75-1b50-7871-a73b-4253a1010194",
       "role": "implementation worker",
-      "state": "Fee acquisition c11 independently approved; writer released. Read-only commissioning diagnostic preparation.",
+      "state": "bd4da0b two-file diagnostic frozen,13checks, independentreview before any liveprobe;07fleetdeleted;no paidaction",
       "worktree": "../rolling-controls",
-      "allowed_paths": [],
+      "allowed_paths": [
+        "deploy/prover/l1-config-diagnostic.mjs",
+        "deploy/prover/l1-config-diagnostic.test.mjs"
+      ],
       "commit_trailer_aliases": {
         "Agent-Session": "controls",
         "Parent-Session": "lead"
       },
-      "base": "55e0772"
+      "base": "72e4f6dffb9f779de4b9951f0392e8202b95eebd",
+      "active_edit_paths": []
     },
     {
       "logical_id": "reviewer-20261011",
@@ -76,30 +126,33 @@
       "parent_id": "lead-20261011",
       "task": [
         "G05",
-        "G06"
+        "G07"
       ],
       "branch": "read-only candidate refs",
       "history_locator": "collaboration runtime /root/reviewer, parent 01a12a75-1b50-7871-a73b-4253a1010194",
       "role": "independent reviewer",
-      "state": "Profile f30 actual acceptance approved; available for social combined source binding"
+      "state": "independent a8eb runtime and50ff component integration review, root source frozen"
     },
     {
       "logical_id": "design-20261011",
       "runtime_id": "/root/design",
       "parent_id": "lead-20261011",
       "task": [
-        "G06"
+        "G07"
       ],
-      "branch": "codex/rolling-account-reactions",
+      "branch": "codex/rolling-preference-replacement-ui",
       "history_locator": "collaboration runtime /root/design, parent01a12a75-1b50-7871-a73b-4253a1010194",
       "role": "implementation worker",
-      "state": "Remote startup source diagnosis complete. Claimed two-account reaction helper in isolated worktree.",
-      "worktree": "../rolling-design",
+      "state": "56e1410 two-file UI frozen,44browserchecks; independentreview pending. Read-only next exact-byte recovery design.",
+      "worktree": "../rolling-preference-actor",
       "allowed_paths": [
-        "scripts/testing/rolling-account-reactions.mjs",
-        "scripts/testing/rolling-account-reactions.test.mjs"
+        "apps/rolling/wallet-panel.mjs",
+        "apps/rolling/wallet-panel.browser.test.mjs"
       ],
-      "base": "f30a8e3"
+      "base": "7d9c7d737a29682a04174549e9cf00f94c0df102",
+      "reference_candidate": "1351ea1b180b11475250463c9c40fdd2e342ab13",
+      "writer_released": true,
+      "active_edit_paths": []
     }
   ],
   "integrations": [
@@ -183,6 +236,107 @@
       "evidence": "evidence/G05/integration-f30-evidence.json",
       "gate_result": "evidence/G05/integration-f30-result.json",
       "limits": "Full product and release gates remain open."
+    },
+    {
+      "task": "G06 bounded genuine anonymous thread and repost reactions",
+      "candidate": "d1e4897c21241ad02ddde0069ca638feee2fe389",
+      "base": "f30a8e3f44092d3452db836969b65861d40efb4b",
+      "integrator_session": "lead-20261011",
+      "reviewer": "reviewer-20261011",
+      "policy_sha256": "5d548c363b642fbb11fe1761c6b08282a7063963d2470a321aaf55e4a2143abb",
+      "evidence": "evidence/G06/integration-d1-evidence.json",
+      "gate_result": "evidence/G06/integration-d1-result.json",
+      "limits": "Full product and release gates remain open."
+    },
+    {
+      "task": "G06 bounded genuine two-account reactions",
+      "candidate": "24934789146be25e5e32bef42b51ae87e644d3c3",
+      "base": "d1e4897c21241ad02ddde0069ca638feee2fe389",
+      "integrator_session": "lead-20261011",
+      "reviewer": "reviewer-20261011",
+      "policy_sha256": "d629ac4a00bb122a45005338291a6fac809fcb11a064eb0101e170f1d8ed7c17",
+      "evidence": "evidence/G06/integration-249-evidence.json",
+      "gate_result": "evidence/G06/integration-249-result.json",
+      "limits": "Full product and release gates remain open."
+    },
+    {
+      "task": "G05 names/recovery/request-capture and G14 bootstrap development",
+      "candidate": "e3c9ebfe1f6a216baa2d3312833e6a40af12ace6",
+      "base": "24934789146be25e5e32bef42b51ae87e644d3c3",
+      "integrator_session": "lead-20261011",
+      "reviewer": "reviewer-20261011",
+      "evidence": "evidence/G05/integration-e3-evidence.json",
+      "gate_result": "evidence/G05/integration-e3-result.json",
+      "limits": "Not fullprivacy or remotequalification; externalreleasegates retained"
+    },
+    {
+      "task": "G05/G06 genuine browser composer development",
+      "candidate": "7328b60ece6422b1ee33e21c0398fac7e75decaa",
+      "base": "e3c9ebfe1f6a216baa2d3312833e6a40af12ace6",
+      "integrator_session": "lead-20261011",
+      "reviewer": "reviewer-20261011",
+      "evidence": "evidence/G06/integration-7328-evidence.json",
+      "gate_result": "evidence/G06/integration-7328-result.json",
+      "limits": "Preparation/cancel notbrowserpublication;fullproduct/releaseopen"
+    },
+    {
+      "task": "G06 bounded social/reaction wire development",
+      "candidate": "ef533d9973b44363e4932c1900f69df61c0d7a3a",
+      "base": "7328b60ece6422b1ee33e21c0398fac7e75decaa",
+      "integrator_session": "lead-20261011",
+      "reviewer": "reviewer-20261011",
+      "evidence": "evidence/G06/integration-ef533-evidence.json",
+      "gate_result": "evidence/G06/integration-ef533-result.json",
+      "limits": "Outage/staleness/fullproduct/deployment/specialist/soak/network stillopen"
+    },
+    {
+      "task": "G06 trustedrecovery and scopedcomponentclosure",
+      "candidate": "4c76d253378f2706d8dc3d946e687c0c05f19a6e",
+      "base": "ef533d9973b44363e4932c1900f69df61c0d7a3a",
+      "integrator_session": "lead-20261011",
+      "reviewer": "reviewer-20261011",
+      "evidence": "evidence/G06/integration-4c76-evidence.json",
+      "gate_result": "evidence/G06/integration-4c76-result.json",
+      "component_evidence": "evidence/G06.json",
+      "limits": "Fullproduct/deployment/specialist/soak/network remainopen"
+    },
+    {
+      "task": "G14 startup diagnostic development",
+      "candidate": "04f41a280ff7eb8d64c9f0333bf0e6924b6b536f",
+      "base": "4c76d253378f2706d8dc3d946e687c0c05f19a6e",
+      "worker_revision": "c06235f83603e904dbc86cb9cad59dc2b8981584",
+      "integrator_session": "lead-20261011",
+      "reviewer": "reviewer-20261011",
+      "evidence": "evidence/G02/integration-04f41-evidence.json",
+      "gate_result": "evidence/G02/integration-04f41-result.json",
+      "limits": "Linuxqualification/freshprivatepayload/shutdowncontrols/remoteproofs notpassed"
+    },
+    {
+      "task": "G05-normalized-name-race",
+      "candidate": "8d8dc0fa3103c010f1756ada15f65b166cc5dd65",
+      "base": "04f41a280ff7eb8d64c9f0333bf0e6924b6b536f",
+      "review": "evidence/G05/name-race-8d8-integration-review.json",
+      "gate": "evidence/G05/integration-8d8-result.json",
+      "status": "integrated",
+      "recorded_at": "2026-10-12T03:38:05.112970+00:00"
+    },
+    {
+      "task_id": "G05-subboard-withdrawal-components",
+      "candidate": "09a8470b31db0736ecac2a084da5a4c3e7c29296",
+      "base": "8d8dc0fa3103c010f1756ada15f65b166cc5dd65",
+      "at": "2026-10-12T04:17:56.896087+00:00",
+      "gate_result": "evidence/G05/integration-09a-result.json",
+      "review": "evidence/G05/subboard-withdrawal-09a-integration-review.json",
+      "scope": "Bounded components only; fullG05/product/privacy/release remainopen"
+    },
+    {
+      "task_id": "G07-preference-and-G14-bootstrap-components",
+      "candidate": "50ff963e26877a94bf8379e97b90e52863e3ab6f",
+      "base": "09a8470b31db0736ecac2a084da5a4c3e7c29296",
+      "at": "2026-10-12T07:12:30.931971+00:00",
+      "gate_result": "evidence/G07/integration-50ff-result.json",
+      "review": "evidence/G07/combined-50ff-integration-review.json",
+      "scope": "Bounded components only; full G07/G14, private recovery after reorg, cold scale, reply delivery and production gates remain open."
     }
   ],
   "candidate_transfers": [
@@ -366,6 +520,205 @@
       "lead_revision": "55e07721498cd87c781c05ea9508794bdc8da79c",
       "review": "evidence/G05/profile-campaign-55e0772-review.json",
       "status": "26independentchecks andnormalwalletassetsverified; actualprofilecampaignrunning"
+    },
+    {
+      "task": "G06-social-wire",
+      "owner": "lead-20261011",
+      "status": "claimed transfer to currentroot, combinedreview then actual",
+      "source_revisions": [
+        "e0d7679c663b02b51dd3cf5dc28b9994f4c02e02",
+        "83ed41bb55e7489a74f3498e593fde047cd950ce"
+      ],
+      "allowed_paths": [
+        "scripts/testing/rolling-social-wire.mjs",
+        "scripts/testing/rolling-social-wire.test.mjs",
+        "scripts/testing/rolling-application-fixture.mjs",
+        "scripts/testing/rolling-public-acceptance.mjs",
+        "scripts/testing/rolling-public-acceptance.test.mjs",
+        "scripts/testing/scenario-flows.mjs",
+        "scripts/testing/scenarios.mjs"
+      ]
+    },
+    {
+      "task": "G05-name-race-composition",
+      "owner": "lead-20261011",
+      "base": "2397d2e1e318450e44953acb06f443d1a80abdcf",
+      "worker_revisions": [
+        "57349a8",
+        "c54820e",
+        "1bfd2f6",
+        "b3ea42b",
+        "75dfae6",
+        "604f978",
+        "10dee787"
+      ],
+      "candidate_revisions": [
+        "013a1ea",
+        "28b6587",
+        "d9f7d32",
+        "e0911f4",
+        "c3abe51",
+        "fa01cac",
+        "af9d930"
+      ],
+      "status": "source composition frozen;228checks passed;independentreviewpending;actualnotrun",
+      "conflict_resolution": "Preserved social second collateral and optional standalone accounting, composer branch/await/assets, e3 observer; union scenario/source inventories and race-specific twojobs/profile oracle. No production contract/assets changes."
+    },
+    {
+      "task": "G06-trusted-recovery",
+      "owner": "lead-20261011",
+      "source_revisions": [
+        "b7c9f8a9f00c2ecad79825230a298f549c490e75",
+        "ef533d9973b44363e4932c1900f69df61c0d7a3a"
+      ],
+      "candidate_revisions": [
+        "ec14364",
+        "c8cd427",
+        "22fc523",
+        "5a62b5213aefc6e6ae398488ced38d235b1b5f22"
+      ],
+      "status": "exact5a62sourceapproved105;roottransfer/actualpending",
+      "review": "evidence/G06/trusted-recovery-parent-5a62-review.json"
+    },
+    {
+      "task": "G05-name-race-recovery-composition",
+      "owner": "lead-20261011",
+      "base": "68e7c326f1ca946463ebc8cfd04848e62ff7cfb8",
+      "source_revision": "af9d930d8af3e16b3e8924fff88ffb6a8a8f3199",
+      "candidate_revisions": [
+        "595190b",
+        "bd949de",
+        "57e9211",
+        "8fe8a05",
+        "dfbe48b",
+        "2f26d99",
+        "c7df4b191d7f9c71d75318a12ec1c25327e3f8aa"
+      ],
+      "status": "exactsourceapproved;actualpending",
+      "review": "evidence/G05/name-race-combined-c7df-review.json",
+      "conflicts": "Union sourceinventory/scenarios and exclusive flags;2racejobs vs1recoveryjob; profileoracle either; both lifecycleclosures; retain allregressiontests. Racebody sixfiles identicalaf9; recoverybody/consumer/reader identical68e."
+    },
+    {
+      "candidate": "83406aa2c70022cc48035619ce595bdab1491ec4",
+      "base": "09a8470b31db0736ecac2a084da5a4c3e7c29296",
+      "task": "G07",
+      "agent_session": "lead-20261011",
+      "transfers": [
+        {
+          "root": "11c8639e9472618fe4d12b04847591f01d1c9711",
+          "reviewedSource": "d530a69fbe017298974b091f55bf7d9e1474d4ee",
+          "stablePatchId": "28e6287474b1c229a92d297899758b80c78ddf2f"
+        },
+        {
+          "root": "ac15a07211be4cfd04c6529dea89ce50f980bbd3",
+          "reviewedSource": "2f31b43b6596aa5ec6b3d6da9d6c1b956e142038",
+          "stablePatchId": "7fa3f86765f604adf8c0f5049661147842ad2983"
+        },
+        {
+          "root": "42d130b176645321244fa44ac68b430c28b279b5",
+          "reviewedSource": "1ac830b30910a0bf099c19c2f830ede2065bea45",
+          "stablePatchId": "a6b3cdf99f17582a83c6cab30e5b0f98d6a3769c"
+        },
+        {
+          "root": "b61d808eb231ba12570024c8b94c69b0f89e3f63",
+          "reviewedSource": "a00a0187047df11db71482f669ae17e33954e1ff",
+          "stablePatchId": "09fe9df6306d098274399dac682eca46a67e46f7"
+        },
+        {
+          "root": "d662e18e08e039dfc39d8cbf6d33100949d6ddcf",
+          "reviewedSource": "fea5af6ba153ab0336efdd914970d989b9ec011e",
+          "stablePatchId": "2f9fe59c2c221d46b7bdc5826f15424d094fb09b"
+        },
+        {
+          "root": "7fdf1f28b94a3c284cd2c1518a9d537e07897d41",
+          "reviewedSource": "093af599c1bd5f5bd5a3e05f1c3c73f69373f0d0",
+          "stablePatchId": "fbad358f9babc58c144b9b4193b65455d5a01b99"
+        },
+        {
+          "root": "65b5f7b6a1160ce338cae292696f160434eb112a",
+          "reviewedSource": "dffbf8dc74a3ffb03b96f3dacd5cd00fa5b249f2",
+          "stablePatchId": "bf29395e235e330951cea0348b901875d49870ea"
+        },
+        {
+          "root": "130d0b8a3e541a6170931150f9f7ca43bf5e0d5c",
+          "reviewedSource": "d933036442fac747bcd0bb50155b393fe171db73",
+          "stablePatchId": "da044249a7d8626246c496ac337e10334c4bc79a"
+        },
+        {
+          "root": "896b3865cc8931d0b770778b2113d486890fd508",
+          "reviewedSource": "0d6b5f9f0c099f3f2219832b8289ad24908c987a",
+          "stablePatchId": "bfd03c5fee2dfa9465ab5435c8544a4dd12c1969"
+        },
+        {
+          "root": "d0b65dc96b53e6f612a3d3dbf4d0cfebcd15feb5",
+          "reviewedSource": "c99d79a86764f5839b8d2abc7b2e87bc6df61682",
+          "stablePatchId": "38a98bf5cde5a48dbe9dfec313ec58edff25a81b"
+        },
+        {
+          "root": "decf7ac33cb6f35b4190abfcdd407d7ff241476a",
+          "reviewedSource": "355ad39b559374402e74cd281a43b776449ba67d",
+          "stablePatchId": "2db75e32937935315909705d914ef4dc9883996e"
+        },
+        {
+          "root": "8b10b5e30d337ecd2c026bde918a2345255e9b72",
+          "reviewedSource": "51e65efd234c5c77e011f6542d8a0a3872a9d6c9",
+          "stablePatchId": "cec222c2532a8d79dfc0819c88c2b97c894f8e24"
+        },
+        {
+          "root": "0419aa2201838a0b38b911b2d59527fe06f787e4",
+          "reviewedSource": "1cf4f3f976606149c9d2c55b1b8f1f6633fa27d6",
+          "stablePatchId": "9fe4854b275596e9f4ea79dfedcf54cb2cd70fd2"
+        },
+        {
+          "root": "83406aa2c70022cc48035619ce595bdab1491ec4",
+          "reviewedSource": "ed6177ba602604598ca6fbf6013e884859f6dfa5",
+          "stablePatchId": "e733862fdaff6957dca13b946a0670167fb256c3"
+        }
+      ],
+      "review": "evidence/G07/combined-834-source-review.json",
+      "status": "source-reviewed; runtime/build acceptance pending"
+    },
+    {
+      "task": "G14-split-bootstrap-and-G07-preflight",
+      "owner": "lead-20261011",
+      "base": "11dcb37d374f6a505802c3cbf85c483b0ce56051",
+      "status": "claimed reviewedsource transfer, genuine11d2aafe complete",
+      "source_revisions": [
+        "f32a1037bd8e95b2994795e1cfe3053f72fd2930",
+        "a65f56e1b75ca5b73f2d0551aada84a1587c3ddb",
+        "7142ca398954be3316ca3bbd54db0c4c74217a67",
+        "8503d7a7ae1bc8508bb6a0d25517b89edb9d17db",
+        "72e4f6dffb9f779de4b9951f0392e8202b95eebd",
+        "28ca0e100e1afce7d0a437eeab2bb235cb34610a",
+        "d941042545eea332b31329e3cc50e387566624bf"
+      ],
+      "allowed_paths": [
+        "deploy/prover/archiver-prerequisites.mjs",
+        "deploy/prover/archiver-prerequisites.test.mjs",
+        "deploy/prover/bootstrap.py",
+        "scripts/test-prover-bootstrap.py",
+        "deploy/prover/BOOTSTRAP.md",
+        "scripts/testing/private-bok-build-preflight.mjs",
+        "scripts/testing/private-bok-build-preflight.test.mjs",
+        "scripts/testing/run-application.mjs",
+        "BUILDING.md"
+      ]
+    },
+    {
+      "task": "G07-browser-preference-composition",
+      "owner": "lead-20261011",
+      "base": "96825e16271baf7d81442415565fe51b1533737e",
+      "source": "436f253809a0b83d815b2c9ca90238aaa0a4381c",
+      "review": "evidence/G07/preference-browser-436f-source-review.json",
+      "status": "claimed exact6sourcecommits transfer; source/assetverification andgenuinebrowser pending",
+      "source_revisions": [
+        "a3f7e200b4b4806842d52863c2807e84646a8610",
+        "8d79f0d",
+        "58280d05ef7dfcaa7450812cc0575f069ec82a53",
+        "0088e1440299a12fbcc92ce8a953985515b24dbc",
+        "00e334d21aa27d2ca1c0b1fb7ae52b46b0c388c4",
+        "b5e6899ec9b93b449ce2bd8a946705886da1eb18"
+      ]
     }
   ]
 }
