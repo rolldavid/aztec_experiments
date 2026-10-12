@@ -1,3 +1,4 @@
+import {PXE_REORG_ANCHOR_PINS,transformPxeReorgAnchor} from './patch-pxe-reorg-anchor.mjs';
 import {PRIVATE_EVENT_QUERY_PINS,transformPrivateEventQuery} from './patch-private-event-query.mjs';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -38,6 +39,11 @@ function fixture(t) {
   for(const pin of PRIVATE_EVENT_QUERY_PINS){
     const source=fs.readFileSync(new URL('../node_modules/@aztec-labs/pxe/'+pin.path,import.meta.url),'utf8');
     inputs['node_modules/@aztec-labs/pxe/'+pin.path]=hash(source)===pin.after?source:transformPrivateEventQuery(source,pin.path);
+  }
+  inputs['scripts/patch-pxe-reorg-anchor.mjs']=fs.readFileSync(new URL('./patch-pxe-reorg-anchor.mjs',import.meta.url),'utf8');
+  for(const pin of PXE_REORG_ANCHOR_PINS){
+    const source=fs.readFileSync(new URL('./testing/fixtures/pxe-reorg-anchor/'+pin.path.split('/').at(-1),import.meta.url),'utf8');
+    inputs['node_modules/@aztec-labs/pxe/'+pin.path]=transformPxeReorgAnchor(source,pin.path);
   }
   const outputs = {
     'aztec_bundle.js': '// synthetic built bundle',
@@ -158,4 +164,18 @@ for(const pin of PRIVATE_EVENT_QUERY_PINS)test('private-event patch must be pres
 });
 test('patch installer itself is a mandatory SDK provenance input',t=>{
  const f=fixture(t);delete f.manifest.inputs['scripts/patch-private-event-query.mjs'];f.save();assert.throws(()=>checkSdk(f.root),/Missing SDK input/);
+});
+
+for(const pin of PXE_REORG_ANCHOR_PINS)test('PXE reorg anchor patch must be present and exact: '+pin.path,t=>{
+  const f=fixture(t),name='node_modules/@aztec-labs/pxe/'+pin.path;
+  delete f.manifest.inputs[name];f.save();assert.throws(()=>checkSdk(f.root),/Missing SDK input/);
+  const original=fs.readFileSync(new URL('./testing/fixtures/pxe-reorg-anchor/'+pin.path.split('/').at(-1),import.meta.url));
+  f.write(name,original);f.manifest.inputs[name]=hash(original);f.save();
+  assert.throws(()=>checkSdk(f.root),/SDK PXE reorg anchor patch mismatch/);
+});
+test('PXE reorg installer is mandatory and its changed bytes invalidate SDK provenance',t=>{
+  const f=fixture(t),name='scripts/patch-pxe-reorg-anchor.mjs',original=f.manifest.inputs[name];
+  delete f.manifest.inputs[name];f.save();assert.throws(()=>checkSdk(f.root),/Missing SDK input/);
+  f.manifest.inputs[name]=original;f.save();f.write(name,'changed patch installer');
+  assert.throws(()=>checkSdk(f.root),/SDK input changed/);
 });

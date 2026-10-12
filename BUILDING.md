@@ -287,3 +287,37 @@ before extracting. The release executable identifies itself as
 `1.6.0-v1.7.0`, commit `f83bad912a9dba7bf0371def1e70bb1896048356`;
 the resolver checks both. Other platforms must use the matching official asset
 and its published checksum. Test evidence records the actual executable hash.
+
+### PXE sparse reorg anchor patch
+
+The same explicit dependency bootstrap also installs the hash-pinned V6 RC1
+`BlockSynchronizer` repair in `scripts/patch-pxe-reorg-anchor.mjs`. Run it only
+after stopping every process using this dependency tree. Both TypeScript and
+compiled JavaScript must be the exact upstream pair or the exact patched pair;
+unknown or interrupted mixed installations fail closed. Reinstall locked
+dependencies to repair mixed state, then bootstrap. SDK build/check binds the
+patch script and both patched dependency hashes in its normal manifest. No
+application runtime installs the patch. Linux packaging must include these
+normal patched SDK bytes and requalify its manifest; Mac tests are not Linux
+qualification.
+
+The repair preserves conservative all-store rollback. With sparse local history,
+a common ancestor at block 10 may require deleting private records from block 12
+even though the configured canonical tip is 12. The patch resolves the canonical
+typed-hash header before mutation, rolls back every store atomically, delivers
+that canonical anchor, clears the normal contract synchronization cache, and
+acknowledges prune tips last, after the transaction (the SDK tips store owns a
+separate transaction; IndexedDB does not support nested transactions). Genuine SDK synchronization
+must then rediscover private state from authenticated encrypted logs. It never
+retains orphan records or fabricates note balances. Missing, stale or changing
+headers reject synchronization; the underlying stream's swallowed failure cannot
+be mistaken for successful anchor delivery. An orphan current anchor cannot be
+replaced without the preceding conservative rollback; this also fails closed on
+a contradictory finalized source. No retry or alternate node is added.
+
+Run `node --test scripts/patch-pxe-reorg-anchor.test.mjs` using the pinned Node.
+Tests copy pristine pinned fixtures to temporary packages, never patch the shared
+installation, and use actual SDK stores/LMDB with labelled synthetic chain and
+note data. These demonstrate rollback/anchor semantics, not genuine encrypted
+FPC recovery, historical failure attribution, or full reorg acceptance. Those
+remain separate real-wallet qualification gates.
