@@ -13,6 +13,16 @@ function replacementOptions(options={}) {
  }catch{throw invalid();}
 }
 function expectedOperation(value) {if(typeof value!=='string'||!value.length||value.length>16384)throw invalid();return value;}
+function recoveryOptions(options) {
+ if(options===undefined)return null;
+ try{
+  if(!options||![Object.prototype,null].includes(Object.getPrototypeOf(options)))throw invalid();
+  const keys=Reflect.ownKeys(options);if(keys.some(key=>!['expectedOperation','expectedTxHash','beforeSubmit'].includes(key))||!keys.includes('expectedOperation')||!keys.includes('expectedTxHash'))throw invalid();
+  const out=Object.fromEntries(keys.map(key=>{const d=Object.getOwnPropertyDescriptor(options,key);if(!d||!Object.hasOwn(d,'value'))throw invalid();return [key,d.value];}));
+  expectedOperation(out.expectedOperation);if(typeof out.expectedTxHash!=='string'||!/^0x[0-9a-f]{64}$/.test(out.expectedTxHash)||('beforeSubmit' in out&&typeof out.beforeSubmit!=='function'))throw invalid();
+  return out;
+ }catch{throw invalid();}
+}
 const scopeNames=['account','chainId','rollup','version','board','portal'];
 export function l2JournalScopeText(scope) {
   if(!scope || Object.keys(scope).sort().join()!==[...scopeNames].sort().join())throw invalid();
@@ -147,20 +157,46 @@ export async function createL2Journal({storage,walletSecret,walletSalt,scope,Tx,
   }
 
   function confirmed(receipt) {acknowledged=receipt.txHash.toString();lastHash=acknowledged;}
-  async function recoverSaved(saved) {
+  function bindRecovery(saved,binding){
+    if(binding&&(!saved.tx||saved.value.operation!==binding.expectedOperation||saved.value.txHash!==binding.expectedTxHash))throw fail();
+  }
+  async function savedRecoveryStatus(saved){
+    let active=true;
+    const reading=Object.fromEntries(['getTxReceipt','isValidTx','getBlock'].map(name=>[name,(...args)=>{if(!active)throw fail();return node[name](...args);} ]));
+    try{return await boundedTransactionRead(async()=>{
+      let receipt=await reading.getTxReceipt(saved.tx.getTxHash());if(!active||receipt?.txHash?.toString()!==saved.value.txHash)return 'unknown';
+      if(receipt.status==='dropped'){
+        const validity=await reading.isValidTx(saved.tx);if(!active)return 'unknown';
+        receipt=await reading.getTxReceipt(saved.tx.getTxHash());if(!active||receipt?.txHash?.toString()!==saved.value.txHash)return 'unknown';
+        if(receipt.status==='dropped')return validity?.result==='valid'?'resumable':'unknown';
+      }
+      if(['pending','proposed'].includes(receipt.status))return 'pending';
+      if(['checkpointed','proven','finalized'].includes(receipt.status))return await readCanonicalReceipt(reading,saved.tx.getTxHash(),waitOptions)?'canonical':'unknown';
+      return 'unknown';
+    },waitOptions.readTimeoutMs??20000);}catch{return 'unknown';}finally{active=false;}
+  }
+  async function recoverSaved(saved,binding=null) {
       if(!saved.tx)throw transactionError('BB_NO_SAVED_TRANSACTION','No saved Aztec transaction exists for this wallet and board.');
+      bindRecovery(saved,binding);
       let receipt;try {receipt=await boundedTransactionRead(()=>node.getTxReceipt(saved.tx.getTxHash()));}catch {throw fail();}
       if(receipt?.txHash?.toString()!==saved.tx.getTxHash().toString())throw fail();
       if(receipt.status==='dropped') {
         let validation;try {validation=await boundedTransactionRead(()=>node.isValidTx(saved.tx));}catch {throw fail();}
+        // Re-inclusion or pending status during validation is reconciliation,
+        // not permission to broadcast the same bytes again.
+        try{receipt=await boundedTransactionRead(()=>node.getTxReceipt(saved.tx.getTxHash()),waitOptions.readTimeoutMs??20000);}catch{throw fail();}
+        if(receipt?.txHash?.toString()!==saved.value.txHash)throw fail();
+        if(receipt.status==='dropped'){
         if(validation?.result!=='valid')throw fail();
         // A crash before broadcast is safe to recover: identical bytes, hash and
         // nullifiers, never a newly generated proof or a new logical operation.
         if(contextGuard)await contextGuard();
+        if(binding?.beforeSubmit)await binding.beforeSubmit(saved.value.txHash);
         if(saved.value.replacementPolicy==='missing-anchor') {
           // Recovery is another send boundary, not a bypass around replacement
           // policy. Authenticate every predecessor from the retained exact bytes.
           await rejectedAttempts(saved,{requireMissingAnchor:true,priorOnly:true});
+        }
           if((await read()).encoded!==saved.encoded)throw fail();
           if(contextGuard)await contextGuard();
           // An account guard can await; a concurrent writer must not replace the
@@ -170,8 +206,8 @@ export async function createL2Journal({storage,walletSecret,walletSalt,scope,Tx,
           // all storage/decryption awaits before the final account validation;
           // no further storage work may introduce a lock/logout gap here.
           if(contextGuard)await contextGuard();
-        }
         await submitOnceWithReconciliation(node,saved.tx);
+        }else if(!['pending','proposed','checkpointed','proven','finalized'].includes(receipt.status))throw fail();
       }
       const result=await waitForCanonicalReceipt(node,saved.tx,waitOptions);confirmed(result);return result;
   }
@@ -201,6 +237,19 @@ export async function createL2Journal({storage,walletSecret,walletSalt,scope,Tx,
         predecessorTxHashes:Object.freeze((saved.value.replacements??[]).map(item=>item.txHash)),requireMissingAnchor,
         attempts:Object.freeze(rows.map(row=>Object.freeze({...row,stateReasons:Object.freeze([...row.stateReasons])})))});
     },
+    /** Exact-byte inspection is not a resend permit. The app must explicitly
+     * confirm recover with the same operation/hash and hold its wallet lease. */
+    async inspectSavedRecovery(operationInput,txHashInput){
+      const binding=recoveryOptions({expectedOperation:operationInput,expectedTxHash:txHashInput});
+      if(contextGuard)await contextGuard();const saved=await read();
+      if(!saved.tx)return Object.freeze({status:'empty',operation:null,txHash:null});bindRecovery(saved,binding);
+      let status=await savedRecoveryStatus(saved);
+      if(status==='resumable'&&saved.value.replacementPolicy==='missing-anchor'){
+        try{await rejectedAttempts(saved,{requireMissingAnchor:true,priorOnly:true});}catch{status='unknown';}
+      }
+      if((await read()).encoded!==saved.encoded)throw fail();if(contextGuard)await contextGuard();
+      return Object.freeze({status,operation:saved.value.operation??null,txHash:saved.value.txHash});
+    },
     async allowReplacement(operationInput,options){
       replacement=null; // A failed renewed authorization cannot retain an old permit.
       const expected=expectedOperation(operationInput),requested=replacementOptions(options);
@@ -225,10 +274,11 @@ export async function createL2Journal({storage,walletSecret,walletSalt,scope,Tx,
     },
     setOperation(value){if(typeof value!=='string'||!value.length||value.length>16384)throw invalid();operation=value;},
     get lastTxHash(){return lastHash;},
-    async recover(){return recoverSaved(await read());},
-    async reconcilePrevious(){
+    async recover(options){const binding=recoveryOptions(options);return recoverSaved(await read(),binding);},
+    async reconcilePrevious(options){
+      const binding=recoveryOptions(options);
       const saved=await read();if(!saved.tx)return null;
-      const receipt=await recoverSaved(saved);
+      const receipt=await recoverSaved(saved,binding);
       if((await read()).encoded!==saved.encoded)throw fail();
       return {receipt,operation:saved.value.operation??null};
     },

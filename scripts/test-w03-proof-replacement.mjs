@@ -249,3 +249,54 @@ for(const method of ['recover','reconcilePrevious'])test(`G07 strict ${method} d
  const journal=await f.open({storage,contextGuard:async()=>{guards++;if(locked)throw Object.assign(Error('Account changed'),{code:'CONTEXT_CHANGED'});}});
  await assert.rejects(journal[method](),{code:'CONTEXT_CHANGED'});assert.equal(invalidations,1);assert.equal(guards,3);assert.deepEqual(f.sent,[]);
 });
+for(const method of ['recover','reconcilePrevious'])test(`G07 first attempt ${method} refuses storage change during its context guard`,async()=>{
+ const f=await fixture(),current=String(f.first.getTxHash());f.states.set(current,{validation:{result:'valid'}});let guards=0;
+ f.node.sendTx=async tx=>{f.sent.push(String(tx.getTxHash()));f.states.set(current,{status:'checkpointed'});};
+ const storage=f.options.storage;const j=await f.open({contextGuard:async()=>{if(++guards===1){const [key]=await storage.keys();await storage.compareAndSwap(key,await storage.read(key),'changed');}}});
+ await assert.rejects(j[method](),{code:'BB_JOURNAL_INVALID'});assert.deepEqual(f.sent,[]);
+});
+for(const method of ['recover','reconcilePrevious'])test(`G07 first attempt ${method} validates account after the last authenticated read`,async()=>{
+ const f=await fixture(),current=String(f.first.getTxHash());f.states.set(current,{validation:{result:'valid'}});let guards=0,locked=false;
+ const backing=f.options.storage,storage={...backing,read:async key=>{const result=await backing.read(key);if(guards===2)locked=true;return result;}};
+ f.node.sendTx=async tx=>{f.sent.push(String(tx.getTxHash()));f.states.set(current,{status:'checkpointed'});};
+ const j=await f.open({storage,contextGuard:async()=>{guards++;if(locked)throw Object.assign(Error('Changed'),{code:'CONTEXT_CHANGED'});}});
+ await assert.rejects(j[method](),{code:'CONTEXT_CHANGED'});assert.equal(guards,3);assert.deepEqual(f.sent,[]);
+});
+for(const state of ['resumable','pending','canonical','unknown'])test(`G07 exact saved inspection reports ${state} without authority or mutation`,async()=>{
+ const f=await fixture(),hash=String(f.first.getTxHash()),j=await f.open();f.states.set(hash,state==='resumable'?{validation:{result:'valid'}}:state==='canonical'?{status:'checkpointed'}:state==='pending'?{status:'pending'}:{});
+ const before=await(await createJournalBackup(f.options)).exportRecords(),result=await j.inspectSavedRecovery(f.operation,hash);
+ assert.deepEqual(result,{status:state,operation:f.operation,txHash:hash});assert(Object.isFrozen(result));assert.deepEqual(await(await createJournalBackup(f.options)).exportRecords(),before);assert.deepEqual(f.sent,[]);
+ await assert.rejects(j.assertCanStart(),{code:'BB_RECOVERY_REQUIRED'});
+});
+for(const method of ['recover','reconcilePrevious'])test(`G07 explicitly bound ${method} resumes exact original bytes once`,async()=>{
+ const f=await fixture(),hash=String(f.first.getTxHash());f.states.set(hash,{validation:{result:'valid'}});let calls=0;
+ f.node.sendTx=async tx=>{assert.equal(calls,1);assert.deepEqual(Buffer.from(tx.toBuffer()),Buffer.from(f.first.toBuffer()));f.sent.push(String(tx.getTxHash()));f.states.set(hash,{status:'checkpointed'});};
+ const j=await f.open(),options={expectedOperation:f.operation,expectedTxHash:hash,beforeSubmit:async observed=>{assert.equal(observed,hash);calls++;}};
+ assert.equal((await j.inspectSavedRecovery(f.operation,hash)).status,'resumable');const receipt=await j[method](options);assert.equal(String((receipt.receipt??receipt).txHash),hash);
+ await j[method](options);assert.equal(calls,1);assert.deepEqual(f.sent,[hash]);
+});
+test('G07 saved resume rejects foreign hash/operation, malformed options and getters before node calls',async()=>{
+ const f=await fixture(),hash=String(f.first.getTxHash()),j=await f.open();let reads=0;const get=f.node.getTxReceipt;f.node.getTxReceipt=async(...args)=>{reads++;return get(...args);};
+ for(const options of [null,{},true,{expectedOperation:f.operation,expectedTxHash:hash,extra:true},{expectedOperation:f.operation,expectedTxHash:hash,beforeSubmit:null},Object.defineProperty({expectedTxHash:hash},'expectedOperation',{enumerable:true,get(){throw Error('PRIVATE_SENTINEL');}})])await assert.rejects(j.recover(options),{code:'BB_JOURNAL_INVALID'});
+ for(const options of [{expectedOperation:'foreign',expectedTxHash:hash},{expectedOperation:f.operation,expectedTxHash:field()}])await assert.rejects(j.recover(options),{code:'BB_RECOVERY_REQUIRED'});
+ await assert.rejects(j.inspectSavedRecovery(f.operation,field()),{code:'BB_RECOVERY_REQUIRED'});assert.equal(reads,0);assert.deepEqual(f.sent,[]);
+});
+test('G07 bound resume snapshots mutable options before storage await and preserves callback failure',async()=>{
+ const f=await fixture(),hash=String(f.first.getTxHash());f.states.set(hash,{validation:{result:'valid'}});const options={expectedOperation:f.operation,expectedTxHash:hash,beforeSubmit:()=>{throw Object.assign(Error('Context failed'),{code:'CONTEXT_CHANGED'});}};
+ const backing=f.options.storage,storage={...backing,read:async key=>{options.expectedOperation='foreign';options.expectedTxHash=field();options.beforeSubmit=()=>assert.fail('replaced callback');return backing.read(key);}};
+ await assert.rejects((await f.open({storage})).recover(options),{code:'CONTEXT_CHANGED'});assert.deepEqual(f.sent,[]);
+});
+for(const method of ['inspectSavedRecovery','recover'])test(`G07 ${method} notices re-inclusion between validity and second receipt without resend`,async()=>{
+ const f=await fixture(),hash=String(f.first.getTxHash());f.node.isValidTx=async()=>{f.states.set(hash,{status:'checkpointed'});return {result:'valid'};};
+ const j=await f.open();const result=method==='recover'?await j.recover({expectedOperation:f.operation,expectedTxHash:hash}):await j.inspectSavedRecovery(f.operation,hash);
+ assert.equal(result.status,method==='recover'?'checkpointed':'canonical');assert.deepEqual(f.sent,[]);
+});
+test('G07 exact saved replacement inspection and send enforce retained strict predecessor policy',async()=>{
+ const f=await strictReplacement(),hash=String(f.second.getTxHash());f.states.set(hash,{validation:{result:'valid'}});f.states.set(String(f.first.getTxHash()),{status:'pending'});const j=await f.open();
+ assert.equal((await j.inspectSavedRecovery(f.operation,hash)).status,'unknown');await assert.rejects(j.recover({expectedOperation:f.operation,expectedTxHash:hash}),{code:'BB_RECOVERY_REQUIRED'});assert.deepEqual(f.sent,[]);
+});
+test('G07 exact saved inspection timeout is unknown and does not resume delayed follow-up reads',async()=>{
+ const f=await fixture(),hash=String(f.first.getTxHash());let release,validations=0;
+ f.node.getTxReceipt=()=>new Promise(resolve=>release=()=>resolve({txHash:hash,status:'dropped'}));f.node.isValidTx=async()=>{validations++;return {result:'valid'};};
+ const result=await(await f.open({waitOptions:{readTimeoutMs:5}})).inspectSavedRecovery(f.operation,hash);assert.equal(result.status,'unknown');release();await new Promise(resolve=>setTimeout(resolve,10));assert.equal(validations,0);assert.deepEqual(f.sent,[]);
+});
