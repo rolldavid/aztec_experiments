@@ -17,7 +17,7 @@ const discard=()=>{};
 const silent=Object.assign(discard,Object.fromEntries(['trace','debug','verbose','info','warn','error','fatal'].map(k=>[k,discard])),
   {level:'silent',isLevelEnabled:()=>false,getBindings:()=>({}),createChild:()=>silent});
 const PERSONAL=['feePayer','publicCallSenders','publicCallTargets','publicCallCalldata','publicWriteSlots','publicWriteValues','publicLogContracts','publicLogFields'];
-const SOURCES=['scripts/testing/rolling-trusted-recovery.mjs','scripts/testing/rolling-social-wire.mjs','scripts/testing/rolling-wire-campaign.mjs','scripts/testing/rolling-wire-trace.mjs','scripts/testing/rolling-owned-names.mjs','scripts/t03-public-footprint.mjs','scripts/testing/rolling-removed-like.mjs','scripts/testing/rolling-application-actor.mjs','scripts/testing/rolling-account-reactions.mjs','scripts/testing/rolling-social-acceptance.mjs','scripts/testing/rolling-profile-acceptance.mjs','experiments/avatar/raster-fixture.mjs','scripts/prove-application-action.mjs','scripts/testing/rolling-native-artifacts.mjs','scripts/testing/rolling-application-fixture.mjs','scripts/testing/scenarios.mjs','scripts/testing/scenario-flows.mjs',
+const SOURCES=['scripts/testing/rolling-name-collision.mjs','scripts/testing/rolling-collision-observer.mjs','scripts/testing/rolling-trusted-recovery.mjs','scripts/testing/rolling-social-wire.mjs','scripts/testing/rolling-wire-campaign.mjs','scripts/testing/rolling-wire-trace.mjs','scripts/testing/rolling-owned-names.mjs','scripts/t03-public-footprint.mjs','scripts/testing/rolling-removed-like.mjs','scripts/testing/rolling-application-actor.mjs','scripts/testing/rolling-account-reactions.mjs','scripts/testing/rolling-social-acceptance.mjs','scripts/testing/rolling-profile-acceptance.mjs','experiments/avatar/raster-fixture.mjs','scripts/prove-application-action.mjs','scripts/testing/rolling-native-artifacts.mjs','scripts/testing/rolling-application-fixture.mjs','scripts/testing/scenarios.mjs','scripts/testing/scenario-flows.mjs',
   'scripts/c01-real-node.mjs','scripts/c01-board-flow.mjs','scripts/c01-deposit-flow.mjs','scripts/c01-client-mining.mjs',
   'scripts/w01-private-fee-flow.mjs','scripts/w01-unfunded-wallet.mjs','scripts/w01-private-funding.mjs',
   'shared/sdk-entry.mjs','shared/private-pxe.mjs','shared/trusted-private-node.mjs','shared/routed-kernel-prover.mjs','shared/remote-prover-client.mjs',
@@ -72,6 +72,40 @@ export async function closeRollingResources(steps,observation) {
 }
 // Public, bounded diagnostic only. It never supplies a clock override, accepts a
 // failed readiness gate, or serializes an SDK error/response into evidence.
+// Preserve financial evidence on a partial pending-barrier failure as well as
+// the happy path. collect is a read-only, bounded canonical read for one started
+// actor; a failed read must not suppress the other actor's collection attempt.
+export async function collectRollingRaceOutcomes({count,collect,priorErrors=[]}){
+ assert(Number.isSafeInteger(count)&&count>=0&&count<=2);assert.equal(typeof collect,'function');
+ const observed=[],errors=[...priorErrors];
+ for(let i=0;i<count;i++)try{observed[i]=await collect(i);}catch(error){errors.push(error);}
+ if(errors.length)throw new AggregateError(errors,'Race failed; retain every available canonical outcome');
+ return observed;
+}
+// No timeout races around writers: actor-owned confirmation/proof deadlines
+// settle the original operation before any outcome collection or actor disposal.
+export async function settleRollingRaceWriters({submissions,resume,priorErrors=[]}){
+ assert(Array.isArray(submissions)&&submissions.length<=2);assert.equal(typeof resume,'function');
+ const errors=[...priorErrors];
+ // Attach to every writer before resuming, including an unexpected rejection.
+ const settlement=Promise.allSettled(submissions);
+ try{await resume();}catch(error){errors.push(error);}
+ for(const result of await settlement)if(result.status==='rejected')errors.push(result.reason);
+ return errors;
+}
+export function requireRollingRaceProofBudget(confirmationDeadlineAt,now=Date.now()){
+ assert(Number.isSafeInteger(confirmationDeadlineAt)&&Number.isSafeInteger(now));
+ // Admission allowance only, not a proof deadline or a cancellation promise.
+ // The actual prover retains120s; a proof finishing after the cutoff is blocked
+ // by the actor's beforeSubmit guard, with its proved journal kept for recovery.
+ assert(confirmationDeadlineAt-now>=90000,'Insufficient remaining race proof budget');
+}
+export function assertClosedCollisionObserver(observation,matched){
+ assert.equal(observation.closed,true);assert.equal(observation.restored,true);
+ for(const key of ['pending','errors','truncated','conflicts','ownershipLost'])assert.equal(observation[key],0,key);
+ assert(observation.calls>=2&&observation.observations>=2&&observation.classified>=1);
+ assert.equal(matched,true,'Canonical loser no longer matches the closed observer');
+}
 export function rollingClockDeadline({now,chainSeconds,campaignDeadlineAt}) {
   assert(Number.isSafeInteger(now)&&Number.isSafeInteger(campaignDeadlineAt)&&campaignDeadlineAt>now);
   assert(typeof chainSeconds==='bigint'&&chainSeconds>=0n&&chainSeconds<=BigInt(Math.floor(Number.MAX_SAFE_INTEGER/1000)));
@@ -199,13 +233,13 @@ export async function loadRollingFixtureSDK() {
 }
 
 export async function runRollingApplicationFixture(ctx,scenario='conversation') {
-  assert(['conversation','profiles','anonymous-thread','repost-reactions','account-reactions','owned-names','owned-names-wire','composer','social-wire','reaction-wire','trusted-recovery'].includes(scenario));
-  const recovery=scenario==='trusted-recovery',composer=scenario==='composer',socialWire=scenario==='social-wire',reactionWire=scenario==='reaction-wire',wireSocial=socialWire||reactionWire,captureWire=scenario==='owned-names-wire'||wireSocial||recovery,names=['owned-names','owned-names-wire','composer'].includes(scenario),multi=scenario==='account-reactions'||names||wireSocial||recovery,social=['anonymous-thread','repost-reactions','account-reactions'].includes(scenario)||wireSocial;
+  assert(['conversation','profiles','anonymous-thread','repost-reactions','account-reactions','owned-names','owned-names-wire','composer','social-wire','reaction-wire','trusted-recovery','name-race'].includes(scenario));
+  const race=scenario==='name-race',recovery=scenario==='trusted-recovery',composer=scenario==='composer',socialWire=scenario==='social-wire',reactionWire=scenario==='reaction-wire',wireSocial=socialWire||reactionWire,captureWire=scenario==='owned-names-wire'||wireSocial||recovery,names=['owned-names','owned-names-wire','composer'].includes(scenario),multi=scenario==='account-reactions'||names||wireSocial||recovery||race,social=['anonymous-thread','repost-reactions','account-reactions'].includes(scenario)||wireSocial;
   const {ROOT,assertNodeVersion,assertAztecPackages}=await import('../toolchain.mjs');
   const directory=path.join(ROOT,'execution/evidence/G06','application-port-'+randomUUID());
   await fs.mkdir(directory,{mode:0o700});
   const report={schemaVersion:1,scenario,passed:false,stage:'preflight',transactions:[],cleanup:{},
-    scope:names?'Actual separate private accounts registering and recovering readable owned names without publishing owner groups':social?'Actual anonymous social transactions and canonical removal/repost/reaction reconstruction':scenario==='profiles'?'Actual private profile updates and public moderator removal; fixed test moderation decision, no image-model acceptance':'Actual funded application port and authenticated public projection; human threaded reply, no composite Bok action',
+    scope:race?'Actual simultaneous normalized-name registration with canonical winner/revert, private ownership rollback and both paid fees':names?'Actual separate private accounts registering and recovering readable owned names without publishing owner groups':social?'Actual anonymous social transactions and canonical removal/repost/reaction reconstruction':scenario==='profiles'?'Actual private profile updates and public moderator removal; fixed test moderation decision, no image-model acceptance':'Actual funded application port and authenticated public projection; human threaded reply, no composite Bok action',
     networkProofs:false,controlledPortalSettlement:true,privacyAcceptance:'Public-field equality checks only; independent privacy qualification remains',
     storage:{pxe:'Actual SDK store with CLI in-memory IndexedDB adaptation; no browser persistence claim',journal:'Real authenticated encrypted file journals; reopen measured'},
     sourceRevision:execFileSync('git',['rev-parse','HEAD'],{cwd:ROOT,encoding:'utf8'}).trim()};
@@ -213,7 +247,7 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
   const mark=async stage=>{if(ctx.applicationDeadlineAt!==undefined)assert(Date.now()<ctx.applicationDeadlineAt,'Parent campaign budget exhausted');report.stage=stage;ctx.mark?.('rolling-application:'+stage);await save();};
   const sourceBinding=async()=>Object.fromEntries(await Promise.all(SOURCES.map(async name=>[name,sha(await fs.readFile(path.join(ROOT,name)))])));
   let fees,feesB,actorA,actorB,activeActor,pxe,rpc,service,failure,restoreIndexedDB,nativeArtifacts,owner,appWallet,journal;
-  let wire,ordinaryRpc,completeTrustedRecovery;
+  let wire,ordinaryRpc,completeTrustedRecovery,collisionObserver;
   let transportSends=0,feeTotalB=0n,fundingRole,collateralRole;
   let feeTotal=0n;const accounted=new Set();
   const accountFee=(hash,fee,other=false)=>{if(!accounted.has(hash)){assert(BigInt(fee)>0n);if(other)feeTotalB+=BigInt(fee);else feeTotal+=BigInt(fee);accounted.add(hash);}report.actualHumanFees=String(feeTotal+feeTotalB);};
@@ -365,6 +399,7 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
       const makeActor=(funding,role,dataDirectory='rolling-application-test-'+role)=>createRollingApplicationActor({sdk,routing,node,endpoint,network,proofsEnabled:real,
         board:{instance:ctx.instance,artifact:checked.artifact},fees:funding,portal:ctx.ready.portalAddress,
         storageDirectory:path.join(ctx.directory,'rolling-application-journals-'+role),dataDirectory,
+        ...(race?{confirmationDeadlineAt:ctx.applicationDeadlineAt-90000}:{}),
         log:discard,externalActivity:()=>({proofJobs:service.stats().submitted,transportSends})});
       actorA=await makeActor(fees,'a');activeActor=actorA;
       pxe=actorA.pxe;appWallet=actorA.wallet;journal=actorA.journal;let app=actorA.application;
@@ -401,7 +436,7 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
         for(const event of events)if(event.type==='NameRegistered')publicNameIds.push(event.payload.name_id);
         row.events=events.map(e=>e.type);row.submission='included';await save();return events;
       }
-      if(!social&&!names){
+      if(!social&&!names&&!race){
       const registered=await action({type:'name',first:'River',last:'Stone'},'name');
       assert.equal(registered.length,1);assert.equal(registered[0].type,'NameRegistered');ids.nameId=registered[0].payload.name_id;
       await mark('owned-name-recovery');
@@ -447,7 +482,97 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
           for(const category of PERSONAL){assert.equal(row.publicFootprint.rolePresence[category].author,false);if(actorB)assert.equal(row.publicFootprint.rolePresence[category].otherAuthor,false);}
           const events=await decoder.decodeTransaction(ctx.node,String(hash));projection.stage(events).apply();hashes.push(String(hash));row.events=events.map(e=>e.type);await save();return events;
         }
-      if(names){
+      if(race){
+        const {createRollingNameCollisionPlan,createNameCollisionClassifier,assertNameCollisionPending,assertNameCollisionOutcome}=await import('./rolling-name-collision.mjs');
+        const {installRollingCollisionObserver}=await import('./rolling-collision-observer.mjs');
+        const plan=await createRollingNameCollisionPlan(),actors=[actorA,actorB],prepared=[],submissions=[],settled=[],pendingTxs=[];
+        const classify=await createNameCollisionClassifier({artifact:checked.artifact,boardAddress:ctx.instance.address});
+        let binding,attemptErrors=[];const confirmationDeadlineAt=ctx.applicationDeadlineAt-90000;
+        const barrierRead=fn=>sdk.boundedTransactionRead(fn,Math.min(3000,confirmationDeadlineAt-Date.now()));
+        await mark('name-race-pending-barrier');
+        report.nameRace={passed:false,bothPendingBeforeSequencing:false};await save();
+        try{
+          await ctx.node.getSequencer().pause();
+          // Serial proving, with ordinary sequencing paused until BOTH real
+          // transactions are pending. Neither account is reconstructed or mocked.
+          for(let i=0;i<actors.length;i++){
+            const actor=actors[i];activeActor=actor;
+            const item=await actor.application.prepare(plan.actions[i]);prepared.push(item);actorIntents.set(actor,item.intentId);
+            const row={action:'name-race-'+i,startedAt:Date.now(),maximumFee:item.maximumFee,submission:'outcome unknown'};
+            report.transactions.push(row);await save();
+            await mark('name-race-proof-start-'+i);requireRollingRaceProofBudget(confirmationDeadlineAt);
+            submissions.push(actor.application.submitPrepared(item.intentId).then(value=>{settled[i]={value};},error=>{settled[i]={error};}));
+            for(;;){
+              assert(Date.now()<confirmationDeadlineAt,'Name race pending barrier deadline');
+              assert(!settled[i],'Name race submission settled before sequencing');
+              const saved=await actor.journal.inspect();
+              if(saved?.operation==='ROLLING_WORKFLOW_V1:'+item.intentId){
+                const receipt=await barrierRead(()=>ctx.node.getTxReceipt(TxHash.fromString(saved.txHash)));
+                if(receipt.status==='pending')break;
+                assert(!['checkpointed','proven','finalized'].includes(receipt.status),'Race included before both pending');
+              }
+              await sleep(100);
+            }
+          }
+          const journals=await Promise.all(actors.map(a=>a.journal.inspect()));
+          const receipts=await Promise.all(journals.map(async j=>{const r=await barrierRead(()=>ctx.node.getTxReceipt(TxHash.fromString(j.txHash)));return {txHash:String(r.txHash),status:r.status,executionResult:r.executionResult};}));
+          binding=assertNameCollisionPending({intentIds:prepared.map(p=>p.intentId),journals,receipts});
+          for(const hash of binding.txHashes){const tx=await barrierRead(()=>ctx.node.getTxByHash(TxHash.fromString(hash)));assert(tx);assert.equal(String(tx.getTxHash()),hash);pendingTxs.push(tx);}
+          assert(Date.now()<confirmationDeadlineAt,'Name race pending barrier deadline');
+          report.nameRace.bothPendingBeforeSequencing=true;await save();
+          // Capture only actual processing after the pending barrier. Preflight
+          // estimates cannot qualify the mined loser's structured rejection.
+          collisionObserver=installRollingCollisionObserver({classify});
+        }catch(error){attemptErrors.push(error);}finally{
+          attemptErrors=await settleRollingRaceWriters({submissions,priorErrors:attemptErrors,resume:()=>ctx.node.getSequencer().start()});
+        }
+        const receipts=[],events=[],boardLogs=[],ownership=[];
+        // Collect both accounts before making semantic assertions, including
+        // the fee/effect of a reverted transaction. A failed read of one account
+        // must not prevent a read-only attempt to preserve the other's receipt.
+        const observed=await collectRollingRaceOutcomes({count:submissions.length,priorErrors:attemptErrors,collect:async i=>{
+          const actor=actors[i];activeActor=actor;const row=report.transactions[i];
+          row.receiptEvidence='unknown';row.effectEvidence='unknown';
+          try{
+            // Only read-only calls are time bounded. Their late completion cannot
+            // write evidence or release a wallet operation still in progress.
+            const outcome=await sdk.boundedTransactionRead(()=>actor.journal.inspectOutcome(),3000);
+            assert(outcome?.receipt);const r=outcome.receipt;row.receiptEvidence='canonical';
+            Object.assign(row,{txHash:outcome.txHash,status:r.status,executionResult:r.executionResult,blockNumber:Number(r.blockNumber),blockHash:String(r.blockHash),transactionFee:String(r.transactionFee),elapsedMs:Date.now()-row.startedAt});
+            accountFee(outcome.txHash,r.transactionFee,i===1);await save();
+            const effect=await sdk.boundedTransactionRead(()=>ctx.node.getTxEffect(TxHash.fromString(outcome.txHash)),3000);
+            if(effect?.data){row.effectEvidence='available';row.effectSha256=sha(effect.data.toBuffer());await fs.writeFile(path.join(directory,row.action+'-effect.bin'),effect.data.toBuffer(),{flag:'wx',mode:0o600});}
+            await save();return {outcome,r,effect};
+          }catch(error){report.failureEvidenceAvailability='incomplete';await save();throw error;}
+        }});
+        assert(binding);assert.equal(observed.length,2);
+        for(let i=0;i<actors.length;i++){
+          const actor=actors[i];activeActor=actor;const row=report.transactions[i],{outcome,r,effect}=observed[i];
+          assert(effect?.data);assert.equal(String(effect.data.txHash),outcome.txHash);assert.equal(String(effect.l2BlockHash),row.blockHash);assert.equal(Number(effect.l2BlockNumber),row.blockNumber);
+          const canonical=await sdk.boundedTransactionRead(()=>ctx.node.getBlock(row.blockNumber,{includeTransactions:true}),3000);assert.equal(String(canonical.hash),row.blockHash);
+          const included=canonical.body.txEffects.filter(e=>String(e.txHash)===outcome.txHash);assert.equal(included.length,1);assert.equal(sha(included[0].toBuffer()),row.effectSha256);
+          receipts.push({txHash:outcome.txHash,status:r.status,executionResult:r.executionResult});
+          boardLogs.push(effect.data.publicLogs.filter(log=>String(log.contractAddress)===String(ctx.instance.address)));
+          row.publicFootprint=classifyRollingApplicationFootprint({tx:pendingTxs[i],effect:effect.data,owner,otherOwner:actorB.owner,payer:fees.browserFixture.instance.address,board:ctx.instance.address});await save();assertRollingPublicFootprint(row.publicFootprint);
+          for(const category of PERSONAL)assert.equal(row.publicFootprint.rolePresence[category].otherAuthor,false);
+          const reconciled=await actor.application.reconcile(prepared[i].intentId);assert.equal(reconciled.txHash,outcome.txHash);
+          if(r.executionResult==='success'){
+            assert.equal(settled[i].value?.status,'confirmed');assert.equal(reconciled.status,'confirmed');
+            assert.equal(String((await actor.journal.assertCanStart()).tx.getTxHash()),outcome.txHash);
+            const decoded=await decoder.decodeTransaction(ctx.node,outcome.txHash);events.push(decoded);projection.stage(decoded).apply();hashes.push(outcome.txHash);
+          }else{
+            assert.equal(r.executionResult,'reverted');assert.equal(settled[i].error?.code,'BB_TRANSACTION_FAILED');assert.equal(reconciled.status,'reverted');events.push([]);
+            assert.equal(boardLogs.at(-1).length,0);
+            if(r.status!=='finalized')await assert.rejects(actor.journal.assertCanStart(),{code:'BB_TRANSACTION_FINALITY_PENDING'});
+          }
+          const head=await actor.application.ownedIdentities(),tail=await actor.application.ownedIdentities({cursor:8});ownership.push({head,tail});
+          row.events=events.at(-1).map(e=>e.type);row.submission='included';await save();
+        }
+        const loser=receipts.findIndex(r=>r.executionResult==='reverted');assert(loser>=0);const lost=report.transactions[loser];
+        const matched=collisionObserver.match({txHash:lost.txHash,effectSha256:lost.effectSha256,blockNumber:lost.blockNumber});
+        report.nameRace={...report.nameRace,...assertNameCollisionOutcome({plan,binding,receipts,events,boardLogs,ownership,collision:{txHash:lost.txHash,matched}}),passed:true};
+        ids.nameId=String(BigInt(plan.nameId));report.profiles={expectedIdentity:projection.identity(ids.nameId)};report.publicViews=projection.profile(ids.nameId,{limit:100});await save();
+      }else if(names){
         const {exerciseRollingOwnedNames}=await import('./rolling-owned-names.mjs');
         report.names=await exerciseRollingOwnedNames({actorA,actorB,actionA:(input,label)=>action(input,label,actorA),actionB:(input,label)=>action(input,label,actorB),onPhase:phase=>wire?.setPhase(phase)});
         if(scenario==='owned-names-wire'){
@@ -550,8 +675,11 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
       for(const actor of [actorA,...(actorB&&!recovery?[actorB]:[])]){
         wire?.setPhase(actor===actorA?'recovery-a':'recovery-b');const before=await actor.journal.inspectOutcome(),activity=actor.activity();
         await actor.reopenJournal();const reconciled=await actor.application.reconcile(actorIntents.get(actor));
-        assert.equal(reconciled.status,'confirmed');assert.equal(reconciled.txHash,before.txHash);
-        assert.deepEqual(actor.activity(),activity);assert((await actor.journal.assertCanStart()).tx);
+        assert.equal(reconciled.status,race&&before.outcome==='reverted'?'reverted':'confirmed');assert.equal(reconciled.txHash,before.txHash);
+        assert.deepEqual(actor.activity(),activity);
+        if(race&&before.outcome==='reverted'&&before.receipt.status!=='finalized')await assert.rejects(actor.journal.assertCanStart(),{code:'BB_TRANSACTION_FINALITY_PENDING'});
+        else assert((await actor.journal.assertCanStart()).tx);
+        assert.equal((await actor.journal.inspect()).txHash,before.txHash);
         report.journalReopen.actors.push({sameHash:true,newProofJobs:0,transactionBytesRetained:true});
       }
       journal=actorA.journal;assert.equal(service.stats().submitted,jobsBefore);
@@ -560,7 +688,7 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
       for(const hash of hashes)rebuilt.stage(await decoder.decodeTransaction(ctx.node,hash)).apply();
       if(names){const {assertCanonicalOwnedNameProfiles}=await import('./rolling-public-acceptance.mjs');assertCanonicalOwnedNameProfiles(rebuilt,report.publicViews);}
       else if(social){const {assertCanonicalSocialViews}=await import('./rolling-public-acceptance.mjs');assertCanonicalSocialViews(rebuilt,report.social.expectedHTTP);}
-      else assert.deepEqual((scenario==='profiles'||recovery)?rebuilt.profile(ids.nameId,{limit:100}):assertRollingApplicationViews(rebuilt,ids),report.publicViews);
+      else assert.deepEqual((scenario==='profiles'||recovery||race)?rebuilt.profile(ids.nameId,{limit:100}):assertRollingApplicationViews(rebuilt,ids),report.publicViews);
       for(const row of [...report.transactions,...(report.avatarModeration?[report.avatarModeration]:[]),...(report.postModeration?[report.postModeration]:[])])assert.equal(String((await ctx.node.getBlockData(row.blockNumber)).blockHash),row.blockHash);
       assert.equal(String((await ctx.node.getBlockData(Number(report.initialPublicAnchor.blockNumber))).blockHash),report.initialPublicAnchor.blockHash);
       report.rebuild={passed:true,canonicalTransactionsRefetched:hashes.length,normalizedCacheTreatedAsAuthority:false};
@@ -569,7 +697,7 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
       await verifyRollingPublicReader({node:ctx.node,artifact:checked.artifact,
         scope:{chainId:network.chainId,rollupVersion:network.version,rollupAddress:network.rollup,boardAddress:String(ctx.instance.address),classId:String((await sdk.getContractClassFromArtifact(checked.artifact)).id)},
         deployment:{blockNumber:Number(report.initialPublicAnchor.blockNumber),blockHash:report.initialPublicAnchor.blockHash,txHash:report.initialPublicAnchor.txHash},
-        cacheDirectory:path.join(ctx.directory,'rolling-public-index'),ids,scenario:names?'owned-names':recovery?'profiles':scenario,wire:wire?{nodeUrl:ordinaryRpc.url,artifactPath:path.join(ROOT,'billboard/target/rolling_contract-RollingBoard.json'),onReader:url=>wire.registerEndpoint('public-reader',url)}:undefined,expectedProfiles:names?report.publicViews:undefined,expectedProfile:report.profiles?.expectedIdentity,expectedHTTP:report.social?.expectedHTTP,deadlineAt:ctx.applicationDeadlineAt,observation:report.publicReader});await save();
+        cacheDirectory:path.join(ctx.directory,'rolling-public-index'),ids,scenario:names?'owned-names':(recovery||race)?'profiles':scenario,wire:wire?{nodeUrl:ordinaryRpc.url,artifactPath:path.join(ROOT,'billboard/target/rolling_contract-RollingBoard.json'),onReader:url=>wire.registerEndpoint('public-reader',url)}:undefined,expectedProfiles:names?report.publicViews:undefined,expectedProfile:report.profiles?.expectedIdentity,expectedHTTP:report.social?.expectedHTTP,deadlineAt:ctx.applicationDeadlineAt,observation:report.publicReader});await save();
       if(composer){
         assert(real,'Genuine browser acceptance requires real proof setup');await mark('production-browser-composer');report.composer={};
         const {runRollingComposerFixture}=await import('./rolling-composer-fixture.mjs');
@@ -583,6 +711,7 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
       }
       if(multi){const bStandalone=BigInt(feesB.standalone?.transactionFee??0);await fees.verify(feeTotal,feesB.browserFixture.fundedAmount-bStandalone-feeTotalB);await feesB.verify(feeTotalB,fees.browserFixture.fundedAmount-feeTotal);assert.equal(fees.poolBefore,feesB.poolBefore);report.accountFees={a:String(feeTotal),b:String(feeTotalB)};}else await fees.verify(feeTotal);report.actualHumanFees=String(feeTotal+feeTotalB);report.proverJobs=service.stats();
       assert.equal(report.proverJobs.failed,0);if(recovery){assert.equal(report.proverJobs.completed,1);assert.equal(report.proverJobs.submitted,1);}
+      else if(race){assert.equal(report.proverJobs.completed,2);assert.equal(report.proverJobs.submitted,2);}
       else if(names){assert.equal(report.proverJobs.completed,4);assert.equal(report.proverJobs.submitted,4);}
       else if(social){const expectedJobs=scenario==='anonymous-thread'?3:multi?6:4;assert.equal(report.proverJobs.completed,expectedJobs);assert.equal(report.proverJobs.submitted,expectedJobs);}
       else{assert.equal(report.proverJobs.completed,5);assert.equal(report.proverJobs.submitted,5);}
@@ -705,7 +834,9 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
     if(error.privateFeeObservation)recordRollingFundingFailure(report,fundingRole,error.privateFeeObservation);
     // Failed submit can still have consumed a fee. Read-only canonical observation,
     // no replacement, reproof or resend. Never treat this as application success.
-    if(activeActor)try{
+    // Race writers were all settled and both started actors collected above.
+    // Do not repeat an unbounded active-actor-only fallback after that attempt.
+    if(activeActor&&!race)try{
       const outcome=await activeActor.journal.inspectOutcome();
       if(outcome?.receipt){
         const receipt=outcome.receipt;
@@ -731,6 +862,11 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
       ...(rpc?[['nodeRPC',()=>rpc.close()]]:[]),
       ...(ordinaryRpc?[['ordinaryRPC',()=>ordinaryRpc.close()]]:[]),
       ...(wire?[['wireCapture',()=>wire.close()]]:[]),
+      ...(collisionObserver?[['collisionObserver',()=>{
+        assert.equal(collisionObserver.close().restored,true);report.collisionObserver=collisionObserver.snapshot();
+        if(report.nameRace?.passed){const lost=report.transactions.find(row=>row.executionResult==='reverted');assert(lost);
+          assertClosedCollisionObserver(report.collisionObserver,collisionObserver.match({txHash:lost.txHash,effectSha256:lost.effectSha256,blockNumber:lost.blockNumber}));}
+      }]]:[]),
       ...(restoreIndexedDB?[['indexedDBGlobals',restoreIndexedDB]]:[]),
       ...(nativeArtifacts?[['nativeArtifactLoader',()=>{try{nativeArtifacts.close();}finally{report.nativeArtifacts=nativeArtifacts.observation();}}]]:[]),
     ],report.cleanup);}catch(error){report.passed=false;failure=failure?new AggregateError([failure,error],'Rolling fixture and cleanup failed'):error;}

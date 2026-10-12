@@ -14,9 +14,11 @@ const quiet=Object.freeze({trace:discard,debug:discard,verbose:discard,info:disc
  level:'silent',module:'rolling-actor',isLevelEnabled:()=>false,createChild:()=>quiet,getBindings:()=>({})});
 
 export async function createRollingApplicationActor({sdk,routing,node,endpoint,network,proofsEnabled,board,fees,portal,
- storageDirectory,dataDirectory,log=discard,externalActivity}){
+ storageDirectory,dataDirectory,log=discard,externalActivity,confirmationDeadlineAt}){
  assert(sdk.isTrustedPrivateNode(node));assert.equal(typeof proofsEnabled,'boolean');
  assert.equal(typeof externalActivity,'function');assert.equal(typeof log,'function');
+ // Optional race-only absolute bound, validated before acquiring either lease.
+ if(confirmationDeadlineAt!==undefined)assert(Number.isSafeInteger(confirmationDeadlineAt)&&confirmationDeadlineAt>Date.now()&&confirmationDeadlineAt<=Date.now()+540000,'Invalid actor confirmation deadline');
  assert(path.isAbsolute(storageDirectory));assert(typeof dataDirectory==='string'&&dataDirectory.length>0);
  const url=new URL(endpoint);assert(!url.username&&!url.password&&!url.search&&!url.hash);
  assert(url.protocol==='https:'||(url.protocol==='http:'&&['127.0.0.1','[::1]'].includes(url.hostname)&&String(network.chainId)==='31337'));
@@ -43,7 +45,26 @@ export async function createRollingApplicationActor({sdk,routing,node,endpoint,n
   else if(store){await store.close();store=undefined;}
   leaseKeys.forEach(key=>leases.delete(key));
  }
- const journalOptions={walletSecret:String(secret),walletSalt:String(salt),scope,Tx:sdk.Tx,node,contextGuard};
+ const expired=()=>Object.assign(Error('Actor confirmation deadline expired; preserve the saved transaction.'),{code:'ROLLING_ACTOR_CONFIRMATION_EXPIRED'});
+ const remaining=()=>Math.max(0,confirmationDeadlineAt-Date.now());
+ // The journal reads these at the start of each wait, including after reopen.
+ // Receipt inspection remains bounded independently for parent cleanup collection.
+ const waitOptions=confirmationDeadlineAt===undefined?undefined:Object.freeze({readTimeoutMs:3000,intervalMs:5000,get timeoutMs(){return remaining();}});
+ const journalOptions={walletSecret:String(secret),walletSalt:String(salt),scope,Tx:sdk.Tx,node,contextGuard,...(waitOptions?{waitOptions}:{})};
+ function boundedSendArgs(args){
+  if(confirmationDeadlineAt===undefined)return args;
+  const opts=args[1];assert(opts&&Object.getPrototypeOf(opts)===Object.prototype&&args.length===2,'Bounded actor submission requires ordinary options');
+  assert(!('wait' in opts)&&!('beforeSubmit' in opts),'Existing submission wait or hook cannot be replaced');
+  if(remaining()<=0)throw expired();
+  const bounded=Object.defineProperties({},Object.getOwnPropertyDescriptors(opts));
+  Object.defineProperties(bounded,{
+   // engine.js reads this AFTER proof generation and actual submission. Keeping
+   // the getter on the wait object prevents a new540s clock after a long proof.
+   wait:{value:Object.freeze({interval:5,get timeout(){return remaining()/1000;}}),enumerable:true},
+   beforeSubmit:{value:()=>{contextGuard();if(remaining()<=0)throw expired();},enumerable:true},
+  });
+  return [args[0],bounded];
+ }
  const deployment={board:{address:board.instance.address,artifact:board.artifact},network:capturedNetwork,portal:scope.portal,proofsEnabled,
   privateFee:{address:fee.instance.address,artifact:fee.artifact,gasSettings:fee.gas}};
  async function rebuild(existingJournal){
@@ -74,7 +95,7 @@ export async function createRollingApplicationActor({sdk,routing,node,endpoint,n
   journal=await sdk.createL2Journal({...journalOptions,storage:createFileJournalStorage(storageDirectory)});contextGuard();
   wallet=routing.createAztecWallet(sdk,pxe,node,node,log,secret,{contextGuard,transactionJournal:journal});contextGuard();
   const send=wallet.sendTx;assert.equal(typeof send,'function');
-  wallet.sendTx=function(...args){contextGuard();assert(walletSubmissions<Number.MAX_SAFE_INTEGER);walletSubmissions++;return send.apply(this,args);};
+  wallet.sendTx=function(...args){contextGuard();const selected=boundedSendArgs(args);assert(walletSubmissions<Number.MAX_SAFE_INTEGER);walletSubmissions++;return send.apply(this,selected);};
   wallet._accountManager=await sdk.AccountManager.create(wallet,secret,accountContract,{salt});contextGuard();assert.equal(String(wallet._accountManager.address),ownerText);
   const key=await accountContract.getSigningPublicKey();contextGuard();const constructor=artifact.functions.find(fn=>fn.name==='constructor');
   if(constructor)await new sdk.ContractFunctionInteraction(wallet,owner,constructor,[key.x,key.y]).simulate({from:owner});

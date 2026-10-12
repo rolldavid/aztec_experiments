@@ -263,3 +263,96 @@ test('installed SDK singleton batch rejects personalized RPC error with HTTP200 
   await client.getContract(AztecAddress.fromBigIntUnsafe(1n));assert.equal(forwarded,1);
  }finally{await rpc.close();}
 });
+
+test('partial race barrier failure preserves started actors canonical fees before rethrowing original failure',async()=>{
+ const {collectRollingRaceOutcomes}=await import('./rolling-application-fixture.mjs');
+ const barrier=Error('B preparation failed'),saved=[];
+ await assert.rejects(collectRollingRaceOutcomes({count:1,priorErrors:[barrier],collect:async i=>{saved.push({actor:i,fee:'12',effect:'canonical'});return saved[0];}}),error=>error instanceof AggregateError&&error.errors[0]===barrier);
+ assert.deepEqual(saved,[{actor:0,fee:'12',effect:'canonical'}]);
+ const firstRead=Error('A receipt unavailable'),calls=[];
+ await assert.rejects(collectRollingRaceOutcomes({count:2,priorErrors:[barrier],collect:async i=>{calls.push(i);if(i===0)throw firstRead;return {fee:'15'};}}),error=>error.errors[0]===barrier&&error.errors[1]===firstRead);
+ assert.deepEqual(calls,[0,1]);
+ assert.deepEqual(await collectRollingRaceOutcomes({count:2,collect:async i=>({fee:String(i+1)})}),[{fee:'1'},{fee:'2'}]);
+});
+test('terminal collision acceptance rejects late observer errors, conflicts, pending work or changed canonical match',async()=>{
+ const {assertClosedCollisionObserver}=await import('./rolling-application-fixture.mjs');
+ const clean={closed:true,restored:true,pending:0,errors:0,truncated:0,conflicts:0,ownershipLost:0,calls:2,observations:2,classified:1};
+ assertClosedCollisionObserver(clean,true);
+ for(const key of ['pending','errors','truncated','conflicts','ownershipLost'])assert.throws(()=>assertClosedCollisionObserver({...clean,[key]:1},true));
+ for(const key of ['closed','restored'])assert.throws(()=>assertClosedCollisionObserver({...clean,[key]:false},true));
+ for(const key of ['calls','observations','classified'])assert.throws(()=>assertClosedCollisionObserver({...clean,[key]:0},true));
+ assert.throws(()=>assertClosedCollisionObserver(clean,false));
+});
+
+// Labelled orchestration doubles; original writer lifetimes and the production
+// read deadline primitive are exercised, without a chain or a proof job.
+test('resume failure and partial barrier still await every original writer before collection and close',async()=>{
+ const {settleRollingRaceWriters,collectRollingRaceOutcomes}=await import('./rolling-application-fixture.mjs');
+ const barrier=Error('partial barrier'),restart=Error('resume failed'),writer=Error('writer failed');
+ let releaseA,releaseB;const calls=[];
+ const a=new Promise(resolve=>{releaseA=()=>{calls.push('a-settled');resolve();};});
+ const b=new Promise((_,reject)=>{releaseB=()=>{calls.push('b-settled');reject(writer);};});
+ const work=(async()=>{
+   const errors=await settleRollingRaceWriters({submissions:[a,b],priorErrors:[barrier],resume:async()=>{calls.push('resume');throw restart;}});
+   try{await collectRollingRaceOutcomes({count:2,priorErrors:errors,collect:async i=>{calls.push('collect-'+i);return {fee:String(i+1)};}});}
+   finally{calls.push('close');}
+ })();
+ const rejected=assert.rejects(work,error=>error instanceof AggregateError&&error.errors.length===3&&error.errors[0]===barrier&&error.errors[1]===restart&&error.errors[2]===writer);
+ await new Promise(resolve=>setImmediate(resolve));assert.deepEqual(calls,['resume']);
+ releaseB();await new Promise(resolve=>setImmediate(resolve));assert.deepEqual(calls,['resume','b-settled']);
+ releaseA();await rejected;assert.deepEqual(calls,['resume','b-settled','a-settled','collect-0','collect-1','close']);
+});
+test('successfully resumed race settles all writers without resubmission',async()=>{
+ const {settleRollingRaceWriters}=await import('./rolling-application-fixture.mjs');
+ let release,resumes=0;const submission=new Promise(resolve=>{release=resolve;});
+ assert.deepEqual(await settleRollingRaceWriters({submissions:[submission],resume:async()=>{resumes++;release();}}),[]);
+ assert.equal(resumes,1);
+ assert.deepEqual(await settleRollingRaceWriters({submissions:[],resume:async()=>{resumes++;}}),[]);assert.equal(resumes,2);
+});
+for(const stalled of ['receipt','effect'])test('bounded '+stalled+' read retains other actor fees and has no late evidence writer',async()=>{
+ const {collectRollingRaceOutcomes}=await import('./rolling-application-fixture.mjs');
+ const {boundedTransactionRead}=await import('../../shared/transaction-outcomes.mjs');
+ let release;const stalledRead=new Promise(resolve=>{release=resolve;});const reads=[],rows=[{},{}],fees=[];
+ await assert.rejects(collectRollingRaceOutcomes({count:2,collect:async i=>{
+   const row=rows[i];row.receipt='unknown';row.effect='unknown';
+   const receipt=await boundedTransactionRead(()=>{reads.push('receipt-'+i);return i===0&&stalled==='receipt'?stalledRead:{fee:String(i+1)};},20);
+   row.receipt='canonical';fees.push(receipt.fee);
+   const effect=await boundedTransactionRead(()=>{reads.push('effect-'+i);return i===0&&stalled==='effect'?stalledRead:{id:i};},20);
+   row.effect='available';return effect;
+ }}),error=>error instanceof AggregateError&&error.errors.length===1&&error.errors[0].code==='BB_SUBMISSION_UNKNOWN');
+ assert.deepEqual(fees,stalled==='receipt'?['2']:['1','2']);assert.equal(rows[1].effect,'available');
+ assert(reads.includes('receipt-1')&&reads.includes('effect-1'));
+ const frozen=JSON.stringify({rows,fees,reads});release({fee:'late',id:9});await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(JSON.stringify({rows,fees,reads}),frozen);
+});
+test('race proof admission allows 90 seconds before cutoff and preserves the separate 90-second cleanup reserve',async()=>{
+ const {requireRollingRaceProofBudget}=await import('./rolling-application-fixture.mjs');
+ const now=1000000,end=now+180000,confirmation=end-90000;
+ requireRollingRaceProofBudget(confirmation,now);
+ assert.throws(()=>requireRollingRaceProofBudget(confirmation,now+1),/Insufficient remaining race proof budget/);
+ let submissions=0;assert.throws(()=>{requireRollingRaceProofBudget(confirmation,now+1);submissions++;});assert.equal(submissions,0);
+ const source=await fs.readFile(new URL('./rolling-application-fixture.mjs',import.meta.url),'utf8');
+ assert(source.includes('...(race?{confirmationDeadlineAt:ctx.applicationDeadlineAt-90000}:{})'));
+ const race=source.slice(source.indexOf('      if(race){'),source.indexOf('      }else if(names){'));
+ assert(race.includes('requireRollingRaceProofBudget(confirmationDeadlineAt)'));
+ assert(race.indexOf('requireRollingRaceProofBudget(confirmationDeadlineAt)')<race.indexOf('submissions.push('));
+ assert(!race.includes('Promise.race'));assert(race.includes('settleRollingRaceWriters({submissions'));
+ assert(race.includes('Date.now()<confirmationDeadlineAt'));
+ assert(race.includes('sdk.boundedTransactionRead(()=>actor.journal.inspectOutcome(),3000)'));
+ assert(race.includes('sdk.boundedTransactionRead(()=>ctx.node.getTxEffect(TxHash.fromString(outcome.txHash)),3000)'));
+});
+
+test('measured second race start is admitted without changing proof timeout or pre-send expiry protection',async()=>{
+ const {requireRollingRaceProofBudget}=await import('./rolling-application-fixture.mjs');
+ // Inputs from independent name-race-timing-604-review.json. No runtime replay.
+ const applicationDeadline=525000,firstStart=297984,secondStart=321341,cutoff=applicationDeadline-90000;
+ assert.equal(secondStart-firstStart,23357);assert.equal(cutoff-secondStart,113659);
+ assert(cutoff-secondStart<120000,'Historical120s admission rejected this measured start');
+ requireRollingRaceProofBudget(cutoff,firstStart);requireRollingRaceProofBudget(cutoff,secondStart);
+ assert.throws(()=>requireRollingRaceProofBudget(cutoff,cutoff-89999));
+ const actor=await fs.readFile(new URL('./rolling-application-actor.mjs',import.meta.url),'utf8');
+ assert(actor.includes('timeoutMs:120000,pollMs:100'),'Real remote timeout remains120s');
+ assert(actor.includes('beforeSubmit:{value:()=>{contextGuard();if(remaining()<=0)throw expired();}'));
+ // The companion actor suite executes this guard through the actual engine
+ // with a late-resolving proof, zero node sends and retained encrypted journal.
+});

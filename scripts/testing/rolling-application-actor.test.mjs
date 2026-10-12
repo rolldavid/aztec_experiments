@@ -9,7 +9,12 @@ import path from 'node:path';
 import {Fr} from '@aztec-labs/foundation/curves/bn254';
 import {AztecAddress} from '@aztec-labs/stdlib/aztec-address';
 import {loadContractArtifact,encodeArguments} from '@aztec-labs/stdlib/abi';
-import {Tx} from '@aztec-labs/stdlib/tx';
+import {Tx,TxHash} from '@aztec-labs/stdlib/tx';
+import {PrivateKernelTailCircuitPublicInputs} from '@aztec-labs/stdlib/kernel';
+import {ChonkProof} from '@aztec-labs/stdlib/proofs';
+import {Gas,GasFees,GasSettings} from '@aztec-labs/stdlib/gas';
+import vm from 'node:vm';
+import * as outcomes from '../../shared/transaction-outcomes.mjs';
 import {SchnorrInitializerlessAccountContract} from '@aztec-labs/accounts/schnorr';
 import {createL2Journal} from '../../shared/l2-journal.mjs';
 import {createRollingApplicationActor} from './rolling-application-actor.mjs';
@@ -115,4 +120,92 @@ test('closed actor cannot sign or submit through retained raw handle',async t=>{
  const f=await fixture(t),actor=await createRollingApplicationActor(f.input),provider=f.state.contract.getAuthWitnessProvider();await actor.close();
  assert.throws(()=>provider.createAuthWit('hash'),{code:'ROLLING_ACTOR_CONTEXT'});assert.throws(()=>actor.wallet.sendTx('payload'),{code:'ROLLING_ACTOR_CONTEXT'});
  assert.deepEqual(actor.activity(),{authWitnesses:0,proofJobs:0,walletSubmissions:0,transportSends:0});
+});
+
+
+for(const deadline of [0,-1,NaN,Infinity,'123',Number.MAX_SAFE_INTEGER])test('optional deadline rejects invalid input before acquiring storage: '+String(deadline),async t=>{
+ const f=await fixture(t);await assert.rejects(createRollingApplicationActor({...f.input,confirmationDeadlineAt:deadline}));assert.equal(f.state.calls.length,0);
+ const actor=await createRollingApplicationActor(f.input);await actor.close();
+});
+test('optional bound preserves caller options and uses lazy post-proof timeout with unchanged5s interval',async t=>{
+ const f=await fixture(t),deadline=Date.now()+10000;let journalOptions;
+ const create=f.input.sdk.createL2Journal;f.input.sdk.createL2Journal=options=>{journalOptions=options;return create(options);};
+ const actor=await createRollingApplicationActor({...f.input,confirmationDeadlineAt:deadline});try{
+  const payload={},opts={from:actor.owner,fee:{exact:true},journalOperation:'fixture'};f.state.sendResult=Promise.resolve();
+  const result=actor.wallet.sendTx(payload,opts);assert.equal(result,f.state.sendResult);await result;
+  const passed=f.state.sendArgs[1];assert.equal(f.state.sendArgs[0],payload);assert.notEqual(passed,opts);for(const key of Object.keys(opts))assert.equal(passed[key],opts[key]);assert(!Object.hasOwn(opts,'wait'));assert(!Object.hasOwn(opts,'beforeSubmit'));
+  assert.equal(passed.wait.interval,5);assert.equal(typeof Object.getOwnPropertyDescriptor(passed.wait,'timeout').get,'function');
+  const time=passed.wait.timeout;assert(time>0&&time<=10);assert.equal(journalOptions.waitOptions.readTimeoutMs,3000);assert.equal(journalOptions.waitOptions.intervalMs,5000);assert(journalOptions.waitOptions.timeoutMs<=10000);
+  await actor.reopenJournal();assert.equal(journalOptions.waitOptions.readTimeoutMs,3000);assert(journalOptions.waitOptions.timeoutMs<=time*1000);
+ }finally{await actor.close();}
+});
+for(const name of ['wait','beforeSubmit'])test('bounded submission refuses an existing '+name+' even undefined without calling wallet',async t=>{
+ const f=await fixture(t),actor=await createRollingApplicationActor({...f.input,confirmationDeadlineAt:Date.now()+10000});try{
+  const opts={from:actor.owner,[name]:undefined};assert.throws(()=>actor.wallet.sendTx({},opts),/cannot be replaced/);assert.equal(f.state.sendArgs,undefined);assert.equal(actor.activity().walletSubmissions,0);
+ }finally{await actor.close();}
+});
+test('unbounded actor retains default journal wait configuration and all exact arguments',async t=>{
+ const f=await fixture(t);let options;const create=f.input.sdk.createL2Journal;f.input.sdk.createL2Journal=value=>{options=value;return create(value);};
+ const actor=await createRollingApplicationActor(f.input);try{assert(!Object.hasOwn(options,'waitOptions'));const args=[{}, {wait:{timeout:123},beforeSubmit:()=>{}},'extra'];actor.wallet.sendTx(...args);assert.deepEqual(f.state.sendArgs,args);assert.equal(f.state.sendArgs[1],args[1]);}finally{await actor.close();}
+});
+
+// Actual engine send lifecycle + real waitForSuccessfulReceipt + encrypted L2
+// journal. Only account/PXE proving and node pending responses are labelled doubles.
+async function confirmationFixture(t){
+ const f=await fixture(t),events=[];
+ const engine=vm.createContext({URL,Date,performance,Buffer,TextEncoder,TextDecoder,Uint8Array,setTimeout,clearTimeout});
+ vm.runInContext(await fs.readFile(new URL('../../shared/moderation-policy.js',import.meta.url),'utf8'),engine);
+ vm.runInContext(await fs.readFile(new URL('../../apps/src/billboard/user/engine.js',import.meta.url),'utf8'),engine);
+ const settings=new GasSettings(new Gas(100,200),new Gas(1,2),new GasFees(3n,4n),new GasFees(0n,0n));
+ class BaseWallet{
+  constructor(pxe,node){this.pxe=pxe;this.aztecNode=node;}
+  async getChainInfo(){return {chainId:31337,version:1};}
+  async completeFeeOptions(opts){return {gasSettings:opts.gasSettings};}
+  async simulateViaEntrypoint(){return {publicInputs:{forPublic:{}},publicOutput:{txEffect:{revertCode:{isOK:()=>true}}},gasUsed:{totalGas:new Gas(90,190),teardownGas:new Gas(0,1)}};}
+  async createTxExecutionRequestFromPayloadAndFee(){return {};}
+  scopesFrom(){return [];}
+  senderForTagsFrom(){return undefined;}
+ }
+ const tx=new Tx(TxHash.fromBigInt(9n),PrivateKernelTailCircuitPublicInputs.empty(),ChonkProof.empty(),[],[]);
+ f.pxe.proveTx=async()=>{events.push('proof');if(f.state.proofWait)await f.state.proofWait;return {toTx:async()=>tx};};
+ f.input.node.sendTx=async()=>{events.push('send');f.state.transportSends++;};
+ f.input.node.getTxReceipt=async()=>{events.push('receipt');f.state.onReceipt?.();if(f.state.readWait)await f.state.readWait;return {txHash:tx.getTxHash(),status:'pending'};};
+ f.input.node.getBlock=async()=>assert.fail('Pending receipt must not read a block');
+ Object.assign(f.input.sdk,outcomes,{BaseWallet,GasSettings});
+ f.input.sdk.waitForSuccessfulReceipt=async(...args)=>{try{return await outcomes.waitForSuccessfulReceipt(...args);}finally{events.push('confirmation-settled');}};
+ f.input.sdk.estimatePrivateFeeTransaction=async()=>({maximumFee:settings.getFeeLimit().toBigInt(),payload:{},gasSettings:settings});
+ f.input.routing=engine.BillboardPrivateFeeRouting;
+ f.input.sdk.AccountManager={async create(wallet,secret,contract){assert.equal(wallet.pxe,f.pxe);assert.equal(contract,f.state.contract);return {address:f.account.address};}};
+ f.state.hook=async label=>{if(label==='stop')events.push('stop');if(label==='close-store')events.push('close-store');};
+ return {...f,tx,events};
+}
+test('real engine confirmation wait settles underlying application before actor.close disposes; no late writer',async t=>{
+ const f=await confirmationFixture(t),deadline=Date.now()+400,actor=await createRollingApplicationActor({...f.input,confirmationDeadlineAt:deadline});
+ const intent=await actor.application.prepare({type:'name',first:'River',last:'Stone'});let receiptSeen;const seen=new Promise(r=>receiptSeen=r);f.state.onReceipt=receiptSeen;
+ const submitting=actor.application.submitPrepared(intent.intentId);const settled=submitting.then(()=>assert.fail('Pending cannot succeed'),error=>{f.events.push('application-settled');return error;});
+ await seen;const closing=actor.close();assert.equal(f.state.stops,0);assert.throws(actor.contextGuard,{code:'ROLLING_ACTOR_CONTEXT'});
+ const error=await settled;assert.equal(error.code,'BB_SUBMISSION_UNKNOWN');await closing;
+ assert(Date.now()<deadline+1500);assert.equal(f.events.filter(x=>x==='send').length,1);assert(f.events.indexOf('confirmation-settled')>=0);assert(f.events.indexOf('confirmation-settled')<f.events.indexOf('stop'));assert.equal(f.state.stops,1);assert.equal(f.state.closes,1);
+ const saved=await actor.journal.inspect();assert.equal(saved.operation,'ROLLING_WORKFLOW_V1:'+intent.intentId);assert.equal(saved.txHash,txHash(f.tx));
+ await assert.rejects(actor.application.submitPrepared(intent.intentId),{code:'ROLLING_ACTOR_CONTEXT'});assert.equal(f.events.filter(x=>x==='send').length,1);
+});
+const txHash=tx=>tx.getTxHash().toString();
+test('deadline expiring during real engine proof prevents node submission and preserves proved journal',async t=>{
+ const f=await confirmationFixture(t),deadline=Date.now()+200,actor=await createRollingApplicationActor({...f.input,confirmationDeadlineAt:deadline});let release;
+ f.state.proofWait=new Promise(r=>release=r);
+ try{
+  const intent=await actor.application.prepare({type:'name',first:'River',last:'Stone'});
+  const pending=actor.application.submitPrepared(intent.intentId),failed=assert.rejects(pending,{code:'ROLLING_ACTOR_CONFIRMATION_EXPIRED'});
+  await new Promise(resolve=>setTimeout(resolve,Math.max(0,deadline-Date.now())+10));release();await failed;
+  assert(f.events.includes('proof'));assert(!f.events.includes('send'));assert(!f.events.includes('receipt'));
+  assert.equal((await actor.journal.inspect()).txHash,txHash(f.tx));assert.equal(actor.activity().transportSends,0);
+ }finally{release();await actor.close();}
+});
+test('stalled receipt RPC uses remaining confirmation budget and cannot hold actor disposal until540s',async t=>{
+ const f=await confirmationFixture(t),deadline=Date.now()+250,actor=await createRollingApplicationActor({...f.input,confirmationDeadlineAt:deadline});let release,entered;
+ f.state.readWait=new Promise(r=>release=r);const seen=new Promise(r=>entered=r);f.state.onReceipt=entered;
+ const intent=await actor.application.prepare({type:'name',first:'River',last:'Stone'}),pending=actor.application.submitPrepared(intent.intentId);
+ const failure=pending.then(()=>assert.fail(),error=>{f.events.push('application-settled');return error;});
+ await seen;const closing=actor.close();assert.equal((await failure).code,'BB_SUBMISSION_UNKNOWN');await closing;const after=[...f.events],files=await fs.readdir(f.input.storageDirectory),saved=await Promise.all(files.map(name=>fs.readFile(path.join(f.input.storageDirectory,name))));
+ release();await new Promise(resolve=>setImmediate(resolve));assert.deepEqual(f.events,after);assert.deepEqual(await Promise.all(files.map(name=>fs.readFile(path.join(f.input.storageDirectory,name)))),saved);assert(Date.now()<deadline+1500);assert.equal(f.state.stops,1);
 });

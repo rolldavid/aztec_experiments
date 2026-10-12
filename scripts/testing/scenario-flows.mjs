@@ -377,3 +377,4 @@ export async function rollingSocialWire(ctx){return (await import('./rolling-app
 export async function rollingReactionWire(ctx){return (await import('./rolling-application-fixture.mjs')).runRollingApplicationFixture(ctx,'reaction-wire');}
 
 export async function rollingTrustedRecovery(ctx){return (await import('./rolling-application-fixture.mjs')).runRollingApplicationFixture(ctx,'trusted-recovery');}
+export async function rollingNameRace(ctx){return (await import('./rolling-application-fixture.mjs')).runRollingApplicationFixture(ctx,'name-race');}
