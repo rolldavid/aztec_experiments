@@ -196,16 +196,16 @@ function recoveryWireFixture(){
   const labels=['trusted-query','trusted-proof','trusted-upstream','ordinary-node','public-reader'];
   const rows=labels.map(label=>({label,count:1,outcome:'resolved',status:200,phase:'setup',roles:label==='trusted-query'?['a','b']:[]}));
   rows.push({label:'trusted-query',count:2,outcome:'resolved',status:503,phase:'outage',roles:[]});
-  rows.push({label:'trusted-upstream',count:1,outcome:'resolved',status:400,phase:'outage',roles:[],methods:['aztec_getContract']});
-  return {requests:8,completed:8,pending:0,unknown:0,unsupported:0,truncated:0,observerErrors:0,privacyAcceptance:'not-evaluated',rows,
-    receiver:{errors:0,requests:Object.fromEntries(labels.map(label=>[label,label==='trusted-query'?3:label==='trusted-upstream'?2:1]))}};
+  for(const label of ['trusted-query','trusted-upstream'])rows.push({label,count:1,outcome:'resolved',status:200,phase:'personalized-denial',roles:['a'],methods:['aztec_getContract']});
+  return {requests:9,completed:9,pending:0,unknown:0,unsupported:0,truncated:0,observerErrors:0,privacyAcceptance:'not-evaluated',rows,
+    receiver:{errors:0,requests:Object.fromEntries(labels.map(label=>[label,label==='trusted-query'?4:label==='trusted-upstream'?2:1]))}};
 }
 test('labelled recovery observation accepts only explicit outage503 with complete receiver accounting',async()=>{
- const {assertRollingRecoveryWire}=await import('./rolling-application-fixture.mjs');assert.equal(assertRollingRecoveryWire(recoveryWireFixture()).intentionalRejections,2);
+ const {assertRollingRecoveryWire}=await import('./rolling-application-fixture.mjs');assert.equal(assertRollingRecoveryWire(recoveryWireFixture(),recoverySemanticFixture()).intentionalRejections,2);
 });
 for(const mutation of ['ordinary-failure','wrong-phase','missing-receiver','hidden-error','pending','human-public','missing-role','absent-fault','bad-status','rejected-transport'])test('recovery observer refuses '+mutation,async()=>{
  const {assertRollingRecoveryWire}=await import('./rolling-application-fixture.mjs');const value=recoveryWireFixture();
- const bad=value.rows.at(-2);
+ const bad=value.rows.at(-3);
  if(mutation==='ordinary-failure')bad.label='ordinary-node';
  if(mutation==='wrong-phase')bad.phase='setup';
  if(mutation==='missing-receiver')value.receiver.requests['trusted-query']--;
@@ -216,7 +216,7 @@ for(const mutation of ['ordinary-failure','wrong-phase','missing-receiver','hidd
  if(mutation==='absent-fault')bad.status=200;
  if(mutation==='bad-status')bad.status=500;
  if(mutation==='rejected-transport')bad.outcome='rejected';
- assert.throws(()=>assertRollingRecoveryWire(value));
+ assert.throws(()=>assertRollingRecoveryWire(value,recoverySemanticFixture()));
 });
 
 for(const mutation of ['method','phase','count','duplicate','missing'])test('personalized denial accounting refuses '+mutation,async()=>{
@@ -226,5 +226,40 @@ for(const mutation of ['method','phase','count','duplicate','missing'])test('per
  if(mutation==='count'){row.count=2;value.receiver.requests['trusted-upstream']++;value.requests++;value.completed++;}
  if(mutation==='duplicate'){value.rows.push({...row});value.receiver.requests['trusted-upstream']++;value.requests++;value.completed++;}
  if(mutation==='missing'){value.rows.pop();value.receiver.requests['trusted-upstream']--;value.requests--;value.completed--;}
- assert.throws(()=>assertRollingRecoveryWire(value));
+ assert.throws(()=>assertRollingRecoveryWire(value,recoverySemanticFixture()));
+});
+
+function recoverySemanticFixture(){return {passed:true,personalizedDenial:{denied:1,forwarded:0,readiness:{getNodeInfo:1,getSyncedL1Timestamp:1}},afterReadiness:[{kind:'personalized',code:'BB_TRUSTED_NODE_UNAVAILABLE',checks:{failedClosed:true,ciphertextPreserved:true,noProofOrSubmission:true,noPublicFallback:true}}]};}
+for(const mutation of ['missing','denied','forwarded','readiness','code','not-failed-closed','duplicate-error','http400','wrong-role','missing-query','duplicate-query'])test('SDK batch denial conjunction refuses '+mutation,async()=>{
+ const {assertRollingRecoveryWire}=await import('./rolling-application-fixture.mjs');const wire=recoveryWireFixture(),semantic=recoverySemanticFixture();
+ if(mutation==='missing')delete semantic.personalizedDenial;
+ if(mutation==='denied')semantic.personalizedDenial.denied=0;
+ if(mutation==='forwarded')semantic.personalizedDenial.forwarded=1;
+ if(mutation==='readiness')semantic.personalizedDenial.readiness.getSyncedL1Timestamp=0;
+ if(mutation==='code')semantic.afterReadiness[0].code='BB_TRUSTED_NODE_STALE';
+ if(mutation==='not-failed-closed')semantic.afterReadiness[0].checks.failedClosed=false;
+ if(mutation==='duplicate-error')semantic.afterReadiness.push(semantic.afterReadiness[0]);
+ if(mutation==='http400')wire.rows.at(-1).status=400;
+ if(mutation==='wrong-role')wire.rows.at(-1).roles=['b'];
+ if(mutation==='missing-query'){wire.rows.splice(-2,1);wire.receiver.requests['trusted-query']--;wire.requests--;wire.completed--;}
+ if(mutation==='duplicate-query'){wire.rows.push({...wire.rows.at(-2)});wire.receiver.requests['trusted-query']++;wire.requests++;wire.completed++;}
+ assert.throws(()=>assertRollingRecoveryWire(wire,semantic));
+});
+
+test('installed SDK singleton batch rejects personalized RPC error with HTTP200 and zero forwarding',async()=>{
+ const {startNodeRpc}=await import('./rolling-application-fixture.mjs');
+ const {createSafeJsonRpcClient}=await import('@aztec-labs/foundation/json-rpc/client');
+ const {AztecNodeApiSchema}=await import('@aztec-labs/stdlib/interfaces/client');
+ const {AztecAddress}=await import('@aztec-labs/stdlib/aztec-address');
+ let forwarded=0,status,batchLength;const rpc=await startNodeRpc({getContract:async()=>{forwarded++;return undefined;}},()=>{throw Error('Unexpected transaction');},{faults:true});
+ try{
+  const client=createSafeJsonRpcClient(rpc.url,AztecNodeApiSchema,{namespaceMethods:'aztec',fetch:async(host,body)=>{
+   assert(Array.isArray(body));batchLength=body.length;
+   const response=await fetch(host,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)});status=response.status;
+   return {response:await response.json(),headers:response.headers};
+  }});
+  rpc.setFault('personalized-once');await assert.rejects(()=>client.getContract(AztecAddress.fromBigIntUnsafe(1n)));
+  assert.equal(status,200);assert.equal(batchLength,1);assert.equal(rpc.snapshot().personalizedDenied,1);assert.equal(rpc.snapshot().forwarded.getContract,undefined);assert.equal(forwarded,0);
+  await client.getContract(AztecAddress.fromBigIntUnsafe(1n));assert.equal(forwarded,1);
+ }finally{await rpc.close();}
 });

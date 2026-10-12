@@ -353,3 +353,11 @@ test('unknown diagnostics retain fixed reasons and known SDK method labels only,
  assert.equal(result.unknownReasons['unsupported-method'],2);assert.equal(result.unknownReasons['invalid-envelope'],1);assert.equal(result.unknownReasons['params-shape'],1);
  assert(!JSON.stringify(result).includes('PRIVATE_SENTINEL'));assert(!JSON.stringify(result).includes(a));assert.equal(result.requestCoverageComplete,false);
 });
+
+test('personalized-denial is a fixed observer phase with an untouched caller-owned response body',async()=>{
+ const trace=make();trace.registerEndpoint('trusted-query',origin);trace.setPhase('personalized-denial');
+ const response=new Response('[{"jsonrpc":"2.0","id":1,"error":{"code":-32000,"message":"fixture"}}]');
+ const result=await trace.wrapFetch(()=>Promise.resolve(response))(origin+'/v1/node',options(rpc('aztec_getContract',[a])));
+ assert.equal(result,response);assert.equal(result.bodyUsed,false);assert.equal(trace.snapshot().rows[0].phase,'personalized-denial');assert.equal(trace.snapshot().rows[0].status,200);
+ assert.throws(()=>trace.setPhase('personalized-denial-private-value'));
+});

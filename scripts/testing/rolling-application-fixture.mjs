@@ -119,25 +119,38 @@ async function closedPort(port) {
 }
 // Failure-campaign acceptance keeps intentional rejection separate from missing
 // or failed observations. No rows are discarded to reuse a positive-only gate.
-export function assertRollingRecoveryWire(observation){
+export function assertRollingRecoveryWire(observation,recovery){
+  assert.equal(recovery?.passed,true);
+  const denial=recovery.personalizedDenial;
+  assert.equal(denial?.denied,1);assert.equal(denial.forwarded,0);
+  for(const key of ['getNodeInfo','getSyncedL1Timestamp'])assert(Number.isSafeInteger(denial.readiness[key])&&denial.readiness[key]>0);
+  assert.equal(recovery.afterReadiness.length,1);
+  const failed=recovery.afterReadiness[0];assert.equal(failed.kind,'personalized');assert.equal(failed.code,'BB_TRUSTED_NODE_UNAVAILABLE');
+  for(const key of ['failedClosed','ciphertextPreserved','noProofOrSubmission','noPublicFallback'])assert.equal(failed.checks[key],true);
   for(const key of ['pending','unknown','unsupported','truncated','observerErrors'])assert.equal(observation[key],0,key);
   assert.equal(observation.receiver.errors,0);assert(observation.requests>0);assert.equal(observation.requests,observation.completed);
-  let intentionalRejections=0,personalizedRejections=0;
+  let intentionalRejections=0;const personalizedRequests={'trusted-query':0,'trusted-upstream':0};
   for(const label of ['trusted-query','trusted-proof','trusted-upstream','ordinary-node','public-reader']){
     const rows=observation.rows.filter(row=>row.label===label),sent=rows.reduce((n,row)=>n+row.count,0);
     assert(sent>0);assert.equal(observation.receiver.requests[label],sent);
     for(const row of rows){
       assert.equal(row.outcome,'resolved');
       if(row.status===503){assert.equal(row.phase,'outage');assert(['trusted-query','trusted-upstream'].includes(label));intentionalRejections+=row.count;}
-      else if(row.status===400){assert.equal(row.phase,'outage');assert.equal(label,'trusted-upstream');assert.deepEqual(row.methods,['aztec_getContract']);assert.equal(row.count,1);personalizedRejections+=row.count;}
       else assert(row.status>=200&&row.status<300);
+      // The installed SDK sends a singleton batch. Its per-call JSON-RPC error
+      // travels with HTTP 200: semantic denial comes from the parent's actual
+      // one-shot fault/readiness/no-forward counters and captured client error.
+      if(row.phase==='personalized-denial'&&row.methods?.includes('aztec_getContract')){
+        assert(Object.hasOwn(personalizedRequests,label));assert.deepEqual(row.methods,['aztec_getContract']);
+        assert.equal(row.status,200);assert.equal(row.count,1);assert.deepEqual(row.roles,['a']);personalizedRequests[label]+=row.count;
+      }
       if(['ordinary-node','public-reader'].includes(label))assert.deepEqual(row.roles,[]);
     }
   }
-  assert(intentionalRejections>=2);assert.equal(personalizedRejections,1);
+  assert(intentionalRejections>=2);assert.deepEqual(personalizedRequests,{'trusted-query':1,'trusted-upstream':1});
   for(const role of ['a','b'])assert(observation.rows.some(row=>row.label==='trusted-query'&&row.roles.includes(role)));
   assert.equal(observation.privacyAcceptance,'not-evaluated');
-  return {passed:true,intentionalRejections,personalizedRejections,scope:'Explicit unavailable/stale transport failures plus bounded request/receiver reconciliation. Not complete transport or deployed privacy qualification.'};
+  return {passed:true,intentionalRejections,personalizedRejections:denial.denied,personalizedRequests,scope:'Explicit unavailable/stale transport failures and semantic personalized rejection plus bounded request/receiver reconciliation. Not complete transport or deployed privacy qualification.'};
 }
 
 export async function startNodeRpc(node,onSend=()=>{},{faults=false}={}) {
@@ -604,14 +617,17 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
           observation.unavailableNoUpstreamForward=true;
         }finally{rpc.setFault('healthy');}
         observation.recoveries.push(await recoverRollingPrivateState(checkpoint));await save();
-        checkpoint=await capture();const beforePersonalized=rpc.snapshot();rpc.setFault('personalized-once');
+        checkpoint=await capture();const beforePersonalized=rpc.snapshot();wire.setPhase('personalized-denial');rpc.setFault('personalized-once');
         try{
           observation.afterReadiness.push(await expectRollingPrivateFailure(checkpoint,{kind:'personalized',operation:()=>node.getContract(actorA.owner)}));
           const after=rpc.snapshot();assert.equal(after.personalizedDenied,beforePersonalized.personalizedDenied+1);
           assert.equal(after.forwarded.getContract??0,beforePersonalized.forwarded.getContract??0);
           assert(after.forwarded.getNodeInfo>beforePersonalized.forwarded.getNodeInfo);assert(after.forwarded.getSyncedL1Timestamp>beforePersonalized.forwarded.getSyncedL1Timestamp);
+          observation.personalizedDenial={denied:after.personalizedDenied-beforePersonalized.personalizedDenied,
+            forwarded:(after.forwarded.getContract??0)-(beforePersonalized.forwarded.getContract??0),
+            readiness:Object.fromEntries(['getNodeInfo','getSyncedL1Timestamp'].map(key=>[key,after.forwarded[key]-beforePersonalized.forwarded[key]]))};
           observation.readinessPassedBeforePersonalizedDenial=true;
-        }finally{rpc.setFault('healthy');}
+        }finally{rpc.setFault('healthy');wire.setPhase('outage');}
         observation.recoveries.push(await recoverRollingPrivateState(checkpoint));
         checkpoint=await capture();await save();
         completeTrustedRecovery=async()=>{
@@ -718,7 +734,7 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
       ...(restoreIndexedDB?[['indexedDBGlobals',restoreIndexedDB]]:[]),
       ...(nativeArtifacts?[['nativeArtifactLoader',()=>{try{nativeArtifacts.close();}finally{report.nativeArtifacts=nativeArtifacts.observation();}}]]:[]),
     ],report.cleanup);}catch(error){report.passed=false;failure=failure?new AggregateError([failure,error],'Rolling fixture and cleanup failed'):error;}
-    if(wire){report.wire=wire.snapshot();try{if(!failure){const {assertRollingWireCampaign}=await import('./rolling-wire-campaign.mjs');report.wireAcceptance=recovery?assertRollingRecoveryWire(report.wire):assertRollingWireCampaign(report.wire);}}catch(error){report.passed=false;failure=error;}}
+    if(wire){report.wire=wire.snapshot();try{if(!failure){const {assertRollingWireCampaign}=await import('./rolling-wire-campaign.mjs');report.wireAcceptance=recovery?assertRollingRecoveryWire(report.wire,report.trustedRecovery):assertRollingWireCampaign(report.wire);}}catch(error){report.passed=false;failure=error;}}
     try{await save();}catch(error){report.passed=false;failure=failure?new AggregateError([failure,error],'Rolling evidence failed'):error;}
   }
   if(failure){failure.rollingApplicationObservation=report;throw failure;}

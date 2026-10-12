@@ -5,7 +5,7 @@ import {createHmac, randomBytes} from 'node:crypto';
 import {AztecNodeApiSchema} from '@aztec-labs/stdlib/interfaces/client';
 
 export const WIRE_LABELS=Object.freeze(['trusted-query','trusted-proof','trusted-upstream','ordinary-node','public-reader','public-l1']);
-export const WIRE_PHASES=Object.freeze(['setup','a-name-1','a-name-2','b-name-1','b-name-2','a-named-post','a-anonymous-post','b-named-post','b-anonymous-post','a-like-first','a-like-repeat','a-like-second','b-like-first','a-unlike','b-unlike','recovery-a','recovery-b','profile-a','profile-b','public-read','outage','cleanup']);
+export const WIRE_PHASES=Object.freeze(['setup','a-name-1','a-name-2','b-name-1','b-name-2','a-named-post','a-anonymous-post','b-named-post','b-anonymous-post','a-like-first','a-like-repeat','a-like-second','b-like-first','a-unlike','b-unlike','recovery-a','recovery-b','profile-a','profile-b','public-read','outage','personalized-denial','cleanup']);
 const nodeMethods=new Set(Object.keys(AztecNodeApiSchema).map(m=>'node_'+m));
 // Pinned clients use node or aztec namespaces; no arbitrary method strings.
 for(const m of Object.keys(AztecNodeApiSchema))nodeMethods.add('aztec_'+m);
