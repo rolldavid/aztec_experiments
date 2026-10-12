@@ -1,6 +1,7 @@
 import {isIP} from 'node:net';
 import http from 'node:http';
 import {decodeJob,MAX_REQUEST_BYTES} from '../shared/remote-prover-wire.mjs';
+import {COMPACT_GATEWAY_ROUTE} from '../shared/rolling/compact-client.mjs';
 /** HTTP adapter depends only on queue and board policy APIs. */
 export function createProverServer({queue,board,chainId,rollupVersion,proofsEnabled=true,origins=[],requestsPerMinute=6,trustedProxy,privateQuery}){
  const clients=new Map();let uploads=0;
@@ -11,17 +12,21 @@ export function createProverServer({queue,board,chainId,rollupVersion,proofsEnab
   if(origin&&!origins.includes(origin)){reply(403,{error:'Origin rejected'});return;}
   if(origin){res.setHeader('Access-Control-Allow-Origin',origin);res.setHeader('Vary','Origin');res.setHeader('Access-Control-Allow-Credentials','true');}
   if(req.method==='OPTIONS'){res.setHeader('Access-Control-Allow-Methods','GET, POST');res.setHeader('Access-Control-Allow-Headers','Content-Type');reply(204,{});return;}
+  const admit=()=>{
+   let client=req.socket.remoteAddress;
+   if(trustedProxy&&client===trustedProxy){const forwarded=req.headers['x-real-ip'];if(typeof forwarded!=='string'||!isIP(forwarded)){reply(400,{error:'Proxy address required'});return;}client=forwarded;}
+   const now=Date.now();
+   for(const [key,value] of clients)if(now-value.start>=60000)clients.delete(key);
+   const rate=clients.get(client)??{start:now,count:0};
+   if(rate.count>=requestsPerMinute||clients.size>=10000||uploads>=8){reply(429,{error:'Rate limited'});return;}
+   rate.count++;clients.set(client,rate);return client;
+  };
   try{
    if(req.method==='GET'&&req.url==='/healthz'){reply(200,{ready:true,proofs:proofsEnabled?'real':'disabled',queue:queue.stats(),query:privateQuery?await privateQuery.health():{enabled:false,ready:false}});return;}
    if(req.method==='POST'&&req.url==='/v1/node'&&privateQuery){await privateQuery.handle(req,res);return;}
+   if(req.url===COMPACT_GATEWAY_ROUTE&&privateQuery?.handleCompact){if(admit()===undefined)return;await privateQuery.handleCompact(req,res);return;}
    if(req.method==='POST'&&req.url==='/v1/jobs'){
-    let client=req.socket.remoteAddress;
-    if(trustedProxy&&client===trustedProxy){const forwarded=req.headers['x-real-ip'];if(typeof forwarded!=='string'||!isIP(forwarded)){reply(400,{error:'Proxy address required'});return;}client=forwarded;}
-    const now=Date.now();
-    for(const [key,value] of clients)if(now-value.start>=60000)clients.delete(key);
-    const rate=clients.get(client)??{start:now,count:0};
-    if(rate.count>=requestsPerMinute||clients.size>=10000||uploads>=8){reply(429,{error:'Rate limited'});return;}
-    rate.count++;clients.set(client,rate);
+    const client=admit();if(client===undefined)return;
     if(req.headers['content-type']!=='application/octet-stream'){reply(415,{error:'Binary job required'});return;}
     uploads++;let body;
     try{const chunks=[];let size=0;for await(const chunk of req){size+=chunk.length;if(size>MAX_REQUEST_BYTES)throw Object.assign(Error(),{status:413});chunks.push(chunk);}body=Buffer.concat(chunks);}finally{uploads--;}

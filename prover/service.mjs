@@ -6,6 +6,18 @@ import {createProcessWorker} from './process-worker.mjs';
 import {createProverServer} from './server.mjs';
 import {createPrivateQuery,validateQueryNode} from './private-query.mjs';
 import {loadCircuitCatalog} from './catalog.mjs';
+import {validateCompactTier} from '../shared/rolling/compact-client.mjs';
+
+// Operator option contains only a tier. Browser origins always come from the
+// same server configuration; a second endpoint allowlist cannot diverge.
+export function compactBlockOptions(config){
+ if(config.compactBlocks===undefined)return undefined;
+ const value=config.compactBlocks;
+ if(!value||Object.getPrototypeOf(value)!==Object.prototype||Reflect.ownKeys(value).length!==1||!Object.hasOwn(value,'tier')||!config.queryNode)throw Error('Invalid compact service configuration');
+ const descriptor=Object.getOwnPropertyDescriptor(value,'tier');
+ if(!Object.hasOwn(descriptor,'value'))throw Error('Invalid compact service configuration');
+ return {tier:validateCompactTier(descriptor.value),origins:config.origins};
+}
 
 // Composition root: owns only the resources it creates. Tests and the host use
 // this same entry point; HTTP, queue and worker communicate through interfaces.
@@ -20,7 +32,7 @@ export async function startProverService(config){
  const host=config.host??'127.0.0.1',proofsEnabled=config.proofs==='real';
  if(!proofsEnabled&&(!['127.0.0.1','::1','localhost'].includes(host)||String(config.chainId)!=='31337'))throw Error('Disabled proofs require loopback local devnet');
  validateQueryNode(config.queryNode);
- const privateQuery=await createPrivateQuery({...config,proofsEnabled});
+ const privateQuery=await createPrivateQuery({...config,proofsEnabled,compactBlocks:compactBlockOptions(config)});
  const runtime=proofsEnabled?await prepareNativeRuntime(config):{};
  await loadCircuitCatalog({applicationProfile});
  const directory=await fs.mkdtemp(path.join(config.queueDirectory??'/tmp','board-prover-'));
