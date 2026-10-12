@@ -254,6 +254,203 @@ if(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1') {
     await assert.rejects(f.page.processRollingPreferencePage(f.p,{contextGuard:async()=>{}}),/PXE_PREFERENCE_PAGE_FAILED/);
     assert.equal(f.state.utilityCalls,1);assert.equal((await f.read()).length,0);
   });
+  // Separate opt-in: real processed ACIR, encryption, scoped keys and original
+  // validators. Only the chain is synthetic. No proof, mining or fee acceptance.
+  if(process.env.ROLLING_PREFERENCE_PAGE_ACIR==='1') {
+    const {loadContractArtifact,FunctionType,decodeFunctionSignature}=await import('@aztec-labs/stdlib/abi');
+    const {computeArtifactHash,getContractClassFromArtifact,SerializableContractInstance,computeContractAddressFromInstance,getContractInstanceFromInstantiationParams,CompleteAddress}=await import('@aztec-labs/stdlib/contract');
+    const {deriveKeys}=await import('@aztec-labs/stdlib/keys');
+    const {EthAddress}=await import('@aztec-labs/foundation/eth-address');
+    const {computeSiloedPrivateInitializationNullifier}=await import('@aztec-labs/stdlib/hash');
+    const {getStandardHandshakeRegistry}=await import('@aztec-labs/standard-contracts/handshake-registry');
+    const {TxExecutionRequest,TxContext,HashedValues}=await import('@aztec-labs/stdlib/tx');
+    const {MerkleTreeId}=await import('@aztec-labs/stdlib/trees');
+    const {WASMSimulator}=await import('@aztec-labs/simulator/client');
+    const {openPxeStores}=await imp('storage/open_pxe_stores.js');
+    const {ContractClassService}=await imp('contract/contract_class_service.js');
+    const {ContractSyncService}=await imp('contract/contract_sync_service.js');
+    const {ContractFunctionSimulator,generateSimulatedProvingResult}=await imp('contract_function_simulator/contract_function_simulator.js');
+    const {TxResolverService}=await imp('messages/tx_resolver_service.js');
+    const artifactBytes=await readFile(join(root,'.build/preference-page-processed-321/RollingBoard.json'));
+    assert.equal(sha(artifactBytes),'799b44cd8901140dfda8c3fbd80fa11ebe708417afbd000d44eb92d39eafa781','Wrong processed ACIR fixture');
+    const artifact=loadContractArtifact(JSON.parse(artifactBytes));
+    const log={...quiet,getBindings:()=>({}),createChild(){return this;}};
+    async function acirFixture(t) {
+      const contractClass=await getContractClassFromArtifact(artifact),artifactHash=await computeArtifactHash(artifact);
+      // A real, deterministically derived instance of the actual processed class.
+      // Its chain registration/initialization is synthetic test data, not a claim
+      // that this instance has been deployed or its transactions proven/mined.
+      const instance=await getContractInstanceFromInstantiationParams(artifact,{salt:new Fr(551),
+        deployer:AztecAddress.fromFieldUnsafe(new Fr(555)),constructorArgs:[Array(32).fill(Fr.ZERO),0,31337,
+          EthAddress.fromString(request().network.rollup),1,1n,1000n,1,1,1,1]}),board=instance.address;
+      const registry=await getStandardHandshakeRegistry();
+      // Source-derived synthetic chain initialization only. The original macro
+      // and generateSimulatedProvingResult still check these actual nullifiers.
+      const initializationNullifiers=await Promise.all([instance,registry.instance].map(i=>
+        computeSiloedPrivateInitializationNullifier(i.address,i.initializationHash)));
+      const instances=new Map([instance,registry.instance].map(i=>[i.address.toString(),i]));
+      const derived=await deriveKeys(Fr.random());
+      const keys={masterNullifierHidingSecretKey:derived.masterNullifierHidingSecretKey,
+        masterIncomingViewingSecretKey:derived.masterIncomingViewingSecretKey,
+        masterOutgoingViewingSecretKey:derived.masterOutgoingViewingSecretKey,
+        masterTaggingSecretKey:derived.masterTaggingSecretKey,
+        masterMessageSigningPublicKey:derived.masterMessageSigningPublicKey,
+        masterFallbackPublicKey:derived.masterFallbackPublicKey};
+      const partialAddress=new Fr(552);let header=BlockHeader.empty();
+      header.globalVariables.blockNumber=2;header.globalVariables.chainId=new Fr(31337);header.globalVariables.version=new Fr(1);
+      let block,effect,canonicalChanged=false;const counters={tagQueries:0,unexpectedCalls:0};
+      const api={
+        getNodeInfo:async()=>({l1ChainId:31337,rollupVersion:1,realProofs:false,l1ContractAddresses:{rollupAddress:{toString:()=>request().network.rollup}}}),
+        getContract:async address=>{const value=instances.get(address.toString());assert(value,'Unexpected synthetic contract');return value;},
+        getBlockData:async number=>{assert.equal(number,header.getBlockNumber());return {header,blockHash:canonicalChanged?BlockHash.random():await header.hash()};},
+        getBlock:async()=>block,
+        findLeavesIndexes:async(_anchor,tree,values)=>{
+          assert.equal(tree,MerkleTreeId.NULLIFIER_TREE);
+          return Promise.all(values.map(async value=>{const index=[...initializationNullifiers,...(effect?.nullifiers??[])].findIndex(x=>x.equals(value));
+            return index<0?undefined:{data:BigInt(index),l2BlockNumber:header.getBlockNumber(),l2BlockHash:await header.hash()};}));
+        },
+        getPrivateLogsByTags:async query=>{counters.tagQueries++;assert.equal(header.getBlockNumber(),2);return query.tags.map(()=>[]);},
+        getPublicLogsByTags:async query=>{counters.tagQueries++;assert.equal(header.getBlockNumber(),2);return query.tags.map(()=>[]);},
+        getTxReceipt:async hash=>{assert(effect&&hash.equals(effect.txHash));return MinedTxReceipt.from({txHash:effect.txHash,status:'proposed',executionResult:'success',transactionFee:effect.transactionFee.toBigInt(),blockNumber:header.getBlockNumber(),blockHash:await header.hash(),slotNumber:header.globalVariables.slotNumber,epochNumber:0,txIndexInBlock:0,txEffect:TxEffect.fromBuffer(effect.toBuffer())});},
+        getTxEffectMembershipWitness:async hash=>{assert(effect&&hash.equals(effect.txHash));return {...await computeTxEffectMembershipWitness([effect],0),blockNumber:header.getBlockNumber()};},
+      };
+      const node=new Proxy(api,{get(target,key){if(key==='then')return undefined;if(key in target)return Reflect.get(target,key);
+        return ()=>{counters.unexpectedCalls++;throw Error('UNIMPLEMENTED_SYNTHETIC_CHAIN_METHOD');};}});
+      async function receiver({withKeys=true,completeAddress,contributor}={}) {
+        const directory=await realpath(await mkdtemp(join(root,'.build/preference-page-acir-')));
+        const db=AztecLmdbStore.open(join(directory,'db'),64*1024,true,log);let queue;
+        t.after(async()=>{try{if(queue)await queue.stop();}finally{try{await db.delete();}finally{await rm(directory,{recursive:true,force:true});}}});
+        const stores=openPxeStores(db,await header.hash());
+        await stores.contractStore.addContractArtifact(artifact);await stores.contractStore.addContractInstance(instance);
+        await stores.contractStore.addContractArtifact(registry.artifact);await stores.contractStore.addContractInstance(registry.instance);
+        const complete=withKeys?await stores.keyStore.addAccount(keys,partialAddress):completeAddress;
+        assert(complete);await stores.addressStore.addCompleteAddress(complete);
+        const classService=new ContractClassService(node,stores.contractStore);
+        const syncService=new ContractSyncService(node,stores.contractStore,classService,stores.noteStore,log,{concurrentContractSyncEnabled:false});
+        const simulator=new WASMSimulator();
+        const args={...stores,contractClassService:classService,contractSyncService:syncService,
+          aztecNode:node,txResolver:new TxResolverService(node),simulator};
+        const functionSimulator=new ContractFunctionSimulator(args);
+        const stagedStores=[stores.capsuleStore,stores.senderTaggingStore,stores.recipientTaggingStore,stores.privateEventStore,stores.noteStore,stores.factStore];
+        queue=new OperationQueue({node:{startRecording:()=>({stop(){}})},synchronizer:{sync:async()=>{throw Error('UNEXPECTED_FULL_SYNC');}},
+          anchorBlockStore:{getBlockHeader:async()=>BlockHeader.fromBuffer(header.toBuffer())},
+          stagedWriteCoordinator:new StagedWriteCoordinator({kvStore:db,stagedStores}),contributors:[syncService,...(contributor?[contributor]:[])],autoSync:false,log});
+        queue.start();
+        const output=transformPreferencePage(source['dest/pxe.js'],'dest/pxe.js'),start=output.indexOf('async processRollingPreferencePage'),end=output.indexOf('/**\n   * Executes a contract utility',start);
+        const bindings={RollingPageFr:Fr,RollingPageAddress:AztecAddress,RollingPageTxHash:TxHash,RollingPageBlockHash:BlockHash,
+          RollingPageHeader:BlockHeader,RollingPageEffect:TxEffect,RollingPageReceipt:MinedTxReceipt,RollingPageSiblingPath:SiblingPath,
+          rollingPageVerifyWitness:verifyTxEffectMembershipWitness,rollingPageCompact:authenticateCompactBlock,
+          rollingPageArtifactHash:computeArtifactHash,rollingPageClass:getContractClassFromArtifact,
+          computeContractAddressFromInstance,BlockNumber:x=>x,FunctionType,ContractFunctionSimulator,RollingPageInstance:SerializableContractInstance,
+          RP_NOTES:constants.MAX_NOTE_HASHES_PER_TX,RP_NULLIFIERS:constants.MAX_NULLIFIERS_PER_TX,RP_MESSAGES:constants.MAX_L2_TO_L1_MSGS_PER_TX,
+          RP_WRITES:constants.MAX_TOTAL_PUBLIC_DATA_UPDATE_REQUESTS_PER_TX,RP_LOGS:constants.MAX_PRIVATE_LOGS_PER_TX,RP_LOG_FIELDS:constants.PRIVATE_LOG_SIZE_IN_FIELDS,
+          RP_PUBLIC_FIELDS:constants.FLAT_PUBLIC_LOGS_PAYLOAD_LENGTH,RP_PUBLIC_HEADER:constants.PUBLIC_LOG_HEADER_LENGTH,
+          RP_CLASS_LOGS:constants.MAX_CONTRACT_CLASS_LOGS_PER_TX,RP_CLASS_FIELDS:constants.CONTRACT_CLASS_LOG_SIZE_IN_FIELDS};
+        // Exact generated page method; utility bridge is the original PXE bridge's
+        // runUtility call, not a mocked return or directly enqueued event.
+        const Class=Function(...Object.keys(bindings),`return class {
+          async #executeUtility(simulator,call,authwits,scopes,anchor,changeSetId) {
+            const result=await simulator.runUtility(call,authwits,anchor,scopes,changeSetId);
+            this.acirCompleted=(this.acirCompleted??0)+1;
+            this.stagedNoteCount=(await this.noteStore.getNotes({contractAddress:call.to,scopes},changeSetId)).length;
+            this.afterUtility?.();
+            return result;
+          }
+          ${output.slice(start,end).trim()}
+        }`)(...Object.values(bindings));
+        const page=new Class();Object.assign(page,stores,{node,proverEnabled:false,operationQueue:queue,
+          contractClassService:classService,contractSyncService:syncService,txResolver:args.txResolver,simulator});
+        const eventAbi=artifact.outputs.structs.events.find(e=>e.path==='RollingBoard::PreferenceChanged');
+        const selector=await EventSelector.fromSignature(decodeFunctionSignature('PreferenceChanged',eventAbi.fields));
+        const read=()=>queue.runSynced(async({changeSetId})=>({
+          events:await stores.privateEventStore.getPrivateEvents(selector,{contractAddress:board,scopes:[complete.address],fromBlock:1,toBlock:header.getBlockNumber()+1},changeSetId),
+          notes:await stores.noteStore.getNotes({contractAddress:board,owner:complete.address,scopes:[complete.address]},changeSetId),
+        }));
+        return {stores,queue,complete,functionSimulator,page,read,syncService};
+      }
+      const sender=await receiver();
+      const call=await sender.stores.contractStore.getFunctionCall('set_preference',[0n,1,new Fr(77),true],board,contractClass.id);
+      const hashed=await HashedValues.fromArgs(call.args),txRequest=new TxExecutionRequest(board,call.selector,hashed.hash,TxContext.empty(31337,1),[hashed],[],[],Fr.random());
+      const simulated=await sender.queue.runSynced(async({changeSetId})=>{
+        const execution=await sender.functionSimulator.run(txRequest,{msgSender:sender.complete.address,anchorBlockHeader:header,scopes:[sender.complete.address],senderForTags:sender.complete.address,changeSetId});
+        return generateSimulatedProvingResult(execution,async()=> 'synthetic.preference',node);
+      });
+      assert(simulated.publicInputs.forRollup,'Preference fixture must remain private-only');
+      const data=simulated.publicInputs.forRollup.end;
+      effect=new TxEffect(RevertCode.OK,TxHash.fromBigInt(553n),Fr.ZERO,
+        data.noteHashes.filter(x=>!x.isZero()),data.nullifiers.filter(x=>!x.isZero()),[],[],data.privateLogs.filter(x=>!x.isEmpty()),[],[]);
+      // Keep all genuine simulation effects, including standard handshake
+      // delivery. Only the board head/event may be admitted by the page gate.
+      assert(effect.noteHashes.length>=1);assert(effect.privateLogs.length>=2&&effect.privateLogs.length<=8);
+      assert(effect.privateLogs.every(x=>x.emittedLength>0&&x.emittedLength<=16),'Bounded encrypted envelope expected');
+      // BlockHeader.hash caches; never mutate an already hashed header into a
+      // different canonical block. This copy has no cached hash.
+      header=BlockHeader.fromBuffer(header.toBuffer());
+      header.globalVariables.blockNumber=4;const body=new Body([effect]);header.txEffectsTreeRoot=await body.computeTxEffectsTreeRoot();
+      block=new L2Block(AppendOnlyTreeSnapshot.empty(),header,body,1,0);
+      const input={...request(),contractAddress:board.toString(),scope:sender.complete.address.toString(),
+        expectedClassId:contractClass.id.toString(),expectedArtifactHash:artifactHash.toString(),blockNumber:4,
+        blockHash:(await header.hash()).toString(),txHash:effect.txHash.toString(),firstLog:0,logCount:effect.privateLogs.length,
+        compactFields:block.toBlobFields().map(x=>x.toString()),headerFields:header.toFields().map(x=>x.toString())};
+      const tagsBefore=counters.tagQueries;
+      return {receiver,sender,input,header,board,contractClass,counters,tagsBefore,
+        invalidate:()=>{canonicalChanged=true;},restore:()=>{canonicalChanged=false;}};
+    }
+    test('real processed ACIR: emitted encrypted preference head/event, scoped keys, validators and atomic discard',async t=>{
+      const f=await acirFixture(t);
+      await t.test('absent owner key rejects even though the complete public address is registered',async()=>{
+        const r=await f.receiver({withKeys:false,completeAddress:f.sender.complete});
+        await assert.rejects(r.page.processRollingPreferencePage(f.input,{contextGuard:async()=>{}}),/PXE_PREFERENCE_PAGE_FAILED/);
+        const state=await r.read();assert.equal(state.events.length,0);assert.equal(state.notes.length,0);assert.equal(r.syncService.syncedContracts.size,0);
+      });
+      await t.test('absent head and absent key cannot turn recovery into a successful empty result',async()=>{
+        const foreign=await CompleteAddress.fromSecretKeyAndPartialAddress(Fr.random(),new Fr(554));
+        const r=await f.receiver({withKeys:false,completeAddress:foreign});
+        await assert.rejects(r.page.processRollingPreferencePage({...f.input,scope:foreign.address.toString()},{contextGuard:async()=>{}}),/PXE_PREFERENCE_PAGE_FAILED/);
+        assert.equal(r.page.acirCompleted,undefined);
+        const state=await r.read();assert.equal(state.events.length,0);assert.equal(state.notes.length,0);assert.equal(r.syncService.syncedContracts.size,0);
+      });
+      await t.test('original utility denies owner key outside actual execution scope',async()=>{
+        const r=await f.receiver();
+        const call=await r.stores.contractStore.getFunctionCall('recover_preference_page',[r.complete.address,TxHash.fromString(f.input.txHash).hash,4,Fr.fromString(f.input.blockHash),0,f.input.logCount],f.board,f.contractClass.id);
+        await assert.rejects(r.queue.runSynced(({changeSetId})=>r.functionSimulator.runUtility(call,[],f.header,[],changeSetId)),/Key validation request denied: no scoped account/);
+        const state=await r.read();assert.equal(state.events.length,0);assert.equal(state.notes.length,0);assert.equal(r.syncService.syncedContracts.size,0);
+      });
+      await t.test('late account failure drains and discards real decrypted staged records',async()=>{
+        const r=await f.receiver();let guards=0;
+        await assert.rejects(r.page.processRollingPreferencePage(f.input,{contextGuard:async()=>{
+          guards++;if(guards===8){assert.equal(r.page.acirCompleted,1);assert.equal(r.page.stagedNoteCount,1);throw Error('SYNTHETIC_ACCOUNT_LOCK');}
+        }}),/PXE_PREFERENCE_PAGE_FAILED/);
+        assert.equal(guards,8);assert.equal(r.page.acirCompleted,1);assert.equal(r.page.stagedNoteCount,1);
+        const state=await r.read();assert.equal(state.events.length,0);assert.equal(state.notes.length,0);assert.equal(r.syncService.syncedContracts.size,0);
+      });
+      await t.test('canonical change after actual decryption discards both staged stores',async()=>{
+        const r=await f.receiver();r.page.afterUtility=f.invalidate;
+        try {
+          await assert.rejects(r.page.processRollingPreferencePage(f.input,{contextGuard:async()=>{}}),/PXE_PREFERENCE_PAGE_FAILED/);
+          assert.equal(r.page.acirCompleted,1);assert.equal(r.page.stagedNoteCount,1);
+        } finally {f.restore();}
+        const state=await r.read();assert.equal(state.events.length,0);assert.equal(state.notes.length,0);assert.equal(r.syncService.syncedContracts.size,0);
+      });
+      await t.test('original lifecycle contributor veto after final guard discards decrypted staged records',async()=>{
+        let fail=true,settled=0,r;
+        const contributor={settle:async()=>{if(fail){settled++;assert.equal(r.page.acirCompleted,1);assert.equal(r.page.stagedNoteCount,1);throw Error('SYNTHETIC_CONTRIBUTOR_FAILURE');}}};
+        r=await f.receiver({contributor});let guards=0;
+        await assert.rejects(r.page.processRollingPreferencePage(f.input,{contextGuard:async()=>{guards++;}}),/PXE_PREFERENCE_PAGE_FAILED/);
+        assert.equal(guards,8);assert.equal(settled,2);fail=false;
+        const state=await r.read();assert.equal(state.events.length,0);assert.equal(state.notes.length,0);assert.equal(r.syncService.syncedContracts.size,0);
+      });
+      await t.test('canonical encrypted head and event commit without contract-sync completion',async()=>{
+        const r=await f.receiver();assert.deepEqual(await r.page.processRollingPreferencePage(f.input,{contextGuard:async()=>{}}),{schemaVersion:1,processed:f.input.logCount,admitted:2});
+        const state=await r.read();assert.equal(state.events.length,1);assert.equal(state.notes.length,1);
+        assert.deepEqual(state.events[0].packedEvent.map(x=>x.toBigInt()),[1n,1n,1n,77n,1n,0n,0n,0n]);
+        assert(state.notes[0].owner.equals(r.complete.address));assert.equal(state.notes[0].note.items.length,4);
+        assert.equal(state.notes[0].note.items[0].toBigInt(),1n);assert.equal(state.notes[0].note.items[1].toBigInt(),1n);
+        assert.equal(r.syncService.syncedContracts.size,0);assert.equal(f.counters.tagQueries,f.tagsBefore);
+        assert.equal(f.counters.unexpectedCalls,0);
+      });
+    });
+  }
   test('actual SDK synthetic complete effect membership rejects changed ciphertext and changed root',async()=>{
     const effect=await TxEffect.random({numNoteHashes:1,numNullifiers:1,numL2ToL1Msgs:0,numPublicDataWrites:0,numPrivateLogs:1,numPublicCallsPerTx:0,numPublicLogsPerCall:0,numContractClassLogs:0});
     const witness=await computeTxEffectMembershipWitness([effect],0);
