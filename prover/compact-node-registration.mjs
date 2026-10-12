@@ -1,20 +1,10 @@
-import {createHash} from 'node:crypto';
 import {EthAddress} from '@aztec-labs/foundation/eth-address';
 import {getVersioningMiddleware} from '@aztec-labs/stdlib/versioning';
 import {createCompactBlockNativeAdapter,COMPACT_BLOCK_NATIVE_ROUTE} from './compact-block-native.mjs';
 
-export const COMPACT_NODE_STARTUP_SHA256='33fbbf4d8a1b7c1b148d30fb283e61e25076b07dc2f99ba7a64bb6698d9e95e4';
-const anchor='                getVersioningMiddleware(versions, versioningOpts)\n            ],';
+export {COMPACT_NODE_STARTUP_SHA256,transformCompactNodeStartup} from './compact-node-transform.mjs';
 const fail=()=>Error('Invalid compact node registration');
 const own=(value,key)=>{const d=Object.getOwnPropertyDescriptor(value,key);if(!d||!Object.hasOwn(d,'value'))throw fail();return d.value;};
-
-/** Pure exact-source composition for the existing startup load hook. No disk,
- * listener, process, dependency or environment mutation. Not installed on import. */
-export function transformCompactNodeStartup(source){
- if(typeof source!=='string'||createHash('sha256').update(source).digest('hex')!==COMPACT_NODE_STARTUP_SHA256||source.split(anchor).length!==2)throw fail();
- return `import {createCompactNodeMiddlewares as __rollingCompactMiddlewares} from ${JSON.stringify(import.meta.url)};\n`+
-  source.replace(anchor,anchor.replace('versioningOpts)\n','versioningOpts),\n                ...__rollingCompactMiddlewares(services, config, process.env.ROLLING_COMPACT_TIER, versions, versioningOpts)\n'));
-}
 
 /** The caller supplies the actual registered services and resolved startNode
  * config. Policy is never inferred from a request or an observed RPC identity.

@@ -8,6 +8,7 @@ import {join,resolve} from 'node:path';
 import {spawnSync} from 'node:child_process';
 import {registerHooks} from 'node:module';
 import {pathToFileURL} from 'node:url';
+import {COMPACT_NODE_STARTUP_PATH,compactNodeStartupInsertion} from '../../prover/compact-node-transform.mjs';
 import {SOURCE_PLAN,PHASES,transformSource,createRecorder,readRecord,validateRecord,MAX_RECORD_BYTES,RECORD_NAME,createLoadHook,RUNTIME_ADAPTER,CONFIG_CALL,SELECTED_CONFIG_CALL,selectConfigurationProvider,emptyProgress,validateProgress,classifyError} from './startup-stages.mjs';
 const sha=x=>createHash('sha256').update(x).digest('hex');
 const digest='a'.repeat(64);
@@ -18,7 +19,7 @@ test('all exact pinned SDK modules hash-bind; only selected complete config call
  for(const plan of SOURCE_PLAN){
   const local=resolve('node_modules/@aztec-labs',plan.path.replace('/usr/src/yarn-project/',''));
   const source=readFileSync(local,'utf8'); const transformed=transformSource(source,plan);
-  let restored=transformed.replace(/^import \{ mark as __rollingStartupStage[^\n]*\n/,'');if(plan.extraImport)restored=restored.replace(plan.extraImport,'');for(const insertion of plan.insertions??[])restored=restored.replace(insertion.text,'');restored=restored.replace(/__rollingStartupStage\("[a-z0-9-]+","(?:begin|complete)"\);\n/g,'').replace(SELECTED_CONFIG_CALL,CONFIG_CALL);assert.equal(restored,source);
+  let restored=transformed;if(plan.path===COMPACT_NODE_STARTUP_PATH){const insertion=compactNodeStartupInsertion(source);restored=restored.replace(insertion.prefix,'').replace(insertion.text,'');}restored=restored.replace(/^import \{ mark as __rollingStartupStage[^\n]*\n/,'');if(plan.extraImport)restored=restored.replace(plan.extraImport,'');for(const insertion of plan.insertions??[])restored=restored.replace(insertion.text,'');restored=restored.replace(/__rollingStartupStage\("[a-z0-9-]+","(?:begin|complete)"\);\n/g,'').replace(SELECTED_CONFIG_CALL,CONFIG_CALL);assert.equal(restored,source);
   const file=join(dir,'module.mjs');writeFileSync(file,transformed);
   const result=spawnSync(process.execPath,['--check',file],{encoding:'utf8',timeout:3000});
   assert.equal(result.status,0,'actual Node syntax check failed');
@@ -234,4 +235,20 @@ test('rc3 actual batch rollback block remains byte-identical and preserves await
   await rejected;
  }
  assert.equal(readFileSync(resolve('node_modules/@aztec-labs',plan.path.replace('/usr/src/yarn-project/','')),'utf8'),source);
+});
+
+
+test('one original-source hook composes compact registration and diagnostics without overlapping edits',()=>{
+ const plan=SOURCE_PLAN.find(item=>item.path===COMPACT_NODE_STARTUP_PATH);
+ const original=readFileSync(resolve('node_modules/@aztec-labs/aztec/dest/cli/aztec_start_action.js'),'utf8');
+ const insertion=compactNodeStartupInsertion(original),combined=transformSource(original,plan);
+ assert.equal(combined.split(insertion.prefix).length,2);assert.equal(combined.split(insertion.text).length,2);
+ for(const point of plan.points)for(const state of ['begin','complete'])assert.equal(combined.split(`__rollingStartupStage(${JSON.stringify(point.phase)},${JSON.stringify(state)});`).length,2);
+ const nextResult={format:'module',source:original,shortCircuit:false},context={};let calls=0;
+ const hook=createLoadHook(new Map([['file:///fixed-cli.mjs',{plan,transformed:combined}]]));
+ const actual=hook('file:///fixed-cli.mjs',context,(url,ctx)=>{calls++;assert.equal(url,'file:///fixed-cli.mjs');assert.equal(ctx,context);return nextResult;});
+ assert.equal(calls,1);assert.equal(actual.source,combined);assert.equal(nextResult.source,original);assert.equal(actual.shortCircuit,false);
+ assert.throws(()=>hook('file:///fixed-cli.mjs',context,()=>({...nextResult,source:combined})));
+ assert.throws(()=>transformSource(original,{...plan,insertions:[{anchor:original.slice(insertion.at,insertion.at+40),text:'collision'}]}));
+ assert.throws(()=>transformSource(original+' ',{...plan,sha256:sha(original+' ')}));
 });

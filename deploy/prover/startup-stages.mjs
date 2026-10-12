@@ -5,6 +5,7 @@
  * Only fixed phases, bounded public progress and typed numeric error categories enter records; no arguments, raw errors, stdout or network responses.
  */
 import { createHash } from 'node:crypto';
+import { COMPACT_NODE_STARTUP_PATH, compactNodeStartupInsertion } from '../../prover/compact-node-transform.mjs';
 import { constants, openSync, closeSync, readSync, fstatSync, lstatSync, realpathSync, writeFileSync, fsyncSync, renameSync } from 'node:fs';
 import { registerHooks } from 'node:module';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -18,7 +19,7 @@ export const RUNTIME_ADAPTER = 'publicnode-config-v1';
 export const CONFIG_CALL = '    const { addresses, config } = await getL1Config(nodeConfig.registryAddress, nodeConfig.l1RpcUrls, nodeConfig.l1ChainId, nodeConfig.rollupVersion);';
 export const SELECTED_CONFIG_CALL = CONFIG_CALL.replace('nodeConfig.l1RpcUrls', "['https://ethereum-sepolia-rpc.publicnode.com']");
 const CONFIG_MODULE = '/usr/src/yarn-project/aztec/dest/cli/cmds/start_node.js';
-const HOOK_URL = 'file:///etc/rolling-node/startup-stages.mjs';
+const HOOK_URL = 'file:///usr/src/yarn-project/rolling/deploy/prover/startup-stages.mjs';
 const sha256 = bytes => createHash('sha256').update(bytes).digest('hex');
 const failure = () => new Error('ROLLING_STARTUP_DIAGNOSTIC_UNAVAILABLE');
 export const SOURCE_PLAN = Object.freeze([
@@ -290,9 +291,16 @@ export function transformSource(source, plan, helperUrl = HOOK_URL) {
     if (!item.anchor || source.split(item.anchor).length!==2 || typeof item.text!=='string') throw failure();
     changes.push({at:source.indexOf(item.anchor)+(item.after?item.anchor.length:0),text:item.text});
   }
+  // Compose both fixed rewrites against the SAME verified original bytes.
+  // Runtime middleware is imported by the transformed CLI only after this hook.
+  const compact = plan.path === COMPACT_NODE_STARTUP_PATH ? compactNodeStartupInsertion(source) : null;
+  if (compact) {
+    if (changes.some(change => change.at === compact.at)) throw failure();
+    changes.push({at:compact.at,text:compact.text});
+  }
   // At a shared boundary the previous operation completes before the next starts.
   changes.sort((a,b) => a.at - b.at || (a.state === 'complete' ? -1 : 1));
-  let result = `import { mark as __rollingStartupStage, observe as __rollingStartupObserve, classifyError as __rollingStartupClassify } from ${JSON.stringify(helperUrl)};\n`+(plan.extraImport??''), previous = 0;
+  let result = `import { mark as __rollingStartupStage, observe as __rollingStartupObserve, classifyError as __rollingStartupClassify } from ${JSON.stringify(helperUrl)};\n`+(plan.extraImport??'')+(compact?.prefix??''), previous = 0;
   for (const {at,state,phase,text} of changes) {
     result += source.slice(previous,at) + (text??`__rollingStartupStage(${JSON.stringify(phase)},${JSON.stringify(state)});\n`);
     previous = at;

@@ -3,6 +3,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import path from 'node:path';
+import {tmpdir} from 'node:os';
+import {pathToFileURL} from 'node:url';
+import {spawnSync} from 'node:child_process';
 import {z} from 'zod';
 import {EthAddress} from '@aztec-labs/foundation/eth-address';
 import {createNamespacedSafeJsonRpcServer,startHttpRpcServer} from '@aztec-labs/foundation/json-rpc/server';
@@ -68,4 +72,33 @@ test('disabled route and separate unmodified admin middleware do not expose comp
   const r=await fetch(url+route,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(selector)});
   assert.notEqual(r.status,200);assert.deepEqual(f.calls,[]);
  });
+});
+
+
+test('startup preload imports only pure transforms, never SDK or runtime middleware',()=>{
+ const target=new URL('../deploy/prover/startup-stages.mjs',import.meta.url).href;
+ const code=`import {registerHooks} from 'node:module';
+ registerHooks({resolve(specifier,context,next){if(specifier.startsWith('@aztec')||specifier.endsWith('/compact-node-registration.mjs'))throw Error('Premature runtime import');return next(specifier,context);}});
+ const startup=await import(${JSON.stringify(target)});if(typeof startup.installRuntimeAdapter!=='function')throw Error('Missing adapter');`;
+ const result=spawnSync(process.execPath,['--input-type=module','-e',code],{encoding:'utf8',timeout:3000});
+ assert.equal(result.status,0,result.stderr);
+});
+
+test('source-only deployment layout resolves runtime helper to the same actual image SDK identity',async()=>{
+ const image=fs.mkdtempSync(path.join(tmpdir(),'rolling-compact-layout-'));
+ try{
+  // Labelled filesystem model of the image: one SDK root, source-only mounts.
+  fs.symlinkSync(fs.realpathSync('node_modules'),path.join(image,'node_modules'),'dir');
+  for(const relative of ['prover/compact-node-registration.mjs','prover/compact-node-transform.mjs','prover/compact-block-native.mjs','shared/trusted-private-node.mjs']){
+   const target=path.join(image,'rolling',relative);fs.mkdirSync(path.dirname(target),{recursive:true});fs.copyFileSync(relative,target);
+  }
+  const probe="export const sdkUrl=import.meta.resolve('@aztec-labs/foundation/eth-address');";
+  fs.writeFileSync(path.join(image,'cli-probe.mjs'),probe);fs.writeFileSync(path.join(image,'rolling/prover/helper-probe.mjs'),probe);
+  const cli=await import(pathToFileURL(path.join(image,'cli-probe.mjs')).href);
+  const helper=await import(pathToFileURL(path.join(image,'rolling/prover/helper-probe.mjs')).href);
+  assert.equal(helper.sdkUrl,cli.sdkUrl);assert.equal(fs.existsSync(path.join(image,'rolling/node_modules')),false);
+  const copied=await import(pathToFileURL(path.join(image,'rolling/prover/compact-node-registration.mjs')).href);
+  const f=fixture();assert.equal(copied.createCompactNodeMiddlewares(f.services,config(),'checkpointed',versions,opts).length,1);
+  assert.deepEqual(f.calls,[]);
+ }finally{fs.rmSync(image,{recursive:true,force:true});}
 });
