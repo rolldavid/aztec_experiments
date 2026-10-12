@@ -366,7 +366,8 @@ test('preference campaigns keep real proof limits, actual decoder and fresh empt
  const sdk=await loadRollingFixtureSDK(),abi=await import('@aztec-labs/stdlib/abi');assert.equal(sdk.decodeFunctionSignature,abi.decodeFunctionSignature);assert.equal(sdk.EventSelector,abi.EventSelector);
  const source=await fs.readFile(new URL('./rolling-application-fixture.mjs',import.meta.url),'utf8');
  const cold=source.slice(source.indexOf("await mark('preference-keys-only-recovery')"),source.indexOf("await mark('canonical-projection-rebuild')"));
- assert(cold.indexOf('await old.close()')<cold.indexOf('await makeActor(fees,role,dataDirectory)'));
+ const closed=cold.indexOf('await old.close()'),constructed=cold.indexOf('await makeActor(fees,role,dataDirectory,metrics)');
+ assert(closed>=0&&constructed>closed,'Original actor must close before the fresh observed actor is constructed');
  assert(cold.includes('assert.deepEqual(await fs.readdir(freshPath),[])'));assert(cold.includes('indexedDB.databases()'));
  assert(cold.includes('actorIntents.delete(old)'));assert(!cold.includes('copyFile'));assert(!cold.includes('submitPrepared'));
  assert(source.indexOf("await mark('encrypted-journal-reopen')")<source.indexOf("await mark('preference-keys-only-recovery')"));
