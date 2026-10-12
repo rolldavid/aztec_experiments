@@ -63,8 +63,11 @@ async function inventory(){
  const sdk=checkSdk(),crs=JSON.parse(await fs.readFile(path.join(ROOT,'crs-manifest.json'),'utf8'));validateCrsManifest(crs);
  const result={...sources};
  for(const name of Object.keys(sdk.outputs))result['/wallet/'+name]='.build/sdk/'+name;
- for(const file of crs.files)result['/crs/'+file.name]='apps/dist/crs/'+file.name;
- for(const file of crs.files){const bytes=await fs.readFile(path.join(ROOT,result['/crs/'+file.name]));if(bytes.length!==file.bytes||sha(bytes)!==file.sha256)throw invalid();}
+ // The browser consumes the pinned uncompressed derivation as well as the
+ // downloaded CRS inputs. Validate every served file before publishing assets.
+ const crsFiles=[...crs.files,crs.derivedG1];
+ for(const file of crsFiles)result['/crs/'+file.name]='apps/dist/crs/'+file.name;
+ for(const file of crsFiles){const bytes=await fs.readFile(path.join(ROOT,result['/crs/'+file.name]));if(bytes.length!==file.bytes||sha(bytes)!==file.sha256)throw invalid();}
  return result;
 }
 export async function buildRollingWalletAssets(){

@@ -4,6 +4,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
+import {createHash} from 'node:crypto';
 import {chromium} from 'playwright';
 import {loadRollingWalletAssets} from '../../scripts/rolling-wallet-assets.mjs';
 import {startRollingReader} from './start.mjs';
@@ -26,6 +27,21 @@ test('real browser SDK unlock and encrypted recovery survive unavailable private
  await page.getByRole('button',{name:'Unlock',exact:true}).click();
  await page.getByRole('button',{name:'Create account and download recovery',exact:true}).waitFor({timeout:30000});
  assert.equal(requests.filter(r=>r.url.endsWith('/wallet/aztec_bundle.js')).length,1);
+ assert.equal(requests.some(r=>r.method==='POST'),false);
+ // Actual browser worker and pinned local CRS initialization, even when the
+ // application uses a remote prover. This previously failed on a missing G1
+ // derivation route; a public/config double cannot hide that asset failure.
+ const manifest=JSON.parse(await fs.readFile('crs-manifest.json','utf8'));
+ const served=await wallet.read('/crs/'+manifest.derivedG1.name);
+ assert(served,'Pinned uncompressed G1 must be in the production asset inventory');
+ assert.equal(served.body.length,manifest.derivedG1.bytes);
+ assert.equal(createHash('sha256').update(served.body).digest('hex'),manifest.derivedG1.sha256);
+ const initialization=await page.evaluate(async()=>{
+  await __aztec.initializeBrowserProver();const options=__aztec.Barretenberg.getSingleton().options;
+  return {backend:options.backend,threads:options.threads,skipSrsInit:options.skipSrsInit};
+ });
+ assert.deepEqual(initialization,{backend:'WasmWorker',threads:1,skipSrsInit:true});
+ for(const name of ['g1_uncompressed.dat','g2.dat','grumpkin_g1.dat'])assert.equal(requests.filter(r=>r.url===server.url+'/crs/'+name).length,1);
  assert.equal(requests.some(r=>r.method==='POST'),false);
  await page.getByRole('textbox',{name:'Recovery password',exact:true}).fill('disposable recovery test password');
  const downloadPromise=page.waitForEvent('download',{timeout:5000});
