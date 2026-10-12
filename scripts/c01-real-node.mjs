@@ -11,10 +11,12 @@ import {initTelemetryClient} from '@aztec-labs/telemetry-client';
 import {RollupContract} from '@aztec-labs/ethereum/contracts/rollup';
 import {RunningPromise} from '@aztec-labs/foundation/running-promise';
 import {withC01ClientMining} from './c01-client-mining.mjs';
+import {localApplicationInboxProfile} from './c01-native-profile.mjs';
+import {MIN_BLOCKS_FOR_INBOX_CATCHUP} from '@aztec-labs/stdlib/messaging';
 export async function qualifyC01RealNode({config,deployment,genesis,directory,privateKey,address,preparation,mark,browserControl,scenario,operatorPackage,providerDeadlineAt,applicationDeadlineAt}){
   assert(scenario&&typeof scenario.run==='function');
   assert(['node','included-board','activated-board'].includes(scenario.fixture));
-  const nodeConfig={...config,...deployment.l1ContractAddresses,rollupVersion:deployment.rollupVersion,
+  const nodeConfig={...config,...localApplicationInboxProfile(config),...deployment.l1ContractAddresses,rollupVersion:deployment.rollupVersion,
     dataDirectory:path.join(directory,'node'),bootstrapNodes:[],p2pEnabled:false,
     txPublicSetupAllowListExtend:[],sequencerPublisherPrivateKeys:[new SecretValue(privateKey)],
     validatorPrivateKeys:new SecretValue([privateKey]),coinbase:EthAddress.fromString(address),
@@ -45,6 +47,13 @@ export async function qualifyC01RealNode({config,deployment,genesis,directory,pr
     for(const key of ['useAutomineSequencer','automineEnableProveEpoch'])assert.equal(actual[key],false);
     assert(!node.getProverNode(),'Application tests must not create a network prover');
     assert(node.getSequencer(),'Ordinary sequencer absent');assert(!node.getAutomineSequencer());
+    assert.equal(actual.allowUnsafeInboxCatchupCapacity,true);
+    const opportunities=node.getSequencer().getSequencer().timetable.getMaxBlocksPerCheckpoint();
+    const effective=Math.min(actual.maxBlocksPerCheckpoint,opportunities);
+    assert(Number.isSafeInteger(effective)&&effective>0);
+    observation.inboxCapacity={profile:'disposable local application fixture',
+      allowUnsafeInboxCatchupCapacity:true,minimumRequired:MIN_BLOCKS_FOR_INBOX_CATCHUP,
+      timetableOpportunities:opportunities,effective,backlogCapacityQualified:false};
     const info=await node.getNodeInfo();assert.equal(Number(info.l1ChainId),31337);
     observation.realProofs=applicationProofsEnabled();observation.proverSubsystemCreated=false;
     observation.ordinarySequencerConstructed=true;observation.sequencerStarted=false;

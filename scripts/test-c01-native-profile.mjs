@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
 import fs from 'node:fs/promises';
-import {applicationNativeProfile} from './c01-native-profile.mjs';
+import {applicationNativeProfile,localApplicationInboxProfile} from './c01-native-profile.mjs';
 test('private prover profile defaults to one and explicitly supports two',()=>{
   assert.deepEqual(applicationNativeProfile('/private/tmp/test',{}),{threads:1,bbPath:'/private/tmp/test/bb-one-thread'});
   for(const threads of ['1','2']) assert.deepEqual(applicationNativeProfile('/private/tmp/test',{C01_APPLICATION_BB_THREADS:threads}),{threads:Number(threads),bbPath:`/private/tmp/test/bb-${threads==='1'?'one-thread':'two-threads'}`});
@@ -25,6 +25,29 @@ test('local timing has an SDK-valid build window and Inbox readiness headroom',a
  assert.equal(LOCAL_TIMING.inboxLag,2);
  const nominalBridgeSeconds=(LOCAL_TIMING.inboxLag+1)*LOCAL_TIMING.aztecSlotDuration+LOCAL_TIMING.blockDurationMs/1000+LOCAL_TIMING.ethereumSlotDuration;
  assert(nominalBridgeSeconds<20,'Local protocol delay must fit the unchanged browser readiness bound');
+});
+
+test('Inbox capacity exemption is confined to the disposable ordinary local fixture',()=>{
+ const local={l1ChainId:31337,p2pEnabled:false,useAutomineSequencer:false,automineEnableProveEpoch:false,l1RpcUrls:['http://127.0.0.1:34567']};
+ assert.deepEqual(localApplicationInboxProfile(local),{allowUnsafeInboxCatchupCapacity:true});
+ for(const change of [{l1ChainId:11155111},{l1ChainId:'31337'},{p2pEnabled:true},{p2pEnabled:undefined},{useAutomineSequencer:true},{automineEnableProveEpoch:true},{l1RpcUrls:[]},{l1RpcUrls:[...local.l1RpcUrls,...local.l1RpcUrls]}])assert.throws(()=>localApplicationInboxProfile({...local,...change}));
+ for(const url of ['https://127.0.0.1:34567','http://example.org:34567','http://127.0.0.1','http://user:password@127.0.0.1:34567','http://127.0.0.1:34567/private','http://127.0.0.1:34567/?key=value','http://127.0.0.1:34567/#value'])assert.throws(()=>localApplicationInboxProfile({...local,l1RpcUrls:[url]}));
+});
+
+test('actual SDK capacity guard rejects the short profile without its explicit local option',async()=>{
+ const {Sequencer}=await import('@aztec-labs/sequencer-client');
+ const {MIN_BLOCKS_FOR_INBOX_CATCHUP}=await import('@aztec-labs/stdlib/messaging');
+ const {buildProposerTimetable}=await import('@aztec-labs/stdlib/timetable');
+ const {LOCAL_TIMING}=await import('./testing/fixture-worker.mjs');
+ const count=buildProposerTimetable(LOCAL_TIMING,{slotDuration:LOCAL_TIMING.aztecSlotDuration,ethereumSlotDuration:LOCAL_TIMING.ethereumSlotDuration,l1GenesisTime:0n}).getMaxBlocksPerCheckpoint();
+ assert(count<MIN_BLOCKS_FOR_INBOX_CATCHUP);
+ const warnings=[],receiver={log:{warn:(...args)=>warnings.push(args)}};
+ const check=Sequencer.prototype.assertEffectiveCapacityClearsInboxBacklog;
+ assert.throws(()=>check.call(receiver,{maxBlocksPerCheckpoint:MIN_BLOCKS_FOR_INBOX_CATCHUP,allowUnsafeInboxCatchupCapacity:false},count),/Rejecting sequencer configuration/);
+ check.call(receiver,{maxBlocksPerCheckpoint:MIN_BLOCKS_FOR_INBOX_CATCHUP,allowUnsafeInboxCatchupCapacity:true},count);
+ assert.equal(warnings.length,1);assert.equal(warnings[0][1].effectiveMaxBlocks,count);
+ check.call(receiver,{maxBlocksPerCheckpoint:MIN_BLOCKS_FOR_INBOX_CATCHUP,allowUnsafeInboxCatchupCapacity:false},MIN_BLOCKS_FOR_INBOX_CATCHUP);
+ assert.equal(warnings.length,1);
 });
 
 // Execute the actual option/assertion blocks with labelled singleton doubles.
