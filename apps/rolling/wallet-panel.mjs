@@ -34,7 +34,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
  const title=el('h2',{id:'rolling-wallet-title'},'Your private account');
  const closeButton=button('Close account panel',()=>close());
  const content=el('div'),live=el('p',{role:'status','aria-live':'polite',class:'quiet'});
- dialog.append(el('div',{class:'dialog-top'},title,closeButton),el('p',{id:'rolling-wallet-description',class:'quiet'},'Your balances and list of owned names stay in this panel. Published names and posts are public. Private preferences remain encrypted.'),live,content);
+ dialog.append(el('div',{class:'dialog-top'},title,closeButton),el('p',{id:'rolling-wallet-description',class:'quiet'},'Your balances and list of owned names stay in this panel. Published names and posts are public. Your saved choices stay private.'),live,content);
  document.body.append(dialog);
  function releasePreviews(){renderEpoch++;for(const url of previewURLs)URL.revokeObjectURL(url);previewURLs.clear();}
  function clearProfileDraft(){profileSnapshot=null;avatarDraft=null;}
@@ -47,15 +47,15 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   const epoch=accountEpoch;checkAccount(epoch);clearPreferences();
   const abort=recoveryAbort=new AbortController();controlsBusy(true);
   let result;try{result=await session.application.readPreferences({signal:abort.signal});}finally{recoveryAbort=null;}checkAccount(epoch);if(abort.signal.aborted)throw connectionFailure;
-  if(result?.status==='complete'&&result.complete===true&&typeof runtime.selectPrivateViews==='function'){preferences=result.preferences;preferenceProgress=null;notice='Private preferences recovered and checked against the chain.';}
-  else if(result?.status==='recovering'&&result.complete===false){preferenceProgress=result.progress;notice='Private recovery is incomplete. Continue when ready; no partial private feed is shown.';}
+  if(result?.status==='complete'&&result.complete===true&&typeof runtime.selectPrivateViews==='function'){preferences=result.preferences;preferenceProgress=null;notice='Your follows, bookmarks and notification settings have been recovered.';}
+  else if(result?.status==='recovering'&&result.complete===false){preferenceProgress=result.progress;notice='Your saved choices are still being recovered. Continue when ready; the feed will appear after recovery finishes.';}
   else throw connectionFailure;
   note('');onPrivateChange();
  }
  function preferencesView(){
-  content.append(el('h3',{},'Private views'),paragraph('Following, bookmarks and reply notifications are filtered on this device. Public requests do not contain your saved choices. Recovering is read-only; changing a setting needs fee confirmation.'));
-  if(preferences){content.append(paragraph('Complete authenticated preferences are ready.'),button(preferences.replyNotifications?'Disable reply notifications':'Enable reply notifications',()=>choosePreference({type:'preference',kind:5,target:'0',enabled:!preferences.replyNotifications})));}
-  else if(preferenceProgress){const p=preferenceProgress;for(const key of ['scannedThrough','anchorBlock','processedRevision','targetRevision','markersChecked','markersTotal'])if(/^[0-9]+$/.test(String(p?.[key]??'')))content.append(paragraph(key+': '+p[key]));}
+  content.append(el('h3',{},'Private views'),paragraph('Your saved choices filter this feed on your device. Recovering them does not send a transaction. Changing a setting needs fee confirmation.'));
+  if(preferences){content.append(paragraph('Your saved choices are ready.'),button(preferences.replyNotifications?'Disable reply notifications':'Enable reply notifications',()=>choosePreference({type:'preference',kind:5,target:'0',enabled:!preferences.replyNotifications})));}
+  else if(preferenceProgress){const p=preferenceProgress,labels={scannedThrough:'History checked through block',anchorBlock:'History available through block',processedRevision:'Saved changes recovered',targetRevision:'Saved changes to recover',markersChecked:'Read positions checked',markersTotal:'Read positions to check'};for(const [key,label]of Object.entries(labels))if(/^[0-9]+$/.test(String(p?.[key]??'')))content.append(paragraph(label+': '+p[key]));}
   const stop=button('Stop private recovery',()=>{recoveryAbort?.abort();clearPreferences();note('Recovery stop requested. Waiting for the private operation to settle.');});stop.dataset.recoveryStop='true';content.append(stop);
   content.append(button(preferences?'Refresh private views':preferenceProgress?'Continue private recovery':'Recover private views',()=>void work(recoverPreferences),true));
  }
@@ -289,7 +289,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
    for(const id of status?.depositIds??[])deposits.append(el('option',{value:id},`Deposit ${id}`));
    if(!deposits.options.length)deposits.append(el('option',{value:''},'No verified collateral found'));
    deposits.value=(status?.depositIds??[]).includes(draft.deposit)?draft.deposit:deposits.options[0].value;draft.deposit=deposits.value;
-   deposits.addEventListener('change',()=>{draft.deposit=deposits.value;validate();});content.append(label('Posting collateral',deposits),paragraph('A deposit alone does not establish eligibility. The action check verifies live policy and collateral conditions.'));
+   deposits.addEventListener('change',()=>{draft.deposit=deposits.value;validate();});content.append(label('Posting collateral',deposits),paragraph('When you review your post, we’ll check your available posting funds and the board’s rules.'));
    input('subboard','Subboard ID (0 for main board)',{initial:'0'});
    if(kind==='reply'){input('parent','Reply to post ID');input('root','Root thread ID');}
    if(kind==='quote'||kind==='repost')input('reference','Referenced post ID');
@@ -338,9 +338,9 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
    else if(intent)showIntent();
    else if(blocked)content.append(paragraph('Check retained recovery before preparing any new action.'),button('Check account recovery',()=>void work(refresh)));
    else{
-    const messages={'fee-needed':'Private network fee credit is needed.','collateral-pending':'No posting collateral is available.','fee-ready':'Private fee credit and deposit IDs were found; posting eligibility still requires the action check.'};
+    const messages={'fee-needed':'Funds for transaction fees are needed.','collateral-pending':'No posting balance is available.','fee-ready':'Your posting balance is available. We’ll check the funds needed when you review an action.'};
     content.append(paragraph(messages[status?.status]??'The private account has not been verified.'));
-    if(status?.privateFeeCredit&&/^[0-9]+$/.test(status.privateFeeCredit))content.append(paragraph(`Private fee credit: ${status.privateFeeCredit} fee-juice units.`));
+    if(status?.privateFeeCredit&&/^[0-9]+$/.test(status.privateFeeCredit))content.append(paragraph(status.privateFeeCredit==='0'?'No funds for transaction fees are available.':'Funds for transaction fees are available.'));
     content.append(paragraph('Funding is not connected in this panel yet. No funds are requested here.'));
     if(status?.status!=='locked'){
      content.append(el('nav',{'aria-label':'Private account views'},button('Actions',()=>{view='action';render();}),button('Your names',()=>{view='names';render();}),button('Private views',()=>{view='preferences';render();})));
