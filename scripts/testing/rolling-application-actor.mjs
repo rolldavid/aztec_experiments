@@ -6,6 +6,7 @@ import assert from 'node:assert/strict';
 import path from 'node:path';
 import {createFileJournalStorage} from '../../apps/src/billboard/user/transaction-journal-store.mjs';
 import {createRollingApplication} from '../../shared/rolling/application.mjs';
+import {createRollingPreferenceReader} from '../../shared/rolling/preference-reader.mjs';
 import {createSynchronizedRollingApplication} from '../../shared/rolling/synchronized-application.mjs';
 const leases=new Set();
 const fail=()=>Object.assign(Error('Rolling actor is unavailable.'),{code:'ROLLING_ACTOR_CONTEXT'});
@@ -27,7 +28,7 @@ export async function createRollingApplicationActor({sdk,routing,node,endpoint,n
  const scope={account:ownerText,...capturedNetwork,board:String(board.instance.address),portal:portal.toLowerCase()};
  const leaseKeys=['journal:'+path.resolve(storageDirectory),'pxe:'+dataDirectory];
  assert(leaseKeys.every(key=>!leases.has(key)),'Actor storage is already in use');leaseKeys.forEach(key=>leases.add(key));
- let store,pxe,wallet,journal,app,closed=false,closing,busy;
+ let store,pxe,wallet,journal,app,readPreferences,closed=false,closing,busy;
  let authWitnesses=0,walletSubmissions=0,lastExternal={proofJobs:0,transportSends:0};
  const contextGuard=()=>{
   if(closed||account.secret!==secret||account.salt!==salt||account.signingKey!==signingKey||String(account.address)!==ownerText||!sdk.isTrustedPrivateNode(node))throw fail();
@@ -65,7 +66,7 @@ export async function createRollingApplicationActor({sdk,routing,node,endpoint,n
   });
   return [args[0],bounded];
  }
- const deployment={board:{address:board.instance.address,artifact:board.artifact},network:capturedNetwork,portal:scope.portal,proofsEnabled,
+ const deployment={board:{address:board.instance.address,artifact:board.artifact,instance:board.instance},network:capturedNetwork,portal:scope.portal,proofsEnabled,
   privateFee:{address:fee.instance.address,artifact:fee.artifact,gasSettings:fee.gas}};
  async function rebuild(existingJournal){
   contextGuard();const privateStore=createFileJournalStorage(storageDirectory);
@@ -73,6 +74,17 @@ export async function createRollingApplicationActor({sdk,routing,node,endpoint,n
   const next=createRollingApplication({sdk:{...sdk,isPrivateWalletForNode:routing.isPrivateWalletForNode},deployment,contextGuard,privateStore,
    accountSession:{owner,wallet,node,journal:nextJournal,walletSecret:journalOptions.walletSecret,walletSalt:journalOptions.walletSalt}});
   app=createSynchronizedRollingApplication({application:next,synchronize:pxe.sync.bind(pxe),contextGuard});
+  // Mirror the production session: the actor owns the exclusive lease, while
+  // the reader owns sync. Calling the public locked head facade would deadlock.
+  // Rebuild starts a new reader bound to this raw application and file store;
+  // the existing encrypted prefix is reauthenticated rather than copied in RAM.
+  let preferenceReader;
+  readPreferences=options=>{
+   preferenceReader??=createRollingPreferenceReader({sdk,pxe,node,owner,deployment,
+    readHead:next.readPreferenceHead.bind(next),contextGuard,privateStore,
+    walletSecret:journalOptions.walletSecret,walletSalt:journalOptions.walletSalt});
+   return preferenceReader.read(options);
+  };
   journal=nextJournal;wallet._transactionJournal=journal;
  }
  try{
@@ -101,7 +113,8 @@ export async function createRollingApplicationActor({sdk,routing,node,endpoint,n
   if(constructor)await new sdk.ContractFunctionInteraction(wallet,owner,constructor,[key.x,key.y]).simulate({from:owner});
   await rebuild(journal);
  }catch(error){closed=true;try{await dispose();}catch(cleanup){throw new AggregateError([error,cleanup],'Actor initialization and cleanup failed');}throw error;}
- const application=Object.freeze(Object.fromEntries(Object.keys(app).map(name=>[name,(...args)=>exclusive(()=>app[name](...args))])));
+ const application=Object.freeze({...Object.fromEntries(Object.keys(app).map(name=>[name,(...args)=>exclusive(()=>app[name](...args))])),
+  readPreferences:options=>exclusive(()=>readPreferences(options))});
  function close(){if(closing)return closing;closed=true;const pending=busy;
   closing=(async()=>{if(pending)try{await pending;}catch{/* Caller retains the operation failure. */}await dispose();})();return closing;}
  const actor={};Object.defineProperties(actor,{application:{value:application},pxe:{get:()=>pxe},wallet:{value:wallet},journal:{get:()=>journal},owner:{value:owner},

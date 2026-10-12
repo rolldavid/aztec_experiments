@@ -1,14 +1,19 @@
 // Labelled SDK/PXE doubles for lifecycle boundaries. Uses actual processed board
 // ABI, argument encoding, production application, encrypted journal and file CAS.
 // No service, proof, real signature, funding or chain acceptance is claimed.
-import test from 'node:test';
+import test,{after} from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import {Fr} from '@aztec-labs/foundation/curves/bn254';
 import {AztecAddress} from '@aztec-labs/stdlib/aztec-address';
-import {loadContractArtifact,encodeArguments} from '@aztec-labs/stdlib/abi';
+import {loadContractArtifact,encodeArguments,EventSelector,decodeFunctionSignature} from '@aztec-labs/stdlib/abi';
+import {BlockHash} from '@aztec-labs/stdlib/block';
+import {poseidon2HashWithSeparator} from '@aztec-labs/foundation/crypto/poseidon';
+import {BarretenbergSync} from '@aztec-foundation/bb.js';
+import {createPreferenceEventDecoder} from '../../shared/rolling/preference-events.mjs';
+after(()=>BarretenbergSync.destroySingleton());
 import {Tx,TxHash} from '@aztec-labs/stdlib/tx';
 import {PrivateKernelTailCircuitPublicInputs} from '@aztec-labs/stdlib/kernel';
 import {ChonkProof} from '@aztec-labs/stdlib/proofs';
@@ -208,4 +213,86 @@ test('stalled receipt RPC uses remaining confirmation budget and cannot hold act
  const failure=pending.then(()=>assert.fail(),error=>{f.events.push('application-settled');return error;});
  await seen;const closing=actor.close();assert.equal((await failure).code,'BB_SUBMISSION_UNKNOWN');await closing;const after=[...f.events],files=await fs.readdir(f.input.storageDirectory),saved=await Promise.all(files.map(name=>fs.readFile(path.join(f.input.storageDirectory,name))));
  release();await new Promise(resolve=>setImmediate(resolve));assert.deepEqual(f.events,after);assert.deepEqual(await Promise.all(files.map(name=>fs.readFile(path.join(f.input.storageDirectory,name)))),saved);assert(Date.now()<deadline+1500);assert.equal(f.state.stops,1);
+});
+
+// Genuine production reader + actual processed event ABI/Poseidon/file AEAD;
+// only SDK/PXE/node behavior is doubled. No chain delivery/recovery claim.
+async function preferenceFixture(t){
+ const f=await fixture(t),classId=new Fr(10),board=f.input.board.instance.address;
+ const state=f.state;state.height=4;state.rows=[];
+ Object.assign(f.input.board.instance,{currentContractClassId:classId,originalContractClassId:classId});
+ const step=async name=>{state.calls.push(name);if(state.hook)await state.hook(name);};
+ const blockHash=n=>BlockHash.fromString(hex(n+100));
+ Object.assign(f.input.sdk,{EventSelector,decodeFunctionSignature,poseidon2HashWithSeparator});
+ const decoder=await createPreferenceEventDecoder({sdk:f.input.sdk,artifact});
+ Object.assign(f.input.node,{
+  getBlockData:async n=>{await step('preference-block');return {header:{globalVariables:{blockNumber:n}},blockHash:blockHash(n)};},
+  getContract:async(_,ref)=>{await step('preference-class');assert(BlockHash.isBlockHash(ref.hash));return {address:board,currentContractClassId:state.badClass?new Fr(11):classId,originalContractClassId:classId};},
+ });
+ Object.assign(f.pxe,{
+  getSyncedBlockHeader:async()=>{await step('preference-header');return {globalVariables:{blockNumber:state.height},hash:async()=>blockHash(state.height)};},
+  getPrivateEvents:async(selector,filter)=>{await step('preference-events');assert.equal(selector.toString(),decoder.selector.toString());assert.equal(filter.contractAddress.toString(),board.toString());assert.deepEqual(filter.scopes.map(String),[String(f.input.fees.authorAccount.address)]);state.ranges??=[];state.ranges.push([filter.fromBlock,filter.toBlock]);return state.rows.filter(r=>r.l2BlockNumber>=filter.fromBlock&&r.l2BlockNumber<filter.toBlock);},
+ });
+ const oldAt=f.input.sdk.Contract.at;
+ f.input.sdk.Contract.at=(...args)=>{const result=oldAt(...args);result.methods.preference_head=owner=>({simulate:async opts=>{assert.equal(String(owner),String(f.input.fees.authorAccount.address));assert.equal(String(opts.from),String(owner));await step('preference-head');return {result:state.head};}});return result;};
+ async function replace(changes){
+  let digest=0n;state.rows=[];
+  for(let i=0;i<changes.length;i++){
+   const {block,kind=1,target=2n,value=true}=changes[i],fields=[1n,BigInt(i+1),BigInt(kind),BigInt(target),value?1n:0n,0n,0n,digest];
+   digest=(await poseidon2HashWithSeparator([31337n,1n,board.toBigInt(),...fields],0x52435031)).toBigInt();
+   state.rows.push({packedEvent:fields.map(x=>new Fr(x)),eventSelector:decoder.selector,l2BlockNumber:block,l2BlockHash:blockHash(block),txHash:TxHash.fromString(hex(block+1000))});
+  }
+  state.head={initialized:changes.length>0,schema:1n,revision:BigInt(changes.length),digest};
+ }
+ await replace([{block:2}]);return {...f,replace};
+}
+test('actor preference API is lazy, reads raw guarded head without nested sync, and stores only actual ciphertext',async t=>{
+ const f=await preferenceFixture(t),actor=await createRollingApplicationActor(f.input);
+ try{
+  assert(!f.state.calls.some(x=>x.startsWith('preference-')));const before=f.state.calls.filter(x=>x==='sync').length;
+  const result=await actor.application.readPreferences();assert.equal(result.status,'complete');assert.deepEqual(result.preferences.bookmarks,['2']);
+  assert.equal(f.state.calls.filter(x=>x==='sync').length-before,1);assert.deepEqual(actor.activity(),{authWitnesses:0,proofJobs:0,walletSubmissions:0,transportSends:0});
+  const files=(await fs.readdir(f.input.storageDirectory)).filter(x=>x.endsWith('.json'));assert.equal(files.length,1);
+  const text=await fs.readFile(path.join(f.input.storageDirectory,files[0]),'utf8');const envelope=JSON.parse(text);assert.equal(envelope.version,1);assert(envelope.recovery);assert(!text.includes('bookmarks'));assert(!text.includes('ROLLING_PREFERENCES_V1'));
+ }finally{await actor.close();}
+});
+test('reopen rebuilds reader against new raw app and reauthenticates genuine AEAD prefix before next page',async t=>{
+ const f=await preferenceFixture(t);f.state.height=40;await f.replace([{block:2},{block:38,kind:3,target:9n}]);
+ const actor=await createRollingApplicationActor(f.input);
+ try{
+  const first=await actor.application.readPreferences();assert.equal(first.status,'recovering');assert(!('preferences' in first));assert.deepEqual(f.state.ranges,[[1,33]]);
+  await actor.reopenJournal();const second=await actor.application.readPreferences();assert.equal(second.status,'complete');assert.deepEqual(second.preferences.followedNames,['9']);assert.deepEqual(f.state.ranges,[[1,33],[33,41]]);
+  const file=path.join(f.input.storageDirectory,(await fs.readdir(f.input.storageDirectory)).find(x=>x.endsWith('.json'))),prior=JSON.parse(await fs.readFile(file,'utf8'));
+  prior.data=(prior.data[0]==='0'?'1':'0')+prior.data.slice(1);await fs.writeFile(file,JSON.stringify(prior),{mode:0o600});
+  await actor.reopenJournal();await assert.rejects(actor.application.readPreferences(),{code:'ROLLING_PREFERENCE_READER_UNAVAILABLE'});
+ }finally{await actor.close();}
+});
+test('preference read excludes concurrent read/action/reopen and retains lease while unabortable sync is pending',async t=>{
+ const f=await preferenceFixture(t),actor=await createRollingApplicationActor(f.input);let enter,release;const seen=new Promise(r=>enter=r),wait=new Promise(r=>release=r);
+ f.state.hook=async name=>{if(name==='sync'){enter();await wait;}};
+ const reading=actor.application.readPreferences();await seen;
+ for(const work of [()=>actor.application.readPreferences(),()=>actor.application.readPreferenceHead(),()=>actor.application.prepare({type:'name',first:'River',last:'Stone'}),()=>actor.reopenJournal()])await assert.rejects(work(),{code:'ROLLING_ACTOR_CONTEXT'});
+ release();assert.equal((await reading).status,'complete');await actor.close();assert.equal(f.state.stops,1);
+});
+test('in-flight preference close drains work and prevents ciphertext publication or a later private call',async t=>{
+ const f=await preferenceFixture(t),actor=await createRollingApplicationActor(f.input);let enter,release;const seen=new Promise(r=>enter=r),wait=new Promise(r=>release=r);
+ f.state.hook=async name=>{if(name==='preference-events'){enter();await wait;}};
+ const reading=actor.application.readPreferences(),failure=assert.rejects(reading,{code:'ROLLING_PREFERENCE_READER_UNAVAILABLE'});await seen;
+ const closing=actor.close();assert.equal(f.state.stops,0);await assert.rejects(actor.application.readPreferences(),{code:'ROLLING_ACTOR_CONTEXT'});
+ release();await failure;await closing;assert.equal(f.state.stops,1);assert.deepEqual(await fs.readdir(f.input.storageDirectory),[]);
+ const after=[...f.state.calls];await new Promise(r=>setImmediate(r));assert.deepEqual(f.state.calls,after);
+});
+for(const stage of ['preference-header','preference-head','preference-class','preference-events'])test('account change during '+stage+' rejects preference read without checkpoint publication',async t=>{
+ const f=await preferenceFixture(t),actor=await createRollingApplicationActor(f.input);
+ try{f.state.hook=name=>{if(name===stage)f.account.secret=new Fr(99);};await assert.rejects(actor.application.readPreferences(),{code:'ROLLING_PREFERENCE_READER_UNAVAILABLE'});assert.deepEqual(await fs.readdir(f.input.storageDirectory),[]);}finally{await actor.close();}
+});
+test('wrong canonical board class fails before event query, without a fallback store',async t=>{
+ const f=await preferenceFixture(t),actor=await createRollingApplicationActor(f.input);f.state.badClass=true;
+ try{await assert.rejects(actor.application.readPreferences(),{code:'ROLLING_PREFERENCE_READER_UNAVAILABLE'});assert(!f.state.calls.includes('preference-events'));assert.deepEqual(await fs.readdir(f.input.storageDirectory),[]);}finally{await actor.close();}
+});
+test('separate replacement namespace and empty encrypted store rebuilds from labelled SDK events, not prior cache',async t=>{
+ const first=await preferenceFixture(t),a=await createRollingApplicationActor(first.input);const prior=await a.application.readPreferences();await a.close();
+ const second=await preferenceFixture(t);assert.notEqual(second.input.storageDirectory,first.input.storageDirectory);assert.notEqual(second.input.dataDirectory,first.input.dataDirectory);
+ const b=await createRollingApplicationActor(second.input);
+ try{assert.deepEqual(await fs.readdir(second.input.storageDirectory),[]);const result=await b.application.readPreferences();assert.deepEqual(result.preferences,prior.preferences);assert.deepEqual(second.state.ranges,[[1,5]]);assert.deepEqual(b.activity(),{authWitnesses:0,proofJobs:0,walletSubmissions:0,transportSends:0});}finally{await b.close();}
 });
