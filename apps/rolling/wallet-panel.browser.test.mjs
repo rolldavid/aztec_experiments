@@ -7,8 +7,9 @@ import http from 'node:http';
 import fs from 'node:fs/promises';
 import {chromium} from 'playwright';
 const fixture=`import {mountRollingWalletPanel} from '/wallet-panel.mjs';
+import {selectPrivateViews} from '/private-views.mjs';
 const state={loads:0,sessions:0,prepares:0,sends:0,reconciles:0,cancels:0,closes:0,creates:0,imports:0,exports:0,effects:0,ended:0,owned:0,unlocked:true,options:null,failure:null,hold:null,release:null,fee:'fee-ready',profileCalls:0,bioVersion:'3',avatarVersion:'4'};
-window.test=state;
+window.test=state;state.rawAccount={secretKey:'PRIVATE_SENTINEL',address:'HUMAN_IDENTITY_SENTINEL'};state.privateChanges=0;state.preferenceReads=0;state.headReads=0;state.revision='4';state.preferences={scope:{chainId:'31337',version:'1',board:'1'},head:{schema:1,initialized:true,revision:'4',digest:'42'},bookmarks:['10'],followedBoards:['0'],followedNames:[],subscriptions:['10'],replyNotifications:true,readMarkers:[]};
 state.previewBlobs=new Map();state.revoked=[];const createURL=URL.createObjectURL.bind(URL),revokeURL=URL.revokeObjectURL.bind(URL);
 URL.createObjectURL=blob=>{const url=createURL(blob);state.previewBlobs.set(url,blob);return url;};URL.revokeObjectURL=url=>{state.revoked.push(url);state.previewBlobs.delete(url);revokeURL(url);};
 const envelope={schemaVersion:1,kind:'aztec-billboard-encrypted-wallet',kdf:'PBKDF2-SHA256',iterations:600000,salt:'aa'.repeat(16),iv:'bb'.repeat(12),ciphertext:'cc'.repeat(16)};
@@ -19,26 +20,30 @@ async function boundary(name){if(state.hold===name)await new Promise(resolve=>st
 const application={
  async readAccountStatus(){await boundary('status');const intent=read();return intent&&!['confirmed','reverted','cancelled'].includes(intent.status)?{status:'recovering',intent}:{status:state.fee,privateFeeCredit:'1000',depositIds:state.fee==='fee-ready'?['9']:[]};},
  async ownedIdentities({cursor}){state.owned++;const page=state.namesPages?.[cursor]??(cursor===0?{identities:['7'],records:[{id:'7',first:'River',last:'Lane'}],nextCursor:8}:{identities:['8'],records:[{id:'8',first:'Ellis',last:'Moss'}],nextCursor:null});await boundary('owned');return page;},
+ async readPreferenceHead(){state.headReads++;await boundary('head');return {schema:1,initialized:true,revision:state.revision,digest:'42'};},
+ async readPreferences(){state.preferenceReads++;await boundary('preferences');return state.partial?{status:'recovering',complete:false,progress:{scannedThrough:32,anchorBlock:80,processedRevision:'2',targetRevision:'4',markersChecked:0,markersTotal:0}}:{status:'complete',complete:true,preferences:state.preferences};},
  async readProfile({name}){state.profileCalls++;await boundary('profile');return {name:'0x'+BigInt(name).toString(16).padStart(64,'0'),bioVersion:state.bioVersion,avatarVersion:state.avatarVersion};},
  async prepare(action){state.prepares++;if(['bio','avatar'].includes(action.type)&&action.expectedVersion!==state[action.type+'Version'])error();write({intentId:'42',action,maximumFee:'123',status:'prepared'});await boundary('prepare');return read();},
  async submitPrepared(id){state.sends++;write({...read(),status:'submitting'});await boundary('submit');const intent={...read(),status:state.submitOutcome??'confirmed'};write(intent);return intent;},
  async cancelPrepared(){state.cancels++;write({...read(),status:'cancelled'});return read();},
  async reconcile(){state.reconciles++;await boundary('reconcile');const intent=read();if(state.resolveOutcome){intent.status=state.resolveOutcome;write(intent);}return intent;}
 };
-const runtime={getAccount:()=>state.unlocked?{secretKey:'PRIVATE_SENTINEL',address:'HUMAN_IDENTITY_SENTINEL'}:null,
+const runtime={selectPrivateViews,getAccount:()=>state.unlocked?state.rawAccount:null,
  account:{configure:options=>{state.options=options;},async create(){state.creates++;await boundary('create');state.unlocked=true;return envelope;},async importRecovery(){state.imports++;await boundary('import');state.unlocked=true;},async exportRecovery(){state.exports++;await boundary('export');return envelope;},async endSession(){state.ended++;state.unlocked=false;return {reload:true};}},
  async createSession(){state.sessions++;await boundary('session');return {application,busy:false,async close(){state.closes++;await boundary('close');}};}
 };
-window.panel=mountRollingWalletPanel({loadRuntime:async()=>{state.loads++;await boundary('load');return runtime;},onPublicEffect:()=>{state.effects++;}});
+window.panel=mountRollingWalletPanel({loadRuntime:async()=>{state.loads++;await boundary('load');return runtime;},onPublicEffect:()=>{state.effects++;},onPrivateChange:()=>{state.privateChanges++;}});
 document.getElementById('open').onclick=()=>window.panel.open(window.defaults);
 window.ready=true;`;
 async function browserFixture(t){
  const server=http.createServer(async(req,res)=>{
   if(req.url==='/'){res.writeHead(200,{'content-type':'text/html','Content-Security-Policy':"default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'none'; img-src blob:; base-uri 'none'; form-action 'none'"});res.end('<!doctype html><meta name="viewport" content="width=device-width"><link rel="stylesheet" href="/style.css"><button id="open">Open account</button><div id="reader">Public reader</div><script type="module" src="/fixture.mjs"></script>');return;}
   if(req.url==='/fixture.mjs'){res.writeHead(200,{'content-type':'text/javascript'});res.end(fixture);return;}
+  if(req.url==='/invocation.mjs'){res.writeHead(200,{'content-type':'text/javascript'});res.end(await fs.readFile(new URL('../../shared/rolling/invocation.mjs',import.meta.url)));return;}
+  if(req.url==='/private-views.mjs'){res.writeHead(200,{'content-type':'text/javascript'});res.end(await fs.readFile(new URL('../../shared/rolling/private-views.mjs',import.meta.url)));return;}
   if(!['/wallet-panel.mjs','/avatar-upload.mjs','/model.mjs','/style.css'].includes(req.url)){res.writeHead(404);res.end();return;}
   res.writeHead(200,{'content-type':req.url.endsWith('.css')?'text/css':'text/javascript'});res.end(await fs.readFile(new URL('.'+req.url,import.meta.url)));
- });await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));t.after(()=>new Promise(resolve=>server.close(resolve)));
+ });await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));t.after(()=>{server.closeAllConnections();return new Promise(resolve=>server.close(resolve));});
  const browser=await chromium.launch({headless:true});t.after(()=>browser.close());const page=await browser.newPage({viewport:{width:390,height:844},acceptDownloads:true});
  const errors=[],requests=[];page.on('pageerror',error=>errors.push(error.message));page.on('request',request=>requests.push(request.url()));
  t.after(()=>assert.deepEqual(errors,[]));await page.goto(`http://127.0.0.1:${server.address().port}/`);await page.waitForFunction(()=>window.ready);
@@ -264,5 +269,51 @@ test('empty private names view offers registration without inventing identities 
 for(const invalidPage of ['duplicate','cursor'])test('invalid private names '+invalidPage+' page preserves current list and stops without retry',async t=>{
  const {page}=await browserFixture(t);await open(page);await unlock(page);await page.getByRole('button',{name:'Your names',exact:true}).click();
  await page.evaluate(kind=>test.namesPages={8:kind==='duplicate'?{identities:['7'],records:[{id:'7',first:'Forged',last:'Label'}],nextCursor:null}:{identities:['8'],records:[{id:'8',first:'Ellis',last:'Moss'}],nextCursor:8}},invalidPage);
- await page.getByRole('button',{name:'Load more owned names',exact:true}).click();await page.getByRole('alert').waitFor();assert.deepEqual(await page.getByRole('list',{name:'Your registered names'}).locator('li p').allTextContents(),['River Lane']);assert.equal(await page.evaluate(()=>test.owned),2);assert.equal((await counts(page)).sends,0);
+ await page.getByRole('button',{name:'Load more owned names',exact:true}).click();await page.getByRole('alert').waitFor({timeout:3000}).catch(async error=>{t.diagnostic(JSON.stringify(await page.evaluate(()=>({owned:test.owned,busy:document.querySelector('dialog').getAttribute('aria-busy'),alerts:document.querySelectorAll('[role=alert]').length}))));throw error;});assert.deepEqual(await page.getByRole('list',{name:'Your registered names'}).locator('li p').allTextContents(),['River Lane']);assert.equal(await page.evaluate(()=>test.owned),2);assert.equal((await counts(page)).sends,0);
+});
+
+// Labelled presentation doubles: production replay, wallet proofs and storage are
+// independently qualified; these tests assert explicit UI boundaries only.
+test('private recovery is explicit, one bounded step, and never exposes partial preferences',async t=>{
+ const {page}=await browserFixture(t);await open(page,{view:'preferences'});assert.equal(await page.evaluate(()=>panel.privateStatus()),'locked');
+ await page.getByRole('button',{name:'Unlock',exact:true}).click();await page.getByRole('button',{name:'Recover private views',exact:true}).waitFor();
+ assert.equal(await page.evaluate(()=>test.preferenceReads),0);await page.evaluate(()=>test.partial=true);
+ await page.getByRole('button',{name:'Recover private views',exact:true}).click();await page.getByRole('button',{name:'Continue private recovery',exact:true}).waitFor();
+ assert.equal(await page.evaluate(()=>panel.privateStatus()),'recovering');assert.equal(await page.evaluate(()=>panel.preferenceEnabled(1,'10')),null);assert.equal(await page.evaluate(()=>test.preferenceReads),1);
+ await page.evaluate(()=>test.partial=false);await page.getByRole('button',{name:'Continue private recovery',exact:true}).click();await page.getByText('Complete authenticated preferences are ready.').waitFor();
+ assert.equal(await page.evaluate(()=>panel.preferenceEnabled(1,'10')),true);assert.equal(await page.evaluate(()=>test.sends),0);
+ assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);assert.equal(await page.getByText('Loading private account tools…',{exact:true}).count(),0);if(process.env.ROLLING_PREFERENCES_COMPLETE_SCREENSHOT){await page.getByRole('button',{name:'Disable reply notifications'}).scrollIntoViewIfNeeded();await page.screenshot({path:process.env.ROLLING_PREFERENCES_COMPLETE_SCREENSHOT,fullPage:true});}
+ await page.getByRole('button',{name:'Close account panel'}).click();await page.evaluate(()=>{test.rawAccount={};});assert.equal(await page.evaluate(()=>panel.privateStatus()),'locked');assert.equal(await page.evaluate(()=>panel.preferenceEnabled(1,'10')),null);
+});
+test('every preference and read marker captures a fresh head and requires maximum-fee confirmation',async t=>{
+ const {page}=await browserFixture(t);await open(page);await unlock(page);
+ for(const [i,action]of [{type:'preference',kind:1,target:'10',enabled:true},{type:'preference',kind:2,target:'0',enabled:false},{type:'preference',kind:3,target:'7',enabled:true},{type:'preference',kind:4,target:'10',enabled:false},{type:'preference',kind:5,target:'0',enabled:false},{type:'read-marker',thread:'10',throughBlock:'12'}].entries()){
+  await page.getByRole('button',{name:'Close account panel'}).click();await open(page,action);await page.getByRole('button',{name:'Check action and review fee'}).waitFor();await page.evaluate(i=>test.revision=String(i+20),i);
+  await page.getByRole('button',{name:'Check action and review fee'}).click();await page.getByRole('button',{name:'Confirm and send'}).waitFor();
+  assert.deepEqual(await page.evaluate(()=>JSON.parse(sessionStorage.getItem('labelled-ui-intent')).action),{...action,expectedRevision:String(i+20)});
+  assert(await page.getByText(/Sending records an encrypted onchain update/).isVisible());assert.equal(await page.evaluate(()=>test.sends),0);
+  await page.getByRole('button',{name:'Cancel prepared action'}).click();await page.getByRole('button',{name:'Check action and review fee'}).waitFor();
+ }
+ assert.equal(await page.evaluate(()=>test.headReads),6);
+});
+test('account invalidation during preference recovery clears capability, keeps busy until settled and never publishes old result',async t=>{
+ const {page}=await browserFixture(t);await open(page,{view:'preferences'});await page.getByRole('button',{name:'Unlock',exact:true}).click();await page.getByRole('button',{name:'Recover private views'}).waitFor();
+ await page.evaluate(()=>test.hold='preferences');await page.getByRole('button',{name:'Recover private views'}).click();await page.waitForFunction(()=>test.release);
+ await page.evaluate(()=>test.options.onChange({invalidated:true}));assert.equal(await page.evaluate(()=>panel.privateStatus()),'locked');assert.equal(await page.getByRole('dialog').getAttribute('aria-busy'),'true');
+ await page.keyboard.press('Escape');assert(await page.getByRole('dialog').isVisible());await page.evaluate(()=>test.release());await page.getByRole('button',{name:'Reload to unlock'}).waitFor();assert.equal(await page.evaluate(()=>panel.preferenceEnabled(1,'10')),null);
+});
+test('preference head failure does not prepare and recovery failure never implies an empty successful view',async t=>{
+ const {page}=await browserFixture(t);await open(page,{type:'preference',kind:1,target:'10',enabled:false});await unlock(page);await page.evaluate(()=>test.failure='head');
+ await page.getByRole('button',{name:'Check action and review fee'}).click();await page.getByRole('alert').waitFor();assert.equal(await page.evaluate(()=>test.prepares),0);
+ await page.evaluate(()=>test.failure=null);await page.getByRole('button',{name:'Check account recovery'}).click();await page.getByRole('button',{name:'Private views',exact:true}).click();await page.evaluate(()=>test.failure='preferences');await page.getByRole('button',{name:'Recover private views'}).click();await page.getByRole('alert').waitFor();assert.equal(await page.evaluate(()=>panel.privateStatus()),'recovering');assert.equal(await page.evaluate(()=>panel.preferenceEnabled(1,'10')),null);
+});
+test('locking clears recovered private capability before asynchronous session cleanup settles',async t=>{
+ const {page}=await browserFixture(t);await open(page,{view:'preferences'});await page.getByRole('button',{name:'Unlock',exact:true}).click();await page.getByRole('button',{name:'Recover private views'}).click();await page.getByText('Complete authenticated preferences are ready.').waitFor();
+ await page.getByText('Backup and account security',{exact:true}).click();await page.evaluate(()=>test.hold='close');await page.getByRole('button',{name:'Lock account',exact:true}).click();await page.waitForFunction(()=>test.release);assert.notEqual(await page.evaluate(()=>panel.privateStatus()),'complete');await page.evaluate(()=>test.release());await page.getByRole('button',{name:'Reload to unlock'}).waitFor();
+});
+test('explicit recovery abort waits for the original private call and does not publish its late complete result',async t=>{
+ const {page}=await browserFixture(t);await open(page,{view:'preferences'});await page.getByRole('button',{name:'Unlock',exact:true}).click();await page.getByRole('button',{name:'Recover private views'}).waitFor();
+ await page.evaluate(()=>test.hold='preferences');await page.getByRole('button',{name:'Recover private views'}).click();await page.waitForFunction(()=>test.release);await page.getByRole('button',{name:'Stop private recovery'}).click();
+ assert.equal(await page.getByRole('dialog').getAttribute('aria-busy'),'true');await page.keyboard.press('Escape');assert(await page.getByRole('dialog').isVisible());assert.equal(await page.evaluate(()=>panel.privateStatus()),'recovering');
+ await page.evaluate(()=>test.release());await page.getByRole('alert').waitFor();assert.equal(await page.evaluate(()=>panel.privateStatus()),'recovering');assert.equal(await page.evaluate(()=>test.preferenceReads),1);assert.equal(await page.evaluate(()=>test.sends),0);
 });

@@ -5,11 +5,16 @@ import {focusRoute,skipToContent} from './navigation.mjs';
 
 const read=createPublicReader(),app=document.querySelector('#app'),positions=new Map();
 let controller,sequence=0,route=location.hash.slice(1)||'/home',main,loadedPages=1;
-let walletPanel;
+let walletPanel,privatePanel;
+const privateViews=new Set(['following','bookmarks','notifications']);
+function privateChanged(){
+ if(privateViews.has(route.split('/')[1])){controller?.abort();main?.replaceChildren();void render();}
+ else for(const node of app.querySelectorAll('[data-private-setting]'))node.textContent=preferenceLabel(node.dataset.privateSetting,Number(node.dataset.kind),node.dataset.target);
+}
 async function openWallet(defaults={}){
  try{
   walletPanel??=import('./wallet-panel.mjs').then(({mountRollingWalletPanel})=>mountRollingWalletPanel({
-   loadRuntime:async()=>{const runtime=await import('/wallet/runtime.mjs');return runtime.loadRollingWalletRuntime();},onPublicEffect:()=>render()}));
+   loadRuntime:async()=>{const runtime=await import('/wallet/runtime.mjs');return runtime.loadRollingWalletRuntime();},onPublicEffect:()=>render(),onPrivateChange:privateChanged})).then(panel=>(privatePanel=panel));
   (await walletPanel).open(defaults);
  }catch{announce('Account tools could not load. Reload the page before trying again.');}
 }
@@ -45,6 +50,10 @@ function removalPolicy(value){
  if(typeof value!=='string'||!/^(0|[1-9][0-9]{0,19})$/.test(value)||BigInt(value)>0xffffffffffffffffn)return null;
  const packed=BigInt(value);return policyLabel('Removal policy',String(packed&0xffffffffn),String(packed>>32n));
 }
+function preferenceLabel(label,kind,target){return privatePanel?.preferenceEnabled?.(kind,target)===true?({'Bookmark':'Unbookmark','Follow board':'Unfollow board','Follow name':'Unfollow name','Subscribe to thread':'Unsubscribe from thread'}[label]??'Remove '+label):label;}
+function preferenceButton(label,kind,target){
+ return button(preferenceLabel(label,kind,target),()=>openWallet({type:'preference',kind,target,enabled:privatePanel?.preferenceEnabled?.(kind,target)!==true}),{'data-private-setting':label,'data-kind':kind,'data-target':target});
+}
 function postCard(post,data){
  if(!post||!field(post.id)||!post.record||!field(post.record.root))throw Error('Invalid public post');
  const r=post.record,isBot=Boolean(post.bot),named=!isBot&&r.name_id!=='0'?data.names?.[r.name_id]:null,board=data.board?.id===r.subboard?data.board:data.boards?.[r.subboard];
@@ -68,17 +77,18 @@ function postCard(post,data){
    if(text(board.rejection?.reason))article.append(el('p',{class:'removed'},'Subboard rejection reason: '+text(board.rejection.reason)));
    if(policyVersion(board.rejection?.mainVersion))article.append(el('p',{class:'quiet'},'Subboard rejected under parent policy v'+board.rejection.mainVersion));
   }
-  article.append(el('div',{class:'post-actions'},link('View thread','/thread/'+r.root),unlike()));return article;
+  article.append(el('div',{class:'post-actions'},link('View thread','/thread/'+r.root),unlike(),preferenceButton('Bookmark',1,post.id)));return article;
  }
  article.append(richText(post.text),el('div',{class:'post-actions'},link('View conversation','/thread/'+r.root,{class:'post-link'}),el('span',{class:'action'},`${text(post.likes)} ${post.likes==='1'?'like':'likes'}`),
   button('Reply',()=>openWallet({type:'reply',parent:post.id,root:r.root,subboard:r.subboard})),
   button('Like',()=>openWallet({type:'like',post:post.id})),unlike(),button('Quote',()=>openWallet({type:'quote',reference:post.id,subboard:r.subboard})),
-  button('Repost',()=>openWallet({type:'repost',reference:post.id,subboard:r.subboard}))));
+  button('Repost',()=>openWallet({type:'repost',reference:post.id,subboard:r.subboard})),preferenceButton('Bookmark',1,post.id),preferenceButton('Subscribe to thread',4,r.root),
+  typeof post.position?.blockNumber==='string'&&/^(0|[1-9][0-9]{0,9})$/.test(post.position.blockNumber)&&BigInt(post.position.blockNumber)<=0xffffffffn?button('Mark thread read',()=>openWallet({type:'read-marker',thread:r.root,throughBlock:String(post.position.blockNumber)})):null));
  return article;
 }
 function timestamp(value){const n=Number(value);if(!Number.isSafeInteger(n)||n<0)return '';const date=new Date(n*1000);return Number.isFinite(date.getTime())?date.toLocaleString(undefined,{dateStyle:'medium',timeStyle:'short'}):'';}
 function shell(title,{boardId=null}={}){
- const rail=el('aside',{class:'rail',id:'community-navigation'},link('◉ rolling.chat','/home',{class:'brand'}),el('nav',{class:'nav-group','aria-label':'Community'},link('Home','/home'),link('Main board','/board/0'),link('Explore subboards','/directory')),el('p',{class:'rail-foot'},'Public conversations. Private participation.'));
+ const rail=el('aside',{class:'rail',id:'community-navigation'},link('◉ rolling.chat','/home',{class:'brand'}),el('nav',{class:'nav-group','aria-label':'Community'},link('Home','/home'),link('Main board','/board/0'),link('Explore subboards','/directory'),link('Following','/following'),link('Bookmarks','/bookmarks'),link('Notifications','/notifications')),el('p',{class:'rail-foot'},'Public conversations. Private participation.'));
  const closeMenu=()=>{rail.classList.remove('open');rail.inert=narrow.matches;document.querySelector('.workspace').inert=false;menu.setAttribute('aria-expanded','false');menu.focus();};
  const menu=button('☰',()=>{rail.inert=false;rail.classList.add('open');document.querySelector('.workspace').inert=true;menu.setAttribute('aria-expanded','true');rail.querySelector('a').focus();},{class:'menu-toggle','aria-label':'Open navigation','aria-expanded':'false','aria-controls':'community-navigation'});
  rail.append(button('×',closeMenu,{class:'mobile-close','aria-label':'Close navigation'}));rail.inert=narrow.matches;
@@ -115,20 +125,29 @@ async function render(){
  // Back navigation reloads the same number of pages against the current index.
  // The whole restoration has one deadline, rather than an unbounded request chain.
  const restoreSignal=AbortSignal.any([signal,AbortSignal.timeout(20000)]),saved=positions.get(route);loadedPages=1;
- const parts=route.split('/').filter(Boolean);let api='home',parameters={limit:30},title='Home',expectedRoot;
- if(parts[0]==='directory'){api='directory';title='Explore subboards';try{parameters.query=parts[1]?decodeURIComponent(parts[1]):'';}catch{shell('Page not found');return;}}
+ const parts=route.split('/').filter(Boolean);let api='home',parameters={limit:30},title='Home',expectedRoot,privateView=null;
+ if(privateViews.has(parts[0])&&parts.length===1){privateView=parts[0];api='feed';title=privateView[0].toUpperCase()+privateView.slice(1);}
+ else if(parts[0]==='directory'){api='directory';title='Explore subboards';try{parameters.query=parts[1]?decodeURIComponent(parts[1]):'';}catch{shell('Page not found');return;}}
  else if(parts[0]==='board'){if(parts.length!==2||!field(parts[1])){shell('Page not found',{boardId:''});return;}api='board';parameters={id:parts[1],limit:30};title=parts[1]==='0'?'Main board':'Subboard';}
  else if(['thread','profile','post'].includes(parts[0])){if(!field(parts[1])||parts[2]&&!field(parts[2])){shell('Page not found');return;}api=parts[0];parameters=api==='post'?{id:parts[1]}:{limit:30,[api==='thread'?'root':'nameId']:parts[1]};title=api==='thread'?'Conversation':api==='profile'?'Profile':'Post';
   if(api==='thread'&&parts[2]){expectedRoot=parts[1];api='post';parameters={id:parts[2]};title='Linked post';}
  }
  else if(parts[0]!=='home'){shell('Page not found');return;}
- shell(title,{boardId:api==='board'?parameters.id:null});const loading=el('p',{role:'status','aria-busy':'true'},'Loading conversations…');main.append(loading);
+ shell(title,{boardId:api==='board'?parameters.id:null});
+ if(privateView){
+  main.querySelector('.intro').textContent='Filtered privately on this device from the ordinary public feed.';
+  main.append(button('Manage private views',()=>openWallet({view:'preferences'})));
+  if(privatePanel?.privateStatus?.()!=='complete'){main.append(el('div',{class:'empty'},el('h2',{},'Unlock and recover your private views'),el('p',{},'Complete authenticated recovery is required. Your choices are not sent to the public reader.'),button('Open private recovery',()=>openWallet({view:'preferences'}))));return;}
+ }
+ const loading=el('p',{role:'status','aria-busy':'true'},'Loading conversations…');main.append(loading);
  if(api==='directory'){
   const input=el('input',{type:'search',value:parameters.query,placeholder:'Search names, descriptions or slugs','aria-label':'Search subboards',maxlength:120});
   const form=el('form',{class:'directory-search',onSubmit:event=>{event.preventDefault();location.hash='/directory/'+encodeURIComponent(input.value.trim());}},input,el('button',{class:'button',type:'submit'},'Search'));main.insertBefore(form,loading);
  }
  const container=el('section',{class:'feed','aria-label':title});let data;
- const seenIds=new Set(),seenCursors=new Set();
+ const seenIds=new Set(),seenCursors=new Set();let lastPosition=null,lastPositionHash=null;
+ const position=p=>['blockNumber','txIndexWithinBlock','logIndexWithinTx'].map(key=>{const v=p?.position?.[key];if(typeof v!=='string'||!/^(0|[1-9][0-9]*)$/.test(v))throw Error('Invalid position');return BigInt(v);});
+ const descending=(a,b)=>{for(let i=0;i<3;i++){if(a[i]!==b[i])return a[i]>b[i];}return false;};
  function append(response){
   if(typeof response.revision!=='string'||response.revision!==data.revision||response.scope.boardAddress!==data.scope.boardAddress||
    response.checkpoint?.number!==data.checkpoint?.number||response.checkpoint?.hash!==data.checkpoint?.hash)throw Error('Changed public snapshot');
@@ -142,7 +161,14 @@ async function render(){
   if(next!==null&&next!==undefined&&(typeof next!=='string'||!next.length||next.length>4096||seenCursors.has(next)||!items.length))throw Error('Invalid next cursor');
   const ids=new Set();for(const item of items){if(!field(item?.id)||seenIds.has(item.id)||ids.has(item.id))throw Error('Duplicate public item');ids.add(item.id);}
   // Validate/build the whole page before changing visible content or paging state.
-  const nodes=items.map(item=>api==='directory'?boardCard(item):postCard(item,response));
+  let visible=items,nextPosition=lastPosition,nextPositionHash=lastPositionHash;
+  if(privateView){
+   // Inspect all rows before filtering, including cross-page order and duplicates.
+   for(const item of items){const at=position(item);if(nextPosition&&(!descending(nextPosition,at)||nextPosition[0]===at[0]&&nextPositionHash!==item.position.blockHash))throw Error('Public order changed');nextPosition=at;nextPositionHash=item.position.blockHash;}
+   visible=privatePanel.filterPrivatePage(privateView,response).posts;
+  }
+  const nodes=visible.map(item=>api==='directory'?boardCard(item):postCard(item,response));
+  if(nodes.length)container.querySelector('.empty')?.remove();lastPosition=nextPosition;lastPositionHash=nextPositionHash;
   container.append(...nodes);for(const id of ids)seenIds.add(id);if(next)seenCursors.add(next);
  }
 
@@ -156,10 +182,10 @@ async function render(){
   }
   loading.remove();
   if(api==='board'){
-   main.querySelector('h1').textContent=data.board?text(data.board.name):'Main board';container.setAttribute('aria-label','Posts in '+(data.board?text(data.board.name):'Main board'));main.append(boardOverview(data));
+   main.querySelector('h1').textContent=data.board?text(data.board.name):'Main board';container.setAttribute('aria-label','Posts in '+(data.board?text(data.board.name):'Main board'));main.append(boardOverview(data),preferenceButton('Follow board',2,parameters.id));
    const compose=document.querySelector('[data-board-compose]');if(compose)compose.disabled=Boolean(data.board?.rejected);
   }
-  if(api==='profile'&&data.identity){main.querySelector('h1').textContent=text(data.identity.first)+' '+text(data.identity.last);main.append(createPublicProfile(data.identity,{signal}));}
+  if(api==='profile'&&data.identity){main.querySelector('h1').textContent=text(data.identity.first)+' '+text(data.identity.last);main.append(createPublicProfile(data.identity,{signal}),preferenceButton('Follow name',3,parameters.nameId));}
   if(!container.childElementCount)container.append(el('div',{class:'empty'},el('h2',{},'A little quiet here'),el('p',{},api==='directory'?'No subboards match this search.':'No posts to show yet.')));
   main.append(container);
   if(expectedRoot)main.append(el('p',{},link('Read the conversation from the beginning','/thread/'+expectedRoot)));

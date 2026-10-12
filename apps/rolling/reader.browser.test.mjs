@@ -94,9 +94,9 @@ test('labelled social records: removed navigation, literal reasons and distinct 
  assert.equal(await page.locator('article img, article script, article a[href^="javascript:"]').count(),0);
  assert(!(await page.locator('body').innerText()).includes('REMOVED_TEXT_SENTINEL'));assert(!(await page.locator('body').innerText()).includes('REJECTED_BOARD_TEXT_SENTINEL'));assert(!(await page.locator('body').innerText()).includes('VERSION_SENTINEL'));
  for(const id of ['11','12','13']){
-  const post=page.locator('#post-'+id);assert.deepEqual(await post.getByRole('button').allTextContents(),['Unlike']);assert.equal(await post.locator('.post-body').count(),0);
+  const post=page.locator('#post-'+id);assert.deepEqual(await post.getByRole('button').allTextContents(),['Unlike','Bookmark']);assert.equal(await post.locator('.post-body').count(),0);
  }
- assert.deepEqual(await page.locator('#post-10').getByRole('button').allTextContents(),['Reply','Like','Unlike','Quote','Repost']);
+ assert.deepEqual(await page.locator('#post-10').getByRole('button').allTextContents(),['Reply','Like','Unlike','Quote','Repost','Bookmark','Subscribe to thread']);
  assert(!requests.some(value=>value.includes('wallet')||value.includes('aztec')));
  await page.locator('#post-10').getByRole('button',{name:'Unlike',exact:true}).click();
  await card.getByRole('button',{name:'Unlike',exact:true}).click();
@@ -258,7 +258,7 @@ test('main and subboard routes use exact board API, contextual composer, directo
 test('rejected board remains discoverable and navigable without new posting controls',async t=>{
  const {page}=await boardFixture(t,{rejected:true});await page.evaluate(()=>location.hash='/board/20');await page.getByRole('heading',{name:'Workshop',level:1}).waitFor();
  assert(await page.getByText('Rejection reason: <script>rejected()</script>',{exact:true}).isVisible());assert.equal(await page.locator('main script').count(),0);assert(await page.getByRole('button',{name:'Write a post',exact:true}).isDisabled());
- const card=page.locator('#post-21');assert.deepEqual(await card.getByRole('button').allTextContents(),['Unlike']);assert.equal(await card.locator(':scope > .post-body').count(),0);assert(!(await card.innerText()).includes('Board post 21'));assert.equal(await card.getByRole('link',{name:'View thread',exact:true}).getAttribute('href'),'#/thread/21');
+ const card=page.locator('#post-21');assert.deepEqual(await card.getByRole('button').allTextContents(),['Unlike','Bookmark']);assert.equal(await card.locator(':scope > .post-body').count(),0);assert(!(await card.innerText()).includes('Board post 21'));assert.equal(await card.getByRole('link',{name:'View thread',exact:true}).getAttribute('href'),'#/thread/21');
  await page.getByText('Parent rules at rejection · v2',{exact:true}).click();assert(await page.getByText('Current parent rules',{exact:true}).last().isVisible());
  await card.getByRole('button',{name:'Unlike',exact:true}).click();await page.waitForFunction(()=>window.boardActions?.length===1);assert.deepEqual(await page.evaluate(()=>boardActions[0]),{type:'unlike',post:'21'});
 });
@@ -271,4 +271,64 @@ for(const mode of ['wrong-board','foreign-post','unavailable'])test('board route
 test('unknown or malformed board route has no generic-feed fallback',async t=>{
  const {page,state}=await boardFixture(t);await page.evaluate(()=>location.hash='/board/999');await page.getByRole('heading',{name:'Board not found',exact:true}).waitFor();const count=state.calls.length;
  await page.evaluate(()=>location.hash='/board/20/extra');await page.getByRole('heading',{name:'Page not found',exact:true}).waitFor();assert.equal(state.calls.length,count);assert(await page.getByRole('button',{name:'Write a post',exact:true}).isDisabled());
+});
+
+// Labelled private-session/public-HTTP doubles, real panel/reader/pure filter.
+// No proof, paid action or encrypted-chain recovery is represented by this fixture.
+async function privateViewFixture(t,{mutation=null}={}){
+ const files=new Set(['live.html','reader.mjs','reader-client.mjs','profile-view.mjs','model.mjs','navigation.mjs','style.css','avatar-upload.mjs','wallet-panel.mjs']);
+ const scope={chainId:'31337',rollupVersion:'1',boardAddress:'0x'+'1'.padStart(64,'0')},hash='0x'+'a'.repeat(64);
+ const make=(id,block)=>({id,record:{root:'10',parent:id==='10'?'0':'10',reference:'0',kind:'1',subboard:'0',name_id:'0'},text:'Public content '+id,timestamp:'1',likes:'0',position:{blockNumber:String(block),txIndexWithinBlock:'0',logIndexWithinTx:'0',blockHash:hash}});
+ const requests=[],feed=[],state={hold:false,pending:[]};
+ const server=http.createServer(async(req,res)=>{
+  const url=new URL(req.url,'http://localhost');requests.push(url.pathname+url.search);
+  if(url.pathname.startsWith('/api/')){
+   const next=url.searchParams.has('cursor');if(url.pathname==='/api/feed')feed.push(url.pathname+url.search);
+   const posts=next?[make(mutation==='duplicate'?'10':'11',mutation==='order'?4:2)]:[make('10',3)];
+   const data={schemaVersion:1,scope,complete:true,checkpoint:{number:4,hash},revision:mutation==='snapshot'&&next?'changed':'one',names:{},boards:{},posts,nextCursor:next?null:'page2'};
+   if(state.hold&&url.pathname==='/api/feed')await new Promise(resolve=>state.pending.push(resolve));
+   res.writeHead(200,{'content-type':'application/json'});res.end(JSON.stringify(data));return;
+  }
+  if(url.pathname==='/wallet/runtime.mjs'){
+   res.writeHead(200,{'content-type':'text/javascript'});res.end(`import {selectPrivateViews} from '/private-views.mjs';
+const raw={},prefs={scope:{chainId:'31337',version:'1',board:'1'},head:{schema:1,initialized:true,revision:'2',digest:'42'},bookmarks:['11'],followedBoards:[],followedNames:[],subscriptions:['10'],replyNotifications:true,readMarkers:[]};
+window.privateTest={reads:0,partial:false,options:null,prepare:[],head:0};
+export async function loadRollingWalletRuntime(){return {selectPrivateViews,getAccount:()=>raw,account:{configure:o=>privateTest.options=o},createSession:async()=>({busy:false,close:async()=>{},application:{readAccountStatus:async()=>({status:'collateral-pending',privateFeeCredit:'2',depositIds:[]}),ownedIdentities:async()=>({identities:[],records:[],nextCursor:null}),readPreferences:async()=>{privateTest.reads++;return privateTest.partial?{status:'recovering',complete:false,progress:{scannedThrough:32,anchorBlock:100}}:{status:'complete',complete:true,preferences:prefs};},readPreferenceHead:async()=>{privateTest.head++;return prefs.head;},prepare:async action=>{privateTest.prepare.push(action);return {intentId:'one',status:'prepared',action,maximumFee:'3'};}}})};}`);return;
+  }
+  if(url.pathname==='/invocation.mjs'){res.writeHead(200,{'content-type':'text/javascript'});res.end(await fs.readFile(new URL('../../shared/rolling/invocation.mjs',import.meta.url)));return;}
+  if(url.pathname==='/private-views.mjs'){res.writeHead(200,{'content-type':'text/javascript'});res.end(await fs.readFile(new URL('../../shared/rolling/private-views.mjs',import.meta.url)));return;}
+  const name=url.pathname==='/'?'live.html':url.pathname.slice(1);if(!files.has(name)){res.writeHead(404);res.end();return;}
+  res.writeHead(200,{'content-type':name.endsWith('.mjs')?'text/javascript':name.endsWith('.css')?'text/css':'text/html'});res.end(await fs.readFile(path.join(root,name)));
+ });await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));t.after(()=>new Promise(resolve=>server.close(resolve)));
+ const browser=await chromium.launch({headless:true});t.after(()=>browser.close());const page=await browser.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));t.after(()=>assert.deepEqual(errors,[]));await page.addInitScript(()=>window.IntersectionObserver=undefined);
+ await page.goto(`http://127.0.0.1:${server.address().port}/#/bookmarks`);await page.getByRole('heading',{name:'Unlock and recover your private views'}).waitFor();return {page,requests,feed,state};
+}
+async function recoverPrivateView(page){await page.getByRole('button',{name:'Open private recovery'}).click();await page.getByRole('button',{name:'Unlock',exact:true}).click();await page.getByRole('button',{name:'Recover private views',exact:true}).click();await page.getByText('Complete authenticated preferences are ready.').waitFor();await page.getByRole('button',{name:'Close account panel'}).click();}
+test('private routes stay SDK-free when locked; filter whole ordinary pages and continue an empty filtered cursor',async t=>{
+ const {page,requests,feed}=await privateViewFixture(t);assert.equal(feed.length,0);assert(!requests.some(p=>p.includes('wallet')));
+ if(process.env.ROLLING_PREFERENCES_LOCKED_SCREENSHOT)await page.screenshot({path:process.env.ROLLING_PREFERENCES_LOCKED_SCREENSHOT,fullPage:true});
+ await recoverPrivateView(page);await page.getByRole('button',{name:'Load more',exact:true}).waitFor();assert.equal(await page.getByRole('article').count(),0);
+ await page.getByRole('button',{name:'Load more',exact:true}).focus();await page.keyboard.press('Enter');await page.locator('#post-11').waitFor();assert.equal(await page.getByRole('article').count(),1);assert.equal(await page.getByRole('heading',{name:'A little quiet here'}).count(),0);
+ assert.deepEqual(feed,['/api/feed?limit=30','/api/feed?limit=30&cursor=page2']);assert(!requests.some(p=>/bookmarks=|nameId=|owner=|subscriptions=/.test(p)));
+ await page.locator('#post-11').getByRole('button',{name:'Unbookmark',exact:true}).click();await page.getByRole('button',{name:'Check action and review fee'}).click();await page.getByRole('button',{name:'Confirm and send'}).waitFor();assert.deepEqual(await page.evaluate(()=>privateTest.prepare),[{type:'preference',kind:1,target:'11',enabled:false,expectedRevision:'2'}]);
+});
+for(const mutation of ['duplicate','order','snapshot'])test('private page validation rejects '+mutation+' even across locally filtered rows',async t=>{
+ const {page}=await privateViewFixture(t,{mutation});await recoverPrivateView(page);await page.getByRole('button',{name:'Load more',exact:true}).click();await page.getByRole('alert').waitFor();assert.equal(await page.getByRole('article').count(),0);assert.equal(await page.getByRole('button',{name:'Load more',exact:true}).count(),0);
+});
+test('account invalidation synchronously removes private DOM and partial recovery never requests public pages',async t=>{
+ const {page,feed}=await privateViewFixture(t);await page.getByRole('button',{name:'Open private recovery'}).click();await page.getByRole('button',{name:'Unlock',exact:true}).click();await page.getByRole('button',{name:'Recover private views',exact:true}).waitFor();await page.evaluate(()=>privateTest.partial=true);await page.getByRole('button',{name:'Recover private views'}).click();await page.getByRole('button',{name:'Continue private recovery'}).waitFor();assert.equal(feed.length,0);
+ await page.evaluate(()=>privateTest.partial=false);await page.getByRole('button',{name:'Continue private recovery'}).click();await page.getByRole('button',{name:'Close account panel'}).click();await page.getByRole('button',{name:'Load more',exact:true}).click();await page.locator('#post-11').waitFor();
+ assert.equal(await page.evaluate(()=>{privateTest.options.onChange({invalidated:true});return document.querySelectorAll('article').length;}),0);await page.getByRole('heading',{name:'Unlock and recover your private views'}).waitFor();
+});
+
+test('a delayed ordinary page cannot restore private content after account invalidation',async t=>{
+ const {page,state}=await privateViewFixture(t);await recoverPrivateView(page);state.hold=true;await page.getByRole('button',{name:'Load more',exact:true}).click();
+ const until=Date.now()+2000;while(!state.pending.length&&Date.now()<until)await new Promise(resolve=>setTimeout(resolve,10));assert.equal(state.pending.length,1);
+ await page.evaluate(()=>privateTest.options.onChange({invalidated:true}));state.hold=false;for(const resolve of state.pending)resolve();await page.getByRole('heading',{name:'Unlock and recover your private views'}).waitFor();
+ assert.equal(await page.getByRole('article').count(),0);
+});
+test('Following and Notifications use only ordinary feed parameters and explicit subscription filtering',async t=>{
+ const {page,feed}=await privateViewFixture(t);await recoverPrivateView(page);await page.getByRole('link',{name:'Following',exact:true}).click();await page.getByRole('button',{name:'Load more',exact:true}).click();await page.getByText('Checked against chain block 4',{exact:true}).waitFor();assert.equal(await page.getByRole('article').count(),0);
+ await page.getByRole('link',{name:'Notifications',exact:true}).click();await page.getByRole('button',{name:'Load more',exact:true}).click();await page.locator('#post-11').waitFor();assert.equal(await page.locator('#post-10').count(),0);assert(feed.every(url=>/^\/api\/feed\?limit=30(?:&cursor=page2)?$/.test(url)));
+ await page.locator('#post-11').getByRole('button',{name:'Mark thread read',exact:true}).click();await page.getByRole('button',{name:'Check action and review fee'}).click();await page.getByRole('button',{name:'Confirm and send'}).waitFor();assert.deepEqual(await page.evaluate(()=>privateTest.prepare),[{type:'read-marker',thread:'10',throughBlock:'2',expectedRevision:'2'}]);
 });

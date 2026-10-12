@@ -1,3 +1,4 @@
+import {selectPrivateViews} from '../../shared/rolling/private-views.mjs';
 // This module is imported only after an explicit Unlock action. Public reading
 // never imports the SDK, opens private storage or makes personalized node calls.
 import {createRollingWalletSession} from './wallet-session.mjs';
@@ -57,7 +58,7 @@ async function load(){
  globalThis.BillboardCRS.validateManifest(crs);
  const boardArtifact=sdk.loadContractArtifact(boardRaw),privateFeeArtifact=sdk.loadContractArtifact(feeRaw);
  let session,creating;
- return Object.freeze({account,getAccount:()=>globalThis.walletState.aztec,createSession({onProgress}={}){
+ return Object.freeze({account,selectPrivateViews,getAccount:()=>globalThis.walletState.aztec,createSession({onProgress}={}){
   if(session)return Promise.resolve(session);if(creating)return creating;
   const selected=globalThis.walletState.aztec;
   if(!selected||globalThis.walletState.invalidated)return Promise.reject(failed());

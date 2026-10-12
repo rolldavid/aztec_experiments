@@ -28,6 +28,8 @@ test('real browser SDK unlock and encrypted recovery survive unavailable private
  await page.getByRole('button',{name:'Create account and download recovery',exact:true}).waitFor({timeout:30000});
  assert.equal(requests.filter(r=>r.url.endsWith('/wallet/aztec_bundle.js')).length,1);
  assert.equal(requests.some(r=>r.method==='POST'),false);
+ const facade=await page.evaluate(async()=>{const {loadRollingWalletRuntime}=await import('/wallet/runtime.mjs');const runtime=await loadRollingWalletRuntime();return {selector:typeof runtime.selectPrivateViews,keys:Object.keys(runtime).sort()};});
+ assert.equal(facade.selector,'function');assert.deepEqual(facade.keys,['account','createSession','getAccount','selectPrivateViews']);
  // Actual browser worker and pinned local CRS initialization, even when the
  // application uses a remote prover. This previously failed on a missing G1
  // derivation route; a public/config double cannot hide that asset failure.
