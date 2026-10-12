@@ -71,3 +71,5 @@ for fee funding, collateral/refund and encrypted-journal recovery. Its controlle
 Outbox roots qualify Ethereum integration, not an L2 exit or the full board GUI.
 The cappedEIP1559 receipt regression in the local-mining test prevents reintroducing
 the Anvil1.4.1 receipt-accounting defect.
+
+The locked dependency bootstrap also applies the hash-pinned IndexedDB atomicity repair before SDK builds. Run `npm run bootstrap:dependencies` only in an isolated checkout with no active dependency consumers, then rebuild the SDK. `node --test scripts/test-indexeddb-atomicity-patch.mjs scripts/test-sdk-storage.mjs` checks patch integrity and labelled fake-IndexedDB behavior; `node scripts/test-sdk-storage-browser.mjs` verifies the actual built adapter in Chromium with disposable storage. Both immediate and delayed callback failures must roll back all writes, survive reopen, preserve the error, and leave the queue usable. Native LMDB tests do not qualify browser storage.

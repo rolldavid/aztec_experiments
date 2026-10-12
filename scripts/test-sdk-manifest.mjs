@@ -1,3 +1,4 @@
+import {INDEXEDDB_ATOMICITY_PINS, transformIndexedDBAtomicity} from './patch-indexeddb-atomicity.mjs';
 import {PXE_REORG_ANCHOR_PINS,transformPxeReorgAnchor} from './patch-pxe-reorg-anchor.mjs';
 import {PRIVATE_EVENT_QUERY_PINS,transformPrivateEventQuery} from './patch-private-event-query.mjs';
 import assert from 'node:assert/strict';
@@ -44,6 +45,11 @@ function fixture(t) {
   for(const pin of PXE_REORG_ANCHOR_PINS){
     const source=fs.readFileSync(new URL('./testing/fixtures/pxe-reorg-anchor/'+pin.path.split('/').at(-1),import.meta.url),'utf8');
     inputs['node_modules/@aztec-labs/pxe/'+pin.path]=transformPxeReorgAnchor(source,pin.path);
+  }
+  inputs['scripts/patch-indexeddb-atomicity.mjs']=fs.readFileSync(new URL('./patch-indexeddb-atomicity.mjs',import.meta.url),'utf8');
+  for(const pin of INDEXEDDB_ATOMICITY_PINS){
+    const source=fs.readFileSync(new URL('./fixtures/indexeddb-atomicity-6.0.0-rc.1/'+pin.path.split('/').at(-1),import.meta.url),'utf8');
+    inputs['node_modules/@aztec-labs/kv-store/'+pin.path]=transformIndexedDBAtomicity(source,pin.path);
   }
   const outputs = {
     'aztec_bundle.js': '// synthetic built bundle',
@@ -178,4 +184,14 @@ test('PXE reorg installer is mandatory and its changed bytes invalidate SDK prov
   delete f.manifest.inputs[name];f.save();assert.throws(()=>checkSdk(f.root),/Missing SDK input/);
   f.manifest.inputs[name]=original;f.save();f.write(name,'changed patch installer');
   assert.throws(()=>checkSdk(f.root),/SDK input changed/);
+});
+
+for(const pin of INDEXEDDB_ATOMICITY_PINS)test('IndexedDB atomicity patch must be present and exact: '+pin.path,t=>{
+ const f=fixture(t),name='node_modules/@aztec-labs/kv-store/'+pin.path;
+ delete f.manifest.inputs[name];f.save();assert.throws(()=>checkSdk(f.root),/Missing SDK input/);
+ f.write(name,'unpatched fixture');f.manifest.inputs[name]=hash('unpatched fixture');f.save();
+ assert.throws(()=>checkSdk(f.root),/SDK IndexedDB atomicity patch mismatch/);
+});
+test('IndexedDB installer is mandatory provenance',t=>{
+ const f=fixture(t);delete f.manifest.inputs['scripts/patch-indexeddb-atomicity.mjs'];f.save();assert.throws(()=>checkSdk(f.root),/Missing SDK input/);
 });

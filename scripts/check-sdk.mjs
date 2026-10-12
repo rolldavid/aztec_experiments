@@ -1,3 +1,4 @@
+import {INDEXEDDB_ATOMICITY_PINS} from './patch-indexeddb-atomicity.mjs';
 import {PXE_REORG_ANCHOR_PINS} from './patch-pxe-reorg-anchor.mjs';
 import {PRIVATE_EVENT_QUERY_PINS} from './patch-private-event-query.mjs';
 import fs from 'node:fs';
@@ -12,7 +13,7 @@ export const SDK_ASSETS = [
   ['node_modules/@aztec-labs/sqlite3mc-wasm/vendor/jswasm/sqlite3-opfs-async-proxy.js', 'sqlite3-opfs-async-proxy.js'],
 ];
 const requiredOutputs = ['aztec_bundle.js', 'bb-main.worker.js', 'bb-thread.worker.js', 'sqlite.worker.js', ...SDK_ASSETS.map(([, output]) => output)];
-const requiredInputs = ['scripts/patch-pxe-reorg-anchor.mjs', ...PXE_REORG_ANCHOR_PINS.map(pin=>'node_modules/@aztec-labs/pxe/'+pin.path), 'scripts/patch-private-event-query.mjs', ...PRIVATE_EVENT_QUERY_PINS.map(pin=>'node_modules/@aztec-labs/pxe/'+pin.path), 'shared/sdk-entry.mjs', 'shared/sdk-store.mjs', 'node_modules/@aztec-labs/pxe/dest/storage/metadata.js', 'scripts/toolchain.mjs', 'toolchain.json', ...SDK_ASSETS.map(([input]) => input)];
+const requiredInputs = ['scripts/patch-indexeddb-atomicity.mjs', ...INDEXEDDB_ATOMICITY_PINS.map(pin=>'node_modules/@aztec-labs/kv-store/'+pin.path), 'scripts/patch-pxe-reorg-anchor.mjs', ...PXE_REORG_ANCHOR_PINS.map(pin=>'node_modules/@aztec-labs/pxe/'+pin.path), 'scripts/patch-private-event-query.mjs', ...PRIVATE_EVENT_QUERY_PINS.map(pin=>'node_modules/@aztec-labs/pxe/'+pin.path), 'shared/sdk-entry.mjs', 'shared/sdk-store.mjs', 'node_modules/@aztec-labs/pxe/dest/storage/metadata.js', 'scripts/toolchain.mjs', 'toolchain.json', ...SDK_ASSETS.map(([input]) => input)];
 const sha = data => createHash('sha256').update(data).digest('hex');
 const isRecord = value => value !== null && typeof value === 'object' && !Array.isArray(value);
 
@@ -46,6 +47,9 @@ export function checkSdk(root = ROOT, sdkDir = path.join(root, '.build/sdk')) {
   verify(root, 'scripts/build-sdk.mjs', manifest.buildScript, 'build script');
   for (const name of requiredInputs) {
     if (!Object.hasOwn(manifest.inputs, name)) throw new Error(`Missing SDK input: ${name}`);
+  }
+  for (const pin of INDEXEDDB_ATOMICITY_PINS) {
+    if(manifest.inputs['node_modules/@aztec-labs/kv-store/'+pin.path]!==pin.after)throw new Error('SDK IndexedDB atomicity patch mismatch');
   }
   for (const pin of PRIVATE_EVENT_QUERY_PINS) {
     if(manifest.inputs['node_modules/@aztec-labs/pxe/'+pin.path]!==pin.after)throw new Error('SDK private event query patch mismatch');

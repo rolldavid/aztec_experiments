@@ -1,3 +1,4 @@
+import {inspectIndexedDBAtomicity, INDEXEDDB_ATOMICITY_PINS} from './patch-indexeddb-atomicity.mjs';
 import {inspectPxeReorgAnchor,PXE_REORG_ANCHOR_PINS} from './patch-pxe-reorg-anchor.mjs';
 import {inspectPrivateEventQuery,PRIVATE_EVENT_QUERY_PINS} from './patch-private-event-query.mjs';
 import {buildPortalRuntime} from './build-portal-runtime.mjs';
@@ -15,6 +16,8 @@ const privateEventQuery=await inspectPrivateEventQuery(fileURLToPath(new URL('..
 if(privateEventQuery.state!=='patched')throw new Error('Run npm run bootstrap:dependencies before building the SDK');
 const pxeReorgAnchor=await inspectPxeReorgAnchor(fileURLToPath(new URL('../node_modules/@aztec-labs/pxe',import.meta.url)));
 if(pxeReorgAnchor.state!=='patched')throw new Error('Run npm run bootstrap:dependencies before building the SDK');
+const indexedDBAtomicity=await inspectIndexedDBAtomicity(fileURLToPath(new URL('../node_modules/@aztec-labs/kv-store',import.meta.url)));
+if(indexedDBAtomicity.state!=='patched')throw new Error('Run npm run bootstrap:dependencies before building the SDK');
 const portalMetadata=buildPortalRuntime();
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -77,7 +80,8 @@ const assets = [
 ];
 for (const [src, dest] of assets) await fs.copyFile(path.join(root, src), path.join(out, dest));
 const inputs = [...new Set([...Object.keys(main.metafile.inputs), ...Object.keys(workers.metafile.inputs),
-  ...assets.map(([src]) => src), 'scripts/toolchain.mjs', 'toolchain.json', 'scripts/patch-private-event-query.mjs',
+  ...assets.map(([src]) => src), 'scripts/patch-indexeddb-atomicity.mjs',
+  ...INDEXEDDB_ATOMICITY_PINS.map(pin=>'node_modules/@aztec-labs/kv-store/'+pin.path), 'scripts/toolchain.mjs', 'toolchain.json', 'scripts/patch-private-event-query.mjs',
   ...PRIVATE_EVENT_QUERY_PINS.map(pin=>'node_modules/@aztec-labs/pxe/'+pin.path), 'scripts/patch-pxe-reorg-anchor.mjs',
   ...PXE_REORG_ANCHOR_PINS.map(pin=>'node_modules/@aztec-labs/pxe/'+pin.path), 'scripts/build-portal-runtime.mjs',...Object.keys(portalMetadata.sources).map(name=>'billboard/portal/'+name)])].sort();
 const inputHashes = {};
