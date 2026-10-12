@@ -13,6 +13,43 @@ export function notificationBrowserBudget(deadlineAt,now=Date.now()){
  assert(Number.isSafeInteger(deadlineAt)&&Number.isSafeInteger(now));
  assert(deadlineAt-now>=180000,'Insufficient remaining notification browser and accounting budget');return 150000;
 }
+// Used on success AND failure. A rejected receipt or one unavailable balance
+// cannot prevent independent already-paid outcomes from being collected.
+export async function settleNotificationEvidence({transactions,balances,observation,persist}){
+ const errors=[];observation.outcomes={transactions:[],balances:[]};
+ for(const [kind,attempts]of [['transactions',transactions],['balances',balances]]){
+  for(const {label,run}of attempts){
+   const item={label,passed:false};observation.outcomes[kind].push(item);
+   try{await run();item.passed=true;}catch(error){errors.push(error);}
+   try{await persist();}catch(error){errors.push(error);}
+  }
+ }
+ observation.accountingVerified=observation.outcomes.balances.length===2&&observation.outcomes.balances.every(item=>item.passed);
+ if(errors.length)observation.passed=false;
+ try{await persist();}catch(error){errors.push(error);}
+ if(errors.length)throw new AggregateError(errors,'Notification receipt or accounting collection failed');
+}
+export async function observeNotificationTransaction({tx,node,TxHash,observation,persist,writeEffect,accountFee,decode}){
+ const txHash=String(tx.getTxHash()),receipt=await node.getTxReceipt(TxHash.fromString(txHash));
+ observation.status=receipt.status;observation.executionResult=receipt.executionResult;await persist();
+ assert(['checkpointed','proven','finalized'].includes(receipt.status));
+ assert.equal(String(receipt.txHash),txHash);
+ accountFee(txHash,receipt.transactionFee);
+ Object.assign(observation,{blockNumber:Number(receipt.blockNumber),blockHash:String(receipt.blockHash),transactionFee:String(receipt.transactionFee),submission:'included'});await persist();
+ const effect=await node.getTxEffect(TxHash.fromString(txHash));
+ assert(effect?.data);assert.equal(String(effect.data.txHash),txHash);assert.equal(String(effect.l2BlockHash),String(receipt.blockHash));assert.equal(Number(effect.l2BlockNumber),Number(receipt.blockNumber));
+ await writeEffect(effect.data.toBuffer());await persist();
+ assert.equal(BigInt(String(effect.data.transactionFee)),BigInt(receipt.transactionFee));
+ const block=await node.getBlock(receipt.blockNumber,{includeTransactions:true});assert(block);assert.equal(String(block.hash),String(receipt.blockHash));
+ const matches=block.body.txEffects.map((item,index)=>({item,index})).filter(({item})=>String(item.txHash)===txHash);
+ assert.equal(matches.length,1);assert(matches[0].item.toBuffer().equals(effect.data.toBuffer()));
+ assert.equal(String((await node.getBlockData(receipt.blockNumber)).blockHash),String(receipt.blockHash));
+ observation.canonical=true;await persist();
+ // A paid reverted receipt/effect is durable before successful-event decoding.
+ assert.equal(receipt.executionResult,'success');
+ const events=await decode(txHash);
+ return {record:{txHash,blockNumber:String(receipt.blockNumber),txIndexWithinBlock:String(matches[0].index),transactionFee:String(receipt.transactionFee),canonical:true,executionResult:receipt.executionResult,events},effect:effect.data};
+}
 export async function readNotificationSubscriptionSignal(directory){
  let file;
  try{

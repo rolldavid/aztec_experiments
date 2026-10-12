@@ -506,31 +506,30 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
           }finally{checkpoints.restore();}
         }
       async function runNotifications(rootEvent){
-        const {runRollingNotificationFixture}=await import('./rolling-notification-fixture.mjs');
+        const {runRollingNotificationFixture,settleNotificationEvidence,observeNotificationTransaction}=await import('./rolling-notification-fixture.mjs');
         const {assertRollingNotificationAcceptance}=await import('./rolling-notification-acceptance.mjs');
         const scope=decoder.scope,initialHead=await actorB.application.readPreferenceHead();
         assert.deepEqual(initialHead,{initialized:false,schema:1,revision:'0',digest:'0'});
-        const captured=new Map();let subscribedPreferences,subscription,reply,markedPreferences,recoveredPreferences;
+        const captured=new Map(),browserEvidenceRows=new Map();let subscribedPreferences,subscription,reply,markedPreferences,recoveredPreferences;
         const rootTx=forwardedSaved[0];assert(rootTx);assert.equal(String(rootTx.getTxHash()),rootEvent.position.txHash);
         async function collect(tx,other,label){
-          const txHash=String(tx.getTxHash());if(captured.has(txHash))return captured.get(txHash);
-          const receipt=await ctx.node.getTxReceipt(TxHash.fromString(txHash));
-          assert(['checkpointed','proven','finalized'].includes(receipt.status));
-          accountFee(txHash,receipt.transactionFee,other);await save();
-          assert.equal(receipt.executionResult,'success');
-          const effect=await ctx.node.getTxEffect(TxHash.fromString(txHash)),block=await ctx.node.getBlock(receipt.blockNumber,{includeTransactions:true});
-          assert(effect?.data&&block);assert.equal(String(effect.data.txHash),txHash);
-          assert.equal(String(effect.l2BlockHash),String(receipt.blockHash));assert.equal(String(block.hash),String(receipt.blockHash));
-          const matches=block.body.txEffects.map((item,index)=>({item,index})).filter(({item})=>String(item.txHash)===txHash);
-          assert.equal(matches.length,1);assert(matches[0].item.toBuffer().equals(effect.data.toBuffer()));
-          const events=await decoder.decodeTransaction(ctx.node,txHash);
-          const row={txHash,blockNumber:String(receipt.blockNumber),txIndexWithinBlock:String(matches[0].index),transactionFee:String(receipt.transactionFee),canonical:true,executionResult:receipt.executionResult,events};
+          const txHash=String(tx.getTxHash());
+          if(captured.has(txHash)){const row=captured.get(txHash);assert.equal(row.executionResult,'success');return row;}
+          let evidence;
           if(other){
-            const publicFootprint=classifyRollingApplicationFootprint({tx,effect:effect.data,owner,otherOwner:actorB.owner,payer:fees.browserFixture.instance.address,board:ctx.instance.address});
-            const evidence={action:label,txHash,status:receipt.status,blockNumber:Number(receipt.blockNumber),blockHash:String(receipt.blockHash),transactionFee:String(receipt.transactionFee),executionResult:receipt.executionResult,events:events.map(e=>e.type),effectSha256:sha(effect.data.toBuffer()),publicFootprint};
-            report.transactions.push(evidence);await fs.writeFile(path.join(directory,label+'-effect.bin'),effect.data.toBuffer(),{flag:'wx',mode:0o600});await save();
+            evidence=browserEvidenceRows.get(txHash);
+            if(!evidence){evidence={action:label,txHash,submission:'outcome unknown'};browserEvidenceRows.set(txHash,evidence);report.transactions.push(evidence);}
+            await save();
+          }
+          const {record:row,effect}=await observeNotificationTransaction({tx,node:ctx.node,TxHash,observation:evidence??{},persist:save,
+            accountFee:(hash,fee)=>accountFee(hash,fee,other),decode:hash=>decoder.decodeTransaction(ctx.node,hash),
+            writeEffect:async bytes=>{if(evidence&&!evidence.effectSha256){await fs.writeFile(path.join(directory,label+'-effect.bin'),bytes,{flag:'wx',mode:0o600});evidence.effectSha256=sha(bytes);}}});
+          const events=row.events;
+          if(other){
+            const publicFootprint=classifyRollingApplicationFootprint({tx,effect,owner,otherOwner:actorB.owner,payer:fees.browserFixture.instance.address,board:ctx.instance.address});
+            Object.assign(evidence,{events:events.map(e=>e.type),publicFootprint});await save();
             assertRollingPublicFootprint(publicFootprint);for(const key of PERSONAL)assert.equal(publicFootprint.rolePresence[key].otherAuthor,false);
-            assert.equal(events.length,0);hashes.push(txHash);
+            assert.equal(events.length,0);if(!hashes.includes(txHash))hashes.push(txHash);
           }
           captured.set(txHash,row);return row;
         }
@@ -568,11 +567,15 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
             // the browser success result. No recovery submission is performed.
             report.notificationBrowser.submittedHashes=forwardedSaved.map(tx=>String(tx.getTxHash()));
             report.notificationBrowser.browserOutcome=browser?'finished':'unknown; do not replay';await save();
-            if(forwardedSaved[1])await collect(forwardedSaved[1],true,'notification-subscription');
-            let marker;if(forwardedSaved[3])marker=await collect(forwardedSaved[3],true,'notification-marker');
-            assert(browser,'Browser completion unavailable; accounting remains incomplete');
-            await fees.verify(feeTotal,feesB.browserFixture.fundedAmount-feeTotalB);await feesB.verify(feeTotalB,fees.browserFixture.fundedAmount-feeTotal);
-            report.notificationBrowser.accountingVerified=true;await save();
+            let marker;
+            await settleNotificationEvidence({observation:report.notificationBrowser,persist:save,
+              transactions:[
+                ...(forwardedSaved[1]?[{label:'subscription',run:()=>collect(forwardedSaved[1],true,'notification-subscription')}]:[]),
+                ...(forwardedSaved[3]?[{label:'marker',run:async()=>{marker=await collect(forwardedSaved[3],true,'notification-marker');}}]:[])
+              ],balances:[
+                {label:'a',run:async()=>{assert(browser,'Browser completion unavailable; accounting remains incomplete');await fees.verify(feeTotal,feesB.browserFixture.fundedAmount-feeTotalB);}},
+                {label:'b',run:async()=>{assert(browser,'Browser completion unavailable; accounting remains incomplete');await feesB.verify(feeTotalB,fees.browserFixture.fundedAmount-feeTotal);}}
+              ]});
             assert(browser?.passed&&subscription&&reply&&marker);assert.equal(forwardedSaved.length,4);
             for(const key of ['rejected','errors','pending'])assert.equal(l1[key],0);assert(l1.forwarded>0);
             markedPreferences=await privateSnapshot('marked');recoveredPreferences=await privateSnapshot('recovered');
