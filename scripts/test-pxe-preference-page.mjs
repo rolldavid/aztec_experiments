@@ -1,12 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {readFile,writeFile,mkdtemp,mkdir,rm,realpath,symlink} from 'node:fs/promises';
+import {readFile,writeFile,mkdtemp,mkdir,rm,realpath,symlink,cp} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join,resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {createHash} from 'node:crypto';
 import {spawnSync} from 'node:child_process';
-import {PREFERENCE_PAGE_PINS,PREFERENCE_PAGE_COMPACT_PIN,transformPreferencePage,inspectPreferencePage,patchPreferencePage} from './patch-pxe-preference-page.mjs';
+import {PREFERENCE_PAGE_PINS,PREFERENCE_PAGE_COMPACT_PIN,PREFERENCE_PAGE_RECOVERY_PIN,preferenceRecoverySource,transformPreferencePage,inspectPreferencePage,patchPreferencePage} from './patch-pxe-preference-page.mjs';
 
 const root=fileURLToPath(new URL('../',import.meta.url));
 const installed=await realpath(join(root,'node_modules/@aztec-labs/pxe'));
@@ -60,6 +60,14 @@ test('isolated helper is exact reviewed source and a missing/tampered copy fails
   assert.equal(sha(await readFile(join(dir,PREFERENCE_PAGE_COMPACT_PIN.generated))),PREFERENCE_PAGE_COMPACT_PIN.sha256);
   await writeFile(join(dir,PREFERENCE_PAGE_COMPACT_PIN.generated),'unknown');await assert.rejects(inspectPreferencePage(dir),/PATCH_STATE/);
   await rm(join(dir,PREFERENCE_PAGE_COMPACT_PIN.generated));await assert.rejects(inspectPreferencePage(dir),/PATCH_STATE/);
+});
+test('cursor helper bytes are pinned and missing/tampered helper never confer patched state',async t=>{
+  assert.equal(sha(preferenceRecoverySource()),PREFERENCE_PAGE_RECOVERY_PIN.sha256);
+  const dir=await copy(t);await patchPreferencePage(dir);
+  assert.equal(await readFile(join(dir,PREFERENCE_PAGE_RECOVERY_PIN.generated),'utf8'),preferenceRecoverySource());
+  await writeFile(join(dir,PREFERENCE_PAGE_RECOVERY_PIN.generated),preferenceRecoverySource()+' ');
+  await assert.rejects(inspectPreferencePage(dir),/PATCH_STATE/);
+  await rm(join(dir,PREFERENCE_PAGE_RECOVERY_PIN.generated));await assert.rejects(inspectPreferencePage(dir),/PATCH_STATE/);
 });
 test('added method does not rewrite original executeUtility, discovery, private calls or event retrieval',()=>{
   for(const pin of PREFERENCE_PAGE_PINS.filter(p=>p.path.endsWith('/pxe.ts')||p.path.endsWith('/pxe.js'))){
@@ -207,6 +215,16 @@ if(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1') {
     await writeFile(join(queueDirectory,path.slice(5)),transformPreferencePage(source[path],path));
   }
   const {OperationQueue}=await import(pathToFileURL(join(queueDirectory,'operation_queue.js')));
+  // Full isolated copied package, never a shared installed mutation. This also
+  // exercises the emitted helper's real relative module/dependency closure.
+  const recoveryDirectory=await realpath(await mkdtemp(join(root,'.build/preference-recovery-sdk-')));
+  after(()=>rm(recoveryDirectory,{recursive:true,force:true}));
+  await cp(installed,recoveryDirectory,{recursive:true});
+  await patchPreferencePage(recoveryDirectory);
+  const patchedImp=p=>import(pathToFileURL(join(recoveryDirectory,'dest',p)));
+  const {RollingPreferenceRecoveryStore,bindRollingPreferenceRecovery,runRollingPreferenceRecovery}=await import(pathToFileURL(join(recoveryDirectory,PREFERENCE_PAGE_RECOVERY_PIN.generated)));
+  const {NoteStore:RecoveryNoteStore}=await patchedImp('storage/note_store/note_store.js');
+  const {NoteDao,NoteStatus}=await import('@aztec-labs/stdlib/note');
   const {BlockSynchronizer}=await imp('block_synchronizer/block_synchronizer.js');
   const {StagedWriteCoordinator}=await imp('storage/staged_write_coordinator.js');
   const {PrivateEventStore}=await imp('storage/private_event_store/private_event_store.js');
@@ -277,6 +295,48 @@ if(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1') {
     const validate=(id,requests=[request],context=data)=>new EventService(header,events,id,quiet).validateAndStoreEvents(requests,scope,context);
     return {db,events,queue,header,scope,contract,selector,request,data,validate,read};
   }
+  test('actual patched NoteStore direct lookup preserves scope/status/contract and avoids historical index',async t=>{
+    const db=await applicationStore(t,address(701),async()=>{}),notes=new RecoveryNoteStore(db);
+    const owner=address(701),contract=address(702),slot=new Fr(703);
+    const note=await NoteDao.random({owner,contractAddress:contract,storageSlot:slot,l2BlockNumber:1,txIndexInBlock:0,noteIndexInTx:0});
+    const id='recovery-note-fixture';notes.beginChangeSet(id);
+    await notes.addNotes([note],owner,id);
+    const base={contractAddress:contract,owner,storageSlot:slot,scopes:[owner],siloedNullifier:note.siloedNullifier};
+    assert.equal((await notes.getNotes(base,id)).length,1,'staged exact key');
+    await db.transactionAsync(()=>notes.commitChangeSet(id));notes.beginChangeSet(id);
+    // An index that throws proves the exact path does not enumerate it. The
+    // original broad path remains deliberately exercised after restoring it.
+    const index=db.openMultiMap('note_nullifiers_by_contract'),original=index.getValuesAsync;
+    // Instrument the backing store via a second exact instance, preserving all
+    // original map operations and original staged read/filter implementation.
+    let indexReads=0;
+    const wrapped=new Proxy(db,{get(target,key){if(key==='openMultiMap')return name=>{const map=target.openMultiMap(name);if(name!=='note_nullifiers_by_contract')return map;return new Proxy(map,{get(m,k){if(k==='getValuesAsync')return (...args)=>{indexReads++;return m.getValuesAsync(...args);};const v=Reflect.get(m,k,m);return typeof v==='function'?v.bind(m):v;}});};const v=Reflect.get(target,key,target);return typeof v==='function'?v.bind(target):v;}});
+    const bounded=new RecoveryNoteStore(wrapped);bounded.beginChangeSet('bounded');
+    assert.equal((await bounded.getNotes(base,'bounded')).length,1);assert.equal(indexReads,0);
+    for(const changed of [{contractAddress:address(999)},{owner:address(999)},{storageSlot:new Fr(999)},{scopes:[address(999)]},{siloedNullifier:new Fr(999)}])assert.deepEqual(await bounded.getNotes({...base,...changed},'bounded'),[]);
+    assert.equal(indexReads,0);
+    await bounded.applyNullifiers([{data:note.siloedNullifier,l2BlockNumber:2}], 'bounded');
+    assert.deepEqual(await bounded.getNotes(base,'bounded'),[]);
+    assert.equal((await bounded.getNotes({...base,status:NoteStatus.ACTIVE_OR_NULLIFIED},'bounded')).length,1);
+    bounded.discardChangeSet('bounded');notes.discardChangeSet(id);
+    await index.set(contract.toString(),new Fr(998).toString());notes.beginChangeSet(id);
+    await assert.rejects(notes.getNotes({contractAddress:contract,scopes:[owner]},id),/database is corrupted/);
+    notes.discardChangeSet(id);assert.equal(index.getValuesAsync,original);
+  });
+  test('actual staging/coordinator: cursor is atomic, survives replacement store, rollback invalidates generation',async t=>{
+    const db=await applicationStore(t,address(710),async()=>{}),store=new RollingPreferenceRecoveryStore(db);
+    const coordinator=new StagedWriteCoordinator({kvStore:db,stagedStores:[store]});
+    // Use the original lifecycle/queue rather than directly flush the helper.
+    const queue=new OperationQueue({node:{startRecording:()=>({stop(){}})},synchronizer:{sync:async()=>{}},anchorBlockStore:{getBlockHeader:async()=>BlockHeader.empty()},stagedWriteCoordinator:coordinator,contributors:[],autoSync:false,log:quiet});queue.start();t.after(()=>queue.stop());
+    let first;
+    await queue.runSynced(async({changeSetId})=>{first=await store.load('scope',changeSetId);await store.save('scope',{epoch:'labelled-fixture',sequence:1},changeSetId);});
+    const next=await queue.runSynced(({changeSetId})=>store.load('scope',changeSetId));assert.equal(next.meta.database,first.meta.database);assert.equal(next.state.sequence,1);
+    await assert.rejects(queue.runSynced(async({changeSetId})=>{await store.save('scope',{sequence:2},changeSetId);throw Error('labelled failure');}));
+    assert.equal((await queue.runSynced(({changeSetId})=>store.load('scope',changeSetId))).state.sequence,1);
+    await db.transactionAsync(()=>store.rollbackToBlock(0));
+    const after=await queue.runSynced(({changeSetId})=>store.load('scope',changeSetId));assert.equal(after.meta.database,first.meta.database);assert.notEqual(after.meta.generation,first.meta.generation);
+    const replacement=new RollingPreferenceRecoveryStore(db);replacement.beginChangeSet('reopen');const loaded=await replacement.load('scope','reopen');replacement.discardChangeSet('reopen');assert.equal(loaded.meta.database,first.meta.database);assert.equal(loaded.meta.generation,after.meta.generation);
+  });
   async function generatedPage(t, mode='valid') {
     const f=await stores(t),p=request();p.blockNumber=4;p.firstLog=0;p.logCount=1;
     const effects=[10,20,30].map((n,i)=>new TxEffect(RevertCode.OK,TxHash.fromBigInt(BigInt(n)),new Fr(3),[],
@@ -364,13 +424,13 @@ if(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1') {
     const {TxExecutionRequest,TxContext,HashedValues}=await import('@aztec-labs/stdlib/tx');
     const {MerkleTreeId}=await import('@aztec-labs/stdlib/trees');
     const {WASMSimulator}=await import('@aztec-labs/simulator/client');
-    const {openPxeStores}=await imp('storage/open_pxe_stores.js');
+    const {openPxeStores}=await patchedImp('storage/open_pxe_stores.js');
     const {ContractClassService}=await imp('contract/contract_class_service.js');
     const {ContractSyncService}=await imp('contract/contract_sync_service.js');
     const {ContractFunctionSimulator,generateSimulatedProvingResult}=await imp('contract_function_simulator/contract_function_simulator.js');
     const {TxResolverService}=await imp('messages/tx_resolver_service.js');
-    const artifactBytes=await readFile(join(root,'.build/preference-page-processed-321/RollingBoard.json'));
-    assert.equal(sha(artifactBytes),'799b44cd8901140dfda8c3fbd80fa11ebe708417afbd000d44eb92d39eafa781','Wrong processed ACIR fixture');
+    const artifactBytes=await readFile(join(root,'.build/preference-page-rc3-fixture/RollingBoard.json'));
+    assert.equal(sha(artifactBytes),'20c4946741d2afd5be7f2f18aad6409780b2f4db74f415bea30f95ee9a76fe24','Wrong processed ACIR fixture');
     const artifact=loadContractArtifact(JSON.parse(artifactBytes));
     const log={...quiet,getBindings:()=>({}),createChild(){return this;}};
     async function acirFixture(t) {
@@ -397,31 +457,43 @@ if(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1') {
       const partialAddress=new Fr(552);let header=BlockHeader.empty();
       header.globalVariables.blockNumber=2;header.globalVariables.chainId=new Fr(31337);header.globalVariables.version=new Fr(1);
       let block,effect,canonicalChanged=false;const counters={tagQueries:0,unexpectedCalls:0};
+      const emptyHistory=new Map(),mined=new Map(),omittedNullifiers=new Set();
+      async function historyBlock(number){
+        if(number===header.getBlockNumber()){assert(block);return block;}
+        assert(Number.isSafeInteger(number)&&number>0&&number<header.getBlockNumber(),'Unexpected synthetic history selector');
+        if(!emptyHistory.has(number)){const h=BlockHeader.empty();h.globalVariables.chainId=new Fr(31337);h.globalVariables.version=new Fr(1);h.globalVariables.blockNumber=number;const body=new Body([]);h.txEffectsTreeRoot=await body.computeTxEffectsTreeRoot();emptyHistory.set(number,new L2Block(AppendOnlyTreeSnapshot.empty(),h,body,1,0));}
+        return emptyHistory.get(number);
+      }
       const api={
         getNodeInfo:async()=>({l1ChainId:31337,rollupVersion:1,realProofs:false,l1ContractAddresses:{rollupAddress:{toString:()=>request().network.rollup}}}),
         getContract:async address=>{const value=instances.get(address.toString());assert(value,'Unexpected synthetic contract');return value;},
-        getBlockData:async number=>{assert.equal(number,header.getBlockNumber());return {header,blockHash:canonicalChanged?BlockHash.random():await header.hash()};},
+        getBlockData:async number=>{const h=number===header.getBlockNumber()?header:(await historyBlock(number)).header;return {header:h,blockHash:canonicalChanged?BlockHash.random():await h.hash()};},
         getBlock:async()=>block,
         findLeavesIndexes:async(_anchor,tree,values)=>{
-          assert.equal(tree,MerkleTreeId.NULLIFIER_TREE);
-          return Promise.all(values.map(async value=>{const index=[...initializationNullifiers,...(effect?.nullifiers??[])].findIndex(x=>x.equals(value));
-            return index<0?undefined:{data:BigInt(index),l2BlockNumber:header.getBlockNumber(),l2BlockHash:await header.hash()};}));
+          assert([MerkleTreeId.NULLIFIER_TREE,MerkleTreeId.NOTE_HASH_TREE].includes(tree));
+          const entries=[...(tree===MerkleTreeId.NULLIFIER_TREE?initializationNullifiers.map(value=>({value,block:null})):[]),
+            ...[...mined.values()].flatMap(item=>(tree===MerkleTreeId.NULLIFIER_TREE?item.effect.nullifiers:item.effect.noteHashes).map(value=>({value,block:item.block})))];
+          return Promise.all(values.map(async value=>{if(tree===MerkleTreeId.NULLIFIER_TREE&&omittedNullifiers.has(value.toString()))return undefined;const index=entries.findIndex(x=>x.value.equals(value));
+            if(index<0)return undefined;const h=entries[index].block?.header??header;
+            return {data:BigInt(index),l2BlockNumber:h.getBlockNumber(),l2BlockHash:await h.hash()};}));
         },
-        getPrivateLogsByTags:async query=>{counters.tagQueries++;assert.equal(header.getBlockNumber(),2);return query.tags.map(()=>[]);},
-        getPublicLogsByTags:async query=>{counters.tagQueries++;assert.equal(header.getBlockNumber(),2);return query.tags.map(()=>[]);},
-        getTxReceipt:async hash=>{assert(effect&&hash.equals(effect.txHash));return MinedTxReceipt.from({txHash:effect.txHash,status:'proposed',executionResult:'success',transactionFee:effect.transactionFee.toBigInt(),blockNumber:header.getBlockNumber(),blockHash:await header.hash(),slotNumber:header.globalVariables.slotNumber,epochNumber:0,txIndexInBlock:0,txEffect:TxEffect.fromBuffer(effect.toBuffer())});},
-        getTxEffectMembershipWitness:async hash=>{assert(effect&&hash.equals(effect.txHash));return {...await computeTxEffectMembershipWitness([effect],0),blockNumber:header.getBlockNumber()};},
+        getPrivateLogsByTags:async query=>{counters.tagQueries++;assert([2,4].includes(header.getBlockNumber()));return query.tags.map(()=>[]);},
+        getPublicLogsByTags:async query=>{counters.tagQueries++;assert([2,4].includes(header.getBlockNumber()));return query.tags.map(()=>[]);},
+        getTxReceipt:async hash=>{const item=mined.get(hash.toString());assert(item);const {effect,block}=item,h=block.header;return MinedTxReceipt.from({txHash:effect.txHash,status:'proposed',executionResult:'success',transactionFee:effect.transactionFee.toBigInt(),blockNumber:h.getBlockNumber(),blockHash:await h.hash(),slotNumber:h.globalVariables.slotNumber,epochNumber:0,txIndexInBlock:0,txEffect:TxEffect.fromBuffer(effect.toBuffer())});},
+        getTxEffectMembershipWitness:async hash=>{const item=mined.get(hash.toString());assert(item);return {...await computeTxEffectMembershipWitness([item.effect],0),blockNumber:item.block.header.getBlockNumber()};},
       };
       const node=new Proxy(api,{get(target,key){if(key==='then')return undefined;if(key in target)return Reflect.get(target,key);
         return ()=>{counters.unexpectedCalls++;throw Error('UNIMPLEMENTED_SYNTHETIC_CHAIN_METHOD');};}});
-      async function receiver({withKeys=true,completeAddress,contributor,pristine=false,extraStore}={}) {
-        const expectedComplete=withKeys?await CompleteAddress.fromPublicKeysAndPartialAddress(derived.publicKeys,partialAddress):completeAddress;
+      async function receiver({withKeys=true,completeAddress,contributor,pristine=false,extraStore,recovery=false,foreignKeys=false,eventPageDouble}={}) {
+        const accountKeys=foreignKeys?await deriveKeys(Fr.random()):derived;
+        const secretKeys=foreignKeys?Object.fromEntries(Object.keys(keys).map(key=>[key,accountKeys[key]])):keys;
+        const expectedComplete=withKeys?await CompleteAddress.fromPublicKeysAndPartialAddress(accountKeys.publicKeys,partialAddress):completeAddress;
         assert(expectedComplete);let queue;
         const db=await applicationStore(t,expectedComplete.address,async()=>{if(queue)await queue.stop();},log);
         const stores=openPxeStores(db,await header.hash());
         await stores.contractStore.addContractArtifact(artifact);await stores.contractStore.addContractInstance(instance);
         await stores.contractStore.addContractArtifact(registry.artifact);await stores.contractStore.addContractInstance(registry.instance);
-        const complete=withKeys?await stores.keyStore.addAccount(keys,partialAddress):completeAddress;
+        const complete=withKeys?await stores.keyStore.addAccount(secretKeys,partialAddress):completeAddress;
         assert(complete);assert(complete.address.equals(expectedComplete.address),'Application store owner differs from actual key registration');
         await stores.addressStore.addCompleteAddress(complete);
         const classService=new ContractClassService(node,stores.contractStore);
@@ -430,7 +502,8 @@ if(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1') {
         const args={...stores,contractClassService:classService,contractSyncService:syncService,
           aztecNode:node,txResolver:new TxResolverService(node),simulator};
         const functionSimulator=new ContractFunctionSimulator(args);
-        const stagedStores=[stores.capsuleStore,stores.senderTaggingStore,stores.recipientTaggingStore,stores.privateEventStore,stores.noteStore,stores.factStore,...(extraStore?[extraStore]:[])];
+        const recoveryStore=recovery?new RollingPreferenceRecoveryStore(db):null;
+        const stagedStores=[...(recoveryStore?[recoveryStore]:[]),stores.capsuleStore,stores.senderTaggingStore,stores.recipientTaggingStore,stores.privateEventStore,stores.noteStore,stores.factStore,...(extraStore?[extraStore]:[])];
         queue=new (pristine?PristineOperationQueue:OperationQueue)({node:{startRecording:()=>({stop(){}})},synchronizer:{sync:async()=>{throw Error('UNEXPECTED_FULL_SYNC');}},
           anchorBlockStore:{getBlockHeader:async()=>BlockHeader.fromBuffer(header.toBuffer())},
           stagedWriteCoordinator:new StagedWriteCoordinator({kvStore:db,stagedStores}),contributors:[syncService,...(contributor?[contributor]:[])],autoSync:false,log});
@@ -440,7 +513,7 @@ if(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1') {
           RollingPageHeader:BlockHeader,RollingPageEffect:TxEffect,RollingPageReceipt:MinedTxReceipt,RollingPageSiblingPath:SiblingPath,
           rollingPageVerifyWitness:verifyTxEffectMembershipWitness,rollingPageCompact:authenticateCompactBlock,
           rollingPageArtifactHash:computeArtifactHash,rollingPageClass:getContractClassFromArtifact,
-          computeContractAddressFromInstance,BlockNumber:x=>x,FunctionType,ContractFunctionSimulator,RollingPageInstance:SerializableContractInstance,
+          computeContractAddressFromInstance,BlockNumber:x=>x,FunctionType,ContractFunctionSimulator,RollingPageInstance:SerializableContractInstance,runRollingPreferenceRecovery,bindRollingPreferenceRecovery,
           RP_NOTES:constants.MAX_NOTE_HASHES_PER_TX,RP_NULLIFIERS:constants.MAX_NULLIFIERS_PER_TX,RP_MESSAGES:constants.MAX_L2_TO_L1_MSGS_PER_TX,
           RP_WRITES:constants.MAX_TOTAL_PUBLIC_DATA_UPDATE_REQUESTS_PER_TX,RP_LOGS:constants.MAX_PRIVATE_LOGS_PER_TX,RP_LOG_FIELDS:constants.PRIVATE_LOG_SIZE_IN_FIELDS,
           RP_PUBLIC_FIELDS:constants.FLAT_PUBLIC_LOGS_PAYLOAD_LENGTH,RP_PUBLIC_HEADER:constants.PUBLIC_LOG_HEADER_LENGTH,
@@ -448,6 +521,7 @@ if(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1') {
         // Exact generated page method; utility bridge is the original PXE bridge's
         // runUtility call, not a mocked return or directly enqueued event.
         const Class=Function(...Object.keys(bindings),`return class {
+          bindRecoveryStore(store){bindRollingPreferenceRecovery(this,store,'checkpointed',(page,guard,frame)=>this.eventPageDouble?this.eventPageDouble(page,guard,frame,this):this.#rollingPreferencePage(page,{contextGuard:guard},frame),this.#rollingPreferenceHead.bind(this));}
           async #executeUtility(simulator,call,authwits,scopes,anchor,changeSetId) {
             const result=await simulator.runUtility(call,authwits,anchor,scopes,changeSetId);
             this.acirCompleted=(this.acirCompleted??0)+1;
@@ -458,14 +532,15 @@ if(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1') {
           ${output.slice(start,end).trim()}
         }`)(...Object.values(bindings));
         const page=new Class();Object.assign(page,stores,{node,proverEnabled:false,operationQueue:queue,
-          contractClassService:classService,contractSyncService:syncService,txResolver:args.txResolver,simulator});
+          contractClassService:classService,contractSyncService:syncService,txResolver:args.txResolver,simulator,eventPageDouble});
+        if(recoveryStore)page.bindRecoveryStore(recoveryStore);
         const eventAbi=artifact.outputs.structs.events.find(e=>e.path==='RollingBoard::PreferenceChanged');
         const selector=await EventSelector.fromSignature(decodeFunctionSignature('PreferenceChanged',eventAbi.fields));
         const read=()=>queue.runSynced(async({changeSetId})=>({
           events:await stores.privateEventStore.getPrivateEvents(selector,{contractAddress:board,scopes:[complete.address],fromBlock:1,toBlock:header.getBlockNumber()+1},changeSetId),
           notes:await stores.noteStore.getNotes({contractAddress:board,owner:complete.address,scopes:[complete.address]},changeSetId),
         }));
-        return {stores,queue,complete,functionSimulator,page,read,syncService,db,stagedStores};
+        return {stores,queue,complete,functionSimulator,page,read,syncService,db,stagedStores,recoveryStore};
       }
       const sender=await receiver();
       const call=await sender.stores.contractStore.getFunctionCall('set_preference',[0n,1,new Fr(77),true],board,contractClass.id);
@@ -486,15 +561,194 @@ if(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1') {
       // different canonical block. This copy has no cached hash.
       header=BlockHeader.fromBuffer(header.toBuffer());
       header.globalVariables.blockNumber=4;const body=new Body([effect]);header.txEffectsTreeRoot=await body.computeTxEffectsTreeRoot();
-      block=new L2Block(AppendOnlyTreeSnapshot.empty(),header,body,1,0);
+      block=new L2Block(AppendOnlyTreeSnapshot.empty(),header,body,1,0);mined.set(effect.txHash.toString(),{effect,block});
       const input={...request(),contractAddress:board.toString(),scope:sender.complete.address.toString(),
         expectedClassId:contractClass.id.toString(),expectedArtifactHash:artifactHash.toString(),blockNumber:4,
         blockHash:(await header.hash()).toString(),txHash:effect.txHash.toString(),firstLog:0,logCount:effect.privateLogs.length,
         compactFields:block.toBlobFields().map(x=>x.toString()),headerFields:header.toFields().map(x=>x.toString())};
       const tagsBefore=counters.tagQueries;
       return {receiver,sender,input,header,board,contractClass,counters,tagsBefore,node,block,
+        // Deliberately synthetic event-only effect for the isolated ordering
+        // algorithm test below. Original EventService authenticates commitments;
+        // this path does not claim ACIR, head completeness or chain acceptance.
+        async orderingEffect(){
+          const abi=artifact.outputs.structs.events.find(e=>e.path==='RollingBoard::PreferenceChanged');
+          const selector=await EventSelector.fromSignature(decodeFunctionSignature('PreferenceChanged',abi.fields));
+          const requests=await Promise.all([1,2].map(async revision=>{
+            const serializedEvent=[1,revision,1,77,1,0,0,0].map(x=>new Fr(x)),randomness=new Fr(800+revision);
+            const eventCommitment=await computePrivateEventCommitment(randomness,selector.toField(),serializedEvent);
+            return {contractAddress:board,eventTypeId:selector,randomness,serializedEvent,eventCommitment,txHash:TxHash.fromBigInt(557n)};
+          }));
+          const nullifiers=await Promise.all(requests.map(x=>siloNullifier(board,x.eventCommitment)));
+          effect=new TxEffect(RevertCode.OK,requests[0].txHash,Fr.ZERO,[],nullifiers,[],[],Array.from({length:9},()=>PrivateLog.random()),[],[]);
+          header=BlockHeader.fromBuffer(header.toBuffer());const body=new Body([effect]);header.txEffectsTreeRoot=await body.computeTxEffectsTreeRoot();
+          block=new L2Block(AppendOnlyTreeSnapshot.empty(),header,body,1,0);mined.clear();mined.set(effect.txHash.toString(),{effect,block});
+          return {requests,data:new Map([[effect.txHash.toString(),{nullifiers,l2BlockNumber:4,l2BlockHash:await header.hash(),txIndexInBlock:0}]])};
+        },
+        // Genuine encryption for a different disposable owner; only the block
+        // composition is synthetic. Repeated foreign envelopes must be examined
+        // physically, but cannot create records for the current scoped owner.
+        async denseForeignPrefix(){
+          const writer=await receiver({foreignKeys:true});
+          assert(!writer.complete.address.equals(sender.complete.address));
+          const call=await writer.stores.contractStore.getFunctionCall('set_preference',[0n,1,new Fr(88),true],board,contractClass.id);
+          const hashed=await HashedValues.fromArgs(call.args),foreignRequest=new TxExecutionRequest(board,call.selector,hashed.hash,TxContext.empty(31337,1),[hashed],[],[],Fr.random());
+          const result=await writer.queue.runSynced(async({changeSetId})=>{
+            const execution=await writer.functionSimulator.run(foreignRequest,{msgSender:writer.complete.address,anchorBlockHeader:header,scopes:[writer.complete.address],senderForTags:writer.complete.address,changeSetId});
+            return generateSimulatedProvingResult(execution,async()=> 'synthetic.foreign.preference',node);
+          });
+          const foreign=result.publicInputs.forRollup.end.privateLogs.filter(x=>!x.isEmpty());assert(foreign.length>0);
+          const original=TxEffect.fromBuffer(effect.toBuffer());
+          effect=new TxEffect(original.revertCode,original.txHash,original.transactionFee,original.noteHashes,original.nullifiers,original.l2ToL1Msgs,original.publicDataWrites,
+            [...Array.from({length:16},(_,i)=>foreign[i%foreign.length]),...original.privateLogs],original.publicLogs,original.contractClassLogs);
+          header=BlockHeader.fromBuffer(header.toBuffer());const body=new Body([effect]);header.txEffectsTreeRoot=await body.computeTxEffectsTreeRoot();
+          block=new L2Block(AppendOnlyTreeSnapshot.empty(),header,body,1,0);mined.set(effect.txHash.toString(),{effect,block});
+          return {physicalLogs:effect.privateLogs.length};
+        },
+        // Real ACIR revision 1 -> 2 over the previously validated head. Chain
+        // receipts/tree membership remain labelled synthetic, never real proof.
+        async extendRevision(){
+          const writer=await receiver();await writer.page.processRollingPreferencePage(input,{contextGuard:async()=>{}});
+          const oldHead=(await writer.read()).notes[0];assert(oldHead);
+          const call=await writer.stores.contractStore.getFunctionCall('set_preference',[1n,2,Fr.ZERO,true],board,contractClass.id);
+          const hashed=await HashedValues.fromArgs(call.args),request2=new TxExecutionRequest(board,call.selector,hashed.hash,TxContext.empty(31337,1),[hashed],[],[],Fr.random());
+          const result=await writer.queue.runSynced(async({changeSetId})=>{
+            const execution=await writer.functionSimulator.run(request2,{msgSender:writer.complete.address,anchorBlockHeader:header,scopes:[writer.complete.address],senderForTags:writer.complete.address,changeSetId});
+            return generateSimulatedProvingResult(execution,async()=> 'synthetic.preference',node);
+          });
+          const data=result.publicInputs.forRollup.end;
+          const next=new TxEffect(RevertCode.OK,TxHash.fromBigInt(554n),Fr.ZERO,data.noteHashes.filter(x=>!x.isZero()),data.nullifiers.filter(x=>!x.isZero()),[],[],data.privateLogs.filter(x=>!x.isEmpty()),[],[]);
+          assert(next.nullifiers.some(value=>value.equals(oldHead.siloedNullifier)),'Second actual revision must consume original head');
+          emptyHistory.set(4,block);header=BlockHeader.fromBuffer(header.toBuffer());header.globalVariables.blockNumber=5;
+          const body=new Body([next]);header.txEffectsTreeRoot=await body.computeTxEffectsTreeRoot();block=new L2Block(AppendOnlyTreeSnapshot.empty(),header,body,1,0);mined.set(next.txHash.toString(),{effect:next,block});
+          return {oldNullifier:oldHead.siloedNullifier.toString(),omitOldSpend(){omittedNullifiers.add(oldHead.siloedNullifier.toString());}};
+        },
+        compact:async number=>{const b=await historyBlock(number);return {blockNumber:number,blockHash:(await b.header.hash()).toString(),fields:b.toBlobFields().map(x=>x.toString()),headerFields:b.header.toFields().map(x=>x.toString())};},
         invalidate:()=>{canonicalChanged=true;},restore:()=>{canonicalChanged=false;}};
     }
+    const recoveryInput=f=>({contractAddress:f.input.contractAddress,scope:f.input.scope,expectedClassId:f.input.expectedClassId,expectedArtifactHash:f.input.expectedArtifactHash,network:f.input.network,proofsEnabled:false,tier:'checkpointed',expected:null,block:null,restart:false});
+    async function recoveryStep(f,r,current,guard=async()=>{}){
+      const block=current.nextBlock<=current.anchor.blockNumber?await f.compact(current.nextBlock):null;
+      return r.page.processRollingPreferenceRecovery({...recoveryInput(f),expected:{epoch:current.epoch,sequence:current.sequence},block},{contextGuard:guard});
+    }
+    test('actual ACIR cursor scans empty history then authentic ciphertexts, replays mailbox, gates terminal head',async t=>{
+      const f=await acirFixture(t),r=await f.receiver({recovery:true});
+      const start=await r.page.processRollingPreferenceRecovery(recoveryInput(f),{contextGuard:async()=>{}});
+      assert.equal(start.sequence,0);assert.equal(start.nextBlock,1);assert.equal(start.complete,false);
+      let current=start,records=[];
+      for(let i=0;i<6&&!current.complete;i++){
+        const before=current,calls=r.page.acirCompleted??0;
+        current=await recoveryStep(f,r,current);records.push(...current.records);
+        assert.equal(current.sequence,before.sequence+1);
+        // Original expected sequence after a lost reply returns committed data,
+        // without a second utility, even after rebuilding the helper's caller.
+        const callsAfter=r.page.acirCompleted??0;
+        const replay=await r.page.processRollingPreferenceRecovery({...recoveryInput(f),expected:{epoch:before.epoch,sequence:before.sequence}},{contextGuard:async()=>{}});
+        assert.deepEqual(replay,current);assert.equal(r.page.acirCompleted??0,callsAfter);
+        if(before.nextBlock<4)assert.equal(callsAfter,calls);
+      }
+      assert.equal(current.complete,true);assert.equal(current.head.revision,'1');assert.equal(current.head.initialized,true);
+      assert.equal(records.length,1);assert.equal(records[0].packedEvent.length,8);
+      assert.equal(records[0].packedEvent[1],hex(1));assert.equal(records[0].packedEvent[3],hex(77));
+      assert.equal(r.syncService.syncedContracts.size,0);assert.equal(f.counters.tagQueries,f.tagsBefore);
+      const state=await r.read();assert.equal(state.notes.length,1);assert.equal(state.events.length,1);
+      assert.equal(current.head.digest,state.notes[0].note.items[2].toBigInt().toString());
+    });
+    test('labelled page double / original EventService: tx-complete mailbox orders by authenticated event index, not log page',async t=>{
+      const f=await acirFixture(t),ordered=await f.orderingEffect();
+      const r=await f.receiver({recovery:true,eventPageDouble:async(page,guard,frame,pxe)=>{
+        await guard();
+        // The first physical page validates the later event. The second page
+        // validates the earlier event, exactly as independent ciphertext order
+        // can differ from original commitment/nullifier order.
+        const request=ordered.requests[page.firstLog===0?1:0];
+        await new EventService(frame.anchorBlockHeader,pxe.privateEventStore,frame.changeSetId,quiet)
+          .validateAndStoreEvents([request],r.complete.address,ordered.data);
+      }});
+      let cursor=await r.page.processRollingPreferenceRecovery(recoveryInput(f),{contextGuard:async()=>{}});
+      while(cursor.nextBlock<4)cursor=await recoveryStep(f,r,cursor);
+      cursor=await recoveryStep(f,r,cursor);assert.equal(cursor.nextLog,8);assert.deepEqual(cursor.records,[]);
+      cursor=await recoveryStep(f,r,cursor);assert.equal(cursor.nextBlock,5);
+      assert.deepEqual(cursor.records.map(x=>BigInt(x.packedEvent[1])),[1n,2n]);assert.equal(cursor.complete,false);
+      assert.equal((await r.read()).events.length,2);assert.equal((await r.read()).notes.length,0);
+    });
+    test('actual ACIR scans dense foreign ciphertext pages without publishing partial transaction records',async t=>{
+      const f=await acirFixture(t),density=await f.denseForeignPrefix(),r=await f.receiver({recovery:true});
+      let cursor=await r.page.processRollingPreferenceRecovery(recoveryInput(f),{contextGuard:async()=>{}});
+      while(cursor.nextBlock<4)cursor=await recoveryStep(f,r,cursor);
+      for(const nextLog of [8,16]){
+        cursor=await recoveryStep(f,r,cursor);assert.equal(cursor.nextBlock,4);assert.equal(cursor.nextLog,nextLog);
+        assert.deepEqual(cursor.records,[]);assert.equal(cursor.complete,false);
+        const state=await r.read();assert.equal(state.notes.length,0);assert.equal(state.events.length,0);
+      }
+      assert(density.physicalLogs>16&&density.physicalLogs<=24);
+      cursor=await recoveryStep(f,r,cursor);assert.equal(cursor.nextBlock,5);assert.equal(cursor.nextLog,0);assert.equal(cursor.records.length,1);assert.equal(cursor.complete,false);
+      cursor=await recoveryStep(f,r,cursor);assert.equal(cursor.complete,true);assert.equal(cursor.head.revision,'1');
+      assert.equal((await r.read()).notes.length,1);assert.equal(r.syncService.syncedContracts.size,0);
+    });
+    test('real ACIR multi-revision heads: historical spent head is not selected; current head completes',async t=>{
+      const f=await acirFixture(t),history=await f.extendRevision(),r=await f.receiver({recovery:true});
+      let cursor=await r.page.processRollingPreferenceRecovery(recoveryInput(f),{contextGuard:async()=>{}});const records=[];
+      for(let i=0;i<8&&!cursor.complete;i++){
+        const priorBlock=cursor.nextBlock;cursor=await recoveryStep(f,r,cursor);records.push(...cursor.records);
+        if(priorBlock===4){
+          assert.equal(await r.db.openMap('note_nullifications_by_nullifier').getAsync(history.oldNullifier),5,
+            'Original NoteService must record the historical head spend at the actual captured final anchor');
+          assert.equal((await r.read()).notes.length,0,'Historical head is already inactive before current head ingestion');
+        }
+      }
+      assert.equal(cursor.complete,true);assert.equal(cursor.head.revision,'2');assert.deepEqual(records.map(x=>BigInt(x.packedEvent[1])),[1n,2n]);
+      const active=await r.read();assert.equal(active.notes.length,1);assert.equal(active.notes[0].note.items[1].toBigInt(),2n);
+      const all=await r.queue.runSynced(({changeSetId})=>r.stores.noteStore.getNotes({contractAddress:f.board,owner:r.complete.address,scopes:[r.complete.address],status:NoteStatus.ACTIVE_OR_NULLIFIED},changeSetId));assert.equal(all.length,2);
+    });
+    test('actual authenticated head envelopes with inconsistent nullifier source cannot hide two active candidates',async t=>{
+      const f=await acirFixture(t),history=await f.extendRevision();history.omitOldSpend();
+      const r=await f.receiver({recovery:true});let cursor=await r.page.processRollingPreferenceRecovery(recoveryInput(f),{contextGuard:async()=>{}});
+      while(cursor.nextBlock<5)cursor=await recoveryStep(f,r,cursor);
+      const before=structuredClone(cursor),prior=await r.read();assert.equal(prior.notes.length,1);assert.equal(prior.events.length,1);
+      const priorNotes=prior.notes.map(x=>x.toBuffer().toString('hex'));
+      const priorEvents=prior.events.map(x=>({content:x.packedEvent.map(f=>f.toString()),tx:x.txHash.toString(),block:x.l2BlockNumber}));
+      assert.equal(await r.db.openMap('note_nullifications_by_nullifier').getAsync(history.oldNullifier),undefined);
+      await assert.rejects(recoveryStep(f,r,cursor),/PXE_PREFERENCE_RECOVERY_FAILED/);
+      assert.deepEqual(await r.page.processRollingPreferenceRecovery(recoveryInput(f),{contextGuard:async()=>{}}),before);
+      const after=await r.read();
+      assert.deepEqual(after.notes.map(x=>x.toBuffer().toString('hex')),priorNotes,'All note bytes remain unchanged');
+      assert.deepEqual(after.events.map(x=>({content:x.packedEvent.map(f=>f.toString()),tx:x.txHash.toString(),block:x.l2BlockNumber})),priorEvents,'All event content and metadata remain unchanged');
+      assert.equal(await r.db.openMap('note_nullifications_by_nullifier').getAsync(history.oldNullifier),undefined,'No invented emission may hide the second active candidate');
+    });
+    test('actual cursor settlement context veto rolls back progress together with decrypted notes/events',async t=>{
+      const f=await acirFixture(t);let locked=false,enabled=false;
+      const r=await f.receiver({recovery:true,contributor:{settle:async()=>{if(enabled)locked=true;}}});
+      let current=await r.page.processRollingPreferenceRecovery(recoveryInput(f),{contextGuard:async()=>{}});
+      while(current.nextBlock<4)current=await recoveryStep(f,r,current);
+      const original=structuredClone(current);enabled=true;
+      await assert.rejects(recoveryStep(f,r,current,async()=>{if(locked)throw Error('synthetic locked context');}),/PXE_PREFERENCE_RECOVERY_FAILED/);
+      enabled=false;locked=false;
+      assert.deepEqual(await r.page.processRollingPreferenceRecovery(recoveryInput(f),{contextGuard:async()=>{}}),original);
+      const state=await r.read();assert.equal(state.notes.length,0);assert.equal(state.events.length,0);
+    });
+    test('actual cursor canonical rollback changes epoch and starts complete physical enumeration again',async t=>{
+      const f=await acirFixture(t),r=await f.receiver({recovery:true});
+      let current=await r.page.processRollingPreferenceRecovery(recoveryInput(f),{contextGuard:async()=>{}});
+      while(current.nextBlock<=4)current=await recoveryStep(f,r,current);
+      assert.equal((await r.read()).notes.length,1);
+      // The official synchronizer owns this same atomic rollbackables list. This
+      // test invokes its exact per-store rollback contract inside the same KV tx.
+      await r.db.transactionAsync(async()=>{for(const store of r.stagedStores)await store.rollbackToBlock(3);});
+      const restarted=await r.page.processRollingPreferenceRecovery(recoveryInput(f),{contextGuard:async()=>{}});
+      assert.notEqual(restarted.epoch,current.epoch);assert.equal(restarted.nextBlock,1);assert.equal(restarted.sequence,0);
+      const state=await r.read();assert.equal(state.notes.length,0);assert.equal(state.events.length,0);
+    });
+    test('expected authenticated head missing from actual store cannot become an uninitialized completion',async t=>{
+      const f=await acirFixture(t),r=await f.receiver({recovery:true});
+      let current=await r.page.processRollingPreferenceRecovery(recoveryInput(f),{contextGuard:async()=>{}});
+      while(current.nextBlock<=4)current=await recoveryStep(f,r,current);
+      const note=(await r.read()).notes[0];assert(note);
+      // Labelled storage corruption only: the original onchain NHK initialization
+      // remains present. A direct missing-key [] must not publish an empty head.
+      await r.db.openMap('notes').delete(note.siloedNullifier.toString());
+      await assert.rejects(recoveryStep(f,r,current),/PXE_PREFERENCE_RECOVERY_FAILED/);
+    });
     test('real processed ACIR: emitted encrypted preference head/event, scoped keys, validators and atomic discard',async t=>{
       const f=await acirFixture(t);
       await t.test('absent owner key rejects even though the complete public address is registered',async()=>{
