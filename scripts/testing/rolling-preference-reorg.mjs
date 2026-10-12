@@ -22,7 +22,7 @@ export async function replaceRollingL1Suffix({eth,retained,readBoundary,quiescen
  assert.equal(typeof readBoundary,'function');assert.equal(typeof persist,'function');
  const original={automine:await eth.isAutoMining(),interval:await eth.getIntervalMining()};
  assert.equal(typeof original.automine,'boolean');assert(height(original.interval),'Mining interval must be readable before mutation');
- observation.miningControlsBefore=original;let failure;
+ observation.miningControlsBefore=original;const errors=[];let restorationFailed=false;
  try{
   await eth.execWithPausedAnvil(async()=>{
    assert.equal(await eth.isAutoMining(),false);assert.equal(await eth.getIntervalMining(),0);
@@ -40,13 +40,16 @@ export async function replaceRollingL1Suffix({eth,retained,readBoundary,quiescen
    observation.replacement={sameHeight:true,changedTip:true,commonAncestorUnchanged:true,rollupCheckpoint:after.pendingCheckpoint};
    await persist();
   });
- }catch(error){failure=error;throw error;}
- finally{
-  // The official SDK only warns when restoration fails; readbacks are required.
-  try{
-   const restored={automine:await eth.isAutoMining(),interval:await eth.getIntervalMining()};
-   assert.deepEqual(restored,original,'Anvil mining controls were not restored');observation.miningControlsRestored=true;await persist();
-  }catch(error){observation.miningControlsRestored=false;await persist();throw new AggregateError([...(failure?[failure]:[]),error],'Reorg control restoration failed');}
- }
+ }catch(error){errors.push(error);}
+ // The SDK warns on restoration failure. Preserve the readback fact separately
+ // from evidence I/O; one failed final write must not relabel a restored chain.
+ try{
+  const restored={automine:await eth.isAutoMining(),interval:await eth.getIntervalMining()};
+  assert.deepEqual(restored,original,'Anvil mining controls were not restored');observation.miningControlsRestored=true;
+ }catch(error){observation.miningControlsRestored=false;restorationFailed=true;errors.push(error);}
+ try{await persist();}catch(error){errors.push(error);}
+ if(restorationFailed)throw new AggregateError(errors,'Reorg control restoration failed');
+ if(errors.length>1)throw new AggregateError(errors,'Reorg operation and evidence recording failed');
+ if(errors.length)throw errors[0];
  return observation.replacement;
 }

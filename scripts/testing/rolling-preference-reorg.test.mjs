@@ -24,3 +24,19 @@ test('failed durable intent prevents mutation; uncertain RPC is never replayed',
 });
 test('SDK swallowed restore failure is independently rejected',async()=>{const f=fixture();const run=f.eth.execWithPausedAnvil;f.eth.execWithPausedAnvil=async fn=>{await run(fn);f.eth.isAutoMining=async()=>false;};await assert.rejects(replaceRollingL1Suffix(f.options),{message:'Reorg control restoration failed'});assert.equal(f.observation.miningControlsRestored,false);});
 for(const defect of ['height','hash','rollup'])test('control fixture requires actual replacement effect: '+defect,async()=>{const f=fixture();const reorg=f.eth.reorgWithReplacement;f.eth.reorgWithReplacement=async(...args)=>{await reorg(...args);if(defect==='height')f.state.l1Tip.number=16;if(defect==='hash')f.state.l1Tip.hash=h(15);if(defect==='rollup')f.state.pendingCheckpoint=7;};await assert.rejects(replaceRollingL1Suffix(f.options));assert.equal(f.activity.filter(x=>x==='reorg').length,1);assert(f.observation.miningControlsRestored);});
+
+test('original failure and final write failure retain successful restoration without another write',async()=>{
+ const f=fixture(),original=Error('labelled reorg failure'),write=Error('labelled final disk failure');let writes=0;
+ f.eth.reorgWithReplacement=async()=>{f.activity.push('reorg');throw original;};
+ f.options.persist=async()=>{writes++;if(writes===2)throw write;};
+ await assert.rejects(replaceRollingL1Suffix(f.options),error=>{assert(error instanceof AggregateError);assert.deepEqual(error.errors,[original,write]);return true;});
+ assert.equal(f.observation.miningControlsRestored,true);assert.equal(writes,2);assert.equal(f.activity.filter(x=>x==='reorg').length,1);
+});
+test('original, readback and final write failures are preserved together with no mutation retry',async()=>{
+ const f=fixture(),original=Error('labelled uncertain reorg'),readback=Error('labelled readback failure'),write=Error('labelled final disk failure');let writes=0;
+ f.eth.reorgWithReplacement=async()=>{f.activity.push('reorg');throw original;};
+ const paused=f.eth.execWithPausedAnvil;f.eth.execWithPausedAnvil=async fn=>{try{return await paused(fn);}finally{f.eth.isAutoMining=async()=>{throw readback;};}};
+ f.options.persist=async()=>{writes++;if(writes===2)throw write;};
+ await assert.rejects(replaceRollingL1Suffix(f.options),error=>{assert(error instanceof AggregateError);assert.deepEqual(error.errors,[original,readback,write]);return true;});
+ assert.equal(f.observation.miningControlsRestored,false);assert.equal(writes,2);assert.equal(f.activity.filter(x=>x==='reorg').length,1);
+});
