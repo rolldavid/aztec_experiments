@@ -2,7 +2,7 @@ import test,{after} from 'node:test';
 import assert from 'node:assert/strict';
 import http from 'node:http';
 import fs from 'node:fs';
-import {once} from 'node:events';
+import {once,EventEmitter} from 'node:events';
 import {BarretenbergSync} from '@aztec-foundation/bb.js';
 import {Fr} from '@aztec-labs/foundation/curves/bn254';
 import {BlockNumber,CheckpointNumber,IndexWithinCheckpoint} from '@aztec-labs/foundation/branded-types';
@@ -54,9 +54,9 @@ async function server(f,fn) {
 async function denied(response,status) {assert.equal(response.status,status);assert.deepEqual(await response.json(),{error:'Compact block unavailable'});}
 
 test('source: protocol limits, no duplicate effects-root hashing and no detached timeout',()=>{
- assert.deepEqual(limits,{requestBytes:1024,responseBytes:2097152,fields:24575,transactions:6142});
+ assert.deepEqual(limits,{requestBytes:1024,responseBytes:2097152,timeoutMs:10000,fields:24575,transactions:6142});
  const source=fs.readFileSync(new URL('./compact-block-native.mjs',import.meta.url),'utf8');
- assert.doesNotMatch(source,/computeTxEffectsTree|authenticateCompactBlock|Promise\.race|setTimeout|fetch\(/);
+ assert.doesNotMatch(source,/computeTxEffectsTree|authenticateCompactBlock|Promise\.race|fetch\(/);
  assert.match(source,/inspectTrustedNode/);
 });
 for(const tier of ['proposed','checkpointed','proven','finalized'])test('actual SDK/HTTP: compact body authenticates at configured '+tier,async()=>{
@@ -172,4 +172,70 @@ test('actual SDK: all effect categories are preserved without padding inflation'
 });
 test('readiness: missing canonical metadata is not treated as an empty block',async()=>{
  const f=await fixture();f.node.getBlockData=async()=>undefined;await server(f,async({send})=>{await denied(await send(),503);assert.equal(f.state.reads,0);});
+});
+
+// Deterministic request/socket controls exercise the actual handler, without
+// opening listeners. A held close models the interval after rejection flushing.
+function compactSocketControl({declared=false,finish=true}={}){
+ const socket=new EventEmitter();socket.closed=false;socket.destroyCalls=0;
+ socket.destroy=()=>{socket.destroyCalls++;};
+ socket.completeClose=()=>{if(!socket.closed){socket.closed=true;socket.emit('close');}};
+ const req=new EventEmitter();Object.assign(req,{url:route,method:'POST',headers:{'content-type':'application/json',...(declared?{'content-length':'1025'}:{})},socket,aborted:false,iterations:0,destroyCalls:0});
+ req.iterator=async function*(){this.iterations++;yield Buffer.alloc(1025,32);};
+ req.destroy=()=>{req.destroyCalls++;req.aborted=true;req.emit('aborted');socket.completeClose();};
+ let ended;const end=new Promise(r=>{ended=r;});const res=new EventEmitter();
+ Object.assign(res,{destroyed:false,writableEnded:false,writableFinished:false,writeHead(status,headers){this.status=status;this.headers=headers;},end(){this.writableEnded=true;ended();if(finish){this.writableFinished=true;this.emit('finish');}}});
+ return {req,res,socket,end};
+}
+function controlledCompactQuery(inspect){
+ const node=Object.fromEntries(['getNodeInfo','getChainTips','getWorldStateSyncStatus','getSyncedL1Timestamp','getBlockData','getBlock'].map(name=>[name,inspect]));
+ return createCompactBlockNativeAdapter({node,expectedNetworkScope:scope,proofsEnabled:false,tier:'checkpointed'});
+}
+for(const declared of [false,true])test(`compact ${declared?'declared':'chunked'} rejection retains actual handler slot until socket closes`,async()=>{
+ let inspections=0;const query=controlledCompactQuery(async()=>{inspections++;});
+ const held=compactSocketControl({declared});const pending=query.handle(held.req,held.res);await held.end;
+ assert.equal(held.res.status,413);assert.equal(held.res.headers.Connection,'close');assert.equal(held.req.iterations,declared?0:1);
+ const second=compactSocketControl({declared});await query.handle(second.req,second.res);assert.equal(second.res.status,429);assert.equal(inspections,0);
+ held.socket.completeClose();await pending;assert.equal(held.req.listenerCount('aborted'),0);assert.equal(held.socket.listenerCount('close'),0);
+ const third=compactSocketControl({declared});const next=query.handle(third.req,third.res);await third.end;assert.equal(third.res.status,413);third.socket.completeClose();await next;
+});
+for(const declared of [false,true])test(`compact ${declared?'declared':'chunked'} unfinished rejection uses existing deadline and cleanup`,async t=>{
+ t.mock.timers.enable({apis:['setTimeout']});
+ const query=controlledCompactQuery(async()=>{throw Error('Must not inspect invalid body');});
+ const held=compactSocketControl({declared,finish:false});const pending=query.handle(held.req,held.res);await held.end;
+ assert.equal(held.res.status,413);assert.equal(held.socket.closed,false);assert.equal(held.req.destroyCalls,0);
+ t.mock.timers.tick(limits.timeoutMs);await pending;
+ assert.equal(held.req.destroyCalls,1);assert.equal(held.socket.closed,true);assert.equal(held.req.listenerCount('aborted'),0);assert.equal(held.socket.listenerCount('close'),0);assert.equal(held.res.listenerCount('finish'),0);
+});
+
+test('HTTP: oversized unfinished chunked request closes the actual connection',async()=>{
+ const f=await fixture();await server(f,async({url,send})=>{
+  let request,socket,responseStatus,connection;
+  await new Promise((resolve,reject)=>{
+   const timer=setTimeout(()=>{request?.destroy();reject(Error('Test socket cleanup deadline'));},2000);
+   const fail=error=>{clearTimeout(timer);reject(error);};
+   request=http.request(url+route,{method:'POST',headers:{'content-type':'application/json','transfer-encoding':'chunked','connection':'keep-alive'}},res=>{
+    responseStatus=res.statusCode;connection=res.headers.connection;res.resume();res.on('error',fail);
+   });
+   request.on('error',error=>{if(!responseStatus)fail(error);});
+   request.on('socket',value=>{socket=value;socket.once('close',()=>{clearTimeout(timer);resolve();});});
+   request.write(Buffer.alloc(1025,32));
+  });
+  assert.equal(responseStatus,413);assert.equal(connection,'close');assert.equal(socket.destroyed,true);assert.equal(request.writableEnded,false);
+  assert.equal(f.state.calls,0);assert.equal((await send()).status,200);
+ });
+});
+test('deadline retains the native call until actual settlement',async t=>{
+ const f=await fixture(),entered=deferred(),release=deferred();
+ f.node.getNodeInfo=async()=>{entered.resolve();await release.promise;throw Error('PRIVATE');};
+ const adapter=createCompactBlockNativeAdapter(f.config);
+ const held=compactSocketControl();held.req.iterator=async function*(){yield Buffer.from(JSON.stringify(f.request));};
+ t.mock.timers.enable({apis:['setTimeout']});
+ const pending=adapter.handle(held.req,held.res);await entered.promise;
+ t.mock.timers.tick(limits.timeoutMs);assert.equal(held.req.destroyCalls,1);
+ const second=compactSocketControl();await adapter.handle(second.req,second.res);assert.equal(second.res.status,429);
+ release.resolve();await pending;assert.equal(held.res.status,undefined);
+ const third=compactSocketControl({declared:true});const next=adapter.handle(third.req,third.res);await third.end;
+ assert.equal(third.res.status,413);third.socket.completeClose();await next;
+ assert.equal(held.req.listenerCount('aborted'),0);assert.equal(held.res.listenerCount('close'),0);
 });

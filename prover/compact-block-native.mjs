@@ -14,7 +14,7 @@ import {inspectTrustedNode} from '../shared/trusted-private-node.mjs';
 export const COMPACT_BLOCK_NATIVE_ROUTE='/rolling/compact-block-v1';
 const fieldCapacity=BLOBS_PER_CHECKPOINT*FIELDS_PER_BLOB-NUM_CHECKPOINT_END_MARKER_FIELDS;
 export const COMPACT_BLOCK_NATIVE_LIMITS=Object.freeze({requestBytes:1024,responseBytes:2*1024*1024,
-  fields:fieldCapacity,transactions:Math.floor((fieldCapacity-NUM_BLOCK_END_BLOB_FIELDS)/MIN_TX_BLOB_FIELDS)});
+  timeoutMs:10000,fields:fieldCapacity,transactions:Math.floor((fieldCapacity-NUM_BLOCK_END_BLOB_FIELDS)/MIN_TX_BLOB_FIELDS)});
 const tiers=['proposed','checkpointed','proven','finalized'];
 const own=(object,key)=>{const d=Object.getOwnPropertyDescriptor(object,key);check(d&&Object.hasOwn(d,'value'));return d.value;};
 const check=value=>{if(!value)throw Error('Compact block unavailable');};
@@ -118,13 +118,27 @@ export function createCompactBlockNativeAdapter(options) {
     if(req.headers.origin!==undefined||!/^application\/json(?:\s*;\s*charset=utf-8)?$/i.test(req.headers['content-type']??'')){reject(res,415);return true;}
     if(active){reject(res,429);return true;}
     const declared=req.headers['content-length'];
-    if(declared!==undefined&&(typeof declared!=='string'||!/^(0|[1-9][0-9]{0,9})$/.test(declared)||Number(declared)>COMPACT_BLOCK_NATIVE_LIMITS.requestBytes)){reject(res,413);return true;}
     active=true;let aborted=req.aborted||res.destroyed,status=503;
     const onAbort=()=>{aborted=true;};const onClose=()=>{if(!res.writableFinished)aborted=true;};
     req.once('aborted',onAbort);res.once('close',onClose);
+    // A deadline closes stalled uploads but never detaches a pending native call.
+    // The single flight remains owned until the original handler settles.
+    const timer=setTimeout(()=>{aborted=true;req.destroy();},COMPACT_BLOCK_NATIVE_LIMITS.timeoutMs);
+    const rejectAndClose=async()=>{
+      const socket=req.socket;
+      if(socket.closed){reject(res,413);return;}
+      await new Promise(resolve=>{
+        const finish=()=>socket.destroy();
+        const closed=()=>{res.off('finish',finish);socket.off('close',closed);resolve();};
+        socket.once('close',closed);res.once('finish',finish);
+        reject(res,413);
+        if(res.destroyed||res.writableFinished)finish();
+      });
+    };
     const alive=()=>check(!aborted&&!req.aborted&&!res.destroyed);
     const api=Object.fromEntries(Object.entries(methods).map(([name,method])=>[name,(...args)=>{alive();return Reflect.apply(method,node,args);} ]));
     try {
+      status=413;if(declared!==undefined&&(typeof declared!=='string'||!/^(0|[1-9][0-9]{0,9})$/.test(declared)||Number(declared)>COMPACT_BLOCK_NATIVE_LIMITS.requestBytes))throw Error();
       status=400;const chunks=[];let bytes=0;
       for await(const chunk of req.iterator({destroyOnReturn:false})){bytes+=chunk.length;if(bytes>COMPACT_BLOCK_NATIVE_LIMITS.requestBytes){status=413;throw Error();}chunks.push(chunk);}
       alive();const request=selector(JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(Buffer.concat(chunks))),config.tier);
@@ -161,8 +175,8 @@ export function createCompactBlockNativeAdapter(options) {
       await canonical();alive();
       const encoded=JSON.stringify(result);check(Buffer.byteLength(encoded)<=COMPACT_BLOCK_NATIVE_LIMITS.responseBytes);
       respond(res,200,encoded);
-    } catch {if(!aborted)reject(res,status);}
-    finally {req.off('aborted',onAbort);res.off('close',onClose);active=false;}
+    } catch {if(status===413)await rejectAndClose();else if(!aborted)reject(res,status);}
+    finally {clearTimeout(timer);req.off('aborted',onAbort);res.off('close',onClose);active=false;}
     return true;
   };
   // Small bridge for the existing official Koa extraMiddlewares extension point.
