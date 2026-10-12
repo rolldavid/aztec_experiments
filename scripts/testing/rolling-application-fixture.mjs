@@ -3,6 +3,7 @@
 // two HTTP adapters and its private wallet state.
 // No fake node, proof, freshness, receipt, event or production factory is injected.
 import assert from 'node:assert/strict';
+import {capturePublicFeeStandalone} from '../private-fee-evidence.mjs';
 import {createRollingPrivateRecoveryMetrics,RECOVERY_METRIC_METHODS} from './rolling-private-recovery-metrics.mjs';
 import {classifyT03PublicFootprint} from '../t03-public-footprint.mjs';
 import fs from 'node:fs/promises';
@@ -18,7 +19,7 @@ const discard=()=>{};
 const silent=Object.assign(discard,Object.fromEntries(['trace','debug','verbose','info','warn','error','fatal'].map(k=>[k,discard])),
   {level:'silent',isLevelEnabled:()=>false,getBindings:()=>({}),createChild:()=>silent});
 const PERSONAL=['feePayer','publicCallSenders','publicCallTargets','publicCallCalldata','publicWriteSlots','publicWriteValues','publicLogContracts','publicLogFields'];
-const SOURCES=['scripts/testing/rolling-private-recovery-metrics.mjs','scripts/testing/rolling-notification-fixture.mjs','scripts/testing/rolling-notification-browser.mjs','scripts/testing/rolling-notification-acceptance.mjs','scripts/testing/rolling-preference-saved.mjs','scripts/testing/rolling-preference-reorg.mjs','scripts/testing/rolling-preference-browser-fixture.mjs','scripts/testing/rolling-preference-browser.mjs','scripts/testing/rolling-preference-recovery.mjs','shared/rolling/preference-reader.mjs','shared/rolling/preference-events.mjs','shared/rolling/preferences.mjs','scripts/testing/rolling-rejected-withdrawal.mjs','scripts/application-post.mjs','scripts/c01-settle-application-message.mjs','scripts/c01-withdraw-l1.mjs','scripts/t04-browser-journey-verify.mjs','scripts/testing/rolling-subboard-acceptance.mjs','scripts/testing/rolling-name-collision.mjs','scripts/testing/rolling-collision-observer.mjs','scripts/testing/rolling-trusted-recovery.mjs','scripts/testing/rolling-social-wire.mjs','scripts/testing/rolling-wire-campaign.mjs','scripts/testing/rolling-wire-trace.mjs','scripts/testing/rolling-owned-names.mjs','scripts/t03-public-footprint.mjs','scripts/testing/rolling-removed-like.mjs','scripts/testing/rolling-application-actor.mjs','scripts/testing/rolling-account-reactions.mjs','scripts/testing/rolling-social-acceptance.mjs','scripts/testing/rolling-profile-acceptance.mjs','experiments/avatar/raster-fixture.mjs','scripts/prove-application-action.mjs','scripts/testing/rolling-native-artifacts.mjs','scripts/testing/rolling-application-fixture.mjs','scripts/testing/scenarios.mjs','scripts/testing/scenario-flows.mjs',
+const SOURCES=['scripts/private-fee-evidence.mjs','scripts/w01-private-fee-standalone.mjs','scripts/testing/rolling-private-recovery-metrics.mjs','scripts/testing/rolling-notification-fixture.mjs','scripts/testing/rolling-notification-browser.mjs','scripts/testing/rolling-notification-acceptance.mjs','scripts/testing/rolling-preference-saved.mjs','scripts/testing/rolling-preference-reorg.mjs','scripts/testing/rolling-preference-browser-fixture.mjs','scripts/testing/rolling-preference-browser.mjs','scripts/testing/rolling-preference-recovery.mjs','shared/rolling/preference-reader.mjs','shared/rolling/preference-events.mjs','shared/rolling/preferences.mjs','scripts/testing/rolling-rejected-withdrawal.mjs','scripts/application-post.mjs','scripts/c01-settle-application-message.mjs','scripts/c01-withdraw-l1.mjs','scripts/t04-browser-journey-verify.mjs','scripts/testing/rolling-subboard-acceptance.mjs','scripts/testing/rolling-name-collision.mjs','scripts/testing/rolling-collision-observer.mjs','scripts/testing/rolling-trusted-recovery.mjs','scripts/testing/rolling-social-wire.mjs','scripts/testing/rolling-wire-campaign.mjs','scripts/testing/rolling-wire-trace.mjs','scripts/testing/rolling-owned-names.mjs','scripts/t03-public-footprint.mjs','scripts/testing/rolling-removed-like.mjs','scripts/testing/rolling-application-actor.mjs','scripts/testing/rolling-account-reactions.mjs','scripts/testing/rolling-social-acceptance.mjs','scripts/testing/rolling-profile-acceptance.mjs','experiments/avatar/raster-fixture.mjs','scripts/prove-application-action.mjs','scripts/testing/rolling-native-artifacts.mjs','scripts/testing/rolling-application-fixture.mjs','scripts/testing/scenarios.mjs','scripts/testing/scenario-flows.mjs',
   'scripts/c01-real-node.mjs','scripts/c01-board-flow.mjs','scripts/c01-deposit-flow.mjs','scripts/c01-client-mining.mjs',
   'scripts/w01-private-fee-flow.mjs','scripts/testing/private-fee-verification.mjs','scripts/w01-unfunded-wallet.mjs','scripts/w01-private-funding.mjs',
   'shared/sdk-entry.mjs','shared/private-pxe.mjs','shared/trusted-private-node.mjs','shared/routed-kernel-prover.mjs','shared/remote-prover-client.mjs',
@@ -42,6 +43,29 @@ export function recordRollingFundingFailure(report,role,observation){
   if(key&&!Object.hasOwn(report,key))report[key]=observation;
   // Never replace completed public funding history when a later role fails.
   report.fundingFailure={role:role??'unattributed',observation};
+}
+// One-shot setup action: save intent before invoking the real claim and keep any
+// paid partial result on failure. No retry, new wallet, or alternate funding path.
+export async function claimRollingDeferredPrivateFees({funding,claim,persist}) {
+  assert(funding&&typeof funding==='object'&&!Object.hasOwn(funding,'standalone'));
+  assert.equal(typeof claim,'function');assert.equal(typeof persist,'function');
+  funding.standalone={passed:false,outcome:'unverified',attempted:true};
+  await persist(); // A failed write must prevent the financial operation.
+  let failed=false,failure;
+  try {
+    const observed=await claim();
+    const captured=capturePublicFeeStandalone(observed);
+    if(captured)funding.standalone={...captured,attempted:true,
+      ...(Number.isSafeInteger(observed.proofMilliseconds)&&observed.proofMilliseconds>=0?{proofMilliseconds:observed.proofMilliseconds}:{})};
+    assert.equal(funding.standalone.passed,true);
+  }catch(error){
+    failed=true;failure=error;
+    const partial=error&&typeof error==='object'?Object.getOwnPropertyDescriptor(error,'privateFeeStandaloneObservation')?.value:undefined;
+    const captured=capturePublicFeeStandalone(partial);
+    if(captured)funding.standalone={...captured,attempted:true};
+  }
+  try{await persist();}catch(error){if(failed)throw new AggregateError([failure,error],'Standalone claim and evidence persistence failed');throw error;}
+  if(failed)throw failure;
 }
 export function assertRollingApplicationViews(projection,{nameId,subboardId,rootId,replyId}) {
   const root=projection.post(rootId),reply=projection.post(replyId);
@@ -313,13 +337,23 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
       fundingRole='a';fees=await prepareW01PrivateFees({...ctx,rpcUrl:ctx.config.l1RpcUrls[0],mineL1,standalone:!multi,
         fundingDirectory:path.join(ctx.directory,'rolling-app-funding'),reportStage:ctx.mark});
       report.privateFees=fees;owner=fees.authorAccount.address;
-      if(multi){fundingRole='b';feesB=await prepareW01PrivateFees({...ctx,rpcUrl:ctx.config.l1RpcUrls[0],mineL1,standalone:!socialWire,fundingDirectory:path.join(ctx.directory,'rolling-app-funding-b'),reportStage:ctx.mark});report.secondPrivateFees=feesB;assert(!feesB.authorAccount.address.equals(owner));assert(feesB.browserFixture.instance.address.equals(fees.browserFixture.instance.address));}
+      if(multi){fundingRole='b';feesB=await prepareW01PrivateFees({...ctx,rpcUrl:ctx.config.l1RpcUrls[0],mineL1,standalone:!socialWire&&!notificationBrowser,fundingDirectory:path.join(ctx.directory,'rolling-app-funding-b'),reportStage:ctx.mark});report.secondPrivateFees=feesB;assert(!feesB.authorAccount.address.equals(owner));assert(feesB.browserFixture.instance.address.equals(fees.browserFixture.instance.address));}
       fundingRole=undefined;const setupWallet=fees.browserFixture.wallet;
       await mark('collateral-claim');
       collateralRole='a';claim=await depositAndClaimC01({...ctx,node:setupWallet.aztecNode,rpcUrl:ctx.config.l1RpcUrls[0],mineL1,reportStage:ctx.mark,
         authorAccount:fees.authorAccount,claimWallet:setupWallet,payerMode:'private',privateFeeAction:fees.privateFeeAction});
       report.collateral=claim;accountFee(claim.claimTxHash,claim.fee);await save();assert(claim.passed);
       collateralRole=undefined;
+      if(notificationBrowser){
+        // Both bridge preparations already captured the same initial pool. Start
+        // A's collateral cooldown before B's genuine fee-only claim, so useful
+        // sequential proving can overlap eligibility without changing clocks.
+        await mark('second-private-fee-claim');
+        const {proveAndIncludePrivateFeeStandalone}=await import('../w01-private-fee-standalone.mjs');
+        await claimRollingDeferredPrivateFees({funding:feesB,persist:save,
+          claim:()=>proveAndIncludePrivateFeeStandalone({wallet:feesB.browserFixture.wallet,owner:feesB.authorAccount.address,
+            privateFeeAction:feesB.privateFeeAction,node:feesB.browserFixture.wallet.aztecNode,mineL1,mark:ctx.mark})});
+      }
       if(socialWire){
         await mark('second-collateral-claim');collateralRole='b';
         const {createWalletClient,http,publicActions}=await import('viem'),{generatePrivateKey,privateKeyToAccount}=await import('viem/accounts');

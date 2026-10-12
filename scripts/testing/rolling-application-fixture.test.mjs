@@ -449,8 +449,13 @@ test('recovery observation keeps rejected and synchronous errors and unobserved 
 test('notification B claims real fee credit without collateral and includes setup debit',async()=>{
  const source=await fs.readFile(new URL('./rolling-application-fixture.mjs',import.meta.url),'utf8');
  const funding=source.slice(source.indexOf("if(multi){fundingRole='b'"),source.indexOf("fundingRole=undefined;const setupWallet"));
- assert(funding.includes('standalone:!socialWire,'));
- assert(!funding.includes('!notificationBrowser'));
+ assert(funding.includes('standalone:!socialWire&&!notificationBrowser,'));
+ const claimed=source.indexOf('report.collateral=claim;accountFee');
+ const deferred=source.indexOf('await claimRollingDeferredPrivateFees({funding:feesB');
+ const eligibility=source.indexOf("await mark('collateral-eligibility')");
+ assert(claimed>0&&deferred>claimed&&eligibility>deferred);
+ assert(source.slice(deferred,eligibility).includes('privateFeeAction:feesB.privateFeeAction'));
+ assert(source.includes("'scripts/private-fee-evidence.mjs','scripts/w01-private-fee-standalone.mjs'"));
  const readiness=source.slice(source.indexOf("actorB=await makeActor(feesB,'b');const state="),source.indexOf('const decoder=await createRollingEventDecoder'));
  assert(readiness.indexOf('await save()')<readiness.indexOf('assert.equal(state.status'));
  assert(readiness.includes("assert.equal(state.status,socialWire?'fee-ready':'collateral-pending')"));
@@ -459,4 +464,45 @@ test('notification B claims real fee credit without collateral and includes setu
  assert(settlement.includes('feesB.browserFixture.fundedAmount-BigInt(feesB.standalone?.transactionFee??0)-feeTotalB'));
  assert(settlement.includes('feesB.verify(feeTotalB,fees.browserFixture.fundedAmount-feeTotal)'));
  assert(source.includes('assert.equal(report.proverJobs.completed,4);assert.equal(report.proverJobs.submitted,4)'));
+});
+
+import {claimRollingDeferredPrivateFees} from './rolling-application-fixture.mjs';
+const standaloneReceipt=()=>({passed:true,canonicalCheckpoint:true,applicationProof:true,networkProof:false,executionResult:'success',nodeValidation:'valid',txHash:'0x'+'11'.repeat(32),payer:'0x'+'12'.repeat(32),transactionFee:'13',status:'checkpointed',proofMilliseconds:17});
+test('deferred fee claim persists intent and real receipt exactly once',async()=>{
+ const funding={},order=[];let calls=0;
+ const claim=async()=>{calls++;order.push('claim');assert.equal(funding.standalone.attempted,true);return standaloneReceipt();};
+ await claimRollingDeferredPrivateFees({funding,claim,persist:async()=>order.push(funding.standalone.passed?'receipt':'intent')});
+ assert.deepEqual(order,['intent','claim','receipt']);assert.equal(funding.standalone.transactionFee,'13');assert.equal(funding.standalone.proofMilliseconds,17);
+ await assert.rejects(()=>claimRollingDeferredPrivateFees({funding,claim,persist:async()=>{}}));assert.equal(calls,1);
+});
+test('deferred fee claim never sends after failed intent persistence',async()=>{
+ const funding={},failure=new Error('disk');let sends=0;
+ await assert.rejects(()=>claimRollingDeferredPrivateFees({funding,claim:async()=>{sends++;},persist:async()=>{throw failure;}}),e=>e===failure);
+ await assert.rejects(()=>claimRollingDeferredPrivateFees({funding,claim:async()=>{sends++;},persist:async()=>{}}));assert.equal(sends,0);
+});
+test('deferred fee claim preserves paid partial receipt and original error without retry',async()=>{
+ const funding={},failure=Object.assign(new Error('canonical read failed'),{privateFeeStandaloneObservation:{...standaloneReceipt(),passed:false,secret:'must not escape'}});let calls=0;const saved=[];
+ const claim=async()=>{calls++;throw failure;};
+ await assert.rejects(()=>claimRollingDeferredPrivateFees({funding,claim,persist:async()=>saved.push(JSON.parse(JSON.stringify(funding)))}),e=>e===failure);
+ assert.equal(saved.length,2);assert.equal(funding.standalone.txHash,standaloneReceipt().txHash);assert.equal(funding.standalone.transactionFee,'13');assert.equal(funding.standalone.passed,false);assert(!JSON.stringify(saved).includes('must not escape'));
+ await assert.rejects(()=>claimRollingDeferredPrivateFees({funding,claim,persist:async()=>{}}));assert.equal(calls,1);
+});
+test('deferred fee claim preserves action and later evidence errors together',async()=>{
+ const funding={},action=new Error('action'),disk=new Error('disk');let saves=0;
+ await assert.rejects(()=>claimRollingDeferredPrivateFees({funding,claim:async()=>{throw action;},persist:async()=>{if(++saves===2)throw disk;}}),e=>e instanceof AggregateError&&e.errors[0]===action&&e.errors[1]===disk);
+});
+test('deferred fee claim refuses malformed success and retains its one-shot fence',async()=>{
+ const funding={};let calls=0;
+ const claim=async()=>{calls++;return {...standaloneReceipt(),transactionFee:'0',secret:'not evidence'};};
+ await assert.rejects(()=>claimRollingDeferredPrivateFees({funding,claim,persist:async()=>{}}));
+ assert.equal(funding.standalone.passed,false);assert(!Object.hasOwn(funding.standalone,'secret'));
+ await assert.rejects(()=>claimRollingDeferredPrivateFees({funding,claim,persist:async()=>{}}));assert.equal(calls,1);
+});
+
+test('deferred fee claim propagates falsy failures and never reports success',async()=>{
+ for(const failure of [undefined,null,false,0]){
+  const funding={};let caught=false;
+  try{await claimRollingDeferredPrivateFees({funding,claim:async()=>{throw failure;},persist:async()=>{}});}catch(error){caught=true;assert.equal(error,failure);}
+  assert(caught);assert.equal(funding.standalone.passed,false);
+ }
 });
