@@ -13,24 +13,21 @@
       "branch": "codex/rolling-private-bok-candidate",
       "history_locator": "Codex runtime thread 01a12a75-1b50-7871-a73b-4253a1010194",
       "role": "lead",
-      "state": "notification timing and pre-handoff accounting repair; sole integrator",
+      "state": "worker-native profile2bc frozen independent review; sole integrator",
       "working_branch": "codex/rolling-private-bok-candidate",
       "active_edit_paths": [
         "execution/"
       ],
       "additional_worktree": {
         "path": "../rolling-lead-social",
-        "branch": "codex/rolling-notification-funding-order",
+        "branch": "codex/rolling-worker-native-profile",
         "owner": "lead-20261011",
-        "base": "6acf92d7d0acb9460392a01a81bb9819589b848b",
-        "state": "profile/accounting repair sole writer",
+        "base": "b26cce3c47b44a45fdfc437830127179dd6f2eec",
+        "state": "early native initialization repair sole writer",
         "allowed_paths": [
-          "scripts/testing/scenarios.mjs",
-          "scripts/test-c01-native-profile.mjs",
-          "scripts/testing/rolling-application-fixture.mjs",
-          "scripts/testing/rolling-application-fixture.test.mjs",
-          "scripts/testing/rolling-notification-fixture.mjs",
-          "scripts/testing/rolling-notification-fixture.test.mjs"
+          "prover/worker.mjs",
+          "prover/worker-native-profile.mjs",
+          "prover/worker-native-profile.test.mjs"
         ]
       },
       "trusted_sender_claim": {
@@ -91,7 +88,7 @@
         ],
         "purpose": "Compose reviewed207+7867; explicit stopped-consumer PXE patch and normal SDK/walletbuild before realinitialreorg"
       },
-      "last_reconciled_at": "2026-10-12T13:11:06.612203+00:00"
+      "last_reconciled_at": "2026-10-12T13:53:30.983406+00:00"
     },
     {
       "logical_id": "recovery-probe-20261011",
@@ -112,27 +109,28 @@
       "task": [
         "G14"
       ],
-      "branch": "codex/rolling-rollup-compatibility-diagnostic",
+      "branch": "codex/rolling-v6-rc3-feasibility",
       "history_locator": "collaboration runtime /root/controls, parent 01a12a75-1b50-7871-a73b-4253a1010194",
       "role": "implementation worker",
-      "state": "09 cleanup complete; source-only compatibility diagnostic",
+      "state": "6851 package pins frozen review; native/compiler provenance read-only",
       "worktree": "../rolling-controls",
       "allowed_paths": [
-        "deploy/prover/rollup-compatibility-diagnostic.mjs",
-        "deploy/prover/rollup-compatibility-diagnostic.test.mjs",
+        "package.json",
+        "package-lock.json",
+        "toolchain.json",
+        "scripts/toolchain.mjs",
+        "scripts/test-toolchain-packages.mjs",
         "execution/evidence/G02/"
       ],
       "commit_trailer_aliases": {
         "Agent-Session": "controls",
         "Parent-Session": "lead"
       },
-      "base": "1070a8fad6cb2b1b0068fe6b9f73267475b55b90",
+      "base": "b26cce3c47b44a45fdfc437830127179dd6f2eec",
       "active_edit_paths": [
-        "deploy/prover/rollup-compatibility-diagnostic.mjs",
-        "deploy/prover/rollup-compatibility-diagnostic.test.mjs",
-        "execution/evidence/G02/"
+        "execution/evidence/G02/rc3-native-compiler-provenance.json"
       ],
-      "writer_released": false
+      "writer_released": true
     },
     {
       "logical_id": "reviewer-20261011",
@@ -145,7 +143,7 @@
       "branch": "read-only candidate refs",
       "history_locator": "collaboration runtime /root/reviewer, parent 01a12a75-1b50-7871-a73b-4253a1010194",
       "role": "independent reviewer",
-      "state": "5c2 timing diagnosis complete; available for independent source review",
+      "state": "6851 source checks passed; worker-native2bc independent source/native checks",
       "active_edit_paths": [
         "execution/evidence/G07/*independent*",
         "execution/evidence/G07/*review*",
@@ -162,7 +160,7 @@
       "branch": "codex/rolling-compact-block-prototype",
       "history_locator": "collaboration runtime /root/design, parent01a12a75-1b50-7871-a73b-4253a1010194",
       "role": "implementation worker",
-      "state": "normal processing321 passed; actual utility ACIR test source only",
+      "state": "c6 actual ACIR accepted; commit guard source design read-only",
       "worktree": "../rolling-design",
       "allowed_paths": [
         "billboard/rolling_contract/src/main.nr",
@@ -173,10 +171,9 @@
       ],
       "base": "ef36801ef215eeff400583e8454c3845744d580b",
       "reference_candidate": "1351ea1b180b11475250463c9c40fdd2e342ab13",
-      "writer_released": false,
+      "writer_released": true,
       "active_edit_paths": [
-        "scripts/test-pxe-preference-page.mjs",
-        "execution/evidence/G07/"
+        "execution/evidence/G07/preference-page/commit-guard-design.json"
       ]
     }
   ],
