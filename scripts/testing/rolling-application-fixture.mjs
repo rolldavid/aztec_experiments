@@ -639,7 +639,7 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
           const {beginRollingRejectedWithdrawal,completeRollingRejectedWithdrawal}=await import('./rolling-rejected-withdrawal.mjs');
           const {exactApplicationDeposit}=await import('../application-post.mjs');
           const {NoteStatus}=await import('@aztec-labs/stdlib/note');
-          const {deriveStorageSlotInMap}=await import('@aztec-labs/stdlib/hash');
+          const {readRollingAdmission}=await import('./rolling-admission-read.mjs');
           const {c01BoardEconomics}=await import('../c01-board-flow.mjs');
           const anchorRecord=(header,blockHash)=>({blockNumber:String(header.globalVariables.blockNumber),blockHash:String(blockHash),
             noteHashRoot:String(header.state.partial.noteHashTree.root),noteHashSize:String(header.state.partial.noteHashTree.nextAvailableLeafIndex),
@@ -676,9 +676,7 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
             isRejectedSubboardError:error=>error?.code==='ROLLING_SUBBOARD_REJECTED',readDeposit,
             action:async(input,label)=>{await action(input,label,actorA);return capture(report.transactions.at(-1).txHash);}},projection,
             rejectSubboard:async({id,reason})=>{await moderate({kind:'subboard',id,reason});return capture(report.subboardModeration.txHash);},waitCanonicalAnchor,
-            readAdmission:async id=>{const head=await ctx.node.getBlockData('checkpointed'),ref={hash:String(head.blockHash)},result={};
-              for(const [key,slot]of [['published','post_time'],['deadline','post_flag_deadline'],['flag','post_flagged']])result[key]=String((await ctx.node.getPublicStorageAt(ref,ctx.instance.address,await deriveStorageSlotInMap(checked.artifact.storageLayout[slot].slot,new Fr(BigInt(id))))).toBigInt());
-              assert.equal(String((await ctx.node.getBlockData(head.header.getBlockNumber())).blockHash),String(head.blockHash));return result;},
+            readAdmission:id=>readRollingAdmission({node:ctx.node,address:ctx.instance.address,storageLayout:checked.artifact.storageLayout,id}),
             scope:escrow.scope,economics:Object.fromEntries(['minDeposit','baseCooldown','censorWindow','maxSaveUp'].map(k=>[k,economics[k]]))});
           // Preserve ordinary canonical reads and fee/journal checks before the
           // real-wall miner stops. The one-use continuation is kept only in RAM.
