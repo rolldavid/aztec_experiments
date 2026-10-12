@@ -40,6 +40,7 @@ export function validateQueryService(config){
  const rawNode=captured.queryNode;
  if(!rawNode||Object.getPrototypeOf(rawNode)!==Object.prototype)throw Error('Query node required');
  const nodeFields={};for(const key of Reflect.ownKeys(rawNode)){const d=Object.getOwnPropertyDescriptor(rawNode,key);if(!['url','rollupAddress','maxLagSeconds'].includes(key)||!Object.hasOwn(d,'value'))throw Error('Invalid query node configuration');nodeFields[key]=d.value;}
+ if(typeof nodeFields.url!=='string'||typeof nodeFields.rollupAddress!=='string')throw Error('Invalid query node configuration');
  const queryNode=validateQueryNode(nodeFields);if(!queryNode)throw Error('Query node required');
  // Compact options keep the existing single origin policy and explicit opt-in.
  const origins=Object.freeze([...captured.origins]);

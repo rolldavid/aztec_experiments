@@ -153,3 +153,12 @@ test('pure query-only configuration rejects accessors, extra upstream keys and n
  assert.equal(reads,0);
  for(const change of [c=>c.service.rollupVersion='01',c=>c.service.rollupVersion='4294967296',c=>c.service.rollupVersion=1,c=>c.service.queryNode.apiKey='PRIVATE_SENTINEL']){const c=config();change(c);assert.throws(()=>validateQualification(c));}
 });
+
+test('pure qualification identity rejects changing and throwing coercions; scope is detached',()=>{
+ let coercions=0;
+ const sentinels=[{toString(){coercions++;return coercions===1?'http://127.0.0.1:8080/':'PRIVATE_SENTINEL';},valueOf(){coercions++;return 1n;}},{[Symbol.toPrimitive](){coercions++;throw Error('PRIVATE_SENTINEL');}}];
+ for(const field of ['url','rollupAddress'])for(const sentinel of sentinels){const c=config();c.service.queryNode[field]=sentinel;assert.throws(()=>validateQualification(c));assert.throws(()=>queryQualificationScope(c.service));}
+ for(const sentinel of sentinels)assert.throws(()=>loopback(sentinel));assert.equal(coercions,0);
+ const c=config(),scope=queryQualificationScope(c.service);c.service.chainId='1';c.service.rollupVersion='1';c.service.queryNode.rollupAddress='0x'+'03'.repeat(20);c.service.queryNode.maxLagSeconds=100;
+ assert.deepEqual(scope,{chainId:'11155111',version:'3409706519',rollup:'0x'+'02'.repeat(20),serviceMode:'query-only',nodeProofs:'real',maxLagSeconds:2});assert(Object.isFrozen(scope));
+});

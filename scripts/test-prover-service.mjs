@@ -57,3 +57,15 @@ test('query-only: bind failure and repeated close preserve caller directory and 
  assert.deepEqual(await fs.readdir(directory),['keep']);assert.equal(await fs.readFile(path.join(directory,'keep'),'utf8'),'caller-owned');
  const next=await startProverService({...queryConfig(),port:service.address.port});await next.close();await fs.rm(directory,{recursive:true});
 });
+
+test('query-only identity rejects object coercion before any service allocation',async()=>{
+ let coercions=0;
+ for(const field of ['url','rollupAddress']){
+  for(const sentinel of [{toString(){coercions++;return coercions===1?'http://127.0.0.1:1/':'PRIVATE_SENTINEL';},valueOf(){coercions++;return 1n;}},{[Symbol.toPrimitive](){coercions++;throw Error('PRIVATE_SENTINEL');}}]){
+   const config=queryConfig();config.queryNode[field]=sentinel;
+   assert.throws(()=>validateQueryService(config),/Invalid query node configuration/);
+   await assert.rejects(startProverService(config),/Invalid query node configuration/);
+  }
+ }
+ assert.equal(coercions,0);
+});

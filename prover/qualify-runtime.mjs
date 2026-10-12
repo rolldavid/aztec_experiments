@@ -59,6 +59,7 @@ export async function verifyRelease(root,digest){
   return {manifestSha256:digest,sourceCommit:manifest.sourceCommit,fileCount:Object.keys(manifest.files).length};
 }
 export function loopback(value){
+  requireCondition(typeof value==='string');
   const url=new URL(value);
   requireCondition(url.protocol==='http:'&&['127.0.0.1','[::1]'].includes(url.hostname)&&!url.username&&!url.password&&!url.search&&!url.hash&&url.pathname==='/');
   return url.href;
@@ -74,6 +75,7 @@ export function validateQualification(config){
   requireCondition(s.chainId==='11155111'&&typeof s.rollupVersion==='string'&&/^[1-9][0-9]{0,9}$/.test(s.rollupVersion)&&BigInt(s.rollupVersion)<2n**32n);
   requireCondition(Array.isArray(s.origins)&&s.origins.length===0);
   record(s.queryNode,['url','rollupAddress','maxLagSeconds']);
+  requireCondition(typeof s.queryNode.url==='string'&&typeof s.queryNode.rollupAddress==='string');
   requireCondition(s.queryNode&&/^0x[a-f0-9]{40}$/.test(s.queryNode.rollupAddress)&&BigInt(s.queryNode.rollupAddress)!==0n);
   const lag=s.queryNode.maxLagSeconds??120;
   requireCondition(Number.isSafeInteger(lag)&&lag>=1&&lag<=120);
@@ -87,7 +89,12 @@ export function validateQualification(config){
 }
 
 export function queryQualificationScope(service){
-  return {...scopeOf(service),serviceMode:'query-only',nodeProofs:'real',maxLagSeconds:service.queryNode.maxLagSeconds??120};
+  validateQualification({service,adminUrl:ADMIN_URL,adminKeyFile:ADMIN_KEY_FILE});
+  // Validation permits only own data properties and primitive identity strings.
+  // Capture a detached scope, never the caller's mutable queryNode object.
+  const {chainId,rollupVersion,queryNode}=service;
+  const {rollupAddress,maxLagSeconds=120}=queryNode;
+  return Object.freeze({chainId,version:rollupVersion,rollup:rollupAddress,serviceMode:'query-only',nodeProofs:'real',maxLagSeconds});
 }
 /** This is structural absence of proof service resources, not a fake queue
  * reporting zero jobs. HTTP rejection is checked before and after qualification. */
