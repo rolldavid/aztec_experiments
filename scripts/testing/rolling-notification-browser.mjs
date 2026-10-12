@@ -103,7 +103,13 @@ export async function reviewRollingNotificationAction({dialog:d,remaining,settle
  const privateViews=d.getByRole('button',{name:'Private views',exact:true});await settled(privateViews);await privateViews.click({timeout:remaining()});await recover();
 }
 
-const stages=new Set(['validation','launch','locked','import','recover','subscribe-review','subscribe-send','wait-reply','unread','marker-review','marker-send','suppressed','lock','reopen','complete']);
+// Policy details also contain rich text. Only the direct child is the post's
+// message; strict selection must still reject absent or duplicated messages.
+export async function assertRollingNotificationPostText(card,expectedText){
+ check(await card.locator(':scope > .post-body').textContent()===expectedText);
+}
+
+const stages=new Set(['validation','launch','locked','root-view','root-message','import','recover','subscribe-review','subscribe-send','wait-reply','unread','marker-review','marker-send','suppressed','lock','reopen','complete']);
 export const NOTIFICATION_BROWSER_CHECKS=Object.freeze(['freshNativeDatabase','publicBeforeUnlock','feeOnlyAccount','subscriptionReviewed','subscriptionConfirmed','subscriptionRecovered','unreadReply','markerReviewed','markerConfirmed','suppressedReply','publicReplyRetained','lockClears','reloadLocked','freshReopen','recoveredSuppression','noFinancialRecovery']);
 export async function runRollingNotificationBrowser(input){
  const started=Date.now();let stage='validation',browser,context,page,timer,expiresAt,expired=false,observer;
@@ -166,7 +172,7 @@ export async function runRollingNotificationBrowser(input){
    await dialog().getByRole('button',{name:'Close account panel',exact:true}).click({timeout:remaining()});
   }
   mark('locked');await importKeys();report.checks.freshNativeDatabase=true;report.checks.publicBeforeUnlock=true;report.checks.feeOnlyAccount=true;
-  await view('Main board',[c.expected.rootId]);const root=()=>page.locator('#post-'+c.expected.rootId);check(await root().locator('.post-body').textContent()===c.expected.rootText);
+  mark('root-view');await view('Main board',[c.expected.rootId]);const root=()=>page.locator('#post-'+c.expected.rootId);mark('root-message');await assertRollingNotificationPostText(root(),c.expected.rootText);
   mark('subscribe-review');await root().getByRole('button',{name:'Subscribe to thread',exact:true}).click({timeout:remaining()});
   await reviewSend('subscription','Enable thread subscription for '+c.expected.rootId+'. This preference is encrypted, not a public ownership list.');
   await root().getByRole('button',{name:'Unsubscribe from thread',exact:true}).waitFor({timeout:remaining()});report.checks.subscriptionRecovered=true;
@@ -174,12 +180,12 @@ export async function runRollingNotificationBrowser(input){
   while(!(reply=await readNotificationReply(directory,c.expected.rootId))){remaining();await sleep(Math.min(100,remaining()));}
   mark('unread');const pageData=await view('Notifications',[reply.replyId,c.expected.rootId]);
   const row=pageData.posts[0];check(row.record.root===c.expected.rootId&&row.record.parent===c.expected.rootId&&row.position.blockNumber===reply.replyBlock&&row.text===reply.replyText);
-  const card=()=>page.locator('#post-'+reply.replyId);await card().waitFor({timeout:remaining()});check(await card().locator('.post-body').textContent()===reply.replyText);check(await page.locator('#content article.post').count()===1&&await root().count()===0);report.checks.unreadReply=true;
+  const card=()=>page.locator('#post-'+reply.replyId);await card().waitFor({timeout:remaining()});await assertRollingNotificationPostText(card(),reply.replyText);check(await page.locator('#content article.post').count()===1&&await root().count()===0);report.checks.unreadReply=true;
   mark('marker-review');await card().getByRole('button',{name:'Mark thread read',exact:true}).click({timeout:remaining()});
   await settled(dialog().getByRole('button',{name:'Check action and review fee',exact:true}));check(await dialog().getByLabel('Thread ID',{exact:true}).inputValue()===c.expected.rootId);check(await dialog().getByLabel('Read through chain block',{exact:true}).inputValue()===reply.replyBlock);
   await reviewSend('marker','Mark this thread read through block '+reply.replyBlock);
   async function suppressed(){
-   await view('Main board',[reply.replyId,c.expected.rootId]);check(await card().locator('.post-body').textContent()===reply.replyText&&await root().locator('.post-body').textContent()===c.expected.rootText);
+   await view('Main board',[reply.replyId,c.expected.rootId]);await assertRollingNotificationPostText(card(),reply.replyText);await assertRollingNotificationPostText(root(),c.expected.rootText);
    check(await root().getByRole('button',{name:'Unsubscribe from thread',exact:true}).count()===1);report.checks.publicReplyRetained=true;
    await view('Notifications',[reply.replyId,c.expected.rootId]);await page.getByRole('heading',{name:'A little quiet here',exact:true}).waitFor({timeout:remaining()});check(await page.locator('#content article.post').count()===0);
   }

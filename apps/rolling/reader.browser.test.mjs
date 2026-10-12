@@ -50,7 +50,7 @@ test('public reader: navigation, unsafe content, failure recovery and narrow key
 
 // These public records and the action-recorder module are labelled doubles.
 // The renderer is real; this checks routing/presentation, never a transaction.
-async function socialFixture(t,{wallet='recorder'}={}){
+async function socialFixture(t,{wallet='recorder',policies=[]}={}){
  const files=new Set(['live.html','reader.mjs','reader-client.mjs','profile-view.mjs','model.mjs','navigation.mjs','style.css','avatar-upload.mjs']);
  if(wallet==='real')files.add('wallet-panel.mjs');
  const reason='<img src=x onerror=alert(1)> [unsafe](javascript:alert(1))';
@@ -64,7 +64,7 @@ async function socialFixture(t,{wallet='recorder'}={}){
   if(url.pathname.startsWith('/api/')){
    res.writeHead(200,{'content-type':'application/json'});
    const board={id:'20',name:'Workshop',slug:'workshop',description:'A public board',mainVersion:'8',mainRules:'Current rules',rules:'Local rules',rejected:true,rejection:{reason,mainVersion:'6'}};
-   const data={schemaVersion:1,scope:{boardAddress:'0x'+'1'.repeat(64)},complete:true,checkpoint:{number:3,hash:'public'},revision:'1',names:{},boards:{'20':board},nextCursor:null};
+   const data={schemaVersion:1,scope:{boardAddress:'0x'+'1'.repeat(64)},complete:true,checkpoint:{number:3,hash:'public'},revision:'1',names:{},boards:{'20':board},nextCursor:null,policies};
    res.end(JSON.stringify(url.pathname==='/api/directory'?{...data,boards:[board]}:{...data,posts:[live,removed,rejected,malformed]}));return;
   }
   if(url.pathname==='/wallet-panel.mjs'&&wallet==='recorder'){
@@ -331,4 +331,26 @@ test('Following and Notifications use only ordinary feed parameters and explicit
  const {page,feed}=await privateViewFixture(t);await recoverPrivateView(page);await page.getByRole('link',{name:'Following',exact:true}).click();await page.getByRole('button',{name:'Load more',exact:true}).click();await page.getByText('Checked against chain block 4',{exact:true}).waitFor();assert.equal(await page.getByRole('article').count(),0);
  await page.getByRole('link',{name:'Notifications',exact:true}).click();await page.getByRole('button',{name:'Load more',exact:true}).click();await page.locator('#post-11').waitFor();assert.equal(await page.locator('#post-10').count(),0);assert(feed.every(url=>/^\/api\/feed\?limit=30(?:&cursor=page2)?$/.test(url)));
  await page.locator('#post-11').getByRole('button',{name:'Mark thread read',exact:true}).click();await page.getByRole('button',{name:'Check action and review fee'}).click();await page.getByRole('button',{name:'Confirm and send'}).waitFor();assert.deepEqual(await page.evaluate(()=>privateTest.prepare),[{type:'read-marker',thread:'10',throughBlock:'2',expectedRevision:'2'}]);
+});
+
+// Real production DOM; labelled public records. This guards the genuine driver
+// against confusing publication policy rich text with the post's own message.
+test('notification message assertion retains publication rules and rejects missing or duplicate direct messages',async t=>{
+ const {assertRollingNotificationPostText}=await import('../../scripts/testing/rolling-notification-browser.mjs');
+ const {page}=await socialFixture(t,{policies:[{version:'2',text:'Keep conversation civil.'}]});
+ page.setDefaultTimeout(500);
+ const card=page.locator('#post-10');
+ assert.equal(await card.locator('.post-body').count(),2);
+ await assert.rejects(card.locator('.post-body').textContent(),/strict mode violation/);
+ await assertRollingNotificationPostText(card,'Visible public post');
+ await card.getByText('Parent rules at publication · v2',{exact:true}).click();
+ assert.equal(await card.locator('details .post-body').textContent(),'Keep conversation civil.');
+ assert(await card.locator('details .post-body').isVisible());
+ assert.equal(await card.getByRole('button',{name:'Subscribe to thread',exact:true}).count(),1);
+ await assert.rejects(assertRollingNotificationPostText(card,'Different message'),/Notification browser check failed/);
+ await card.evaluate(node=>node.append(node.querySelector(':scope > .post-body').cloneNode(true)));
+ await assert.rejects(assertRollingNotificationPostText(card,'Visible public post'),/strict mode violation/);
+ await card.evaluate(node=>node.querySelectorAll(':scope > .post-body').forEach(body=>body.remove()));
+ await assert.rejects(assertRollingNotificationPostText(card,'Keep conversation civil.'),/Timeout/);
+ assert.equal(await card.locator('details .post-body').textContent(),'Keep conversation civil.');
 });
