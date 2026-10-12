@@ -3,7 +3,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {OperationQueue} from '../../node_modules/@aztec-labs/pxe/dest/operation_queue.js';
 import {createSynchronizedRollingApplication} from './synchronized-application.mjs';
-const names=['readAccountStatus','readPreferenceHead','readProfile','ownedIdentities','prepare','submitPrepared','cancelPrepared','reconcile','inspectRecovery','prepareReplacement'];
+const names=['readAccountStatus','readPreferenceHead','readProfile','ownedIdentities','prepare','submitPrepared','cancelPrepared','reconcile','inspectRecovery','prepareReplacement','resumeSaved'];
 test('explicit synchronization exposes a newly included name through the actual autoSync:false SDK queue',async()=>{
  let anchor=14,head=14,closed=0,syncs=0;
  const synchronizer={sync:async()=>{syncs++;anchor=head;}};
@@ -23,7 +23,7 @@ test('failed synchronization and context changes prevent every private operation
   const application=createSynchronizedRollingApplication({application:Object.fromEntries(names.map(n=>[n,()=>{calls++;}])),
    contextGuard:()=>{guards++;if(failure==='before'||failure==='after'&&guards===2)throw error;},
    synchronize:()=>{syncs++;if(failure==='sync')throw error;}});
-  await assert.rejects(application[name](),value=>value===error);assert.equal(calls,0);assert.equal(syncs,failure==='before'?0:1);
+  await assert.rejects(application[name](...(name==='resumeSaved'?['intent',{expectedTxHash:'0x'+'11'.repeat(32)}]:[])),value=>value===error);assert.equal(calls,0);assert.equal(syncs,failure==='before'?0:1);
  }
 });
 test('capabilities and method receivers are captured before asynchronous synchronization',async()=>{
@@ -46,4 +46,15 @@ test('preference head observes the synchronized anchor through the supported ope
   assert.equal((await raw.readPreferenceHead()).revision,'1');assert.equal((await application.readPreferenceHead()).revision,'2');
   assert.equal(reads,2);assert.equal(syncs,1);
  }finally{await queue.stop();}
+});
+
+test('saved resume options are captured before synchronization without invoking accessors',async()=>{
+ let release;const gate=new Promise(resolve=>release=resolve),hash='0x'+'11'.repeat(32),input={expectedTxHash:hash};
+ const raw=Object.fromEntries(names.map(name=>[name,(...args)=>args]));
+ const application=createSynchronizedRollingApplication({application:raw,contextGuard:()=>{},synchronize:()=>gate});
+ const pending=application.resumeSaved('intent',input);await Promise.resolve();input.expectedTxHash='0x'+'22'.repeat(32);release();
+ assert.deepEqual(await pending,['intent',{expectedTxHash:hash}]);
+ let reads=0,calls=0;const guarded=createSynchronizedRollingApplication({application:raw,contextGuard:()=>{calls++;},synchronize:()=>{calls++;}});
+ await assert.rejects(guarded.resumeSaved('intent',{get expectedTxHash(){reads++;throw Error('PRIVATE_SENTINEL');}}),{code:'ROLLING_INVALID_ACTION'});
+ assert.equal(reads,0);assert.equal(calls,0);
 });

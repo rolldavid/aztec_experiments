@@ -120,9 +120,10 @@ const methods={preference:'set_preference','read-marker':'mark_thread_read',bio:
  * This does not retrieve encrypted events or qualify key-only recovery.
  * A prepared post includes authenticated-wallet screening hints and live policy versions.
  * submit delegates the sole prove/journal/send lifecycle to wallet.sendTx. Once its
- * durable fence exists, only read-only reconcile is allowed, including after a crash
+ * durable fence exists, automatic behavior is limited to read-only reconcile, including after a crash
  * before transaction bytes were saved. Missing receipt is never absence. No automatic
- * replacement; cancelPrepared permits only the pre-send prepared state. Recovery UI must preserve both encrypted journals.
+ * replacement. Explicit preference-only resumeSaved may resend the identical saved bytes
+ * after fresh context validation, without estimation or proving; cancelPrepared permits only the pre-send prepared state. Recovery UI must preserve both encrypted journals.
  * This slice excludes bridging, deposit claims, L1 exits and composite Bok request/post;
  * withdraw is ONLY existing funded deposit's L2 exit. These remain integration work.
  */
@@ -170,7 +171,8 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
     privateFeeAddress:fixed.fee,privateFeeArtifact:deployment.privateFee.artifact,expectedChainId:scope.chainId,expectedVersion:scope.version,gasSettings:fixed.gas});}
   const operation=id=>`ROLLING_WORKFLOW_V1:${id}`;
   function summary(record){return {intentId:record.id,action:clone(record.action),status:record.status,maximumFee:record.maximumFee,
-    nonce:record.nonce,txHash:record.txHash??null,stage:'single-transaction',...(record.replacementReview?{replacementReview:clone(record.replacementReview)}:{})};}
+    nonce:record.nonce,txHash:record.txHash??null,stage:'single-transaction',...(record.replacementReview?{replacementReview:clone(record.replacementReview)}:{}),
+    ...(preferenceAction(record)?{inclusionHistory:clone(record.inclusionHistory??[])}:{})};}
   async function savedIntent(id){const saved=await (await slot()).read();check(saved.value?.id===id,'ROLLING_INTENT_NOT_FOUND');return saved;}
   function acknowledge(found,expected){
     check(found&&found.operation===expected.operation&&found.txHash===expected.txHash&&
@@ -222,16 +224,47 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
     check(!prior||same(prior,fact),'ROLLING_INVALID_RESPONSE');if(!prior)attempt.inclusions.push(fact);
     return history;
   }
+  function savedConsent(record,txHash){
+    const review=record.replacementReview;
+    // A renewed quote does not prove that new signed bytes were saved. Never
+    // attribute that quote to its old source candidate after an interrupted proof.
+    if(!txHash||review&&review.sourceTxHash===txHash)return null;
+    const maximumFee=review?review.maximumFee:record.maximumFee;
+    if(typeof maximumFee!=='string'||!/^(0|[1-9][0-9]{0,76})$/.test(maximumFee)||BigInt(maximumFee)>=FIELD_MODULUS)return null;
+    return {maximumFee,feeSource:review?'replacement':'original',marker:clone(review?review.marker:record.originalMarker??null)};
+  }
+  function savedContextMatches(record,consent,head,marker){
+    return !!consent&&!!record.originalPreferenceHead&&same(head,record.originalPreferenceHead)&&
+      head.revision===record.action.expectedRevision&&same(marker,consent.marker)&&
+      (!record.replacementReview||same(head,record.replacementReview.head));
+  }
+  async function exactResumeSnapshot(record,txHash,head,marker){
+    if(!txHash)return {status:'empty',txHash:null,maximumFee:null,feeSource:null,marker:null};
+    const inspected=await session.journal.inspectSavedRecovery(operation(record.id),txHash),consent=savedConsent(record,txHash);
+    let status=inspected.status;
+    if(status==='resumable'&&!consent)status='unknown';
+    else if(status==='resumable'&&!savedContextMatches(record,consent,head,marker))status='context-changed';
+    if(status==='resumable'&&['prepared','cancelled','replacement-prepared'].includes(record.status))status='unknown';
+    return {status,txHash:inspected.txHash,...(consent??{maximumFee:null,feeSource:null,marker:null})};
+  }
+  async function checkSavedResumeContext(saved,txHash){
+    const record=saved.value,consent=savedConsent(record,txHash);
+    await guard();await session.wallet.pxe.sync();await guard();
+    const head=await preferenceHead(),marker=await markerContext(record);
+    check(savedContextMatches(record,consent,head,marker),'ROLLING_RECOVERY_CONTEXT_CHANGED');
+    check((await savedIntent(record.id)).encoded===saved.encoded,'ROLLING_RECOVERY_REQUIRED');await guard();
+  }
   async function recoverySnapshot(saved){
     const record=saved.value;check(preferenceAction(record),'ROLLING_RECOVERY_UNSUPPORTED');
     const inspected=await session.journal.inspectReplacement(operation(record.id),{requireMissingAnchor:true});
     const head=await preferenceHead(),marker=await markerContext(record);await guard();
+    const exactResume=await exactResumeSnapshot(record,inspected.txHash,head,marker);
     check((await savedIntent(record.id)).encoded===saved.encoded,'ROLLING_RECOVERY_REQUIRED');await guard();
     let status=inspected.status==='available'?'replacement-available':inspected.status;
     if(status==='replacement-available'&&(!record.originalPreferenceHead||!same(head,record.originalPreferenceHead)||head.revision!==record.action.expectedRevision))status='context-changed';
     if(status==='replacement-available'&&['confirmed','reverted'].includes(record.status)&&!record.inclusionHistory?.some(row=>row.txHash===record.txHash))status='history-unavailable';
     return {intent:summary(record),status,attempts:clone(inspected.attempts),requireMissingAnchor:inspected.requireMissingAnchor,
-      head,originalPreferenceHead:clone(record.originalPreferenceHead??null),marker,originalMarker:clone(record.originalMarker??null),inclusionHistory:clone(record.inclusionHistory??[]),currentTxHash:inspected.txHash};
+      head,originalPreferenceHead:clone(record.originalPreferenceHead??null),marker,originalMarker:clone(record.originalMarker??null),inclusionHistory:clone(record.inclusionHistory??[]),currentTxHash:inspected.txHash,exactResume};
   }
   async function checkReplacementReview(record,{synchronize=false}={}){
     const review=record.replacementReview;check(review&&preferenceAction(record),'ROLLING_RECOVERY_REQUIRED');
@@ -340,9 +373,32 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
     });},
     // Explicit preference-only recovery. Inspection never acknowledges or writes.
     // Original revision/action/nonce remain immutable; a changed head is unresolved,
-    // not silently rebased. Valid-but-unsent candidates stay fenced for separate
-    // exact-byte recovery. Caller retains its exclusive wallet lease throughout.
+    // not silently rebased. Exact-byte recovery is separately user-confirmed and
+    // never re-estimates or re-proves. Caller retains its wallet lease throughout.
     async inspectRecovery(id){return exclusive(async()=>{await guard();return recoverySnapshot(await savedIntent(id));});},
+    async resumeSaved(id,input){
+      let expectedTxHash;try{({expectedTxHash}=exactData(input,['expectedTxHash']));}catch{throw fail('ROLLING_INVALID_ACTION');}
+      check(typeof expectedTxHash==='string'&&/^0x[0-9a-f]{64}$/.test(expectedTxHash));
+      return exclusive(async()=>{
+        await guard();const saved=await savedIntent(id),record=saved.value;
+        check(preferenceAction(record),'ROLLING_RECOVERY_UNSUPPORTED');
+        check(!['prepared','cancelled','replacement-prepared'].includes(record.status),'ROLLING_RECOVERY_REQUIRED');
+        const current=await session.journal.inspect();
+        check(current?.operation===operation(id)&&current.txHash===expectedTxHash,'ROLLING_RECOVERY_REQUIRED');
+        // Canonical current attempts can reconcile even when their own effect
+        // advanced the head. Pending/unknown states never authorize a broadcast.
+        const inspected=await session.journal.inspectSavedRecovery(operation(id),expectedTxHash);
+        if(inspected.status==='canonical'){await guard();return outcome(saved);}
+        check(inspected.status==='resumable','ROLLING_RECOVERY_REQUIRED');
+        await checkSavedResumeContext(saved,expectedTxHash);
+        await session.journal.recover({expectedOperation:operation(id),expectedTxHash,beforeSubmit:async hash=>{
+          check(hash===expectedTxHash,'ROLLING_RECOVERY_REQUIRED');
+          await checkSavedResumeContext(saved,expectedTxHash);
+        }});
+        await guard();check((await savedIntent(id)).encoded===saved.encoded,'ROLLING_RECOVERY_REQUIRED');await guard();
+        return outcome(saved);
+      });
+    },
     async prepareReplacement(id,input){
       // Capture only own data primitives before any asynchronous guard or RPC.
       let reviewInput,expectedHead;try{
