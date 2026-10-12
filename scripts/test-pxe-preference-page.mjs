@@ -129,6 +129,46 @@ test('labelled boundary double calls exactly one existing queue after valid capt
   const f=captureFixture();let guards=0;await assert.rejects(f.processRollingPreferencePage(request(),{contextGuard:async()=>{guards++;}}),/PXE_PREFERENCE_PAGE_FAILED/);assert.equal(guards,1);assert.equal(f.queued,1);
 });
 
+// Deterministic lifecycle controls: no SDK or chain doubles. Setup deliberately
+// pauses across an event-loop turn; its awaited owner must retain every resource
+// until setup and all serial children settle, including a failing partial setup.
+test('awaited suite owns delayed copy and failed partial initialization cleanup',async t=>{
+  const directory=await copy(t),input=join(directory,'copy-source'),output=join(directory,'copy-owned');
+  await mkdir(input);await writeFile(join(input,'source.txt'),'fixture');
+  let release,entered,cleaned=0,finished=false;
+  const gate=new Promise(resolve=>release=resolve),started=new Promise(resolve=>entered=resolve);
+  const owner=t.test('held-copy owner',async scope=>{
+    await mkdir(output);
+    scope.after(async()=>{await rm(output,{recursive:true,force:true});cleaned++;});
+    entered();await gate;await cp(input,output,{recursive:true});
+    await scope.test('copied resource remains owned for child',async()=>{assert.equal(cleaned,0);assert.equal(await readFile(join(output,'source.txt'),'utf8'),'fixture');});
+    finished=true;
+  });
+  await started;
+  try {await new Promise(resolve=>setImmediate(resolve));assert.equal(cleaned,0);assert.equal(finished,false);}
+  finally {release();await owner;}
+  assert.equal(finished,true);assert.equal(cleaned,1);
+  await assert.rejects(readFile(join(output,'source.txt')),error=>error.code==='ENOENT');
+  const child=join(directory,'partial-setup.mjs'),partial=join(directory,'partial-owned'),receipt=join(directory,'partial-result.json');
+  // A subprocess permits asserting an intentionally failed node:test owner
+  // without weakening the parent test's failure contract or faking hook order.
+  await writeFile(child,`import test from 'node:test';
+import {mkdir,writeFile,rm,access} from 'node:fs/promises';
+const owned=${JSON.stringify(partial)},receipt=${JSON.stringify(receipt)};
+let cleaned=0;
+await test('expected partial setup failure',async scope=>{
+ await mkdir(owned);scope.after(async()=>{await rm(owned,{recursive:true,force:true});cleaned++;});
+ await writeFile(owned+'/partial.txt','fixture');await new Promise(resolve=>setImmediate(resolve));
+ throw Error('EXPECTED_PARTIAL_SETUP_FAILURE');
+});
+let exists=true;try{await access(owned);}catch(e){if(e.code==='ENOENT')exists=false;else throw e;}
+await writeFile(receipt,JSON.stringify({cleaned,exists}));
+`);
+  const result=spawnSync(process.execPath,['--test',child],{encoding:'utf8',timeout:5000});
+  assert.equal(result.signal,null);assert.equal(result.status,1);assert.match(result.stdout+result.stderr,/EXPECTED_PARTIAL_SETUP_FAILURE/);
+  assert.deepEqual(JSON.parse(await readFile(receipt,'utf8')),{cleaned:1,exists:false});
+});
+
 // Explicit separate invocation, ONLY after the lead grants the native slot:
 // ROLLING_PREFERENCE_PAGE_NATIVE=1 LOG_LEVEL=silent node --test this-file
 // Uses actual SDK Poseidon/membership, EventService, OperationQueue/coordinator,
@@ -136,8 +176,10 @@ test('labelled boundary double calls exactly one existing queue after valid capt
 // labelled fake-indexeddb. This is not native Chromium storage qualification.
 // Transactions/inclusion are synthetic; processed ACIR is a separate opt-in.
 if(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1') {
+ await test('owned isolated SDK and ACIR suite',async suite=>{
   const {pathToFileURL}=await import('node:url');
-  const {after}=await import('node:test');
+  const after=fn=>suite.after(fn);
+  const test=(...args)=>suite.test(...args);
   // Bind the reviewed b440 atomicity repair before importing the adapter. No
   // shared dependency is patched by this test. Historical v1 failures remain
   // unresolved evidence; selecting the application's store does not fix v1.
@@ -172,11 +214,11 @@ if(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1') {
     const rawBytes=await readFile(join(root,'execution/evidence/G07/preference-page/raw-RollingBoard.json'));
     assert.equal(sha(rawBytes),'bdd685dc8fe525e2b813c6c7e46312a37317d85f4b914b8aac871ad9420bb649','Wrong raw utility fixture');
     const raw=JSON.parse(rawBytes),rawFunction=raw.functions.find(fn=>fn.name==='__aztec_nr_internals__recover_preference_page');
-    test('actual official loader rejects unprocessed candidate rather than claiming normal artifact authority',()=>{
+    await test('actual official loader rejects unprocessed candidate rather than claiming normal artifact authority',()=>{
       assert.equal(raw.transpiled,undefined);
       assert.throws(()=>loadContractArtifact(raw),/public bytecode has not been transpiled/);
     });
-    test('actual public loader preserves raw utility bytes but cannot supply missing private verification keys',async()=>{
+    await test('actual public loader preserves raw utility bytes but cannot supply missing private verification keys',async()=>{
       const artifact=loadContractArtifactForPublic(raw);
       const utility=artifact.functions.find(fn=>fn.name===rawFunction.name);
       assert.equal(utility.functionType,FunctionType.UTILITY);
@@ -258,7 +300,7 @@ if(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1') {
     assert.equal(await db.openSingleton('billboardStoreIdentity').getAsync(),identity.metadata);
     return db;
   }
-  test('application store fixture owns full isolated namespaces and deletes them after settled hooks',async t=>{
+  await test('application store fixture owns full isolated namespaces and deletes them after settled hooks',async t=>{
     const before=(await factory.databases()).map(entry=>entry.name).sort();let stops=0;
     await t.test('real application metadata and isolated data on labelled Node IndexedDB',async sub=>{
       const first=await applicationStore(sub,address(2),async()=>{stops++;});
@@ -295,7 +337,7 @@ if(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1') {
     const validate=(id,requests=[request],context=data)=>new EventService(header,events,id,quiet).validateAndStoreEvents(requests,scope,context);
     return {db,events,queue,header,scope,contract,selector,request,data,validate,read};
   }
-  test('actual patched NoteStore direct lookup preserves scope/status/contract and avoids historical index',async t=>{
+  await test('actual patched NoteStore direct lookup preserves scope/status/contract and avoids historical index',async t=>{
     const db=await applicationStore(t,address(701),async()=>{}),notes=new RecoveryNoteStore(db);
     const owner=address(701),contract=address(702),slot=new Fr(703);
     const note=await NoteDao.random({owner,contractAddress:contract,storageSlot:slot,l2BlockNumber:1,txIndexInBlock:0,noteIndexInTx:0});
@@ -323,7 +365,7 @@ if(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1') {
     await assert.rejects(notes.getNotes({contractAddress:contract,scopes:[owner]},id),/database is corrupted/);
     notes.discardChangeSet(id);assert.equal(index.getValuesAsync,original);
   });
-  test('actual staging/coordinator: cursor is atomic, survives replacement store, rollback invalidates generation',async t=>{
+  await test('actual staging/coordinator: cursor is atomic, survives replacement store, rollback invalidates generation',async t=>{
     const db=await applicationStore(t,address(710),async()=>{}),store=new RollingPreferenceRecoveryStore(db);
     const coordinator=new StagedWriteCoordinator({kvStore:db,stagedStores:[store]});
     // Use the original lifecycle/queue rather than directly flush the helper.
@@ -398,16 +440,16 @@ if(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1') {
     };
     return {...f,p,page,state};
   }
-  for(const mode of ['wrong ordinal','wrong fee','wrong execution','wrong slot'])test('generated page / actual SDK rejects consistent '+mode+' before utility',async t=>{
+  for(const mode of ['wrong ordinal','wrong fee','wrong execution','wrong slot'])await test('generated page / actual SDK rejects consistent '+mode+' before utility',async t=>{
     const f=await generatedPage(t,mode);await assert.rejects(f.page.processRollingPreferencePage(f.p,{contextGuard:async()=>{}}),/PXE_PREFERENCE_PAGE_FAILED/);
     assert.equal(f.state.utilityCalls,0);assert.equal((await f.read()).length,0);
   });
-  test('generated multi-tx page uses authenticated ordinal and detaches original mutable receipt',async t=>{
+  await test('generated multi-tx page uses authenticated ordinal and detaches original mutable receipt',async t=>{
     const f=await generatedPage(t,'mutated original receipt');
     assert.deepEqual(await f.page.processRollingPreferencePage(f.p,{contextGuard:async()=>{}}),{schemaVersion:1,processed:1,admitted:1});
     assert.equal(f.state.pinnedIndex,2);assert.equal((await f.read()).length,1);
   });
-  test('generated page final original-node receipt change discards validated staged event',async t=>{
+  await test('generated page final original-node receipt change discards validated staged event',async t=>{
     const f=await generatedPage(t,'changed receipt after utility');
     await assert.rejects(f.page.processRollingPreferencePage(f.p,{contextGuard:async()=>{}}),/PXE_PREFERENCE_PAGE_FAILED/);
     assert.equal(f.state.utilityCalls,1);assert.equal((await f.read()).length,0);
@@ -631,7 +673,7 @@ if(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1') {
       const block=current.nextBlock<=current.anchor.blockNumber?await f.compact(current.nextBlock):null;
       return r.page.processRollingPreferenceRecovery({...recoveryInput(f),expected:{epoch:current.epoch,sequence:current.sequence},block},{contextGuard:guard});
     }
-    test('actual ACIR cursor scans empty history then authentic ciphertexts, replays mailbox, gates terminal head',async t=>{
+    await test('actual ACIR cursor scans empty history then authentic ciphertexts, replays mailbox, gates terminal head',async t=>{
       const f=await acirFixture(t),r=await f.receiver({recovery:true});
       const start=await r.page.processRollingPreferenceRecovery(recoveryInput(f),{contextGuard:async()=>{}});
       assert.equal(start.sequence,0);assert.equal(start.nextBlock,1);assert.equal(start.complete,false);
@@ -654,7 +696,7 @@ if(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1') {
       const state=await r.read();assert.equal(state.notes.length,1);assert.equal(state.events.length,1);
       assert.equal(current.head.digest,state.notes[0].note.items[2].toBigInt().toString());
     });
-    test('labelled page double / original EventService: tx-complete mailbox orders by authenticated event index, not log page',async t=>{
+    await test('labelled page double / original EventService: tx-complete mailbox orders by authenticated event index, not log page',async t=>{
       const f=await acirFixture(t),ordered=await f.orderingEffect();
       const r=await f.receiver({recovery:true,eventPageDouble:async(page,guard,frame,pxe)=>{
         await guard();
@@ -672,7 +714,7 @@ if(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1') {
       assert.deepEqual(cursor.records.map(x=>BigInt(x.packedEvent[1])),[1n,2n]);assert.equal(cursor.complete,false);
       assert.equal((await r.read()).events.length,2);assert.equal((await r.read()).notes.length,0);
     });
-    test('actual ACIR scans dense foreign ciphertext pages without publishing partial transaction records',async t=>{
+    await test('actual ACIR scans dense foreign ciphertext pages without publishing partial transaction records',async t=>{
       const f=await acirFixture(t),density=await f.denseForeignPrefix(),r=await f.receiver({recovery:true});
       let cursor=await r.page.processRollingPreferenceRecovery(recoveryInput(f),{contextGuard:async()=>{}});
       while(cursor.nextBlock<4)cursor=await recoveryStep(f,r,cursor);
@@ -686,7 +728,7 @@ if(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1') {
       cursor=await recoveryStep(f,r,cursor);assert.equal(cursor.complete,true);assert.equal(cursor.head.revision,'1');
       assert.equal((await r.read()).notes.length,1);assert.equal(r.syncService.syncedContracts.size,0);
     });
-    test('real ACIR multi-revision heads: historical spent head is not selected; current head completes',async t=>{
+    await test('real ACIR multi-revision heads: historical spent head is not selected; current head completes',async t=>{
       const f=await acirFixture(t),history=await f.extendRevision(),r=await f.receiver({recovery:true});
       let cursor=await r.page.processRollingPreferenceRecovery(recoveryInput(f),{contextGuard:async()=>{}});const records=[];
       for(let i=0;i<8&&!cursor.complete;i++){
@@ -701,7 +743,7 @@ if(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1') {
       const active=await r.read();assert.equal(active.notes.length,1);assert.equal(active.notes[0].note.items[1].toBigInt(),2n);
       const all=await r.queue.runSynced(({changeSetId})=>r.stores.noteStore.getNotes({contractAddress:f.board,owner:r.complete.address,scopes:[r.complete.address],status:NoteStatus.ACTIVE_OR_NULLIFIED},changeSetId));assert.equal(all.length,2);
     });
-    test('actual authenticated head envelopes with inconsistent nullifier source cannot hide two active candidates',async t=>{
+    await test('actual authenticated head envelopes with inconsistent nullifier source cannot hide two active candidates',async t=>{
       const f=await acirFixture(t),history=await f.extendRevision();history.omitOldSpend();
       const r=await f.receiver({recovery:true});let cursor=await r.page.processRollingPreferenceRecovery(recoveryInput(f),{contextGuard:async()=>{}});
       while(cursor.nextBlock<5)cursor=await recoveryStep(f,r,cursor);
@@ -716,7 +758,7 @@ if(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1') {
       assert.deepEqual(after.events.map(x=>({content:x.packedEvent.map(f=>f.toString()),tx:x.txHash.toString(),block:x.l2BlockNumber})),priorEvents,'All event content and metadata remain unchanged');
       assert.equal(await r.db.openMap('note_nullifications_by_nullifier').getAsync(history.oldNullifier),undefined,'No invented emission may hide the second active candidate');
     });
-    test('actual cursor settlement context veto rolls back progress together with decrypted notes/events',async t=>{
+    await test('actual cursor settlement context veto rolls back progress together with decrypted notes/events',async t=>{
       const f=await acirFixture(t);let locked=false,enabled=false;
       const r=await f.receiver({recovery:true,contributor:{settle:async()=>{if(enabled)locked=true;}}});
       let current=await r.page.processRollingPreferenceRecovery(recoveryInput(f),{contextGuard:async()=>{}});
@@ -727,7 +769,7 @@ if(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1') {
       assert.deepEqual(await r.page.processRollingPreferenceRecovery(recoveryInput(f),{contextGuard:async()=>{}}),original);
       const state=await r.read();assert.equal(state.notes.length,0);assert.equal(state.events.length,0);
     });
-    test('actual cursor canonical rollback changes epoch and starts complete physical enumeration again',async t=>{
+    await test('actual cursor canonical rollback changes epoch and starts complete physical enumeration again',async t=>{
       const f=await acirFixture(t),r=await f.receiver({recovery:true});
       let current=await r.page.processRollingPreferenceRecovery(recoveryInput(f),{contextGuard:async()=>{}});
       while(current.nextBlock<=4)current=await recoveryStep(f,r,current);
@@ -739,7 +781,7 @@ if(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1') {
       assert.notEqual(restarted.epoch,current.epoch);assert.equal(restarted.nextBlock,1);assert.equal(restarted.sequence,0);
       const state=await r.read();assert.equal(state.notes.length,0);assert.equal(state.events.length,0);
     });
-    test('expected authenticated head missing from actual store cannot become an uninitialized completion',async t=>{
+    await test('expected authenticated head missing from actual store cannot become an uninitialized completion',async t=>{
       const f=await acirFixture(t),r=await f.receiver({recovery:true});
       let current=await r.page.processRollingPreferenceRecovery(recoveryInput(f),{contextGuard:async()=>{}});
       while(current.nextBlock<=4)current=await recoveryStep(f,r,current);
@@ -749,7 +791,7 @@ if(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1') {
       await r.db.openMap('notes').delete(note.siloedNullifier.toString());
       await assert.rejects(recoveryStep(f,r,current),/PXE_PREFERENCE_RECOVERY_FAILED/);
     });
-    test('real processed ACIR: emitted encrypted preference head/event, scoped keys, validators and atomic discard',async t=>{
+    await test('real processed ACIR: emitted encrypted preference head/event, scoped keys, validators and atomic discard',async t=>{
       const f=await acirFixture(t);
       await t.test('absent owner key rejects even though the complete public address is registered',async()=>{
         const r=await f.receiver({withKeys:false,completeAddress:f.sender.complete});
@@ -876,7 +918,7 @@ if(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1') {
       });
     });
   }
-  test('patched real queue: post-settle hook once, callback capture, no-hook defaults and failure drainage',async t=>{
+  await test('patched real queue: post-settle hook once, callback capture, no-hook defaults and failure drainage',async t=>{
     const order=[];let calls=0;const contributor={onOperationEnd(){order.push('end');},settle:async()=>{order.push('settle');}};
     const f=await stores(t,[contributor]);
     const options={beforeCommit:async()=>{calls++;order.push('guard');}};
@@ -891,7 +933,7 @@ if(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1') {
     await assert.rejects(f.queue.runSynced(({changeSetId})=>f.validate(changeSetId),{beforeCommit:async()=>{throw Error('GUARD_VETO');}}),/GUARD_VETO/);
     assert.equal((await f.read()).length,0);
   });
-  test('actual SDK synthetic complete effect membership rejects changed ciphertext and changed root',async()=>{
+  await test('actual SDK synthetic complete effect membership rejects changed ciphertext and changed root',async()=>{
     const effect=await TxEffect.random({numNoteHashes:1,numNullifiers:1,numL2ToL1Msgs:0,numPublicDataWrites:0,numPrivateLogs:1,numPublicCallsPerTx:0,numPublicLogsPerCall:0,numContractClassLogs:0});
     const witness=await computeTxEffectMembershipWitness([effect],0);
     const leaf=await effect.computeTxEffectsTreeLeaf();
@@ -902,7 +944,7 @@ if(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1') {
     assert.equal(await verifyTxEffectMembershipWitness(await changed.computeTxEffectsTreeLeaf(),witness,witness.root),false);
     assert.equal(await verifyTxEffectMembershipWitness(leaf,witness,new Fr(88)),false);
   });
-  test('actual application store/SDK on labelled Node IndexedDB: valid event commits, forged payload/missing nullifier does not',async t=>{
+  await test('actual application store/SDK on labelled Node IndexedDB: valid event commits, forged payload/missing nullifier does not',async t=>{
     const f=await stores(t);
     const forged={...f.request,serializedEvent:[new Fr(999),...f.request.serializedEvent.slice(1)]};
     await f.queue.runSynced(({changeSetId})=>f.validate(changeSetId,[forged]));assert.equal((await f.read()).length,0);
@@ -910,7 +952,7 @@ if(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1') {
     await f.queue.runSynced(({changeSetId})=>f.validate(changeSetId,[f.request],absent));assert.equal((await f.read()).length,0);
     await f.queue.runSynced(({changeSetId})=>f.validate(changeSetId));assert.equal((await f.read()).length,1);
   });
-  test('actual application store/SDK on labelled Node IndexedDB: staged valid event discarded on final context or canonical receipt failure',async t=>{
+  await test('actual application store/SDK on labelled Node IndexedDB: staged valid event discarded on final context or canonical receipt failure',async t=>{
     const f=await stores(t);
     for(const label of ['context changed','canonical receipt changed']){
       await assert.rejects(f.queue.runSynced(async({changeSetId})=>{await f.validate(changeSetId);throw Error(label);}),new RegExp(label));
@@ -919,10 +961,11 @@ if(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1') {
     await f.queue.runSynced(({changeSetId})=>f.validate(changeSetId));assert.equal((await f.read()).length,1);
     await f.db.transactionAsync(()=>f.events.rollbackToBlock(3));assert.equal((await f.read()).length,0);
   });
-  test('actual application store/SDK on labelled Node IndexedDB retains operation until awaited validator settles; no detached write',async t=>{
+  await test('actual application store/SDK on labelled Node IndexedDB retains operation until awaited validator settles; no detached write',async t=>{
     const f=await stores(t);let release,entered;const gate=new Promise(r=>release=r),started=new Promise(r=>entered=r);let finished=false;
     const run=f.queue.runSynced(async({changeSetId})=>{entered();await gate;await f.validate(changeSetId);throw Error('late context');});
     const caught=run.catch(e=>{assert.equal(e.message,'late context');finished=true;});
     await started;await Promise.resolve();assert.equal(finished,false);release();await caught;assert.equal((await f.read()).length,0);
   });
+ });
 }
