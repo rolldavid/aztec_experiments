@@ -470,7 +470,7 @@ test('preference and read marker encode actual ABI, preserve exact payer/journal
   [{type:'read-marker',expectedRevision:'9007199254740993',thread:hex(42),throughBlock:'4294967295'},'mark_thread_read',[9007199254740993n,42n,0xffffffffn]],
  ];
  for(const [action,method,fields] of cases){
-  const f=fixture(),p=await f.app.prepare(action);assert.equal(p.status,'prepared');assert.equal(p.maximumFee,'10');assert.equal(f.state.sends,0);assert.equal(f.state.privateReads.length,0);
+  const f=fixture();f.state.preferenceHead=preferenceHead(action.expectedRevision!=='0',1,action.expectedRevision,action.expectedRevision==='0'?'0':'11');const p=await f.app.prepare(action);assert.equal(p.status,'prepared');assert.equal(p.maximumFee,'10');assert.equal(f.state.sends,0);assert.deepEqual(f.state.privateReads.map(row=>row.name),['preference_head']);
   const call=f.state.calls[0],abi=artifact.functions.find(fn=>fn.name===method);assert(abi);assert.equal(call.name,method);
   assert.deepEqual(encodeArguments(abi,call.args).map(x=>x.toBigInt()),fields);
   const result=await f.restart().submitPrepared(p.intentId);assert.equal(result.status,'confirmed');assert.equal(f.state.sends,1);
@@ -500,12 +500,12 @@ test('read marker validates canonical revision/thread/block without accepting a 
 });
 test('preference saved maximum and revision remain immutable on retry-free stale simulation failure',async()=>{
  const f=fixture(),action={type:'preference',expectedRevision:'7',kind:1,target:'42',enabled:true};
- const prepared=await f.app.prepare(action);action.expectedRevision='8';action.enabled=false;f.state.fee=11n;
+ f.state.preferenceHead=preferenceHead(true,1,7,11);const prepared=await f.app.prepare(action);action.expectedRevision='8';action.enabled=false;f.state.fee=11n;
  await assert.rejects(f.restart().submitPrepared(prepared.intentId),{code:'ROLLING_FEE_CHANGED'});assert.equal(f.state.sends,0);
  f.state.fee=10n;const error=Object.assign(Error('Labelled stale expected revision'),{code:'LABELLED_REVISION_REJECTED'});f.state.preferenceError=error;
  await assert.rejects(f.app.submitPrepared(prepared.intentId),e=>e===error);assert.equal(f.state.sends,0);
  const retained=await f.app.reconcile(prepared.intentId);assert.equal(retained.status,'prepared');assert.equal(retained.action.expectedRevision,'7');assert.equal(retained.action.enabled,true);
- assert.equal(f.state.privateReads.length,0);assert.equal((await f.app.cancelPrepared(prepared.intentId)).status,'cancelled');
+ assert.deepEqual(f.state.privateReads.map(row=>row.name),['preference_head']);assert.equal((await f.app.cancelPrepared(prepared.intentId)).status,'cancelled');
 });
 test('uncertain preference submit keeps durable fence across replacement without another send',async()=>{
  const f=fixture(),p=await f.app.prepare({type:'read-marker',expectedRevision:'0',thread:'42',throughBlock:'10'});f.state.failSend=true;
@@ -673,4 +673,17 @@ test('reopened account and inspection summaries restore detached replacement rev
  assert.deepEqual((await f.app.readAccountStatus()).intent.replacementReview,proposed.replacementReview);
  f.state.fee=13n;await assert.rejects(f.app.submitPrepared(f.prepared.intentId),{code:'ROLLING_FEE_CHANGED'});assert.equal(f.state.sends,1);
  f.state.fee=12n;const confirmed=await f.app.submitPrepared(f.prepared.intentId);assert.equal(confirmed.status,'confirmed');assert.equal(confirmed.replacementReview.maximumFee,'12');assert.equal(confirmed.maximumFee,'10');assert.equal(f.state.sends,2);
+});
+test('same revision with a different authenticated preference digest is context-changed, not replacement authority',async()=>{
+ const f=await replacementFixture({marker:true});f.fork();await f.reopen();f.state.preferenceHead=preferenceHead(true,1,1,12);
+ const changed={...f.review(),expectedHead:{initialized:true,schema:1,revision:'1',digest:'12'}};
+ const result=await f.app.inspectRecovery(f.prepared.intentId);assert.equal(result.status,'context-changed');
+ await assert.rejects(f.app.prepareReplacement(f.prepared.intentId,changed),{code:'ROLLING_RECOVERY_REQUIRED'});assert.equal(f.state.sends,1);assert.equal(f.transactions.length,1);
+});
+test('initial preference preparation binds the full guarded head and refuses stale expected revision before fees',async()=>{
+ const f=fixture();f.state.preferenceHead=preferenceHead(true,1,2,22);
+ await assert.rejects(f.app.prepare({type:'preference',expectedRevision:'1',kind:1,target:'42',enabled:true}),{code:'ROLLING_RECOVERY_CONTEXT_CHANGED'});
+ assert.equal(f.state.estimates,0);assert.equal(f.state.sends,0);assert.equal(f.values.size,0);
+ const g=await replacementFixture({marker:true});g.fork();await g.reopen();const snapshot=await g.app.inspectRecovery(g.prepared.intentId);assert.deepEqual(snapshot.originalPreferenceHead,g.initial);
+ snapshot.originalPreferenceHead.digest='999';assert.deepEqual((await g.app.inspectRecovery(g.prepared.intentId)).originalPreferenceHead,g.initial);
 });

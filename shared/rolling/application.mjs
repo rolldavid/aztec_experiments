@@ -228,16 +228,16 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
     const head=await preferenceHead(),marker=await markerContext(record);await guard();
     check((await savedIntent(record.id)).encoded===saved.encoded,'ROLLING_RECOVERY_REQUIRED');await guard();
     let status=inspected.status==='available'?'replacement-available':inspected.status;
-    if(status==='replacement-available'&&head.revision!==record.action.expectedRevision)status='context-changed';
+    if(status==='replacement-available'&&(!record.originalPreferenceHead||!same(head,record.originalPreferenceHead)||head.revision!==record.action.expectedRevision))status='context-changed';
     if(status==='replacement-available'&&['confirmed','reverted'].includes(record.status)&&!record.inclusionHistory?.some(row=>row.txHash===record.txHash))status='history-unavailable';
     return {intent:summary(record),status,attempts:clone(inspected.attempts),requireMissingAnchor:inspected.requireMissingAnchor,
-      head,marker,originalMarker:clone(record.originalMarker??null),inclusionHistory:clone(record.inclusionHistory??[]),currentTxHash:inspected.txHash};
+      head,originalPreferenceHead:clone(record.originalPreferenceHead??null),marker,originalMarker:clone(record.originalMarker??null),inclusionHistory:clone(record.inclusionHistory??[]),currentTxHash:inspected.txHash};
   }
   async function checkReplacementReview(record,{synchronize=false}={}){
     const review=record.replacementReview;check(review&&preferenceAction(record),'ROLLING_RECOVERY_REQUIRED');
     if(synchronize){await guard();await session.wallet.pxe.sync();await guard();}
     const head=await preferenceHead(),marker=await markerContext(record);
-    check(head.revision===record.action.expectedRevision&&same(head,review.head)&&same(marker,review.marker),'ROLLING_RECOVERY_CONTEXT_CHANGED');
+    check(record.originalPreferenceHead&&same(head,record.originalPreferenceHead)&&head.revision===record.action.expectedRevision&&same(head,review.head)&&same(marker,review.marker),'ROLLING_RECOVERY_CONTEXT_CHANGED');
     await guard();
   }
   async function screeningArguments(board,deposit){
@@ -331,6 +331,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
       const nonce=field(sdk.Fr.random().toString(),true),id=field(sdk.Fr.random().toString(),true),board=await contract();
       const args=plain(await argumentsFor(action,board,nonce));
       const record={version:1,id,action,args,method:methods[action.type],nonce,predecessor,status:'prepared'};
+      if(preferenceAction(record)){record.originalPreferenceHead=await preferenceHead();check(record.originalPreferenceHead.revision===action.expectedRevision,'ROLLING_RECOVERY_CONTEXT_CHANGED');}
       if(action.type==='read-marker')record.originalMarker=await markerContext(record);
       const selected=interaction(board,record);record.encoded=selected.encoded;
       progress('estimating');const estimated=await sdk.estimatePrivateFeeTransaction({wallet:session.wallet,node:session.node,interaction:selected.call,
