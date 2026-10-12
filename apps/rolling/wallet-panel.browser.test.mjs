@@ -421,3 +421,27 @@ for(const width of [390,1280])for(const phase of ['history','prepared-marker'])t
  assert(metrics.documentWidth<=metrics.viewport);
  assert.equal((await counts(page)).sends,0);assert.equal(await page.evaluate(()=>test.replacementPrepares),0);
 });
+
+for(const prepared of [false,true])test(`retained ${prepared?'replacement-ready':'unknown'} intent clears loading only after account connection settles`,async t=>{
+ const {page}=await browserFixture(t);await seedReplacement(page,{prepared});
+ await page.reload();await page.waitForFunction(()=>window.ready);await page.evaluate(()=>test.hold='status');
+ await open(page);await page.getByRole('button',{name:'Unlock',exact:true}).click();await page.waitForFunction(()=>test.release);
+ assert(await page.getByText('Loading private account tools…',{exact:true}).isVisible());
+ assert.equal(await page.getByRole('dialog').getAttribute('aria-busy'),'true');
+ await page.evaluate(()=>{test.hold=null;test.release();});await page.waitForFunction(()=>document.querySelector('dialog').getAttribute('aria-busy')==='false');
+ assert.equal(await page.getByText('Loading private account tools…',{exact:true}).count(),0);
+ assert(await page.getByRole('heading',{name:prepared?'Review replacement before sending':'Transaction recovery',exact:true}).isVisible());
+ assert(await page.getByRole('button',{name:prepared?'Confirm replacement and send':'Check existing transaction',exact:true}).isVisible());
+ assert.equal((await counts(page)).sends,0);assert.equal(await page.evaluate(()=>test.replacementPrepares+test.recoveryChecks),0);
+});
+
+test('settled connection message cleanup preserves custody guidance and failed connection alert',async t=>{
+ const {page}=await browserFixture(t);await page.evaluate(()=>test.unlocked=false);await open(page);await page.getByRole('button',{name:'Unlock',exact:true}).click();
+ await page.waitForFunction(()=>document.querySelector('dialog').getAttribute('aria-busy')==='false');
+ assert(await page.getByText('Create an account or import your encrypted recovery file.',{exact:true}).isVisible());
+ assert.equal(await page.getByText('Loading private account tools…',{exact:true}).count(),0);
+ await page.reload();await page.waitForFunction(()=>window.ready);await page.evaluate(()=>test.failure='status');await open(page);await page.getByRole('button',{name:'Unlock',exact:true}).click();
+ await page.getByRole('alert').waitFor();assert(await page.getByText('The private connection is unavailable. Your encrypted recovery is preserved. Reconnect when the service returns.',{exact:true}).isVisible());
+ assert.equal(await page.getByText('Loading private account tools…',{exact:true}).count(),0);
+ assert.equal((await counts(page)).sends,0);
+});

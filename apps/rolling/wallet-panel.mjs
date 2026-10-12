@@ -110,13 +110,14 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   blocked=false;
  }
  async function connect(){
+  const epoch=accountEpoch;
   try{
   if(!accountIdentity)accountIdentity=runtime.getAccount();
   if(!session)session=await runtime.createSession({onProgress:progress=>{
    const stages={estimating:'Checking the action and its maximum fee…',submitting:'Proving and submitting. Keep this page open; do not send again.'};
    note(stages[progress?.stage]??'Checking the private account…');
   }});
-  await refresh();
+  await refresh();checkAccount(epoch);note('');
   }catch{throw connectionFailure;}
  }
  async function unlock(){await work(async()=>{
