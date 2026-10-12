@@ -73,3 +73,30 @@ test('supervisor retains selected provider in partial receipt if worker fails be
   const invalid=path.join(dir,'wrongmode.json');await assert.rejects(supervise(invalid,{historicalProvider:'tenderly'}));assert.equal(fs.existsSync(invalid),false);
  }finally{fs.rmSync(dir,{recursive:true,force:true});}
 });
+
+import {prerequisiteProviderConfig} from './archiver-prerequisites.mjs';
+test('full prerequisite fixed provider config reaches actual SDK transport and blob L1 config, with strict sources unchanged',async()=>{
+ const {getPublicClient,getRpcUrlsFromClient}=await import('@aztec-labs/ethereum/client');
+ for(const [provider,url] of [['publicnode','https://ethereum-sepolia-rpc.publicnode.com'],['tenderly','https://sepolia.gateway.tenderly.co']]){
+  const config=prerequisiteProviderConfig(provider),client=getPublicClient(config.client); // construction only: no RPC
+  assert.deepEqual(getRpcUrlsFromClient(client),[url]);assert.deepEqual(config.client.l1RpcUrls,[url]);assert.equal(client.chain.id,11155111);
+  assert.equal(config.blob.l1RpcUrls,config.client.l1RpcUrls);assert.deepEqual(config.blob.l1ConsensusHostUrls,['https://ethereum-sepolia-beacon-api.publicnode.com']);assert.deepEqual(config.blob.blobFileStoreUrls,['https://aztec-labs-snapshots.com/testnet/blobs']);assert.equal(config.blob.blobAllowEmptySources,false);assert.equal(config.blob.rollupAddress,SCOPE.rollup);assert.equal(config.blob.rollupVersion,SCOPE.version);assert.equal(config.blob.blobFileStoreTimeoutMs,10000);
+  assert.throws(()=>config.client.l1RpcUrls.push('https://fallback.invalid'));assert.throws(()=>{config.blob.blobAllowEmptySources=true;});
+ }
+ assert.deepEqual(prerequisiteProviderConfig(),prerequisiteProviderConfig('publicnode'));
+ for(const selector of ['https://sepolia.gateway.tenderly.co','constructor',null,{}])assert.throws(()=>prerequisiteProviderConfig(selector));
+});
+test('selected full provider preserves every acceptance gate and failure cleanup; no alternate retry',async()=>{
+ const good=await runChecks(fixture().ops,()=>{},'tenderly');assert.equal(good.provider,'tenderly');assert.equal(good.passed,true);assert.deepEqual(good.stages.map(x=>x.name),PHASES);
+ for(const [overrides,stage] of [[{chain:async()=>1},'chain'],[{identity:async()=>({version:1n,hasCode:true,codeSha256:H})},'rollup-identity'],[{historicalLogs:async()=>[]},'historical-logs'],[{nowSeconds:()=>1301},'latest-clock'],[{trace:async()=>({debugTraceRecent:false,traceTransactionRecent:false,debugTraceOld:false,traceTransactionOld:false})},'trace'],[{blobSources:async()=>false},'blob-sources'],[{block:async n=>({number:n,timestamp:1000n,hash:D})},'anchor-continuity']]){
+  const {ops,calls}=fixture(overrides);const r=await runChecks(ops,()=>{},'tenderly');assert.equal(r.provider,'tenderly');assert.equal(r.passed,false);assert.equal(r.stages.at(-1).name,stage);assert.equal(r.cleanup,true);assert.equal(calls.filter(x=>x==='source').length,1);
+ }
+ let ran=false;await assert.rejects(runChecks({source(){ran=true;}},()=>{},'unknown'));assert.equal(ran,false);
+});
+test('full mode retains explicit provider on child failure and refuses mixed provider modes before receipt creation',async()=>{
+ const dir=fs.mkdtempSync(path.join(os.tmpdir(),'archive-full-provider-'));try{
+  const r=await supervise(path.join(dir,'partial.json'),{prerequisiteProvider:'tenderly',spawnWorker(fd){return spawn(process.execPath,['-e','process.exit(1)'],{stdio:['ignore','ignore','ignore',fd]});}});
+  assert.equal(r.provider,'tenderly');assert.equal(r.scope,'public-read-only-archiver-prerequisites');assert.equal(r.passed,false);assert.deepEqual(r.stages,[]);assert.equal(r.processCategory,'WORKER_FAILED');assert.equal(r.process.deadlineMs,59000);
+  for(const options of [{prerequisiteProvider:'unknown'},{historicalOnly:true,prerequisiteProvider:'tenderly'}]){const file=path.join(dir,'invalid.json');await assert.rejects(supervise(file,options));assert.equal(fs.existsSync(file),false);}
+ }finally{fs.rmSync(dir,{recursive:true,force:true});}
+});
