@@ -47,6 +47,21 @@ export function assertCanonicalOwnedNameProfiles(projection,profiles){
   assert.deepEqual(projection.profile(expected.identity.id,{limit:100}),expected);
  }
 }
+// Complete bounded canonical pages before handing synchronization to the server.
+// Every pass uses the production index limit; no failed pass is retried. Reserve
+// its maximum20s read timeout and1.5s cleanup inside the original30s budget.
+export async function synchronizeRollingPublicReader(index,deadlineAt){
+ assert(Number.isSafeInteger(deadlineAt));let passes=0,pages=0;
+ while(index.status().state!=='ready'){
+  assert(deadlineAt-Date.now()>=21500,'Insufficient bounded public index pass budget');
+  const result=await index.sync();passes++;
+  assert(Number.isSafeInteger(result.pages)&&result.pages>=0);pages+=result.pages;
+  assert(['authenticating','syncing','ready'].includes(result.state));
+  if(result.state!=='ready')assert(result.pages>0,'Canonical index made no authenticated progress');
+ }
+ assert(deadlineAt-Date.now()>=21500,'Reserve first server sync and cleanup');return {passes,pages};
+}
+
 export async function verifyRollingPublicReader({node,artifact,scope,deployment,cacheDirectory,ids,scenario='conversation',expectedProfile,expectedProfiles,expectedHTTP,deadlineAt,observation,wire}){
  assert(['conversation','profiles','anonymous-thread','repost-reactions','account-reactions','owned-names','social-wire','reaction-wire'].includes(scenario));
  const names=scenario==='owned-names';
@@ -67,6 +82,7 @@ export async function verifyRollingPublicReader({node,artifact,scope,deployment,
   if(phase==='reopened'){const stored=await storage().load(index.key,20000);assert(stored.head!==null&&stored.ranges.length>0);observation.persistedRangesBeforeReopen=stored.ranges.length;}
   assert.throws(()=>index.query('feed'),{code:'ROLLING_PUBLIC_NOT_READY'});
   const session={phase,closed:false};observation.sessions.push(session);
+  session.catchup=await synchronizeRollingPublicReader(index,deadline);
   const server=await startRollingPublicServer({index,staticHandler:serveRollingReaderAsset,pollMs:30000,port:readerPort});let failure;
   try{
    if(wire){if(!readerPort){readerPort=Number(new URL(server.url).port);wire.onReader(server.url);}else assert.equal(Number(new URL(server.url).port),readerPort);}

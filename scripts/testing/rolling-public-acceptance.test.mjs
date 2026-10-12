@@ -54,3 +54,11 @@ test('social canonical profile checks identity posts and cursors independently o
   const {projection,rows}=make();change(rows[0]);assert.throws(()=>assertCanonicalSocialViews(projection,rows));
  }
 });
+
+test('bounded catchup rejects stalled pages and never retries an index error',async()=>{
+ const {synchronizeRollingPublicReader}=await import('./rolling-public-acceptance.mjs');let calls=0;
+ const error=Error('labelled upstream failure');
+ await assert.rejects(()=>synchronizeRollingPublicReader({status:()=>({state:'authenticating'}),sync:async()=>{calls++;throw error;}},Date.now()+30000),e=>e===error);assert.equal(calls,1);
+ calls=0;await assert.rejects(()=>synchronizeRollingPublicReader({status:()=>({state:'syncing'}),sync:async()=>{calls++;return {state:'syncing',pages:0};}},Date.now()+30000));assert.equal(calls,1);
+ calls=0;await assert.rejects(()=>synchronizeRollingPublicReader({status:()=>({state:'syncing'}),sync:async()=>{calls++;}},Date.now()+21000));assert.equal(calls,0);
+});

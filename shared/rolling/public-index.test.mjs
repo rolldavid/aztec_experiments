@@ -201,3 +201,24 @@ test('labelled actual HTTP: owned-name content and index metadata use separate r
  assert.throws(()=>assertRollingHTTPMetadata(actual,{...status,state:'syncing'}));
  assert.throws(()=>ownedNameHTTPExpectation({...raw,revision:'5'}));
 });
+
+test('acceptance catchup completes three ABI-decoded synthetic ranges before HTTP on fresh and cold SQLite',async t=>{
+ const {synchronizeRollingPublicReader,assertRollingHTTPMetadata,assertSocialHTTPView}=await import('../../scripts/testing/rolling-public-acceptance.mjs');
+ const {startRollingPublicServer}=await import('../../scripts/rolling-public-server.mjs');
+ const f=await fixture(t);
+ for(let n=4;n<=24;n++)f.put(n,n===24?[await log('LikeChanged',{schema:1,post:10,tag:9,active:true,count:1})]:[]);f.setHead(24);
+ let first;
+ for(const phase of ['fresh','cold-reopen']){
+  const index=await f.create({rangeSize:10,pagesPerSync:2});assert.throws(()=>index.query('feed'),{code:'ROLLING_PUBLIC_NOT_READY'});
+  const observed=await synchronizeRollingPublicReader(index,Date.now()+30000);assert.equal(observed.passes,2);assert.equal(observed.pages,3);
+  assert.equal(index.status().authenticatedRanges,3);assert.equal(index.status().checkpoint.number,24);
+  const server=await startRollingPublicServer({index,pollMs:30000});
+  try{
+   // The production HTTP handler joins its own first sync; no second owner runs.
+   const response=await fetch(server.url+'/api/feed');assert.equal(response.status,200);const view=await response.json(),status=index.status();
+   assertRollingHTTPMetadata(view,status);assert.equal(view.posts[0].likes,'1');assert.equal(view.posts[0].text,'Hello');
+   assert.equal(view.names[f.nameId].first,'John');assert.equal(view.boards[f.boardId].slug,'build');assert.equal(view.nextCursor,null);
+   const {revision,checkpoint,...content}=view;if(first)assertSocialHTTPView(content,first);else first=content;
+  }finally{await server.close();}
+ }
+});
