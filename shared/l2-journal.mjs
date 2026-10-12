@@ -166,6 +166,10 @@ export async function createL2Journal({storage,walletSecret,walletSalt,scope,Tx,
           // An account guard can await; a concurrent writer must not replace the
           // authenticated candidate while that check is in flight.
           if((await read()).encoded!==saved.encoded)throw fail();
+          // The caller holds its exclusive wallet lease through this send. Finish
+          // all storage/decryption awaits before the final account validation;
+          // no further storage work may introduce a lock/logout gap here.
+          if(contextGuard)await contextGuard();
         }
         await submitOnceWithReconciliation(node,saved.tx);
       }

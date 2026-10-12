@@ -216,7 +216,7 @@ for(const method of ['recover','reconcilePrevious'])for(const state of ['pending
 for(const method of ['recover','reconcilePrevious']) {
  test(`G07 strict ${method} resumes only identical valid candidate bytes after all predecessor guards`,async()=>{
   const f=await strictReplacement(),current=String(f.second.getTxHash()),bytes=Buffer.from(f.second.toBuffer());f.states.set(current,{validation:{result:'valid'}});
-  let guarded=0;f.node.sendTx=async tx=>{assert.equal(guarded,2);assert.deepEqual(Buffer.from(tx.toBuffer()),bytes);f.sent.push(String(tx.getTxHash()));f.states.set(current,{status:'checkpointed'});};
+  let guarded=0;f.node.sendTx=async tx=>{assert.equal(guarded,3);assert.deepEqual(Buffer.from(tx.toBuffer()),bytes);f.sent.push(String(tx.getTxHash()));f.states.set(current,{status:'checkpointed'});};
   const before=await(await createJournalBackup(f.options)).exportRecords();const result=await(await f.open({contextGuard:async()=>{guarded++;}}))[method]();
   assert.equal(String((result.receipt??result).txHash),current);assert.deepEqual(f.sent,[current]);assert.deepEqual(await(await createJournalBackup(f.options)).exportRecords(),before);
  });
@@ -241,3 +241,11 @@ for(const method of ['recover','reconcilePrevious']) {
   assert.equal(guards,2);assert.equal(changed.length,1);assert.deepEqual(f.sent,[]);
  });
 }
+for(const method of ['recover','reconcilePrevious'])test(`G07 strict ${method} detects account lock during last authenticated storage read`,async()=>{
+ const f=await strictReplacement(),current=String(f.second.getTxHash());f.states.set(current,{validation:{result:'valid'}});
+ let guards=0,locked=false,invalidations=0;const backing=f.options.storage;
+ const storage={...backing,read:async key=>{const value=await backing.read(key);if(guards===2){locked=true;invalidations++;}return value;}};
+ f.node.sendTx=async tx=>{f.sent.push(String(tx.getTxHash()));f.states.set(current,{status:'checkpointed'});};
+ const journal=await f.open({storage,contextGuard:async()=>{guards++;if(locked)throw Object.assign(Error('Account changed'),{code:'CONTEXT_CHANGED'});}});
+ await assert.rejects(journal[method](),{code:'CONTEXT_CHANGED'});assert.equal(invalidations,1);assert.equal(guards,3);assert.deepEqual(f.sent,[]);
+});
