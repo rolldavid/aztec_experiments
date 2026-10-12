@@ -1,3 +1,4 @@
+import {inspectPrivateEventQuery,PRIVATE_EVENT_QUERY_PINS} from './patch-private-event-query.mjs';
 import {buildPortalRuntime} from './build-portal-runtime.mjs';
 import { build } from 'esbuild';
 import { polyfillNode } from 'esbuild-plugin-polyfill-node';
@@ -9,6 +10,8 @@ import { assertNodeVersion, assertAztecPackages, pins } from './toolchain.mjs';
 
 assertNodeVersion();
 assertAztecPackages();
+const privateEventQuery=await inspectPrivateEventQuery(fileURLToPath(new URL('../node_modules/@aztec-labs/pxe',import.meta.url)));
+if(privateEventQuery.state!=='patched')throw new Error('Run npm run bootstrap:dependencies before building the SDK');
 const portalMetadata=buildPortalRuntime();
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -71,7 +74,8 @@ const assets = [
 ];
 for (const [src, dest] of assets) await fs.copyFile(path.join(root, src), path.join(out, dest));
 const inputs = [...new Set([...Object.keys(main.metafile.inputs), ...Object.keys(workers.metafile.inputs),
-  ...assets.map(([src]) => src), 'scripts/toolchain.mjs', 'toolchain.json', 'scripts/build-portal-runtime.mjs',...Object.keys(portalMetadata.sources).map(name=>'billboard/portal/'+name)])].sort();
+  ...assets.map(([src]) => src), 'scripts/toolchain.mjs', 'toolchain.json', 'scripts/patch-private-event-query.mjs',
+  ...PRIVATE_EVENT_QUERY_PINS.map(pin=>'node_modules/@aztec-labs/pxe/'+pin.path), 'scripts/build-portal-runtime.mjs',...Object.keys(portalMetadata.sources).map(name=>'billboard/portal/'+name)])].sort();
 const inputHashes = {};
 for (const filename of inputs) {
   try { inputHashes[filename] = sha(await fs.readFile(path.resolve(root, filename))); }

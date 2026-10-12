@@ -3,8 +3,8 @@ import { readFile, lstat, realpath, writeFile } from 'node:fs/promises';
 import { resolve, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-// Distribution proposal only: apply explicitly to a disposable/copied package root.
-// The lead must authorize pipeline installation. Never silently patch shared dependencies.
+// Explicit dependency bootstrap, run after locked installation and before services.
+// Never mutate a shared dependency directory while its consumers are running.
 // No schema/index changes. Query limits are reversible development defaults, NOT
 // product capacity criteria. Cold SDK synchronization and native browser IndexedDB
 // qualification remain separate gates. An over-limit interval has no partial result.

@@ -32,8 +32,18 @@ Then install the repository dependencies and compiler:
 ```sh
 npm ci --ignore-scripts --no-audit --no-fund
 npm ci --prefix billboard/portal --ignore-scripts --no-audit --no-fund
+npm run bootstrap:dependencies
 npm run bootstrap:noir
 ```
+
+The explicit dependency bootstrap applies the reviewed block-indexed private-event
+query patch to the exact pinned PXE source and emitted JavaScript. It checks both
+input hashes before writing, is idempotent, and rejects changed or partially
+patched packages. After interruption, reinstall with `npm ci --ignore-scripts`
+and run the bootstrap again. Do not run this operation while wallets or tests
+use the same dependency directory. The SDK build and manifest reject an
+unpatched or mismatched store. This bounds store queries; cold PXE synchronization
+and application recovery capacity require separate qualification.
 
 Both npm lockfiles are required. Do not substitute `npm install` in release or CI
 builds. The compiler bootstrap verifies the archive's SHA-256 and the executable's

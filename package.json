@@ -64,7 +64,8 @@
     "test:plugins:wallet": "NODE_BACKEND=js node --env-file=plugins/.env plugins/devnet/qualify.mjs read",
     "test:plugins:write": "NODE_BACKEND=js node --env-file=plugins/.env plugins/devnet/qualify.mjs write",
     "test:plugins:operations": "NODE_BACKEND=js node --env-file=plugins/.env plugins/devnet/qualify.mjs operations",
-    "plugin:operator": "NODE_BACKEND=js node --env-file=plugins/.env plugins/operator.mjs"
+    "plugin:operator": "NODE_BACKEND=js node --env-file=plugins/.env plugins/operator.mjs",
+    "bootstrap:dependencies": "node scripts/patch-private-event-query.mjs --apply node_modules/@aztec-labs/pxe"
   },
   "overrides": {
     "systeminformation": "5.31.7",

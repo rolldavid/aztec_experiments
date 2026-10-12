@@ -1,3 +1,4 @@
+import {PRIVATE_EVENT_QUERY_PINS,transformPrivateEventQuery} from './patch-private-event-query.mjs';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -33,6 +34,11 @@ function fixture(t) {
     'node_modules/@aztec-labs/sqlite3mc-wasm/vendor/jswasm/sqlite3.wasm': 'synthetic sqlite asset',
     'node_modules/@aztec-labs/sqlite3mc-wasm/vendor/jswasm/sqlite3-opfs-async-proxy.js': 'synthetic sqlite proxy',
   };
+  inputs['scripts/patch-private-event-query.mjs']=fs.readFileSync(new URL('./patch-private-event-query.mjs',import.meta.url),'utf8');
+  for(const pin of PRIVATE_EVENT_QUERY_PINS){
+    const source=fs.readFileSync(new URL('../node_modules/@aztec-labs/pxe/'+pin.path,import.meta.url),'utf8');
+    inputs['node_modules/@aztec-labs/pxe/'+pin.path]=hash(source)===pin.after?source:transformPrivateEventQuery(source,pin.path);
+  }
   const outputs = {
     'aztec_bundle.js': '// synthetic built bundle',
     'bb-main.worker.js': '// synthetic main worker',
@@ -142,4 +148,14 @@ test('missing worker file is rejected rather than silently omitted', t => {
   const f = fixture(t);
   fs.rmSync(path.join(f.root, '.build/sdk/bb-main.worker.js'));
   assert.throws(() => checkSdk(f.root), { code: 'ENOENT' });
+});
+
+for(const pin of PRIVATE_EVENT_QUERY_PINS)test('private-event patch must be present and exact: '+pin.path,t=>{
+  const f=fixture(t),name='node_modules/@aztec-labs/pxe/'+pin.path;
+  delete f.manifest.inputs[name];f.save();assert.throws(()=>checkSdk(f.root),/Missing SDK input/);
+  f.write(name,'synthetic unpatched store');f.manifest.inputs[name]=hash('synthetic unpatched store');f.save();
+  assert.throws(()=>checkSdk(f.root),/SDK private event query patch mismatch/);
+});
+test('patch installer itself is a mandatory SDK provenance input',t=>{
+ const f=fixture(t);delete f.manifest.inputs['scripts/patch-private-event-query.mjs'];f.save();assert.throws(()=>checkSdk(f.root),/Missing SDK input/);
 });
