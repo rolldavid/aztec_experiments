@@ -46,7 +46,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
  async function recoverPreferences(){
   const epoch=accountEpoch;checkAccount(epoch);clearPreferences();
   const abort=recoveryAbort=new AbortController();controlsBusy(true);
-  let result;try{result=await session.application.readPreferences({signal:abort.signal});}finally{recoveryAbort=null;}checkAccount(epoch);if(abort.signal.aborted)throw connectionFailure;
+  let result;try{result=await session.application.readColdPreferences({signal:abort.signal});}finally{recoveryAbort=null;}checkAccount(epoch);if(abort.signal.aborted)throw connectionFailure;
   if(result?.status==='complete'&&result.complete===true&&typeof runtime.selectPrivateViews==='function'){preferences=result.preferences;preferenceProgress=null;notice='Your follows, bookmarks and notification settings have been recovered.';}
   else if(result?.status==='recovering'&&result.complete===false){preferenceProgress=result.progress;notice='Your saved choices are still being recovered. Continue when ready; the feed will appear after recovery finishes.';}
   else throw connectionFailure;
@@ -55,11 +55,11 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
  function preferencesView(){
   content.append(el('h3',{},'Private views'),paragraph('Your saved choices filter this feed on your device. Recovering them does not send a transaction. Changing a setting needs fee confirmation.'));
   if(preferences){content.append(paragraph('Your saved choices are ready.'),button(preferences.replyNotifications?'Disable reply notifications':'Enable reply notifications',()=>choosePreference({type:'preference',kind:5,target:'0',enabled:!preferences.replyNotifications})));}
-  else if(preferenceProgress){const p=preferenceProgress,labels={scannedThrough:'History checked through block',anchorBlock:'History available through block',processedRevision:'Saved changes recovered',targetRevision:'Saved changes to recover',markersChecked:'Read positions checked',markersTotal:'Read positions to check'};for(const [key,label]of Object.entries(labels))if(/^[0-9]+$/.test(String(p?.[key]??'')))content.append(paragraph(label+': '+p[key]));}
+  else if(preferenceProgress){const p=preferenceProgress,labels={nextBlock:'Next history block to check',scannedThrough:'History checked through block',anchorBlock:'History available through block',processedRevision:'Saved changes recovered',targetRevision:'Saved changes to recover',markersChecked:'Read positions checked',markersTotal:'Read positions to check'};for(const [key,label]of Object.entries(labels))if(/^[0-9]+$/.test(String(p?.[key]??'')))content.append(paragraph(label+': '+p[key]));}
   const stop=button('Stop private recovery',()=>{recoveryAbort?.abort();clearPreferences();note('Recovery stop requested. Waiting for the private operation to settle.');});stop.dataset.recoveryStop='true';content.append(stop);
   content.append(button(preferences?'Refresh private views':preferenceProgress?'Continue private recovery':'Recover private views',()=>void work(recoverPreferences),true));
  }
- function choosePreference(value){if(busy||intent||blocked)return;view='action';draft={...value};render();}
+ function choosePreference(value){if(busy||intent)return;view='action';draft={...value};render();}
  function ownedLabel(id){const record=identityRecords.find(r=>r.id===id);return record?`${record.first} ${record.last}`:'Selected owned name';}
  function acceptNames(page,append=false){
   if(!Array.isArray(page.identities)||!Array.isArray(page.records)||page.identities.length!==page.records.length)throw Error('Private name records unavailable');
@@ -113,11 +113,11 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   const epoch=accountEpoch;
   try{
   if(!accountIdentity)accountIdentity=runtime.getAccount();
-  if(!session)session=await runtime.createSession({onProgress:progress=>{
+  if(!session){blocked=true;session=await runtime.createSession({onProgress:progress=>{
    const stages={estimating:'Checking the action and its maximum fee…',submitting:'Proving and submitting. Keep this page open; do not send again.'};
    note(stages[progress?.stage]??'Checking the private account…');
-  }});
-  await refresh();checkAccount(epoch);note('');
+  }});}
+  if(view!=='preferences')await refresh();checkAccount(epoch);note('');
   }catch{throw connectionFailure;}
  }
  async function unlock(){await work(async()=>{
@@ -416,6 +416,10 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   else{
    if(!session)content.append(paragraph('Your account is unlocked. The verified private connection is not ready.'),button('Connect private account',()=>void work(connect),true));
    else if(intent)showIntent();
+   else if(blocked&&view==='preferences'){
+    content.append(paragraph('Recover saved choices without checking funds or preparing a transaction.'));preferencesView();
+    content.append(button('Check account recovery',()=>void work(async()=>{await refresh();view='action';})));
+   }
    else if(blocked)content.append(paragraph('Check retained recovery before preparing any new action.'),button('Check account recovery',()=>void work(refresh)));
    else{
     const messages={'fee-needed':'Funds for transaction fees are needed.','collateral-pending':'No posting deposit was found.','fee-ready':'A posting deposit was found. We’ll check whether it can be used when you review an action.'};
@@ -453,6 +457,6 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
    if(next.type==='read-marker'&&field(defaults.thread)&&typeof defaults.throughBlock==='string')Object.assign(next,{thread:defaults.thread,throughBlock:defaults.throughBlock});
    if(typeof defaults.content==='string'&&defaults.content.length<=10000)next.content=defaults.content;draft=next;}
   if(!dialog.open){returnFocus=document.activeElement;render();dialog.showModal();closeButton.focus();}
-  if(session&&unlocked())void work(refresh);
+  if(session&&unlocked()&&view!=='preferences')void work(refresh);
  },close,privateStatus,preferenceEnabled,filterPrivatePage(view,page){if(privateStatus()!=='complete'||!['following','bookmarks','notifications'].includes(view))throw connectionFailure;return runtime.selectPrivateViews({preferences,page})[view];}});
 }

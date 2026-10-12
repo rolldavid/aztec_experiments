@@ -9,7 +9,7 @@ import {chromium} from 'playwright';
 const fixture=`import {mountRollingWalletPanel} from '/wallet-panel.mjs';
 import {selectPrivateViews} from '/private-views.mjs';
 const state={loads:0,sessions:0,prepares:0,sends:0,reconciles:0,cancels:0,closes:0,creates:0,imports:0,exports:0,effects:0,ended:0,owned:0,unlocked:true,options:null,failure:null,hold:null,release:null,fee:'fee-ready',profileCalls:0,bioVersion:'3',avatarVersion:'4'};
-window.test=state;state.rawAccount={secretKey:'PRIVATE_SENTINEL',address:'HUMAN_IDENTITY_SENTINEL'};state.privateChanges=0;state.preferenceReads=0;state.headReads=0;state.revision='4';state.recoveryChecks=0;state.replacementPrepares=0;state.resumes=0;state.submitCalls=0;state.preferences={scope:{chainId:'31337',version:'1',board:'1'},head:{schema:1,initialized:true,revision:'4',digest:'42'},bookmarks:['10'],followedBoards:['0'],followedNames:[],subscriptions:['10'],replyNotifications:true,readMarkers:[]};
+window.test=state;state.rawAccount={secretKey:'PRIVATE_SENTINEL',address:'HUMAN_IDENTITY_SENTINEL'};state.privateChanges=0;state.preferenceReads=0;state.statusReads=0;state.headReads=0;state.revision='4';state.recoveryChecks=0;state.replacementPrepares=0;state.resumes=0;state.submitCalls=0;state.preferences={scope:{chainId:'31337',version:'1',board:'1'},head:{schema:1,initialized:true,revision:'4',digest:'42'},bookmarks:['10'],followedBoards:['0'],followedNames:[],subscriptions:['10'],replyNotifications:true,readMarkers:[]};
 state.previewBlobs=new Map();state.revoked=[];const createURL=URL.createObjectURL.bind(URL),revokeURL=URL.revokeObjectURL.bind(URL);
 URL.createObjectURL=blob=>{const url=createURL(blob);state.previewBlobs.set(url,blob);return url;};URL.revokeObjectURL=url=>{state.revoked.push(url);state.previewBlobs.delete(url);revokeURL(url);};
 const envelope={schemaVersion:1,kind:'aztec-billboard-encrypted-wallet',kdf:'PBKDF2-SHA256',iterations:600000,salt:'aa'.repeat(16),iv:'bb'.repeat(12),ciphertext:'cc'.repeat(16)};
@@ -21,10 +21,10 @@ const application={
  async resumeSaved(id,input){state.resumes++;state.resumeInput={id,...input};state.sends++;await boundary('saved-resume');const next={...read(),txHash:input.expectedTxHash,status:state.resumeOutcome??'confirmed'};write(next);return next;},
  async inspectRecovery(id){state.recoveryChecks++;await boundary('recovery-options');return {...state.recoverySnapshot,intent:read()};},
  async prepareReplacement(id,input){state.replacementPrepares++;state.replacementInput=input;await boundary('replacement-prepare');const current=read();const next={...current,status:'replacement-prepared',replacementReview:{sourceTxHash:input.expectedTxHash,head:input.expectedHead,marker:current.action.type==='read-marker'?state.recoverySnapshot.marker:null,maximumFee:'456'}};write(next);return next;},
- async readAccountStatus(){await boundary('status');const intent=read();return intent&&!['confirmed','reverted','cancelled'].includes(intent.status)?{status:'recovering',intent}:{status:state.fee,privateFeeCredit:'1000',depositIds:state.fee==='fee-ready'?['9']:[]};},
+ async readAccountStatus(){state.statusReads++;await boundary('status');const intent=read();return intent&&!['confirmed','reverted','cancelled'].includes(intent.status)?{status:'recovering',intent}:{status:state.fee,privateFeeCredit:'1000',depositIds:state.fee==='fee-ready'?['9']:[]};},
  async ownedIdentities({cursor}){state.owned++;const page=state.namesPages?.[cursor]??(cursor===0?{identities:['7'],records:[{id:'7',first:'River',last:'Lane'}],nextCursor:8}:{identities:['8'],records:[{id:'8',first:'Ellis',last:'Moss'}],nextCursor:null});await boundary('owned');return page;},
  async readPreferenceHead(){state.headReads++;await boundary('head');return {schema:1,initialized:true,revision:state.revision,digest:'42'};},
- async readPreferences(){state.preferenceReads++;await boundary('preferences');return state.partial?{status:'recovering',complete:false,progress:{scannedThrough:32,anchorBlock:80,processedRevision:'2',targetRevision:'4',markersChecked:0,markersTotal:0}}:{status:'complete',complete:true,preferences:state.preferences};},
+ async readColdPreferences(){state.preferenceReads++;await boundary('preferences');return state.partial?{status:'recovering',complete:false,progress:{nextBlock:33,anchorBlock:80,processedRevision:'2',markersChecked:0,markersTotal:null}}:{status:'complete',complete:true,preferences:state.preferences};},
  async readProfile({name}){state.profileCalls++;await boundary('profile');return {name:'0x'+BigInt(name).toString(16).padStart(64,'0'),bioVersion:state.bioVersion,avatarVersion:state.avatarVersion};},
  async prepare(action){state.prepares++;if(['bio','avatar'].includes(action.type)&&action.expectedVersion!==state[action.type+'Version'])error();write({intentId:'42',action,maximumFee:'123',status:'prepared'});await boundary('prepare');return read();},
  async submitPrepared(id){state.submitCalls++;state.sends++;write({...read(),status:'submitting'});await boundary('submit');const intent={...read(),status:state.submitOutcome??'confirmed'};write(intent);return intent;},
@@ -280,9 +280,9 @@ for(const invalidPage of ['duplicate','cursor'])test('invalid private names '+in
 test('private recovery is explicit, one bounded step, and never exposes partial preferences',async t=>{
  const {page}=await browserFixture(t);await open(page,{view:'preferences'});assert.equal(await page.evaluate(()=>panel.privateStatus()),'locked');
  await page.getByRole('button',{name:'Unlock',exact:true}).click();await page.getByRole('button',{name:'Recover private views',exact:true}).waitFor();
- assert(await page.getByText('A posting deposit was found. We’ll check whether it can be used when you review an action.',{exact:true}).isVisible());assert.equal(await page.getByText('Your posting balance is available.',{exact:false}).count(),0);assert.equal(await page.evaluate(()=>test.preferenceReads),0);await page.evaluate(()=>test.partial=true);
+ assert.equal(await page.evaluate(()=>test.statusReads),0);assert.equal(await page.evaluate(()=>test.owned),0);assert(await page.getByText('Recover saved choices without checking funds or preparing a transaction.',{exact:true}).isVisible());assert.equal(await page.getByText('Your posting balance is available.',{exact:false}).count(),0);assert.equal(await page.evaluate(()=>test.preferenceReads),0);await page.evaluate(()=>test.partial=true);
  await page.getByRole('button',{name:'Recover private views',exact:true}).click();await page.getByRole('button',{name:'Continue private recovery',exact:true}).waitFor();
- assert.equal(await page.evaluate(()=>panel.privateStatus()),'recovering');assert.equal(await page.evaluate(()=>panel.preferenceEnabled(1,'10')),null);assert.equal(await page.evaluate(()=>test.preferenceReads),1);
+ assert.equal(await page.evaluate(()=>panel.privateStatus()),'recovering');assert.equal(await page.evaluate(()=>panel.preferenceEnabled(1,'10')),null);assert.equal(await page.evaluate(()=>test.preferenceReads),1);assert(await page.getByText('Next history block to check: 33',{exact:true}).isVisible());
  await page.evaluate(()=>test.partial=false);await page.getByRole('button',{name:'Continue private recovery',exact:true}).click();await page.getByText('Your saved choices are ready.').waitFor();
  assert.equal(await page.evaluate(()=>panel.preferenceEnabled(1,'10')),true);assert.equal(await page.evaluate(()=>test.sends),0);
  assert(await page.getByText('Your follows, bookmarks and notification settings have been recovered.',{exact:true}).isVisible());assert.equal(await page.getByText(/fee-juice units|deposit IDs|action check/).count(),0);
@@ -534,4 +534,16 @@ test('notification campaign reviews, confirms, then navigates to private recover
  await run('Enable thread subscription for 10. This preference is encrypted, not a public ownership list.');assert.equal(recovered,1);assert.equal((await counts(page)).sends,1);
  await d.getByRole('button',{name:'Close account panel',exact:true}).click();await open(page,{type:'read-marker',thread:'10',throughBlock:'80'});
  await run('Mark this thread read through block 80');assert.equal(recovered,2);assert.equal((await counts(page)).sends,2);assert.deepEqual(phases,['reviewed','confirmed-send','included','reviewed','confirmed-send','included']);
+});
+
+test('cold private view cannot prepare a preference before checking retained financial recovery',async t=>{
+ const {page}=await browserFixture(t);await open(page,{view:'preferences'});await page.getByRole('button',{name:'Unlock',exact:true}).click();
+ await page.getByRole('button',{name:'Recover private views',exact:true}).click();await page.getByText('Your saved choices are ready.').waitFor();
+ assert.equal(await page.evaluate(()=>test.statusReads),0);assert.equal(await page.evaluate(()=>test.owned),0);
+ await page.getByRole('button',{name:'Disable reply notifications',exact:true}).click();
+ await page.getByRole('button',{name:'Check account recovery',exact:true}).waitFor();
+ assert.equal(await page.getByRole('button',{name:'Check action and review fee',exact:true}).count(),0);
+ assert.equal(await page.evaluate(()=>test.prepares),0);assert.equal(await page.evaluate(()=>test.sends),0);
+ await page.getByRole('button',{name:'Check account recovery',exact:true}).click();await page.getByRole('button',{name:'Check action and review fee',exact:true}).waitFor();
+ assert.equal(await page.evaluate(()=>test.statusReads),1);assert.equal(await page.evaluate(()=>test.owned),1);
 });

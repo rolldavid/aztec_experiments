@@ -37,7 +37,7 @@ import {AztecAddress} from '@aztec-labs/stdlib/aztec-address';
 import {loadContractArtifact,decodeFromAbi,getFunctionReturnType,EventSelector,decodeFunctionSignature} from '@aztec-labs/stdlib/abi';
 import {poseidon2HashWithSeparator} from '@aztec-labs/foundation/crypto/poseidon';
 import {nameRegistration,NAME_DOMAIN} from '../../shared/rolling/name-policy.mjs';
-import {getContractClassFromArtifact,getContractInstanceFromInstantiationParams,computeContractAddressFromInstance} from '@aztec-labs/stdlib/contract';
+import {computeArtifactHash,getContractClassFromArtifact,getContractInstanceFromInstantiationParams,computeContractAddressFromInstance} from '@aztec-labs/stdlib/contract';
 import {sha256ToField} from '@aztec-labs/foundation/crypto/sha256';
 import {derivePrivateFeeInstance,normalizePrivateFeeGasSettings} from '../../shared/private-fee-client.mjs';
 import {expectedPortalRuntime,verifyPortalRuntime} from '../../shared/portal-runtime.mjs';
@@ -99,7 +99,7 @@ async function sessionFixture(){
  const wallet={aztecNode:f.node,pxe,getAccounts:async()=>[accountInstance.address],getChainInfo:async()=>({chainId:31337,version:1}),sendTx:async()=>{held('send');state.sends++;throw Error('unknown send');}};
  const routing={createAztecWallet:(_sdk,p,n,raw)=>{held('create-wallet');assert.equal(p,pxe);assert.equal(n,f.node);assert.equal(raw,f.node);return wallet;},
   isPrivateWalletForNode:(w,n)=>!state.wrongWallet&&w===wallet&&n===f.node};
- const sdk={...f.options.sdk,poseidon2HashWithSeparator,EventSelector,decodeFunctionSignature,Fr,deriveKeys,deriveSigningKey,SchnorrInitializerlessAccountContract,getContractInstanceFromInstantiationParams,computePartialAddress,Tx,encodeArguments,
+ const sdk={...f.options.sdk,computeArtifactHash,poseidon2HashWithSeparator,EventSelector,decodeFunctionSignature,Fr,deriveKeys,deriveSigningKey,SchnorrInitializerlessAccountContract,getContractInstanceFromInstantiationParams,computePartialAddress,Tx,encodeArguments,
   createTrustedPrivateNode:async options=>{held('trusted-node');assert.equal(options.url,'http://127.0.0.1:3/v1/node');return f.node;},
   openPXEStore:async options=>{held('open-store');assert.equal(options.accountAddress,account.address);assert.equal(options.dataDirectory,'rolling-wallet-v1');return store;},
   createPXE:async(n,c,o)=>{held('create-pxe');assert.equal(n,f.node);assert.equal(o.store,store);assert.deepEqual(o.remoteProver,{url:'http://127.0.0.1:3',board:String(f.board.address)});if(state.failCreatePXE)throw Error('pxe failed');return pxe;},
@@ -197,7 +197,11 @@ test('account mutation during each awaited initialization step blocks the next p
    f.input.sdk.SchnorrInitializerlessAccountContract=class extends SchnorrInitializerlessAccountContract{async getSigningPublicKey(){const result=await super.getSigningPublicKey();if(f.state.events.includes('account-manager'))change();return result;}};
    f.input.sdk.ContractFunctionInteraction=class{async simulate(){forbidden++;}};
   }
-  await assert.rejects(createRollingWalletSession(f.input),{code:'ROLLING_CONTEXT_CHANGED'},stage);
+  if(stage==='signing-key'){
+   const session=await createRollingWalletSession(f.input);
+   assert(!f.state.events.includes('signing-capsule'));
+   await assert.rejects(session.application.ownedIdentities(),{code:'ROLLING_CONTEXT_CHANGED'},stage);await session.close();
+  }else await assert.rejects(createRollingWalletSession(f.input),{code:'ROLLING_CONTEXT_CHANGED'},stage);
   assert.equal(forbidden,0,stage);assert.equal(f.state.stops,1,stage);assert.equal(f.state.closes,1,stage);
   assert.ok(f.state.events.indexOf('store-close')<f.state.events.lastIndexOf('unlock'),stage);
  }
@@ -250,4 +254,48 @@ test('failed preference read preserves session and existing prepared financial i
  f.state.failEvents=true;await assert.rejects(session.application.readPreferences(),{code:'ROLLING_PREFERENCE_READER_UNAVAILABLE'});
  const restored=await session.application.readAccountStatus();assert.equal(restored.intent.intentId,intent.intentId);assert.equal(f.state.sends,0);
  f.state.failEvents=false;assert.equal((await session.application.readPreferences()).status,'complete');await session.close();
+});
+
+// Actual cold reader, AEAD, local artifact hash and session lease; explicitly
+// synthetic PXE mailbox and chain anchor. Full-chain recovery is a separate gate.
+function installColdMailbox(f){
+ const receipt={schemaVersion:1,database:'ab'.repeat(32),epoch:'cd'.repeat(32),sequence:0,
+  anchor:{blockNumber:10,blockHash:hex(55)},nextBlock:1,nextLog:0,records:[],head:null,complete:false};
+ f.node.getBlockData=async height=>{assert.equal(height,10);return {blockHash:Fr.fromString(hex(55)),header:{globalVariables:{blockNumber:10},hash:async()=>Fr.fromString(hex(55))}};};
+ f.pxe.processRollingPreferenceRecovery=async(config,{contextGuard})=>{
+  assert(f.state.active);f.state.events.push('cold-mailbox');await contextGuard();
+  assert.equal(config.expectedArtifactHash,(await computeArtifactHash(artifact)).toString());
+  assert.equal(config.tier,'checkpointed');assert.equal(config.scope,f.input.account.address);
+  assert.deepEqual(config.network,{chainId:31337,version:1,rollup:eth(11)});
+  if(f.state.waitCold)await f.state.waitCold;
+  return structuredClone(receipt);
+ };
+}
+test('cold recovery starts under the account lease without signing capsule or ordinary event discovery',async()=>{
+ const f=await sessionFixture();installColdMailbox(f);const session=await createRollingWalletSession(f.input);
+ assert(!f.state.events.includes('signing-capsule'));
+ f.pxe.getPrivateEvents=async()=>{throw Error('Unbounded event discovery forbidden');};
+ const start=f.state.events.length,result=await session.application.readColdPreferences();
+ assert.equal(result.status,'recovering');assert.equal(result.complete,false);assert.equal(result.progress.nextBlock,1);
+ const events=f.state.events.slice(start);assert.equal(events.filter(x=>x==='lock').length,1);assert.equal(events.filter(x=>x==='unlock').length,1);
+ assert(!events.includes('signing-capsule'));assert(!events.includes('preference-head'));assert.equal(f.state.sends,0);
+ await session.application.ownedIdentities();assert.equal(f.state.events.filter(x=>x==='signing-capsule').length,1);
+ await session.application.readAccountStatus();assert.equal(f.state.events.filter(x=>x==='signing-capsule').length,1);await session.close();
+});
+test('missing cold extension rejects without using the ordinary preference reader',async()=>{
+ const f=await sessionFixture(),session=await createRollingWalletSession(f.input);
+ await assert.rejects(session.application.readColdPreferences(),{code:'ROLLING_COLD_PREFERENCES_INVALID'});
+ assert(!f.state.events.includes('signing-capsule'));assert(!f.state.events.includes('preference-events'));assert.equal(f.state.sends,0);await session.close();
+});
+test('cold cancellation or account change retains the lock until the original PXE operation settles',async()=>{
+ for(const mode of ['abort','account']){
+  const f=await sessionFixture();installColdMailbox(f);const session=await createRollingWalletSession(f.input);let release;
+  f.state.waitCold=new Promise(resolve=>release=resolve);const controller=new AbortController();
+  const pending=session.application.readColdPreferences({signal:controller.signal}),observed=assert.rejects(pending,{code:'ROLLING_COLD_PREFERENCES_UNAVAILABLE'});
+  const deadline=Date.now()+2000;while(!f.state.events.includes('cold-mailbox')){assert(Date.now()<deadline);await new Promise(r=>setTimeout(r,1));}
+  if(mode==='abort')controller.abort();else f.input.account.secretKey=hex(99);
+  assert(session.busy&&f.state.active);await assert.rejects(session.close(),{code:'ROLLING_BUSY'});
+  await assert.rejects(session.application.readAccountStatus(),{code:'ROLLING_BUSY'});
+  release();await observed;assert(!session.busy&&!f.state.active);assert.equal(f.state.sends,0);await session.close();
+ }
 });

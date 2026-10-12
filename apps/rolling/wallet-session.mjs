@@ -1,5 +1,7 @@
 // Load after explicit unlock. All SDK and custody dependencies are supplied by
 // the authenticated application bundle; no fixture or ordinary-node fallback.
+import {createRollingColdPreferenceReader} from '../../shared/rolling/cold-preference-reader.mjs';
+import {createRollingCompactClient} from '../../shared/rolling/compact-client.mjs';
 import {createRollingPreferenceReader} from '../../shared/rolling/preference-reader.mjs';
 import {createSynchronizedRollingApplication} from '../../shared/rolling/synchronized-application.mjs';
 import {createRollingApplication} from '../../shared/rolling/application.mjs';
@@ -14,7 +16,7 @@ export async function createRollingWalletSession({sdk,routing,ethers,config,boar
  const captured={secretKey:account.secretKey,salt:String(account.salt),address:String(account.address)};
  const selected=structuredClone(config),query=structuredClone(trustedQuery),remote=remoteProver?structuredClone(remoteProver):undefined;
  const lockName='billboard-wallet:'+captured.address;
- let pxe,store,closed=false,busy=false,app,closing,privateNode,privateWallet,readPreferences;
+ let pxe,store,closed=false,busy=false,app,closing,privateNode,privateWallet,readPreferences,readColdPreferences,initializeAccount;
  const assertCaptured=()=>{
   if(closed||captured.secretKey!==account.secretKey||captured.salt!==String(account.salt)||captured.address!==String(account.address))throw fail('ROLLING_CONTEXT_CHANGED');
  };
@@ -58,8 +60,17 @@ export async function createRollingWalletSession({sdk,routing,ethers,config,boar
    if(wallet.aztecNode!==node||wallet.pxe!==pxe||!routing.isPrivateWalletForNode(wallet,node))throw fail('ROLLING_PRIVATE_ROUTE');
    await guard();wallet._accountManager=await sdk.AccountManager.create(wallet,secret,accountContract,{salt});
    if(wallet._accountManager.address.toString()!==captured.address)throw fail('ROLLING_ACCOUNT_MISMATCH');
-   await guard();const signingPublicKey=await accountContract.getSigningPublicKey(),constructor=artifact.functions.find(fn=>fn.name==='constructor');
-   if(constructor){await guard();await new sdk.ContractFunctionInteraction(wallet,instance.address,constructor,[signingPublicKey.x,signingPublicKey.y]).simulate({from:instance.address});}
+   // Cold preference recovery needs only registered keys and the scoped PXE
+   // cursor. The signing capsule can trigger ordinary note discovery, so create
+   // it lazily under the same account lease before an ordinary operation.
+   let initialized=false;
+   initializeAccount=async()=>{
+    await guardRoute();if(initialized)return;
+    const signingPublicKey=await accountContract.getSigningPublicKey();await guardRoute();
+    const constructor=artifact.functions.find(fn=>fn.name==='constructor');
+    if(constructor){await new sdk.ContractFunctionInteraction(wallet,instance.address,constructor,[signingPublicKey.x,signingPublicKey.y]).simulate({from:instance.address});await guardRoute();}
+    initialized=true;
+   };
    privateNode=node;privateWallet=wallet;
    await guard();app=createRollingApplication({sdk:{...sdk,isPrivateWalletForNode:routing.isPrivateWalletForNode},deployment,contextGuard:guard,privateStore,onProgress,
     accountSession:{owner:instance.address,wallet,node,journal,walletSecret:captured.secretKey,walletSalt:captured.salt}});
@@ -67,11 +78,25 @@ export async function createRollingWalletSession({sdk,routing,ethers,config,boar
    // lock and PXE lifetime. Its head capability is the raw guarded application
    // method, never the lock-taking public facade (which would nest the lock).
    let preferenceReader;
-   readPreferences=options=>{
+   readPreferences=async options=>{
+    await initializeAccount();
     preferenceReader??=createRollingPreferenceReader({sdk,pxe,node,owner:instance.address,deployment,
       readHead:app.readPreferenceHead.bind(app),contextGuard:guardRoute,privateStore,
       walletSecret:captured.secretKey,walletSalt:captured.salt});
     return preferenceReader.read(options);
+   };
+   // This is a separate bounded capability, never a fallback to the ordinary
+   // event reader. Hash the verified local artifact, not remote configuration.
+   let coldReader;
+   readColdPreferences=async options=>{
+    await guardRoute();
+    if(!coldReader){
+     const expectedArtifactHash=(await sdk.computeArtifactHash(deployment.board.artifact)).toString();await guardRoute();
+     const compact=createRollingCompactClient({url:new URL(query.url).origin,tier:'checkpointed',contextGuard:guardRoute,...(query.allowLocalDev===true?{allowLocalDev:true}:{})});
+     coldReader=createRollingColdPreferenceReader({sdk,pxe,node,owner:instance.address,deployment,expectedArtifactHash,tier:'checkpointed',compact,
+      contextGuard:guardRoute,privateStore,walletSecret:captured.secretKey,walletSalt:captured.salt});
+    }
+    return coldReader.read(options);
    };
   }catch(error){closed=true;try{await dispose();}catch(cleanupError){throw new AggregateError([error,cleanupError],'Private session initialization and cleanup failed');}throw error;}
  });
@@ -79,9 +104,10 @@ export async function createRollingWalletSession({sdk,routing,ethers,config,boar
   await guard();
   if(!sdk.isTrustedPrivateNode(privateNode)||!sdk.isPrivatePXEForNode(pxe,privateNode)||privateWallet.aztecNode!==privateNode||privateWallet.pxe!==pxe||!routing.isPrivateWalletForNode(privateWallet,privateNode))throw fail('ROLLING_PRIVATE_ROUTE');
  }
- const synchronized=createSynchronizedRollingApplication({application:app,synchronize:pxe.sync.bind(pxe),contextGuard:guardRoute});
+ const synchronized=createSynchronizedRollingApplication({application:app,synchronize:async()=>{await pxe.sync();await initializeAccount();},contextGuard:guardRoute});
  const application=Object.freeze({...Object.fromEntries(Object.entries(synchronized).map(([name,call])=>[name,(...args)=>locked(()=>call(...args))])),
-  readPreferences:options=>locked(()=>readPreferences(options))});
+  readPreferences:options=>locked(()=>readPreferences(options)),
+  readColdPreferences:options=>locked(()=>readColdPreferences(options))});
  return Object.freeze({application,get busy(){return busy;},close(){
   if(closing)return closing;
   if(busy)return Promise.reject(fail('ROLLING_BUSY'));
