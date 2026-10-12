@@ -418,3 +418,27 @@ test('actual saved-versus-reorg dispatch selects job counts and only initialized
   report.proverJobs.completed=count+1;await assert.rejects(run(scenario,assert,report,async()=>{},async()=>{},async()=>{},async()=>({}),{verify(){}}));
  }
 });
+
+// Labelled pure server-boundary controls: not encrypted-discovery qualification.
+test('recovery observation forwards exact receiver args and Promise without extra calls',async()=>{
+ const {forwardRecoveryObservedNodeCall}=await import('./rolling-application-fixture.mjs');
+ const {createRollingPrivateRecoveryMetrics}=await import('./rolling-private-recovery-metrics.mjs');
+ const metrics=createRollingPrivateRecoveryMetrics(),argument={tags:['PRIVATE_SENTINEL']};let calls=0;
+ const result=Promise.resolve([[]]);const node={getPrivateLogsByTags(arg){assert.equal(this,node);assert.equal(arg,argument);calls++;return result;}};
+ assert.equal(forwardRecoveryObservedNodeCall(node,'getPrivateLogsByTags',[argument],metrics),result);
+ await result;const snapshot=metrics.snapshot();assert.equal(calls,1);assert.equal(snapshot.methods.getPrivateLogsByTags.calls,1);
+ assert.equal(snapshot.methods.getPrivateLogsByTags.requestedTags,1);assert.equal(snapshot.methods.getPrivateLogsByTags.pageResponses,1);
+ assert.equal(snapshot.transportBytesObserved,false);assert(!JSON.stringify(snapshot).includes('PRIVATE_SENTINEL'));
+});
+test('recovery observation keeps rejected and synchronous errors and unobserved methods unchanged',async()=>{
+ const {forwardRecoveryObservedNodeCall}=await import('./rolling-application-fixture.mjs');
+ const {createRollingPrivateRecoveryMetrics}=await import('./rolling-private-recovery-metrics.mjs');
+ const metrics=createRollingPrivateRecoveryMetrics(),error=new Error('PRIVATE_SENTINEL'),rejection=Promise.reject(error);let calls=0;
+ const node={getBlock(){calls++;return rejection;},getBlockData(){calls++;throw error;},sendTx(value){calls++;assert.equal(this,node);return value;}};
+ assert.equal(forwardRecoveryObservedNodeCall(node,'getBlock',[],metrics),rejection);await assert.rejects(rejection,e=>e===error);
+ assert.throws(()=>forwardRecoveryObservedNodeCall(node,'getBlockData',[],metrics),e=>e===error);
+ const value={};assert.equal(forwardRecoveryObservedNodeCall(node,'sendTx',[value],metrics),value);
+ assert.equal(forwardRecoveryObservedNodeCall(node,'sendTx',[value],undefined),value);assert.equal(calls,4);
+ const snapshot=metrics.snapshot();assert.equal(snapshot.methods.getBlock.rejected,1);assert.equal(snapshot.methods.getBlockData.rejected,1);
+ assert(!JSON.stringify(snapshot).includes('PRIVATE_SENTINEL'));assert.equal(snapshot.counters.pending,0);
+});
