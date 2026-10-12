@@ -13,7 +13,7 @@
       "branch": "codex/rolling-private-bok-candidate",
       "history_locator": "Codex runtime thread 01a12a75-1b50-7871-a73b-4253a1010194",
       "role": "lead",
-      "state": "8eea1f5 code composition: approved720notificationorder+4f70infra, c8coldc43genuinePASS; fullpackage09next",
+      "state": "active61147diagnosis and09 preparation; soleintegrator",
       "working_branch": "codex/rolling-private-bok-candidate",
       "active_edit_paths": [
         "execution/"
@@ -88,7 +88,7 @@
         ],
         "purpose": "Compose reviewed207+7867; explicit stopped-consumer PXE patch and normal SDK/walletbuild before realinitialreorg"
       },
-      "last_reconciled_at": "2026-10-12T10:38:40.508073+00:00"
+      "last_reconciled_at": "2026-10-12T12:03:25.606014+00:00"
     },
     {
       "logical_id": "recovery-probe-20261011",
@@ -112,11 +112,12 @@
       "branch": "codex/rolling-archiver-startup-observation",
       "history_locator": "collaboration runtime /root/controls, parent 01a12a75-1b50-7871-a73b-4253a1010194",
       "role": "implementation worker",
-      "state": "read-only bounded exactL1provider preflight before09",
+      "state": "running09 upload/preparation only; launch held",
       "worktree": "../rolling-controls",
       "allowed_paths": [
-        ".build/run-package-startup09.py",
-        ".build/verify-package-startup09.py"
+        ".build/rolling-node-09-operator.py",
+        ".build/private09 staging",
+        "execution/evidence/G02/operator09 evidence"
       ],
       "commit_trailer_aliases": {
         "Agent-Session": "controls",
@@ -124,7 +125,8 @@
       },
       "base": "1070a8fad6cb2b1b0068fe6b9f73267475b55b90",
       "active_edit_paths": [
-        "execution/evidence/G02/archiver09-local-provider-preflight.json"
+        ".build/rolling-node-09-operator.py",
+        "execution/evidence/G02/operator09 evidence"
       ],
       "writer_released": false
     },
@@ -139,9 +141,11 @@
       "branch": "read-only candidate refs",
       "history_locator": "collaboration runtime /root/reviewer, parent 01a12a75-1b50-7871-a73b-4253a1010194",
       "role": "independent reviewer",
-      "state": "72072ea fundingorderP2rereview; compact615ac approved40checks; cold21319actual pending",
+      "state": "nativeef368 independently35PASS; notification61147 timing/failurediagnosis",
       "active_edit_paths": [
-        "execution/evidence/G07/"
+        "execution/evidence/G07/*independent*",
+        "execution/evidence/G07/*review*",
+        "execution/evidence/G07/*diagnosis*"
       ]
     },
     {
@@ -154,18 +158,24 @@
       "branch": "codex/rolling-compact-block-prototype",
       "history_locator": "collaboration runtime /root/design, parent01a12a75-1b50-7871-a73b-4253a1010194",
       "role": "implementation worker",
-      "state": "native compactblock adapter2newfiles source implementation; d9e verifier frozenreview",
+      "state": "running boundedpreference page source experiment",
       "worktree": "../rolling-design",
       "allowed_paths": [
-        "shared/rolling/compact-block.mjs",
-        "shared/rolling/compact-block.test.mjs"
+        "billboard/rolling_contract/src/main.nr",
+        "billboard/rolling_contract/src/preference_recovery.nr",
+        "billboard/rolling_contract/src/lib.nr",
+        "scripts/patch-pxe-preference-page.mjs",
+        "scripts/test-pxe-preference-page.mjs"
       ],
-      "base": "7867f511a8a5c318da1c70d3b49c89df870ef63e",
+      "base": "ef36801ef215eeff400583e8454c3845744d580b",
       "reference_candidate": "1351ea1b180b11475250463c9c40fdd2e342ab13",
       "writer_released": false,
       "active_edit_paths": [
-        "prover/compact-block-native.mjs",
-        "prover/compact-block-native.test.mjs"
+        "billboard/rolling_contract/src/main.nr",
+        "billboard/rolling_contract/src/preference_recovery.nr",
+        "billboard/rolling_contract/src/lib.nr",
+        "scripts/patch-pxe-preference-page.mjs",
+        "scripts/test-pxe-preference-page.mjs"
       ]
     }
   ],

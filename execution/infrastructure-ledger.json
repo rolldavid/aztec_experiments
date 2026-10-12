@@ -2,7 +2,7 @@
   "schema_version": 1,
   "budget_usd": 300,
   "scope": "Cumulative prover campaign plus at most one additional rolling.chat server; existing moderator costs remain separate.",
-  "as_of": "2026-10-12T09:49:27.047129+00:00",
+  "as_of": "2026-10-12T12:10:34.929300+00:00",
   "billing_evidence": "evidence/G02/aws-costs.json",
   "historical_campaign_bound_usd": 83.27,
   "historical_bound_method": "Retain the full earlier conservative bound including unused planned compute through13Oct, rather than subtracting unverified savings. Includes49.47 prior allowance,28.80 revival maximum and5 ancillary.",
@@ -12,8 +12,8 @@
   "new_spend_description": "One Cost Explorer query; include in reconciliation.",
   "billing_delay_cleanup_reserve_usd": 20,
   "retained_storage_network_forecast_usd": 5,
-  "conservative_committed_and_reserved_usd": 190.28,
-  "remaining_before_new_launch_usd": 109.72,
+  "conservative_committed_and_reserved_usd": 215.28,
+  "remaining_before_new_launch_usd": 84.72,
   "resources": [
     {
       "id": "i-0025eb05db3c2491c",
@@ -634,19 +634,189 @@
       "reservation_disposition": "Retain15USD fullhour compute/storage/network +30dayarchive +8.3135 delayedbilling/tax/cleanupbuffer; release10unused afterverifiedcompute/disks/Fleet cleanup. Not actualinvoice.",
       "cleanup_evidence": "evidence/G02/operator08-cleanup-reconciliation.json",
       "terminal_evidence": "evidence/G02/operator08-terminal-handoff.json"
+    },
+    {
+      "id": "rolling-node-commissioning-20261012-09",
+      "purpose": "One changed instrumented nativeAMD64 archiver-startup/query-only qualification campaign09 using reviewed schema2 progress and preserved config-provider adapter; measure08unknown wait, not blind capacity retry. No proofjobs/publicrouting/release.",
+      "state": "archive uploaded once; exactpayload independently checked, report and one-shotlaunchhelper review pending; no compute",
+      "reservation_usd": 25,
+      "source": "1ec67f406645442965ced41e56b4e93c7097a050",
+      "forecast": {
+        "schemaVersion": 1,
+        "createdAt": "2026-10-12T11:53:41.339959+00:00",
+        "status": "PROPOSED_ONLY_NOT_ALLOCATED",
+        "priorCumulativeBoundUsd": "190.28",
+        "proposedReservationUsd": "25.00",
+        "cumulativeIfLeadReservesUsd": "215.28",
+        "authorizedTotalCeilingUsd": "300.00",
+        "remainingIfReservedUsd": "84.72",
+        "remainingBeforeReservationUsd": "109.72",
+        "purpose": "One changed instrumented nativeAMD64 archiver-startup/query-only qualification campaign09 using reviewed schema2 progress and preserved config-provider adapter; measure08unknown wait, not blind capacity retry. No proofjobs/publicrouting/release.",
+        "resourceProposal": {
+          "instances": 1,
+          "instanceType": "m7a.4xlarge",
+          "region": "us-east-1",
+          "vCpu": 16,
+          "memoryGiB": 64,
+          "rootGp3GiB": 40,
+          "dataGp3GiB": 1024,
+          "ioBaselineOnly": true,
+          "encrypted": true,
+          "deleteOnTermination": true,
+          "egressMbps": 50,
+          "overlapInstances": 0,
+          "newSnapshots": 0,
+          "newBackupServices": 0,
+          "walletOrAwsCredentialsOnHost": false,
+          "sshOrNewIngress": false
+        },
+        "freshReadOnlyEvidence": {
+          "path": "execution/evidence/G02/operator09-forecast-readonly.json",
+          "sha256": "84595197f391b7de5567eeab0320473baf5dd190e41c7096b018820850479879"
+        },
+        "pricing": {
+          "compute": {
+            "sku": "TTPYSE2GSHDGSMTX",
+            "unit": "Hrs",
+            "usd": "0.9273600000",
+            "effectiveDate": "2026-10-01T00:00:00Z"
+          },
+          "observedAt": "2026-10-12T11:53:41.339959+00:00",
+          "source": "AWS Price List Query API GetProducts exact filters",
+          "ebsUsdPerGiBMonth": ".08",
+          "monthHours": 720,
+          "ipv4UsdPerHour": ".005",
+          "egressPlanningCeilingUsdPerGB": ".195",
+          "ancillaryRateStatus": "Retained conservative same-day planning rates/ceilings; not a new account invoice query",
+          "references": [
+            "https://aws.amazon.com/ec2/pricing/on-demand/",
+            "https://aws.amazon.com/ebs/pricing/",
+            "https://aws.amazon.com/vpc/pricing/"
+          ]
+        },
+        "costItems": [
+          {
+            "item": "compute_75min",
+            "usd": "1.15920000",
+            "basis": "One m7a.4xlarge Linux On-Demand us-east-1; 60min budget plus15min shutdown/billing margin. No Spot savings assumed."
+          },
+          {
+            "item": "gp3_1064GiB_75min",
+            "usd": "0.14777778",
+            "basis": "40GiB root+1024GiB data; baseline3000IOPS/125MiBps, encrypted DOT, no paid performance addons."
+          },
+          {
+            "item": "public_ipv4_75min",
+            "usd": "0.00625000",
+            "basis": "One public IPv4, no elastic-IP retention planned."
+          },
+          {
+            "item": "network_35GB",
+            "usd": "6.82500000",
+            "basis": "Conservative per-GB ceiling, not invoice rate;50Mbps*75min=28.125decimalGB, rounded up35GB; no free allowance assumed."
+          },
+          {
+            "item": "orphan_disk_24h",
+            "usd": "2.83733334",
+            "basis": "Separate24h full-disk retention cleanup allowance beyond compute; not authority to leave disks indefinitely."
+          },
+          {
+            "item": "new_archive_receipt_storage_30days",
+            "usd": "0.50000000",
+            "basis": "One fresh immutable runtime archive+receipts retained30days; prior retained archives already included in190.28."
+          },
+          {
+            "item": "archive_cross_region_transfer",
+            "usd": "0.50000000",
+            "basis": "Existing private eu-west-2 artifact bucket to us-east-1 host; conservative allowance."
+          },
+          {
+            "item": "requests_and_monitoring",
+            "usd": "0.25000000",
+            "basis": "S3 requests/control/readbacks/log metadata; no extra log ingestion service."
+          },
+          {
+            "item": "tax_and_unpriced_related_charges",
+            "usd": "3.00000000",
+            "basis": "Conservative planning provision, not an assertion about account tax treatment."
+          },
+          {
+            "item": "additional_delayed_billing_and_cleanup_buffer",
+            "usd": "9.77443888",
+            "basis": "Residual reserve; includes rate rounding, delayed usage and extra cleanup reads. Stop/replan before full forecast exceeds reserved25."
+          }
+        ],
+        "costItemsTotalUsd": "25.00000000",
+        "controls": {
+          "createdAt": "Fresh timestamp after authorized archive upload and immediately before actualpayload generation; not assigned now",
+          "latestLaunch": "createdAt+10min; reject stale payload, no silent redate",
+          "commissioning": "createdAt+30min, persistent commissioning timer; verified install controls required",
+          "readiness": "createdAt+44min",
+          "qualification": "createdAt+59min",
+          "absoluteBudgetStop": "createdAt+60min",
+          "independentCloudControl": "Request Fleet ValidUntil=absoluteBudgetStop and TerminateInstancesWithExpiration=true; actual AWS readback required",
+          "independentHostControl": "Persistent absolute systemd budget poweroff/terminate timer plus commissioning and qualification deadline controls; actual attestation required",
+          "financialReplay": "Exclusive fsynced intent/token before each single mutation. Unknown receipt reconciles only; no upload/fleet/replacement replay.",
+          "terminalCleanup": "Once-only owned cleanup on terminal failure/control failure/deadline; verify instance termination, bothvolumes absent and Fleetdeleted. Preserve receipt/source/intent evidence.",
+          "retention": "No new snapshot; DeleteOnTermination required. Archive/receipt30day allowance; retained storage remains charged after compute stops."
+        },
+        "packageEvidence": {
+          "path": "execution/evidence/G02/runtime-package-startup09-20261012.json",
+          "sha256": "15fc6511efd0c5cb5027b17b2a69ede513880a756951c275d6f2aa973092d920",
+          "source": "1ec67f406645442965ced41e56b4e93c7097a050",
+          "archivePassed": true
+        },
+        "limits": [
+          "Five localL1 preflight reads passed; they do not prove EC2 sustained upstream capacity/blob/trace/backlog or node readiness.",
+          "Plugin remains separately degraded with zeroactive jobs; publicL2 API compatibility prerequisite unresolved, no readiness inference from HTTP200.",
+          "Paid launch requires independent archive approval, explicit preparation grant, actualpayload<=16384/pins/capabilityexpiry review and separate launch grant; this forecast grants none.",
+          "Lead alone updates shared ledger; no reservation made by this worker."
+        ],
+        "allocationPerformed": false,
+        "uploadPerformed": false,
+        "launchPerformed": false,
+        "ledgerChanged": false
+      },
+      "forecast_evidence": "execution/evidence/G02/operator09-forecast.json",
+      "forecast_sha256": "499a648c1a932369f7299544a8a4677383de1b4eba938d9ae00672de35ed3aad",
+      "runtime_archive_sha256": "c41a55908c9a40f50c700c2d70286c16bb285f897ee9b32d5019a2d7ee88ef3e",
+      "runtime_manifest_sha256": "d20ad9e3eb9498a6963b0fb517ba9c3403e53f84fbae1770bf9731e8c1db1d41",
+      "package_review": "evidence/G02/startup09-package-runtime-review.json",
+      "operating_minutes": 60,
+      "paid_compute_started": false,
+      "approved_by": "lead-20261011",
+      "recorded_at": "2026-10-12T12:00:49.798770+00:00",
+      "authorization": "User cumulativeUSD300 mandate; lead reserves25 before upload. Separate actualpayload review and launch grant required.",
+      "retention_deadline": "2026-11-11",
+      "runtime_archive_key": "releases/rolling-1ec67f-20261012-09/runtime.tar.gz",
+      "runtime_archive_version": "w2oOS5NNWwfI.V_pziYODw9mTlRhKhE6",
+      "payload_sha256": "5cd99b535107063b597194c6310aa213e6fb8a304041c81284fec1346d720ff9",
+      "payload_bytes": 16367,
+      "deadlines": {
+        "createdAt": "2026-10-12T12:03:58Z",
+        "budgetStop": "2026-10-12T13:03:58Z",
+        "commissioningStop": "2026-10-12T12:33:58Z",
+        "readinessStop": "2026-10-12T12:47:58Z",
+        "qualificationStop": "2026-10-12T13:02:58Z",
+        "credentialExpiration": "2026-10-12T20:03:57.000Z",
+        "capabilityLifetimeSeconds": 7200
+      },
+      "latest_launch_before": "2026-10-12T12:13:58+00:00",
+      "upload_and_payload_evidence": "evidence/G02/operator09-actual-payload-verification.json",
+      "archiveChargesIncludedInReservation": true
     }
   ],
-  "launch_hold": "08 fullycleaned; before any new allocation/paidaction require source-backed archiver observation change, reviewed exact package/payload, complete forecast and both shutdowncontrols. No longer blind retry justified.",
+  "launch_hold": "09 reserved25; upload/preparation only authorized. No compute until actual <=16384 payload/digest/capability/deadline independent review and lead grant. No replay uncertain actions.",
   "node_requirement_sources": [
     "https://docs.aztec.network/operate/testnet/operators/full-node/overview",
     "https://docs.aztec.network/operate/testnet/operators/setup/running_a_node"
   ],
   "node_requirements": "Fullnode documented8cores/16vCPU,8GB or16GB RAM,1TBstorage25Mbps; existingproverMemoryMax24G makes32GiB insufficient for cohostOSheadroom. Proposedm7a.4xlarge16physicalcores64GiB, nodebounded separately. Actualsync/load unverified.",
   "latest_live_check": {
-    "observedAt": "2026-10-12T11:11:57Z",
-    "evidence": "evidence/G02/archiver09-prelaunch-readonly.json",
-    "sha256": "19b9a80376e8e4a0a2b731e5732de6935dbfa5b32ea4f3e299a61881c628bb3e",
-    "state": "Both AWS profiles authenticate to expected account; no liveinstances/retainedvolumes, all8Fleetsdeleted. Plugin degraded/active0, current missinggetCurrentMinFees RPC failure, directidentity probes403; diagnosis8b9f retained. No paidaction; conservative190.28USD/109.72remaining unchanged."
+    "observedAt": "2026-10-12T11:53:41.339959+00:00",
+    "evidence": "evidence/G02/operator09-forecast-readonly.json",
+    "sha256": "84595197f391b7de5567eeab0320473baf5dd190e41c7096b018820850479879",
+    "state": "Bothprofiles expected identity, zero livecompute/volumes,8Fleetsdeleted; plugin degradedactive0. No overlap observed."
   },
   "recovery_proposal": {
     "checked_by": "design-20261011",
