@@ -313,7 +313,7 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
       fundingRole='a';fees=await prepareW01PrivateFees({...ctx,rpcUrl:ctx.config.l1RpcUrls[0],mineL1,standalone:!multi,
         fundingDirectory:path.join(ctx.directory,'rolling-app-funding'),reportStage:ctx.mark});
       report.privateFees=fees;owner=fees.authorAccount.address;
-      if(multi){fundingRole='b';feesB=await prepareW01PrivateFees({...ctx,rpcUrl:ctx.config.l1RpcUrls[0],mineL1,standalone:!socialWire&&!notificationBrowser,fundingDirectory:path.join(ctx.directory,'rolling-app-funding-b'),reportStage:ctx.mark});report.secondPrivateFees=feesB;assert(!feesB.authorAccount.address.equals(owner));assert(feesB.browserFixture.instance.address.equals(fees.browserFixture.instance.address));}
+      if(multi){fundingRole='b';feesB=await prepareW01PrivateFees({...ctx,rpcUrl:ctx.config.l1RpcUrls[0],mineL1,standalone:!socialWire,fundingDirectory:path.join(ctx.directory,'rolling-app-funding-b'),reportStage:ctx.mark});report.secondPrivateFees=feesB;assert(!feesB.authorAccount.address.equals(owner));assert(feesB.browserFixture.instance.address.equals(fees.browserFixture.instance.address));}
       fundingRole=undefined;const setupWallet=fees.browserFixture.wallet;
       await mark('collateral-claim');
       collateralRole='a';claim=await depositAndClaimC01({...ctx,node:setupWallet.aztecNode,rpcUrl:ctx.config.l1RpcUrls[0],mineL1,reportStage:ctx.mark,
@@ -426,7 +426,14 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
       actorA=await makeActor(fees,'a');activeActor=actorA;
       pxe=actorA.pxe;appWallet=actorA.wallet;journal=actorA.journal;let app=actorA.application;
       assert.equal((await app.readAccountStatus()).status,'fee-ready');
-      if(multi){actorB=await makeActor(feesB,'b');const state=await actorB.application.readAccountStatus();assert.equal(state.status,socialWire?'fee-ready':'collateral-pending');assert(BigInt(state.privateFeeCredit)>0n);}
+      if(multi){
+        actorB=await makeActor(feesB,'b');const state=await actorB.application.readAccountStatus();
+        // Persist only fixed readiness and numeric fee data before assertions so
+        // a failed setup is diagnosable without leaking keys or account linkage.
+        report.secondAccountReadiness={status:['fee-needed','collateral-pending','fee-ready'].includes(state.status)?state.status:'unexpected',
+          privateFeeCredit:typeof state.privateFeeCredit==='string'&&/^[0-9]{1,78}$/.test(state.privateFeeCredit)?state.privateFeeCredit:null};await save();
+        assert.equal(state.status,socialWire?'fee-ready':'collateral-pending');assert(BigInt(state.privateFeeCredit)>0n);
+      }
       const decoder=await createRollingEventDecoder({artifact:checked.artifact,scope:{chainId:network.chainId,rollupVersion:network.version,rollupAddress:network.rollup,
         boardAddress:String(ctx.instance.address),classId:String((await sdk.getContractClassFromArtifact(checked.artifact)).id)}});
       const projection=createRollingProjection({isValidatedEvent:isRollingEvent});
@@ -583,7 +590,7 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
                 ...(forwardedSaved[1]?[{label:'subscription',run:()=>collect(forwardedSaved[1],true,'notification-subscription')}]:[]),
                 ...(forwardedSaved[3]?[{label:'marker',run:async()=>{marker=await collect(forwardedSaved[3],true,'notification-marker');}}]:[])
               ],balances:[
-                {label:'a',run:async()=>{assert(browser,'Browser completion unavailable; accounting remains incomplete');await fees.verify(feeTotal,feesB.browserFixture.fundedAmount-feeTotalB);}},
+                {label:'a',run:async()=>{assert(browser,'Browser completion unavailable; accounting remains incomplete');await fees.verify(feeTotal,feesB.browserFixture.fundedAmount-BigInt(feesB.standalone?.transactionFee??0)-feeTotalB);}},
                 {label:'b',run:async()=>{assert(browser,'Browser completion unavailable; accounting remains incomplete');await feesB.verify(feeTotalB,fees.browserFixture.fundedAmount-feeTotal);}}
               ]});
             assert(browser?.passed&&subscription&&reply&&marker);assert.equal(forwardedSaved.length,4);

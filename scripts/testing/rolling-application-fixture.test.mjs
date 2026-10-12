@@ -443,3 +443,20 @@ test('recovery observation keeps rejected and synchronous errors and unobserved 
  const snapshot=metrics.snapshot();assert.equal(snapshot.methods.getBlock.rejected,1);assert.equal(snapshot.methods.getBlockData.rejected,1);
  assert(!JSON.stringify(snapshot).includes('PRIVATE_SENTINEL'));assert.equal(snapshot.counters.pending,0);
 });
+
+// Regression for genuine5925: a fee-only B must consume its bridge claim before
+// the production wallet reads private credit; readiness assertions stay strict.
+test('notification B claims real fee credit without collateral and includes setup debit',async()=>{
+ const source=await fs.readFile(new URL('./rolling-application-fixture.mjs',import.meta.url),'utf8');
+ const funding=source.slice(source.indexOf("if(multi){fundingRole='b'"),source.indexOf("fundingRole=undefined;const setupWallet"));
+ assert(funding.includes('standalone:!socialWire,'));
+ assert(!funding.includes('!notificationBrowser'));
+ const readiness=source.slice(source.indexOf("actorB=await makeActor(feesB,'b');const state="),source.indexOf('const decoder=await createRollingEventDecoder'));
+ assert(readiness.indexOf('await save()')<readiness.indexOf('assert.equal(state.status'));
+ assert(readiness.includes("assert.equal(state.status,socialWire?'fee-ready':'collateral-pending')"));
+ assert(readiness.includes('assert(BigInt(state.privateFeeCredit)>0n)'));
+ const settlement=source.slice(source.indexOf('await settleNotificationEvidence({'),source.indexOf('assert(browser?.passed&&subscription&&reply&&marker)'));
+ assert(settlement.includes('feesB.browserFixture.fundedAmount-BigInt(feesB.standalone?.transactionFee??0)-feeTotalB'));
+ assert(settlement.includes('feesB.verify(feeTotalB,fees.browserFixture.fundedAmount-feeTotal)'));
+ assert(source.includes('assert.equal(report.proverJobs.completed,4);assert.equal(report.proverJobs.submitted,4)'));
+});
