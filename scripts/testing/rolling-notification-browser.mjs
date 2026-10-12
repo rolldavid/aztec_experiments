@@ -118,6 +118,20 @@ export async function assertRollingNotificationPostText(card,expectedText){
 
 const stages=new Set(['validation','launch','locked','root-view','root-message','import','recover','subscribe-review','subscribe-send','wait-reply','unread','marker-review','marker-send','suppressed','lock','reopen','complete']);
 export const NOTIFICATION_BROWSER_CHECKS=Object.freeze(['freshNativeDatabase','publicBeforeUnlock','feeOnlyAccount','subscriptionReviewed','subscriptionConfirmed','subscriptionRecovered','unreadReply','markerReviewed','markerConfirmed','suppressedReply','publicReplyRetained','lockClears','reloadLocked','freshReopen','recoveredSuppression','noFinancialRecovery']);
+// Final transport/cleanup snapshot is taken AFTER all awaited browser teardown.
+// A success observed before close cannot authorize late writes or hide failures.
+export function finalizeRollingNotificationReport(report,{traffic,stage,elapsedMs,timedOut}){
+ let passed=false;
+ try{
+  check(report.passed===true&&timedOut===false&&stage==='complete');
+  check(report.cleanup.contextClosed===true&&report.cleanup.browserClosed===true);
+  for(const key of NOTIFICATION_BROWSER_CHECKS)check(report.checks[key]===true);
+  check(traffic.proofSubmits===2&&traffic.nodeSubmissions===2&&traffic.completedWritePhases===2&&traffic.writePhaseOpen===false);
+  for(const key of ['l1Submissions','blockedRequests','inspectionErrors','deniedWrites'])check(traffic[key]===0);
+  passed=true;
+ }catch{}
+ return {...report,passed,failureCategory:passed?null:'browser-check-failed',traffic,stage,elapsedMs,timedOut};
+}
 export async function runRollingNotificationBrowser(input){
  const started=Date.now();let stage='validation',browser,context,page,timer,expiresAt,expired=false,observer;
  const report={schemaVersion:1,passed:false,diagnostic:null,failureCategory:null,checks:Object.fromEntries(NOTIFICATION_BROWSER_CHECKS.map(k=>[k,false])),recoverySteps:0,coldRecovery:{windows:0,compactRequests:0,tagDiscoveryRequests:0},traffic:null,cleanup:{contextClosed:false,browserClosed:false}};
@@ -211,5 +225,6 @@ export async function runRollingNotificationBrowser(input){
  }catch{report.passed=false;report.failureCategory='browser-check-failed';if(expiresAt!==undefined&&Date.now()>=expiresAt)expired=true;}
  finally{clearTimeout(timer);if(context)try{await context.close();report.cleanup.contextClosed=true;}catch{report.passed=false;}else report.cleanup.contextClosed=true;
   if(browser)try{await browser.close();report.cleanup.browserClosed=!browser.isConnected();if(!report.cleanup.browserClosed)report.passed=false;}catch{report.passed=false;}else report.cleanup.browserClosed=true;}
- report.traffic=observer?.snapshot()??null;return {...report,stage,elapsedMs:Date.now()-started,timedOut:expired};
+ if(expiresAt!==undefined&&Date.now()>=expiresAt)expired=true;
+ return finalizeRollingNotificationReport(report,{traffic:observer?.snapshot()??null,stage,elapsedMs:Date.now()-started,timedOut:expired});
 }

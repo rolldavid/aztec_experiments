@@ -72,7 +72,7 @@ export function createRollingPreferenceTraffic({origin:publicOrigin,trustedOrigi
     if(u.origin===ethereumOrigin){if(!['eth_chainId','eth_blockNumber','eth_getBlockByNumber','eth_getBlockByHash','eth_getCode','eth_call'].includes(rpc.method))throw invalid();}
     else {
      if(!rpc.method.startsWith('aztec_')||!nodeReads.has(rpc.method.slice(6)))throw invalid();
-     if(rpc.method==='aztec_getPrivateLogsByTags')counts.tagDiscoveryRequests++;
+     if(['aztec_getPrivateLogsByTags','aztec_getPublicLogsByTags'].includes(rpc.method))counts.tagDiscoveryRequests++;
     }
    }
    return allowed;

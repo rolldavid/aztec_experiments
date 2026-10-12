@@ -110,3 +110,9 @@ for(const mutation of ['missing','negative','fraction','decrease','accessor'])te
  if(mutation==='missing')delete b.compactRequests;if(mutation==='negative')b.compactRequests=-1;if(mutation==='fraction')b.compactRequests=1.5;if(mutation==='decrease')b.compactRequests=0;if(mutation==='accessor')Object.defineProperty(b,'compactRequests',{get(){reads++;return 2;}});
  assert.throws(()=>checkRollingColdRecoveryWindow(a,b));assert.equal(reads,0);
 });
+
+for(const methods of [['aztec_getPublicLogsByTags'],['aztec_getPrivateLogsByTags','aztec_getPublicLogsByTags']])test('cold window rejects every public/private tag envelope '+methods.join('+'),()=>{
+ const t=createRollingPreferenceTraffic(origins),before=t.snapshot();assert(t.inspect(compactRequest()));
+ const body=JSON.stringify(methods.map((method,id)=>({jsonrpc:'2.0',id,method,params:['PRIVATE_SENTINEL']})));assert(t.inspect(req(origins.trustedOrigin+'/v1/node','POST',body)));
+ assert.equal(t.snapshot().tagDiscoveryRequests,methods.length);assert.throws(()=>checkRollingColdRecoveryWindow(before,t.snapshot(),{requireCompact:true}));assert(!JSON.stringify(t.snapshot()).includes('PRIVATE_SENTINEL'));
+});

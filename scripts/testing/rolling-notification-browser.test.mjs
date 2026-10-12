@@ -7,7 +7,7 @@ import path from 'node:path';
 import os from 'node:os';
 import vm from 'node:vm';
 import {webcrypto} from 'node:crypto';
-import {validateRollingNotificationBrowserControl,createRollingNotificationTraffic,checkRollingNotificationFeeOnly,notificationSubscriptionConfirmed,readNotificationReply,runRollingNotificationBrowser} from './rolling-notification-browser.mjs';
+import {validateRollingNotificationBrowserControl,createRollingNotificationTraffic,checkRollingNotificationFeeOnly,finalizeRollingNotificationReport,NOTIFICATION_BROWSER_CHECKS,notificationSubscriptionConfirmed,readNotificationReply,runRollingNotificationBrowser} from './rolling-notification-browser.mjs';
 let root,envelope;
 const origins={origin:'http://127.0.0.1:11001',trustedOrigin:'http://127.0.0.1:11002',ethereumOrigin:'http://127.0.0.1:11003'};
 before(async()=>{root=await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(),'rolling-notification-unit-')));await fs.chmod(root,0o700);const c=vm.createContext({crypto:webcrypto,TextEncoder,TextDecoder,Uint8Array});vm.runInContext(await fs.readFile(new URL('../../shared/wallet-backup.js',import.meta.url),'utf8'),c);envelope=JSON.stringify(await c.BillboardWalletBackup.encrypt({schemaVersion:1,wallet:{secretKey:'0x'+'01'.repeat(32),salt:'0'},claims:[]},'PRIVATE_PASSWORD_SENTINEL'));});
@@ -64,3 +64,12 @@ test('source-bound driver imports without status discovery and checks fee-only a
  assert(!body.includes('No posting deposit'));assert(!body.includes('checkRollingNotificationFeeOnly'));assert(body.includes('recover({before,requireCompact:true})'));
  const subscribe=source.indexOf("mark('subscribe-review');"),fee=source.indexOf('await checkRollingNotificationFeeOnly',subscribe),review=source.indexOf("await reviewSend('subscription'",subscribe);assert(subscribe>0&&fee>subscribe&&review>fee);
 });
+
+const finalFixture=()=>({report:{passed:true,failureCategory:null,checks:Object.fromEntries(NOTIFICATION_BROWSER_CHECKS.map(k=>[k,true])),cleanup:{contextClosed:true,browserClosed:true}},options:{traffic:{proofSubmits:2,nodeSubmissions:2,completedWritePhases:2,writePhaseOpen:false,l1Submissions:0,blockedRequests:0,inspectionErrors:0,deniedWrites:0},stage:'complete',elapsedMs:123,timedOut:false}});
+test('actual-used finalizer accepts only completed checks and final clean traffic',()=>{const f=finalFixture();assert.equal(finalizeRollingNotificationReport(f.report,f.options).passed,true);f.report.passed=false;assert.equal(finalizeRollingNotificationReport(f.report,f.options).passed,false);});
+const lateChanges={extraProof:f=>f.options.traffic.proofSubmits++,extraSend:f=>f.options.traffic.nodeSubmissions++,missingSend:f=>f.options.traffic.nodeSubmissions--,extraPhase:f=>f.options.traffic.completedWritePhases++,openPhase:f=>f.options.traffic.writePhaseOpen=true,L1:f=>f.options.traffic.l1Submissions++,blocked:f=>f.options.traffic.blockedRequests++,inspection:f=>f.options.traffic.inspectionErrors++,denied:f=>f.options.traffic.deniedWrites++,timeout:f=>f.options.timedOut=true,contextCleanup:f=>f.report.cleanup.contextClosed=false,browserCleanup:f=>f.report.cleanup.browserClosed=false,missingCheck:f=>f.report.checks.noFinancialRecovery=false};
+for(const [name,mutate] of Object.entries(lateChanges))test('labelled late teardown change cannot preserve success: '+name,async()=>{
+ const f=finalFixture();assert.equal(finalizeRollingNotificationReport(f.report,f.options).passed,true);
+ await Promise.resolve().then(()=>mutate(f));const result=finalizeRollingNotificationReport(f.report,f.options);assert.equal(result.passed,false);assert.equal(result.failureCategory,'browser-check-failed');
+});
+test('driver finalizer follows awaited browser cleanup and current deadline/counter capture',async()=>{const source=await fs.readFile(new URL('./rolling-notification-browser.mjs',import.meta.url),'utf8'),close=source.lastIndexOf('await browser.close()'),final=source.lastIndexOf('return finalizeRollingNotificationReport(report,');assert(close>0&&final>close);assert(source.slice(close,final).includes('Date.now()>=expiresAt'));assert(source.slice(final).includes('traffic:observer?.snapshot()??null'));});
