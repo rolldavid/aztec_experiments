@@ -231,8 +231,10 @@ test('deadline retains the native call until actual settlement',async t=>{
  const adapter=createCompactBlockNativeAdapter(f.config);
  const held=compactSocketControl();held.req.iterator=async function*(){yield Buffer.from(JSON.stringify(f.request));};
  t.mock.timers.enable({apis:['setTimeout']});
+ // Model complete IncomingMessage.destroy(): it no longer destroys its socket.
+ held.req.destroy=()=>{held.req.destroyCalls++;};
  const pending=adapter.handle(held.req,held.res);await entered.promise;
- t.mock.timers.tick(limits.timeoutMs);assert.equal(held.req.destroyCalls,1);
+ t.mock.timers.tick(limits.timeoutMs);assert.equal(held.req.destroyCalls,1);assert.equal(held.socket.destroyCalls,1);
  const second=compactSocketControl();await adapter.handle(second.req,second.res);assert.equal(second.res.status,429);
  release.resolve();await pending;assert.equal(held.res.status,undefined);
  const third=compactSocketControl({declared:true});const next=adapter.handle(third.req,third.res);await third.end;

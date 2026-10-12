@@ -123,7 +123,7 @@ export function createCompactBlockNativeAdapter(options) {
     req.once('aborted',onAbort);res.once('close',onClose);
     // A deadline closes stalled uploads but never detaches a pending native call.
     // The single flight remains owned until the original handler settles.
-    const timer=setTimeout(()=>{aborted=true;req.destroy();},COMPACT_BLOCK_NATIVE_LIMITS.timeoutMs);
+    const timer=setTimeout(()=>{aborted=true;req.destroy();req.socket.destroy();},COMPACT_BLOCK_NATIVE_LIMITS.timeoutMs);
     const rejectAndClose=async()=>{
       const socket=req.socket;
       if(socket.closed){reject(res,413);return;}
