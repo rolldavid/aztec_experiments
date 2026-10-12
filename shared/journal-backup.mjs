@@ -1,17 +1,32 @@
 import {createEncryptedJournalSlot,journalRecoveryIdentity,decryptJournalDescriptor} from './journal-record.mjs';
 import {l2JournalScopeText} from './l2-journal.mjs';
+import {FIELD_MODULUS} from './rolling/invocation.mjs';
 import {transactionError} from './transaction-outcomes.mjs';
 const fail=()=>transactionError('BB_JOURNAL_INVALID','Recovery records could not be authenticated or conflict with newer local records. Preserve both copies.');
 const domains=new Map([
  ['AZTEC_BB_L2_JOURNAL_KEY_V1','AZTEC_BB_L2_JOURNAL_V1'],
  ['AZTEC_BB_ETH_JOURNAL_KEY_V1','AZTEC_BB_ETH_JOURNAL_V1'],
  ['ROLLING_WORKFLOW_V1','ROLLING_WORKFLOW_V1'],
+ ['ROLLING_PREFERENCES_V1','ROLLING_PREFERENCES_V1'],
 ]);
 const LIMIT=16*1024*1024;
 function validDescriptor(descriptor) {
  if(!descriptor||Object.keys(descriptor).sort().join()!=='keyDomain,scopeText'||!domains.has(descriptor.keyDomain)||typeof descriptor.scopeText!=='string')throw fail();
  const frame=JSON.parse(descriptor.scopeText);
  if(frame[0]!==domains.get(descriptor.keyDomain))throw fail();
+ if(descriptor.keyDomain==='ROLLING_PREFERENCES_V1') {
+  // Match preference-reader's complete canonical scope, not the decrypted cache
+  // contents. The reader separately validates and reauthenticates that cache.
+  if(!Array.isArray(frame)||frame.length!==8||frame[7]!==1||descriptor.scopeText!==JSON.stringify(frame))throw fail();
+  for(const index of [1,2]) {
+   const value=frame[index];
+   if(typeof value!=='string'||value.length>78||!/^[1-9][0-9]*$/.test(value)||BigInt(value)>=FIELD_MODULUS)throw fail();
+  }
+  for(const index of [3,4,5,6]) {
+   const value=frame[index],width=index===3?40:64;
+   if(typeof value!=='string'||!new RegExp(`^0x[0-9a-f]{${width}}$`).test(value)||BigInt(value)===0n||(index!==3&&BigInt(value)>=FIELD_MODULUS))throw fail();
+  }
+ }
  if(descriptor.keyDomain==='ROLLING_WORKFLOW_V1') {
   // Match createRollingApplication's two-level scope exactly. The nested scope
   // remains the complete canonical L2 identity; a domain label alone is not enough.

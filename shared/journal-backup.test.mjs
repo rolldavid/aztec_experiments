@@ -78,3 +78,64 @@ test('authenticated but incorrectly framed Rolling descriptors are rejected befo
   await assert.rejects((await f.backup(destination)).restoreRecords(records),{code:'BB_JOURNAL_INVALID'});assert.deepEqual(await destination.keys(),[]);
  }
 });
+
+const PREFERENCES='ROLLING_PREFERENCES_V1';
+const preferenceFrame=f=>[PREFERENCES,f.scope.chainId,f.scope.version,f.scope.rollup,f.scope.board,hex(10),f.scope.account,1];
+async function preferenceRecord(f,source,{scopeText=JSON.stringify(preferenceFrame(f)),keyDomain=PREFERENCES,value={privateSentinel:'Private preference sentinel',revision:'1'}}={}){
+ const slot=await createEncryptedJournalSlot({...f.credentials,storage:source,scopeText,keyDomain});
+ await slot.write(await slot.read(),value);
+ return {slot,record:{key:slot.storageKey,encoded:await source.read(slot.storageKey)}};
+}
+test('real AEAD preferences export and fresh restore alongside L2 and workflow records, with only encrypted scope storage',async()=>{
+ const f=fixture(),source=storage(),destination=storage();
+ const intent=await f.app(source).prepare({type:'name',first:'River',last:'Stone'});
+ const l2=await createEncryptedJournalSlot({...f.credentials,storage:source,keyDomain:'AZTEC_BB_L2_JOURNAL_KEY_V1',scopeText:l2JournalScopeText(f.scope)});
+ await l2.write(await l2.read(),{status:'prepared',privateSentinel:'L2 sentinel'});
+ const {slot}=await preferenceRecord(f,source);
+ const records=await (await f.backup(source)).exportRecords();assert.equal(records.length,3);
+ assert.deepEqual((await source.keys()).sort(),records.map(x=>x.key).sort());
+ for(const key of await source.keys())assert.match(key,/^[0-9a-f]{64}$/);
+ for(const secret of [PREFERENCES,f.scope.account,f.scope.board,f.scope.rollup,'Private preference sentinel','L2 sentinel',f.credentials.walletSecret])assert.ok(!JSON.stringify(records).includes(secret));
+ await (await f.backup(destination)).restoreRecords(records);
+ const restored=await createEncryptedJournalSlot({...f.credentials,storage:destination,keyDomain:PREFERENCES,scopeText:JSON.stringify(preferenceFrame(f))});
+ assert.deepEqual((await restored.read()).value,(await slot.read()).value);
+ assert.deepEqual(await f.app(destination).reconcile(intent.intentId),intent);
+ assert.deepEqual(await (await f.backup(destination)).exportRecords(),records);assert.equal(f.state.sends,0);
+});
+test('authenticated preference descriptors reject wrong domain, noncanonical fields, addresses and schema before any restore write',async()=>{
+ const f=fixture(),frame=preferenceFrame(f),field=21888242871839275222246405745257275088548364400416034343698204186575808495617n;
+ const cases=[{keyDomain:'UNKNOWN_PRIVATE_DOMAIN'}, {scopeText:JSON.stringify(['OTHER',...frame.slice(1)])},
+  {scopeText:JSON.stringify(frame.slice(0,-1))},{scopeText:JSON.stringify([...frame,'extra'])},
+  {scopeText:' '+JSON.stringify(frame)}, {scopeText:JSON.stringify(frame).replace('31337','3133\\u0037')}];
+ for(const index of [1,2])for(const value of ['0','01','+1','1.0','1e1','-1',1,null,String(field),'9'.repeat(79)]){const bad=[...frame];bad[index]=value;cases.push({scopeText:JSON.stringify(bad)});}
+ for(const index of [3,4,5,6])for(const value of [null,1,'0x1','0x'+'00'.repeat(index===3?20:32),'0x'+'AB'.repeat(index===3?20:32),'0x'+'11'.repeat(index===3?32:20),...(index===3?[]:[hex(field)])]){const bad=[...frame];bad[index]=value;cases.push({scopeText:JSON.stringify(bad)});}
+ for(const value of [0,2,'1',null]){const bad=[...frame];bad[7]=value;cases.push({scopeText:JSON.stringify(bad)});}
+ for(const options of cases){
+  const source=storage(),destination=storage(),{record}=await preferenceRecord(f,source,options);
+  await assert.rejects((await f.backup(source)).exportRecords(),{code:'BB_JOURNAL_INVALID'});
+  await assert.rejects((await f.backup(destination)).restoreRecords([record]),{code:'BB_JOURNAL_INVALID'});
+  assert.deepEqual(await destination.keys(),[]);
+ }
+});
+test('preference recovery rejects ciphertext/descriptor tamper and cross-account storage-key transplant',async()=>{
+ const f=fixture(),source=storage(),{record}=await preferenceRecord(f,source),frame=preferenceFrame(f);frame[6]=hex(44);
+ const other=await preferenceRecord(f,storage(),{scopeText:JSON.stringify(frame)});
+ const changed=structuredClone(record),envelope=JSON.parse(record.encoded);
+ const flip=s=>(s[0]==='0'?'1':'0')+s.slice(1);
+ envelope.data=flip(envelope.data);changed.encoded=JSON.stringify(envelope);
+ const descriptor=JSON.parse(record.encoded);descriptor.recovery.data=flip(descriptor.recovery.data);
+ for(const bad of [changed,{...record,encoded:JSON.stringify(descriptor)},{...record,key:other.record.key},{...record,encoded:other.record.encoded}]){
+  const destination=storage();await assert.rejects((await f.backup(destination)).restoreRecords([bad]),{code:'BB_JOURNAL_INVALID'});assert.deepEqual(await destination.keys(),[]);
+ }
+ const foreign=await createJournalBackup({...f.credentials,walletSecret:hex(9),storage:source});assert.deepEqual(await foreign.exportRecords(),[]);
+ const destination=storage(),foreignRestore=await createJournalBackup({...f.credentials,walletSecret:hex(9),storage:destination});
+ await assert.rejects(foreignRestore.restoreRecords([record]),{code:'BB_JOURNAL_INVALID'});assert.deepEqual(await destination.keys(),[]);
+});
+test('preference restore preserves newer cache, rejects duplicate records and permits identical idempotent restore',async()=>{
+ const f=fixture(),source=storage(),destination=storage(),{record}=await preferenceRecord(f,source),backup=await f.backup(destination);
+ await assert.rejects(backup.restoreRecords([record,record]),{code:'BB_JOURNAL_INVALID'});assert.deepEqual(await destination.keys(),[]);
+ await backup.restoreRecords([record]);await backup.restoreRecords([record]);
+ const slot=await createEncryptedJournalSlot({...f.credentials,storage:destination,keyDomain:PREFERENCES,scopeText:JSON.stringify(preferenceFrame(f))});
+ await slot.write(await slot.read(),{revision:'2'});const newer=await destination.read(record.key);
+ await assert.rejects(backup.restoreRecords([record]),{code:'BB_JOURNAL_INVALID'});assert.equal(await destination.read(record.key),newer);
+});
