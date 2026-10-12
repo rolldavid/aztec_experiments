@@ -216,7 +216,7 @@ test('installed viem zero-argument actions omit params and remain completely obs
  assert.deepEqual(seen.map(x=>x.method),['eth_chainId','eth_blockNumber','eth_gasPrice','eth_maxPriorityFeePerGas','eth_accounts','eth_requestAccounts']);
  const result=trace.snapshot();assert.equal(result.requests,6);assert.equal(result.completed,6);assert.equal(result.requestCoverageComplete,true);assert.equal(result.unknown,0);
 });
-for(const [method,params,hasParams]of [['eth_chainId',null,true],['eth_chainId',{},true],['eth_getBalance',null,false],['net_version',null,false],['node_getContract',null,false]])test('synthetic params exception rejects unsupported '+method+' '+String(hasParams)+' '+JSON.stringify(params),async()=>{
+for(const [method,params,hasParams]of [['eth_blobBaseFee',null,true],['eth_blobBaseFee',{},true],['eth_chainId',null,true],['eth_chainId',{},true],['eth_getBalance',null,false],['net_version',null,false],['node_getContract',null,false]])test('synthetic params exception rejects unsupported '+method+' '+String(hasParams)+' '+JSON.stringify(params),async()=>{
  const trace=make();trace.registerEndpoint(method.startsWith('node_')?'ordinary-node':'public-l1',origin);
  await sent(trace,origin+'/',options(JSON.stringify({jsonrpc:'2.0',id:a,method,...(hasParams?{params}:{})})));
  assert.equal(trace.snapshot().unknown,1);assert.equal(trace.snapshot().requestCoverageComplete,false);assert.deepEqual(trace.snapshot().rows[0].roles,['a']);
@@ -284,4 +284,46 @@ test('synthetic opaque transactions still inspect unexpected extra arguments',as
  await sent(trace,origin+'/',options(rpc('eth_sendRawTransaction',['0x1234',{actor:a}])));
  await sent(trace,origin+'/',options(rpc('eth_sendTransaction',[{from:b,data:'0x1234'},{actor:a}])));
  for(const row of trace.snapshot().rows)assert(row.roles.includes('a'));assert.equal(trace.snapshot().opaqueTransactions,2);
+});
+
+// Actual installed viem serialization; transport is explicitly a synthetic receiver.
+test('installed viem blob fee omits params and blob gas estimate uses exact EIP-4844 array',async()=>{
+ const {createPublicClient,http}=await import('viem');const trace=make();trace.registerEndpoint('public-l1',origin);const methods=[];
+ const blob='0x'+'ab'.repeat(131072);
+ const client=createPublicClient({transport:http(origin,{retryCount:0,fetchFn:trace.wrapFetch(async(url,init)=>{
+  const body=JSON.parse(init.body);methods.push(body.method);
+  if(body.method==='eth_blobBaseFee')assert.equal(Object.hasOwn(body,'params'),false);
+  else{assert.equal(body.method,'eth_estimateGas');assert.deepEqual(body.params[0].blobs,[blob]);}
+  return Response.json({jsonrpc:'2.0',id:body.id,result:'0x5208'});
+ })})});
+ assert.equal(await client.getBlobBaseFee(),21000n);
+ assert.equal(await client.estimateGas({account:'0x'+'12'.repeat(20),to:'0x'+'34'.repeat(20),blobs:[blob]}),21000n);
+ const result=trace.snapshot();assert.deepEqual(methods,['eth_blobBaseFee','eth_estimateGas']);assert.equal(result.unknown,0);assert.equal(result.unsupported,0);assert.equal(result.opaqueTransactions,1);assert.equal(result.requestCoverageComplete,false);
+ assert(!JSON.stringify(result).includes(blob));
+});
+const validBlob='0x'+'ab'.repeat(131072);
+for(const [name,blobs]of [['empty',[]],['not-array',validBlob],['short',['0x1234']],['oversize',['0x'+'ab'.repeat(131073)]],['nonhex',['0x'+'xy'.repeat(131072)]],['null',[null]],['too-many',Array(7).fill(validBlob)]])test('synthetic blob encoding fails closed: '+name,async()=>{
+ const trace=make();trace.registerEndpoint('public-l1',origin);await sent(trace,origin+'/',options(rpc('eth_estimateGas',[{blobs,from:a,to:b}])));
+ const result=trace.snapshot();assert(result.unsupported>0);assert.deepEqual(result.rows[0].roles,['a','b']);assert.equal(result.requestCoverageComplete,false);
+});
+test('synthetic blob transaction observes surrounding identity and explicitly counts opacity once',async()=>{
+ const trace=make();trace.registerEndpoint('public-l1',origin);
+ await sent(trace,origin+'/',{...options(JSON.stringify({jsonrpc:'2.0',id:a,method:'eth_estimateGas',params:[{data:'0x1234',blobs:[validBlob],from:a,to:b,blobVersionedHashes:[a],[b]:a},'latest',{[a]:{balance:'0x1'}}]})),headers:{'X-Account':b}});
+ const result=trace.snapshot();assert.deepEqual(result.rows[0].roles,['a','b']);assert.equal(result.opaqueTransactions,1);assert.equal(result.unsupported,1);assert.equal(result.requestCoverageComplete,false);
+});
+for(const kind of ['send','override','extra'])test('synthetic blob exception does not extend to '+kind,async()=>{
+ const trace=make();trace.registerEndpoint('public-l1',origin);const tx={from:a,blobs:[validBlob]};let params=[tx];
+ if(kind==='override')params=[{from:a},'latest',{[b]:{blobs:[validBlob]}}];
+ if(kind==='extra')tx.extra=validBlob;
+ await sent(trace,origin+'/',options(rpc(kind==='send'?'eth_sendTransaction':'eth_estimateGas',params)));
+ assert(trace.snapshot().unsupported>0);assert.equal(trace.snapshot().requestCoverageComplete,false);
+});
+test('synthetic blob request still respects whole body limit',async()=>{
+ const trace=createRollingWireTrace({roles:{a,b},limits:{maxBodyBytes:1024}});trace.registerEndpoint('public-l1',origin);
+ await sent(trace,origin+'/',options(rpc('eth_estimateGas',[{blobs:[validBlob]}])));assert.equal(trace.snapshot().truncated,1);assert.equal(trace.snapshot().requestCoverageComplete,false);
+});
+
+test('synthetic blob fee extra params stay unsupported and observable',async()=>{
+ const trace=make();trace.registerEndpoint('public-l1',origin);await sent(trace,origin+'/',options(rpc('eth_blobBaseFee',[a])));
+ assert.equal(trace.snapshot().unsupported,1);assert.deepEqual(trace.snapshot().rows[0].roles,['a']);
 });

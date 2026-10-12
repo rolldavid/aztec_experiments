@@ -10,11 +10,11 @@ const nodeMethods=new Set(Object.keys(AztecNodeApiSchema).map(m=>'node_'+m));
 // Pinned clients use node or aztec namespaces; no arbitrary method strings.
 for(const m of Object.keys(AztecNodeApiSchema))nodeMethods.add('aztec_'+m);
 // Three Anvil methods are the existing C01 parent miner's fixed control RPCs.
-const l1Methods=new Set(['anvil_getAutomine','evm_setAutomine','evm_mine','eth_chainId','net_version','eth_blockNumber','eth_getBlockByNumber','eth_getBlockByHash','eth_getBalance','eth_getCode','eth_getStorageAt','eth_call','eth_estimateGas','eth_gasPrice','eth_maxPriorityFeePerGas','eth_feeHistory','eth_getTransactionCount','eth_getTransactionByHash','eth_getTransactionReceipt','eth_getLogs','eth_sendTransaction','eth_sendRawTransaction','eth_accounts','eth_requestAccounts']);
+const l1Methods=new Set(['anvil_getAutomine','evm_setAutomine','evm_mine','eth_chainId','net_version','eth_blockNumber','eth_getBlockByNumber','eth_getBlockByHash','eth_getBalance','eth_getCode','eth_getStorageAt','eth_call','eth_estimateGas','eth_gasPrice','eth_blobBaseFee','eth_maxPriorityFeePerGas','eth_feeHistory','eth_getTransactionCount','eth_getTransactionByHash','eth_getTransactionReceipt','eth_getLogs','eth_sendTransaction','eth_sendRawTransaction','eth_accounts','eth_requestAccounts']);
 // Installed viem actions/public/{getChainId,getBlockNumber,getGasPrice,
-// estimateMaxPriorityFeePerGas} and actions/wallet/{getAddresses,requestAddresses}
+// estimateMaxPriorityFeePerGas,getBlobBaseFee} and actions/wallet/{getAddresses,requestAddresses}
 // send these methods without params. Missing params is not generally an array.
-const omittedL1Params=new Set(['eth_chainId','eth_blockNumber','eth_gasPrice','eth_maxPriorityFeePerGas','eth_accounts','eth_requestAccounts']);
+const omittedL1Params=new Set(['eth_chainId','eth_blockNumber','eth_gasPrice','eth_blobBaseFee','eth_maxPriorityFeePerGas','eth_accounts','eth_requestAccounts']);
 const txMethods=new Set(['node_sendTx','aztec_sendTx','node_simulatePublicCalls','aztec_simulatePublicCalls','node_isValidTx','aztec_isValidTx']);
 const object=v=>v!==null&&typeof v==='object'&&!Array.isArray(v);
 const base64=v=>typeof v==='string'&&v.length>0&&v.length%4===0&&/^[A-Za-z0-9+/]*={0,2}$/.test(v)&&Buffer.from(v,'base64').toString('base64')===v;
@@ -152,6 +152,9 @@ export function createRollingWireTrace({roles,limits={}}={}){
      for(const value of params.slice(1))walk(value);
     }else if(label==='public-l1'&&['eth_estimateGas','eth_sendTransaction'].includes(rpc.method)){
      // viem's transaction formatter sends calldata in params[0].data only.
+     // The pinned sequencer also estimates blob transactions. Only exact EIP-4844
+     // blobs (131072 bytes each) at this path are opaque; other fields still walk.
+     // This observer accepts at most six blobs; the overall request byte cap applies.
      // The rest of the transaction, block and state overrides are observable.
      const tx=params[0];
      if(rpc.method==='eth_sendTransaction')counts.opaqueTransactions++;
@@ -161,6 +164,11 @@ export function createRollingWireTrace({roles,limits={}}={}){
       if(key==='data'){
        if(rpc.method==='eth_estimateGas')counts.opaqueTransactions++;
        if(!hexBytes(value)){counts.unsupported++;walk(value);}
+      }else if(key==='blobs'&&rpc.method==='eth_estimateGas'){
+       // Count this transaction once even when it also carries calldata.
+       if(!Object.hasOwn(tx,'data'))counts.opaqueTransactions++;
+       if(!Array.isArray(value)||value.length<1||value.length>6){counts.unsupported++;walk(value);}
+       else for(const blob of value)if(typeof blob!=='string'||blob.length!==262146||!hexBytes(blob)){counts.unsupported++;walk(blob);}
       }else walk(value);
      }
      for(const value of params.slice(1))walk(value);
