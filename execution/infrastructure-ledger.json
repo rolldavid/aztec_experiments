@@ -643,10 +643,10 @@
   ],
   "node_requirements": "Fullnode documented8cores/16vCPU,8GB or16GB RAM,1TBstorage25Mbps; existingproverMemoryMax24G makes32GiB insufficient for cohostOSheadroom. Proposedm7a.4xlarge16physicalcores64GiB, nodebounded separately. Actualsync/load unverified.",
   "latest_live_check": {
-    "observedAt": "2026-10-12T10:11:53Z",
-    "evidence": "evidence/G02/archiver-observation-preparation-readonly-101153.json",
-    "sha256": "bc5dbb9464e0a25a69c883b446472f38357ad36d9aff2b1590dc6695592d829b",
-    "state": "Both project AWS profiles authenticate to same account. No paid compute/disks; all eight campaign Fleets deleted. Plugin ready with zero active jobs. Cumulative conservative bound190.28USD,109.72remaining; no new allocation."
+    "observedAt": "2026-10-12T11:11:57Z",
+    "evidence": "evidence/G02/archiver09-prelaunch-readonly.json",
+    "sha256": "19b9a80376e8e4a0a2b731e5732de6935dbfa5b32ea4f3e299a61881c628bb3e",
+    "state": "Both AWS profiles authenticate to expected account; no liveinstances/retainedvolumes, all8Fleetsdeleted. Plugin degraded/active0, current missinggetCurrentMinFees RPC failure, directidentity probes403; diagnosis8b9f retained. No paidaction; conservative190.28USD/109.72remaining unchanged."
   },
   "recovery_proposal": {
     "checked_by": "design-20261011",

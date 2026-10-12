@@ -13,31 +13,22 @@
       "branch": "codex/rolling-private-bok-candidate",
       "history_locator": "Codex runtime thread 01a12a75-1b50-7871-a73b-4253a1010194",
       "role": "lead",
-      "state": "Recovery3b gatedintegrationcomplete; notification/cold482 candidate transfer",
+      "state": "8eea1f5 code composition: approved720notificationorder+4f70infra, c8coldc43genuinePASS; fullpackage09next",
       "working_branch": "codex/rolling-private-bok-candidate",
       "active_edit_paths": [
-        "execution/",
-        "scripts/testing/rolling-notification-fixture.mjs",
-        "scripts/testing/rolling-notification-fixture.test.mjs",
-        "scripts/testing/rolling-application-fixture.mjs",
-        "scripts/testing/rolling-application-fixture.test.mjs",
-        "scripts/testing/scenarios.mjs",
-        "scripts/testing/scenario-flows.mjs",
-        "scripts/testing/browser-worker.mjs",
-        "scripts/testing/run-application.mjs",
-        "scripts/testing/assets.mjs",
-        "scripts/testing/rolling-public-acceptance.mjs",
-        "scripts/testing/rolling-public-acceptance.test.mjs",
-        "scripts/testing/rolling-notification-browser.mjs",
-        "scripts/testing/rolling-notification-browser.test.mjs",
-        "apps/rolling/wallet-panel.browser.test.mjs"
+        "execution/"
       ],
       "additional_worktree": {
         "path": "../rolling-lead-social",
-        "branch": "codex/rolling-notification-parent",
+        "branch": "codex/rolling-notification-funding-order",
         "owner": "lead-20261011",
-        "base": "497b74866bea07b9924b90332ab7c7baeb3ad3eb",
-        "state": "G07 notification parent integration source implementation"
+        "base": "c8fdb2e1184184b025304fbfc5eec0261c7354e2",
+        "state": "72072ea frozen/reviewed437dc; root exacttransfercomplete",
+        "allowed_paths": [
+          "scripts/testing/rolling-application-fixture.mjs",
+          "scripts/testing/rolling-application-fixture.test.mjs",
+          "scripts/testing/assets.mjs"
+        ]
       },
       "trusted_sender_claim": {
         "chainId": 11155111,
@@ -121,7 +112,7 @@
       "branch": "codex/rolling-archiver-startup-observation",
       "history_locator": "collaboration runtime /root/controls, parent 01a12a75-1b50-7871-a73b-4253a1010194",
       "role": "implementation worker",
-      "state": "offline09packaging2helper preparation; no execution grant",
+      "state": "read-only bounded exactL1provider preflight before09",
       "worktree": "../rolling-controls",
       "allowed_paths": [
         ".build/run-package-startup09.py",
@@ -133,8 +124,7 @@
       },
       "base": "1070a8fad6cb2b1b0068fe6b9f73267475b55b90",
       "active_edit_paths": [
-        ".build/run-package-startup09.py",
-        ".build/verify-package-startup09.py"
+        "execution/evidence/G02/archiver09-local-provider-preflight.json"
       ],
       "writer_released": false
     },
@@ -149,7 +139,10 @@
       "branch": "read-only candidate refs",
       "history_locator": "collaboration runtime /root/reviewer, parent 01a12a75-1b50-7871-a73b-4253a1010194",
       "role": "independent reviewer",
-      "state": "3b259 eligibilitye6b12 approved; cf46metrics and09operator source-only reviews while genuine67151 active"
+      "state": "72072ea fundingorderP2rereview; compact615ac approved40checks; cold21319actual pending",
+      "active_edit_paths": [
+        "execution/evidence/G07/"
+      ]
     },
     {
       "logical_id": "design-20261011",
@@ -158,20 +151,21 @@
       "task": [
         "G07"
       ],
-      "branch": "codex/rolling-cold-actor-observation",
+      "branch": "codex/rolling-compact-block-prototype",
       "history_locator": "collaboration runtime /root/design, parent01a12a75-1b50-7871-a73b-4253a1010194",
       "role": "implementation worker",
-      "state": "1427 actor frozen; self-preference narrow cold-sync read-only design",
+      "state": "native compactblock adapter2newfiles source implementation; d9e verifier frozenreview",
       "worktree": "../rolling-design",
       "allowed_paths": [
-        "scripts/testing/rolling-application-actor.mjs",
-        "scripts/testing/rolling-application-actor.test.mjs"
+        "shared/rolling/compact-block.mjs",
+        "shared/rolling/compact-block.test.mjs"
       ],
       "base": "7867f511a8a5c318da1c70d3b49c89df870ef63e",
       "reference_candidate": "1351ea1b180b11475250463c9c40fdd2e342ab13",
-      "writer_released": true,
+      "writer_released": false,
       "active_edit_paths": [
-        "execution/evidence/G07/self-preference-cold-sync-design.json"
+        "prover/compact-block-native.mjs",
+        "prover/compact-block-native.test.mjs"
       ]
     }
   ],
@@ -1140,6 +1134,92 @@
       ],
       "acceptance": "Derive protocol and installed API maxima for block transaction/private-log enumeration and serialized transport, identify existing pagination/effect roots. Determine whether bounded full-body decode is legitimately sufficient or node extension mandatory; exact field/byte bounds, malicious oversize rejection beforeallocation and completehistorybehavior. No source/tests/heavy/cloud.",
       "at": "2026-10-12T10:55:35.205787+00:00"
+    },
+    {
+      "task": "G14-archiver09-source-composition",
+      "owner": "lead-20261011",
+      "branch": "codex/rolling-archiver09-candidate",
+      "worktree": "../rolling-lead-social",
+      "base": "f898c7f3eab81443ac4251863ef703408dbd5ef2",
+      "source_revisions": [
+        "bd4da0bbc0c98e98ef29df46eba47f83a00d084c",
+        "499c42a9074872451b3c66bbb497c32cdb0099fb",
+        "9a3e590c5b4fbe5a9bb854bc277641c55d14b6cf",
+        "1070a8fad6cb2b1b0068fe6b9f73267475b55b90"
+      ],
+      "status": "running isolated source-only exactreviewed transfer",
+      "allowed_paths": [
+        "deploy/prover/BOOTSTRAP.md",
+        "deploy/prover/bootstrap.py",
+        "deploy/prover/l1-config-diagnostic.mjs",
+        "deploy/prover/l1-config-diagnostic.test.mjs",
+        "deploy/prover/startup-stages.mjs",
+        "deploy/prover/startup-stages.test.mjs",
+        "scripts/test-prover-bootstrap.py"
+      ],
+      "requirements": [
+        "G14",
+        "G07-A08"
+      ],
+      "acceptance": "Exact reviewedarchiver/config diagnostic composition withcurrentSDKrepair; no root/deps/generated mutation orpackagingduringgenuine48003. Sourcecheapchecks thenpackagewhenheavyslotfree andbindingsindependentlyreviewed. No newpaidgrant.",
+      "at": "2026-10-12T11:06:17.556247+00:00"
+    },
+    {
+      "task": "G07-compact-block-authentication-prototype",
+      "owner": "design-20261011",
+      "status": "running source-only prototype; nativechecks withheld",
+      "branch": "codex/rolling-compact-block-prototype",
+      "worktree": "../rolling-design",
+      "base": "1427ff118a947f8e73262b1e9e4c6b68a2af5039",
+      "allowed_paths": [
+        "shared/rolling/compact-block.mjs",
+        "shared/rolling/compact-block.test.mjs"
+      ],
+      "requirements": [
+        "G07-A02",
+        "G07-A08"
+      ],
+      "dependencies": [
+        "canonical-block-enumeration-bounds.json",
+        "self-preference-cold-sync-design.json"
+      ],
+      "acceptance": "Protocol-bounded compactblock decode oneeffect atatime with exactordered effectsroot authentication, strictfields/category/count/trailingdata bounds, no wholeBody expansion. Only authenticatedcomplete block mayyield usablemessage descriptors; labelprototype not integratedAPI/coldqualification. ActualSDKdifferentialmalformed/reorg/oversize checks; native afterleadslotgrant. No endpoint/Noir/generated/sourceoutside2paths.",
+      "at": "2026-10-12T11:08:25.301148+00:00"
+    },
+    {
+      "task": "G14-live-prelaunch-reconciliation",
+      "owner": "controls-20261011",
+      "status": "running read-only",
+      "branch": "codex/rolling-archiver-startup-observation",
+      "allowed_paths": [
+        "execution/evidence/G02/archiver09-prelaunch-readonly.json"
+      ],
+      "requirements": [
+        "G14",
+        "G07-A08"
+      ],
+      "acceptance": "Both existingAWSprofile identities, allcampaigncompute/disks/Fleets andpluginhealth fromactualMac; sanitizedcounts/IDs/status only, no secrets. No refresh requiringinteraction withoutexplicitblock, no cloudmutations orpaidactions.",
+      "at": "2026-10-12T11:10:33.556544+00:00"
+    },
+    {
+      "candidate": "8eea1f52acfa4fb9bd26200fffd181538613e08b",
+      "base": "c8fdb2e1184184b025304fbfc5eec0261c7354e2",
+      "sourceCandidates": [
+        "72072ea69c20b4066402a70dd9518600f4d2a3ca",
+        "4f70cbeb06f8346855d938e408b8048785e1eb6d"
+      ],
+      "transferredCommits": [
+        "36ed856",
+        "d279116",
+        "ce02de0",
+        "8eea1f5"
+      ],
+      "sourceReviews": [
+        "evidence/G07/notification-funding-order-720-review.json",
+        "evidence/G02/archiver-4f70-source-composition-review.json"
+      ],
+      "status": "candidate only; no new integration advance",
+      "recordedAt": "2026-10-12T11:40:28.638450+00:00"
     }
   ]
 }
