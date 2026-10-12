@@ -22,11 +22,13 @@ export async function replaceRollingL1Suffix({eth,retained,readBoundary,quiescen
  assert(!Object.hasOwn(observation,'intent'),'Never replay a previously attempted reorg');
  assert.equal(typeof readBoundary,'function');assert.equal(typeof persist,'function');
  const original={automine:await eth.isAutoMining(),interval:await eth.getIntervalMining()};
- assert.equal(typeof original.automine,'boolean');assert(height(original.interval),'Mining interval must be readable before mutation');
+ // Pinned Anvil reports disabled interval mining as null, including after the
+ // official SDK sets interval 0 while pausing. Enabled intervals are seconds.
+ assert.equal(typeof original.automine,'boolean');assert(original.interval===null||(Number.isSafeInteger(original.interval)&&original.interval>0),'Mining interval must be readable before mutation');
  observation.miningControlsBefore=original;const errors=[];let restorationFailed=false;
  try{
   await eth.execWithPausedAnvil(async()=>{
-   assert.equal(await eth.isAutoMining(),false);assert.equal(await eth.getIntervalMining(),0);
+   assert.equal(await eth.isAutoMining(),false);assert.equal(await eth.getIntervalMining(),null,'Interval mining must be disabled while paused');
    const before=await readBoundary(),{tip,depth}=validatePreferenceReorgBoundary(retained,before);
    assert(deadlineAt-Date.now()>=90000,'Reorg admission expired before mutation');
    observation.intent={retained:{l1:block(retained.l1),l2:block(retained.l2),checkpoint:retained.checkpoint},oldTip:tip,depth,attemptsAllowed:1};
