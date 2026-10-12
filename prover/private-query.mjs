@@ -3,6 +3,7 @@ import {jsonStringify} from '@aztec-labs/foundation/json-rpc';
 import {getSchemaParameters, getSchemaReturnType, parseWithOptionals, schemaHasMethod} from '@aztec-labs/foundation/schemas';
 import {AztecNodeApiSchema} from '@aztec-labs/stdlib/interfaces/client';
 import {getVersioningResponseHandler} from '@aztec-labs/stdlib/versioning';
+import {COMPACT_GATEWAY_ROUTE,COMPACT_NATIVE_ROUTE,COMPACT_TRANSPORT_LIMITS,validateCompactTier,validateCompactSelector,readCompactResponse} from '../shared/rolling/compact-client.mjs';
 
 export const QUERY_LIMITS = Object.freeze({bodyBytes: 8 * 1024 ** 2, responseBytes: 32 * 1024 ** 2, batch: 8, concurrent: 8, timeoutMs: 10000});
 const silent = Object.assign(() => {}, Object.fromEntries(['trace','debug','verbose','info','warn','error','fatal'].map(k => [k, () => {}])));
@@ -34,10 +35,29 @@ export async function createPrivateQuery(options) {
 
 // Inspector injection is only for labelled unit tests. Production composition
 // above always uses the shared identity/sync/freshness inspector.
-export function createPrivateQueryWithInspector({queryNode, chainId, rollupVersion, proofsEnabled}, inspectTrustedNode) {
+export function createPrivateQueryWithInspector({queryNode, chainId, rollupVersion, proofsEnabled, compactBlocks}, inspectTrustedNode) {
   const config = validateQueryNode(queryNode);
   if (!config || typeof inspectTrustedNode !== 'function') throw Error('Query inspector required');
   const options = Object.freeze({expectedNetworkScope: Object.freeze({chainId: String(chainId), version: String(rollupVersion), rollup: config.rollupAddress}), proofsEnabled, maxLagSeconds: config.maxLagSeconds});
+  // No route is registered here. The caller must explicitly compose handleCompact
+  // behind the existing server origin/auth checks. This handler independently
+  // checks the captured origin allowlist as defense against accidental exposure.
+  let compact;
+  if(compactBlocks!==undefined){
+    const own=(v,k)=>{const d=Object.getOwnPropertyDescriptor(v,k);if(!d||!Object.hasOwn(d,'value'))throw Error('Invalid compact gateway configuration');return d.value;};
+    if(!compactBlocks||Object.getPrototypeOf(compactBlocks)!==Object.prototype||Reflect.ownKeys(compactBlocks).length!==2)throw Error('Invalid compact gateway configuration');
+    const tier=validateCompactTier(own(compactBlocks,'tier')),supplied=own(compactBlocks,'origins');
+    if(!Array.isArray(supplied)||supplied.length>64)throw Error('Invalid compact gateway configuration');
+    const origins=[];
+    for(let i=0;i<supplied.length;i++){
+      const value=own(supplied,String(i));let url;try{url=new URL(value);}catch{throw Error('Invalid compact gateway configuration');}
+      if(typeof value!=='string'||value.length>2048||!['http:','https:'].includes(url.protocol)||url.origin!==value||url.username||url.password||origins.includes(value))throw Error('Invalid compact gateway configuration');
+      origins.push(value);
+    }
+    if(Reflect.ownKeys(supplied).length!==origins.length+1)throw Error('Invalid compact gateway configuration');
+    compact=Object.freeze({tier,origins:Object.freeze(origins)});
+  }
+  const compactFetch=globalThis.fetch.bind(globalThis);
   const node = createSafeJsonRpcClient(config.url, AztecNodeApiSchema, {
     namespaceMethods: 'aztec', log: silent, maxBatchSize: QUERY_LIMITS.batch,
     maxRequestBodySize: QUERY_LIMITS.bodyBytes,
@@ -117,5 +137,38 @@ export function createPrivateQueryWithInspector({queryNode, chainId, rollupVersi
     } catch {if (!res.writableEnded) reply(400, errorResponse(null));}
     finally {active--;}
   };
-  return Object.freeze({health, handle});
+  let compactActive=false;
+  const handleCompact=compact?async(req,res)=>{
+    const reply=(status,value)=>{if(!res.destroyed&&!res.writableEnded){res.writeHead(status,{'Content-Type':'application/json','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});res.end(JSON.stringify(value));}};
+    const rejected=status=>reply(status,{error:'Compact block unavailable'});
+    if(req.url!==COMPACT_GATEWAY_ROUTE){rejected(404);return;}
+    if(req.method!=='POST'){rejected(405);return;}
+    const origin=req.headers.origin;
+    if(origin!==undefined&&(typeof origin!=='string'||!compact.origins.includes(origin))){rejected(403);return;}
+    if(!/^application\/json(?:\s*;\s*charset=utf-8)?$/i.test(req.headers['content-type']??'')){rejected(415);return;}
+    const length=req.headers['content-length'];
+    if(length!==undefined&&(typeof length!=='string'||!/^(0|[1-9][0-9]{0,9})$/.test(length)||Number(length)>COMPACT_TRANSPORT_LIMITS.requestBytes)){rejected(413);return;}
+    if(compactActive||active>=QUERY_LIMITS.concurrent){rejected(429);return;}
+    compactActive=true;active++;
+    const controller=new AbortController();const abort=()=>controller.abort();
+    const close=()=>{if(!res.writableFinished)abort();};
+    req.once('aborted',abort);res.once('close',close);
+    const timer=setTimeout(()=>{abort();req.destroy();},QUERY_LIMITS.timeoutMs);
+    const alive=()=>{if(controller.signal.aborted||req.aborted||res.destroyed)throw unavailable();};
+    let status=400;
+    try{
+      const chunks=[];let bytes=0;
+      for await(const chunk of req.iterator({destroyOnReturn:false})){
+        bytes+=chunk.length;if(bytes>COMPACT_TRANSPORT_LIMITS.requestBytes){status=413;throw unavailable();}chunks.push(chunk);
+      }
+      alive();const selector=validateCompactSelector(JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(Buffer.concat(chunks))),compact.tier);
+      status=503;await inspect();alive();
+      const response=await compactFetch(new URL(COMPACT_NATIVE_ROUTE,config.url),{method:'POST',headers:{'content-type':'application/json'},
+        body:JSON.stringify(selector),redirect:'error',credentials:'omit',referrerPolicy:'no-referrer',signal:controller.signal});
+      const value=await readCompactResponse(response,selector);alive();await inspect();alive();
+      reply(200,value);
+    }catch{rejected(status);}
+    finally{clearTimeout(timer);req.off('aborted',abort);res.off('close',close);active--;compactActive=false;}
+  }:undefined;
+  return Object.freeze({health,handle,...(handleCompact?{handleCompact}:{})});
 }
