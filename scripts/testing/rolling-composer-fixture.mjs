@@ -40,7 +40,19 @@ export async function startComposerL1Reader({upstream,origin}){
  await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(0,'127.0.0.1',resolve);});
  return {url:'http://127.0.0.1:'+server.address().port,stats:()=>({...stats}),close:()=>new Promise((resolve,reject)=>{server.close(error=>error?reject(error):resolve());server.closeIdleConnections();})};
 }
-export async function runRollingComposerFixture({ctx,actors,fees,claim,endpoint,network,artifact,scope,deployment,service,sendCount,observation}){
+// A failed browser must not trigger supervisor-wide cleanup before the fixture
+// persists receiver/accounting evidence. The hard supervisor remains authoritative.
+export async function writeComposerResultAndAwaitAck({directory,result,timeoutMs=30000}){
+ assert(Number.isSafeInteger(timeoutMs)&&timeoutMs>0&&timeoutMs<=30000);
+ await fs.writeFile(path.join(directory,'browser-result.json'),JSON.stringify(result)+'\n',{flag:'wx',mode:0o600});
+ const deadline=Date.now()+timeoutMs;
+ for(;;){
+  try{const ack=JSON.parse(await fs.readFile(path.join(directory,'composer-observed.json'),'utf8'));assert.deepEqual(ack,{schemaVersion:1,observed:true});return;}
+  catch(error){if(error.code!=='ENOENT')throw error;}
+  assert(Date.now()<deadline,'Composer observation acknowledgement unavailable');await sleep(25);
+ }
+}
+export async function runRollingComposerFixture({ctx,actors,fees,claim,endpoint,network,artifact,scope,deployment,service,sendCount,observation,persist,verifyFees}){
  const {startRollingReader}=await import('../../apps/rolling/start.mjs');
  const {loadRollingWalletAssets}=await import('../rolling-wallet-assets.mjs');
  const {createRollingPublicIndex}=await import('../../shared/rolling/public-index.mjs');
@@ -49,7 +61,8 @@ export async function runRollingComposerFixture({ctx,actors,fees,claim,endpoint,
  const control=ctx.browserControl;assert.equal(control?.browserMode,'rolling-composer');assert.equal(control.browserEngine,'chromium');
  assert.equal(actors.length,2);assert.equal(fees.length,2);
  Object.assign(observation,{passed:false,scope:'Production browser encrypted import and composer; no browser posting/funding acceptance',cleanup:{}});
- let l1,reader,failure;
+ assert.equal(typeof persist,'function');assert.equal(typeof verifyFees,'function');
+ let l1,reader,failure,browserResult,before;
  try{
   const expectedNames={a:(await actors[0].application.ownedIdentities()).records,b:(await actors[1].application.ownedIdentities()).records};
   const backupPaths={a:path.join(ctx.directory,'composer-a.json'),b:path.join(ctx.directory,'composer-b.json')};
@@ -72,7 +85,7 @@ export async function runRollingComposerFixture({ctx,actors,fees,claim,endpoint,
   while(index.status().state!=='ready'){assert(Date.now()<readyDeadline);assert.notEqual(index.status().state,'unavailable');await sleep(25);}
   const handoff={browserMode:'rolling-composer',browserEngine:'chromium',origin:control.origin,trustedOrigin:endpoint,ethereumOrigin:l1.url,backupPaths,backupPassword:control.backupPassword,expectedNames,timeoutMs:composerBudget(ctx.applicationDeadlineAt)};
   await validateRollingComposerControl(handoff,{directory:ctx.directory});
-  const before={proofs:service.stats().submitted,sends:sendCount()};
+  before={proofs:service.stats().submitted,sends:sendCount()};
   await fs.writeFile(path.join(ctx.directory,'browser-ready.json'),JSON.stringify(handoff),{flag:'wx',mode:0o600});
   ctx.mark('browser-ready');
   const deadline=Date.now()+handoff.timeoutMs+5000;
@@ -81,7 +94,7 @@ export async function runRollingComposerFixture({ctx,actors,fees,claim,endpoint,
    try{result=JSON.parse(await fs.readFile(path.join(ctx.directory,'browser-result.json'),'utf8'));break;}catch(error){if(error.code!=='ENOENT')throw error;}
    assert(Date.now()<deadline);await sleep(100);
   }
-  observation.browser=result;observation.receiver={newProofJobs:service.stats().submitted-before.proofs,newNodeSubmissions:sendCount()-before.sends,l1:l1.stats()};
+  browserResult=result;observation.browser=result;observation.receiver={newProofJobs:service.stats().submitted-before.proofs,newNodeSubmissions:sendCount()-before.sends,l1:l1.stats()};
   assert.equal(result.passed,true);assert.equal(observation.receiver.newProofJobs,0);assert.equal(observation.receiver.newNodeSubmissions,0);
   assert(observation.receiver.l1.forwarded>0);for(const key of ['rejected','errors','pending'])assert.equal(observation.receiver.l1[key],0);
   observation.passed=true;
@@ -89,6 +102,15 @@ export async function runRollingComposerFixture({ctx,actors,fees,claim,endpoint,
  finally{
   const errors=[];
   for(const [name,resource]of [['reader',reader],['l1',l1]])if(resource)try{await resource.close();observation.cleanup[name]=true;}catch(error){observation.cleanup[name]=false;errors.push(error);}
-  if(errors.length){observation.passed=false;throw new AggregateError([...(failure?[failure]:[]),...errors],'Composer fixture cleanup failed');}
+  if(browserResult){
+   // Browser context is already closed. Account independently before allowing a
+   // failed worker exit to activate the supervisor's emergency process cleanup.
+   observation.receiver={newProofJobs:service.stats().submitted-before.proofs,newNodeSubmissions:sendCount()-before.sends,l1:l1.stats()};
+   try{await verifyFees();observation.accountingVerified=true;}catch(error){observation.accountingVerified=false;errors.push(error);}
+  }
+  if(errors.length)observation.passed=false;
+  let persisted=false;try{await persist();persisted=true;}catch(error){errors.push(error);}
+  if(browserResult&&persisted)await fs.writeFile(path.join(ctx.directory,'composer-observed.json'),JSON.stringify({schemaVersion:1,observed:true}),{flag:'wx',mode:0o600});
+  if(errors.length)throw new AggregateError([...(failure?[failure]:[]),...errors],'Composer fixture cleanup or accounting failed');
  }
 }

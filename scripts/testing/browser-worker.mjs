@@ -24,6 +24,9 @@ export async function runBrowser(directory,control) {
       onStage:stage=>console.log(JSON.stringify({stage}))});
     }
   }catch(error){result={passed:false,failure:describeFailure(error)};}
-  await fs.writeFile(path.join(directory,'browser-result.json'),JSON.stringify(result)+'\n',{flag:'wx',mode:0o600});
+  if(control?.browserMode==='rolling-composer'){
+    const {writeComposerResultAndAwaitAck}=await import('./rolling-composer-fixture.mjs');
+    await writeComposerResultAndAwaitAck({directory,result});
+  }else await fs.writeFile(path.join(directory,'browser-result.json'),JSON.stringify(result)+'\n',{flag:'wx',mode:0o600});
   process.exitCode=result.passed?0:1;
 }

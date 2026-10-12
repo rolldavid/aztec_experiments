@@ -30,3 +30,26 @@ test('malformed and oversized request produce failed evidence with no upstream s
   assert.equal(calls,0);assert.equal(proxy.stats().errors,2);
  }finally{await proxy?.close();await new Promise(resolve=>upstream.close(resolve));}
 });
+
+test('failed browser process waits for durable parent evidence before nonzero exit',async()=>{
+ const fs=await import('node:fs/promises'),os=await import('node:os'),path=await import('node:path');const {spawn}=await import('node:child_process');
+ const directory=await fs.mkdtemp(path.join(os.tmpdir(),'composer-ack-'));let child;
+ try{
+  const moduleURL=new URL('./rolling-composer-fixture.mjs',import.meta.url).href;
+  const code=`import {writeComposerResultAndAwaitAck} from ${JSON.stringify(moduleURL)};await writeComposerResultAndAwaitAck({directory:${JSON.stringify(directory)},result:{passed:false,stage:'forced-synthetic-failure'},timeoutMs:2000});process.exitCode=1;`;
+  child=spawn(process.execPath,['--input-type=module','-e',code],{stdio:'ignore'});const exited=new Promise(resolve=>child.once('exit',resolve));
+  let result;const end=Date.now()+1500;
+  while(!result){try{result=JSON.parse(await fs.readFile(path.join(directory,'browser-result.json'),'utf8'));}catch(e){if(e.code!=='ENOENT')throw e;}assert(Date.now()<end);await new Promise(r=>setTimeout(r,10));}
+  assert.equal(result.passed,false);assert.equal(child.exitCode,null);
+  const evidence={browser:result,receiver:{newNodeSubmissions:0},accountingVerified:true};
+  await fs.writeFile(path.join(directory,'durable-observation.json'),JSON.stringify(evidence),{flag:'wx',mode:0o600});
+  await fs.writeFile(path.join(directory,'composer-observed.json'),JSON.stringify({schemaVersion:1,observed:true}),{flag:'wx',mode:0o600});
+  assert.equal(await exited,1);assert.deepEqual(JSON.parse(await fs.readFile(path.join(directory,'durable-observation.json'),'utf8')),evidence);
+ }finally{if(child&&child.exitCode===null)child.kill('SIGKILL');await fs.rm(directory,{recursive:true,force:true});}
+});
+test('missing parent acknowledgement fails within explicit bound',async()=>{
+ const fs=await import('node:fs/promises'),os=await import('node:os'),path=await import('node:path');const {writeComposerResultAndAwaitAck}=await import('./rolling-composer-fixture.mjs');
+ const directory=await fs.mkdtemp(path.join(os.tmpdir(),'composer-no-ack-'));
+ try{await assert.rejects(writeComposerResultAndAwaitAck({directory,result:{passed:false},timeoutMs:50}),/acknowledgement unavailable/);assert.equal(JSON.parse(await fs.readFile(path.join(directory,'browser-result.json'),'utf8')).passed,false);}
+ finally{await fs.rm(directory,{recursive:true,force:true});}
+});
