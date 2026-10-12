@@ -91,6 +91,18 @@ export async function readNotificationReply(directory,rootId){
   return Object.freeze(r);
  }catch{throw failed();}finally{await handle?.close().catch(()=>{});}
 }
+
+// Shared with production-panel DOM regression; callbacks observe the phase only.
+export async function reviewRollingNotificationAction({dialog:d,remaining,settled,reviewText,onReviewed,onConfirm,onConfirmed,recover}){
+ await settled(d.getByRole('button',{name:'Check action and review fee',exact:true}));
+ await d.getByRole('button',{name:'Check action and review fee',exact:true}).click({timeout:remaining()});await settled(d.getByRole('button',{name:'Confirm and send',exact:true}));
+ await d.getByText(reviewText,{exact:true}).waitFor({timeout:remaining()});
+ check(await d.getByText(/^Maximum network fee: [1-9][0-9]* fee-juice units\. This is a maximum, not a guaranteed final charge\.$/).count()===1);
+ onReviewed();onConfirm();await d.getByRole('button',{name:'Confirm and send',exact:true}).click({timeout:remaining()});
+ await settled(d.getByText('Transaction confirmed on the verified chain.',{exact:true}));onConfirmed();
+ const privateViews=d.getByRole('button',{name:'Private views',exact:true});await settled(privateViews);await privateViews.click({timeout:remaining()});await recover();
+}
+
 const stages=new Set(['validation','launch','locked','import','recover','subscribe-review','subscribe-send','wait-reply','unread','marker-review','marker-send','suppressed','lock','reopen','complete']);
 export const NOTIFICATION_BROWSER_CHECKS=Object.freeze(['freshNativeDatabase','publicBeforeUnlock','feeOnlyAccount','subscriptionReviewed','subscriptionConfirmed','subscriptionRecovered','unreadReply','markerReviewed','markerConfirmed','suppressedReply','publicReplyRetained','lockClears','reloadLocked','freshReopen','recoveredSuppression','noFinancialRecovery']);
 export async function runRollingNotificationBrowser(input){
@@ -147,15 +159,11 @@ export async function runRollingNotificationBrowser(input){
    await page.getByText('Checked against chain block '+String(data.checkpoint.number),{exact:true}).waitFor({timeout:remaining()});check(await page.locator('#content [role="alert"]').count()===0);traffic();return data;
   }
   async function reviewSend(kind,reviewText){
-   const d=dialog();await settled(d.getByRole('button',{name:'Check action',exact:true}));
-   await d.getByRole('button',{name:'Check action',exact:true}).click({timeout:remaining()});await settled(d.getByRole('button',{name:'Confirm and send',exact:true}));
-   await d.getByText(reviewText,{exact:true}).waitFor({timeout:remaining()});
-   const maximum=d.getByText(/^Maximum network fee: [1-9][0-9]* fee-juice units\. This is a maximum, not a guaranteed final charge\.$/);check(await maximum.count()===1);check(!traffic().writePhaseOpen);
-   report.checks[kind==='subscription'?'subscriptionReviewed':'markerReviewed']=true;
-   observer.begin(kind);mark(kind==='subscription'?'subscribe-send':'marker-send');
-   await d.getByRole('button',{name:'Confirm and send',exact:true}).click({timeout:remaining()});await settled(d.getByText('Transaction confirmed on the verified chain.',{exact:true}));observer.end();traffic();
-   report.checks[kind==='subscription'?'subscriptionConfirmed':'markerConfirmed']=true;await recover();
-   await d.getByRole('button',{name:'Close account panel',exact:true}).click({timeout:remaining()});
+   await reviewRollingNotificationAction({dialog:dialog(),remaining,settled,reviewText,
+    onReviewed:()=>{check(!traffic().writePhaseOpen);report.checks[kind==='subscription'?'subscriptionReviewed':'markerReviewed']=true;},
+    onConfirm:()=>{observer.begin(kind);mark(kind==='subscription'?'subscribe-send':'marker-send');},
+    onConfirmed:()=>{observer.end();traffic();report.checks[kind==='subscription'?'subscriptionConfirmed':'markerConfirmed']=true;},recover});
+   await dialog().getByRole('button',{name:'Close account panel',exact:true}).click({timeout:remaining()});
   }
   mark('locked');await importKeys();report.checks.freshNativeDatabase=true;report.checks.publicBeforeUnlock=true;report.checks.feeOnlyAccount=true;
   await view('Main board',[c.expected.rootId]);const root=()=>page.locator('#post-'+c.expected.rootId);check(await root().locator('.post-body').textContent()===c.expected.rootText);
@@ -168,7 +176,7 @@ export async function runRollingNotificationBrowser(input){
   const row=pageData.posts[0];check(row.record.root===c.expected.rootId&&row.record.parent===c.expected.rootId&&row.position.blockNumber===reply.replyBlock&&row.text===reply.replyText);
   const card=()=>page.locator('#post-'+reply.replyId);await card().waitFor({timeout:remaining()});check(await card().locator('.post-body').textContent()===reply.replyText);check(await page.locator('#content article.post').count()===1&&await root().count()===0);report.checks.unreadReply=true;
   mark('marker-review');await card().getByRole('button',{name:'Mark thread read',exact:true}).click({timeout:remaining()});
-  await settled(dialog().getByRole('button',{name:'Check action',exact:true}));check(await dialog().getByLabel('Thread ID',{exact:true}).inputValue()===c.expected.rootId);check(await dialog().getByLabel('Read through chain block',{exact:true}).inputValue()===reply.replyBlock);
+  await settled(dialog().getByRole('button',{name:'Check action and review fee',exact:true}));check(await dialog().getByLabel('Thread ID',{exact:true}).inputValue()===c.expected.rootId);check(await dialog().getByLabel('Read through chain block',{exact:true}).inputValue()===reply.replyBlock);
   await reviewSend('marker','Mark this thread read through block '+reply.replyBlock);
   async function suppressed(){
    await view('Main board',[reply.replyId,c.expected.rootId]);check(await card().locator('.post-body').textContent()===reply.replyText&&await root().locator('.post-body').textContent()===c.expected.rootText);
