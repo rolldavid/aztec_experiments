@@ -9,6 +9,10 @@ export async function readControl() {
 export async function runBrowser(directory,control) {
   let result;
   try {
+    if(control?.browserMode==='rolling-composer'){
+      const {runRollingComposerBrowser}=await import('./rolling-composer-browser.mjs');
+      result=await runRollingComposerBrowser({...control,directory,onStage:stage=>console.log(JSON.stringify({stage}))});
+    }else{
     const {validateBrowserWorkerControl,driveT04BrowserJourney}=await import('../t04-browser-journey.mjs');
     const {driveT04BrowserPerformance}=await import('../t04-browser-performance.mjs');
     const {driveT04BrowserFunding}=await import('../t04-browser-funding.mjs');
@@ -18,6 +22,7 @@ export async function runBrowser(directory,control) {
       journeyDriver:control.browserMode==='performance'?driveT04BrowserPerformance:control.browserMode==='lifecycle'?driveT04BrowserJourney:control.browserMode==='funding'?driveT04BrowserFunding:undefined,
       diagnostic:process.env.BOARD_TEST_DIAGNOSTIC==='1',observeProofStages:control.browserMode==='post',
       onStage:stage=>console.log(JSON.stringify({stage}))});
+    }
   }catch(error){result={passed:false,failure:describeFailure(error)};}
   await fs.writeFile(path.join(directory,'browser-result.json'),JSON.stringify(result)+'\n',{flag:'wx',mode:0o600});
   process.exitCode=result.passed?0:1;

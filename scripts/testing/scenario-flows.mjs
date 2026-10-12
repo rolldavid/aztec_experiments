@@ -370,3 +370,5 @@ export async function rollingAccountReactions(ctx){return (await import('./rolli
 export async function rollingOwnedNames(ctx){return (await import('./rolling-application-fixture.mjs')).runRollingApplicationFixture(ctx,'owned-names');}
 
 export async function rollingOwnedNamesWire(ctx){return (await import('./rolling-application-fixture.mjs')).runRollingApplicationFixture(ctx,'owned-names-wire');}
+
+export async function rollingComposer(ctx){return (await import('./rolling-application-fixture.mjs')).runRollingApplicationFixture(ctx,'composer');}

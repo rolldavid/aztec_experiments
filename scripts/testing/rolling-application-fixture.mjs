@@ -157,8 +157,8 @@ export async function loadRollingFixtureSDK() {
 }
 
 export async function runRollingApplicationFixture(ctx,scenario='conversation') {
-  assert(['conversation','profiles','anonymous-thread','repost-reactions','account-reactions','owned-names','owned-names-wire'].includes(scenario));
-  const captureWire=scenario==='owned-names-wire',names=scenario==='owned-names'||captureWire,multi=scenario==='account-reactions'||names,social=['anonymous-thread','repost-reactions','account-reactions'].includes(scenario);
+  assert(['conversation','profiles','anonymous-thread','repost-reactions','account-reactions','owned-names','owned-names-wire','composer'].includes(scenario));
+  const composer=scenario==='composer',captureWire=scenario==='owned-names-wire',names=scenario==='owned-names'||captureWire||composer,multi=scenario==='account-reactions'||names,social=['anonymous-thread','repost-reactions','account-reactions'].includes(scenario);
   const {ROOT,assertNodeVersion,assertAztecPackages}=await import('../toolchain.mjs');
   const directory=path.join(ROOT,'execution/evidence/G06','application-port-'+randomUUID());
   await fs.mkdir(directory,{mode:0o700});
@@ -278,7 +278,7 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
       await mark('trusted-service-startup');
       service=await startProverService({host:'127.0.0.1',port:0,board:String(ctx.instance.address),chainId:31337,rollupVersion:info.rollupVersion,
         applicationProfile:'rolling',privateBokAddress:String(bokInstance.address),privateFeeAddress:String(fees.browserFixture.instance.address),
-        proofs:real?'real':'disabled',origins:[],threads:1,queueDirectory:ctx.directory,crsPath:process.env.CRS_PATH,
+        proofs:real?'real':'disabled',origins:composer?[ctx.browserControl.origin]:[],threads:1,queueDirectory:ctx.directory,crsPath:process.env.CRS_PATH,
         queryNode:{url:rpc.url,rollupAddress:network.rollup,maxLagSeconds:120}});
       endpoint=`http://127.0.0.1:${service.address.port}`;
       if(captureWire){
@@ -501,6 +501,14 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
         scope:{chainId:network.chainId,rollupVersion:network.version,rollupAddress:network.rollup,boardAddress:String(ctx.instance.address),classId:String((await sdk.getContractClassFromArtifact(checked.artifact)).id)},
         deployment:{blockNumber:Number(report.initialPublicAnchor.blockNumber),blockHash:report.initialPublicAnchor.blockHash,txHash:report.initialPublicAnchor.txHash},
         cacheDirectory:path.join(ctx.directory,'rolling-public-index'),ids,scenario:names?'owned-names':scenario,wire:wire?{nodeUrl:ordinaryRpc.url,artifactPath:path.join(ROOT,'billboard/target/rolling_contract-RollingBoard.json'),onReader:url=>wire.registerEndpoint('public-reader',url)}:undefined,expectedProfiles:names?report.publicViews:undefined,expectedProfile:report.profiles?.expectedIdentity,expectedHTTP:report.social?.expectedHTTP,deadlineAt:ctx.applicationDeadlineAt,observation:report.publicReader});await save();
+      if(composer){
+        assert(real,'Genuine browser acceptance requires real proof setup');await mark('production-browser-composer');report.composer={};
+        const {runRollingComposerFixture}=await import('./rolling-composer-fixture.mjs');
+        try{await runRollingComposerFixture({ctx,actors:[actorA,actorB],fees:[fees,feesB],claim:claim.claim,endpoint,network,artifact:checked.artifact,
+          scope:{chainId:network.chainId,rollupVersion:network.version,rollupAddress:network.rollup,boardAddress:String(ctx.instance.address),classId:String((await sdk.getContractClassFromArtifact(checked.artifact)).id)},
+          deployment:{blockNumber:Number(report.initialPublicAnchor.blockNumber),blockHash:report.initialPublicAnchor.blockHash,txHash:report.initialPublicAnchor.txHash},service,sendCount:()=>transportSends,observation:report.composer});}
+        finally{await save();}
+      }
       if(multi){const bStandalone=BigInt(feesB.standalone.transactionFee);await fees.verify(feeTotal,feesB.browserFixture.fundedAmount-bStandalone-feeTotalB);await feesB.verify(feeTotalB,fees.browserFixture.fundedAmount-feeTotal);assert.equal(fees.poolBefore,feesB.poolBefore);report.accountFees={a:String(feeTotal),b:String(feeTotalB)};}else await fees.verify(feeTotal);report.actualHumanFees=String(feeTotal+feeTotalB);report.proverJobs=service.stats();
       assert.equal(report.proverJobs.failed,0);if(names){assert.equal(report.proverJobs.completed,4);assert.equal(report.proverJobs.submitted,4);}
       else if(social){const expectedJobs=scenario==='anonymous-thread'?3:multi?6:4;assert.equal(report.proverJobs.completed,expectedJobs);assert.equal(report.proverJobs.submitted,expectedJobs);}

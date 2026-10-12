@@ -27,7 +27,7 @@ export async function fingerprints() {
   }
   return result;
 }
-export async function browserFingerprints() {
+export async function browserFingerprints({rolling=false}={}) {
   const result={};
   async function file(name){const hash=createHash('sha256');for await(const chunk of createReadStream(path.join(ROOT,name)))hash.update(chunk);result[name]=hash.digest('hex');}
   for(const name of ['.build/apps-manifest.json','.build/sdk/sdk-manifest.json'])await file(name);
@@ -35,6 +35,12 @@ export async function browserFingerprints() {
   await walk('apps/dist');
   const manifest=JSON.parse(await fs.readFile(path.join(ROOT,'.build/apps-manifest.json'),'utf8'));
   for(const [name,digest] of Object.entries(manifest.outputs))assert.equal(result[name],digest,'Browser release output differs from manifest');
+  if(rolling){
+    await walk('apps/rolling');await file('scripts/rolling-wallet-assets.mjs');await file('.build/rolling-wallet/manifest.json');
+    const wallet=JSON.parse(await fs.readFile(path.join(ROOT,'.build/rolling-wallet/manifest.json'),'utf8'));
+    for(const [name,expected]of Object.entries(wallet.inputs)){await file(name);assert.equal(result[name],expected);}
+    for(const entry of Object.values(wallet.files)){await file(entry.file);assert.equal(result[entry.file],entry.sha256);}
+  }
   return result;
 }
 export async function verifyCensorPackage(){
