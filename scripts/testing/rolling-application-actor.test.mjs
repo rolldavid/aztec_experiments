@@ -399,3 +399,17 @@ test('metrics retains account-change fencing after awaited head read',async t=>{
  f.state.hook=label=>{if(label==='preference-head')f.account.secret=new Fr(99);};
  try{await assert.rejects(actor.application.readPreferences(),{code:'ROLLING_PREFERENCE_READER_UNAVAILABLE'});assert.equal(metrics.snapshot().phases.events.calls,0);assert.deepEqual(await fs.readdir(f.input.storageDirectory),[]);}finally{await actor.close();}
 });
+
+test('explicit cold actor defers account signing and never falls back when extension is unavailable',async t=>{
+ const f=await fixture(t),actor=await createRollingApplicationActor({...f.input,coldPreferences:true});
+ try{
+  assert(!f.state.calls.includes('signing-key'));await assert.rejects(actor.application.readColdPreferences());
+  assert(!f.state.calls.includes('signing-key'));assert.equal(actor.activity().walletSubmissions,0);
+  await actor.application.readAccountStatus();assert.equal(f.state.calls.filter(x=>x==='signing-key').length,1);
+  await actor.application.readAccountStatus();assert.equal(f.state.calls.filter(x=>x==='signing-key').length,1);
+ }finally{await actor.close();}
+});
+test('ordinary actor rejects an unselected cold capability',async t=>{
+ const f=await fixture(t),actor=await createRollingApplicationActor(f.input);
+ try{await assert.rejects(actor.application.readColdPreferences(),/not selected/);assert.equal(actor.activity().walletSubmissions,0);}finally{await actor.close();}
+});

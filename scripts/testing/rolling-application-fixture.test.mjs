@@ -589,3 +589,30 @@ test('evidence setup rejects a child collision without replacing existing data',
     assert.equal(await fs.readFile(path.join(collided,'retained.json'),'utf8'),'retained');
   } finally {injected.mock.restore();await fs.rm(root,{recursive:true,force:true});}
 });
+
+test('compact fixture route is explicit and does not pass through JSON-RPC body decoding',async()=>{
+ const {startNodeRpc}=await import('./rolling-application-fixture.mjs');
+ const node=Object.fromEntries(['getNodeInfo','getChainTips','getWorldStateSyncStatus','getSyncedL1Timestamp','getBlockData','getBlock'].map(k=>[k,async()=>{throw Error('Invalid request must not reach node');}]));
+ const config={expectedNetworkScope:{chainId:'31337',version:'1',rollup:'0x'+'1'.repeat(40)},proofsEnabled:true,tier:'checkpointed'};
+ const ordinary=await startNodeRpc(node),enabled=await startNodeRpc(node,()=>{throw Error('No send');},{compactBlocks:config});
+ try{
+  for(const [rpc,status]of [[ordinary,403],[enabled,400]]){
+   const response=await fetch(new URL('/rolling/compact-block-v1',rpc.url),{method:'POST',headers:{'content-type':'application/json'},body:'{}'});assert.equal(response.status,status);await response.text();
+  }
+  assert.equal(enabled.compactSnapshot().requests,1);assert.equal(enabled.compactSnapshot().accepted,0);
+ }finally{await ordinary.close();await enabled.close();}
+});
+test('closing compact fixture retains ownership until the admitted native read settles',async()=>{
+ const {startNodeRpc}=await import('./rolling-application-fixture.mjs');let enter,release;
+ const entered=new Promise(resolve=>enter=resolve),held=new Promise(resolve=>release=resolve);
+ const node=Object.fromEntries(['getNodeInfo','getChainTips','getWorldStateSyncStatus','getSyncedL1Timestamp','getBlockData','getBlock'].map(k=>[k,async()=>({})]));
+ node.getNodeInfo=async()=>{enter();await held;return {};};
+ const rpc=await startNodeRpc(node,()=>{throw Error('No send');},{compactBlocks:{expectedNetworkScope:{chainId:'31337',version:'1',rollup:'0x'+'1'.repeat(40)},proofsEnabled:true,tier:'checkpointed'}});
+ const request=fetch(new URL('/rolling/compact-block-v1',rpc.url),{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({schemaVersion:1,number:1,hash:'0x'+'1'.padStart(64,'0'),tier:'checkpointed'})}).then(r=>r.text(),()=>null);
+ let closed=false,closing;
+ try{
+  await entered;assert.equal(rpc.compactSnapshot().pending,1);closing=rpc.close().then(()=>{closed=true;});
+  await new Promise(resolve=>setTimeout(resolve,20));assert.equal(closed,false);assert.equal(rpc.compactSnapshot().pending,1);
+ }finally{release();await request;await(closing??rpc.close());}
+ assert.equal(closed,true);assert.equal(rpc.compactSnapshot().pending,0);
+});

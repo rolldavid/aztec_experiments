@@ -19,7 +19,7 @@ const discard=()=>{};
 const silent=Object.assign(discard,Object.fromEntries(['trace','debug','verbose','info','warn','error','fatal'].map(k=>[k,discard])),
   {level:'silent',isLevelEnabled:()=>false,getBindings:()=>({}),createChild:()=>silent});
 const PERSONAL=['feePayer','publicCallSenders','publicCallTargets','publicCallCalldata','publicWriteSlots','publicWriteValues','publicLogContracts','publicLogFields'];
-const SOURCES=['scripts/private-fee-evidence.mjs','scripts/w01-private-fee-standalone.mjs','scripts/testing/rolling-private-recovery-metrics.mjs','scripts/testing/rolling-notification-fixture.mjs','scripts/testing/rolling-notification-browser.mjs','scripts/testing/rolling-notification-acceptance.mjs','scripts/testing/rolling-preference-saved.mjs','scripts/testing/rolling-preference-reorg.mjs','scripts/testing/rolling-preference-browser-fixture.mjs','scripts/testing/rolling-preference-browser.mjs','scripts/testing/rolling-preference-recovery.mjs','shared/rolling/preference-reader.mjs','shared/rolling/preference-events.mjs','shared/rolling/preferences.mjs','scripts/testing/rolling-rejected-withdrawal.mjs','scripts/application-post.mjs','scripts/c01-settle-application-message.mjs','scripts/c01-withdraw-l1.mjs','scripts/t04-browser-journey-verify.mjs','scripts/testing/rolling-subboard-acceptance.mjs','scripts/testing/rolling-name-collision.mjs','scripts/testing/rolling-collision-observer.mjs','scripts/testing/rolling-trusted-recovery.mjs','scripts/testing/rolling-social-wire.mjs','scripts/testing/rolling-wire-campaign.mjs','scripts/testing/rolling-wire-trace.mjs','scripts/testing/rolling-owned-names.mjs','scripts/t03-public-footprint.mjs','scripts/testing/rolling-removed-like.mjs','scripts/testing/rolling-application-actor.mjs','scripts/testing/rolling-account-reactions.mjs','scripts/testing/rolling-social-acceptance.mjs','scripts/testing/rolling-profile-acceptance.mjs','experiments/avatar/raster-fixture.mjs','scripts/prove-application-action.mjs','scripts/testing/rolling-native-artifacts.mjs','scripts/testing/rolling-application-fixture.mjs','scripts/testing/scenarios.mjs','scripts/testing/scenario-flows.mjs',
+const SOURCES=['shared/rolling/cold-preference-reader.mjs','shared/rolling/compact-client.mjs','shared/rolling/compact-block.mjs','prover/compact-block-native.mjs','scripts/patch-pxe-preference-page.mjs','scripts/private-fee-evidence.mjs','scripts/w01-private-fee-standalone.mjs','scripts/testing/rolling-private-recovery-metrics.mjs','scripts/testing/rolling-notification-fixture.mjs','scripts/testing/rolling-notification-browser.mjs','scripts/testing/rolling-notification-acceptance.mjs','scripts/testing/rolling-preference-saved.mjs','scripts/testing/rolling-preference-reorg.mjs','scripts/testing/rolling-preference-browser-fixture.mjs','scripts/testing/rolling-preference-browser.mjs','scripts/testing/rolling-preference-recovery.mjs','shared/rolling/preference-reader.mjs','shared/rolling/preference-events.mjs','shared/rolling/preferences.mjs','scripts/testing/rolling-rejected-withdrawal.mjs','scripts/application-post.mjs','scripts/c01-settle-application-message.mjs','scripts/c01-withdraw-l1.mjs','scripts/t04-browser-journey-verify.mjs','scripts/testing/rolling-subboard-acceptance.mjs','scripts/testing/rolling-name-collision.mjs','scripts/testing/rolling-collision-observer.mjs','scripts/testing/rolling-trusted-recovery.mjs','scripts/testing/rolling-social-wire.mjs','scripts/testing/rolling-wire-campaign.mjs','scripts/testing/rolling-wire-trace.mjs','scripts/testing/rolling-owned-names.mjs','scripts/t03-public-footprint.mjs','scripts/testing/rolling-removed-like.mjs','scripts/testing/rolling-application-actor.mjs','scripts/testing/rolling-account-reactions.mjs','scripts/testing/rolling-social-acceptance.mjs','scripts/testing/rolling-profile-acceptance.mjs','experiments/avatar/raster-fixture.mjs','scripts/prove-application-action.mjs','scripts/testing/rolling-native-artifacts.mjs','scripts/testing/rolling-application-fixture.mjs','scripts/testing/scenarios.mjs','scripts/testing/scenario-flows.mjs',
   'scripts/c01-real-node.mjs','scripts/c01-board-flow.mjs','scripts/c01-deposit-flow.mjs','scripts/c01-client-mining.mjs',
   'scripts/w01-private-fee-flow.mjs','scripts/testing/private-fee-verification.mjs','scripts/w01-unfunded-wallet.mjs','scripts/w01-private-funding.mjs',
   'shared/sdk-entry.mjs','shared/private-pxe.mjs','shared/trusted-private-node.mjs','shared/routed-kernel-prover.mjs','shared/remote-prover-client.mjs',
@@ -223,7 +223,7 @@ export function forwardRecoveryObservedNodeCall(node,name,args,metrics){
   const call=metrics&&RECOVERY_METRIC_METHODS.includes(name)?metrics.wrapNode(name,original):original;
   return Reflect.apply(call,node,args);
 }
-export async function startNodeRpc(node,onSend=()=>{},{faults=false,recoveryMetrics=()=>undefined}={}) {
+export async function startNodeRpc(node,onSend=()=>{},{faults=false,recoveryMetrics=()=>undefined,compactBlocks}={}) {
   let fault='healthy',deniedTransaction;const diagnostic={unavailableRequests:0,personalizedDenied:0,sendDenied:0,forwarded:{}};
   const setFault=value=>{assert(faults&&['healthy','unavailable','personalized-once','send-before-forward'].includes(value));fault=value;};
   const {createNamespacedSafeJsonRpcServer}=await import('@aztec-labs/foundation/json-rpc/server');
@@ -238,8 +238,21 @@ export async function startNodeRpc(node,onSend=()=>{},{faults=false,recoveryMetr
   } ]));
   const rpc=createNamespacedSafeJsonRpcServer({aztec:[api,AztecNodeApiSchema]},
     {maxBatchSize:8,maxBodySizeBytes:8*1024*1024,corsAllowedOrigins:[],log:silent});
+  let compact;const pendingCompact=new Set();const compactDiagnostic={requests:0,accepted:0,failures:0};
+  if(compactBlocks!==undefined){
+    assert.deepEqual(Object.keys(compactBlocks).sort(),['expectedNetworkScope','proofsEnabled','tier']);
+    const {createCompactBlockNativeAdapter}=await import('../../prover/compact-block-native.mjs');
+    compact=createCompactBlockNativeAdapter({node,...compactBlocks});
+  }
   const callback=rpc.getApp().callback();
   const server=http.createServer((req,res)=>{
+    if(compact&&req.url==='/rolling/compact-block-v1'){
+      if(fault==='unavailable'){diagnostic.unavailableRequests++;res.writeHead(503);res.end();return;}
+      compactDiagnostic.requests++;
+      res.once('finish',()=>{if(res.statusCode===200)compactDiagnostic.accepted++;else compactDiagnostic.failures++;});
+      const work=compact.handle(req,res);pendingCompact.add(work);
+      work.then(()=>pendingCompact.delete(work),()=>{pendingCompact.delete(work);compactDiagnostic.failures++;res.destroy();});return;
+    }
     if(req.method!=='POST'||req.url!=='/'||req.headers.origin!==undefined||!/^application\/json(?:;|$)/i.test(req.headers['content-type']??'')){res.writeHead(403);res.end();return;}
     if(fault==='unavailable'){diagnostic.unavailableRequests++;res.writeHead(503);res.end();return;}
     callback(req,res);
@@ -248,8 +261,8 @@ export async function startNodeRpc(node,onSend=()=>{},{faults=false,recoveryMetr
   try{await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(0,'127.0.0.1',resolve);});}
   catch(error){server.close();server.closeAllConnections();throw error;}
   const port=server.address().port;
-  return {url:`http://127.0.0.1:${port}/`,...(faults?{setFault,snapshot:()=>structuredClone(diagnostic),deniedTransaction:()=>deniedTransaction}:{}),close:async()=>{
-    await new Promise((resolve,reject)=>{server.close(error=>error?reject(error):resolve());server.closeAllConnections();});await closedPort(port);
+  return {url:`http://127.0.0.1:${port}/`,compactSnapshot:()=>({...compactDiagnostic,pending:pendingCompact.size}),...(faults?{setFault,snapshot:()=>structuredClone(diagnostic),deniedTransaction:()=>deniedTransaction}:{}),close:async()=>{
+    await new Promise((resolve,reject)=>{server.close(error=>error?reject(error):resolve());server.closeAllConnections();});await Promise.all([...pendingCompact]);await closedPort(port);
   }};
 }
 
@@ -282,6 +295,7 @@ export async function createRollingEvidenceDirectory(root) {
 
 export async function runRollingApplicationFixture(ctx,scenario='conversation') {
   assert(['conversation','profiles','anonymous-thread','repost-reactions','account-reactions','owned-names','owned-names-wire','composer','social-wire','reaction-wire','trusted-recovery','name-race','subboard-policy','rejected-subboard-withdrawal','preference-relationships','preference-notifications','preference-browser','preference-reorg-initial','preference-reorg-marker','preference-saved','notification-browser'].includes(scenario));
+  const boundedCold=scenario==='preference-relationships';
   const notificationBrowser=scenario==='notification-browser';
   const preferenceSaved=scenario==='preference-saved',preferenceBrowser=scenario==='preference-browser',preferenceReorg=['preference-reorg-initial','preference-reorg-marker'].includes(scenario),markerReorg=scenario==='preference-reorg-marker';
   const preferences=['preference-relationships','preference-notifications','preference-browser','preference-reorg-initial','preference-reorg-marker','preference-saved','notification-browser'].includes(scenario);
@@ -432,11 +446,11 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
       await observe('after-first-wall-mine');
       await mark('node-rpc-startup');
       const forwardedSaved=[];
-      rpc=await startNodeRpc(ctx.node,tx=>{assert(transportSends<Number.MAX_SAFE_INTEGER);transportSends++;if(preferenceSaved||notificationBrowser){assert(forwardedSaved.length<(notificationBrowser?4:3));forwardedSaved.push(tx);};},{faults:recovery||preferenceSaved,recoveryMetrics:()=>coldRecoveryMetrics});
+      rpc=await startNodeRpc(ctx.node,tx=>{assert(transportSends<Number.MAX_SAFE_INTEGER);transportSends++;if(preferenceSaved||notificationBrowser){assert(forwardedSaved.length<(notificationBrowser?4:3));forwardedSaved.push(tx);};},{faults:recovery||preferenceSaved,recoveryMetrics:()=>coldRecoveryMetrics,...(boundedCold?{compactBlocks:{expectedNetworkScope:network,proofsEnabled:real,tier:'checkpointed'}}:{})});
       await mark('trusted-service-startup');
       const trustedProofThreads=notificationBrowser?2:1;report.trustedProofThreads=trustedProofThreads;
       service=await startProverService({host:'127.0.0.1',port:0,board:String(ctx.instance.address),chainId:31337,rollupVersion:info.rollupVersion,
-        applicationProfile:'rolling',privateBokAddress:String(bokInstance.address),privateFeeAddress:String(fees.browserFixture.instance.address),
+        ...(boundedCold?{compactBlocks:{tier:'checkpointed'}}:{}),applicationProfile:'rolling',privateBokAddress:String(bokInstance.address),privateFeeAddress:String(fees.browserFixture.instance.address),
         proofs:real?'real':'disabled',origins:(composer||preferenceBrowser||notificationBrowser)?[ctx.browserControl.origin]:[],threads:trustedProofThreads,queueDirectory:ctx.directory,crsPath:process.env.CRS_PATH,
         queryNode:{url:rpc.url,rollupAddress:network.rollup,maxLagSeconds:120}});
       endpoint=`http://127.0.0.1:${service.address.port}`;
@@ -461,7 +475,7 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
       restoreIndexedDB=()=>{for(const [key,descriptor] of previous)if(descriptor)Object.defineProperty(globalThis,key,descriptor);else delete globalThis[key];};
       for(const k of keys)Object.defineProperty(globalThis,k,{value:k==='indexedDB'?new idb.IDBFactory():idb[k],writable:true,configurable:true});
       const {createRollingApplicationActor}=await import('./rolling-application-actor.mjs');
-      const makeActor=(funding,role,dataDirectory='rolling-application-test-'+role,metrics)=>createRollingApplicationActor({sdk,routing,node,endpoint,network,proofsEnabled:real,...(metrics?{metrics}:{}),
+      const makeActor=(funding,role,dataDirectory='rolling-application-test-'+role,metrics,coldPreferences=false)=>createRollingApplicationActor({sdk,routing,node,endpoint,network,proofsEnabled:real,coldPreferences,...(metrics?{metrics}:{}),
         board:{instance:ctx.instance,artifact:checked.artifact},fees:funding,portal:ctx.ready.portalAddress,
         storageDirectory:path.join(ctx.directory,'rolling-application-journals-'+role),dataDirectory,
         ...(race?{confirmationDeadlineAt:ctx.applicationDeadlineAt-90000}:{}),
@@ -1180,7 +1194,7 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
       journal=actorA.journal;assert.equal(service.stats().submitted,jobsBefore);
       if(preferences&&!preferenceBrowser&&!preferenceReorg&&!preferenceSaved&&!notificationBrowser){
         await mark('preference-keys-only-recovery');
-        const {compareRecoveredRollingPreferences}=await import('./rolling-preference-recovery.mjs');
+        const {compareRecoveredRollingPreferences,compareRecoveredColdRollingPreferences}=await import('./rolling-preference-recovery.mjs');
         const old=actorA,dataDirectory='rolling-preference-cold-'+randomUUID(),role='preference-cold-'+randomUUID();
         const freshPath=path.join(ctx.directory,'rolling-application-journals-'+role);
         await fs.mkdir(freshPath,{mode:0o700});assert.deepEqual(await fs.readdir(freshPath),[]);
@@ -1198,14 +1212,20 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
         sample();coldRecoveryMetrics=metrics;
         try{
           report.preferenceCold.metrics=metrics.snapshot();await save();
-          const replacement=await makeActor(fees,role,dataDirectory,metrics);
+          const replacement=await makeActor(fees,role,dataDirectory,metrics,boundedCold);
           actorA=activeActor=replacement;actorIntents.delete(old);
           assert(replacement.pxe!==old.pxe&&replacement.journal!==old.journal);assert.equal(String(replacement.owner),String(old.owner));
           assert((await indexedDB.databases()).some(db=>db.name===identity.name));
           pxe=actorA.pxe;appWallet=actorA.wallet;journal=actorA.journal;app=actorA.application;
           report.preferenceKeysOnly={freshPXEVerified:true,freshPrivateStoreVerified:true,oldActorClosed:true,
-            ...await compareRecoveredRollingPreferences(preferenceCheckpoint,{readPreferences:options=>app.readPreferences(options),activity:()=>actorA.activity()}),
+            ...await (boundedCold?compareRecoveredColdRollingPreferences:compareRecoveredRollingPreferences)(preferenceCheckpoint,{readPreferences:options=>boundedCold?app.readColdPreferences(options):app.readPreferences(options),activity:()=>actorA.activity()}),
             storagePlatform:'real SDK IndexedDB adapter on labelled CLI fake-indexeddb; native browser recovery is separate'};
+          if(boundedCold){
+            report.preferenceCold.compact=rpc.compactSnapshot();
+            assert(report.preferenceCold.compact.accepted>0&&report.preferenceCold.compact.pending===0,'Actual native compact recovery required');
+            assert.equal(actorA.activity().authWitnesses,0,'Cold recovery must not initialize signing or create auth witnesses');
+            report.preferenceCold.reader='production bounded PXE cursor';
+          }
           report.preferenceCold.completed=true;
         }catch(error){recoveryError=error;throw error;}
         finally{

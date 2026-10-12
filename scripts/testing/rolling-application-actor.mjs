@@ -6,6 +6,8 @@ import assert from 'node:assert/strict';
 import path from 'node:path';
 import {createFileJournalStorage} from '../../apps/src/billboard/user/transaction-journal-store.mjs';
 import {createRollingApplication} from '../../shared/rolling/application.mjs';
+import {createRollingColdPreferenceReader} from '../../shared/rolling/cold-preference-reader.mjs';
+import {createRollingCompactClient} from '../../shared/rolling/compact-client.mjs';
 import {createRollingPreferenceReader} from '../../shared/rolling/preference-reader.mjs';
 import {createSynchronizedRollingApplication} from '../../shared/rolling/synchronized-application.mjs';
 const leases=new Set();
@@ -15,8 +17,8 @@ const quiet=Object.freeze({trace:discard,debug:discard,verbose:discard,info:disc
  level:'silent',module:'rolling-actor',isLevelEnabled:()=>false,createChild:()=>quiet,getBindings:()=>({})});
 
 export async function createRollingApplicationActor({sdk,routing,node,endpoint,network,proofsEnabled,board,fees,portal,
- storageDirectory,dataDirectory,log=discard,externalActivity,confirmationDeadlineAt,metrics}){
- assert(sdk.isTrustedPrivateNode(node));assert.equal(typeof proofsEnabled,'boolean');
+ storageDirectory,dataDirectory,log=discard,externalActivity,confirmationDeadlineAt,metrics,coldPreferences=false}){
+ assert.equal(typeof coldPreferences,'boolean');assert(sdk.isTrustedPrivateNode(node));assert.equal(typeof proofsEnabled,'boolean');
  assert.equal(typeof externalActivity,'function');assert.equal(typeof log,'function');
  // Optional trusted harness observer only. Capture its capability before any
  // await; never wrap node identity, SDK prototypes or internal sync services.
@@ -38,7 +40,7 @@ export async function createRollingApplicationActor({sdk,routing,node,endpoint,n
  const scope={account:ownerText,...capturedNetwork,board:String(board.instance.address),portal:portal.toLowerCase()};
  const leaseKeys=['journal:'+path.resolve(storageDirectory),'pxe:'+dataDirectory];
  assert(leaseKeys.every(key=>!leases.has(key)),'Actor storage is already in use');leaseKeys.forEach(key=>leases.add(key));
- let store,pxe,wallet,journal,app,readPreferences,closed=false,closing,busy;
+ let store,pxe,wallet,journal,app,readPreferences,readColdPreferences,initializeAccount,closed=false,closing,busy;
  let authWitnesses=0,walletSubmissions=0,lastExternal={proofJobs:0,transportSends:0};
  const contextGuard=()=>{
   if(closed||account.secret!==secret||account.salt!==salt||account.signingKey!==signingKey||String(account.address)!==ownerText||!sdk.isTrustedPrivateNode(node))throw fail();
@@ -83,17 +85,29 @@ export async function createRollingApplicationActor({sdk,routing,node,endpoint,n
   const nextJournal=existingJournal??await sdk.createL2Journal({...journalOptions,storage:privateStore});contextGuard();
   const next=createRollingApplication({sdk:{...sdk,isPrivateWalletForNode:routing.isPrivateWalletForNode},deployment,contextGuard,privateStore,
    accountSession:{owner,wallet,node,journal:nextJournal,walletSecret:journalOptions.walletSecret,walletSalt:journalOptions.walletSalt}});
-  app=createSynchronizedRollingApplication({application:next,synchronize:pxe.sync.bind(pxe),contextGuard});
+  app=createSynchronizedRollingApplication({application:next,synchronize:async()=>{await pxe.sync();await initializeAccount();},contextGuard});
   // Mirror the production session: the actor owns the exclusive lease, while
   // the reader owns sync. Calling the public locked head facade would deadlock.
   // Rebuild starts a new reader bound to this raw application and file store;
   // the existing encrypted prefix is reauthenticated rather than copied in RAM.
   let preferenceReader;
-  readPreferences=options=>{
+  readPreferences=async options=>{
+   await initializeAccount();
    preferenceReader??=createRollingPreferenceReader({sdk,pxe,node,owner,deployment,
     readHead:(observe?observe('head-utility',next.readPreferenceHead):next.readPreferenceHead).bind(next),contextGuard,privateStore,
     walletSecret:journalOptions.walletSecret,walletSalt:journalOptions.walletSalt});
    return preferenceReader.read(options);
+  };
+  let coldReader;
+  readColdPreferences=async options=>{
+   contextGuard();assert(coldPreferences,'Cold recovery was not selected');
+   if(!coldReader){
+    const expectedArtifactHash=(await sdk.computeArtifactHash(board.artifact)).toString();contextGuard();
+    const compact=createRollingCompactClient({url:url.origin,tier:'checkpointed',contextGuard,...(String(network.chainId)==='31337'?{allowLocalDev:true}:{})});
+    coldReader=createRollingColdPreferenceReader({sdk,pxe,node,owner,deployment,expectedArtifactHash,tier:'checkpointed',compact,contextGuard,privateStore,
+     walletSecret:journalOptions.walletSecret,walletSalt:journalOptions.walletSalt});
+   }
+   return coldReader.read(options);
   };
   journal=nextJournal;wallet._transactionJournal=journal;
  }
@@ -125,12 +139,19 @@ export async function createRollingApplicationActor({sdk,routing,node,endpoint,n
   const send=wallet.sendTx;assert.equal(typeof send,'function');
   wallet.sendTx=function(...args){contextGuard();const selected=boundedSendArgs(args);assert(walletSubmissions<Number.MAX_SAFE_INTEGER);walletSubmissions++;return send.apply(this,selected);};
   wallet._accountManager=await sdk.AccountManager.create(wallet,secret,accountContract,{salt});contextGuard();assert.equal(String(wallet._accountManager.address),ownerText);
-  const key=await accountContract.getSigningPublicKey();contextGuard();const constructor=artifact.functions.find(fn=>fn.name==='constructor');
-  if(constructor)await new sdk.ContractFunctionInteraction(wallet,owner,constructor,[key.x,key.y]).simulate({from:owner});
+  let initialized=false;
+  initializeAccount=async()=>{
+   contextGuard();if(initialized)return;
+   const key=await accountContract.getSigningPublicKey();contextGuard();const constructor=artifact.functions.find(fn=>fn.name==='constructor');
+   if(constructor){await new sdk.ContractFunctionInteraction(wallet,owner,constructor,[key.x,key.y]).simulate({from:owner});contextGuard();}
+   initialized=true;
+  };
+  if(!coldPreferences)await initializeAccount();
   await rebuild(journal);
  }catch(error){closed=true;try{await dispose();}catch(cleanup){throw new AggregateError([error,cleanup],'Actor initialization and cleanup failed');}throw error;}
  const application=Object.freeze({...Object.fromEntries(Object.keys(app).map(name=>[name,(...args)=>exclusive(()=>app[name](...args))])),
-  readPreferences:options=>exclusive(()=>readPreferences(options))});
+  readPreferences:options=>exclusive(()=>readPreferences(options)),
+  readColdPreferences:options=>exclusive(()=>readColdPreferences(options))});
  function close(){if(closing)return closing;closed=true;const pending=busy;
   closing=(async()=>{if(pending)try{await pending;}catch{/* Caller retains the operation failure. */}await dispose();})();return closing;}
  const actor={};Object.defineProperties(actor,{application:{value:application},pxe:{get:()=>pxe},wallet:{value:wallet},journal:{get:()=>journal},owner:{value:owner},

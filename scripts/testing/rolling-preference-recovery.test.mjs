@@ -1,7 +1,7 @@
 // Labelled capability doubles test the acceptance consumer, never chain recovery.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {exerciseRollingPreferences,compareRecoveredRollingPreferences} from './rolling-preference-recovery.mjs';
+import {exerciseRollingPreferences,compareRecoveredRollingPreferences,compareRecoveredColdRollingPreferences} from './rolling-preference-recovery.mjs';
 function fixture(mode='relationships',fault){
  let revision=0,proofJobs=0,transportSends=0,walletSubmissions=0,readCount=0;
  const actions=[],snapshot={scope:{chainId:'31337',version:'1',board:'9'},head:{initialized:true,schema:1,revision:'0',digest:'1'},bookmarks:[],followedNames:[],followedBoards:[],subscriptions:[],replyNotifications:true,readMarkers:[]};
@@ -45,3 +45,22 @@ for(const fault of ['retained-wallet','changed-snapshot','cold-send'])test('cold
  const f=fixture(),r=await exerciseRollingPreferences(f.options);if(fault!=='retained-wallet')f.reset();if(fault==='changed-snapshot')f.mutate();if(fault==='cold-send')f.send();await assert.rejects(compareRecoveredRollingPreferences(r.checkpoint,f.options));
 });
 test('expired budget performs no mutations',async()=>{const f=fixture();await assert.rejects(exerciseRollingPreferences({...f.options,deadlineAt:Date.now()-1}));assert.equal(f.actions.length,0);});
+
+for(const fault of [null,'partial-published','anchor-change','backward','changed-snapshot','extra-send','unfinished','orphaned'])test('bounded physical cursor '+(fault??'accepts repeated block progress'),async()=>{
+ const f=fixture(),r=await exerciseRollingPreferences(f.options);f.reset();let calls=0;
+ const readPreferences=async()=>{
+  const ordinary=await f.options.readPreferences();calls++;
+  const progress={nextBlock:calls<3?1:14,anchorBlock:13,processedRevision:'3',markersChecked:0,markersTotal:calls<3?null:0};
+  let value=calls<3?{status:'recovering',complete:false,progress}:{...ordinary,anchor:{blockNumber:13,blockHash:'0x'+'1'.padStart(64,'0')},progress};
+  if(fault==='partial-published'&&calls===1)value.preferences=ordinary.preferences;
+  if(fault==='anchor-change'&&calls===2)progress.anchorBlock=14;
+  if(fault==='backward'){if(calls===1)progress.nextBlock=2;}
+  if(fault==='changed-snapshot'&&calls===3)value.preferences.head.digest='99';
+  if(fault==='extra-send'&&calls===2)f.send();
+  if(fault==='unfinished'&&calls===3)progress.nextBlock=13;
+  if(fault==='orphaned'&&calls===3)value.orphanedReadMarkers=[{}];
+  return value;
+ };
+ if(fault)await assert.rejects(compareRecoveredColdRollingPreferences(r.checkpoint,{readPreferences,activity:f.options.activity}),/acceptance failed/);
+ else{const result=await compareRecoveredColdRollingPreferences(r.checkpoint,{readPreferences,activity:f.options.activity});assert.equal(result.steps,3);assert.equal(result.exactPrivateStateRecovered,true);assert.equal(result.newProofJobs,0);}
+});

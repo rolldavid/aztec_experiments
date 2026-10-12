@@ -19,6 +19,26 @@ async function complete(read,deadlineAt){
   last={scannedThrough:p.scannedThrough,markersChecked:p.markersChecked};
  }
 }
+// The bounded cursor can consume a full physical page without an event for
+// this owner. nextBlock may therefore repeat; a deadline still bounds the run.
+async function completeCold(read,deadlineAt){
+ const started=Date.now();let steps=0,last,anchorBlock;
+ for(;;){
+  check(Date.now()<deadlineAt);const value=await read({deadlineAt});steps++;
+  check(value&&typeof value.complete==='boolean'&&value.progress);
+  const p=value.progress;
+  check(Number.isSafeInteger(p.anchorBlock)&&p.anchorBlock>=1&&Number.isSafeInteger(p.nextBlock)&&p.nextBlock>=1&&p.nextBlock<=p.anchorBlock+1);
+  check(Number.isSafeInteger(p.markersChecked)&&p.markersChecked>=0&&typeof p.processedRevision==='string'&&/^(0|[1-9][0-9]*)$/.test(p.processedRevision));
+  if(anchorBlock===undefined)anchorBlock=p.anchorBlock;check(p.anchorBlock===anchorBlock);
+  if(last)check(p.nextBlock>=last.nextBlock&&p.markersChecked>=last.markersChecked&&BigInt(p.processedRevision)>=BigInt(last.processedRevision));
+  if(value.complete){
+   check(value.status==='complete'&&value.preferences&&value.orphanedReadMarkers?.length===0&&value.anchor?.blockNumber===anchorBlock&&p.nextBlock===anchorBlock+1);
+   check(/^0x[0-9a-f]{64}$/.test(value.anchor?.blockHash)&&p.markersTotal===p.markersChecked);
+   return {value,measurement:{steps,elapsedMs:Date.now()-started,nextBlock:p.nextBlock,anchorBlock,markersChecked:p.markersChecked}};
+  }
+  check(value.status==='recovering'&&!Object.hasOwn(value,'preferences'));last={...p};
+ }
+}
 function verify(p,{mode,root,name,rootBlock,rootHash,revision,final}){
  const relationships=mode==='relationships'||mode==='browser-relationships';
  check(p.head.initialized&&p.head.schema===1&&p.head.revision===String(revision));
@@ -62,14 +82,17 @@ export async function exerciseRollingPreferences({mode,root,name,rootBlock,rootH
   return {checkpoint,observation:{passed:true,preferenceTransactions:revision,publicPreferenceEvents:0,initial:initial.measurement,incremental:incremental.measurement,authenticatedHeadMatched:true,noReadProofOrSend:true}};
  }catch{throw fail();}
 }
-export async function compareRecoveredRollingPreferences(checkpoint,{readPreferences,activity}){
+async function compareRecovered(checkpoint,{readPreferences,activity},completeRead){
  const state=states.get(checkpoint);states.delete(checkpoint);
  try{
   check(state);const before=counters(activity);
   check(before.proofJobs===state.activity.proofJobs&&before.transportSends===state.activity.transportSends&&before.walletSubmissions===0);
-  const recovered=await complete(readPreferences,state.deadlineAt);
+  const recovered=await completeRead(readPreferences,state.deadlineAt);
   check(JSON.stringify(recovered.value.preferences)===state.snapshot);
   const after=counters(activity);check(equal(before,after));
   return {passed:true,...recovered.measurement,exactPrivateStateRecovered:true,newProofJobs:0,newTransportSends:0,newWalletSubmissions:0};
  }catch{throw fail();}
 }
+
+export const compareRecoveredRollingPreferences=(checkpoint,capabilities)=>compareRecovered(checkpoint,capabilities,complete);
+export const compareRecoveredColdRollingPreferences=(checkpoint,capabilities)=>compareRecovered(checkpoint,capabilities,completeCold);
