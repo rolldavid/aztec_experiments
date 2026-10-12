@@ -1,3 +1,4 @@
+import {applicationNativeProfile} from './c01-native-profile.mjs';
 import {failPrivateFeeWalletSetup} from './private-fee-evidence.mjs';
 import {applicationProofsEnabled,applicationProver} from './testing/proof-policy.mjs';
 // TEST ONLY. Publish canonical FPC using funded deployer; author remains unfunded.
@@ -7,7 +8,7 @@ import path from 'node:path';
 import {generateSchnorrAccounts} from '@aztec-labs/accounts/testing';
 import {getFeeJuiceBalance} from '@aztec-labs/aztec.js/utils';
 import {EmbeddedWallet} from '@aztec-labs/wallets/embedded';
-import {BackendType} from '@aztec-foundation/bb.js';
+import {Barretenberg,BackendType} from '@aztec-foundation/bb.js';
 import {loadContractArtifact} from '@aztec-labs/stdlib/abi';
 import {derivePrivateFeeInstance,createPrivateFeeDeployment,requirePublishedPrivateFee} from '../shared/private-fee-client.mjs';
 import {restoreApplicationAuthor} from './w02-wallet-restore.mjs';
@@ -33,10 +34,14 @@ export async function prepareW01UnfundedWallet({node,preparation,directory,persi
  if(observeNode) node=await observeNode({node,human:author.address,operator:preparation.account.address});
  assert.equal(await getFeeJuiceBalance(author.address,node),0n);
  let wallet;
- const open=()=>EmbeddedWallet.create(node,{ephemeral:persistentDirectory===undefined,pxe:{
+ const open=()=>{
+  const native={backend:BackendType.NativeUnixSocket,...applicationNativeProfile(directory)};
+  for(const key of ['backend','bbPath','threads'])assert.equal(Barretenberg.getSingleton().options[key],native[key],'Native singleton differs from selected application profile');
+  return EmbeddedWallet.create(node,{ephemeral:persistentDirectory===undefined,pxe:{
   ...(persistentDirectory===undefined?{}:{dataDirectory:persistentDirectory}),proverEnabled:true,
-  proverOrOptions:applicationProver({backend:BackendType.NativeUnixSocket,bbPath:path.join(directory,'bb-one-thread'),threads:1}),
+  proverOrOptions:applicationProver(native),
   autoSync:false,syncChainTip:'checkpointed'}});
+ };
  const close=async()=>{if(wallet){await wallet.stop();wallet=undefined;}};
  try{
   wallet=await open();

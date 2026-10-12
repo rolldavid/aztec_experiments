@@ -1,3 +1,4 @@
+import {applicationNativeProfile} from './c01-native-profile.mjs';
 import {applicationProofsEnabled,applicationProver} from './testing/proof-policy.mjs';
 // TEST ONLY: disposable local L1 deposit and genuine private claim. Parent owns all process/resource limits.
 import assert from 'node:assert/strict';
@@ -93,7 +94,7 @@ export async function depositAndClaimC01({node,preparation,instance,l1Client,rea
     assert.equal((await read('CONFIG_HASH')).toLowerCase(),ready.configHash.toLowerCase());
     const rollupAddress=(await read('ROLLUP')).toLowerCase();
     assert.equal(rollupAddress,info.l1ContractAddresses.rollupAddress.toString().toLowerCase());
-    const native={backend:BackendType.NativeUnixSocket,bbPath:path.join(directory,'bb-one-thread'),threads:1};
+    const native={backend:BackendType.NativeUnixSocket,...applicationNativeProfile(directory)};
     for(const key of ['backend','bbPath','threads'])assert.equal(Barretenberg.getSingleton().options[key],native[key]);
     mark(ownsWallet?'reopen-claim-wallet':'reuse-parent-claim-wallet');
     const boundaryModule=qualifyWrongOrigin?await import('./t02-claim-boundary.mjs'):undefined;
