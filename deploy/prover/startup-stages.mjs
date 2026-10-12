@@ -1,4 +1,6 @@
-/** Diagnostic-only source instrumentation for the pinned trusted node CLI.
+/** Explicit configuration-provider adapter and diagnostic stage instrumentation
+ * for the pinned trusted node CLI. Only its full getL1Config call selects
+ * PublicNode; ordinary/history and debug settings are preserved. No fallback.
  * No SDK file is modified. This is not malicious-process attestation or health.
  * No arguments, values, error objects, stdout or network responses enter records.
  */
@@ -12,6 +14,10 @@ export const RECORD_DIRECTORY = '/rolling-startup';
 export const RECORD_NAME = 'stages.json';
 export const MAX_RECORD_BYTES = 8192;
 const CLI = '/usr/src/yarn-project/aztec/dest/bin/index.js';
+export const RUNTIME_ADAPTER = 'publicnode-config-v1';
+export const CONFIG_CALL = '    const { addresses, config } = await getL1Config(nodeConfig.registryAddress, nodeConfig.l1RpcUrls, nodeConfig.l1ChainId, nodeConfig.rollupVersion);';
+export const SELECTED_CONFIG_CALL = CONFIG_CALL.replace('nodeConfig.l1RpcUrls', "['https://ethereum-sepolia-rpc.publicnode.com']");
+const CONFIG_MODULE = '/usr/src/yarn-project/aztec/dest/cli/cmds/start_node.js';
 const HOOK_URL = 'file:///etc/rolling-node/startup-stages.mjs';
 const sha256 = bytes => createHash('sha256').update(bytes).digest('hex');
 const failure = () => new Error('ROLLING_STARTUP_DIAGNOSTIC_UNAVAILABLE');
@@ -162,8 +168,20 @@ export const SOURCE_PLAN = Object.freeze([
 ]);
 export const PHASES = Object.freeze(SOURCE_PLAN.flatMap(module => module.points.map(point => point.phase)));
 
+/** Pure single-call rewrite. transformSource supplies the independent whole-file
+ * SHA gate first; the unique full call and call-name counts are additional gates.
+ * No caller URL/config input exists, and no SDK disk file is ever changed. */
+export function selectConfigurationProvider(source) {
+  if (typeof source !== 'string' || source.split(CONFIG_CALL).length !== 2 || source.split('getL1Config(').length !== 2) throw failure();
+  return source.replace(CONFIG_CALL,SELECTED_CONFIG_CALL);
+}
 export function transformSource(source, plan, helperUrl = HOOK_URL) {
   if (typeof source !== 'string' || sha256(source) !== plan.sha256 || source.includes('__rollingStartupStage')) throw failure();
+  const selectProvider = plan.path === CONFIG_MODULE;
+  if (selectProvider) {
+    if (plan.sha256 !== SOURCE_PLAN[0].sha256) throw failure();
+    selectConfigurationProvider(source); // validate before producing any transformed module
+  }
   const changes = [];
   for (const {phase, before, after} of plan.points) {
     if (!PHASES.includes(phase) || !before || !after || source.split(before).length !== 2 || source.split(after).length !== 2) throw failure();
@@ -178,7 +196,8 @@ export function transformSource(source, plan, helperUrl = HOOK_URL) {
     result += source.slice(previous,at) + `__rollingStartupStage(${JSON.stringify(phase)},${JSON.stringify(state)});\n`;
     previous = at;
   }
-  return result + source.slice(previous);
+  result += source.slice(previous);
+  return selectProvider ? selectConfigurationProvider(result) : result;
 }
 
 function privateDirectory(directory) {
@@ -197,7 +216,7 @@ function boundedFile(path, limit, privateMode = false) {
   } finally { closeSync(fd); }
 }
 export function validateRecord(value, helperSha256) {
-  if (!value || Object.getPrototypeOf(value) !== Object.prototype || Object.keys(value).sort().join() !== 'helperSha256,history,instrumented,schemaVersion' || value.schemaVersion !== 1 || value.instrumented !== true || !/^[a-f0-9]{64}$/.test(helperSha256) || value.helperSha256 !== helperSha256 || !Array.isArray(value.history) || value.history.length > PHASES.length * 2) throw failure();
+  if (!value || Object.getPrototypeOf(value) !== Object.prototype || Object.keys(value).sort().join() !== 'helperSha256,history,instrumented,runtimeAdapter,schemaVersion' || value.schemaVersion !== 1 || value.instrumented !== true || value.runtimeAdapter !== RUNTIME_ADAPTER || !/^[a-f0-9]{64}$/.test(helperSha256) || value.helperSha256 !== helperSha256 || !Array.isArray(value.history) || value.history.length > PHASES.length * 2) throw failure();
   const started = new Set(), stack = [];
   for (const pair of value.history) {
     if (!Array.isArray(pair) || pair.length !== 2 || !PHASES.includes(pair[0]) || !['begin','complete'].includes(pair[1])) throw failure();
@@ -218,7 +237,7 @@ function existsEntry(path) {
 export function createRecorder(directory, helperSha256) {
   privateDirectory(directory);
   if (!/^[a-f0-9]{64}$/.test(helperSha256) || existsEntry(join(directory, RECORD_NAME)) || existsEntry(join(directory, '.stages.tmp'))) throw failure();
-  const value = {schemaVersion:1,instrumented:true,helperSha256,history:[]};
+  const value = {schemaVersion:1,instrumented:true,runtimeAdapter:RUNTIME_ADAPTER,helperSha256,history:[]};
   let unavailable = false;
   return (phase,state) => {
     if (unavailable) return false;
@@ -241,7 +260,7 @@ export function createRecorder(directory, helperSha256) {
 }
 let recorder;
 export function mark(phase,state) { return recorder?.(phase,state) ?? false; }
-export function installDiagnostic() {
+export function installRuntimeAdapter() {
   if (process.version !== 'v24.21.0' || import.meta.url !== HOOK_URL) throw failure();
   const prepared = new Map();
   // Validate the entire exact-source closure BEFORE the application imports.
@@ -263,5 +282,5 @@ export function createLoadHook(prepared) {
   };
 }
 if (process.argv[1] === CLI) {
-  try { installDiagnostic(); } catch { throw failure(); }
+  try { installRuntimeAdapter(); } catch { throw failure(); }
 }

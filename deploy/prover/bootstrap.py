@@ -749,8 +749,9 @@ def _execute(config, attestation_source):
 
 
 
-# Dedicated records from the exact pinned trusted process, not adversarial attestation.
-STARTUP_HELPER_SHA = 'cc13d6539544f95683572766579a3a884c1bae711a865ec74b2e731e1d407e49'
+# Dedicated records from the exact pinned process with an explicit configuration-provider adapter; not adversarial attestation.
+STARTUP_HELPER_SHA = '5903627ac22e4746e27c5fe0326a63be6004e391bbae82a2d3bed26d7d14c3f9'
+STARTUP_ADAPTER = 'publicnode-config-v1'
 DIAGNOSTIC_PHASES = ('registry-guard', 'rollup-compatibility', 'l1-config', 'genesis-compare', 'telemetry', 'factory', 'factory-bb', 'factory-kzg', 'factory-keystore', 'factory-addresses', 'factory-l1-constants', 'factory-blob', 'factory-snapshot', 'factory-epoch-cache', 'factory-world-state', 'factory-avm', 'factory-archiver', 'factory-world-state-sync', 'factory-verifiers', 'factory-fee-provider', 'factory-p2p', 'factory-start', 'public-rpc-bind', 'admin-auth', 'admin-rpc-bind')
 
 def stage_directory(base):
@@ -781,7 +782,7 @@ def stage_observation(base):
             if len(data)>8192:raise ValueError()
             v=json.loads(data)
         finally:os.close(fd)
-        if type(v) is not dict or set(v)!={'schemaVersion','instrumented','helperSha256','history'} or type(v['schemaVersion']) is not int or v['schemaVersion']!=1 or v['instrumented'] is not True or v['helperSha256']!=STARTUP_HELPER_SHA:raise ValueError()
+        if type(v) is not dict or set(v)!={'schemaVersion','instrumented','runtimeAdapter','helperSha256','history'} or type(v['schemaVersion']) is not int or v['schemaVersion']!=1 or v['instrumented'] is not True or v['runtimeAdapter']!=STARTUP_ADAPTER or v['helperSha256']!=STARTUP_HELPER_SHA:raise ValueError()
         if type(v['history']) is not list or len(v['history'])>2*len(DIAGNOSTIC_PHASES):raise ValueError()
         stack=[];started=set()
         for pair in v['history']:

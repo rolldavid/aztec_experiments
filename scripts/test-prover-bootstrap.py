@@ -958,19 +958,19 @@ raise SystemExit(code)
             code="import {createRecorder,PHASES} from "+json.dumps(helper.as_uri())+";const record=createRecorder(process.argv[1],process.argv[2]);if(!record('factory','begin')||!record('factory-bb','begin')||!record('factory-bb','complete'))throw Error('fixture');process.stdout.write(JSON.stringify(PHASES));"
             result=subprocess.run([node,'--input-type=module','--eval',code,str(directory),b.STARTUP_HELPER_SHA],capture_output=True,text=True,timeout=3,check=True)
             self.assertEqual(json.loads(result.stdout),list(b.DIAGNOSTIC_PHASES))
-            observation=b.stage_observation(base);self.assertTrue(observation['available'])
+            observation=b.stage_observation(base);self.assertTrue(observation['available']);self.assertEqual(observation['runtimeAdapter'],'publicnode-config-v1')
             self.assertEqual(observation['history'],[['factory','begin'],['factory-bb','begin'],['factory-bb','complete']])
 
     def test_stage_projection_independent_of_native_output_and_rejects_forged_records(self):
         import os
         with tempfile.TemporaryDirectory() as t:
             base=pathlib.Path(t);directory=base/'startup-stages';directory.mkdir(mode=0o700);file=directory/'stages.json'
-            good={'schemaVersion':1,'instrumented':True,'helperSha256':b.STARTUP_HELPER_SHA,'history':[['factory','begin'],['factory-bb','begin'],['factory-bb','complete']]}
+            good={'schemaVersion':1,'instrumented':True,'runtimeAdapter':b.STARTUP_ADAPTER,'helperSha256':b.STARTUP_HELPER_SHA,'history':[['factory','begin'],['factory-bb','begin'],['factory-bb','complete']]}
             file.write_text(json.dumps(good));file.chmod(0o600)
             self.assertEqual(b.stage_observation(base),{'available':True,**good})
             output=b.NodeOutput();output.feed(b'__rollingStartupStage("admin-auth","complete"); PRIVATE_SENTINEL\n');output.finish(1)
             self.assertEqual(output.value['stages'],[])
-            for bad in [{**good,'extra':'PRIVATE_SENTINEL'},{**good,'helperSha256':'a'*64},{**good,'history':[['factory','complete']]},{**good,'history':[['factory','begin'],['factory-bb','begin'],['factory','complete']]},{**good,'history':[['PRIVATE_SENTINEL','begin']]},{**good,'schemaVersion':True}]:
+            for bad in [{k:v for k,v in good.items() if k!='runtimeAdapter'},{**good,'runtimeAdapter':'diagnostic-only'},{**good,'extra':'PRIVATE_SENTINEL'},{**good,'helperSha256':'a'*64},{**good,'history':[['factory','complete']]},{**good,'history':[['factory','begin'],['factory-bb','begin'],['factory','complete']]},{**good,'history':[['PRIVATE_SENTINEL','begin']]},{**good,'schemaVersion':True}]:
                 file.write_text(json.dumps(bad));self.assertEqual(b.stage_observation(base),{'available':False})
             file.write_text('x'*8193);self.assertEqual(b.stage_observation(base),{'available':False})
             file.unlink();file.symlink_to(base/'elsewhere');self.assertEqual(b.stage_observation(base),{'available':False})

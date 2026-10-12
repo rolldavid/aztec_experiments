@@ -8,17 +8,17 @@ import {join,resolve} from 'node:path';
 import {spawnSync} from 'node:child_process';
 import {registerHooks} from 'node:module';
 import {pathToFileURL} from 'node:url';
-import {SOURCE_PLAN,PHASES,transformSource,createRecorder,readRecord,validateRecord,MAX_RECORD_BYTES,RECORD_NAME,createLoadHook} from './startup-stages.mjs';
+import {SOURCE_PLAN,PHASES,transformSource,createRecorder,readRecord,validateRecord,MAX_RECORD_BYTES,RECORD_NAME,createLoadHook,RUNTIME_ADAPTER,CONFIG_CALL,SELECTED_CONFIG_CALL,selectConfigurationProvider} from './startup-stages.mjs';
 const sha=x=>createHash('sha256').update(x).digest('hex');
 const digest='a'.repeat(64);
 const temporary=fn=>{const dir=mkdtempSync(join(tmpdir(),'rolling-stages-'));chmodSync(dir,0o700);try{return fn(dir);}finally{rmSync(dir,{recursive:true,force:true});}};
-const record=history=>({schemaVersion:1,instrumented:true,helperSha256:digest,history});
+const record=history=>({schemaVersion:1,instrumented:true,runtimeAdapter:RUNTIME_ADAPTER,helperSha256:digest,history});
 
-test('all exact pinned SDK modules hash-bind, retain original bytes, and parse without execution',()=>temporary(dir=>{
+test('all exact pinned SDK modules hash-bind; only selected complete config call changes, and modules parse without execution',()=>temporary(dir=>{
  for(const plan of SOURCE_PLAN){
   const local=resolve('node_modules/@aztec-labs',plan.path.replace('/usr/src/yarn-project/',''));
   const source=readFileSync(local,'utf8'); const transformed=transformSource(source,plan);
-  assert.equal(transformed.replace(/^import \{ mark as __rollingStartupStage \}[^\n]*\n/,'').replace(/__rollingStartupStage\("[a-z0-9-]+","(?:begin|complete)"\);\n/g,''),source);
+  assert.equal(transformed.replace(/^import \{ mark as __rollingStartupStage \}[^\n]*\n/,'').replace(/__rollingStartupStage\("[a-z0-9-]+","(?:begin|complete)"\);\n/g,'').replace(SELECTED_CONFIG_CALL,CONFIG_CALL),source);
   const file=join(dir,'module.mjs');writeFileSync(file,transformed);
   const result=spawnSync(process.execPath,['--check',file],{encoding:'utf8',timeout:3000});
   assert.equal(result.status,0,'actual Node syntax check failed');
@@ -54,7 +54,7 @@ test('real dedicated atomic record retains nested begin/complete and no caller d
 }));
 
 test('malformed, forged-hash, nonnested, duplicate, overflow and extra-field records reject',()=>{
- const cases=[null,{...record([]),secret:'PRIVATE'}, {...record([]),helperSha256:'b'.repeat(64)}, {...record([]),schemaVersion:true},record([['factory','complete']]),record([['factory','begin'],['factory-bb','begin'],['factory','complete']]),record([['factory','begin'],['factory','complete'],['factory','begin']]),record([['SECRET','begin']]),record(Array(100).fill(['factory','begin']))];
+ const cases=[null,{...record([]),runtimeAdapter:'diagnostic-only'},{...record([]),runtimeAdapter:undefined},{...record([]),secret:'PRIVATE'}, {...record([]),helperSha256:'b'.repeat(64)}, {...record([]),schemaVersion:true},record([['factory','complete']]),record([['factory','begin'],['factory-bb','begin'],['factory','complete']]),record([['factory','begin'],['factory','complete'],['factory','begin']]),record([['SECRET','begin']]),record(Array(100).fill(['factory','begin']))];
  for(const value of cases)assert.throws(()=>validateRecord(value,digest));
 });
 
@@ -97,4 +97,40 @@ test('actual Node24 synchronous load hook substitutes only exact target and dere
 
 test('dangling record and temporary symlinks are rejected before recording',()=>temporary(dir=>{
  for(const name of [RECORD_NAME,'.stages.tmp']){const path=join(dir,name);symlinkSync(join(dir,'absent'),path);assert.throws(()=>createRecorder(dir,digest));rmSync(path);}
+}));
+
+test('configuration provider rewrite requires one exact complete call and independently enforces call count',()=>{
+ const plan=SOURCE_PLAN[0],local=resolve('node_modules/@aztec-labs',plan.path.replace('/usr/src/yarn-project/','')),source=readFileSync(local,'utf8');
+ assert.equal(source.split(CONFIG_CALL).length,2);assert.equal(selectConfigurationProvider(source),source.replace(CONFIG_CALL,SELECTED_CONFIG_CALL));
+ for(const changed of [source.replace(CONFIG_CALL,''),source+'\n'+CONFIG_CALL,source+'\ngetL1Config(other);',source.replace('nodeConfig.l1ChainId, nodeConfig.rollupVersion','11155111, nodeConfig.rollupVersion')]){
+  assert.throws(()=>selectConfigurationProvider(changed));assert.throws(()=>transformSource(changed,plan));assert.throws(()=>transformSource(changed,{...plan,sha256:sha(changed)}));
+ }
+ assert.throws(()=>transformSource(source+'\n// changed',plan));
+ assert.equal(readFileSync(local,'utf8'),source,'SDK disk bytes unchanged');
+});
+
+test('actual installed complete configuration call and merge retain all other arguments, awaited result, genesis guard and runtime providers',async()=>{
+ const source=readFileSync(resolve('node_modules/@aztec-labs',SOURCE_PLAN[0].path.replace('/usr/src/yarn-project/','')),'utf8');
+ const transformed=transformSource(source,SOURCE_PLAN[0]);
+ const start=transformed.indexOf('__rollingStartupStage("l1-config","begin");'),end=transformed.indexOf('    if (!options.sequencer');
+ assert(start>=0&&end>start);const actualBlock=transformed.slice(start,end);assert(actualBlock.includes(SELECTED_CONFIG_CALL));assert(actualBlock.includes('...addresses,\n        ...config'));assert(actualBlock.includes('if (!Fr.fromHexString(config.genesisArchiveTreeRoot).equals(genesisArchiveRoot))'));
+ const AsyncFunction=Object.getPrototypeOf(async function(){}).constructor;
+ const run=new AsyncFunction('nodeConfig','getL1Config','Fr','genesisArchiveRoot','process','__rollingStartupStage',actualBlock+'return {nodeConfig,addresses,config};');
+ const registry={},version=2914217885,ordinary=['https://sepolia.gateway.tenderly.co'],debug=['https://ethereum-sepolia-rpc.publicnode.com'];
+ const original={registryAddress:registry,l1RpcUrls:ordinary,l1DebugRpcUrls:debug,l1ChainId:11155111,rollupVersion:version,preserved:{}};
+ const addresses={rollupAddress:{toString:()=> '0xpublicrollup'},allReturnedAddresses:{}};
+ const config={genesisArchiveTreeRoot:'0xpublicroot',allReturnedConfiguration:{},aztecSlotDuration:72};
+ const history=[],environment={env:{}};let resolveRead,calls=0;
+ const pending=run(original,(r,urls,chain,v)=>{calls++;assert.equal(r,registry);assert.deepEqual(urls,['https://ethereum-sepolia-rpc.publicnode.com']);assert.equal(chain,11155111);assert.equal(v,version);return new Promise(resolve=>{resolveRead=resolve;});},{fromHexString(root){assert.equal(root,config.genesisArchiveTreeRoot);return {equals:actual=>actual==='independent-genesis'};}},'independent-genesis',environment,(...v)=>history.push(v));
+ assert.deepEqual(history,[['l1-config','begin']]);resolveRead({addresses,config});const result=await pending;assert.equal(calls,1);assert.equal(result.addresses,addresses);assert.equal(result.config,config);
+ assert.equal(result.nodeConfig.allReturnedAddresses,addresses.allReturnedAddresses);assert.equal(result.nodeConfig.allReturnedConfiguration,config.allReturnedConfiguration);assert.equal(result.nodeConfig.preserved,original.preserved);assert.equal(result.nodeConfig.l1RpcUrls,ordinary);assert.equal(result.nodeConfig.l1DebugRpcUrls,debug);assert.equal(original.l1RpcUrls,ordinary);assert.equal(environment.env.ROLLUP_CONTRACT_ADDRESS,'0xpublicrollup');
+ assert.deepEqual(history,[['l1-config','begin'],['l1-config','complete'],['genesis-compare','begin'],['genesis-compare','complete']]);
+ const failure={private:'NEVER_SERIALIZE'};for(const synchronous of [true,false]){let count=0;const steps=[];await assert.rejects(run(original,()=>{count++;if(synchronous)throw failure;return Promise.reject(failure);},{},'unused',{env:{}},(...v)=>steps.push(v)),e=>e===failure);assert.equal(count,1);assert.deepEqual(steps,[['l1-config','begin']]);}
+ const badSteps=[];await assert.rejects(run(original,async()=>({addresses,config}),{fromHexString:()=>({equals:()=>false})},'wrong',{env:{}},(...v)=>badSteps.push(v)),/does not match the expected/);assert.deepEqual(badSteps,[['l1-config','begin'],['l1-config','complete'],['genesis-compare','begin']]);
+ assert.equal(readFileSync(resolve('node_modules/@aztec-labs',SOURCE_PLAN[0].path.replace('/usr/src/yarn-project/','')),'utf8'),source);
+});
+
+test('attestation requires the exact semantic runtime adapter label rather than diagnostic-only claim',()=>temporary(dir=>{
+ const write=createRecorder(dir,digest);assert.equal(write('l1-config','begin'),true);const observation=readRecord(dir,digest);assert.equal(observation.runtimeAdapter,'publicnode-config-v1');
+ const missing={...observation};delete missing.runtimeAdapter;assert.throws(()=>validateRecord(missing,digest));assert.throws(()=>validateRecord({...observation,runtimeAdapter:'PRIVATE_SENTINEL'},digest));
 }));

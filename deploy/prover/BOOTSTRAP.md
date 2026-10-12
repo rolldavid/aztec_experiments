@@ -443,7 +443,7 @@ unchanged cgroup/stop budget remains the last resort. Regression tests inject
 ENOSPC at the first post-spawn receipt fsync after a real disposable child starts, covering ordinary
 termination and a child that ignores TERM. No Docker process is used by tests.
 
-## Bounded post-genesis diagnostic stages
+## Configuration provider adapter and bounded startup stages
 
 The runtime now packages `deploy/prover/startup-stages.mjs`. The hash-bound
 Python wrapper checks its exact SHA256, exclusively creates a dedicated 0700
@@ -463,22 +463,29 @@ byte-identical startup/factory modules. A real Mac Node 24 hook test validates
 replacement, untouched unrelated imports and deregistration; this is not a
 Linux node startup test. Before the CLI imports, all three exact module hashes
 and unique insertion anchors must match. At load time the original returned
-bytes are checked again. Only fixed begin/complete marker statements and one
-import are inserted; conditions, calls, arguments, awaits and cleanup remain
-byte-for-byte recoverable. SDK/image files on disk are unchanged. This execution
-is explicitly **instrumented**, not an unmodified-image qualification.
+bytes are checked again. Fixed begin/complete markers and one import are inserted.
+The one complete CLI `getL1Config` call also selects the fixed PublicNode URL
+in place of its `nodeConfig.l1RpcUrls` argument. All other arguments, the awaited
+complete result, genesis comparison, config merge, errors, retries and cleanup
+remain intact. Reversing this one argument replacement and removing markers
+recovers the exact original module bytes. SDK/image files on disk are unchanged.
+This execution has an explicit **semantic configuration-provider adapter plus
+instrumentation**; it is not an unmodified-image qualification or merely logging.
 
 The 25 intervals cover registry validation, rollup compatibility, L1 configuration,
 genesis comparison, telemetry, factory crypto/key-store/address/blob/snapshot/
 world-state/AVM/archiver/verifier/fee/P2P startup, and public/admin RPC binding.
 A begin without completion identifies an interval, not its error's cause. Marker
 I/O failure is sticky and cannot replace the application's result or thrown
-object. The helper emits no stdout/stderr diagnostics and never receives an
-error object, URL, runtime configuration, identity or return value.
+object. The helper emits no stdout/stderr diagnostics. Its recorder never receives an
+error object, URL, runtime configuration, identity or return value; provider
+selection is a fixed source-level literal rather than a runtime input.
 
 `startup.instrumentation` reads only `startup-stages/stages.json`: an owner-only
 regular file, maximum 8192 bytes, with strict schema, helper digest and a bounded,
-properly nested history. Unknown phases, extra fields, duplicate/reordered
+properly nested history and exact `runtimeAdapter: "publicnode-config-v1"`
+label. A missing/incorrect adapter label is rejected, including old diagnostic-only
+records. Unknown phases, extra fields, duplicate/reordered
 completions, changed digest, symlinks, nonregular files and public permissions
 are rejected. The fixed directory is separate from combined native output;
 marker-looking exception text cannot become a stage record. This is evidence
@@ -495,7 +502,9 @@ PROVER_VALIDATION_NODE=/absolute/path/to/pinned/node python3 scripts/test-prover
 ```
 
 Use the pinned Node 24.21.0 binary. Node tests parse all transformed SDK modules,
-recover the exact original bytes, exercise await/error/receiver semantics, and
+recover the exact original bytes by reversing the explicit adapter, execute the
+actual installed complete-call/config-merge block against labelled doubles,
+exercise await/error/receiver semantics, and
 verify bounded atomic records and malformed inputs. Python tests preserve the
 real disposable-child termination/escalation cases, now injecting failure at
 the first post-spawn fsync (after the additional directory sync). Package tests
@@ -532,3 +541,41 @@ data cap remains enforced. Every actual new capability/deadline combination
 must be regenerated and measured before launch; historical near-limit payloads
 are not reusable approval. Changing bootstrap bytes also requires a fresh
 manifest-bound runtime archive. No new launch is authorized by this change.
+
+### Explicit full configuration provider selection
+
+Operator07 failed before completion of CLI `getL1Config`. The separately approved
+`operator07-l1-config-live-1.json` reproduced HTTP429 from Tenderly during the
+complete configuration reads after successful address collection. The next
+`config-history-499-live-1.json` passed all11 phases: actual complete SDK
+PublicNode configuration, Tenderly deployment history and both providers' chain
+identity/common canonical anchor before and after. These are Mac prerequisites,
+not retrospective success for07 or a Linux qualification.
+
+The loader therefore changes exactly one SHA- and count-gated complete call:
+
+```js
+getL1Config(nodeConfig.registryAddress,
+  ['https://ethereum-sepolia-rpc.publicnode.com'],
+  nodeConfig.l1ChainId, nodeConfig.rollupVersion)
+```
+
+This is our explicit runtime adapter using the official function's URL argument,
+**not a stock SDK configuration flag**. Missing/duplicate call anchors, any
+changed whole-module bytes, or an incompatible loaded module fail before module
+execution. It does not edit installed SDK files, omit configuration fields,
+mutate `nodeConfig.l1RpcUrls`, rotate providers, or retry a failed provider.
+`ETHEREUM_HOSTS` stays Tenderly for ordinary/history/blob L1 reads and
+`ETHEREUM_DEBUG_HOSTS` stays PublicNode for debug reads. Returned values and
+genesis validation remain required. The updated helper digest binds this
+adaptation in packaging and in the dedicated stage attestation. Future operator
+receipt projectors must retain/validate the fixed `runtimeAdapter` field.
+
+Factory, epoch-cache and archiver still make parallel ordinary reads on Tenderly;
+this change has **not** established their sustained capacity. Real native Linux
+startup/readiness, strict trace/blob/history verification and query qualification
+remain release gates. No deployment, package build or paid launch is authorized
+by this source change. A future package needs a fresh complete manifest and
+actual <=16384-byte payload check, while all shutdown/masking/isolation controls
+remain unchanged. Reversal requires a reviewed explicit provider choice and new
+helper/package pins, never automatic fallback.
