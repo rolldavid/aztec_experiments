@@ -318,3 +318,24 @@ test('explicit recovery abort waits for the original private call and does not p
  assert.equal(await page.getByRole('dialog').getAttribute('aria-busy'),'true');await page.keyboard.press('Escape');assert(await page.getByRole('dialog').isVisible());assert.equal(await page.evaluate(()=>panel.privateStatus()),'recovering');
  await page.evaluate(()=>test.release());await page.getByRole('alert').waitFor();assert.equal(await page.evaluate(()=>panel.privateStatus()),'recovering');assert.equal(await page.evaluate(()=>test.preferenceReads),1);assert.equal(await page.evaluate(()=>test.sends),0);
 });
+
+// Actual production DOM and driver; account/RPC behavior remains a labelled UI double.
+test('preference lock driver waits for delayed reopen refresh before expanding security',async t=>{
+ const {lockRollingPreferencePanel}=await import('../../scripts/testing/rolling-preference-browser.mjs');
+ const {page}=await browserFixture(t);await open(page);await unlock(page);
+ await page.getByRole('button',{name:'Close account panel',exact:true}).click();
+ await page.evaluate(()=>test.hold='status');await open(page);
+ await page.waitForFunction(()=>typeof test.release==='function');
+ const dialog=page.getByRole('dialog'),deadline=Date.now()+3000;
+ const locking=lockRollingPreferencePanel({dialog,remaining:()=>Math.max(1,deadline-Date.now())});
+ // Attach rejection immediately so the intentionally failing pre-fix case cannot
+ // outlive this test or become an unhandled rejection during browser teardown.
+ const result=locking.then(value=>({value}),error=>({error}));let observationError;
+ try{
+  await page.waitForTimeout(200);
+  assert.equal(await dialog.getByText('Backup and account security',{exact:true}).evaluate(node=>node.parentElement.open),false,'Security must stay closed while refresh owns the panel');
+ }catch(error){observationError=error;}finally{await page.evaluate(()=>{test.hold=null;test.release();});}
+ const outcome=await result;if(observationError)throw observationError;if(outcome.error)throw outcome.error;assert.equal(outcome.value,'ready');
+ assert.equal(await page.evaluate(()=>test.closes),1);assert.equal(await page.evaluate(()=>test.ended),1);
+ assert.equal((await counts(page)).sends,0);assert.equal((await counts(page)).prepares,0);
+});

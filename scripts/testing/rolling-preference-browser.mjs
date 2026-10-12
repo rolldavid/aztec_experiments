@@ -71,12 +71,22 @@ export function createRollingPreferenceTraffic({origin:publicOrigin,trustedOrigi
  return Object.freeze({inspect,snapshot:()=>({...counts}),blocked:()=>{counts.blockedRequests++;},inspectionFailed:()=>{counts.inspectionErrors++;}});
 }
 
+// The production panel refreshes on reopen and replaces its details subtree.
+// Use its existing settled-state observer before expanding security controls.
+export async function lockRollingPreferencePanel({dialog,remaining}){
+ const state=await waitForRollingComposerState({dialog,ready:dialog.getByText('Backup and account security',{exact:true}),remaining});
+ if(state!=='ready')return state;
+ await dialog.getByText('Backup and account security',{exact:true}).click({timeout:remaining()});
+ await dialog.getByRole('button',{name:'Lock account',exact:true}).click({timeout:remaining()});
+ return waitForRollingComposerState({dialog,ready:dialog.getByRole('button',{name:'Reload to unlock',exact:true}),remaining});
+}
+
 export async function runRollingPreferenceBrowser(input){
- const started=Date.now();let stage='validation',browser,context,page,timer,expired=false,observer;
+ const started=Date.now();let stage='validation',browser,context,page,timer,expiresAt,expired=false,observer;
  const report={schemaVersion:1,passed:false,diagnostic:null,scope:'Production browser keys-only private preference recovery; parent authenticates chain setup and no-spend accounting',checks:{freshNativeDatabase:false,publicBeforeUnlock:false,completeRecovery:false,bookmarks:false,following:false,mainBoardFollow:false,lockClears:false,reloadLocked:false},recoverySteps:0,traffic:null,cleanup:{contextClosed:false,browserClosed:false}};
  try{
   const {directory,onStage=()=>{},...control}=input;if(typeof onStage!=='function')fail();
-  const selected=await validateRollingPreferenceBrowserControl(control,{directory});observer=createRollingPreferenceTraffic(selected);
+  const selected=await validateRollingPreferenceBrowserControl(control,{directory});observer=createRollingPreferenceTraffic(selected);expiresAt=started+selected.timeoutMs;
   const remaining=()=>{const ms=selected.timeoutMs-(Date.now()-started);if(ms<=0||expired)fail();return ms;};
   const mark=next=>{assert(stages.has(next));stage=next;onStage('rolling-preferences-'+next);remaining();};
   const {chromium}=await import('playwright');mark('launch');
@@ -122,13 +132,13 @@ export async function runRollingPreferenceBrowser(input){
   mark('bookmarks');await assertView('Bookmarks');report.checks.bookmarks=true;
   mark('main-board');await page.getByRole('navigation',{name:'Community'}).getByRole('link',{name:'Main board',exact:true}).click({timeout:remaining()});await page.getByRole('button',{name:'Unfollow board',exact:true}).waitFor({timeout:remaining()});assert(safeTraffic().boardRequests>0);report.checks.mainBoardFollow=true;
   await assertView('Bookmarks');
-  mark('lock');await page.getByRole('button',{name:'Manage private views',exact:true}).click({timeout:remaining()});await dialog.getByText('Backup and account security',{exact:true}).click({timeout:remaining()});await dialog.getByRole('button',{name:'Lock account',exact:true}).click({timeout:remaining()});
+  mark('lock');await page.getByRole('button',{name:'Manage private views',exact:true}).click({timeout:remaining()});assert.equal(await lockRollingPreferencePanel({dialog,remaining}),'ready');
   assert.equal(await page.locator('#content article.post').count(),0);await dialog.getByRole('button',{name:'Reload to unlock',exact:true}).waitFor({timeout:remaining()});assert.equal(await dialog.getByText('Your saved choices are ready.',{exact:true}).count(),0);report.checks.lockClears=true;
   const beforeReload=safeTraffic();mark('reload');await Promise.all([page.waitForEvent('load',{timeout:remaining()}),dialog.getByRole('button',{name:'Reload to unlock',exact:true}).click({timeout:remaining()})]);
   await page.getByRole('heading',{name:'Unlock and recover your private views',exact:true}).waitFor({timeout:remaining()});assert.equal(await page.locator('#content article.post').count(),0);
   assert(await page.evaluate(()=>globalThis.__aztec===undefined&&globalThis.BillboardAccount===undefined));const afterReload=safeTraffic();for(const k of ['walletAssets','privateRequests','feedRequests'])assert.equal(afterReload[k],beforeReload[k]);report.checks.reloadLocked=true;
   mark('complete');report.passed=true;
- }catch{report.passed=false;}
+ }catch{report.passed=false;if(expiresAt!==undefined&&Date.now()>=expiresAt)expired=true;}
  finally{
   clearTimeout(timer);
   if(context)try{await context.close();report.cleanup.contextClosed=true;}catch{report.passed=false;}else report.cleanup.contextClosed=true;
