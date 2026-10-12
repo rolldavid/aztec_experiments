@@ -1034,5 +1034,15 @@
     "cleanup_evidence": "evidence/G02/operator09-cleanup-readback.json",
     "final_fleet_evidence": "evidence/G02/operator09-fleet-final-readback-130614.json",
     "basis": "Full-hour compute/storage/network plus 30-day archive, tax, delayed billing and cleanup buffer retained after final deleted readback; no paid action."
+  },
+  "reconciliation_20261012_late": {
+    "at": "2026-10-12T20:40:28.272438+00:00",
+    "evidence": "evidence/G02/lead-readonly-reconciliation-20261012-late.json",
+    "evidence_sha256": "3a57f95036224e53a5657443fd4698de36ea3c775012c16f8da35e30cd7f9c16",
+    "confirmed": "Both existingAWSprofiles authenticated; all ledgercampaigninstances andvolumes absent; latestFleetdeleted. Plugin degraded/active0; remoteproverhealth timedout, not available.",
+    "bound_usd": 205.28,
+    "remaining_usd": 94.72,
+    "new_paid_action": false,
+    "cost_note": "Retained conservative archive/storage/network/delayedbilling/cleanup estimates unchanged; no zero-cost or currentinvoice claim."
   }
 }

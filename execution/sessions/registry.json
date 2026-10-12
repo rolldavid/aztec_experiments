@@ -13,21 +13,32 @@
       "branch": "codex/rolling-private-bok-candidate",
       "history_locator": "Codex runtime thread 01a12a75-1b50-7871-a73b-4253a1010194",
       "role": "lead",
-      "state": "worker-native profile2bc frozen independent review; sole integrator",
+      "state": "Solelead; root andintegrationb440, rootSDK/frontend/wallet manifests identicaltoindependentlyqualifiedisolatedcandidate",
       "working_branch": "codex/rolling-private-bok-candidate",
       "active_edit_paths": [
         "execution/"
       ],
       "additional_worktree": {
         "path": "../rolling-lead-social",
-        "branch": "codex/rolling-worker-native-profile",
+        "branch": "codex/rolling-pxe-store-atomicity",
         "owner": "lead-20261011",
-        "base": "b26cce3c47b44a45fdfc437830127179dd6f2eec",
-        "state": "early native initialization repair sole writer",
+        "base": "a75f24f8e11deb8585bf0540e9b26a0bdd20a3e5",
+        "state": "b440integratedtestedsourcefrozen; no runningjob",
         "allowed_paths": [
-          "prover/worker.mjs",
-          "prover/worker-native-profile.mjs",
-          "prover/worker-native-profile.test.mjs"
+          "scripts/test-sdk-storage-browser.mjs",
+          "scripts/test-sdk-storage.mjs",
+          "scripts/patch-indexeddb-atomicity.mjs",
+          "scripts/test-indexeddb-atomicity-patch.mjs",
+          "scripts/build-sdk.mjs",
+          "scripts/check-sdk.mjs",
+          "package.json",
+          "TESTING.md",
+          "scripts/fixtures/indexeddb-atomicity-6.0.0-rc.1/",
+          "scripts/test-sdk-manifest.mjs",
+          "shared/portal-runtime.json (normal SDK build generated output; must remain byte-identical)",
+          "scripts/testing/assets.mjs",
+          "apps/dist/aztec_bundle.js",
+          "apps/dist/sdk-manifest.json"
         ]
       },
       "trusted_sender_claim": {
@@ -39,7 +50,7 @@
         "state": "Mint daed763 finalized and fully accounted; permanent lease retained, no further send authorization assumed for this journal",
         "evidence": "evidence/G04/fee-mint-1791758790202.json"
       },
-      "frozen_candidate": null,
+      "frozen_candidate": "b44010c38da83d04b123382d92ed522b13b6979f",
       "allowed_paths": [
         "execution/",
         "scripts/testing/rolling-notification-fixture.mjs",
@@ -88,7 +99,7 @@
         ],
         "purpose": "Compose reviewed207+7867; explicit stopped-consumer PXE patch and normal SDK/walletbuild before realinitialreorg"
       },
-      "last_reconciled_at": "2026-10-12T13:53:30.983406+00:00"
+      "last_reconciled_at": "2026-10-12T21:24:24.486967+00:00"
     },
     {
       "logical_id": "recovery-probe-20261011",
@@ -100,7 +111,8 @@
       "branch": "none (read-only)",
       "history_locator": "collaboration runtime /root/recovery_probe, parent 01a12a75-1b50-7871-a73b-4253a1010194",
       "role": "disposable worker",
-      "state": "completed"
+      "state": "completed",
+      "last_reconciled_at": "2026-10-12T21:24:24.486967+00:00"
     },
     {
       "logical_id": "controls-20261011",
@@ -109,28 +121,44 @@
       "task": [
         "G14"
       ],
-      "branch": "codex/rolling-v6-rc3-feasibility",
+      "branch": "codex/rolling-v6-portal-alignment",
       "history_locator": "collaboration runtime /root/controls, parent 01a12a75-1b50-7871-a73b-4253a1010194",
       "role": "implementation worker",
-      "state": "6851 package pins frozen review; native/compiler provenance read-only",
+      "state": "Read-only rc3 compatibility comparison for reviewed Design59d utility/SDK patch; old Rolling build intent held for composition",
       "worktree": "../rolling-controls",
       "allowed_paths": [
-        "package.json",
-        "package-lock.json",
-        "toolchain.json",
-        "scripts/toolchain.mjs",
-        "scripts/test-toolchain-packages.mjs",
+        "scripts/testing/rolling-native-artifacts.mjs",
+        "scripts/testing/rolling-native-artifacts.test.mjs",
+        "crs-manifest.json",
+        "scripts/build-crs.mjs",
+        "shared/crs-client.js",
+        "scripts/test-crs-build.mjs",
+        "scripts/test-crs-consumers.mjs",
         "execution/evidence/G02/"
       ],
       "commit_trailer_aliases": {
         "Agent-Session": "controls",
         "Parent-Session": "lead"
       },
-      "base": "b26cce3c47b44a45fdfc437830127179dd6f2eec",
+      "base": "a3fb6af",
       "active_edit_paths": [
-        "execution/evidence/G02/rc3-native-compiler-provenance.json"
+        "apps/src/billboard/billboard_artifact.json",
+        "apps/src/billboard/deploy/billboard_artifact.json",
+        "apps/src/billboard/censor/billboard_artifact.json",
+        "apps/src/billboard/private_fee_artifact.json",
+        "plugins/adapter_artifact.json",
+        "apps/src/billboard/portal_bytecode.txt",
+        "apps/src/billboard/deploy/portal_bytecode.txt",
+        "billboard/portal/out/",
+        "billboard/target/",
+        "billboard/portal/cache/",
+        ".build/contracts-manifest.json",
+        "experiments/avatar/target/",
+        "experiments/private-bok/target/",
+        "execution/evidence/G02/"
       ],
-      "writer_released": true
+      "writer_released": false,
+      "last_reconciled_at": "2026-10-12T21:24:24.486967+00:00"
     },
     {
       "logical_id": "reviewer-20261011",
@@ -143,12 +171,14 @@
       "branch": "read-only candidate refs",
       "history_locator": "collaboration runtime /root/reviewer, parent 01a12a75-1b50-7871-a73b-4253a1010194",
       "role": "independent reviewer",
-      "state": "6851 source checks passed; worker-native2bc independent source/native checks",
+      "state": "Independent first rc3 base runtime/artifact review then Design59d actual52/52 review",
       "active_edit_paths": [
         "execution/evidence/G07/*independent*",
         "execution/evidence/G07/*review*",
-        "execution/evidence/G07/*diagnosis*"
-      ]
+        "execution/evidence/G07/*diagnosis*",
+        "execution/evidence/G02/*review*"
+      ],
+      "last_reconciled_at": "2026-10-12T21:24:24.486967+00:00"
     },
     {
       "logical_id": "design-20261011",
@@ -160,7 +190,7 @@
       "branch": "codex/rolling-compact-block-prototype",
       "history_locator": "collaboration runtime /root/design, parent01a12a75-1b50-7871-a73b-4253a1010194",
       "role": "implementation worker",
-      "state": "c6 actual ACIR accepted; commit guard source design read-only",
+      "state": "59d actual full component+ACIR52/52 passed; final packet plus read-only real cold consumer integration proposal",
       "worktree": "../rolling-design",
       "allowed_paths": [
         "billboard/rolling_contract/src/main.nr",
@@ -169,12 +199,14 @@
         "scripts/patch-pxe-preference-page.mjs",
         "scripts/test-pxe-preference-page.mjs"
       ],
-      "base": "ef36801ef215eeff400583e8454c3845744d580b",
+      "base": "c6bbe0d5db2a734758c790c6a6aa880ef3b04a73",
       "reference_candidate": "1351ea1b180b11475250463c9c40fdd2e342ab13",
       "writer_released": true,
       "active_edit_paths": [
-        "execution/evidence/G07/preference-page/commit-guard-design.json"
-      ]
+        "scripts/test-pxe-preference-page.mjs",
+        "execution/evidence/G07/preference-page/"
+      ],
+      "last_reconciled_at": "2026-10-12T21:24:24.486967+00:00"
     }
   ],
   "integrations": [
@@ -371,6 +403,24 @@
       "review": "evidence/G07/integration-3b259-final-review.json",
       "status": "integrated scoped development components; wholeG07 open",
       "history": "Original source commits and cherry-pick -x mappings retained in branch history; no squash."
+    },
+    {
+      "candidate": "b44010c38da83d04b123382d92ed522b13b6979f",
+      "base": "3b259e1422bddfd8d4a8121d1780be18e53b618c",
+      "task": "G07-notification-storage-components",
+      "agent_session": "lead-20261011",
+      "at": "2026-10-12T21:07:16.721567+00:00",
+      "reviewer": "reviewer-20261011",
+      "source_sessions": [
+        "lead-20261011",
+        "controls-20261011",
+        "design-20261011"
+      ],
+      "policy": "evidence/G07/integration-b440-policy.json",
+      "evidence": "evidence/G07/integration-b440-evidence.json",
+      "result": "evidence/G07/integration-b440-result.json",
+      "negative": "evidence/G07/integration-b440-negative-gate.json",
+      "scope": "Development components only; fullG07/rc3/remote/testnet/audit/soak/network gates remain. Source commits retained withoutsquash."
     }
   ],
   "candidate_transfers": [
