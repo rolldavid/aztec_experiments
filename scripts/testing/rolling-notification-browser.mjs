@@ -113,7 +113,7 @@ const stages=new Set(['validation','launch','locked','root-view','root-message',
 export const NOTIFICATION_BROWSER_CHECKS=Object.freeze(['freshNativeDatabase','publicBeforeUnlock','feeOnlyAccount','subscriptionReviewed','subscriptionConfirmed','subscriptionRecovered','unreadReply','markerReviewed','markerConfirmed','suppressedReply','publicReplyRetained','lockClears','reloadLocked','freshReopen','recoveredSuppression','noFinancialRecovery']);
 export async function runRollingNotificationBrowser(input){
  const started=Date.now();let stage='validation',browser,context,page,timer,expiresAt,expired=false,observer;
- const report={schemaVersion:1,passed:false,diagnostic:null,checks:Object.fromEntries(NOTIFICATION_BROWSER_CHECKS.map(k=>[k,false])),recoverySteps:0,traffic:null,cleanup:{contextClosed:false,browserClosed:false}};
+ const report={schemaVersion:1,passed:false,diagnostic:null,failureCategory:null,checks:Object.fromEntries(NOTIFICATION_BROWSER_CHECKS.map(k=>[k,false])),recoverySteps:0,traffic:null,cleanup:{contextClosed:false,browserClosed:false}};
  try{
   const {directory,onStage=()=>{},...control}=input;check(typeof onStage==='function');const c=await validateRollingNotificationBrowserControl(control,{directory});
   observer=createRollingNotificationTraffic({origin:c.origin,trustedOrigin:c.trustedOrigin,ethereumOrigin:c.ethereumOrigin});expiresAt=started+c.timeoutMs;
@@ -197,7 +197,7 @@ export async function runRollingNotificationBrowser(input){
   await context.close();context=null;mark('reopen');await newContext();await importKeys();report.checks.freshReopen=true;
   await suppressed();report.checks.recoveredSuppression=true;unchanged(beforeRecovery);report.checks.noFinancialRecovery=true;
   const t=traffic();check(t.proofSubmits===2&&t.nodeSubmissions===2&&t.completedWritePhases===2&&!t.writePhaseOpen);mark('complete');report.passed=true;
- }catch{report.passed=false;if(expiresAt!==undefined&&Date.now()>=expiresAt)expired=true;}
+ }catch{report.passed=false;report.failureCategory='browser-check-failed';if(expiresAt!==undefined&&Date.now()>=expiresAt)expired=true;}
  finally{clearTimeout(timer);if(context)try{await context.close();report.cleanup.contextClosed=true;}catch{report.passed=false;}else report.cleanup.contextClosed=true;
   if(browser)try{await browser.close();report.cleanup.browserClosed=!browser.isConnected();if(!report.cleanup.browserClosed)report.passed=false;}catch{report.passed=false;}else report.cleanup.browserClosed=true;}
  report.traffic=observer?.snapshot()??null;return {...report,stage,elapsedMs:Date.now()-started,timedOut:expired};
