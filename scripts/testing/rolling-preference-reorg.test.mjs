@@ -51,7 +51,8 @@ test('actual pinned Anvil SDK pauses and restores disabled/enabled interval mini
   // Pinned Anvil selects automining or interval mining; setting an interval
   // disables automining, while enabling automining clears the interval.
   for(const {automine,interval} of [{automine:true,interval:null},{automine:false,interval:null},{automine:false,interval:60}])await t.test(`automine=${automine}, interval=${interval}`,async()=>{
-   await eth.setAutomine(automine,{silent:true});await eth.setIntervalMining(interval??0,{silent:true});
+   await eth.setAutomine(false,{silent:true});await eth.setIntervalMining(interval??0,{silent:true});
+   if(automine)await eth.setAutomine(true,{silent:true});
    assert.equal(await eth.getIntervalMining(),interval);assert.equal(await eth.isAutoMining(),automine);
    const f=fixture(),sentinel=Error('Intentional boundary stop before chain mutation');let reached=false;
    f.options.eth=eth;f.options.readBoundary=async()=>{reached=true;assert.equal(await eth.isAutoMining(),false);assert.equal(await eth.getIntervalMining(),null);throw sentinel;};
