@@ -52,6 +52,17 @@ export async function writeComposerResultAndAwaitAck({directory,result,timeoutMs
   assert(Date.now()<deadline,'Composer observation acknowledgement unavailable');await sleep(25);
  }
 }
+export async function finishComposerEvidence({observation,verifyFees,receiver,persist,ack}){
+ assert(Array.isArray(verifyFees)&&verifyFees.length===2&&verifyFees.every(fn=>typeof fn==='function'));
+ const errors=[];observation.accounting={};
+ for(const [i,role]of ['a','b'].entries())try{await verifyFees[i]();observation.accounting[role]=true;}catch(error){observation.accounting[role]=false;errors.push(error);}
+ observation.accountingVerified=errors.length===0;observation.receiver=receiver();
+ try{assert.equal(observation.receiver.newProofJobs,0);assert.equal(observation.receiver.newNodeSubmissions,0);assert(observation.receiver.l1.forwarded>0);for(const key of ['rejected','errors','pending'])assert.equal(observation.receiver.l1[key],0);}catch(error){errors.push(error);}
+ if(errors.length)observation.passed=false;
+ await persist(); // Never acknowledge evidence that was not successfully saved.
+ await ack();
+ if(errors.length)throw new AggregateError(errors,'Composer final accounting or receiver checks failed');
+}
 export async function runRollingComposerFixture({ctx,actors,fees,claim,endpoint,network,artifact,scope,deployment,service,sendCount,observation,persist,verifyFees}){
  const {startRollingReader}=await import('../../apps/rolling/start.mjs');
  const {loadRollingWalletAssets}=await import('../rolling-wallet-assets.mjs');
@@ -61,7 +72,7 @@ export async function runRollingComposerFixture({ctx,actors,fees,claim,endpoint,
  const control=ctx.browserControl;assert.equal(control?.browserMode,'rolling-composer');assert.equal(control.browserEngine,'chromium');
  assert.equal(actors.length,2);assert.equal(fees.length,2);
  Object.assign(observation,{passed:false,scope:'Production browser encrypted import and composer; no browser posting/funding acceptance',cleanup:{}});
- assert.equal(typeof persist,'function');assert.equal(typeof verifyFees,'function');
+ assert.equal(typeof persist,'function');assert(Array.isArray(verifyFees)&&verifyFees.length===2);
  let l1,reader,failure,browserResult,before;
  try{
   const expectedNames={a:(await actors[0].application.ownedIdentities()).records,b:(await actors[1].application.ownedIdentities()).records};
@@ -102,15 +113,11 @@ export async function runRollingComposerFixture({ctx,actors,fees,claim,endpoint,
  finally{
   const errors=[];
   for(const [name,resource]of [['reader',reader],['l1',l1]])if(resource)try{await resource.close();observation.cleanup[name]=true;}catch(error){observation.cleanup[name]=false;errors.push(error);}
-  if(browserResult){
-   // Browser context is already closed. Account independently before allowing a
-   // failed worker exit to activate the supervisor's emergency process cleanup.
-   observation.receiver={newProofJobs:service.stats().submitted-before.proofs,newNodeSubmissions:sendCount()-before.sends,l1:l1.stats()};
-   try{await verifyFees();observation.accountingVerified=true;}catch(error){observation.accountingVerified=false;errors.push(error);}
-  }
   if(errors.length)observation.passed=false;
-  let persisted=false;try{await persist();persisted=true;}catch(error){errors.push(error);}
-  if(browserResult&&persisted)await fs.writeFile(path.join(ctx.directory,'composer-observed.json'),JSON.stringify({schemaVersion:1,observed:true}),{flag:'wx',mode:0o600});
+  if(before){
+   try{await finishComposerEvidence({observation,verifyFees,receiver:()=>({newProofJobs:service.stats().submitted-before.proofs,newNodeSubmissions:sendCount()-before.sends,l1:l1.stats()}),persist,
+    ack:async()=>{if(browserResult)await fs.writeFile(path.join(ctx.directory,'composer-observed.json'),JSON.stringify({schemaVersion:1,observed:true}),{flag:'wx',mode:0o600});}});}catch(error){errors.push(error);}
+  }else try{await persist();}catch(error){errors.push(error);}
   if(errors.length)throw new AggregateError([...(failure?[failure]:[]),...errors],'Composer fixture cleanup or accounting failed');
  }
 }

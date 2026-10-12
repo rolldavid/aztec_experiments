@@ -506,9 +506,10 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
         const {runRollingComposerFixture}=await import('./rolling-composer-fixture.mjs');
         try{await runRollingComposerFixture({ctx,actors:[actorA,actorB],fees:[fees,feesB],claim:claim.claim,endpoint,network,artifact:checked.artifact,
           scope:{chainId:network.chainId,rollupVersion:network.version,rollupAddress:network.rollup,boardAddress:String(ctx.instance.address),classId:String((await sdk.getContractClassFromArtifact(checked.artifact)).id)},
-          deployment:{blockNumber:Number(report.initialPublicAnchor.blockNumber),blockHash:report.initialPublicAnchor.blockHash,txHash:report.initialPublicAnchor.txHash},service,sendCount:()=>transportSends,observation:report.composer,persist:save,verifyFees:async()=>{
-            const bStandalone=BigInt(feesB.standalone.transactionFee);await fees.verify(feeTotal,feesB.browserFixture.fundedAmount-bStandalone-feeTotalB);await feesB.verify(feeTotalB,fees.browserFixture.fundedAmount-feeTotal);
-          }});}
+          deployment:{blockNumber:Number(report.initialPublicAnchor.blockNumber),blockHash:report.initialPublicAnchor.blockHash,txHash:report.initialPublicAnchor.txHash},service,sendCount:()=>transportSends,observation:report.composer,persist:save,verifyFees:[
+            ()=>fees.verify(feeTotal,feesB.browserFixture.fundedAmount-BigInt(feesB.standalone.transactionFee)-feeTotalB),
+            ()=>feesB.verify(feeTotalB,fees.browserFixture.fundedAmount-feeTotal)
+          ]});}
         finally{await save();}
       }
       if(multi){const bStandalone=BigInt(feesB.standalone.transactionFee);await fees.verify(feeTotal,feesB.browserFixture.fundedAmount-bStandalone-feeTotalB);await feesB.verify(feeTotalB,fees.browserFixture.fundedAmount-feeTotal);assert.equal(fees.poolBefore,feesB.poolBefore);report.accountFees={a:String(feeTotal),b:String(feeTotalB)};}else await fees.verify(feeTotal);report.actualHumanFees=String(feeTotal+feeTotalB);report.proverJobs=service.stats();

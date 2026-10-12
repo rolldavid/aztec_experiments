@@ -53,3 +53,19 @@ test('missing parent acknowledgement fails within explicit bound',async()=>{
  try{await assert.rejects(writeComposerResultAndAwaitAck({directory,result:{passed:false},timeoutMs:50}),/acknowledgement unavailable/);assert.equal(JSON.parse(await fs.readFile(path.join(directory,'browser-result.json'),'utf8')).passed,false);}
  finally{await fs.rm(directory,{recursive:true,force:true});}
 });
+
+const cleanReceiver=()=>({newProofJobs:0,newNodeSubmissions:0,l1:{forwarded:2,rejected:0,errors:0,pending:0}});
+test('A accounting failure still checks B then persists both failures before acknowledgement',async()=>{
+ const {finishComposerEvidence}=await import('./rolling-composer-fixture.mjs');const seen=[],observation={passed:true};const original=Error('synthetic A mismatch');let saved;
+ await assert.rejects(finishComposerEvidence({observation,verifyFees:[async()=>{seen.push('a');throw original;},async()=>seen.push('b')],receiver:cleanReceiver,persist:async()=>{seen.push('persist');saved=structuredClone(observation);},ack:async()=>seen.push('ack')}),e=>e instanceof AggregateError&&e.errors[0]===original);
+ assert.deepEqual(seen,['a','b','persist','ack']);assert.deepEqual(saved.accounting,{a:false,b:true});assert.equal(saved.passed,false);
+});
+for(const property of ['newProofJobs','newNodeSubmissions'])test('late '+property+' invalidates final evidence before acknowledgement',async()=>{
+ const {finishComposerEvidence}=await import('./rolling-composer-fixture.mjs');const observation={passed:true};let saved,acked=false;
+ await assert.rejects(finishComposerEvidence({observation,verifyFees:[async()=>{},async()=>{}],receiver:()=>({...cleanReceiver(),[property]:1}),persist:async()=>{saved=structuredClone(observation);},ack:async()=>{acked=true;}}),AggregateError);
+ assert.equal(saved.passed,false);assert.equal(saved.receiver[property],1);assert.equal(acked,true);
+});
+test('failed persistence never acknowledges or masks its failure',async()=>{
+ const {finishComposerEvidence}=await import('./rolling-composer-fixture.mjs');const failure=Error('synthetic storage failure');let acked=false;
+ await assert.rejects(finishComposerEvidence({observation:{passed:true},verifyFees:[async()=>{},async()=>{}],receiver:cleanReceiver,persist:async()=>{throw failure;},ack:async()=>{acked=true;}}),e=>e===failure);assert.equal(acked,false);
+});
