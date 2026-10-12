@@ -32,3 +32,53 @@ test('labelled transport double: measured request volume fits and the explicit c
   assert.throws(()=>assertRollingWireCampaign(observed),/truncated/);
  }finally{trace.close();globalThis.fetch=original;}
 });
+
+test('labelled actual Home HTTP: serialized sender and diagnostic receiver reconcile; invalid query and public identity cannot pass',async()=>{
+ const received=[];
+ const server=http.createServer((req,res)=>{received.push(req.url);res.setHeader('content-type','application/json');res.end(JSON.stringify({schemaVersion:1,complete:true}));});
+ server.listen(0,'127.0.0.1');await once(server,'listening');const original=fetch;
+ try{
+  const base='http://127.0.0.1:'+server.address().port;
+  for(const scenario of ['home','unknown-parameter','human-cursor']){
+   const trace=installRollingWireCampaign({roles});
+   try{
+    trace.registerEndpoint('public-reader',base);trace.setPhase('public-read');
+    if(scenario==='home'){
+     await (await fetch(base+'/api/home?limit=20&cursor=revision-page',{method:'GET',credentials:'omit',redirect:'error',cache:'no-store',headers:{Accept:'application/json'}})).json();
+     assert.equal(received.at(-1),'/api/home?limit=20&cursor=revision-page');
+    }else await (await fetch(base+'/api/home?'+(scenario==='unknown-parameter'?'limit=20&owner=PRIVATE_SENTINEL':'cursor='+roles.a))).json();
+    const s=trace.snapshot();assert.equal(s.requests,1);assert.equal(s.receiver.requests['public-reader'],1);assert.equal(s.receiver.errors,0);
+    assert.equal(s.rows.length,1);assert.equal(s.rows[0].label,'public-reader');assert.equal(s.rows[0].count,1);
+    // Other legs below are explicitly synthetic positive controls; this test
+    // qualifies only this actual Home HTTP leg, never the complete campaign.
+    const combined=observation();combined.rows[4]=s.rows[0];combined.unknown=s.unknown;combined.unsupported=s.unsupported;combined.truncated=s.truncated;combined.observerErrors=s.observerErrors;
+    combined.receiver.requests['public-reader']=s.receiver.requests['public-reader'];
+    if(scenario==='home'){assert.equal(s.requestCoverageComplete,true);assert.equal(assertRollingWireCampaign(combined).passed,true);}
+    else if(scenario==='unknown-parameter'){assert.equal(s.unknownReasons['reader-parameter'],1);assert.equal(s.requestCoverageComplete,false);assert.throws(()=>assertRollingWireCampaign(combined),/unknown/);}
+    else{assert.deepEqual(s.rows[0].roles,['a']);assert.throws(()=>assertRollingWireCampaign(combined),/exposed known human account/);}
+    assert(!JSON.stringify(s).includes('PRIVATE_SENTINEL'));assert(!JSON.stringify(s).includes(roles.a));
+   }finally{trace.close();assert.equal(fetch,original);}
+  }
+ }finally{server.closeAllConnections();await new Promise(r=>server.close(r));}
+});
+
+test('actual board HTTP sender and receiver match; known account in public ID fails campaign',async()=>{
+ const received=[];const server=http.createServer((req,res)=>{received.push(req.url);res.setHeader('content-type','application/json');res.end('{}');});
+ server.listen(0,'127.0.0.1');await once(server,'listening');const original=fetch;
+ try{
+  const base='http://127.0.0.1:'+server.address().port;
+  for(const id of ['0',roles.a]){const trace=installRollingWireCampaign({roles});
+   try{trace.registerEndpoint('public-reader',base);trace.setPhase('public-read');
+    await (await fetch(base+'/api/board?id='+id+'&limit=20')).json();
+    assert.equal(received.at(-1),'/api/board?id='+id+'&limit=20');const s=trace.snapshot();
+    assert.equal(s.requests,1);assert.equal(s.receiver.errors,0);assert.equal(s.receiver.requests['public-reader'],1);assert.equal(s.requestCoverageComplete,true);
+    assert.deepEqual(s.rows[0].methods,['reader_board']);assert.deepEqual(s.rows[0].roles,id==='0'?[]:['a']);
+    // Remaining legs are synthetic controls, not complete real-wallet evidence.
+    const combined=observation();combined.rows[4]=s.rows[0];
+    if(id==='0')assert.equal(assertRollingWireCampaign(combined).passed,true);
+    else assert.throws(()=>assertRollingWireCampaign(combined),/exposed known human account/);
+    assert(!JSON.stringify(s).includes(roles.a));
+   }finally{trace.close();assert.equal(fetch,original);}
+  }
+ }finally{server.closeAllConnections();await new Promise(r=>server.close(r));}
+});

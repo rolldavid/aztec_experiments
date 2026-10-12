@@ -18,7 +18,7 @@ const error=()=>{throw Object.defineProperty(Error('PRIVATE_SENTINEL'), 'code',{
 async function boundary(name){if(state.hold===name)await new Promise(resolve=>state.release=resolve);if(state.failure===name)error();}
 const application={
  async readAccountStatus(){await boundary('status');const intent=read();return intent&&!['confirmed','reverted','cancelled'].includes(intent.status)?{status:'recovering',intent}:{status:state.fee,privateFeeCredit:'1000',depositIds:state.fee==='fee-ready'?['9']:[]};},
- async ownedIdentities({cursor}){state.owned++;return cursor===0?{identities:['7'],records:[{id:'7',first:'River',last:'Lane'}],nextCursor:8}:{identities:['8'],records:[{id:'8',first:'Ellis',last:'Moss'}],nextCursor:null};},
+ async ownedIdentities({cursor}){state.owned++;const page=state.namesPages?.[cursor]??(cursor===0?{identities:['7'],records:[{id:'7',first:'River',last:'Lane'}],nextCursor:8}:{identities:['8'],records:[{id:'8',first:'Ellis',last:'Moss'}],nextCursor:null});await boundary('owned');return page;},
  async readProfile({name}){state.profileCalls++;await boundary('profile');return {name:'0x'+BigInt(name).toString(16).padStart(64,'0'),bioVersion:state.bioVersion,avatarVersion:state.avatarVersion};},
  async prepare(action){state.prepares++;if(['bio','avatar'].includes(action.type)&&action.expectedVersion!==state[action.type+'Version'])error();write({intentId:'42',action,maximumFee:'123',status:'prepared'});await boundary('prepare');return read();},
  async submitPrepared(id){state.sends++;write({...read(),status:'submitting'});await boundary('submit');const intent={...read(),status:state.submitOutcome??'confirmed'};write(intent);return intent;},
@@ -203,4 +203,66 @@ test('lost profile preparation acknowledgement retains saved intent and exact av
  await page.evaluate(()=>test.failure='prepare');await page.getByRole('button',{name:'Check action and review fee'}).click();await page.getByRole('button',{name:'Check account recovery'}).waitFor();assert.equal((await counts(page)).sends,0);
  await page.evaluate(()=>test.failure=null);await page.getByRole('button',{name:'Check account recovery'}).click();await page.waitForFunction(()=>{const b=[...document.querySelectorAll('button')].find(b=>b.textContent==='Confirm and send');return b&&!b.disabled;});assert.equal((await previewData(page)).data,preview.data);assert.equal(await page.evaluate(()=>test.profileCalls),1);
  await page.getByRole('button',{name:'Cancel prepared action'}).click();await page.getByRole('button',{name:'Check current profile version'}).waitFor();assert(await page.getByRole('button',{name:'Check action and review fee'}).isDisabled());assert.equal((await previewData(page)).data,preview.data);assert.equal((await counts(page)).sends,0);
+});
+
+test('private names view pages only on request and opens one public profile deliberately',async t=>{
+ const {page,requests}=await browserFixture(t);await open(page);await unlock(page);const owned=await page.evaluate(()=>test.owned);
+ await page.getByRole('button',{name:'Your names',exact:true}).click();await page.getByRole('heading',{name:'Your names',exact:true}).waitFor();
+ assert.equal(await page.evaluate(()=>test.owned),owned);assert.equal(await page.evaluate(()=>test.profileCalls),0);
+ assert.deepEqual(await page.getByRole('list',{name:'Your registered names'}).locator('li p').allTextContents(),['River Lane']);
+ await page.getByRole('button',{name:'Load more owned names',exact:true}).click();await page.getByRole('button',{name:'Edit bio for Ellis Moss',exact:true}).waitFor();
+ assert.equal(await page.evaluate(()=>test.owned),owned+1);assert.equal(await page.getByRole('button',{name:'Load more owned names',exact:true}).count(),0);
+ assert.equal(await page.evaluate(()=>test.profileCalls),0);assert(!requests.some(url=>url.includes('/api/')||url.includes('owned_')||url.includes('profile/')));
+ assert.equal(await page.getByRole('link',{name:'View public profile for Ellis Moss',exact:true}).getAttribute('href'),'#/profile/8');
+ await page.getByRole('link',{name:'View public profile for Ellis Moss',exact:true}).click();assert.equal(await page.evaluate(()=>location.hash),'#/profile/8');assert.equal(await page.getByRole('dialog').isVisible(),false);
+ assert(!requests.some(url=>url.includes('/api/')||url.includes('owned_')));assert.equal((await counts(page)).prepares,0);
+});
+
+test('names paging failure keeps existing names and retries only on explicit user action',async t=>{
+ const {page}=await browserFixture(t);await open(page);await unlock(page);await page.getByRole('button',{name:'Your names',exact:true}).click();
+ await page.evaluate(()=>test.failure='owned');await page.getByRole('button',{name:'Load more owned names',exact:true}).click();await page.getByRole('alert').waitFor();
+ const attempted=await page.evaluate(()=>test.owned);assert.equal(attempted,2);assert.deepEqual(await page.getByRole('list',{name:'Your registered names'}).locator('li p').allTextContents(),['River Lane']);
+ await page.getByRole('button',{name:'Actions',exact:true}).click();await page.getByRole('button',{name:'Your names',exact:true}).click();assert.equal(await page.evaluate(()=>test.owned),attempted);
+ await page.evaluate(()=>test.failure=null);await page.getByRole('button',{name:'Load more owned names',exact:true}).click();await page.getByRole('button',{name:'Edit bio for Ellis Moss',exact:true}).waitFor();assert.equal(await page.evaluate(()=>test.owned),attempted+1);
+ assert.equal((await counts(page)).sends,0);
+});
+
+test('names management reuses registration and version-checked profile fee confirmation',async t=>{
+ const {page}=await browserFixture(t);await open(page);await unlock(page);await page.getByRole('button',{name:'Your names',exact:true}).click();
+ await page.getByRole('button',{name:'Register a name',exact:true}).click();assert.equal(await page.getByLabel('Action',{exact:true}).inputValue(),'name');assert.equal(await page.evaluate(()=>test.profileCalls),0);
+ await page.getByLabel('First name',{exact:true}).fill('Mira');await page.getByLabel('Last name',{exact:true}).fill('Vale');await page.getByRole('button',{name:'Check action and review fee'}).click();await page.getByRole('button',{name:'Cancel prepared action'}).waitFor();
+ assert.deepEqual(await page.evaluate(()=>JSON.parse(sessionStorage.getItem('labelled-ui-intent')).action),{type:'name',first:'Mira',last:'Vale'});assert.equal((await counts(page)).sends,0);
+ await page.getByRole('button',{name:'Cancel prepared action'}).click();await page.getByRole('button',{name:'Your names',exact:true}).click();await page.getByRole('button',{name:'Edit bio for River Lane',exact:true}).click();
+ await page.getByLabel('Bio (empty to clear)').waitFor();assert.equal(await page.getByLabel('Profile name').inputValue(),'7');assert.equal(await page.evaluate(()=>test.profileCalls),1);
+ await page.getByLabel('Bio (empty to clear)').fill('Edit from private names');await page.getByRole('button',{name:'Check action and review fee'}).click();await page.getByRole('button',{name:'Confirm and send'}).waitFor();assert(await page.getByText(/Maximum network fee: 123/).isVisible());assert.equal((await counts(page)).sends,0);
+ await page.getByRole('button',{name:'Cancel prepared action'}).click();await page.getByRole('button',{name:'Your names',exact:true}).click();await page.getByRole('button',{name:'Edit avatar for River Lane',exact:true}).click();await page.getByLabel('Avatar image').waitFor();assert.equal(await page.getByLabel('Profile name').inputValue(),'7');assert.equal(await page.evaluate(()=>test.profileCalls),2);
+ await page.getByRole('button',{name:'Your names',exact:true}).click();await page.getByRole('button',{name:'Actions',exact:true}).click();await page.getByLabel('Action').selectOption('post');assert.deepEqual(await page.getByLabel('Posting identity').locator('option').allTextContents(),['Anonymous','River Lane']);
+});
+
+for(const boundary of ['owned','profile'])test(`account invalidation clears names/drafts immediately and discards delayed ${boundary} results`,async t=>{
+ const {page}=await browserFixture(t);await open(page);await unlock(page);await page.getByLabel('Message',{exact:true}).fill('PRIVATE_DRAFT_SENTINEL');await page.getByRole('button',{name:'Your names',exact:true}).click();
+ await page.evaluate(value=>test.hold=value,boundary);
+ await page.getByRole('button',{name:boundary==='owned'?'Load more owned names':'Edit bio for River Lane',exact:true}).click();await page.waitForFunction(()=>typeof test.release==='function');
+ await page.evaluate(()=>{test.options.onChange({invalidated:true});test.namesPages={0:{identities:['9'],records:[{id:'9',first:'Mira',last:'Vale'}],nextCursor:null}};});
+ assert.equal(await page.getByRole('link',{name:/View public profile/}).count(),0);assert.equal(await page.locator('dialog select').count(),0);assert(!/River Lane|Ellis Moss|PRIVATE_DRAFT_SENTINEL/.test(await page.getByRole('dialog').innerText()));
+ await page.evaluate(()=>test.release());await page.waitForFunction(()=>document.querySelector('dialog').getAttribute('aria-busy')==='false');
+ assert(!/River Lane|Ellis Moss|Mira Vale|PRIVATE_DRAFT_SENTINEL/.test(await page.getByRole('dialog').innerText()));assert.equal(await page.getByRole('button',{name:'Check action and review fee'}).count(),0);assert.equal((await counts(page)).sends,0);
+ await page.getByRole('button',{name:'Close account panel'}).click();await open(page);assert(!/River Lane|Ellis Moss|PRIVATE_DRAFT_SENTINEL/.test(await page.getByRole('dialog').innerText()));
+});
+
+test('locking from names management removes names and drafts without deleting retained recovery',async t=>{
+ const {page}=await browserFixture(t);await open(page);await unlock(page);await page.getByLabel('Message',{exact:true}).fill('PRIVATE_DRAFT_SENTINEL');await page.getByRole('button',{name:'Your names',exact:true}).click();
+ await page.getByText('Backup and account security',{exact:true}).click();await page.getByRole('button',{name:'Lock account',exact:true}).click();await page.getByRole('button',{name:'Reload to unlock'}).waitFor();
+ assert.equal(await page.evaluate(()=>test.ended),1);assert.equal(await page.evaluate(()=>test.closes),1);assert(!/River Lane|Ellis Moss|PRIVATE_DRAFT_SENTINEL/.test(await page.getByRole('dialog').innerText()));assert.equal(await page.getByRole('link',{name:/View public profile/}).count(),0);
+});
+
+test('empty private names view offers registration without inventing identities or public lookups',async t=>{
+ const {page,requests}=await browserFixture(t);await page.evaluate(()=>test.namesPages={0:{identities:[],records:[],nextCursor:null}});await open(page);await unlock(page);await page.getByRole('button',{name:'Your names',exact:true}).click();
+ assert(await page.getByText(/No registered names were found/).isVisible());assert.equal(await page.getByRole('link',{name:/View public profile/}).count(),0);assert.equal(await page.getByRole('button',{name:'Load more owned names'}).count(),0);
+ assert(await page.getByRole('button',{name:'Register a name',exact:true}).isEnabled());await page.getByRole('button',{name:'Actions',exact:true}).click();assert.deepEqual(await page.getByLabel('Posting identity').locator('option').allTextContents(),['Anonymous']);assert(!requests.some(url=>url.includes('/api/')));
+});
+for(const invalidPage of ['duplicate','cursor'])test('invalid private names '+invalidPage+' page preserves current list and stops without retry',async t=>{
+ const {page}=await browserFixture(t);await open(page);await unlock(page);await page.getByRole('button',{name:'Your names',exact:true}).click();
+ await page.evaluate(kind=>test.namesPages={8:kind==='duplicate'?{identities:['7'],records:[{id:'7',first:'Forged',last:'Label'}],nextCursor:null}:{identities:['8'],records:[{id:'8',first:'Ellis',last:'Moss'}],nextCursor:8}},invalidPage);
+ await page.getByRole('button',{name:'Load more owned names',exact:true}).click();await page.getByRole('alert').waitFor();assert.deepEqual(await page.getByRole('list',{name:'Your registered names'}).locator('li p').allTextContents(),['River Lane']);assert.equal(await page.evaluate(()=>test.owned),2);assert.equal((await counts(page)).sends,0);
 });

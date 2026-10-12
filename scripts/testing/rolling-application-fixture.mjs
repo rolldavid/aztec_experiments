@@ -17,7 +17,7 @@ const discard=()=>{};
 const silent=Object.assign(discard,Object.fromEntries(['trace','debug','verbose','info','warn','error','fatal'].map(k=>[k,discard])),
   {level:'silent',isLevelEnabled:()=>false,getBindings:()=>({}),createChild:()=>silent});
 const PERSONAL=['feePayer','publicCallSenders','publicCallTargets','publicCallCalldata','publicWriteSlots','publicWriteValues','publicLogContracts','publicLogFields'];
-const SOURCES=['scripts/testing/rolling-name-collision.mjs','scripts/testing/rolling-collision-observer.mjs','scripts/testing/rolling-trusted-recovery.mjs','scripts/testing/rolling-social-wire.mjs','scripts/testing/rolling-wire-campaign.mjs','scripts/testing/rolling-wire-trace.mjs','scripts/testing/rolling-owned-names.mjs','scripts/t03-public-footprint.mjs','scripts/testing/rolling-removed-like.mjs','scripts/testing/rolling-application-actor.mjs','scripts/testing/rolling-account-reactions.mjs','scripts/testing/rolling-social-acceptance.mjs','scripts/testing/rolling-profile-acceptance.mjs','experiments/avatar/raster-fixture.mjs','scripts/prove-application-action.mjs','scripts/testing/rolling-native-artifacts.mjs','scripts/testing/rolling-application-fixture.mjs','scripts/testing/scenarios.mjs','scripts/testing/scenario-flows.mjs',
+const SOURCES=['scripts/testing/rolling-rejected-withdrawal.mjs','scripts/application-post.mjs','scripts/c01-settle-application-message.mjs','scripts/c01-withdraw-l1.mjs','scripts/t04-browser-journey-verify.mjs','scripts/testing/rolling-subboard-acceptance.mjs','scripts/testing/rolling-name-collision.mjs','scripts/testing/rolling-collision-observer.mjs','scripts/testing/rolling-trusted-recovery.mjs','scripts/testing/rolling-social-wire.mjs','scripts/testing/rolling-wire-campaign.mjs','scripts/testing/rolling-wire-trace.mjs','scripts/testing/rolling-owned-names.mjs','scripts/t03-public-footprint.mjs','scripts/testing/rolling-removed-like.mjs','scripts/testing/rolling-application-actor.mjs','scripts/testing/rolling-account-reactions.mjs','scripts/testing/rolling-social-acceptance.mjs','scripts/testing/rolling-profile-acceptance.mjs','experiments/avatar/raster-fixture.mjs','scripts/prove-application-action.mjs','scripts/testing/rolling-native-artifacts.mjs','scripts/testing/rolling-application-fixture.mjs','scripts/testing/scenarios.mjs','scripts/testing/scenario-flows.mjs',
   'scripts/c01-real-node.mjs','scripts/c01-board-flow.mjs','scripts/c01-deposit-flow.mjs','scripts/c01-client-mining.mjs',
   'scripts/w01-private-fee-flow.mjs','scripts/w01-unfunded-wallet.mjs','scripts/w01-private-funding.mjs',
   'shared/sdk-entry.mjs','shared/private-pxe.mjs','shared/trusted-private-node.mjs','shared/routed-kernel-prover.mjs','shared/remote-prover-client.mjs',
@@ -235,8 +235,8 @@ export async function loadRollingFixtureSDK() {
 }
 
 export async function runRollingApplicationFixture(ctx,scenario='conversation') {
-  assert(['conversation','profiles','anonymous-thread','repost-reactions','account-reactions','owned-names','owned-names-wire','composer','social-wire','reaction-wire','trusted-recovery','name-race'].includes(scenario));
-  const race=scenario==='name-race',recovery=scenario==='trusted-recovery',composer=scenario==='composer',socialWire=scenario==='social-wire',reactionWire=scenario==='reaction-wire',wireSocial=socialWire||reactionWire,captureWire=scenario==='owned-names-wire'||wireSocial||recovery,names=['owned-names','owned-names-wire','composer'].includes(scenario),multi=scenario==='account-reactions'||names||wireSocial||recovery||race,social=['anonymous-thread','repost-reactions','account-reactions'].includes(scenario)||wireSocial;
+  assert(['conversation','profiles','anonymous-thread','repost-reactions','account-reactions','owned-names','owned-names-wire','composer','social-wire','reaction-wire','trusted-recovery','name-race','subboard-policy','rejected-subboard-withdrawal'].includes(scenario));
+  const rejectedWithdrawal=scenario==='rejected-subboard-withdrawal',subboards=scenario==='subboard-policy',race=scenario==='name-race',recovery=scenario==='trusted-recovery',composer=scenario==='composer',socialWire=scenario==='social-wire',reactionWire=scenario==='reaction-wire',wireSocial=socialWire||reactionWire,captureWire=scenario==='owned-names-wire'||wireSocial||recovery,names=['owned-names','owned-names-wire','composer'].includes(scenario),multi=scenario==='account-reactions'||names||wireSocial||recovery||race||subboards,social=['anonymous-thread','repost-reactions','account-reactions'].includes(scenario)||wireSocial||subboards||rejectedWithdrawal;
   const {ROOT,assertNodeVersion,assertAztecPackages}=await import('../toolchain.mjs');
   const directory=path.join(ROOT,'execution/evidence/G06','application-port-'+randomUUID());
   await fs.mkdir(directory,{mode:0o700});
@@ -249,7 +249,7 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
   const mark=async stage=>{if(ctx.applicationDeadlineAt!==undefined)assert(Date.now()<ctx.applicationDeadlineAt,'Parent campaign budget exhausted');report.stage=stage;ctx.mark?.('rolling-application:'+stage);await save();};
   const sourceBinding=async()=>Object.fromEntries(await Promise.all(SOURCES.map(async name=>[name,sha(await fs.readFile(path.join(ROOT,name)))])));
   let fees,feesB,actorA,actorB,activeActor,pxe,rpc,service,failure,restoreIndexedDB,nativeArtifacts,owner,appWallet,journal;
-  let wire,ordinaryRpc,completeTrustedRecovery,collisionObserver;
+  let wire,ordinaryRpc,completeTrustedRecovery,collisionObserver,withdrawalCompletion;
   let transportSends=0,feeTotalB=0n,fundingRole,collateralRole;
   let feeTotal=0n;const accounted=new Set();
   const accountFee=(hash,fee,other=false)=>{if(!accounted.has(hash)){assert(BigInt(fee)>0n);if(other)feeTotalB+=BigInt(fee);else feeTotal+=BigInt(fee);accounted.add(hash);}report.actualHumanFees=String(feeTotal+feeTotalB);};
@@ -414,7 +414,7 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
       const initialEvents=await decoder.decodeTransaction(ctx.node,hashes[0]);
       assert.equal(initialEvents.length,1);assert.equal(initialEvents[0].type,'MainPolicyPublished');
       report.initialPublicAnchor=initialEvents[0].position;projection.stage(initialEvents).apply();
-      const ids={},publicNameIds=[];const actorIntents=new Map();
+      const ids={},publicNameIds=[];const actorIntents=new Map(),withdrawalCaptures=new Map();
       async function action(input,type,selected=actorA) {
         activeActor=selected;const app=selected.application,journal=selected.journal;
         await mark(type);
@@ -436,7 +436,7 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
         await save();assertRollingPublicFootprint(row.publicFootprint);if(actorB)for(const category of PERSONAL)assert.equal(row.publicFootprint.rolePresence[category].otherAuthor,false);
         const events=await decoder.decodeTransaction(ctx.node,outcome.txHash);projection.stage(events).apply();hashes.push(outcome.txHash);
         for(const event of events)if(event.type==='NameRegistered')publicNameIds.push(event.payload.name_id);
-        row.events=events.map(e=>e.type);row.submission='included';await save();return events;
+        row.events=events.map(e=>e.type);row.submission='included';if(rejectedWithdrawal)withdrawalCaptures.set(outcome.txHash,{tx:saved.tx,receipt,effect:effect.data,events});await save();return events;
       }
       if(!social&&!names&&!race){
       const registered=await action({type:'name',first:'River',last:'Stone'},'name');
@@ -452,15 +452,15 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
       report.ownedNameRecovery.readableMetadataRecovered=true;await save();
       }
         async function moderate({kind,id,expectedVersion,mainVersion,localVersion=0,reason}){
-          assert(['avatar','post'].includes(kind));await mark(kind+'-moderation');const wallet=fees.browserFixture.wallet,operator=ctx.preparation.account.address;
+          assert(['avatar','post','main-policy','subboard'].includes(kind));await mark(kind+'-moderation');const wallet=fees.browserFixture.wallet,operator=ctx.preparation.account.address;
           assert(!operator.equals(owner));await wallet.pxe.sync();
           const {getFeeJuiceBalance}=await import('@aztec-labs/aztec.js/utils');
-          const before=await getFeeJuiceBalance(operator,ctx.node),bytes=Buffer.from(reason),packed=Array(7).fill(0n);
-          assert(bytes.length>0&&bytes.length<=217);
+          const before=await getFeeJuiceBalance(operator,ctx.node),bytes=Buffer.from(reason),packed=Array(kind==='main-policy'?32:7).fill(0n);
+          assert(bytes.length>0&&bytes.length<=packed.length*31);
           for(let i=0;i<bytes.length;i++)packed[Math.floor(i/31)]|=BigInt(bytes[i])<<BigInt(8*(30-i%31));
           const row={submission:'not attempted',operatorIdentityPublic:true};report[kind+'Moderation']=row;await save();
           const methods=Contract.at(ctx.instance.address,checked.artifact,wallet).methods,reasonFields=packed.map(n=>new Fr(n));
-          const interaction=kind==='avatar'?methods.remove_avatar(new Fr(BigInt(id)),expectedVersion,mainVersion,reasonFields,bytes.length):methods.remove_post(new Fr(BigInt(id)),mainVersion,localVersion,reasonFields,bytes.length);
+          const interaction=kind==='main-policy'?methods.set_main_policy(reasonFields,bytes.length):kind==='subboard'?methods.reject_subboard(new Fr(BigInt(id)),reasonFields,bytes.length):kind==='avatar'?methods.remove_avatar(new Fr(BigInt(id)),expectedVersion,mainVersion,reasonFields,bytes.length):methods.remove_post(new Fr(BigInt(id)),mainVersion,localVersion,reasonFields,bytes.length);
           const {tx}=await proveApplicationAction({wallet,owner:operator,interaction,payerMode:'genesis'}),hash=tx.getTxHash();
           row.txHash=String(hash);row.submission='outcome unknown';
           const intent=await fs.open(path.join(directory,kind+'-moderation-intent.json'),'wx',0o600);
@@ -482,7 +482,7 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
           assert.equal(before-after,BigInt(receipt.transactionFee));assert(BigInt(receipt.transactionFee)>0n);
           row.publicFootprint=classifyRollingApplicationFootprint({tx,effect:effect.data,owner,otherOwner:actorB?.owner,payer:fees.browserFixture.instance.address,board:ctx.instance.address});
           for(const category of PERSONAL){assert.equal(row.publicFootprint.rolePresence[category].author,false);if(actorB)assert.equal(row.publicFootprint.rolePresence[category].otherAuthor,false);}
-          const events=await decoder.decodeTransaction(ctx.node,String(hash));projection.stage(events).apply();hashes.push(String(hash));row.events=events.map(e=>e.type);await save();return events;
+          const events=await decoder.decodeTransaction(ctx.node,String(hash));projection.stage(events).apply();hashes.push(String(hash));row.events=events.map(e=>e.type);if(rejectedWithdrawal)withdrawalCaptures.set(String(hash),{tx,receipt,effect:effect.data,events});await save();return events;
         }
       if(race){
         const {createRollingNameCollisionPlan,createNameCollisionClassifier,assertNameCollisionPending,assertNameCollisionOutcome}=await import('./rolling-name-collision.mjs');
@@ -635,7 +635,125 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
           }finally{checkpoints.restore();}
         }
         const options={deposit,action,projection,waitPostAdmission,moderatePost:args=>moderate({kind:'post',id:args.postId,...args})};
-        if(wireSocial){
+        if(rejectedWithdrawal){
+          const {beginRollingRejectedWithdrawal,completeRollingRejectedWithdrawal}=await import('./rolling-rejected-withdrawal.mjs');
+          const {exactApplicationDeposit}=await import('../application-post.mjs');
+          const {NoteStatus}=await import('@aztec-labs/stdlib/note');
+          const {deriveStorageSlotInMap}=await import('@aztec-labs/stdlib/hash');
+          const {c01BoardEconomics}=await import('../c01-board-flow.mjs');
+          const anchorRecord=(header,blockHash)=>({blockNumber:String(header.globalVariables.blockNumber),blockHash:String(blockHash),
+            noteHashRoot:String(header.state.partial.noteHashTree.root),noteHashSize:String(header.state.partial.noteHashTree.nextAvailableLeafIndex),
+            nullifierRoot:String(header.state.partial.nullifierTree.root),nullifierSize:String(header.state.partial.nullifierTree.nextAvailableLeafIndex)});
+          const capture=async hash=>{
+            const original=withdrawalCaptures.get(hash);assert(original);const {tx,receipt,effect,events}=original;
+            assert(!tx.chonkProof.isEmpty());assert.equal(String(tx.getTxHash()),hash);assert.equal(String(effect.txHash),hash);
+            const anchor=tx.data.constants.anchorBlockHeader,canonical=await ctx.node.getBlockData(anchor.getBlockNumber());
+            assert.equal(String(canonical.blockHash),String(await anchor.hash()));
+            return {events,txHash:hash,anchorTimestamp:String(anchor.globalVariables.timestamp),nullifiers:effect.nullifiers.map(String),l2ToL1Msgs:effect.l2ToL1Msgs.map(String),
+              canonical:{blockNumber:String(receipt.blockNumber),blockHash:String(receipt.blockHash),effectSha256:sha(effect.toBuffer())}};
+          };
+          const readDeposit=async()=>{
+            await actorA.pxe.sync();const header=await actorA.pxe.getSyncedBlockHeader();
+            const canonical=await ctx.node.getBlockData(header.getBlockNumber());assert.equal(String(canonical.blockHash),String(await header.hash()));
+            const fields=(await Contract.at(ctx.instance.address,checked.artifact,actorA.wallet).methods.get_deposit_info(actorA.owner,claim.claim.depositChainId).simulate({from:actorA.owner})).result.map(value=>BigInt(value.toString()));
+            assert.equal(fields.length,10);
+            const notes=(await actorA.pxe.debug.getNotes({contractAddress:ctx.instance.address,owner:actorA.owner,storageSlot:checked.artifact.storageLayout.deposits.slot,status:NoteStatus.ACTIVE,scopes:[actorA.owner]})).filter(note=>note.note.items[1]?.equals(claim.claim.depositChainId));
+            if(fields.every(value=>value===0n)){assert.equal(notes.length,0);return {fields:fields.map(String),nullifier:null,txHash:null,anchor:anchorRecord(header,canonical.blockHash)};}
+            assert.equal(notes.length,1);const note=await exactApplicationDeposit({wallet:actorA.wallet,artifact:checked.artifact,instance:ctx.instance,owner:actorA.owner,chain:claim.claim.depositChainId,fields,txHash:notes[0].txHash});
+            return {fields:fields.map(String),nullifier:String(note.siloedNullifier),txHash:String(note.txHash)};
+          };
+          const waitCanonicalAnchor=async timestamp=>{
+            await actorA.pxe.sync();const checkpoints=createT04CheckpointScope(ctx.node.getSequencer()),deadline=Math.min(Date.now()+90000,ctx.applicationDeadlineAt);
+            try{checkpoints.enable();while(BigInt((await actorA.pxe.getSyncedBlockHeader()).globalVariables.timestamp)<BigInt(timestamp)){
+              assert(Date.now()<deadline);await mineL1();await actorA.pxe.sync();}
+              await drainT04Checkpoints({node:ctx.node,l1Client:ctx.l1Client,rollupAddress:network.rollup,checkpoints,deadline});
+              await actorA.pxe.sync();const header=await actorA.pxe.getSyncedBlockHeader();assert(BigInt(header.globalVariables.timestamp)>=BigInt(timestamp));
+              assert.equal(String((await ctx.node.getBlockData(header.getBlockNumber())).blockHash),String(await header.hash()));
+            }finally{checkpoints.restore();}
+          };
+          const economics=c01BoardEconomics(ctx.preparation),escrow=claim.claim;
+          const checkpoint=await beginRollingRejectedWithdrawal({actor:{deposit,activity:actorA.activity,prepare:input=>actorA.application.prepare(input),
+            isRejectedSubboardError:error=>error?.code==='ROLLING_SUBBOARD_REJECTED',readDeposit,
+            action:async(input,label)=>{await action(input,label,actorA);return capture(report.transactions.at(-1).txHash);}},projection,
+            rejectSubboard:async({id,reason})=>{await moderate({kind:'subboard',id,reason});return capture(report.subboardModeration.txHash);},waitCanonicalAnchor,
+            readAdmission:async id=>{const head=await ctx.node.getBlockData('checkpointed'),ref={hash:String(head.blockHash)},result={};
+              for(const [key,slot]of [['published','post_time'],['deadline','post_flag_deadline'],['flag','post_flagged']])result[key]=String((await ctx.node.getPublicStorageAt(ref,ctx.instance.address,await deriveStorageSlotInMap(checked.artifact.storageLayout[slot].slot,new Fr(BigInt(id))))).toBigInt());
+              assert.equal(String((await ctx.node.getBlockData(head.header.getBlockNumber())).blockHash),String(head.blockHash));return result;},
+            scope:escrow.scope,economics:Object.fromEntries(['minDeposit','baseCooldown','censorWindow','maxSaveUp'].map(k=>[k,economics[k]]))});
+          // Preserve ordinary canonical reads and fee/journal checks before the
+          // real-wall miner stops. The one-use continuation is kept only in RAM.
+          const postRow=report.transactions.find(row=>row.action==='withdrawal-post'),post=projection.feed({limit:100}).posts[0];assert.equal(post.position.txHash,postRow.txHash);
+          const board=projection.board(post.record.subboard),enrich=value=>({...value,names:{},boards:{[board.id]:{id:board.id,name:board.name,slug:board.slug}}});
+          const expectedHTTP=[{route:'feed',parameters:{limit:100},expected:enrich({posts:[post],nextCursor:null})},
+            {route:'thread',parameters:{root:post.id,limit:100},expected:enrich({posts:[post],nextCursor:null})},
+            {route:'post',parameters:{id:post.id},expected:enrich({post})}];
+          const directoryView=projection.directory({limit:100});expectedHTTP.push({route:'directory',parameters:{limit:100},expected:{boards:directoryView.boards,nextCursor:directoryView.nextCursor}});
+          report.social={scenario:'rejected-subboard-withdrawal',privateTransactions:4,expectedHTTP,l2ExitVerified:true,fullWithdrawalPassed:false};
+          withdrawalCompletion=async()=>{
+            const verifyCanonical=async({captures,absenceAnchor})=>{
+              const actual=[];
+              for(const wanted of captures){const row=withdrawalCaptures.get(wanted.txHash);assert(row);
+                const receipt=await ctx.node.getTxReceipt(TxHash.fromString(wanted.txHash)),effect=await ctx.node.getTxEffect(TxHash.fromString(wanted.txHash));
+                assert(['checkpointed','proven','finalized'].includes(receipt.status));assert.equal(receipt.executionResult,'success');
+                assert.equal(String(receipt.blockNumber),wanted.canonical.blockNumber);assert.equal(String(receipt.blockHash),wanted.canonical.blockHash);
+                assert.equal(String((await ctx.node.getBlockData(receipt.blockNumber)).blockHash),wanted.canonical.blockHash);
+                assert.equal(String(effect.l2BlockHash),wanted.canonical.blockHash);assert.equal(Number(effect.l2BlockNumber),Number(receipt.blockNumber));
+                assert.equal(sha(effect.data.toBuffer()),wanted.canonical.effectSha256);assert.equal(String(effect.data.txHash),wanted.txHash);
+                const events=await decoder.decodeTransaction(ctx.node,wanted.txHash);assert.deepEqual(events,wanted.events);
+                actual.push({...await capture(wanted.txHash),events,nullifiers:effect.data.nullifiers.map(String),l2ToL1Msgs:effect.data.l2ToL1Msgs.map(String)});
+              }
+              const previous=await ctx.node.getBlockData(Number(absenceAnchor.blockNumber));assert.equal(String(previous.blockHash),absenceAnchor.blockHash);
+              assert.deepEqual(anchorRecord(previous.header,previous.blockHash),absenceAnchor);
+              const current=await ctx.node.getBlockData('checkpointed'),state=anchorRecord(current.header,current.blockHash);
+              assert(BigInt(state.blockNumber)>=BigInt(absenceAnchor.blockNumber));
+              for(const key of ['noteHashRoot','noteHashSize','nullifierRoot','nullifierSize'])assert.equal(state[key],absenceAnchor[key]);
+              return {captures:actual,stateContinuity:true};
+            };
+            const settleAndRefund=async input=>{
+              await mark('rejected-withdrawal-local-settlement');const actual=withdrawalCaptures.get(input.exit.txHash);assert(actual);assert.equal(input.depositor,escrow.depositor);assert.equal(input.amount,String(escrow.amount));
+              const {settleC01ApplicationMessage}=await import('../c01-settle-application-message.mjs');
+              const {withdrawC01L1}=await import('../c01-withdraw-l1.mjs');
+              try{report.exitSettlement=await settleC01ApplicationMessage({node:ctx.node,config:ctx.config,dateProvider:ctx.dateProvider,l1Client:ctx.l1Client,directory:ctx.directory,rollupAddress:ctx.rollupAddress,
+                txHash:input.exit.txHash,expectedLeaf:input.expectedExitLeaf,kind:'exit',applicationProofs:real});}catch(error){if(error.settlementObservation)report.exitSettlement=error.settlementObservation;await save();throw error;}await save();
+              const exitResult={passed:true,exitEmitted:true,exactNoteNullifierEmitted:true,activeNoteAbsent:true,blockNumber:String(actual.receipt.blockNumber),
+                expectedExitContent:input.expectedExitContent,expectedExitLeaf:input.expectedExitLeaf};
+              Object.defineProperty(exitResult,'exit',{value:{tx:actual.tx,claim:escrow,instance:ctx.instance}});
+              await mark('rejected-withdrawal-original-depositor-refund');
+              try{report.withdrawalRefund=await withdrawC01L1({node:ctx.node,preparation:ctx.preparation,ready:ctx.ready,exitResult,settlement:report.exitSettlement,l1Client:ctx.l1Client,rpcUrl:ctx.config.l1RpcUrls[0]});}
+              catch(error){if(error.withdrawalObservation)report.withdrawalRefund=error.withdrawalObservation;await save();throw error;}
+              await save();return {settlement:report.exitSettlement,refund:report.withdrawalRefund};
+            };
+            report.withdrawal=await completeRollingRejectedWithdrawal(checkpoint,{quiescence:{privateActorsClosed:report.cleanup.applicationActorA===true&&report.cleanup.fundingWallet===true,
+              minerStopped:report.applicationMining.clientMining.stopped,minerPassed:report.applicationMining.clientMining.passed,autominingRestored:report.applicationMining.clientMining.autominingRestored},verifyCanonical,settleAndRefund});
+            report.social.fullWithdrawalPassed=true;await save();
+          };
+        }else if(subboards){
+          const {exerciseRollingSubboardAcceptance}=await import('./rolling-subboard-acceptance.mjs');
+          const privateRead=async(method,args)=>{await actorA.pxe.sync();const result=(await Contract.at(ctx.instance.address,checked.artifact,actorA.wallet).methods[method](...args).simulate({from:actorA.owner})).result;assert(Array.isArray(result));return result.map(value=>typeof value==='boolean'?value:String(BigInt(value.toString())));};
+          report.home={};
+          const inspectHome=async({phase,subboardId,post})=>{
+            await mark('subboard-home-'+phase);assert(['published','rejected'].includes(phase));
+            const {verifyRollingPublicReader}=await import('./rolling-public-acceptance.mjs');
+            report.home[phase]={};
+            for(const selected of (phase==='published'?[false,true]:[true])){
+              const label=selected?'curated':'default',included=selected&&phase==='published',board=projection.board(subboardId);
+              const observation=report.home[phase][label]={};await save();
+              await verifyRollingPublicReader({node:ctx.node,artifact:checked.artifact,
+                scope:{chainId:network.chainId,rollupVersion:network.version,rollupAddress:network.rollup,boardAddress:String(ctx.instance.address),classId:String((await sdk.getContractClassFromArtifact(checked.artifact)).id)},
+                deployment:{blockNumber:Number(report.initialPublicAnchor.blockNumber),blockHash:report.initialPublicAnchor.blockHash,txHash:report.initialPublicAnchor.txHash},
+                cacheDirectory:path.join(ctx.directory,'rolling-home-'+phase+'-'+label),scenario:'subboard-home',homeSubboards:selected?[subboardId]:[],
+                expectedHTTP:[{route:'home',parameters:{limit:100},expected:{posts:included?[post]:[],nextCursor:null,names:{},boards:included?{[subboardId]:{id:subboardId,name:board.name,slug:board.slug}}:{}}}],
+                deadlineAt:ctx.applicationDeadlineAt,observation});await save();
+            }
+          };
+          report.social=await exerciseRollingSubboardAcceptance({
+            creator:{action:(input,label)=>action(input,label,actorB),readAccountStatus:()=>actorB.application.readAccountStatus()},
+            publisher:{deposit,action:(input,label)=>action(input,label,actorA),prepare:input=>actorA.application.prepare(input),waitPostAdmission,
+              readDeposit:()=>privateRead('get_deposit_info',[actorA.owner,new Fr(BigInt(deposit))]),activity:actorA.activity,
+              isRejectedSubboardError:error=>error?.code==='ROLLING_SUBBOARD_REJECTED'},
+            moderator:{setMainPolicy:({rules})=>moderate({kind:'main-policy',reason:rules}),rejectSubboard:({id,reason})=>moderate({kind:'subboard',id,reason})},
+            readPolicy:id=>privateRead('effective_policy',[new Fr(BigInt(id))]),inspectHome,projection});
+        }else if(wireSocial){
           const {exerciseRollingSocialWire,exerciseRollingReactionWire}=await import('./rolling-social-wire.mjs');
           const actorOptions=(selected,selectedClaim)=>({action:(input,label)=>action(input,label,selected),ownedIdentities:options=>selected.application.ownedIdentities(options),
             ...(selectedClaim?{deposit:String(selectedClaim.claim.depositChainId),waitPostAdmission:()=>waitPostAdmission(selected,String(selectedClaim.claim.depositChainId))}:{})});
@@ -691,7 +809,7 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
       if(names){const {assertCanonicalOwnedNameProfiles}=await import('./rolling-public-acceptance.mjs');assertCanonicalOwnedNameProfiles(rebuilt,report.publicViews);}
       else if(social){const {assertCanonicalSocialViews}=await import('./rolling-public-acceptance.mjs');assertCanonicalSocialViews(rebuilt,report.social.expectedHTTP);}
       else assert.deepEqual((scenario==='profiles'||recovery||race)?rebuilt.profile(ids.nameId,{limit:100}):assertRollingApplicationViews(rebuilt,ids),report.publicViews);
-      for(const row of [...report.transactions,...(report.avatarModeration?[report.avatarModeration]:[]),...(report.postModeration?[report.postModeration]:[])])assert.equal(String((await ctx.node.getBlockData(row.blockNumber)).blockHash),row.blockHash);
+      for(const row of [...report.transactions,...(report.avatarModeration?[report.avatarModeration]:[]),...(report.postModeration?[report.postModeration]:[]),...(report['main-policyModeration']?[report['main-policyModeration']]:[]),...(report.subboardModeration?[report.subboardModeration]:[])])assert.equal(String((await ctx.node.getBlockData(row.blockNumber)).blockHash),row.blockHash);
       assert.equal(String((await ctx.node.getBlockData(Number(report.initialPublicAnchor.blockNumber))).blockHash),report.initialPublicAnchor.blockHash);
       report.rebuild={passed:true,canonicalTransactionsRefetched:hashes.length,normalizedCacheTreatedAsAuthority:false};
       wire?.setPhase('public-read');await mark('canonical-public-http-reopen');report.publicReader={};await save();
@@ -715,7 +833,7 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
       assert.equal(report.proverJobs.failed,0);if(recovery){assert.equal(report.proverJobs.completed,1);assert.equal(report.proverJobs.submitted,1);}
       else if(race){assert.equal(report.proverJobs.completed,2);assert.equal(report.proverJobs.submitted,2);}
       else if(names){assert.equal(report.proverJobs.completed,4);assert.equal(report.proverJobs.submitted,4);}
-      else if(social){const expectedJobs=scenario==='anonymous-thread'?3:multi?6:4;assert.equal(report.proverJobs.completed,expectedJobs);assert.equal(report.proverJobs.submitted,expectedJobs);}
+      else if(social){const expectedJobs=subboards?2:scenario==='anonymous-thread'?3:multi?6:4;assert.equal(report.proverJobs.completed,expectedJobs);assert.equal(report.proverJobs.submitted,expectedJobs);}
       else{assert.equal(report.proverJobs.completed,5);assert.equal(report.proverJobs.submitted,5);}
       assert.equal(report.proverJobs.running,false);
       if(recovery){
@@ -819,7 +937,13 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
       }
       nativeArtifacts.verify();report.nativeArtifacts=nativeArtifacts.observation();
       assert.deepEqual(await sourceBinding(),report.sourceHashes);assert.deepEqual(buildInputs(),manifest.inputs);
-      report.passed=!recovery;await mark(recovery?'trusted-recovery-prepared':'complete');
+      if(rejectedWithdrawal){
+        // Close private query users before leaving the sole real-wall mining
+        // scope. Official settlement later advances only this disposable chain.
+        await closeRollingResources([['applicationActorA',()=>actorA.close()],['fundingWallet',()=>fees.close()],
+          ['proverAndQuery',async()=>{const port=service.address.port;await service.close();await closedPort(port);}],['nodeRPC',()=>rpc.close()]],report.cleanup);
+        activeActor=actorA=undefined;fees=undefined;service=rpc=undefined;
+      }else{report.passed=!recovery;await mark(recovery?'trusted-recovery-prepared':'complete');}
       }catch(error){
         // Keep the exact failure; diagnostic failures must not replace it.
         try{await observe('application-failed');}catch{report.readinessIncomplete=true;}
@@ -828,6 +952,7 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
     });
     assert.equal(report.applicationMining.clientMining.stopped,true);assert.equal(report.applicationMining.clientMining.passed,true);
     if(recovery){await completeTrustedRecovery();assert.deepEqual(await sourceBinding(),report.sourceHashes);nativeArtifacts.verify();report.passed=true;await mark('complete');}
+    if(rejectedWithdrawal){assert.equal(typeof withdrawalCompletion,'function');await withdrawalCompletion();report.passed=true;await mark('complete');}
   }catch(error){
     failure=error;report.passed=false;
     // Keep only fixed/public observation schemas. Never raw SDK error/cause/stack.

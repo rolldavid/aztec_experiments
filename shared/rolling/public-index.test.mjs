@@ -6,6 +6,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import {DatabaseSync} from 'node:sqlite';
+import {startRollingPublicServer} from '../../scripts/rolling-public-server.mjs';
 import {Fr} from '@aztec-labs/foundation/curves/bn254';
 import {poseidon2HashWithSeparator} from '@aztec-labs/foundation/crypto/poseidon';
 import {loadContractArtifact,EventSelector,decodeFunctionSignature,encodeArguments} from '@aztec-labs/stdlib/abi';
@@ -35,7 +36,7 @@ async function fixture(t){
    await log('NameRegistered',{schema:1,name_id:nameId,first_length:4,first:pack('John',2),last_length:3,last:pack('Doe',2)})];
  const block2=[await log('SubboardCreated',{schema:1,subboard_id:boardId,slug_length:5,slug:pack('build',2),name_length:5,name:pack('Build',3),description_length:4,description:pack('Desc',16),local_policy_version:1,
    rules_length:0,rules:pack('',32),rules_digest:await digest('',32),main_policy_version:1,metadata_digest:await poseidon2HashWithSeparator([boardId,await digest('Build',3),await digest('Desc',16)],0x52434d31)})];
- const post=async(id,number,content='Hello')=>log('PostPublished',{schema:1,id,record:{subboard:boardId,parent:0,root:id,kind:1,name_id:nameId,reference:0,content_digest:await digest(content,32)},timestamp:number,main_policy_version:1,local_policy_version:1,length:Buffer.byteLength(content),message:pack(content,32)});
+ const post=async(id,number,content='Hello',main=false)=>log('PostPublished',{schema:1,id,record:{subboard:main?0:boardId,parent:0,root:id,kind:1,name_id:nameId,reference:0,content_digest:await digest(content,32)},timestamp:number,main_policy_version:1,local_policy_version:main?0:1,length:Buffer.byteLength(content),message:pack(content,32)});
  const blocks=new Map(),calls=[];let head=3;
  function put(n,logs,salt=0){const txHash=TxHash.fromString(hex(100+n+salt)),hash=wrap(hex(1000+n+salt)),effect={txHash,publicLogs:logs,toBuffer:()=>Buffer.concat(logs.map(l=>l.toBuffer()))};
    blocks.set(n,{hash,header:{globalVariables:{blockNumber:n,timestamp:BigInt(n)}},body:{txEffects:[effect]}});}
@@ -130,25 +131,25 @@ async function fullAvatarPageFixture(t,distinct){
   logs.push(await log('PostPublished',{schema:1,id,record:{subboard:BigInt(f.boardId),parent:0,root:id,kind:1,name_id:nameId,reference:0,content_digest:await digest(body,32)},timestamp:n,main_policy_version:1,local_policy_version:1,length:992,message:pack(body,32)}));
   f.put(n,logs);expected.unshift(String(id));
  }
- f.setHead(102);const index=await f.create();for(let page=0;page<6&&!index.status().complete;page++)await index.sync();assert.equal(index.status().state,'ready');
+ f.setHead(102);const index=await f.create({homeSubboards:[f.boardId]});for(let page=0;page<6&&!index.status().complete;page++)await index.sync();assert.equal(index.status().state,'ready');
  return {...f,index,expected};
 }
-for(const distinct of [false,true])test(`labelled actual HTTP/reader: 100 maximum avatars, ${distinct?'distinct authors paginate by bytes':'same author deduplicates'}`,{timeout:30000},async t=>{
+for(const route of ['feed','home'])for(const distinct of [false,true])test(`labelled actual HTTP/reader ${route}: 100 maximum avatars, ${distinct?'distinct authors paginate by bytes':'same author deduplicates'}`,{timeout:30000},async t=>{
  const {startRollingPublicServer}=await import('../../scripts/rolling-public-server.mjs');
  const {createPublicReader}=await import('../../apps/rolling/reader-client.mjs');
  const f=await fullAvatarPageFixture(t,distinct),server=await startRollingPublicServer({index:f.index,pollMs:30000});t.after(()=>server.close());
  const sizes=[];const read=createPublicReader({fetch:async(url,options)=>{const response=await fetch(server.url+url,options);assert.equal(response.status,200);const size=(await response.clone().arrayBuffer()).byteLength;sizes.push(size);assert(size<=1048576);return response;}});
- const first=await read('feed',{limit:100});assert(first.posts.every(p=>!Object.hasOwn(p,'identity')));
+ const first=await read(route,{limit:100});assert(first.posts.every(p=>!Object.hasOwn(p,'identity')));
  assert.equal(Object.keys(first.names).length,distinct?first.posts.length:1);
  for(const name of Object.values(first.names)){assert.equal(Buffer.from(name.profile.avatar.data,'base64').length,8192);assert.equal(name.profile.avatar.version,'1');}
  if(distinct){assert(first.posts.length<100);assert(first.nextCursor);}
  else{assert.equal(first.posts.length,100);assert.equal(first.nextCursor,null);assert(sizes[0]<250000);}
  const seen=first.posts.map(p=>p.id);let cursor=first.nextCursor,requests=1;
- while(cursor){assert(requests++<5);const page=await read('feed',{limit:100,cursor});seen.push(...page.posts.map(p=>p.id));cursor=page.nextCursor;}
+ while(cursor){assert(requests++<5);const page=await read(route,{limit:100,cursor});seen.push(...page.posts.map(p=>p.id));cursor=page.nextCursor;}
  assert.deepEqual(seen,f.expected);assert.equal(new Set(seen).size,100);
  // Querying the projection again generated the cursor; epochs/revisions remain
  // authoritative, and an unrelated append invalidates the bounded page cursor.
- if(distinct){f.put(103,[await f.post(900,103,'New')]);f.setHead(103);await f.index.sync();assert.throws(()=>f.index.query('feed',{cursor:first.nextCursor}),{code:'ROLLING_PUBLIC_CURSOR_STALE'});}
+ if(distinct){f.put(103,[await f.post(900,103,'New')]);f.setHead(103);await f.index.sync();assert.throws(()=>f.index.query(route,{cursor:first.nextCursor}),{code:'ROLLING_PUBLIC_CURSOR_STALE'});}
  const nameId=first.posts[0].record.name_id,profile=await read('profile',{nameId,limit:100});
  assert.equal(profile.identity.profile.avatar.version,'1');assert.equal(profile.identity.profile.avatar.length,'8192');assert(sizes.every(size=>size<=1048576));
 });
@@ -234,4 +235,50 @@ test('two acceptance phases reuse the explicit reader endpoint across four owned
  const after={};await verifyRollingPublicReader({...common,readerPort:before.readerPort,cacheDirectory:path.join(f.directory,'after'),deadlineAt:Date.now()+30000,observation:after});
  assert(after.passed&&after.sessions.length===2&&after.sessions.every(s=>s.closed));assert.equal(after.readerPort,before.readerPort);
  for(const readerPort of [-1,65536,1.5,'1234'])await assert.rejects(()=>verifyRollingPublicReader({...common,readerPort,cacheDirectory:f.directory,deadlineAt:Date.now()+30000,observation:{}}));
+});
+
+test('Home real decoder/SQLite/HTTP excludes newly posted boards until explicit operator curation',async t=>{
+ const f=await fixture(t),main=await f.create();await main.sync();
+ assert.equal(main.query('home').posts.length,0);assert.equal(main.query('feed').posts.length,1);assert.equal(main.query('directory').boards.length,1);
+ f.put(4,[await f.post(20,4,'Main board',true)]);f.setHead(4);await main.sync();
+ const ids=[f.boardId],curated=await f.create({homeSubboards:ids});ids.length=0;await curated.sync();
+ const server=await startRollingPublicServer({index:curated,pollMs:30000});t.after(()=>server.close());
+ const get=async route=>{const response=await fetch(server.url+route);return {status:response.status,body:await response.json()};};
+ const first=await get('/api/home?limit=1');assert.equal(first.status,200);assert.equal(first.body.posts[0].id,'20');assert(first.body.nextCursor);
+ const second=await get('/api/home?limit=1&cursor='+encodeURIComponent(first.body.nextCursor));assert.equal(second.body.posts[0].id,'10');assert.equal(second.body.nextCursor,null);assert.equal(second.body.boards[f.boardId].slug,'build');
+ assert.equal((await get('/api/home?homeSubboards=1')).status,400);assert.equal((await get('/api/feed')).body.posts.length,2);
+ assert.deepEqual(main.query('home').posts.map(p=>p.id),['20']);
+ // A new instance with different immutable curation gets a different epoch;
+ // cold authentication still verifies retained chain data independently.
+ const changed=await f.create();await changed.sync();assert.throws(()=>changed.query('home',{cursor:first.body.nextCursor}),{code:'ROLLING_PUBLIC_CURSOR_STALE'});
+ f.put(5,[await log('SubboardRejected',{schema:1,subboard_id:BigInt(f.boardId),main_policy_version:1,local_policy_version:1,reason_length:3,reason:pack('Bad',7),reason_digest:await digest('Bad',7)})]);f.setHead(5);await curated.sync();
+ assert.deepEqual((await get('/api/home')).body.posts.map(p=>p.id),['20']);
+ assert.equal((await get('/api/feed')).body.posts.find(p=>p.id==='10').text,null);
+ assert.equal((await get('/api/directory')).body.boards[0].rejected,true);
+ assert.equal((await get('/api/home?cursor='+encodeURIComponent(first.body.nextCursor))).status,409);
+});
+test('Home applies full ranked selection before pages, reorg replacement and stale cursors',async t=>{
+ const f=await fixture(t),index=await f.create({homeSubboards:[f.boardId]});await index.sync();
+ f.put(4,[await f.post(20,4),await f.post(30,4)]);f.setHead(4);await index.sync();
+ const first=index.query('home',{limit:1});assert.equal(first.posts[0].id,'20');assert.equal(index.query('home',{limit:1,cursor:first.nextCursor}).posts[0].id,'30');
+ f.put(5,[await log('LikeChanged',{schema:1,post:10,tag:77,active:true,count:1})]);f.setHead(5);await index.sync();
+ assert.equal(index.query('home').posts[0].id,'10');assert.throws(()=>index.query('home',{cursor:first.nextCursor}),{code:'ROLLING_PUBLIC_CURSOR_STALE'});
+ const liked=index.query('home',{limit:1});f.put(5,[await f.post(40,5)],20);await index.sync();
+ assert.deepEqual(index.query('home').posts.map(p=>p.id),['40','20','30','10']);assert.throws(()=>index.query('home',{cursor:liked.nextCursor}),{code:'ROLLING_PUBLIC_CURSOR_STALE'});
+});
+
+
+test('board public index authenticates complete scoped pagination, policy history, rejection and cold reopen',async t=>{
+ const f=await fixture(t);f.put(4,[await f.post(20,4)]);f.setHead(4);const index=await f.create();await index.sync();
+ const first=index.query('board',{id:f.boardId,limit:1});assert.equal(first.posts[0].id,'20');assert.equal(first.board.slug,'build');assert(first.nextCursor);
+ const second=index.query('board',{id:f.boardId,limit:1,cursor:first.nextCursor});assert.equal(second.posts[0].id,'10');assert.equal(second.nextCursor,null);
+ assert.deepEqual(index.query('board',{id:'0'}).posts,[]);assert.throws(()=>index.query('board',{id:'0',cursor:first.nextCursor}),{code:'ROLLING_PUBLIC_CURSOR_STALE'});
+ assert.throws(()=>index.query('board',{id:'999'}),{code:'ROLLING_PUBLIC_NOT_FOUND'});
+ f.put(5,[await log('MainPolicyPublished',{schema:1,version:2,digest:await digest('Changed',32),length:7,rules:pack('Changed',32)})]);
+ f.put(6,[await log('SubboardRejected',{schema:1,subboard_id:BigInt(f.boardId),main_policy_version:2,local_policy_version:1,reason_length:3,reason:pack('Bad',7),reason_digest:await digest('Bad',7)})]);f.setHead(6);await index.sync();
+ const after=index.query('board',{id:f.boardId});assert(after.board.rejected);assert(after.posts.every(post=>post.text===null));assert.deepEqual(after.policies.map(p=>p.version),['1','2']);assert.equal(after.mainPolicy.text,'Changed');
+ assert.throws(()=>index.query('board',{id:f.boardId,cursor:first.nextCursor}),{code:'ROLLING_PUBLIC_CURSOR_STALE'});
+ const cold=await f.create();await cold.sync();const reopened=cold.query('board',{id:f.boardId});assert.deepEqual(reopened.posts,after.posts);assert.deepEqual(reopened.board,after.board);assert.deepEqual(reopened.policies,after.policies);
+ const {startRollingPublicServer}=await import('../../scripts/rolling-public-server.mjs'),server=await startRollingPublicServer({index:cold,pollMs:30000});
+ try{const response=await fetch(server.url+'/api/board?id='+f.boardId);assert.equal(response.status,200);const body=await response.json();assert.deepEqual(body.posts,after.posts);assert.equal(body.board.rejection.reason,'Bad');assert.equal((await fetch(server.url+'/api/board?id=999')).status,404);}finally{await server.close();}
 });

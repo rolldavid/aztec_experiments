@@ -34,60 +34,118 @@ function richText(value){
   node.append(url?el('a',{href:url,target:'_blank',rel:'noopener noreferrer'},match[1]||match[3]):document.createTextNode(match[0]));end=match.index+match[0].length;
  }node.append(document.createTextNode(source.slice(end)));return node;
 }
+// Policy fields are authenticated by the public index. Display their distinct
+// provenance; never substitute today's rules for the versions used by a post.
+const policyVersion=value=>typeof value==='string'&&/^(0|[1-9][0-9]{0,9})$/.test(value)&&BigInt(value)<=0xffffffffn;
+function policyLabel(label,mainVersion,localVersion){
+ if(!policyVersion(mainVersion)||!policyVersion(localVersion))return null;
+ return el('p',{class:'quiet'},`${label}: parent v${mainVersion} · local v${localVersion}`);
+}
+function removalPolicy(value){
+ if(typeof value!=='string'||!/^(0|[1-9][0-9]{0,19})$/.test(value)||BigInt(value)>0xffffffffffffffffn)return null;
+ const packed=BigInt(value);return policyLabel('Removal policy',String(packed&0xffffffffn),String(packed>>32n));
+}
 function postCard(post,data){
  if(!post||!field(post.id)||!post.record||!field(post.record.root))throw Error('Invalid public post');
- const r=post.record,isBot=Boolean(post.bot),named=!isBot&&r.name_id!=='0'?data.names?.[r.name_id]:null,board=data.boards?.[r.subboard];
+ const r=post.record,isBot=Boolean(post.bot),named=!isBot&&r.name_id!=='0'?data.names?.[r.name_id]:null,board=data.board?.id===r.subboard?data.board:data.boards?.[r.subboard];
  const author=isBot?'Bok':r.name_id==='0'?'Anonymous':named?`${text(named.first)} ${text(named.last)}`:'Registered name';
  const article=el('article',{class:'post',id:'post-'+post.id,'aria-label':'Post by '+author});
  const who=isBot||r.name_id==='0'?el('span',{class:'author'},author):link(author,'/profile/'+r.name_id,{class:'author'});
- article.append(el('div',{class:'post-top'},named?createPublicAvatar(named,{signal:controller.signal}):el('span',{class:'avatar '+(isBot?'bot':'anonymous'),'aria-hidden':'true'},isBot?'B':'◌'),el('div',{},who,isBot?el('span',{class:'bot-badge'},'Authenticated bot'):null,el('div',{class:'post-context'},board?text(board.name):'Main board',' · ',timestamp(post.timestamp)))));
- if(post.text===null){article.append(el('p',{class:'removed'},'This post is unavailable under the board’s moderation policy. ',link('View thread','/thread/'+r.root)));return article;}
- if(r.parent!=='0')article.append(el('p',{class:'reply-line'},'In reply to ',link('an earlier post','/thread/'+r.root+'/'+r.parent)));
- if(r.reference!=='0')article.append(el('p',{class:'reply-line'},r.kind==='3'?'Reposted from ':'Quoted from ',link('the original post','/post/'+r.reference)));
+ article.append(el('div',{class:'post-top'},named?createPublicAvatar(named,{signal:controller.signal}):el('span',{class:'avatar '+(isBot?'bot':'anonymous'),'aria-hidden':'true'},isBot?'B':'◌'),el('div',{},who,isBot?el('span',{class:'bot-badge'},'Authenticated bot'):null,el('div',{class:'post-context'},field(r.subboard)?link(r.subboard==='0'?'Main board':board?text(board.name):'Subboard','/board/'+r.subboard):'Board unavailable',' · ',timestamp(post.timestamp)))));
+ const authoredPolicy=policyLabel('Published under policy',post.mainVersion,post.localVersion);if(authoredPolicy)article.append(authoredPolicy);
+ if(Array.isArray(data.policies)){const policy=data.policies.find(p=>p.version===post.mainVersion);if(policy&&policyVersion(policy.version))article.append(el('details',{},el('summary',{},'Parent rules at publication · v'+policy.version),richText(policy.text)));}
+ if(field(r.parent)&&r.parent!=='0')article.append(el('p',{class:'reply-line'},'In reply to ',link('an earlier post','/thread/'+r.root+'/'+r.parent)));
+ if(field(r.reference)&&r.reference!=='0')article.append(el('p',{class:'reply-line'},r.kind==='3'?'Reposted from ':'Quoted from ',link('the original post','/post/'+r.reference)));
+ const unlike=()=>button('Unlike',()=>openWallet({type:'unlike',post:post.id}));
+ if(post.text===null||post.removal||board?.rejected===true){
+  article.append(el('p',{class:'removed'},'This post is unavailable under the board’s moderation policy.'));
+  // A rejected subboard also redacts posts without an individual removal event.
+  if(post.removal){
+   if(text(post.removal.reason))article.append(el('p',{class:'removed'},'Removal reason: '+text(post.removal.reason)));
+   const policy=removalPolicy(post.removal.policy);if(policy)article.append(policy);
+  }
+  if(board?.rejected){
+   if(text(board.rejection?.reason))article.append(el('p',{class:'removed'},'Subboard rejection reason: '+text(board.rejection.reason)));
+   if(policyVersion(board.rejection?.mainVersion))article.append(el('p',{class:'quiet'},'Subboard rejected under parent policy v'+board.rejection.mainVersion));
+  }
+  article.append(el('div',{class:'post-actions'},link('View thread','/thread/'+r.root),unlike()));return article;
+ }
  article.append(richText(post.text),el('div',{class:'post-actions'},link('View conversation','/thread/'+r.root,{class:'post-link'}),el('span',{class:'action'},`${text(post.likes)} ${post.likes==='1'?'like':'likes'}`),
   button('Reply',()=>openWallet({type:'reply',parent:post.id,root:r.root,subboard:r.subboard})),
-  button('Like',()=>openWallet({type:'like',post:post.id})),button('Quote',()=>openWallet({type:'quote',reference:post.id,subboard:r.subboard})),
+  button('Like',()=>openWallet({type:'like',post:post.id})),unlike(),button('Quote',()=>openWallet({type:'quote',reference:post.id,subboard:r.subboard})),
   button('Repost',()=>openWallet({type:'repost',reference:post.id,subboard:r.subboard}))));
  return article;
 }
 function timestamp(value){const n=Number(value);if(!Number.isSafeInteger(n)||n<0)return '';const date=new Date(n*1000);return Number.isFinite(date.getTime())?date.toLocaleString(undefined,{dateStyle:'medium',timeStyle:'short'}):'';}
-function shell(title){
- const rail=el('aside',{class:'rail',id:'community-navigation'},link('◉ rolling.chat','/home',{class:'brand'}),el('nav',{class:'nav-group','aria-label':'Community'},link('Conversations','/home'),link('Explore subboards','/directory')),el('p',{class:'rail-foot'},'Public conversations. Private participation.'));
+function shell(title,{boardId=null}={}){
+ const rail=el('aside',{class:'rail',id:'community-navigation'},link('◉ rolling.chat','/home',{class:'brand'}),el('nav',{class:'nav-group','aria-label':'Community'},link('Home','/home'),link('Main board','/board/0'),link('Explore subboards','/directory')),el('p',{class:'rail-foot'},'Public conversations. Private participation.'));
  const closeMenu=()=>{rail.classList.remove('open');rail.inert=narrow.matches;document.querySelector('.workspace').inert=false;menu.setAttribute('aria-expanded','false');menu.focus();};
  const menu=button('☰',()=>{rail.inert=false;rail.classList.add('open');document.querySelector('.workspace').inert=true;menu.setAttribute('aria-expanded','true');rail.querySelector('a').focus();},{class:'menu-toggle','aria-label':'Open navigation','aria-expanded':'false','aria-controls':'community-navigation'});
  rail.append(button('×',closeMenu,{class:'mobile-close','aria-label':'Close navigation'}));rail.inert=narrow.matches;
  rail.addEventListener('keydown',event=>{if(event.key==='Escape')closeMenu();if(event.key==='Tab'&&rail.classList.contains('open')){const targets=[...rail.querySelectorAll('a,button')],first=targets[0],last=targets.at(-1);if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus();}else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus();}}});
  main=el('main',{id:'content',tabindex:'-1'},el('header',{class:'page-head'},el('div',{},el('h1',{tabindex:'-1'},title),el('p',{class:'intro'},'Read the conversation without connecting an account.'))));
  const context=el('aside',{class:'context'},el('section',{},el('h2',{},'Join the conversation'),el('p',{},'Posts and reactions are recorded onchain. Named identities and authenticated Bok replies are shown with their conversations.'),
-  button('Write a post',()=>openWallet({type:'post'})),button('Register a name',()=>openWallet({type:'name'})),button('Create a subboard',()=>openWallet({type:'subboard'}))));
+  button('Write a post',()=>openWallet({type:'post',...(boardId!==null?{subboard:boardId}:{})}),boardId!==null?{'data-board-compose':'',disabled:''}:{}),button('Register a name',()=>openWallet({type:'name'})),button('Create a subboard',()=>openWallet({type:'subboard'}))));
  app.replaceChildren(el('div',{class:'shell'},rail,el('div',{class:'workspace'},el('header',{class:'topbar'},menu,el('p',{},'rolling.chat'),link('Explore subboards','/directory',{class:'search-link'}),button('Your account',()=>openWallet())),el('div',{class:'layout'},main,context))));
  return main;
 }
 function boardCard(board){
- const rules=el('details',{},el('summary',{},'Effective rules'),el('h3',{},'Parent rules'),richText(board.mainRules),el('h3',{},'Local rules'),richText(board.rules));
- return el('article',{class:'post'},el('h2',{},text(board.name)),el('p',{class:'quiet'},'/'+text(board.slug)),el('p',{},text(board.description)),board.rejected?el('p',{class:'removed'},'Rejected by the main board: '+text(board.rejection?.reason)):null,rules);
+ const rules=el('details',{},el('summary',{},'Effective rules'),el('h3',{},'Parent rules'),policyVersion(board.mainVersion)?el('p',{class:'quiet'},'Current parent policy v'+board.mainVersion):null,richText(board.mainRules),el('h3',{},'Local rules'),richText(board.rules));
+ return el('article',{class:'post'},el('h2',{},field(board.id)?link(text(board.name),'/board/'+board.id):text(board.name)),el('p',{class:'quiet'},'/'+text(board.slug)),el('p',{},text(board.description)),board.rejected?el('p',{class:'removed'},'Rejected by the main board: '+text(board.rejection?.reason)):null,board.rejected&&policyVersion(board.rejection?.mainVersion)?el('p',{class:'quiet'},'Subboard rejected under parent policy v'+board.rejection.mainVersion):null,rules);
+}
+function boardOverview(data){
+ const section=el('section',{'aria-label':'Board information'}),board=data.board,policy=data.mainPolicy;
+ if(board){
+  section.append(el('p',{class:'quiet'},'/'+text(board.slug)),el('p',{},text(board.description)));
+  if(policyVersion(board.creationVersion))section.append(el('p',{class:'quiet'},'Created under parent policy v'+board.creationVersion));
+  if(board.rejected)section.append(el('p',{class:'removed',role:'status'},'This subboard is rejected. New posts are disabled. Existing thread links and unlike remain available.'),el('p',{class:'removed'},'Rejection reason: '+text(board.rejection?.reason)));
+ }
+ const rules=el('details',{},el('summary',{},'Effective board rules'),el('h2',{},'Current parent rules · v'+policy.version),richText(policy.text));
+ if(board)rules.append(el('h2',{},'Immutable local rules'),richText(board.rules),el('p',{class:'quiet'},'Both current parent rules and local rules apply.'));
+ else rules.append(el('p',{class:'quiet'},'The main board follows these parent rules.'));
+ section.append(rules);
+ if(board?.rejection&&policyVersion(board.rejection.mainVersion)){
+  const applied=data.policies.find(p=>p.version===board.rejection.mainVersion);
+  if(applied)section.append(el('details',{},el('summary',{},'Parent rules at rejection · v'+applied.version),richText(applied.text)));
+ }
+ return section;
 }
 async function render(){
  controller?.abort();controller=new AbortController();const signal=controller.signal,current=++sequence;
  // Back navigation reloads the same number of pages against the current index.
  // The whole restoration has one deadline, rather than an unbounded request chain.
  const restoreSignal=AbortSignal.any([signal,AbortSignal.timeout(20000)]),saved=positions.get(route);loadedPages=1;
- const parts=route.split('/').filter(Boolean);let api='feed',parameters={limit:30},title='Conversations',expectedRoot;
+ const parts=route.split('/').filter(Boolean);let api='home',parameters={limit:30},title='Home',expectedRoot;
  if(parts[0]==='directory'){api='directory';title='Explore subboards';try{parameters.query=parts[1]?decodeURIComponent(parts[1]):'';}catch{shell('Page not found');return;}}
+ else if(parts[0]==='board'){if(parts.length!==2||!field(parts[1])){shell('Page not found',{boardId:''});return;}api='board';parameters={id:parts[1],limit:30};title=parts[1]==='0'?'Main board':'Subboard';}
  else if(['thread','profile','post'].includes(parts[0])){if(!field(parts[1])||parts[2]&&!field(parts[2])){shell('Page not found');return;}api=parts[0];parameters=api==='post'?{id:parts[1]}:{limit:30,[api==='thread'?'root':'nameId']:parts[1]};title=api==='thread'?'Conversation':api==='profile'?'Profile':'Post';
   if(api==='thread'&&parts[2]){expectedRoot=parts[1];api='post';parameters={id:parts[2]};title='Linked post';}
  }
  else if(parts[0]!=='home'){shell('Page not found');return;}
- shell(title);const loading=el('p',{role:'status','aria-busy':'true'},'Loading conversations…');main.append(loading);
+ shell(title,{boardId:api==='board'?parameters.id:null});const loading=el('p',{role:'status','aria-busy':'true'},'Loading conversations…');main.append(loading);
  if(api==='directory'){
   const input=el('input',{type:'search',value:parameters.query,placeholder:'Search names, descriptions or slugs','aria-label':'Search subboards',maxlength:120});
   const form=el('form',{class:'directory-search',onSubmit:event=>{event.preventDefault();location.hash='/directory/'+encodeURIComponent(input.value.trim());}},input,el('button',{class:'button',type:'submit'},'Search'));main.insertBefore(form,loading);
  }
  const container=el('section',{class:'feed','aria-label':title});let data;
+ const seenIds=new Set(),seenCursors=new Set();
  function append(response){
-  if(api==='directory'){if(!Array.isArray(response.boards))throw Error('Invalid directory');container.append(...response.boards.map(boardCard));}
-  else{const posts=api==='post'?(response.post?[response.post]:[]):response.posts;if(!Array.isArray(posts))throw Error('Invalid feed');container.append(...posts.map(post=>postCard(post,response)));}
+  if(typeof response.revision!=='string'||response.revision!==data.revision||response.scope.boardAddress!==data.scope.boardAddress||
+   response.checkpoint?.number!==data.checkpoint?.number||response.checkpoint?.hash!==data.checkpoint?.hash)throw Error('Changed public snapshot');
+  const items=api==='directory'?response.boards:api==='post'?(response.post?[response.post]:[]):response.posts;
+  if(!Array.isArray(items))throw Error('Invalid public page');
+  if(api==='board'){
+   if(response.boardId!==parameters.id||(parameters.id==='0'?response.board!==null:response.board?.id!==parameters.id)||items.some(p=>p.record?.subboard!==parameters.id)||
+    !policyVersion(response.mainPolicy?.version)||typeof response.mainPolicy.text!=='string'||!Array.isArray(response.policies))throw Error('Invalid board page');
+  }
+  const next=response.nextCursor;
+  if(next!==null&&next!==undefined&&(typeof next!=='string'||!next.length||next.length>4096||seenCursors.has(next)||!items.length))throw Error('Invalid next cursor');
+  const ids=new Set();for(const item of items){if(!field(item?.id)||seenIds.has(item.id)||ids.has(item.id))throw Error('Duplicate public item');ids.add(item.id);}
+  // Validate/build the whole page before changing visible content or paging state.
+  const nodes=items.map(item=>api==='directory'?boardCard(item):postCard(item,response));
+  container.append(...nodes);for(const id of ids)seenIds.add(id);if(next)seenCursors.add(next);
  }
+
  try{
   data=await read(api,parameters,restoreSignal);if(current!==sequence)return;
   if(expectedRoot&&(!data.post||data.post.record?.root!==expectedRoot))throw Error('Linked post does not belong to this conversation');
@@ -97,19 +155,49 @@ async function render(){
    const page=await read(api,{...parameters,cursor},restoreSignal);if(current!==sequence)return;append(page);cursor=page.nextCursor;loadedPages++;
   }
   loading.remove();
+  if(api==='board'){
+   main.querySelector('h1').textContent=data.board?text(data.board.name):'Main board';container.setAttribute('aria-label','Posts in '+(data.board?text(data.board.name):'Main board'));main.append(boardOverview(data));
+   const compose=document.querySelector('[data-board-compose]');if(compose)compose.disabled=Boolean(data.board?.rejected);
+  }
   if(api==='profile'&&data.identity){main.querySelector('h1').textContent=text(data.identity.first)+' '+text(data.identity.last);main.append(createPublicProfile(data.identity,{signal}));}
   if(!container.childElementCount)container.append(el('div',{class:'empty'},el('h2',{},'A little quiet here'),el('p',{},api==='directory'?'No subboards match this search.':'No posts to show yet.')));
   main.append(container);
   if(expectedRoot)main.append(el('p',{},link('Read the conversation from the beginning','/thread/'+expectedRoot)));
-  const more=button('Load more',async()=>{
-   more.disabled=true;
-   try{const page=await read(api,{...parameters,cursor},signal);if(current!==sequence)return;append(page);cursor=page.nextCursor;loadedPages++;if(!cursor)more.remove();else more.disabled=false;announce('More conversations loaded.');}
-   catch(error){if(signal.aborted)return;more.remove();main.append(el('p',{role:'alert'},'The conversation changed or could not load. ',button('Refresh',()=>render())));}
-  });if(cursor)main.append(more);
+  let observer,inFlight=false,stopped=false;
+  const stop=()=>{stopped=true;observer?.disconnect();};
+  signal.addEventListener('abort',stop,{once:true});
+  const more=button('Load more',()=>void loadMore());
+  async function loadMore(){
+   if(inFlight||stopped||signal.aborted||current!==sequence||!cursor)return;
+   inFlight=true;more.disabled=true;more.setAttribute('aria-busy','true');observer?.unobserve(more);
+   try{
+    const page=await read(api,{...parameters,cursor},signal);
+    if(signal.aborted||current!==sequence||stopped)return;
+    append(page);cursor=page.nextCursor;loadedPages++;
+    if(!cursor){stop();more.remove();}else more.disabled=false;
+    announce('More conversations loaded.');
+   }catch(error){
+    if(signal.aborted||current!==sequence||stopped)return;
+    stop();more.remove();main.append(el('p',{role:'alert'},'The conversation changed or could not load. ',button('Refresh',()=>render())));
+   }finally{
+    inFlight=false;more.removeAttribute('aria-busy');
+    if(!stopped&&!signal.aborted&&current===sequence&&cursor)observer?.observe(more);
+   }
+  }
+  if(cursor)main.append(more);
   main.append(el('p',{class:'quiet'},'Checked against chain block '+String(data.checkpoint?.number??'')));
   focusRoute(route,positions.get(route),current===1);
- }catch(error){if(signal.aborted)return;loading.remove();main.append(el('div',{class:'empty',role:'alert'},el('h2',{},error.code==='READER_SYNCING'?'Conversations are being checked':'Conversations could not load'),el('p',{},'No account or transaction has changed.'),button('Try again',()=>render())));}
+  // One request owner serves both automatic and keyboard paging. Re-observation
+  // after each page fills short viewports, but never creates parallel requests.
+  if(cursor&&typeof IntersectionObserver==='function'){
+   observer=new IntersectionObserver(entries=>{if(entries.some(entry=>entry.target===more&&entry.isIntersecting))void loadMore();},{rootMargin:'300px 0px',threshold:0});
+   observer.observe(more);
+  }
+
+ }catch(error){if(signal.aborted)return;loading.remove();main.append(el('div',{class:'empty',role:'alert'},el('h2',{},error.code==='READER_SYNCING'?'Conversations are being checked':api==='board'&&error.code==='READER_NOT_FOUND'?'Board not found':'Conversations could not load'),el('p',{},'No account or transaction has changed.'),button('Try again',()=>render())));}
 }
+addEventListener('pagehide',()=>{sequence++;controller?.abort();});
+addEventListener('pageshow',event=>{if(event.persisted)render();});
 document.querySelector('.skip').addEventListener('click',skipToContent);
 addEventListener('hashchange',()=>{positions.set(route,{y:scrollY,pages:loadedPages,focus:document.activeElement?.getAttribute('href')});if(positions.size>40)positions.delete(positions.keys().next().value);route=location.hash.slice(1)||'/home';render();});
 narrow.addEventListener('change',()=>{const rail=document.querySelector('.rail'),workspace=document.querySelector('.workspace');if(rail){rail.classList.remove('open');rail.inert=narrow.matches;workspace.inert=false;document.querySelector('.menu-toggle')?.setAttribute('aria-expanded','false');}});

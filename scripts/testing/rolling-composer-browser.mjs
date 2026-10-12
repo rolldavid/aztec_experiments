@@ -6,6 +6,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import {constants} from 'node:fs';
 import path from 'node:path';
+import {setTimeout as delay} from 'node:timers/promises';
 const invalid=()=>Error('Invalid private composer browser control.');
 const stages=['validation','launch','public-reader','unlock-a','import-a','choices-a','prepare-992','cancel-992','reject-996','literal-preview','lock-a','reload','unlock-b','import-b','choices-b','complete'];
 const data=(o,k)=>{const d=Object.getOwnPropertyDescriptor(o,k);if(!d||!Object.hasOwn(d,'value'))throw invalid();return d.value;};
@@ -48,9 +49,39 @@ export async function validateRollingComposerControl(control,{directory}={}){
  }catch{throw invalid();}
 }
 
+// Exact production wallet-panel alert copies, never arbitrary DOM/error text.
+// Poll a single awaited loop: no detached Playwright wait survives a terminal
+// result. Parent supplies its existing absolute deadline; no new time allowance.
+export async function waitForRollingComposerState({dialog,ready,remaining}){
+ const alerts=[
+  ['connection-unavailable','The private connection is unavailable. Your encrypted recovery is preserved. Reconnect when the service returns.'],
+  ['operation-failed','This operation could not be completed. Recovery records were preserved. Check the existing transaction before preparing another.'],
+ ];
+ while(true){
+  let ms;try{ms=remaining();}catch{return 'deadline';}
+  if(!Number.isFinite(ms)||ms<=0)return 'deadline';
+  try{
+   // work() clears the old error internally but rerenders only when it ends.
+   // Do not confuse a previous rendered alert during busy work with its outcome.
+   if(await dialog.getAttribute('aria-busy')==='false'){
+    for(const [status,text]of alerts){
+     if(await dialog.getByRole('alert').and(dialog.getByText(text,{exact:true})).isVisible())return status;
+    }
+    if(await ready.isVisible()){
+     try{if(remaining()<=0)return 'deadline';}catch{return 'deadline';}
+     return 'ready';
+    }
+   }
+  }catch{return 'observation-failed';}
+  try{ms=remaining();}catch{return 'deadline';}
+  if(!Number.isFinite(ms)||ms<=0)return 'deadline';
+  await delay(Math.min(50,ms));
+ }
+}
+
 export async function runRollingComposerBrowser(input){
  const started=Date.now();let stage='validation',browser,context,page,timer,expired=false,selected;
- const result={schemaVersion:1,passed:false,scope:'Production browser custody/PXE/composer boundary; no browser publication or extension-funding acceptance',
+ const result={schemaVersion:1,passed:false,diagnostic:null,scope:'Production browser custody/PXE/composer boundary; no browser publication or extension-funding acceptance',
   checks:{publicBeforeUnlock:false,ownedChoicesA:false,ownedChoicesB:false,exact992Prepared:false,preparedCancelled:false,oversizeRetained:false,literalPreview:false,accountSwitch:false,collateralPendingB:false},
   traffic:{walletAssets:0,privateRequests:0,proofSubmits:0,nodeSubmissions:0,l1Submissions:0,blockedRequests:0,inspectionErrors:0},cleanup:{contextClosed:false,browserClosed:false}};
  const fail=()=>{throw Error('Composer browser check failed.');};
@@ -91,13 +122,17 @@ export async function runRollingComposerBrowser(input){
   assert.deepEqual(await page.evaluate(()=>({secure:isSecureContext,isolated:crossOriginIsolated,locks:typeof navigator.locks?.request==='function',sdkAbsent:globalThis.__aztec===undefined,accountAbsent:globalThis.BillboardAccount===undefined})),{secure:true,isolated:true,locks:true,sdkAbsent:true,accountAbsent:true});
   assert.equal(result.traffic.walletAssets,0);assert.equal(result.traffic.privateRequests,0);result.checks.publicBeforeUnlock=true;
   const noSpend=()=>{assert.equal(result.traffic.proofSubmits,0);assert.equal(result.traffic.nodeSubmissions,0);assert.equal(result.traffic.l1Submissions,0);assert.equal(result.traffic.blockedRequests,0);assert.equal(result.traffic.inspectionErrors,0);};
+  async function waitForState(ready){
+   const status=await waitForRollingComposerState({dialog,ready,remaining});
+   if(status!=='ready'){result.diagnostic=status;if(status==='deadline')expired=true;fail();}
+  }
   async function openAccount(role){
    mark('unlock-'+role);await dialog.getByRole('button',{name:'Unlock',exact:true}).click({timeout:remaining()});
-   await dialog.getByLabel('Recovery file',{exact:true}).waitFor({timeout:remaining()});
+   await waitForState(dialog.getByLabel('Recovery file',{exact:true}));
    mark('import-'+role);await dialog.getByLabel('Recovery password',{exact:true}).fill(selected.backupPassword);
    await dialog.getByLabel('Recovery file',{exact:true}).setInputFiles(selected.backupPaths[role]);
    await dialog.getByRole('button',{name:'Import recovery',exact:true}).click();
-   await dialog.getByLabel('Posting identity',{exact:true}).waitFor({timeout:remaining()});
+   await waitForState(dialog.getByLabel('Posting identity',{exact:true}));
    mark('choices-'+role);
    const options=await dialog.getByLabel('Posting identity',{exact:true}).locator('option').evaluateAll(nodes=>nodes.map(x=>({value:x.value,label:x.textContent})));
    const expected=[{value:'0',label:'Anonymous'},...selected.expectedNames[role].map(x=>({value:x.id,label:x.first+' '+x.last}))];
@@ -114,7 +149,7 @@ export async function runRollingComposerBrowser(input){
   assert.notEqual(await dialog.getByLabel('Posting collateral',{exact:true}).inputValue(),'');
   const exact='😀'.repeat(248),oversize=exact+'😀';
   mark('prepare-992');await dialog.getByLabel('Posting identity',{exact:true}).selectOption(selected.expectedNames.a[0].id);await message.fill(exact);assert.equal(await message.inputValue(),exact);await dialog.getByText('248 characters · 992/992 UTF-8 bytes · 0 bytes remaining',{exact:true}).waitFor();assert.equal(await review.isEnabled(),true);
-  await review.click();await dialog.getByRole('heading',{name:'Review before sending',exact:true}).waitFor({timeout:remaining()});
+  await review.click();await waitForState(dialog.getByRole('heading',{name:'Review before sending',exact:true}));
   const fee=await dialog.getByText(/^Maximum network fee: [0-9]+ fee-juice units\./).textContent();assert(/^Maximum network fee: [1-9][0-9]* fee-juice units\./.test(fee));
   await dialog.getByText('content: '+exact,{exact:true}).waitFor();await dialog.getByText('name: '+selected.expectedNames.a[0].first+' '+selected.expectedNames.a[0].last,{exact:true}).waitFor();assert.equal(await dialog.getByRole('button',{name:'Confirm and send',exact:true}).isEnabled(),true);result.checks.exact992Prepared=true;noSpend();
   mark('cancel-992');await dialog.getByRole('button',{name:'Cancel prepared action',exact:true}).click();await message.waitFor({timeout:remaining()});await dialog.getByText('Prepared action cancelled. No new transaction was sent.',{exact:true}).waitFor();result.checks.preparedCancelled=true;noSpend();

@@ -2,7 +2,7 @@
 import {AztecAddress} from '@aztec-labs/stdlib/aztec-address';
 import {createHash,randomUUID} from 'node:crypto';
 import {createRollingEventDecoder,isRollingEvent,validateRollingScope} from './public-events.mjs';
-import {createRollingProjection} from './public-projection.mjs';
+import {createRollingProjection,normalizeHomeSubboards} from './public-projection.mjs';
 const fail=code=>Object.assign(Error('Rolling public history is unavailable.'),{code});
 const check=(v,code='ROLLING_PUBLIC_INVALID')=>{if(!v)throw fail(code);};
 const hash=v=>typeof v==='string'&&/^0x[0-9a-f]{64}$/.test(v);
@@ -24,13 +24,14 @@ const field=v=>typeof v==='string'&&/^(0|[1-9][0-9]{0,76})$/.test(v);
  * and the checkpointed head are processed. Ordinary public RPC supplies this history;
  * this is canonical consistency checking, not a new trustless consensus client.
  */
-export async function createRollingPublicIndex({node,artifact,scope,deployment,storage,rangeSize=10,pagesPerSync=2,
+export async function createRollingPublicIndex({node,artifact,scope,deployment,storage,homeSubboards,rangeSize=10,pagesPerSync=2,
   maxEvents=50000,maxRanges=20000,maxRollbackChecks=128,timeoutMs=20000,maxRecordBytes=1048576,maxSnapshotBytes=67108864}){
+  homeSubboards=normalizeHomeSubboards(homeSubboards);
   scope=validateRollingScope(scope);deployment=copy(deployment);exact(deployment,['blockNumber','blockHash','txHash']);
   check(natural(deployment.blockNumber)&&deployment.blockNumber>0&&hash(deployment.blockHash)&&hash(deployment.txHash));
   for(const [v,min,max] of [[rangeSize,1,100],[pagesPerSync,1,20],[maxEvents,1,50000],[maxRanges,1,20000],
     [maxRollbackChecks,1,128],[timeoutMs,1,20000],[maxRecordBytes,1024,1048576],[maxSnapshotBytes,1024,67108864]])check(natural(v)&&v>=min&&v<=max);
-  const decoder=await createRollingEventDecoder({artifact,scope}),projection=createRollingProjection({isValidatedEvent:isRollingEvent,maxEvents});
+  const decoder=await createRollingEventDecoder({artifact,scope}),projection=createRollingProjection({isValidatedEvent:isRollingEvent,maxEvents,homeSubboards});
   const key='rolling-public-v1:'+createHash('sha256').update(JSON.stringify({scope,deployment})).digest('hex'),epoch=randomUUID();
   let headText=null,state=null,cold=null,coldOffset=0,hydrated=false,busy=false,ready=false,unavailable=false,revision=0,projectionRevision=0;
   const ranges=[];let storedBytes=0;
@@ -137,11 +138,17 @@ export async function createRollingPublicIndex({node,artifact,scope,deployment,s
   }
   function query(view,params={}){
     check(ready&&!busy&&!unavailable,'ROLLING_PUBLIC_NOT_READY');
-    let cursor=params.cursor??null;if(cursor!==null){check(typeof cursor==='string'&&cursor.startsWith(epoch+':')&&cursor.length<=120,'ROLLING_PUBLIC_CURSOR_STALE');cursor=cursor.slice(epoch.length+1);check(/^[0-9]+:[0-9]+$/.test(cursor)&&Number(cursor.split(':')[0])===projectionRevision,'ROLLING_PUBLIC_CURSOR_STALE');}
+    let cursor=params.cursor??null;if(cursor!==null){
+      check(typeof cursor==='string'&&cursor.startsWith(epoch+':')&&cursor.length<=(view==='board'?200:120),'ROLLING_PUBLIC_CURSOR_STALE');cursor=cursor.slice(epoch.length+1);
+      if(view==='board')check(field(params.id)&&cursor.startsWith(params.id+':')&&/^[0-9]+:[0-9]+:[0-9]+$/.test(cursor)&&Number(cursor.split(':')[1])===projectionRevision,'ROLLING_PUBLIC_CURSOR_STALE');
+      else check(/^[0-9]+:[0-9]+$/.test(cursor)&&Number(cursor.split(':')[0])===projectionRevision,'ROLLING_PUBLIC_CURSOR_STALE');
+    }
     const requested=params.limit??50;check(Number.isSafeInteger(requested)&&requested>=1&&requested<=100);
     function envelopeFor(limit){
       const options={limit,cursor};let result;
-      if(view==='feed')result=projection.feed(options);
+      if(view==='home')result=projection.home(options);
+      else if(view==='feed')result=projection.feed(options);
+      else if(view==='board'){check(field(params.id));check(params.id==='0'||projection.board(params.id),'ROLLING_PUBLIC_NOT_FOUND');result=projection.boardFeed(params.id,options);}
       else if(view==='directory')result=projection.directory({...options,query:params.query??''});
       else if(view==='thread'){check(field(params.root));result=projection.thread(params.root,options);}
       else if(view==='profile'){check(field(params.nameId));result=projection.profile(params.nameId,options);}

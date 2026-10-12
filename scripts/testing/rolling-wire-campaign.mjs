@@ -19,7 +19,7 @@ export function installRollingWireCampaign({roles}){
    if(candidates.includes('trusted-query')&&((method==='POST'&&url==='/v1/node')||(method==='GET'&&url==='/healthz')))label='trusted-query';
    else if(candidates.includes('trusted-proof')&&((method==='POST'&&url==='/v1/jobs')||(method==='GET'&&/^\/v1\/jobs\/[a-f0-9]{64}$/.test(url))))label='trusted-proof';
    else if(candidates.length===1&&['trusted-upstream','ordinary-node'].includes(candidates[0])&&method==='POST'&&url==='/')label=candidates[0];
-   else if(candidates.includes('public-reader')&&method==='GET'&&/^\/api\/(status|feed|directory|thread|profile|post)(?:\?|$)/.test(url))label='public-reader';
+   else if(candidates.includes('public-reader')&&method==='GET'&&/^\/api\/(status|feed|home|board|directory|thread|profile|post)(?:\?|$)/.test(url))label='public-reader';
    else{errors++;return;}
    ingress[label]++;
   }catch{errors++;}

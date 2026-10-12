@@ -2,6 +2,14 @@
 const rollingError=()=>Object.assign(Error('Rolling public history is invalid or unavailable.'),{code:'ROLLING_PUBLIC_INVALID'});
 const check=v=>{if(!v)throw rollingError();};
 const copy=v=>structuredClone(v);
+// Operator configuration, never event-derived or accepted as an HTTP parameter.
+// Main board zero is always included; unknown future subboards are harmless until
+// their authenticated creation. The field bound matches pinned Aztec Fr.
+export function normalizeHomeSubboards(value=[]){
+ check(Array.isArray(value)&&value.length<=256);
+ const ids=Array.from(value);check(ids.every(id=>typeof id==='string'&&/^[1-9][0-9]{0,76}$/.test(id)&&BigInt(id)<0x30644e72e131a029b85045b68181585d2833e84879b9709143e1f593f0000001n));
+ check(new Set(ids).size===ids.length);return Object.freeze(ids);
+}
 const pos=e=>[e.position.blockNumber,e.position.txIndexWithinBlock,e.position.logIndexWithinTx].map(BigInt);
 const compare=(a,b)=>{for(let i=0;i<3;i++)if(a[i]!==b[i])return a[i]<b[i]?-1:1;return 0;};
 const text=(p,field,length)=>{const bytes=new Uint8Array(p[field].length*31);p[field].forEach((word,i)=>{let n=BigInt(word);for(let j=30;j>=0;j--){bytes[i*31+j]=Number(n&255n);n>>=8n;}});return new TextDecoder('utf-8',{fatal:true,ignoreBOM:true}).decode(bytes.slice(0,Number(p[length])));};
@@ -11,8 +19,9 @@ const binaryBase64=(fields,length)=>{const bytes=[];for(const word of fields){le
 const emptyProfile=()=>({bio:{version:'0',digest:'0',length:'0',text:''},avatar:{version:'0',digest:'0',width:'0',height:'0',length:'0',encoding:'base64',data:'',removal:null}});
 // stage changes nothing; apply and reverse-order undo are single-use and reject
 // stale candidates. Private ownership and like-tag membership are never returned.
-export function createRollingProjection({isValidatedEvent,maxEvents=50000}={}) {
+export function createRollingProjection({isValidatedEvent,maxEvents=50000,homeSubboards}={}) {
  check(typeof isValidatedEvent==='function'&&Number.isSafeInteger(maxEvents)&&maxEvents>0&&maxEvents<=1000000);
+ const curated=new Set(['0',...normalizeHomeSubboards(homeSubboards)]);
  let state={posts:new Map(),names:new Map(),boards:new Map(),policies:new Map(),plugins:new Map(),requests:new Map(),likes:new Map(),order:[],version:'0',last:null,scope:null,eventCount:0},revision=0,tip=Symbol('initial');
  function stage(events){
   check(Array.isArray(events)&&events.length<=10000&&state.eventCount+events.length<=maxEvents);
@@ -114,6 +123,29 @@ export function createRollingProjection({isValidatedEvent,maxEvents=50000}={}) {
    let ids=[...state.order].reverse().filter(id=>(upper===null||BigInt(state.posts.get(id).order)<=bound(upper))&&(before===null||BigInt(state.posts.get(id).order)<bound(before)));
    const posts=ids.slice(0,limit).map(id=>visible(state.posts.get(id))),needed=new Set([state.version,...posts.map(p=>p.mainVersion),...posts.filter(p=>p.removal).map(p=>String(BigInt(p.removal.policy)&0xffffffffn))]);return {posts,policies:[...needed].filter(v=>state.policies.has(v)).map(v=>copy(state.policies.get(v))),hasMore:ids.length>limit};},
   feed:options=>select([...state.order].reverse(),options),
+  boardFeed(id,{limit=50,cursor=null}={}){
+   check(id==='0'||state.boards.has(id));
+   if(cursor!==null){check(typeof cursor==='string'&&cursor.startsWith(id+':'));cursor=cursor.slice(id.length+1);}
+   // Select the complete board history before paging; rejected boards retain
+   // navigable tombstones through the same visible() redaction as every view.
+   const page=select([...state.order].reverse().filter(key=>state.posts.get(key).record.subboard===id),{limit,cursor});
+   if(page.nextCursor)page.nextCursor=id+':'+page.nextCursor;
+   const board=state.boards.get(id),needed=new Set([state.version,...page.posts.map(p=>p.mainVersion),...page.posts.filter(p=>p.removal).map(p=>String(BigInt(p.removal.policy)&0xffffffffn))]);
+   if(board?.rejection)needed.add(board.rejection.mainVersion);
+   const policies=[...needed].sort((a,b)=>BigInt(a)<BigInt(b)?-1:BigInt(a)>BigInt(b)?1:0).map(version=>{
+    const policy=state.policies.get(version);check(policy);return {version,digest:policy.digest,text:policy.text};
+   });
+   return {...page,boardId:id,board:board?{...copy(board),mainVersion:state.version,mainRules:state.policies.get(state.version)?.text}:null,
+    mainPolicy:copy(policies.find(p=>p.version===state.version)),policies};
+  },
+  // Reversible ranking default: prefer community likes, then recent canonical
+  // timestamps, then numeric post ID ascending for stable ties. Filter and rank
+  // the complete bounded history BEFORE paging. No creation-based promotion.
+  home:options=>select(state.order.filter(id=>{const p=state.posts.get(id);return curated.has(p.record.subboard)&&!state.boards.get(p.record.subboard)?.rejected;}).sort((a,b)=>{
+   const x=state.posts.get(a),y=state.posts.get(b);
+   for(const key of ['likes','timestamp']){const left=BigInt(x[key]),right=BigInt(y[key]);if(left!==right)return left>right?-1:1;}
+   return BigInt(a)<BigInt(b)?-1:BigInt(a)>BigInt(b)?1:0;
+  }),options),
   thread(root,options){check(state.posts.get(root)?.record.root===root);return select(state.order.filter(id=>state.posts.get(id).record.root===root),options);},
   profile(nameId,options){check(state.names.has(nameId));return {...select([...state.order].reverse().filter(id=>state.posts.get(id).record.name_id===nameId),options),identity:publicIdentity(state.names.get(nameId))};},
   directory({query='',limit=50,cursor=null}={}){check(typeof query==='string'&&query.length<=120&&Number.isSafeInteger(limit)&&limit>=1&&limit<=100);const q=query.trim().toLowerCase(),boards=[...state.boards.values()].filter(b=>[b.slug,b.name,b.description].some(v=>v.toLowerCase().includes(q))).sort((a,b)=>a.slug<b.slug?-1:a.slug>b.slug?1:0);

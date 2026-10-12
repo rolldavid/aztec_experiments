@@ -67,10 +67,10 @@ function component(fields,length){
   const bytes=Array.from({length:31},(_,i)=>Number((words[0]>>BigInt((30-i)*8))&255n));bytes.push(Number(words[1]>>240n));
   check(bytes.slice(length).every(n=>n===0),'ROLLING_INVALID_RESPONSE');return String.fromCharCode(...bytes.slice(0,length));
 }
-const keys={bio:['name','expectedVersion','content'],avatar:['name','expectedVersion','width','height','data'],name:['first','last'],subboard:['slug','name','description','rules'],like:['post'],unlike:['post'],withdraw:['deposit'],
+const keys={bio:['name','expectedVersion','content'],avatar:['name','expectedVersion','width','height','data'],name:['first','last'],subboard:['slug','name','description','rules'],like:['post'],unlike:['post'],withdraw:['deposit'],screen:['deposit'],
   post:['deposit','content','name','subboard'],reply:['deposit','content','name','subboard','parent','root'],
   quote:['deposit','content','name','subboard','reference'],repost:['deposit','content','name','subboard','reference']};
-const methods={bio:'set_bio',avatar:'set_avatar',name:'register_name',subboard:'create_subboard',like:'set_like',unlike:'set_like',withdraw:'withdraw',post:'post',reply:'post',quote:'post',repost:'post'};
+const methods={bio:'set_bio',avatar:'set_avatar',name:'register_name',subboard:'create_subboard',like:'set_like',unlike:'set_like',withdraw:'withdraw',screen:'screen',post:'post',reply:'post',quote:'post',repost:'post'};
 
 /** Wallet-only port; import after unlock. No SDK, network or public-reader work at import.
  * deployment: {board:{address,artifact}, network:{chainId,version,rollup},portal,
@@ -97,6 +97,9 @@ const methods={bio:'set_bio',avatar:'set_avatar',name:'register_name',subboard:'
  * including empty clear. Avatars accept canonical padded base64<=8192bytes,100x100,
  * or empty data with0x0 to clear. The upload UI must validate/decode/moderate pixels
  * and bind confirmed preview bytes before preparing this binary contract action.
+ * screen accepts only an existing deposit ID and snapshots authenticated-wallet
+ * child/grandchild screening hints. It advances private history without public
+ * content or a subboard-policy gate; the contract enforces maturity and debt.
  * A prepared post includes authenticated-wallet screening hints and live policy versions.
  * submit delegates the sole prove/journal/send lifecycle to wallet.sendTx. Once its
  * durable fence exists, only read-only reconcile is allowed, including after a crash
@@ -166,6 +169,11 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
     const next={...saved.value,status:found.outcome==='success'?'confirmed':'reverted',txHash:found.txHash};
     await (await slot()).write(saved,next);return summary(next);
   }
+  async function screeningArguments(board,deposit){
+    const hints=await utility(board,'get_screen_hints',[session.owner,deposit]);
+    check(Array.isArray(hints)&&hints.length===2&&!(!hints[0]&&hints[1]),'ROLLING_HISTORY_UNAVAILABLE');
+    return [deposit,...hints];
+  }
   async function argumentsFor(action,board,nonce){
     const allowed=keys[action?.type];check(allowed&&Object.keys(action).every(k=>k==='type'||allowed.includes(k)));
     switch(action.type){
@@ -179,16 +187,17 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
       }
       case 'like':case 'unlike':return [field(action.post,true),action.type==='like'];
       case 'withdraw':return [field(action.deposit,true)];
+      case 'screen':return screeningArguments(board,field(action.deposit,true));
       default:{
         const subboard=field(action.subboard??'0'),kind=action.type==='quote'?2:action.type==='repost'?3:1;
         const policy=subboard===zero?await utility(board,'main_policy',[]):await utility(board,'effective_policy',[subboard]);
-        check(Array.isArray(policy)&&policy.length===(subboard===zero?2:5)&&policy[4]!==true,'ROLLING_POLICY_UNAVAILABLE');
+        check(Array.isArray(policy)&&policy.length===(subboard===zero?2:5),'ROLLING_POLICY_UNAVAILABLE');
+        check(subboard===zero||policy[4]!==true,'ROLLING_SUBBOARD_REJECTED');
         const [message,length]=text(action.content,32,kind!==3);
         const draft={subboard,parent:field(action.parent??'0',action.type==='reply'),root_reference:field(action.root??'0',action.type==='reply'),kind,
           name_id:field(action.name??'0'),reference:field(action.reference??'0',kind!==1),message,length,
           expected_main_policy_version:Number(BigInt(policy[0])),expected_local_policy_version:subboard===zero?0:Number(BigInt(policy[2]))};
-        const deposit=field(action.deposit,true),hints=await utility(board,'get_screen_hints',[session.owner,deposit]);
-        check(Array.isArray(hints)&&hints.length===2&&!(!hints[0]&&hints[1]),'ROLLING_HISTORY_UNAVAILABLE');
+        const [deposit,...hints]=await screeningArguments(board,field(action.deposit,true));
         return [deposit,nonce,draft,...hints];
       }
     }

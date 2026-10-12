@@ -361,3 +361,39 @@ test('personalized-denial is a fixed observer phase with an untouched caller-own
  assert.equal(result,response);assert.equal(result.bodyUsed,false);assert.equal(trace.snapshot().rows[0].phase,'personalized-denial');assert.equal(trace.snapshot().rows[0].status,200);
  assert.throws(()=>trace.setPhase('personalized-denial-private-value'));
 });
+
+// Home uses the same bounded observer visitor as the complete feed. These are
+// transport observations, not evidence of real wallet privacy or curation.
+test('synthetic Home and feed parameters retain identical role detection and fail-closed bounds',async()=>{
+ for(const route of ['home','feed']){
+  for(const [query,expected]of [
+   ['limit=20&cursor='+a,'role'],
+   ['limit=20&owner='+a,'unknown'],
+   ['cursor=x&cursor=y','unknown'],
+   ['cursor='+ 'x'.repeat(4100),'truncated'],
+  ]){
+   const trace=make();trace.registerEndpoint('public-reader',origin);
+   await sent(trace,origin+'/api/'+route+'?'+query,{method:'GET'});
+   const s=trace.snapshot();assert.equal(s.rows[0].label,'public-reader');
+   if(expected==='role'){assert.deepEqual(s.rows[0].roles,['a']);assert.equal(s.requestCoverageComplete,true);}
+   else{assert(s[expected]>0);assert.equal(s.requestCoverageComplete,false);}
+   assert(!JSON.stringify(s).includes(a));
+  }
+ }
+});
+
+// Public board navigation parameters still undergo known-human detection.
+test('synthetic board navigation observes IDs and rejects unknown or duplicate parameters',async()=>{
+ for(const [query,expected]of [['id=0&limit=20','clean'],['id='+a,'role'],['id=1&cursor='+a,'role'],['id=0&owner='+a,'unknown'],['id=0&id=1','unknown'],['id=1&cursor='+'x'.repeat(4100),'truncated']]){
+  const trace=make();trace.registerEndpoint('public-reader',origin);
+  await sent(trace,origin+'/api/board?'+query,{method:'GET'});const s=trace.snapshot();
+  assert.equal(s.rows[0].label,'public-reader');
+  // Oversized query returns before route-body classification; it must remain a
+  // truncation failure, without claiming a fully observed method.
+  assert.deepEqual(s.rows[0].methods,expected==='truncated'?[]:['reader_board']);
+  if(expected==='clean'){assert.deepEqual(s.rows[0].roles,[]);assert.equal(s.requestCoverageComplete,true);}
+  else if(expected==='role'){assert.deepEqual(s.rows[0].roles,['a']);assert.equal(s.requestCoverageComplete,true);}
+  else{assert(s[expected]>0);assert.equal(s.requestCoverageComplete,false);}
+  assert(!JSON.stringify(s).includes(a));
+ }
+});

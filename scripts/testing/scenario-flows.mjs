@@ -378,3 +378,6 @@ export async function rollingReactionWire(ctx){return (await import('./rolling-a
 
 export async function rollingTrustedRecovery(ctx){return (await import('./rolling-application-fixture.mjs')).runRollingApplicationFixture(ctx,'trusted-recovery');}
 export async function rollingNameRace(ctx){return (await import('./rolling-application-fixture.mjs')).runRollingApplicationFixture(ctx,'name-race');}
+export async function rollingSubboardPolicy(ctx){return (await import('./rolling-application-fixture.mjs')).runRollingApplicationFixture(ctx,'subboard-policy');}
+
+export async function rollingRejectedWithdrawal(ctx){return (await import('./rolling-application-fixture.mjs')).runRollingApplicationFixture(ctx,'rejected-subboard-withdrawal');}

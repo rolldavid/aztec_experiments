@@ -10,11 +10,11 @@ import {createPublicReader} from '../../apps/rolling/reader-client.mjs';
 const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 export function assertCanonicalSocialViews(projection,rows){
  for(const {route,parameters,expected}of rows){
-  assert(['feed','thread','post','profile'].includes(route));
-  const actual=route==='post'?{post:projection.post(parameters.id)}:route==='thread'?projection.thread(parameters.root,parameters):route==='profile'?projection.profile(parameters.nameId,parameters):projection.feed(parameters);
+  assert(['feed','thread','post','profile','directory','board'].includes(route));
+  const actual=route==='board'?projection.boardFeed(parameters.id,parameters):route==='directory'?projection.directory(parameters):route==='post'?{post:projection.post(parameters.id)}:route==='thread'?projection.thread(parameters.root,parameters):route==='profile'?projection.profile(parameters.nameId,parameters):projection.feed(parameters);
   // Raw projection owns canonical posts and cursors. The HTTP index enriches
   // names/boards; those remain mandatory in assertSocialHTTPView below.
-  const keys=route==='post'?['post']:route==='profile'?['identity','posts','nextCursor']:['posts','nextCursor'];
+  const keys=route==='board'?['posts','nextCursor','boardId','board','mainPolicy','policies']:route==='directory'?['boards','nextCursor']:route==='post'?['post']:route==='profile'?['identity','posts','nextCursor']:['posts','nextCursor'];
   assert(keys.every(key=>Object.hasOwn(expected,key)&&Object.hasOwn(actual,key)));
   assert.deepEqual(Object.fromEntries(keys.map(key=>[key,actual[key]])),Object.fromEntries(keys.map(key=>[key,expected[key]])));
  }
@@ -62,17 +62,17 @@ export async function synchronizeRollingPublicReader(index,deadlineAt){
  assert(deadlineAt-Date.now()>=21500,'Reserve first server sync and cleanup');return {passes,pages};
 }
 
-export async function verifyRollingPublicReader({node,artifact,scope,deployment,cacheDirectory,ids,scenario='conversation',expectedProfile,expectedProfiles,expectedHTTP,deadlineAt,observation,wire,readerPort=0}){
- assert(['conversation','profiles','anonymous-thread','repost-reactions','account-reactions','owned-names','social-wire','reaction-wire'].includes(scenario));
+export async function verifyRollingPublicReader({node,artifact,scope,deployment,cacheDirectory,ids,scenario='conversation',expectedProfile,expectedProfiles,expectedHTTP,deadlineAt,observation,wire,readerPort=0,homeSubboards=[]}){
+ assert(['conversation','profiles','anonymous-thread','repost-reactions','account-reactions','owned-names','social-wire','reaction-wire','subboard-policy','subboard-home','rejected-subboard-withdrawal'].includes(scenario));
  const names=scenario==='owned-names';
- const social=['anonymous-thread','repost-reactions','account-reactions','social-wire','reaction-wire'].includes(scenario);
+ const social=['anonymous-thread','repost-reactions','account-reactions','social-wire','reaction-wire','subboard-policy','subboard-home','rejected-subboard-withdrawal'].includes(scenario);
  if(names){assert(Array.isArray(expectedProfiles)&&expectedProfiles.length===4);assert.equal(new Set(expectedProfiles.map(p=>p.identity.id)).size,4);}
  if(social)assert(Array.isArray(expectedHTTP)&&expectedHTTP.length>0);
  if(scenario==='profiles')assert(expectedProfile&&expectedProfile.id===ids.nameId);
  assert(Number.isSafeInteger(deadlineAt)&&deadlineAt>Date.now());
  const deadline=Math.min(deadlineAt,Date.now()+30000);
  const storage=()=>publicFeedFileStorage(cacheDirectory,{maxRecordBytes:1048576,maxSnapshotBytes:67108864});
- const make=async timeoutMs=>wire?(await createRollingPublicIndexFromConfig({nodeUrl:wire.nodeUrl,artifactPath:wire.artifactPath,scope,deployment,cacheDirectory,port:0})).index:createRollingPublicIndex({node,artifact,scope,deployment,storage:storage(),rangeSize:10,pagesPerSync:20,timeoutMs});
+ const make=async timeoutMs=>wire?(await createRollingPublicIndexFromConfig({nodeUrl:wire.nodeUrl,artifactPath:wire.artifactPath,scope,deployment,cacheDirectory,port:0,homeSubboards})).index:createRollingPublicIndex({node,artifact,scope,deployment,homeSubboards,storage:storage(),rangeSize:10,pagesPerSync:20,timeoutMs});
  const routes=names?[...expectedProfiles.map(p=>['profile',{nameId:p.identity.id,limit:100},ownedNameHTTPExpectation(p)]),['feed',{}, {posts:[],nextCursor:null,names:{},boards:{}}],['directory',{}, {boards:[],nextCursor:null}]]:social?expectedHTTP.map(row=>[row.route,row.parameters,row.expected]):scenario==='profiles'?[['profile',{nameId:ids.nameId}],['feed',{}],['directory',{}]]:[['feed',{}],['thread',{root:ids.rootId}],['profile',{nameId:ids.nameId}],['directory',{}],['post',{id:ids.replyId}]];
  assert(Number.isSafeInteger(readerPort)&&readerPort>=0&&readerPort<=65535);
  let first;

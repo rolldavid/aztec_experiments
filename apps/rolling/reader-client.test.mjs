@@ -18,3 +18,15 @@ test('streaming size gate cancels before reading an unbounded response',async()=
  const read=createPublicReader({fetch:async()=>new Response(stream,{headers:{'content-type':'application/json'}}),maxBytes:150});
  await assert.rejects(read('feed'));assert(cancelled);
 });
+test('Home has its own public route and rejects caller-supplied curation',async()=>{
+ const calls=[],read=createPublicReader({fetch:async(url,options)=>{calls.push({url,options});return Response.json(body);}});
+ await read('home',{limit:2,cursor:'abc:1:2'});assert.equal(calls[0].url,'/api/home?limit=2&cursor=abc%3A1%3A2');
+ for(const extra of ['homeSubboards','subboard','owner'])await assert.rejects(read('home',{[extra]:'1'}));
+ assert.equal(calls.length,1);await read('feed');assert.equal(calls[1].url,'/api/feed');
+});
+
+
+test('board reader uses public id and cursor without private parameters',async()=>{
+ let call;const read=createPublicReader({fetch:async(url,options)=>{call={url,options};return Response.json(body);}});await read('board',{id:'0',limit:2,cursor:'abc:0:1:2'});assert.equal(call.url,'/api/board?id=0&limit=2&cursor=abc%3A0%3A1%3A2');assert.equal(call.options.credentials,'omit');
+ await assert.rejects(read('board',{id:'1',owner:'private'}));await assert.rejects(read('board',{id:'1',likedBy:'private'}));
+});

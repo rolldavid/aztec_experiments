@@ -217,3 +217,48 @@ test('avatar removal event requires nonempty canonical UTF8 reason and exact rea
  const {nameId}=await fixture(),a=await avatar(nameId,'1',Buffer.from([7])),removed=await removeAvatar(a);
  for(const patch of [{name_id:'0'},{avatar_version:'0'},{main_policy_version:'0'},{reason_digest:'1'},{length:'0',reason:pack('',7)},{length:'218'},{reason:pack('Unsafe image!',7)},{length:'1',reason:pack(Buffer.from([0xc0]),7)}])await assert.rejects(()=>modified(removed,patch));
 });
+
+async function homeFixture(){
+ const {events}=await fixture(),slug=pack('build',2),id=await h(['5',...slug],0x52435331);
+ const created=await event('SubboardCreated',{subboard_id:id,slug_length:'5',slug,name_length:'5',name:pack('Build',3),description_length:'5',description:pack('Tools',16),local_policy_version:'1',rules_length:'0',rules:pack('',32),rules_digest:await digest('',32),main_policy_version:'1',metadata_digest:await h([id,await digest('Build',3),await digest('Tools',16)],0x52434d31)},0,'3');
+ const publish=async(postId,board,timestamp,tx)=>event('PostPublished',{id:postId,record:{subboard:board,parent:'0',root:postId,kind:'1',name_id:'0',reference:'0',content_digest:await digest('Home',32)},timestamp,main_policy_version:'1',local_policy_version:board==='0'?'0':'1',length:'4',message:pack('Home',32)},0,tx);
+ const posts=[await publish('30',id,'99','4'),await publish('40','0','2','5'),await publish('50','0','2','6')];
+ return {id,events:[...events,created,...posts],publish};
+}
+test('Home defaults main-only; immutable explicit curation cannot be changed by creation or query',async()=>{
+ const f=await homeFixture(),ids=[f.id],curated=createRollingProjection({isValidatedEvent:isRollingEvent,homeSubboards:ids}),main=createRollingProjection({isValidatedEvent:isRollingEvent});ids.length=0;
+ for(const p of [main,curated])p.stage(f.events).apply();
+ assert.deepEqual(main.home().posts.map(p=>p.id),['40','50','10','20']);
+ assert.deepEqual(curated.home().posts.map(p=>p.id),['30','40','50','10','20']);
+ assert.deepEqual(main.home({homeSubboards:[f.id]}).posts,main.home().posts);
+ assert.equal(main.feed().posts.length,5);assert.equal(main.directory().boards[0].id,f.id);
+ const page=curated.home({limit:2});assert.deepEqual(page.posts.map(p=>p.id),['30','40']);
+ const next=curated.home({limit:2,cursor:page.nextCursor});assert.deepEqual(next.posts.map(p=>p.id),['50','10']);
+ assert.deepEqual(curated.home({limit:2,cursor:next.nextCursor}).posts.map(p=>p.id),['20']);
+});
+test('Home ranking responds to likes, invalidates cursors on change/undo and omits rejected boards',async()=>{
+ const f=await homeFixture(),p=createRollingProjection({isValidatedEvent:isRollingEvent,homeSubboards:[f.id]});p.stage(f.events).apply();
+ const initial=p.home().posts,cursor=p.home({limit:1}).nextCursor;
+ const liked=p.stage([await event('LikeChanged',{post:'50',tag:'99',active:true,count:'1'},0,'7')]);liked.apply();assert.equal(p.home().posts[0].id,'50');assert.throws(()=>p.home({cursor}));
+ const afterLike=p.home({limit:1}).nextCursor;liked.undo();assert.deepEqual(p.home().posts,initial);assert.throws(()=>p.home({cursor:afterLike}));
+ const rejection=p.stage([await event('SubboardRejected',{subboard_id:f.id,main_policy_version:'1',local_policy_version:'1',reason_length:'3',reason:pack('Bad',7),reason_digest:await digest('Bad',7)},0,'8')]);rejection.apply();
+ assert(!p.home().posts.some(post=>post.id==='30'));assert.equal(p.feed().posts.find(post=>post.id==='30').text,null);assert.equal(p.directory().boards[0].rejected,true);
+ rejection.undo();assert.deepEqual(p.home().posts,initial);
+});
+for(const homeSubboards of [null,{},'1',[0],['0'],['01'],['-1'],['0x1'],['1','1'],Array(257).fill('1'),['21888242871839275222246405745257275088548364400416034343698204186575808495617']])test(`Home rejects invalid operator curation ${JSON.stringify(homeSubboards).slice(0,80)}`,()=>{
+ assert.throws(()=>createRollingProjection({isValidatedEvent:isRollingEvent,homeSubboards}));
+});
+
+
+test('board feed filters before paging and retains effective and authored policy history with tombstones',async()=>{
+ const f=await homeFixture(),p=createRollingProjection({isValidatedEvent:isRollingEvent});p.stage(f.events).apply();
+ const first=p.boardFeed('0',{limit:1});assert.equal(first.posts.length,1);assert(first.posts.every(post=>post.record.subboard==='0'));assert(first.nextCursor);
+ assert(p.boardFeed('0',{limit:1,cursor:first.nextCursor}).posts.every(post=>post.record.subboard==='0'));
+ assert.throws(()=>p.boardFeed(f.id,{cursor:first.nextCursor}));assert.throws(()=>p.boardFeed('999'));
+ const named=p.boardFeed(f.id);assert.deepEqual(named.posts.map(post=>post.id),['30']);assert.equal(named.board.slug,'build');assert.equal(named.mainPolicy.text,'Rules');
+ const policy=await event('MainPolicyPublished',{version:'2',digest:await digest('Updated',32),length:'7',rules:pack('Updated',32)},0,'7');p.stage([policy]).apply();
+ assert.throws(()=>p.boardFeed('0',{cursor:first.nextCursor}));
+ const reject=await event('SubboardRejected',{subboard_id:f.id,main_policy_version:'2',local_policy_version:'1',reason_length:'3',reason:pack('Bad',7),reason_digest:await digest('Bad',7)},0,'8');p.stage([reject]).apply();
+ const after=p.boardFeed(f.id);assert.equal(after.board.rejected,true);assert.equal(after.board.rejection.reason,'Bad');assert.equal(after.posts[0].text,null);assert.equal(after.posts[0].record.root,'30');assert.equal(after.mainPolicy.version,'2');assert.deepEqual(after.policies.map(v=>v.version),['1','2']);
+ after.board.rules='MUTATED';after.policies[0].text='MUTATED';assert.equal(p.boardFeed(f.id).policies[0].text,'Rules');assert.equal(p.boardFeed('0').board,null);
+});

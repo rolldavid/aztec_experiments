@@ -15,7 +15,7 @@ import {BaseWallet} from '@aztec-labs/wallet-sdk/base-wallet';
 import {FIELD_MODULUS} from './invocation.mjs';
 import {createRollingApplication} from './application.mjs';
 const hex=n=>'0x'+BigInt(n).toString(16).padStart(64,'0');
-const artifact=loadContractArtifact(JSON.parse(fs.readFileSync(new URL('../../billboard/target/rolling_contract-RollingBoard.json',import.meta.url))));
+const artifact=loadContractArtifact(JSON.parse(fs.readFileSync(process.env.ROLLING_TEST_ARTIFACT??new URL('../../billboard/target/rolling_contract-RollingBoard.json',import.meta.url))));
 // REQUIRED: run only after normal profile-protocol build/processing. Never invent
 // or patch an ABI to make these cases pass against an older application artifact.
 const ownedRecordAbi=artifact.functions.find(f=>f.name==='owned_name_records');
@@ -38,8 +38,10 @@ function fixture(){
   }};
   const board={methods:new Proxy({},{get:(_,name)=>(...args)=>({name,args,simulate:async()=>{
     state.privateReads.push({name,args});
+    if(name==='effective_policy'&&state.policyReadError)throw state.policyReadError;
+    if(name==='get_screen_hints'&&state.hintsReadError)throw state.hintsReadError;
     const replies={profile_state:state.profileState??decodeFromAbi(getFunctionReturnType([...artifact.functions,...artifact.nonDispatchPublicFunctions].find(f=>f.name==='profile_state')),Array.from({length:8},()=>Fr.ZERO)),owned_name_records:('records' in state)?state.records:await ownershipPage(),get_deposit_ids:[9n,0n,0n,0n,0n,0n,0n,0n,0n,0n],
-      main_policy:[BigInt(state.policy),1n],effective_policy:[BigInt(state.policy),1n,1n,2n,false],get_screen_hints:state.hints??decodeFromAbi(getFunctionReturnType(artifact.functions.find(f=>f.name==='get_screen_hints')),Array.from({length:28},()=>Fr.ZERO))};
+      main_policy:[BigInt(state.policy),1n],effective_policy:('effectivePolicy' in state)?state.effectivePolicy:[BigInt(state.policy),1n,1n,2n,false],get_screen_hints:state.hints??decodeFromAbi(getFunctionReturnType(artifact.functions.find(f=>f.name==='get_screen_hints')),Array.from({length:28},()=>Fr.ZERO))};
     return {result:replies[name]};
   }})})};
   const journal={assertCanStart:async()=>{},inspectOutcome:async()=>state.outcome,inspect:async()=>state.outcome,confirmed:()=>{}};
@@ -54,6 +56,7 @@ function fixture(){
     inspectTrustedNode:async()=>{if(!state.guard)throw Error('stale trusted node');},
     preparePrivateFeePayment:async()=>({availableCredit:100n}),estimatePrivateFeeTransaction:async input=>{
       await input.guard();state.estimates++;state.calls.push(input.interaction);
+      if(input.interaction.name==='screen'&&state.screenError)throw state.screenError;
       if(['set_bio','set_avatar'].includes(input.interaction.name)){assert.equal(input.interaction.args[1],state.profileVersion??0,'stale profile version');assert((state.profileVersion??0)<0xffffffff,'profile version exhausted');}
       if(input.interaction.name==='post')assert.equal(input.interaction.args[2].expected_main_policy_version,state.policy,'policy changed');
       return {maximumFee:state.fee,payload:input.interaction,gasSettings:{ceiling:state.fee}};
@@ -80,7 +83,7 @@ test('all first-slice actions encode against the installed RollingBoard ABI',asy
   const actions=[{type:'subboard',slug:'tiny-board',name:'Tiny',description:'Description',rules:''},
     {type:'post',deposit:'9',content:'héllo'}, {type:'reply',deposit:'9',content:'Reply',parent:'10',root:'11'},
     {type:'quote',deposit:'9',content:'Quote',reference:'10'}, {type:'repost',deposit:'9',content:'',reference:'10'},
-    {type:'like',post:'10'},{type:'unlike',post:'10'},{type:'withdraw',deposit:'9'}];
+    {type:'like',post:'10'},{type:'unlike',post:'10'},{type:'withdraw',deposit:'9'},{type:'screen',deposit:'9'}];
   for(const action of actions){const f=fixture(),p=await f.app.prepare(action);assert.equal(p.status,'prepared');
     assert.equal((await f.app.submitPrepared(p.intentId)).status,'confirmed');}
 });
@@ -378,4 +381,75 @@ test('profile snapshots reject anonymous names and malformed or overflowing vers
   const f=fixture();f.state.profileState={bio_version:0n,bio_digest:0n,bio_length:0,avatar_version:0n,avatar_digest:0n,avatar_width:0,avatar_height:0,avatar_length:0,[key]:value};
   await assert.rejects(f.app.readProfile({name:'9'}));assert.equal(f.state.sends,0);assert.equal(f.values.size,0);
  }
+});
+
+test('rejected subboard has a distinct pre-spend result without hiding malformed policy or outages',async()=>{
+ const input={type:'post',deposit:'9',subboard:'17',name:'0',content:'A retained draft'};
+ const rejected=fixture();rejected.state.effectivePolicy=[1n,1n,1n,2n,true];
+ await assert.rejects(rejected.app.prepare(input),{code:'ROLLING_SUBBOARD_REJECTED'});
+ for(const value of [null,[],[1n,1n,1n,2n], [1n,1n,1n,2n,'true']]){
+  const malformed=fixture();malformed.state.effectivePolicy=value;
+  await assert.rejects(malformed.app.prepare(input),error=>error.code==='ROLLING_INVALID_RESPONSE');
+  assert.equal(malformed.state.estimates,0);assert.equal(malformed.state.sends,0);assert.equal(malformed.values.size,0);
+ }
+ const unavailable=fixture(),error=Object.assign(Error('test-only offline'),{code:'TEST_NODE_UNAVAILABLE'});unavailable.state.policyReadError=error;
+ await assert.rejects(unavailable.app.prepare(input),e=>e===error);
+ for(const f of [rejected,unavailable]){assert.equal(f.state.estimates,0);assert.equal(f.state.sends,0);assert.equal(f.values.size,0);assert(!f.state.privateReads.some(x=>x.name==='get_screen_hints'));}
+ assert.equal(input.content,'A retained draft');
+ const valid=fixture();await valid.app.prepare(input);assert.equal(valid.state.estimates,1);assert.equal(valid.state.sends,0);
+});
+
+// Labelled session doubles; actual normal ABI/decoder and encrypted persistence.
+// These prove the adapter boundary, not on-chain maturity or a completed exit.
+test('screen actual ABI snapshots None/Some pairs and submits once after explicit confirmation',async()=>{
+ const hintsType=getFunctionReturnType(artifact.functions.find(f=>f.name==='get_screen_hints'));
+ const screen=artifact.functions.find(f=>f.name==='screen');assert(screen);
+ for(const count of [0,1,2]){
+  const fields=Array.from({length:28},()=>Fr.ZERO);
+  for(let i=0;i<count;i++){
+   const offset=i*14,values=[1n,1n,9n,BigInt(i+1),BigInt(8+i),100n,3n,0n,1n,3n,20n,21n,1n,22n];
+   values.forEach((n,j)=>{fields[offset+j]=new Fr(n);});
+  }
+  const f=fixture();f.state.hints=decodeFromAbi(hintsType,fields);
+  const prepared=await f.app.prepare({type:'screen',deposit:'9'});assert.equal(prepared.status,'prepared');assert.equal(prepared.maximumFee,'10');
+  assert.equal(f.state.sends,0);assert.deepEqual(f.state.privateReads.map(r=>r.name),['get_screen_hints']);
+  const args=f.state.calls[0].args;assert.equal(args[0],hex(9));
+  assert.deepEqual(encodeArguments(screen,args).map(String),[new Fr(9n),...fields].map(String));
+  // A later utility response must not replace the confirmed immutable hints.
+  f.state.hints=decodeFromAbi(hintsType,Array.from({length:28},()=>Fr.ZERO));
+  const outcome=await f.restart().submitPrepared(prepared.intentId);assert.equal(outcome.status,'confirmed');
+  assert.equal(f.state.sends,1);assert.equal(f.state.sent.payload.name,'screen');assert.deepEqual(f.state.sent.payload.args,args);
+  assert.equal(f.state.privateReads.length,1);await assert.rejects(f.app.submitPrepared(prepared.intentId),{code:'ROLLING_RECOVERY_REQUIRED'});
+ }
+});
+test('screen rejects malformed deposit, extra hints/content/call options and grandchild without child',async()=>{
+ for(const action of [{type:'screen'},{type:'screen',deposit:'0'},{type:'screen',deposit:9},{type:'screen',deposit:'09'},
+  {type:'screen',deposit:FIELD_MODULUS.toString()},{type:'screen',deposit:'9',child:null},{type:'screen',deposit:'9',content:''},{type:'screen',deposit:'9',from:hex(3)}]){
+  const f=fixture();await assert.rejects(f.app.prepare(action),{code:'ROLLING_INVALID_ACTION'});assert.equal(f.state.privateReads.length,0);assert.equal(f.state.estimates,0);assert.equal(f.state.sends,0);assert.equal(f.values.size,0);
+ }
+ const f=fixture(),type=getFunctionReturnType(artifact.functions.find(fn=>fn.name==='get_screen_hints')),fields=Array.from({length:28},()=>Fr.ZERO);fields[14]=new Fr(1n);
+ f.state.hints=decodeFromAbi(type,fields);await assert.rejects(f.app.prepare({type:'screen',deposit:'9'}),{code:'ROLLING_HISTORY_UNAVAILABLE'});assert.equal(f.state.estimates,0);assert.equal(f.values.size,0);
+});
+test('screen propagates private hint and fee-simulation failures without saving or sending',async()=>{
+ for(const phase of ['hintsReadError','screenError']){
+  const f=fixture(),error=Error('Labelled screening failure');f.state[phase]=error;
+  await assert.rejects(f.app.prepare({type:'screen',deposit:'9'}),e=>e===error);assert.equal(f.values.size,0);assert.equal(f.state.sends,0);
+ }
+ const f=fixture();f.state.hints=[{},undefined];await assert.rejects(f.app.prepare({type:'screen',deposit:'9'}),{code:'ROLLING_INVALID_RESPONSE'});assert.equal(f.values.size,0);assert.equal(f.state.estimates,0);
+});
+test('screen retains saved fee ceiling, permits pre-send cancellation and fences uncertain send',async()=>{
+ const f=fixture(),p=await f.app.prepare({type:'screen',deposit:'9'});f.state.fee=11n;
+ await assert.rejects(f.restart().submitPrepared(p.intentId),{code:'ROLLING_FEE_CHANGED'});assert.equal(f.state.sends,0);
+ assert.equal((await f.app.cancelPrepared(p.intentId)).status,'cancelled');
+ f.state.fee=10n;const next=await f.app.prepare({type:'screen',deposit:'9'});f.state.failSend=true;
+ await assert.rejects(f.app.submitPrepared(next.intentId));assert.equal(f.state.sends,1);
+ const replacement=f.restart();assert.equal((await replacement.reconcile(next.intentId)).status,'unknown');
+ await assert.rejects(replacement.submitPrepared(next.intentId),{code:'ROLLING_RECOVERY_REQUIRED'});
+ await assert.rejects(replacement.prepare({type:'screen',deposit:'9'}),{code:'ROLLING_RECOVERY_REQUIRED'});assert.equal(f.state.sends,1);
+});
+test('screen stale-state submission fails without refreshing immutable hints or spending',async()=>{
+ const f=fixture(),p=await f.app.prepare({type:'screen',deposit:'9'}),error=Error('Labelled spent deposit simulation');
+ f.state.screenError=error;await assert.rejects(f.restart().submitPrepared(p.intentId),e=>e===error);
+ assert.equal(f.state.sends,0);assert.equal(f.state.privateReads.filter(r=>r.name==='get_screen_hints').length,1);
+ assert.equal((await f.app.reconcile(p.intentId)).status,'prepared');assert.equal((await f.app.cancelPrepared(p.intentId)).status,'cancelled');
 });

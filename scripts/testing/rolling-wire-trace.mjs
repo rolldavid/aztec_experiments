@@ -22,7 +22,7 @@ const txMethods=new Set(['node_sendTx','aztec_sendTx','node_simulatePublicCalls'
 const object=v=>v!==null&&typeof v==='object'&&!Array.isArray(v);
 const base64=v=>typeof v==='string'&&v.length>0&&v.length%4===0&&/^[A-Za-z0-9+/]*={0,2}$/.test(v)&&Buffer.from(v,'base64').toString('base64')===v;
 const hexBytes=v=>typeof v==='string'&&/^0x(?:[a-fA-F0-9]{2})*$/.test(v);
-const readerParams={status:[],feed:['limit','cursor'],directory:['query','limit','cursor'],thread:['root','limit','cursor'],profile:['nameId','limit','cursor'],post:['id']};
+const readerParams={status:[],feed:['limit','cursor'],home:['limit','cursor'],board:['id','limit','cursor'],directory:['query','limit','cursor'],thread:['root','limit','cursor'],profile:['nameId','limit','cursor'],post:['id']};
 const configError=()=>Error('Invalid wire observer configuration');
 const actor=phase=>phase.startsWith('a-')||phase.endsWith('-a')?'a':phase.startsWith('b-')||phase.endsWith('-b')?'b':null;
 const own=(o,k)=>{const d=Object.getOwnPropertyDescriptor(o,k);if(d&&!Object.hasOwn(d,'value'))throw Error();return d?.value;};

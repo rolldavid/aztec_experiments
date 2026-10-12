@@ -12,8 +12,8 @@ async function fixture(t){const state={ready:true,calls:[],syncs:0,active:0,peak
 }
 test('strict public routes, bounded query parameters and no private/RPC surfaces',async t=>{
  const f=await fixture(t);
- for(const route of ['/api/feed?limit=2','/api/directory?query=build','/api/thread?root=10','/api/profile?nameId=20','/api/post?id=30'])assert.equal((await f.get(route)).status,200);
- for(const route of ['/api/feed?owner=secret','/api/feed?limit=0','/api/feed?limit=101','/api/feed?limit=1&limit=2','/api/thread','/api/profile?nameId=0x42','/api/post?id=-1','/api/feed?cursor='+('a'.repeat(121))])assert.equal((await f.get(route)).status,400,route);
+ for(const route of ['/api/home?limit=2','/api/feed?limit=2','/api/directory?query=build','/api/thread?root=10','/api/profile?nameId=20','/api/post?id=30'])assert.equal((await f.get(route)).status,200);
+ for(const route of ['/api/home?homeSubboards=1','/api/home?subboard=1','/api/feed?owner=secret','/api/feed?limit=0','/api/feed?limit=101','/api/feed?limit=1&limit=2','/api/thread','/api/profile?nameId=0x42','/api/post?id=-1','/api/feed?cursor='+('a'.repeat(121))])assert.equal((await f.get(route)).status,400,route);
  for(const route of ['/api/owned_names','/api/simulate','/api/wallet','/api/constructor','/api/status/x'])assert.equal((await f.get(route)).status,404);
  assert.equal((await fetch(f.server.url+'/api/feed',{method:'POST',body:'{}'})).status,405);
  assert.equal((await fetch(f.server.url+'/api/feed',{method:'HEAD'})).status,405);
@@ -62,6 +62,10 @@ test('shared config factory rejects invalid port/extras/private URL before artif
   const candidate=Object.defineProperties({},Object.getOwnPropertyDescriptors(config));candidate.nodeUrl=nodeUrl;
   await assert.rejects(createRollingPublicIndexFromConfig(candidate),{message:'Invalid public index configuration'});
  }
+ for(const homeSubboards of [null,['0'],['1','1'],['0x1'],[1],Array(257).fill('1')]){
+  const candidate=Object.defineProperties({},Object.getOwnPropertyDescriptors(config));candidate.homeSubboards=homeSubboards;
+  await assert.rejects(createRollingPublicIndexFromConfig(candidate),{message:'Invalid public index configuration'});
+ }
  const extra=Object.defineProperties({},Object.getOwnPropertyDescriptors(config));extra.wallet={};
  await assert.rejects(createRollingPublicIndexFromConfig(extra),{message:'Invalid public index configuration'});
 });
@@ -72,8 +76,15 @@ test('shared factory constructs real decoder and bounded storage without startin
  const artifact=loadContractArtifact(JSON.parse(await readFile(artifactPath,'utf8'))),classId=(await getContractClassFromArtifact(artifact)).id.toString();
  const cacheDirectory=await mkdtemp(join(tmpdir(),'rolling-server-config-'));t.after(()=>rm(cacheDirectory,{recursive:true,force:true}));
  const hex=n=>'0x'+BigInt(n).toString(16).padStart(64,'0');
- const {index,port}=await createRollingPublicIndexFromConfig({nodeUrl:'http://127.0.0.1:1',artifactPath,cacheDirectory,port:0,
+ const {index,port}=await createRollingPublicIndexFromConfig({nodeUrl:'http://127.0.0.1:1',artifactPath,cacheDirectory,port:0,homeSubboards:['17'],
   scope:{chainId:'31337',rollupVersion:'1',rollupAddress:'0x'+'11'.repeat(20),boardAddress:hex(42),classId},
   deployment:{blockNumber:1,blockHash:hex(1),txHash:hex(2)}});
  assert.equal(port,0);assert.equal(index.status().state,'authenticating');assert.throws(()=>index.query('feed'),{code:'ROLLING_PUBLIC_NOT_READY'});
+});
+
+
+test('board route requires one canonical public id and bounded scoped cursor',async t=>{
+ const f=await fixture(t);assert.equal((await f.get('/api/board?id=0&limit=1')).status,200);assert.deepEqual(f.state.calls.at(-1),{view:'board',params:{id:'0',limit:1}});
+ for(const route of ['/api/board','/api/board?id=01','/api/board?id=-1','/api/board?id=1&id=2','/api/board?id=1&owner=private','/api/board?id=1&cursor='+('a'.repeat(201))])assert.equal((await f.get(route)).status,400);
+ f.index.query=()=>{throw Object.assign(Error('PRIVATE_SENTINEL'),{code:'ROLLING_PUBLIC_NOT_FOUND'});};const response=await f.get('/api/board?id=999');assert.equal(response.status,404);assert.deepEqual(await response.json(),{schemaVersion:1,error:'not-found'});
 });

@@ -62,3 +62,17 @@ test('bounded catchup rejects stalled pages and never retries an index error',as
  calls=0;await assert.rejects(()=>synchronizeRollingPublicReader({status:()=>({state:'syncing'}),sync:async()=>{calls++;return {state:'syncing',pages:0};}},Date.now()+30000));assert.equal(calls,1);
  calls=0;await assert.rejects(()=>synchronizeRollingPublicReader({status:()=>({state:'syncing'}),sync:async()=>{calls++;}},Date.now()+21000));assert.equal(calls,0);
 });
+
+test('canonical directory oracle rejects invented boards and cursors while omitting only index metadata',()=>{
+ const {projection}=fixture();const row={route:'directory',parameters:{query:'',limit:100},expected:{boards:[],nextCursor:null}};
+ assertCanonicalSocialViews(projection,[row]);
+ for(const mutate of [r=>r.expected.boards.push({id:'7'}),r=>r.expected.nextCursor='stale',r=>delete r.expected.boards]){const changed=structuredClone(row);mutate(changed);assert.throws(()=>assertCanonicalSocialViews(projection,[changed]));}
+});
+
+test('canonical board oracle requires content, policies, identity and continuation independently of HTTP metadata',()=>{
+ const {projection}=fixture();const {revision,...expected}=projection.boardFeed('0',{limit:100});
+ const row={route:'board',parameters:{id:'0',limit:100},expected:{...expected,names:{},boards:{}}};assertCanonicalSocialViews(projection,[row]);
+ for(const mutate of [r=>r.expected.posts=[],r=>r.expected.boardId='9',r=>r.expected.board={id:'0'},r=>r.expected.mainPolicy.text='changed',r=>r.expected.policies=[],r=>r.expected.nextCursor='unexpected',r=>delete r.expected.mainPolicy]){
+  const changed=structuredClone(row);mutate(changed);assert.throws(()=>assertCanonicalSocialViews(projection,[changed]));
+ }
+});
