@@ -3,7 +3,7 @@ import { readFile, lstat, realpath, writeFile } from 'node:fs/promises';
 import { resolve, join, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-// ISOLATED EXPERIMENT ONLY. No build/install hook. Normal sync is unchanged;
+// Explicit hash-pinned distribution; builds only verify, never apply. Normal sync is unchanged;
 // fixed page/cursor/head operations only, never a generic skip-sync flag.
 // Caller supplies manifest-approved pins and holds the account lease. Its guard
 // runs again AFTER contributor settlement, before the original atomic commit.
@@ -515,17 +515,46 @@ export async function inspectPreferencePage(root) {
   return {state:states[0],files:files.map(({pin,source})=>({path:pin.path,sha256:sha(source)})),compact:helperSource?PREFERENCE_PAGE_COMPACT_PIN.sha256:null,recovery:recoverySource?PREFERENCE_PAGE_RECOVERY_PIN.sha256:null};
 }
 export async function patchPreferencePage(root) {
-  // This prototype cannot install into a node_modules tree or the shared package
+  // Isolated mode cannot install into a node_modules tree or the shared package
   // resolved from this workspace. Only explicit standalone copied packages.
   root=resolve(root);
   const installed=await realpath(fileURLToPath(new URL('../node_modules/@aztec-labs/pxe',import.meta.url)));
   if(root===installed||root.startsWith(installed+sep)||root.split(sep).includes('node_modules'))throw Error('PREFERENCE_PAGE_PATCH_ISOLATED_ONLY');
+  return applyPreferencePage(root);
+}
+
+// Installed mode has no arbitrary destination authority. It belongs only to
+// the physical repository containing this installer, never a borrowed checkout
+// link. Stopping all consumers/borrowers is an operator prerequisite, not a
+// condition this filesystem check can infer. There is no force override.
+export async function patchInstalledPreferencePage(root) {
+  if(typeof root!=='string')throw Error('PREFERENCE_PAGE_PATCH_OWNING_TREE');
+  const repository=resolve(fileURLToPath(new URL('../',import.meta.url)));
+  const expected=join(repository,'node_modules/@aztec-labs/pxe');
+  if(resolve(root)!==expected)throw Error('PREFERENCE_PAGE_PATCH_OWNING_TREE');
+  for(const directory of [repository,join(repository,'node_modules'),join(repository,'node_modules/@aztec-labs'),expected]) {
+    if(!(await lstat(directory)).isDirectory()||await realpath(directory)!==directory)throw Error('PREFERENCE_PAGE_PATCH_OWNING_TREE');
+  }
+  // Local toolchain and package metadata supplement (never replace) exact byte
+  // pins. The SDK build separately verifies the complete locked package closure.
+  const toolchain=JSON.parse(await readFile(join(repository,'toolchain.json'),'utf8'));
+  const packageMetadata=JSON.parse(await readFile(join(expected,'package.json'),'utf8'));
+  if(toolchain.node!==process.versions.node||toolchain.aztec!=='6.0.0-rc.3'||packageMetadata.name!=='@aztec-labs/pxe'||packageMetadata.version!==toolchain.aztec)throw Error('PREFERENCE_PAGE_PATCH_VERSION');
+  // Hard-linked targets also share writable bytes with another tree.
+  for(const relative of [...PREFERENCE_PAGE_PINS.map(pin=>pin.path),PREFERENCE_PAGE_COMPACT_PIN.generated,PREFERENCE_PAGE_RECOVERY_PIN.generated]) {
+    try {if((await lstat(join(expected,relative))).nlink!==1)throw Error('PREFERENCE_PAGE_PATCH_OWNING_TREE');}
+    catch(error){if(error.code!=='ENOENT')throw error;}
+  }
+  return applyPreferencePage(expected);
+}
+
+async function applyPreferencePage(root) {
   const files=await paths(root),state=await inspectPreferencePage(root);
-  if(state.state==='patched')return state;
   const helper=await readFile(fileURLToPath(new URL('../'+PREFERENCE_PAGE_COMPACT_PIN.source,import.meta.url)));
   if(sha(helper)!==PREFERENCE_PAGE_COMPACT_PIN.sha256)throw Error('PREFERENCE_PAGE_COMPACT_SOURCE');
   const recoverySource=preferenceRecoverySource();
   if(sha(recoverySource)!==PREFERENCE_PAGE_RECOVERY_PIN.sha256)throw Error('PREFERENCE_PAGE_RECOVERY_SOURCE');
+  if(state.state==='patched')return state;
   const outputs=files.map(({pin,source})=>transformPreferencePage(source,pin.path));
   await writeFile(join(root,PREFERENCE_PAGE_COMPACT_PIN.generated),helper,{flag:'wx'});
   await writeFile(join(root,PREFERENCE_PAGE_RECOVERY_PIN.generated),recoverySource,{flag:'wx'});
@@ -534,6 +563,6 @@ export async function patchPreferencePage(root) {
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
   const [mode,root,...rest]=process.argv.slice(2);
-  if(!root||rest.length||!['--verify','--apply-isolated'].includes(mode))throw Error('PREFERENCE_PAGE_PATCH_USAGE');
-  console.log(JSON.stringify(await (mode==='--verify'?inspectPreferencePage(root):patchPreferencePage(root))));
+  if(!root||rest.length||!['--verify','--apply-isolated','--apply-installed'].includes(mode))throw Error('PREFERENCE_PAGE_PATCH_USAGE');
+  console.log(JSON.stringify(await (mode==='--verify'?inspectPreferencePage(root):mode==='--apply-installed'?patchInstalledPreferencePage(root):patchPreferencePage(root))));
 }

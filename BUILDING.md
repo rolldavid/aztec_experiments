@@ -45,6 +45,50 @@ use the same dependency directory. The SDK build and manifest reject an
 unpatched or mismatched store. This bounds store queries; cold PXE synchronization
 and application recovery capacity require separate qualification.
 
+The same explicit bootstrap installs the bounded preference recovery page/cursor
+implementation into the pinned rc3 PXE. Its installer supports two separate modes:
+
+```sh
+node scripts/patch-pxe-preference-page.mjs --apply-installed node_modules/@aztec-labs/pxe
+node scripts/patch-pxe-preference-page.mjs --apply-isolated /absolute/owned/copied-pxe
+node scripts/patch-pxe-preference-page.mjs --verify node_modules/@aztec-labs/pxe
+```
+
+Installed mode accepts only the physical `node_modules/@aztec-labs/pxe` beneath
+that installer's repository. Borrowed or symlinked dependency trees, alternate
+destinations and symlinked or hard-linked target files are rejected. Stop every wallet, test,
+build and other checkout borrowing these dependencies before bootstrap; the
+filesystem guard cannot detect live consumers. Isolated mode still rejects
+`node_modules` targets and changes only an explicitly owned standalone copy.
+
+Installed mode requires the pinned Node and rc3 PXE package versions; the normal
+SDK build retains its complete lockfile/package-closure checks.
+All eight source/emitted-file hashes and both generated helpers must be in one
+complete pinned state. The installer validates every input and generated output
+before writing and rejects mixed, unknown, missing or tampered states. The ten
+writes are not an atomic filesystem transaction: interruption requires a fresh
+locked dependency installation while all consumers remain stopped. A complete
+patched state is verified without rewriting. No force or partial-resume mode exists.
+The generated `rolling-preference-compact.mjs` is an exact copy of the reviewed
+`shared/rolling/compact-block.mjs`; `rolling-preference-recovery.mjs` has its own
+literal output pin. Neither helper changes normal synchronization behavior.
+
+The SDK build only verifies this patch; it never applies it. The SDK manifest
+must include the installer, canonical compact source, all eight patched files,
+and both helpers. The checker requires their literal reviewed hashes as well as
+matching actual files; changing a manifest hash cannot admit other patch bytes.
+The SDK exposes the upstream `computeArtifactHash`: its field result authenticates
+the contract artifact in the recovery scope, and is distinct from the artifact
+JSON file's SHA-256. No new artifact or contract class is produced by this bootstrap.
+
+The eight original rc3 files under
+`scripts/testing/fixtures/pxe-preference-page-6.0.0-rc.3/` are immutable test inputs.
+Differential tests copy these originals into temporary owned packages, preserving
+pristine-versus-patched comparisons after installation; they never reverse a
+shared installed patch. Component/ACIR checks remain separate from genuine cold
+wallet/browser recovery and capacity qualification. Installation alone does not
+establish either, and no service route is registered by this installer.
+
 Both npm lockfiles are required. Do not substitute `npm install` in release or CI
 builds. The compiler bootstrap verifies the archive's SHA-256 and the executable's
 version and commit before use. `toolchain.json` records the pins and official

@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {readFile,writeFile,mkdtemp,mkdir,rm,realpath,symlink,cp} from 'node:fs/promises';
+import {readFile,writeFile,mkdtemp,mkdir,rm,realpath,symlink,link,cp} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join,resolve} from 'node:path';
-import {fileURLToPath} from 'node:url';
+import {fileURLToPath,pathToFileURL} from 'node:url';
 import {createHash} from 'node:crypto';
 import {spawnSync} from 'node:child_process';
 import {PREFERENCE_PAGE_PINS,PREFERENCE_PAGE_COMPACT_PIN,PREFERENCE_PAGE_RECOVERY_PIN,preferenceRecoverySource,transformPreferencePage,inspectPreferencePage,patchPreferencePage} from './patch-pxe-preference-page.mjs';
@@ -11,7 +11,17 @@ import {PREFERENCE_PAGE_PINS,PREFERENCE_PAGE_COMPACT_PIN,PREFERENCE_PAGE_RECOVER
 const root=fileURLToPath(new URL('../',import.meta.url));
 const installed=await realpath(join(root,'node_modules/@aztec-labs/pxe'));
 const sha=x=>createHash('sha256').update(x).digest('hex');
-const source=Object.fromEntries(await Promise.all(PREFERENCE_PAGE_PINS.map(async p=>[p.path,await readFile(join(installed,p.path),'utf8')])));
+const pristine=join(root,'scripts/testing/fixtures/pxe-preference-page-6.0.0-rc.3');
+const source=Object.fromEntries(await Promise.all(PREFERENCE_PAGE_PINS.map(async p=>{
+  const text=await readFile(join(pristine,p.path),'utf8');
+  assert.equal(sha(text),p.before,'Pristine fixture changed');return [p.path,text];
+})));
+async function restorePristineCopy(directory) {
+  // Only owned temporary copies: never reverse-transform installed dependencies.
+  for(const pin of PREFERENCE_PAGE_PINS)await writeFile(join(directory,pin.path),source[pin.path]);
+  for(const pin of [PREFERENCE_PAGE_COMPACT_PIN,PREFERENCE_PAGE_RECOVERY_PIN])await rm(join(directory,pin.generated),{force:true});
+}
+
 async function copy(t) {
   const directory=await realpath(await mkdtemp(join(tmpdir(),'rolling-preference-page-')));
   t.after(()=>rm(directory,{recursive:true,force:true}));
@@ -19,8 +29,88 @@ async function copy(t) {
   return directory;
 }
 
-test('source pin is exact installed original; transformed TS and JS are exact output pins',()=>{
+test('source pin is exact pristine rc3 original; transformed TS and JS are exact output pins',()=>{
   for(const pin of PREFERENCE_PAGE_PINS){assert.equal(sha(source[pin.path]),pin.before);assert.equal(sha(transformPreferencePage(source[pin.path],pin.path)),pin.after);}
+});
+test('installed package inspection accepts only a complete original or complete reviewed patched closure',async()=>{
+  assert(['original','patched'].includes((await inspectPreferencePage(installed)).state));
+});
+
+// The copied installer owns this physical fixture repository. These checks do
+// not apply anything to this checkout's actual or borrowed node_modules tree.
+async function ownedInstallFixture(t) {
+  const container=await copy(t),repository=join(container,'repo');
+  const target=join(repository,'node_modules/@aztec-labs/pxe');
+  for(const pin of PREFERENCE_PAGE_PINS){await mkdir(join(target,pin.path,'..'),{recursive:true});await writeFile(join(target,pin.path),source[pin.path]);}
+  await cp(join(root,'toolchain.json'),join(repository,'toolchain.json'));
+  // Labelled minimum package metadata for the physical installation fixture.
+  await writeFile(join(target,'package.json'),JSON.stringify({name:'@aztec-labs/pxe',version:'6.0.0-rc.3',type:'module'}));
+  await mkdir(join(repository,'scripts'),{recursive:true});
+  const installer=join(repository,'scripts/patch-pxe-preference-page.mjs');
+  await cp(join(root,'scripts/patch-pxe-preference-page.mjs'),installer);
+  await mkdir(join(repository,'shared/rolling'),{recursive:true});
+  await cp(join(root,PREFERENCE_PAGE_COMPACT_PIN.source),join(repository,PREFERENCE_PAGE_COMPACT_PIN.source));
+  const api=await import(pathToFileURL(installer));
+  return {repository,target,api,container};
+}
+test('installed mode applies only to its physical owning repository and is byte-idempotent',async t=>{
+  const f=await ownedInstallFixture(t);
+  const applied=await f.api.patchInstalledPreferencePage(f.target);
+  assert.equal(applied.state,'patched');
+  assert.deepEqual(await f.api.patchInstalledPreferencePage(f.target),applied);
+  for(const pin of PREFERENCE_PAGE_PINS)assert.equal(sha(await readFile(join(f.target,pin.path))),pin.after);
+  await assert.rejects(f.api.patchPreferencePage(f.target),/ISOLATED_ONLY/);
+});
+for(const name of ['toolchain.json','node_modules/@aztec-labs/pxe/package.json'])test('installed mode rejects mismatched version metadata: '+name,async t=>{
+  const f=await ownedInstallFixture(t),path=join(f.repository,name),value=JSON.parse(await readFile(path,'utf8'));
+  if(name==='toolchain.json')value.node='0.0.0';else value.version='6.0.0-rc.1';
+  await writeFile(path,JSON.stringify(value));await assert.rejects(f.api.patchInstalledPreferencePage(f.target),/PATCH_VERSION/);
+  assert.equal((await f.api.inspectPreferencePage(f.target)).state,'original');
+});
+test('installed mode rejects arbitrary destinations, coercion and borrowed dependency trees before writes',async t=>{
+  const f=await ownedInstallFixture(t),other=await copy(t);
+  await assert.rejects(f.api.patchInstalledPreferencePage(other),/OWNING_TREE/);
+  let coerced=0;await assert.rejects(f.api.patchInstalledPreferencePage({toString(){coerced++;return f.target;}}),/OWNING_TREE/);
+  assert.equal(coerced,0);
+  const modules=join(f.repository,'node_modules'),borrowed=join(f.container,'borrowed');
+  await cp(modules,borrowed,{recursive:true});await rm(modules,{recursive:true});await symlink(borrowed,modules);
+  await assert.rejects(f.api.patchInstalledPreferencePage(f.target),/OWNING_TREE/);
+  for(const pin of PREFERENCE_PAGE_PINS)assert.equal(sha(await readFile(join(borrowed,'@aztec-labs/pxe',pin.path))),pin.before);
+});
+for(const relative of ['node_modules/@aztec-labs','node_modules/@aztec-labs/pxe'])test('installed mode rejects symlink ownership at '+relative,async t=>{
+  const f=await ownedInstallFixture(t),path=join(f.repository,relative),borrowed=join(f.container,'borrowed');
+  await cp(path,borrowed,{recursive:true});await rm(path,{recursive:true});await symlink(borrowed,path);
+  await assert.rejects(f.api.patchInstalledPreferencePage(f.target),/OWNING_TREE/);
+});
+test('installed mode rejects hard-linked writable targets before changing their other owner',async t=>{
+  const f=await ownedInstallFixture(t),pin=PREFERENCE_PAGE_PINS[0],target=join(f.target,pin.path),other=join(f.container,'other-owner');
+  await link(target,other);await assert.rejects(f.api.patchInstalledPreferencePage(f.target),/OWNING_TREE/);
+  assert.equal(sha(await readFile(other)),pin.before);
+  assert.equal((await f.api.inspectPreferencePage(f.target)).state,'original');
+});
+test('installed mode rejects mixed and unknown bytes before any helper or sibling write',async t=>{
+  for(const replacement of ['unknown',transformPreferencePage(source[PREFERENCE_PAGE_PINS[0].path],PREFERENCE_PAGE_PINS[0].path)]){
+    const f=await ownedInstallFixture(t),[a,b]=PREFERENCE_PAGE_PINS;
+    await writeFile(join(f.target,a.path),replacement);
+    await assert.rejects(f.api.patchInstalledPreferencePage(f.target),/PATCH_STATE/);
+    assert.equal(await readFile(join(f.target,b.path),'utf8'),source[b.path]);
+    for(const pin of [PREFERENCE_PAGE_COMPACT_PIN,PREFERENCE_PAGE_RECOVERY_PIN])await assert.rejects(readFile(join(f.target,pin.generated)),{code:'ENOENT'});
+  }
+});
+test('installed mode rejects changed compact source even for an otherwise complete patched package',async t=>{
+  const f=await ownedInstallFixture(t),path=join(f.repository,PREFERENCE_PAGE_COMPACT_PIN.source);
+  const original=await readFile(path);await writeFile(path,'unknown');
+  await assert.rejects(f.api.patchInstalledPreferencePage(f.target),/COMPACT_SOURCE/);
+  assert.equal((await f.api.inspectPreferencePage(f.target)).state,'original');
+  await writeFile(path,original);await f.api.patchInstalledPreferencePage(f.target);await writeFile(path,'unknown');
+  await assert.rejects(f.api.patchInstalledPreferencePage(f.target),/COMPACT_SOURCE/);
+});
+for(const pin of [PREFERENCE_PAGE_COMPACT_PIN,PREFERENCE_PAGE_RECOVERY_PIN])test('installed mode rejects missing or changed '+pin.generated,async t=>{
+  const f=await ownedInstallFixture(t);await f.api.patchInstalledPreferencePage(f.target);
+  await writeFile(join(f.target,pin.generated),'unknown');
+  await assert.rejects(f.api.patchInstalledPreferencePage(f.target),/PATCH_STATE/);
+  await rm(join(f.target,pin.generated));
+  await assert.rejects(f.api.patchInstalledPreferencePage(f.target),/PATCH_STATE/);
 });
 test('rc3 queue pressure, wait timer cleanup and error handling remain byte-identical',()=>{
   for(const pin of PREFERENCE_PAGE_PINS.filter(p=>p.path.includes('operation_queue.'))){
@@ -250,7 +340,11 @@ if(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1') {
   const {computePrivateEventCommitment,siloNullifier}=await import('@aztec-labs/stdlib/hash');
   const {BarretenbergSync}=await import('@aztec-foundation/bb.js');
   const imp=p=>import(pathToFileURL(join(installed,'dest',p)));
-  const {OperationQueue:PristineOperationQueue}=await imp('operation_queue.js');
+  const pristineQueueDirectory=await realpath(await mkdtemp(join(root,'.build/preference-page-pristine-queue-')));
+  after(()=>rm(pristineQueueDirectory,{recursive:true,force:true}));
+  await writeFile(join(pristineQueueDirectory,'package.json'),JSON.stringify({type:'module'}));
+  for(const path of ['dest/operation_queue.js','dest/operation_lifecycle.js'])await writeFile(join(pristineQueueDirectory,path.slice(5)),source[path]);
+  const {OperationQueue:PristineOperationQueue}=await import(pathToFileURL(join(pristineQueueDirectory,'operation_queue.js')));
   // Import exact transformed queue/lifecycle from an isolated directory. Their
   // original SDK imports resolve normally; shared installed files stay untouched.
   const queueDirectory=await realpath(await mkdtemp(join(root,'.build/preference-page-queue-')));
@@ -265,6 +359,7 @@ if(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1') {
   const recoveryDirectory=await realpath(await mkdtemp(join(root,'.build/preference-recovery-sdk-')));
   after(()=>rm(recoveryDirectory,{recursive:true,force:true}));
   await cp(installed,recoveryDirectory,{recursive:true});
+  await restorePristineCopy(recoveryDirectory);
   await patchPreferencePage(recoveryDirectory);
   const patchedImp=p=>import(pathToFileURL(join(recoveryDirectory,'dest',p)));
   const {RollingPreferenceRecoveryStore,bindRollingPreferenceRecovery,runRollingPreferenceRecovery}=await import(pathToFileURL(join(recoveryDirectory,PREFERENCE_PAGE_RECOVERY_PIN.generated)));
