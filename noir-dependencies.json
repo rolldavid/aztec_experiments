@@ -994,7 +994,10 @@
       "dependencies/github.com/AztecProtocol/aztec-packages/v6.0.0-rc.1/noir-projects/fnd/noir-protocol-circuits/crates/serde/src/type_impls.nr": "4c3dfcca69b9013ae2a7e5279a07a15fa1773aca1c9a739e524d79ece4eeb76f",
       "dependencies/github.com/AztecProtocol/aztec-packages/v6.0.0-rc.1/noir-projects/fnd/noir-protocol-circuits/crates/serde/src/writer.nr": "108bcc0a94252589e04c6cc253bf7ede4ec8f26c26213d60db35a20f080d1dd2",
       "dependencies/github.com/noir-lang/sha256/v0.3.0/src/sha256.nr": "c3a66f2eac7f4b38b866518264f755ea2e0b95d33fd21df044f65297e08640e8",
-      "dependencies/github.com/aztec-labs-eng/aztec-nr/v6.0.0-rc.1/uint-note/src/uint_note.nr": "8aa6b858ba460528bc8daad5209c0e8ab5c11ca6c77f50f726456d86b34f289a"
+      "dependencies/github.com/aztec-labs-eng/aztec-nr/v6.0.0-rc.1/uint-note/src/uint_note.nr": "8aa6b858ba460528bc8daad5209c0e8ab5c11ca6c77f50f726456d86b34f289a",
+      "dependencies/github.com/aztec-labs-eng/aztec-nr/v6.0.0-rc.1/aztec/src/event/event_message.nr": "3d0fd33e18c3d26f22cf92a54e01ddb1fe221af605687bf51eff7119a0131ad9",
+      "dependencies/github.com/aztec-labs-eng/aztec-nr/v6.0.0-rc.1/aztec/src/oracle/block_header.nr": "473fd0f6d08be111eb09bdff45906f565d22a23f5aa33e8dd20b6c51d039318c",
+      "dependencies/github.com/aztec-labs-eng/aztec-nr/v6.0.0-rc.1/aztec/src/state_vars/private_mutable.nr": "58d93dd8b3fb98509c7573948eff6f2d7f76de40d2b4c503287dc6f1c6e226aa"
     },
     "PrivateBok": {
       "dependencies/github.com/AztecProtocol/aztec-packages/v6.0.0-rc.1/noir-projects/fnd/noir-protocol-circuits/crates/serde/src/reader.nr": "14d753725ee736e631211d3c34b9b542ae09ef44bee12f25b0d5c8613122c99d",
