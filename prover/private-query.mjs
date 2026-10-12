@@ -162,7 +162,6 @@ export function createPrivateQueryWithInspector({queryNode, chainId, rollupVersi
     if(origin!==undefined&&(typeof origin!=='string'||!compact.origins.includes(origin))){rejected(403);return;}
     if(!/^application\/json(?:\s*;\s*charset=utf-8)?$/i.test(req.headers['content-type']??'')){rejected(415);return;}
     const length=req.headers['content-length'];
-    if(length!==undefined&&(typeof length!=='string'||!/^(0|[1-9][0-9]{0,9})$/.test(length)||Number(length)>COMPACT_TRANSPORT_LIMITS.requestBytes)){await rejectAndClose();return;}
     if(compactActive||active>=QUERY_LIMITS.concurrent){rejected(429);return;}
     compactActive=true;active++;
     const controller=new AbortController();const abort=()=>controller.abort();
@@ -172,6 +171,7 @@ export function createPrivateQueryWithInspector({queryNode, chainId, rollupVersi
     const alive=()=>{if(controller.signal.aborted||req.aborted||res.destroyed)throw unavailable();};
     let status=400;
     try{
+      if(length!==undefined&&(typeof length!=='string'||!/^(0|[1-9][0-9]{0,9})$/.test(length)||Number(length)>COMPACT_TRANSPORT_LIMITS.requestBytes)){status=413;throw unavailable();}
       const chunks=[];let bytes=0;
       for await(const chunk of req.iterator({destroyOnReturn:false})){
         bytes+=chunk.length;if(bytes>COMPACT_TRANSPORT_LIMITS.requestBytes){status=413;throw unavailable();}chunks.push(chunk);

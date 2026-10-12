@@ -2,6 +2,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import http from 'node:http';
+import {EventEmitter} from 'node:events';
 import {createPrivateQuery, createPrivateQueryWithInspector, validateQueryNode, QUERY_LIMITS} from './private-query.mjs';
 import {createProverServer} from './server.mjs';
 const rollupAddress = '0x' + '12'.repeat(20);
@@ -166,4 +167,36 @@ test('compact oversized unfinished chunked upload closes socket before releasing
  assert.equal(responseStatus,413);assert.equal(connection,'close');assert.equal(socket.destroyed,true);assert.equal(request.writableEnded,false);
  assert.equal(inspections,0);assert.equal(f.received.length,0);
  assert.equal((await f.post()).status,200);
+});
+
+// Deterministic request/socket controls exercise the actual handler, without
+// opening listeners. A held close models the interval after rejection flushing.
+function compactSocketControl({declared=false,finish=true}={}){
+ const socket=new EventEmitter();socket.closed=false;socket.destroyCalls=0;
+ socket.destroy=()=>{socket.destroyCalls++;};
+ socket.completeClose=()=>{if(!socket.closed){socket.closed=true;socket.emit('close');}};
+ const req=new EventEmitter();Object.assign(req,{url:'/v1/compact-block',method:'POST',headers:{'content-type':'application/json',...(declared?{'content-length':'1025'}:{})},socket,aborted:false,iterations:0,destroyCalls:0});
+ req.iterator=async function*(){this.iterations++;yield Buffer.alloc(1025,32);};
+ req.destroy=()=>{req.destroyCalls++;req.aborted=true;req.emit('aborted');socket.completeClose();};
+ let ended;const end=new Promise(r=>{ended=r;});const res=new EventEmitter();
+ Object.assign(res,{destroyed:false,writableEnded:false,writableFinished:false,writeHead(status,headers){this.status=status;this.headers=headers;},end(){this.writableEnded=true;ended();if(finish){this.writableFinished=true;this.emit('finish');}}});
+ return {req,res,socket,end};
+}
+function controlledCompactQuery(inspect){return createPrivateQueryWithInspector({queryNode:{url:'http://127.0.0.1:1',rollupAddress},chainId:'31337',rollupVersion:'1',proofsEnabled:false,
+ compactBlocks:{tier:'checkpointed',origins:[]}},inspect);}
+for(const declared of [false,true])test(`compact ${declared?'declared':'chunked'} rejection retains actual handler slot until socket closes`,async()=>{
+ let inspections=0;const query=controlledCompactQuery(async()=>{inspections++;});
+ const held=compactSocketControl({declared});const pending=query.handleCompact(held.req,held.res);await held.end;
+ assert.equal(held.res.status,413);assert.equal(held.res.headers.Connection,'close');assert.equal(held.req.iterations,declared?0:1);
+ const second=compactSocketControl({declared});await query.handleCompact(second.req,second.res);assert.equal(second.res.status,429);assert.equal(inspections,0);
+ held.socket.completeClose();await pending;assert.equal(held.req.listenerCount('aborted'),0);assert.equal(held.socket.listenerCount('close'),0);
+ const third=compactSocketControl({declared});const next=query.handleCompact(third.req,third.res);await third.end;assert.equal(third.res.status,413);third.socket.completeClose();await next;
+});
+for(const declared of [false,true])test(`compact ${declared?'declared':'chunked'} unfinished rejection uses existing deadline and cleanup`,async t=>{
+ t.mock.timers.enable({apis:['setTimeout']});
+ const query=controlledCompactQuery(async()=>{throw Error('Must not inspect invalid body');});
+ const held=compactSocketControl({declared,finish:false});const pending=query.handleCompact(held.req,held.res);await held.end;
+ assert.equal(held.res.status,413);assert.equal(held.socket.closed,false);assert.equal(held.req.destroyCalls,0);
+ t.mock.timers.tick(QUERY_LIMITS.timeoutMs);await pending;
+ assert.equal(held.req.destroyCalls,1);assert.equal(held.socket.closed,true);assert.equal(held.req.listenerCount('aborted'),0);assert.equal(held.socket.listenerCount('close'),0);assert.equal(held.res.listenerCount('finish'),0);
 });
