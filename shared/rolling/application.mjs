@@ -183,9 +183,62 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
     const found=await session.journal.inspectOutcome();
     if(!found||found.operation!==operation(saved.value.id))return {...summary(saved.value),status:'unknown'};
     if(!['success','reverted'].includes(found.outcome))return {...summary(saved.value),status:'unknown',txHash:found.txHash};
-    acknowledge(found,{operation:operation(saved.value.id),txHash:saved.value.txHash??found.txHash});
-    const next={...saved.value,status:found.outcome==='success'?'confirmed':'reverted',txHash:found.txHash};
+    acknowledge(found,{operation:operation(saved.value.id),txHash:saved.value.replacementReview?found.txHash:(saved.value.txHash??found.txHash)});
+    const next={...saved.value,status:found.outcome==='success'?'confirmed':'reverted',txHash:found.txHash,...(preferenceAction(saved.value)?{inclusionHistory:inclusionHistory(saved.value,found)}:{})};
     await (await slot()).write(saved,next);return summary(next);
+  }
+  const preferenceAction=record=>['preference','read-marker'].includes(record.action.type);
+  const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
+  const hashText=value=>{const text=value?.toString();check(typeof text==='string'&&/^0x[0-9a-f]{64}$/.test(text),'ROLLING_INVALID_RESPONSE');return text;};
+  function exactData(value,names){
+    check(value&&Object.getPrototypeOf(value)===Object.prototype&&Reflect.ownKeys(value).length===names.length,'ROLLING_INVALID_ACTION');
+    return Object.fromEntries(names.map(name=>{const d=Object.getOwnPropertyDescriptor(value,name);check(d&&Object.hasOwn(d,'value'),'ROLLING_INVALID_ACTION');return [name,d.value];}));
+  }
+  async function preferenceHead(){
+    await guard();const board=await contract();await guard();
+    const record=await utility(board,'preference_head',[session.owner]);
+    check(record&&typeof record.initialized==='boolean','ROLLING_INVALID_RESPONSE');
+    const numeric=(value,max)=>{check(typeof value==='string'&&/^0x[0-9a-f]{64}$/.test(value),'ROLLING_INVALID_RESPONSE');const n=BigInt(value);check(n<=max,'ROLLING_INVALID_RESPONSE');return n;};
+    const schema=numeric(record.schema,0xffffffffn),revision=numeric(record.revision,0xffffffffffffffffn),digest=numeric(record.digest,FIELD_MODULUS-1n);
+    check(schema===1n&&(record.initialized?revision>0n&&digest>0n:revision===0n&&digest===0n),'ROLLING_INVALID_RESPONSE');
+    await guard();return {initialized:record.initialized,schema:1,revision:String(revision),digest:String(digest)};
+  }
+  async function markerContext(record){
+    if(record.action.type!=='read-marker')return null;
+    await guard();const height=Number(record.action.throughBlock),block=await session.node.getBlockData(height);await guard();
+    check(block&&Number(block.header?.globalVariables?.blockNumber)===height,'ROLLING_RECOVERY_CONTEXT_CHANGED');
+    return {throughBlock:record.action.throughBlock,blockHash:hashText(block.blockHash)};
+  }
+  function inclusionHistory(record,found){
+    const history=clone(record.inclusionHistory??[]);if(!preferenceAction(record))return history;
+    const receipt=found.receipt,fee=receipt.transactionFee;
+    check(Number.isSafeInteger(receipt.blockNumber)&&receipt.blockNumber>0&&
+      ['checkpointed','proven','finalized'].includes(receipt.status)&&
+      (typeof fee==='bigint'||typeof fee==='string')&&/^(0|[1-9][0-9]{0,76})$/.test(String(fee))&&BigInt(fee)<FIELD_MODULUS,'ROLLING_INVALID_RESPONSE');
+    const fact={blockNumber:receipt.blockNumber,blockHash:hashText(receipt.blockHash),executionResult:found.outcome,transactionFee:String(fee)};
+    let attempt=history.find(row=>row.txHash===found.txHash);
+    if(!attempt){check(history.length<9,'ROLLING_RECOVERY_REQUIRED');attempt={txHash:found.txHash,inclusions:[]};history.push(attempt);}
+    const prior=attempt.inclusions.find(row=>row.blockHash===fact.blockHash);
+    check(!prior||same(prior,fact),'ROLLING_INVALID_RESPONSE');if(!prior)attempt.inclusions.push(fact);
+    return history;
+  }
+  async function recoverySnapshot(saved){
+    const record=saved.value;check(preferenceAction(record),'ROLLING_RECOVERY_UNSUPPORTED');
+    const inspected=await session.journal.inspectReplacement(operation(record.id),{requireMissingAnchor:true});
+    const head=await preferenceHead(),marker=await markerContext(record);await guard();
+    check((await savedIntent(record.id)).encoded===saved.encoded,'ROLLING_RECOVERY_REQUIRED');await guard();
+    let status=inspected.status==='available'?'replacement-available':inspected.status;
+    if(status==='replacement-available'&&head.revision!==record.action.expectedRevision)status='context-changed';
+    if(status==='replacement-available'&&['confirmed','reverted'].includes(record.status)&&!record.inclusionHistory?.some(row=>row.txHash===record.txHash))status='history-unavailable';
+    return {intent:summary(record),status,attempts:clone(inspected.attempts),requireMissingAnchor:inspected.requireMissingAnchor,
+      head,marker,originalMarker:clone(record.originalMarker??null),inclusionHistory:clone(record.inclusionHistory??[]),currentTxHash:inspected.txHash};
+  }
+  async function checkReplacementReview(record,{synchronize=false}={}){
+    const review=record.replacementReview;check(review&&preferenceAction(record),'ROLLING_RECOVERY_REQUIRED');
+    if(synchronize){await guard();await session.wallet.pxe.sync();await guard();}
+    const head=await preferenceHead(),marker=await markerContext(record);
+    check(head.revision===record.action.expectedRevision&&same(head,review.head)&&same(marker,review.marker),'ROLLING_RECOVERY_CONTEXT_CHANGED');
+    await guard();
   }
   async function screeningArguments(board,deposit){
     const hints=await utility(board,'get_screen_hints',[session.owner,deposit]);
@@ -253,18 +306,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
       }catch{throw fail('ROLLING_INVALID_RESPONSE');}
       await guard();return {name:id,bioVersion:String(bioVersion),avatarVersion:String(avatarVersion)};
     });},
-    async readPreferenceHead(){return exclusive(async()=>{
-      await guard();const board=await contract();await guard();
-      const record=await utility(board,'preference_head',[session.owner]);
-      check(record&&typeof record.initialized==='boolean','ROLLING_INVALID_RESPONSE');
-      const numeric=(value,max)=>{
-        check(typeof value==='string'&&/^0x[0-9a-f]{64}$/.test(value),'ROLLING_INVALID_RESPONSE');
-        const n=BigInt(value);check(n<=max,'ROLLING_INVALID_RESPONSE');return n;
-      };
-      const schema=numeric(record.schema,0xffffffffn),revision=numeric(record.revision,0xffffffffffffffffn),digest=numeric(record.digest,FIELD_MODULUS-1n);
-      check(schema===1n&&(record.initialized?revision>0n&&digest>0n:revision===0n&&digest===0n),'ROLLING_INVALID_RESPONSE');
-      await guard();return Object.freeze({initialized:record.initialized,schema:1,revision:String(revision),digest:String(digest)});
-    });},
+    async readPreferenceHead(){return exclusive(async()=>Object.freeze(await preferenceHead()));},
     async ownedIdentities({cursor=0}={}){return exclusive(async()=>{await guard();check(Number.isInteger(cursor)&&cursor>=0&&cursor<=0xffffffff-8);
       const values=await utility(await contract(),'owned_name_records',[session.owner,cursor]);check(Array.isArray(values)&&values.length===8,'ROLLING_INVALID_RESPONSE');
       const records=[],seen=new Set();let empty=false;
@@ -289,23 +331,63 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
       const nonce=field(sdk.Fr.random().toString(),true),id=field(sdk.Fr.random().toString(),true),board=await contract();
       const args=plain(await argumentsFor(action,board,nonce));
       const record={version:1,id,action,args,method:methods[action.type],nonce,predecessor,status:'prepared'};
+      if(action.type==='read-marker')record.originalMarker=await markerContext(record);
       const selected=interaction(board,record);record.encoded=selected.encoded;
       progress('estimating');const estimated=await sdk.estimatePrivateFeeTransaction({wallet:session.wallet,node:session.node,interaction:selected.call,
         prepared:await payment(),from:session.owner,guard});
       record.maximumFee=estimated.maximumFee.toString();await guard();await store.write(prior,record);return summary(record);
     });},
-    async submitPrepared(id){return exclusive(async()=>{await guard();const saved=await savedIntent(id);check(saved.value.status==='prepared','ROLLING_RECOVERY_REQUIRED');
-      if(saved.value.predecessor){
+    // Explicit preference-only recovery. Inspection never acknowledges or writes.
+    // Original revision/action/nonce remain immutable; a changed head is unresolved,
+    // not silently rebased. Valid-but-unsent candidates stay fenced for separate
+    // exact-byte recovery. Caller retains its exclusive wallet lease throughout.
+    async inspectRecovery(id){return exclusive(async()=>{await guard();return recoverySnapshot(await savedIntent(id));});},
+    async prepareReplacement(id,input){
+      // Capture only own data primitives before any asynchronous guard or RPC.
+      let reviewInput,expectedHead;try{
+        reviewInput=exactData(input,Object.hasOwn(input??{},'expectedMarkerHash')?['expectedTxHash','expectedHead','expectedMarkerHash']:['expectedTxHash','expectedHead']);
+        expectedHead=exactData(reviewInput.expectedHead,['initialized','schema','revision','digest']);
+      }catch{throw fail('ROLLING_INVALID_ACTION');}
+      check(typeof reviewInput.expectedTxHash==='string'&&/^0x[0-9a-f]{64}$/.test(reviewInput.expectedTxHash));
+      check(typeof expectedHead.initialized==='boolean'&&expectedHead.schema===1);preferenceRevision(expectedHead.revision);
+      check(typeof expectedHead.digest==='string'&&/^(0|[1-9][0-9]*)$/.test(expectedHead.digest)&&BigInt(expectedHead.digest)<FIELD_MODULUS);
+      if(Object.hasOwn(reviewInput,'expectedMarkerHash'))check(typeof reviewInput.expectedMarkerHash==='string'&&/^0x[0-9a-f]{64}$/.test(reviewInput.expectedMarkerHash));
+      return exclusive(async()=>{await guard();const saved=await savedIntent(id),record=saved.value;
+        check(!['prepared','cancelled'].includes(record.status),'ROLLING_RECOVERY_REQUIRED');
+        const snapshot=await recoverySnapshot(saved);
+        check(snapshot.status==='replacement-available'&&snapshot.currentTxHash===reviewInput.expectedTxHash,'ROLLING_RECOVERY_REQUIRED');
+        check(same(snapshot.head,expectedHead),'ROLLING_RECOVERY_CONTEXT_CHANGED');
+        check(record.action.type==='read-marker'?Object.hasOwn(reviewInput,'expectedMarkerHash')&&snapshot.marker.blockHash===reviewInput.expectedMarkerHash:!Object.hasOwn(reviewInput,'expectedMarkerHash'),'ROLLING_RECOVERY_CONTEXT_CHANGED');
+        await session.journal.allowReplacement(operation(id),{requireMissingAnchor:true});await session.journal.assertCanStart();
+        const selected=interaction(await contract(),record);
+        const estimated=await sdk.estimatePrivateFeeTransaction({wallet:session.wallet,node:session.node,interaction:selected.call,prepared:await payment(),from:session.owner,guard});
+        const replacementReview={sourceTxHash:snapshot.currentTxHash,head:snapshot.head,marker:snapshot.marker,maximumFee:estimated.maximumFee.toString()};
+        const next={...record,status:'replacement-prepared',replacementReview};
+        await checkReplacementReview(next);await session.journal.inspectReplacement(operation(id),{requireMissingAnchor:true}).then(view=>check(view.status==='available'&&view.txHash===replacementReview.sourceTxHash,'ROLLING_RECOVERY_REQUIRED'));
+        await guard();await (await slot()).write(saved,next);return {...summary(next),replacementReview:clone(replacementReview)};
+      });
+    },
+    async submitPrepared(id){return exclusive(async()=>{await guard();const saved=await savedIntent(id),replacing=saved.value.status==='replacement-prepared';check(replacing||saved.value.status==='prepared','ROLLING_RECOVERY_REQUIRED');
+      if(replacing){
+        await checkReplacementReview(saved.value);
+        const inspected=await session.journal.inspectReplacement(operation(id),{requireMissingAnchor:true});
+        check(inspected.status==='available'&&inspected.txHash===saved.value.replacementReview.sourceTxHash,'ROLLING_RECOVERY_REQUIRED');
+        await session.journal.allowReplacement(operation(id),{requireMissingAnchor:true});
+      }else if(saved.value.predecessor){
         const found=await session.journal.inspectOutcome();acknowledge(found,saved.value.predecessor);
       }
       await session.journal.assertCanStart(); // Before private simulation, not merely before send.
       const selected=interaction(await contract(),saved.value);progress('estimating');
       const estimated=await sdk.estimatePrivateFeeTransaction({wallet:session.wallet,node:session.node,interaction:selected.call,prepared:await payment(),from:session.owner,guard});
-      check(estimated.maximumFee<=BigInt(saved.value.maximumFee),'ROLLING_FEE_CHANGED');await guard();
+      const maximumFee=replacing?saved.value.replacementReview.maximumFee:saved.value.maximumFee;
+      check(estimated.maximumFee<=BigInt(maximumFee),'ROLLING_FEE_CHANGED');await guard();
       await (await slot()).write(saved,{...saved.value,status:'submitting'}); // Durable no-replay fence before wallet lifecycle.
       await guard();progress('submitting');
       await session.wallet.sendTx(estimated.payload,{from:session.owner,fee:{gasSettings:estimated.gasSettings},
-        transactionJournal:session.journal,journalOperation:operation(id)});
+        transactionJournal:session.journal,journalOperation:operation(id),...(replacing?{beforeSubmit:async hash=>{
+          await checkReplacementReview(saved.value,{synchronize:true});
+          await session.journal.assertReplacementPredecessors(operation(id),hash,{requireMissingAnchor:true});await guard();
+        }}:{})});
       return outcome(await savedIntent(id));
     });},
     async cancelPrepared(id){return exclusive(async()=>{await guard();const saved=await savedIntent(id);
@@ -314,7 +396,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
       await guard();const cancelled={...saved.value,status:'cancelled'};await (await slot()).write(saved,cancelled);return summary(cancelled);
     });},
     async reconcile(id){return exclusive(async()=>{await guard();const saved=await savedIntent(id);
-      if(['prepared','cancelled'].includes(saved.value.status))return summary(saved.value);return outcome(saved);
+      if(['prepared','cancelled','replacement-prepared'].includes(saved.value.status))return {...summary(saved.value),...(saved.value.replacementReview?{replacementReview:clone(saved.value.replacementReview)}:{})};return outcome(saved);
     });},
   });
 }
