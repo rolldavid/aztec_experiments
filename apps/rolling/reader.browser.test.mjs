@@ -305,7 +305,7 @@ export async function loadRollingWalletRuntime(){return {selectPrivateViews,getA
 }
 async function recoverPrivateView(page){await page.getByRole('button',{name:'Open private recovery'}).click();await page.getByRole('button',{name:'Unlock',exact:true}).click();await page.getByRole('button',{name:'Recover private views',exact:true}).click();await page.getByText('Your saved choices are ready.').waitFor();await page.getByRole('button',{name:'Close account panel'}).click();}
 test('private routes stay SDK-free when locked; filter whole ordinary pages and continue an empty filtered cursor',async t=>{
- const {page,requests,feed}=await privateViewFixture(t);assert.equal(feed.length,0);assert(!requests.some(p=>p.includes('wallet')));
+ const {page,requests,feed}=await privateViewFixture(t);assert.equal(feed.length,0);assert(!requests.some(p=>p.includes('wallet')));assert(await page.getByText('Recover your saved choices to see this view. Your follows and bookmarks stay private.',{exact:true}).isVisible());
  if(process.env.ROLLING_PREFERENCES_LOCKED_SCREENSHOT)await page.screenshot({path:process.env.ROLLING_PREFERENCES_LOCKED_SCREENSHOT,fullPage:true});
  await recoverPrivateView(page);await page.getByRole('button',{name:'Load more',exact:true}).waitFor();assert.equal(await page.getByRole('article').count(),0);
  await page.getByRole('button',{name:'Load more',exact:true}).focus();await page.keyboard.press('Enter');await page.locator('#post-11').waitFor();assert.equal(await page.getByRole('article').count(),1);assert.equal(await page.getByRole('heading',{name:'A little quiet here'}).count(),0);

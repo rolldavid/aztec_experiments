@@ -135,9 +135,9 @@ async function render(){
  else if(parts[0]!=='home'){shell('Page not found');return;}
  shell(title,{boardId:api==='board'?parameters.id:null});
  if(privateView){
-  main.querySelector('.intro').textContent='Filtered privately on this device from the ordinary public feed.';
+  main.querySelector('.intro').textContent='Only you can see this view. Your saved choices stay on your device while you browse.';
   main.append(button('Manage private views',()=>openWallet({view:'preferences'})));
-  if(privatePanel?.privateStatus?.()!=='complete'){main.append(el('div',{class:'empty'},el('h2',{},'Unlock and recover your private views'),el('p',{},'Complete authenticated recovery is required. Your choices are not sent to the public reader.'),button('Open private recovery',()=>openWallet({view:'preferences'}))));return;}
+  if(privatePanel?.privateStatus?.()!=='complete'){main.append(el('div',{class:'empty'},el('h2',{},'Unlock and recover your private views'),el('p',{},'Recover your saved choices to see this view. Your follows and bookmarks stay private.'),button('Open private recovery',()=>openWallet({view:'preferences'}))));return;}
  }
  const loading=el('p',{role:'status','aria-busy':'true'},'Loading conversations…');main.append(loading);
  if(api==='directory'){
