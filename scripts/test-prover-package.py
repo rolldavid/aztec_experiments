@@ -26,6 +26,26 @@ class PackagePreflight(unittest.TestCase):
     def tearDown(self):
         self.temp.cleanup()
 
+    def test_release_gate_rejects_missing_or_historical_linux_pin_before_source_reads(self):
+        # Explicitly fake toolchains; no archive, native execution or qualification.
+        for pins in [{},{'nativeProverPackage':'6.0.0-rc.6','nativeProver':{},'nativeProverHistory':{'linux-x64':{'version':'6.0.0-rc.1'}}}]:
+            (self.root/'toolchain.json').write_text(json.dumps(pins))
+            with self.assertRaisesRegex(ValueError,'Active Linux prover qualification required'):
+                package.release_preflight(self.root)
+            self.assertEqual(sorted(p.name for p in self.root.iterdir()),['prover','toolchain.json'])
+
+    def test_release_gate_requires_full_pinned_helper_composition_after_qualification(self):
+        # Labelled candidate qualification in an isolated test directory only.
+        spec=importlib.util.spec_from_file_location('fixture_bootstrap',ROOT/'deploy/prover/bootstrap.py')
+        b=importlib.util.module_from_spec(spec);spec.loader.exec_module(b)
+        (self.root/'toolchain.json').write_text(json.dumps({'nativeProverPackage':b.BB_VERSION,'nativeProver':{'linux-x64':{'version':b.BB_VERSION,'sha256':b.BB_SHA}}}))
+        with self.assertRaises(FileNotFoundError):package.release_preflight(self.root)
+        for rel,raw in b.startup_sources(ROOT).items():
+            p=self.root/rel;p.parent.mkdir(parents=True,exist_ok=True);p.write_bytes(raw)
+        self.assertEqual(package.release_preflight(self.root),{'version':b.BB_VERSION,'sha256':b.BB_SHA})
+        (self.root/'prover/compact-node-registration.mjs').write_text('PRIVATE_SENTINEL')
+        with self.assertRaisesRegex(ValueError,'Invalid helper source hash'):package.release_preflight(self.root)
+
     def test_pending_artifacts_cannot_enter_package(self):
         with self.assertRaises(subprocess.CalledProcessError):
             package.rolling_resources(self.root, self.node)
@@ -105,6 +125,7 @@ export const getVersioningResponseHandler=()=>()=>{};
 
     def test_enabled_query_loads_copied_inspector_and_checks_public_state(self):
         self.assertEqual((self.release/'shared/trusted-private-node.mjs').read_bytes(),(ROOT/'shared/trusted-private-node.mjs').read_bytes())
+        self.assertEqual((self.release/'shared/rolling/compact-client.mjs').read_bytes(),(ROOT/'shared/rolling/compact-client.mjs').read_bytes())
         self.run_isolated("""
 const options={queryNode:{url:'http://127.0.0.1:9000/',rollupAddress:'0x'+'11'.repeat(20)},chainId:'31337',rollupVersion:'1',proofsEnabled:true};
 const query=await createPrivateQuery(options);

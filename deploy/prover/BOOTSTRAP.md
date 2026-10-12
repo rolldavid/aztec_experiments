@@ -4,9 +4,38 @@ This generator prepares one private EC2 user-data payload. It makes no cloud
 calls and starts nothing on the development computer. It installs the reviewed
 Linux runtime and a testnet fullnode; **the prover and its proxy remain masked**.
 It supplies no Rolling contract addresses. It automatically attempts the reviewed
-Linux query qualification against the explicitly labelled historical legacy board.
-Existing legacy addresses may only be used later in an explicitly labelled
-legacy qualification. The existing prover service's 24GiB limit is unchanged.
+Linux query qualification in explicit `serviceMode: "query-only"` against the
+configured current network. No board address, proof queue or proof worker is
+allocated for this exercise. The existing prover service's 24GiB limit is unchanged.
+
+## Current rc3 composition and closed execution gate
+
+This source selects the verified rc3 amd64 image, reviewed normal Rolling catalog
+`fafaf3387cdb360e11dff386f30be2fac40e5547ee642cb969aac449b40efb7e`, and
+source helper closure from the reviewed lead composition. The public network
+snapshot is version `3409706519`, rollup
+`0xed1eb2eb670b42e2fb5a478c076a264b9604089d`; it is not fresh target clearance.
+Recheck canonical registry selection, all three compatibility constants and
+liveness before any separately authorized paid launch. Historical deployment
+and failed commissioning records remain unchanged.
+
+The rc6 Linux BB bytes are known, but their version probe timed out under Mac
+ARM emulation. The cause is unknown; this is not native Linux qualification.
+`toolchain.json` therefore has no active `nativeProver.linux-x64` pin for these
+bytes. Both package creation and payload generation reject this state before
+creating usable output. They require the exact active rc6 version/hash pair;
+historical pins cannot satisfy the gate. The host independently checks that pair
+in its fully authenticated release before any binary execution, then requires
+the exact version output. This change does not add or promote a toolchain pin.
+A reviewed, successful actual Linux qualification and explicit pin update are
+prerequisites for packaging, payload measurement and deployment.
+
+Qualification uses the real existing query service, inspector and trusted client.
+Its report must include exact `current-network-query-only` scope and
+`noProofLifecycle` checks: proof routes disabled, no queue, no worker. Ordinary
+proof-service mode is unchanged; passing this exercise never enables proving or
+public routing. The node schema still contains `sendTx`, so query-only does not
+mean a read-only node RPC surface.
 
 ## Reviewed deployment inputs
 
@@ -35,7 +64,7 @@ Creation must be within five minutes of generation. Budget stop is at most eight
 hours after creation; commissioning stop is exactly thirty minutes after creation.
 The archive contains release contents directly, including `prover-release.json`,
 not an enclosing directory. Its external SHA256 and manifest SHA256 must be
-recorded by the lead after packaging. Node 24.21.0 Linux binary, BB6rc1 binary,
+recorded by the lead after packaging. Node 24.21.0 Linux binary, candidate BB6rc6 binary,
 and reviewed Rolling catalog hashes are additionally pinned in this generator.
 A changed catalog requires source review; rebuilding an identical catalog with a
 new qualification helper needs only new external archive/manifest hashes.
@@ -90,7 +119,7 @@ Before any package or image download, the host:
    the commissioning timer; the absolute budget timer remains active. Then it starts
    the separate bounded qualification job described below.
 
-The image is `azteclabs/aztec@sha256:e5bc218e326b4f3b1cd06b0309cb98e87fef5dfda3330157ce1e393d89416c32`.
+The image is `azteclabs/aztec@sha256:44479404b67dde931cf8f202a3ce34703876e709ce124924251da8435d5d8651`.
 The generator embeds the inspected11October network configuration: registry,
 bootnodes, snapshot URLs and read-only blob/transaction stores. It never fetches
 mutable network defaults at boot. The node receives this via NETWORK_CONFIG_LOCATION.
@@ -198,13 +227,12 @@ checks actual network/proof identity, coherent canonical anchors, world-state
 synchronization and ≤120second L1 lag. Only public readiness data is queried.
 The loopback addresses are RPC8082 and admin8882.
 
-Scope is fixed from the repository's `deploy/prover/live-deployment.json`:
-Sepolia11155111, rollupVersion2914217885,
-rollup`0x8c2fb2a68a3d362ab1de99e06f83f8903160bbd9`, legacy board
-`0x0346558fcce04c4bf0b0907c1ef20858b9583123ef55bceb7125cb3fc3fb3752`.
-The config explicitly says `applicationProfile: legacy`, `proofs: real` and
-zero public listener port and an explicit empty `origins` list. These historical addresses do not identify a Rolling
-application. No proof job, model call or wallet action is submitted.
+Scope is the reviewed rc3 snapshot: Sepolia11155111, rollupVersion3409706519,
+rollup`0xed1eb2eb670b42e2fb5a478c076a264b9604089d`. It must be refreshed against
+canonical registry/compatibility/liveness before launch. The config explicitly
+says `serviceMode: query-only`, `proofs: real`, loopback port0 and empty `origins`.
+There is no board or proof-worker configuration. No proof job, model call or wallet
+action is submitted; the API's unchanged `sendTx` method is not advertised read-only.
 
 An exclusive fsynced intent is recorded before readiness polling. Then exactly
 one qualifier invocation has at most 15minutes. It tests actual healthy client
@@ -223,7 +251,7 @@ safe projected result. The existing console channel emits only validated
 booleans, public network/canonical anchors, fixed stages, manifest and report
 hashes. The lead can independently compare the canonical hashes and every check
 via the AWS console-output API. No raw logs/errors/configuration or capability
-URL enter the console. A success remains **legacy Linux query qualification**,
+URL enter the console. A success remains **current-network Linux query qualification**,
 not genuine Rolling proofs, privacy acceptance or production release.
 
 The host also records HTB parent bytes before and after its bounded installation
@@ -334,7 +362,7 @@ none` prevents retained Docker logs. No restart or extra storage resource is add
 Before any shutdown request, the publisher exclusively creates and fsyncs
 `/var/lib/rolling-bootstrap-private/final-receipt.json` and its directory, then
 synchronously attempts the existing bounded serial/console sinks under
-`ROLLING_QUALIFICATION_RECEIPT`. Receipt scope remains `legacy-query-only`.
+`ROLLING_QUALIFICATION_RECEIPT`. Receipt scope is `current-network-query-only`; old-scope receipts cannot qualify this candidate.
 Only a fully checked complete result qualifies; a receipt is never permission to
 unmask the prover. Reinvocation does not replace/re-emit the receipt or upload it
 again. Disk failures produce only a fixed `FINALIZATION_FAILED` console attempt
@@ -402,8 +430,7 @@ failure is a local packaging blocker, not permission to launch with altered data
 ### Bounded startup observations
 
 The node unit now invokes the reviewed, packaged `deploy/prover/bootstrap.py`
-wrapper around the same single foreground Docker command. Docker flags, mounted
-paths, network, hash-only admin configuration, `ExecStop`, restart policy and
+wrapper around the same single foreground Docker command. Docker resource/network flags, hash-only admin configuration, `ExecStop`, restart policy and
 45-second stop budget remain unchanged. No extra service or retry is introduced.
 The public wrapper source enters the runtime manifest; its exact hash is also
 pinned by generated bootstrap controls and checked before node execution and
@@ -445,12 +472,21 @@ termination and a child that ignores TERM. No Docker process is used by tests.
 
 ## Configuration provider adapter and bounded startup stages
 
-The runtime now packages `deploy/prover/startup-stages.mjs`. The hash-bound
-Python wrapper checks its exact SHA256, exclusively creates a dedicated 0700
-stage directory, mounts only that directory and the read-only helper, and adds
-Node's `--import` before the existing CLI arguments. The foreground Docker
-process, image, limits, no-restart policy, admin authority, shutdown controls and
-qualifier sandbox remain unchanged. A prior directory is preserved and prevents
+The runtime packages the exact relative-import closure of
+`deploy/prover/startup-stages.mjs`: `prover/compact-node-transform.mjs`,
+`prover/compact-node-registration.mjs`, `prover/compact-block-native.mjs`, and
+`shared/trusted-private-node.mjs`. The wrapper captures all five regular files
+(maximum 1MiB each) and checks every source hash before creating either destination.
+Symlinks, missing or changed files fail closed. It exclusively creates a 0700
+`startup-code` directory containing those five files only, and a separate 0700
+stage directory. It mounts code read-only at `/usr/src/yarn-project/rolling`
+and imports `/usr/src/yarn-project/rolling/deploy/prover/startup-stages.mjs`.
+No package `node_modules` or nearer dependency directory is mounted: all SDK
+imports share the image's `/usr/src/yarn-project/node_modules` identities.
+The compact registration helper remains opt-in; this bootstrap does not set
+`ROLLING_COMPACT_TIER`, and query-only qualification is not compact-route acceptance.
+The foreground Docker process, limits, no-restart policy, admin authority,
+shutdown controls and qualifier sandbox remain unchanged. A prior directory is preserved and prevents
 another launch through this wrapper. No extra capability or authentication key
 is introduced. The generated host program has no extra embedded diagnostic code;
 its existing startup-source hash changes and still requires fresh packaging and
@@ -461,14 +497,13 @@ The helper requires Node 24.21.0 and uses the official synchronous
 Offline extraction from the pinned image found the 24.21.0 public header and
 byte-identical startup/factory modules. A real Mac Node 24 hook test validates
 replacement, untouched unrelated imports and deregistration; this is not a
-Linux node startup test. Before the CLI imports, all six exact module hashes
+Linux node startup test. Before the CLI imports, all six instrumented module hashes
 and unique insertion anchors must match. At load time the original returned
-bytes are checked again. Fixed begin/complete markers and one import are inserted.
+bytes are checked again. Fixed begin/complete markers and the reviewed compact registration import are inserted. The registration uses the actual CLI-created node; no second node lifecycle is introduced.
 The one complete CLI `getL1Config` call also selects the fixed PublicNode URL
 in place of its `nodeConfig.l1RpcUrls` argument. All other arguments, the awaited
 complete result, genesis comparison, config merge, errors, retries and cleanup
-remain intact. Reversing this one argument replacement and removing markers
-recovers the exact original module bytes. SDK/image files on disk are unchanged.
+remain intact. Reversing the configuration argument replacement, marker insertions and compact registration import recovers the exact original module bytes. SDK/image files on disk are unchanged.
 This execution has an explicit **semantic configuration-provider adapter plus
 instrumentation**; it is not an unmodified-image qualification or merely logging.
 
@@ -623,11 +658,10 @@ supply this record. These fields describe a trusted, explicitly instrumented
 runtime, not a malicious-process attestation, anonymity result or readiness
 pass. No observation alters timeout or release gates.
 
-All six installed source modules are hash-bound and syntax-tested without
-executing the node. The new `archiver/dest/modules/l1_synchronizer.js` binding is
-currently installed-source evidence only; its exact pinned-image byte equality
-must be independently verified before paid execution. Existing image bindings
-cover the other modules. A future operator receipt projector must validate and
+All six instrumented modules and the standby module were extracted from the
+exact rc3 image and matched the installed rc3 source bytes. This includes
+`archiver/dest/modules/l1_synchronizer.js`. Static byte equality is not execution
+qualification; the existing unsuppressed compiler diagnostic hold is also unchanged. A future operator receipt projector must validate and
 retain schema 2 and its finite `archiver` snapshot, including the unchanged
 `runtimeAdapter: "publicnode-config-v1"` label. New packaging, an actual
 <=16384-byte capability payload check and independent review remain prerequisites

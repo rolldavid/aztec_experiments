@@ -16,8 +16,13 @@ whose SHA256 has been verified against Node's release checksums. Run:
 python3 deploy/prover/package.py NEW_OUTPUT --node-archive VERIFIED_NODE_ARCHIVE
 ```
 
-The native binary must match the platform SHA256 in toolchain.json before it can
-execute, and must report the exact pinned V6 version. Its source is the
+Package creation first requires an active exact rc6 `nativeProver.linux-x64`
+version/hash pair in `toolchain.json`, plus the complete pinned startup-helper
+composition. The rc6 candidate hash is known but its Linux execution remains
+unqualified; the active pin is absent and packaging currently fails closed before
+creating output. A historical pin or matching bytes alone cannot satisfy this gate.
+After a separately reviewed qualification/pin update, the native binary must match
+the platform SHA256 before execution and report the exact pinned V6 version. Its source is the
 integrity-locked official @aztec-foundation/bb.js npm package.
 
 The output contains source, installed dependencies, trusted circuit artifacts,
@@ -30,7 +35,8 @@ do. Copy only this package; never copy .build, wallets or the whole workspace.
 Install the package in /opt/board-prover/releases/RELEASE and point
 /opt/board-prover/current at it. Create a system user/group board-prover. Install
 board-prover.service into /etc/systemd/system. The host needs no AWS role to prove.
-Use encrypted EBS with DeleteOnTermination and restrictive SSH access for installation.
+Use encrypted EBS with DeleteOnTermination and the reviewed immutable bootstrap
+installation; no SSH access or host IAM role is required.
 A live deployment must have an explicit spending horizon; trial instances should
 have an independently scheduled shutdown within the user's approved budget.
 
@@ -119,7 +125,7 @@ cleanup, including CloudFront tagging and multipart upload cleanup.
 
 ## Qualification and health
 
-GET /prover/healthz returns mode, aggregate queue/job counters and separate
+In ordinary proof-service mode, GET /prover/healthz returns mode, aggregate queue/job counters and separate
 `query.enabled` / `query.ready` facts, never witnesses or bearer job IDs. Top-level
 `ready` describes the proof service and must not be treated as fullnode readiness.
 For wallet use require `query.enabled: true` and `query.ready: true`; identity,
@@ -137,6 +143,24 @@ prevent distributed abuse. MemoryMax and fixed instance count bound resource use
 No witnesses or job URLs should be logged. The operator can see private witness
 information and must be trusted by users.
 
+
+## Query-only service boundary
+
+The closed `serviceMode: "query-only"` mode uses the same authenticated upstream
+inspector, origin policy, request bounds and HTTP lifecycle as ordinary service
+mode. It branches before proof-module loading or resource allocation; there is
+no dummy queue. Health reports `proofs: "not-offered"`, `nodeProofs: "real"`,
+`queue: null` and separate query readiness. Neither HTTP200 nor query readiness
+qualifies a proof service. Job GET/POST routes are unavailable before body decoding.
+Shutdown closes admitted HTTP connections and awaits in-flight upstream handlers.
+
+This mode is query-service qualification, not a read-only node policy: the normal
+node RPC schema still includes `sendTx`. The bootstrap's compact-node helper shares
+the image SDK identity but remains opt-in. Compact tier/route qualification and
+ordinary proof service deployment need their own reviewed scope and acceptance.
+The packaged service closure explicitly includes the pure
+`shared/rolling/compact-client.mjs`, including when no Rolling artifact input list
+is supplied; it must never resolve through a workspace dependency ancestor.
 
 ## Isolated package verification gate
 
@@ -174,9 +198,12 @@ x86-64 against that exact release:
    The helper starts the actual service on an ephemeral loopback port, then uses
    a separate packaged-Node process for the production trusted client. It checks
    public node identity and a canonical block; no proof jobs are submitted.
-   Use an explicit verified historical **legacy** deployment configuration for
-   this query-only exercise. Rolling artifacts/catalog are checked separately.
-   Legacy addresses are not evidence of a deployed Rolling application.
+   Use explicit `serviceMode: "query-only"` with the actual verified network
+   scope, without any board, fee or plugin addresses. The same service and HTTP
+   implementation reject all job routes before decoding job bodies; proof-only
+   modules, directories, queues and workers are not allocated. Require the report's
+   exact no-proof-lifecycle checks. Rolling artifacts/catalog and native binaries
+   are still verified separately, without asserting deployed Rolling contracts.
 4. Require rejection for each incorrect expected chain/version/rollup. The helper
    first checks the correct policy against the actual service, and accepts only
    the exact `BB_TRUSTED_NODE_IDENTITY` error for these cases.
@@ -197,7 +224,7 @@ x86-64 against that exact release:
    The active release is never modified; all original manifest hashes are checked
    again after the control. Reserve disk/time for this full copy.
 7. Require closed service listeners, exited client children and removed temporary
-   queue/CRS/copy files. Preserve the node's persistent archive. The existing host
+   qualification/copy files. No queue or CRS runtime is allocated in query-only mode. Preserve the node's persistent archive. The existing host
    commissioning systemd unit owns the overall deadline, `KillMode=control-group`,
    and verification that no owned process remains after exit. The helper is not a
    new supervisor and does not relax the host's shutdown deadline. Restrict this
@@ -219,19 +246,23 @@ so the helper itself appears in the externally pinned manifest.
 
 The private configuration has exactly these top-level keys:
 
-- `service`: the verified legacy configuration with `applicationProfile: "legacy"`,
-  `proofs: "real"`, `host: "127.0.0.1"`, `port: 0`, Sepolia `chainId: "11155111"`,
-  actual `rollupVersion`, actual `board`, `origins`, optional `privateFeeAddress`,
-  `pluginAddresses`, `threads`, and `queryNode`.
+- `service`: explicit `serviceMode: "query-only"`, `proofs: "real"`,
+  `host: "127.0.0.1"`, `port: 0`, Sepolia `chainId: "11155111"`, actual
+  `rollupVersion`, `origins`, and `queryNode`. Proof-only fields (`board`,
+  application profile, fee/plugin addresses, threads, queue paths) are rejected.
 - `queryNode` inside `service`: fixed loopback root URL, actual `rollupAddress`,
   `maxLagSeconds` from 1 through 120 (default 120).
 - `adminUrl`: fixed loopback root URL for the installed node admin API. Container
   loopback is not host loopback: supply an explicitly reviewed host-loopback-only
   binding or invoke qualification within the existing trusted network namespace.
+- `adminKeyFile`: the dedicated owner-only capability file prepared by the trusted
+  host bootstrap, readable only at the exact qualifier sandbox path. It is sent
+  solely to the fixed loopback admin URL using `x-api-key`, never query/proof RPC.
 - Optional `recoveryTimeoutMs`: 1,000 through 180,000, default 180,000.
 
-No keys, wallets, credentials, custom BB path, persistent CRS path, or queue
-location belong in this configuration. The helper owns disposable runtime paths.
+No wallet keys, inline credentials, custom BB path, persistent CRS path, or queue
+location belong in this configuration; the narrow admin file reference is the
+only capability handoff. The helper owns disposable runtime paths.
 Use only the packaged Node, with stdout restricted to its safe result summary:
 
 ```sh

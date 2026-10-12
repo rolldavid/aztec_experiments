@@ -5,22 +5,34 @@ Only public pins are committed. Capability URLs belong in owner-only external fi
 """
 import argparse, base64, datetime as dt, gzip, hashlib, ipaddress, io, json, lzma, os, pathlib, re, signal, stat, subprocess, sys, tokenize, urllib.parse
 
-IMAGE = "azteclabs/aztec@sha256:e5bc218e326b4f3b1cd06b0309cb98e87fef5dfda3330157ce1e393d89416c32"
+IMAGE = "azteclabs/aztec@sha256:44479404b67dde931cf8f202a3ce34703876e709ce124924251da8435d5d8651"
 NODE_SHA = "7fde7b8afa198da66257f42ee2001d874c7355631e6d1579a5fb5ef1f246df4c"
-BB_SHA = "ba8bbb2b82c573153511e638c97100791f0186ef40ee5dd41e911bb5286b29d9"
-CATALOG_SHA = "1c01bc19b58975149b477aff5c68ec8c0e9e10ef287049411a7f489f8a655f85"
+BB_SHA = "fa4b12adaefd5684b53b802346b9fe839ab3d6a4a829a5ea4efd6bd200e0829f"
+BB_VERSION = "6.0.0-rc.6"
+CATALOG_SHA = "fafaf3387cdb360e11dff386f30be2fac40e5547ee642cb969aac449b40efb7e"
 NETWORK = {'testnet': {'bootnodes': ['enr:-LO4QA4kHKdUJOirQ4NxtI-gjBNLRK1GPeKtmz664Uph-EqLW1B3EkCqu6ul5C7dejOBWbEWMOPZc07I0Bl8bmW5Vn0EhWF6dGVjqDAwLTExMTU1MTExLTAwMDAwMDAwLTAtMjI3ODAyMzktMmRhOWY4MDGCaWSCdjSCaXCEIlCfmYlzZWNwMjU2azGhAoRffgRFcK_rV5ddbmtUW9cyXrPwrDFL18OFRVejOOXDg3VkcIKd0A', 'enr:-LO4QO3-kuKH3c-RgaxYBWk0PiV-97B4wnvHcgMxYpB-1WjoctKlpY3Fuh29AESLhBn1WtQXE-1G0Umo_VhTcu7bLloEhWF6dGVjqDAwLTExMTU1MTExLTAwMDAwMDAwLTAtMjI3ODAyMzktMmRhOWY4MDGCaWSCdjSCaXCEIicStolzZWNwMjU2azGhAxUvKI8xXnGpkj2VjRZk9VmMbtfHZUoszOvvl76qFrGeg3VkcIKd0A', 'enr:-LO4QNTdBJe-2tIfXpzJmu4Tise0rRdPSn2gwQMtkVPe40szAdpWRgixGub2iUXMcxSQuQ8nkKh-GSvQpRKqw2XzUhQEhWF6dGVjqDAwLTExMTU1MTExLTAwMDAwMDAwLTAtMjI3ODAyMzktMmRhOWY4MDGCaWSCdjSCaXCEIrZz14lzZWNwMjU2azGhApwZiWnsA8TFqvz-sGDrgbi1AypT4QXJfFWdYOz2yeVtg3VkcIKd0A', 'enr:-Nu4QLjG2KMKvsVOjnhELmYmUO-auKssB_HPKNJitPOwXN0IYC5XPwUwZucnlAE0towcJ9lemeu4gmZkRnYWiGL_lkIHhWF6dGVjsDAwLTExMTU1MTExLWViZDk5ZmYwLTg0NTIzMTcxMy0xMmU5YWEzNi0yMjllYWRiN4JpZIJ2NINpcDaQKgEE-AJiEJUAAAAAAAAAAolzZWNwMjU2azGhA5_JMPCAGUHSS3vWQU3LlQoXnUOaO7AUNylXu2ieLTlKhHRjcDaCnJCEdWRwNoKckIN2ZXKFMi4xLjI', 'enr:-Ku4QHA70JBzwsnhlg-Y-Ud_vH_xAJtaoIAGpEGwvBFu8jHxEEVBrzMCrgRTqYpwDgPgyWPEtEGg-pWlxsK3Gq1VGa4EhWF6dGVjoDAwLS0wMDAwMDAwMC0wLTIyNzgwMjM5LTBjNzU3NmQzgmlkgnY0gmlwhNU65vmJc2VjcDI1NmsxoQLj0Km-mQSLz-0Wz8JBhBv9r0AhFbctdeO0yuT-gqUlPYN1ZHCCndA'], 'snapshots': ['https://aztec-labs-snapshots.com/testnet/', 'https://files5.blacknodes.net/Aztec/', 'https://snapshots-data.aztec.graphops.xyz/'], 'blobFileStoreUrls': ['https://aztec-labs-snapshots.com/testnet/blobs'], 'txCollectionFileStoreUrls': ['https://aztec-labs-snapshots.com/testnet/txs'], 'registryAddress': '0xa0bfb1b494fb49041e5c6e8c2c1be09cd171c6ba', 'feeAssetHandlerAddress': '0x5602c39a6e9c5ace589f64f754927bcda4f4bfc9', 'l1ChainId': 11155111}}
 
-# Public historical deployment identity; qualification is explicitly legacy,
-# never a Rolling deployment. Source: deploy/prover/live-deployment.json.
-QUALIFICATION = {'service': {'applicationProfile':'legacy','proofs':'real','host':'127.0.0.1','port':0,'origins':[],
-    'chainId':'11155111','rollupVersion':'2914217885',
-    'board':'0x0346558fcce04c4bf0b0907c1ef20858b9583123ef55bceb7125cb3fc3fb3752',
-    'queryNode':{'url':'http://127.0.0.1:8082/','rollupAddress':'0x8c2fb2a68a3d362ab1de99e06f83f8903160bbd9','maxLagSeconds':120}},
+# Public rc3 compatibility snapshot, not fresh network clearance or a deployed board.
+# Query-only qualification never allocates a proof queue or worker.
+QUALIFICATION = {'service': {'serviceMode':'query-only','proofs':'real','host':'127.0.0.1','port':0,'origins':[],
+    'chainId':'11155111','rollupVersion':'3409706519',
+    'queryNode':{'url':'http://127.0.0.1:8082/','rollupAddress':'0xed1eb2eb670b42e2fb5a478c076a264b9604089d','maxLagSeconds':120}},
     'adminUrl':'http://127.0.0.1:8882/','adminKeyFile':'/var/lib/rolling-admin/qualification-key','recoveryTimeoutMs':180000}
 
 class Invalid(ValueError):
     pass
+
+def require_linux_qualification(root=None):
+    """Candidate bytes are not an execution qualification. Never promote a pin here."""
+    root=pathlib.Path(root) if root is not None else pathlib.Path(__file__).resolve().parents[2]
+    try:
+        pins=json.loads((root/'toolchain.json').read_text())
+        expected={'version':BB_VERSION,'sha256':BB_SHA}
+        if pins.get('nativeProverPackage')!=BB_VERSION or pins.get('nativeProver',{}).get('linux-x64')!=expected:
+            raise ValueError()
+    except (OSError,ValueError,TypeError,AttributeError):
+        raise Invalid('Active Linux prover qualification required') from None
+    return expected
 
 def timestamp(value):
     if not isinstance(value, str) or not re.fullmatch(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z", value):
@@ -317,6 +329,8 @@ def verify_release(target):
     for rel, expected in m['files'].items():
         p = target/rel
         if not p.resolve().is_relative_to(target.resolve()) or digest(p)!=expected: raise ValueError('Release file mismatch')
+    pins=json.loads((target/'toolchain.json').read_text())
+    if pins.get('nativeProverPackage')!=PINS['bbVersion'] or pins.get('nativeProver',{}).get('linux-x64')!={'version':PINS['bbVersion'],'sha256':PINS['bb']}: raise ValueError('Unqualified Linux prover')
     for rel, key in [('node/bin/node','node'),('node_modules/@aztec-foundation/bb.js/build/amd64-linux/bb','bb'),('prover/rolling-artifacts.json','catalog')]:
         if digest(target/rel)!=PINS[key]: raise ValueError('Native or catalog mismatch')
 
@@ -556,9 +570,11 @@ def qualification_projection(report, process_exited=False):
     scope=QUALIFICATION['service'];expected={'chainId':scope['chainId'],'rollupVersion':scope['rollupVersion']}
     public=report.get('publicScope',{})
     result['scope']=public=={'chainId':expected['chainId'],'version':expected['rollupVersion'],
-        'rollup':scope['queryNode']['rollupAddress'],'applicationProfile':'legacy','board':scope['board'],'proofs':'real','maxLagSeconds':120}
+        'rollup':scope['queryNode']['rollupAddress'],'serviceMode':'query-only','nodeProofs':'real','maxLagSeconds':120}
     result['release']=report.get('release',{}).get('manifestSha256')==PINS['manifest']
     result['noProofJobs']=type(report.get('proofJobs')) is int and report['proofJobs']==0
+    lifecycle=checks.get('noProofLifecycle',{});expected={'passed':True,'proofEndpointsDisabled':True,'queueAllocated':False,'workerAllocated':False}
+    result['noProofLifecycle']=type(lifecycle) is dict and set(lifecycle)==set(expected) and all(type(lifecycle[k]) is bool and lifecycle[k] is v for k,v in expected.items())
     result['complete']=report.get('passed') is True and report.get('stage')=='complete'
     return result
 
@@ -587,7 +603,7 @@ def readiness_projection(value):
     return exact
 
 def qualification_failure(stage):
-    return {'schemaVersion':1,'passed':False,'stage':stage,'scope':'legacy-query-only','manifestSha256':PINS['manifest']}
+    return {'schemaVersion':1,'passed':False,'stage':stage,'scope':'current-network-query-only','manifestSha256':PINS['manifest']}
 
 def qualify(aborted=False):
     directory=BASE/'qualification';directory.mkdir(mode=0o700,exist_ok=True)
@@ -640,7 +656,7 @@ def qualify(aborted=False):
             if output.is_symlink() or not output.is_file() or output.stat().st_size>16384: raise ValueError('Missing bounded result')
             report=json.loads(output.read_text());checks=qualification_projection(report,process_exited)
             result={'schemaVersion':1,'passed':all(checks.values()),'stage':'complete' if all(checks.values()) else 'qualification-failed',
-                    'scope':'legacy-query-only','manifestSha256':PINS['manifest'],'reportSha256':digest(output),'checks':checks,'readiness':snapshot}
+                    'scope':'current-network-query-only','manifestSha256':PINS['manifest'],'reportSha256':digest(output),'checks':checks,'readiness':snapshot}
             if checks['healthy'] and checks['recovered']: result['anchors']=qualification_anchors(report['checks'])
             # Preserve the actual bounded report durably before acknowledging result.
             with open(output,'rb') as f: os.fsync(f.fileno())
@@ -656,7 +672,7 @@ def install_qualification():
 
 def validated_qualification(q):
     allowed={'schemaVersion','passed','stage','scope','manifestSha256','reportSha256','checks','readiness','anchors'}
-    if type(q.get('schemaVersion')) is not int or q['schemaVersion']!=1 or type(q.get('passed')) is not bool or set(q)-allowed or q.get('manifestSha256')!=PINS['manifest'] or q.get('scope')!='legacy-query-only': raise ValueError('Bad result')
+    if type(q.get('schemaVersion')) is not int or q['schemaVersion']!=1 or type(q.get('passed')) is not bool or set(q)-allowed or q.get('manifestSha256')!=PINS['manifest'] or q.get('scope')!='current-network-query-only': raise ValueError('Bad result')
     if q.get('stage') not in ('complete','qualification-failed','readiness-failed','qualifier-failed','interrupted-unknown'): raise ValueError('Bad stage')
     if 'checks' in q and (set(q['checks'])!=set(qualification_projection({})) or any(type(v) is not bool for v in q['checks'].values())): raise ValueError('Bad checks')
     if 'reportSha256' in q and not re.fullmatch('[a-f0-9]{64}',q['reportSha256']): raise ValueError('Bad hash')
@@ -735,7 +751,7 @@ def _execute(config, attestation_source):
             else: mark('runtime-verify');verify_release(RELEASE)
             mark('native-checks');node=str(RELEASE/'node/bin/node');bb=str(RELEASE/'node_modules/@aztec-foundation/bb.js/build/amd64-linux/bb')
             if run([node,'--version'],capture=True)!='v24.21.0': raise ValueError('Wrong Node')
-            if '6.0.0-rc.1' not in run([bb,'--version'],capture=True): raise ValueError('Wrong BB')
+            if run([bb,'--version'],capture=True).strip()!=PINS['bbVersion']: raise ValueError('Wrong BB')
             run([node,'--input-type=module','--eval',"import {loadRollingArtifacts} from '"+(RELEASE/'prover/rolling-artifacts.mjs').as_uri()+"';loadRollingArtifacts();"],timeout=120)
             STAGE='node';write(BASE/'stage',STAGE);mark('node-install');install_node();verify_controls()
             egress_after=verify_controls();mark('egress-exercise')
@@ -750,7 +766,15 @@ def _execute(config, attestation_source):
 
 
 # Dedicated records from the exact pinned process with an explicit configuration-provider adapter; not adversarial attestation.
-STARTUP_HELPER_SHA = '259fc1463fe0731b76739ff851e68ad50c65884ea3c3e1f12beb3ac1e3c13c6c'
+STARTUP_HELPER_SHA = 'f10d47fa2f26f50197bb36c44c75f2d34b41a2e5726caed26c935e42f2c69d15'
+# Entire relative-import closure. SDK imports intentionally resolve in the image.
+STARTUP_SOURCES = {
+    'deploy/prover/startup-stages.mjs': STARTUP_HELPER_SHA,
+    'prover/compact-node-transform.mjs': 'd7e7e95a1061342e7aaa301e826fbf4bd21cfb9ea2de605e2a2aa17452160545',
+    'prover/compact-node-registration.mjs': '07316d9a6629dff67fbb8d033360a45b9a1492febdd18520e6ffe6c1023c546c',
+    'prover/compact-block-native.mjs': '5040454029af8c78bac67dc9961e80bf4918ce2ee000277000a4fdd32fb64f07',
+    'shared/trusted-private-node.mjs': '98ebbc01e11fd2b760bee045c77971bcd0432cfbbe18181cf3ba08efe47cb30e',
+}
 STARTUP_ADAPTER = 'publicnode-config-v1'
 DIAGNOSTIC_PHASES = ('registry-guard', 'rollup-compatibility', 'l1-config', 'genesis-compare', 'telemetry', 'factory', 'factory-bb', 'factory-kzg', 'factory-keystore', 'factory-addresses', 'factory-l1-constants', 'factory-blob', 'factory-snapshot', 'factory-epoch-cache', 'factory-world-state', 'factory-avm', 'factory-archiver', 'factory-world-state-sync', 'factory-verifiers', 'factory-fee-provider', 'factory-p2p', 'factory-start', 'public-rpc-bind', 'admin-auth', 'admin-rpc-bind', 'archiver-store', 'archiver-protocol-register', 'archiver-constants', 'archiver-start-header', 'archiver-start', 'archiver-blob-test', 'archiver-clock-test', 'archiver-trace-test', 'archiver-history-test', 'archiver-initial-sync')
 
@@ -760,17 +784,42 @@ def stage_directory(base):
     if not stat.S_ISDIR(info.st_mode) or stat.S_IMODE(info.st_mode)!=0o700 or info.st_uid!=os.getuid():raise ValueError('Invalid stage directory')
     return directory
 
+def startup_sources(root=None):
+    """Capture exact regular public bytes before any destination or evidence write."""
+    root=(pathlib.Path(root) if root is not None else pathlib.Path(__file__).resolve().parents[2]).resolve()
+    captured={}
+    for rel,expected in STARTUP_SOURCES.items():
+        path=root/rel
+        if path.resolve()!=path or any(not stat.S_ISDIR(parent.lstat().st_mode) for parent in path.parents if parent!=root and root in parent.parents):
+            raise ValueError('Invalid helper source path')
+        fd=os.open(path,os.O_RDONLY|os.O_NOFOLLOW)
+        try:
+            info=os.fstat(fd)
+            if not stat.S_ISREG(info.st_mode) or not 0<info.st_size<=1048576:raise ValueError('Invalid helper source file')
+            with os.fdopen(fd,'rb',closefd=False) as stream:raw=stream.read(1048577)
+            if len(raw)!=info.st_size or hashlib.sha256(raw).hexdigest()!=expected:raise ValueError('Invalid helper source hash')
+            captured[rel]=raw
+        finally:os.close(fd)
+    return captured
+
 def instrument_node_args(args,base):
-    helper=pathlib.Path(__file__).resolve().parent/'startup-stages.mjs'
-    info=helper.lstat()
-    if not stat.S_ISREG(info.st_mode) or hashlib.sha256(helper.read_bytes()).hexdigest()!=STARTUP_HELPER_SHA:raise ValueError('Invalid stage helper')
-    directory=base/'startup-stages';directory.mkdir(mode=0o700) # exclusive, never discard prior evidence
-    stage_directory(base)
-    fd=os.open(base,os.O_RDONLY|os.O_DIRECTORY|os.O_NOFOLLOW)
-    try:os.fsync(fd)
-    finally:os.close(fd)
+    captured=startup_sources() # complete closure is checked before creating either directory
     i=args.index(IMAGE)
-    return args[:i]+['-v',str(helper)+':/etc/rolling-node/startup-stages.mjs:ro','-v',str(directory)+':/rolling-startup']+args[i:i+1]+['--import','/etc/rolling-node/startup-stages.mjs']+args[i+1:]
+    directory=base/'startup-stages';directory.mkdir(mode=0o700) # exclusive, retain failures/prior evidence
+    stage_directory(base)
+    code=base/'startup-code';code.mkdir(mode=0o700)
+    for rel,raw in captured.items():
+        destination=code/rel;destination.parent.mkdir(mode=0o700,parents=True,exist_ok=True)
+        fd=os.open(destination,os.O_WRONLY|os.O_CREAT|os.O_EXCL|os.O_NOFOLLOW,0o600)
+        try:
+            with os.fdopen(fd,'wb',closefd=False) as stream:stream.write(raw);stream.flush();os.fsync(fd)
+        finally:os.close(fd)
+    for path in sorted([code,*[p for p in code.rglob('*') if p.is_dir()]],key=lambda p:len(p.parts),reverse=True)+[base]:
+        fd=os.open(path,os.O_RDONLY|os.O_DIRECTORY|os.O_NOFOLLOW)
+        try:os.fsync(fd)
+        finally:os.close(fd)
+    # No mounted node_modules: this exact local closure shares the image SDK classes.
+    return args[:i]+['-v',str(code)+':/usr/src/yarn-project/rolling:ro','-v',str(directory)+':/rolling-startup']+args[i:i+1]+['--import','/usr/src/yarn-project/rolling/deploy/prover/startup-stages.mjs']+args[i+1:]
 
 def validate_archiver_progress(p):
     counters=('passesStarted','passesCompleted','passesFailed','lastObservationMs','lastProgressMs','droppedObservations')
@@ -937,10 +986,11 @@ def node_wrapper(args,base):
 
 def generate(config, now=None):
     config = validate(config, now)
+    require_linux_qualification()
     # Remove comments only to stay within AWS's 16KiB compressed user-data cap.
     # Tokenization preserves every string, executable token and line boundary.
     runtime=tokenize.untokenize(t._replace(string='') if t.type==tokenize.COMMENT else t for t in tokenize.generate_tokens(io.StringIO(HOST).readline))
-    pins = {'image':IMAGE, 'manifest':config['manifestSha256'], 'node':NODE_SHA, 'bb':BB_SHA, 'catalog':CATALOG_SHA, 'bootstrap':hashlib.sha256(runtime.encode()).hexdigest(),'startup':hashlib.sha256(pathlib.Path(__file__).read_bytes()).hexdigest()}
+    pins = {'image':IMAGE, 'manifest':config['manifestSha256'], 'node':NODE_SHA, 'bb':BB_SHA, 'bbVersion':BB_VERSION, 'catalog':CATALOG_SHA, 'bootstrap':hashlib.sha256(runtime.encode()).hexdigest(),'startup':hashlib.sha256(pathlib.Path(__file__).read_bytes()).hexdigest()}
     prefix = 'PINS = '+repr(pins)+'\nNETWORK = '+repr(NETWORK)+'\nQUALIFICATION = '+repr(QUALIFICATION)+'\n'
     dispatch = "\ntry:\n    if '--qualify' in sys.argv: qualify()\n    elif '--qualification-stop' in sys.argv:\n        qualify(aborted=True);run(['systemctl','start','rolling-qualification-receipt.service'],timeout=40)\n    elif '--qualification-receipt' in sys.argv: final_receipt()\n    else: attest('--check' in sys.argv)\nexcept Exception as error:\n    shutdown_failure(error)\n"
     program = 'SOURCE = '+repr(prefix+runtime)+'\nCONFIG = '+repr(config)+'\nATTESTATION = SOURCE + '+repr(dispatch)+'\nexec(SOURCE)\nexecute(CONFIG, ATTESTATION)\n'

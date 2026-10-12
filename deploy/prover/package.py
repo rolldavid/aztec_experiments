@@ -1,7 +1,15 @@
 """Build an isolated Linux x86-64 runtime from the pinned installed dependencies.
 No wallets, application state or operator configuration enter the package.
 """
-import argparse,hashlib,json,pathlib,shutil,subprocess,tarfile
+import argparse,hashlib,importlib.util,json,pathlib,shutil,subprocess,tarfile
+
+def release_preflight(root):
+ """Reject unqualified native bytes or an incomplete helper composition before output."""
+ spec=importlib.util.spec_from_file_location('release_bootstrap',pathlib.Path(__file__).with_name('bootstrap.py'))
+ bootstrap=importlib.util.module_from_spec(spec);spec.loader.exec_module(bootstrap)
+ pin=bootstrap.require_linux_qualification(root)
+ bootstrap.startup_sources(root)
+ return pin
 
 def rolling_resources(root, node):
  pins=json.loads((root/'toolchain.json').read_text())
@@ -16,7 +24,7 @@ def copy_sources(root, out, rolling=()):
 
  Kept separate so isolated import regressions need no heavyweight Linux archive.
  """
- for rel in ['prover','deploy/prover/bootstrap.py','deploy/prover/startup-stages.mjs','scripts/toolchain.mjs','shared/remote-prover-wire.mjs','shared/trusted-private-node.mjs','toolchain.json','package.json','package-lock.json','crs-manifest.json','apps/src/billboard/billboard_artifact.json','apps/src/billboard/private_fee_artifact.json','plugins/adapter_artifact.json']+list(rolling):
+ for rel in ['prover','deploy/prover/bootstrap.py','deploy/prover/startup-stages.mjs','scripts/toolchain.mjs','shared/remote-prover-wire.mjs','shared/trusted-private-node.mjs','shared/rolling/compact-client.mjs','toolchain.json','package.json','package-lock.json','crs-manifest.json','apps/src/billboard/billboard_artifact.json','apps/src/billboard/private_fee_artifact.json','plugins/adapter_artifact.json']+list(rolling):
   src=root/rel;dst=out/rel;dst.parent.mkdir(parents=True,exist_ok=True)
   if src.is_dir():shutil.copytree(src,dst,ignore=shutil.ignore_patterns('.DS_Store','._*'))
   else:shutil.copyfile(src,dst)
@@ -24,6 +32,7 @@ def copy_sources(root, out, rolling=()):
 def main():
  root=pathlib.Path(__file__).resolve().parents[2]
  a=argparse.ArgumentParser();a.add_argument('output');a.add_argument('--node-archive',required=True);a.add_argument('--application-profile',choices=['legacy','rolling'],default='legacy');a.add_argument('--validation-node',default='node');args=a.parse_args()
+ linux_pin=release_preflight(root)
  rolling=rolling_resources(root,args.validation_node) if args.application_profile=='rolling' else []
  out=pathlib.Path(args.output).resolve();out.mkdir(parents=True,exist_ok=False)
  seen=set()
@@ -48,8 +57,7 @@ def main():
   dst=out/'apps/dist/crs'/entry['name'];dst.parent.mkdir(parents=True,exist_ok=True);shutil.copyfile(src,dst)
  # Retain only the target native BB executable. The runtime uses native proving.
  build=out/'node_modules/@aztec-foundation/bb.js/build'
- pins=json.loads((root/'toolchain.json').read_text())
- assert hashlib.sha256((build/'amd64-linux/bb').read_bytes()).hexdigest()==pins['nativeProver']['linux-x64']['sha256'], 'Linux prover differs from pinned official artifact'
+ assert hashlib.sha256((build/'amd64-linux/bb').read_bytes()).hexdigest()==linux_pin['sha256'], 'Linux prover differs from pinned official artifact'
  for child in build.iterdir():
   if child.name!='amd64-linux':shutil.rmtree(child) if child.is_dir() else child.unlink()
  (out/'node').mkdir();subprocess.run(['tar','-xf',str(pathlib.Path(args.node_archive).resolve()),'-C',str(out/'node'),'--strip-components=1'],check=True)

@@ -1,5 +1,5 @@
 """Development unit tests; no Linux services, cloud calls, or proof jobs are run."""
-import base64, datetime as dt, gzip, hashlib, importlib.util, io, json, lzma, pathlib, subprocess, tarfile, tempfile, unittest
+import os, shutil, base64, datetime as dt, gzip, hashlib, importlib.util, io, json, lzma, pathlib, subprocess, tarfile, tempfile, unittest
 from unittest.mock import patch
 
 ROOT=pathlib.Path(__file__).resolve().parents[1]
@@ -10,8 +10,14 @@ def config():
     return dict(createdAt='2026-10-11T18:00:00Z',budgetStop='2026-10-12T02:00:00Z',commissioningStop='2026-10-11T18:30:00Z',
                 runtimeUrl='https://anonymous-message-board-testnet-backups-nvdhcyurtoga.s3.eu-west-2.amazonaws.com/releases/test/runtime.tar.gz?X-Amz-Signature=PRIVATE_SENTINEL',
                 runtimeArchiveSha256='a'*64,manifestSha256='b'*64)
+def fixture_generate(config,now):
+    # Labelled payload-only fixture: no active native qualification is fabricated
+    # in the repository. Actual generation rejection is tested separately below.
+    with patch.object(b,'require_linux_qualification',return_value={'version':b.BB_VERSION,'sha256':b.BB_SHA}):
+        return b.generate(config,now)
+
 def host(diagnostic_devices=False):
-    ns={'PINS':{'manifest':'b'*64,'node':b.NODE_SHA,'bb':b.BB_SHA,'catalog':b.CATALOG_SHA,'image':b.IMAGE},'NETWORK':b.NETWORK,'QUALIFICATION':b.QUALIFICATION}
+    ns={'PINS':{'manifest':'b'*64,'node':b.NODE_SHA,'bb':b.BB_SHA,'bbVersion':b.BB_VERSION,'catalog':b.CATALOG_SHA,'image':b.IMAGE},'NETWORK':b.NETWORK,'QUALIFICATION':b.QUALIFICATION}
     exec(b.HOST,ns)
     if not diagnostic_devices:ns['emit_diagnostic']=lambda data:None # never write Mac device output
     return ns
@@ -26,12 +32,42 @@ def qualifier_fixture():
     anchor={'ready':True,'blockNumber':99,'blockHash':'0x'+'b'*64}
     checks={k:{'rejected':True} for k in ('wrong-chain','wrong-version','wrong-rollup','proof-config-floor')}
     checks.update(healthy=anchor,recovered=anchor,nativeAndRollingCatalog={'passed':True,'circuitCount':16},missingHelper={'missingHelperRejected':True},manifestUnchanged=True,
+                  noProofLifecycle={'passed':True,'proofEndpointsDisabled':True,'queueAllocated':False,'workerAllocated':False},
                   freshness={k:True for k in ('paused','stale','queriesRejected','resumed','recovered')})
     return {'schemaVersion':1,'passed':True,'stage':'complete','checks':checks,'cleanup':{k:True for k in ('serviceClosed','temporaryFilesRemoved','childProcessesExited')},
             'release':{'manifestSha256':'b'*64},'proofJobs':0,
-            'publicScope':{'chainId':scope['chainId'],'version':scope['rollupVersion'],'rollup':scope['queryNode']['rollupAddress'],'applicationProfile':'legacy','board':scope['board'],'proofs':'real','maxLagSeconds':120}}
+            'publicScope':{'chainId':scope['chainId'],'version':scope['rollupVersion'],'rollup':scope['queryNode']['rollupAddress'],'serviceMode':'query-only','nodeProofs':'real','maxLagSeconds':120}}
 
 class Bootstrap(unittest.TestCase):
+    def test_unqualified_linux_never_generates_payload_and_requires_exact_active_pin(self):
+        original=b.require_linux_qualification
+        with tempfile.TemporaryDirectory() as t:
+            root=pathlib.Path(t);file=root/'toolchain.json'
+            good={'nativeProverPackage':b.BB_VERSION,'nativeProver':{'linux-x64':{'version':b.BB_VERSION,'sha256':b.BB_SHA}}}
+            for pins in [{}, {'nativeProverPackage':b.BB_VERSION,'nativeProverHistory':good['nativeProver']},
+                         {**good,'nativeProverPackage':'6.0.0-rc.1'},
+                         {**good,'nativeProver':{'linux-x64':{'version':b.BB_VERSION,'sha256':'0'*64}}},
+                         {**good,'nativeProver':{'linux-x64':{'version':'6.0.0-rc.1','sha256':b.BB_SHA}}}]:
+                file.write_text(json.dumps(pins))
+                with patch.object(b,'require_linux_qualification',side_effect=lambda:original(root)),patch.object(b.lzma,'compress') as compressed:
+                    with self.assertRaisesRegex(b.Invalid,'^Active Linux prover qualification required$'):b.generate(config(),NOW)
+                    compressed.assert_not_called()
+            file.write_text(json.dumps(good))
+            self.assertEqual(original(root),good['nativeProver']['linux-x64'])
+
+    def test_query_qualification_requires_exact_scope_and_absent_proof_lifecycle(self):
+        ns=host();report=qualifier_fixture()
+        self.assertTrue(all(ns['qualification_projection'](report,True).values()))
+        for value in [None,{},True,{'passed':True,'proofEndpointsDisabled':True,'queueAllocated':0,'workerAllocated':False},
+                      {**report['checks']['noProofLifecycle'],'queueAllocated':True},
+                      {**report['checks']['noProofLifecycle'],'extra':'PRIVATE_SENTINEL'}]:
+            report=qualifier_fixture();report['checks']['noProofLifecycle']=value
+            self.assertFalse(ns['qualification_projection'](report,True)['noProofLifecycle'])
+        report=qualifier_fixture();report['publicScope']['board']='0x'+'1'*64
+        self.assertFalse(ns['qualification_projection'](report,True)['scope'])
+        self.assertEqual(b.QUALIFICATION['service']['serviceMode'],'query-only')
+        self.assertFalse({'board','applicationProfile','privateFeeAddress','queueDirectory','threads'} & set(b.QUALIFICATION['service']))
+
     def test_current_reviewed_catalog_matches_bootstrap_pin(self):
         # A newly packaged profile catalog must not reach a paid host with the
         # historical catalog pin. The immutable runtime validator still rejects
@@ -40,7 +76,7 @@ class Bootstrap(unittest.TestCase):
         self.assertEqual(hashlib.sha256(catalog.read_bytes()).hexdigest(),b.CATALOG_SHA)
 
     def test_valid_input_frozen_and_bounded_userdata_shell_syntax(self):
-        c=config();text=b.generate(c,NOW)
+        c=config();text=fixture_generate(c,NOW)
         self.assertEqual(c,config());self.assertNotIn('PRIVATE_SENTINEL',text)
         self.assertLess(len(gzip.compress(text.encode(),mtime=0)),16384)
         subprocess.run(['/bin/sh','-n'],input=text,text=True,check=True)
@@ -57,8 +93,8 @@ class Bootstrap(unittest.TestCase):
             captured.append(data)
             return compressor(data,preset=6)
         c=config()
-        with patch.object(b.lzma,'compress',side_effect=legacy_encoding):legacy=b.generate(c,NOW)
-        current=b.generate(c,NOW)
+        with patch.object(b.lzma,'compress',side_effect=legacy_encoding):legacy=fixture_generate(c,NOW)
+        current=fixture_generate(c,NOW)
         def decode(text):
             encoded=text.split("base64.b64decode('")[1].split("')")[0]
             return lzma.decompress(base64.b64decode(encoded))
@@ -86,10 +122,10 @@ class Bootstrap(unittest.TestCase):
         for key,value in bad:
             with self.subTest(key=key,value=value):
                 c=config();c[key]=value
-                with self.assertRaises(b.Invalid) as e:b.generate(c,NOW)
+                with self.assertRaises(b.Invalid) as e:fixture_generate(c,NOW)
                 self.assertNotIn('PRIVATE_SENTINEL',str(e.exception))
         c=config();c['command']='id'
-        with self.assertRaises(b.Invalid):b.generate(c,NOW)
+        with self.assertRaises(b.Invalid):fixture_generate(c,NOW)
 
     def test_bucket_region_binding_and_redirect_rejection(self):
         actual=config();self.assertEqual(b.validate(actual,NOW),actual)
@@ -144,9 +180,19 @@ class Bootstrap(unittest.TestCase):
             paths=['node/bin/node','node_modules/@aztec-foundation/bb.js/build/amd64-linux/bb','prover/rolling-artifacts.json']
             for rel in paths:
                 p=root/rel;p.parent.mkdir(parents=True,exist_ok=True);p.write_bytes(rel.encode());files[rel]=ns['digest'](p)
+            native={'version':b.BB_VERSION,'sha256':files[paths[1]]}
+            (root/'toolchain.json').write_text(json.dumps({'nativeProverPackage':b.BB_VERSION,'nativeProver':{'linux-x64':native}}))
+            files['toolchain.json']=ns['digest'](root/'toolchain.json')
             m={'platform':'linux-x64','applicationProfile':'rolling','files':files}
-            (root/'prover-release.json').write_text(json.dumps(m));ns['PINS']={'manifest':ns['digest'](root/'prover-release.json'),**dict(zip(['node','bb','catalog'],files.values()))}
+            (root/'prover-release.json').write_text(json.dumps(m));ns['PINS']={'manifest':ns['digest'](root/'prover-release.json'),'bbVersion':b.BB_VERSION,**dict(zip(['node','bb','catalog'],files.values()))}
             ns['verify_release'](root)
+            original=(root/'toolchain.json').read_bytes()
+            (root/'toolchain.json').write_text(json.dumps({'nativeProverPackage':b.BB_VERSION,'nativeProver':{}}))
+            files['toolchain.json']=ns['digest'](root/'toolchain.json');(root/'prover-release.json').write_text(json.dumps(m))
+            ns['PINS']['manifest']=ns['digest'](root/'prover-release.json')
+            with self.assertRaisesRegex(ValueError,'Unqualified Linux prover'):ns['verify_release'](root)
+            (root/'toolchain.json').write_bytes(original);files['toolchain.json']=ns['digest'](root/'toolchain.json')
+            (root/'prover-release.json').write_text(json.dumps(m));ns['PINS']['manifest']=ns['digest'](root/'prover-release.json')
             (root/paths[0]).write_text('tampered')
             with self.assertRaises(ValueError):ns['verify_release'](root)
             (root/paths[0]).write_bytes(paths[0].encode());(root/'extra').write_text('unmanifested')
@@ -373,7 +419,7 @@ class htb 1:20 parent 1:1 prio 0 rate 25Mbit ceil 50Mbit burst 4725b cburst 7850
             ns['BASE']=pathlib.Path(t);ns['verify_controls']=lambda:99
             (ns['BASE']/'deadline.json').write_text(json.dumps(config()));(ns['BASE']/'stage').write_text('installed')
             directory=ns['BASE']/'qualification';directory.mkdir()
-            result={'schemaVersion':1,'passed':True,'stage':'complete','scope':'legacy-query-only','manifestSha256':'b'*64,
+            result={'schemaVersion':1,'passed':True,'stage':'complete','scope':'current-network-query-only','manifestSha256':'b'*64,
                     'checks':ns['qualification_projection'](qualifier_fixture(),True),'readiness':ready_fixture(),
                     'anchors':ns['qualification_anchors'](qualifier_fixture()['checks']),'reportSha256':'d'*64}
             captured=[]
@@ -397,7 +443,7 @@ class htb 1:20 parent 1:1 prio 0 rate 25Mbit ceil 50Mbit burst 4725b cburst 7850
         # Extract exact public config from the generated payload; execute only
         # definitions, never bootstrap or a service. No mirrored validator.
         import ast
-        generated=b.generate(config(),NOW)
+        generated=fixture_generate(config(),NOW)
         encoded=generated.split("base64.b64decode('")[1].split("')")[0]
         program=lzma.decompress(base64.b64decode(encoded)).decode()
         assignment=ast.parse(program).body[0]
@@ -406,27 +452,21 @@ class htb 1:20 parent 1:1 prio 0 rate 25Mbit ceil 50Mbit burst 4725b cburst 7850
         actual=namespace['QUALIFICATION']
         script="""
 import assert from 'node:assert/strict';
-import {startProverService} from SERVICE_URI;
+import {validateQueryService} from SERVICE_URI;
 import {validateQualification} from QUALIFIER_URI;
 let raw='';for await(const chunk of process.stdin)raw+=chunk;
 const config=JSON.parse(raw);validateQualification(config);
 assert.deepEqual(config.service.origins,[]);
-const boundary=new Error('development pre-start boundary');
-async function probe(includeOrigins){
+assert.equal(validateQueryService(config.service).serviceMode,'query-only');
+assert.equal(Object.hasOwn(config.service,'board'),false);
+for(const key of ['origins','queryNode']){
   let reads=0;const s={...config.service};
-  if(!includeOrigins)delete s.origins;
-  Object.defineProperty(s,'queryNode',{enumerable:true,get(){
-    if(++reads===1)return config.service.queryNode;
-    throw boundary;
-  }});
-  // Actual service validates queryNode first; its next access is the config
-  // spread immediately before createPrivateQuery. Throw before any I/O starts.
-  await assert.rejects(()=>startProverService(s),e=>includeOrigins?e===boundary:e.message==='Invalid network, origins or threads');
-  assert.equal(reads,includeOrigins?2:0);
+  Object.defineProperty(s,key,{enumerable:true,get(){reads++;throw Error('PRIVATE_SENTINEL');}});
+  assert.throws(()=>validateQueryService(s),/Invalid query-only configuration/);
+  assert.equal(reads,0);
 }
-await probe(false);await probe(true);
 """.replace('SERVICE_URI',json.dumps((ROOT/'prover/service.mjs').as_uri())).replace('QUALIFIER_URI',json.dumps((ROOT/'prover/qualify-runtime.mjs').as_uri()))
-        subprocess.run(['node','--input-type=module','--eval',script],input=json.dumps(actual),text=True,check=True,
+        subprocess.run([os.environ.get('PROVER_VALIDATION_NODE','node'),'--input-type=module','--eval',script],input=json.dumps(actual),text=True,check=True,
                        env={'PATH':'/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin','LOG_LEVEL':'silent'})
 
     def test_qualification_unit_enforces_process_and_network_boundary(self):
@@ -602,7 +642,7 @@ class FinalReceipt(unittest.TestCase):
             with self.subTest(new=new),self.assertRaises(b.Invalid):b.validate(bad,NOW)
         bad=dict(c,receiptPutUrl=c['receiptPutUrl']+'&unexpected=PRIVATE_SENTINEL')
         with self.assertRaises(b.Invalid):b.validate(bad,NOW)
-        text=b.generate(c,NOW);self.assertLess(len(gzip.compress(text.encode())),16384)
+        text=fixture_generate(c,NOW);self.assertLess(len(gzip.compress(text.encode())),16384)
         source=lzma.decompress(base64.b64decode(text.split("base64.b64decode('")[1].split("')")[0])).decode()
         self.assertNotIn(self.capability(),source.split('ATTESTATION = ')[1])
         compile(source,'generated-private','exec')
@@ -617,7 +657,7 @@ class FinalReceipt(unittest.TestCase):
         token=''.join(rng.choice(string.ascii_letters+string.digits) for _ in range(1024))
         c['runtimeUrl']+='&X-Amz-Security-Token='+token
         c['receiptPutUrl']+='&X-Amz-Security-Token='+token
-        text=b.generate(c,NOW);self.assertLess(len(gzip.compress(text.encode())),16384)
+        text=fixture_generate(c,NOW);self.assertLess(len(gzip.compress(text.encode())),16384)
         encoded=text.split("base64.b64decode('")[1].split("')")[0]
         source=lzma.decompress(base64.b64decode(encoded)).decode()
         definitions,entry=source.rsplit('execute(CONFIG, ATTESTATION)',1)
@@ -657,14 +697,17 @@ class FinalReceipt(unittest.TestCase):
             for key,delta in [('createdAt',dt.timedelta()),('budgetStop',dt.timedelta(hours=8)),('commissioningStop',dt.timedelta(minutes=30))]:c[key]=(now+delta).strftime('%Y-%m-%dT%H:%M:%SZ')
             source=directory/'input.json';source.write_text(json.dumps(c));source.chmod(0o600)
             output=directory/'output.gz'
-            result=subprocess.run(['python3',str(ROOT/'deploy/prover/bootstrap.py'),'--config',str(source),'--output',str(output)],capture_output=True,text=True)
+            fixture=directory/'fixture';cli=fixture/'deploy/prover/bootstrap.py';cli.parent.mkdir(parents=True)
+            shutil.copyfile(ROOT/'deploy/prover/bootstrap.py',cli)
+            (fixture/'toolchain.json').write_text(json.dumps({'nativeProverPackage':b.BB_VERSION,'nativeProver':{'linux-x64':{'version':b.BB_VERSION,'sha256':b.BB_SHA}}}))
+            result=subprocess.run(['python3',str(cli),'--config',str(source),'--output',str(output)],capture_output=True,text=True)
             self.assertEqual(result.returncode,1);self.assertFalse(output.exists());self.assertNotIn(token,result.stdout+result.stderr)
 
     def test_success_and_persistence_failure_do_not_masquerade_as_receipts(self):
         for boundary in ('success','disk-failure'):
             with self.subTest(boundary=boundary),tempfile.TemporaryDirectory() as t:
                 ns=self.environment(t);events=[]
-                report=qualifier_fixture();q={'schemaVersion':1,'passed':True,'stage':'complete','scope':'legacy-query-only','manifestSha256':'b'*64,
+                report=qualifier_fixture();q={'schemaVersion':1,'passed':True,'stage':'complete','scope':'current-network-query-only','manifestSha256':'b'*64,
                     'checks':ns['qualification_projection'](report,True),'readiness':ready_fixture(),'anchors':ns['qualification_anchors'](report['checks'])}
                 ns['exclusive_record'](ns['BASE']/'qualification/result.json',q)
                 ns['service_observations']=lambda:{};ns['emit_diagnostic']=lambda data:events.append(data)
@@ -942,12 +985,42 @@ raise SystemExit(code)
             base=pathlib.Path(t);args=['/usr/bin/docker','run','--log-driver','none','--entrypoint','node',b.IMAGE,'--no-warnings','/usr/src/yarn-project/aztec/dest/bin/index.js','start','--node','--network','testnet']
             actual=b.instrument_node_args(args,base)
             self.assertEqual(args[args.index(b.IMAGE)+1:],actual[actual.index(b.IMAGE)+3:])
-            self.assertIn(str(pathlib.Path(b.__file__).parent/'startup-stages.mjs')+':/etc/rolling-node/startup-stages.mjs:ro',actual)
+            self.assertIn(str(base/'startup-code')+':/usr/src/yarn-project/rolling:ro',actual)
             self.assertIn(str(base/'startup-stages')+':/rolling-startup',actual)
-            self.assertEqual(actual[actual.index(b.IMAGE)+1:actual.index(b.IMAGE)+3],['--import','/etc/rolling-node/startup-stages.mjs'])
+            self.assertEqual(actual[actual.index(b.IMAGE)+1:actual.index(b.IMAGE)+3],['--import','/usr/src/yarn-project/rolling/deploy/prover/startup-stages.mjs'])
             self.assertEqual((base/'startup-stages').stat().st_mode & 0o777,0o700)
+            actual_files={str(p.relative_to(base/'startup-code')):hashlib.sha256(p.read_bytes()).hexdigest() for p in (base/'startup-code').rglob('*') if p.is_file()}
+            self.assertEqual(actual_files,b.STARTUP_SOURCES)
+            self.assertFalse(any(p.name=='node_modules' for p in (base/'startup-code').rglob('*')))
+            self.assertFalse(any('ROLLING_COMPACT_TIER=' in arg for arg in actual))
             with self.assertRaises(FileExistsError):b.instrument_node_args(args,base)
+        with tempfile.TemporaryDirectory() as t:
+            base=pathlib.Path(t);prior=base/'startup-code';prior.mkdir(mode=0o700)
+            marker=prior/'node_modules';marker.write_text('prior-owned-data')
+            with self.assertRaises(FileExistsError):b.instrument_node_args(args,base)
+            self.assertEqual(marker.read_text(),'prior-owned-data')
         self.assertEqual(hashlib.sha256((pathlib.Path(b.__file__).parent/'startup-stages.mjs').read_bytes()).hexdigest(),b.STARTUP_HELPER_SHA)
+
+    def test_complete_source_closure_is_checked_before_any_mount_write(self):
+        # Actual pinned files, not a synthetic helper graph. Requires reviewed
+        # lead helper composition; cannot pass using the historical single file.
+        captured=b.startup_sources(ROOT)
+        self.assertEqual(set(captured),set(b.STARTUP_SOURCES))
+        with tempfile.TemporaryDirectory() as t:
+            root=pathlib.Path(t)/'source';root.mkdir()
+            for rel,raw in captured.items():
+                p=root/rel;p.parent.mkdir(parents=True,exist_ok=True);p.write_bytes(raw)
+            self.assertEqual(b.startup_sources(root),captured)
+            rel='prover/compact-block-native.mjs';p=root/rel
+            for failure in ('changed','missing','symlink','oversized'):
+                if p.exists() or p.is_symlink():p.unlink()
+                if failure=='changed':p.write_bytes(captured[rel]+b' ')
+                elif failure=='symlink':p.symlink_to(ROOT/rel)
+                elif failure=='oversized':p.write_bytes(b'x'*1048577)
+                base=pathlib.Path(t)/failure;base.mkdir()
+                with patch.object(b,'__file__',str(root/'deploy/prover/bootstrap.py')):
+                    with self.assertRaises((OSError,ValueError)):b.instrument_node_args(['/usr/bin/docker','run',b.IMAGE],base)
+                self.assertEqual(list(base.iterdir()),[])
 
     def test_actual_js_record_agrees_with_python_projection(self):
         import os
