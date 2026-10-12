@@ -40,14 +40,22 @@ test('same existing server serves fixed compact route with original origins and 
 test('disabled compact endpoint remains absent',async t=>{
  const f=await fixture(t,{enabled:false});assert.equal((await f.post()).status,404);assert.equal(f.upstreamRequests.length,0);assert.equal(f.inspections(),0);
 });
-test('compact shares existing per-client rate admission and cannot bypass it with forwarded headers',async t=>{
- const f=await fixture(t,{requestsPerMinute:1});assert.equal((await f.post({'x-real-ip':'192.0.2.1'})).status,200);
+test('compact has separate bounded read admission and cannot bypass it with forwarded headers',async t=>{
+ const f=await fixture(t,{requestsPerMinute:1,compactRequestsPerMinute:1});assert.equal((await f.post({'x-real-ip':'192.0.2.1'})).status,200);
  assert.equal((await f.post({'x-real-ip':'192.0.2.2'})).status,429);assert.equal(f.upstreamRequests.length,1);
- const job=await fetch(f.url+'/v1/jobs',{method:'POST',headers:{'content-type':'application/octet-stream'},body:new Uint8Array()});assert.equal(job.status,429);
+ const job=await fetch(f.url+'/v1/jobs',{method:'POST',headers:{'content-type':'application/octet-stream'},body:new Uint8Array()});assert.equal(job.status,400);
+ const limitedJob=await fetch(f.url+'/v1/jobs',{method:'POST',headers:{'content-type':'application/octet-stream'},body:new Uint8Array()});assert.equal(limitedJob.status,429);
 });
 test('configured trusted proxy requires valid client identity and keeps clients separate',async t=>{
- const f=await fixture(t,{requestsPerMinute:1,trustedProxy:'127.0.0.1'});
+ const f=await fixture(t,{requestsPerMinute:1,compactRequestsPerMinute:1,trustedProxy:'127.0.0.1'});
  assert.equal((await f.post()).status,400);assert.equal((await f.post({'x-real-ip':'not-an-ip'})).status,400);
  assert.equal((await f.post({'x-real-ip':'192.0.2.1'})).status,200);assert.equal((await f.post({'x-real-ip':'192.0.2.1'})).status,429);
  assert.equal((await f.post({'x-real-ip':'192.0.2.2'})).status,200);assert.equal(f.upstreamRequests.length,2);
+});
+
+test('default compact allowance permits more than six reads without spending proof quota',async t=>{
+ const f=await fixture(t,{requestsPerMinute:1});for(let i=0;i<7;i++)assert.equal((await f.post()).status,200);
+ const job=await fetch(f.url+'/v1/jobs',{method:'POST',headers:{'content-type':'application/octet-stream'},body:new Uint8Array()});assert.equal(job.status,400);
+ assert.equal((await f.post()).status,200);
+ for(const compactRequestsPerMinute of [0,-1,1.5,6001,Infinity,'600'])assert.throws(()=>createProverServer({compactRequestsPerMinute}),/Invalid compact read rate/);
 });
