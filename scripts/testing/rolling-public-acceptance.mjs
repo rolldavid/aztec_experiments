@@ -63,9 +63,9 @@ export async function synchronizeRollingPublicReader(index,deadlineAt){
 }
 
 export async function verifyRollingPublicReader({node,artifact,scope,deployment,cacheDirectory,ids,scenario='conversation',expectedProfile,expectedProfiles,expectedHTTP,deadlineAt,observation,wire,readerPort=0,homeSubboards=[]}){
- assert(['conversation','profiles','anonymous-thread','repost-reactions','account-reactions','owned-names','social-wire','reaction-wire','subboard-policy','subboard-home','rejected-subboard-withdrawal'].includes(scenario));
+ assert(['conversation','profiles','anonymous-thread','repost-reactions','account-reactions','owned-names','social-wire','reaction-wire','subboard-policy','subboard-home','rejected-subboard-withdrawal','preference-relationships','preference-notifications'].includes(scenario));
  const names=scenario==='owned-names';
- const social=['anonymous-thread','repost-reactions','account-reactions','social-wire','reaction-wire','subboard-policy','subboard-home','rejected-subboard-withdrawal'].includes(scenario);
+ const social=['anonymous-thread','repost-reactions','account-reactions','social-wire','reaction-wire','subboard-policy','subboard-home','rejected-subboard-withdrawal','preference-relationships','preference-notifications'].includes(scenario);
  if(names){assert(Array.isArray(expectedProfiles)&&expectedProfiles.length===4);assert.equal(new Set(expectedProfiles.map(p=>p.identity.id)).size,4);}
  if(social)assert(Array.isArray(expectedHTTP)&&expectedHTTP.length>0);
  if(scenario==='profiles')assert(expectedProfile&&expectedProfile.id===ids.nameId);

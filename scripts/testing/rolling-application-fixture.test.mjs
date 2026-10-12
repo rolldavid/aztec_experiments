@@ -334,7 +334,7 @@ test('race proof admission allows 90 seconds before cutoff and preserves the sep
  let submissions=0;assert.throws(()=>{requireRollingRaceProofBudget(confirmation,now+1);submissions++;});assert.equal(submissions,0);
  const source=await fs.readFile(new URL('./rolling-application-fixture.mjs',import.meta.url),'utf8');
  assert(source.includes('...(race?{confirmationDeadlineAt:ctx.applicationDeadlineAt-90000}:{})'));
- const race=source.slice(source.indexOf('      if(race){'),source.indexOf('      }else if(names){'));
+ const race=source.slice(source.indexOf('      }else if(race){'),source.indexOf('      }else if(names){'));
  assert(race.includes('requireRollingRaceProofBudget(confirmationDeadlineAt)'));
  assert(race.indexOf('requireRollingRaceProofBudget(confirmationDeadlineAt)')<race.indexOf('submissions.push('));
  assert(!race.includes('Promise.race'));assert(race.includes('settleRollingRaceWriters({submissions'));
@@ -356,4 +356,17 @@ test('measured second race start is admitted without changing proof timeout or p
  assert(actor.includes('beforeSubmit:{value:()=>{contextGuard();if(remaining()<=0)throw expired();}'));
  // The companion actor suite executes this guard through the actual engine
  // with a late-resolving proof, zero node sends and retained encrypted journal.
+});
+
+
+test('preference campaigns keep real proof limits, actual decoder and fresh empty-store recovery',async()=>{
+ const {getScenario}=await import('./scenarios.mjs');
+ for(const name of ['rolling-preference-relationships','rolling-preference-notifications']){const s=getScenario(name);assert.equal(s.deadlineMs,540000);assert.equal(s.fixtureHeapMiB,768);assert.equal(s.boardProfile,'rolling');assert.equal(s.evidenceTask,'G07');assert.equal(s.browser,'none');}
+ const sdk=await loadRollingFixtureSDK(),abi=await import('@aztec-labs/stdlib/abi');assert.equal(sdk.decodeFunctionSignature,abi.decodeFunctionSignature);assert.equal(sdk.EventSelector,abi.EventSelector);
+ const source=await fs.readFile(new URL('./rolling-application-fixture.mjs',import.meta.url),'utf8');
+ const cold=source.slice(source.indexOf("await mark('preference-keys-only-recovery')"),source.indexOf("await mark('canonical-projection-rebuild')"));
+ assert(cold.indexOf('await old.close()')<cold.indexOf('await makeActor(fees,role,dataDirectory)'));
+ assert(cold.includes('assert.deepEqual(await fs.readdir(freshPath),[])'));assert(cold.includes('indexedDB.databases()'));
+ assert(cold.includes('actorIntents.delete(old)'));assert(!cold.includes('copyFile'));assert(!cold.includes('submitPrepared'));
+ assert(source.indexOf("await mark('encrypted-journal-reopen')")<source.indexOf("await mark('preference-keys-only-recovery')"));
 });

@@ -17,7 +17,7 @@ const discard=()=>{};
 const silent=Object.assign(discard,Object.fromEntries(['trace','debug','verbose','info','warn','error','fatal'].map(k=>[k,discard])),
   {level:'silent',isLevelEnabled:()=>false,getBindings:()=>({}),createChild:()=>silent});
 const PERSONAL=['feePayer','publicCallSenders','publicCallTargets','publicCallCalldata','publicWriteSlots','publicWriteValues','publicLogContracts','publicLogFields'];
-const SOURCES=['scripts/testing/rolling-rejected-withdrawal.mjs','scripts/application-post.mjs','scripts/c01-settle-application-message.mjs','scripts/c01-withdraw-l1.mjs','scripts/t04-browser-journey-verify.mjs','scripts/testing/rolling-subboard-acceptance.mjs','scripts/testing/rolling-name-collision.mjs','scripts/testing/rolling-collision-observer.mjs','scripts/testing/rolling-trusted-recovery.mjs','scripts/testing/rolling-social-wire.mjs','scripts/testing/rolling-wire-campaign.mjs','scripts/testing/rolling-wire-trace.mjs','scripts/testing/rolling-owned-names.mjs','scripts/t03-public-footprint.mjs','scripts/testing/rolling-removed-like.mjs','scripts/testing/rolling-application-actor.mjs','scripts/testing/rolling-account-reactions.mjs','scripts/testing/rolling-social-acceptance.mjs','scripts/testing/rolling-profile-acceptance.mjs','experiments/avatar/raster-fixture.mjs','scripts/prove-application-action.mjs','scripts/testing/rolling-native-artifacts.mjs','scripts/testing/rolling-application-fixture.mjs','scripts/testing/scenarios.mjs','scripts/testing/scenario-flows.mjs',
+const SOURCES=['scripts/testing/rolling-preference-recovery.mjs','shared/rolling/preference-reader.mjs','shared/rolling/preference-events.mjs','shared/rolling/preferences.mjs','scripts/testing/rolling-rejected-withdrawal.mjs','scripts/application-post.mjs','scripts/c01-settle-application-message.mjs','scripts/c01-withdraw-l1.mjs','scripts/t04-browser-journey-verify.mjs','scripts/testing/rolling-subboard-acceptance.mjs','scripts/testing/rolling-name-collision.mjs','scripts/testing/rolling-collision-observer.mjs','scripts/testing/rolling-trusted-recovery.mjs','scripts/testing/rolling-social-wire.mjs','scripts/testing/rolling-wire-campaign.mjs','scripts/testing/rolling-wire-trace.mjs','scripts/testing/rolling-owned-names.mjs','scripts/t03-public-footprint.mjs','scripts/testing/rolling-removed-like.mjs','scripts/testing/rolling-application-actor.mjs','scripts/testing/rolling-account-reactions.mjs','scripts/testing/rolling-social-acceptance.mjs','scripts/testing/rolling-profile-acceptance.mjs','experiments/avatar/raster-fixture.mjs','scripts/prove-application-action.mjs','scripts/testing/rolling-native-artifacts.mjs','scripts/testing/rolling-application-fixture.mjs','scripts/testing/scenarios.mjs','scripts/testing/scenario-flows.mjs',
   'scripts/c01-real-node.mjs','scripts/c01-board-flow.mjs','scripts/c01-deposit-flow.mjs','scripts/c01-client-mining.mjs',
   'scripts/w01-private-fee-flow.mjs','scripts/w01-unfunded-wallet.mjs','scripts/w01-private-funding.mjs',
   'shared/sdk-entry.mjs','shared/private-pxe.mjs','shared/trusted-private-node.mjs','shared/routed-kernel-prover.mjs','shared/remote-prover-client.mjs',
@@ -229,13 +229,14 @@ export async function loadRollingFixtureSDK() {
     import('../../shared/private-pxe.mjs'),import('../../shared/trusted-private-node.mjs'),
     import('../../shared/sdk-store.mjs'),import('../../shared/private-fee-client.mjs'),
     import('../../shared/private-fee-estimation.mjs'),import('../../shared/l2-journal.mjs'),
-    import('../../shared/transaction-outcomes.mjs'),
+    import('../../shared/transaction-outcomes.mjs'),import('@aztec-labs/stdlib/abi'),
   ]);
   return Object.assign({},...modules);
 }
 
 export async function runRollingApplicationFixture(ctx,scenario='conversation') {
-  assert(['conversation','profiles','anonymous-thread','repost-reactions','account-reactions','owned-names','owned-names-wire','composer','social-wire','reaction-wire','trusted-recovery','name-race','subboard-policy','rejected-subboard-withdrawal'].includes(scenario));
+  assert(['conversation','profiles','anonymous-thread','repost-reactions','account-reactions','owned-names','owned-names-wire','composer','social-wire','reaction-wire','trusted-recovery','name-race','subboard-policy','rejected-subboard-withdrawal','preference-relationships','preference-notifications'].includes(scenario));
+  const preferences=['preference-relationships','preference-notifications'].includes(scenario);
   const rejectedWithdrawal=scenario==='rejected-subboard-withdrawal',subboards=scenario==='subboard-policy',race=scenario==='name-race',recovery=scenario==='trusted-recovery',composer=scenario==='composer',socialWire=scenario==='social-wire',reactionWire=scenario==='reaction-wire',wireSocial=socialWire||reactionWire,captureWire=scenario==='owned-names-wire'||wireSocial||recovery,names=['owned-names','owned-names-wire','composer'].includes(scenario),multi=scenario==='account-reactions'||names||wireSocial||recovery||race||subboards,social=['anonymous-thread','repost-reactions','account-reactions'].includes(scenario)||wireSocial||subboards||rejectedWithdrawal;
   const {ROOT,assertNodeVersion,assertAztecPackages}=await import('../toolchain.mjs');
   const directory=path.join(ROOT,'execution/evidence/G06','application-port-'+randomUUID());
@@ -438,7 +439,7 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
         for(const event of events)if(event.type==='NameRegistered')publicNameIds.push(event.payload.name_id);
         row.events=events.map(e=>e.type);row.submission='included';if(rejectedWithdrawal)withdrawalCaptures.set(outcome.txHash,{tx:saved.tx,receipt,effect:effect.data,events});await save();return events;
       }
-      if(!social&&!names&&!race){
+      if(!social&&!names&&!race&&!preferences){
       const registered=await action({type:'name',first:'River',last:'Stone'},'name');
       assert.equal(registered.length,1);assert.equal(registered[0].type,'NameRegistered');ids.nameId=registered[0].payload.name_id;
       await mark('owned-name-recovery');
@@ -484,7 +485,38 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
           for(const category of PERSONAL){assert.equal(row.publicFootprint.rolePresence[category].author,false);if(actorB)assert.equal(row.publicFootprint.rolePresence[category].otherAuthor,false);}
           const events=await decoder.decodeTransaction(ctx.node,String(hash));projection.stage(events).apply();hashes.push(String(hash));row.events=events.map(e=>e.type);if(rejectedWithdrawal)withdrawalCaptures.set(String(hash),{tx,receipt,effect:effect.data,events});await save();return events;
         }
-      if(race){
+        async function waitPostAdmission(selected=actorA,selectedDeposit=String(claim.claim.depositChainId)){
+          const pxe=selected.pxe,appWallet=selected.wallet,owner=selected.owner;
+          await pxe.sync();
+          const state=(await Contract.at(ctx.instance.address,checked.artifact,appWallet).methods.get_deposit_info(owner,new Fr(BigInt(selectedDeposit))).simulate({from:owner})).result;
+          assert.equal(state.length,10);
+          const checkpoints=createT04CheckpointScope(ctx.node.getSequencer()),deadline=Math.min(Date.now()+90000,ctx.applicationDeadlineAt);
+          try{checkpoints.enable();while((await pxe.getSyncedBlockHeader()).globalVariables.timestamp<BigInt(state[9])){
+            assert(Date.now()<deadline);await mineL1();await pxe.sync();}
+            await drainT04Checkpoints({node:ctx.node,l1Client:ctx.l1Client,rollupAddress:network.rollup,checkpoints,deadline});
+          }finally{checkpoints.restore();}
+        }
+      let preferenceCheckpoint;
+      if(preferences){
+        const {exerciseRollingPreferences}=await import('./rolling-preference-recovery.mjs');
+        const mode=scenario==='preference-relationships'?'relationships':'notifications';
+        if(mode==='relationships'){
+          const registered=await action({type:'name',first:'River',last:'Stone'},'preference-name');
+          assert.equal(registered.length,1);assert.equal(registered[0].type,'NameRegistered');ids.nameId=registered[0].payload.name_id;
+        }
+        await waitPostAdmission();
+        const published=await action({type:'post',deposit:String(claim.claim.depositChainId),name:ids.nameId??'0',subboard:'0',content:'A genuine preference recovery post.'},'preference-root');
+        assert.equal(published.length,1);assert.equal(published[0].type,'PostPublished');ids.rootId=published[0].payload.id;
+        const rootPosition=published[0].position;
+        const result=await exerciseRollingPreferences({mode,root:ids.rootId,name:ids.nameId,rootBlock:Number(rootPosition.blockNumber),rootHash:rootPosition.blockHash,
+          action,readPreferences:options=>actorA.application.readPreferences(options),activity:()=>actorA.activity(),deadlineAt:ctx.applicationDeadlineAt});
+        preferenceCheckpoint=result.checkpoint;report.preferences=result.observation;
+        const expectedNames=ids.nameId?{[ids.nameId]:projection.identity(ids.nameId)}:{};
+        const page=projection.feed({limit:100});assert.equal(page.nextCursor,null);assert.equal(page.posts.length,1);
+        report.social={expectedHTTP:[{route:'feed',parameters:{limit:100},expected:{posts:page.posts,nextCursor:null,names:expectedNames,boards:{}}},
+          {route:'thread',parameters:{root:ids.rootId,limit:100},expected:{posts:page.posts,nextCursor:null,names:expectedNames,boards:{}}}]};
+        await save();
+      }else if(race){
         const {createRollingNameCollisionPlan,createNameCollisionClassifier,assertNameCollisionPending,assertNameCollisionOutcome}=await import('./rolling-name-collision.mjs');
         const {installRollingCollisionObserver}=await import('./rolling-collision-observer.mjs');
         const plan=await createRollingNameCollisionPlan(),actors=[actorA,actorB],prepared=[],submissions=[],settled=[],pendingTxs=[];
@@ -623,17 +655,6 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
       }else if(social){
         const {exerciseRollingAnonymousThread,exerciseRollingRepostReactions,captureRollingAnonymousHTTPViews}=await import('./rolling-social-acceptance.mjs');
         const deposit=String(claim.claim.depositChainId);
-        async function waitPostAdmission(selected=actorA,selectedDeposit=deposit){
-          const pxe=selected.pxe,appWallet=selected.wallet,owner=selected.owner;
-          await pxe.sync();
-          const state=(await Contract.at(ctx.instance.address,checked.artifact,appWallet).methods.get_deposit_info(owner,new Fr(BigInt(selectedDeposit))).simulate({from:owner})).result;
-          assert.equal(state.length,10);
-          const checkpoints=createT04CheckpointScope(ctx.node.getSequencer()),deadline=Math.min(Date.now()+90000,ctx.applicationDeadlineAt);
-          try{checkpoints.enable();while((await pxe.getSyncedBlockHeader()).globalVariables.timestamp<BigInt(state[9])){
-            assert(Date.now()<deadline);await mineL1();await pxe.sync();}
-            await drainT04Checkpoints({node:ctx.node,l1Client:ctx.l1Client,rollupAddress:network.rollup,checkpoints,deadline});
-          }finally{checkpoints.restore();}
-        }
         const options={deposit,action,projection,waitPostAdmission,moderatePost:args=>moderate({kind:'post',id:args.postId,...args})};
         if(rejectedWithdrawal){
           const {beginRollingRejectedWithdrawal,completeRollingRejectedWithdrawal}=await import('./rolling-rejected-withdrawal.mjs');
@@ -801,11 +822,32 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
         report.journalReopen.actors.push({sameHash:true,newProofJobs:0,transactionBytesRetained:true});
       }
       journal=actorA.journal;assert.equal(service.stats().submitted,jobsBefore);
+      if(preferences){
+        await mark('preference-keys-only-recovery');
+        const {compareRecoveredRollingPreferences}=await import('./rolling-preference-recovery.mjs');
+        const old=actorA,dataDirectory='rolling-preference-cold-'+randomUUID(),role='preference-cold-'+randomUUID();
+        const freshPath=path.join(ctx.directory,'rolling-application-journals-'+role);
+        await fs.mkdir(freshPath,{mode:0o700});assert.deepEqual(await fs.readdir(freshPath),[]);
+        const identity=sdk.getPXEStoreIdentity({l1ChainId:Number(network.chainId),rollupAddress:network.rollup,accountAddress:String(old.owner),dataDirectory});
+        assert(!(await indexedDB.databases()).some(db=>db.name===identity.name));
+        await old.close();assert.throws(()=>old.contextGuard());
+        // Recreate from same disposable keys and public artifacts ONLY. Empty
+        // storage means the old transaction journal is intentionally not copied.
+        const replacement=await makeActor(fees,role,dataDirectory);
+        actorA=activeActor=replacement;actorIntents.delete(old);
+        assert(replacement.pxe!==old.pxe&&replacement.journal!==old.journal);assert.equal(String(replacement.owner),String(old.owner));
+        assert((await indexedDB.databases()).some(db=>db.name===identity.name));
+        pxe=actorA.pxe;appWallet=actorA.wallet;journal=actorA.journal;app=actorA.application;
+        report.preferenceKeysOnly={freshPXEVerified:true,freshPrivateStoreVerified:true,oldActorClosed:true,
+          ...await compareRecoveredRollingPreferences(preferenceCheckpoint,{readPreferences:options=>app.readPreferences(options),activity:()=>actorA.activity()}),
+          storagePlatform:'real SDK IndexedDB adapter on labelled CLI fake-indexeddb; native browser recovery is separate'};
+        await save();
+      }
       await mark('canonical-projection-rebuild');
       const rebuilt=createRollingProjection({isValidatedEvent:isRollingEvent});
       for(const hash of hashes)rebuilt.stage(await decoder.decodeTransaction(ctx.node,hash)).apply();
       if(names){const {assertCanonicalOwnedNameProfiles}=await import('./rolling-public-acceptance.mjs');assertCanonicalOwnedNameProfiles(rebuilt,report.publicViews);}
-      else if(social){const {assertCanonicalSocialViews}=await import('./rolling-public-acceptance.mjs');assertCanonicalSocialViews(rebuilt,report.social.expectedHTTP);}
+      else if(social||preferences){const {assertCanonicalSocialViews}=await import('./rolling-public-acceptance.mjs');assertCanonicalSocialViews(rebuilt,report.social.expectedHTTP);}
       else assert.deepEqual((scenario==='profiles'||recovery||race)?rebuilt.profile(ids.nameId,{limit:100}):assertRollingApplicationViews(rebuilt,ids),report.publicViews);
       for(const row of [...report.transactions,...(report.avatarModeration?[report.avatarModeration]:[]),...(report.postModeration?[report.postModeration]:[]),...(report['main-policyModeration']?[report['main-policyModeration']]:[]),...(report.subboardModeration?[report.subboardModeration]:[])])assert.equal(String((await ctx.node.getBlockData(row.blockNumber)).blockHash),row.blockHash);
       assert.equal(String((await ctx.node.getBlockData(Number(report.initialPublicAnchor.blockNumber))).blockHash),report.initialPublicAnchor.blockHash);

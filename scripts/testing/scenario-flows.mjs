@@ -381,3 +381,6 @@ export async function rollingNameRace(ctx){return (await import('./rolling-appli
 export async function rollingSubboardPolicy(ctx){return (await import('./rolling-application-fixture.mjs')).runRollingApplicationFixture(ctx,'subboard-policy');}
 
 export async function rollingRejectedWithdrawal(ctx){return (await import('./rolling-application-fixture.mjs')).runRollingApplicationFixture(ctx,'rejected-subboard-withdrawal');}
+
+export async function rollingPreferenceRelationships(ctx){return (await import('./rolling-application-fixture.mjs')).runRollingApplicationFixture(ctx,'preference-relationships');}
+export async function rollingPreferenceNotifications(ctx){return (await import('./rolling-application-fixture.mjs')).runRollingApplicationFixture(ctx,'preference-notifications');}
