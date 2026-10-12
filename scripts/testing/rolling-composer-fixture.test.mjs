@@ -69,3 +69,21 @@ test('failed persistence never acknowledges or masks its failure',async()=>{
  const {finishComposerEvidence}=await import('./rolling-composer-fixture.mjs');const failure=Error('synthetic storage failure');let acked=false;
  await assert.rejects(finishComposerEvidence({observation:{passed:true},verifyFees:[async()=>{},async()=>{}],receiver:cleanReceiver,persist:async()=>{throw failure;},ack:async()=>{acked=true;}}),e=>e===failure);assert.equal(acked,false);
 });
+
+// Actual processed artifact, decoder, canonical index, SQLite and HTTP listener.
+// The upstream is deliberately unavailable: this is no chain/proof acceptance.
+test('composer reader awaits its actual index factory and preserves unavailable upstream as an HTTP state',async()=>{
+ const fs=await import('node:fs/promises'),os=await import('node:os'),path=await import('node:path');
+ const {loadContractArtifact}=await import('@aztec-labs/stdlib/abi');const {getContractClassFromArtifact}=await import('@aztec-labs/stdlib/contract');
+ const {BarretenbergSync}=await import('@aztec-foundation/bb.js');const {startComposerPublicReader}=await import('./rolling-composer-fixture.mjs');
+ const directory=await fs.mkdtemp(path.join(os.tmpdir(),'composer-index-'));let reader,url,reads=0;
+ try{
+  const artifact=loadContractArtifact(JSON.parse(await fs.readFile(process.env.ROLLING_TEST_ARTIFACT??new URL('../../billboard/target/rolling_contract-RollingBoard.json',import.meta.url),'utf8')));
+  const hex=n=>'0x'+BigInt(n).toString(16).padStart(64,'0'),scope={chainId:'31337',rollupVersion:'1',rollupAddress:'0x'+'11'.repeat(20),boardAddress:hex(42),classId:String((await getContractClassFromArtifact(artifact)).id)};
+  const started=await startComposerPublicReader({node:{getNodeInfo:async()=>{reads++;throw Error('synthetic upstream unavailable');}},artifact,scope,deployment:{blockNumber:1,blockHash:hex(1),txHash:hex(2)},cacheDirectory:directory,port:0});
+  reader=started.reader;url=reader.url;assert.equal(typeof started.index.status,'function');assert.equal(typeof started.index.sync,'function');
+  const denied=await fetch(url+'/api/feed');assert.equal(denied.status,503);assert.equal((await denied.json()).error,'not-ready');
+  const response=await fetch(url+'/api/status');assert.equal(response.status,200);const state=await response.json();assert.equal(state.state,'unavailable');assert.equal(state.complete,false);assert.deepEqual(state.scope,scope);assert(reads>0);
+ }finally{await reader?.close();await fs.rm(directory,{recursive:true,force:true});await BarretenbergSync.destroySingleton();}
+ await assert.rejects(fetch(url+'/api/status',{signal:AbortSignal.timeout(1000)}));
+});

@@ -63,11 +63,17 @@ export async function finishComposerEvidence({observation,verifyFees,receiver,pe
  await ack();
  if(errors.length)throw new AggregateError(errors,'Composer final accounting or receiver checks failed');
 }
-export async function runRollingComposerFixture({ctx,actors,fees,claim,endpoint,network,artifact,scope,deployment,service,sendCount,observation,persist,verifyFees}){
+// Return the actual index together with its listener so the parent retains sole
+// cleanup ownership. Awaiting its factory is required before the server polls it.
+export async function startComposerPublicReader({node,artifact,scope,deployment,cacheDirectory,port,wallet}){
  const {startRollingReader}=await import('../../apps/rolling/start.mjs');
- const {loadRollingWalletAssets}=await import('../rolling-wallet-assets.mjs');
  const {createRollingPublicIndex}=await import('../../shared/rolling/public-index.mjs');
  const {publicFeedFileStorage}=await import('../../shared/public-feed-file-storage.mjs');
+ const index=await createRollingPublicIndex({node,artifact,scope,deployment,storage:publicFeedFileStorage(cacheDirectory,{maxRecordBytes:1048576,maxSnapshotBytes:67108864}),rangeSize:10,pagesPerSync:20,timeoutMs:10000});
+ const reader=await startRollingReader({index,port,wallet});return {index,reader};
+}
+export async function runRollingComposerFixture({ctx,actors,fees,claim,endpoint,network,artifact,scope,deployment,service,sendCount,observation,persist,verifyFees}){
+ const {loadRollingWalletAssets}=await import('../rolling-wallet-assets.mjs');
  const {validateRollingComposerControl}=await import('./rolling-composer-browser.mjs');
  const control=ctx.browserControl;assert.equal(control?.browserMode,'rolling-composer');assert.equal(control.browserEngine,'chromium');
  assert.equal(actors.length,2);assert.equal(fees.length,2);
@@ -90,8 +96,8 @@ export async function runRollingComposerFixture({ctx,actors,fees,claim,endpoint,
   const gasSettings=Object.fromEntries(['gasLimits','teardownGasLimits','maxFeesPerGas','maxPriorityFeesPerGas'].map(name=>[name,Object.fromEntries((name.endsWith('Gas')?['feePerDaGas','feePerL2Gas']:['daGas','l2Gas']).map(key=>[key,String(gas[name][key])]))]));
   const configuration={config:{network:{chainId:network.chainId,rollupVersion:network.version,rollupAddress:network.rollup,ethRpcUrl:l1.url},board:{contractAddress:String(ctx.instance.address),portalAddress:String(ctx.ready.portalAddress).toLowerCase()},privateFee:{contractAddress:String(fees[0].browserFixture.instance.address),gasSettings}},trustedQuery:{url:endpoint+'/v1/node',allowLocalDev:true},remoteProver:{url:endpoint,board:String(ctx.instance.address),chainId:network.chainId,rollupVersion:network.version,proofsEnabled:true},proofsEnabled:true};
   const wallet=await loadRollingWalletAssets(configuration,scope);
-  const index=await createRollingPublicIndex({node:ctx.node,artifact,scope,deployment,storage:publicFeedFileStorage(path.join(ctx.directory,'composer-public-index'),{maxRecordBytes:1048576,maxSnapshotBytes:67108864}),rangeSize:10,pagesPerSync:20,timeoutMs:10000});
-  reader=await startRollingReader({index,port:Number(new URL(control.origin).port),wallet});assert.equal(reader.url,control.origin);
+  const started=await startComposerPublicReader({node:ctx.node,artifact,scope,deployment,cacheDirectory:path.join(ctx.directory,'composer-public-index'),port:Number(new URL(control.origin).port),wallet});
+  reader=started.reader;const index=started.index;assert.equal(reader.url,control.origin);
   const readyDeadline=Math.min(Date.now()+10000,ctx.applicationDeadlineAt-30000);
   while(index.status().state!=='ready'){assert(Date.now()<readyDeadline);assert.notEqual(index.status().state,'unavailable');await sleep(25);}
   const handoff={browserMode:'rolling-composer',browserEngine:'chromium',origin:control.origin,trustedOrigin:endpoint,ethereumOrigin:l1.url,backupPaths,backupPassword:control.backupPassword,expectedNames,timeoutMs:composerBudget(ctx.applicationDeadlineAt)};
