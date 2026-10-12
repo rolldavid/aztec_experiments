@@ -12,7 +12,7 @@ const ENTRY=path.join(ROOT,'scripts/test-c01-application.mjs');
 export async function runApplication(name) {
   assertNodeVersion();assertAztecPackages();
   assert.equal(process.platform,'darwin');assert.equal(process.arch,'arm64');
-  const scenario=getScenario(name),browser=scenario.browser!=='none',rollingBrowser=['rolling-composer','rolling-preferences'].includes(scenario.browser);
+  const scenario=getScenario(name),browser=scenario.browser!=='none',rollingBrowser=['rolling-composer','rolling-preferences','rolling-notifications'].includes(scenario.browser);
   const report={applicationProofs:process.env.BOARD_TEST_PROOFS!=='disabled',remoteProver:process.env.BOARD_TEST_REMOTE==='1',schemaVersion:2,scenario:name,profile:scenario.description,startedAt:new Date().toISOString(),passed:false,stages:[]};
   const evidence=path.join(ROOT,'execution/evidence',scenario.evidenceTask,'application-'+randomUUID()+'.json');
   await fs.mkdir(path.dirname(evidence),{recursive:true});
@@ -55,7 +55,7 @@ export async function runApplication(name) {
     const {validateBrowserHandoff}=await import('../t04-browser-journey.mjs');
     const handoff=JSON.parse(await fs.readFile(path.join(directory,'browser-ready.json'),'utf8'));
     if(rollingBrowser){
-      const validate=scenario.browser==='rolling-composer'?(await import('./rolling-composer-browser.mjs')).validateRollingComposerControl:(await import('./rolling-preference-browser.mjs')).validateRollingPreferenceBrowserControl;
+      const validate=scenario.browser==='rolling-composer'?(await import('./rolling-composer-browser.mjs')).validateRollingComposerControl:scenario.browser==='rolling-notifications'?(await import('./rolling-notification-browser.mjs')).validateRollingNotificationBrowserControl:(await import('./rolling-preference-browser.mjs')).validateRollingPreferenceBrowserControl;
       await validate(handoff,{directory});
       assert.equal(handoff.origin,control.origin);assert.equal(handoff.backupPassword,control.backupPassword);
     }else{validateBrowserHandoff(handoff,{directory,browserMode:scenario.browser});

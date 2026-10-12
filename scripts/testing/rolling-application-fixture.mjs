@@ -17,7 +17,7 @@ const discard=()=>{};
 const silent=Object.assign(discard,Object.fromEntries(['trace','debug','verbose','info','warn','error','fatal'].map(k=>[k,discard])),
   {level:'silent',isLevelEnabled:()=>false,getBindings:()=>({}),createChild:()=>silent});
 const PERSONAL=['feePayer','publicCallSenders','publicCallTargets','publicCallCalldata','publicWriteSlots','publicWriteValues','publicLogContracts','publicLogFields'];
-const SOURCES=['scripts/testing/rolling-preference-saved.mjs','scripts/testing/rolling-preference-reorg.mjs','scripts/testing/rolling-preference-browser-fixture.mjs','scripts/testing/rolling-preference-browser.mjs','scripts/testing/rolling-preference-recovery.mjs','shared/rolling/preference-reader.mjs','shared/rolling/preference-events.mjs','shared/rolling/preferences.mjs','scripts/testing/rolling-rejected-withdrawal.mjs','scripts/application-post.mjs','scripts/c01-settle-application-message.mjs','scripts/c01-withdraw-l1.mjs','scripts/t04-browser-journey-verify.mjs','scripts/testing/rolling-subboard-acceptance.mjs','scripts/testing/rolling-name-collision.mjs','scripts/testing/rolling-collision-observer.mjs','scripts/testing/rolling-trusted-recovery.mjs','scripts/testing/rolling-social-wire.mjs','scripts/testing/rolling-wire-campaign.mjs','scripts/testing/rolling-wire-trace.mjs','scripts/testing/rolling-owned-names.mjs','scripts/t03-public-footprint.mjs','scripts/testing/rolling-removed-like.mjs','scripts/testing/rolling-application-actor.mjs','scripts/testing/rolling-account-reactions.mjs','scripts/testing/rolling-social-acceptance.mjs','scripts/testing/rolling-profile-acceptance.mjs','experiments/avatar/raster-fixture.mjs','scripts/prove-application-action.mjs','scripts/testing/rolling-native-artifacts.mjs','scripts/testing/rolling-application-fixture.mjs','scripts/testing/scenarios.mjs','scripts/testing/scenario-flows.mjs',
+const SOURCES=['scripts/testing/rolling-notification-fixture.mjs','scripts/testing/rolling-notification-browser.mjs','scripts/testing/rolling-notification-acceptance.mjs','scripts/testing/rolling-preference-saved.mjs','scripts/testing/rolling-preference-reorg.mjs','scripts/testing/rolling-preference-browser-fixture.mjs','scripts/testing/rolling-preference-browser.mjs','scripts/testing/rolling-preference-recovery.mjs','shared/rolling/preference-reader.mjs','shared/rolling/preference-events.mjs','shared/rolling/preferences.mjs','scripts/testing/rolling-rejected-withdrawal.mjs','scripts/application-post.mjs','scripts/c01-settle-application-message.mjs','scripts/c01-withdraw-l1.mjs','scripts/t04-browser-journey-verify.mjs','scripts/testing/rolling-subboard-acceptance.mjs','scripts/testing/rolling-name-collision.mjs','scripts/testing/rolling-collision-observer.mjs','scripts/testing/rolling-trusted-recovery.mjs','scripts/testing/rolling-social-wire.mjs','scripts/testing/rolling-wire-campaign.mjs','scripts/testing/rolling-wire-trace.mjs','scripts/testing/rolling-owned-names.mjs','scripts/t03-public-footprint.mjs','scripts/testing/rolling-removed-like.mjs','scripts/testing/rolling-application-actor.mjs','scripts/testing/rolling-account-reactions.mjs','scripts/testing/rolling-social-acceptance.mjs','scripts/testing/rolling-profile-acceptance.mjs','experiments/avatar/raster-fixture.mjs','scripts/prove-application-action.mjs','scripts/testing/rolling-native-artifacts.mjs','scripts/testing/rolling-application-fixture.mjs','scripts/testing/scenarios.mjs','scripts/testing/scenario-flows.mjs',
   'scripts/c01-real-node.mjs','scripts/c01-board-flow.mjs','scripts/c01-deposit-flow.mjs','scripts/c01-client-mining.mjs',
   'scripts/w01-private-fee-flow.mjs','scripts/testing/private-fee-verification.mjs','scripts/w01-unfunded-wallet.mjs','scripts/w01-private-funding.mjs',
   'shared/sdk-entry.mjs','shared/private-pxe.mjs','shared/trusted-private-node.mjs','shared/routed-kernel-prover.mjs','shared/remote-prover-client.mjs',
@@ -239,10 +239,11 @@ export async function loadRollingFixtureSDK() {
 }
 
 export async function runRollingApplicationFixture(ctx,scenario='conversation') {
-  assert(['conversation','profiles','anonymous-thread','repost-reactions','account-reactions','owned-names','owned-names-wire','composer','social-wire','reaction-wire','trusted-recovery','name-race','subboard-policy','rejected-subboard-withdrawal','preference-relationships','preference-notifications','preference-browser','preference-reorg-initial','preference-reorg-marker','preference-saved'].includes(scenario));
+  assert(['conversation','profiles','anonymous-thread','repost-reactions','account-reactions','owned-names','owned-names-wire','composer','social-wire','reaction-wire','trusted-recovery','name-race','subboard-policy','rejected-subboard-withdrawal','preference-relationships','preference-notifications','preference-browser','preference-reorg-initial','preference-reorg-marker','preference-saved','notification-browser'].includes(scenario));
+  const notificationBrowser=scenario==='notification-browser';
   const preferenceSaved=scenario==='preference-saved',preferenceBrowser=scenario==='preference-browser',preferenceReorg=['preference-reorg-initial','preference-reorg-marker'].includes(scenario),markerReorg=scenario==='preference-reorg-marker';
-  const preferences=['preference-relationships','preference-notifications','preference-browser','preference-reorg-initial','preference-reorg-marker','preference-saved'].includes(scenario);
-  const rejectedWithdrawal=scenario==='rejected-subboard-withdrawal',subboards=scenario==='subboard-policy',race=scenario==='name-race',recovery=scenario==='trusted-recovery',composer=scenario==='composer',socialWire=scenario==='social-wire',reactionWire=scenario==='reaction-wire',wireSocial=socialWire||reactionWire,captureWire=scenario==='owned-names-wire'||wireSocial||recovery,names=['owned-names','owned-names-wire','composer'].includes(scenario),multi=scenario==='account-reactions'||names||wireSocial||recovery||race||subboards,social=['anonymous-thread','repost-reactions','account-reactions'].includes(scenario)||wireSocial||subboards||rejectedWithdrawal;
+  const preferences=['preference-relationships','preference-notifications','preference-browser','preference-reorg-initial','preference-reorg-marker','preference-saved','notification-browser'].includes(scenario);
+  const rejectedWithdrawal=scenario==='rejected-subboard-withdrawal',subboards=scenario==='subboard-policy',race=scenario==='name-race',recovery=scenario==='trusted-recovery',composer=scenario==='composer',socialWire=scenario==='social-wire',reactionWire=scenario==='reaction-wire',wireSocial=socialWire||reactionWire,captureWire=scenario==='owned-names-wire'||wireSocial||recovery,names=['owned-names','owned-names-wire','composer'].includes(scenario),multi=notificationBrowser||scenario==='account-reactions'||names||wireSocial||recovery||race||subboards,social=['anonymous-thread','repost-reactions','account-reactions'].includes(scenario)||wireSocial||subboards||rejectedWithdrawal;
   const {ROOT,assertNodeVersion,assertAztecPackages}=await import('../toolchain.mjs');
   const directory=path.join(ROOT,'execution/evidence/G06','application-port-'+randomUUID());
   await fs.mkdir(directory,{mode:0o700});
@@ -302,7 +303,7 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
       fundingRole='a';fees=await prepareW01PrivateFees({...ctx,rpcUrl:ctx.config.l1RpcUrls[0],mineL1,standalone:!multi,
         fundingDirectory:path.join(ctx.directory,'rolling-app-funding'),reportStage:ctx.mark});
       report.privateFees=fees;owner=fees.authorAccount.address;
-      if(multi){fundingRole='b';feesB=await prepareW01PrivateFees({...ctx,rpcUrl:ctx.config.l1RpcUrls[0],mineL1,standalone:!socialWire,fundingDirectory:path.join(ctx.directory,'rolling-app-funding-b'),reportStage:ctx.mark});report.secondPrivateFees=feesB;assert(!feesB.authorAccount.address.equals(owner));assert(feesB.browserFixture.instance.address.equals(fees.browserFixture.instance.address));}
+      if(multi){fundingRole='b';feesB=await prepareW01PrivateFees({...ctx,rpcUrl:ctx.config.l1RpcUrls[0],mineL1,standalone:!socialWire&&!notificationBrowser,fundingDirectory:path.join(ctx.directory,'rolling-app-funding-b'),reportStage:ctx.mark});report.secondPrivateFees=feesB;assert(!feesB.authorAccount.address.equals(owner));assert(feesB.browserFixture.instance.address.equals(fees.browserFixture.instance.address));}
       fundingRole=undefined;const setupWallet=fees.browserFixture.wallet;
       await mark('collateral-claim');
       collateralRole='a';claim=await depositAndClaimC01({...ctx,node:setupWallet.aztecNode,rpcUrl:ctx.config.l1RpcUrls[0],mineL1,reportStage:ctx.mark,
@@ -379,11 +380,11 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
       await observe('after-first-wall-mine');
       await mark('node-rpc-startup');
       const forwardedSaved=[];
-      rpc=await startNodeRpc(ctx.node,tx=>{assert(transportSends<Number.MAX_SAFE_INTEGER);transportSends++;if(preferenceSaved){assert(forwardedSaved.length<3);forwardedSaved.push(tx);};},{faults:recovery||preferenceSaved});
+      rpc=await startNodeRpc(ctx.node,tx=>{assert(transportSends<Number.MAX_SAFE_INTEGER);transportSends++;if(preferenceSaved||notificationBrowser){assert(forwardedSaved.length<(notificationBrowser?4:3));forwardedSaved.push(tx);};},{faults:recovery||preferenceSaved});
       await mark('trusted-service-startup');
       service=await startProverService({host:'127.0.0.1',port:0,board:String(ctx.instance.address),chainId:31337,rollupVersion:info.rollupVersion,
         applicationProfile:'rolling',privateBokAddress:String(bokInstance.address),privateFeeAddress:String(fees.browserFixture.instance.address),
-        proofs:real?'real':'disabled',origins:(composer||preferenceBrowser)?[ctx.browserControl.origin]:[],threads:1,queueDirectory:ctx.directory,crsPath:process.env.CRS_PATH,
+        proofs:real?'real':'disabled',origins:(composer||preferenceBrowser||notificationBrowser)?[ctx.browserControl.origin]:[],threads:1,queueDirectory:ctx.directory,crsPath:process.env.CRS_PATH,
         queryNode:{url:rpc.url,rollupAddress:network.rollup,maxLagSeconds:120}});
       endpoint=`http://127.0.0.1:${service.address.port}`;
       if(captureWire){
@@ -504,6 +505,88 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
             await drainT04Checkpoints({node:ctx.node,l1Client:ctx.l1Client,rollupAddress:network.rollup,checkpoints,deadline});
           }finally{checkpoints.restore();}
         }
+      async function runNotifications(rootEvent){
+        const {runRollingNotificationFixture}=await import('./rolling-notification-fixture.mjs');
+        const {assertRollingNotificationAcceptance}=await import('./rolling-notification-acceptance.mjs');
+        const scope=decoder.scope,initialHead=await actorB.application.readPreferenceHead();
+        assert.deepEqual(initialHead,{initialized:false,schema:1,revision:'0',digest:'0'});
+        const captured=new Map();let subscribedPreferences,subscription,reply,markedPreferences,recoveredPreferences;
+        const rootTx=forwardedSaved[0];assert(rootTx);assert.equal(String(rootTx.getTxHash()),rootEvent.position.txHash);
+        async function collect(tx,other,label){
+          const txHash=String(tx.getTxHash());if(captured.has(txHash))return captured.get(txHash);
+          const receipt=await ctx.node.getTxReceipt(TxHash.fromString(txHash));
+          assert(['checkpointed','proven','finalized'].includes(receipt.status));
+          accountFee(txHash,receipt.transactionFee,other);await save();
+          assert.equal(receipt.executionResult,'success');
+          const effect=await ctx.node.getTxEffect(TxHash.fromString(txHash)),block=await ctx.node.getBlock(receipt.blockNumber,{includeTransactions:true});
+          assert(effect?.data&&block);assert.equal(String(effect.data.txHash),txHash);
+          assert.equal(String(effect.l2BlockHash),String(receipt.blockHash));assert.equal(String(block.hash),String(receipt.blockHash));
+          const matches=block.body.txEffects.map((item,index)=>({item,index})).filter(({item})=>String(item.txHash)===txHash);
+          assert.equal(matches.length,1);assert(matches[0].item.toBuffer().equals(effect.data.toBuffer()));
+          const events=await decoder.decodeTransaction(ctx.node,txHash);
+          const row={txHash,blockNumber:String(receipt.blockNumber),txIndexWithinBlock:String(matches[0].index),transactionFee:String(receipt.transactionFee),canonical:true,executionResult:receipt.executionResult,events};
+          if(other){
+            const publicFootprint=classifyRollingApplicationFootprint({tx,effect:effect.data,owner,otherOwner:actorB.owner,payer:fees.browserFixture.instance.address,board:ctx.instance.address});
+            const evidence={action:label,txHash,status:receipt.status,blockNumber:Number(receipt.blockNumber),blockHash:String(receipt.blockHash),transactionFee:String(receipt.transactionFee),executionResult:receipt.executionResult,events:events.map(e=>e.type),effectSha256:sha(effect.data.toBuffer()),publicFootprint};
+            report.transactions.push(evidence);await fs.writeFile(path.join(directory,label+'-effect.bin'),effect.data.toBuffer(),{flag:'wx',mode:0o600});await save();
+            assertRollingPublicFootprint(publicFootprint);for(const key of PERSONAL)assert.equal(publicFootprint.rolePresence[key].otherAuthor,false);
+            assert.equal(events.length,0);hashes.push(txHash);
+          }
+          captured.set(txHash,row);return row;
+        }
+        const root=await collect(rootTx,false,'notification-root');
+        async function privateSnapshot(label){
+          const role='notification-'+label+'-'+randomUUID(),dataDirectory=role;
+          const identity=sdk.getPXEStoreIdentity({l1ChainId:Number(network.chainId),rollupAddress:network.rollup,accountAddress:String(actorB.owner),dataDirectory});
+          assert(!(await indexedDB.databases()).some(db=>db.name===identity.name));
+          const journalPath=path.join(ctx.directory,'rolling-application-journals-'+role);await fs.mkdir(journalPath,{mode:0o700});assert.deepEqual(await fs.readdir(journalPath),[]);
+          const before={jobs:service.stats().submitted,sends:transportSends};let reader;
+          try{
+            reader=await makeActor(feesB,role,dataDirectory);
+            let result;do{assert(Date.now()<ctx.applicationDeadlineAt);result=await reader.application.readPreferences({deadlineAt:Math.min(Date.now()+5000,ctx.applicationDeadlineAt)});}while(!result.complete);
+            assert.equal(result.status,'complete');assert.deepEqual(result.orphanedReadMarkers,[]);return result;
+          }finally{if(reader)await reader.close();assert.deepEqual({jobs:service.stats().submitted,sends:transportSends},before);}
+        }
+        report.notificationBrowser={};await mark('production-browser-notifications');
+        await runRollingNotificationFixture({ctx,actor:actorB,fees:feesB,endpoint,network,artifact:checked.artifact,scope,
+          deployment:{blockNumber:Number(report.initialPublicAnchor.blockNumber),blockHash:report.initialPublicAnchor.blockHash,txHash:report.initialPublicAnchor.txHash},
+          expected:{rootId:ids.rootId,rootText:'A genuine preference recovery post.'},observation:report.notificationBrowser,persist:save,
+          onSubscription:async()=>{
+            assert.equal(forwardedSaved.length,2);subscription=await collect(forwardedSaved[1],true,'notification-subscription');
+            // Browser is now waiting on the fixed reply barrier, so this separate
+            // owned PXE is closed before the browser can prepare its marker.
+            subscribedPreferences=await privateSnapshot('subscribed');assert.equal(subscribedPreferences.preferences.head.revision,'1');
+            assert.deepEqual(subscribedPreferences.preferences.subscriptions,[ids.rootId]);
+            await waitPostAdmission();
+            const events=await action({type:'reply',deposit:String(claim.claim.depositChainId),name:'0',subboard:'0',parent:ids.rootId,root:ids.rootId,content:'A genuine notification reply.'},'notification-reply');
+            assert.equal(events.length,1);assert.equal(events[0].type,'PostPublished');ids.replyId=events[0].payload.id;
+            assert.equal(forwardedSaved.length,3);reply=await collect(forwardedSaved[2],false,'notification-reply');
+            return {schemaVersion:1,rootId:ids.rootId,replyId:ids.replyId,replyText:'A genuine notification reply.',replyBlock:reply.blockNumber};
+          },
+          collectAfterBrowser:async(browser,l1,readPublicPage)=>{
+            // Canonical effects and their charges are retained before requiring
+            // the browser success result. No recovery submission is performed.
+            report.notificationBrowser.submittedHashes=forwardedSaved.map(tx=>String(tx.getTxHash()));
+            report.notificationBrowser.browserOutcome=browser?'finished':'unknown; do not replay';await save();
+            if(forwardedSaved[1])await collect(forwardedSaved[1],true,'notification-subscription');
+            let marker;if(forwardedSaved[3])marker=await collect(forwardedSaved[3],true,'notification-marker');
+            assert(browser,'Browser completion unavailable; accounting remains incomplete');
+            await fees.verify(feeTotal,feesB.browserFixture.fundedAmount-feeTotalB);await feesB.verify(feeTotalB,fees.browserFixture.fundedAmount-feeTotal);
+            report.notificationBrowser.accountingVerified=true;await save();
+            assert(browser?.passed&&subscription&&reply&&marker);assert.equal(forwardedSaved.length,4);
+            for(const key of ['rejected','errors','pending'])assert.equal(l1[key],0);assert(l1.forwarded>0);
+            markedPreferences=await privateSnapshot('marked');recoveredPreferences=await privateSnapshot('recovered');
+            const markers=markedPreferences.preferences.readMarkers;assert.equal(markers.length,1);assert.equal(markers[0].thread,ids.rootId);
+            const metadata=await ctx.node.getBlockData(markers[0].throughBlock);assert(metadata);assert.equal(String(BigInt(String(metadata.blockHash))),markers[0].blockHash);
+            const markerContext={blockNumber:String(markers[0].throughBlock),blockHash:String(metadata.blockHash),canonical:true};
+            let page;const publicDeadline=Math.min(Date.now()+10000,ctx.applicationDeadlineAt);
+            do{assert(Date.now()<publicDeadline);page=await readPublicPage();if(page.complete&&page.checkpoint?.number>=Number(marker.blockNumber))break;await sleep(100);}while(true);
+            assert.deepEqual(page.posts,projection.feed({limit:100}).posts);
+            report.notificationBrowser.acceptance=await assertRollingNotificationAcceptance({scope:{chainId:network.chainId,version:network.version,board:String(BigInt(String(ctx.instance.address)))},initialHead,root,subscription,reply,marker,markerContext,subscribedPreferences,markedPreferences,recoveredPreferences,publicPage:page,browser,
+              receiver:{proofJobs:service.stats().submitted,completedProofJobs:service.stats().completed,nodeSubmissions:transportSends,browserProofJobs:service.stats().submitted-2,browserNodeSubmissions:transportSends-2,browserL1Submissions:l1.rejected,recoveryProofJobs:0,recoveryNodeSubmissions:0},
+              accounting:{verified:true,chargedTransactions:4,totalTransactionFee:String([root,subscription,reply,marker].reduce((n,r)=>n+BigInt(r.transactionFee),0n))},hash:async(fields,domain)=>(await sdk.poseidon2HashWithSeparator(fields.map(n=>new Fr(n)),domain)).toBigInt()});await save();
+          }});
+      }
       let preferenceCheckpoint;
       if(preferences){
         const {exerciseRollingPreferences}=await import('./rolling-preference-recovery.mjs');
@@ -516,7 +599,10 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
         const published=await action({type:'post',deposit:String(claim.claim.depositChainId),name:ids.nameId??'0',subboard:'0',content:'A genuine preference recovery post.'},'preference-root');
         assert.equal(published.length,1);assert.equal(published[0].type,'PostPublished');ids.rootId=published[0].payload.id;
         const rootPosition=published[0].position;
-        if(preferenceSaved){
+        if(notificationBrowser){
+          assert(real,'Notification browser acceptance requires genuine proofs');
+          await runNotifications(published[0]);
+        }else if(preferenceSaved){
           assert(real,'Saved transaction acceptance requires genuine proofs');
           const {exerciseRollingSavedPreference}=await import('./rolling-preference-saved.mjs');
           const row={action:'preference-saved',startedAt:Date.now(),submission:'not attempted'};report.transactions.push(row);
@@ -697,9 +783,9 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
         preferenceCheckpoint=result.checkpoint;report.preferences=result.observation;
         }
         const expectedNames=ids.nameId?{[ids.nameId]:projection.identity(ids.nameId)}:{};
-        const page=projection.feed({limit:100});assert.equal(page.nextCursor,null);assert.equal(page.posts.length,1);
+        const page=projection.feed({limit:100});assert.equal(page.nextCursor,null);assert.equal(page.posts.length,notificationBrowser?2:1);
         report.social={expectedHTTP:[{route:'feed',parameters:{limit:100},expected:{posts:page.posts,nextCursor:null,names:expectedNames,boards:{}}},
-          {route:'thread',parameters:{root:ids.rootId,limit:100},expected:{posts:page.posts,nextCursor:null,names:expectedNames,boards:{}}}]};
+          {route:'thread',parameters:{root:ids.rootId,limit:100},expected:{posts:projection.thread(ids.rootId,{limit:100}).posts,nextCursor:null,names:expectedNames,boards:{}}}]};
         await save();
       }else if(race){
         const {createRollingNameCollisionPlan,createNameCollisionClassifier,assertNameCollisionPending,assertNameCollisionOutcome}=await import('./rolling-name-collision.mjs');
@@ -996,7 +1082,7 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
       await mark('encrypted-journal-reopen');
       const jobsBefore=service.stats().submitted;
       report.journalReopen={sameHash:true,newProofJobs:0,transactionBytesRetained:true,actors:[]};
-      for(const actor of [actorA,...(actorB&&!recovery?[actorB]:[])]){
+      for(const actor of [actorA,...(actorB&&!recovery&&!notificationBrowser?[actorB]:[])]){
         wire?.setPhase(actor===actorA?'recovery-a':'recovery-b');const before=await actor.journal.inspectOutcome(),activity=actor.activity();
         await actor.reopenJournal();const reconciled=await actor.application.reconcile(actorIntents.get(actor));
         assert.equal(reconciled.status,race&&before.outcome==='reverted'?'reverted':'confirmed');assert.equal(reconciled.txHash,before.txHash);
@@ -1007,7 +1093,7 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
         report.journalReopen.actors.push({sameHash:true,newProofJobs:0,transactionBytesRetained:true});
       }
       journal=actorA.journal;assert.equal(service.stats().submitted,jobsBefore);
-      if(preferences&&!preferenceBrowser&&!preferenceReorg&&!preferenceSaved){
+      if(preferences&&!preferenceBrowser&&!preferenceReorg&&!preferenceSaved&&!notificationBrowser){
         await mark('preference-keys-only-recovery');
         const {compareRecoveredRollingPreferences}=await import('./rolling-preference-recovery.mjs');
         const old=actorA,dataDirectory='rolling-preference-cold-'+randomUUID(),role='preference-cold-'+randomUUID();
@@ -1066,6 +1152,7 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
       if(multi){const bStandalone=BigInt(feesB.standalone?.transactionFee??0);await fees.verify(feeTotal,feesB.browserFixture.fundedAmount-bStandalone-feeTotalB);await feesB.verify(feeTotalB,fees.browserFixture.fundedAmount-feeTotal);assert.equal(fees.poolBefore,feesB.poolBefore);report.accountFees={a:String(feeTotal),b:String(feeTotalB)};}else await fees.verify(feeTotal);report.actualHumanFees=String(feeTotal+feeTotalB);report.proverJobs=service.stats();
       assert.equal(report.proverJobs.failed,0);if(recovery){assert.equal(report.proverJobs.completed,1);assert.equal(report.proverJobs.submitted,1);}
       else if(preferenceReorg){const expected=markerReorg?3:2;assert.equal(report.proverJobs.completed,expected);assert.equal(report.proverJobs.submitted,expected);}
+      else if(notificationBrowser){assert.equal(report.proverJobs.completed,4);assert.equal(report.proverJobs.submitted,4);}
       else if(preferenceSaved){assert.equal(report.proverJobs.completed,2);assert.equal(report.proverJobs.submitted,2);}
       else if(preferenceBrowser){assert.equal(report.proverJobs.completed,3);assert.equal(report.proverJobs.submitted,3);}
       else if(race){assert.equal(report.proverJobs.completed,2);assert.equal(report.proverJobs.submitted,2);}
