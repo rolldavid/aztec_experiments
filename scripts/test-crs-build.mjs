@@ -55,6 +55,9 @@ test('schema2 separates the72MiB derived asset from bounded network assets', () 
   assert.equal(manifest.files.length, 3);
   assert.ok(manifest.files.every(file => file.bytes <= 64 * 1024 * 1024));
   assert.equal(manifest.derivedG1.bytes, 72 * 1024 * 1024);
+  assert.equal(manifest.aztecVersion, '6.0.0-rc.3');
+  assert.equal(manifest.provenance.version, '6.0.0-rc.6');
+  assert.equal(manifest.derivedG1.derivation.packageVersion, '6.0.0-rc.6');
 });
 for (const [label, mutate] of [
   ['wrong Grumpkin format', m => { m.files[2].format = 'grumpkin-compressed'; }],
@@ -69,6 +72,12 @@ for (const [label, mutate] of [
   ['wrong points', m => { m.derivedG1.numPoints--; }],
   ['unreviewed method', m => { m.derivedG1.derivation.method = 'other'; }],
   ['package mismatch', m => { m.derivedG1.derivation.packageVersion = '5.0.0'; }],
+  ['SDK version used as foundation version', m => { m.derivedG1.derivation.packageVersion = m.aztecVersion; }],
+  ['old SDK', m => { m.aztecVersion = '6.0.0-rc.1'; }],
+  ['wrong downloader package', m => { m.provenance.package = '@aztec-labs/pxe'; }],
+  ['wrong downloader version', m => { m.provenance.version = m.aztecVersion; }],
+  ['wrong downloader source', m => { m.provenance.source = 'other.js'; }],
+  ['wrong downloader hash', m => { m.provenance.sourceSha256 = '0'.repeat(64); }],
   ['input checksum mismatch', m => { m.derivedG1.derivation.inputSha256 = '0'.repeat(64); }],
   ['G2 checksum mismatch', m => { m.derivedG1.derivation.g2Sha256 = '0'.repeat(64); }],
   ['untrusted WASM path', m => { m.derivedG1.derivation.wasmSource = '/tmp/other.wasm.gz'; }],
@@ -81,6 +90,15 @@ for (const [label, mutate] of [
     assert.throws(() => validateCrsManifest(changed), /CRS|derived G1/);
   });
 }
+
+test('declared rc6 derivation WASM and downloader match installed package bytes without running WASM', async () => {
+  const installed = JSON.parse(await fs.readFile(new URL('../node_modules/@aztec-foundation/bb.js/package.json', import.meta.url)));
+  assert.equal(installed.version, '6.0.0-rc.6');
+  const wasm = await fs.readFile(new URL('../' + manifest.derivedG1.derivation.wasmSource, import.meta.url));
+  verifyDerivationWasm(manifest, wasm);
+  const downloader = await fs.readFile(new URL('../' + manifest.provenance.source, import.meta.url));
+  assert.equal(createHash('sha256').update(downloader).digest('hex'), manifest.provenance.sourceSha256);
+});
 
 test('rejects actual WASM bytes that do not match the declared gzip pin', () => {
   assert.throws(() => verifyDerivationWasm(manifest, Buffer.from('corrupt WASM')), /WASM provenance mismatch/);

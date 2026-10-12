@@ -31,8 +31,30 @@ export function processArtifact(input, output, {publicOnly=false}={}) {
   }
 }
 
+// The SDK and foundation releases have distinct exact versions. Verify the
+// portal's own installed tree and lock before any compiler/prover work begins.
+export function assertPortalL1Artifacts({ root = ROOT, toolchain = pins } = {}) {
+  const name = '@aztec-foundation/l1-artifacts';
+  const expected = toolchain.aztecLockPackages?.[name];
+  if (typeof expected !== 'string' || !/^\d+\.\d+\.\d+(?:-[a-z0-9]+(?:\.[a-z0-9]+)*)?$/.test(expected)) {
+    throw new Error('Missing exact portal L1 package pin');
+  }
+  const portal = path.join(root, 'billboard/portal');
+  const read = file => JSON.parse(fs.readFileSync(path.join(portal, file), 'utf8'));
+  const declared = read('package.json').dependencies?.[name];
+  const lock = read('package-lock.json');
+  const locked = lock.packages?.[`node_modules/${name}`];
+  if (declared !== expected || lock.lockfileVersion !== 3 || lock.packages?.['']?.dependencies?.[name] !== expected ||
+      locked?.version !== expected || locked.link || typeof locked.integrity !== 'string' || !/^sha512-[A-Za-z0-9+/]{86}==$/.test(locked.integrity)) {
+    throw new Error('Portal L1 declaration or lock differs from exact foundation package pin');
+  }
+  const installed = read(`node_modules/${name}/package.json`);
+  if (installed.name !== name || installed.version !== expected) throw new Error('Portal L1 installed package identity mismatch');
+  return { name, version: expected };
+}
+
 export function buildContracts() {
-  assertNodeVersion(); assertAztecPackages();
+  assertNodeVersion(); assertAztecPackages(); assertPortalL1Artifacts();
   const billboard = path.join(ROOT, 'billboard');
   execFileSync(nargoBinary(), ['compile', '--force', '--silence-warnings'], { cwd: billboard, stdio: 'inherit' });
   const raw = path.join(billboard, 'target/billboard_contract-Billboard.json');
@@ -55,8 +77,6 @@ export function buildContracts() {
     throw new Error(`Expected Foundry ${pins.foundry}`);
   }
   const portalDir = path.join(billboard, 'portal');
-  const portalDependency = JSON.parse(fs.readFileSync(path.join(portalDir, 'node_modules/@aztec-foundation/l1-artifacts/package.json'), 'utf8'));
-  if (portalDependency.version !== pins.aztec) throw new Error('Portal L1 dependency version mismatch');
   execFileSync(forge, ['build','--force'], { cwd: portalDir, stdio: 'inherit' });
   const portal = JSON.parse(fs.readFileSync(path.join(portalDir, 'out/BillboardPortal.sol/BillboardPortal.json'), 'utf8'));
   const constructor = portal.abi.find(f => f.type === 'constructor');

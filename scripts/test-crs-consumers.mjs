@@ -51,6 +51,9 @@ function stubProver() {
 }
 
 test('required local derived G1, G2 and Grumpkin initialize the pinned point counts', async () => {
+  assert.equal(pinned.aztecVersion, '6.0.0-rc.3');
+  assert.equal(pinned.provenance.version, '6.0.0-rc.6');
+  assert.equal(pinned.derivedG1.derivation.packageVersion, '6.0.0-rc.6');
   const bb = stubProver();
   const result = await CRS.initialize(bb, options());
   assert.equal(result.g1Format, 'bn254-g1-uncompressed-64-byte');
@@ -103,7 +106,12 @@ for (const [label, mutation] of [
   ['derived remote URL', m => { m.derivedG1.url = m.files[0].url; return m; }],
   ['missing provenance', m => { delete m.derivedG1.derivation; return m; }],
   ['wrong derivation method', m => { m.derivedG1.derivation.method = 'generic-cache'; return m; }],
-  ['wrong derivation SDK', m => { m.derivedG1.derivation.packageVersion = '5.0.0'; return m; }],
+  ['wrong derivation foundation', m => { m.derivedG1.derivation.packageVersion = '5.0.0'; return m; }],
+  ['SDK version used as foundation version', m => { m.derivedG1.derivation.packageVersion = m.aztecVersion; return m; }],
+  ['wrong downloader package', m => { m.provenance.package = '@aztec-labs/pxe'; return m; }],
+  ['wrong downloader version', m => { m.provenance.version = m.aztecVersion; return m; }],
+  ['wrong downloader source', m => { m.provenance.source = 'other.js'; return m; }],
+  ['wrong downloader hash', m => { m.provenance.sourceSha256 = '0'.repeat(64); return m; }],
   ['wrong derivation input name', m => { m.derivedG1.derivation.inputName = 'other.dat'; return m; }],
   ['mismatched derivation input pin', m => { m.derivedG1.derivation.inputSha256 = '0'.repeat(64); return m; }],
   ['mismatched derivation G2 pin', m => { m.derivedG1.derivation.g2Sha256 = '0'.repeat(64); return m; }],
