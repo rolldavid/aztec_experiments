@@ -282,3 +282,26 @@ test('board public index authenticates complete scoped pagination, policy histor
  const {startRollingPublicServer}=await import('../../scripts/rolling-public-server.mjs'),server=await startRollingPublicServer({index:cold,pollMs:30000});
  try{const response=await fetch(server.url+'/api/board?id='+f.boardId);assert.equal(response.status,200);const body=await response.json();assert.deepEqual(body.posts,after.posts);assert.equal(body.board.rejection.reason,'Bad');assert.equal((await fetch(server.url+'/api/board?id=999')).status,404);}finally{await server.close();}
 });
+
+// Actual index, decoder, store and HTTP polling; upstream SDK records remain
+// explicitly synthetic. No proof or browser acceptance is claimed here.
+test('notification reader ingests initial history during awaited root work, then requires the new canonical root',async t=>{
+ const {awaitNotificationRootVisibility}=await import('../../scripts/testing/rolling-notification-fixture.mjs');
+ const {setTimeout:sleep}=await import('node:timers/promises');
+ const f=await fixture(t),index=await f.create(),server=await startRollingPublicServer({index,pollMs:1000});
+ try{
+  let rootCalls=0;
+  const publishRoot=async()=>{
+   rootCalls++;const end=Date.now()+2000;
+   while(index.status().state!=='ready'){assert(Date.now()<end);await sleep(10);}
+   assert(f.calls.some(([,n])=>n===1));assert(f.calls.some(([,n])=>n===3));
+   assert.equal(index.query('post',{id:'30'}).post,null);
+   f.put(4,[await f.post(30,4,'New notification root')]);f.setHead(4);
+   return {expected:{rootId:'30',rootText:'New notification root'},rootPosition:{blockNumber:'4',blockHash:hex(1004),txHash:hex(104),txIndexWithinBlock:'0',logIndexWithinTx:'0'}};
+  };
+  const root=await publishRoot();
+  const result=await awaitNotificationRootVisibility({index,...root,deadlineAt:Date.now()+190000});
+  assert.equal(rootCalls,1);assert.equal(result.rootObserved,true);assert.equal(result.checkpointNumber,4);
+ }finally{await server.close();}
+ await assert.rejects(fetch(server.url+'/api/status',{signal:AbortSignal.timeout(1000)}));
+});

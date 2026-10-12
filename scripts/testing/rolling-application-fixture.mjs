@@ -557,13 +557,13 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
             await drainT04Checkpoints({node:ctx.node,l1Client:ctx.l1Client,rollupAddress:network.rollup,checkpoints,deadline});
           }finally{checkpoints.restore();}
         }
-      async function runNotifications(rootEvent){
+      async function runNotifications(publishRoot){
         const {runRollingNotificationFixture,settleNotificationEvidence,observeNotificationTransaction}=await import('./rolling-notification-fixture.mjs');
         const {assertRollingNotificationAcceptance}=await import('./rolling-notification-acceptance.mjs');
         const scope=decoder.scope,initialHead=await actorB.application.readPreferenceHead();
         assert.deepEqual(initialHead,{initialized:false,schema:1,revision:'0',digest:'0'});
         const captured=new Map(),browserEvidenceRows=new Map();let subscribedPreferences,subscription,reply,markedPreferences,recoveredPreferences;
-        const rootTx=forwardedSaved[0];assert(rootTx);assert.equal(String(rootTx.getTxHash()),rootEvent.position.txHash);
+        let root;
         async function collect(tx,other,label){
           const txHash=String(tx.getTxHash());
           if(captured.has(txHash)){const row=captured.get(txHash);assert.equal(row.executionResult,'success');return row;}
@@ -585,7 +585,6 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
           }
           captured.set(txHash,row);return row;
         }
-        const root=await collect(rootTx,false,'notification-root');
         async function privateSnapshot(label){
           const role='notification-'+label+'-'+randomUUID(),dataDirectory=role;
           const identity=sdk.getPXEStoreIdentity({l1ChainId:Number(network.chainId),rollupAddress:network.rollup,accountAddress:String(actorB.owner),dataDirectory});
@@ -601,7 +600,12 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
         report.notificationBrowser={};await mark('production-browser-notifications');
         await runRollingNotificationFixture({ctx,actor:actorB,fees:feesB,endpoint,network,artifact:checked.artifact,scope,
           deployment:{blockNumber:Number(report.initialPublicAnchor.blockNumber),blockHash:report.initialPublicAnchor.blockHash,txHash:report.initialPublicAnchor.txHash},
-          expected:{rootId:ids.rootId,rootText:'A genuine preference recovery post.'},observation:report.notificationBrowser,persist:save,
+          prepareRoot:async()=>{
+            const rootEvent=await publishRoot();
+            const rootTx=forwardedSaved[0];assert(rootTx);assert.equal(String(rootTx.getTxHash()),rootEvent.position.txHash);
+            root=await collect(rootTx,false,'notification-root');
+            return {expected:{rootId:ids.rootId,rootText:'A genuine preference recovery post.'},rootPosition:rootEvent.position};
+          },observation:report.notificationBrowser,persist:save,
           onSubscription:async()=>{
             assert.equal(forwardedSaved.length,2);subscription=await collect(forwardedSaved[1],true,'notification-subscription');
             // Browser is now waiting on the fixed reply barrier, so this separate
@@ -651,12 +655,16 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
           assert.equal(registered.length,1);assert.equal(registered[0].type,'NameRegistered');ids.nameId=registered[0].payload.name_id;
         }
         await waitPostAdmission();
-        const published=await action({type:'post',deposit:String(claim.claim.depositChainId),name:ids.nameId??'0',subboard:'0',content:'A genuine preference recovery post.'},'preference-root');
-        assert.equal(published.length,1);assert.equal(published[0].type,'PostPublished');ids.rootId=published[0].payload.id;
-        const rootPosition=published[0].position;
+        const publishRoot=async()=>{
+          const published=await action({type:'post',deposit:String(claim.claim.depositChainId),name:ids.nameId??'0',subboard:'0',content:'A genuine preference recovery post.'},'preference-root');
+          assert.equal(published.length,1);assert.equal(published[0].type,'PostPublished');ids.rootId=published[0].payload.id;
+          return published[0];
+        };
+        const rootEvent=notificationBrowser?undefined:await publishRoot();
+        const rootPosition=rootEvent?.position;
         if(notificationBrowser){
           assert(real,'Notification browser acceptance requires genuine proofs');
-          await runNotifications(published[0]);
+          await runNotifications(publishRoot);
         }else if(preferenceSaved){
           assert(real,'Saved transaction acceptance requires genuine proofs');
           const {exerciseRollingSavedPreference}=await import('./rolling-preference-saved.mjs');

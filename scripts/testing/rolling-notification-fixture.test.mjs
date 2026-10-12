@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
-import {notificationBrowserBudget,readNotificationSubscriptionSignal,settleNotificationEvidence,observeNotificationTransaction} from './rolling-notification-fixture.mjs';
+import {notificationBridgeProgress,awaitNotificationRootVisibility,notificationBrowserBudget,readNotificationSubscriptionSignal,settleNotificationEvidence,observeNotificationTransaction} from './rolling-notification-fixture.mjs';
 import {getScenario} from './scenarios.mjs';
 test('browser campaign retains 540s/4GiB parent and reserves 30s beyond 150s browser',()=>{
  const s=getScenario('rolling-notification-browser');assert.equal(s.deadlineMs,540000);assert.equal(s.fixtureHeapMiB,768);assert.equal(s.browser,'rolling-notifications');assert.equal(s.browserEngine,'chromium');assert.equal(s.applicationThreads,1);assert.equal(s.evidenceTask,'G07');
@@ -59,4 +59,25 @@ test('changed canonical block retains paid effect but refuses canonical and sema
 });
 test('successful receipt returns ordered authenticated inputs only after full effect equality and decoder',async()=>{
  const f=receiptFixture(),result=await observeNotificationTransaction(f.input);assert.equal(result.record.transactionFee,'9');assert.equal(result.record.txIndexWithinBlock,'0');assert.equal(result.record.canonical,true);assert.deepEqual(result.record.events,[]);assert.equal(f.calls.at(-1)[0],'decode');
+});
+
+test('bridge diagnostics retain only a finite stage, integer timing and known index state',()=>{
+ assert.deepEqual(notificationBridgeProgress('root-visibility',200000,{now:2000,startedAt:1000,indexState:'ready'}),{stage:'root-visibility',elapsedMs:1000,remainingMs:198000,indexState:'ready'});
+ assert.deepEqual(notificationBridgeProgress('backup',200000,{now:2000,startedAt:1000,indexState:'PRIVATE_SENTINEL'}),{stage:'backup',elapsedMs:1000,remainingMs:198000});
+ assert.throws(()=>notificationBridgeProgress('PRIVATE_SENTINEL',200000));
+ assert.throws(()=>notificationBridgeProgress('backup',200000,{now:1,startedAt:2}));
+});
+function visibilityFixture(){
+ const expected={rootId:'5',rootText:'Expected root'},rootPosition={blockNumber:'12',blockHash:'canonical',txHash:'tx',txIndexWithinBlock:'0',logIndexWithinTx:'0'};
+ const state={state:'ready',checkpoint:{number:12}},page={complete:true,checkpoint:{number:12},post:{id:'5',text:'Expected root',position:rootPosition}};
+ return {expected,rootPosition,state,page,index:{status:()=>state,query:()=>page},deadlineAt:Date.now()+190000};
+}
+test('handoff root check requires exact canonical position and text, not merely ready index',async()=>{
+ const f=visibilityFixture();assert.deepEqual(await awaitNotificationRootVisibility(f),{checkpointNumber:12,rootObserved:true});
+ f.page.post.position={...f.rootPosition,blockHash:'substituted'};await assert.rejects(awaitNotificationRootVisibility(f));
+ f.page.post.position=f.rootPosition;f.page.post.text='substituted';await assert.rejects(awaitNotificationRootVisibility(f));
+});
+test('unavailable index and spent browser reserve cannot admit a root or invoke publication',async()=>{
+ const f=visibilityFixture();f.state.state='unavailable';await assert.rejects(awaitNotificationRootVisibility(f));
+ f.state.state='ready';f.deadlineAt=Date.now()+179999;await assert.rejects(awaitNotificationRootVisibility(f));
 });
