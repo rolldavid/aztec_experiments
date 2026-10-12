@@ -38,9 +38,11 @@ function fixture(){
   }};
   const board={methods:new Proxy({},{get:(_,name)=>(...args)=>({name,args,simulate:async()=>{
     state.privateReads.push({name,args});
+    if(name==='preference_head'&&state.preferenceHeadError)throw state.preferenceHeadError;
+    if(name==='preference_head'&&state.beforePreferenceHead)await state.beforePreferenceHead();
     if(name==='effective_policy'&&state.policyReadError)throw state.policyReadError;
     if(name==='get_screen_hints'&&state.hintsReadError)throw state.hintsReadError;
-    const replies={profile_state:state.profileState??decodeFromAbi(getFunctionReturnType([...artifact.functions,...artifact.nonDispatchPublicFunctions].find(f=>f.name==='profile_state')),Array.from({length:8},()=>Fr.ZERO)),owned_name_records:('records' in state)?state.records:await ownershipPage(),get_deposit_ids:[9n,0n,0n,0n,0n,0n,0n,0n,0n,0n],
+    const replies={preference_head:('preferenceHead' in state)?state.preferenceHead:decodeFromAbi(getFunctionReturnType(artifact.functions.find(f=>f.name==='preference_head')),[Fr.ZERO,new Fr(1n),Fr.ZERO,Fr.ZERO]),profile_state:state.profileState??decodeFromAbi(getFunctionReturnType([...artifact.functions,...artifact.nonDispatchPublicFunctions].find(f=>f.name==='profile_state')),Array.from({length:8},()=>Fr.ZERO)),owned_name_records:('records' in state)?state.records:await ownershipPage(),get_deposit_ids:[9n,0n,0n,0n,0n,0n,0n,0n,0n,0n],
       main_policy:[BigInt(state.policy),1n],effective_policy:('effectivePolicy' in state)?state.effectivePolicy:[BigInt(state.policy),1n,1n,2n,false],get_screen_hints:state.hints??decodeFromAbi(getFunctionReturnType(artifact.functions.find(f=>f.name==='get_screen_hints')),Array.from({length:28},()=>Fr.ZERO))};
     return {result:replies[name]};
   }})})};
@@ -56,6 +58,7 @@ function fixture(){
     inspectTrustedNode:async()=>{if(!state.guard)throw Error('stale trusted node');},
     preparePrivateFeePayment:async()=>({availableCredit:100n}),estimatePrivateFeeTransaction:async input=>{
       await input.guard();state.estimates++;state.calls.push(input.interaction);
+      if(['set_preference','mark_thread_read'].includes(input.interaction.name)&&state.preferenceError)throw state.preferenceError;
       if(input.interaction.name==='screen'&&state.screenError)throw state.screenError;
       if(['set_bio','set_avatar'].includes(input.interaction.name)){assert.equal(input.interaction.args[1],state.profileVersion??0,'stale profile version');assert((state.profileVersion??0)<0xffffffff,'profile version exhausted');}
       if(input.interaction.name==='post')assert.equal(input.interaction.args[2].expected_main_policy_version,state.policy,'policy changed');
@@ -452,4 +455,96 @@ test('screen stale-state submission fails without refreshing immutable hints or 
  f.state.screenError=error;await assert.rejects(f.restart().submitPrepared(p.intentId),e=>e===error);
  assert.equal(f.state.sends,0);assert.equal(f.state.privateReads.filter(r=>r.name==='get_screen_hints').length,1);
  assert.equal((await f.app.reconcile(p.intentId)).status,'prepared');assert.equal((await f.app.cancelPrepared(p.intentId)).status,'cancelled');
+});
+
+// Preference integration uses the normally processed d530 artifact. Only the
+// transport/funding doubles are synthetic; ABI encoding and encrypted intent
+// persistence use the production implementations. No chain acceptance claim.
+const preferenceHead=(initialized,schema,revision,digest)=>decodeFromAbi(getFunctionReturnType(artifact.functions.find(f=>f.name==='preference_head')),
+ [new Fr(initialized?1n:0n),new Fr(BigInt(schema)),new Fr(BigInt(revision)),new Fr(BigInt(digest))]);
+test('preference and read marker encode actual ABI, preserve exact payer/journal and submit only after confirmation',async()=>{
+ const cases=[
+  [{type:'preference',expectedRevision:'0',kind:1,target:'42',enabled:true},'set_preference',[0n,1n,42n,1n]],
+  [{type:'preference',expectedRevision:'18446744073709551615',kind:5,target:hex(0),enabled:false},'set_preference',[0xffffffffffffffffn,5n,0n,0n]],
+  [{type:'read-marker',expectedRevision:'9007199254740993',thread:hex(42),throughBlock:'4294967295'},'mark_thread_read',[9007199254740993n,42n,0xffffffffn]],
+ ];
+ for(const [action,method,fields] of cases){
+  const f=fixture(),p=await f.app.prepare(action);assert.equal(p.status,'prepared');assert.equal(p.maximumFee,'10');assert.equal(f.state.sends,0);assert.equal(f.state.privateReads.length,0);
+  const call=f.state.calls[0],abi=artifact.functions.find(fn=>fn.name===method);assert(abi);assert.equal(call.name,method);
+  assert.deepEqual(encodeArguments(abi,call.args).map(x=>x.toBigInt()),fields);
+  const result=await f.restart().submitPrepared(p.intentId);assert.equal(result.status,'confirmed');assert.equal(f.state.sends,1);
+  assert.equal(f.state.sent.opts.from.toString(),f.options.accountSession.owner.toString());assert.equal(f.state.sent.opts.transactionJournal,f.options.accountSession.journal);
+  assert.equal(f.state.sent.opts.journalOperation,`ROLLING_WORKFLOW_V1:${p.intentId}`);assert.deepEqual(f.state.sent.payload.args,call.args);
+  await assert.rejects(f.app.submitPrepared(p.intentId),{code:'ROLLING_RECOVERY_REQUIRED'});
+ }
+});
+test('all five preference targets allow only their fixed ID shape before fee estimation',async()=>{
+ for(const [kind,target] of [[1,'1'],[2,'0'],[2,'1'],[3,'1'],[4,'1'],[5,'0']]){
+  const f=fixture();await f.app.prepare({type:'preference',expectedRevision:'0',kind,target,enabled:false});assert.equal(f.state.estimates,1);
+ }
+ const base={type:'preference',expectedRevision:'0',kind:1,target:'1',enabled:true};
+ for(const patch of [{kind:0},{kind:6},{kind:'1'},{kind:1.5},{kind:null},{target:'0'},{kind:3,target:'0'},{kind:4,target:'0'},
+  {kind:5,target:'1'},{target:'01'},{target:1},{target:FIELD_MODULUS.toString()},{enabled:1},{enabled:null},
+  {expectedRevision:'01'},{expectedRevision:0},{expectedRevision:'-1'},{expectedRevision:'18446744073709551616'},{owner:hex(3)},{read_hash:hex(1)}]){
+  const f=fixture();await assert.rejects(f.app.prepare({...base,...patch}),{code:'ROLLING_INVALID_ACTION'});assert.equal(f.state.estimates,0);assert.equal(f.state.sends,0);assert.equal(f.values.size,0);
+ }
+ for(const key of ['expectedRevision','kind','target','enabled']){const f=fixture(),action={...base};delete action[key];await assert.rejects(f.app.prepare(action));assert.equal(f.state.estimates,0);}
+});
+test('read marker validates canonical revision/thread/block without accepting a caller header hash',async()=>{
+ const base={type:'read-marker',expectedRevision:'0',thread:'1',throughBlock:'0'};
+ for(const patch of [{thread:'0'},{thread:'01'},{thread:1},{throughBlock:0},{throughBlock:'01'},{throughBlock:'-1'},
+  {throughBlock:'4294967296'},{expectedRevision:'18446744073709551616'},{readHash:hex(9)},{owner:hex(3)},{enabled:true}]){
+  const f=fixture();await assert.rejects(f.app.prepare({...base,...patch}),{code:'ROLLING_INVALID_ACTION'});assert.equal(f.state.estimates,0);assert.equal(f.values.size,0);
+ }
+});
+test('preference saved maximum and revision remain immutable on retry-free stale simulation failure',async()=>{
+ const f=fixture(),action={type:'preference',expectedRevision:'7',kind:1,target:'42',enabled:true};
+ const prepared=await f.app.prepare(action);action.expectedRevision='8';action.enabled=false;f.state.fee=11n;
+ await assert.rejects(f.restart().submitPrepared(prepared.intentId),{code:'ROLLING_FEE_CHANGED'});assert.equal(f.state.sends,0);
+ f.state.fee=10n;const error=Object.assign(Error('Labelled stale expected revision'),{code:'LABELLED_REVISION_REJECTED'});f.state.preferenceError=error;
+ await assert.rejects(f.app.submitPrepared(prepared.intentId),e=>e===error);assert.equal(f.state.sends,0);
+ const retained=await f.app.reconcile(prepared.intentId);assert.equal(retained.status,'prepared');assert.equal(retained.action.expectedRevision,'7');assert.equal(retained.action.enabled,true);
+ assert.equal(f.state.privateReads.length,0);assert.equal((await f.app.cancelPrepared(prepared.intentId)).status,'cancelled');
+});
+test('uncertain preference submit keeps durable fence across replacement without another send',async()=>{
+ const f=fixture(),p=await f.app.prepare({type:'read-marker',expectedRevision:'0',thread:'42',throughBlock:'10'});f.state.failSend=true;
+ await assert.rejects(f.app.submitPrepared(p.intentId));assert.equal(f.state.sends,1);const replacement=f.restart();
+ assert.equal((await replacement.reconcile(p.intentId)).status,'unknown');
+ await assert.rejects(replacement.submitPrepared(p.intentId),{code:'ROLLING_RECOVERY_REQUIRED'});
+ await assert.rejects(replacement.prepare({type:'preference',expectedRevision:'1',kind:2,target:'0',enabled:true}),{code:'ROLLING_RECOVERY_REQUIRED'});
+ assert.equal(f.state.sends,1);
+});
+test('head utility returns exact replay format through owner only without fees/journal/public lookup',async()=>{
+ const f=fixture();assert.deepEqual(await f.app.readPreferenceHead(),{initialized:false,schema:1,revision:'0',digest:'0'});
+ f.state.preferenceHead=preferenceHead(true,1,9007199254740993n,42);const head=await f.app.readPreferenceHead();
+ assert.deepEqual(head,{initialized:true,schema:1,revision:'9007199254740993',digest:'42'});assert(Object.isFrozen(head));
+ assert(f.state.privateReads.every(r=>r.name==='preference_head'&&r.args.length===1&&r.args[0]===f.options.accountSession.owner));
+ assert.equal(f.state.estimates,0);assert.equal(f.state.sends,0);assert.equal(f.values.size,0);
+});
+test('head read rejects inconsistent absence, schema, revision overflow and malformed utility output',async()=>{
+ const cases=[preferenceHead(false,1,1,0),preferenceHead(false,1,0,1),preferenceHead(true,1,0,1),preferenceHead(true,1,1,0),preferenceHead(true,2,1,2),
+  {initialized:true,schema:1n,revision:1n<<64n,digest:1n},{initialized:false,schema:1n,revision:0n,digest:0n,owner:hex(3)},undefined,null,[],
+  {initialized:0,schema:1n,revision:0n,digest:0n}];
+ for(const record of cases){const f=fixture();f.state.preferenceHead=record;await assert.rejects(f.app.readPreferenceHead());assert.equal(f.values.size,0);assert.equal(f.state.sends,0);}
+});
+test('head utility failures preserve errors and never masquerade as no preferences',async()=>{
+ const f=fixture(),error=Object.assign(Error('Labelled unavailable scoped NHK'),{code:'BB_TRUSTED_NODE_UNAVAILABLE'});f.state.preferenceHeadError=error;
+ await assert.rejects(f.app.readPreferenceHead(),e=>e===error);assert.equal(f.state.privateReads.length,1);assert.equal(f.values.size,0);
+ await assert.rejects(createRollingApplication({}).readPreferenceHead(),{code:'ROLLING_LOCKED'});
+});
+test('account change during contract acquisition prevents personalized head read',async()=>{
+ const f=fixture(),original=f.options.sdk.Contract.at;f.options.sdk.Contract.at=async()=>{f.options.accountSession.owner=new AztecAddress(new Fr(4n));return original();};
+ await assert.rejects(f.app.readPreferenceHead(),{code:'ROLLING_CONTEXT_CHANGED'});assert.equal(f.state.privateReads.length,0);
+});
+test('head read is exclusive and account change during utility prevents returning old private state',async()=>{
+ const f=fixture();let release,entered;const gate=new Promise(r=>release=r),active=new Promise(r=>entered=r);
+ f.state.beforePreferenceHead=async()=>{entered();await gate;};const pending=f.app.readPreferenceHead();await active;
+ await assert.rejects(f.app.readPreferenceHead(),{code:'ROLLING_BUSY'});f.options.accountSession.owner=new AztecAddress(new Fr(4n));release();
+ await assert.rejects(pending,{code:'ROLLING_CONTEXT_CHANGED'});assert.equal(f.state.privateReads.length,1);assert.equal(f.values.size,0);
+});
+test('preference and read-marker initial simulation errors propagate without intent or send',async()=>{
+ for(const action of [{type:'preference',expectedRevision:'0',kind:2,target:'0',enabled:true},{type:'read-marker',expectedRevision:'0',thread:'1',throughBlock:'1'}]){
+  const f=fixture(),error=Error('Labelled constrained preference failure');f.state.preferenceError=error;
+  await assert.rejects(f.app.prepare(action),e=>e===error);assert.equal(f.state.estimates,1);assert.equal(f.state.sends,0);assert.equal(f.values.size,0);
+ }
 });

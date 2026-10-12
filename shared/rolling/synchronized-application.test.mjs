@@ -3,7 +3,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {OperationQueue} from '../../node_modules/@aztec-labs/pxe/dest/operation_queue.js';
 import {createSynchronizedRollingApplication} from './synchronized-application.mjs';
-const names=['readAccountStatus','readProfile','ownedIdentities','prepare','submitPrepared','cancelPrepared','reconcile'];
+const names=['readAccountStatus','readPreferenceHead','readProfile','ownedIdentities','prepare','submitPrepared','cancelPrepared','reconcile'];
 test('explicit synchronization exposes a newly included name through the actual autoSync:false SDK queue',async()=>{
  let anchor=14,head=14,closed=0,syncs=0;
  const synchronizer={sync:async()=>{syncs++;anchor=head;}};
@@ -33,4 +33,17 @@ test('capabilities and method receivers are captured before asynchronous synchro
  const application=createSynchronizedRollingApplication(options),pending=application.prepare('exact-intent');
  await Promise.resolve();raw.prepare=()=>assert.fail('replacement');options.contextGuard=()=>assert.fail('replacement');options.synchronize=()=>assert.fail('replacement');
  release();assert.deepEqual(await pending,['exact-intent']);assert.deepEqual(order,['guard','sync','guard','call']);assert(Object.isFrozen(application));
+});
+test('preference head observes the synchronized anchor through the supported operation queue',async()=>{
+ let anchor=14,head=15,syncs=0,reads=0;
+ const queue=new OperationQueue({autoSync:false,node:{startRecording:()=>({stop(){}})},synchronizer:{},
+  anchorBlockStore:{getBlockHeader:async()=>({number:anchor})},contributors:[],
+  stagedWriteCoordinator:{begin:()=>1,commit:async()=>{},abort:()=>{}},log:{verbose(){},warn(){}}});queue.start();
+ try{
+  const raw=Object.fromEntries(names.map(name=>[name,()=>{}]));
+  raw.readPreferenceHead=()=>queue.runSynced(({anchorBlockHeader})=>{reads++;return {initialized:true,schema:1,revision:anchorBlockHeader.number>=15?'2':'1',digest:anchorBlockHeader.number>=15?'22':'11'};});
+  const application=createSynchronizedRollingApplication({application:raw,synchronize:()=>queue.run(()=>{syncs++;anchor=head;}),contextGuard:()=>{}});
+  assert.equal((await raw.readPreferenceHead()).revision,'1');assert.equal((await application.readPreferenceHead()).revision,'2');
+  assert.equal(reads,2);assert.equal(syncs,1);
+ }finally{await queue.stop();}
 });

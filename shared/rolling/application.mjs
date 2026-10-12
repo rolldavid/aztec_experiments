@@ -54,6 +54,17 @@ function pack(bytes,count){
   return packed.map(n=>field(n.toString()));
 }
 function version(value){check(typeof value==='string'&&/^(?:0|[1-9][0-9]{0,9})$/.test(value)&&BigInt(value)<=0xffffffffn);return Number(value);}
+function preferenceRevision(value){
+  check(typeof value==='string'&&/^(?:0|[1-9][0-9]{0,19})$/.test(value)&&BigInt(value)<=0xffffffffffffffffn);
+  return BigInt(value);
+}
+function preferenceArguments(action){
+  const revision=preferenceRevision(action.expectedRevision);
+  check(Number.isInteger(action.kind)&&action.kind>=1&&action.kind<=5&&typeof action.enabled==='boolean');
+  const target=field(action.target,action.kind!==2&&action.kind!==5);
+  check(action.kind!==5||target===zero);
+  return [revision,action.kind,target,action.enabled];
+}
 function avatar(action){
   check(typeof action.data==='string'&&action.data.length<=10924&&/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(action.data));
   const binary=atob(action.data);check(btoa(binary)===action.data&&binary.length<=8192);
@@ -67,10 +78,10 @@ function component(fields,length){
   const bytes=Array.from({length:31},(_,i)=>Number((words[0]>>BigInt((30-i)*8))&255n));bytes.push(Number(words[1]>>240n));
   check(bytes.slice(length).every(n=>n===0),'ROLLING_INVALID_RESPONSE');return String.fromCharCode(...bytes.slice(0,length));
 }
-const keys={bio:['name','expectedVersion','content'],avatar:['name','expectedVersion','width','height','data'],name:['first','last'],subboard:['slug','name','description','rules'],like:['post'],unlike:['post'],withdraw:['deposit'],screen:['deposit'],
+const keys={preference:['expectedRevision','kind','target','enabled'],'read-marker':['expectedRevision','thread','throughBlock'],bio:['name','expectedVersion','content'],avatar:['name','expectedVersion','width','height','data'],name:['first','last'],subboard:['slug','name','description','rules'],like:['post'],unlike:['post'],withdraw:['deposit'],screen:['deposit'],
   post:['deposit','content','name','subboard'],reply:['deposit','content','name','subboard','parent','root'],
   quote:['deposit','content','name','subboard','reference'],repost:['deposit','content','name','subboard','reference']};
-const methods={bio:'set_bio',avatar:'set_avatar',name:'register_name',subboard:'create_subboard',like:'set_like',unlike:'set_like',withdraw:'withdraw',screen:'screen',post:'post',reply:'post',quote:'post',repost:'post'};
+const methods={preference:'set_preference','read-marker':'mark_thread_read',bio:'set_bio',avatar:'set_avatar',name:'register_name',subboard:'create_subboard',like:'set_like',unlike:'set_like',withdraw:'withdraw',screen:'screen',post:'post',reply:'post',quote:'post',repost:'post'};
 
 /** Wallet-only port; import after unlock. No SDK, network or public-reader work at import.
  * deployment: {board:{address,artifact}, network:{chainId,version,rollup},portal,
@@ -100,6 +111,13 @@ const methods={bio:'set_bio',avatar:'set_avatar',name:'register_name',subboard:'
  * screen accepts only an existing deposit ID and snapshots authenticated-wallet
  * child/grandchild screening hints. It advances private history without public
  * content or a subboard-policy gate; the contract enforces maturity and debt.
+ * preference/read-marker expectedRevision is canonical decimal uint64; kind1..5
+ * toggles use opaque canonical IDs (board0 and global0 allowed, other targets
+ * nonzero). Deleted/stale targets remain recoverable, without public lookups.
+ * read-marker throughBlock is decimal uint32; the contract authenticates its hash.
+ * readPreferenceHead returns the pure replay shape, only through the scoped owner
+ * utility after trusted-route guards. A failed read never becomes empty history.
+ * This does not retrieve encrypted events or qualify key-only recovery.
  * A prepared post includes authenticated-wallet screening hints and live policy versions.
  * submit delegates the sole prove/journal/send lifecycle to wallet.sendTx. Once its
  * durable fence exists, only read-only reconcile is allowed, including after a crash
@@ -177,6 +195,8 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
   async function argumentsFor(action,board,nonce){
     const allowed=keys[action?.type];check(allowed&&Object.keys(action).every(k=>k==='type'||allowed.includes(k)));
     switch(action.type){
+      case 'preference':return preferenceArguments(action);
+      case 'read-marker':return [preferenceRevision(action.expectedRevision),field(action.thread,true),version(action.throughBlock)];
       case 'bio':return [field(action.name,true),version(action.expectedVersion),...text(action.content,32,false)];
       case 'avatar':return avatar(action);
       case 'name':return nameRegistration(action.first,action.last).arguments;
@@ -232,6 +252,18 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
         check(bioVersion>=0n&&bioVersion<=0xffffffffn&&avatarVersion>=0n&&avatarVersion<=0xffffffffn,'ROLLING_INVALID_RESPONSE');
       }catch{throw fail('ROLLING_INVALID_RESPONSE');}
       await guard();return {name:id,bioVersion:String(bioVersion),avatarVersion:String(avatarVersion)};
+    });},
+    async readPreferenceHead(){return exclusive(async()=>{
+      await guard();const board=await contract();await guard();
+      const record=await utility(board,'preference_head',[session.owner]);
+      check(record&&typeof record.initialized==='boolean','ROLLING_INVALID_RESPONSE');
+      const numeric=(value,max)=>{
+        check(typeof value==='string'&&/^0x[0-9a-f]{64}$/.test(value),'ROLLING_INVALID_RESPONSE');
+        const n=BigInt(value);check(n<=max,'ROLLING_INVALID_RESPONSE');return n;
+      };
+      const schema=numeric(record.schema,0xffffffffn),revision=numeric(record.revision,0xffffffffffffffffn),digest=numeric(record.digest,FIELD_MODULUS-1n);
+      check(schema===1n&&(record.initialized?revision>0n&&digest>0n:revision===0n&&digest===0n),'ROLLING_INVALID_RESPONSE');
+      await guard();return Object.freeze({initialized:record.initialized,schema:1,revision:String(revision),digest:String(digest)});
     });},
     async ownedIdentities({cursor=0}={}){return exclusive(async()=>{await guard();check(Number.isInteger(cursor)&&cursor>=0&&cursor<=0xffffffff-8);
       const values=await utility(await contract(),'owned_name_records',[session.owner,cursor]);check(Array.isArray(values)&&values.length===8,'ROLLING_INVALID_RESPONSE');
