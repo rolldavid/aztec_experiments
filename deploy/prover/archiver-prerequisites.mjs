@@ -73,14 +73,60 @@ async function actualOperations(){
   async close(){await blob?.stop?.();}
  };
 }
+// Separate diagnostic: one fixed eth_getLogs request. It does not repeat the
+// original SDK method's getL1StartBlock eth_call or qualify historical AWS state.
+const DEPLOY_BLOCK='0xb3d474',DEPLOY_HASH='0x58d0033b3e1bd75ef5035779824d90a6bf4312be8d7cf2989ecb9c5ad4e34622';
+const OWNERSHIP_TOPIC='0x8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0';
+export function initialHistoricalReport(){return {schemaVersion:1,scope:'single-public-historical-log-diagnostic',sourceSha256:hash(fs.readFileSync(FILE)),nodeStartupQualified:false,imageModuleBinding:'separate-evidence-required',originalSdkFailureCause:'undetermined; original method also repeats start-block eth_call',passed:false,status:'NOT_STARTED',httpStatus:null,rpcCode:null,rawCount:null,sdkCount:null,strictDecodedCount:null,requests:0};}
+export async function diagnoseHistoricalLogs({fetchImpl=globalThis.fetch,timeoutMs=10000,persist=()=>{}}={}){
+ requireThat(Number.isInteger(timeoutMs)&&timeoutMs>0&&timeoutMs<=10000);
+ const report=initialHistoricalReport(),controller=new AbortController();let reader,expired=false;
+ const timer=setTimeout(()=>{expired=true;controller.abort();},timeoutMs);
+ try{
+  report.requests=1;report.status='REQUESTING';persist(report);
+  const response=await fetchImpl(RPC,{method:'POST',redirect:'error',credentials:'omit',referrerPolicy:'no-referrer',signal:controller.signal,headers:{'content-type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:1,method:'eth_getLogs',params:[{address:SCOPE.rollup,topics:[OWNERSHIP_TOPIC],fromBlock:DEPLOY_BLOCK,toBlock:DEPLOY_BLOCK}]})});
+  const status=response.status;requireThat(Number.isInteger(status)&&status>=100&&status<=599);report.httpStatus=status;
+  if(status!==200){report.status='HTTP_ERROR';return report;}
+  report.status='READING';reader=response.body.getReader();let size=0;const chunks=[];
+  for(;;){const {done,value}=await reader.read();if(done)break;requireThat(value instanceof Uint8Array);size+=value.byteLength;if(size>16384){report.status='RESPONSE_TOO_LARGE';return report;}chunks.push(value);}
+  let payload;try{payload=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(Buffer.concat(chunks,size)));}catch{report.status='INVALID_JSON';return report;}
+  const object=v=>v!==null&&typeof v==='object'&&!Array.isArray(v);
+  if(!object(payload)||payload.jsonrpc!=='2.0'||payload.id!==1||Object.hasOwn(payload,'result')===Object.hasOwn(payload,'error')){report.status='INVALID_ENVELOPE';return report;}
+  if(Object.hasOwn(payload,'error')){
+   const code=object(payload.error)?payload.error.code:null;
+   if(!Number.isInteger(code)||code<-(2**31)||code>2**31-1){report.status='INVALID_RPC_ERROR';return report;}
+   report.rpcCode=code;report.status='RPC_ERROR';return report;
+  }
+  const logs=payload.result;
+  if(!Array.isArray(logs)||logs.length>128){report.status='INVALID_LOG_ARRAY';return report;}
+  report.rawCount=logs.length;
+  if(logs.length===0){report.status='EMPTY_LOGS';return report;}
+  for(const log of logs){
+   if(!object(log)||log.address!==SCOPE.rollup||log.blockNumber!==DEPLOY_BLOCK||log.blockHash!==DEPLOY_HASH||log.removed!==false||!hex(log.transactionHash,32)||!/^0x(?:0|[1-9a-f][0-9a-f]*)$/.test(log.transactionIndex)||!/^0x(?:0|[1-9a-f][0-9a-f]*)$/.test(log.logIndex)||!Array.isArray(log.topics)||log.topics.length!==3||log.topics[0]!==OWNERSHIP_TOPIC||!log.topics.every(t=>hex(t,32))||log.data!=='0x'){report.status='LOG_BINDING_OR_SHAPE';return report;}
+  }
+  // Same response only: the SDK's custom transport cannot contact any endpoint.
+  const {createPublicClient,custom,getContract,decodeEventLog}=await import('viem');
+  const {RollupAbi}=await import('@aztec-foundation/l1-artifacts/RollupAbi');
+  let offlineRequests=0;
+  const client=createPublicClient({transport:custom({request:async args=>{requireThat(args.method==='eth_getLogs'&&++offlineRequests===1);return logs;}},{retryCount:0})});
+  try{
+   const decoded=await getContract({address:SCOPE.rollup,abi:RollupAbi,client}).getEvents.OwnershipTransferred({},{fromBlock:BigInt(DEPLOY_BLOCK),toBlock:BigInt(DEPLOY_BLOCK)});
+   report.sdkCount=decoded.length;requireThat(decoded.length===logs.length);
+  }catch{report.status='SDK_DECODE_FAILED';return report;}
+  try{for(const log of logs){requireThat(log.topics.slice(1).every(t=>/^0x0{24}[0-9a-fA-F]{40}$/.test(t)));const event=decodeEventLog({abi:RollupAbi,eventName:'OwnershipTransferred',topics:log.topics,data:log.data,strict:true});requireThat(event.eventName==='OwnershipTransferred'&&hex(event.args.previousOwner,20)&&hex(event.args.newOwner,20));}report.strictDecodedCount=logs.length;}
+  catch{report.status='STRICT_DECODE_FAILED';return report;}
+  if(expired){report.status='TIMEOUT';return report;}report.status='PASSED';report.passed=true;return report;
+ }catch{report.status=expired?'TIMEOUT':'UNAVAILABLE';return report;}
+ finally{clearTimeout(timer);controller.abort();if(reader){try{await reader.cancel();}catch{}try{reader.releaseLock();}catch{}}persist(report);}
+}
 // Parent owns the external deadline and protected receipt descriptor. Worker
 // stderr/stdout are discarded, so library diagnostics cannot leak raw URLs.
-export async function supervise(output,{deadlineMs=59000,spawnWorker}={}){
+export async function supervise(output,{deadlineMs=59000,spawnWorker,historicalOnly=false}={}){
  requireThat(Number.isInteger(deadlineMs)&&deadlineMs>0&&deadlineMs<=59000&&path.isAbsolute(output));
- const fd=fs.openSync(output,fs.constants.O_RDWR|fs.constants.O_CREAT|fs.constants.O_EXCL|fs.constants.O_NOFOLLOW,0o600);record(fd,initialReport());
+ const fd=fs.openSync(output,fs.constants.O_RDWR|fs.constants.O_CREAT|fs.constants.O_EXCL|fs.constants.O_NOFOLLOW,0o600);record(fd,historicalOnly?initialHistoricalReport():initialReport());
  let child,timer,killer,timedOut=false,exitCode=null;
  try{
-  child=spawnWorker?spawnWorker(fd):spawn(process.execPath,[FILE,'--worker'],{cwd:ROOT,stdio:['ignore','ignore','ignore',fd],env:{PATH:process.env.PATH??'/usr/bin:/bin',LOG_LEVEL:'silent',NO_COLOR:'1'}});
+  child=spawnWorker?spawnWorker(fd):spawn(process.execPath,[FILE,historicalOnly?'--historical-worker':'--worker'],{cwd:ROOT,stdio:['ignore','ignore','ignore',fd],env:{PATH:process.env.PATH??'/usr/bin:/bin',LOG_LEVEL:'silent',NO_COLOR:'1'}});
   timer=setTimeout(()=>{timedOut=true;child.kill('SIGTERM');killer=setTimeout(()=>child.kill('SIGKILL'),500);},deadlineMs);
   exitCode=await new Promise(resolve=>{child.once('error',()=>resolve(null));child.once('close',code=>resolve(code));});
   const size=fs.fstatSync(fd).size;requireThat(size<=16384);const b=Buffer.alloc(size);fs.readSync(fd,b,0,size,0);const r=JSON.parse(b.toString());
@@ -89,10 +135,12 @@ export async function supervise(output,{deadlineMs=59000,spawnWorker}={}){
  }finally{clearTimeout(timer);clearTimeout(killer);if(child&&child.exitCode===null&&child.signalCode===null)child.kill('SIGKILL');fs.closeSync(fd);}
 }
 if(process.argv[1]&&path.resolve(process.argv[1])===FILE){
- if(process.argv[2]==='--worker'){
+ if(process.argv[2]==='--historical-worker'){
+  try{const ops=await actualOperations();await ops.source();const r=await diagnoseHistoricalLogs({persist:r=>record(3,r)});process.exit(r.passed?0:1);}catch{process.exit(1);}
+ }else if(process.argv[2]==='--worker'){
   // Only inherited descriptor3, never a caller-selected file or environment.
   try{const ops=await actualOperations();const result=await runChecks(ops,r=>record(3,r));process.exit(result.passed?0:1);}catch{process.exit(1);}
- }else if(process.argv.length===4&&process.argv[2]==='--output'){
-  try{const r=await supervise(process.argv[3]);process.stdout.write(JSON.stringify({passed:r.passed,nodeStartupQualified:false})+'\n');process.exitCode=r.passed?0:1;}catch{process.stderr.write('Archiver prerequisite diagnostic failed.\n');process.exitCode=1;}
- }else{process.stderr.write('Usage: node archiver-prerequisites.mjs --output ABSOLUTE_NEW_RECEIPT\n');process.exitCode=1;}
+ }else if(process.argv.length===4&&['--output','--historical-log-output'].includes(process.argv[2])){
+  try{const r=await supervise(process.argv[3],{historicalOnly:process.argv[2]==='--historical-log-output'});process.stdout.write(JSON.stringify({passed:r.passed,nodeStartupQualified:false})+'\n');process.exitCode=r.passed?0:1;}catch{process.stderr.write('Archiver prerequisite diagnostic failed.\n');process.exitCode=1;}
+ }else{process.stderr.write('Usage: node archiver-prerequisites.mjs --output|--historical-log-output ABSOLUTE_NEW_RECEIPT\n');process.exitCode=1;}
 }
