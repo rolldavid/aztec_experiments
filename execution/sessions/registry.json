@@ -13,7 +13,7 @@
       "branch": "codex/rolling-private-bok-candidate",
       "history_locator": "Codex runtime thread 01a12a75-1b50-7871-a73b-4253a1010194",
       "role": "lead",
-      "state": "active61147diagnosis and09 preparation; soleintegrator",
+      "state": "active source repair after independently reproduced browser selector defect; sole integrator",
       "working_branch": "codex/rolling-private-bok-candidate",
       "active_edit_paths": [
         "execution/"
@@ -22,12 +22,12 @@
         "path": "../rolling-lead-social",
         "branch": "codex/rolling-notification-funding-order",
         "owner": "lead-20261011",
-        "base": "c8fdb2e1184184b025304fbfc5eec0261c7354e2",
-        "state": "72072ea frozen/reviewed437dc; root exacttransfercomplete",
+        "base": "e7214b9710724546dc1758d7ff271b3d3a21cf9b",
+        "state": "notification message selector repair; sole writer",
         "allowed_paths": [
-          "scripts/testing/rolling-application-fixture.mjs",
-          "scripts/testing/rolling-application-fixture.test.mjs",
-          "scripts/testing/assets.mjs"
+          "scripts/testing/rolling-notification-browser.mjs",
+          "scripts/testing/rolling-notification-browser.test.mjs",
+          "apps/rolling/reader.browser.test.mjs"
         ]
       },
       "trusted_sender_claim": {
@@ -88,7 +88,7 @@
         ],
         "purpose": "Compose reviewed207+7867; explicit stopped-consumer PXE patch and normal SDK/walletbuild before realinitialreorg"
       },
-      "last_reconciled_at": "2026-10-12T12:03:25.606014+00:00"
+      "last_reconciled_at": "2026-10-12T12:40:36.790645+00:00"
     },
     {
       "logical_id": "recovery-probe-20261011",
@@ -112,7 +112,7 @@
       "branch": "codex/rolling-archiver-startup-observation",
       "history_locator": "collaboration runtime /root/controls, parent 01a12a75-1b50-7871-a73b-4253a1010194",
       "role": "implementation worker",
-      "state": "running09 upload/preparation only; launch held",
+      "state": "sole live09 watch78374/PID28234 and reviewed once-only terminalcleanup; no extension/replacement",
       "worktree": "../rolling-controls",
       "allowed_paths": [
         ".build/rolling-node-09-operator.py",
@@ -141,7 +141,7 @@
       "branch": "read-only candidate refs",
       "history_locator": "collaboration runtime /root/reviewer, parent 01a12a75-1b50-7871-a73b-4253a1010194",
       "role": "independent reviewer",
-      "state": "nativeef368 independently35PASS; notification61147 timing/failurediagnosis",
+      "state": "notification5815 diagnosed/reproduced790348; design434 source review, actualtests failing",
       "active_edit_paths": [
         "execution/evidence/G07/*independent*",
         "execution/evidence/G07/*review*",
@@ -158,7 +158,7 @@
       "branch": "codex/rolling-compact-block-prototype",
       "history_locator": "collaboration runtime /root/design, parent01a12a75-1b50-7871-a73b-4253a1010194",
       "role": "implementation worker",
-      "state": "running boundedpreference page source experiment",
+      "state": "434 prototype test32/34; source-backed installedaddressAPI repair, isolated SDK/LMDB slot granted",
       "worktree": "../rolling-design",
       "allowed_paths": [
         "billboard/rolling_contract/src/main.nr",
