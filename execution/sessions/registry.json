@@ -10,49 +10,34 @@
         "G07",
         "G14"
       ],
-      "branch": "codex/rolling-chat-draft3",
+      "branch": "codex/rolling-private-bok-candidate",
       "history_locator": "Codex runtime thread 01a12a75-1b50-7871-a73b-4253a1010194",
       "role": "lead",
-      "state": "50ff component gate integrated; claims reviewed e28 transfer to root, normal build and combined verification next",
+      "state": "Recovery3b gatedintegrationcomplete; notification/cold482 candidate transfer",
       "working_branch": "codex/rolling-private-bok-candidate",
       "active_edit_paths": [
-        "scripts/test-w03-journal.mjs",
-        "scripts/test-w03-proof-replacement.mjs",
+        "execution/",
+        "scripts/testing/rolling-notification-fixture.mjs",
+        "scripts/testing/rolling-notification-fixture.test.mjs",
         "scripts/testing/rolling-application-fixture.mjs",
         "scripts/testing/rolling-application-fixture.test.mjs",
-        "scripts/testing/rolling-preference-reorg.mjs",
-        "scripts/testing/rolling-preference-reorg.test.mjs",
-        "scripts/testing/rolling-public-acceptance.mjs",
-        "scripts/testing/scenario-flows.mjs",
         "scripts/testing/scenarios.mjs",
-        "shared/l2-journal.mjs",
-        "shared/rolling/application.mjs",
-        "shared/rolling/application.test.mjs",
-        "shared/rolling/synchronized-application.mjs",
-        "shared/rolling/synchronized-application.test.mjs",
-        "execution/"
+        "scripts/testing/scenario-flows.mjs",
+        "scripts/testing/browser-worker.mjs",
+        "scripts/testing/run-application.mjs",
+        "scripts/testing/assets.mjs",
+        "scripts/testing/rolling-public-acceptance.mjs",
+        "scripts/testing/rolling-public-acceptance.test.mjs",
+        "scripts/testing/rolling-notification-browser.mjs",
+        "scripts/testing/rolling-notification-browser.test.mjs",
+        "apps/rolling/wallet-panel.browser.test.mjs"
       ],
       "additional_worktree": {
         "path": "../rolling-lead-social",
-        "branch": "codex/rolling-preference-reorg-combined",
-        "base": "50ff963e26877a94bf8379e97b90e52863e3ab6f",
-        "allowed_paths": [
-          "scripts/test-w03-journal.mjs",
-          "scripts/test-w03-proof-replacement.mjs",
-          "scripts/testing/rolling-application-fixture.mjs",
-          "scripts/testing/rolling-application-fixture.test.mjs",
-          "scripts/testing/rolling-preference-reorg.mjs",
-          "scripts/testing/rolling-preference-reorg.test.mjs",
-          "scripts/testing/rolling-public-acceptance.mjs",
-          "scripts/testing/scenario-flows.mjs",
-          "scripts/testing/scenarios.mjs",
-          "shared/l2-journal.mjs",
-          "shared/rolling/application.mjs",
-          "shared/rolling/application.test.mjs",
-          "shared/rolling/synchronized-application.mjs",
-          "shared/rolling/synchronized-application.test.mjs"
-        ],
-        "state": "reviewed9commits transferred withoutconflict to e28b121; combined checks running, no genuine/build"
+        "branch": "codex/rolling-notification-parent",
+        "owner": "lead-20261011",
+        "base": "497b74866bea07b9924b90332ab7c7baeb3ad3eb",
+        "state": "G07 notification parent integration source implementation"
       },
       "trusted_sender_claim": {
         "chainId": 11155111,
@@ -63,17 +48,23 @@
         "state": "Mint daed763 finalized and fully accounted; permanent lease retained, no further send authorization assumed for this journal",
         "evidence": "evidence/G04/fee-mint-1791758790202.json"
       },
-      "frozen_candidate": "50ff963",
+      "frozen_candidate": null,
       "allowed_paths": [
         "execution/",
-        "scripts/testing/rolling-trusted-recovery.mjs",
-        "scripts/testing/rolling-trusted-recovery.test.mjs",
+        "scripts/testing/rolling-notification-fixture.mjs",
+        "scripts/testing/rolling-notification-fixture.test.mjs",
         "scripts/testing/rolling-application-fixture.mjs",
         "scripts/testing/rolling-application-fixture.test.mjs",
-        "scripts/testing/rolling-public-acceptance.mjs",
-        "shared/rolling/public-index.test.mjs",
+        "scripts/testing/scenarios.mjs",
         "scripts/testing/scenario-flows.mjs",
-        "scripts/testing/scenarios.mjs"
+        "scripts/testing/browser-worker.mjs",
+        "scripts/testing/run-application.mjs",
+        "scripts/testing/assets.mjs",
+        "scripts/testing/rolling-public-acceptance.mjs",
+        "scripts/testing/rolling-public-acceptance.test.mjs",
+        "scripts/testing/rolling-notification-browser.mjs",
+        "scripts/testing/rolling-notification-browser.test.mjs",
+        "apps/rolling/wallet-panel.browser.test.mjs"
       ],
       "browser_repair_claim": {
         "base": "842683a17e8e9b670a87148422f0c5c0dd2d6bfc",
@@ -83,7 +74,30 @@
           "apps/rolling/wallet-panel.browser.test.mjs"
         ],
         "status": "source approved and genuine passed; writer released"
-      }
+      },
+      "root_candidate_claim": {
+        "task": "G07",
+        "base": "f52aa61a4bb815d9d043970e4cabd9e667416020",
+        "paths": [
+          "scripts/w01-private-fee-flow.mjs",
+          "scripts/testing/private-fee-verification.mjs",
+          "scripts/testing/private-fee-verification.test.mjs",
+          "scripts/testing/assets.mjs",
+          "scripts/testing/rolling-application-fixture.mjs",
+          "BUILDING.md",
+          "package.json",
+          "scripts/build-sdk.mjs",
+          "scripts/check-sdk.mjs",
+          "scripts/patch-pxe-reorg-anchor.mjs",
+          "scripts/patch-pxe-reorg-anchor.test.mjs",
+          "scripts/test-sdk-manifest.mjs",
+          "scripts/testing/fixtures/pxe-reorg-anchor/README.md",
+          "scripts/testing/fixtures/pxe-reorg-anchor/block_synchronizer.js",
+          "scripts/testing/fixtures/pxe-reorg-anchor/block_synchronizer.ts"
+        ],
+        "purpose": "Compose reviewed207+7867; explicit stopped-consumer PXE patch and normal SDK/walletbuild before realinitialreorg"
+      },
+      "last_reconciled_at": "2026-10-12T10:38:40.508073+00:00"
     },
     {
       "logical_id": "recovery-probe-20261011",
@@ -104,21 +118,25 @@
       "task": [
         "G14"
       ],
-      "branch": "codex/rolling-l1-config-diagnostic",
+      "branch": "codex/rolling-archiver-startup-observation",
       "history_locator": "collaboration runtime /root/controls, parent 01a12a75-1b50-7871-a73b-4253a1010194",
       "role": "implementation worker",
-      "state": "bd4da0b two-file diagnostic frozen,13checks, independentreview before any liveprobe;07fleetdeleted;no paidaction",
+      "state": "offline09packaging2helper preparation; no execution grant",
       "worktree": "../rolling-controls",
       "allowed_paths": [
-        "deploy/prover/l1-config-diagnostic.mjs",
-        "deploy/prover/l1-config-diagnostic.test.mjs"
+        ".build/run-package-startup09.py",
+        ".build/verify-package-startup09.py"
       ],
       "commit_trailer_aliases": {
         "Agent-Session": "controls",
         "Parent-Session": "lead"
       },
-      "base": "72e4f6dffb9f779de4b9951f0392e8202b95eebd",
-      "active_edit_paths": []
+      "base": "1070a8fad6cb2b1b0068fe6b9f73267475b55b90",
+      "active_edit_paths": [
+        ".build/run-package-startup09.py",
+        ".build/verify-package-startup09.py"
+      ],
+      "writer_released": false
     },
     {
       "logical_id": "reviewer-20261011",
@@ -131,7 +149,7 @@
       "branch": "read-only candidate refs",
       "history_locator": "collaboration runtime /root/reviewer, parent 01a12a75-1b50-7871-a73b-4253a1010194",
       "role": "independent reviewer",
-      "state": "independent a8eb runtime and50ff component integration review, root source frozen"
+      "state": "3b259 eligibilitye6b12 approved; cf46metrics and09operator source-only reviews while genuine67151 active"
     },
     {
       "logical_id": "design-20261011",
@@ -140,19 +158,21 @@
       "task": [
         "G07"
       ],
-      "branch": "codex/rolling-preference-replacement-ui",
+      "branch": "codex/rolling-cold-actor-observation",
       "history_locator": "collaboration runtime /root/design, parent01a12a75-1b50-7871-a73b-4253a1010194",
       "role": "implementation worker",
-      "state": "56e1410 two-file UI frozen,44browserchecks; independentreview pending. Read-only next exact-byte recovery design.",
-      "worktree": "../rolling-preference-actor",
+      "state": "1427 actor frozen; self-preference narrow cold-sync read-only design",
+      "worktree": "../rolling-design",
       "allowed_paths": [
-        "apps/rolling/wallet-panel.mjs",
-        "apps/rolling/wallet-panel.browser.test.mjs"
+        "scripts/testing/rolling-application-actor.mjs",
+        "scripts/testing/rolling-application-actor.test.mjs"
       ],
-      "base": "7d9c7d737a29682a04174549e9cf00f94c0df102",
+      "base": "7867f511a8a5c318da1c70d3b49c89df870ef63e",
       "reference_candidate": "1351ea1b180b11475250463c9c40fdd2e342ab13",
       "writer_released": true,
-      "active_edit_paths": []
+      "active_edit_paths": [
+        "execution/evidence/G07/self-preference-cold-sync-design.json"
+      ]
     }
   ],
   "integrations": [
@@ -337,6 +357,18 @@
       "gate_result": "evidence/G07/integration-50ff-result.json",
       "review": "evidence/G07/combined-50ff-integration-review.json",
       "scope": "Bounded components only; full G07/G14, private recovery after reorg, cold scale, reply delivery and production gates remain open."
+    },
+    {
+      "task": "G07-explicit-saved-and-reorg-recovery-components",
+      "candidate": "3b259e1422bddfd8d4a8121d1780be18e53b618c",
+      "base": "50ff963e26877a94bf8379e97b90e52863e3ab6f",
+      "branch": "codex/rolling-chat-draft3",
+      "owner": "lead-20261011",
+      "at": "2026-10-12T11:02:08.297370+00:00",
+      "gate": "evidence/G07/integration-3b259-result.json",
+      "review": "evidence/G07/integration-3b259-final-review.json",
+      "status": "integrated scoped development components; wholeG07 open",
+      "history": "Original source commits and cherry-pick -x mappings retained in branch history; no squash."
     }
   ],
   "candidate_transfers": [
@@ -719,6 +751,395 @@
         "00e334d21aa27d2ca1c0b1fb7ae52b46b0c388c4",
         "b5e6899ec9b93b449ce2bd8a946705886da1eb18"
       ]
+    },
+    {
+      "task": "G14-config-adapter-composition",
+      "owner": "lead-20261011",
+      "base": "a699a5493e7cca99577845846cd4d7be4ac8559d",
+      "branch": "codex/rolling-config-adapter-combined",
+      "worktree": "../rolling-lead-social",
+      "status": "exact7files composed; normal package08 completeverified, independent package review pending; no paid action",
+      "source_revisions": [
+        "bd4da0bbc0c98e98ef29df46eba47f83a00d084c",
+        "499c42a9074872451b3c66bbb497c32cdb0099fb",
+        "9a3e590c5b4fbe5a9bb854bc277641c55d14b6cf"
+      ],
+      "allowed_paths": [
+        "deploy/prover/l1-config-diagnostic.mjs",
+        "deploy/prover/l1-config-diagnostic.test.mjs",
+        "deploy/prover/startup-stages.mjs",
+        "deploy/prover/startup-stages.test.mjs",
+        "deploy/prover/bootstrap.py",
+        "scripts/test-prover-bootstrap.py",
+        "deploy/prover/BOOTSTRAP.md"
+      ],
+      "candidate": "5ce91bced6f6c5d02b5de333e6ee73d112de07f8"
+    },
+    {
+      "task": "G07-saved-recovery-and-context-repair",
+      "owner": "lead-20261011",
+      "base": "a699a5493e7cca99577845846cd4d7be4ac8559d",
+      "status": "claimed exact reviewed863+936+c6 transfer; build/combinedsource/genuine next",
+      "source_revisions": [
+        "863beaa18cf1ef0fcaf6e8b7bb9b18a36622fcdc",
+        "936b55400f6d1edaf0ab47781c35d90721d41316",
+        "c6fc1848d86e34ba5ce673435aab0a9307598bcb"
+      ],
+      "allowed_paths": [
+        "shared/l2-journal.mjs",
+        "scripts/test-w03-proof-replacement.mjs",
+        "shared/rolling/application.mjs",
+        "shared/rolling/application.test.mjs",
+        "shared/rolling/synchronized-application.mjs",
+        "shared/rolling/synchronized-application.test.mjs"
+      ],
+      "review": "evidence/G07/replacement-order-c6fc184-review.json"
+    },
+    {
+      "task": "G07-saved-byte-genuine-parent",
+      "owner": "design-20261011",
+      "status": "verified source; root composition andgenuinepending",
+      "worktree": "../rolling-lead-social",
+      "branch": "codex/rolling-preference-saved-parent",
+      "base": "6d0b67f",
+      "requirements": [
+        "RC26",
+        "RC46",
+        "G07-A01",
+        "G07-A07"
+      ],
+      "acceptance": "Actual genuine proven Tx saved before failed transport; exact persisted byte/hash resume after close/reopen same stores; zero reproof/estimate/payment, canonical fee once and native public effects; realchain required later",
+      "allowed_paths": [
+        "scripts/testing/rolling-application-fixture.mjs",
+        "scripts/testing/rolling-application-fixture.test.mjs",
+        "scripts/testing/rolling-preference-saved.mjs",
+        "scripts/testing/rolling-preference-saved.test.mjs",
+        "scripts/testing/scenarios.mjs",
+        "scripts/testing/scenario-flows.mjs",
+        "scripts/testing/rolling-public-acceptance.mjs",
+        "scripts/testing/rolling-public-acceptance.test.mjs"
+      ],
+      "candidate": "b77bfd2c419117731a0ec65d7c8901fd1c1a3a1a",
+      "review": "evidence/G07/saved-parent-b77bfd2-review.json"
+    },
+    {
+      "task": "G07-reorg-interval-compatibility",
+      "owner": "lead-20261011",
+      "base": "a5522a07e3478009dc1212bfd8949a7b8f65173c",
+      "branch": "codex/rolling-private-bok-candidate",
+      "status": "verified source; actualinitial3 running28713",
+      "allowed_paths": [
+        "scripts/testing/rolling-preference-reorg.mjs",
+        "scripts/testing/rolling-preference-reorg.test.mjs"
+      ],
+      "requirements": [
+        "G07-A02",
+        "RC26"
+      ],
+      "acceptance": "Use official nullable disabled interval representation; independently verify paused and restored controls; retain mutation intent/uncertain no replay and allboundarychecks.",
+      "candidate": "bd90d8fced55e330577df6070d83e230dafeeeed",
+      "tests": "30pass actualAnvil3modes3745ms",
+      "preservedFailures": [
+        "reorg-interval-before.log",
+        "reorg-interval-after.log",
+        "reorg-interval-after-2.log",
+        "reorg-interval-after-3.log"
+      ],
+      "review": "evidence/G07/reorg-interval-bd90-source-review.json"
+    },
+    {
+      "task": "G07-reply-notification-feasibility",
+      "owner": "design-20261011",
+      "status": "running read-only source investigation",
+      "base": "b77bfd2c419117731a0ec65d7c8901fd1c1a3a1a",
+      "requirements": [
+        "G07-A03",
+        "G07-A10",
+        "RC26"
+      ],
+      "allowed_paths": [
+        "execution/evidence/G07/reply-notification-investigation.json"
+      ],
+      "acceptance": "Identify smallest genuine real reply arrival/read-marker filtering through production UI scenario within540s4GiB, existing proofcount/cost evidence and exactsource gaps. No proof/browser or sourceedit in investigation."
+    },
+    {
+      "task": "G07-cold-sync-feasibility-review",
+      "owner": "reviewer-20261011",
+      "status": "running read-only source review",
+      "base": "bd90d8fced55e330577df6070d83e230dafeeeed",
+      "requirements": [
+        "G07-A02",
+        "G07-A08"
+      ],
+      "allowed_paths": [
+        "execution/evidence/G07/cold-sync-feasibility-review.json"
+      ],
+      "acceptance": "Reconcile retained source diagnosis and current actual SDK/API; bounded minimal measurement/implementation route preserving validation, complete recovery, canonical rollback and no partial synced status; no heavy or edits."
+    },
+    {
+      "task": "G07-saved-composition",
+      "owner": "lead-20261011",
+      "status": "running",
+      "base": "bd90d8fced55e330577df6070d83e230dafeeeed",
+      "branch": "codex/rolling-private-bok-candidate",
+      "source_revisions": [
+        "3e1aec931d92d557b4630a8d09febe921e5f8ec2",
+        "b77bfd2c419117731a0ec65d7c8901fd1c1a3a1a",
+        "3bead1adc9d9ffbd0274f784cd3138c67af2a0e4"
+      ],
+      "allowed_paths": [
+        "apps/rolling/wallet-panel.mjs",
+        "apps/rolling/wallet-panel.browser.test.mjs",
+        "scripts/testing/rolling-application-fixture.mjs",
+        "scripts/testing/rolling-application-fixture.test.mjs",
+        "scripts/testing/rolling-preference-saved.mjs",
+        "scripts/testing/rolling-preference-saved.test.mjs",
+        "scripts/testing/scenarios.mjs",
+        "scripts/testing/scenario-flows.mjs",
+        "scripts/testing/rolling-public-acceptance.mjs",
+        "scripts/testing/rolling-public-acceptance.test.mjs"
+      ],
+      "requirements": [
+        "G07-A01",
+        "G07-A07",
+        "RC26",
+        "RC46"
+      ],
+      "acceptance": "Exact reviewed10file transfer with no overlappingworker; normalwallet build/affectedsource+DOM checks; real2proof savedbyte canonicalfee/effect exactresume aftereligibilityreview. No reorgqualification inferred."
+    },
+    {
+      "task": "G07-notification-driver",
+      "owner": "design-20261011",
+      "branch": "codex/rolling-notification-browser",
+      "base": "f52aa61a4bb815d9d043970e4cabd9e667416020",
+      "status": "running",
+      "allowed_paths": [
+        "scripts/testing/rolling-notification-browser.mjs",
+        "scripts/testing/rolling-notification-browser.test.mjs",
+        "scripts/testing/rolling-notification-acceptance.mjs",
+        "scripts/testing/rolling-notification-acceptance.test.mjs"
+      ],
+      "requirements": [
+        "G07-A03",
+        "G07-A10"
+      ],
+      "dependencies": [
+        "savedUI3be currentf52 composition",
+        "reply-notification-investigation.json"
+      ],
+      "acceptance": "ActualUI subscribe, unreadreply, markread, suppression andfreshkeys-onlyrestore; strict bounded control/traffic/phase and sanitized evidence; real parent proofs remain lead wiring task. No alternatebackend/truncatedassertions."
+    },
+    {
+      "task": "G07-fee-reorg-measurement",
+      "owner": "lead-20261011",
+      "status": "running source-only separatecheckout",
+      "branch": "codex/rolling-fee-reorg-observation",
+      "worktree": "../rolling-design",
+      "base": "f52aa61a4bb815d9d043970e4cabd9e667416020",
+      "allowed_paths": [
+        "scripts/w01-private-fee-flow.mjs",
+        "scripts/testing/private-fee-verification.mjs",
+        "scripts/testing/private-fee-verification.test.mjs",
+        "scripts/testing/assets.mjs",
+        "scripts/testing/rolling-application-fixture.mjs"
+      ],
+      "requirements": [
+        "G07-A02",
+        "G07-A07"
+      ],
+      "dependencies": [
+        "reorg-1b908-fee-diagnosis-review.json"
+      ],
+      "acceptance": "Retain expected/actual numeric balances and fullcanonicalanchors before existing equality assertions; failclosed if SDK sync returns staleorphan anchor. Preserve every fee assertion; no extra sync/cacheclear/reopen. Meaningful labelledtest controls and realSDK diagnostic beforeanynewforkattempt.",
+      "note": "Add new accounting dependency to both existing source fingerprint inventories; lead sole owner, no notification worker assignment overlaps."
+    },
+    {
+      "task": "G14-archiver-startup-observation",
+      "owner": "controls-20261011",
+      "status": "running",
+      "base": "9a3e590c5b4fbe5a9bb854bc277641c55d14b6cf",
+      "branch": "codex/rolling-archiver-startup-observation",
+      "allowed_paths": [
+        "deploy/prover/startup-stages.mjs",
+        "deploy/prover/startup-stages.test.mjs",
+        "deploy/prover/bootstrap.py",
+        "scripts/test-prover-bootstrap.py",
+        "deploy/prover/BOOTSTRAP.md"
+      ],
+      "requirements": [
+        "G14",
+        "G07-A08"
+      ],
+      "acceptance": "Distinguish actual archiver initialization subphase/progress/typed failures with fixed bounded sanitized counters; pinnedsource-gated instrumentation; do not log URLs/capabilities/messages/secrets or change sync/retry semantics. Source/cheaptests only, independentreview before package/paidoperation.",
+      "dependencies": [
+        "operator08-archiver-delay-diagnosis.json"
+      ]
+    },
+    {
+      "task": "G07",
+      "worker": "lead-20261011",
+      "worker_revision": "207bc89359da15885e79513f1f426070b95dc84f",
+      "candidate_revision": "bf080d07a2653dd14e4557f1c017f9face0a6360",
+      "review": "evidence/G07/private-fee-207bc89-review.json",
+      "status": "source composed on candidate only; genuine reorg pending"
+    },
+    {
+      "task": "G07-SDK-sparse-reorg-composition",
+      "owner": "lead-20261011",
+      "branch": "codex/rolling-private-bok-candidate",
+      "base": "bf080d0",
+      "candidate": "3b259e1422bddfd8d4a8121d1780be18e53b618c",
+      "source_revisions": [
+        "7867f511a8a5c318da1c70d3b49c89df870ef63e"
+      ],
+      "status": "review",
+      "requirements": [
+        "G07-A02",
+        "G07-A07"
+      ],
+      "acceptance": "Exact reviewed pinned SDK sparse checkpoint repair; normal SDK/wallet builds and157affectedchecks passed; independent combined eligibility then one genuine initial reorg attempt4 unchanged540s4GiB.",
+      "evidence": "evidence/G07/pxe-3b259-composition-checks.json",
+      "at": "2026-10-12T10:35:47.562299+00:00"
+    },
+    {
+      "task": "G07-cold-sync-step-design",
+      "owner": "design-20261011",
+      "status": "running read-only investigation",
+      "branch": "codex/rolling-cold-recovery-metrics",
+      "base": "cf46b92af58279b1e7111afc8be2f9adffc0279f",
+      "allowed_paths": [
+        "execution/evidence/G07/cold-sync-step-design.json"
+      ],
+      "requirements": [
+        "G07-A02",
+        "G07-A08"
+      ],
+      "dependencies": [
+        "cold-sync-feasibility-review.json"
+      ],
+      "acceptance": "Source-backed smallest safe scoped incremental sync API design preserving operation queue, all authentication/nullifier paths, atomic continuation, no partial-complete state; exact edit-path proposal and meaningful tests. No source/shareddependency mutation or heavy operations.",
+      "at": "2026-10-12T10:36:36.701241+00:00"
+    },
+    {
+      "task": "G07-cold-actor-observation",
+      "owner": "design-20261011",
+      "status": "ready after current read-only design report",
+      "branch": "codex/rolling-cold-recovery-metrics",
+      "base": "cf46b92af58279b1e7111afc8be2f9adffc0279f",
+      "allowed_paths": [
+        "scripts/testing/rolling-application-actor.mjs",
+        "scripts/testing/rolling-application-actor.test.mjs"
+      ],
+      "requirements": [
+        "G07-A02",
+        "G07-A08"
+      ],
+      "dependencies": [
+        "private-recovery-metrics-cf46-review.json"
+      ],
+      "acceptance": "Optional trusted test-only metrics on actual public createPXE/sync/getPrivateEvents/raw preference-head callbacks; preserve exact receivers/promises/error identity and branded node/PXE; no privateSDK fields or productionAPI changes. No retries or lifecycle changes. Existing default actor behavior and meaningful labelled observer checks.",
+      "at": "2026-10-12T10:41:12.390041+00:00"
+    },
+    {
+      "task": "G14-package09-offline-preparation",
+      "owner": "controls-20261011",
+      "status": "running source only; execution withheld",
+      "branch": "codex/rolling-archiver-startup-observation",
+      "base": "1070a8fad6cb2b1b0068fe6b9f73267475b55b90",
+      "allowed_paths": [
+        ".build/run-package-startup09.py",
+        ".build/verify-package-startup09.py"
+      ],
+      "requirements": [
+        "G14",
+        "G07-A08"
+      ],
+      "acceptance": "Adapt existing bounded07packager/verifier to fresh09 output without touching historicalruns; explicit future combinedsource expected, complete inventory/native/catalog/bootstrap checks and both installed+packaged PXEpatch exactverify. No execution until heavy-slot andsource grant, no upload/cloud/paidoperation.",
+      "at": "2026-10-12T10:47:28.981754+00:00"
+    },
+    {
+      "task": "G07-self-preference-cold-sync-design",
+      "owner": "design-20261011",
+      "status": "running read-only",
+      "branch": "codex/rolling-cold-actor-observation",
+      "base": "1427ff118a947f8e73262b1e9e4c6b68a2af5039",
+      "allowed_paths": [
+        "execution/evidence/G07/self-preference-cold-sync-design.json"
+      ],
+      "requirements": [
+        "G07-A02",
+        "G07-A08"
+      ],
+      "acceptance": "Trace actual own-account RollingBoard preference event/head tagging and all required note/nullifier contributors; establish smallest bounded authenticated step utility route with honest class/artifact effects. No omission of necessaryhandshakes or canonicalidentityspoofing. Sourcehashes/exactpaths/tests; no source/native/heavy mutation.",
+      "at": "2026-10-12T10:48:25.077720+00:00"
+    },
+    {
+      "task": "G07-notification-cold-metrics-composition",
+      "owner": "lead-20261011",
+      "status": "source reviewed;297affectedchecks PASS; exact root transfer/build andgenuine next",
+      "worktree": "../rolling-lead-social",
+      "branch": "codex/rolling-cold-recovery-parent",
+      "base": "3b259e1422bddfd8d4a8121d1780be18e53b618c",
+      "source_revisions": [
+        "497b74866bea07b9924b90332ab7c7baeb3ad3eb",
+        "56a8de98c18c95b16eb8e7354af3231f0c561a02",
+        "9ee08df5bd530fc55f8e50a5d20d975c7c588ecb",
+        "4fde250c2f3581af48861287625a1c45407f5600",
+        "cf46b92af58279b1e7111afc8be2f9adffc0279f",
+        "1427ff118a947f8e73262b1e9e4c6b68a2af5039"
+      ],
+      "allowed_paths": [
+        "apps/rolling/wallet-panel.browser.test.mjs",
+        "scripts/testing/assets.mjs",
+        "scripts/testing/browser-worker.mjs",
+        "scripts/testing/rolling-application-fixture.mjs",
+        "scripts/testing/rolling-application-fixture.test.mjs",
+        "scripts/testing/rolling-notification-acceptance.mjs",
+        "scripts/testing/rolling-notification-acceptance.test.mjs",
+        "scripts/testing/rolling-notification-browser.mjs",
+        "scripts/testing/rolling-notification-browser.test.mjs",
+        "scripts/testing/rolling-notification-fixture.mjs",
+        "scripts/testing/rolling-notification-fixture.test.mjs",
+        "scripts/testing/rolling-private-recovery-metrics.mjs",
+        "scripts/testing/rolling-private-recovery-metrics.test.mjs",
+        "scripts/testing/rolling-public-acceptance.mjs",
+        "scripts/testing/run-application.mjs",
+        "scripts/testing/scenario-flows.mjs",
+        "scripts/testing/scenarios.mjs",
+        "scripts/testing/rolling-application-actor.mjs",
+        "scripts/testing/rolling-application-actor.test.mjs"
+      ],
+      "requirements": [
+        "G07-A02",
+        "G07-A03",
+        "G07-A08",
+        "G07-A10"
+      ],
+      "acceptance": "Exact reviewed notification4commits and cf46metrics, lead owns fixture coldwindow + NodeRPC publicmethod observation and sourceinventories. Brandednode unchanged, byte/discovery/fold remainunobserved, realexistingkeys-onlyrecovery withsameproofcount. No source/root/deps/generated edits duringmarker. Native/browser checks afterserializedgrant.",
+      "at": "2026-10-12T10:50:05.077116+00:00",
+      "actor_transfer": "Exact reviewed28f715 source transfer after worker released; no independent source edits to actor.",
+      "candidate": "482e88778042f819f3c008ba5b5449b4f9805533",
+      "target_branch": "codex/rolling-private-bok-candidate",
+      "target_worktree": ".",
+      "review": "evidence/G07/cold-parent-1107499-review.json",
+      "test_repair_review": "evidence/G07/cold-parent-482e-test-repair-review.json",
+      "checks": "evidence/G07/notification-cold-repaired-combined-tests.log"
+    },
+    {
+      "task": "G07-canonical-block-enumeration-bounds",
+      "owner": "design-20261011",
+      "status": "running read-only feasibility",
+      "branch": "codex/rolling-cold-actor-observation",
+      "base": "1427ff118a947f8e73262b1e9e4c6b68a2af5039",
+      "allowed_paths": [
+        "execution/evidence/G07/canonical-block-enumeration-bounds.json"
+      ],
+      "requirements": [
+        "G07-A02",
+        "G07-A08"
+      ],
+      "acceptance": "Derive protocol and installed API maxima for block transaction/private-log enumeration and serialized transport, identify existing pagination/effect roots. Determine whether bounded full-body decode is legitimately sufficient or node extension mandatory; exact field/byte bounds, malicious oversize rejection beforeallocation and completehistorybehavior. No source/tests/heavy/cloud.",
+      "at": "2026-10-12T10:55:35.205787+00:00"
     }
   ]
 }
