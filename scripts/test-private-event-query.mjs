@@ -1,6 +1,7 @@
 // Actual pinned PrivateEventStore and actual SDK KV adapters. IndexedDB runs on
 // fake-indexeddb (a labelled platform double), NOT a native browser qualification.
 // Small differential/failure fixtures only, not the deferred capacity benchmark.
+import {spawnSync} from 'node:child_process';
 import test, { after } from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtemp, mkdir, cp, readFile, writeFile, symlink, rm, realpath } from 'node:fs/promises';
@@ -19,7 +20,8 @@ import { EventSelector } from '@aztec-labs/stdlib/abi';
 import { PRIVATE_EVENT_QUERY_PINS, PRIVATE_EVENT_QUERY_LIMITS, transformPrivateEventQuery, inspectPrivateEventQuery, patchPrivateEventQuery } from './patch-private-event-query.mjs';
 
 const repo = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const installed = await realpath(join(repo, 'node_modules/@aztec-labs/pxe'));
+const installed = await realpath(process.env.ROLLING_QUERY_TEST_PACKAGE_ROOT ?? join(repo, 'node_modules/@aztec-labs/pxe'));
+await inspectPrivateEventQuery(installed); // Both original and patched are valid; mixed/unknown never are.
 const temporary = await realpath(await mkdtemp(join(tmpdir(), 'rolling-private-query-')));
 after(() => rm(temporary, { recursive: true, force: true }));
 const quiet = { debug() {}, verbose() {}, info() {}, warn() {}, error() {} };
@@ -28,7 +30,9 @@ async function copyPackage(name) {
   const root = join(temporary, name);
   for (const pin of PRIVATE_EVENT_QUERY_PINS) {
     await mkdir(dirname(join(root, pin.path)), { recursive: true });
-    await cp(join(installed, pin.path), join(root, pin.path));
+    const source=await readFile(join(repo,'scripts/fixtures/private-event-query-6.0.0-rc.1',pin.path.split('/').at(-1)));
+    assert.equal(sha(source),pin.before,'Pristine upstream regression input changed');
+    await writeFile(join(root,pin.path),source);
   }
   for (const path of ['dest/storage/base_staging_store.js', 'dest/storage/private_event_store/stored_private_event.js']) {
     await cp(join(installed, path), join(root, path));
@@ -98,11 +102,12 @@ async function setup(t, platform, Constructor = Patched) {
 
 test('exact source/dest hash pins; verify-only does not mutate installed dependencies', async () => {
   const before = await inspectPrivateEventQuery(installed);
-  assert.equal(before.state, 'original');
+  assert(['original','patched'].includes(before.state));
+  assert.equal((await inspectPrivateEventQuery(originalRoot)).state,'original');
   assert.equal((await inspectPrivateEventQuery(patchedRoot)).state, 'patched');
   assert.deepEqual(await patchPrivateEventQuery(patchedRoot), await inspectPrivateEventQuery(patchedRoot));
   for (const pin of PRIVATE_EVENT_QUERY_PINS) {
-    const source = await readFile(join(installed, pin.path), 'utf8');
+    const source = await readFile(join(originalRoot, pin.path), 'utf8');
     const output = transformPrivateEventQuery(source, pin.path);
     assert.equal(sha(output), pin.after);
     assert.equal(output.slice(output.indexOf('* Deletes every event')), source.slice(source.indexOf('* Deletes every event')));
@@ -255,3 +260,11 @@ test('delayed storage rejection settles the sole started read before query failu
   await assert.rejects(s.events.getPrivateEvents(selector, filter(), 'changes'), { message: 'PXE_PRIVATE_EVENT_QUERY_FAILED' });
   assert.equal(s.counts.pending, 0);
 });
+
+if(!process.env.ROLLING_QUERY_TEST_CHILD)for(const [state,root] of [['original',originalRoot],['patched',patchedRoot]]){
+ test('full regression suite also passes with disposable '+state+' installed package',()=>{
+  const result=spawnSync(process.execPath,['--test','--test-concurrency=1',fileURLToPath(import.meta.url)],{
+   cwd:repo,env:{...process.env,ROLLING_QUERY_TEST_PACKAGE_ROOT:root,ROLLING_QUERY_TEST_CHILD:'1'},encoding:'utf8',timeout:20000,maxBuffer:1024*1024});
+  assert.ifError(result.error);assert.equal(result.signal,null);assert.equal(result.status,0,result.stdout+result.stderr);
+ });
+}
