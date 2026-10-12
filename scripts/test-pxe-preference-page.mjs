@@ -164,7 +164,10 @@ await test('expected partial setup failure',async scope=>{
 let exists=true;try{await access(owned);}catch(e){if(e.code==='ENOENT')exists=false;else throw e;}
 await writeFile(receipt,JSON.stringify({cleaned,exists}));
 `);
-  const result=spawnSync(process.execPath,['--test',child],{encoding:'utf8',timeout:5000});
+  // Node's outer test runner sets this marker; inheriting it makes a nested
+  // --test invocation skip its files instead of exercising the failed owner.
+  const childEnv={...process.env};delete childEnv.NODE_TEST_CONTEXT;
+  const result=spawnSync(process.execPath,['--test',child],{encoding:'utf8',timeout:5000,env:childEnv});
   assert.equal(result.signal,null);assert.equal(result.status,1);assert.match(result.stdout+result.stderr,/EXPECTED_PARTIAL_SETUP_FAILURE/);
   assert.deepEqual(JSON.parse(await readFile(receipt,'utf8')),{cleaned:1,exists:false});
 });
@@ -465,6 +468,9 @@ if(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1') {
     const {getStandardHandshakeRegistry}=await import('@aztec-labs/standard-contracts/handshake-registry');
     const {TxExecutionRequest,TxContext,HashedValues}=await import('@aztec-labs/stdlib/tx');
     const {MerkleTreeId}=await import('@aztec-labs/stdlib/trees');
+    const {PrivateLogsQuerySchema,PublicLogsQuerySchema,LogResultSchema,SiloedTag,LogCursor}=await import('@aztec-labs/stdlib/logs');
+    const {MAX_LOGS_PER_TAG}=await import('@aztec-labs/stdlib/interfaces/client');
+    const {jsonStringify}=await import('@aztec-labs/foundation/json-rpc');
     const {WASMSimulator}=await import('@aztec-labs/simulator/client');
     const {openPxeStores}=await patchedImp('storage/open_pxe_stores.js');
     const {ContractClassService}=await imp('contract/contract_class_service.js');
@@ -498,13 +504,55 @@ if(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1') {
         masterFallbackPublicKey:derived.masterFallbackPublicKey};
       const partialAddress=new Fr(552);let header=BlockHeader.empty();
       header.globalVariables.blockNumber=2;header.globalVariables.chainId=new Fr(31337);header.globalVariables.version=new Fr(1);
-      let block,effect,canonicalChanged=false;const counters={tagQueries:0,unexpectedCalls:0};
+      const initialHeader=BlockHeader.fromBuffer(header.toBuffer());
+      let block,effect,canonicalChanged=false;const counters={tagQueries:0,tagResults:0,unexpectedCalls:0};
       const emptyHistory=new Map(),mined=new Map(),omittedNullifiers=new Set();
       async function historyBlock(number){
         if(number===header.getBlockNumber()){assert(block);return block;}
         assert(Number.isSafeInteger(number)&&number>0&&number<header.getBlockNumber(),'Unexpected synthetic history selector');
         if(!emptyHistory.has(number)){const h=BlockHeader.empty();h.globalVariables.chainId=new Fr(31337);h.globalVariables.version=new Fr(1);h.globalVariables.blockNumber=number;const body=new Body([]);h.txEffectsTreeRoot=await body.computeTxEffectsTreeRoot();emptyHistory.set(number,new L2Block(AppendOnlyTreeSnapshot.empty(),h,body,1,0));}
         return emptyHistory.get(number);
+      }
+      // Labelled chain transport only: expose genuine simulated ciphertexts
+      // through the original RPC schema and archiver ordering, never note-store
+      // inserts. This is necessary for normal registry sync in a fresh writer.
+      // afterLog supersedes fromBlock, exactly as archiver/store/log_store.ts.
+      async function logsByTags(input,publicLogs=false){
+        counters.tagQueries++;
+        const query=(publicLogs?PublicLogsQuerySchema:PrivateLogsQuerySchema).parse(JSON.parse(jsonStringify(input)));
+        let referenceNumber=header.getBlockNumber();
+        if(query.referenceBlock){
+          assert(!canonicalChanged,'Synthetic reference anchor is no longer canonical');
+          const ref=query.referenceBlock instanceof BlockHash?query.referenceBlock:query.referenceBlock.hash;
+          const known=[initialHeader,header,...[...emptyHistory.values()].map(b=>b.header),...[...mined.values()].map(x=>x.block.header)];
+          let found;
+          for(const h of known)if((await h.hash()).equals(ref)){found=h;break;}
+          assert(found,'Unknown synthetic reference anchor');
+          referenceNumber=found.getBlockNumber();
+          if(!(query.referenceBlock instanceof BlockHash))assert.equal(query.referenceBlock.number,referenceNumber);
+        }
+        const end=Math.min(query.toBlock??referenceNumber+1,referenceNumber+1),rows=[];
+        for(const item of mined.values()){
+          const h=item.block.header,number=h.getBlockNumber();
+          if(number>=end||query.txHash&&!query.txHash.equals(item.effect.txHash))continue;
+          const txIndex=item.block.body.txEffects.findIndex(x=>x.txHash.equals(item.effect.txHash));assert(txIndex>=0);
+          const detached=TxEffect.fromBuffer(item.effect.toBuffer()),logs=publicLogs?detached.publicLogs:detached.privateLogs;
+          for(let index=0;index<logs.length;index++){
+            const log=logs[index];if(publicLogs&&!log.contractAddress.equals(query.contractAddress))continue;
+            rows.push({logData:log.getEmittedFields(),blockNumber:number,blockHash:BlockHash.fromBuffer((await h.hash()).toBuffer()),
+              blockTimestamp:h.globalVariables.timestamp,txHash:detached.txHash,txIndexWithinBlock:txIndex,logIndexWithinTx:index,
+              ...(query.includeEffects?{noteHashes:detached.noteHashes,nullifiers:detached.nullifiers}:{})});
+          }
+        }
+        const compare=(a,b)=>a.blockNumber-b.blockNumber||a.txIndexWithinBlock-b.txIndexWithinBlock||a.logIndexWithinTx-b.logIndexWithinTx;
+        rows.sort(compare);
+        const results=query.tags.map(entry=>{
+          const tag=entry.tag??entry,after=entry.afterLog;
+          return rows.filter(row=>tag.value.equals(row.logData[0])&&(after?compare(row,after)>0:row.blockNumber>=(query.fromBlock??1)))
+            .slice(0,query.limitPerTag??MAX_LOGS_PER_TAG);
+        });
+        counters.tagResults+=results.reduce((n,page)=>n+page.length,0);
+        return results;
       }
       const api={
         getNodeInfo:async()=>({l1ChainId:31337,rollupVersion:1,realProofs:false,l1ContractAddresses:{rollupAddress:{toString:()=>request().network.rollup}}}),
@@ -519,8 +567,8 @@ if(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1') {
             if(index<0)return undefined;const h=entries[index].block?.header??header;
             return {data:BigInt(index),l2BlockNumber:h.getBlockNumber(),l2BlockHash:await h.hash()};}));
         },
-        getPrivateLogsByTags:async query=>{counters.tagQueries++;assert([2,4].includes(header.getBlockNumber()));return query.tags.map(()=>[]);},
-        getPublicLogsByTags:async query=>{counters.tagQueries++;assert([2,4].includes(header.getBlockNumber()));return query.tags.map(()=>[]);},
+        getPrivateLogsByTags:query=>logsByTags(query),
+        getPublicLogsByTags:query=>logsByTags(query,true),
         getTxReceipt:async hash=>{const item=mined.get(hash.toString());assert(item);const {effect,block}=item,h=block.header;return MinedTxReceipt.from({txHash:effect.txHash,status:'proposed',executionResult:'success',transactionFee:effect.transactionFee.toBigInt(),blockNumber:h.getBlockNumber(),blockHash:await h.hash(),slotNumber:h.globalVariables.slotNumber,epochNumber:0,txIndexInBlock:0,txEffect:TxEffect.fromBuffer(effect.toBuffer())});},
         getTxEffectMembershipWitness:async hash=>{const item=mined.get(hash.toString());assert(item);return {...await computeTxEffectMembershipWitness([item.effect],0),blockNumber:item.block.header.getBlockNumber()};},
       };
@@ -609,7 +657,7 @@ if(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1') {
         blockHash:(await header.hash()).toString(),txHash:effect.txHash.toString(),firstLog:0,logCount:effect.privateLogs.length,
         compactFields:block.toBlobFields().map(x=>x.toString()),headerFields:header.toFields().map(x=>x.toString())};
       const tagsBefore=counters.tagQueries;
-      return {receiver,sender,input,header,board,contractClass,counters,tagsBefore,node,block,
+      return {receiver,sender,input,header,initialHeader,board,contractClass,counters,tagsBefore,node,block,
         // Deliberately synthetic event-only effect for the isolated ordering
         // algorithm test below. Original EventService authenticates commitments;
         // this path does not claim ACIR, head completeness or chain acceptance.
@@ -654,8 +702,15 @@ if(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1') {
           const oldHead=(await writer.read()).notes[0];assert(oldHead);
           const call=await writer.stores.contractStore.getFunctionCall('set_preference',[1n,2,Fr.ZERO,true],board,contractClass.id);
           const hashed=await HashedValues.fromArgs(call.args),request2=new TxExecutionRequest(board,call.selector,hashed.hash,TxContext.empty(31337,1),[hashed],[],[],Fr.random());
+          const registryBefore=await writer.queue.runSynced(({changeSetId})=>writer.stores.noteStore.getNotes({contractAddress:registry.instance.address,owner:writer.complete.address,scopes:[writer.complete.address]},changeSetId));
+          assert.equal(registryBefore.length,0,'Bounded board page must not inject registry notes');
+          const matchesBefore=counters.tagResults;
           const result=await writer.queue.runSynced(async({changeSetId})=>{
             const execution=await writer.functionSimulator.run(request2,{msgSender:writer.complete.address,anchorBlockHeader:header,scopes:[writer.complete.address],senderForTags:writer.complete.address,changeSetId});
+            const registryNotes=await writer.stores.noteStore.getNotes({contractAddress:registry.instance.address,owner:writer.complete.address,scopes:[writer.complete.address]},changeSetId);
+            assert(registryNotes.some(note=>note.txHash.equals(effect.txHash)&&note.l2BlockNumber===4&&note.l2BlockHash===input.blockHash),
+              'Original handshake sync must admit the retained first transaction note');
+            assert(counters.tagResults>matchesBefore,'Original handshake path must retrieve actual encrypted logs');
             return generateSimulatedProvingResult(execution,async()=> 'synthetic.preference',node);
           });
           const data=result.publicInputs.forRollup.end;
@@ -673,6 +728,38 @@ if(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1') {
       const block=current.nextBlock<=current.anchor.blockNumber?await f.compact(current.nextBlock):null;
       return r.page.processRollingPreferenceRecovery({...recoveryInput(f),expected:{epoch:current.epoch,sequence:current.sequence},block},{contextGuard:guard});
     }
+    await test('labelled chain tag RPC serves only retained actual encrypted logs with canonical metadata and exact query bounds',async t=>{
+      const f=await acirFixture(t),effect=f.block.body.txEffects[0],log=effect.privateLogs[0];
+      const tag=new SiloedTag(log.fields[0]),referenceBlock={number:4,hash:await f.header.hash()};
+      const query={tags:[tag],referenceBlock,includeEffects:true,limitPerTag:1};
+      const [rows]=await f.node.getPrivateLogsByTags(query);assert.equal(rows.length,1);
+      const row=LogResultSchema.parse(JSON.parse(jsonStringify(rows[0])));
+      assert.equal(row.blockNumber,4);assert.equal(row.txIndexWithinBlock,0);assert.equal(row.logIndexWithinTx,0);
+      assert(row.blockHash.equals(referenceBlock.hash));assert(row.txHash.equals(effect.txHash));
+      assert.equal(row.blockTimestamp,f.header.globalVariables.timestamp);
+      assert.equal(row.logData.length,log.emittedLength);assert(row.logData.every((value,i)=>value.equals(log.fields[i])));
+      assert.equal(row.noteHashes.length,effect.noteHashes.length);assert(row.noteHashes.every((value,i)=>value.equals(effect.noteHashes[i])));
+      assert.equal(row.nullifiers.length,effect.nullifiers.length);assert(row.nullifiers.every((value,i)=>value.equals(effect.nullifiers[i])));
+      const bare=await f.node.getPrivateLogsByTags({tags:[tag],referenceBlock:referenceBlock.hash});
+      assert(!('noteHashes' in bare[0][0]));assert(!('nullifiers' in bare[0][0]));
+      const at=LogCursor.fromLog(row),before=new LogCursor(3,0,0);
+      const after=await f.node.getPrivateLogsByTags({...query,tags:[{tag,afterLog:at}]});
+      assert(after[0].every(value=>value.logIndexWithinTx>0),'afterLog is strictly exclusive');
+      const overridesRange=await f.node.getPrivateLogsByTags({...query,fromBlock:5,tags:[{tag,afterLog:before}]});
+      assert.equal(overridesRange[0].length,1,'Original archiver cursor supersedes lower bound');
+      for(const narrow of [{toBlock:4},{fromBlock:5},{referenceBlock:{number:2,hash:await f.initialHeader.hash()}},{txHash:TxHash.fromBigInt(999n)}]){
+        assert.equal((await f.node.getPrivateLogsByTags({...query,...narrow}))[0].length,0);
+      }
+      assert.equal((await f.node.getPrivateLogsByTags({...query,txHash:effect.txHash}))[0].length,1);
+      const reversed=[new SiloedTag(effect.privateLogs[1].fields[0]),tag];
+      const ordered=await f.node.getPrivateLogsByTags({...query,tags:reversed});
+      assert.equal(ordered.length,2);assert(ordered.every((page,i)=>page.length===1&&page[0].logData[0].equals(reversed[i].value)));
+      await assert.rejects(f.node.getPrivateLogsByTags({...query,txHash:effect.txHash,fromBlock:1}));
+      await assert.rejects(f.node.getPrivateLogsByTags({...query,limitPerTag:MAX_LOGS_PER_TAG+1}));
+      await assert.rejects(f.node.getPrivateLogsByTags({...query,referenceBlock:{number:3,hash:referenceBlock.hash}}));
+      await assert.rejects(f.node.getPrivateLogsByTags({...query,referenceBlock:BlockHash.random()}));
+      f.invalidate();await assert.rejects(f.node.getPrivateLogsByTags(query));
+    });
     await test('actual ACIR cursor scans empty history then authentic ciphertexts, replays mailbox, gates terminal head',async t=>{
       const f=await acirFixture(t),r=await f.receiver({recovery:true});
       const start=await r.page.processRollingPreferenceRecovery(recoveryInput(f),{contextGuard:async()=>{}});
