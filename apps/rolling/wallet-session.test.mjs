@@ -261,7 +261,7 @@ test('failed preference read preserves session and existing prepared financial i
 function installColdMailbox(f){
  const receipt={schemaVersion:1,database:'ab'.repeat(32),epoch:'cd'.repeat(32),sequence:0,
   anchor:{blockNumber:10,blockHash:hex(55)},nextBlock:1,nextLog:0,records:[],head:null,complete:false};
- f.node.getBlockData=async height=>{assert.equal(height,10);return {blockHash:Fr.fromString(hex(55)),header:{globalVariables:{blockNumber:10},hash:async()=>Fr.fromString(hex(55))}};};
+ f.node.getBlockData=async height=>{assert(height===10||height==='checkpointed');return {blockHash:Fr.fromString(hex(55)),header:{globalVariables:{blockNumber:10},hash:async()=>Fr.fromString(hex(55))}};};
  f.pxe.processRollingPreferenceRecovery=async(config,{contextGuard})=>{
   assert(f.state.active);f.state.events.push('cold-mailbox');await contextGuard();
   assert.equal(config.expectedArtifactHash,(await computeArtifactHash(artifact)).toString());
