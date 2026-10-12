@@ -35,7 +35,7 @@ Creation must be within five minutes of generation. Budget stop is at most eight
 hours after creation; commissioning stop is exactly thirty minutes after creation.
 The archive contains release contents directly, including `prover-release.json`,
 not an enclosing directory. Its external SHA256 and manifest SHA256 must be
-recorded by the lead after packaging. Node24.21.0 Linux binary, BB6rc1 binary,
+recorded by the lead after packaging. Node 24.21.0 Linux binary, BB6rc1 binary,
 and reviewed Rolling catalog hashes are additionally pinned in this generator.
 A changed catalog requires source review; rebuilding an identical catalog with a
 new qualification helper needs only new external archive/manifest hashes.
@@ -182,7 +182,7 @@ need budget allowance. This repair does not waive either commissioning gate.
 ### Automatic Linux qualification, without a remote shell
 
 `rolling-qualification.service` starts once after installation and uses the
-packaged Node24.21.0 and reviewed qualifier. Its cgroup allows loopback networking
+packaged Node 24.21.0 and reviewed qualifier. Its cgroup allows loopback networking
 only; node P2P/L1 synchronization runs in the separate node service. The job has a
 private temporary directory, read-only system/release, empty capabilities,
 `LOG_LEVEL=silent`, no `NODE_PATH`, `NODE_OPTIONS`, `BB`, Docker socket, host IAM
@@ -440,5 +440,64 @@ fixed cleanup flags; a cleanup failure cannot replace that exception. When
 storage still works, the sanitized observation also retains those flags and the
 actual reaped child exit/signal. Failed storage may prevent this record; systemd's
 unchanged cgroup/stop budget remains the last resort. Regression tests inject
-ENOSPC at the third fsync after a real disposable child starts, covering ordinary
+ENOSPC at the first post-spawn receipt fsync after a real disposable child starts, covering ordinary
 termination and a child that ignores TERM. No Docker process is used by tests.
+
+## Bounded post-genesis diagnostic stages
+
+The runtime now packages `deploy/prover/startup-stages.mjs`. The hash-bound
+Python wrapper checks its exact SHA256, exclusively creates a dedicated 0700
+stage directory, mounts only that directory and the read-only helper, and adds
+Node's `--import` before the existing CLI arguments. The foreground Docker
+process, image, limits, no-restart policy, admin authority, shutdown controls and
+qualifier sandbox remain unchanged. A prior directory is preserved and prevents
+another launch through this wrapper. No extra capability or authentication key
+is introduced. The generated host program has no extra embedded diagnostic code;
+its existing startup-source hash changes and still requires fresh packaging and
+actual <=16384-byte user-data verification before a separately authorized launch.
+
+The helper requires Node 24.21.0 and uses the official synchronous
+[`registerHooks` API](https://raw.githubusercontent.com/nodejs/node/v24.21.0/doc/api/module.md).
+Offline extraction from the pinned image found the 24.21.0 public header and
+byte-identical startup/factory modules. A real Mac Node 24 hook test validates
+replacement, untouched unrelated imports and deregistration; this is not a
+Linux node startup test. Before the CLI imports, all three exact module hashes
+and unique insertion anchors must match. At load time the original returned
+bytes are checked again. Only fixed begin/complete marker statements and one
+import are inserted; conditions, calls, arguments, awaits and cleanup remain
+byte-for-byte recoverable. SDK/image files on disk are unchanged. This execution
+is explicitly **instrumented**, not an unmodified-image qualification.
+
+The 25 intervals cover registry validation, rollup compatibility, L1 configuration,
+genesis comparison, telemetry, factory crypto/key-store/address/blob/snapshot/
+world-state/AVM/archiver/verifier/fee/P2P startup, and public/admin RPC binding.
+A begin without completion identifies an interval, not its error's cause. Marker
+I/O failure is sticky and cannot replace the application's result or thrown
+object. The helper emits no stdout/stderr diagnostics and never receives an
+error object, URL, runtime configuration, identity or return value.
+
+`startup.instrumentation` reads only `startup-stages/stages.json`: an owner-only
+regular file, maximum 8192 bytes, with strict schema, helper digest and a bounded,
+properly nested history. Unknown phases, extra fields, duplicate/reordered
+completions, changed digest, symlinks, nonregular files and public permissions
+are rejected. The fixed directory is separate from combined native output;
+marker-looking exception text cannot become a stage record. This is evidence
+from the trusted pinned runtime, **not attestation against a malicious process**
+which could write its own record. Availability or completion never substitutes
+for the actual trusted-node readiness and Linux qualification gates.
+
+Cheap checks (no Docker execution, node startup, proof or archive build):
+
+```sh
+node --test deploy/prover/startup-stages.test.mjs
+python3 scripts/test-prover-bootstrap.py
+PROVER_VALIDATION_NODE=/absolute/path/to/pinned/node python3 scripts/test-prover-package.py
+```
+
+Use the pinned Node 24.21.0 binary. Node tests parse all transformed SDK modules,
+recover the exact original bytes, exercise await/error/receiver semantics, and
+verify bounded atomic records and malformed inputs. Python tests preserve the
+real disposable-child termination/escalation cases, now injecting failure at
+the first post-spawn fsync (after the additional directory sync). Package tests
+check exact helper bytes in the complete runtime inventory. Actual Linux
+instrumented startup, real readiness and any new paid launch remain pending.

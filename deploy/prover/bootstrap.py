@@ -748,6 +748,52 @@ def _execute(config, attestation_source):
 '''
 
 
+
+# Dedicated records from the exact pinned trusted process, not adversarial attestation.
+STARTUP_HELPER_SHA = 'cc13d6539544f95683572766579a3a884c1bae711a865ec74b2e731e1d407e49'
+DIAGNOSTIC_PHASES = ('registry-guard', 'rollup-compatibility', 'l1-config', 'genesis-compare', 'telemetry', 'factory', 'factory-bb', 'factory-kzg', 'factory-keystore', 'factory-addresses', 'factory-l1-constants', 'factory-blob', 'factory-snapshot', 'factory-epoch-cache', 'factory-world-state', 'factory-avm', 'factory-archiver', 'factory-world-state-sync', 'factory-verifiers', 'factory-fee-provider', 'factory-p2p', 'factory-start', 'public-rpc-bind', 'admin-auth', 'admin-rpc-bind')
+
+def stage_directory(base):
+    directory=base/'startup-stages'
+    info=directory.lstat()
+    if not stat.S_ISDIR(info.st_mode) or stat.S_IMODE(info.st_mode)!=0o700 or info.st_uid!=os.getuid():raise ValueError('Invalid stage directory')
+    return directory
+
+def instrument_node_args(args,base):
+    helper=pathlib.Path(__file__).resolve().parent/'startup-stages.mjs'
+    info=helper.lstat()
+    if not stat.S_ISREG(info.st_mode) or hashlib.sha256(helper.read_bytes()).hexdigest()!=STARTUP_HELPER_SHA:raise ValueError('Invalid stage helper')
+    directory=base/'startup-stages';directory.mkdir(mode=0o700) # exclusive, never discard prior evidence
+    stage_directory(base)
+    fd=os.open(base,os.O_RDONLY|os.O_DIRECTORY|os.O_NOFOLLOW)
+    try:os.fsync(fd)
+    finally:os.close(fd)
+    i=args.index(IMAGE)
+    return args[:i]+['-v',str(helper)+':/etc/rolling-node/startup-stages.mjs:ro','-v',str(directory)+':/rolling-startup']+args[i:i+1]+['--import','/etc/rolling-node/startup-stages.mjs']+args[i+1:]
+
+def stage_observation(base):
+    try:
+        directory=stage_directory(base);fd=os.open(directory/'stages.json',os.O_RDONLY|os.O_NOFOLLOW|os.O_NONBLOCK)
+        try:
+            info=os.fstat(fd)
+            if not stat.S_ISREG(info.st_mode) or stat.S_IMODE(info.st_mode)!=0o600 or info.st_uid!=os.getuid() or info.st_size>8192:raise ValueError()
+            with os.fdopen(fd,'rb',closefd=False) as f:data=f.read(8193)
+            if len(data)>8192:raise ValueError()
+            v=json.loads(data)
+        finally:os.close(fd)
+        if type(v) is not dict or set(v)!={'schemaVersion','instrumented','helperSha256','history'} or type(v['schemaVersion']) is not int or v['schemaVersion']!=1 or v['instrumented'] is not True or v['helperSha256']!=STARTUP_HELPER_SHA:raise ValueError()
+        if type(v['history']) is not list or len(v['history'])>2*len(DIAGNOSTIC_PHASES):raise ValueError()
+        stack=[];started=set()
+        for pair in v['history']:
+            if type(pair) is not list or len(pair)!=2 or pair[0] not in DIAGNOSTIC_PHASES or pair[1] not in ('begin','complete'):raise ValueError()
+            phase,state=pair
+            if state=='begin':
+                if phase in started:raise ValueError()
+                started.add(phase);stack.append(phase)
+            elif not stack or stack.pop()!=phase:raise ValueError()
+        return {'available':True,**v}
+    except Exception:return {'available':False}
+
 NODE_STAGES=('process-spawned','crs','genesis','rollup-standby','node-construction','public-rpc','admin-rpc')
 NODE_ERRORS=('native-load','module-load','permission','disk-full','memory','fetch','unknown')
 
@@ -763,7 +809,7 @@ def node_startup_observation(base):
             if v[key] is not None and (type(v[key]) is not int or not 0<=v[key]<=limit): raise ValueError()
         if v['signal']==0:raise ValueError()
         if v['complete']!=(sum(v[k] is not None for k in ('exitCode','signal'))==1) or (not v['complete'] and (v['exitCode'] is not None or v['signal'] is not None)): raise ValueError()
-        return {'available':True,**v}
+        return {'available':True,**v,'instrumentation':stage_observation(base)}
     except Exception:return {'available':False}
 
 class NodeOutput:
@@ -839,6 +885,7 @@ def node_wrapper(args,base):
     try:
         persist()
         if requested is not None:output.finish(-requested);persist();return -requested
+        args=instrument_node_args(args,base)
         process=subprocess.Popen(args,stdin=subprocess.DEVNULL,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,bufsize=0)
         output.value['stages'].append('process-spawned');persist()
         if requested is not None:stop(requested,None)

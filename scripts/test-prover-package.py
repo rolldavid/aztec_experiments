@@ -86,8 +86,11 @@ export const getVersioningResponseHandler=()=>()=>{};
         self.assertEqual(copied.read_bytes(),source.read_bytes())
         inventory={str(p.relative_to(self.release)):hashlib.sha256(p.read_bytes()).hexdigest() for p in self.release.rglob('*') if p.is_file()}
         self.assertEqual(inventory['deploy/prover/bootstrap.py'],hashlib.sha256(source.read_bytes()).hexdigest())
-        self.assertEqual(sorted(str(p.relative_to(self.release)) for p in (self.release/'deploy').rglob('*') if p.is_file()),['deploy/prover/bootstrap.py'])
+        self.assertEqual(sorted(str(p.relative_to(self.release)) for p in (self.release/'deploy').rglob('*') if p.is_file()),['deploy/prover/bootstrap.py','deploy/prover/startup-stages.mjs'])
         self.assertNotIn('CONFIG = {',copied.read_text())
+        stage=ROOT/'deploy/prover/startup-stages.mjs'
+        self.assertEqual((self.release/'deploy/prover/startup-stages.mjs').read_bytes(),stage.read_bytes())
+        self.assertEqual(inventory['deploy/prover/startup-stages.mjs'],hashlib.sha256(stage.read_bytes()).hexdigest())
         isolated=importlib.util.spec_from_file_location('isolated_startup',copied);module=importlib.util.module_from_spec(isolated);isolated.loader.exec_module(module)
         output=module.NodeOutput();output.feed(b'PRIVATE_SENTINEL\n');output.finish(1)
         self.assertEqual(output.value['errors'],['unknown']);self.assertNotIn('PRIVATE_SENTINEL',json.dumps(output.value))

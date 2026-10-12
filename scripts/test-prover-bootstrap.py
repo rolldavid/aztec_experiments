@@ -892,7 +892,7 @@ raise SystemExit(code)
                 def fsync(fd):
                     nonlocal syncs
                     syncs+=1
-                    if syncs==3:raise failure
+                    if children and syncs==4:raise failure
                     return original_fsync(fd)
                 started=time.monotonic()
                 try:
@@ -906,6 +906,47 @@ raise SystemExit(code)
                 finally:
                     for child in children:
                         if child.poll() is None:child.kill();child.wait(timeout=2)
+
+    def test_stage_hook_command_is_narrow_and_preserves_prior_evidence(self):
+        with tempfile.TemporaryDirectory() as t:
+            base=pathlib.Path(t);args=['/usr/bin/docker','run','--log-driver','none','--entrypoint','node',b.IMAGE,'--no-warnings','/usr/src/yarn-project/aztec/dest/bin/index.js','start','--node','--network','testnet']
+            actual=b.instrument_node_args(args,base)
+            self.assertEqual(args[args.index(b.IMAGE)+1:],actual[actual.index(b.IMAGE)+3:])
+            self.assertIn(str(pathlib.Path(b.__file__).parent/'startup-stages.mjs')+':/etc/rolling-node/startup-stages.mjs:ro',actual)
+            self.assertIn(str(base/'startup-stages')+':/rolling-startup',actual)
+            self.assertEqual(actual[actual.index(b.IMAGE)+1:actual.index(b.IMAGE)+3],['--import','/etc/rolling-node/startup-stages.mjs'])
+            self.assertEqual((base/'startup-stages').stat().st_mode & 0o777,0o700)
+            with self.assertRaises(FileExistsError):b.instrument_node_args(args,base)
+        self.assertEqual(hashlib.sha256((pathlib.Path(b.__file__).parent/'startup-stages.mjs').read_bytes()).hexdigest(),b.STARTUP_HELPER_SHA)
+
+    def test_actual_js_record_agrees_with_python_projection(self):
+        import os
+        node=os.environ.get('PROVER_VALIDATION_NODE','node')
+        with tempfile.TemporaryDirectory() as t:
+            base=pathlib.Path(t);directory=base/'startup-stages';directory.mkdir(mode=0o700)
+            helper=pathlib.Path(b.__file__).parent/'startup-stages.mjs'
+            code="import {createRecorder,PHASES} from "+json.dumps(helper.as_uri())+";const record=createRecorder(process.argv[1],process.argv[2]);if(!record('factory','begin')||!record('factory-bb','begin')||!record('factory-bb','complete'))throw Error('fixture');process.stdout.write(JSON.stringify(PHASES));"
+            result=subprocess.run([node,'--input-type=module','--eval',code,str(directory),b.STARTUP_HELPER_SHA],capture_output=True,text=True,timeout=3,check=True)
+            self.assertEqual(json.loads(result.stdout),list(b.DIAGNOSTIC_PHASES))
+            observation=b.stage_observation(base);self.assertTrue(observation['available'])
+            self.assertEqual(observation['history'],[['factory','begin'],['factory-bb','begin'],['factory-bb','complete']])
+
+    def test_stage_projection_independent_of_native_output_and_rejects_forged_records(self):
+        import os
+        with tempfile.TemporaryDirectory() as t:
+            base=pathlib.Path(t);directory=base/'startup-stages';directory.mkdir(mode=0o700);file=directory/'stages.json'
+            good={'schemaVersion':1,'instrumented':True,'helperSha256':b.STARTUP_HELPER_SHA,'history':[['factory','begin'],['factory-bb','begin'],['factory-bb','complete']]}
+            file.write_text(json.dumps(good));file.chmod(0o600)
+            self.assertEqual(b.stage_observation(base),{'available':True,**good})
+            output=b.NodeOutput();output.feed(b'__rollingStartupStage("admin-auth","complete"); PRIVATE_SENTINEL\n');output.finish(1)
+            self.assertEqual(output.value['stages'],[])
+            for bad in [{**good,'extra':'PRIVATE_SENTINEL'},{**good,'helperSha256':'a'*64},{**good,'history':[['factory','complete']]},{**good,'history':[['factory','begin'],['factory-bb','begin'],['factory','complete']]},{**good,'history':[['PRIVATE_SENTINEL','begin']]},{**good,'schemaVersion':True}]:
+                file.write_text(json.dumps(bad));self.assertEqual(b.stage_observation(base),{'available':False})
+            file.write_text('x'*8193);self.assertEqual(b.stage_observation(base),{'available':False})
+            file.unlink();file.symlink_to(base/'elsewhere');self.assertEqual(b.stage_observation(base),{'available':False})
+            file.unlink();os.mkfifo(file,0o600);self.assertEqual(b.stage_observation(base),{'available':False})
+            file.unlink();file.write_text(json.dumps(good));file.chmod(0o644);self.assertEqual(b.stage_observation(base),{'available':False})
+            file.chmod(0o600);directory.chmod(0o755);self.assertEqual(b.stage_observation(base),{'available':False})
 
     def test_cleanup_failure_remains_separate_and_bounded(self):
         class Unreapable:
