@@ -7,7 +7,7 @@ import path from 'node:path';
 import os from 'node:os';
 import vm from 'node:vm';
 import {webcrypto} from 'node:crypto';
-import {validateRollingNotificationBrowserControl,createRollingNotificationTraffic,notificationSubscriptionConfirmed,readNotificationReply,runRollingNotificationBrowser} from './rolling-notification-browser.mjs';
+import {validateRollingNotificationBrowserControl,createRollingNotificationTraffic,checkRollingNotificationFeeOnly,notificationSubscriptionConfirmed,readNotificationReply,runRollingNotificationBrowser} from './rolling-notification-browser.mjs';
 let root,envelope;
 const origins={origin:'http://127.0.0.1:11001',trustedOrigin:'http://127.0.0.1:11002',ethereumOrigin:'http://127.0.0.1:11003'};
 before(async()=>{root=await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(),'rolling-notification-unit-')));await fs.chmod(root,0o700);const c=vm.createContext({crypto:webcrypto,TextEncoder,TextDecoder,Uint8Array});vm.runInContext(await fs.readFile(new URL('../../shared/wallet-backup.js',import.meta.url),'utf8'),c);envelope=JSON.stringify(await c.BillboardWalletBackup.encrypt({schemaVersion:1,wallet:{secretKey:'0x'+'01'.repeat(32),salt:'0'},claims:[]},'PRIVATE_PASSWORD_SENTINEL'));});
@@ -43,4 +43,24 @@ test('installed client single-item batch and actual Tx serialization pass submis
  const discard=()=>{},log={debug:discard,info:discard,warn:discard,error:discard,trace:discard,verbose:discard};
  const client=createSafeJsonRpcClient(origins.trustedOrigin+'/v1/node',AztecNodeApiSchema,{namespaceMethods:'aztec',log,fetch:async(host,body)=>{const serialized=jsonStringify(body);requests.push({batch:Array.isArray(body),count:body.length,allowed:t.inspect(req(host,'POST',serialized))});return {response:body.map(r=>({jsonrpc:'2.0',id:r.id,result:null})),headers:new Headers()};}});
  try{await client.sendTx(await Tx.random());assert.deepEqual(requests,[{batch:true,count:1,allowed:true}]);t.end();assert.equal(t.snapshot().nodeSubmissions,1);}finally{await BarretenbergSync.destroySingleton();}
+});
+
+test('notification compact reads remain public-only before and within explicit write phases',()=>{
+ const t=createRollingNotificationTraffic(origins),body=JSON.stringify({schemaVersion:1,number:7,hash:'0x'+'01'.repeat(32),tier:'checkpointed'}),r=req(origins.trustedOrigin+'/v1/compact-block','POST',body);
+ assert(t.inspect(r));t.begin('subscription');assert(t.inspect(r));assert(t.inspect(proof()));assert(t.inspect(send()));t.end();assert(t.inspect(r));
+ const s=t.snapshot();assert.equal(s.compactRequests,3);assert.equal(s.tagDiscoveryRequests,0);assert.equal(s.proofSubmits,1);assert.equal(s.nodeSubmissions,1);assert.equal(s.completedWritePhases,1);assert.equal(s.inspectionErrors,0);
+ const bad=req(origins.trustedOrigin+'/v1/compact-block','POST',JSON.stringify({...JSON.parse(body),tag:'PRIVATE_SENTINEL'}));assert.equal(t.inspect(bad),false);assert.equal(t.snapshot().compactRequests,3);assert(!JSON.stringify(t.snapshot()).includes('PRIVATE_SENTINEL'));
+});
+test('labelled fee-only UI seam waits for explicit action settlement before reading deposit status',async()=>{
+ const order=[],ready={};let release;const pending=new Promise(r=>{release=r;});const dialog={getByRole(role,options){assert.equal(role,'button');assert.deepEqual(options,{name:'Check action and review fee',exact:true});order.push('action');return ready;},getByText(text,options){assert.equal(text,'No posting deposit was found.');assert.deepEqual(options,{exact:true});order.push('deposit');return {async waitFor(options){assert.deepEqual(options,{timeout:12});order.push('visible');}};}};
+ const work=checkRollingNotificationFeeOnly({dialog,remaining:()=>12,settled:async r=>{assert.equal(r,ready);order.push('settling');await pending;order.push('settled');}});assert.deepEqual(order,['action','settling']);release();await work;assert.deepEqual(order,['action','settling','settled','deposit','visible']);
+});
+test('labelled fee-only seam never reads status after action settlement fails',async()=>{
+ let statusReads=0;const error=Error('labelled failure'),dialog={getByRole(){return {};},getByText(){statusReads++;throw Error('unexpected');}};
+ await assert.rejects(checkRollingNotificationFeeOnly({dialog,remaining:()=>12,settled:async()=>{throw error;}}),e=>e===error);assert.equal(statusReads,0);
+});
+test('source-bound driver imports without status discovery and checks fee-only after subscribe click',async()=>{
+ const source=await fs.readFile(new URL('./rolling-notification-browser.mjs',import.meta.url),'utf8'),start=source.indexOf('async function importKeys(){'),end=source.indexOf('// Parent fixture',start),body=source.slice(start,end);assert(start>0&&end>start);
+ assert(!body.includes('No posting deposit'));assert(!body.includes('checkRollingNotificationFeeOnly'));assert(body.includes('recover({before,requireCompact:true})'));
+ const subscribe=source.indexOf("mark('subscribe-review');"),fee=source.indexOf('await checkRollingNotificationFeeOnly',subscribe),review=source.indexOf("await reviewSend('subscription'",subscribe);assert(subscribe>0&&fee>subscribe&&review>fee);
 });

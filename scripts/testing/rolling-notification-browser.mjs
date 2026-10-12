@@ -5,7 +5,7 @@ import {constants} from 'node:fs';
 import path from 'node:path';
 import {setTimeout as sleep} from 'node:timers/promises';
 import {validateRollingBrowserBackup,waitForRollingComposerState} from './rolling-composer-browser.mjs';
-import {createRollingPreferenceTraffic,lockRollingPreferencePanel} from './rolling-preference-browser.mjs';
+import {createRollingPreferenceTraffic,lockRollingPreferencePanel,checkRollingColdRecoveryWindow} from './rolling-preference-browser.mjs';
 const invalid=()=>Error('Invalid notification browser control.');
 const failed=()=>Error('Notification browser check failed.');
 const check=v=>{if(!v)throw failed();};
@@ -103,6 +103,13 @@ export async function reviewRollingNotificationAction({dialog:d,remaining,settle
  const privateViews=d.getByRole('button',{name:'Private views',exact:true});await settled(privateViews);await privateViews.click({timeout:remaining()});await recover();
 }
 
+// Fee-only is checked only after the user explicitly opens an action. Cold
+// keys-only import intentionally does not query balances or owned names.
+export async function checkRollingNotificationFeeOnly({dialog,remaining,settled}){
+ await settled(dialog.getByRole('button',{name:'Check action and review fee',exact:true}));
+ await dialog.getByText('No posting deposit was found.',{exact:true}).waitFor({timeout:remaining()});
+}
+
 // Policy details also contain rich text. Only the direct child is the post's
 // message; strict selection must still reject absent or duplicated messages.
 export async function assertRollingNotificationPostText(card,expectedText){
@@ -113,7 +120,7 @@ const stages=new Set(['validation','launch','locked','root-view','root-message',
 export const NOTIFICATION_BROWSER_CHECKS=Object.freeze(['freshNativeDatabase','publicBeforeUnlock','feeOnlyAccount','subscriptionReviewed','subscriptionConfirmed','subscriptionRecovered','unreadReply','markerReviewed','markerConfirmed','suppressedReply','publicReplyRetained','lockClears','reloadLocked','freshReopen','recoveredSuppression','noFinancialRecovery']);
 export async function runRollingNotificationBrowser(input){
  const started=Date.now();let stage='validation',browser,context,page,timer,expiresAt,expired=false,observer;
- const report={schemaVersion:1,passed:false,diagnostic:null,failureCategory:null,checks:Object.fromEntries(NOTIFICATION_BROWSER_CHECKS.map(k=>[k,false])),recoverySteps:0,traffic:null,cleanup:{contextClosed:false,browserClosed:false}};
+ const report={schemaVersion:1,passed:false,diagnostic:null,failureCategory:null,checks:Object.fromEntries(NOTIFICATION_BROWSER_CHECKS.map(k=>[k,false])),recoverySteps:0,coldRecovery:{windows:0,compactRequests:0,tagDiscoveryRequests:0},traffic:null,cleanup:{contextClosed:false,browserClosed:false}};
  try{
   const {directory,onStage=()=>{},...control}=input;check(typeof onStage==='function');const c=await validateRollingNotificationBrowserControl(control,{directory});
   observer=createRollingNotificationTraffic({origin:c.origin,trustedOrigin:c.trustedOrigin,ethereumOrigin:c.ethereumOrigin});expiresAt=started+c.timeoutMs;
@@ -137,11 +144,13 @@ export async function runRollingNotificationBrowser(input){
   await newContext();
   const dialog=()=>page.getByRole('dialog',{name:'Your private account',exact:true});
   async function settled(ready){const state=await waitForRollingComposerState({dialog:dialog(),ready,remaining});if(state!=='ready'){report.diagnostic=state;throw failed();}}
-  async function recover(){
-   const before=traffic(),d=dialog(),done=d.getByText('Your saved choices are ready.',{exact:true}),more=d.getByRole('button',{name:'Continue private recovery',exact:true});
+  async function recover({before=traffic(),requireCompact=false}={}){
+   const d=dialog(),done=d.getByText('Your saved choices are ready.',{exact:true}),more=d.getByRole('button',{name:'Continue private recovery',exact:true});
    let next=d.getByRole('button',{name:'Recover private views',exact:true});await settled(next);
    for(;;){await next.click({timeout:remaining()});report.recoverySteps++;await settled(done.or(more));unchanged(before);if(await done.isVisible())break;check(await page.locator('#content article.post').count()===0);next=more;}
    check(await page.evaluate(async()=>(await indexedDB.databases()).length>0));
+   const window=checkRollingColdRecoveryWindow(before,traffic(),{requireCompact});
+   for(const key of ['windows','compactRequests','tagDiscoveryRequests'])report.coldRecovery[key]+=window[key];
   }
   async function importKeys(){
    const before=traffic();await page.goto(c.origin+'/#/notifications',{waitUntil:'networkidle',timeout:remaining()});
@@ -152,7 +161,7 @@ export async function runRollingNotificationBrowser(input){
    await dialog().getByRole('button',{name:'Unlock',exact:true}).click({timeout:remaining()});await settled(dialog().getByLabel('Recovery file',{exact:true}));
    await dialog().getByLabel('Recovery password',{exact:true}).fill(c.backupPassword,{timeout:remaining()});await dialog().getByLabel('Recovery file',{exact:true}).setInputFiles(c.backupPath,{timeout:remaining()});
    await dialog().getByRole('button',{name:'Import recovery',exact:true}).click({timeout:remaining()});await settled(dialog().getByRole('button',{name:'Recover private views',exact:true}));
-   await dialog().getByText('No posting deposit was found.',{exact:false}).waitFor({timeout:remaining()});await recover();unchanged(before);
+   await recover({before,requireCompact:true});unchanged(before);
    await dialog().getByRole('button',{name:'Close account panel',exact:true}).click({timeout:remaining()});
   }
   // Parent fixture has exactly two public posts; no page filtering or skipped
@@ -165,15 +174,17 @@ export async function runRollingNotificationBrowser(input){
    await page.getByText('Checked against chain block '+String(data.checkpoint.number),{exact:true}).waitFor({timeout:remaining()});check(await page.locator('#content [role="alert"]').count()===0);traffic();return data;
   }
   async function reviewSend(kind,reviewText){
+   let recoveryBefore;
    await reviewRollingNotificationAction({dialog:dialog(),remaining,settled,reviewText,
     onReviewed:()=>{check(!traffic().writePhaseOpen);report.checks[kind==='subscription'?'subscriptionReviewed':'markerReviewed']=true;},
     onConfirm:()=>{observer.begin(kind);mark(kind==='subscription'?'subscribe-send':'marker-send');},
-    onConfirmed:()=>{observer.end();traffic();report.checks[kind==='subscription'?'subscriptionConfirmed':'markerConfirmed']=true;},recover});
+    onConfirmed:()=>{observer.end();recoveryBefore=traffic();report.checks[kind==='subscription'?'subscriptionConfirmed':'markerConfirmed']=true;},recover:()=>recover({before:recoveryBefore})});
    await dialog().getByRole('button',{name:'Close account panel',exact:true}).click({timeout:remaining()});
   }
-  mark('locked');await importKeys();report.checks.freshNativeDatabase=true;report.checks.publicBeforeUnlock=true;report.checks.feeOnlyAccount=true;
+  mark('locked');await importKeys();report.checks.freshNativeDatabase=true;report.checks.publicBeforeUnlock=true;
   mark('root-view');await view('Main board',[c.expected.rootId]);const root=()=>page.locator('#post-'+c.expected.rootId);mark('root-message');await assertRollingNotificationPostText(root(),c.expected.rootText);
   mark('subscribe-review');await root().getByRole('button',{name:'Subscribe to thread',exact:true}).click({timeout:remaining()});
+  await checkRollingNotificationFeeOnly({dialog:dialog(),remaining,settled});report.checks.feeOnlyAccount=true;
   await reviewSend('subscription','Enable thread subscription for '+c.expected.rootId+'. This preference is encrypted, not a public ownership list.');
   await root().getByRole('button',{name:'Unsubscribe from thread',exact:true}).waitFor({timeout:remaining()});report.checks.subscriptionRecovered=true;
   mark('wait-reply');await notificationSubscriptionConfirmed(directory);let reply;

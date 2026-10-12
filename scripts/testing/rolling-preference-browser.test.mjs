@@ -7,7 +7,7 @@ import path from 'node:path';
 import os from 'node:os';
 import vm from 'node:vm';
 import {webcrypto} from 'node:crypto';
-import {validateRollingPreferenceBrowserControl,createRollingPreferenceTraffic,runRollingPreferenceBrowser} from './rolling-preference-browser.mjs';
+import {validateRollingPreferenceBrowserControl,createRollingPreferenceTraffic,checkRollingColdRecoveryWindow,runRollingPreferenceBrowser} from './rolling-preference-browser.mjs';
 let root,envelope;
 before(async()=>{
  root=await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(),'rolling-preferences-unit-')));await fs.chmod(root,0o700);
@@ -60,10 +60,10 @@ const badRequests=[
  req(origins.trustedOrigin+'/v1/node','POST',rpc('aztec_getUnknownPrivateAPI')),req(origins.trustedOrigin+'/v1/node','POST',rpc('node_getNodeInfo')),req(origins.trustedOrigin+'/v1/node','POST','PRIVATE_SENTINEL'),req(origins.trustedOrigin+'/v1/node','POST','[]'),req(origins.trustedOrigin+'/v1/node','POST','x'.repeat(8*1024*1024+1)),req(origins.ethereumOrigin+'/','POST',rpc('eth_sign',[])),req(origins.trustedOrigin+'/wrong','POST',rpc('node_getNodeInfo')),
 ];
 for(const [index,request]of badRequests.entries())test('labelled unknown/expanded traffic fails closed '+index,()=>{const o=createRollingPreferenceTraffic(origins);assert.equal(o.inspect(request),false);assert.equal(o.snapshot().inspectionErrors,1);assert(!JSON.stringify(o.snapshot()).includes('PRIVATE_SENTINEL'));});
-test('pinned node read inventory matches installed SDK source without a submission method',async()=>{
- const source=await fs.readFile(new URL('../../node_modules/@aztec-labs/stdlib/dest/interfaces/aztec-node.js',import.meta.url),'utf8'),methods=[...source.matchAll(/^    ([A-Za-z][A-Za-z0-9]*): z.function/gm)].map(m=>m[1]);assert(methods.length>50);assert(methods.includes('getSyncedL1Timestamp'));assert(methods.includes('getL1ToL2MessageMembershipWitness'));
- const o=createRollingPreferenceTraffic(origins);for(const method of methods)assert.equal(o.inspect(req(origins.trustedOrigin+'/v1/node','POST',rpc('aztec_'+method))),method!=='sendTx',method);
- assert.equal(o.snapshot().inspectionErrors,0);assert.equal(o.snapshot().nodeSubmissions,1);
+test('pinned rc3 node inventory keeps submission and unused archive witness denied',async()=>{
+ const source=await fs.readFile(new URL('../../node_modules/@aztec-labs/stdlib/dest/interfaces/aztec-node.js',import.meta.url),'utf8'),methods=[...source.matchAll(/^    ([A-Za-z][A-Za-z0-9]*): z.function/gm)].map(m=>m[1]);assert(methods.length>50);assert(methods.includes('getSyncedL1Timestamp'));assert(methods.includes('getL1ToL2MessageMembershipWitness'));assert(methods.includes('getBlockHashMembershipWitnessAtArchive'));
+ const o=createRollingPreferenceTraffic(origins);for(const method of methods)assert.equal(o.inspect(req(origins.trustedOrigin+'/v1/node','POST',rpc('aztec_'+method))),!['sendTx','getBlockHashMembershipWitnessAtArchive'].includes(method),method);
+ assert.equal(o.snapshot().inspectionErrors,1);assert.equal(o.snapshot().nodeSubmissions,1);
 });
 
 // Actual production transport request, with only the HTTP receiver replaced.
@@ -75,4 +75,38 @@ test('production trusted node first request passes the read-only observer',async
  try{await assert.rejects(createTrustedPrivateNode({url:origins.trustedOrigin+'/v1/node',expectedNetworkScope:{chainId:'31337',version:'1',rollup:'0x'+'01'.repeat(20)},proofsEnabled:true,allowLocalDev:true}),{code:'BB_TRUSTED_NODE_UNAVAILABLE'});}
  finally{globalThis.fetch=previous;}
  assert.deepEqual(observed,[{allowed:true,methods:['aztec_getNodeInfo']}]);assert.equal(o.snapshot().inspectionErrors,0);
+});
+
+// Production selector grammar; labelled transport fixtures, never block authority.
+const compactSelector=()=>({schemaVersion:1,number:7,hash:'0x'+'01'.repeat(32),tier:'checkpointed'});
+const compactRequest=(selector=compactSelector())=>req(origins.trustedOrigin+'/v1/compact-block','POST',JSON.stringify(selector));
+test('exact compact POST/preflight aggregate and detached snapshot contain no selectors',()=>{
+ const t=createRollingPreferenceTraffic(origins);assert(t.inspect(req(origins.trustedOrigin+'/v1/compact-block','OPTIONS')));assert(t.inspect(compactRequest()));
+ const s=t.snapshot();assert.equal(s.compactRequests,1);assert.equal(s.compactPreflights,1);assert.equal(s.inspectionErrors,0);assert(!JSON.stringify(s).includes(compactSelector().hash));s.compactRequests=99;assert.equal(t.snapshot().compactRequests,1);
+});
+const compactMutations={extra:s=>s.owner='PRIVATE_SENTINEL',missing:s=>delete s.hash,schema:s=>s.schemaVersion=2,zero:s=>s.number=0,overflow:s=>s.number=4294967296,fraction:s=>s.number=1.5,stringNumber:s=>s.number='7',shortHash:s=>s.hash='0x1',uppercase:s=>s.hash='0x'+'AB'.repeat(32),fieldOverflow:s=>s.hash='0x'+'ff'.repeat(32),tier:s=>s.tier='proposed'};
+for(const [name,change] of Object.entries(compactMutations))test('compact selector rejects '+name,()=>{const s=compactSelector();change(s);const t=createRollingPreferenceTraffic(origins);assert.equal(t.inspect(compactRequest(s)),false);assert.equal(t.snapshot().compactRequests,0);assert.equal(t.snapshot().inspectionErrors,1);assert(!JSON.stringify(t.snapshot()).includes('PRIVATE_SENTINEL'));});
+for(const [name,r]of [
+ ['GET',req(origins.trustedOrigin+'/v1/compact-block')],['query',req(origins.trustedOrigin+'/v1/compact-block?owner=PRIVATE_SENTINEL','POST',JSON.stringify(compactSelector()))],
+ ['native path',req(origins.trustedOrigin+'/rolling/compact-block-v1','POST',JSON.stringify(compactSelector()))],['public origin',req(origins.origin+'/v1/compact-block','POST',JSON.stringify(compactSelector()))],['L1 origin',req(origins.ethereumOrigin+'/v1/compact-block','POST',JSON.stringify(compactSelector()))],
+ ['malformed',req(origins.trustedOrigin+'/v1/compact-block','POST','PRIVATE_SENTINEL')],['oversize',req(origins.trustedOrigin+'/v1/compact-block','POST',' '.repeat(1025))],['preflight body',req(origins.trustedOrigin+'/v1/compact-block','OPTIONS','{}')],['batch',compactRequest([compactSelector()])]
+])test('compact route rejects '+name,()=>{const t=createRollingPreferenceTraffic(origins);assert.equal(t.inspect(r),false);assert.equal(t.snapshot().compactRequests,0);assert.equal(t.snapshot().inspectionErrors,1);});
+test('real production compact client emits the exact accepted selector; unavailable transport remains failure',async()=>{
+ const {createRollingCompactClient}=await import('../../shared/rolling/compact-client.mjs');const previous=globalThis.fetch,t=createRollingPreferenceTraffic(origins),requests=[];
+ globalThis.fetch=async(url,init)=>{requests.push({allowed:t.inspect(req(url,init.method,init.body)),redirect:init.redirect,credentials:init.credentials});return new Response('',{status:503});};
+ try{const c=createRollingCompactClient({url:origins.trustedOrigin,tier:'checkpointed',allowLocalDev:true,contextGuard:async()=>{}});await assert.rejects(c.read({number:7,hash:compactSelector().hash}),{code:'BB_COMPACT_BLOCK_UNAVAILABLE'});}finally{globalThis.fetch=previous;}
+ assert.deepEqual(requests,[{allowed:true,redirect:'error',credentials:'omit'}]);assert.equal(t.snapshot().compactRequests,1);
+});
+test('cold recovery requires compact evidence and excludes tag discovery only within its window',()=>{
+ const t=createRollingPreferenceTraffic(origins);assert(t.inspect(req(origins.trustedOrigin+'/v1/node','POST',rpc('aztec_getPrivateLogsByTags',['PRIVATE_SENTINEL']))));const before=t.snapshot();assert(t.inspect(compactRequest()));
+ assert.deepEqual(checkRollingColdRecoveryWindow(before,t.snapshot(),{requireCompact:true}),{windows:1,compactRequests:1,tagDiscoveryRequests:0});
+ assert.deepEqual(checkRollingColdRecoveryWindow(t.snapshot(),t.snapshot()),{windows:1,compactRequests:0,tagDiscoveryRequests:0});
+ assert.throws(()=>checkRollingColdRecoveryWindow(t.snapshot(),t.snapshot(),{requireCompact:true}));
+ const batch=JSON.stringify([1,2].map(id=>({jsonrpc:'2.0',id,method:'aztec_getPrivateLogsByTags',params:['PRIVATE_SENTINEL']})));assert(t.inspect(req(origins.trustedOrigin+'/v1/node','POST',batch)));assert.equal(t.snapshot().tagDiscoveryRequests,3);assert.throws(()=>checkRollingColdRecoveryWindow(before,t.snapshot(),{requireCompact:true}));
+});
+for(const key of ['tagDiscoveryRequests','proofSubmits','nodeSubmissions','l1Submissions','blockedRequests','inspectionErrors'])test('cold window fails on '+key,()=>{const a=createRollingPreferenceTraffic(origins).snapshot(),b={...a,compactRequests:1,[key]:1};assert.throws(()=>checkRollingColdRecoveryWindow(a,b,{requireCompact:true}));});
+for(const mutation of ['missing','negative','fraction','decrease','accessor'])test('cold counters fail closed on '+mutation,()=>{
+ const a={...createRollingPreferenceTraffic(origins).snapshot(),compactRequests:1},b={...a};let reads=0;
+ if(mutation==='missing')delete b.compactRequests;if(mutation==='negative')b.compactRequests=-1;if(mutation==='fraction')b.compactRequests=1.5;if(mutation==='decrease')b.compactRequests=0;if(mutation==='accessor')Object.defineProperty(b,'compactRequests',{get(){reads++;return 2;}});
+ assert.throws(()=>checkRollingColdRecoveryWindow(a,b));assert.equal(reads,0);
 });

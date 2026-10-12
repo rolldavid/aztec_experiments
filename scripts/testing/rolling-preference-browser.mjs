@@ -3,10 +3,12 @@
 // immutable encrypted handoff and >=150s remaining outer budget. Expected public
 // content is assertion-only: never injected into application or persisted here.
 import assert from 'node:assert/strict';
+import {COMPACT_GATEWAY_ROUTE,COMPACT_TRANSPORT_LIMITS,validateCompactSelector} from '../../shared/rolling/compact-client.mjs';
 import {validateRollingBrowserBackup,waitForRollingComposerState} from './rolling-composer-browser.mjs';
 const invalid=()=>Error('Invalid private preference browser control.');
 const fail=()=>{throw Error('Preference browser check failed.');};
-// Pinned 6.0.0-rc.1 AztecNodeApiSchema read/simulation method inventory.
+// Reviewed read/simulation inventory retained on pinned rc3. The new unused
+// getBlockHashMembershipWitnessAtArchive method stays denied until a caller is reviewed.
 const nodeReads=new Set(["getWorldStateSyncStatus", "findLeavesIndexes", "getNullifierMembershipWitness", "getLowNullifierMembershipWitness", "getPublicDataWitness", "getBlockHashMembershipWitness", "getNoteHashMembershipWitness", "getL1ToL2MessageMembershipWitness", "getL1ToL2MessageIndex", "getL2ToL1Messages", "getL2ToL1MembershipWitness", "getTxEffectMembershipWitness", "getBlockNumber", "getCheckpointNumber", "getChainTips", "getL1Constants", "getSyncedL2SlotNumber", "getSyncedL2EpochNumber", "getSyncedL1Timestamp", "getCheckpointsData", "getBlock", "getBlockData", "getBlocks", "getCheckpoint", "getCheckpoints", "isReady", "getNodeInfo", "getCurrentMinFees", "getPredictedMinFees", "getMaxPriorityFees", "getNodeVersion", "getVersion", "getChainId", "getL1ContractAddresses", "getProtocolContractAddresses", "getPrivateLogsByTags", "getPublicLogsByTags", "getTxReceipt", "getTxEffect", "getPendingTxs", "getPendingTxCount", "getTxByHash", "getTxsByHash", "getPublicStorageAt", "getValidatorsStats", "getValidatorStats", "getValidatorStatsBatch", "simulatePublicCalls", "isValidTx", "getContractClass", "getContract", "getEncodedEnr", "getAllowedPublicSetup", "getPeers", "getCheckpointAttestationsForSlot", "getProposalsForSlot"]);
 const stages=new Set(['validation','launch','public-reader','unlock','import','recover','bookmarks','following','main-board','lock','reload','complete']);
 const value=(o,k)=>{const d=Object.getOwnPropertyDescriptor(o,k);if(!d||!Object.hasOwn(d,'value'))throw invalid();return d.value;};
@@ -32,7 +34,7 @@ export async function validateRollingPreferenceBrowserControl(control,{directory
  * Parent independently reconciles actual receiver counts and balances. */
 export function createRollingPreferenceTraffic({origin:publicOrigin,trustedOrigin,ethereumOrigin}){
  const origins=[origin(publicOrigin),origin(trustedOrigin),origin(ethereumOrigin)];if(new Set(origins).size!==3)throw invalid();
- const counts={walletAssets:0,privateRequests:0,feedRequests:0,boardRequests:0,proofSubmits:0,nodeSubmissions:0,l1Submissions:0,blockedRequests:0,inspectionErrors:0};
+ const counts={walletAssets:0,privateRequests:0,feedRequests:0,boardRequests:0,compactRequests:0,compactPreflights:0,tagDiscoveryRequests:0,proofSubmits:0,nodeSubmissions:0,l1Submissions:0,blockedRequests:0,inspectionErrors:0};
  function inspect({url,method,body=null}){
   try{
    if(typeof url!=='string'||url.length>8192||typeof method!=='string')throw invalid();
@@ -51,6 +53,11 @@ export function createRollingPreferenceTraffic({origin:publicOrigin,trustedOrigi
    }
    counts.privateRequests++;
    if(u.search)throw invalid();
+   if(u.origin===trustedOrigin&&u.pathname===COMPACT_GATEWAY_ROUTE){
+    if(method==='OPTIONS'){if(body!==null&&body!=='')throw invalid();counts.compactPreflights++;return true;}
+    if(method!=='POST'||typeof body!=='string'||Buffer.byteLength(body)>COMPACT_TRANSPORT_LIMITS.requestBytes)throw invalid();
+    validateCompactSelector(JSON.parse(body),'checkpointed');counts.compactRequests++;return true;
+   }
    if(u.origin===trustedOrigin&&u.pathname==='/healthz'&&method==='GET')return true;
    if(u.origin===trustedOrigin&&u.pathname==='/v1/jobs'&&method==='POST'){counts.proofSubmits++;return false;}
    if(method==='OPTIONS'&&((u.origin===trustedOrigin&&u.pathname==='/v1/node')||(u.origin===ethereumOrigin&&u.pathname==='/')))return true;
@@ -63,12 +70,31 @@ export function createRollingPreferenceTraffic({origin:publicOrigin,trustedOrigi
     if(/^(node|aztec)_sendTx$/.test(rpc.method)){counts.nodeSubmissions++;allowed=false;continue;}
     if(['eth_sendTransaction','eth_sendRawTransaction','wallet_sendCalls'].includes(rpc.method)){counts.l1Submissions++;allowed=false;continue;}
     if(u.origin===ethereumOrigin){if(!['eth_chainId','eth_blockNumber','eth_getBlockByNumber','eth_getBlockByHash','eth_getCode','eth_call'].includes(rpc.method))throw invalid();}
-    else if(!rpc.method.startsWith('aztec_')||!nodeReads.has(rpc.method.slice(6)))throw invalid();
+    else {
+     if(!rpc.method.startsWith('aztec_')||!nodeReads.has(rpc.method.slice(6)))throw invalid();
+     if(rpc.method==='aztec_getPrivateLogsByTags')counts.tagDiscoveryRequests++;
+    }
    }
    return allowed;
   }catch{counts.inspectionErrors++;return false;}
  }
  return Object.freeze({inspect,snapshot:()=>({...counts}),blocked:()=>{counts.blockedRequests++;},inspectionFailed:()=>{counts.inspectionErrors++;}});
+}
+
+// Aggregate assertion only; caller captures each nonoverlapping window around
+// actual import/recovery. Ordinary explicit action preparation is outside it.
+// A fresh context must enumerate through compact transport. A later already-
+// authenticated same-anchor completion need not fetch compact data again.
+export function checkRollingColdRecoveryWindow(before,after,{requireCompact=false}={}){
+ if(typeof requireCompact!=='boolean')fail();
+ const delta={};
+ for(const key of ['compactRequests','compactPreflights','tagDiscoveryRequests','proofSubmits','nodeSubmissions','l1Submissions','blockedRequests','inspectionErrors']){
+  const a=value(before,key),b=value(after,key);
+  if(!Number.isSafeInteger(a)||a<0||!Number.isSafeInteger(b)||b<a)fail();delta[key]=b-a;
+ }
+ for(const key of ['tagDiscoveryRequests','proofSubmits','nodeSubmissions','l1Submissions','blockedRequests','inspectionErrors'])if(delta[key]!==0)fail();
+ if(requireCompact&&delta.compactRequests===0)fail();
+ return Object.freeze({windows:1,compactRequests:delta.compactRequests,tagDiscoveryRequests:0});
 }
 
 // The production panel refreshes on reopen and replaces its details subtree.
@@ -83,7 +109,7 @@ export async function lockRollingPreferencePanel({dialog,remaining}){
 
 export async function runRollingPreferenceBrowser(input){
  const started=Date.now();let stage='validation',browser,context,page,timer,expiresAt,expired=false,observer;
- const report={schemaVersion:1,passed:false,diagnostic:null,scope:'Production browser keys-only private preference recovery; parent authenticates chain setup and no-spend accounting',checks:{freshNativeDatabase:false,publicBeforeUnlock:false,completeRecovery:false,bookmarks:false,following:false,mainBoardFollow:false,lockClears:false,reloadLocked:false},recoverySteps:0,traffic:null,cleanup:{contextClosed:false,browserClosed:false}};
+ const report={schemaVersion:1,passed:false,diagnostic:null,scope:'Production browser keys-only private preference recovery; parent authenticates chain setup and no-spend accounting',checks:{freshNativeDatabase:false,publicBeforeUnlock:false,completeRecovery:false,bookmarks:false,following:false,mainBoardFollow:false,lockClears:false,reloadLocked:false},recoverySteps:0,coldRecovery:{windows:0,compactRequests:0,tagDiscoveryRequests:0},traffic:null,cleanup:{contextClosed:false,browserClosed:false}};
  try{
   const {directory,onStage=()=>{},...control}=input;if(typeof onStage!=='function')fail();
   const selected=await validateRollingPreferenceBrowserControl(control,{directory});observer=createRollingPreferenceTraffic(selected);expiresAt=started+selected.timeoutMs;
@@ -117,7 +143,7 @@ export async function runRollingPreferenceBrowser(input){
    if(await complete.isVisible())break;
    assert.equal(await page.locator('#content article.post').count(),0);next=more;
   }
-  assert(await page.evaluate(async()=>(await indexedDB.databases()).length>0));const recoveredTraffic=safeTraffic();assert(recoveredTraffic.walletAssets>0&&recoveredTraffic.privateRequests>0);report.checks.completeRecovery=true;
+  assert(await page.evaluate(async()=>(await indexedDB.databases()).length>0));const recoveredTraffic=safeTraffic();assert(recoveredTraffic.walletAssets>0&&recoveredTraffic.privateRequests>0);report.coldRecovery=checkRollingColdRecoveryWindow(locked,recoveredTraffic,{requireCompact:true});report.checks.completeRecovery=true;
   await dialog.getByRole('button',{name:'Close account panel',exact:true}).click({timeout:remaining()});
   const card=page.locator('#post-'+selected.expected.postId);
   async function assertView(view){
@@ -144,7 +170,7 @@ export async function runRollingPreferenceBrowser(input){
   if(context)try{await context.close();report.cleanup.contextClosed=true;}catch{report.passed=false;}else report.cleanup.contextClosed=true;
   if(browser)try{await browser.close();report.cleanup.browserClosed=!browser.isConnected();if(!report.cleanup.browserClosed)report.passed=false;}catch{report.passed=false;}else report.cleanup.browserClosed=true;
  }
- report.traffic=observer?.snapshot()??{walletAssets:0,privateRequests:0,feedRequests:0,boardRequests:0,proofSubmits:0,nodeSubmissions:0,l1Submissions:0,blockedRequests:0,inspectionErrors:0};
+ report.traffic=observer?.snapshot()??{walletAssets:0,privateRequests:0,feedRequests:0,boardRequests:0,compactRequests:0,compactPreflights:0,tagDiscoveryRequests:0,proofSubmits:0,nodeSubmissions:0,l1Submissions:0,blockedRequests:0,inspectionErrors:0};
  if(expired||['proofSubmits','nodeSubmissions','l1Submissions','blockedRequests','inspectionErrors'].some(k=>report.traffic[k]!==0))report.passed=false;
  return {...report,stage,elapsedMs:Date.now()-started,timedOut:expired};
 }
