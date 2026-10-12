@@ -5,3 +5,6 @@
 
 /* Public profile media keeps the complete100×100 raster visible; no circle crop. */
 .public-avatar{display:inline-flex;width:40px;height:40px;flex:0 0 auto;align-items:center;justify-content:center;background:var(--lilac);color:#51466b;border-radius:6px;overflow:hidden;vertical-align:middle}.public-avatar canvas{display:block;width:100%;height:100%;object-fit:contain}.public-avatar-glyph{font-size:24px;line-height:1}.public-avatar-large{width:100px;height:100px}.public-avatar-large .public-avatar-glyph{font-size:46px}.public-avatar[data-state="removed"],.public-avatar[data-state="unavailable"]{background:#e6eaf0;color:var(--muted)}.public-profile{display:flex;align-items:flex-start;gap:22px;margin-bottom:26px;padding:0 0 24px;border-bottom:1px solid var(--line)}.public-profile-details{min-width:0;max-width:65ch}.public-bio{white-space:pre-wrap;overflow-wrap:anywhere;margin:0;line-height:1.65}.public-avatar-removal{font-size:13px;color:var(--muted);overflow-wrap:anywhere;margin:12px 0 0}@media(max-width:450px){.public-profile{gap:16px;flex-wrap:wrap}.public-profile-details{flex:1 1 160px}}
+
+/* Recovery fingerprints remain complete and selectable inside narrow dialogs. */
+.recovery-values{overflow-wrap:anywhere;min-width:0}

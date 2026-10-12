@@ -178,7 +178,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
    'context-changed':'Your saved settings changed. This update cannot be repeated safely.', 'history-unavailable':'Earlier transaction details are unavailable. Keep your recovery file; a replacement cannot be reviewed safely.', 'limit-reached':'This update has reached its replacement limit. Keep your recovery file; no further replacement can be sent.',
    'replacement-available':'The earlier attempts can no longer be included. Review this saved update and a new maximum fee before sending a replacement.'};
   content.append(paragraph(statuses[snapshot.status]??statuses.unknown));
-  const details=el('details',{},el('summary',{},'Original setting and transaction history'));
+  const details=el('details',{class:'recovery-values'},el('summary',{},'Original setting and transaction history'));
   if(snapshot.originalPreferenceHead){const head=snapshot.originalPreferenceHead;details.append(paragraph('Original saved-settings revision: '+head.revision),paragraph('Original saved-settings fingerprint: '+head.digest));}
   for(const attempt of snapshot.inclusionHistory??[]){
    details.append(paragraph('Earlier transaction: '+attempt.txHash));
@@ -215,7 +215,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   if(replacement){
    if(feeReady)content.append(paragraph(`New maximum network fee: ${reviewedFee} fee-juice units. Confirming authorizes this replacement only; the final charge may be lower.`));
    if(typeof intent.maximumFee==='string')content.append(paragraph(`Original maximum fee: ${intent.maximumFee} fee-juice units. This earlier ceiling is not the replacement fee or an actual charge.`));
-   if(intent.replacementReview?.marker)content.append(paragraph(`Reviewed read position: block ${intent.replacementReview.marker.throughBlock}; block fingerprint ${intent.replacementReview.marker.blockHash}.`));
+   if(intent.replacementReview?.marker)content.append(el('p',{class:'recovery-values'},`Reviewed read position: block ${intent.replacementReview.marker.throughBlock}; block fingerprint ${intent.replacementReview.marker.blockHash}.`));
   }else if(feeReady)content.append(paragraph(`Maximum network fee: ${reviewedFee} fee-juice units. This is a maximum, not a guaranteed final charge.`));
   if(intent.action?.type==='bio'&&intent.action.content==='')content.append(paragraph('Clear the current profile bio. Historical versions remain public.'));
   let avatarReady=intent.action?.type!=='avatar'||intent.action.data==='';

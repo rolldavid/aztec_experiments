@@ -343,17 +343,17 @@ test('preference lock driver waits for delayed reopen refresh before expanding s
 });
 
 // Recovery decisions are labelled presentation doubles, never genuine chain evidence.
-async function seedReplacement(page,{marker=false,status='replacement-available',prepared=false}={}){
- await page.evaluate(({marker,status,prepared})=>{
-  const hash=n=>'0x'+n.toString(16).padStart(64,'0');
-  const head={initialized:true,schema:1,revision:'1',digest:'11'};
+async function seedReplacement(page,{marker=false,status='replacement-available',prepared=false,fullValues=false}={}){
+ await page.evaluate(({marker,status,prepared,fullValues})=>{
+  const hash=n=>'0x'+(fullValues?'1234567890abcdef'.repeat(4):n.toString(16).padStart(64,'0'));
+  const head={initialized:true,schema:1,revision:'1',digest:fullValues?'1234567890'.repeat(7)+'123456':'11'};
   const action=marker?{type:'read-marker',expectedRevision:'1',thread:'42',throughBlock:'10'}:{type:'preference',expectedRevision:'1',kind:1,target:'42',enabled:true};
   test.recoverySnapshot={status,currentTxHash:hash(77),attempts:[{txHash:hash(77),status:'invalid',stateReasons:['Block header not found']}],head,originalPreferenceHead:head,
    marker:marker?{throughBlock:'10',blockHash:hash(44)}:null,originalMarker:marker?{throughBlock:'10',blockHash:hash(43)}:null,
    inclusionHistory:[{txHash:hash(77),inclusions:[{blockNumber:12,blockHash:hash(42),executionResult:'success',transactionFee:'7'}]}]};
   const intent={intentId:'42',status:prepared?'replacement-prepared':'unknown',action,nonce:hash(100),maximumFee:'123',...(prepared?{replacementReview:{sourceTxHash:hash(77),head,marker:marker?test.recoverySnapshot.marker:null,maximumFee:'456'}}:{})};
   sessionStorage.setItem('labelled-ui-intent',JSON.stringify(intent));
- },{marker,status,prepared});
+ },{marker,status,prepared,fullValues});
  await open(page);await page.getByRole('button',{name:'Unlock',exact:true}).click();await page.getByRole('button',{name:'Check recovery options',exact:true}).waitFor();
 }
 test('replacement inspection and review never send; confirmation shows distinct ceiling and historical fees',async t=>{
@@ -393,4 +393,31 @@ test('account invalidation during recovery inspection clears private history and
  const {page}=await browserFixture(t);await seedReplacement(page);await page.evaluate(()=>test.hold='recovery-options');await page.getByRole('button',{name:'Check recovery options'}).click();await page.waitForFunction(()=>test.release);
  await page.evaluate(()=>test.options.onChange({invalidated:true}));assert.equal(await page.getByText('Original setting and transaction history',{exact:true}).count(),0);assert.equal(await page.getByRole('dialog').getAttribute('aria-busy'),'true');
  await page.evaluate(()=>test.release());await page.getByRole('button',{name:'Reload to unlock'}).waitFor();assert.equal(await page.getByRole('button',{name:'Review replacement',exact:true}).count(),0);assert.equal(await page.evaluate(()=>test.replacementPrepares+test.sends),0);
+});
+
+
+// Full-width canonical values, not shortened fixture identifiers. These are
+// synthetic presentation checks; no chain or financial recovery is exercised.
+for(const width of [390,1280])for(const phase of ['history','prepared-marker'])test(`recovery full values wrap inside the dialog at ${width}px: ${phase}`,async t=>{
+ const {page}=await browserFixture(t);await page.setViewportSize({width,height:844});
+ await seedReplacement(page,{marker:true,prepared:phase==='prepared-marker',fullValues:true});
+ await page.waitForFunction(()=>document.querySelector('dialog').getAttribute('aria-busy')==='false');
+ const hash='0x'+'1234567890abcdef'.repeat(4),digest='1234567890'.repeat(7)+'123456';
+ if(phase==='history'){
+  await page.getByRole('button',{name:'Check recovery options',exact:true}).click();
+  await page.getByText('Original setting and transaction history',{exact:true}).click();
+  assert.equal(await page.getByText('Original saved-settings fingerprint: '+digest,{exact:true}).textContent(),'Original saved-settings fingerprint: '+digest);
+  assert.equal(await page.getByText('Earlier transaction: '+hash,{exact:true}).textContent(),'Earlier transaction: '+hash);
+  await page.getByText('Earlier transaction: '+hash,{exact:true}).scrollIntoViewIfNeeded();
+ }else{
+  const text=`Reviewed read position: block 10; block fingerprint ${hash}.`;
+  assert.equal(await page.getByText(text,{exact:true}).textContent(),text);
+  await page.getByText(text,{exact:true}).scrollIntoViewIfNeeded();
+ }
+ const metrics=await page.getByRole('dialog').evaluate(dialog=>({clientWidth:dialog.clientWidth,scrollWidth:dialog.scrollWidth,documentWidth:document.documentElement.scrollWidth,viewport:innerWidth}));
+ t.diagnostic(JSON.stringify({width,phase,...metrics}));
+ if(process.env.ROLLING_RECOVERY_SCREENSHOT_DIRECTORY)await page.screenshot({path:`${process.env.ROLLING_RECOVERY_SCREENSHOT_DIRECTORY}/replacement-wrap-${width}-${phase}.png`});
+ assert(metrics.scrollWidth<=metrics.clientWidth,`dialog overflows: ${JSON.stringify(metrics)}`);
+ assert(metrics.documentWidth<=metrics.viewport);
+ assert.equal((await counts(page)).sends,0);assert.equal(await page.evaluate(()=>test.replacementPrepares),0);
 });
