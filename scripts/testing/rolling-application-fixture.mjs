@@ -640,7 +640,7 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
             await verifyRollingPublicReader({node:ctx.node,artifact:checked.artifact,
               scope:{chainId:network.chainId,rollupVersion:network.version,rollupAddress:network.rollup,boardAddress:String(ctx.instance.address),classId:String((await sdk.getContractClassFromArtifact(checked.artifact)).id)},
               deployment:{blockNumber:Number(report.initialPublicAnchor.blockNumber),blockHash:report.initialPublicAnchor.blockHash,txHash:report.initialPublicAnchor.txHash},
-              cacheDirectory:path.join(ctx.directory,'rolling-stale-public-index'),ids,scenario:'profiles',expectedProfile:report.profiles.expectedIdentity,
+              readerPort:report.publicReader.readerPort,cacheDirectory:path.join(ctx.directory,'rolling-stale-public-index'),ids,scenario:'profiles',expectedProfile:report.profiles.expectedIdentity,
               wire:{nodeUrl:ordinaryRpc.url,artifactPath:path.join(ROOT,'billboard/target/rolling_contract-RollingBoard.json'),onReader:url=>wire.registerEndpoint('public-reader',url)},
               deadlineAt:ctx.applicationDeadlineAt,observation:observation.stalePublicReader});
             const beforeStale=rpc.snapshot();

@@ -222,3 +222,16 @@ test('acceptance catchup completes three ABI-decoded synthetic ranges before HTT
   }finally{await server.close();}
  }
 });
+
+
+test('two acceptance phases reuse the explicit reader endpoint across four owned server lifetimes',async t=>{
+ const {verifyRollingPublicReader}=await import('../../scripts/testing/rolling-public-acceptance.mjs');
+ const f=await fixture(t),index=await f.create();await index.sync();
+ const {revision,checkpoint,...expected}=index.query('feed');
+ const common={node:f.node,artifact,scope,deployment:f.options.deployment,ids:{},scenario:'social-wire',expectedHTTP:[{route:'feed',parameters:{},expected}]};
+ const before={};await verifyRollingPublicReader({...common,cacheDirectory:path.join(f.directory,'before'),deadlineAt:Date.now()+30000,observation:before});
+ assert(before.passed&&before.sessions.length===2&&before.sessions.every(s=>s.closed));assert(before.readerPort>0);
+ const after={};await verifyRollingPublicReader({...common,readerPort:before.readerPort,cacheDirectory:path.join(f.directory,'after'),deadlineAt:Date.now()+30000,observation:after});
+ assert(after.passed&&after.sessions.length===2&&after.sessions.every(s=>s.closed));assert.equal(after.readerPort,before.readerPort);
+ for(const readerPort of [-1,65536,1.5,'1234'])await assert.rejects(()=>verifyRollingPublicReader({...common,readerPort,cacheDirectory:f.directory,deadlineAt:Date.now()+30000,observation:{}}));
+});

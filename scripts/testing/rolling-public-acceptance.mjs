@@ -62,7 +62,7 @@ export async function synchronizeRollingPublicReader(index,deadlineAt){
  assert(deadlineAt-Date.now()>=21500,'Reserve first server sync and cleanup');return {passes,pages};
 }
 
-export async function verifyRollingPublicReader({node,artifact,scope,deployment,cacheDirectory,ids,scenario='conversation',expectedProfile,expectedProfiles,expectedHTTP,deadlineAt,observation,wire}){
+export async function verifyRollingPublicReader({node,artifact,scope,deployment,cacheDirectory,ids,scenario='conversation',expectedProfile,expectedProfiles,expectedHTTP,deadlineAt,observation,wire,readerPort=0}){
  assert(['conversation','profiles','anonymous-thread','repost-reactions','account-reactions','owned-names','social-wire','reaction-wire'].includes(scenario));
  const names=scenario==='owned-names';
  const social=['anonymous-thread','repost-reactions','account-reactions','social-wire','reaction-wire'].includes(scenario);
@@ -74,7 +74,8 @@ export async function verifyRollingPublicReader({node,artifact,scope,deployment,
  const storage=()=>publicFeedFileStorage(cacheDirectory,{maxRecordBytes:1048576,maxSnapshotBytes:67108864});
  const make=async timeoutMs=>wire?(await createRollingPublicIndexFromConfig({nodeUrl:wire.nodeUrl,artifactPath:wire.artifactPath,scope,deployment,cacheDirectory,port:0})).index:createRollingPublicIndex({node,artifact,scope,deployment,storage:storage(),rangeSize:10,pagesPerSync:20,timeoutMs});
  const routes=names?[...expectedProfiles.map(p=>['profile',{nameId:p.identity.id,limit:100},ownedNameHTTPExpectation(p)]),['feed',{}, {posts:[],nextCursor:null,names:{},boards:{}}],['directory',{}, {boards:[],nextCursor:null}]]:social?expectedHTTP.map(row=>[row.route,row.parameters,row.expected]):scenario==='profiles'?[['profile',{nameId:ids.nameId}],['feed',{}],['directory',{}]]:[['feed',{}],['thread',{root:ids.rootId}],['profile',{nameId:ids.nameId}],['directory',{}],['post',{id:ids.replyId}]];
- let first,readerPort=0;
+ assert(Number.isSafeInteger(readerPort)&&readerPort>=0&&readerPort<=65535);
+ let first;
  observation.passed=false;observation.sessions=[];
  for(const phase of ['fresh','reopened']){
   const remaining=deadline-Date.now()-1500;assert(remaining>0,'No bounded public index budget remains');
@@ -85,7 +86,8 @@ export async function verifyRollingPublicReader({node,artifact,scope,deployment,
   session.catchup=await synchronizeRollingPublicReader(index,deadline);
   const server=await startRollingPublicServer({index,staticHandler:serveRollingReaderAsset,pollMs:30000,port:readerPort});let failure;
   try{
-   if(wire){if(!readerPort){readerPort=Number(new URL(server.url).port);wire.onReader(server.url);}else assert.equal(Number(new URL(server.url).port),readerPort);}
+   if(!readerPort){readerPort=Number(new URL(server.url).port);wire?.onReader(server.url);}else assert.equal(Number(new URL(server.url).port),readerPort);
+   observation.readerPort=readerPort;
    while(index.status().state!=='ready'){
     assert(Date.now()<deadline-1500,'Actual public index readiness deadline');
     assert.notEqual(index.status().state,'unavailable','Actual canonical index failed');await sleep(25);
