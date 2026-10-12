@@ -66,7 +66,7 @@ const bridgeStages=new Set(['backup','close-subscriber','l1-reader','wallet-asse
 export function notificationBridgeProgress(stage,deadlineAt,{now=Date.now(),startedAt=now,indexState}={}){
  assert(bridgeStages.has(stage));assert([deadlineAt,now,startedAt].every(Number.isSafeInteger));assert(now>=startedAt);
  return {stage,elapsedMs:now-startedAt,remainingMs:deadlineAt-now,
-  ...(['ready','syncing','cold','unavailable'].includes(indexState)?{indexState}:{})};
+  ...(['ready','syncing','authenticating','unavailable'].includes(indexState)?{indexState}:{})};
 }
 // Reader polling is already owned by the actual listener. Do not launch another
 // sync loop or retry the financial root callback. Require the canonical public
