@@ -4,6 +4,7 @@ pub mod admission;
 pub mod posting;
 pub mod profiles;
 pub mod preferences;
+pub mod preference_recovery;
 mod preferences_tests;
 mod profiles_tests;
 mod posting_tests;
@@ -17,8 +18,9 @@ pub contract RollingBoard {
         history::{note::assert_note_existed_by, storage::public_storage_historical_read},
         keys::getters::{get_nhk_app, get_public_keys, try_get_public_keys},
         macros::{events::event, functions::{external, initializer, internal, only_self, view}, notes::note, storage::storage},
+        event::event_interface::EventInterface,
         messages::delivery::MessageDelivery,
-        note::{note_getter_options::{NoteGetterOptions, NoteStatus}, note_viewer_options::NoteViewerOptions, note_interface::{NoteProperties, NoteHash}, HintedNote, ConfirmedNote, NoteMessage},
+        note::{note_getter_options::{NoteGetterOptions, NoteStatus}, note_viewer_options::NoteViewerOptions, note_interface::{NoteProperties, NoteHash, NoteType}, HintedNote, ConfirmedNote, NoteMessage},
         protocol::{address::{AztecAddress, EthAddress}, abis::block_header::BlockHeader, hash::poseidon2_hash_with_separator, traits::{Deserialize, Hash, Packable, Serialize, ToField}},
         state_vars::{Map, Owned, PrivateMutable, PrivateSet, PublicImmutable, PublicMutable, StateVariable},
         utils::comparison::Comparator,
@@ -137,6 +139,21 @@ pub contract RollingBoard {
         let read_hash = header.hash();
         assert(read_hash != 0, "Zero read marker hash");
         self.internal._write_preference(expected_revision, crate::preferences::THREAD_READ, thread, true, through_block, read_hash);
+    }
+
+    /// Experimental bounded page; never marks this contract completely synced.
+    /// Only the dedicated pinned PXE entry avoids normal full contract discovery.
+    #[external("utility")]
+    unconstrained fn recover_preference_page(owner: AztecAddress, tx_hash: Field,
+        block_number: u32, block_hash: Field, first_log: u8, log_count: u8) -> pub u8 {
+        // Key gate applies even when there is no recoverable head yet.
+        let _initialized = self.storage.preferences.at(owner).is_initialized();
+        std::static_assert(<PreferenceHeadNote as Packable>::N == 4, "Preference head packed layout");
+        std::static_assert(<PreferenceChanged as Serialize>::N == 8, "Preference event layout");
+        crate::preference_recovery::recover(self.address, owner,
+            self.storage.preferences.get_storage_slot(), PreferenceHeadNote::get_id(),
+            PreferenceChanged::get_event_type_id().to_field(), _compute_note_hash, _compute_note_nullifier,
+            tx_hash, block_number, block_hash, first_log, log_count)
     }
 
     /// Trusted scoped PXE only, never an ordinary public-reader endpoint.
