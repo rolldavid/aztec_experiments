@@ -204,3 +204,40 @@ test('G07 hostile option proxy rejects with fixed error without raw detail propa
  const f=await fixture(),j=await f.open(),options=new Proxy({},{getPrototypeOf(){throw Error('PRIVATE_SENTINEL');}});
  await assert.rejects(j.inspectReplacement(f.operation,options),error=>error.code==='BB_JOURNAL_INVALID'&&!error.message.includes('PRIVATE_SENTINEL'));
 });
+
+for(const method of ['recover','reconcilePrevious'])for(const state of ['pending','unknown','checkpointed'])test(`G07 strict ${method} refuses exact-byte resend with ${state} predecessor`,async()=>{
+ const f=await strictReplacement(),current=String(f.second.getTxHash());f.states.set(current,{validation:{result:'valid'}});
+ f.states.set(String(f.first.getTxHash()),state==='unknown'?{validation:{result:'invalid',reason:['unrecognized']}}:{status:state});
+ f.node.sendTx=async tx=>{f.sent.push(String(tx.getTxHash()));f.states.set(current,{status:'checkpointed'});};
+ const before=await(await createJournalBackup(f.options)).exportRecords();
+ await assert.rejects((await f.open())[method](),{code:'BB_RECOVERY_REQUIRED'});
+ assert.deepEqual(f.sent,[]);assert.deepEqual(await(await createJournalBackup(f.options)).exportRecords(),before);
+});
+for(const method of ['recover','reconcilePrevious']) {
+ test(`G07 strict ${method} resumes only identical valid candidate bytes after all predecessor guards`,async()=>{
+  const f=await strictReplacement(),current=String(f.second.getTxHash()),bytes=Buffer.from(f.second.toBuffer());f.states.set(current,{validation:{result:'valid'}});
+  let guarded=0;f.node.sendTx=async tx=>{assert.equal(guarded,2);assert.deepEqual(Buffer.from(tx.toBuffer()),bytes);f.sent.push(String(tx.getTxHash()));f.states.set(current,{status:'checkpointed'});};
+  const before=await(await createJournalBackup(f.options)).exportRecords();const result=await(await f.open({contextGuard:async()=>{guarded++;}}))[method]();
+  assert.equal(String((result.receipt??result).txHash),current);assert.deepEqual(f.sent,[current]);assert.deepEqual(await(await createJournalBackup(f.options)).exportRecords(),before);
+ });
+ test(`G07 strict ${method} reconciles canonical current candidate without requiring invalid predecessors`,async()=>{
+  const f=await strictReplacement(),current=String(f.second.getTxHash());f.states.set(current,{status:'checkpointed'});f.states.set(String(f.first.getTxHash()),{status:'pending'});
+  const get=f.node.getTxReceipt;f.node.getTxReceipt=async hash=>{assert.equal(String(hash),current);return get(hash);};
+  const result=await(await f.open())[method]();assert.equal(String((result.receipt??result).txHash),current);assert.deepEqual(f.sent,[]);
+ });
+ test(`G07 strict ${method} detects predecessor reinclusion during validation`,async()=>{
+  const f=await strictReplacement(),current=String(f.second.getTxHash()),old=String(f.first.getTxHash());f.states.set(current,{validation:{result:'valid'}});
+  const validate=f.node.isValidTx;f.node.isValidTx=async tx=>{const result=await validate(tx);if(String(tx.getTxHash())===old)f.states.set(old,{status:'checkpointed'});return result;};
+  await assert.rejects((await f.open())[method](),{code:'BB_RECOVERY_REQUIRED'});assert.deepEqual(f.sent,[]);
+ });
+ test(`G07 strict ${method} checks context again after asynchronous predecessor reads`,async()=>{
+  const f=await strictReplacement(),current=String(f.second.getTxHash());f.states.set(current,{validation:{result:'valid'}});let guards=0;
+  await assert.rejects((await f.open({contextGuard:async()=>{if(++guards===2)throw Object.assign(Error('Account changed'),{code:'CONTEXT_CHANGED'});}}))[method](),{code:'CONTEXT_CHANGED'});assert.equal(guards,2);assert.deepEqual(f.sent,[]);
+ });
+ test(`G07 strict ${method} rejects ciphertext changed during final context check`,async()=>{
+  const f=await strictReplacement(),current=String(f.second.getTxHash());f.states.set(current,{validation:{result:'valid'}});let guards=0;
+  const storage=f.options.storage;const changed=[];
+  await assert.rejects((await f.open({contextGuard:async()=>{if(++guards===2){const [key]=await storage.keys();const value=await storage.read(key);changed.push(key);await storage.compareAndSwap(key,value,'tampered');}}}))[method](),{code:'BB_JOURNAL_INVALID'});
+  assert.equal(guards,2);assert.equal(changed.length,1);assert.deepEqual(f.sent,[]);
+ });
+}

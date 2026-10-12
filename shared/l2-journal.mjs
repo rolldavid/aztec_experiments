@@ -157,6 +157,16 @@ export async function createL2Journal({storage,walletSecret,walletSalt,scope,Tx,
         // A crash before broadcast is safe to recover: identical bytes, hash and
         // nullifiers, never a newly generated proof or a new logical operation.
         if(contextGuard)await contextGuard();
+        if(saved.value.replacementPolicy==='missing-anchor') {
+          // Recovery is another send boundary, not a bypass around replacement
+          // policy. Authenticate every predecessor from the retained exact bytes.
+          await rejectedAttempts(saved,{requireMissingAnchor:true,priorOnly:true});
+          if((await read()).encoded!==saved.encoded)throw fail();
+          if(contextGuard)await contextGuard();
+          // An account guard can await; a concurrent writer must not replace the
+          // authenticated candidate while that check is in flight.
+          if((await read()).encoded!==saved.encoded)throw fail();
+        }
         await submitOnceWithReconciliation(node,saved.tx);
       }
       const result=await waitForCanonicalReceipt(node,saved.tx,waitOptions);confirmed(result);return result;
