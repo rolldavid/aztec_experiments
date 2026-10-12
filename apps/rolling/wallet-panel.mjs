@@ -167,6 +167,37 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   })));
   content.append(section);
  }
+ function savedResumeReview(snapshot){
+  const saved=snapshot.exactResume,record=snapshot.intent,hash=value=>typeof value==='string'&&/^0x[0-9a-f]{64}$/.test(value);
+  if(saved?.status!=='resumable'||snapshot.status!=='unknown'||!hash(saved.txHash)||saved.txHash!==snapshot.currentTxHash||
+   !['preference','read-marker'].includes(record.action?.type)||['prepared','cancelled','replacement-prepared'].includes(record.status))return null;
+  if(typeof saved.maximumFee!=='string'||!/^(0|[1-9][0-9]{0,76})$/.test(saved.maximumFee))return null;
+  const review=record.replacementReview;
+  if(saved.feeSource==='original'){if(review||saved.maximumFee!==record.maximumFee)return null;}
+  else if(saved.feeSource==='replacement'){if(!review||!hash(review.sourceTxHash)||saved.txHash===review.sourceTxHash||saved.maximumFee!==review.maximumFee)return null;}
+  else return null;
+  const expectedMarker=review?review.marker:snapshot.originalMarker;
+  if(record.action.type==='read-marker'){
+   if(!saved.marker||!hash(saved.marker.blockHash)||saved.marker.throughBlock!==record.action.throughBlock||
+    saved.marker.blockHash!==expectedMarker?.blockHash||saved.marker.throughBlock!==expectedMarker?.throughBlock||
+    saved.marker.blockHash!==snapshot.marker?.blockHash||saved.marker.throughBlock!==snapshot.marker?.throughBlock)return null;
+  }else if(saved.marker!==null||expectedMarker!=null)return null;
+  return {txHash:saved.txHash,maximumFee:saved.maximumFee,feeSource:saved.feeSource,marker:saved.marker?{...saved.marker}:null};
+ }
+ function showSavedResume(snapshot,review){
+  content.append(el('h3',{},'Review the saved transaction'),paragraph('This sends the exact transaction already saved on this device. It does not create a new transaction or request a new fee quote.'),
+   el('p',{class:'recovery-values'},'Saved transaction: '+review.txHash),
+   el('p',{class:'recovery-values'},`${review.feeSource==='replacement'?'Previously reviewed replacement':'Previously approved'} maximum fee: ${review.maximumFee} fee-juice units. This is the saved ceiling, not an additional fee or a record of a charge.`));
+  if(review.marker)content.append(el('p',{class:'recovery-values'},`Saved read position: block ${review.marker.throughBlock}; block fingerprint ${review.marker.blockHash}.`));
+  content.append(button('Confirm saved transaction and send',()=>void work(async()=>{
+   const epoch=accountEpoch,id=intent.intentId;checkAccount(epoch);
+   if(recoveryInspection!==snapshot||snapshot.intent.intentId!==id)throw connectionFailure;
+   const expectedTxHash=review.txHash;recoveryInspection=null;notice='';intent={...intent,status:'unknown'};blocked=true;
+   note('Sending the saved transaction. Keep this page open; do not send again.');
+   try{const result=await session.application.resumeSaved(id,{expectedTxHash});checkAccount(epoch);await receive(result);}
+   catch{throw Error('Saved transaction outcome unknown');}
+  }),true));
+ }
  function showRecoveryOptions(){
   content.append(button('Check recovery options',()=>void work(async()=>{
    const epoch=accountEpoch,id=intent.intentId;checkAccount(epoch);recoveryInspection=null;clearPreferences();
@@ -178,7 +209,9 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   const statuses={pending:'This update is still pending. Keep your recovery file and check again.',unknown:'This update is still unresolved. Keep your recovery file and check again. Do not send another copy.',canonical:'An attempt is included in the verified chain. Check the existing transaction to reconcile it; do not send a replacement.',empty:'No signed transaction was found. Keep the saved action and recovery file; a replacement is not available.',
    'context-changed':'Your saved settings changed. This update cannot be repeated safely.', 'history-unavailable':'Earlier transaction details are unavailable. Keep your recovery file; a replacement cannot be reviewed safely.', 'limit-reached':'This update has reached its replacement limit. Keep your recovery file; no further replacement can be sent.',
    'replacement-available':'The earlier attempts can no longer be included. Review this saved update and a new maximum fee before sending a replacement.'};
-  content.append(paragraph(statuses[snapshot.status]??statuses.unknown));
+  const savedReview=savedResumeReview(snapshot);
+  const displayStatus=snapshot.status==='unknown'&&['pending','canonical','empty'].includes(snapshot.exactResume?.status)?snapshot.exactResume.status:snapshot.status;
+  content.append(paragraph(savedReview?'The saved transaction can be sent without preparing another. Review its saved fee ceiling before confirming.':snapshot.exactResume?.status==='context-changed'?'The saved transaction no longer matches your settings or read position. Keep your recovery file; it cannot be sent safely.':statuses[displayStatus]??statuses.unknown));
   const details=el('details',{class:'recovery-values'},el('summary',{},'Original setting and transaction history'));
   if(snapshot.originalPreferenceHead){const head=snapshot.originalPreferenceHead;details.append(paragraph('Original saved-settings revision: '+head.revision),paragraph('Original saved-settings fingerprint: '+head.digest));}
   for(const attempt of snapshot.inclusionHistory??[]){
@@ -187,6 +220,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   }
   if(!(snapshot.inclusionHistory??[]).length)details.append(paragraph('No earlier inclusion or fee record is available.'));
   content.append(details);
+  if(savedReview){showSavedResume(snapshot,savedReview);return;}
   if(snapshot.status!=='replacement-available')return;
   const marker=intent.action.type==='read-marker',changed=marker&&snapshot.originalMarker?.blockHash!==snapshot.marker?.blockHash;
   let consent;
@@ -217,7 +251,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
    if(feeReady)content.append(paragraph(`New maximum network fee: ${reviewedFee} fee-juice units. Confirming authorizes this replacement only; the final charge may be lower.`));
    if(typeof intent.maximumFee==='string')content.append(paragraph(`Original maximum fee: ${intent.maximumFee} fee-juice units. This earlier ceiling is not the replacement fee or an actual charge.`));
    if(intent.replacementReview?.marker)content.append(el('p',{class:'recovery-values'},`Reviewed read position: block ${intent.replacementReview.marker.throughBlock}; block fingerprint ${intent.replacementReview.marker.blockHash}.`));
-  }else if(feeReady)content.append(paragraph(`Maximum network fee: ${reviewedFee} fee-juice units. This is a maximum, not a guaranteed final charge.`));
+  }else if(feeReady)content.append(paragraph(intent.replacementReview?`Original maximum fee: ${intent.maximumFee} fee-juice units. This earlier ceiling is not the saved replacement fee or a record of a charge.`:`Maximum network fee: ${reviewedFee} fee-juice units. This is a maximum, not a guaranteed final charge.`));
   if(intent.action?.type==='bio'&&intent.action.content==='')content.append(paragraph('Clear the current profile bio. Historical versions remain public.'));
   let avatarReady=intent.action?.type!=='avatar'||intent.action.data==='';
   const avatarArea=el('div',{'aria-label':'Saved avatar preview'});
