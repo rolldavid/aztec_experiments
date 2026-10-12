@@ -386,3 +386,6 @@ export async function rollingPreferenceRelationships(ctx){return (await import('
 export async function rollingPreferenceNotifications(ctx){return (await import('./rolling-application-fixture.mjs')).runRollingApplicationFixture(ctx,'preference-notifications');}
 
 export async function rollingPreferenceBrowser(ctx){return (await import('./rolling-application-fixture.mjs')).runRollingApplicationFixture(ctx,'preference-browser');}
+
+export async function rollingPreferenceReorgInitial(ctx){return (await import('./rolling-application-fixture.mjs')).runRollingApplicationFixture(ctx,'preference-reorg-initial');}
+export async function rollingPreferenceReorgMarker(ctx){return (await import('./rolling-application-fixture.mjs')).runRollingApplicationFixture(ctx,'preference-reorg-marker');}

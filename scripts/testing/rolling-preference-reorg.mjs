@@ -7,6 +7,7 @@ function block(value){assert(value&&height(value.number)&&hash(value.hash));retu
 export function validatePreferenceReorgBoundary(retained,state){
  const l1=block(retained.l1),l2=block(retained.l2),tip=block(state.l1Tip);
  assert(height(retained.checkpoint)&&height(state.pendingCheckpoint)&&height(state.finalizedNumber));
+ assert.equal(state.pendingL1Transactions,0,'Pending L1 transactions prevent an isolated fork');
  assert.deepEqual(block(state.l1Retained),l1,'L1 common ancestor changed');
  assert.deepEqual(block(state.l2Retained),l2,'L2 common ancestor changed');
  assert(state.finalizedNumber<=l2.number,'Never remove finalized application state');
@@ -37,6 +38,7 @@ export async function replaceRollingL1Suffix({eth,retained,readBoundary,quiescen
    assert(hash(after.l1Tip.hash)&&after.l1Tip.hash!==tip.hash,'Replacement must change the removed tip hash');
    assert.deepEqual(block(after.l1Retained),block(retained.l1));
    assert.equal(after.pendingCheckpoint,retained.checkpoint,'Actual rollup storage must return to retained checkpoint');
+   assert.equal(after.pendingL1Transactions,0,'Replacement must not leave pending L1 transactions');
    observation.replacement={sameHeight:true,changedTip:true,commonAncestorUnchanged:true,rollupCheckpoint:after.pendingCheckpoint};
    await persist();
   });

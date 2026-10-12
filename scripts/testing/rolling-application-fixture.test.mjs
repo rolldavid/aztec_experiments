@@ -74,7 +74,7 @@ test('native fixture facade imports genuine shared factories and rejects unconst
 });
 test('fixture uses sole real journal send path, five actions and canonical decoder rebuild',async()=>{
   const source=await fs.readFile(new URL('./rolling-application-fixture.mjs',import.meta.url),'utf8');
-  assert.equal((source.match(/await withC01ClientMining\(/g)||[]).length,3); // Separate awaited recovery scope after the original miner stops.
+  assert.equal((source.match(/await withC01ClientMining\(/g)||[]).length,4); // Separate awaited recovery scopes after the original miner stops.
   assert(source.includes('assert(report.applicationMining.clientMining.stopped&&report.applicationMining.clientMining.passed&&report.applicationMining.clientMining.autominingRestored)'));
   assert(source.includes('if(recovery){await completeTrustedRecovery();'));
   assert(source.indexOf('report.setupMining.clientMining.stopped,true')<source.indexOf("await mark('real-wall-clock-readiness')"));
