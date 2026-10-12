@@ -2,7 +2,7 @@
   "schema_version": 1,
   "budget_usd": 300,
   "scope": "Cumulative prover campaign plus at most one additional rolling.chat server; existing moderator costs remain separate.",
-  "as_of": "2026-10-12T12:10:34.929300+00:00",
+  "as_of": "2026-10-12T12:19:54.782575+00:00",
   "billing_evidence": "evidence/G02/aws-costs.json",
   "historical_campaign_bound_usd": 83.27,
   "historical_bound_method": "Retain the full earlier conservative bound including unused planned compute through13Oct, rather than subtracting unverified savings. Includes49.47 prior allowance,28.80 revival maximum and5 ancillary.",
@@ -638,7 +638,7 @@
     {
       "id": "rolling-node-commissioning-20261012-09",
       "purpose": "One changed instrumented nativeAMD64 archiver-startup/query-only qualification campaign09 using reviewed schema2 progress and preserved config-provider adapter; measure08unknown wait, not blind capacity retry. No proofjobs/publicrouting/release.",
-      "state": "archive uploaded once; exactpayload independently checked, report and one-shotlaunchhelper review pending; no compute",
+      "state": "running; actualcloudandhostshutdown controlsverified, bootstrapcomplete, Linuxnodequalificationpending",
       "reservation_usd": 25,
       "source": "1ec67f406645442965ced41e56b4e93c7097a050",
       "forecast": {
@@ -783,7 +783,7 @@
       "runtime_manifest_sha256": "d20ad9e3eb9498a6963b0fb517ba9c3403e53f84fbae1770bf9731e8c1db1d41",
       "package_review": "evidence/G02/startup09-package-runtime-review.json",
       "operating_minutes": 60,
-      "paid_compute_started": false,
+      "paid_compute_started": true,
       "approved_by": "lead-20261011",
       "recorded_at": "2026-10-12T12:00:49.798770+00:00",
       "authorization": "User cumulativeUSD300 mandate; lead reserves25 before upload. Separate actualpayload review and launch grant required.",
@@ -803,10 +803,37 @@
       },
       "latest_launch_before": "2026-10-12T12:13:58+00:00",
       "upload_and_payload_evidence": "evidence/G02/operator09-actual-payload-verification.json",
-      "archiveChargesIncludedInReservation": true
+      "archiveChargesIncludedInReservation": true,
+      "launch_template_id": "lt-0f105c842ae8ab7b1",
+      "fleet_id": "fleet-8022692d-f2e7-40ac-9dcc-38934a84fc35",
+      "launch_evidence": "evidence/G02/operator09-launch.json",
+      "cloud_termination_verified": true,
+      "host_termination_verified": true,
+      "cloud_controls": {
+        "type": "request",
+        "validUntil": "2026-10-12T13:03:58+00:00",
+        "terminateWithExpiration": true,
+        "state": "submitted",
+        "activity": "pending_fulfillment"
+      },
+      "payload_review": "evidence/G02/operator09-actual-payload-review.json",
+      "launch_helper_review": "evidence/G02/operator09-launch-helper-review.json",
+      "instance_id": "i-0f0ba078e3ff50444",
+      "volume_ids": [
+        "vol-0ff2bbf64e8bd943d",
+        "vol-0d960a6aa947389fc"
+      ],
+      "launch_time": "2026-10-12T12:14:00Z",
+      "fleet_submission_finished_at": "2026-10-12T12:13:49Z",
+      "delete_on_termination_verified": true,
+      "instance_shutdown_terminate_verified": true,
+      "latest_live_evidence": "evidence/G02/operator09-readonly-121847.json",
+      "compute_rate_usd_hour": 0.92736,
+      "host_controls_verified_at": "2026-10-12T12:18:47.696767+00:00",
+      "control_evidence": "evidence/G02/operator09-readonly-121847.json"
     }
   ],
-  "launch_hold": "09 reserved25; upload/preparation only authorized. No compute until actual <=16384 payload/digest/capability/deadline independent review and lead grant. No replay uncertain actions.",
+  "launch_hold": "09 running withinreserved25 and13:03:58absolute stop; no additionalcompute/replacement. Actualhostcontrols andLinuxreadiness qualification required; no publicrouting/proofjobs.",
   "node_requirement_sources": [
     "https://docs.aztec.network/operate/testnet/operators/full-node/overview",
     "https://docs.aztec.network/operate/testnet/operators/setup/running_a_node"
