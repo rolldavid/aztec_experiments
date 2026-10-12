@@ -1,11 +1,8 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import {prepareNativeRuntime} from './runtime.mjs';
-import {createProofQueue} from './queue.mjs';
-import {createProcessWorker} from './process-worker.mjs';
+import {isIP} from 'node:net';
 import {createProverServer} from './server.mjs';
 import {createPrivateQuery,validateQueryNode} from './private-query.mjs';
-import {loadCircuitCatalog} from './catalog.mjs';
 import {validateCompactTier} from '../shared/rolling/compact-client.mjs';
 
 // Operator option contains only a tier. Browser origins always come from the
@@ -19,9 +16,58 @@ export function compactBlockOptions(config){
  return {tier:validateCompactTier(descriptor.value),origins:config.origins};
 }
 
+const queryKeys=new Set(['serviceMode','chainId','rollupVersion','proofs','host','port','origins','queryNode','compactBlocks','compactRequestsPerMinute','trustedProxy']);
+// Capture only own data properties: no ignored proof settings or accessor-backed
+// configuration can smuggle a second lifecycle into this explicit mode.
+export function validateQueryService(config){
+ if(!config||Object.getPrototypeOf(config)!==Object.prototype)throw Error('Invalid query-only configuration');
+ const captured={};
+ for(const key of Reflect.ownKeys(config)){
+  const descriptor=Object.getOwnPropertyDescriptor(config,key);
+  if(!queryKeys.has(key)||!Object.hasOwn(descriptor,'value'))throw Error('Invalid query-only configuration');
+  captured[key]=descriptor.value;
+ }
+ if(!Array.isArray(captured.origins))throw Error('Invalid query-only configuration');
+ for(const key of Reflect.ownKeys(captured.origins)){const d=Object.getOwnPropertyDescriptor(captured.origins,key);if(!Object.hasOwn(d,'value')||(key!=='length'&&!/^(0|[1-9][0-9]*)$/.test(key)))throw Error('Invalid origins');}
+ if(Object.keys(captured.origins).length!==captured.origins.length)throw Error('Invalid origins');
+ const decimal=(value,bits)=>typeof value==='string'&&/^[1-9][0-9]{0,19}$/.test(value)&&BigInt(value)<(1n<<BigInt(bits))&&BigInt(value)<=BigInt(Number.MAX_SAFE_INTEGER);
+ const origin=value=>{try{return typeof value==='string'&&value.length<=2048&&['http:','https:'].includes(new URL(value).protocol)&&new URL(value).origin===value;}catch{return false;}};
+ if(captured.serviceMode!=='query-only'||captured.proofs!=='real'||!decimal(captured.chainId,64)||!decimal(captured.rollupVersion,32)
+  ||!Array.isArray(captured.origins)||captured.origins.length>64||!captured.origins.every(origin)||new Set(captured.origins).size!==captured.origins.length
+  ||typeof (captured.host??'127.0.0.1')!=='string'||!(captured.host??'127.0.0.1').length||(captured.host??'127.0.0.1').length>253
+  ||!Number.isSafeInteger(captured.port??8081)||(captured.port??8081)<0||(captured.port??8081)>65535
+  ||(captured.trustedProxy!==undefined&&!isIP(captured.trustedProxy)))throw Error('Invalid query-only configuration');
+ const rawNode=captured.queryNode;
+ if(!rawNode||Object.getPrototypeOf(rawNode)!==Object.prototype)throw Error('Query node required');
+ const nodeFields={};for(const key of Reflect.ownKeys(rawNode)){const d=Object.getOwnPropertyDescriptor(rawNode,key);if(!['url','rollupAddress','maxLagSeconds'].includes(key)||!Object.hasOwn(d,'value'))throw Error('Invalid query node configuration');nodeFields[key]=d.value;}
+ const queryNode=validateQueryNode(nodeFields);if(!queryNode)throw Error('Query node required');
+ // Compact options keep the existing single origin policy and explicit opt-in.
+ const origins=Object.freeze([...captured.origins]);
+ const normalized={...captured,origins,queryNode};const compact=compactBlockOptions(normalized);
+ if(compact)normalized.compactBlocks=Object.freeze({tier:compact.tier});
+ return Object.freeze(normalized);
+}
+async function listen(server,port,host){
+ await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(port,host,()=>{server.removeListener('error',reject);resolve();});});
+}
+async function startQueryOnlyService(input){
+ const config=validateQueryService(input);
+ const privateQuery=await createPrivateQuery({...config,proofsEnabled:true,compactBlocks:compactBlockOptions(config)});
+ const server=createProverServer({...config,privateQuery,proofsEnabled:true});
+ const close=()=>server.closeAndDrain();
+ try{
+  await listen(server,config.port??8081,config.host??'127.0.0.1');
+  return {address:server.address(),close,stats:()=>Object.freeze({serviceMode:'query-only',proofJobsEnabled:false,queueAllocated:false,workerAllocated:false})};
+ }catch(error){await close();throw error;}
+}
+
 // Composition root: owns only the resources it creates. Tests and the host use
 // this same entry point; HTTP, queue and worker communicate through interfaces.
 export async function startProverService(config){
+ const mode=Object.getOwnPropertyDescriptor(config,'serviceMode');
+ if(mode&&!Object.hasOwn(mode,'value'))throw Error('Invalid service mode');
+ if(mode?.value==='query-only')return startQueryOnlyService(config);
+ if(mode&&mode.value!=='prover')throw Error('Invalid service mode');
  if(!/^[1-9][0-9]*$/.test(String(config.chainId))||!/^[1-9][0-9]*$/.test(String(config.rollupVersion))||!Array.isArray(config.origins)||!config.origins.every(o=>{try{return new URL(o).origin===o;}catch{return false;}})||!Number.isSafeInteger(config.threads??1)||(config.threads??1)<1||(config.threads??1)>256)throw Error('Invalid network, origins or threads');
  if(!/^0x[0-9a-f]{64}$/.test(config.board)||!['real','disabled'].includes(config.proofs))throw Error('Invalid board/proofs configuration');
  if(config.privateFeeAddress!==undefined&&!/^0x[0-9a-f]{64}$/.test(config.privateFeeAddress))throw Error('Invalid private fee address');
@@ -33,16 +79,18 @@ export async function startProverService(config){
  if(!proofsEnabled&&(!['127.0.0.1','::1','localhost'].includes(host)||String(config.chainId)!=='31337'))throw Error('Disabled proofs require loopback local devnet');
  validateQueryNode(config.queryNode);
  const privateQuery=await createPrivateQuery({...config,proofsEnabled,compactBlocks:compactBlockOptions(config)});
+ // Query-only returns above, before any proof-only module or resource exists.
+ const [{prepareNativeRuntime},{loadCircuitCatalog},{createProcessWorker},{createProofQueue}]=await Promise.all([import('./runtime.mjs'),import('./catalog.mjs'),import('./process-worker.mjs'),import('./queue.mjs')]);
  const runtime=proofsEnabled?await prepareNativeRuntime(config):{};
  await loadCircuitCatalog({applicationProfile});
  const directory=await fs.mkdtemp(path.join(config.queueDirectory??'/tmp','board-prover-'));
  const worker=createProcessWorker({applicationProfile,privateBokAddress:config.privateBokAddress,proofsEnabled,threads:config.threads??1,privateFeeAddress:config.privateFeeAddress,pluginAddresses:config.pluginAddresses,...runtime});
  let queue,server,closing;
- const close=()=>closing??=(async()=>{if(server){server.close();server.closeAllConnections();}await (queue?queue.close():worker.close());await fs.rm(directory,{recursive:true,force:true});})();
+ const close=()=>closing??=(async()=>{try{if(server)await server.closeAndDrain();}finally{try{await (queue?queue.close():worker.close());}finally{await fs.rm(directory,{recursive:true,force:true});}}})();
  try{
   queue=await createProofQueue({directory,worker,maxJobs:1000,maxBytes:config.maxQueueBytes??2*1024**3});
   server=createProverServer({...config,queue,proofsEnabled,privateQuery});
-  await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(config.port??8081,host,()=>{server.removeListener('error',reject);resolve();});});
+  await listen(server,config.port??8081,host);
   return {address:server.address(),close,stats:()=>queue.stats()};
  }catch(error){await close();throw error;}
 }

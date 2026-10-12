@@ -5,12 +5,12 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import {createHash} from 'node:crypto';
-import {verifyRelease,validateQualification,loopback,exerciseFreshness,expectedClientRejection,adminRpc,publicRpc,readAdminKey,ADMIN_URL,ADMIN_KEY_FILE} from './qualify-runtime.mjs';
+import {verifyRelease,validateQualification,loopback,exerciseFreshness,expectedClientRejection,queryQualificationScope,verifyQueryOnlyService,adminRpc,publicRpc,readAdminKey,ADMIN_URL,ADMIN_KEY_FILE} from './qualify-runtime.mjs';
 const sha=x=>createHash('sha256').update(x).digest('hex');
-const config=()=>({service:{applicationProfile:'legacy',proofs:'real',host:'127.0.0.1',port:0,chainId:'11155111',rollupVersion:'2914217885',board:'0x'+'01'.repeat(32),origins:[],queryNode:{url:'http://127.0.0.1:8080',rollupAddress:'0x'+'02'.repeat(20),maxLagSeconds:2}},adminUrl:ADMIN_URL,adminKeyFile:ADMIN_KEY_FILE});
-test('pure configuration: only actual-network legacy real query qualification',()=>{
+const config=()=>({service:{serviceMode:'query-only',proofs:'real',host:'127.0.0.1',port:0,chainId:'11155111',rollupVersion:'3409706519',origins:[],queryNode:{url:'http://127.0.0.1:8080',rollupAddress:'0x'+'02'.repeat(20),maxLagSeconds:2}},adminUrl:ADMIN_URL,adminKeyFile:ADMIN_KEY_FILE});
+test('pure configuration: only actual-network query-only real-node qualification',()=>{
   assert.deepEqual(validateQualification(config()),{maxLagSeconds:2,recoveryTimeoutMs:180000});
-  for(const change of [c=>c.service.proofs='disabled',c=>c.service.applicationProfile='rolling',c=>c.service.host='0.0.0.0',c=>c.service.port=8081,c=>c.service.chainId='31337',c=>c.service.queryNode.maxLagSeconds=121,c=>c.service.board='0x'+'00'.repeat(32),c=>c.service.bbPath='/override',c=>c.service.apiKey='PRIVATE_SENTINEL',c=>c.adminKeyFile='/var/lib/rolling-bootstrap-private/config.json',c=>c.adminUrl='http://127.0.0.1:8880/',c=>c.adminUrl='https://example.com/',c=>c.recoveryTimeoutMs=180001]){const c=config();change(c);assert.throws(()=>validateQualification(c));}
+  for(const change of [c=>c.service.proofs='disabled',c=>c.service.applicationProfile='legacy',c=>c.service.serviceMode='prover',c=>c.service.host='0.0.0.0',c=>c.service.port=8081,c=>c.service.chainId='31337',c=>c.service.queryNode.maxLagSeconds=121,c=>c.service.board='0x'+'01'.repeat(32),c=>c.service.queueDirectory='/tmp/unused',c=>c.service.privateBokAddress='0x'+'02'.repeat(32),c=>c.service.origins=['https://example.com'],c=>c.service.bbPath='/override',c=>c.service.apiKey='PRIVATE_SENTINEL',c=>c.adminKeyFile='/var/lib/rolling-bootstrap-private/config.json',c=>c.adminUrl='http://127.0.0.1:8880/',c=>c.adminUrl='https://example.com/',c=>c.recoveryTimeoutMs=180001]){const c=config();change(c);assert.throws(()=>validateQualification(c));}
 });
 test('pure configuration: reject external, authenticated and redirected-path admin/upstream endpoints',()=>{
   for(const url of ['http://example.com','http://127.0.0.1/a','http://secret@127.0.0.1','http://127.0.0.1?token=secret','http://127.0.0.1#x','file:///tmp/x'])assert.throws(()=>loopback(url));
@@ -141,4 +141,15 @@ test('SDK fake transport: missing admin header rejected; freshness recovery uses
   f.args.admin={pauseSync:async()=>{await admin.pauseSync();return original.pauseSync();},resumeSync:async()=>{await admin.resumeSync();return original.resumeSync();}};
   await exerciseFreshness(f.args);assert(f.observation.recovered);assert(f.observation.resumed);
   assert(!JSON.stringify(f.observation).includes(c.key));assert.deepEqual(calls.slice(1).map(x=>x.method),['aztecAdmin_pauseSync','aztecAdmin_resumeSync']);
+});
+
+test('pure qualification scope contains no fabricated deployment or proof-service claim',()=>{
+ assert.deepEqual(queryQualificationScope(config().service),{chainId:'11155111',version:'3409706519',rollup:'0x'+'02'.repeat(20),serviceMode:'query-only',nodeProofs:'real',maxLagSeconds:2});
+});
+
+test('pure query-only configuration rejects accessors, extra upstream keys and noncanonical version without invoking getters',()=>{
+ let reads=0;
+ for(const [object,key] of [['root','service'],['service','proofs'],['node','url']]){const c=config(),target=object==='root'?c:object==='service'?c.service:c.service.queryNode;Object.defineProperty(target,key,{get(){reads++;throw Error('PRIVATE_SENTINEL');}});assert.throws(()=>validateQualification(c));}
+ assert.equal(reads,0);
+ for(const change of [c=>c.service.rollupVersion='01',c=>c.service.rollupVersion='4294967296',c=>c.service.rollupVersion=1,c=>c.service.queryNode.apiKey='PRIVATE_SENTINEL']){const c=config();change(c);assert.throws(()=>validateQualification(c));}
 });

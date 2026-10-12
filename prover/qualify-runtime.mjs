@@ -66,12 +66,14 @@ export function loopback(value){
 export const ADMIN_URL='http://127.0.0.1:8882/';
 export const ADMIN_KEY_FILE='/var/lib/rolling-admin/qualification-key';
 export function validateQualification(config){
-  requireCondition(config&&Object.keys(config).every(k=>['service','adminUrl','adminKeyFile','recoveryTimeoutMs'].includes(k)));
+  const record=(value,keys)=>{requireCondition(value&&Object.getPrototypeOf(value)===Object.prototype);for(const key of Reflect.ownKeys(value))requireCondition(keys.includes(key)&&Object.hasOwn(Object.getOwnPropertyDescriptor(value,key),'value'));};
+  record(config,['service','adminUrl','adminKeyFile','recoveryTimeoutMs']);
   const s=config.service;
-  requireCondition(s&&Object.keys(s).every(k=>['applicationProfile','proofs','host','port','chainId','rollupVersion','board','privateFeeAddress','pluginAddresses','origins','threads','queryNode'].includes(k)));
-  requireCondition(s&&s.applicationProfile==='legacy'&&s.proofs==='real'&&s.host==='127.0.0.1'&&s.port===0);
-  requireCondition(String(s.chainId)==='11155111'&&/^[1-9][0-9]*$/.test(String(s.rollupVersion)));
-  requireCondition(/^0x[a-f0-9]{64}$/.test(s.board)&&BigInt(s.board)!==0n);
+  record(s,['serviceMode','proofs','host','port','chainId','rollupVersion','origins','queryNode']);
+  requireCondition(s&&s.serviceMode==='query-only'&&s.proofs==='real'&&s.host==='127.0.0.1'&&s.port===0);
+  requireCondition(s.chainId==='11155111'&&typeof s.rollupVersion==='string'&&/^[1-9][0-9]{0,9}$/.test(s.rollupVersion)&&BigInt(s.rollupVersion)<2n**32n);
+  requireCondition(Array.isArray(s.origins)&&s.origins.length===0);
+  record(s.queryNode,['url','rollupAddress','maxLagSeconds']);
   requireCondition(s.queryNode&&/^0x[a-f0-9]{40}$/.test(s.queryNode.rollupAddress)&&BigInt(s.queryNode.rollupAddress)!==0n);
   const lag=s.queryNode.maxLagSeconds??120;
   requireCondition(Number.isSafeInteger(lag)&&lag>=1&&lag<=120);
@@ -82,6 +84,22 @@ export function validateQualification(config){
   // Runtime directories belong to qualification, not release or persistent node.
   requireCondition(s.bbPath===undefined&&s.crsPath===undefined&&s.queueDirectory===undefined);
   return {maxLagSeconds:lag,recoveryTimeoutMs:recovery};
+}
+
+export function queryQualificationScope(service){
+  return {...scopeOf(service),serviceMode:'query-only',nodeProofs:'real',maxLagSeconds:service.queryNode.maxLagSeconds??120};
+}
+/** This is structural absence of proof service resources, not a fake queue
+ * reporting zero jobs. HTTP rejection is checked before and after qualification. */
+export async function verifyQueryOnlyService(service,url){
+  assert.deepEqual(service.stats(),{serviceMode:'query-only',proofJobsEnabled:false,queueAllocated:false,workerAllocated:false});
+  const health=await fetch(url+'/healthz',{redirect:'error',signal:AbortSignal.timeout(30000)});requireCondition(health.ok);
+  const value=await health.json();requireCondition(value.serviceMode==='query-only'&&value.proofs==='not-offered'&&value.nodeProofs==='real'&&value.queue===null&&value.query.enabled===true);
+  for(const [method,route] of [['POST','/v1/jobs'],['GET','/v1/jobs/'+'0'.repeat(64)]]){
+    const response=await fetch(url+route,{method,redirect:'error',signal:AbortSignal.timeout(10000),...(method==='POST'?{headers:{'content-type':'application/octet-stream'},body:new Uint8Array(0)}:{})});
+    requireCondition(response.status===404);assert.deepEqual(await response.json(),{error:'Proof service not offered'});
+  }
+  return {passed:true,proofEndpointsDisabled:true,queueAllocated:false,workerAllocated:false};
 }
 
 /** Labelled pure-fake unit tests exercise scheduling/cleanup here. Production
@@ -225,10 +243,11 @@ export async function qualifyRuntime(config,digest,output){
     report.checks.nativeAndRollingCatalog={passed:true,circuitCount:catalog.size};
     directory=await fs.mkdtemp('/tmp/board-linux-qualification-');
     const {startProverService}=await import('./service.mjs');
-    service=await startProverService({...config.service,queueDirectory:directory,crsPath:path.join(directory,'crs')});
+    service=await startProverService(config.service);
     const url='http://127.0.0.1:'+service.address.port;
     const health=async()=>{const r=await fetch(url+'/healthz',{redirect:'error',signal:AbortSignal.timeout(30000)});requireCondition(r.ok);return r.json();};
-    report.publicScope={...scopeOf(config.service),applicationProfile:'legacy',board:config.service.board,proofs:'real',maxLagSeconds:bounds.maxLagSeconds};
+    report.publicScope=queryQualificationScope(config.service);
+    report.checks.noProofLifecycle=await verifyQueryOnlyService(service,url);
     report.stage='healthy-composition';requireCondition((await health()).query.ready===true);
     const input={url:url+'/v1/node',scope:scopeOf(config.service),maxLagSeconds:bounds.maxLagSeconds};
     report.checks.healthy=await child({...input,case:'healthy'});
@@ -246,8 +265,8 @@ export async function qualifyRuntime(config,digest,output){
     const copy=path.join(directory,'missing-helper-release');await fs.cp(ROOT,copy,{recursive:true,dereference:false,verbatimSymlinks:true,errorOnExist:true,force:false});
     await verifyRelease(copy,digest);
     await fs.unlink(path.join(copy,'shared/trusted-private-node.mjs'));
-    report.checks.missingHelper=await child({case:'missing-helper',service:{...config.service,queueDirectory:directory,crsPath:path.join(directory,'crs')}},copy);
-    requireCondition(service.stats().submitted===0);const port=service.address.port;await service.close();service=undefined;await assertPortClosed(port);report.cleanup.serviceClosed=true;report.cleanup.childProcessesExited=true;
+    report.checks.missingHelper=await child({case:'missing-helper',service:config.service},copy);
+    requireCondition((await verifyQueryOnlyService(service,url)).passed);const port=service.address.port;await service.close();service=undefined;await assertPortClosed(port);report.cleanup.serviceClosed=true;report.cleanup.childProcessesExited=true;
     report.stage='recheck-manifest';await verifyRelease(ROOT,digest);report.checks.manifestUnchanged=true;
     report.stage='complete';report.passed=true;
   }catch{report.passed=false;}

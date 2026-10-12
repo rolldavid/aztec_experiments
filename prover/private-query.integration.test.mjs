@@ -6,6 +6,8 @@ import assert from 'node:assert/strict';
 import http from 'node:http';
 import {createPrivateQuery} from './private-query.mjs';
 import {createProverServer} from './server.mjs';
+import {startProverService} from './service.mjs';
+import {verifyQueryOnlyService} from './qualify-runtime.mjs';
 import {createTrustedPrivateNode,isTrustedPrivateNode} from '../shared/trusted-private-node.mjs';
 import {jsonStringify} from '@aztec-labs/foundation/json-rpc';
 import {getSchemaParameters,parseWithOptionals} from '@aztec-labs/foundation/schemas';
@@ -25,18 +27,19 @@ const listen = async server => {
 };
 const stop = server => {server.closeAllConnections();return new Promise(resolve=>server.close(resolve));};
 
-async function composition(t) {
+async function composition(t,{queryOnly=false}={}) {
   const id = n => ({number:n,hash:hex(n)}), tip = n => ({block:id(n),checkpoint:{number:n,hash:hex(n)}});
   // Same schema-valid NodeInfo/BlockData shape as shared trusted-node unit tests,
   // transported through real HTTP and both real production adapters here.
-  const info = {nodeVersion:'6.0.0-rc.1',l1ChainId:31337,rollupVersion:1,realProofs:true,
+  const info = {nodeVersion:'6.0.0-rc.3',l1ChainId:31337,rollupVersion:1,realProofs:true,
     l1ContractAddresses:Object.fromEntries(L1ContractsNames.map(name=>[name,rollup])),
     protocolContractAddresses:Object.fromEntries(['classRegistry','feeJuice','instanceRegistry','multiCallEntrypoint'].map(name=>[name,hex(1)])),
     txsLimits:{gas:{daGas:100,l2Gas:100}}};
   const state = {latestBlockNumber:8,latestBlockHash:hex(8),finalizedBlockNumber:3,oldestHistoricBlockNumber:0,treesAreSynched:true};
   const tips = {proposed:id(8),checkpointed:tip(7),proven:tip(4),finalized:tip(3)};
   let lagSeconds = 0, upstreamFailure = false, frontRequests = 0, encodedEnr;
-  const calls = [], errors = [];
+  const calls = [], errors = [], holds=new Map();
+  t.after(()=>{for(const gate of holds.values())gate.release();});
   const handlers = {
     getEncodedEnr:()=>encodedEnr,
     getNodeInfo:()=>info,
@@ -64,22 +67,28 @@ async function composition(t) {
         assert(request.method.startsWith('aztec_'));
         const method=request.method.slice(6);assert(Object.hasOwn(handlers,method));
         const args=await parseWithOptionals(request.params,getSchemaParameters(AztecNodeApiSchema[method]));
-        calls.push(method);results.push({jsonrpc:'2.0',id:request.id,result:handlers[method](...args)??null});
+        calls.push(method);const gate=holds.get(method);if(gate){gate.enter();await gate.promise;holds.delete(method);}
+        results.push({jsonrpc:'2.0',id:request.id,result:handlers[method](...args)??null});
       }
       res.writeHead(200,{'content-type':'application/json'});res.end(jsonStringify(results));
     }catch(error){errors.push(error);res.writeHead(500);res.end('Fixture rejected request');}
   });
   const upstreamUrl=await listen(upstream);t.after(()=>stop(upstream));
   // No injected inspector: this dynamically imports the production shared gate.
-  const privateQuery=await createPrivateQuery({queryNode:{url:upstreamUrl,rollupAddress:rollup,maxLagSeconds:120},
-    chainId:scope.chainId,rollupVersion:scope.version,proofsEnabled:true});
-  const server=createProverServer({privateQuery,queue:{stats:()=>({submitted:0})},proofsEnabled:true,origins:[]});
-  server.prependListener('request',()=>{frontRequests++;});
-  const url=await listen(server);t.after(()=>stop(server));
+  let url,service;
+  if(queryOnly){
+    service=await startProverService({serviceMode:'query-only',queryNode:{url:upstreamUrl,rollupAddress:rollup,maxLagSeconds:120},chainId:scope.chainId,rollupVersion:scope.version,proofs:'real',host:'127.0.0.1',port:0,origins:[]});
+    url='http://127.0.0.1:'+service.address.port;t.after(()=>service.close());
+  }else{
+    const privateQuery=await createPrivateQuery({queryNode:{url:upstreamUrl,rollupAddress:rollup,maxLagSeconds:120},chainId:scope.chainId,rollupVersion:scope.version,proofsEnabled:true});
+    const server=createProverServer({privateQuery,queue:{stats:()=>({submitted:0})},proofsEnabled:true,origins:[]});
+    server.prependListener('request',()=>{frontRequests++;});
+    url=await listen(server);t.after(()=>stop(server));
+  }
   const create = () => createTrustedPrivateNode({url:url+'/v1/node',expectedNetworkScope:scope,proofsEnabled:true,allowLocalDev:true,maxLagSeconds:120});
   const reset = () => {calls.length=0;frontRequests=0;};
   t.after(()=>assert.deepEqual(errors,[],'Controlled upstream must accept every forwarded SDK request'));
-  return {info,state,tips,calls,create,reset,url,get frontRequests(){return frontRequests;},
+  return {info,state,tips,calls,create,reset,url,service,hold:method=>{let enter,release;const entered=new Promise(r=>enter=r),promise=new Promise(r=>release=r);holds.set(method,{enter,release,promise});return {entered,release};},get frontRequests(){return frontRequests;},
     setEncodedEnrBytes:bytes=>{assert(Number.isSafeInteger(bytes)&&bytes>=0&&bytes<=33*1024*1024);encodedEnr='e'.repeat(bytes);},
     setLag:value=>{lagSeconds=value;},setFailure:value=>{upstreamFailure=value;}};
 }
@@ -138,4 +147,29 @@ test('development HTTP composition: aggregate batch above 32 MiB rejects both in
   const results=await Promise.allSettled([node.getEncodedEnr(),node.getEncodedEnr()]);
   assert(results.every(result=>result.status==='rejected'&&unavailable(result.reason)));
   assert.deepEqual(f.calls,[...publicGate,'getEncodedEnr','getEncodedEnr']);assert.equal(f.frontRequests,1);
+});
+
+
+test('development query-only service: actual client/inspector, no deployment or proof lifecycle',async t=>{
+ const f=await composition(t,{queryOnly:true}),node=await f.create();assert(isTrustedPrivateNode(node));
+ assert.deepEqual(f.service.stats(),{serviceMode:'query-only',proofJobsEnabled:false,queueAllocated:false,workerAllocated:false});
+ f.reset();assert.equal(await node.getContract(address,8),undefined);assert.deepEqual(f.calls,[...publicGate,'getContract']);
+ assert.deepEqual(await verifyQueryOnlyService(f.service,f.url),{passed:true,proofEndpointsDisabled:true,queueAllocated:false,workerAllocated:false});
+});
+for(const [label,mutate,expected] of [
+ ['identity',f=>{f.info.rollupVersion=2;},['getNodeInfo']],
+ ['proof policy',f=>{f.info.realProofs=false;},['getNodeInfo']],
+ ['sync',f=>{f.state.treesAreSynched=false;},publicGate.slice(0,3)],
+ ['stale',f=>{f.setLag(121);},publicGate.slice(0,6)],
+])test('development query-only service: '+label+' refuses private forward',async t=>{
+ const f=await composition(t,{queryOnly:true}),node=await f.create();f.reset();mutate(f);
+ await assert.rejects(node.getContract(address,8),unavailable);assert.deepEqual(f.calls,expected);assert(!f.calls.includes('getContract'));
+});
+test('development query-only service: close waits for actual held upstream SDK response',async t=>{
+ const f=await composition(t,{queryOnly:true}),node=await f.create();const gate=f.hold('getContract');
+ const query=node.getContract(address,8).catch(()=>undefined);let closed=false;
+ try{
+  await gate.entered;const closing=f.service.close().then(()=>{closed=true;});await new Promise(r=>setImmediate(r));assert.equal(closed,false);
+  gate.release();await closing;await query;assert.equal(closed,true);
+ }finally{gate.release();await f.service.close();await query;}
 });

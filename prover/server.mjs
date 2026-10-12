@@ -3,10 +3,13 @@ import http from 'node:http';
 import {decodeJob,MAX_REQUEST_BYTES} from '../shared/remote-prover-wire.mjs';
 import {COMPACT_GATEWAY_ROUTE} from '../shared/rolling/compact-client.mjs';
 /** HTTP adapter depends only on queue and board policy APIs. */
-export function createProverServer({queue,board,chainId,rollupVersion,proofsEnabled=true,origins=[],requestsPerMinute=6,compactRequestsPerMinute=600,trustedProxy,privateQuery}){
+export function createProverServer({serviceMode='prover',queue,board,chainId,rollupVersion,proofsEnabled=true,origins=[],requestsPerMinute=6,compactRequestsPerMinute=600,trustedProxy,privateQuery}){
+ if(!['prover','query-only'].includes(serviceMode)||(serviceMode==='query-only'&&(!privateQuery||queue!==undefined||board!==undefined||proofsEnabled!==true)))throw Error('Invalid service mode');
+ const queryOnly=serviceMode==='query-only';
  if(!Number.isSafeInteger(compactRequestsPerMinute)||compactRequestsPerMinute<1||compactRequestsPerMinute>6000)throw Error('Invalid compact read rate');
  const clients=new Map();let uploads=0;
- const server=http.createServer(async(req,res)=>{
+ const active=new Set();let closing;
+ const handle=async(req,res)=>{
   const reply=(status,value)=>{res.writeHead(status,{'Content-Type':'application/json','Cache-Control':'no-store'});res.end(JSON.stringify(value));};
   res.setHeader('X-Content-Type-Options','nosniff');
   const origin=req.headers.origin;
@@ -24,9 +27,13 @@ export function createProverServer({queue,board,chainId,rollupVersion,proofsEnab
    rate[counter]++;clients.set(client,rate);return client;
   };
   try{
-   if(req.method==='GET'&&req.url==='/healthz'){reply(200,{ready:true,proofs:proofsEnabled?'real':'disabled',queue:queue.stats(),query:privateQuery?await privateQuery.health():{enabled:false,ready:false}});return;}
+   if(req.method==='GET'&&req.url==='/healthz'){reply(200,queryOnly?{ready:true,serviceMode:'query-only',proofs:'not-offered',nodeProofs:'real',queue:null,query:await privateQuery.health()}:{ready:true,proofs:proofsEnabled?'real':'disabled',queue:queue.stats(),query:privateQuery?await privateQuery.health():{enabled:false,ready:false}});return;}
    if(req.method==='POST'&&req.url==='/v1/node'&&privateQuery){await privateQuery.handle(req,res);return;}
    if(req.url===COMPACT_GATEWAY_ROUTE&&privateQuery?.handleCompact){if(admit(true)===undefined)return;await privateQuery.handleCompact(req,res);return;}
+   // No request body decoding, queue lookup or proof admission in this mode.
+   if(queryOnly&&(req.url==='/v1/jobs'||req.url.startsWith('/v1/jobs/'))){
+    res.setHeader('Connection','close');res.once('finish',()=>req.socket.destroy());reply(404,{error:'Proof service not offered'});return;
+   }
    if(req.method==='POST'&&req.url==='/v1/jobs'){
     const client=admit();if(client===undefined)return;
     if(req.headers['content-type']!=='application/octet-stream'){reply(415,{error:'Binary job required'});return;}
@@ -40,7 +47,21 @@ export function createProverServer({queue,board,chainId,rollupVersion,proofsEnab
    if(req.method==='GET'&&match){const job=queue.get(match[1]);reply(job?200:404,job??{error:'Job expired'});return;}
    reply(404,{error:'Not found'});
   }catch(error){reply(error.status??400,{error:'Request rejected'});}
+ };
+ const server=http.createServer((req,res)=>{
+  if(closing){req.destroy();return;}
+  const pending=handle(req,res);active.add(pending);
+  void pending.finally(()=>active.delete(pending)).catch(()=>res.destroy());
  });
+ // Listener closure alone does not settle an already admitted SDK upstream
+ // request. Await all handler promises (including query/health/compact calls);
+ // their existing transport deadlines remain in force. No retry or new calls
+ // are admitted after closure starts.
+ server.closeAndDrain=()=>closing??=(async()=>{
+  const stopped=new Promise((resolve,reject)=>server.close(error=>error&&error.code!=='ERR_SERVER_NOT_RUNNING'?reject(error):resolve()));
+  server.closeAllConnections();
+  await Promise.all([stopped,Promise.allSettled([...active])]);
+ })();
  server.requestTimeout=30000;server.headersTimeout=10000;server.maxConnections=128;
  return server;
 }
