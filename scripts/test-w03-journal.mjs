@@ -5,10 +5,10 @@ import os from 'node:os';
 import path from 'node:path';
 import {execFileSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
-import {randomBytes} from 'node:crypto';
+import {randomBytes,createHash} from 'node:crypto';
 import {Tx,TxHash} from '@aztec-labs/stdlib/tx';
 import {IDBFactory} from 'fake-indexeddb';
-import {createL2Journal} from '../shared/l2-journal.mjs';
+import {createL2Journal,l2JournalScopeText} from '../shared/l2-journal.mjs';
 import {createBrowserJournalStorage} from '../shared/journal-indexeddb.mjs';
 import {createFileJournalStorage} from '../apps/src/billboard/user/transaction-journal-store.mjs';
 const field=()=> '0x'+randomBytes(31).toString('hex').padStart(64,'0');
@@ -25,6 +25,15 @@ for(const backend of ['file','indexeddb']) {
   const temp=fs.mkdtempSync(path.join(os.tmpdir(),'bb-journal-test-'));
   try {const idb=new IDBFactory(),storage=backend==='file'?createFileJournalStorage(temp):createBrowserJournalStorage(idb);await fn(fixture(storage),{temp,idb,storage});}finally{fs.rmSync(temp,{recursive:true,force:true});}
  }
+ test(`${backend}: G07 strict replacement inspection leaves exact authenticated ciphertext and acknowledgement untouched`,()=>withStorage(async (f,{storage})=>{
+  const j=await f.newSession();j.setOperation('ROLLING_WORKFLOW_V1:fixture');await j.prepare(f.tx,await j.assertCanStart());
+  f.node.isValidTx=async()=>({result:'invalid',reason:['Block header not found']});
+  const key=createHash('sha256').update(l2JournalScopeText(f.opts.scope)).digest('hex'),before=await storage.read(key);let writes=0;
+  storage.compareAndSwap=async()=>{writes++;throw Error('Read-only inspection must not write');};
+  const reopened=await f.newSession(),result=await reopened.inspectReplacement('ROLLING_WORKFLOW_V1:fixture',{requireMissingAnchor:true});
+  assert.equal(result.status,'available');assert.equal(result.attempts[0].txHash,String(f.tx.getTxHash()));assert.equal(await storage.read(key),before);
+  await assert.rejects(reopened.assertCanStart(),{code:'BB_RECOVERY_REQUIRED'});assert.equal(writes,0);assert.equal(reopened.lastTxHash,null);assert.equal(f.sent.length,0);
+ }));
  test(`${backend}: read-only outcome never rebroadcasts or acknowledges`,()=>withStorage(async f=>{
   const journal=await f.newSession();journal.setOperation('post');await journal.prepare(f.tx,await journal.assertCanStart());
   const reopened=await f.newSession();assert.equal((await reopened.inspectOutcome()).outcome,'pending');assert.equal(f.sent.length,0);await assert.rejects(reopened.assertCanStart(),{code:'BB_RECOVERY_REQUIRED'});

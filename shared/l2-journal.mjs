@@ -2,6 +2,17 @@ import { readCanonicalReceipt, transactionError, boundedTransactionRead, classif
 import {createEncryptedJournalSlot} from './journal-record.mjs';
 const fail=()=>transactionError('BB_RECOVERY_REQUIRED','Recover the saved transaction before starting another operation.');
 const invalid=()=>transactionError('BB_JOURNAL_INVALID','Transaction recovery storage could not be authenticated. Preserve it before continuing.');
+// Options are trusted operation policy, never a loose UI object. Capture own
+// data primitives before any await; an accessor cannot silently relax the mode.
+function replacementOptions(options={}) {
+ try {
+  if(!options||![Object.prototype,null].includes(Object.getPrototypeOf(options))||Reflect.ownKeys(options).some(key=>key!=='requireMissingAnchor'))throw invalid();
+  const property=Object.getOwnPropertyDescriptor(options,'requireMissingAnchor');
+  if(property&&(!Object.hasOwn(property,'value')||typeof property.value!=='boolean'))throw invalid();
+  return property?.value??false;
+ }catch{throw invalid();}
+}
+function expectedOperation(value) {if(typeof value!=='string'||!value.length||value.length>16384)throw invalid();return value;}
 const scopeNames=['account','chainId','rollup','version','board','portal'];
 export function l2JournalScopeText(scope) {
   if(!scope || Object.keys(scope).sort().join()!==[...scopeNames].sort().join())throw invalid();
@@ -27,6 +38,7 @@ export async function createL2Journal({storage,walletSecret,walletSalt,scope,Tx,
     try {
       const record=saved.value;
       if(record.version!==1||typeof record.txHash!=='string'||!/^0x[0-9a-f]{64}$/.test(record.txHash)||typeof record.tx!=='string'||!/^(?:[0-9a-f]{2})+$/.test(record.tx))throw invalid();
+      if(record.replacementPolicy!==undefined&&(record.replacementPolicy!=='missing-anchor'||!Array.isArray(record.replacements)||!record.replacements.length))throw invalid();
       if(record.operation!==undefined&&record.operation!==null&&(typeof record.operation!=='string'||!record.operation.length||record.operation.length>16384))throw invalid();
       if(record.replacements!==undefined) {
         if(!Array.isArray(record.replacements)||record.replacements.length>8)throw invalid();
@@ -48,7 +60,7 @@ export async function createL2Journal({storage,walletSecret,walletSalt,scope,Tx,
   async function assertCanStart() {
     const previous=await read();
     if(previous.tx) {
-      if(replacement?.encoded===previous.encoded) {await rejectedAttempts(previous);return previous;}
+      if(replacement?.encoded===previous.encoded) {await rejectedAttempts(previous,{requireMissingAnchor:replacement.requireMissingAnchor});return previous;}
       if(acknowledged!==previous.tx.getTxHash().toString())throw fail();
       // A previous display or cached receipt cannot authorize a replacement
       // after a reorg. This check intentionally does not regenerate stale proofs.
@@ -61,29 +73,76 @@ export async function createL2Journal({storage,walletSecret,walletSalt,scope,Tx,
     }
     return previous;
   }
-  async function rejectedAttempts(saved) {
-    return boundedTransactionRead(async()=>{
-      let reasons=[];
-      for(const attempt of [...(saved.value.replacements||[]),{tx:saved.value.tx,txHash:saved.value.txHash}]) {
-        const tx=Tx.fromBuffer(Buffer.from(attempt.tx,'hex'));
-        let receipt;try{receipt=await node.getTxReceipt(tx.getTxHash());}catch{throw fail();}
-        try {await classifyDroppedTransaction(node,tx,receipt);throw fail();}
-        catch(error){if(error?.code!=='BB_STATE_CONFLICT')throw fail();reasons=error.stateReasons;}
+  const attemptsOf=(saved,priorOnly=false)=>[...(saved.value.replacements||[]),...(priorOnly?[]:[{tx:saved.value.tx,txHash:saved.value.txHash}])];
+  const strictMode=(saved,requested)=>requested||saved.value.replacementPolicy==='missing-anchor';
+  async function attemptState(attempt,active) {
+    const reading=Object.fromEntries(['getTxReceipt','isValidTx','getBlock'].map(name=>[name,(...args)=>{if(!active())throw fail();return node[name](...args);} ]));
+    const result={txHash:attempt.txHash,status:'unknown',stateReasons:[]};
+    try {
+      const tx=Tx.fromBuffer(Buffer.from(attempt.tx,'hex'));
+      let receipt=await reading.getTxReceipt(tx.getTxHash());
+      if(!active())return result;
+      if(receipt?.txHash?.toString()!==attempt.txHash)return result;
+      if(receipt.status==='dropped') {
+        try {receipt=await classifyDroppedTransaction(reading,tx,receipt);}
+        catch(error) {
+          // Only fixed structured classifier results, never messages or causes.
+          const code=Object.getOwnPropertyDescriptor(error??{},'code'),reasons=Object.getOwnPropertyDescriptor(error??{},'stateReasons');
+          if(code?.value==='BB_STATE_CONFLICT'&&Array.isArray(reasons?.value)&&reasons.value.length&&reasons.value.length<=8&&reasons.value.every(reason=>['Existing nullifier','Block header not found'].includes(reason))) {
+            return {...result,status:'invalid',stateReasons:[...reasons.value]};
+          }
+          return result;
+        }
       }
-      return reasons;
-    },waitOptions.readTimeoutMs??20000);
+      if(['pending','proposed'].includes(receipt?.status))return {...result,status:'pending'};
+      if(['checkpointed','proven','finalized'].includes(receipt?.status)) {
+        const canonical=await readCanonicalReceipt(reading,tx.getTxHash(),waitOptions);
+        if(canonical)return {...result,status:'canonical'};
+      }
+    }catch{/* Unknown is not replacement authority. No diagnostic is retained. */}
+    return result;
+  }
+  async function inspectAttempts(saved,priorOnly=false) {
+    // A timed-out read cannot be cancelled by this SDK, but it must not start
+    // later validation/receipt requests or advance through more predecessors.
+    let active=true;
+    try {return await boundedTransactionRead(async()=>{
+      const result=[];
+      for(const attempt of attemptsOf(saved,priorOnly)) {
+        if(!active)break;
+        result.push(await attemptState(attempt,()=>active));
+      }
+      return result;
+    },waitOptions.readTimeoutMs??20000);}finally{active=false;}
+  }
+  function rejected(rows,requireMissingAnchor) {
+    return rows.length>0&&rows.every(row=>row.status==='invalid'&&row.stateReasons.length&&
+      (!requireMissingAnchor||row.stateReasons.every(reason=>reason==='Block header not found')));
+  }
+  async function rejectedAttempts(saved,{requireMissingAnchor=false,priorOnly=false}={}) {
+    const rows=await inspectAttempts(saved,priorOnly);
+    if(!rejected(rows,strictMode(saved,requireMissingAnchor)))throw fail();
+    return [...rows.at(-1).stateReasons]; // Preserve legacy allowReplacement return.
   }
   async function prepare(tx,previous,{applicationNullifier}={}) {
+    // The caller's previous.value is a convenient view, not authority over saved
+    // signed bytes. Re-read authenticated state before retaining predecessors.
+    const authenticated=await read();
+    const encoded=Object.getOwnPropertyDescriptor(previous??{},'encoded');
+    if(!encoded||!Object.hasOwn(encoded,'value')||authenticated.encoded!==encoded.value)throw invalid();
+    previous=authenticated;
     if(applicationNullifier!==undefined&&!containsApplicationNullifier(tx,applicationNullifier))throw invalid();
     let replacements=[];
-    if(replacement) {
-      if(replacement.encoded!==previous.encoded||operation!==previous.value.operation||!operation)throw fail();
+    const authorization=replacement,selectedOperation=operation;
+    if(authorization) {
+      if(authorization.encoded!==previous.encoded||selectedOperation!==previous.value.operation||!selectedOperation)throw fail();
       if(previous.value.applicationNullifier!==undefined && applicationNullifier!==previous.value.applicationNullifier)throw fail();
-      await rejectedAttempts(previous);
+      await rejectedAttempts(previous,{requireMissingAnchor:authorization.requireMissingAnchor});
       replacements=[...(previous.value.replacements||[]),{txHash:previous.value.txHash,tx:previous.value.tx}];
       if(replacements.length>8||replacements.some(prior=>prior.txHash===tx.getTxHash().toString()))throw fail();
     }
-    await slot.write(previous,{version:1,txHash:tx.getTxHash().toString(),tx:Buffer.from(tx.toBuffer()).toString('hex'),operation,...(applicationNullifier!==undefined?{applicationNullifier}:{}),...(replacements.length?{replacements}:{})});
+    if(operation!==selectedOperation||replacement!==authorization)throw fail();
+    await slot.write(previous,{version:1,txHash:tx.getTxHash().toString(),tx:Buffer.from(tx.toBuffer()).toString('hex'),operation:selectedOperation,...(authorization?.requireMissingAnchor?{replacementPolicy:'missing-anchor'}:{}),...(applicationNullifier!==undefined?{applicationNullifier}:{}),...(replacements.length?{replacements}:{})});
     replacement=null;
   }
 
@@ -111,12 +170,44 @@ export async function createL2Journal({storage,walletSecret,walletSalt,scope,Tx,
       if((await read()).encoded!==saved.encoded)throw fail();
       return {operation:saved.value.operation??null,txHash:saved.value.txHash,applicationNullifier:saved.value.applicationNullifier??null,outcome:receipt?.executionResult??'pending',receipt};
     },
-    async allowReplacement(expectedOperation){
+    /** Read-only status, not a permit. Each row is bound to exact authenticated Tx
+     * bytes. A canonical predecessor does not mean the current candidate won.
+     * No acknowledgement, authorization, journal write or broadcast occurs here. */
+    async inspectReplacement(operationInput,options){
+      const expected=expectedOperation(operationInput),requested=replacementOptions(options);
       const saved=await read();
-      if(!saved.tx||!expectedOperation||saved.value.operation!==expectedOperation||(saved.value.replacements?.length??0)>=8)throw fail();
-      const reasons=await rejectedAttempts(saved);
+      if(!saved.tx)return Object.freeze({status:'empty',operation:null,txHash:null,predecessorTxHashes:Object.freeze([]),requireMissingAnchor:requested,attempts:Object.freeze([])});
+      if(saved.value.operation!==expected)throw fail();
+      const requireMissingAnchor=strictMode(saved,requested);
+      let rows;try{rows=await inspectAttempts(saved);}catch{rows=attemptsOf(saved).map(attempt=>({txHash:attempt.txHash,status:'unknown',stateReasons:[]}));}
       if((await read()).encoded!==saved.encoded)throw fail();
-      replacement={encoded:saved.encoded};operation=expectedOperation;return reasons;
+      const status=rows.some(row=>row.status==='canonical')?'canonical':rows.some(row=>row.status==='pending')?'pending':
+        !rejected(rows,requireMissingAnchor)?'unknown':(saved.value.replacements?.length??0)>=8?'limit-reached':'available';
+      return Object.freeze({status,operation:expected,txHash:saved.value.txHash,
+        predecessorTxHashes:Object.freeze((saved.value.replacements??[]).map(item=>item.txHash)),requireMissingAnchor,
+        attempts:Object.freeze(rows.map(row=>Object.freeze({...row,stateReasons:Object.freeze([...row.stateReasons])})))});
+    },
+    async allowReplacement(operationInput,options){
+      replacement=null; // A failed renewed authorization cannot retain an old permit.
+      const expected=expectedOperation(operationInput),requested=replacementOptions(options);
+      const saved=await read();
+      if(!saved.tx||saved.value.operation!==expected||(saved.value.replacements?.length??0)>=8)throw fail();
+      const requireMissingAnchor=strictMode(saved,requested);
+      const reasons=await rejectedAttempts(saved,{requireMissingAnchor});
+      if((await read()).encoded!==saved.encoded)throw fail();
+      replacement={encoded:saved.encoded,requireMissingAnchor};operation=expected;return reasons;
+    },
+    /** Call from the existing wallet beforeSubmit hook, after prepare saved the
+     * new candidate. Never classify that valid candidate as an old rejection.
+     * Persisted strict policy cannot be downgraded after restart. */
+    async assertReplacementPredecessors(operationInput,currentTxHash,options){
+      const expected=expectedOperation(operationInput),requested=replacementOptions(options);
+      if(typeof currentTxHash!=='string'||!/^0x[0-9a-f]{64}$/.test(currentTxHash))throw invalid();
+      const saved=await read();
+      if(!saved.tx||saved.value.operation!==expected||saved.value.txHash!==currentTxHash||!saved.value.replacements?.length)throw fail();
+      await rejectedAttempts(saved,{requireMissingAnchor:requested,priorOnly:true});
+      if((await read()).encoded!==saved.encoded)throw fail();
+      return true;
     },
     setOperation(value){if(typeof value!=='string'||!value.length||value.length>16384)throw invalid();operation=value;},
     get lastTxHash(){return lastHash;},

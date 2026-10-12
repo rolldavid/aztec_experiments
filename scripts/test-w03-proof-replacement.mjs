@@ -61,7 +61,7 @@ test('concurrent replacement authorizations still allow only one durable new pro
 test('replacement chain is bounded and preserves its last record when the limit is reached',async()=>{
  const f=await fixture();let last=f.first;
  for(let i=0;i<8;i++){const j=await f.open();await j.allowReplacement(f.operation);last=Tx.random();await j.prepare(last,await j.assertCanStart());}
- const full=await f.open();await assert.rejects(full.allowReplacement(f.operation),{code:'BB_RECOVERY_REQUIRED'});assert.equal((await full.inspect()).txHash,last.getTxHash().toString());
+ const full=await f.open();await assert.rejects(full.allowReplacement(f.operation),{code:'BB_RECOVERY_REQUIRED'});assert.equal((await full.inspect()).txHash,last.getTxHash().toString());const status=await full.inspectReplacement(f.operation,{requireMissingAnchor:true});assert.equal(status.status,'limit-reached');assert.equal(status.attempts.length,9);assert.equal(status.predecessorTxHashes.length,8);
 });
 test('stalled transaction reads and canonical receipt requests respect bounded deadlines',async()=>{
  await assert.rejects(boundedTransactionRead(()=>new Promise(()=>{}),5),{code:'BB_SUBMISSION_UNKNOWN'});
@@ -96,4 +96,111 @@ test('replacement must retain the exact bound application spend even when fee nu
  await resumed.prepare(same,previous,{applicationNullifier:app.toString()});
  const reopened=await createL2Journal(options);assert.equal((await reopened.inspect()).applicationNullifier,app.toString());
  const records=await(await createJournalBackup(options)).exportRecords();assert(records.length>0);
+});
+
+// G07 replacement inspection uses actual pinned Tx bytes and authenticated
+// IndexedDB records; Tx.random proofs and node responses remain labelled doubles.
+test('G07 strict read-only inspection does not authorize, write or send',async()=>{
+ const f=await fixture(),j=await f.open();
+ const before=await(await createJournalBackup(f.options)).exportRecords();
+ const status=await j.inspectReplacement(f.operation,{requireMissingAnchor:true});
+ assert.equal(status.status,'available');assert.equal(status.requireMissingAnchor,true);
+ assert.deepEqual(status.attempts,[{txHash:f.first.getTxHash().toString(),status:'invalid',stateReasons:['Block header not found']}]);
+ await assert.rejects(j.assertCanStart(),{code:'BB_RECOVERY_REQUIRED'});
+ assert.deepEqual(await(await createJournalBackup(f.options)).exportRecords(),before);assert.deepEqual(f.sent,[]);
+});
+
+test('G07 strict missing-anchor mode rejects generic nullifier conflict while legacy default remains available',async()=>{
+ const f=await fixture();f.states.set(String(f.first.getTxHash()),{validation:{result:'invalid',reason:['Existing nullifier']}});
+ const j=await f.open();assert.equal((await j.inspectReplacement(f.operation)).status,'available');
+ const strict=await j.inspectReplacement(f.operation,{requireMissingAnchor:true});assert.equal(strict.status,'unknown');assert.deepEqual(strict.attempts[0].stateReasons,['Existing nullifier']);
+ await assert.rejects(j.allowReplacement(f.operation,{requireMissingAnchor:true}),{code:'BB_RECOVERY_REQUIRED'});
+ assert.deepEqual(await j.allowReplacement(f.operation),['Existing nullifier']);assert.deepEqual(f.sent,[]);
+});
+for(const boundary of ['assert','prepare'])test('G07 strict authorization survives reason mutation at '+boundary,async()=>{
+ const f=await fixture(),j=await f.open();await j.allowReplacement(f.operation,{requireMissingAnchor:true});
+ const previous=await j.assertCanStart();f.states.set(String(f.first.getTxHash()),{validation:{result:'invalid',reason:['Existing nullifier']}});
+ if(boundary==='assert')await assert.rejects(j.assertCanStart(),{code:'BB_RECOVERY_REQUIRED'});
+ else await assert.rejects(j.prepare(Tx.random(),previous),{code:'BB_RECOVERY_REQUIRED'});
+ assert.equal((await j.inspect()).txHash,String(f.first.getTxHash()));assert.deepEqual(f.sent,[]);
+});
+async function strictReplacement(){const f=await fixture(),j=await f.open();await j.allowReplacement(f.operation,{requireMissingAnchor:true});const second=Tx.random();await j.prepare(second,await j.assertCanStart());return {...f,second,j};}
+test('G07 strict policy persists across encrypted portable restore and cannot be downgraded',async()=>{
+ const f=await strictReplacement();const records=await(await createJournalBackup(f.options)).exportRecords();const storage=createBrowserJournalStorage(new IDBFactory());await(await createJournalBackup({...f.options,storage})).restoreRecords(records);
+ const j=await f.open({storage});assert.equal((await j.inspectReplacement(f.operation)).requireMissingAnchor,true);
+ f.states.set(String(f.first.getTxHash()),{validation:{result:'invalid',reason:['Existing nullifier']}});
+ for(const options of [undefined,{requireMissingAnchor:false}]){
+  assert.equal((await j.inspectReplacement(f.operation,options)).status,'unknown');
+  await assert.rejects(j.allowReplacement(f.operation,options),{code:'BB_RECOVERY_REQUIRED'});
+  await assert.rejects(j.assertReplacementPredecessors(f.operation,String(f.second.getTxHash()),options),{code:'BB_RECOVERY_REQUIRED'});
+ }
+ assert.deepEqual(await(await createJournalBackup({...f.options,storage})).exportRecords(),records);assert.deepEqual(f.sent,[]);
+});
+test('G07 before-submit guard inspects only prior hashes, never rejects the new valid pending candidate',async()=>{
+ const f=await strictReplacement(),j=await f.open();const current=String(f.second.getTxHash());f.states.set(current,{status:'pending',validation:{result:'valid'}});
+ const reads=[],validate=f.node.isValidTx,receipt=f.node.getTxReceipt;f.node.isValidTx=async tx=>{reads.push(String(tx.getTxHash()));return validate(tx);};f.node.getTxReceipt=async hash=>{assert.notEqual(String(hash),current);return receipt(hash);};
+ const before=await(await createJournalBackup(f.options)).exportRecords();assert.equal(await j.assertReplacementPredecessors(f.operation,current),true);
+ assert.deepEqual(reads,[String(f.first.getTxHash())]);assert.deepEqual(await(await createJournalBackup(f.options)).exportRecords(),before);assert.deepEqual(f.sent,[]);
+});
+for(const state of ['pending','checkpointed','unknown','noncanonical'])test('G07 prior-only guard fences predecessor '+state,async()=>{
+ const f=await strictReplacement(),j=await f.open();
+ f.states.set(String(f.first.getTxHash()),state==='unknown'?{validation:{result:'invalid',reason:['unrecognized']}}:{status:state==='noncanonical'?'checkpointed':state});
+ if(state==='noncanonical')f.node.getBlock=async()=>({hash:'different'});
+ const status=await j.inspectReplacement(f.operation);assert.equal(status.status,state==='checkpointed'?'canonical':state==='pending'?'pending':'unknown');assert.equal(status.attempts[0].txHash,String(f.first.getTxHash()));assert.equal(status.attempts[1].txHash,String(f.second.getTxHash()));assert.equal(status.attempts[1].status,'invalid');
+ await assert.rejects(j.assertReplacementPredecessors(f.operation,String(f.second.getTxHash())),{code:'BB_RECOVERY_REQUIRED'});assert.deepEqual(f.sent,[]);
+});
+test('G07 receipt re-inclusion between validation and second receipt is not absence',async()=>{
+ const f=await fixture(),j=await f.open();const validate=f.node.isValidTx;f.node.isValidTx=async tx=>{const result=await validate(tx);f.states.set(String(tx.getTxHash()),{status:'checkpointed'});return result;};
+ assert.equal((await j.inspectReplacement(f.operation,{requireMissingAnchor:true})).status,'canonical');await assert.rejects(j.allowReplacement(f.operation,{requireMissingAnchor:true}),{code:'BB_RECOVERY_REQUIRED'});assert.deepEqual(f.sent,[]);
+});
+test('G07 options captured before await; status rows are detached frozen primitive projections',async()=>{
+ const f=await fixture(),j=await f.open(),options={requireMissingAnchor:true};const get=f.node.getTxReceipt;f.node.getTxReceipt=async hash=>{options.requireMissingAnchor=false;return get(hash);};
+ const result=await j.inspectReplacement(f.operation,options);assert.equal(result.requireMissingAnchor,true);assert(Object.isFrozen(result));assert(Object.isFrozen(result.attempts));assert(Object.isFrozen(result.attempts[0].stateReasons));assert(!JSON.stringify(result).includes('tx":"'));assert.deepEqual(f.sent,[]);
+});
+for(const options of [null,{requireMissingAnchor:1},{requireMissingAnchor:undefined},{unexpected:true},Object.create({requireMissingAnchor:true})])test('G07 malformed replacement options are rejected before network',async()=>{
+ const f=await fixture(),j=await f.open();let reads=0;f.node.getTxReceipt=async()=>{reads++;throw Error('No network');};
+ for(const method of [()=>j.inspectReplacement(f.operation,options),()=>j.allowReplacement(f.operation,options),()=>j.assertReplacementPredecessors(f.operation,String(f.first.getTxHash()),options)])await assert.rejects(method,{code:'BB_JOURNAL_INVALID'});assert.equal(reads,0);
+});
+test('G07 accessors, malformed operations and foreign before-submit identity are rejected without authority',async()=>{
+ const f=await strictReplacement(),j=await f.open();let reads=0;const options={get requireMissingAnchor(){reads++;throw Error('PRIVATE_SENTINEL');}};
+ for(const call of [()=>j.inspectReplacement(f.operation,options),()=>j.allowReplacement(f.operation,options),()=>j.assertReplacementPredecessors(f.operation,String(f.second.getTxHash()),options)])await assert.rejects(call,{code:'BB_JOURNAL_INVALID'});assert.equal(reads,0);
+ for(const op of ['',1,null,{},'x'.repeat(16385)])await assert.rejects(j.inspectReplacement(op),{code:'BB_JOURNAL_INVALID'});
+ await assert.rejects(j.inspectReplacement('different'),{code:'BB_RECOVERY_REQUIRED'});
+ await assert.rejects(j.assertReplacementPredecessors('different',String(f.second.getTxHash())),{code:'BB_RECOVERY_REQUIRED'});
+ await assert.rejects(j.assertReplacementPredecessors(f.operation,String(f.first.getTxHash())),{code:'BB_RECOVERY_REQUIRED'});
+ await assert.rejects(j.assertReplacementPredecessors(f.operation,'not-a-hash'),{code:'BB_JOURNAL_INVALID'});assert.deepEqual(f.sent,[]);
+});
+test('G07 inspection on empty journal or unsigned first attempt cannot grant before-submit permission',async()=>{
+ const f=await fixture(),empty=await createL2Journal({...f.options,storage:createBrowserJournalStorage(new IDBFactory())});
+ const status=await empty.inspectReplacement(f.operation,{requireMissingAnchor:true});assert.equal(status.status,'empty');assert.deepEqual(status.attempts,[]);
+ await assert.rejects(empty.assertReplacementPredecessors(f.operation,String(f.first.getTxHash())),{code:'BB_RECOVERY_REQUIRED'});
+ await assert.rejects((await f.open()).assertReplacementPredecessors(f.operation,String(f.first.getTxHash())),{code:'BB_RECOVERY_REQUIRED'});
+});
+test('G07 failed renewed authorization clears an older in-memory permit',async()=>{
+ const f=await fixture(),j=await f.open();await j.allowReplacement(f.operation,{requireMissingAnchor:true});
+ await assert.rejects(j.allowReplacement('another'),{code:'BB_RECOVERY_REQUIRED'});
+ await assert.rejects(j.assertCanStart(),{code:'BB_RECOVERY_REQUIRED'});assert.deepEqual(f.sent,[]);
+});
+test('G07 caller mutation of previous decoded value cannot replace authenticated prior signed bytes',async()=>{
+ const f=await fixture(),j=await f.open();await j.allowReplacement(f.operation,{requireMissingAnchor:true});const previous=await j.assertCanStart(),forged=Tx.random();previous.value.tx=Buffer.from(forged.toBuffer()).toString('hex');previous.value.txHash=String(forged.getTxHash());
+ const next=Tx.random();await j.prepare(next,previous);assert.deepEqual((await j.inspect()).predecessorTxHashes,[String(f.first.getTxHash())]);assert.deepEqual(f.sent,[]);
+});
+test('G07 inspection detects concurrent ciphertext CAS change and never returns stale authority',async()=>{
+ const f=await fixture(),a=await f.open({waitOptions:{readTimeoutMs:1000}}),b=await f.open({waitOptions:{readTimeoutMs:1000}});let once=true;const get=f.node.getTxReceipt;
+ f.node.getTxReceipt=async hash=>{if(once){once=false;await b.allowReplacement(f.operation,{requireMissingAnchor:true});await b.prepare(Tx.random(),await b.assertCanStart());}return get(hash);};
+ await assert.rejects(a.inspectReplacement(f.operation,{requireMissingAnchor:true}),{code:'BB_RECOVERY_REQUIRED'});assert.deepEqual(f.sent,[]);
+});
+test('G07 unknown transport and hostile error fields stay sanitized without changing ciphertext',async()=>{
+ const f=await fixture(),j=await f.open();let reads=0;const error={get message(){reads++;throw Error('PRIVATE_SENTINEL');},get code(){reads++;throw Error('PRIVATE_SENTINEL');}};f.node.getTxReceipt=async()=>{throw error;};
+ const before=await(await createJournalBackup(f.options)).exportRecords(),status=await j.inspectReplacement(f.operation,{requireMissingAnchor:true});assert.equal(status.status,'unknown');assert.equal(reads,0);assert(!JSON.stringify(status).includes('PRIVATE_SENTINEL'));assert.deepEqual(await(await createJournalBackup(f.options)).exportRecords(),before);assert.deepEqual(f.sent,[]);
+});
+
+test('G07 timed-out inspection never starts follow-up validation after the late receipt settles',async()=>{
+ const f=await fixture(),j=await f.open({waitOptions:{readTimeoutMs:5}});let resolve,calls=0;const get=f.node.getTxReceipt;
+ f.node.getTxReceipt=hash=>{calls++;return new Promise(done=>{resolve=async()=>done(await get(hash));});};f.node.isValidTx=async()=>{calls++;return {result:'invalid',reason:['Block header not found']};};
+ const status=await j.inspectReplacement(f.operation,{requireMissingAnchor:true});assert.equal(status.status,'unknown');assert.equal(calls,1);await resolve();await new Promise(done=>setTimeout(done,20));assert.equal(calls,1);assert.deepEqual(f.sent,[]);
+});
+test('G07 hostile option proxy rejects with fixed error without raw detail propagation',async()=>{
+ const f=await fixture(),j=await f.open(),options=new Proxy({},{getPrototypeOf(){throw Error('PRIVATE_SENTINEL');}});
+ await assert.rejects(j.inspectReplacement(f.operation,options),error=>error.code==='BB_JOURNAL_INVALID'&&!error.message.includes('PRIVATE_SENTINEL'));
 });
