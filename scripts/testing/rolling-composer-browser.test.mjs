@@ -6,7 +6,7 @@ import path from 'node:path';
 import os from 'node:os';
 import vm from 'node:vm';
 import {webcrypto} from 'node:crypto';
-import {validateRollingComposerControl,runRollingComposerBrowser,waitForRollingComposerState} from './rolling-composer-browser.mjs';
+import {validateRollingComposerControl,runRollingComposerBrowser,waitForRollingComposerState,validateRollingBrowserBackup} from './rolling-composer-browser.mjs';
 let root,envelope;
 const hex=n=>'0x'+BigInt(n).toString(16).padStart(64,'0');
 before(async()=>{
@@ -22,6 +22,13 @@ async function fixture(){
 }
 test('actual encrypted backup envelopes pass strict handoff validation; returned snapshot detached/frozen',async()=>{
  const {directory,control}=await fixture();const checked=await validateRollingComposerControl(control,{directory});assert.deepEqual(checked,control);assert(Object.isFrozen(checked));assert(Object.isFrozen(checked.expectedNames.a[0]));assert(Object.isFrozen(checked.backupPaths));control.expectedNames.a[0].first='Changed';assert.equal(checked.expectedNames.a[0].first,'River');
+});
+test('single-account backup validator preserves private directory and file confinement',async()=>{
+ const {directory,control}=await fixture(),file=control.backupPaths.a;
+ assert.equal(await validateRollingBrowserBackup(file,directory),file);
+ await fs.chmod(directory,0o755);await assert.rejects(validateRollingBrowserBackup(file,directory));
+ await fs.chmod(directory,0o700);await assert.rejects(validateRollingBrowserBackup(file,path.dirname(directory)));
+ await fs.rm(file);await fs.symlink(control.backupPaths.b,file);await assert.rejects(validateRollingBrowserBackup(file,directory));
 });
 test('mutation during filesystem await cannot replace captured endpoint, password, files or names',async()=>{
  const {directory,control}=await fixture();const pending=validateRollingComposerControl(control,{directory});

@@ -18,7 +18,9 @@ function names(value){
   if(typeof id!=='string'||!/^0x[0-9a-f]{64}$/.test(id)||BigInt(id)===0n||BigInt(id)>=21888242871839275222246405745257275088548364400416034343698204186575808495617n||[first,last].some(v=>typeof v!=='string'||v.length<1||v.length>32||!/^[A-Za-z](?:[A-Za-z '-]*[A-Za-z])?$/.test(v)))throw invalid();
   return Object.freeze({id,first,last});});
 }
-async function backup(file,directory){
+export async function validateRollingBrowserBackup(file,directory){
+ if(typeof directory!=='string'||!path.isAbsolute(directory)||path.resolve(directory)!==directory)throw invalid();
+ const parent=await fs.lstat(directory);if(!parent.isDirectory()||parent.isSymbolicLink()||parent.uid!==process.getuid()||(parent.mode&0o777)!==0o700||await fs.realpath(directory)!==directory)throw invalid();
  if(typeof file!=='string'||file.length>4096||path.dirname(file)!==directory||path.resolve(file)!==file||!file.endsWith('.json'))throw invalid();
  const initial=await fs.lstat(file);if(!initial.isFile()||initial.isSymbolicLink()||initial.uid!==process.getuid()||(initial.mode&0o777)!==0o600||initial.size<1||initial.size>32*1024*1024+4096||await fs.realpath(file)!==file)throw invalid();
  const handle=await fs.open(file,constants.O_RDONLY|constants.O_NOFOLLOW);
@@ -44,7 +46,7 @@ export async function validateRollingComposerControl(control,{directory}={}){
   if(typeof selected.backupPassword!=='string'||selected.backupPassword.length<12||selected.backupPassword.length>256||!Number.isSafeInteger(selected.timeoutMs)||selected.timeoutMs<1||selected.timeoutMs>120000)throw invalid();
   if(typeof directory!=='string'||!path.isAbsolute(directory)||path.resolve(directory)!==directory||selected.backupPaths.a===selected.backupPaths.b)throw invalid();
   const stat=await fs.lstat(directory);if(!stat.isDirectory()||stat.isSymbolicLink()||stat.uid!==process.getuid()||(stat.mode&0o777)!==0o700||await fs.realpath(directory)!==directory)throw invalid();
-  for(const role of ['a','b'])await backup(selected.backupPaths[role],directory);
+  for(const role of ['a','b'])await validateRollingBrowserBackup(selected.backupPaths[role],directory);
   for(const role of ['a','b'])Object.freeze(selected.expectedNames[role]);Object.freeze(selected.expectedNames);Object.freeze(selected.backupPaths);return Object.freeze(selected);
  }catch{throw invalid();}
 }
