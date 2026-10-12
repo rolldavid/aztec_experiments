@@ -740,8 +740,8 @@ var __aztec = (() => {
     }
     function fromArrayView(arrayView) {
       if (isInstance(arrayView, Uint8Array)) {
-        const copy2 = new Uint8Array(arrayView);
-        return fromArrayBuffer(copy2.buffer, copy2.byteOffset, copy2.byteLength);
+        const copy3 = new Uint8Array(arrayView);
+        return fromArrayBuffer(copy3.buffer, copy3.byteOffset, copy3.byteLength);
       }
       return fromArrayLike(arrayView);
     }
@@ -1829,7 +1829,7 @@ var __aztec = (() => {
     Buffer3.prototype.writeDoubleBE = function writeDoubleBE(value, offset, noAssert) {
       return writeDouble(this, value, offset, false, noAssert);
     };
-    Buffer3.prototype.copy = function copy2(target, targetStart, start, end) {
+    Buffer3.prototype.copy = function copy3(target, targetStart, start, end) {
       if (!Buffer3.isBuffer(target)) throw new TypeError("argument should be a Buffer");
       if (!start) start = 0;
       if (!end && end !== 0) end = this.length;
@@ -4926,31 +4926,31 @@ var __aztec = (() => {
             set8(this, setOpts, logger3, level3);
           });
         }
-        function child(setOpts2, bindings, childOptions) {
-          if (!bindings) {
+        function child(setOpts2, bindings2, childOptions) {
+          if (!bindings2) {
             throw new Error("missing bindings for child Pino");
           }
           childOptions = childOptions || {};
-          if (serialize2 && bindings.serializers) {
-            childOptions.serializers = bindings.serializers;
+          if (serialize2 && bindings2.serializers) {
+            childOptions.serializers = bindings2.serializers;
           }
           const childOptionsSerializers = childOptions.serializers;
           if (serialize2 && childOptionsSerializers) {
             var childSerializers = Object.assign({}, serializers, childOptionsSerializers);
             var childSerialize = opts.browser.serialize === true ? Object.keys(childSerializers) : serialize2;
-            delete bindings.serializers;
-            applySerializers([bindings], childSerialize, childSerializers, this._stdErrSerialize);
+            delete bindings2.serializers;
+            applySerializers([bindings2], childSerialize, childSerializers, this._stdErrSerialize);
           }
           function Child(parent) {
             this._childLevel = (parent._childLevel | 0) + 1;
-            this.bindings = bindings;
+            this.bindings = bindings2;
             if (childSerializers) {
               this.serializers = childSerializers;
               this._serialize = childSerialize;
             }
             if (transmit2) {
               this._logEvent = createLogEventShape(
-                [].concat(parent._logEvent.bindings, bindings)
+                [].concat(parent._logEvent.bindings, bindings2)
               );
             }
           }
@@ -5003,18 +5003,18 @@ var __aztec = (() => {
       pino2.stdSerializers = stdSerializers;
       pino2.stdTimeFunctions = Object.assign({}, { nullTime, epochTime, unixTime, isoTime });
       function getBindingChain(logger3) {
-        const bindings = [];
+        const bindings2 = [];
         if (logger3.bindings) {
-          bindings.push(logger3.bindings);
+          bindings2.push(logger3.bindings);
         }
         let hierarchy = logger3[hierarchySymbol];
         while (hierarchy.parent) {
           hierarchy = hierarchy.parent;
           if (hierarchy.logger.bindings) {
-            bindings.push(hierarchy.logger.bindings);
+            bindings2.push(hierarchy.logger.bindings);
           }
         }
-        return bindings.reverse();
+        return bindings2.reverse();
       }
       function set8(self2, opts, rootLogger, level) {
         Object.defineProperty(self2, level, {
@@ -5031,15 +5031,15 @@ var __aztec = (() => {
           if (methodValue < transmitValue) return;
         }
         self2[level] = createWrap(self2, opts, rootLogger, level);
-        const bindings = getBindingChain(self2);
-        if (bindings.length === 0) {
+        const bindings2 = getBindingChain(self2);
+        if (bindings2.length === 0) {
           return;
         }
-        self2[level] = prependBindingsInArguments(bindings, self2[level]);
+        self2[level] = prependBindingsInArguments(bindings2, self2[level]);
       }
-      function prependBindingsInArguments(bindings, logFunc) {
+      function prependBindingsInArguments(bindings2, logFunc) {
         return function() {
-          return logFunc.apply(this, [...bindings, ...arguments]);
+          return logFunc.apply(this, [...bindings2, ...arguments]);
         };
       }
       function createWrap(self2, opts, rootLogger, level) {
@@ -5133,7 +5133,7 @@ var __aztec = (() => {
         const methodLevel = opts.methodLevel;
         const methodValue = opts.methodValue;
         const val = opts.val;
-        const bindings = logger3._logEvent.bindings;
+        const bindings2 = logger3._logEvent.bindings;
         if (!argsIsSerialized) {
           applySerializers(
             args,
@@ -5144,18 +5144,18 @@ var __aztec = (() => {
         }
         logger3._logEvent.ts = ts;
         logger3._logEvent.messages = args.filter(function(arg) {
-          return bindings.indexOf(arg) === -1;
+          return bindings2.indexOf(arg) === -1;
         });
         logger3._logEvent.level.label = methodLevel;
         logger3._logEvent.level.value = methodValue;
         send(methodLevel, logger3._logEvent, val);
-        logger3._logEvent = createLogEventShape(bindings);
+        logger3._logEvent = createLogEventShape(bindings2);
       }
-      function createLogEventShape(bindings) {
+      function createLogEventShape(bindings2) {
         return {
           ts: 0,
           messages: [],
-          bindings: bindings || [],
+          bindings: bindings2 || [],
           level: { label: "", value: 0 }
         };
       }
@@ -5548,18 +5548,18 @@ var __aztec = (() => {
   // node_modules/@aztec-labs/foundation/dest/log/pino-logger.js
   function getBindingsFromHandlers() {
     for (const handler of logBindingsHandlers) {
-      const bindings = handler();
-      if (bindings) {
-        return bindings;
+      const bindings2 = handler();
+      if (bindings2) {
+        return bindings2;
       }
     }
     return void 0;
   }
-  function createLogger(module, bindings) {
+  function createLogger(module, bindings2) {
     module = module.slice(0, MAX_MODULE_NAME_LENGTH).replace(/^aztec:/, "");
     const resolvedBindings = {
       ...getBindingsFromHandlers(),
-      ...bindings
+      ...bindings2
     };
     const actor = resolvedBindings?.actor;
     const instanceId = resolvedBindings?.instanceId;
@@ -6507,8 +6507,8 @@ var __aztec = (() => {
   function uint8ArrayToBase64url2(bytes3) {
     return uint8ArrayToBase642(bytes3).replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
   }
-  function hexToUint8Array2(hex17) {
-    const cleanHex = hex17.replace(/^0x/, "");
+  function hexToUint8Array2(hex18) {
+    const cleanHex = hex18.replace(/^0x/, "");
     if (cleanHex.length % 2 !== 0) {
       throw new Error("Invalid hex string length");
     }
@@ -8761,42 +8761,42 @@ var __aztec = (() => {
           }
           doc.write(`const newResult = {};`);
           for (const key of normalized.keys) {
-            const id2 = ids[key];
+            const id3 = ids[key];
             const k = esc2(key);
             const schema = shape[key];
             const isOptionalIn = schema?._zod?.optin === "optional";
             const isOptionalOut = schema?._zod?.optout === "optional";
-            doc.write(`const ${id2} = ${parseStr(key)};`);
+            doc.write(`const ${id3} = ${parseStr(key)};`);
             if (isOptionalIn && isOptionalOut) {
               doc.write(`
-        if (${id2}.issues.length) {
+        if (${id3}.issues.length) {
           if (${k} in input) {
-            payload.issues = payload.issues.concat(${id2}.issues.map(iss => ({
+            payload.issues = payload.issues.concat(${id3}.issues.map(iss => ({
               ...iss,
               path: iss.path ? [${k}, ...iss.path] : [${k}]
             })));
           }
         }
         
-        if (${id2}.value === undefined) {
+        if (${id3}.value === undefined) {
           if (${k} in input) {
             newResult[${k}] = undefined;
           }
         } else {
-          newResult[${k}] = ${id2}.value;
+          newResult[${k}] = ${id3}.value;
         }
         
       `);
             } else if (!isOptionalIn) {
               doc.write(`
-        const ${id2}_present = ${k} in input;
-        if (${id2}.issues.length) {
-          payload.issues = payload.issues.concat(${id2}.issues.map(iss => ({
+        const ${id3}_present = ${k} in input;
+        if (${id3}.issues.length) {
+          payload.issues = payload.issues.concat(${id3}.issues.map(iss => ({
             ...iss,
             path: iss.path ? [${k}, ...iss.path] : [${k}]
           })));
         }
-        if (!${id2}_present && !${id2}.issues.length) {
+        if (!${id3}_present && !${id3}.issues.length) {
           payload.issues.push({
             code: "invalid_type",
             expected: "nonoptional",
@@ -8805,30 +8805,30 @@ var __aztec = (() => {
           });
         }
 
-        if (${id2}_present) {
-          if (${id2}.value === undefined) {
+        if (${id3}_present) {
+          if (${id3}.value === undefined) {
             newResult[${k}] = undefined;
           } else {
-            newResult[${k}] = ${id2}.value;
+            newResult[${k}] = ${id3}.value;
           }
         }
 
       `);
             } else {
               doc.write(`
-        if (${id2}.issues.length) {
-          payload.issues = payload.issues.concat(${id2}.issues.map(iss => ({
+        if (${id3}.issues.length) {
+          payload.issues = payload.issues.concat(${id3}.issues.map(iss => ({
             ...iss,
             path: iss.path ? [${k}, ...iss.path] : [${k}]
           })));
         }
         
-        if (${id2}.value === undefined) {
+        if (${id3}.value === undefined) {
           if (${k} in input) {
             newResult[${k}] = undefined;
           }
         } else {
-          newResult[${k}] = ${id2}.value;
+          newResult[${k}] = ${id3}.value;
         }
         
       `);
@@ -17430,26 +17430,26 @@ var __aztec = (() => {
       throw new Error("Unprocessed schema. This is a bug in Zod.");
     const idToSchema = /* @__PURE__ */ new Map();
     for (const entry of ctx.seen.entries()) {
-      const id2 = ctx.metadataRegistry.get(entry[0])?.id;
-      if (id2) {
-        const existing = idToSchema.get(id2);
+      const id3 = ctx.metadataRegistry.get(entry[0])?.id;
+      if (id3) {
+        const existing = idToSchema.get(id3);
         if (existing && existing !== entry[0]) {
-          throw new Error(`Duplicate schema id "${id2}" detected during JSON Schema conversion. Two different schemas cannot share the same id when converted together.`);
+          throw new Error(`Duplicate schema id "${id3}" detected during JSON Schema conversion. Two different schemas cannot share the same id when converted together.`);
         }
-        idToSchema.set(id2, entry[0]);
+        idToSchema.set(id3, entry[0]);
       }
     }
     const makeURI = (entry) => {
       const defsSegment = ctx.target === "draft-2020-12" ? "$defs" : "definitions";
       if (ctx.external) {
         const externalId = ctx.external.registry.get(entry[0])?.id;
-        const uriGenerator = ctx.external.uri ?? ((id3) => id3);
+        const uriGenerator = ctx.external.uri ?? ((id4) => id4);
         if (externalId) {
           return { ref: uriGenerator(externalId) };
         }
-        const id2 = entry[1].defId ?? entry[1].schema.id ?? `schema${ctx.counter++}`;
-        entry[1].defId = id2;
-        return { defId: id2, ref: `${uriGenerator("__shared")}#/${defsSegment}/${id2}` };
+        const id3 = entry[1].defId ?? entry[1].schema.id ?? `schema${ctx.counter++}`;
+        entry[1].defId = id3;
+        return { defId: id3, ref: `${uriGenerator("__shared")}#/${defsSegment}/${id3}` };
       }
       if (entry[1] === root) {
         return { ref: "#" };
@@ -17497,8 +17497,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
           continue;
         }
       }
-      const id2 = ctx.metadataRegistry.get(entry[0])?.id;
-      if (id2) {
+      const id3 = ctx.metadataRegistry.get(entry[0])?.id;
+      if (id3) {
         extractToDef(entry);
         continue;
       }
@@ -17594,10 +17594,10 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     } else {
     }
     if (ctx.external?.uri) {
-      const id2 = ctx.external.registry.get(schema)?.id;
-      if (!id2)
+      const id3 = ctx.external.registry.get(schema)?.id;
+      if (!id3)
         throw new Error("Schema is missing an `id` property");
-      result.$id = ctx.external.uri(id2);
+      result.$id = ctx.external.uri(id3);
     }
     Object.assign(result, root.def ?? root.schema);
     const rootMetaId = ctx.metadataRegistry.get(schema)?.id;
@@ -19579,8 +19579,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
             reg.add(this, meta13);
             return this;
           },
-          refine(check9, params) {
-            return this.check(refine2(check9, params));
+          refine(check10, params) {
+            return this.check(refine2(check10, params));
           },
           superRefine(refinement, params) {
             return this.check(superRefine2(refinement, params));
@@ -21538,7 +21538,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
         console.warn(`Invalid origin '${ev.origin}' for comlink proxy`);
         return;
       }
-      const { id: id2, type, path } = Object.assign({ path: [] }, ev.data);
+      const { id: id3, type, path } = Object.assign({ path: [] }, ev.data);
       const argumentList = (ev.data.argumentList || []).map(fromWireValue);
       let returnValue;
       try {
@@ -21589,7 +21589,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
         return { value, [throwMarker]: 0 };
       }).then((returnValue2) => {
         const [wireValue, transferables] = toWireValue(returnValue2);
-        ep.postMessage(Object.assign(Object.assign({}, wireValue), { id: id2 }), transferables);
+        ep.postMessage(Object.assign(Object.assign({}, wireValue), { id: id3 }), transferables);
         if (type === "RELEASE") {
           ep.removeEventListener("message", callback);
           closeEndPoint(ep);
@@ -21602,7 +21602,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
           value: new TypeError("Unserializable return value"),
           [throwMarker]: 0
         });
-        ep.postMessage(Object.assign(Object.assign({}, wireValue), { id: id2 }), transferables);
+        ep.postMessage(Object.assign(Object.assign({}, wireValue), { id: id3 }), transferables);
       });
     });
     if (ep.start) {
@@ -21771,12 +21771,12 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
   }
   function requestResponseMessage(ep, pendingListeners, msg, transfers) {
     return new Promise((resolve) => {
-      const id2 = generateUUID();
-      pendingListeners.set(id2, resolve);
+      const id3 = generateUUID();
+      pendingListeners.set(id3, resolve);
       if (ep.start) {
         ep.start();
       }
-      ep.postMessage(Object.assign({ id: id2 }, msg), transfers);
+      ep.postMessage(Object.assign({ id: id3 }, msg), transfers);
     });
   }
   function generateUUID() {
@@ -22239,10 +22239,10 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
             wasi: {
               "thread-spawn": (arg) => {
                 arg = arg >>> 0;
-                const id2 = this.nextThreadId++;
+                const id3 = this.nextThreadId++;
                 const worker = this.nextWorker++ % this.remoteWasms.length;
-                this.remoteWasms[worker].call("wasi_thread_start", id2, arg).catch(this.logger);
-                return id2;
+                this.remoteWasms[worker].call("wasi_thread_start", id3, arg).catch(this.logger);
+                return id3;
               }
             },
             env: {
@@ -24144,20 +24144,20 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
             let beg = s.pending;
             let left = (s.gzhead.extra.length & 65535) - s.gzindex;
             while (s.pending + left > s.pending_buf_size) {
-              let copy2 = s.pending_buf_size - s.pending;
-              s.pending_buf.set(s.gzhead.extra.subarray(s.gzindex, s.gzindex + copy2), s.pending);
+              let copy3 = s.pending_buf_size - s.pending;
+              s.pending_buf.set(s.gzhead.extra.subarray(s.gzindex, s.gzindex + copy3), s.pending);
               s.pending = s.pending_buf_size;
               if (s.gzhead.hcrc && s.pending > beg) {
                 strm.adler = crc32_1(strm.adler, s.pending_buf, s.pending - beg, beg);
               }
-              s.gzindex += copy2;
+              s.gzindex += copy3;
               flush_pending(strm);
               if (s.pending !== 0) {
                 s.last_flush = -1;
                 return Z_OK$3;
               }
               beg = 0;
-              left -= copy2;
+              left -= copy3;
             }
             let gzhead_extra = new Uint8Array(s.gzhead.extra);
             s.pending_buf.set(gzhead_extra.subarray(s.gzindex, s.gzindex + left), s.pending);
@@ -25350,7 +25350,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
         state.distcode = distfix;
         state.distbits = 5;
       };
-      updatewindow = (strm, src, end, copy2) => {
+      updatewindow = (strm, src, end, copy3) => {
         let dist;
         const state = strm.state;
         if (state.window === null) {
@@ -25361,20 +25361,20 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
           state.wnext = 0;
           state.whave = 0;
         }
-        if (copy2 >= state.wsize) {
+        if (copy3 >= state.wsize) {
           state.window.set(src.subarray(end - state.wsize, end), 0);
           state.wnext = 0;
           state.whave = state.wsize;
         } else {
           dist = state.wsize - state.wnext;
-          if (dist > copy2) {
-            dist = copy2;
+          if (dist > copy3) {
+            dist = copy3;
           }
-          state.window.set(src.subarray(end - copy2, end - copy2 + dist), state.wnext);
-          copy2 -= dist;
-          if (copy2) {
-            state.window.set(src.subarray(end - copy2, end), 0);
-            state.wnext = copy2;
+          state.window.set(src.subarray(end - copy3, end - copy3 + dist), state.wnext);
+          copy3 -= dist;
+          if (copy3) {
+            state.window.set(src.subarray(end - copy3, end), 0);
+            state.wnext = copy3;
             state.whave = state.wsize;
           } else {
             state.wnext += dist;
@@ -25397,7 +25397,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
         let hold;
         let bits;
         let _in, _out;
-        let copy2;
+        let copy3;
         let from;
         let from_source;
         let here = 0;
@@ -25596,11 +25596,11 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
               /* falls through */
               case EXTRA:
                 if (state.flags & 1024) {
-                  copy2 = state.length;
-                  if (copy2 > have) {
-                    copy2 = have;
+                  copy3 = state.length;
+                  if (copy3 > have) {
+                    copy3 = have;
                   }
-                  if (copy2) {
+                  if (copy3) {
                     if (state.head) {
                       len = state.head.extra_len - state.length;
                       if (!state.head.extra) {
@@ -25611,18 +25611,18 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
                           next,
                           // extra field is limited to 65536 bytes
                           // - no need for additional size check
-                          next + copy2
+                          next + copy3
                         ),
                         /*len + copy > state.head.extra_max - len ? state.head.extra_max : copy,*/
                         len
                       );
                     }
                     if (state.flags & 512 && state.wrap & 4) {
-                      state.check = crc32_1(state.check, input2, copy2, next);
+                      state.check = crc32_1(state.check, input2, copy3, next);
                     }
-                    have -= copy2;
-                    next += copy2;
-                    state.length -= copy2;
+                    have -= copy3;
+                    next += copy3;
+                    state.length -= copy3;
                   }
                   if (state.length) {
                     break inf_leave;
@@ -25636,18 +25636,18 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
                   if (have === 0) {
                     break inf_leave;
                   }
-                  copy2 = 0;
+                  copy3 = 0;
                   do {
-                    len = input2[next + copy2++];
+                    len = input2[next + copy3++];
                     if (state.head && len && state.length < 65536) {
                       state.head.name += String.fromCharCode(len);
                     }
-                  } while (len && copy2 < have);
+                  } while (len && copy3 < have);
                   if (state.flags & 512 && state.wrap & 4) {
-                    state.check = crc32_1(state.check, input2, copy2, next);
+                    state.check = crc32_1(state.check, input2, copy3, next);
                   }
-                  have -= copy2;
-                  next += copy2;
+                  have -= copy3;
+                  next += copy3;
                   if (len) {
                     break inf_leave;
                   }
@@ -25662,18 +25662,18 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
                   if (have === 0) {
                     break inf_leave;
                   }
-                  copy2 = 0;
+                  copy3 = 0;
                   do {
-                    len = input2[next + copy2++];
+                    len = input2[next + copy3++];
                     if (state.head && len && state.length < 65536) {
                       state.head.comment += String.fromCharCode(len);
                     }
-                  } while (len && copy2 < have);
+                  } while (len && copy3 < have);
                   if (state.flags & 512 && state.wrap & 4) {
-                    state.check = crc32_1(state.check, input2, copy2, next);
+                    state.check = crc32_1(state.check, input2, copy3, next);
                   }
-                  have -= copy2;
-                  next += copy2;
+                  have -= copy3;
+                  next += copy3;
                   if (len) {
                     break inf_leave;
                   }
@@ -25808,23 +25808,23 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
                 state.mode = COPY;
               /* falls through */
               case COPY:
-                copy2 = state.length;
-                if (copy2) {
-                  if (copy2 > have) {
-                    copy2 = have;
+                copy3 = state.length;
+                if (copy3) {
+                  if (copy3 > have) {
+                    copy3 = have;
                   }
-                  if (copy2 > left) {
-                    copy2 = left;
+                  if (copy3 > left) {
+                    copy3 = left;
                   }
-                  if (copy2 === 0) {
+                  if (copy3 === 0) {
                     break inf_leave;
                   }
-                  output3.set(input2.subarray(next, next + copy2), put);
-                  have -= copy2;
-                  next += copy2;
-                  left -= copy2;
-                  put += copy2;
-                  state.length -= copy2;
+                  output3.set(input2.subarray(next, next + copy3), put);
+                  have -= copy3;
+                  next += copy3;
+                  left -= copy3;
+                  put += copy3;
+                  state.length -= copy3;
                   break;
                 }
                 state.mode = TYPE;
@@ -25925,7 +25925,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
                         break;
                       }
                       len = state.lens[state.have - 1];
-                      copy2 = 3 + (hold & 3);
+                      copy3 = 3 + (hold & 3);
                       hold >>>= 2;
                       bits -= 2;
                     } else if (here_val === 17) {
@@ -25941,7 +25941,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
                       hold >>>= here_bits;
                       bits -= here_bits;
                       len = 0;
-                      copy2 = 3 + (hold & 7);
+                      copy3 = 3 + (hold & 7);
                       hold >>>= 3;
                       bits -= 3;
                     } else {
@@ -25957,16 +25957,16 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
                       hold >>>= here_bits;
                       bits -= here_bits;
                       len = 0;
-                      copy2 = 11 + (hold & 127);
+                      copy3 = 11 + (hold & 127);
                       hold >>>= 7;
                       bits -= 7;
                     }
-                    if (state.have + copy2 > state.nlen + state.ndist) {
+                    if (state.have + copy3 > state.nlen + state.ndist) {
                       strm.msg = "invalid bit length repeat";
                       state.mode = BAD;
                       break;
                     }
-                    while (copy2--) {
+                    while (copy3--) {
                       state.lens[state.have++] = len;
                     }
                   }
@@ -26185,39 +26185,39 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
                 if (left === 0) {
                   break inf_leave;
                 }
-                copy2 = _out - left;
-                if (state.offset > copy2) {
-                  copy2 = state.offset - copy2;
-                  if (copy2 > state.whave) {
+                copy3 = _out - left;
+                if (state.offset > copy3) {
+                  copy3 = state.offset - copy3;
+                  if (copy3 > state.whave) {
                     if (state.sane) {
                       strm.msg = "invalid distance too far back";
                       state.mode = BAD;
                       break;
                     }
                   }
-                  if (copy2 > state.wnext) {
-                    copy2 -= state.wnext;
-                    from = state.wsize - copy2;
+                  if (copy3 > state.wnext) {
+                    copy3 -= state.wnext;
+                    from = state.wsize - copy3;
                   } else {
-                    from = state.wnext - copy2;
+                    from = state.wnext - copy3;
                   }
-                  if (copy2 > state.length) {
-                    copy2 = state.length;
+                  if (copy3 > state.length) {
+                    copy3 = state.length;
                   }
                   from_source = state.window;
                 } else {
                   from_source = output3;
                   from = put - state.offset;
-                  copy2 = state.length;
+                  copy3 = state.length;
                 }
-                if (copy2 > left) {
-                  copy2 = left;
+                if (copy3 > left) {
+                  copy3 = left;
                 }
-                left -= copy2;
-                state.length -= copy2;
+                left -= copy3;
+                state.length -= copy3;
                 do {
                   output3[put++] = from_source[from++];
-                } while (--copy2);
+                } while (--copy3);
                 if (state.length === 0) {
                   state.mode = LEN;
                 }
@@ -26894,14 +26894,14 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
               }
             }
             loadedStructures.sharedLength = loadedStructures.length;
-            for (let id2 in existingStructures || []) {
-              if (id2 >= 0) {
-                let structure = loadedStructures[id2];
-                let existing = existingStructures[id2];
+            for (let id3 in existingStructures || []) {
+              if (id3 >= 0) {
+                let structure = loadedStructures[id3];
+                let existing = existingStructures[id3];
                 if (existing) {
                   if (structure)
-                    (loadedStructures.restoreStructures || (loadedStructures.restoreStructures = []))[id2] = structure;
-                  loadedStructures[id2] = existing;
+                    (loadedStructures.restoreStructures || (loadedStructures.restoreStructures = []))[id3] = structure;
+                  loadedStructures[id3] = existing;
                 }
               }
             }
@@ -26963,8 +26963,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
           }
         }
         function restoreStructures() {
-          for (let id2 in currentStructures.restoreStructures) {
-            currentStructures[id2] = currentStructures.restoreStructures[id2];
+          for (let id3 in currentStructures.restoreStructures) {
+            currentStructures[id3] = currentStructures.restoreStructures[id3];
           }
           currentStructures.restoreStructures = null;
         }
@@ -27244,10 +27244,10 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
             let highByte = src[position$1++];
             if (highByte === 0)
               return read0();
-            let id2 = firstId < 32 ? -(firstId + (highByte << 5)) : firstId + (highByte << 5);
-            let structure = currentStructures[id2] || loadStructures()[id2];
+            let id3 = firstId < 32 ? -(firstId + (highByte << 5)) : firstId + (highByte << 5);
+            let structure = currentStructures[id3] || loadStructures()[id3];
             if (!structure) {
-              throw new Error("Record id is not defined for " + id2);
+              throw new Error("Record id is not defined for " + id3);
             }
             if (!structure.read)
               structure.read = createStructureReader(structure, firstId);
@@ -27621,18 +27621,18 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
           }
           throw new Error(`Invalid property type for record: ${typeof property}`);
         }
-        const recordDefinition = (id2, highByte) => {
+        const recordDefinition = (id3, highByte) => {
           let structure = read2().map(asSafeString);
-          let firstByte = id2;
+          let firstByte = id3;
           if (highByte !== void 0) {
-            id2 = id2 < 32 ? -((highByte << 5) + id2) : (highByte << 5) + id2;
+            id3 = id3 < 32 ? -((highByte << 5) + id3) : (highByte << 5) + id3;
             structure.highByte = highByte;
           }
-          let existingStructure = currentStructures[id2];
+          let existingStructure = currentStructures[id3];
           if (existingStructure && (existingStructure.isShared || sequentialMode)) {
-            (currentStructures.restoreStructures || (currentStructures.restoreStructures = []))[id2] = existingStructure;
+            (currentStructures.restoreStructures || (currentStructures.restoreStructures = []))[id3] = existingStructure;
           }
-          currentStructures[id2] = structure;
+          currentStructures[id3] = structure;
           structure.read = createStructureReader(structure, firstByte);
           return (structure.read0 || structure.read)();
         };
@@ -27688,7 +27688,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
         };
         currentExtensions[105] = (data) => {
           if (currentUnpackr.structuredClone === false) throw new Error("Structured clone extension is disabled");
-          let id2 = dataView.getUint32(position$1 - 4);
+          let id3 = dataView.getUint32(position$1 - 4);
           if (!referenceMap)
             referenceMap = /* @__PURE__ */ new Map();
           let token = src[position$1];
@@ -27702,7 +27702,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
           else
             target2 = {};
           let refEntry = { target: target2 };
-          referenceMap.set(id2, refEntry);
+          referenceMap.set(id3, refEntry);
           let targetProperties = read2();
           if (!refEntry.used) {
             return refEntry.target = targetProperties;
@@ -27717,8 +27717,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
         };
         currentExtensions[112] = (data) => {
           if (currentUnpackr.structuredClone === false) throw new Error("Structured clone extension is disabled");
-          let id2 = dataView.getUint32(position$1 - 4);
-          let refEntry = referenceMap.get(id2);
+          let id3 = dataView.getUint32(position$1 - 4);
+          let refEntry = referenceMap.get(id3);
           refEntry.used = true;
           return refEntry.target;
         };
@@ -28847,16 +28847,16 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
           let lastEnd = serialized.length - distanceToMove;
           while (nextId = idsToInsert.pop()) {
             let offset = nextId.offset;
-            let id2 = nextId.id;
+            let id3 = nextId.id;
             serialized.copyWithin(offset + distanceToMove, offset, lastEnd);
             distanceToMove -= 6;
             let position3 = offset + distanceToMove;
             serialized[position3++] = 214;
             serialized[position3++] = 105;
-            serialized[position3++] = id2 >> 24;
-            serialized[position3++] = id2 >> 16 & 255;
-            serialized[position3++] = id2 >> 8 & 255;
-            serialized[position3++] = id2 & 255;
+            serialized[position3++] = id3 >> 24;
+            serialized[position3++] = id3 >> 16 & 255;
+            serialized[position3++] = id3 >> 8 & 255;
+            serialized[position3++] = id3 & 255;
             lastEnd = offset;
           }
           return serialized;
@@ -32710,11 +32710,11 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 
   // node_modules/@aztec-labs/foundation/dest/bigint-buffer/index.js
   function toBigIntBE(buf) {
-    const hex17 = buf.toString("hex");
-    if (hex17.length === 0) {
+    const hex18 = buf.toString("hex");
+    if (hex18.length === 0) {
       return BigInt(0);
     }
-    return BigInt(`0x${hex17}`);
+    return BigInt(`0x${hex18}`);
   }
   function toBufferBE(num, width) {
     if (num < 0n) {
@@ -32723,8 +32723,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     if (num === 0n) {
       return Buffer2.alloc(width);
     }
-    const hex17 = num.toString(16);
-    const buffer = Buffer2.from(hex17.padStart(width * 2, "0").slice(0, width * 2), "hex");
+    const hex18 = num.toString(16);
+    const buffer = Buffer2.from(hex18.padStart(width * 2, "0").slice(0, width * 2), "hex");
     if (buffer.length > width) {
       throw new Error(`Number ${num.toString(16)} does not fit in ${width}`);
     }
@@ -32758,10 +32758,10 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
         static instance;
         counter;
         log;
-        constructor(seed, bindings) {
+        constructor(seed, bindings2) {
           this.seed = seed;
           this.counter = 0;
-          this.log = createLogger("foundation:randomness_singleton", bindings);
+          this.log = createLogger("foundation:randomness_singleton", bindings2);
           if (seed !== void 0) {
             this.log.debug(`Using pseudo-randomness with seed: ${seed}`);
             this.counter = seed;
@@ -32769,10 +32769,10 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
             this.log.debug("Using true randomness");
           }
         }
-        static getInstance(bindings) {
+        static getInstance(bindings2) {
           if (!_RandomnessSingleton.instance) {
             const seed = process_exports.env.SEED ? Number(process_exports.env.SEED) : void 0;
-            _RandomnessSingleton.instance = new _RandomnessSingleton(seed, bindings);
+            _RandomnessSingleton.instance = new _RandomnessSingleton(seed, bindings2);
           }
           return _RandomnessSingleton.instance;
         }
@@ -33706,7 +33706,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
       init_dirname();
       init_buffer2();
       init_process2();
-      var copy2 = function copy3(I, i) {
+      var copy3 = function copy4(I, i) {
         return function(O, o) {
           var oi = o * 2;
           var ii = i * 2;
@@ -33714,7 +33714,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
           O[oi + 1] = I[ii + 1];
         };
       };
-      module.exports = copy2;
+      module.exports = copy3;
     }
   });
 
@@ -33981,11 +33981,11 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
       };
       var Sponge = function Sponge2(_ref) {
         var _this = this;
-        var capacity = _ref.capacity, padding = _ref.padding;
+        var capacity2 = _ref.capacity, padding = _ref.padding;
         var keccak = (0, _permute["default"])();
         var stateSize = 200;
-        var blockSize = capacity / 8;
-        var queueSize = stateSize - capacity / 4;
+        var blockSize = capacity2 / 8;
+        var queueSize = stateSize - capacity2 / 4;
         var queueOffset = 0;
         var state = new Uint32Array(stateSize / 4);
         var queue3 = _buffer.Buffer.allocUnsafe(queueSize);
@@ -37270,14 +37270,14 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
   function padHex(hex_, { dir, size: size2 = 32 } = {}) {
     if (size2 === null)
       return hex_;
-    const hex17 = hex_.replace("0x", "");
-    if (hex17.length > size2 * 2)
+    const hex18 = hex_.replace("0x", "");
+    if (hex18.length > size2 * 2)
       throw new SizeExceedsPaddingSizeError({
-        size: Math.ceil(hex17.length / 2),
+        size: Math.ceil(hex18.length / 2),
         targetSize: size2,
         type: "hex"
       });
-    return `0x${hex17[dir === "right" ? "padEnd" : "padStart"](size2 * 2, "0")}`;
+    return `0x${hex18[dir === "right" ? "padEnd" : "padStart"](size2 * 2, "0")}`;
   }
   function padBytes(bytes3, { dir, size: size2 = 32 } = {}) {
     if (size2 === null)
@@ -37355,24 +37355,24 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     return bytesToHex2(value, opts);
   }
   function boolToHex(value, opts = {}) {
-    const hex17 = `0x${Number(value)}`;
+    const hex18 = `0x${Number(value)}`;
     if (typeof opts.size === "number") {
-      assertSize(hex17, { size: opts.size });
-      return pad(hex17, { size: opts.size });
+      assertSize(hex18, { size: opts.size });
+      return pad(hex18, { size: opts.size });
     }
-    return hex17;
+    return hex18;
   }
   function bytesToHex2(value, opts = {}) {
     let string19 = "";
     for (let i = 0; i < value.length; i++) {
       string19 += hexes2[value[i]];
     }
-    const hex17 = `0x${string19}`;
+    const hex18 = `0x${string19}`;
     if (typeof opts.size === "number") {
-      assertSize(hex17, { size: opts.size });
-      return pad(hex17, { dir: "right", size: opts.size });
+      assertSize(hex18, { size: opts.size });
+      return pad(hex18, { dir: "right", size: opts.size });
     }
-    return hex17;
+    return hex18;
   }
   function numberToHex(value_, opts = {}) {
     const { signed, size: size2 } = opts;
@@ -37397,10 +37397,10 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
         value: `${value_}${suffix}`
       });
     }
-    const hex17 = `0x${(signed && value < 0 ? (1n << BigInt(size2 * 8)) + BigInt(value) : value).toString(16)}`;
+    const hex18 = `0x${(signed && value < 0 ? (1n << BigInt(size2 * 8)) + BigInt(value) : value).toString(16)}`;
     if (size2)
-      return pad(hex17, { size: size2 });
-    return hex17;
+      return pad(hex18, { size: size2 });
+    return hex18;
   }
   function stringToHex(value_, opts = {}) {
     const value = encoder.encode(value_);
@@ -37449,12 +37449,12 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     return void 0;
   }
   function hexToBytes2(hex_, opts = {}) {
-    let hex17 = hex_;
+    let hex18 = hex_;
     if (opts.size) {
-      assertSize(hex17, { size: opts.size });
-      hex17 = pad(hex17, { dir: "right", size: opts.size });
+      assertSize(hex18, { size: opts.size });
+      hex18 = pad(hex18, { dir: "right", size: opts.size });
     }
-    let hexString = hex17.slice(2);
+    let hexString = hex18.slice(2);
     if (hexString.length % 2)
       hexString = `0${hexString}`;
     const length = hexString.length / 2;
@@ -37470,8 +37470,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     return bytes3;
   }
   function numberToBytes(value, opts) {
-    const hex17 = numberToHex(value, opts);
-    return hexToBytes2(hex17);
+    const hex18 = numberToHex(value, opts);
+    return hexToBytes2(hex18);
   }
   function stringToBytes(value, opts = {}) {
     const bytes3 = encoder2.encode(value);
@@ -301939,6 +301939,7 @@ pub contract MultiCallEntrypoint {
     TxHash: () => TxHash,
     boundedTransactionRead: () => boundedTransactionRead,
     classifyDroppedTransaction: () => classifyDroppedTransaction,
+    computeArtifactHash: () => computeArtifactHash,
     computeContractAddressFromInstance: () => computeContractAddressFromInstance,
     computeFeeJuiceMessageNullifier: () => computeFeeJuiceMessageNullifier,
     computeL1ToL2MessageNullifier: () => computeFeeJuiceMessageNullifier,
@@ -303328,8 +303329,8 @@ pub contract MultiCallEntrypoint {
   function uint8ArrayToBase64url(bytes3) {
     return uint8ArrayToBase64(bytes3).replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
   }
-  function hexToUint8Array(hex17) {
-    const cleanHex = hex17.replace(/^0x/, "");
+  function hexToUint8Array(hex18) {
+    const cleanHex = hex18.replace(/^0x/, "");
     if (cleanHex.length % 2 !== 0) {
       throw new Error("Invalid hex string length");
     }
@@ -305597,15 +305598,15 @@ ${content.join("\n")}
       const syms = normalized.symbolKeys;
       const doc = new Doc(["payload", "ctx"], { shape, inst, memo: memo2, syms });
       const parseStr = (k) => `shape[${k}]._zod.run({ value: input[${k}], issues: [] }, ctx)`;
-      const prefixStr = (id2, k) => `
-          let ${id2}_ab = false;
-          for (let i = 0; i < ${id2}.issues.length; i++) {
-            const iss = ${id2}.issues[i];
+      const prefixStr = (id3, k) => `
+          let ${id3}_ab = false;
+          for (let i = 0; i < ${id3}.issues.length; i++) {
+            const iss = ${id3}.issues[i];
             iss.path = iss.path ? [${k}, ...iss.path] : [${k}];
             payload.issues.push(iss);
-            if (iss.continue !== true) ${id2}_ab = true;
+            if (iss.continue !== true) ${id3}_ab = true;
           }
-          if (${id2}_ab && ctx && ctx.abortEarly) {
+          if (${id3}_ab && ctx && ctx.abortEarly) {
             payload.value = newResult;
             return payload;
           }`;
@@ -305619,34 +305620,34 @@ ${content.join("\n")}
       for (const key of normalized.allKeys) {
         if (key === "__proto__")
           continue;
-        const id2 = ids[key];
+        const id3 = ids[key];
         const k = typeof key === "symbol" ? `syms[${syms.indexOf(key)}]` : esc(key);
         const isPresent = `${k} in input`;
         const schema = shape[key];
         const optin = schema?._zod?.optin;
         const isOptionalIn = optin !== void 0;
         const isOptionalOut = schema?._zod?.optout === "optional";
-        doc.write(`const ${id2} = ${parseStr(k)};`);
+        doc.write(`const ${id3} = ${parseStr(k)};`);
         if (isOptionalIn && isOptionalOut) {
-          const assign2 = optin === "optional" ? `${id2}_present` : `${id2}.value !== undefined || ${id2}_present`;
+          const assign2 = optin === "optional" ? `${id3}_present` : `${id3}.value !== undefined || ${id3}_present`;
           doc.write(`
-        const ${id2}_present = ${isPresent};
-        if (!${id2}.issues.length || ${id2}_present) {
-          if (${id2}.issues.length) {${prefixStr(id2, k)}
+        const ${id3}_present = ${isPresent};
+        if (!${id3}.issues.length || ${id3}_present) {
+          if (${id3}.issues.length) {${prefixStr(id3, k)}
           }
 
           if (${assign2}) {
-            newResult[${k}] = ${id2}.value;
+            newResult[${k}] = ${id3}.value;
           }
         }
 
       `);
         } else if (!isOptionalIn) {
           doc.write(`
-        const ${id2}_present = ${isPresent};
-        if (${id2}.issues.length) {${prefixStr(id2, k)}
+        const ${id3}_present = ${isPresent};
+        if (${id3}.issues.length) {${prefixStr(id3, k)}
         }
-        if (!${id2}_present && !${id2}.issues.length) {
+        if (!${id3}_present && !${id3}.issues.length) {
           payload.issues.push({
             code: "invalid_type",
             expected: "nonoptional",
@@ -305659,22 +305660,22 @@ ${content.join("\n")}
           }
         }
 
-        if (${id2}_present) {
-          newResult[${k}] = ${id2}.value;
+        if (${id3}_present) {
+          newResult[${k}] = ${id3}.value;
         }
 
       `);
         } else {
           doc.write(`
-        if (${id2}.issues.length) {${prefixStr(id2, k)}
+        if (${id3}.issues.length) {${prefixStr(id3, k)}
         }
       `);
           if (optin === "defaulted") {
-            doc.write(`newResult[${k}] = ${id2}.value;`);
+            doc.write(`newResult[${k}] = ${id3}.value;`);
           } else {
             doc.write(`
-        if (${id2}.value !== undefined || ${isPresent}) {
-          newResult[${k}] = ${id2}.value;
+        if (${id3}.value !== undefined || ${isPresent}) {
+          newResult[${k}] = ${id3}.value;
         }
       `);
           }
@@ -307108,7 +307109,7 @@ ${content.join("\n")}
       return PROVEN;
     stack.add(inst);
     let result = NONE;
-    const check9 = (child) => {
+    const check10 = (child) => {
       if (result !== PROVEN && child?._zod) {
         const answer = isRecursive(child, stack, resolve);
         if (answer > result)
@@ -307137,35 +307138,35 @@ ${content.join("\n")}
       case "object": {
         const raw = rawShape(def);
         merge7(raw ? shape(raw, true) : ASSUMED);
-        check9(def.catchall);
+        check10(def.catchall);
         break;
       }
       case "properties":
         merge7(shape(def.shape, false));
         break;
       case "array":
-        check9(def.element);
+        check10(def.element);
         break;
       case "tuple":
         for (const el of def.items)
-          check9(el);
-        check9(def.rest);
+          check10(el);
+        check10(def.rest);
         break;
       case "record":
       case "map":
-        check9(def.keyType);
-        check9(def.valueType);
+        check10(def.keyType);
+        check10(def.valueType);
         break;
       case "set":
-        check9(def.valueType);
+        check10(def.valueType);
         break;
       case "union":
         for (const el of def.options)
-          check9(el);
+          check10(el);
         break;
       case "intersection":
-        check9(def.left);
-        check9(def.right);
+        check10(def.left);
+        check10(def.right);
         break;
       case "optional":
       case "nullable":
@@ -307176,15 +307177,15 @@ ${content.join("\n")}
       case "nonoptional":
       case "promise":
       case "success":
-        check9(def.innerType);
+        check10(def.innerType);
         break;
       case "pipe":
-        check9(def.in);
-        check9(def.out);
+        check10(def.in);
+        check10(def.out);
         break;
       case "function":
-        check9(def.input);
-        check9(def.output);
+        check10(def.input);
+        check10(def.output);
         break;
       // `$ZodLazy` caches its inner on the def, so a resolved edge is followed exactly
       case "lazy": {
@@ -307225,10 +307226,10 @@ ${content.join("\n")}
           if (!value || typeof value !== "object")
             continue;
           if (value._zod)
-            check9(value);
+            check10(value);
           else if (Array.isArray(value))
             for (const el of value)
-              check9(el);
+              check10(el);
         }
       }
     }
@@ -315315,8 +315316,8 @@ ${code}
     if (!schemaChecks || schemaChecks.length === 0)
       return accessor;
     let currentAccessor = accessor;
-    for (const check9 of schemaChecks) {
-      const def = check9._zod.def;
+    for (const check10 of schemaChecks) {
+      const def = check10._zod.def;
       if (def.when && !WHEN_DEFAULTED_CHECKS.has(def.check)) {
         throw new ZodCompileUnsupportedError(`check with a custom "when" condition`);
       }
@@ -315346,9 +315347,9 @@ ${code}
           break;
         }
         case "length_equals": {
-          const exact2 = numericOperand(def.length, "length_equals");
-          const len = codePointLengthVar(doc, ctx, currentAccessor, `${currentAccessor}.length >= ${exact2} && ${currentAccessor}.length <= ${def.length * 2}`);
-          doc.write(`if (${len} !== ${exact2}) return INVALID;`);
+          const exact3 = numericOperand(def.length, "length_equals");
+          const len = codePointLengthVar(doc, ctx, currentAccessor, `${currentAccessor}.length >= ${exact3} && ${currentAccessor}.length <= ${def.length * 2}`);
+          doc.write(`if (${len} !== ${exact3}) return INVALID;`);
           break;
         }
         case "min_size":
@@ -315364,7 +315365,7 @@ ${code}
           currentAccessor = generateStringFormatCheck(doc, ctx, def, currentAccessor);
           break;
         case "custom":
-          currentAccessor = generateCustomRefineCheck(doc, ctx, check9, currentAccessor);
+          currentAccessor = generateCustomRefineCheck(doc, ctx, check10, currentAccessor);
           break;
         case "bigint_format":
           generateBigIntFormatCheck(doc, def, currentAccessor);
@@ -315380,7 +315381,7 @@ ${code}
           break;
         case "overwrite": {
           const newAccessor = newVar(ctx);
-          generateOverwriteCheck(doc, ctx, check9, currentAccessor, newAccessor);
+          generateOverwriteCheck(doc, ctx, check10, currentAccessor, newAccessor);
           currentAccessor = newAccessor;
           break;
         }
@@ -315503,8 +315504,8 @@ ${code}
     const propAccessor = `${accessor}[${JSON.stringify(def.property)}]`;
     generateCheck(doc, ctx, def.schema, propAccessor);
   }
-  function generateOverwriteCheck(doc, ctx, check9, currentAccessor, newAccessor) {
-    const tx = check9._zod.def.tx;
+  function generateOverwriteCheck(doc, ctx, check10, currentAccessor, newAccessor) {
+    const tx = check10._zod.def.tx;
     if (!tx) {
       throw new ZodCompileUnsupportedError("overwrite check without a transform function");
     }
@@ -315520,8 +315521,8 @@ ${code}
   function pushIssue(issue7) {
     this.issues.push(issue7);
   }
-  function generateCustomRefineCheck(doc, ctx, check9, accessor) {
-    const def = check9._zod.def;
+  function generateCustomRefineCheck(doc, ctx, check10, accessor) {
+    const def = check10._zod.def;
     if (def.fn) {
       if (isAsyncFunction(def.fn)) {
         throw new ZodCompileAsyncError("z.compile: async .refine() predicates are not supported");
@@ -315534,11 +315535,11 @@ ${code}
       doc.write(`if (!${resVar}) return INVALID;`);
       return accessor;
     }
-    if (check9._zod.check) {
-      if (isAsyncFunction(check9._zod.check)) {
+    if (check10._zod.check) {
+      if (isAsyncFunction(check10._zod.check)) {
         throw new ZodCompileAsyncError("z.compile: async .superRefine() / check functions are not supported");
       }
-      const checkFn = check9._zod.check;
+      const checkFn = check10._zod.check;
       const helperFn = (value) => {
         const fakePayload = { value, issues: [], addIssue: pushIssue };
         const result = checkFn(fakePayload);
@@ -317912,26 +317913,26 @@ ${code}
       return;
     const idToSchema = /* @__PURE__ */ new Map();
     for (const entry of ctx.seen.entries()) {
-      const id2 = ctx.metadataRegistry.get(entry[0])?.id;
-      if (id2) {
-        const existing = idToSchema.get(id2);
+      const id3 = ctx.metadataRegistry.get(entry[0])?.id;
+      if (id3) {
+        const existing = idToSchema.get(id3);
         if (existing && existing !== entry[0]) {
-          throw new Error(`Duplicate schema id "${id2}" detected during JSON Schema conversion. Two different schemas cannot share the same id when converted together.`);
+          throw new Error(`Duplicate schema id "${id3}" detected during JSON Schema conversion. Two different schemas cannot share the same id when converted together.`);
         }
-        idToSchema.set(id2, entry[0]);
+        idToSchema.set(id3, entry[0]);
       }
     }
     const makeURI = (entry) => {
       const defsSegment = ctx.target === "draft-2020-12" ? "$defs" : "definitions";
       if (ctx.external) {
         const externalId = ctx.external.registry.get(entry[0])?.id;
-        const uriGenerator = ctx.external.uri ?? ((id3) => id3);
+        const uriGenerator = ctx.external.uri ?? ((id4) => id4);
         if (externalId) {
           return { ref: uriGenerator(externalId) };
         }
-        const id2 = entry[1].defId ?? entry[1].schema.id ?? `schema${ctx.counter++}`;
-        entry[1].defId = id2;
-        return { defId: id2, ref: `${uriGenerator("__shared")}#/${defsSegment}/${encodeJSONPointerSegment(id2)}` };
+        const id3 = entry[1].defId ?? entry[1].schema.id ?? `schema${ctx.counter++}`;
+        entry[1].defId = id3;
+        return { defId: id3, ref: `${uriGenerator("__shared")}#/${defsSegment}/${encodeJSONPointerSegment(id3)}` };
       }
       const uriPrefix = `#`;
       const defUriPrefix = `${uriPrefix}/${defsSegment}/`;
@@ -317979,8 +317980,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
           continue;
         }
       }
-      const id2 = ctx.metadataRegistry.get(entry[0])?.id;
-      if (id2) {
+      const id3 = ctx.metadataRegistry.get(entry[0])?.id;
+      if (id3) {
         extractToDef(entry);
         continue;
       }
@@ -318213,10 +318214,10 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     } else {
     }
     if (ctx.external?.uri) {
-      const id2 = ctx.external.registry.get(schema)?.id;
-      if (!id2)
+      const id3 = ctx.external.registry.get(schema)?.id;
+      if (!id3)
         throw new Error("Schema is missing an `id` property");
-      result.$id = ctx.external.uri(id2);
+      result.$id = ctx.external.uri(id3);
     }
     assignProps(result, root.defId ? root.schema : root.def ?? root.schema);
     const rootMetaId = ctx.metadataRegistry.get(schema)?.id;
@@ -318852,7 +318853,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     const values = json7.enum ?? (json7.const !== void 0 ? [json7.const] : void 0);
     if (!numericType && !values?.some((v) => typeof v === "number"))
       return json7;
-    const { minimum, maximum, exclusiveMinimum, exclusiveMaximum, multipleOf, format: format2, id: id2, ...rest } = json7;
+    const { minimum, maximum, exclusiveMinimum, exclusiveMaximum, multipleOf, format: format2, id: id3, ...rest } = json7;
     if (rest.enum)
       rest.enum = rest.enum.map((v) => typeof v === "number" ? String(v) : v);
     else if (typeof rest.const === "number")
@@ -319524,8 +319525,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
       reg.add(this, meta13);
       return this;
     },
-    refine(check9, params) {
-      return this.check(refine(check9, params));
+    refine(check10, params) {
+      return this.check(refine(check10, params));
     },
     superRefine(refinement, params) {
       return this.check(superRefine(refinement, params));
@@ -322184,7 +322185,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
         timeoutPromise2
       ]);
       clearTimeout(timeoutId);
-      this.timeoutIds = this.timeoutIds.filter((id2) => id2 !== timeoutId);
+      this.timeoutIds = this.timeoutIds.filter((id3) => id3 !== timeoutId);
       this.interrupts = this.interrupts.filter((res) => res !== interruptResolve);
       if (shouldThrow) {
         throw new InterruptError("Interrupted.");
@@ -322200,7 +322201,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     interrupt(sleepShouldThrow = false) {
       this.interrupts.forEach((resolve) => resolve(sleepShouldThrow));
       this.interrupts = [];
-      this.timeoutIds.forEach((id2) => clearTimeout(id2));
+      this.timeoutIds.forEach((id3) => clearTimeout(id3));
       this.timeoutIds = [];
     }
   };
@@ -322396,7 +322397,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     const fetch2 = config9.fetch ?? defaultFetch;
     const log3 = config9.log ?? createLogger("json-rpc:client");
     const { namespaceMethods = false, batchWindowMS = DEFAULT_BATCH_WINDOW_MS, maxBatchSize = DEFAULT_MAX_BATCH_SIZE, maxRequestBodySize = DEFAULT_MAX_REQUESTY_BODY_SIZE } = config9;
-    let id2 = 0;
+    let id3 = 0;
     let sendBatchTimeoutHandle;
     const queue3 = [];
     const sendBatch = async () => {
@@ -322505,7 +322506,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
       const method = namespaceMethods ? `${namespaceMethods}_${methodName}` : methodName;
       const body = {
         jsonrpc: "2.0",
-        id: id2++,
+        id: id3++,
         method,
         params
       };
@@ -322998,6 +322999,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
   var PRIVATE_LOG_CIPHERTEXT_LEN = 15;
   var FLAT_PUBLIC_LOGS_PAYLOAD_LENGTH = 4096;
   var PUBLIC_LOG_HEADER_LENGTH = 2;
+  var MAX_PUBLIC_LOG_SIZE_IN_FIELDS = 4094;
   var CONTRACT_CLASS_LOG_SIZE_IN_FIELDS = 3023;
   var CONTRACT_CLASS_LOG_LENGTH = 3025;
   var PUBLIC_DATA_WRITE_LENGTH = 2;
@@ -323306,10 +323308,10 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     * per-element function-call indirection through the generic sinkable dispatcher. Use this in classes
     * that hold large flat field arrays (e.g. the 1632-element ChonkProof field list).
     */
-    writeFields(fields) {
-      this.ensure(32 * fields.length);
-      for (let i = 0, n2 = fields.length; i < n2; i++) {
-        const value = fields[i].toBigInt();
+    writeFields(fields2) {
+      this.ensure(32 * fields2.length);
+      for (let i = 0, n2 = fields2.length; i < n2; i++) {
+        const value = fields2[i].toBigInt();
         if (value < 0n) {
           throw new Error(`Cannot serialize negative bigint ${value}`);
         }
@@ -323425,10 +323427,10 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     fields;
     index;
     length;
-    constructor(fields, offset = 0) {
-      this.fields = fields;
+    constructor(fields2, offset = 0) {
+      this.fields = fields2;
       this.index = offset;
-      this.length = fields.length;
+      this.length = fields2.length;
       if (offset > this.length) {
         throw new Error("Offset out of bounds.");
       }
@@ -323439,11 +323441,11 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     * @param fields - A field array or FieldReader to initialize the FieldReader.
     * @returns An instance of FieldReader.
     */
-    static asReader(fields) {
-      if (fields instanceof _FieldReader) {
-        return fields;
+    static asReader(fields2) {
+      if (fields2 instanceof _FieldReader) {
+        return fields2;
       }
-      return new _FieldReader(fields);
+      return new _FieldReader(fields2);
     }
     /**
     * Returns the current cursor position.
@@ -323919,8 +323921,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     static fromField(fr) {
       return new _EthAddress(fr.toBuffer().slice(-_EthAddress.SIZE_IN_BYTES));
     }
-    static fromFields(fields) {
-      const reader = FieldReader.asReader(fields);
+    static fromFields(fields2) {
+      const reader = FieldReader.asReader(fields2);
       return _EthAddress.fromField(reader.readField());
     }
     /**
@@ -324137,8 +324139,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
         this.y
       ];
     }
-    static fromFields(fields) {
-      const reader = FieldReader.asReader(fields);
+    static fromFields(fields2) {
+      const reader = FieldReader.asReader(fields2);
       const [x, y] = [
         reader.readField(),
         reader.readField()
@@ -325659,8 +325661,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
   function uint8ArrayToBase64url3(bytes3) {
     return uint8ArrayToBase643(bytes3).replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
   }
-  function hexToUint8Array4(hex17) {
-    const cleanHex = hex17.replace(/^0x/, "");
+  function hexToUint8Array4(hex18) {
+    const cleanHex = hex18.replace(/^0x/, "");
     if (cleanHex.length % 2 !== 0) {
       throw new Error("Invalid hex string length");
     }
@@ -327494,42 +327496,42 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
       }
       doc.write(`const newResult = {};`);
       for (const key of normalized.keys) {
-        const id2 = ids[key];
+        const id3 = ids[key];
         const k = esc3(key);
         const schema = shape[key];
         const isOptionalIn = schema?._zod?.optin === "optional";
         const isOptionalOut = schema?._zod?.optout === "optional";
-        doc.write(`const ${id2} = ${parseStr(key)};`);
+        doc.write(`const ${id3} = ${parseStr(key)};`);
         if (isOptionalIn && isOptionalOut) {
           doc.write(`
-        if (${id2}.issues.length) {
+        if (${id3}.issues.length) {
           if (${k} in input) {
-            payload.issues = payload.issues.concat(${id2}.issues.map(iss => ({
+            payload.issues = payload.issues.concat(${id3}.issues.map(iss => ({
               ...iss,
               path: iss.path ? [${k}, ...iss.path] : [${k}]
             })));
           }
         }
         
-        if (${id2}.value === undefined) {
+        if (${id3}.value === undefined) {
           if (${k} in input) {
             newResult[${k}] = undefined;
           }
         } else {
-          newResult[${k}] = ${id2}.value;
+          newResult[${k}] = ${id3}.value;
         }
         
       `);
         } else if (!isOptionalIn) {
           doc.write(`
-        const ${id2}_present = ${k} in input;
-        if (${id2}.issues.length) {
-          payload.issues = payload.issues.concat(${id2}.issues.map(iss => ({
+        const ${id3}_present = ${k} in input;
+        if (${id3}.issues.length) {
+          payload.issues = payload.issues.concat(${id3}.issues.map(iss => ({
             ...iss,
             path: iss.path ? [${k}, ...iss.path] : [${k}]
           })));
         }
-        if (!${id2}_present && !${id2}.issues.length) {
+        if (!${id3}_present && !${id3}.issues.length) {
           payload.issues.push({
             code: "invalid_type",
             expected: "nonoptional",
@@ -327538,30 +327540,30 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
           });
         }
 
-        if (${id2}_present) {
-          if (${id2}.value === undefined) {
+        if (${id3}_present) {
+          if (${id3}.value === undefined) {
             newResult[${k}] = undefined;
           } else {
-            newResult[${k}] = ${id2}.value;
+            newResult[${k}] = ${id3}.value;
           }
         }
 
       `);
         } else {
           doc.write(`
-        if (${id2}.issues.length) {
-          payload.issues = payload.issues.concat(${id2}.issues.map(iss => ({
+        if (${id3}.issues.length) {
+          payload.issues = payload.issues.concat(${id3}.issues.map(iss => ({
             ...iss,
             path: iss.path ? [${k}, ...iss.path] : [${k}]
           })));
         }
         
-        if (${id2}.value === undefined) {
+        if (${id3}.value === undefined) {
           if (${k} in input) {
             newResult[${k}] = undefined;
           }
         } else {
-          newResult[${k}] = ${id2}.value;
+          newResult[${k}] = ${id3}.value;
         }
         
       `);
@@ -336065,26 +336067,26 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
       throw new Error("Unprocessed schema. This is a bug in Zod.");
     const idToSchema = /* @__PURE__ */ new Map();
     for (const entry of ctx.seen.entries()) {
-      const id2 = ctx.metadataRegistry.get(entry[0])?.id;
-      if (id2) {
-        const existing = idToSchema.get(id2);
+      const id3 = ctx.metadataRegistry.get(entry[0])?.id;
+      if (id3) {
+        const existing = idToSchema.get(id3);
         if (existing && existing !== entry[0]) {
-          throw new Error(`Duplicate schema id "${id2}" detected during JSON Schema conversion. Two different schemas cannot share the same id when converted together.`);
+          throw new Error(`Duplicate schema id "${id3}" detected during JSON Schema conversion. Two different schemas cannot share the same id when converted together.`);
         }
-        idToSchema.set(id2, entry[0]);
+        idToSchema.set(id3, entry[0]);
       }
     }
     const makeURI = (entry) => {
       const defsSegment = ctx.target === "draft-2020-12" ? "$defs" : "definitions";
       if (ctx.external) {
         const externalId = ctx.external.registry.get(entry[0])?.id;
-        const uriGenerator = ctx.external.uri ?? ((id3) => id3);
+        const uriGenerator = ctx.external.uri ?? ((id4) => id4);
         if (externalId) {
           return { ref: uriGenerator(externalId) };
         }
-        const id2 = entry[1].defId ?? entry[1].schema.id ?? `schema${ctx.counter++}`;
-        entry[1].defId = id2;
-        return { defId: id2, ref: `${uriGenerator("__shared")}#/${defsSegment}/${id2}` };
+        const id3 = entry[1].defId ?? entry[1].schema.id ?? `schema${ctx.counter++}`;
+        entry[1].defId = id3;
+        return { defId: id3, ref: `${uriGenerator("__shared")}#/${defsSegment}/${id3}` };
       }
       if (entry[1] === root) {
         return { ref: "#" };
@@ -336132,8 +336134,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
           continue;
         }
       }
-      const id2 = ctx.metadataRegistry.get(entry[0])?.id;
-      if (id2) {
+      const id3 = ctx.metadataRegistry.get(entry[0])?.id;
+      if (id3) {
         extractToDef(entry);
         continue;
       }
@@ -336229,10 +336231,10 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     } else {
     }
     if (ctx.external?.uri) {
-      const id2 = ctx.external.registry.get(schema)?.id;
-      if (!id2)
+      const id3 = ctx.external.registry.get(schema)?.id;
+      if (!id3)
         throw new Error("Schema is missing an `id` property");
-      result.$id = ctx.external.uri(id2);
+      result.$id = ctx.external.uri(id3);
     }
     Object.assign(result, root.def ?? root.schema);
     const rootMetaId = ctx.metadataRegistry.get(schema)?.id;
@@ -337376,8 +337378,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
         reg.add(this, meta13);
         return this;
       },
-      refine(check9, params) {
-        return this.check(refine3(check9, params));
+      refine(check10, params) {
+        return this.check(refine3(check10, params));
       },
       superRefine(refinement, params) {
         return this.check(superRefine3(refinement, params));
@@ -339642,6 +339644,14 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
       return new _SiblingPath(subtreePathSize, subtreeData);
     }
   };
+  async function computeRootFromSiblingPath(leaf, siblingPath, index, hasher) {
+    let result = leaf;
+    for (const sibling of siblingPath) {
+      result = index & 1 ? await hasher(sibling, result) : await hasher(result, sibling);
+      index >>= 1;
+    }
+    return result;
+  }
 
   // node_modules/@aztec-labs/foundation/dest/trees/indexed_tree_leaf.js
   init_dirname();
@@ -341319,8 +341329,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
   function uint8ArrayToBase64url4(bytes3) {
     return uint8ArrayToBase644(bytes3).replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
   }
-  function hexToUint8Array5(hex17) {
-    const cleanHex = hex17.replace(/^0x/, "");
+  function hexToUint8Array5(hex18) {
+    const cleanHex = hex18.replace(/^0x/, "");
     if (cleanHex.length % 2 !== 0) {
       throw new Error("Invalid hex string length");
     }
@@ -343154,42 +343164,42 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
       }
       doc.write(`const newResult = {};`);
       for (const key of normalized.keys) {
-        const id2 = ids[key];
+        const id3 = ids[key];
         const k = esc4(key);
         const schema = shape[key];
         const isOptionalIn = schema?._zod?.optin === "optional";
         const isOptionalOut = schema?._zod?.optout === "optional";
-        doc.write(`const ${id2} = ${parseStr(key)};`);
+        doc.write(`const ${id3} = ${parseStr(key)};`);
         if (isOptionalIn && isOptionalOut) {
           doc.write(`
-        if (${id2}.issues.length) {
+        if (${id3}.issues.length) {
           if (${k} in input) {
-            payload.issues = payload.issues.concat(${id2}.issues.map(iss => ({
+            payload.issues = payload.issues.concat(${id3}.issues.map(iss => ({
               ...iss,
               path: iss.path ? [${k}, ...iss.path] : [${k}]
             })));
           }
         }
         
-        if (${id2}.value === undefined) {
+        if (${id3}.value === undefined) {
           if (${k} in input) {
             newResult[${k}] = undefined;
           }
         } else {
-          newResult[${k}] = ${id2}.value;
+          newResult[${k}] = ${id3}.value;
         }
         
       `);
         } else if (!isOptionalIn) {
           doc.write(`
-        const ${id2}_present = ${k} in input;
-        if (${id2}.issues.length) {
-          payload.issues = payload.issues.concat(${id2}.issues.map(iss => ({
+        const ${id3}_present = ${k} in input;
+        if (${id3}.issues.length) {
+          payload.issues = payload.issues.concat(${id3}.issues.map(iss => ({
             ...iss,
             path: iss.path ? [${k}, ...iss.path] : [${k}]
           })));
         }
-        if (!${id2}_present && !${id2}.issues.length) {
+        if (!${id3}_present && !${id3}.issues.length) {
           payload.issues.push({
             code: "invalid_type",
             expected: "nonoptional",
@@ -343198,30 +343208,30 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
           });
         }
 
-        if (${id2}_present) {
-          if (${id2}.value === undefined) {
+        if (${id3}_present) {
+          if (${id3}.value === undefined) {
             newResult[${k}] = undefined;
           } else {
-            newResult[${k}] = ${id2}.value;
+            newResult[${k}] = ${id3}.value;
           }
         }
 
       `);
         } else {
           doc.write(`
-        if (${id2}.issues.length) {
-          payload.issues = payload.issues.concat(${id2}.issues.map(iss => ({
+        if (${id3}.issues.length) {
+          payload.issues = payload.issues.concat(${id3}.issues.map(iss => ({
             ...iss,
             path: iss.path ? [${k}, ...iss.path] : [${k}]
           })));
         }
         
-        if (${id2}.value === undefined) {
+        if (${id3}.value === undefined) {
           if (${k} in input) {
             newResult[${k}] = undefined;
           }
         } else {
-          newResult[${k}] = ${id2}.value;
+          newResult[${k}] = ${id3}.value;
         }
         
       `);
@@ -351725,26 +351735,26 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
       throw new Error("Unprocessed schema. This is a bug in Zod.");
     const idToSchema = /* @__PURE__ */ new Map();
     for (const entry of ctx.seen.entries()) {
-      const id2 = ctx.metadataRegistry.get(entry[0])?.id;
-      if (id2) {
-        const existing = idToSchema.get(id2);
+      const id3 = ctx.metadataRegistry.get(entry[0])?.id;
+      if (id3) {
+        const existing = idToSchema.get(id3);
         if (existing && existing !== entry[0]) {
-          throw new Error(`Duplicate schema id "${id2}" detected during JSON Schema conversion. Two different schemas cannot share the same id when converted together.`);
+          throw new Error(`Duplicate schema id "${id3}" detected during JSON Schema conversion. Two different schemas cannot share the same id when converted together.`);
         }
-        idToSchema.set(id2, entry[0]);
+        idToSchema.set(id3, entry[0]);
       }
     }
     const makeURI = (entry) => {
       const defsSegment = ctx.target === "draft-2020-12" ? "$defs" : "definitions";
       if (ctx.external) {
         const externalId = ctx.external.registry.get(entry[0])?.id;
-        const uriGenerator = ctx.external.uri ?? ((id3) => id3);
+        const uriGenerator = ctx.external.uri ?? ((id4) => id4);
         if (externalId) {
           return { ref: uriGenerator(externalId) };
         }
-        const id2 = entry[1].defId ?? entry[1].schema.id ?? `schema${ctx.counter++}`;
-        entry[1].defId = id2;
-        return { defId: id2, ref: `${uriGenerator("__shared")}#/${defsSegment}/${id2}` };
+        const id3 = entry[1].defId ?? entry[1].schema.id ?? `schema${ctx.counter++}`;
+        entry[1].defId = id3;
+        return { defId: id3, ref: `${uriGenerator("__shared")}#/${defsSegment}/${id3}` };
       }
       if (entry[1] === root) {
         return { ref: "#" };
@@ -351792,8 +351802,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
           continue;
         }
       }
-      const id2 = ctx.metadataRegistry.get(entry[0])?.id;
-      if (id2) {
+      const id3 = ctx.metadataRegistry.get(entry[0])?.id;
+      if (id3) {
         extractToDef(entry);
         continue;
       }
@@ -351889,10 +351899,10 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     } else {
     }
     if (ctx.external?.uri) {
-      const id2 = ctx.external.registry.get(schema)?.id;
-      if (!id2)
+      const id3 = ctx.external.registry.get(schema)?.id;
+      if (!id3)
         throw new Error("Schema is missing an `id` property");
-      result.$id = ctx.external.uri(id2);
+      result.$id = ctx.external.uri(id3);
     }
     Object.assign(result, root.def ?? root.schema);
     const rootMetaId = ctx.metadataRegistry.get(schema)?.id;
@@ -353036,8 +353046,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
         reg.add(this, meta13);
         return this;
       },
-      refine(check9, params) {
-        return this.check(refine4(check9, params));
+      refine(check10, params) {
+        return this.check(refine4(check10, params));
       },
       superRefine(refinement, params) {
         return this.check(superRefine4(refinement, params));
@@ -354836,8 +354846,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     static fromString(str) {
       return _AppendOnlyTreeSnapshot.fromBuffer(hexToBuffer(str));
     }
-    static fromFields(fields) {
-      const reader = FieldReader.asReader(fields);
+    static fromFields(fields2) {
+      const reader = FieldReader.asReader(fields2);
       return new _AppendOnlyTreeSnapshot(reader.readField(), TreeLeafIndex.fromField(reader.readField()));
     }
     toAbi() {
@@ -355128,8 +355138,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
         return void 0;
       }
     }
-    static fromFields(fields) {
-      const reader = FieldReader.asReader(fields);
+    static fromFields(fields2) {
+      const reader = FieldReader.asReader(fields2);
       return _FunctionSelector.fromField(reader.readField());
     }
     /**
@@ -355304,8 +355314,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     * address (see {@link AztecAddress.isValid}); it is meant for reading addresses from already-validated serialized
     * data. Use {@link AztecAddress.random} for valid test addresses.
     */
-    static fromFields(fields) {
-      const reader = FieldReader.asReader(fields);
+    static fromFields(fields2) {
+      const reader = FieldReader.asReader(fields2);
       return new _AztecAddress(reader.readField());
     }
     /**
@@ -355445,8 +355455,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     equals(other) {
       return this.daGas === other.daGas && this.l2Gas === other.l2Gas;
     }
-    static from(fields) {
-      return new _Gas(fields.daGas ?? 0, fields.l2Gas ?? 0);
+    static from(fields2) {
+      return new _Gas(fields2.daGas ?? 0, fields2.l2Gas ?? 0);
     }
     /**
     * Creates a Gas instance from a plain object without Zod validation.
@@ -355502,8 +355512,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     toFields() {
       return serializeToFields(this.daGas, this.l2Gas);
     }
-    static fromFields(fields) {
-      const reader = FieldReader.asReader(fields);
+    static fromFields(fields2) {
+      const reader = FieldReader.asReader(fields2);
       return new _Gas(reader.readU32(), reader.readU32());
     }
   };
@@ -355655,8 +355665,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
         return new _GasFees(bigintMulCeil(this.feePerDaGas, scalar2), bigintMulCeil(this.feePerL2Gas, scalar2));
       }
     }
-    static from(fields) {
-      return new _GasFees(fields.feePerDaGas, fields.feePerL2Gas);
+    static from(fields2) {
+      return new _GasFees(fields2.feePerDaGas, fields2.feePerL2Gas);
     }
     /**
     * Creates a GasFees instance from a plain object without Zod validation.
@@ -355695,8 +355705,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
       sink.writeBigInt(this.feePerDaGas, 16);
       sink.writeBigInt(this.feePerL2Gas, 16);
     }
-    static fromFields(fields) {
-      const reader = FieldReader.asReader(fields);
+    static fromFields(fields2) {
+      const reader = FieldReader.asReader(fields2);
       return new _GasFees(reader.readField().toBigInt(), reader.readField().toBigInt());
     }
     toFields() {
@@ -355755,8 +355765,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     getSize() {
       return this.toBuffer().length;
     }
-    static from(fields) {
-      return new _GlobalVariables(..._GlobalVariables.getFields(fields));
+    static from(fields2) {
+      return new _GlobalVariables(..._GlobalVariables.getFields(fields2));
     }
     /**
     * Creates a GlobalVariables instance from a plain object without Zod validation.
@@ -355768,7 +355778,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     static fromPlainObject(obj) {
       return new _GlobalVariables(Fr.fromPlainObject(obj.chainId), Fr.fromPlainObject(obj.version), obj.blockNumber, SlotNumber(Fr.fromPlainObject(obj.slotNumber).toNumber()), typeof obj.timestamp === "bigint" ? obj.timestamp : BigInt(obj.timestamp), EthAddress.fromPlainObject(obj.coinbase), AztecAddress.fromPlainObject(obj.feeRecipient), GasFees.fromPlainObject(obj.gasFees));
     }
-    static empty(fields = {}) {
+    static empty(fields2 = {}) {
       return _GlobalVariables.from({
         blockNumber: BlockNumber.ZERO,
         slotNumber: SlotNumber.ZERO,
@@ -355778,27 +355788,27 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
         coinbase: EthAddress.ZERO,
         feeRecipient: AztecAddress.ZERO,
         gasFees: GasFees.empty(),
-        ...fields
+        ...fields2
       });
     }
     static fromBuffer(buffer) {
       const reader = BufferReader.asReader(buffer);
       return new _GlobalVariables(Fr.fromBuffer(reader), Fr.fromBuffer(reader), BlockNumber(reader.readNumber()), SlotNumber(reader.readNumber()), reader.readUInt64(), reader.readObject(EthAddress), reader.readObject(AztecAddress), reader.readObject(GasFees));
     }
-    static fromFields(fields) {
-      const reader = FieldReader.asReader(fields);
+    static fromFields(fields2) {
+      const reader = FieldReader.asReader(fields2);
       return new _GlobalVariables(reader.readField(), reader.readField(), BlockNumber(reader.readU32()), SlotNumber(reader.readU32()), reader.readField().toBigInt(), EthAddress.fromField(reader.readField()), AztecAddress.fromFieldUnsafe(reader.readField()), GasFees.fromFields(reader));
     }
-    static getFields(fields) {
+    static getFields(fields2) {
       return [
-        fields.chainId,
-        fields.version,
-        fields.blockNumber,
-        fields.slotNumber,
-        fields.timestamp,
-        fields.coinbase,
-        fields.feeRecipient,
-        fields.gasFees
+        fields2.chainId,
+        fields2.version,
+        fields2.blockNumber,
+        fields2.slotNumber,
+        fields2.timestamp,
+        fields2.coinbase,
+        fields2.feeRecipient,
+        fields2.gasFees
       ];
     }
     toBuffer(sink) {
@@ -355810,11 +355820,11 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
       serializeToSink(sink, this.coinbase, this.feeRecipient, this.gasFees);
     }
     toFields() {
-      const fields = serializeToFields(..._GlobalVariables.getFields(this));
-      if (fields.length !== GLOBAL_VARIABLES_LENGTH) {
-        throw new Error(`Invalid number of fields for GlobalVariables. Expected ${GLOBAL_VARIABLES_LENGTH}, got ${fields.length}`);
+      const fields2 = serializeToFields(..._GlobalVariables.getFields(this));
+      if (fields2.length !== GLOBAL_VARIABLES_LENGTH) {
+        throw new Error(`Invalid number of fields for GlobalVariables. Expected ${GLOBAL_VARIABLES_LENGTH}, got ${fields2.length}`);
       }
-      return fields;
+      return fields2;
     }
     /**
     * A trimmed version of the JSON representation of the global variables,
@@ -355915,22 +355925,22 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     getSize() {
       return this.noteHashTree.getSize() + this.nullifierTree.getSize() + this.publicDataTree.getSize();
     }
-    static getFields(fields) {
+    static getFields(fields2) {
       return [
-        fields.noteHashTree,
-        fields.nullifierTree,
-        fields.publicDataTree
+        fields2.noteHashTree,
+        fields2.nullifierTree,
+        fields2.publicDataTree
       ];
     }
-    static from(fields) {
-      return new _PartialStateReference(..._PartialStateReference.getFields(fields));
+    static from(fields2) {
+      return new _PartialStateReference(..._PartialStateReference.getFields(fields2));
     }
     static fromBuffer(buffer) {
       const reader = BufferReader.asReader(buffer);
       return new _PartialStateReference(reader.readObject(AppendOnlyTreeSnapshot), reader.readObject(AppendOnlyTreeSnapshot), reader.readObject(AppendOnlyTreeSnapshot));
     }
-    static fromFields(fields) {
-      const reader = FieldReader.asReader(fields);
+    static fromFields(fields2) {
+      const reader = FieldReader.asReader(fields2);
       const noteHashTree = AppendOnlyTreeSnapshot.fromFields(reader);
       const nullifierTree = AppendOnlyTreeSnapshot.fromFields(reader);
       const publicDataTree = AppendOnlyTreeSnapshot.fromFields(reader);
@@ -355956,15 +355966,15 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
       serializeToSink(sink, this.noteHashTree, this.nullifierTree, this.publicDataTree);
     }
     toFields() {
-      const fields = [
+      const fields2 = [
         ...this.noteHashTree.toFields(),
         ...this.nullifierTree.toFields(),
         ...this.publicDataTree.toFields()
       ];
-      if (fields.length !== PARTIAL_STATE_REFERENCE_LENGTH) {
-        throw new Error(`Invalid number of fields for PartialStateReference. Expected ${PARTIAL_STATE_REFERENCE_LENGTH}, got ${fields.length}`);
+      if (fields2.length !== PARTIAL_STATE_REFERENCE_LENGTH) {
+        throw new Error(`Invalid number of fields for PartialStateReference. Expected ${PARTIAL_STATE_REFERENCE_LENGTH}, got ${fields2.length}`);
       }
-      return fields;
+      return fields2;
     }
     isEmpty() {
       return this.noteHashTree.isEmpty() && this.nullifierTree.isEmpty() && this.publicDataTree.isEmpty();
@@ -355993,14 +356003,14 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     getSize() {
       return this.l1ToL2MessageTree.getSize() + this.partial.getSize();
     }
-    static getFields(fields) {
+    static getFields(fields2) {
       return [
-        fields.l1ToL2MessageTree,
-        fields.partial
+        fields2.l1ToL2MessageTree,
+        fields2.partial
       ];
     }
-    static from(fields) {
-      return new _StateReference(..._StateReference.getFields(fields));
+    static from(fields2) {
+      return new _StateReference(..._StateReference.getFields(fields2));
     }
     toBuffer(sink) {
       if (!sink) {
@@ -356009,21 +356019,21 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
       serializeToSink(sink, this.l1ToL2MessageTree, this.partial);
     }
     toFields() {
-      const fields = [
+      const fields2 = [
         ...this.l1ToL2MessageTree.toFields(),
         ...this.partial.toFields()
       ];
-      if (fields.length !== STATE_REFERENCE_LENGTH) {
-        throw new Error(`Invalid number of fields for StateReference. Expected ${STATE_REFERENCE_LENGTH}, got ${fields.length}`);
+      if (fields2.length !== STATE_REFERENCE_LENGTH) {
+        throw new Error(`Invalid number of fields for StateReference. Expected ${STATE_REFERENCE_LENGTH}, got ${fields2.length}`);
       }
-      return fields;
+      return fields2;
     }
     static fromBuffer(buffer) {
       const reader = BufferReader.asReader(buffer);
       return new _StateReference(reader.readObject(AppendOnlyTreeSnapshot), reader.readObject(PartialStateReference));
     }
-    static fromFields(fields) {
-      const reader = FieldReader.asReader(fields);
+    static fromFields(fields2) {
+      const reader = FieldReader.asReader(fields2);
       const l1ToL2MessageTree = AppendOnlyTreeSnapshot.fromFields(reader);
       const partial7 = PartialStateReference.fromFields(reader);
       return new _StateReference(l1ToL2MessageTree, partial7);
@@ -356112,19 +356122,19 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
         totalManaUsed: schemas.Fr
       }).transform(_BlockHeader.from);
     }
-    static getFields(fields) {
+    static getFields(fields2) {
       return [
-        fields.lastArchive,
-        fields.state,
-        fields.spongeBlobHash,
-        fields.txEffectsTreeRoot,
-        fields.globalVariables,
-        fields.totalFees,
-        fields.totalManaUsed
+        fields2.lastArchive,
+        fields2.state,
+        fields2.spongeBlobHash,
+        fields2.txEffectsTreeRoot,
+        fields2.globalVariables,
+        fields2.totalFees,
+        fields2.totalManaUsed
       ];
     }
-    static from(fields) {
-      return new _BlockHeader(..._BlockHeader.getFields(fields));
+    static from(fields2) {
+      return new _BlockHeader(..._BlockHeader.getFields(fields2));
     }
     getSlot() {
       return this.globalVariables.slotNumber;
@@ -356142,11 +356152,11 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
       serializeToSink(sink, ..._BlockHeader.getFields(this));
     }
     toFields() {
-      const fields = serializeToFields(..._BlockHeader.getFields(this));
-      if (fields.length !== BLOCK_HEADER_LENGTH) {
-        throw new Error(`Invalid number of fields for Header. Expected ${BLOCK_HEADER_LENGTH}, got ${fields.length}`);
+      const fields2 = serializeToFields(..._BlockHeader.getFields(this));
+      if (fields2.length !== BLOCK_HEADER_LENGTH) {
+        throw new Error(`Invalid number of fields for Header. Expected ${BLOCK_HEADER_LENGTH}, got ${fields2.length}`);
       }
-      return fields;
+      return fields2;
     }
     clone() {
       return _BlockHeader.fromBuffer(this.toBuffer());
@@ -356155,11 +356165,11 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
       const reader = BufferReader.asReader(buffer);
       return new _BlockHeader(reader.readObject(AppendOnlyTreeSnapshot), reader.readObject(StateReference), reader.readObject(Fr), reader.readObject(Fr), reader.readObject(GlobalVariables), reader.readObject(Fr), reader.readObject(Fr));
     }
-    static fromFields(fields) {
-      const reader = FieldReader.asReader(fields);
+    static fromFields(fields2) {
+      const reader = FieldReader.asReader(fields2);
       return new _BlockHeader(AppendOnlyTreeSnapshot.fromFields(reader), StateReference.fromFields(reader), reader.readField(), reader.readField(), GlobalVariables.fromFields(reader), reader.readField(), reader.readField());
     }
-    static empty(fields = {}) {
+    static empty(fields2 = {}) {
       return _BlockHeader.from({
         lastArchive: AppendOnlyTreeSnapshot.empty(),
         state: StateReference.empty(),
@@ -356168,7 +356178,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
         globalVariables: GlobalVariables.empty(),
         totalFees: Fr.ZERO,
         totalManaUsed: Fr.ZERO,
-        ...fields
+        ...fields2
       });
     }
     isEmpty() {
@@ -357007,20 +357017,20 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
   var hexes = /* @__PURE__ */ Array.from({ length: 256 }, (_, i) => i.toString(16).padStart(2, "0"));
   function bytesToHex(bytes3) {
     abytes2(bytes3);
-    let hex17 = "";
+    let hex18 = "";
     for (let i = 0; i < bytes3.length; i++) {
-      hex17 += hexes[bytes3[i]];
+      hex18 += hexes[bytes3[i]];
     }
-    return hex17;
+    return hex18;
   }
   function numberToHexUnpadded(num) {
-    const hex17 = num.toString(16);
-    return hex17.length & 1 ? "0" + hex17 : hex17;
+    const hex18 = num.toString(16);
+    return hex18.length & 1 ? "0" + hex18 : hex18;
   }
-  function hexToNumber(hex17) {
-    if (typeof hex17 !== "string")
-      throw new Error("hex string expected, got " + typeof hex17);
-    return hex17 === "" ? _0n : BigInt("0x" + hex17);
+  function hexToNumber(hex18) {
+    if (typeof hex18 !== "string")
+      throw new Error("hex string expected, got " + typeof hex18);
+    return hex18 === "" ? _0n : BigInt("0x" + hex18);
   }
   var asciis = { _0: 48, _9: 57, A: 65, F: 70, a: 97, f: 102 };
   function asciiToBase16(ch) {
@@ -357032,19 +357042,19 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
       return ch - (asciis.a - 10);
     return;
   }
-  function hexToBytes(hex17) {
-    if (typeof hex17 !== "string")
-      throw new Error("hex string expected, got " + typeof hex17);
-    const hl = hex17.length;
+  function hexToBytes(hex18) {
+    if (typeof hex18 !== "string")
+      throw new Error("hex string expected, got " + typeof hex18);
+    const hl = hex18.length;
     const al = hl / 2;
     if (hl % 2)
       throw new Error("hex string expected, got unpadded hex of length " + hl);
     const array7 = new Uint8Array(al);
     for (let ai = 0, hi = 0; ai < al; ai++, hi += 2) {
-      const n1 = asciiToBase16(hex17.charCodeAt(hi));
-      const n2 = asciiToBase16(hex17.charCodeAt(hi + 1));
+      const n1 = asciiToBase16(hex18.charCodeAt(hi));
+      const n2 = asciiToBase16(hex18.charCodeAt(hi + 1));
       if (n1 === void 0 || n2 === void 0) {
-        const char = hex17[hi] + hex17[hi + 1];
+        const char = hex18[hi] + hex18[hi + 1];
         throw new Error('hex string expected, got non-hex character "' + char + '" at index ' + hi);
       }
       array7[ai] = n1 * 16 + n2;
@@ -357067,16 +357077,16 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
   function numberToVarBytesBE(n2) {
     return hexToBytes(numberToHexUnpadded(n2));
   }
-  function ensureBytes(title3, hex17, expectedLength) {
+  function ensureBytes(title3, hex18, expectedLength) {
     let res;
-    if (typeof hex17 === "string") {
+    if (typeof hex18 === "string") {
       try {
-        res = hexToBytes(hex17);
+        res = hexToBytes(hex18);
       } catch (e) {
         throw new Error(title3 + " must be hex string or Uint8Array, cause: " + e);
       }
-    } else if (isBytes2(hex17)) {
-      res = Uint8Array.from(hex17);
+    } else if (isBytes2(hex18)) {
+      res = Uint8Array.from(hex18);
     } else {
       throw new Error(title3 + " must be hex string or Uint8Array");
     }
@@ -357835,12 +357845,12 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
         const { Err: E } = DER;
         if (num < _0n4)
           throw new E("integer: negative integers are not allowed");
-        let hex17 = numberToHexUnpadded(num);
-        if (Number.parseInt(hex17[0], 16) & 8)
-          hex17 = "00" + hex17;
-        if (hex17.length & 1)
+        let hex18 = numberToHexUnpadded(num);
+        if (Number.parseInt(hex18[0], 16) & 8)
+          hex18 = "00" + hex18;
+        if (hex18.length & 1)
           throw new E("unexpected DER parsing assertion: unpadded hex");
-        return hex17;
+        return hex18;
       },
       decode(data) {
         const { Err: E } = DER;
@@ -357851,9 +357861,9 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
         return b2n(data);
       }
     },
-    toSig(hex17) {
+    toSig(hex18) {
       const { Err: E, _int: int7, _tlv: tlv } = DER;
-      const data = typeof hex17 === "string" ? h2b(hex17) : hex17;
+      const data = typeof hex18 === "string" ? h2b(hex18) : hex18;
       abytes2(data);
       const { v: seqBytes, l: seqLeftBytes } = tlv.decode(48, data);
       if (seqLeftBytes.length)
@@ -358005,8 +358015,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
        * Converts hash string or Uint8Array to Point.
        * @param hex short/long ECDSA hex
        */
-      static fromHex(hex17) {
-        const P = Point3.fromAffine(fromBytes(ensureBytes("pointHex", hex17)));
+      static fromHex(hex18) {
+        const P = Point3.fromAffine(fromBytes(ensureBytes("pointHex", hex18)));
         P.assertValidity();
         return P;
       }
@@ -358359,15 +358369,15 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
         this.assertValidity();
       }
       // pair (bytes of r, bytes of s)
-      static fromCompact(hex17) {
+      static fromCompact(hex18) {
         const l = CURVE.nByteLength;
-        hex17 = ensureBytes("compactSignature", hex17, l * 2);
-        return new Signature3(slcNum(hex17, 0, l), slcNum(hex17, l, 2 * l));
+        hex18 = ensureBytes("compactSignature", hex18, l * 2);
+        return new Signature3(slcNum(hex18, 0, l), slcNum(hex18, l, 2 * l));
       }
       // DER encoded ECDSA signature
       // https://bitcoin.stackexchange.com/questions/57644/what-are-the-parts-of-a-bitcoin-transaction-input-script
-      static fromDER(hex17) {
-        const { r, s } = DER.toSig(ensureBytes("DER", hex17));
+      static fromDER(hex18) {
+        const { r, s } = DER.toSig(ensureBytes("DER", hex18));
         return new Signature3(r, s);
       }
       assertValidity() {
@@ -359280,23 +359290,23 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
       }
       serializeToSink(sink, ..._GasSettings.getFields(this));
     }
-    static fromFields(fields) {
-      const reader = FieldReader.asReader(fields);
+    static fromFields(fields2) {
+      const reader = FieldReader.asReader(fields2);
       return new _GasSettings(reader.readObject(Gas), reader.readObject(Gas), reader.readObject(GasFees), reader.readObject(GasFees));
     }
     toFields() {
-      const fields = serializeToFields(..._GasSettings.getFields(this));
-      if (fields.length !== GAS_SETTINGS_LENGTH) {
-        throw new Error(`Invalid number of fields for GasSettings. Expected ${GAS_SETTINGS_LENGTH} but got ${fields.length}`);
+      const fields2 = serializeToFields(..._GasSettings.getFields(this));
+      if (fields2.length !== GAS_SETTINGS_LENGTH) {
+        throw new Error(`Invalid number of fields for GasSettings. Expected ${GAS_SETTINGS_LENGTH} but got ${fields2.length}`);
       }
-      return fields;
+      return fields2;
     }
-    static getFields(fields) {
+    static getFields(fields2) {
       return [
-        fields.gasLimits,
-        fields.teardownGasLimits,
-        fields.maxFeesPerGas,
-        fields.maxPriorityFeesPerGas
+        fields2.gasLimits,
+        fields2.teardownGasLimits,
+        fields2.maxFeesPerGas,
+        fields2.maxPriorityFeesPerGas
       ];
     }
   };
@@ -359348,6 +359358,10 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     value <<= NUM_TXS_BIT_SIZE;
     value += BigInt(blockEndMarker.numTxs);
     return new Fr(value);
+  }
+  function isBlockEndMarker(field5) {
+    const prefix = field5.toBigInt() >> NUM_TXS_BIT_SIZE + BLOCK_NUMBER_BIT_SIZE + TIMESTAMP_BIT_SIZE;
+    return prefix === BigInt(BLOCK_END_PREFIX);
   }
 
   // node_modules/@aztec-labs/blob-lib/dest/encoding/block_end_state_field.js
@@ -359494,8 +359508,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
       ...txBlobData.contractClassLog
     ];
   }
-  function decodeTxBlobData(fields) {
-    const reader = FieldReader.asReader(fields);
+  function decodeTxBlobData(fields2) {
+    const reader = FieldReader.asReader(fields2);
     if (reader.isFinished()) {
       throw new BlobDeserializationError(`Incorrect encoding of blob fields: not enough fields for tx blob data.`);
     }
@@ -359734,24 +359748,24 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
         accumulatedFees: schemas2.Fr
       }).transform(_CheckpointHeader.from);
     }
-    static getFields(fields) {
+    static getFields(fields2) {
       return [
-        fields.lastArchiveRoot,
-        fields.blockHeadersHash,
-        fields.blobsHash,
-        fields.inboxRollingHash,
-        fields.epochOutHash,
-        fields.slotNumber,
-        fields.timestamp,
-        fields.coinbase,
-        fields.feeRecipient,
-        fields.gasFees,
-        fields.totalManaUsed,
-        fields.accumulatedFees
+        fields2.lastArchiveRoot,
+        fields2.blockHeadersHash,
+        fields2.blobsHash,
+        fields2.inboxRollingHash,
+        fields2.epochOutHash,
+        fields2.slotNumber,
+        fields2.timestamp,
+        fields2.coinbase,
+        fields2.feeRecipient,
+        fields2.gasFees,
+        fields2.totalManaUsed,
+        fields2.accumulatedFees
       ];
     }
-    static from(fields) {
-      return new _CheckpointHeader(..._CheckpointHeader.getFields(fields));
+    static from(fields2) {
+      return new _CheckpointHeader(..._CheckpointHeader.getFields(fields2));
     }
     static fromBuffer(buffer) {
       const reader = BufferReader.asReader(buffer);
@@ -359785,7 +359799,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
         this.toBuffer()
       ]);
     }
-    static empty(fields = {}) {
+    static empty(fields2 = {}) {
       return _CheckpointHeader.from({
         lastArchiveRoot: Fr.ZERO,
         blockHeadersHash: Fr.ZERO,
@@ -359799,7 +359813,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
         gasFees: GasFees.empty(),
         totalManaUsed: Fr.ZERO,
         accumulatedFees: Fr.ZERO,
-        ...fields
+        ...fields2
       });
     }
     static random(overrides = {}) {
@@ -359957,28 +359971,28 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
         value: schemas.Fr
       }).transform(_PublicDataWrite.from);
     }
-    static from(fields) {
-      return new _PublicDataWrite(..._PublicDataWrite.getFields(fields));
+    static from(fields2) {
+      return new _PublicDataWrite(..._PublicDataWrite.getFields(fields2));
     }
-    static getFields(fields) {
+    static getFields(fields2) {
       return [
-        fields.leafSlot,
-        fields.value
+        fields2.leafSlot,
+        fields2.value
       ];
     }
-    static fromFields(fields) {
-      const reader = FieldReader.asReader(fields);
+    static fromFields(fields2) {
+      const reader = FieldReader.asReader(fields2);
       return new _PublicDataWrite(reader.readField(), reader.readField());
     }
     toFields() {
-      const fields = serializeToFields(..._PublicDataWrite.getFields(this));
-      if (fields.length !== PUBLIC_DATA_WRITE_LENGTH) {
-        throw new Error(`Invalid number of fields for PublicDataWrite. Expected ${PUBLIC_DATA_WRITE_LENGTH}, got ${fields.length}`);
+      const fields2 = serializeToFields(..._PublicDataWrite.getFields(this));
+      if (fields2.length !== PUBLIC_DATA_WRITE_LENGTH) {
+        throw new Error(`Invalid number of fields for PublicDataWrite. Expected ${PUBLIC_DATA_WRITE_LENGTH}, got ${fields2.length}`);
       }
-      return fields;
+      return fields2;
     }
-    static fromBlobFields(fields) {
-      const reader = FieldReader.asReader(fields);
+    static fromBlobFields(fields2) {
+      const reader = FieldReader.asReader(fields2);
       return new _PublicDataWrite(reader.readField(), reader.readField());
     }
     toBlobFields() {
@@ -360121,8 +360135,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     static fromField(field5) {
       return _RevertCode.fromNumber(field5.toNumber());
     }
-    static fromFields(fields) {
-      const reader = FieldReader.asReader(fields);
+    static fromFields(fields2) {
+      const reader = FieldReader.asReader(fields2);
       return _RevertCode.fromField(reader.readField());
     }
     static fromBuffer(buffer) {
@@ -360150,16 +360164,16 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     fields;
     // Below line gives error 'Type instantiation is excessively deep and possibly infinite. ts(2589)'
     // public fields: Tuple<Fr, typeof CONTRACT_CLASS_LOG_SIZE_IN_FIELDS>
-    constructor(fields) {
-      this.fields = fields;
-      if (fields.length !== CONTRACT_CLASS_LOG_SIZE_IN_FIELDS) {
-        throw new Error(`Invalid number of fields for ContractClassLog. Expected ${CONTRACT_CLASS_LOG_SIZE_IN_FIELDS}, got ${fields.length}`);
+    constructor(fields2) {
+      this.fields = fields2;
+      if (fields2.length !== CONTRACT_CLASS_LOG_SIZE_IN_FIELDS) {
+        throw new Error(`Invalid number of fields for ContractClassLog. Expected ${CONTRACT_CLASS_LOG_SIZE_IN_FIELDS}, got ${fields2.length}`);
       }
     }
     static get schema() {
       return external_exports4.object({
         fields: external_exports4.array(schemas.Fr).refine((arr) => arr.length === CONTRACT_CLASS_LOG_SIZE_IN_FIELDS)
-      }).transform(({ fields }) => new _ContractClassLogFields(fields));
+      }).transform(({ fields: fields2 }) => new _ContractClassLogFields(fields2));
     }
     /**
     * Creates a ContractClassLogFields from a plain object without Zod validation.
@@ -360177,8 +360191,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     toFields() {
       return this.fields;
     }
-    static fromFields(fields) {
-      const reader = FieldReader.asReader(fields);
+    static fromFields(fields2) {
+      const reader = FieldReader.asReader(fields2);
       return new _ContractClassLogFields(Array.from({
         length: CONTRACT_CLASS_LOG_SIZE_IN_FIELDS
       }, () => reader.readField()));
@@ -360228,13 +360242,13 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     fields;
     emittedLength;
     static SIZE_IN_BYTES = Fr.SIZE_IN_BYTES * CONTRACT_CLASS_LOG_LENGTH;
-    constructor(contractAddress, fields, emittedLength) {
+    constructor(contractAddress, fields2, emittedLength) {
       this.contractAddress = contractAddress;
-      this.fields = fields;
+      this.fields = fields2;
       this.emittedLength = emittedLength;
     }
-    static from(fields) {
-      return new _ContractClassLog(fields.contractAddress, fields.fields, fields.emittedLength);
+    static from(fields2) {
+      return new _ContractClassLog(fields2.contractAddress, fields2.fields, fields2.emittedLength);
     }
     toFields() {
       return serializeToFields([
@@ -360254,8 +360268,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
         this.contractAddress.toField()
       ].concat(this.getEmittedFields());
     }
-    static fromBlobFields(emittedLength, fields) {
-      const reader = FieldReader.asReader(fields);
+    static fromBlobFields(emittedLength, fields2) {
+      const reader = FieldReader.asReader(fields2);
       const contractAddress = reader.readObject(AztecAddress);
       const emittedFields = reader.readFieldArray(emittedLength);
       return new _ContractClassLog(contractAddress, ContractClassLogFields.fromEmittedFields(emittedFields), emittedLength);
@@ -360275,9 +360289,9 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     static fromBuffer(buffer) {
       const reader = BufferReader.asReader(buffer);
       const address6 = reader.readObject(AztecAddress);
-      const fields = ContractClassLogFields.fromBuffer(reader);
+      const fields2 = ContractClassLogFields.fromBuffer(reader);
       const emittedLength = reader.readNumber();
-      return new _ContractClassLog(address6, fields, emittedLength);
+      return new _ContractClassLog(address6, fields2, emittedLength);
     }
     static async random() {
       const emittedLength = Math.ceil(CONTRACT_CLASS_LOG_SIZE_IN_FIELDS / 2);
@@ -360326,24 +360340,24 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     fields;
     emittedLength;
     static SIZE_IN_BYTES = Fr.SIZE_IN_BYTES * PRIVATE_LOG_LENGTH;
-    constructor(fields, emittedLength) {
-      this.fields = fields;
+    constructor(fields2, emittedLength) {
+      this.fields = fields2;
       this.emittedLength = emittedLength;
     }
-    static from(fields) {
-      return new _PrivateLog(..._PrivateLog.getFields(fields));
+    static from(fields2) {
+      return new _PrivateLog(..._PrivateLog.getFields(fields2));
     }
-    static getFields(fields) {
+    static getFields(fields2) {
       return [
-        fields.fields,
-        fields.emittedLength
+        fields2.fields,
+        fields2.emittedLength
       ];
     }
     toFields() {
       return serializeToFields(..._PrivateLog.getFields(this));
     }
-    static fromFields(fields) {
-      const reader = FieldReader.asReader(fields);
+    static fromFields(fields2) {
+      const reader = FieldReader.asReader(fields2);
       return new _PrivateLog(reader.readFieldArray(PRIVATE_LOG_SIZE_IN_FIELDS), reader.readU32());
     }
     getEmittedFields() {
@@ -360355,8 +360369,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     toBlobFields() {
       return this.getEmittedFields();
     }
-    static fromBlobFields(emittedLength, fields) {
-      const reader = FieldReader.asReader(fields);
+    static fromBlobFields(emittedLength, fields2) {
+      const reader = FieldReader.asReader(fields2);
       const emittedFields = reader.readFieldArray(emittedLength);
       return new _PrivateLog(padArrayEnd(emittedFields, Fr.ZERO, PRIVATE_LOG_SIZE_IN_FIELDS), emittedLength);
     }
@@ -360384,15 +360398,15 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
       return new _PrivateLog(reader.readArray(PRIVATE_LOG_SIZE_IN_FIELDS, Fr), reader.readNumber());
     }
     static random(tag = Fr.random()) {
-      const fields = makeTuple(PRIVATE_LOG_SIZE_IN_FIELDS, Fr.random);
-      fields[0] = tag;
-      return new _PrivateLog(fields, PRIVATE_LOG_SIZE_IN_FIELDS);
+      const fields2 = makeTuple(PRIVATE_LOG_SIZE_IN_FIELDS, Fr.random);
+      fields2[0] = tag;
+      return new _PrivateLog(fields2, PRIVATE_LOG_SIZE_IN_FIELDS);
     }
     static get schema() {
       return external_exports4.object({
         fields: external_exports4.array(schemas.Fr),
         emittedLength: external_exports4.number()
-      }).strict().transform(({ fields, emittedLength }) => _PrivateLog.fromFields(fields.concat(new Fr(emittedLength))));
+      }).strict().transform(({ fields: fields2, emittedLength }) => _PrivateLog.fromFields(fields2.concat(new Fr(emittedLength))));
     }
     /**
     * Creates a PrivateLog from a plain object without Zod validation.
@@ -360449,8 +360463,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
       ]);
     }
     // In blobs, the actual nonempty length of the logs is encoded with the prefix, and then we have the non-padded payload.
-    static fromBlobFields(length, fields) {
-      const reader = FieldReader.asReader(fields);
+    static fromBlobFields(length, fields2) {
+      const reader = FieldReader.asReader(fields2);
       const payload = reader.readFieldArray(length);
       return this.fromUnpaddedPayload(payload);
     }
@@ -360492,8 +360506,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
         ...this.payload
       ];
     }
-    static fromFields(fields) {
-      const reader = FieldReader.asReader(fields);
+    static fromFields(fields2) {
+      const reader = FieldReader.asReader(fields2);
       const length = reader.readU32();
       const payload = [];
       for (let i = 0; i < FLAT_PUBLIC_LOGS_PAYLOAD_LENGTH; ++i) {
@@ -360522,17 +360536,17 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
   var PublicLog = class _PublicLog {
     contractAddress;
     fields;
-    constructor(contractAddress, fields) {
+    constructor(contractAddress, fields2) {
       this.contractAddress = contractAddress;
-      this.fields = fields;
+      this.fields = fields2;
     }
-    static from(fields) {
-      return new _PublicLog(..._PublicLog.getFields(fields));
+    static from(fields2) {
+      return new _PublicLog(..._PublicLog.getFields(fields2));
     }
-    static getFields(fields) {
+    static getFields(fields2) {
       return [
-        fields.contractAddress,
-        fields.fields
+        fields2.contractAddress,
+        fields2.fields
       ];
     }
     toFields() {
@@ -360542,8 +360556,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
         ...this.fields
       ];
     }
-    static fromFields(fields) {
-      const reader = FieldReader.asReader(fields);
+    static fromFields(fields2) {
+      const reader = FieldReader.asReader(fields2);
       const fieldsLength = reader.readU32();
       return new _PublicLog(reader.readObject(AztecAddress), reader.readFieldArray(fieldsLength));
     }
@@ -360589,9 +360603,9 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
       return external_exports4.object({
         contractAddress: AztecAddress.schema,
         fields: external_exports4.array(schemas.Fr)
-      }).transform(({ contractAddress, fields }) => _PublicLog.from({
+      }).transform(({ contractAddress, fields: fields2 }) => _PublicLog.from({
         contractAddress,
-        fields
+        fields: fields2
       }));
     }
     [_computedKey19]() {
@@ -360634,6 +360648,13 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
       leaves: entries.map((entry) => entry.leaf),
       categoriesHashes: entries.map((entry) => entry.categoriesHash)
     };
+  }
+  async function computeRootFromTxEffectMembershipWitness(leaf, witness) {
+    const root = await computeRootFromSiblingPath(leaf.toBuffer(), witness.siblingPath.toBufferArray(), Number(witness.leafIndex), txEffectsTreeNodeHash);
+    return Fr.fromBuffer(root);
+  }
+  async function verifyTxEffectMembershipWitness(leaf, witness, expectedRoot) {
+    return (await computeRootFromTxEffectMembershipWitness(leaf, witness)).equals(expectedRoot);
   }
 
   // node_modules/@aztec-labs/stdlib/dest/tx/tx_hash.js
@@ -360803,8 +360824,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     toBlobFields() {
       return encodeTxBlobData(this.toTxBlobData());
     }
-    static fromBlobFields(fields) {
-      return _TxEffect.fromTxBlobData(decodeTxBlobData(fields));
+    static fromBlobFields(fields2) {
+      return _TxEffect.fromTxBlobData(decodeTxBlobData(fields2));
     }
     getTxStartMarker() {
       const flatPublicLogs = FlatPublicLogs.fromLogs(this.publicLogs);
@@ -360903,8 +360924,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
         contractClassLogs
       });
     }
-    static from(fields) {
-      return new _TxEffect(fields.revertCode, fields.txHash, fields.transactionFee, fields.noteHashes, fields.nullifiers, fields.l2ToL1Msgs, fields.publicDataWrites, fields.privateLogs, fields.publicLogs, fields.contractClassLogs);
+    static from(fields2) {
+      return new _TxEffect(fields2.revertCode, fields2.txHash, fields2.transactionFee, fields2.noteHashes, fields2.nullifiers, fields2.l2ToL1Msgs, fields2.publicDataWrites, fields2.privateLogs, fields2.publicLogs, fields2.contractClassLogs);
     }
     static get schema() {
       return external_exports4.object({
@@ -361250,16 +361271,16 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
         feeAssetPriceModifier: schemas2.BigInt
       }).transform(({ archive, header, blocks, number: number20, feeAssetPriceModifier }) => new _Checkpoint(archive, header, blocks, number20, feeAssetPriceModifier));
     }
-    static from(fields) {
-      return new _Checkpoint(..._Checkpoint.getFields(fields));
+    static from(fields2) {
+      return new _Checkpoint(..._Checkpoint.getFields(fields2));
     }
-    static getFields(fields) {
+    static getFields(fields2) {
       return [
-        fields.archive,
-        fields.header,
-        fields.blocks,
-        fields.number,
-        fields.feeAssetPriceModifier
+        fields2.archive,
+        fields2.header,
+        fields2.blocks,
+        fields2.number,
+        fields2.feeAssetPriceModifier
       ];
     }
     static fromBuffer(buf) {
@@ -361373,8 +361394,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     static random() {
       return new _L1PublishedData(randomBigInt(1000n) + 1n, BigInt(Math.floor(Date.now() / 1e3)), Buffer32.random().toString());
     }
-    static fromFields(fields) {
-      return new _L1PublishedData(fields.blockNumber, fields.timestamp, fields.blockHash);
+    static fromFields(fields2) {
+      return new _L1PublishedData(fields2.blockNumber, fields2.timestamp, fields2.blockHash);
     }
     static fromBuffer(bufferOrReader) {
       const reader = BufferReader.asReader(bufferOrReader);
@@ -361406,16 +361427,16 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
         verbatimAttestations: ViemCommitteeAttestationsSchema
       }).transform((obj) => _PublishedCheckpoint.from(obj));
     }
-    static getFields(fields) {
+    static getFields(fields2) {
       return [
-        fields.checkpoint,
-        fields.l1,
-        fields.attestations,
-        fields.verbatimAttestations
+        fields2.checkpoint,
+        fields2.l1,
+        fields2.attestations,
+        fields2.verbatimAttestations
       ];
     }
-    static from(fields) {
-      return new _PublishedCheckpoint(..._PublishedCheckpoint.getFields(fields));
+    static from(fields2) {
+      return new _PublishedCheckpoint(..._PublishedCheckpoint.getFields(fields2));
     }
     static fromBuffer(bufferOrReader) {
       const reader = BufferReader.asReader(bufferOrReader);
@@ -362592,20 +362613,20 @@ ${err2.message}`);
       this.args = args;
       this.returnType = returnType;
     }
-    static getFields(fields) {
+    static getFields(fields2) {
       return [
-        fields.name,
-        fields.to,
-        fields.selector,
-        fields.type,
-        fields.hideMsgSender,
-        fields.isStatic,
-        fields.args,
-        fields.returnType
+        fields2.name,
+        fields2.to,
+        fields2.selector,
+        fields2.type,
+        fields2.hideMsgSender,
+        fields2.isStatic,
+        fields2.args,
+        fields2.returnType
       ];
     }
-    static from(fields) {
-      return new _FunctionCall(..._FunctionCall.getFields(fields));
+    static from(fields2) {
+      return new _FunctionCall(..._FunctionCall.getFields(fields2));
     }
     static get schema() {
       return external_exports4.object({
@@ -362620,8 +362641,8 @@ ${err2.message}`);
         // Old consumers send `returnTypes`, not `returnType`. So we accept both for now, until we can safely remove
         // the old version.
         returnTypes: external_exports4.array(AbiTypeSchema).optional()
-      }).transform(({ returnType, returnTypes, ...fields }) => _FunctionCall.from({
-        ...fields,
+      }).transform(({ returnType, returnTypes, ...fields2 }) => _FunctionCall.from({
+        ...fields2,
         returnType: getFunctionReturnType({
           returnType,
           returnTypes
@@ -363082,8 +363103,8 @@ ${err2.message}`);
         fbpkMHash: schemas.Fr
       }).transform(_PublicKeys.from);
     }
-    static from(fields) {
-      return new _PublicKeys(fields.npkMHash, fields.ivpkM, fields.ovpkMHash, fields.tpkMHash, fields.mspkMHash, fields.fbpkMHash);
+    static from(fields2) {
+      return new _PublicKeys(fields2.npkMHash, fields2.ivpkM, fields2.ovpkMHash, fields2.tpkMHash, fields2.mspkMHash, fields2.fbpkMHash);
     }
     /**
     * Creates a PublicKeys from a plain object without Zod validation.
@@ -363182,8 +363203,8 @@ ${err2.message}`);
     encodeToNoir() {
       return this.toFields();
     }
-    static fromFields(fields) {
-      const reader = FieldReader.asReader(fields);
+    static fromFields(fields2) {
+      const reader = FieldReader.asReader(fields2);
       const npkMHash = reader.readField();
       const ivpkM = reader.readObject(PublicKey);
       const ovpkMHash = reader.readField();
@@ -365152,7 +365173,7 @@ ${err2.message}`);
       if (obj.message instanceof Error) throw obj.message;
       throw new AssertionError2(obj);
     }
-    function fail9(actual, expected, message, operator, stackStartFn) {
+    function fail11(actual, expected, message, operator, stackStartFn) {
       var argsLen = arguments.length;
       var internalMessage;
       if (argsLen === 0) {
@@ -365173,7 +365194,7 @@ ${err2.message}`);
         actual,
         expected,
         operator: operator === void 0 ? "fail" : operator,
-        stackStartFn: stackStartFn || fail9
+        stackStartFn: stackStartFn || fail11
       };
       if (message !== void 0) {
         errArgs.message = message;
@@ -365185,7 +365206,7 @@ ${err2.message}`);
       }
       throw err2;
     }
-    assert10.fail = fail9;
+    assert10.fail = fail11;
     assert10.AssertionError = AssertionError2;
     function innerOk(fn, argLen, value, message) {
       if (!value) {
@@ -365668,13 +365689,13 @@ ${err2.message}`);
     const artifactHash = contractClass.artifactHash;
     const privateFunctionsRoot = "privateFunctionsRoot" in contractClass ? contractClass.privateFunctionsRoot : await computePrivateFunctionsRoot(contractClass.privateFunctions);
     const publicBytecodeCommitment = "publicBytecodeCommitment" in contractClass ? contractClass.publicBytecodeCommitment : await computePublicBytecodeCommitment(contractClass.packedBytecode);
-    const id2 = await poseidon2HashWithSeparator([
+    const id3 = await poseidon2HashWithSeparator([
       artifactHash,
       privateFunctionsRoot,
       publicBytecodeCommitment
     ], DomainSeparator.CONTRACT_CLASS_ID);
     return {
-      id: id2,
+      id: id3,
       artifactHash,
       privateFunctionsRoot,
       publicBytecodeCommitment
@@ -366208,11 +366229,11 @@ ${err2.message}`);
     level;
     message;
     fields;
-    constructor(contractAddress, level, message, fields) {
+    constructor(contractAddress, level, message, fields2) {
       this.contractAddress = contractAddress;
       this.level = level;
       this.message = message;
-      this.fields = fields;
+      this.fields = fields2;
     }
     static get schema() {
       return external_exports4.object({
@@ -366220,7 +366241,7 @@ ${err2.message}`);
         level: external_exports4.enum(LogLevels),
         message: external_exports4.string(),
         fields: external_exports4.array(schemas.Fr)
-      }).transform(({ contractAddress, level, message, fields }) => new _DebugLog(contractAddress, level, message, fields));
+      }).transform(({ contractAddress, level, message, fields: fields2 }) => new _DebugLog(contractAddress, level, message, fields2));
     }
     /**
     * Creates a DebugLog from a plain object without Zod validation.
@@ -366247,6 +366268,76 @@ ${err2.message}`);
   init_buffer2();
   init_process2();
   var VERSION2 = 2;
+  var SerializableContractInstance = class _SerializableContractInstance {
+    version = VERSION2;
+    salt;
+    deployer;
+    currentContractClassId;
+    originalContractClassId;
+    initializationHash;
+    immutablesHash;
+    publicKeys;
+    constructor(instance) {
+      if (instance.version !== VERSION2) {
+        throw new Error(`Unexpected contract class version ${instance.version}`);
+      }
+      this.salt = instance.salt;
+      this.deployer = instance.deployer;
+      this.currentContractClassId = instance.currentContractClassId;
+      this.originalContractClassId = instance.originalContractClassId;
+      this.initializationHash = instance.initializationHash;
+      this.immutablesHash = instance.immutablesHash;
+      this.publicKeys = instance.publicKeys;
+    }
+    toBuffer() {
+      return serializeToBuffer(numToUInt8(this.version), this.salt, this.deployer, this.currentContractClassId, this.originalContractClassId, this.initializationHash, this.immutablesHash, this.publicKeys);
+    }
+    /** Returns a copy of this object with its address included. */
+    withAddress(address6) {
+      return {
+        ...this,
+        address: address6
+      };
+    }
+    static fromBuffer(bufferOrReader) {
+      const reader = BufferReader.asReader(bufferOrReader);
+      return new _SerializableContractInstance({
+        version: reader.readUInt8(),
+        salt: reader.readObject(Fr),
+        deployer: reader.readObject(AztecAddress),
+        currentContractClassId: reader.readObject(Fr),
+        originalContractClassId: reader.readObject(Fr),
+        initializationHash: reader.readObject(Fr),
+        immutablesHash: reader.readObject(Fr),
+        publicKeys: reader.readObject(PublicKeys)
+      });
+    }
+    static async random(opts = {}) {
+      return new _SerializableContractInstance({
+        version: VERSION2,
+        salt: Fr.random(),
+        deployer: await AztecAddress.random(),
+        currentContractClassId: Fr.random(),
+        originalContractClassId: Fr.random(),
+        initializationHash: Fr.random(),
+        immutablesHash: Fr.random(),
+        publicKeys: await PublicKeys.random(),
+        ...opts
+      });
+    }
+    static default() {
+      return new _SerializableContractInstance({
+        version: VERSION2,
+        salt: Fr.zero(),
+        deployer: AztecAddress.zero(),
+        currentContractClassId: Fr.zero(),
+        originalContractClassId: Fr.zero(),
+        initializationHash: Fr.zero(),
+        immutablesHash: Fr.zero(),
+        publicKeys: PublicKeys.default()
+      });
+    }
+  };
   var SerializableContractInstancePreimage = class _SerializableContractInstancePreimage {
     version = VERSION2;
     salt;
@@ -367008,8 +367099,8 @@ Partial Address: ${this.partialAddress.toString()}
         inboxRollingHash: Fr.schema
       }).transform(_InboxMessagePrefixRef.from);
     }
-    static from(fields) {
-      return new _InboxMessagePrefixRef(fields.inboxRollingHash);
+    static from(fields2) {
+      return new _InboxMessagePrefixRef(fields2.inboxRollingHash);
     }
     /** The reference naming the prefix a message position ends: its rolling hash. */
     static fromPosition(position2) {
@@ -367088,15 +367179,15 @@ Partial Address: ${this.partialAddress.toString()}
     isEmpty() {
       return this.msgSender.isZero() && this.contractAddress.isZero() && this.functionSelector.isEmpty() && !this.isStaticCall;
     }
-    static from(fields) {
-      return new _CallContext(..._CallContext.getFields(fields));
+    static from(fields2) {
+      return new _CallContext(..._CallContext.getFields(fields2));
     }
-    static getFields(fields) {
+    static getFields(fields2) {
       return [
-        fields.msgSender,
-        fields.contractAddress,
-        fields.functionSelector,
-        fields.isStaticCall
+        fields2.msgSender,
+        fields2.contractAddress,
+        fields2.functionSelector,
+        fields2.isStaticCall
       ];
     }
     /**
@@ -367107,11 +367198,11 @@ Partial Address: ${this.partialAddress.toString()}
       return serializeToBuffer(..._CallContext.getFields(this));
     }
     toFields() {
-      const fields = serializeToFields(..._CallContext.getFields(this));
-      if (fields.length !== CALL_CONTEXT_LENGTH) {
-        throw new Error(`Invalid number of fields for CallContext. Expected ${CALL_CONTEXT_LENGTH}, got ${fields.length}`);
+      const fields2 = serializeToFields(..._CallContext.getFields(this));
+      if (fields2.length !== CALL_CONTEXT_LENGTH) {
+        throw new Error(`Invalid number of fields for CallContext. Expected ${CALL_CONTEXT_LENGTH}, got ${fields2.length}`);
       }
-      return fields;
+      return fields2;
     }
     /**
     * Deserialize this from a buffer.
@@ -367122,8 +367213,8 @@ Partial Address: ${this.partialAddress.toString()}
       const reader = BufferReader.asReader(buffer);
       return new _CallContext(reader.readObject(AztecAddress), reader.readObject(AztecAddress), reader.readObject(FunctionSelector), reader.readBoolean());
     }
-    static fromFields(fields) {
-      const reader = FieldReader.asReader(fields);
+    static fromFields(fields2) {
+      const reader = FieldReader.asReader(fields2);
       return new _CallContext(reader.readObject(AztecAddress), reader.readObject(AztecAddress), reader.readObject(FunctionSelector), reader.readBoolean());
     }
     equals(callContext) {
@@ -367167,14 +367258,14 @@ Partial Address: ${this.partialAddress.toString()}
       return serializeToBuffer(this.selector, this.isPrivate);
     }
     toFields() {
-      const fields = [
+      const fields2 = [
         this.selector.toField(),
         new Fr(this.isPrivate)
       ];
-      if (fields.length !== FUNCTION_DATA_LENGTH) {
-        throw new Error(`Invalid number of fields for FunctionData. Expected ${FUNCTION_DATA_LENGTH}, got ${fields.length}`);
+      if (fields2.length !== FUNCTION_DATA_LENGTH) {
+        throw new Error(`Invalid number of fields for FunctionData. Expected ${FUNCTION_DATA_LENGTH}, got ${fields2.length}`);
       }
-      return fields;
+      return fields2;
     }
     /**
     * Returns whether this instance is empty.
@@ -367212,8 +367303,8 @@ Partial Address: ${this.partialAddress.toString()}
         reader.readBoolean()
       );
     }
-    static fromFields(fields) {
-      const reader = FieldReader.asReader(fields);
+    static fromFields(fields2) {
+      const reader = FieldReader.asReader(fields2);
       const selector = FunctionSelector.fromFields(reader);
       const isPrivate = reader.readBoolean();
       return new _FunctionData(selector, isPrivate);
@@ -367259,8 +367350,8 @@ Partial Address: ${this.partialAddress.toString()}
       }
       serializeToSink(sink, this.l1ToL2MessageTree, this.noteHashTree, this.nullifierTree, this.publicDataTree);
     }
-    static fromFields(fields) {
-      const reader = FieldReader.asReader(fields);
+    static fromFields(fields2) {
+      const reader = FieldReader.asReader(fields2);
       const l1ToL2MessageTree = AppendOnlyTreeSnapshot.fromFields(reader);
       const noteHashTree = AppendOnlyTreeSnapshot.fromFields(reader);
       const nullifierTree = AppendOnlyTreeSnapshot.fromFields(reader);
@@ -367268,16 +367359,16 @@ Partial Address: ${this.partialAddress.toString()}
       return new _TreeSnapshots(l1ToL2MessageTree, noteHashTree, nullifierTree, publicDataTree);
     }
     toFields() {
-      const fields = [
+      const fields2 = [
         ...this.l1ToL2MessageTree.toFields(),
         ...this.noteHashTree.toFields(),
         ...this.nullifierTree.toFields(),
         ...this.publicDataTree.toFields()
       ];
-      if (fields.length !== TREE_SNAPSHOTS_LENGTH) {
-        throw new Error(`Invalid number of fields for TreeSnapshots. Expected ${TREE_SNAPSHOTS_LENGTH}, got ${fields.length}`);
+      if (fields2.length !== TREE_SNAPSHOTS_LENGTH) {
+        throw new Error(`Invalid number of fields for TreeSnapshots. Expected ${TREE_SNAPSHOTS_LENGTH}, got ${fields2.length}`);
       }
-      return fields;
+      return fields2;
     }
     static empty() {
       return new _TreeSnapshots(AppendOnlyTreeSnapshot.empty(), AppendOnlyTreeSnapshot.empty(), AppendOnlyTreeSnapshot.empty(), AppendOnlyTreeSnapshot.empty());
@@ -367320,16 +367411,16 @@ Partial Address: ${this.partialAddress.toString()}
     constructor(derivedAddresses) {
       this.derivedAddresses = derivedAddresses;
     }
-    static from(fields) {
-      return new _ProtocolContracts(..._ProtocolContracts.getFields(fields));
+    static from(fields2) {
+      return new _ProtocolContracts(..._ProtocolContracts.getFields(fields2));
     }
-    static getFields(fields) {
+    static getFields(fields2) {
       return [
-        fields.derivedAddresses
+        fields2.derivedAddresses
       ];
     }
-    static fromFields(fields) {
-      const reader = FieldReader.asReader(fields);
+    static fromFields(fields2) {
+      const reader = FieldReader.asReader(fields2);
       return new _ProtocolContracts(reader.readArray(MAX_PROTOCOL_CONTRACTS, AztecAddress));
     }
     toFields() {
@@ -367400,16 +367491,16 @@ Partial Address: ${this.partialAddress.toString()}
       }
       serializeToSink(sink, ..._TxContext.getFields(this));
     }
-    static fromFields(fields) {
-      const reader = FieldReader.asReader(fields);
+    static fromFields(fields2) {
+      const reader = FieldReader.asReader(fields2);
       return new _TxContext(reader.readField(), reader.readField(), reader.readObject(GasSettings));
     }
     toFields() {
-      const fields = serializeToFields(..._TxContext.getFields(this));
-      if (fields.length !== TX_CONTEXT_LENGTH) {
-        throw new Error(`Invalid number of fields for TxContext. Expected ${TX_CONTEXT_LENGTH}, got ${fields.length}`);
+      const fields2 = serializeToFields(..._TxContext.getFields(this));
+      if (fields2.length !== TX_CONTEXT_LENGTH) {
+        throw new Error(`Invalid number of fields for TxContext. Expected ${TX_CONTEXT_LENGTH}, got ${fields2.length}`);
       }
-      return fields;
+      return fields2;
     }
     /**
     * Deserializes TxContext from a buffer or reader.
@@ -367431,19 +367522,19 @@ Partial Address: ${this.partialAddress.toString()}
     * @param fields - The dictionary.
     * @returns A new instance.
     */
-    static from(fields) {
-      return new _TxContext(..._TxContext.getFields(fields));
+    static from(fields2) {
+      return new _TxContext(..._TxContext.getFields(fields2));
     }
     /**
     * Serialize into a field array. Low-level utility.
     * @param fields - Object with fields.
     * @returns The array.
     */
-    static getFields(fields) {
+    static getFields(fields2) {
       return [
-        fields.chainId,
-        fields.version,
-        fields.gasSettings
+        fields2.chainId,
+        fields2.version,
+        fields2.gasSettings
       ];
     }
   };
@@ -367462,28 +367553,28 @@ Partial Address: ${this.partialAddress.toString()}
       this.vkTreeRoot = vkTreeRoot;
       this.protocolContracts = protocolContracts;
     }
-    static from(fields) {
-      return new _PrivateTxConstantData(..._PrivateTxConstantData.getFields(fields));
+    static from(fields2) {
+      return new _PrivateTxConstantData(..._PrivateTxConstantData.getFields(fields2));
     }
-    static getFields(fields) {
+    static getFields(fields2) {
       return [
-        fields.anchorBlockHeader,
-        fields.txContext,
-        fields.protocolNullifier,
-        fields.vkTreeRoot,
-        fields.protocolContracts
+        fields2.anchorBlockHeader,
+        fields2.txContext,
+        fields2.protocolNullifier,
+        fields2.vkTreeRoot,
+        fields2.protocolContracts
       ];
     }
-    static fromFields(fields) {
-      const reader = FieldReader.asReader(fields);
+    static fromFields(fields2) {
+      const reader = FieldReader.asReader(fields2);
       return new _PrivateTxConstantData(reader.readObject(BlockHeader), reader.readObject(TxContext), reader.readField(), reader.readField(), reader.readObject(ProtocolContracts));
     }
     toFields() {
-      const fields = serializeToFields(..._PrivateTxConstantData.getFields(this));
-      if (fields.length !== TX_CONSTANT_DATA_LENGTH) {
-        throw new Error(`Invalid number of fields for PrivateTxConstantData. Expected ${TX_CONSTANT_DATA_LENGTH}, got ${fields.length}`);
+      const fields2 = serializeToFields(..._PrivateTxConstantData.getFields(this));
+      if (fields2.length !== TX_CONSTANT_DATA_LENGTH) {
+        throw new Error(`Invalid number of fields for PrivateTxConstantData. Expected ${TX_CONSTANT_DATA_LENGTH}, got ${fields2.length}`);
       }
-      return fields;
+      return fields2;
     }
     static fromBuffer(buffer) {
       const reader = BufferReader.asReader(buffer);
@@ -367518,27 +367609,27 @@ Partial Address: ${this.partialAddress.toString()}
       this.vkTreeRoot = vkTreeRoot;
       this.protocolContractsHash = protocolContractsHash2;
     }
-    static from(fields) {
-      return new _TxConstantData(..._TxConstantData.getFields(fields));
+    static from(fields2) {
+      return new _TxConstantData(..._TxConstantData.getFields(fields2));
     }
-    static getFields(fields) {
+    static getFields(fields2) {
       return [
-        fields.anchorBlockHeader,
-        fields.txContext,
-        fields.vkTreeRoot,
-        fields.protocolContractsHash
+        fields2.anchorBlockHeader,
+        fields2.txContext,
+        fields2.vkTreeRoot,
+        fields2.protocolContractsHash
       ];
     }
-    static fromFields(fields) {
-      const reader = FieldReader.asReader(fields);
+    static fromFields(fields2) {
+      const reader = FieldReader.asReader(fields2);
       return new _TxConstantData(reader.readObject(BlockHeader), reader.readObject(TxContext), reader.readField(), reader.readField());
     }
     toFields() {
-      const fields = serializeToFields(..._TxConstantData.getFields(this));
-      if (fields.length !== TX_CONSTANT_DATA_LENGTH) {
-        throw new Error(`Invalid number of fields for TxConstantData. Expected ${TX_CONSTANT_DATA_LENGTH}, got ${fields.length}`);
+      const fields2 = serializeToFields(..._TxConstantData.getFields(this));
+      if (fields2.length !== TX_CONSTANT_DATA_LENGTH) {
+        throw new Error(`Invalid number of fields for TxConstantData. Expected ${TX_CONSTANT_DATA_LENGTH}, got ${fields2.length}`);
       }
-      return fields;
+      return fields2;
     }
     static fromBuffer(buffer) {
       const reader = BufferReader.asReader(buffer);
@@ -367581,17 +367672,17 @@ Partial Address: ${this.partialAddress.toString()}
       this.salt = salt;
     }
     // docs:end:constructor
-    static getFields(fields) {
+    static getFields(fields2) {
       return [
-        fields.origin,
-        fields.argsHash,
-        fields.txContext,
-        fields.functionData,
-        fields.salt
+        fields2.origin,
+        fields2.argsHash,
+        fields2.txContext,
+        fields2.functionData,
+        fields2.salt
       ];
     }
-    static from(fields) {
-      return new _TxRequest(..._TxRequest.getFields(fields));
+    static from(fields2) {
+      return new _TxRequest(..._TxRequest.getFields(fields2));
     }
     /**
     * Serialize as a buffer.
@@ -367623,11 +367714,11 @@ Partial Address: ${this.partialAddress.toString()}
       return computeProtocolNullifier(await this.computeProtocolNullifierValue());
     }
     toFields() {
-      const fields = serializeToFields(..._TxRequest.getFields(this));
-      if (fields.length !== TX_REQUEST_LENGTH) {
-        throw new Error(`Invalid number of fields for TxRequest. Expected ${TX_REQUEST_LENGTH}, got ${fields.length}`);
+      const fields2 = serializeToFields(..._TxRequest.getFields(this));
+      if (fields2.length !== TX_REQUEST_LENGTH) {
+        throw new Error(`Invalid number of fields for TxRequest. Expected ${TX_REQUEST_LENGTH}, got ${fields2.length}`);
       }
-      return fields;
+      return fields2;
     }
     /**
     * Deserializes from a buffer or reader, corresponding to a write in cpp.
@@ -367685,17 +367776,17 @@ Partial Address: ${this.partialAddress.toString()}
       return new _KeyValidationRequest(Fr.fromBuffer(reader), Fr.fromBuffer(reader));
     }
     toFields() {
-      const fields = [
+      const fields2 = [
         this.pkMHash,
         this.skApp
       ];
-      if (fields.length !== KEY_VALIDATION_REQUEST_LENGTH) {
-        throw new Error(`Invalid number of fields for KeyValidationRequest. Expected ${KEY_VALIDATION_REQUEST_LENGTH}, got ${fields.length}`);
+      if (fields2.length !== KEY_VALIDATION_REQUEST_LENGTH) {
+        throw new Error(`Invalid number of fields for KeyValidationRequest. Expected ${KEY_VALIDATION_REQUEST_LENGTH}, got ${fields2.length}`);
       }
-      return fields;
+      return fields2;
     }
-    static fromFields(fields) {
-      const reader = FieldReader.asReader(fields);
+    static fromFields(fields2) {
+      const reader = FieldReader.asReader(fields2);
       return new _KeyValidationRequest(reader.readField(), reader.readField());
     }
     isEmpty() {
@@ -367725,17 +367816,17 @@ Partial Address: ${this.partialAddress.toString()}
       return new _KeyValidationRequestAndSeparator(reader.readObject(KeyValidationRequest), Fr.fromBuffer(reader));
     }
     toFields() {
-      const fields = [
+      const fields2 = [
         ...this.request.toFields(),
         this.keyTypeDomainSeparator
       ];
-      if (fields.length !== KEY_VALIDATION_REQUEST_AND_GENERATOR_LENGTH) {
-        throw new Error(`Invalid number of fields for KeyValidationRequestAndSeparator. Expected ${KEY_VALIDATION_REQUEST_AND_GENERATOR_LENGTH}, got ${fields.length}`);
+      if (fields2.length !== KEY_VALIDATION_REQUEST_AND_GENERATOR_LENGTH) {
+        throw new Error(`Invalid number of fields for KeyValidationRequestAndSeparator. Expected ${KEY_VALIDATION_REQUEST_AND_GENERATOR_LENGTH}, got ${fields2.length}`);
       }
-      return fields;
+      return fields2;
     }
-    static fromFields(fields) {
-      const reader = FieldReader.asReader(fields);
+    static fromFields(fields2) {
+      const reader = FieldReader.asReader(fields2);
       return new _KeyValidationRequestAndSeparator(KeyValidationRequest.fromFields(reader), reader.readField());
     }
     isEmpty() {
@@ -367760,8 +367851,8 @@ Partial Address: ${this.partialAddress.toString()}
       this.value = value;
       this.length = length;
     }
-    static from(fields) {
-      return new _LogHash(fields.value, fields.length);
+    static from(fields2) {
+      return new _LogHash(fields2.value, fields2.length);
     }
     toFields() {
       return [
@@ -367769,8 +367860,8 @@ Partial Address: ${this.partialAddress.toString()}
         new Fr(this.length)
       ];
     }
-    static fromFields(fields) {
-      const reader = FieldReader.asReader(fields);
+    static fromFields(fields2) {
+      const reader = FieldReader.asReader(fields2);
       return new _LogHash(reader.readField(), reader.readU32());
     }
     isEmpty() {
@@ -367812,8 +367903,8 @@ Partial Address: ${this.partialAddress.toString()}
         new Fr(this.counter)
       ];
     }
-    static fromFields(fields) {
-      const reader = FieldReader.asReader(fields);
+    static fromFields(fields2) {
+      const reader = FieldReader.asReader(fields2);
       return new _CountedLogHash(reader.readObject(LogHash), reader.readU32());
     }
     isEmpty() {
@@ -367849,8 +367940,8 @@ Partial Address: ${this.partialAddress.toString()}
         this.contractAddress.toField()
       ];
     }
-    static fromFields(fields) {
-      const reader = FieldReader.asReader(fields);
+    static fromFields(fields2) {
+      const reader = FieldReader.asReader(fields2);
       return new _ScopedLogHash(reader.readObject(LogHash), AztecAddress.fromFieldUnsafe(reader.readField()));
     }
     isEmpty() {
@@ -367886,8 +367977,8 @@ Partial Address: ${this.partialAddress.toString()}
         this.contractAddress.toField()
       ];
     }
-    static fromFields(fields) {
-      const reader = FieldReader.asReader(fields);
+    static fromFields(fields2) {
+      const reader = FieldReader.asReader(fields2);
       return new _ScopedCountedLogHash(reader.readObject(CountedLogHash), AztecAddress.fromFieldUnsafe(reader.readField()));
     }
     toBuffer(sink) {
@@ -367934,8 +368025,8 @@ Partial Address: ${this.partialAddress.toString()}
         this.endSideEffectCounter
       ]);
     }
-    static fromFields(fields) {
-      const reader = FieldReader.asReader(fields);
+    static fromFields(fields2) {
+      const reader = FieldReader.asReader(fields2);
       return new _PrivateCallRequest(reader.readObject(CallContext), reader.readField(), reader.readField(), reader.readU32(), reader.readU32());
     }
     toBuffer() {
@@ -367976,26 +368067,26 @@ Partial Address: ${this.partialAddress.toString()}
       this.noteHashCounter = noteHashCounter;
       this.counter = counter;
     }
-    static from(fields) {
-      return new _PrivateLogData(..._PrivateLogData.getFields(fields));
+    static from(fields2) {
+      return new _PrivateLogData(..._PrivateLogData.getFields(fields2));
     }
-    static getFields(fields) {
+    static getFields(fields2) {
       return [
-        fields.log,
-        fields.noteHashCounter,
-        fields.counter
+        fields2.log,
+        fields2.noteHashCounter,
+        fields2.counter
       ];
     }
-    static fromFields(fields) {
-      const reader = FieldReader.asReader(fields);
+    static fromFields(fields2) {
+      const reader = FieldReader.asReader(fields2);
       return new _PrivateLogData(reader.readObject(PrivateLog), reader.readU32(), reader.readU32());
     }
     toFields() {
-      const fields = serializeToFields(..._PrivateLogData.getFields(this));
-      if (fields.length !== PRIVATE_LOG_DATA_LENGTH) {
-        throw new Error(`Invalid number of fields for PrivateLogData. Expected ${PRIVATE_LOG_DATA_LENGTH}, got ${fields.length}`);
+      const fields2 = serializeToFields(..._PrivateLogData.getFields(this));
+      if (fields2.length !== PRIVATE_LOG_DATA_LENGTH) {
+        throw new Error(`Invalid number of fields for PrivateLogData. Expected ${PRIVATE_LOG_DATA_LENGTH}, got ${fields2.length}`);
       }
-      return fields;
+      return fields2;
     }
     static fromBuffer(buffer) {
       const reader = BufferReader.asReader(buffer);
@@ -368026,20 +368117,20 @@ Partial Address: ${this.partialAddress.toString()}
       this.inner = inner;
       this.contractAddress = contractAddress;
     }
-    static from(fields) {
-      return new _ScopedPrivateLogData(..._ScopedPrivateLogData.getFields(fields));
+    static from(fields2) {
+      return new _ScopedPrivateLogData(..._ScopedPrivateLogData.getFields(fields2));
     }
-    static getFields(fields) {
+    static getFields(fields2) {
       return [
-        fields.inner,
-        fields.contractAddress
+        fields2.inner,
+        fields2.contractAddress
       ];
     }
     toFields() {
       return serializeToFields(..._ScopedPrivateLogData.getFields(this));
     }
-    static fromFields(fields) {
-      const reader = FieldReader.asReader(fields);
+    static fromFields(fields2) {
+      const reader = FieldReader.asReader(fields2);
       return new _ScopedPrivateLogData(reader.readObject(PrivateLogData), AztecAddress.fromFieldUnsafe(reader.readField()));
     }
     isEmpty() {
@@ -368128,8 +368219,8 @@ Partial Address: ${this.partialAddress.toString()}
     * @param fields An array of fields to deserialize from.
     * @returns An instance of L2ToL1Message.
     */
-    static fromFields(fields) {
-      const reader = FieldReader.asReader(fields);
+    static fromFields(fields2) {
+      const reader = FieldReader.asReader(fields2);
       return new _L2ToL1Message(reader.readObject(EthAddress), reader.readField());
     }
     /**
@@ -368181,8 +368272,8 @@ Partial Address: ${this.partialAddress.toString()}
       }
       serializeToSink(sink, this.message, this.counter);
     }
-    static fromFields(fields) {
-      const reader = FieldReader.asReader(fields);
+    static fromFields(fields2) {
+      const reader = FieldReader.asReader(fields2);
       return new _CountedL2ToL1Message(reader.readObject(L2ToL1Message), reader.readU32());
     }
     toFields() {
@@ -368231,8 +368322,8 @@ Partial Address: ${this.partialAddress.toString()}
       }
       serializeToSink(sink, this.message, this.contractAddress);
     }
-    static fromFields(fields) {
-      const reader = FieldReader.asReader(fields);
+    static fromFields(fields2) {
+      const reader = FieldReader.asReader(fields2);
       return new _ScopedL2ToL1Message(reader.readObject(L2ToL1Message), reader.readObject(AztecAddress));
     }
     toFields() {
@@ -368268,8 +368359,8 @@ Partial Address: ${this.partialAddress.toString()}
       }
       serializeToSink(sink, this.inner, this.contractAddress);
     }
-    static fromFields(fields) {
-      const reader = FieldReader.asReader(fields);
+    static fromFields(fields2) {
+      const reader = FieldReader.asReader(fields2);
       return new _ScopedCountedL2ToL1Message(reader.readObject(CountedL2ToL1Message), reader.readObject(AztecAddress));
     }
     toFields() {
@@ -368300,8 +368391,8 @@ Partial Address: ${this.partialAddress.toString()}
     toBuffer() {
       return serializeToBuffer(this.array, this.claimedLength);
     }
-    static fromFields(fields, deserializer, arrayLength) {
-      const reader = FieldReader.asReader(fields);
+    static fromFields(fields2, deserializer, arrayLength) {
+      const reader = FieldReader.asReader(fields2);
       const array7 = reader.readArray(arrayLength, deserializer);
       const claimedLength = reader.readU32();
       return new _ClaimedLengthArray(array7, claimedLength);
@@ -368377,8 +368468,8 @@ Partial Address: ${this.partialAddress.toString()}
         new Fr(this.counter)
       ];
     }
-    static fromFields(fields) {
-      const reader = FieldReader.asReader(fields);
+    static fromFields(fields2) {
+      const reader = FieldReader.asReader(fields2);
       return new _ReadRequest(reader.readField(), reader.readU32());
     }
     /**
@@ -368438,8 +368529,8 @@ Partial Address: ${this.partialAddress.toString()}
         this.contractAddress.toField()
       ];
     }
-    static fromFields(fields) {
-      const reader = FieldReader.asReader(fields);
+    static fromFields(fields2) {
+      const reader = FieldReader.asReader(fields2);
       return new _ScopedReadRequest(reader.readObject(ReadRequest), AztecAddress.fromFieldUnsafe(reader.readField()));
     }
     /**
@@ -368475,8 +368566,8 @@ Partial Address: ${this.partialAddress.toString()}
         new Fr(this.counter)
       ];
     }
-    static fromFields(fields) {
-      const reader = FieldReader.asReader(fields);
+    static fromFields(fields2) {
+      const reader = FieldReader.asReader(fields2);
       return new _NoteHash(reader.readField(), reader.readU32());
     }
     isEmpty() {
@@ -368518,8 +368609,8 @@ Partial Address: ${this.partialAddress.toString()}
         this.contractAddress.toField()
       ];
     }
-    static fromFields(fields) {
-      const reader = FieldReader.asReader(fields);
+    static fromFields(fields2) {
+      const reader = FieldReader.asReader(fields2);
       return new _ScopedNoteHash(reader.readObject(NoteHash), AztecAddress.fromFieldUnsafe(reader.readField()));
     }
     isEmpty() {
@@ -368560,8 +368651,8 @@ Partial Address: ${this.partialAddress.toString()}
         new Fr(this.counter)
       ];
     }
-    static fromFields(fields) {
-      const reader = FieldReader.asReader(fields);
+    static fromFields(fields2) {
+      const reader = FieldReader.asReader(fields2);
       return new _Nullifier(reader.readField(), reader.readField(), reader.readU32());
     }
     isEmpty() {
@@ -368606,8 +368697,8 @@ Partial Address: ${this.partialAddress.toString()}
         this.contractAddress.toField()
       ];
     }
-    static fromFields(fields) {
-      const reader = FieldReader.asReader(fields);
+    static fromFields(fields2) {
+      const reader = FieldReader.asReader(fields2);
       return new _ScopedNullifier(reader.readObject(Nullifier), AztecAddress.fromFieldUnsafe(reader.readField()));
     }
     isEmpty() {
@@ -368679,27 +368770,27 @@ Partial Address: ${this.partialAddress.toString()}
     getSize() {
       return this.isEmpty() ? 0 : this.toBuffer().length;
     }
-    static from(fields) {
-      return new _PublicCallRequest(..._PublicCallRequest.getFields(fields));
+    static from(fields2) {
+      return new _PublicCallRequest(..._PublicCallRequest.getFields(fields2));
     }
-    static getFields(fields) {
+    static getFields(fields2) {
       return [
-        fields.msgSender,
-        fields.contractAddress,
-        fields.isStaticCall,
-        fields.calldataHash
+        fields2.msgSender,
+        fields2.contractAddress,
+        fields2.isStaticCall,
+        fields2.calldataHash
       ];
     }
-    static fromFields(fields) {
-      const reader = FieldReader.asReader(fields);
+    static fromFields(fields2) {
+      const reader = FieldReader.asReader(fields2);
       return new _PublicCallRequest(reader.readObject(AztecAddress), reader.readObject(AztecAddress), reader.readBoolean(), reader.readField());
     }
     toFields() {
-      const fields = serializeToFields(..._PublicCallRequest.getFields(this));
-      if (fields.length !== PUBLIC_CALL_REQUEST_LENGTH) {
-        throw new Error(`Invalid number of fields for PublicCallRequest. Expected ${PUBLIC_CALL_REQUEST_LENGTH}, got ${fields.length}`);
+      const fields2 = serializeToFields(..._PublicCallRequest.getFields(this));
+      if (fields2.length !== PUBLIC_CALL_REQUEST_LENGTH) {
+        throw new Error(`Invalid number of fields for PublicCallRequest. Expected ${PUBLIC_CALL_REQUEST_LENGTH}, got ${fields2.length}`);
       }
-      return fields;
+      return fields2;
     }
     static fromBuffer(buffer) {
       const reader = BufferReader.asReader(buffer);
@@ -368759,15 +368850,15 @@ Partial Address: ${this.partialAddress.toString()}
         return new _PublicCallRequestArrayLengths(setupCalls, appLogicCalls, teardownCall);
       });
     }
-    static getFields(fields) {
+    static getFields(fields2) {
       return [
-        fields.setupCalls,
-        fields.appLogicCalls,
-        fields.teardownCall
+        fields2.setupCalls,
+        fields2.appLogicCalls,
+        fields2.teardownCall
       ];
     }
-    static fromFields(fields) {
-      const reader = FieldReader.asReader(fields);
+    static fromFields(fields2) {
+      const reader = FieldReader.asReader(fields2);
       return new _PublicCallRequestArrayLengths(reader.readU32(), reader.readU32(), reader.readBoolean());
     }
     toFields() {
@@ -368814,22 +368905,22 @@ Partial Address: ${this.partialAddress.toString()}
     getSize() {
       return this.isEmpty() ? 0 : this.toBuffer().length;
     }
-    static getFields(fields) {
+    static getFields(fields2) {
       return [
-        fields.inner,
-        fields.counter
+        fields2.inner,
+        fields2.counter
       ];
     }
-    static fromFields(fields) {
-      const reader = FieldReader.asReader(fields);
+    static fromFields(fields2) {
+      const reader = FieldReader.asReader(fields2);
       return new _CountedPublicCallRequest(reader.readObject(PublicCallRequest), reader.readU32());
     }
     toFields() {
-      const fields = serializeToFields(..._CountedPublicCallRequest.getFields(this));
-      if (fields.length !== COUNTED_PUBLIC_CALL_REQUEST_LENGTH) {
-        throw new Error(`Invalid number of fields for CountedPublicCallRequest. Expected ${COUNTED_PUBLIC_CALL_REQUEST_LENGTH}, got ${fields.length}`);
+      const fields2 = serializeToFields(..._CountedPublicCallRequest.getFields(this));
+      if (fields2.length !== COUNTED_PUBLIC_CALL_REQUEST_LENGTH) {
+        throw new Error(`Invalid number of fields for CountedPublicCallRequest. Expected ${COUNTED_PUBLIC_CALL_REQUEST_LENGTH}, got ${fields2.length}`);
       }
-      return fields;
+      return fields2;
     }
     static fromBuffer(buffer) {
       const reader = BufferReader.asReader(buffer);
@@ -368906,8 +368997,8 @@ Partial Address: ${this.partialAddress.toString()}
     * @param fields - The dictionary.
     * @returns A PrivateCircuitPublicInputs object.
     */
-    static from(fields) {
-      return new _PrivateCircuitPublicInputs(..._PrivateCircuitPublicInputs.getFields(fields));
+    static from(fields2) {
+      return new _PrivateCircuitPublicInputs(..._PrivateCircuitPublicInputs.getFields(fields2));
     }
     /**
     * Deserializes from a buffer or reader.
@@ -368918,8 +369009,8 @@ Partial Address: ${this.partialAddress.toString()}
       const reader = BufferReader.asReader(buffer);
       return new _PrivateCircuitPublicInputs(reader.readObject(CallContext), reader.readObject(Fr), reader.readObject(Fr), reader.readObject(BlockHeader), reader.readObject(TxContext), reader.readObject(Fr), reader.readBoolean(), reader.readUInt64(), reader.readObject(Fr), reader.readObject(Fr), reader.readObject(Fr), reader.readObject(Fr), reader.readObject(ClaimedLengthArrayFromBuffer(ScopedReadRequest, MAX_NOTE_HASH_READ_REQUESTS_PER_CALL)), reader.readObject(ClaimedLengthArrayFromBuffer(ScopedReadRequest, MAX_NULLIFIER_READ_REQUESTS_PER_CALL)), reader.readObject(ClaimedLengthArrayFromBuffer(KeyValidationRequestAndSeparator, MAX_KEY_VALIDATION_REQUESTS_PER_CALL)), reader.readObject(ClaimedLengthArrayFromBuffer(PrivateCallRequest, MAX_PRIVATE_CALL_STACK_LENGTH_PER_CALL)), reader.readObject(ClaimedLengthArrayFromBuffer(CountedPublicCallRequest, MAX_ENQUEUED_CALLS_PER_CALL)), reader.readObject(PublicCallRequest), reader.readObject(ClaimedLengthArrayFromBuffer(NoteHash, MAX_NOTE_HASHES_PER_CALL)), reader.readObject(ClaimedLengthArrayFromBuffer(Nullifier, MAX_NULLIFIERS_PER_CALL)), reader.readObject(ClaimedLengthArrayFromBuffer(CountedL2ToL1Message, MAX_L2_TO_L1_MSGS_PER_CALL)), reader.readObject(ClaimedLengthArrayFromBuffer(PrivateLogData, MAX_PRIVATE_LOGS_PER_CALL)), reader.readObject(ClaimedLengthArrayFromBuffer(CountedLogHash, MAX_CONTRACT_CLASS_LOGS_PER_CALL)), reader.readObject(Fr));
     }
-    static fromFields(fields) {
-      const reader = FieldReader.asReader(fields);
+    static fromFields(fields2) {
+      const reader = FieldReader.asReader(fields2);
       return new _PrivateCircuitPublicInputs(reader.readObject(CallContext), reader.readField(), reader.readField(), reader.readObject(BlockHeader), reader.readObject(TxContext), reader.readField(), reader.readBoolean(), reader.readU64(), reader.readField(), reader.readField(), reader.readField(), reader.readField(), reader.readObject(ClaimedLengthArrayFromFields(ScopedReadRequest, MAX_NOTE_HASH_READ_REQUESTS_PER_CALL)), reader.readObject(ClaimedLengthArrayFromFields(ScopedReadRequest, MAX_NULLIFIER_READ_REQUESTS_PER_CALL)), reader.readObject(ClaimedLengthArrayFromFields(KeyValidationRequestAndSeparator, MAX_KEY_VALIDATION_REQUESTS_PER_CALL)), reader.readObject(ClaimedLengthArrayFromFields(PrivateCallRequest, MAX_PRIVATE_CALL_STACK_LENGTH_PER_CALL)), reader.readObject(ClaimedLengthArrayFromFields(CountedPublicCallRequest, MAX_ENQUEUED_CALLS_PER_CALL)), reader.readObject(PublicCallRequest), reader.readObject(ClaimedLengthArrayFromFields(NoteHash, MAX_NOTE_HASHES_PER_CALL)), reader.readObject(ClaimedLengthArrayFromFields(Nullifier, MAX_NULLIFIERS_PER_CALL)), reader.readObject(ClaimedLengthArrayFromFields(CountedL2ToL1Message, MAX_L2_TO_L1_MSGS_PER_CALL)), reader.readObject(ClaimedLengthArrayFromFields(PrivateLogData, MAX_PRIVATE_LOGS_PER_CALL)), reader.readObject(ClaimedLengthArrayFromFields(CountedLogHash, MAX_CONTRACT_CLASS_LOGS_PER_CALL)), reader.readField());
     }
     /**
@@ -368937,32 +369028,32 @@ Partial Address: ${this.partialAddress.toString()}
     * @param fields - Object with fields.
     * @returns The array.
     */
-    static getFields(fields) {
+    static getFields(fields2) {
       return [
-        fields.callContext,
-        fields.argsHash,
-        fields.returnsHash,
-        fields.anchorBlockHeader,
-        fields.txContext,
-        fields.minRevertibleSideEffectCounter,
-        fields.isFeePayer,
-        fields.expirationTimestamp,
-        fields.startSideEffectCounter,
-        fields.endSideEffectCounter,
-        fields.expectedNonRevertibleSideEffectCounter,
-        fields.expectedRevertibleSideEffectCounter,
-        fields.noteHashReadRequests,
-        fields.nullifierReadRequests,
-        fields.keyValidationRequestsAndSeparators,
-        fields.privateCallRequests,
-        fields.publicCallRequests,
-        fields.publicTeardownCallRequest,
-        fields.noteHashes,
-        fields.nullifiers,
-        fields.l2ToL1Msgs,
-        fields.privateLogs,
-        fields.contractClassLogsHashes,
-        fields.protocolNullifier
+        fields2.callContext,
+        fields2.argsHash,
+        fields2.returnsHash,
+        fields2.anchorBlockHeader,
+        fields2.txContext,
+        fields2.minRevertibleSideEffectCounter,
+        fields2.isFeePayer,
+        fields2.expirationTimestamp,
+        fields2.startSideEffectCounter,
+        fields2.endSideEffectCounter,
+        fields2.expectedNonRevertibleSideEffectCounter,
+        fields2.expectedRevertibleSideEffectCounter,
+        fields2.noteHashReadRequests,
+        fields2.nullifierReadRequests,
+        fields2.keyValidationRequestsAndSeparators,
+        fields2.privateCallRequests,
+        fields2.publicCallRequests,
+        fields2.publicTeardownCallRequest,
+        fields2.noteHashes,
+        fields2.nullifiers,
+        fields2.l2ToL1Msgs,
+        fields2.privateLogs,
+        fields2.contractClassLogsHashes,
+        fields2.protocolNullifier
       ];
     }
     /**
@@ -369169,13 +369260,13 @@ Partial Address: ${this.partialAddress.toString()}
         hash: schemas2.Fr
       }).transform(_HashedValues.from);
     }
-    static from(fields) {
-      return new _HashedValues(..._HashedValues.getFields(fields));
+    static from(fields2) {
+      return new _HashedValues(..._HashedValues.getFields(fields2));
     }
-    static getFields(fields) {
+    static getFields(fields2) {
       return [
-        fields.values,
-        fields.hash
+        fields2.values,
+        fields2.hash
       ];
     }
     static random() {
@@ -369224,8 +369315,8 @@ Partial Address: ${this.partialAddress.toString()}
         noteTypeId: schemas2.NoteSelector
       }).transform(_NoteAndSlot.from);
     }
-    static from(fields) {
-      return new _NoteAndSlot(fields.note, fields.storageSlot, fields.randomness, fields.noteTypeId);
+    static from(fields2) {
+      return new _NoteAndSlot(fields2.note, fields2.storageSlot, fields2.randomness, fields2.noteTypeId);
     }
     static random() {
       return new _NoteAndSlot(Note.random(), Fr.random(), Fr.random(), NoteSelector.random());
@@ -369244,8 +369335,8 @@ Partial Address: ${this.partialAddress.toString()}
         counter: schemas2.Integer
       }).transform(_CountedContractClassLog.from);
     }
-    static from(fields) {
-      return new _CountedContractClassLog(fields.log, fields.counter);
+    static from(fields2) {
+      return new _CountedContractClassLog(fields2.log, fields2.counter);
     }
     isEmpty() {
       return this.log.isEmpty() && !this.counter;
@@ -369267,8 +369358,8 @@ Partial Address: ${this.partialAddress.toString()}
         publicFunctionCalldata: external_exports4.array(HashedValues.schema)
       }).transform(_PrivateExecutionResult.from);
     }
-    static from(fields) {
-      return new _PrivateExecutionResult(fields.entrypoint, fields.firstNullifier, fields.publicFunctionCalldata);
+    static from(fields2) {
+      return new _PrivateExecutionResult(fields2.entrypoint, fields2.firstNullifier, fields2.publicFunctionCalldata);
     }
     static async random(nested = 1) {
       return new _PrivateExecutionResult(await PrivateCallExecutionResult.random(nested), Fr.random(), [
@@ -369331,8 +369422,8 @@ Partial Address: ${this.partialAddress.toString()}
         contractClassLogs: external_exports4.array(CountedContractClassLog.schema)
       }).transform(_PrivateCallExecutionResult.from);
     }
-    static from(fields) {
-      return new _PrivateCallExecutionResult(fields.acir, fields.vk, fields.partialWitness, fields.publicInputs, fields.newNotes, fields.noteHashNullifierCounterMap, fields.returnValues, fields.offchainEffects, fields.taggingIndexRanges, fields.nestedExecutionResults, fields.contractClassLogs);
+    static from(fields2) {
+      return new _PrivateCallExecutionResult(fields2.acir, fields2.vk, fields2.partialWitness, fields2.publicInputs, fields2.newNotes, fields2.noteHashNullifierCounterMap, fields2.returnValues, fields2.offchainEffects, fields2.taggingIndexRanges, fields2.nestedExecutionResults, fields2.contractClassLogs);
     }
     static async random(nested = 1) {
       return new _PrivateCallExecutionResult(randomBytes2(4), randomBytes2(4), /* @__PURE__ */ new Map([
@@ -369433,8 +369524,8 @@ Partial Address: ${this.partialAddress.toString()}
         calldata: external_exports4.array(schemas2.Fr)
       }).transform(_PublicCallRequestWithCalldata.from);
     }
-    static from(fields) {
-      return new _PublicCallRequestWithCalldata(fields.request, fields.calldata);
+    static from(fields2) {
+      return new _PublicCallRequestWithCalldata(fields2.request, fields2.calldata);
     }
     /**
     * Creates a PublicCallRequestWithCalldata from a plain object without Zod validation.
@@ -369513,22 +369604,22 @@ Partial Address: ${this.partialAddress.toString()}
     getSize() {
       return arraySerializedSizeOfNonEmpty(this.noteHashes) + arraySerializedSizeOfNonEmpty(this.nullifiers) + arraySerializedSizeOfNonEmpty(this.l2ToL1Msgs) + arraySerializedSizeOfNonEmpty(this.privateLogs) + arraySerializedSizeOfNonEmpty(this.contractClassLogsHashes) + arraySerializedSizeOfNonEmpty(this.publicCallRequests);
     }
-    static getFields(fields) {
+    static getFields(fields2) {
       return [
-        fields.noteHashes,
-        fields.nullifiers,
-        fields.l2ToL1Msgs,
-        fields.privateLogs,
-        fields.contractClassLogsHashes,
-        fields.publicCallRequests
+        fields2.noteHashes,
+        fields2.nullifiers,
+        fields2.l2ToL1Msgs,
+        fields2.privateLogs,
+        fields2.contractClassLogsHashes,
+        fields2.publicCallRequests
       ];
     }
-    static fromFields(fields) {
-      const reader = FieldReader.asReader(fields);
+    static fromFields(fields2) {
+      const reader = FieldReader.asReader(fields2);
       return new this(reader.readFieldArray(MAX_NOTE_HASHES_PER_TX), reader.readFieldArray(MAX_NULLIFIERS_PER_TX), reader.readArray(MAX_L2_TO_L1_MSGS_PER_TX, ScopedL2ToL1Message), reader.readArray(MAX_PRIVATE_LOGS_PER_TX, PrivateLog), reader.readArray(MAX_CONTRACT_CLASS_LOGS_PER_TX, ScopedLogHash), reader.readArray(MAX_ENQUEUED_CALLS_PER_TX, PublicCallRequest));
     }
-    static from(fields) {
-      return new _PrivateToPublicAccumulatedData(..._PrivateToPublicAccumulatedData.getFields(fields));
+    static from(fields2) {
+      return new _PrivateToPublicAccumulatedData(..._PrivateToPublicAccumulatedData.getFields(fields2));
     }
     static fromBuffer(buffer) {
       const reader = BufferReader.asReader(buffer);
@@ -369541,11 +369632,11 @@ Partial Address: ${this.partialAddress.toString()}
       serializeToSink(sink, ..._PrivateToPublicAccumulatedData.getFields(this));
     }
     toFields() {
-      const fields = serializeToFields(..._PrivateToPublicAccumulatedData.getFields(this));
-      if (fields.length !== PRIVATE_TO_PUBLIC_ACCUMULATED_DATA_LENGTH) {
-        throw new Error(`Invalid number of fields for PrivateToPublicAccumulatedData. Expected ${PRIVATE_TO_PUBLIC_ACCUMULATED_DATA_LENGTH}, got ${fields.length}`);
+      const fields2 = serializeToFields(..._PrivateToPublicAccumulatedData.getFields(this));
+      if (fields2.length !== PRIVATE_TO_PUBLIC_ACCUMULATED_DATA_LENGTH) {
+        throw new Error(`Invalid number of fields for PrivateToPublicAccumulatedData. Expected ${PRIVATE_TO_PUBLIC_ACCUMULATED_DATA_LENGTH}, got ${fields2.length}`);
       }
-      return fields;
+      return fields2;
     }
     static empty() {
       return new _PrivateToPublicAccumulatedData(makeTuple(MAX_NOTE_HASHES_PER_TX, Fr.zero), makeTuple(MAX_NULLIFIERS_PER_TX, Fr.zero), makeTuple(MAX_L2_TO_L1_MSGS_PER_TX, ScopedL2ToL1Message.empty), makeTuple(MAX_PRIVATE_LOGS_PER_TX, PrivateLog.empty), makeTuple(MAX_CONTRACT_CLASS_LOGS_PER_TX, ScopedLogHash.empty), makeTuple(MAX_ENQUEUED_CALLS_PER_TX, PublicCallRequest.empty));
@@ -369592,15 +369683,15 @@ Partial Address: ${this.partialAddress.toString()}
       serializeToSink(sink, this.constants, this.nonRevertibleAccumulatedData, this.revertibleAccumulatedData, this.publicTeardownCallRequest, this.gasUsed, this.feePayer);
       sink.writeUInt64(this.expirationTimestamp);
     }
-    static getFields(fields) {
+    static getFields(fields2) {
       return [
-        fields.constants,
-        fields.nonRevertibleAccumulatedData,
-        fields.revertibleAccumulatedData,
-        fields.publicTeardownCallRequest,
-        fields.gasUsed,
-        fields.feePayer,
-        fields.expirationTimestamp
+        fields2.constants,
+        fields2.nonRevertibleAccumulatedData,
+        fields2.revertibleAccumulatedData,
+        fields2.publicTeardownCallRequest,
+        fields2.gasUsed,
+        fields2.feePayer,
+        fields2.expirationTimestamp
       ];
     }
     static fromBuffer(buffer) {
@@ -369617,11 +369708,11 @@ Partial Address: ${this.partialAddress.toString()}
       return bufferToHex(this.toBuffer());
     }
     toFields() {
-      const fields = serializeToFields(..._PrivateToPublicKernelCircuitPublicInputs.getFields(this));
-      if (fields.length !== PRIVATE_TO_PUBLIC_KERNEL_CIRCUIT_PUBLIC_INPUTS_LENGTH) {
-        throw new Error(`Invalid number of fields for PrivateToPublicKernelCircuitPublicInputs. Expected ${PRIVATE_TO_PUBLIC_KERNEL_CIRCUIT_PUBLIC_INPUTS_LENGTH}, got ${fields.length}`);
+      const fields2 = serializeToFields(..._PrivateToPublicKernelCircuitPublicInputs.getFields(this));
+      if (fields2.length !== PRIVATE_TO_PUBLIC_KERNEL_CIRCUIT_PUBLIC_INPUTS_LENGTH) {
+        throw new Error(`Invalid number of fields for PrivateToPublicKernelCircuitPublicInputs. Expected ${PRIVATE_TO_PUBLIC_KERNEL_CIRCUIT_PUBLIC_INPUTS_LENGTH}, got ${fields2.length}`);
       }
-      return fields;
+      return fields2;
     }
     hash() {
       return poseidon2HashWithSeparator(this.toFields(), DomainSeparator.PUBLIC_TX_HASH);
@@ -369658,17 +369749,17 @@ Partial Address: ${this.partialAddress.toString()}
     getSize() {
       return arraySerializedSizeOfNonEmpty(this.noteHashes) + arraySerializedSizeOfNonEmpty(this.nullifiers) + arraySerializedSizeOfNonEmpty(this.l2ToL1Msgs) + arraySerializedSizeOfNonEmpty(this.privateLogs) + arraySerializedSizeOfNonEmpty(this.contractClassLogsHashes);
     }
-    static getFields(fields) {
+    static getFields(fields2) {
       return [
-        fields.noteHashes,
-        fields.nullifiers,
-        fields.l2ToL1Msgs,
-        fields.privateLogs,
-        fields.contractClassLogsHashes
+        fields2.noteHashes,
+        fields2.nullifiers,
+        fields2.l2ToL1Msgs,
+        fields2.privateLogs,
+        fields2.contractClassLogsHashes
       ];
     }
-    static from(fields) {
-      return new _PrivateToRollupAccumulatedData(..._PrivateToRollupAccumulatedData.getFields(fields));
+    static from(fields2) {
+      return new _PrivateToRollupAccumulatedData(..._PrivateToRollupAccumulatedData.getFields(fields2));
     }
     static get schema() {
       return bufferSchemaFor(_PrivateToRollupAccumulatedData);
@@ -369706,11 +369797,11 @@ Partial Address: ${this.partialAddress.toString()}
       return new _PrivateToRollupAccumulatedData(makeTuple(MAX_NOTE_HASHES_PER_TX, Fr.zero), makeTuple(MAX_NULLIFIERS_PER_TX, Fr.zero), makeTuple(MAX_L2_TO_L1_MSGS_PER_TX, ScopedL2ToL1Message.empty), makeTuple(MAX_PRIVATE_LOGS_PER_TX, PrivateLog.empty), makeTuple(MAX_CONTRACT_CLASS_LOGS_PER_TX, ScopedLogHash.empty));
     }
     toFields() {
-      const fields = serializeToFields(..._PrivateToRollupAccumulatedData.getFields(this));
-      if (fields.length !== PRIVATE_TO_ROLLUP_ACCUMULATED_DATA_LENGTH) {
-        throw new Error(`Invalid number of fields for PrivateToRollupAccumulatedData. Expected ${PRIVATE_TO_ROLLUP_ACCUMULATED_DATA_LENGTH}, got ${fields.length}`);
+      const fields2 = serializeToFields(..._PrivateToRollupAccumulatedData.getFields(this));
+      if (fields2.length !== PRIVATE_TO_ROLLUP_ACCUMULATED_DATA_LENGTH) {
+        throw new Error(`Invalid number of fields for PrivateToRollupAccumulatedData. Expected ${PRIVATE_TO_ROLLUP_ACCUMULATED_DATA_LENGTH}, got ${fields2.length}`);
       }
-      return fields;
+      return fields2;
     }
     [_computedKey30]() {
       return `PrivateToRollupAccumulatedData {
@@ -369774,13 +369865,13 @@ Partial Address: ${this.partialAddress.toString()}
     toJSON() {
       return this.toBuffer();
     }
-    static getFields(fields) {
+    static getFields(fields2) {
       return [
-        fields.constants,
-        fields.end,
-        fields.gasUsed,
-        fields.feePayer,
-        fields.expirationTimestamp
+        fields2.constants,
+        fields2.end,
+        fields2.gasUsed,
+        fields2.feePayer,
+        fields2.expirationTimestamp
       ];
     }
     /** Creates an instance from a hex string. */
@@ -369788,11 +369879,11 @@ Partial Address: ${this.partialAddress.toString()}
       return bufferSchemaFor(_PrivateToRollupKernelCircuitPublicInputs);
     }
     toFields() {
-      const fields = serializeToFields(..._PrivateToRollupKernelCircuitPublicInputs.getFields(this));
-      if (fields.length !== PRIVATE_TO_ROLLUP_KERNEL_CIRCUIT_PUBLIC_INPUTS_LENGTH) {
-        throw new Error(`Invalid number of fields for PrivateToRollupKernelCircuitPublicInputs. Expected ${PRIVATE_TO_ROLLUP_KERNEL_CIRCUIT_PUBLIC_INPUTS_LENGTH}, got ${fields.length}`);
+      const fields2 = serializeToFields(..._PrivateToRollupKernelCircuitPublicInputs.getFields(this));
+      if (fields2.length !== PRIVATE_TO_ROLLUP_KERNEL_CIRCUIT_PUBLIC_INPUTS_LENGTH) {
+        throw new Error(`Invalid number of fields for PrivateToRollupKernelCircuitPublicInputs. Expected ${PRIVATE_TO_ROLLUP_KERNEL_CIRCUIT_PUBLIC_INPUTS_LENGTH}, got ${fields2.length}`);
       }
-      return fields;
+      return fields2;
     }
     hash() {
       return poseidon2HashWithSeparator(this.toFields(), DomainSeparator.PRIVATE_TX_HASH);
@@ -370038,10 +370129,10 @@ Partial Address: ${this.partialAddress.toString()}
     * When reading from compressed format, this is populated and fields are decompressed on demand.
     */
     compressedProof;
-    constructor(fields, compressedProof) {
-      this.fields = fields;
-      if (fields.length !== 0 && fields.length !== CHONK_PROOF_LENGTH) {
-        throw new Error(`Invalid ChonkProof length: ${fields.length}`);
+    constructor(fields2, compressedProof) {
+      this.fields = fields2;
+      if (fields2.length !== 0 && fields2.length !== CHONK_PROOF_LENGTH) {
+        throw new Error(`Invalid ChonkProof length: ${fields2.length}`);
       }
       this.compressedProof = compressedProof;
     }
@@ -370112,13 +370203,13 @@ Partial Address: ${this.partialAddress.toString()}
         compressedProof: new Uint8Array(compressed)
       });
       const flatFields = flattenChonkProofFields(result.proof);
-      const fields = flatFields.map((f) => Fr.fromBuffer(Buffer2.from(f)));
-      if (fields.length > CHONK_PROOF_LENGTH) {
-        const numPubInputs = fields.length - CHONK_PROOF_LENGTH;
-        const proofFields = fields.slice(numPubInputs);
+      const fields2 = flatFields.map((f) => Fr.fromBuffer(Buffer2.from(f)));
+      if (fields2.length > CHONK_PROOF_LENGTH) {
+        const numPubInputs = fields2.length - CHONK_PROOF_LENGTH;
+        const proofFields = fields2.slice(numPubInputs);
         return new _ChonkProof(proofFields, compressed);
       }
-      return new _ChonkProof(fields, compressed);
+      return new _ChonkProof(fields2, compressed);
     }
     toBuffer(sink) {
       if (!sink) {
@@ -370188,8 +370279,8 @@ Partial Address: ${this.partialAddress.toString()}
       sink.writeFields(this.fieldsWithPublicInputs);
     }
     // Called when constructing from bb proving results.
-    static fromBufferArray(fields) {
-      const proof = fields.map((field5) => Fr.fromBuffer(Buffer2.from(field5)));
+    static fromBufferArray(fields2) {
+      const proof = fields2.map((field5) => Fr.fromBuffer(Buffer2.from(field5)));
       return new _ChonkProofWithPublicInputs(proof);
     }
   };
@@ -370287,19 +370378,19 @@ Partial Address: ${this.partialAddress.toString()}
         publicFunctionCalldata: external_exports4.array(HashedValues.schemaFor(MAX_FR_CALLDATA_TO_ALL_ENQUEUED_CALLS)).max(MAX_PUBLIC_FUNCTION_CALLDATA_PER_TX)
       }).transform(_Tx.create);
     }
-    static async computeTxHash(fields) {
-      const hash12 = fields.data.forPublic ? await fields.data.toPrivateToPublicKernelCircuitPublicInputs().hash() : await fields.data.toPrivateToRollupKernelCircuitPublicInputs().hash();
+    static async computeTxHash(fields2) {
+      const hash12 = fields2.data.forPublic ? await fields2.data.toPrivateToPublicKernelCircuitPublicInputs().hash() : await fields2.data.toPrivateToRollupKernelCircuitPublicInputs().hash();
       return new TxHash(hash12);
     }
-    static async create(fields) {
-      const txHash = await _Tx.computeTxHash(fields);
+    static async create(fields2) {
+      const txHash = await _Tx.computeTxHash(fields2);
       return _Tx.from({
-        ...fields,
+        ...fields2,
         txHash
       });
     }
-    static from(fields) {
-      return new _Tx(fields.txHash, fields.data, fields.chonkProof, fields.contractClassLogFields, fields.publicFunctionCalldata);
+    static from(fields2) {
+      return new _Tx(fields2.txHash, fields2.data, fields2.chonkProof, fields2.contractClassLogFields, fields2.publicFunctionCalldata);
     }
     /**
     * Validates that the tx hash matches the computed hash from the tx data.
@@ -370507,17 +370598,17 @@ Partial Address: ${this.partialAddress.toString()}
     static empty() {
       return new _PendingTxReceipt(TxHash.zero(), void 0);
     }
-    static from(fields) {
-      return new _PendingTxReceipt(fields.txHash, fields.tx);
+    static from(fields2) {
+      return new _PendingTxReceipt(fields2.txHash, fields2.tx);
     }
     static get schema() {
       return external_exports4.object({
         txHash: TxHash.schema,
         status: external_exports4.literal("pending"),
         tx: Tx.schema.optional()
-      }).transform((fields) => _PendingTxReceipt.from({
+      }).transform((fields2) => _PendingTxReceipt.from({
         tx: void 0,
-        ...fields
+        ...fields2
       }));
     }
   };
@@ -370531,8 +370622,8 @@ Partial Address: ${this.partialAddress.toString()}
     static empty() {
       return new _DroppedTxReceipt(TxHash.zero());
     }
-    static from(fields) {
-      return new _DroppedTxReceipt(fields.txHash, fields.error);
+    static from(fields2) {
+      return new _DroppedTxReceipt(fields2.txHash, fields2.error);
     }
     static get schema() {
       return external_exports4.object({
@@ -370564,8 +370655,8 @@ Partial Address: ${this.partialAddress.toString()}
     hasExecutionReverted() {
       return this.executionResult !== "success";
     }
-    static from(fields) {
-      return new _MinedTxReceipt(fields.txHash, fields.status, fields.executionResult, fields.transactionFee, fields.blockHash, fields.blockNumber, fields.slotNumber, fields.txIndexInBlock, fields.epochNumber, fields.txEffect, fields.debugLogs);
+    static from(fields2) {
+      return new _MinedTxReceipt(fields2.txHash, fields2.status, fields2.executionResult, fields2.transactionFee, fields2.blockHash, fields2.blockNumber, fields2.slotNumber, fields2.txIndexInBlock, fields2.epochNumber, fields2.txEffect, fields2.debugLogs);
     }
     static get schema() {
       return external_exports4.object({
@@ -370585,9 +370676,9 @@ Partial Address: ${this.partialAddress.toString()}
         epochNumber: EpochNumberSchema,
         txEffect: TxEffect.schema.optional(),
         debugLogs: external_exports4.array(DebugLog.schema).optional()
-      }).transform((fields) => _MinedTxReceipt.from({
+      }).transform((fields2) => _MinedTxReceipt.from({
         txEffect: void 0,
-        ...fields
+        ...fields2
       }));
     }
     static executionResultFromRevertCode(revertCode) {
@@ -371431,8 +371522,8 @@ ${val.stack}`;
         timings: optional3(ProvingTimingsSchema)
       }).transform(_TxProvingResult.from);
     }
-    static from(fields) {
-      return new _TxProvingResult(fields.privateExecutionResult, fields.publicInputs, fields.chonkProof);
+    static from(fields2) {
+      return new _TxProvingResult(fields2.privateExecutionResult, fields2.publicInputs, fields2.chonkProof);
     }
     static async random() {
       return new _TxProvingResult(await PrivateExecutionResult.random(), PrivateKernelTailCircuitPublicInputs.empty(), ChonkProof.empty());
@@ -371519,7 +371610,7 @@ ${val.stack}`;
           billedGas: Gas.schema
         }),
         debugLogs: external_exports4.array(DebugLog.schema).default([])
-      }).transform((fields) => new _PublicSimulationOutput(fields.revertReason, fields.globalVariables, fields.txEffect, fields.publicReturnValues, fields.gasUsed, fields.debugLogs));
+      }).transform((fields2) => new _PublicSimulationOutput(fields2.revertReason, fields2.globalVariables, fields2.txEffect, fields2.publicReturnValues, fields2.gasUsed, fields2.debugLogs));
     }
     static async random() {
       return new _PublicSimulationOutput(await SimulationError.random(), GlobalVariables.empty(), TxEffect.empty(), (0, import_lodash2.default)(2, NestedProcessReturnValues.random), {
@@ -371603,8 +371694,8 @@ ${val.stack}`;
         stats: optional3(SimulationStatsSchema)
       }).transform(_TxSimulationResult.from);
     }
-    static from(fields) {
-      return new _TxSimulationResult(fields.privateExecutionResult, fields.publicInputs, fields.publicOutput, fields.stats);
+    static from(fields2) {
+      return new _TxSimulationResult(fields2.privateExecutionResult, fields2.publicInputs, fields2.publicOutput, fields2.stats);
     }
     static fromPrivateSimulationResultAndPublicOutput(privateSimulationResult, publicOutput, stats) {
       return new _TxSimulationResult(privateSimulationResult.privateExecutionResult, privateSimulationResult.publicInputs, publicOutput, stats);
@@ -371777,20 +371868,20 @@ ${val.stack}`;
         this.salt
       );
     }
-    static getFields(fields) {
+    static getFields(fields2) {
       return [
-        fields.origin,
-        fields.functionSelector,
-        fields.firstCallArgsHash,
-        fields.txContext,
-        fields.argsOfCalls,
-        fields.authWitnesses,
-        fields.capsules,
-        fields.salt
+        fields2.origin,
+        fields2.functionSelector,
+        fields2.firstCallArgsHash,
+        fields2.txContext,
+        fields2.argsOfCalls,
+        fields2.authWitnesses,
+        fields2.capsules,
+        fields2.salt
       ];
     }
-    static from(fields) {
-      return new _TxExecutionRequest(..._TxExecutionRequest.getFields(fields));
+    static from(fields2) {
+      return new _TxExecutionRequest(..._TxExecutionRequest.getFields(fields2));
     }
     /**
     * Serialize as a buffer.
@@ -372597,12 +372688,12 @@ ${val.stack}`;
         signatureContext: coordinationSignatureContextSchema
       }).transform((obj) => new _ConsensusPayload(obj.header, obj.archive, obj.feeAssetPriceModifier, obj.signatureContext));
     }
-    static getFields(fields) {
+    static getFields(fields2) {
       return [
-        fields.header,
-        fields.archive,
-        fields.feeAssetPriceModifier,
-        fields.signatureContext
+        fields2.header,
+        fields2.archive,
+        fields2.feeAssetPriceModifier,
+        fields2.signatureContext
       ];
     }
     getPayloadToSign() {
@@ -372648,8 +372739,8 @@ ${val.stack}`;
       const signatureContext = readCoordinationSignatureContext(reader);
       return new _ConsensusPayload(header, archive, feeAssetPriceModifier, signatureContext);
     }
-    static fromFields(fields) {
-      return new _ConsensusPayload(fields.header, fields.archive, fields.feeAssetPriceModifier, fields.signatureContext);
+    static fromFields(fields2) {
+      return new _ConsensusPayload(fields2.header, fields2.archive, fields2.feeAssetPriceModifier, fields2.signatureContext);
     }
     static fromCheckpoint(checkpoint, signatureContext) {
       return new _ConsensusPayload(checkpoint.header, checkpoint.archive.root, checkpoint.feeAssetPriceModifier, signatureContext);
@@ -375016,8 +375107,8 @@ ${val.stack}`;
     static fromFrBuffer(vkBytes) {
       const numFields = vkBytes.length / Fr.SIZE_IN_BYTES;
       const reader = BufferReader.asReader(vkBytes);
-      const fields = reader.readArray(numFields, Fr);
-      return _VerificationKeyAsFields.fromKey(fields);
+      const fields2 = reader.readArray(numFields, Fr);
+      return _VerificationKeyAsFields.fromKey(fields2);
     }
     /**
     * Builds a fake verification key that should be accepted by circuits.
@@ -376026,8 +376117,8 @@ ${val.stack}`;
       this.svc = svc;
       this.sdc = sdc;
     }
-    static fromFields(fields) {
-      const reader = FieldReader.asReader(fields);
+    static fromFields(fields2) {
+      const reader = FieldReader.asReader(fields2);
       const firstField = reader.readField().toBigInt();
       const svcPre = reader.readFieldArray(UPDATES_VALUE_SIZE);
       const svcPost = reader.readFieldArray(UPDATES_VALUE_SIZE);
@@ -376078,8 +376169,8 @@ ${val.stack}`;
       return Promise.all(fieldPromises);
     }
     async hash() {
-      const fields = this.toFields();
-      const hash12 = await poseidon2Hash(fields);
+      const fields2 = this.toFields();
+      const hash12 = await poseidon2Hash(fields2);
       return hash12;
     }
   };
@@ -376114,15 +376205,15 @@ ${val.stack}`;
     * @param fields - Object with fields.
     * @returns The array.
     */
-    static getFields(fields) {
+    static getFields(fields2) {
       return [
-        fields.publicInputs,
-        fields.vk,
-        fields.verificationKeyHints
+        fields2.publicInputs,
+        fields2.vk,
+        fields2.verificationKeyHints
       ];
     }
-    static from(fields) {
-      return new _PrivateCallData(..._PrivateCallData.getFields(fields));
+    static from(fields2) {
+      return new _PrivateCallData(..._PrivateCallData.getFields(fields2));
     }
     /**
     * Serialize this as a buffer.
@@ -376161,18 +376252,18 @@ ${val.stack}`;
     * @param fields - Object with fields.
     * @returns The array.
     */
-    static getFields(fields) {
+    static getFields(fields2) {
       return [
-        fields.contractClassArtifactHash,
-        fields.contractClassPublicBytecodeCommitment,
-        fields.publicKeys,
-        fields.saltedInitializationHash,
-        fields.functionLeafMembershipWitness,
-        fields.updatedClassIdHints
+        fields2.contractClassArtifactHash,
+        fields2.contractClassPublicBytecodeCommitment,
+        fields2.publicKeys,
+        fields2.saltedInitializationHash,
+        fields2.functionLeafMembershipWitness,
+        fields2.updatedClassIdHints
       ];
     }
-    static from(fields) {
-      return new _PrivateVerificationKeyHints(..._PrivateVerificationKeyHints.getFields(fields));
+    static from(fields2) {
+      return new _PrivateVerificationKeyHints(..._PrivateVerificationKeyHints.getFields(fields2));
     }
     /**
     * Serialize this as a buffer.
@@ -376200,15 +376291,15 @@ ${val.stack}`;
       this.updatedClassIdLeaf = updatedClassIdLeaf;
       this.updatedClassIdValues = updatedClassIdValues;
     }
-    static getFields(fields) {
+    static getFields(fields2) {
       return [
-        fields.updatedClassIdWitness,
-        fields.updatedClassIdLeaf,
-        fields.updatedClassIdValues
+        fields2.updatedClassIdWitness,
+        fields2.updatedClassIdLeaf,
+        fields2.updatedClassIdValues
       ];
     }
-    static from(fields) {
-      return new _UpdatedClassIdHints(..._UpdatedClassIdHints.getFields(fields));
+    static from(fields2) {
+      return new _UpdatedClassIdHints(..._UpdatedClassIdHints.getFields(fields2));
     }
     /**
     * Serialize this as a buffer.
@@ -376263,17 +376354,17 @@ ${val.stack}`;
       return new _ScopedKeyValidationRequestAndSeparator(KeyValidationRequestAndSeparator.fromBuffer(reader), AztecAddress.fromBuffer(reader));
     }
     toFields() {
-      const fields = [
+      const fields2 = [
         ...this.request.toFields(),
         this.contractAddress.toField()
       ];
-      if (fields.length !== SCOPED_KEY_VALIDATION_REQUEST_AND_GENERATOR_LENGTH) {
-        throw new Error(`Invalid number of fields for ScopedKeyValidationRequestAndSeparator. Expected ${SCOPED_KEY_VALIDATION_REQUEST_AND_GENERATOR_LENGTH}, got ${fields.length}`);
+      if (fields2.length !== SCOPED_KEY_VALIDATION_REQUEST_AND_GENERATOR_LENGTH) {
+        throw new Error(`Invalid number of fields for ScopedKeyValidationRequestAndSeparator. Expected ${SCOPED_KEY_VALIDATION_REQUEST_AND_GENERATOR_LENGTH}, got ${fields2.length}`);
       }
-      return fields;
+      return fields2;
     }
-    static fromFields(fields) {
-      const reader = FieldReader.asReader(fields);
+    static fromFields(fields2) {
+      const reader = FieldReader.asReader(fields2);
       return new _ScopedKeyValidationRequestAndSeparator(KeyValidationRequestAndSeparator.fromFields(reader), AztecAddress.fromFields(reader));
     }
     isEmpty() {
@@ -376779,9 +376870,9 @@ ${val.stack}`;
     static empty() {
       return new _PrivateKernelResetDimensions(0, 0, 0, 0, 0, 0, 0, 0, 0);
     }
-    static from(fields) {
+    static from(fields2) {
       const dimensions2 = _PrivateKernelResetDimensions.empty();
-      privateKernelResetDimensionNames.forEach((name) => dimensions2[name] = fields[name] ?? 0);
+      privateKernelResetDimensionNames.forEach((name) => dimensions2[name] = fields2[name] ?? 0);
       return dimensions2;
     }
     static fromValues(values) {
@@ -376886,26 +376977,26 @@ ${val.stack}`;
     getArrayLengths() {
       return new PrivateToAvmAccumulatedDataArrayLengths(countAccumulatedItems(this.noteHashes), countAccumulatedItems(this.nullifiers), countAccumulatedItems(this.l2ToL1Msgs));
     }
-    static getFields(fields) {
+    static getFields(fields2) {
       return [
-        fields.noteHashes,
-        fields.nullifiers,
-        fields.l2ToL1Msgs
+        fields2.noteHashes,
+        fields2.nullifiers,
+        fields2.l2ToL1Msgs
       ];
     }
-    static fromFields(fields) {
-      const reader = FieldReader.asReader(fields);
+    static fromFields(fields2) {
+      const reader = FieldReader.asReader(fields2);
       return new this(reader.readFieldArray(MAX_NOTE_HASHES_PER_TX), reader.readFieldArray(MAX_NULLIFIERS_PER_TX), reader.readArray(MAX_L2_TO_L1_MSGS_PER_TX, ScopedL2ToL1Message));
     }
     toFields() {
-      const fields = serializeToFields(..._PrivateToAvmAccumulatedData.getFields(this));
-      if (fields.length !== PRIVATE_TO_AVM_ACCUMULATED_DATA_LENGTH) {
-        throw new Error(`Invalid number of fields for PrivateToAvmAccumulatedData. Expected ${PRIVATE_TO_AVM_ACCUMULATED_DATA_LENGTH}, got ${fields.length}`);
+      const fields2 = serializeToFields(..._PrivateToAvmAccumulatedData.getFields(this));
+      if (fields2.length !== PRIVATE_TO_AVM_ACCUMULATED_DATA_LENGTH) {
+        throw new Error(`Invalid number of fields for PrivateToAvmAccumulatedData. Expected ${PRIVATE_TO_AVM_ACCUMULATED_DATA_LENGTH}, got ${fields2.length}`);
       }
-      return fields;
+      return fields2;
     }
-    static from(fields) {
-      return new _PrivateToAvmAccumulatedData(..._PrivateToAvmAccumulatedData.getFields(fields));
+    static from(fields2) {
+      return new _PrivateToAvmAccumulatedData(..._PrivateToAvmAccumulatedData.getFields(fields2));
     }
     static fromBuffer(buffer) {
       const reader = BufferReader.asReader(buffer);
@@ -376958,15 +377049,15 @@ ${val.stack}`;
     getSize() {
       return 4 * 3;
     }
-    static getFields(fields) {
+    static getFields(fields2) {
       return [
-        fields.noteHashes,
-        fields.nullifiers,
-        fields.l2ToL1Msgs
+        fields2.noteHashes,
+        fields2.nullifiers,
+        fields2.l2ToL1Msgs
       ];
     }
-    static fromFields(fields) {
-      const reader = FieldReader.asReader(fields);
+    static fromFields(fields2) {
+      const reader = FieldReader.asReader(fields2);
       return new this(reader.readU32(), reader.readU32(), reader.readU32());
     }
     toFields() {
@@ -376976,8 +377067,8 @@ ${val.stack}`;
         this.l2ToL1Msgs
       ];
     }
-    static from(fields) {
-      return new _PrivateToAvmAccumulatedDataArrayLengths(..._PrivateToAvmAccumulatedDataArrayLengths.getFields(fields));
+    static from(fields2) {
+      return new _PrivateToAvmAccumulatedDataArrayLengths(..._PrivateToAvmAccumulatedDataArrayLengths.getFields(fields2));
     }
     static fromBuffer(buffer) {
       const reader = BufferReader.asReader(buffer);
@@ -377393,8 +377484,8 @@ ${val.stack}`;
         new Fr(this.noteHashIndex)
       ];
     }
-    static fromFields(fields) {
-      const reader = FieldReader.asReader(fields);
+    static fromFields(fields2) {
+      const reader = FieldReader.asReader(fields2);
       return new _TransientDataSquashingHint(reader.readU32(), reader.readU32());
     }
     isEmpty() {
@@ -378877,8 +378968,8 @@ ${val.stack}`;
         }
       },
       ShortSignature: {
-        fromHex(hex17) {
-          const { infinity, sort, value } = parseMask(ensureBytes("signatureHex", hex17, 48));
+        fromHex(hex18) {
+          const { infinity, sort, value } = parseMask(ensureBytes("signatureHex", hex18, 48));
           const P = Fp.ORDER;
           const compressedValue = bytesToNumberBE(value);
           if (infinity)
@@ -379018,8 +379109,8 @@ ${val.stack}`;
       },
       Signature: {
         // TODO: Optimize, it's very slow because of sqrt.
-        fromHex(hex17) {
-          const { infinity, sort, value } = parseMask(ensureBytes("signatureHex", hex17));
+        fromHex(hex18) {
+          const { infinity, sort, value } = parseMask(ensureBytes("signatureHex", hex18));
           const P = Fp.ORDER;
           const half = value.length / 2;
           if (half !== 48 && half !== 96)
@@ -379576,18 +379667,18 @@ ${val.stack}`;
     * @param fields - The encoded BN254 fields.
     * @returns The point fields.
     */
-    static fromBN254Fields(fields) {
+    static fromBN254Fields(fields2) {
       return _BLS12Point.decompress(Buffer2.concat([
-        fields[0].toBuffer().subarray(1),
-        fields[1].toBuffer().subarray(-17)
+        fields2[0].toBuffer().subarray(1),
+        fields2[1].toBuffer().subarray(-17)
       ]));
     }
     /**
     * Creates a point from an array of 2 fields.
     * @returns The point
     */
-    static fromBLS12FqFields(fields) {
-      return new this(fields[0], fields[1], !fields[2].isEmpty());
+    static fromBLS12FqFields(fields2) {
+      return new this(fields2[0], fields2[1], !fields2[2].isEmpty());
     }
     /**
     * Creates a point from @noble/curves projective point definition.
@@ -379908,28 +379999,28 @@ ${val.stack}`;
     toBuffer() {
       return serializeToBuffer(..._SpongeBlob.getFields(this));
     }
-    static getFields(fields) {
+    static getFields(fields2) {
       return [
-        fields.sponge,
-        fields.numAbsorbedFields
+        fields2.sponge,
+        fields2.numAbsorbedFields
       ];
     }
     toFields() {
       return serializeToFields(..._SpongeBlob.getFields(this));
     }
-    static fromFields(fields) {
-      const reader = FieldReader.asReader(fields);
+    static fromFields(fields2) {
+      const reader = FieldReader.asReader(fields2);
       return new _SpongeBlob(reader.readObject(Poseidon2Sponge), reader.readField().toNumber());
     }
     clone() {
       return _SpongeBlob.fromBuffer(this.toBuffer());
     }
-    async absorb(fields) {
-      if (this.numAbsorbedFields + fields.length > _SpongeBlob.MAX_FIELDS) {
-        throw new Error(`Attempted to fill spongeBlob with ${this.numAbsorbedFields + fields.length}, but it has a max of ${_SpongeBlob.MAX_FIELDS}`);
+    async absorb(fields2) {
+      if (this.numAbsorbedFields + fields2.length > _SpongeBlob.MAX_FIELDS) {
+        throw new Error(`Attempted to fill spongeBlob with ${this.numAbsorbedFields + fields2.length}, but it has a max of ${_SpongeBlob.MAX_FIELDS}`);
       }
-      await this.sponge.absorb(fields);
-      this.numAbsorbedFields += fields.length;
+      await this.sponge.absorb(fields2);
+      this.numAbsorbedFields += fields2.length;
     }
     async squeeze() {
       return await this.sponge.squeeze();
@@ -379956,19 +380047,19 @@ ${val.stack}`;
     toBuffer() {
       return serializeToBuffer(this.cache, this.state, this.cacheSize, this.squeezeMode);
     }
-    static getFields(fields) {
+    static getFields(fields2) {
       return [
-        fields.cache,
-        fields.state,
-        fields.cacheSize,
-        fields.squeezeMode
+        fields2.cache,
+        fields2.state,
+        fields2.cacheSize,
+        fields2.squeezeMode
       ];
     }
     toFields() {
       return serializeToFields(..._Poseidon2Sponge.getFields(this));
     }
-    static fromFields(fields) {
-      const reader = FieldReader.asReader(fields);
+    static fromFields(fields2) {
+      const reader = FieldReader.asReader(fields2);
       return new _Poseidon2Sponge(reader.readFieldArray(3), reader.readFieldArray(4), reader.readField().toNumber(), reader.readBoolean());
     }
     static empty() {
@@ -379996,18 +380087,18 @@ ${val.stack}`;
         perm[3]
       ];
     }
-    async absorb(fields) {
+    async absorb(fields2) {
       if (this.squeezeMode) {
         throw new Error(`Poseidon sponge is not able to absorb more inputs.`);
       }
-      if (fields.length === 0) {
+      if (fields2.length === 0) {
         return;
       }
       const rate = this.cache.length;
-      const total = this.cacheSize + fields.length;
+      const total = this.cacheSize + fields2.length;
       const numChunkedFields = Math.floor((total - 1) / rate) * rate;
       if (numChunkedFields === 0) {
-        for (const field5 of fields) {
+        for (const field5 of fields2) {
           this.cache[this.cacheSize++] = field5;
         }
         return;
@@ -380017,7 +380108,7 @@ ${val.stack}`;
         chain[i] = this.cache[i];
       }
       for (let i = this.cacheSize; i < numChunkedFields; i++) {
-        chain[i] = fields[i - this.cacheSize];
+        chain[i] = fields2[i - this.cacheSize];
       }
       const state = await poseidon2AbsorbChain(this.state, chain);
       this.state = [
@@ -380027,7 +380118,7 @@ ${val.stack}`;
         state[3]
       ];
       for (let i = total - rate; i < total; i++) {
-        this.cache[i % rate] = i < this.cacheSize ? chain[i] : fields[i - this.cacheSize];
+        this.cache[i % rate] = i < this.cacheSize ? chain[i] : fields2[i - this.cacheSize];
       }
       this.cacheSize = total - numChunkedFields;
     }
@@ -380231,13 +380322,13 @@ ${val.stack}`;
       length: mapNumberToNoir(claimedLengthArray.claimedLength)
     };
   }
-  function mapAppendOnlyTreeSnapshotFromNoir(snapshot) {
-    return new AppendOnlyTreeSnapshot(mapFieldFromNoir(snapshot.root), TreeLeafIndex.fromField(mapFieldFromNoir(snapshot.next_available_leaf_index)));
+  function mapAppendOnlyTreeSnapshotFromNoir(snapshot2) {
+    return new AppendOnlyTreeSnapshot(mapFieldFromNoir(snapshot2.root), TreeLeafIndex.fromField(mapFieldFromNoir(snapshot2.next_available_leaf_index)));
   }
-  function mapAppendOnlyTreeSnapshotToNoir(snapshot) {
+  function mapAppendOnlyTreeSnapshotToNoir(snapshot2) {
     return {
-      root: mapFieldToNoir(snapshot.root),
-      next_available_leaf_index: mapFieldToNoir(new Fr(snapshot.nextAvailableLeafIndex))
+      root: mapFieldToNoir(snapshot2.root),
+      next_available_leaf_index: mapFieldToNoir(new Fr(snapshot2.nextAvailableLeafIndex))
     };
   }
   function mapBlockHeaderToNoir(header) {
@@ -381524,14 +381615,14 @@ ${val.stack}`;
     const log3 = createLogger("noir-protocol-circuits:oracle");
     if (name === "utilityLog") {
       strict(args.length === 4, "expected 4 arguments for debugLog: level, msg, fields_length, fields");
-      const [levelInput, msgRaw, _ignoredFieldsSize, fields] = args;
+      const [levelInput, msgRaw, _ignoredFieldsSize, fields2] = args;
       const levelNumber = Fr.fromString(levelInput[0]).toNumber();
       if (!LogLevels[levelNumber]) {
         throw new Error(`Invalid debug log level: ${levelNumber}`);
       }
       const level = LogLevels[levelNumber];
       const msg = msgRaw.map((acvmField) => String.fromCharCode(Fr.fromString(acvmField).toNumber())).join("");
-      const fieldsFr = fields.map((field5) => Fr.fromString(field5));
+      const fieldsFr = fields2.map((field5) => Fr.fromString(field5));
       log3[level]("debug_log " + applyStringFormatting(msg, fieldsFr));
     } else if (name === "noOp") {
     } else {
@@ -382011,7 +382102,902 @@ ${val.stack}`;
   init_buffer2();
   init_process2();
 
-  // node_modules/@aztec-labs/foundation/dest/promise/index.js
+  // node_modules/@aztec-labs/pxe/rolling-preference-compact.mjs
+  init_dirname();
+  init_buffer2();
+  init_process2();
+  var capacity = BLOBS_PER_CHECKPOINT * FIELDS_PER_BLOB;
+  var COMPACT_BLOCK_LIMITS = Object.freeze({
+    fields: capacity - NUM_CHECKPOINT_END_MARKER_FIELDS,
+    transactions: Math.floor((capacity - NUM_CHECKPOINT_END_MARKER_FIELDS - NUM_BLOCK_END_BLOB_FIELDS) / MIN_TX_BLOB_FIELDS),
+    headerFields: BLOCK_HEADER_LENGTH
+  });
+  var verified = /* @__PURE__ */ new WeakSet();
+  var fail3 = () => Object.assign(new Error("Compact block is invalid or unavailable."), { code: "ROLLING_COMPACT_BLOCK_INVALID" });
+  var requireThat = (value) => {
+    if (!value) throw fail3();
+  };
+  var fieldText = (value) => {
+    requireThat(typeof value === "string" && /^0x[0-9a-f]{64}$/.test(value));
+    requireThat(BigInt(value) < Fr.MODULUS);
+    return value;
+  };
+  function ownValue(object7, key) {
+    const descriptor = Object.getOwnPropertyDescriptor(object7, key);
+    requireThat(descriptor && Object.hasOwn(descriptor, "value"));
+    return descriptor.value;
+  }
+  function snapshotFields(input2, minimum, maximum) {
+    requireThat(Array.isArray(input2));
+    const length = ownValue(input2, "length");
+    requireThat(Number.isSafeInteger(length) && length >= minimum && length <= maximum);
+    const result = [];
+    for (let i = 0; i < length; i++) result.push(fieldText(ownValue(input2, String(i))));
+    return result;
+  }
+  function integer5(field5, maximum) {
+    const value = field5.toBigInt();
+    requireThat(value <= BigInt(maximum));
+    return Number(value);
+  }
+  function bounded(value, maximum, minimum = 0) {
+    requireThat(Number.isSafeInteger(value) && value >= minimum && value <= maximum);
+  }
+  function parseLayout(fields2) {
+    let cursor = 0;
+    const transactions = [];
+    while (cursor < fields2.length && !isBlockEndMarker(fields2[cursor])) {
+      requireThat(transactions.length < COMPACT_BLOCK_LIMITS.transactions);
+      const start = cursor, marker = decodeTxStartMarker(fields2[start]);
+      bounded(marker.numBlobFields, MAX_TX_BLOB_DATA_SIZE_IN_FIELDS, MIN_TX_BLOB_FIELDS);
+      requireThat(start + marker.numBlobFields <= fields2.length - NUM_BLOCK_END_BLOB_FIELDS);
+      requireThat(encodeTxStartMarker(marker).equals(fields2[start]));
+      bounded(marker.revertCode, 1);
+      bounded(marker.numNoteHashes, MAX_NOTE_HASHES_PER_TX);
+      bounded(marker.numNullifiers, MAX_NULLIFIERS_PER_TX, 1);
+      bounded(marker.numL2ToL1Msgs, MAX_L2_TO_L1_MSGS_PER_TX);
+      bounded(marker.numPublicDataWrites, MAX_TOTAL_PUBLIC_DATA_UPDATE_REQUESTS_PER_TX);
+      bounded(marker.numPrivateLogs, MAX_PRIVATE_LOGS_PER_TX);
+      bounded(marker.privateLogsLength, MAX_PRIVATE_LOGS_PER_TX * PRIVATE_LOG_SIZE_IN_FIELDS);
+      bounded(marker.publicLogsLength, FLAT_PUBLIC_LOGS_PAYLOAD_LENGTH);
+      bounded(marker.contractClassLogLength, CONTRACT_CLASS_LOG_SIZE_IN_FIELDS);
+      requireThat(getNumTxBlobFields(marker) === marker.numBlobFields);
+      const end = start + marker.numBlobFields;
+      cursor = start + 3;
+      for (let i = 0; i < marker.numNoteHashes + marker.numNullifiers + marker.numL2ToL1Msgs; i++) {
+        requireThat(cursor < end && !fields2[cursor++].isZero());
+      }
+      for (let i = 0; i < marker.numPublicDataWrites; i++) {
+        requireThat(cursor + 2 <= end && !(fields2[cursor].isZero() && fields2[cursor + 1].isZero()));
+        cursor += 2;
+      }
+      const logs = [];
+      let emitted = 0;
+      for (let i = 0; i < marker.numPrivateLogs; i++) {
+        requireThat(cursor < end);
+        const length = integer5(fields2[cursor++], PRIVATE_LOG_SIZE_IN_FIELDS);
+        requireThat(length > 0 && cursor + length <= end);
+        logs.push({ start: cursor, length });
+        emitted += length;
+        cursor += length;
+      }
+      requireThat(emitted === marker.privateLogsLength);
+      const publicEnd = cursor + marker.publicLogsLength;
+      requireThat(publicEnd <= end);
+      while (cursor < publicEnd) {
+        requireThat(cursor + 2 <= publicEnd);
+        const length = integer5(fields2[cursor], MAX_PUBLIC_LOG_SIZE_IN_FIELDS);
+        requireThat(cursor + 2 + length <= publicEnd);
+        cursor += 2 + length;
+      }
+      if (marker.contractClassLogLength > 0) cursor += 1 + marker.contractClassLogLength;
+      requireThat(cursor === end);
+      transactions.push({ start, end, logs });
+    }
+    requireThat(cursor + NUM_BLOCK_END_BLOB_FIELDS === fields2.length);
+    return { transactions, end: cursor };
+  }
+  function expectedEnd(header, count) {
+    return encodeBlockEndBlobData({
+      blockEndMarker: { numTxs: count, timestamp: header.globalVariables.timestamp, blockNumber: header.getBlockNumber() },
+      blockEndStateField: {
+        l1ToL2MessageNextAvailableLeafIndex: header.state.l1ToL2MessageTree.nextAvailableLeafIndex,
+        noteHashNextAvailableLeafIndex: header.state.partial.noteHashTree.nextAvailableLeafIndex,
+        nullifierNextAvailableLeafIndex: header.state.partial.nullifierTree.nextAvailableLeafIndex,
+        publicDataNextAvailableLeafIndex: header.state.partial.publicDataTree.nextAvailableLeafIndex,
+        totalManaUsed: header.totalManaUsed.toBigInt()
+      },
+      lastArchiveRoot: header.lastArchive.root,
+      noteHashRoot: header.state.partial.noteHashTree.root,
+      nullifierRoot: header.state.partial.nullifierTree.root,
+      publicDataRoot: header.state.partial.publicDataTree.root,
+      l1ToL2MessageRoot: header.state.l1ToL2MessageTree.root
+    });
+  }
+  async function authenticateCompactBlock(input2) {
+    try {
+      const text = snapshotFields(ownValue(input2, "fields"), NUM_BLOCK_END_BLOB_FIELDS, COMPACT_BLOCK_LIMITS.fields);
+      const headerText = snapshotFields(ownValue(input2, "headerFields"), BLOCK_HEADER_LENGTH, BLOCK_HEADER_LENGTH);
+      const expectedBlockHash = fieldText(ownValue(input2, "expectedBlockHash"));
+      const assertCanonical = ownValue(input2, "assertCanonical");
+      requireThat(typeof assertCanonical === "function");
+      const fields2 = text.map((value) => Fr.fromString(value));
+      const layout = parseLayout(fields2);
+      const header = BlockHeader.fromFields(headerText.map((value) => Fr.fromString(value)));
+      requireThat(header.toFields().every((value, index) => value.toString() === headerText[index]));
+      const ending = expectedEnd(header, layout.transactions.length);
+      requireThat(ending.every((value, index) => value.equals(fields2[layout.end + index])));
+      const binding3 = Object.freeze({ blockHash: expectedBlockHash, blockNumber: header.getBlockNumber() });
+      requireThat(await assertCanonical(binding3) === true);
+      requireThat((await header.hash()).toString() === expectedBlockHash);
+      const leaves = [], ciphertexts = [];
+      for (let txIndex = 0; txIndex < layout.transactions.length; txIndex++) {
+        const tx = layout.transactions[txIndex];
+        const effect = TxEffect.fromTxBlobData(decodeTxBlobData(fields2.slice(tx.start, tx.end)));
+        const encoded = effect.toBlobFields();
+        requireThat(encoded.length === tx.end - tx.start && encoded.every((value, index) => value.equals(fields2[tx.start + index])));
+        leaves.push((await effect.computeTxEffectsTreeLeaf()).toBuffer());
+        for (let logIndex = 0; logIndex < tx.logs.length; logIndex++) {
+          const log3 = tx.logs[logIndex];
+          ciphertexts.push(Object.freeze({
+            txHash: effect.txHash.toString(),
+            txIndex,
+            logIndex,
+            fields: Object.freeze(text.slice(log3.start, log3.start + log3.length))
+          }));
+        }
+      }
+      const root = await computeUnbalancedMerkleTreeRootAsync(leaves, txEffectsTreeNodeHash);
+      requireThat(Fr.fromBuffer(root).equals(header.txEffectsTreeRoot));
+      requireThat(await assertCanonical(binding3) === true);
+      const result = Object.freeze({ ...binding3, txCount: layout.transactions.length, ciphertexts: Object.freeze(ciphertexts) });
+      verified.add(result);
+      return result;
+    } catch {
+      throw fail3();
+    }
+  }
+
+  // node_modules/@aztec-labs/pxe/rolling-preference-recovery.mjs
+  init_dirname();
+  init_buffer2();
+  init_process2();
+
+  // node_modules/@aztec-labs/pxe/dest/storage/base_staging_store.js
+  init_dirname();
+  init_buffer2();
+  init_process2();
+
+  // node_modules/@aztec-labs/foundation/dest/queue/index.js
+  init_dirname();
+  init_buffer2();
+  init_process2();
+
+  // node_modules/@aztec-labs/foundation/dest/queue/fifo_memory_queue.js
+  init_dirname();
+  init_buffer2();
+  init_process2();
+
+  // node_modules/@aztec-labs/foundation/dest/queue/base_memory_queue.js
+  init_dirname();
+  init_buffer2();
+  init_process2();
+  var BaseMemoryQueue = class {
+    log;
+    waiting;
+    flushing;
+    constructor(log3 = createLogger("foundation:memory_fifo")) {
+      this.log = log3;
+      this.waiting = [];
+      this.flushing = false;
+    }
+    /**
+    * Returns the current number of items in the queue.
+    * The length represents the size of the queue at the time of invocation and may change as new items are added or consumed.
+    *
+    * @returns The number of items in the queue.
+    */
+    length() {
+      return this.items.length;
+    }
+    /**
+    * Returns next item within the queue, or undefined if the queue is empty. Does not block.
+    * @returns The next item in the queue.
+    */
+    getImmediate() {
+      return this.items.get();
+    }
+    /**
+    * Returns next item within the queue, or blocks until an item has been put into the queue.
+    *
+    * If given a timeout, the promise will reject if no item is received after `timeoutSec` seconds.
+    * If the timeout is undefined (default), this call will block until an item is available or the queue is closed.
+    * If the timeout is 0 and there are no items available then the queue will immediately reject with a TimeoutError.
+    *
+    * If the queue is flushing, `null` is returned.
+    * @param timeoutSec - The timeout in seconds.
+    * @returns A result promise.
+    */
+    get(timeoutSec) {
+      if (this.items.length) {
+        return Promise.resolve(this.items.get());
+      }
+      if (this.items.length === 0 && this.flushing) {
+        return Promise.resolve(null);
+      }
+      if (timeoutSec === 0) {
+        return Promise.reject(new TimeoutError("Timeout getting item from queue."));
+      }
+      return new Promise((resolve, reject) => {
+        this.waiting.push(resolve);
+        if (timeoutSec) {
+          setTimeout(() => {
+            const index = this.waiting.findIndex((r) => r === resolve);
+            if (index > -1) {
+              this.waiting.splice(index, 1);
+              const err2 = new TimeoutError("Timeout getting item from queue.");
+              reject(err2);
+            }
+          }, timeoutSec * 1e3);
+        }
+      });
+    }
+    /**
+    * Put an item onto back of the queue.
+    * @param item - The item to enqueue.
+    * @returns A boolean indicating whether the item was successfully added to the queue.
+    */
+    put(item) {
+      if (this.flushing) {
+        this.log.warn("Discarding item because queue is flushing");
+        return false;
+      } else if (this.waiting.length) {
+        this.waiting.shift()(item);
+        return true;
+      } else {
+        this.items.put(item);
+        return true;
+      }
+    }
+    /** Discards pending items without affecting waiting consumers, active handlers, or the queue's open/closed state. */
+    clear() {
+      this.items.clear();
+    }
+    /**
+    * Once ended, no further items are added to queue. Consumers will consume remaining items within the queue.
+    * The queue is not reusable after calling `end()`.
+    * Any consumers waiting for an item receive null.
+    */
+    end() {
+      this.flushing = true;
+      this.waiting.forEach((resolve) => resolve(null));
+    }
+    /**
+    * Once cancelled, all items are discarded from the queue, and no further items are added to the queue.
+    * The queue is not reusable after calling `cancel()`.
+    * Any consumers waiting for an item receive null.
+    */
+    cancel() {
+      this.flushing = true;
+      this.items.clear();
+      this.waiting.forEach((resolve) => resolve(null));
+    }
+    /**
+    * Process items from the queue using a provided handler function.
+    * The function iterates over items in the queue, invoking the handler for each item until the queue is empty and flushing.
+    * If the handler throws an error, it will be caught and logged as 'Queue handler exception:', but the iteration will continue.
+    * The process function returns a promise that resolves when there are no more items in the queue and the queue is flushing.
+    *
+    * @param handler - A function that takes an item of type T and returns a Promise<void> after processing the item.
+    * @returns A Promise<void> that resolves when the queue is finished processing.
+    */
+    async process(handler) {
+      try {
+        while (true) {
+          const item = await this.get();
+          if (item === null) {
+            break;
+          }
+          await handler(item);
+        }
+      } catch (err2) {
+        this.log.error("Queue handler exception", err2);
+      }
+    }
+  };
+
+  // node_modules/@aztec-labs/foundation/dest/queue/fifo_memory_queue.js
+  var FifoMemoryQueue = class extends BaseMemoryQueue {
+    container = new FifoQueue();
+    constructor(log3) {
+      super(log3);
+    }
+    get items() {
+      return this.container;
+    }
+  };
+  var FifoQueue = class {
+    items = [];
+    put(item) {
+      this.items.push(item);
+    }
+    get() {
+      return this.items.shift();
+    }
+    get length() {
+      return this.items.length;
+    }
+    clear() {
+      this.items = [];
+    }
+  };
+
+  // node_modules/@aztec-labs/foundation/dest/queue/priority_memory_queue.js
+  init_dirname();
+  init_buffer2();
+  init_process2();
+
+  // node_modules/@aztec-labs/foundation/dest/queue/priority_queue.js
+  init_dirname();
+  init_buffer2();
+  init_process2();
+
+  // node_modules/@aztec-labs/foundation/dest/queue/serial_queue.js
+  init_dirname();
+  init_buffer2();
+  init_process2();
+  var SerialQueue = class {
+    queue = new FifoMemoryQueue();
+    runningPromises = [];
+    started = false;
+    /**
+    * Initializes the execution of enqueued functions in the serial queue.
+    * Functions are executed in the order they were added to the queue, with each function
+    * waiting for the completion of the previous one before starting its execution.
+    * This method should be called once to start processing the queue.
+    */
+    start(numWorkers = 1) {
+      if (this.started) {
+        return;
+      }
+      this.runningPromises = Array.from({
+        length: numWorkers
+      }, () => this.queue.process((fn) => fn()));
+      this.started = true;
+    }
+    /**
+    * Returns the current number of enqueued functions in the serial queue.
+    * This provides a way to check the size of the queue and monitor its progress.
+    *
+    * @returns The length of the serial queue as a number.
+    */
+    length() {
+      return this.queue.length();
+    }
+    /**
+    * Cancels the processing of the remaining functions in the serial queue and resolves the running promise.
+    * Any enqueued functions that have not yet been executed will be discarded. The queue can still accept new
+    * functions after cancellation, but the previously enqueued functions will not be re-processed.
+    *
+    * @returns The running promise which resolves when the current executing function (if any) completes.
+    */
+    cancel() {
+      this.queue.cancel();
+      return Promise.all(this.runningPromises).then(() => {
+      });
+    }
+    /**
+    * Signals the SerialQueue that it should finish processing its current task and stop accepting new tasks.
+    * The returned Promise resolves when all enqueued tasks have completed execution.
+    *
+    * @returns A Promise that resolves when the queue is completely emptied and no new tasks are allowed.
+    */
+    end() {
+      this.queue.end();
+      return Promise.all(this.runningPromises).then(() => {
+      });
+    }
+    /**
+    * Enqueues fn for execution on the serial queue.
+    * Returns the result of the function after execution.
+    * @param fn - The function to enqueue.
+    * @returns A resolution promise. Rejects if the function does, or if the function could not be enqueued.
+    */
+    put(fn) {
+      return new Promise((resolve, reject) => {
+        const accepted2 = this.queue.put(async () => {
+          try {
+            const res = await fn();
+            resolve(res);
+          } catch (e) {
+            reject(e);
+          }
+        });
+        if (!accepted2) {
+          reject(new Error("Could not enqueue function"));
+        }
+      });
+    }
+    /**
+    * Awaiting this ensures the queue is empty before resuming.
+    */
+    async syncPoint() {
+      await this.put(async () => {
+      });
+    }
+  };
+
+  // node_modules/@aztec-labs/foundation/dest/queue/bounded_serial_queue.js
+  init_dirname();
+  init_buffer2();
+  init_process2();
+
+  // node_modules/@aztec-labs/foundation/dest/queue/semaphore.js
+  init_dirname();
+  init_buffer2();
+  init_process2();
+  var Semaphore = class {
+    queue = new FifoMemoryQueue();
+    constructor(size2) {
+      new Array(size2).fill(true).map(() => this.queue.put(true));
+    }
+    /**
+    * Acquires a token from the Semaphore, allowing access to a limited resource.
+    * If no tokens are available, the call will block and wait until a token is released.
+    * Use in conjunction with the release() method to manage access to resources with limited capacity.
+    *
+    * @returns A Promise that resolves when a token is acquired.
+    */
+    async acquire() {
+      await this.queue.get();
+    }
+    /**
+    * Releases a token back into the semaphore, allowing another acquire call to proceed.
+    * If there are any pending calls to acquire(), one of them will be unblocked and allowed to proceed.
+    * This method should only be called by the holder of the acquired token to ensure proper functionality
+    * and avoid unexpected behavior.
+    */
+    release() {
+      this.queue.put(true);
+    }
+  };
+
+  // node_modules/@aztec-labs/foundation/dest/queue/batch_queue.js
+  init_dirname();
+  init_buffer2();
+  init_process2();
+  init_pino_logger();
+
+  // node_modules/@aztec-labs/pxe/dest/storage/base_staging_store.js
+  var BaseStagingStore = class {
+    storeName;
+    #store;
+    #db;
+    #buildChangeSet;
+    #lock = new Semaphore(1);
+    /** The change set currently open, if any. */
+    #current;
+    constructor({ storeName, store, buildChangeSet, buildDb }) {
+      this.storeName = storeName;
+      this.#store = store;
+      this.#buildChangeSet = buildChangeSet;
+      this.#db = buildDb(store);
+    }
+    /**
+    * Opens the change set, so its operations are accepted until {@link commitChangeSet} or {@link discardChangeSet}.
+    *
+    * @throws If a change set is already open.
+    */
+    beginChangeSet(changeSetId) {
+      if (this.#current !== void 0) {
+        throw new Error(`Store "${this.storeName}": cannot open change set "${changeSetId}" because change set "${this.#current.changeSetId}" is already open`);
+      }
+      this.#current = {
+        changeSetId,
+        changeSet: this.#buildChangeSet(),
+        inFlight: 0
+      };
+    }
+    /**
+    * Commits the change set's staged data: flushes it via {@link flushChangeSet}, then closes the change set. Runs
+    * inside the transaction owned by the caller.
+    *
+    * Not meant to be overridden: subclasses implement {@link flushChangeSet}.
+    *
+    * @throws If the change set is not open, or still has operations in flight.
+    */
+    async commitChangeSet(changeSetId) {
+      const current = this.#currentOrThrow(changeSetId);
+      if (current.inFlight > 0) {
+        throw new Error(`Store "${this.storeName}": cannot commit change set "${changeSetId}" while ${current.inFlight} of its operations are in flight`);
+      }
+      await this.flushChangeSet(current.changeSet, this.#db);
+      this.#closeChangeSet(changeSetId);
+    }
+    /** Closes the change set, discarding any staged data without committing. A no-op if it is not open. */
+    discardChangeSet(changeSetId) {
+      this.#closeChangeSet(changeSetId);
+    }
+    /**
+    * Rolls the store back to `toBlock` via {@link applyRollback}.
+    *
+    * Must be called inside a transaction owned by the caller, since it opens none of its own.
+    *
+    * Not meant to be overridden: subclasses implement {@link applyRollback}.
+    *
+    * @throws If a change set is open, since its staged writes could later be committed anchored to deleted blocks.
+    */
+    async rollbackToBlock(toBlock) {
+      if (this.#current !== void 0) {
+        throw new Error(`Store "${this.storeName}": cannot roll back while change set "${this.#current.changeSetId}" is open`);
+      }
+      await this.applyRollback(toBlock, this.#db);
+    }
+    /**
+    * Runs a change set operation that reads the DB. Takes the store's lock, opens a transaction, and calls `fn` with
+    * the change set's staged data and a read-only view of the DB (writes are staged in memory until
+    * {@link flushChangeSet} runs on commit).
+    *
+    * Prefer {@link withChangeSet} unless `fn` actually reads the DB.
+    *
+    * The lock makes the store thread safe: two operations issued concurrently (e.g. under `Promise.all`) cannot
+    * interleave across awaits, so `fn` can read staged data and write it back without handling atomicity itself.
+    *
+    * @throws If the change set is not open.
+    */
+    withChangeSetAndDb(changeSetId, fn) {
+      return this.#runLocked(changeSetId, () => this.#store.transactionAsync(() => {
+        const current = this.#currentOrThrow(changeSetId);
+        return fn(current.changeSet, this.#db);
+      }));
+    }
+    /**
+    * Runs a change set operation over the staged data alone: takes the store's lock and calls `fn` with the change
+    * set's staged data, opening no db transaction.
+    *
+    * Use {@link withChangeSetAndDb} instead when `fn` reads the DB.
+    *
+    * @throws If the change set is not open.
+    */
+    withChangeSet(changeSetId, fn) {
+      return this.#runLocked(changeSetId, async () => {
+        const current = this.#currentOrThrow(changeSetId);
+        return await fn(current.changeSet);
+      });
+    }
+    async #runLocked(changeSetId, run) {
+      const entered = this.#currentOrThrow(changeSetId);
+      entered.inFlight++;
+      try {
+        await this.#lock.acquire();
+        try {
+          return await run();
+        } finally {
+          this.#lock.release();
+        }
+      } finally {
+        entered.inFlight--;
+      }
+    }
+    #currentOrThrow(changeSetId) {
+      if (this.#current?.changeSetId !== changeSetId) {
+        throw new Error(`Store "${this.storeName}": change set "${changeSetId}" is not open`);
+      }
+      return this.#current;
+    }
+    #closeChangeSet(changeSetId) {
+      if (this.#current?.changeSetId === changeSetId) {
+        this.#current = void 0;
+      }
+    }
+  };
+
+  // node_modules/@aztec-labs/pxe/rolling-preference-recovery.mjs
+  var bindings = /* @__PURE__ */ new WeakMap();
+  var MAX_STATE = 256 * 1024;
+  var fail4 = () => {
+    throw Error("PXE_PREFERENCE_RECOVERY_FAILED");
+  };
+  var check5 = (x) => {
+    if (!x) fail4();
+  };
+  var copy = (x) => JSON.parse(JSON.stringify(x));
+  var same = (a, b2) => JSON.stringify(a) === JSON.stringify(b2);
+  var id = () => Array.from(crypto.getRandomValues(new Uint8Array(32)), (x) => x.toString(16).padStart(2, "0")).join("");
+  function exact(x, keys) {
+    check5(x && Object.getPrototypeOf(x) === Object.prototype);
+    const ds = Object.getOwnPropertyDescriptors(x);
+    check5(Reflect.ownKeys(ds).length === keys.length);
+    const r = {};
+    for (const k of keys) {
+      check5(ds[k] && "value" in ds[k]);
+      r[k] = ds[k].value;
+    }
+    return r;
+  }
+  function hex10(x, zero2 = false, width = 64) {
+    check5(typeof x === "string" && new RegExp("^0x[0-9a-f]{" + width + "}$").test(x));
+    if (width === 64) check5(BigInt(x) < Fr.MODULUS);
+    check5(zero2 || BigInt(x) > 0n);
+    return x;
+  }
+  function integer6(x, max = 4294967295, min2 = 0) {
+    check5(Number.isSafeInteger(x) && x >= min2 && x <= max);
+    return x;
+  }
+  function fields(x, max, min2 = 0) {
+    check5(Array.isArray(x));
+    const len = Object.getOwnPropertyDescriptor(x, "length")?.value;
+    integer6(len, max, min2);
+    const out = [];
+    for (let i = 0; i < len; i++) {
+      const d = Object.getOwnPropertyDescriptor(x, String(i));
+      check5(d && "value" in d);
+      out.push(hex10(d.value, true));
+    }
+    return out;
+  }
+  function snapshot(input2, options) {
+    const p = exact(input2, ["contractAddress", "scope", "expectedClassId", "expectedArtifactHash", "network", "proofsEnabled", "tier", "expected", "block", "restart"]);
+    for (const k of ["contractAddress", "scope", "expectedClassId", "expectedArtifactHash"]) hex10(p[k]);
+    p.network = exact(p.network, ["chainId", "version", "rollup"]);
+    integer6(p.network.chainId, Number.MAX_SAFE_INTEGER, 1);
+    integer6(p.network.version, 4294967295, 1);
+    hex10(p.network.rollup, false, 40);
+    check5(typeof p.restart === "boolean" && (!p.restart || p.expected === null));
+    check5(typeof p.proofsEnabled === "boolean" && ["proposed", "checkpointed", "proven", "finalized"].includes(p.tier));
+    if (p.expected !== null) {
+      p.expected = exact(p.expected, ["epoch", "sequence"]);
+      check5(typeof p.expected.epoch === "string" && /^[0-9a-f]{64}$/.test(p.expected.epoch));
+      integer6(p.expected.sequence, Number.MAX_SAFE_INTEGER);
+    }
+    if (p.block !== null) {
+      p.block = exact(p.block, ["blockNumber", "blockHash", "fields", "headerFields"]);
+      integer6(p.block.blockNumber, 4294967295, 1);
+      hex10(p.block.blockHash);
+      p.block.fields = fields(p.block.fields, 24575, 7);
+      p.block.headerFields = fields(p.block.headerFields, 23, 23);
+    }
+    const { contextGuard } = exact(options, ["contextGuard"]);
+    check5(typeof contextGuard === "function");
+    return { p, guard: contextGuard };
+  }
+  var RollingPreferenceRecoveryStore = class extends BaseStagingStore {
+    constructor(store) {
+      super({ storeName: "rolling_preference_recovery_v1", store, buildChangeSet: () => /* @__PURE__ */ new Map(), buildDb: (db) => ({ values: db.openMap("rolling_preference_recovery_v1") }) });
+    }
+    load(key, changeSetId) {
+      return this.withChangeSetAndDb(changeSetId, async (stage, db) => {
+        const [rawMeta, rawState] = await Promise.all([db.values.getAsync("meta"), db.values.getAsync(key)]);
+        let meta13 = stage.get("meta") ?? rawMeta;
+        if (meta13 === void 0) {
+          meta13 = JSON.stringify({ database: id(), generation: id() });
+          stage.set("meta", meta13);
+        }
+        check5(typeof meta13 === "string" && meta13.length < 256);
+        const m2 = JSON.parse(meta13);
+        check5(typeof m2.database === "string" && /^[0-9a-f]{64}$/.test(m2.database) && typeof m2.generation === "string" && /^[0-9a-f]{64}$/.test(m2.generation));
+        const raw = stage.get(key) ?? rawState;
+        check5(raw === void 0 || typeof raw === "string" && raw.length <= MAX_STATE);
+        return { meta: m2, state: raw === void 0 ? null : JSON.parse(raw) };
+      });
+    }
+    save(key, state, changeSetId) {
+      const text = JSON.stringify(state);
+      check5(text.length <= MAX_STATE);
+      return this.withChangeSet(changeSetId, (stage) => {
+        stage.set(key, text);
+      });
+    }
+    async flushChangeSet(stage, db) {
+      for (const [key, value] of stage) await db.values.set(key, value);
+    }
+    async applyRollback(_toBlock, db) {
+      const text = await db.values.getAsync("meta");
+      if (text !== void 0) {
+        const m2 = JSON.parse(text);
+        await db.values.set("meta", JSON.stringify({ database: m2.database, generation: id() }));
+      }
+    }
+  };
+  function bindRollingPreferenceRecovery(pxe, store, tier, page, headCall) {
+    check5(!bindings.has(pxe) && store instanceof RollingPreferenceRecoveryStore && typeof page === "function" && typeof headCall === "function");
+    bindings.set(pxe, Object.freeze({ store, tier: tier ?? "proposed", page, headCall }));
+  }
+  function receipt(state, records = [], head = null) {
+    return { schemaVersion: 1, database: state.database, epoch: state.epoch, sequence: state.sequence, anchor: copy(state.anchor), nextBlock: state.nextBlock, nextLog: state.nextLog, records, head, complete: head !== null };
+  }
+  async function runRollingPreferenceRecovery(pxe, input2, options) {
+    try {
+      const { p, guard } = snapshot(input2, options), binding3 = bindings.get(pxe);
+      check5(binding3 && binding3.tier === p.tier && pxe.proverEnabled === p.proofsEnabled);
+      const address6 = AztecAddress.fromFieldUnsafe(Fr.fromString(p.contractAddress)), owner = AztecAddress.fromFieldUnsafe(Fr.fromString(p.scope));
+      const key = JSON.stringify([p.network, p.proofsEnabled, p.tier, p.contractAddress, p.expectedClassId, p.expectedArtifactHash, p.scope, 1]);
+      let beforeCommit;
+      await guard();
+      return await pxe.operationQueue.runSynced(async (context) => {
+        const frame = { ...context, validators: [] };
+        const anchor2 = BlockHeader.fromBuffer(BlockHeader.prototype.toBuffer.call(context.anchorBlockHeader));
+        const anchorRecord = { blockNumber: anchor2.getBlockNumber(), blockHash: (await anchor2.hash()).toString() };
+        const canonical2 = async () => {
+          const info = await pxe.node.getNodeInfo();
+          check5(info.l1ChainId === p.network.chainId && info.rollupVersion === p.network.version && info.l1ContractAddresses.rollupAddress.toString().toLowerCase() === p.network.rollup && info.realProofs === p.proofsEnabled);
+          const observed = await pxe.node.getBlockData(anchorRecord.blockNumber);
+          check5(observed && observed.blockHash.toString() === anchorRecord.blockHash);
+          const h = BlockHeader.fromBuffer(BlockHeader.prototype.toBuffer.call(observed.header));
+          check5((await h.hash()).toString() === anchorRecord.blockHash && h.getBlockNumber() === anchorRecord.blockNumber && h.globalVariables.chainId.toBigInt() === BigInt(p.network.chainId) && h.globalVariables.version.toBigInt() === BigInt(p.network.version));
+          const raw = await pxe.node.getContract(address6, await anchor2.toBlockParameter());
+          check5(raw);
+          const instance = SerializableContractInstance.fromBuffer(new SerializableContractInstance(raw).toBuffer());
+          check5(instance.currentContractClassId.toString() === p.expectedClassId && instance.originalContractClassId.toString() === p.expectedClassId && (await computeContractAddressFromInstance(instance)).equals(address6));
+          await guard();
+        };
+        await canonical2();
+        const artifact = await pxe.contractStore.getContractArtifact(Fr.fromString(p.expectedClassId));
+        check5(artifact && artifact.name === "RollingBoard");
+        const artifactHash = await computeArtifactHash(artifact);
+        check5(artifactHash.toString() === p.expectedArtifactHash && (await getContractClassFromArtifact({ ...artifact, artifactHash })).id.toString() === p.expectedClassId);
+        beforeCommit = async () => {
+          for (const validate2 of frame.validators) await validate2();
+          await canonical2();
+          await guard();
+        };
+        await guard();
+        const { meta: meta13, state: loaded } = await binding3.store.load(key, context.changeSetId);
+        await guard();
+        let state = loaded;
+        if (p.restart || !state || state.database !== meta13.database || state.generation !== meta13.generation || !same(state.anchor, anchorRecord)) {
+          state = { schemaVersion: 1, scope: key, database: meta13.database, generation: meta13.generation, epoch: id(), anchor: anchorRecord, sequence: 0, nextBlock: 1, nextLog: 0, pending: [], candidate: null, last: null };
+          state.last = receipt(state);
+          await binding3.store.save(key, state, context.changeSetId);
+          await beforeCommit();
+          return copy(state.last);
+        }
+        exact(state, ["schemaVersion", "scope", "database", "generation", "epoch", "anchor", "sequence", "nextBlock", "nextLog", "pending", "candidate", "last"]);
+        check5(state.schemaVersion === 1 && state.scope === key && typeof state.epoch === "string" && /^[0-9a-f]{64}$/.test(state.epoch));
+        integer6(state.sequence, Number.MAX_SAFE_INTEGER);
+        integer6(state.nextBlock, anchorRecord.blockNumber + 1, 1);
+        integer6(state.nextLog, 24575);
+        check5(Array.isArray(state.pending) && state.pending.length <= 64 && state.last && state.last.sequence === state.sequence);
+        check5(state.last.database === state.database && state.last.epoch === state.epoch && same(state.last.anchor, state.anchor) && state.last.nextBlock === state.nextBlock && state.last.nextLog === state.nextLog);
+        if (state.candidate) {
+          exact(state.candidate, ["nullifier", "slot"]);
+          hex10(state.candidate.nullifier);
+          hex10(state.candidate.slot);
+        }
+        if (state.sequence === 0) check5(state.nextBlock === 1 && state.nextLog === 0 && state.pending.length === 0 && state.candidate === null);
+        if (p.expected === null) {
+          await beforeCommit();
+          return copy(state.last);
+        }
+        check5(p.expected.epoch === state.epoch);
+        if (p.expected.sequence === state.sequence - 1) {
+          await beforeCommit();
+          return copy(state.last);
+        }
+        check5(p.expected.sequence === state.sequence && !state.last.complete);
+        let records = [], head = null;
+        if (state.nextBlock > anchorRecord.blockNumber) {
+          check5(p.block === null && state.pending.length === 0);
+          const call2 = await pxe.contractStore.getFunctionCall("preference_head", [owner], address6, Fr.fromString(p.expectedClassId));
+          check5(call2.type === FunctionType.UTILITY);
+          const noteStore = new Proxy(pxe.noteStore, { get(target, k) {
+            if (k === "getNotes") return (filter, changeSetId) => {
+              check5(changeSetId === context.changeSetId && filter.contractAddress.equals(address6) && filter.owner?.equals(owner) && filter.status === 1 && filter.scopes.length === 1 && filter.scopes[0].equals(owner));
+              if (!state.candidate) return Promise.resolve([]);
+              check5(filter.storageSlot?.toString() === state.candidate.slot && filter.siloedNullifier === void 0);
+              return target.getNotes({ ...filter, siloedNullifier: Fr.fromString(state.candidate.nullifier) }, changeSetId).then((notes) => {
+                check5(notes.length === 1);
+                return notes;
+              });
+            };
+            const value = Reflect.get(target, k, target);
+            return typeof value === "function" ? value.bind(target) : value;
+          } });
+          await guard();
+          const result = await binding3.headCall(call2, noteStore, owner, anchor2, context.changeSetId);
+          await guard();
+          check5(result.offchainEffects.length === 0 && result.result.length === 4);
+          const values = result.result.map((x) => x.toBigInt());
+          check5((values[0] === 0n || values[0] === 1n) && values[1] === 1n && values[2] >= 0n && values[2] < 1n << 64n);
+          head = { initialized: values[0] === 1n, schema: 1, revision: String(values[2]), digest: String(values[3]) };
+          check5(head.initialized ? !!state.candidate && values[2] > 0n && values[3] > 0n : !state.candidate && values[2] === 0n && values[3] === 0n);
+        } else {
+          check5(p.block && p.block.blockNumber === state.nextBlock);
+          const block2 = p.block;
+          const checkBlock = async () => {
+            await canonical2();
+            const raw = await pxe.node.getBlockData(block2.blockNumber);
+            check5(raw && raw.blockHash.toString() === block2.blockHash);
+            const h = BlockHeader.fromBuffer(BlockHeader.prototype.toBuffer.call(raw.header));
+            check5((await h.hash()).toString() === block2.blockHash && h.toFields().every((f, i) => f.toString() === block2.headerFields[i]));
+            await guard();
+            return true;
+          };
+          const verified2 = await authenticateCompactBlock({ fields: block2.fields, headerFields: block2.headerFields, expectedBlockHash: block2.blockHash, assertCanonical: checkBlock });
+          frame.validators.push(checkBlock);
+          check5(verified2.blockNumber === state.nextBlock && state.nextLog <= verified2.ciphertexts.length);
+          if (state.nextLog < verified2.ciphertexts.length) {
+            const first2 = verified2.ciphertexts[state.nextLog], logs = [];
+            for (let i = state.nextLog; i < verified2.ciphertexts.length && logs.length < 8 && verified2.ciphertexts[i].txIndex === first2.txIndex; i++) logs.push(verified2.ciphertexts[i]);
+            await binding3.page({ contractAddress: p.contractAddress, scope: p.scope, expectedClassId: p.expectedClassId, expectedArtifactHash: p.expectedArtifactHash, network: p.network, proofsEnabled: p.proofsEnabled, blockNumber: block2.blockNumber, blockHash: block2.blockHash, txHash: first2.txHash, firstLog: first2.logIndex, logCount: logs.length, compactFields: block2.fields, headerFields: block2.headerFields }, guard, frame);
+            const events = await pxe.privateEventStore.withChangeSet(context.changeSetId, (changeSet) => {
+              check5(changeSet.size <= 8);
+              return Array.from(changeSet.values(), (e) => ({ packedEvent: e.msgContent.map((x) => x.toString()), eventSelector: e.eventSelector.toString(), l2BlockNumber: e.l2BlockNumber, l2BlockHash: e.l2BlockHash.toString(), txHash: e.txHash.toString(), txIndexInBlock: e.txIndexInBlock, eventIndexInTx: e.eventIndexInTx, contract: e.contractAddress.toString(), scoped: e.scopes.has(p.scope) }));
+            });
+            check5(events.length <= 8);
+            for (const e of events) {
+              check5(e.contract === p.contractAddress && e.scoped === true && e.txHash === first2.txHash && e.txIndexInBlock === first2.txIndex && e.l2BlockNumber === block2.blockNumber && e.l2BlockHash === block2.blockHash && e.packedEvent.length === 8);
+              integer6(e.eventIndexInTx, 63);
+              const prior = state.pending.find((x) => x.eventIndexInTx === e.eventIndexInTx);
+              if (prior) check5(same(prior, e));
+              else state.pending.push(e);
+              check5(state.pending.length <= 64);
+            }
+            const candidates = await pxe.noteStore.withChangeSet(context.changeSetId, (stage) => {
+              check5(stage.notes.size <= 8);
+              return [...stage.notes.values()].map((n2) => ({ nullifier: n2.noteDao.siloedNullifier.toString(), slot: n2.noteDao.storageSlot.toString(), owner: n2.noteDao.owner.toString(), contract: n2.noteDao.contractAddress.toString() }));
+            });
+            check5(candidates.length <= 8);
+            const eventSnapshot = await pxe.privateEventStore.withChangeSet(context.changeSetId, (stage) => [...stage.entries()].map(([key2, value]) => [key2, value.toBuffer().toString("hex")]));
+            const noteSnapshot = await pxe.noteStore.withChangeSet(context.changeSetId, (stage) => ({ notes: [...stage.notes.entries()].map(([key2, value]) => [key2, value.toBuffer().toString("hex")]), nullifiers: [...stage.nullifierEmissions] }));
+            frame.validators.push(async () => {
+              const currentEvents = await pxe.privateEventStore.withChangeSet(context.changeSetId, (stage) => [...stage.entries()].map(([key2, value]) => [key2, value.toBuffer().toString("hex")]));
+              const currentNotes = await pxe.noteStore.withChangeSet(context.changeSetId, (stage) => ({ notes: [...stage.notes.entries()].map(([key2, value]) => [key2, value.toBuffer().toString("hex")]), nullifiers: [...stage.nullifierEmissions] }));
+              check5(same(currentEvents, eventSnapshot) && same(currentNotes, noteSnapshot));
+            });
+            for (const candidate of candidates) {
+              check5(candidate.owner === p.scope && candidate.contract === p.contractAddress);
+              const active = await pxe.noteStore.getNotes({ contractAddress: address6, owner, scopes: [owner], storageSlot: Fr.fromString(candidate.slot), siloedNullifier: Fr.fromString(candidate.nullifier) }, context.changeSetId);
+              check5(active.length <= 1);
+              if (active.length) {
+                if (state.candidate) check5(state.candidate.nullifier === candidate.nullifier && state.candidate.slot === candidate.slot);
+                else state.candidate = { nullifier: candidate.nullifier, slot: candidate.slot };
+              }
+            }
+            state.nextLog += logs.length;
+            if (state.nextLog === verified2.ciphertexts.length || verified2.ciphertexts[state.nextLog].txIndex !== first2.txIndex) {
+              records = state.pending.sort((a, b2) => a.eventIndexInTx - b2.eventIndexInTx).map(({ contract, scoped, txIndexInBlock, eventIndexInTx, ...record7 }) => record7);
+              state.pending = [];
+            }
+          }
+          if (state.nextLog === verified2.ciphertexts.length) {
+            check5(state.pending.length === 0);
+            state.nextBlock++;
+            state.nextLog = 0;
+          }
+        }
+        check5(state.sequence < Number.MAX_SAFE_INTEGER);
+        state.sequence++;
+        state.last = receipt(state, records, head);
+        await binding3.store.save(key, state, context.changeSetId);
+        await beforeCommit();
+        return copy(state.last);
+      }, { beforeCommit: async () => {
+        check5(typeof beforeCommit === "function");
+        await beforeCommit();
+      } });
+    } catch {
+      throw Error("PXE_PREFERENCE_RECOVERY_FAILED");
+    }
+  }
+
+  // node_modules/@aztec-labs/stdlib/dest/block/index.js
+  init_dirname();
+  init_buffer2();
+  init_process2();
+
+  // node_modules/@aztec-labs/stdlib/dest/block/l2_block_stream/index.js
+  init_dirname();
+  init_buffer2();
+  init_process2();
+
+  // node_modules/@aztec-labs/stdlib/dest/block/l2_block_stream/event_driven_l2_block_stream.js
+  init_dirname();
+  init_buffer2();
+  init_process2();
+
+  // node_modules/@aztec-labs/foundation/dest/running-promise/index.js
   init_dirname();
   init_buffer2();
   init_process2();
@@ -382136,144 +383122,6 @@ ${val.stack}`;
       this.pollingIntervalMS = pollingIntervalMS;
     }
   };
-
-  // node_modules/@aztec-labs/protocol-contracts/dest/index.js
-  init_dirname();
-  init_buffer2();
-  init_process2();
-
-  // node_modules/@aztec-labs/protocol-contracts/dest/genesis_data.js
-  init_dirname();
-  init_buffer2();
-  init_process2();
-
-  // node_modules/@aztec-labs/protocol-contracts/dest/protocol_contract_data.js
-  init_dirname();
-  init_buffer2();
-  init_process2();
-  var protocolContractNames = [
-    "ContractInstanceRegistry",
-    "ContractClassRegistry",
-    "FeeJuice"
-  ];
-  var ProtocolContractSalt = {
-    ContractInstanceRegistry: new Fr(1),
-    ContractClassRegistry: new Fr(1),
-    FeeJuice: new Fr(1)
-  };
-  var ProtocolContractAddress = {
-    ContractInstanceRegistry: AztecAddress.fromBigIntUnsafe(2n),
-    ContractClassRegistry: AztecAddress.fromBigIntUnsafe(1n),
-    FeeJuice: AztecAddress.fromBigIntUnsafe(3n)
-  };
-  var ProtocolContractDerivedAddress = {
-    ContractInstanceRegistry: AztecAddress.fromStringUnsafe("0x2b937086a6b367070f03fd007b932f64fcce36501ffcad6ff7c73f1d116e1c77"),
-    ContractClassRegistry: AztecAddress.fromStringUnsafe("0x2b95cb98fbd2723c66350f27310e670ff9faeaa8ca100ce83a3195e4d8235e17"),
-    FeeJuice: AztecAddress.fromStringUnsafe("0x064e81954bc70f4c8e060d4fa2ba0427eff0fe10f1f5aa57bf8f93c8745fac79")
-  };
-  var ProtocolContractClassId = {
-    ContractInstanceRegistry: Fr.fromString("0x250bc22bd53e83820ec12b83b41addb81073884ef63e7dc5261787bf92850f7f"),
-    ContractClassRegistry: Fr.fromString("0x010f027b753bf0e29dedc8e47a8bdda62211a7253b002b625cffb475495dc002"),
-    FeeJuice: Fr.fromString("0x1fa4d16bbcc242b144b07ee9a424083ee404ed9ce11037b24c465057b6a92c59")
-  };
-  var ProtocolContractClassIdPreimage = {
-    ContractInstanceRegistry: {
-      artifactHash: Fr.fromString("0x28f9ec60f51cd93bc2cd3d021d3a0d1847cd3b4b57ed6fb22435d422b3a0fb31"),
-      privateFunctionsRoot: Fr.fromString("0x2cab3dca97df25e1b2f62b64540799a1130f8d2cf41aff507909ec075cb3905b"),
-      publicBytecodeCommitment: Fr.fromString("0x1fd8380bb220e7d13db681da7e62c93b03add6754895a84c51d13fcde03e8d25")
-    },
-    ContractClassRegistry: {
-      artifactHash: Fr.fromString("0x21edcafeabc08ef1566c5f3ad3594449ab67812a5bb425a8e51b8c67e4d50bdb"),
-      privateFunctionsRoot: Fr.fromString("0x0cce8e37c65a1cf4365b585909228fcde42954d12737435d912d86186167b8cc"),
-      publicBytecodeCommitment: Fr.fromString("0x0ce4c618c3ed7f3a20410e618c06bb701e150af7fe28a3e92f68e7733809f33e")
-    },
-    FeeJuice: {
-      artifactHash: Fr.fromString("0x03a70c5c263a8968dc45863fbed9e409a23a4234175cc27eccd16e2fbdbdba8b"),
-      privateFunctionsRoot: Fr.fromString("0x056ab6386ea8654985dc89dc9f083b0e002df2459f12866bf498b0b5546412ff"),
-      publicBytecodeCommitment: Fr.fromString("0x2968eb109f722c701d59d171c32d32b79199841f0044d6bbd77dc43bd513a770")
-    }
-  };
-  var ProtocolContractInitializationHash = {
-    ContractInstanceRegistry: Fr.fromString("0x0000000000000000000000000000000000000000000000000000000000000000"),
-    ContractClassRegistry: Fr.fromString("0x0000000000000000000000000000000000000000000000000000000000000000"),
-    FeeJuice: Fr.fromString("0x0000000000000000000000000000000000000000000000000000000000000000")
-  };
-  var ProtocolContractPrivateFunctions = {
-    ContractInstanceRegistry: [
-      {
-        selector: FunctionSelector.fromField(Fr.fromString("0x0000000000000000000000000000000000000000000000000000000077cff62f")),
-        vkHash: Fr.fromString("0x0ba93c1df26342e4871884648597eba8204fe51b1295e00ecb69a011db1359b6")
-      }
-    ],
-    ContractClassRegistry: [
-      {
-        selector: FunctionSelector.fromField(Fr.fromString("0x000000000000000000000000000000000000000000000000000000006934ed0d")),
-        vkHash: Fr.fromString("0x1af8e7c965fa21b828e2307fb320fbf38038a42121495906aba2b80c3f072bd8")
-      }
-    ],
-    FeeJuice: [
-      {
-        selector: FunctionSelector.fromField(Fr.fromString("0x00000000000000000000000000000000000000000000000000000000cbe67243")),
-        vkHash: Fr.fromString("0x2e78182eafa9eedb8a75d0eabee8cc7031a41b2d630949979a9495f6be9d9e2e")
-      },
-      {
-        selector: FunctionSelector.fromField(Fr.fromString("0x00000000000000000000000000000000000000000000000000000000e8d374b6")),
-        vkHash: Fr.fromString("0x253da18011550ba749e4311e9dc5f59309a35c27b1d16e1f9ccb90bae9db1235")
-      }
-    ]
-  };
-  var ProtocolContractsList = new ProtocolContracts([
-    AztecAddress.fromStringUnsafe("0x2b95cb98fbd2723c66350f27310e670ff9faeaa8ca100ce83a3195e4d8235e17"),
-    AztecAddress.fromStringUnsafe("0x2b937086a6b367070f03fd007b932f64fcce36501ffcad6ff7c73f1d116e1c77"),
-    AztecAddress.fromStringUnsafe("0x064e81954bc70f4c8e060d4fa2ba0427eff0fe10f1f5aa57bf8f93c8745fac79"),
-    AztecAddress.fromStringUnsafe("0x0000000000000000000000000000000000000000000000000000000000000000"),
-    AztecAddress.fromStringUnsafe("0x0000000000000000000000000000000000000000000000000000000000000000"),
-    AztecAddress.fromStringUnsafe("0x0000000000000000000000000000000000000000000000000000000000000000"),
-    AztecAddress.fromStringUnsafe("0x0000000000000000000000000000000000000000000000000000000000000000"),
-    AztecAddress.fromStringUnsafe("0x0000000000000000000000000000000000000000000000000000000000000000"),
-    AztecAddress.fromStringUnsafe("0x0000000000000000000000000000000000000000000000000000000000000000"),
-    AztecAddress.fromStringUnsafe("0x0000000000000000000000000000000000000000000000000000000000000000"),
-    AztecAddress.fromStringUnsafe("0x0000000000000000000000000000000000000000000000000000000000000000")
-  ]);
-  var protocolContractsHash = Fr.fromString("0x0f54271c52865841a77aaa66036eed901aff22fdce9f08e123ec8b205c9854d7");
-  var ProtocolContractGenesisNullifiers = [
-    Fr.fromString("0x04287df03953b0d68b0e83e08a89067afc602626defd6002277cd6df34696818"),
-    Fr.fromString("0x0d99507b7ecac720c73bf197a0e7366a5ed80c1c1b0afe8ff8c6ecc7b5a7aefe"),
-    Fr.fromString("0x0eb50b367fb754d3a7d1238bfc105cc9b391a02e187be69038876ae9a502e877"),
-    Fr.fromString("0x16f917edd8e333013e5bb0633f7f484725bd19403854d6112992dccef4961e32"),
-    Fr.fromString("0x1cea539e01abaa5db980e7ff52ef0d2a7772310306ac625783ae435756ee326d"),
-    Fr.fromString("0x2c3a57c8d7c387652babd36c4d79ab03c0fe593e160315a4dc098f92caf592c3")
-  ];
-  var CONTRACT_INSTANCE_PUBLISHED_EVENT_TAG = Fr.fromHexString("0x1a7e1badb79abdd38c684b3c8306ffe7ecb33c69e3380d9855730aaaa83a21a8");
-
-  // node_modules/@aztec-labs/protocol-contracts/dest/protocol_contract.js
-  init_dirname();
-  init_buffer2();
-  init_process2();
-  function isProtocolContract(address6) {
-    return Object.values(ProtocolContractAddress).some((a) => a.equals(address6));
-  }
-  var protocolContractClassIds = new Set(Object.values(ProtocolContractClassId).map((id2) => id2.toString()));
-
-  // node_modules/@aztec-labs/stdlib/dest/block/index.js
-  init_dirname();
-  init_buffer2();
-  init_process2();
-
-  // node_modules/@aztec-labs/stdlib/dest/block/l2_block_stream/index.js
-  init_dirname();
-  init_buffer2();
-  init_process2();
-
-  // node_modules/@aztec-labs/stdlib/dest/block/l2_block_stream/event_driven_l2_block_stream.js
-  init_dirname();
-  init_buffer2();
-  init_process2();
-
-  // node_modules/@aztec-labs/foundation/dest/running-promise/index.js
-  init_dirname();
-  init_buffer2();
-  init_process2();
 
   // node_modules/@aztec-labs/stdlib/dest/block/l2_block_stream/l2_block_stream.js
   init_dirname();
@@ -382822,6 +383670,129 @@ ${val.stack}`;
   init_buffer2();
   init_process2();
 
+  // node_modules/@aztec-labs/foundation/dest/promise/index.js
+  init_dirname();
+  init_buffer2();
+  init_process2();
+
+  // node_modules/@aztec-labs/protocol-contracts/dest/index.js
+  init_dirname();
+  init_buffer2();
+  init_process2();
+
+  // node_modules/@aztec-labs/protocol-contracts/dest/genesis_data.js
+  init_dirname();
+  init_buffer2();
+  init_process2();
+
+  // node_modules/@aztec-labs/protocol-contracts/dest/protocol_contract_data.js
+  init_dirname();
+  init_buffer2();
+  init_process2();
+  var protocolContractNames = [
+    "ContractInstanceRegistry",
+    "ContractClassRegistry",
+    "FeeJuice"
+  ];
+  var ProtocolContractSalt = {
+    ContractInstanceRegistry: new Fr(1),
+    ContractClassRegistry: new Fr(1),
+    FeeJuice: new Fr(1)
+  };
+  var ProtocolContractAddress = {
+    ContractInstanceRegistry: AztecAddress.fromBigIntUnsafe(2n),
+    ContractClassRegistry: AztecAddress.fromBigIntUnsafe(1n),
+    FeeJuice: AztecAddress.fromBigIntUnsafe(3n)
+  };
+  var ProtocolContractDerivedAddress = {
+    ContractInstanceRegistry: AztecAddress.fromStringUnsafe("0x2b937086a6b367070f03fd007b932f64fcce36501ffcad6ff7c73f1d116e1c77"),
+    ContractClassRegistry: AztecAddress.fromStringUnsafe("0x2b95cb98fbd2723c66350f27310e670ff9faeaa8ca100ce83a3195e4d8235e17"),
+    FeeJuice: AztecAddress.fromStringUnsafe("0x064e81954bc70f4c8e060d4fa2ba0427eff0fe10f1f5aa57bf8f93c8745fac79")
+  };
+  var ProtocolContractClassId = {
+    ContractInstanceRegistry: Fr.fromString("0x250bc22bd53e83820ec12b83b41addb81073884ef63e7dc5261787bf92850f7f"),
+    ContractClassRegistry: Fr.fromString("0x010f027b753bf0e29dedc8e47a8bdda62211a7253b002b625cffb475495dc002"),
+    FeeJuice: Fr.fromString("0x1fa4d16bbcc242b144b07ee9a424083ee404ed9ce11037b24c465057b6a92c59")
+  };
+  var ProtocolContractClassIdPreimage = {
+    ContractInstanceRegistry: {
+      artifactHash: Fr.fromString("0x28f9ec60f51cd93bc2cd3d021d3a0d1847cd3b4b57ed6fb22435d422b3a0fb31"),
+      privateFunctionsRoot: Fr.fromString("0x2cab3dca97df25e1b2f62b64540799a1130f8d2cf41aff507909ec075cb3905b"),
+      publicBytecodeCommitment: Fr.fromString("0x1fd8380bb220e7d13db681da7e62c93b03add6754895a84c51d13fcde03e8d25")
+    },
+    ContractClassRegistry: {
+      artifactHash: Fr.fromString("0x21edcafeabc08ef1566c5f3ad3594449ab67812a5bb425a8e51b8c67e4d50bdb"),
+      privateFunctionsRoot: Fr.fromString("0x0cce8e37c65a1cf4365b585909228fcde42954d12737435d912d86186167b8cc"),
+      publicBytecodeCommitment: Fr.fromString("0x0ce4c618c3ed7f3a20410e618c06bb701e150af7fe28a3e92f68e7733809f33e")
+    },
+    FeeJuice: {
+      artifactHash: Fr.fromString("0x03a70c5c263a8968dc45863fbed9e409a23a4234175cc27eccd16e2fbdbdba8b"),
+      privateFunctionsRoot: Fr.fromString("0x056ab6386ea8654985dc89dc9f083b0e002df2459f12866bf498b0b5546412ff"),
+      publicBytecodeCommitment: Fr.fromString("0x2968eb109f722c701d59d171c32d32b79199841f0044d6bbd77dc43bd513a770")
+    }
+  };
+  var ProtocolContractInitializationHash = {
+    ContractInstanceRegistry: Fr.fromString("0x0000000000000000000000000000000000000000000000000000000000000000"),
+    ContractClassRegistry: Fr.fromString("0x0000000000000000000000000000000000000000000000000000000000000000"),
+    FeeJuice: Fr.fromString("0x0000000000000000000000000000000000000000000000000000000000000000")
+  };
+  var ProtocolContractPrivateFunctions = {
+    ContractInstanceRegistry: [
+      {
+        selector: FunctionSelector.fromField(Fr.fromString("0x0000000000000000000000000000000000000000000000000000000077cff62f")),
+        vkHash: Fr.fromString("0x0ba93c1df26342e4871884648597eba8204fe51b1295e00ecb69a011db1359b6")
+      }
+    ],
+    ContractClassRegistry: [
+      {
+        selector: FunctionSelector.fromField(Fr.fromString("0x000000000000000000000000000000000000000000000000000000006934ed0d")),
+        vkHash: Fr.fromString("0x1af8e7c965fa21b828e2307fb320fbf38038a42121495906aba2b80c3f072bd8")
+      }
+    ],
+    FeeJuice: [
+      {
+        selector: FunctionSelector.fromField(Fr.fromString("0x00000000000000000000000000000000000000000000000000000000cbe67243")),
+        vkHash: Fr.fromString("0x2e78182eafa9eedb8a75d0eabee8cc7031a41b2d630949979a9495f6be9d9e2e")
+      },
+      {
+        selector: FunctionSelector.fromField(Fr.fromString("0x00000000000000000000000000000000000000000000000000000000e8d374b6")),
+        vkHash: Fr.fromString("0x253da18011550ba749e4311e9dc5f59309a35c27b1d16e1f9ccb90bae9db1235")
+      }
+    ]
+  };
+  var ProtocolContractsList = new ProtocolContracts([
+    AztecAddress.fromStringUnsafe("0x2b95cb98fbd2723c66350f27310e670ff9faeaa8ca100ce83a3195e4d8235e17"),
+    AztecAddress.fromStringUnsafe("0x2b937086a6b367070f03fd007b932f64fcce36501ffcad6ff7c73f1d116e1c77"),
+    AztecAddress.fromStringUnsafe("0x064e81954bc70f4c8e060d4fa2ba0427eff0fe10f1f5aa57bf8f93c8745fac79"),
+    AztecAddress.fromStringUnsafe("0x0000000000000000000000000000000000000000000000000000000000000000"),
+    AztecAddress.fromStringUnsafe("0x0000000000000000000000000000000000000000000000000000000000000000"),
+    AztecAddress.fromStringUnsafe("0x0000000000000000000000000000000000000000000000000000000000000000"),
+    AztecAddress.fromStringUnsafe("0x0000000000000000000000000000000000000000000000000000000000000000"),
+    AztecAddress.fromStringUnsafe("0x0000000000000000000000000000000000000000000000000000000000000000"),
+    AztecAddress.fromStringUnsafe("0x0000000000000000000000000000000000000000000000000000000000000000"),
+    AztecAddress.fromStringUnsafe("0x0000000000000000000000000000000000000000000000000000000000000000"),
+    AztecAddress.fromStringUnsafe("0x0000000000000000000000000000000000000000000000000000000000000000")
+  ]);
+  var protocolContractsHash = Fr.fromString("0x0f54271c52865841a77aaa66036eed901aff22fdce9f08e123ec8b205c9854d7");
+  var ProtocolContractGenesisNullifiers = [
+    Fr.fromString("0x04287df03953b0d68b0e83e08a89067afc602626defd6002277cd6df34696818"),
+    Fr.fromString("0x0d99507b7ecac720c73bf197a0e7366a5ed80c1c1b0afe8ff8c6ecc7b5a7aefe"),
+    Fr.fromString("0x0eb50b367fb754d3a7d1238bfc105cc9b391a02e187be69038876ae9a502e877"),
+    Fr.fromString("0x16f917edd8e333013e5bb0633f7f484725bd19403854d6112992dccef4961e32"),
+    Fr.fromString("0x1cea539e01abaa5db980e7ff52ef0d2a7772310306ac625783ae435756ee326d"),
+    Fr.fromString("0x2c3a57c8d7c387652babd36c4d79ab03c0fe593e160315a4dc098f92caf592c3")
+  ];
+  var CONTRACT_INSTANCE_PUBLISHED_EVENT_TAG = Fr.fromHexString("0x1a7e1badb79abdd38c684b3c8306ffe7ecb33c69e3380d9855730aaaa83a21a8");
+
+  // node_modules/@aztec-labs/protocol-contracts/dest/protocol_contract.js
+  init_dirname();
+  init_buffer2();
+  init_process2();
+  function isProtocolContract(address6) {
+    return Object.values(ProtocolContractAddress).some((a) => a.equals(address6));
+  }
+  var protocolContractClassIds = new Set(Object.values(ProtocolContractClassId).map((id3) => id3.toString()));
+
   // node_modules/@aztec-labs/stdlib/dest/errors/index.js
   init_dirname();
   init_buffer2();
@@ -382844,306 +383815,6 @@ ${val.stack}`;
   init_dirname();
   init_buffer2();
   init_process2();
-
-  // node_modules/@aztec-labs/foundation/dest/queue/index.js
-  init_dirname();
-  init_buffer2();
-  init_process2();
-
-  // node_modules/@aztec-labs/foundation/dest/queue/fifo_memory_queue.js
-  init_dirname();
-  init_buffer2();
-  init_process2();
-
-  // node_modules/@aztec-labs/foundation/dest/queue/base_memory_queue.js
-  init_dirname();
-  init_buffer2();
-  init_process2();
-  var BaseMemoryQueue = class {
-    log;
-    waiting;
-    flushing;
-    constructor(log3 = createLogger("foundation:memory_fifo")) {
-      this.log = log3;
-      this.waiting = [];
-      this.flushing = false;
-    }
-    /**
-    * Returns the current number of items in the queue.
-    * The length represents the size of the queue at the time of invocation and may change as new items are added or consumed.
-    *
-    * @returns The number of items in the queue.
-    */
-    length() {
-      return this.items.length;
-    }
-    /**
-    * Returns next item within the queue, or undefined if the queue is empty. Does not block.
-    * @returns The next item in the queue.
-    */
-    getImmediate() {
-      return this.items.get();
-    }
-    /**
-    * Returns next item within the queue, or blocks until an item has been put into the queue.
-    *
-    * If given a timeout, the promise will reject if no item is received after `timeoutSec` seconds.
-    * If the timeout is undefined (default), this call will block until an item is available or the queue is closed.
-    * If the timeout is 0 and there are no items available then the queue will immediately reject with a TimeoutError.
-    *
-    * If the queue is flushing, `null` is returned.
-    * @param timeoutSec - The timeout in seconds.
-    * @returns A result promise.
-    */
-    get(timeoutSec) {
-      if (this.items.length) {
-        return Promise.resolve(this.items.get());
-      }
-      if (this.items.length === 0 && this.flushing) {
-        return Promise.resolve(null);
-      }
-      if (timeoutSec === 0) {
-        return Promise.reject(new TimeoutError("Timeout getting item from queue."));
-      }
-      return new Promise((resolve, reject) => {
-        this.waiting.push(resolve);
-        if (timeoutSec) {
-          setTimeout(() => {
-            const index = this.waiting.findIndex((r) => r === resolve);
-            if (index > -1) {
-              this.waiting.splice(index, 1);
-              const err2 = new TimeoutError("Timeout getting item from queue.");
-              reject(err2);
-            }
-          }, timeoutSec * 1e3);
-        }
-      });
-    }
-    /**
-    * Put an item onto back of the queue.
-    * @param item - The item to enqueue.
-    * @returns A boolean indicating whether the item was successfully added to the queue.
-    */
-    put(item) {
-      if (this.flushing) {
-        this.log.warn("Discarding item because queue is flushing");
-        return false;
-      } else if (this.waiting.length) {
-        this.waiting.shift()(item);
-        return true;
-      } else {
-        this.items.put(item);
-        return true;
-      }
-    }
-    /** Discards pending items without affecting waiting consumers, active handlers, or the queue's open/closed state. */
-    clear() {
-      this.items.clear();
-    }
-    /**
-    * Once ended, no further items are added to queue. Consumers will consume remaining items within the queue.
-    * The queue is not reusable after calling `end()`.
-    * Any consumers waiting for an item receive null.
-    */
-    end() {
-      this.flushing = true;
-      this.waiting.forEach((resolve) => resolve(null));
-    }
-    /**
-    * Once cancelled, all items are discarded from the queue, and no further items are added to the queue.
-    * The queue is not reusable after calling `cancel()`.
-    * Any consumers waiting for an item receive null.
-    */
-    cancel() {
-      this.flushing = true;
-      this.items.clear();
-      this.waiting.forEach((resolve) => resolve(null));
-    }
-    /**
-    * Process items from the queue using a provided handler function.
-    * The function iterates over items in the queue, invoking the handler for each item until the queue is empty and flushing.
-    * If the handler throws an error, it will be caught and logged as 'Queue handler exception:', but the iteration will continue.
-    * The process function returns a promise that resolves when there are no more items in the queue and the queue is flushing.
-    *
-    * @param handler - A function that takes an item of type T and returns a Promise<void> after processing the item.
-    * @returns A Promise<void> that resolves when the queue is finished processing.
-    */
-    async process(handler) {
-      try {
-        while (true) {
-          const item = await this.get();
-          if (item === null) {
-            break;
-          }
-          await handler(item);
-        }
-      } catch (err2) {
-        this.log.error("Queue handler exception", err2);
-      }
-    }
-  };
-
-  // node_modules/@aztec-labs/foundation/dest/queue/fifo_memory_queue.js
-  var FifoMemoryQueue = class extends BaseMemoryQueue {
-    container = new FifoQueue();
-    constructor(log3) {
-      super(log3);
-    }
-    get items() {
-      return this.container;
-    }
-  };
-  var FifoQueue = class {
-    items = [];
-    put(item) {
-      this.items.push(item);
-    }
-    get() {
-      return this.items.shift();
-    }
-    get length() {
-      return this.items.length;
-    }
-    clear() {
-      this.items = [];
-    }
-  };
-
-  // node_modules/@aztec-labs/foundation/dest/queue/priority_memory_queue.js
-  init_dirname();
-  init_buffer2();
-  init_process2();
-
-  // node_modules/@aztec-labs/foundation/dest/queue/priority_queue.js
-  init_dirname();
-  init_buffer2();
-  init_process2();
-
-  // node_modules/@aztec-labs/foundation/dest/queue/serial_queue.js
-  init_dirname();
-  init_buffer2();
-  init_process2();
-  var SerialQueue = class {
-    queue = new FifoMemoryQueue();
-    runningPromises = [];
-    started = false;
-    /**
-    * Initializes the execution of enqueued functions in the serial queue.
-    * Functions are executed in the order they were added to the queue, with each function
-    * waiting for the completion of the previous one before starting its execution.
-    * This method should be called once to start processing the queue.
-    */
-    start(numWorkers = 1) {
-      if (this.started) {
-        return;
-      }
-      this.runningPromises = Array.from({
-        length: numWorkers
-      }, () => this.queue.process((fn) => fn()));
-      this.started = true;
-    }
-    /**
-    * Returns the current number of enqueued functions in the serial queue.
-    * This provides a way to check the size of the queue and monitor its progress.
-    *
-    * @returns The length of the serial queue as a number.
-    */
-    length() {
-      return this.queue.length();
-    }
-    /**
-    * Cancels the processing of the remaining functions in the serial queue and resolves the running promise.
-    * Any enqueued functions that have not yet been executed will be discarded. The queue can still accept new
-    * functions after cancellation, but the previously enqueued functions will not be re-processed.
-    *
-    * @returns The running promise which resolves when the current executing function (if any) completes.
-    */
-    cancel() {
-      this.queue.cancel();
-      return Promise.all(this.runningPromises).then(() => {
-      });
-    }
-    /**
-    * Signals the SerialQueue that it should finish processing its current task and stop accepting new tasks.
-    * The returned Promise resolves when all enqueued tasks have completed execution.
-    *
-    * @returns A Promise that resolves when the queue is completely emptied and no new tasks are allowed.
-    */
-    end() {
-      this.queue.end();
-      return Promise.all(this.runningPromises).then(() => {
-      });
-    }
-    /**
-    * Enqueues fn for execution on the serial queue.
-    * Returns the result of the function after execution.
-    * @param fn - The function to enqueue.
-    * @returns A resolution promise. Rejects if the function does, or if the function could not be enqueued.
-    */
-    put(fn) {
-      return new Promise((resolve, reject) => {
-        const accepted2 = this.queue.put(async () => {
-          try {
-            const res = await fn();
-            resolve(res);
-          } catch (e) {
-            reject(e);
-          }
-        });
-        if (!accepted2) {
-          reject(new Error("Could not enqueue function"));
-        }
-      });
-    }
-    /**
-    * Awaiting this ensures the queue is empty before resuming.
-    */
-    async syncPoint() {
-      await this.put(async () => {
-      });
-    }
-  };
-
-  // node_modules/@aztec-labs/foundation/dest/queue/bounded_serial_queue.js
-  init_dirname();
-  init_buffer2();
-  init_process2();
-
-  // node_modules/@aztec-labs/foundation/dest/queue/semaphore.js
-  init_dirname();
-  init_buffer2();
-  init_process2();
-  var Semaphore = class {
-    queue = new FifoMemoryQueue();
-    constructor(size2) {
-      new Array(size2).fill(true).map(() => this.queue.put(true));
-    }
-    /**
-    * Acquires a token from the Semaphore, allowing access to a limited resource.
-    * If no tokens are available, the call will block and wait until a token is released.
-    * Use in conjunction with the release() method to manage access to resources with limited capacity.
-    *
-    * @returns A Promise that resolves when a token is acquired.
-    */
-    async acquire() {
-      await this.queue.get();
-    }
-    /**
-    * Releases a token back into the semaphore, allowing another acquire call to proceed.
-    * If there are any pending calls to acquire(), one of them will be unblocked and allowed to proceed.
-    * This method should only be called by the holder of the acquired token to ensure proper functionality
-    * and avoid unexpected behavior.
-    */
-    release() {
-      this.queue.put(true);
-    }
-  };
-
-  // node_modules/@aztec-labs/foundation/dest/queue/batch_queue.js
-  init_dirname();
-  init_buffer2();
-  init_process2();
-  init_pino_logger();
 
   // node_modules/@aztec-labs/pxe/dest/block_synchronizer/block_stream_source.js
   init_dirname();
@@ -383193,7 +383864,7 @@ ${val.stack}`;
     isSyncing;
     eventQueue;
     blockStream;
-    constructor(node2, store, anchorBlockStore, rollbackables, l2TipsStore, contractSyncService, config9 = {}, bindings) {
+    constructor(node2, store, anchorBlockStore, rollbackables, l2TipsStore, contractSyncService, config9 = {}, bindings2) {
       this.node = node2;
       this.store = store;
       this.anchorBlockStore = anchorBlockStore;
@@ -383202,7 +383873,7 @@ ${val.stack}`;
       this.contractSyncService = contractSyncService;
       this.config = config9;
       this.eventQueue = new SerialQueue();
-      this.log = createLogger("pxe:block_synchronizer", bindings);
+      this.log = createLogger("pxe:block_synchronizer", bindings2);
       this.blockStream = this.createBlockStream();
       this.eventQueue.start();
     }
@@ -383474,8 +384145,8 @@ ${val.stack}`;
       return "0x" + this.toBuffer().toString("hex");
     }
     static fromString(str) {
-      const hex17 = str.replace(/^0x/, "");
-      return _NoteDao.fromBuffer(Buffer2.from(hex17, "hex"));
+      const hex18 = str.replace(/^0x/, "");
+      return _NoteDao.fromBuffer(Buffer2.from(hex18, "hex"));
     }
     /**
     * Returns true if this note is equal to the `other` one.
@@ -384347,7 +385018,7 @@ ${val.stack}`;
     "043d269d2aa5e4cff642ac81dbf816db480fff3cd9f462b7a2c8c1bf14621699",
     "116ae380e0db24fb20e252d05a1afd523bb143bb5b50dc7e2ccf1db7fd5f50e9",
     "13eeb174d4119b221a22721853261759f57a65a57e864ad78b840b23cde69e02"
-  ].map((hex17) => Buffer2.from(hex17, "hex")));
+  ].map((hex18) => Buffer2.from(hex18, "hex")));
 
   // node_modules/@aztec-labs/noir-protocol-circuits-types/dest/artifacts/vks/tree.js
   function getVKTreeRoot() {
@@ -385201,8 +385872,8 @@ ${val.stack}`;
     }
     return `0x${adaptBufferSize(buffer).toString("hex")}`;
   }
-  function toACVMWitness(witnessStartIndex, fields) {
-    return fields.reduce((witness, field5, index) => {
+  function toACVMWitness(witnessStartIndex, fields2) {
+    return fields2.reduce((witness, field5, index) => {
       witness.set(index + witnessStartIndex, toACVMField(field5));
       return witness;
     }, /* @__PURE__ */ new Map());
@@ -385395,133 +386066,6 @@ ${val.stack}`;
   init_buffer2();
   init_process2();
 
-  // node_modules/@aztec-labs/pxe/dest/storage/base_staging_store.js
-  init_dirname();
-  init_buffer2();
-  init_process2();
-  var BaseStagingStore = class {
-    storeName;
-    #store;
-    #db;
-    #buildChangeSet;
-    #lock = new Semaphore(1);
-    /** The change set currently open, if any. */
-    #current;
-    constructor({ storeName, store, buildChangeSet, buildDb }) {
-      this.storeName = storeName;
-      this.#store = store;
-      this.#buildChangeSet = buildChangeSet;
-      this.#db = buildDb(store);
-    }
-    /**
-    * Opens the change set, so its operations are accepted until {@link commitChangeSet} or {@link discardChangeSet}.
-    *
-    * @throws If a change set is already open.
-    */
-    beginChangeSet(changeSetId) {
-      if (this.#current !== void 0) {
-        throw new Error(`Store "${this.storeName}": cannot open change set "${changeSetId}" because change set "${this.#current.changeSetId}" is already open`);
-      }
-      this.#current = {
-        changeSetId,
-        changeSet: this.#buildChangeSet(),
-        inFlight: 0
-      };
-    }
-    /**
-    * Commits the change set's staged data: flushes it via {@link flushChangeSet}, then closes the change set. Runs
-    * inside the transaction owned by the caller.
-    *
-    * Not meant to be overridden: subclasses implement {@link flushChangeSet}.
-    *
-    * @throws If the change set is not open, or still has operations in flight.
-    */
-    async commitChangeSet(changeSetId) {
-      const current = this.#currentOrThrow(changeSetId);
-      if (current.inFlight > 0) {
-        throw new Error(`Store "${this.storeName}": cannot commit change set "${changeSetId}" while ${current.inFlight} of its operations are in flight`);
-      }
-      await this.flushChangeSet(current.changeSet, this.#db);
-      this.#closeChangeSet(changeSetId);
-    }
-    /** Closes the change set, discarding any staged data without committing. A no-op if it is not open. */
-    discardChangeSet(changeSetId) {
-      this.#closeChangeSet(changeSetId);
-    }
-    /**
-    * Rolls the store back to `toBlock` via {@link applyRollback}.
-    *
-    * Must be called inside a transaction owned by the caller, since it opens none of its own.
-    *
-    * Not meant to be overridden: subclasses implement {@link applyRollback}.
-    *
-    * @throws If a change set is open, since its staged writes could later be committed anchored to deleted blocks.
-    */
-    async rollbackToBlock(toBlock) {
-      if (this.#current !== void 0) {
-        throw new Error(`Store "${this.storeName}": cannot roll back while change set "${this.#current.changeSetId}" is open`);
-      }
-      await this.applyRollback(toBlock, this.#db);
-    }
-    /**
-    * Runs a change set operation that reads the DB. Takes the store's lock, opens a transaction, and calls `fn` with
-    * the change set's staged data and a read-only view of the DB (writes are staged in memory until
-    * {@link flushChangeSet} runs on commit).
-    *
-    * Prefer {@link withChangeSet} unless `fn` actually reads the DB.
-    *
-    * The lock makes the store thread safe: two operations issued concurrently (e.g. under `Promise.all`) cannot
-    * interleave across awaits, so `fn` can read staged data and write it back without handling atomicity itself.
-    *
-    * @throws If the change set is not open.
-    */
-    withChangeSetAndDb(changeSetId, fn) {
-      return this.#runLocked(changeSetId, () => this.#store.transactionAsync(() => {
-        const current = this.#currentOrThrow(changeSetId);
-        return fn(current.changeSet, this.#db);
-      }));
-    }
-    /**
-    * Runs a change set operation over the staged data alone: takes the store's lock and calls `fn` with the change
-    * set's staged data, opening no db transaction.
-    *
-    * Use {@link withChangeSetAndDb} instead when `fn` reads the DB.
-    *
-    * @throws If the change set is not open.
-    */
-    withChangeSet(changeSetId, fn) {
-      return this.#runLocked(changeSetId, async () => {
-        const current = this.#currentOrThrow(changeSetId);
-        return await fn(current.changeSet);
-      });
-    }
-    async #runLocked(changeSetId, run) {
-      const entered = this.#currentOrThrow(changeSetId);
-      entered.inFlight++;
-      try {
-        await this.#lock.acquire();
-        try {
-          return await run();
-        } finally {
-          this.#lock.release();
-        }
-      } finally {
-        entered.inFlight--;
-      }
-    }
-    #currentOrThrow(changeSetId) {
-      if (this.#current?.changeSetId !== changeSetId) {
-        throw new Error(`Store "${this.storeName}": change set "${changeSetId}" is not open`);
-      }
-      return this.#current;
-    }
-    #closeChangeSet(changeSetId) {
-      if (this.#current?.changeSetId === changeSetId) {
-        this.#current = void 0;
-      }
-    }
-  };
-
   // node_modules/@aztec-labs/pxe/dest/storage/fact_store/fact_store_keys.js
   init_dirname();
   init_buffer2();
@@ -385541,8 +386085,8 @@ ${val.stack}`;
       this.factCollectionTypeId = factCollectionTypeId;
       assertNonZeroScope(scope);
     }
-    static from(fields) {
-      return new _FactCollectionTypeKey(fields.contractAddress, fields.scope, fields.factCollectionTypeId);
+    static from(fields2) {
+      return new _FactCollectionTypeKey(fields2.contractAddress, fields2.scope, fields2.factCollectionTypeId);
     }
     toString() {
       return `${this.contractAddress}:${this.scope}:${this.factCollectionTypeId}`;
@@ -385560,8 +386104,8 @@ ${val.stack}`;
       this.factCollectionId = factCollectionId;
       assertNonZeroScope(scope);
     }
-    static from(fields) {
-      return new _FactCollectionKey(fields.contractAddress, fields.scope, fields.factCollectionTypeId, fields.factCollectionId);
+    static from(fields2) {
+      return new _FactCollectionKey(fields2.contractAddress, fields2.scope, fields2.factCollectionTypeId, fields2.factCollectionId);
     }
     /** Inverse of toString */
     static fromString(str) {
@@ -386533,8 +387077,8 @@ ${val.stack}`;
         return this.state.values;
       }
       const mapping = this.state.mapping;
-      return service.readArrayAt(this.state.slot).map((fields) => mapping.deserialization.fn([
-        FieldReader.asReader(fields)
+      return service.readArrayAt(this.state.slot).map((fields2) => mapping.deserialization.fn([
+        FieldReader.asReader(fields2)
       ]));
     }
   };
@@ -386558,8 +387102,8 @@ ${val.stack}`;
       this.eventCommitment = eventCommitment;
       this.txHash = txHash;
     }
-    static fromFields(fields) {
-      const reader = FieldReader.asReader(fields);
+    static fromFields(fields2) {
+      const reader = FieldReader.asReader(fields2);
       const contractAddress = AztecAddress.fromFieldUnsafe(reader.readField());
       const eventTypeId = EventSelector.fromField(reader.readField());
       const randomness = reader.readField();
@@ -386620,8 +387164,8 @@ ${val.stack}`;
       this.nullifier = nullifier;
       this.txHash = txHash;
     }
-    static fromFields(fields) {
-      const reader = FieldReader.asReader(fields);
+    static fromFields(fields2) {
+      const reader = FieldReader.asReader(fields2);
       const contractAddress = AztecAddress.fromFieldUnsafe(reader.readField());
       const owner = AztecAddress.fromFieldUnsafe(reader.readField());
       const storageSlot = reader.readField();
@@ -387745,22 +388289,22 @@ ${val.stack}`;
       ]
     };
   }
-  function STRUCT(fields) {
+  function STRUCT(fields2) {
     return {
       kind: "struct",
-      label: `{${structFieldLabels(fields)}}`,
-      fields,
-      serialization: fields.every((f) => f.type.serialization) ? {
+      label: `{${structFieldLabels(fields2)}}`,
+      fields: fields2,
+      serialization: fields2.every((f) => f.type.serialization) ? {
         fn: (value) => {
           const props = value;
-          return fields.flatMap((f) => f.type.serialization.fn(props[f.name]));
+          return fields2.flatMap((f) => f.type.serialization.fn(props[f.name]));
         }
       } : void 0,
-      deserialization: fields.every((f) => f.type.deserialization) ? {
+      deserialization: fields2.every((f) => f.type.deserialization) ? {
         fn: (readers) => {
           const props = {};
           let slot = 0;
-          for (const f of fields) {
+          for (const f of fields2) {
             const slotCount = f.type.shape.length;
             props[f.name] = f.type.deserialization.fn(readers.slice(slot, slot + slotCount));
             slot += slotCount;
@@ -387768,14 +388312,14 @@ ${val.stack}`;
           return props;
         }
       } : void 0,
-      shape: fields.flatMap((f) => f.type.shape)
+      shape: fields2.flatMap((f) => f.type.shape)
     };
   }
   function isStructMapping(type) {
     return type.kind === "struct";
   }
-  function structFieldLabels(fields) {
-    return fields.map((f) => isStructMapping(f.type) ? structFieldLabels(f.type.fields) : f.type.label).join(",");
+  function structFieldLabels(fields2) {
+    return fields2.map((f) => isStructMapping(f.type) ? structFieldLabels(f.type.fields) : f.type.label).join(",");
   }
   function uintFromField(field5, bits) {
     const max = 2n ** BigInt(bits) - 1n;
@@ -387808,35 +388352,35 @@ ${val.stack}`;
     }
     return width;
   }
-  function splitByShape(fields, shape) {
+  function splitByShape(fields2, shape) {
     const readers = [];
     let cursor = 0;
     shape.forEach((slot, i) => {
       if (slot === "scalar" || typeof slot === "object" && "len" in slot) {
         const width = slot === "scalar" ? 1 : slot.len;
-        if (cursor + width > fields.length) {
-          throw new Error(`Not enough fields to reconstruct shape: needed ${width}, had ${fields.length - cursor}`);
+        if (cursor + width > fields2.length) {
+          throw new Error(`Not enough fields to reconstruct shape: needed ${width}, had ${fields2.length - cursor}`);
         }
-        readers.push(new FieldReader(fields.slice(cursor, cursor + width)));
+        readers.push(new FieldReader(fields2.slice(cursor, cursor + width)));
         cursor += width;
       } else {
         if (i !== shape.length - 1) {
           throw new Error("A variable-width slot must be last to be reconstructed from a flat field array");
         }
-        readers.push(new FieldReader(fields.slice(cursor)));
-        cursor = fields.length;
+        readers.push(new FieldReader(fields2.slice(cursor)));
+        cursor = fields2.length;
       }
     });
-    if (cursor !== fields.length) {
-      throw new Error(`Malformed flattened value: ${fields.length - cursor} unexpected trailing field(s)`);
+    if (cursor !== fields2.length) {
+      throw new Error(`Malformed flattened value: ${fields2.length - cursor} unexpected trailing field(s)`);
     }
     return readers;
   }
   function serializeElement(element, value) {
     return element.serialization.fn(value).flat();
   }
-  function deserializeElement(element, fields) {
-    const readers = splitByShape(fields, element.shape);
+  function deserializeElement(element, fields2) {
+    const readers = splitByShape(fields2, element.shape);
     const value = element.deserialization.fn(readers);
     assertReadersConsumed(readers);
     return value;
@@ -388981,7 +389525,7 @@ ${val.stack}`;
             throw new Error(`Param '${param.name}' has no deserialization defined`);
           }
           const slotCount = slotsOf(param.type);
-          const readers = inputs.slice(offset, offset + slotCount).map((slot) => new FieldReader(slot.map((hex17) => Fr.fromString(hex17))));
+          const readers = inputs.slice(offset, offset + slotCount).map((slot) => new FieldReader(slot.map((hex18) => Fr.fromString(hex18))));
           offset += slotCount;
           const value = param.type.deserialization.fn(readers);
           assertReadersConsumed(readers);
@@ -389050,7 +389594,7 @@ ${val.stack}`;
           type: ARRAY(FIELD)
         }
       ],
-      serve: (handler, [level, message, fieldsSize, fields]) => handler.log(level, message, fieldsSize, fields)
+      serve: (handler, [level, message, fieldsSize, fields2]) => handler.log(level, message, fieldsSize, fields2)
     }),
     aztec_protocol_utl_getCapsule: protocolOracle("utl", {
       params: [
@@ -389685,17 +390229,17 @@ ${val.stack}`;
     const txHashesDropped = [];
     const txHashesWithExecutionReverted = [];
     for (let i = 0; i < receipts.length; i++) {
-      const receipt = receipts[i];
+      const receipt2 = receipts[i];
       const txHash = pending2[i];
-      if (receipt.status === TxStatus.FINALIZED) {
-        if (receipt.hasExecutionSucceeded()) {
+      if (receipt2.status === TxStatus.FINALIZED) {
+        if (receipt2.hasExecutionSucceeded()) {
           txHashesFinalized.push(txHash);
-        } else if (receipt.hasExecutionReverted()) {
+        } else if (receipt2.hasExecutionReverted()) {
           txHashesWithExecutionReverted.push(txHash);
         } else {
           throw new Error("Both hasExecutionSucceeded and hasExecutionReverted on the receipt returned false. This should never happen and it implies a bug. Please open an issue.");
         }
-      } else if (receipt.isDropped()) {
+      } else if (receipt2.isDropped()) {
         txHashesDropped.push(txHash);
       } else {
       }
@@ -389733,8 +390277,8 @@ ${val.stack}`;
       includeTxEffect: true
     })));
   }
-  function isFinalized(receipt) {
-    return receipt.status === TxStatus.FINALIZED;
+  function isFinalized(receipt2) {
+    return receipt2.status === TxStatus.FINALIZED;
   }
 
   // node_modules/@aztec-labs/pxe/dest/tagging/sender_sync/sync_sender_tagging_indexes.js
@@ -389754,8 +390298,8 @@ ${val.stack}`;
       await taggingStore.dropPendingIndexes(txHashesDropped, changeSetId);
       await taggingStore.finalizePendingIndexesOfSecret(secret, txHashesFinalizedFromLogs, changeSetId);
       await taggingStore.finalizePendingIndexes(txHashesFinalizedFromReceipts, changeSetId);
-      for (const receipt of receiptsWithExecutionReverted) {
-        await taggingStore.finalizePendingIndexesOfAPartiallyRevertedTx(receipt.txEffect, changeSetId);
+      for (const receipt2 of receiptsWithExecutionReverted) {
+        await taggingStore.finalizePendingIndexesOfAPartiallyRevertedTx(receipt2.txEffect, changeSetId);
       }
       newFinalizedIndex = await taggingStore.getLastFinalizedIndex(secret, changeSetId);
       if (previousFinalizedIndex !== newFinalizedIndex) {
@@ -390001,8 +390545,8 @@ ${val.stack}`;
     const module = name ? `${prefix}:${name}(${addrAbbrev})` : `${prefix}:Unknown(${addrAbbrev})`;
     return createLogger(module, options);
   }
-  function logContractMessage(logger3, level, message, fields) {
-    logger3[level](applyStringFormatting(message, fields));
+  function logContractMessage(logger3, level, message, fields2) {
+    logger3[level](applyStringFormatting(message, fields2));
   }
   async function displayDebugLogs(debugLogs, getContractName) {
     for (const log3 of debugLogs) {
@@ -390103,7 +390647,7 @@ ${val.stack}`;
     scopes;
     changeSetId;
     log;
-    constructor(aztecNode, anchorBlockHeader, l2TipsStore, keyStore, recipientTaggingStore, taggingSecretSourcesStore, addressStore, scopes, changeSetId, bindings) {
+    constructor(aztecNode, anchorBlockHeader, l2TipsStore, keyStore, recipientTaggingStore, taggingSecretSourcesStore, addressStore, scopes, changeSetId, bindings2) {
       this.aztecNode = aztecNode;
       this.anchorBlockHeader = anchorBlockHeader;
       this.l2TipsStore = l2TipsStore;
@@ -390113,7 +390657,7 @@ ${val.stack}`;
       this.addressStore = addressStore;
       this.scopes = scopes;
       this.changeSetId = changeSetId;
-      this.log = createLogger("pxe:log_service", bindings);
+      this.log = createLogger("pxe:log_service", bindings2);
     }
     /** Fetches all logs matching each request's tag, returning an array of log arrays (one per request). */
     async fetchLogsByTag(contractAddress, logRetrievalRequests) {
@@ -390845,13 +391389,13 @@ See docs for context: https://docs.aztec.network/errors/14`);
       }
       return this.aztecnrLogger;
     }
-    async log(level, message, _fieldsSize, fields) {
+    async log(level, message, _fieldsSize, fields2) {
       if (!LogLevels[level]) {
         throw new Error(`Invalid log level: ${level}`);
       }
       const { kind, message: strippedMessage } = stripAztecnrLogPrefix(message);
       const logger3 = kind == "aztecnr" ? await this.#getAztecnrLogger() : await this.#getContractLogger();
-      logContractMessage(logger3, LogLevels[level], strippedMessage, fields);
+      logContractMessage(logger3, LogLevels[level], strippedMessage, fields2);
     }
     /** Fetches pending tagged logs into a freshly allocated ephemeral array and returns it. */
     async getPendingTaggedLogsV2(scope, providedSecrets) {
@@ -390990,7 +391534,7 @@ See docs for context: https://docs.aztec.network/errors/14`);
     }
     // TODO(#11849): consider replacing this oracle with a pure Noir implementation of aes decryption.
     async decryptAes128(ciphertext, iv, symKey) {
-      const capacity = ciphertext.maxLength;
+      const capacity2 = ciphertext.maxLength;
       try {
         const aes128 = new Aes128();
         const plaintext = await aes128.decryptBufferCBC(Buffer2.from(ciphertext.data), Buffer2.from(iv), Buffer2.from(symKey));
@@ -390998,11 +391542,11 @@ See docs for context: https://docs.aztec.network/errors/14`);
           data: [
             ...plaintext
           ],
-          maxLength: capacity
+          maxLength: capacity2
         }));
       } catch {
         return Option.none({
-          maxLength: capacity
+          maxLength: capacity2
         });
       }
     }
@@ -391210,8 +391754,8 @@ See docs for context: https://docs.aztec.network/errors/14`);
       return new Map([
         ...known,
         ...misses.map((h, i) => {
-          const receipt = fetched[i];
-          if (!receipt.isMined() || !receipt.txEffect) {
+          const receipt2 = fetched[i];
+          if (!receipt2.isMined() || !receipt2.txEffect) {
             return [
               h.toString(),
               void 0
@@ -391220,11 +391764,11 @@ See docs for context: https://docs.aztec.network/errors/14`);
           return [
             h.toString(),
             {
-              noteHashes: receipt.txEffect.noteHashes,
-              nullifiers: receipt.txEffect.nullifiers,
-              l2BlockNumber: receipt.blockNumber,
-              l2BlockHash: receipt.blockHash,
-              txIndexInBlock: receipt.txIndexInBlock
+              noteHashes: receipt2.txEffect.noteHashes,
+              nullifiers: receipt2.txEffect.nullifiers,
+              l2BlockNumber: receipt2.blockNumber,
+              l2BlockHash: receipt2.blockHash,
+              txIndexInBlock: receipt2.txIndexInBlock
             }
           ];
         }).filter((entry) => entry[1] !== void 0)
@@ -391240,24 +391784,24 @@ See docs for context: https://docs.aztec.network/errors/14`);
     */
     #getTxReceiptWithEffect(txHash) {
       const key = txHash.toString();
-      let receipt = this.txReceiptsCache.get(key);
-      if (!receipt) {
-        receipt = this.aztecNode.getTxReceipt(txHash, {
+      let receipt2 = this.txReceiptsCache.get(key);
+      if (!receipt2) {
+        receipt2 = this.aztecNode.getTxReceipt(txHash, {
           includeTxEffect: true
         }).catch((err2) => {
           this.txReceiptsCache.delete(key);
           throw err2;
         });
-        this.txReceiptsCache.set(key, receipt);
+        this.txReceiptsCache.set(key, receipt2);
       }
-      return receipt;
+      return receipt2;
     }
     async #getTxEffectOption(txHash) {
-      const receipt = await this.#getTxReceiptWithEffect(txHash);
-      if (!receipt.isMined() || !receipt.txEffect || receipt.blockNumber > this.anchorBlockHeader.getBlockNumber()) {
+      const receipt2 = await this.#getTxReceiptWithEffect(txHash);
+      if (!receipt2.isMined() || !receipt2.txEffect || receipt2.blockNumber > this.anchorBlockHeader.getBlockNumber()) {
         return Option.none();
       }
-      return Option.some(this.#toTxEffectData(receipt.txEffect));
+      return Option.some(this.#toTxEffectData(receipt2.txEffect));
     }
     #toTxEffectData(txEffect) {
       return {
@@ -391426,11 +391970,11 @@ See docs for context: https://docs.aztec.network/errors/14`);
       if (privateContextInputsAsFields.length !== PRIVATE_CONTEXT_INPUTS_LENGTH) {
         throw new Error("Invalid private context inputs size");
       }
-      const fields = [
+      const fields2 = [
         ...privateContextInputsAsFields,
         ...args
       ];
-      return toACVMWitness(0, fields);
+      return toACVMWitness(0, fields2);
     }
     /**
     * Get the data for the newly created notes.
@@ -392646,8 +393190,8 @@ See docs for context: https://docs.aztec.network/errors/14`);
         includeTxEffect: true
       })));
       const txEffects = new Map(uniqueTxHashes.map((h, i) => {
-        const receipt = fetched[i];
-        if (!receipt.isMined() || !receipt.txEffect) {
+        const receipt2 = fetched[i];
+        if (!receipt2.isMined() || !receipt2.txEffect) {
           return [
             h.toString(),
             void 0
@@ -392656,11 +393200,11 @@ See docs for context: https://docs.aztec.network/errors/14`);
         return [
           h.toString(),
           {
-            data: receipt.txEffect,
-            l2BlockNumber: receipt.blockNumber,
-            l2BlockHash: receipt.blockHash,
-            txIndexInBlock: receipt.txIndexInBlock,
-            slotNumber: receipt.slotNumber
+            data: receipt2.txEffect,
+            l2BlockNumber: receipt2.blockNumber,
+            l2BlockHash: receipt2.blockHash,
+            txIndexInBlock: receipt2.txIndexInBlock,
+            slotNumber: receipt2.slotNumber
           }
         ];
       }).filter((entry) => entry[1] !== void 0));
@@ -392995,10 +393539,11 @@ See docs for context: https://docs.aztec.network/errors/14`);
   init_buffer2();
   init_process2();
   async function runOperation(args, fn) {
-    const { stagedWriteCoordinator, contributors: contributors2, changeSetId, log: log3 } = args;
+    const { stagedWriteCoordinator, contributors: contributors2, changeSetId, log: log3, beforeCommit } = args;
     try {
       const result = await fn();
       await allToCompletion(contributors2.map((contributor) => contributor.settle?.(changeSetId)));
+      if (beforeCommit !== void 0) await beforeCommit();
       log3.verbose(`Committing operation ${changeSetId}`, {
         changeSetId
       });
@@ -393115,7 +393660,11 @@ See docs for context: https://docs.aztec.network/errors/14`);
     * `forceSync` is set). If the operation succeeds, then all staged writes are committed. If it rejects, then all
     * staged writes are discarded.
     */
-    runSynced(fn, { errorContext, forceSync = false } = {}) {
+    runSynced(fn, options = {}) {
+      const { errorContext, forceSync = false } = options;
+      const descriptor = Object.getOwnPropertyDescriptor(options, "beforeCommit");
+      if (descriptor && (!("value" in descriptor) || typeof descriptor.value !== "function")) throw new Error("PXE_OPERATION_COMMIT_GUARD");
+      const beforeCommit = descriptor?.value;
       return this.run(async () => {
         const totalTimer = new Timer();
         const recording = this.node.startRecording();
@@ -393134,6 +393683,7 @@ See docs for context: https://docs.aztec.network/errors/14`);
           const operationArgs = {
             stagedWriteCoordinator: this.stagedWriteCoordinator,
             contributors: this.contributors,
+            beforeCommit,
             changeSetId,
             log: this.log
           };
@@ -393590,12 +394140,12 @@ ${context.join("\n")}`;
     fakeProofs;
     maxBatchSize;
     log;
-    constructor(oracle, proofCreator, fakeProofs = false, bindings, maxBatchSize = MAX_APPS_PER_KERNEL) {
+    constructor(oracle, proofCreator, fakeProofs = false, bindings2, maxBatchSize = MAX_APPS_PER_KERNEL) {
       this.oracle = oracle;
       this.proofCreator = proofCreator;
       this.fakeProofs = fakeProofs;
       this.maxBatchSize = maxBatchSize;
-      this.log = createLogger("pxe:private-kernel-execution-prover", bindings);
+      this.log = createLogger("pxe:private-kernel-execution-prover", bindings2);
     }
     /**
     * Generate a proof for a given transaction request and execution result.
@@ -393967,9 +394517,9 @@ ${context.join("\n")}`;
       ];
     }
     async writeToTree(delayedPublicMutableSlot, storageWrite) {
-      const fields = await this.toFields();
-      for (let i = 0; i < fields.length; i++) {
-        await storageWrite(delayedPublicMutableSlot.add(new Fr(i)), fields[i]);
+      const fields2 = await this.toFields();
+      for (let i = 0; i < fields2.length; i++) {
+        await storageWrite(delayedPublicMutableSlot.add(new Fr(i)), fields2[i]);
       }
     }
     static async getContractUpdateSlots(contractAddress) {
@@ -395222,20 +395772,28 @@ See docs for context: https://docs.aztec.network/errors/14`);
         }
         const targetStatus = filter.status ?? NoteStatus.ACTIVE;
         const candidates = /* @__PURE__ */ new Map();
-        for await (const nullifier of db.notesByContractAddress.getValuesAsync(filter.contractAddress.toString())) {
+        if (filter.siloedNullifier) {
+          const nullifier = filter.siloedNullifier.toString();
           candidates.set(nullifier, {
             notePromise: this.#readNote(changeSet, db, nullifier),
             nullificationPromise: this.#readNullifierEmission(changeSet, db, nullifier)
           });
-        }
-        for (const storedNote of changeSet.notes.values()) {
-          if (storedNote.noteDao.contractAddress.equals(filter.contractAddress)) {
-            const nullifier = storedNote.noteDao.siloedNullifier.toString();
-            if (!candidates.has(nullifier)) {
-              candidates.set(nullifier, {
-                notePromise: Promise.resolve(storedNote),
-                nullificationPromise: this.#readNullifierEmission(changeSet, db, nullifier)
-              });
+        } else {
+          for await (const nullifier of db.notesByContractAddress.getValuesAsync(filter.contractAddress.toString())) {
+            candidates.set(nullifier, {
+              notePromise: this.#readNote(changeSet, db, nullifier),
+              nullificationPromise: this.#readNullifierEmission(changeSet, db, nullifier)
+            });
+          }
+          for (const storedNote of changeSet.notes.values()) {
+            if (storedNote.noteDao.contractAddress.equals(filter.contractAddress)) {
+              const nullifier = storedNote.noteDao.siloedNullifier.toString();
+              if (!candidates.has(nullifier)) {
+                candidates.set(nullifier, {
+                  notePromise: Promise.resolve(storedNote),
+                  nullificationPromise: this.#readNullifierEmission(changeSet, db, nullifier)
+                });
+              }
             }
           }
         }
@@ -395251,8 +395809,10 @@ See docs for context: https://docs.aztec.network/errors/14`);
         const foundNotes = /* @__PURE__ */ new Map();
         for (const note of notes) {
           if (!note) {
+            if (filter.siloedNullifier) continue;
             throw new Error("PXE note database is corrupted.");
           }
+          if (!note.noteDao.contractAddress.equals(filter.contractAddress)) continue;
           const nullified = emissionByNullifier.get(note.noteDao.siloedNullifier.toString()) !== void 0;
           if (targetStatus === NoteStatus.ACTIVE && nullified) {
             continue;
@@ -396392,7 +396952,7 @@ See docs for context: https://docs.aztec.network/errors/14`);
     * @returns A promise that resolves PXE is ready to be used.
     */
     static async create({ node: node2, nodeDebug, store, proofCreator, simulator, protocolContractsProvider, preloadedContractsProvider, config: config9, loggerOrSuffix, hooks }) {
-      const bindings = loggerOrSuffix && typeof loggerOrSuffix !== "string" ? loggerOrSuffix.getBindings() : void 0;
+      const bindings2 = loggerOrSuffix && typeof loggerOrSuffix !== "string" ? loggerOrSuffix.getBindings() : void 0;
       const log3 = !loggerOrSuffix || typeof loggerOrSuffix === "string" ? createLogger(loggerOrSuffix ? `pxe:service:${loggerOrSuffix}` : `pxe:service`) : loggerOrSuffix;
       const info = await node2.getNodeInfo();
       const initialBlockHash = (await node2.getBlock(BlockNumber.ZERO))?.hash ?? GENESIS_BLOCK_HEADER_HASH3;
@@ -396400,9 +396960,11 @@ See docs for context: https://docs.aztec.network/errors/14`);
       const { addressStore, privateEventStore, contractStore, noteStore, anchorBlockStore, senderTaggingStore, taggingSecretSourcesStore, recipientTaggingStore, capsuleStore, keyStore, l2TipsStore, factStore } = openPxeStores(store, initialBlockHash);
       const readCachedNode = withCache(node2);
       const contractClassService = new ContractClassService(readCachedNode, contractStore);
-      const contractSyncService = new ContractSyncService(readCachedNode, contractStore, contractClassService, noteStore, createLogger("pxe:contract_sync", bindings), config9);
+      const contractSyncService = new ContractSyncService(readCachedNode, contractStore, contractClassService, noteStore, createLogger("pxe:contract_sync", bindings2), config9);
       const txResolver = new TxResolverService(readCachedNode);
+      const rollingRecoveryStore = new RollingPreferenceRecoveryStore(store);
       const stagedStores = [
+        rollingRecoveryStore,
         capsuleStore,
         senderTaggingStore,
         recipientTaggingStore,
@@ -396410,11 +396972,11 @@ See docs for context: https://docs.aztec.network/errors/14`);
         noteStore,
         factStore
       ];
-      const synchronizer = new BlockSynchronizer(readCachedNode, store, anchorBlockStore, stagedStores, l2TipsStore, contractSyncService, config9, bindings);
+      const synchronizer = new BlockSynchronizer(readCachedNode, store, anchorBlockStore, stagedStores, l2TipsStore, contractSyncService, config9, bindings2);
       const stagedWriteCoordinator = new StagedWriteCoordinator({
         kvStore: store,
         stagedStores,
-        bindings
+        bindings: bindings2
       });
       const debugUtils = new PXEDebugUtils(contractSyncService, noteStore);
       const operationQueue = new OperationQueue({
@@ -396429,6 +396991,13 @@ See docs for context: https://docs.aztec.network/errors/14`);
         log: log3
       });
       const pxe = new _PXE(readCachedNode, nodeDebug, store, synchronizer, keyStore, contractStore, noteStore, capsuleStore, factStore, anchorBlockStore, senderTaggingStore, taggingSecretSourcesStore, recipientTaggingStore, addressStore, privateEventStore, contractSyncService, contractClassService, txResolver, l2TipsStore, simulator, proverEnabled, proofCreator, protocolContractsProvider, preloadedContractsProvider, log3, operationQueue, debugUtils, hooks);
+      bindRollingPreferenceRecovery(
+        pxe,
+        rollingRecoveryStore,
+        config9.syncChainTip,
+        (page, guard, frame) => pxe.#rollingPreferencePage(page, { contextGuard: guard }, frame),
+        pxe.#rollingPreferenceHead.bind(pxe)
+      );
       debugUtils.setPXEHelpers((fn) => operationQueue.runSynced(fn, {
         forceSync: true
       }), pxe.#getSimulatorForTx.bind(pxe), pxe.#executeUtility.bind(pxe));
@@ -396632,8 +397201,8 @@ See docs for context: https://docs.aztec.network/errors/14`);
     * @param id - Identifier of the contract class.
     * @returns The contract artifact if found, undefined otherwise.
     */
-    async getContractArtifact(id2) {
-      return await this.contractStore.getContractArtifact(id2);
+    async getContractArtifact(id3) {
+      return await this.contractStore.getContractArtifact(id3);
     }
     /**
     * Registers a user account in PXE.
@@ -397098,10 +397667,281 @@ See docs for context: https://docs.aztec.network/errors/14`);
         ]
       });
     }
+    /** Experimental page ingestion. The trusted caller holds an account lease and
+     * supplies locally approved deployment pins, never HTTP-supplied authority.
+     * Counts describe this page only; no cursor, preference state or completion.
+     */
+    async processRollingPreferencePage(input2, options) {
+      return this.#rollingPreferencePage(input2, options);
+    }
+    async processRollingPreferenceRecovery(input2, options) {
+      return runRollingPreferenceRecovery(this, input2, options);
+    }
+    #rollingPreferenceHead(call2, noteStore, owner, anchor2, changeSetId) {
+      const simulator = new ContractFunctionSimulator({
+        contractStore: this.contractStore,
+        contractClassService: this.contractClassService,
+        noteStore,
+        keyStore: this.keyStore,
+        addressStore: this.addressStore,
+        aztecNode: this.node,
+        l2TipsStore: this.l2TipsStore,
+        senderTaggingStore: this.senderTaggingStore,
+        recipientTaggingStore: this.recipientTaggingStore,
+        taggingSecretSourcesStore: this.taggingSecretSourcesStore,
+        capsuleStore: this.capsuleStore,
+        factStore: this.factStore,
+        privateEventStore: this.privateEventStore,
+        simulator: this.simulator,
+        contractSyncService: this.contractSyncService,
+        txResolver: this.txResolver,
+        hooks: this.hooks
+      });
+      return this.#executeUtility(simulator, call2, [], [owner], anchor2, changeSetId);
+    }
+    async #rollingPreferencePage(input2, options, frame) {
+      const fail11 = () => {
+        throw new Error("PXE_PREFERENCE_PAGE_FAILED");
+      };
+      const check10 = (ok2) => {
+        if (!ok2) fail11();
+      };
+      const own2 = (object7, key) => {
+        const d = object7 && Object.getOwnPropertyDescriptor(object7, key);
+        if (!d || !("value" in d)) return fail11();
+        return d.value;
+      };
+      const exact3 = (object7, keys) => {
+        check10(object7 && Object.getPrototypeOf(object7) === Object.prototype);
+        check10(Reflect.ownKeys(object7).length === keys.length);
+        return Object.fromEntries(keys.map((key) => [key, own2(object7, key)]));
+      };
+      const field5 = (value) => {
+        check10(typeof value === "string" && /^0x[0-9a-f]{64}$/.test(value));
+        check10(BigInt(value) > 0n && BigInt(value) < Fr.MODULUS);
+        return value;
+      };
+      const natural2 = (value, maximum, minimum = 0) => {
+        check10(Number.isSafeInteger(value) && value >= minimum && value <= maximum);
+        return value;
+      };
+      try {
+        const p = exact3(input2, [
+          "contractAddress",
+          "scope",
+          "expectedClassId",
+          "expectedArtifactHash",
+          "network",
+          "proofsEnabled",
+          "blockNumber",
+          "blockHash",
+          "txHash",
+          "firstLog",
+          "logCount",
+          "compactFields",
+          "headerFields"
+        ]);
+        const snapshotFields2 = (value, maximum, minimum) => {
+          check10(Array.isArray(value));
+          const length = natural2(own2(value, "length"), maximum, minimum);
+          const copy3 = [];
+          for (let i = 0; i < length; i++) {
+            const item = own2(value, String(i));
+            check10(typeof item === "string" && /^0x[0-9a-f]{64}$/.test(item) && BigInt(item) < Fr.MODULUS);
+            copy3.push(item);
+          }
+          return copy3;
+        };
+        p.compactFields = snapshotFields2(p.compactFields, 24575, 7);
+        p.headerFields = snapshotFields2(p.headerFields, 23, 23);
+        check10((p.compactFields.length + p.headerFields.length) * 69 + 2048 <= 2 * 1024 * 1024);
+        const guard = exact3(options, ["contextGuard"]).contextGuard;
+        check10(typeof guard === "function");
+        for (const key of ["contractAddress", "scope", "expectedClassId", "expectedArtifactHash", "blockHash", "txHash"]) p[key] = field5(p[key]);
+        p.network = exact3(p.network, ["chainId", "version", "rollup"]);
+        natural2(p.network.chainId, Number.MAX_SAFE_INTEGER, 1);
+        natural2(p.network.version, 4294967295, 1);
+        check10(typeof p.network.rollup === "string" && /^0x[0-9a-f]{40}$/.test(p.network.rollup));
+        check10(typeof p.proofsEnabled === "boolean" && p.proofsEnabled === this.proverEnabled);
+        natural2(p.blockNumber, 4294967295, 1);
+        natural2(p.firstLog, MAX_PRIVATE_LOGS_PER_TX - 1);
+        natural2(p.logCount, 8, 1);
+        check10(p.firstLog + p.logCount <= MAX_PRIVATE_LOGS_PER_TX);
+        const address6 = AztecAddress.fromFieldUnsafe(Fr.fromString(p.contractAddress)), scope = AztecAddress.fromFieldUnsafe(Fr.fromString(p.scope));
+        const classId = Fr.fromString(p.expectedClassId), txHash = TxHash.fromString(p.txHash);
+        let validateCommit;
+        const beforeCommit = async () => {
+          check10(typeof validateCommit === "function");
+          await validateCommit();
+        };
+        await guard();
+        const execute = async ({ changeSetId, anchorBlockHeader }) => {
+          await guard();
+          const anchor2 = BlockHeader.fromBuffer(BlockHeader.prototype.toBuffer.call(anchorBlockHeader));
+          const anchorHash = (await anchor2.hash()).toString();
+          check10(p.blockNumber <= anchor2.getBlockNumber());
+          const canonical2 = async () => {
+            const info = await this.node.getNodeInfo();
+            check10(info.l1ChainId === p.network.chainId && info.rollupVersion === p.network.version && info.l1ContractAddresses.rollupAddress.toString().toLowerCase() === p.network.rollup && info.realProofs === p.proofsEnabled);
+            for (const [number20, hash12] of [[anchor2.getBlockNumber(), anchorHash], [p.blockNumber, p.blockHash]]) {
+              const data = await this.node.getBlockData(BlockNumber(number20));
+              check10(data && data.blockHash.toString() === hash12);
+              const h = BlockHeader.fromBuffer(BlockHeader.prototype.toBuffer.call(data.header));
+              check10(h.getBlockNumber() === number20 && (await h.hash()).toString() === hash12 && h.globalVariables.chainId.toBigInt() === BigInt(p.network.chainId) && h.globalVariables.version.toBigInt() === BigInt(p.network.version));
+            }
+            const observed = await this.node.getContract(address6, await anchor2.toBlockParameter());
+            check10(observed);
+            const instance = SerializableContractInstance.fromBuffer(new SerializableContractInstance(observed).toBuffer());
+            check10(instance.currentContractClassId.equals(classId) && instance.originalContractClassId.equals(classId) && (await computeContractAddressFromInstance(instance)).equals(address6));
+            await guard();
+          };
+          await canonical2();
+          const artifact = await this.contractStore.getContractArtifact(classId);
+          check10(artifact && artifact.name === "RollingBoard");
+          const artifactHash = await computeArtifactHash(artifact);
+          check10(artifactHash.toString() === p.expectedArtifactHash);
+          const computedClass = await getContractClassFromArtifact({ ...artifact, artifactHash });
+          check10(computedClass.id.equals(classId));
+          const call2 = await this.contractStore.getFunctionCall(
+            "recover_preference_page",
+            [scope, txHash.hash, p.blockNumber, Fr.fromString(p.blockHash), p.firstLog, p.logCount],
+            address6,
+            classId
+          );
+          check10(call2.type === FunctionType.UTILITY);
+          const array7 = (value, max) => {
+            check10(Array.isArray(value) && value.length <= max);
+            return value;
+          };
+          const effectBytes = (effect2) => {
+            check10(effect2 instanceof TxEffect && effect2.txHash.equals(txHash));
+            array7(effect2.noteHashes, MAX_NOTE_HASHES_PER_TX);
+            array7(effect2.nullifiers, MAX_NULLIFIERS_PER_TX);
+            array7(effect2.l2ToL1Msgs, MAX_L2_TO_L1_MSGS_PER_TX);
+            array7(effect2.publicDataWrites, MAX_TOTAL_PUBLIC_DATA_UPDATE_REQUESTS_PER_TX);
+            array7(effect2.privateLogs, MAX_PRIVATE_LOGS_PER_TX);
+            array7(effect2.publicLogs, FLAT_PUBLIC_LOGS_PAYLOAD_LENGTH / PUBLIC_LOG_HEADER_LENGTH);
+            array7(effect2.contractClassLogs, MAX_CONTRACT_CLASS_LOGS_PER_TX);
+            for (const log3 of effect2.privateLogs) {
+              check10(array7(log3.fields, PRIVATE_LOG_SIZE_IN_FIELDS).length === PRIVATE_LOG_SIZE_IN_FIELDS);
+              natural2(log3.emittedLength, PRIVATE_LOG_SIZE_IN_FIELDS, 1);
+              check10(log3.hasZeroPadding());
+            }
+            let publicFields = 0;
+            for (const log3 of effect2.publicLogs) {
+              publicFields += array7(log3.fields, FLAT_PUBLIC_LOGS_PAYLOAD_LENGTH).length + PUBLIC_LOG_HEADER_LENGTH;
+              check10(publicFields <= FLAT_PUBLIC_LOGS_PAYLOAD_LENGTH);
+            }
+            for (const log3 of effect2.contractClassLogs) {
+              check10(array7(log3.fields.fields, CONTRACT_CLASS_LOG_SIZE_IN_FIELDS).length === CONTRACT_CLASS_LOG_SIZE_IN_FIELDS);
+              natural2(log3.emittedLength, CONTRACT_CLASS_LOG_SIZE_IN_FIELDS, 1);
+            }
+            check10(p.firstLog + p.logCount <= effect2.privateLogs.length);
+            return TxEffect.prototype.toBuffer.call(effect2);
+          };
+          const receipt2 = await this.node.getTxReceipt(txHash, { includeTxEffect: true });
+          check10(receipt2 instanceof MinedTxReceipt && receipt2.isMined() && receipt2.txHash.equals(txHash) && receipt2.blockNumber === p.blockNumber && receipt2.blockHash.toString() === p.blockHash && receipt2.txEffect);
+          const receiptFields = {
+            status: own2(receipt2, "status"),
+            executionResult: own2(receipt2, "executionResult"),
+            transactionFee: own2(receipt2, "transactionFee"),
+            blockNumber: p.blockNumber,
+            slotNumber: own2(receipt2, "slotNumber"),
+            txIndexInBlock: own2(receipt2, "txIndexInBlock"),
+            epochNumber: own2(receipt2, "epochNumber")
+          };
+          check10(["proposed", "checkpointed", "proven", "finalized"].includes(receiptFields.status));
+          check10(["success", "reverted"].includes(receiptFields.executionResult) && typeof receiptFields.transactionFee === "bigint");
+          natural2(receiptFields.slotNumber, Number.MAX_SAFE_INTEGER);
+          natural2(receiptFields.epochNumber, Number.MAX_SAFE_INTEGER);
+          natural2(receiptFields.txIndexInBlock, 6141);
+          const bytes3 = effectBytes(receipt2.txEffect);
+          const effect = TxEffect.fromBuffer(bytes3);
+          check10(receiptFields.transactionFee === effect.transactionFee.toBigInt() && receiptFields.executionResult === (effect.revertCode.isOK() ? "success" : "reverted"));
+          const metadata = await this.node.getBlockData(BlockNumber(p.blockNumber));
+          check10(metadata && metadata.blockHash.toString() === p.blockHash);
+          const header = BlockHeader.fromBuffer(BlockHeader.prototype.toBuffer.call(metadata.header));
+          check10((await header.hash()).toString() === p.blockHash && header.globalVariables.slotNumber === receiptFields.slotNumber);
+          const witness = await this.node.getTxEffectMembershipWitness(txHash);
+          check10(witness && witness.blockNumber === p.blockNumber && witness.root.equals(header.txEffectsTreeRoot));
+          const pathLength = witness.siblingPath.pathSize;
+          natural2(pathLength, 13);
+          check10(witness.siblingPath.toBufferArray().length === pathLength);
+          const leafIndex = witness.leafIndex;
+          check10(typeof leafIndex === "bigint" && leafIndex >= 0n && leafIndex < 1n << BigInt(pathLength));
+          const pinnedWitness = { leafIndex, siblingPath: new SiblingPath(pathLength, witness.siblingPath.toBufferArray().map((value) => Buffer2.from(value))) };
+          check10(await verifyTxEffectMembershipWitness(await effect.computeTxEffectsTreeLeaf(), pinnedWitness, header.txEffectsTreeRoot));
+          check10(header.toFields().every((value, index) => value.toString() === p.headerFields[index]));
+          const verified2 = await authenticateCompactBlock({
+            fields: p.compactFields,
+            headerFields: p.headerFields,
+            expectedBlockHash: p.blockHash,
+            assertCanonical: async () => {
+              await canonical2();
+              return true;
+            }
+          });
+          const selected = verified2.ciphertexts.filter((log3) => log3.txHash === p.txHash);
+          check10(selected.length === effect.privateLogs.length && selected.length > 0);
+          for (let i = 0; i < selected.length; i++) {
+            const emitted = effect.privateLogs[i].getEmittedFields();
+            check10(selected[i].txIndex === receiptFields.txIndexInBlock && selected[i].logIndex === i && selected[i].fields.length === emitted.length && emitted.every((value, index) => value.toString() === selected[i].fields[index]));
+          }
+          const detachedReceipt = () => MinedTxReceipt.from({ ...receiptFields, txHash: TxHash.fromString(p.txHash), blockHash: BlockHash.fromString(p.blockHash), txEffect: TxEffect.fromBuffer(bytes3), debugLogs: void 0 });
+          const pinnedNode = new Proxy(this.node, { get(target, key) {
+            if (key === "getTxReceipt") return async (hash12, opts) => {
+              check10(hash12 instanceof TxHash && hash12.equals(txHash) && exact3(opts, ["includeTxEffect"]).includeTxEffect === true);
+              return detachedReceipt();
+            };
+            const value = Reflect.get(target, key, target);
+            return typeof value === "function" ? value.bind(target) : value;
+          } });
+          const simulator = new ContractFunctionSimulator({
+            contractStore: this.contractStore,
+            contractClassService: this.contractClassService,
+            noteStore: this.noteStore,
+            keyStore: this.keyStore,
+            addressStore: this.addressStore,
+            aztecNode: pinnedNode,
+            l2TipsStore: this.l2TipsStore,
+            senderTaggingStore: this.senderTaggingStore,
+            recipientTaggingStore: this.recipientTaggingStore,
+            taggingSecretSourcesStore: this.taggingSecretSourcesStore,
+            capsuleStore: this.capsuleStore,
+            factStore: this.factStore,
+            privateEventStore: this.privateEventStore,
+            simulator: this.simulator,
+            contractSyncService: this.contractSyncService,
+            txResolver: this.txResolver,
+            hooks: this.hooks
+          });
+          await guard();
+          const result = await this.#executeUtility(simulator, call2, [], [scope], anchor2, changeSetId);
+          check10(result.offchainEffects.length === 0 && result.result.length === 1);
+          const admitted = Number(result.result[0].toBigInt());
+          natural2(admitted, p.logCount);
+          validateCommit = async () => {
+            await canonical2();
+            const after = await this.node.getTxReceipt(txHash, { includeTxEffect: true });
+            check10(after instanceof MinedTxReceipt && after.isMined() && after.txHash.equals(txHash) && after.blockNumber === p.blockNumber && after.blockHash.toString() === p.blockHash && after.txIndexInBlock === receiptFields.txIndexInBlock && after.slotNumber === receiptFields.slotNumber && after.transactionFee === receiptFields.transactionFee && after.executionResult === receiptFields.executionResult && effectBytes(after.txEffect).equals(bytes3));
+            await guard();
+          };
+          await validateCommit();
+          return Object.freeze({ schemaVersion: 1, processed: p.logCount, admitted });
+        };
+        if (frame) {
+          frame.validators.push(beforeCommit);
+          return await execute(frame);
+        }
+        return await this.operationQueue.runSynced(execute, { beforeCommit });
+      } catch {
+        throw new Error("PXE_PREFERENCE_PAGE_FAILED");
+      }
+    }
     /**
-    * Executes a contract utility function.
-    * @param call - The function call containing the function details, arguments, and target contract address.
-    */
+       * Executes a contract utility function.
+       * @param call - The function call containing the function details, arguments, and target contract address.
+       */
     executeUtility(call2, { authwits, scopes } = {
       scopes: []
     }) {
@@ -397720,25 +398560,25 @@ See docs for context: https://docs.aztec.network/errors/14`);
     toBuffer() {
       return serializeToBuffer(this.noteHashes, this.nullifiers, this.l2ToL1Msgs, this.publicLogs, this.publicDataWrites);
     }
-    static getFields(fields) {
+    static getFields(fields2) {
       return [
-        fields.noteHashes,
-        fields.nullifiers,
-        fields.l2ToL1Msgs,
-        fields.publicLogs,
-        fields.publicDataWrites
+        fields2.noteHashes,
+        fields2.nullifiers,
+        fields2.l2ToL1Msgs,
+        fields2.publicLogs,
+        fields2.publicDataWrites
       ];
     }
-    static fromFields(fields) {
-      const reader = FieldReader.asReader(fields);
+    static fromFields(fields2) {
+      const reader = FieldReader.asReader(fields2);
       return new this(reader.readFieldArray(MAX_NOTE_HASHES_PER_TX), reader.readFieldArray(MAX_NULLIFIERS_PER_TX), reader.readArray(MAX_L2_TO_L1_MSGS_PER_TX, ScopedL2ToL1Message), reader.readObject(FlatPublicLogs), reader.readArray(MAX_TOTAL_PUBLIC_DATA_UPDATE_REQUESTS_PER_TX, PublicDataWrite));
     }
     toFields() {
-      const fields = serializeToFields(..._AvmAccumulatedData.getFields(this));
-      if (fields.length !== AVM_ACCUMULATED_DATA_LENGTH) {
-        throw new Error(`Invalid number of fields for AvmAccumulatedData. Expected ${AVM_ACCUMULATED_DATA_LENGTH}, got ${fields.length}`);
+      const fields2 = serializeToFields(..._AvmAccumulatedData.getFields(this));
+      if (fields2.length !== AVM_ACCUMULATED_DATA_LENGTH) {
+        throw new Error(`Invalid number of fields for AvmAccumulatedData. Expected ${AVM_ACCUMULATED_DATA_LENGTH}, got ${fields2.length}`);
       }
-      return fields;
+      return fields2;
     }
     static fromString(str) {
       return this.fromBuffer(hexToBuffer(str));
@@ -397802,8 +398642,8 @@ See docs for context: https://docs.aztec.network/errors/14`);
     toBuffer() {
       return serializeToBuffer(this.noteHashes, this.nullifiers, this.l2ToL1Msgs, this.publicDataWrites);
     }
-    static fromFields(fields) {
-      const reader = FieldReader.asReader(fields);
+    static fromFields(fields2) {
+      const reader = FieldReader.asReader(fields2);
       return new _AvmAccumulatedDataArrayLengths(Number(reader.readField()), Number(reader.readField()), Number(reader.readField()), Number(reader.readField()));
     }
     toFields() {
@@ -397902,9 +398742,9 @@ See docs for context: https://docs.aztec.network/errors/14`);
     });
     (0, import_msgpackr5.addExtension)({
       Class: AppendOnlyTreeSnapshot,
-      write: (snapshot) => ({
-        ...snapshot,
-        nextAvailableLeafIndex: BigInt(snapshot.nextAvailableLeafIndex)
+      write: (snapshot2) => ({
+        ...snapshot2,
+        nextAvailableLeafIndex: BigInt(snapshot2.nextAvailableLeafIndex)
       })
     });
     messagePackWasSetUp = true;
@@ -397999,8 +398839,8 @@ See docs for context: https://docs.aztec.network/errors/14`);
     toString() {
       return bufferToHex(this.toBuffer());
     }
-    static fromFields(fields) {
-      const reader = FieldReader.asReader(fields);
+    static fromFields(fields2) {
+      const reader = FieldReader.asReader(fields2);
       return new _AvmCircuitPublicInputs(GlobalVariables.fromFields(reader), ProtocolContracts.fromFields(reader), TreeSnapshots.fromFields(reader), Gas.fromFields(reader), GasSettings.fromFields(reader), GasFees.fromFields(reader), AztecAddress.fromFields(reader), reader.readField(), PublicCallRequestArrayLengths.fromFields(reader), reader.readArray(MAX_ENQUEUED_CALLS_PER_TX, PublicCallRequest), reader.readArray(MAX_ENQUEUED_CALLS_PER_TX, PublicCallRequest), PublicCallRequest.fromFields(reader), PrivateToAvmAccumulatedDataArrayLengths.fromFields(reader), PrivateToAvmAccumulatedDataArrayLengths.fromFields(reader), PrivateToAvmAccumulatedData.fromFields(reader), PrivateToAvmAccumulatedData.fromFields(reader), TreeSnapshots.fromFields(reader), Gas.fromFields(reader), AvmAccumulatedDataArrayLengths.fromFields(reader), AvmAccumulatedData.fromFields(reader), reader.readField(), reader.readBoolean());
     }
     toFields() {
@@ -400164,13 +401004,13 @@ See docs for context: https://docs.aztec.network/errors/14`);
       this.#name = name;
       this.#log = log3;
       this.#worker.onmessage = (ev) => {
-        const { id: id2 } = ev.data;
-        const handler = this.#pending.get(id2);
+        const { id: id3 } = ev.data;
+        const handler = this.#pending.get(id3);
         if (!handler) {
-          this.#log.warn(`SQLite worker: no pending handler for id ${id2}`);
+          this.#log.warn(`SQLite worker: no pending handler for id ${id3}`);
           return;
         }
-        this.#pending.delete(id2);
+        this.#pending.delete(id3);
         handler.resolve(ev.data);
       };
       this.#worker.onerror = (ev) => {
@@ -400847,39 +401687,39 @@ See docs for context: https://docs.aztec.network/errors/14`);
       clearTimeout(timer);
     }
   }
-  function requireSuccessfulReceipt(receipt, txHash) {
-    if (hash8(receipt?.txHash) !== hash8(txHash) || !accepted.has(receipt?.status) || receipt.executionResult !== "success" || !Number.isSafeInteger(receipt.blockNumber) || receipt.blockNumber < 1 || !receipt.blockHash) {
+  function requireSuccessfulReceipt(receipt2, txHash) {
+    if (hash8(receipt2?.txHash) !== hash8(txHash) || !accepted.has(receipt2?.status) || receipt2.executionResult !== "success" || !Number.isSafeInteger(receipt2.blockNumber) || receipt2.blockNumber < 1 || !receipt2.blockHash) {
       throw transactionError("BB_TRANSACTION_FAILED", "Transaction does not have a successful confirmed receipt.");
     }
-    return receipt;
+    return receipt2;
   }
   async function readCanonicalReceipt(node2, txHash, { readTimeoutMs = 2e4 } = {}) {
-    const receipt = await boundedTransactionRead(() => node2.getTxReceipt(txHash), readTimeoutMs);
-    if (hash8(receipt?.txHash) !== hash8(txHash)) throw transactionError("BB_SUBMISSION_UNKNOWN", "Receipt identity does not match.");
-    if (pending.has(receipt.status) || receipt.status === "dropped") return null;
-    if (!accepted.has(receipt.status) || !Number.isSafeInteger(receipt.blockNumber) || receipt.blockNumber < 1 || !receipt.blockHash || !["success", "reverted"].includes(receipt.executionResult)) throw transactionError("BB_SUBMISSION_UNKNOWN", "Receipt is incomplete.");
-    const block2 = await boundedTransactionRead(() => node2.getBlock(receipt.blockNumber), readTimeoutMs);
-    if (!block2 || hash8(block2.hash) !== hash8(receipt.blockHash)) throw transactionError("BB_SUBMISSION_UNKNOWN", "Receipt block is not canonical.");
-    return receipt;
+    const receipt2 = await boundedTransactionRead(() => node2.getTxReceipt(txHash), readTimeoutMs);
+    if (hash8(receipt2?.txHash) !== hash8(txHash)) throw transactionError("BB_SUBMISSION_UNKNOWN", "Receipt identity does not match.");
+    if (pending.has(receipt2.status) || receipt2.status === "dropped") return null;
+    if (!accepted.has(receipt2.status) || !Number.isSafeInteger(receipt2.blockNumber) || receipt2.blockNumber < 1 || !receipt2.blockHash || !["success", "reverted"].includes(receipt2.executionResult)) throw transactionError("BB_SUBMISSION_UNKNOWN", "Receipt is incomplete.");
+    const block2 = await boundedTransactionRead(() => node2.getBlock(receipt2.blockNumber), readTimeoutMs);
+    if (!block2 || hash8(block2.hash) !== hash8(receipt2.blockHash)) throw transactionError("BB_SUBMISSION_UNKNOWN", "Receipt block is not canonical.");
+    return receipt2;
   }
   async function submitOnceWithReconciliation(node2, tx) {
     try {
       await boundedTransactionRead(() => node2.sendTx(tx));
     } catch {
-      let receipt;
+      let receipt2;
       try {
-        receipt = await boundedTransactionRead(() => node2.getTxReceipt(tx.getTxHash()));
+        receipt2 = await boundedTransactionRead(() => node2.getTxReceipt(tx.getTxHash()));
       } catch {
       }
-      if (hash8(receipt?.txHash) === hash8(tx.getTxHash())) {
-        if (pending.has(receipt?.status) || accepted.has(receipt?.status)) return receipt;
-        if (receipt?.status === "dropped") return classifyDroppedTransaction(node2, tx, receipt);
+      if (hash8(receipt2?.txHash) === hash8(tx.getTxHash())) {
+        if (pending.has(receipt2?.status) || accepted.has(receipt2?.status)) return receipt2;
+        if (receipt2?.status === "dropped") return classifyDroppedTransaction(node2, tx, receipt2);
       }
       throw transactionError("BB_SUBMISSION_UNKNOWN", "Submission outcome is unknown. Reconcile this transaction before retrying.");
     }
   }
-  async function classifyDroppedTransaction(node2, tx, receipt) {
-    if (receipt?.status !== "dropped" || hash8(receipt.txHash) !== hash8(tx.getTxHash())) throw transactionError("BB_SUBMISSION_UNKNOWN", "Transaction identity is unavailable.");
+  async function classifyDroppedTransaction(node2, tx, receipt2) {
+    if (receipt2?.status !== "dropped" || hash8(receipt2.txHash) !== hash8(tx.getTxHash())) throw transactionError("BB_SUBMISSION_UNKNOWN", "Transaction identity is unavailable.");
     let validation, refreshed;
     try {
       validation = await boundedTransactionRead(() => node2.isValidTx(tx));
@@ -400899,28 +401739,28 @@ See docs for context: https://docs.aztec.network/errors/14`);
   }, readTimeoutMs = 2e4 } = {}) {
     const txHash = tx.getTxHash(), deadline = now() + timeoutMs;
     while (now() < deadline) {
-      let receipt;
+      let receipt2;
       try {
-        receipt = await boundedTransactionRead(() => node2.getTxReceipt(txHash), Math.min(readTimeoutMs, deadline - now()));
+        receipt2 = await boundedTransactionRead(() => node2.getTxReceipt(txHash), Math.min(readTimeoutMs, deadline - now()));
       } catch (error312) {
         if (error312?.code === "BB_SUBMISSION_UNKNOWN") throw error312;
       }
-      if (receipt) {
-        if (hash8(receipt.txHash) !== hash8(txHash)) throw transactionError("BB_SUBMISSION_UNKNOWN", "Receipt identity does not match.");
-        if (receipt.status === "dropped") receipt = await classifyDroppedTransaction(node2, tx, receipt);
-        if (accepted.has(receipt.status)) {
-          if (!Number.isSafeInteger(receipt.blockNumber) || receipt.blockNumber < 1 || !receipt.blockHash) throw transactionError("BB_SUBMISSION_UNKNOWN", "Receipt block identity is unavailable.");
+      if (receipt2) {
+        if (hash8(receipt2.txHash) !== hash8(txHash)) throw transactionError("BB_SUBMISSION_UNKNOWN", "Receipt identity does not match.");
+        if (receipt2.status === "dropped") receipt2 = await classifyDroppedTransaction(node2, tx, receipt2);
+        if (accepted.has(receipt2.status)) {
+          if (!Number.isSafeInteger(receipt2.blockNumber) || receipt2.blockNumber < 1 || !receipt2.blockHash) throw transactionError("BB_SUBMISSION_UNKNOWN", "Receipt block identity is unavailable.");
           let block2;
           try {
-            block2 = await boundedTransactionRead(() => node2.getBlock(receipt.blockNumber), Math.min(readTimeoutMs, deadline - now()));
+            block2 = await boundedTransactionRead(() => node2.getBlock(receipt2.blockNumber), Math.min(readTimeoutMs, deadline - now()));
           } catch (error312) {
             if (error312?.code === "BB_SUBMISSION_UNKNOWN") throw error312;
           }
-          if (!block2 || hash8(block2.hash) !== hash8(receipt.blockHash)) throw transactionError("BB_SUBMISSION_UNKNOWN", "Receipt block is not confirmed canonical.");
-          if (!["success", "reverted"].includes(receipt.executionResult)) throw transactionError("BB_SUBMISSION_UNKNOWN", "Receipt execution result is unavailable.");
-          return receipt;
+          if (!block2 || hash8(block2.hash) !== hash8(receipt2.blockHash)) throw transactionError("BB_SUBMISSION_UNKNOWN", "Receipt block is not confirmed canonical.");
+          if (!["success", "reverted"].includes(receipt2.executionResult)) throw transactionError("BB_SUBMISSION_UNKNOWN", "Receipt execution result is unavailable.");
+          return receipt2;
         }
-        if (!pending.has(receipt.status)) throw transactionError("BB_SUBMISSION_UNKNOWN", "Receipt status is unrecognized.");
+        if (!pending.has(receipt2.status)) throw transactionError("BB_SUBMISSION_UNKNOWN", "Receipt status is unrecognized.");
       }
       onPoll();
       await sleep2(Math.min(intervalMs, Math.max(0, deadline - now())));
@@ -401825,7 +402665,7 @@ See docs for context: https://docs.aztec.network/errors/14`);
         this.#activeStore = scheduled(tx.store);
         for (const container of this.#containers) container.db = this.#activeStore;
         const heartbeat = new Promise((resolveHeartbeat) => {
-          const fail9 = (error312) => {
+          const fail11 = (error312) => {
             callbackPending = false;
             rejectPending(error312);
             try {
@@ -401839,7 +402679,7 @@ See docs for context: https://docs.aztec.network/errors/14`);
             try {
               request = unwrap(tx.store).get("");
             } catch (error312) {
-              fail9(error312);
+              fail11(error312);
               return;
             }
             request.onsuccess = () => {
@@ -401847,7 +402687,7 @@ See docs for context: https://docs.aztec.network/errors/14`);
               if (callbackPending || pending2.length || inflight.size) next();
               else resolveHeartbeat({ ok: true });
             };
-            request.onerror = () => fail9(request.error);
+            request.onerror = () => fail11(request.error);
           };
           next();
         });
@@ -402457,7 +403297,7 @@ See docs for context: https://docs.aztec.network/errors/14`);
     bigint: () => bigint14,
     boolean: () => boolean14,
     catch: () => _catch10,
-    check: () => check5,
+    check: () => check6,
     cidrv4: () => cidrv410,
     cidrv6: () => cidrv610,
     clone: () => clone5,
@@ -402494,7 +403334,7 @@ See docs for context: https://docs.aztec.network/errors/14`);
     gte: () => _gte5,
     guid: () => guid10,
     hash: () => hash9,
-    hex: () => hex11,
+    hex: () => hex12,
     hostname: () => hostname10,
     httpUrl: () => httpUrl5,
     includes: () => _includes5,
@@ -403660,8 +404500,8 @@ See docs for context: https://docs.aztec.network/errors/14`);
   function uint8ArrayToBase64url5(bytes3) {
     return uint8ArrayToBase645(bytes3).replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
   }
-  function hexToUint8Array6(hex17) {
-    const cleanHex = hex17.replace(/^0x/, "");
+  function hexToUint8Array6(hex18) {
+    const cleanHex = hex18.replace(/^0x/, "");
     if (cleanHex.length % 2 !== 0) {
       throw new Error("Invalid hex string length");
     }
@@ -403937,12 +404777,12 @@ See docs for context: https://docs.aztec.network/errors/14`);
     emoji: () => emoji9,
     extendedDuration: () => extendedDuration5,
     guid: () => guid9,
-    hex: () => hex10,
+    hex: () => hex11,
     hostname: () => hostname9,
     html5Email: () => html5Email5,
     httpProtocol: () => httpProtocol5,
     idnEmail: () => idnEmail5,
-    integer: () => integer5,
+    integer: () => integer7,
     ipv4: () => ipv49,
     ipv6: () => ipv69,
     ksuid: () => ksuid9,
@@ -404048,14 +404888,14 @@ See docs for context: https://docs.aztec.network/errors/14`);
     return new RegExp(`^${regex}$`);
   };
   var bigint13 = /^-?\d+n?$/;
-  var integer5 = /^-?\d+$/;
+  var integer7 = /^-?\d+$/;
   var number13 = /^-?\d+(?:\.\d+)?$/;
   var boolean13 = /^(?:true|false)$/i;
   var _null13 = /^null$/i;
   var _undefined13 = /^undefined$/i;
   var lowercase5 = /^[^A-Z]*$/;
   var uppercase5 = /^[^a-z]*$/;
-  var hex10 = /^[0-9a-fA-F]*$/;
+  var hex11 = /^[0-9a-fA-F]*$/;
   function fixedBase645(bodyLength, padding) {
     return new RegExp(`^[A-Za-z0-9+/]{${bodyLength}}${padding}$`);
   }
@@ -404180,7 +405020,7 @@ See docs for context: https://docs.aztec.network/errors/14`);
       bag.minimum = minimum;
       bag.maximum = maximum;
       if (isInt)
-        bag.pattern = integer5;
+        bag.pattern = integer7;
     });
     inst._zod.check = (payload) => {
       const input2 = payload.value;
@@ -405495,42 +406335,42 @@ See docs for context: https://docs.aztec.network/errors/14`);
       }
       doc.write(`const newResult = {};`);
       for (const key of normalized.keys) {
-        const id2 = ids[key];
+        const id3 = ids[key];
         const k = esc5(key);
         const schema = shape[key];
         const isOptionalIn = schema?._zod?.optin === "optional";
         const isOptionalOut = schema?._zod?.optout === "optional";
-        doc.write(`const ${id2} = ${parseStr(key)};`);
+        doc.write(`const ${id3} = ${parseStr(key)};`);
         if (isOptionalIn && isOptionalOut) {
           doc.write(`
-        if (${id2}.issues.length) {
+        if (${id3}.issues.length) {
           if (${k} in input) {
-            payload.issues = payload.issues.concat(${id2}.issues.map(iss => ({
+            payload.issues = payload.issues.concat(${id3}.issues.map(iss => ({
               ...iss,
               path: iss.path ? [${k}, ...iss.path] : [${k}]
             })));
           }
         }
         
-        if (${id2}.value === undefined) {
+        if (${id3}.value === undefined) {
           if (${k} in input) {
             newResult[${k}] = undefined;
           }
         } else {
-          newResult[${k}] = ${id2}.value;
+          newResult[${k}] = ${id3}.value;
         }
         
       `);
         } else if (!isOptionalIn) {
           doc.write(`
-        const ${id2}_present = ${k} in input;
-        if (${id2}.issues.length) {
-          payload.issues = payload.issues.concat(${id2}.issues.map(iss => ({
+        const ${id3}_present = ${k} in input;
+        if (${id3}.issues.length) {
+          payload.issues = payload.issues.concat(${id3}.issues.map(iss => ({
             ...iss,
             path: iss.path ? [${k}, ...iss.path] : [${k}]
           })));
         }
-        if (!${id2}_present && !${id2}.issues.length) {
+        if (!${id3}_present && !${id3}.issues.length) {
           payload.issues.push({
             code: "invalid_type",
             expected: "nonoptional",
@@ -405539,30 +406379,30 @@ See docs for context: https://docs.aztec.network/errors/14`);
           });
         }
 
-        if (${id2}_present) {
-          if (${id2}.value === undefined) {
+        if (${id3}_present) {
+          if (${id3}.value === undefined) {
             newResult[${k}] = undefined;
           } else {
-            newResult[${k}] = ${id2}.value;
+            newResult[${k}] = ${id3}.value;
           }
         }
 
       `);
         } else {
           doc.write(`
-        if (${id2}.issues.length) {
-          payload.issues = payload.issues.concat(${id2}.issues.map(iss => ({
+        if (${id3}.issues.length) {
+          payload.issues = payload.issues.concat(${id3}.issues.map(iss => ({
             ...iss,
             path: iss.path ? [${k}, ...iss.path] : [${k}]
           })));
         }
         
-        if (${id2}.value === undefined) {
+        if (${id3}.value === undefined) {
           if (${k} in input) {
             newResult[${k}] = undefined;
           }
         } else {
-          newResult[${k}] = ${id2}.value;
+          newResult[${k}] = ${id3}.value;
         }
         
       `);
@@ -414066,26 +414906,26 @@ See docs for context: https://docs.aztec.network/errors/14`);
       throw new Error("Unprocessed schema. This is a bug in Zod.");
     const idToSchema = /* @__PURE__ */ new Map();
     for (const entry of ctx.seen.entries()) {
-      const id2 = ctx.metadataRegistry.get(entry[0])?.id;
-      if (id2) {
-        const existing = idToSchema.get(id2);
+      const id3 = ctx.metadataRegistry.get(entry[0])?.id;
+      if (id3) {
+        const existing = idToSchema.get(id3);
         if (existing && existing !== entry[0]) {
-          throw new Error(`Duplicate schema id "${id2}" detected during JSON Schema conversion. Two different schemas cannot share the same id when converted together.`);
+          throw new Error(`Duplicate schema id "${id3}" detected during JSON Schema conversion. Two different schemas cannot share the same id when converted together.`);
         }
-        idToSchema.set(id2, entry[0]);
+        idToSchema.set(id3, entry[0]);
       }
     }
     const makeURI = (entry) => {
       const defsSegment = ctx.target === "draft-2020-12" ? "$defs" : "definitions";
       if (ctx.external) {
         const externalId = ctx.external.registry.get(entry[0])?.id;
-        const uriGenerator = ctx.external.uri ?? ((id3) => id3);
+        const uriGenerator = ctx.external.uri ?? ((id4) => id4);
         if (externalId) {
           return { ref: uriGenerator(externalId) };
         }
-        const id2 = entry[1].defId ?? entry[1].schema.id ?? `schema${ctx.counter++}`;
-        entry[1].defId = id2;
-        return { defId: id2, ref: `${uriGenerator("__shared")}#/${defsSegment}/${id2}` };
+        const id3 = entry[1].defId ?? entry[1].schema.id ?? `schema${ctx.counter++}`;
+        entry[1].defId = id3;
+        return { defId: id3, ref: `${uriGenerator("__shared")}#/${defsSegment}/${id3}` };
       }
       if (entry[1] === root) {
         return { ref: "#" };
@@ -414133,8 +414973,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
           continue;
         }
       }
-      const id2 = ctx.metadataRegistry.get(entry[0])?.id;
-      if (id2) {
+      const id3 = ctx.metadataRegistry.get(entry[0])?.id;
+      if (id3) {
         extractToDef(entry);
         continue;
       }
@@ -414230,10 +415070,10 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     } else {
     }
     if (ctx.external?.uri) {
-      const id2 = ctx.external.registry.get(schema)?.id;
-      if (!id2)
+      const id3 = ctx.external.registry.get(schema)?.id;
+      if (!id3)
         throw new Error("Schema is missing an `id` property");
-      result.$id = ctx.external.uri(id2);
+      result.$id = ctx.external.uri(id3);
     }
     Object.assign(result, root.def ?? root.schema);
     const rootMetaId = ctx.metadataRegistry.get(schema)?.id;
@@ -415056,7 +415896,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     bigint: () => bigint14,
     boolean: () => boolean14,
     catch: () => _catch10,
-    check: () => check5,
+    check: () => check6,
     cidrv4: () => cidrv410,
     cidrv6: () => cidrv610,
     codec: () => codec5,
@@ -415077,7 +415917,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     function: () => _function5,
     guid: () => guid10,
     hash: () => hash9,
-    hex: () => hex11,
+    hex: () => hex12,
     hostname: () => hostname10,
     httpUrl: () => httpUrl5,
     instanceof: () => _instanceof5,
@@ -415377,8 +416217,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
         reg.add(this, meta13);
         return this;
       },
-      refine(check9, params) {
-        return this.check(refine5(check9, params));
+      refine(check10, params) {
+        return this.check(refine5(check10, params));
       },
       superRefine(refinement, params) {
         return this.check(superRefine5(refinement, params));
@@ -415718,7 +416558,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
   function hostname10(_params) {
     return _stringFormat5(ZodCustomStringFormat5, "hostname", regexes_exports5.hostname, _params);
   }
-  function hex11(_params) {
+  function hex12(_params) {
     return _stringFormat5(ZodCustomStringFormat5, "hex", regexes_exports5.hex, _params);
   }
   function hash9(alg, params) {
@@ -416521,7 +417361,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     ZodType5.init(inst, def);
     inst._zod.processJSONSchema = (ctx, json7, params) => customProcessor5(inst, ctx, json7, params);
   });
-  function check5(fn) {
+  function check6(fn) {
     const ch = new $ZodCheck5({
       check: "custom"
       // ...util.normalizeParams(params),
@@ -417921,13 +418761,13 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
         this.log.debug(`Sent deployment tx ${result.txHash.hash} of ${this.artifact.name} contract`);
         return result;
       }
-      const { receipt, ...offchainOutput } = await this.wallet.sendTx(executionPayload, sendOptions);
-      this.log.debug(`Deployed ${this.artifact.name} contract in tx ${receipt.txHash}`);
+      const { receipt: receipt2, ...offchainOutput } = await this.wallet.sendTx(executionPayload, sendOptions);
+      this.log.debug(`Deployed ${this.artifact.name} contract in tx ${receipt2.txHash}`);
       const instance = await this.getInstance();
       const contract = this.postDeployCtor(instance, this.wallet);
       return {
         contract,
-        receipt,
+        receipt: receipt2,
         instance,
         ...offchainOutput
       };
@@ -418386,8 +419226,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
       return void 0;
     }, "RPC Get Node Info", opts?.timeout ?? DefaultWaitOpts.timeout, opts?.interval ?? DefaultWaitOpts.interval);
   };
-  function hasReachedStatus(receipt, desiredStatus) {
-    return SortedTxStatuses.indexOf(receipt.status) >= SortedTxStatuses.indexOf(desiredStatus);
+  function hasReachedStatus(receipt2, desiredStatus) {
+    return SortedTxStatuses.indexOf(receipt2.status) >= SortedTxStatuses.indexOf(desiredStatus);
   }
   async function waitForTx(node2, txHash, opts) {
     const ignoreDroppedReceiptsFor = opts?.ignoreDroppedReceiptsFor ?? DefaultWaitOpts.ignoreDroppedReceiptsFor;
@@ -418401,7 +419241,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
       await sleep(delay * 1e3);
     }
     const startTime = Date.now();
-    const receipt = await retryUntil(async () => {
+    const receipt2 = await retryUntil(async () => {
       const txReceipt = await node2.getTxReceipt(txHash);
       if (txReceipt.isPending()) {
         return void 0;
@@ -418418,13 +419258,13 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
       }
       return txReceipt;
     }, "isMined", deadline, opts?.interval ?? DefaultWaitOpts.interval);
-    if (!receipt.isMined()) {
-      throw new Error(`Transaction ${txHash.toString()} was ${receipt.status}. Reason: ${receipt.error ?? "unknown"}`);
+    if (!receipt2.isMined()) {
+      throw new Error(`Transaction ${txHash.toString()} was ${receipt2.status}. Reason: ${receipt2.error ?? "unknown"}`);
     }
-    if (!receipt.hasExecutionSucceeded() && !opts?.dontThrowOnRevert) {
-      throw new Error(`Transaction ${txHash.toString()} reverted: ${receipt.executionResult}. Reason: ${receipt.error ?? "unknown"}`);
+    if (!receipt2.hasExecutionSucceeded() && !opts?.dontThrowOnRevert) {
+      throw new Error(`Transaction ${txHash.toString()} reverted: ${receipt2.executionResult}. Reason: ${receipt2.error ?? "unknown"}`);
     }
-    return receipt;
+    return receipt2;
   }
 
   // node_modules/@aztec-labs/aztec.js/dest/api/wallet.js
@@ -418537,7 +419377,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     bigint: () => bigint17,
     boolean: () => boolean17,
     catch: () => _catch12,
-    check: () => check6,
+    check: () => check7,
     cidrv4: () => cidrv412,
     cidrv6: () => cidrv612,
     clone: () => clone6,
@@ -418574,7 +419414,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     gte: () => _gte6,
     guid: () => guid12,
     hash: () => hash10,
-    hex: () => hex13,
+    hex: () => hex14,
     hostname: () => hostname12,
     httpUrl: () => httpUrl6,
     includes: () => _includes6,
@@ -419740,8 +420580,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
   function uint8ArrayToBase64url6(bytes3) {
     return uint8ArrayToBase646(bytes3).replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
   }
-  function hexToUint8Array7(hex17) {
-    const cleanHex = hex17.replace(/^0x/, "");
+  function hexToUint8Array7(hex18) {
+    const cleanHex = hex18.replace(/^0x/, "");
     if (cleanHex.length % 2 !== 0) {
       throw new Error("Invalid hex string length");
     }
@@ -420017,12 +420857,12 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     emoji: () => emoji11,
     extendedDuration: () => extendedDuration6,
     guid: () => guid11,
-    hex: () => hex12,
+    hex: () => hex13,
     hostname: () => hostname11,
     html5Email: () => html5Email6,
     httpProtocol: () => httpProtocol6,
     idnEmail: () => idnEmail6,
-    integer: () => integer6,
+    integer: () => integer8,
     ipv4: () => ipv411,
     ipv6: () => ipv611,
     ksuid: () => ksuid11,
@@ -420128,14 +420968,14 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     return new RegExp(`^${regex}$`);
   };
   var bigint16 = /^-?\d+n?$/;
-  var integer6 = /^-?\d+$/;
+  var integer8 = /^-?\d+$/;
   var number16 = /^-?\d+(?:\.\d+)?$/;
   var boolean16 = /^(?:true|false)$/i;
   var _null16 = /^null$/i;
   var _undefined16 = /^undefined$/i;
   var lowercase6 = /^[^A-Z]*$/;
   var uppercase6 = /^[^a-z]*$/;
-  var hex12 = /^[0-9a-fA-F]*$/;
+  var hex13 = /^[0-9a-fA-F]*$/;
   function fixedBase646(bodyLength, padding) {
     return new RegExp(`^[A-Za-z0-9+/]{${bodyLength}}${padding}$`);
   }
@@ -420260,7 +421100,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
       bag.minimum = minimum;
       bag.maximum = maximum;
       if (isInt)
-        bag.pattern = integer6;
+        bag.pattern = integer8;
     });
     inst._zod.check = (payload) => {
       const input2 = payload.value;
@@ -421575,42 +422415,42 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
       }
       doc.write(`const newResult = {};`);
       for (const key of normalized.keys) {
-        const id2 = ids[key];
+        const id3 = ids[key];
         const k = esc6(key);
         const schema = shape[key];
         const isOptionalIn = schema?._zod?.optin === "optional";
         const isOptionalOut = schema?._zod?.optout === "optional";
-        doc.write(`const ${id2} = ${parseStr(key)};`);
+        doc.write(`const ${id3} = ${parseStr(key)};`);
         if (isOptionalIn && isOptionalOut) {
           doc.write(`
-        if (${id2}.issues.length) {
+        if (${id3}.issues.length) {
           if (${k} in input) {
-            payload.issues = payload.issues.concat(${id2}.issues.map(iss => ({
+            payload.issues = payload.issues.concat(${id3}.issues.map(iss => ({
               ...iss,
               path: iss.path ? [${k}, ...iss.path] : [${k}]
             })));
           }
         }
         
-        if (${id2}.value === undefined) {
+        if (${id3}.value === undefined) {
           if (${k} in input) {
             newResult[${k}] = undefined;
           }
         } else {
-          newResult[${k}] = ${id2}.value;
+          newResult[${k}] = ${id3}.value;
         }
         
       `);
         } else if (!isOptionalIn) {
           doc.write(`
-        const ${id2}_present = ${k} in input;
-        if (${id2}.issues.length) {
-          payload.issues = payload.issues.concat(${id2}.issues.map(iss => ({
+        const ${id3}_present = ${k} in input;
+        if (${id3}.issues.length) {
+          payload.issues = payload.issues.concat(${id3}.issues.map(iss => ({
             ...iss,
             path: iss.path ? [${k}, ...iss.path] : [${k}]
           })));
         }
-        if (!${id2}_present && !${id2}.issues.length) {
+        if (!${id3}_present && !${id3}.issues.length) {
           payload.issues.push({
             code: "invalid_type",
             expected: "nonoptional",
@@ -421619,30 +422459,30 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
           });
         }
 
-        if (${id2}_present) {
-          if (${id2}.value === undefined) {
+        if (${id3}_present) {
+          if (${id3}.value === undefined) {
             newResult[${k}] = undefined;
           } else {
-            newResult[${k}] = ${id2}.value;
+            newResult[${k}] = ${id3}.value;
           }
         }
 
       `);
         } else {
           doc.write(`
-        if (${id2}.issues.length) {
-          payload.issues = payload.issues.concat(${id2}.issues.map(iss => ({
+        if (${id3}.issues.length) {
+          payload.issues = payload.issues.concat(${id3}.issues.map(iss => ({
             ...iss,
             path: iss.path ? [${k}, ...iss.path] : [${k}]
           })));
         }
         
-        if (${id2}.value === undefined) {
+        if (${id3}.value === undefined) {
           if (${k} in input) {
             newResult[${k}] = undefined;
           }
         } else {
-          newResult[${k}] = ${id2}.value;
+          newResult[${k}] = ${id3}.value;
         }
         
       `);
@@ -430146,26 +430986,26 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
       throw new Error("Unprocessed schema. This is a bug in Zod.");
     const idToSchema = /* @__PURE__ */ new Map();
     for (const entry of ctx.seen.entries()) {
-      const id2 = ctx.metadataRegistry.get(entry[0])?.id;
-      if (id2) {
-        const existing = idToSchema.get(id2);
+      const id3 = ctx.metadataRegistry.get(entry[0])?.id;
+      if (id3) {
+        const existing = idToSchema.get(id3);
         if (existing && existing !== entry[0]) {
-          throw new Error(`Duplicate schema id "${id2}" detected during JSON Schema conversion. Two different schemas cannot share the same id when converted together.`);
+          throw new Error(`Duplicate schema id "${id3}" detected during JSON Schema conversion. Two different schemas cannot share the same id when converted together.`);
         }
-        idToSchema.set(id2, entry[0]);
+        idToSchema.set(id3, entry[0]);
       }
     }
     const makeURI = (entry) => {
       const defsSegment = ctx.target === "draft-2020-12" ? "$defs" : "definitions";
       if (ctx.external) {
         const externalId = ctx.external.registry.get(entry[0])?.id;
-        const uriGenerator = ctx.external.uri ?? ((id3) => id3);
+        const uriGenerator = ctx.external.uri ?? ((id4) => id4);
         if (externalId) {
           return { ref: uriGenerator(externalId) };
         }
-        const id2 = entry[1].defId ?? entry[1].schema.id ?? `schema${ctx.counter++}`;
-        entry[1].defId = id2;
-        return { defId: id2, ref: `${uriGenerator("__shared")}#/${defsSegment}/${id2}` };
+        const id3 = entry[1].defId ?? entry[1].schema.id ?? `schema${ctx.counter++}`;
+        entry[1].defId = id3;
+        return { defId: id3, ref: `${uriGenerator("__shared")}#/${defsSegment}/${id3}` };
       }
       if (entry[1] === root) {
         return { ref: "#" };
@@ -430213,8 +431053,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
           continue;
         }
       }
-      const id2 = ctx.metadataRegistry.get(entry[0])?.id;
-      if (id2) {
+      const id3 = ctx.metadataRegistry.get(entry[0])?.id;
+      if (id3) {
         extractToDef(entry);
         continue;
       }
@@ -430310,10 +431150,10 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     } else {
     }
     if (ctx.external?.uri) {
-      const id2 = ctx.external.registry.get(schema)?.id;
-      if (!id2)
+      const id3 = ctx.external.registry.get(schema)?.id;
+      if (!id3)
         throw new Error("Schema is missing an `id` property");
-      result.$id = ctx.external.uri(id2);
+      result.$id = ctx.external.uri(id3);
     }
     Object.assign(result, root.def ?? root.schema);
     const rootMetaId = ctx.metadataRegistry.get(schema)?.id;
@@ -431136,7 +431976,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     bigint: () => bigint17,
     boolean: () => boolean17,
     catch: () => _catch12,
-    check: () => check6,
+    check: () => check7,
     cidrv4: () => cidrv412,
     cidrv6: () => cidrv612,
     codec: () => codec6,
@@ -431157,7 +431997,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     function: () => _function6,
     guid: () => guid12,
     hash: () => hash10,
-    hex: () => hex13,
+    hex: () => hex14,
     hostname: () => hostname12,
     httpUrl: () => httpUrl6,
     instanceof: () => _instanceof6,
@@ -431457,8 +432297,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
         reg.add(this, meta13);
         return this;
       },
-      refine(check9, params) {
-        return this.check(refine6(check9, params));
+      refine(check10, params) {
+        return this.check(refine6(check10, params));
       },
       superRefine(refinement, params) {
         return this.check(superRefine6(refinement, params));
@@ -431798,7 +432638,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
   function hostname12(_params) {
     return _stringFormat6(ZodCustomStringFormat6, "hostname", regexes_exports6.hostname, _params);
   }
-  function hex13(_params) {
+  function hex14(_params) {
     return _stringFormat6(ZodCustomStringFormat6, "hex", regexes_exports6.hex, _params);
   }
   function hash10(alg, params) {
@@ -432601,7 +433441,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     ZodType6.init(inst, def);
     inst._zod.processJSONSchema = (ctx, json7, params) => customProcessor6(inst, ctx, json7, params);
   });
-  function check6(fn) {
+  function check7(fn) {
     const ch = new $ZodCheck6({
       check: "custom"
       // ...util.normalizeParams(params),
@@ -434971,15 +435811,15 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
         interval: this.defaultWaitInterval
       } : callerWaitOpts;
       const initialDelay = waitOpts?.initialDelay ?? waitOpts?.interval ?? DefaultWaitOpts.interval;
-      const receipt = await waitForTx(this.aztecNode, txHash, {
+      const receipt2 = await waitForTx(this.aztecNode, txHash, {
         ...waitOpts,
         initialDelay
       });
-      if (receipt.isMined() && receipt.debugLogs?.length) {
-        await displayDebugLogs(receipt.debugLogs, this.getContractName.bind(this));
+      if (receipt2.isMined() && receipt2.debugLogs?.length) {
+        await displayDebugLogs(receipt2.debugLogs, this.getContractName.bind(this));
       }
       return {
-        receipt,
+        receipt: receipt2,
         ...offchainOutput
       };
     }
@@ -435057,10 +435897,10 @@ ${context.join("\n")}`;
         updatedContractClassId: isContractUpdated ? publiclyRegisteredContract.currentContractClassId : void 0
       };
     }
-    async getContractClassMetadata(id2) {
-      const publiclyRegisteredContractClass = await this.aztecNode.getContractClass(id2);
+    async getContractClassMetadata(id3) {
+      const publiclyRegisteredContractClass = await this.aztecNode.getContractClass(id3);
       return {
-        isArtifactRegistered: !!await this.pxe.getContractArtifact(id2),
+        isArtifactRegistered: !!await this.pxe.getContractArtifact(id3),
         isContractClassPubliclyRegistered: !!publiclyRegisteredContractClass
       };
     }
@@ -435153,20 +435993,20 @@ ${context.join("\n")}`;
       this.code = code;
     }
   };
-  var check7 = (ok2, code) => {
+  var check8 = (ok2, code) => {
     if (!ok2) throw new PrivateFeePreparationError(code);
   };
   function uint(value, bits) {
     if (value?.toBigInt) value = value.toBigInt();
     if (typeof value === "number") {
-      check7(Number.isSafeInteger(value), "PRIVATE_FEE_INVALID_VALUE");
+      check8(Number.isSafeInteger(value), "PRIVATE_FEE_INVALID_VALUE");
       value = BigInt(value);
     }
     if (typeof value === "string") {
-      check7(/^(0|[1-9][0-9]*)$/.test(value) && value.length <= 78, "PRIVATE_FEE_INVALID_VALUE");
+      check8(/^(0|[1-9][0-9]*)$/.test(value) && value.length <= 78, "PRIVATE_FEE_INVALID_VALUE");
       value = BigInt(value);
     }
-    check7(typeof value === "bigint" && value >= 0n && value < 1n << BigInt(bits), "PRIVATE_FEE_INVALID_VALUE");
+    check8(typeof value === "bigint" && value >= 0n && value < 1n << BigInt(bits), "PRIVATE_FEE_INVALID_VALUE");
     return value;
   }
   function field(value) {
@@ -435176,9 +436016,9 @@ ${context.join("\n")}`;
   }
   function address2(value) {
     const text = value instanceof AztecAddress ? value.toString() : value;
-    check7(typeof text === "string" && /^0x[0-9a-f]{64}$/.test(text), "PRIVATE_FEE_INVALID_ADDRESS");
+    check8(typeof text === "string" && /^0x[0-9a-f]{64}$/.test(text), "PRIVATE_FEE_INVALID_ADDRESS");
     const result = new AztecAddress(Fr.fromString(text));
-    check7(!result.isZero(), "PRIVATE_FEE_INVALID_ADDRESS");
+    check8(!result.isZero(), "PRIVATE_FEE_INVALID_ADDRESS");
     return result;
   }
   var equal2 = (a, b2) => a?.toString() === b2?.toString();
@@ -435186,9 +436026,9 @@ ${context.join("\n")}`;
     const artifact = loadContractArtifact(value);
     const functions = getAllFunctionAbis(artifact);
     const publicFunctions = functions.filter((f) => f.functionType === "public" && f.name !== "public_dispatch");
-    check7(artifact.name === "PrivateFPC" && !functions.some((f) => f.isInitializer) && publicFunctions.length === 1 && publicFunctions[0].name === "_complete_refund" && publicFunctions[0].isOnlySelf && publicFunctions[0].parameters.length === 2, "PRIVATE_FEE_ARTIFACT_INVALID");
+    check8(artifact.name === "PrivateFPC" && !functions.some((f) => f.isInitializer) && publicFunctions.length === 1 && publicFunctions[0].name === "_complete_refund" && publicFunctions[0].isOnlySelf && publicFunctions[0].parameters.length === 2, "PRIVATE_FEE_ARTIFACT_INVALID");
     for (const [name, count] of [["pay_fee", 1], ["mint_and_pay_fee", 4]]) {
-      check7(artifact.functions.some((f) => f.name === name && f.functionType === "private" && f.parameters.length === count), "PRIVATE_FEE_ARTIFACT_INVALID");
+      check8(artifact.functions.some((f) => f.name === name && f.functionType === "private" && f.parameters.length === count), "PRIVATE_FEE_ARTIFACT_INVALID");
     }
     return artifact;
   }
@@ -435199,30 +436039,30 @@ ${context.join("\n")}`;
     return Contract.deploy(wallet, artifactOf(privateFeeArtifact), [], void 0, { salt: Fr.ZERO, universalDeploy: true });
   }
   async function requirePublishedPrivateFee(node2, canonical2) {
-    check7(node2?.getContract, "PRIVATE_FEE_PROVIDER_REQUIRED");
+    check8(node2?.getContract, "PRIVATE_FEE_PROVIDER_REQUIRED");
     const instance = await node2.getContract(canonical2.address, "latest");
-    check7(instance, "PRIVATE_FEE_NOT_PUBLISHED");
-    check7(equal2(instance.address, canonical2.address) && equal2(instance.originalContractClassId, canonical2.originalContractClassId) && equal2(instance.currentContractClassId, canonical2.currentContractClassId) && equal2(await computeContractAddressFromInstance(instance), canonical2.address), "PRIVATE_FEE_CLASS_MISMATCH");
+    check8(instance, "PRIVATE_FEE_NOT_PUBLISHED");
+    check8(equal2(instance.address, canonical2.address) && equal2(instance.originalContractClassId, canonical2.originalContractClassId) && equal2(instance.currentContractClassId, canonical2.currentContractClassId) && equal2(await computeContractAddressFromInstance(instance), canonical2.address), "PRIVATE_FEE_CLASS_MISMATCH");
   }
   async function derivePrivateFeeAddress(privateFeeArtifact) {
     return (await derivePrivateFeeInstance(privateFeeArtifact)).address;
   }
   async function derivePrivateFeeBridgeSecret({ salt, owner }) {
     const fixedSalt = field(salt);
-    check7(!fixedSalt.isZero(), "PRIVATE_FEE_INVALID_CLAIM");
+    check8(!fixedSalt.isZero(), "PRIVATE_FEE_INVALID_CLAIM");
     return poseidon2HashWithSeparator([fixedSalt, address2(owner).toField()], 3952304070);
   }
   async function derivePrivateFeeBridgeSecretHash(input2) {
     return computeSecretHash(await derivePrivateFeeBridgeSecret(input2));
   }
   function normalizePrivateFeeGasSettings(value) {
-    check7(value, "PRIVATE_FEE_CONFIGURATION_REQUIRED");
+    check8(value, "PRIVATE_FEE_CONFIGURATION_REQUIRED");
     const da = uint(value.gasLimits?.daGas, 32), l2 = uint(value.gasLimits?.l2Gas, 32);
     const tda = uint(value.teardownGasLimits?.daGas, 32), tl2 = uint(value.teardownGasLimits?.l2Gas, 32);
     const fda = uint(value.maxFeesPerGas?.feePerDaGas, 128), fl2 = uint(value.maxFeesPerGas?.feePerL2Gas, 128);
     const pda = uint(value.maxPriorityFeesPerGas?.feePerDaGas, 128), pl2 = uint(value.maxPriorityFeesPerGas?.feePerL2Gas, 128);
     const maximumFee = da * fda + l2 * fl2;
-    check7(da > 0n && l2 > 0n && maximumFee > 0n && maximumFee < 1n << 128n && tda <= da && tl2 > 0n && tl2 <= l2 && pda <= fda && pl2 <= fl2, "PRIVATE_FEE_INVALID_GAS");
+    check8(da > 0n && l2 > 0n && maximumFee > 0n && maximumFee < 1n << 128n && tda <= da && tl2 > 0n && tl2 <= l2 && pda <= fda && pl2 <= fl2, "PRIVATE_FEE_INVALID_GAS");
     return { gasSettings: new GasSettings(new Gas(Number(da), Number(l2)), new Gas(Number(tda), Number(tl2)), new GasFees(fda, fl2), new GasFees(pda, pl2)), maximumFee };
   }
   async function preparePrivateFeePayment(input2) {
@@ -435234,34 +436074,34 @@ ${context.join("\n")}`;
     }
   }
   async function prepare({ wallet, node: node2, owner, privateFeeAddress, privateFeeArtifact, expectedChainId, expectedVersion, gasSettings, claim: claim2 } = {}) {
-    check7(wallet?.getChainInfo && wallet?.registerContract && node2?.getNodeInfo && node2?.getContract, "PRIVATE_FEE_PROVIDER_REQUIRED");
-    check7(privateFeeAddress && privateFeeArtifact, "PRIVATE_FEE_CONFIGURATION_REQUIRED");
+    check8(wallet?.getChainInfo && wallet?.registerContract && node2?.getNodeInfo && node2?.getContract, "PRIVATE_FEE_PROVIDER_REQUIRED");
+    check8(privateFeeAddress && privateFeeArtifact, "PRIVATE_FEE_CONFIGURATION_REQUIRED");
     const author = address2(owner), payer = address2(privateFeeAddress), chainId = uint(expectedChainId, 64), version12 = uint(expectedVersion, 32);
-    check7(!author.equals(payer), "PRIVATE_FEE_OWNER_IS_PAYER");
+    check8(!author.equals(payer), "PRIVATE_FEE_OWNER_IS_PAYER");
     const fixed = normalizePrivateFeeGasSettings(gasSettings);
     const [walletChain, nodeInfo] = await Promise.all([wallet.getChainInfo(), node2.getNodeInfo()]);
-    check7(uint(walletChain.chainId, 64) === chainId && uint(walletChain.version, 32) === version12 && uint(nodeInfo.l1ChainId, 64) === chainId && uint(nodeInfo.rollupVersion, 32) === version12, "PRIVATE_FEE_CHAIN_MISMATCH");
+    check8(uint(walletChain.chainId, 64) === chainId && uint(walletChain.version, 32) === version12 && uint(nodeInfo.l1ChainId, 64) === chainId && uint(nodeInfo.rollupVersion, 32) === version12, "PRIVATE_FEE_CHAIN_MISMATCH");
     const minimum = await node2.getCurrentMinFees();
-    check7(["feePerDaGas", "feePerL2Gas"].every((key) => fixed.gasSettings.maxFeesPerGas[key] >= uint(minimum[key], 128)), "PRIVATE_FEE_CAP_TOO_LOW");
+    check8(["feePerDaGas", "feePerL2Gas"].every((key) => fixed.gasSettings.maxFeesPerGas[key] >= uint(minimum[key], 128)), "PRIVATE_FEE_CAP_TOO_LOW");
     const artifact = artifactOf(privateFeeArtifact), canonical2 = await derivePrivateFeeInstance(artifact);
-    check7(equal2(canonical2.address, payer), "PRIVATE_FEE_NONCANONICAL_ADDRESS");
+    check8(equal2(canonical2.address, payer), "PRIVATE_FEE_NONCANONICAL_ADDRESS");
     await requirePublishedPrivateFee(node2, canonical2);
     let paymentMethod, availableCredit;
     if (claim2 !== void 0) {
-      check7(claim2 && typeof claim2 === "object" && !Array.isArray(claim2), "PRIVATE_FEE_INVALID_CLAIM");
+      check8(claim2 && typeof claim2 === "object" && !Array.isArray(claim2), "PRIVATE_FEE_INVALID_CLAIM");
       const amount = uint(claim2.amount, 128), salt = field(claim2.salt), leafIndex = field(claim2.leafIndex);
-      check7(amount > 0n, "PRIVATE_FEE_CLAIM_INSUFFICIENT");
+      check8(amount > 0n, "PRIVATE_FEE_CLAIM_INSUFFICIENT");
       availableCredit = amount;
       const secret = await derivePrivateFeeBridgeSecret({ salt, owner: author });
-      check7(claim2.secret === void 0 || equal2(field(claim2.secret), secret), "PRIVATE_FEE_CLAIM_SECRET_MISMATCH");
+      check8(claim2.secret === void 0 || equal2(field(claim2.secret), secret), "PRIVATE_FEE_CLAIM_SECRET_MISMATCH");
       paymentMethod = new PrivateMintAndPayFeePaymentMethod(payer, { amount, salt, leafIndex, secret }, 1n);
     }
     await wallet.registerContract(canonical2, artifact);
     if (!paymentMethod) {
-      check7(wallet.executeUtility, "PRIVATE_FEE_PROVIDER_REQUIRED");
+      check8(wallet.executeUtility, "PRIVATE_FEE_PROVIDER_REQUIRED");
       const { result } = await Contract.at(payer, artifact, wallet).methods.balance_of(author).simulate({ from: author });
       availableCredit = uint(result, 128);
-      check7(availableCredit > 0n, "PRIVATE_FEE_BALANCE_INSUFFICIENT");
+      check8(availableCredit > 0n, "PRIVATE_FEE_BALANCE_INSUFFICIENT");
       paymentMethod = new PrivateFeePaymentMethod(payer, 1n);
     }
     const refund = getAllFunctionAbis(artifact).find((f) => f.name === "_complete_refund");
@@ -435479,13 +436319,13 @@ ${context.join("\n")}`;
     }
     return error312;
   }
-  function assert9(check9, message, code, info) {
-    if (!check9) {
+  function assert9(check10, message, code, info) {
+    if (!check10) {
       throw makeError(message, code, info);
     }
   }
-  function assertArgument(check9, message, name, value) {
-    assert9(check9, message, "INVALID_ARGUMENT", { argument: name, value });
+  function assertArgument(check10, message, name, value) {
+    assert9(check10, message, "INVALID_ARGUMENT", { argument: name, value });
   }
   function assertArgumentCount(count, expectedCount, message) {
     if (message == null) {
@@ -435510,9 +436350,9 @@ ${context.join("\n")}`;
       }
       ;
       if (form === "NFD") {
-        const check9 = String.fromCharCode(233).normalize("NFD");
+        const check10 = String.fromCharCode(233).normalize("NFD");
         const expected = String.fromCharCode(101, 769);
-        if (check9 !== expected) {
+        if (check10 !== expected) {
           throw new Error("broken");
         }
       }
@@ -435544,9 +436384,9 @@ ${context.join("\n")}`;
   }
 
   // node_modules/ethers/lib.esm/utils/data.js
-  function _getBytes(value, name, copy2) {
+  function _getBytes(value, name, copy3) {
     if (value instanceof Uint8Array) {
-      if (copy2) {
+      if (copy3) {
         return new Uint8Array(value);
       }
       return value;
@@ -435772,25 +436612,25 @@ ${context.join("\n")}`;
       const width = _width != null ? getNumber(_width, "width") : 0;
       return new Uint8Array(width);
     }
-    let hex17 = value.toString(16);
-    if (hex17.length % 2) {
-      hex17 = "0" + hex17;
+    let hex18 = value.toString(16);
+    if (hex18.length % 2) {
+      hex18 = "0" + hex18;
     }
     if (_width != null) {
       const width = getNumber(_width, "width");
-      while (hex17.length < width * 2) {
-        hex17 = "00" + hex17;
+      while (hex18.length < width * 2) {
+        hex18 = "00" + hex18;
       }
-      assert9(width * 2 === hex17.length, `value exceeds width (${width} bytes)`, "NUMERIC_FAULT", {
+      assert9(width * 2 === hex18.length, `value exceeds width (${width} bytes)`, "NUMERIC_FAULT", {
         operation: "toBeArray",
         fault: "overflow",
         value: _value
       });
     }
-    const result = new Uint8Array(hex17.length / 2);
+    const result = new Uint8Array(hex18.length / 2);
     for (let i = 0; i < result.length; i++) {
       const offset = i * 2;
-      result[i] = parseInt(hex17.substring(offset, offset + 2), 16);
+      result[i] = parseInt(hex18.substring(offset, offset + 2), 16);
     }
     return result;
   }
@@ -438028,7 +438868,7 @@ ${context.join("\n")}`;
   init_dirname();
   init_buffer2();
   init_process2();
-  function id(value) {
+  function id2(value) {
     return keccak2563(toUtf8Bytes(value));
   }
 
@@ -438823,7 +439663,7 @@ ${context.join("\n")}`;
      *  The Custom Error selector.
      */
     get selector() {
-      return id(this.format("sighash")).substring(0, 10);
+      return id2(this.format("sighash")).substring(0, 10);
     }
     /**
      *  Returns a string representation of this fragment as %%format%%.
@@ -438888,7 +439728,7 @@ ${context.join("\n")}`;
      *  The Event topic hash.
      */
     get topicHash() {
-      return id(this.format("sighash"));
+      return id2(this.format("sighash"));
     }
     /**
      *  Returns a string representation of this event as %%format%%.
@@ -439140,7 +439980,7 @@ ${context.join("\n")}`;
      *  The Function selector.
      */
     get selector() {
-      return id(this.format("sighash")).substring(0, 10);
+      return id2(this.format("sighash")).substring(0, 10);
     }
     /**
      *  Returns a string representation of this function as %%format%%.
@@ -440260,7 +441100,7 @@ ${context.join("\n")}`;
       }
       const encodeTopic = (param, value) => {
         if (param.type === "string") {
-          return id(value);
+          return id2(value);
         } else if (param.type === "bytes") {
           return keccak2563(hexlify(value));
         }
@@ -440313,7 +441153,7 @@ ${context.join("\n")}`;
         const value = values[index];
         if (param.indexed) {
           if (param.type === "string") {
-            topics.push(id(value));
+            topics.push(id2(value));
           } else if (param.type === "bytes") {
             topics.push(keccak2563(value));
           } else if (param.baseType === "tuple" || param.baseType === "array") {
@@ -440467,7 +441307,7 @@ ${context.join("\n")}`;
   init_process2();
   var encoder5 = new TextEncoder();
   var decoder2 = new TextDecoder("utf-8", { fatal: true });
-  var hex14 = (data) => Array.from(data, (b2) => b2.toString(16).padStart(2, "0")).join("");
+  var hex15 = (data) => Array.from(data, (b2) => b2.toString(16).padStart(2, "0")).join("");
   var bytes2 = (value) => Uint8Array.from(value.match(/../g) || [], (b2) => parseInt(b2, 16));
   var invalid = () => transactionError("BB_JOURNAL_INVALID", "Transaction recovery storage could not be authenticated or saved.");
   var MAX_BYTES = 16 * 1024 * 1024;
@@ -440485,7 +441325,7 @@ ${context.join("\n")}`;
     const material = encoder5.encode("AZTEC_BB_JOURNAL_RECOVERY_KEY_V1\0" + walletSecret + ":" + BigInt(walletSalt).toString(16).padStart(64, "0"));
     const digest2 = await crypto3.subtle.digest("SHA-256", material);
     material.fill(0);
-    const owner = hex14(new Uint8Array(await crypto3.subtle.digest("SHA-256", digest2)));
+    const owner = hex15(new Uint8Array(await crypto3.subtle.digest("SHA-256", digest2)));
     const key = await crypto3.subtle.importKey("raw", digest2, "AES-GCM", false, ["encrypt", "decrypt"]);
     return { key, owner };
   }
@@ -440516,7 +441356,7 @@ ${context.join("\n")}`;
     const digest2 = await crypto3.subtle.digest("SHA-256", material);
     material.fill(0);
     const key = await crypto3.subtle.importKey("raw", digest2, "AES-GCM", false, ["encrypt", "decrypt"]);
-    const storageKey = hex14(new Uint8Array(await crypto3.subtle.digest("SHA-256", aad)));
+    const storageKey = hex15(new Uint8Array(await crypto3.subtle.digest("SHA-256", aad)));
     const identity = await journalRecoveryIdentity({ walletSecret, walletSalt, crypto: crypto3 });
     async function read2() {
       let encoded, plain;
@@ -440545,8 +441385,8 @@ ${context.join("\n")}`;
       let encoded;
       const descriptor = encoder5.encode(JSON.stringify({ scopeText, keyDomain })), descriptorIv = crypto3.getRandomValues(new Uint8Array(12));
       try {
-        const recovery = { owner: identity.owner, iv: hex14(descriptorIv), data: hex14(new Uint8Array(await crypto3.subtle.encrypt({ name: "AES-GCM", iv: descriptorIv, additionalData: encoder5.encode(identity.owner) }, identity.key, descriptor))) };
-        encoded = JSON.stringify({ version: 1, iv: hex14(iv), data: hex14(new Uint8Array(await crypto3.subtle.encrypt({ name: "AES-GCM", iv, additionalData: aad }, key, plain))), recovery });
+        const recovery = { owner: identity.owner, iv: hex15(descriptorIv), data: hex15(new Uint8Array(await crypto3.subtle.encrypt({ name: "AES-GCM", iv: descriptorIv, additionalData: encoder5.encode(identity.owner) }, identity.key, descriptor))) };
+        encoded = JSON.stringify({ version: 1, iv: hex15(iv), data: hex15(new Uint8Array(await crypto3.subtle.encrypt({ name: "AES-GCM", iv, additionalData: aad }, key, plain))), recovery });
       } finally {
         plain.fill(0);
         descriptor.fill(0);
@@ -440583,7 +441423,7 @@ ${context.join("\n")}`;
   var hash11 = (v) => typeof v === "string" && /^0x[0-9a-f]{64}$/.test(v);
   var lower = (v) => typeof v === "string" ? v.toLowerCase() : "";
   var positive = (v) => typeof v === "string" && /^[1-9][0-9]{0,77}$/.test(v);
-  var integer7 = (v) => Number.isSafeInteger(v) && v >= 0;
+  var integer9 = (v) => Number.isSafeInteger(v) && v >= 0;
   function validatedScope(scope) {
     const names = ["account", "chainId", "rollup", "version", "board", "portal", "depositor", ...scope?.token !== void 0 ? ["token"] : [], ...scope?.deployment !== void 0 ? ["deployment"] : []];
     if (!scope || Object.keys(scope).sort().join() !== [...names].sort().join()) throw invalid2();
@@ -440600,7 +441440,7 @@ ${context.join("\n")}`;
     return expected?.kind === "approve" ? scope.token : scope.portal;
   }
   function validateIntent(record7, scope) {
-    if (!record7 || record7.version !== 1 || record7.from !== scope.depositor || record7.to !== intentDestination(record7.expected, scope) || record7.chainId !== scope.chainId || !integer7(record7.nonce) || !integer7(record7.startBlock) || !hash11(record7.startHash) || !integer7(record7.nextBlock) || record7.nextBlock < 1 || record7.cursorHash !== null && !hash11(record7.cursorHash) || record7.txHash !== null && !hash11(record7.txHash) || typeof record7.data !== "string" || record7.data.length > 131072 || !/^0x(?:[0-9a-f]{2})+$/.test(record7.data) || typeof record7.value !== "string" || !/^(0|[1-9][0-9]{0,77})$/.test(record7.value)) throw invalid2();
+    if (!record7 || record7.version !== 1 || record7.from !== scope.depositor || record7.to !== intentDestination(record7.expected, scope) || record7.chainId !== scope.chainId || !integer9(record7.nonce) || !integer9(record7.startBlock) || !hash11(record7.startHash) || !integer9(record7.nextBlock) || record7.nextBlock < 1 || record7.cursorHash !== null && !hash11(record7.cursorHash) || record7.txHash !== null && !hash11(record7.txHash) || typeof record7.data !== "string" || record7.data.length > 131072 || !/^0x(?:[0-9a-f]{2})+$/.test(record7.data) || typeof record7.value !== "string" || !/^(0|[1-9][0-9]{0,77})$/.test(record7.value)) throw invalid2();
     const expected = record7.expected;
     if (scope.deployment !== void 0) {
       if (!expected || !["create-portal", "create2-portal", "activate-portal"].includes(expected.kind) || !address3(expected.portal) || record7.value !== "0") throw invalid2();
@@ -440647,26 +441487,26 @@ ${context.join("\n")}`;
     }
   }
   async function verifyEthereumIntentReceipt(provider, record7, txHash, read2 = (fn) => fn()) {
-    const receipt = await read2(() => provider.getTransactionReceipt(txHash));
-    if (!receipt) return null;
-    if (lower(receipt.hash) !== txHash || !integer7(receipt.blockNumber) || !hash11(lower(receipt.blockHash)) || ![0, 1].includes(receipt.status)) throw unknown7();
-    const [tx, block2] = await Promise.all([read2(() => provider.getTransaction(txHash)), read2(() => provider.getBlock(receipt.blockNumber))]);
-    if (!tx || lower(tx.hash) !== txHash || lower(tx.from) !== record7.from || Number(tx.nonce) !== record7.nonce || String(tx.chainId) !== record7.chainId || lower(block2?.hash) !== lower(receipt.blockHash) || lower(receipt.from) !== record7.from || lower(receipt.to) !== lower(tx.to)) throw unknown7();
+    const receipt2 = await read2(() => provider.getTransactionReceipt(txHash));
+    if (!receipt2) return null;
+    if (lower(receipt2.hash) !== txHash || !integer9(receipt2.blockNumber) || !hash11(lower(receipt2.blockHash)) || ![0, 1].includes(receipt2.status)) throw unknown7();
+    const [tx, block2] = await Promise.all([read2(() => provider.getTransaction(txHash)), read2(() => provider.getBlock(receipt2.blockNumber))]);
+    if (!tx || lower(tx.hash) !== txHash || lower(tx.from) !== record7.from || Number(tx.nonce) !== record7.nonce || String(tx.chainId) !== record7.chainId || lower(block2?.hash) !== lower(receipt2.blockHash) || lower(receipt2.from) !== record7.from || lower(receipt2.to) !== lower(tx.to)) throw unknown7();
     const direct = matchesRequest(tx, record7);
     const effectKinds = ["deposit", "withdraw", "approve", "fee-deposit"];
-    if (!direct && !effectKinds.includes(record7.expected.kind)) return { outcome: "replaced", txHash, receipt, event: null };
-    if (receipt.status === 0) return { outcome: "reverted", txHash, receipt, event: null };
-    if (!Array.isArray(receipt.logs)) throw unknown7();
+    if (!direct && !effectKinds.includes(record7.expected.kind)) return { outcome: "replaced", txHash, receipt: receipt2, event: null };
+    if (receipt2.status === 0) return { outcome: "reverted", txHash, receipt: receipt2, event: null };
+    if (!Array.isArray(receipt2.logs)) throw unknown7();
     const expected = record7.expected;
     if (["create-portal", "create2-portal"].includes(expected.kind)) {
-      if (expected.kind === "create-portal" && lower(receipt.contractAddress) !== expected.portal) throw unknown7();
-      const code = await read2(() => provider.getCode(expected.portal, receipt.blockNumber));
+      if (expected.kind === "create-portal" && lower(receipt2.contractAddress) !== expected.portal) throw unknown7();
+      const code = await read2(() => provider.getCode(expected.portal, receipt2.blockNumber));
       if (typeof code !== "string" || code === "0x" || !/^0x(?:[0-9a-fA-F]{2})+$/.test(code)) throw unknown7();
-      return { outcome: "success", txHash, receipt, event: null };
+      return { outcome: "success", txHash, receipt: receipt2, event: null };
     }
     const eventName = { deposit: "Deposited", withdraw: "Withdrawn", approve: "Approval", "fee-deposit": "DepositToAztecPublic", "activate-portal": "Activated" }[expected.kind];
     const topic = iface.getEvent(eventName).topicHash.toLowerCase(), events = [];
-    for (const log3 of receipt.logs) {
+    for (const log3 of receipt2.logs) {
       if (lower(log3.address) !== record7.to || lower(log3.topics?.[0]) !== topic) continue;
       let parsed;
       try {
@@ -440684,13 +441524,13 @@ ${context.join("\n")}`;
       } else if (lower(parsed.args.depositor) !== record7.from || String(parsed.args.amount) !== expected.amount || expected.kind === "deposit" && lower(parsed.args.secretHash) !== expected.secretHash) throw unknown7();
       events.push(parsed.args);
     }
-    if (!direct && events.length === 0) return { outcome: "replaced", txHash, receipt, event: null };
+    if (!direct && events.length === 0) return { outcome: "replaced", txHash, receipt: receipt2, event: null };
     if (events.length !== 1) throw unknown7();
-    return { outcome: "success", txHash, receipt, event: events[0] };
+    return { outcome: "success", txHash, receipt: receipt2, event: events[0] };
   }
   async function createEthereumJournal({ storage, walletSecret, walletSalt, scope, provider, signer, acknowledgeTx, contextGuard, timeoutMs = 2e4, minimumNonce = 0 }) {
     const slot = await createEncryptedJournalSlot({ storage, walletSecret, walletSalt, scopeText: validatedScope(scope), keyDomain: "AZTEC_BB_ETH_JOURNAL_KEY_V1" });
-    if (!integer7(minimumNonce)) throw invalid2();
+    if (!integer9(minimumNonce)) throw invalid2();
     if (!Number.isFinite(timeoutMs) || timeoutMs <= 0 || timeoutMs > 2e4) throw invalid2();
     let acknowledged = acknowledgeTx, lastHash = null;
     function reader({ preserveInsufficientFunds = false } = {}) {
@@ -440731,7 +441571,7 @@ ${context.join("\n")}`;
         if (result) return { saved, result };
       }
       const head = await read2(() => provider.getBlockNumber());
-      if (!integer7(head)) throw unknown7();
+      if (!integer9(head)) throw unknown7();
       if (record7.nextBlock > 1) {
         const anchor2 = await read2(() => provider.getBlock(record7.nextBlock - 1));
         const expected = record7.cursorHash ?? record7.startHash;
@@ -440743,7 +441583,7 @@ ${context.join("\n")}`;
       const tip = await read2(() => provider.getBlock(head));
       if (tip?.number !== head || !hash11(lower(tip.hash))) throw unknown7();
       const minedNonce = await read2(() => provider.getTransactionCount(record7.from, head));
-      if (!integer7(minedNonce)) throw unknown7();
+      if (!integer9(minedNonce)) throw unknown7();
       if (minedNonce <= record7.nonce) {
         const current = await read2(() => provider.getBlock(head));
         if (lower(current?.hash) !== lower(tip.hash)) throw unknown7();
@@ -440849,10 +441689,10 @@ ${context.join("\n")}`;
         if (!signer || lower(await signer.getAddress()) !== scope.depositor) throw unknown7();
         const start = await read2(() => provider.getBlock("latest"));
         const pendingNonce = await read2(() => provider.getTransactionCount(scope.depositor, "pending"));
-        if (!integer7(pendingNonce)) throw unknown7();
+        if (!integer9(pendingNonce)) throw unknown7();
         const nonce = Math.max(pendingNonce, previous.value ? previous.value.nonce + 1 : 0, minimumNonce);
         const { data, value, expected } = typeof intent === "function" ? await intent(nonce) : intent;
-        if (!start || !integer7(start.number) || !hash11(lower(start.hash)) || !integer7(nonce)) throw unknown7();
+        if (!start || !integer9(start.number) || !hash11(lower(start.hash)) || !integer9(nonce)) throw unknown7();
         const record7 = validateIntent({
           version: 1,
           from: scope.depositor,
@@ -440911,45 +441751,45 @@ ${context.join("\n")}`;
       if (record7) this.recoveryRecord = Object.freeze({ ...record7 });
     }
   };
-  var check8 = (ok2, code) => {
+  var check9 = (ok2, code) => {
     if (!ok2) throw new PrivateFeeFundingError(code);
   };
   function uint2(value, bits = 128) {
     if (value?.toBigInt) value = value.toBigInt();
     if (typeof value === "number") {
-      check8(Number.isSafeInteger(value), "PRIVATE_FEE_FUNDING_INVALID");
+      check9(Number.isSafeInteger(value), "PRIVATE_FEE_FUNDING_INVALID");
       value = BigInt(value);
     }
     if (typeof value === "string") {
-      check8(/^(0|[1-9][0-9]*)$/.test(value) && value.length <= 78, "PRIVATE_FEE_FUNDING_INVALID");
+      check9(/^(0|[1-9][0-9]*)$/.test(value) && value.length <= 78, "PRIVATE_FEE_FUNDING_INVALID");
       value = BigInt(value);
     }
-    check8(typeof value === "bigint" && value >= 0n && value < 1n << BigInt(bits), "PRIVATE_FEE_FUNDING_INVALID");
+    check9(typeof value === "bigint" && value >= 0n && value < 1n << BigInt(bits), "PRIVATE_FEE_FUNDING_INVALID");
     return value;
   }
   function address4(value) {
     const result = getAddress(value?.toString());
-    check8(result !== "0x0000000000000000000000000000000000000000", "PRIVATE_FEE_FUNDING_INVALID");
+    check9(result !== "0x0000000000000000000000000000000000000000", "PRIVATE_FEE_FUNDING_INVALID");
     return result;
   }
   function secretField(value) {
     const text = value instanceof Fr ? value.toString() : value;
-    check8(typeof text === "string" && /^0x[0-9a-f]{64}$/.test(text), "PRIVATE_FEE_FUNDING_INVALID");
+    check9(typeof text === "string" && /^0x[0-9a-f]{64}$/.test(text), "PRIVATE_FEE_FUNDING_INVALID");
     const result = Fr.fromString(text);
-    check8(!result.isZero(), "PRIVATE_FEE_FUNDING_INVALID");
+    check9(!result.isZero(), "PRIVATE_FEE_FUNDING_INVALID");
     return result;
   }
   var eq = (a, b2) => String(a).toLowerCase() === String(b2).toLowerCase();
-  var copy = (record7) => Object.freeze({ ...record7 });
+  var copy2 = (record7) => Object.freeze({ ...record7 });
   async function read(provider, to, abi2, name, args = []) {
     return abi2.decodeFunctionResult(name, await provider.call({ to, data: abi2.encodeFunctionData(name, args) }))[0];
   }
   async function verifyScope({ node: node2, ethProvider, privateFeeArtifact, privateFeeAddress, expectedChainId, expectedVersion }) {
-    check8(node2?.getNodeInfo && ethProvider?.getNetwork, "PRIVATE_FEE_FUNDING_PROVIDER_REQUIRED");
+    check9(node2?.getNodeInfo && ethProvider?.getNetwork, "PRIVATE_FEE_FUNDING_PROVIDER_REQUIRED");
     const chainId = uint2(expectedChainId, 64), version12 = uint2(expectedVersion, 32);
     const [info, network, canonical2] = await Promise.all([node2.getNodeInfo(), ethProvider.getNetwork(), derivePrivateFeeInstance(privateFeeArtifact)]);
-    check8(uint2(network.chainId, 64) === chainId && uint2(info.l1ChainId, 64) === chainId && uint2(info.rollupVersion, 32) === version12, "PRIVATE_FEE_FUNDING_CHAIN_MISMATCH");
-    check8(eq(canonical2.address, privateFeeAddress), "PRIVATE_FEE_FUNDING_ADDRESS_MISMATCH");
+    check9(uint2(network.chainId, 64) === chainId && uint2(info.l1ChainId, 64) === chainId && uint2(info.rollupVersion, 32) === version12, "PRIVATE_FEE_FUNDING_CHAIN_MISMATCH");
+    check9(eq(canonical2.address, privateFeeAddress), "PRIVATE_FEE_FUNDING_ADDRESS_MISMATCH");
     await requirePublishedPrivateFee(node2, canonical2);
     const scope = {
       chainId: chainId.toString(),
@@ -440965,7 +441805,7 @@ ${context.join("\n")}`;
       read(ethProvider, scope.portalAddress, portalAbi, "VERSION"),
       read(ethProvider, scope.portalAddress, portalAbi, "L2_TOKEN_ADDRESS")
     ]);
-    check8(eq(rollup, scope.rollupAddress) && eq(token, scope.tokenAddress) && uint2(portalVersion, 32) === version12 && eq(l2Token, ProtocolContractAddress.FeeJuice), "PRIVATE_FEE_FUNDING_PORTAL_MISMATCH");
+    check9(eq(rollup, scope.rollupAddress) && eq(token, scope.tokenAddress) && uint2(portalVersion, 32) === version12 && eq(l2Token, ProtocolContractAddress.FeeJuice), "PRIVATE_FEE_FUNDING_PORTAL_MISMATCH");
     return scope;
   }
   async function claimSecrets({ walletSecret, owner, record: record7 }) {
@@ -440982,16 +441822,16 @@ ${context.join("\n")}`;
     return { salt, secret, secretHash };
   }
   function validRecord(record7) {
-    check8(record7 && record7.schema === SCHEMA, "PRIVATE_FEE_RECOVERY_INVALID");
+    check9(record7 && record7.schema === SCHEMA, "PRIVATE_FEE_RECOVERY_INVALID");
     const allowed = ["schema", "chainId", "version", "rollupAddress", "portalAddress", "tokenAddress", "privateFeeAddress", "sender", "nonce", "amount", "txHash", "leafIndex"];
-    check8(Object.keys(record7).every((key) => allowed.includes(key)), "PRIVATE_FEE_RECOVERY_INVALID");
-    check8(uint2(record7.amount) > 0n, "PRIVATE_FEE_RECOVERY_INVALID");
+    check9(Object.keys(record7).every((key) => allowed.includes(key)), "PRIVATE_FEE_RECOVERY_INVALID");
+    check9(uint2(record7.amount) > 0n, "PRIVATE_FEE_RECOVERY_INVALID");
     uint2(record7.nonce, 64);
     address4(record7.sender);
-    if (record7.txHash !== void 0) check8(/^0x[0-9a-fA-F]{64}$/.test(record7.txHash), "PRIVATE_FEE_RECOVERY_INVALID");
+    if (record7.txHash !== void 0) check9(/^0x[0-9a-fA-F]{64}$/.test(record7.txHash), "PRIVATE_FEE_RECOVERY_INVALID");
   }
   async function fundingJournal(input2, scope, sender) {
-    check8(input2.journalStorage?.read && input2.journalStorage?.compareAndSwap && input2.walletSalt !== void 0, "BB_JOURNAL_INVALID");
+    check9(input2.journalStorage?.read && input2.journalStorage?.compareAndSwap && input2.walletSalt !== void 0, "BB_JOURNAL_INVALID");
     return createEthereumJournal({
       storage: input2.journalStorage,
       walletSecret: secretField(input2.walletSecret).toString(),
@@ -441006,7 +441846,7 @@ ${context.join("\n")}`;
   async function recoverPrivateFeeFunding(input2) {
     const ethProvider = input2.ethProvider;
     const scope = await verifyScope({ ...input2, ethProvider });
-    if (input2.ethSigner) check8(uint2((await input2.ethSigner.provider.getNetwork()).chainId, 64) === uint2(scope.chainId, 64), "PRIVATE_FEE_FUNDING_CHAIN_MISMATCH");
+    if (input2.ethSigner) check9(uint2((await input2.ethSigner.provider.getNetwork()).chainId, 64) === uint2(scope.chainId, 64), "PRIVATE_FEE_FUNDING_CHAIN_MISMATCH");
     const sender = address4(input2.sender ?? await input2.ethSigner?.getAddress());
     const journal = await fundingJournal({ ...input2, ethProvider }, scope, sender);
     const result = await journal.recover({ retry: input2.retry === true });
@@ -441014,56 +441854,56 @@ ${context.join("\n")}`;
     if (result.request.expected.kind === "approve") return { outcome: "approved", amount: result.request.expected.amount, lastEthereumTxHash: result.txHash };
     const record7 = { schema: SCHEMA, ...scope, sender, nonce: String(result.request.nonce), amount: result.request.expected.amount, txHash: result.txHash, leafIndex: String(result.event.index) };
     const { secretHash } = await claimSecrets({ ...input2, record: record7 });
-    check8(eq(secretHash, result.request.expected.secretHash), "PRIVATE_FEE_RECOVERY_TRANSACTION_MISMATCH");
-    if (input2.saveRecovery) await input2.saveRecovery(copy(record7));
-    return { outcome: "funded", lastEthereumTxHash: result.txHash, record: copy(record7) };
+    check9(eq(secretHash, result.request.expected.secretHash), "PRIVATE_FEE_RECOVERY_TRANSACTION_MISMATCH");
+    if (input2.saveRecovery) await input2.saveRecovery(copy2(record7));
+    return { outcome: "funded", lastEthereumTxHash: result.txHash, record: copy2(record7) };
   }
   async function fundPrivateFees(input2) {
     let record7, depositAttempted = false, phase = "validate-input";
     try {
       const { node: node2, ethSigner, ethProvider, owner, walletSecret, privateFeeAddress, privateFeeArtifact, amount, saveRecovery, expectedChainId, expectedVersion } = input2 ?? {};
-      check8(ethProvider?.getNetwork && ethSigner?.provider && ethSigner?.sendTransaction && typeof saveRecovery === "function", "PRIVATE_FEE_FUNDING_PROVIDER_REQUIRED");
+      check9(ethProvider?.getNetwork && ethSigner?.provider && ethSigner?.sendTransaction && typeof saveRecovery === "function", "PRIVATE_FEE_FUNDING_PROVIDER_REQUIRED");
       secretField(walletSecret);
       secretField(owner?.toString());
       const quantity = uint2(amount);
-      check8(quantity > 0n, "PRIVATE_FEE_FUNDING_INVALID");
+      check9(quantity > 0n, "PRIVATE_FEE_FUNDING_INVALID");
       phase = "verify-scope";
       const scope = await verifyScope({ node: node2, ethProvider, privateFeeArtifact, privateFeeAddress, expectedChainId, expectedVersion });
-      check8(uint2((await ethSigner.provider.getNetwork()).chainId, 64) === uint2(scope.chainId, 64), "PRIVATE_FEE_FUNDING_CHAIN_MISMATCH");
+      check9(uint2((await ethSigner.provider.getNetwork()).chainId, 64) === uint2(scope.chainId, 64), "PRIVATE_FEE_FUNDING_CHAIN_MISMATCH");
       const sender = address4(await ethSigner.getAddress());
       phase = "journal-preflight";
       const journal = await fundingJournal(input2, scope, sender);
       await journal.assertCanStart();
       phase = "read-token-funding";
       const [balance, allowance] = await Promise.all([read(ethProvider, scope.tokenAddress, tokenAbi, "balanceOf", [sender]), read(ethProvider, scope.tokenAddress, tokenAbi, "allowance", [sender, scope.portalAddress])]);
-      check8(balance >= quantity, "PRIVATE_FEE_FUNDING_TOKEN_BALANCE");
+      check9(balance >= quantity, "PRIVATE_FEE_FUNDING_TOKEN_BALANCE");
       if (allowance < quantity) {
         phase = "submit-approval";
         await journal.send({ data: tokenAbi.encodeFunctionData("approve", [scope.portalAddress, quantity]), value: "0", expected: { kind: "approve", amount: quantity.toString(), spender: scope.portalAddress.toLowerCase() } });
         phase = "verify-allowance";
-        check8(await read(ethProvider, scope.tokenAddress, tokenAbi, "allowance", [sender, scope.portalAddress]) >= quantity, "PRIVATE_FEE_FUNDING_APPROVAL_FAILED");
+        check9(await read(ethProvider, scope.tokenAddress, tokenAbi, "allowance", [sender, scope.portalAddress]) >= quantity, "PRIVATE_FEE_FUNDING_APPROVAL_FAILED");
       }
-      check8(eq(await ethSigner.getAddress(), sender), "PRIVATE_FEE_FUNDING_ACCOUNT_CHANGED");
+      check9(eq(await ethSigner.getAddress(), sender), "PRIVATE_FEE_FUNDING_ACCOUNT_CHANGED");
       phase = "select-deposit-nonce";
       const deposited = await journal.send(async (nonce) => {
         record7 = { schema: SCHEMA, ...scope, sender, nonce: nonce.toString(), amount: quantity.toString() };
         const { secretHash } = await claimSecrets({ walletSecret, owner, record: record7 });
         phase = "save-before-deposit";
-        await saveRecovery(copy(record7));
-        check8(uint2((await ethProvider.getNetwork()).chainId, 64) === uint2(scope.chainId, 64) && eq(await ethSigner.getAddress(), sender), "PRIVATE_FEE_FUNDING_ACCOUNT_CHANGED");
+        await saveRecovery(copy2(record7));
+        check9(uint2((await ethProvider.getNetwork()).chainId, 64) === uint2(scope.chainId, 64) && eq(await ethSigner.getAddress(), sender), "PRIVATE_FEE_FUNDING_ACCOUNT_CHANGED");
         phase = "submit-deposit";
         depositAttempted = true;
         return { data: portalAbi.encodeFunctionData("depositToAztecPublic", [scope.privateFeeAddress, quantity, secretHash.toString()]), value: "0", expected: { kind: "fee-deposit", amount: quantity.toString(), secretHash: secretHash.toString(), recipient: scope.privateFeeAddress.toLowerCase() } };
       });
       record7 = { ...record7, txHash: deposited.txHash };
       phase = "save-deposit-hash";
-      await saveRecovery(copy(record7));
+      await saveRecovery(copy2(record7));
       phase = "recover-confirmed-claim";
       const claim2 = await recoverPrivateFeeClaim({ node: node2, ethProvider, owner, walletSecret, privateFeeArtifact, record: record7, expectedChainId, expectedVersion });
       record7 = { ...record7, leafIndex: claim2.leafIndex.toBigInt().toString() };
       phase = "save-confirmed-claim";
-      await saveRecovery(copy(record7));
-      return copy(record7);
+      await saveRecovery(copy2(record7));
+      return copy2(record7);
     } catch (error312) {
       const journalCode = ["BB_ETH_REQUEST_CANCELLED", "BB_ETH_INSUFFICIENT_FUNDS", "BB_JOURNAL_INVALID", "BB_ETH_RECOVERY_REQUIRED", "BB_ETH_SUBMISSION_UNKNOWN", "BB_ETH_TRANSACTION_FAILED"].includes(error312?.code);
       const wrapped = journalCode ? new PrivateFeeFundingError(error312.code, record7) : depositAttempted ? new PrivateFeeFundingError("PRIVATE_FEE_FUNDING_SUBMISSION_UNKNOWN", record7) : error312 instanceof PrivateFeeFundingError ? error312 : new PrivateFeeFundingError("PRIVATE_FEE_FUNDING_FAILED");
@@ -441099,15 +441939,15 @@ ${context.join("\n")}`;
     try {
       const { node: node2, ethProvider, owner, walletSecret, privateFeeArtifact, record: record7, expectedChainId, expectedVersion } = input2 ?? {};
       validRecord(record7);
-      check8(record7.txHash, "PRIVATE_FEE_RECOVERY_HASH_REQUIRED");
+      check9(record7.txHash, "PRIVATE_FEE_RECOVERY_HASH_REQUIRED");
       const scope = await verifyScope({ node: node2, ethProvider, privateFeeArtifact, privateFeeAddress: record7.privateFeeAddress, expectedChainId, expectedVersion });
-      check8(Object.entries(scope).every(([key, value]) => eq(value, record7[key])), "PRIVATE_FEE_RECOVERY_SCOPE_MISMATCH");
+      check9(Object.entries(scope).every(([key, value]) => eq(value, record7[key])), "PRIVATE_FEE_RECOVERY_SCOPE_MISMATCH");
       const { salt, secret, secretHash } = await claimSecrets({ walletSecret, owner, record: record7 });
-      const [receipt, transaction] = await Promise.all([ethProvider.getTransactionReceipt(record7.txHash), ethProvider.getTransaction(record7.txHash)]);
-      check8(receipt && transaction, "PRIVATE_FEE_RECOVERY_PENDING");
-      check8(receipt.status === 1, "PRIVATE_FEE_RECOVERY_REVERTED");
-      const block2 = await ethProvider.getBlock(receipt.blockNumber);
-      check8(block2 && eq(block2.hash, receipt.blockHash), "PRIVATE_FEE_RECOVERY_REORG");
+      const [receipt2, transaction] = await Promise.all([ethProvider.getTransactionReceipt(record7.txHash), ethProvider.getTransaction(record7.txHash)]);
+      check9(receipt2 && transaction, "PRIVATE_FEE_RECOVERY_PENDING");
+      check9(receipt2.status === 1, "PRIVATE_FEE_RECOVERY_REVERTED");
+      const block2 = await ethProvider.getBlock(receipt2.blockNumber);
+      check9(block2 && eq(block2.hash, receipt2.blockHash), "PRIVATE_FEE_RECOVERY_REORG");
       const expectedData = portalAbi.encodeFunctionData("depositToAztecPublic", [scope.privateFeeAddress, uint2(record7.amount), secretHash.toString()]);
       const intent = {
         from: record7.sender.toLowerCase(),
@@ -441118,16 +441958,16 @@ ${context.join("\n")}`;
         value: "0",
         expected: { kind: "fee-deposit", recipient: scope.privateFeeAddress.toLowerCase(), amount: String(record7.amount), secretHash: secretHash.toString().toLowerCase() }
       };
-      let verified;
+      let verified2;
       try {
-        verified = await verifyEthereumIntentReceipt(ethProvider, intent, record7.txHash.toLowerCase());
+        verified2 = await verifyEthereumIntentReceipt(ethProvider, intent, record7.txHash.toLowerCase());
       } catch {
         throw new PrivateFeeFundingError("PRIVATE_FEE_RECOVERY_TRANSACTION_MISMATCH");
       }
-      check8(verified?.outcome === "success", "PRIVATE_FEE_RECOVERY_TRANSACTION_MISMATCH");
-      const event = verified.event;
+      check9(verified2?.outcome === "success", "PRIVATE_FEE_RECOVERY_TRANSACTION_MISMATCH");
+      const event = verified2.event;
       const leafIndex = new Fr(uint2(event.index, 254));
-      check8(record7.leafIndex === void 0 || uint2(record7.leafIndex, 254) === leafIndex.toBigInt(), "PRIVATE_FEE_RECOVERY_EVENT_MISMATCH");
+      check9(record7.leafIndex === void 0 || uint2(record7.leafIndex, 254) === leafIndex.toBigInt(), "PRIVATE_FEE_RECOVERY_EVENT_MISMATCH");
       return { amount: uint2(record7.amount), salt, secret, leafIndex, messageKey: event.key };
     } catch (error312) {
       if (error312 instanceof PrivateFeeFundingError) throw error312;
@@ -441138,7 +441978,7 @@ ${context.join("\n")}`;
     const inner = await computeFeeJuiceMessageNullifier(Fr.fromString(claim2.messageKey), claim2.secret);
     const nullifier = await siloNullifier(ProtocolContractAddress.FeeJuice, inner);
     const indices = await node2.findLeavesIndexes("latest", MerkleTreeId.NULLIFIER_TREE, [nullifier]);
-    check8(Array.isArray(indices) && indices.length === 1, "PRIVATE_FEE_RECOVERY_FAILED");
+    check9(Array.isArray(indices) && indices.length === 1, "PRIVATE_FEE_RECOVERY_FAILED");
     return indices[0] !== void 0;
   }
 
@@ -441156,7 +441996,7 @@ ${context.join("\n")}`;
   init_dirname();
   init_buffer2();
   init_process2();
-  var fail3 = () => transactionError("BB_RECOVERY_REQUIRED", "Recover the saved transaction before starting another operation.");
+  var fail5 = () => transactionError("BB_RECOVERY_REQUIRED", "Recover the saved transaction before starting another operation.");
   var invalid3 = () => transactionError("BB_JOURNAL_INVALID", "Transaction recovery storage could not be authenticated. Preserve it before continuing.");
   function replacementOptions(options = {}) {
     try {
@@ -441238,9 +442078,9 @@ ${context.join("\n")}`;
           await rejectedAttempts(previous, { requireMissingAnchor: replacement.requireMissingAnchor });
           return previous;
         }
-        if (acknowledged !== previous.tx.getTxHash().toString()) throw fail3();
-        const receipt = await waitForCanonicalReceipt(node2, previous.tx, waitOptions);
-        if (receipt.executionResult === "reverted" && receipt.status !== "finalized") {
+        if (acknowledged !== previous.tx.getTxHash().toString()) throw fail5();
+        const receipt2 = await waitForCanonicalReceipt(node2, previous.tx, waitOptions);
+        if (receipt2.executionResult === "reverted" && receipt2.status !== "finalized") {
           throw transactionError("BB_TRANSACTION_FINALITY_PENDING", "The previous transaction reverted. Wait for network finality before starting another action; keep its saved record.");
         }
       }
@@ -441250,18 +442090,18 @@ ${context.join("\n")}`;
     const strictMode = (saved, requested) => requested || saved.value.replacementPolicy === "missing-anchor";
     async function attemptState(attempt, active) {
       const reading = Object.fromEntries(["getTxReceipt", "isValidTx", "getBlock"].map((name) => [name, (...args) => {
-        if (!active()) throw fail3();
+        if (!active()) throw fail5();
         return node2[name](...args);
       }]));
       const result = { txHash: attempt.txHash, status: "unknown", stateReasons: [] };
       try {
         const tx = Tx2.fromBuffer(Buffer2.from(attempt.tx, "hex"));
-        let receipt = await reading.getTxReceipt(tx.getTxHash());
+        let receipt2 = await reading.getTxReceipt(tx.getTxHash());
         if (!active()) return result;
-        if (receipt?.txHash?.toString() !== attempt.txHash) return result;
-        if (receipt.status === "dropped") {
+        if (receipt2?.txHash?.toString() !== attempt.txHash) return result;
+        if (receipt2.status === "dropped") {
           try {
-            receipt = await classifyDroppedTransaction(reading, tx, receipt);
+            receipt2 = await classifyDroppedTransaction(reading, tx, receipt2);
           } catch (error312) {
             const code = Object.getOwnPropertyDescriptor(error312 ?? {}, "code"), reasons = Object.getOwnPropertyDescriptor(error312 ?? {}, "stateReasons");
             if (code?.value === "BB_STATE_CONFLICT" && Array.isArray(reasons?.value) && reasons.value.length && reasons.value.length <= 8 && reasons.value.every((reason) => ["Existing nullifier", "Block header not found"].includes(reason))) {
@@ -441270,8 +442110,8 @@ ${context.join("\n")}`;
             return result;
           }
         }
-        if (["pending", "proposed"].includes(receipt?.status)) return { ...result, status: "pending" };
-        if (["checkpointed", "proven", "finalized"].includes(receipt?.status)) {
+        if (["pending", "proposed"].includes(receipt2?.status)) return { ...result, status: "pending" };
+        if (["checkpointed", "proven", "finalized"].includes(receipt2?.status)) {
           const canonical2 = await readCanonicalReceipt(reading, tx.getTxHash(), waitOptions);
           if (canonical2) return { ...result, status: "canonical" };
         }
@@ -441299,7 +442139,7 @@ ${context.join("\n")}`;
     }
     async function rejectedAttempts(saved, { requireMissingAnchor = false, priorOnly = false } = {}) {
       const rows = await inspectAttempts(saved, priorOnly);
-      if (!rejected(rows, strictMode(saved, requireMissingAnchor))) throw fail3();
+      if (!rejected(rows, strictMode(saved, requireMissingAnchor))) throw fail5();
       return [...rows.at(-1).stateReasons];
     }
     async function prepare2(tx, previous, { applicationNullifier } = {}) {
@@ -441311,42 +442151,42 @@ ${context.join("\n")}`;
       let replacements = [];
       const authorization = replacement, selectedOperation = operation;
       if (authorization) {
-        if (authorization.encoded !== previous.encoded || selectedOperation !== previous.value.operation || !selectedOperation) throw fail3();
-        if (previous.value.applicationNullifier !== void 0 && applicationNullifier !== previous.value.applicationNullifier) throw fail3();
+        if (authorization.encoded !== previous.encoded || selectedOperation !== previous.value.operation || !selectedOperation) throw fail5();
+        if (previous.value.applicationNullifier !== void 0 && applicationNullifier !== previous.value.applicationNullifier) throw fail5();
         await rejectedAttempts(previous, { requireMissingAnchor: authorization.requireMissingAnchor });
         replacements = [...previous.value.replacements || [], { txHash: previous.value.txHash, tx: previous.value.tx }];
-        if (replacements.length > 8 || replacements.some((prior) => prior.txHash === tx.getTxHash().toString())) throw fail3();
+        if (replacements.length > 8 || replacements.some((prior) => prior.txHash === tx.getTxHash().toString())) throw fail5();
       }
-      if (operation !== selectedOperation || replacement !== authorization) throw fail3();
+      if (operation !== selectedOperation || replacement !== authorization) throw fail5();
       await slot.write(previous, { version: 1, txHash: tx.getTxHash().toString(), tx: Buffer2.from(tx.toBuffer()).toString("hex"), operation: selectedOperation, ...authorization?.requireMissingAnchor ? { replacementPolicy: "missing-anchor" } : {}, ...applicationNullifier !== void 0 ? { applicationNullifier } : {}, ...replacements.length ? { replacements } : {} });
       replacement = null;
     }
-    function confirmed(receipt) {
-      acknowledged = receipt.txHash.toString();
+    function confirmed(receipt2) {
+      acknowledged = receipt2.txHash.toString();
       lastHash = acknowledged;
     }
     function bindRecovery(saved, binding3) {
-      if (binding3 && (!saved.tx || saved.value.operation !== binding3.expectedOperation || saved.value.txHash !== binding3.expectedTxHash)) throw fail3();
+      if (binding3 && (!saved.tx || saved.value.operation !== binding3.expectedOperation || saved.value.txHash !== binding3.expectedTxHash)) throw fail5();
     }
     async function savedRecoveryStatus(saved) {
       let active = true;
       const reading = Object.fromEntries(["getTxReceipt", "isValidTx", "getBlock"].map((name) => [name, (...args) => {
-        if (!active) throw fail3();
+        if (!active) throw fail5();
         return node2[name](...args);
       }]));
       try {
         return await boundedTransactionRead(async () => {
-          let receipt = await reading.getTxReceipt(saved.tx.getTxHash());
-          if (!active || receipt?.txHash?.toString() !== saved.value.txHash) return "unknown";
-          if (receipt.status === "dropped") {
+          let receipt2 = await reading.getTxReceipt(saved.tx.getTxHash());
+          if (!active || receipt2?.txHash?.toString() !== saved.value.txHash) return "unknown";
+          if (receipt2.status === "dropped") {
             const validity = await reading.isValidTx(saved.tx);
             if (!active) return "unknown";
-            receipt = await reading.getTxReceipt(saved.tx.getTxHash());
-            if (!active || receipt?.txHash?.toString() !== saved.value.txHash) return "unknown";
-            if (receipt.status === "dropped") return validity?.result === "valid" ? "resumable" : "unknown";
+            receipt2 = await reading.getTxReceipt(saved.tx.getTxHash());
+            if (!active || receipt2?.txHash?.toString() !== saved.value.txHash) return "unknown";
+            if (receipt2.status === "dropped") return validity?.result === "valid" ? "resumable" : "unknown";
           }
-          if (["pending", "proposed"].includes(receipt.status)) return "pending";
-          if (["checkpointed", "proven", "finalized"].includes(receipt.status)) return await readCanonicalReceipt(reading, saved.tx.getTxHash(), waitOptions) ? "canonical" : "unknown";
+          if (["pending", "proposed"].includes(receipt2.status)) return "pending";
+          if (["checkpointed", "proven", "finalized"].includes(receipt2.status)) return await readCanonicalReceipt(reading, saved.tx.getTxHash(), waitOptions) ? "canonical" : "unknown";
           return "unknown";
         }, waitOptions.readTimeoutMs ?? 2e4);
       } catch {
@@ -441358,39 +442198,39 @@ ${context.join("\n")}`;
     async function recoverSaved(saved, binding3 = null) {
       if (!saved.tx) throw transactionError("BB_NO_SAVED_TRANSACTION", "No saved Aztec transaction exists for this wallet and board.");
       bindRecovery(saved, binding3);
-      let receipt;
+      let receipt2;
       try {
-        receipt = await boundedTransactionRead(() => node2.getTxReceipt(saved.tx.getTxHash()));
+        receipt2 = await boundedTransactionRead(() => node2.getTxReceipt(saved.tx.getTxHash()));
       } catch {
-        throw fail3();
+        throw fail5();
       }
-      if (receipt?.txHash?.toString() !== saved.tx.getTxHash().toString()) throw fail3();
-      if (receipt.status === "dropped") {
+      if (receipt2?.txHash?.toString() !== saved.tx.getTxHash().toString()) throw fail5();
+      if (receipt2.status === "dropped") {
         let validation;
         try {
           validation = await boundedTransactionRead(() => node2.isValidTx(saved.tx));
         } catch {
-          throw fail3();
+          throw fail5();
         }
         try {
-          receipt = await boundedTransactionRead(() => node2.getTxReceipt(saved.tx.getTxHash()), waitOptions.readTimeoutMs ?? 2e4);
+          receipt2 = await boundedTransactionRead(() => node2.getTxReceipt(saved.tx.getTxHash()), waitOptions.readTimeoutMs ?? 2e4);
         } catch {
-          throw fail3();
+          throw fail5();
         }
-        if (receipt?.txHash?.toString() !== saved.value.txHash) throw fail3();
-        if (receipt.status === "dropped") {
-          if (validation?.result !== "valid") throw fail3();
+        if (receipt2?.txHash?.toString() !== saved.value.txHash) throw fail5();
+        if (receipt2.status === "dropped") {
+          if (validation?.result !== "valid") throw fail5();
           if (contextGuard) await contextGuard();
           if (saved.value.replacementPolicy === "missing-anchor") {
             await rejectedAttempts(saved, { requireMissingAnchor: true, priorOnly: true });
           }
           if (binding3?.beforeSubmit) await binding3.beforeSubmit(saved.value.txHash);
-          if ((await read2()).encoded !== saved.encoded) throw fail3();
+          if ((await read2()).encoded !== saved.encoded) throw fail5();
           if (contextGuard) await contextGuard();
-          if ((await read2()).encoded !== saved.encoded) throw fail3();
+          if ((await read2()).encoded !== saved.encoded) throw fail5();
           if (contextGuard) await contextGuard();
           await submitOnceWithReconciliation(node2, saved.tx);
-        } else if (!["pending", "proposed", "checkpointed", "proven", "finalized"].includes(receipt.status)) throw fail3();
+        } else if (!["pending", "proposed", "checkpointed", "proven", "finalized"].includes(receipt2.status)) throw fail5();
       }
       const result = await waitForCanonicalReceipt(node2, saved.tx, waitOptions);
       confirmed(result);
@@ -441407,9 +442247,9 @@ ${context.join("\n")}`;
       async inspectOutcome() {
         const saved = await read2();
         if (!saved.tx) return null;
-        const receipt = await readCanonicalReceipt(node2, saved.tx.getTxHash(), waitOptions);
-        if ((await read2()).encoded !== saved.encoded) throw fail3();
-        return { operation: saved.value.operation ?? null, txHash: saved.value.txHash, applicationNullifier: saved.value.applicationNullifier ?? null, outcome: receipt?.executionResult ?? "pending", receipt };
+        const receipt2 = await readCanonicalReceipt(node2, saved.tx.getTxHash(), waitOptions);
+        if ((await read2()).encoded !== saved.encoded) throw fail5();
+        return { operation: saved.value.operation ?? null, txHash: saved.value.txHash, applicationNullifier: saved.value.applicationNullifier ?? null, outcome: receipt2?.executionResult ?? "pending", receipt: receipt2 };
       },
       /** Read-only status, not a permit. Each row is bound to exact authenticated Tx
        * bytes. A canonical predecessor does not mean the current candidate won.
@@ -441418,7 +442258,7 @@ ${context.join("\n")}`;
         const expected = expectedOperation(operationInput), requested = replacementOptions(options);
         const saved = await read2();
         if (!saved.tx) return Object.freeze({ status: "empty", operation: null, txHash: null, predecessorTxHashes: Object.freeze([]), requireMissingAnchor: requested, attempts: Object.freeze([]) });
-        if (saved.value.operation !== expected) throw fail3();
+        if (saved.value.operation !== expected) throw fail5();
         const requireMissingAnchor = strictMode(saved, requested);
         let rows;
         try {
@@ -441426,7 +442266,7 @@ ${context.join("\n")}`;
         } catch {
           rows = attemptsOf(saved).map((attempt) => ({ txHash: attempt.txHash, status: "unknown", stateReasons: [] }));
         }
-        if ((await read2()).encoded !== saved.encoded) throw fail3();
+        if ((await read2()).encoded !== saved.encoded) throw fail5();
         const status = rows.some((row) => row.status === "canonical") ? "canonical" : rows.some((row) => row.status === "pending") ? "pending" : !rejected(rows, requireMissingAnchor) ? "unknown" : (saved.value.replacements?.length ?? 0) >= 8 ? "limit-reached" : "available";
         return Object.freeze({
           status,
@@ -441453,7 +442293,7 @@ ${context.join("\n")}`;
             status = "unknown";
           }
         }
-        if ((await read2()).encoded !== saved.encoded) throw fail3();
+        if ((await read2()).encoded !== saved.encoded) throw fail5();
         if (contextGuard) await contextGuard();
         return Object.freeze({ status, operation: saved.value.operation ?? null, txHash: saved.value.txHash });
       },
@@ -441461,10 +442301,10 @@ ${context.join("\n")}`;
         replacement = null;
         const expected = expectedOperation(operationInput), requested = replacementOptions(options);
         const saved = await read2();
-        if (!saved.tx || saved.value.operation !== expected || (saved.value.replacements?.length ?? 0) >= 8) throw fail3();
+        if (!saved.tx || saved.value.operation !== expected || (saved.value.replacements?.length ?? 0) >= 8) throw fail5();
         const requireMissingAnchor = strictMode(saved, requested);
         const reasons = await rejectedAttempts(saved, { requireMissingAnchor });
-        if ((await read2()).encoded !== saved.encoded) throw fail3();
+        if ((await read2()).encoded !== saved.encoded) throw fail5();
         replacement = { encoded: saved.encoded, requireMissingAnchor };
         operation = expected;
         return reasons;
@@ -441476,9 +442316,9 @@ ${context.join("\n")}`;
         const expected = expectedOperation(operationInput), requested = replacementOptions(options);
         if (typeof currentTxHash !== "string" || !/^0x[0-9a-f]{64}$/.test(currentTxHash)) throw invalid3();
         const saved = await read2();
-        if (!saved.tx || saved.value.operation !== expected || saved.value.txHash !== currentTxHash || !saved.value.replacements?.length) throw fail3();
+        if (!saved.tx || saved.value.operation !== expected || saved.value.txHash !== currentTxHash || !saved.value.replacements?.length) throw fail5();
         await rejectedAttempts(saved, { requireMissingAnchor: requested, priorOnly: true });
-        if ((await read2()).encoded !== saved.encoded) throw fail3();
+        if ((await read2()).encoded !== saved.encoded) throw fail5();
         return true;
       },
       setOperation(value) {
@@ -441496,9 +442336,9 @@ ${context.join("\n")}`;
         const binding3 = recoveryOptions(options);
         const saved = await read2();
         if (!saved.tx) return null;
-        const receipt = await recoverSaved(saved, binding3);
-        if ((await read2()).encoded !== saved.encoded) throw fail3();
-        return { receipt, operation: saved.value.operation ?? null };
+        const receipt2 = await recoverSaved(saved, binding3);
+        if ((await read2()).encoded !== saved.encoded) throw fail5();
+        return { receipt: receipt2, operation: saved.value.operation ?? null };
       }
     };
   }
@@ -472368,58 +473208,68 @@ mod tests {
   var FIELD_MODULUS = 0x30644e72e131a029b85045b68181585d2833e84879b9709143e1f593f0000001n;
 
   // shared/journal-backup.mjs
-  var fail4 = () => transactionError("BB_JOURNAL_INVALID", "Recovery records could not be authenticated or conflict with newer local records. Preserve both copies.");
+  var fail6 = () => transactionError("BB_JOURNAL_INVALID", "Recovery records could not be authenticated or conflict with newer local records. Preserve both copies.");
   var domains = /* @__PURE__ */ new Map([
     ["AZTEC_BB_L2_JOURNAL_KEY_V1", "AZTEC_BB_L2_JOURNAL_V1"],
     ["AZTEC_BB_ETH_JOURNAL_KEY_V1", "AZTEC_BB_ETH_JOURNAL_V1"],
     ["ROLLING_WORKFLOW_V1", "ROLLING_WORKFLOW_V1"],
-    ["ROLLING_PREFERENCES_V1", "ROLLING_PREFERENCES_V1"]
+    ["ROLLING_PREFERENCES_V1", "ROLLING_PREFERENCES_V1"],
+    ["ROLLING_COLD_PREFERENCES_V1", "ROLLING_COLD_PREFERENCES_V1"]
   ]);
   var LIMIT = 16 * 1024 * 1024;
   function validDescriptor(descriptor) {
-    if (!descriptor || Object.keys(descriptor).sort().join() !== "keyDomain,scopeText" || !domains.has(descriptor.keyDomain) || typeof descriptor.scopeText !== "string") throw fail4();
+    if (!descriptor || Object.keys(descriptor).sort().join() !== "keyDomain,scopeText" || !domains.has(descriptor.keyDomain) || typeof descriptor.scopeText !== "string") throw fail6();
     const frame = JSON.parse(descriptor.scopeText);
-    if (frame[0] !== domains.get(descriptor.keyDomain)) throw fail4();
+    if (frame[0] !== domains.get(descriptor.keyDomain)) throw fail6();
     if (descriptor.keyDomain === "ROLLING_PREFERENCES_V1") {
-      if (!Array.isArray(frame) || frame.length !== 8 || frame[7] !== 1 || descriptor.scopeText !== JSON.stringify(frame)) throw fail4();
+      if (!Array.isArray(frame) || frame.length !== 8 || frame[7] !== 1 || descriptor.scopeText !== JSON.stringify(frame)) throw fail6();
       for (const index of [1, 2]) {
         const value = frame[index];
-        if (typeof value !== "string" || value.length > 78 || !/^[1-9][0-9]*$/.test(value) || BigInt(value) >= FIELD_MODULUS) throw fail4();
+        if (typeof value !== "string" || value.length > 78 || !/^[1-9][0-9]*$/.test(value) || BigInt(value) >= FIELD_MODULUS) throw fail6();
       }
       for (const index of [3, 4, 5, 6]) {
         const value = frame[index], width = index === 3 ? 40 : 64;
-        if (typeof value !== "string" || !new RegExp(`^0x[0-9a-f]{${width}}$`).test(value) || BigInt(value) === 0n || index !== 3 && BigInt(value) >= FIELD_MODULUS) throw fail4();
+        if (typeof value !== "string" || !new RegExp(`^0x[0-9a-f]{${width}}$`).test(value) || BigInt(value) === 0n || index !== 3 && BigInt(value) >= FIELD_MODULUS) throw fail6();
       }
     }
+    if (descriptor.keyDomain === "ROLLING_COLD_PREFERENCES_V1") {
+      if (!Array.isArray(frame) || frame.length !== 11 || frame[10] !== 1 || descriptor.scopeText !== JSON.stringify(frame)) throw fail6();
+      if (!Number.isSafeInteger(frame[1]) || frame[1] < 1 || !Number.isSafeInteger(frame[2]) || frame[2] < 1 || frame[2] > 4294967295) throw fail6();
+      for (const index of [3, 4, 5, 6, 7]) {
+        const value = frame[index], width = index === 3 ? 40 : 64;
+        if (typeof value !== "string" || !new RegExp(`^0x[0-9a-f]{${width}}$`).test(value) || BigInt(value) === 0n || index !== 3 && BigInt(value) >= FIELD_MODULUS) throw fail6();
+      }
+      if (typeof frame[8] !== "boolean" || !["proposed", "checkpointed", "proven", "finalized"].includes(frame[9])) throw fail6();
+    }
     if (descriptor.keyDomain === "ROLLING_WORKFLOW_V1") {
-      if (!Array.isArray(frame) || frame.length !== 2 || typeof frame[1] !== "string") throw fail4();
+      if (!Array.isArray(frame) || frame.length !== 2 || typeof frame[1] !== "string") throw fail6();
       const nested = JSON.parse(frame[1]), names = ["account", "chainId", "rollup", "version", "board", "portal"];
-      if (!Array.isArray(nested) || nested.length !== 7 || nested[0] !== "AZTEC_BB_L2_JOURNAL_V1" || nested.some((value) => typeof value !== "string")) throw fail4();
+      if (!Array.isArray(nested) || nested.length !== 7 || nested[0] !== "AZTEC_BB_L2_JOURNAL_V1" || nested.some((value) => typeof value !== "string")) throw fail6();
       const canonical2 = l2JournalScopeText(Object.fromEntries(names.map((name, index) => [name, nested[index + 1]])));
-      if (frame[1] !== canonical2 || descriptor.scopeText !== JSON.stringify(["ROLLING_WORKFLOW_V1", canonical2])) throw fail4();
+      if (frame[1] !== canonical2 || descriptor.scopeText !== JSON.stringify(["ROLLING_WORKFLOW_V1", canonical2])) throw fail6();
     }
   }
   async function createJournalBackup({ storage, walletSecret, walletSalt }) {
     const identity = await journalRecoveryIdentity({ walletSecret, walletSalt });
     async function authenticate(record7) {
       try {
-        if (!record7 || typeof record7.key !== "string" || !/^[0-9a-f]{64}$/.test(record7.key) || typeof record7.encoded !== "string" || record7.encoded.length > LIMIT) throw fail4();
+        if (!record7 || typeof record7.key !== "string" || !/^[0-9a-f]{64}$/.test(record7.key) || typeof record7.encoded !== "string" || record7.encoded.length > LIMIT) throw fail6();
         const envelope = JSON.parse(record7.encoded), descriptor = await decryptJournalDescriptor(envelope.recovery, identity);
         validDescriptor(descriptor);
         const slot = await createEncryptedJournalSlot({ walletSecret, walletSalt, ...descriptor, storage: { read: async (key) => {
-          if (key !== record7.key) throw fail4();
+          if (key !== record7.key) throw fail6();
           return record7.encoded;
         } } });
-        if (slot.storageKey !== record7.key) throw fail4();
+        if (slot.storageKey !== record7.key) throw fail6();
         await slot.read();
         return record7;
       } catch {
-        throw fail4();
+        throw fail6();
       }
     }
     return {
       async exportRecords() {
-        if (typeof storage.keys !== "function") throw fail4();
+        if (typeof storage.keys !== "function") throw fail6();
         const keys = await storage.keys(), records = [];
         let total = 0;
         for (const key of keys) {
@@ -472429,41 +473279,41 @@ mod tests {
           try {
             envelope = JSON.parse(encoded);
           } catch {
-            throw fail4();
+            throw fail6();
           }
-          if (!envelope.recovery) throw fail4();
+          if (!envelope.recovery) throw fail6();
           if (envelope.recovery.owner !== identity.owner) continue;
           total += encoded.length;
-          if (total > LIMIT) throw fail4();
+          if (total > LIMIT) throw fail6();
           records.push(await authenticate({ key, encoded }));
         }
         const finalKeys = await storage.keys();
-        if (JSON.stringify([...keys].sort()) !== JSON.stringify([...finalKeys].sort())) throw fail4();
-        for (const record7 of records) if (await storage.read(record7.key) !== record7.encoded) throw fail4();
+        if (JSON.stringify([...keys].sort()) !== JSON.stringify([...finalKeys].sort())) throw fail6();
+        for (const record7 of records) if (await storage.read(record7.key) !== record7.encoded) throw fail6();
         return records;
       },
       async restoreRecords(records) {
-        if (!Array.isArray(records) || records.length > 1e4) throw fail4();
+        if (!Array.isArray(records) || records.length > 1e4) throw fail6();
         const seen = /* @__PURE__ */ new Set();
         let total = 0;
         for (const record7 of records) {
           await authenticate(record7);
           total += record7.encoded.length;
-          if (total > LIMIT || seen.has(record7.key)) throw fail4();
+          if (total > LIMIT || seen.has(record7.key)) throw fail6();
           seen.add(record7.key);
           const current = await storage.read(record7.key);
-          if (current !== null && current !== record7.encoded) throw fail4();
+          if (current !== null && current !== record7.encoded) throw fail6();
         }
         for (const record7 of records) {
           const current = await storage.read(record7.key);
           if (current === record7.encoded) continue;
-          if (current !== null) throw fail4();
+          if (current !== null) throw fail6();
           try {
             await storage.compareAndSwap(record7.key, null, record7.encoded);
           } catch {
-            throw fail4();
+            throw fail6();
           }
-          if (await storage.read(record7.key) !== record7.encoded) throw fail4();
+          if (await storage.read(record7.key) !== record7.encoded) throw fail6();
         }
       }
     };
@@ -472609,60 +473459,60 @@ mod tests {
 
   // shared/deployment-manifest.mjs
   var FR2 = 21888242871839275222246405745257275088548364400416034343698204186575808495617n;
-  var fail5 = (message) => {
+  var fail7 = (message) => {
     throw Object.assign(Error(message), { code: "BB_DEPLOYMENT_MANIFEST" });
   };
-  function exact(value, keys, label) {
-    if (!value || typeof value !== "object" || Array.isArray(value) || Object.keys(value).sort().join() !== [...keys].sort().join()) fail5("Invalid " + label + " fields");
+  function exact2(value, keys, label) {
+    if (!value || typeof value !== "object" || Array.isArray(value) || Object.keys(value).sort().join() !== [...keys].sort().join()) fail7("Invalid " + label + " fields");
   }
   function uint3(v, bits, label) {
-    if (typeof v !== "string" || !/^[1-9][0-9]*$/.test(v) || v.length > 78 || BigInt(v) >= 1n << BigInt(bits)) fail5("Invalid " + label);
+    if (typeof v !== "string" || !/^[1-9][0-9]*$/.test(v) || v.length > 78 || BigInt(v) >= 1n << BigInt(bits)) fail7("Invalid " + label);
     return v;
   }
-  function hex15(v, size2, label) {
-    if (typeof v !== "string" || !new RegExp("^0x[0-9a-f]{" + size2 * 2 + "}$").test(v) || BigInt(v) === 0n) fail5("Invalid " + label);
+  function hex16(v, size2, label) {
+    if (typeof v !== "string" || !new RegExp("^0x[0-9a-f]{" + size2 * 2 + "}$").test(v) || BigInt(v) === 0n) fail7("Invalid " + label);
     return v;
   }
   function field3(v, label) {
-    hex15(v, 32, label);
-    if (BigInt(v) >= FR2) fail5("Invalid " + label);
+    hex16(v, 32, label);
+    if (BigInt(v) >= FR2) fail7("Invalid " + label);
     return v;
   }
   function endpoint2(v) {
-    if (typeof v !== "string" || v.length > 4096 || v !== v.trim()) fail5("Invalid deployment endpoint");
+    if (typeof v !== "string" || v.length > 4096 || v !== v.trim()) fail7("Invalid deployment endpoint");
     let u;
     try {
       u = new URL(v);
     } catch {
-      fail5("Invalid deployment endpoint");
+      fail7("Invalid deployment endpoint");
     }
-    if (!["http:", "https:"].includes(u.protocol) || u.username || u.password || u.search || u.hash) fail5("Deployment endpoints must exclude credentials, query and fragment");
+    if (!["http:", "https:"].includes(u.protocol) || u.username || u.password || u.search || u.hash) fail7("Deployment endpoints must exclude credentials, query and fragment");
     return u.href;
   }
   function validateDeploymentManifest(value) {
-    exact(value, ["schemaVersion", "profile", "network", "actors", "board", "artifacts"], "deployment manifest");
-    if (value.schemaVersion !== 1 || !["local-test", "operator"].includes(value.profile)) fail5("Invalid deployment profile");
+    exact2(value, ["schemaVersion", "profile", "network", "actors", "board", "artifacts"], "deployment manifest");
+    if (value.schemaVersion !== 1 || !["local-test", "operator"].includes(value.profile)) fail7("Invalid deployment profile");
     const n2 = value.network, b2 = value.board, a = value.actors, f = value.artifacts;
-    exact(n2, ["nodeUrl", "ethRpcUrl", "chainId", "rollupVersion", "rollup", "inbox", "outbox"], "network");
+    exact2(n2, ["nodeUrl", "ethRpcUrl", "chainId", "rollupVersion", "rollup", "inbox", "outbox"], "network");
     endpoint2(n2.nodeUrl);
     endpoint2(n2.ethRpcUrl);
     uint3(n2.chainId, 64, "chain");
     uint3(n2.rollupVersion, 32, "rollup version");
-    for (const k of ["rollup", "inbox", "outbox"]) hex15(n2[k], 20, k);
-    exact(a, ["aztecDeployer", "ethereumDeployer"], "actors");
+    for (const k of ["rollup", "inbox", "outbox"]) hex16(n2[k], 20, k);
+    exact2(a, ["aztecDeployer", "ethereumDeployer"], "actors");
     field3(a.aztecDeployer, "Aztec deployer");
-    hex15(a.ethereumDeployer, 20, "Ethereum deployer");
-    exact(b2, ["salt", "minDeposit", "maxDeposit", "baseCooldown", "kMultiplier", "censorWindow", "maxSaveUp", "censor", "policy"], "board");
-    if (typeof b2.salt !== "string" || !/^(0|[1-9][0-9]*)$/.test(b2.salt) || b2.salt.length > 78 || BigInt(b2.salt) >= FR2) fail5("Invalid contract salt");
+    hex16(a.ethereumDeployer, 20, "Ethereum deployer");
+    exact2(b2, ["salt", "minDeposit", "maxDeposit", "baseCooldown", "kMultiplier", "censorWindow", "maxSaveUp", "censor", "policy"], "board");
+    if (typeof b2.salt !== "string" || !/^(0|[1-9][0-9]*)$/.test(b2.salt) || b2.salt.length > 78 || BigInt(b2.salt) >= FR2) fail7("Invalid contract salt");
     uint3(b2.minDeposit, 96, "minimum deposit");
     uint3(b2.maxDeposit, 96, "maximum deposit");
-    if (BigInt(b2.minDeposit) > BigInt(b2.maxDeposit)) fail5("Reversed deposit bounds");
+    if (BigInt(b2.minDeposit) > BigInt(b2.maxDeposit)) fail7("Reversed deposit bounds");
     for (const k of ["baseCooldown", "censorWindow"]) uint3(b2[k], 32, k);
     for (const k of ["kMultiplier", "maxSaveUp"]) uint3(b2[k], 16, k);
     field3(b2.censor, "censor");
-    if (typeof b2.policy !== "string" || !b2.policy.isWellFormed() || b2.policy.includes("\0") || !b2.policy.trim() || new TextEncoder().encode(b2.policy).length > 1488) fail5("Explicit nonempty policy required");
-    exact(f, ["boardJsonSha256", "boardClassId", "portalCreationSha256", "portalRuntimeMetadataSha256"], "artifacts");
-    for (const k of Object.keys(f)) hex15(f[k], 32, k);
+    if (typeof b2.policy !== "string" || !b2.policy.isWellFormed() || b2.policy.includes("\0") || !b2.policy.trim() || new TextEncoder().encode(b2.policy).length > 1488) fail7("Explicit nonempty policy required");
+    exact2(f, ["boardJsonSha256", "boardClassId", "portalCreationSha256", "portalRuntimeMetadataSha256"], "artifacts");
+    for (const k of Object.keys(f)) hex16(f[k], 32, k);
     field3(f.boardClassId, "board class");
     return structuredClone(value);
   }
@@ -472672,23 +473522,23 @@ mod tests {
   }
   function verifyDeploymentInputs(manifest, { artifact, portalBytecode, runtimeMetadata, config: config9, ethers }) {
     const m2 = validateDeploymentManifest(manifest), expected = deploymentManifestConfig(m2);
-    for (const k of ["aztecNodeUrl", "ethRpcUrl"]) if (endpoint2(config9[k]) !== endpoint2(expected[k])) fail5("Manifest endpoint mismatch");
-    for (const k of ["contractSalt", "minDepositWei", "maxDepositWei", "baseCooldown", "kMultiplier", "censorWindow", "maxSaveUp"]) if (config9[k] === void 0 || BigInt(config9[k]) !== BigInt(expected[k])) fail5("Manifest parameter mismatch: " + k);
-    if (config9.censor?.toLowerCase() !== m2.board.censor || config9.moderationPolicy !== m2.board.policy) fail5("Manifest policy/censor mismatch");
+    for (const k of ["aztecNodeUrl", "ethRpcUrl"]) if (endpoint2(config9[k]) !== endpoint2(expected[k])) fail7("Manifest endpoint mismatch");
+    for (const k of ["contractSalt", "minDepositWei", "maxDepositWei", "baseCooldown", "kMultiplier", "censorWindow", "maxSaveUp"]) if (config9[k] === void 0 || BigInt(config9[k]) !== BigInt(expected[k])) fail7("Manifest parameter mismatch: " + k);
+    if (config9.censor?.toLowerCase() !== m2.board.censor || config9.moderationPolicy !== m2.board.policy) fail7("Manifest policy/censor mismatch");
     const hash12 = (o) => ethers.sha256(ethers.toUtf8Bytes(JSON.stringify(o)));
-    if (hash12(artifact) !== m2.artifacts.boardJsonSha256 || ethers.sha256(portalBytecode) !== m2.artifacts.portalCreationSha256 || hash12(runtimeMetadata) !== m2.artifacts.portalRuntimeMetadataSha256) fail5("Deployment artifact identity mismatch");
+    if (hash12(artifact) !== m2.artifacts.boardJsonSha256 || ethers.sha256(portalBytecode) !== m2.artifacts.portalCreationSha256 || hash12(runtimeMetadata) !== m2.artifacts.portalRuntimeMetadataSha256) fail7("Deployment artifact identity mismatch");
     return { manifest: m2, intentDigest: hash12(m2) };
   }
   async function preflightDeploymentNetwork(manifest, { node: node2, provider, ethers, timeoutMs = 2e4 }) {
     const m2 = validateDeploymentManifest(manifest), n2 = m2.network, deadline = Date.now() + timeoutMs;
-    if (!Number.isInteger(timeoutMs) || timeoutMs < 1 || timeoutMs > 2e4) fail5("Invalid preflight timeout");
+    if (!Number.isInteger(timeoutMs) || timeoutMs < 1 || timeoutMs > 2e4) fail7("Invalid preflight timeout");
     const read2 = (fn) => boundedTransactionRead(fn, deadline - Date.now());
     const [info, contracts, network] = await read2(() => Promise.all([node2.getNodeInfo(), node2.getL1ContractAddresses(), provider.getNetwork()]));
-    if (String(info.l1ChainId) !== n2.chainId || String(network.chainId) !== n2.chainId || String(info.rollupVersion) !== n2.rollupVersion || contracts.rollupAddress?.toString().toLowerCase() !== n2.rollup) fail5("Deployment network identity mismatch");
-    for (const [key, name] of [["inboxAddress", "inbox"], ["outboxAddress", "outbox"]]) if (contracts[key] && contracts[key].toString().toLowerCase() !== n2[name]) fail5("Node bridge identity mismatch");
+    if (String(info.l1ChainId) !== n2.chainId || String(network.chainId) !== n2.chainId || String(info.rollupVersion) !== n2.rollupVersion || contracts.rollupAddress?.toString().toLowerCase() !== n2.rollup) fail7("Deployment network identity mismatch");
+    for (const [key, name] of [["inboxAddress", "inbox"], ["outboxAddress", "outbox"]]) if (contracts[key] && contracts[key].toString().toLowerCase() !== n2[name]) fail7("Node bridge identity mismatch");
     const rollup = new ethers.Contract(n2.rollup, ["function getInbox() view returns (address)", "function getOutbox() view returns (address)"], provider);
     const [inbox, outbox, ...codes] = await read2(() => Promise.all([rollup.getInbox(), rollup.getOutbox(), ...["rollup", "inbox", "outbox"].map((k) => provider.getCode(n2[k]))]));
-    if (inbox.toLowerCase() !== n2.inbox || outbox.toLowerCase() !== n2.outbox || codes.some((c) => typeof c !== "string" || !/^0x(?:[0-9a-fA-F]{2})+$/.test(c))) fail5("Deployment bridge/code mismatch");
+    if (inbox.toLowerCase() !== n2.inbox || outbox.toLowerCase() !== n2.outbox || codes.some((c) => typeof c !== "string" || !/^0x(?:[0-9a-fA-F]{2})+$/.test(c))) fail7("Deployment bridge/code mismatch");
     return { nodeInfo: info, l1Contracts: contracts };
   }
   async function deploymentPolicyVersion(board, policy2) {
@@ -472700,27 +473550,27 @@ mod tests {
   init_buffer2();
   init_process2();
   var PORTAL_IMMUTABLES = Object.freeze(["MIN_DEPOSIT", "MAX_DEPOSIT", "L2_CONTRACT", "ROLLUP", "INBOX", "OUTBOX", "VERSION", "L1_CHAIN_ID", "CONFIG_HASH"]);
-  var hex16 = (value) => typeof value === "string" && /^0x(?:[0-9a-fA-F]{2})+$/.test(value);
-  var fail6 = () => {
+  var hex17 = (value) => typeof value === "string" && /^0x(?:[0-9a-fA-F]{2})+$/.test(value);
+  var fail8 = () => {
     throw new Error("Invalid portal runtime metadata or immutable values");
   };
   function expectedPortalRuntime(metadata, values) {
-    if (!metadata || metadata.schemaVersion !== 1 || !hex16(metadata.runtimeTemplate) || !metadata.immutables || !values) fail6();
+    if (!metadata || metadata.schemaVersion !== 1 || !hex17(metadata.runtimeTemplate) || !metadata.immutables || !values) fail8();
     const names = Object.keys(metadata.immutables).sort();
-    if (JSON.stringify(names) !== JSON.stringify([...PORTAL_IMMUTABLES].sort()) || JSON.stringify(Object.keys(values).sort()) !== JSON.stringify(names)) fail6();
+    if (JSON.stringify(names) !== JSON.stringify([...PORTAL_IMMUTABLES].sort()) || JSON.stringify(Object.keys(values).sort()) !== JSON.stringify(names)) fail8();
     const bytes3 = metadata.runtimeTemplate.slice(2).toLowerCase().match(/../g), occupied = /* @__PURE__ */ new Set();
     for (const name of names) {
       const raw = values[name];
-      if (!(typeof raw === "bigint" || typeof raw === "string" && /^(?:0|[1-9][0-9]*|0x[0-9a-fA-F]+)$/.test(raw))) fail6();
+      if (!(typeof raw === "bigint" || typeof raw === "string" && /^(?:0|[1-9][0-9]*|0x[0-9a-fA-F]+)$/.test(raw))) fail8();
       const value = BigInt(raw), width = ["ROLLUP", "INBOX", "OUTBOX"].includes(name) ? 160n : 256n;
-      if (value < 0n || value >= 1n << width) fail6();
+      if (value < 0n || value >= 1n << width) fail8();
       const word2 = value.toString(16).padStart(64, "0").match(/../g), refs = metadata.immutables[name];
-      if (!Array.isArray(refs) || !refs.length) fail6();
+      if (!Array.isArray(refs) || !refs.length) fail8();
       for (const ref of refs) {
-        if (!ref || Object.keys(ref).sort().join(",") !== "length,start" || ref.length !== 32 || !Number.isSafeInteger(ref.start) || ref.start < 0 || ref.start + 32 > bytes3.length) fail6();
+        if (!ref || Object.keys(ref).sort().join(",") !== "length,start" || ref.length !== 32 || !Number.isSafeInteger(ref.start) || ref.start < 0 || ref.start + 32 > bytes3.length) fail8();
         for (let i = 0; i < 32; i++) {
           const offset = ref.start + i;
-          if (occupied.has(offset) || bytes3[offset] !== "00") fail6();
+          if (occupied.has(offset) || bytes3[offset] !== "00") fail8();
           occupied.add(offset);
           bytes3[offset] = word2[i];
         }
@@ -472730,7 +473580,7 @@ mod tests {
   }
   function verifyPortalRuntime(actual, metadata, values) {
     const expected = expectedPortalRuntime(metadata, values);
-    if (!hex16(actual) || actual.toLowerCase() !== expected) throw new Error("Deployed portal runtime does not match the verified build and configuration");
+    if (!hex17(actual) || actual.toLowerCase() !== expected) throw new Error("Deployed portal runtime does not match the verified build and configuration");
     return true;
   }
 
@@ -472990,41 +473840,41 @@ mod tests {
   var DOMAIN = 1111639041;
   var MODULUS = 21888242871839275222246405745257275088548364400416034343698204186575808495617n;
   var abi = new Interface(["event Deposited(address indexed depositor,uint128 amount,bytes32 secretHash,bytes32 key,uint256 index)", "function deposit(bytes32 secretHash) payable"]);
-  var fail7 = () => Object.assign(Error("Deposit recovery could not be verified."), { code: "BB_DEPOSIT_LOOKUP_FAILED" });
+  var fail9 = () => Object.assign(Error("Deposit recovery could not be verified."), { code: "BB_DEPOSIT_LOOKUP_FAILED" });
   function uint4(value, bits) {
-    if (!["bigint", "number", "string"].includes(typeof value) || typeof value === "number" && !Number.isSafeInteger(value) || typeof value === "string" && !/^(?:0|[1-9][0-9]*|0x[0-9a-f]+)$/.test(value)) throw fail7();
+    if (!["bigint", "number", "string"].includes(typeof value) || typeof value === "number" && !Number.isSafeInteger(value) || typeof value === "string" && !/^(?:0|[1-9][0-9]*|0x[0-9a-f]+)$/.test(value)) throw fail9();
     let n2;
     try {
       n2 = BigInt(value);
     } catch {
-      throw fail7();
+      throw fail9();
     }
-    if (n2 < 0n || n2 >= 1n << BigInt(bits)) throw fail7();
+    if (n2 < 0n || n2 >= 1n << BigInt(bits)) throw fail9();
     return n2;
   }
   function field4(value) {
     const n2 = uint4(value, 254);
-    if (n2 >= MODULUS) throw fail7();
+    if (n2 >= MODULUS) throw fail9();
     return new Fr(n2);
   }
   function address5(value, bits) {
-    if (typeof value !== "string" || !(bits === 160 ? /^0x[0-9a-f]{40}$/ : /^0x[0-9a-f]{64}$/).test(value) || BigInt(value) === 0n) throw fail7();
+    if (typeof value !== "string" || !(bits === 160 ? /^0x[0-9a-f]{40}$/ : /^0x[0-9a-f]{64}$/).test(value) || BigInt(value) === 0n) throw fail9();
     return field4(value);
   }
   async function deriveBoardDepositSecret({ walletSecret, walletSalt, scope, owner, nonce }) {
     const secretKey = field4(walletSecret);
-    if (secretKey.toBigInt() === 0n) throw fail7();
-    if (uint4(scope.l1ChainId, 64) === 0n || uint4(scope.rollupVersion, 32) === 0n) throw fail7();
+    if (secretKey.toBigInt() === 0n) throw fail9();
+    if (uint4(scope.l1ChainId, 64) === 0n || uint4(scope.rollupVersion, 32) === 0n) throw fail9();
     const secret = await poseidon2HashWithSeparator([new Fr(1), secretKey, field4(walletSalt), new Fr(uint4(scope.l1ChainId, 64)), new Fr(uint4(scope.rollupVersion, 32)), address5(scope.rollupAddress, 160), address5(scope.boardAddress, 254), address5(scope.portalAddress, 160), address5(scope.depositor, 160), address5(owner, 254), new Fr(uint4(nonce, 64))], DOMAIN);
     const secretHash = await computeSecretHash(secret);
-    if (secret.toBigInt() === 0n || secretHash.toBigInt() === 0n) throw fail7();
+    if (secret.toBigInt() === 0n || secretHash.toBigInt() === 0n) throw fail9();
     return { secret: secret.toString(), secretHash: secretHash.toString() };
   }
   async function recoverBoardDepositSecret({ provider, read: read2, scope, active, head, walletSecret, walletSalt, owner, guard = async () => {
   }, progress }) {
     const topics = abi.encodeFilterTopics("Deposited", [scope.depositor]);
     const identity = JSON.stringify([scope, active.amount.toString(), active.secretHash, active.key, active.index.toString()]);
-    if (!Number.isSafeInteger(head.number) || head.number < 0 || !/^0x[0-9a-f]{64}$/.test(head.hash)) throw fail7();
+    if (!Number.isSafeInteger(head.number) || head.number < 0 || !/^0x[0-9a-f]{64}$/.test(head.hash)) throw fail9();
     let saved = await progress?.read(identity);
     if (saved && (saved.schema !== 1 || !["boundary", "scan"].includes(saved.phase) || !Number.isSafeInteger(saved.low) || !Number.isSafeInteger(saved.high) || saved.low < 0 || saved.high < saved.low || !Number.isSafeInteger(saved.end) || saved.end < saved.low - 1 || saved.end > saved.headNumber || !/^0x[0-9a-f]{64}$/.test(saved.headHash) || !Number.isSafeInteger(saved.headNumber) || saved.headNumber < saved.high)) {
       await progress.clear(identity);
@@ -473039,32 +473889,32 @@ mod tests {
     while (low < high) {
       await guard();
       const mid = Math.floor((low + high) / 2), code = await read2(() => provider.getCode(scope.portalAddress, mid));
-      if (typeof code !== "string" || !/^0x(?:[0-9a-fA-F]{2})*$/.test(code)) throw fail7();
+      if (typeof code !== "string" || !/^0x(?:[0-9a-fA-F]{2})*$/.test(code)) throw fail9();
       if (code === "0x") low = mid + 1;
       else high = mid;
       await checkpoint("boundary", head.number);
     }
-    const same = (event) => String(event.amount) === String(active.amount) && event.secretHash.toLowerCase() === active.secretHash.toLowerCase() && event.key.toLowerCase() === active.key.toLowerCase() && String(event.index) === String(active.index);
+    const same2 = (event) => String(event.amount) === String(active.amount) && event.secretHash.toLowerCase() === active.secretHash.toLowerCase() && event.key.toLowerCase() === active.key.toLowerCase() && String(event.index) === String(active.index);
     for (let end = saved?.phase === "scan" ? saved.end : head.number; end >= low; end -= 2e3) {
       await guard();
       const logs = await read2(() => provider.getLogs({ address: scope.portalAddress, topics, fromBlock: Math.max(low, end - 1999), toBlock: end }));
       for (const log3 of logs) {
         const parsed = abi.parseLog(log3);
-        if (!parsed || !same(parsed.args)) continue;
+        if (!parsed || !same2(parsed.args)) continue;
         const tx = await read2(() => provider.getTransaction(log3.transactionHash));
-        if (!tx || String(tx.chainId) !== scope.l1ChainId || tx.from.toLowerCase() !== scope.depositor) throw fail7();
+        if (!tx || String(tx.chainId) !== scope.l1ChainId || tx.from.toLowerCase() !== scope.depositor) throw fail9();
         const derived2 = await deriveBoardDepositSecret({ walletSecret, walletSalt, scope, owner, nonce: tx.nonce });
         if (derived2.secretHash !== active.secretHash.toLowerCase()) throw Object.assign(Error("Different private account."), { code: "BB_CLAIM_SECRET_MISSING" });
         const record7 = { from: scope.depositor, to: scope.portalAddress, chainId: scope.l1ChainId, nonce: tx.nonce, data: abi.encodeFunctionData("deposit", [derived2.secretHash]).toLowerCase(), value: String(active.amount), scope, expected: { kind: "deposit", amount: String(active.amount), secretHash: derived2.secretHash } };
         const result = await verifyEthereumIntentReceipt(provider, record7, log3.transactionHash.toLowerCase(), read2);
-        if (result?.outcome !== "success" || !same(result.event) || (await read2(() => provider.getBlock(head.number)))?.hash !== head.hash) throw fail7();
+        if (result?.outcome !== "success" || !same2(result.event) || (await read2(() => provider.getBlock(head.number)))?.hash !== head.hash) throw fail9();
         await progress?.clear(identity);
         return derived2;
       }
       await checkpoint("scan", Math.max(low - 1, end - 2e3));
     }
     await progress?.clear(identity);
-    throw fail7();
+    throw fail9();
   }
 
   // shared/private-fee-estimation.mjs
@@ -473101,7 +473951,7 @@ mod tests {
 
   // shared/private-fee-estimation.mjs
   var dimensions = ["daGas", "l2Gas"];
-  var fail8 = (code) => Object.assign(new Error(code), { code });
+  var fail10 = (code) => Object.assign(new Error(code), { code });
   var min = (a, b2) => a < b2 ? a : b2;
   var successful = (r) => r.publicInputs && (!r.publicInputs.forPublic || r.publicOutput?.txEffect?.revertCode?.isOK()) && !r.publicOutput?.revertReason;
   var outOfGas = (e) => /^(?:Out of gas(?: exception)?(?::|$)|Not enough (?:DAGAS|L2GAS)(?:, (?:DAGAS|L2GAS))? gas left$)/i.test(e?.getOriginalMessage?.() ?? "");
@@ -473133,7 +473983,7 @@ mod tests {
     const caps = new Gas(Math.min(ceiling.gasLimits.daGas, network.daGas, MAX_TX_DA_GAS), Math.min(ceiling.gasLimits.l2Gas, network.l2Gas, MAX_PROCESSABLE_L2_GAS));
     const settings = (gasLimits, teardownGasLimits) => GasSettings.from({ gasLimits, teardownGasLimits, maxFeesPerGas: ceiling.maxFeesPerGas, maxPriorityFeesPerGas: ceiling.maxPriorityFeesPerGas });
     const maximum = min(available, cost(caps, ceiling.maxFeesPerGas) + 1n), application = await interaction.request();
-    if (available <= 0n) throw fail8("PRIVATE_FEE_BALANCE_INSUFFICIENT");
+    if (available <= 0n) throw fail10("PRIVATE_FEE_BALANCE_INSUFFICIENT");
     const payloadFor = async (reservation2) => mergeExecutionPayloads([await prepared.paymentMethod.withReservation(reservation2).getExecutionPayload(), application]);
     const privateSettings = GasSettings.forEstimation({ maxFeesPerGas: GasFees.empty(), maxPriorityFeesPerGas: GasFees.empty() });
     privateSettings.teardownGasLimits = Gas.empty();
@@ -473156,14 +474006,14 @@ mod tests {
           const error312 = probe.publicOutput?.revertReason;
           if (error312 && !refundExhausted(error312, prepared)) {
             if (!outOfGas(error312)) throw error312;
-          } else if (!probe.publicInputs || !probe.publicOutput) throw fail8("BB_SIMULATION_FAILED");
+          } else if (!probe.publicInputs || !probe.publicOutput) throw fail10("BB_SIMULATION_FAILED");
           else {
             const main = probe.gasUsed.totalGas;
             const teardown = new Gas(...dimensions.map((k) => Math.max(0, Math.min(ceiling.teardownGasLimits[k], gasLimits[k] - main[k]))));
             const full = await simulator.public(payload, from, settings(gasLimits, teardown));
             if (successful(full)) {
               let limits = getGasLimits(full.gasUsed, caps, 0.1);
-              if (dimensions.some((k) => full.gasUsed.teardownGas[k] > ceiling.teardownGasLimits[k])) throw fail8("BB_GAS_LIMIT_EXCEEDED");
+              if (dimensions.some((k) => full.gasUsed.teardownGas[k] > ceiling.teardownGasLimits[k])) throw fail10("BB_GAS_LIMIT_EXCEEDED");
               for (const k of dimensions) limits.teardownGasLimits[k] = Math.min(limits.teardownGasLimits[k], ceiling.teardownGasLimits[k]);
               if (cost(limits.gasLimits, ceiling.maxFeesPerGas) > available) limits = getGasLimits(full.gasUsed, caps, 0);
               const gasSettings = settings(limits.gasLimits, limits.teardownGasLimits), required7 = gasSettings.getFeeLimit().toBigInt();
@@ -473171,19 +474021,19 @@ mod tests {
                 const finalReservation = required7 || 1n, finalPayload = await payloadFor(finalReservation);
                 await guard();
                 const final = await simulator.public(finalPayload, from, gasSettings, true);
-                if (!successful(final)) throw final.publicOutput?.revertReason ?? fail8("BB_SIMULATION_FAILED");
-                if (dimensions.some((k) => final.gasUsed.totalGas[k] > gasSettings.gasLimits[k] || final.gasUsed.teardownGas[k] > gasSettings.teardownGasLimits[k])) throw fail8("BB_GAS_LIMIT_EXCEEDED");
+                if (!successful(final)) throw final.publicOutput?.revertReason ?? fail10("BB_SIMULATION_FAILED");
+                if (dimensions.some((k) => final.gasUsed.totalGas[k] > gasSettings.gasLimits[k] || final.gasUsed.teardownGas[k] > gasSettings.teardownGasLimits[k])) throw fail10("BB_GAS_LIMIT_EXCEEDED");
                 await guard();
                 return { payload: finalPayload, gasSettings, reservation: finalReservation, maximumFee: required7, passes: pass + 1 };
               }
-            } else if (!outOfGas(full.publicOutput?.revertReason)) throw full.publicOutput?.revertReason ?? fail8("BB_SIMULATION_FAILED");
+            } else if (!outOfGas(full.publicOutput?.revertReason)) throw full.publicOutput?.revertReason ?? fail10("BB_SIMULATION_FAILED");
           }
         }
       }
       if (reservation === maximum) break;
       reservation = min(maximum, reservation * 2n);
     }
-    throw fail8("BB_FEE_ESTIMATION_UNSTABLE");
+    throw fail10("BB_FEE_ESTIMATION_UNSTABLE");
   }
   async function sendPrivateFeeTransaction(input2) {
     const estimated = await estimatePrivateFeeTransaction(input2);
