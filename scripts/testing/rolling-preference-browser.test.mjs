@@ -44,23 +44,35 @@ test('labelled observation permits exact public pages and pinned read-only nativ
  const o=createRollingPreferenceTraffic(origins);
  for(const route of ['/', '/reader.mjs','/wallet/runtime.json','/wallet/aztec_bundle.js','/wallet/worker.worker.js','/crs/g1.dat'])assert(o.inspect(req(origins.origin+route)));
  assert(o.inspect(req(origins.origin+'/api/feed?limit=30')));assert(o.inspect(req(origins.origin+'/api/feed?limit=30&cursor=opaque-valid')));assert(o.inspect(req(origins.origin+'/api/board?id=0&limit=30')));
- assert(o.inspect(req(origins.trustedOrigin+'/healthz')));assert(o.inspect(req(origins.trustedOrigin+'/v1/node','OPTIONS')));assert(o.inspect(req(origins.trustedOrigin+'/v1/node','POST',rpc('node_getPrivateLogsByTags',['PRIVATE_SENTINEL']))));assert(o.inspect(req(origins.ethereumOrigin+'/','POST',rpc('eth_call',[{data:'PRIVATE_SENTINEL'},'latest']))));
+ assert(o.inspect(req(origins.trustedOrigin+'/healthz')));assert(o.inspect(req(origins.trustedOrigin+'/v1/node','OPTIONS')));assert(o.inspect(req(origins.trustedOrigin+'/v1/node','POST',rpc('aztec_getPrivateLogsByTags',['PRIVATE_SENTINEL']))));assert(o.inspect(req(origins.ethereumOrigin+'/','POST',rpc('eth_call',[{data:'PRIVATE_SENTINEL'},'latest']))));
  const s=o.snapshot();assert.equal(s.feedRequests,2);assert.equal(s.boardRequests,1);assert.equal(s.walletAssets,3);assert.equal(s.inspectionErrors,0);assert(!JSON.stringify(s).includes('PRIVATE_SENTINEL'));s.privateRequests=999;assert.notEqual(o.snapshot().privateRequests,999);
 });
 for(const [label,request,key]of [
  ['proof',req(origins.trustedOrigin+'/v1/jobs','POST','opaque'),'proofSubmits'],
+ ['aztec send',req(origins.trustedOrigin+'/v1/node','POST',rpc('aztec_sendTx',['opaque'])),'nodeSubmissions'],
  ['node send',req(origins.trustedOrigin+'/v1/node','POST',rpc('node_sendTx',['opaque'])),'nodeSubmissions'],
  ['L1 send',req(origins.ethereumOrigin+'/','POST',rpc('eth_sendRawTransaction',['opaque'])),'l1Submissions'],
- ['batch send',req(origins.trustedOrigin+'/v1/node','POST',JSON.stringify([{jsonrpc:'2.0',id:1,method:'node_getNodeInfo',params:[]},{jsonrpc:'2.0',id:2,method:'node_sendTx',params:['opaque']}])),'nodeSubmissions'],
+ ['batch send',req(origins.trustedOrigin+'/v1/node','POST',JSON.stringify([{jsonrpc:'2.0',id:1,method:'aztec_getNodeInfo',params:[]},{jsonrpc:'2.0',id:2,method:'node_sendTx',params:['opaque']}])),'nodeSubmissions'],
  ['outside',req('https://outside.invalid/private'),'blockedRequests'],
 ])test('labelled '+label+' is rejected and counted before route forwarding',()=>{const o=createRollingPreferenceTraffic(origins);assert.equal(o.inspect(request),false);assert.equal(o.snapshot()[key],1);});
 const badRequests=[
  req(origins.origin+'/api/feed?limit=30&owner=PRIVATE_SENTINEL'),req(origins.origin+'/api/feed?limit=30&limit=30'),req(origins.origin+'/api/feed?cursor=x'),req(origins.origin+'/api/feed?limit=30&cursor='),req(origins.origin+'/api/feed?limit=30&cursor='+'x'.repeat(4097)),req(origins.origin+'/api/board?id=1&limit=30'),req(origins.origin+'/api/profile?nameId=1'),req(origins.origin+'/api/preferences'),req(origins.origin+'/api/feed?limit=30','POST','{}'),req(origins.origin+'/wallet/private?secret=x'),
- req(origins.trustedOrigin+'/v1/node','POST',rpc('node_getUnknownPrivateAPI')),req(origins.trustedOrigin+'/v1/node','POST','PRIVATE_SENTINEL'),req(origins.trustedOrigin+'/v1/node','POST','[]'),req(origins.trustedOrigin+'/v1/node','POST','x'.repeat(8*1024*1024+1)),req(origins.ethereumOrigin+'/','POST',rpc('eth_sign',[])),req(origins.trustedOrigin+'/wrong','POST',rpc('node_getNodeInfo')),
+ req(origins.trustedOrigin+'/v1/node','POST',rpc('aztec_getUnknownPrivateAPI')),req(origins.trustedOrigin+'/v1/node','POST',rpc('node_getNodeInfo')),req(origins.trustedOrigin+'/v1/node','POST','PRIVATE_SENTINEL'),req(origins.trustedOrigin+'/v1/node','POST','[]'),req(origins.trustedOrigin+'/v1/node','POST','x'.repeat(8*1024*1024+1)),req(origins.ethereumOrigin+'/','POST',rpc('eth_sign',[])),req(origins.trustedOrigin+'/wrong','POST',rpc('node_getNodeInfo')),
 ];
 for(const [index,request]of badRequests.entries())test('labelled unknown/expanded traffic fails closed '+index,()=>{const o=createRollingPreferenceTraffic(origins);assert.equal(o.inspect(request),false);assert.equal(o.snapshot().inspectionErrors,1);assert(!JSON.stringify(o.snapshot()).includes('PRIVATE_SENTINEL'));});
 test('pinned node read inventory matches installed SDK source without a submission method',async()=>{
  const source=await fs.readFile(new URL('../../node_modules/@aztec-labs/stdlib/dest/interfaces/aztec-node.js',import.meta.url),'utf8'),methods=[...source.matchAll(/^    ([A-Za-z][A-Za-z0-9]*): z.function/gm)].map(m=>m[1]);assert(methods.length>50);assert(methods.includes('getSyncedL1Timestamp'));assert(methods.includes('getL1ToL2MessageMembershipWitness'));
- const o=createRollingPreferenceTraffic(origins);for(const method of methods)assert.equal(o.inspect(req(origins.trustedOrigin+'/v1/node','POST',rpc('node_'+method))),method!=='sendTx',method);
+ const o=createRollingPreferenceTraffic(origins);for(const method of methods)assert.equal(o.inspect(req(origins.trustedOrigin+'/v1/node','POST',rpc('aztec_'+method))),method!=='sendTx',method);
  assert.equal(o.snapshot().inspectionErrors,0);assert.equal(o.snapshot().nodeSubmissions,1);
+});
+
+// Actual production transport request, with only the HTTP receiver replaced.
+// The unavailable response is deliberate: no chain or recovery success is claimed.
+test('production trusted node first request passes the read-only observer',async()=>{
+ const {createTrustedPrivateNode}=await import('../../shared/trusted-private-node.mjs');
+ const previous=globalThis.fetch,observed=[];const o=createRollingPreferenceTraffic(origins);
+ globalThis.fetch=async(url,init)=>{observed.push({allowed:o.inspect(req(url,init.method,init.body)),methods:[JSON.parse(init.body)].flat().map(r=>r.method)});return new Response('',{status:503});};
+ try{await assert.rejects(createTrustedPrivateNode({url:origins.trustedOrigin+'/v1/node',expectedNetworkScope:{chainId:'31337',version:'1',rollup:'0x'+'01'.repeat(20)},proofsEnabled:true,allowLocalDev:true}),{code:'BB_TRUSTED_NODE_UNAVAILABLE'});}
+ finally{globalThis.fetch=previous;}
+ assert.deepEqual(observed,[{allowed:true,methods:['aztec_getNodeInfo']}]);assert.equal(o.snapshot().inspectionErrors,0);
 });
