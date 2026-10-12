@@ -9,7 +9,7 @@ import {chromium} from 'playwright';
 const fixture=`import {mountRollingWalletPanel} from '/wallet-panel.mjs';
 import {selectPrivateViews} from '/private-views.mjs';
 const state={loads:0,sessions:0,prepares:0,sends:0,reconciles:0,cancels:0,closes:0,creates:0,imports:0,exports:0,effects:0,ended:0,owned:0,unlocked:true,options:null,failure:null,hold:null,release:null,fee:'fee-ready',profileCalls:0,bioVersion:'3',avatarVersion:'4'};
-window.test=state;state.rawAccount={secretKey:'PRIVATE_SENTINEL',address:'HUMAN_IDENTITY_SENTINEL'};state.privateChanges=0;state.preferenceReads=0;state.headReads=0;state.revision='4';state.preferences={scope:{chainId:'31337',version:'1',board:'1'},head:{schema:1,initialized:true,revision:'4',digest:'42'},bookmarks:['10'],followedBoards:['0'],followedNames:[],subscriptions:['10'],replyNotifications:true,readMarkers:[]};
+window.test=state;state.rawAccount={secretKey:'PRIVATE_SENTINEL',address:'HUMAN_IDENTITY_SENTINEL'};state.privateChanges=0;state.preferenceReads=0;state.headReads=0;state.revision='4';state.recoveryChecks=0;state.replacementPrepares=0;state.preferences={scope:{chainId:'31337',version:'1',board:'1'},head:{schema:1,initialized:true,revision:'4',digest:'42'},bookmarks:['10'],followedBoards:['0'],followedNames:[],subscriptions:['10'],replyNotifications:true,readMarkers:[]};
 state.previewBlobs=new Map();state.revoked=[];const createURL=URL.createObjectURL.bind(URL),revokeURL=URL.revokeObjectURL.bind(URL);
 URL.createObjectURL=blob=>{const url=createURL(blob);state.previewBlobs.set(url,blob);return url;};URL.revokeObjectURL=url=>{state.revoked.push(url);state.previewBlobs.delete(url);revokeURL(url);};
 const envelope={schemaVersion:1,kind:'aztec-billboard-encrypted-wallet',kdf:'PBKDF2-SHA256',iterations:600000,salt:'aa'.repeat(16),iv:'bb'.repeat(12),ciphertext:'cc'.repeat(16)};
@@ -18,6 +18,8 @@ const write=value=>sessionStorage.setItem('labelled-ui-intent',JSON.stringify(va
 const error=()=>{throw Object.defineProperty(Error('PRIVATE_SENTINEL'), 'code',{get(){throw Error('GETTER_SENTINEL');}});};
 async function boundary(name){if(state.hold===name)await new Promise(resolve=>state.release=resolve);if(state.failure===name)error();}
 const application={
+ async inspectRecovery(id){state.recoveryChecks++;await boundary('recovery-options');return {...state.recoverySnapshot,intent:read()};},
+ async prepareReplacement(id,input){state.replacementPrepares++;state.replacementInput=input;await boundary('replacement-prepare');const current=read();const next={...current,status:'replacement-prepared',replacementReview:{sourceTxHash:input.expectedTxHash,head:input.expectedHead,marker:current.action.type==='read-marker'?state.recoverySnapshot.marker:null,maximumFee:'456'}};write(next);return next;},
  async readAccountStatus(){await boundary('status');const intent=read();return intent&&!['confirmed','reverted','cancelled'].includes(intent.status)?{status:'recovering',intent}:{status:state.fee,privateFeeCredit:'1000',depositIds:state.fee==='fee-ready'?['9']:[]};},
  async ownedIdentities({cursor}){state.owned++;const page=state.namesPages?.[cursor]??(cursor===0?{identities:['7'],records:[{id:'7',first:'River',last:'Lane'}],nextCursor:8}:{identities:['8'],records:[{id:'8',first:'Ellis',last:'Moss'}],nextCursor:null});await boundary('owned');return page;},
  async readPreferenceHead(){state.headReads++;await boundary('head');return {schema:1,initialized:true,revision:state.revision,digest:'42'};},
@@ -338,4 +340,57 @@ test('preference lock driver waits for delayed reopen refresh before expanding s
  const outcome=await result;if(observationError)throw observationError;if(outcome.error)throw outcome.error;assert.equal(outcome.value,'ready');
  assert.equal(await page.evaluate(()=>test.closes),1);assert.equal(await page.evaluate(()=>test.ended),1);
  assert.equal((await counts(page)).sends,0);assert.equal((await counts(page)).prepares,0);
+});
+
+// Recovery decisions are labelled presentation doubles, never genuine chain evidence.
+async function seedReplacement(page,{marker=false,status='replacement-available',prepared=false}={}){
+ await page.evaluate(({marker,status,prepared})=>{
+  const hash=n=>'0x'+n.toString(16).padStart(64,'0');
+  const head={initialized:true,schema:1,revision:'1',digest:'11'};
+  const action=marker?{type:'read-marker',expectedRevision:'1',thread:'42',throughBlock:'10'}:{type:'preference',expectedRevision:'1',kind:1,target:'42',enabled:true};
+  test.recoverySnapshot={status,currentTxHash:hash(77),attempts:[{txHash:hash(77),status:'invalid',stateReasons:['Block header not found']}],head,originalPreferenceHead:head,
+   marker:marker?{throughBlock:'10',blockHash:hash(44)}:null,originalMarker:marker?{throughBlock:'10',blockHash:hash(43)}:null,
+   inclusionHistory:[{txHash:hash(77),inclusions:[{blockNumber:12,blockHash:hash(42),executionResult:'success',transactionFee:'7'}]}]};
+  const intent={intentId:'42',status:prepared?'replacement-prepared':'unknown',action,nonce:hash(100),maximumFee:'123',...(prepared?{replacementReview:{sourceTxHash:hash(77),head,marker:marker?test.recoverySnapshot.marker:null,maximumFee:'456'}}:{})};
+  sessionStorage.setItem('labelled-ui-intent',JSON.stringify(intent));
+ },{marker,status,prepared});
+ await open(page);await page.getByRole('button',{name:'Unlock',exact:true}).click();await page.getByRole('button',{name:'Check recovery options',exact:true}).waitFor();
+}
+test('replacement inspection and review never send; confirmation shows distinct ceiling and historical fees',async t=>{
+ const {page}=await browserFixture(t);await seedReplacement(page);assert.equal(await page.evaluate(()=>test.recoveryChecks),0);
+ await page.getByRole('button',{name:'Check recovery options',exact:true}).click();await page.getByRole('button',{name:'Review replacement',exact:true}).waitFor();
+ assert.equal(await page.evaluate(()=>test.replacementPrepares),0);assert.equal((await counts(page)).sends,0);
+ await page.getByText('Original setting and transaction history',{exact:true}).click();assert(await page.getByText(/7 fee-juice units; result success\. Historical record only/).isVisible());assert(await page.getByText('Original saved-settings revision: 1',{exact:true}).isVisible());
+ await page.getByRole('button',{name:'Review replacement',exact:true}).click();await page.getByRole('button',{name:'Confirm replacement and send',exact:true}).waitFor();
+ assert(await page.getByText(/New maximum network fee: 456 fee-juice units/).isVisible());assert(await page.getByText(/Original maximum fee: 123 fee-juice units/).isVisible());
+ assert.deepEqual(await page.evaluate(()=>test.replacementInput),{expectedTxHash:'0x'+(77).toString(16).padStart(64,'0'),expectedHead:{initialized:true,schema:1,revision:'1',digest:'11'}});
+ assert.equal((await counts(page)).sends,0);assert.equal(await page.getByRole('button',{name:'Cancel prepared action'}).count(),0);
+ await page.getByRole('button',{name:'Confirm replacement and send',exact:true}).click();await page.getByText('Transaction confirmed on the verified chain.',{exact:true}).waitFor();assert.equal((await counts(page)).sends,1);
+});
+test('changed same-height marker needs explicit consent again after closing before review',async t=>{
+ const {page}=await browserFixture(t);await seedReplacement(page,{marker:true});await page.getByRole('button',{name:'Check recovery options'}).click();await page.getByRole('button',{name:'Review replacement',exact:true}).waitFor();
+ const consent=page.getByRole('checkbox',{name:'I understand that the same read position now refers to a different block.'});assert(await page.getByRole('button',{name:'Review replacement',exact:true}).isDisabled());await consent.check();
+ await page.getByRole('button',{name:'Close account panel'}).click();await open(page);await page.getByRole('button',{name:'Check recovery options'}).click();await consent.waitFor();assert.equal(await consent.isChecked(),false);assert(await page.getByRole('button',{name:'Review replacement',exact:true}).isDisabled());
+ await consent.check();await page.getByRole('button',{name:'Review replacement',exact:true}).click();await page.getByRole('button',{name:'Confirm replacement and send'}).waitFor();
+ assert.equal(await page.evaluate(()=>test.replacementInput.expectedMarkerHash),'0x'+(44).toString(16).padStart(64,'0'));assert(await page.getByText(/Reviewed read position: block 10/).isVisible());assert.equal((await counts(page)).sends,0);
+});
+test('reopened replacement restores renewed ceiling without inspecting, preparing or sending automatically',async t=>{
+ const {page}=await browserFixture(t);await seedReplacement(page,{prepared:true});assert(await page.getByText(/New maximum network fee: 456/).isVisible());assert.equal(await page.evaluate(()=>test.recoveryChecks+test.replacementPrepares+test.sends),0);
+ await page.reload();await page.waitForFunction(()=>window.ready);await open(page);await page.getByRole('button',{name:'Unlock',exact:true}).click();await page.getByRole('button',{name:'Confirm replacement and send'}).waitFor();
+ assert(await page.getByText(/New maximum network fee: 456/).isVisible());assert.equal(await page.evaluate(()=>test.recoveryChecks+test.replacementPrepares+test.sends),0);
+});
+for(const status of ['pending','unknown','context-changed','history-unavailable','canonical','limit-reached'])test(`replacement ${status} is honestly fenced without preparation or sending`,async t=>{
+ const {page}=await browserFixture(t);await seedReplacement(page,{status});await page.getByRole('button',{name:'Check recovery options'}).click();await page.getByText('Recovery options checked. No transaction was sent.',{exact:true}).waitFor();
+ assert.equal(await page.getByRole('button',{name:'Review replacement',exact:true}).count(),0);assert.equal(await page.getByRole('button',{name:'Confirm replacement and send',exact:true}).count(),0);assert.equal(await page.evaluate(()=>test.replacementPrepares+test.sends),0);
+});
+test('failed replacement preparation discards eligibility but preserves saved action and requires explicit recheck',async t=>{
+ const {page}=await browserFixture(t);await seedReplacement(page);await page.getByRole('button',{name:'Check recovery options'}).click();await page.getByRole('button',{name:'Review replacement',exact:true}).waitFor();await page.evaluate(()=>test.failure='replacement-prepare');
+ await page.getByRole('button',{name:'Review replacement',exact:true}).click();await page.getByRole('alert').waitFor();assert.equal(await page.getByRole('button',{name:'Review replacement',exact:true}).count(),0);assert.equal((await counts(page)).sends,0);
+ assert.equal(await page.evaluate(()=>JSON.parse(sessionStorage.getItem('labelled-ui-intent')).action.target),'42');assert(!(await page.locator('body').innerText()).includes('PRIVATE_SENTINEL'));
+ await page.evaluate(()=>test.failure=null);await page.getByRole('button',{name:'Check recovery options'}).click();await page.getByRole('button',{name:'Review replacement',exact:true}).waitFor();assert.equal(await page.evaluate(()=>test.replacementPrepares),1);
+});
+test('account invalidation during recovery inspection clears private history and never restores late eligibility',async t=>{
+ const {page}=await browserFixture(t);await seedReplacement(page);await page.evaluate(()=>test.hold='recovery-options');await page.getByRole('button',{name:'Check recovery options'}).click();await page.waitForFunction(()=>test.release);
+ await page.evaluate(()=>test.options.onChange({invalidated:true}));assert.equal(await page.getByText('Original setting and transaction history',{exact:true}).count(),0);assert.equal(await page.getByRole('dialog').getAttribute('aria-busy'),'true');
+ await page.evaluate(()=>test.release());await page.getByRole('button',{name:'Reload to unlock'}).waitFor();assert.equal(await page.getByRole('button',{name:'Review replacement',exact:true}).count(),0);assert.equal(await page.evaluate(()=>test.replacementPrepares+test.sends),0);
 });

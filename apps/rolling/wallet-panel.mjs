@@ -28,7 +28,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
  const connectionFailure=Object.freeze({}),avatarFailure=Object.freeze({});
  let runtime,session,busy=false,blocked=false,invalidated=false,reloadRequired=false,returnFocus;
  let status=null,intent=null,identities=[],identityRecords=[],cursor=0,error='',notice='',draft={type:'post',subboard:'0',content:''};
- let preferences=null,preferenceProgress=null,accountIdentity=null,recoveryAbort=null;
+ let preferences=null,preferenceProgress=null,accountIdentity=null,recoveryAbort=null,recoveryInspection=null;
  let profileSnapshot=null,avatarDraft=null,renderEpoch=0,accountEpoch=0,view='action';const previewURLs=new Set();
  const dialog=el('dialog',{'aria-labelledby':'rolling-wallet-title','aria-describedby':'rolling-wallet-description'});
  const title=el('h2',{id:'rolling-wallet-title'},'Your private account');
@@ -39,7 +39,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
  function releasePreviews(){renderEpoch++;for(const url of previewURLs)URL.revokeObjectURL(url);previewURLs.clear();}
  function clearProfileDraft(){profileSnapshot=null;avatarDraft=null;}
  function clearPreferences(){preferences=null;preferenceProgress=null;onPrivateChange();}
- function clearPrivateView(){accountEpoch++;accountIdentity=null;content.replaceChildren();clearPreferences();status=null;intent=null;identities=[];identityRecords=[];cursor=0;view='action';draft={type:'post',subboard:'0',content:''};releasePreviews();clearProfileDraft();}
+ function clearPrivateView(){recoveryInspection=null;accountEpoch++;accountIdentity=null;content.replaceChildren();clearPreferences();status=null;intent=null;identities=[];identityRecords=[];cursor=0;view='action';draft={type:'post',subboard:'0',content:''};releasePreviews();clearProfileDraft();}
  function checkAccount(epoch){if(epoch!==accountEpoch||!unlocked())throw connectionFailure;}
  function privateStatus(){if(!unlocked()||!session)return 'locked';return preferences?'complete':'recovering';}
  function preferenceEnabled(kind,target){if(privateStatus()!=='complete')return null;const key={1:'bookmarks',2:'followedBoards',3:'followedNames',4:'subscriptions'}[kind];return kind===5?preferences.replyNotifications:key?preferences[key].includes(BigInt(target).toString()):null;}
@@ -95,11 +95,11 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
  function note(text){live.textContent=text;}
  async function work(fn){
   if(busy)return;busy=true;error='';controlsBusy(true);
-  try{await fn();}catch(failure){clearPreferences();note('');error=failure===connectionFailure?'The private connection is unavailable. Your encrypted recovery is preserved. Reconnect when the service returns.':failure===avatarFailure?'This image could not be prepared. Choose a still PNG, JPEG or WebP under 8 MiB. It must fit 8192 encoded bytes after cropping and compression. No transaction was prepared.':message;}finally{if(invalidated||reloadRequired)clearPrivateView();busy=false;render();}
+  try{await fn();}catch(failure){recoveryInspection=null;clearPreferences();note('');error=failure===connectionFailure?'The private connection is unavailable. Your encrypted recovery is preserved. Reconnect when the service returns.':failure===avatarFailure?'This image could not be prepared. Choose a still PNG, JPEG or WebP under 8 MiB. It must fit 8192 encoded bytes after cropping and compression. No transaction was prepared.':message;}finally{if(invalidated||reloadRequired)clearPrivateView();busy=false;render();}
  }
  function unlocked(){if(invalidated||reloadRequired)return false;const current=runtime?runtime.getAccount():null;if(accountIdentity&&current!==accountIdentity){invalidated=true;clearPrivateView();note('The account changed. Reload before continuing.');return false;}return !!current;}
  async function refresh(){
-  const epoch=accountEpoch;checkAccount(epoch);clearPreferences();blocked=true;
+  const epoch=accountEpoch;checkAccount(epoch);recoveryInspection=null;clearPreferences();blocked=true;
   const next=await session.application.readAccountStatus();
   checkAccount(epoch);status=next;intent=next.intent??null;
   if(next.status==='recovering'){
@@ -166,15 +166,57 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   })));
   content.append(section);
  }
+ function showRecoveryOptions(){
+  content.append(button('Check recovery options',()=>void work(async()=>{
+   const epoch=accountEpoch,id=intent.intentId;checkAccount(epoch);recoveryInspection=null;clearPreferences();
+   const result=await session.application.inspectRecovery(id);checkAccount(epoch);
+   if(result?.intent?.intentId!==id||!Array.isArray(result.attempts))throw connectionFailure;
+   recoveryInspection=result;notice='Recovery options checked. No transaction was sent.';
+  })));
+  const snapshot=recoveryInspection;if(!snapshot||snapshot.intent.intentId!==intent.intentId)return;
+  const statuses={pending:'This update is still pending. Keep your recovery file and check again.',unknown:'This update is still unresolved. Keep your recovery file and check again. Do not send another copy.',canonical:'An attempt is included in the verified chain. Check the existing transaction to reconcile it; do not send a replacement.',empty:'No signed transaction was found. Keep the saved action and recovery file; a replacement is not available.',
+   'context-changed':'Your saved settings changed. This update cannot be repeated safely.', 'history-unavailable':'Earlier transaction details are unavailable. Keep your recovery file; a replacement cannot be reviewed safely.', 'limit-reached':'This update has reached its replacement limit. Keep your recovery file; no further replacement can be sent.',
+   'replacement-available':'The earlier attempts can no longer be included. Review this saved update and a new maximum fee before sending a replacement.'};
+  content.append(paragraph(statuses[snapshot.status]??statuses.unknown));
+  const details=el('details',{},el('summary',{},'Original setting and transaction history'));
+  if(snapshot.originalPreferenceHead){const head=snapshot.originalPreferenceHead;details.append(paragraph('Original saved-settings revision: '+head.revision),paragraph('Original saved-settings fingerprint: '+head.digest));}
+  for(const attempt of snapshot.inclusionHistory??[]){
+   details.append(paragraph('Earlier transaction: '+attempt.txHash));
+   for(const fact of attempt.inclusions??[])details.append(paragraph(`Previously included at block ${fact.blockNumber}: ${fact.transactionFee} fee-juice units; result ${fact.executionResult}. Historical record only; this does not show a current charge.`));
+  }
+  if(!(snapshot.inclusionHistory??[]).length)details.append(paragraph('No earlier inclusion or fee record is available.'));
+  content.append(details);
+  if(snapshot.status!=='replacement-available')return;
+  const marker=intent.action.type==='read-marker',changed=marker&&snapshot.originalMarker?.blockHash!==snapshot.marker?.blockHash;
+  let consent;
+  if(marker){
+   if(!snapshot.marker||snapshot.marker.throughBlock!==intent.action.throughBlock)return;
+   content.append(paragraph(`The read position stays at block ${snapshot.marker.throughBlock} of this thread.`));
+   if(changed){consent=el('input',{type:'checkbox'});content.append(label('I understand that the same read position now refers to a different block.',consent));}
+  }
+  const review=button('Review replacement',()=>void work(async()=>{
+   if(changed&&!consent?.checked)throw connectionFailure;
+   const epoch=accountEpoch,id=intent.intentId;checkAccount(epoch);
+   const input={expectedTxHash:snapshot.currentTxHash,expectedHead:{...snapshot.head},...(marker?{expectedMarkerHash:snapshot.marker.blockHash}:{})};
+   recoveryInspection=null;const result=await session.application.prepareReplacement(id,input);checkAccount(epoch);
+   recoveryInspection=null;intent=result;blocked=false;notice='Replacement prepared for review. Nothing has been sent. Check the new maximum fee before confirming.';
+  }),true);
+  review.dataset.unavailable=String(changed);if(consent)consent.addEventListener('change',()=>{review.dataset.unavailable=String(!consent.checked);review.disabled=busy||!consent.checked;});content.append(review);
+ }
  function showIntent(){
-  const prepared=intent.status==='prepared';
-  content.append(el('h3',{},prepared?'Review before sending':'Transaction recovery'));
+  const replacement=intent.status==='replacement-prepared',prepared=intent.status==='prepared'||replacement;
+  content.append(el('h3',{},replacement?'Review replacement before sending':prepared?'Review before sending':'Transaction recovery'));
   content.append(paragraph(TYPES[intent.action?.type]??'Existing transaction'));
   // Explicit fields only, and text nodes throughout. No nonce, account or raw error.
   for(const key of ['first','last','slug','name','description','rules','content','subboard','parent','root','reference','post']){
    const value=intent.action?.[key];if(typeof value==='string'&&value)content.append(el('p',{class:'post-body'},`${key}: ${key==='name'&&intent.action.type!=='subboard'?ownedLabel(value):value}`));
   }
-  if(typeof intent.maximumFee==='string'&&/^[0-9]+$/.test(intent.maximumFee))content.append(paragraph(`Maximum network fee: ${intent.maximumFee} fee-juice units. This is a maximum, not a guaranteed final charge.`));
+  const reviewedFee=replacement?intent.replacementReview?.maximumFee:intent.maximumFee,feeReady=typeof reviewedFee==='string'&&/^(0|[1-9][0-9]*)$/.test(reviewedFee);
+  if(replacement){
+   if(feeReady)content.append(paragraph(`New maximum network fee: ${reviewedFee} fee-juice units. Confirming authorizes this replacement only; the final charge may be lower.`));
+   if(typeof intent.maximumFee==='string')content.append(paragraph(`Original maximum fee: ${intent.maximumFee} fee-juice units. This earlier ceiling is not the replacement fee or an actual charge.`));
+   if(intent.replacementReview?.marker)content.append(paragraph(`Reviewed read position: block ${intent.replacementReview.marker.throughBlock}; block fingerprint ${intent.replacementReview.marker.blockHash}.`));
+  }else if(feeReady)content.append(paragraph(`Maximum network fee: ${reviewedFee} fee-juice units. This is a maximum, not a guaranteed final charge.`));
   if(intent.action?.type==='bio'&&intent.action.content==='')content.append(paragraph('Clear the current profile bio. Historical versions remain public.'));
   let avatarReady=intent.action?.type!=='avatar'||intent.action.data==='';
   const avatarArea=el('div',{'aria-label':'Saved avatar preview'});
@@ -186,15 +228,18 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   const privateAction=['preference','read-marker'].includes(intent.action?.type);
   if(privateAction){content.append(paragraph(intent.action.type==='read-marker'?'Mark this thread read through block '+intent.action.throughBlock:preferenceDescription(intent.action)));}
   if(prepared){
-   confirm=button('Confirm and send',()=>void work(async()=>{
-    if(!avatarReady)throw Error('Avatar preview not verified');
+   confirm=button(replacement?'Confirm replacement and send':'Confirm and send',()=>void work(async()=>{
+    if(!avatarReady||!feeReady)throw Error('Review unavailable');
+    const epoch=accountEpoch;checkAccount(epoch);recoveryInspection=null;
     const id=intent.intentId;intent={...intent,status:'unknown'};blocked=true;
-    try{await receive(await session.application.submitPrepared(id));}catch{note('Submission outcome is unknown. Check this transaction; do not submit again.');throw Error('Unknown outcome');}
-   }),true);confirm.dataset.unavailable=String(!avatarReady);
-   content.append(paragraph(privateAction?'Your exact private setting is saved. Sending records an encrypted onchain update and charges a network fee.':'Your exact action is saved. Sending publishes it onchain and cannot be undone.'),confirm,button('Cancel prepared action',()=>void work(async()=>{await session.application.cancelPrepared(intent.intentId);intent=null;await refresh();notice='Prepared action cancelled. No new transaction was sent.';})));
+    try{const result=await session.application.submitPrepared(id);checkAccount(epoch);await receive(result);}catch{note('Submission outcome is unknown. Check this transaction; do not submit again.');throw Error('Unknown outcome');}
+   }),true);confirm.dataset.unavailable=String(!avatarReady||!feeReady);
+   content.append(paragraph(privateAction?'Your exact private setting is saved. Sending records an encrypted onchain update and charges a network fee.':'Your exact action is saved. Sending publishes it onchain and cannot be undone.'),confirm);
+   if(!replacement)content.append(button('Cancel prepared action',()=>void work(async()=>{await session.application.cancelPrepared(intent.intentId);intent=null;await refresh();notice='Prepared action cancelled. No new transaction was sent.';})));
   }else{
    content.append(paragraph('No automatic resend is allowed. A missing receipt does not mean the transaction failed.'),button('Check existing transaction',()=>void work(async()=>{await receive(await session.application.reconcile(intent.intentId));})));
   }
+  if(privateAction&&intent.status!=='prepared')showRecoveryOptions();
   if(intent.action?.type==='avatar'&&intent.action.data!==''){
    const epoch=renderEpoch,action=intent.action;avatarArea.append(paragraph('Checking the exact saved avatar preview…'));
    void (async()=>{try{const blob=savedAvatarBlob(action),checked=await prepareAvatarUpload(blob);
@@ -204,7 +249,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   }
  }
  async function receive(result){
-  intent=result;blocked=false;
+  recoveryInspection=null;intent=result;blocked=false;
   if(['confirmed','reverted'].includes(result.status)&&['preference','read-marker'].includes(result.action?.type))clearPreferences();
   if(['confirmed','reverted'].includes(result.status)&&['bio','avatar'].includes(result.action?.type))profileSnapshot=null;
   if(result.status==='confirmed'){
@@ -353,7 +398,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   controlsBusy(busy);
   if(dialog.open&&!busy&&(hadFocus||document.activeElement===document.body))closeButton.focus();
  }
- function close(){if(busy||session?.busy){note('An account operation is in progress. Wait before closing.');return false;}releasePreviews();if(dialog.open)dialog.close();return true;}
+ function close(){if(busy||session?.busy){note('An account operation is in progress. Wait before closing.');return false;}recoveryInspection=null;releasePreviews();if(dialog.open)dialog.close();return true;}
  dialog.addEventListener('cancel',event=>{event.preventDefault();close();});
  dialog.addEventListener('close',()=>{for(const input of dialog.querySelectorAll('input[type=password]'))input.value='';if(returnFocus?.isConnected)returnFocus.focus();});
  dialog.addEventListener('keydown',event=>{
