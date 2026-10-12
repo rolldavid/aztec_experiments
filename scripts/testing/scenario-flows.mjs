@@ -384,3 +384,5 @@ export async function rollingRejectedWithdrawal(ctx){return (await import('./rol
 
 export async function rollingPreferenceRelationships(ctx){return (await import('./rolling-application-fixture.mjs')).runRollingApplicationFixture(ctx,'preference-relationships');}
 export async function rollingPreferenceNotifications(ctx){return (await import('./rolling-application-fixture.mjs')).runRollingApplicationFixture(ctx,'preference-notifications');}
+
+export async function rollingPreferenceBrowser(ctx){return (await import('./rolling-application-fixture.mjs')).runRollingApplicationFixture(ctx,'preference-browser');}

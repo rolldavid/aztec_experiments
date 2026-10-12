@@ -20,17 +20,18 @@ async function complete(read,deadlineAt){
  }
 }
 function verify(p,{mode,root,name,rootBlock,rootHash,revision,final}){
+ const relationships=mode==='relationships'||mode==='browser-relationships';
  check(p.head.initialized&&p.head.schema===1&&p.head.revision===String(revision));
- check(equal(p.bookmarks,mode==='relationships'?[root]:[]));
+ check(equal(p.bookmarks,relationships?[root]:[]));
  check(equal(p.followedNames,mode==='relationships'?[name]:[]));
- check(equal(p.followedBoards,mode==='relationships'&&final?['0']:[]));
+ check(equal(p.followedBoards,relationships&&final?['0']:[]));
  check(equal(p.subscriptions,mode==='notifications'?[root]:[]));
- check(p.replyNotifications===(mode==='relationships'||final));
+ check(p.replyNotifications===(relationships||final));
  check(equal(p.readMarkers,mode==='notifications'?[{thread:root,throughBlock:rootBlock,blockHash:String(BigInt(rootHash))}]:[]));
 }
 export async function exerciseRollingPreferences({mode,root,name,rootBlock,rootHash,action,readPreferences,activity,deadlineAt}){
  try{
-  check(['relationships','notifications'].includes(mode)&&field(root)&&Number.isSafeInteger(deadlineAt)&&deadlineAt>Date.now());
+  check(['relationships','browser-relationships','notifications'].includes(mode)&&field(root)&&Number.isSafeInteger(deadlineAt)&&deadlineAt>Date.now());
   check(mode!=='relationships'||field(name));check(Number.isSafeInteger(rootBlock)&&rootBlock>0&&/^0x[0-9a-f]{64}$/.test(rootHash));
   for(const fn of [action,readPreferences,activity])check(typeof fn==='function');
   let revision=0;
@@ -41,9 +42,9 @@ export async function exerciseRollingPreferences({mode,root,name,rootBlock,rootH
    for(const k of ['proofJobs','transportSends','walletSubmissions'])check(after[k]===before[k]+1);
    revision++;
   }
-  if(mode==='relationships'){
+  if(mode==='relationships'||mode==='browser-relationships'){
    await mutate({type:'preference',kind:1,target:root,enabled:true});
-   await mutate({type:'preference',kind:3,target:name,enabled:true});
+   if(mode==='relationships')await mutate({type:'preference',kind:3,target:name,enabled:true});
   }else{
    await mutate({type:'preference',kind:4,target:root,enabled:true});
    await mutate({type:'preference',kind:5,target:'0',enabled:false});
@@ -52,7 +53,7 @@ export async function exerciseRollingPreferences({mode,root,name,rootBlock,rootH
   const expected={mode,root,name,rootBlock,rootHash},beforeRead=counters(activity);
   const initial=await complete(readPreferences,deadlineAt);verify(initial.value.preferences,{...expected,revision,final:false});
   check(equal(counters(activity),beforeRead));
-  await mutate(mode==='relationships'?{type:'preference',kind:2,target:'0',enabled:true}:{type:'preference',kind:5,target:'0',enabled:true});
+  await mutate(mode!=='notifications'?{type:'preference',kind:2,target:'0',enabled:true}:{type:'preference',kind:5,target:'0',enabled:true});
   const afterMutation=counters(activity),incremental=await complete(readPreferences,deadlineAt);
   verify(incremental.value.preferences,{...expected,revision,final:true});check(equal(counters(activity),afterMutation));
   check(incremental.value.anchor.blockNumber>initial.value.anchor.blockNumber);

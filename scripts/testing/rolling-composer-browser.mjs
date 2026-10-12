@@ -161,7 +161,7 @@ export async function runRollingComposerBrowser(input){
   mark('lock-a');await dialog.getByText('Backup and account security',{exact:true}).click();await dialog.getByRole('button',{name:'Lock account',exact:true}).click();await dialog.getByRole('button',{name:'Reload to unlock',exact:true}).waitFor({timeout:remaining()});assert.equal(await dialog.getByLabel('Posting identity',{exact:true}).count(),0);
   mark('reload');await Promise.all([page.waitForEvent('load',{timeout:remaining()}),dialog.getByRole('button',{name:'Reload to unlock',exact:true}).click()]);
   await page.getByRole('button',{name:'Your account',exact:true}).click({timeout:remaining()});await dialog.getByRole('button',{name:'Unlock',exact:true}).waitFor({timeout:remaining()});
-  await openAccount('b');assert.equal(await message.inputValue(),'');assert.equal(await dialog.getByLabel('Posting collateral',{exact:true}).inputValue(),'');await dialog.getByText('No posting collateral is available.',{exact:true}).waitFor();result.checks.accountSwitch=true;result.checks.collateralPendingB=true;noSpend();
+  await openAccount('b');assert.equal(await message.inputValue(),'');assert.equal(await dialog.getByLabel('Posting collateral',{exact:true}).inputValue(),'');await dialog.getByText('No posting deposit was found.',{exact:true}).waitFor();result.checks.accountSwitch=true;result.checks.collateralPendingB=true;noSpend();
   mark('complete');result.passed=true;
  }catch{result.passed=false;}
  finally{

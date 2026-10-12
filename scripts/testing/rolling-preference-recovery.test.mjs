@@ -29,10 +29,10 @@ function fixture(mode='relationships',fault){
  return {options:{mode,root:'10',name:'11',rootBlock:2,rootHash:'0x'+(13).toString(16).padStart(64,'0'),action,readPreferences,activity,deadlineAt:Date.now()+10000},actions,
   reset(){walletSubmissions=0;},mutate(){snapshot.head.digest='999';},send(){transportSends++;}};
 }
-for(const mode of ['relationships','notifications'])test(mode+': exact mutations, incremental read and one-use fresh recovery',async()=>{
+for(const mode of ['relationships','notifications','browser-relationships'])test(mode+': exact mutations, incremental read and one-use fresh recovery',async()=>{
  const f=fixture(mode),r=await exerciseRollingPreferences(f.options);
- assert.equal(r.observation.preferenceTransactions,mode==='relationships'?3:4);assert.throws(()=>JSON.stringify(r.checkpoint));
- assert.deepEqual(f.actions.map(a=>a.kind??6),mode==='relationships'?[1,3,2]:[4,5,6,5]);
+ assert.equal(r.observation.preferenceTransactions,mode==='relationships'?3:mode==='notifications'?4:2);assert.throws(()=>JSON.stringify(r.checkpoint));
+ assert.deepEqual(f.actions.map(a=>a.kind??6),mode==='relationships'?[1,3,2]:mode==='notifications'?[4,5,6,5]:[1,2]);
  assert.equal(JSON.stringify(r.observation).includes('digest'),false);
  f.reset();const recovered=await compareRecoveredRollingPreferences(r.checkpoint,f.options);assert.equal(recovered.exactPrivateStateRecovered,true);
  await assert.rejects(compareRecoveredRollingPreferences(r.checkpoint,f.options),/acceptance failed/);

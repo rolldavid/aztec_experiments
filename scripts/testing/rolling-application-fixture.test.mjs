@@ -362,6 +362,7 @@ test('measured second race start is admitted without changing proof timeout or p
 test('preference campaigns keep real proof limits, actual decoder and fresh empty-store recovery',async()=>{
  const {getScenario}=await import('./scenarios.mjs');
  for(const name of ['rolling-preference-relationships','rolling-preference-notifications']){const s=getScenario(name);assert.equal(s.deadlineMs,540000);assert.equal(s.fixtureHeapMiB,768);assert.equal(s.boardProfile,'rolling');assert.equal(s.evidenceTask,'G07');assert.equal(s.browser,'none');}
+ const browser=getScenario('rolling-preference-browser');assert.equal(browser.deadlineMs,540000);assert.equal(browser.fixtureHeapMiB,768);assert.equal(browser.boardProfile,'rolling');assert.equal(browser.evidenceTask,'G07');assert.equal(browser.browser,'rolling-preferences');assert.equal(browser.browserEngine,'chromium');assert.equal(browser.applicationThreads,1);
  const sdk=await loadRollingFixtureSDK(),abi=await import('@aztec-labs/stdlib/abi');assert.equal(sdk.decodeFunctionSignature,abi.decodeFunctionSignature);assert.equal(sdk.EventSelector,abi.EventSelector);
  const source=await fs.readFile(new URL('./rolling-application-fixture.mjs',import.meta.url),'utf8');
  const cold=source.slice(source.indexOf("await mark('preference-keys-only-recovery')"),source.indexOf("await mark('canonical-projection-rebuild')"));

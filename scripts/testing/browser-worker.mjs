@@ -12,6 +12,9 @@ export async function runBrowser(directory,control) {
     if(control?.browserMode==='rolling-composer'){
       const {runRollingComposerBrowser}=await import('./rolling-composer-browser.mjs');
       result=await runRollingComposerBrowser({...control,directory,onStage:stage=>console.log(JSON.stringify({stage}))});
+    }else if(control?.browserMode==='rolling-preferences'){
+      const {runRollingPreferenceBrowser}=await import('./rolling-preference-browser.mjs');
+      result=await runRollingPreferenceBrowser({...control,directory,onStage:stage=>console.log(JSON.stringify({stage}))});
     }else{
     const {validateBrowserWorkerControl,driveT04BrowserJourney}=await import('../t04-browser-journey.mjs');
     const {driveT04BrowserPerformance}=await import('../t04-browser-performance.mjs');
@@ -24,7 +27,7 @@ export async function runBrowser(directory,control) {
       onStage:stage=>console.log(JSON.stringify({stage}))});
     }
   }catch(error){result={passed:false,failure:describeFailure(error)};}
-  if(control?.browserMode==='rolling-composer'){
+  if(['rolling-composer','rolling-preferences'].includes(control?.browserMode)){
     const {writeComposerResultAndAwaitAck}=await import('./rolling-composer-fixture.mjs');
     await writeComposerResultAndAwaitAck({directory,result});
   }else await fs.writeFile(path.join(directory,'browser-result.json'),JSON.stringify(result)+'\n',{flag:'wx',mode:0o600});

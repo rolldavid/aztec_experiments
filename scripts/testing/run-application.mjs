@@ -12,7 +12,7 @@ const ENTRY=path.join(ROOT,'scripts/test-c01-application.mjs');
 export async function runApplication(name) {
   assertNodeVersion();assertAztecPackages();
   assert.equal(process.platform,'darwin');assert.equal(process.arch,'arm64');
-  const scenario=getScenario(name),browser=scenario.browser!=='none';
+  const scenario=getScenario(name),browser=scenario.browser!=='none',rollingBrowser=['rolling-composer','rolling-preferences'].includes(scenario.browser);
   const report={applicationProofs:process.env.BOARD_TEST_PROOFS!=='disabled',remoteProver:process.env.BOARD_TEST_REMOTE==='1',schemaVersion:2,scenario:name,profile:scenario.description,startedAt:new Date().toISOString(),passed:false,stages:[]};
   const evidence=path.join(ROOT,'execution/evidence',scenario.evidenceTask,'application-'+randomUUID()+'.json');
   await fs.mkdir(path.dirname(evidence),{recursive:true});
@@ -54,16 +54,16 @@ export async function runApplication(name) {
   async function launchBrowser(){
     const {validateBrowserHandoff}=await import('../t04-browser-journey.mjs');
     const handoff=JSON.parse(await fs.readFile(path.join(directory,'browser-ready.json'),'utf8'));
-    if(scenario.browser==='rolling-composer'){
-      const {validateRollingComposerControl}=await import('./rolling-composer-browser.mjs');
-      await validateRollingComposerControl(handoff,{directory});
+    if(rollingBrowser){
+      const validate=scenario.browser==='rolling-composer'?(await import('./rolling-composer-browser.mjs')).validateRollingComposerControl:(await import('./rolling-preference-browser.mjs')).validateRollingPreferenceBrowserControl;
+      await validate(handoff,{directory});
       assert.equal(handoff.origin,control.origin);assert.equal(handoff.backupPassword,control.backupPassword);
     }else{validateBrowserHandoff(handoff,{directory,browserMode:scenario.browser});
     assert.equal(await fs.realpath(handoff.backupPath),handoff.backupPath);}
     const remaining=scenario.deadlineMs-Math.round(performance.now()-supervisor.started)-15000;assert(remaining>0,'Browser needs time for cleanup before the supervisor deadline');
     const exit=await supervisor.start('browser',process.execPath,['--max-old-space-size=128',ENTRY,'browser-worker',directory],{
       cwd:ROOT,env:{BOARD_TEST_DIAGNOSTIC:process.env.BOARD_TEST_DIAGNOSTIC??'0',PATH:path.dirname(process.execPath)+':/usr/bin:/bin',HOME:process.env.HOME,TMPDIR:directory,NODE_OPTIONS:''},
-      input:scenario.browser==='rolling-composer'?{...handoff,timeoutMs:Math.min(handoff.timeoutMs,remaining)}:{...handoff,...control,timeoutMs:Math.min(480000,remaining)},onRecord:stage('browser')});
+      input:rollingBrowser?{...handoff,timeoutMs:Math.min(handoff.timeoutMs,remaining)}:{...handoff,...control,timeoutMs:Math.min(480000,remaining)},onRecord:stage('browser')});
     report.browser=await readResult('browser');assert.equal(exit.code,0);assert.equal(report.browser.passed,true);
   }
   try {
@@ -77,12 +77,12 @@ export async function runApplication(name) {
     if(browser){
       assert(['chromium','chrome','firefox','webkit'].includes(scenario.browserEngine));
       const engines=await import('playwright');await fs.access(scenario.browserEngine==='chrome'?'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome':engines[scenario.browserEngine].executablePath());
-      Object.assign(report.sourceHashes,await browserFingerprints({rolling:scenario.browser==='rolling-composer'}));
+      Object.assign(report.sourceHashes,await browserFingerprints({rolling:rollingBrowser}));
       if(scenario.ethereumWallet==='metamask'){const name='.build/metamask-13.49.0/metamask-chrome-13.49.0.zip';report.sourceHashes[name]=createHash('sha256').update(await fs.readFile(path.join(ROOT,name))).digest('hex');}
       const reservation=net.createServer();
       await new Promise((resolve,reject)=>{reservation.once('error',reject);reservation.listen(0,'127.0.0.1',resolve);});
       const port=reservation.address().port;await new Promise(resolve=>reservation.close(resolve));
-      control={ethereumWallet:scenario.ethereumWallet??'disposable',browserEngine:scenario.browserEngine,browserMode:scenario.browser,origin:(scenario.browser==='rolling-composer'?'http://':'https://')+'127.0.0.1:'+port,rpcToken:randomBytes(32).toString('hex'),backupPassword:randomBytes(32).toString('base64url')};
+      control={ethereumWallet:scenario.ethereumWallet??'disposable',browserEngine:scenario.browserEngine,browserMode:scenario.browser,origin:(rollingBrowser?'http://':'https://')+'127.0.0.1:'+port,rpcToken:randomBytes(32).toString('hex'),backupPassword:randomBytes(32).toString('base64url')};
     }
     runtime=await prepareRuntime(directory,scenario,report);
     const {crs,profile}=runtime;
@@ -98,7 +98,7 @@ export async function runApplication(name) {
     assert.equal(exit.code,0);assert.equal(report.worker.passed,true);
     if(browser){assert(browserRun,'Browser was never launched');await browserRun;}
     if(scenario.providerRecovery===true){assert(providerRun,'Provider was never launched');await providerRun;}
-    const finalHashes=await fingerprints();if(browser)Object.assign(finalHashes,await browserFingerprints({rolling:scenario.browser==='rolling-composer'}));
+    const finalHashes=await fingerprints();if(browser)Object.assign(finalHashes,await browserFingerprints({rolling:rollingBrowser}));
     if(scenario.ethereumWallet==='metamask'){const name='.build/metamask-13.49.0/metamask-chrome-13.49.0.zip';finalHashes[name]=createHash('sha256').update(await fs.readFile(path.join(ROOT,name))).digest('hex');}
     assert.deepEqual(finalHashes,report.sourceHashes,'Sources changed during test');
     report.passed=true;
