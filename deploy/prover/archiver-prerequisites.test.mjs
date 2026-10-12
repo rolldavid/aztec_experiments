@@ -100,3 +100,34 @@ test('full mode retains explicit provider on child failure and refuses mixed pro
   for(const options of [{prerequisiteProvider:'unknown'},{historicalOnly:true,prerequisiteProvider:'tenderly'}]){const file=path.join(dir,'invalid.json');await assert.rejects(supervise(file,options));assert.equal(fs.existsSync(file),false);}
  }finally{fs.rmSync(dir,{recursive:true,force:true});}
 });
+
+const SPLIT='tenderly-publicnode-debug';
+const splitFixture=overrides=>fixture({debugChain:async()=>11155111,debugBlock:async n=>({number:n,timestamp:1000n,hash:H}),...overrides});
+test('supported SDK separate debug client uses fixed PublicNode while ordinary/history/blob execution stays Tenderly',async()=>{
+ const {getPublicClient,getRpcUrlsFromClient}=await import('@aztec-labs/ethereum/client');const config=prerequisiteProviderConfig(SPLIT);
+ assert.deepEqual(getRpcUrlsFromClient(getPublicClient(config.client)),['https://sepolia.gateway.tenderly.co']);
+ assert.deepEqual(getRpcUrlsFromClient(getPublicClient(config.debugClient)),['https://ethereum-sepolia-rpc.publicnode.com']);
+ assert.equal(config.blob.l1RpcUrls,config.client.l1RpcUrls);assert.equal(config.blob.blobAllowEmptySources,false);
+ assert.equal(config.client.l1ChainId,11155111);assert.equal(config.debugClient.l1ChainId,11155111);assert.throws(()=>config.debugClient.l1RpcUrls.push('https://other.invalid'));
+ assert.throws(()=>prerequisiteProviderConfig('publicnode-tenderly-debug'));assert.throws(()=>prerequisiteProviderConfig('https://sepolia.gateway.tenderly.co'));
+ const f=splitFixture(),r=await runChecks(f.ops,()=>{},SPLIT);assert.equal(r.passed,true);assert.equal(r.provider,SPLIT);assert.equal(r.ordinaryProvider,'tenderly');assert.equal(r.debugProvider,'publicnode');
+ assert.deepEqual(r.stages.map(x=>x.name),[...PHASES.slice(0,8),'debug-chain-and-anchor',...PHASES.slice(8)]);
+ assert(f.calls.indexOf('historicalLogs')<f.calls.indexOf('debugChain'));assert(f.calls.indexOf('debugBlock')<f.calls.indexOf('trace'));assert.equal(f.calls.filter(x=>x==='debugBlock').length,2);
+});
+test('split debug identity and canonical anchor disagreement stop before any trace and preserve safe failure',async()=>{
+ for(const [overrides,category] of [[{debugChain:async()=>1},'DEBUG_CHAIN_MISMATCH'],[{debugBlock:async n=>({number:n,timestamp:1000n,hash:D})},'DEBUG_ANCHOR_MISMATCH'],[{debugBlock:async n=>({number:n+1n,timestamp:1000n,hash:H})},'DEBUG_ANCHOR_MISMATCH'],[{debugChain:async()=>{throw Error('PRIVATE_SENTINEL');}},'UNAVAILABLE']]){
+  const f=splitFixture(overrides),r=await runChecks(f.ops,()=>{},SPLIT);assert.equal(r.passed,false);assert.equal(r.cleanup,true);assert.equal(r.stages.at(-1).category,category);assert(!f.calls.includes('trace'));assert(!JSON.stringify(r).includes('PRIVATE_SENTINEL'));
+ }
+});
+test('split mode checks debug anchor again after all gates and fails a changed canonical view',async()=>{let reads=0;const f=splitFixture({debugBlock:async n=>({number:n,timestamp:1000n,hash:++reads===1?H:D})});const r=await runChecks(f.ops,()=>{},SPLIT);assert.equal(r.passed,false);assert.equal(r.stages.at(-1).name,'anchor-continuity');assert.equal(r.stages.at(-1).category,'DEBUG_ANCHOR_CHANGED');assert.equal(r.cleanup,true);});
+test('split mode preserves ordinary history, trace and blob failure gates without provider fallback',async()=>{
+ for(const [overrides,name] of [[{historicalLogs:async()=>[]},'historical-logs'],[{trace:async()=>({debugTraceRecent:false,traceTransactionRecent:false,debugTraceOld:false,traceTransactionOld:false})},'trace'],[{blobSources:async()=>false},'blob-sources']]){
+  const f=splitFixture(overrides),r=await runChecks(f.ops,()=>{},SPLIT);assert.equal(r.passed,false);assert.equal(r.stages.at(-1).name,name);assert.equal(r.ordinaryProvider,'tenderly');assert.equal(r.debugProvider,'publicnode');assert.equal(f.calls.filter(x=>x==='source').length,1);assert.equal(r.cleanup,true);
+ }
+});
+test('split provider labels survive worker failure and cannot be passed to historical-only mode',async()=>{
+ const dir=fs.mkdtempSync(path.join(os.tmpdir(),'split-provider-'));try{
+  const r=await supervise(path.join(dir,'partial.json'),{prerequisiteProvider:SPLIT,spawnWorker(fd){return spawn(process.execPath,['-e','process.exit(1)'],{stdio:['ignore','ignore','ignore',fd]});}});assert.equal(r.passed,false);assert.equal(r.ordinaryProvider,'tenderly');assert.equal(r.debugProvider,'publicnode');assert.equal(r.process.deadlineMs,59000);
+  const file=path.join(dir,'invalid');await assert.rejects(supervise(file,{historicalOnly:true,historicalProvider:SPLIT}));assert.equal(fs.existsSync(file),false);
+ }finally{fs.rmSync(dir,{recursive:true,force:true});}
+});

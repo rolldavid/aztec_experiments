@@ -30,13 +30,14 @@ const failures=new WeakMap();
 const requireThat=(v,category='CHECK_FAILED')=>{if(!v){const error=new Error('PREREQUISITE_CHECK_FAILED');failures.set(error,category);throw error;}};
 const hex=(v,bytes)=>typeof v==='string'&&new RegExp(`^0x[0-9a-fA-F]{${bytes*2}}$`).test(v);
 const integer=v=>typeof v==='bigint'&&v>=0n&&v<(1n<<256n);
-export function initialReport(provider='publicnode'){historicalEndpoint(provider);return {schemaVersion:1,scope:'public-read-only-archiver-prerequisites',provider,network:{...SCOPE},nodeStartupQualified:false,imageExecution:false,imageModuleBinding:'separate-evidence-required',sdkReadRetries:'installed SDK defaults; no operator retry',passed:false,stages:[],cleanup:null};}
+function prerequisiteSelection(provider){if(provider==='tenderly-publicnode-debug')return {ordinary:'tenderly',debug:'publicnode',split:true};historicalEndpoint(provider);return {ordinary:provider,debug:provider,split:false};}
+export function initialReport(provider='publicnode'){const selected=prerequisiteSelection(provider);return {schemaVersion:1,scope:'public-read-only-archiver-prerequisites',provider,ordinaryProvider:selected.ordinary,debugProvider:selected.debug,network:{...SCOPE},nodeStartupQualified:false,imageExecution:false,imageModuleBinding:'separate-evidence-required',sdkReadRetries:'installed SDK defaults; no operator retry',passed:false,stages:[],cleanup:null};}
 function record(fd,r){const b=Buffer.from(JSON.stringify(r,null,2)+'\n');requireThat(b.length<=16384);fs.writeSync(fd,b,0,b.length,0);fs.ftruncateSync(fd,b.length);fs.fsyncSync(fd);}
 function projectBlock(b){const number=b.number,timestamp=b.timestamp,blockHash=b.hash;requireThat(integer(number)&&integer(timestamp)&&hex(blockHash,32));return {number:number.toString(),timestamp:timestamp.toString(),hash:blockHash.toLowerCase()};}
 /** Labelled pure-fake tests exercise sequencing, rejection and sanitization. The
  * CLI always constructs actual installed SDK operations below. */
 export async function runChecks(ops,persist=()=>{},provider='publicnode'){
- const r=initialReport(provider);let anchor,constants,deploy;const stage=async(name,fn)=>{const row={name,status:'running'};r.stages.push(row);persist(r);try{row.observation=await fn();row.status='passed';persist(r);}catch(error){row.status='failed';row.category=failures.get(error)??'UNAVAILABLE';persist(r);throw new Error('PREREQUISITE_CHECK_FAILED');}};
+ const r=initialReport(provider),selected=prerequisiteSelection(provider);let anchor,constants,deploy;const stage=async(name,fn)=>{const row={name,status:'running'};r.stages.push(row);persist(r);try{row.observation=await fn();row.status='passed';persist(r);}catch(error){row.status='failed';row.category=failures.get(error)??'UNAVAILABLE';persist(r);throw new Error('PREREQUISITE_CHECK_FAILED');}};
  try{
   await stage('source',async()=>{const {node,aztec,sourceSha256,sourceFiles}=await ops.source();requireThat(node==='24.21.0'&&aztec==='6.0.0-rc.1'&&typeof sourceSha256==='string'&&/^[a-f0-9]{64}$/.test(sourceSha256));requireThat(sourceFiles&&Object.keys(sourceFiles).length===Object.keys(SOURCE_HASHES).length);const files={};for(const [key,digest]of Object.entries(SOURCE_HASHES)){const value=sourceFiles[key];requireThat(value===digest);files[key]=value;}return {node,aztec,sourceSha256,sourceFiles:files};});
   await stage('chain',async()=>{requireThat(await ops.chain()===SCOPE.chainId,'CHAIN_MISMATCH');return {matched:true};});
@@ -46,9 +47,10 @@ export async function runChecks(ops,persist=()=>{},provider='publicnode'){
   await stage('deploy-block',async()=>{deploy=projectBlock(await ops.block(BigInt(constants.startBlock)));requireThat(deploy.number===constants.startBlock);return deploy;});
   await stage('historical-logs',async()=>{const logs=await ops.historicalLogs();requireThat(Array.isArray(logs)&&logs.length<=128,'MALFORMED_LOGS');requireThat(logs.length>0,'HISTORICAL_LOGS_EMPTY');for(const log of logs){requireThat(log.blockNumber===BigInt(deploy.number)&&log.blockHash?.toLowerCase()===deploy.hash&&log.address?.toLowerCase()===SCOPE.rollup&&log.removed===false,'HISTORICAL_LOG_BINDING');}return {ownershipTransferredEvents:logs.length,deployBlockMatched:true};});
   await stage('latest-clock',async()=>{const b=projectBlock(await ops.latest()),now=ops.nowSeconds();requireThat(Number.isSafeInteger(now)&&now>=0);const drift=BigInt(now)-BigInt(b.timestamp);requireThat(drift<=300n,'L1_STALE');return {...b,observedWallSeconds:now,lagSeconds:drift.toString(),maxAllowedDriftSeconds:300};});
+  if(selected.split)await stage('debug-chain-and-anchor',async()=>{requireThat(await ops.debugChain()===SCOPE.chainId,'DEBUG_CHAIN_MISMATCH');const b=projectBlock(await ops.debugBlock(BigInt(anchor.number)));requireThat(b.number===anchor.number&&b.hash===anchor.hash,'DEBUG_ANCHOR_MISMATCH');return {chainMatched:true,anchorMatched:true,blockNumber:b.number,blockHash:b.hash};});
   await stage('trace',async()=>{const raw=await ops.trace(),out={};for(const k of ['debugTraceRecent','traceTransactionRecent','debugTraceOld','traceTransactionOld']){const v=raw[k];requireThat(typeof v==='boolean');out[k]=v;}requireThat(Object.values(out).some(Boolean),'TRACE_UNAVAILABLE');return out;});
   await stage('blob-sources',async()=>{requireThat(await ops.blobSources()===true);return {strictSdkTestSourcesPassed:true,uploadConfigured:false};});
-  await stage('anchor-continuity',async()=>{const a=projectBlock(await ops.block(BigInt(anchor.number)));requireThat(a.hash===anchor.hash,'ANCHOR_CHANGED');return {finalizedAnchorUnchanged:true};});
+  await stage('anchor-continuity',async()=>{const a=projectBlock(await ops.block(BigInt(anchor.number)));requireThat(a.hash===anchor.hash,'ANCHOR_CHANGED');if(selected.split){const debug=projectBlock(await ops.debugBlock(BigInt(anchor.number)));requireThat(debug.number===anchor.number&&debug.hash===anchor.hash,'DEBUG_ANCHOR_CHANGED');}return {finalizedAnchorUnchanged:true};});
   r.passed=true;
  }catch{/* Deliberately never inspect/serialize exception, cause or provider text. */}
  finally{try{await ops.close();r.cleanup=true;}catch{r.cleanup=false;r.passed=false;}persist(r);}
@@ -57,25 +59,25 @@ export async function runChecks(ops,persist=()=>{},provider='publicnode'){
 // One immutable provider selection feeds ordinary RPC, trace checks and blob L1
 // lookups. Beacon and Aztec filestore endpoints stay unchanged and explicit.
 export function prerequisiteProviderConfig(provider='publicnode'){
- const l1RpcUrls=Object.freeze([historicalEndpoint(provider)]);
- return Object.freeze({client:Object.freeze({l1RpcUrls,l1ChainId:SCOPE.chainId,l1HttpTimeoutMS:10000,viemPollingIntervalMS:1000}),blob:Object.freeze({l1ChainId:SCOPE.chainId,rollupVersion:SCOPE.version,rollupAddress:SCOPE.rollup,l1RpcUrls,l1ConsensusHostUrls:Object.freeze([BEACON]),blobFileStoreUrls:Object.freeze([BLOBS]),blobAllowEmptySources:false,blobFileStoreTimeoutMs:10000,l1HttpTimeoutMS:10000})});
+ const selected=prerequisiteSelection(provider),l1RpcUrls=Object.freeze([historicalEndpoint(selected.ordinary)]),l1DebugRpcUrls=Object.freeze([historicalEndpoint(selected.debug)]);
+ return Object.freeze({debugClient:Object.freeze({l1RpcUrls:l1DebugRpcUrls,l1ChainId:SCOPE.chainId,l1HttpTimeoutMS:10000,viemPollingIntervalMS:1000}),client:Object.freeze({l1RpcUrls,l1ChainId:SCOPE.chainId,l1HttpTimeoutMS:10000,viemPollingIntervalMS:1000}),blob:Object.freeze({l1ChainId:SCOPE.chainId,rollupVersion:SCOPE.version,rollupAddress:SCOPE.rollup,l1RpcUrls,l1ConsensusHostUrls:Object.freeze([BEACON]),blobFileStoreUrls:Object.freeze([BLOBS]),blobAllowEmptySources:false,blobFileStoreTimeoutMs:10000,l1HttpTimeoutMS:10000})});
 }
 async function actualOperations(provider='publicnode'){
  const config=prerequisiteProviderConfig(provider);
- let client,rollup,blob,validateTraceAvailability;
+ let client,debugClient,rollup,blob,validateTraceAvailability;
  return {
   async source(){
    const {assertAztecPackages,assertNodeVersion}=await import('../../scripts/toolchain.mjs');assertNodeVersion();assertAztecPackages();
    for(const [rel,digest]of Object.entries(SOURCE_HASHES))requireThat(hash(fs.readFileSync(path.join(ROOT,rel)))===digest);
    const {getPublicClient}=await import('@aztec-labs/ethereum/client');const {RollupContract}=await import('@aztec-labs/ethereum/contracts');
-   client=getPublicClient(config.client);rollup=new RollupContract(client,SCOPE.rollup);
+   client=getPublicClient(config.client);debugClient=provider==='tenderly-publicnode-debug'?getPublicClient(config.debugClient):client;rollup=new RollupContract(client,SCOPE.rollup);
    ({validateTraceAvailability}=await import(pathToFileURL(path.join(ROOT,'node_modules/@aztec-labs/archiver/dest/l1/validate_trace.js')).href));
    return {node:process.versions.node,aztec:'6.0.0-rc.1',sourceSha256:hash(fs.readFileSync(FILE)),sourceFiles:{...SOURCE_HASHES}};
   },
   chain:()=>client.getChainId(),finalized:()=>client.getBlock({blockTag:'finalized',includeTransactions:false}),latest:()=>client.getBlock({blockTag:'latest',includeTransactions:false}),block:n=>client.getBlock({blockNumber:n,includeTransactions:false}),nowSeconds:()=>Math.floor(Date.now()/1000),
   async identity(){const code=await client.getBytecode({address:SCOPE.rollup});return {version:BigInt(await rollup.getVersion()),hasCode:typeof code==='string'&&code.length>2,codeSha256:'0x'+hash(Buffer.from((code??'0x').slice(2),'hex'))};},
   async constants(){const [startBlock,genesisTime,proofSubmissionEpochs,root,proposer,committeeSize,manaLimit]=await Promise.all([rollup.getL1StartBlock(),rollup.getL1GenesisTime(),rollup.getProofSubmissionEpochs(),rollup.getGenesisArchiveTreeRoot(),rollup.getSlashingProposerAddress(),rollup.getTargetCommitteeSize(),rollup.getManaLimit()]);return {startBlock,genesisTime,proofSubmissionEpochs:BigInt(proofSubmissionEpochs),genesisArchiveRoot:BigInt(root.toString()),slashingProposer:proposer.toString(),committeeSize:BigInt(committeeSize),manaLimit:BigInt(manaLimit)};},
-  historicalLogs:()=>rollup.getOwnershipTransferredEventsAtDeploy(),trace:()=>validateTraceAvailability(client),
+  historicalLogs:()=>rollup.getOwnershipTransferredEventsAtDeploy(),debugChain:()=>debugClient.getChainId(),debugBlock:n=>debugClient.getBlock({blockNumber:n,includeTransactions:false}),trace:()=>validateTraceAvailability(debugClient),
   async blobSources(){const {createBlobClientWithFileStores}=await import('@aztec-labs/blob-client/client');const {EthAddress}=await import('@aztec-labs/foundation/eth-address');blob=await createBlobClientWithFileStores({...config.blob,rollupAddress:EthAddress.fromString(config.blob.rollupAddress)},silent);await blob.testSources();return true;},
   async close(){await blob?.stop?.();}
  };
@@ -131,12 +133,12 @@ export async function diagnoseHistoricalLogs({provider='publicnode',fetchImpl=gl
 // Parent owns the external deadline and protected receipt descriptor. Worker
 // stderr/stdout are discarded, so library diagnostics cannot leak raw URLs.
 export async function supervise(output,{deadlineMs=59000,spawnWorker,historicalOnly=false,historicalProvider='publicnode',prerequisiteProvider='publicnode'}={}){
- historicalEndpoint(historicalProvider);historicalEndpoint(prerequisiteProvider);requireThat(historicalOnly||historicalProvider==='publicnode');requireThat(!historicalOnly||prerequisiteProvider==='publicnode');
+ historicalEndpoint(historicalProvider);prerequisiteSelection(prerequisiteProvider);requireThat(historicalOnly||historicalProvider==='publicnode');requireThat(!historicalOnly||prerequisiteProvider==='publicnode');
  requireThat(Number.isInteger(deadlineMs)&&deadlineMs>0&&deadlineMs<=59000&&path.isAbsolute(output));
  const fd=fs.openSync(output,fs.constants.O_RDWR|fs.constants.O_CREAT|fs.constants.O_EXCL|fs.constants.O_NOFOLLOW,0o600);record(fd,historicalOnly?initialHistoricalReport(historicalProvider):initialReport(prerequisiteProvider));
  let child,timer,killer,timedOut=false,exitCode=null;
  try{
-  child=spawnWorker?spawnWorker(fd):spawn(process.execPath,[FILE,historicalOnly?(historicalProvider==='tenderly'?'--tenderly-historical-worker':'--historical-worker'):(prerequisiteProvider==='tenderly'?'--tenderly-prerequisites-worker':'--worker')],{cwd:ROOT,stdio:['ignore','ignore','ignore',fd],env:{PATH:process.env.PATH??'/usr/bin:/bin',LOG_LEVEL:'silent',NO_COLOR:'1'}});
+  child=spawnWorker?spawnWorker(fd):spawn(process.execPath,[FILE,historicalOnly?(historicalProvider==='tenderly'?'--tenderly-historical-worker':'--historical-worker'):(prerequisiteProvider==='tenderly-publicnode-debug'?'--split-prerequisites-worker':prerequisiteProvider==='tenderly'?'--tenderly-prerequisites-worker':'--worker')],{cwd:ROOT,stdio:['ignore','ignore','ignore',fd],env:{PATH:process.env.PATH??'/usr/bin:/bin',LOG_LEVEL:'silent',NO_COLOR:'1'}});
   timer=setTimeout(()=>{timedOut=true;child.kill('SIGTERM');killer=setTimeout(()=>child.kill('SIGKILL'),500);},deadlineMs);
   exitCode=await new Promise(resolve=>{child.once('error',()=>resolve(null));child.once('close',code=>resolve(code));});
   const size=fs.fstatSync(fd).size;requireThat(size<=16384);const b=Buffer.alloc(size);fs.readSync(fd,b,0,size,0);const r=JSON.parse(b.toString());
@@ -147,10 +149,10 @@ export async function supervise(output,{deadlineMs=59000,spawnWorker,historicalO
 if(process.argv[1]&&path.resolve(process.argv[1])===FILE){
  if(['--historical-worker','--tenderly-historical-worker'].includes(process.argv[2])){
   try{const ops=await actualOperations();await ops.source();const r=await diagnoseHistoricalLogs({provider:process.argv[2]==='--tenderly-historical-worker'?'tenderly':'publicnode',persist:r=>record(3,r)});process.exit(r.passed?0:1);}catch{process.exit(1);}
- }else if(['--worker','--tenderly-prerequisites-worker'].includes(process.argv[2])){
+ }else if(['--worker','--tenderly-prerequisites-worker','--split-prerequisites-worker'].includes(process.argv[2])){
   // Only inherited descriptor3, never a caller-selected file or environment.
-  try{const provider=process.argv[2]==='--tenderly-prerequisites-worker'?'tenderly':'publicnode';const ops=await actualOperations(provider);const result=await runChecks(ops,r=>record(3,r),provider);process.exit(result.passed?0:1);}catch{process.exit(1);}
- }else if(process.argv.length===4&&['--output','--historical-log-output','--tenderly-historical-log-output','--tenderly-prerequisites-output'].includes(process.argv[2])){
-  try{const r=await supervise(process.argv[3],{historicalOnly:process.argv[2].endsWith('historical-log-output'),historicalProvider:process.argv[2]==='--tenderly-historical-log-output'?'tenderly':'publicnode',prerequisiteProvider:process.argv[2]==='--tenderly-prerequisites-output'?'tenderly':'publicnode'});process.stdout.write(JSON.stringify({passed:r.passed,nodeStartupQualified:false})+'\n');process.exitCode=r.passed?0:1;}catch{process.stderr.write('Archiver prerequisite diagnostic failed.\n');process.exitCode=1;}
- }else{process.stderr.write('Usage: node archiver-prerequisites.mjs --output|--historical-log-output|--tenderly-historical-log-output|--tenderly-prerequisites-output ABSOLUTE_NEW_RECEIPT\n');process.exitCode=1;}
+  try{const provider=process.argv[2]==='--split-prerequisites-worker'?'tenderly-publicnode-debug':process.argv[2]==='--tenderly-prerequisites-worker'?'tenderly':'publicnode';const ops=await actualOperations(provider);const result=await runChecks(ops,r=>record(3,r),provider);process.exit(result.passed?0:1);}catch{process.exit(1);}
+ }else if(process.argv.length===4&&['--output','--historical-log-output','--tenderly-historical-log-output','--tenderly-prerequisites-output','--split-prerequisites-output'].includes(process.argv[2])){
+  try{const r=await supervise(process.argv[3],{historicalOnly:process.argv[2].endsWith('historical-log-output'),historicalProvider:process.argv[2]==='--tenderly-historical-log-output'?'tenderly':'publicnode',prerequisiteProvider:process.argv[2]==='--split-prerequisites-output'?'tenderly-publicnode-debug':process.argv[2]==='--tenderly-prerequisites-output'?'tenderly':'publicnode'});process.stdout.write(JSON.stringify({passed:r.passed,nodeStartupQualified:false})+'\n');process.exitCode=r.passed?0:1;}catch{process.stderr.write('Archiver prerequisite diagnostic failed.\n');process.exitCode=1;}
+ }else{process.stderr.write('Usage: node archiver-prerequisites.mjs --output|--historical-log-output|--tenderly-historical-log-output|--tenderly-prerequisites-output|--split-prerequisites-output ABSOLUTE_NEW_RECEIPT\n');process.exitCode=1;}
 }
