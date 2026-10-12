@@ -153,3 +153,22 @@ test('normal profile entrypoints are narrowly allowed, with private fees and no 
  }
  for(const name of ['_set_bio','_set_avatar']){const id=await selector(name);for(const visibility of [false,true])assert.throws(()=>validateRollingPayload({inputs:context('4'),app_payload:{function_calls:[call(1,id,visibility),fee]}},policy),/Unapproved/);}
 });
+
+
+test('private preference entrypoints require exact board/network/private flags and fees',async()=>{
+ const raw=loadRollingArtifacts(),selected=await rollingSelectors(raw),a=loadContractArtifact(raw.find(a=>a.name==='RollingBoard'));
+ const policy={...options,selectors:selected},fee=call(3,[...selected.fee.fee][0]);
+ for(const name of ['set_preference','mark_thread_read']){
+  const fn=a.functions.find(f=>f.name===name);assert(fn?.verificationKey,'Normal processed preference VK required');
+  const id=BigInt((await FunctionSelector.fromNameAndParameters(fn)).toString());
+  const valid={inputs:context('4'),app_payload:{function_calls:[call(1,id),fee]}};
+  assert.deepEqual(validateRollingPayload(valid,policy),{applications:1,fees:1});
+  bindRollingCircuit('RollingBoard:'+name,{inputs:context('1')},policy);
+  for(const calls of [[call(99,id),fee],[call(1,id,true),fee],[call(1,id)]])assert.throws(()=>validateRollingPayload({...valid,app_payload:{function_calls:calls}},policy),/Unapproved|Private fee/);
+  for(const flag of ['hide_msg_sender','is_static']){const bad=structuredClone(valid);bad.app_payload.function_calls[0][flag]=true;assert.throws(()=>validateRollingPayload(bad,policy),/flags/);}
+  for(const key of ['chain_id','version']){const bad=structuredClone(valid);bad.inputs.tx_context[key]='999';assert.throws(()=>validateRollingPayload(bad,policy),/network/);const circuit=context('1');circuit.tx_context[key]='999';assert.throws(()=>bindRollingCircuit('RollingBoard:'+name,{inputs:circuit},policy),/network/);}
+  assert.throws(()=>bindRollingCircuit('RollingBoard:'+name,{inputs:context('9')},policy),/contract/);
+ }
+ // Utility heads and internal public dispatch never become paid account actions.
+ for(const name of ['preference_head','preference_head_initialized','_set_preference','_mark_thread_read'])assert.throws(()=>bindRollingCircuit('RollingBoard:'+name,{inputs:context('1')},policy),/Unapproved/);
+});

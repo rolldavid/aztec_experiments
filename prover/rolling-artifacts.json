@@ -5,7 +5,7 @@
     {
       "name": "RollingBoard",
       "path": "billboard/target/rolling_contract-RollingBoard.json",
-      "sha256": "6553d89d4ab0b576ad8d80c0833f0b05cbedff175102beb8f335fdef98807ace"
+      "sha256": "c8c256bbc9540f1ceb903b7af8d947e06ac9889115892e5ac715ef24e4fbf431"
     },
     {
       "name": "PrivateBok",
@@ -15,7 +15,7 @@
   ],
   "inputs": {
     "apps/src/billboard/private_fee_artifact.json": "bf53168a2bc4e3f7c4ec58aa31bd771868dd5f880689048b6e5ac5cacb1b5497",
-    "noir-dependencies.json": "7d7d9db800156399d12ea966b10d0f8699165c0ac17e08a4de540a668ca09c7e",
+    "noir-dependencies.json": "6465dfa29036186ec7c032a112a24318d408f8fef14eb31384e7384bbdcb6043",
     "toolchain.json": "7edd16d508bada5e5d7bbeefb0445d09975ac838985b2ce61ac821729dcb4458",
     "package-lock.json": "d8c43be2eea22e1a19c184206bf3ee16b7d2ed0503c0dfc4489f57f4dbee832a",
     "scripts/build-contracts.mjs": "6f1424b76685082dd5edbf06a2153d9cbc3ff8ba9fd713627b0f5839770c1895",
@@ -29,8 +29,9 @@
     "experiments/private-bok/build.mjs": "813b1b41c66b0f6ff255d23a1ac45541a4d87042fe9521f135c203f4cfb89da0",
     "billboard/rolling_contract/src/admission.nr": "83868ff1dd7b5f7841fdff2f1252d76d96c68db9554d9bb93e65b6a6a7011b38",
     "billboard/rolling_contract/src/encoding.nr": "32d1ddbca7c6cdf607a24ad1ecdf7ab4be6667877cf7c34b3cf370a02efcfd07",
-    "billboard/rolling_contract/src/main.nr": "32ebdead7ef12c68c16e2d3dcf871ce521d1ddb33c5ae7955756ecd6d0817660",
+    "billboard/rolling_contract/src/main.nr": "0f690fef381b8342cf0030132ccefa1b724ee308fdf5939ce482eb7bf448bfd0",
     "billboard/rolling_contract/src/posting.nr": "1bac8187638522892d6389a6d4b34185c4bd46297dddcba6102b2a3b81098bda",
+    "billboard/rolling_contract/src/preferences.nr": "7cdae41312403c4135f4ab621283c7a4bf52b0b6fb8c34d14a90e83386e4be30",
     "billboard/rolling_contract/src/profiles.nr": "b12124ca50d181f9798c24e3373f9ba358697fdb433cc7d696c3a69ac9d53efd",
     "experiments/private-bok/escrow/src/main.nr": "948ca452f8974e1933d5898c8b5210cc504c3b9224e53115da70dbbd913ef8f9"
   }
