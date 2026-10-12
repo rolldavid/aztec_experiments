@@ -60,7 +60,7 @@ export const SOURCE_PLAN = Object.freeze([
   },
   {
     "path": "/usr/src/yarn-project/aztec-node/dest/factory.js",
-    "sha256": "67726f96a7df3817c5cf30d8f1161055f487f34a4824e2baecb7c56833fe0259",
+    "sha256": "5ad06917c2c49b1baab89bc4012863aedb9356890d4cc57e6ea3a756e5a239d5",
     "points": [
       {
         "phase": "factory-bb",
@@ -243,7 +243,7 @@ export const SOURCE_PLAN = Object.freeze([
 },
 {
   "path": "/usr/src/yarn-project/archiver/dest/modules/l1_synchronizer.js",
-  "sha256": "118889e3b8a157aa748ffd3b4977c6c2fa87d8149d6668862c673fa0b71e7d7a",
+  "sha256": "595956f62d7476709058cf327dc0b43d4e1b31eb2e18803cd8eaf9cf0a7da924",
   "points": [],
   "insertions": [
     {
