@@ -201,22 +201,28 @@ The wallet build checks the canonical contract and SDK input manifests before
 assembling its own assets. Never refresh a manifest by hand to accept stale files.
 
 Application tests reject stale PrivateBok inputs and either stale output before
-starting the chain, and repeat the fixture's checks at use. The two preference
-development campaigns use disposable identities, native proofs-disabled devnet/PXE configuration, the local HTTP
-service and controlled local portal settlement:
+starting the chain, and repeat the fixture's checks at use. Development uses
+native proofs-disabled devnet/PXE configuration. This existing fixture checks
+board deployment and ordinary inclusion with disposable identities:
 
 ```sh
-NODE_BACKEND=js BOARD_TEST_PROOFS=disabled BOARD_TEST_REMOTE=1 node scripts/test-c01-application.mjs rolling-preference-relationships
-NODE_BACKEND=js BOARD_TEST_PROOFS=disabled BOARD_TEST_REMOTE=1 node scripts/test-c01-application.mjs rolling-preference-notifications
+NODE_BACKEND=js node scripts/test-c01-application.mjs included-board
 ```
 
-Run them serially under the existing 540-second / 4 GiB supervisor. On macOS,
-prefix the command with `caffeinate -i` (after the environment assignments) to
-prevent idle sleep during the foreground run; this does not protect against lid
-closure, manual sleep, session termination or a disconnected host. Failed results
-and cleanup are recorded under `execution/evidence/G07`. A successful local run
-does not establish testnet service availability, browser key recovery, independent
-privacy review or production qualification.
+The runner defaults to `BOARD_TEST_PROOFS=disabled`. The existing preference
+acceptance campaigns additionally require observed real proof jobs; their
+proof-job assertions remain mandatory and cannot pass in this development mode.
+Reserve that evidence for testnet acceptance. Do not enable real local proofs to
+work around an acceptance-only assertion.
+
+Run development scenarios serially under their existing supervisor limits
+(`included-board`: 120 seconds / 4 GiB; full journeys: 540 seconds / 4 GiB).
+On macOS, prefix the command with `caffeinate -i` (after the environment
+assignments) to prevent idle sleep during the foreground run; this does not
+protect against lid closure, manual sleep, session termination or a disconnected
+host. The example's results and cleanup are recorded under `execution/evidence/C01`.
+A successful local run does not establish testnet service availability, browser
+key recovery, independent privacy review or production qualification.
 
 ## Compare clean builds
 

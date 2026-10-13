@@ -27,11 +27,16 @@ cannot satisfy those assertions or qualify real-proof acceptance. Reserve real
 proofs for the testnet acceptance campaign, explicitly selecting its real-proof
 configuration. Historical real-proof evidence and all release gates remain intact.
 
-Browser development scenarios are currently held before resource allocation:
+Rolling browser development scenarios are currently held before resource allocation:
 `apps/rolling/wallet-session.mjs` explicitly enables its native PXE flag. The
 browser fixture's proof-mode metadata cannot override that SDK option. Resolve
 that configuration constraint before browser development; do not use real local
 proofs as a workaround. No browser proofs-disabled result is claimed.
+
+The preference acceptance helpers also require a completed proof job for each
+mutation. Those assertions remain unchanged; a proofs-disabled run cannot
+qualify them. Use the verified `included-board` development command above for
+configuration checks, and reserve proof-dependent acceptance for testnet.
 
 ## Structure
 
