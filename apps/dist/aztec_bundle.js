@@ -473639,8 +473639,8 @@ mod tests {
   }
   function validateDeploymentManifest(value) {
     exact2(value, ["schemaVersion", "profile", "network", "actors", "board", "artifacts"], "deployment manifest");
-    if (value.schemaVersion !== 1 || !["local-test", "operator"].includes(value.profile)) fail7("Invalid deployment profile");
-    const n2 = value.network, b2 = value.board, a = value.actors, f = value.artifacts;
+    if (![1, 2].includes(value.schemaVersion) || !["local-test", "operator"].includes(value.profile)) fail7("Invalid deployment profile");
+    const n2 = value.network, b2 = value.board, a = value.actors, f = value.artifacts, rolling = value.schemaVersion === 2;
     exact2(n2, ["nodeUrl", "ethRpcUrl", "chainId", "rollupVersion", "rollup", "inbox", "outbox"], "network");
     endpoint2(n2.nodeUrl);
     endpoint2(n2.ethRpcUrl);
@@ -473650,15 +473650,16 @@ mod tests {
     exact2(a, ["aztecDeployer", "ethereumDeployer"], "actors");
     field3(a.aztecDeployer, "Aztec deployer");
     hex16(a.ethereumDeployer, 20, "Ethereum deployer");
-    exact2(b2, ["salt", "minDeposit", "maxDeposit", "baseCooldown", "kMultiplier", "censorWindow", "maxSaveUp", "censor", "policy"], "board");
+    exact2(b2, ["salt", "minDeposit", "maxDeposit", "baseCooldown", "kMultiplier", "censorWindow", "maxSaveUp", rolling ? "kind" : "censor", "policy"], "board");
+    if (rolling && b2.kind !== "rolling") fail7("Invalid board kind");
     if (typeof b2.salt !== "string" || !/^(0|[1-9][0-9]*)$/.test(b2.salt) || b2.salt.length > 78 || BigInt(b2.salt) >= FR2) fail7("Invalid contract salt");
     uint3(b2.minDeposit, 96, "minimum deposit");
     uint3(b2.maxDeposit, 96, "maximum deposit");
     if (BigInt(b2.minDeposit) > BigInt(b2.maxDeposit)) fail7("Reversed deposit bounds");
     for (const k of ["baseCooldown", "censorWindow"]) uint3(b2[k], 32, k);
     for (const k of ["kMultiplier", "maxSaveUp"]) uint3(b2[k], 16, k);
-    field3(b2.censor, "censor");
-    if (typeof b2.policy !== "string" || !b2.policy.isWellFormed() || b2.policy.includes("\0") || !b2.policy.trim() || new TextEncoder().encode(b2.policy).length > 1488) fail7("Explicit nonempty policy required");
+    if (!rolling) field3(b2.censor, "censor");
+    if (typeof b2.policy !== "string" || !b2.policy.isWellFormed() || b2.policy.includes("\0") || !b2.policy.trim() || new TextEncoder().encode(b2.policy).length > (rolling ? 992 : 1488)) fail7("Explicit nonempty policy required");
     exact2(f, ["boardJsonSha256", "boardClassId", "portalCreationSha256", "portalRuntimeMetadataSha256"], "artifacts");
     for (const k of Object.keys(f)) hex16(f[k], 32, k);
     field3(f.boardClassId, "board class");
@@ -473666,13 +473667,14 @@ mod tests {
   }
   function deploymentManifestConfig(manifest) {
     const m2 = validateDeploymentManifest(manifest), b2 = m2.board;
-    return { deploymentManifest: m2, aztecNodeUrl: m2.network.nodeUrl, ethRpcUrl: m2.network.ethRpcUrl, contractSalt: BigInt(b2.salt), minDepositWei: BigInt(b2.minDeposit), maxDepositWei: BigInt(b2.maxDeposit), baseCooldown: Number(b2.baseCooldown), kMultiplier: Number(b2.kMultiplier), censorWindow: Number(b2.censorWindow), maxSaveUp: Number(b2.maxSaveUp), censor: b2.censor, moderationPolicy: b2.policy };
+    return { deploymentManifest: m2, aztecNodeUrl: m2.network.nodeUrl, ethRpcUrl: m2.network.ethRpcUrl, contractSalt: BigInt(b2.salt), minDepositWei: BigInt(b2.minDeposit), maxDepositWei: BigInt(b2.maxDeposit), baseCooldown: Number(b2.baseCooldown), kMultiplier: Number(b2.kMultiplier), censorWindow: Number(b2.censorWindow), maxSaveUp: Number(b2.maxSaveUp), ...m2.schemaVersion === 2 ? { boardProfile: "rolling" } : { censor: b2.censor }, moderationPolicy: b2.policy };
   }
   function verifyDeploymentInputs(manifest, { artifact, portalBytecode, runtimeMetadata, config: config9, ethers }) {
     const m2 = validateDeploymentManifest(manifest), expected = deploymentManifestConfig(m2);
     for (const k of ["aztecNodeUrl", "ethRpcUrl"]) if (endpoint2(config9[k]) !== endpoint2(expected[k])) fail7("Manifest endpoint mismatch");
     for (const k of ["contractSalt", "minDepositWei", "maxDepositWei", "baseCooldown", "kMultiplier", "censorWindow", "maxSaveUp"]) if (config9[k] === void 0 || BigInt(config9[k]) !== BigInt(expected[k])) fail7("Manifest parameter mismatch: " + k);
-    if (config9.censor?.toLowerCase() !== m2.board.censor || config9.moderationPolicy !== m2.board.policy) fail7("Manifest policy/censor mismatch");
+    if ((m2.schemaVersion === 2 ? config9.boardProfile !== "rolling" || config9.censor !== void 0 : config9.boardProfile !== void 0 || config9.censor?.toLowerCase() !== m2.board.censor) || config9.moderationPolicy !== m2.board.policy) fail7("Manifest policy/censor mismatch");
+    if (m2.schemaVersion === 2 && artifact?.name !== "RollingBoard") fail7("Rolling artifact required");
     const hash12 = (o) => ethers.sha256(ethers.toUtf8Bytes(JSON.stringify(o)));
     if (hash12(artifact) !== m2.artifacts.boardJsonSha256 || ethers.sha256(portalBytecode) !== m2.artifacts.portalCreationSha256 || hash12(runtimeMetadata) !== m2.artifacts.portalRuntimeMetadataSha256) fail7("Deployment artifact identity mismatch");
     return { manifest: m2, intentDigest: hash12(m2) };
