@@ -33,10 +33,20 @@ browser fixture's proof-mode metadata cannot override that SDK option. Resolve
 that configuration constraint before browser development; do not use real local
 proofs as a workaround. No browser proofs-disabled result is claimed.
 
-The preference acceptance helpers also require a completed proof job for each
-mutation. Those assertions remain unchanged; a proofs-disabled run cannot
-qualify them. Use the verified `included-board` development command above for
-configuration checks, and reserve proof-dependent acceptance for testnet.
+The ordinary CLI preference checks use the captured native configuration: zero
+proof jobs when disabled, and the original job counts when real proofs are enabled.
+Exact transaction, fee, encrypted-state and recovery checks remain in place. The
+relationships development journey has passed with both native flags disabled:
+
+```sh
+npm run test:e2e -- rolling-preference-relationships
+```
+
+It includes preference writes, encrypted-journal reopen, public-view rebuild and
+recovery from keys with an empty local cache. This is CLI development evidence;
+it does not qualify browser persistence, full-history capacity or genuine proofs.
+Proof-dependent saved-transaction, reorg and browser acceptance remains reserved
+for testnet with real proofs.
 
 ## Structure
 
