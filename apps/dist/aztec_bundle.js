@@ -475009,6 +475009,7 @@ mod tests {
   // shared/journal-backup.mjs
   var fail9 = () => transactionError("BB_JOURNAL_INVALID", "Recovery records could not be authenticated or conflict with newer local records. Preserve both copies.");
   var domains = /* @__PURE__ */ new Map([
+    ["ROLLING_TOPUP_FUNDING_V1", "ROLLING_TOPUP_FUNDING_V1"],
     ["ROLLING_AGGREGATE_FUNDING_V1", "ROLLING_AGGREGATE_FUNDING_V1"],
     ["AZTEC_BB_L2_JOURNAL_KEY_V1", "AZTEC_BB_L2_JOURNAL_V1"],
     ["AZTEC_BB_ETH_JOURNAL_KEY_V1", "AZTEC_BB_ETH_JOURNAL_V1"],
@@ -475021,6 +475022,15 @@ mod tests {
     if (!descriptor || Object.keys(descriptor).sort().join() !== "keyDomain,scopeText" || !domains.has(descriptor.keyDomain) || typeof descriptor.scopeText !== "string") throw fail9();
     const frame = JSON.parse(descriptor.scopeText);
     if (frame[0] !== domains.get(descriptor.keyDomain)) throw fail9();
+    if (descriptor.keyDomain === "ROLLING_TOPUP_FUNDING_V1") {
+      if (!Array.isArray(frame) || ![11, 12].includes(frame.length) || frame.at(-1) !== 1 || descriptor.scopeText !== JSON.stringify(frame) || !["private-fee", "bok"].includes(frame[6])) throw fail9();
+      for (const index of [1, 2]) if (typeof frame[index] !== "string" || !/^[1-9][0-9]{0,19}$/.test(frame[index]) || BigInt(frame[index]) >= FIELD_MODULUS2) throw fail9();
+      for (const index of [3, 4, 5, 7, 8, 9]) {
+        const width = [3, 7, 8].includes(index) ? 40 : 64, value = frame[index];
+        if (typeof value !== "string" || !new RegExp(`^0x[0-9a-f]{${width}}$`).test(value) || BigInt(value) === 0n || width === 64 && BigInt(value) >= FIELD_MODULUS2) throw fail9();
+      }
+      if (frame.length === 12 && (typeof frame[10] !== "string" || !/^0x[0-9a-f]{64}$/.test(frame[10]))) throw fail9();
+    }
     if (descriptor.keyDomain === "ROLLING_AGGREGATE_FUNDING_V1") {
       if (!Array.isArray(frame) || ![8, 9].includes(frame.length) || frame.at(-1) !== 1 || descriptor.scopeText !== JSON.stringify(frame)) throw fail9();
       if (frame.length === 9 && (typeof frame[7] !== "string" || !/^0x[0-9a-f]{64}$/.test(frame[7]))) throw fail9();

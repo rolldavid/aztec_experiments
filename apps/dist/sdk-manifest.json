@@ -2032,7 +2032,7 @@
     "shared/deposit-custody.mjs": "b977a541366368032e1fcb184301bb6b09797d0bc20e2b4ebefa015759d559e6",
     "shared/ethereum-journal.mjs": "4d3ebcd58ba275e7eddede184bd7674e0f9e12e42c0daa89a18191868d41bab6",
     "shared/fee-onboarding.mjs": "dd9d76c0468ca0a3b06d65402be468cead299f5a750f0f3edcfcb57bd33abbbe",
-    "shared/journal-backup.mjs": "1dc7b59d0874141deb0610b6f0a9d7f57bc6981775cd5527f519d5ad62663f65",
+    "shared/journal-backup.mjs": "105e2b3305528431dfe185135522e1674109cef8ce81277b9db27eff21901937",
     "shared/journal-indexeddb.mjs": "3b9bb21ae70b8bde89b460b673dcd4dd38422ee2d7f6d31f7c5c9c1bba4773b8",
     "shared/journal-record.mjs": "549c91da1ea11706769edc28fba6b1c1ad0fa58c845e784cc7462353726d5a08",
     "shared/l2-journal.mjs": "176abed83280f98f04b0de060a2061311f41d439626a99134d5a29e80e829bef",
@@ -2063,7 +2063,7 @@
   },
   "outputs": {
     "acvm_js_bg.wasm": "117fd939c3762470aec0920178b90b76293e1d92e75650e756483352c5ddcb1a",
-    "aztec_bundle.js": "cc084f690cabb67ae4ab296da2bd78ed6361a0956eabdde4a7ccfc0e7976ed62",
+    "aztec_bundle.js": "0b70ec63237e95fc387642fc5911b3185c48389178fada0c47e1a4442c27f4ef",
     "bb-main.worker.js": "a20e91000929692e4dda7c9b99d273fa3a565d433a1918239aaebd88ca104174",
     "bb-thread.worker.js": "80d2a3036eb1a04094200890d660fb503f7cc3103bdcb003b3ccea2fdfecc663",
     "noirc_abi_wasm_bg.wasm": "51dbfae8ef59b40e88f093fcc59df503a937649dd17ff4e5ecc1eeb4e95594d9",
