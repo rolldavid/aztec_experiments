@@ -1,5 +1,6 @@
 // Load after explicit unlock. All SDK and custody dependencies are supplied by
 // the authenticated application bundle; no fixture or ordinary-node fallback.
+import {createAggregateWallet} from '../../shared/rolling/aggregate-wallet.mjs';
 import {createRollingColdPreferenceReader} from '../../shared/rolling/cold-preference-reader.mjs';
 import {createRollingCompactClient} from '../../shared/rolling/compact-client.mjs';
 import {createRollingPreferenceReader} from '../../shared/rolling/preference-reader.mjs';
@@ -35,12 +36,12 @@ export async function verifyRollingBokCapability({sdk,node,config,artifact,deplo
  return Object.freeze({address,artifact,instance,operator:new sdk.AztecAddress(new sdk.Fr(BigInt(selected.operatorAddress))),pluginId:selected.pluginId});
 }
 export async function createRollingWalletSession({sdk,routing,ethers,config,boardArtifact,privateFeeArtifact,bokArtifact,account,
- trustedQuery,remoteProver,contextGuard,claimStore,onProgress=()=>{},locks=globalThis.navigator?.locks,proofsEnabled=true}){
+ trustedQuery,remoteProver,contextGuard,claimStore,captureFundingWallet,onProgress=()=>{},locks=globalThis.navigator?.locks,proofsEnabled=true}){
  if(typeof proofsEnabled!=='boolean'||(!proofsEnabled&&String(config?.network?.chainId)!=='31337')||typeof contextGuard!=='function'||typeof locks?.request!=='function'||!account||!trustedQuery||!routing)throw fail('ROLLING_SESSION_CONFIG');
  const captured={secretKey:account.secretKey,salt:String(account.salt),address:String(account.address)};
  const selected=structuredClone(config),query=structuredClone(trustedQuery),remote=remoteProver?structuredClone(remoteProver):undefined;
  const lockName='billboard-wallet:'+captured.address;
- let pxe,store,fundingProvider,closed=false,busy=false,app,closing,privateNode,privateWallet,readPreferences,readColdPreferences,initializeAccount;
+ let pxe,store,fundingProvider,closed=false,busy=false,app,closing,privateNode,privateWallet,readPreferences,readColdPreferences,initializeAccount,aggregate;
  const assertCaptured=()=>{
   if(closed||captured.secretKey!==account.secretKey||captured.salt!==String(account.salt)||captured.address!==String(account.address))throw fail('ROLLING_CONTEXT_CHANGED');
  };
@@ -120,10 +121,32 @@ export async function createRollingWalletSession({sdk,routing,ethers,config,boar
    privateNode=node;privateWallet=wallet;
    // Read-only Ethereum access is lazy and scoped to this private session.
    // No signer is supplied: importing a recovery receipt cannot pay again.
-   const funding={claimStore,provider:Object.fromEntries(['getNetwork','getTransactionReceipt','getTransaction','getBlock','call'].map(name=>[name,async(...args)=>{
+   const funding={claimStore,provider:Object.fromEntries(['getNetwork','getTransactionReceipt','getTransaction','getBlock','getCode','call'].map(name=>[name,async(...args)=>{
     await guardRoute();fundingProvider??=new ethers.JsonRpcProvider(selected.network.ethRpcUrl);
     const result=await fundingProvider[name](...args);await guardRoute();return result;
    }]))};
+   if(selected.aggregateFunding!==undefined){
+    const scope=selected.aggregateFunding;
+    if(!bok||scope.chainId!==network.chainId||scope.collateralPortal!==deployment.portal||scope.privateFpc!==deployment.privateFee.address.toString()||typeof captureFundingWallet!=='function')throw fail('ROLLING_SESSION_CONFIG');
+    const provider=Object.fromEntries(['getNetwork','getTransactionReceipt','getTransaction','getBlock','getCode','call','send','getTransactionCount','getBlockNumber','estimateGas','getFeeData','waitForTransaction'].map(name=>[name,async(...args)=>{
+     await guardRoute();fundingProvider??=new ethers.JsonRpcProvider(selected.network.ethRpcUrl);
+     const result=await fundingProvider[name](...args);await guardRoute();return result;
+    }]));
+    const verifyScope=async()=>{
+     await guardRoute();const contracts=await node.getL1ContractAddresses();await guardRoute();
+     if(contracts.feeJuicePortalAddress?.toString().toLowerCase()!==scope.feePortal)throw fail('ROLLING_SESSION_CONFIG');
+     const head=await node.getBlockData('checkpointed');await guardRoute();
+     const number=Number(head?.header?.globalVariables?.blockNumber),hash=head?.blockHash?.toString(),slot=bokArtifact.storageLayout?.portal?.slot;
+     if(!Number.isSafeInteger(number)||number<1||!/^0x[0-9a-f]{64}$/.test(hash)||slot===undefined)throw fail('ROLLING_SESSION_CONFIG');
+     const portal=await node.getPublicStorageAt({hash},bok.address,new sdk.Fr(BigInt(slot)));await guardRoute();
+     if(BigInt(portal.toString())!==BigInt(scope.bokPortal))throw fail('ROLLING_SESSION_CONFIG');
+     const again=await node.getBlockData(number);await guardRoute();if(again?.blockHash?.toString()!==hash)throw fail('ROLLING_CONTEXT_CHANGED');
+     await sdk.inspectTrustedNode(node,{expectedNetworkScope:network,proofsEnabled});await guardRoute();
+    };
+    aggregate=await createAggregateWallet({sdk,ethers,scope,network,board:deployment.board.address.toString(),bok:bok.address.toString(),owner:captured.address,
+     walletSecret:captured.secretKey,walletSalt:captured.salt,storage:privateStore,provider,captureWallet:captureFundingWallet,contextGuard:guardRoute,verifyScope});
+    funding.loadAggregate=txHash=>aggregate.loadAggregate(txHash);
+   }
    await guard();app=createRollingApplication({sdk:{...sdk,isPrivateWalletForNode:routing.isPrivateWalletForNode},deployment,contextGuard:guard,privateStore,funding,onProgress,
     accountSession:{owner:instance.address,wallet,node,journal,walletSecret:captured.secretKey,walletSalt:captured.salt}});
    // The reader owns synchronization, but the session owns this same account
@@ -161,7 +184,7 @@ export async function createRollingWalletSession({sdk,routing,ethers,config,boar
  const application=Object.freeze({...Object.fromEntries(Object.entries(synchronized).map(([name,call])=>[name,(...args)=>locked(()=>call(...args))])),
   readPreferences:options=>locked(()=>readPreferences(options)),
   readColdPreferences:options=>locked(()=>readColdPreferences(options))});
- return Object.freeze({application,get busy(){return busy;},close(){
+ return Object.freeze({application,funding:aggregate?Object.freeze({defaultPrivateFeeCap:((BigInt(selected.privateFee.gasSettings.gasLimits.daGas)+BigInt(selected.privateFee.gasSettings.teardownGasLimits.daGas))*BigInt(selected.privateFee.gasSettings.maxFeesPerGas.feePerDaGas)+(BigInt(selected.privateFee.gasSettings.gasLimits.l2Gas)+BigInt(selected.privateFee.gasSettings.teardownGasLimits.l2Gas))*BigInt(selected.privateFee.gasSettings.maxFeesPerGas.feePerL2Gas)).toString(),...Object.fromEntries(['prepare','confirm','recover','inspect','checkpointClaim'].map(name=>[name,(...args)=>locked(()=>aggregate[name](...args))]))}):null,get busy(){return busy;},close(){
   if(closing)return closing;
   if(busy)return Promise.reject(fail('ROLLING_BUSY'));
   if(closed&&!pxe&&!store)return Promise.resolve();
