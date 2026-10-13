@@ -32,10 +32,10 @@ for(const kind of ['symlink','hardlink','hidden credential','workflow','node_mod
   await assert.rejects(captureStaticSource(f.source));
  }finally{await f.close();}
 });
-const result=()=>({schema:1,node:STATIC_NODE_VERSION,test:{code:0,limited:false},build:{code:0,limited:false},logs:'',artifacts:[{path:'index.html',data:Buffer.from('<p>static</p>').toString('base64')}]});
+const result=()=>({schema:1,node:STATIC_NODE_VERSION,testCount:1,test:{code:0,limited:false},build:{code:0,limited:false},logs:'',artifacts:[{path:'index.html',data:Buffer.from('<p>static</p>').toString('base64')}]});
 test('bounded static result carries exact artifact bytes and hash',()=>{const x=validateStaticResult(result());assert.equal(x.artifacts[0].bytes.toString(),'<p>static</p>');assert.equal(x.artifacts[0].sha256.length,64);});
 for(const [label,mutate] of [
- ['wrong runtime',x=>x.node='v24.0.0'],['failed test',x=>x.test.code=1],['missing build',x=>x.build=null],['timeout',x=>x.build.limited=true],
+ ['zero test count',x=>x.testCount=0],['wrong runtime',x=>x.node='v24.0.0'],['failed test',x=>x.test.code=1],['missing build',x=>x.build=null],['timeout',x=>x.build.limited=true],
  ['traversal',x=>x.artifacts[0].path='../escape.html'],['absolute',x=>x.artifacts[0].path='/escape.html'],
  ['case collision',x=>x.artifacts.push({...x.artifacts[0],path:'INDEX.html'})],
  ['directory collision',x=>x.artifacts.push({...x.artifacts[0],path:'index.html/inside.js'})],
@@ -57,7 +57,7 @@ test('isolated boundary',async()=>{
  a.throws(()=>fs.writeFileSync('/etc/owned','no'));
  await a.rejects(fetch('http://169.254.169.254/latest/meta-data/',{signal:AbortSignal.timeout(250)}));
 });`);
-  const runner=createIsolatedExecution({workspaceRoot:f.root,outputRoot:f.output,workMs:10000});
+  const runner=createIsolatedExecution({workspaceRoot:f.root,outputRoot:f.output,workMs:20000});
   assert.deepEqual(await runner.assertAvailable(),{available:true,image:'sha256:44479404b67dde931cf8f202a3ce34703876e709ce124924251da8435d5d8651',platform:'linux/amd64',expectedNode:STATIC_NODE_VERSION});
   const r=await runner.execute({sourceDirectory:f.source,revision});assert(r.testsPassed&&r.buildPassed);
   assert.equal(r.node,STATIC_NODE_VERSION);assert.equal(r.revision,revision);
@@ -75,10 +75,10 @@ for(const [kind,build] of [
  ['artifact hardlink',"const f=require('node:fs');f.mkdirSync('dist');f.writeFileSync('dist/a.txt','x');f.linkSync('dist/a.txt','dist/b.txt');"],
  ['disk exhaustion',"const f=require('node:fs');for(let n=0;n<100;n++)f.writeFileSync('/work/file'+n,Buffer.alloc(1024*1024));"],
  ['detached descendant',"const {spawn}=require('node:child_process');const c=spawn(process.execPath,['-e','setInterval(()=>{},100)'],{detached:true,stdio:'ignore'});c.unref();const f=require('node:fs');f.mkdirSync('dist');f.writeFileSync('dist/index.html','done');"],
-])test('actual hostile generated '+kind+' remains owned and bounded',{skip:!actual,timeout:30000},async()=>{
+])test('actual hostile generated '+kind+' remains owned and bounded',{skip:!actual,timeout:45000},async()=>{
  const f=await fixture();try{
   await fs.writeFile(path.join(f.source,'build.cjs'),build);
-  const run=createIsolatedExecution({workspaceRoot:f.root,outputRoot:f.output,workMs:10000}).execute({sourceDirectory:f.source,revision});
+  const run=createIsolatedExecution({workspaceRoot:f.root,outputRoot:f.output,workMs:20000}).execute({sourceDirectory:f.source,revision});
   if(kind==='detached descendant'){const receipt=await run;assert(receipt.testsPassed);console.log(JSON.stringify({runtimeNode:receipt.node,image:receipt.image,limits:receipt.limits}));}else await assert.rejects(run,error=>{assert.equal(error.code,'STATIC_FAILED');assert.equal(error.result.passed,false);assert(!JSON.stringify(error.result).includes(f.root));return true;});
   const dirs=await fs.readdir(f.output);assert.equal(dirs.length,1);
   const cleanup=JSON.parse(await fs.readFile(path.join(f.output,dirs[0],'cleanup.json')));assert.equal(cleanup.ownedContainerAbsent,true);
@@ -103,4 +103,47 @@ test('root Git metadata is omitted while ordinary tracked dotfiles retain exact 
 test('unavailable runtime returns only finite startup error',async()=>{
  const runner=createIsolatedExecution({workspaceRoot:'/unused',outputRoot:'/unused',docker:'/does-not-exist/synthetic-private-path'});
  await assert.rejects(runner.assertAvailable(),e=>e.code==='STATIC_UNAVAILABLE'&&!String(e).includes('synthetic-private-path'));
+});
+
+test('actual generated child cannot signal or inspect the trusted driver',{skip:!actual,timeout:45000},async()=>{
+ const f=await fixture();try{
+  await fs.writeFile(path.join(f.source,'build.cjs'),String.raw`
+(async()=>{
+ const a=require('node:assert/strict'),fs=require('node:fs');
+ a.equal(process.getuid(),1000);a.equal(process.getgid(),1000);
+ const status=fs.readFileSync('/proc/self/status','utf8');
+ for(const name of ['CapEff','CapPrm','CapAmb'])a.match(status,new RegExp('^'+name+':\\s+0+$','m'));
+ a.throws(()=>process.kill(1,'SIGUSR1'),{code:'EPERM'});
+ a.throws(()=>fs.openSync('/proc/1/fd/1','w'));
+ a.throws(()=>fs.openSync('/proc/1/mem','r'));
+ a.throws(()=>process.setuid(0));
+ await new Promise(r=>setTimeout(r,250));
+ await a.rejects(fetch('http://127.0.0.1:9229/json/list',{signal:AbortSignal.timeout(500)}));
+ fs.mkdirSync('dist');fs.writeFileSync('dist/index.html','driver inspector unavailable');
+})().catch(()=>process.exitCode=1);`);
+  const r=await createIsolatedExecution({workspaceRoot:f.root,outputRoot:f.output,workMs:20000}).execute({sourceDirectory:f.source,revision});
+  assert(r.testsPassed&&r.buildPassed);assert.equal(r.node,STATIC_NODE_VERSION);
+  assert.deepEqual(JSON.parse(await fs.readFile(path.join(r.outputDirectory,'cleanup.json'))),{ownedContainerAbsent:true});
+ }finally{await f.close();}
+});
+
+for(const [name,body] of [['testfoo.cjs',"require('node:test')('must run',()=>{throw Error('EXPECTED_FAIL')});"],['main.test.cjs',"require('node:test').skip('cannot qualify');"]])test('actual explicit test count rejects '+name,{skip:!actual,timeout:45000},async()=>{
+ const f=await fixture();try{
+  await fs.rm(path.join(f.source,'main.test.cjs'));await fs.writeFile(path.join(f.source,name),body);
+  await assert.rejects(createIsolatedExecution({workspaceRoot:f.root,outputRoot:f.output,workMs:20000}).execute({sourceDirectory:f.source,revision}),e=>{
+   assert.equal(e.code,'STATIC_FAILED');if(name==='testfoo.cjs')assert(e.result.outcome.test.code!==0);else assert.equal(e.result.outcome.guestError,'test count');assert.equal(e.result.outcome.build,null);return true;
+  });
+  const [dir]=await fs.readdir(f.output);assert.deepEqual(JSON.parse(await fs.readFile(path.join(f.output,dir,'cleanup.json'))),{ownedContainerAbsent:true});
+ }finally{await f.close();}
+});
+test('actual failed cleanup record poisons capability and blocks reopen until reconciliation',{skip:!actual,timeout:15000},async t=>{
+ const f=await fixture(),runner=createIsolatedExecution({workspaceRoot:f.root,outputRoot:f.output});
+ try{
+  const original=fs.writeFile;t.mock.method(fs,'writeFile',async function(file,...args){if(/\/(?:intent|cleanup)\.json$/.test(file))throw Error('synthetic persistence failure');return original.call(this,file,...args);});
+  await assert.rejects(runner.execute({sourceDirectory:f.source,revision}),{code:'STATIC_RECORD_FAILED'});
+  t.mock.restoreAll();
+  await assert.rejects(runner.execute({sourceDirectory:f.source,revision}),{code:'STATIC_UNAVAILABLE'});
+  await assert.rejects(runner.assertAvailable(),{code:'STATIC_UNAVAILABLE'});
+  await assert.rejects(createIsolatedExecution({workspaceRoot:f.root,outputRoot:f.output}).assertAvailable(),{code:'STATIC_UNAVAILABLE'});
+ }finally{t.mock.restoreAll();await f.close();}
 });

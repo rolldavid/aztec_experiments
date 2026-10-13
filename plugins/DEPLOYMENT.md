@@ -184,14 +184,21 @@ ordinary dotfiles such as `.gitignore` remain part of the byte manifest. Links,
 rejected. Credential-free, pinned dependencies may be designed separately later;
 there is no host install fallback.
 
-Both `node --test` and `node --run build` must succeed; a real Node test file and
+Both `node --test` and `node --run build` must succeed; captured test files are
+passed explicitly, and the test runner must report a positive test count with
+zero failures, cancellations, skips or todos. A real Node test file and
 a package build script are required. The build must produce `dist/`. Generated
-code runs as UID/GID 1000 with no Linux capabilities, no new privileges, no
+code runs as UID/GID 1000 with zero permitted/effective/ambient capabilities,
+no new privileges, no
 network or published ports, no host mounts, a read-only image, and private PID,
 IPC and cgroup namespaces. Writable storage is bounded tmpfs: 64 MiB work,
 16 MiB temporary files, and 1 MiB shared memory. Limits are one CPU, 256 MiB RAM
 and equal memory/swap bound, 64 processes, 256 file descriptors, 8 MiB per written
 file, 64 KiB combined program output, and at most 45 seconds for both commands.
+The trusted PID1 driver uses UID0/GID1000 with only SETUID, SETGID and KILL
+capabilities, to launch the unprivileged child and drain it. Its inspector signal
+is disabled; the child cannot signal or access driver process files. Shared-group
+private tmpfs avoids adding filesystem override or ownership capabilities.
 The host reserves cleanup time within a 60-second envelope. Trusted callers may
 reduce the work deadline; they cannot increase it or supply commands, environment,
 mounts, images or network settings.
@@ -199,8 +206,10 @@ mounts, images or network settings.
 The host records an exclusive intent before create, verifies container settings
 before start, and removes only the exact owned container ID. An ambiguous create
 is reconciled by its fresh name and ownership label, never repeated. A failed
-cleanup rejects the call and leaves its private intent/cleanup record for the
-operator. Never turn that into an automatic retry. A hard host crash requires
+cleanup rejects the call and poisons that capability until operator reconciliation.
+An uncertain cleanup-record write also poisons it. Startup and each new execution
+reject retained output directories without positive cleanup records, preventing
+a restart from silently bypassing the unresolved state. Records remain private. Never turn that into an automatic retry. A hard host crash requires
 operator reconciliation of that retained name; this is not a remote service or
 an independent cloud shutdown mechanism.
 
@@ -226,6 +235,8 @@ or `STATIC_RECORD_FAILED` category. `error.result` provides `passed:false`, the
 validated revision, optional captured `sourceDigest`, finite phase/outcome, and
 a bounded `log` for the model's repair loop. Logs are untrusted generated output;
 no raw host exception, path, Docker diagnostic or host environment is included.
-Startup unavailability throws only `STATIC_UNAVAILABLE`. A successful checked
+Startup or pre-execution unavailability throws `STATIC_UNAVAILABLE`. The guest
+work deadline is bound to the host start timestamp, including runtime startup;
+VM clock drift or exhausted startup time fails closed within the same host cap. A successful checked
 Git tree may be reused by the repository owner only after validating its exact
 parent/tree/revision binding; plain chat requires no build or checkout.
