@@ -865,3 +865,52 @@ routing authorization or permission to submit a proof job. Bok is explicitly
 acceptance. No application transaction, deployment or key-management operation is
 performed by activation. Operator/Fleet grants, current deployed scope and actual
 Linux activation acceptance remain separate gates.
+
+# Optional authenticated operator query host
+
+An explicit `queryHost` object adds only `privateAddress` (an assigned RFC1918
+IPv4), `operatorAuthSha256` (64 lowercase hex characters), and
+`originSecurityGroupId` (the independently verified CloudFront VPC-origin
+service-managed security group). The digest verifies a fresh local operator key;
+the key, wallet, AWS credentials and receipt capabilities never enter service
+configuration. The security-group field is a campaign binding, **not** a claim
+that Linux has verified AWS ingress rules. Before enabling the route, the trusted
+operator must read back the actual origin HTTP port8083 and ingress restricted
+to that managed group. Viewer HTTPS does not establish origin isolation.
+
+After the immutable query qualification passes, the existing root attestor makes
+one durable query-host intent, creates `rolling-query`, and starts a fixed
+`rolling-query.service` from the verified public release. It listens on only the
+bound private address:8083. It runs the existing query-only composition with zero
+proof resources, empty origins and mandatory authentication. Only POST `/v1/node`
+is admitted; health, jobs, admin and compact paths remain unavailable. `sendTx`
+is included in the fixed operator method policy, so this is not a read-only API.
+No raw node/admin port is exposed. Prover and proxy remain masked.
+
+The service has no restart, a30-second stop/drain bound,2GiB memory ceiling,
+128-task limit, no capabilities, inaccessible root-private paths and no public
+network egress. Its fresh readiness inspector independently reads only the
+loopback node under the existing real-proof/testnet identity and120-second
+freshness policy. Local listener probes must reject unauthenticated calls; they
+are not positive authenticated-operation qualification. Actual CLI/PXE integration
+and deployed TLS/SG/route tests remain required. Local development uses native
+devnet proofs disabled; this campaign gate remains testnet acceptance.
+
+Only verified public runtime bytes use the `rolling-runtime` reader group.
+Directories/executables are0550, other regular files0440; internal regular-file
+links remain validated and receive no-follow ownership only. The dedicated query
+config is root:rolling-query0640 under0750. Later prover activation adds only its
+own account to the public reader group and preserves that group on the release;
+private config/capability paths keep their separate groups and0700/0600 boundary.
+Existing identity/link/traversal prevalidation and activation once-only gates stay.
+
+Every observation checks actual unit/config/process identities, shared-reader
+permissions and fresh upstream readiness. Missing result after an intent is
+reconcile-only; drift or setup failure stops the query unit and invokes the
+existing shutdown owner. Attestor timeout also triggers that owner. Neither the
+host nor Fleet deadline is extended. This slice does not implement the separately
+reviewed finite S3 activation delivery, current contract deployments, public proof
+routing or proof-job acceptance. Complete package and compressed user-data size
+must be requalified before deployment; source preparation alone is not a payload.
+
+Query-host opt-in is bound into the immutable bootstrap pins. After installation, missing request/intent/result state fails closed rather than disabling observation. Runtime supplementary groups must be unique decimal IDs limited to the query primary group and public runtime group, with the public group present. The final qualification receipt is hash-bound in the once-only query intent. Focused development tests use real owned filesystem modes and explicitly simulated root identities/systemd state; actual Linux commissioning remains required.

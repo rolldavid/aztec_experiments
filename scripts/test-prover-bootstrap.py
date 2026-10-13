@@ -1782,4 +1782,233 @@ class ProverActivation(unittest.TestCase):
         functions={n.name:ast.get_source_segment(b.HOST,n) for n in ast.parse(b.HOST).body if isinstance(n,ast.FunctionDef)}
         for name in ('_execute','qualify','final_receipt'):self.assertNotIn('activation_support',functions[name])
 
+class QueryHost(unittest.TestCase):
+    def record(self):return {'privateAddress':'10.0.0.4','operatorAuthSha256':'a'*64,'originSecurityGroupId':'sg-'+'b'*17}
+
+    def test_closed_query_config_has_digest_only_and_no_proof_resources(self):
+        r=self.record();c=b.query_host_config(r);r['operatorAuthSha256']='c'*64
+        self.assertEqual(c['operatorAuthSha256'],'a'*64);self.assertEqual(c['serviceMode'],'query-only');self.assertEqual(c['host'],'10.0.0.4');self.assertEqual(c['port'],8083)
+        self.assertEqual(c['queryNode'],b.QUALIFICATION['service']['queryNode']);self.assertEqual(c['origins'],[])
+        self.assertFalse({'queueDirectory','board','privateFeeAddress','privateKey','adminKey','receiptPutUrl'}&set(c))
+        self.assertEqual(b.validate({**config(),'queryHost':self.record()},NOW)['queryHost'],self.record())
+        for key,value in [('privateAddress','8.8.8.8'),('privateAddress','127.0.0.1'),('privateAddress','::1'),('privateAddress',{}),('operatorAuthSha256','key'),('originSecurityGroupId','sg-bad')]:
+            with self.subTest(key=key,value=value),self.assertRaises(b.Invalid):b.query_host_record({**self.record(),key:value})
+        with self.assertRaises(b.Invalid):b.query_host_record({**self.record(),'key':'PRIVATE_SENTINEL'})
+
+    def test_fixed_query_unit_confines_identity_and_preserves_secret_boundary(self):
+        unit=b.query_host_unit(pathlib.Path('/opt/board-prover/releases/rolling-'+'b'*16))
+        for item in ['User=rolling-query','Group=rolling-query','SupplementaryGroups=rolling-runtime','Restart=no','KillMode=control-group','TimeoutStopSec=30','MemoryMax=2G','ProtectSystem=strict','/var/lib/rolling-bootstrap-private /var/lib/cloud /var/lib/rolling-admin','StandardOutput=null','prover/start.mjs /etc/rolling-query/config.json']:self.assertIn(item,unit)
+        for item in ['--prover','AZTEC_API_KEY','PRIVATE_SENTINEL','ReadWritePaths=','board-prover.service']:self.assertNotIn(item,unit)
+        with self.assertRaises(b.Invalid):b.query_host_unit(pathlib.Path('/tmp/other'))
+
+    def test_public_runtime_real_modes_preserve_file_links_and_private_sentinel(self):
+        original=pathlib.Path.lstat;gids={};events=[]
+        with tempfile.TemporaryDirectory() as t:
+            root=pathlib.Path(t).resolve();release=root/'releases'/'candidate';release.mkdir(parents=True)
+            binary=release/'public-bin';binary.write_text('public');binary.chmod(0o755)
+            data=release/'public.json';data.write_text('{}');link=release/'alias';link.symlink_to('public-bin')
+            private=root/'private';private.mkdir(mode=0o700);sentinel=private/'cap';sentinel.write_text('PRIVATE_SENTINEL');sentinel.chmod(0o600)
+            def lstat(p,*a,**kw):
+                result=list(original(p,*a,**kw));result[4]=0
+                if p in gids:result[5]=gids[p]
+                return os.stat_result(result)
+            def chown(p,uid,gid,**kw):events.append((p,uid,gid,kw));gids[p]=gid
+            with patch.object(pathlib.Path,'lstat',lstat),patch.object(b.os,'chown',side_effect=chown):
+                entries=b.query_public_plan(release);b.query_public_harden(entries,997)
+                self.assertEqual(b.query_public_plan(release)[0][1].st_gid,997)
+            self.assertEqual(binary.stat().st_mode&0o777,0o550);self.assertEqual(data.stat().st_mode&0o777,0o440)
+            self.assertEqual(os.readlink(link),'public-bin');self.assertTrue(all(e[3]=={'follow_symlinks':False} for e in events))
+            self.assertEqual(sentinel.read_text(),'PRIVATE_SENTINEL');self.assertEqual(sentinel.stat().st_mode&0o777,0o600);self.assertEqual(private.stat().st_mode&0o777,0o700)
+            # Read/traverse group bits are present for the one explicit shared
+            # runtime group; no world or private capability access is widened.
+            self.assertEqual(binary.stat().st_mode&0o007,0);self.assertEqual(release.stat().st_mode&0o050,0o050)
+            release.chmod(0o750) # owned temporary cleanup needs directory writes
+
+    def test_public_plan_rejects_unsafe_links_before_any_ownership_change(self):
+        fixture=ProverActivation()
+        from contextlib import ExitStack
+        for kind in ('outside','directory','loop','dangling','absolute'):
+            with self.subTest(kind=kind),tempfile.TemporaryDirectory() as t:
+                root=pathlib.Path(t).resolve();h,events,patches,_=fixture.path_fixture(root);link=h['RELEASE']/'bad'
+                target={'outside':'../../../outside','directory':'node','loop':'bad','dangling':'absent','absolute':'/etc/passwd'}[kind];link.symlink_to(target)
+                with ExitStack() as stack:
+                    for item in patches:stack.enter_context(item)
+                    with self.assertRaises(b.Invalid):b.query_public_plan(h['RELEASE'])
+                self.assertEqual(events,[])
+
+    def test_activation_keeps_query_public_group_and_adds_only_prover_reader(self):
+        fixture=ProverActivation()
+        from contextlib import ExitStack
+        from types import SimpleNamespace
+        with tempfile.TemporaryDirectory() as t:
+            root=pathlib.Path(t).resolve();h,events,patches,_=fixture.path_fixture(root);private=root/'private';private.mkdir();(private/'query-host-result.json').write_text('{}');h['PRIVATE']=private
+            oldrun=h['run'];members=['rolling-query']
+            def run(args,**kw):
+                if args[0]=='usermod':self.assertEqual(args,['usermod','--append','--groups','rolling-runtime','board-prover']);members.append('board-prover');events.append(('reader',));return
+                return oldrun(args,**kw)
+            h['run']=run
+            # Preserve the fixture's allocated primary identity while modelling
+            # only the separately verified shared public reader group.
+            base_group=patches[1].kwargs['side_effect']
+            patches[1]=patch('grp.getgrnam',side_effect=lambda name:SimpleNamespace(gr_gid=997,gr_mem=members) if name=='rolling-runtime' else base_group(name))
+            with ExitStack() as stack:
+                for item in patches:stack.enter_context(item)
+                stack.enter_context(patch.object(b,'query_host_readback',return_value={'publicGid':997}))
+                self.assertEqual(b.activation_paths(h,fixture.scope()),(999,998))
+            self.assertIn(('reader',),events)
+            public_chowns=[e for e in events if e[0]=='chown' and e[1].is_relative_to(h['RELEASE'])]
+            self.assertTrue(public_chowns);self.assertTrue(all(e[3]==997 for e in public_chowns))
+            self.assertEqual(members,['rolling-query','board-prover'])
+
+    def lifecycle_fixture(self,root):
+        """Actual files/functions; labelled root IDs, process status and systemd only."""
+        from contextlib import ExitStack,contextmanager
+        from types import SimpleNamespace
+        @contextmanager
+        def fixture():
+            Path=pathlib.Path;original_stat=Path.stat;original_lstat=Path.lstat;original_fstat=os.fstat;original_lexists=os.path.lexists
+            release=root/'opt/board-prover/releases'/('rolling-'+'b'*16);release.mkdir(parents=True)
+            (release/'public').write_text('public');(release/'link').symlink_to('public')
+            private=root/'private';private.mkdir(mode=0o700);base=root/'base';base.mkdir()
+            (root/'etc/systemd/system').mkdir(parents=True);proc=root/'proc/123';proc.mkdir(parents=True)
+            state={'created':False,'groups':'998 997','uid':999,'gid':998,'members':['rolling-query'],'show':{'User':'rolling-query','Group':'rolling-query','SupplementaryGroups':'rolling-runtime','Restart':'no','ActiveState':'active','MainPID':'123','DropInPaths':'','MemoryMax':str(2*1024**3)}}
+            events=[];owners={};q=self.record();unit=b.query_host_unit(Path('/opt/board-prover/releases')/release.name)
+            def mapped(value,*args):
+                p=Path(value,*args)
+                return root/str(p).lstrip('/') if str(p).startswith(('/etc/','/proc/')) or str(p) in ('/etc','/proc') else p
+            def identity(info,p=None):
+                v=list(info);v[4]=0
+                if p in owners:v[5]=owners[p]
+                return os.stat_result(v)
+            def lstat(p,*a,**kw):return identity(original_lstat(p,*a,**kw),p)
+            def stat(p,*a,**kw):return identity(original_stat(p,*a,**kw),p)
+            def save(p,value):
+                p=mapped(p);events.append(('record',p.name))
+                with p.open('x') as f:json.dump(value,f)
+                p.chmod(0o600)
+            def write(p,text,mode=0o600):p=mapped(p);p.write_text(text);p.chmod(mode)
+            def user(name):
+                self.assertEqual(name,'rolling-query')
+                if not state['created']:raise KeyError(name)
+                return SimpleNamespace(pw_uid=state['uid'],pw_gid=state['gid'],pw_shell='/usr/sbin/nologin')
+            def group(name):
+                if not state['created']:raise KeyError(name)
+                return SimpleNamespace(gr_gid=997 if name=='rolling-runtime' else 998,gr_mem=state['members'] if name=='rolling-runtime' else [])
+            def run(args,**kw):
+                events.append(tuple(args))
+                if args[0]=='groupadd':return ''
+                if args[0]=='useradd':state['created']=True;return ''
+                if args==['systemctl','show','board-prover.service','--property=LoadState','--value']:return 'masked'
+                if args==['ip','-j','-4','address','show']:return json.dumps([{'addr_info':[{'family':'inet','local':q['privateAddress']}]}])
+                if args[:3]==['systemctl','show','rolling-query.service']:
+                    write(proc/'status','Uid:\t'+('999 '*4).strip()+'\nGid:\t'+('998 '*4).strip()+'\nGroups:\t'+state['groups']+'\n')
+                    return '\n'.join(k+'='+v for k,v in state['show'].items())
+                if args in (['systemctl','daemon-reload'],['systemctl','start','rolling-query.service'],['systemctl','stop','rolling-query.service'],['systemctl','start','--no-block','rolling-budget.service']):return ''
+                raise AssertionError('Unexpected simulated command')
+            save(private/'query-host-request.json',q)
+            save(private/'final-receipt.json',{'manifestSha256':'b'*64,'bootstrapSourceSha256':'c'*64,'qualification':{'passed':True,'stage':'complete','checks':{'fixture':True},'anchors':{},'readiness':{}}})
+            write(base/'deadline.json',json.dumps({'budgetStop':(dt.datetime.now(dt.timezone.utc)+dt.timedelta(hours=1)).strftime('%Y-%m-%dT%H:%M:%SZ')}))
+            h={'PRIVATE':private,'BASE':base,'RELEASE':release,'PINS':{'manifest':'b'*64,'bootstrap':'c'*64,'queryHost':hashlib.sha256(json.dumps(q,sort_keys=True,separators=(',',':')).encode()).hexdigest()},
+               'run':run,'exclusive_record':save,'write':write,'digest':lambda p:hashlib.sha256(mapped(p).read_bytes()).hexdigest(),
+               'read_bounded_json':lambda p:json.loads(mapped(p).read_text()),'validated_qualification':lambda q:q,'verify_release':lambda p:events.append(('verify-release',)), 'verify_controls':lambda:events.append(('controls',))}
+            with ExitStack() as stack:
+                for item in [patch.object(b,'pathlib',SimpleNamespace(Path=mapped)),patch.object(Path,'lstat',lstat),patch.object(Path,'stat',stat),
+                    patch.object(b.os,'fstat',side_effect=lambda fd:identity(original_fstat(fd))),patch.object(b.os,'geteuid',return_value=0),
+                    patch.object(b.os,'chown',side_effect=lambda p,u,g,**kw:owners.__setitem__(mapped(p),g)),
+                    patch.object(b.os.path,'lexists',side_effect=lambda p:original_lexists(mapped(p))),patch('pwd.getpwnam',side_effect=user),patch('grp.getgrnam',side_effect=group),
+                    patch.object(b,'query_host_unit',side_effect=lambda p:unit if p==release else (_ for _ in ()).throw(AssertionError('Wrong release'))),
+                    patch.object(b,'query_host_fresh',side_effect=lambda h:events.append(('fresh-readiness',))),patch.object(b,'activation_proxy_masked',side_effect=lambda h:events.append(('proxy-masked',))),
+                    patch.object(b,'query_listener_denials',side_effect=lambda address:events.append(('listener-denials',address)))]:stack.enter_context(item)
+                try:yield h,events,state,root
+                finally:
+                    for p in [release,*release.rglob('*')]:
+                        if p.is_dir():p.chmod(0o750)
+        return fixture()
+
+    def test_simulated_commissioning_actual_readback_once_and_reader_modes(self):
+        with tempfile.TemporaryDirectory() as t,self.lifecycle_fixture(pathlib.Path(t).resolve()) as (h,events,state,root):
+            expected={'queryHostPolicy':'active-private-authenticated','queryProofJobsEnabled':False}
+            self.assertEqual(b.query_host(h),expected);self.assertEqual(b.query_host(h),expected)
+            self.assertEqual(events.count(('systemctl','start','rolling-query.service')),1)
+            self.assertLess(events.index(('record','query-host-intent.json')),next(i for i,e in enumerate(events) if e[0]=='groupadd'))
+            self.assertEqual(b.query_host_readback(h)['publicGid'],997)
+            self.assertEqual((root/'etc/rolling-query/config.json').stat().st_mode&0o777,0o640)
+            self.assertEqual(h['RELEASE'].stat().st_mode&0o777,0o550)
+            self.assertEqual(h['PRIVATE'].stat().st_mode&0o777,0o700)
+            state['members'].append('board-prover');self.assertEqual(b.query_host_readback(h)['publicGid'],997)
+
+    def test_actual_readback_rejects_group_grammar_and_identity_config_unit_drift(self):
+        with tempfile.TemporaryDirectory() as t,self.lifecycle_fixture(pathlib.Path(t).resolve()) as (h,events,state,root):
+            b.query_host(h)
+            for groups in ('997 0','997 996','997 997','998','', '997 bad','0997','997 2147483648','997 +998'):
+                with self.subTest(groups=groups):
+                    state['groups']=groups
+                    with self.assertRaisesRegex(b.Invalid,'Query public group'):b.query_host_readback(h)
+            state['groups']='997';self.assertEqual(b.query_host_readback(h)['uid'],999)
+            state['uid']=1000
+            with self.assertRaisesRegex(b.Invalid,'Query identity'):b.query_host_readback(h)
+            state['uid']=999;state['show']['User']='root'
+            with self.assertRaisesRegex(b.Invalid,'Query service state'):b.query_host_readback(h)
+            state['show']['User']='rolling-query'
+            for path,reason in [(root/'etc/rolling-query/config.json','config changed'),(root/'etc/systemd/system/rolling-query.service','unit changed')]:
+                before=path.read_bytes();path.write_text('changed')
+                with self.assertRaisesRegex(b.Invalid,reason):b.query_host_readback(h)
+                path.write_bytes(before)
+
+    def test_retained_state_disappearance_fails_closed_without_second_start(self):
+        with tempfile.TemporaryDirectory() as t,self.lifecycle_fixture(pathlib.Path(t).resolve()) as (h,events,state,root):
+            b.query_host(h)
+            for name in ('request','intent','result'):
+                p=h['PRIVATE']/('query-host-'+name+'.json');raw=p.read_bytes();p.unlink()
+                with self.subTest(name=name),self.assertRaises((b.Invalid,OSError)):b.query_host(h)
+                p.write_bytes(raw);p.chmod(0o600)
+            p=h['PRIVATE']/'final-receipt.json';p.unlink()
+            with self.assertRaises(OSError):b.query_host(h)
+            self.assertEqual(events.count(('systemctl','start','rolling-query.service')),1)
+            self.assertEqual(events.count(('systemctl','start','--no-block','rolling-budget.service')),4)
+
+    def test_attestor_bound_opt_in_or_retained_records_cannot_disappear_silently(self):
+        for bound,retained in ((True,False),(False,True)):
+            with self.subTest(bound=bound,retained=retained),tempfile.TemporaryDirectory() as t:
+                ns=host();base=pathlib.Path(t);private=base/'private';private.mkdir();events=[]
+                (base/'stage').write_text('installed');(base/'deadline.json').write_text(json.dumps({'budgetStop':'2026-10-12T02:00:00Z','runtimeArchiveSha256':'a'*64,'manifestSha256':'b'*64}))
+                if bound:ns['PINS']['queryHost']='d'*64
+                if retained:(private/'query-host-intent.json').write_text('{}')
+                def support(operation):events.append(('support',operation));raise b.Invalid('labelled lost state')
+                def run(args,**kw):events.append(tuple(args));return 'masked'
+                ns.update(BASE=base,PRIVATE=private,verify_controls=lambda:1,run=run,activation_support=support,
+                          open=lambda *a,**kw:io.StringIO(),write=lambda p,v,*a:pathlib.Path(p).write_text(v))
+                ns['attest']()
+                self.assertIn(('support','query-observe'),events)
+                self.assertIn(('systemctl','start','rolling-budget.service'),events)
+                self.assertTrue(any(e[:2]==('systemctl','stop') and 'rolling-query.service' in e for e in events))
+
+    def test_query_payload_existing_compressed_limit_and_bound_opt_in(self):
+        text=fixture_generate({**config(),'queryHost':self.record()},NOW)
+        self.assertLessEqual(len(gzip.compress(text.encode(),mtime=0)),16384)
+        encoded=text.split("base64.b64decode('")[1].split("')")[0]
+        program=lzma.decompress(base64.b64decode(encoded)).decode()
+        import ast
+        source=ast.literal_eval(ast.parse(program).body[0].value)
+        pins=ast.literal_eval(ast.parse(source).body[0].value)
+        self.assertEqual(pins['queryHost'],hashlib.sha256(json.dumps(self.record(),sort_keys=True,separators=(',',':')).encode()).hexdigest())
+        subprocess.run(['/bin/sh','-n'],input=text,text=True,check=True)
+
+    def test_pending_or_existing_intent_never_allocates_or_restarts(self):
+        with tempfile.TemporaryDirectory() as t:
+            private=pathlib.Path(t);events=[];h={'PRIVATE':private,'run':lambda *a,**k:events.append(a)}
+            with patch.object(b.os,'geteuid',return_value=0),patch.object(b,'query_host_request',return_value=self.record()):
+                self.assertEqual(b.query_host(h)['queryHostPolicy'],'pending-qualification')
+                (private/'query-host-intent.json').write_text('{}')
+                with self.assertRaisesRegex(b.Invalid,'reconcile only'):b.query_host(h)
+            self.assertEqual(events,[(['systemctl','stop','rolling-query.service'],),(['systemctl','start','--no-block','rolling-budget.service'],)])
+
+    def test_query_failure_stops_owned_unit_and_shutdown_even_without_result_write(self):
+        with tempfile.TemporaryDirectory() as t:
+            private=pathlib.Path(t);(private/'final-receipt.json').write_text('{}');events=[]
+            h={'PRIVATE':private,'run':lambda args,**kw:events.append(args)}
+            with patch.object(b.os,'geteuid',return_value=0),patch.object(b,'activation_private',side_effect=OSError('labelled private read failure')):
+                with self.assertRaises(OSError):b.query_host(h)
+            self.assertEqual(events,[['systemctl','stop','rolling-query.service'],['systemctl','start','--no-block','rolling-budget.service']])
+
 if __name__=='__main__':unittest.main(verbosity=2)

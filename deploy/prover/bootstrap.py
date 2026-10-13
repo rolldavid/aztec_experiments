@@ -57,7 +57,7 @@ def receipt_url(value):
 
 def validate(config, now=None):
     keys = {"createdAt", "budgetStop", "commissioningStop", "runtimeUrl", "runtimeArchiveSha256", "manifestSha256"}
-    if type(config) is not dict or not keys <= set(config) or set(config)-keys-{"receiptPutUrl"}: raise Invalid("Invalid bootstrap fields")
+    if type(config) is not dict or not keys <= set(config) or set(config)-keys-{"receiptPutUrl","queryHost"}: raise Invalid("Invalid bootstrap fields")
     created, stop, commission = (timestamp(config[k]) for k in ("createdAt", "budgetStop", "commissioningStop"))
     now = now or dt.datetime.now(dt.timezone.utc)
     if not now - dt.timedelta(minutes=5) <= created <= now + dt.timedelta(minutes=5): raise Invalid("Stale creation time")
@@ -76,6 +76,7 @@ def validate(config, now=None):
     if "receiptPutUrl" in config:
         try: receipt_url(config["receiptPutUrl"])
         except ValueError: raise Invalid("Invalid receipt capability") from None
+    if 'queryHost' in config: query_host_record(config['queryHost'])
     return dict(config)
 
 # Executed only on the future Linux host, never while generating or testing.
@@ -714,15 +715,20 @@ def attest(check=False):
             output['qualification']=q
             output['linuxQueryQualified']=q.get('passed') is True and q.get('stage')=='complete' and bool(q.get('checks')) and all(q['checks'].values()) and 'readiness' in q and 'anchors' in q
         except Exception: output['qualification']=qualification_failure('interrupted-unknown')
+    if (PINS.get('queryHost') and status=='installed') or any((PRIVATE/('query-host-'+n+'.json')).exists() for n in ('request','intent','result')):
+        try: output.update(activation_support('query-observe'))
+        except Exception: good=False;output['controlsVerified']=False;output['queryHostPolicy']='unverified'
     minute=str(int(dt.datetime.now(dt.timezone.utc).timestamp())//60)
     last=BASE/'last-attestation'
     marker=minute+':'+status+':'+str(good)+':'+str(output.get('qualification',{}).get('stage','pending'))
-    if not last.exists() or last.read_text()!=marker:
-        with open('/dev/console','w') as f: f.write('ROLLING_BOOTSTRAP '+json.dumps(output,separators=(',',':'))+'\n')
-        write(last,marker)
-    if not good:
-        run(['systemctl','stop','rolling-node.service','board-prover.service','board-prover-proxy.service'])
-        run(['systemctl','start','rolling-budget.service'])
+    try:
+        if not last.exists() or last.read_text()!=marker:
+            with open('/dev/console','w') as f: f.write('ROLLING_BOOTSTRAP '+json.dumps(output,separators=(',',':'))+'\n')
+            write(last,marker)
+    finally:
+        if not good:
+            try: run(['systemctl','stop','rolling-query.service','rolling-node.service','board-prover.service','board-prover-proxy.service'])
+            finally: run(['systemctl','start','rolling-budget.service'])
 
 def activation_support(operation, expected=None):
     # Only the immutable packaged source may interpret root-owned activation data.
@@ -734,7 +740,7 @@ def activation_support(operation, expected=None):
 
 def install_attestation(source):
     write('/usr/local/lib/rolling-attest.py',source,0o700)
-    write('/etc/systemd/system/rolling-attest.service','[Unit]\nDescription=Bounded public bootstrap attestation\n[Service]\nType=oneshot\nExecStart=/usr/bin/python3 /usr/local/lib/rolling-attest.py\nStandardOutput=null\nStandardError=null\n',0o644)
+    write('/etc/systemd/system/rolling-attest.service','[Unit]\nDescription=Bounded public bootstrap attestation\nOnFailure=rolling-budget.service\n[Service]\nType=oneshot\nTimeoutStartSec=100\nExecStart=/usr/bin/python3 /usr/local/lib/rolling-attest.py\nStandardOutput=null\nStandardError=null\n',0o644)
     write('/etc/systemd/system/rolling-attest.timer','[Unit]\nDescription=Bootstrap controls monitor\n[Timer]\nOnBootSec=5s\nOnUnitActiveSec=5s\n[Install]\nWantedBy=timers.target\n',0o644)
     run(['systemctl','daemon-reload']);run(['systemctl','enable','--now','rolling-attest.timer'])
 
@@ -773,6 +779,7 @@ def _execute(config, attestation_source):
             egress_after=verify_controls();mark('egress-exercise')
             if type(egress_before) is not int or type(egress_after) is not int or egress_after<=egress_before: raise ValueError('Egress counter exercise failed')
             write(BASE/'egress-exercise.json',json.dumps({'beforeBytes':egress_before,'afterBytes':egress_after,'deltaBytes':egress_after-egress_before,'exercise':'installation-egress-not-throughput'}))
+            if 'queryHost' in config: exclusive_record(PRIVATE/'query-host-request.json',config['queryHost'])
             STAGE='installed';write(BASE/'stage',STAGE)
             # Only commissioning protection is retired; fixed budget control remains enabled.
             mark('qualification-install');run(['systemctl','disable','--now','rolling-commissioning.timer']);install_qualification();attest();mark('complete');diagnostic(status='passed')
@@ -1004,6 +1011,162 @@ PROVER_UNIT_SHA = '340d19baa4b764e5198fafb261f74001ffefa4c2d9dde111ef0ba07ca7e61
 ACTIVATION_PUBLIC_FILES = ('shared/portal-runtime.mjs','shared/portal-runtime.json',
                            'shared/protocol-commitments.mjs','shared/protocol-schema.mjs')
 
+
+# Optional operator data plane. All executable content comes from this packaged
+# source, never the campaign record. No API key or cloud authority enters it.
+def query_host_record(value):
+    if type(value) is not dict or set(value)!={'privateAddress','operatorAuthSha256','originSecurityGroupId'}:raise Invalid('Query host fields')
+    if any(type(v) is not str for v in value.values()):raise Invalid('Query host types')
+    try: address=ipaddress.IPv4Address(value['privateAddress'])
+    except ValueError:raise Invalid('Query private address') from None
+    if str(address)!=value['privateAddress'] or not any(address in ipaddress.ip_network(n) for n in ('10.0.0.0/8','172.16.0.0/12','192.168.0.0/16')):raise Invalid('Query private address')
+    if not re.fullmatch('[a-f0-9]{64}',value['operatorAuthSha256']) or not re.fullmatch('sg-([a-f0-9]{8}|[a-f0-9]{17})',value['originSecurityGroupId']):raise Invalid('Query host binding')
+    return dict(value)
+
+def query_host_request(h):
+    record=query_host_record(activation_private(h['PRIVATE']/'query-host-request.json'))
+    if hashlib.sha256(json.dumps(record,sort_keys=True,separators=(',',':')).encode()).hexdigest()!=h['PINS'].get('queryHost'):raise Invalid('Query campaign binding')
+    return record
+
+def query_host_config(record):
+    record=query_host_record(record)
+    return {**QUALIFICATION['service'],'queryNode':dict(QUALIFICATION['service']['queryNode']),
+            'host':record['privateAddress'],'port':8083,'operatorAuthSha256':record['operatorAuthSha256']}
+
+def query_host_unit(release):
+    # release is derived solely from the already checked manifest digest.
+    if not re.fullmatch('/opt/board-prover/releases/rolling-[a-f0-9]{16}',str(release)):raise Invalid('Query release path')
+    return ('[Unit]\nDescription=Authenticated operator query only\nRequires=rolling-node.service rolling-egress.service\nAfter=rolling-node.service rolling-egress.service\n'
+      '[Service]\nType=simple\nUser=rolling-query\nGroup=rolling-query\nSupplementaryGroups=rolling-runtime\nWorkingDirectory='+str(release)+'\nExecStart='+str(release)+'/node/bin/node prover/start.mjs /etc/rolling-query/config.json\n'
+      'Restart=no\nTimeoutStopSec=30\nKillMode=control-group\nUMask=0077\nNoNewPrivileges=yes\nPrivateTmp=yes\nPrivateDevices=yes\nProtectSystem=strict\nProtectHome=yes\nCapabilityBoundingSet=\nRestrictAddressFamilies=AF_UNIX AF_INET AF_INET6\n'
+      'IPAddressDeny=any\nIPAddressAllow=localhost 10.0.0.0/8 172.16.0.0/12 192.168.0.0/16\nInaccessiblePaths=/var/lib/rolling-bootstrap-private /var/lib/cloud /var/lib/rolling-admin\nMemoryMax=2G\nTasksMax=128\nLimitCORE=0\nEnvironment=NODE_BACKEND=js HARDWARE_CONCURRENCY=1 LOG_LEVEL=silent\nUnsetEnvironment=NODE_PATH NODE_OPTIONS BB\nStandardOutput=null\nStandardError=null\n')
+
+def query_public_plan(release):
+    if not release.is_absolute() or release.resolve()!=release:raise Invalid('Query release')
+    entries=[(p,p.lstat()) for p in [release,*release.rglob('*')]]
+    if not stat.S_ISDIR(entries[0][1].st_mode):raise Invalid('Query release directory')
+    regular={p for p,i in entries if stat.S_ISREG(i.st_mode)}
+    for p,i in entries:
+        if i.st_uid!=0 or not (stat.S_ISREG(i.st_mode) or stat.S_ISDIR(i.st_mode) or stat.S_ISLNK(i.st_mode)):raise Invalid('Query public ownership')
+        if stat.S_ISLNK(i.st_mode):
+            try:
+                if os.path.isabs(os.readlink(p)) or p.resolve(strict=True) not in regular:raise Invalid('Query public link')
+            except (OSError,RuntimeError):raise Invalid('Query public link') from None
+    for p in (release.parent,release.parent.parent):
+        i=p.lstat()
+        if not stat.S_ISDIR(i.st_mode) or i.st_uid!=0 or i.st_mode&0o022:raise Invalid('Query traversal')
+    return entries
+
+def query_public_harden(entries,gid):
+    for p,i in entries:
+        current=p.lstat()
+        if (current.st_dev,current.st_ino,current.st_mode,current.st_uid)!=(i.st_dev,i.st_ino,i.st_mode,i.st_uid):raise Invalid('Query release changed')
+        os.chown(p,0,gid,follow_symlinks=False)
+        if not stat.S_ISLNK(i.st_mode):os.chmod(p,0o550 if stat.S_ISDIR(i.st_mode) or i.st_mode&0o111 else 0o440,follow_symlinks=False)
+    release=entries[0][0]
+    for p in (release.parent,release.parent.parent):os.chmod(p,0o755,follow_symlinks=False)
+
+def query_listener_denials(address):
+    import urllib.request,urllib.error
+    class NoRedirect(urllib.request.HTTPRedirectHandler):
+        def redirect_request(self,*args,**kwargs):raise Invalid('Query redirect')
+    opener=urllib.request.build_opener(urllib.request.ProxyHandler({}),NoRedirect())
+    for path,method,expected in [('/healthz','GET',404),('/v1/node','POST',401)]:
+        request=urllib.request.Request('http://'+address+':8083'+path,data=b'[]' if method=='POST' else None,method=method)
+        try:
+            with opener.open(request,timeout=2):raise Invalid('Query unauthenticated admission')
+        except urllib.error.HTTPError as error:
+            with error:
+                if error.code!=expected or len(error.read(513))>512:raise Invalid('Query boundary')
+
+def query_host_fresh(h):
+    # Independent current upstream inspection: operator digest cannot sign a
+    # self-test request, and the operator listener intentionally has no health API.
+    code="import {createAztecNodeClient} from '@aztec-labs/stdlib/interfaces/client';import {jsonStringify} from '@aztec-labs/foundation/json-rpc';import {inspectTrustedNode} from './shared/trusted-private-node.mjs';const o="+json.dumps({'url':QUALIFICATION['service']['queryNode']['url'],'expectedNetworkScope':{'chainId':QUALIFICATION['service']['chainId'],'version':QUALIFICATION['service']['rollupVersion'],'rollup':QUALIFICATION['service']['queryNode']['rollupAddress']},'proofsEnabled':True,'maxLagSeconds':120},separators=(',',':'))+";const n=createAztecNodeClient(o.url,{maxBatchSize:1,fetch:async(host,body)=>{const r=await fetch(host,{method:'POST',headers:{'content-type':'application/json'},body:jsonStringify(body),redirect:'error',signal:AbortSignal.timeout(10000)});if(!r.ok)throw Error();let size=0;const c=[];for await(const b of r.body){size+=b.length;if(size>33554432)throw Error();c.push(b);}return {response:JSON.parse(Buffer.concat(c).toString('utf8')),headers:r.headers};}});if((await inspectTrustedNode(n,o)).ready!==true)throw Error();process.stdout.write('ready');"
+    if h['run']([str(h['RELEASE']/'node/bin/node'),'--max-old-space-size=256','--input-type=module','--eval',code],capture=True,timeout=25,cwd=h['RELEASE'])!='ready':raise Invalid('Query freshness')
+
+def query_host_readback(h):
+    import pwd,grp
+    r=activation_private(h['PRIVATE']/'query-host-result.json')
+    if type(r) is not dict or set(r)!={'uid','gid','publicGid','configSha256','unitSha256','manifestSha256'} or r['manifestSha256']!=h['PINS']['manifest'] or any(type(r[k]) is not int or not 0<r[k]<2**31 for k in ('uid','gid','publicGid')) or any(type(r[k]) is not str or not re.fullmatch('[a-f0-9]{64}',r[k]) for k in ('configSha256','unitSha256')):raise Invalid('Query result')
+    user=pwd.getpwnam('rolling-query');public=grp.getgrnam('rolling-runtime')
+    if (user.pw_uid,user.pw_gid,user.pw_shell)!=(r['uid'],r['gid'],'/usr/sbin/nologin') or public.gr_gid!=r['publicGid'] or not {'rolling-query'}<=set(public.gr_mem)<= {'rolling-query','board-prover'}:raise Invalid('Query identity')
+    intent=activation_private(h['PRIVATE']/'query-host-intent.json')
+    if type(intent) is not dict or type(intent.get('attempts')) is not int or intent!={'manifestSha256':h['PINS']['manifest'],'requestSha256':h['digest'](h['PRIVATE']/'query-host-request.json'),'finalReceiptSha256':h['digest'](h['PRIVATE']/'final-receipt.json'),'attempts':1}:raise Invalid('Query intent')
+    record=query_host_request(h)
+    config=pathlib.Path('/etc/rolling-query/config.json');info=config.lstat();parent=config.parent.lstat()
+    if not stat.S_ISREG(info.st_mode) or info.st_uid!=0 or info.st_gid!=r['gid'] or stat.S_IMODE(info.st_mode)!=0o640 or not stat.S_ISDIR(parent.st_mode) or parent.st_uid!=0 or parent.st_gid!=r['gid'] or stat.S_IMODE(parent.st_mode)!=0o750:raise Invalid('Query config permissions')
+    if h['digest'](config)!=r['configSha256'] or json.loads(config.read_text())!=query_host_config(record):raise Invalid('Query config changed')
+    unit=pathlib.Path('/etc/systemd/system/rolling-query.service')
+    if h['digest'](unit)!=r['unitSha256'] or unit.read_text()!=query_host_unit(h['RELEASE']):raise Invalid('Query unit changed')
+    raw=h['run'](['systemctl','show','rolling-query.service','--property=User,Group,SupplementaryGroups,Restart,ActiveState,MainPID,DropInPaths,MemoryMax'],capture=True,timeout=5)
+    if len(raw)>4096:raise Invalid('Query service state')
+    rows=[line.partition('=') for line in raw.splitlines()];values={k:v for k,sep,v in rows}
+    exact={'User':'rolling-query','Group':'rolling-query','SupplementaryGroups':'rolling-runtime','Restart':'no','ActiveState':'active','DropInPaths':'','MemoryMax':str(2*1024**3)}
+    if len(rows)!=len(values) or any(not sep for _,sep,_ in rows) or set(values)!=set(exact)|{'MainPID'} or any(values[k]!=v for k,v in exact.items()) or not re.fullmatch('[1-9][0-9]{0,9}',values['MainPID']):raise Invalid('Query service state')
+    with open(pathlib.Path('/proc')/values['MainPID']/'status','rb') as f:data=f.read(16385)
+    if len(data)>16384:raise Invalid('Query process identity')
+    for key,number in ((b'Uid:',r['uid']),(b'Gid:',r['gid'])):
+        if [line.split()[1:] for line in data.splitlines() if line.startswith(key)]!=[[str(number).encode()]*4]:raise Invalid('Query process identity')
+    groups=[line.split()[1:] for line in data.splitlines() if line.startswith(b'Groups:')]
+    if len(groups)!=1 or len(groups[0])!=len(set(groups[0])) or any(not re.fullmatch(rb'[1-9][0-9]{0,9}',v) or int(v)>=2**31 for v in groups[0]) or not {str(r['publicGid']).encode()}<=set(groups[0])<={str(r['gid']).encode(),str(r['publicGid']).encode()}:raise Invalid('Query public group')
+    for p,i in query_public_plan(h['RELEASE']):
+        if i.st_gid!=r['publicGid'] or (not stat.S_ISLNK(i.st_mode) and stat.S_IMODE(i.st_mode)!=(0o550 if stat.S_ISDIR(i.st_mode) or i.st_mode&0o111 else 0o440)):raise Invalid('Query public permissions')
+    query_listener_denials(record['privateAddress'])
+    query_host_fresh(h)
+    return r
+
+def query_host(h):
+    import fcntl,pwd,grp,time
+    if os.geteuid()!=0:raise Invalid('Query authority')
+    private=h['PRIVATE'];intent=private/'query-host-intent.json';result=private/'query-host-result.json'
+    with open(private/'query-host-lock','a') as lock:
+        fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
+        try:
+            record=query_host_request(h)
+            if intent.exists():
+                if not result.exists():raise Invalid('Query interrupted; reconcile only')
+                query_host_readback(h);return {'queryHostPolicy':'active-private-authenticated','queryProofJobsEnabled':False}
+            if result.exists():raise Invalid('Query result without intent')
+            if not (private/'final-receipt.json').exists():return {'queryHostPolicy':'pending-qualification','queryProofJobsEnabled':False}
+            final=activation_private(private/'final-receipt.json');q=h['validated_qualification'](final.get('qualification',{}))
+            if final.get('manifestSha256')!=h['PINS']['manifest'] or final.get('bootstrapSourceSha256')!=h['PINS']['bootstrap'] or q.get('passed') is not True or q.get('stage')!='complete' or not q.get('checks') or not all(q['checks'].values()) or not {'anchors','readiness'}<=set(q):raise Invalid('Query qualification')
+            if timestamp(h['read_bounded_json'](h['BASE']/'deadline.json')['budgetStop']).timestamp()-time.time()<900:raise Invalid('Query budget reserve')
+            h['verify_release'](h['RELEASE']);h['verify_controls']();activation_proxy_masked(h)
+            if h['run'](['systemctl','show','board-prover.service','--property=LoadState','--value'],capture=True,timeout=5)!='masked':raise Invalid('Proof service must be masked')
+            addresses=json.loads(h['run'](['ip','-j','-4','address','show'],capture=True,timeout=5))
+            if record['privateAddress'] not in [a.get('local') for row in addresses for a in row.get('addr_info',[]) if a.get('family')=='inet']:raise Invalid('Query address not local')
+            query_host_fresh(h)
+            entries=query_public_plan(h['RELEASE']);unit=query_host_unit(h['RELEASE']);configdir=pathlib.Path('/etc/rolling-query')
+            if os.path.lexists(configdir) or os.path.lexists('/etc/systemd/system/rolling-query.service'):raise Invalid('Existing query paths')
+            for name,lookup in [('rolling-query',pwd.getpwnam),('rolling-query',grp.getgrnam),('rolling-runtime',grp.getgrnam)]:
+                try:lookup(name)
+                except KeyError:pass
+                else:raise Invalid('Existing query identity')
+            h['exclusive_record'](intent,{'manifestSha256':h['PINS']['manifest'],'requestSha256':h['digest'](private/'query-host-request.json'),'finalReceiptSha256':h['digest'](private/'final-receipt.json'),'attempts':1})
+            h['run'](['groupadd','--system','rolling-runtime'],timeout=5)
+            h['run'](['useradd','--system','--user-group','--groups','rolling-runtime','--no-create-home','--home-dir','/nonexistent','--shell','/usr/sbin/nologin','rolling-query'],timeout=5)
+            user=pwd.getpwnam('rolling-query');public=grp.getgrnam('rolling-runtime')
+            if any(type(v) is not int or not 0<v<2**31 for v in (user.pw_uid,user.pw_gid,public.gr_gid)) or user.pw_shell!='/usr/sbin/nologin' or public.gr_mem!=['rolling-query']:raise Invalid('Query identity')
+            query_public_harden(entries,public.gr_gid)
+            configdir.mkdir(mode=0o750);os.chown(configdir,0,user.pw_gid);os.chmod(configdir,0o750)
+            config=configdir/'config.json';h['exclusive_record'](config,query_host_config(record));os.chown(config,0,user.pw_gid);os.chmod(config,0o640)
+            h['write']('/etc/systemd/system/rolling-query.service',unit,0o644);h['run'](['systemctl','daemon-reload'],timeout=5)
+            h['verify_controls']();h['run'](['systemctl','start','rolling-query.service'],timeout=15)
+            r={'uid':user.pw_uid,'gid':user.pw_gid,'publicGid':public.gr_gid,'configSha256':h['digest'](config),'unitSha256':hashlib.sha256(unit.encode()).hexdigest(),'manifestSha256':h['PINS']['manifest']}
+            h['exclusive_record'](result,r)
+            ready_by=time.monotonic()+15
+            while True:
+                try:query_host_readback(h);break
+                except Exception:
+                    if time.monotonic()>=ready_by:raise
+                    h['verify_controls']();time.sleep(1)
+            return {'queryHostPolicy':'active-private-authenticated','queryProofJobsEnabled':False}
+        except BaseException:
+            try:h['run'](['systemctl','stop','rolling-query.service'],timeout=35)
+            finally:h['run'](['systemctl','start','--no-block','rolling-budget.service'],timeout=5)
+            raise
+
 def activation_record(value, manifest):
     """Closed public scope; no endpoint, key, worker option or executable input."""
     fields={'schemaVersion','manifestSha256','catalogSha256','deploymentEvidenceSha256','chainId','rollupVersion',
@@ -1196,23 +1359,7 @@ def activation_paths(h, scope):
     # Manifest verification precedes this function. Prevalidate the complete
     # ownership/link/traversal plan before allocating an identity or changing
     # any path. Official Node npm/npx/corepack links are relative file links.
-    if not release.is_absolute() or release.resolve()!=release:raise Invalid('Release path')
-    entries=[(path,path.lstat()) for path in [release,*release.rglob('*')]]
-    regular={path for path,info in entries if stat.S_ISREG(info.st_mode)}
-    for path,info in entries:
-        if info.st_uid!=0 or not (stat.S_ISREG(info.st_mode) or stat.S_ISDIR(info.st_mode) or stat.S_ISLNK(info.st_mode)):raise Invalid('Release ownership')
-        if stat.S_ISLNK(info.st_mode):
-            try:
-                target=os.readlink(path)
-                if os.path.isabs(target):raise Invalid('Release link')
-                resolved=path.resolve(strict=True)
-                if not resolved.is_relative_to(release) or resolved not in regular:raise Invalid('Release link')
-            except (OSError,RuntimeError) as error:raise Invalid('Release link') from error
-    if not stat.S_ISDIR(entries[0][1].st_mode):raise Invalid('Release directory')
-    parents=(release.parent,release.parent.parent)
-    for parent in parents:
-        info=parent.lstat()
-        if not stat.S_ISDIR(info.st_mode) or info.st_uid!=0 or info.st_mode&0o022:raise Invalid('Release traversal')
+    entries=query_public_plan(release)
     if os.path.lexists(pathlib.Path('/etc/board-prover')) or os.path.lexists(release.parent.parent/'current'):raise Invalid('Existing prover paths')
     try:pwd.getpwnam('board-prover')
     except KeyError:pass
@@ -1223,15 +1370,13 @@ def activation_paths(h, scope):
     run(['useradd','--system','--user-group','--no-create-home','--home-dir','/nonexistent','--shell','/usr/sbin/nologin','board-prover'],timeout=5)
     user=pwd.getpwnam('board-prover');group=grp.getgrnam('board-prover')
     if not 1<=user.pw_uid<2**31 or not 1<=user.pw_gid==group.gr_gid<2**31 or user.pw_shell!='/usr/sbin/nologin' or group.gr_mem:raise Invalid('Prover identity')
-    # Only the captured, fully validated public tree is mutated. Never chmod a
-    # symlink (which would follow its target); regular targets are hardened once
-    # through their own inventory entries and link ownership uses no-follow.
-    for path,info in entries:
-        current=path.lstat()
-        if (current.st_dev,current.st_ino,current.st_mode,current.st_uid)!=(info.st_dev,info.st_ino,info.st_mode,info.st_uid):raise Invalid('Release changed')
-        os.chown(path,0,group.gr_gid,follow_symlinks=False)
-        if not stat.S_ISLNK(info.st_mode):os.chmod(path,0o550 if stat.S_ISDIR(info.st_mode) or info.st_mode&0o111 else 0o440,follow_symlinks=False)
-    for parent in parents:os.chmod(parent,0o755,follow_symlinks=False)
+    public_gid=group.gr_gid
+    if 'PRIVATE' in h and (h['PRIVATE']/'query-host-result.json').exists():
+        query=query_host_readback(h)
+        public_gid=query['publicGid']
+        run(['usermod','--append','--groups','rolling-runtime','board-prover'],timeout=5)
+        if 'board-prover' not in grp.getgrnam('rolling-runtime').gr_mem:raise Invalid('Public runtime membership')
+    query_public_harden(entries,public_gid)
     configdir=pathlib.Path('/etc/board-prover');configdir.mkdir(mode=0o750)
     os.chown(configdir,0,group.gr_gid);os.chmod(configdir,0o750)
     config=configdir/'config.json';h['exclusive_record'](config,activation_config(scope));os.chown(config,0,group.gr_gid);os.chmod(config,0o640)
@@ -1265,6 +1410,7 @@ def activation_service(h, uid, gid, config_sha):
 def prover_activation(h, operation, expected=None):
     """Root-local operation only. No listener, retry, capability or paid API."""
     import fcntl,time
+    if operation=='query-observe':return query_host(h)
     if os.geteuid()!=0 or operation not in ('activate','observe'):raise Invalid('Activation authority')
     private=h['PRIVATE'];intent_path=private/'prover-activation-intent.json';result_path=private/'prover-activation-result.json'
     if operation=='observe':
@@ -1342,6 +1488,7 @@ def generate(config, now=None):
     # Tokenization preserves every string, executable token and line boundary.
     runtime=tokenize.untokenize(t._replace(string='') if t.type==tokenize.COMMENT else t for t in tokenize.generate_tokens(io.StringIO(HOST).readline))
     pins = {'image':IMAGE, 'manifest':config['manifestSha256'], 'node':NODE_SHA, 'bb':BB_SHA, 'bbVersion':BB_VERSION, 'catalog':CATALOG_SHA, 'bootstrap':hashlib.sha256(runtime.encode()).hexdigest(),'startup':hashlib.sha256(pathlib.Path(__file__).read_bytes()).hexdigest()}
+    if 'queryHost' in config:pins['queryHost']=hashlib.sha256(json.dumps(config['queryHost'],sort_keys=True,separators=(',',':')).encode()).hexdigest()
     prefix = 'PINS = '+repr(pins)+'\nNETWORK = '+repr(NETWORK)+'\nQUALIFICATION = '+repr(QUALIFICATION)+'\n'
     dispatch = "\ntry:\n    if sys.argv[1:2]==['--activate-prover']:\n        if len(sys.argv)!=3: raise ValueError('Activation arguments')\n        activation_support('activate',sys.argv[2])\n    elif '--qualify' in sys.argv: qualify()\n    elif '--qualification-stop' in sys.argv:\n        qualify(aborted=True);run(['systemctl','start','rolling-qualification-receipt.service'],timeout=40)\n    elif '--qualification-receipt' in sys.argv: final_receipt()\n    else: attest('--check' in sys.argv)\nexcept Exception as error:\n    shutdown_failure(error)\n"
     # A raw multiline literal avoids doubling runtime backslashes/newlines in

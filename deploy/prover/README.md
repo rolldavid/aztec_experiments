@@ -318,3 +318,19 @@ The activation receipt distinguishes service availability from real application
 proof acceptance. Public routing, proof jobs, Bok credit/service qualification and
 any paid-resource action still require their respective reviewed grants. A failed
 or ambiguous activation shuts down rather than restarting or replaying.
+
+The optional authenticated operator host reuses `prover/start.mjs` in query-only
+mode, with a dedicated private listener and identity. Bootstrap accepts the closed
+`queryHost` input described in [BOOTSTRAP.md](BOOTSTRAP.md). The pure
+`withQueryOperatorOrigin` transform adds only exact `/v1/node` routing and preserves
+other website/prover behaviors. It uses HTTPS viewers, disabled caching, one
+origin connection attempt and the managed AllViewerExceptHostHeader policy to
+forward the operator header without placing credentials in distribution config.
+AWS documents that policy at
+https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/using-managed-origin-request-policies.html.
+
+Actual origin protocol/port, managed-group-only ingress and absence of custom
+header logging require separate deployment readback. Service logs are disabled;
+operator keys must never be selected for CloudFront real-time logs. No CloudFront
+or security-group mutation is performed by this source generator. The existing
+prover proxy stays masked and proof routes are not activated by this option.
