@@ -145,6 +145,9 @@ export async function startDevnet({directory,fundingAddresses,proofs=false,persi
     }
     if(!active)throw Error('Local validator activation failed');
     const dateProvider=new TestDateProvider({warn(){}});
+    // A retained local chain may have been stopped for hours. Initialize the
+    // same mined clock used below before the archiver checks Ethereum drift.
+    synchronizeC01MinedClock(dateProvider,Number((await deployment.l1Client.getBlock({blockTag:'latest'})).timestamp));
     const nodeConfig={...config,...localApplicationInboxProfile(config),...deployment.l1ContractAddresses,rollupVersion:deployment.rollupVersion,
       dataDirectory:path.join(directory,'node'),bootstrapNodes:[],txPublicSetupAllowListExtend:[],
       sequencerPublisherPrivateKeys:[new SecretValue(identity.privateKey)],validatorPrivateKeys:new SecretValue([identity.privateKey]),coinbase:validator,
