@@ -203,7 +203,9 @@ current network clearance or the full14-day qualification period.
 The current development entry is the existing plugin devnet command, now with an
 explicit Rolling profile. It does not require a model-provider key for the reader,
 private wallet or local chain. Finish the normal pinned builds above first; do not
-repin generated manifests by hand. From the repository root:
+repin generated manifests by hand. In particular, run the existing
+`experiments/private-bok/build.mjs` after `scripts/build-contracts.mjs` so the Bok
+artifact provenance matches that builder before the wallet asset build. From the repository root:
 
 ```sh
 NODE_BACKEND=js .build/A02-node/node-v24.21.0-darwin-arm64/bin/node \
@@ -212,7 +214,11 @@ NODE_BACKEND=js .build/A02-node/node-v24.21.0-darwin-arm64/bin/node \
   --app-port 8080 --node-port 18080 --ethereum-port 18545
 ```
 
-Use a dedicated mode-0700 directory. The three ports must be distinct and unused;
+Use a dedicated canonical mode-0700 directory owned by the current user, with no
+symlinked parents. The existing inode-bound hosted lease owns this local process.
+Missing network metadata beside retained snapshots, node data or journals requires
+explicit recovery; it never creates another chain. Miner or checkpoint failure
+retains the lease and reports unsuccessful cleanup. The three ports must be distinct and unused;
 all listeners bind to `127.0.0.1`. Do not stop or repurpose another project's node.
 The existing port4317 design preview is unrelated. Local node proof generation and
 PXE proving are both disabled; `PLUGIN_PROOFS=true` is rejected. The local SDK's

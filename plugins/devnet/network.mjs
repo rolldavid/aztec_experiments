@@ -55,6 +55,17 @@ export async function assertDevnetPortsFree(ports) {
   const listeners=[];try{for(const port of Object.values(devnetPorts(ports))){const server=net.createServer();listeners.push(server);await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(port,'127.0.0.1',resolve);});}}
   catch{throw Error('A selected development port is already owned');}finally{await Promise.all(listeners.filter(s=>s.listening).map(s=>new Promise(r=>s.close(r))));}
 }
+export async function assertFreshDevnetDirectory(directory) {
+  const allowed=new Set(['operator.json','hosted.lock']);
+  if((await fs.readdir(directory)).some(name=>!allowed.has(name)))throw Error('Original development network metadata missing; recovery required');
+}
+// Only a completely stopped, healthy network may mark its snapshot restartable.
+export async function persistDevnetCheckpoint({persistent,bootComplete,miningError,priorFailure,save}) {
+  if(miningError)throw Error('Development miner failed; recovery required');
+  if(!persistent)return;
+  if(!bootComplete||priorFailure)throw Error('Development checkpoint incomplete; recovery required');
+  await save();
+}
 export async function startDevnet({directory,fundingAddresses,proofs=false,persistent=false,ports:requestedPorts,onProgress=()=>{},onOwned=()=>{}}){
   await fs.mkdir(directory,{recursive:true,mode:0o700});
   const ports=devnetPorts(requestedPorts),statePath=path.join(directory,'network.json'),snapshotPath=path.join(directory,'ethereum-state.json');
@@ -63,6 +74,7 @@ export async function startDevnet({directory,fundingAddresses,proofs=false,persi
   if(persistent)await assertDevnetPortsFree(ports);
   if(persistent&&proofs!==false)throw Error('Persistent local development requires native proofs disabled');
   if(saved)validateDevnetResume(saved,{fundingAddresses,ports,toolchainHash});
+  else if(persistent)await assertFreshDevnetDirectory(directory);
   const identity=saved?Wallet.fromPhrase(saved.mnemonic):Wallet.createRandom(),validatorSecret=saved?Fr.fromString(saved.validatorSecret):Fr.random();
   if(saved&&identity.privateKey!==saved.privateKey)throw Error('Original development signer differs');
   const port=persistent?ports.ethereumPort:await freePort(),rpcUrl='http://127.0.0.1:'+port;
@@ -70,22 +82,22 @@ export async function startDevnet({directory,fundingAddresses,proofs=false,persi
   if(persistent)await writeDevnetRecord(statePath,{...state,phase:'starting'},{exclusive:!saved});
   let deployment,bootComplete=false,wallMode=false;
   const terminateChild=()=>{if(anvil&&anvil.exitCode===null)anvil.kill('SIGTERM');};
-  let node,nodeServer,anvil,mining,stopMining=false,miningError,spawnError,anvilClosed,closed=false;
-  async function close(){
-    if(closed)return;closed=true;stopMining=true;const failures=[];
+  let node,nodeServer,anvil,mining,stopMining=false,miningError,spawnError,anvilClosed,closing;
+  function close(){return closing??=(async()=>{
+    stopMining=true;const failures=[];
     for(const cleanup of [()=>mining,()=>nodeServer&&new Promise(resolve=>{nodeServer.close(resolve);nodeServer.closeAllConnections();}),()=>node?.stop(),async()=>{
-      if(persistent&&bootComplete&&!failures.length&&!miningError){
+      await persistDevnetCheckpoint({persistent,bootComplete,miningError,priorFailure:failures.length>0,save:async()=>{
         const snapshot=await deployment.l1Client.request({method:'anvil_dumpState',params:[true]});
         if(typeof snapshot!=='string'||!/^0x[0-9a-f]+$/i.test(snapshot)||snapshot.length>134217728)throw Error('Invalid development snapshot');
         const bytes=JSON.stringify(snapshot);await writeDevnetRecord(snapshotPath,snapshot);
         await writeDevnetRecord(statePath,{...state,phase:'stopped',snapshotHash:createHash('sha256').update(bytes+'\n').digest('hex')});
-      }
+      }});
     },async()=>{if(anvil&&anvil.exitCode===null&&!spawnError){anvil.kill('SIGTERM');await anvilClosed;}}]){
       try{await cleanup();}catch(error){failures.push(error);}
     }
     process.removeListener('exit',terminateChild);
     if(failures.length)throw new AggregateError(failures,'Devnet cleanup failed');
-  }
+  })();}
   onOwned({close});
   try{
     onProgress('Starting disposable Ethereum');

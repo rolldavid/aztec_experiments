@@ -92,4 +92,28 @@ if(focused){
  const stopped={schemaVersion:1,phase:'stopped',toolchainHash,ports,fundingAddresses,privateKey:'0x'+'3'.repeat(64),validatorSecret:'0x'+'4'.repeat(64),snapshotHash:'5'.repeat(64),mnemonic:Array(12).fill('synthetic').join(' '),addresses:{rollupAddress:'0x'+'6'.repeat(40)},rollupVersion:7};
  test('clean restart preserves exact original identity scope',()=>assert.equal(validateDevnetResume(stopped,{fundingAddresses,ports,toolchainHash}),stopped));
  for(const [name,change] of [['unclean',{phase:'running'}],['starting',{phase:'starting'}],['other genesis',{fundingAddresses:['0x'+'9'.repeat(64)]}],['other ports',{ports:{...ports,nodePort:18085}}],['other binary scope',{toolchainHash:'9'.repeat(64)}],['missing snapshot',{snapshotHash:null}]])test('restart refuses '+name+' without reset',()=>assert.throws(()=>validateDevnetResume({...stopped,...change},{fundingAddresses,ports,toolchainHash}),/recovery required/));
+ test('development lease rejects symlinked parent and preserves a replaced owner inode',async()=>{
+  const {acquireDevelopmentLease}=await import('./start.mjs');const parent=await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(),'rolling-owner-'))),root=path.join(parent,'state'),link=path.join(parent,'link');
+  try{await fs.mkdir(root,{mode:0o700});await fs.symlink(parent,link);await assert.rejects(acquireDevelopmentLease(path.join(link,'state')),/canonical/);
+   const lease=await acquireDevelopmentLease(root);await lease.assertHeld();await assert.rejects(acquireDevelopmentLease(root),{code:'EEXIST'});
+   const lock=path.join(root,'hosted.lock');await fs.rename(lock,lock+'.original');await fs.writeFile(lock,'replacement',{mode:0o600,flag:'wx'});
+   await assert.rejects(lease.assertHeld(),/changed/);await assert.rejects(lease.close(),/changed/);assert.equal(await fs.readFile(lock,'utf8'),'replacement');
+   await fs.unlink(lock);const second=await acquireDevelopmentLease(root);await second.close();await assert.rejects(fs.stat(lock),{code:'ENOENT'});
+   await fs.chmod(root,0o755);await assert.rejects(acquireDevelopmentLease(root),/private/);
+  }finally{await fs.rm(parent,{recursive:true,force:true});}
+ });
+ test('actual checkpoint boundary surfaces miner failure and incomplete shutdown without saving',async()=>{
+  const {persistDevnetCheckpoint}=await import('./network.mjs');let saves=0;const save=async()=>{saves++;};
+  for(const change of [{miningError:Error('controlled miner failure')},{bootComplete:false},{priorFailure:true}])await assert.rejects(persistDevnetCheckpoint({persistent:true,bootComplete:true,miningError:null,priorFailure:false,save,...change}),/recovery required/);
+  assert.equal(saves,0);await persistDevnetCheckpoint({persistent:true,bootComplete:true,miningError:null,priorFailure:false,save});assert.equal(saves,1);
+  await assert.rejects(persistDevnetCheckpoint({persistent:true,bootComplete:true,priorFailure:false,save:async()=>{throw Error('controlled disk failure');}}),/disk failure/);
+ });
+
+ test('missing network metadata cannot reset retained chain snapshots, node data or deployment journals',async()=>{
+  const {assertFreshDevnetDirectory}=await import('./network.mjs');const dir=await fs.mkdtemp(path.join(os.tmpdir(),'rolling-incomplete-'));
+  try{await assertFreshDevnetDirectory(dir);await fs.writeFile(path.join(dir,'operator.json'),'{}',{mode:0o600});await fs.writeFile(path.join(dir,'hosted.lock'),'1',{mode:0o600});await assertFreshDevnetDirectory(dir);
+   for(const name of ['ethereum-state.json','node','deployment.json','bok-operations.json']){const p=path.join(dir,name);if(name==='node')await fs.mkdir(p);else await fs.writeFile(p,'retained',{mode:0o600});await assert.rejects(assertFreshDevnetDirectory(dir),/metadata missing/);assert(await fs.lstat(p));await fs.rm(p,{recursive:true});}
+  }finally{await fs.rm(dir,{recursive:true,force:true});}
+ });
+
 }

@@ -1,7 +1,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import {pathToFileURL} from 'node:url';
-import {devnetPorts,readDevnetRecord,writeDevnetRecord} from './network.mjs';
+import {devnetPorts,readDevnetRecord} from './network.mjs';
 
 export function developmentOptions(args=[],env={}) {
  const options={};for(let i=0;i<args.length;i+=2){const key=args[i];if(!['--profile','--directory','--app-port','--node-port','--ethereum-port','--hosted-config'].includes(key)||Object.hasOwn(options,key)||!args[i+1])throw Error('Invalid development option');options[key]=args[i+1];}
@@ -11,20 +11,25 @@ export function developmentOptions(args=[],env={}) {
  return {profile,directory:path.resolve(options['--directory']??'.build/rolling-devnet'),ports,...(options['--hosted-config']?{hostedConfig:path.resolve(options['--hosted-config'])}:{})};
 }
 
+export async function acquireDevelopmentLease(directory) {
+ await fs.mkdir(directory,{recursive:true,mode:0o700});
+ const stat=await fs.lstat(directory);
+ if(!path.isAbsolute(directory)||await fs.realpath(directory)!==directory||!stat.isDirectory()||stat.isSymbolicLink()||(stat.mode&0o777)!==0o700||stat.uid!==process.getuid())throw Error('Development state directory must be canonical, owned and private');
+ // Never replace an older unresolved startup record during this migration.
+ if(await readDevnetRecord(path.join(directory,'owner.json')))throw Error('Original development owner requires reconciliation');
+ const {acquireHostedLease}=await import('../main.mjs');return acquireHostedLease(directory);
+}
+
 export async function startDevelopment(options) {
  const {Barretenberg,BarretenbergSync}=await import('@aztec-foundation/bb.js');
  const {bootstrapPluginDevnet,bootstrapRollingDevnet}=await import('./bootstrap.mjs');
- const {directory}=options;await fs.mkdir(directory,{recursive:true,mode:0o700});
- const stat=await fs.lstat(directory);if(!stat.isDirectory()||stat.isSymbolicLink()||(stat.mode&0o077))throw Error('Development state directory must be private');
- // An existing lock, including a dead owner's lock, requires explicit diagnosis.
- // Never infer that uncertain writes can be repeated from a missing process.
- const lock=path.join(directory,'owner.json');await writeDevnetRecord(lock,{pid:process.pid,profile:options.profile},{exclusive:true});
- let fixture,server,service,closed=false;
+ const {directory}=options,lease=await acquireDevelopmentLease(directory);
+ let fixture,server,service,closing;
  const shutdown=()=>close().then(()=>process.exit(0),()=>process.exit(1));
  if(options.handleSignals){process.once('SIGINT',shutdown);process.once('SIGTERM',shutdown);}
- async function close(){if(closed)return;closed=true;process.removeListener('SIGINT',shutdown);process.removeListener('SIGTERM',shutdown);const errors=[];for(const stop of [()=>service?.close(),()=>server?.close(),()=>fixture?.close(),()=>Barretenberg.destroySingleton(),()=>BarretenbergSync.destroySingleton()])try{await stop();}catch(error){errors.push(error);}
-  if(!errors.length)await fs.unlink(lock);if(errors.length)throw Error('Development cleanup requires reconciliation');
- }
+ function close(){return closing??=(async()=>{process.removeListener('SIGINT',shutdown);process.removeListener('SIGTERM',shutdown);const errors=[];for(const stop of [()=>service?.close(),()=>server?.close(),()=>fixture?.close(),()=>Barretenberg.destroySingleton(),()=>BarretenbergSync.destroySingleton()])try{await stop();}catch(error){errors.push(error);}
+  if(!errors.length)await lease.close();if(errors.length)throw Error('Development cleanup requires reconciliation');
+ })();}
  try{
   if(options.profile==='legacy'){
    fixture=await bootstrapPluginDevnet({directory,host:'127.0.0.1',proofs:false});
@@ -38,6 +43,7 @@ export async function startDevelopment(options) {
    try{server=await startRollingReader({...index,wallet});}catch(error){await index.index.close();throw error;}
   }
   if(options.hostedConfig){const config=await readDevnetRecord(options.hostedConfig);if(!config||config.development!==true)throw Error('Explicit local hosted configuration required');const {runHostedService}=await import('../main.mjs');service=await runHostedService({config});}
+  await lease.assertHeld();
   return {url:server?.url,profile:options.profile,close,readiness:fixture.readiness??'legacy-development-only'};
  }catch{await close();throw Error('Development startup failed; preserve state and reconcile its saved operations');}
 }

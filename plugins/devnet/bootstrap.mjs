@@ -90,7 +90,7 @@ export async function bootstrapPluginDevnet({directory,port=8787,host='127.0.0.1
 // Current local profile. Production deployment/transaction implementations are
 // reused; only the disposable chain's explicitly labelled settlement is local.
 export async function bootstrapRollingDevnet({directory,ports,onProgress=console.log,onOwned=()=>{}}) {
- const {readDevnetRecord,writeDevnetRecord,devnetPorts}=await import('./network.mjs');
+ const {readDevnetRecord,writeDevnetRecord,devnetPorts,assertFreshDevnetDirectory}=await import('./network.mjs');
  const {deriveMasterMessageSigningSecretKey}=await import('@aztec-labs/stdlib/keys');
  const {getSchnorrInitializerlessAccountContractAddress}=await import('@aztec-labs/accounts/schnorr');
  const {GrumpkinScalar}=await import('@aztec-labs/foundation/curves/grumpkin');
@@ -104,6 +104,7 @@ export async function bootstrapRollingDevnet({directory,ports,onProgress=console
  if(!actor){
   // A missing actor in an existing network is never permission for a new chain.
   if(await readDevnetRecord(path.join(directory,'network.json')))throw Error('Original local actor is missing');
+  await assertFreshDevnetDirectory(directory);
   const secret=Fr.random(),salt=Fr.random(),signingKey=deriveMasterMessageSigningSecretKey(secret);
   const address=await getSchnorrInitializerlessAccountContractAddress(signingKey,salt,secret);
   actor={secret:String(secret),salt:String(salt),signingKey:String(signingKey),address:String(address)};
@@ -113,8 +114,8 @@ export async function bootstrapRollingDevnet({directory,ports,onProgress=console
  const address=await getSchnorrInitializerlessAccountContractAddress(signingKey,salt,secret);
  if(String(address)!==actor.address||!signingKey.equals(deriveMasterMessageSigningSecretKey(secret)))throw Error('Original local actor identity differs');
  const net=await startDevnet({directory,fundingAddresses:[address],proofs:false,persistent:true,ports:selected,onProgress,onOwned});
- let wallet,closed=false,activeChild,activeExit;
- async function close(){if(closed)return;closed=true;let error;if(activeChild){activeChild.kill('SIGTERM');const timer=setTimeout(()=>activeChild?.kill('SIGKILL'),5000);try{await activeExit;}finally{clearTimeout(timer);}}try{await wallet?.stop();}catch(e){error=e;}try{await net.close();}catch(e){error??=e;}if(error)throw Error('Current development cleanup incomplete');}
+ let wallet,closing,activeChild,activeExit;
+ function close(){return closing??=(async()=>{let error;if(activeChild){activeChild.kill('SIGTERM');const timer=setTimeout(()=>activeChild?.kill('SIGKILL'),5000);try{await activeExit;}finally{clearTimeout(timer);}}try{await wallet?.stop();}catch(e){error=e;}try{await net.close();}catch(e){error??=e;}if(error)throw Error('Current development cleanup incomplete');})();}
  onOwned({close});
  async function fixedFile(name,value){const filename=path.join(directory,name),prior=await readDevnetRecord(filename);if(prior){if(JSON.stringify(prior)!==JSON.stringify(value))throw Error('Saved development configuration differs');}else await writeDevnetRecord(filename,value,{exclusive:true});return filename;}
  async function cli(args){
