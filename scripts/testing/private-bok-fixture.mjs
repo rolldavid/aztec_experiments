@@ -11,6 +11,10 @@ import {RollupContract} from '@aztec-labs/ethereum/contracts';
 import {TxHash, TxStatus, TxExecutionResult} from '@aztec-labs/stdlib/tx';
 import {EthAddress} from '@aztec-labs/foundation/eth-address';
 import {Fr} from '@aztec-labs/foundation/curves/bn254';
+import {GrumpkinScalar} from '@aztec-labs/foundation/curves/grumpkin';
+import {AztecAddress} from '@aztec-labs/stdlib/aztec-address';
+import {rollingOperatorConfig,rollingPxeOptions} from '../../plugins/operations.mjs';
+import {Fr} from '@aztec-labs/foundation/curves/bn254';
 import {L1Actor, L2Actor, L1ToL2Message} from '@aztec-labs/stdlib/messaging';
 import {ROOT} from '../toolchain.mjs';
 import {applicationNativeProfile} from '../c01-native-profile.mjs';
@@ -299,4 +303,142 @@ export async function runPrivateBokFixture(ctx, caseProfile = 'both', payerMode 
   // The generic worker accepts JSON observations. Normalize only after cleanup
   // so its report retains the same exact amounts and flags as fixture.json.
   return JSON.parse(evidenceJson(observation));
+}
+
+// The public Bok deployment actor is disposable and deliberately public. Its
+// secret fields remain only in memory; the durable signed journal stays private.
+export function operatorDevnetInputs(ctx,info,nodeUrl) {
+  assert.equal(ctx.scenario.fixture,'included-board');
+  assert.equal(ctx.scenario.boardProfile,'rolling');
+  assert.equal(ctx.preparation.boardProfile,'rolling');
+  assert.equal(ctx.preparation.authorAccounts.length,1);
+  assert.equal(ctx.preparation.account,ctx.preparation.authorAccounts[0]);
+  assert.equal(info.l1ChainId,31337);assert.equal(info.realProofs,false);
+  assert.equal(ctx.config.realProofs,false);
+  for(const endpoint of [nodeUrl,ctx.config.l1RpcUrls[0]]) {
+    const url=new URL(endpoint);assert.equal(url.protocol,'http:');assert.equal(url.hostname,'127.0.0.1');
+    assert.equal(url.pathname,'/');assert(!url.username&&!url.password&&!url.search&&!url.hash);
+  }
+  const account=ctx.preparation.account;
+  assert.equal(account.type,'schnorr_initializerless');
+  assert(account.secret instanceof Fr && account.salt instanceof Fr);
+  assert(account.signingKey instanceof GrumpkinScalar && account.address instanceof AztecAddress);
+  assert(ctx.instance.address instanceof AztecAddress);
+  const actor=Object.freeze(Object.fromEntries(['address','secret','salt','signingKey'].map(k=>[k,account[k].toString()])));
+  assert.equal(Fr.fromString(actor.secret).toString(),actor.secret);
+  assert.equal(Fr.fromString(actor.salt).toString(),actor.salt);
+  assert.equal(GrumpkinScalar.fromString(actor.signingKey).toString(),actor.signingKey);
+  const rollup=String(info.l1ContractAddresses.rollupAddress).toLowerCase();
+  assert.equal(rollup,String(ctx.rollupAddress).toLowerCase());
+  const config=rollingOperatorConfig({applicationProfile:'rolling',development:true,chainId:'31337',
+    rollupVersion:String(info.rollupVersion),rollupAddress:rollup,boardAddress:String(ctx.instance.address),
+    operatorAddress:actor.address,nodeUrl,ethereumUrl:ctx.config.l1RpcUrls[0]});
+  return {actor,config};
+}
+
+// Actual-used ownership boundary; controlled tests inject labelled wallet doubles.
+// Production supplies the unchanged SDK NodeEmbeddedWallet factory below.
+export async function checkOperatorDevnetWallet(createWallet,actor) {
+  let wallet;
+  try {
+    wallet=await createWallet();assert.equal(wallet.pxe.proverEnabled,false);
+    const account=await wallet.createSchnorrInitializerlessAccount(Fr.fromString(actor.secret),Fr.fromString(actor.salt),
+      GrumpkinScalar.fromString(actor.signingKey),'disposable public Bok operator');
+    assert.equal(String(account.address),actor.address);
+    return {passed:true,proverEnabled:false,accountMatched:true};
+  } finally {if(wallet)await wallet.stop();}
+}
+
+// One initial command may send. Every subsequent command is checked against the
+// same private journal and must reconcile only; it cannot create another wallet.
+export async function reconcileOperatorDevnet({invoke,readJournal,tick,now,deadlineAt,sendCount}) {
+  const admit=()=>assert(Number.isSafeInteger(deadlineAt)&&now()<deadlineAt,'Operator devnet deadline');
+  admit();let result=await invoke(false);const first=await readJournal();
+  assert.equal(sendCount(),1,'Expected exactly one initial operator send');
+  assert.equal(first.phase,'submission-unknown');assert.equal(first.operationCount,1);
+  assert(/^0x[0-9a-f]{64}$/.test(first.transactionHash));assert(/^[0-9a-f]{64}$/.test(first.sha256));
+  for(let reads=0;result.status==='unresolved'&&reads<32;reads++) {
+    admit();await tick();admit();result=await invoke(true);
+    assert.deepEqual(await readJournal(),first,'Retained operator journal changed');assert.equal(sendCount(),1);
+  }
+  assert.equal(result.status,'succeeded');assert.equal(result.canonical,true);assert.equal(result.scope,'constructor-only');
+  assert.equal(result.transactionHash,first.transactionHash);
+  for(const key of ['portalReady','registrationReady','hostedServiceReady'])assert.equal(result[key],false);
+  assert(/^0x[0-9a-f]{64}$/.test(result.escrow));
+  assert(Number.isSafeInteger(result.blockNumber)&&result.blockNumber>0);assert(/^0x[0-9a-f]{64}$/.test(result.blockHash));
+  admit();const repeated=await invoke(true);assert.deepEqual(repeated,result);
+  assert.deepEqual(await readJournal(),first);assert.equal(sendCount(),1);
+  // Deliberately return a closed public projection, never an arbitrary SDK result.
+  return {passed:true,status:'succeeded',scope:'constructor-only',canonical:true,transactionHash:first.transactionHash,
+    escrow:result.escrow,blockNumber:result.blockNumber,blockHash:result.blockHash,journalSha256:first.sha256,
+    sends:1,reconciliationOnly:true,portalReady:false,registrationReady:false,hostedServiceReady:false};
+}
+
+export async function runRollingOperatorDevnet(ctx,mode) {
+  assert(['wallet','constructor'].includes(mode));assert.equal(applicationProofsEnabled(),false);
+  assert.equal(ctx.scenario.name,'rolling-operator-'+mode);
+  assert(path.isAbsolute(ctx.directory)&&Number.isSafeInteger(ctx.applicationDeadlineAt)&&ctx.applicationDeadlineAt>Date.now());
+  const report={passed:false,scope:mode==='wallet'?'actual native-disabled operator wallet; no send':'actual native-disabled operator constructor only',
+    applicationProofs:false,networkProofs:false,stage:'preflight',sends:0,cleanup:{rpcClosed:false,artifactHookClosed:false,walletStopped:false}};
+  let rpc,adapter,failure,privateDirectory,statePath;
+  const publicPath=path.join(ctx.directory,'rolling-operator-result.json');
+  const save=()=>fs.writeFile(publicPath,evidenceJson(report),{mode:0o600});
+  const mark=async stage=>{assert(Date.now()<ctx.applicationDeadlineAt);report.stage=stage;ctx.mark?.('rolling-operator:'+stage);await save();};
+  const files=['scripts/testing/scenarios.mjs','scripts/testing/scenario-flows.mjs','scripts/testing/private-bok-fixture.mjs',
+    'scripts/testing/rolling-application-fixture.mjs','plugins/operator.mjs','plugins/operations.mjs',
+    'prover/rolling-artifacts.json','scripts/testing/rolling-native-artifacts.mjs'];
+  const sources=async()=>Object.fromEntries(await Promise.all(files.map(async p=>[p,sha(await fs.readFile(path.join(ROOT,p)))])));
+  try {
+    report.sources=await sources();
+    const {installRollingNativeArtifacts}=await import('./rolling-native-artifacts.mjs');adapter=installRollingNativeArtifacts();
+    const {startNodeRpc}=await import('./rolling-application-fixture.mjs');
+    let allowSend=false;
+    rpc=await startNodeRpc(ctx.node,()=>{assert(allowSend&&report.sends===0,'Unexpected operator send');report.sends++;});
+    const {actor,config}=operatorDevnetInputs(ctx,await ctx.node.getNodeInfo(),rpc.url);
+    const {operatorCommand}=await import('../../plugins/operator.mjs');
+    const {createAztecNodeClient}=await import('../../shared/aztec-node-client.mjs');
+    const {operatorNodeFetch}=await import('../../plugins/operations.mjs');
+    const {jsonStringify}=await import('@aztec-labs/foundation/json-rpc');
+    const node=createAztecNodeClient(rpc.url,{fetch:operatorNodeFetch({endpoint:rpc.url,serialize:jsonStringify})});
+    const options=await rollingPxeOptions(true,()=>assert.fail('Native proof setup forbidden'));
+    assert.deepEqual(options,{proverEnabled:false});
+    await mark('wallet-preflight');
+    report.wallet=await checkOperatorDevnetWallet(()=>EmbeddedWallet.create(node,{ephemeral:true,pxe:options}),actor);
+    report.cleanup.walletStopped=true;assert.equal(report.sends,0);
+    const fees=await operatorCommand({command:'fees',config,actor,onProgress:()=>assert.fail('Fee read initialized wallet')});
+    assert.equal(fees.account,actor.address);assert(BigInt(fees.publicFeeJuice)>0n);
+    report.feeBalancePositive=true;
+    if(mode==='constructor') {
+      // Retained outside parent temporary cleanup; no actor/key file is written.
+      privateDirectory=path.join(ROOT,'.build','operator-devnet-private-'+randomUUID());
+      await fs.mkdir(privateDirectory,{mode:0o700});
+      await fs.writeFile(path.join(privateDirectory,'ownership.json'),evidenceJson({scope:'disposable local operator',directory:privateDirectory,retention:'retain success and uncertain outcomes; never replay',sourceHashes:report.sources}),{flag:'wx',mode:0o600});
+      statePath=path.join(privateDirectory,'operator.json');report.privateJournalRetained=true;
+      const readJournal=async()=>{
+        const stat=await fs.lstat(statePath);assert(stat.isFile()&&!stat.isSymbolicLink()&&(stat.mode&0o777)===0o600&&stat.size<=20*1024**2);
+        const bytes=await fs.readFile(statePath),state=JSON.parse(bytes),record=state.operations?.['deploy-escrow'];
+        assert(record&&record.policy==='reconcile-only'&&record.identity===state.identity);
+        return {sha256:sha(bytes),transactionHash:record.hash,phase:record.phase,operationCount:Object.keys(state.operations).length};
+      };
+      await mark('constructor');report.mining={};
+      report.constructor=await withC01ClientMining({rpcUrl:config.ethereumUrl,dateProvider:ctx.dateProvider,observation:report.mining},async tick=>
+        reconcileOperatorDevnet({deadlineAt:ctx.applicationDeadlineAt,now:Date.now,tick,sendCount:()=>report.sends,readJournal,
+          invoke:async retained=>{
+            allowSend=!retained;
+            try{return await operatorCommand({command:'deploy-escrow',config,actor,statePath,
+              onProgress:()=>{assert(!retained,'Retained command initialized a wallet');}});}
+            finally{allowSend=false;}
+          }}));
+      const lock=await fs.lstat(statePath+'.lock').then(()=>true,e=>{if(e.code==='ENOENT')return false;throw e;});assert.equal(lock,false);
+      report.privateJournalRetained=true;
+    }
+    adapter.verify();assert.deepEqual(await sources(),report.sources);report.passed=true;report.stage='complete';
+  } catch {report.passed=false;report.failureCategory='operator-devnet-stage-failed';failure=Error('Operator devnet stage failed');}
+  finally {
+    if(rpc)try{await rpc.close();report.cleanup.rpcClosed=true;}catch{report.passed=false;failure=Error('Operator RPC cleanup failed');}
+    if(adapter)try{try{adapter.verify();}finally{adapter.close();report.cleanup.artifactHookClosed=true;}}catch{report.passed=false;failure=Error('Operator artifact cleanup failed');}
+    if(statePath)try{const bytes=await fs.readFile(statePath);report.journalSha256=sha(bytes);}catch(e){if(e.code!=='ENOENT'){report.passed=false;failure=Error('Operator private journal observation failed');}}
+    try{await save();}catch{report.passed=false;failure=Error('Operator devnet evidence persistence failed');}
+  }
+  if(failure){failure.privateBokObservation=report;throw failure;}return report;
 }

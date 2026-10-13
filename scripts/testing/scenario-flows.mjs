@@ -393,3 +393,11 @@ export async function rollingPreferenceReorgMarker(ctx){return (await import('./
 export async function rollingPreferenceSaved(ctx){return (await import('./rolling-application-fixture.mjs')).runRollingApplicationFixture(ctx,'preference-saved');}
 
 export async function rollingNotificationBrowser(ctx){return (await import('./rolling-application-fixture.mjs')).runRollingApplicationFixture(ctx,'notification-browser');}
+
+// Existing included-board owner supplies node, genesis actor and cleanup budget.
+export async function rollingOperatorWallet(ctx) {
+  return (await import('./private-bok-fixture.mjs')).runRollingOperatorDevnet(ctx,'wallet');
+}
+export async function rollingOperatorConstructor(ctx) {
+  return (await import('./private-bok-fixture.mjs')).runRollingOperatorDevnet(ctx,'constructor');
+}
