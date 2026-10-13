@@ -5,7 +5,7 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import http from 'node:http';
 import path from 'node:path';
-import {createRollingEvidenceDirectory,classifyRollingApplicationFootprint,recordRollingFundingFailure,assertRollingApplicationViews,assertRollingPublicFootprint,closeRollingResources,loadRollingFixtureSDK,observeRollingReadiness} from './rolling-application-fixture.mjs';
+import {assertRollingBrowserCompactAcceptance,createRollingEvidenceDirectory,classifyRollingApplicationFootprint,recordRollingFundingFailure,assertRollingApplicationViews,assertRollingPublicFootprint,closeRollingResources,loadRollingFixtureSDK,observeRollingReadiness} from './rolling-application-fixture.mjs';
 import {createRollingProjection} from '../../shared/rolling/public-projection.mjs';
 import {createFileJournalStorage} from '../../apps/src/billboard/user/transaction-journal-store.mjs';
 import {createEncryptedJournalSlot} from '../../shared/journal-record.mjs';
@@ -616,3 +616,22 @@ test('closing compact fixture retains ownership until the admitted native read s
  }finally{release();await request;await(closing??rpc.close());}
  assert.equal(closed,true);assert.equal(rpc.compactSnapshot().pending,0);
 });
+
+// Labelled observer/receiver seam: no real network acceptance here.
+const compactPair=windows=>({browser:{passed:true,coldRecovery:{windows,compactRequests:windows===4?7:3,tagDiscoveryRequests:0},traffic:{compactRequests:windows===4?8:3}},native:{requests:windows===4?8:3,accepted:windows===4?8:3,failures:0,pending:0}});
+for(const windows of [1,4])test('cold browser receiver joins actual-used finite counters for '+windows+' windows',()=>{
+ const {browser,native}=compactPair(windows);assert.equal(assertRollingBrowserCompactAcceptance(browser,native,windows).nativeAccepted,native.accepted);
+});
+for(const [name,change]of [
+ ['observer-only delivery',p=>{p.native.requests--;p.native.accepted--;}],
+ ['unobserved receiver request',p=>{p.native.requests++;p.native.accepted++;}],
+ ['receiver failure',p=>{p.native.failures=1;}],
+ ['pending response',p=>{p.native.pending=1;}],
+ ['cold public or private tag discovery',p=>{p.browser.coldRecovery.tagDiscoveryRequests=1;}],
+ ['missing fresh import delivery',p=>{p.browser.coldRecovery.compactRequests=1;}],
+ ['incomplete cold windows',p=>{p.browser.coldRecovery.windows=3;}],
+ ['forged cold subset',p=>{p.browser.coldRecovery.compactRequests=9;}],
+ ['missing observer field',p=>{delete p.browser.traffic.compactRequests;}],
+ ['nonfinite receiver',p=>{p.native.accepted=NaN;}],
+ ['failed browser',p=>{p.browser.passed=false;}],
+])test('cold browser receiver rejects '+name,()=>{const p=compactPair(4);change(p);assert.throws(()=>assertRollingBrowserCompactAcceptance(p.browser,p.native,4),/Cold browser transport acceptance failed/);});

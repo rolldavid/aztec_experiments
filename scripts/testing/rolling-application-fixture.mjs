@@ -293,9 +293,23 @@ export async function createRollingEvidenceDirectory(root) {
   return directory;
 }
 
+// Join the browser observer to the independent native receiver. Public counters
+// only; a browser PASS alone cannot establish compact delivery or cold privacy.
+export function assertRollingBrowserCompactAcceptance(browser,native,windows){
+  const check=value=>{if(!value)throw Error('Cold browser transport acceptance failed');};
+  check(browser?.passed===true&&[1,4].includes(windows));
+  const cold=browser.coldRecovery,traffic=browser.traffic;
+  check(cold&&traffic&&native);
+  for(const value of [cold.windows,cold.compactRequests,cold.tagDiscoveryRequests,traffic.compactRequests,native.requests,native.accepted,native.failures,native.pending])check(Number.isSafeInteger(value)&&value>=0);
+  check(cold.windows===windows&&cold.tagDiscoveryRequests===0);
+  check(cold.compactRequests>=(windows===4?2:1)&&cold.compactRequests<=traffic.compactRequests);
+  check(native.failures===0&&native.pending===0&&native.requests===native.accepted&&native.accepted===traffic.compactRequests);
+  return {passed:true,windows,coldCompactRequests:cold.compactRequests,compactRequests:traffic.compactRequests,nativeAccepted:native.accepted,tagDiscoveryRequests:0};
+}
+
 export async function runRollingApplicationFixture(ctx,scenario='conversation') {
   assert(['conversation','profiles','anonymous-thread','repost-reactions','account-reactions','owned-names','owned-names-wire','composer','social-wire','reaction-wire','trusted-recovery','name-race','subboard-policy','rejected-subboard-withdrawal','preference-relationships','preference-notifications','preference-browser','preference-reorg-initial','preference-reorg-marker','preference-saved','notification-browser'].includes(scenario));
-  const boundedCold=scenario==='preference-relationships';
+  const boundedCold=['preference-relationships','preference-browser','notification-browser'].includes(scenario);
   const notificationBrowser=scenario==='notification-browser';
   const preferenceSaved=scenario==='preference-saved',preferenceBrowser=scenario==='preference-browser',preferenceReorg=['preference-reorg-initial','preference-reorg-marker'].includes(scenario),markerReorg=scenario==='preference-reorg-marker';
   const preferences=['preference-relationships','preference-notifications','preference-browser','preference-reorg-initial','preference-reorg-marker','preference-saved','notification-browser'].includes(scenario);
@@ -669,6 +683,8 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
                 {label:'b',run:async()=>{assert(browser,'Browser completion unavailable; accounting remains incomplete');await feesB.verify(feeTotalB,fees.browserFixture.fundedAmount-feeTotal);}}
               ]});
             assert(browser?.passed&&subscription&&reply&&marker);assert.equal(forwardedSaved.length,4);
+            report.notificationBrowser.compactNative=rpc.compactSnapshot();await save();
+            report.notificationBrowser.compact=assertRollingBrowserCompactAcceptance(browser,report.notificationBrowser.compactNative,4);
             for(const key of ['rejected','errors','pending'])assert.equal(l1[key],0);assert(l1.forwarded>0);
             markedPreferences=await privateSnapshot('marked');recoveredPreferences=await privateSnapshot('recovered');
             const markers=markedPreferences.preferences.readMarkers;assert.equal(markers.length,1);assert.equal(markers[0].thread,ids.rootId);
@@ -1258,6 +1274,8 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
           deployment:{blockNumber:Number(report.initialPublicAnchor.blockNumber),blockHash:report.initialPublicAnchor.blockHash,txHash:report.initialPublicAnchor.txHash},
           service,sendCount:()=>transportSends,expected:{postId:ids.rootId,postText:'A genuine preference recovery post.'},observation:report.preferenceBrowser,persist:save,verifyFees:()=>fees.verify(feeTotal)});}
         finally{await save();}
+        report.preferenceBrowser.compactNative=rpc.compactSnapshot();await save();
+        report.preferenceBrowser.compact=assertRollingBrowserCompactAcceptance(report.preferenceBrowser.browser,report.preferenceBrowser.compactNative,1);await save();
       }
       if(composer){
         assert(real,'Genuine browser acceptance requires real proof setup');await mark('production-browser-composer');report.composer={};
