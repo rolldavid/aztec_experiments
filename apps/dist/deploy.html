@@ -45592,7 +45592,9 @@ if (typeof module !== 'undefined' && module.exports) {
     const rawNode=a.createAztecNodeClient(config.aztecNodeUrl);
     const ownedProviders=new Set();
     try {
-    const preflightProvider=new ethers.JsonRpcProvider(config.ethRpcUrl);
+    // Deployment changes code between consecutive reads of the same address.
+    // Ethers' default short cache can otherwise return the pre-deployment 0x.
+    const preflightProvider=new ethers.JsonRpcProvider(config.ethRpcUrl,undefined,{cacheTimeout:-1});
     ownedProviders.add(preflightProvider);
     const {nodeInfo,l1Contracts,proofsEnabled}=await a.preflightDeploymentNetwork(manifest,{node:rawNode,provider:preflightProvider,ethers});
     if(typeof proofsEnabled!=='boolean')throw new Error('Verified native proof configuration is required');
