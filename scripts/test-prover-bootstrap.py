@@ -766,9 +766,11 @@ class FinalReceipt(unittest.TestCase):
         for boundary in ('success','disk-failure'):
             with self.subTest(boundary=boundary),tempfile.TemporaryDirectory() as t:
                 ns=self.environment(t);events=[]
-                ns['RELEASE']=ROOT;ns['PINS']['startup']=hashlib.sha256(pathlib.Path(b.__file__).read_bytes()).hexdigest()
-                report=qualifier_fixture();q={'schemaVersion':1,'passed':True,'stage':'complete','scope':'current-network-query-only','manifestSha256':'b'*64,
-                    'checks':ns['qualification_projection'](report,True),'readiness':ready_fixture(),'anchors':ns['qualification_anchors'](report['checks'])}
+                # Use the actual packaged helpers only while building the report.
+                # Restore the original unavailable startup source before testing receipts.
+                with patch.dict(ns,{'RELEASE':ROOT,'PINS':{**ns['PINS'],'startup':hashlib.sha256(pathlib.Path(b.__file__).read_bytes()).hexdigest()}}):
+                    report=qualifier_fixture();q={'schemaVersion':1,'passed':True,'stage':'complete','scope':'current-network-query-only','manifestSha256':'b'*64,
+                        'checks':ns['qualification_projection'](report,True),'readiness':ready_fixture(),'anchors':ns['qualification_anchors'](report['checks'])}
                 ns['exclusive_record'](ns['BASE']/'qualification/result.json',q)
                 ns['service_observations']=lambda:{};ns['emit_diagnostic']=lambda data:events.append(data)
                 ns['upload_receipt']=lambda data:events.append('upload');ns['run']=lambda *a,**k:events.append('shutdown')
