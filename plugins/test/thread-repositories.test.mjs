@@ -1,5 +1,6 @@
 // Actual local Git repositories. No GitHub, provider, generated-code execution or proofs.
 import test from 'node:test';import assert from 'node:assert/strict';
+import {pathToFileURL} from 'node:url';
 import fs from 'node:fs/promises';import os from 'node:os';import path from 'node:path';
 import {threadRepositories,repositoryGit} from '../thread-repositories.mjs';
 const id=n=>'0x'+BigInt(n).toString(16).padStart(64,'0');
@@ -36,13 +37,26 @@ test('lease loss prevents acceptance; user paths and changed repository identity
 
 test('existing toolbox edits and accepts actual thread source across independent invocations',async t=>{
  const {githubToolbox}=await import('../github-tools.mjs');const h=await fixture(t),seed=path.join(h.root,'seed');
- await repositoryGit(['init',seed]);await fs.writeFile(path.join(seed,'hello.txt'),'start');await repositoryGit(['add','.'],{cwd:seed});await repositoryGit(['commit','-m','seed'],{cwd:seed});
+ await repositoryGit(['init',seed]);await fs.writeFile(path.join(seed,'hello.txt'),'start');await repositoryGit(['add','.'],{cwd:seed});await repositoryGit(['commit','-m','seed'],{cwd:seed});await fs.writeFile(path.join(seed,'hello.txt'),'later');await repositoryGit(['commit','-am','second seed'],{cwd:seed});
  let apiCalls=0;const api=async(method,route)=>{apiCalls++;if(route.includes('/git/commits/'))return {tree:{sha:'fixture-tree'}};if(route.includes('/git/trees/'))return {sha:'fixture-tree',truncated:false,tree:[{path:'hello.txt',type:'blob',size:5}]};return {default_branch:'main'};};
- const toolbox=githubToolbox({repository:'owner/project',api,repositories:h.manager,runCommand:async(command,args,options)=>{assert.equal(command,'git');return repositoryGit(args.map(arg=>arg==='https://github.com/owner/project.git'?seed:arg),options);}});
+ const toolbox=githubToolbox({repository:'owner/project',api,repositories:h.manager,runCommand:async(command,args,options)=>{assert.equal(command,'git');return repositoryGit(args.map(arg=>arg==='https://github.com/owner/project.git'?pathToFileURL(seed).href:arg),options);}});
  const first=await toolbox.open({threadId:id(1),id:id(1),postId:id(9)});
  assert(!first.definitions.some(d=>d.function.name==='create_pr'));
  await first.call('write_file',{path:'hello.txt',content:'accepted from first participant'});const revision=await first.accept();await first.close();
+ const check=await h.open(99);assert.equal((await repositoryGit(['rev-parse','--is-shallow-repository'],{cwd:check.repositoryPath})).stdout.trim(),'true');await repositoryGit(['fsck','--connectivity-only','--no-dangling'],{cwd:check.repositoryPath});await check.close();
  const before=apiCalls,second=await toolbox.open({threadId:id(1),id:id(2),postId:id(10)});
  assert.equal((await second.call('read_file',{path:'hello.txt'})).text,'accepted from first participant');assert.equal(apiCalls,before,'accepted local revision does not require invented remote commit');
  await second.call('write_file',{path:'next.txt',content:'second participant'});const next=await second.accept();assert.equal(next.readRevision,revision.acceptedRevision);assert.notEqual(next.acceptedRevision,revision.acceptedRevision);await second.close();
+});
+
+test('failed validation cannot advance accepted source and cannot be retried in same session',async t=>{
+ const h=await fixture(t),first=await h.open();await h.checkout(first);const prior=await first.accept();await first.close();let validations=0;
+ const manager=threadRepositories({...h.options,validateRevision:async()=>{validations++;return {passed:false};}});
+ const next=await h.open(2,1,manager);await h.checkout(next);await fs.writeFile(path.join(next.work,'file.txt'),'rejected code');await assert.rejects(next.accept(),/validation failed/);await assert.rejects(next.accept(),/already attempted/);assert.equal(validations,1);await next.close();
+ const last=await h.open(3);assert.equal(last.readRevision,prior.acceptedRevision);await last.close();
+});
+test('bounded revision and storage budgets refuse new accepted source',async t=>{
+ const h=await fixture(t),first=await h.open();await h.checkout(first);await first.accept();await first.close();
+ await assert.rejects(h.open(2,1,threadRepositories({...h.options,maxRevisions:1})),/revision limit/);
+ const next=await h.open(2,1,threadRepositories({...h.options,maxBytes:1024}));await h.checkout(next);await assert.rejects(next.accept(),/storage limit/);await next.close();
 });

@@ -50,10 +50,10 @@ export function threadRepositories({directory,namespace,lease,git=repositoryGit,
    assert.equal(await head(),state.acceptedRevision,'Accepted repository ref changed');
    if(state.operations[invocationId])throw Error('Invocation already has an accepted revision');
    assert(Object.keys(state.operations).length<maxRevisions,'Thread revision limit reached');
-   const readRevision=state.acceptedRevision;draft=await fs.mkdtemp(path.join(root,'draft-'));const work=path.join(draft,'repository');let accepted=null;
+   const readRevision=state.acceptedRevision;draft=await fs.mkdtemp(path.join(root,'draft-'));const work=path.join(draft,'repository');let accepted=null,acceptStarted=false;
    return Object.freeze({work,repositoryPath:repo,readRevision,
     async accept(){
-     assert(!closed);await lease.assertHeld();if(accepted)return accepted;
+     assert(!closed);if(accepted)return accepted;assert(!acceptStarted,'Acceptance already attempted; reopen and reconcile');acceptStarted=true;await lease.assertHeld();
      const parent=(await git(['rev-parse','HEAD'],{cwd:work})).stdout.trim();assert(revision(parent));if(readRevision)assert.equal(parent,readRevision);
      const used=await size(root),scratch=await size(draft);assert(used+scratch<=maxBytes,'Thread storage limit reached');
      await git(['add','--all','--force','--','.'],{cwd:work});const tree=(await git(['write-tree'],{cwd:work})).stdout.trim();assert(revision(tree));
@@ -62,7 +62,10 @@ export function threadRepositories({directory,namespace,lease,git=repositoryGit,
      if(validateRevision){assert(validation?.passed===true&&validation.revision===produced&&/^[0-9a-f]{64}$/.test(validation.sourceDigest),'Isolated revision validation failed');await git(['diff','--quiet',produced,'--'],{cwd:work});}
      // Import objects before persisting the intended CAS. The ref is internal and
      // never selects a source revision for publication by itself.
-     await git(['fetch','--no-tags',work,`${produced}:refs/invocations/${invocationId.slice(2)}`],{cwd:repo});
+     const importedRef=`refs/invocations/${invocationId.slice(2)}`;
+     await git(['fetch','--no-tags','--update-shallow',work,`${produced}:${importedRef}`],{cwd:repo});
+     assert.equal((await git(['rev-parse','--verify',importedRef],{cwd:repo})).stdout.trim(),produced,'Produced revision was not imported');
+     await git(['fsck','--connectivity-only','--no-dangling'],{cwd:repo});
      const record={threadId,invocationId,readRevision,producedRevision:produced,validation,status:'prepared'};
      await store.write({...state,operations:{...state.operations,[invocationId]:record}});state=store.read();
      await lease.assertHeld();await git(['update-ref','refs/heads/accepted',produced,readRevision||'0'.repeat(40)],{cwd:repo});
