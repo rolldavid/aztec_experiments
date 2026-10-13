@@ -120,7 +120,7 @@ test('actual SDK board projection gates canonical plugin, moderation, anchor and
   const originalQuery=index.query,older={...post,id:'2',order:'2'},newer={...post,id:'3',order:'3',record:{...post.record,root:'3'}};
   for(const n of [2n,3n])storage.set((await deriveStorageSlotInMap(artifact.storageLayout.post_flagged.slot,new Fr(n))).toBigInt(),0n);
   index.query=(method,args)=>method==='post'?originalQuery(method,args):args.cursor?{revision:'same',posts:[older,post],nextCursor:null}:{revision:'same',posts:[newer],nextCursor:'page2'};
-  const ordered=(await port.pending()).requests;assert.deepEqual(ordered.map(r=>r.postId),[f(1),f(2),f(3)]);assert.deepEqual(ordered.map(r=>r.threadId),[f(1),f(1),f(3)]);index.query=originalQuery;
+  const ordered=(await port.pending()).requests;assert.deepEqual(ordered.map(r=>r.postId),[f(1),f(3)]);assert.deepEqual(ordered.map(r=>r.threadId),[f(1),f(3)]);index.query=originalQuery;
 
   post.text=null;assert.equal((await port.readRequest(f(1))).usable,false);post.text='visible';
   storage.set(flagged,1n);assert.equal((await port.readRequest(f(1))).usable,false);storage.set(flagged,0n);

@@ -72,16 +72,19 @@ export async function rollingBoardPort({node,index,scope,boardArtifact,pluginId,
  const syncReady=async()=>{const deadline=Date.now()+20000;for(let steps=0;steps<512&&Date.now()<deadline;steps++){await index.sync();if(index.status().state==='ready')return;};throw Error('Canonical public index catching up');};
  return {
   async pending(){
-   await syncReady();let cursor=null,revision=null;const posts=[],seen=new Set();
-   // Read one immutable projection before any await. Retain only the oldest
-   // bounded pending set, so a descending public feed cannot reverse a thread.
+   await syncReady();let cursor=null,revision=null;const heads=new Map(),seen=new Set();
+   // Read one immutable projection before any await. Retain the oldest
+   // pending request per thread, so one busy thread cannot fill every slot.
    do{
     const page=index.query('feed',{limit:100,cursor});
     if(revision===null)revision=page.revision;assert.equal(page.revision,revision);
-    for(const post of page.posts)if(post.invocation&&toField(post.invocation.adapter)===scope.receiver&&toField(post.invocation.pluginId)===pluginId&&post.invocation.reply===null&&!post.removal&&typeof post.text==='string'){posts.push(post);if(posts.length>64)posts.shift();}
+    for(const post of page.posts)if(post.invocation&&toField(post.invocation.adapter)===scope.receiver&&toField(post.invocation.pluginId)===pluginId&&post.invocation.reply===null&&!post.removal&&typeof post.text==='string'){
+     const root=toField(post.record.root);heads.set(root,post);
+     if(heads.size>64){const newest=[...heads.entries()].reduce((a,b)=>BigInt(a[1].order)>BigInt(b[1].order)?a:b);heads.delete(newest[0]);}
+    }
     cursor=page.nextCursor;if(cursor){assert(!seen.has(cursor));seen.add(cursor);}
    }while(cursor);
-   posts.sort((a,b)=>BigInt(a.order)<BigInt(b.order)?-1:BigInt(a.order)>BigInt(b.order)?1:0);
+   const posts=[...heads.values()];posts.sort((a,b)=>BigInt(a.order)<BigInt(b.order)?-1:BigInt(a.order)>BigInt(b.order)?1:0);
    const requests=[];for(const post of posts){const request=await requestFrom(post);if(request?.usable&&!request.replied)requests.push(request);}
    return {requests,nextCursor:null};
   },
