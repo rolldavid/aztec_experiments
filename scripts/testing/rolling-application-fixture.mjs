@@ -62,6 +62,12 @@ export function observeRollingColdRead(read) {
     finally{state.pending--;step.elapsedMs=Math.round(performance.now()-started);state.lastStep=step;}
   }});
 }
+export async function persistRollingRecoveryObservation(persist,recoveryFailed,recoveryError) {
+  try{await persist();}catch(error){
+    if(recoveryFailed)throw new AggregateError([recoveryError,error],'Recovery and measurement persistence failed');
+    throw error;
+  }
+}
 export function recordRollingFundingFailure(report,role,observation){
   assert(role===undefined||role==='a'||role==='b');
   assert(observation&&typeof observation==='object');
@@ -1245,7 +1251,7 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
         await old.close();assert.throws(()=>old.contextGuard());
         // Recreate from original keys and public artifacts only. Neither the
         // old encrypted journal nor the PXE's retained events are copied.
-        const metrics=createRollingPrivateRecoveryMetrics();let recoveryError,coldReadObservation;
+        const metrics=createRollingPrivateRecoveryMetrics();let recoveryError,coldReadObservation,recoveryFailed=false;
         const sample=()=>{const m=process.memoryUsage();metrics.sampleMemory({rssBytes:m.rss,heapUsedBytes:m.heapUsed});};
         report.preferenceCold={completed:false,scope:'Actual fresh keys-only recovery; CLI fake-indexeddb platform',
           nodeScope:'Forwarded server-window calls, possibly including service readiness; not uniquely actor-attributed',
@@ -1270,13 +1276,13 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
             report.preferenceCold.reader='production bounded PXE cursor';
           }
           report.preferenceCold.completed=true;
-        }catch(error){recoveryError=error;throw error;}
+        }catch(error){recoveryFailed=true;recoveryError=error;throw error;}
         finally{
           coldRecoveryMetrics=undefined;sample();report.preferenceCold.metrics=metrics.snapshot();
           if(boundedCold){report.preferenceCold.compact=rpc.compactSnapshot();report.preferenceCold.readProgress=coldReadObservation?.snapshot()??null;}
           // A pending server read remains visibly pending in this snapshot. No
           // extra wait or lifecycle action is introduced to improve the metric.
-          try{await save();}catch(error){if(recoveryError)throw new AggregateError([recoveryError,error],'Recovery and measurement persistence failed');throw error;}
+          await persistRollingRecoveryObservation(save,recoveryFailed,recoveryError);
         }
       }
       await mark('canonical-projection-rebuild');

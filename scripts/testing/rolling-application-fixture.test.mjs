@@ -5,7 +5,7 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import http from 'node:http';
 import path from 'node:path';
-import {observeRollingColdRead,assertRollingBrowserCompactAcceptance,createRollingEvidenceDirectory,classifyRollingApplicationFootprint,recordRollingFundingFailure,assertRollingApplicationViews,assertRollingPublicFootprint,closeRollingResources,loadRollingFixtureSDK,observeRollingReadiness} from './rolling-application-fixture.mjs';
+import {persistRollingRecoveryObservation,observeRollingColdRead,assertRollingBrowserCompactAcceptance,createRollingEvidenceDirectory,classifyRollingApplicationFootprint,recordRollingFundingFailure,assertRollingApplicationViews,assertRollingPublicFootprint,closeRollingResources,loadRollingFixtureSDK,observeRollingReadiness} from './rolling-application-fixture.mjs';
 import {createRollingProjection} from '../../shared/rolling/public-projection.mjs';
 import {createFileJournalStorage} from '../../apps/src/billboard/user/transaction-journal-store.mjs';
 import {createEncryptedJournalSlot} from '../../shared/journal-record.mjs';
@@ -657,4 +657,16 @@ test('cold observation ignores invalid and accessor progress without invoking ge
   Object.defineProperty(progress,'nextBlock',{get(){throw Error('accessor');}});
   const value={complete:false,progress},observer=observeRollingColdRead(async()=>value);
   assert.equal(await observer.read({}),value);assert.deepEqual(observer.snapshot().lastStep.progress,{});
+});
+
+test('actual cold persistence helper retains falsy recovery failure alongside save failure',async()=>{
+  for(const original of [undefined,null,false,0,'',Error('original')]){
+    const saveFailure=Error('write failure');let calls=0;
+    await assert.rejects(persistRollingRecoveryObservation(async()=>{calls++;throw saveFailure;},true,original),e=>e instanceof AggregateError&&e.errors.length===2&&e.errors[0]===original&&e.errors[1]===saveFailure);
+    assert.equal(calls,1);
+  }
+});
+test('cold persistence helper propagates sole save failure and does not invent retry',async()=>{
+  const failure=Error('save');await assert.rejects(persistRollingRecoveryObservation(async()=>{throw failure;},false,undefined),e=>e===failure);
+  let calls=0;await persistRollingRecoveryObservation(async()=>{calls++;},true,undefined);assert.equal(calls,1);
 });
