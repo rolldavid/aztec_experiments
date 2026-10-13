@@ -317,3 +317,82 @@ closed. Global `docker ps` inventory is not needed: a measured local inventory
 stall returned no bytes for5seconds while the same exact-name inspect completed
 in142ms. Execution/resource/cleanup deadlines remain unchanged. Raw Docker
 stderr stays internal and is never part of model-visible failure logs.
+
+### Dedicated-organization GitHub App source mirror
+
+`createGitHubAppBroker({enabled:false, directory, artifactRoot, organization,
+organizationId, appId, installationId, privateKeyFile})` is a trusted host
+capability. Its default rejects both `assertAvailable()` and `sync(receipt)`
+without reading a key or making a request. **GitHub writes remain disabled until
+an operator explicitly configures the dedicated organization and installation.**
+The existing personal application repository and unrelated organizations are not
+mirror targets. This component does not create organizations, register/install
+Apps, alter permissions, delete repositories, expose an HTTP control endpoint,
+or hand credentials to the model, toolbox, Git subprocesses or generated code.
+
+Use an organization dedicated to these per-thread public source repositories.
+Register a private-to-owner GitHub App with repository Administration write,
+Contents write and implicit Metadata read; no Actions, Workflows, organization,
+user or OAuth permissions/events. Install it for all repositories **only in that
+dedicated organization**, so newly created repositories are included. Organization
+owners retain administrative control; do not install this capability on an
+organization containing unrelated work. Disable Actions by organization policy
+before activation; source capture additionally rejects every `.github` path.
+The broker's creation token requests Administration only; subsequent content
+access requests Contents only and the single checked repository ID. No PAT or
+ambient `gh` login is used. The App RSA key is a no-follow regular private0600
+file in a canonical0700 host directory, outside source/artifact trees; its bytes
+and short-lived JWT/installation tokens remain in trusted host memory.
+
+The host config pins numeric organization, App and installation IDs plus the
+exact lowercase organization login. `assertAvailable()` only reads installation
+identity, suspension, permission and all-repository selection; it does not mint
+an installation token or create a repository. Before paid work the host must
+check availability. Live setup and API behavior are still separate acceptance
+checks; controlled protocol tests do not qualify an installed GitHub service.
+
+After durable local accepted-ref CAS, call `sync` with the same trusted accepted
+receipt used by publication. It validates the successful test/build receipt,
+positive container cleanup and exact public source snapshot. A deterministic
+`bok-<64hex>` repository name is bound to repository/thread IDs. Creation has a
+durable random ownership marker; existing names without that intent are never
+adopted. GitHub requires a nonempty repository before ref operations, so the
+initial repository uses `auto_init:true`. The subsequent full Git tree has no
+base tree and contains only the captured regular files, including binary bytes;
+the bootstrap README is not inherited into accepted source.
+
+`acceptedRevision` remains the local source authority. `remoteCommit`,
+`remoteTree`, `remoteParent`, `sourceDigest` and `remoteRepositoryId` record its
+explicit remote mapping; the SHA identities are intentionally distinct. The
+remote commit message binds original revision, digest, repository, thread and
+invocation. It has the captured previous remote commit as parent. The host
+rechecks the predecessor then performs only a non-forced ref update: concurrent
+incompatible head changes fail, never force-overwrite. The dedicated repository
+must have a sole mirror writer; this is not a general multi-writer Git merge
+service. Results include the immutable GitHub source URL, never a token.
+
+Every repository/blob/tree/commit/ref mutation gets a durable intent before its
+single network call. Lost responses reconcile by exact ownership marker or
+precomputed Git object identity and read back the final ref. An absent/unknown
+result stays `GITHUB_BROKER_UNRESOLVED`; rerunning does not retransmit that write.
+Read-only reconciliation can later finish the original sequence. Do not delete
+or hand-edit the journal to force retries. A persistence failure poisons the
+capability until restart and original-intent reconciliation. Back up this private
+journal together with the local accepted Git repository and source snapshots.
+
+One owner operates the broker; calls are serialized. Per call bounds:120seconds,
+540 requests,8seconds each,2MiB response; no redirects/retries/provider fallback.
+Source limits remain512 regular files,1MiB/file,8MiB total. State is capped at
+128 repositories,64 accepted revisions each,8MiB serialized journal. Bounds fail
+closed; no automatic quota increase, cleanup or paid capacity. API errors are
+fixed sanitized codes with no upstream body, private pathname or credential.
+
+Official setup references: [App manifest registration](https://docs.github.com/en/apps/sharing-github-apps/registering-a-github-app-from-a-manifest),
+[App JWT authentication](https://docs.github.com/en/apps/creating-github-apps/authenticating-with-a-github-app/generating-a-json-web-token-jwt-for-a-github-app),
+[installation token scoping](https://docs.github.com/en/rest/apps/apps#create-an-installation-access-token-for-an-app),
+[organization repository creation](https://docs.github.com/en/rest/repos/repos#create-an-organization-repository),
+[Git trees](https://docs.github.com/en/rest/git/trees#create-a-tree),
+[Git commits](https://docs.github.com/en/rest/git/commits#create-a-commit), and
+[reference updates](https://docs.github.com/en/rest/git/refs#update-a-reference).
+The implementation pins API version2026-03-10. No registration or GitHub mutation
+is performed by the installation preparation packet.
