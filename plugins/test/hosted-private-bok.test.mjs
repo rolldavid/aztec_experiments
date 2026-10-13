@@ -114,14 +114,15 @@ test('actual SDK board projection gates canonical plugin, moderation, anchor and
   const node={getNodeInfo:async()=>({l1ChainId:31337,rollupVersion:3409706519,realProofs:state.realProofs,l1ContractAddresses:{rollupAddress:scope.rollupAddress}}),
    getBlock:async tag=>({number:5,hash:tag==='checkpointed'?f(99):state.anchor}),getContract:async()=>({originalContractClassId:classId,currentContractClassId:state.currentClass}),
    getPublicStorageAt:async(anchor,address,slot)=>{assert.deepEqual(anchor,{number:5,hash:f(99)});assert.equal(String(address),scope.boardAddress);return new Fr(storage.get(slot.toBigInt()));}};
-  const index={sync:async()=>{},status:()=>({state:'ready'}),query:(method,args)=>method==='post'?{post}:{posts:[post],nextCursor:null}};
+  const index={sync:async()=>{},status:()=>({state:'ready'}),query:()=>({post}),scanPosts:()=>({complete:true,posts:[post],nextAfter:null,checkpoint:{number:5,hash:f(99)}})};
   const port=await rollingBoardPort({node,index,scope,boardArtifact:artifact,pluginId,development:true});
   assert.equal((await port.pending(null)).requests[0].target,f(3));assert.equal((await port.readRequest(f(1))).usable,true);
-  const originalQuery=index.query,older={...post,id:'2',order:'2'},newer={...post,id:'3',order:'3',record:{...post.record,root:'3'}};
-  for(const n of [2n,3n])storage.set((await deriveStorageSlotInMap(artifact.storageLayout.post_flagged.slot,new Fr(n))).toBigInt(),0n);
-  index.query=(method,args)=>method==='post'?originalQuery(method,args):args.cursor?{revision:'same',posts:[older,post],nextCursor:null}:{revision:'same',posts:[newer],nextCursor:'page2'};
-  const ordered=(await port.pending()).requests;assert.deepEqual(ordered.map(r=>r.postId),[f(1),f(3)]);assert.deepEqual(ordered.map(r=>r.threadId),[f(1),f(3)]);index.query=originalQuery;
-
+  const originalScan=index.scanPosts;let scans=0;
+  index.scanPosts=({after,limit})=>{scans++;assert.equal(limit,64);if(after===null)return {complete:true,posts:[{...post,text:null}],nextAfter:'1',checkpoint:{number:5,hash:f(99)}};assert.equal(after,'1');return {complete:true,posts:[post],nextAfter:null,checkpoint:{number:5,hash:f(99)}};};
+  node.getBlockData=async()=>({blockHash:f(99)});
+  const rejected=await port.pending();assert.equal(rejected.requests.length,0);assert.equal(rejected.nextCursor.after,'1');
+  assert.equal((await port.pending(rejected.nextCursor)).requests[0].postId,f(1));assert.equal(scans,2);
+  node.getBlockData=async()=>({blockHash:f(88)});assert.equal((await port.pending(rejected.nextCursor)).requests.length,0);index.scanPosts=originalScan;
   post.text=null;assert.equal((await port.readRequest(f(1))).usable,false);post.text='visible';
   storage.set(flagged,1n);assert.equal((await port.readRequest(f(1))).usable,false);storage.set(flagged,0n);
   storage.set(pluginSlot+1n,0n);assert.equal((await port.readRequest(f(1))).usable,false);storage.set(pluginSlot+1n,1n);

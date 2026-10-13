@@ -7,7 +7,7 @@ import {packText} from './protocol.mjs';
 export async function startEscrowService({descriptor,escrow,board,run,host='127.0.0.1',port=8787,onError=console.error,pollMs=2000,concurrency=2,profile='legacy'}){
  if(!['legacy','rolling'].includes(profile))throw Error('Invalid service profile');
  if(!Number.isSafeInteger(concurrency)||concurrency<1||concurrency>16)throw Error('Invalid service concurrency');
- let rollingCursor=null;
+ let rollingCursor=null,rollingQueue=[];
  let stopped=false,polling=false,cursor=0,inFlight=Promise.resolve(),pollFailure=null,jobFailure=null,lastSuccess=null;
  const jobs=new Map(),deferred=new Set();
  const failed=(error,source='job')=>{const failure={at:new Date().toISOString(),kind:error.name||'Error'};if(source==='poll')pollFailure=failure;else jobFailure=failure;onError(error);};
@@ -35,11 +35,12 @@ export async function startEscrowService({descriptor,escrow,board,run,host='127.
  async function poll(){if(stopped||polling)return;polling=true;try{
   if(profile==='rolling'){
    if(jobs.size>=concurrency)return;
-   const page=await board.pending(rollingCursor);rollingCursor=page.nextCursor;
-   for(const request of page.requests){
+   if(!rollingQueue.length){const page=await board.pending(rollingCursor);rollingCursor=page.nextCursor;assert(Array.isArray(page.requests)&&page.requests.length<=64);rollingQueue=page.requests;}
+   for(const request of [...rollingQueue]){
     if(stopped||jobs.size>=concurrency)break;
     assert(typeof request.threadId==='string','Canonical thread identity required');
     if(jobs.has(request.requestId)||[...jobs.values()].some(job=>job.threadId===request.threadId))continue;
+    rollingQueue=rollingQueue.filter(row=>row.requestId!==request.requestId);
     const job={post:request.postId,threadId:request.threadId,promise:null};jobs.set(request.requestId,job);
     job.promise=Promise.resolve().then(()=>run(request)).then(()=>{jobFailure=null;lastSuccess=new Date().toISOString();},error=>failed(error)).finally(()=>jobs.delete(request.requestId));
    }

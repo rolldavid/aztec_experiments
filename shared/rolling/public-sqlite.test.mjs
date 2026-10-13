@@ -358,3 +358,18 @@ test('SQLite public query discards its completed snapshot on a late external COM
  try{assert.throws(()=>f.read('feed'),{code:'ROLLING_PUBLIC_STORAGE_CONFLICT'});}finally{DatabaseSync.prototype.exec=original;}
  assert.equal(fired,true);
 });
+
+test('SQLite trusted chronological scan uses bounded ascending pages across new canonical publications',async t=>{
+ const f=await queryFixture(t);for(const id of ['10','20','30'])await f.post(id);
+ const first=f.read('chronological',{limit:2});assert.deepEqual(first.value.posts.map(p=>p.id),['10','20']);assert.equal(first.nextAfter,'20');assert(first.work.candidateRows<=3);
+ await f.post('40');const second=f.read('chronological',{limit:2},first.nextAfter);assert.deepEqual(second.value.posts.map(p=>p.id),['30','40']);assert.equal(second.nextAfter,null);assert(second.work.candidateRows<=3);
+});
+
+test('SQLite pending invocation range skips ordinary history and follows authenticated reply updates',async t=>{
+ const f=await queryFixture(t);await f.add([['PluginConfigured',{plugin_id:'7',adapter:'9',enabled:true}]]);
+ for(let n=1;n<=20;n++)await f.post(String(n));
+ const invoke=async id=>f.add([await f.postInput(id),['PluginInvoked',{plugin_id:'7',post_id:id,request_id:String(BigInt(id)+1000n),target:'12'}]]);
+ await invoke('100');await f.post('101');await invoke('200');const page=f.read('pending',{limit:1});assert.deepEqual(page.value.posts.map(p=>p.id),['100']);assert(page.work.candidateRows<=2);assert.equal(page.nextAfter,'100');
+ await f.add([await f.postInput('300',{parent:'100',root:'100',kind:'4'}),['PluginReplyPublished',{plugin_id:'7',request_id:'1100',post_id:'300',parent_id:'100',target:'12'}]]);
+ const next=f.read('pending',{limit:1},page.nextAfter);assert.deepEqual(next.value.posts.map(p=>p.id),['200']);assert.deepEqual(f.read('pending').value.posts.map(p=>p.id),['200']);assert(next.work.candidateRows<=2);
+});
