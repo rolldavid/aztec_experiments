@@ -300,6 +300,17 @@ contract PortalDepositConsentTest is PortalFixtures {
         require(portal.getDeposit(owner)==1 ether && portal.getDeposit(address(this))==0 && portal.depositNonces(owner)==1);
         control.expectRevert();portal.depositFor{value:1 ether}(owner,SECRET,0,deadline,sig);
     }
+    function testRelayedCollateralCanOnlyWithdrawToBeneficiary() public {
+        uint256 deadline=block.timestamp+60;bytes memory sig=signature(address(this),1 ether,SECRET,0,deadline);
+        portal.depositFor{value:1 ether}(owner,SECRET,0,deadline,sig);
+        RootPublisher r=RootPublisher(address(portal.ROLLUP()));
+        bytes32 content=PortalMessages.receipt(true,block.chainid,address(portal),L2,VERSION,owner,uint128(1 ether));
+        r.publish(2,1,Hash.sha256ToField(DataStructures.L2ToL1Msg(DataStructures.L2Actor(L2,VERSION),DataStructures.L1Actor(address(portal),block.chainid),content)));
+        control.expectRevert();portal.withdraw(2,1,0,new bytes32[](0));
+        vm.prank(owner);portal.withdraw(2,1,0,new bytes32[](0));require(owner.balance==1 ether && portal.getDeposit(owner)==0);
+        control.expectRevert();portal.depositFor{value:1 ether}(owner,SECRET,0,deadline,sig);
+        require(portal.depositNonces(owner)==1 && portal.getDeposit(owner)==0,"Old authorization replayed after withdrawal");
+    }
     function testDirectDepositUnchangedAndConsentCannotPreoccupyExistingOwner() public {
         vm.deal(owner,2 ether);vm.prank(owner);portal.deposit{value:1 ether}(SECRET);
         bytes memory sig=signature(address(this),1 ether,SECRET,0,block.timestamp+60);

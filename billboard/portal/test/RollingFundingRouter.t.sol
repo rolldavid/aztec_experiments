@@ -5,6 +5,8 @@ import {BillboardPortal} from "../src/BillboardPortal.sol";
 import {PluginPortal} from "../src/PluginPortal.sol";
 import {AccountingRollup} from "./PortalArtifactRegression.t.sol";
 import {ERC20} from "@oz/token/ERC20/ERC20.sol";
+import {FeeJuicePortal} from "@aztec/core/messagebridge/FeeJuicePortal.sol";
+import {IRollup} from "@aztec/core/interfaces/IRollup.sol";
 import {IERC20} from "@oz/token/ERC20/IERC20.sol";
 interface FundingVm {function deal(address,uint256) external;function addr(uint256) external returns(address);function sign(uint256,bytes32) external returns(uint8,bytes32,bytes32);function prank(address) external;function expectRevert() external;function warp(uint256) external;function chainId(uint256) external;}
 // Labelled reserve/accounting doubles. Mint provisions only test DEX reserves;
@@ -22,6 +24,7 @@ contract FundingDex {
 }
 contract FundingFeeBridge {
  IERC20 public immutable UNDERLYING; address public immutable ROLLUP; uint256 public constant VERSION=1;
+ function INBOX() external view returns(address){return address(AccountingRollup(ROLLUP).getInbox());}
  bool public fail; bytes32 public recipient; uint256 public amount;
  constructor(address t,address r){UNDERLYING=IERC20(t);ROLLUP=r;} function setFail(bool f) external {fail=f;}
  function depositToAztecPublic(bytes32 to,uint256 n,bytes32) external returns(bytes32,uint256){require(!fail,"Fee bridge failed");UNDERLYING.transferFrom(msg.sender,address(this),n);recipient=to;amount+=n;return(bytes32(n),1);}
@@ -53,6 +56,12 @@ contract RollingFundingRouterTest {
  function testExactThreeDepositsRefundAndZeroApprovals() public {
  submit(plan(alice));require(portal.getDeposit(alice)==1 ether && portal.getDeposit(address(router))==0,"Wrong owner");require(alice.balance==9 ether-3000,"Wrong exact cost/refund");require(fee.amount()==100 && fee.recipient()==bytes32(uint256(3)),"Wrong private FPC");require(usdc.balanceOf(address(bok))==200,"Wrong Bok allocation");
  require(address(router).balance==0 && weth.balanceOf(address(router))==0 && feeToken.balanceOf(address(router))==0 && usdc.balanceOf(address(router))==0,"Retained principal");require(weth.allowance(address(router),address(dex))==0 && feeToken.allowance(address(router),address(fee))==0 && usdc.allowance(address(router),address(bok))==0,"Retained approval"); }
+ function testInstalledFeeJuicePortalReceivesExactPaidTokens() public {
+ FeeJuicePortal actual=new FeeJuicePortal(IRollup(address(rollup)),IERC20(address(feeToken)),rollup.getInbox(),1);
+ router=new RollingFundingRouter(address(portal),address(actual),address(bok),address(weth),address(dex),bytes32(uint256(3)));
+ submit(plan(alice));require(feeToken.balanceOf(address(actual))==100 && usdc.balanceOf(address(bok))==200 && portal.getDeposit(alice)==1 ether);
+ require(alice.balance==9 ether-3000 && address(router).balance==0 && feeToken.allowance(address(router),address(actual))==0);
+ }
  function testLastLegFailureRevertsAllSwapsDepositNonceAndFee() public {RollingFundingRouter.Plan memory p=plan(alice);p.bokCommitment=bytes32(0);reject(p);empty();}
  function testFeeLegFailureRollsBackCollateralAndSwaps() public {fee.setFail(true);reject(plan(alice));empty();}
  function testUnavailableLiquidityRejectsWithoutPrincipal() public {dex.configure(true,false);reject(plan(alice));empty();}

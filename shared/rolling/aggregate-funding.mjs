@@ -19,6 +19,8 @@ function record(x,keys){check(x && [Object.prototype,null].includes(Object.getPr
 function hex(x,n=32){check(typeof x==='string' && new RegExp(`^0x[0-9a-f]{${n*2}}$`).test(x) && BigInt(x)>0n);return x;}
 function uint(x,bits=256){check(typeof x==='string' && /^(0|[1-9][0-9]{0,77})$/.test(x) && BigInt(x)<2n**BigInt(bits));return BigInt(x);}
 function field(x){hex(x);check(BigInt(x)<P);return x;}
+function quantity(x){check(typeof x==='string' && /^0x(?:0|[1-9a-f][0-9a-f]{0,63})$/.test(x),'PUBLIC_READ_FAILED');return BigInt(x);}
+function blockSnapshot(x){check(x && Object.getPrototypeOf(x)===Object.prototype,'PUBLIC_READ_FAILED');const out={};for(const k of ['number','hash','timestamp']){const d=Object.getOwnPropertyDescriptor(x,k);check(d && 'value' in d,'PUBLIC_READ_FAILED');out[k]=d.value;}quantity(out.number);quantity(out.timestamp);hex(out.hash);return out;}
 function freeze(x){if(x && typeof x==='object'){Object.values(x).forEach(freeze);Object.freeze(x);}return x;}
 export const collateralConsentTypes=freeze({DepositFor:[{name:'beneficiary',type:'address'},{name:'executor',type:'address'},{name:'amount',type:'uint256'},{name:'secretHash',type:'bytes32'},{name:'nonce',type:'uint256'},{name:'deadline',type:'uint256'}]});
 /** Trusted session supplies authenticated deployment scope and its public RPC adapter (EIP1193).
@@ -41,10 +43,8 @@ export async function prepareAggregateFunding(input,{provider,nowSeconds=()=>Mat
   check(w.chainId===s.chainId && w.canSendTransaction===true && w.canSignTypedData===true,'WALLET_CAPABILITY');check(uint(w.gasBudgetWei)>0n,'USER_GAS_REQUIRED');
   check(provider && typeof provider.request==='function');
   const request=async(method,params)=>{try{return await provider.request({method,params});}catch{fail('PUBLIC_READ_FAILED');}};
-  check(BigInt(await request('eth_chainId',[]))===BigInt(s.chainId),'CHAIN');
-  const block=await request('eth_getBlockByNumber',['latest',false]);
-  check(block && typeof block.number==='string' && /^0x[0-9a-f]+$/.test(block.number));hex(block.hash);
-  check(typeof block.timestamp==='string' && /^0x[0-9a-f]+$/.test(block.timestamp));
+  check(quantity(await request('eth_chainId',[]))===BigInt(s.chainId),'CHAIN');
+  const block=blockSnapshot(await request('eth_getBlockByNumber',['latest',false]));
   const now=nowSeconds();check(Number.isSafeInteger(now) && now>=0 && BigInt(block.timestamp)<=BigInt(now) && BigInt(now)-BigInt(block.timestamp)<=60n,'STALE_QUOTE');
   const tag=block.number;
   for(const [address,expected] of [[s.router,s.routerCodeHash],[s.quoter,s.quoterCodeHash]]){
@@ -62,14 +62,14 @@ export async function prepareAggregateFunding(input,{provider,nowSeconds=()=>Mat
     check(q>0n,'LIQUIDITY_UNQUALIFIED');return {amount,maxEth:((q*BigInt(10000+a.slippageBps)+9999n)/10000n).toString(),poolFee,quotedEth:q.toString()};
   };
   const fee=await quote(s.feeToken,a.feeAmount,a.feePoolFee), credit=await quote(s.bokToken,a.bokAmount,a.bokPoolFee);
-  const current=await request('eth_getBlockByNumber',[tag,false]);check(current?.hash===block.hash,'QUOTE_REORG');
-  check(nowSeconds()-now<=30,'STALE_QUOTE');
+  const current=blockSnapshot(await request('eth_getBlockByNumber',[tag,false]));check(current.hash===block.hash && current.timestamp===block.timestamp,'QUOTE_REORG');
   const deadline=(BigInt(block.timestamp)+120n).toString();
   const plan={beneficiary:w.address,collateral:a.collateralWei,collateralSecretHash:a.collateralSecretHash,
     fee:{amount:fee.amount,maxEth:fee.maxEth,poolFee:fee.poolFee},feeSecretHash:a.feeSecretHash,
     bok:{amount:credit.amount,maxEth:credit.maxEth,poolFee:credit.poolFee},bokCommitment:a.bokCommitment,bokSecretHash:a.bokSecretHash,nonce,deadline};
   const value=(BigInt(plan.collateral)+BigInt(fee.maxEth)+BigInt(credit.maxEth)).toString();
-  const balance=await request('eth_getBalance',[w.address,'latest']);check(typeof balance==='string' && /^0x[0-9a-f]+$/.test(balance) && BigInt(balance)>=BigInt(value)+BigInt(w.gasBudgetWei),'INSUFFICIENT_USER_FUNDS');
+  const balance=await request('eth_getBalance',[w.address,'latest']);check(quantity(balance)>=BigInt(value)+BigInt(w.gasBudgetWei),'INSUFFICIENT_USER_FUNDS');
+  const finished=nowSeconds();check(Number.isSafeInteger(finished) && finished>=now && finished-now<=30 && BigInt(finished)<=BigInt(deadline),'STALE_QUOTE');
   const consent={domain:{name:'RollingCollateral',version:'1',chainId:s.chainId,verifyingContract:s.collateralPortal},types:collateralConsentTypes,
     value:{beneficiary:w.address,executor:s.router,amount:plan.collateral,secretHash:plan.collateralSecretHash,nonce,deadline}};
   const result=freeze({kind:'rolling-aggregate-eth-v1',scope:s,plan,value,quoteAnchor:{number:tag,hash:block.hash,timestamp:block.timestamp},

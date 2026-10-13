@@ -10,6 +10,7 @@ interface FundingWETH is IERC20 { function deposit() external payable; function 
 interface FundingFeePortal {
     function UNDERLYING() external view returns (IERC20);
     function ROLLUP() external view returns (address);
+    function INBOX() external view returns (address);
     function VERSION() external view returns (uint256);
     function depositToAztecPublic(bytes32,uint256,bytes32) external returns (bytes32,uint256);
 }
@@ -49,13 +50,13 @@ contract RollingFundingRouter is ReentrancyGuard {
         require(address(feeToken).code.length>0 && address(bokToken).code.length>0 && address(feeToken)!=address(bokToken)
             && address(feeToken)!=weth_ && address(bokToken)!=weth_,"Invalid tokens");
         require(collateralPortal.L1_CHAIN_ID()==block.chainid && bokPortal.chainId()==block.chainid
-            && feePortal.ROLLUP()==address(collateralPortal.ROLLUP()) && feePortal.VERSION()==collateralPortal.VERSION()
+            && feePortal.ROLLUP()==address(collateralPortal.ROLLUP()) && feePortal.INBOX()==address(collateralPortal.INBOX()) && feePortal.VERSION()==collateralPortal.VERSION()
             && bokPortal.version()==collateralPortal.VERSION() && address(bokPortal.inbox())==address(collateralPortal.INBOX())
             && address(bokPortal.outbox())==address(collateralPortal.OUTBOX()),"Mismatched scope");
     }
     function fund(Plan calldata p, bytes calldata consent) external payable nonReentrant {
         require(block.chainid==chainId && p.beneficiary==msg.sender && block.timestamp<=p.deadline,"Invalid funding owner/deadline");
-        require(p.fee.amount>0 && p.bok.amount>0 && p.bok.amount<=type(uint128).max,"Invalid allocation");
+        require(p.fee.amount>0 && p.fee.amount<=type(uint128).max && p.bok.amount>0 && p.bok.amount<=type(uint128).max,"Invalid allocation");
         require(msg.value==p.collateral+p.fee.maxEth+p.bok.maxEth,"Invalid funding value");
         uint256 baseline=address(this).balance-msg.value;
         uint256 wrappedBefore=weth.balanceOf(address(this));
@@ -64,10 +65,11 @@ contract RollingFundingRouter is ReentrancyGuard {
         uint256 bokEth=_buy(bokToken,p.bok);
         collateralPortal.depositFor{value:p.collateral}(p.beneficiary,p.collateralSecretHash,p.nonce,p.deadline,consent);
         uint256 beforeFee=feeToken.balanceOf(address(this));
+        uint256 portalFeeBefore=feeToken.balanceOf(address(feePortal));
         feeToken.forceApprove(address(feePortal),p.fee.amount);
         feePortal.depositToAztecPublic(privateFpc,p.fee.amount,p.feeSecretHash);
         feeToken.forceApprove(address(feePortal),0);
-        require(feeToken.balanceOf(address(this))==beforeFee-p.fee.amount,"Fee debit mismatch");
+        require(feeToken.balanceOf(address(this))==beforeFee-p.fee.amount && feeToken.balanceOf(address(feePortal))==portalFeeBefore+p.fee.amount,"Fee debit mismatch");
         uint256 beforeBok=bokToken.balanceOf(address(this));
         bokToken.forceApprove(address(bokPortal),p.bok.amount);
         bokPortal.deposit(p.bokCommitment,uint128(p.bok.amount),p.bokSecretHash);
