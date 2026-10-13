@@ -766,14 +766,20 @@ class FinalReceipt(unittest.TestCase):
         for boundary in ('success','disk-failure'):
             with self.subTest(boundary=boundary),tempfile.TemporaryDirectory() as t:
                 ns=self.environment(t);events=[]
-                # Use the actual packaged helpers only while building the report.
-                # Restore the original unavailable startup source before testing receipts.
-                with patch.dict(ns,{'RELEASE':ROOT,'PINS':{**ns['PINS'],'startup':hashlib.sha256(pathlib.Path(b.__file__).read_bytes()).hexdigest()}}):
-                    report=qualifier_fixture();q={'schemaVersion':1,'passed':True,'stage':'complete','scope':'current-network-query-only','manifestSha256':'b'*64,
-                        'checks':ns['qualification_projection'](report,True),'readiness':ready_fixture(),'anchors':ns['qualification_anchors'](report['checks'])}
+                # Successful receipt validation also uses the actual pinned helpers.
+                ns['RELEASE']=ROOT;ns['PINS']['startup']=hashlib.sha256(pathlib.Path(b.__file__).read_bytes()).hexdigest()
+                report=qualifier_fixture();q={'schemaVersion':1,'passed':True,'stage':'complete','scope':'current-network-query-only','manifestSha256':'b'*64,
+                    'checks':ns['qualification_projection'](report,True),'readiness':ready_fixture(),'anchors':ns['qualification_anchors'](report['checks'])}
                 ns['exclusive_record'](ns['BASE']/'qualification/result.json',q)
                 ns['service_observations']=lambda:{};ns['emit_diagnostic']=lambda data:events.append(data)
-                ns['upload_receipt']=lambda data:events.append('upload');ns['run']=lambda *a,**k:events.append('shutdown')
+                ns['upload_receipt']=lambda data:events.append('upload');startup_calls=[]
+                def run(args,**kwargs):
+                    if args==['/usr/bin/python3',str(ROOT/'deploy/prover/bootstrap.py'),'--startup-observation']:
+                        self.assertEqual(kwargs,{'timeout':3,'capture':True});startup_calls.append(args)
+                        return json.dumps({'available':False}) # labelled startup observation fixture
+                    self.assertEqual(args,['systemctl','start','--no-block','rolling-budget.service'])
+                    self.assertEqual(kwargs,{'timeout':5});events.append('shutdown')
+                ns['run']=run
                 if boundary=='disk-failure':
                     with patch.object(ns['os'],'fsync',side_effect=OSError('PRIVATE_SENTINEL')):
                         with self.assertRaises(OSError):ns['final_receipt']()
@@ -782,6 +788,7 @@ class FinalReceipt(unittest.TestCase):
                 else:
                     ns['final_receipt']();ns['final_receipt']()
                     self.assertNotIn('shutdown',events);self.assertEqual(events[-1],'upload');self.assertEqual(len(events),2)
+                self.assertEqual(len(startup_calls),1)
 
     def test_service_state_projection_and_failures(self):
         good='LoadState=loaded\nActiveState=failed\nSubState=failed\nResult=oom-kill\nExecMainCode=2\nExecMainStatus=9\nNRestarts=0'
