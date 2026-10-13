@@ -72,7 +72,12 @@ export async function runPrivateBokRequest({request,board,escrow,store,provider,
  if(saved)assert.deepEqual(saved.binding,binding,'Hosted request identity changed');
  const current=await board.readRequest(request.postId);
  assert(current&&current.requestId===request.requestId&&current.target===request.target&&current.pluginId===request.pluginId,'Canonical invocation changed');
- const metering=privateBokMetering({provider,escrow,store,identity,limits});
+ const guardedProvider={quote:(...args)=>provider.quote(...args),execute:async(...args)=>{
+  const final=await board.readRequest(request.postId);
+  assert(final?.usable&&!final.replied&&final.requestId===request.requestId&&final.target===request.target&&final.pluginId===request.pluginId,'Invocation changed before provider execution');
+  return provider.execute(...args);
+ }};
+ const metering=privateBokMetering({provider:guardedProvider,escrow,store,identity,limits});
  if(saved?.phase==='finished')return {status:'finished',replayed:false};
  if(saved&& !['reply-intent','reply-confirmed'].includes(saved.phase))throw Error('Hosted request unresolved; reconcile original journal without another paid call');
  if(!saved){
@@ -92,7 +97,7 @@ export async function runPrivateBokRequest({request,board,escrow,store,provider,
   // permission to invoke it again (a crash may have crossed the call boundary).
   try{await escrow.publish_reply(...args,saved.operation);}catch{/* Reconcile exact original operation below. */}
  }
- if(saved.phase==='reply-intent'){
+ if(['reply-intent','reply-confirmed'].includes(saved.phase)){
   const observed=await escrow.inspectOperation(saved.operation.operationId);
   assert(observed.status==='succeeded'&&observed.canonical&&observed.method==='publish_reply'&&observed.argsDigest===saved.operation.argsDigest,'Reply transaction unresolved');
   const published=await board.readRequest(request.postId);assert(published?.replied&&published.target===request.target,'Authenticated Rolling reply unavailable');

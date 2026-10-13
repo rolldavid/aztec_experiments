@@ -25,6 +25,7 @@ import {provingEnabledForNode} from '../shared/proving-policy.mjs';
 
 /** Composition root: only this module knows which implementations are selected. */
 export async function runHostedService({config,env=process.env,onError=error=>console.error('Plugin action failed:',error.message)}) {
+  assert(config.applicationProfile===undefined||config.applicationProfile==='rolling','Unsupported hosted application profile');
   if(config.applicationProfile==='rolling')return runRollingHostedService({config,env,onError});
   if(!env.VENICE_WALLET_PRIVATE_KEY)throw Error('Configure VENICE_WALLET_PRIVATE_KEY locally before starting the service');
   const repository=env.PLUGIN_REPOSITORY||config.repository,api=githubApi({token:env.GITHUB_TOKEN}),allowWrites=env.PLUGIN_GITHUB_WRITES==='true';
@@ -80,6 +81,18 @@ export async function acquireHostedLease(directory){
  return {async assertHeld(){assert(!closed,'Hosted lease closed');assert(same(await fs.lstat(lockPath)),'Hosted lease path changed');},close};
 }
 
+/** Decode private actor material in memory; neither parser text nor raw SDK
+ * diagnostics may escape this boundary into CLI errors or service logs. */
+export async function readHostedActor(config){
+ try{
+  const actor=config.operatorFile?JSON.parse(await fs.readFile(config.operatorFile,'utf8')):config.operator;
+  assert(actor&&Object.getPrototypeOf(actor)===Object.prototype);
+  const fields=Object.getOwnPropertyDescriptors(actor);assert(Reflect.ownKeys(fields).every(k=>['address','secret','salt','signingKey'].includes(k)));
+  for(const key of ['secret','salt','signingKey'])assert(fields[key]&&Object.hasOwn(fields[key],'value')&&typeof fields[key].value==='string'&&/^0x[0-9a-f]{64}$/.test(fields[key].value));
+  return {secret:Fr.fromString(fields.secret.value),salt:Fr.fromString(fields.salt.value),signingKey:GrumpkinScalar.fromString(fields.signingKey.value)};
+ }catch{throw Error('Invalid private operator configuration');}
+}
+
 /** Explicit Rolling composition; the legacy account escrow is never selected. */
 export async function runRollingHostedService({config,env=process.env,onError=()=>{}}){
  const [{rollingOperatorConfig,rollingPxeOptions,operatorNodeFetch,fileState},{loadRollingArtifacts},{jsonStringify},
@@ -105,10 +118,10 @@ export async function runRollingHostedService({config,env=process.env,onError=()
   const key=env.PLUGIN_QUERY_API_KEY;if(!config.development)assert(typeof key==='string','Operator query capability required');
   const node=createAztecNodeClient(config.nodeUrl,{fetch:operatorNodeFetch({endpoint:config.nodeUrl,key,serialize:jsonStringify})});
   const info=await node.getNodeInfo();assert.equal(info.realProofs,!config.development);assert.equal(String(info.l1ChainId),scope.chainId);assert.equal(String(info.rollupVersion),scope.rollupVersion);assert.equal(String(info.l1ContractAddresses.rollupAddress).toLowerCase(),scope.rollupAddress);
-  const actor=config.operatorFile?JSON.parse(await fs.readFile(config.operatorFile,'utf8')):config.operator;
+  const actor=await readHostedActor(config);
   const pxe=await rollingPxeOptions(config.development,async()=>({backend:BackendType.NativeUnixSocket,...await prepareNativeRuntime({}),threads:1}));
   wallet=await EmbeddedWallet.create(node,{ephemeral:true,pxe});
-  const account=await wallet.createSchnorrInitializerlessAccount(Fr.fromString(actor.secret),Fr.fromString(actor.salt),GrumpkinScalar.fromString(actor.signingKey),'public Bok operator');
+  const account=await wallet.createSchnorrInitializerlessAccount(actor.secret,actor.salt,actor.signingKey,'public Bok operator');
   assert.equal(String(account.address),config.operatorAddress);assert(await getFeeJuiceBalance(account.address,node)>0n);
   const [boardRaw,bokRaw]=loadRollingArtifacts(),boardArtifact=loadContractArtifact(boardRaw),artifact=loadContractArtifact(bokRaw);
   const indexScope={chainId:scope.chainId,rollupVersion:scope.rollupVersion,rollupAddress:scope.rollupAddress,boardAddress:scope.boardAddress,classId:String((await getContractClassFromArtifact(boardArtifact)).id)};
@@ -130,11 +143,11 @@ export async function runRollingHostedService({config,env=process.env,onError=()
      bokRunner({runner:createAgent({model,toolbox,maxCalls:config.limits?.maxCalls??8,instructions:'You are bok, the board development assistant. Answer the explicit request; do not merge or deploy.'})}).run(input)});
    }});
   return {address:server.address,close};
- }catch(error){try{await close();}catch(cleanup){throw new AggregateError([error,cleanup],'Rolling hosted startup and cleanup failed');}throw error;}
+ }catch{let cleanupFailed=false;try{await close();}catch{cleanupFailed=true;}throw Error(cleanupFailed?'Rolling hosted startup failed; owned cleanup requires attention':'Rolling hosted startup failed');}
 }
 
 if(process.argv[1]&&import.meta.url===pathToFileURL(process.argv[1]).href){
-  const config=JSON.parse(await fs.readFile(process.argv[2],'utf8'));
+  let config;try{config=JSON.parse(await fs.readFile(process.argv[2],'utf8'));}catch{throw Error('Invalid service configuration');}
   const service=await runHostedService({config});console.log('Plugin service listening on',service.address);
   let closing=false;async function close(){if(closing)return;closing=true;try{await service.close();}finally{await Barretenberg.destroySingleton();BarretenbergSync.destroySingleton();}}
   const shutdown=()=>close().then(()=>process.exit(0),()=>process.exit(1));

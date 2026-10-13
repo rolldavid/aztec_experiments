@@ -130,3 +130,35 @@ test('actual SDK board projection gates canonical plugin, moderation, anchor and
   state.realProofs=true;await assert.rejects(port.readRequest(f(1)));
  }finally{BarretenbergSync.destroySingleton();}
 });
+
+test('restarted confirmed reply must remain canonical and linked before releasing unused credits',async()=>{
+ for(const invalidation of ['operation','link']){
+  const x=fixture(),finish=x.args.escrow.finish;
+  x.args.escrow.finish=async()=>{throw Error('controlled shutdown before finish');};
+  await assert.rejects(x.run(),/Chain operation unresolved/);assert.equal(x.store.read().hostedPrivateBok.phase,'reply-confirmed');
+  if(invalidation==='operation')x.control.unknownReply=true;else x.current.replied=false;
+  x.args.escrow.finish=finish;await assert.rejects(x.run(),/Reply transaction unresolved|Authenticated Rolling reply/);
+  assert.deepEqual(x.events,['reserve','paid','settle','publish_reply']);assert.equal(x.row.refunded,0n);
+ }
+});
+
+test('moderation drift during reservation prevents the actual provider call and preserves its fence',async()=>{
+ const x=fixture(),reserve=x.args.escrow.reserve;
+ x.args.escrow.reserve=async(...args)=>{const result=await reserve(...args);x.current.usable=false;return result;};
+ await assert.rejects(x.run(),/unknown/);
+ assert.deepEqual(x.events,['reserve','close_uncertain']);assert.equal(x.row.reserved,110n);assert.equal(x.row.state,3);
+ x.current.usable=true;await assert.rejects(x.run(),/unresolved/);assert(!x.events.includes('paid'));
+});
+
+test('private actor file and SDK decode failures cannot leak private sentinels',async()=>{
+ const fs=await import('node:fs/promises'),os=await import('node:os'),path=await import('node:path');
+ const {inspect}=await import('node:util'),{readHostedActor}=await import('../main.mjs');
+ const root=await fs.mkdtemp(path.join(os.tmpdir(),'bok-private-')),file=path.join(root,'actor.json'),sentinel='PRIVATE-ACTOR-SENTINEL';
+ try{
+  await fs.writeFile(file,'{"secret":"'+sentinel,{mode:0o600});
+  for(const config of [{operatorFile:file},{operator:{secret:sentinel,salt:f(1),signingKey:f(2)}},{operator:{secret:'0x'+'f'.repeat(64),salt:f(1),signingKey:f(2)}}]){
+   await assert.rejects(readHostedActor(config),error=>{assert.equal(error.message,'Invalid private operator configuration');assert(!inspect(error).includes(sentinel));assert.equal(error.cause,undefined);return true;});
+  }
+  const actor=await readHostedActor({operator:{secret:f(1),salt:f(2),signingKey:f(3)}});assert.equal(String(actor.secret),f(1));
+ }finally{await fs.rm(root,{recursive:true,force:true});}
+});
