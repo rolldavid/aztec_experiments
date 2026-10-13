@@ -79,7 +79,7 @@ function component(fields,length){
   check(bytes.slice(length).every(n=>n===0),'ROLLING_INVALID_RESPONSE');return String.fromCharCode(...bytes.slice(0,length));
 }
 const moderationTypes=new Set(['moderate-post','moderate-avatar','reject-subboard','set-main-policy']);
-const keys={'moderate-post':['post','reason'],'moderate-avatar':['name','reason'],'reject-subboard':['subboard','reason'],'set-main-policy':['rules'],'claim-deposit':['receipt','feeReceipt'],preference:['expectedRevision','kind','target','enabled'],'read-marker':['expectedRevision','thread','throughBlock'],bio:['name','expectedVersion','content'],avatar:['name','expectedVersion','width','height','data'],name:['first','last'],subboard:['slug','name','description','rules'],like:['post'],unlike:['post'],withdraw:['deposit'],screen:['deposit'],
+const keys={'moderate-post':['post','reason'],'moderate-avatar':['name','reason'],'reject-subboard':['subboard','reason'],'set-main-policy':['rules'],'claim-deposit':['receipt','feeReceipt','bokReceipt'],preference:['expectedRevision','kind','target','enabled'],'read-marker':['expectedRevision','thread','throughBlock'],bio:['name','expectedVersion','content'],avatar:['name','expectedVersion','width','height','data'],name:['first','last'],subboard:['slug','name','description','rules'],like:['post'],unlike:['post'],withdraw:['deposit'],screen:['deposit'],
   bok:['deposit','content','name','subboard','budget'],post:['deposit','content','name','subboard'],reply:['deposit','content','name','subboard','parent','root'],
   quote:['deposit','content','name','subboard','reference'],repost:['deposit','content','name','subboard','reference']};
 const methods={'moderate-post':'remove_post','moderate-avatar':'remove_avatar','reject-subboard':'reject_subboard','set-main-policy':'set_main_policy',bok:'authorize_request','claim-deposit':'claim_deposit',preference:'set_preference','read-marker':'mark_thread_read',bio:'set_bio',avatar:'set_avatar',name:'register_name',subboard:'create_subboard',like:'set_like',unlike:'set_like',withdraw:'withdraw',screen:'screen',post:'post',reply:'post',quote:'post',repost:'post'};
@@ -141,6 +141,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
   const session=accountSession;
   const owner=session?.owner?.toString();
   const fundingProvider=funding?.provider,claimStore=funding?.claimStore;
+  const loadAggregate=typeof funding?.loadAggregate==='function'?funding.loadAggregate.bind(funding):null;
   const fixed=deployment&&{board:deployment.board.address.toString(),network:clone(deployment.network),portal:deployment.portal,
     fee:deployment.privateFee.address.toString(),gas:JSON.parse(JSON.stringify(deployment.privateFee.gasSettings,(_,v)=>typeof v==='bigint'?v.toString():v)),proofsEnabled:deployment.proofsEnabled!==false};
   const bok=deployment?.bok&&{address:deployment.bok.address.toString(),operator:deployment.bok.operator.toString(),pluginId:field(deployment.bok.pluginId,true)};
@@ -183,14 +184,22 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
     const receipt=exactData(metadata,['txHash','blockHash','blockNumber','sender','nonce','amount','leafIndex','messageKey','secretHash']);
     await guard();const header=await session.wallet.pxe.getSyncedBlockHeader();await guard();
     const anchor={number:Number(header.globalVariables.blockNumber),hash:(await header.hash()).toString(),root:header.state.l1ToL2MessageTree.root.toString()};
+    const aggregate=loadAggregate?await loadAggregate(receipt.txHash):null;await guard();
     let claimScope={...fixed.network,portal:fixed.portal,recipient:fixed.board};
+    let secrets={walletSecret:session.walletSecret,...(kind==='collateral'?{walletSalt:field(String(session.walletSalt))}:{})};
+    if(kind==='bok'){
+      check(bok&&aggregate?.intent&&aggregate.bokScope,'ROLLING_FUNDING_UNAVAILABLE');
+      claimScope=exactData(aggregate.bokScope,['chainId','version','rollup','portal','recipient','token']);
+      check(claimScope.recipient===bok.address&&['chainId','version','rollup'].every(key=>claimScope[key]===fixed.network[key]),'ROLLING_FUNDING_MISMATCH');
+      secrets={recipientSalt:field(aggregate.recipientSalt,true),bridgeSecret:field(aggregate.bridgeSecret,true)};
+    }
     if(kind==='private-fee'){
       const info=await session.node.getNodeInfo();await guard();
       claimScope={...fixed.network,portal:info.l1ContractAddresses.feeJuicePortalAddress.toString().toLowerCase(),
         token:info.l1ContractAddresses.feeJuiceAddress.toString().toLowerCase(),recipient:fixed.fee};
     }
     const verified=await sdk.prepareFundingClaim({kind,scope:claimScope,receipt,anchor,owner,
-      secrets:{walletSecret:session.walletSecret,...(kind==='collateral'?{walletSalt:field(String(session.walletSalt))}:{})},
+      secrets,...(aggregate?{aggregateIntent:aggregate.intent}:{}),
       privateFeeArtifact:deployment.privateFee.artifact,ethProvider:fundingProvider,node:session.node,claimStore,contextGuard:guard});
     await guard();check(verified.status==='claim-ready','ROLLING_FUNDING_NOT_READY');return verified.claim;
   }
@@ -212,11 +221,17 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
     check(claim.contract===fixed.board&&claim.method==='claim_deposit','ROLLING_FUNDING_MISMATCH');
     return plain(claim.args);
   }
+  async function bokFundingClaim(action){
+    check(bok&&action.feeReceipt&&action.bokReceipt&&action.receipt.txHash===action.feeReceipt.txHash&&action.receipt.txHash===action.bokReceipt.txHash,'ROLLING_FUNDING_MISMATCH');
+    const claim=await fundingClaim('bok',action.bokReceipt);
+    check(claim.contract===bok.address&&claim.method==='claim','ROLLING_FUNDING_MISMATCH');
+    return {scope:clone(bok),args:plain(claim.args)};
+  }
   const operation=id=>`ROLLING_WORKFLOW_V1:${id}`;
   function summary(record){return {intentId:record.id,action:clone(record.action),status:record.status,maximumFee:record.maximumFee,
     nonce:record.nonce,txHash:record.txHash??null,...(record.moderation?{moderation:clone(record.moderation)}:{}),stage:record.bok?`bok-${record.bok.phase}`:'single-transaction',...(record.bok?{bok:{phase:record.bok.phase,budget:record.bok.budget,availableCredit:record.bok.availableCredit,authorizationTxHash:record.bok.authorizationTxHash??null,...(record.bok.phase==='post'?{mainPolicyVersion:record.args[2].expected_main_policy_version,localPolicyVersion:record.args[2].expected_local_policy_version}:{})}}:{}),...(record.replacementReview?{replacementReview:clone(record.replacementReview)}:{}),
     ...(preferenceAction(record)?{inclusionHistory:clone(record.inclusionHistory??[])}:{})};}
-  function checkBokRecord(record){if(record?.bok)check(bok&&JSON.stringify(record.bok.scope)===JSON.stringify(bok),'ROLLING_CONTEXT_CHANGED');}
+  function checkBokRecord(record){for(const savedScope of [record?.bok?.scope,record?.fundingBok?.scope])if(savedScope)check(bok&&JSON.stringify(savedScope)===JSON.stringify(bok),'ROLLING_CONTEXT_CHANGED');}
   async function savedIntent(id){const saved=await (await slot()).read();check(saved.value?.id===id,'ROLLING_INTENT_NOT_FOUND');checkBokRecord(saved.value);return saved;}
   function acknowledge(found,expected){
     check(found&&found.operation===expected.operation&&found.txHash===expected.txHash&&
@@ -416,12 +431,18 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
     await guard();
   }
   async function selectedContract(record){return record.bok?.phase==='authorize'?bokContract():contract();}
-  function interaction(board,record){
+  async function interaction(board,record){
     check((record.bok?.phase==='post'?'post_with_bok':methods[record.action.type])===record.method,'ROLLING_INTENT_CHANGED');
-    const call=board.methods[record.method](...record.args);
+    let call=board.methods[record.method](...record.args);
     const selectedArtifact=record.bok?.phase==='authorize'?deployment.bok.artifact:deployment.board.artifact;
     const abi=[...selectedArtifact.functions,...(selectedArtifact.nonDispatchPublicFunctions??[])].find(f=>f.name===record.method);check(abi,'ROLLING_ABI_MISMATCH');
-    const encoded=sdk.encodeArguments(abi,record.args).map(f=>f.toString());
+    let encoded=sdk.encodeArguments(abi,record.args).map(f=>f.toString());
+    if(record.action.type==='claim-deposit'&&record.action.bokReceipt!==undefined){
+      checkBokRecord(record);check(record.fundingBok&&typeof sdk.BatchCall==='function','ROLLING_FUNDING_UNAVAILABLE');
+      const bokAbi=deployment.bok.artifact.functions.find(f=>f.name==='claim');check(bokAbi,'ROLLING_ABI_MISMATCH');
+      encoded=[encoded,sdk.encodeArguments(bokAbi,record.fundingBok.args).map(f=>f.toString())];
+      call=new sdk.BatchCall(session.wallet,[call,(await bokContract()).methods.claim(...record.fundingBok.args)]);
+    }
     if(record.encoded)check(JSON.stringify(encoded)===JSON.stringify(record.encoded),'ROLLING_INTENT_CHANGED');
     return {call,encoded};
   }
@@ -478,6 +499,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
       const moderation=moderationTypes.has(action.type)?await moderationArguments(action,board):null;
       const args=moderation?moderation.args:plain(await argumentsFor(action,board,nonce));
       const record={version:1,id,action,args,method:methods[action.type],nonce,predecessor,status:'prepared',...(moderation?{moderation:moderation.review}:{})};
+      if(action.type==='claim-deposit'&&action.bokReceipt!==undefined)record.fundingBok=await bokFundingClaim(action);
       if(action.type==='bok'){
         const budget=uint128(action.budget);check(budget>0n);const available=await bokCredit();check(available>=budget,'ROLLING_BOK_CREDIT_INSUFFICIENT');
         const draft=args[2],requestId=field(sdk.Fr.random().toString(),true);
@@ -489,7 +511,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
       }
       if(preferenceAction(record)){record.originalPreferenceHead=await preferenceHead();check(record.originalPreferenceHead.revision===action.expectedRevision,'ROLLING_RECOVERY_CONTEXT_CHANGED');}
       if(action.type==='read-marker')record.originalMarker=await markerContext(record);
-      const selected=interaction(await selectedContract(record),record);record.encoded=selected.encoded;
+      const selected=await interaction(await selectedContract(record),record);record.encoded=selected.encoded;
       progress('estimating');const estimated=await sdk.estimatePrivateFeeTransaction({wallet:session.wallet,node:session.node,interaction:selected.call,
         prepared:await payment(action),from:session.owner,guard});
       record.maximumFee=estimated.maximumFee.toString();await guard();await store.write(prior,record);return summary(record);
@@ -507,7 +529,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
       const record={...prior,id:field(sdk.Fr.random().toString(),true),method:'post_with_bok',args:[...postArgs,bok.pluginId,prior.bok.requestId],
         status:'prepared',txHash:null,encoded:undefined,predecessor:{operation:operation(prior.id),txHash:prior.txHash},
         bok:{...prior.bok,phase:'post',authorizationTxHash:prior.bok.authorizationTxHash??prior.txHash}};
-      const selected=interaction(await contract(),record);record.encoded=selected.encoded;
+      const selected=await interaction(await contract(),record);record.encoded=selected.encoded;
       progress('estimating');const estimate=await sdk.estimatePrivateFeeTransaction({wallet:session.wallet,node:session.node,interaction:selected.call,
         prepared:await payment(),from:session.owner,guard});record.maximumFee=estimate.maximumFee.toString();
       await waitingBok(record);await guard();await (await slot()).write(saved,record);return summary(record);
@@ -557,7 +579,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
         check(same(snapshot.head,expectedHead),'ROLLING_RECOVERY_CONTEXT_CHANGED');
         check(record.action.type==='read-marker'?Object.hasOwn(reviewInput,'expectedMarkerHash')&&snapshot.marker.blockHash===reviewInput.expectedMarkerHash:!Object.hasOwn(reviewInput,'expectedMarkerHash'),'ROLLING_RECOVERY_CONTEXT_CHANGED');
         await session.journal.allowReplacement(operation(id),{requireMissingAnchor:true});await session.journal.assertCanStart();
-        const selected=interaction(await contract(),record);
+        const selected=await interaction(await contract(),record);
         const estimated=await sdk.estimatePrivateFeeTransaction({wallet:session.wallet,node:session.node,interaction:selected.call,prepared:await payment(),from:session.owner,guard});
         const replacementReview={sourceTxHash:snapshot.currentTxHash,head:snapshot.head,marker:snapshot.marker,maximumFee:estimated.maximumFee.toString()};
         const next={...record,status:'replacement-prepared',replacementReview};
@@ -576,10 +598,11 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
       }
       await session.journal.assertCanStart(); // Before private simulation, not merely before send.
       if(saved.value.action.type==='claim-deposit')check(same(await collateralClaim(saved.value.action),saved.value.args),'ROLLING_FUNDING_MISMATCH');
+      if(saved.value.fundingBok)check(same(await bokFundingClaim(saved.value.action),saved.value.fundingBok),'ROLLING_FUNDING_MISMATCH');
       await checkModeration(saved.value);
       if(saved.value.bok?.phase==='authorize'){const available=await bokCredit();check(available>=BigInt(saved.value.bok.budget),'ROLLING_BOK_CREDIT_INSUFFICIENT');}
       if(saved.value.bok?.phase==='post')await waitingBok(saved.value);
-      const selected=interaction(await selectedContract(saved.value),saved.value);progress('estimating');
+      const selected=await interaction(await selectedContract(saved.value),saved.value);progress('estimating');
       const estimated=await sdk.estimatePrivateFeeTransaction({wallet:session.wallet,node:session.node,interaction:selected.call,prepared:await payment(saved.value.action),from:session.owner,guard});
       const maximumFee=replacing?saved.value.replacementReview.maximumFee:saved.value.maximumFee;
       check(estimated.maximumFee<=BigInt(maximumFee),'ROLLING_FEE_CHANGED');await guard();
