@@ -39,11 +39,13 @@ function projected(post,event,root,parent){
  * hash must be actual pinned SDK Poseidon; plain digest equality is not authority.
  * Returns aggregates only. Owner/preference associations remain in caller RAM.
  */
-export async function assertRollingNotificationAcceptance(input){
+export async function assertRollingNotificationAcceptance(input,{proofsEnabled=true}={}){
  try{
+  check(typeof proofsEnabled==='boolean');
   const o=record(input,['scope','initialHead','root','reply','subscription','marker','markerContext','subscribedPreferences','markedPreferences','recoveredPreferences','publicPage','browser','receiver','accounting','hash']);check(typeof o.hash==='function');const hash=o.hash;
   const root=transaction(o.root,'PostPublished'),reply=transaction(o.reply,'PostPublished'),subscription=transaction(o.subscription),marker=transaction(o.marker);
   const d={};for(const k of ['scope','initialHead','markerContext','subscribedPreferences','markedPreferences','recoveredPreferences','publicPage','browser','receiver','accounting'])d[k]=copy(o[k]);
+  check(proofsEnabled||d.scope.chainId==='31337');
   const rows=[root,subscription,reply,marker];check(new Set(rows.map(r=>r.txHash)).size===4);for(let i=1;i<4;i++)check(earlier(rows[i-1],rows[i]));
   check(same(d.initialHead,{initialized:false,schema:1,revision:'0',digest:'0'}));
   const rootEvent=root.events[0],replyEvent=reply.events[0],rootId=rootEvent.payload.id,replyId=replyEvent.payload.id;check(rootId!==replyId);
@@ -62,11 +64,12 @@ export async function assertRollingNotificationAcceptance(input){
   check(same(unread.posts.map(p=>p.id),[replyId])&&read.posts.length===0&&restored.posts.length===0);
   const b=d.browser;check(b.schemaVersion===1&&b.passed===true&&b.stage==='complete'&&b.timedOut===false&&b.diagnostic===null&&Number.isSafeInteger(b.elapsedMs)&&b.elapsedMs>0&&b.elapsedMs<=150000&&b.cleanup?.contextClosed===true&&b.cleanup?.browserClosed===true);
   for(const k of NOTIFICATION_BROWSER_CHECKS)check(b.checks?.[k]===true);
-  check(b.traffic?.proofSubmits===2&&b.traffic.nodeSubmissions===2&&b.traffic.completedWritePhases===2&&b.traffic.writePhaseOpen===false);
-  for(const k of ['proofPolls','feedRequests','boardRequests','walletAssets','privateRequests'])check(Number.isSafeInteger(b.traffic[k])&&b.traffic[k]>0);
+  check(b.traffic?.proofSubmits===(proofsEnabled?2:0)&&b.traffic.nodeSubmissions===2&&b.traffic.completedWritePhases===2&&b.traffic.writePhaseOpen===false);
+  if(proofsEnabled)check(Number.isSafeInteger(b.traffic.proofPolls)&&b.traffic.proofPolls>0);else check(b.traffic.proofPolls===0);
+  for(const k of ['feedRequests','boardRequests','walletAssets','privateRequests'])check(Number.isSafeInteger(b.traffic[k])&&b.traffic[k]>0);
   for(const k of ['l1Submissions','deniedWrites','blockedRequests','inspectionErrors'])check(b.traffic[k]===0);
   const r=record(d.receiver,['proofJobs','completedProofJobs','nodeSubmissions','browserProofJobs','browserNodeSubmissions','browserL1Submissions','recoveryProofJobs','recoveryNodeSubmissions']);
-  check(same(r,{proofJobs:4,completedProofJobs:4,nodeSubmissions:4,browserProofJobs:2,browserNodeSubmissions:2,browserL1Submissions:0,recoveryProofJobs:0,recoveryNodeSubmissions:0}));
+  check(same(r,{proofJobs:proofsEnabled?4:0,completedProofJobs:proofsEnabled?4:0,nodeSubmissions:4,browserProofJobs:proofsEnabled?2:0,browserNodeSubmissions:2,browserL1Submissions:0,recoveryProofJobs:0,recoveryNodeSubmissions:0}));
   const accounting=record(d.accounting,['verified','chargedTransactions','totalTransactionFee']);check(accounting.verified===true&&accounting.chargedTransactions===4&&decimal(accounting.totalTransactionFee)&&BigInt(accounting.totalTransactionFee)===rows.reduce((n,r)=>n+BigInt(r.transactionFee),0n));
   return {passed:true,applicationTransactions:4,browserTransactions:2,publicPosts:2,publicPreferenceEvents:0,feeOnlySubscriber:true,uiSubscriptionAndReadConfirmed:true,actualReplyUnreadThenSuppressed:true,exactRecoveredPrivateState:true,canonicalMarker:true,newRecoveryProofJobs:0,newRecoveryNodeSubmissions:0,accountingVerified:true};
  }catch{throw failed();}

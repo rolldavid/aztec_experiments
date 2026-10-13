@@ -18,9 +18,9 @@ function origin(v){if(typeof v!=='string'||v.length>100)throw invalid();const u=
 // including the second fresh-context import; never copy decrypted keys to reports.
 export async function validateRollingNotificationBrowserControl(control,{directory}={}){
  try{
-  const c=record(control,['browserMode','browserEngine','origin','trustedOrigin','ethereumOrigin','backupPath','backupPassword','expected','timeoutMs']);
+  const c=record(control,['browserMode','browserEngine','origin','trustedOrigin','ethereumOrigin','backupPath','backupPassword','expected','timeoutMs','proofsEnabled']);
   c.expected=Object.freeze(record(c.expected,['rootId','rootText']));
-  if(c.browserMode!=='rolling-notifications'||c.browserEngine!=='chromium'||!id(c.expected.rootId)||!text(c.expected.rootText)||!Number.isSafeInteger(c.timeoutMs)||c.timeoutMs<1||c.timeoutMs>150000||typeof c.backupPassword!=='string'||c.backupPassword.length<12||c.backupPassword.length>256)throw invalid();
+  if(typeof c.proofsEnabled!=='boolean'||c.browserMode!=='rolling-notifications'||c.browserEngine!=='chromium'||!id(c.expected.rootId)||!text(c.expected.rootText)||!Number.isSafeInteger(c.timeoutMs)||c.timeoutMs<1||c.timeoutMs>150000||typeof c.backupPassword!=='string'||c.backupPassword.length<12||c.backupPassword.length>256)throw invalid();
   for(const k of ['origin','trustedOrigin','ethereumOrigin'])c[k]=origin(c[k]);if(new Set([c.origin,c.trustedOrigin,c.ethereumOrigin]).size!==3)throw invalid();
   await validateRollingBrowserBackup(c.backupPath,directory);return Object.freeze(c);
  }catch{throw invalid();}
@@ -30,30 +30,32 @@ export async function validateRollingNotificationBrowserControl(control,{directo
  * proof POST and one sole sendTx envelope per explicit confirmation. Binary
  * witnesses are never decoded, retained or logged. This is scoped route coverage,
  * not blanket network/privacy assurance. Parent reconciles actual receivers. */
-export function createRollingNotificationTraffic(input){
+export function createRollingNotificationTraffic(input,{proofsEnabled=true}={}){
+ if(typeof proofsEnabled!=='boolean')throw invalid();
+ const expectedProof=proofsEnabled?1:0;
  const c=record(input,['origin','trustedOrigin','ethereumOrigin']);for(const k of Object.keys(c))c[k]=origin(c[k]);
  if(new Set(Object.values(c)).size!==3)throw invalid();
  const reads=createRollingPreferenceTraffic(c),counts={proofSubmits:0,nodeSubmissions:0,proofPolls:0,deniedWrites:0};
  let phase=null,completed=0,proof=0,send=0,jobId=null;
  const denied=()=>{counts.deniedWrites++;return false;};
  function begin(next){check(phase===null&&next===(completed===0?'subscription':completed===1?'marker':null));phase=next;proof=0;send=0;jobId=null;}
- function end(){check(phase!==null&&proof===1&&send===1);phase=null;completed++;}
+ function end(){check(phase!==null&&proof===expectedProof&&send===1);phase=null;completed++;}
  function inspect(request){
   try{
    const {url,method,body=null}=request;const u=new URL(url);
    if(u.origin===c.trustedOrigin&&!u.username&&!u.password&&!u.search&&!u.hash){
-    if(u.pathname==='/v1/jobs'&&method==='OPTIONS')return phase!==null||denied();
+    if(u.pathname==='/v1/jobs'&&method==='OPTIONS')return proofsEnabled&&phase!==null||denied();
     if(u.pathname==='/v1/jobs'&&method==='POST'){
-     counts.proofSubmits++;if(!phase||proof||send)return denied();proof++;return true;
+     counts.proofSubmits++;if(!proofsEnabled||!phase||proof||send)return denied();proof++;return true;
     }
     if(/^\/v1\/jobs\/[a-f0-9]{64}$/.test(u.pathname)&&method==='GET'){
-     counts.proofPolls++;const selected=u.pathname.slice('/v1/jobs/'.length);if(!phase||proof!==1||jobId!==null&&jobId!==selected)return denied();jobId=selected;return true;
+     counts.proofPolls++;const selected=u.pathname.slice('/v1/jobs/'.length);if(!proofsEnabled||!phase||proof!==1||jobId!==null&&jobId!==selected)return denied();jobId=selected;return true;
     }
     if(u.pathname==='/v1/node'&&method==='POST'&&typeof body==='string'&&Buffer.byteLength(body)<=8*1024*1024){
      const parsed=JSON.parse(body),batch=Array.isArray(parsed)?parsed:[parsed];
      if(batch.some(r=>/^(?:aztec|node)_sendTx$/.test(r?.method??''))){
       counts.nodeSubmissions++;
-      if(batch.length!==1||!phase||proof!==1||send)return denied();
+      if(batch.length!==1||!phase||proof!==expectedProof||send)return denied();
       const rpc=record(batch[0],['jsonrpc','id','method','params']);
       if(rpc.jsonrpc!=='2.0'||rpc.method!=='aztec_sendTx'||(!Number.isSafeInteger(rpc.id)||rpc.id<0)||!Array.isArray(rpc.params)||rpc.params.length!==1||rpc.params[0]===null||typeof rpc.params[0]!=='object'||Array.isArray(rpc.params[0]))return denied();
       const tx=rpc.params[0],keys=Object.keys(tx);if(!['data','chonkProof','contractClassLogFields','publicFunctionCalldata'].every(k=>Object.hasOwn(tx,k))||keys.some(k=>!['txHash','data','chonkProof','contractClassLogFields','publicFunctionCalldata'].includes(k))||Object.hasOwn(tx,'txHash')&&(typeof tx.txHash!=='string'||!/^0x[0-9a-f]{64}$/.test(tx.txHash)))return denied();
@@ -120,24 +122,26 @@ const stages=new Set(['validation','launch','locked','root-view','root-message',
 export const NOTIFICATION_BROWSER_CHECKS=Object.freeze(['freshNativeDatabase','publicBeforeUnlock','feeOnlyAccount','subscriptionReviewed','subscriptionConfirmed','subscriptionRecovered','unreadReply','markerReviewed','markerConfirmed','suppressedReply','publicReplyRetained','lockClears','reloadLocked','freshReopen','recoveredSuppression','noFinancialRecovery']);
 // Final transport/cleanup snapshot is taken AFTER all awaited browser teardown.
 // A success observed before close cannot authorize late writes or hide failures.
-export function finalizeRollingNotificationReport(report,{traffic,stage,elapsedMs,timedOut}){
+export function finalizeRollingNotificationReport(report,{traffic,stage,elapsedMs,timedOut,proofsEnabled=true}){
  let passed=false;
  try{
+  check(typeof proofsEnabled==='boolean');
   check(report.passed===true&&timedOut===false&&stage==='complete');
   check(report.cleanup.contextClosed===true&&report.cleanup.browserClosed===true);
   for(const key of NOTIFICATION_BROWSER_CHECKS)check(report.checks[key]===true);
-  check(traffic.proofSubmits===2&&traffic.nodeSubmissions===2&&traffic.completedWritePhases===2&&traffic.writePhaseOpen===false);
+  check(traffic.proofSubmits===(proofsEnabled?2:0)&&traffic.nodeSubmissions===2&&traffic.completedWritePhases===2&&traffic.writePhaseOpen===false);
   for(const key of ['l1Submissions','blockedRequests','inspectionErrors','deniedWrites'])check(traffic[key]===0);
+  if(!proofsEnabled)check(traffic.proofPolls===0);
   passed=true;
  }catch{}
  return {...report,passed,failureCategory:passed?null:'browser-check-failed',traffic,stage,elapsedMs,timedOut};
 }
 export async function runRollingNotificationBrowser(input){
- const started=Date.now();let stage='validation',browser,context,page,timer,expiresAt,expired=false,observer;
+ const started=Date.now();let stage='validation',browser,context,page,timer,expiresAt,expired=false,observer,proofsEnabled=true;
  const report={schemaVersion:1,passed:false,diagnostic:null,failureCategory:null,checks:Object.fromEntries(NOTIFICATION_BROWSER_CHECKS.map(k=>[k,false])),recoverySteps:0,coldRecovery:{windows:0,compactRequests:0,tagDiscoveryRequests:0},traffic:null,cleanup:{contextClosed:false,browserClosed:false}};
  try{
   const {directory,onStage=()=>{},...control}=input;check(typeof onStage==='function');const c=await validateRollingNotificationBrowserControl(control,{directory});
-  observer=createRollingNotificationTraffic({origin:c.origin,trustedOrigin:c.trustedOrigin,ethereumOrigin:c.ethereumOrigin});expiresAt=started+c.timeoutMs;
+  proofsEnabled=c.proofsEnabled;report.proofsEnabled=proofsEnabled;observer=createRollingNotificationTraffic({origin:c.origin,trustedOrigin:c.trustedOrigin,ethereumOrigin:c.ethereumOrigin},{proofsEnabled});expiresAt=started+c.timeoutMs;
   const remaining=()=>{const n=expiresAt-Date.now();check(n>0&&!expired);return n;};
   const mark=next=>{check(stages.has(next));stage=next;onStage('rolling-notifications-'+next);remaining();};
   function traffic(){const s=observer.snapshot();for(const k of ['l1Submissions','blockedRequests','inspectionErrors','deniedWrites'])check(s[k]===0);return s;}
@@ -221,10 +225,10 @@ export async function runRollingNotificationBrowser(input){
   await page.getByRole('heading',{name:'Unlock and recover your private views',exact:true}).waitFor({timeout:remaining()});check(await page.evaluate(()=>globalThis.__aztec===undefined&&globalThis.BillboardAccount===undefined));for(const k of ['walletAssets','privateRequests','feedRequests'])check(traffic()[k]===beforeReload[k]);report.checks.reloadLocked=true;
   await context.close();context=null;mark('reopen');await newContext();await importKeys();report.checks.freshReopen=true;
   await suppressed();report.checks.recoveredSuppression=true;unchanged(beforeRecovery);report.checks.noFinancialRecovery=true;
-  const t=traffic();check(t.proofSubmits===2&&t.nodeSubmissions===2&&t.completedWritePhases===2&&!t.writePhaseOpen);mark('complete');report.passed=true;
+  const t=traffic();check(t.proofSubmits===(proofsEnabled?2:0)&&t.nodeSubmissions===2&&t.completedWritePhases===2&&!t.writePhaseOpen);mark('complete');report.passed=true;
  }catch{report.passed=false;report.failureCategory='browser-check-failed';if(expiresAt!==undefined&&Date.now()>=expiresAt)expired=true;}
  finally{clearTimeout(timer);if(context)try{await context.close();report.cleanup.contextClosed=true;}catch{report.passed=false;}else report.cleanup.contextClosed=true;
   if(browser)try{await browser.close();report.cleanup.browserClosed=!browser.isConnected();if(!report.cleanup.browserClosed)report.passed=false;}catch{report.passed=false;}else report.cleanup.browserClosed=true;}
  if(expiresAt!==undefined&&Date.now()>=expiresAt)expired=true;
- return finalizeRollingNotificationReport(report,{traffic:observer?.snapshot()??null,stage,elapsedMs:Date.now()-started,timedOut:expired});
+ return finalizeRollingNotificationReport(report,{traffic:observer?.snapshot()??null,stage,elapsedMs:Date.now()-started,timedOut:expired,proofsEnabled});
 }

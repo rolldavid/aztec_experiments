@@ -82,3 +82,27 @@ test('actual board HTTP sender and receiver match; known account in public ID fa
   }
  }finally{server.closeAllConnections();await new Promise(r=>server.close(r));}
 });
+
+function disabledObservation(){const value=observation();value.rows=value.rows.filter(row=>row.label!=='trusted-proof');value.requests--;value.receiver.requests['trusted-proof']=0;return value;}
+test('disabled social-wire accounting requires zero proof attempts and zero actual ingress',()=>{
+ assert.equal(assertRollingWireCampaign(disabledObservation(),{proofsEnabled:false}).passed,true);
+ for(const mutate of [
+  s=>s.rows.push({label:'trusted-proof',count:1,outcome:'resolved',status:200,roles:[]}),
+  s=>s.rows.push({label:'trusted-proof',count:1,outcome:'rejected',status:0,roles:[]}),
+  s=>s.receiver.requests['trusted-proof']=1,
+ ]){const s=disabledObservation();mutate(s);assert.throws(()=>assertRollingWireCampaign(s,{proofsEnabled:false}));}
+});
+test('disabled social-wire accounting retains every other positive transport and receiver control',()=>{
+ for(const label of ['trusted-query','trusted-upstream','ordinary-node','public-reader']){
+  const absent=disabledObservation();absent.rows=absent.rows.filter(row=>row.label!==label);absent.receiver.requests[label]=0;
+  assert.throws(()=>assertRollingWireCampaign(absent,{proofsEnabled:false}),/No positive observation/);
+  const mismatch=disabledObservation();mismatch.receiver.requests[label]=0;assert.throws(()=>assertRollingWireCampaign(mismatch,{proofsEnabled:false}),/Receiver mismatch/);
+ }
+ for(const mutate of [s=>s.rows[0].roles=[],s=>s.rows.find(r=>r.label==='ordinary-node').roles=['a'],s=>s.rows.find(r=>r.label==='public-reader').roles=['b'],s=>s.rows[0].outcome='rejected',s=>s.rows[0].status=500,s=>s.pending=1,s=>s.unknown=1,s=>s.unsupported=1,s=>s.truncated=1,s=>s.observerErrors=1,s=>s.receiver.errors=1]){
+  const s=disabledObservation();mutate(s);assert.throws(()=>assertRollingWireCampaign(s,{proofsEnabled:false}));
+ }
+});
+test('real and default wire accounting still require positive proof traffic; invalid modes fail',()=>{
+ for(const options of [undefined,{proofsEnabled:true}]){assert.equal(assertRollingWireCampaign(observation(),options).passed,true);assert.throws(()=>assertRollingWireCampaign(disabledObservation(),options),/No positive observation for trusted-proof/);}
+ for(const mode of [null,0,1,'disabled','real',{},[]])assert.throws(()=>assertRollingWireCampaign(observation(),{proofsEnabled:mode}));
+});

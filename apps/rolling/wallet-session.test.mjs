@@ -64,7 +64,7 @@ async function deploymentFixture(){
  const provider={getNetwork:async()=>({chainId:31337n}),getBlock:async n=>({number:20,hash:hex(66)}),getCode:async(address,n)=>{state.ethReads.push(n);return expectedPortalRuntime(metadata,immutables);},destroy:()=>{state.destroyed++;}};
  const ethers={JsonRpcProvider:class{constructor(){return provider;}},Contract:class{constructor(){return {...Object.fromEntries(Object.keys(immutables).map(name=>[name,async opts=>{state.ethReads.push(opts.blockTag);return immutables[name];}])),depositsEnabled:async opts=>{state.ethReads.push(opts.blockTag);return state.enabled;}};}}};
  const sdk={Fr,AztecAddress,getContractClassFromArtifact,computeContractAddressFromInstance,derivePrivateFeeInstance,normalizePrivateFeeGasSettings,sha256ToField,verifyPortalRuntime,portalRuntimeMetadata:metadata,
-  isTrustedPrivateNode:n=>n===node,inspectTrustedNode:async(n,opts)=>{state.inspection++;assert.deepEqual(opts.expectedNetworkScope,{chainId:'31337',version:'1',rollup});assert.equal(opts.proofsEnabled,true);}};
+  isTrustedPrivateNode:n=>n===node,inspectTrustedNode:async(n,opts)=>{state.inspection++;assert.deepEqual(opts.expectedNetworkScope,{chainId:'31337',version:'1',rollup});assert.equal(opts.proofsEnabled,state.proofsEnabled??true);}};
  const options={sdk,node,ethers,config,boardArtifact:artifact,privateFeeArtifact:feeArtifact,contextGuard:async()=>{state.guards++;}};
  return {options,state,node,provider,board,fee,storage,immutables,configHash,economics};
 }
@@ -100,9 +100,9 @@ async function sessionFixture(){
  const routing={createAztecWallet:(_sdk,p,n,raw)=>{held('create-wallet');assert.equal(p,pxe);assert.equal(n,f.node);assert.equal(raw,f.node);return wallet;},
   isPrivateWalletForNode:(w,n)=>!state.wrongWallet&&w===wallet&&n===f.node};
  const sdk={...f.options.sdk,computeArtifactHash,poseidon2HashWithSeparator,EventSelector,decodeFunctionSignature,Fr,deriveKeys,deriveSigningKey,SchnorrInitializerlessAccountContract,getContractInstanceFromInstantiationParams,computePartialAddress,Tx,encodeArguments,
-  createTrustedPrivateNode:async options=>{held('trusted-node');assert.equal(options.url,'http://127.0.0.1:3/v1/node');return f.node;},
+  createTrustedPrivateNode:async options=>{held('trusted-node');state.trustedProofsEnabled=options.proofsEnabled;assert.equal(options.url,'http://127.0.0.1:3/v1/node');return f.node;},
   openPXEStore:async options=>{held('open-store');assert.equal(options.accountAddress,account.address);assert.equal(options.dataDirectory,'rolling-wallet-v1');return store;},
-  createPXE:async(n,c,o)=>{held('create-pxe');assert.equal(n,f.node);assert.equal(o.store,store);assert.deepEqual(o.remoteProver,{url:'http://127.0.0.1:3',board:String(f.board.address)});if(state.failCreatePXE)throw Error('pxe failed');return pxe;},
+  createPXE:async(n,c,o)=>{held('create-pxe');state.pxeConfig=structuredClone(c);assert.equal(n,f.node);assert.equal(o.store,store);assert.deepEqual(o.remoteProver,{url:'http://127.0.0.1:3',board:String(f.board.address)});if(state.failCreatePXE)throw Error('pxe failed');return pxe;},
   isPrivatePXEForNode:(p,n)=>!state.wrongPXE&&p===pxe&&n===f.node,
   createBrowserJournalStorage:()=>privateStore,createL2Journal,
   AccountManager:{create:async()=>{held('account-manager');return {address:accountInstance.address};}},
@@ -111,7 +111,7 @@ async function sessionFixture(){
   preparePrivateFeePayment:async()=>({availableCredit:100n}),estimatePrivateFeeTransaction:async()=>({maximumFee:10n,payload:{},gasSettings:{}})};
  const locks={request:async(name,options,run)=>{assert.equal(name,'billboard-wallet:'+account.address);assert.deepEqual(options,{ifAvailable:true});
   if(state.active||state.otherTab)return run(null);state.active=true;state.events.push('lock');try{return await run({});}finally{state.active=false;state.events.push('unlock');}}};
- return {...f,state,ownedId,privateStore,pxe,store,wallet,input:{...f.options,sdk,routing,account,locks,trustedQuery:{url:'http://127.0.0.1:3/v1/node',allowLocalDev:true},remoteProver:{url:'http://127.0.0.1:3',board:String(f.board.address)},contextGuard:async()=>{held('guard');}}};
+ return {...f,state,deploymentState:f.state,ownedId,privateStore,pxe,store,wallet,input:{...f.options,sdk,routing,account,locks,trustedQuery:{url:'http://127.0.0.1:3/v1/node',allowLocalDev:true},remoteProver:{url:'http://127.0.0.1:3',board:String(f.board.address)},contextGuard:async()=>{held('guard');}}};
 }
 test('constructs verified deployment/account, registers with one trusted PXE, and guards every application operation',async()=>{
  const f=await sessionFixture(),session=await createRollingWalletSession(f.input);
@@ -344,4 +344,24 @@ test('session diagnostic does not hide account invalidation or invoke exception 
  await assert.rejects(createRollingWalletSession(f.input),{code:'ROLLING_CONTEXT_CHANGED'});assert.equal(observed.at(-1).code,'ROLLING_CONTEXT_CHANGED');assert(!f.state.events.includes('create-pxe'));assert.equal(f.state.closes,1);
  const g=await sessionFixture();let reads=0;const original=Object.defineProperty(Error('PRIVATE_SENTINEL'),'code',{get(){reads++;throw Error('PRIVATE_SENTINEL');}});g.input.sdk.createTrustedPrivateNode=async()=>{throw original;};g.input.onProgress=r=>observed.push(r);
  await assert.rejects(createRollingWalletSession(g.input),e=>e===original);assert.equal(reads,0);assert.equal(observed.at(-1).code,'unknown');
+});
+
+for(const mode of [undefined,true,false])test(`native PXE configuration follows captured proof mode ${mode}`,async()=>{
+ const f=await sessionFixture();if(mode!==undefined)f.input.proofsEnabled=mode;f.deploymentState.proofsEnabled=mode??true;
+ const session=await createRollingWalletSession(f.input);
+ try{assert.equal(f.state.trustedProofsEnabled,mode??true);assert.deepEqual(f.state.pxeConfig,{proverEnabled:mode??true,autoSync:false,syncChainTip:'checkpointed'});assert.equal(f.state.syncs,1);assert.equal(f.state.registrations,1);}
+ finally{await session.close();}assert.equal(f.state.stops,1);assert.equal(f.state.closes,1);
+});
+test('native PXE disabled configuration rejects nondevelopment networks before any SDK access',async()=>{
+ for(const chainId of ['1','11155111','0',undefined]){const f=options();f.input.proofsEnabled=false;f.input.config.network.chainId=chainId;
+  await assert.rejects(createRollingWalletSession(f.input),{code:'ROLLING_SESSION_CONFIG'});assert.deepEqual(f.accesses,[]);}
+});
+test('native PXE configuration rejects nonboolean modes before any SDK access',async()=>{
+ for(const mode of [null,'false','disabled',0,1,{},[]]){const f=options();f.input.proofsEnabled=mode;
+  await assert.rejects(createRollingWalletSession(f.input),{code:'ROLLING_SESSION_CONFIG'});assert.deepEqual(f.accesses,[]);}
+});
+test('native PXE configuration cannot change through caller mutation during initialization',async()=>{
+ const f=await sessionFixture();f.input.proofsEnabled=false;f.deploymentState.proofsEnabled=false;
+ const original=f.input.sdk.openPXEStore;f.input.sdk.openPXEStore=async(...args)=>{f.input.proofsEnabled=true;return original(...args);};
+ const session=await createRollingWalletSession(f.input);try{assert.equal(f.state.pxeConfig.proverEnabled,false);assert.equal(f.state.trustedProofsEnabled,false);}finally{await session.close();}
 });

@@ -7,14 +7,15 @@ test('development proof configuration defaults off and preserves explicit accept
  const prior=process.env.BOARD_TEST_PROOFS;
  try{
   delete process.env.BOARD_TEST_PROOFS;assert.equal(applicationProofsEnabled(),false);
-  const {runApplication}=await import('./testing/run-application.mjs');
-  await assert.rejects(()=>runApplication('rolling-composer'),/Browser development is held/);
   process.env.BOARD_TEST_PROOFS='disabled';assert.equal(applicationProofsEnabled(),false);
   process.env.BOARD_TEST_PROOFS='real';assert.equal(applicationProofsEnabled(),true);
   for(const mode of ['', 'false', '0', 'REAL']){process.env.BOARD_TEST_PROOFS=mode;assert.throws(applicationProofsEnabled,/Invalid BOARD_TEST_PROOFS/);}
  }finally{if(prior===undefined)delete process.env.BOARD_TEST_PROOFS;else process.env.BOARD_TEST_PROOFS=prior;}
  const runner=await fs.readFile(new URL('./testing/run-application.mjs',import.meta.url),'utf8');
  assert(runner.includes("const proofMode=process.env.BOARD_TEST_PROOFS??'disabled'"));
+ assert(!runner.includes('Browser development is held'));
+ const wallet=await fs.readFile(new URL('../apps/rolling/wallet-session.mjs',import.meta.url),'utf8');
+ assert(wallet.includes('proverEnabled:proofsEnabled,autoSync:false'));
  assert(runner.includes("applicationProofs:proofMode==='real'"));assert(runner.includes('BOARD_TEST_PROOFS:proofMode'));
  for(const name of ['./testing/fixture-worker.mjs','./c01-real-node.mjs']){
   const source=await fs.readFile(new URL(name,import.meta.url),'utf8');assert(source.includes('realProofs:applicationProofsEnabled()'));

@@ -13,7 +13,7 @@ const logger=Object.freeze({trace:silent,debug:silent,verbose:silent,info:silent
  level:'silent',module:'rolling-wallet',isLevelEnabled:()=>false,createChild:()=>logger,getBindings:()=>({})});
 export async function createRollingWalletSession({sdk,routing,ethers,config,boardArtifact,privateFeeArtifact,account,
  trustedQuery,remoteProver,contextGuard,onProgress=()=>{},locks=globalThis.navigator?.locks,proofsEnabled=true}){
- if(typeof contextGuard!=='function'||typeof locks?.request!=='function'||!account||!trustedQuery||!routing)throw fail('ROLLING_SESSION_CONFIG');
+ if(typeof proofsEnabled!=='boolean'||(!proofsEnabled&&String(config?.network?.chainId)!=='31337')||typeof contextGuard!=='function'||typeof locks?.request!=='function'||!account||!trustedQuery||!routing)throw fail('ROLLING_SESSION_CONFIG');
  const captured={secretKey:account.secretKey,salt:String(account.salt),address:String(account.address)};
  const selected=structuredClone(config),query=structuredClone(trustedQuery),remote=remoteProver?structuredClone(remoteProver):undefined;
  const lockName='billboard-wallet:'+captured.address;
@@ -58,7 +58,7 @@ export async function createRollingWalletSession({sdk,routing,ethers,config,boar
    await guard();store=await sdk.openPXEStore({l1ChainId:Number(network.chainId),rollupAddress:network.rollup,
     accountAddress:captured.address,dataDirectory:'rolling-wallet-v1'},undefined,logger);
    begin('pxe-create');
-   await guard();pxe=await sdk.createPXE(node,{proverEnabled:true,autoSync:false,syncChainTip:'checkpointed'},{store,remoteProver:remote});await guard();
+   await guard();pxe=await sdk.createPXE(node,{proverEnabled:proofsEnabled,autoSync:false,syncChainTip:'checkpointed'},{store,remoteProver:remote});await guard();
    if(!sdk.isPrivatePXEForNode(pxe,node))throw fail('ROLLING_PRIVATE_ROUTE');
    begin('account-register');
    const partialAddress=await sdk.computePartialAddress(instance);await guard();

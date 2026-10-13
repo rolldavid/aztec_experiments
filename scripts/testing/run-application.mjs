@@ -15,7 +15,6 @@ export async function runApplication(name) {
   assertNodeVersion();assertAztecPackages();
   assert.equal(process.platform,'darwin');assert.equal(process.arch,'arm64');
   const scenario=getScenario(name),browser=scenario.browser!=='none',rollingBrowser=['rolling-composer','rolling-preferences','rolling-notifications'].includes(scenario.browser);
-  assert(!(rollingBrowser&&proofMode==='disabled'),'Browser development is held: its application PXE configuration still explicitly enables proofs');
   const report={applicationProofs:proofMode==='real',remoteProver:process.env.BOARD_TEST_REMOTE==='1',schemaVersion:2,scenario:name,profile:scenario.description,startedAt:new Date().toISOString(),passed:false,stages:[]};
   const evidence=path.join(ROOT,'execution/evidence',scenario.evidenceTask,'application-'+randomUUID()+'.json');
   await fs.mkdir(path.dirname(evidence),{recursive:true});

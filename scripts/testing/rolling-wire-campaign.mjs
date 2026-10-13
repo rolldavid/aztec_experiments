@@ -38,12 +38,15 @@ export function installRollingWireCampaign({roles}){
   snapshot(){return {...trace.snapshot(),receiver:{channel,errors,requests:{...ingress},scope:'Same-process loopback HTTP adapters only; Anvil and native transports excluded'}};},
  });
 }
-export function assertRollingWireCampaign(observation){
+export function assertRollingWireCampaign(observation,{proofsEnabled=true}={}){
+ assert.equal(typeof proofsEnabled,'boolean');
  assert.equal(observation.pending,0);for(const key of ['unknown','unsupported','truncated','observerErrors'])assert.equal(observation[key],0,key);
  assert.equal(observation.receiver.errors,0);assert(observation.requests>0);
  for(const label of labels){
   const rows=observation.rows.filter(row=>row.label===label),sent=rows.reduce((n,row)=>n+row.count,0);
-  assert(sent>0,'No positive observation for '+label);assert.equal(observation.receiver.requests[label],sent,'Receiver mismatch for '+label);
+  if(label==='trusted-proof'&&!proofsEnabled)assert.equal(sent,0,'Proof attempt while proofs disabled');
+  else assert(sent>0,'No positive observation for '+label);
+  assert.equal(observation.receiver.requests[label],sent,'Receiver mismatch for '+label);
   for(const row of rows){assert.equal(row.outcome,'resolved');assert(row.status>=200&&row.status<300);
    if(['ordinary-node','public-reader'].includes(label))assert.deepEqual(row.roles,[],label+' exposed known human account');}
  }

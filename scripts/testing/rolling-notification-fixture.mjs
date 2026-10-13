@@ -100,6 +100,7 @@ export async function awaitNotificationRootVisibility({index,expected,rootPositi
 export async function runRollingNotificationFixture({ctx,actor,fees,endpoint,network,artifact,scope,deployment,prepareRoot,observation,persist,onSubscription,collectBeforeBrowser,collectAfterBrowser}){
  const {loadRollingWalletAssets}=await import('../rolling-wallet-assets.mjs');
  const control=ctx.browserControl;assert.equal(control?.browserMode,'rolling-notifications');assert.equal(control.browserEngine,'chromium');
+ const proofsEnabled=applicationProofsEnabled();assert(proofsEnabled||network.chainId==='31337');
  notificationBrowserBudget(ctx.applicationDeadlineAt);
  Object.assign(observation,{passed:false,cleanup:{},scope:'Actual fee-only browser subscription, human reply, unread delivery, read marker and keys-only restoration'});
  let reader,l1,result,failure,failed=false,handedOff=false,subscriptionObserved=false;
@@ -115,7 +116,7 @@ export async function runRollingNotificationFixture({ctx,actor,fees,endpoint,net
   l1=await startComposerL1Reader({upstream:ctx.config.l1RpcUrls[0],origin:control.origin});
   const gas=fees.browserFixture.gas;
   const gasSettings=Object.fromEntries(['gasLimits','teardownGasLimits','maxFeesPerGas','maxPriorityFeesPerGas'].map(name=>[name,Object.fromEntries((name.endsWith('Gas')?['feePerDaGas','feePerL2Gas']:['daGas','l2Gas']).map(key=>[key,String(gas[name][key])]))]));
-  const configuration={config:{network:{chainId:network.chainId,rollupVersion:network.version,rollupAddress:network.rollup,ethRpcUrl:l1.url},board:{contractAddress:String(ctx.instance.address),portalAddress:String(ctx.ready.portalAddress).toLowerCase()},privateFee:{contractAddress:String(fees.browserFixture.instance.address),gasSettings}},trustedQuery:{url:endpoint+'/v1/node',allowLocalDev:true},remoteProver:{url:endpoint,board:String(ctx.instance.address),chainId:network.chainId,rollupVersion:network.version,proofsEnabled:applicationProofsEnabled()},proofsEnabled:applicationProofsEnabled()};
+  const configuration={config:{network:{chainId:network.chainId,rollupVersion:network.version,rollupAddress:network.rollup,ethRpcUrl:l1.url},board:{contractAddress:String(ctx.instance.address),portalAddress:String(ctx.ready.portalAddress).toLowerCase()},privateFee:{contractAddress:String(fees.browserFixture.instance.address),gasSettings}},trustedQuery:{url:endpoint+'/v1/node',allowLocalDev:true},remoteProver:{url:endpoint,board:String(ctx.instance.address),chainId:network.chainId,rollupVersion:network.version,proofsEnabled},proofsEnabled};
   await phase('wallet-assets');
   const wallet=await loadRollingWalletAssets(configuration,scope);
   await phase('public-reader');
@@ -126,7 +127,7 @@ export async function runRollingNotificationFixture({ctx,actor,fees,endpoint,net
   await phase('root-visibility',started.index.status().state);
   observation.rootVisibility=await awaitNotificationRootVisibility({index:started.index,expected,rootPosition,deadlineAt:ctx.applicationDeadlineAt});
   await phase('handoff-validation',started.index.status().state);
-  const handoff={browserMode:'rolling-notifications',browserEngine:'chromium',origin:control.origin,trustedOrigin:endpoint,ethereumOrigin:l1.url,backupPath,backupPassword:control.backupPassword,expected,timeoutMs:notificationBrowserBudget(ctx.applicationDeadlineAt)};
+  const handoff={proofsEnabled,browserMode:'rolling-notifications',browserEngine:'chromium',origin:control.origin,trustedOrigin:endpoint,ethereumOrigin:l1.url,backupPath,backupPassword:control.backupPassword,expected,timeoutMs:notificationBrowserBudget(ctx.applicationDeadlineAt)};
   await validateRollingNotificationBrowserControl(handoff,{directory:ctx.directory});
   await phase('handoff-write');
   notificationBrowserBudget(ctx.applicationDeadlineAt); // Validation cannot consume the reserve unnoticed.

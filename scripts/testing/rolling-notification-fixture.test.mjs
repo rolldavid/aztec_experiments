@@ -108,3 +108,11 @@ test('pre-handoff accounting requires an idle drained proof queue and known forw
   const value=base();change(value);assert.throws(()=>assertNotificationAccountingQuiescent(value));
  }
 });
+
+test('notification bridge captures one proof mode for native browser metadata and strict handoff',async()=>{
+ const {readFile}=await import('node:fs/promises');const source=await readFile(new URL('./rolling-notification-fixture.mjs',import.meta.url),'utf8');
+ assert(source.includes("const proofsEnabled=applicationProofsEnabled();assert(proofsEnabled||network.chainId==='31337');"));
+ assert(source.includes("const handoff={proofsEnabled,browserMode:'rolling-notifications'"));
+ assert.equal((source.match(/applicationProofsEnabled\(\)/g)||[]).length,1);
+ assert(source.includes('proofsEnabled},proofsEnabled}'));
+});

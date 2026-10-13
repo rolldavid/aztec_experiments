@@ -46,3 +46,19 @@ test('later canonical empty block marker suppresses reply without requiring exac
  const digest=String(await hash([31337n,1n,9n,1n,2n,6n,101n,1n,4n,4n,BigInt(previous)],0x52435031));
  const preferences=await replayPreferenceEvents({scope,head:{initialized:true,schema:1,revision:'2',digest},events,hash});f.markedPreferences.preferences=preferences;f.recoveredPreferences.preferences=preferences;assert.equal((await assertRollingNotificationAcceptance(f)).passed,true);
 });
+
+function disableProofAccounting(f){f.browser.traffic.proofSubmits=0;f.browser.traffic.proofPolls=0;f.receiver.proofJobs=0;f.receiver.completedProofJobs=0;f.receiver.browserProofJobs=0;return f;}
+test('disabled notification acceptance retains four authentic schema transactions and all paid fees',async()=>{
+ const f=disableProofAccounting(await fixture()),result=await assertRollingNotificationAcceptance(f,{proofsEnabled:false});
+ assert.equal(result.applicationTransactions,4);assert.equal(result.browserTransactions,2);assert.equal(result.accountingVerified,true);
+});
+test('disabled notification acceptance rejects any proof traffic or job and retains other negative gates',async()=>{
+ for(const mutate of [f=>f.browser.traffic.proofSubmits=1,f=>f.browser.traffic.proofPolls=1,f=>f.receiver.proofJobs=1,f=>f.receiver.completedProofJobs=1,f=>f.receiver.browserProofJobs=1,...Object.entries(mutations).filter(([name])=>!['noPoll','readonlyBrowser'].includes(name)).map(([,fn])=>fn)]){
+  const f=disableProofAccounting(await fixture());mutate(f);await assert.rejects(assertRollingNotificationAcceptance(f,{proofsEnabled:false}));
+ }
+});
+test('disabled notification acceptance remains confined to local development and boolean configuration',async()=>{
+ for(const mode of [null,0,'disabled'])await assert.rejects(assertRollingNotificationAcceptance(await fixture(),{proofsEnabled:mode}));
+ const f=disableProofAccounting(await fixture());f.scope={...f.scope,chainId:'11155111'};await assert.rejects(assertRollingNotificationAcceptance(f,{proofsEnabled:false}));
+ await assert.rejects(assertRollingNotificationAcceptance(disableProofAccounting(await fixture())));
+});

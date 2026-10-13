@@ -6,7 +6,7 @@ import os from 'node:os';
 import http from 'node:http';
 import path from 'node:path';
 import {createHash} from 'node:crypto';
-import {settleRollingRootOverlap,rollingTrustedProofThreads,countRollingColdPhysicalPages,createRollingColdPhysicalPageOracle,runRollingPublicRecoveryChecks,persistRollingRecoveryObservation,observeRollingColdRead,assertRollingBrowserCompactAcceptance,createRollingEvidenceDirectory,classifyRollingApplicationFootprint,recordRollingFundingFailure,assertRollingApplicationViews,assertRollingPublicFootprint,closeRollingResources,loadRollingFixtureSDK,observeRollingReadiness} from './rolling-application-fixture.mjs';
+import {assertRollingSocialWireProofJobs,settleRollingRootOverlap,rollingTrustedProofThreads,countRollingColdPhysicalPages,createRollingColdPhysicalPageOracle,runRollingPublicRecoveryChecks,persistRollingRecoveryObservation,observeRollingColdRead,assertRollingBrowserCompactAcceptance,createRollingEvidenceDirectory,classifyRollingApplicationFootprint,recordRollingFundingFailure,assertRollingApplicationViews,assertRollingPublicFootprint,closeRollingResources,loadRollingFixtureSDK,observeRollingReadiness} from './rolling-application-fixture.mjs';
 import {createRollingProjection} from '../../shared/rolling/public-projection.mjs';
 import {createFileJournalStorage} from '../../apps/src/billboard/user/transaction-journal-store.mjs';
 import {createEncryptedJournalSlot} from '../../shared/journal-record.mjs';
@@ -1127,4 +1127,28 @@ test('actual-used physical oracle preserves original node rejection without a re
  const f=await physicalOracleFixture(),failure=Error('labelled public fixture failure');let calls=0;
  f.node.getBlock=function(number,options){assert.equal(this,f.node);assert.equal(number,1);assert.deepEqual(options,{includeTransactions:true});calls++;return Promise.reject(failure);};
  await assert.rejects(f.read(f.request),error=>error===failure);assert.equal(calls,1);assert.equal(f.state.metadata,1);assert.equal(f.state.guards,1);
+});
+
+// Actual-used accounting only; no real chain or cryptographic proof is claimed.
+for(const proofsEnabled of [false,true])test(`social-wire proof accounting preserves exact mode ${proofsEnabled}`,()=>{
+ const expected=proofsEnabled?6:0,jobs={submitted:expected,completed:expected,failed:0,running:false};
+ assertRollingSocialWireProofJobs(jobs,proofsEnabled);
+ for(const key of ['submitted','completed'])for(const value of [expected+1,expected-1])assert.throws(()=>assertRollingSocialWireProofJobs({...jobs,[key]:value},proofsEnabled));
+ assert.throws(()=>assertRollingSocialWireProofJobs({...jobs,failed:1},proofsEnabled));
+ assert.throws(()=>assertRollingSocialWireProofJobs({...jobs,running:true},proofsEnabled));
+});
+test('social-wire proof accounting rejects nonboolean configuration',()=>{
+ for(const mode of [undefined,null,0,1,'disabled','real',{},[]])assert.throws(()=>assertRollingSocialWireProofJobs({submitted:0,completed:0,failed:0,running:false},mode));
+});
+test('social-wire actual wiring scopes disabled accounting and preserves transaction and fee acceptance',async()=>{
+ const source=await fs.readFile(new URL('./rolling-application-fixture.mjs',import.meta.url),'utf8');
+ assert(source.includes('if(socialWire)socialWireProofsEnabled=real;'));
+ assert(source.includes('if(socialWire)assertRollingSocialWireProofJobs(report.proverJobs,socialWireProofsEnabled);'));
+ assert(source.includes('assertRollingWireCampaign(report.wire,{proofsEnabled:socialWire?socialWireProofsEnabled:true})'));
+ assert(source.includes("else if(social){const expectedJobs=subboards?2:scenario==='anonymous-thread'?3:multi?6:4;"));
+ assert(source.includes('await fees.verify(feeTotal,feesB.browserFixture.fundedAmount-bStandalone-feeTotalB)'));
+ assert(source.includes('await feesB.verify(feeTotalB,fees.browserFixture.fundedAmount-feeTotal)'));
+ const social=await fs.readFile(new URL('./rolling-social-wire.mjs',import.meta.url),'utf8');
+ assert(social.includes('privateTransactions:6,registeredNames:2'));
+ assert(social.includes('expectedHTTP:httpViews(projection,posts,posts.slice(0,2),[a,b])'));
 });

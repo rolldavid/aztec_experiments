@@ -12,7 +12,7 @@ let root,envelope;
 const origins={origin:'http://127.0.0.1:11001',trustedOrigin:'http://127.0.0.1:11002',ethereumOrigin:'http://127.0.0.1:11003'};
 before(async()=>{root=await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(),'rolling-notification-unit-')));await fs.chmod(root,0o700);const c=vm.createContext({crypto:webcrypto,TextEncoder,TextDecoder,Uint8Array});vm.runInContext(await fs.readFile(new URL('../../shared/wallet-backup.js',import.meta.url),'utf8'),c);envelope=JSON.stringify(await c.BillboardWalletBackup.encrypt({schemaVersion:1,wallet:{secretKey:'0x'+'01'.repeat(32),salt:'0'},claims:[]},'PRIVATE_PASSWORD_SENTINEL'));});
 after(async()=>{await fs.rm(root,{force:true,recursive:true});});
-async function fixture(){const directory=await fs.mkdtemp(path.join(root,'case-'));await fs.chmod(directory,0o700);const backupPath=path.join(directory,'backup.json');await fs.writeFile(backupPath,envelope,{mode:0o600});return {directory,control:{browserMode:'rolling-notifications',browserEngine:'chromium',...origins,backupPath,backupPassword:'PRIVATE_PASSWORD_SENTINEL',expected:{rootId:'101',rootText:'Public root.'},timeoutMs:150000}};}
+async function fixture(){const directory=await fs.mkdtemp(path.join(root,'case-'));await fs.chmod(directory,0o700);const backupPath=path.join(directory,'backup.json');await fs.writeFile(backupPath,envelope,{mode:0o600});return {directory,control:{proofsEnabled:true,browserMode:'rolling-notifications',browserEngine:'chromium',...origins,backupPath,backupPassword:'PRIVATE_PASSWORD_SENTINEL',expected:{rootId:'101',rootText:'Public root.'},timeoutMs:150000}};}
 test('real encrypted backup and detached control capture before awaits',async()=>{const f=await fixture(),p=validateRollingNotificationBrowserControl(f.control,f);f.control.expected.rootId='99';f.control.backupPassword='mutated';f.control.origin='https://outside.invalid';const r=await p;assert.equal(r.expected.rootId,'101');assert.equal(r.backupPassword,'PRIVATE_PASSWORD_SENTINEL');assert.equal(r.origin,origins.origin);assert(Object.isFrozen(r.expected));});
 const mutations={extra:c=>c.secret='PRIVATE_SENTINEL',mode:c=>c.browserMode='rolling-preferences',engine:c=>c.browserEngine='firefox',external:c=>c.origin='https://external.invalid',credentials:c=>c.origin='http://secret@127.0.0.1:11001',alias:c=>c.origin='http://localhost:11001',path:c=>c.origin+='/',query:c=>c.origin+='?key=x',duplicate:c=>c.ethereumOrigin=c.origin,zero:c=>c.expected.rootId='0',fieldOverflow:c=>c.expected.rootId='9'.repeat(77),privateExpected:c=>c.expected.preferences=[],textOversize:c=>c.expected.rootText='😀'.repeat(249),invalidUTF8:c=>c.expected.rootText='\ud800',password:c=>c.backupPassword='short',timeout:c=>c.timeoutMs=150001,timeoutZero:c=>c.timeoutMs=0,backupEscape:c=>c.backupPath='/tmp/private.json'};
 for(const [name,mutate]of Object.entries(mutations))test('control rejects '+name,async()=>{const f=await fixture();mutate(f.control);await assert.rejects(validateRollingNotificationBrowserControl(f.control,f),e=>e.message==='Invalid notification browser control.');});
@@ -73,3 +73,30 @@ for(const [name,mutate] of Object.entries(lateChanges))test('labelled late teard
  await Promise.resolve().then(()=>mutate(f));const result=finalizeRollingNotificationReport(f.report,f.options);assert.equal(result.passed,false);assert.equal(result.failureCategory,'browser-check-failed');
 });
 test('driver finalizer follows awaited browser cleanup and current deadline/counter capture',async()=>{const source=await fs.readFile(new URL('./rolling-notification-browser.mjs',import.meta.url),'utf8'),close=source.lastIndexOf('await browser.close()'),final=source.lastIndexOf('return finalizeRollingNotificationReport(report,');assert(close>0&&final>close);assert(source.slice(close,final).includes('Date.now()>=expiresAt'));assert(source.slice(final).includes('traffic:observer?.snapshot()??null'));});
+
+test('disabled notification transport retains exactly two explicit sends and denies all proof attempts',()=>{
+ const t=createRollingNotificationTraffic(origins,{proofsEnabled:false});
+ for(const phase of ['subscription','marker']){t.begin(phase);assert.throws(()=>t.end());assert(t.inspect(send()));t.end();}
+ const r=t.snapshot();assert.equal(r.proofSubmits,0);assert.equal(r.proofPolls,0);assert.equal(r.nodeSubmissions,2);assert.equal(r.completedWritePhases,2);assert.equal(r.deniedWrites,0);
+ for(const request of [proof(),poll(1),req(origins.trustedOrigin+'/v1/jobs','OPTIONS')]){const denied=createRollingNotificationTraffic(origins,{proofsEnabled:false});denied.begin('subscription');assert.equal(denied.inspect(request),false);assert.equal(denied.snapshot().deniedWrites,1);}
+});
+test('disabled notification transport preserves every send boundary',()=>{
+ for(const attempt of [
+  t=>t.inspect(send()),
+  t=>{t.begin('subscription');t.inspect(send());return t.inspect(send());},
+  t=>{t.begin('subscription');return t.inspect(req(origins.trustedOrigin+'/v1/node','POST','['+rpc('aztec_sendTx',[tx])+','+rpc('aztec_getNodeInfo')+']'));},
+  t=>{t.begin('subscription');return t.inspect(req(origins.trustedOrigin+'/v1/node','POST',rpc('node_sendTx',[tx])));},
+  t=>{t.begin('subscription');return t.inspect(req(origins.trustedOrigin+'/v1/node','POST',rpc('aztec_sendTx',[tx,'PRIVATE_SENTINEL'])));},
+  t=>{t.begin('subscription');return t.inspect(req(origins.trustedOrigin+'/v1/node','POST',rpc('aztec_sendTx',[{...tx,secret:'PRIVATE_SENTINEL'}])));},
+ ]){const t=createRollingNotificationTraffic(origins,{proofsEnabled:false});assert.equal(attempt(t),false);assert(t.snapshot().deniedWrites>0);assert(!JSON.stringify(t.snapshot()).includes('PRIVATE_SENTINEL'));}
+});
+test('disabled notification finalizer still rejects late proof, send, timeout and cleanup changes',()=>{
+ const make=()=>{const f=finalFixture();f.options.proofsEnabled=false;f.options.traffic.proofSubmits=0;f.options.traffic.proofPolls=0;return f;};
+ let f=make();assert.equal(finalizeRollingNotificationReport(f.report,f.options).passed,true);
+ for(const mutate of [f=>f.options.traffic.proofSubmits=1,f=>f.options.traffic.proofPolls=1,...Object.values(lateChanges)]){f=make();mutate(f);assert.equal(finalizeRollingNotificationReport(f.report,f.options).passed,false);}
+});
+test('notification control captures explicit proof mode and rejects missing or malformed configuration',async()=>{
+ const f=await fixture();f.control.proofsEnabled=false;const pending=validateRollingNotificationBrowserControl(f.control,f);f.control.proofsEnabled=true;assert.equal((await pending).proofsEnabled,false);
+ for(const mode of [undefined,null,0,'disabled']){const f=await fixture();f.control.proofsEnabled=mode;await assert.rejects(validateRollingNotificationBrowserControl(f.control,f));}
+ const bad=await fixture();let reads=0;Object.defineProperty(bad.control,'proofsEnabled',{enumerable:true,get(){reads++;return false;}});await assert.rejects(validateRollingNotificationBrowserControl(bad.control,bad));assert.equal(reads,0);
+});

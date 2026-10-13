@@ -476,6 +476,15 @@ export function assertRollingBrowserCompactAcceptance(browser,native,windows){
   return {passed:true,windows,coldCompactRequests:cold.compactRequests,compactRequests:traffic.compactRequests,nativeAccepted:native.accepted,tagDiscoveryRequests:0};
 }
 
+// Actual-used accounting for the explicitly configured social-wire scenario.
+// Disabling proving never changes transaction, fee or public-effect acceptance.
+export function assertRollingSocialWireProofJobs(jobs,proofsEnabled) {
+  assert.equal(typeof proofsEnabled,'boolean');
+  const expected=proofsEnabled?6:0;
+  assert.equal(jobs.submitted,expected);assert.equal(jobs.completed,expected);
+  assert.equal(jobs.failed,0);assert.equal(jobs.running,false);
+}
+
 export async function runRollingApplicationFixture(ctx,scenario='conversation') {
   assert(['conversation','profiles','anonymous-thread','repost-reactions','account-reactions','owned-names','owned-names-wire','composer','social-wire','reaction-wire','trusted-recovery','name-race','subboard-policy','rejected-subboard-withdrawal','preference-relationships','preference-notifications','preference-browser','preference-reorg-initial','preference-reorg-marker','preference-saved','notification-browser'].includes(scenario));
   const boundedCold=['preference-relationships','preference-browser','notification-browser','preference-reorg-initial','preference-reorg-marker'].includes(scenario);
@@ -502,7 +511,7 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
     await save();};
   const sourceBinding=async()=>Object.fromEntries(await Promise.all(SOURCES.map(async name=>[name,sha(await fs.readFile(path.join(ROOT,name)))])));
   let fees,feesB,actorA,actorB,coldActor,coldRpc,coldService,coldNode,coldEndpoint,coldWire,coldRejectedSends=0,rootOverlap,activeActor,pxe,rpc,service,failure,restoreIndexedDB,nativeArtifacts,owner,appWallet,journal;
-  let coldRecoveryMetrics;
+  let coldRecoveryMetrics,socialWireProofsEnabled;
   let wire,ordinaryRpc,completeTrustedRecovery,collisionObserver,withdrawalCompletion,completePreferenceReorg,pausePreferenceBoundary;
   let transportSends=0,feeTotalB=0n,fundingRole,collateralRole;
   let feeTotal=0n;const accounted=new Set();
@@ -513,7 +522,7 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
     assert(path.isAbsolute(ctx.directory));
     assert(Number.isSafeInteger(ctx.applicationDeadlineAt)&&ctx.applicationDeadlineAt>Date.now(),'Explicit remaining parent campaign deadline required');
     const {applicationProofsEnabled}=await import('./proof-policy.mjs');
-    const real=applicationProofsEnabled();report.applicationProofs=real;report.proofMode=real?'real':'proofs-disabled';
+    const real=applicationProofsEnabled();report.applicationProofs=real;report.proofMode=real?'real':'proofs-disabled';if(socialWire)socialWireProofsEnabled=real;
     const info=await ctx.node.getNodeInfo();assert.equal(info.l1ChainId,31337);assert.equal(info.realProofs,real);
     const network={chainId:'31337',version:String(info.rollupVersion),rollup:String(ctx.rollupAddress).toLowerCase()};
     assert.equal(String(info.l1ContractAddresses.rollupAddress).toLowerCase(),network.rollup);report.network=network;
@@ -908,8 +917,8 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
             do{assert(Date.now()<publicDeadline);page=await readPublicPage();if(page.complete&&page.checkpoint?.number>=Number(marker.blockNumber))break;await sleep(100);}while(true);
             assert.deepEqual(page.posts,projection.feed({limit:100}).posts);
             report.notificationBrowser.acceptance=await assertRollingNotificationAcceptance({scope:{chainId:network.chainId,version:network.version,board:String(BigInt(String(ctx.instance.address)))},initialHead,root,subscription,reply,marker,markerContext,subscribedPreferences,markedPreferences,recoveredPreferences,publicPage:page,browser,
-              receiver:{proofJobs:service.stats().submitted,completedProofJobs:service.stats().completed,nodeSubmissions:transportSends,browserProofJobs:service.stats().submitted-2,browserNodeSubmissions:transportSends-2,browserL1Submissions:l1.rejected,recoveryProofJobs:0,recoveryNodeSubmissions:0},
-              accounting:{verified:true,chargedTransactions:4,totalTransactionFee:String([root,subscription,reply,marker].reduce((n,r)=>n+BigInt(r.transactionFee),0n))},hash:async(fields,domain)=>(await sdk.poseidon2HashWithSeparator(fields.map(n=>new Fr(n)),domain)).toBigInt()});await save();
+              receiver:{proofJobs:service.stats().submitted,completedProofJobs:service.stats().completed,nodeSubmissions:transportSends,browserProofJobs:service.stats().submitted-(real?2:0),browserNodeSubmissions:transportSends-2,browserL1Submissions:l1.rejected,recoveryProofJobs:0,recoveryNodeSubmissions:0},
+              accounting:{verified:true,chargedTransactions:4,totalTransactionFee:String([root,subscription,reply,marker].reduce((n,r)=>n+BigInt(r.transactionFee),0n))},hash:async(fields,domain)=>(await sdk.poseidon2HashWithSeparator(fields.map(n=>new Fr(n)),domain)).toBigInt()},{proofsEnabled:real});await save();
           }});
       }
       let preferenceCheckpoint;
@@ -968,7 +977,6 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
         }else rootEvent=notificationBrowser||preferenceBrowser?undefined:await publishRoot();
         const rootPosition=rootEvent?.position;
         if(notificationBrowser){
-          assert(real,'Notification browser acceptance requires genuine proofs');
           await runNotifications(publishRoot);
         }else if(preferenceSaved){
           assert(real,'Saved transaction acceptance requires genuine proofs');
@@ -1539,7 +1547,7 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
       };
       await runRollingPublicRecoveryChecks({boundedCold,recoverPrivate:recoverPrivatePreferences,verifyPublic:verifyCanonicalPublic});
       if(preferenceBrowser){
-        assert(real,'Genuine browser acceptance requires real proof setup');await mark('production-browser-preferences');report.preferenceBrowser={};
+        await mark('production-browser-preferences');report.preferenceBrowser={};
         const {runRollingPreferenceBrowserFixture}=await import('./rolling-preference-browser-fixture.mjs');
         try{await runRollingPreferenceBrowserFixture({ctx,actor:actorA,fees,endpoint,network,artifact:checked.artifact,
           scope:{chainId:network.chainId,rollupVersion:network.version,rollupAddress:network.rollup,boardAddress:String(ctx.instance.address),classId:String((await sdk.getContractClassFromArtifact(checked.artifact)).id)},
@@ -1550,7 +1558,7 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
         report.preferenceBrowser.compact=assertRollingBrowserCompactAcceptance(report.preferenceBrowser.browser,report.preferenceBrowser.compactNative,1);await save();
       }
       if(composer){
-        assert(real,'Genuine browser acceptance requires real proof setup');await mark('production-browser-composer');report.composer={};
+        await mark('production-browser-composer');report.composer={};
         const {runRollingComposerFixture}=await import('./rolling-composer-fixture.mjs');
         try{await runRollingComposerFixture({ctx,actors:[actorA,actorB],fees:[fees,feesB],claim:claim.claim,endpoint,network,artifact:checked.artifact,
           scope:{chainId:network.chainId,rollupVersion:network.version,rollupAddress:network.rollup,boardAddress:String(ctx.instance.address),classId:String((await sdk.getContractClassFromArtifact(checked.artifact)).id)},
@@ -1562,7 +1570,8 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
       }
       if(multi){const bStandalone=BigInt(feesB.standalone?.transactionFee??0);await fees.verify(feeTotal,feesB.browserFixture.fundedAmount-bStandalone-feeTotalB);await feesB.verify(feeTotalB,fees.browserFixture.fundedAmount-feeTotal);assert.equal(fees.poolBefore,feesB.poolBefore);report.accountFees={a:String(feeTotal),b:String(feeTotalB)};}else await fees.verify(feeTotal);report.actualHumanFees=String(feeTotal+feeTotalB);report.proverJobs=service.stats();
       assert.equal(report.proverJobs.failed,0);
-      if(!real&&['preference-relationships','preference-notifications'].includes(scenario)){assert.equal(report.proverJobs.completed,0);assert.equal(report.proverJobs.submitted,0);}
+      if(socialWire)assertRollingSocialWireProofJobs(report.proverJobs,socialWireProofsEnabled);
+      else if(!real&&['preference-relationships','preference-notifications','preference-browser','notification-browser','composer'].includes(scenario)){assert.equal(report.proverJobs.completed,0);assert.equal(report.proverJobs.submitted,0);}
       else if(recovery){assert.equal(report.proverJobs.completed,1);assert.equal(report.proverJobs.submitted,1);}
       else if(preferenceReorg){const expected=markerReorg?3:2;assert.equal(report.proverJobs.completed,expected);assert.equal(report.proverJobs.submitted,expected);}
       else if(notificationBrowser){assert.equal(report.proverJobs.completed,4);assert.equal(report.proverJobs.submitted,4);}
@@ -1740,7 +1749,7 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
       ...(nativeArtifacts?[['nativeArtifactLoader',()=>{try{nativeArtifacts.close();}finally{report.nativeArtifacts=nativeArtifacts.observation();}}]]:[]),
     ],report.cleanup);}catch(error){report.passed=false;failure=failure?new AggregateError([failure,error],'Rolling fixture and cleanup failed'):error;}
     if(coldWire){report.coldTransport=rollingColdTransportEvidence(coldWire,rpc,coldRpc,coldRejectedSends);try{if(report.passed)rollingColdAttributedSnapshot(coldWire,coldRpc,coldRejectedSends);}catch(error){report.passed=false;failure=failure?new AggregateError([failure,error],'Cold transport acceptance failed'):error;}}
-    if(wire){report.wire=wire.snapshot();try{if(!failure){const {assertRollingWireCampaign}=await import('./rolling-wire-campaign.mjs');report.wireAcceptance=recovery?assertRollingRecoveryWire(report.wire,report.trustedRecovery):assertRollingWireCampaign(report.wire);}}catch(error){report.passed=false;failure=error;}}
+    if(wire){report.wire=wire.snapshot();try{if(!failure){const {assertRollingWireCampaign}=await import('./rolling-wire-campaign.mjs');report.wireAcceptance=recovery?assertRollingRecoveryWire(report.wire,report.trustedRecovery):assertRollingWireCampaign(report.wire,{proofsEnabled:socialWire?socialWireProofsEnabled:true});}}catch(error){report.passed=false;failure=error;}}
     try{await save();}catch(error){report.passed=false;failure=failure?new AggregateError([failure,error],'Rolling evidence failed'):error;}
   }
   if(failure){failure.rollingApplicationObservation=report;throw failure;}
