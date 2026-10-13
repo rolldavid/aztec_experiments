@@ -7,9 +7,9 @@ function fixture(){
  const scope={chainId:'31337',rollupVersion:'1',rollupAddress:'0x'+'11'.repeat(20),boardAddress:f(9),classId:f(10)},checkpoint={number:20,hash:f(20)};
  const posts=[1,2,3,4].map((n,i)=>({id:String(n),record:{root:'1'},order:String(i),position:{blockNumber:String(n+10)},text:n===3?'latest':`text${n}`,bot:n===2?{pluginId:'1'}:null,removal:null}));
  const state={revision:'r1',reads:0,reorg:false,finalized:20};
- const env=()=>({complete:true,scope,revision:'r1',checkpoint});
+ const env=()=>({complete:true,scope,revision:state.revision,checkpoint});
  const index={sync:async()=>{},status:()=>({...env(),state:'ready',revision:state.revision}),query:(view,args)=>{
-  if(view==='post')return {...env(),post:posts[2]};state.reads++;if(state.changeRevision)state.revision='r2';
+  if(view==='post')return {...env(),post:posts.find(post=>post.id===args.id)};state.reads++;if(state.changeRevision)state.revision='r2';
   return {...env(),posts:args.cursor?posts.slice(2):posts.slice(0,2),nextCursor:args.cursor?null:'next'};
  }};
  const node={getNodeInfo:async()=>({l1ChainId:31337,rollupVersion:1,l1ContractAddresses:{rollupAddress:scope.rollupAddress},realProofs:false}),
@@ -23,9 +23,15 @@ for(const [name,change] of [['changed revision',h=>h.state.changeRevision=true],
 test('removed prior post is a tombstone without hidden text',async()=>{const h=fixture();h.posts[0].removal={reason:'removed'};h.posts[0].text='HIDDEN_SENTINEL';const r=await h.load();assert.equal(r.messages[0].text,'[Removed post]');assert(!JSON.stringify(r).includes('HIDDEN_SENTINEL'));});
 
 test('retained paid-context guard fences changes after summary and reservation',async()=>{
- for(const change of [h=>h.state.reorg=true,h=>h.state.revision='r2']){
+ for(const change of [h=>h.state.reorg=true,h=>{h.state.revision='r2';h.posts[0].removal={reason:'removed'};},h=>h.posts[1].text='changed']){
   const h=fixture(),history=await h.load();await history.assertCurrent();
   change(h);await assert.rejects(history.assertCurrent());
   assert.equal(h.state.reads,2,'guard must not reload a different paid context');
  }
+});
+
+test('own reservation may advance complete projection without replacing original context',async()=>{
+ const h=fixture(),history=await h.load();h.state.revision='r2';h.posts[3].text='New later message';
+ await history.assertCurrent();assert.equal(h.state.reads,2);assert.equal(history.messages.length,3);
+ assert.equal(history.anchor.number,20);
 });

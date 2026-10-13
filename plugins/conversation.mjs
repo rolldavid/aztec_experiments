@@ -26,7 +26,7 @@ export function rollingConversation({index,node,scope,development=false,maxMessa
    assert.equal(String((await node.getBlock(confirmed.number))?.hash),String(confirmed.hash));
    const end=status();assert(end.state==='ready'&&end.complete===true&&end.revision===revision);
   };
-  await check();const messages=[],seen=new Set(),cursors=new Set();let cursor=null,prior=-1n,found=false;
+  await check();const messages=[],captured=[],seen=new Set(),cursors=new Set();let cursor=null,prior=-1n,found=false;
   while(!found){
    const page=query('thread',{root:BigInt(threadId).toString(),limit:100,cursor});
    assert(page.complete===true&&page.revision===revision&&JSON.stringify(page.scope)===expected&&JSON.stringify(page.checkpoint)===JSON.stringify(checkpoint));
@@ -37,6 +37,7 @@ export function rollingConversation({index,node,scope,development=false,maxMessa
     if(!messages.length)assert.equal(postId,threadId);
     assert(messages.length<maxMessages);seen.add(postId);prior=order;
     messages.push({id:postId,role:post.bot?'assistant':'user',text:post.removal?'[Removed post]':post.text});
+    captured.push({id:postId,root:field(post.record.root),order:String(post.order),block:String(post.position.blockNumber),role:post.bot?'assistant':'user',text:post.removal?'[Removed post]':post.text});
     if(postId===id){found=true;break;}
    }
    if(!found){assert(typeof page.nextCursor==='string'&&!cursors.has(page.nextCursor));cursors.add(page.nextCursor);cursor=page.nextCursor;}
@@ -46,6 +47,24 @@ export function rollingConversation({index,node,scope,development=false,maxMessa
   // guard. It validates this exact history; it never reloads a newer thread
   // after a summary has already been paid for. Do not serialize it into a
   // metering request or expose it as a user-supplied capability.
-  return {canonical:true,complete:true,threadId,anchor:{...checkpoint},messages,assertCurrent:check};
+  const assertCurrent=async()=>{
+   // Our own reservation advances the public index. A later complete projection
+   // is allowed only while the exact summarized rows and original anchors remain
+   // canonical. Newer posts do not silently enter the already-paid summary.
+   const current=status();assert(current.state==='ready'&&current.complete===true&&JSON.stringify(current.scope)===expected);
+   assert(Number.isSafeInteger(current.checkpoint.number)&&current.checkpoint.number>=checkpoint.number);
+   const head=await node.getBlock(development?'checkpointed':'finalized');assert(head&&current.checkpoint.number<=head.number);
+   for(const saved of captured){
+    const result=query('post',{id:BigInt(saved.id).toString()}),post=result.post;
+    assert(result.revision===current.revision&&post);
+    assert.deepEqual({id:field(post.id),root:field(post.record.root),order:String(post.order),block:String(post.position.blockNumber),role:post.bot?'assistant':'user',text:post.removal?'[Removed post]':post.text},saved,'Paid conversation changed');
+   }
+   for(const anchor of [checkpoint,current.checkpoint]){
+    const block=await node.getBlockData(anchor.number);assert.equal(Number(block?.header?.globalVariables?.blockNumber),anchor.number);assert.equal(String(block?.blockHash),anchor.hash);
+   }
+   assert.equal(String((await node.getBlock(confirmed.number))?.hash),String(confirmed.hash));
+   const end=status();assert(end.state==='ready'&&end.complete===true&&end.revision===current.revision);
+  };
+  return {canonical:true,complete:true,threadId,anchor:{...checkpoint},messages,assertCurrent};
  }});
 }
