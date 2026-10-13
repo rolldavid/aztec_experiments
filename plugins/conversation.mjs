@@ -19,6 +19,7 @@ export function rollingConversation({index,node,scope,development=false,maxMessa
   const info=await node.getNodeInfo();assert.equal(String(info.l1ChainId),scope.chainId);assert.equal(String(info.rollupVersion),scope.rollupVersion);
   assert.equal(String(info.l1ContractAddresses.rollupAddress).toLowerCase(),scope.rollupAddress);assert.equal(info.realProofs,!development);
   const confirmed=await node.getBlock(development?'checkpointed':'finalized');assert(confirmed&&Number.isSafeInteger(confirmed.number)&&/^0x[0-9a-f]{64}$/.test(String(confirmed.hash))); 
+  assert(Number.isSafeInteger(checkpoint.number)&&checkpoint.number<=confirmed.number,'Conversation publication is not finalized');
   const check=async()=>{
    const current=status();assert(current.state==='ready'&&current.complete&&current.revision===revision);
    const block=await node.getBlockData(checkpoint.number);assert.equal(Number(block?.header?.globalVariables?.blockNumber),checkpoint.number);assert.equal(String(block?.blockHash),checkpoint.hash);
