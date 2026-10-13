@@ -487,7 +487,7 @@ for(const fault of ['private-tag','public-tag','send','proof','rejected','malfor
 // Native configuration affects only test accounting, never production proof calls.
 for(const mode of ['relationships','notifications'])test('native disabled configuration: '+mode+' keeps exact writes and zero jobs',async()=>{
  const f=fixture(mode,undefined,false),r=await exerciseRollingPreferences({...f.options,proofsEnabled:false});
- assert.equal(r.observation.proofMode,'native-disabled-development');assert.equal(r.observation.genuineProofAcceptance,false);
+ assert.equal(r.observation.proofMode,'native-disabled-development');assert.equal(r.observation.genuineProofsExpected,false);
  const expected=mode==='relationships'?3:4;assert.deepEqual(f.options.activity(),{proofJobs:0,transportSends:expected,walletSubmissions:expected,authWitnesses:2});
 });
 for(const [actual,expected] of [[true,false],[false,true]])test('native configuration rejects mismatched proof accounting '+actual+'/'+expected,async()=>{

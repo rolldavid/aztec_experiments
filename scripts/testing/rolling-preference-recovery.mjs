@@ -81,7 +81,7 @@ export async function exerciseRollingPreferences({mode,root,name,rootBlock,rootH
   check(incremental.value.anchor.blockNumber>initial.value.anchor.blockNumber);
   const checkpoint=Object.freeze(Object.defineProperty({},'toJSON',{value:()=>{throw fail();}}));
   states.set(checkpoint,{snapshot:JSON.stringify(incremental.value.preferences),activity:afterMutation,deadlineAt});
-  return {checkpoint,observation:{passed:true,proofMode:proofsEnabled?'real':'native-disabled-development',genuineProofAcceptance:proofsEnabled,preferenceTransactions:revision,publicPreferenceEvents:0,initial:initial.measurement,incremental:incremental.measurement,authenticatedHeadMatched:true,noReadProofOrSend:true}};
+  return {checkpoint,observation:{passed:true,proofMode:proofsEnabled?'real':'native-disabled-development',genuineProofsExpected:proofsEnabled,preferenceTransactions:revision,publicPreferenceEvents:0,initial:initial.measurement,incremental:incremental.measurement,authenticatedHeadMatched:true,noReadProofOrSend:true}};
  }catch{throw fail();}
 }
 // Browser-specific ordering: Main following needs fees but no posting deposit.
