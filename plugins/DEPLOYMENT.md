@@ -4,6 +4,65 @@
 
 # Deploying a plugin
 
+## Current Rolling / PrivateBok operator
+
+Select `applicationProfile: "rolling"` in the private operator config. The example
+requires verified current network, board and token identities. Development is
+restricted to chain31337 with native proofs disabled; testnet uses Sepolia and
+real proofs. Keep the existing constructor state file, its salt and signed records.
+The optional `lifecycle: {tokenAddress, pluginId}` is separately bound; adding it
+does not change the original constructor campaign identity. Changing either
+lifecycle value after any lifecycle intent is refused.
+
+Use the same public deployment actor throughout. It must own PrivateBok and be
+the current Rolling moderator for registration. The configured public Bok service
+operator may be another Aztec account; it is never the private human caller.
+Fund the deployment actor's public Fee Juice and the L1 signer's gas balance.
+No deposit or provider treasury payment is performed by these commands.
+`PLUGIN_QUERY_API_KEY` and `PLUGIN_ETHEREUM_PRIVATE_KEY` are runtime-only local
+capabilities, absent from config identity and public results.
+
+Run these existing operator commands in order with the same CONFIG and STATE:
+
+```
+npm run plugin:operator -- deploy-escrow CONFIG STATE
+npm run plugin:operator -- deploy-portal CONFIG STATE
+npm run plugin:operator -- bind CONFIG STATE
+npm run plugin:operator -- activate CONFIG STATE
+npm run plugin:operator -- register CONFIG STATE
+npm run plugin:operator -- status CONFIG STATE
+```
+
+`deploy-portal` uses the normal build's exact PluginPortal creation bytecode and
+constructor (rollup, PrivateBok, version, token). It verifies complete runtime and
+all public immutables at canonical L1 blocks. `bind` uses PrivateBok `set_portal`
+and verifies its exact Ready message. `activate` waits for the real membership
+witness; production never injects settlement. `register` uses Rolling's three
+arguments `configure_plugin(pluginId, adapter, true)` and verifies canonical map
+storage. No legacy descriptor ABI is used.
+
+Each command persists intent before signing/proving and exact signed bytes before
+its single broadcast. Retained preparing, dropped, lost-response and unknown
+records only reconcile; even the same signed bytes are never retransmitted.
+An unresolved result is not permission to delete state or make another campaign.
+A pending command can be invoked later to observe the original transaction.
+Production requires finalized successful L2 receipts/effects and finalized L1
+inclusion; disposable development may observe checkpointed L2 / canonical latest
+L1. Reorgs, mismatched effects and unavailable reads remain unresolved. L1 HTTP
+redirects/throttling cannot trigger hidden transaction retries.
+
+The `status` result distinguishes canonical portal activation and current plugin
+registration. `hostedServiceReady` stays false: provider funding, hosted service,
+request accounting, reply delivery and complete board/application readiness are
+separate checks. Earnings withdrawal commands remain legacy-only in this slice.
+Back up the private0600 journal in its private0700 directory; never publish its
+signed records. No runtime credentials are copied to artifacts or generated code.
+
+## Historical legacy operator
+
+The following commands and descriptors document the older board profile. They
+are not a current Rolling deployment recipe.
+
 Use the built plugin-enabled board and escrow artifacts from the same commit.
 The existing pre-plugin board cannot be upgraded by merely registering this
 adapter: deploy a compatible board using the application's board deployment flow.
@@ -318,35 +377,34 @@ stall returned no bytes for5seconds while the same exact-name inspect completed
 in142ms. Execution/resource/cleanup deadlines remain unchanged. Raw Docker
 stderr stays internal and is never part of model-visible failure logs.
 
-### Dedicated-organization GitHub App source mirror
+### Scoped personal-account GitHub App source mirror
 
-`createGitHubAppBroker({enabled:false, directory, artifactRoot, organization,
-organizationId, appId, installationId, privateKeyFile})` is a trusted host
-capability. Its default rejects both `assertAvailable()` and `sync(receipt)`
-without reading a key or making a request. **GitHub writes remain disabled until
-an operator explicitly configures the dedicated organization and installation.**
-The existing personal application repository and unrelated organizations are not
-mirror targets. This component does not create organizations, register/install
-Apps, alter permissions, delete repositories, expose an HTTP control endpoint,
-or hand credentials to the model, toolbox, Git subprocesses or generated code.
+`createGitHubAppBroker({enabled:false, directory, artifactRoot, owner, ownerId,
+appId, installationId, privateKeyFile})` is a trusted host capability. Root's
+personal-account adapter targets `zac-williamson` (User1476668) through
+`POST /user/repos`. GitHub writes stay disabled until its selected-repository App
+installation is explicitly configured and verified. Do not grant unrelated
+repositories or organizations; the existing application repository is not a
+per-thread mirror. No organization creation, broad installation, PAT, ambient
+`gh` credential or generated-code GitHub authority is required.
 
-Use an organization dedicated to these per-thread private source repositories.
-Register a private-to-owner GitHub App with repository Administration write,
-Contents write and implicit Metadata read; no Actions, Workflows, organization,
-user or OAuth permissions/events. Install it for all repositories **only in that
-dedicated organization**, so newly created repositories are included. Organization
-owners retain administrative control; do not install this capability on an
-organization containing unrelated work. Disable Actions by organization policy
-before activation; source capture additionally rejects every `.github` path.
+Use repository Administration write, Contents write and implicit Metadata read;
+no Actions, Workflows, organization, user OAuth permissions or event subscription.
+Select only the intended per-thread private repositories. A newly created
+repository outside the installation's selected scope remains blocked until the
+operator explicitly grants that repository; never fall back to all repositories.
+Disable Actions before use; source capture additionally rejects `.github` paths.
+The concrete installation and actual personal-account creation permission are
+external setup gates, not facts established by controlled tests.
 The broker's creation token requests Administration only; subsequent content
 access requests Contents only and the single checked repository ID. No PAT or
 ambient `gh` login is used. The App RSA key is a no-follow regular private0600
 file in a canonical0700 host directory, outside source/artifact trees; its bytes
 and short-lived JWT/installation tokens remain in trusted host memory.
 
-The host config pins numeric organization, App and installation IDs plus the
-exact lowercase organization login. `assertAvailable()` only reads installation
-identity, suspension, permission and all-repository selection; it does not mint
+The host config pins the numeric owner, App and installation IDs plus the
+exact lowercase personal owner login. `assertAvailable()` only reads installation
+identity, suspension, permission and selected-repository scope; it does not mint
 an installation token or create a repository. Before paid work the host must
 check availability. Live setup and API behavior are still separate acceptance
 checks; controlled protocol tests do not qualify an installed GitHub service.
@@ -392,7 +450,7 @@ fixed sanitized codes with no upstream body, private pathname or credential.
 Official setup references: [App manifest registration](https://docs.github.com/en/apps/sharing-github-apps/registering-a-github-app-from-a-manifest),
 [App JWT authentication](https://docs.github.com/en/apps/creating-github-apps/authenticating-with-a-github-app/generating-a-json-web-token-jwt-for-a-github-app),
 [installation token scoping](https://docs.github.com/en/rest/apps/apps#create-an-installation-access-token-for-an-app),
-[organization repository creation](https://docs.github.com/en/rest/repos/repos#create-an-organization-repository),
+[personal repository creation](https://docs.github.com/en/rest/repos/repos#create-a-repository-for-the-authenticated-user),
 [Git trees](https://docs.github.com/en/rest/git/trees#create-a-tree),
 [Git commits](https://docs.github.com/en/rest/git/commits#create-a-commit), and
 [reference updates](https://docs.github.com/en/rest/git/refs#update-a-reference).

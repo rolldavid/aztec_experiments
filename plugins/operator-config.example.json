@@ -8,5 +8,9 @@
   "boardAddress": "REPLACE_WITH_CURRENT_ROLLING_BOARD",
   "operatorAddress": "REPLACE_WITH_PUBLIC_BOK_OPERATOR_ADDRESS",
   "operatorFile": "/absolute/private/path/operator.json",
-  "development": false
+  "development": false,
+  "lifecycle": {
+    "tokenAddress": "REPLACE_WITH_VERIFIED_SIX_DECIMAL_TOKEN",
+    "pluginId": "0x0000000000000000000000000000000000000000000000000000000000000001"
+  }
 }

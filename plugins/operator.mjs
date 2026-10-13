@@ -1,7 +1,7 @@
 import {prepareNativeRuntime} from '../prover/runtime.mjs';
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import {pathToFileURL} from 'node:url';
+import {pathToFileURL,fileURLToPath} from 'node:url';
 import {BackendType,Barretenberg,BarretenbergSync} from '@aztec-foundation/bb.js';
 import {createAztecNodeClient} from '../shared/aztec-node-client.mjs';
 import {waitForTx} from '@aztec-labs/aztec.js/node';
@@ -17,10 +17,13 @@ import {EthAddress} from '@aztec-labs/foundation/eth-address';
 import {loadContractArtifact} from '@aztec-labs/stdlib/abi';
 import {getContractClassFromArtifact,getContractInstanceFromInstantiationParams,computeContractAddressFromInstance} from '@aztec-labs/stdlib/contract';
 import {Tx,TxHash,TxStatus} from '@aztec-labs/stdlib/tx';
-import {JsonRpcProvider,Wallet,Contract as EthereumContract,ContractFactory,getCreateAddress,keccak256,parseUnits,formatUnits,sha256,toUtf8Bytes} from 'ethers';
+import {JsonRpcProvider,FetchRequest,Wallet,Transaction,Contract as EthereumContract,ContractFactory,getCreateAddress,keccak256,parseUnits,formatUnits,sha256,toUtf8Bytes} from 'ethers';
 import {API_VERSION,packText,handleField,validateDescriptor} from './protocol.mjs';
 import {provingEnabledForNode} from '../shared/proving-policy.mjs';
-import {fileState,recordedTransaction,outboxArguments,operatorApplicationProfile,rollingOperatorConfig,operatorNodeFetch,onceAztecOperation,reconcileRollingOperation,rollingPxeOptions,bindRollingJournal,readOperatorActor,projectRollingReceipt} from './operations.mjs';
+import {fileState,recordedTransaction,outboxArguments,operatorApplicationProfile,rollingOperatorConfig,operatorNodeFetch,onceAztecOperation,reconcileRollingOperation,rollingPxeOptions,bindRollingJournal,readOperatorActor,projectRollingReceipt,rollingLifecycleConfig,rollingOperatorCommandScope,verifyPluginPortalRuntime,reconcileRollingEthereum,operatorEthereumRequest,matchRollingEthereumSigned,requireRollingReadyEffect} from './operations.mjs';
+import {deriveStorageSlotInMap,computeL2ToL1MessageHash} from '@aztec-labs/stdlib/hash';
+import {sha256ToField} from '@aztec-labs/foundation/crypto/sha256';
+import {contractInputs,sha as artifactSha} from '../scripts/artifact-provenance.mjs';
 import {loadRollingArtifacts} from '../prover/rolling-artifacts.mjs';
 import {jsonStringify} from '@aztec-labs/foundation/json-rpc';
 const read=async p=>JSON.parse(await fs.readFile(p,'utf8'));
@@ -29,7 +32,7 @@ const read=async p=>JSON.parse(await fs.readFile(p,'utf8'));
  * Keys are read from a separate mode-0600 actor file, never deployment output.
  */
 export async function operatorCommand({command,config,statePath,actor,ethereumKey,amount,recipient,claim,queryApiKey,onProgress=()=>{}}){
- if(operatorApplicationProfile(config)==='rolling'){try{return await rollingOperatorCommand({command,config,statePath,actor,claim,queryApiKey,onProgress});}catch{throw Error('Rolling operator unavailable; preserve the journal and reconcile retained operations');}}
+ if(operatorApplicationProfile(config)==='rolling'){try{return await rollingOperatorCommand({command,config,statePath,actor,ethereumKey,claim,queryApiKey,onProgress});}catch{throw Error('Rolling operator unavailable; preserve the journal and reconcile retained operations');}}
  const [adapterJson,portalJson,boardJson]=await Promise.all([read(new URL('./adapter_artifact.json',import.meta.url)),read(new URL('../billboard/portal/out/PluginPortal.sol/PluginPortal.json',import.meta.url)),read(new URL('../apps/src/billboard/billboard_artifact.json',import.meta.url))]);
  const fingerprints=[adapterJson,portalJson,boardJson].map(x=>sha256(toUtf8Bytes(JSON.stringify(x))));
  const node=createAztecNodeClient(config.nodeUrl);onProgress('network-identity');const info=await node.getNodeInfo();
@@ -136,24 +139,20 @@ export async function operatorCommand({command,config,statePath,actor,ethereumKe
   throw Error('Unknown operator command');
  }finally{try{await wallet?.stop();}finally{provider.destroy();await lock?.close();await fs.unlink(statePath+'.lock');}}
 }
-// Constructor-only current application profile. Legacy lifecycle above is untouched.
-// PLUGIN_QUERY_API_KEY is runtime-only; never put it in CONFIG. The example's
-// placeholders intentionally fail closed until current network/board are verified.
-// fees is read-only; claim-fees and deploy-escrow each consume one journal slot.
-// Repeating either reconciles its original intent, including unknown/preparing
-// outcomes. A successful constructor result does not enable portal/registration
-// or hosted service operations. No private human caller is a Bok descriptor field.
-async function rollingOperatorCommand({command,config:input,statePath,actor,claim,queryApiKey,onProgress}){
+// Current Rolling lifecycle uses the same durable constructor campaign and exact
+// once-only operations. Native development is proof-disabled. Public Bok identity
+// never identifies its private human callers; runtime authentication stays out of state.
+async function rollingOperatorCommand({command,config:input,statePath,actor,ethereumKey,claim,queryApiKey,onProgress}){
  let wallet,provider,lock;
  const lockPath=statePath+'.lock';
  try{
   const config=rollingOperatorConfig(input);
-  if(!['fees','claim-fees','deploy-escrow'].includes(command))throw Error('Unsupported constructor command');
+  const commandScope=rollingOperatorCommandScope(command,input);
   if(!config.development&&queryApiKey===undefined)throw Error('Operator authentication required');
   if(typeof actor?.address!=='string'||!/^0x[0-9a-f]{64}$/.test(actor.address)||BigInt(actor.address)===0n)throw Error('Invalid deployer');
   const from=AztecAddress.fromStringUnsafe(actor.address);
   const node=createAztecNodeClient(config.nodeUrl,{fetch:operatorNodeFetch({endpoint:config.nodeUrl,key:queryApiKey,serialize:jsonStringify})});
-  provider=new JsonRpcProvider(config.ethereumUrl,undefined,{cacheTimeout:-1});
+  provider=new JsonRpcProvider(operatorEthereumRequest(FetchRequest,config.ethereumUrl),undefined,{cacheTimeout:-1,batchMaxCount:1});
   const checkNetwork=async()=>{
    const info=await node.getNodeInfo();
    if(String((await provider.getNetwork()).chainId)!==config.chainId||String(info.l1ChainId)!==config.chainId||String(info.rollupVersion)!==config.rollupVersion||String(info.l1ContractAddresses.rollupAddress).toLowerCase()!==config.rollupAddress||info.realProofs!==!config.development)throw Error('Network scope mismatch');
@@ -173,15 +172,160 @@ async function rollingOperatorCommand({command,config:input,statePath,actor,clai
   const salt=Fr.fromString(store.read().salt);
   const instance=await getContractInstanceFromInstantiationParams(artifact,{constructorArgs,constructorArtifact:'init',deployer:from,salt});
   const expected={version:instance.version,...Object.fromEntries(['address','deployer','originalContractClassId','currentContractClassId','salt','initializationHash','immutablesHash'].map(k=>[k,String(instance[k])])),storage:{board:config.boardAddress,operator:config.operatorAddress,owner:from.toString(),l1_chain:new Fr(BigInt(config.chainId)).toString(),version:new Fr(BigInt(config.rollupVersion)).toString()}};
-  const reconcile=async record=>{
+  const reconcile=async(record,constructor=command==='deploy-escrow')=>{
    await checkNetwork();
-   return reconcileRollingOperation({record,development:config.development,expected:command==='deploy-escrow'?expected:undefined,reads:{
+   return reconcileRollingOperation({record,development:config.development,expected:constructor?expected:undefined,reads:{
     signed:async(raw,hash)=>{const tx=Tx.fromBuffer(Buffer.from(raw,'hex'));return tx.getTxHash().toString()===hash&&String(tx.data.constants.txContext.chainId)===new Fr(BigInt(config.chainId)).toString()&&String(tx.data.constants.txContext.version)===new Fr(BigInt(config.rollupVersion)).toString();},
     receipt:async hash=>projectRollingReceipt(await node.getTxReceipt(TxHash.fromString(hash))),block:number=>node.getBlock(number),effect:hash=>node.getTxEffect(TxHash.fromString(hash)),
     instance:(address,anchor)=>node.getContract(AztecAddress.fromStringUnsafe(address),anchor),address:async value=>(await computeContractAddressFromInstance(value)).toString(),
     storage:async(address,field,anchor)=>String(await node.getPublicStorageAt(anchor,AztecAddress.fromStringUnsafe(address),artifact.storageLayout[field].slot)),
    }});
   };
+  if(commandScope==='portal-registration'){
+   const lifecycle=rollingLifecycleConfig(input),scope='portal-registration';
+   const requireSuccess=result=>{if(result?.status!=='succeeded'||!result.canonical)throw Error('Original prerequisite awaits canonical reconciliation');return result;};
+   requireSuccess(await reconcile(store.read().operations['deploy-escrow']??{},true));
+   const root=new URL('../',import.meta.url),portalBytes=await fs.readFile(new URL('billboard/portal/out/PluginPortal.sol/PluginPortal.json',root));
+   const portalArtifact=JSON.parse(portalBytes),manifest=await read(new URL('.build/contracts-manifest.json',root));
+   if(manifest.pluginPortal!==artifactSha(portalBytes)||JSON.stringify(manifest.inputs)!==JSON.stringify(contractInputs(fileURLToPath(root))))throw Error('Normal portal build provenance required');
+   const factory=new ContractFactory(portalArtifact.abi,portalArtifact.bytecode.object);
+   const creation=(await factory.getDeployTransaction(config.rollupAddress,expected.address,BigInt(config.rollupVersion),lifecycle.tokenAddress)).data.toLowerCase();
+   const lifecycleIdentity=JSON.stringify({constructorIdentity:identity,lifecycle,portalArtifactSha256:artifactSha(portalBytes)});
+   const addressOf=record=>{
+    const d=record?.deployment;
+    if(typeof d?.from!=='string'||!/^0x[0-9a-f]{40}$/.test(d.from)||!Number.isSafeInteger(d.nonce)||d.nonce<0||d.address!==getCreateAddress({from:d.from,nonce:d.nonce}).toLowerCase())throw Error('Portal intent missing');
+    return d.address;
+   };
+   const lifecycleRecord=name=>{const r=store.read().operations[name];if(r&&(r.identity!==lifecycleIdentity||r.journalIdentity!==identity))throw Error('Lifecycle scope mismatch');return r;};
+   const portalRecord=()=>lifecycleRecord('deploy-portal');
+   const portalAddress=()=>addressOf(portalRecord());
+   const verifyPortal=async(address,blockNumber,active)=>{
+    const contract=new EthereumContract(address,portalArtifact.abi,provider),tag={blockTag:blockNumber};
+    verifyPluginPortalRuntime((await provider.getCode(address,blockNumber)).toLowerCase(),portalArtifact.deployedBytecode);
+    const rollup=new EthereumContract(config.rollupAddress,['function getInbox() view returns(address)','function getOutbox() view returns(address)'],provider);
+    const [token,escrow,version,chain,inbox,outbox,actualActive,expectedInbox,expectedOutbox]=await Promise.all([
+     contract.token(tag),contract.escrow(tag),contract.version(tag),contract.chainId(tag),contract.inbox(tag),contract.outbox(tag),contract.active(tag),rollup.getInbox(tag),rollup.getOutbox(tag)]);
+    if(token.toLowerCase()!==lifecycle.tokenAddress||escrow!==expected.address||String(version)!==config.rollupVersion||String(chain)!==config.chainId||inbox.toLowerCase()!==expectedInbox.toLowerCase()||outbox.toLowerCase()!==expectedOutbox.toLowerCase()||(active!==undefined&&actualActive!==active))throw Error('Portal scope mismatch');
+    const tokenContract=new EthereumContract(token,['function decimals() view returns(uint8)'],provider);
+    if(Number(await tokenContract.decimals(tag))!==6)throw Error('Six decimal token required');
+    return true;
+   };
+   const canonicalHead=async()=>{const h=await provider.getBlock(config.development?'latest':'finalized');if(!h||!Number.isSafeInteger(h.number)||!h.hash)throw Error('L1 anchor unavailable');return h;};
+   const verifyCurrentPortal=async(active)=>{const h=await canonicalHead();await verifyPortal(portalAddress(),h.number,active);if((await provider.getBlock(h.number))?.hash!==h.hash)throw Error('L1 anchor changed');await checkNetwork();};
+   const checkBok=async({portal,registered=false,unbound=false}={})=>{
+    await checkNetwork();const h=await node.getBlock(config.development?'checkpointed':'finalized');
+    if(!h||!Number.isSafeInteger(h.number)||!h.hash)throw Error('L2 anchor unavailable');
+    const anchor={number:h.number,hash:h.hash},current=await node.getContract(instance.address,anchor);
+    for(const name of ['address','deployer','originalContractClassId','currentContractClassId','salt','initializationHash','immutablesHash'])if(String(current?.[name])!==expected[name])throw Error('Bok instance changed');
+    if(current?.version!==expected.version||String(await computeContractAddressFromInstance(current))!==expected.address)throw Error('Bok address mismatch');
+    const storage=async(address,slot)=>node.getPublicStorageAt(anchor,address,slot);
+    for(const [name,value]of Object.entries(expected.storage))if(String(await storage(instance.address,artifact.storageLayout[name].slot))!==value)throw Error('Bok constructor changed');
+    const portalValue=(await storage(instance.address,artifact.storageLayout.portal.slot)).toBigInt();
+    if(unbound?portalValue!==0n:portal!==undefined&&portalValue!==BigInt(portal))throw Error('Bok portal binding mismatch');
+    const boardAddress=AztecAddress.fromStringUnsafe(config.boardAddress),board=await node.getContract(boardAddress,anchor);
+    if(String(board?.originalContractClassId)!==boardClass||String(board?.currentContractClassId)!==boardClass||String(await computeContractAddressFromInstance(board))!==config.boardAddress)throw Error('Rolling class mismatch');
+    if(registered){
+     const slot=await deriveStorageSlotInMap(boardArtifact.storageLayout.plugins.slot,Fr.fromString(lifecycle.pluginId));
+     if((await storage(boardAddress,slot)).toBigInt()!==BigInt(expected.address)||(await storage(boardAddress,new Fr(slot.toBigInt()+1n))).toBigInt()!==1n)throw Error('Rolling registration unavailable');
+    }
+    if(command==='register'&&(await storage(boardAddress,boardArtifact.storageLayout.moderator.slot)).toBigInt()!==BigInt(from.toString()))throw Error('Deployment actor must be current moderator');
+    if(String((await node.getBlock(h.number))?.hash)!==String(h.hash))throw Error('L2 anchor changed');
+    return {anchor,board,current};
+   };
+   const checkReady=async()=>{
+    const bound=requireSuccess(await reconcile(lifecycleRecord('bind')??{},false));
+    await checkBok({portal:portalAddress()});
+    const raw=Buffer.alloc(160);raw.write('PLUGIN_READY_V1','ascii');
+    [BigInt(config.chainId),BigInt(portalAddress()),BigInt(expected.address),BigInt(config.rollupVersion)].forEach((v,i)=>Buffer.from(v.toString(16).padStart(64,'0'),'hex').copy(raw,32*(i+1)));
+    const leaf=computeL2ToL1MessageHash({l2Sender:instance.address,l1Recipient:EthAddress.fromString(portalAddress()),content:sha256ToField([raw]),rollupVersion:new Fr(BigInt(config.rollupVersion)),chainId:new Fr(BigInt(config.chainId))});
+    const effect=await node.getTxEffect(TxHash.fromString(lifecycleRecord('bind').hash));
+    requireRollingReadyEffect(effect,bound,leaf);
+    if(String((await node.getBlock(bound.blockNumber))?.hash)!==bound.blockHash)throw Error('Ready anchor changed');
+   };
+   const ethereumReconcile=async(record,name)=>reconcileRollingEthereum({record,development:config.development,reads:{
+    signed:async r=>{
+     const expectedTo=name==='deploy-portal'?null:portalAddress(),data=name==='deploy-portal'?creation:r.deployment?.data;
+     if(!matchRollingEthereumSigned({parse:raw=>Transaction.from(raw),record:r,chainId:config.chainId,to:expectedTo,data,from:r.deployment?.from,nonce:r.deployment?.nonce}))return false;
+     if(name==='deploy-portal')return !!addressOf(r);
+     return factory.interface.parseTransaction({data})?.name==='activate';
+    },receipt:h=>provider.getTransactionReceipt(h),block:n=>provider.getBlock(n),head:tag=>provider.getBlock(tag),
+    effect:async(r,anchor,receipt)=>{
+     if(name==='deploy-portal')return receipt.contractAddress?.toLowerCase()===addressOf(r)&&await verifyPortal(addressOf(r),anchor.number);
+     await checkReady();return verifyPortal(portalAddress(),anchor.number,true);
+    },
+   }});
+   const ethereumSend=async(name,prepare)=>{
+    let signer,populated,metadata;
+    if(!lifecycleRecord(name)){
+     // Missing funds/config fail before durable intent. Retained intents never
+     // reconstruct a signer, populate another transaction or use a new nonce.
+     if(typeof ethereumKey!=='string')throw Error('Local Ethereum signer required');signer=new Wallet(ethereumKey,provider);
+     await checkNetwork();const prepared=await prepare(signer);metadata=prepared.metadata;
+     populated=await signer.populateTransaction(prepared.transaction);metadata={...metadata,nonce:populated.nonce};
+     if(populated.chainId!==BigInt(config.chainId)||BigInt(populated.value??0)!==0n||BigInt(populated.gasLimit)*BigInt(populated.maxFeePerGas??populated.gasPrice)>await provider.getBalance(signer.address))throw Error('Fund L1 transaction fees first');
+    }
+    return onceAztecOperation({store,name,identity:lifecycleIdentity,journalIdentity:identity,scope,reconcile:r=>ethereumReconcile(r,name),execute:async({submit,bindDeployment})=>{
+     await bindDeployment(metadata);const raw=await signer.signTransaction(populated),hash=keccak256(raw);
+     await checkNetwork();if(name==='activate'){await verifyCurrentPortal(false);await checkReady();}
+     await submit({hash,raw:raw.slice(2)},()=>provider.broadcastTransaction(raw));
+    }});
+   };
+   if(command==='deploy-portal'){
+    const result=await ethereumSend(command,async signer=>{
+     await checkBok({unbound:true});const h=await canonicalHead();
+     const token=new EthereumContract(lifecycle.tokenAddress,['function decimals() view returns(uint8)'],provider);
+     if((await provider.getCode(lifecycle.tokenAddress,h.number))==='0x'||Number(await token.decimals({blockTag:h.number}))!==6)throw Error('Token prerequisite unavailable');
+     const nonce=await signer.getNonce('pending'),from=signer.address.toLowerCase(),address=getCreateAddress({from,nonce}).toLowerCase();
+     return {transaction:{data:creation,nonce,value:0n},metadata:{from,nonce,address}};
+    });return {...result,...(result.status==='succeeded'?{portal:portalAddress()}:{}),hostedServiceReady:false};
+   }
+   requireSuccess(await ethereumReconcile(portalRecord()??{},'deploy-portal'));
+   if(command==='activate'){
+    const result=await ethereumSend(command,async signer=>{
+     await verifyCurrentPortal(false);await checkReady();
+     const args=await outboxArguments(node,TxHash.fromString(lifecycleRecord('bind').hash),{requireFinalized:!config.development});
+     const data=factory.interface.encodeFunctionData('activate',args);return {transaction:{to:portalAddress(),data,value:0n},metadata:{from:signer.address.toLowerCase(),data:data.toLowerCase()}};
+    });return {...result,portalReady:result.status==='succeeded',hostedServiceReady:false};
+   }
+   if(command==='status'){
+    await checkReady();requireSuccess(await ethereumReconcile(lifecycleRecord('activate')??{},'activate'));await verifyCurrentPortal(true);
+    requireSuccess(await reconcile(lifecycleRecord('register')??{},false));await checkBok({portal:portalAddress(),registered:true});
+    return {status:'succeeded',scope,canonical:true,escrow:expected.address,portal:portalAddress(),pluginId:lifecycle.pluginId,portalReady:true,registrationReady:true,hostedServiceReady:false};
+   }
+   const preflightL2=async()=>{
+    if(command==='bind')await verifyCurrentPortal(false);
+    else{await checkReady();requireSuccess(await ethereumReconcile(lifecycleRecord('activate')??{},'activate'));await verifyCurrentPortal(true);}
+    const checked=await checkBok(command==='bind'?{unbound:true}:{portal:portalAddress()});
+    if(await getFeeJuiceBalance(from,node)===0n)throw Error('Public Fee Juice required');
+    if(command==='register'){
+     const slot=await deriveStorageSlotInMap(boardArtifact.storageLayout.plugins.slot,Fr.fromString(lifecycle.pluginId));
+     const old=(await node.getPublicStorageAt(checked.anchor,checked.board.address,slot)).toBigInt();
+     if(old!==0n&&old!==BigInt(expected.address))throw Error('Plugin ID belongs to another adapter');
+    }
+    return checked;
+   };
+   if(!lifecycleRecord(command))await preflightL2();
+   const result=await onceAztecOperation({store,name:command,identity:lifecycleIdentity,journalIdentity:identity,scope,reconcile:async record=>{
+    const r=await reconcile(record,false);if(r.status==='succeeded'){
+     try{await checkBok({portal:portalAddress(),registered:command==='register'});if(command==='bind')await checkReady();else await verifyCurrentPortal(true);}catch{return {status:'unresolved',scope,canonical:false};}
+    }return {...r,scope,hostedServiceReady:false};
+   },execute:async({submit})=>{
+    const {board,current}=await preflightL2();
+    const recordedNode=new Proxy(node,{get(target,key){if(key!=='sendTx')return Reflect.get(target,key);return async tx=>{
+     if(String(tx.data.constants.txContext.chainId)!==new Fr(BigInt(config.chainId)).toString()||String(tx.data.constants.txContext.version)!==new Fr(BigInt(config.rollupVersion)).toString())throw Error('Transaction scope mismatch');
+     await checkNetwork();await checkBok(command==='bind'?{unbound:true}:{portal:portalAddress()});await verifyCurrentPortal(command==='register');
+     return submit({hash:tx.getTxHash().toString(),raw:tx.toBuffer().toString('hex')},()=>node.sendTx(tx));
+    };}});
+    const pxe=await rollingPxeOptions(config.development,async()=>({backend:BackendType.NativeUnixSocket,...await prepareNativeRuntime({}),threads:1}));
+    wallet=await EmbeddedWallet.create(recordedNode,{ephemeral:true,pxe});
+    const account=await wallet.createSchnorrInitializerlessAccount(Fr.fromString(actor.secret),Fr.fromString(actor.salt),GrumpkinScalar.fromString(actor.signingKey),'public Bok lifecycle operator');
+    if(!account.address.equals(from))throw Error('Actor mismatch');
+    await wallet.registerContract(current,artifact);await wallet.registerContract(board,boardArtifact);
+    const call=command==='bind'?Contract.at(instance.address,artifact,wallet).methods.set_portal(EthAddress.fromString(portalAddress())):Contract.at(board.address,boardArtifact,wallet).methods.configure_plugin(Fr.fromString(lifecycle.pluginId),instance.address,true);
+    await call.send({from,wait:NO_WAIT});
+   }});
+   return {...result,scope,portalReady:command==='register'&&result.status==='succeeded',registrationReady:command==='register'&&result.status==='succeeded',hostedServiceReady:false};
+  }
   const result=await onceAztecOperation({store,name:command,identity, reconcile,execute:async({submit,bindDeployment})=>{
    // This branch cannot be reached for any retained operation, even without a hash.
    await checkNetwork();
