@@ -28,7 +28,7 @@ export async function startDevelopment(options) {
  const shutdown=()=>close().then(()=>process.exit(0),()=>process.exit(1));
  if(options.handleSignals){process.once('SIGINT',shutdown);process.once('SIGTERM',shutdown);}
  function close(){return closing??=(async()=>{process.removeListener('SIGINT',shutdown);process.removeListener('SIGTERM',shutdown);const errors=[];for(const stop of [()=>service?.close(),()=>server?.close(),()=>fixture?.close(),()=>Barretenberg.destroySingleton(),()=>BarretenbergSync.destroySingleton()])try{await stop();}catch(error){errors.push(error);}
-  if(!errors.length)await lease.close();if(errors.length)throw Error('Development cleanup requires reconciliation');
+  if(!errors.length)await lease.close();if(errors.length)throw new AggregateError(errors,'Development cleanup requires reconciliation');
  })();}
  try{
   if(options.profile==='legacy'){
@@ -45,7 +45,10 @@ export async function startDevelopment(options) {
   if(options.hostedConfig){const config=await readDevnetRecord(options.hostedConfig);if(!config||config.development!==true)throw Error('Explicit local hosted configuration required');const {runHostedService}=await import('../main.mjs');service=await runHostedService({config});}
   await lease.assertHeld();
   return {url:server?.url,profile:options.profile,close,readiness:fixture.readiness??'legacy-development-only'};
- }catch{await close();throw Error('Development startup failed; preserve state and reconcile its saved operations');}
+ }catch(error){
+  try{await close();}catch(cleanup){throw new AggregateError([error,cleanup],'Development startup and cleanup require reconciliation');}
+  throw new Error('Development startup failed; preserve state and reconcile its saved operations',{cause:error});
+ }
 }
 if(process.argv[1]&&import.meta.url===pathToFileURL(process.argv[1]).href){
  let runtime;

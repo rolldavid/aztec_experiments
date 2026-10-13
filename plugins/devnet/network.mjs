@@ -101,7 +101,9 @@ export async function startDevnet({directory,fundingAddresses,proofs=false,persi
   onOwned({close});
   try{
     onProgress('Starting disposable Ethereum');
-    anvil=spawn(path.resolve('.build/anvil-1.7.0/anvil'),['--host','127.0.0.1','--port',String(port),'--chain-id','31337','--mnemonic',identity.mnemonic.phrase,'--silent'],{stdio:'ignore'});
+    // Retained snapshots exceed Anvil's default 2MB RPC body limit. This
+    // isolated loopback process loads only the private, hash-bound <=128MiB file.
+    anvil=spawn(path.resolve('.build/anvil-1.7.0/anvil'),['--host','127.0.0.1','--port',String(port),'--chain-id','31337','--mnemonic',identity.mnemonic.phrase,'--silent',...(persistent?['--no-request-size-limit']:[])],{stdio:'ignore'});
     process.once('exit',terminateChild);
     anvilClosed=new Promise(resolve=>{anvil.once('error',error=>{spawnError=error;resolve();});anvil.once('close',resolve);});
     let ready=false;
