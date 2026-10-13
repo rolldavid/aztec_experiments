@@ -6,7 +6,7 @@ import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import vm from 'node:vm';
 import * as ethers from 'ethers';
-import {loadContractArtifact,encodeArguments} from '@aztec-labs/stdlib/abi';
+import {loadContractArtifact,encodeArguments,getInitializer} from '@aztec-labs/stdlib/abi';
 import {poseidon2HashWithSeparator} from '@aztec-labs/foundation/crypto/poseidon';
 import {Fr} from '@aztec-labs/foundation/curves/bn254';
 import {AztecAddress} from '@aztec-labs/stdlib/aztec-address';
@@ -182,7 +182,7 @@ for(const loss of ['none','binding','deployment'])test('Rolling actual ABI profi
  if(loss!=='none'){await assert.rejects(f.run(),/synthetic lost/);f.clearLoss();}
  const r=await f.run();assert.equal(r.status,'pending-settlement');assert.equal(f.bindings,1);assert.equal(f.deploys,loss==='deployment'?1:0);
  const call=f.deploymentCalls[0];assert.equal(call.initializer,'init');assert.equal(call.args.length,11);assert.equal(call.args[0].length,32);assert.equal(call.options.deployer.toString(),f.manifest.actors.aztecDeployer);assert.equal(call.options.universalDeploy,undefined);
- const abi=rollingArtifact.functions.find(f=>f.name==='init');assert.equal(encodeArguments(abi,call.args).length,42);
+ const abi=getInitializer(rollingArtifact,'init');assert.equal(encodeArguments(abi,call.args).length,42);
  const again=await f.run();assert.equal(again.readyTxHash,r.readyTxHash);assert.equal(f.bindings,1);
 });
 for(const fieldName of ['moderator','main_rules','main_version','config','portal_address'])test('Rolling canonical '+fieldName+' mismatch blocks portal binding',async()=>{
