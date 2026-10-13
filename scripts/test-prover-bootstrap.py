@@ -1,6 +1,9 @@
 """Development unit tests; no Linux services, cloud calls, or proof jobs are run."""
-import os, shutil, base64, datetime as dt, gzip, hashlib, importlib.util, io, json, lzma, pathlib, subprocess, tarfile, tempfile, unittest
+import os, shutil, base64, datetime as dt, gzip, hashlib, importlib.util, io, json, lzma, pathlib, subprocess, sys, tarfile, tempfile, unittest
 from unittest.mock import patch
+
+if sys.version_info < (3,12):
+    raise SystemExit('Bootstrap tests require Python 3.12+ with the tarfile data extraction filter.')
 
 ROOT=pathlib.Path(__file__).resolve().parents[1]
 spec=importlib.util.spec_from_file_location('bootstrap',ROOT/'deploy/prover/bootstrap.py')
@@ -594,7 +597,9 @@ for(const key of ['origins','queryNode']){
             ns['diagnostic'](ValueError('PRIVATE_SENTINEL'));write.assert_not_called()
 
     def test_cli_private_compressed_output_and_no_overwrite(self):
-        with tempfile.TemporaryDirectory() as t:
+        # The real CLI forbids inputs/outputs inside its checkout. A supervisor's
+        # TMPDIR may be inside that checkout, so use an owned external directory.
+        with tempfile.TemporaryDirectory(prefix='rolling-bootstrap-cli-',dir='/tmp') as t:
             directory=pathlib.Path(t).resolve();directory.chmod(0o700)
             now=dt.datetime.now(dt.timezone.utc).replace(microsecond=0)
             c=config()
@@ -602,16 +607,31 @@ for(const key of ['origins','queryNode']){
                 c[key]=(now+delta).strftime('%Y-%m-%dT%H:%M:%SZ')
             source=directory/'input.json';source.write_text(json.dumps(c));source.chmod(0o600)
             output=directory/'user-data.gz'
-            args=['python3',str(ROOT/'deploy/prover/bootstrap.py'),'--config',str(source),'--output',str(output)]
-            result=subprocess.run(args,capture_output=True,text=True)
+            # Exercise the actual closed release gate before the separate positive
+            # fixture. This is a real CLI invocation, not fixture_generate's mock.
+            real_pins=(ROOT/'toolchain.json').read_bytes()
+            active=json.loads(real_pins).get('nativeProver',{}).get('linux-x64')
+            if active is None:
+                with self.assertRaisesRegex(b.Invalid,'^Active Linux prover qualification required$'):b.require_linux_qualification()
+                actual=subprocess.run([sys.executable,str(ROOT/'deploy/prover/bootstrap.py'),'--config',str(source),'--output',str(output)],capture_output=True,text=True,timeout=10)
+                self.assertEqual(actual.returncode,1);self.assertFalse(output.exists())
+                self.assertNotIn('PRIVATE_SENTINEL',actual.stdout+actual.stderr)
+            # Labelled qualified release fixture only. It copies the unchanged CLI
+            # into a temporary root; no active repository/toolchain pin is changed.
+            fixture=directory/'qualified-fixture';cli=fixture/'deploy/prover/bootstrap.py';cli.parent.mkdir(parents=True)
+            shutil.copyfile(ROOT/'deploy/prover/bootstrap.py',cli)
+            (fixture/'toolchain.json').write_text(json.dumps({'nativeProverPackage':b.BB_VERSION,'nativeProver':{'linux-x64':{'version':b.BB_VERSION,'sha256':b.BB_SHA}}}))
+            args=[sys.executable,str(cli),'--config',str(source),'--output',str(output)]
+            result=subprocess.run(args,capture_output=True,text=True,timeout=10)
             self.assertEqual(result.returncode,0,result.stderr)
             self.assertNotIn('PRIVATE_SENTINEL',result.stdout+result.stderr)
             self.assertEqual(output.stat().st_mode & 0o777,0o600)
             data=output.read_bytes();self.assertLessEqual(len(data),16384)
             subprocess.run(['/bin/sh','-n'],input=gzip.decompress(data),check=True)
-            result=subprocess.run(args,capture_output=True,text=True)
+            result=subprocess.run(args,capture_output=True,text=True,timeout=10)
             self.assertEqual(result.returncode,1);self.assertEqual(output.read_bytes(),data)
             self.assertNotIn('PRIVATE_SENTINEL',result.stdout+result.stderr)
+            self.assertEqual((ROOT/'toolchain.json').read_bytes(),real_pins)
 
     def test_private_input_permissions_and_symlink_rejected(self):
         with tempfile.TemporaryDirectory() as t:
@@ -700,7 +720,7 @@ class FinalReceipt(unittest.TestCase):
             fixture=directory/'fixture';cli=fixture/'deploy/prover/bootstrap.py';cli.parent.mkdir(parents=True)
             shutil.copyfile(ROOT/'deploy/prover/bootstrap.py',cli)
             (fixture/'toolchain.json').write_text(json.dumps({'nativeProverPackage':b.BB_VERSION,'nativeProver':{'linux-x64':{'version':b.BB_VERSION,'sha256':b.BB_SHA}}}))
-            result=subprocess.run(['python3',str(cli),'--config',str(source),'--output',str(output)],capture_output=True,text=True)
+            result=subprocess.run([sys.executable,str(cli),'--config',str(source),'--output',str(output)],capture_output=True,text=True,timeout=10)
             self.assertEqual(result.returncode,1);self.assertFalse(output.exists());self.assertNotIn(token,result.stdout+result.stderr)
 
     def test_success_and_persistence_failure_do_not_masquerade_as_receipts(self):
@@ -925,15 +945,29 @@ code=b.node_wrapper(['/usr/bin/docker','run',b.IMAGE,'testnet'],base)
 if code<0:signal.signal(-code,signal.SIG_DFL);os.kill(os.getpid(),-code)
 raise SystemExit(code)
 """
-            process=subprocess.Popen([sys.executable,'-c',script,b.__file__,t],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+            # This test owns a separate group, including its disposable grandchild.
+            # A failed readiness assertion must not leave inherited pipes open.
+            process=subprocess.Popen([sys.executable,'-c',script,b.__file__,t],stdout=subprocess.PIPE,stderr=subprocess.PIPE,start_new_session=True)
             try:
+                self.assertEqual(os.getpgid(process.pid),process.pid)
                 deadline=time.monotonic()+3
                 while not (pathlib.Path(t)/'ready').exists() and time.monotonic()<deadline:time.sleep(.01)
                 self.assertTrue((pathlib.Path(t)/'ready').exists());process.send_signal(signal.SIGTERM)
                 stdout,stderr=process.communicate(timeout=3);self.assertEqual(process.returncode,-15);self.assertEqual(stdout,b'');self.assertEqual(stderr,b'')
                 observed=b.node_startup_observation(pathlib.Path(t));self.assertEqual(observed['signal'],15);self.assertTrue(observed['complete'])
             finally:
-                if process.poll() is None:process.kill();process.communicate()
+                try:os.killpg(process.pid,signal.SIGKILL)
+                except ProcessLookupError:pass
+                try:process.communicate(timeout=2)
+                finally:
+                    for stream in (process.stdout,process.stderr):stream.close()
+                self.assertIsNotNone(process.poll())
+                gone=False;cleanup_deadline=time.monotonic()+1
+                while time.monotonic()<cleanup_deadline:
+                    try:os.killpg(process.pid,0)
+                    except ProcessLookupError:gone=True;break
+                    time.sleep(.01)
+                self.assertTrue(gone,'Owned disposable process group was not reaped')
 
     def test_real_disposable_process_exit_and_signal_are_preserved_without_raw_output(self):
         # Real short Python children stand in for Docker; no Docker/service runs.
@@ -957,21 +991,26 @@ raise SystemExit(code)
         original_spawn=subprocess.Popen;original_fsync=b.os.fsync
         for ignore_term in [False,True]:
             with self.subTest(ignore_term=ignore_term),tempfile.TemporaryDirectory() as t:
-                children=[];syncs=0;failure=OSError(errno.ENOSPC,'PRIVATE_SENTINEL')
+                children=[];post_spawn_syncs=0;failure=OSError(errno.ENOSPC,'PRIVATE_SENTINEL')
                 def spawn(args,**kw):
                     code="import signal,time;"+("signal.signal(signal.SIGTERM,signal.SIG_IGN);" if ignore_term else '')+"print('ready',flush=True);time.sleep(30)"
                     child=original_spawn([sys.executable,'-c',code],**kw);children.append(child)
                     self.assertEqual(child.stdout.readline(),b'ready\n');return child
                 def fsync(fd):
-                    nonlocal syncs
-                    syncs+=1
-                    if children and syncs==4:raise failure
+                    nonlocal post_spawn_syncs
+                    # Source mounting has its own durable writes before Popen.
+                    # Fail the first node-startup persistence after this child
+                    # actually exists, independent of that earlier write count.
+                    if children:
+                        post_spawn_syncs+=1
+                        if post_spawn_syncs==1:raise failure
                     return original_fsync(fd)
                 started=time.monotonic()
                 try:
                     with patch.object(b.subprocess,'Popen',side_effect=spawn),patch.object(b.os,'fsync',side_effect=fsync):
                         with self.assertRaises(OSError) as caught:b.node_wrapper(['/usr/bin/docker','run',b.IMAGE,'testnet'],pathlib.Path(t))
                     self.assertIs(caught.exception,failure);self.assertLess(time.monotonic()-started,5)
+                    self.assertGreaterEqual(post_spawn_syncs,1)
                     self.assertEqual(len(children),1);self.assertIsNotNone(children[0].poll())
                     self.assertTrue(failure.node_cleanup['reaped']);self.assertEqual(failure.node_cleanup['killSent'],ignore_term);self.assertFalse(failure.node_cleanup['failed'])
                     observed=b.node_startup_observation(pathlib.Path(t));self.assertTrue(observed['available']);self.assertEqual(observed['cleanup'],failure.node_cleanup)
@@ -1075,4 +1114,4 @@ raise SystemExit(code)
         self.assertTrue(result['failed']);self.assertFalse(result['reaped']);self.assertEqual(child.waits,[2,2]);self.assertEqual(child.kills,1);self.assertIsNone(code)
         self.assertNotIn('PRIVATE_SENTINEL',json.dumps(result))
 
-if __name__=='__main__':unittest.main()
+if __name__=='__main__':unittest.main(verbosity=2)

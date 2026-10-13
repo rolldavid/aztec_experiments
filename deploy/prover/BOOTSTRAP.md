@@ -533,9 +533,24 @@ Cheap checks (no Docker execution, node startup, proof or archive build):
 
 ```sh
 node --test deploy/prover/startup-stages.test.mjs
-python3 scripts/test-prover-bootstrap.py
-PROVER_VALIDATION_NODE=/absolute/path/to/pinned/node python3 scripts/test-prover-package.py
+python3.12 -u scripts/test-prover-bootstrap.py
+PROVER_VALIDATION_NODE=/absolute/path/to/pinned/node python3.12 -u scripts/test-prover-package.py
 ```
+
+Use an explicit Python 3.12 or newer interpreter (the available Python 3.14 is
+also supported), not macOS's older `/usr/bin/python3`. The bootstrap tests reject
+an older interpreter before running: archive safety depends on the standard
+library's `tarfile` data filter and `FilterError`. CLI children use that same
+interpreter. Verbose test names and unbuffered output identify a stalled case
+without waiting for the whole suite to finish. Successful payload CLI checks use
+a clearly labelled isolated qualified release fixture; the actual repository's
+missing Linux qualification pin must still reject generation without output.
+The real CLI test uses an owned external temporary directory, so a supervisor's
+in-checkout `TMPDIR` cannot cause a path rejection to masquerade as a native-pin
+check. Disposable termination tests own a process group and bound pipe draining
+on both success and failure. The disk-full injection targets persistence after
+child creation, independent of earlier source-mount writes. These repairs do not
+establish the cause of the historical termination-test stall.
 
 Use the pinned Node 24.21.0 binary. Node tests parse all transformed SDK modules,
 recover the exact original bytes by reversing the explicit adapter, execute the
