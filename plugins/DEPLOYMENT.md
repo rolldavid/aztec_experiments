@@ -390,9 +390,9 @@ per-thread mirror. No organization creation, broad installation, PAT, ambient
 
 Use repository Administration write, Contents write and implicit Metadata read;
 no Actions, Workflows, organization, user OAuth permissions or event subscription.
-Select only the intended per-thread private repositories. A newly created
-repository outside the installation's selected scope remains blocked until the
-operator explicitly grants that repository; never fall back to all repositories.
+Select only the intended per-thread private repositories. GitHub automatically
+adds App-created repositories to that App's selected installation. Never fall back
+to all repositories or select an unrelated repository as a setup seed.
 Disable Actions before use; source capture additionally rejects `.github` paths.
 The concrete installation and actual personal-account creation permission are
 external setup gates, not facts established by controlled tests.
@@ -468,7 +468,7 @@ is performed by the installation preparation packet.
 it does not deploy or activate anything. It uses the private Rolling descriptor,
 not the legacy `SERVICE.json` account-linked escrow. Replace every placeholder
 from independently verified public deployment receipts and operator inputs.
-`deployment.blockNumber`, organization/App/installation IDs must be JSON integers;
+`deployment.blockNumber`, owner/App/installation IDs must be JSON integers;
 chain and rollup versions remain decimal strings. `pluginId` is the registered
 nonzero32-byte field; descriptor receiver is the PrivateBok address. Board and
 artifact origins must be different HTTPS origins. The state directory is an
@@ -479,7 +479,7 @@ is a separate private JSON file with `secret`, `salt` and `signingKey` (canonica
 The reference `repository` authorizes read-only PR lookup for that repository;
 new thread projects start empty and their accepted local Git state is separate.
 The GitHub App mirrors accepted source to private per-thread repositories in the
-configured dedicated organization. Private `operatorUrl` values are retained in
+configured personal `zac-williamson` account. Private `operatorUrl` values are retained in
 broker state and never substituted for public latest-source links. Production
 startup requires `githubApp.enabled: true` and a valid, available installation.
 Leaving it disabled is supported only for disposable development; the example
