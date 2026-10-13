@@ -1,3 +1,4 @@
+export {createEncryptedJournalSlot} from './journal-record.mjs';
 export {prepareAggregateFunding, aggregateFundingTransaction} from './rolling/aggregate-funding.mjs';
 export {validateAggregateFundingIntent, verifyAggregateFundingEffects} from './rolling/aggregate-recovery.mjs';
 import './browser-runtime-policy.mjs';
