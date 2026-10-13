@@ -22,6 +22,8 @@ import {rollingConversation} from './conversation.mjs';
 import {bokRunner} from './bok.mjs';
 import {veniceClient} from './venice.mjs';
 import {githubApi,githubToolbox} from './github-tools.mjs';
+import {threadRepositories} from './thread-repositories.mjs';
+import {createIsolatedExecution} from './isolated-execution.mjs';
 import {provingEnabledForNode} from '../shared/proving-policy.mjs';
 
 /** Composition root: only this module knows which implementations are selected. */
@@ -145,7 +147,14 @@ export async function runRollingHostedService({config,env=process.env,onError=()
   assert(env.VENICE_WALLET_PRIVATE_KEY,'Provider key required');
   assert(env.VENICE_AUTO_TOP_UP!=='true','Fund provider credits separately before hosted request execution');
   const repository=env.PLUGIN_REPOSITORY||config.repository,api=githubApi({token:env.GITHUB_TOKEN}),allowWrites=env.PLUGIN_GITHUB_WRITES==='true';
-  assert(!allowWrites||env.GITHUB_TOKEN);const toolbox=githubToolbox({repository,api,allowWrites,draftPr:env.PLUGIN_GITHUB_DRAFT!=='false'});await api('GET','/repos/'+repository);
+  assert(!allowWrites||env.GITHUB_TOKEN);
+  const workspaceRoot=path.join(config.stateDirectory,'thread-repositories'),outputRoot=path.join(config.stateDirectory,'static-artifacts');
+  for(const directory of [workspaceRoot,outputRoot])await fs.mkdir(directory,{recursive:true,mode:0o700});
+  const execution=createIsolatedExecution({...config.staticExecution,workspaceRoot,outputRoot});
+  await execution.assertAvailable();
+  const repositories=threadRepositories({directory:workspaceRoot,namespace:JSON.stringify({scope,pluginId:config.pluginId}),lease,startEmpty:true,
+   validateRevision:input=>execution.execute(input)});
+  const toolbox=githubToolbox({repository,api,repositories});await api('GET','/repos/'+repository);
   const provider=veniceMeteredProvider({client:veniceClient({privateKey:env.VENICE_WALLET_PRIVATE_KEY}),model:env.VENICE_MODEL||undefined,autoTopUp:false});
   server=await startEscrowService({descriptor,profile:'rolling',concurrency:1,board,host:config.host??'127.0.0.1',port:config.port??8787,
    onError:()=>onError(Error('Rolling hosted request requires reconciliation')),run:async request=>{
@@ -154,7 +163,7 @@ export async function runRollingHostedService({config,env=process.env,onError=()
     const escrow=await createPrivateBokEscrow({node,wallet,artifact,address:scope.receiver,operator:account.address.toString(),board:scope.boardAddress,network:scope,
      requestId:request.requestId,target:request.target,store,lease,development:config.development,proofMode:config.development?'disabled':'real'});
     return runPrivateBokRequest({request,board,escrow,store,provider,conversation,limits:config.limits,runAgent:async({model,conversation,...input})=>
-     bokRunner({runner:createAgent({model,toolbox,conversation,summaryModelId,maxCalls:config.limits?.maxCalls??8,instructions:'You are bok, the board development assistant. Answer the explicit request; do not merge or deploy.'})}).run(input)});
+     bokRunner({runner:createAgent({model,toolbox,conversation,summaryModelId,maxCalls:config.limits?.maxCalls??8,instructions:'You are bok, the board development assistant. Answer the explicit request. Each thread has its own persistent source repository. For static applications, provide package.json with a build script, explicit Node tests, and dist output. Use check_workspace to run isolated tests and builds and repair failures before answering. The runtime has Node and no network or dependency installation. Host validation saves accepted revisions; tools cannot alter permissions or deploy.'})}).run(input)});
    }});
   return {address:server.address,close};
  }catch{let cleanupFailed=false;try{await close();}catch{cleanupFailed=true;}throw Error(cleanupFailed?'Rolling hosted startup failed; owned cleanup requires attention':'Rolling hosted startup failed');}

@@ -60,3 +60,28 @@ test('bounded revision and storage budgets refuse new accepted source',async t=>
  await assert.rejects(h.open(2,1,threadRepositories({...h.options,maxRevisions:1})),/revision limit/);
  const next=await h.open(2,1,threadRepositories({...h.options,maxBytes:1024}));await h.checkout(next);await assert.rejects(next.accept(),/storage limit/);await next.close();
 });
+
+test('model can check and repair an empty thread; acceptance reuses only the exact checked source',async t=>{
+ const {githubToolbox}=await import('../github-tools.mjs');const h=await fixture(t);let validations=0;
+ const manager=threadRepositories({...h.options,startEmpty:true,validateRevision:async({sourceDirectory,revision})=>{validations++;const text=await fs.readFile(path.join(sourceDirectory,'app.js'),'utf8');if(text==='bad')throw Object.assign(Error('Isolated execution failed'),{result:{passed:false,phase:'test',revision,log:'assertion failed'}});return {passed:true,revision,sourceDigest:'a'.repeat(64),log:'passed'};}});
+ const toolbox=githubToolbox({repository:'owner/project',repositories:manager,api:async()=>assert.fail('Empty thread requires no external repository API')});
+ const session=await toolbox.open({threadId:id(1),id:id(1),postId:id(9)});
+ await session.call('write_file',{path:'app.js',content:'bad'});assert.equal((await session.call('check_workspace',{})).passed,false);
+ await session.call('write_file',{path:'app.js',content:'good'});const checked=await session.call('check_workspace',{});assert.equal(checked.passed,true);assert.equal(validations,2);
+ const accepted=await session.accept();assert.equal(accepted.acceptedRevision,checked.revision);assert.equal(validations,2,'unchanged source reuses exact isolated result');await session.close();
+ const second=await toolbox.open({threadId:id(1),id:id(2),postId:id(10)});assert.equal((await second.call('read_file',{path:'app.js'})).text,'good');await second.call('check_workspace',{});await second.call('write_file',{path:'app.js',content:'changed'});await second.accept();assert.equal(validations,4,'edit invalidates previous isolated check');await second.close();
+});
+
+test('a text-only empty thread can answer without creating a fake static application',async t=>{
+ const {githubToolbox}=await import('../github-tools.mjs');const h=await fixture(t);let validations=0;
+ const manager=threadRepositories({...h.options,startEmpty:true,validateRevision:async()=>{validations++;assert.fail('No changed source');}});
+ const toolbox=githubToolbox({repository:'owner/project',repositories:manager,api:async()=>assert.fail('No API')});
+ const session=await toolbox.open({threadId:id(1),id:id(1),postId:id(9)});assert.equal(await session.accept(),null);await session.close();assert.equal(validations,0);
+});
+test('publication lost acknowledgement reconciles the exact accepted receipt without model or validation replay',async t=>{
+ const h=await fixture(t);let calls=0,validations=0,firstReceipt;
+ const options={...h.options,validateRevision:async({revision})=>{validations++;return {passed:true,revision,sourceDigest:'a'.repeat(64)};},onAccepted:async receipt=>{calls++;if(!firstReceipt)firstReceipt=receipt;else assert.deepEqual(receipt,firstReceipt);if(calls===1)throw Error('lost publication acknowledgement');return {published:true,acceptedRevision:receipt.acceptedRevision};}};
+ const first=await h.open(1,1,threadRepositories(options));await h.checkout(first);await fs.writeFile(path.join(first.work,'file.txt'),'publish exact source');await assert.rejects(first.accept(),/lost publication/);await first.close();
+ const second=await h.open(2,1,threadRepositories(options));assert.equal(second.readRevision,firstReceipt.acceptedRevision);assert.equal(calls,2);assert.equal(validations,1);await second.close();
+ const third=await h.open(3,1,threadRepositories(options));assert.equal(calls,2);await third.close();
+});

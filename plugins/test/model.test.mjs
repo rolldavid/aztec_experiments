@@ -51,3 +51,9 @@ test('successful answer waits for host acceptance before closing invocation work
  const result=await createAgent({toolbox,instructions:'Help',model:{complete:async()=>({message:{role:'assistant',content:'Done'}})}}).run({id:'a',postId:'b',text:'Help'});
  assert(accepted&&closed);assert.equal(result.revision.acceptedRevision,'abc');
 });
+
+test('published app links are host-produced, byte bounded, and omit private validation metadata',async()=>{
+ const toolbox={open:async()=>({definitions:[],accept:async()=>({repositoryId:'repo',acceptedRevision:'a'.repeat(40),validation:{outputDirectory:'/private/operator/output'},publication:{artifactUrl:'https://apps.example/t/abc/latest/',sourceUrl:'https://apps.example/t/abc/r/'+'a'.repeat(40)+'/source.json'}}),close:async()=>{}})};
+ const result=await createAgent({toolbox,instructions:'Help',model:{complete:async()=>({message:{role:'assistant',content:'🌎'.repeat(248)}})}}).run({id:'a',postId:'b',text:'Build'});
+ assert(Buffer.byteLength(result.replyText)<=992);assert(result.replyText.isWellFormed());assert.match(result.replyText,/App: https:\/\/apps.example/);assert.match(result.replyText,/Source:/);assert(!JSON.stringify(result).includes('/private/'));assert(!Object.hasOwn(result.revision,'validation'));
+});

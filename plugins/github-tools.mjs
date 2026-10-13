@@ -25,6 +25,10 @@ export function githubToolbox({repository,api,allowWrites=false,draftPr=false,ru
         if(baseSha!==workspace.readRevision)throw Error('Accepted repository revision changed');
         return {base:null,baseSha};
       }
+      if(workspace?.startEmpty){
+        await runCommand('git',['init',work]);await runCommand('git',['commit','--allow-empty','-m','Initialize isolated Bok thread'],{cwd:work});
+        return {base:null,baseSha:(await runCommand('git',['rev-parse','HEAD'],{cwd:work})).stdout.trim()};
+      }
       await runCommand('git',['clone','--depth','1','--filter=blob:none','--no-checkout','https://github.com/'+repository+'.git',work],{timeout:60000,maxBuffer:1024*1024});
       const info=await api('GET','/repos/'+repository);
       const baseSha=(await runCommand('git',['rev-parse','HEAD'],{cwd:work})).stdout.trim();
@@ -34,7 +38,7 @@ export function githubToolbox({repository,api,allowWrites=false,draftPr=false,ru
     // index so publishing a small edit never treats large artifacts as deleted.
     const ensureFiles=()=>files??=(async()=>{
       const {baseSha}=await ensureCheckout();let commit,tree;
-      if(workspace?.readRevision){
+      if(workspace?.readRevision||workspace?.startEmpty){
         const listed=await runCommand('git',['ls-tree','-r','-l','-z',baseSha],{cwd:work,maxBuffer:4*1024*1024});
         commit={tree:{sha:baseSha}};tree={sha:baseSha,truncated:false,tree:listed.stdout.split('\0').filter(Boolean).map(row=>{
           const match=/^([0-7]+) (blob|commit) ([0-9a-f]{40}) +([0-9]+|-)\t(.+)$/s.exec(row);
@@ -74,9 +78,13 @@ export function githubToolbox({repository,api,allowWrites=false,draftPr=false,ru
       definition('create_pr','Publish current edits as a new pull request; never merge',{title:string,body:string}),
     ];
     return {
-      definitions:workspace?definitions.filter(x=>x.function.name!=='create_pr'):definitions,
+      definitions:workspace?[...definitions.filter(x=>x.function.name!=='create_pr'),definition('check_workspace','Run isolated tests and static build for current source; repair failures before finishing',{})]:definitions,
       summary:reason=>(reason+(prUrl?' PR: '+prUrl:' No PR was published.')).slice(0,900),
       async call(name,args){
+        if(name==='check_workspace'&&workspace){
+          await ensureFiles();let result;try{result=await workspace.check();}catch(error){if(!error.result)throw error;result=error.result;}
+          return {passed:result.passed,revision:result.revision,sourceDigest:result.sourceDigest,phase:result.phase,log:result.log?.slice(-12000),logTruncated:(result.log?.length??0)>12000};
+        }
         if(name==='list_files'){if(typeof args.prefix!=='string')throw Error('Prefix required');await ensureCheckout();const listed=await runCommand('git',['ls-tree','-r','--name-only','-z','HEAD'],{cwd:work,maxBuffer:4*1024*1024});const files=listed.stdout.split('\0').filter(x=>x&&x.startsWith(args.prefix));return {files:files.slice(0,500),truncated:files.length>500};}
         if(name==='read_file'){const oversized=await ensureFiles(),file=await safe(args.path);if(oversized.has(pathKey(path.relative(work,file)))||(await fs.stat(file)).size>100000)throw Error('File too large');return {text:await fs.readFile(file,'utf8')};}
         if(name==='write_file'){if(typeof args.content!=='string'||Buffer.byteLength(args.content)>100000)throw Error('File too large');const oversized=await ensureFiles(),file=await safe(args.path);if(oversized.has(pathKey(path.relative(work,file))))throw Error('File too large');await fs.mkdir(path.dirname(file),{recursive:true});await fs.writeFile(file,args.content);return {written:args.path};}
