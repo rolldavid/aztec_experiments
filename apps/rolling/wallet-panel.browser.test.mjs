@@ -19,7 +19,7 @@ const error=()=>{throw Object.defineProperty(Error('PRIVATE_SENTINEL'), 'code',{
 async function boundary(name){if(state.hold===name)await new Promise(resolve=>state.release=resolve);if(state.failure===name)error();}
 const application={
  async readBokStatus(){return {available:state.bokCredit!==undefined,...(state.bokCredit!==undefined?{availableCredit:state.bokCredit}:{})};},
- async prepareBokPost(id){state.bokContinues=(state.bokContinues??0)+1;await boundary('bok-continue');const prior=read();if(prior.intentId!==id||prior.status!=='authorized')error();const next={...prior,intentId:'43',status:'prepared',maximumFee:'234',bok:{...prior.bok,phase:'post',authorizationTxHash:'0x'+'7'.repeat(64)}};write(next);return next;},
+ async prepareBokPost(id){state.bokContinues=(state.bokContinues??0)+1;await boundary('bok-continue');const prior=read();if(prior.intentId!==id||!['authorized','bok-post-reverted'].includes(prior.status))error();const next={...prior,intentId:'43',status:'prepared',maximumFee:'234',bok:{...prior.bok,phase:'post',authorizationTxHash:'0x'+'7'.repeat(64)}};write(next);return next;},
  async resumeSaved(id,input){state.resumes++;state.resumeInput={id,...input};state.sends++;await boundary('saved-resume');const next={...read(),txHash:input.expectedTxHash,status:state.resumeOutcome??'confirmed'};write(next);return next;},
  async inspectRecovery(id){state.recoveryChecks++;await boundary('recovery-options');return {...state.recoverySnapshot,intent:read()};},
  async prepareReplacement(id,input){state.replacementPrepares++;state.replacementInput=input;await boundary('replacement-prepare');const current=read();const next={...current,status:'replacement-prepared',replacementReview:{sourceTxHash:input.expectedTxHash,head:input.expectedHead,marker:current.action.type==='read-marker'?state.recoverySnapshot.marker:null,maximumFee:'456'}};write(next);return next;},
@@ -612,4 +612,13 @@ test('Bok continuation failure preserves authorized recovery without another cre
  await open(page);await page.getByRole('button',{name:'Unlock',exact:true}).click();await page.getByRole('button',{name:'Review saved Bok post',exact:true}).click();
  await page.getByRole('alert').waitFor();assert.equal((await counts(page)).sends,0);assert.equal((await counts(page)).prepares,0);
  assert.equal(await page.evaluate(()=>JSON.parse(sessionStorage.getItem('labelled-ui-intent')).status),'authorized');
+});
+
+test('Bok reverted post stays in explicit saved-request recovery after reopen without a new authorization',async t=>{
+ const {page}=await browserFixture(t);await page.evaluate(()=>{test.bokCredit='600';sessionStorage.setItem('labelled-ui-intent',JSON.stringify({intentId:'43',status:'bok-post-reverted',action:{type:'bok',content:'Saved funded Bok draft',budget:'400'},maximumFee:'123',bok:{phase:'post',budget:'400',availableCredit:'1000',authorizationTxHash:'confirmed-authorize'}}));});
+ await open(page);await page.getByRole('button',{name:'Unlock',exact:true}).click();await page.getByRole('button',{name:'Review saved Bok post',exact:true}).waitFor();
+ await page.getByText(/The post reverted. Its paid network fee is not refunded/).waitFor();assert.equal(await page.getByLabel('Action',{exact:true}).count(),0);
+ assert.equal((await counts(page)).sends,0);assert.equal((await counts(page)).prepares,0);
+ await page.getByRole('button',{name:'Review saved Bok post',exact:true}).click();await page.getByRole('button',{name:'Confirm and send',exact:true}).waitFor();
+ assert.equal((await counts(page)).sends,0);assert.equal((await counts(page)).prepares,0);assert.equal(await page.getByRole('button',{name:'Cancel prepared action',exact:true}).count(),0);
 });

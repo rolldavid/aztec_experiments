@@ -284,10 +284,10 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   if(intent.bok){
    content.append(paragraph(`Bok request budget: ${intent.bok.budget} credits. This is separate from the network fee.`));
    if(intent.bok.phase==='authorize')content.append(paragraph('First authorize this exact request privately. Publishing the saved post requires a separate review and network fee.'));
-   else content.append(paragraph('The request is already authorized. This publishes its exact saved post; the Bok budget is not authorized again.'));
+   else {content.append(paragraph('The request is already authorized. This publishes its exact saved post; the Bok budget is not authorized again.'));if(Number.isSafeInteger(intent.bok.mainPolicyVersion)&&Number.isSafeInteger(intent.bok.localPolicyVersion))content.append(paragraph(`Reviewed policy versions: parent ${intent.bok.mainPolicyVersion}, local ${intent.bok.localPolicyVersion}.`));}
   }
-  if(intent.status==='authorized'){
-   content.append(paragraph('Bok authorization confirmed. Your exact request and post are saved. Nothing else will be sent automatically.'),button('Review saved Bok post',()=>void work(async()=>{
+  if(['authorized','bok-post-reverted'].includes(intent.status)){
+   content.append(paragraph(intent.status==='authorized'?'Bok authorization confirmed. Your exact request and post are saved. Nothing else will be sent automatically.':'The post reverted. Its paid network fee is not refunded. Your authorized Bok request and draft remain saved; review current policy and a new network fee before trying again.'),button('Review saved Bok post',()=>void work(async()=>{
     const epoch=accountEpoch,id=intent.intentId;checkAccount(epoch);blocked=true;
     const result=await session.application.prepareBokPost(id);checkAccount(epoch);intent=result;blocked=false;notice='Review the saved post and its separate network fee before sending.';
    }),true));return;

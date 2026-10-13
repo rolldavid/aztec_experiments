@@ -960,3 +960,36 @@ test('Bok saved authorization and post cannot migrate to a changed adapter, oper
   assert.equal(f.state.sends,sends);assert.deepEqual([...f.values.entries()],before);
  }
 });
+
+test('Bok continuation renews policy consent without changing its authorized target',async()=>{
+ const f=bokFixture(),auth=await f.app.prepare(bokAction());await f.app.submitPrepared(auth.intentId);f.state.policy=2;
+ const post=await f.restart().prepareBokPost(auth.intentId);assert.equal(post.bok.mainPolicyVersion,2);
+ assert.equal(f.state.calls.at(-1).args[2].expected_main_policy_version,2);assert.equal(f.state.sends,1);
+ await f.app.submitPrepared(post.intentId);assert.equal(f.state.sends,2);
+});
+test('Bok canonical post revert retains the funded draft across reopen and explicit fee-reviewed retry',async()=>{
+ const f=bokFixture(),auth=await f.app.prepare(bokAction());await f.app.submitPrepared(auth.intentId);
+ const first=await f.app.prepareBokPost(auth.intentId);await f.app.submitPrepared(first.intentId);const originalArgs=structuredClone(f.state.sent.payload.args);
+ f.state.outcome={...f.state.outcome,outcome:'reverted'};const recovered=await f.restart().readAccountStatus();
+ assert.equal(recovered.status,'recovering');assert.equal(recovered.intent.status,'bok-post-reverted');
+ await assert.rejects(f.restart().prepare({type:'name',first:'River',last:'Stone'}),{code:'ROLLING_RECOVERY_REQUIRED'});
+ await assert.rejects(f.restart().cancelPrepared(first.intentId),{code:'ROLLING_RECOVERY_REQUIRED'});
+ f.state.policy=3;f.state.fee=12n;const retry=await f.restart().prepareBokPost(first.intentId);
+ assert.equal(f.state.sends,2);assert.notEqual(retry.intentId,first.intentId);assert.equal(retry.maximumFee,'12');assert.equal(retry.bok.mainPolicyVersion,3);
+ assert.equal(retry.bok.authorizationTxHash,auth.txHash??hex(77));
+ const retriedArgs=f.state.calls.at(-1).args;assert.deepEqual(retriedArgs.slice(5),originalArgs.slice(5));
+ assert.deepEqual({...retriedArgs[2],expected_main_policy_version:1},originalArgs[2]);
+ await f.restart().submitPrepared(retry.intentId);assert.equal(f.state.sends,3);assert.equal(f.state.sent.payload.name,'post_with_bok');
+ assert.equal(f.state.bokCredit,600n);
+});
+test('Bok post recovery never replaces unknown, nonfinal or changed funded requests',async()=>{
+ for(const mutation of ['unknown','nonfinal','spent','scope']){
+  const f=bokFixture(),auth=await f.app.prepare(bokAction());await f.app.submitPrepared(auth.intentId);const post=await f.app.prepareBokPost(auth.intentId);await f.app.submitPrepared(post.intentId);
+  f.state.outcome={...f.state.outcome,outcome:mutation==='unknown'?'unknown':'reverted'};
+  if(mutation==='nonfinal')f.options.accountSession.journal.assertCanStart=async()=>{throw Error('Original journal finality guard');};
+  if(mutation==='spent')f.state.bokRequest.available=0n;
+  if(mutation==='scope')f.options.deployment.bok.pluginId=hex(99);
+  await assert.rejects(f.restart().prepareBokPost(post.intentId));assert.equal(f.state.sends,2);
+  await assert.rejects(f.restart().prepare(bokAction()));assert.equal(f.state.sends,2);
+ }
+});

@@ -213,7 +213,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
   }
   const operation=id=>`ROLLING_WORKFLOW_V1:${id}`;
   function summary(record){return {intentId:record.id,action:clone(record.action),status:record.status,maximumFee:record.maximumFee,
-    nonce:record.nonce,txHash:record.txHash??null,stage:record.bok?`bok-${record.bok.phase}`:'single-transaction',...(record.bok?{bok:{phase:record.bok.phase,budget:record.bok.budget,availableCredit:record.bok.availableCredit,authorizationTxHash:record.bok.authorizationTxHash??null}}:{}),...(record.replacementReview?{replacementReview:clone(record.replacementReview)}:{}),
+    nonce:record.nonce,txHash:record.txHash??null,stage:record.bok?`bok-${record.bok.phase}`:'single-transaction',...(record.bok?{bok:{phase:record.bok.phase,budget:record.bok.budget,availableCredit:record.bok.availableCredit,authorizationTxHash:record.bok.authorizationTxHash??null,...(record.bok.phase==='post'?{mainPolicyVersion:record.args[2].expected_main_policy_version,localPolicyVersion:record.args[2].expected_local_policy_version}:{})}}:{}),...(record.replacementReview?{replacementReview:clone(record.replacementReview)}:{}),
     ...(preferenceAction(record)?{inclusionHistory:clone(record.inclusionHistory??[])}:{})};}
   function checkBokRecord(record){if(record?.bok)check(bok&&JSON.stringify(record.bok.scope)===JSON.stringify(bok),'ROLLING_CONTEXT_CHANGED');}
   async function savedIntent(id){const saved=await (await slot()).read();check(saved.value?.id===id,'ROLLING_INTENT_NOT_FOUND');checkBokRecord(saved.value);return saved;}
@@ -231,7 +231,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
     if(!['success','reverted'].includes(found.outcome))return {...summary(saved.value),status:'unknown',txHash:found.txHash};
     acknowledge(found,{operation:operation(saved.value.id),txHash:saved.value.replacementReview?found.txHash:(saved.value.txHash??found.txHash)});
     const next={...saved.value,status:found.outcome==='success'?'confirmed':'reverted',txHash:found.txHash,...(preferenceAction(saved.value)?{inclusionHistory:inclusionHistory(saved.value,found)}:{})};
-    await (await slot()).write(saved,next);return {...summary(next),...(next.bok?.phase==='authorize'&&next.status==='confirmed'?{status:'authorized'}:{})};
+    await (await slot()).write(saved,next);return {...summary(next),...(next.bok?.phase==='authorize'&&next.status==='confirmed'?{status:'authorized'}:next.bok?.phase==='post'&&next.status==='reverted'?{status:'bok-post-reverted'}:{})};
   }
   const preferenceAction=record=>['preference','read-marker'].includes(record.action.type);
   const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
@@ -449,14 +449,18 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
       record.maximumFee=estimated.maximumFee.toString();await guard();await store.write(prior,record);return summary(record);
     });},
     async prepareBokPost(id){return exclusive(async()=>{
-      await guard();let saved=await savedIntent(id);check(saved.value.bok?.phase==='authorize','ROLLING_RECOVERY_UNSUPPORTED');
-      const authorized=await outcome(saved);check(authorized.status==='authorized','ROLLING_RECOVERY_REQUIRED');saved=await savedIntent(id);
+      await guard();let saved=await savedIntent(id);check(['authorize','post'].includes(saved.value.bok?.phase),'ROLLING_RECOVERY_UNSUPPORTED');
+      const previousPhase=saved.value.bok.phase,authorized=await outcome(saved);
+      check(authorized.status===(previousPhase==='authorize'?'authorized':'bok-post-reverted'),'ROLLING_RECOVERY_REQUIRED');saved=await savedIntent(id);
       await waitingBok(saved.value);await session.journal.assertCanStart();
-      const prior=saved.value,postArgs=clone(prior.bok.postArgs),fresh=await screeningArguments(await contract(),postArgs[0]);
-      postArgs.splice(3,2,...fresh.slice(1));
+      const prior=saved.value,postArgs=plain(await argumentsFor(prior.action,await contract(),prior.nonce));
+      // Renew only public policy versions and screening hints. The funded target's
+      // deposit, nonce and every immutable post field remain the authorized draft.
+      check(same(postArgs.slice(0,2),prior.bok.postArgs.slice(0,2))&&
+        ['subboard','parent','root_reference','kind','name_id','reference','message','length'].every(key=>same(postArgs[2][key],prior.bok.postArgs[2][key])),'ROLLING_INTENT_CHANGED');
       const record={...prior,id:field(sdk.Fr.random().toString(),true),method:'post_with_bok',args:[...postArgs,bok.pluginId,prior.bok.requestId],
         status:'prepared',txHash:null,encoded:undefined,predecessor:{operation:operation(prior.id),txHash:prior.txHash},
-        bok:{...prior.bok,phase:'post',authorizationTxHash:prior.txHash}};
+        bok:{...prior.bok,phase:'post',authorizationTxHash:prior.bok.authorizationTxHash??prior.txHash}};
       const selected=interaction(await contract(),record);record.encoded=selected.encoded;
       progress('estimating');const estimate=await sdk.estimatePrivateFeeTransaction({wallet:session.wallet,node:session.node,interaction:selected.call,
         prepared:await payment(),from:session.owner,guard});record.maximumFee=estimate.maximumFee.toString();
