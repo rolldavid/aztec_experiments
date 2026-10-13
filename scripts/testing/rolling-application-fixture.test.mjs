@@ -5,7 +5,7 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import http from 'node:http';
 import path from 'node:path';
-import {assertRollingBrowserCompactAcceptance,createRollingEvidenceDirectory,classifyRollingApplicationFootprint,recordRollingFundingFailure,assertRollingApplicationViews,assertRollingPublicFootprint,closeRollingResources,loadRollingFixtureSDK,observeRollingReadiness} from './rolling-application-fixture.mjs';
+import {observeRollingColdRead,assertRollingBrowserCompactAcceptance,createRollingEvidenceDirectory,classifyRollingApplicationFootprint,recordRollingFundingFailure,assertRollingApplicationViews,assertRollingPublicFootprint,closeRollingResources,loadRollingFixtureSDK,observeRollingReadiness} from './rolling-application-fixture.mjs';
 import {createRollingProjection} from '../../shared/rolling/public-projection.mjs';
 import {createFileJournalStorage} from '../../apps/src/billboard/user/transaction-journal-store.mjs';
 import {createEncryptedJournalSlot} from '../../shared/journal-record.mjs';
@@ -635,3 +635,26 @@ for(const [name,change]of [
  ['nonfinite receiver',p=>{p.native.accepted=NaN;}],
  ['failed browser',p=>{p.browser.passed=false;}],
 ])test('cold browser receiver rejects '+name,()=>{const p=compactPair(4);change(p);assert.throws(()=>assertRollingBrowserCompactAcceptance(p.browser,p.native,4),/Cold browser transport acceptance failed/);});
+
+test('cold read observer awaits original work and projects only bounded numeric progress',async()=>{
+  let resolve,calls=0;const options={deadlineAt:123};
+  const value={complete:false,progress:{nextBlock:2,anchorBlock:5,markersChecked:0,markersTotal:null,privateChoice:'SECRET',processedRevision:'123'},preferences:{private:'SECRET'}};
+  const observer=observeRollingColdRead(async input=>{calls++;assert.equal(input,options);return new Promise(r=>resolve=r);});
+  const pending=observer.read(options);assert.equal(calls,1);assert.equal(observer.snapshot().pending,1);
+  resolve(value);assert.equal(await pending,value);
+  const snapshot=observer.snapshot();assert.equal(snapshot.pending,0);assert.equal(snapshot.calls,1);assert.equal(snapshot.completed,1);assert.equal(snapshot.failed,0);
+  assert.deepEqual(snapshot.lastStep.progress,{nextBlock:2,anchorBlock:5,markersChecked:0,markersTotal:null});
+  assert.equal(JSON.stringify(snapshot).includes('SECRET'),false);snapshot.lastStep.progress.nextBlock=99;assert.equal(observer.snapshot().lastStep.progress.nextBlock,2);
+});
+test('cold read observer preserves failure identity without leaking error text or extra calls',async()=>{
+  const failure=Error('SECRET'),observer=observeRollingColdRead(async()=>{throw failure;});
+  await assert.rejects(observer.read({}),error=>error===failure);
+  const s=observer.snapshot();assert.equal(s.calls,1);assert.equal(s.failed,1);assert.equal(s.completed,0);assert.equal(s.pending,0);assert.equal(s.lastStep.returned,false);assert.equal(s.lastStep.progress,null);
+  assert(Number.isSafeInteger(s.lastStep.elapsedMs)&&s.lastStep.elapsedMs>=0);assert.equal(JSON.stringify(s).includes('SECRET'),false);
+});
+test('cold observation ignores invalid and accessor progress without invoking getters',async()=>{
+  const progress={nextBlock:NaN,anchorBlock:-1,markersChecked:Infinity,markersTotal:'SECRET'};
+  Object.defineProperty(progress,'nextBlock',{get(){throw Error('accessor');}});
+  const value={complete:false,progress},observer=observeRollingColdRead(async()=>value);
+  assert.equal(await observer.read({}),value);assert.deepEqual(observer.snapshot().lastStep.progress,{});
+});

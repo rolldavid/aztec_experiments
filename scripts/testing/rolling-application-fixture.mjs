@@ -36,6 +36,32 @@ const SOURCES=['shared/rolling/cold-preference-reader.mjs','shared/rolling/compa
 export function classifyRollingApplicationFootprint({tx,effect,owner,otherOwner,payer,board}){
   return classifyT03PublicFootprint({tx,effect,roles:{author:owner,...(otherOwner?{otherAuthor:otherOwner}:{}),sharedPayer:payer,board}});
 }
+// Test-only bounded summary, never private choices, headers, keys or errors.
+// Await the original read exactly once; observation does not drive recovery.
+export function observeRollingColdRead(read) {
+  assert.equal(typeof read,'function');
+  const state={calls:0,pending:0,completed:0,failed:0,lastStep:null};
+  return Object.freeze({snapshot:()=>structuredClone(state),async read(options){
+    const call=++state.calls,started=performance.now();state.pending++;
+    const step={call,elapsedMs:0,returned:false,complete:null,progress:null};
+    try{
+      const value=await read(options);step.returned=true;
+      const descriptors=value&&typeof value==='object'?Object.getOwnPropertyDescriptors(value):{};
+      step.complete=typeof descriptors.complete?.value==='boolean'?descriptors.complete.value:null;
+      const p=descriptors.progress?.value;
+      if(p&&typeof p==='object'){
+        const progress={};
+        for(const key of ['nextBlock','anchorBlock','markersChecked','markersTotal']){
+          const d=Object.getOwnPropertyDescriptor(p,key);
+          if(d&&'value'in d&&(d.value===null||Number.isSafeInteger(d.value)&&d.value>=0))progress[key]=d.value;
+        }
+        step.progress=progress;
+      }
+      state.completed++;return value;
+    }catch(error){state.failed++;throw error;}
+    finally{state.pending--;step.elapsedMs=Math.round(performance.now()-started);state.lastStep=step;}
+  }});
+}
 export function recordRollingFundingFailure(report,role,observation){
   assert(role===undefined||role==='a'||role==='b');
   assert(observation&&typeof observation==='object');
@@ -1219,7 +1245,7 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
         await old.close();assert.throws(()=>old.contextGuard());
         // Recreate from original keys and public artifacts only. Neither the
         // old encrypted journal nor the PXE's retained events are copied.
-        const metrics=createRollingPrivateRecoveryMetrics();let recoveryError;
+        const metrics=createRollingPrivateRecoveryMetrics();let recoveryError,coldReadObservation;
         const sample=()=>{const m=process.memoryUsage();metrics.sampleMemory({rssBytes:m.rss,heapUsedBytes:m.heapUsed});};
         report.preferenceCold={completed:false,scope:'Actual fresh keys-only recovery; CLI fake-indexeddb platform',
           nodeScope:'Forwarded server-window calls, possibly including service readiness; not uniquely actor-attributed',
@@ -1233,8 +1259,9 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
           assert(replacement.pxe!==old.pxe&&replacement.journal!==old.journal);assert.equal(String(replacement.owner),String(old.owner));
           assert((await indexedDB.databases()).some(db=>db.name===identity.name));
           pxe=actorA.pxe;appWallet=actorA.wallet;journal=actorA.journal;app=actorA.application;
+          if(boundedCold)coldReadObservation=observeRollingColdRead(options=>app.readColdPreferences(options));
           report.preferenceKeysOnly={freshPXEVerified:true,freshPrivateStoreVerified:true,oldActorClosed:true,
-            ...await (boundedCold?compareRecoveredColdRollingPreferences:compareRecoveredRollingPreferences)(preferenceCheckpoint,{readPreferences:options=>boundedCold?app.readColdPreferences(options):app.readPreferences(options),activity:()=>actorA.activity()}),
+            ...await (boundedCold?compareRecoveredColdRollingPreferences:compareRecoveredRollingPreferences)(preferenceCheckpoint,{readPreferences:options=>boundedCold?coldReadObservation.read(options):app.readPreferences(options),activity:()=>actorA.activity()}),
             storagePlatform:'real SDK IndexedDB adapter on labelled CLI fake-indexeddb; native browser recovery is separate'};
           if(boundedCold){
             report.preferenceCold.compact=rpc.compactSnapshot();
@@ -1246,6 +1273,7 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
         }catch(error){recoveryError=error;throw error;}
         finally{
           coldRecoveryMetrics=undefined;sample();report.preferenceCold.metrics=metrics.snapshot();
+          if(boundedCold){report.preferenceCold.compact=rpc.compactSnapshot();report.preferenceCold.readProgress=coldReadObservation?.snapshot()??null;}
           // A pending server read remains visibly pending in this snapshot. No
           // extra wait or lifecycle action is introduced to improve the metric.
           try{await save();}catch(error){if(recoveryError)throw new AggregateError([recoveryError,error],'Recovery and measurement persistence failed');throw error;}
