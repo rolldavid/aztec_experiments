@@ -354,7 +354,8 @@ test('measured second race start is admitted without changing proof timeout or p
  assert.throws(()=>requireRollingRaceProofBudget(cutoff,cutoff-89999));
  const actor=await fs.readFile(new URL('./rolling-application-actor.mjs',import.meta.url),'utf8');
  assert(actor.includes('timeoutMs:120000,pollMs:100'),'Real remote timeout remains120s');
- assert(actor.includes('beforeSubmit:{value:()=>{contextGuard();if(remaining()<=0)throw expired();}'));
+ assert(actor.includes('beforeSubmit:{value:hook?async function(...values){contextGuard();if(remaining()<=0)throw expired();await Reflect.apply(hook.value,this,values);contextGuard();if(remaining()<=0)throw expired();}'));
+ assert(actor.includes(':()=>{contextGuard();if(remaining()<=0)throw expired();},enumerable:true}'));
  // The companion actor suite executes this guard through the actual engine
  // with a late-resolving proof, zero node sends and retained encrypted journal.
 });
