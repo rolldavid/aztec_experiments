@@ -42,6 +42,10 @@ export function rollingConversation({index,node,scope,development=false,maxMessa
    if(!found){assert(typeof page.nextCursor==='string'&&!cursors.has(page.nextCursor));cursors.add(page.nextCursor);cursor=page.nextCursor;}
   }
   assert.equal(messages.at(-1).text,request.text);await check();
-  return {canonical:true,complete:true,threadId,anchor:{...checkpoint},messages};
+  // The trusted host retains this closure for its immediate pre-inference
+  // guard. It validates this exact history; it never reloads a newer thread
+  // after a summary has already been paid for. Do not serialize it into a
+  // metering request or expose it as a user-supplied capability.
+  return {canonical:true,complete:true,threadId,anchor:{...checkpoint},messages,assertCurrent:check};
  }});
 }
