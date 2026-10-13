@@ -454,7 +454,28 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   }
   validate();
  }
+ function fundingWalletView(){
+  if(typeof runtime.fundingWallets!=='function'||typeof runtime.connectFundingWallet!=='function'||typeof runtime.fundingWalletStatus!=='function')return;
+  content.append(el('h3',{},'Your funding wallet'),paragraph('Choose the Ethereum wallet that will pay. Connecting does not transfer money or publish your private account.'));
+  const snapshot=runtime.fundingWalletStatus();
+  if(snapshot.connected){
+   if(typeof snapshot.name!=='string'||typeof snapshot.address!=='string'||!/^0x[0-9a-fA-F]{40}$/.test(snapshot.address))throw connectionFailure;
+   content.append(paragraph(snapshot.name+' connected: '+snapshot.address.slice(0,6)+'…'+snapshot.address.slice(-4)));return;
+  }
+  const choices=runtime.fundingWallets();
+  if(!Array.isArray(choices)||choices.length>32)throw connectionFailure;
+  if(!choices.length)content.append(paragraph('No Ethereum wallet was found. Open MetaMask or Phantom in this browser, then refresh the wallet list.'));
+  for(const choice of choices){
+   if(typeof choice.id!=='string'||typeof choice.name!=='string'||choice.name.length>128)throw connectionFailure;
+   content.append(button('Connect '+choice.name,()=>void work(async()=>{
+    const epoch=accountEpoch;checkAccount(epoch);await runtime.connectFundingWallet(choice.id);checkAccount(epoch);
+    notice='Funding wallet connected. No payment has been sent.';
+   })));
+  }
+  content.append(button('Refresh wallet list',()=>render()));
+ }
  function fundingView(){
+  fundingWalletView();
   content.append(el('h3',{},'Recover a completed funding payment'),paragraph('Import the public receipt saved when funding. We check the original payment and bridge delivery before offering a private claim. This does not request another Ethereum payment.'));
   const file=el('input',{type:'file',accept:'.json,application/json','aria-label':'Funding recovery receipt'});
   const review=button('Check funding receipt',()=>void work(async()=>{

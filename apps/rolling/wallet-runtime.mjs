@@ -61,7 +61,28 @@ async function load(){
  globalThis.BillboardCRS.validateManifest(crs);
  const boardArtifact=sdk.loadContractArtifact(boardRaw),privateFeeArtifact=sdk.loadContractArtifact(feeRaw),bokArtifact=bokRaw?sdk.loadContractArtifact(bokRaw):undefined;
  let session,creating;
- return Object.freeze({account,selectPrivateViews,getAccount:()=>globalThis.walletState.aztec,createSession({onProgress}={}){
+ // Only metadata leaves provider discovery. The selected transport stays inside
+ // existing custody, which verifies the configured chain and invalidates changes.
+ const fundingWallets=()=>{
+  if(!globalThis.walletState.aztec||globalThis.walletState.invalidated)throw failed();
+  globalThis.BillboardWalletProviders.refresh();
+  return globalThis.BillboardWalletProviders.list().map(({id,name})=>Object.freeze({id,name}));
+ };
+ const fundingWalletStatus=()=>{
+  const value=account.snapshot();
+  return Object.freeze({connected:value.ethereumConnected===true&&!value.invalidated,
+   name:value.ethereumConnected?value.ethereumWalletName:null,address:value.ethereumConnected?value.ethereumAddress:null});
+ };
+ const connectFundingWallet=async id=>{
+  const current=globalThis.walletState.aztec;
+  if(!current||globalThis.walletState.invalidated||typeof id!=='string')throw failed();
+  const selected=globalThis.BillboardWalletProviders.list().find(entry=>entry.id===id);
+  if(!selected)throw failed();
+  await account.connect(selected.provider,selected.name,{selectAccount:selected.rdns==='io.metamask'});
+  if(globalThis.walletState.aztec!==current||globalThis.walletState.invalidated)throw failed();
+  return fundingWalletStatus();
+ };
+ return Object.freeze({account,selectPrivateViews,fundingWallets,fundingWalletStatus,connectFundingWallet,getAccount:()=>globalThis.walletState.aztec,createSession({onProgress}={}){
   if(session)return Promise.resolve(session);if(creating)return creating;
   const selected=globalThis.walletState.aztec;
   if(!selected||globalThis.walletState.invalidated)return Promise.reject(failed());

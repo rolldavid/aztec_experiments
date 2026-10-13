@@ -34,7 +34,10 @@ const application={
  async cancelPrepared(){state.cancels++;write({...read(),status:'cancelled'});return read();},
  async reconcile(){state.reconciles++;await boundary('reconcile');const intent=read();if(state.resolveOutcome){intent.status=state.resolveOutcome;write(intent);}return intent;}
 };
-const runtime={selectPrivateViews,getAccount:()=>state.unlocked?state.rawAccount:null,
+const runtime={selectPrivateViews,
+ fundingWallets:()=>state.walletChoices??[],fundingWalletStatus:()=>state.fundingWallet??{connected:false},
+ async connectFundingWallet(id){state.walletConnects=(state.walletConnects??0)+1;state.walletSelected=id;await boundary('funding-wallet');state.fundingWallet={connected:true,name:'MetaMask',address:'0x'+'1'.repeat(40)};},
+ getAccount:()=>state.unlocked?state.rawAccount:null,
  account:{configure:options=>{state.options=options;},async create(){state.creates++;await boundary('create');state.unlocked=true;return envelope;},async importRecovery(){state.imports++;await boundary('import');state.unlocked=true;},async exportRecovery(){state.exports++;await boundary('export');return envelope;},async endSession(){state.ended++;state.unlocked=false;return {reload:true};}},
  async createSession({onProgress}){state.sessions++;state.sessionProgress=onProgress;for(const record of state.initializationRecords??[])onProgress(record);await boundary('session');return {application,busy:false,async close(){state.closes++;await boundary('close');}};}
 };
@@ -656,4 +659,26 @@ test('Moderator contextual defaults retain exact public avatar target and capabi
  await page.getByLabel('Profile name ID',{exact:true}).waitFor();assert.equal(await page.getByLabel('Profile name ID',{exact:true}).inputValue(),'99');
  await page.evaluate(()=>test.options.onChange({invalidated:true}));assert.equal(await page.evaluate(()=>panel.moderatorAuthorized()),false);
  assert.equal((await counts(page)).sends,0);
+});
+
+
+test('funding wallet selection is explicit, escaped and never prepares or sends a payment',async t=>{
+ const {page}=await browserFixture(t);
+ await page.evaluate(()=>{test.walletChoices=[{id:'metamask',name:'MetaMask'},{id:'phantom',name:'Phantom <script>'}];});
+ await open(page);await unlock(page);await page.getByRole('button',{name:'Recover funding',exact:true}).click();
+ assert.equal(await page.evaluate(()=>test.walletConnects??0),0);
+ assert(await page.getByRole('button',{name:'Connect Phantom <script>',exact:true}).isVisible());
+ await page.getByRole('button',{name:'Connect MetaMask',exact:true}).click();
+ await page.getByText('Funding wallet connected. No payment has been sent.',{exact:true}).waitFor();
+ assert.deepEqual(await page.evaluate(()=>({selected:test.walletSelected,connections:test.walletConnects,prepares:test.prepares,sends:test.sends})),{selected:'metamask',connections:1,prepares:0,sends:0});
+ assert(await page.getByText('MetaMask connected: 0x1111…1111',{exact:true}).isVisible());
+ assert.equal(await page.locator('body').innerText().then(v=>v.includes('HUMAN_IDENTITY_SENTINEL')),false);
+});
+
+test('rejected funding connection retains recovery and sends nothing',async t=>{
+ const {page}=await browserFixture(t);await page.evaluate(()=>{test.walletChoices=[{id:'metamask',name:'MetaMask'}];test.failure='funding-wallet';});
+ await open(page);await unlock(page);await page.getByRole('button',{name:'Recover funding',exact:true}).click();await page.getByRole('button',{name:'Connect MetaMask',exact:true}).click();
+ await page.getByRole('alert').waitFor();assert(!((await page.getByRole('alert').innerText()).includes('PRIVATE_SENTINEL')));
+ assert(await page.getByRole('button',{name:'Check funding receipt',exact:true}).isVisible());
+ assert.equal(await page.evaluate(()=>test.sends),0);
 });

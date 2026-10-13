@@ -32,7 +32,7 @@ test('real browser SDK unlock and encrypted recovery survive unavailable private
  const bokServed=await wallet.read('/wallet/bok.json');assert.equal(JSON.parse(bokServed.body).name,'PrivateBok');assert.equal(createHash('sha256').update(bokServed.body).digest('hex'),wallet.runtime.artifacts.bok.sha256);
  assert.equal(requests.some(r=>r.method==='POST'),false);
  const facade=await page.evaluate(async()=>{const {loadRollingWalletRuntime}=await import('/wallet/runtime.mjs');const runtime=await loadRollingWalletRuntime();return {selector:typeof runtime.selectPrivateViews,keys:Object.keys(runtime).sort()};});
- assert.equal(facade.selector,'function');assert.deepEqual(facade.keys,['account','createSession','getAccount','selectPrivateViews']);
+ assert.equal(facade.selector,'function');assert.deepEqual(facade.keys,['account','connectFundingWallet','createSession','fundingWalletStatus','fundingWallets','getAccount','selectPrivateViews']);
  // Actual browser worker and pinned local CRS initialization, even when the
  // application uses a remote prover. This previously failed on a missing G1
  // derivation route; a public/config double cannot hide that asset failure.
@@ -61,6 +61,26 @@ test('real browser SDK unlock and encrypted recovery survive unavailable private
  assert.ok(encrypted.ciphertext.length>32);
  await page.getByRole('button',{name:'Connect private account',exact:true}).waitFor();
  assert.equal(await page.evaluate(()=>Boolean(window.walletState.aztec)&&!window.walletState.invalidated),true);
+ // Real custody binding with a labelled injected transport; this is not a
+ // successful MetaMask/Phantom extension or payment qualification.
+ const connection=await page.evaluate(async()=>{
+  const {loadRollingWalletRuntime}=await import('/wallet/runtime.mjs'),runtime=await loadRollingWalletRuntime();
+  const before=runtime.getAccount(),calls=[],address='0x'+'1'.repeat(40);
+  const transport={on(){},removeListener(){},async request({method}){calls.push(method);
+   if(method==='eth_chainId')return '0x7a69';
+   if(method==='eth_requestAccounts'||method==='eth_accounts')return [address];
+   if(method==='wallet_requestPermissions')return [];
+   throw Error('Unexpected controlled transport operation');
+  }};
+  dispatchEvent(new CustomEvent('eip6963:announceProvider',{detail:{info:{uuid:'controlled-funding-wallet',name:'Labelled funding wallet',rdns:'io.metamask'},provider:transport}}));
+  const choices=runtime.fundingWallets();await runtime.connectFundingWallet('controlled-funding-wallet');
+  return {choices,status:runtime.fundingWalletStatus(),samePrivateAccount:runtime.getAccount()===before,calls};
+ });
+ assert.deepEqual(connection.choices,[{id:'controlled-funding-wallet',name:'Labelled funding wallet'}]);
+ assert.deepEqual(connection.status,{connected:true,name:'Labelled funding wallet',address:'0x'+'1'.repeat(40)});
+ assert.equal(connection.samePrivateAccount,true);assert(connection.calls.includes('wallet_requestPermissions'));
+ assert(connection.calls.every(method=>['wallet_requestPermissions','eth_chainId','eth_requestAccounts','eth_accounts'].includes(method)));
+
  assert.equal(await page.locator('input[type=password]').evaluateAll(nodes=>nodes.every(node=>node.value==='')),true);
  assert.equal(requests.some(r=>r.url.includes('sendTx')||r.url.includes('/v1/jobs')),false);
  assert.deepEqual(errors,[]);
@@ -124,7 +144,7 @@ test('public-only actual browser prover initialization diagnostic',{timeout:6000
   const dialog=page.getByRole('dialog',{name:'Your private account',exact:true});await dialog.getByRole('button',{name:'Unlock',exact:true}).click();
   await dialog.getByLabel('Recovery file',{exact:true}).waitFor();
   const facade=await page.evaluate(async()=>{const {loadRollingWalletRuntime}=await import('/wallet/runtime.mjs');const runtime=await loadRollingWalletRuntime();return {selector:typeof runtime.selectPrivateViews,keys:Object.keys(runtime).sort(),hasAccount:Boolean(globalThis.walletState.aztec)};});
-  assert.equal(facade.selector,'function');assert.deepEqual(facade.keys,['account','createSession','getAccount','selectPrivateViews']);assert.equal(facade.hasAccount,false);
+  assert.equal(facade.selector,'function');assert.deepEqual(facade.keys,['account','connectFundingWallet','createSession','fundingWalletStatus','fundingWallets','getAccount','selectPrivateViews']);assert.equal(facade.hasAccount,false);
   const served=await wallet.read('/crs/'+manifest.derivedG1.name);assert(served);assert.equal(served.body.length,manifest.derivedG1.bytes);assert.equal(createHash('sha256').update(served.body).digest('hex'),manifest.derivedG1.sha256);
   report.stage='actual-initializer';
   const observed=await page.evaluate(async()=>{
