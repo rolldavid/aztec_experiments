@@ -728,6 +728,21 @@ independent. Each output stream retains at most 8 KiB in memory and only its
 byte count, digest and truncation flag in evidence. No native stdout/stderr,
 arbitrary exception, capability URL or configuration is published.
 
+The bootstrap retains `umask 077`. After exclusively creating the public-only
+`/opt/rolling-native-version` directory, it explicitly sets that directory to
+0755 through a no-follow directory descriptor before downloading or starting
+the unit. This permits the dynamic user to traverse to the public 0444 capture
+script and verified 0555 binary. Private directories remain 0700; capabilities
+and journals remain private. An existing directory or permission-setting failure
+halts this invocation and retains the final shutdown path.
+
+The first native diagnostic observed systemd exit status 2 with no worker result.
+Its source created this directory as 0700 under the inherited mask, reproduced
+on the local filesystem. That is a concrete access defect consistent with the
+receipt; absent historical remote modes/stderr, it does not prove the exact
+historical exit cause or qualify the binary. Local mode tests do not substitute
+for a separately authorized native execution.
+
 The root observer records bounded systemd state **before cleanup**, with distinct
 `transport-error` and `projection-error` statuses. Version outcomes distinguish
 `started`, `timeout`, `nonzero`, `signal`, `oom`, `state-unreadable`, `passed`, and

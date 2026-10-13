@@ -1264,6 +1264,11 @@ def native_execute(config,worker):
         receipt['stage']='guest-preflight';receipt['guestPreflight']=native_guest()
         if receipt['guestPreflight']['status']!='passed':raise ValueError('Guest preflight failed')
         receipt['stage']='download';NATIVE_ROOT.mkdir(mode=0o755,parents=True,exist_ok=False)
+        # The private bootstrap umask is 077. Only this newly owned directory
+        # contains public bytes; DynamicUser needs traversal to read capture.py.
+        directory=os.open(NATIVE_ROOT,os.O_RDONLY|os.O_DIRECTORY|os.O_NOFOLLOW)
+        try:os.fchmod(directory,0o755);os.fsync(directory)
+        finally:os.close(directory)
         native_fetch(config['binaryUrl'],NATIVE_ROOT/'bb')
         write(NATIVE_ROOT/'capture.py',worker,0o444)
         unit='[Unit]\nDescription=Closed public binary version diagnostic\nAfter=rolling-egress.service\n[Service]\nType=exec\nDynamicUser=yes\nStateDirectory=rolling-native-version\nStateDirectoryMode=0700\nExecStart=/usr/bin/python3 /opt/rolling-native-version/capture.py\nRestart=no\nRuntimeMaxSec=20s\nTimeoutStopSec=2s\nKillMode=control-group\nMemoryMax=512M\nMemorySwapMax=0\nCPUQuota=200%\nTasksMax=64\nUMask=0077\nNoNewPrivileges=yes\nCapabilityBoundingSet=\nPrivateNetwork=yes\nIPAddressDeny=any\nPrivateTmp=yes\nPrivateDevices=yes\nProtectSystem=strict\nProtectHome=yes\nProtectKernelTunables=yes\nProtectControlGroups=yes\nRestrictSUIDSGID=yes\nInaccessiblePaths=/var/lib/rolling-bootstrap-private /var/lib/cloud\nStandardOutput=null\nStandardError=null\n'

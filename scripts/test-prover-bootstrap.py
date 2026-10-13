@@ -1311,12 +1311,15 @@ class NativeVersionDiagnostic(unittest.TestCase):
         self.assertTrue(result['stdout']['truncated']);self.assertEqual(len(raw['stdout']),8192)
         result,raw=ns['bounded_capture']([sys.executable,'-c','import time;time.sleep(10)'],.1)
         self.assertTrue(result['timeout']);self.assertTrue(result['reaped']);self.assertLess(result['returnCode'],0)
-    def exercise(self,root,fail=None):
+    def exercise(self,root,fail=None,public_modes=None):
         ns=self.host();events=[];writes={};base=root/'base';base.mkdir();private=root/'private'
         ns.update(BASE=base,PRIVATE=private,NATIVE_ROOT=root/'binary')
         ns['install_controls']=lambda config:events.append('controls')
         ns['verify_controls']=lambda:events.append('verify')
-        ns['native_fetch']=lambda *args:events.append('download')
+        def download(*args):
+            events.append('download')
+            if public_modes is not None:public_modes.append(ns['NATIVE_ROOT'].stat().st_mode&0o777)
+        ns['native_fetch']=download
         ns['write']=lambda path,text,mode=0o600:writes.update({str(path):text})
         ns['run']=lambda args,**kw:events.append(tuple(args))
         ns['native_state']=lambda:self.state()
@@ -1338,6 +1341,45 @@ class NativeVersionDiagnostic(unittest.TestCase):
                 with self.assertRaises(OSError):ns['native_execute'](self.config(),'public worker')
             else:ns['native_execute'](self.config(),'public worker')
         return ns,events,writes
+    def test_public_directory_traversable_under_private_umask_before_download(self):
+        # Actual local filesystem modes; service/network calls remain labelled
+        # doubles. Other-user execute permission models DynamicUser traversal.
+        with tempfile.TemporaryDirectory() as t:
+            root=pathlib.Path(t);modes=[];previous=os.umask(0o077)
+            try:
+                historical=root/'historical';historical.mkdir(mode=0o755)
+                self.assertEqual(historical.stat().st_mode&0o777,0o700)
+                ns,events,writes=self.exercise(root,public_modes=modes)
+            finally:os.umask(previous)
+            self.assertEqual(modes,[0o755]) # observed at actual download boundary
+            self.assertTrue(ns['NATIVE_ROOT'].stat().st_mode&0o001)
+            self.assertFalse(historical.stat().st_mode&0o001)
+            for directory in (ns['BASE'],ns['PRIVATE']):
+                self.assertEqual(directory.stat().st_mode&0o777,0o700)
+            self.assertEqual((ns['PRIVATE']/'receipt-put.json').stat().st_mode&0o777,0o600)
+            self.assertEqual(events[-1],'shutdown')
+            self.assertIn('DynamicUser=yes',writes['/etc/systemd/system/rolling-native-version.service'])
+    def test_public_directory_collision_never_chmods_existing_directory(self):
+        with tempfile.TemporaryDirectory() as t:
+            root=pathlib.Path(t);existing=root/'binary';existing.mkdir(mode=0o700);existing.chmod(0o700)
+            sentinel=existing/'retained';sentinel.write_bytes(b'public retained fixture')
+            ns,events,writes=self.exercise(root)
+            self.assertEqual(existing.stat().st_mode&0o777,0o700)
+            self.assertEqual(sentinel.read_bytes(),b'public retained fixture')
+            self.assertNotIn('download',events);self.assertEqual(events[-1],'shutdown')
+            self.assertEqual(writes,{})
+            self.assertEqual(json.loads((ns['BASE']/'native-final.json').read_text())['outcome'],'precondition-or-io-failure')
+    def test_public_directory_permission_failure_stops_before_download_and_shuts_down(self):
+        with tempfile.TemporaryDirectory() as t:
+            real_fchmod=os.fchmod
+            def fail_directory(fd,mode):
+                if os.fstat(fd).st_mode&0o170000==0o040000:raise OSError('PRIVATE_SENTINEL')
+                return real_fchmod(fd,mode)
+            with patch.object(os,'fchmod',side_effect=fail_directory):
+                ns,events,writes=self.exercise(pathlib.Path(t))
+            self.assertNotIn('download',events);self.assertEqual(events[-1],'shutdown');self.assertEqual(writes,{})
+            receipt=json.loads((ns['BASE']/'native-final.json').read_text())
+            self.assertEqual(receipt['outcome'],'precondition-or-io-failure');self.assertNotIn('PRIVATE_SENTINEL',json.dumps(receipt))
     def test_controls_before_download_unit_isolation_receipt_and_once_intent(self):
         with tempfile.TemporaryDirectory() as t:
             ns,events,writes=self.exercise(pathlib.Path(t))
