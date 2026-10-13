@@ -265,6 +265,13 @@ export function forwardRecoveryObservedNodeCall(node,name,args,metrics){
   const call=metrics&&RECOVERY_METRIC_METHODS.includes(name)?metrics.wrapNode(name,original):original;
   return Reflect.apply(call,node,args);
 }
+// Count complete physical log pages, not matched private preferences. Native
+// TxEffect rejects empty/padded logs; each transaction is paged separately by8.
+export function countRollingColdPhysicalPages(block) {
+  const effects=block?.body?.txEffects;assert(Array.isArray(effects)&&effects.length<=6143);
+  let pages=0;for(const effect of effects){assert(Array.isArray(effect.privateLogs)&&effect.privateLogs.length<=64);pages+=Math.ceil(effect.privateLogs.length/8);}
+  return Math.max(1,pages);
+}
 export async function startNodeRpc(node,onSend=()=>{},{faults=false,recoveryMetrics=()=>undefined,compactBlocks}={}) {
   let fault='healthy',deniedTransaction;const diagnostic={unavailableRequests:0,personalizedDenied:0,sendDenied:0,forwarded:{}};
   const setFault=value=>{assert(faults&&['healthy','unavailable','personalized-once','send-before-forward'].includes(value));fault=value;};
@@ -303,7 +310,7 @@ export async function startNodeRpc(node,onSend=()=>{},{faults=false,recoveryMetr
   try{await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(0,'127.0.0.1',resolve);});}
   catch(error){server.close();server.closeAllConnections();throw error;}
   const port=server.address().port;
-  return {url:`http://127.0.0.1:${port}/`,compactSnapshot:()=>({...compactDiagnostic,pending:pendingCompact.size}),...(faults?{setFault,snapshot:()=>structuredClone(diagnostic),deniedTransaction:()=>deniedTransaction}:{}),close:async()=>{
+  return {url:`http://127.0.0.1:${port}/`,coldSnapshot:()=>({...compactDiagnostic,pending:pendingCompact.size,privateTags:diagnostic.forwarded.getPrivateLogsByTags??0,publicTags:diagnostic.forwarded.getPublicLogsByTags??0}),compactSnapshot:()=>({...compactDiagnostic,pending:pendingCompact.size}),...(faults?{setFault,snapshot:()=>structuredClone(diagnostic),deniedTransaction:()=>deniedTransaction}:{}),close:async()=>{
     await new Promise((resolve,reject)=>{server.close(error=>error?reject(error):resolve());server.closeAllConnections();});await Promise.all([...pendingCompact]);await closedPort(port);
   }};
 }
@@ -351,7 +358,7 @@ export function assertRollingBrowserCompactAcceptance(browser,native,windows){
 
 export async function runRollingApplicationFixture(ctx,scenario='conversation') {
   assert(['conversation','profiles','anonymous-thread','repost-reactions','account-reactions','owned-names','owned-names-wire','composer','social-wire','reaction-wire','trusted-recovery','name-race','subboard-policy','rejected-subboard-withdrawal','preference-relationships','preference-notifications','preference-browser','preference-reorg-initial','preference-reorg-marker','preference-saved','notification-browser'].includes(scenario));
-  const boundedCold=['preference-relationships','preference-browser','notification-browser'].includes(scenario);
+  const boundedCold=['preference-relationships','preference-browser','notification-browser','preference-reorg-initial','preference-reorg-marker'].includes(scenario);
   const notificationBrowser=scenario==='notification-browser';
   const preferenceSaved=scenario==='preference-saved',preferenceBrowser=scenario==='preference-browser',preferenceReorg=['preference-reorg-initial','preference-reorg-marker'].includes(scenario),markerReorg=scenario==='preference-reorg-marker';
   const preferences=['preference-relationships','preference-notifications','preference-browser','preference-reorg-initial','preference-reorg-marker','preference-saved','notification-browser'].includes(scenario);
@@ -537,7 +544,7 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
         storageDirectory:path.join(ctx.directory,'rolling-application-journals-'+role),dataDirectory,
         ...(race?{confirmationDeadlineAt:ctx.applicationDeadlineAt-90000}:{}),
         log:discard,externalActivity:()=>({proofJobs:service.stats().submitted,transportSends})});
-      actorA=await makeActor(fees,'a');activeActor=actorA;
+      actorA=await makeActor(fees,'a',undefined,undefined,preferenceReorg);activeActor=actorA;
       pxe=actorA.pxe;appWallet=actorA.wallet;journal=actorA.journal;let app=actorA.application;
       assert.equal((await app.readAccountStatus()).status,'fee-ready');
       if(multi){
@@ -811,16 +818,27 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
             for(;;){const t=await tips();if(t.proposed.number===t.checkpointed.block.number&&await pending()===Number(t.checkpointed.checkpoint.number))return t;
               assert(Date.now()<deadline,'Published checkpoint boundary did not converge');await sleep(100);}
           };
-          async function privateSnapshot(){
-            const before=actorA.activity();let previous;
-            for(;;){assert(Date.now()<ctx.applicationDeadlineAt-15000);const state=await actorA.application.readPreferences({deadlineAt:Math.min(Date.now()+30000,ctx.applicationDeadlineAt-15000)});
-              assert.deepEqual(actorA.activity(),before,'Recovery must not create a proof or send');
-              if(state.complete){assert.equal(state.status,'complete');assert.deepEqual(state.orphanedReadMarkers,[]);return structuredClone(state.preferences);}
-              assert.equal(state.status,'recovering');assert(!Object.hasOwn(state,'preferences'));
-              if(previous)assert(state.progress.scannedThrough>previous.scannedThrough||state.progress.markersChecked>previous.markersChecked);
-              previous=state.progress;
-            }
-          }
+          const {createRollingColdReorgSnapshots,COLD_REORG_BUDGET}=await import('./rolling-preference-recovery.mjs');
+          observation.cold={};
+          const coldSnapshots=createRollingColdReorgSnapshots({
+            readPreferences:options=>actorA.application.readColdPreferences(options),activity:()=>actorA.activity(),
+            transport:()=>rpc.coldSnapshot(),persist:save,observation:observation.cold,
+            // Public native body counts are an independent workload oracle,
+            // never private event authority. The reader still authenticates the
+            // whole ordered effects root and every original note/event envelope.
+            physicalPages:async({fromBlock,anchor,deadlineAt})=>{
+              actorA.contextGuard();
+              const before=await ctx.node.getBlockData(anchor.blockNumber);assert.equal(String(before?.blockHash),anchor.blockHash);
+              let pages=0;
+              for(let number=fromBlock;number<=anchor.blockNumber;number++){
+                assert(Date.now()<deadlineAt);
+                const block=await ctx.node.getBlock(number);assert(block);assert.equal(block.header.getBlockNumber(),number);
+                pages+=countRollingColdPhysicalPages(block);
+              }
+              assert.equal(String((await ctx.node.getBlockData(anchor.blockNumber))?.blockHash),anchor.blockHash);actorA.contextGuard();return pages;
+            }});
+          const privateSnapshot=phase=>coldSnapshots.read(phase,Math.min(ctx.applicationDeadlineAt-15000,Date.now()+
+            (['retained','restored'].includes(phase)?COLD_REORG_BUDGET.fullReadMs:COLD_REORG_BUDGET.suffixReadMs)));
           async function emptySuffix(atLeast,tick){
             const checkpoints=createT04CheckpointScope(ctx.node.getSequencer()),deadline=Math.min(Date.now()+30000,ctx.applicationDeadlineAt-60000);
             try{checkpoints.enable();while((await tips()).checkpointed.block.number<atLeast){assert(Date.now()<deadline,'Empty checkpoint suffix did not publish');await tick();}
@@ -829,7 +847,7 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
             await actorA.pxe.sync();
           }
           if(markerReorg)assert.deepEqual(await action({type:'preference',expectedRevision:'0',kind:1,target:ids.rootId,enabled:true},'reorg-retained-bookmark'),[]);
-          const retainedPreferences=await privateSnapshot();assert.equal(retainedPreferences.head.revision,markerReorg?'1':'0');
+          const retainedPreferences=await privateSnapshot('retained');assert.equal(retainedPreferences.head.revision,markerReorg?'1':'0');
           const retainedTips=await pausePreferenceBoundary(),retainedL1=await ctx.l1Client.getBlock({blockTag:'latest'});
           assert.equal((await ctx.l1Client.getBlock({blockTag:'pending'})).transactions.length,0);
           const retained={l1:{number:Number(retainedL1.number),hash:retainedL1.hash},l2:{number:retainedTips.checkpointed.block.number,hash:String(retainedTips.checkpointed.block.hash)},checkpoint:Number(retainedTips.checkpointed.checkpoint.number)};
@@ -845,12 +863,14 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
           assert.equal(String(await original.tx.data.constants.anchorBlockHeader.hash()),anchorHash);
           const originalBytes=sha(original.tx.toBuffer());
           await fs.writeFile(path.join(directory,'reorg-original-tx.bin'),original.tx.toBuffer(),{flag:'wx',mode:0o600});
-          const orphanPreferences=await privateSnapshot();assert.equal(orphanPreferences.head.revision,markerReorg?'2':'1');
+          const orphanPreferences=await privateSnapshot('orphaned');assert.equal(orphanPreferences.head.revision,markerReorg?'2':'1');
           observation.original={txHash:originalRow.txHash,blockNumber:originalRow.blockNumber,blockHash:originalRow.blockHash,transactionFee:originalRow.transactionFee,signedBytesSha256:originalBytes,anchor:{number:anchorHeight,hash:anchorHash}};
           observation.retained=retained;observation.cachedOrphanPrefix=true;await save();
           completePreferenceReorg=async()=>{
             assert(report.applicationMining.clientMining.stopped&&report.applicationMining.clientMining.passed&&report.applicationMining.clientMining.autominingRestored);
             await mark('preference-real-l1-reorg');
+            observation.cold.forkBudget={remainingMs:ctx.applicationDeadlineAt-Date.now(),requiredMs:COLD_REORG_BUDGET.forkReserveMs};await save();
+            assert(observation.cold.forkBudget.remainingMs>=COLD_REORG_BUDGET.forkReserveMs,'Cold fork propagation/rebuild/replacement budget not available');
             const readBoundary=async()=>{
               const l1Tip=await ctx.l1Client.getBlock({blockTag:'latest'}),l1Retained=await ctx.l1Client.getBlock({blockNumber:BigInt(retained.l1.number)}),l2Retained=await ctx.node.getBlockData(retained.l2.number),t=await tips();
               return {l1Tip:{number:Number(l1Tip.number),hash:l1Tip.hash},l1Retained:{number:Number(l1Retained.number),hash:l1Retained.hash},l2Retained:{number:l2Retained.header.globalVariables.blockNumber,hash:String(l2Retained.blockHash)},pendingCheckpoint:await pending(),finalizedNumber:t.finalized.block.number,pendingL1Transactions:(await ctx.l1Client.getBlock({blockTag:'pending'})).transactions.length};
@@ -869,16 +889,16 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
                 const old=actorA;await old.close();assert.throws(()=>old.contextGuard());
                 // Same journal directory and PXE namespace: this is a real cold
                 // reopen of the orphaned prefix, never a fresh-store bypass.
-                actorA=activeActor=await makeActor(fees,'a');actorIntents.delete(old);actorIntents.set(actorA,intentId);
+                actorA=activeActor=await makeActor(fees,'a',undefined,undefined,true);actorIntents.delete(old);actorIntents.set(actorA,intentId);
                 pxe=actorA.pxe;appWallet=actorA.wallet;journal=actorA.journal;app=actorA.application;
                 observation.sameStoreColdReopen=true;
               }
               assert.equal((await actorA.journal.inspect()).txHash,originalRow.txHash);
-              const beforeRead=actorA.activity();assert.deepEqual(await privateSnapshot(),retainedPreferences);assert.deepEqual(actorA.activity(),beforeRead);
+              const beforeRead=actorA.activity();assert.deepEqual(await privateSnapshot('restored'),retainedPreferences);assert.deepEqual(actorA.activity(),beforeRead);
               observation.restoredExactRetainedPreferences=true;observation.noRecoveryProofOrSend=true;
               await ctx.node.getSequencer().start();await emptySuffix(anchorHeight,tick);
               const markerBlock=await ctx.node.getBlockData(anchorHeight);assert(markerBlock);assert.notEqual(String(markerBlock.blockHash),anchorHash);
-              assert.deepEqual(await privateSnapshot(),retainedPreferences);
+              assert.deepEqual(await privateSnapshot('replacement-height'),retainedPreferences);
               // Both missing effect and normal validation are observed; pool
               // entries are never deleted to manufacture replacement eligibility.
               let inspection;const dropDeadline=Math.min(Date.now()+30000,ctx.applicationDeadlineAt-45000);
@@ -924,7 +944,7 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
                 expected.head={initialized:true,schema:1,revision:'2',digest:String((await sdk.poseidon2HashWithSeparator(fields.map(n=>new Fr(n)),0x52435031)).toBigInt())};
                 expected.readMarkers=[{thread:ids.rootId,throughBlock:anchorHeight,blockHash:String(BigInt(markerBlock.blockHash))}];
               }
-              assert.deepEqual(await privateSnapshot(),expected);
+              assert.deepEqual(await privateSnapshot('replacement'),expected);
               assert.equal((await ctx.node.getTxReceipt(TxHash.fromString(originalRow.txHash))).status,TxStatus.DROPPED);
               await actorA.reopenJournal();const final=await actorA.application.inspectRecovery(intentId);assert.equal(final.status,'canonical');
               assert(final.inclusionHistory.some(item=>item.txHash===originalRow.txHash));assert(final.inclusionHistory.some(item=>item.txHash===replacement.txHash));

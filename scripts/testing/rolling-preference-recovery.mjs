@@ -96,3 +96,78 @@ async function compareRecovered(checkpoint,{readPreferences,activity},completeRe
 
 export const compareRecoveredRollingPreferences=(checkpoint,capabilities)=>compareRecovered(checkpoint,capabilities,complete);
 export const compareRecoveredColdRollingPreferences=(checkpoint,capabilities)=>compareRecovered(checkpoint,capabilities,completeCold);
+
+// Genuine parent acceptance seam, not a replacement reader. All authority is
+// still the production cold reader's canonical SDK mailbox/root/AEAD checks.
+// Private heads/choices stay in this closure and the caller's RAM assertions.
+// The parent supplies an independent count from actual canonical block effects.
+export const COLD_REORG_BUDGET = Object.freeze({fullReadMs:45000,suffixReadMs:15000,forkReserveMs:150000});
+export function createRollingColdReorgSnapshots({readPreferences,activity,transport,physicalPages,persist,observation}) {
+ const phases=['retained','orphaned','restored','replacement-height','replacement'];
+ let next=0,previous,busy=false,failed=false;
+ const integer=x=>Number.isSafeInteger(x)&&x>=0;
+ function traffic(){
+  const x=transport(),keys=['requests','accepted','failures','pending','privateTags','publicTags'];
+  check(x&&keys.every(k=>integer(x[k])));return Object.fromEntries(keys.map(k=>[k,x[k]]));
+ }
+ function active(){const x=activity(),keys=['proofJobs','transportSends','walletSubmissions','authWitnesses'];check(x&&keys.every(k=>integer(x[k])));return Object.fromEntries(keys.map(k=>[k,x[k]]));}
+ function delta(after,before){const out={};for(const key of Object.keys(before)){check(after[key]>=before[key]);out[key]=after[key]-before[key];}return out;}
+ check([readPreferences,activity,transport,physicalPages,persist].every(x=>typeof x==='function'));
+ check(observation&&Object.keys(observation).length===0);observation.phases=[];
+ return Object.freeze({async read(phase,deadlineAt){
+  if(busy)throw fail();
+  let row,started;
+  try{
+   check(!failed&&phase===phases[next]&&Number.isSafeInteger(deadlineAt)&&deadlineAt>Date.now());
+   busy=true;next++; // A failed measurement is not silently replayable.
+   const mode=phase==='retained'?'initial':phase==='restored'?'rebuild':'append';
+   check(mode==='initial'||previous);
+   started=Date.now();const beforeActivity=active(),beforeTraffic=traffic();
+   check(beforeTraffic.pending===0);
+   row={phase,mode,passed:false,steps:0,elapsedMs:0,first:null,last:null,compact:null};observation.phases.push(row);await persist();
+   let prior,anchorBlock,lastTraffic=beforeTraffic,value;
+   for(;;){
+    check(Date.now()<deadlineAt);
+    value=await readPreferences({deadlineAt});row.steps++;
+    check(equal(active(),beforeActivity));const now=traffic(),change=delta(now,lastTraffic);lastTraffic=now;
+    check(now.pending===0&&change.failures===0&&change.privateTags===0&&change.publicTags===0);
+    check(change.requests===change.accepted&&change.accepted<=1);
+    check(value&&typeof value.complete==='boolean');const p=value.progress;
+    check(p&&integer(p.anchorBlock)&&p.anchorBlock>0&&integer(p.nextBlock)&&p.nextBlock>0&&p.nextBlock<=p.anchorBlock+1);
+    check(integer(p.markersChecked)&&typeof p.processedRevision==='string'&&/^(0|[1-9][0-9]*)$/.test(p.processedRevision));
+    if(anchorBlock===undefined)anchorBlock=p.anchorBlock;check(anchorBlock===p.anchorBlock);
+    const position={nextBlock:p.nextBlock,anchorBlock,markersChecked:p.markersChecked};row.first??={...position};row.last=position;
+    if(row.steps===1){
+     check(!value.complete&&!Object.hasOwn(value,'preferences'));
+     if(mode==='append'){
+      check(anchorBlock>previous.anchor.blockNumber&&p.nextBlock===previous.anchor.blockNumber+1);
+      check(p.processedRevision===previous.head.revision&&change.accepted===(previous.head.initialized?1:0));
+     }else{check(p.nextBlock===1&&p.processedRevision==='0'&&change.accepted===0);if(mode==='rebuild')check(anchorBlock<previous.anchor.blockNumber);}
+    }else{
+     check(p.nextBlock>=prior.nextBlock&&p.markersChecked>=prior.markersChecked&&BigInt(p.processedRevision)>=BigInt(prior.processedRevision));
+     // Dense unrelated ciphertexts can leave public nextBlock unchanged. They
+     // must still consume one real accepted compact page, never a busy loop.
+     if(!value.complete)check(p.nextBlock>prior.nextBlock||p.markersChecked>prior.markersChecked||change.accepted===1);
+    }
+    row.elapsedMs=Date.now()-started;row.compact=delta(now,beforeTraffic);await persist();
+    if(value.complete)break;
+    check(value.status==='recovering'&&!Object.hasOwn(value,'preferences'));prior={...p};
+   }
+   check(value.status==='complete'&&value.preferences&&value.orphanedReadMarkers?.length===0);
+   check(value.anchor?.blockNumber===anchorBlock&&/^0x[0-9a-f]{64}$/.test(value.anchor.blockHash));
+   check(value.progress.nextBlock===anchorBlock+1&&integer(value.progress.markersTotal)&&value.progress.markersTotal===value.progress.markersChecked);
+   check(value.preferences.head?.revision===value.progress.processedRevision);
+   const fromBlock=mode==='append'?previous.anchor.blockNumber+1:1;
+   const pages=await physicalPages({fromBlock,anchor:{...value.anchor},deadlineAt});check(integer(pages)&&pages>=anchorBlock-fromBlock+1);
+   const expected=pages+(mode==='append'&&previous.head.initialized?1:0),after=traffic();
+   row.compact=delta(after,beforeTraffic);
+   check(after.pending===0&&row.compact.requests===expected&&row.compact.accepted===expected&&row.compact.failures===0&&row.compact.privateTags===0&&row.compact.publicTags===0);
+   check(equal(active(),beforeActivity));check(Date.now()<deadlineAt);
+   row.elapsedMs=Date.now()-started;row.physicalSuffixPages=pages;row.formerHeadPages=expected-pages;row.noReadProofOrSend=true;row.noTagDiscovery=true;
+   row.authenticatedPrefixRetained=mode==='append';row.fullEnumeration=mode!=='append';row.passed=true;
+   previous={anchor:structuredClone(value.anchor),head:structuredClone(value.preferences.head)};
+   await persist();return structuredClone(value.preferences);
+  }catch{failed=true;if(row){row.passed=false;row.elapsedMs=Date.now()-started;try{row.lastTransport=traffic();await persist();}catch{}}throw fail();}
+  finally{busy=false;}
+ }});
+}

@@ -5,7 +5,7 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import http from 'node:http';
 import path from 'node:path';
-import {rollingTrustedProofThreads,runRollingPublicRecoveryChecks,persistRollingRecoveryObservation,observeRollingColdRead,assertRollingBrowserCompactAcceptance,createRollingEvidenceDirectory,classifyRollingApplicationFootprint,recordRollingFundingFailure,assertRollingApplicationViews,assertRollingPublicFootprint,closeRollingResources,loadRollingFixtureSDK,observeRollingReadiness} from './rolling-application-fixture.mjs';
+import {rollingTrustedProofThreads,countRollingColdPhysicalPages,runRollingPublicRecoveryChecks,persistRollingRecoveryObservation,observeRollingColdRead,assertRollingBrowserCompactAcceptance,createRollingEvidenceDirectory,classifyRollingApplicationFootprint,recordRollingFundingFailure,assertRollingApplicationViews,assertRollingPublicFootprint,closeRollingResources,loadRollingFixtureSDK,observeRollingReadiness} from './rolling-application-fixture.mjs';
 import {createRollingProjection} from '../../shared/rolling/public-projection.mjs';
 import {createFileJournalStorage} from '../../apps/src/billboard/user/transaction-journal-store.mjs';
 import {createEncryptedJournalSlot} from '../../shared/journal-record.mjs';
@@ -710,6 +710,35 @@ test('actual fixture binds unchanged public and private gates before final accou
  assert(source.indexOf('await verifyRollingPublicReader({',dispatch)>dispatch,'Later stale-readiness check retains the outer import binding');
  const browser=source.indexOf('if(preferenceBrowser){',dispatch),accounting=source.indexOf('report.actualHumanFees=String(feeTotal+feeTotalB)',dispatch);
  assert(browser>dispatch&&accounting>browser);assert(source.slice(browser,accounting).includes('await fees.verify(feeTotal)'));
+});
+
+// Labelled native-body shapes verify the workload oracle only. The real parent
+// passes actual canonical SDK block bodies, not these synthetic rows.
+test('cold physical page count includes empty blocks, unrelated logs and transaction boundaries',()=>{
+ const body=(...lengths)=>({body:{txEffects:lengths.map(n=>({privateLogs:Array(n).fill({})}))}});
+ assert.equal(countRollingColdPhysicalPages(body()),1);
+ assert.equal(countRollingColdPhysicalPages(body(0,0)),1);
+ assert.equal(countRollingColdPhysicalPages(body(1,1)),2);
+ assert.equal(countRollingColdPhysicalPages(body(8,9,64)),11);
+ assert.throws(()=>countRollingColdPhysicalPages(body(65)));
+ assert.throws(()=>countRollingColdPhysicalPages({body:{txEffects:Array(6144).fill({privateLogs:[]})}}));
+});
+test('actual cold reorg dispatch enables only the existing two reorg lanes in addition to previous cold lanes',async()=>{
+ const source=await fs.readFile(new URL('./rolling-application-fixture.mjs',import.meta.url),'utf8');
+ const declaration=source.match(/  const boundedCold=([^;]+);/);assert(declaration);
+ const enabled=new Function('scenario','return '+declaration[1]);
+ for(const scenario of ['preference-relationships','preference-browser','notification-browser','preference-reorg-initial','preference-reorg-marker'])assert.equal(enabled(scenario),true);
+ for(const scenario of ['preference-saved','preference-notifications','name-race','conversation'])assert.equal(enabled(scenario),false);
+ const branch=source.slice(source.indexOf('        }else if(preferenceReorg){'),source.indexOf('        }else{\n        const result=await exerciseRollingPreferences'));
+ assert(branch.includes('actorA.application.readColdPreferences(options)'));
+ assert(!branch.includes('actorA.application.readPreferences('));
+ for(const phase of ['retained','orphaned','restored','replacement-height','replacement'])assert(branch.includes("privateSnapshot('"+phase+"')"));
+ assert(branch.includes("makeActor(fees,'a',undefined,undefined,true)"));
+ assert(branch.includes('expectedJobs=markerReorg?4:3'));
+ for(const invariant of ['sameHeightMarkerReviewed','orphanFeeExcludedAfterCanonicalBalanceCheck','historicalInclusionsRetained','exactPriorSignedBytesRetained','actualArchiverAndWorldstateUnwind'])assert(branch.includes(invariant));
+ assert(branch.indexOf('forkBudget.remainingMs>=COLD_REORG_BUDGET.forkReserveMs')<branch.indexOf('await replaceRollingL1Suffix'));
+ assert(branch.includes('pages+=countRollingColdPhysicalPages(block)'));
+ assert(branch.includes('assert.equal(String((await ctx.node.getBlockData(anchor.blockNumber))?.blockHash),anchor.blockHash)'));
 });
 
 test('selected browser profile matches the actual trusted worker without changing bounds',async()=>{
