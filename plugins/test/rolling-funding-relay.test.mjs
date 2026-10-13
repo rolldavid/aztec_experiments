@@ -50,7 +50,7 @@ for(const defect of ['wrongChain','wrongCode','upgrade','revert','expensive','un
  const f=await fixture(t,{[defect]:true});await assert.rejects(f.relay.submit(f.input),/Funding relay unavailable/);assert.equal(f.state.sends,0);assert.equal(f.state.signs,0);assert.equal(JSON.parse(await fs.readFile(path.join(f.directory,'funding-budget.json'),'utf8')).reservedGasWei,'0');
 });
 test('cumulative conservative gas budget remains consumed even after successful reimbursement',async t=>{
- const f=await fixture(t,{budget:'1000'});await f.relay.submit(f.input);const next={data:abi.encodeFunctionData('fundUsdc',[{...f.plan,authorizationSalt:h(88)},'0x01','0x02'])};await assert.rejects(f.relay.submit(next));assert.equal(f.state.sends,1);
+ const f=await fixture(t,{budget:'1000'});assert.equal(f.relay.terms().feeUsdc,'500');await f.relay.submit(f.input);assert.throws(()=>f.relay.terms());const next={data:abi.encodeFunctionData('fundUsdc',[{...f.plan,authorizationSalt:h(88)},'0x01','0x02'])};await assert.rejects(f.relay.submit(next));assert.equal(f.state.sends,1);
 });
 test('HTTP data cannot replace signer, change network, select a destination or call arbitrary methods',async t=>{
  const f=await fixture(t);for(const input of [{...f.input,to:a(99)},{data:'0x1234'},{data:abi.encodeFunctionData('fundUsdc',[{...f.plan,relayer:a(99)},'0x01','0x02'])},{data:abi.encodeFunctionData('fundUsdc',[{...f.plan,relayFeeUsdc:'1'},'0x01','0x02'])}])await assert.rejects(f.relay.submit(input));assert.equal(f.state.calls,0);assert.equal(f.state.sends,0);

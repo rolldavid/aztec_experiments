@@ -71,7 +71,7 @@ export async function createRollingFundingRelay({config,directory,provider,signe
  }
  async function owned(fn){check(!closed&&!busy);busy=true;active=(async()=>{await lease.assertHeld();return fn();})();try{return await active;}catch{throw rejected();}finally{busy=false;}}
  return Object.freeze({
-  terms:()=>({relayer:c.relayer,feeUsdc:c.feeUsdc,gasBudgetWei:c.maxGasWei}),
+  terms:()=>{check(!closed&&ledger.read().activePlan===null&&BigInt(ledger.read().reservedGasWei)+BigInt(c.maxGasWei)<=BigInt(c.totalGasBudgetWei));return {relayer:c.relayer,feeUsdc:c.feeUsdc,gasBudgetWei:c.maxGasWei};},
   submit:input=>owned(async()=>{
    const {data}=capture(input,['data']),{intent,plan,planHash}=intentFromData(data);
    const old=await readStore(planHash);if(old){const record=old.read().operations?.['relay-funding'];check(record?.identity===planHash);return reconcile(record);}
