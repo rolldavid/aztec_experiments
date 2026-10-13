@@ -921,3 +921,135 @@ test('actual-used setup clock projection records only public block/time measurem
  assert.equal(report.setupClock[0].l1Block,'123');assert.equal(report.setupClock[0].l1Timestamp,'1');assert.equal(report.setupClock[0].leadSeconds,1-report.setupClock[0].wallSeconds);assert(!JSON.stringify(report).includes('PRIVATE_SENTINEL'));
  const failed={};await assert.rejects(run({l1Client:{getBlock:async()=>({number:1n,timestamp:-1n})}},failed,assert));assert.equal(failed.setupClock,undefined);
 });
+
+// Attributed transport controls use real serialized HTTP requests and original
+// gateway/native schema code. Their node/inspector data are explicitly doubles.
+import {installRollingColdTransportObserver,rollingColdAttributedSnapshot,rollingColdTransportEvidence,startNodeRpc} from './rolling-application-fixture.mjs';
+const coldTestCall=(method,params=[])=>({jsonrpc:'2.0',id:1,method,params});
+const coldTestTick=()=>new Promise(resolve=>setImmediate(resolve));
+const emptyColdNative=()=>({requests:0,accepted:0,failures:0,pending:0,privateTags:0,publicTags:0});
+function coldObserverDouble(fetchImpl){
+ const previous=globalThis.fetch;globalThis.fetch=fetchImpl;
+ let observer;
+ try{observer=installRollingColdTransportObserver({mainEndpoint:'http://127.0.0.1:31001',coldEndpoint:'http://127.0.0.1:31002'});}catch(error){globalThis.fetch=previous;throw error;}
+ return {observer,async close(){try{await observer.close();}finally{globalThis.fetch=previous;}}};
+}
+test('cold observer preserves exact original receiver arguments promise and private-free additive projection',async()=>{
+ const result=Promise.resolve({status:200}),receiver={},calls=[];
+ const f=coldObserverDouble(function(...args){calls.push({receiver:this,args});return result;});
+ const input={method:'POST',headers:{authorization:'PRIVATE_HEADER'},body:JSON.stringify([coldTestCall('aztec_getPrivateLogsByTags',['PRIVATE_ARGUMENT']),coldTestCall('node_getPublicLogsByTags',['PRIVATE_ARGUMENT']),coldTestCall('node_sendTx',['PRIVATE_BYTES'])])};
+ try{assert.equal(globalThis.fetch.call(receiver,'http://127.0.0.1:31001/v1/node',input),result);await result;await coldTestTick();
+  assert.equal(calls[0].receiver,receiver);assert.equal(calls[0].args[1],input);
+  const snapshot=f.observer.snapshot();assert.equal(snapshot.main.privateTags,1);assert.equal(snapshot.main.publicTags,1);assert.equal(snapshot.main.sends,1);
+  assert.equal(snapshot.cold.requests,0);assert.deepEqual(snapshot.total,snapshot.main);assert(!JSON.stringify(snapshot).includes('PRIVATE'));
+  snapshot.main.privateTags=999;assert.equal(f.observer.snapshot().main.privateTags,1);
+ }finally{await f.close();}
+});
+for(const method of ['aztec_getPrivateLogsByTags','node_getPrivateLogsByTags','aztec_getPublicLogsByTags','node_getPublicLogsByTags','aztec_sendTx','node_sendTx'])test('cold observer counts every rejected batch item including '+method,async()=>{
+ const f=coldObserverDouble(()=>Promise.resolve({status:400})),field=method.endsWith('sendTx')?'sends':method.includes('Private')?'privateTags':'publicTags';
+ try{await fetch('http://127.0.0.1:31002/v1/node',{method:'POST',body:JSON.stringify([null,...Array.from({length:9},()=>coldTestCall(method,['PRIVATE_SENTINEL']))])});await coldTestTick();
+  const row=f.observer.snapshot().cold;assert.equal(row[field],9);assert.equal(row.errors,2);assert.equal(row.rejected,1);assert.equal(row.pending,0);
+  assert.throws(()=>rollingColdAttributedSnapshot(f.observer,{coldSnapshot:emptyColdNative,pendingReads:()=>0},0));assert(!JSON.stringify(row).includes('PRIVATE'));
+ }finally{await f.close();}
+});
+for(const failure of [undefined,null,false,0,'',Error('PRIVATE_FAILURE')])test('cold observer preserves original synchronous and asynchronous rejection '+String(failure),async()=>{
+ let async=false;const rejection=Promise.reject(failure);rejection.catch(()=>{});
+ const f=coldObserverDouble(()=>{if(async)return rejection;throw failure;});
+ const args=['http://127.0.0.1:31002/v1/node',{method:'POST',body:JSON.stringify(coldTestCall('aztec_getBlockNumber'))}];
+ try{let caught=false;try{fetch(...args);}catch(error){caught=true;assert.equal(error,failure);}assert(caught);
+  async=true;assert.equal(fetch(...args),rejection);const outcome=await rejection.then(()=>({ok:true}),reason=>({reason}));assert.equal(outcome.reason,failure);await coldTestTick();
+  assert.equal(f.observer.snapshot().cold.rejected,2);assert.equal(f.observer.snapshot().cold.pending,0);
+ }finally{await f.close();}
+});
+test('cold observer owns the original pending fetch until settlement even when caller stops waiting',async()=>{
+ let release;const original=new Promise(resolve=>release=resolve);const f=coldObserverDouble(()=>original);let closed=false;
+ fetch('http://127.0.0.1:31002/v1/node',{method:'POST',body:JSON.stringify(coldTestCall('aztec_getBlockNumber'))});
+ const closing=f.observer.close().then(()=>{closed=true;});
+ try{await coldTestTick();assert(!closed);assert.equal(f.observer.snapshot().cold.pending,1);
+  assert.throws(()=>rollingColdAttributedSnapshot(f.observer,{coldSnapshot:emptyColdNative,pendingReads:()=>0},0));
+  release({status:200});await closing;assert(closed);assert.equal(f.observer.snapshot().cold.pending,0);
+ }finally{release({status:200});await closing;await f.close();}
+});
+test('cold observer rejects ambiguous endpoint ownership before replacing fetch',()=>{
+ const before=globalThis.fetch;
+ for(const coldEndpoint of ['http://127.0.0.1:31001','http://example.com:31002','http://127.0.0.1:31002/path','http://127.0.0.1:31002?account=PRIVATE'])
+  assert.throws(()=>installRollingColdTransportObserver({mainEndpoint:'http://127.0.0.1:31001',coldEndpoint}));
+ assert.equal(globalThis.fetch,before);
+});
+async function attributedHTTPFixture({node={getBlockNumber:async()=>7,getPrivateLogsByTags:async()=>[[]],getPublicLogsByTags:async()=>[[]]},beforeForward}={}){
+ const {createPrivateQueryWithInspector}=await import('../../prover/private-query.mjs'),{createProverServer}=await import('../../prover/server.mjs');
+ const resources=[],state={ready:true,onSend:0,denied:0};let observer;
+ try{
+  const main=await startNodeRpc(node);resources.push(()=>main.close());
+  const cold=await startNodeRpc(node,()=>{state.onSend++;},{beforeForward:tx=>{state.denied++;if(beforeForward)beforeForward(tx);throw Error('Cold send forbidden');}});resources.push(()=>cold.close());
+  async function gateway(native){
+   const privateQuery=createPrivateQueryWithInspector({queryNode:{url:native.url,rollupAddress:'0x'+'12'.repeat(20)},chainId:'31337',rollupVersion:'1',proofsEnabled:true},async()=>{if(!state.ready)throw Error('Labelled unavailable node');return {ready:true};});
+   const server=createProverServer({serviceMode:'query-only',privateQuery,proofsEnabled:true,origins:[]});resources.push(()=>server.closeAndDrain());
+   await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(0,'127.0.0.1',resolve);});return 'http://127.0.0.1:'+server.address().port;
+  }
+  const mainEndpoint=await gateway(main),coldEndpoint=await gateway(cold);
+  observer=installRollingColdTransportObserver({mainEndpoint,coldEndpoint});
+  const post=async(lane,body)=>{const response=await fetch((lane==='main'?mainEndpoint:coldEndpoint)+'/v1/node',{method:'POST',headers:{'content-type':'application/json'},body:typeof body==='string'?body:JSON.stringify(body)});return {status:response.status,body:await response.json()};};
+  return {main,cold,observer,state,post,coldEndpoint,async close(){try{await closeRollingResources(resources.reverse().map((close,i)=>['owner'+i,close]),{});}finally{await observer.close();}}};
+ }catch(error){try{await closeRollingResources(resources.reverse().map((close,i)=>['owner'+i,close]),{});}finally{if(observer)await observer.close();}throw error;}
+}
+const coldTestTag='0x'+'01'.padStart(64,'0');
+test('actual separate HTTP lanes retain concurrent writer tag totals while accepting a tag-free cold reader',async()=>{
+ let entered,release;const seen=new Promise(r=>entered=r),held=new Promise(r=>release=r);
+ const f=await attributedHTTPFixture({node:{getBlockNumber:async()=>7,async getPrivateLogsByTags(){entered();await held;return [[]];},getPublicLogsByTags:async()=>[[]]}});
+ let writer;
+ try{writer=f.post('main',[coldTestCall('aztec_getPrivateLogsByTags',[{tags:[coldTestTag]}]),{...coldTestCall('aztec_getPublicLogsByTags',[{contractAddress:coldTestTag,tags:[coldTestTag]}]),id:2}]);
+  await seen;const read=await f.post('cold',coldTestCall('aztec_getBlockNumber'));assert.equal(read.body.result,7);
+  assert.equal(rollingColdAttributedSnapshot(f.observer,f.cold,0).privateTags,0);
+  assert.equal(f.observer.snapshot().main.pending,1);assert.equal(f.observer.snapshot().cold.pending,0);
+  release();assert.equal((await writer).status,200);await coldTestTick();
+  const evidence=rollingColdTransportEvidence(f.observer,f.main,f.cold,0);
+  assert.equal(evidence.attempted.main.privateTags,1);assert.equal(evidence.attempted.main.publicTags,1);assert.equal(evidence.totalNative.privateTags,1);assert.equal(evidence.totalNative.publicTags,1);
+  assert.equal(evidence.coldNative.privateTags,0);assert.equal(evidence.coldNative.publicTags,0);assert.equal(evidence.attempted.total.privateTags,1);
+ }finally{release();if(writer)await writer;await f.close();}
+});
+for(const fault of ['schema','readiness'])test('actual cold gateway '+fault+' rejection still records both tag attempts before native acceptance',async()=>{
+ const f=await attributedHTTPFixture();try{
+  if(fault==='readiness')f.state.ready=false;
+  const params=fault==='schema'?[]:[{tags:[coldTestTag]}],publicParams=fault==='schema'?[]:[{contractAddress:coldTestTag,tags:[coldTestTag]}];
+  const response=await f.post('cold',[coldTestCall('aztec_getPrivateLogsByTags',params),{...coldTestCall('node_getPublicLogsByTags',publicParams),id:2}]);
+  assert.equal(response.status,fault==='schema'?400:503);await coldTestTick();
+  assert.equal(f.cold.coldSnapshot().privateTags,0);assert.equal(f.cold.coldSnapshot().publicTags,0);
+  assert.equal(f.observer.snapshot().cold.privateTags,1);assert.equal(f.observer.snapshot().cold.publicTags,1);assert.equal(f.observer.snapshot().cold.rejected,1);
+  assert.throws(()=>rollingColdAttributedSnapshot(f.observer,f.cold,0));
+ }finally{await f.close();}
+});
+test('actual query-only cold HTTP rejects a serialized SDK send before onSend/native and retains attempted denial',async()=>{
+ const {Tx}=await import('@aztec-labs/stdlib/tx'),{jsonStringify}=await import('@aztec-labs/foundation/json-rpc');const tx=Tx.random();await tx.recomputeHash();let forwarded=0;
+ const f=await attributedHTTPFixture({node:{sendTx(){forwarded++;}}});
+ try{const response=await f.post('cold',jsonStringify(coldTestCall('aztec_sendTx',[tx])));assert(response.body.error);assert.equal(f.state.denied,1);assert.equal(f.state.onSend,0);assert.equal(forwarded,0);
+  assert.equal(f.observer.snapshot().cold.sends,1);assert.throws(()=>rollingColdAttributedSnapshot(f.observer,f.cold,f.state.denied));
+ }finally{await f.close();}
+});
+test('actual query-only cold HTTP rejects proof submission with no proof queue and retains attempted denial',async()=>{
+ const f=await attributedHTTPFixture();try{const response=await fetch(f.coldEndpoint+'/v1/jobs',{method:'POST',body:'PRIVATE_NOT_A_PROOF'});assert.equal(response.status,404);await response.text();await coldTestTick();
+  assert.equal(f.observer.snapshot().cold.proofRequests,1);assert.equal(f.observer.snapshot().cold.rejected,1);assert.throws(()=>rollingColdAttributedSnapshot(f.observer,f.cold,0));
+ }finally{await f.close();}
+});
+test('native read close drains original SDK work after a disconnected HTTP caller',async()=>{
+ let entered,release,closed=false;const seen=new Promise(r=>entered=r),held=new Promise(r=>release=r),abort=new AbortController();
+ const rpc=await startNodeRpc({async getBlockNumber(){entered();await held;return 7;}});
+ const sent=fetch(rpc.url,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(coldTestCall('aztec_getBlockNumber')),signal:abort.signal}).then(r=>r.text(),e=>e);
+ let closing;try{await seen;abort.abort();await sent;assert.equal(rpc.pendingReads(),1);closing=rpc.close().then(()=>{closed=true;});await coldTestTick();assert(!closed);
+  release();await closing;assert(closed);assert.equal(rpc.pendingReads(),0);
+ }finally{abort.abort();release();await sent;if(closing)await closing;else await rpc.close();}
+});
+test('reorg fixture fixes a distinct cold route for initial actor and same-store reopen, with explicit query-only ownership',async()=>{
+ const source=await fs.readFile(new URL('./rolling-application-fixture.mjs',import.meta.url),'utf8');
+ assert(source.includes("node:role==='a-cold'?coldNode:node,endpoint:role==='a-cold'?coldEndpoint:endpoint"));
+ const actor=await fs.readFile(new URL('./rolling-application-actor.mjs',import.meta.url),'utf8');assert(actor.includes('remoteProver:{url:endpoint,board:scope.board'));
+ assert(source.includes("serviceMode:'query-only',host:'127.0.0.1',port:0,chainId:'31337',rollupVersion:String(info.rollupVersion)"));
+ assert(source.includes("coldNode=await sdk.createTrustedPrivateNode({url:coldEndpoint+'/v1/node'"));
+ assert.equal((source.match(/coldActor=await makeActor\(fees,'a-cold',undefined,undefined,true\)/g)||[]).length,2);
+ assert(source.includes("serviceMode:'query-only',proofJobsEnabled:false,queueAllocated:false,workerAllocated:false"));
+ assert(source.includes("beforeForward:()=>{coldRejectedSends++;throw Error('Cold native send forbidden');}"));
+ assert(source.includes('return rollingColdAttributedSnapshot(coldWire,coldRpc,coldRejectedSends)'));
+ for(const owner of ['coldRecoveryActor','coldQuery','coldRPC','coldTransportCapture'])assert(source.includes("['"+owner+"'"));
+ assert(source.indexOf("['coldQuery'")<source.indexOf("['coldRPC'"));assert(source.indexOf("['coldRPC'")<source.indexOf("['coldTransportCapture'"));
+ assert(source.includes('if(report.passed)rollingColdAttributedSnapshot(coldWire,coldRpc,coldRejectedSends)'));
+});

@@ -303,15 +303,75 @@ export function countRollingColdPhysicalPages(block) {
   let pages=0;for(const effect of effects){assert(Array.isArray(effect.privateLogs)&&effect.privateLogs.length<=64);pages+=Math.ceil(effect.privateLogs.length/8);}
   return Math.max(1,pages);
 }
+// Harness-only observation of actual outbound serialized requests. Two fixed
+// gateway origins separate batchers; no caller role, header or private argument
+// is used for attribution. Like the existing wire campaign, restore only our
+// own fetch wrapper after its original promises have settled.
+export function installRollingColdTransportObserver({mainEndpoint,coldEndpoint}) {
+  const origin=value=>{assert.equal(typeof value,'string');const u=new URL(value);assert.equal(u.origin,value);assert.equal(u.protocol,'http:');assert.equal(u.hostname,'127.0.0.1');assert(u.port);return u.origin;};
+  const endpoints=new Map([[origin(mainEndpoint),'main'],[origin(coldEndpoint),'cold']]);assert.equal(endpoints.size,2);
+  const empty=()=>({requests:0,nodeRequests:0,compactRequests:0,proofRequests:0,privateTags:0,publicTags:0,sends:0,errors:0,rejected:0,pending:0});
+  const counts={main:empty(),cold:empty()},original=globalThis.fetch,pending=new Set();let closed=false;
+  const add=(row,key)=>{assert(row[key]<Number.MAX_SAFE_INTEGER);row[key]++;};
+  function inspect(input,init){
+    const address=typeof input==='string'?input:input instanceof URL?input.href:input instanceof Request?input.url:null;
+    if(address===null)return;
+    const url=new URL(address),lane=endpoints.get(url.origin);if(!lane)return;
+    const row=counts[lane];add(row,'requests');
+    try{
+      assert(typeof input==='string'&&!url.search&&!url.hash&&!url.username&&!url.password);
+      const method=init?.method??'GET';
+      if(url.pathname==='/v1/node'&&method==='POST'){
+        add(row,'nodeRequests');assert(typeof init.body==='string'&&Buffer.byteLength(init.body)<=8*1024*1024);
+        const parsed=JSON.parse(init.body),batch=Array.isArray(parsed)?parsed:[parsed];assert(batch.length>0);if(batch.length>8)add(row,'errors');
+        for(const item of batch){if(!item||typeof item!=='object'||Array.isArray(item)||typeof item.method!=='string'){add(row,'errors');continue;}
+          if(['aztec_getPrivateLogsByTags','node_getPrivateLogsByTags'].includes(item.method))add(row,'privateTags');
+          if(['aztec_getPublicLogsByTags','node_getPublicLogsByTags'].includes(item.method))add(row,'publicTags');
+          if(['aztec_sendTx','node_sendTx'].includes(item.method))add(row,'sends');
+        }
+      }else if(url.pathname==='/v1/compact-block'&&method==='POST')add(row,'compactRequests');
+      else if(url.pathname==='/v1/jobs'&&method==='POST')add(row,'proofRequests');
+      else assert(method==='GET'&&(url.pathname==='/healthz'||/^\/v1\/jobs\/[a-f0-9]{64}$/.test(url.pathname)));
+    }catch{add(row,'errors');}
+    return row;
+  }
+  function wrapped(...args){
+    let row;try{row=inspect(...args);}catch{add(counts.cold,'errors');}
+    let result;try{result=Reflect.apply(original,this,args);}catch(error){if(row)add(row,'rejected');throw error;}
+    if(row){add(row,'pending');const work=Promise.resolve(result);pending.add(work);
+      const done=()=>{row.pending--;pending.delete(work);};
+      work.then(response=>{try{if(response.status>=400)add(row,'rejected');}catch{add(row,'errors');}finally{done();}},()=>{try{add(row,'rejected');}finally{done();}}).catch(()=>{});
+    }
+    return result;
+  }
+  globalThis.fetch=wrapped;
+  return Object.freeze({snapshot(){const main={...counts.main},cold={...counts.cold},total={};for(const key of Object.keys(main)){total[key]=main[key]+cold[key];assert(Number.isSafeInteger(total[key]));}return {main,cold,total};},
+    async close(){if(closed)return;await Promise.allSettled([...pending]);await Promise.resolve();assert.equal(pending.size,0);assert.equal(globalThis.fetch,wrapped,'Fetch owner changed');globalThis.fetch=original;closed=true;},
+  });
+}
+export function rollingColdTransportEvidence(observer,main,cold,rejectedSends) {
+  const mainNative=main.coldSnapshot(),coldNative=cold.coldSnapshot(),totalNative={};
+  for(const key of Object.keys(mainNative)){totalNative[key]=mainNative[key]+coldNative[key];assert(Number.isSafeInteger(totalNative[key]));}
+  return {attempted:observer.snapshot(),mainNative,coldNative,totalNative,coldRejectedSends:rejectedSends};
+}
+export function rollingColdAttributedSnapshot(observer,native,rejectedSends) {
+  const attempted=observer.snapshot().cold,accepted=native.coldSnapshot();
+  for(const key of ['privateTags','publicTags','sends','proofRequests','errors','rejected','pending'])assert.equal(attempted[key],0,'Forbidden cold request or unsettled transport');
+  assert.equal(rejectedSends,0);assert.equal(accepted.privateTags,0);assert.equal(accepted.publicTags,0);
+  assert.equal(native.pendingReads(),0);
+  return {...accepted,privateTags:attempted.privateTags,publicTags:attempted.publicTags};
+}
 export async function startNodeRpc(node,onSend=()=>{},{faults=false,recoveryMetrics=()=>undefined,compactBlocks,beforeForward}={}) {
-  assert(beforeForward===undefined||typeof beforeForward==='function');const requestScope=new AsyncLocalStorage(),pendingSends=new Set();
+  assert(beforeForward===undefined||typeof beforeForward==='function');const requestScope=new AsyncLocalStorage(),pendingSends=new Set(),pendingReads=new Set();
   const ownSend=value=>{const work=Promise.resolve(value);pendingSends.add(work);work.then(()=>pendingSends.delete(work),()=>pendingSends.delete(work));return value;};
   const drainSends=async()=>{await Promise.allSettled([...pendingSends]);return {pending:pendingSends.size};};
-  let fault='healthy',deniedTransaction;const diagnostic={unavailableRequests:0,personalizedDenied:0,sendDenied:0,forwarded:{}};
+  const ownRead=value=>{const work=Promise.resolve(value);pendingReads.add(work);work.then(()=>pendingReads.delete(work),()=>pendingReads.delete(work));return value;};
+  let fault='healthy',deniedTransaction,closing=false;const diagnostic={unavailableRequests:0,personalizedDenied:0,sendDenied:0,forwarded:{}};
   const setFault=value=>{assert(faults&&['healthy','unavailable','personalized-once','send-before-forward'].includes(value));fault=value;};
   const {createNamespacedSafeJsonRpcServer}=await import('@aztec-labs/foundation/json-rpc/server');
   const {AztecNodeApiSchema}=await import('@aztec-labs/stdlib/interfaces/client');
   const api=Object.fromEntries(Object.keys(AztecNodeApiSchema).map(name=>[name,(...args)=>{
+    if(closing)throw Error('Native RPC closing');
     if(fault==='personalized-once'&&name==='getContract'){fault='healthy';diagnostic.personalizedDenied++;throw Error('Controlled upstream unavailable');}
     // Keep this fault armed until explicit recovery. An HTTP client's retry must
     // never accidentally turn an intentionally unsent signed transaction into
@@ -324,7 +384,7 @@ export async function startNodeRpc(node,onSend=()=>{},{faults=false,recoveryMetr
       if(result!==undefined)return ownSend(Promise.resolve(result).then(()=>{throw Error('Forward fence must be synchronous');}));
     }
     diagnostic.forwarded[name]=(diagnostic.forwarded[name]??0)+1;if(name==='sendTx')onSend(args[0]);
-    const result=forwardRecoveryObservedNodeCall(node,name,args,recoveryMetrics());return name==='sendTx'&&beforeForward?ownSend(result):result;
+    const result=forwardRecoveryObservedNodeCall(node,name,args,recoveryMetrics());return name==='sendTx'&&beforeForward?ownSend(result):name!=='sendTx'?ownRead(result):result;
   } ]));
   const rpc=createNamespacedSafeJsonRpcServer({aztec:[api,AztecNodeApiSchema]},
     {maxBatchSize:8,maxBodySizeBytes:8*1024*1024,corsAllowedOrigins:[],log:silent});
@@ -336,6 +396,7 @@ export async function startNodeRpc(node,onSend=()=>{},{faults=false,recoveryMetr
   }
   const callback=rpc.getApp().callback();
   const server=http.createServer((req,res)=>{
+    if(closing){req.destroy();return;}
     if(compact&&req.url==='/rolling/compact-block-v1'){
       if(fault==='unavailable'){diagnostic.unavailableRequests++;res.writeHead(503);res.end();return;}
       compactDiagnostic.requests++;
@@ -351,8 +412,11 @@ export async function startNodeRpc(node,onSend=()=>{},{faults=false,recoveryMetr
   try{await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(0,'127.0.0.1',resolve);});}
   catch(error){server.close();server.closeAllConnections();throw error;}
   const port=server.address().port;
-  return {url:`http://127.0.0.1:${port}/`,drainSends,coldSnapshot:()=>({...compactDiagnostic,pending:pendingCompact.size,privateTags:diagnostic.forwarded.getPrivateLogsByTags??0,publicTags:diagnostic.forwarded.getPublicLogsByTags??0}),compactSnapshot:()=>({...compactDiagnostic,pending:pendingCompact.size}),...(faults?{setFault,snapshot:()=>structuredClone(diagnostic),deniedTransaction:()=>deniedTransaction}:{}),close:async()=>{
-    await new Promise((resolve,reject)=>{server.close(error=>error?reject(error):resolve());server.closeAllConnections();});await Promise.all([...pendingCompact]);await drainSends();await closedPort(port);
+  return {url:`http://127.0.0.1:${port}/`,drainSends,pendingReads:()=>pendingReads.size,coldSnapshot:()=>({...compactDiagnostic,pending:pendingCompact.size,privateTags:diagnostic.forwarded.getPrivateLogsByTags??0,publicTags:diagnostic.forwarded.getPublicLogsByTags??0}),compactSnapshot:()=>({...compactDiagnostic,pending:pendingCompact.size}),...(faults?{setFault,snapshot:()=>structuredClone(diagnostic),deniedTransaction:()=>deniedTransaction}:{}),close:async()=>{
+    closing=true;const compact=[...pendingCompact],reads=[...pendingReads];
+    const settled=await Promise.allSettled([new Promise((resolve,reject)=>{server.close(error=>error?reject(error):resolve());server.closeAllConnections();}),...compact,...reads]);
+    await drainSends();assert.equal(pendingReads.size,0);await closedPort(port);
+    const errors=settled.slice(0,1+compact.length).filter(row=>row.status==='rejected').map(row=>row.reason);if(errors.length)throw new AggregateError(errors,'Native RPC cleanup failed');
   }};
 }
 
@@ -422,7 +486,7 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
     if(!bokEnabled&&['private-fee-funding','collateral-claim','bok-capability-disabled','real-wall-clock-readiness'].includes(stage))await recordSetupClock(stage);
     await save();};
   const sourceBinding=async()=>Object.fromEntries(await Promise.all(SOURCES.map(async name=>[name,sha(await fs.readFile(path.join(ROOT,name)))])));
-  let fees,feesB,actorA,actorB,coldActor,rootOverlap,activeActor,pxe,rpc,service,failure,restoreIndexedDB,nativeArtifacts,owner,appWallet,journal;
+  let fees,feesB,actorA,actorB,coldActor,coldRpc,coldService,coldNode,coldEndpoint,coldWire,coldRejectedSends=0,rootOverlap,activeActor,pxe,rpc,service,failure,restoreIndexedDB,nativeArtifacts,owner,appWallet,journal;
   let coldRecoveryMetrics;
   let wire,ordinaryRpc,completeTrustedRecovery,collisionObserver,withdrawalCompletion,completePreferenceReorg,pausePreferenceBoundary;
   let transportSends=0,feeTotalB=0n,fundingRole,collateralRole;
@@ -590,6 +654,17 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
         proofs:real?'real':'disabled',origins:(composer||preferenceBrowser||notificationBrowser)?[ctx.browserControl.origin]:[],threads:trustedProofThreads,queueDirectory:ctx.directory,crsPath:process.env.CRS_PATH,
         queryNode:{url:rpc.url,rollupAddress:network.rollup,maxLagSeconds:120}});
       endpoint=`http://127.0.0.1:${service.address.port}`;
+      if(preferenceReorg){
+        coldRpc=await startNodeRpc(ctx.node,()=>{throw Error('Cold native send forbidden');},{
+          compactBlocks:{expectedNetworkScope:network,proofsEnabled:real,tier:'checkpointed'},
+          beforeForward:()=>{coldRejectedSends++;throw Error('Cold native send forbidden');}});
+        coldService=await startProverService({serviceMode:'query-only',host:'127.0.0.1',port:0,chainId:'31337',rollupVersion:String(info.rollupVersion),
+          proofs:'real',origins:[],compactBlocks:{tier:'checkpointed'},queryNode:{url:coldRpc.url,rollupAddress:network.rollup,maxLagSeconds:120}});
+        assert.deepEqual(coldService.stats(),{serviceMode:'query-only',proofJobsEnabled:false,queueAllocated:false,workerAllocated:false});
+        coldEndpoint=`http://127.0.0.1:${coldService.address.port}`;
+        coldWire=installRollingColdTransportObserver({mainEndpoint:endpoint,coldEndpoint});
+        coldNode=await sdk.createTrustedPrivateNode({url:coldEndpoint+'/v1/node',expectedNetworkScope:network,proofsEnabled:real,allowLocalDev:true});
+      }
       if(captureWire){
         ordinaryRpc=await startNodeRpc(ctx.node);
         const {installRollingWireCampaign}=await import('./rolling-wire-campaign.mjs');
@@ -611,7 +686,7 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
       restoreIndexedDB=()=>{for(const [key,descriptor] of previous)if(descriptor)Object.defineProperty(globalThis,key,descriptor);else delete globalThis[key];};
       for(const k of keys)Object.defineProperty(globalThis,k,{value:k==='indexedDB'?new idb.IDBFactory():idb[k],writable:true,configurable:true});
       const {createRollingApplicationActor}=await import('./rolling-application-actor.mjs');
-      const makeActor=(funding,role,dataDirectory='rolling-application-test-'+role,metrics,coldPreferences=false)=>createRollingApplicationActor({sdk,routing,node,endpoint,network,proofsEnabled:real,coldPreferences,...(metrics?{metrics}:{}),...(preferenceReorg&&role==='a'?{rootSubmissionGate:rootOverlap.capability}:{}),
+      const makeActor=(funding,role,dataDirectory='rolling-application-test-'+role,metrics,coldPreferences=false)=>createRollingApplicationActor({sdk,routing,node:role==='a-cold'?coldNode:node,endpoint:role==='a-cold'?coldEndpoint:endpoint,network,proofsEnabled:real,coldPreferences,...(metrics?{metrics}:{}),...(preferenceReorg&&role==='a'?{rootSubmissionGate:rootOverlap.capability}:{}),
         board:{instance:ctx.instance,artifact:checked.artifact},fees:funding,portal:ctx.ready.portalAddress,
         storageDirectory:path.join(ctx.directory,'rolling-application-journals-'+role),dataDirectory,
         ...(race?{confirmationDeadlineAt:ctx.applicationDeadlineAt-90000}:{}),
@@ -840,7 +915,7 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
           coldObservation.cold={};
           coldSnapshots=createRollingColdReorgSnapshots({
             readPreferences:options=>coldActor.application.readColdPreferences(options),activity:()=>coldActor.activity(),
-            transport:()=>rpc.coldSnapshot(),persist:save,observation:coldObservation.cold,bootstrap:true,
+            transport:()=>{coldObservation.transport=rollingColdTransportEvidence(coldWire,rpc,coldRpc,coldRejectedSends);return rollingColdAttributedSnapshot(coldWire,coldRpc,coldRejectedSends);},persist:save,observation:coldObservation.cold,bootstrap:true,
             // Public native body counts are an independent workload oracle,
             // never private event authority. The reader still authenticates the
             // whole ordered effects root and every original note/event envelope.
@@ -1642,10 +1717,13 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
       ...(actorB?[['applicationActorB',()=>actorB.close()]]:[]),
       ...(fees?[['fundingWallet',()=>fees.close()]]:[]),
       ...(feesB?[['fundingWalletB',()=>feesB.close()]]:[]),
+      ...(coldService?[['coldQuery',async()=>{const port=coldService.address.port;await coldService.close();await closedPort(port);}]]:[]),
       ...(service?[['proverAndQuery',async()=>{const port=service.address.port;await service.close();await closedPort(port);}]]:[]),
+      ...(coldRpc?[['coldRPC',()=>coldRpc.close()]]:[]),
       ...(rpc?[['nodeRPC',()=>rpc.close()]]:[]),
       ...(ordinaryRpc?[['ordinaryRPC',()=>ordinaryRpc.close()]]:[]),
       ...(wire?[['wireCapture',()=>wire.close()]]:[]),
+      ...(coldWire?[['coldTransportCapture',()=>coldWire.close()]]:[]),
       ...(collisionObserver?[['collisionObserver',()=>{
         assert.equal(collisionObserver.close().restored,true);report.collisionObserver=collisionObserver.snapshot();
         if(report.nameRace?.passed){const lost=report.transactions.find(row=>row.executionResult==='reverted');assert(lost);
@@ -1654,6 +1732,7 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
       ...(restoreIndexedDB?[['indexedDBGlobals',restoreIndexedDB]]:[]),
       ...(nativeArtifacts?[['nativeArtifactLoader',()=>{try{nativeArtifacts.close();}finally{report.nativeArtifacts=nativeArtifacts.observation();}}]]:[]),
     ],report.cleanup);}catch(error){report.passed=false;failure=failure?new AggregateError([failure,error],'Rolling fixture and cleanup failed'):error;}
+    if(coldWire){report.coldTransport=rollingColdTransportEvidence(coldWire,rpc,coldRpc,coldRejectedSends);try{if(report.passed)rollingColdAttributedSnapshot(coldWire,coldRpc,coldRejectedSends);}catch(error){report.passed=false;failure=failure?new AggregateError([failure,error],'Cold transport acceptance failed'):error;}}
     if(wire){report.wire=wire.snapshot();try{if(!failure){const {assertRollingWireCampaign}=await import('./rolling-wire-campaign.mjs');report.wireAcceptance=recovery?assertRollingRecoveryWire(report.wire,report.trustedRecovery):assertRollingWireCampaign(report.wire);}}catch(error){report.passed=false;failure=error;}}
     try{await save();}catch(error){report.passed=false;failure=failure?new AggregateError([failure,error],'Rolling evidence failed'):error;}
   }

@@ -69,7 +69,7 @@ import {createRollingColdReorgSnapshots,COLD_REORG_BUDGET} from './rolling-prefe
 const canonicalHash=n=>'0x'+BigInt(n).toString(16).padStart(64,'0');
 // Labelled parent/transport capabilities only. These verify assertion behavior;
 // the future genuine parent supplies production reader, node and proof counters.
-function coldReorgFixture(fault,initial=false,bootstrap=false){
+function coldReorgFixture(fault,initial=false,bootstrap=false,routing={}){
  const observation={},counts={requests:0,accepted:0,failures:0,pending:0,privateTags:0,publicTags:0};
  const activity={proofJobs:2,walletSubmissions:2,transportSends:2,authWitnesses:5};
  const phases=[...(bootstrap?['bootstrap']:[]),'retained','orphaned','restored','replacement-height','replacement'];
@@ -101,9 +101,9 @@ function coldReorgFixture(fault,initial=false,bootstrap=false){
   if(fault==='old-anchor'&&phase===1)value.progress.anchorBlock=4;
   if(fault==='orphan-marker'&&value.complete)value.orphanedReadMarkers=[{secret:'PRIVATE_SENTINEL'}];
   if(fault==='wrong-head'&&value.complete)value.preferences.head.revision='99';
-  if(fault==='callback-error')throw Error('PRIVATE_SENTINEL');return value;
+  if(fault==='callback-error')throw Error('PRIVATE_SENTINEL');await routing.onRead?.({calls,value,counts});return value;
  };
- const consumer=createRollingColdReorgSnapshots({bootstrap,readPreferences,activity:()=>({...activity}),transport:()=>({...counts}),observation,persist:async()=>{},physicalPages:async({fromBlock,anchor})=>{state.oracleCalls++;assert.equal(anchor.blockNumber,ends[phase]);return anchor.blockNumber-fromBlock+1+(fault==='wrong-physical-count'||fault==='dense'&&phase===0?1:0);}});
+ const consumer=createRollingColdReorgSnapshots({bootstrap,readPreferences,activity:()=>({...activity}),transport:()=>routing.transport?routing.transport(counts):({...counts}),observation,persist:async()=>{},physicalPages:async({fromBlock,anchor})=>{state.oracleCalls++;await routing.onOracle?.({counts});assert.equal(anchor.blockNumber,ends[phase]);return anchor.blockNumber-fromBlock+1+(fault==='wrong-physical-count'||fault==='dense'&&phase===0?1:0);}});
  return {observation,counts,state,consumer,async run(){const result=await consumer.read(phases[phase],Date.now()+10000);phase++;if(phase<phases.length)prepare();return result;}};
 }
 test('labelled real-parent contract requires initial, monotonic, divergent rebuild and replacement without additional transactions',async()=>{
@@ -271,4 +271,43 @@ for(const fault of ['initial-bookmark','initial-missing-follow','wrong-head','un
 });
 test('labelled following-first expired admission spends nothing and does not attempt root eligibility',async()=>{
  const f=followingFirstFixture();f.options.deadlineAt=Date.now()-1;await assert.rejects(exerciseRollingBrowserPreferences(f.options));assert.deepEqual(f.calls,[]);
+});
+
+import {installRollingColdTransportObserver,rollingColdAttributedSnapshot,rollingColdTransportEvidence} from './rolling-application-fixture.mjs';
+// Labelled fetch/node capabilities exercise the unchanged recovery consumer's
+// actual acceptance boundary; real HTTP/schema cases live in fixture.test.mjs.
+async function attributedRecoveryFixture(fault){
+ const original=globalThis.fetch;let release,pendingReads=0,triggered=false;
+ const held=new Promise(resolve=>release=resolve);globalThis.fetch=()=>fault==='pending'?held:Promise.resolve({status:fault==='rejected'?503:200});
+ const observer=installRollingColdTransportObserver({mainEndpoint:'http://127.0.0.1:31011',coldEndpoint:'http://127.0.0.1:31012'});
+ const request=async(lane,methods)=>{const result=fetch('http://127.0.0.1:'+ (lane==='main'?'31011':'31012')+'/v1/node',{method:'POST',body:methods==='malformed'?'{':JSON.stringify(methods.map((method,id)=>({jsonrpc:'2.0',id,method,params:['PRIVATE_NOT_RETAINED']})))});if(fault!=='pending')await result;};
+ let f;
+ const attempt=async({counts})=>{
+  if(triggered)return;triggered=true;
+  if(fault==='native-tags'){counts.privateTags++;return;}
+  if(fault==='native-pending'){pendingReads++;return;}
+  if(fault==='proof'){await fetch('http://127.0.0.1:31012/v1/jobs',{method:'POST',body:'PRIVATE_NOT_RETAINED'});return;}
+  await request(fault==='writer'?'main':'cold',fault==='malformed'?'malformed':fault==='writer'?['aztec_getPrivateLogsByTags','aztec_getPublicLogsByTags']:fault==='private-tag'||fault==='late-private'?['aztec_getPrivateLogsByTags']:fault==='public-tag'||fault==='late-public'?['node_getPublicLogsByTags']:fault==='send'?['aztec_sendTx']:['aztec_getBlockNumber']);
+ };
+ const native={coldSnapshot:()=>({...f.counts}),pendingReads:()=>pendingReads};
+ f=coldReorgFixture(undefined,false,false,{transport:()=>rollingColdAttributedSnapshot(observer,native,0),
+  onRead:fault.startsWith('late-')?undefined:attempt,onOracle:fault.startsWith('late-')?attempt:undefined});
+ return {...f,observer,native,async close(){release({status:200});try{await observer.close();}finally{globalThis.fetch=original;}}};
+}
+test('unchanged cold recovery consumer accepts attributed writer tag traffic and retains literal global totals',async()=>{
+ const f=await attributedRecoveryFixture('writer');try{for(let i=0;i<5;i++)await f.run();
+  assert(f.observation.phases.every(row=>row.passed&&row.noTagDiscovery&&row.noReadProofOrSend));
+  const evidence=rollingColdTransportEvidence(f.observer,{coldSnapshot:()=>({requests:0,accepted:0,failures:0,pending:0,privateTags:1,publicTags:1})},f.native,0);
+  assert.equal(evidence.attempted.main.privateTags,1);assert.equal(evidence.attempted.main.publicTags,1);
+  assert.equal(evidence.attempted.cold.privateTags,0);assert.equal(evidence.attempted.cold.publicTags,0);
+  assert.equal(evidence.totalNative.privateTags,1);assert.equal(evidence.totalNative.publicTags,1);assert(!JSON.stringify(evidence).includes('PRIVATE'));
+ }finally{await f.close();}
+});
+for(const fault of ['private-tag','public-tag','send','proof','rejected','malformed','pending','native-tags','native-pending','late-private','late-public'])test('unchanged cold recovery consumer rejects attributed '+fault+' even when no forbidden native forward is recorded',async()=>{
+ const f=await attributedRecoveryFixture(fault);try{
+  await assert.rejects(f.run(),error=>error.message==='Rolling preference recovery acceptance failed.'&&!error.actual&&!error.expected);
+  assert.equal(f.observation.phases[0].passed,false);assert(!JSON.stringify(f.observation).includes('PRIVATE'));
+  if(fault!=='native-tags'){assert.equal(f.counts.privateTags,0);assert.equal(f.counts.publicTags,0);}
+  await assert.rejects(f.run(),/acceptance failed/); // Original poisoned phase, no hidden retry.
+ }finally{await f.close();}
 });
