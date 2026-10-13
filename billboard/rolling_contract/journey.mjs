@@ -44,14 +44,14 @@ const fresh = () => { let result; do { result = Fr.random(); } while (result.isZ
 // Test observer failures must survive the production owner's intentional
 // receipt-reconciliation catch. Gas is measured before the one actual send.
 export function hostedJourneyObserver(node,{measure=measureApplicationGas}={}){
- const sent=new Map(),gas=new Map();let failure;
+ const sent=new Map(),gas=new Map();let failure,failureSeen=false;
  const observedNode=new Proxy(node,{get(target,key){
   if(key==='sendTx')return async tx=>{const hash=String(tx.getTxHash());assert(!sent.has(hash),'No hosted retransmission');
    gas.set(hash,await measure(target,tx));sent.set(hash,tx);return target.sendTx(tx);};
   const value=Reflect.get(target,key);return typeof value==='function'?value.bind(target):value;
  }});
- return {node:observedNode,sent,gas,observe:fn=>async(...args)=>{try{return await fn(...args);}catch(error){failure??=error;throw error;}},
-  assertHealthy(){if(failure)throw failure;}};
+ return {node:observedNode,sent,gas,observe:fn=>async(...args)=>{try{return await fn(...args);}catch(error){if(!failureSeen){failureSeen=true;failure=error;}throw error;}},
+  assertHealthy(){if(failureSeen)throw failure;}};
 }
 
 /**

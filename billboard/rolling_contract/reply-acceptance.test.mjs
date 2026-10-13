@@ -86,3 +86,11 @@ test('hosted journey measures before send and retains swallowed observer failure
  const original=Error('fixed observer assertion');try{await observer.observe(async()=>{throw original;})();}catch{}
  assert.throws(()=>observer.assertHealthy(),e=>e===original);
 });
+
+test('hosted observer retains every falsy original failure and never replaces it',async()=>{
+ for(const first of [undefined,null,false,0,'']){
+  const observer=hostedJourneyObserver({});
+  for(const value of [first,Error('later')])try{await observer.observe(async()=>{throw value;})();}catch{}
+  let caught=false;try{observer.assertHealthy();}catch(value){caught=true;assert.equal(value,first);}assert(caught);
+ }
+});
