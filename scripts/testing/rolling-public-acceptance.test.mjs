@@ -83,3 +83,27 @@ test('saved preference public acceptance requires the same full canonical post v
  assert.equal((source.match(/'preference-saved'/g)||[]).length,2); // Both scenario admission and mandatory expectedHTTP branch.
  const leaked=structuredClone(rows[0].expected);leaked.posts.push({type:'PreferenceChanged'});assert.throws(()=>assertSocialHTTPView(leaked,rows[0].expected));
 });
+
+import {synchronizeRollingPublicReader,assertRollingHTTPMetadata} from './rolling-public-acceptance.mjs';
+test('persistent catchup counts bounded steps and completion without invented ranges or pages',async()=>{
+ let calls=0;const states=[{schemaVersion:1,state:'authenticating',complete:false,revision:null,cursor:null},
+  {schemaVersion:1,state:'syncing',complete:false,revision:'epoch:1:1',cursor:{blockNumber:'1',nextTxIndex:'0'}},
+  {schemaVersion:1,state:'syncing',complete:false,revision:'epoch:1:2',cursor:{blockNumber:'1',nextTxIndex:'1'}},
+  {schemaVersion:1,state:'ready',complete:true,revision:'epoch:1:2',cursor:{blockNumber:'1',nextTxIndex:'1'}}];
+ const index={storageKind:'sqlite-v3',status:()=>states[calls],sync:async()=>states[++calls]};
+ assert.deepEqual(await synchronizeRollingPublicReader(index,Date.now()+30000),{passes:3,steps:3});assert.equal(calls,3);
+});
+for(const defect of ['stalled','incomplete-ready','missing-revision','wrong-schema','error'])test('persistent catchup rejects '+defect+' without retry',async()=>{
+ let calls=0;const original={schemaVersion:1,state:'syncing',complete:false,revision:'epoch:1:1',cursor:{blockNumber:'1',nextTxIndex:'0'}},error=Error('upstream');
+ const result={...original};if(defect==='incomplete-ready')result.state='ready';if(defect==='missing-revision')result.revision=null;if(defect==='wrong-schema')result.schemaVersion=3;
+ const index={storageKind:'sqlite-v3',status:()=>original,sync:async()=>{calls++;if(defect==='error')throw error;return result;}};
+ await assert.rejects(synchronizeRollingPublicReader(index,Date.now()+30000),defect==='error'?e=>e===error:undefined);assert.equal(calls,1);
+});
+test('persistent HTTP metadata preserves generation revision and numeric checkpoint without widening legacy grammar',()=>{
+ const epoch='12345678-1234-4234-8234-123456789abc',status={state:'ready',complete:true,scope:{boardAddress:'public'},checkpoint:{number:3,hash:'0x'+'1'.repeat(64)},revision:epoch+':2:9'},body={...status,schemaVersion:1};
+ assertRollingHTTPMetadata(body,status,'sqlite-v3');assert.throws(()=>assertRollingHTTPMetadata(body,status));
+ for(const change of [b=>b.revision=epoch+':0:9',b=>b.revision=epoch+':9',b=>b.checkpoint.number='3',b=>b.scope.boardAddress='different',b=>b.complete=false]){
+  const altered=structuredClone(body);change(altered);assert.throws(()=>assertRollingHTTPMetadata(altered,status,'sqlite-v3'));
+ }
+ const old={...status,revision:epoch+':9'};assertRollingHTTPMetadata({...old,schemaVersion:1},old);
+});

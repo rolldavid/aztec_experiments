@@ -158,7 +158,7 @@ async function render(){
     !policyVersion(response.mainPolicy?.version)||typeof response.mainPolicy.text!=='string'||!Array.isArray(response.policies))throw Error('Invalid board page');
   }
   const next=response.nextCursor;
-  if(next!==null&&next!==undefined&&(typeof next!=='string'||!next.length||next.length>4096||seenCursors.has(next)||!items.length))throw Error('Invalid next cursor');
+  if(next!==null&&next!==undefined&&(typeof next!=='string'||!next.length||next.length>4096||seenCursors.has(next)||!items.length&&api!=='directory'))throw Error('Invalid next cursor');
   const ids=new Set();for(const item of items){if(!field(item?.id)||seenIds.has(item.id)||ids.has(item.id))throw Error('Duplicate public item');ids.add(item.id);}
   // Validate/build the whole page before changing visible content or paging state.
   let visible=items,nextPosition=lastPosition,nextPositionHash=lastPositionHash;
@@ -177,7 +177,7 @@ async function render(){
   if(expectedRoot&&(!data.post||data.post.record?.root!==expectedRoot))throw Error('Linked post does not belong to this conversation');
   append(data);
   let cursor=data.nextCursor;
-  while(cursor&&loadedPages<(saved?.pages??1)){
+  while(api!=='directory'&&cursor&&loadedPages<(saved?.pages??1)){
    const page=await read(api,{...parameters,cursor},restoreSignal);if(current!==sequence)return;append(page);cursor=page.nextCursor;loadedPages++;
   }
   loading.remove();
@@ -186,7 +186,7 @@ async function render(){
    const compose=document.querySelector('[data-board-compose]');if(compose)compose.disabled=Boolean(data.board?.rejected);
   }
   if(api==='profile'&&data.identity){main.querySelector('h1').textContent=text(data.identity.first)+' '+text(data.identity.last);main.append(createPublicProfile(data.identity,{signal}),preferenceButton('Follow name',3,parameters.nameId));}
-  if(!container.childElementCount)container.append(el('div',{class:'empty'},el('h2',{},'A little quiet here'),el('p',{},api==='directory'?'No subboards match this search.':'No posts to show yet.')));
+  if(!container.childElementCount)container.append(el('div',{class:'empty'},el('h2',{},'A little quiet here'),el('p',{},api==='directory'?(cursor?'No matches in this page. Continue searching.':'No subboards match this search.'):'No posts to show yet.')));
   main.append(container);
   if(expectedRoot)main.append(el('p',{},link('Read the conversation from the beginning','/thread/'+expectedRoot)));
   let observer,inFlight=false,stopped=false;
@@ -200,8 +200,9 @@ async function render(){
     const page=await read(api,{...parameters,cursor},signal);
     if(signal.aborted||current!==sequence||stopped)return;
     append(page);cursor=page.nextCursor;loadedPages++;
+    if(api==='directory'&&container.querySelector('.empty'))container.querySelector('.empty p').textContent=cursor?'No matches in this page. Continue searching.':'No subboards match this search.';
     if(!cursor){stop();more.remove();}else more.disabled=false;
-    announce('More conversations loaded.');
+    announce(api==='directory'?'Next search page checked.':'More conversations loaded.');
    }catch(error){
     if(signal.aborted||current!==sequence||stopped)return;
     stop();more.remove();main.append(el('p',{role:'alert'},'The conversation changed or could not load. ',button('Refresh',()=>render())));
@@ -215,7 +216,7 @@ async function render(){
   focusRoute(route,positions.get(route),current===1);
   // One request owner serves both automatic and keyboard paging. Re-observation
   // after each page fills short viewports, but never creates parallel requests.
-  if(cursor&&typeof IntersectionObserver==='function'){
+  if(api!=='directory'&&cursor&&typeof IntersectionObserver==='function'){
    observer=new IntersectionObserver(entries=>{if(entries.some(entry=>entry.target===more&&entry.isIntersecting))void loadMore();},{rootMargin:'300px 0px',threshold:0});
    observer.observe(more);
   }

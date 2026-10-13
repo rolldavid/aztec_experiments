@@ -130,18 +130,19 @@ test('real panel opening from removed Unlike stays lazy and sanitizes an unavail
 
 // Controlled intersection callbacks and synthetic public pages; fetch and DOM
 // are real. No wallet, proof or chain acceptance is inferred from these checks.
-async function pagingFixture(t,{observer='controlled'}={}){
+async function pagingFixture(t,{observer='controlled',directory=false}={}){
  const state={calls:[],pending:[],hold:false,mode:'normal',active:0,peak:0};
  const files=new Set(['live.html','reader.mjs','reader-client.mjs','profile-view.mjs','model.mjs','navigation.mjs','style.css']);
  const post=id=>({id:String(id),record:{root:String(id),parent:'0',reference:'0',kind:'1',subboard:'0',name_id:'0'},text:'Public item '+id+'\n'+('Visible public text.\n'.repeat(20)),timestamp:'1',likes:'0'});
  const server=http.createServer(async(req,res)=>{
   const url=new URL(req.url,'http://localhost');
   if(url.pathname.startsWith('/api/')){
-   const cursor=url.searchParams.get('cursor');state.calls.push({path:url.pathname,cursor});state.active++;state.peak=Math.max(state.peak,state.active);
+   const cursor=url.searchParams.get('cursor');state.calls.push({path:url.pathname,cursor,keys:[...url.searchParams.keys()]});state.active++;state.peak=Math.max(state.peak,state.active);
    let finished=false;const finish=()=>{if(!finished){finished=true;state.active--;}};res.once('close',finish);
    const respond=()=>{
     const kind=url.pathname.slice(5),base={schemaVersion:1,scope:{boardAddress:'public'},complete:true,checkpoint:{number:3,hash:'public'},revision:'epoch:1',names:{},boards:{},nextCursor:null};
     let body=kind==='directory'?{...base,boards:[]}:{...base,posts:[post(cursor==='next-3'?3:cursor?2:1)],nextCursor:cursor==='next-3'?null:cursor?'next-3':'next-2'};
+    if(kind==='directory'&&directory){body={...base,boards:cursor==='next-3'&&state.mode!=='no-match'?[{id:'20',slug:'needle',name:'Needle result',description:'Sparse match',mainRules:'Rules',rules:'',rejected:false}]:[],nextCursor:cursor==='next-3'?null:cursor?'next-3':'next-2'};}
     if(cursor&&state.mode==='revision')body.revision='epoch:2';
     if(cursor&&state.mode==='duplicate')body.posts=[post(1)];
     if(cursor&&state.mode==='cursor-loop')body.nextCursor=cursor;
@@ -166,7 +167,8 @@ async function pagingFixture(t,{observer='controlled'}={}){
    fire(){this.callback([{target:this.lastTarget,isIntersecting:true}]);}
   };
  });
- await page.goto(`http://127.0.0.1:${server.address().port}/`);await page.locator('#post-1').waitFor();
+ await page.goto(`http://127.0.0.1:${server.address().port}/${directory?'#/directory/needle':''}`);
+ if(directory)await page.getByRole('button',{name:'Load more',exact:true}).waitFor();else await page.locator('#post-1').waitFor();
  return {page,state,async fire(times=1){await page.evaluate(n=>{for(let i=0;i<n;i++)window.pagingObservers.at(-1).fire();},times);},async release(){for(const fn of state.pending.splice(0))fn();}};
 }
 async function until(predicate){const end=Date.now()+2000;while(!predicate()){assert(Date.now()<end,'fixture request did not arrive');await new Promise(resolve=>setTimeout(resolve,5));}}
@@ -353,4 +355,27 @@ test('notification message assertion retains publication rules and rejects missi
  await card.evaluate(node=>node.querySelectorAll(':scope > .post-body').forEach(body=>body.remove()));
  await assert.rejects(assertRollingNotificationPostText(card,'Keep conversation civil.'),/Timeout/);
  assert.equal(await card.locator('details .post-body').textContent(),'Keep conversation civil.');
+});
+
+// Sparse bounded directory windows intentionally may have no matches yet.
+test('directory empty continuations require one explicit action per page and never replay saved windows',async t=>{
+ const {page,state}=await pagingFixture(t,{directory:true});
+ assert(await page.getByText('No matches in this page. Continue searching.',{exact:true}).isVisible());
+ assert.equal(await page.getByText('No subboards match this search.',{exact:true}).count(),0);
+ assert.equal(await page.evaluate(()=>pagingObservers.length),0);await page.waitForTimeout(100);assert.equal(state.calls.length,1);
+ const more=page.getByRole('button',{name:'Load more',exact:true});await more.click();await until(()=>state.calls.length===2);await page.waitForFunction(()=>!document.querySelector('[aria-busy="true"]'));
+ assert(await page.getByText('No matches in this page. Continue searching.',{exact:true}).isVisible());await page.waitForTimeout(100);assert.equal(state.calls.length,2);
+ await more.click();await page.getByRole('heading',{name:'Needle result',exact:true}).waitFor();assert.equal(state.calls.length,3);assert.equal(await more.count(),0);
+ await page.evaluate(()=>location.hash='/home');await page.locator('#post-1').waitFor();await page.goBack();await page.getByRole('button',{name:'Load more',exact:true}).waitFor();
+ await page.waitForTimeout(100);const directory=state.calls.filter(c=>c.path==='/api/directory');assert.deepEqual(directory.map(c=>c.cursor),[null,'next-2','next-3',null]);
+ assert(directory.every(c=>c.keys.every(key=>['query','limit','cursor'].includes(key))));
+});
+test('directory definitive no-results wording appears only on the terminal empty window',async t=>{
+ const {page,state}=await pagingFixture(t,{directory:true});state.mode='no-match';
+ for(let i=0;i<2;i++){await page.getByRole('button',{name:'Load more',exact:true}).click();await until(()=>state.calls.length===i+2);await page.waitForFunction(()=>!document.querySelector('[aria-busy="true"]'));}
+ assert(await page.getByText('No subboards match this search.',{exact:true}).isVisible());assert.equal(await page.getByRole('button',{name:'Load more',exact:true}).count(),0);
+});
+for(const mode of ['revision','cursor-loop','reorg'])test('directory empty continuation rejects '+mode+' without another request',async t=>{
+ const {page,state}=await pagingFixture(t,{directory:true});state.mode=mode;await page.getByRole('button',{name:'Load more',exact:true}).click();await page.getByRole('alert').waitFor();
+ assert.equal(state.calls.length,2);await page.waitForTimeout(100);assert.equal(state.calls.length,2);assert.equal(await page.getByRole('button',{name:'Load more',exact:true}).count(),0);
 });
