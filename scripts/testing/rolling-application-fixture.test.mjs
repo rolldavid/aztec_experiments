@@ -776,7 +776,8 @@ test('root overlap lanes select two actual worker threads and retain all existin
  const {getScenario}=await import('./scenarios.mjs');
  for(const scenario of ['preference-reorg-initial','preference-reorg-marker']){
   const selected=getScenario('rolling-'+scenario);assert.equal(selected.applicationThreads,2);assert.equal(rollingTrustedProofThreads(scenario),2);
-  assert.equal(selected.deadlineMs,540000);assert.equal(selected.fixtureHeapMiB,768);assert.equal(selected.browser,'none');
+  assert.equal(selected.deadlineMs,scenario==='preference-reorg-initial'?585000:540000);
+  assert(selected.deadlineMs<600000);assert.equal(selected.fixtureHeapMiB,768);assert.equal(selected.browser,'none');
  }
  const source=await fs.readFile(new URL('./rolling-application-fixture.mjs',import.meta.url),'utf8');
  assert(source.includes("if(preferenceReorg)assert.equal(process.env.C01_APPLICATION_BB_THREADS,'2'"));
