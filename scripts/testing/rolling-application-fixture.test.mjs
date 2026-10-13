@@ -5,7 +5,7 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import http from 'node:http';
 import path from 'node:path';
-import {rollingTrustedProofThreads,countRollingColdPhysicalPages,runRollingPublicRecoveryChecks,persistRollingRecoveryObservation,observeRollingColdRead,assertRollingBrowserCompactAcceptance,createRollingEvidenceDirectory,classifyRollingApplicationFootprint,recordRollingFundingFailure,assertRollingApplicationViews,assertRollingPublicFootprint,closeRollingResources,loadRollingFixtureSDK,observeRollingReadiness} from './rolling-application-fixture.mjs';
+import {settleRollingRootOverlap,rollingTrustedProofThreads,countRollingColdPhysicalPages,runRollingPublicRecoveryChecks,persistRollingRecoveryObservation,observeRollingColdRead,assertRollingBrowserCompactAcceptance,createRollingEvidenceDirectory,classifyRollingApplicationFootprint,recordRollingFundingFailure,assertRollingApplicationViews,assertRollingPublicFootprint,closeRollingResources,loadRollingFixtureSDK,observeRollingReadiness} from './rolling-application-fixture.mjs';
 import {createRollingProjection} from '../../shared/rolling/public-projection.mjs';
 import {createFileJournalStorage} from '../../apps/src/billboard/user/transaction-journal-store.mjs';
 import {createEncryptedJournalSlot} from '../../shared/journal-record.mjs';
@@ -811,4 +811,34 @@ test('root-fenced RPC close drains an original native send even after its HTTP c
  try{await seen;abort.abort();await sent;closing=rpc.close().then(()=>{closed=true;});await new Promise(r=>setImmediate(r));assert(!closed);
   release();await closing;assert(closed);assert.deepEqual(await rpc.drainSends(),{pending:0});
  }finally{abort.abort();release();await sent;if(closing)await closing;else await rpc.close();}
+});
+
+// Labelled outcome/cleanup fixtures exercise the exact parent-used finalizer.
+for(const original of [undefined,null,false,0,'',Error('PRIVATE_ORIGINAL')])
+ for(const fault of ['none','drain','pending','snapshot','persist'])test('overlap finalizer retains original rejection '+String(original)+' with '+fault,async()=>{
+  const cleanup=Error('PRIVATE_CLEANUP'),calls=[],observation={};
+  const result=await settleRollingRootOverlap({observation,
+   run:async()=>{calls.push('run');throw original;},
+   drain:async()=>{calls.push('drain');if(fault==='drain')throw cleanup;return {pending:fault==='pending'?1:0};},
+   snapshot:()=>{calls.push('snapshot');if(fault==='snapshot')throw cleanup;return {state:'failed'};},
+   persist:async()=>{calls.push('persist');if(fault==='persist')throw cleanup;},
+  }).then(()=>({resolved:true}),reason=>({reason}));
+  assert(!result.resolved);assert(result.reason instanceof AggregateError);assert.equal(result.reason.errors[0],original);
+  assert.equal(result.reason.errors.length,fault==='none'?1:2);
+  if(!['none','pending'].includes(fault))assert.equal(result.reason.errors[1],cleanup);
+  assert.deepEqual(calls,['run','drain','snapshot','persist']);assert.equal(observation.passed,false);
+  assert(!JSON.stringify(observation).includes('PRIVATE'));
+ });
+test('overlap finalizer retains all cleanup failures after a successful operation',async()=>{
+ const errors=[undefined,false,Error('PRIVATE_PERSIST')],observation={},calls=[];
+ await assert.rejects(settleRollingRootOverlap({observation,run:async()=>{calls.push('run');return 'included';},
+  drain:async()=>{calls.push('drain');throw errors[0];},snapshot:()=>{calls.push('snapshot');throw errors[1];},
+  persist:async()=>{calls.push('persist');throw errors[2];}}),e=>e instanceof AggregateError&&e.errors.length===3&&e.errors.every((v,i)=>v===errors[i]));
+ assert.deepEqual(calls,['run','drain','snapshot','persist']);assert.equal(observation.passed,false);
+});
+test('overlap finalizer returns the original success only after drain and diagnostics settle',async()=>{
+ const result={},observation={},calls=[];
+ assert.equal(await settleRollingRootOverlap({observation,run:async()=>{calls.push('run');return result;},
+  drain:async()=>{calls.push('drain');return {pending:0};},snapshot:()=>{calls.push('snapshot');return {state:'done'};},persist:async()=>{calls.push('persist');assert(observation.passed);}}),result);
+ assert.deepEqual(calls,['run','drain','snapshot','persist']);assert.equal(observation.passed,true);
 });

@@ -79,6 +79,23 @@ export async function persistRollingRecoveryObservation(persist,recoveryFailed,r
     throw error;
   }
 }
+// Keep every failure in RAM, including falsy thrown values. A truthy aggregate
+// also prevents legacy lifecycle catch blocks from mistaking false for success.
+// Mandatory native drain and fixed diagnostics each run once; none can hide the
+// original financial outcome or trigger a second send.
+export async function settleRollingRootOverlap({run,drain,snapshot,observation,persist}) {
+  const errors=[];let result;
+  observation.passed=false;
+  try{result=await run();}catch(error){errors.push(error);}
+  try{observation.native=await drain();assert.equal(observation.native.pending,0);observation.nativeDrained=true;}
+  catch(error){observation.nativeDrained=false;errors.push(error);}
+  try{Object.assign(observation,snapshot());observation.snapshotCaptured=true;}
+  catch(error){observation.snapshotCaptured=false;errors.push(error);}
+  observation.passed=errors.length===0;
+  try{await persist();}catch(error){observation.passed=false;errors.push(error);}
+  if(errors.length)throw new AggregateError(errors,'Root overlap or owned cleanup failed');
+  return result;
+}
 export function recordRollingFundingFailure(report,role,observation){
   assert(role===undefined||role==='a'||role==='b');
   assert(observation&&typeof observation==='object');
@@ -810,8 +827,10 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
         let rootEvent;
         if(preferenceReorg){
           coldObservation.overlap={passed:false};await save();
-          try{
-            rootEvent=await rootOverlap.run({submit:publishRoot,
+          rootEvent=await settleRollingRootOverlap({observation:coldObservation.overlap,
+            drain:()=>rpc.drainSends(),snapshot:()=>rootOverlap.snapshot(),persist:save,
+            run:async()=>{
+            const result=await rootOverlap.run({submit:publishRoot,
               admissionDeadlineAt:Math.min(Date.now()+COLD_REORG_BUDGET.fullReadMs,ctx.applicationDeadlineAt-COLD_REORG_BUDGET.forkReserveMs),
               scanDeadline:()=>Math.min(Date.now()+COLD_REORG_BUDGET.fullReadMs,ctx.applicationDeadlineAt-COLD_REORG_BUDGET.forkReserveMs),
               bootstrap:async({signal,deadlineAt})=>{
@@ -820,17 +839,12 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
                 for(const key of ['bookmarks','followedBoards','followedNames','subscriptions','readMarkers'])assert.deepEqual(value[key],[]);
                 assert.equal(value.replyNotifications,true);return value;
               }});
-            coldObservation.overlap.passed=true;
             // Each successful real worker checks its actual initialized native
             // backend/thread profile, not just the requested environment.
             assert(service.stats().completed===1&&service.stats().failed===0);
             coldObservation.workerProfile={threads:trustedProofThreads,completedWorkerProfileAsserted:true};
-          }finally{
-            // submitOnce's bounded read can settle before an underlying native
-            // call. Keep that original writer owned before any actor disposal.
-            coldObservation.overlap.native=await rpc.drainSends();assert.equal(coldObservation.overlap.native.pending,0);
-            Object.assign(coldObservation.overlap,rootOverlap.snapshot());await save();
-          }
+            return result;
+          }});
         }else rootEvent=notificationBrowser?undefined:await publishRoot();
         const rootPosition=rootEvent?.position;
         if(notificationBrowser){
