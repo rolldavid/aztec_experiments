@@ -19,9 +19,12 @@ def fixture_generate(config,now):
     with patch.object(b,'require_linux_qualification',return_value={'version':b.BB_VERSION,'sha256':b.BB_SHA}):
         return b.generate(config,now)
 
-def host(diagnostic_devices=False):
+def host(diagnostic_devices=False, packaged_support=False):
     ns={'PINS':{'manifest':'b'*64,'node':b.NODE_SHA,'bb':b.BB_SHA,'bbVersion':b.BB_VERSION,'catalog':b.CATALOG_SHA,'image':b.IMAGE},'NETWORK':b.NETWORK,'QUALIFICATION':b.QUALIFICATION}
     exec(b.HOST,ns)
+    if packaged_support:
+        ns['RELEASE']=ROOT
+        ns['PINS']['startup']=hashlib.sha256(pathlib.Path(b.__file__).read_bytes()).hexdigest()
     if not diagnostic_devices:ns['emit_diagnostic']=lambda data:None # never write Mac device output
     return ns
 
@@ -59,7 +62,7 @@ class Bootstrap(unittest.TestCase):
             self.assertEqual(original(root),good['nativeProver']['linux-x64'])
 
     def test_query_qualification_requires_exact_scope_and_absent_proof_lifecycle(self):
-        ns=host();report=qualifier_fixture()
+        ns=host(packaged_support=True);report=qualifier_fixture()
         self.assertTrue(all(ns['qualification_projection'](report,True).values()))
         for value in [None,{},True,{'passed':True,'proofEndpointsDisabled':True,'queueAllocated':0,'workerAllocated':False},
                       {**report['checks']['noProofLifecycle'],'queueAllocated':True},
@@ -70,6 +73,24 @@ class Bootstrap(unittest.TestCase):
         self.assertFalse(ns['qualification_projection'](report,True)['scope'])
         self.assertEqual(b.QUALIFICATION['service']['serviceMode'],'query-only')
         self.assertFalse({'board','applicationProfile','privateFeeAddress','queueDirectory','threads'} & set(b.QUALIFICATION['service']))
+
+    def test_packaged_qualification_helpers_require_exact_source_before_execution(self):
+        with tempfile.TemporaryDirectory() as t:
+            ns=host();ns['RELEASE']=pathlib.Path(t)
+            source=ns['RELEASE']/'deploy/prover/bootstrap.py';source.parent.mkdir(parents=True)
+            exact=pathlib.Path(b.__file__).read_bytes();ns['PINS']['startup']=hashlib.sha256(exact).hexdigest()
+            report=qualifier_fixture();calls=[lambda:ns['qualification_projection'](report,True),lambda:ns['qualification_anchors'](report['checks'])]
+            for call in calls:
+                with self.assertRaises(FileNotFoundError):call()
+            source.write_bytes(exact)
+            self.assertTrue(all(calls[0]().values()))
+            self.assertEqual(calls[1](),{k:{'blockNumber':99,'blockHash':'0x'+'b'*64} for k in ('healthy','recovered')})
+            for value in (True,-1,2**53,'99'):
+                invalid=qualifier_fixture()['checks'];invalid['healthy']={**invalid['healthy'],'blockNumber':value}
+                with self.assertRaisesRegex(ValueError,'Invalid qualification anchor'):ns['qualification_anchors'](invalid)
+            source.write_bytes(exact+b'\nraise AssertionError("unverified source executed")\n')
+            for call in calls:
+                with self.assertRaisesRegex(ValueError,'Activation source changed'):call()
 
     def test_current_reviewed_catalog_matches_bootstrap_pin(self):
         # A newly packaged profile catalog must not reach a paid host with the
@@ -341,6 +362,8 @@ class htb 1:20 parent 1:1 prio 0 rate 25Mbit ceil 50Mbit burst 4725b cburst 7850
         ns=host();ns['BASE']=pathlib.Path(directory);ns['RELEASE']=pathlib.Path(directory)/'release'
         (ns['RELEASE']/'prover').mkdir(parents=True);(ns['RELEASE']/'prover/qualify-runtime.mjs').write_text('// labelled test fake')
         (ns['BASE']/'deadline.json').write_text(json.dumps(config()))
+        helper=ns['RELEASE']/'deploy/prover/bootstrap.py';helper.parent.mkdir(parents=True)
+        helper.write_bytes(pathlib.Path(b.__file__).read_bytes());ns['PINS']['startup']=hashlib.sha256(helper.read_bytes()).hexdigest()
         ns['verify_release']=lambda _:None;ns['verify_controls']=lambda:123
         return ns
 
@@ -417,7 +440,7 @@ class htb 1:20 parent 1:1 prio 0 rate 25Mbit ceil 50Mbit burst 4725b cburst 7850
             with self.subTest(name=name),self.assertRaises(ValueError):ns['readiness_projection'](r)
 
     def test_console_qualification_projection_rejects_unknown_fields(self):
-        ns=host()
+        ns=host(packaged_support=True)
         with tempfile.TemporaryDirectory() as t:
             ns['BASE']=pathlib.Path(t);ns['PRIVATE']=pathlib.Path(t)/'private'
             ns['PRIVATE'].mkdir(mode=0o700);ns['verify_controls']=lambda:99
@@ -743,6 +766,7 @@ class FinalReceipt(unittest.TestCase):
         for boundary in ('success','disk-failure'):
             with self.subTest(boundary=boundary),tempfile.TemporaryDirectory() as t:
                 ns=self.environment(t);events=[]
+                ns['RELEASE']=ROOT;ns['PINS']['startup']=hashlib.sha256(pathlib.Path(b.__file__).read_bytes()).hexdigest()
                 report=qualifier_fixture();q={'schemaVersion':1,'passed':True,'stage':'complete','scope':'current-network-query-only','manifestSha256':'b'*64,
                     'checks':ns['qualification_projection'](report,True),'readiness':ready_fixture(),'anchors':ns['qualification_anchors'](report['checks'])}
                 ns['exclusive_record'](ns['BASE']/'qualification/result.json',q)

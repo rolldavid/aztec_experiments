@@ -553,39 +553,10 @@ def final_receipt():
         if not passed: run(['systemctl','start','--no-block','rolling-budget.service'],timeout=5)
 
 def qualification_projection(report, process_exited=False):
-    # Fixed booleans only: no messages, configuration, reply, logs or arbitrary keys.
-    checks=report.get('checks',{});cleanup=report.get('cleanup',{})
-    result={'processExitVerified':process_exited is True}
-    for name in ('wrong-chain','wrong-version','wrong-rollup','proof-config-floor'):
-        result[name]=checks.get(name,{}).get('rejected') is True
-    for name in ('healthy','recovered'):
-        r=checks.get(name,{})
-        result[name]=r.get('ready') is True and type(r.get('blockNumber')) is int and r['blockNumber']>=0 and bool(re.fullmatch('0x[a-f0-9]{64}',str(r.get('blockHash'))))
-    result['nativeAndRollingCatalog']=checks.get('nativeAndRollingCatalog',{}).get('passed') is True
-    result['missingHelper']=checks.get('missingHelper',{}).get('missingHelperRejected') is True
-    result['manifestUnchanged']=checks.get('manifestUnchanged') is True
-    for name in ('paused','stale','queriesRejected','resumed','recovered'):
-        result['freshness-'+name]=checks.get('freshness',{}).get(name) is True
-    for name in ('serviceClosed','temporaryFilesRemoved','childProcessesExited'):
-        result['cleanup-'+name]=cleanup.get(name) is True
-    scope=QUALIFICATION['service'];expected={'chainId':scope['chainId'],'rollupVersion':scope['rollupVersion']}
-    public=report.get('publicScope',{})
-    result['scope']=public=={'chainId':expected['chainId'],'version':expected['rollupVersion'],
-        'rollup':scope['queryNode']['rollupAddress'],'serviceMode':'query-only','nodeProofs':'real','maxLagSeconds':120}
-    result['release']=report.get('release',{}).get('manifestSha256')==PINS['manifest']
-    result['noProofJobs']=type(report.get('proofJobs')) is int and report['proofJobs']==0
-    lifecycle=checks.get('noProofLifecycle',{});expected={'passed':True,'proofEndpointsDisabled':True,'queueAllocated':False,'workerAllocated':False}
-    result['noProofLifecycle']=type(lifecycle) is dict and set(lifecycle)==set(expected) and all(type(lifecycle[k]) is bool and lifecycle[k] is v for k,v in expected.items())
-    result['complete']=report.get('passed') is True and report.get('stage')=='complete'
-    return result
+    return activation_support('qualification-projection',(report,process_exited))
 
 def qualification_anchors(checks):
-    anchors={}
-    for name in ('healthy','recovered'):
-        value=checks[name]
-        if type(value.get('blockNumber')) is not int or not 0<=value['blockNumber']<=2**53-1 or type(value.get('blockHash')) is not str or not re.fullmatch('0x[a-f0-9]{64}',value['blockHash']): raise ValueError('Invalid qualification anchor')
-        anchors[name]={'blockNumber':value['blockNumber'],'blockHash':value['blockHash']}
-    return anchors
+    return activation_support('qualification-anchors',checks)
 
 def readiness_projection(value):
     scope=QUALIFICATION['service']
@@ -1407,9 +1378,46 @@ def activation_service(h, uid, gid, config_sha):
         rows=[line.split()[1:] for line in data.splitlines() if line.startswith(key)]
         if rows!=[[str(number).encode()]*4]:raise Invalid('Prover process identity')
 
+def qualification_projection(h, report, process_exited=False):
+    # Fixed booleans only: no messages, configuration, reply, logs or arbitrary keys.
+    checks=report.get('checks',{});cleanup=report.get('cleanup',{})
+    result={'processExitVerified':process_exited is True}
+    for name in ('wrong-chain','wrong-version','wrong-rollup','proof-config-floor'):
+        result[name]=checks.get(name,{}).get('rejected') is True
+    for name in ('healthy','recovered'):
+        r=checks.get(name,{})
+        result[name]=r.get('ready') is True and type(r.get('blockNumber')) is int and r['blockNumber']>=0 and bool(re.fullmatch('0x[a-f0-9]{64}',str(r.get('blockHash'))))
+    result['nativeAndRollingCatalog']=checks.get('nativeAndRollingCatalog',{}).get('passed') is True
+    result['missingHelper']=checks.get('missingHelper',{}).get('missingHelperRejected') is True
+    result['manifestUnchanged']=checks.get('manifestUnchanged') is True
+    for name in ('paused','stale','queriesRejected','resumed','recovered'):
+        result['freshness-'+name]=checks.get('freshness',{}).get(name) is True
+    for name in ('serviceClosed','temporaryFilesRemoved','childProcessesExited'):
+        result['cleanup-'+name]=cleanup.get(name) is True
+    scope=h['QUALIFICATION']['service'];expected={'chainId':scope['chainId'],'rollupVersion':scope['rollupVersion']}
+    public=report.get('publicScope',{})
+    result['scope']=public=={'chainId':expected['chainId'],'version':expected['rollupVersion'],
+        'rollup':scope['queryNode']['rollupAddress'],'serviceMode':'query-only','nodeProofs':'real','maxLagSeconds':120}
+    result['release']=report.get('release',{}).get('manifestSha256')==h['PINS']['manifest']
+    result['noProofJobs']=type(report.get('proofJobs')) is int and report['proofJobs']==0
+    lifecycle=checks.get('noProofLifecycle',{});expected={'passed':True,'proofEndpointsDisabled':True,'queueAllocated':False,'workerAllocated':False}
+    result['noProofLifecycle']=type(lifecycle) is dict and set(lifecycle)==set(expected) and all(type(lifecycle[k]) is bool and lifecycle[k] is v for k,v in expected.items())
+    result['complete']=report.get('passed') is True and report.get('stage')=='complete'
+    return result
+
+def qualification_anchors(checks):
+    anchors={}
+    for name in ('healthy','recovered'):
+        value=checks[name]
+        if type(value.get('blockNumber')) is not int or not 0<=value['blockNumber']<=2**53-1 or type(value.get('blockHash')) is not str or not re.fullmatch('0x[a-f0-9]{64}',value['blockHash']): raise ValueError('Invalid qualification anchor')
+        anchors[name]={'blockNumber':value['blockNumber'],'blockHash':value['blockHash']}
+    return anchors
+
 def prover_activation(h, operation, expected=None):
-    """Root-local operation only. No listener, retry, capability or paid API."""
+    """Pinned package support. No listener, retry, capability or paid API."""
     import fcntl,time
+    if operation=='qualification-projection':return qualification_projection(h,*expected)
+    if operation=='qualification-anchors':return qualification_anchors(expected)
     if operation=='query-observe':return query_host(h)
     if os.geteuid()!=0 or operation not in ('activate','observe'):raise Invalid('Activation authority')
     private=h['PRIVATE'];intent_path=private/'prover-activation-intent.json';result_path=private/'prover-activation-result.json'
