@@ -1156,7 +1156,7 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
             },action,readPreferences:options=>actorA.application.readPreferences(options),activity:()=>actorA.activity(),deadlineAt:ctx.applicationDeadlineAt});
           preferenceCheckpoint=result.checkpoint;report.preferences=result.observation;
         }else{
-        const result=await exerciseRollingPreferences({mode,root:ids.rootId,name:ids.nameId,rootBlock:Number(rootPosition.blockNumber),rootHash:rootPosition.blockHash,
+        const result=await exerciseRollingPreferences({proofsEnabled:real,mode,root:ids.rootId,name:ids.nameId,rootBlock:Number(rootPosition.blockNumber),rootHash:rootPosition.blockHash,
           action,readPreferences:options=>actorA.application.readPreferences(options),activity:()=>actorA.activity(),deadlineAt:ctx.applicationDeadlineAt});
         preferenceCheckpoint=result.checkpoint;report.preferences=result.observation;
         }
@@ -1561,7 +1561,9 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
         finally{await save();}
       }
       if(multi){const bStandalone=BigInt(feesB.standalone?.transactionFee??0);await fees.verify(feeTotal,feesB.browserFixture.fundedAmount-bStandalone-feeTotalB);await feesB.verify(feeTotalB,fees.browserFixture.fundedAmount-feeTotal);assert.equal(fees.poolBefore,feesB.poolBefore);report.accountFees={a:String(feeTotal),b:String(feeTotalB)};}else await fees.verify(feeTotal);report.actualHumanFees=String(feeTotal+feeTotalB);report.proverJobs=service.stats();
-      assert.equal(report.proverJobs.failed,0);if(recovery){assert.equal(report.proverJobs.completed,1);assert.equal(report.proverJobs.submitted,1);}
+      assert.equal(report.proverJobs.failed,0);
+      if(!real&&['preference-relationships','preference-notifications'].includes(scenario)){assert.equal(report.proverJobs.completed,0);assert.equal(report.proverJobs.submitted,0);}
+      else if(recovery){assert.equal(report.proverJobs.completed,1);assert.equal(report.proverJobs.submitted,1);}
       else if(preferenceReorg){const expected=markerReorg?3:2;assert.equal(report.proverJobs.completed,expected);assert.equal(report.proverJobs.submitted,expected);}
       else if(notificationBrowser){assert.equal(report.proverJobs.completed,4);assert.equal(report.proverJobs.submitted,4);}
       else if(preferenceSaved){assert.equal(report.proverJobs.completed,2);assert.equal(report.proverJobs.submitted,2);}

@@ -3,13 +3,13 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {exerciseRollingPreferences,compareRecoveredRollingPreferences,compareRecoveredColdRollingPreferences} from './rolling-preference-recovery.mjs';
-function fixture(mode='relationships',fault){
+function fixture(mode='relationships',fault,proofsEnabled=true){
  let revision=0,proofJobs=0,transportSends=0,walletSubmissions=0,readCount=0;
  const actions=[],snapshot={scope:{chainId:'31337',version:'1',board:'9'},head:{initialized:true,schema:1,revision:'0',digest:'1'},bookmarks:[],followedNames:[],followedBoards:[],subscriptions:[],replyNotifications:true,readMarkers:[]};
  const activity=()=>({proofJobs,transportSends,walletSubmissions,authWitnesses:readCount});
  const action=async(input,label)=>{
   assert.equal(input.expectedRevision,String(revision));assert.equal(label,'preference-'+(revision+1));actions.push(input);
-  revision++;snapshot.head.revision=String(revision);snapshot.head.digest=String(revision+1);proofJobs++;transportSends++;walletSubmissions++;
+  revision++;snapshot.head.revision=String(revision);snapshot.head.digest=String(revision+1);proofJobs+=proofsEnabled?1:0;transportSends++;walletSubmissions++;
   if(input.kind===1)snapshot.bookmarks=[input.target];if(input.kind===2)snapshot.followedBoards=[input.target];if(input.kind===3)snapshot.followedNames=[input.target];
   if(input.kind===4)snapshot.subscriptions=[input.target];if(input.kind===5)snapshot.replyNotifications=input.enabled;
   if(input.type==='read-marker'){assert.equal(typeof input.throughBlock,'string');snapshot.readMarkers=[{thread:input.thread,throughBlock:Number(input.throughBlock),blockHash:'13'}];}
@@ -482,4 +482,17 @@ for(const fault of ['private-tag','public-tag','send','proof','rejected','malfor
   if(fault!=='native-tags'){assert.equal(f.counts.privateTags,0);assert.equal(f.counts.publicTags,0);}
   await assert.rejects(f.run(),/acceptance failed/); // Original poisoned phase, no hidden retry.
  }finally{await f.close();}
+});
+
+// Native configuration affects only test accounting, never production proof calls.
+for(const mode of ['relationships','notifications'])test('native disabled configuration: '+mode+' keeps exact writes and zero jobs',async()=>{
+ const f=fixture(mode,undefined,false),r=await exerciseRollingPreferences({...f.options,proofsEnabled:false});
+ assert.equal(r.observation.proofMode,'native-disabled-development');assert.equal(r.observation.genuineProofAcceptance,false);
+ const expected=mode==='relationships'?3:4;assert.deepEqual(f.options.activity(),{proofJobs:0,transportSends:expected,walletSubmissions:expected,authWitnesses:2});
+});
+for(const [actual,expected] of [[true,false],[false,true]])test('native configuration rejects mismatched proof accounting '+actual+'/'+expected,async()=>{
+ const f=fixture('relationships',undefined,actual);await assert.rejects(exerciseRollingPreferences({...f.options,proofsEnabled:expected}));
+});
+for(const value of [null,0,'false'])test('native configuration rejects nonboolean '+JSON.stringify(value),async()=>{
+ const f=fixture();await assert.rejects(exerciseRollingPreferences({...f.options,proofsEnabled:value}));assert.equal(f.actions.length,0);
 });

@@ -49,8 +49,9 @@ function verify(p,{mode,root,name,rootBlock,rootHash,revision,final}){
  check(p.replyNotifications===(relationships||final));
  check(equal(p.readMarkers,mode==='notifications'?[{thread:root,throughBlock:rootBlock,blockHash:String(BigInt(rootHash))}]:[]));
 }
-export async function exerciseRollingPreferences({mode,root,name,rootBlock,rootHash,action,readPreferences,activity,deadlineAt}){
+export async function exerciseRollingPreferences({mode,root,name,rootBlock,rootHash,action,readPreferences,activity,deadlineAt,proofsEnabled=true}){
  try{
+  check(typeof proofsEnabled==='boolean');
   check(['relationships','browser-relationships','notifications'].includes(mode)&&field(root)&&Number.isSafeInteger(deadlineAt)&&deadlineAt>Date.now());
   check(mode!=='relationships'||field(name));check(Number.isSafeInteger(rootBlock)&&rootBlock>0&&/^0x[0-9a-f]{64}$/.test(rootHash));
   for(const fn of [action,readPreferences,activity])check(typeof fn==='function');
@@ -59,7 +60,8 @@ export async function exerciseRollingPreferences({mode,root,name,rootBlock,rootH
    const before=counters(activity),events=await action({...input,expectedRevision:String(revision)},'preference-'+(revision+1));
    // Encrypted PreferenceChanged delivery must not become a public board event.
    check(Array.isArray(events)&&events.length===0);const after=counters(activity);
-   for(const k of ['proofJobs','transportSends','walletSubmissions'])check(after[k]===before[k]+1);
+   check(after.proofJobs===before.proofJobs+(proofsEnabled?1:0));
+   for(const k of ['transportSends','walletSubmissions'])check(after[k]===before[k]+1);
    revision++;
   }
   if(mode==='relationships'||mode==='browser-relationships'){
@@ -79,7 +81,7 @@ export async function exerciseRollingPreferences({mode,root,name,rootBlock,rootH
   check(incremental.value.anchor.blockNumber>initial.value.anchor.blockNumber);
   const checkpoint=Object.freeze(Object.defineProperty({},'toJSON',{value:()=>{throw fail();}}));
   states.set(checkpoint,{snapshot:JSON.stringify(incremental.value.preferences),activity:afterMutation,deadlineAt});
-  return {checkpoint,observation:{passed:true,preferenceTransactions:revision,publicPreferenceEvents:0,initial:initial.measurement,incremental:incremental.measurement,authenticatedHeadMatched:true,noReadProofOrSend:true}};
+  return {checkpoint,observation:{passed:true,proofMode:proofsEnabled?'real':'native-disabled-development',genuineProofAcceptance:proofsEnabled,preferenceTransactions:revision,publicPreferenceEvents:0,initial:initial.measurement,incremental:incremental.measurement,authenticatedHeadMatched:true,noReadProofOrSend:true}};
  }catch{throw fail();}
 }
 // Browser-specific ordering: Main following needs fees but no posting deposit.
