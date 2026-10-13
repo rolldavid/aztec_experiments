@@ -729,7 +729,18 @@ test('actual cold reorg dispatch enables only the existing two reorg lanes in ad
  const enabled=new Function('scenario','return '+declaration[1]);
  for(const scenario of ['preference-relationships','preference-browser','notification-browser','preference-reorg-initial','preference-reorg-marker'])assert.equal(enabled(scenario),true);
  for(const scenario of ['preference-saved','preference-notifications','name-race','conversation'])assert.equal(enabled(scenario),false);
- const branch=source.slice(source.indexOf('        }else if(preferenceReorg){'),source.indexOf('        }else{\n        const result=await exerciseRollingPreferences'));
+ const reorgStart='        }else if(preferenceReorg){',browserStart='        }else if(preferenceBrowser){';
+ const reorgBranch=text=>{
+  const start=text.indexOf(reorgStart),end=text.indexOf(browserStart,start);
+  assert(start>=0&&end>start,'Explicit reorg and following browser branches must exist in order');
+  const selected=text.slice(start,end);assert(!selected.includes('actorA.application.readPreferences('));return selected;
+ };
+ const branch=reorgBranch(source);
+ // Boundary control: the real browser may use its ordinary private read, but
+ // injecting that same call inside the actual reorg branch must still fail.
+ assert.throws(()=>reorgBranch(source.replace(reorgStart,reorgStart+'\n await actorA.application.readPreferences({});')));
+ const browser=source.slice(source.indexOf(browserStart,source.indexOf(reorgStart)),source.indexOf('        }else{\n        const result=await exerciseRollingPreferences'));
+ assert(browser.includes('actorA.application.readPreferences('));
  const coldSetup=source.slice(source.indexOf("coldActor=await makeActor(fees,'a-cold'"),source.indexOf('const publishRoot=async()=>'));
  assert(coldSetup.includes('coldActor.application.readColdPreferences(options)'));
  assert(coldSetup.includes('activity:()=>coldActor.activity()'));
