@@ -104,7 +104,7 @@ Stop with Ctrl-C; the server joins the bounded active sync before closing. To
 rebuild a cache, stop first and remove only that deployment's cache directory.
 
 This interface currently supports public conversations, linked replies, profiles,
-subboard discovery and pagination. The account panel connects to the production private wallet session when configured. Funding is still under implementation and is not presented as successful. The
+subboard discovery and pagination. The account panel connects to the production private wallet session when configured. Receipt-backed funding recovery and Bok composition are implemented; initial aggregate funding and real-wallet testnet acceptance remain incomplete. The
 separate `index.html` preview still uses labelled fixtures. Synthetic browser
 checks qualify rendering and navigation only; full chain, wallet, privacy and
 production acceptance remain separate requirements.
@@ -146,9 +146,11 @@ only the pinned wallet assets; private account creation exports encrypted recove
 The real deployment is verified before private PXE use. Account actions use the
 existing encrypted journals, show the maximum fee before confirmation, and offer
 reconciliation for uncertain outcomes. An unavailable node preserves recovery and
-never fabricates a completed action. The panel currently supports names,
-subboards, posts, replies, quotes, reposts and likes; initial aggregate funding,
-Bok workspace integration and complete recovery qualification remain open.
+never fabricates a completed action. The panel supports names, subboards, posts, replies, quotes, reposts, likes,
+receipt-backed claims, private Bok authorization/posting and authenticated moderator
+actions. Initial aggregate funding, complete live Bok deployment and final recovery
+qualification remain open. See [independent deployment](../../docs/rolling-deployment.md)
+for current setup and concrete gaps.
 
 The wallet-enabled server adds cross-origin isolation and the SDK's required WASM,
 worker and data-URI permissions. Connections are restricted to the exact configured

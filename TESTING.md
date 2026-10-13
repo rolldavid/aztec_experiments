@@ -27,11 +27,11 @@ cannot satisfy those assertions or qualify real-proof acceptance. Reserve real
 proofs for the testnet acceptance campaign, explicitly selecting its real-proof
 configuration. Historical real-proof evidence and all release gates remain intact.
 
-Rolling browser development scenarios are currently held before resource allocation:
-`apps/rolling/wallet-session.mjs` explicitly enables its native PXE flag. The
-browser fixture's proof-mode metadata cannot override that SDK option. Resolve
-that configuration constraint before browser development; do not use real local
-proofs as a workaround. No browser proofs-disabled result is claimed.
+Rolling browser development passes the validated deployment proof mode into the
+native PXE option. It uses `proverEnabled: false` only with the disposable local
+chain; a metadata label alone cannot override the SDK. Development evidence must
+record both native modes and zero proof jobs. Real-proof browser/testnet acceptance
+remains separate.
 
 The ordinary CLI preference checks use the captured native configuration: zero
 proof jobs when disabled, and the original job counts when real proofs are enabled.

@@ -92,10 +92,10 @@ establish either, and no service route is registered by this installer.
 Both npm lockfiles are required. Do not substitute `npm install` in release or CI
 builds. The compiler bootstrap verifies the archive's SHA-256 and the executable's
 version and commit before use. `toolchain.json` records the pins and official
-download sources. The native Aztec **6.0.0-rc.1** prover and test service come from the
+download sources. The native Aztec **6.0.0-rc.6** prover and **6.0.0-rc.3** test service come from the
 locked npm dependencies; a globally installed Aztec CLI is unnecessary. Native
 provers are checked against platform-specific SHA-256 and exact version pins
-before use. All pinned platforms report `6.0.0-rc.1`. An initial
+before use. The platform-specific native binary pins require `6.0.0-rc.6`. An initial
 build needs network access for npm, official compiler downloads, Noir Git
 dependencies, the Solidity compiler, and content-pinned CRS assets. A preexisting developer cache is not a
 prerequisite, although compilers may populate and reuse their own caches.
