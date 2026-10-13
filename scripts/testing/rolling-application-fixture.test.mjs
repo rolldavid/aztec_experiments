@@ -5,7 +5,7 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import http from 'node:http';
 import path from 'node:path';
-import {runRollingPublicRecoveryChecks,persistRollingRecoveryObservation,observeRollingColdRead,assertRollingBrowserCompactAcceptance,createRollingEvidenceDirectory,classifyRollingApplicationFootprint,recordRollingFundingFailure,assertRollingApplicationViews,assertRollingPublicFootprint,closeRollingResources,loadRollingFixtureSDK,observeRollingReadiness} from './rolling-application-fixture.mjs';
+import {rollingTrustedProofThreads,runRollingPublicRecoveryChecks,persistRollingRecoveryObservation,observeRollingColdRead,assertRollingBrowserCompactAcceptance,createRollingEvidenceDirectory,classifyRollingApplicationFootprint,recordRollingFundingFailure,assertRollingApplicationViews,assertRollingPublicFootprint,closeRollingResources,loadRollingFixtureSDK,observeRollingReadiness} from './rolling-application-fixture.mjs';
 import {createRollingProjection} from '../../shared/rolling/public-projection.mjs';
 import {createFileJournalStorage} from '../../apps/src/billboard/user/transaction-journal-store.mjs';
 import {createEncryptedJournalSlot} from '../../shared/journal-record.mjs';
@@ -362,7 +362,7 @@ test('measured second race start is admitted without changing proof timeout or p
 test('preference campaigns keep real proof limits, actual decoder and fresh empty-store recovery',async()=>{
  const {getScenario}=await import('./scenarios.mjs');
  for(const name of ['rolling-preference-relationships','rolling-preference-notifications']){const s=getScenario(name);assert.equal(s.deadlineMs,540000);assert.equal(s.fixtureHeapMiB,768);assert.equal(s.boardProfile,'rolling');assert.equal(s.evidenceTask,'G07');assert.equal(s.browser,'none');}
- const browser=getScenario('rolling-preference-browser');assert.equal(browser.deadlineMs,540000);assert.equal(browser.fixtureHeapMiB,768);assert.equal(browser.boardProfile,'rolling');assert.equal(browser.evidenceTask,'G07');assert.equal(browser.browser,'rolling-preferences');assert.equal(browser.browserEngine,'chromium');assert.equal(browser.applicationThreads,1);
+ const browser=getScenario('rolling-preference-browser');assert.equal(browser.deadlineMs,540000);assert.equal(browser.fixtureHeapMiB,768);assert.equal(browser.boardProfile,'rolling');assert.equal(browser.evidenceTask,'G07');assert.equal(browser.browser,'rolling-preferences');assert.equal(browser.browserEngine,'chromium');assert.equal(browser.applicationThreads,2);
  const sdk=await loadRollingFixtureSDK(),abi=await import('@aztec-labs/stdlib/abi');assert.equal(sdk.decodeFunctionSignature,abi.decodeFunctionSignature);assert.equal(sdk.EventSelector,abi.EventSelector);
  const source=await fs.readFile(new URL('./rolling-application-fixture.mjs',import.meta.url),'utf8');
  const cold=source.slice(source.indexOf("await mark('preference-keys-only-recovery')"),source.indexOf("await mark('canonical-projection-rebuild')"));
@@ -710,4 +710,18 @@ test('actual fixture binds unchanged public and private gates before final accou
  assert(source.indexOf('await verifyRollingPublicReader({',dispatch)>dispatch,'Later stale-readiness check retains the outer import binding');
  const browser=source.indexOf('if(preferenceBrowser){',dispatch),accounting=source.indexOf('report.actualHumanFees=String(feeTotal+feeTotalB)',dispatch);
  assert(browser>dispatch&&accounting>browser);assert(source.slice(browser,accounting).includes('await fees.verify(feeTotal)'));
+});
+
+test('selected browser profile matches the actual trusted worker without changing bounds',async()=>{
+ const {getScenario}=await import('./scenarios.mjs');
+ for(const scenario of ['preference-browser','notification-browser','preference-relationships','preference-notifications','preference-saved']){
+  const selected=getScenario('rolling-'+scenario);assert.equal(selected.applicationThreads,rollingTrustedProofThreads(scenario));
+  assert.equal(selected.deadlineMs,540000);assert.equal(selected.fixtureHeapMiB,768);
+ }
+ assert.equal(rollingTrustedProofThreads('preference-browser'),2);
+ const source=await fs.readFile(new URL('./rolling-application-fixture.mjs',import.meta.url),'utf8');
+ assert(source.includes('const trustedProofThreads=rollingTrustedProofThreads(scenario)'));
+ assert(source.includes('threads:trustedProofThreads'));
+ assert(source.includes("if(preferenceBrowser)assert.equal(process.env.C01_APPLICATION_BB_THREADS,'2'"));
+ assert(source.includes('runRollingPreferenceBrowserFixture')); // Same parent, no alternate browser lifecycle.
 });

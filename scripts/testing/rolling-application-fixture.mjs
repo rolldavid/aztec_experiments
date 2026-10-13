@@ -24,6 +24,7 @@ export async function runRollingPublicRecoveryChecks({boundedCold,recoverPrivate
   if(boundedCold){await verifyPublic();await recoverPrivate();}
   else{await recoverPrivate();await verifyPublic();}
 }
+export const rollingTrustedProofThreads=scenario=>['notification-browser','preference-browser'].includes(scenario)?2:1;
 const discard=()=>{};
 const silent=Object.assign(discard,Object.fromEntries(['trace','debug','verbose','info','warn','error','fatal'].map(k=>[k,discard])),
   {level:'silent',isLevelEnabled:()=>false,getBindings:()=>({}),createChild:()=>silent});
@@ -503,7 +504,8 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
       const forwardedSaved=[];
       rpc=await startNodeRpc(ctx.node,tx=>{assert(transportSends<Number.MAX_SAFE_INTEGER);transportSends++;if(preferenceSaved||notificationBrowser){assert(forwardedSaved.length<(notificationBrowser?4:3));forwardedSaved.push(tx);};},{faults:recovery||preferenceSaved,recoveryMetrics:()=>coldRecoveryMetrics,...(boundedCold?{compactBlocks:{expectedNetworkScope:network,proofsEnabled:real,tier:'checkpointed'}}:{})});
       await mark('trusted-service-startup');
-      const trustedProofThreads=notificationBrowser?2:1;report.trustedProofThreads=trustedProofThreads;
+      const trustedProofThreads=rollingTrustedProofThreads(scenario);
+      if(preferenceBrowser)assert.equal(process.env.C01_APPLICATION_BB_THREADS,'2','Browser application profile must match trusted worker');report.trustedProofThreads=trustedProofThreads;
       service=await startProverService({host:'127.0.0.1',port:0,board:String(ctx.instance.address),chainId:31337,rollupVersion:info.rollupVersion,
         ...(boundedCold?{compactBlocks:{tier:'checkpointed'}}:{}),applicationProfile:'rolling',privateBokAddress:String(bokInstance.address),privateFeeAddress:String(fees.browserFixture.instance.address),
         proofs:real?'real':'disabled',origins:(composer||preferenceBrowser||notificationBrowser)?[ctx.browserControl.origin]:[],threads:trustedProofThreads,queueDirectory:ctx.directory,crsPath:process.env.CRS_PATH,
