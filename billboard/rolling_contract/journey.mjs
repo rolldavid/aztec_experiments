@@ -41,6 +41,19 @@ const equalPrivate = (left, right, message) => assert(isDeepStrictEqual(left, ri
 const accepted = [TxStatus.CHECKPOINTED, TxStatus.PROVEN, TxStatus.FINALIZED];
 const fresh = () => { let result; do { result = Fr.random(); } while (result.isZero()); return result; };
 
+// Test observer failures must survive the production owner's intentional
+// receipt-reconciliation catch. Gas is measured before the one actual send.
+export function hostedJourneyObserver(node,{measure=measureApplicationGas}={}){
+ const sent=new Map(),gas=new Map();let failure;
+ const observedNode=new Proxy(node,{get(target,key){
+  if(key==='sendTx')return async tx=>{const hash=String(tx.getTxHash());assert(!sent.has(hash),'No hosted retransmission');
+   gas.set(hash,await measure(target,tx));sent.set(hash,tx);return target.sendTx(tx);};
+  const value=Reflect.get(target,key);return typeof value==='function'?value.bind(target):value;
+ }});
+ return {node:observedNode,sent,gas,observe:fn=>async(...args)=>{try{return await fn(...args);}catch(error){failure??=error;throw error;}},
+  assertHealthy(){if(failure)throw failure;}};
+}
+
 /**
  * board/bok: actual SDK Contract.at instances for this wallet.
  * privateFee: preparePrivateBokFees result; no new wallet lifetime here.
@@ -439,16 +452,16 @@ export async function runRollingBokJourney({node, wallet, owner, operator, board
       try{publicIndex=ownRollingPersistentPublicIndex(await createRollingPersistentPublicIndex({node,artifact:board.artifact,scope:indexScope,deployment:boardDeployment,storage}),storage);}
       catch(error){storage.close();throw error;}
       const boardPort=await rollingBoardPort({node,index:publicIndex,scope,boardArtifact:board.artifact,pluginId:String(pluginId),development:true});
-      const store=await fileState(path.join(hostedDirectory,'request.json')),sent=new Map();
-      const observedNode=new Proxy(node,{get(target,key){if(key==='sendTx')return async tx=>{sent.set(String(tx.getTxHash()),tx);return target.sendTx(tx);};const value=Reflect.get(target,key);return typeof value==='function'?value.bind(target):value;}});
+      const store=await fileState(path.join(hostedDirectory,'request.json')),observer=hostedJourneyObserver(node),{sent}=observer;
+      const observedNode=observer.node;
       const escrow=await createPrivateBokEscrow({node:observedNode,wallet,artifact:bok.artifact,address:String(bok.address),operator:String(operator),board:String(board.address),network:scope,
         requestId:String(requestId),target:String(target),store,lease:hostedLease,development:true,proofMode:'disabled'});
       const observed={...escrow};
-      for(const method of ['reserve','settle','publish_reply','finish'])observed[method]=async(...args)=>{
+      for(const method of ['reserve','settle','publish_reply','finish'])observed[method]=observer.observe(async(...args)=>{
         const result=await escrow[method](...args);assert.equal(result.status,'succeeded');assert.equal(result.canonical,true);
         const tx=sent.get(result.txHash);assert(tx,'Exactly one current hosted send');
         const receipt=await node.getTxReceipt(TxHash.fromString(result.txHash)),effect=(await node.getTxEffect(TxHash.fromString(result.txHash))).data;
-        const gas=await measureApplicationGas(node,tx);observedPublic.push({tx,effect});
+        const gas=observer.gas.get(result.txHash);assert(gas,'Pre-send gas observation required');observedPublic.push({tx,effect});
         report.transactions.push({label:'hosted-'+method,actorRole:'operator',payerMode:'genesis',txHash:result.txHash,submission:'canonical inclusion',
           transactionFee:String(receipt.transactionFee),blockNumber:receipt.blockNumber,blockHash:String(receipt.blockHash),footprint:inspect(tx,effect,false,gas)});
         const row=await query(bok,'request',requestId);
@@ -462,7 +475,7 @@ export async function runRollingBokJourney({node, wallet, owner, operator, board
         }
         if(method==='publish_reply')await checkPublished({tx,effect,receipt},settled);
         await save();return result;
-      };
+      });
       let modelCalls=0;
       const quote={modelId:'inert-hosted-fixture',inputBound:190,maxTokens:10,inputPrice:1000000000n,outputPrice:1000000000n,cachePrice:null,maximum:200n};
       const provider={quote:async()=>quote,execute:async()=>{modelCalls++;assert.equal(modelCalls,1);
@@ -470,8 +483,8 @@ export async function runRollingBokJourney({node, wallet, owner, operator, board
         return {message:{role:'assistant',content:replyContent},billing,charge:120n,receipt:billing.receipt};}};
       const invocation={postId:String(postId),requestId:String(requestId),target:String(target),pluginId:String(pluginId)};
       const run=()=>runPrivateBokRequest({request:invocation,board:boardPort,escrow:observed,store,provider,
-        runAgent:async({model,text})=>{assert.equal(text,content);const response=await model.complete({messages:[{role:'user',content:text}],maxTokens:10});return {replyText:response.message.content};}});
-      assert.equal((await run()).status,'finished');assert.equal(modelCalls,1);assert.equal(sent.size,4);
+        runAgent:async({model,text})=>{assert.equal(text,content);const response=await model.complete({messages:[{role:'user',content:text}],maxTokens:10});observer.assertHealthy();return {replyText:response.message.content};}});
+      assert.equal((await run()).status,'finished');observer.assertHealthy();assert.equal(modelCalls,1);assert.equal(sent.size,4);
       await run();assert.equal(modelCalls,1);assert.equal(sent.size,4);
       report.reply.hosted={passed:true,model:'labelled inert provider',actualProviderCall:false,modelCalls,transactionCount:sent.size,repeatSends:0,
         authenticatedPublicIndex:true,journalRetained:true,journalSha256:sha(await fs.readFile(path.join(hostedDirectory,'request.json')))};

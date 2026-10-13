@@ -18,6 +18,7 @@ import {startEscrowService,runPrivateBokRequest} from './escrow-service.mjs';
 import {meteredModel} from './metering.mjs';
 import {veniceMeteredProvider} from './venice-metered.mjs';
 import {createAgent} from './agent.mjs';
+import {rollingConversation} from './conversation.mjs';
 import {bokRunner} from './bok.mjs';
 import {veniceClient} from './venice.mjs';
 import {githubApi,githubToolbox} from './github-tools.mjs';
@@ -93,6 +94,16 @@ export async function readHostedActor(config){
  }catch{throw Error('Invalid private operator configuration');}
 }
 
+/** Keep the existing authenticated index/decoder, selecting the production
+ * finalized tip at its existing checkpointed-tip read boundary. */
+export function hostedIndexNode(node,development){
+ assert.equal(typeof development,'boolean');
+ return new Proxy(node,{get(target,key){
+  if(key==='getBlockData')return (number,...args)=>target.getBlockData(!development&&number==='checkpointed'?'finalized':number,...args);
+  const value=Reflect.get(target,key);return typeof value==='function'?value.bind(target):value;
+ }});
+}
+
 /** Explicit Rolling composition; the legacy account escrow is never selected. */
 export async function runRollingHostedService({config,env=process.env,onError=()=>{}}){
  const [{rollingOperatorConfig,rollingPxeOptions,operatorNodeFetch,fileState},{loadRollingArtifacts},{jsonStringify},
@@ -126,8 +137,11 @@ export async function runRollingHostedService({config,env=process.env,onError=()
   const [boardRaw,bokRaw]=loadRollingArtifacts(),boardArtifact=loadContractArtifact(boardRaw),artifact=loadContractArtifact(bokRaw);
   const indexScope={chainId:scope.chainId,rollupVersion:scope.rollupVersion,rollupAddress:scope.rollupAddress,boardAddress:scope.boardAddress,classId:String((await getContractClassFromArtifact(boardArtifact)).id)};
   const storage=createRollingPublicSqliteStore(path.join(config.stateDirectory,'public-index'),{scope:indexScope});
-  try{index=ownRollingPersistentPublicIndex(await createRollingPersistentPublicIndex({node,artifact:boardArtifact,scope:indexScope,deployment:config.deployment,storage}),storage);}catch(error){storage.close();throw error;}
+  try{index=ownRollingPersistentPublicIndex(await createRollingPersistentPublicIndex({node:hostedIndexNode(node,config.development),artifact:boardArtifact,scope:indexScope,deployment:config.deployment,storage}),storage);}catch(error){storage.close();throw error;}
   const board=await rollingBoardPort({node,index,scope,boardArtifact,pluginId:config.pluginId,development:config.development});
+  const conversation=rollingConversation({index,node,scope:indexScope,development:config.development});
+  const summaryModelId=env.VENICE_SUMMARY_MODEL||config.summaryModelId;
+  assert(typeof summaryModelId==='string'&&/^[A-Za-z0-9][A-Za-z0-9._:/-]{0,127}$/.test(summaryModelId),'Cheaper summary model required');
   assert(env.VENICE_WALLET_PRIVATE_KEY,'Provider key required');
   assert(env.VENICE_AUTO_TOP_UP!=='true','Fund provider credits separately before hosted request execution');
   const repository=env.PLUGIN_REPOSITORY||config.repository,api=githubApi({token:env.GITHUB_TOKEN}),allowWrites=env.PLUGIN_GITHUB_WRITES==='true';
@@ -139,8 +153,8 @@ export async function runRollingHostedService({config,env=process.env,onError=()
     const store=await fileState(path.join(config.stateDirectory,id+'.json'));
     const escrow=await createPrivateBokEscrow({node,wallet,artifact,address:scope.receiver,operator:account.address.toString(),board:scope.boardAddress,network:scope,
      requestId:request.requestId,target:request.target,store,lease,development:config.development,proofMode:config.development?'disabled':'real'});
-    return runPrivateBokRequest({request,board,escrow,store,provider,limits:config.limits,runAgent:async({model,...input})=>
-     bokRunner({runner:createAgent({model,toolbox,maxCalls:config.limits?.maxCalls??8,instructions:'You are bok, the board development assistant. Answer the explicit request; do not merge or deploy.'})}).run(input)});
+    return runPrivateBokRequest({request,board,escrow,store,provider,conversation,limits:config.limits,runAgent:async({model,conversation,...input})=>
+     bokRunner({runner:createAgent({model,toolbox,conversation,summaryModelId,maxCalls:config.limits?.maxCalls??8,instructions:'You are bok, the board development assistant. Answer the explicit request; do not merge or deploy.'})}).run(input)});
    }});
   return {address:server.address,close};
  }catch{let cleanupFailed=false;try{await close();}catch{cleanupFailed=true;}throw Error(cleanupFailed?'Rolling hosted startup failed; owned cleanup requires attention':'Rolling hosted startup failed');}

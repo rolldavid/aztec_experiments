@@ -162,3 +162,47 @@ test('private actor file and SDK decode failures cannot leak private sentinels',
   const actor=await readHostedActor({operator:{secret:f(1),salt:f(2),signingKey:f(3)}});assert.equal(String(actor.secret),f(1));
  }finally{await fs.rm(root,{recursive:true,force:true});}
 });
+
+test('captured conversation guard runs after reservation and current policy before each paid call',async()=>{
+ const x=fixture();let captures=0,guards=0;
+ x.args.conversation={load:async()=>{captures++;return {assertCurrent:async()=>{guards++;assert(x.events.includes('reserve'));assert(x.row.reserved>0n);}};}};
+ const run=x.args.runAgent;x.args.runAgent=async input=>{await input.conversation.load({postId:input.postId});return run(input);};
+ await x.run();assert.equal(captures,1);assert.equal(guards,1);assert.equal(x.events.filter(x=>x==='paid').length,1);
+ assert(!JSON.stringify(x.store.read()).includes('assertCurrent'));
+});
+test('history change during reservation fences provider without loading replacement context',async()=>{
+ const x=fixture();let changed=false,captures=0;const reserve=x.args.escrow.reserve;
+ x.args.escrow.reserve=async(...args)=>{await reserve(...args);changed=true;};
+ x.args.conversation={load:async()=>{captures++;return {assertCurrent:async()=>assert(!changed,'Original history changed')};}};
+ const run=x.args.runAgent;x.args.runAgent=async input=>{await input.conversation.load({postId:input.postId});return run(input);};
+ await assert.rejects(x.run(),/unknown/);assert.equal(captures,1);assert(!x.events.includes('paid'));assert.equal(x.row.reserved,110n);
+ await assert.rejects(x.run(),/unresolved/);assert.equal(captures,1);
+});
+test('conversation enabled request cannot execute provider without actual capture',async()=>{
+ const x=fixture();x.args.conversation={load:()=>assert.fail('Must not silently load')};
+ await assert.rejects(x.run(),/unknown/);assert(!x.events.includes('paid'));
+});
+test('production hosted projection selects finalized while development stays checkpointed',async()=>{
+ const {hostedIndexNode}=await import('../main.mjs');const calls=[];
+ const node={getBlockData:async n=>{calls.push(n);return n;},getNodeInfo(){assert.equal(this,node);return 'same';}};
+ const production=hostedIndexNode(node,false),development=hostedIndexNode(node,true);
+ await production.getBlockData('checkpointed');await production.getBlockData(12);await development.getBlockData('checkpointed');
+ assert.deepEqual(calls,['finalized',12,'checkpointed']);assert.equal(production.getNodeInfo(),'same');
+});
+test('actual agent uses the same guarded metering for prior-history summary and current answer',async()=>{
+ const {createAgent}=await import('../agent.mjs');const {bokRunner}=await import('../bok.mjs');
+ const x=fixture(),inputs=[];let captured=0,guards=0,closed=0;
+ const quote=x.args.provider.quote;x.args.provider.quote=async input=>{inputs.push(structuredClone(input));return quote(input);};
+ x.args.conversation={load:async()=>{captured++;return {canonical:true,complete:true,threadId:f(9),
+  messages:[{id:f(9),role:'user',text:'prior request'},{id:f(10),role:'assistant',text:'prior Bok result'},
+   {id:x.args.request.postId,role:'user',text:x.current.text}],assertCurrent:async()=>{guards++;assert(x.row.reserved>0n);}};}};
+ const toolbox={open:async()=>({definitions:[],close:async()=>{closed++;}})};
+ x.args.runAgent=({model,conversation,...input})=>bokRunner({runner:createAgent({model,conversation,toolbox,summaryModelId:'cheap-summary',
+  summaryTokens:10,maxTokens:10,maxCalls:3,instructions:'Test only'})}).run(input);
+ await x.run();assert.equal(captured,1);assert.equal(guards,2);assert.equal(closed,1);
+ assert.deepEqual(x.events,['reserve','paid','settle','reserve','paid','settle','publish_reply','finish']);
+ assert.equal(inputs[0].modelId,'cheap-summary');assert(!inputs[0].messages.at(-1).content.includes(x.current.text));
+ assert(inputs[1].messages.some(m=>m.content.includes('Prior conversation summary')));
+ assert.equal(inputs[1].messages.at(-1).content,x.current.text);
+ assert(!JSON.stringify(inputs).includes('assertCurrent'));assert.equal(x.row.charged,12n);
+});

@@ -73,3 +73,16 @@ test('labelled fake ABI: matching messages without authenticated revert data can
     assert.equal(matchesReplyRejection(new SimulationError(text, [{contractAddress: contract.address}], [new Fr(1n), new Fr(2n)]), contracts, label), false);
   }
 });
+
+// Actual-used journey observer, controlled transaction/chain: post-mining
+// simulation is deliberately invalid and a swallowed assertion remains fatal.
+const {hostedJourneyObserver}=await import('./journey.mjs');
+test('hosted journey measures before send and retains swallowed observer failure',async()=>{
+ let mined=false,calls=0;const tx={getTxHash:()=> 'fixed-public-hash'},expected={totalGas:{daGas:1,l2Gas:2}};
+ const observer=hostedJourneyObserver({sendTx:async value=>{assert.equal(value,tx);mined=true;calls++;}},
+  {measure:async()=>{assert.equal(mined,false);return expected;}});
+ await observer.node.sendTx(tx);assert.equal(observer.gas.get('fixed-public-hash'),expected);assert.equal(calls,1);
+ await assert.rejects(observer.node.sendTx(tx),/retransmission/);assert.equal(calls,1);
+ const original=Error('fixed observer assertion');try{await observer.observe(async()=>{throw original;})();}catch{}
+ assert.throws(()=>observer.assertHealthy(),e=>e===original);
+});

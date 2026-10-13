@@ -63,7 +63,7 @@ export async function startEscrowService({descriptor,escrow,board,run,host='127.
 /** Existing request billing owns every paid-call fence. Hosted restart never
  * reruns an agent whose run intent exists; only its exact reply/finish may be
  * reconciled. Ports are dependency seams, not client-supplied authority. */
-export async function runPrivateBokRequest({request,board,escrow,store,provider,runAgent,limits}){
+export async function runPrivateBokRequest({request,board,escrow,store,provider,runAgent,limits,conversation}){
  const identity={...escrow.identity,requestId:request.requestId,target:request.target};
  const binding={...identity,postId:request.postId,pluginId:request.pluginId};
  const digest=value=>createHash('sha256').update(JSON.stringify(value)).digest('hex');
@@ -72,9 +72,16 @@ export async function runPrivateBokRequest({request,board,escrow,store,provider,
  if(saved)assert.deepEqual(saved.binding,binding,'Hosted request identity changed');
  const current=await board.readRequest(request.postId);
  assert(current&&current.requestId===request.requestId&&current.target===request.target&&current.pluginId===request.pluginId,'Canonical invocation changed');
+ let historyGuard;
+ const requestConversation=conversation?Object.freeze({async load(input){
+  assert(!historyGuard,'Conversation already captured');assert.equal(input.postId,request.postId);
+  const history=await conversation.load(input);assert.equal(typeof history?.assertCurrent,'function');
+  historyGuard=history.assertCurrent;return history;
+ }}):undefined;
  const guardedProvider={quote:(...args)=>provider.quote(...args),execute:async(...args)=>{
   const final=await board.readRequest(request.postId);
   assert(final?.usable&&!final.replied&&final.requestId===request.requestId&&final.target===request.target&&final.pluginId===request.pluginId,'Invocation changed before provider execution');
+  if(conversation){assert(historyGuard,'Conversation must be captured before billing');await historyGuard();}
   return provider.execute(...args);
  }};
  const metering=privateBokMetering({provider:guardedProvider,escrow,store,identity,limits});
@@ -85,7 +92,7 @@ export async function runPrivateBokRequest({request,board,escrow,store,provider,
   const row=await escrow.request(request.requestId);assert(row.canonical&&row.request.state===2&&row.request.reserved===0n,'Active canonical request required');
   saved={binding,phase:'running'};await save(saved);
   let call=0;
-  const result=await runAgent({text:current.text,id:request.requestId,postId:request.postId,model:{complete:async input=>{
+  const result=await runAgent({conversation:requestConversation,text:current.text,id:request.requestId,postId:request.postId,model:{complete:async input=>{
    const fresh=await board.readRequest(request.postId);assert(fresh?.usable&&!fresh.replied&&fresh.target===request.target,'Invocation changed before paid call');
    const response=await metering.complete(call++,input);assert(response.replyAvailable,'Recovered billing has no recoverable reply');return response;
   }}});
