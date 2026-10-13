@@ -1152,3 +1152,18 @@ test('social-wire actual wiring scopes disabled accounting and preserves transac
  assert(social.includes('privateTransactions:6,registeredNames:2'));
  assert(social.includes('expectedHTTP:httpViews(projection,posts,posts.slice(0,2),[a,b])'));
 });
+
+// Existing real miner mode selection, no chain/network in these controls.
+test('Bok application consumer selects real-wall mining with the original absolute deadline only',async()=>{
+ const {privateBokMiningOptions}=await import('./private-bok-fixture.mjs');
+ const deadlineAt=Date.now()+10000,ctx={scenario:{name:'rolling-bok-post'},applicationDeadlineAt:deadlineAt};
+ assert.deepEqual(privateBokMiningOptions(ctx,()=>{}),{mode:'real-wall',deadlineAt});
+ assert.deepEqual(privateBokMiningOptions({},undefined),{mode:'warped'});
+ for(const bad of [{...ctx,scenario:{name:'private-bok-uncertain'}},{...ctx,applicationDeadlineAt:0},{...ctx,applicationDeadlineAt:NaN}])assert.throws(()=>privateBokMiningOptions(bad,()=>{}));
+ assert.throws(()=>privateBokMiningOptions(ctx,true));
+});
+test('Bok application port rejects proofs and nonlocal scope before resource acquisition',async()=>{
+ const {createRollingBokApplicationPort}=await import('./rolling-application-fixture.mjs');
+ await assert.rejects(createRollingBokApplicationPort({proofsEnabled:true,network:{chainId:'31337'}}));
+ await assert.rejects(createRollingBokApplicationPort({proofsEnabled:false,network:{chainId:'1'}}));
+});

@@ -54,6 +54,18 @@ export function hostedJourneyObserver(node,{measure=measureApplicationGas}={}){
   assertHealthy(){if(failureSeen)throw failure;}};
 }
 
+// Capture the original application outcome without losing a transaction whose
+// send completed before a later failure. The caller accounts its canonical fee
+// before rethrowing the exact outcome; this helper never sends or retries.
+export async function observeRollingBokApplicationSubmit(application, prepared, observer) {
+ const previous=new Set(observer.sent.keys());let result,failed=false,error;
+ try{result=await application.submitPrepared(prepared.intentId);}catch(original){failed=true;error=original;}
+ const fresh=[...observer.sent].filter(([hash])=>!previous.has(hash));
+ if(!fresh.length){if(failed)throw error;assert.fail('Application did not submit its prepared transaction');}
+ assert.equal(fresh.length,1);const [hash,tx]=fresh[0],gas=observer.gas.get(hash);assert(gas);
+ return {tx,gas,result,failed,error};
+}
+
 /**
  * board/bok: actual SDK Contract.at instances for this wallet.
  * privateFee: preparePrivateBokFees result; no new wallet lifetime here.
@@ -65,7 +77,7 @@ export function hostedJourneyObserver(node,{measure=measureApplicationGas}={}){
  * actual 1000 private Bok credits are required. No synthetic funding accepted.
  */
 export async function runRollingBokJourney({node, wallet, owner, operator, board, bok, privateFee,
-  claimedDeposit, pluginId, initialHumanFees, boardDeployment, outputDirectory, mineL1, finalizeReverted, mark = () => {}, harnessFiles = []}) {
+  claimedDeposit, pluginId, initialHumanFees, boardDeployment, openApplication, outputDirectory, mineL1, finalizeReverted, mark = () => {}, harnessFiles = []}) {
   assertNodeVersion(); assertAztecPackages();
   assert(path.isAbsolute(outputDirectory)); assert.equal(typeof mineL1, 'function'); assert.equal(typeof finalizeReverted, 'function');
   assert(wallet === privateFee.wallet && owner.equals(privateFee.owner) && operator.equals(privateFee.operator));
@@ -85,7 +97,8 @@ export async function runRollingBokJourney({node, wallet, owner, operator, board
   const lease = await fs.open(path.join(outputDirectory, 'journey-intent.json'), 'wx', 0o600);
   try { await lease.writeFile(json({scope: 'rolling-bok-journey', createdAt: new Date().toISOString()})); await lease.sync(); }
   finally { await lease.close(); }
-  let noteMembership;
+  let noteMembership,applicationPort,journeyFailed=false,journeyFailure;
+  const applicationObserver=hostedJourneyObserver(node,{measure:async(native,tx)=>{const gas=await measureApplicationGas(native,tx);assert.equal((await native.isValidTx(tx)).result,'valid');return gas;}});
   const save = async () => {
     if (noteMembership) {await noteMembership.flush(); report.noteMembership = noteMembership.snapshot();}
     return fs.writeFile(path.join(outputDirectory, 'journey.json'), json(report), {mode: 0o600});
@@ -189,18 +202,26 @@ export async function runRollingBokJourney({node, wallet, owner, operator, board
       assert.equal(effect.l2ToL1Msgs.length, 0);
       return footprint;
     }
-    async function send(label, interaction, actor) {
+    async function send(label, interaction, actor, prepared) {
       await stage(label); await wallet.pxe.sync();
       const selected = privateFee.paymentFor(actor), started = performance.now();
-      const proof = await proveApplicationAction({wallet, owner: actor, interaction, ...selected});
-      const {tx} = proof, gas = await measureApplicationGas(node, tx);
-      assert.equal((await node.isValidTx(tx)).result, 'valid');
+      let proof,tx,gas,applicationResult,applicationFailed=false,applicationError;
+      if(prepared){
+        assert(actor.equals(owner)&&interaction===null);
+        // Production application owns its durable journal and sole send.
+        const outcome=await observeRollingBokApplicationSubmit(applicationPort.actor.application,prepared,applicationObserver);
+        ({tx,gas}=outcome);applicationResult=outcome.result;applicationFailed=outcome.failed;applicationError=outcome.error;
+        proof={maximumFee:prepared.maximumFee};applicationPort.observe();
+      }else{
+        proof=await proveApplicationAction({wallet,owner:actor,interaction,...selected});tx=proof.tx;gas=await measureApplicationGas(node,tx);
+        assert.equal((await node.isValidTx(tx)).result,'valid');
+      }
       const row = {label, actorRole: selected.role, payerMode: selected.payerMode, txHash: String(tx.getTxHash()),
         gas, serializedTxBytes: tx.toBuffer().length, prepareMs: Math.round(performance.now() - started), submission: 'outcome unknown'};
       const intent = await fs.open(path.join(outputDirectory, `${label}-intent.json`), 'wx', 0o600);
       try { await intent.writeFile(json({txHash: row.txHash, sourceRevision: report.sourceRevision, artifactHashes})); await intent.sync(); }
       finally { await intent.close(); }
-      report.transactions.push(row); await save(); await node.sendTx(tx);
+      report.transactions.push(row); await save(); if(!prepared)await node.sendTx(tx);
       let receipt; const deadline = Date.now() + 60000;
       while (Date.now() < deadline) {
         receipt = await node.getTxReceipt(tx.getTxHash());
@@ -222,6 +243,8 @@ export async function runRollingBokJourney({node, wallet, owner, operator, board
       Object.assign(row, {submission: 'canonical inclusion', executionResult: receipt.executionResult, transactionFee: String(receipt.transactionFee),
         blockNumber: Number(receipt.blockNumber), blockHash: String(receipt.blockHash), effectSha256: sha(bytes)});
       await save(); // Reverted execution or policy failure cannot erase charged fees.
+      if(applicationFailed)throw applicationError;
+      if(prepared){assert.equal(applicationResult.status,label==='authorize-request'?'authorized':'confirmed');const saved=await applicationPort.actor.journal.assertCanStart();assert(saved.tx.getTxHash().equals(tx.getTxHash()));}
       assert.equal(receipt.executionResult, TxExecutionResult.SUCCESS);
       if (selected.role !== 'operator') assert(BigInt(proof.maximumFee) >= receipt.transactionFee);
       row.publicObservation = {publicWrites: effect.publicDataWrites.length,
@@ -243,7 +266,13 @@ export async function runRollingBokJourney({node, wallet, owner, operator, board
     await send('configure-plugin', board.methods.configure_plugin(pluginId, bok.address, true), operator);
     const plugin = await query(board, 'get_plugin', pluginId);
     assert(plugin.enabled && n(plugin.adapter) === n(bok.address));
-    const nonce = fresh(), requestId = fresh(), content = '@Bok build a quiet reading page.';
+    assert.equal(typeof openApplication,'function');report.application={passed:false};
+    applicationPort=await openApplication(applicationObserver.node,report.application);
+    assert.equal((await applicationPort.actor.application.readAccountStatus()).status,'fee-ready');
+    const content='@Bok build a quiet reading page.';
+    const preparedAuthorization=await applicationPort.actor.application.prepare({type:'bok',deposit:String(depositId),name:String(nameId),subboard:'0',content,budget:'400'});
+    const workflow=await applicationPort.readWorkflow();assert.equal(workflow.id,preparedAuthorization.intentId);assert.equal(workflow.bok.phase,'authorize');
+    const nonce=new Fr(BigInt(workflow.nonce)),requestId=new Fr(BigInt(workflow.bok.requestId));
     const input = {chainId: BigInt(info.l1ChainId), rollupVersion: BigInt(info.rollupVersion), board: n(board.address),
       plugin: n(bok.address), name: n(nameId), nonce: n(nonce), content};
     const preimage = invocationPreimage(input), target = await invocationHash(input);
@@ -251,7 +280,11 @@ export async function runRollingBokJourney({node, wallet, owner, operator, board
     const draft = {subboard: Fr.ZERO, parent: Fr.ZERO, root_reference: Fr.ZERO, kind: 1, name_id: nameId, reference: Fr.ZERO,
       message: preimage.slice(13).map(value => new Fr(value)), length: Number(preimage[12]),
       expected_main_policy_version: Number(mainVersion), expected_local_policy_version: 0};
-    const authorization = await send('authorize-request', bok.methods.authorize_request(requestId, target, 400n), owner);
+    assert.equal(BigInt(workflow.bok.target),n(target));
+    equalPrivate(workflow.bok.postArgs[2].message.map(BigInt),draft.message.map(n),'Application retained different authorized message');
+    const authorization=await send('authorize-request',null,owner,preparedAuthorization);
+    await applicationPort.actor.reopenJournal();
+    const recovered=await applicationPort.actor.application.readAccountStatus();assert.equal(recovered.intent.status,'authorized');assert.equal(recovered.intent.intentId,preparedAuthorization.intentId);
     const waiting = await query(bok, 'request', requestId);
     assert(n(waiting.state) === 1n && n(waiting.invocation_hash) === n(target) && n(waiting.budget) === 400n
       && n(waiting.available) === 400n && n(waiting.reserved) === 0n && n(waiting.charged) === 0n && n(waiting.refunded) === 0n);
@@ -326,7 +359,11 @@ export async function runRollingBokJourney({node, wallet, owner, operator, board
     const countBefore = n(await query(board, 'get_post_count'));
     equalPrivate((await query(board, 'get_deposit_info', owner, depositId)).map(n), before, 'Rollback changed deposit');
     const hints = await query(board, 'get_screen_hints', owner, depositId); assert(hints.length === 2 && !hints[0] && !hints[1]);
-    const posted = await send('post-with-bok', board.methods.post_with_bok(depositId, nonce, draft, hints[0], hints[1], pluginId, requestId), owner);
+    const preparedPost=await applicationPort.actor.application.prepareBokPost(preparedAuthorization.intentId);
+    const continued=await applicationPort.readWorkflow();assert.equal(continued.bok.requestId,workflow.bok.requestId);assert.equal(continued.nonce,workflow.nonce);
+    const posted=await send('post-with-bok',null,owner,preparedPost);
+    applicationPort.observe();assert.equal(report.application.transportSends,2);assert.equal(applicationPort.actor.activity().walletSubmissions,2);assert.equal(applicationObserver.sent.size,2);report.application.passed=true;
+
     assert(posted.effect.nullifiers.filter(value => value.equals(oldNote.siloedNullifier)).length === 1, 'Original collateral note not spent exactly once');
     const postId = await poseidon2HashWithSeparator([1n, n(board.address), n(nonce)], 0x42420102);
     const digest = await poseidon2HashWithSeparator([BigInt(draft.length), ...draft.message.map(n)], 0x52435431);
@@ -519,8 +556,13 @@ export async function runRollingBokJourney({node, wallet, owner, operator, board
   } catch (error) {
     // Only stage and completed public observations are persisted. SDK errors may
     // contain identities, note material or witness values; never serialize them.
-    await save(); error.rollingJourneyObservation = report; throw error;
+    journeyFailed=true;journeyFailure=error;await save(); error.rollingJourneyObservation = report; throw error;
   } finally {
-    if (noteMembership) {await noteMembership.flush(); noteMembership.close(); await save();}
+    const cleanupErrors=[];
+    try{if(noteMembership){await noteMembership.flush();noteMembership.close();await save();}}catch(error){cleanupErrors.push(error);}
+    try{applicationPort?.observe();}catch(error){cleanupErrors.push(error);}
+    try{await applicationPort?.close();}catch(error){cleanupErrors.push(error);}
+    try{if(applicationPort)await save();}catch(error){cleanupErrors.push(error);}
+    if(cleanupErrors.length)throw new AggregateError([...(journeyFailed?[journeyFailure]:[]),...cleanupErrors],'Journey cleanup failed');
   }
 }

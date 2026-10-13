@@ -514,3 +514,30 @@ test('actual engine held root hook retains actor lease through close and cannot 
   release();await rejected;await closing;assert.equal(f.state.stops,1);assert(f.events.indexOf('hook-settled')<f.events.indexOf('stop'));assert(!f.events.includes('send'));
  }finally{release();if(pending)await pending.catch(()=>{});await actor.close();}
 });
+
+test('bounded actor composes original beforeSubmit receiver and falsy failure without bypassing deadline',async t=>{
+ const f=await fixture(t),actor=await createRollingApplicationActor({...f.input,confirmationDeadlineAt:Date.now()+10000});
+ try{const receiver={},args=['saved-hash'],calls=[];actor.wallet.sendTx({}, {beforeSubmit:async function(...values){assert.equal(this,receiver);calls.push(values);}});
+ await Reflect.apply(f.state.sendArgs[1].beforeSubmit,receiver,args);assert.deepEqual(calls,[args]);
+ for(const value of [undefined,null,0,false]){actor.wallet.sendTx({}, {beforeSubmit:async()=>{throw value;}});let caught=false;try{await f.state.sendArgs[1].beforeSubmit();}catch(error){caught=true;assert.equal(error,value);}assert(caught);}
+ actor.wallet.sendTx({}, {beforeSubmit:async()=>actor.close()});await assert.rejects(f.state.sendArgs[1].beforeSubmit(),{code:'ROLLING_ACTOR_CONTEXT'});
+ }finally{await actor.close();}
+});
+
+test('optional Bok actor verifies original public capability and registers actual artifact before application use',async t=>{
+ const f=await fixture(t,{proofsEnabled:false});const bokArtifact=loadContractArtifact(JSON.parse(await fs.readFile(new URL('../../experiments/private-bok/target/private_bok-PrivateBok.json',import.meta.url),'utf8')));
+ const config={contractAddress:String(address(9)),operatorAddress:String(address(10)),pluginId:String(new Fr(1))};const id=new Fr(12),hash=String(new Fr(13));
+ f.input.sdk.getContractClassFromArtifact=async value=>{assert.equal(value,bokArtifact);return {id};};
+ f.input.sdk.computeContractAddressFromInstance=async value=>value.address;
+ f.input.node.getBlockData=async()=>({blockHash:hash,header:{globalVariables:{blockNumber:1}}});
+ f.input.node.getContract=async(value,ref)=>{assert.equal(String(value),config.contractAddress);assert.deepEqual(ref,{hash});return {address:value,currentContractClassId:id,originalContractClassId:id};};
+ const expected={board:2n,operator:10n,l1_chain:31337n,version:1n};let reads=0;
+ f.input.node.getPublicStorageAt=async(ref,where,slot)=>{assert.deepEqual(ref,{hash});assert.equal(String(where),config.contractAddress);const key=Object.keys(expected).find(key=>BigInt(bokArtifact.storageLayout[key].slot)===slot.toBigInt());assert(key);reads++;return new Fr(expected[key]);};
+ const actor=await createRollingApplicationActor({...f.input,bok:{config,artifact:bokArtifact}});
+ try{assert.equal(reads,4);assert.equal(f.state.calls.filter(x=>x==='register-contract').length,4);assert.equal(actor.activity().walletSubmissions,0);}finally{await actor.close();}
+});
+test('optional Bok actor rejects malformed capability before acquiring its private store',async t=>{
+ const f=await fixture(t);await assert.rejects(createRollingApplicationActor({...f.input,bok:{config:{contractAddress:'wrong'},artifact:{name:'PrivateBok'}}}));
+ assert(!f.state.calls.includes('open-store'));assert.equal(f.state.closes,0);
+ const actor=await createRollingApplicationActor(f.input);await actor.close();
+});

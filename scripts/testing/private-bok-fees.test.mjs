@@ -48,11 +48,12 @@ test('pure fake: two isolated journals, cold owner, standalone other user, trust
   assert(f.calls.every(call => call.reportStage === f.ctx.mark && call.directory === f.ctx.directory));
   assert.deepEqual(f.registrations, [['fake-secret-1', 'fake-salt-1', 'fake-key-1', 'private-bok-other-user']]);
   assert.equal(result.wallet, f.wallet);
-  for (const key of ['wallet', 'owner', 'otherUser', 'operator', 'paymentFor', 'verify', 'close']) {
+  assert.equal(result.applicationFunding.authorAccount,f.helpers[0].authorAccount);assert.equal(result.applicationFunding.browserFixture,f.helpers[0].browserFixture);assert.throws(()=>JSON.stringify(result.applicationFunding),/cannot be serialized/);
+  for (const key of ['applicationFunding', 'wallet', 'owner', 'otherUser', 'operator', 'paymentFor', 'verify', 'close']) {
     assert.equal(Object.getOwnPropertyDescriptor(result, key).enumerable, false);
   }
   assert(!/human-A|human-B|fake-secret|fake-key/.test(JSON.stringify(result)));
-  await result.close();
+  await result.close();assert.throws(()=>result.applicationFunding,/closed/);
 });
 
 test('pure fake: exact actor binding, no human genesis fallback or unknown actor', async () => {

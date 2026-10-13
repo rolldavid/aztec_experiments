@@ -94,3 +94,35 @@ test('hosted observer retains every falsy original failure and never replaces it
   let caught=false;try{observer.assertHealthy();}catch(value){caught=true;assert.equal(value,first);}assert(caught);
  }
 });
+
+const {observeRollingBokApplicationSubmit}=await import('./journey.mjs');
+test('actual-used application send observation retains one original send and post-send failure for fee accounting',async()=>{
+ for(const failure of [undefined,null,false,0,'',Error('original')]){
+  const tx={},gas={},observer={sent:new Map([['prior',{}]]),gas:new Map()},intent={intentId:'fixed'};let calls=0;
+  const result=await observeRollingBokApplicationSubmit({async submitPrepared(id){calls++;assert.equal(id,intent.intentId);observer.sent.set('new',tx);observer.gas.set('new',gas);throw failure;}},intent,observer);
+  assert.equal(calls,1);assert.equal(result.tx,tx);assert.equal(result.gas,gas);assert.equal(result.failed,true);assert.equal(result.error,failure);
+ }
+});
+test('actual-used application send observation does not replay unsent failure or accept missing and duplicate sends',async()=>{
+ for(const failure of [undefined,null,false,0,'']){
+  let calls=0,caught=false;
+  try{await observeRollingBokApplicationSubmit({async submitPrepared(){calls++;throw failure;}},{intentId:'fixed'},{sent:new Map(),gas:new Map()});}
+  catch(error){caught=true;assert.equal(error,failure);}assert(caught);assert.equal(calls,1);
+ }
+ await assert.rejects(observeRollingBokApplicationSubmit({submitPrepared:async()=>({status:'confirmed'})},{},{sent:new Map(),gas:new Map()}),/did not submit/);
+ const observer={sent:new Map(),gas:new Map()};
+ await assert.rejects(observeRollingBokApplicationSubmit({async submitPrepared(){observer.sent.set('a',{});observer.sent.set('b',{});}},{},observer));
+});
+test('actual-used application send observation keeps successful result identity',async()=>{
+ const observer={sent:new Map(),gas:new Map()},tx={},gas={},result={status:'authorized'};
+ const observed=await observeRollingBokApplicationSubmit({async submitPrepared(){observer.sent.set('one',tx);observer.gas.set('one',gas);return result;}},{},observer);
+ assert.equal(observed.failed,false);assert.equal(observed.result,result);assert.equal(observed.tx,tx);
+});
+
+// Import the exact hosted factory seam before a real journey allocates its chain.
+// No provider, lease, service, wallet or transaction is started by this check.
+test('real Bok journey hosted factory exports are available in the composed source',async()=>{
+ const [{acquireHostedLease},{rollingBoardPort},{runPrivateBokRequest}]=await Promise.all([
+  import('../../plugins/main.mjs'),import('../../plugins/aztec.mjs'),import('../../plugins/escrow-service.mjs')]);
+ for(const factory of [acquireHostedLease,rollingBoardPort,runPrivateBokRequest])assert.equal(typeof factory,'function');
+});
