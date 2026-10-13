@@ -72,3 +72,70 @@ contract RollingFundingRouterTest {
  function testDonationRemainsSurplusAndCannotBeRefundedToUser() public {new FundingForce{value:123}(payable(address(router)));submit(plan(alice));require(address(router).balance==123 && alice.balance==9 ether-3000);}
  function testContractBeneficiaryConsentAndRejectedRefundAtomicity() public {FundingConsentAccount account=new FundingConsentAccount();RollingFundingRouter.Plan memory p=plan(address(account));account.configure(portal.depositForDigest(address(account),address(router),p.collateral,p.collateralSecretHash,0,p.deadline),true);vm.expectRevert();account.fund{value:1 ether+10000}(router,p);require(portal.getDeposit(address(account))==0 && portal.depositNonces(address(account))==0);empty();account.configure(portal.depositForDigest(address(account),address(router),p.collateral,p.collateralSecretHash,0,p.deadline),false);account.fund{value:1 ether+10000}(router,p);require(portal.getDeposit(address(account))==1 ether && address(account).balance==7000);}
 }
+
+// Circle EIP3009's verified payee/time/nonce/signature ordering, with test-only
+// initial reserves. This double is NOT a live Circle proxy or named-wallet test.
+import {EIP712} from "@oz/utils/cryptography/EIP712.sol";
+import {SignatureChecker} from "@oz/utils/cryptography/SignatureChecker.sol";
+contract FundingAuthorizedUsdc is FundingToken,EIP712 {
+ mapping(address=>mapping(bytes32=>bool)) public authorizationState;
+ constructor() EIP712("USDC","2") {}
+ function digest(address from,address to,uint256 value,uint256 validAfter,uint256 validBefore,bytes32 nonce) public view returns(bytes32){
+ return _hashTypedDataV4(keccak256(abi.encode(keccak256("ReceiveWithAuthorization(address from,address to,uint256 value,uint256 validAfter,uint256 validBefore,bytes32 nonce)"),from,to,value,validAfter,validBefore,nonce))); }
+ function receiveWithAuthorization(address from,address to,uint256 value,uint256 validAfter,uint256 validBefore,bytes32 nonce,bytes calldata signature) external {
+ require(to==msg.sender && block.timestamp>validAfter && block.timestamp<validBefore && !authorizationState[from][nonce],"Invalid authorization");
+ require(SignatureChecker.isValidSignatureNow(from,digest(from,to,value,validAfter,validBefore,nonce),signature),"Invalid signature");
+ authorizationState[from][nonce]=true;_transfer(from,to,value);
+ }
+}
+contract RollingUsdcFundingRouterTest {
+ FundingVm constant vm=FundingVm(address(uint160(uint256(keccak256("hevm cheat code")))));
+ BillboardPortal portal;PluginPortal bok;FundingFeeBridge fee;FundingWrapped weth;FundingDex dex;
+ FundingToken feeToken;FundingAuthorizedUsdc usdc;RollingFundingRouter router;address alice;address relayer=address(0x222);uint256 constant KEY=123;
+ function setUp() public {
+ vm.warp(100);alice=vm.addr(KEY);AccountingRollup rollup=new AccountingRollup();portal=new BillboardPortal(address(rollup),bytes32(uint256(1)),1,1 ether,2 ether,bytes32(uint256(2)));portal.activate(0,0,0,new bytes32[](0));
+ feeToken=new FundingToken();usdc=new FundingAuthorizedUsdc();weth=new FundingWrapped();dex=new FundingDex();fee=new FundingFeeBridge(address(feeToken),address(rollup));
+ bok=new PluginPortal(address(rollup),bytes32(uint256(4)),1,address(usdc));bok.activate(0,0,0,new bytes32[](0));router=new RollingFundingRouter(address(portal),address(fee),address(bok),address(weth),address(dex),bytes32(uint256(3)));
+ feeToken.seed(address(dex),10000);usdc.seed(alice,100 ether);vm.deal(address(this),10 ether);weth.deposit{value:5 ether}();weth.transfer(address(dex),5 ether);vm.deal(relayer,1 ether);require(alice.balance==0);
+ }
+ function plan() private view returns(RollingFundingRouter.UsdcPlan memory p){
+ p=RollingFundingRouter.UsdcPlan(alice,relayer,RollingFundingRouter.UsdcSwap(1 ether,20 ether,500),bytes32(uint256(11)),RollingFundingRouter.UsdcSwap(100,5000,3000),bytes32(uint256(12)),200,bytes32(uint256(13)),bytes32(uint256(14)),0,0,block.timestamp+60,50,bytes32(uint256(77))); }
+ function signature(bytes32 digest) private returns(bytes memory){(uint8 v,bytes32 r,bytes32 s)=vm.sign(KEY,digest);return abi.encodePacked(r,s,v);}
+ function signatures(RollingFundingRouter.UsdcPlan memory p) private returns(bytes memory consent,bytes memory auth){
+ consent=signature(portal.depositForDigest(alice,address(router),p.collateral.amount,p.collateralSecretHash,p.nonce,p.deadline));
+ auth=signature(usdc.digest(alice,address(router),p.collateral.maxUsdc+p.fee.maxUsdc+p.bokAmount+p.relayFeeUsdc,p.validAfter,p.deadline,router.usdcAuthorizationNonce(p))); }
+ function submit(RollingFundingRouter.UsdcPlan memory p) private { (bytes memory consent,bytes memory auth)=signatures(p);vm.prank(relayer);router.fundUsdc(p,consent,auth); }
+ function unchanged(RollingFundingRouter.UsdcPlan memory p) private view {
+ require(usdc.balanceOf(alice)==100 ether && usdc.balanceOf(relayer)==0 && !usdc.authorizationState(alice,router.usdcAuthorizationNonce(p)),"Auth/payment not atomic");
+ require(portal.getDeposit(alice)==0 && portal.depositNonces(alice)==0 && fee.amount()==0 && usdc.balanceOf(address(bok))==0,"Deposits not atomic");
+ require(address(router).balance==0 && weth.balanceOf(address(router))==0 && feeToken.balanceOf(address(router))==0 && usdc.balanceOf(address(router))==0,"Retained principal"); }
+ function testZeroEthBeneficiaryPaysExactUsdcIncludingRelayerAndRefund() public {
+ RollingFundingRouter.UsdcPlan memory p=plan();submit(p);require(alice.balance==0 && portal.getDeposit(alice)==1 ether && portal.getDeposit(relayer)==0);
+ require(usdc.balanceOf(alice)==90 ether-1250 && usdc.balanceOf(relayer)==50 && usdc.balanceOf(address(bok))==200 && fee.amount()==100,"Exact allocation/refund mismatch");
+ require(usdc.authorizationState(alice,router.usdcAuthorizationNonce(p)) && usdc.allowance(alice,address(router))==0 && usdc.allowance(address(router),address(dex))==0 && usdc.allowance(address(router),address(bok))==0 && feeToken.allowance(address(router),address(fee))==0,"Nonce/allowance mismatch");
+ require(address(router).balance==0 && usdc.balanceOf(address(router))==0 && weth.balanceOf(address(router))==0 && feeToken.balanceOf(address(router))==0);
+ }
+ function testWrongExecutorCannotTakeSignedRelayFee() public {RollingFundingRouter.UsdcPlan memory p=plan();(bytes memory c,bytes memory a)=signatures(p);vm.expectRevert();router.fundUsdc(p,c,a);unchanged(p);}
+ function testAuthorizationNonceBindsMutatedAllocationAndRelayer() public {
+ RollingFundingRouter.UsdcPlan memory p=plan();bytes32 n=router.usdcAuthorizationNonce(p);(bytes memory c,bytes memory a)=signatures(p);
+ p.relayFeeUsdc++;require(router.usdcAuthorizationNonce(p)!=n);vm.expectRevert();vm.prank(relayer);router.fundUsdc(p,c,a);p=plan();p.bokCommitment=bytes32(uint256(99));vm.expectRevert();vm.prank(relayer);router.fundUsdc(p,c,a);
+ p=plan();p.relayer=address(0x333);vm.expectRevert();vm.prank(p.relayer);router.fundUsdc(p,c,a);unchanged(plan());
+ }
+ function testAuthorizationCannotCrossRouterOrChain() public {
+ RollingFundingRouter.UsdcPlan memory p=plan();bytes32 original=router.usdcAuthorizationNonce(p);(bytes memory c,bytes memory a)=signatures(p);
+ RollingFundingRouter other=new RollingFundingRouter(address(portal),address(fee),address(bok),address(weth),address(dex),bytes32(uint256(3)));
+ require(other.usdcAuthorizationNonce(p)!=original,"Router domain omitted");vm.expectRevert();vm.prank(relayer);other.fundUsdc(p,c,a);unchanged(p);
+ vm.chainId(block.chainid+1);vm.expectRevert();vm.prank(relayer);router.fundUsdc(p,c,a);unchanged(p);
+ }
+ function testDirectAuthorizationFrontRunCannotConsumeRouterPayeeNonce() public {
+ RollingFundingRouter.UsdcPlan memory p=plan();(,bytes memory a)=signatures(p);bytes32 n=router.usdcAuthorizationNonce(p);
+ vm.expectRevert();vm.prank(relayer);usdc.receiveWithAuthorization(alice,address(router),p.collateral.maxUsdc+p.fee.maxUsdc+p.bokAmount+p.relayFeeUsdc,p.validAfter,p.deadline,n,a);
+ unchanged(p);submit(p);require(usdc.authorizationState(alice,n) && usdc.balanceOf(relayer)==50);
+ }
+ function testLastLegRevertRestoresAuthorizationSwapCollateralAndFee() public {RollingFundingRouter.UsdcPlan memory p=plan();p.bokCommitment=bytes32(0);(bytes memory c,bytes memory a)=signatures(p);vm.expectRevert();vm.prank(relayer);router.fundUsdc(p,c,a);unchanged(p);}
+ function testFeeFailureRevertsAuthorizationAndNoRelayReimbursement() public {RollingFundingRouter.UsdcPlan memory p=plan();fee.setFail(true);(bytes memory c,bytes memory a)=signatures(p);vm.expectRevert();vm.prank(relayer);router.fundUsdc(p,c,a);unchanged(p);}
+ function testNoLiquidityOrSlippageDoesNotConsumeAuthorization() public {RollingFundingRouter.UsdcPlan memory p=plan();dex.configure(true,false);(bytes memory c,bytes memory a)=signatures(p);vm.expectRevert();vm.prank(relayer);router.fundUsdc(p,c,a);unchanged(p);dex.configure(false,false);p.collateral.maxUsdc=1;(c,a)=signatures(p);vm.expectRevert();vm.prank(relayer);router.fundUsdc(p,c,a);unchanged(p);}
+ function testReplayAndExpiredAuthorizationRejected() public {RollingFundingRouter.UsdcPlan memory p=plan();(bytes memory c,bytes memory a)=signatures(p);vm.warp(p.deadline);vm.expectRevert();vm.prank(relayer);router.fundUsdc(p,c,a);unchanged(p);p=plan();(c,a)=signatures(p);vm.prank(relayer);router.fundUsdc(p,c,a);vm.expectRevert();vm.prank(relayer);router.fundUsdc(p,c,a);require(usdc.balanceOf(relayer)==50);}
+ function testDonationsAreNeverUserRefundOrFee() public {usdc.seed(address(router),999);new FundingForce{value:123}(payable(address(router)));submit(plan());require(usdc.balanceOf(address(router))==999 && address(router).balance==123 && usdc.balanceOf(relayer)==50 && usdc.balanceOf(alice)==90 ether-1250);}
+ function testWrongCollateralConsentRollsBackAuthorizedDebit() public {RollingFundingRouter.UsdcPlan memory p=plan();(,bytes memory a)=signatures(p);vm.expectRevert();vm.prank(relayer);router.fundUsdc(p,hex"01",a);unchanged(p);}
+}

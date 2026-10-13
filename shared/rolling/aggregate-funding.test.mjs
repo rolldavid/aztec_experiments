@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {Interface,keccak256,TypedDataEncoder} from 'ethers';
-import {prepareAggregateFunding,aggregateFundingTransaction,aggregateFundingAbi} from './aggregate-funding.mjs';
+import {Interface,keccak256,TypedDataEncoder,AbiCoder,encodeBytes32String} from 'ethers';
+import {prepareAggregateFunding,aggregateFundingTransaction,aggregateFundingAbi,prepareAggregateUsdcFunding,aggregateUsdcFundingTransaction} from './aggregate-funding.mjs';
 const address=n=>'0x'+n.toString(16).padStart(40,'0'),field=n=>'0x'+n.toString(16).padStart(64,'0');
 const r=new Interface(aggregateFundingAbi), p=new Interface(['function depositNonces(address) view returns(uint256)','function depositsEnabled() view returns(bool)','function getDeposit(address) view returns(uint128)','function MIN_DEPOSIT() view returns(uint256)','function MAX_DEPOSIT() view returns(uint256)']);
 const b=new Interface(['function active() view returns(bool)']);
@@ -42,3 +42,45 @@ test('all input allocations are captured before asynchronous reads',async()=>{co
 
 test('malformed RPC quantities are rejected without object coercion',async()=>{const f=fixture();let touched=0;f.provider.request=async()=>({toString(){touched++;return '0xaa36a7';}});await assert.rejects(f.prepare(),{code:'AGGREGATE_PUBLIC_READ_FAILED'});assert.equal(touched,0);});
 test('quote deadline includes all balance/public-read time',async()=>{const f=fixture();let reads=0;await assert.rejects(prepareAggregateFunding(f.input,{provider:f.provider,nowSeconds:()=>reads++===0?1000:1031}),{code:'AGGREGATE_STALE_QUOTE'});});
+
+const usdc=new Interface(['function implementation() view returns(address)','function DOMAIN_SEPARATOR() view returns(bytes32)','function balanceOf(address) view returns(uint256)','function authorizationState(address,bytes32) view returns(bool)']);
+function usdcFixture(options={}) {
+ const f=fixture(options),s=f.input.scope;
+ Object.assign(s,{usdcCodeHash:keccak256('0x6000'),usdcImplementation:address(70),usdcImplementationCodeHash:keccak256('0x6000'),usdcDomain:{name:'USDC',version:'2'}});
+ const a=f.input.allocation;delete a.bokPoolFee;Object.assign(a,{asset:'USDC',collateralPoolFee:500,authorizationSalt:field(80)});
+ delete f.input.wallet.canSendTransaction;delete f.input.wallet.gasBudgetWei;
+ f.input.relay={address:address(71),feeUsdc:'50',gasBudgetWei:'10000'};
+ const original=f.provider.request;
+ f.provider.request=async call=>{
+  if(call.method==='eth_getBalance'){f.calls.push(call);assert.equal(call.params[0],f.input.relay.address,'Only RELAYER requires ETH');return options.relayEmpty?'0x0':'0xffffff';}
+  if(call.method==='eth_call'){
+   const {to,data}=call.params[0];
+   if(to===s.quoter){f.calls.push(call);const parsed=q.parseTransaction({data});assert.equal(parsed.args[0].tokenIn,s.bokToken);assert([s.weth,s.feeToken].includes(parsed.args[0].tokenOut.toLowerCase()));if(options.noLiquidity)throw Error('No route');return q.encodeFunctionResult('quoteExactOutputSingle',[parsed.args[0].amount*10n,1,0,100]);}
+   if(to===s.bokToken){f.calls.push(call);const parsed=usdc.parseTransaction({data});const values={implementation:options.badImplementation?address(72):s.usdcImplementation,DOMAIN_SEPARATOR:options.badDomain?field(3):TypedDataEncoder.hashDomain({...s.usdcDomain,chainId:s.chainId,verifyingContract:s.bokToken}),balanceOf:options.poor?1n:999999999n,authorizationState:options.spent===true};return usdc.encodeFunctionResult(parsed.name,[values[parsed.name]]);}
+   if(to===s.router && r.parseTransaction({data}).name==='usdcAuthorizationNonce'){
+    f.calls.push(call);const plan=r.parseTransaction({data}).args[0],hash=keccak256(AbiCoder.defaultAbiCoder().encode([r.getFunction('fundUsdc').inputs[0]],[plan]));
+    return r.encodeFunctionResult('usdcAuthorizationNonce',[keccak256(AbiCoder.defaultAbiCoder().encode(['bytes32','uint256','address','bytes32'],[encodeBytes32String('ROLLING_USDC_FUNDING_V1'),s.chainId,s.router,hash]))]);
+   }
+  }
+  return original(call);
+ };
+ f.prepare=()=>prepareAggregateUsdcFunding(f.input,{provider:f.provider,nowSeconds:()=>1000});return f;
+}
+test('USDC-only user needs no ETH or approval; exact signed allocation reimburses bound relayer',async()=>{
+ const f=usdcFixture(),result=await f.prepare();assert.equal(result.maximumUsdc,'10101260');assert.equal(result.value,'0');assert.equal(result.plan.relayer,f.input.relay.address);assert.equal(result.plan.bokAmount,'200');
+ assert.equal(result.authorization.value.from,f.input.wallet.address);assert.equal(result.authorization.value.to,f.input.scope.router);assert.equal(result.authorization.value.value,result.maximumUsdc);assert.equal(result.authorization.value.nonce,result.authorizationNonce);
+ assert.equal(result.authorizationDigest,TypedDataEncoder.hash(result.authorization.domain,result.authorization.types,result.authorization.value));
+ const tx=aggregateUsdcFundingTransaction(result,'0x12','0x34',{nowSeconds:1000});assert.equal(tx.from,f.input.relay.address);assert.equal(tx.beneficiary,f.input.wallet.address);assert.equal(tx.value,'0');assert.equal(r.parseTransaction(tx).name,'fundUsdc');
+ assert.equal(result.ready,false);assert.equal(result.failureGasRisk,'relayer-unreimbursed-on-revert');assert.equal(result.relayPreflightRequired,true);
+ assert.equal(f.calls.filter(c=>c.method==='eth_getBalance').length,1);assert.equal(f.calls.filter(c=>c.method==='eth_call'&&c.params[0].to===f.input.scope.quoter).length,2);assert(!f.calls.some(c=>/send|sign/.test(c.method)));
+});
+for(const [label,options,code] of [
+ ['missing FEE conversion liquidity',{noLiquidity:true},'PUBLIC_READ_FAILED'],['unknown upgraded implementation',{badImplementation:true},'USDC_IMPLEMENTATION'],['wrong token signature domain',{badDomain:true},'USDC_DOMAIN'],
+ ['spent authorization',{spent:true},'AUTHORIZATION_SPENT'],['insufficient user USDC',{poor:true},'INSUFFICIENT_USER_FUNDS'],['unfunded relayer ETH',{relayEmpty:true},'RELAY_GAS_REQUIRED'],['changed quote anchor',{reorg:true},'QUOTE_REORG'],
+])test(`USDC route rejects ${label} before signatures/payment`,async()=>{const f=usdcFixture(options);await assert.rejects(f.prepare(),{code:'AGGREGATE_'+code});assert(!f.calls.some(c=>/send|sign/.test(c.method)));});
+test('USDC authorization nonce binds allocations, fee, beneficiary, executor, expiry and fresh salt',async()=>{
+ const f=usdcFixture(),result=await f.prepare();for(const change of [p=>{p.beneficiary=address(99);},p=>{p.relayer=address(99);},p=>{p.relayFeeUsdc='51';},p=>{p.bokAmount='201';},p=>{p.bokCommitment=field(99);},p=>{p.collateral.maxUsdc='5';},p=>{p.deadline='1121';},p=>{p.authorizationSalt=field(99);}]){
+ const p=structuredClone(result.plan);change(p);const hash=keccak256(AbiCoder.defaultAbiCoder().encode([r.getFunction('fundUsdc').inputs[0]],[p]));const nonce=keccak256(AbiCoder.defaultAbiCoder().encode(['bytes32','uint256','address','bytes32'],[encodeBytes32String('ROLLING_USDC_FUNDING_V1'),f.input.scope.chainId,f.input.scope.router,hash]));assert.notEqual(nonce,result.authorizationNonce);}
+});
+test('USDC deadline is strict and forged plans cannot encode relay calls',async()=>{const f=usdcFixture(),result=await f.prepare();assert.throws(()=>aggregateUsdcFundingTransaction(result,'0x12','0x34',{nowSeconds:1120}),{code:'AGGREGATE_STALE_QUOTE'});assert.throws(()=>aggregateUsdcFundingTransaction(structuredClone(result),'0x12','0x34'),{code:'AGGREGATE_UNVERIFIED_QUOTE'});assert.throws(()=>aggregateFundingTransaction(result,'0x12'),{code:'AGGREGATE_UNVERIFIED_QUOTE'});});
+test('USDC absent wallet typed signing or relay budget fails before public calls',async()=>{for(const alter of [f=>{f.input.wallet.canSignTypedData=false;},f=>{f.input.relay.feeUsdc='0';},f=>{f.input.relay.gasBudgetWei='0';}]){const f=usdcFixture();alter(f);await assert.rejects(f.prepare());assert.equal(f.calls.length,0);}});
