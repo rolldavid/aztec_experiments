@@ -38,6 +38,16 @@ export function veniceMeteredProvider({client,model='kimi-k2-5',autoTopUp=false,
    const catalog=await client.json('/api/v1/models');
    const spec=catalog.data?.find(x=>x.id===modelId)?.model_spec;
    const quote={...quoteCall(spec,available,input.maxTokens),modelId};
+   if(Object.hasOwn(input,'cheaperThan')){
+    const primary=input.cheaperThan??model;
+    if(typeof primary!=='string'||!idPattern.test(primary)||primary===modelId)throw Error('Summary model must be cheaper');
+    const primarySpec=catalog.data?.find(x=>x.id===primary)?.model_spec;
+    const compared=quoteCall(primarySpec,available,input.maxTokens);
+    // Compare all published token rates, not model names or claimed labels.
+    const rates=q=>[q.inputPrice,q.outputPrice,q.cachePrice??q.inputPrice];
+    const summaryRates=rates(quote),mainRates=rates(compared);
+    if(summaryRates.some((rate,i)=>rate>mainRates[i])||!summaryRates.some((rate,i)=>rate<mainRates[i]))throw Error('Summary model must be cheaper');
+   }
    await ensureCredits(quote.maximum);
    return quote;
   },
