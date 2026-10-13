@@ -380,7 +380,7 @@ stderr stays internal and is never part of model-visible failure logs.
 ### Scoped personal-account GitHub App source mirror
 
 `createGitHubAppBroker({enabled:false, directory, artifactRoot, owner, ownerId,
-appId, installationId, privateKeyFile})` is a trusted host capability. Root's
+appId, installationId, privateKeyFile})` is a trusted host capability. The
 personal-account adapter targets `zac-williamson` (User1476668) through
 `POST /user/repos`. GitHub writes stay disabled until its selected-repository App
 installation is explicitly configured and verified. Do not grant unrelated
@@ -396,16 +396,20 @@ operator explicitly grants that repository; never fall back to all repositories.
 Disable Actions before use; source capture additionally rejects `.github` paths.
 The concrete installation and actual personal-account creation permission are
 external setup gates, not facts established by controlled tests.
-The broker's creation token requests Administration only; subsequent content
-access requests Contents only and the single checked repository ID. No PAT or
+The token used for creation requests Administration write. This permission is
+broader than repository creation; it is not a create-only capability. It stays in
+the trusted broker. Subsequent content access requests Contents only and the
+single checked repository ID. No PAT or
 ambient `gh` login is used. The App RSA key is a no-follow regular private0600
 file in a canonical0700 host directory, outside source/artifact trees; its bytes
 and short-lived JWT/installation tokens remain in trusted host memory.
 
 The host config pins the numeric owner, App and installation IDs plus the
 exact lowercase personal owner login. `assertAvailable()` only reads installation
-identity, suspension, permission and selected-repository scope; it does not mint
-an installation token or create a repository. Before paid work the host must
+identity, suspension, permission and selected-repository mode; it does not
+enumerate every selected repository or prove the operator selected only Bok
+repositories. That selection remains an explicit operator setup responsibility.
+The check does not mint an installation token or create a repository. Before paid work the host must
 check availability. Live setup and API behavior are still separate acceptance
 checks; controlled protocol tests do not qualify an installed GitHub service.
 
