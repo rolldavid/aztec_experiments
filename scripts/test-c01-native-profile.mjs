@@ -194,3 +194,11 @@ test('actual worker checks genesis before protocol work and retains deployment a
  assert.equal((source.match(/evm_setNextBlockTimestamp/g)||[]).length,1);assert(source.includes('Number(current.timestamp)+seconds'));assert(source.includes('const seconds=config.aztecSlotDuration*config.aztecEpochDuration'));
  assert(!source.includes('evm_setTime'));assert(!source.includes('setBlockTimestampInterval'));assert(!source.includes('setNextBlockTimestamp\',params:[initialClock'));
 });
+
+test('only the Bok scenario gives both setup inclusion calls the original real-wall deadline',async()=>{
+ const source=await fs.readFile(new URL('./c01-real-node.mjs',import.meta.url),'utf8');
+ assert.equal(source.split("scenario.name==='rolling-bok-post'?{miningMode:'real-wall',deadlineAt:applicationDeadlineAt}:{}").length-1,2);
+ const inclusion=await fs.readFile(new URL('./c01-board-inclusion.mjs',import.meta.url),'utf8');
+ assert(inclusion.includes("if(tick)await tick();else await client.request({method:'evm_mine',params:[]});"));
+ assert(inclusion.includes("const deadline=Date.now()+(diagnostic?45000:120000)"));
+});
