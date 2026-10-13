@@ -277,3 +277,11 @@ test('cancelled saved private claim pauses and requires explicit re-review witho
  assert.equal((await advanceAggregateClaim({application:workflow.open(),funding})).state,'cancelled');assert.equal(workflow.state.sends,0);
  await funding.reviewRevertedClaim();assert.equal((await advanceAggregateClaim({application:workflow.open(),funding})).state,'review');assert.equal(workflow.state.sends,0);assert.equal(f.state.sends,1);
 });
+
+test('USDC matching imported and retained canonical transaction hashes recover while relay status throws',async()=>{
+ const f=usdcWalletFixture(),funding=await f.open();await funding.prepare(f.allocation);await funding.confirm();
+ f.options.relay.status=async()=>{throw Error('labelled HTTP503');};
+ const reopened=await f.open(),context=await reopened.loadAggregate(h(200));assert.equal(context.intent.nonce,42);assert.equal(context.aggregateCustody.beneficiary,f.wallet.address);
+ assert.equal((await(await f.open()).recover()).receipt.txHash,h(200));assert.equal(f.state.posts,1);assert.equal(f.state.statusReads,0);
+ f.state.usdcReceipt.logs.pop();await assert.rejects(reopened.loadAggregate(h(200)));assert.equal(f.state.posts,1);
+});

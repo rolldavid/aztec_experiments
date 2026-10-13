@@ -121,14 +121,17 @@ export async function createAggregateWallet({sdk,ethers,scope,network,board,bok,
  async function reconcileUsdc(saved,requiredHash,lookupHash,allowReverted=false){
   const value=saved.value;check(value.relay?.submitted&&value.relay.request,'RECOVERY_REQUIRED');
   const request=value.relay.request;sdk.validateAggregateFundingIntent(request);
-  const state=await read(()=>relay.status(value.relay.planHash));
-  check(state&&state.scope==='aggregate-funding'&&state.planHash===value.relay.planHash&&['absent','unresolved','succeeded','failed'].includes(state.status)&&typeof state.canonical==='boolean','RELAY_SCOPE');
-  const hash=lookupHash??value.relay.transactionHash??state.transactionHash;
+  let hash=lookupHash??value.relay.transactionHash;
+  if(hash===undefined){
+   const state=await read(()=>relay.status(value.relay.planHash));
+   check(state&&state.scope==='aggregate-funding'&&state.planHash===value.relay.planHash&&['absent','unresolved','succeeded','failed'].includes(state.status)&&typeof state.canonical==='boolean','RELAY_SCOPE');
+   hash=state.transactionHash;
+  }
   check(typeof hash==='string'&&/^0x[0-9a-f]{64}$/.test(hash),'PENDING');
   if(requiredHash!==undefined)check(requiredHash===hash,'MISMATCH');
   const network=await read(()=>provider.getNetwork());check(String(network.chainId)===n.chainId,'MISMATCH');
   const tx=await read(()=>provider.getTransaction(hash));
-  if(lookupHash!==undefined&&state.transactionHash!==hash&&(!tx||tx.hash?.toLowerCase()!==hash||tx.from?.toLowerCase()!==request.from||tx.to?.toLowerCase()!==request.to||tx.data?.toLowerCase()!==request.data||String(tx.chainId)!==request.chainId||String(tx.value)!==request.value))return null;
+  if(lookupHash!==undefined&&(!tx||tx.hash?.toLowerCase()!==hash||tx.from?.toLowerCase()!==request.from||tx.to?.toLowerCase()!==request.to||tx.data?.toLowerCase()!==request.data||String(tx.chainId)!==request.chainId||String(tx.value)!==request.value))return null;
   check(tx&&tx.hash?.toLowerCase()===hash&&Number.isSafeInteger(tx.nonce)&&tx.nonce>=0,'PENDING');
   const intent={...request,nonce:tx.nonce};
   const verified=await read(()=>sdk.verifyEthereumIntentReceipt(provider,intent,hash));
