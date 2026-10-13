@@ -350,5 +350,7 @@ for(const kind of ['private-fee','bok'])test(`direct ${kind} confirmed claim sur
  const complete=await advanceAggregateClaim({application:workflow.open(),funding});assert.equal(complete.state,'complete');assert.equal(workflow.state.sends,1);
  f.options.reconcileClaim=async()=>{throw Error('labelled subsequent workflow replaced old slot');};
  await (await f.open()).prepare(f.allocation);assert.equal(f.state.sends,1);
- f.options.verifyClaim=async()=>{throw Error('labelled canonical claim reorg');};await assert.rejects((await f.open()).prepare(f.allocation),/canonical claim reorg/);assert.equal(f.state.sends,1);
+ const successor=await f.open();await successor.prepare(f.allocation);f.options.verifyClaim=async()=>{throw Error('labelled canonical claim reorg');};await assert.rejects((await f.open()).prepare(f.allocation),/canonical claim reorg/);assert.equal(f.state.sends,1);
+ // The captured callback can observe a chain change after review, before send.
+ f.options.verifyClaim=async()=>{};let canonical=true;f.options.verifyClaim=async()=>{if(!canonical)throw Error('claim changed after review');};const race=await f.open();await race.prepare(f.allocation);canonical=false;await assert.rejects(race.confirm(),/claim changed after review/);assert.equal(f.state.sends,1);
 });

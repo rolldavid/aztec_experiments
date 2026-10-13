@@ -318,6 +318,11 @@ export async function createStandaloneTopupWallet({sdk,ethers,kind,network,board
   if(result.outcome==='reverted'&&n.chainId!=='31337'){const finalized=await read(()=>provider.getBlock('finalized'));check(Number.isSafeInteger(finalized?.number)&&finalized.number>=result.receipt.blockNumber,'PENDING');}
   const block=await read(()=>provider.getBlock(result.receipt.blockNumber));check(block?.hash?.toLowerCase()===result.receipt.blockHash.toLowerCase(),'MISMATCH');return result;
  }
+ async function completedClaim(value){
+  check(value.claim?.attempted,'RECOVERY_REQUIRED');
+  if(value.confirmedClaim){const confirmed=value.confirmedClaim;check(confirmed.intentId===value.claim.intentId&&/^0x[0-9a-f]{64}$/.test(confirmed.txHash)&&typeof verifyClaim==='function','MISMATCH');await read(()=>verifyClaim(confirmed.txHash));}
+  else{check(typeof reconcileClaim==='function','RECOVERY_REQUIRED');check((await read(()=>reconcileClaim(value.claim.intentId))).status==='confirmed','RECOVERY_REQUIRED');}
+ }
  async function archived(hash){const store=await slot(hash),record=await read(()=>store.read());check(record.value?.txHash===hash&&record.value.intent,'MISMATCH');const result=await read(()=>sdk.verifyEthereumIntentReceipt(provider,record.value.intent,hash));check(result?.outcome===record.value.outcome,'MISMATCH');const block=await read(()=>provider.getBlock(result.receipt.blockNumber));check(block?.hash?.toLowerCase()===result.receipt.blockHash.toLowerCase(),'MISMATCH');return {value:record.value,result};}
  const cap={
   async prepare(input){
@@ -330,9 +335,7 @@ export async function createStandaloneTopupWallet({sdk,ethers,kind,network,board
      reuse=saved.value;
     }else{
      if(result.outcome==='success'&&saved.value.phase==='deposit'){
-      check(saved.value.claim?.attempted,'RECOVERY_REQUIRED');
-      if(saved.value.confirmedClaim){const confirmed=saved.value.confirmedClaim;check(confirmed.intentId===saved.value.claim.intentId&&/^0x[0-9a-f]{64}$/.test(confirmed.txHash)&&typeof verifyClaim==='function','MISMATCH');await read(()=>verifyClaim(confirmed.txHash));}
-      else{check(typeof reconcileClaim==='function','RECOVERY_REQUIRED');check((await read(()=>reconcileClaim(saved.value.claim.intentId))).status==='confirmed','RECOVERY_REQUIRED');}
+      await completedClaim(saved.value);
      }
      const archive=await slot(result.txHash),old=await read(()=>archive.read()),value={...saved.value,txHash:result.txHash,outcome:result.outcome};
      if(old.value===null)await read(()=>archive.write(old,value));else check(JSON.stringify(old.value.intent)===JSON.stringify(value.intent),'MISMATCH');
@@ -361,7 +364,7 @@ export async function createStandaloneTopupWallet({sdk,ethers,kind,network,board
   },
   async confirm(){
    const current=prepared;prepared=null;check(current,'QUOTE_REQUIRED');const {wallet,request}=current;await context();await read(wallet.guard);
-   if(current.saved.value?.intent)await verified(current.saved.value);else if(current.priorHash)await archived(current.priorHash);
+   if(current.saved.value?.intent){const prior=await verified(current.saved.value);if(prior.outcome==='success'&&current.saved.value.phase==='deposit')await completedClaim(current.saved.value);}else if(current.priorHash)await archived(current.priorHash);
    let saved=await read(()=>current.store.write(current.saved,current.value));
    const signer={getAddress:()=>wallet.signer.getAddress(),sendTransaction:async tx=>{await read(wallet.guard);await context();const fees=await read(()=>provider.getFeeData()),price=fees.maxFeePerGas??fees.gasPrice;const gasLimit=tx.gasLimit??(await read(()=>provider.estimateGas(tx)))*2n;check(typeof gasLimit==='bigint'&&gasLimit>0n&&typeof price==='bigint'&&price>0n&&gasLimit*price<=BigInt(current.value.gasBudgetWei),'GAS_CHANGED');await read(wallet.guard);return wallet.signer.sendTransaction({...tx,gasLimit,...(fees.maxFeePerGas!==undefined&&fees.maxFeePerGas!==null?{maxFeePerGas:price,maxPriorityFeePerGas:fees.maxPriorityFeePerGas??0n}:{gasPrice:price})});}};
    const j=await sdk.createEthereumJournal({...journalOptions(current.value),signer,acknowledgeTx:current.priorHash,contextGuard:async()=>{await contextGuard();await wallet.guard();}});
