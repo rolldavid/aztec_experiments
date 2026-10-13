@@ -82,6 +82,46 @@ export async function exerciseRollingPreferences({mode,root,name,rootBlock,rootH
   return {checkpoint,observation:{passed:true,preferenceTransactions:revision,publicPreferenceEvents:0,initial:initial.measurement,incremental:incremental.measurement,authenticatedHeadMatched:true,noReadProofOrSend:true}};
  }catch{throw fail();}
 }
+// Browser-specific ordering: Main following needs fees but no posting deposit.
+// The parent callback still authenticates deposit eligibility, the real root and
+// its canonical fee/effect before returning. No new financial lifecycle here.
+export async function exerciseRollingBrowserPreferences({publishRoot,action,readPreferences,activity,deadlineAt}) {
+ try {
+  check([publishRoot,action,readPreferences,activity].every(fn=>typeof fn==='function'));
+  check(Number.isSafeInteger(deadlineAt)&&deadlineAt>Date.now());
+  async function mutate(kind,target,revision) {
+   check(Date.now()<deadlineAt);const before=counters(activity);
+   const events=await action({type:'preference',kind,target,enabled:true,expectedRevision:String(revision)},'preference-'+(revision+1));
+   check(Array.isArray(events)&&events.length===0);
+   const after=counters(activity);for(const key of Object.keys(before))check(after[key]===before[key]+1);
+  }
+  await mutate(2,'0',0);
+  const beforeRead=counters(activity),initial=await complete(readPreferences,deadlineAt);
+  const p=initial.value.preferences;
+  check(p.head.initialized&&p.head.schema===1&&p.head.revision==='1');
+  check(equal(p.bookmarks,[])&&equal(p.followedNames,[])&&equal(p.followedBoards,['0'])&&equal(p.subscriptions,[])&&p.replyNotifications===true&&equal(p.readMarkers,[]));
+  check(equal(counters(activity),beforeRead));
+  check(Number.isSafeInteger(initial.value.anchor?.blockNumber)&&initial.value.anchor.blockNumber>0);
+  check(Date.now()<deadlineAt);const beforeRoot=counters(activity),rootEvent=await publishRoot();
+  const afterRoot=counters(activity);for(const key of Object.keys(beforeRoot))check(afterRoot[key]===beforeRoot[key]+1);
+  check(rootEvent?.type==='PostPublished'&&field(rootEvent.payload?.id));
+  const root=rootEvent.payload.id,record=rootEvent.payload.record,position=rootEvent.position;
+  check(record&&record.root===root&&record.parent==='0'&&record.reference==='0'&&record.name_id==='0'&&record.subboard==='0'&&record.kind==='1');
+  const rootBlock=Number(position?.blockNumber),rootHash=position?.blockHash;
+  check(Number.isSafeInteger(rootBlock)&&rootBlock>initial.value.anchor.blockNumber&&/^0x[0-9a-f]{64}$/.test(rootHash));
+  await mutate(1,root,1);
+  const afterMutation=counters(activity),incremental=await complete(readPreferences,deadlineAt);
+  verify(incremental.value.preferences,{mode:'browser-relationships',root,rootBlock,rootHash,revision:2,final:true});
+  check(equal(counters(activity),afterMutation));
+  check(incremental.value.anchor.blockNumber>rootBlock);
+  check(equal(initial.value.preferences.scope,incremental.value.preferences.scope));
+  check(Date.now()<deadlineAt);
+  const checkpoint=Object.freeze(Object.defineProperty({},'toJSON',{value:()=>{throw fail();}}));
+  states.set(checkpoint,{snapshot:JSON.stringify(incremental.value.preferences),activity:afterMutation,deadlineAt});
+  return {checkpoint,observation:{passed:true,sequence:'follow-root-bookmark',preferenceTransactions:2,publicPreferenceEvents:0,
+   initial:initial.measurement,incremental:incremental.measurement,authenticatedHeadMatched:true,noReadProofOrSend:true}};
+ }catch{throw fail();}
+}
 async function compareRecovered(checkpoint,{readPreferences,activity},completeRead){
  const state=states.get(checkpoint);states.delete(checkpoint);
  try{

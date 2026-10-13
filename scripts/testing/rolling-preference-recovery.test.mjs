@@ -215,3 +215,60 @@ test('labelled aborted cold scan settles original reader before releasing busy s
  const work=f.consumer.read('retained',Date.now()+10000,{signal:abort.signal}),rejected=assert.rejects(work);await entered.promise;abort.abort();
  await assert.rejects(f.consumer.read('orphaned',Date.now()+10000));hold.resolve();await rejected;assert.equal(f.state.oracleCalls,0);
 });
+
+import {exerciseRollingBrowserPreferences} from './rolling-preference-recovery.mjs';
+// Labelled actor/chain doubles. These check the ordering and acceptance fences;
+// they neither produce a proof nor authenticate a chain event.
+function followingFirstFixture(fault) {
+ const calls=[],counts={proofJobs:0,transportSends:0,walletSubmissions:0};let revision=0,reads=0;
+ const preferences={scope:{chainId:'31337',version:'1',board:'9'},head:{initialized:true,schema:1,revision:'0',digest:'0'},bookmarks:[],followedNames:[],followedBoards:[],subscriptions:[],replyNotifications:true,readMarkers:[]};
+ const transact=()=>{for(const k of Object.keys(counts))counts[k]++;};
+ const options={deadlineAt:Date.now()+10000,activity:()=>({...counts}),
+  action:async(input,label)=>{
+   calls.push(input.kind===2?'follow':'bookmark');
+   assert.deepEqual(input,{type:'preference',kind:revision===0?2:1,target:revision===0?'0':'10',enabled:true,expectedRevision:String(revision)});
+   assert.equal(label,'preference-'+(revision+1));revision++;transact();
+   preferences.head={initialized:true,schema:1,revision:String(revision),digest:String(revision)};
+   if(input.kind===2)preferences.followedBoards=['0'];else preferences.bookmarks=['10'];
+   if(fault==='extra-mutation')transact();return fault==='public-event'?[{type:'PreferenceChanged'}]:[];
+  },
+  readPreferences:async()=>{
+   reads++;calls.push('read-'+revision);if(fault==='read-send')counts.transportSends++;
+   const p=structuredClone(preferences);
+   if(fault==='initial-bookmark'&&reads===1)p.bookmarks=['10'];
+   if(fault==='initial-missing-follow'&&reads===1)p.followedBoards=[];
+   if(fault==='wrong-head')p.head.revision='99';
+   if(fault==='final-missing-bookmark'&&reads===2)p.bookmarks=[];
+   if(fault==='changed-scope'&&reads===2)p.scope.board='99';
+   if(fault==='unexpected-name')p.followedNames=['PRIVATE_SENTINEL'];
+   const blockNumber=reads===1?10:fault==='old-incremental-anchor'?11:12;
+   const value={complete:true,status:'complete',preferences:p,anchor:{blockNumber,blockHash:canonicalHash(blockNumber)},orphanedReadMarkers:[],progress:{scannedThrough:blockNumber,markersChecked:0}};
+   if(fault==='partial-publication'){value.complete=false;value.status='recovering';}
+   return value;
+  },
+  publishRoot:async()=>{
+   calls.push('eligibility');if(fault==='eligibility-failure')throw Error('PRIVATE_SENTINEL');
+   calls.push('root');transact();if(fault==='extra-root-send')transact();
+   return {type:'PostPublished',payload:{id:'10',record:{root:'10',parent:'0',reference:'0',name_id:'0',subboard:'0',kind:'1'}},
+    position:{blockNumber:fault==='old-root-anchor'?'10':'11',blockHash:fault==='bad-root-hash'?'bad':canonicalHash(11)}};
+  }};
+ return {options,calls,counts,preferences,reset(){counts.walletSubmissions=0;}};
+}
+test('labelled browser follows before eligibility, then roots and bookmarks with exact revisions and no read sends',async()=>{
+ const f=followingFirstFixture(),result=await exerciseRollingBrowserPreferences(f.options);
+ assert.deepEqual(f.calls,['follow','read-1','eligibility','root','bookmark','read-2']);
+ assert.deepEqual(f.counts,{proofJobs:3,transportSends:3,walletSubmissions:3});
+ assert.equal(result.observation.sequence,'follow-root-bookmark');assert.equal(result.observation.preferenceTransactions,2);
+ assert(result.observation.noReadProofOrSend);assert.throws(()=>JSON.stringify(result.checkpoint));
+ assert(!JSON.stringify(result.observation).includes('digest'));f.reset();
+ assert.equal((await compareRecoveredRollingPreferences(result.checkpoint,f.options)).exactPrivateStateRecovered,true);
+});
+for(const fault of ['initial-bookmark','initial-missing-follow','wrong-head','unexpected-name','public-event','extra-mutation','read-send','partial-publication','eligibility-failure','extra-root-send','old-root-anchor','bad-root-hash','final-missing-bookmark','changed-scope','old-incremental-anchor'])test('labelled following-first rejects '+fault+' without a partial success or private diagnostic',async()=>{
+ const f=followingFirstFixture(fault);
+ await assert.rejects(exerciseRollingBrowserPreferences(f.options),e=>e.message==='Rolling preference recovery acceptance failed.'&&!e.actual&&!e.expected);
+ if(['initial-bookmark','initial-missing-follow','wrong-head','unexpected-name','public-event','extra-mutation','read-send','partial-publication'].includes(fault))assert(!f.calls.includes('eligibility'));
+ if(['eligibility-failure','extra-root-send','old-root-anchor','bad-root-hash'].includes(fault))assert(!f.calls.includes('bookmark'));
+});
+test('labelled following-first expired admission spends nothing and does not attempt root eligibility',async()=>{
+ const f=followingFirstFixture();f.options.deadlineAt=Date.now()-1;await assert.rejects(exerciseRollingBrowserPreferences(f.options));assert.deepEqual(f.calls,[]);
+});

@@ -26,6 +26,19 @@ export async function runRollingPublicRecoveryChecks({boundedCold,recoverPrivate
   else{await recoverPrivate();await verifyPublic();}
 }
 export const rollingTrustedProofThreads=scenario=>['notification-browser','preference-browser','preference-reorg-initial','preference-reorg-marker'].includes(scenario)?2:1;
+// Reversible admission allowances, rounded above the measured a189 two-thread
+// actions (30.048s / 39.612s / 28.869s), reads and handoff. Not time guarantees.
+// The separate actual 150s browser admission gate remains authoritative.
+export function rollingBrowserFollowingAdmission({now,deadlineAt,nextAllowedTime}) {
+  assert(Number.isSafeInteger(now)&&now>=0&&Number.isSafeInteger(deadlineAt));
+  assert(typeof nextAllowedTime==='bigint'&&nextAllowedTime>=0n&&nextAllowedTime<=BigInt(Math.floor(Number.MAX_SAFE_INTEGER/1000)));
+  const allowances={followMs:35000,initialReadMs:3000,rootMs:45000,bookmarkMs:35000,incrementalReadMs:3000,handoffMs:3000};
+  const postingDelayMs=Math.max(0,Number(nextAllowedTime)*1000-now);
+  const extraEligibilityMs=Math.max(0,postingDelayMs-allowances.followMs-allowances.initialReadMs);
+  const requiredBeforeBrowserMs=Object.values(allowances).reduce((a,b)=>a+b,0)+extraEligibilityMs;
+  const remainingMs=deadlineAt-now,browserReserveMs=150000;
+  return {admitted:remainingMs>=requiredBeforeBrowserMs+browserReserveMs,remainingMs,postingDelayMs,extraEligibilityMs,requiredBeforeBrowserMs,browserReserveMs,allowances};
+}
 const discard=()=>{};
 const silent=Object.assign(discard,Object.fromEntries(['trace','debug','verbose','info','warn','error','fatal'].map(k=>[k,discard])),
   {level:'silent',isLevelEnabled:()=>false,getBindings:()=>({}),createChild:()=>silent});
@@ -502,6 +515,15 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
       const actualBok=await ctx.node.getContract(bokInstance.address);assert(actualBok);
       assert.equal(String(actualBok.currentContractClassId),String(bokInstance.currentContractClassId));
       report.bok={address:String(bokInstance.address),txHash:String(bokHash),used:false};await save();
+      if(preferenceBrowser){
+        // Capture the real pre-eligibility anchor; do not drive the setup clock
+        // to a posting-only deadline before a fee-only preference can execute.
+        const header=await setupWallet.pxe.getSyncedBlockHeader(),blockNumber=Number(header.globalVariables.blockNumber),blockHash=String(await header.hash());
+        assert.equal(String((await ctx.node.getBlockData(blockNumber)).blockHash),blockHash);
+        report.browserFollowing={preEligibilityAnchor:{blockNumber,blockHash,timestamp:String(header.globalVariables.timestamp)},
+          setupPostingDelaySeconds:String(claim.claim.nextAllowedTime>header.globalVariables.timestamp?claim.claim.nextAllowedTime-header.globalVariables.timestamp:0n),eligibilityDeferred:true};
+        await save();
+      }else{
       await mark('collateral-eligibility');
       const checkpoints=createT04CheckpointScope(ctx.node.getSequencer()),eligibilityDeadline=Math.min(Date.now()+90000,ctx.applicationDeadlineAt);
       try{checkpoints.enable();
@@ -510,6 +532,7 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
         }
         report.eligibility=await drainT04Checkpoints({node:ctx.node,l1Client:ctx.l1Client,rollupAddress:network.rollup,checkpoints,deadline:eligibilityDeadline});
       }finally{checkpoints.restore();}
+      }
     });
     assert.equal(report.setupMining.clientMining.stopped,true);assert.equal(report.setupMining.clientMining.passed,true);
     // Catch up AFTER controlled READY and funding setup; the setup miner has stopped. There is no mining loop
@@ -526,7 +549,9 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
         assert(Date.now()<clockDeadline,'Fixture clock catchup exceeded remaining bounded budget');await sleep(250);
       }
       report.clock.ready=await sdk.inspectTrustedNode(ctx.node,{expectedNetworkScope:network,proofsEnabled:real});
-      report.clock.elapsedMs=Date.now()-clockStart;await save();
+      report.clock.elapsedMs=Date.now()-clockStart;
+      if(preferenceBrowser)report.browserFollowing.readiness={readyAt:Date.now(),wallSeconds:Math.floor(Date.now()/1000),syncedL1Timestamp:String(await ctx.node.getSyncedL1Timestamp()),catchupMs:report.clock.elapsedMs};
+      await save();
     }finally{await ctx.node.getSequencer().start();}
     report.applicationMining={};
     await withC01ClientMining({rpcUrl:ctx.config.l1RpcUrls[0],dateProvider:ctx.dateProvider,observation:report.applicationMining,mode:'real-wall',deadlineAt:ctx.applicationDeadlineAt},async mineL1=>{
@@ -674,7 +699,8 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
           const checkpoints=createT04CheckpointScope(ctx.node.getSequencer()),deadline=Math.min(Date.now()+90000,ctx.applicationDeadlineAt);
           try{checkpoints.enable();while((await pxe.getSyncedBlockHeader()).globalVariables.timestamp<BigInt(state[9])){
             assert(Date.now()<deadline);await mineL1();await pxe.sync();}
-            await drainT04Checkpoints({node:ctx.node,l1Client:ctx.l1Client,rollupAddress:network.rollup,checkpoints,deadline});
+            const drained=await drainT04Checkpoints({node:ctx.node,l1Client:ctx.l1Client,rollupAddress:network.rollup,checkpoints,deadline});
+            if(preferenceBrowser)report.eligibility=drained;
           }finally{checkpoints.restore();}
         }
       async function runNotifications(publishRoot){
@@ -784,7 +810,7 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
       }
       let preferenceCheckpoint;
       if(preferences){
-        const {exerciseRollingPreferences}=await import('./rolling-preference-recovery.mjs');
+        const {exerciseRollingPreferences,exerciseRollingBrowserPreferences}=await import('./rolling-preference-recovery.mjs');
         const mode=preferenceBrowser?'browser-relationships':scenario==='preference-relationships'?'relationships':'notifications';
         if(mode==='relationships'){
           const registered=await action({type:'name',first:'River',last:'Stone'},'preference-name');
@@ -818,7 +844,7 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
           privateSnapshot=(phase,options={})=>coldSnapshots.read(phase,Math.min(ctx.applicationDeadlineAt-15000,Date.now()+
             (['bootstrap','restored'].includes(phase)?COLD_REORG_BUDGET.fullReadMs:COLD_REORG_BUDGET.suffixReadMs)),options);
         }
-        await waitPostAdmission();
+        if(!preferenceBrowser)await waitPostAdmission();
         const publishRoot=async()=>{
           const published=await action({type:'post',deposit:String(claim.claim.depositChainId),name:ids.nameId??'0',subboard:'0',content:'A genuine preference recovery post.'},'preference-root');
           assert.equal(published.length,1);assert.equal(published[0].type,'PostPublished');ids.rootId=published[0].payload.id;
@@ -845,7 +871,7 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
             coldObservation.workerProfile={threads:trustedProofThreads,completedWorkerProfileAsserted:true};
             return result;
           }});
-        }else rootEvent=notificationBrowser?undefined:await publishRoot();
+        }else rootEvent=notificationBrowser||preferenceBrowser?undefined:await publishRoot();
         const rootPosition=rootEvent?.position;
         if(notificationBrowser){
           assert(real,'Notification browser acceptance requires genuine proofs');
@@ -1020,6 +1046,21 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
             assert(observation.recoveryMining.clientMining.stopped&&observation.recoveryMining.clientMining.passed&&observation.recoveryMining.clientMining.autominingRestored);
             observation.passed=true;await save();
           };
+        }else if(preferenceBrowser){
+          report.browserFollowing.admission=rollingBrowserFollowingAdmission({now:Date.now(),deadlineAt:ctx.applicationDeadlineAt,nextAllowedTime:claim.claim.nextAllowedTime});
+          await save();assert(report.browserFollowing.admission.admitted,'Insufficient conservative budget before first browser preference proof');
+          // Persistence may itself take time. Recheck immediately before the
+          // consumer starts its first write, without another awaited operation.
+          report.browserFollowing.admission.finalCheckAt=Date.now();
+          report.browserFollowing.admission.finalCheckPassed=rollingBrowserFollowingAdmission({now:report.browserFollowing.admission.finalCheckAt,deadlineAt:ctx.applicationDeadlineAt,nextAllowedTime:claim.claim.nextAllowedTime}).admitted;
+          assert(report.browserFollowing.admission.finalCheckPassed,'Browser setup admission expired before first proof');
+          const result=await exerciseRollingBrowserPreferences({
+            publishRoot:async()=>{
+              await mark('browser-posting-eligibility');const started=Date.now();
+              await waitPostAdmission();report.browserFollowing.postingEligibility={elapsedMs:Date.now()-started,checked:true};await save();
+              return publishRoot();
+            },action,readPreferences:options=>actorA.application.readPreferences(options),activity:()=>actorA.activity(),deadlineAt:ctx.applicationDeadlineAt});
+          preferenceCheckpoint=result.checkpoint;report.preferences=result.observation;
         }else{
         const result=await exerciseRollingPreferences({mode,root:ids.rootId,name:ids.nameId,rootBlock:Number(rootPosition.blockNumber),rootHash:rootPosition.blockHash,
           action,readPreferences:options=>actorA.application.readPreferences(options),activity:()=>actorA.activity(),deadlineAt:ctx.applicationDeadlineAt});

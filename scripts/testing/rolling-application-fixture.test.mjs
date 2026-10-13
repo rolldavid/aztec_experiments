@@ -842,3 +842,37 @@ test('overlap finalizer returns the original success only after drain and diagno
   drain:async()=>{calls.push('drain');return {pending:0};},snapshot:()=>{calls.push('snapshot');return {state:'done'};},persist:async()=>{calls.push('persist');assert(observation.passed);}}),result);
  assert.deepEqual(calls,['run','drain','snapshot','persist']);assert.equal(observation.passed,true);
 });
+
+import {rollingBrowserFollowingAdmission} from './rolling-application-fixture.mjs';
+test('browser following-first admission retains150s and conservative124s allowance before first proof',()=>{
+ const now=100000,deadlineAt=374000;
+ const plan=rollingBrowserFollowingAdmission({now,deadlineAt,nextAllowedTime:100n});
+ assert(plan.admitted);assert.equal(plan.requiredBeforeBrowserMs,124000);assert.equal(plan.browserReserveMs,150000);
+ assert.equal(rollingBrowserFollowingAdmission({now:now+1,deadlineAt,nextAllowedTime:100n}).admitted,false);
+ assert.equal(rollingBrowserFollowingAdmission({now,deadlineAt:now-1,nextAllowedTime:100n}).admitted,false);
+ assert(!JSON.stringify(plan).includes('nextAllowedTime'));
+});
+test('browser admission overlaps only actual pending eligibility with following and its first read',()=>{
+ const now=100000,deadlineAt=400000;
+ assert.equal(rollingBrowserFollowingAdmission({now,deadlineAt,nextAllowedTime:138n}).extraEligibilityMs,0);
+ const plan=rollingBrowserFollowingAdmission({now,deadlineAt,nextAllowedTime:150n});
+ assert.equal(plan.postingDelayMs,50000);assert.equal(plan.extraEligibilityMs,12000);assert.equal(plan.requiredBeforeBrowserMs,136000);
+ assert.equal(rollingBrowserFollowingAdmission({now,deadlineAt:385999,nextAllowedTime:150n}).admitted,false);
+});
+for(const nextAllowedTime of ['100',-1n,BigInt(Number.MAX_SAFE_INTEGER),undefined])test('browser admission rejects malformed private time '+String(nextAllowedTime),()=>{
+ assert.throws(()=>rollingBrowserFollowingAdmission({now:100000,deadlineAt:400000,nextAllowedTime}));
+});
+test('following-first is confined to preference-browser and retains the actual posting gate and three-proof final assertion',async()=>{
+ const source=await fs.readFile(new URL('./rolling-application-fixture.mjs',import.meta.url),'utf8');
+ assert(source.includes('if(preferenceBrowser){\n        // Capture the real pre-eligibility anchor'));
+ assert(source.includes("}else{\n      await mark('collateral-eligibility')"));
+ assert(source.includes('if(!preferenceBrowser)await waitPostAdmission();'));
+ assert(source.includes('rootEvent=notificationBrowser||preferenceBrowser?undefined:await publishRoot()'));
+ const start=source.indexOf('}else if(preferenceBrowser){\n          report.browserFollowing.admission'),end=source.indexOf('const expectedNames=',start),branch=source.slice(start,end);
+ assert(start>0&&end>start);assert(branch.indexOf('admission.admitted')<branch.indexOf('exerciseRollingBrowserPreferences'));
+ assert(branch.includes('await waitPostAdmission();report.browserFollowing.postingEligibility'));
+ assert(branch.includes('return publishRoot();'));
+ assert(branch.includes('exerciseRollingPreferences({mode,root:ids.rootId,name:ids.nameId,rootBlock:Number(rootPosition.blockNumber),rootHash:rootPosition.blockHash'));
+ assert(source.includes('preferenceBrowser){assert.equal(report.proverJobs.completed,3);assert.equal(report.proverJobs.submitted,3)'));
+ assert(source.includes('runRollingPreferenceBrowserFixture'));assert(source.includes('actualBok.currentContractClassId'));
+});
