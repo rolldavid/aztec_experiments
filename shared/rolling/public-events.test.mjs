@@ -132,3 +132,13 @@ test('labelled actual AvatarRemoved ABI authenticates exact avatar version/diges
  const event=await decoder.decodeLog(make(),position);assert.equal(event.type,'AvatarRemoved');assert.equal(event.payload.avatar_digest,image.payload.digest);assert.equal(event.payload.main_policy_version,'1');
  for(const mutate of [l=>{l.contractAddress=AztecAddress.fromBigIntUnsafe(43n);},l=>{l.fields[3]=Fr.ZERO;},l=>{l.fields[6]=Fr.ZERO;},l=>{l.fields[7]=Fr.ZERO;},l=>{l.fields[l.fields.length-1]=Fr.ONE;}]){const bad=make();mutate(bad);await assert.rejects(()=>decoder.decodeLog(bad,position));}
 });
+
+for(const rejection of [false,true])test(`decoder expired SDK call remains owned and sanitized, rejection=${rejection}`,async()=>{
+ const n=nodeFixture();let release,settled=false;n.getNodeInfo=()=>new Promise((resolve,reject)=>{release=rejection?reject:resolve;});
+ const pending=decoder.decodeTransaction(n,txHash.toString(),{timeoutMs:10});pending.then(()=>{settled=true;},()=>{settled=true;});
+ await new Promise(r=>setTimeout(r,20));assert.equal(settled,false);release(rejection?0:{});await assert.rejects(pending,{code:'ROLLING_PUBLIC_INVALID'});
+});
+for(const timeoutMs of [0,-1,20001,NaN,'20'])test(`decoder rejects invalid operation budget ${String(timeoutMs)}`,async()=>{
+ const n=nodeFixture();let calls=0;n.getNodeInfo=()=>{calls++;throw Error('must not be called');};
+ await assert.rejects(decoder.decodeTransaction(n,txHash.toString(),{timeoutMs}),{code:'ROLLING_PUBLIC_INVALID'});assert.equal(calls,0);
+});

@@ -124,10 +124,13 @@ export async function createRollingEventDecoder({artifact,scope}) {
  }
  // The caller retains range-level anchor rechecks/reorg handling. This verifies
  // one entire successful transaction against the actual SDK block/effect APIs.
- async function decodeTransaction(node,hashValue) {
+ async function decodeTransaction(node,hashValue,{timeoutMs=20000}={}) {
   try {
-   const deadline=Date.now()+20000;
-   const read=async fn=>{const left=deadline-Date.now();check(left>0);let timer;try{return await Promise.race([Promise.resolve().then(fn),new Promise((_,reject)=>{timer=setTimeout(()=>reject(rollingError()),left);})]);}finally{clearTimeout(timer);}};
+   check(Number.isSafeInteger(timeoutMs)&&timeoutMs>0&&timeoutMs<=20000);
+   const deadline=Date.now()+timeoutMs;
+   // The SDK does not expose cancellation for every method. Expiry stops further
+   // admission, but the current call remains owned until it actually settles.
+   const read=async fn=>{check(Date.now()<deadline);const value=await fn();check(Date.now()<deadline);return value;};
    const txHash=TxHash.fromString(hashValue),address=AztecAddress.fromBigIntUnsafe(BigInt(scope.boardAddress)),info=await read(()=>node.getNodeInfo()),instance=await read(()=>node.getContract(address));
    check(String(info.l1ChainId)===scope.chainId&&String(info.rollupVersion)===scope.rollupVersion&&info.l1ContractAddresses.rollupAddress.toString()===scope.rollupAddress);
    check(instance?.currentContractClassId.toString()===scope.classId&&instance?.originalContractClassId.toString()===scope.classId);

@@ -18,7 +18,8 @@ import {TxHash} from '@aztec-labs/stdlib/tx';
 import {DomainSeparator} from '@aztec-labs/constants';
 import {nameRegistration,NAME_DOMAIN} from './name-policy.mjs';
 import {publicFeedFileStorage} from '../public-feed-file-storage.mjs';
-import {createRollingPublicIndex} from './public-index.mjs';
+import {createRollingPublicSqliteStore} from './public-sqlite.mjs';
+import {createRollingPersistentPublicIndex,createRollingPublicIndex} from './public-index.mjs';
 const artifact=loadContractArtifact(JSON.parse(fs.readFileSync(process.env.ROLLING_TEST_ARTIFACT??new URL('../../billboard/target/rolling_contract-RollingBoard.json',import.meta.url))));
 const classId=(await getContractClassFromArtifact(artifact)).id.toString(),address=AztecAddress.fromBigIntUnsafe(42n);
 const scope={chainId:'31337',rollupVersion:'1',rollupAddress:'0x'+'11'.repeat(20),boardAddress:address.toString(),classId};
@@ -28,8 +29,8 @@ function pack(text,size){const b=Buffer.alloc(size*31);Buffer.from(text).copy(b)
 const digest=async(text,size)=>poseidon2HashWithSeparator([BigInt(Buffer.byteLength(text)),...pack(text,size)],0x52435431);
 async function log(type,payload){const abi=artifact.outputs.structs.events.find(e=>e.path==='RollingBoard::'+type),selector=await EventSelector.fromSignature(decodeFunctionSignature(type,abi.fields));
   return new PublicLog(address,[await computeLogTag(selector.toField(),DomainSeparator.EVENT_LOG_TAG),...encodeArguments({parameters:abi.fields},abi.fields.map(f=>payload[f.name]))]);}
-async function fixture(t){
- const directory=fs.mkdtempSync(path.join(os.tmpdir(),'rolling-public-index-'));t.after(()=>fs.rmSync(directory,{recursive:true,force:true}));
+async function fixture(t,resources=[]){
+ const directory=fs.mkdtempSync(path.join(os.tmpdir(),'rolling-public-index-'));t.after(()=>{try{for(const resource of resources)resource.close();}finally{fs.rmSync(directory,{recursive:true,force:true});}});
  const nameId=(await poseidon2HashWithSeparator(nameRegistration('John','Doe').preimage,NAME_DOMAIN)).toBigInt();
  const boardId=(await poseidon2HashWithSeparator([5n,...pack('build',2)],0x52435331)).toBigInt();
  const block1=[await log('MainPolicyPublished',{schema:1,version:1,digest:await digest('Rules',32),length:5,rules:pack('Rules',32)}),
@@ -111,7 +112,9 @@ test('network/class/deployment changes fail closed even with retained data',asyn
 test('bounded capacity, read timeout and concurrent sync cannot produce partial ready state',async t=>{
  const f=await fixture(t),index=await f.create({maxEvents:1});await assert.rejects(index.sync());assert.equal(index.status().complete,false);
  const g=await fixture(t);let release;g.node.getNodeInfo=()=>new Promise(resolve=>{release=resolve;});const slow=await g.create({timeoutMs:15});
- const pending=slow.sync();await new Promise(r=>setImmediate(r));await assert.rejects(slow.sync(),{code:'ROLLING_PUBLIC_BUSY'});await assert.rejects(pending,{code:'ROLLING_PUBLIC_TIMEOUT'});assert.ok(release);assert.equal(slow.status().complete,false);
+ const pending=slow.sync();let settled=false;pending.then(()=>{settled=true;},()=>{settled=true;});await new Promise(r=>setTimeout(r,25));
+ assert.equal(settled,false);await assert.rejects(slow.sync(),{code:'ROLLING_PUBLIC_BUSY'});assert.ok(release);release({});
+ await assert.rejects(pending,{code:'ROLLING_PUBLIC_TIMEOUT'});assert.equal(slow.status().complete,false);
 });
 
 // Controlled canonical SDK-data fixture through the actual HTTP server and
@@ -304,4 +307,194 @@ test('notification reader ingests initial history during awaited root work, then
   assert.equal(rootCalls,1);assert.equal(result.rootObserved,true);assert.equal(result.checkpointNumber,4);
  }finally{await server.close();}
  await assert.rejects(fetch(server.url+'/api/status',{signal:AbortSignal.timeout(1000)}));
+});
+
+// New opt-in ingestion: actual SQLite, original ABI/hash decoder and reducer;
+// labelled finite canonical-node data doubles. No genuine archive qualification.
+async function persistentFixture(t){
+ const stores=[],f=await fixture(t,stores);f.blocks.set(0,{hash:wrap(hex(1000)),header:{globalVariables:{blockNumber:0,timestamp:0n}},body:{txEffects:[]}});
+ const directory=path.join(f.directory,'persistent');
+ const store=()=>{const s=createRollingPublicSqliteStore(directory,{scope});stores.push(s);return s;};
+ const open=async(storage=store(),extra={})=>({storage,index:await createRollingPersistentPublicIndex({node:f.node,artifact,scope,deployment:f.options.deployment,storage,...extra})});
+ const drain=async(index,limit=100)=>{let steps=0;while(!index.status().complete){assert.ok(steps++<limit,'finite fixture must progress');await index.step();}return steps;};
+ const projection=(s,table,k)=>s.readProjection({expectedControl:s.inspect().control,table,k});
+ const mutate=fn=>{const db=new DatabaseSync(path.join(directory,'rolling-public-v3.sqlite'));try{fn(db);}finally{db.close();}};
+ return {...f,open,drain,projection,mutate};
+}
+test('persistent ingestion owns one transaction or completion per step with original decoding',async t=>{
+ const f=await persistentFixture(t),{storage:s,index}=await f.open();assert.throws(()=>index.publication());
+ let count=0;while(!index.status().complete){const before=s.inspect().control;await index.step();const after=s.inspect().control;
+  if(before)assert.ok(BigInt(after.segmentCount)-BigInt(before.segmentCount)<=1n);count++;}
+ assert.equal(count,7);assert.equal(f.projection(s,'posts','10').text,'Hello');assert.equal(s.inspect().control.segmentCount,'6');
+ assert.equal(index.publication().checkpoint.number,'3');assert.equal(f.calls.every(([, ,opts])=>opts.includeTransactions===true),true);
+});
+test('persistent cold restart rebuilds all canonical events and never trusts a projection row',async t=>{
+ const f=await persistentFixture(t),a=await f.open();await f.drain(a.index);const epoch=a.index.publication().authenticationEpoch;
+ f.mutate(db=>db.prepare("UPDATE projection SET value='{}' WHERE kind='posts'").run());a.storage.close();f.calls.length=0;
+ const b=await f.open();assert.equal(b.index.status().complete,false);await f.drain(b.index);
+ assert.notEqual(b.index.publication().authenticationEpoch,epoch);assert.equal(f.projection(b.storage,'posts','10').text,'Hello');
+ assert.equal(b.index.status().cacheComparison,'complete');for(const n of [1,2,3])assert.ok(f.calls.some(([,number])=>number===n));
+});
+for(const defect of ['omit-event','alter-event','extra-event','omit-segment','extra-segment','omit-block','extra-block','shortened-control'])
+ test(`persistent canonical cache ${defect} cannot earn publication`,async t=>{
+  const f=await persistentFixture(t),a=await f.open();await f.drain(a.index);a.storage.close();
+  f.mutate(db=>{
+   if(defect==='omit-event')db.exec("DELETE FROM events WHERE pos=(SELECT max(pos) FROM events)");
+   if(defect==='alter-event'){const r=db.prepare('SELECT pos,value FROM events ORDER BY pos DESC LIMIT 1').get(),v=JSON.parse(r.value);v.payload.message[0]='1';db.prepare('UPDATE events SET value=? WHERE pos=?').run(JSON.stringify(v),r.pos);}
+   if(defect==='extra-event')db.exec("INSERT INTO events SELECT g,replace(printf('%192s',''),' ','f'),segment,value FROM events LIMIT 1");
+   if(defect==='omit-segment')db.exec('DELETE FROM segments WHERE seq=(SELECT max(seq) FROM segments)');
+   if(defect==='extra-segment')db.exec("INSERT INTO segments SELECT g,replace(printf('%64s',''),' ','f'),value FROM segments LIMIT 1");
+   if(defect==='omit-block')db.exec('DELETE FROM blocks WHERE n=(SELECT max(n) FROM blocks)');
+   if(defect==='extra-block')db.exec("INSERT INTO blocks SELECT g,replace(printf('%64s',''),' ','f'),value FROM blocks LIMIT 1");
+   if(defect==='shortened-control'){const v=JSON.parse(db.prepare('SELECT value FROM control').get().value);v.segmentCount='0';db.prepare('UPDATE control SET value=?').run(JSON.stringify(v));}
+  });const b=await f.open();await assert.rejects(f.drain(b.index),{code:'ROLLING_PUBLIC_CACHE_MISMATCH'});assert.throws(()=>b.index.publication());
+ });
+test('persistent interrupted transaction and lost commit reply reopen without duplication',async t=>{
+ const f=await persistentFixture(t),a=await f.open();await a.index.step();assert.equal(a.storage.inspect().control.cursor.nextTxIndex,'1');a.storage.close();
+ const b=await f.open();await f.drain(b.index);assert.equal(b.storage.inspect().control.scalars.eventCount,'4');
+ f.put(4,[await f.post(20,4)]);f.setHead(4);
+ const real=b.storage.commitTransaction,broken={...b.storage,commitTransaction(args){real(args);throw Error('labelled lost reply');}};
+ const c=await f.open(broken);await assert.rejects(c.index.step());assert.throws(()=>c.index.publication());b.storage.close();
+ const d=await f.open();await f.drain(d.index);assert.equal(d.storage.inspect().control.scalars.eventCount,'5');assert.equal(f.projection(d.storage,'posts','20').text,'Hello');
+});
+test('persistent empty and unrelated physical transactions have exact coverage on restart',async t=>{
+ const f=await persistentFixture(t);f.put(4,[]);f.blocks.get(4).body.txEffects=[];
+ f.put(5,[]);const second={txHash:TxHash.fromString(hex(777)),publicLogs:[],toBuffer:()=>Buffer.alloc(0)};f.blocks.get(5).body.txEffects.push(second);f.setHead(5);
+ const a=await f.open();await f.drain(a.index);assert.equal(a.storage.inspect().control.segmentCount,'10');assert.equal(a.storage.inspect().control.scalars.eventCount,'4');
+ a.storage.close();const b=await f.open();await f.drain(b.index);assert.equal(b.index.status().cacheComparison,'complete');assert.equal(b.index.publication().checkpoint.number,'5');
+});
+test('persistent hot rollback spans more than128 segments without full reset or lost prefix',async t=>{
+ const f=await persistentFixture(t);for(let n=4;n<=70;n++)f.put(n,[]);f.setHead(70);
+ const a=await f.open();await f.drain(a.index,200);const generation=a.storage.inspect().control.generation;
+ for(let n=4;n<=70;n++)f.put(n,[],500);let reversals=0;
+ for(;;){const old=a.storage.inspect().control.segmentCount;await a.index.step();const next=a.storage.inspect().control.segmentCount;
+  if(BigInt(next)<BigInt(old)){assert.equal(BigInt(old)-BigInt(next),1n);reversals++;assert.throws(()=>a.index.publication());}else break;}
+ assert.equal(reversals,134);await f.drain(a.index,200);assert.equal(a.storage.inspect().control.generation,generation);assert.equal(f.projection(a.storage,'posts','10').text,'Hello');
+});
+test('persistent cold fork discards only independently noncanonical cache suffix',async t=>{
+ const f=await persistentFixture(t),a=await f.open();await f.drain(a.index);a.storage.close();f.put(3,[await f.post(30,3,'Replacement')],50);
+ const b=await f.open();await f.drain(b.index);assert.equal(b.index.status().cacheComparison,'canonical-prefix');assert.equal(f.projection(b.storage,'posts','10'),null);assert.equal(f.projection(b.storage,'posts','30').text,'Replacement');
+});
+for(const defect of ['missing-history','wrong-network','wrong-class','wrong-deployment','final-reorg','competing-CAS'])
+ test(`persistent ${defect} withholds publication`,async t=>{
+  const f=await persistentFixture(t),a=await f.open();await f.drain(a.index);
+  if(defect==='missing-history')f.blocks.delete(3);
+  if(defect==='wrong-network')f.node.getNodeInfo=async()=>({l1ChainId:1});
+  if(defect==='wrong-class')f.node.getContract=async()=>null;
+  if(defect==='wrong-deployment')f.put(1,[],600);
+  if(defect==='competing-CAS'){const c=a.storage.inspect().control;a.storage.startGeneration({expectedControl:c,origin:{number:'0',hash:hex(1000)}});}
+  if(defect==='final-reorg'){const original=f.node.getBlockData;let n=0;f.node.getBlockData=async number=>{const result=await original(number);if(number===3&&++n===2)return {...result,blockHash:wrap(hex(888))};return result;};}
+  await assert.rejects(a.index.step());assert.equal(a.index.status().complete,false);assert.throws(()=>a.index.publication());
+ });
+test('persistent deadline retains exclusive lease until the actual SDK promise settles',async t=>{
+ const f=await persistentFixture(t),a=await f.open(undefined,{timeoutMs:15});let release,settled=false;
+ f.node.getNodeInfo=()=>new Promise(resolve=>{release=resolve;});const pending=a.index.step();pending.then(()=>{settled=true;},()=>{settled=true;});
+ await new Promise(resolve=>setTimeout(resolve,25));assert.equal(settled,false);await assert.rejects(a.index.step(),{code:'ROLLING_PUBLIC_BUSY'});assert.equal(a.storage.inspect().control,null);
+ release({});await assert.rejects(pending,{code:'ROLLING_PUBLIC_TIMEOUT'});assert.equal(a.storage.inspect().control,null);await assert.rejects(a.index.step(),{code:'ROLLING_PUBLIC_REOPEN_REQUIRED'});
+});
+
+test('persistent shorter canonical tip rebuilds retained orphan coverage without treating missing historical data as a fork',async t=>{
+ const f=await persistentFixture(t),a=await f.open();await f.drain(a.index);a.storage.close();f.setHead(2);
+ const b=await f.open();await f.drain(b.index);assert.equal(b.index.publication().checkpoint.number,'2');assert.equal(b.index.status().cacheComparison,'canonical-prefix');assert.equal(f.projection(b.storage,'posts','10'),null);
+});
+test('persistent append retains authenticated generation and invalidates prior publication revision',async t=>{
+ const f=await persistentFixture(t),a=await f.open();await f.drain(a.index);const before=a.index.publication();
+ f.put(4,[await f.post(20,4)]);f.setHead(4);await a.index.step();assert.throws(()=>a.index.publication());await f.drain(a.index);
+ const after=a.index.publication();assert.equal(after.authenticationEpoch,before.authenticationEpoch);assert.notEqual(after.revision,before.revision);assert.equal(f.projection(a.storage,'posts','20').text,'Hello');
+});
+for(const defect of ['missing-body','duplicate-transaction','missing-deployment-policy','wrong-ordinal','bad-log-digest'])
+ test(`persistent original decoder/physical boundary rejects ${defect}`,async t=>{
+  const f=await persistentFixture(t);
+  if(defect==='missing-body')f.blocks.get(1).body=undefined;
+  if(defect==='duplicate-transaction')f.blocks.get(1).body.txEffects.push(f.blocks.get(1).body.txEffects[0]);
+  if(defect==='missing-deployment-policy')f.blocks.get(1).body.txEffects[0].publicLogs=[];
+  if(defect==='bad-log-digest')f.blocks.get(1).body.txEffects[0].publicLogs[0].fields[3]=Fr.ZERO;
+  if(defect==='wrong-ordinal'){const original=f.node.getBlock;let seen=0;f.node.getBlock=async(...args)=>{const b=await original(...args);if(args[0]===1&&++seen===2)return {...b,body:{txEffects:[{txHash:TxHash.fromString(hex(777)),publicLogs:[],toBuffer:()=>Buffer.alloc(0)},...b.body.txEffects]}};return b;};}
+  const a=await f.open();await assert.rejects(a.index.step());assert.throws(()=>a.index.publication());assert.equal(a.storage.inspect().control.segmentCount,'0');
+ });
+test('persistent source operations cannot emit private RPC or subscription parameters',async t=>{
+ const f=await persistentFixture(t),methods=[],allowed=new Set(['getNodeInfo','getContract','getBlockData','getBlock','getTxReceipt','getTxEffect']);
+ const node=new Proxy(f.node,{get(target,k){assert.ok(allowed.has(k));return (...args)=>{methods.push({method:k,args});return target[k](...args);};}});
+ const a=await f.open(undefined,{node});await f.drain(a.index);assert.ok(methods.length>0);
+ assert.equal(methods.some(({method})=>/private|tag|proof|send/i.test(method)),false);
+ for(const call of methods.filter(c=>c.method==='getBlock'))assert.deepEqual(call.args[1],{includeTransactions:true});
+});
+
+test('persistent publication and authenticated reduction reject an external projection-only mutation',async t=>{
+ const f=await persistentFixture(t),a=await f.open();await f.drain(a.index);
+ f.mutate(db=>db.exec("UPDATE projection SET value='{}' WHERE kind='posts'"));
+ assert.throws(()=>a.index.publication(),{code:'ROLLING_PUBLIC_STORAGE_CONFLICT'});assert.equal(a.index.status().complete,false);
+ await assert.rejects(a.index.step(),{code:'ROLLING_PUBLIC_STORAGE_CONFLICT'});a.storage.close();
+ const b=await f.open();await f.drain(b.index);assert.equal(f.projection(b.storage,'posts','10').text,'Hello');
+});
+
+// Bounded query integration: actual decoder/store, labelled canonical-node data.
+function stripPersistentEnvelope(value){const {revision,nextCursor,...rest}=value;return rest;}
+for(const view of ['feed','home','board','thread','profile','post','directory'])test(`persistent authenticated ${view} envelope matches legacy view`,async t=>{
+ const f=await persistentFixture(t),old=await f.create(),a=await f.open();await old.sync();await f.drain(a.index);
+ const params=view==='board'?{id:f.boardId}:view==='thread'?{root:'10'}:view==='profile'?{nameId:f.nameId}:view==='post'?{id:'10'}:{};
+ assert.deepEqual(stripPersistentEnvelope(a.index.query(view,params)),stripPersistentEnvelope(old.query(view,params)));
+ assert.equal(a.index.query('post',{id:'999'}).post,null);
+});
+test('persistent opaque cursors bind public view, parameters, limit, control and restart epoch',async t=>{
+ const f=await persistentFixture(t);f.put(4,[await f.post(20,4)]);f.setHead(4);const a=await f.open();await f.drain(a.index);
+ const first=a.index.query('feed',{limit:1});assert.match(first.nextCursor,/^[0-9a-f]{32}:[0-9a-f]{64}:[0-9a-f]{16}$/);assert.equal(first.nextCursor.length,114);
+ assert.equal(a.index.query('feed',{limit:1,cursor:first.nextCursor}).posts[0].id,'10');
+ for(const [view,params] of [['home',{limit:1}],['feed',{limit:2}],['board',{id:f.boardId,limit:1}],['profile',{nameId:f.nameId,limit:1}],['thread',{root:'10',limit:1}]])assert.throws(()=>a.index.query(view,{...params,cursor:first.nextCursor}),{code:'ROLLING_PUBLIC_CURSOR_STALE'});
+ for(const cursor of [first.nextCursor.slice(0,-1)+(first.nextCursor.endsWith('0')?'1':'0'),'0'.repeat(32)+first.nextCursor.slice(32),'private-sentinel'])assert.throws(()=>a.index.query('feed',{limit:1,cursor}),{code:'ROLLING_PUBLIC_CURSOR_STALE'});
+ a.storage.close();const reopened=await f.open();assert.throws(()=>reopened.index.query('feed'),{code:'ROLLING_PUBLIC_NOT_READY'});await f.drain(reopened.index);
+ assert.throws(()=>reopened.index.query('feed',{limit:1,cursor:first.nextCursor}),{code:'ROLLING_PUBLIC_CURSOR_STALE'});
+});
+test('persistent append and actual fork invalidate old query publication and cursors',async t=>{
+ const f=await persistentFixture(t);f.put(4,[await f.post(20,4)]);f.setHead(4);const a=await f.open();await f.drain(a.index);const cursor=a.index.query('feed',{limit:1}).nextCursor;
+ f.put(5,[await f.post(30,5)]);f.setHead(5);await a.index.sync();assert.throws(()=>a.index.query('feed'),{code:'ROLLING_PUBLIC_NOT_READY'});await f.drain(a.index);assert.throws(()=>a.index.query('feed',{limit:1,cursor}),{code:'ROLLING_PUBLIC_CURSOR_STALE'});
+ const next=a.index.query('feed',{limit:1}).nextCursor;f.put(5,[await f.post(40,5,'Changed')],50);await a.index.step();assert.throws(()=>a.index.query('feed'),{code:'ROLLING_PUBLIC_NOT_READY'});await f.drain(a.index);
+ assert.throws(()=>a.index.query('feed',{limit:1,cursor:next}),{code:'ROLLING_PUBLIC_CURSOR_STALE'});assert.equal(a.index.query('feed').posts[0].id,'40');
+});
+test('persistent query cannot publish on external projection mutation before or after atomic read',async t=>{
+ const f=await persistentFixture(t),real=createRollingPublicSqliteStore(path.join(f.directory,'query-race'),{scope});t.after(()=>real.close());let mutateAfter=false;
+ const storage={...real,readPublicPage(options){const result=real.readPublicPage(options);if(mutateAfter){const db=new DatabaseSync(real.filename);try{db.exec("UPDATE projection SET value='{}' WHERE kind='posts'");}finally{db.close();}}return result;}};
+ const a=await f.open(storage);await f.drain(a.index);assert.equal(a.index.query('feed').posts[0].id,'10');mutateAfter=true;
+ assert.throws(()=>a.index.query('feed'),{code:'ROLLING_PUBLIC_STORAGE_CONFLICT'});assert.equal(a.index.status().complete,false);assert.throws(()=>a.index.query('feed'),{code:'ROLLING_PUBLIC_NOT_READY'});
+});
+test('persistent query cannot mutate returned metadata or introduce private RPC parameters',async t=>{
+ const f=await persistentFixture(t),a=await f.open();await f.drain(a.index);const count=f.calls.length,first=a.index.query('feed');first.posts[0].text='Changed';first.names[f.nameId].first='Private';
+ assert.equal(a.index.query('feed').posts[0].text,'Hello');assert.equal(a.index.query('feed').names[f.nameId].first,'John');assert.equal(f.calls.length,count);
+ for(const key of ['account','tags','following','bookmarks','subscriptions','homeSubboards'])assert.throws(()=>a.index.query('home',{[key]:['private-sentinel']}));
+ let invoked=0;assert.throws(()=>a.index.query('feed',{get limit(){invoked++;throw Error('private-sentinel');}}));assert.equal(invoked,0);
+});
+test('persistent busy canonical recheck withholds all SQLite query publication',async t=>{
+ const f=await persistentFixture(t),a=await f.open();await f.drain(a.index);const original=f.node.getNodeInfo;let release;
+ f.node.getNodeInfo=()=>new Promise(resolve=>{release=()=>original().then(resolve);});const pending=a.index.step();assert.throws(()=>a.index.query('feed'),{code:'ROLLING_PUBLIC_NOT_READY'});
+ f.node.getNodeInfo=original;await release();await pending;assert.equal(a.index.query('feed').posts[0].id,'10');
+});
+test('persistent directory cursor binds normalized search and repeats without hidden advancement',async t=>{
+ const f=await persistentFixture(t),slug='zulu',boardId=await poseidon2HashWithSeparator([4n,...pack(slug,2)],0x52435331);
+ f.put(4,[await log('SubboardCreated',{schema:1,subboard_id:boardId,slug_length:4,slug:pack(slug,2),name_length:4,name:pack('Zulu',3),description_length:4,description:pack('Desc',16),local_policy_version:1,
+  rules_length:0,rules:pack('',32),rules_digest:await digest('',32),main_policy_version:1,metadata_digest:await poseidon2HashWithSeparator([boardId,await digest('Zulu',3),await digest('Desc',16)],0x52434d31)})]);f.setHead(4);
+ const a=await f.open();await f.drain(a.index);const first=a.index.query('directory',{query:' DESC ',limit:1});assert(first.nextCursor);const options={query:'desc',limit:1,cursor:first.nextCursor};
+ const second=a.index.query('directory',options);assert.equal(second.boards[0].slug,'zulu');assert.deepEqual(a.index.query('directory',options),second);
+ assert.throws(()=>a.index.query('directory',{...options,query:'build'}),{code:'ROLLING_PUBLIC_CURSOR_STALE'});
+ assert.throws(()=>a.index.query('directory',{...options,limit:2}),{code:'ROLLING_PUBLIC_CURSOR_STALE'});
+});
+
+// Small authenticity companion only: actual ABI decoding and canonical recheck
+// against a finite synthetic chain. This does NOT replay the 200006-row fixture.
+test('small decoded late-post history reauthenticates on reopen and removes forked suffix before publication',async t=>{
+ const f=await persistentFixture(t);for(let n=4;n<=8;n++)f.put(n,[await f.post(100+n,n,'Late '+n)]);f.setHead(8);
+ const a=await f.open();await f.drain(a.index);
+ const read=index=>{const ids=[];let cursor=null,pages=0;do{const p=index.query('feed',{limit:2,...(cursor?{cursor}:{})});
+  assert(p.posts.length<=2);ids.push(...p.posts.map(post=>post.id));cursor=p.nextCursor;assert(++pages<=3);}while(cursor);return ids;};
+ const expected=['108','107','106','105','104','10'];assert.deepEqual(read(a.index),expected);
+ const oldCursor=a.index.query('feed',{limit:2}).nextCursor;a.storage.close();f.calls.length=0;
+ const b=await f.open();assert.equal(b.storage.inspect().trusted,false);assert.throws(()=>b.index.query('feed'),{code:'ROLLING_PUBLIC_NOT_READY'});
+ await f.drain(b.index);for(let n=1;n<=8;n++)assert(f.calls.some(([,number])=>number===n));assert.deepEqual(read(b.index),expected);
+ assert.throws(()=>b.index.query('feed',{limit:2,cursor:oldCursor}),{code:'ROLLING_PUBLIC_CURSOR_STALE'});
+ const beforeFork=b.index.query('feed',{limit:2}).nextCursor;
+ f.put(6,[await f.post(206,6,'Replacement')],50);f.setHead(6);await b.index.step();
+ assert.throws(()=>b.index.query('feed'),{code:'ROLLING_PUBLIC_NOT_READY'});await f.drain(b.index);
+ assert.throws(()=>b.index.query('feed',{limit:2,cursor:beforeFork}),{code:'ROLLING_PUBLIC_CURSOR_STALE'});
+ assert.deepEqual(read(b.index),['206','105','104','10']);for(const id of ['106','107','108'])assert.equal(b.index.query('post',{id}).post,null);
+ b.storage.close();const c=await f.open();assert.throws(()=>c.index.query('feed'),{code:'ROLLING_PUBLIC_NOT_READY'});await f.drain(c.index);
+ assert.deepEqual(read(c.index),['206','105','104','10']);assert.equal(c.index.query('post',{id:'206'}).post.text,'Replacement');
 });

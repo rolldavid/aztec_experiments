@@ -17,30 +17,21 @@ const text=(p,field,length)=>{const bytes=new Uint8Array(p[field].length*31);p[f
 // keeps public JSON bounded; MIME/image decoding is a separate consumer duty.
 const binaryBase64=(fields,length)=>{const bytes=[];for(const word of fields){let n=BigInt(word),chunk=new Array(31);for(let j=30;j>=0;j--){chunk[j]=Number(n&255n);n>>=8n;}bytes.push(...chunk);}const data=bytes.slice(0,Number(length)),alphabet='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';let encoded='';for(let i=0;i<data.length;i+=3){const a=data[i],b=data[i+1],c=data[i+2],n=(a<<16)|((b??0)<<8)|(c??0);encoded+=alphabet[(n>>>18)&63]+alphabet[(n>>>12)&63]+(b===undefined?'=':alphabet[(n>>>6)&63])+(c===undefined?'=':alphabet[n&63]);}return encoded;};
 const emptyProfile=()=>({bio:{version:'0',digest:'0',length:'0',text:''},avatar:{version:'0',digest:'0',width:'0',height:'0',length:'0',encoding:'base64',data:'',removal:null}});
-// stage changes nothing; apply and reverse-order undo are single-use and reject
-// stale candidates. Private ownership and like-tag membership are never returned.
-export function createRollingProjection({isValidatedEvent,maxEvents=50000,homeSubboards}={}) {
- check(typeof isValidatedEvent==='function'&&Number.isSafeInteger(maxEvents)&&maxEvents>0&&maxEvents<=1000000);
- const curated=new Set(['0',...normalizeHomeSubboards(homeSubboards)]);
- let state={posts:new Map(),names:new Map(),boards:new Map(),policies:new Map(),plugins:new Map(),requests:new Map(),likes:new Map(),order:[],version:'0',last:null,scope:null,eventCount:0},revision=0,tip=Symbol('initial');
- function stage(events){
-  check(Array.isArray(events)&&events.length<=10000&&state.eventCount+events.length<=maxEvents);
-  const expectedRevision=revision,baseTip=tip,ownTip=Symbol('range'),oldLength=state.order.length,appended=[];
-  // Retain only touched values. Never retain a cloned Map or full order array
-  // per checkpoint: the cache keeps these undo closures for its whole suffix.
-  const scalarKeys=['version','last','scope','eventCount'];
-  const beforeScalars=Object.fromEntries(scalarKeys.map(key=>[key,state[key]]));
-  const deltas=[];
-  function overlay(map){
-   const before=new Map(),after=new Map();
-   const get=key=>after.has(key)?after.get(key):map.get(key);
-   const draft={get,has:key=>after.has(key)||map.has(key),set(key,value){if(!before.has(key))before.set(key,{exists:map.has(key),value:map.get(key)});after.set(key,value);}};
-   deltas.push({apply(){for(const [key,value] of after)map.set(key,value);},undo(){for(const [key,prior] of before)if(prior.exists)map.set(key,prior.value);else map.delete(key);}});
-   return draft;
-  }
-  const next={...beforeScalars,eventCount:state.eventCount+events.length,
-   order:{get length(){return oldLength+appended.length;},push(id){appended.push(id);}}};
-  for(const key of ['posts','names','boards','policies','plugins','requests','likes'])next[key]=overlay(state[key]);
+// Shared semantic reducer. The port is synchronous point access only; adapters
+// own atomicity/CAS. A bounded overlay records the first before-image even when
+// an event range changes the same key repeatedly. No history enumeration here.
+export const ROLLING_PROJECTION_TABLES=Object.freeze(['posts','names','boards','policies','plugins','requests','likes']);
+export function stageRollingPublicReduction(events,{isValidatedEvent,read,scalars}={}){
+ check(Array.isArray(events)&&events.length<=10000&&typeof isValidatedEvent==='function'&&typeof read==='function');
+ const point=(table,key)=>{const value=read(table,key);check(value===undefined||typeof value==='boolean'||value&&Object.getPrototypeOf(value)===Object.prototype);return value;};
+ const changes=new Map(),next={...scalars,eventCount:String(BigInt(scalars.eventCount)+BigInt(events.length))};
+ for(const table of ROLLING_PROJECTION_TABLES){
+  const get=key=>{const id=table+':'+key;return changes.has(id)?changes.get(id).value:point(table,key);};
+  next[table]={get,has:key=>get(key)!==undefined,set(key,value){const id=table+':'+key;
+   if(!changes.has(id)){const old=point(table,key);changes.set(id,{table,key,existed:old!==undefined,before:old,value});}
+   else changes.get(id).value=value;
+  }};
+ }
   const awaiting=new Set();
   const sameTx=(a,b)=>a.position.txHash===b.position.txHash&&a.position.blockHash===b.position.blockHash;
   const putPost=(id,patch)=>{check(next.posts.has(id));next.posts.set(id,{...next.posts.get(id),...patch});};
@@ -73,7 +64,7 @@ export function createRollingProjection({isValidatedEvent,maxEvents=50000,homeSu
     check(r.name_id==='0'||next.names.has(r.name_id));
     if(r.parent!=='0')check(parent&&!parent.removal&&parent.record.root===r.root&&parent.record.subboard===r.subboard);
     if(r.reference!=='0')check(reference&&!reference.removal);
-    next.posts.set(p.id,{id:p.id,record:copy(r),text:text(p,'message','length'),timestamp:p.timestamp,mainVersion:p.main_policy_version,localVersion:p.local_policy_version,position:e.position,order:String(next.order.length),likes:'0',removal:null,invocation:null,bot:null});next.order.push(p.id);
+    next.posts.set(p.id,{id:p.id,record:copy(r),text:text(p,'message','length'),timestamp:p.timestamp,mainVersion:p.main_policy_version,localVersion:p.local_policy_version,position:e.position,order:next.postCount,likes:'0',removal:null,invocation:null,bot:null});next.postCount=String(BigInt(next.postCount)+1n);
     if(r.kind==='4')awaiting.add(p.id);
    } else if(e.type==='PostRemoved'){
     const post=next.posts.get(p.id);check(post&&!post.removal);const local=post.record.subboard==='0'?0n:1n;
@@ -96,7 +87,29 @@ export function createRollingProjection({isValidatedEvent,maxEvents=50000,homeSu
   }
   // Cache ranges must include whole transactions; never display an unauthenticated
   // kind-4 post while waiting for a later fragment with its linkage event.
-  check(awaiting.size===0);let applied=false,undone=false;
+  check(awaiting.size===0);
+ return {scalars:Object.fromEntries(['version','last','scope','eventCount','postCount'].map(key=>[key,next[key]])),changes:[...changes.values()]};
+}
+// stage changes nothing; apply and reverse-order undo are single-use and reject
+// stale candidates. Private ownership and like-tag membership are never returned.
+export function createRollingProjection({isValidatedEvent,maxEvents=50000,homeSubboards}={}) {
+ check(typeof isValidatedEvent==='function'&&Number.isSafeInteger(maxEvents)&&maxEvents>0&&maxEvents<=1000000);
+ const curated=new Set(['0',...normalizeHomeSubboards(homeSubboards)]);
+ let state={posts:new Map(),names:new Map(),boards:new Map(),policies:new Map(),plugins:new Map(),requests:new Map(),likes:new Map(),order:[],version:'0',last:null,scope:null,eventCount:0},revision=0,tip=Symbol('initial');
+ function stage(events){
+  check(Array.isArray(events)&&events.length<=10000&&state.eventCount+events.length<=maxEvents);
+  const expectedRevision=revision,baseTip=tip,ownTip=Symbol('range'),oldLength=state.order.length,appended=[];
+  // Retain only touched values. Never retain a cloned Map or full order array
+  // per checkpoint: the cache keeps these undo closures for its whole suffix.
+  const scalarKeys=['version','last','scope','eventCount'];
+  const beforeScalars=Object.fromEntries(scalarKeys.map(key=>[key,state[key]]));
+  const reduction=stageRollingPublicReduction(events,{isValidatedEvent,read:(table,key)=>state[table].get(key),
+   scalars:{...beforeScalars,eventCount:String(state.eventCount),postCount:String(oldLength)}});
+  for(const change of reduction.changes)if(change.table==='posts'&&!change.existed)appended.push(change.key);
+  const next={...reduction.scalars,eventCount:Number(reduction.scalars.eventCount)};
+  const deltas=reduction.changes.map(change=>({apply(){state[change.table].set(change.key,change.value);},
+   undo(){if(change.existed)state[change.table].set(change.key,change.before);else state[change.table].delete(change.key);}}));
+  let applied=false,undone=false;
   const afterScalars=Object.fromEntries(scalarKeys.map(key=>[key,next[key]]));
   return {apply(){
     check(!applied&&!undone&&revision===expectedRevision&&tip===baseTip);

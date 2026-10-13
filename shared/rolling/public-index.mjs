@@ -1,6 +1,8 @@
 // Server-side public indexing only. No wallet, private queries, signer or prover.
+import {BLOBS_PER_CHECKPOINT,FIELDS_PER_BLOB,FLAT_PUBLIC_LOGS_PAYLOAD_LENGTH} from '@aztec-labs/constants';
+import {NUM_BLOCK_END_BLOB_FIELDS,NUM_CHECKPOINT_END_MARKER_FIELDS,MIN_TX_BLOB_FIELDS} from '@aztec-labs/blob-lib/encoding';
 import {AztecAddress} from '@aztec-labs/stdlib/aztec-address';
-import {createHash,randomUUID} from 'node:crypto';
+import {createHash,createHmac,randomBytes,randomUUID,timingSafeEqual} from 'node:crypto';
 import {createRollingEventDecoder,isRollingEvent,validateRollingScope} from './public-events.mjs';
 import {createRollingProjection,normalizeHomeSubboards} from './public-projection.mjs';
 const fail=code=>Object.assign(Error('Rolling public history is unavailable.'),{code});
@@ -60,8 +62,7 @@ export async function createRollingPublicIndex({node,artifact,scope,deployment,s
   async function sync(){
     check(!busy,'ROLLING_PUBLIC_BUSY');busy=true;ready=false;unavailable=false;
     const deadline=Date.now()+timeoutMs;
-    async function read(fn){const left=deadline-Date.now();check(left>0,'ROLLING_PUBLIC_TIMEOUT');let timer;
-      try{return await Promise.race([Promise.resolve().then(fn),new Promise((_,reject)=>{timer=setTimeout(()=>reject(fail('ROLLING_PUBLIC_TIMEOUT')),left);})]);}finally{clearTimeout(timer);}}
+    async function read(fn){check(Date.now()<deadline,'ROLLING_PUBLIC_TIMEOUT');const value=await fn();check(Date.now()<deadline,'ROLLING_PUBLIC_TIMEOUT');return value;}
     async function blockData(number){const block=await read(()=>node.getBlockData(number));
       if(!block)return null;const n=Number(block.header?.globalVariables?.blockNumber),h=textHash(block.blockHash);
       check(natural(n)&&hash(h));return {number:n,hash:h};}
@@ -179,4 +180,200 @@ export async function createRollingPublicIndex({node,artifact,scope,deployment,s
     check(best,'ROLLING_PUBLIC_CAPACITY');return copy(best);
   }
   return Object.freeze({key,scope,sync,status,query});
+}
+
+/** Opt-in persistent ingestion component; the production factory above is unchanged.
+ * storage is createRollingPublicSqliteStore, owned/closed by its caller. A step
+ * commits at most one whole transaction, block completion, or inverse segment.
+ * Complete canonical history remains on disk; no retained-history arrays/caps.
+ * Full block RPC is still used: dense wire/heap admission is a separate open gate.
+ * This is the existing trusted-node canonical consistency model, not consensus.
+ * SQL queries use one guarded snapshot only after complete canonical publication.
+ * publication() is a revision binding, not standalone authority for cached rows.
+ */
+export async function createRollingPersistentPublicIndex({node,artifact,scope,deployment,storage,timeoutMs=20000,homeSubboards}){
+  scope=validateRollingScope(scope);
+  const curated=normalizeHomeSubboards(homeSubboards),cursorSecret=randomBytes(32);
+  const own=(v,keys)=>{exact(v,keys);for(const k of keys)check(Object.hasOwn(Object.getOwnPropertyDescriptor(v,k),'value'));return copy(v);};
+  deployment=own(deployment,['blockNumber','blockHash','txHash']);
+  check(natural(deployment.blockNumber)&&deployment.blockNumber>0&&hash(deployment.blockHash)&&hash(deployment.txHash));
+  check(Number.isSafeInteger(timeoutMs)&&timeoutMs>0&&timeoutMs<=20000);
+  const decoder=await createRollingEventDecoder({artifact,scope}),epoch=randomUUID();
+  const maxTransactions=Math.floor((BLOBS_PER_CHECKPOINT*FIELDS_PER_BLOB-NUM_BLOCK_END_BLOB_FIELDS-NUM_CHECKPOINT_END_MARKER_FIELDS)/MIN_TX_BLOB_FIELDS);
+  const address=AztecAddress.fromBigIntUnsafe(BigInt(scope.boardAddress)),same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
+  const cache=v=>check(v,'ROLLING_PUBLIC_CACHE_MISMATCH');
+  const uint=(v,bits=256)=>typeof v==='string'&&/^(0|[1-9][0-9]*)$/.test(v)&&v.length<=78&&BigInt(v)<1n<<BigInt(bits);
+  const increment=v=>String(BigInt(v)+1n),key=v=>BigInt(v).toString(16).padStart(64,'0');
+  const eventKey=e=>key(e.position.blockNumber)+key(e.position.txIndexWithinBlock)+key(e.position.logIndexWithinTx);
+  const semantic=c=>{const {generation,revision,...rest}=c;return rest;};
+  let control=null,previous=null,oldSequence=0n,loaded=false,busy=false,ready=false,unavailable=false,origin=null;
+  let oldPages=null,comparisonDone=false,orphanedCache=false,failed=false;
+  const state=()=>({schemaVersion:3,state:unavailable?'unavailable':ready?'ready':loaded?'syncing':'authenticating',
+    scope,complete:ready,authenticationEpoch:epoch,revision:control?`${epoch}:${control.generation}:${control.revision}`:null,
+    checkpoint:copy(control?.checkpoint??null),cursor:copy(control?.cursor??null),cacheComparison:comparisonDone?(orphanedCache?'canonical-prefix':'complete'):'pending'});
+  function assertOwned(){check(same(storage.inspect().control,control),'PUBLIC_FEED_CONFLICT');}
+  function status(){if(ready){try{assertOwned();}catch{ready=false;unavailable=true;}}return state();}
+  function publication(){check(ready&&!busy&&!unavailable,'ROLLING_PUBLIC_NOT_READY');assertOwned();return state();}
+  function query(view,params={}){
+    check(ready&&!busy&&!unavailable,'ROLLING_PUBLIC_NOT_READY');
+    const allowed={home:[],feed:[],board:['id'],directory:['query'],thread:['root'],profile:['nameId'],post:['id']};
+    check(typeof view==='string'&&Object.hasOwn(allowed,view)&&params&&Object.getPrototypeOf(params)===Object.prototype);
+    const input={};for(const [k,d] of Object.entries(Object.getOwnPropertyDescriptors(params))){
+      check((k==='cursor'||k==='limit'||allowed[view].includes(k))&&Object.hasOwn(d,'value'));
+      check(d.value===null||typeof d.value==='string'&&d.value.length<=120||typeof d.value==='number'&&Number.isSafeInteger(d.value));input[k]=d.value;
+    }
+    const cursor=input.cursor??null;delete input.cursor;input.limit??=50;
+    check(Number.isSafeInteger(input.limit)&&input.limit>=1&&input.limit<=100);
+    if(view==='directory'){input.query??='';check(typeof input.query==='string'&&input.query.length<=120&&!input.query.includes('\0'));input.query=input.query.trim().toLowerCase();}
+    const idKey={board:'id',thread:'root',profile:'nameId',post:'id'}[view];if(idKey)check(field(input[idKey]));
+    const tokenEpoch=epoch.replaceAll('-','');
+    // MAC binds all normalized public query inputs and the exact authenticated
+    // publication, including deployment and Home configuration. No cache row or
+    // external token can confer canonical authority or survive a restart/reorg.
+    const binding=JSON.stringify([scope,deployment,control.generation,control.revision,control.checkpoint,view,allowed[view].map(k=>[k,input[k]]),input.limit,curated]);
+    const mac=last=>createHmac('sha256',cursorSecret).update(binding).update(':').update(last).digest('hex').slice(0,16);
+    let after=null;
+    if(cursor!==null){check(view!=='post'&&typeof cursor==='string'&&/^[0-9a-f]{32}:[0-9a-f]{64}:[0-9a-f]{16}$/.test(cursor),'ROLLING_PUBLIC_CURSOR_STALE');
+      const [e,last,signature]=cursor.split(':');check(e===tokenEpoch&&timingSafeEqual(Buffer.from(signature,'hex'),Buffer.from(mac(last),'hex')),'ROLLING_PUBLIC_CURSOR_STALE');after=String(BigInt('0x'+last));}
+    try{
+      assertOwned();const page=storage.readPublicPage({expectedControl:control,view,params:input,after,homeSubboards:curated});
+      check(page.trusted===false&&page.generation===control.generation&&page.revision===control.revision);
+      const nextCursor=page.nextAfter===null?null:(()=>{const last=key(page.nextAfter);return `${tokenEpoch}:${last}:${mac(last)}`;})();
+      const envelope={schemaVersion:1,scope,checkpoint:{number:Number(control.checkpoint.number),hash:control.checkpoint.hash},complete:true,...page.value,
+        ...(view==='post'?{}:{nextCursor}),revision:`${epoch}:${control.generation}:${control.revision}`};
+      check(bytes(JSON.stringify(envelope))<=1048576,'ROLLING_PUBLIC_CAPACITY');assertOwned();return copy(envelope);
+    }catch(error){const code=error&&Object.getOwnPropertyDescriptor(error,'code')?.value;
+      if(code==='ROLLING_PUBLIC_STORAGE_CONFLICT'||code==='PUBLIC_FEED_CONFLICT'){ready=false;unavailable=true;failed=true;}
+      throw fail(['ROLLING_PUBLIC_STORAGE_CONFLICT','PUBLIC_FEED_CONFLICT','ROLLING_PUBLIC_STORAGE_CAPACITY','ROLLING_PUBLIC_CURSOR_STALE','ROLLING_PUBLIC_NOT_FOUND','ROLLING_PUBLIC_CAPACITY'].includes(code)?code:'ROLLING_PUBLIC_INVALID');}
+  }
+  function validateControl(c){
+    own(c,['schema','scope','generation','revision','segmentCount','checkpoint','cursor','scalars']);
+    cache(c.schema===3&&c.scope===JSON.stringify(scope)&&uint(c.generation)&&c.generation!=='0'&&uint(c.revision)&&uint(c.segmentCount));
+    own(c.checkpoint,['number','hash']);cache(uint(c.checkpoint.number,53)&&hash(c.checkpoint.hash));
+    own(c.cursor,['blockNumber','nextTxIndex','block']);cache(uint(c.cursor.blockNumber,53)&&uint(c.cursor.nextTxIndex,32)&&c.cursor.blockNumber===increment(c.checkpoint.number));
+    if(c.cursor.block!==null){validateBlock(c.cursor.block);cache(c.cursor.block.number===c.cursor.blockNumber&&c.cursor.block.parentHash===c.checkpoint.hash&&BigInt(c.cursor.nextTxIndex)<=BigInt(c.cursor.block.transactionCount));}
+    else cache(c.cursor.nextTxIndex==='0');
+    own(c.scalars,['version','last','scope','eventCount','postCount']);cache(uint(c.scalars.version)&&uint(c.scalars.eventCount)&&uint(c.scalars.postCount));
+  }
+  function validateBlock(b){own(b,['number','hash','parentHash','transactionCount']);cache(uint(b.number,53)&&b.number!=='0'&&hash(b.hash)&&hash(b.parentHash)&&uint(b.transactionCount,32)&&BigInt(b.transactionCount)<=BigInt(maxTransactions));}
+  // Only a single row is retained per stream. SQLite performs byte checks before
+  // parsing and uses indexed keyset reads, including the terminal trailing check.
+  function stream(method){let after=null,held,ended=false;return {
+    peek(){if(held===undefined&&!ended){const page=storage[method]({expectedControl:control,generation:previous.generation,after,limit:1});
+      cache(page.rows.length<=1);held=page.rows[0]??null;if(held===null)ended=true;}return held??null;},
+    take(){const row=this.peek();cache(row!==null);after=row.key;held=undefined;return row;}
+  };}
+  function finishComparison(){
+    if(!previous||comparisonDone)return;
+    cache(oldSequence===BigInt(previous.segmentCount));cache(same(semantic(previous),semantic(control)));
+    for(const s of Object.values(oldPages))cache(s.peek()===null);
+    comparisonDone=true;
+  }
+  function compareBefore(events,block,complete){
+    if(!previous||comparisonDone)return;
+    cache(oldSequence<BigInt(previous.segmentCount));
+    const row=oldPages.segments.take();cache(row.key===key(oldSequence+1n));
+    const segment=own(row.value,['before','eventCount','blockCompleted']);validateControl(segment.before);
+    cache(segment.before.generation===previous.generation&&same(semantic(segment.before),semantic(control)));
+    cache(segment.eventCount===events.length&&segment.blockCompleted===(complete?block.number:null));
+    for(const e of events){const retained=oldPages.events.take();cache(retained.key===eventKey(e)&&same(retained.value,e));}
+    if(complete){const retained=oldPages.blocks.take();cache(retained.key===key(block.number)&&same(retained.value,block));}
+    oldSequence++;
+  }
+  async function step(){
+    check(!failed,'ROLLING_PUBLIC_REOPEN_REQUIRED');
+    check(!busy,'ROLLING_PUBLIC_BUSY');busy=true;ready=false;unavailable=false;const deadline=Date.now()+timeoutMs;
+    // Expired work stays owned until the SDK call settles. No detached race,
+    // retries, parallel fanout or writes from a timed-out continuation.
+    const read=async fn=>{check(Date.now()<deadline,'ROLLING_PUBLIC_TIMEOUT');const v=await fn();check(Date.now()<deadline,'ROLLING_PUBLIC_TIMEOUT');return v;};
+    async function identity(){const info=await read(()=>node.getNodeInfo());
+      check(String(info.l1ChainId)===scope.chainId&&String(info.rollupVersion)===scope.rollupVersion&&textHash(info.l1ContractAddresses?.rollupAddress)===scope.rollupAddress);
+      const instance=await read(()=>node.getContract(address));check(textHash(instance?.currentContractClassId)===scope.classId&&textHash(instance?.originalContractClassId)===scope.classId);
+    }
+    async function anchor(n){const b=await read(()=>node.getBlockData(n));check(b,'ROLLING_PUBLIC_UNAVAILABLE');
+      const number=String(b.header?.globalVariables?.blockNumber),h=textHash(b.blockHash);check(uint(number,53)&&hash(h));if(n!=='checkpointed')check(number===String(n));return {number,hash:h};}
+    try{
+      await identity();const target=await anchor('checkpointed');check(BigInt(target.number)>=BigInt(deployment.blockNumber));
+      const deployed=await anchor(deployment.blockNumber);check(deployed.hash===deployment.blockHash);
+      const base=await anchor(deployment.blockNumber-1);
+      if(origin)check(same(origin,base));else origin=base;
+      if(!loaded){const inspected=storage.inspect();control=inspected.control;
+        if(control){validateControl(control);previous=copy(control);cache(BigInt(control.checkpoint.number)>=BigInt(base.number));}
+        control=storage.startGeneration({expectedControl:control,origin:base});validateControl(control);loaded=true;
+        if(previous){oldPages={events:stream('readEventPage'),segments:stream('readSegmentPage'),blocks:stream('readBlockPage')};if(previous.segmentCount==='0')finishComparison();}
+        else comparisonDone=true;
+      }
+      assertOwned();
+      const recheck=async extra=>{await identity();check(same(await anchor(deployment.blockNumber),deployed));check(same(await anchor(Number(base.number)),base));
+        check(same(await anchor(Number(target.number)),target));
+        if(extra)check((await anchor(Number(extra.number))).hash===extra.hash);
+        assertOwned();check(Date.now()<deadline,'ROLLING_PUBLIC_TIMEOUT');};
+      // A checked canonical mismatch permits inverse work; missing data is never
+      // treated as an orphan. Each call removes only one durable segment.
+      const retained=control.cursor.block??control.checkpoint;
+      const current=BigInt(retained.number)>BigInt(target.number)?null:await anchor(Number(retained.number));
+      if(!current||current.hash!==retained.hash){
+        check(control.segmentCount!=='0');await recheck();control=storage.rollbackOne({expectedControl:control});
+        previous=null;comparisonDone=true;orphanedCache=true;
+        await recheck();return state();
+      }
+      if(BigInt(control.cursor.blockNumber)>BigInt(target.number)){
+        if(previous&&!comparisonDone){
+          if(oldSequence<BigInt(previous.segmentCount)&&BigInt(previous.cursor.blockNumber)>BigInt(target.number)){
+            const next=oldPages.segments.peek();cache(next!==null);validateControl(next.value.before);
+            cache(same(semantic(next.value.before),semantic(control)));comparisonDone=true;orphanedCache=true;
+          }else finishComparison();
+        }
+        await recheck(control.checkpoint);ready=true;return state();
+      }
+      const number=Number(control.cursor.blockNumber),raw=await read(()=>node.getBlock(number,{includeTransactions:true}));
+      check(raw&&Number(raw.header?.globalVariables?.blockNumber)===number&&hash(textHash(raw.hash))&&Array.isArray(raw.body?.txEffects));
+      check(raw.body.txEffects.length<=maxTransactions);const seen=new Set();
+      const effects=raw.body.txEffects.map(tx=>{const h=textHash(tx.txHash);check(hash(h)&&!seen.has(h));seen.add(h);
+        check(Array.isArray(tx.publicLogs)&&tx.publicLogs.length<=FLAT_PUBLIC_LOGS_PAYLOAD_LENGTH);
+        let fields=0,hasBoard=false;for(const log of tx.publicLogs){const size=log.sizeInFields();check(Number.isSafeInteger(size)&&size>0);fields+=size;check(fields<=FLAT_PUBLIC_LOGS_PAYLOAD_LENGTH);if(textHash(log.contractAddress)===scope.boardAddress)hasBoard=true;}
+        return {hash:h,hasBoard};});
+      const block={number:String(number),hash:textHash(raw.hash),parentHash:control.checkpoint.hash,transactionCount:String(effects.length)};
+      check((await anchor(number)).hash===block.hash);
+      if(control.cursor.block)check(same(control.cursor.block,block));
+      // Bind the retained prefix to canonical block identity before comparing
+      // old rows. The entire orphan suffix is ignored, never made authoritative.
+      if(previous&&!comparisonDone){const next=oldPages.segments.peek();cache(next!==null);
+        const oldBlock=next.value.blockCompleted!==null?oldPages.blocks.peek()?.value:next.value.before?.cursor?.block;
+        // The first transaction's before cursor has no block yet. Its next
+        // segment (or final previous control) supplies that immutable descriptor.
+        let expectedBlock=oldBlock;
+        if(!expectedBlock){const seq=key(oldSequence+1n),page=storage.readSegmentPage({expectedControl:control,generation:previous.generation,after:seq,limit:1});
+          expectedBlock=page.rows[0]?.value.before?.cursor?.block??previous.cursor.block;
+          if(!expectedBlock)expectedBlock=oldPages.blocks.peek()?.value;
+        }
+        cache(expectedBlock!==null&&expectedBlock!==undefined);validateBlock(expectedBlock);cache(expectedBlock.number===block.number);
+        if(expectedBlock.hash!==block.hash){comparisonDone=true;orphanedCache=true;}
+        else cache(same(expectedBlock,block));
+      }
+      const index=Number(control.cursor.nextTxIndex);check(index<=effects.length);
+      let events=[],txHash=null;
+      if(index<effects.length){const tx=effects[index];txHash=tx.hash;
+        if(tx.hasBoard){
+          events=await read(()=>decoder.decodeTransaction(node,txHash,{timeoutMs:Math.max(1,Math.min(20000,deadline-Date.now()))}));
+          check(events.every(e=>e.position.blockNumber===block.number&&e.position.blockHash===block.hash&&e.position.txHash===txHash&&e.position.txIndexWithinBlock===String(index)));
+        }
+        if(number===deployment.blockNumber&&txHash===deployment.txHash)check(events.some(e=>e.type==='MainPolicyPublished'&&e.payload.version==='1'));
+      }else if(number===deployment.blockNumber){
+        // Policy validation must have been performed by the original decoder,
+        // even when the deployment block also contains unrelated transactions.
+        check(effects.some(tx=>tx.hash===deployment.txHash)&&control.scalars.version!=='0');
+      }
+      await recheck(block);compareBefore(events,block,index===effects.length);
+      control=index===effects.length?storage.completeBlock({expectedControl:control,block}):storage.commitTransaction({expectedControl:control,block,txIndex:String(index),txHash,events});
+      if(previous&&!comparisonDone&&oldSequence===BigInt(previous.segmentCount))finishComparison();
+      await recheck(block);
+      // A final publication recheck happens on a separate bounded step. It
+      // includes a fresh target; a tip advance cannot yield a partial ready view.
+      return state();
+    }catch(e){unavailable=true;ready=false;failed=true;const code=e&&Object.getOwnPropertyDescriptor(e,'code')?.value;
+      throw fail(['ROLLING_PUBLIC_INVALID','ROLLING_PUBLIC_UNAVAILABLE','ROLLING_PUBLIC_TIMEOUT','ROLLING_PUBLIC_CACHE_MISMATCH','PUBLIC_FEED_CONFLICT','ROLLING_PUBLIC_STORAGE_CONFLICT','ROLLING_PUBLIC_STORAGE_CAPACITY'].includes(code)?code:'ROLLING_PUBLIC_UNAVAILABLE');}
+    finally{busy=false;}
+  }
+  return Object.freeze({scope,step,sync:step,status,publication,query});
 }

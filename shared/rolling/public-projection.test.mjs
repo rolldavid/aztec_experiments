@@ -3,7 +3,11 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {poseidon2HashWithSeparator} from '@aztec-labs/foundation/crypto/poseidon';
 import {validateRollingEvent,isRollingEvent} from './public-events.mjs';
-import {createRollingProjection} from './public-projection.mjs';
+import {createRollingProjection,stageRollingPublicReduction} from './public-projection.mjs';
+import {createRollingPublicSqliteStore} from './public-sqlite.mjs';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 import {nameRegistration,NAME_DOMAIN} from './name-policy.mjs';
 const scope={chainId:'31337',rollupVersion:'1',rollupAddress:'0x'+'11'.repeat(20),boardAddress:'0x'+'0'.repeat(62)+'42',classId:'0x'+'0'.repeat(63)+'1'};
 const h=async(values,domain)=>(await poseidon2HashWithSeparator(values.map(BigInt),domain)).toBigInt().toString();
@@ -261,4 +265,64 @@ test('board feed filters before paging and retains effective and authored policy
  const reject=await event('SubboardRejected',{subboard_id:f.id,main_policy_version:'2',local_policy_version:'1',reason_length:'3',reason:pack('Bad',7),reason_digest:await digest('Bad',7)},0,'8');p.stage([reject]).apply();
  const after=p.boardFeed(f.id);assert.equal(after.board.rejected,true);assert.equal(after.board.rejection.reason,'Bad');assert.equal(after.posts[0].text,null);assert.equal(after.posts[0].record.root,'30');assert.equal(after.mainPolicy.version,'2');assert.deepEqual(after.policies.map(v=>v.version),['1','2']);
  after.board.rules='MUTATED';after.policies[0].text='MUTATED';assert.equal(p.boardFeed(f.id).policies[0].text,'Rules');assert.equal(p.boardFeed('0').board,null);
+});
+
+// Same original reducer and actual branded events on both adapters. SQLite is
+// a cache component here, not a substitute for canonical-chain verification.
+test('shared reducer/SQLite differential covers linked posts, profiles, moderation, policies, likes and reverse rollback',async t=>{
+ const directory=fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(),'rolling-diff-'))),store=createRollingPublicSqliteStore(directory,{scope});
+ t.after(()=>{store.close();fs.rmSync(directory,{recursive:true,force:true});});
+ const {events,nameId}=await fixture(),memory=createRollingProjection({isValidatedEvent:isRollingEvent});
+ const block={number:'1',hash:events[0].position.blockHash,parentHash:'0x'+'00'.repeat(32),transactionCount:'100'};
+ let control=store.startGeneration({expectedControl:null,origin:{number:'0',hash:block.parentHash}}),tx=0;
+ const oracle=new Map(),changes=[];let scalars={version:'0',last:null,scope:null,eventCount:'0',postCount:'0'};
+ function apply(group){
+  const target=Number(group[0].position.txIndexWithinBlock);
+  while(tx<target){control=store.commitTransaction({expectedControl:control,block,txIndex:String(tx),txHash:'0x'+String(tx).padStart(64,'0'),events:[]});tx++;}
+  const staged=memory.stage(group),delta=stageRollingPublicReduction(group,{isValidatedEvent:isRollingEvent,read:(table,key)=>oracle.get(table+':'+key),scalars});
+  control=store.commitTransaction({expectedControl:control,block,txIndex:String(tx),txHash:group[0].position.txHash,events:group});tx++;staged.apply();
+  for(const change of delta.changes)oracle.set(change.table+':'+change.key,change.value);scalars=delta.scalars;changes.push(staged);
+  for(const [entry,value] of oracle){const split=entry.indexOf(':'),table=entry.slice(0,split),k=entry.slice(split+1);assert.deepEqual(store.readProjection({expectedControl:control,table,k}),value);}
+  assert.equal(control.scalars.eventCount,String(scalars.eventCount));assert.equal(control.scalars.postCount,String(memory.postCount));
+ }
+ apply(events.slice(0,5));apply(events.slice(5));
+ apply([await bio(nameId,'1','Profile','3')]);
+ const image=await avatar(nameId,'1',Buffer.from([0xff,0,1,2]),'4');apply([image]);
+ apply([await removeAvatar(image,'5')]);
+ apply([await event('LikeChanged',{post:'10',tag:'77',active:true,count:'1'},0,'6')]);
+ apply([await event('LikeChanged',{post:'10',tag:'77',active:false,count:'0'},0,'7')]);
+ apply([await event('MainPolicyPublished',{version:'2',digest:await digest('Updated',32),length:'7',rules:pack('Updated',32)},0,'8')]);
+ apply([await event('PostRemoved',{id:'10',policy_version:'2',penalized:true,reason_length:'3',reason:pack('Bad',7)},0,'9')]);
+ assert.equal(memory.post('10').text,null);assert.equal(store.readProjection({expectedControl:control,table:'posts',k:'10'}).removal.reason,'Bad');
+ const slug=pack('build',2),boardId=await h(['5',...slug],0x52435331);
+ apply([await event('SubboardCreated',{subboard_id:boardId,slug_length:'5',slug,name_length:'5',name:pack('Build',3),description_length:'5',description:pack('Tools',16),local_policy_version:'1',rules_length:'0',rules:pack('',32),rules_digest:await digest('',32),main_policy_version:'2',metadata_digest:await h([boardId,await digest('Build',3),await digest('Tools',16)],0x52434d31)},0,'10')]);
+ apply([await event('PostPublished',{id:'30',record:{subboard:boardId,parent:'0',root:'30',kind:'1',name_id:'0',reference:'0',content_digest:await digest('Board',32)},timestamp:'3',main_policy_version:'2',local_policy_version:'1',length:'5',message:pack('Board',32)},0,'11')]);
+ apply([await event('SubboardRejected',{subboard_id:boardId,main_policy_version:'2',local_policy_version:'1',reason_length:'3',reason:pack('Bad',7),reason_digest:await digest('Bad',7)},0,'12')]);
+ assert.equal(memory.boardFeed(boardId).posts[0].text,null);assert.equal(store.readProjection({expectedControl:control,table:'boards',k:boardId}).rejected,true);
+
+ while(changes.length){control=store.rollbackOne({expectedControl:control});changes.pop().undo();assert.equal(control.scalars.postCount,String(memory.postCount));}
+ assert.equal(store.readProjection({expectedControl:control,table:'posts',k:'10'}),null);assert.equal(store.readProjection({expectedControl:control,table:'names',k:nameId}),null);
+});
+test('shared reducer staging uses synchronous touched-key state and leaves base rows unchanged',async()=>{
+ const {events}=await fixture(),maps=new Map(),scalars={version:'0',last:null,scope:null,eventCount:'0',postCount:'0'};
+ const delta=stageRollingPublicReduction(events,{isValidatedEvent:isRollingEvent,read:(table,key)=>maps.get(table+':'+key),scalars});
+ assert.equal(maps.size,0);assert.equal(scalars.eventCount,'0');assert.equal(delta.scalars.eventCount,'7');assert.equal(delta.scalars.postCount,'2');
+ assert(delta.changes.every(change=>change.existed===false));assert.equal(delta.changes.filter(change=>change.table==='posts'&&change.key==='10').length,1);
+ assert.throws(()=>stageRollingPublicReduction(events.map(e=>structuredClone(e)),{isValidatedEvent:isRollingEvent,read:()=>undefined,scalars}));
+});
+
+test('shared reducer rejects asynchronous point ports instead of treating a Promise as existing state',async()=>{
+ const {events}=await fixture();assert.throws(()=>stageRollingPublicReduction(events,{isValidatedEvent:isRollingEvent,read:async()=>undefined,scalars:{version:'0',last:null,scope:null,eventCount:'0',postCount:'0'}}));
+});
+test('SQLite rejects incomplete transaction-linked bot publication without partial writes',async t=>{
+ const directory=fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(),'rolling-link-'))),store=createRollingPublicSqliteStore(directory,{scope});
+ t.after(()=>{store.close();fs.rmSync(directory,{recursive:true,force:true});});
+ const {events}=await fixture(),block={number:'1',hash:events[0].position.blockHash,parentHash:'0x'+'00'.repeat(32),transactionCount:'3'};
+ let c=store.startGeneration({expectedControl:null,origin:{number:'0',hash:block.parentHash}});
+ c=store.commitTransaction({expectedControl:c,block,txIndex:'0',txHash:'0x'+'00'.repeat(32),events:[]});
+ c=store.commitTransaction({expectedControl:c,block,txIndex:'1',txHash:events[0].position.txHash,events:events.slice(0,5)});
+ assert.throws(()=>store.commitTransaction({expectedControl:c,block,txIndex:'2',txHash:events[5].position.txHash,events:[events[5]]}));
+ assert.deepEqual(store.inspect().control,c);assert.equal(store.readProjection({expectedControl:c,table:'posts',k:'20'}),null);
+ c=store.commitTransaction({expectedControl:c,block,txIndex:'2',txHash:events[5].position.txHash,events:events.slice(5)});
+ assert.equal(store.readProjection({expectedControl:c,table:'posts',k:'20'}).bot.pluginId,'7');
 });
