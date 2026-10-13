@@ -14,7 +14,6 @@ import {Fr} from '@aztec-labs/foundation/curves/bn254';
 import {GrumpkinScalar} from '@aztec-labs/foundation/curves/grumpkin';
 import {AztecAddress} from '@aztec-labs/stdlib/aztec-address';
 import {rollingOperatorConfig,rollingPxeOptions} from '../../plugins/operations.mjs';
-import {Fr} from '@aztec-labs/foundation/curves/bn254';
 import {L1Actor, L2Actor, L1ToL2Message} from '@aztec-labs/stdlib/messaging';
 import {ROOT} from '../toolchain.mjs';
 import {applicationNativeProfile} from '../c01-native-profile.mjs';
@@ -379,9 +378,12 @@ export async function runRollingOperatorDevnet(ctx,mode) {
   assert.equal(ctx.scenario.name,'rolling-operator-'+mode);
   assert(path.isAbsolute(ctx.directory)&&Number.isSafeInteger(ctx.applicationDeadlineAt)&&ctx.applicationDeadlineAt>Date.now());
   const report={passed:false,scope:mode==='wallet'?'actual native-disabled operator wallet; no send':'actual native-disabled operator constructor only',
-    applicationProofs:false,networkProofs:false,stage:'preflight',sends:0,cleanup:{rpcClosed:false,artifactHookClosed:false,walletStopped:false}};
+    applicationProofs:false,networkProofs:false,stage:'preflight',sends:0,cleanup:{rpcClosed:false,artifactHookClosed:false,preflightWalletStopped:false}};
   let rpc,adapter,failure,privateDirectory,statePath;
-  const publicPath=path.join(ctx.directory,'rolling-operator-result.json');
+  const publicDirectory=path.join(ROOT,'execution/evidence/G14/operator-devnet');
+  await fs.mkdir(publicDirectory,{recursive:true,mode:0o700});
+  const publicPath=path.join(publicDirectory,'actual-'+randomUUID()+'.json');
+  report.publicEvidence=path.relative(ROOT,publicPath);
   const save=()=>fs.writeFile(publicPath,evidenceJson(report),{mode:0o600});
   const mark=async stage=>{assert(Date.now()<ctx.applicationDeadlineAt);report.stage=stage;ctx.mark?.('rolling-operator:'+stage);await save();};
   const files=['scripts/testing/scenarios.mjs','scripts/testing/scenario-flows.mjs','scripts/testing/private-bok-fixture.mjs',
@@ -404,7 +406,7 @@ export async function runRollingOperatorDevnet(ctx,mode) {
     assert.deepEqual(options,{proverEnabled:false});
     await mark('wallet-preflight');
     report.wallet=await checkOperatorDevnetWallet(()=>EmbeddedWallet.create(node,{ephemeral:true,pxe:options}),actor);
-    report.cleanup.walletStopped=true;assert.equal(report.sends,0);
+    report.cleanup.preflightWalletStopped=true;assert.equal(report.sends,0);
     const fees=await operatorCommand({command:'fees',config,actor,onProgress:()=>assert.fail('Fee read initialized wallet')});
     assert.equal(fees.account,actor.address);assert(BigInt(fees.publicFeeJuice)>0n);
     report.feeBalancePositive=true;
@@ -421,7 +423,7 @@ export async function runRollingOperatorDevnet(ctx,mode) {
         return {sha256:sha(bytes),transactionHash:record.hash,phase:record.phase,operationCount:Object.keys(state.operations).length};
       };
       await mark('constructor');report.mining={};
-      report.constructor=await withC01ClientMining({rpcUrl:config.ethereumUrl,dateProvider:ctx.dateProvider,observation:report.mining},async tick=>
+      report.constructor=await withC01ClientMining({rpcUrl:config.ethereumUrl,dateProvider:ctx.dateProvider,observation:report.mining,mode:'real-wall',deadlineAt:ctx.applicationDeadlineAt},async tick=>
         reconcileOperatorDevnet({deadlineAt:ctx.applicationDeadlineAt,now:Date.now,tick,sendCount:()=>report.sends,readJournal,
           invoke:async retained=>{
             allowSend=!retained;
