@@ -159,8 +159,8 @@ test('Rolling deployment targets current ABI, not legacy policy/portal getters',
  const raw=JSON.parse(await readFile(new URL('../billboard/target/rolling_contract-RollingBoard.json',import.meta.url),'utf8')),artifact=loadContractArtifact(raw);
  const init=artifact.functions.find(f=>f.name==='init');
  assert.deepEqual(init.parameters.map(p=>p.name),['rules','length','l1_chain_id','rollup_address','rollup_version','min_deposit','max_deposit','base_cooldown','k','censor_window','max_save_up']);
- for(const absent of ['get_portal','is_portal_set','get_censor','get_policy_version','get_config_hash'])assert.equal(artifact.functions.some(f=>f.name===absent),false);
- for(const present of ['update_portal','main_policy'])assert(artifact.functions.some(f=>f.name===present));
+ for(const absent of ['get_portal','is_portal_set','get_censor','get_policy_version'])assert.equal(artifact.functions.some(f=>f.name===absent),false);
+ for(const present of ['update_portal','main_policy','get_config_hash'])assert(artifact.functions.some(f=>f.name===present));
  const args=[Array(32).fill(Fr.ZERO),1n,11155111n,EthAddress.fromString('0x'+'11'.repeat(20)),3409706519n,1n,100n,60n,4n,60n,16n];
  assert.equal(encodeArguments(init,args).length,42);
  for(const [index,width]of [[1,16],[2,64],[4,32],[5,128],[6,128],[7,32],[8,16],[9,32],[10,16]]){const bad=args.slice();bad[index]=1n<<BigInt(width);assert.throws(()=>encodeArguments(init,bad));}
