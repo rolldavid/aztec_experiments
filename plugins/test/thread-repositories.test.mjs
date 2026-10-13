@@ -1,0 +1,48 @@
+// Actual local Git repositories. No GitHub, provider, generated-code execution or proofs.
+import test from 'node:test';import assert from 'node:assert/strict';
+import fs from 'node:fs/promises';import os from 'node:os';import path from 'node:path';
+import {threadRepositories,repositoryGit} from '../thread-repositories.mjs';
+const id=n=>'0x'+BigInt(n).toString(16).padStart(64,'0');
+async function fixture(t,git=repositoryGit){
+ const root=await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(),'bok-thread-')));t.after(()=>fs.rm(root,{recursive:true,force:true}));
+ const directory=path.join(root,'threads'),lease={assertHeld:async()=>{}},options={directory,namespace:'local-chain/board/plugin',lease,git};
+ const manager=threadRepositories(options),open=(n=1,thread=1,m=manager)=>m.open({threadId:id(thread),invocationId:id(n),repository:'owner/project'});
+ async function checkout(session){
+  if(session.readRevision)await repositoryGit(['clone','--no-hardlinks','--branch','accepted',session.repositoryPath,session.work]);
+  else{await repositoryGit(['init',session.work]);await fs.writeFile(path.join(session.work,'file.txt'),'initial');await repositoryGit(['add','.'],{cwd:session.work});await repositoryGit(['commit','-m','initial'],{cwd:session.work});}
+ }
+ return {root,options,manager,open,checkout};
+}
+test('actual accepted commit survives restart; failed invocation leaves previous source intact',async t=>{
+ const h=await fixture(t),first=await h.open();await h.checkout(first);await fs.writeFile(path.join(first.work,'file.txt'),'accepted');const receipt=await first.accept();assert.equal(receipt.readRevision,null);assert.match(receipt.acceptedRevision,/^[0-9a-f]{40}$/);await first.close();
+ const reopened=await h.open(2,1,threadRepositories(h.options));assert.equal(reopened.readRevision,receipt.acceptedRevision);await h.checkout(reopened);assert.equal(await fs.readFile(path.join(reopened.work,'file.txt'),'utf8'),'accepted');await fs.writeFile(path.join(reopened.work,'file.txt'),'unaccepted');await reopened.close();
+ const third=await h.open(3);await h.checkout(third);assert.equal(await fs.readFile(path.join(third.work,'file.txt'),'utf8'),'accepted');await third.close();
+ await assert.rejects(h.open(1),/already has an accepted revision/);
+});
+test('same-thread operations wait; a different thread opens independently',async t=>{
+ const h=await fixture(t),first=await h.open();let entered=false;
+ const next=h.open(2).then(s=>{entered=true;return s;});const other=await h.open(1,2);assert.equal(entered,false);assert.notEqual(first.repositoryPath,other.repositoryPath);await other.close();await first.close();const second=await next;assert.equal(entered,true);await second.close();
+});
+test('restart reconciles exact accepted ref after lost acknowledgement without rerunning invocation',async t=>{
+ let interrupt=true;const h=await fixture(t,async(args,options)=>{const result=await repositoryGit(args,options);if(args[0]==='update-ref'&&interrupt){interrupt=false;throw Error('lost acknowledgement');}return result;});
+ const first=await h.open();await h.checkout(first);await fs.writeFile(path.join(first.work,'file.txt'),'durable');await assert.rejects(first.accept(),/lost acknowledgement/);await first.close();
+ const second=await h.open(2,1,threadRepositories(h.options));assert.match(second.readRevision,/^[0-9a-f]{40}$/);await h.checkout(second);assert.equal(await fs.readFile(path.join(second.work,'file.txt'),'utf8'),'durable');await second.close();await assert.rejects(h.open(1),/already has an accepted revision/);
+});
+test('lease loss prevents acceptance; user paths and changed repository identity fail closed',async t=>{
+ const h=await fixture(t);await assert.rejects(h.manager.open({threadId:'../x',invocationId:id(1),repository:'owner/project'}));
+ const first=await h.open();await h.checkout(first);h.options.lease.assertHeld=async()=>{throw Error('lease lost');};await assert.rejects(first.accept(),/lease lost/);await first.close();
+ h.options.lease.assertHeld=async()=>{};await assert.rejects(h.manager.open({threadId:id(1),invocationId:id(2),repository:'different/project'}));
+});
+
+test('existing toolbox edits and accepts actual thread source across independent invocations',async t=>{
+ const {githubToolbox}=await import('../github-tools.mjs');const h=await fixture(t),seed=path.join(h.root,'seed');
+ await repositoryGit(['init',seed]);await fs.writeFile(path.join(seed,'hello.txt'),'start');await repositoryGit(['add','.'],{cwd:seed});await repositoryGit(['commit','-m','seed'],{cwd:seed});
+ let apiCalls=0;const api=async(method,route)=>{apiCalls++;if(route.includes('/git/commits/'))return {tree:{sha:'fixture-tree'}};if(route.includes('/git/trees/'))return {sha:'fixture-tree',truncated:false,tree:[{path:'hello.txt',type:'blob',size:5}]};return {default_branch:'main'};};
+ const toolbox=githubToolbox({repository:'owner/project',api,repositories:h.manager,runCommand:async(command,args,options)=>{assert.equal(command,'git');return repositoryGit(args.map(arg=>arg==='https://github.com/owner/project.git'?seed:arg),options);}});
+ const first=await toolbox.open({threadId:id(1),id:id(1),postId:id(9)});
+ assert(!first.definitions.some(d=>d.function.name==='create_pr'));
+ await first.call('write_file',{path:'hello.txt',content:'accepted from first participant'});const revision=await first.accept();await first.close();
+ const before=apiCalls,second=await toolbox.open({threadId:id(1),id:id(2),postId:id(10)});
+ assert.equal((await second.call('read_file',{path:'hello.txt'})).text,'accepted from first participant');assert.equal(apiCalls,before,'accepted local revision does not require invented remote commit');
+ await second.call('write_file',{path:'next.txt',content:'second participant'});const next=await second.accept();assert.equal(next.readRevision,revision.acceptedRevision);assert.notEqual(next.acceptedRevision,revision.acceptedRevision);await second.close();
+});

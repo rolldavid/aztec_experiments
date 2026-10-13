@@ -1,9 +1,8 @@
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
-import {execFile} from 'node:child_process';
-import {promisify} from 'node:util';
-const exec=promisify(execFile);
+import {repositoryGit} from './thread-repositories.mjs';
+const trustedCommand=(command,args,options)=>{if(command!=='git')throw Error('Unsupported repository command');return repositoryGit(args,options);};
 const definition=(name,description,properties,required=Object.keys(properties))=>({type:'function',function:{name,description,parameters:{type:'object',properties,required,additionalProperties:false}}});
 const string={type:'string'};
 const pathKey=name=>name.normalize('NFC').toLowerCase();
@@ -11,14 +10,21 @@ const pathKey=name=>name.normalize('NFC').toLowerCase();
 /** GitHub implementation of the agent tool API. Writes stay in a fresh branch.
  * API transport is supplied by the host; no token enters the working directory.
  */
-export function githubToolbox({repository,api,allowWrites=false,draftPr=false,runCommand=exec}) {
+export function githubToolbox({repository,api,allowWrites=false,draftPr=false,runCommand=trustedCommand,repositories}) {
   if(!/^[\w.-]+\/[\w.-]+$/.test(repository))throw Error('Invalid repository');
-  return {async open({postId}) {
-    const dir=await fs.mkdtemp(path.join(os.tmpdir(),'bok-')),work=path.join(dir,'repository');
+  return {async open({postId,threadId,id}) {
+    const workspace=repositories?await repositories.open({threadId,invocationId:id,repository}):null;
+    const dir=workspace?null:await fs.mkdtemp(path.join(os.tmpdir(),'bok-')),work=workspace?.work??path.join(dir,'repository');
     let prUrl=null,checkout,files;
     // Plain replies and PR reads do not need a checkout. Retain a rejected
     // initialization promise too: one invocation never silently retries cloning.
     const ensureCheckout=()=>checkout??=(async()=>{
+      if(workspace?.readRevision){
+        await runCommand('git',['clone','--no-hardlinks','--no-checkout','--branch','accepted',workspace.repositoryPath,work],{timeout:60000,maxBuffer:1024*1024});
+        const baseSha=(await runCommand('git',['rev-parse','HEAD'],{cwd:work})).stdout.trim();
+        if(baseSha!==workspace.readRevision)throw Error('Accepted repository revision changed');
+        return {base:null,baseSha};
+      }
       await runCommand('git',['clone','--depth','1','--filter=blob:none','--no-checkout','https://github.com/'+repository+'.git',work],{timeout:60000,maxBuffer:1024*1024});
       const info=await api('GET','/repos/'+repository);
       const baseSha=(await runCommand('git',['rev-parse','HEAD'],{cwd:work})).stdout.trim();
@@ -27,8 +33,18 @@ export function githubToolbox({repository,api,allowWrites=false,draftPr=false,ru
     // Download only files the tools can read. Keep omitted files in the Git
     // index so publishing a small edit never treats large artifacts as deleted.
     const ensureFiles=()=>files??=(async()=>{
-      const {baseSha}=await ensureCheckout(),commit=await api('GET',`/repos/${repository}/git/commits/${baseSha}`);
-      const tree=await api('GET',`/repos/${repository}/git/trees/${commit.tree.sha}?recursive=1`);
+      const {baseSha}=await ensureCheckout();let commit,tree;
+      if(workspace?.readRevision){
+        const listed=await runCommand('git',['ls-tree','-r','-l','-z',baseSha],{cwd:work,maxBuffer:4*1024*1024});
+        commit={tree:{sha:baseSha}};tree={sha:baseSha,truncated:false,tree:listed.stdout.split('\0').filter(Boolean).map(row=>{
+          const match=/^([0-7]+) (blob|commit) ([0-9a-f]{40}) +([0-9]+|-)\t(.+)$/s.exec(row);
+          if(!match||match[2]!=='blob')throw Error('Unsupported repository entry');
+          return {path:match[5],type:'blob',size:Number(match[4])};
+        })};
+      }else{
+        commit=await api('GET',`/repos/${repository}/git/commits/${baseSha}`);
+        tree=await api('GET',`/repos/${repository}/git/trees/${commit.tree.sha}?recursive=1`);
+      }
       if(tree.truncated!==false||tree.sha!==commit.tree.sha||!Array.isArray(tree.tree))throw Error('Incomplete repository tree');
       const oversized=new Set();
       for(const entry of tree.tree){
@@ -58,7 +74,7 @@ export function githubToolbox({repository,api,allowWrites=false,draftPr=false,ru
       definition('create_pr','Publish current edits as a new pull request; never merge',{title:string,body:string}),
     ];
     return {
-      definitions,
+      definitions:workspace?definitions.filter(x=>x.function.name!=='create_pr'):definitions,
       summary:reason=>(reason+(prUrl?' PR: '+prUrl:' No PR was published.')).slice(0,900),
       async call(name,args){
         if(name==='list_files'){if(typeof args.prefix!=='string')throw Error('Prefix required');await ensureCheckout();const listed=await runCommand('git',['ls-tree','-r','--name-only','-z','HEAD'],{cwd:work,maxBuffer:4*1024*1024});const files=listed.stdout.split('\0').filter(x=>x&&x.startsWith(args.prefix));return {files:files.slice(0,500),truncated:files.length>500};}
@@ -89,6 +105,7 @@ export function githubToolbox({repository,api,allowWrites=false,draftPr=false,ru
           return result;
         }
         if(name==='create_pr'){
+          if(workspace)throw Error('Thread publication requires the scoped revision publisher');
           if(!allowWrites)throw Error('GitHub writes are disabled');
           if(prUrl)throw Error('One PR per invocation');
           if(typeof args.title!=='string'||args.title.length>200||typeof args.body!=='string'||args.body.length>20000)throw Error('Invalid PR text');
@@ -109,7 +126,8 @@ export function githubToolbox({repository,api,allowWrites=false,draftPr=false,ru
         }
         throw Error('Unknown tool');
       },
-      close:()=>fs.rm(dir,{recursive:true,force:true}),
+      ...(workspace?{accept:async()=>{if(!checkout)return null;await ensureFiles();return workspace.accept();}}:{}),
+      close:()=>workspace?workspace.close():fs.rm(dir,{recursive:true,force:true}),
     };
   }};
 }

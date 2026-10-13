@@ -45,3 +45,9 @@ test('summary counts against the request model-call ceiling',async()=>{
  f.options.model.complete=async input=>{f.calls.push(input);return {message:input.modelId==='cheap'?{role:'assistant',content:'Summary'}:{role:'assistant',content:null,tool_calls:[{id:'1',function:{name:'read_file',arguments:'{}'}}]}};};
  assert.match((await f.run()).replyText,/step limit/);assert.equal(f.calls.length,2);
 });
+
+test('successful answer waits for host acceptance before closing invocation workspace',async()=>{
+ let closed=false,accepted=false;const toolbox={open:async()=>({definitions:[],summary:x=>x,accept:async()=>{await new Promise(resolve=>setImmediate(resolve));assert.equal(closed,false);accepted=true;return {acceptedRevision:'abc'};},close:async()=>{closed=true;}})};
+ const result=await createAgent({toolbox,instructions:'Help',model:{complete:async()=>({message:{role:'assistant',content:'Done'}})}}).run({id:'a',postId:'b',text:'Help'});
+ assert(accepted&&closed);assert.equal(result.revision.acceptedRevision,'abc');
+});
