@@ -354,3 +354,19 @@ for(const kind of ['private-fee','bok'])test(`direct ${kind} confirmed claim sur
  // The captured callback can observe a chain change after review, before send.
  f.options.verifyClaim=async()=>{};let canonical=true;f.options.verifyClaim=async()=>{if(!canonical)throw Error('claim changed after review');};const race=await f.open();await race.prepare(f.allocation);canonical=false;await assert.rejects(race.confirm(),/claim changed after review/);assert.equal(f.state.sends,1);
 });
+
+import {submitWithStandaloneTopupCheckpoint} from './aggregate-wallet.mjs';
+for(const kind of ['private-fee','bok'])test(`direct ${kind} manual over-cap claim checkpoints before send and retains confirmed successor`,async()=>{
+ const f=topupFixture(kind);f.state.allowance=1000n;let workflow;f.options.reconcileClaim=id=>workflow.open().reconcile(id);const funding=await f.open();await funding.prepare({...f.allocation,privateFeeCap:'1'});await funding.confirm();workflow=durableClaimApplication(f,funding);
+ const review=await advanceAggregateClaim({application:workflow.open(),funding});assert.equal(review.state,'review');assert.equal((await funding.inspect()).claim.attempted,false);assert.equal(workflow.state.sends,0);
+ const original=workflow.open(),application={...original,submitPrepared:async id=>{assert.equal((await funding.inspect()).claim.attempted,true);return original.submitPrepared(id);}};
+ const done=await submitWithStandaloneTopupCheckpoint({application,topups:{[kind]:funding},intentId:review.intent.intentId});assert.equal(done.status,'confirmed');assert.equal(workflow.state.sends,1);
+ f.options.reconcileClaim=async()=>{throw Error('later unrelated workflow');};await (await f.open()).prepare(f.allocation);assert.equal(f.state.sends,1);
+});
+
+test('direct top-up manual checkpoint rejects substituted receipt and leaves unrelated imported claim alone',async()=>{
+ const f=topupFixture(),funding=await f.open();f.state.allowance=1000n;await funding.prepare(f.allocation);const {receipt}=await funding.confirm();await funding.checkpointClaim({intentId:h(901),attempted:false});let sends=0;
+ const app=id=>({reconcile:async()=>({intentId:id,status:'prepared',action:{type:'claim-bok',receipt:{...receipt,amount:'999'}}}),submitPrepared:async()=>{sends++;return {status:'unknown'};}});
+ await assert.rejects(submitWithStandaloneTopupCheckpoint({application:app(h(901)),topups:{bok:funding},intentId:h(901)}),{code:'ROLLING_FUNDING_MISMATCH'});assert.equal(sends,0);assert.equal((await funding.inspect()).claim.attempted,false);
+ await submitWithStandaloneTopupCheckpoint({application:app(h(902)),topups:{bok:funding},intentId:h(902)});assert.equal(sends,1);assert.equal((await funding.inspect()).claim.attempted,false);
+});

@@ -377,6 +377,11 @@ export async function createStandaloneTopupWallet({sdk,ethers,kind,network,board
    return {receipt:{txHash:result.txHash,blockHash:result.receipt.blockHash.toLowerCase(),blockNumber:result.receipt.blockNumber,sender:result.request.from,nonce:String(result.request.nonce),amount:result.request.expected.amount,secretHash:result.request.expected.secretHash,messageKey:e.key,leafIndex:String(e.index)}};
   },
   async checkpointClaim(value){check(value&&Object.keys(value).sort().join()==='attempted,intentId'&&/^0x[0-9a-f]{64}$/.test(value.intentId)&&typeof value.attempted==='boolean');const {store,saved}=await stored();check(saved.value?.phase==='deposit'&&saved.value.intent,'RECOVERY_REQUIRED');if(saved.value.claim)check(saved.value.claim.intentId===value.intentId&&(!saved.value.claim.attempted||value.attempted),'RECOVERY_REQUIRED');await read(()=>store.write(saved,{...saved.value,claim:clone(value)}));},
+  async checkpointSubmission(intentId,receipt){
+   const {saved}=await stored();if(saved.value?.claim?.intentId!==intentId)return;
+   const original=(await cap.recover()).receipt;check(receipt&&Object.keys(receipt).sort().join()===Object.keys(original).sort().join()&&Object.keys(original).every(key=>receipt[key]===original[key]),'MISMATCH');
+   await cap.checkpointClaim({intentId,attempted:true});
+  },
   async recordConfirmedClaim(result){
    if(result?.status!=='confirmed'||result.action?.type!==(kind==='bok'?'claim-bok':'claim-private-fee'))return;
    const {store,saved}=await stored();if(!saved.value?.claim||saved.value.claim.intentId!==result.intentId)return;
@@ -392,4 +397,15 @@ export async function createStandaloneTopupWallet({sdk,ethers,kind,network,board
   },
  };
  return Object.freeze(cap);
+}
+
+// Used for the explicit fee-review path as well as ordinary application sends.
+// A durable attempt precedes submission, even if the response is lost.
+export async function submitWithStandaloneTopupCheckpoint({application,topups,intentId}){
+ const current=await application.reconcile(intentId),kind=current.action?.type==='claim-bok'?'bok':current.action?.type==='claim-private-fee'?'private-fee':null;
+ const funding=kind?topups?.[kind]:null;
+ if(current.status==='prepared'&&funding)await funding.checkpointSubmission(intentId,current.action.receipt);
+ const result=await application.submitPrepared(intentId);
+ if(result.status==='confirmed'&&funding)await funding.recordConfirmedClaim(result);
+ return result;
 }

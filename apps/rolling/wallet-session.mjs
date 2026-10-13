@@ -1,6 +1,6 @@
 // Load after explicit unlock. All SDK and custody dependencies are supplied by
 // the authenticated application bundle; no fixture or ordinary-node fallback.
-import {createAggregateWallet,createStandaloneTopupWallet,advanceAggregateClaim} from '../../shared/rolling/aggregate-wallet.mjs';
+import {createAggregateWallet,createStandaloneTopupWallet,advanceAggregateClaim,submitWithStandaloneTopupCheckpoint} from '../../shared/rolling/aggregate-wallet.mjs';
 import {createRollingColdPreferenceReader} from '../../shared/rolling/cold-preference-reader.mjs';
 import {createRollingCompactClient} from '../../shared/rolling/compact-client.mjs';
 import {createRollingPreferenceReader} from '../../shared/rolling/preference-reader.mjs';
@@ -195,7 +195,7 @@ export async function createRollingWalletSession({sdk,routing,ethers,config,boar
   if(!sdk.isTrustedPrivateNode(privateNode)||!sdk.isPrivatePXEForNode(pxe,privateNode)||privateWallet.aztecNode!==privateNode||privateWallet.pxe!==pxe||!routing.isPrivateWalletForNode(privateWallet,privateNode))throw fail('ROLLING_PRIVATE_ROUTE');
  }
  const synchronized=createSynchronizedRollingApplication({application:app,synchronize:async()=>{await pxe.sync();await initializeAccount();},contextGuard:guardRoute});
- const application=Object.freeze({...Object.fromEntries(Object.entries(synchronized).map(([name,call])=>[name,(...args)=>locked(async()=>{const result=await call(...args);if(['submitPrepared','reconcile'].includes(name)&&result?.status==='confirmed'){const kind=result.action?.type==='claim-bok'?'bok':result.action?.type==='claim-private-fee'?'private-fee':null;if(kind&&topups?.[kind])await topups[kind].recordConfirmedClaim(result);}return result;})])),
+ const application=Object.freeze({...Object.fromEntries(Object.entries(synchronized).map(([name,call])=>[name,(...args)=>locked(async()=>{const result=name==='submitPrepared'&&topups?await submitWithStandaloneTopupCheckpoint({application:synchronized,topups,intentId:args[0]}):await call(...args);if(name==='reconcile'&&result?.status==='confirmed'){const kind=result.action?.type==='claim-bok'?'bok':result.action?.type==='claim-private-fee'?'private-fee':null;if(kind&&topups?.[kind])await topups[kind].recordConfirmedClaim(result);}return result;})])),
   readPreferences:options=>locked(()=>readPreferences(options)),
   readColdPreferences:options=>locked(()=>readColdPreferences(options))});
  const privateFeeCap=((BigInt(selected.privateFee.gasSettings.gasLimits.daGas)+BigInt(selected.privateFee.gasSettings.teardownGasLimits.daGas))*BigInt(selected.privateFee.gasSettings.maxFeesPerGas.feePerDaGas)+(BigInt(selected.privateFee.gasSettings.gasLimits.l2Gas)+BigInt(selected.privateFee.gasSettings.teardownGasLimits.l2Gas))*BigInt(selected.privateFee.gasSettings.maxFeesPerGas.feePerL2Gas)).toString();
