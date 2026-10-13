@@ -775,3 +775,23 @@ remain explicit and block execution. No raw host text, arbitrary vendor/version
 string, environment, process argument or URL enters the receipt. The operator
 must validate this object and its new control-source hash before accepting a
 passing version receipt. This does not replace later genuine native proof tests.
+
+The native-only mode retains execution metadata across `systemctl start --wait`
+and the separate state read. A fixed drop-in declares
+`Before=rolling-native-version.service` on the **already-active** budget timer.
+Systemd file ordering dependencies retain the referenced unit; this direction
+follows the ordinary timer-before-service order. It adds no `Wants`, `Requires`,
+start/restart or stop propagation, and changes neither absolute shutdown time.
+After reloading, both timers must still be active and bounded ordering readbacks
+must show the incoming reference and no reverse edge before the binary starts.
+The version unit, `--wait`, strict exit/start-timestamp predicates, final shutdown
+and ordinary Linux qualification gate remain unchanged.
+
+Campaign2707 observed an independently reaped zero-exit matching version, but its
+later systemd read showed zero execution fields. The unchanged gate rejected it.
+Systemd's documented collection of inactive unreferenced units explains how such
+state can be lost; the historical collection itself was not captured. This
+reference repair requires an actual harmless Linux systemd lifecycle regression
+before another paid version attempt. Local transport doubles are not that proof.
+`RemainAfterExit=yes` alone is unsuitable because `--wait` would not complete;
+`CollectMode=inactive` is already the default and permits successful collection.

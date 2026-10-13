@@ -1192,6 +1192,34 @@ def native_fetch(url,path):
     try:os.fsync(directory)
     finally:os.close(directory)
 
+def native_ordering(unit):
+    if unit not in ('rolling-budget.timer',NATIVE_UNIT):raise ValueError('Invalid retention unit')
+    capture,raw=bounded_capture(['systemctl','show',unit,'--property=Before,After'],3,4096)
+    if capture['timeout'] or capture['returnCode']!=0 or not capture['reaped'] or capture['stdout']['truncated']:raise ValueError('Retention readback unavailable')
+    fields={}
+    for line in raw['stdout'].decode('ascii').splitlines():
+        key,value=line.split('=',1)
+        if key not in ('Before','After') or key in fields:raise ValueError('Invalid retention readback')
+        names=value.split()
+        if len(names)>128 or len(names)!=len(set(names)) or any(not re.fullmatch(r'[A-Za-z0-9_.:@\\-]{1,255}',name) for name in names):raise ValueError('Invalid retention dependencies')
+        fields[key]=set(names)
+    if set(fields)!={'Before','After'}:raise ValueError('Incomplete retention readback')
+    return fields
+
+def native_retain_execution():
+    # A file-declared ordering edge also holds a reference. The already-active
+    # timer retains this inactive service across --wait / show, without starting
+    # it. Before follows the normal timer -> basic.target -> service ordering.
+    # Neither timer deadline nor its activation/stop dependencies are changed.
+    write('/etc/systemd/system/rolling-budget.timer.d/native-version-reference.conf',
+          '[Unit]\nBefore='+NATIVE_UNIT+'\n',0o644)
+    run(['systemctl','daemon-reload'],timeout=5)
+    for timer in ('budget','commissioning'):
+        run(['systemctl','is-active','--quiet','rolling-'+timer+'.timer'],timeout=3)
+    timer=native_ordering('rolling-budget.timer');service=native_ordering(NATIVE_UNIT)
+    if NATIVE_UNIT not in timer['Before'] or NATIVE_UNIT in timer['After'] or 'rolling-budget.timer' not in service['After'] or 'rolling-budget.timer' in service['Before']:
+        raise ValueError('Retention ordering mismatch')
+
 def native_state():
     try:
         capture,raw=bounded_capture(['systemctl','show',NATIVE_UNIT,'--property=ActiveState,SubState,Result,ExecMainCode,ExecMainStatus,ExecMainStartTimestampMonotonic'],3,4096)
@@ -1272,7 +1300,7 @@ def native_execute(config,worker):
         native_fetch(config['binaryUrl'],NATIVE_ROOT/'bb')
         write(NATIVE_ROOT/'capture.py',worker,0o444)
         unit='[Unit]\nDescription=Closed public binary version diagnostic\nAfter=rolling-egress.service\n[Service]\nType=exec\nDynamicUser=yes\nStateDirectory=rolling-native-version\nStateDirectoryMode=0700\nExecStart=/usr/bin/python3 /opt/rolling-native-version/capture.py\nRestart=no\nRuntimeMaxSec=20s\nTimeoutStopSec=2s\nKillMode=control-group\nMemoryMax=512M\nMemorySwapMax=0\nCPUQuota=200%\nTasksMax=64\nUMask=0077\nNoNewPrivileges=yes\nCapabilityBoundingSet=\nPrivateNetwork=yes\nIPAddressDeny=any\nPrivateTmp=yes\nPrivateDevices=yes\nProtectSystem=strict\nProtectHome=yes\nProtectKernelTunables=yes\nProtectControlGroups=yes\nRestrictSUIDSGID=yes\nInaccessiblePaths=/var/lib/rolling-bootstrap-private /var/lib/cloud\nStandardOutput=null\nStandardError=null\n'
-        write('/etc/systemd/system/'+NATIVE_UNIT,unit,0o644);run(['systemctl','daemon-reload'],timeout=5)
+        write('/etc/systemd/system/'+NATIVE_UNIT,unit,0o644);native_retain_execution()
         receipt['stage']='version'
         try:run(['systemctl','start','--wait',NATIVE_UNIT],timeout=25)
         except Exception:pass # Exact state/result observed before stopping, never retry.
