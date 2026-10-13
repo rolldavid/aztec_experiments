@@ -118,6 +118,15 @@ export async function assertRollingNotificationPostText(card,expectedText){
  check(await card.locator(':scope > .post-body').textContent()===expectedText);
 }
 
+// Partial private recovery hides private feeds, not the independent public
+// Main board. Capture the expected route from the campaign phase, so navigation
+// to a public route cannot make a private-feed privacy failure pass.
+export async function assertRollingNotificationRecoveryVisibility(page,{publicBoard=false}={}){
+ check(typeof publicBoard==='boolean');
+ check(new URL(page.url()).hash===(publicBoard?'#/board/0':'#/notifications'));
+ if(!publicBoard)check(await page.locator('#content article.post').count()===0);
+}
+
 const stages=new Set(['validation','launch','locked','root-view','root-message','import','recover','subscribe-review','subscribe-send','wait-reply','unread','marker-review','marker-send','suppressed','lock','reopen','complete']);
 export const NOTIFICATION_BROWSER_CHECKS=Object.freeze(['freshNativeDatabase','publicBeforeUnlock','feeOnlyAccount','subscriptionReviewed','subscriptionConfirmed','subscriptionRecovered','unreadReply','markerReviewed','markerConfirmed','suppressedReply','publicReplyRetained','lockClears','reloadLocked','freshReopen','recoveredSuppression','noFinancialRecovery']);
 // Final transport/cleanup snapshot is taken AFTER all awaited browser teardown.
@@ -162,10 +171,10 @@ export async function runRollingNotificationBrowser(input){
   await newContext();
   const dialog=()=>page.getByRole('dialog',{name:'Your private account',exact:true});
   async function settled(ready){const state=await waitForRollingComposerState({dialog:dialog(),ready,remaining});if(state!=='ready'){report.diagnostic=state;throw failed();}}
-  async function recover({before=traffic(),requireCompact=false}={}){
+  async function recover({before=traffic(),requireCompact=false,publicBoard=false}={}){
    const d=dialog(),done=d.getByText('Your saved choices are ready.',{exact:true}),more=d.getByRole('button',{name:'Continue private recovery',exact:true});
    let next=d.getByRole('button',{name:'Recover private views',exact:true});report.actionStep='recovery-ready';await settled(next);
-   for(;;){report.actionStep='recovery-click';await next.click({timeout:remaining()});report.recoverySteps++;report.actionStep='recovery-result';await settled(done.or(more));unchanged(before);if(await done.isVisible())break;check(await page.locator('#content article.post').count()===0);next=more;}
+   for(;;){report.actionStep='recovery-click';await next.click({timeout:remaining()});report.recoverySteps++;report.actionStep='recovery-result';await settled(done.or(more));unchanged(before);if(await done.isVisible())break;await assertRollingNotificationRecoveryVisibility(page,{publicBoard});next=more;}
    check(await page.evaluate(async()=>(await indexedDB.databases()).length>0));
    const window=checkRollingColdRecoveryWindow(before,traffic(),{requireCompact});
    for(const key of ['windows','compactRequests','tagDiscoveryRequests'])report.coldRecovery[key]+=window[key];
@@ -196,7 +205,7 @@ export async function runRollingNotificationBrowser(input){
    await reviewRollingNotificationAction({dialog:dialog(),remaining,settled,reviewText,onStep:step=>{report.actionStep=step;},
     onReviewed:()=>{check(!traffic().writePhaseOpen);report.checks[kind==='subscription'?'subscriptionReviewed':'markerReviewed']=true;},
     onConfirm:()=>{observer.begin(kind);mark(kind==='subscription'?'subscribe-send':'marker-send');},
-    onConfirmed:()=>{observer.end();recoveryBefore=traffic();report.checks[kind==='subscription'?'subscriptionConfirmed':'markerConfirmed']=true;},recover:()=>recover({before:recoveryBefore})});
+    onConfirmed:()=>{observer.end();recoveryBefore=traffic();report.checks[kind==='subscription'?'subscriptionConfirmed':'markerConfirmed']=true;},recover:()=>recover({before:recoveryBefore,publicBoard:kind==='subscription'})});
    report.actionStep='close-recovered-panel';await dialog().getByRole('button',{name:'Close account panel',exact:true}).click({timeout:remaining()});
   }
   mark('locked');await importKeys();report.checks.freshNativeDatabase=true;report.checks.publicBeforeUnlock=true;
