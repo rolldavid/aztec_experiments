@@ -133,10 +133,17 @@ The isolated executor needs its pinned container runtime/image; Aztec devnet
 itself does not require Docker. Test and build generated code with no network,
 fixed resource limits and verified owned-container cleanup.
 
-Use the dedicated-organization GitHub App broker for source mirrors, not a broad
-developer PAT. Register/install the App under the operator's dedicated organization
-and verify its restricted permissions before activation. Missing App installation
-is a concrete service prerequisite, not permission to use unrelated organizations.
+Use a dedicated GitHub App installed on the owner's personal `zac-williamson`
+account (User ID1476668), as directed by the owner on 13 October 2026. Select only
+Bok-owned repositories; the broker rejects an installation covering all personal
+repositories. App registration and installation remain service prerequisites.
+Repository creation uses an installation token with `administration:write` and
+`POST /user/repos`; GitHub automatically grants the App access to repositories it
+creates. This permission is broader than creation: the selected-repository
+boundary protects unrelated repositories. Source writes use a separate token
+restricted to the exact new repository ID with `contents:write`. Do not use an
+unrelated repository as a setup seed. Keep the private App key in operator-only
+configuration, never in source, model prompts or generated-code processes.
 See the current broker instructions in [plugin deployment](../plugins/DEPLOYMENT.md).
 
 Artifact latest links and source downloads identify the same current revision.

@@ -6,7 +6,7 @@
   "operatorAddress": "REPLACE_WITH_PUBLIC_BOK_OPERATOR_ADDRESS",
   "operatorFile": "/absolute/private/path/operator.json",
   "stateDirectory": "/absolute/private/path/bok-state",
-  "repository": "YOUR_ORGANIZATION/YOUR_AUTHORIZED_REFERENCE_REPOSITORY",
+  "repository": "zac-williamson/YOUR_AUTHORIZED_REFERENCE_REPOSITORY",
   "pluginId": "REPLACE_WITH_CANONICAL_REGISTERED_BOK_PLUGIN_ID",
   "summaryModelId": "REPLACE_WITH_VERIFIED_CHEAPER_MODEL_ID",
   "descriptor": {
@@ -41,8 +41,8 @@
   },
   "githubApp": {
     "enabled": false,
-    "organization": "YOUR_DEDICATED_ORGANIZATION",
-    "organizationId": "REPLACE_WITH_INTEGER_ORGANIZATION_ID",
+    "owner": "zac-williamson",
+    "ownerId": 1476668,
     "appId": "REPLACE_WITH_INTEGER_APP_ID",
     "installationId": "REPLACE_WITH_INTEGER_INSTALLATION_ID",
     "privateKeyFile": "/absolute/private/path/github-app.pem"
