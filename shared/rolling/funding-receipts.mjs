@@ -9,7 +9,7 @@ import {DomainSeparator, L1_TO_L2_MSG_TREE_HEIGHT} from '@aztec-labs/constants';
 import {poseidon2HashWithSeparator} from '@aztec-labs/foundation/crypto/poseidon';
 import {computeSecretHash} from '@aztec-labs/stdlib/hash';
 import {deriveBoardDepositSecret} from '../deposit-custody.mjs';
-import {recoverPrivateFeeClaim, captureAggregateFundingIntent, PrivateFeeFundingError} from '../private-fee-funding.mjs';
+import {recoverPrivateFeeClaim, captureAggregateFundingIntent, captureAggregateFundingCustody, PrivateFeeFundingError} from '../private-fee-funding.mjs';
 import {verifyEthereumIntentReceipt} from '../ethereum-journal.mjs';
 import {isTrustedPrivateNode} from '../trusted-private-node.mjs';
 import {encodeEscrowCommitment, sha256Field} from '../protocol-commitments.mjs';
@@ -72,6 +72,9 @@ function validated(input) {
  * Bok's event omits the secret hash: bind exact direct calldata, or optional aggregateIntent
  * from the private wallet's original journal (never public imported receipt). Aggregate
  * recovery checks the exact transaction, pinned router runtime and ALL three effects.
+ * USDC additionally requires private aggregateCustody bound to the original plan;
+ * collateral must load its saved secret under the beneficiary (never the relayer),
+ * and FPC uses the encrypted retained random salt. Public receipt sender/nonce stay unchanged.
  * Finalized L1 is a reversible engineering default for this slice, not a new product
  * latency requirement. Absence, pending finality/delivery, mismatch, reorg and unknown
  * remain distinct. No polling/retry, nullifier query, automatic claim or transaction API.
@@ -89,6 +92,8 @@ export async function prepareFundingClaim(input) {
     // object must not permit a route or guard change during verification.
     const aggregateDescriptor=Object.getOwnPropertyDescriptor(input,'aggregateIntent');requireThat(!aggregateDescriptor || 'value' in aggregateDescriptor,'INVALID');
     const aggregateIntent=captureAggregateFundingIntent(aggregateDescriptor?.value);
+    const custodyDescriptor=Object.getOwnPropertyDescriptor(input,'aggregateCustody');requireThat(!custodyDescriptor || 'value' in custodyDescriptor,'INVALID');
+    const aggregateCustody=captureAggregateFundingCustody(custodyDescriptor?.value,aggregateIntent);
     const guard=input.contextGuard, privateFeeArtifact=input.privateFeeArtifact;
     const suppliedNode=input.node, suppliedProvider=input.ethProvider, suppliedStore=input.claimStore;
     requireThat(isTrustedPrivateNode(suppliedNode),'UNTRUSTED_NODE');
@@ -97,6 +102,7 @@ export async function prepareFundingClaim(input) {
     const providerMethods=['getNetwork','getTransactionReceipt','getTransaction','getBlock','call',...(aggregateIntent?['getCode']:[])];
     const providerReads=capture(suppliedProvider,providerMethods);
     const loadClaim=suppliedStore===undefined ? null : capture(suppliedStore,['load']).load;
+    if(aggregateCustody && kind==='collateral')requireThat(loadClaim,'INVALID');
     const deadline=Date.now()+20000;
     const read=async fn=>{
       let timer;try {
@@ -132,6 +138,7 @@ export async function prepareFundingClaim(input) {
         && aggregateIntent.expected[portalKey]===s.portal && (!aggregateIntent.txHash || aggregateIntent.txHash===r.txHash));
       let verified;try{verified=await verifyEthereumIntentReceipt(provider,aggregateIntent,r.txHash);}catch{throw fail(readFailed?'UNKNOWN':'MISMATCH');}
       requireThat(verified?.outcome==='success' && verified.receipt.blockNumber===r.blockNumber && equal(verified.receipt.blockHash,r.blockHash));
+      if(aggregateCustody)requireThat(verified.event.beneficiary===aggregateCustody.beneficiary);
       aggregate=verified.event[kind==='private-fee'?'privateFee':kind];
       requireThat(aggregate.amount===r.amount && aggregate.secretHash===r.secretHash && aggregate.messageKey===r.messageKey && aggregate.leafIndex===r.leafIndex);
     }
@@ -140,20 +147,22 @@ export async function prepareFundingClaim(input) {
     let content,secret,claim,messageRecipient=s.recipient;
     if(kind==='collateral') {
       for(const [name,value] of [['ROLLUP',s.rollup],['L2_CONTRACT',s.recipient],['VERSION',s.version],['L1_CHAIN_ID',s.chainId]])requireThat(equal(await call(s.portal,boardAbi,name),value));
-      const custodyScope={...boardScope,depositor:r.sender};
+      const depositor=aggregateCustody?.beneficiary ?? r.sender;
+      const custodyScope={...boardScope,depositor};
       const saved=loadClaim ? await read(()=>loadClaim(custodyScope,r.secretHash)) : null;
+      if(aggregateCustody)requireThat(saved,'INVALID');
       const derived=saved ?? await deriveBoardDepositSecret({...secrets,scope:custodyScope,owner,nonce:r.nonce});
       secret=field(derived.secret);requireThat(derived.secretHash===r.secretHash);
       const record={from:r.sender,to:s.portal,nonce:Number(r.nonce),chainId:s.chainId,data:boardAbi.encodeFunctionData('deposit',[r.secretHash]).toLowerCase(),value:r.amount,
         expected:{kind:'deposit',amount:r.amount,secretHash:r.secretHash}};
       if(!aggregate){let result;try{result=await verifyEthereumIntentReceipt(provider,record,r.txHash);}catch{throw fail(readFailed?'UNKNOWN':'MISMATCH');}
         requireThat(result?.outcome==='success' && equal(result.event.key,r.messageKey) && String(result.event.index)===r.leafIndex);}
-      content=await sha256Field(encodeEscrowCommitment('claim',boardScope,{depositor:r.sender,amount:r.amount}));
-      claim={contract:s.recipient,method:'claim_deposit',args:[r.sender,r.amount,secret,r.leafIndex]};
+      content=await sha256Field(encodeEscrowCommitment('claim',boardScope,{depositor,amount:r.amount}));
+      claim={contract:s.recipient,method:'claim_deposit',args:[depositor,r.amount,secret,r.leafIndex]};
     } else if(kind==='private-fee') {
       const record={schema:'private-fee-funding-v1',chainId:s.chainId,version:s.version,rollupAddress:s.rollup,portalAddress:s.portal,tokenAddress:s.token,privateFeeAddress:s.recipient,
         sender:r.sender,nonce:r.nonce,amount:r.amount,txHash:r.txHash,leafIndex:r.leafIndex};
-      const recovered=await recoverPrivateFeeClaim({node,ethProvider:provider,owner:new AztecAddress(Fr.fromString(owner)),walletSecret:secrets.walletSecret,privateFeeArtifact,record,aggregateIntent,expectedChainId:s.chainId,expectedVersion:s.version});
+      const recovered=await recoverPrivateFeeClaim({node,ethProvider:provider,owner:new AztecAddress(Fr.fromString(owner)),walletSecret:secrets.walletSecret,privateFeeArtifact,record,aggregateIntent,aggregateCustody,expectedChainId:s.chainId,expectedVersion:s.version});
       requireThat(equal(recovered.messageKey,r.messageKey));secret=recovered.secret.toString();
       // The existing helper owns deterministic FPC verification and derivation;
       // repeat only immutable L1 bindings at the receipt anchor (helper uses latest).

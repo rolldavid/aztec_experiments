@@ -1,6 +1,7 @@
 import {validateAggregateFundingIntent} from './rolling/aggregate-recovery.mjs';
 import {createEthereumJournal,verifyEthereumIntentReceipt} from './ethereum-journal.mjs';
-// User-funded Fee Juice bridge. Recovery metadata is public; secrets derive from the existing wallet key.
+// User-funded Fee Juice bridge. Public recovery metadata never contains custody.
+// Direct/ETH secrets derive from the wallet key; USDC uses an encrypted retained random salt.
 import { Interface, getAddress } from 'ethers';
 import { computeFeeJuiceMessageNullifier } from '@aztec-labs/stdlib/messaging';
 import { siloNullifier } from '@aztec-labs/stdlib/hash';
@@ -76,11 +77,28 @@ export function captureAggregateFundingIntent(input) {
   r.expected=capture(r.expected,['kind','routerCodeHash','collateralPortal','feePortal','bokPortal','privateFpc','planHash']);
   for(const key of ['from','to'])check(typeof r[key]==='string' && /^0x[0-9a-f]{40}$/.test(r[key]) && BigInt(r[key])>0n,invalid);
   check(Number.isSafeInteger(r.nonce) && r.nonce>=0 && typeof r.chainId==='string' && /^[1-9][0-9]{0,19}$/.test(r.chainId) && BigInt(r.chainId)<2n**64n,invalid);
-  check(typeof r.data==='string' && /^0x(?:[0-9a-f]{2})+$/.test(r.data) && r.data.length<=16384 && typeof r.value==='string' && /^[1-9][0-9]{0,77}$/.test(r.value),invalid);
+  check(typeof r.data==='string' && /^0x(?:[0-9a-f]{2})+$/.test(r.data) && r.data.length<=16384 && typeof r.value==='string' && /^(0|[1-9][0-9]{0,77})$/.test(r.value) && (r.expected.kind==='aggregate-usdc-funding' || r.value!=='0'),invalid);
   const hash=Object.getOwnPropertyDescriptor(input,'txHash');
   if(hash){check('value' in hash && (hash.value===null || typeof hash.value==='string' && /^0x[0-9a-f]{64}$/.test(hash.value)),invalid);r.txHash=hash.value;}
   try{validateAggregateFundingIntent(r);}catch{throw new PrivateFeeFundingError(invalid);}
   Object.freeze(r.expected);return Object.freeze(r);
+}
+/** Captured only from the private wallet's encrypted original funding context.
+ * A random retained FPC salt avoids confusing a relayer transaction nonce with
+ * either a beneficiary's transaction nonce or the collateral consent nonce. */
+export function captureAggregateFundingCustody(input,intent) {
+  const invalid='PRIVATE_FEE_RECOVERY_TRANSACTION_MISMATCH';
+  const usdc=intent?.expected.kind==='aggregate-usdc-funding';
+  if(!usdc){check(input===undefined,invalid);return undefined;}
+  const keys=['kind','planHash','beneficiary','privateFeeSalt'];
+  check(input && [Object.prototype,null].includes(Object.getPrototypeOf(input)) && Reflect.ownKeys(input).length===keys.length,invalid);
+  const r={};for(const key of keys){const d=Object.getOwnPropertyDescriptor(input,key);check(d && 'value' in d,invalid);r[key]=d.value;}
+  check(r.kind==='aggregate-usdc-custody-v1' && r.planHash===intent.expected.planHash && typeof r.beneficiary==='string'
+    && /^0x[0-9a-f]{40}$/.test(r.beneficiary) && BigInt(r.beneficiary)>0n && typeof r.privateFeeSalt==='string'
+    && /^0x[0-9a-f]{64}$/.test(r.privateFeeSalt) && BigInt(r.privateFeeSalt)>0n && BigInt(r.privateFeeSalt)<21888242871839275222246405745257275088548364400416034343698204186575808495617n,invalid);
+  let plan;try{plan=validateAggregateFundingIntent(intent);}catch{throw new PrivateFeeFundingError(invalid);}
+  check(plan.beneficiary.toLowerCase()===r.beneficiary,invalid);
+  return Object.freeze(r);
 }
 function validRecord(record){
   check(record&&record.schema===SCHEMA,'PRIVATE_FEE_RECOVERY_INVALID');
@@ -173,9 +191,12 @@ export async function recoverPrivateFeeClaim(input){
       rollupAddress:address(recordData.rollupAddress),portalAddress:address(recordData.portalAddress),tokenAddress:address(recordData.tokenAddress),
       privateFeeAddress:secretField(recordData.privateFeeAddress).toString(),sender:address(recordData.sender),nonce:uint(recordData.nonce,64).toString(),amount:uint(recordData.amount).toString(),
       ...(recordData.leafIndex===undefined?{}:{leafIndex:uint(recordData.leafIndex,254).toString()})}), aggregateIntent=captureAggregateFundingIntent(aggregateDescriptor?.value);
+    const custodyDescriptor=Object.getOwnPropertyDescriptor(input,'aggregateCustody');check(!custodyDescriptor || 'value' in custodyDescriptor,'PRIVATE_FEE_RECOVERY_INVALID');
+    const aggregateCustody=captureAggregateFundingCustody(custodyDescriptor?.value,aggregateIntent);
     const scope=await verifyScope({node,ethProvider,privateFeeArtifact,privateFeeAddress:record.privateFeeAddress,expectedChainId,expectedVersion});
     check(Object.entries(scope).every(([key,value])=>eq(value,record[key])),'PRIVATE_FEE_RECOVERY_SCOPE_MISMATCH');
-    const {salt,secret,secretHash}=await claimSecrets({walletSecret,owner,record});
+    const retainedSalt=aggregateCustody ? Fr.fromString(aggregateCustody.privateFeeSalt) : null;
+    const {salt,secret,secretHash}=aggregateCustody ? {salt:retainedSalt,secret:await derivePrivateFeeBridgeSecret({salt:retainedSalt,owner}),secretHash:await derivePrivateFeeBridgeSecretHash({salt:retainedSalt,owner})} : await claimSecrets({walletSecret,owner,record});
     const [receipt,transaction]=await Promise.all([ethProvider.getTransactionReceipt(record.txHash),ethProvider.getTransaction(record.txHash)]);
     check(receipt&&transaction,'PRIVATE_FEE_RECOVERY_PENDING');
     check(receipt.status===1,'PRIVATE_FEE_RECOVERY_REVERTED');
@@ -192,6 +213,7 @@ export async function recoverPrivateFeeClaim(input){
     try { verified=await verifyEthereumIntentReceipt(ethProvider,intent,record.txHash.toLowerCase()); }
     catch { throw new PrivateFeeFundingError('PRIVATE_FEE_RECOVERY_TRANSACTION_MISMATCH'); }
     check(verified?.outcome==='success','PRIVATE_FEE_RECOVERY_TRANSACTION_MISMATCH');
+    if(aggregateCustody)check(verified.event.beneficiary===aggregateCustody.beneficiary,'PRIVATE_FEE_RECOVERY_EVENT_MISMATCH');
     const event=aggregateIntent ? {key:verified.event.privateFee.messageKey,index:verified.event.privateFee.leafIndex} : verified.event;
     if(aggregateIntent)check(verified.event.privateFee.amount===String(record.amount) && verified.event.privateFee.secretHash===secretHash.toString(),'PRIVATE_FEE_RECOVERY_EVENT_MISMATCH');
     const leafIndex=new Fr(uint(event.index,254));
