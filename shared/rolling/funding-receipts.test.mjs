@@ -3,7 +3,7 @@
 import test,{before,after} from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import {AbiCoder,Interface,encodeBytes32String,getBytes} from 'ethers';
+import {AbiCoder,Interface,encodeBytes32String,getBytes,keccak256} from 'ethers';
 import {BlockHeader} from '@aztec-labs/stdlib/tx';
 import {AppendOnlyTreeSnapshot} from '@aztec-labs/stdlib/trees';
 import {L1ContractsNames} from '@aztec-labs/ethereum/l1-contract-addresses';
@@ -23,6 +23,7 @@ import {BarretenbergSync} from '@aztec-foundation/bb.js';
 import {deriveBoardDepositSecret} from '../deposit-custody.mjs';
 import {derivePrivateFeeInstance,derivePrivateFeeBridgeSecret} from '../private-fee-client.mjs';
 import {sha256Field} from '../protocol-commitments.mjs';
+import {aggregateFundingAbi} from './aggregate-funding.mjs';
 import {prepareFundingClaim} from './funding-receipts.mjs';
 const h=n=>'0x'+BigInt(n).toString(16).padStart(64,'0'),addr=n=>'0x'+BigInt(n).toString(16).padStart(40,'0');
 const common=['function ROLLUP() view returns(address)','function VERSION() view returns(uint256)'];
@@ -168,3 +169,51 @@ test('mutation during guard await cannot replace captured custody-store capabili
  store.load=async()=>{wrong++;throw Error('Replaced store method');};f.input.claimStore={load:async()=>{wrong++;throw Error('Replaced store');}};
  release();assert.equal((await pending).status,'claim-ready');assert.equal(calls,1);assert.equal(wrong,0);
 });
+
+// Aggregate route uses the same real SDK hash/Merkle fixtures and an exact original
+// journal intent. Other legs have labelled public event fixtures; no payment occurs.
+async function aggregateFixture(kind='collateral') {
+ const f=await fixture(kind),r=f.input.receipt,s=f.input.scope,abi=new Interface(aggregateFundingAbi);
+ const portals={collateralPortal:kind==='collateral'?s.portal:addr(60),feePortal:kind==='private-fee'?s.portal:addr(61),bokPortal:kind==='bok'?s.portal:addr(62)};
+ const plan={beneficiary:r.sender,collateral:'5000',collateralSecretHash:kind==='collateral'?r.secretHash:h(30),
+  fee:{amount:'5000',maxEth:'100',poolFee:3000},feeSecretHash:kind==='private-fee'?r.secretHash:h(31),
+  bok:{amount:'5000',maxEth:'200',poolFee:500},bokCommitment:kind==='bok'?f.eventArgs[0]:h(32),bokSecretHash:kind==='bok'?r.secretHash:h(33),nonce:'99',deadline:'2000000000'};
+ const hash=keccak256(AbiCoder.defaultAbiCoder().encode([abi.getFunction('fund').inputs[0]],[plan]));
+ const log=(address,contract,name,args)=>({address,...contract.encodeEventLog(contract.getEvent(name),args)});
+ const selected=f.state.receipt.logs[0];
+ f.state.receipt.logs=[log(addr(63),abi,'Funded',[r.sender,hash,5000,5000,5000,50,100,150]),
+  kind==='collateral'?selected:log(portals.collateralPortal,boardAbi,'Deposited',[r.sender,5000,plan.collateralSecretHash,h(34),4]),
+  kind==='private-fee'?selected:log(portals.feePortal,feeAbi,'DepositToAztecPublic',[canonical.address.toString(),5000,plan.feeSecretHash,h(35),5]),
+  kind==='bok'?selected:log(portals.bokPortal,bokAbi,'Deposited',[plan.bokCommitment,5000,h(36),6])];
+ f.state.tx={...f.state.tx,to:addr(63),value:5300n,data:abi.encodeFunctionData('fund',[plan,'0x1234']).toLowerCase()};f.state.receipt.to=addr(63);
+ f.input.ethProvider.getCode=async(address,block)=>{assert.equal(address,addr(63));assert.equal(block,6);return '0x6000';};
+ f.input.aggregateIntent={from:r.sender,to:addr(63),nonce:Number(r.nonce),chainId:s.chainId,data:f.state.tx.data,value:'5300',txHash:r.txHash,
+  expected:{kind:'aggregate-funding',routerCodeHash:keccak256('0x6000'),...portals,privateFpc:canonical.address.toString(),planHash:hash}};
+ return {...f,plan,routerAbi:abi};
+}
+for(const kind of ['collateral','private-fee','bok'])test(`aggregate ${kind} prepares only canonical exact funded private claim`,async()=>{
+ const f=await aggregateFixture(kind),result=await prepareFundingClaim(f.input);assert.equal(result.status,'claim-ready');assert.equal(result.evidence.txHash,f.input.receipt.txHash);
+ assert(!JSON.stringify(result.evidence).includes(f.secret));assert(!JSON.stringify(result.evidence).includes('aggregateIntent'));
+ if(kind==='collateral')assert.equal(result.claim.args[2],f.secret);
+ if(kind==='private-fee')assert.equal(result.claim.bridgeClaim.amount,'5000');
+ if(kind==='bok')assert.equal(result.claim.args[2],f.secret);
+});
+for(const [label,mutate] of [
+ ['missing other allocation event',f=>f.state.receipt.logs.splice(2,1)],
+ ['wrong router bytecode',f=>{f.input.ethProvider.getCode=async()=> '0x6001';}],
+ ['changed original calldata',f=>{f.state.tx.data=f.routerAbi.encodeFunctionData('fund',[{...f.plan,bokSecretHash:h(99)},'0x1234']);}],
+ ['changed retained hash',f=>{f.input.aggregateIntent.txHash=h(99);}],
+ ['wrong consent versus Ethereum nonce',f=>{f.input.aggregateIntent.nonce=99;}],
+ ['wrong scoped portal',f=>{f.input.aggregateIntent.expected.collateralPortal=addr(99);}],
+ ['duplicate event',f=>f.state.receipt.logs.push(f.state.receipt.logs[3])],
+ ['wrong total accounting',f=>{f.state.receipt.logs[0]={address:addr(63),...f.routerAbi.encodeEventLog(f.routerAbi.getEvent('Funded'),[f.input.receipt.sender,f.input.aggregateIntent.expected.planHash,5000,5000,5000,50,100,151])};}],
+])test(`aggregate rejects ${label} before claim`,async()=>{const f=await aggregateFixture();mutate(f);await assert.rejects(prepareFundingClaim(f.input),{code:'ROLLING_FUNDING_MISMATCH'});assert(!f.state.reads.includes('witness'));});
+test('aggregate context cannot be imported through public receipt',async()=>{const f=await aggregateFixture('bok');f.input.receipt.aggregateIntent=f.input.aggregateIntent;delete f.input.aggregateIntent;await assert.rejects(prepareFundingClaim(f.input),{code:'ROLLING_FUNDING_INVALID'});});
+test('aggregate expected getters are not invoked and captured intent survives await mutation',async()=>{
+ const f=await aggregateFixture();let touched=0;Object.defineProperty(f.input.aggregateIntent.expected,'routerCodeHash',{get(){touched++;return keccak256('0x6000');}});await assert.rejects(prepareFundingClaim(f.input));assert.equal(touched,0);
+ const g=await aggregateFixture('private-fee'),original=g.input.contextGuard;g.input.contextGuard=async()=>{g.input.aggregateIntent.expected.feePortal=addr(99);g.input.aggregateIntent.data='0x';await original();};assert.equal((await prepareFundingClaim(g.input)).status,'claim-ready');
+});
+test('aggregate Bok preserves private recipient binding and FPC preserves deterministic owner binding',async()=>{for(const kind of ['bok','private-fee']){const f=await aggregateFixture(kind);f.input.owner=h(99);await assert.rejects(prepareFundingClaim(f.input));}});
+test('aggregate claim still rejects post-witness reorg and waits for L1 finality',async()=>{const f=await aggregateFixture('bok');f.state.finalized.number=5;assert.deepEqual(await prepareFundingClaim(f.input),{status:'waiting',reason:'l1-finality'});const g=await aggregateFixture('private-fee'),original=g.backend.getL1ToL2MessageMembershipWitness;g.backend.getL1ToL2MessageMembershipWitness=async(...a)=>{const value=await original(...a);g.state.blockHash=h(999);return value;};await assert.rejects(prepareFundingClaim(g.input),{code:'ROLLING_FUNDING_REORG'});});
+
+test('aggregate context property accessor cannot execute during claim preparation',async()=>{const f=await aggregateFixture();let touched=0;Object.defineProperty(f.input,'aggregateIntent',{get(){touched++;throw Error('PRIVATE_SENTINEL');}});await assert.rejects(prepareFundingClaim(f.input),{code:'ROLLING_FUNDING_INVALID'});assert.equal(touched,0);});

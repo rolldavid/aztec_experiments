@@ -1,3 +1,6 @@
+export {createEncryptedJournalSlot} from './journal-record.mjs';
+export {prepareAggregateFunding, aggregateFundingTransaction} from './rolling/aggregate-funding.mjs';
+export {validateAggregateFundingIntent, verifyAggregateFundingEffects} from './rolling/aggregate-recovery.mjs';
 import './browser-runtime-policy.mjs';
 export {prepareFundingClaim} from './rolling/funding-receipts.mjs';
 
@@ -22,7 +25,7 @@ export { Contract, ContractFunctionInteraction, BatchCall, DeployMethod, NO_WAIT
 export { NO_FROM } from '@aztec-labs/aztec.js/account';
 export { createPrivateFeeDeployment, normalizePrivateFeeGasSettings, preparePrivateFeePayment, derivePrivateFeeInstance, derivePrivateFeeBridgeSecret, derivePrivateFeeAddress } from './private-fee-client.mjs';
 export { ensureOnboardingFees } from './fee-onboarding.mjs';
-export { fundPrivateFees, recoverPrivateFeeClaim, recoverPrivateFeeFunding, isPrivateFeeClaimConsumed } from './private-fee-funding.mjs';
+export { fundPrivateFees, recoverPrivateFeeClaim, recoverPrivateFeeFunding, isPrivateFeeClaimConsumed, claimSecrets } from './private-fee-funding.mjs';
 export { EventSelector, decodeFunctionSignature } from '@aztec-labs/stdlib/abi';
 export { FunctionCall, FunctionSelector, FunctionType, encodeArguments, loadContractArtifact } from '@aztec-labs/aztec.js/abi';
 export { Capsule, HashedValues, ExecutionPayload, TxExecutionRequest, TxHash } from '@aztec-labs/aztec.js/tx';

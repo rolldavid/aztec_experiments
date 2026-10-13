@@ -5,13 +5,14 @@ import {createBrowserJournalStorage} from '../shared/journal-indexeddb.mjs';
 import test,{before,after} from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { Interface } from 'ethers';
+import { Interface, AbiCoder, keccak256 } from 'ethers';
 import { Fr } from '@aztec-labs/foundation/curves/bn254';
 import { AztecAddress } from '@aztec-labs/stdlib/aztec-address';
 import { BarretenbergSync } from '@aztec-foundation/bb.js';
 import { ProtocolContractAddress } from '@aztec-labs/protocol-contracts';
 import { derivePrivateFeeAddress,derivePrivateFeeInstance } from '../shared/private-fee-client.mjs';
-import { fundPrivateFees,recoverPrivateFeeClaim,recoverPrivateFeeFunding } from '../shared/private-fee-funding.mjs';
+import { fundPrivateFees,recoverPrivateFeeClaim,recoverPrivateFeeFunding,claimSecrets,captureAggregateFundingIntent } from '../shared/private-fee-funding.mjs';
+import {aggregateFundingAbi} from '../shared/rolling/aggregate-funding.mjs';
 const portal=new Interface(['function ROLLUP() view returns(address)','function UNDERLYING() view returns(address)','function VERSION() view returns(uint256)','function L2_TOKEN_ADDRESS() view returns(bytes32)',
   'function depositToAztecPublic(bytes32 to,uint256 amount,bytes32 secretHash) returns(bytes32 key,uint256 index)','event DepositToAztecPublic(bytes32 indexed to,uint256 amount,bytes32 secretHash,bytes32 key,uint256 index)']);
 const token=new Interface(['function balanceOf(address) view returns(uint256)','function allowance(address,address) view returns(uint256)','function approve(address,uint256) returns(bool)','event Approval(address indexed owner,address indexed spender,uint256 value)']);
@@ -164,3 +165,32 @@ for(const change of ['emitter','recipient','amount','secret','duplicate','sender
  }
  await assert.rejects(f.recover(record));assert.equal(f.state.calls.length,2);
 });
+
+async function aggregateClaimFixture(){
+ const f=fixture(),record={schema:'private-fee-funding-v1',chainId:'1',version:'2',rollupAddress:rollup,portalAddress,tokenAddress,privateFeeAddress:privateFeeAddress.toString(),sender,nonce:'7',amount:'4000',txHash,leafIndex:'9'};
+ const secrets=await claimSecrets({walletSecret:f.input.walletSecret,owner:f.input.owner,record});
+ const h=n=>'0x'+BigInt(n).toString(16).padStart(64,'0'),a=n=>'0x'+BigInt(n).toString(16).padStart(40,'0');
+ const router=new Interface(aggregateFundingAbi),board=new Interface(['event Deposited(address indexed depositor,uint128 amount,bytes32 secretHash,bytes32 key,uint256 index)']),bok=new Interface(['event Deposited(bytes32 indexed account,uint128 amount,bytes32 key,uint256 index)']);
+ const plan={beneficiary:sender,collateral:100n,collateralSecretHash:h(101),fee:{amount:4000n,maxEth:200n,poolFee:3000},feeSecretHash:secrets.secretHash.toString(),bok:{amount:300n,maxEth:300n,poolFee:500},bokCommitment:h(102),bokSecretHash:h(103),nonce:99n,deadline:2000000000n};
+ const planHash=keccak256(AbiCoder.defaultAbiCoder().encode([router.getFunction('fund').inputs[0]],[plan]));
+ const intent={from:sender,to:a(80),nonce:7,chainId:'1',data:router.encodeFunctionData('fund',[plan,'0x1234']).toLowerCase(),value:'600',txHash,
+  expected:{kind:'aggregate-funding',routerCodeHash:keccak256('0x6000'),collateralPortal:a(81),feePortal:portalAddress,bokPortal:a(82),privateFpc:privateFeeAddress.toString(),planHash}};
+ const log=(address,abi,name,args)=>({address,...abi.encodeEventLog(abi.getEvent(name),args)});
+ f.state.transaction={...intent,hash:txHash,value:600n};f.state.receipt={hash:txHash,from:sender,to:a(80),status:1,blockNumber:10,blockHash,logs:[
+ log(a(80),router,'Funded',[sender,planHash,100,4000,300,150,200,150]),log(a(81),board,'Deposited',[sender,100,h(101),h(111),8]),
+ log(portalAddress,portal,'DepositToAztecPublic',[privateFeeAddress.toString(),4000,secrets.secretHash.toString(),h(112),9]),log(a(82),bok,'Deposited',[h(102),300,h(113),10]) ]};
+ f.input.ethProvider.getCode=async()=> '0x6000';
+ const recover=()=>recoverPrivateFeeClaim({node:f.input.node,ethProvider:f.input.ethProvider,owner:f.input.owner,walletSecret:f.input.walletSecret,privateFeeArtifact:artifact,record,aggregateIntent:intent,expectedChainId:'1',expectedVersion:'2'});
+ return {...f,record,intent,recover,secrets};
+}
+test('aggregate FPC recovers original deterministic secrets without approval or deposit calls',async()=>{const f=await aggregateClaimFixture(),claim=await f.recover();assert.equal(claim.secret.toString(),f.secrets.secret.toString());assert.equal(claim.salt.toString(),f.secrets.salt.toString());assert.equal(claim.amount,4000n);assert.equal(claim.leafIndex.toBigInt(),9n);assert.equal(f.state.calls.length,0);const changed=await claimSecrets({walletSecret:f.input.walletSecret,owner:f.input.owner,record:{...f.record,nonce:'99'}});assert.notEqual(changed.secretHash.toString(),f.secrets.secretHash.toString(),'L1 nonce must not be confused with portal consent nonce');});
+for(const [name,mutate] of [
+ ['another owner',f=>{f.input.owner=AztecAddress.fromFieldUnsafe(new Fr(99));}],
+ ['changed router code',f=>{f.input.ethProvider.getCode=async()=> '0x6001';}],
+ ['missing other allocation',f=>{f.state.receipt.logs.pop();}],
+ ['mismatched public amount',f=>{f.record.amount='4001';}],
+ ['changed retained tx hash',f=>{f.intent.txHash='0x'+'88'.repeat(32);}],
+ ['wrong scoped FPC',f=>{f.intent.expected.privateFpc=new Fr(99).toString();}],
+ ['wrong Ethereum nonce',f=>{f.intent.nonce=99;}],
+])test(`aggregate FPC rejects ${name} without sending`,async()=>{const f=await aggregateClaimFixture();mutate(f);await assert.rejects(f.recover());assert.equal(f.state.calls.length,0);});
+test('aggregate original intent descriptor capture never calls hostile getters',()=>{let calls=0;const intent={};Object.defineProperty(intent,'from',{get(){calls++;throw Error('PRIVATE_SENTINEL');}});assert.throws(()=>captureAggregateFundingIntent(intent),{code:'PRIVATE_FEE_RECOVERY_TRANSACTION_MISMATCH'});assert.equal(calls,0);});

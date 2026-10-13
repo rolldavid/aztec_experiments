@@ -8,13 +8,13 @@ import {Constants} from "@aztec/core/libraries/ConstantsGen.sol";
 import {DataStructures} from "@aztec/core/libraries/DataStructures.sol";
 import {Epoch} from "@aztec/core/libraries/TimeLib.sol";
 import {ReentrancyGuard} from "@oz/utils/ReentrancyGuard.sol";
-import {EIP712} from "@oz/utils/cryptography/EIP712.sol";
+import {MessageHashUtils} from "@oz/utils/cryptography/MessageHashUtils.sol";
 import {SignatureChecker} from "@oz/utils/cryptography/SignatureChecker.sol";
 import {PortalMessages} from "./PortalMessages.sol";
 
 /// @notice Fresh V1 ETH escrow. Deposits require an authenticated Ready message.
 /// @dev No administrator refund/sweep or legacy receipt path. Forced ETH is surplus.
-contract BillboardPortal is ReentrancyGuard, EIP712 {
+contract BillboardPortal is ReentrancyGuard {
     bytes32 public constant DEPOSIT_FOR_TYPEHASH = keccak256("DepositFor(address beneficiary,address executor,uint256 amount,bytes32 secretHash,uint256 nonce,uint256 deadline)");
     mapping(address => uint256) public depositNonces;
     uint256 public immutable MIN_DEPOSIT;
@@ -41,7 +41,7 @@ contract BillboardPortal is ReentrancyGuard, EIP712 {
     event Deposited(address indexed depositor, uint128 amount, bytes32 secretHash, bytes32 key, uint256 index);
     event Withdrawn(address indexed depositor, uint128 amount);
 
-    constructor(address rollup, bytes32 board, uint256 version, uint256 minDeposit, uint256 maxDeposit, bytes32 configHash) EIP712("RollingCollateral", "1") {
+    constructor(address rollup, bytes32 board, uint256 version, uint256 minDeposit, uint256 maxDeposit, bytes32 configHash) {
         require(rollup.code.length > 0, "Invalid rollup");
         require(uint256(board) > 0 && uint256(board) < Constants.P, "Invalid board");
         require(version > 0 && version <= type(uint32).max, "Invalid version");
@@ -91,7 +91,11 @@ contract BillboardPortal is ReentrancyGuard, EIP712 {
     function depositForDigest(address beneficiary, address executor, uint256 amount, bytes32 secretHash, uint256 nonce, uint256 deadline)
         public view returns (bytes32)
     {
-        return _hashTypedDataV4(keccak256(abi.encode(DEPOSIT_FOR_TYPEHASH, beneficiary, executor, amount, secretHash, nonce, deadline)));
+        // Compute the standard domain rather than adding inherited cached immutable
+        // words to the portal's exact runtime verifier/deployment manifest.
+        bytes32 domain=keccak256(abi.encode(keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"),
+            keccak256("RollingCollateral"),keccak256("1"),block.chainid,address(this)));
+        return MessageHashUtils.toTypedDataHash(domain,keccak256(abi.encode(DEPOSIT_FOR_TYPEHASH, beneficiary, executor, amount, secretHash, nonce, deadline)));
     }
 
     function _deposit(address beneficiary, bytes32 secretHash) private returns (bytes32 key, uint256 index) {
