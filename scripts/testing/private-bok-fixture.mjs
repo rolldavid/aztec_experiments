@@ -28,6 +28,17 @@ export const evidenceJson = value => JSON.stringify(value, (_, item) => typeof i
 const sha = bytes => createHash('sha256').update(bytes).digest('hex');
 const same = (a, b) => assert.equal(String(a).toLowerCase(), String(b).toLowerCase());
 
+// The application consumer uses production freshness checks against actual wall
+// time. Reuse the sole miner's supported real-wall mode for this entire scope;
+// standalone epoch/expiry experiments retain their explicit warped semantics.
+export function privateBokMiningOptions(ctx, consumer) {
+  if (consumer === undefined) return {mode: 'warped'};
+  assert.equal(typeof consumer, 'function');
+  assert.equal(ctx.scenario?.name, 'rolling-bok-post');
+  assert(Number.isSafeInteger(ctx.applicationDeadlineAt) && ctx.applicationDeadlineAt > Date.now());
+  return {mode: 'real-wall', deadlineAt: ctx.applicationDeadlineAt};
+}
+
 export async function runPrivateBokFixture(ctx, caseProfile = 'both', payerMode = 'genesis', consumer) {
   assert(['both', 'normal', 'uncertain', 'provider'].includes(caseProfile));
   if(caseProfile==='provider'){assert.equal(payerMode,'private');assert.equal(ctx.scenario?.providerRecovery,true);}
@@ -109,7 +120,7 @@ export async function runPrivateBokFixture(ctx, caseProfile = 'both', payerMode 
       return [BigInt(w.epochNumber), BigInt(w.numCheckpointsInEpoch), w.leafIndex,
         w.siblingPath.toBufferArray().map(bytes => '0x' + bytes.toString('hex'))];
     };
-    await withC01ClientMining({rpcUrl: url.href, dateProvider: ctx.dateProvider, observation}, async mineL1 => {
+    await withC01ClientMining({rpcUrl: url.href, dateProvider: ctx.dateProvider, observation, ...privateBokMiningOptions(ctx, consumer)}, async mineL1 => {
       if (payerMode === 'private') {
         const {preparePrivateBokFees} = await import('./private-bok-fees.mjs');
         privateFees = await preparePrivateBokFees({...ctx, rpcUrl: url.href, mineL1, observeNodeCalls: ctx.scenario?.observeNodeCalls === true});

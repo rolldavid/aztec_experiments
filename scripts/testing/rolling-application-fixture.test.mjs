@@ -354,7 +354,8 @@ test('measured second race start is admitted without changing proof timeout or p
  assert.throws(()=>requireRollingRaceProofBudget(cutoff,cutoff-89999));
  const actor=await fs.readFile(new URL('./rolling-application-actor.mjs',import.meta.url),'utf8');
  assert(actor.includes('timeoutMs:120000,pollMs:100'),'Real remote timeout remains120s');
- assert(actor.includes('beforeSubmit:{value:()=>{contextGuard();if(remaining()<=0)throw expired();}'));
+ assert(actor.includes('beforeSubmit:{value:hook?async function(...values){contextGuard();if(remaining()<=0)throw expired();await Reflect.apply(hook.value,this,values);contextGuard();if(remaining()<=0)throw expired();}'));
+ assert(actor.includes(':()=>{contextGuard();if(remaining()<=0)throw expired();},enumerable:true}'));
  // The companion actor suite executes this guard through the actual engine
  // with a late-resolving proof, zero node sends and retained encrypted journal.
 });
@@ -1151,4 +1152,19 @@ test('social-wire actual wiring scopes disabled accounting and preserves transac
  const social=await fs.readFile(new URL('./rolling-social-wire.mjs',import.meta.url),'utf8');
  assert(social.includes('privateTransactions:6,registeredNames:2'));
  assert(social.includes('expectedHTTP:httpViews(projection,posts,posts.slice(0,2),[a,b])'));
+});
+
+// Existing real miner mode selection, no chain/network in these controls.
+test('Bok application consumer selects real-wall mining with the original absolute deadline only',async()=>{
+ const {privateBokMiningOptions}=await import('./private-bok-fixture.mjs');
+ const deadlineAt=Date.now()+10000,ctx={scenario:{name:'rolling-bok-post'},applicationDeadlineAt:deadlineAt};
+ assert.deepEqual(privateBokMiningOptions(ctx,()=>{}),{mode:'real-wall',deadlineAt});
+ assert.deepEqual(privateBokMiningOptions({},undefined),{mode:'warped'});
+ for(const bad of [{...ctx,scenario:{name:'private-bok-uncertain'}},{...ctx,applicationDeadlineAt:0},{...ctx,applicationDeadlineAt:NaN}])assert.throws(()=>privateBokMiningOptions(bad,()=>{}));
+ assert.throws(()=>privateBokMiningOptions(ctx,true));
+});
+test('Bok application port rejects proofs and nonlocal scope before resource acquisition',async()=>{
+ const {createRollingBokApplicationPort}=await import('./rolling-application-fixture.mjs');
+ await assert.rejects(createRollingBokApplicationPort({proofsEnabled:true,network:{chainId:'31337'}}));
+ await assert.rejects(createRollingBokApplicationPort({proofsEnabled:false,network:{chainId:'1'}}));
 });

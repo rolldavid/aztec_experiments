@@ -5,6 +5,7 @@
 import assert from 'node:assert/strict';
 import path from 'node:path';
 import {createFileJournalStorage} from '../../apps/src/billboard/user/transaction-journal-store.mjs';
+import {verifyRollingBokCapability} from '../../apps/rolling/wallet-session.mjs';
 import {createRollingApplication} from '../../shared/rolling/application.mjs';
 import {createRollingColdPreferenceReader} from '../../shared/rolling/cold-preference-reader.mjs';
 import {createRollingCompactClient} from '../../shared/rolling/compact-client.mjs';
@@ -73,7 +74,8 @@ export async function bindRollingRootSubmission(args,capability,contextGuard) {
 }
 
 export async function createRollingApplicationActor({sdk,routing,node,endpoint,network,proofsEnabled,board,fees,portal,
- storageDirectory,dataDirectory,log=discard,externalActivity,confirmationDeadlineAt,metrics,coldPreferences=false,rootSubmissionGate}){
+ storageDirectory,dataDirectory,log=discard,externalActivity,confirmationDeadlineAt,metrics,coldPreferences=false,rootSubmissionGate,bok}){
+ const bokInput=bok===undefined?undefined:{config:structuredClone(bok.config),artifact:bok.artifact};
  let rootGate;
  if(rootSubmissionGate!==undefined){
   const d=rootSubmissionGate&&Object.getOwnPropertyDescriptor(rootSubmissionGate,'select');
@@ -130,14 +132,16 @@ export async function createRollingApplicationActor({sdk,routing,node,endpoint,n
  function boundedSendArgs(args){
   if(confirmationDeadlineAt===undefined)return args;
   const opts=args[1];assert(opts&&Object.getPrototypeOf(opts)===Object.prototype&&args.length===2,'Bounded actor submission requires ordinary options');
-  assert(!('wait' in opts)&&!('beforeSubmit' in opts),'Existing submission wait or hook cannot be replaced');
+  assert(!('wait' in opts),'Existing submission wait cannot be replaced');
+  const hook=Object.getOwnPropertyDescriptor(opts,'beforeSubmit');
+  assert(!hook||(Object.hasOwn(hook,'value')&&typeof hook.value==='function'),'Existing submission hook cannot be replaced');
   if(remaining()<=0)throw expired();
   const bounded=Object.defineProperties({},Object.getOwnPropertyDescriptors(opts));
   Object.defineProperties(bounded,{
    // engine.js reads this AFTER proof generation and actual submission. Keeping
    // the getter on the wait object prevents a new540s clock after a long proof.
    wait:{value:Object.freeze({interval:5,get timeout(){return remaining()/1000;}}),enumerable:true},
-   beforeSubmit:{value:()=>{contextGuard();if(remaining()<=0)throw expired();},enumerable:true},
+   beforeSubmit:{value:hook?async function(...values){contextGuard();if(remaining()<=0)throw expired();await Reflect.apply(hook.value,this,values);contextGuard();if(remaining()<=0)throw expired();}:()=>{contextGuard();if(remaining()<=0)throw expired();},enumerable:true},
   });
   return [args[0],bounded];
  }
@@ -176,6 +180,7 @@ export async function createRollingApplicationActor({sdk,routing,node,endpoint,n
  }
  try{
   activity();await sdk.inspectTrustedNode(node,{expectedNetworkScope:capturedNetwork,proofsEnabled});contextGuard();
+  if(bokInput)deployment.bok=await verifyRollingBokCapability({sdk,node,...bokInput,deployment,contextGuard});contextGuard();
   store=await sdk.openPXEStore({l1ChainId:Number(capturedNetwork.chainId),rollupAddress:capturedNetwork.rollup,accountAddress:ownerText,dataDirectory},undefined,quiet);contextGuard();
   pxe=await Reflect.apply(createPXE,sdk,[node,{proverEnabled:proofsEnabled,autoSync:false,syncChainTip:'checkpointed'},
    {store,remoteProver:{url:endpoint,board:scope.board,timeoutMs:120000,pollMs:100}}]);contextGuard();
@@ -195,7 +200,7 @@ export async function createRollingApplicationActor({sdk,routing,node,endpoint,n
   const instance=await sdk.getContractInstanceFromInstantiationParams(artifact,{salt,publicKeys:derived.publicKeys,
    constructorArtifact:undefined,constructorArgs:undefined,immutablesHash:await accountContract.getImmutablesHash()});contextGuard();
   assert.equal(String(instance.address),ownerText);const partial=await sdk.computePartialAddress(instance);contextGuard();await pxe.registerAccount(derived,partial);
-  for(const [a,i]of [[artifact,instance],[board.artifact,board.instance],[fee.artifact,fee.instance]]){contextGuard();await pxe.registerContractClass(a);contextGuard();await pxe.registerContract(i);}
+  for(const [a,i]of [[artifact,instance],[board.artifact,board.instance],[fee.artifact,fee.instance],...(deployment.bok?[[deployment.bok.artifact,deployment.bok.instance]]:[])]){contextGuard();await pxe.registerContractClass(a);contextGuard();await pxe.registerContract(i);}
   contextGuard();await pxe.sync();contextGuard();
   journal=await sdk.createL2Journal({...journalOptions,storage:createFileJournalStorage(storageDirectory)});contextGuard();
   wallet=routing.createAztecWallet(sdk,pxe,node,node,log,secret,{contextGuard,transactionJournal:journal});contextGuard();

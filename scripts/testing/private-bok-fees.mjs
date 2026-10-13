@@ -148,7 +148,8 @@ export function createPrivateBokFeesPreparer({prepareFees, mkdir: makeDirectory}
           }});
       };
       refreshObserver();
-      return Object.defineProperties(observation, {wallet: {value: wallet}, owner: {value: owner},
+      const applicationFunding=Object.freeze({authorAccount:a.authorAccount,browserFixture:a.browserFixture,toJSON(){throw Error('Private application funding cannot be serialized');}});
+      return Object.defineProperties(observation, {applicationFunding:{get:()=>{requireOpen();return applicationFunding;}},wallet: {value: wallet}, owner: {value: owner},
         operator: {value: operator}, otherUser: {value: otherUser}, paymentFor: {value: paymentFor},
         verify: {value: verify}, close: {value: close}});
     } catch (error) {

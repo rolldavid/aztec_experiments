@@ -35,7 +35,7 @@ export async function runRollingBokFixture(ctx) {
     const save = () => fs.writeFile(path.join(outputDirectory, 'rolling-setup.json'), evidenceJson(report));
     let stage = 'preflight', ownerFees = 0n;
     const files = ['scripts/testing/reverted-finality.mjs', 'scripts/testing/rolling-bok-fixture.mjs', 'scripts/testing/private-bok-fixture.mjs',
-      'scripts/testing/private-bok-fees.mjs', 'scripts/c01-board-flow.mjs', 'scripts/c01-ready-flow.mjs',
+      'scripts/testing/private-bok-fees.mjs', 'scripts/testing/rolling-application-fixture.mjs', 'scripts/testing/rolling-application-actor.mjs', 'apps/rolling/wallet-session.mjs', 'shared/rolling/application.mjs', 'shared/rolling/synchronized-application.mjs', 'scripts/c01-board-flow.mjs', 'scripts/c01-ready-flow.mjs',
       'scripts/c01-deposit-flow.mjs', 'scripts/testing/fixture-worker.mjs', 'scripts/testing/scenarios.mjs',
       'scripts/testing/scenario-flows.mjs'];
     const sources = async () => Object.fromEntries(await Promise.all(files.map(async name => [name, sha(await fs.readFile(path.join(ROOT, name)))])));
@@ -130,8 +130,15 @@ export async function runRollingBokFixture(ctx) {
         await drainT04Checkpoints({node, l1Client: ctx.l1Client, rollupAddress: String(ctx.rollupAddress), checkpoints: {restore}, deadline});
       } finally {restore();}
       const {runRollingBokJourney} = await import('../../billboard/rolling_contract/journey.mjs');
+      const {createRollingBokApplicationPort}=await import('./rolling-application-fixture.mjs');
+      const network={chainId:String(chainId),version:String(version),rollup:String(info.l1ContractAddresses.rollupAddress).toLowerCase()};
       report.journey = await runRollingBokJourney({node, wallet, owner, operator, board: Contract.at(ctx.instance.address, ctx.preparation.artifact, wallet), bok,
-        privateFee: privateFees, claimedDeposit: {depositId: claim.claim.depositChainId, logicalFields: claim.claim.logicalFields,
+        privateFee: privateFees,
+        openApplication:(observedNode,observation)=>createRollingBokApplicationPort({node:observedNode,network,
+          board:{instance:ctx.instance,artifact:ctx.preparation.artifact},bok:{config:{contractAddress:String(instance.address),operatorAddress:String(operator),pluginId:String(new Fr(1n))},artifact},
+          fees:privateFees.applicationFunding,portal:ctx.ready.portalAddress,directory:path.join(outputDirectory,'application'),deadlineAt:ctx.applicationDeadlineAt,proofsEnabled:realProofs,observation}),
+        boardDeployment:{blockNumber:Number(ctx.inclusion.blockNumber),blockHash:String((await node.getBlock(Number(ctx.inclusion.blockNumber))).hash),txHash:String(ctx.inclusion.txHash)},
+        claimedDeposit: {depositId: claim.claim.depositChainId, logicalFields: claim.claim.logicalFields,
           txHash: claim.claimTxHash, evidenceRef: claimEvidence, economics: c01BoardEconomics(ctx.preparation)},
         boardDeployment:{blockNumber:Number(ctx.inclusion.blockNumber),blockHash:String((await node.getBlock(Number(ctx.inclusion.blockNumber))).hash),txHash:String(ctx.inclusion.txHash)},
         pluginId: new Fr(1n), initialHumanFees: {owner: ownerFees, otherUser: 0n}, outputDirectory: path.join(outputDirectory, 'journey'), mineL1, finalizeReverted, mark, harnessFiles: files});
