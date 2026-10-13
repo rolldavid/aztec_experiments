@@ -3,7 +3,7 @@
 Host executable tokens are embedded and unit-tested through injected commands.
 Only public pins are committed. Capability URLs belong in owner-only external files.
 """
-import argparse, base64, datetime as dt, gzip, hashlib, ipaddress, io, json, lzma, os, pathlib, re, signal, stat, subprocess, sys, tokenize, urllib.parse
+import argparse, ast, base64, datetime as dt, gzip, hashlib, ipaddress, io, json, lzma, os, pathlib, re, signal, stat, subprocess, sys, tokenize, urllib.parse
 
 IMAGE = "azteclabs/aztec@sha256:44479404b67dde931cf8f202a3ce34703876e709ce124924251da8435d5d8651"
 NODE_SHA = "7fde7b8afa198da66257f42ee2001d874c7355631e6d1579a5fb5ef1f246df4c"
@@ -773,7 +773,7 @@ STARTUP_SOURCES = {
     'prover/compact-node-transform.mjs': 'd7e7e95a1061342e7aaa301e826fbf4bd21cfb9ea2de605e2a2aa17452160545',
     'prover/compact-node-registration.mjs': '07316d9a6629dff67fbb8d033360a45b9a1492febdd18520e6ffe6c1023c546c',
     'prover/compact-block-native.mjs': '5040454029af8c78bac67dc9961e80bf4918ce2ee000277000a4fdd32fb64f07',
-    'shared/trusted-private-node.mjs': '98ebbc01e11fd2b760bee045c77971bcd0432cfbbe18181cf3ba08efe47cb30e',
+    'shared/trusted-private-node.mjs': '50fa3642a777cb2eca66e595d72a6e639781cc7d0fc2deb4d1903c0a2a0d81d5',
 }
 STARTUP_ADAPTER = 'publicnode-config-v1'
 DIAGNOSTIC_PHASES = ('registry-guard', 'rollup-compatibility', 'l1-config', 'genesis-compare', 'telemetry', 'factory', 'factory-bb', 'factory-kzg', 'factory-keystore', 'factory-addresses', 'factory-l1-constants', 'factory-blob', 'factory-snapshot', 'factory-epoch-cache', 'factory-world-state', 'factory-avm', 'factory-archiver', 'factory-world-state-sync', 'factory-verifiers', 'factory-fee-provider', 'factory-p2p', 'factory-start', 'public-rpc-bind', 'admin-auth', 'admin-rpc-bind', 'archiver-store', 'archiver-protocol-register', 'archiver-constants', 'archiver-start-header', 'archiver-start', 'archiver-blob-test', 'archiver-clock-test', 'archiver-trace-test', 'archiver-history-test', 'archiver-initial-sync')
@@ -999,6 +999,241 @@ def generate(config, now=None):
     return "#!/bin/sh\nset -eu\numask 077\nexec /usr/bin/python3 - <<'B'\nimport base64,lzma\nexec(lzma.decompress(base64.b64decode('"+encoded+"')))\nB\n"
 
 
+# This closed diagnostic does not qualify normal deployment or run node/proof work.
+NATIVE_BYTES = 44698432
+NATIVE_REUSE = ('receipt_url','diagnostic','emit_diagnostic','mark','version_facts','run','write','digest',
+                'immutable_deadline','install_controls','class_bytes','verify_controls','exclusive_record',
+                'read_bounded_json','upload_receipt')
+NATIVE_GLOBALS = ('BASE','PRIVATE','STAGE','DIAGNOSTICS_ACTIVE','STEP','STEPS')
+
+def native_control_source():
+    # Explicit AST membership, in original order. No text-pattern extraction or
+    # inferred dependency traversal. The generated program binds the full bytes.
+    selected=[];found=[]
+    for node in ast.parse(HOST).body:
+        if isinstance(node,(ast.Import,ast.ImportFrom)):
+            selected.append(ast.get_source_segment(HOST,node))
+        elif isinstance(node,ast.FunctionDef) and node.name in NATIVE_REUSE:
+            found.append(node.name);selected.append(ast.get_source_segment(HOST,node))
+        elif isinstance(node,ast.Assign) and len(node.targets)==1 and isinstance(node.targets[0],ast.Name) and node.targets[0].id in NATIVE_GLOBALS:
+            found.append(node.targets[0].id);selected.append(ast.get_source_segment(HOST,node))
+    if len(found)!=len(set(found)) or set(found)!=set(NATIVE_REUSE+NATIVE_GLOBALS):raise Invalid('Native control closure changed')
+    return '\n\n'.join(selected)+'\n'
+
+def native_binary_url(value):
+    # Same scoped S3 capability grammar, but a single immutable public-binary key.
+    if type(value) is not str:raise Invalid('Invalid binary capability')
+    try:
+        u=urllib.parse.urlsplit(value)
+        expected='/releases/native-bb-'+BB_SHA+'/bb'
+        if u.path!=expected:raise ValueError()
+        receipt_url(urllib.parse.urlunsplit((u.scheme,u.netloc,'/receipts/native/binary.json',u.query,u.fragment)))
+    except Exception:raise Invalid('Invalid binary capability') from None
+    return value
+
+def validate_native(config,now=None):
+    keys={'mode','createdAt','budgetStop','commissioningStop','binaryUrl','binarySha256','binaryBytes','expectedVersion','receiptPutUrl'}
+    if type(config) is not dict or set(config)!=keys:raise Invalid('Invalid native diagnostic fields')
+    if config['mode']!='native-version-only' or type(config['binarySha256']) is not str or config['binarySha256']!=BB_SHA or type(config['binaryBytes']) is not int or config['binaryBytes']!=NATIVE_BYTES or type(config['expectedVersion']) is not str or config['expectedVersion']!=BB_VERSION:raise Invalid('Invalid native diagnostic pins')
+    created,stop,commission=(timestamp(config[k]) for k in ('createdAt','budgetStop','commissioningStop'))
+    now=now or dt.datetime.now(dt.timezone.utc)
+    if not now-dt.timedelta(minutes=5)<=created<=now+dt.timedelta(minutes=5) or stop!=created+dt.timedelta(minutes=45) or commission!=created+dt.timedelta(minutes=30):raise Invalid('Invalid native diagnostic deadlines')
+    native_binary_url(config['binaryUrl']);receipt_url(config['receiptPutUrl'])
+    return dict(config)
+
+NATIVE_CAPTURE = r'''
+import hashlib, json, os, pathlib, selectors, signal, subprocess, time
+
+def bounded_capture(args,seconds,limit=8192):
+    # Fixed callers only. Stream, hash and discard bytes past the cap; no native
+    # output or exception text enters evidence. Wall bound includes full pipes.
+    captures={k:{'bytes':0,'sha256':hashlib.sha256(),'data':bytearray()} for k in ('stdout','stderr')}
+    child=None;timed=False;reaped=False;code=None
+    try:
+        child=subprocess.Popen(args,stdin=subprocess.DEVNULL,stdout=subprocess.PIPE,stderr=subprocess.PIPE,
+            start_new_session=True,env={'PATH':'/usr/bin:/bin','LANG':'C','LC_ALL':'C'})
+        with selectors.DefaultSelector() as selector:
+            for key,pipe in (('stdout',child.stdout),('stderr',child.stderr)):
+                os.set_blocking(pipe.fileno(),False);selector.register(pipe,selectors.EVENT_READ,key)
+            deadline=time.monotonic()+seconds
+            while selector.get_map():
+                if time.monotonic()>=deadline:timed=True;break
+                for key,_ in selector.select(min(.05,max(0,deadline-time.monotonic()))):
+                    data=os.read(key.fileobj.fileno(),4096)
+                    if not data:selector.unregister(key.fileobj);continue
+                    row=captures[key.data];row['bytes']+=len(data);row['sha256'].update(data)
+                    if len(row['data'])<limit:row['data'].extend(data[:limit-len(row['data'])])
+            if not timed:
+                try:code=child.wait(timeout=max(.001,deadline-time.monotonic()));reaped=True
+                except subprocess.TimeoutExpired:timed=True
+    finally:
+        if child is not None:
+            if child.poll() is None or timed:
+                try:os.killpg(child.pid,signal.SIGKILL)
+                except ProcessLookupError:pass
+            try:code=child.wait(timeout=2);reaped=True
+            except subprocess.TimeoutExpired:pass
+            for pipe in (child.stdout,child.stderr):
+                if pipe is not None:pipe.close()
+    summary={'started':child is not None,'timeout':timed,'reaped':reaped,'returnCode':code}
+    for key,row in captures.items():summary[key]={'bytes':row['bytes'],'sha256':row['sha256'].hexdigest(),'truncated':row['bytes']>limit}
+    return summary,{k:bytes(v['data']) for k,v in captures.items()}
+
+def native_worker():
+    output=pathlib.Path('/var/lib/rolling-native-version/result.json')
+    # StateDirectory is disposable, but an acknowledged intent is never replayed.
+    with open(output.parent/'intent.json','x') as file:
+        file.write('{"schemaVersion":1,"attempts":1}');file.flush();os.fsync(file.fileno())
+    directory=os.open(output.parent,os.O_RDONLY|os.O_DIRECTORY)
+    try:os.fsync(directory)
+    finally:os.close(directory)
+    result,raw=bounded_capture(['/opt/rolling-native-version/bb','--version'],15)
+    result.update(schemaVersion=1,versionMatches=raw['stdout'].strip()==EXPECTED_VERSION.encode() and not result['stdout']['truncated'])
+    with open(output,'x') as file:
+        file.write(json.dumps(result,separators=(',',':')));file.flush();os.fsync(file.fileno())
+    directory=os.open(output.parent,os.O_RDONLY|os.O_DIRECTORY)
+    try:os.fsync(directory)
+    finally:os.close(directory)
+'''
+
+NATIVE_HOST = r'''
+NATIVE_UNIT='rolling-native-version.service'
+NATIVE_ROOT=pathlib.Path('/opt/rolling-native-version')
+
+def native_fetch(url,path):
+    class NoRedirect(urllib.request.HTTPRedirectHandler):
+        def redirect_request(self,*args,**kwargs):raise ValueError('Redirect rejected')
+    opener=urllib.request.build_opener(urllib.request.ProxyHandler({}),NoRedirect())
+    deadline=time.monotonic()+60;total=0;sha=hashlib.sha256()
+    # This is a public binary, but the source capability remains root-only.
+    fd=os.open(path,os.O_WRONLY|os.O_CREAT|os.O_EXCL|os.O_NOFOLLOW,0o600)
+    with os.fdopen(fd,'wb') as file:
+        with opener.open(urllib.request.Request(url,method='GET'),timeout=5) as response:
+            if response.status!=200:raise ValueError('Binary transport')
+            while True:
+                if time.monotonic()>=deadline:raise TimeoutError('Binary deadline')
+                block=response.read1(min(65536,BINARY_BYTES-total+1))
+                if not block:break
+                total+=len(block)
+                if total>BINARY_BYTES:raise ValueError('Binary size')
+                sha.update(block);file.write(block)
+        if total!=BINARY_BYTES or sha.hexdigest()!=PINS['bb']:raise ValueError('Binary integrity')
+        file.flush();os.fsync(file.fileno());os.fchmod(file.fileno(),0o555)
+    directory=os.open(path.parent,os.O_RDONLY|os.O_DIRECTORY)
+    try:os.fsync(directory)
+    finally:os.close(directory)
+
+def native_state():
+    try:
+        capture,raw=bounded_capture(['systemctl','show',NATIVE_UNIT,'--property=ActiveState,SubState,Result,ExecMainCode,ExecMainStatus,ExecMainStartTimestampMonotonic'],3,4096)
+    except Exception:return {'status':'transport-error'}
+    if capture['timeout'] or capture['returnCode']!=0 or not capture['reaped']:return {'status':'transport-error'}
+    try:
+        if capture['stdout']['truncated']:raise ValueError()
+        fields={}
+        for line in raw['stdout'].decode('ascii').splitlines():
+            key,value=line.split('=',1)
+            if key in fields:raise ValueError()
+            fields[key]=value
+        if set(fields)!={'ActiveState','SubState','Result','ExecMainCode','ExecMainStatus','ExecMainStartTimestampMonotonic'}:raise ValueError()
+        allowed={'ActiveState':('active','inactive','failed','activating','deactivating'),
+                 'SubState':('running','dead','failed','start','stop','stop-sigterm','stop-sigkill','exited'),
+                 'Result':('success','exit-code','signal','core-dump','timeout','oom-kill','resources','start-limit-hit','protocol')}
+        if any(fields[key] not in values for key,values in allowed.items()):raise ValueError()
+        nums={}
+        for key,maximum in [('ExecMainCode',6),('ExecMainStatus',255),('ExecMainStartTimestampMonotonic',2**63-1)]:
+            if not re.fullmatch('[0-9]{1,19}',fields[key]) or int(fields[key])>maximum:raise ValueError()
+            nums[key]=int(fields[key])
+        return {'status':'observed',**{k:fields[k] for k in allowed},**nums}
+    except Exception:return {'status':'projection-error'}
+
+def native_result(value):
+    expected={'schemaVersion','started','timeout','reaped','returnCode','stdout','stderr','versionMatches'}
+    if type(value) is not dict or set(value)!=expected or type(value['schemaVersion']) is not int or value['schemaVersion']!=1:raise ValueError('Invalid version result')
+    if any(type(value[k]) is not bool for k in ('started','timeout','reaped','versionMatches')):raise ValueError('Invalid version flags')
+    if value['returnCode'] is not None and (type(value['returnCode']) is not int or not -255<=value['returnCode']<=255):raise ValueError('Invalid version status')
+    for key in ('stdout','stderr'):
+        row=value[key]
+        if type(row) is not dict or set(row)!={'bytes','sha256','truncated'} or type(row['bytes']) is not int or not 0<=row['bytes']<=2**53-1 or type(row['sha256']) is not str or not re.fullmatch('[a-f0-9]{64}',row['sha256']) or type(row['truncated']) is not bool or row['truncated']!=(row['bytes']>8192):raise ValueError('Invalid output projection')
+    return json.loads(json.dumps(value))
+
+def native_classify(state,result):
+    if state['status']!='observed':return 'state-unreadable'
+    if state['Result']=='oom-kill':return 'oom'
+    if state['Result']=='timeout' or result and result['timeout']:return 'timeout'
+    if state['Result'] in ('signal','core-dump') or result and result['returnCode'] is not None and result['returnCode']<0:return 'signal'
+    if state['Result']=='exit-code' or result and result['returnCode'] not in (None,0):return 'nonzero'
+    if state['ActiveState']=='active':return 'started'
+    if result and result['started'] and result['reaped'] and result['returnCode']==0 and result['versionMatches'] and not result['stdout']['truncated'] and not result['stderr']['truncated'] and state['Result']=='success' and state['ActiveState']=='inactive' and state['ExecMainCode']==1 and state['ExecMainStatus']==0 and state['ExecMainStartTimestampMonotonic']>0:return 'passed'
+    return 'unqualified'
+
+def native_shutdown():
+    try:run(['systemctl','start','rolling-budget.service'],timeout=5)
+    except Exception:
+        try:run(['/usr/sbin/poweroff'],timeout=5)
+        except Exception:pass
+
+def native_execute(config,worker):
+    receipt={'schemaVersion':1,'mode':'native-version-only','passed':False,'nodeStartupQualified':False,'proofJobs':0,
+             'binarySha256':PINS['bb'],'binaryBytes':BINARY_BYTES,'expectedVersion':PINS['bbVersion'],
+             'controlSourceSha256':PINS['bootstrap'],'workerSha256':hashlib.sha256(worker.encode()).hexdigest(),
+             'budgetStop':config['budgetStop'],'commissioningStop':config['commissioningStop'],
+             'stage':'host-preflight','state':{'status':'not-observed'},'resultStatus':'not-observed'}
+    lock=None
+    try:
+        if platform.system()!='Linux' or platform.machine()!='x86_64' or os.geteuid()!=0:raise ValueError('Native host required')
+        BASE.mkdir(mode=0o700,parents=True,exist_ok=True);PRIVATE.mkdir(mode=0o700,parents=True,exist_ok=True)
+        lock=open(BASE/'native-writer.lock','a');fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
+        # Existing controls use these names as immutable artifact identities; in
+        # this closed mode they mean binary and control-source, not an archive.
+        controls={**config,'runtimeArchiveSha256':PINS['bb'],'manifestSha256':PINS['bootstrap']}
+        receipt['stage']='controls';install_controls(controls)
+        for timer in ('budget','commissioning'):run(['systemctl','is-active','--quiet','rolling-'+timer+'.timer'],timeout=3)
+        verify_controls();receipt['controlsVerified']=True
+        exclusive_record(PRIVATE/'receipt-put.json',{'url':receipt_url(config['receiptPutUrl'])})
+        exclusive_record(BASE/'native-intent.json',{'schemaVersion':1,'binarySha256':PINS['bb'],'controlSourceSha256':PINS['bootstrap'],'attempts':1})
+        receipt['stage']='download';NATIVE_ROOT.mkdir(mode=0o755,parents=True,exist_ok=False)
+        native_fetch(config['binaryUrl'],NATIVE_ROOT/'bb')
+        write(NATIVE_ROOT/'capture.py',worker,0o444)
+        unit='[Unit]\nDescription=Closed public binary version diagnostic\nAfter=rolling-egress.service\n[Service]\nType=exec\nDynamicUser=yes\nStateDirectory=rolling-native-version\nStateDirectoryMode=0700\nExecStart=/usr/bin/python3 /opt/rolling-native-version/capture.py\nRestart=no\nRuntimeMaxSec=20s\nTimeoutStopSec=2s\nKillMode=control-group\nMemoryMax=512M\nMemorySwapMax=0\nCPUQuota=200%\nTasksMax=64\nUMask=0077\nNoNewPrivileges=yes\nCapabilityBoundingSet=\nPrivateNetwork=yes\nIPAddressDeny=any\nPrivateTmp=yes\nPrivateDevices=yes\nProtectSystem=strict\nProtectHome=yes\nProtectKernelTunables=yes\nProtectControlGroups=yes\nRestrictSUIDSGID=yes\nInaccessiblePaths=/var/lib/rolling-bootstrap-private /var/lib/cloud\nStandardOutput=null\nStandardError=null\n'
+        write('/etc/systemd/system/'+NATIVE_UNIT,unit,0o644);run(['systemctl','daemon-reload'],timeout=5)
+        receipt['stage']='version'
+        try:run(['systemctl','start','--wait',NATIVE_UNIT],timeout=25)
+        except Exception:pass # Exact state/result observed before stopping, never retry.
+        receipt['state']=native_state();result=None
+        try:result=native_result(read_bounded_json(pathlib.Path('/var/lib/rolling-native-version/result.json')));receipt['resultStatus']='observed';receipt['result']=result
+        except FileNotFoundError:receipt['resultStatus']='absent'
+        except Exception:receipt['resultStatus']='invalid-or-unreadable'
+        receipt['outcome']=native_classify(receipt['state'],result);receipt['passed']=receipt['outcome']=='passed'
+        receipt['stage']='complete'
+    except Exception:
+        receipt['outcome']='precondition-or-io-failure'
+    finally:
+        try:
+            # Receipt is bounded before any publication; no raw capability, args,
+            # native output, response or exception is retained.
+            data=json.dumps(receipt,separators=(',',':')).encode()
+            if len(data)>8192:raise ValueError('Native receipt limit')
+            exclusive_record(BASE/'native-final.json',receipt)
+            emit_diagnostic(b'ROLLING_NATIVE_VERSION '+data+b'\n')
+            upload_receipt(data)
+        finally:
+            native_shutdown()
+            if lock is not None:lock.close()
+'''
+
+def generate_native(config,now=None):
+    config=validate_native(config,now)
+    controls=native_control_source()
+    runtime=controls+NATIVE_CAPTURE+NATIVE_HOST
+    worker='EXPECTED_VERSION = '+repr(BB_VERSION)+'\n'+NATIVE_CAPTURE+'\nnative_worker()\n'
+    pins={'bb':BB_SHA,'bbVersion':BB_VERSION,'bootstrap':hashlib.sha256(runtime.encode()).hexdigest()}
+    source='PINS = '+repr(pins)+'\nBINARY_BYTES = '+repr(NATIVE_BYTES)+'\n'+runtime
+    program='SOURCE = '+repr(source)+'\nWORKER = '+repr(worker)+'\nCONFIG = '+repr(config)+'\nexec(SOURCE)\ntry:\n    native_execute(CONFIG,WORKER)\nexcept BaseException:\n    sys.exit(1)\n'
+    encoded=base64.b64encode(lzma.compress(program.encode(),format=lzma.FORMAT_ALONE,filters=[{'id':lzma.FILTER_LZMA1,'preset':6,'pb':0}])).decode()
+    return "#!/bin/sh\nset -eu\numask 077\nexec /usr/bin/python3 - <<'B'\nimport base64,lzma\nexec(lzma.decompress(base64.b64decode('"+encoded+"')))\nB\n"
+
+
 def private_file(path):
     path = pathlib.Path(path)
     fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW)
@@ -1013,6 +1248,7 @@ def private_file(path):
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--config',required=True);parser.add_argument('--output',required=True)
+    parser.add_argument('--native-version-only',action='store_true')
     args=parser.parse_args()
     try:
         output=pathlib.Path(args.output).absolute()
@@ -1020,7 +1256,8 @@ def main():
         if output.resolve().is_relative_to(repo) or output.parent.resolve()!=output.parent or pathlib.Path(args.config).resolve().is_relative_to(repo): raise Invalid('Private inputs and outputs must be outside checkout')
         info=output.parent.stat()
         if stat.S_IMODE(info.st_mode)!=0o700 or info.st_uid!=os.getuid(): raise Invalid('Private output directory required')
-        body=gzip.compress(generate(private_file(args.config)).encode(),mtime=0)
+        generator=generate_native if args.native_version_only else generate
+        body=gzip.compress(generator(private_file(args.config)).encode(),mtime=0)
         if len(body)>16384: raise Invalid('Compressed user data exceeds AWS limit')
         fd=os.open(output,os.O_WRONLY|os.O_CREAT|os.O_EXCL|os.O_NOFOLLOW,0o600)
         with os.fdopen(fd,'wb') as f: f.write(body);f.flush();os.fsync(f.fileno())

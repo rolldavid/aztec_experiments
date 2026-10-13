@@ -1114,4 +1114,196 @@ raise SystemExit(code)
         self.assertTrue(result['failed']);self.assertFalse(result['reaped']);self.assertEqual(child.waits,[2,2]);self.assertEqual(child.kills,1);self.assertIsNone(code)
         self.assertNotIn('PRIVATE_SENTINEL',json.dumps(result))
 
+class NativeVersionDiagnostic(unittest.TestCase):
+    """Labelled local doubles; these tests never qualify Linux or call AWS/systemd."""
+    def capability(self,path):
+        return ('https://anonymous-message-board-testnet-backups-nvdhcyurtoga.s3.eu-west-2.amazonaws.com'+path+
+                '?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=ABCDEFGHIJKLMNOP/20261011/eu-west-2/s3/aws4_request'+
+                '&X-Amz-Date=20261011T180000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature='+'a'*64)
+    def config(self):
+        return {'mode':'native-version-only','createdAt':'2026-10-11T18:00:00Z','budgetStop':'2026-10-11T18:45:00Z',
+                'commissioningStop':'2026-10-11T18:30:00Z','binarySha256':b.BB_SHA,'binaryBytes':b.NATIVE_BYTES,
+                'expectedVersion':b.BB_VERSION,'binaryUrl':self.capability('/releases/native-bb-'+b.BB_SHA+'/bb'),
+                'receiptPutUrl':self.capability('/receipts/native-test/final.json')}
+    def host(self):
+        ns={'PINS':{'bb':b.BB_SHA,'bbVersion':b.BB_VERSION,'bootstrap':'c'*64},'BINARY_BYTES':b.NATIVE_BYTES}
+        exec(b.native_control_source()+b.NATIVE_CAPTURE+b.NATIVE_HOST,ns)
+        ns['emit_diagnostic']=lambda data:None
+        return ns
+    def result(self,**changes):
+        row={'bytes':0,'sha256':hashlib.sha256(b'').hexdigest(),'truncated':False}
+        return {'schemaVersion':1,'started':True,'timeout':False,'reaped':True,'returnCode':0,
+                'stdout':dict(row),'stderr':dict(row),'versionMatches':True,**changes}
+    def state(self,**changes):
+        return {'status':'observed','ActiveState':'inactive','SubState':'dead','Result':'success',
+                'ExecMainCode':1,'ExecMainStatus':0,'ExecMainStartTimestampMonotonic':100,**changes}
+    def test_closed_config_and_capability_scopes(self):
+        good=self.config();self.assertEqual(b.validate_native(good,NOW),good)
+        mutations={'mode':'general-runner','binaryBytes':True,'binarySha256':'0'*64,'expectedVersion':'PRIVATE_SENTINEL',
+                   'budgetStop':'2026-10-11T19:00:00Z','commissioningStop':'2026-10-11T18:29:00Z',
+                   'binaryUrl':self.capability('/releases/other/bb'),'receiptPutUrl':self.capability('/releases/secret')}
+        for key,value in mutations.items():
+            with self.subTest(key=key),self.assertRaises(ValueError):b.validate_native({**good,key:value},NOW)
+        for url in [good['binaryUrl'].replace('https:','http:'),good['binaryUrl']+'#secret',good['binaryUrl'].replace('.s3.eu-west-2.amazonaws.com','.evil.invalid'),good['binaryUrl'].replace('/bb?','/../bb?')]:
+            with self.assertRaises(ValueError):b.validate_native({**good,'binaryUrl':url},NOW)
+        with self.assertRaises(ValueError):b.validate_native({**good,'command':'whoami'},NOW)
+        with self.assertRaises(ValueError):b.validate_native(good,NOW+dt.timedelta(minutes=6))
+    def test_explicit_closure_is_exact_and_excludes_node_lifecycle(self):
+        import ast
+        full={n.name:ast.dump(n,include_attributes=False) for n in ast.parse(b.HOST).body if isinstance(n,ast.FunctionDef)}
+        closure={n.name:ast.dump(n,include_attributes=False) for n in ast.parse(b.native_control_source()).body if isinstance(n,ast.FunctionDef)}
+        self.assertEqual(set(closure),set(b.NATIVE_REUSE))
+        for name in closure:self.assertEqual(closure[name],full[name])
+        self.assertNotIn('execute',closure);self.assertNotIn('install_node',closure)
+        ns=self.host()
+        # Each selected function's global name references must resolve in this
+        # finite assembly or builtins; checks nested comprehension code too.
+        import builtins,types,dis
+        def check(code):
+            for instruction in dis.get_instructions(code):
+                if instruction.opname in ('LOAD_GLOBAL','LOAD_NAME'):self.assertTrue(instruction.argval in ns or hasattr(builtins,instruction.argval),instruction.argval)
+            for constant in code.co_consts:
+                if isinstance(constant,types.CodeType):check(constant)
+        for name in b.NATIVE_REUSE:check(ns[name].__code__)
+        with patch.object(b,'HOST',b.HOST+'\ndef upload_receipt(data): pass\n'):
+            with self.assertRaises(b.Invalid):b.native_control_source()
+    def test_native_payload_hash_roundtrip_and_normal_gate_unchanged(self):
+        with patch.object(b,'require_linux_qualification',side_effect=b.Invalid('Active Linux prover qualification required')) as gate:
+            payload=b.generate_native(self.config(),NOW);gate.assert_not_called()
+            with self.assertRaises(b.Invalid):b.generate(config(),NOW)
+        encoded=payload.split("base64.b64decode('")[1].split("')")[0]
+        program=lzma.decompress(base64.b64decode(encoded)).decode();compile(program,'native fixture','exec')
+        import ast
+        assigns={n.targets[0].id:ast.literal_eval(n.value) for n in ast.parse(program).body if isinstance(n,ast.Assign)}
+        source=assigns['SOURCE'];pins=ast.literal_eval(ast.parse(source).body[0].value)
+        self.assertEqual(pins['bootstrap'],hashlib.sha256((b.native_control_source()+b.NATIVE_CAPTURE+b.NATIVE_HOST).encode()).hexdigest())
+        self.assertNotIn('X-Amz',source);self.assertNotIn('X-Amz',assigns['WORKER'])
+        self.assertNotIn('install_node()',source);self.assertNotIn('require_linux_qualification',source)
+        self.assertIn("native_execute(CONFIG,WORKER)",program)
+        self.assertLessEqual(len(gzip.compress(payload.encode(),mtime=0)),16384)
+        # Realistic maximum capability sizes still obey the actual hard cap.
+        large=self.config()
+        for key in ('binaryUrl','receiptPutUrl'):
+            token=''.join(hashlib.sha256((key+str(i)).encode()).hexdigest() for i in range(40))
+            large[key]+='&X-Amz-Security-Token='+token
+        self.assertLessEqual(len(gzip.compress(b.generate_native(large,NOW).encode(),mtime=0)),16384)
+    def test_native_cli_private_exclusive_payload_does_not_promote_gate(self):
+        # Real generator subprocess only; decoded host program is never executed.
+        with tempfile.TemporaryDirectory(dir='/tmp',prefix='rolling-native-cli-') as t:
+            root=pathlib.Path(t);root.chmod(0o700);private=root/'config.json';output=root/'payload.gz'
+            now=dt.datetime.now(dt.timezone.utc).replace(microsecond=0);c=self.config()
+            for key,minutes in [('createdAt',0),('budgetStop',45),('commissioningStop',30)]:c[key]=(now+dt.timedelta(minutes=minutes)).strftime('%Y-%m-%dT%H:%M:%SZ')
+            private.write_text(json.dumps(c));private.chmod(0o600)
+            toolchain=(ROOT/'toolchain.json').read_bytes()
+            args=[sys.executable,str(ROOT/'deploy/prover/bootstrap.py'),'--native-version-only','--config',str(private),'--output',str(output)]
+            first=subprocess.run(args,capture_output=True,timeout=10)
+            self.assertEqual(first.returncode,0);before=output.read_bytes();self.assertLessEqual(len(before),16384)
+            self.assertEqual(output.stat().st_mode&0o777,0o600);self.assertNotIn(b'X-Amz',first.stdout+first.stderr)
+            second=subprocess.run(args,capture_output=True,timeout=10)
+            self.assertNotEqual(second.returncode,0);self.assertEqual(output.read_bytes(),before)
+            self.assertEqual((ROOT/'toolchain.json').read_bytes(),toolchain)
+
+    def test_state_transport_projection_and_finite_valid_fields(self):
+        ns=self.host();raw='ActiveState=inactive\nSubState=dead\nResult=success\nExecMainCode=1\nExecMainStatus=0\nExecMainStartTimestampMonotonic=100\n'
+        capture={'timeout':False,'returnCode':0,'reaped':True,'stdout':{'truncated':False}}
+        ns['bounded_capture']=lambda *args:(capture,{'stdout':raw.encode()})
+        self.assertEqual(ns['native_state'](),self.state())
+        for bad in [raw.replace('success','PRIVATE_SENTINEL'),raw+'Result=success\n',raw.replace('=100','=9999999999999999999999'),raw.replace('ExecMainStatus=0','ExecMainStatus=-1'),raw.replace('SubState=dead\n','')]:
+            ns['bounded_capture']=lambda *args:(capture,{'stdout':bad.encode()})
+            self.assertEqual(ns['native_state'](),{'status':'projection-error'})
+        ns['bounded_capture']=lambda *args:({**capture,'timeout':True},{'stdout':b'PRIVATE_SENTINEL'})
+        self.assertEqual(ns['native_state'](),{'status':'transport-error'})
+        def error(*args):raise OSError('PRIVATE_SENTINEL')
+        ns['bounded_capture']=error
+        self.assertEqual(ns['native_state'](),{'status':'transport-error'})
+    def test_result_projection_and_distinct_outcomes(self):
+        ns=self.host();good=self.result();self.assertEqual(ns['native_result'](good),good)
+        for key,value in [('versionMatches','PRIVATE_SENTINEL'),('returnCode',True),('schemaVersion',True),('stdout',{'bytes':0,'sha256':'PRIVATE_SENTINEL','truncated':False})]:
+            with self.assertRaises(ValueError):ns['native_result']({**good,key:value})
+        with self.assertRaises(ValueError):ns['native_result']({**good,'secret':'PRIVATE_SENTINEL'})
+        cases=[(self.state(),good,'passed'),(self.state(),self.result(timeout=True),'timeout'),
+               (self.state(Result='oom-kill'),None,'oom'),(self.state(Result='signal'),None,'signal'),
+               (self.state(),self.result(returnCode=1),'nonzero'),(self.state(ActiveState='active'),None,'started'),
+               ({'status':'projection-error'},good,'state-unreadable'),(self.state(),None,'unqualified')]
+        for state,result,expected in cases:self.assertEqual(ns['native_classify'](state,result),expected)
+    def test_download_size_hash_before_executable_permission_no_redirect_proxy(self):
+        ns=self.host();payload=b'public-test-binary';ns['BINARY_BYTES']=len(payload);ns['PINS']['bb']=hashlib.sha256(payload).hexdigest()
+        class Response:
+            status=200
+            def __init__(self,data):self.io=io.BytesIO(data)
+            def read1(self,size):return self.io.read(size)
+            def __enter__(self):return self
+            def __exit__(self,*args):pass
+        class Opener:
+            def __init__(self,data):self.data=data
+            def open(self,request,timeout):self.request=request;self.timeout=timeout;return Response(self.data)
+        with tempfile.TemporaryDirectory() as t:
+            for i,data in enumerate([payload,payload+b'!',payload[:-1],b'X'*len(payload)]):
+                target=pathlib.Path(t)/str(i);opener=Opener(data)
+                with patch.object(ns['urllib'].request,'build_opener',return_value=opener) as builder:
+                    if data==payload:
+                        ns['native_fetch'](self.config()['binaryUrl'],target);self.assertEqual(target.stat().st_mode&0o777,0o555)
+                    else:
+                        with self.assertRaises(ValueError):ns['native_fetch'](self.config()['binaryUrl'],target)
+                        self.assertEqual(target.stat().st_mode&0o777,0o600)
+                    self.assertEqual(builder.call_args.args[0].proxies,{})
+                    with self.assertRaises(ValueError):builder.call_args.args[1].redirect_request(None,None,None,None,None,None)
+            old=pathlib.Path(t)/'owned';old.write_bytes(b'prior')
+            with self.assertRaises(FileExistsError):ns['native_fetch'](self.config()['binaryUrl'],old)
+            self.assertEqual(old.read_bytes(),b'prior')
+    def test_capture_is_bounded_and_reaps_timeout_without_raw_output(self):
+        ns=self.host()
+        result,raw=ns['bounded_capture']([sys.executable,'-c',"import sys;sys.stdout.write('x'*20000)"],2)
+        self.assertEqual(result['returnCode'],0);self.assertTrue(result['reaped']);self.assertEqual(result['stdout']['bytes'],20000)
+        self.assertTrue(result['stdout']['truncated']);self.assertEqual(len(raw['stdout']),8192)
+        result,raw=ns['bounded_capture']([sys.executable,'-c','import time;time.sleep(10)'],.1)
+        self.assertTrue(result['timeout']);self.assertTrue(result['reaped']);self.assertLess(result['returnCode'],0)
+    def exercise(self,root,fail=None):
+        ns=self.host();events=[];writes={};base=root/'base';base.mkdir();private=root/'private'
+        ns.update(BASE=base,PRIVATE=private,NATIVE_ROOT=root/'binary')
+        ns['install_controls']=lambda config:events.append('controls')
+        ns['verify_controls']=lambda:events.append('verify')
+        ns['native_fetch']=lambda *args:events.append('download')
+        ns['write']=lambda path,text,mode=0o600:writes.update({str(path):text})
+        ns['run']=lambda args,**kw:events.append(tuple(args))
+        ns['native_state']=lambda:self.state()
+        ns['read_bounded_json']=lambda path:self.result()
+        ns['upload_receipt']=lambda data:events.append('upload')
+        ns['native_shutdown']=lambda:events.append('shutdown')
+        ns['emit_diagnostic']=lambda data:events.append('emit')
+        original=ns['exclusive_record']
+        def record(path,value):
+            if fail=='receipt' and path.name=='native-final.json':raise OSError('PRIVATE_SENTINEL')
+            return original(path,value)
+        ns['exclusive_record']=record
+        if fail=='upload':ns['upload_receipt']=lambda data:(_ for _ in ()).throw(OSError('PRIVATE_SENTINEL'))
+        if fail=='controls':ns['verify_controls']=lambda:(_ for _ in ()).throw(ValueError('PRIVATE_SENTINEL'))
+        with patch.object(ns['platform'],'system',return_value='Linux'),patch.object(ns['platform'],'machine',return_value='x86_64'),patch.object(ns['os'],'geteuid',return_value=0):
+            if fail in ('receipt','upload'):
+                with self.assertRaises(OSError):ns['native_execute'](self.config(),'public worker')
+            else:ns['native_execute'](self.config(),'public worker')
+        return ns,events,writes
+    def test_controls_before_download_unit_isolation_receipt_and_once_intent(self):
+        with tempfile.TemporaryDirectory() as t:
+            ns,events,writes=self.exercise(pathlib.Path(t))
+            self.assertLess(events.index('verify'),events.index('download'));self.assertEqual(events[-1],'shutdown')
+            for timer in ('budget','commissioning'):self.assertLess(events.index(('systemctl','is-active','--quiet','rolling-'+timer+'.timer')),events.index('download'))
+            unit=writes['/etc/systemd/system/rolling-native-version.service']
+            for required in ('DynamicUser=yes','PrivateNetwork=yes','IPAddressDeny=any','MemoryMax=512M','CPUQuota=200%','RuntimeMaxSec=20s','Restart=no','InaccessiblePaths=/var/lib/rolling-bootstrap-private /var/lib/cloud'):self.assertIn(required,unit)
+            self.assertNotIn('X-Amz',unit);self.assertNotIn('Environment=',unit)
+            receipt=json.loads((ns['BASE']/'native-final.json').read_text());self.assertTrue(receipt['passed']);self.assertFalse(receipt['nodeStartupQualified'])
+            self.assertNotIn('X-Amz',json.dumps(receipt));self.assertNotIn('PRIVATE_SENTINEL',json.dumps(receipt))
+            self.assertEqual(json.loads((ns['BASE']/'native-intent.json').read_text())['attempts'],1)
+            before=events.count('download')
+            with patch.object(ns['platform'],'system',return_value='Linux'),patch.object(ns['platform'],'machine',return_value='x86_64'),patch.object(ns['os'],'geteuid',return_value=0):
+                with self.assertRaises(FileExistsError):ns['native_execute'](self.config(),'public worker')
+            self.assertEqual(events.count('download'),before)
+    def test_final_shutdown_even_persistence_upload_or_control_failure(self):
+        for failure in ('receipt','upload','controls'):
+            with self.subTest(failure=failure),tempfile.TemporaryDirectory() as t:
+                ns,events,writes=self.exercise(pathlib.Path(t),failure)
+                self.assertEqual(events[-1],'shutdown')
+                if failure=='controls':self.assertNotIn('download',events)
+                if failure=='receipt':self.assertNotIn('upload',events)
+
 if __name__=='__main__':unittest.main(verbosity=2)

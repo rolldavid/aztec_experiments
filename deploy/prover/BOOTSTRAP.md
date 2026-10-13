@@ -682,3 +682,63 @@ retain schema 2 and its finite `archiver` snapshot, including the unchanged
 <=16384-byte capability payload check and independent review remain prerequisites
 for a separately authorized run. This source change does not extend a runtime,
 rotate providers, retry a campaign or establish Linux qualification.
+
+### Closed native version diagnostic (source only until separately authorized)
+
+`bootstrap.py --native-version-only --config PRIVATE_CONFIG --output PRIVATE_GZIP`
+selects a separate, closed diagnostic. Ordinary generation and packaging still
+require the active Linux qualification pin; this mode neither supplies that pin
+nor qualifies a node, query service or proof workload. No Node, Docker, CRS,
+wallet, provider configuration, proof job or inbound service is installed.
+
+Its exact JSON fields are `mode: "native-version-only"`, `createdAt`,
+`budgetStop` (creation plus 45 minutes), `commissioningStop` (plus 30 minutes),
+`binaryUrl`, `binarySha256`, `binaryBytes`, `expectedVersion`, and `receiptPutUrl`.
+The only binary is the reviewed 44,698,432-byte Linux AMD64 rc.6 candidate with
+SHA-256 `fa4b12adaefd5684b53b802346b9fe839ab3d6a4a829a5ea4efd6bd200e0829f`.
+Its scoped HTTPS capability must point to the fixed private-bucket object
+`releases/native-bb-<that-sha256>/bb`; redirects, proxy inheritance and alternate
+hosts/keys are rejected. A successful raw download must match both length and
+hash before executable permission is applied. Uploading this public binary,
+reserving the complete cost envelope and creating a Fleet require separate
+operator authorization; generation is not a launch grant.
+
+The public generated runtime contains an explicit AST-selected subset of the
+existing persistent deadline, egress, exclusive-record and receipt functions.
+The full assembled runtime and worker bytes are hashed into its receipt. Tests
+check this subset against the original functions and its complete global-name
+closure. It is not an inferred source extraction or a general command runner.
+For the reused immutable deadline record only, `runtimeArchiveSha256` identifies
+the binary and `manifestSha256` identifies the diagnostic control source; these
+are not claims of an ordinary release manifest or runtime archive.
+
+The operator must first verify a request Fleet's exact absolute `ValidUntil`
+and `TerminateInstancesWithExpiration=true`, encrypted root-volume deletion,
+no IAM role or inbound access, and the existing single-attempt journal. Host
+bootstrap independently installs and checks both persistent shutdown timers and
+the 50 Mbps host ceiling **before downloading**. The configured root-only PUT
+capability is never passed to the version unit or its environment. Reboot or
+unknown-result replay encounters retained exclusive intents and fails closed.
+
+The fixed unprivileged systemd unit runs only `bb --version`: 15-second capture,
+512 MiB memory, two CPU quota, no network, read-only system, no private bootstrap
+or cloud-init directory access, and no restart. Its enclosing 20-second unit
+limit allows bounded capture/reaping; the absolute cloud/host deadlines remain
+independent. Each output stream retains at most 8 KiB in memory and only its
+byte count, digest and truncation flag in evidence. No native stdout/stderr,
+arbitrary exception, capability URL or configuration is published.
+
+The root observer records bounded systemd state **before cleanup**, with distinct
+`transport-error` and `projection-error` statuses. Version outcomes distinguish
+`started`, `timeout`, `nonzero`, `signal`, `oom`, `state-unreadable`, `passed`, and
+`unqualified`; precondition or I/O failures remain separate. A passing result
+requires an observed successful unit plus the reaped binary's exact version.
+The durable final receipt is at `/var/lib/rolling-bootstrap/native-final.json`;
+the upload intent/result stay private. A synchronous console marker and one
+scoped PUT follow persistence. Shutdown is attempted in a `finally` path even
+if persistence or publication fails. Independent timers remain the last resort;
+missing evidence never authorizes another launch or execution.
+
+Actual native AMD64 execution, receipt transport, resource readback and cleanup
+must be independently reviewed before any active Linux pin is changed. Local
+labelled doubles and payload roundtrips do not satisfy that gate.
