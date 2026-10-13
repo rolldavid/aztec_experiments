@@ -45570,7 +45570,20 @@ if (typeof module !== 'undefined' && module.exports) {
     if(again?.blockHash?.toString()!==hash||Number(again?.header?.globalVariables?.blockNumber)!==height)fail();
     return {portal:'0x'+values[0].toString(16).padStart(40,'0'),checkpoint:{height,hash}};
   }
-  g.BillboardDeployRolling={readRollingDeploymentState};
+  async function readBoardDeploymentAnchor({node,receipt,read,contextGuard}) {
+    if(contextGuard)await contextGuard();
+    const hash=receipt?.txHash?.toString();
+    if(!/^0x[0-9a-f]{64}$/.test(hash??''))throw Error('Original board deployment receipt unavailable');
+    const current=await read(()=>node.getTxReceipt(receipt.txHash));
+    if(current?.txHash?.toString()!==hash||!['checkpointed','proven','finalized'].includes(current.status)||current.executionResult!=='success'||
+      !Number.isSafeInteger(current.blockNumber)||current.blockNumber<1||!/^0x[0-9a-f]{64}$/.test(current.blockHash?.toString()??''))throw Error('Original board deployment receipt unavailable');
+    const result={txHash:hash,blockNumber:current.blockNumber,blockHash:current.blockHash.toString()};
+    if((await read(()=>node.getBlock(result.blockNumber)))?.hash?.toString()!==result.blockHash)throw Error('Original board deployment anchor changed');
+    const again=await read(()=>node.getTxReceipt(receipt.txHash));
+    if(again?.txHash?.toString()!==hash||!['checkpointed','proven','finalized'].includes(again.status)||again.blockNumber!==result.blockNumber||again.blockHash?.toString()!==result.blockHash||again.executionResult!=='success')throw Error('Original board deployment anchor changed');
+    if(contextGuard)await contextGuard();return result;
+  }
+  g.BillboardDeployRolling={readRollingDeploymentState,readBoardDeploymentAnchor};
 
   g.runDeploy = async function(env, config) {
     const { aztec: a, ethers, log, pause, initCRS, createStore, portalBytecode, artifact } = env;
@@ -45802,7 +45815,7 @@ if (typeof module !== 'undefined' && module.exports) {
       Tx: a.Tx, node: rawNode, contextGuard: config.contextGuard });
     const publicationOperation='publish-board-class:'+manifest.artifacts.boardClassId;
     const deploymentOperation=rolling?'deploy-rolling-board':'deploy-board';
-    let recoveredDeployment=null, staleDeployment=null;
+    let recoveredDeployment=null, staleDeployment=null, boardDeployment=null;
     const unresolved=()=>Object.assign(new Error('The original deployment transaction requires reconciliation. Preserve its recovery records.'),{code:'BB_RECOVERY_REQUIRED'});
     try { recoveredDeployment = await deploymentJournal.reconcilePrevious(); }
     catch(error) {
@@ -45812,6 +45825,7 @@ if (typeof module !== 'undefined' && module.exports) {
       await deploymentJournal.allowReplacement(saved.operation);
       staleDeployment=saved.operation;
     }
+    if(rolling&&recoveredDeployment?.operation===deploymentOperation)boardDeployment=await readBoardDeploymentAnchor({node:rawNode,receipt:recoveredDeployment.receipt,read:fn=>a.boundedTransactionRead(fn,20000),contextGuard:config.contextGuard});
     await deploymentJournal.assertCanStart();
     wallet._transactionJournal = deploymentJournal;
     let existingInstance = await a.boundedTransactionRead(()=>rawNode.getContract(l2Addr),20000);
@@ -45841,6 +45855,7 @@ if (typeof module !== 'undefined' && module.exports) {
       log('  Not yet deployed. Sending deploy tx...', 'info');
       deploymentJournal.setOperation(deploymentOperation);
       const result = await deployMethod.send({ from: address, skipClassPublication:true });
+      if(rolling)boardDeployment=await readBoardDeploymentAnchor({node:rawNode,receipt:result.receipt,read:fn=>a.boundedTransactionRead(fn,20000),contextGuard:config.contextGuard});
       log('  TX confirmed! Block: ' + result.receipt.blockNumber, 'success');
       log('  L2 contract address: ' + l2Addr.toString(), 'success');
       const finalInstance = existingInstance || await deployMethod.getInstance();
@@ -45923,14 +45938,24 @@ if (typeof module !== 'undefined' && module.exports) {
       BigInt(minDepositWei), maxDepositWei, BigInt(configHash),BigInt(manifest.network.inbox),BigInt(manifest.network.outbox)];
     if (values.some((value, index) => BigInt(value) !== expected[index])) throw new Error('Portal configuration mismatch');
 
-    const recoveredBindingHash = recoveredDeployment?.operation === 'bind-portal:' + predicted.toLowerCase() &&
-      recoveredDeployment.receipt.executionResult === 'success' ? recoveredDeployment.receipt.txHash.toString() : null;
+    // Preserve the original creation transaction in the zero-portal journal.
+    // New bindings use their actual portal scope. Historical binding records
+    // remain readable but cannot invent a missing original creation anchor.
+    let bindingJournal=deploymentJournal,recoveredBinding=recoveredDeployment;
+    if(rolling&&(!recoveredDeployment?.operation?.startsWith('bind-portal:'))){
+      bindingJournal=await env.createTransactionJournal({reconcileOnly:true,walletSecret:secretKeyHex,walletSalt:saltVal,
+        scope:{account:address.toString().toLowerCase(),chainId:String(nodeInfo.l1ChainId),rollup:rollupAddr.toLowerCase(),version:String(version),board:l2Addr.toString().toLowerCase(),portal:predicted.toLowerCase()},
+        Tx:a.Tx,node:rawNode,contextGuard:config.contextGuard});
+      recoveredBinding=await bindingJournal.reconcilePrevious();await bindingJournal.assertCanStart();wallet._transactionJournal=bindingJournal;
+    }
+    const recoveredBindingHash = recoveredBinding?.operation === 'bind-portal:' + predicted.toLowerCase() &&
+      recoveredBinding.receipt.executionResult === 'success' ? recoveredBinding.receipt.txHash.toString() : null;
     if (config.readyTxHash && recoveredBindingHash && config.readyTxHash !== recoveredBindingHash) throw new Error('Supplied binding hash differs from the saved transaction');
     let readyTxHash = recoveredBindingHash || config.readyTxHash || null;
     if (portalAlreadySet) {
       if ((await readPortal()).toLowerCase() !== predicted.toLowerCase()) throw new Error('Board is bound to another portal');
     } else {
-      deploymentJournal.setOperation('bind-portal:' + predicted.toLowerCase());
+      bindingJournal.setOperation('bind-portal:' + predicted.toLowerCase());
       const result = await l2Contract.methods.update_portal(a.EthAddress.fromString(predicted)).send({ from: address });
       readyTxHash = result.receipt.txHash.toString();
       log('Portal binding transaction: ' + readyTxHash, 'info');
@@ -45955,12 +45980,14 @@ if (typeof module !== 'undefined' && module.exports) {
       const activation = await activateReady({ node: rawNode, portal, hash, leaf, ethers, log,
         activate: async args => (await ethereumActivation.send({ data: new ethers.Interface(PORTAL_ABI).encodeFunctionData('activate', args),
           value: '0', expected: { kind: 'activate-portal', portal: predicted.toLowerCase(), configHash: configHash.toLowerCase() } })).receipt });
-      if (activation.status !== 'active') return { l2Addr: l2Addr.toString(), portalAddr: predicted, readyTxHash, configHash, intentDigest:verified.intentDigest, policyVersion:expectedPolicyVersion, status: activation.status };
+      if(rolling&&boardDeployment)boardDeployment=await readBoardDeploymentAnchor({node:rawNode,receipt:{txHash:a.TxHash.fromString(boardDeployment.txHash)},read:fn=>a.boundedTransactionRead(fn,20000),contextGuard:config.contextGuard});
+      if (activation.status !== 'active') return { ...(rolling?{boardDeployment}:{}), l2Addr: l2Addr.toString(), portalAddr: predicted, readyTxHash, configHash, intentDigest:verified.intentDigest, policyVersion:expectedPolicyVersion, status: activation.status };
     }
     await verifyBoardPolicy();
+    if(rolling&&boardDeployment)boardDeployment=await readBoardDeploymentAnchor({node:rawNode,receipt:{txHash:a.TxHash.fromString(boardDeployment.txHash)},read:fn=>a.boundedTransactionRead(fn,20000),contextGuard:config.contextGuard});
     log('Board and portal are linked; authenticated Ready enabled deposits.', 'success');
 
-    return { l2Addr: l2Addr.toString(), portalAddr: predicted, readyTxHash, configHash, intentDigest:verified.intentDigest, policyVersion:expectedPolicyVersion, status: 'active' };
+    return { ...(rolling?{boardDeployment}:{}), l2Addr: l2Addr.toString(), portalAddr: predicted, readyTxHash, configHash, intentDigest:verified.intentDigest, policyVersion:expectedPolicyVersion, status: 'active' };
     } finally { await pxe.stop(); }
     } finally { for(const provider of ownedProviders)provider.destroy(); }
   };
