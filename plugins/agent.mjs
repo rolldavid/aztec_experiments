@@ -56,7 +56,7 @@ export function createAgent({model,toolbox,instructions,maxCalls=12,maxTokens=15
         for(const call of message.tool_calls){
           let result;
           try{result=await session.call(call.function.name,JSON.parse(call.function.arguments));}
-          catch(error){result={error:error.message};}
+          catch(error){if(['STATIC_CLEANUP_REQUIRED','STATIC_RECORD_FAILED','STATIC_UNAVAILABLE'].includes(error.code))throw error;result={error:error.message};}
           messages.push({role:'tool',tool_call_id:call.id,content:JSON.stringify(result).slice(0,16000)});
         }
       }

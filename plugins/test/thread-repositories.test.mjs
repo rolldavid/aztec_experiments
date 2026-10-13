@@ -63,7 +63,7 @@ test('bounded revision and storage budgets refuse new accepted source',async t=>
 
 test('model can check and repair an empty thread; acceptance reuses only the exact checked source',async t=>{
  const {githubToolbox}=await import('../github-tools.mjs');const h=await fixture(t);let validations=0;
- const manager=threadRepositories({...h.options,startEmpty:true,validateRevision:async({sourceDirectory,revision})=>{validations++;const text=await fs.readFile(path.join(sourceDirectory,'app.js'),'utf8');if(text==='bad')throw Object.assign(Error('Isolated execution failed'),{result:{passed:false,phase:'test',revision,log:'assertion failed'}});return {passed:true,revision,sourceDigest:'a'.repeat(64),log:'passed'};}});
+ const manager=threadRepositories({...h.options,startEmpty:true,validateRevision:async({sourceDirectory,revision})=>{validations++;const text=await fs.readFile(path.join(sourceDirectory,'app.js'),'utf8');if(text==='bad')throw Object.assign(Error('Isolated execution failed'),{code:'STATIC_FAILED',result:{passed:false,phase:'test',revision,log:'assertion failed'}});return {passed:true,revision,sourceDigest:'a'.repeat(64),log:'passed'};}});
  const toolbox=githubToolbox({repository:'owner/project',repositories:manager,api:async()=>assert.fail('Empty thread requires no external repository API')});
  const session=await toolbox.open({threadId:id(1),id:id(1),postId:id(9)});
  await session.call('write_file',{path:'app.js',content:'bad'});assert.equal((await session.call('check_workspace',{})).passed,false);

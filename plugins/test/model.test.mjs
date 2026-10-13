@@ -57,3 +57,8 @@ test('published app links are host-produced, byte bounded, and omit private vali
  const result=await createAgent({toolbox,instructions:'Help',model:{complete:async()=>({message:{role:'assistant',content:'🌎'.repeat(248)}})}}).run({id:'a',postId:'b',text:'Build'});
  assert(Buffer.byteLength(result.replyText)<=992);assert(result.replyText.isWellFormed());assert.match(result.replyText,/App: https:\/\/apps.example/);assert.match(result.replyText,/Source:/);assert(!JSON.stringify(result).includes('/private/'));assert(!Object.hasOwn(result.revision,'validation'));
 });
+for(const code of ['STATIC_CLEANUP_REQUIRED','STATIC_RECORD_FAILED','STATIC_UNAVAILABLE'])test('isolated '+code+' stops the agent before another paid call or tool',async()=>{
+ let models=0,tools=0,closed=0;const toolbox={open:async()=>({definitions:[],call:async()=>{tools++;throw Object.assign(Error('requires operator reconciliation'),{code,result:{passed:false,phase:'cleanup'}});},close:async()=>{closed++;}})};
+ const model={complete:async()=>{models++;return {message:{role:'assistant',tool_calls:[{id:'1',function:{name:'check_workspace',arguments:'{}'}},{id:'2',function:{name:'check_workspace',arguments:'{}'}}]}};}};
+ await assert.rejects(createAgent({toolbox,model,instructions:'Help'}).run({id:'a',postId:'b',text:'Build'}),e=>e.code===code);assert.equal(models,1);assert.equal(tools,1);assert.equal(closed,1);
+});

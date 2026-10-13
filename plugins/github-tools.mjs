@@ -82,7 +82,7 @@ export function githubToolbox({repository,api,allowWrites=false,draftPr=false,ru
       summary:reason=>(reason+(prUrl?' PR: '+prUrl:' No PR was published.')).slice(0,900),
       async call(name,args){
         if(name==='check_workspace'&&workspace){
-          await ensureFiles();let result;try{result=await workspace.check();}catch(error){if(!error.result)throw error;result=error.result;}
+          await ensureFiles();let result;try{result=await workspace.check();}catch(error){if(error.code!=='STATIC_FAILED'||!error.result)throw error;result=error.result;}
           return {passed:result.passed,revision:result.revision,sourceDigest:result.sourceDigest,phase:result.phase,log:result.log?.slice(-12000),logTruncated:(result.log?.length??0)>12000};
         }
         if(name==='list_files'){if(typeof args.prefix!=='string')throw Error('Prefix required');await ensureCheckout();const listed=await runCommand('git',['ls-tree','-r','--name-only','-z','HEAD'],{cwd:work,maxBuffer:4*1024*1024});const files=listed.stdout.split('\0').filter(x=>x&&x.startsWith(args.prefix));return {files:files.slice(0,500),truncated:files.length>500};}
