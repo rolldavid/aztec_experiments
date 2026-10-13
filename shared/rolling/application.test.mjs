@@ -40,6 +40,7 @@ function fixture(){
   }};
   const board={methods:new Proxy({},{get:(_,name)=>(...args)=>({name,args,simulate:async()=>{
     state.privateReads.push({name,args});
+    if(state.responses&&Object.hasOwn(state.responses,name))return {result:state.responses[name]};
     if(name==='preference_head'&&state.preferenceHeadError)throw state.preferenceHeadError;
     if(name==='preference_head'&&state.beforePreferenceHead)await state.beforePreferenceHead();
     if(name==='effective_policy'&&state.policyReadError)throw state.policyReadError;
@@ -992,4 +993,52 @@ test('Bok post recovery never replaces unknown, nonfinal or changed funded reque
   await assert.rejects(f.restart().prepareBokPost(post.intentId));assert.equal(f.state.sends,2);
   await assert.rejects(f.restart().prepare(bokAction()));assert.equal(f.state.sends,2);
  }
+});
+
+function moderatorFixture(){
+ const f=fixture(),decode=(name,values)=>decodeFromAbi(getFunctionReturnType([...artifact.functions,...artifact.nonDispatchPublicFunctions].find(fn=>fn.name===name)),values.map(n=>new Fr(n)));
+ f.state.moderator=3n;f.state.storageReads=[];f.state.responses={
+  get_post:decode('get_post',[1n,0n,0n,8n,1n,0n,0n,9n,0n,10n,0n]),
+  subboard_state:decode('subboard_state',[1n,8n,1n,0n,0n]),
+  profile_state:decode('profile_state',[1n,8n,10n,2n,9n,100n,100n,100n]),
+  avatar_moderation:decode('avatar_moderation',[0n,0n,0n,0n])};
+ const node=f.options.accountSession.node;node.getBlockData=async height=>({header:{globalVariables:{blockNumber:height==='checkpointed'?7:height}},blockHash:hex(f.state.reorg&&height!=='checkpointed'?43:42)});
+ node.getPublicStorageAt=async(ref,address,slot)=>{f.state.storageReads.push({ref,address:String(address),slot:String(slot)});assert.equal(String(slot),String(new Fr(BigInt(artifact.storageLayout.moderator.slot))));return new Fr(f.state.moderator);};
+ const original=f.options.accountSession.wallet.sendTx;f.options.accountSession.wallet.sendTx=async(payload,opts)=>{if(f.state.beforeModeratorSubmit)await f.state.beforeModeratorSubmit();if(opts.beforeSubmit)await opts.beforeSubmit(hex(77));return original(payload,opts);};
+ return {...f,decode};
+}
+const moderatorActions=[{type:'moderate-post',post:'8',reason:'Spam removal'},{type:'moderate-avatar',name:'7',reason:'Unsafe image'},{type:'reject-subboard',subboard:'9',reason:'Violates parent rules'},{type:'set-main-policy',rules:'Keep discussion civil.'}];
+test('Moderator actions bind actual public ABI, canonical authority and separately confirmed fees without collateral',async()=>{
+ for(const action of moderatorActions){
+  const f=moderatorFixture();assert.deepEqual(await f.app.readModeratorStatus(),{authorized:true});const prepared=await f.app.prepare(action);
+  assert.equal(prepared.moderation.mainVersion,1);assert.equal(f.state.sends,0);assert.equal(prepared.maximumFee,'10');
+  assert(f.state.storageReads.every(row=>row.ref.hash===hex(42)&&row.address===hex(1)));
+  assert(!f.state.privateReads.some(row=>row.name==='get_screen_hints'));const expected=({ 'moderate-post':'remove_post','moderate-avatar':'remove_avatar','reject-subboard':'reject_subboard','set-main-policy':'set_main_policy'})[action.type];
+  assert.equal(f.state.calls.at(-1).name,expected);const sent=await f.restart().submitPrepared(prepared.intentId);assert.equal(sent.status,'confirmed');assert.equal(f.state.sends,1);assert.equal(f.state.sent.payload.name,expected);
+  assert.equal((await f.restart().reconcile(prepared.intentId)).status,'confirmed');assert.equal(f.state.sends,1);
+ }
+});
+test('Moderator capability rejects unauthorized, malformed and reorged storage without preparing effects',async()=>{
+ for(const kind of ['unauthorized','zero','reorg','throw']){
+  const f=moderatorFixture();if(kind==='unauthorized')f.state.moderator=99n;if(kind==='zero')f.state.moderator=0n;if(kind==='reorg')f.state.reorg=true;if(kind==='throw')f.options.accountSession.node.getPublicStorageAt=async()=>{throw 0;};
+  if(kind==='unauthorized')assert.deepEqual(await f.app.readModeratorStatus(),{authorized:false});else await assert.rejects(f.app.readModeratorStatus());
+  for(const action of moderatorActions)await assert.rejects(f.app.prepare(action));assert.equal(f.state.sends,0);assert.equal(f.values.size,0);
+ }
+});
+test('Moderator reviewed policy, target and authority are rechecked before submission and after preparation',async()=>{
+ for(const when of ['before-submit','before-forward'])for(const kind of ['authority','policy','post','avatar','board']){
+  const f=moderatorFixture(),action=moderatorActions[kind==='avatar'?1:kind==='board'?2:0],prepared=await f.app.prepare(action);
+  const mutate=()=>{if(kind==='authority')f.state.moderator=99n;else if(kind==='policy')f.state.policy=2;else if(kind==='post')f.state.responses.get_post[2]=1n;else if(kind==='avatar')f.state.responses.profile_state.avatar_version=3n;else f.state.responses.subboard_state[3]=true;};
+  if(when==='before-submit')mutate();else f.state.beforeModeratorSubmit=mutate;
+  await assert.rejects(f.restart().submitPrepared(prepared.intentId));assert.equal(f.state.sends,0);
+ }
+});
+test('Moderator immutable author semantics and bounded exact reasons reject invalid actions',async()=>{
+ for(const action of [{type:'hide-post',post:'8'},...moderatorActions.map(a=>({...a,owner:hex(3)})),{...moderatorActions[0],post:'0'},{...moderatorActions[0],reason:'a'.repeat(218)},{...moderatorActions[0],reason:'x\0y'},{...moderatorActions[3],rules:'a'.repeat(993)}]){
+  const f=moderatorFixture();await assert.rejects(f.app.prepare(action));assert.equal(f.state.sends,0);assert.equal(f.values.size,0);
+ }
+});
+test('Moderator unknown send preserves original journal operation and forbids a second action',async()=>{
+ const f=moderatorFixture(),prepared=await f.app.prepare(moderatorActions[0]);f.state.failSend=true;await assert.rejects(f.app.submitPrepared(prepared.intentId));
+ await assert.rejects(f.restart().prepare(moderatorActions[1]));assert.equal((await f.restart().reconcile(prepared.intentId)).status,'unknown');assert.equal(f.state.sends,1);
 });

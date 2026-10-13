@@ -78,10 +78,11 @@ function component(fields,length){
   const bytes=Array.from({length:31},(_,i)=>Number((words[0]>>BigInt((30-i)*8))&255n));bytes.push(Number(words[1]>>240n));
   check(bytes.slice(length).every(n=>n===0),'ROLLING_INVALID_RESPONSE');return String.fromCharCode(...bytes.slice(0,length));
 }
-const keys={'claim-deposit':['receipt','feeReceipt'],preference:['expectedRevision','kind','target','enabled'],'read-marker':['expectedRevision','thread','throughBlock'],bio:['name','expectedVersion','content'],avatar:['name','expectedVersion','width','height','data'],name:['first','last'],subboard:['slug','name','description','rules'],like:['post'],unlike:['post'],withdraw:['deposit'],screen:['deposit'],
+const moderationTypes=new Set(['moderate-post','moderate-avatar','reject-subboard','set-main-policy']);
+const keys={'moderate-post':['post','reason'],'moderate-avatar':['name','reason'],'reject-subboard':['subboard','reason'],'set-main-policy':['rules'],'claim-deposit':['receipt','feeReceipt'],preference:['expectedRevision','kind','target','enabled'],'read-marker':['expectedRevision','thread','throughBlock'],bio:['name','expectedVersion','content'],avatar:['name','expectedVersion','width','height','data'],name:['first','last'],subboard:['slug','name','description','rules'],like:['post'],unlike:['post'],withdraw:['deposit'],screen:['deposit'],
   bok:['deposit','content','name','subboard','budget'],post:['deposit','content','name','subboard'],reply:['deposit','content','name','subboard','parent','root'],
   quote:['deposit','content','name','subboard','reference'],repost:['deposit','content','name','subboard','reference']};
-const methods={bok:'authorize_request','claim-deposit':'claim_deposit',preference:'set_preference','read-marker':'mark_thread_read',bio:'set_bio',avatar:'set_avatar',name:'register_name',subboard:'create_subboard',like:'set_like',unlike:'set_like',withdraw:'withdraw',screen:'screen',post:'post',reply:'post',quote:'post',repost:'post'};
+const methods={'moderate-post':'remove_post','moderate-avatar':'remove_avatar','reject-subboard':'reject_subboard','set-main-policy':'set_main_policy',bok:'authorize_request','claim-deposit':'claim_deposit',preference:'set_preference','read-marker':'mark_thread_read',bio:'set_bio',avatar:'set_avatar',name:'register_name',subboard:'create_subboard',like:'set_like',unlike:'set_like',withdraw:'withdraw',screen:'screen',post:'post',reply:'post',quote:'post',repost:'post'};
 
 /** Wallet-only port; import after unlock. No SDK, network or public-reader work at import.
  * deployment: {board:{address,artifact}, network:{chainId,version,rollup},portal,
@@ -213,7 +214,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
   }
   const operation=id=>`ROLLING_WORKFLOW_V1:${id}`;
   function summary(record){return {intentId:record.id,action:clone(record.action),status:record.status,maximumFee:record.maximumFee,
-    nonce:record.nonce,txHash:record.txHash??null,stage:record.bok?`bok-${record.bok.phase}`:'single-transaction',...(record.bok?{bok:{phase:record.bok.phase,budget:record.bok.budget,availableCredit:record.bok.availableCredit,authorizationTxHash:record.bok.authorizationTxHash??null,...(record.bok.phase==='post'?{mainPolicyVersion:record.args[2].expected_main_policy_version,localPolicyVersion:record.args[2].expected_local_policy_version}:{})}}:{}),...(record.replacementReview?{replacementReview:clone(record.replacementReview)}:{}),
+    nonce:record.nonce,txHash:record.txHash??null,...(record.moderation?{moderation:clone(record.moderation)}:{}),stage:record.bok?`bok-${record.bok.phase}`:'single-transaction',...(record.bok?{bok:{phase:record.bok.phase,budget:record.bok.budget,availableCredit:record.bok.availableCredit,authorizationTxHash:record.bok.authorizationTxHash??null,...(record.bok.phase==='post'?{mainPolicyVersion:record.args[2].expected_main_policy_version,localPolicyVersion:record.args[2].expected_local_policy_version}:{})}}:{}),...(record.replacementReview?{replacementReview:clone(record.replacementReview)}:{}),
     ...(preferenceAction(record)?{inclusionHistory:clone(record.inclusionHistory??[])}:{})};}
   function checkBokRecord(record){if(record?.bok)check(bok&&JSON.stringify(record.bok.scope)===JSON.stringify(bok),'ROLLING_CONTEXT_CHANGED');}
   async function savedIntent(id){const saved=await (await slot()).read();check(saved.value?.id===id,'ROLLING_INTENT_NOT_FOUND');checkBokRecord(saved.value);return saved;}
@@ -353,6 +354,47 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
       }
     }
   }
+  async function moderatorStatus(){
+    await guard();const slot=deployment.board.artifact.storageLayout?.moderator?.slot;check(slot!==undefined,'ROLLING_ABI_MISMATCH');
+    const head=await session.node.getBlockData('checkpointed'),number=Number(head?.header?.globalVariables?.blockNumber),hash=hashText(head?.blockHash);
+    check(Number.isSafeInteger(number)&&number>0,'ROLLING_INVALID_RESPONSE');await guard();
+    const address=new sdk.AztecAddress(new sdk.Fr(BigInt(fixed.board)));
+    const moderator=field((await session.node.getPublicStorageAt({hash},address,new sdk.Fr(BigInt(slot)))).toString(),true);
+    await guard();const again=await session.node.getBlockData(number);
+    check(hashText(again?.blockHash)===hash&&Number(again?.header?.globalVariables?.blockNumber)===number,'ROLLING_CONTEXT_CHANGED');await guard();
+    return {authorized:field(owner,true)===moderator};
+  }
+  async function moderationArguments(action,board){
+    check((await moderatorStatus()).authorized,'ROLLING_MODERATOR_REQUIRED');
+    const policy=await utility(board,'main_policy',[]);check(Array.isArray(policy)&&policy.length===2,'ROLLING_POLICY_UNAVAILABLE');
+    const mainVersion=version(String(BigInt(policy[0]))),mainDigest=field(policy[1]);
+    const review={mainVersion,mainDigest};let args;
+    if(action.type==='set-main-policy')args=text(action.rules,32);
+    else{
+      const reason=text(action.reason,7);
+      if(action.type==='moderate-post'){
+        const id=field(action.post,true),post=await utility(board,'get_post',[id]);
+        check(Array.isArray(post)&&post.length===5&&post[0]===true&&BigInt(post[2])===0n,'ROLLING_MODERATION_TARGET_CHANGED');
+        const subboard=field(post[1].subboard),localVersion=subboard===zero?0:1;
+        Object.assign(review,{target:id,localVersion});args=[id,mainVersion,localVersion,...reason];
+      }else if(action.type==='moderate-avatar'){
+        const id=field(action.name,true),profile=await utility(board,'profile_state',[id]),removed=await utility(board,'avatar_moderation',[id]);
+        const avatarVersion=version(String(BigInt(profile.avatar_version)));
+        check(BigInt(profile.avatar_length)>0n&&BigInt(removed.avatar_version)!==BigInt(avatarVersion),'ROLLING_MODERATION_TARGET_CHANGED');
+        Object.assign(review,{target:id,avatarVersion,avatarDigest:field(profile.avatar_digest)});args=[id,avatarVersion,mainVersion,...reason];
+      }else{
+        check(action.type==='reject-subboard');const id=field(action.subboard,true),state=await utility(board,'subboard_state',[id]);
+        check(Array.isArray(state)&&state.length===5&&state[0]===true&&state[3]===false,'ROLLING_MODERATION_TARGET_CHANGED');
+        Object.assign(review,{target:id,localVersion:1});args=[id,...reason];
+      }
+    }
+    await guard();return {args:plain(args),review};
+  }
+  async function checkModeration(record){
+    if(!moderationTypes.has(record.action.type))return;
+    const current=await moderationArguments(record.action,await contract());
+    check(same(current.args,record.args)&&same(current.review,record.moderation),'ROLLING_MODERATION_TARGET_CHANGED');
+  }
   const bokContract=()=>{check(bok,'ROLLING_BOK_UNAVAILABLE');return sdk.Contract.at(new sdk.AztecAddress(new sdk.Fr(BigInt(bok.address))),deployment.bok.artifact,session.wallet);};
   const uint128=value=>{check(typeof value==='string'&&/^(0|[1-9][0-9]{0,38})$/.test(value)&&BigInt(value)<(1n<<128n));return BigInt(value);};
   async function bokContext(){
@@ -377,12 +419,14 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
   function interaction(board,record){
     check((record.bok?.phase==='post'?'post_with_bok':methods[record.action.type])===record.method,'ROLLING_INTENT_CHANGED');
     const call=board.methods[record.method](...record.args);
-    const abi=(record.bok?.phase==='authorize'?deployment.bok.artifact:deployment.board.artifact).functions.find(f=>f.name===record.method);check(abi,'ROLLING_ABI_MISMATCH');
+    const selectedArtifact=record.bok?.phase==='authorize'?deployment.bok.artifact:deployment.board.artifact;
+    const abi=[...selectedArtifact.functions,...(selectedArtifact.nonDispatchPublicFunctions??[])].find(f=>f.name===record.method);check(abi,'ROLLING_ABI_MISMATCH');
     const encoded=sdk.encodeArguments(abi,record.args).map(f=>f.toString());
     if(record.encoded)check(JSON.stringify(encoded)===JSON.stringify(record.encoded),'ROLLING_INTENT_CHANGED');
     return {call,encoded};
   }
   return Object.freeze({
+    async readModeratorStatus(){return exclusive(moderatorStatus);},
     async readBokStatus(){return exclusive(async()=>{if(!bok)return {available:false};try{return {available:true,availableCredit:String(await bokCredit()),pluginId:bok.pluginId};}catch(error){if(error?.code==='ROLLING_BOK_UNAVAILABLE')return {available:false};throw error;}});},
     async readAccountStatus(){
       if(!session)return {status:'locked'};
@@ -430,8 +474,10 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
       const previousTx=await session.journal.assertCanStart();
       const predecessor=previousTx?.value?{operation:previousTx.value.operation??null,txHash:previousTx.value.txHash}:null;
       const nonce=field(sdk.Fr.random().toString(),true),id=field(sdk.Fr.random().toString(),true),board=await contract();
-      const args=plain(await argumentsFor(action,board,nonce));
-      const record={version:1,id,action,args,method:methods[action.type],nonce,predecessor,status:'prepared'};
+      const allowed=keys[action?.type];check(allowed&&Object.keys(action).every(key=>key==='type'||allowed.includes(key)));
+      const moderation=moderationTypes.has(action.type)?await moderationArguments(action,board):null;
+      const args=moderation?moderation.args:plain(await argumentsFor(action,board,nonce));
+      const record={version:1,id,action,args,method:methods[action.type],nonce,predecessor,status:'prepared',...(moderation?{moderation:moderation.review}:{})};
       if(action.type==='bok'){
         const budget=uint128(action.budget);check(budget>0n);const available=await bokCredit();check(available>=budget,'ROLLING_BOK_CREDIT_INSUFFICIENT');
         const draft=args[2],requestId=field(sdk.Fr.random().toString(),true);
@@ -530,6 +576,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
       }
       await session.journal.assertCanStart(); // Before private simulation, not merely before send.
       if(saved.value.action.type==='claim-deposit')check(same(await collateralClaim(saved.value.action),saved.value.args),'ROLLING_FUNDING_MISMATCH');
+      await checkModeration(saved.value);
       if(saved.value.bok?.phase==='authorize'){const available=await bokCredit();check(available>=BigInt(saved.value.bok.budget),'ROLLING_BOK_CREDIT_INSUFFICIENT');}
       if(saved.value.bok?.phase==='post')await waitingBok(saved.value);
       const selected=interaction(await selectedContract(saved.value),saved.value);progress('estimating');
@@ -539,7 +586,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
       await (await slot()).write(saved,{...saved.value,status:'submitting'}); // Durable no-replay fence before wallet lifecycle.
       await guard();progress('submitting');
       await session.wallet.sendTx(estimated.payload,{from:session.owner,fee:{gasSettings:estimated.gasSettings},
-        transactionJournal:session.journal,journalOperation:operation(id),...(saved.value.bok?{beforeSubmit:async()=>{
+        transactionJournal:session.journal,journalOperation:operation(id),...(saved.value.moderation?{beforeSubmit:async()=>{await checkModeration(saved.value);await guard();}}:{}),...(saved.value.bok?{beforeSubmit:async()=>{
           if(saved.value.bok.phase==='post')await waitingBok(saved.value);else await bokContext();await guard();
         }}:{}),...(replacing?{beforeSubmit:async hash=>{
           await session.journal.assertReplacementPredecessors(operation(id),hash,{requireMissingAnchor:true});
