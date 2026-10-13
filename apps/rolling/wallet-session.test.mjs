@@ -113,6 +113,20 @@ async function sessionFixture(){
   if(state.active||state.otherTab)return run(null);state.active=true;state.events.push('lock');try{return await run({});}finally{state.active=false;state.events.push('unlock');}}};
  return {...f,state,deploymentState:f.state,ownedId,privateStore,pxe,store,wallet,input:{...f.options,sdk,routing,account,locks,trustedQuery:{url:'http://127.0.0.1:3/v1/node',allowLocalDev:true},remoteProver:{url:'http://127.0.0.1:3',board:String(f.board.address)},contextGuard:async()=>{held('guard');}}};
 }
+test('funding reader opens lazily under account lease and closes with the session',async()=>{
+ const f=await sessionFixture();let opened=0,destroyed=0,reads=0;
+ const Original=f.input.ethers.JsonRpcProvider;
+ f.input.ethers={...f.input.ethers,JsonRpcProvider:class{constructor(url){opened++;if(opened===1)return new Original(url);return {getNetwork:async()=>{assert(f.state.active);reads++;return {chainId:31337n};},destroy:()=>{destroyed++;}};}}};
+ const receipt={txHash:hex(40),blockHash:hex(41),blockNumber:2,sender:'0x'+'33'.repeat(20),nonce:'1',amount:'100',leafIndex:'2',messageKey:hex(43),secretHash:hex(44)};
+ const claimStore={load:async()=>null};f.input.claimStore=claimStore;
+ f.pxe.getSyncedBlockHeader=async()=>({globalVariables:{blockNumber:10},hash:async()=>hex(55),state:{l1ToL2MessageTree:{root:new Fr(1)}}});
+ f.input.sdk.prepareFundingClaim=async input=>{assert.equal(input.claimStore,claimStore);assert.equal((await input.ethProvider.getNetwork()).chainId,31337n);return {status:'waiting'};};
+ const session=await createRollingWalletSession(f.input);assert.equal(opened,1);
+ await assert.rejects(session.application.prepare({type:'claim-deposit',receipt}),{code:'ROLLING_FUNDING_NOT_READY'});
+ assert.equal(opened,2);assert.equal(reads,1);assert.equal(f.state.sends,0);
+ await session.close();assert.equal(destroyed,1);
+ await assert.rejects(session.application.prepare({type:'claim-deposit',receipt}),{code:'ROLLING_CONTEXT_CHANGED'});assert.equal(reads,1);
+});
 test('constructs verified deployment/account, registers with one trusted PXE, and guards every application operation',async()=>{
  const f=await sessionFixture(),session=await createRollingWalletSession(f.input);
  assert.equal(f.state.registrations,1);assert.equal(f.state.events.filter(x=>x==='register-contract').length,3);

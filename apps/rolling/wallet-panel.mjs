@@ -262,7 +262,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
  function showIntent(){
   const replacement=intent.status==='replacement-prepared',prepared=intent.status==='prepared'||replacement;
   content.append(el('h3',{},replacement?'Review replacement before sending':prepared?'Review before sending':'Transaction recovery'));
-  content.append(paragraph(TYPES[intent.action?.type]??'Existing transaction'));
+  content.append(paragraph(intent.action?.type==='claim-deposit'?'Recover posting funds':TYPES[intent.action?.type]??'Existing transaction'));
   // Explicit fields only, and text nodes throughout. No nonce, account or raw error.
   for(const key of ['first','last','slug','name','description','rules','content','subboard','parent','root','reference','post']){
    const value=intent.action?.[key];if(typeof value==='string'&&value)content.append(el('p',{class:'post-body'},`${key}: ${key==='name'&&intent.action.type!=='subboard'?ownedLabel(value):value}`));
@@ -281,7 +281,8 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
    if(intent.action.data==='')avatarArea.append(paragraph('Clear avatar. No image bytes will be published.'));
   }
   let confirm;
-  const privateAction=['preference','read-marker'].includes(intent.action?.type);
+  const privateAction=['preference','read-marker'].includes(intent.action?.type),fundingAction=intent.action?.type==='claim-deposit';
+  if(fundingAction){content.append(paragraph('Claim the previously paid posting collateral privately. No second Ethereum payment will be requested.'),paragraph('Collateral: '+intent.action.receipt.amount+' wei.'));if(intent.action.feeReceipt)content.append(paragraph('Previously bridged transaction fees: '+intent.action.feeReceipt.amount+' fee-juice units. The fee claim and collateral claim share one transaction.'));}
   if(privateAction){content.append(paragraph(intent.action.type==='read-marker'?'Mark this thread read through block '+intent.action.throughBlock:preferenceDescription(intent.action)));}
   if(prepared){
    confirm=button(replacement?'Confirm replacement and send':'Confirm and send',()=>void work(async()=>{
@@ -290,7 +291,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
     const id=intent.intentId;intent={...intent,status:'unknown'};blocked=true;
     try{const result=await session.application.submitPrepared(id);checkAccount(epoch);await receive(result);}catch{note('Submission outcome is unknown. Check this transaction; do not submit again.');throw Error('Unknown outcome');}
    }),true);confirm.dataset.unavailable=String(!avatarReady||!feeReady);
-   content.append(paragraph(privateAction?'Your exact private setting is saved. Sending records an encrypted onchain update and charges a network fee.':'Your exact action is saved. Sending publishes it onchain and cannot be undone.'),confirm);
+   content.append(paragraph(fundingAction?'Your saved funding receipt will be checked again before sending this private claim.':privateAction?'Your exact private setting is saved. Sending records an encrypted onchain update and charges a network fee.':'Your exact action is saved. Sending publishes it onchain and cannot be undone.'),confirm);
    if(!replacement)content.append(button('Cancel prepared action',()=>void work(async()=>{await session.application.cancelPrepared(intent.intentId);intent=null;await refresh();notice='Prepared action cancelled. No new transaction was sent.';})));
   }else{
    content.append(paragraph('No automatic resend is allowed. A missing receipt does not mean the transaction failed.'),button('Check existing transaction',()=>void work(async()=>{await receive(await session.application.reconcile(intent.intentId));})));
@@ -426,6 +427,22 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   }
   validate();
  }
+ function fundingView(){
+  content.append(el('h3',{},'Recover a completed funding payment'),paragraph('Import the public receipt saved when funding. We check the original payment and bridge delivery before offering a private claim. This does not request another Ethereum payment.'));
+  const file=el('input',{type:'file',accept:'.json,application/json','aria-label':'Funding recovery receipt'});
+  const review=button('Check funding receipt',()=>void work(async()=>{
+   const epoch=accountEpoch;checkAccount(epoch);const selected=file.files?.[0];
+   if(!selected||selected.size>16384)throw connectionFailure;
+   const recovered=JSON.parse(await selected.text());checkAccount(epoch);
+   if(!recovered||Object.getPrototypeOf(recovered)!==Object.prototype||Object.keys(recovered).some(key=>!['receipt','feeReceipt'].includes(key))||!recovered.receipt)throw connectionFailure;
+   const action={type:'claim-deposit',receipt:recovered.receipt,...(recovered.feeReceipt?{feeReceipt:recovered.feeReceipt}:{})};
+   blocked=true;intent=await session.application.prepare(action);checkAccount(epoch);blocked=false;
+   notice='Payment and bridge delivery verified. Review the private claim and maximum fee.';
+  }),true);
+  review.dataset.unavailable='true';review.disabled=true;
+  file.addEventListener('change',()=>{const ready=!!file.files?.[0]&&file.files[0].size<=16384;review.dataset.unavailable=String(!ready);review.disabled=busy||!ready;});
+  content.append(label('Saved funding receipt',file),review,paragraph('New aggregate funding is still being connected. This recovery step alone does not make Bok ready.'));
+ }
  function render(){
   const hadFocus=dialog.contains(document.activeElement);
   releasePreviews();content.replaceChildren();
@@ -446,10 +463,10 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
     const messages={'fee-needed':'Funds for transaction fees are needed.','collateral-pending':'No posting deposit was found.','fee-ready':'A posting deposit was found. We’ll check whether it can be used when you review an action.'};
     content.append(paragraph(messages[status?.status]??'The private account has not been verified.'));
     if(status?.privateFeeCredit&&/^[0-9]+$/.test(status.privateFeeCredit))content.append(paragraph(status.privateFeeCredit==='0'?'No funds for transaction fees are available.':'Funds for transaction fees are available.'));
-    content.append(paragraph('Funding is not connected in this panel yet. No funds are requested here.'));
+    content.append(button('Recover funding',()=>{view='funding';render();}));
     if(status?.status!=='locked'){
      content.append(el('nav',{'aria-label':'Private account views'},button('Actions',()=>{view='action';render();}),button('Your names',()=>{view='names';render();}),button('Private views',()=>{view='preferences';render();})));
-     if(view==='names')namesView();else if(view==='preferences')preferencesView();else form();
+     if(view==='names')namesView();else if(view==='preferences')preferencesView();else if(view==='funding')fundingView();else form();
     }
     content.append(button('Refresh private account',()=>void work(refresh)));
    }

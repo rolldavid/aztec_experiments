@@ -64,7 +64,8 @@ async function load(){
   if(!selected||globalThis.walletState.invalidated)return Promise.reject(failed());
   const guard=()=>{if(globalThis.walletState.invalidated||globalThis.walletState.aztec!==selected)throw failed();};
   creating=createRollingWalletSession({sdk,routing,ethers:globalThis.ethers,config,boardArtifact,privateFeeArtifact,account:selected,
-   trustedQuery:query,remoteProver:remote,contextGuard:guard,onProgress,proofsEnabled:metadata.proofsEnabled}).then(value=>(session=value)).finally(()=>{creating=undefined;});
+   trustedQuery:query,remoteProver:remote,contextGuard:guard,onProgress,
+   claimStore:globalThis.makeClaimSecretStore(selected.secretKey,selected.salt),proofsEnabled:metadata.proofsEnabled}).then(value=>(session=value)).finally(()=>{creating=undefined;});
   return creating;
  }});
 }

@@ -78,10 +78,10 @@ function component(fields,length){
   const bytes=Array.from({length:31},(_,i)=>Number((words[0]>>BigInt((30-i)*8))&255n));bytes.push(Number(words[1]>>240n));
   check(bytes.slice(length).every(n=>n===0),'ROLLING_INVALID_RESPONSE');return String.fromCharCode(...bytes.slice(0,length));
 }
-const keys={preference:['expectedRevision','kind','target','enabled'],'read-marker':['expectedRevision','thread','throughBlock'],bio:['name','expectedVersion','content'],avatar:['name','expectedVersion','width','height','data'],name:['first','last'],subboard:['slug','name','description','rules'],like:['post'],unlike:['post'],withdraw:['deposit'],screen:['deposit'],
+const keys={'claim-deposit':['receipt','feeReceipt'],preference:['expectedRevision','kind','target','enabled'],'read-marker':['expectedRevision','thread','throughBlock'],bio:['name','expectedVersion','content'],avatar:['name','expectedVersion','width','height','data'],name:['first','last'],subboard:['slug','name','description','rules'],like:['post'],unlike:['post'],withdraw:['deposit'],screen:['deposit'],
   post:['deposit','content','name','subboard'],reply:['deposit','content','name','subboard','parent','root'],
   quote:['deposit','content','name','subboard','reference'],repost:['deposit','content','name','subboard','reference']};
-const methods={preference:'set_preference','read-marker':'mark_thread_read',bio:'set_bio',avatar:'set_avatar',name:'register_name',subboard:'create_subboard',like:'set_like',unlike:'set_like',withdraw:'withdraw',screen:'screen',post:'post',reply:'post',quote:'post',repost:'post'};
+const methods={'claim-deposit':'claim_deposit',preference:'set_preference','read-marker':'mark_thread_read',bio:'set_bio',avatar:'set_avatar',name:'register_name',subboard:'create_subboard',like:'set_like',unlike:'set_like',withdraw:'withdraw',screen:'screen',post:'post',reply:'post',quote:'post',repost:'post'};
 
 /** Wallet-only port; import after unlock. No SDK, network or public-reader work at import.
  * deployment: {board:{address,artifact}, network:{chainId,version,rollup},portal,
@@ -124,14 +124,20 @@ const methods={preference:'set_preference','read-marker':'mark_thread_read',bio:
  * before transaction bytes were saved. Missing receipt is never absence. No automatic
  * replacement. Explicit preference-only resumeSaved may resend the identical saved bytes
  * after fresh context validation, without estimation or proving; cancelPrepared permits only the pre-send prepared state. Recovery UI must preserve both encrypted journals.
- * This slice excludes bridging, deposit claims, L1 exits and composite Bok request/post;
+ * claim-deposit accepts public receipt metadata only. The existing receipt verifier
+ * derives the private claim from wallet custody and checks delivery at the current
+ * PXE anchor before both preparation and submission. Secrets stay in the encrypted
+ * workflow record, never its public action/summary. The caller owns funding.provider
+ * and its lifetime, guarded with the same account/network context.
+ * This slice excludes new bridge payments, L1 exits and composite Bok request/post;
  * withdraw is ONLY existing funded deposit's L2 exit. These remain integration work.
  */
-export function createRollingApplication({sdk,deployment,accountSession,privateStore,publicReader,onProgress=()=>{},contextGuard}){
+export function createRollingApplication({sdk,deployment,accountSession,privateStore,publicReader,funding,onProgress=()=>{},contextGuard}){
   void publicReader; // Private methods must never send anything to this dependency.
   let busy=false,slotPromise;
   const session=accountSession;
   const owner=session?.owner?.toString();
+  const fundingProvider=funding?.provider,claimStore=funding?.claimStore;
   const fixed=deployment&&{board:deployment.board.address.toString(),network:clone(deployment.network),portal:deployment.portal,
     fee:deployment.privateFee.address.toString(),gas:JSON.parse(JSON.stringify(deployment.privateFee.gasSettings,(_,v)=>typeof v==='bigint'?v.toString():v)),proofsEnabled:deployment.proofsEnabled!==false};
   const scope=session&&fixed&&{account:owner,chainId:String(fixed.network.chainId),version:String(fixed.network.version),
@@ -167,8 +173,40 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
     const out=await board.methods[name](...args).simulate({from:session.owner});
     return utilityPlain(out.result??out,abi.returnType??abi.returnTypes?.[0]);
   }
-  async function payment(){return sdk.preparePrivateFeePayment({wallet:session.wallet,node:session.node,owner:session.owner,
-    privateFeeAddress:fixed.fee,privateFeeArtifact:deployment.privateFee.artifact,expectedChainId:scope.chainId,expectedVersion:scope.version,gasSettings:fixed.gas});}
+  async function fundingClaim(kind,metadata){
+    check(fundingProvider&&typeof sdk.prepareFundingClaim==='function','ROLLING_FUNDING_UNAVAILABLE');
+    const receipt=exactData(metadata,['txHash','blockHash','blockNumber','sender','nonce','amount','leafIndex','messageKey','secretHash']);
+    await guard();const header=await session.wallet.pxe.getSyncedBlockHeader();await guard();
+    const anchor={number:Number(header.globalVariables.blockNumber),hash:(await header.hash()).toString(),root:header.state.l1ToL2MessageTree.root.toString()};
+    let claimScope={...fixed.network,portal:fixed.portal,recipient:fixed.board};
+    if(kind==='private-fee'){
+      const info=await session.node.getNodeInfo();await guard();
+      claimScope={...fixed.network,portal:info.l1ContractAddresses.feeJuicePortalAddress.toString().toLowerCase(),
+        token:info.l1ContractAddresses.feeJuiceAddress.toString().toLowerCase(),recipient:fixed.fee};
+    }
+    const verified=await sdk.prepareFundingClaim({kind,scope:claimScope,receipt,anchor,owner,
+      secrets:{walletSecret:session.walletSecret,...(kind==='collateral'?{walletSalt:field(String(session.walletSalt))}:{})},
+      privateFeeArtifact:deployment.privateFee.artifact,ethProvider:fundingProvider,node:session.node,claimStore,contextGuard:guard});
+    await guard();check(verified.status==='claim-ready','ROLLING_FUNDING_NOT_READY');return verified.claim;
+  }
+  async function payment(action){
+    let claim;
+    if(action?.type==='claim-deposit'&&action.feeReceipt!==undefined){
+      const verified=await fundingClaim('private-fee',action.feeReceipt);
+      check(verified.contract===fixed.fee&&verified.kind==='private-fee-bridge','ROLLING_FUNDING_MISMATCH');
+      claim=verified.bridgeClaim;
+    }
+    return sdk.preparePrivateFeePayment({wallet:session.wallet,node:session.node,owner:session.owner,
+      privateFeeAddress:fixed.fee,privateFeeArtifact:deployment.privateFee.artifact,expectedChainId:scope.chainId,expectedVersion:scope.version,gasSettings:fixed.gas,
+      ...(claim?{claim}:{})});
+  }
+  async function collateralClaim(action){
+    // Receipt metadata cannot replace the authenticated deployment or inject
+    // secrets. Both claims are derived from custody and rechecked at submission.
+    const claim=await fundingClaim('collateral',action.receipt);
+    check(claim.contract===fixed.board&&claim.method==='claim_deposit','ROLLING_FUNDING_MISMATCH');
+    return plain(claim.args);
+  }
   const operation=id=>`ROLLING_WORKFLOW_V1:${id}`;
   function summary(record){return {intentId:record.id,action:clone(record.action),status:record.status,maximumFee:record.maximumFee,
     nonce:record.nonce,txHash:record.txHash??null,stage:'single-transaction',...(record.replacementReview?{replacementReview:clone(record.replacementReview)}:{}),
@@ -281,6 +319,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
   async function argumentsFor(action,board,nonce){
     const allowed=keys[action?.type];check(allowed&&Object.keys(action).every(k=>k==='type'||allowed.includes(k)));
     switch(action.type){
+      case 'claim-deposit':return collateralClaim(action);
       case 'preference':return preferenceArguments(action);
       case 'read-marker':return [preferenceRevision(action.expectedRevision),field(action.thread,true),version(action.throughBlock)];
       case 'bio':return [field(action.name,true),version(action.expectedVersion),...text(action.content,32,false)];
@@ -368,7 +407,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
       if(action.type==='read-marker')record.originalMarker=await markerContext(record);
       const selected=interaction(board,record);record.encoded=selected.encoded;
       progress('estimating');const estimated=await sdk.estimatePrivateFeeTransaction({wallet:session.wallet,node:session.node,interaction:selected.call,
-        prepared:await payment(),from:session.owner,guard});
+        prepared:await payment(action),from:session.owner,guard});
       record.maximumFee=estimated.maximumFee.toString();await guard();await store.write(prior,record);return summary(record);
     });},
     // Explicit preference-only recovery. Inspection never acknowledges or writes.
@@ -434,8 +473,9 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
         const found=await session.journal.inspectOutcome();acknowledge(found,saved.value.predecessor);
       }
       await session.journal.assertCanStart(); // Before private simulation, not merely before send.
+      if(saved.value.action.type==='claim-deposit')check(same(await collateralClaim(saved.value.action),saved.value.args),'ROLLING_FUNDING_MISMATCH');
       const selected=interaction(await contract(),saved.value);progress('estimating');
-      const estimated=await sdk.estimatePrivateFeeTransaction({wallet:session.wallet,node:session.node,interaction:selected.call,prepared:await payment(),from:session.owner,guard});
+      const estimated=await sdk.estimatePrivateFeeTransaction({wallet:session.wallet,node:session.node,interaction:selected.call,prepared:await payment(saved.value.action),from:session.owner,guard});
       const maximumFee=replacing?saved.value.replacementReview.maximumFee:saved.value.maximumFee;
       check(estimated.maximumFee<=BigInt(maximumFee),'ROLLING_FEE_CHANGED');await guard();
       await (await slot()).write(saved,{...saved.value,status:'submitting'}); // Durable no-replay fence before wallet lifecycle.

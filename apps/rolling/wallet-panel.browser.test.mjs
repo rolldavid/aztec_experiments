@@ -116,9 +116,23 @@ test('funding remains honest and unavailable connection has no action buttons or
  const {page}=await browserFixture(t);await page.evaluate(()=>test.failure='session');await open(page);await page.getByRole('button',{name:'Unlock',exact:true}).click();await page.getByRole('button',{name:'Connect private account'}).waitFor();
  assert.equal((await counts(page)).sessions,1);assert.equal(await page.getByRole('button',{name:'Confirm and send'}).count(),0);assert.equal(await page.getByRole('button',{name:'Check action and review fee'}).count(),0);
  await page.evaluate(()=>{test.failure=null;test.fee='collateral-pending';});await page.getByRole('button',{name:'Connect private account'}).click();await page.getByText('No posting deposit was found.',{exact:true}).waitFor();
- assert(await page.getByText('Funding is not connected in this panel yet. No funds are requested here.',{exact:true}).isVisible());await page.getByLabel('Message',{exact:true}).fill('No collateral');assert(await page.getByRole('button',{name:'Check action and review fee'}).isDisabled());
+ assert(await page.getByRole('button',{name:'Recover funding',exact:true}).isVisible());await page.getByLabel('Message',{exact:true}).fill('No collateral');assert(await page.getByRole('button',{name:'Check action and review fee'}).isDisabled());
  await page.getByLabel('Action').selectOption('subboard');await page.getByLabel('Permanent slug (3–40 lowercase letters, digits or single hyphens)').fill('small-tools');await page.getByLabel('Subboard name').fill('Small tools');await page.getByLabel('Description',{exact:true}).fill('Make useful things');
  await page.getByRole('button',{name:'Check action and review fee'}).click();await page.getByRole('button',{name:'Confirm and send'}).waitFor();assert.equal((await counts(page)).sends,0);
+});
+
+test('funding recovery imports only on request and requires a separate claim confirmation',async t=>{
+ const {page}=await browserFixture(t);await open(page);await unlock(page);
+ await page.getByRole('button',{name:'Recover funding',exact:true}).click();
+ const data={receipt:{txHash:'0x'+'40'.repeat(32),blockHash:'0x'+'41'.repeat(32),blockNumber:2,sender:'0x'+'33'.repeat(20),nonce:'1',amount:'100',leafIndex:'2',messageKey:'0x'+'01'.repeat(32),secretHash:'0x'+'02'.repeat(32)}};
+ await page.getByLabel('Funding recovery receipt',{exact:true}).setInputFiles({name:'funding.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(data))});
+ assert.equal((await counts(page)).prepares,0);assert.equal((await counts(page)).sends,0);
+ await page.getByRole('button',{name:'Check funding receipt',exact:true}).click();await page.getByRole('button',{name:'Confirm and send',exact:true}).waitFor();
+ assert(await page.getByText('Collateral: 100 wei.',{exact:true}).isVisible());assert.equal((await counts(page)).sends,0);
+ assert.deepEqual(await page.evaluate(()=>JSON.parse(sessionStorage.getItem('labelled-ui-intent')).action),{type:'claim-deposit',...data});
+ await page.reload();await page.waitForFunction(()=>window.ready);await open(page);await page.getByRole('button',{name:'Unlock',exact:true}).click();
+ await page.getByRole('button',{name:'Confirm and send',exact:true}).waitFor();assert.equal((await counts(page)).prepares,0);assert.equal((await counts(page)).sends,0);
+ await page.getByRole('button',{name:'Confirm and send',exact:true}).click();await page.getByText('Transaction confirmed on the verified chain.',{exact:true}).waitFor();assert.equal((await counts(page)).sends,1);
 });
 
 test('recovery import is explicit; quote, repost, like and unlike retain exact selected targets',async t=>{

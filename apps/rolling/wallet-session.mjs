@@ -12,12 +12,12 @@ const silent=()=>{};
 const logger=Object.freeze({trace:silent,debug:silent,verbose:silent,info:silent,warn:silent,error:silent,fatal:silent,
  level:'silent',module:'rolling-wallet',isLevelEnabled:()=>false,createChild:()=>logger,getBindings:()=>({})});
 export async function createRollingWalletSession({sdk,routing,ethers,config,boardArtifact,privateFeeArtifact,account,
- trustedQuery,remoteProver,contextGuard,onProgress=()=>{},locks=globalThis.navigator?.locks,proofsEnabled=true}){
+ trustedQuery,remoteProver,contextGuard,claimStore,onProgress=()=>{},locks=globalThis.navigator?.locks,proofsEnabled=true}){
  if(typeof proofsEnabled!=='boolean'||(!proofsEnabled&&String(config?.network?.chainId)!=='31337')||typeof contextGuard!=='function'||typeof locks?.request!=='function'||!account||!trustedQuery||!routing)throw fail('ROLLING_SESSION_CONFIG');
  const captured={secretKey:account.secretKey,salt:String(account.salt),address:String(account.address)};
  const selected=structuredClone(config),query=structuredClone(trustedQuery),remote=remoteProver?structuredClone(remoteProver):undefined;
  const lockName='billboard-wallet:'+captured.address;
- let pxe,store,closed=false,busy=false,app,closing,privateNode,privateWallet,readPreferences,readColdPreferences,initializeAccount;
+ let pxe,store,fundingProvider,closed=false,busy=false,app,closing,privateNode,privateWallet,readPreferences,readColdPreferences,initializeAccount;
  const assertCaptured=()=>{
   if(closed||captured.secretKey!==account.secretKey||captured.salt!==String(account.salt)||captured.address!==String(account.address))throw fail('ROLLING_CONTEXT_CHANGED');
  };
@@ -28,9 +28,9 @@ export async function createRollingWalletSession({sdk,routing,ethers,config,boar
   finally{busy=false;}
  };
  async function dispose(){
-  if(pxe){try{await pxe.stop();pxe=undefined;store=undefined;}
+  try{if(pxe){try{await pxe.stop();pxe=undefined;store=undefined;}
    catch(error){try{if(store){await store.close();store=undefined;}}catch(cleanupError){throw new AggregateError([error,cleanupError],'Private session cleanup failed');}throw error;}}
-  else if(store){await store.close();store=undefined;}
+  else if(store){await store.close();store=undefined;}}finally{fundingProvider?.destroy();fundingProvider=undefined;}
  }
  let initializationStep='account-lock',nestedFailure=null,failedObservation=false;
  const emit=(state,error)=>observeRollingSetup(onProgress,{stage:'session-initialization',step:initializationStep,deploymentStep:null,state,code:state==='failed'?rollingSetupErrorCode(error):null});
@@ -93,7 +93,13 @@ export async function createRollingWalletSession({sdk,routing,ethers,config,boar
    };
    begin('application-bind');
    privateNode=node;privateWallet=wallet;
-   await guard();app=createRollingApplication({sdk:{...sdk,isPrivateWalletForNode:routing.isPrivateWalletForNode},deployment,contextGuard:guard,privateStore,onProgress,
+   // Read-only Ethereum access is lazy and scoped to this private session.
+   // No signer is supplied: importing a recovery receipt cannot pay again.
+   const funding={claimStore,provider:Object.fromEntries(['getNetwork','getTransactionReceipt','getTransaction','getBlock','call'].map(name=>[name,async(...args)=>{
+    await guardRoute();fundingProvider??=new ethers.JsonRpcProvider(selected.network.ethRpcUrl);
+    const result=await fundingProvider[name](...args);await guardRoute();return result;
+   }]))};
+   await guard();app=createRollingApplication({sdk:{...sdk,isPrivateWalletForNode:routing.isPrivateWalletForNode},deployment,contextGuard:guard,privateStore,funding,onProgress,
     accountSession:{owner:instance.address,wallet,node,journal,walletSecret:captured.secretKey,walletSalt:captured.salt}});
    // The reader owns synchronization, but the session owns this same account
    // lock and PXE lifetime. Its head capability is the raw guarded application

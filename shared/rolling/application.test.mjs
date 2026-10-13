@@ -74,6 +74,61 @@ function fixture(){
 test('locked construction does not load or query a wallet',async()=>{
   assert.deepEqual(await createRollingApplication({}).readAccountStatus(),{status:'locked'});
 });
+function fundingFixture(){
+ const f=fixture(),receipt={txHash:hex(40),blockHash:hex(41),blockNumber:2,sender:'0x'+'33'.repeat(20),nonce:'1',amount:'100',leafIndex:'2',messageKey:hex(43),secretHash:hex(44)};
+ f.options.funding={provider:{label:'controlled Ethereum reader'}};
+ f.options.accountSession.wallet.pxe.getSyncedBlockHeader=async()=>({globalVariables:{blockNumber:3},hash:async()=>hex(42),state:{l1ToL2MessageTree:{root:new Fr(45)}}});
+ f.state.claimReads=[];f.state.claimSecret=hex(46);
+ f.options.sdk.prepareFundingClaim=async input=>{
+  f.state.claimReads.push(input);await input.contextGuard();
+  assert.equal(input.ethProvider,f.options.funding.provider);assert.deepEqual(input.scope,{...f.options.deployment.network,portal:f.options.deployment.portal,recipient:hex(1)});
+  assert.deepEqual(input.secrets,{walletSecret:hex(8),walletSalt:hex(0)});assert.deepEqual(input.anchor,{number:3,hash:hex(42),root:hex(45)});
+  if(f.state.claimError)throw Object.assign(Error('Verified receipt unavailable'),{code:'ROLLING_FUNDING_REORG'});
+  return {status:f.state.claimStatus??'claim-ready',claim:{contract:hex(1),method:'claim_deposit',args:[receipt.sender,'100',f.state.claimSecret,'2']}};
+ };
+ return {...f,receipt,app:f.restart()};
+}
+test('funding claim keeps derived secret encrypted and revalidates receipt before one journalled send',async()=>{
+ const f=fundingFixture(),prepared=await f.app.prepare({type:'claim-deposit',receipt:f.receipt});
+ assert.equal(f.state.claimReads.length,1);assert(!JSON.stringify(prepared).includes(f.state.claimSecret));
+ assert([...f.values.values()].every(value=>!value.includes(f.state.claimSecret)));
+ const result=await f.restart().submitPrepared(prepared.intentId);assert.equal(result.status,'confirmed');assert.equal(f.state.claimReads.length,2);assert.equal(f.state.sends,1);
+ assert.equal(f.state.sent.payload.name,'claim_deposit');assert.equal(f.state.sent.opts.transactionJournal,f.options.accountSession.journal);
+ assert.equal((await f.restart().reconcile(prepared.intentId)).status,'confirmed');assert.equal(f.state.sends,1);
+});
+test('funding recovery mints private fee credit in the same collateral transaction and rechecks both receipts',async()=>{
+ const f=fundingFixture(),original=f.options.sdk.prepareFundingClaim,feeReceipt={...f.receipt,txHash:hex(51)},bridgeClaim={amount:'200',salt:hex(52),leafIndex:'4'};
+ f.options.accountSession.node.getNodeInfo=async()=>({l1ContractAddresses:{feeJuicePortalAddress:'0x'+'55'.repeat(20),feeJuiceAddress:'0x'+'66'.repeat(20)}});
+ let feeReads=0;const payments=[];
+ f.options.sdk.prepareFundingClaim=async input=>{
+  if(input.kind==='collateral')return original(input);
+  feeReads++;assert.deepEqual(input.receipt,feeReceipt);assert.deepEqual(input.secrets,{walletSecret:hex(8)});
+  assert.deepEqual(input.scope,{...f.options.deployment.network,portal:'0x'+'55'.repeat(20),token:'0x'+'66'.repeat(20),recipient:hex(2)});
+  return {status:'claim-ready',claim:{contract:hex(2),kind:'private-fee-bridge',bridgeClaim}};
+ };
+ f.options.sdk.preparePrivateFeePayment=async input=>{payments.push(input);return {availableCredit:200n};};
+ const prepared=await f.restart().prepare({type:'claim-deposit',receipt:f.receipt,feeReceipt});
+ assert(!JSON.stringify(prepared).includes(bridgeClaim.salt));assert.equal(f.state.sends,0);
+ assert.equal((await f.restart().submitPrepared(prepared.intentId)).status,'confirmed');
+ assert.equal(feeReads,2);assert.equal(f.state.claimReads.length,2);assert.equal(f.state.sends,1);
+ assert.equal(payments.length,2);assert(payments.every(input=>input.claim===bridgeClaim));
+});
+for(const outcome of ['waiting','absent','reverted'])test(`funding ${outcome} receipt never estimates or sends`,async()=>{
+ const f=fundingFixture();f.state.claimStatus=outcome;
+ await assert.rejects(f.app.prepare({type:'claim-deposit',receipt:f.receipt}),{code:'ROLLING_FUNDING_NOT_READY'});
+ assert.equal(f.state.sends,0);assert.equal(f.state.estimates,0);assert.equal(f.values.size,0);
+});
+test('funding reorg or changed derived claim blocks submission without replacing the saved intent',async()=>{
+ for(const kind of ['reorg','changed-secret']){
+  const f=fundingFixture(),prepared=await f.app.prepare({type:'claim-deposit',receipt:f.receipt}),before=[...f.values.values()];
+  if(kind==='reorg')f.state.claimError=true;else f.state.claimSecret=hex(47);
+  await assert.rejects(f.restart().submitPrepared(prepared.intentId));assert.equal(f.state.sends,0);assert.deepEqual([...f.values.values()],before);
+ }
+});
+test('funding metadata cannot supply a private secret or silently create a payment',async()=>{
+ const f=fundingFixture();await assert.rejects(f.app.prepare({type:'claim-deposit',receipt:{...f.receipt,secret:hex(55)}}));assert.equal(f.state.claimReads.length,0);assert.equal(f.state.sends,0);
+ const plain=fixture();await assert.rejects(plain.app.prepare({type:'claim-deposit',receipt:f.receipt}),{code:'ROLLING_FUNDING_UNAVAILABLE'});
+});
 test('name preparation is encrypted, real ABI encoded and immutable across mutation/restart',async()=>{
   const f=fixture(),action={type:'name',first:'Private Sentinel',last:'Moss'};
   const prepared=await f.app.prepare(action);action.first='Different';
