@@ -90,7 +90,9 @@ export async function prepareRuntime(directory,scenario,report) {
     await fs.writeFile(path.join(directory,'bb-one-thread'),"#!/bin/sh\nHARDWARE_CONCURRENCY=1 exec '"+bb+"' \"$@\"\n",{flag:'wx',mode:0o700});
     const applicationThreads=scenario.applicationThreads;
     if(applicationThreads===2)await fs.writeFile(path.join(directory,'bb-two-threads'),"#!/bin/sh\nHARDWARE_CONCURRENCY=2 exec '"+bb+"' \"$@\"\n",{flag:'wx',mode:0o700});
-    report.applicationBBThreads=applicationThreads;report.nodeBBThreads=1;report.worldStateHardwareConcurrency=1;
+    report.applicationBBThreads=applicationThreads;report.nodeBBThreads=1;
+    // Persistent SDK world-state chooses its own threads; parent HWC does not override it.
+    report.worldStateThreadConfiguration={mode:'sdk-default',selectionRule:'min(16, os.cpus().length)',observedThreads:null};
     await fs.mkdir(path.join(directory,'acvm'),{mode:0o700});
     const profile=path.join(directory,'local-only.sb');
     const privatePaths=[path.join(process.env.HOME,'.aws'),path.join(process.env.HOME,'Library/Application Support/AnonymousMessageBoard/V6/private')];
