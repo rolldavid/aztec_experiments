@@ -3,13 +3,13 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {OperationQueue} from '../../node_modules/@aztec-labs/pxe/dest/operation_queue.js';
 import {createSynchronizedRollingApplication} from './synchronized-application.mjs';
-const names=['readAccountStatus','readPreferenceHead','readProfile','ownedIdentities','prepare','submitPrepared','cancelPrepared','reconcile','inspectRecovery','prepareReplacement','resumeSaved'];
+const names=['readBokStatus','prepareBokPost','readAccountStatus','readPreferenceHead','readProfile','ownedIdentities','prepare','submitPrepared','cancelPrepared','reconcile','inspectRecovery','prepareReplacement','resumeSaved'];
 test('explicit synchronization exposes a newly included name through the actual autoSync:false SDK queue',async()=>{
  let anchor=14,head=14,closed=0,syncs=0;
  const synchronizer={sync:async()=>{syncs++;anchor=head;}};
  const queue=new OperationQueue({autoSync:false,node:{startRecording:()=>({stop:()=>closed++})},synchronizer,
   anchorBlockStore:{getBlockHeader:async()=>({number:anchor})},contributors:[],
-  stagedWriteCoordinator:{begin:()=>1,commit:async()=>{},abort:()=>{}},log:{verbose(){},warn(){}}});queue.start();
+  stagedWriteCoordinator:{begin:()=>1,commit:async()=>{},abort:()=>{}},log:{debug(){},verbose(){},warn(){}}});queue.start();
  try{
   const raw=Object.fromEntries(names.map(name=>[name,()=>queue.runSynced(({anchorBlockHeader})=>({identities:anchorBlockHeader.number>=15?['registered-name']:[]}))]));
   head=15;assert.deepEqual((await raw.ownedIdentities()).identities,[]);
@@ -38,7 +38,7 @@ test('preference head observes the synchronized anchor through the supported ope
  let anchor=14,head=15,syncs=0,reads=0;
  const queue=new OperationQueue({autoSync:false,node:{startRecording:()=>({stop(){}})},synchronizer:{},
   anchorBlockStore:{getBlockHeader:async()=>({number:anchor})},contributors:[],
-  stagedWriteCoordinator:{begin:()=>1,commit:async()=>{},abort:()=>{}},log:{verbose(){},warn(){}}});queue.start();
+  stagedWriteCoordinator:{begin:()=>1,commit:async()=>{},abort:()=>{}},log:{debug(){},verbose(){},warn(){}}});queue.start();
  try{
   const raw=Object.fromEntries(names.map(name=>[name,()=>{}]));
   raw.readPreferenceHead=()=>queue.runSynced(({anchorBlockHeader})=>{reads++;return {initialized:true,schema:1,revision:anchorBlockHeader.number>=15?'2':'1',digest:anchorBlockHeader.number>=15?'22':'11'};});

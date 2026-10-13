@@ -379,3 +379,45 @@ test('native PXE configuration cannot change through caller mutation during init
  const original=f.input.sdk.openPXEStore;f.input.sdk.openPXEStore=async(...args)=>{f.input.proofsEnabled=true;return original(...args);};
  const session=await createRollingWalletSession(f.input);try{assert.equal(f.state.pxeConfig.proverEnabled,false);assert.equal(f.state.trustedProofsEnabled,false);}finally{await session.close();}
 });
+
+import {verifyRollingBokCapability} from './wallet-session.mjs';
+const bokArtifact=loadContractArtifact(JSON.parse(fs.readFileSync(new URL('../../experiments/private-bok/target/private_bok-PrivateBok.json',import.meta.url))));
+async function bokCapabilityFixture(){
+ const board=AztecAddress.fromBigIntUnsafe(4n),operator=AztecAddress.fromBigIntUnsafe(5n);
+ const instance=await getContractInstanceFromInstantiationParams(bokArtifact,{salt:new Fr(6),deployer:operator,constructorArtifact:'init',constructorArgs:[board,operator,31337,1]});
+ const config={contractAddress:String(instance.address),operatorAddress:String(operator),pluginId:hex(7)};
+ const values=new Map(Object.entries({board:4n,operator:5n,l1_chain:31337n,version:1n}).map(([key,value])=>[String(BigInt(bokArtifact.storageLayout[key].slot)),new Fr(value)]));
+ const state={reads:[],guards:0,inspections:0,instance,number:10,hash:hex(55)};
+ const node={getBlockData:async which=>({blockHash:which==='checkpointed'?hex(55):state.hash,header:{globalVariables:{blockNumber:state.number}}}),
+  getContract:async(_address,reference)=>{state.reads.push(reference);return state.instance;},
+  getPublicStorageAt:async(reference,_address,slot)=>{state.reads.push(reference);return values.get(String(slot.toBigInt()));}};
+ const input={sdk:{Fr,AztecAddress,getContractClassFromArtifact,computeContractAddressFromInstance,inspectTrustedNode:async(_node,options)=>{state.inspections++;assert.equal(options.proofsEnabled,false);}},
+  node,config,artifact:bokArtifact,deployment:{board:{address:board},network:{chainId:'31337',version:'1',rollup:eth(1)},proofsEnabled:false},contextGuard:async()=>{state.guards++;}};
+ return {state,values,input};
+}
+test('Bok capability uses original class and immutable public scope at one canonical checkpoint',async()=>{
+ const f=await bokCapabilityFixture(),result=await verifyRollingBokCapability(f.input);
+ assert.equal(String(result.address),f.input.config.contractAddress);assert.equal(String(result.operator),f.input.config.operatorAddress);assert.equal(result.artifact,bokArtifact);
+ assert.equal(f.state.reads.length,5);assert(f.state.reads.every(row=>row.hash===hex(55)));assert.equal(f.state.inspections,1);assert(Object.isFrozen(result));
+});
+for(const field of ['board','operator','l1_chain','version'])test('Bok capability rejects mismatched '+field,async()=>{
+ const f=await bokCapabilityFixture();f.values.set(String(BigInt(bokArtifact.storageLayout[field].slot)),new Fr(999));
+ await assert.rejects(verifyRollingBokCapability(f.input),{code:'ROLLING_DEPLOYMENT_INVALID'});
+});
+test('Bok capability rejects changed class, missing publication and canonical reorg',async()=>{
+ for(const alter of [f=>f.state.instance={...f.state.instance,currentContractClassId:new Fr(99)},f=>f.state.instance=null,f=>f.state.hash=hex(56)]){
+  const f=await bokCapabilityFixture();alter(f);await assert.rejects(verifyRollingBokCapability(f.input),{code:'ROLLING_DEPLOYMENT_INVALID'});
+ }
+});
+test('Bok capability captures config before awaits and preserves account invalidation',async()=>{
+ const f=await bokCapabilityFixture(),original=f.input.config.contractAddress;f.input.contextGuard=async()=>{f.input.config.contractAddress=hex(100);};
+ assert.equal(String((await verifyRollingBokCapability(f.input)).address),original);
+ const g=await bokCapabilityFixture(),failure=Error('account invalidated');g.input.contextGuard=async()=>{throw failure;};
+ await assert.rejects(verifyRollingBokCapability(g.input),error=>error===failure);
+});
+test('Bok capability absent stays unavailable and rejects half configured scopes',async()=>{
+ assert.equal(await verifyRollingBokCapability({}),undefined);
+ await assert.rejects(verifyRollingBokCapability({artifact:bokArtifact}),{code:'ROLLING_SESSION_CONFIG'});
+ const f=await bokCapabilityFixture();f.input.config={...f.input.config,token:'PRIVATE_SENTINEL'};
+ await assert.rejects(verifyRollingBokCapability(f.input),{code:'ROLLING_SESSION_CONFIG'});assert.equal(f.state.reads.length,0);
+});

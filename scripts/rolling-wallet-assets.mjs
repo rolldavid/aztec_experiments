@@ -8,6 +8,7 @@ import {checkSdk} from './check-sdk.mjs';
 import {contractInputs} from './artifact-provenance.mjs';
 import {checkNoirEmbeddedSources} from './check-noir-dependencies.mjs';
 import {validateCrsManifest} from './build-crs.mjs';
+import {ARTIFACT as bokArtifactPath,MANIFEST as bokManifestPath,buildInputs as bokInputs} from '../experiments/private-bok/build.mjs';
 const out='.build/rolling-wallet',sha=bytes=>createHash('sha256').update(bytes).digest('hex');
 const scripts={
  'ethers.js':'node_modules/ethers/dist/ethers.umd.min.js',
@@ -24,6 +25,7 @@ const sources={...Object.fromEntries(Object.entries(scripts).map(([name,file])=>
  '/wallet/runtime.mjs':out+'/runtime.mjs',
  '/wallet/board.json':'billboard/target/rolling_contract-RollingBoard.json',
  '/wallet/private-fee.json':'apps/src/billboard/private_fee_artifact.json',
+ '/wallet/bok.json':'experiments/private-bok/target/private_bok-PrivateBok.json',
  '/crs/crs-manifest.json':'crs-manifest.json',
 };
 const invalid=()=>Error('Invalid Rolling wallet assets or public configuration');
@@ -44,7 +46,8 @@ function address(value,bytes){if(typeof value!=='string'||!new RegExp('^0x[0-9a-
 export function validateRollingWalletConfig(value,scope){
  keys(value,['config','trustedQuery','remoteProver','proofsEnabled']);
  const copy=structuredClone(value),{config:c,trustedQuery:q,remoteProver:r,proofsEnabled}=copy;
- keys(c,['network','board','privateFee']);keys(c.network,['chainId','rollupVersion','rollupAddress','ethRpcUrl']);
+ keys(c,c.bok===undefined?['network','board','privateFee']:['network','board','privateFee','bok']);
+ if(c.bok!==undefined){keys(c.bok,['contractAddress','operatorAddress','pluginId']);for(const v of Object.values(c.bok))address(v,32);}keys(c.network,['chainId','rollupVersion','rollupAddress','ethRpcUrl']);
  keys(c.board,['contractAddress','portalAddress']);keys(c.privateFee,['contractAddress','gasSettings']);
  if(typeof c.network.chainId!=='string'||!/^[1-9][0-9]{0,19}$/.test(c.network.chainId)||typeof c.network.rollupVersion!=='string'||!/^[1-9][0-9]{0,9}$/.test(c.network.rollupVersion))throw invalid();
  const local=c.network.chainId==='31337';if(typeof proofsEnabled!=='boolean'||!proofsEnabled&&!local)throw invalid();
@@ -62,6 +65,9 @@ export function validateRollingWalletConfig(value,scope){
 async function inventory(){
  const sdk=checkSdk(),crs=JSON.parse(await fs.readFile(path.join(ROOT,'crs-manifest.json'),'utf8'));validateCrsManifest(crs);
  const result={...sources};
+ const bokBytes=await fs.readFile(bokArtifactPath),bokManifest=JSON.parse(await fs.readFile(bokManifestPath,'utf8')),bokRaw=JSON.parse(bokBytes);
+ if(JSON.stringify(bokInputs())!==JSON.stringify(bokManifest.inputs)||sha(bokBytes)!==bokManifest.artifactSha256||bokRaw.name!=='PrivateBok'||bokRaw.transpiled!==true||!bokRaw.functions.filter(f=>f.custom_attributes?.includes('abi_private')).every(f=>f.verification_key))throw invalid();
+ checkNoirEmbeddedSources(bokRaw);
  for(const name of Object.keys(sdk.outputs))result['/wallet/'+name]='.build/sdk/'+name;
  // The browser consumes the pinned uncompressed derivation as well as the
  // downloaded CRS inputs. Validate every served file before publishing assets.
@@ -87,7 +93,8 @@ export async function buildRollingWalletAssets(){
  const built=await build({absWorkingDir:ROOT,entryPoints:['apps/rolling/wallet-runtime.mjs'],outfile:out+'/runtime.mjs',bundle:true,format:'esm',platform:'browser',target:'es2022',metafile:true,logLevel:'silent',external:['@aztec-labs/foundation/crypto/poseidon']});
  if(Object.values(built.metafile.outputs).some(output=>output.imports.length))throw invalid();
  if(Object.keys(built.metafile.inputs).some(name=>name.includes('node_modules')))throw invalid();
- const inputs={...current};
+ const inputs={...current,...bokInputs()};
+ for(const file of [bokManifestPath,bokArtifactPath])inputs[path.relative(ROOT,file)]=sha(await fs.readFile(file));
  for(const name of [...Object.keys(built.metafile.inputs),'scripts/rolling-wallet-assets.mjs',...Object.values(scripts),'crs-manifest.json','.build/contracts-manifest.json','.build/sdk/sdk-manifest.json'])inputs[name]=sha(await fs.readFile(path.join(ROOT,name)));
  const files={};for(const [url,file] of Object.entries(await inventory())){const bytes=await fs.readFile(path.join(ROOT,file));files[url]={file,bytes:bytes.length,sha256:sha(bytes)};}
  await fs.writeFile(path.join(ROOT,out,'manifest.json'),JSON.stringify({schemaVersion:1,inputs,files},null,2)+'\n');
@@ -108,7 +115,7 @@ export async function loadRollingWalletAssets(configuration,scope){
   if(entry.file!==file)throw invalid();const bytes=await fs.readFile(path.join(ROOT,file));if(bytes.length!==entry.bytes||sha(bytes)!==entry.sha256)throw invalid();
  }
  const describe=url=>{const {bytes,sha256}=manifest.files[url];return {url,bytes,sha256};};
- const runtime={schemaVersion:1,...value,scripts:Object.keys(scripts).map(name=>describe('/wallet/'+name)),crs:describe('/crs/crs-manifest.json'),artifacts:{board:describe('/wallet/board.json'),privateFee:describe('/wallet/private-fee.json')}};
+ const runtime={schemaVersion:1,...value,scripts:Object.keys(scripts).map(name=>describe('/wallet/'+name)),crs:describe('/crs/crs-manifest.json'),artifacts:{board:describe('/wallet/board.json'),privateFee:describe('/wallet/private-fee.json'),...(value.config.bok?{bok:describe('/wallet/bok.json')}:{})}};
  return Object.freeze({connectOrigins,runtime,async read(url){
   if(url==='/wallet/runtime.json')return {body:Buffer.from(JSON.stringify(runtime)),type:'application/json'};
   const file=manifest.files[url];if(!file)return null;

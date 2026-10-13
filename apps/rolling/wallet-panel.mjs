@@ -16,7 +16,7 @@ export function projectRollingInitialization(value){
   return Object.freeze(out);
  }catch{return null;}
 }
-const TYPES={preference:'Private preference','read-marker':'Mark thread read',bio:'Edit bio',avatar:'Edit avatar',post:'Write a post',reply:'Reply',quote:'Quote a post',repost:'Repost',like:'Like a post',unlike:'Remove a like',name:'Register a name',subboard:'Create a subboard'};
+const TYPES={bok:'Ask Bok with a post',preference:'Private preference','read-marker':'Mark thread read',bio:'Edit bio',avatar:'Edit avatar',post:'Write a post',reply:'Reply',quote:'Quote a post',repost:'Repost',like:'Like a post',unlike:'Remove a like',name:'Register a name',subboard:'Create a subboard'};
 const IDS=['subboard','parent','root','reference','post'];
 const field=value=>typeof value==='string'&&/^(?:0x[0-9a-f]{64}|0|[1-9][0-9]{0,76})$/.test(value);
 const el=(tag,attrs={},...children)=>{const node=document.createElement(tag);for(const [key,value]of Object.entries(attrs))node.setAttribute(key,value);for(const child of children.flat())if(child!==null&&child!==undefined)node.append(child instanceof Node?child:document.createTextNode(String(child)));return node;};
@@ -43,7 +43,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
  const connectionFailure=Object.freeze({}),avatarFailure=Object.freeze({});
  let initializationAttempt=0;
  let runtime,session,busy=false,blocked=false,invalidated=false,reloadRequired=false,returnFocus;
- let status=null,intent=null,identities=[],identityRecords=[],cursor=0,error='',notice='',draft={type:'post',subboard:'0',content:''};
+ let bokStatus=null,status=null,intent=null,identities=[],identityRecords=[],cursor=0,error='',notice='',draft={type:'post',subboard:'0',content:''};
  let preferences=null,preferenceProgress=null,accountIdentity=null,recoveryAbort=null,recoveryInspection=null;
  let profileSnapshot=null,avatarDraft=null,renderEpoch=0,accountEpoch=0,view='action';const previewURLs=new Set();
  const dialog=el('dialog',{'aria-labelledby':'rolling-wallet-title','aria-describedby':'rolling-wallet-description'});
@@ -55,7 +55,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
  function releasePreviews(){renderEpoch++;for(const url of previewURLs)URL.revokeObjectURL(url);previewURLs.clear();}
  function clearProfileDraft(){profileSnapshot=null;avatarDraft=null;}
  function clearPreferences(){preferences=null;preferenceProgress=null;onPrivateChange();}
- function clearPrivateView(){initializationAttempt++;dialog.removeAttribute('data-rolling-initialization');recoveryInspection=null;accountEpoch++;accountIdentity=null;content.replaceChildren();clearPreferences();status=null;intent=null;identities=[];identityRecords=[];cursor=0;view='action';draft={type:'post',subboard:'0',content:''};releasePreviews();clearProfileDraft();}
+ function clearPrivateView(){initializationAttempt++;dialog.removeAttribute('data-rolling-initialization');recoveryInspection=null;accountEpoch++;accountIdentity=null;content.replaceChildren();clearPreferences();status=null;bokStatus=null;intent=null;identities=[];identityRecords=[];cursor=0;view='action';draft={type:'post',subboard:'0',content:''};releasePreviews();clearProfileDraft();}
  function checkAccount(epoch){if(epoch!==accountEpoch||!unlocked())throw connectionFailure;}
  function privateStatus(){if(!unlocked()||!session)return 'locked';return preferences?'complete':'recovering';}
  function preferenceEnabled(kind,target){if(privateStatus()!=='complete')return null;const key={1:'bookmarks',2:'followedBoards',3:'followedNames',4:'subscriptions'}[kind];return kind===5?preferences.replyNotifications:key?preferences[key].includes(BigInt(target).toString()):null;}
@@ -122,6 +122,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
    if(!intent?.intentId)throw Error('Missing recovery intent');
   }else{
    await loadNames();
+   bokStatus=typeof session.application.readBokStatus==='function'?await session.application.readBokStatus():null;checkAccount(epoch);
   }
   blocked=false;
  }
@@ -280,6 +281,17 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
    content.append(avatarArea);
    if(intent.action.data==='')avatarArea.append(paragraph('Clear avatar. No image bytes will be published.'));
   }
+  if(intent.bok){
+   content.append(paragraph(`Bok request budget: ${intent.bok.budget} credits. This is separate from the network fee.`));
+   if(intent.bok.phase==='authorize')content.append(paragraph('First authorize this exact request privately. Publishing the saved post requires a separate review and network fee.'));
+   else content.append(paragraph('The request is already authorized. This publishes its exact saved post; the Bok budget is not authorized again.'));
+  }
+  if(intent.status==='authorized'){
+   content.append(paragraph('Bok authorization confirmed. Your exact request and post are saved. Nothing else will be sent automatically.'),button('Review saved Bok post',()=>void work(async()=>{
+    const epoch=accountEpoch,id=intent.intentId;checkAccount(epoch);blocked=true;
+    const result=await session.application.prepareBokPost(id);checkAccount(epoch);intent=result;blocked=false;notice='Review the saved post and its separate network fee before sending.';
+   }),true));return;
+  }
   let confirm;
   const privateAction=['preference','read-marker'].includes(intent.action?.type),fundingAction=intent.action?.type==='claim-deposit';
   if(fundingAction){content.append(paragraph('Claim the previously paid posting collateral privately. No second Ethereum payment will be requested.'),paragraph('Collateral: '+intent.action.receipt.amount+' wei.'));if(intent.action.feeReceipt)content.append(paragraph('Previously bridged transaction fees: '+intent.action.feeReceipt.amount+' fee-juice units. The fee claim and collateral claim share one transaction.'));}
@@ -292,7 +304,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
     try{const result=await session.application.submitPrepared(id);checkAccount(epoch);await receive(result);}catch{note('Submission outcome is unknown. Check this transaction; do not submit again.');throw Error('Unknown outcome');}
    }),true);confirm.dataset.unavailable=String(!avatarReady||!feeReady);
    content.append(paragraph(fundingAction?'Your saved funding receipt will be checked again before sending this private claim.':privateAction?'Your exact private setting is saved. Sending records an encrypted onchain update and charges a network fee.':'Your exact action is saved. Sending publishes it onchain and cannot be undone.'),confirm);
-   if(!replacement)content.append(button('Cancel prepared action',()=>void work(async()=>{await session.application.cancelPrepared(intent.intentId);intent=null;await refresh();notice='Prepared action cancelled. No new transaction was sent.';})));
+   if(!replacement&&intent.bok?.phase!=='post')content.append(button('Cancel prepared action',()=>void work(async()=>{await session.application.cancelPrepared(intent.intentId);intent=null;await refresh();notice='Prepared action cancelled. No new transaction was sent.';})));
   }else{
    content.append(paragraph('No automatic resend is allowed. A missing receipt does not mean the transaction failed.'),button('Check existing transaction',()=>void work(async()=>{await receive(await session.application.reconcile(intent.intentId));})));
   }
@@ -309,6 +321,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   recoveryInspection=null;intent=result;blocked=false;
   if(['confirmed','reverted'].includes(result.status)&&['preference','read-marker'].includes(result.action?.type))clearPreferences();
   if(['confirmed','reverted'].includes(result.status)&&['bio','avatar'].includes(result.action?.type))profileSnapshot=null;
+  if(result.status==='authorized'){notice='Bok request authorized. Review the saved post when ready; it has not been published.';return;}
   if(result.status==='confirmed'){
    notice='Transaction confirmed on the verified chain.';
    try{await onPublicEffect();}catch{notice+=' Public feed refresh is unavailable; the transaction remains confirmed.';}
@@ -336,7 +349,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
  }
  function preferenceDescription(action){const labels={1:'bookmark',2:'board follow',3:'name follow',4:'thread subscription',5:'reply notifications'};return `${action.enabled?'Enable':'Disable'} ${labels[action.kind]??'private setting'}${action.kind===5?'':' for '+action.target}. This preference is encrypted, not a public ownership list.`;}
  function form(){
-  const type=el('select',{'aria-label':'Action'});for(const [value,text]of Object.entries(TYPES)){const option=el('option',{value},text);option.selected=draft.type===value;type.append(option);}
+  const type=el('select',{'aria-label':'Action'});for(const [value,text]of Object.entries(TYPES)){if(value==='bok'&&bokStatus?.available!==true)continue;const option=el('option',{value},text);option.selected=draft.type===value;type.append(option);}
   type.addEventListener('change',()=>{clearProfileDraft();draft={type:type.value,subboard:'0',content:''};render();});content.append(label('Action',type));
   const fields=new Map();
   function input(name,text,{area=false,initial='',required=true}={}){
@@ -396,6 +409,10 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
    if(kind==='reply'){input('parent','Reply to post ID');input('root','Root thread ID');}
    if(kind==='quote'||kind==='repost')input('reference','Referenced post ID');
    input('content',kind==='repost'?'Optional repost comment':'Message',{area:true,required:kind!=='repost'});
+   if(kind==='bok'){
+    content.append(paragraph(`Available private Bok credit: ${bokStatus.availableCredit}.`),paragraph('Bok receives this post only after you confirm its credit authorization and then confirm publication. Each action has its own network fee.'));
+    input('budget','Maximum Bok credits',{initial:'1'});
+   }
   }
   const counter=el('p',{class:'counter','aria-live':'polite'}),preview=el('div',{class:'preview-body','aria-label':'Message preview'});
   if(fields.has('content'))content.append(counter,el('details',{},el('summary',{},'Preview message'),preview));
@@ -419,6 +436,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
     counter.className=`counter${a.remaining<0?' invalid':''}`;
     valid=valid&&a.remaining>=0&&text.isWellFormed()&&!text.includes('\0')&&(kind==='bio'||!!draft.deposit);
    }
+   if(kind==='bok'){const v=fields.get('budget').value;valid=valid&&/^[1-9][0-9]{0,38}$/.test(v)&&BigInt(v)<(1n<<128n)&&BigInt(v)<=BigInt(bokStatus?.availableCredit??'0');}
    if(kind==='bio'||kind==='avatar')valid=valid&&!!profileSnapshot&&identities.includes(draft.name)&&BigInt(profileSnapshot.name)===BigInt(draft.name)&&(kind!=='avatar'||!!avatarDraft);
    if(kind==='preference')valid=valid&&field(draft.kind===5?'0':fields.get('target').value)&&(draft.kind===2||draft.kind===5||BigInt(fields.get('target').value||'0')!==0n);
    if(kind==='read-marker')valid=valid&&field(fields.get('thread').value)&&BigInt(fields.get('thread').value||'0')!==0n&&/^(0|[1-9][0-9]{0,9})$/.test(fields.get('throughBlock').value)&&BigInt(fields.get('throughBlock').value)<=0xffffffffn;

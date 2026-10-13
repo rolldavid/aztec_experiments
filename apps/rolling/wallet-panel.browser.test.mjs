@@ -18,6 +18,8 @@ const write=value=>sessionStorage.setItem('labelled-ui-intent',JSON.stringify(va
 const error=()=>{throw Object.defineProperty(Error('PRIVATE_SENTINEL'), 'code',{get(){throw Error('GETTER_SENTINEL');}});};
 async function boundary(name){if(state.hold===name)await new Promise(resolve=>state.release=resolve);if(state.failure===name)error();}
 const application={
+ async readBokStatus(){return {available:state.bokCredit!==undefined,...(state.bokCredit!==undefined?{availableCredit:state.bokCredit}:{})};},
+ async prepareBokPost(id){state.bokContinues=(state.bokContinues??0)+1;await boundary('bok-continue');const prior=read();if(prior.intentId!==id||prior.status!=='authorized')error();const next={...prior,intentId:'43',status:'prepared',maximumFee:'234',bok:{...prior.bok,phase:'post',authorizationTxHash:'0x'+'7'.repeat(64)}};write(next);return next;},
  async resumeSaved(id,input){state.resumes++;state.resumeInput={id,...input};state.sends++;await boundary('saved-resume');const next={...read(),txHash:input.expectedTxHash,status:state.resumeOutcome??'confirmed'};write(next);return next;},
  async inspectRecovery(id){state.recoveryChecks++;await boundary('recovery-options');return {...state.recoverySnapshot,intent:read()};},
  async prepareReplacement(id,input){state.replacementPrepares++;state.replacementInput=input;await boundary('replacement-prepare');const current=read();const next={...current,status:'replacement-prepared',replacementReview:{sourceTxHash:input.expectedTxHash,head:input.expectedHead,marker:current.action.type==='read-marker'?state.recoverySnapshot.marker:null,maximumFee:'456'}};write(next);return next;},
@@ -26,8 +28,8 @@ const application={
  async readPreferenceHead(){state.headReads++;await boundary('head');return {schema:1,initialized:true,revision:state.revision,digest:'42'};},
  async readColdPreferences(){state.preferenceReads++;await boundary('preferences');return state.partial?{status:'recovering',complete:false,progress:{nextBlock:33,anchorBlock:80,processedRevision:'2',markersChecked:0,markersTotal:null}}:{status:'complete',complete:true,preferences:state.preferences};},
  async readProfile({name}){state.profileCalls++;await boundary('profile');return {name:'0x'+BigInt(name).toString(16).padStart(64,'0'),bioVersion:state.bioVersion,avatarVersion:state.avatarVersion};},
- async prepare(action){state.prepares++;if(['bio','avatar'].includes(action.type)&&action.expectedVersion!==state[action.type+'Version'])error();write({intentId:'42',action,maximumFee:'123',status:'prepared'});await boundary('prepare');return read();},
- async submitPrepared(id){state.submitCalls++;state.sends++;write({...read(),status:'submitting'});await boundary('submit');const intent={...read(),status:state.submitOutcome??'confirmed'};write(intent);return intent;},
+ async prepare(action){state.prepares++;if(['bio','avatar'].includes(action.type)&&action.expectedVersion!==state[action.type+'Version'])error();write({intentId:'42',action,maximumFee:'123',status:'prepared',...(action.type==='bok'?{bok:{phase:'authorize',budget:action.budget,availableCredit:state.bokCredit}}:{})});await boundary('prepare');return read();},
+ async submitPrepared(id){state.submitCalls++;state.sends++;write({...read(),status:'submitting'});await boundary('submit');const intent={...read(),status:state.submitOutcome??(read().bok?.phase==='authorize'?'authorized':'confirmed')};write(intent);return intent;},
  async cancelPrepared(){state.cancels++;write({...read(),status:'cancelled'});return read();},
  async reconcile(){state.reconciles++;await boundary('reconcile');const intent=read();if(state.resolveOutcome){intent.status=state.resolveOutcome;write(intent);}return intent;}
 };
@@ -579,4 +581,35 @@ test('initialization projection ignores accessors and account invalidation clear
  const dialog=page.getByRole('dialog');assert.equal(JSON.parse(await dialog.getAttribute('data-rolling-initialization')).step,'application-bind');
  await page.evaluate(()=>{test.rawAccount={address:'OTHER_PRIVATE_SENTINEL'};test.options.onChange({invalidated:true});test.sessionProgress({stage:'session-initialization',step:'pxe-create',deploymentStep:null,state:'failed',code:'unknown'});});
  assert.equal(await dialog.getAttribute('data-rolling-initialization'),null);await page.getByRole('button',{name:'Reload to unlock',exact:true}).waitFor();assert(!await dialog.innerText().then(s=>s.includes('PRIVATE_SENTINEL')));assert.equal((await counts(page)).sends,0);
+});
+
+
+test('Bok composer reviews credit and both fees, restores authorized draft and never auto-publishes',async t=>{
+ const {page}=await browserFixture(t);await page.evaluate(()=>test.bokCredit='1000');await open(page);await unlock(page);
+ await page.getByLabel('Action',{exact:true}).selectOption('bok');await page.getByText('Available private Bok credit: 1000.',{exact:true}).waitFor();
+ await page.getByLabel('Message',{exact:true}).fill('Ask Bok with the exact saved draft');await page.getByLabel('Maximum Bok credits',{exact:true}).fill('400');
+ await page.getByRole('button',{name:'Check action and review fee',exact:true}).click();await page.getByRole('button',{name:'Confirm and send',exact:true}).waitFor();
+ assert.equal((await counts(page)).sends,0);await page.getByText('Bok request budget: 400 credits. This is separate from the network fee.',{exact:true}).waitFor();
+ await page.getByRole('button',{name:'Confirm and send',exact:true}).click();await page.getByRole('button',{name:'Review saved Bok post',exact:true}).waitFor();
+ assert.equal((await counts(page)).sends,1);assert.equal(await page.getByRole('button',{name:'Confirm and send',exact:true}).count(),0);
+ await page.reload();await page.waitForFunction(()=>window.ready);await open(page);await page.getByRole('button',{name:'Unlock',exact:true}).click();
+ await page.getByRole('button',{name:'Review saved Bok post',exact:true}).waitFor();assert.equal((await counts(page)).sends,0);
+ await page.getByText('content: Ask Bok with the exact saved draft',{exact:true}).waitFor();
+ await page.getByRole('button',{name:'Review saved Bok post',exact:true}).click();await page.getByRole('button',{name:'Confirm and send',exact:true}).waitFor();
+ await page.getByText('Maximum network fee: 234 fee-juice units. This is a maximum, not a guaranteed final charge.',{exact:true}).waitFor();
+ assert.equal((await counts(page)).sends,0);assert.equal(await page.getByRole('button',{name:'Cancel prepared action',exact:true}).count(),0);
+ await page.getByRole('button',{name:'Confirm and send',exact:true}).click();await page.getByText('Transaction confirmed on the verified chain.',{exact:true}).waitFor();assert.equal((await counts(page)).sends,1);
+});
+test('Bok composer hides unavailable capability and rejects unaffordable budgets before preparation',async t=>{
+ const {page}=await browserFixture(t);await open(page);await unlock(page);assert.equal(await page.locator('option[value="bok"]').count(),0);
+ await page.reload();await page.waitForFunction(()=>window.ready);await page.evaluate(()=>test.bokCredit='20');await open(page);await unlock(page);
+ await page.getByLabel('Action',{exact:true}).selectOption('bok');await page.getByLabel('Message',{exact:true}).fill('Bok draft');
+ for(const budget of ['0','21','-1','1e2']){await page.getByLabel('Maximum Bok credits',{exact:true}).fill(budget);assert.equal(await page.getByRole('button',{name:'Check action and review fee',exact:true}).isDisabled(),true);}
+ assert.equal((await counts(page)).prepares,0);
+});
+test('Bok continuation failure preserves authorized recovery without another credit authorization',async t=>{
+ const {page}=await browserFixture(t);await page.evaluate(()=>{test.bokCredit='1000';sessionStorage.setItem('labelled-ui-intent',JSON.stringify({intentId:'42',status:'authorized',action:{type:'bok',content:'Saved Bok draft',budget:'400'},maximumFee:'123',bok:{phase:'authorize',budget:'400',availableCredit:'1000'}}));test.failure='bok-continue';});
+ await open(page);await page.getByRole('button',{name:'Unlock',exact:true}).click();await page.getByRole('button',{name:'Review saved Bok post',exact:true}).click();
+ await page.getByRole('alert').waitFor();assert.equal((await counts(page)).sends,0);assert.equal((await counts(page)).prepares,0);
+ assert.equal(await page.evaluate(()=>JSON.parse(sessionStorage.getItem('labelled-ui-intent')).status),'authorized');
 });

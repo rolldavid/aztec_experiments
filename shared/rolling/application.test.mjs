@@ -19,6 +19,7 @@ const hex=n=>'0x'+BigInt(n).toString(16).padStart(64,'0');
 const artifact=loadContractArtifact(JSON.parse(fs.readFileSync(process.env.ROLLING_TEST_ARTIFACT??new URL('../../billboard/target/rolling_contract-RollingBoard.json',import.meta.url))));
 // REQUIRED: run only after normal profile-protocol build/processing. Never invent
 // or patch an ABI to make these cases pass against an older application artifact.
+const bokArtifact=loadContractArtifact(JSON.parse(fs.readFileSync(new URL('../../experiments/private-bok/target/private_bok-PrivateBok.json',import.meta.url))));
 const ownedRecordAbi=artifact.functions.find(f=>f.name==='owned_name_records');
 const displayPack=value=>{const bytes=new TextEncoder().encode(value),words=[0n,0n];for(let i=0;i<bytes.length;i++)words[Math.floor(i/31)]|=BigInt(bytes[i])<<BigInt(8*(30-i%31));return words;};
 async function ownershipPage(names=[['Jane','Smith']]){
@@ -43,7 +44,7 @@ function fixture(){
     if(name==='preference_head'&&state.beforePreferenceHead)await state.beforePreferenceHead();
     if(name==='effective_policy'&&state.policyReadError)throw state.policyReadError;
     if(name==='get_screen_hints'&&state.hintsReadError)throw state.hintsReadError;
-    const replies={preference_head:('preferenceHead' in state)?state.preferenceHead:decodeFromAbi(getFunctionReturnType(artifact.functions.find(f=>f.name==='preference_head')),[Fr.ZERO,new Fr(1n),Fr.ZERO,Fr.ZERO]),profile_state:state.profileState??decodeFromAbi(getFunctionReturnType([...artifact.functions,...artifact.nonDispatchPublicFunctions].find(f=>f.name==='profile_state')),Array.from({length:8},()=>Fr.ZERO)),owned_name_records:('records' in state)?state.records:await ownershipPage(),get_deposit_ids:[9n,0n,0n,0n,0n,0n,0n,0n,0n,0n],
+    const replies={balance_of:state.bokCredit??1000n,get_plugin:{adapter:AztecAddress.fromBigIntUnsafe(state.bokAdapter??5n),enabled:state.bokEnabled!==false},request:state.bokRequest,preference_head:('preferenceHead' in state)?state.preferenceHead:decodeFromAbi(getFunctionReturnType(artifact.functions.find(f=>f.name==='preference_head')),[Fr.ZERO,new Fr(1n),Fr.ZERO,Fr.ZERO]),profile_state:state.profileState??decodeFromAbi(getFunctionReturnType([...artifact.functions,...artifact.nonDispatchPublicFunctions].find(f=>f.name==='profile_state')),Array.from({length:8},()=>Fr.ZERO)),owned_name_records:('records' in state)?state.records:await ownershipPage(),get_deposit_ids:[9n,0n,0n,0n,0n,0n,0n,0n,0n,0n],
       main_policy:[BigInt(state.policy),1n],effective_policy:('effectivePolicy' in state)?state.effectivePolicy:[BigInt(state.policy),1n,1n,2n,false],get_screen_hints:state.hints??decodeFromAbi(getFunctionReturnType(artifact.functions.find(f=>f.name==='get_screen_hints')),Array.from({length:28},()=>Fr.ZERO))};
     return {result:replies[name]};
   }})})};
@@ -872,4 +873,90 @@ for(const mutation of ['head','marker'])test(`replacement late predecessor ${mut
  await assert.rejects(f.app.submitPrepared(f.prepared.intentId),{code:'ROLLING_RECOVERY_CONTEXT_CHANGED'});
  assert.equal(changed,true);assert.equal(f.state.sends,sends);assert.equal(f.transactions.length,2,'The proved candidate remains in the actual encrypted journal');
  assert.equal((await f.options.accountSession.journal.inspect()).txHash,String(f.transactions[1].getTxHash()));
+});
+
+function bokFixture(){
+ const f=fixture();f.options.deployment.bok={address:hex(5),operator:hex(6),pluginId:hex(7),artifact:bokArtifact};
+ const original=f.options.accountSession.wallet.sendTx;
+ f.options.accountSession.wallet.sendTx=async(payload,opts)=>{
+  if(f.state.beforeBokSubmit)await f.state.beforeBokSubmit();
+  if(opts.beforeSubmit)await opts.beforeSubmit(hex(77));
+  const result=await original(payload,opts);
+  if(payload.name==='authorize_request'){
+   const [id,target,budget]=payload.args;f.state.bokRequestId=id;f.state.bokCredit=1000n-BigInt(budget);
+   const abi=bokArtifact.nonDispatchPublicFunctions.find(fn=>fn.name==='request');
+   f.state.bokRequest=decodeFromAbi(getFunctionReturnType(abi),[1n,BigInt(target),0n,9999999999n,BigInt(budget),BigInt(budget),0n,0n,0n,0n,0n,0n,0n,0n].map(n=>new Fr(n)));
+  }
+  return result;
+ };
+ f.app=f.restart();return f;
+}
+const bokAction=()=>({type:'bok',deposit:'9',content:'Private Sentinel asks Bok to explain this post.',name:'0',subboard:'0',budget:'400'});
+test('Bok uses real two-contract ABI and durable exact draft across separately confirmed fees',async()=>{
+ const f=bokFixture();assert.deepEqual(await f.app.readBokStatus(),{available:true,availableCredit:'1000',pluginId:hex(7)});
+ const prepared=await f.app.prepare(bokAction());assert.equal(prepared.stage,'bok-authorize');assert.equal(prepared.bok.budget,'400');assert.equal(f.state.sends,0);
+ assert.equal(f.state.calls.at(-1).name,'authorize_request');const authArgs=structuredClone(f.state.calls.at(-1).args);
+ const authorized=await f.restart().submitPrepared(prepared.intentId);assert.equal(authorized.status,'authorized');assert.equal(f.state.sends,1);
+ const status=await f.restart().readAccountStatus();assert.equal(status.status,'recovering');assert.equal(status.intent.status,'authorized');
+ await assert.rejects(f.restart().prepare({type:'name',first:'River',last:'Stone'}),{code:'ROLLING_RECOVERY_REQUIRED'});
+ const post=await f.restart().prepareBokPost(prepared.intentId);assert.equal(post.stage,'bok-post');assert.notEqual(post.intentId,prepared.intentId);assert.equal(f.state.sends,1);
+ const postArgs=f.state.calls.at(-1).args;assert.equal(f.state.calls.at(-1).name,'post_with_bok');assert.equal(postArgs[5],hex(7));assert.equal(postArgs[6],authArgs[0]);
+ const draft=postArgs[2],preimage=[1n,31337n,1n,1n,5n,BigInt(draft.subboard),BigInt(draft.parent),BigInt(draft.root_reference),BigInt(draft.kind),BigInt(draft.name_id),BigInt(draft.reference),BigInt(postArgs[1]),BigInt(draft.length),...draft.message.map(BigInt)];
+ assert.equal(authArgs[1],String(await poseidon2HashWithSeparator(preimage.map(n=>new Fr(n)),0x52434931)));
+ assert.equal(post.bok.authorizationTxHash,hex(77));await assert.rejects(f.app.cancelPrepared(post.intentId),{code:'ROLLING_RECOVERY_REQUIRED'});
+ const sent=await f.restart().submitPrepared(post.intentId);assert.equal(sent.status,'confirmed');assert.equal(f.state.sends,2);
+ assert.deepEqual(f.state.sent.payload.args,postArgs);assert.equal((await f.restart().reconcile(post.intentId)).status,'confirmed');assert.equal(f.state.sends,2);
+ assert([...f.values.values()].every(value=>!value.includes('Private Sentinel')));
+});
+test('Bok unavailable, disabled or mismatched plugin and insufficient credit never prepare a send',async()=>{
+ const absent=fixture();assert.deepEqual(await absent.app.readBokStatus(),{available:false});await assert.rejects(absent.app.prepare(bokAction()),{code:'ROLLING_BOK_UNAVAILABLE'});
+ for(const mutate of [f=>f.state.bokEnabled=false,f=>f.state.bokAdapter=8n,f=>f.state.bokCredit=399n]){
+  const f=bokFixture();mutate(f);await assert.rejects(f.app.prepare(bokAction()));assert.equal(f.state.sends,0);assert.equal(f.values.size,0);
+ }
+ for(const budget of ['0','-1','01',(1n<<128n).toString()]){const f=bokFixture();await assert.rejects(f.app.prepare({...bokAction(),budget}));assert.equal(f.state.sends,0);}
+});
+test('Bok unknown authorization outcome cannot advance or create a replacement request',async()=>{
+ const f=bokFixture(),prepared=await f.app.prepare(bokAction());f.state.failSend=true;
+ await assert.rejects(f.app.submitPrepared(prepared.intentId));assert.equal(f.state.sends,1);
+ await assert.rejects(f.restart().prepareBokPost(prepared.intentId),{code:'ROLLING_RECOVERY_REQUIRED'});
+ await assert.rejects(f.restart().prepare(bokAction()),{code:'ROLLING_RECOVERY_REQUIRED'});assert.equal(f.state.sends,1);
+});
+test('Bok continuation rechecks exact authorization, plugin, credit and fee before effects',async()=>{
+ for(const change of ['target','state','plugin','fee']){
+  const f=bokFixture(),prepared=await f.app.prepare(bokAction());await f.app.submitPrepared(prepared.intentId);
+  if(change==='target')f.state.bokRequest.invocation_hash=new Fr(123);
+  if(change==='state')f.state.bokRequest.state=2n;
+  if(change==='plugin')f.state.bokEnabled=false;
+  if(change==='fee'){
+   const post=await f.app.prepareBokPost(prepared.intentId);f.state.fee=11n;
+   await assert.rejects(f.app.submitPrepared(post.intentId),{code:'ROLLING_FEE_CHANGED'});
+  }else await assert.rejects(f.app.prepareBokPost(prepared.intentId));
+  assert.equal(f.state.sends,1);
+ }
+});
+
+test('Bok final journal before-submit guard rejects late plugin revocation without sending',async()=>{
+ const f=bokFixture(),prepared=await f.app.prepare(bokAction());f.state.beforeBokSubmit=async()=>{f.state.bokEnabled=false;};
+ await assert.rejects(f.app.submitPrepared(prepared.intentId),{code:'ROLLING_BOK_UNAVAILABLE'});assert.equal(f.state.sends,0);
+ assert.equal((await f.restart().readAccountStatus()).status,'recovering');
+});
+
+test('Bok authorization loses no exact request on continuation CAS failure or absent canonical outcome',async()=>{
+ const f=bokFixture(),prepared=await f.app.prepare(bokAction());await f.app.submitPrepared(prepared.intentId);
+ f.state.failCAS=true;await assert.rejects(f.restart().prepareBokPost(prepared.intentId));f.state.failCAS=false;
+ assert.equal((await f.restart().readAccountStatus()).intent.intentId,prepared.intentId);assert.equal(f.state.sends,1);
+ f.state.outcome={...f.state.outcome,outcome:'unknown'};await assert.rejects(f.restart().prepareBokPost(prepared.intentId),{code:'ROLLING_RECOVERY_REQUIRED'});assert.equal(f.state.sends,1);
+});
+
+test('Bok saved authorization and post cannot migrate to a changed adapter, operator or plugin after reopen',async()=>{
+ for(const phase of ['prepared','authorized','post'])for(const key of ['address','operator','pluginId']){
+  const f=bokFixture();let intent=await f.app.prepare(bokAction());
+  if(phase!=='prepared')await f.app.submitPrepared(intent.intentId);
+  if(phase==='post')intent=await f.app.prepareBokPost(intent.intentId);
+  const before=[...f.values.entries()],sends=f.state.sends;f.options.deployment.bok[key]=hex(99);
+  const reopened=f.restart();await assert.rejects(reopened.readAccountStatus(),{code:'ROLLING_CONTEXT_CHANGED'});
+  await assert.rejects(reopened.submitPrepared(intent.intentId),{code:'ROLLING_CONTEXT_CHANGED'});
+  if(phase==='authorized')await assert.rejects(reopened.prepareBokPost(intent.intentId),{code:'ROLLING_CONTEXT_CHANGED'});
+  assert.equal(f.state.sends,sends);assert.deepEqual([...f.values.entries()],before);
+ }
 });

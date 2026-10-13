@@ -11,7 +11,30 @@ export const ROLLING_SESSION_STAGES=Object.freeze(['account-lock','trusted-node'
 const silent=()=>{};
 const logger=Object.freeze({trace:silent,debug:silent,verbose:silent,info:silent,warn:silent,error:silent,fatal:silent,
  level:'silent',module:'rolling-wallet',isLevelEnabled:()=>false,createChild:()=>logger,getBindings:()=>({})});
-export async function createRollingWalletSession({sdk,routing,ethers,config,boardArtifact,privateFeeArtifact,account,
+// Optional Bok capability is authenticated from the pinned local artifact and
+// canonical public storage before registration or any personalized operation.
+export async function verifyRollingBokCapability({sdk,node,config,artifact,deployment,contextGuard}){
+ if(config===undefined){if(artifact!==undefined)throw fail('ROLLING_SESSION_CONFIG');return undefined;}
+ const selected=structuredClone(config),canonical=value=>typeof value==='string'&&/^0x[0-9a-f]{64}$/.test(value)&&BigInt(value)>0n;
+ if(!selected||Object.keys(selected).sort().join()!=='contractAddress,operatorAddress,pluginId'||
+  !canonical(selected.contractAddress)||!canonical(selected.operatorAddress)||!canonical(selected.pluginId)||artifact?.name!=='PrivateBok')throw fail('ROLLING_SESSION_CONFIG');
+ const check=ok=>{if(!ok)throw fail('ROLLING_DEPLOYMENT_INVALID');};
+ await contextGuard();const head=await node.getBlockData('checkpointed');await contextGuard();
+ const number=Number(head?.header?.globalVariables?.blockNumber),hash=head?.blockHash?.toString();check(Number.isSafeInteger(number)&&number>0&&canonical(hash));
+ const reference={hash},address=new sdk.AztecAddress(new sdk.Fr(BigInt(selected.contractAddress))),expected=(await sdk.getContractClassFromArtifact(artifact)).id;
+ await contextGuard();const instance=await node.getContract(address,reference);await contextGuard();
+ const same=(a,b)=>BigInt(a.toString())===BigInt(b.toString());
+ check(instance&&same(instance.address,address)&&same(instance.currentContractClassId,expected)&&same(instance.originalContractClassId,expected)&&same(await sdk.computeContractAddressFromInstance(instance),address));
+ const expectedValues={board:deployment.board.address,operator:selected.operatorAddress,l1_chain:deployment.network.chainId,version:deployment.network.version};
+ for(const [name,value]of Object.entries(expectedValues)){
+  const slot=artifact.storageLayout?.[name]?.slot;check(slot!==undefined);
+  await contextGuard();const actual=await node.getPublicStorageAt(reference,address,new sdk.Fr(BigInt(slot)));check(same(actual,value));
+ }
+ await contextGuard();const again=await node.getBlockData(number);check(again?.blockHash?.toString()===hash&&Number(again?.header?.globalVariables?.blockNumber)===number);
+ await sdk.inspectTrustedNode(node,{expectedNetworkScope:deployment.network,proofsEnabled:deployment.proofsEnabled});await contextGuard();
+ return Object.freeze({address,artifact,instance,operator:new sdk.AztecAddress(new sdk.Fr(BigInt(selected.operatorAddress))),pluginId:selected.pluginId});
+}
+export async function createRollingWalletSession({sdk,routing,ethers,config,boardArtifact,privateFeeArtifact,bokArtifact,account,
  trustedQuery,remoteProver,contextGuard,claimStore,onProgress=()=>{},locks=globalThis.navigator?.locks,proofsEnabled=true}){
  if(typeof proofsEnabled!=='boolean'||(!proofsEnabled&&String(config?.network?.chainId)!=='31337')||typeof contextGuard!=='function'||typeof locks?.request!=='function'||!account||!trustedQuery||!routing)throw fail('ROLLING_SESSION_CONFIG');
  const captured={secretKey:account.secretKey,salt:String(account.salt),address:String(account.address)};
@@ -43,10 +66,12 @@ export async function createRollingWalletSession({sdk,routing,ethers,config,boar
    const network={chainId:String(selected.network.chainId),version:String(selected.network.rollupVersion),rollup:selected.network.rollupAddress};
    const node=await sdk.createTrustedPrivateNode({...query,expectedNetworkScope:network,proofsEnabled});await guard();
    begin('deployment');
-   const deployment=await verifyRollingDeployment({sdk,node,ethers,config:selected,boardArtifact,privateFeeArtifact,contextGuard:guard,proofsEnabled,onProgress:record=>{
+   const verifiedDeployment=await verifyRollingDeployment({sdk,node,ethers,config:selected,boardArtifact,privateFeeArtifact,contextGuard:guard,proofsEnabled,onProgress:record=>{
     const value={stage:'session-initialization',step:'deployment',deploymentStep:record.step,state:record.state,code:record.code};
     if(record.state==='failed')nestedFailure=Object.freeze(value);observeRollingSetup(onProgress,value);
    }});
+   const bok=await verifyRollingBokCapability({sdk,node,config:selected.bok,artifact:bokArtifact,deployment:verifiedDeployment,contextGuard:guard});
+   const deployment={...verifiedDeployment,...(bok?{bok}:{})};
    begin('account-derive');
    const secret=sdk.Fr.fromHexString(captured.secretKey),salt=new sdk.Fr(BigInt(captured.salt));
    const accountContract=new sdk.SchnorrInitializerlessAccountContract(sdk.deriveSigningKey(secret));
@@ -64,7 +89,7 @@ export async function createRollingWalletSession({sdk,routing,ethers,config,boar
    const partialAddress=await sdk.computePartialAddress(instance);await guard();
    await pxe.registerAccount(keys,partialAddress);
    begin('contracts-register');
-   for(const [contractArtifact,contractInstance]of [[artifact,instance],[boardArtifact,deployment.board.instance],[privateFeeArtifact,deployment.privateFee.instance]]){
+   for(const [contractArtifact,contractInstance]of [[artifact,instance],[boardArtifact,deployment.board.instance],[privateFeeArtifact,deployment.privateFee.instance],...(bok?[[bokArtifact,bok.instance]]:[])]){
     await guard();await pxe.registerContractClass(contractArtifact);
     await guard();await pxe.registerContract(contractInstance);
    }
