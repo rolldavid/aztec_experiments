@@ -11,7 +11,11 @@ import {Fr} from '@aztec-labs/foundation/curves/bn254';
 import {AztecAddress} from '@aztec-labs/stdlib/aztec-address';
 import {encodeArguments,loadContractArtifact,decodeFromAbi,getFunctionReturnType} from '@aztec-labs/stdlib/abi';
 import {createL2Journal} from '../l2-journal.mjs';
-import {Tx} from '@aztec-labs/stdlib/tx';
+import {Tx,mergeExecutionPayloads} from '@aztec-labs/stdlib/tx';
+import {BatchCall} from '@aztec-labs/aztec.js/contracts';
+import {PrivateMintAndPayFeePaymentMethod} from '../private-fee-payment.mjs';
+import {derivePrivateFeeBridgeSecret} from '../private-fee-client.mjs';
+import {prepareFundingClaim as verifyFundingClaim} from './funding-receipts.mjs';
 import {BaseWallet} from '@aztec-labs/wallet-sdk/base-wallet';
 import {FIELD_MODULUS} from './invocation.mjs';
 import {createRollingApplication} from './application.mjs';
@@ -1085,4 +1089,65 @@ test('Moderator immutable author semantics and bounded exact reasons reject inva
 test('Moderator unknown send preserves original journal operation and forbids a second action',async()=>{
  const f=moderatorFixture(),prepared=await f.app.prepare(moderatorActions[0]);f.state.failSend=true;await assert.rejects(f.app.submitPrepared(prepared.intentId));
  await assert.rejects(f.restart().prepare(moderatorActions[1]));assert.equal((await f.restart().reconcile(prepared.intentId)).status,'unknown');assert.equal(f.state.sends,1);
+});
+
+// Application boundaries use explicit receipt/estimation doubles below; actual ABI,
+// encrypted workflow CAS, SDK BatchCall and payment payload are retained. This is
+// not a live bridge/payment acceptance claim (the receipt module has its own actual
+// SDK hash/witness tests). No public/legacy Bok client is supplied.
+function topUpFixture(kind='private-fee'){
+ const f=fundingFixture();f.options.sdk.BatchCall=BatchCall;
+ const bridge={amount:'200',salt:hex(90),leafIndex:'3'},retained={recipientSalt:hex(91),bridgeSecret:hex(92),
+  bokScope:{...f.options.deployment.network,portal:'0x'+'77'.repeat(20),recipient:hex(5),token:'0x'+'88'.repeat(20)}};
+ f.options.deployment.bok={address:hex(5),operator:hex(6),pluginId:hex(7),artifact:bokArtifact};
+ f.options.funding.loadAggregate=async()=>f.state.missingContext?null:kind==='bok'?retained:null;
+ f.options.accountSession.node.getNodeInfo=async()=>({l1ContractAddresses:{feeJuicePortalAddress:'0x'+'55'.repeat(20),feeJuiceAddress:'0x'+'66'.repeat(20)}});
+ f.options.sdk.prepareFundingClaim=async input=>{
+  f.state.claimReads.push(input);await input.contextGuard();assert.equal(input.aggregateIntent,undefined);assert.equal(input.aggregateCustody,undefined);
+  if(f.state.claimError)throw Object.assign(Error('Unavailable canonical receipt'),{code:'ROLLING_FUNDING_REORG'});
+  if(input.kind==='private-fee')return {status:f.state.claimStatus??'claim-ready',claim:{contract:hex(2),kind:'private-fee-bridge',bridgeClaim:{...bridge,salt:f.state.changedClaim?hex(99):bridge.salt}}};
+  assert.equal(input.kind,'bok');assert.deepEqual(input.secrets,{recipientSalt:hex(91),bridgeSecret:hex(92)});assert.deepEqual(input.scope,retained.bokScope);
+  return {status:f.state.claimStatus??'claim-ready',claim:{contract:hex(5),method:'claim',args:['300',hex(91),f.state.changedClaim?hex(99):hex(92),'4']}};
+ };
+ f.state.payments=[];f.options.sdk.preparePrivateFeePayment=async input=>{f.state.payments.push(input);return {availableCredit:200n};};
+ return {...f,retained,bridge,action:{type:kind==='bok'?'claim-bok':'claim-private-fee',receipt:f.receipt}};
+}
+for(const kind of ['private-fee','bok'])test(`top-up ${kind} prepares separately with active collateral and one confirmed private journal send`,async()=>{
+ const f=topUpFixture(kind),app=f.restart(),prepared=await app.prepare(f.action);
+ assert.equal(f.state.sends,0);assert.equal(f.state.estimates,1);assert.equal(f.state.claimReads.length,1);
+ for(const value of [hex(90),hex(91),hex(92)]){assert(!JSON.stringify(prepared).includes(value));assert([...f.values.values()].every(row=>!row.includes(value)));}
+ const result=await f.restart().submitPrepared(prepared.intentId);assert.equal(result.status,'confirmed');assert.equal(f.state.sends,1);assert.equal(f.state.claimReads.length,2);
+ assert.equal((await f.restart().reconcile(prepared.intentId)).status,'confirmed');await assert.rejects(f.restart().submitPrepared(prepared.intentId),{code:'ROLLING_RECOVERY_REQUIRED'});assert.equal(f.state.sends,1);
+ assert(f.state.claimReads.every(row=>row.kind===kind));assert(!f.state.calls.some(call=>['withdraw','claim_deposit'].includes(call.name)));
+ if(kind==='bok')assert.equal(f.state.sent.payload.name,'claim');else{assert(f.state.sent.payload instanceof BatchCall);assert(f.state.payments.every(p=>p.claim.salt===hex(90)));}
+});
+test('top-up fee-only actual SDK empty batch merges only existing FeeJuice claim and mint-and-pay calls',async()=>{
+ const f=topUpFixture(),prepared=await f.restart().prepare(f.action),interaction=f.state.calls[0];assert(interaction instanceof BatchCall);
+ const application=await interaction.request();assert.equal(application.calls.length,0);
+ const payer=AztecAddress.fromBigIntUnsafe(2n),salt=new Fr(90),secret=await derivePrivateFeeBridgeSecret({salt,owner:f.options.accountSession.owner});
+ const payment=new PrivateMintAndPayFeePaymentMethod(payer,{amount:200n,secret,salt,leafIndex:new Fr(3)},10n);
+ const payload=mergeExecutionPayloads([await payment.getExecutionPayload(),application]);
+ assert.deepEqual(payload.calls.map(c=>c.name),['claim','mint_and_pay_fee']);assert.equal(payload.calls[0].args[2].toString(),secret.toString());assert.equal(payload.calls[1].to.toString(),hex(2));assert.equal(payload.calls[1].args[0].toString(),hex(200));assert.equal(payload.calls[1].args[3].toString(),hex(10));assert.equal(f.state.sends,0);
+ await f.restart().cancelPrepared(prepared.intentId);
+});
+test('top-up Bok can bootstrap private fees in its existing single claim transaction',async()=>{
+ const f=topUpFixture('bok'),action={...f.action,feeReceipt:{...f.receipt,txHash:hex(53)}};
+ const prepared=await f.restart().prepare(action);assert.deepEqual(f.state.claimReads.map(x=>x.kind),['bok','private-fee']);
+ assert.equal((await f.restart().submitPrepared(prepared.intentId)).status,'confirmed');assert.equal(f.state.sends,1);assert.equal(f.state.sent.payload.name,'claim');assert(f.state.payments.every(p=>p.claim.amount==='200'));
+});
+for(const kind of ['private-fee','bok'])for(const failure of ['claimError','waiting','changedClaim','fee','context'])test(`top-up ${kind} rejects ${failure} on reopen before durable send`,async()=>{
+ const f=topUpFixture(kind),prepared=await f.restart().prepare(f.action),before=[...f.values.values()];
+ if(failure==='waiting')f.state.claimStatus='waiting';else if(failure==='fee')f.state.fee=11n;else if(failure==='context')f.options.accountSession.owner=AztecAddress.fromBigIntUnsafe(99n);else f.state[failure]=true;
+ await assert.rejects(f.restart().submitPrepared(prepared.intentId));assert.equal(f.state.sends,0);assert.deepEqual([...f.values.values()],before);
+});
+for(const kind of ['private-fee','bok'])test(`top-up ${kind} preserves unknown submission across restart without another estimation or send`,async()=>{
+ const f=topUpFixture(kind),prepared=await f.restart().prepare(f.action);f.state.failSend=true;
+ await assert.rejects(f.restart().submitPrepared(prepared.intentId));const count=f.state.estimates;
+ assert.equal((await f.restart().reconcile(prepared.intentId)).status,'unknown');await assert.rejects(f.restart().submitPrepared(prepared.intentId),{code:'ROLLING_RECOVERY_REQUIRED'});
+ await assert.rejects(f.restart().prepare(f.action),{code:'ROLLING_RECOVERY_REQUIRED'});assert.equal(f.state.sends,1);assert.equal(f.state.estimates,count);
+});
+test('top-up rejects private action fields, missing Bok custody and unavailable receipt without saving a claim',async()=>{
+ for(const kind of ['private-fee','bok']){const f=topUpFixture(kind);await assert.rejects(f.restart().prepare({...f.action,secret:hex(90)}));assert.equal(f.values.size,0);assert.equal(f.state.sends,0);}
+ const f=topUpFixture('bok');f.state.missingContext=true;await assert.rejects(f.restart().prepare(f.action),{code:'ROLLING_FUNDING_UNAVAILABLE'});assert.equal(f.values.size,0);
+ const g=topUpFixture();g.options.sdk.prepareFundingClaim=verifyFundingClaim;await assert.rejects(g.restart().prepare(g.action),{code:'ROLLING_FUNDING_UNTRUSTED_NODE'});assert.equal(g.values.size,0);assert.equal(g.state.sends,0);
 });
