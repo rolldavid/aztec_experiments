@@ -475294,8 +475294,8 @@ mod tests {
     const m2 = validateDeploymentManifest(manifest), n2 = m2.network, deadline = Date.now() + timeoutMs;
     if (!Number.isInteger(timeoutMs) || timeoutMs < 1 || timeoutMs > 2e4) fail10("Invalid preflight timeout");
     const read2 = (fn) => boundedTransactionRead(fn, deadline - Date.now());
-    const [info, contracts, network, nativeConfig] = await read2(() => Promise.all([node2.getNodeInfo(), node2.getL1ContractAddresses(), provider.getNetwork(), node2.getConfig()]));
-    const realProofs = nativeConfig && Object.getOwnPropertyDescriptor(nativeConfig, "realProofs");
+    const [info, contracts, network] = await read2(() => Promise.all([node2.getNodeInfo(), node2.getL1ContractAddresses(), provider.getNetwork()]));
+    const realProofs = info && Object.getOwnPropertyDescriptor(info, "realProofs");
     if (!realProofs || !Object.hasOwn(realProofs, "value") || typeof realProofs.value !== "boolean") fail10("Native proof configuration unavailable");
     const proofsEnabled = realProofs.value;
     if (m2.profile === "local-test" ? n2.chainId !== "31337" || proofsEnabled : n2.chainId !== "11155111" || !proofsEnabled) fail10("Native proof configuration differs from deployment profile");
