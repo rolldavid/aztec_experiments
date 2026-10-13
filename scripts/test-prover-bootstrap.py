@@ -419,7 +419,16 @@ class htb 1:20 parent 1:1 prio 0 rate 25Mbit ceil 50Mbit burst 4725b cburst 7850
     def test_console_qualification_projection_rejects_unknown_fields(self):
         ns=host()
         with tempfile.TemporaryDirectory() as t:
-            ns['BASE']=pathlib.Path(t);ns['verify_controls']=lambda:99
+            ns['BASE']=pathlib.Path(t);ns['PRIVATE']=pathlib.Path(t)/'private'
+            ns['PRIVATE'].mkdir(mode=0o700);ns['verify_controls']=lambda:99
+            calls=[]
+            expected=[(['systemctl','show',service,'--property=LoadState','--value'],{'capture':True,'timeout':5})
+                      for service in ('board-prover.service','board-prover-proxy.service')]
+            def masked_readback(args,**kwargs):
+                self.assertLess(len(calls),len(expected))
+                self.assertEqual((args,kwargs),expected[len(calls)])
+                calls.append((args,kwargs));return 'masked'
+            ns['run']=masked_readback
             (ns['BASE']/'deadline.json').write_text(json.dumps(config()));(ns['BASE']/'stage').write_text('installed')
             directory=ns['BASE']/'qualification';directory.mkdir()
             result={'schemaVersion':1,'passed':True,'stage':'complete','scope':'current-network-query-only','manifestSha256':'b'*64,
@@ -436,7 +445,8 @@ class htb 1:20 parent 1:1 prio 0 rate 25Mbit ceil 50Mbit burst 4725b cburst 7850
                 if mode=='bad-boolean':sample['passed']='PRIVATE_SENTINEL'
                 (directory/'result.json').write_text(json.dumps(sample))
                 (ns['BASE']/'last-attestation').unlink(missing_ok=True)
-                ns['attest']()
+                calls.clear();ns['attest']()
+                self.assertEqual(calls,expected)
                 output=json.loads(captured[-1].removeprefix('ROLLING_BOOTSTRAP '))
                 self.assertEqual(output['linuxQueryQualified'],mode=='valid')
                 self.assertNotIn('PRIVATE_SENTINEL',captured[-1])
@@ -686,7 +696,13 @@ class FinalReceipt(unittest.TestCase):
         exec('execute(CONFIG, ATTESTATION)',ns)
         self.assertEqual(calls[0][0],c);compile(calls[0][1],'attestor','exec')
         runtime=ns['SOURCE'][ns['SOURCE'].index('\nimport datetime as dt, fcntl'):]
+        expected_runtime=b.tokenize.untokenize(t._replace(string='') if t.type==b.tokenize.COMMENT else t
+            for t in b.tokenize.generate_tokens(io.StringIO(b.HOST).readline))
+        self.assertEqual(runtime,expected_runtime)
         self.assertEqual(ns['PINS']['bootstrap'],hashlib.sha256(runtime.encode()).hexdigest())
+        # An unrepresentable raw delimiter fails closed; never rewrite runtime.
+        with patch.object(b,'HOST',b.HOST+'\nEXAMPLE = '+repr(chr(34)*3)+'\n'):
+            with self.assertRaisesRegex(b.Invalid,'^Bootstrap source encoding mismatch$'):fixture_generate(c,NOW)
         self.assertEqual(ns['PINS']['startup'],hashlib.sha256(pathlib.Path(b.__file__).read_bytes()).hexdigest())
         self.assertNotIn(token,calls[0][1])
         # Verify the executed decoded payload, not just the generator's source.

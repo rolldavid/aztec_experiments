@@ -1344,7 +1344,14 @@ def generate(config, now=None):
     pins = {'image':IMAGE, 'manifest':config['manifestSha256'], 'node':NODE_SHA, 'bb':BB_SHA, 'bbVersion':BB_VERSION, 'catalog':CATALOG_SHA, 'bootstrap':hashlib.sha256(runtime.encode()).hexdigest(),'startup':hashlib.sha256(pathlib.Path(__file__).read_bytes()).hexdigest()}
     prefix = 'PINS = '+repr(pins)+'\nNETWORK = '+repr(NETWORK)+'\nQUALIFICATION = '+repr(QUALIFICATION)+'\n'
     dispatch = "\ntry:\n    if sys.argv[1:2]==['--activate-prover']:\n        if len(sys.argv)!=3: raise ValueError('Activation arguments')\n        activation_support('activate',sys.argv[2])\n    elif '--qualify' in sys.argv: qualify()\n    elif '--qualification-stop' in sys.argv:\n        qualify(aborted=True);run(['systemctl','start','rolling-qualification-receipt.service'],timeout=40)\n    elif '--qualification-receipt' in sys.argv: final_receipt()\n    else: attest('--check' in sys.argv)\nexcept Exception as error:\n    shutdown_failure(error)\n"
-    program = 'SOURCE = '+repr(prefix+runtime)+'\nCONFIG = '+repr(config)+'\nATTESTATION = SOURCE + '+repr(dispatch)+'\nexec(SOURCE)\nexecute(CONFIG, ATTESTATION)\n'
+    # A raw multiline literal avoids doubling runtime backslashes/newlines in
+    # the compressed envelope. Verify its decoded value before emitting bytes;
+    # runtime code, attestation content and their hashes remain unchanged.
+    literal = 'r"""'+prefix+runtime+'"""'
+    try:
+        if ast.literal_eval(literal) != prefix+runtime: raise ValueError()
+    except (SyntaxError, ValueError): raise Invalid('Bootstrap source encoding mismatch') from None
+    program = 'SOURCE = '+literal+'\nCONFIG = '+repr(config)+'\nATTESTATION = SOURCE + '+repr(dispatch)+'\nexec(SOURCE)\nexecute(CONFIG, ATTESTATION)\n'
     encoded = base64.b64encode(lzma.compress(program.encode(),format=lzma.FORMAT_ALONE,
         filters=[{'id':lzma.FILTER_LZMA1,'preset':6,'pb':0}])).decode()
     return "#!/bin/sh\nset -eu\numask 077\nexec /usr/bin/python3 - <<'B'\nimport base64,lzma\nexec(lzma.decompress(base64.b64decode('"+encoded+"')))\nB\n"
