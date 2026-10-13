@@ -742,3 +742,21 @@ missing evidence never authorizes another launch or execution.
 Actual native AMD64 execution, receipt transport, resource readback and cleanup
 must be independently reviewed before any active Linux pin is changed. Local
 labelled doubles and payload roundtrips do not satisfy that gate.
+
+The closed mode now also observes guest prerequisites after shutdown controls
+are verified and before downloading the binary. Its receipt contains only finite
+architecture, libc version, loader-presence, OS and CPU fields. The source reads
+fixed `/proc/cpuinfo` (64 KiB maximum) and `/usr/lib/os-release` (4 KiB maximum),
+and captures fixed `/usr/bin/getconf GNU_LIBC_VERSION` for at most three seconds
+and 256 bytes. `/usr/lib/os-release` avoids Ubuntu's ordinary `/etc/os-release`
+symlink without loosening a no-follow file guard.
+
+Execution requires observed x86_64, the fixed executable ELF interpreter,
+glibc >=2.34 (the candidate's retained ELF requirement), Ubuntu24.04 and two AMD
+processors matching the intended m7a.large. Only the intersection of six fixed
+CPU flags is reported; these flags are facts, not invented binary ISA gates.
+Missing/malformed/truncated inputs, command transport failure or mismatches
+remain explicit and block execution. No raw host text, arbitrary vendor/version
+string, environment, process argument or URL enters the receipt. The operator
+must validate this object and its new control-source hash before accepting a
+passing version receipt. This does not replace later genuine native proof tests.

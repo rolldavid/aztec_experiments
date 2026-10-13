@@ -1100,6 +1100,75 @@ NATIVE_HOST = r'''
 NATIVE_UNIT='rolling-native-version.service'
 NATIVE_ROOT=pathlib.Path('/opt/rolling-native-version')
 
+CPU_FLAGS=('sse4_2','avx','avx2','avx512f','bmi2','adx')
+
+def native_read(path,limit):
+    fd=os.open(path,os.O_RDONLY|os.O_NOFOLLOW)
+    try:
+        if not stat.S_ISREG(os.fstat(fd).st_mode):raise ValueError('Guest file type')
+        with os.fdopen(fd,'rb',closefd=False) as file:data=file.read(limit+1)
+        if len(data)>limit:raise ValueError('Guest file limit')
+        return data
+    finally:os.close(fd)
+
+def native_cpu(data):
+    if type(data) is not bytes or len(data)>65536:raise ValueError('CPU limit')
+    processors=[];flags=[];vendors=[]
+    for block in data.decode('ascii').strip().split('\n\n'):
+        fields={}
+        for line in block.splitlines():
+            key,separator,value=line.partition(':');key=key.strip()
+            if key not in ('processor','vendor_id','flags'):continue
+            if not separator or key in fields:raise ValueError('CPU fields')
+            fields[key]=value.strip()
+        if set(fields)!={'processor','vendor_id','flags'} or not re.fullmatch('[0-9]{1,4}',fields['processor']) or int(fields['processor'])>1023:raise ValueError('CPU record')
+        index=int(fields['processor'])
+        if index in processors or len(processors)>=8:raise ValueError('CPU count')
+        tokens=fields['flags'].split()
+        if not 1<=len(tokens)<=256 or any(not re.fullmatch('[a-z0-9_]{1,32}',value) for value in tokens):raise ValueError('CPU flags')
+        processors.append(index);flags.append(set(tokens));vendors.append({'AuthenticAMD':'amd','GenuineIntel':'intel'}.get(fields['vendor_id'],'other'))
+    if not processors:raise ValueError('CPU missing')
+    common=set.intersection(*flags)
+    return {'status':'observed','processors':len(processors),'vendor':vendors[0] if len(set(vendors))==1 else 'mixed','flags':{flag:flag in common for flag in CPU_FLAGS}}
+
+def native_os(data):
+    if type(data) is not bytes or len(data)>4096:raise ValueError('OS limit')
+    fields={}
+    for line in data.decode('utf-8').splitlines():
+        key,separator,value=line.partition('=')
+        if key not in ('ID','VERSION_ID'):continue
+        if not separator or key in fields:raise ValueError('OS fields')
+        fields[key]=value
+    if set(fields)!={'ID','VERSION_ID'}:raise ValueError('OS missing')
+    return {'status':'observed','ubuntu2404':fields['ID'] in ('ubuntu','"ubuntu"') and fields['VERSION_ID'] in ('24.04','"24.04"')}
+
+def native_loader():
+    # Fixed Ubuntu ELF interpreter path; following its trusted system symlink is
+    # intentional. Never serialize its target or load a caller-selected library.
+    path=pathlib.Path('/lib64/ld-linux-x86-64.so.2')
+    return path.is_file() and os.access(path,os.X_OK)
+
+def native_guest():
+    facts={'status':'failed','architecture':'unavailable','libc':{'status':'transport-error'},'loaderAvailable':False,'os':{'status':'unavailable'},'cpu':{'status':'unavailable'}}
+    try:facts['architecture']='x86_64' if platform.machine()=='x86_64' else 'other'
+    except Exception:pass
+    try:
+        capture,raw=bounded_capture(['/usr/bin/getconf','GNU_LIBC_VERSION'],3,256)
+        if not capture['timeout'] and capture['returnCode']==0 and capture['reaped']:
+            match=None if capture['stdout']['truncated'] else re.fullmatch(rb'glibc ([0-9]{1,3})\.([0-9]{1,3})\n?',raw['stdout'])
+            facts['libc']={'status':'observed','major':int(match[1]),'minor':int(match[2])} if match else {'status':'projection-error'}
+    except Exception:pass
+    try:facts['loaderAvailable']=bool(native_loader())
+    except Exception:pass
+    for name,path,limit,parser in [('cpu','/proc/cpuinfo',65536,native_cpu),('os','/usr/lib/os-release',4096,native_os)]:
+        try:data=native_read(path,limit)
+        except Exception:continue
+        try:facts[name]=parser(data)
+        except Exception:facts[name]={'status':'projection-error'}
+    libc=facts['libc'];cpu=facts['cpu'];os_facts=facts['os']
+    if facts['architecture']=='x86_64' and libc['status']=='observed' and (libc['major'],libc['minor'])>=(2,34) and facts['loaderAvailable'] and os_facts.get('ubuntu2404') is True and cpu.get('processors')==2 and cpu.get('vendor')=='amd':facts['status']='passed'
+    return facts
+
 def native_fetch(url,path):
     class NoRedirect(urllib.request.HTTPRedirectHandler):
         def redirect_request(self,*args,**kwargs):raise ValueError('Redirect rejected')
@@ -1178,7 +1247,7 @@ def native_execute(config,worker):
              'binarySha256':PINS['bb'],'binaryBytes':BINARY_BYTES,'expectedVersion':PINS['bbVersion'],
              'controlSourceSha256':PINS['bootstrap'],'workerSha256':hashlib.sha256(worker.encode()).hexdigest(),
              'budgetStop':config['budgetStop'],'commissioningStop':config['commissioningStop'],
-             'stage':'host-preflight','state':{'status':'not-observed'},'resultStatus':'not-observed'}
+             'stage':'host-preflight','state':{'status':'not-observed'},'resultStatus':'not-observed','guestPreflight':{'status':'not-observed'}}
     lock=None
     try:
         if platform.system()!='Linux' or platform.machine()!='x86_64' or os.geteuid()!=0:raise ValueError('Native host required')
@@ -1192,6 +1261,8 @@ def native_execute(config,worker):
         verify_controls();receipt['controlsVerified']=True
         exclusive_record(PRIVATE/'receipt-put.json',{'url':receipt_url(config['receiptPutUrl'])})
         exclusive_record(BASE/'native-intent.json',{'schemaVersion':1,'binarySha256':PINS['bb'],'controlSourceSha256':PINS['bootstrap'],'attempts':1})
+        receipt['stage']='guest-preflight';receipt['guestPreflight']=native_guest()
+        if receipt['guestPreflight']['status']!='passed':raise ValueError('Guest preflight failed')
         receipt['stage']='download';NATIVE_ROOT.mkdir(mode=0o755,parents=True,exist_ok=False)
         native_fetch(config['binaryUrl'],NATIVE_ROOT/'bb')
         write(NATIVE_ROOT/'capture.py',worker,0o444)

@@ -1130,6 +1130,8 @@ class NativeVersionDiagnostic(unittest.TestCase):
         exec(b.native_control_source()+b.NATIVE_CAPTURE+b.NATIVE_HOST,ns)
         ns['emit_diagnostic']=lambda data:None
         return ns
+    def guest(self):
+        return {'status':'passed','architecture':'x86_64','libc':{'status':'observed','major':2,'minor':39},'loaderAvailable':True,'os':{'status':'observed','ubuntu2404':True},'cpu':{'status':'observed','processors':2,'vendor':'amd','flags':{k:True for k in ('sse4_2','avx','avx2','avx512f','bmi2','adx')}}}
     def result(self,**changes):
         row={'bytes':0,'sha256':hashlib.sha256(b'').hexdigest(),'truncated':False}
         return {'schemaVersion':1,'started':True,'timeout':False,'reaped':True,'returnCode':0,
@@ -1177,7 +1179,11 @@ class NativeVersionDiagnostic(unittest.TestCase):
         assigns={n.targets[0].id:ast.literal_eval(n.value) for n in ast.parse(program).body if isinstance(n,ast.Assign)}
         source=assigns['SOURCE'];pins=ast.literal_eval(ast.parse(source).body[0].value)
         self.assertEqual(pins['bootstrap'],hashlib.sha256((b.native_control_source()+b.NATIVE_CAPTURE+b.NATIVE_HOST).encode()).hexdigest())
-        self.assertNotIn('X-Amz',source);self.assertNotIn('X-Amz',assigns['WORKER'])
+        # Validator field names are public source, not a leaked capability.
+        private_config=self.config();self.assertEqual(assigns['CONFIG'],private_config)
+        for secret in (private_config['binaryUrl'],private_config['receiptPutUrl'],
+                       'ABCDEFGHIJKLMNOP/20261011/eu-west-2/s3/aws4_request','a'*64):
+            self.assertNotIn(secret,source);self.assertNotIn(secret,assigns['WORKER'])
         self.assertNotIn('install_node()',source);self.assertNotIn('require_linux_qualification',source)
         self.assertIn("native_execute(CONFIG,WORKER)",program)
         self.assertLessEqual(len(gzip.compress(payload.encode(),mtime=0)),16384)
@@ -1190,7 +1196,7 @@ class NativeVersionDiagnostic(unittest.TestCase):
     def test_native_cli_private_exclusive_payload_does_not_promote_gate(self):
         # Real generator subprocess only; decoded host program is never executed.
         with tempfile.TemporaryDirectory(dir='/tmp',prefix='rolling-native-cli-') as t:
-            root=pathlib.Path(t);root.chmod(0o700);private=root/'config.json';output=root/'payload.gz'
+            root=pathlib.Path(t).resolve();root.chmod(0o700);private=root/'config.json';output=root/'payload.gz'
             now=dt.datetime.now(dt.timezone.utc).replace(microsecond=0);c=self.config()
             for key,minutes in [('createdAt',0),('budgetStop',45),('commissioningStop',30)]:c[key]=(now+dt.timedelta(minutes=minutes)).strftime('%Y-%m-%dT%H:%M:%SZ')
             private.write_text(json.dumps(c));private.chmod(0o600)
@@ -1199,6 +1205,10 @@ class NativeVersionDiagnostic(unittest.TestCase):
             first=subprocess.run(args,capture_output=True,timeout=10)
             self.assertEqual(first.returncode,0);before=output.read_bytes();self.assertLessEqual(len(before),16384)
             self.assertEqual(output.stat().st_mode&0o777,0o600);self.assertNotIn(b'X-Amz',first.stdout+first.stderr)
+            for secret in (c['binaryUrl'],c['receiptPutUrl'],'ABCDEFGHIJKLMNOP/20261011/eu-west-2/s3/aws4_request','a'*64):self.assertNotIn(secret.encode(),first.stdout+first.stderr)
+            alias=root/'alias';alias.symlink_to(root,target_is_directory=True)
+            rejected=subprocess.run(args[:-1]+[str(alias/'rejected.gz')],capture_output=True,timeout=10)
+            self.assertNotEqual(rejected.returncode,0);self.assertFalse((root/'rejected.gz').exists())
             second=subprocess.run(args,capture_output=True,timeout=10)
             self.assertNotEqual(second.returncode,0);self.assertEqual(output.read_bytes(),before)
             self.assertEqual((ROOT/'toolchain.json').read_bytes(),toolchain)
@@ -1251,6 +1261,49 @@ class NativeVersionDiagnostic(unittest.TestCase):
             old=pathlib.Path(t)/'owned';old.write_bytes(b'prior')
             with self.assertRaises(FileExistsError):ns['native_fetch'](self.config()['binaryUrl'],old)
             self.assertEqual(old.read_bytes(),b'prior')
+    def test_guest_preflight_fixed_observed_facts_and_secret_safe_failures(self):
+        ns=self.host();cpu=b'processor : 0\nvendor_id : AuthenticAMD\nflags : sse4_2 avx avx2 avx512f bmi2 adx\n\nprocessor : 1\nvendor_id : AuthenticAMD\nflags : sse4_2 avx avx2 avx512f bmi2 adx\n'
+        files={'/proc/cpuinfo':cpu,'/usr/lib/os-release':b'ID=ubuntu\nVERSION_ID="24.04"\nHOME_URL="PRIVATE_SENTINEL"\n'}
+        ns['native_read']=lambda path,limit:files[path];ns['native_loader']=lambda:True
+        capture={'timeout':False,'returnCode':0,'reaped':True,'stdout':{'truncated':False}}
+        calls=[]
+        def capture_good(args,seconds,limit):calls.append((args,seconds,limit));return capture,{'stdout':b'glibc 2.39\n'}
+        ns['bounded_capture']=capture_good
+        with patch.object(ns['platform'],'machine',return_value='x86_64'):
+            facts=ns['native_guest']();self.assertEqual(facts,self.guest())
+            self.assertEqual(calls,[(['/usr/bin/getconf','GNU_LIBC_VERSION'],3,256)])
+            self.assertNotIn('PRIVATE_SENTINEL',json.dumps(facts))
+            for raw,status in [(b'glibc 2.33\n','observed'),(b'PRIVATE_SENTINEL','projection-error')]:
+                ns['bounded_capture']=lambda *args:(capture,{'stdout':raw})
+                failed=ns['native_guest']();self.assertEqual(failed['status'],'failed');self.assertEqual(failed['libc']['status'],status);self.assertNotIn('PRIVATE_SENTINEL',json.dumps(failed))
+            ns['bounded_capture']=lambda *args:({**capture,'timeout':True},{'stdout':b'PRIVATE_SENTINEL'})
+            self.assertEqual(ns['native_guest']()['libc'],{'status':'transport-error'})
+            ns['bounded_capture']=capture_good;ns['native_loader']=lambda:False
+            self.assertEqual(ns['native_guest']()['status'],'failed')
+            ns['native_loader']=lambda:True;files['/proc/cpuinfo']=b'PRIVATE_SENTINEL'
+            self.assertEqual(ns['native_guest']()['cpu'],{'status':'projection-error'})
+        with patch.object(ns['platform'],'machine',return_value='PRIVATE_SENTINEL'):
+            self.assertEqual(ns['native_guest']()['architecture'],'other')
+        with self.assertRaises(ValueError):ns['native_cpu'](b'x'*65537)
+        with self.assertRaises(ValueError):ns['native_cpu'](cpu.replace(b'processor : 1',b'processor : 0'))
+        different=cpu.replace(b'processor : 1\nvendor_id : AuthenticAMD\nflags : sse4_2 avx avx2 avx512f bmi2 adx',b'processor : 1\nvendor_id : AuthenticAMD\nflags : sse4_2 avx avx2 bmi2 adx')
+        self.assertFalse(ns['native_cpu'](different)['flags']['avx512f'])
+        with self.assertRaises(ValueError):ns['native_os'](b'x'*4097)
+        with self.assertRaises(ValueError):ns['native_os'](b'ID=ubuntu\nID=ubuntu\nVERSION_ID=24.04')
+        self.assertFalse(ns['native_os'](b'ID=PRIVATE_SENTINEL\nVERSION_ID=24.04')['ubuntu2404'])
+
+    def test_guest_file_reads_are_bounded_and_do_not_follow_aliases(self):
+        # Labelled local files only; no real guest/platform inspection.
+        ns=self.host()
+        with tempfile.TemporaryDirectory() as t:
+            root=pathlib.Path(t);file=root/'facts';file.write_bytes(b'abcd')
+            self.assertEqual(ns['native_read'](file,4),b'abcd')
+            with self.assertRaises(ValueError):ns['native_read'](file,3)
+            alias=root/'alias';alias.symlink_to(file)
+            with self.assertRaises(OSError):ns['native_read'](alias,4)
+            with self.assertRaises(ValueError):ns['native_read'](root,4)
+            with self.assertRaises(FileNotFoundError):ns['native_read'](root/'missing',4)
+
     def test_capture_is_bounded_and_reaps_timeout_without_raw_output(self):
         ns=self.host()
         result,raw=ns['bounded_capture']([sys.executable,'-c',"import sys;sys.stdout.write('x'*20000)"],2)
@@ -1267,6 +1320,7 @@ class NativeVersionDiagnostic(unittest.TestCase):
         ns['write']=lambda path,text,mode=0o600:writes.update({str(path):text})
         ns['run']=lambda args,**kw:events.append(tuple(args))
         ns['native_state']=lambda:self.state()
+        ns['native_guest']=lambda:self.guest()
         ns['read_bounded_json']=lambda path:self.result()
         ns['upload_receipt']=lambda data:events.append('upload')
         ns['native_shutdown']=lambda:events.append('shutdown')
@@ -1278,6 +1332,7 @@ class NativeVersionDiagnostic(unittest.TestCase):
         ns['exclusive_record']=record
         if fail=='upload':ns['upload_receipt']=lambda data:(_ for _ in ()).throw(OSError('PRIVATE_SENTINEL'))
         if fail=='controls':ns['verify_controls']=lambda:(_ for _ in ()).throw(ValueError('PRIVATE_SENTINEL'))
+        if fail=='guest':ns['native_guest']=lambda:{**self.guest(),'status':'failed'}
         with patch.object(ns['platform'],'system',return_value='Linux'),patch.object(ns['platform'],'machine',return_value='x86_64'),patch.object(ns['os'],'geteuid',return_value=0):
             if fail in ('receipt','upload'):
                 with self.assertRaises(OSError):ns['native_execute'](self.config(),'public worker')
@@ -1299,11 +1354,11 @@ class NativeVersionDiagnostic(unittest.TestCase):
                 with self.assertRaises(FileExistsError):ns['native_execute'](self.config(),'public worker')
             self.assertEqual(events.count('download'),before)
     def test_final_shutdown_even_persistence_upload_or_control_failure(self):
-        for failure in ('receipt','upload','controls'):
+        for failure in ('receipt','upload','controls','guest'):
             with self.subTest(failure=failure),tempfile.TemporaryDirectory() as t:
                 ns,events,writes=self.exercise(pathlib.Path(t),failure)
                 self.assertEqual(events[-1],'shutdown')
-                if failure=='controls':self.assertNotIn('download',events)
+                if failure in ('controls','guest'):self.assertNotIn('download',events)
                 if failure=='receipt':self.assertNotIn('upload',events)
 
 if __name__=='__main__':unittest.main(verbosity=2)
