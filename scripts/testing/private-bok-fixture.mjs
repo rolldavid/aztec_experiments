@@ -19,6 +19,7 @@ import {ROOT} from '../toolchain.mjs';
 import {applicationNativeProfile} from '../c01-native-profile.mjs';
 import {applicationProofsEnabled, applicationProver} from './proof-policy.mjs';
 import {withC01ClientMining} from '../c01-client-mining.mjs';
+import {describeFailure} from './supervisor.mjs';
 import {settleC01ApplicationMessage} from '../c01-settle-application-message.mjs';
 import {createFinalizeReverted} from './reverted-finality.mjs';
 import {drainT04Checkpoints} from '../u01-browser-flow.mjs';
@@ -331,7 +332,7 @@ export function operatorDevnetInputs(ctx,info,nodeUrl) {
   assert.equal(rollup,String(ctx.rollupAddress).toLowerCase());
   const config=rollingOperatorConfig({applicationProfile:'rolling',development:true,chainId:'31337',
     rollupVersion:String(info.rollupVersion),rollupAddress:rollup,boardAddress:String(ctx.instance.address),
-    operatorAddress:actor.address,nodeUrl,ethereumUrl:ctx.config.l1RpcUrls[0]});
+    operatorAddress:actor.address,nodeUrl:new URL(nodeUrl).href,ethereumUrl:new URL(ctx.config.l1RpcUrls[0]).href});
   return {actor,config};
 }
 
@@ -422,8 +423,10 @@ export async function runRollingOperatorDevnet(ctx,mode) {
         assert(record&&record.policy==='reconcile-only'&&record.identity===state.identity);
         return {sha256:sha(bytes),transactionHash:record.hash,phase:record.phase,operationCount:Object.keys(state.operations).length};
       };
-      await mark('constructor');report.mining={};
-      report.constructor=await withC01ClientMining({rpcUrl:config.ethereumUrl,dateProvider:ctx.dateProvider,observation:report.mining,mode:'real-wall',deadlineAt:ctx.applicationDeadlineAt},async tick=>
+      await mark('constructor');report.mining={scope:'controlled disposable chain time; no wall-clock freshness claim'};
+      // Genesis validator activation advances this disposable chain beyond wall time.
+      // Constructor inclusion needs canonical blocks, not a public-node freshness claim.
+      report.constructor=await withC01ClientMining({rpcUrl:config.ethereumUrl,dateProvider:ctx.dateProvider,observation:report.mining,mode:'warped'},async tick=>
         reconcileOperatorDevnet({deadlineAt:ctx.applicationDeadlineAt,now:Date.now,tick,sendCount:()=>report.sends,readJournal,
           invoke:async retained=>{
             allowSend=!retained;
@@ -435,7 +438,7 @@ export async function runRollingOperatorDevnet(ctx,mode) {
       report.privateJournalRetained=true;
     }
     adapter.verify();assert.deepEqual(await sources(),report.sources);report.passed=true;report.stage='complete';
-  } catch {report.passed=false;report.failureCategory='operator-devnet-stage-failed';failure=Error('Operator devnet stage failed');}
+  } catch(error) {report.passed=false;report.failureCategory='operator-devnet-stage-failed';report.failure=describeFailure(error);failure=Error('Operator devnet stage failed');}
   finally {
     if(rpc)try{await rpc.close();report.cleanup.rpcClosed=true;}catch{report.passed=false;failure=Error('Operator RPC cleanup failed');}
     if(adapter)try{try{adapter.verify();}finally{adapter.close();report.cleanup.artifactHookClosed=true;}}catch{report.passed=false;failure=Error('Operator artifact cleanup failed');}

@@ -60,6 +60,8 @@ test('operator fixture projects actual SDK actor types privately and keeps exact
   assert.equal(config.nodeUrl,nodeUrl);assert.equal(config.development,true);assert.equal(config.chainId,'31337');
   for(const secret of ['secret','salt','signingKey'])assert(!Object.hasOwn(config,secret));
   assert.equal(actor.address,String(ctx.preparation.account.address));
+  ctx.config.l1RpcUrls[0]='http://127.0.0.1:8545';
+  assert.equal(operatorDevnetInputs(ctx,info,nodeUrl).config.ethereumUrl,'http://127.0.0.1:8545/');
 });
 test('operator fixture refuses wrong profile account type network and proof mode before wallet',()=>{
   for(const mutate of [
