@@ -158,3 +158,74 @@ process. A clean moderation decision is distinct from contract screening.
 These are testnet installation records. Preserve the private deployment directory,
 wallets and queue; they are not disposable test output. The public browser sequence
 is documented in [public/README.md](public/README.md).
+
+## Generated static execution (G11)
+
+`createIsolatedExecution` in `isolated-execution.mjs` is a **trusted host
+capability**, not an arbitrary shell tool. Construct it with real, owned
+`workspaceRoot` and `outputRoot` directories. Call
+`execute({sourceDirectory, revision})` while the repository's invocation lease is
+held. Call read-only `assertAvailable()` during hosted startup before accepting
+paid execution work: it checks the reachable Docker daemon's exact cached image
+identity/platform without creating a container. It reports the pinned expected
+Node v24.21.0; each execution verifies that version before generated commands.
+`revision` is the exact 40-character source commit; the caller must bind it
+to that materialized directory before accepting its compare-and-swap update.
+The executor additionally captures a SHA-256 manifest of actual bytes and checks
+that the public source has not changed before returning success.
+
+The capability uses the already-installed Docker runtime and exact cached public
+image `sha256:44479404b67dde931cf8f202a3ce34703876e709ce124924251da8435d5d8651`.
+It never pulls images, installs dependencies, or passes host Docker/configuration
+access to generated code. Source comes from a public invocation tree, not the
+operator's checkout or home. Root `.git` metadata is omitted without being read;
+ordinary dotfiles such as `.gitignore` remain part of the byte manifest. Links,
+`.github`, credential configuration, environment files, and `node_modules` are
+rejected. Credential-free, pinned dependencies may be designed separately later;
+there is no host install fallback.
+
+Both `node --test` and `node --run build` must succeed; a real Node test file and
+a package build script are required. The build must produce `dist/`. Generated
+code runs as UID/GID 1000 with no Linux capabilities, no new privileges, no
+network or published ports, no host mounts, a read-only image, and private PID,
+IPC and cgroup namespaces. Writable storage is bounded tmpfs: 64 MiB work,
+16 MiB temporary files, and 1 MiB shared memory. Limits are one CPU, 256 MiB RAM
+and equal memory/swap bound, 64 processes, 256 file descriptors, 8 MiB per written
+file, 64 KiB combined program output, and at most 45 seconds for both commands.
+The host reserves cleanup time within a 60-second envelope. Trusted callers may
+reduce the work deadline; they cannot increase it or supply commands, environment,
+mounts, images or network settings.
+
+The host records an exclusive intent before create, verifies container settings
+before start, and removes only the exact owned container ID. An ambiguous create
+is reconciled by its fresh name and ownership label, never repeated. A failed
+cleanup rejects the call and leaves its private intent/cleanup record for the
+operator. Never turn that into an automatic retry. A hard host crash requires
+operator reconciliation of that retained name; this is not a remote service or
+an independent cloud shutdown mechanism.
+
+Successful output includes `passed`, exact `revision`, `sourceDigest`, captured
+source manifest, actual container Node version, test/build outcomes, artifact
+manifest, and digests of `source-snapshot.json` and `artifacts.json`. These JSON
+archives contain exact base64 bytes, not executable extraction instructions.
+Regular bounded artifacts are also written under the new private `dist/` output
+folder after path, size, duplicate and link checks; the captured public source is
+written under `source/`. Returned logs are bounded **untrusted generated text**.
+Do not interpret their contents as operator instructions or independent test
+attestation. Source and generated tests can intentionally be wrong even when the
+commands exit successfully.
+
+This capability does not publish, deploy a server, access a wallet, prove a
+transaction, merge a PR, or activate cloud infrastructure. Generated HTML/JS is
+untrusted active browser content and must later use a separate origin with no
+board/operator credentials. That publication gate is independent of static
+build success.
+
+On failure, `error.code` is a fixed `STATIC_FAILED`, `STATIC_CLEANUP_REQUIRED`,
+or `STATIC_RECORD_FAILED` category. `error.result` provides `passed:false`, the
+validated revision, optional captured `sourceDigest`, finite phase/outcome, and
+a bounded `log` for the model's repair loop. Logs are untrusted generated output;
+no raw host exception, path, Docker diagnostic or host environment is included.
+Startup unavailability throws only `STATIC_UNAVAILABLE`. A successful checked
+Git tree may be reused by the repository owner only after validating its exact
+parent/tree/revision binding; plain chat requires no build or checkout.
