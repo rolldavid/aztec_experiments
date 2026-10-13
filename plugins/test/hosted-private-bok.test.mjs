@@ -11,7 +11,7 @@ function fixture(){
  const row={state:2,sequence:0,invocation_hash:f(3),budget:1000n,available:1000n,reserved:0n,charged:0n,refunded:0n,receipt:f(0)};
  let saved={operations:{}};const ops=new Map(),events=[],control={};
  const store={read:()=>saved,write:async next=>{if(control.writeFailure?.(next))throw Error('disk');saved=structuredClone(next);}};
- const board={readRequest:async()=>({...current}),pending:async()=>({requests:[request],nextCursor:null})};
+ const board={readRequest:async()=>({...current}),pending:async()=>({requests:[{...request,threadId:f(9)}],nextCursor:null})};
  const escrow={identity:{network:'eip155-31337:aztec-1:public',escrow:f(5)},request:async()=>({canonical:true,request:{...row}}),assertUsable:async()=>{},inspectOperation:async id=>control.unknownReply&&ops.get(id)?.method==='publish_reply'?{status:'pending'}:ops.get(id)??{status:'absent'}};
  for(const method of ['reserve','settle','close_uncertain','reconcile','finish','publish_reply'])escrow[method]=async(...args)=>{
   const op=args.pop();events.push(method);assert(!ops.has(op.operationId),'No repeated mutator');
@@ -110,13 +110,18 @@ test('actual SDK board projection gates canonical plugin, moderation, anchor and
   const flagged=(await deriveStorageSlotInMap(artifact.storageLayout.post_flagged.slot,new Fr(1n))).toBigInt();
   const storage=new Map([[pluginSlot,9n],[pluginSlot+1n,1n],[flagged,0n],[artifact.storageLayout.main_version.slot.toBigInt(),1n]]);
   const state={realProofs:false,anchor:f(99),currentClass:classId};
-  const post={id:'1',text:'@bok hello',record:{subboard:'0'},position:{blockNumber:3},removal:null,invocation:{adapter:'9',pluginId:'4',requestId:'2',target:'3',reply:null}};
+  const post={id:'1',text:'@bok hello',record:{subboard:'0',root:'1'},order:'1',position:{blockNumber:3},removal:null,invocation:{adapter:'9',pluginId:'4',requestId:'2',target:'3',reply:null}};
   const node={getNodeInfo:async()=>({l1ChainId:31337,rollupVersion:3409706519,realProofs:state.realProofs,l1ContractAddresses:{rollupAddress:scope.rollupAddress}}),
    getBlock:async tag=>({number:5,hash:tag==='checkpointed'?f(99):state.anchor}),getContract:async()=>({originalContractClassId:classId,currentContractClassId:state.currentClass}),
    getPublicStorageAt:async(anchor,address,slot)=>{assert.deepEqual(anchor,{number:5,hash:f(99)});assert.equal(String(address),scope.boardAddress);return new Fr(storage.get(slot.toBigInt()));}};
   const index={sync:async()=>{},status:()=>({state:'ready'}),query:(method,args)=>method==='post'?{post}:{posts:[post],nextCursor:null}};
   const port=await rollingBoardPort({node,index,scope,boardArtifact:artifact,pluginId,development:true});
   assert.equal((await port.pending(null)).requests[0].target,f(3));assert.equal((await port.readRequest(f(1))).usable,true);
+  const originalQuery=index.query,older={...post,id:'2',order:'2'},newer={...post,id:'3',order:'3',record:{...post.record,root:'3'}};
+  for(const n of [2n,3n])storage.set((await deriveStorageSlotInMap(artifact.storageLayout.post_flagged.slot,new Fr(n))).toBigInt(),0n);
+  index.query=(method,args)=>method==='post'?originalQuery(method,args):args.cursor?{revision:'same',posts:[older,post],nextCursor:null}:{revision:'same',posts:[newer],nextCursor:'page2'};
+  const ordered=(await port.pending()).requests;assert.deepEqual(ordered.map(r=>r.postId),[f(1),f(2),f(3)]);assert.deepEqual(ordered.map(r=>r.threadId),[f(1),f(1),f(3)]);index.query=originalQuery;
+
   post.text=null;assert.equal((await port.readRequest(f(1))).usable,false);post.text='visible';
   storage.set(flagged,1n);assert.equal((await port.readRequest(f(1))).usable,false);storage.set(flagged,0n);
   storage.set(pluginSlot+1n,0n);assert.equal((await port.readRequest(f(1))).usable,false);storage.set(pluginSlot+1n,1n);

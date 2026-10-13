@@ -65,17 +65,25 @@ export async function rollingBoardPort({node,index,scope,boardArtifact,pluginId,
   }
   // This contract's effective_policy/publish_plugin_reply define immutable local version 1.
   assert.equal(String((await node.getBlock(head.number))?.hash),String(head.hash),'Board anchor changed');
-  return {postId:toField(post.id),requestId:toField(invocation.requestId),target:toField(invocation.target),pluginId,
+  return {postId:toField(post.id),threadId:toField(post.record.root),order:String(post.order),requestId:toField(invocation.requestId),target:toField(invocation.target),pluginId,
    text:post.text,replied:invocation.reply!==null,mainVersion,localVersion:post.record.subboard==='0'?0:1,
    usable:localAllowed&&typeof post.text==='string'&&!post.removal&&!flagged&&String(adapter)===scope.receiver&&enabled.toBigInt()===1n&&BigInt(post.position.blockNumber)<=BigInt(head.number)};
  };
  const syncReady=async()=>{const deadline=Date.now()+20000;for(let steps=0;steps<512&&Date.now()<deadline;steps++){await index.sync();if(index.status().state==='ready')return;};throw Error('Canonical public index catching up');};
  return {
-  async pending(cursor){
-   await syncReady();let page;
-   try{page=index.query('feed',{limit:64,cursor});}catch(error){if(error.code!=='ROLLING_PUBLIC_CURSOR_STALE')throw error;page=index.query('feed',{limit:64});}
-   const requests=[];for(const post of page.posts){const request=await requestFrom(post);if(request)requests.push(request);}
-   return {requests,nextCursor:page.nextCursor};
+  async pending(){
+   await syncReady();let cursor=null,revision=null;const posts=[],seen=new Set();
+   // Read one immutable projection before any await. Retain only the oldest
+   // bounded pending set, so a descending public feed cannot reverse a thread.
+   do{
+    const page=index.query('feed',{limit:100,cursor});
+    if(revision===null)revision=page.revision;assert.equal(page.revision,revision);
+    for(const post of page.posts)if(post.invocation&&toField(post.invocation.adapter)===scope.receiver&&toField(post.invocation.pluginId)===pluginId&&post.invocation.reply===null&&!post.removal&&typeof post.text==='string'){posts.push(post);if(posts.length>64)posts.shift();}
+    cursor=page.nextCursor;if(cursor){assert(!seen.has(cursor));seen.add(cursor);}
+   }while(cursor);
+   posts.sort((a,b)=>BigInt(a.order)<BigInt(b.order)?-1:BigInt(a.order)>BigInt(b.order)?1:0);
+   const requests=[];for(const post of posts){const request=await requestFrom(post);if(request?.usable&&!request.replied)requests.push(request);}
+   return {requests,nextCursor:null};
   },
   async readRequest(postId){await syncReady();return requestFrom(index.query('post',{id:BigInt(postId).toString()}).post);},
  };

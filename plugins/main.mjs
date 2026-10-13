@@ -140,8 +140,14 @@ export async function runRollingHostedService({config,env=process.env,onError=()
   const indexScope={chainId:scope.chainId,rollupVersion:scope.rollupVersion,rollupAddress:scope.rollupAddress,boardAddress:scope.boardAddress,classId:String((await getContractClassFromArtifact(boardArtifact)).id)};
   const storage=createRollingPublicSqliteStore(path.join(config.stateDirectory,'public-index'),{scope:indexScope});
   try{index=ownRollingPersistentPublicIndex(await createRollingPersistentPublicIndex({node:hostedIndexNode(node,config.development),artifact:boardArtifact,scope:indexScope,deployment:config.deployment,storage}),storage);}catch(error){storage.close();throw error;}
-  const board=await rollingBoardPort({node,index,scope,boardArtifact,pluginId:config.pluginId,development:config.development});
-  const conversation=rollingConversation({index,node,scope:indexScope,development:config.development});
+  // A request owns its own billing journal. Only shared wallet operations and
+  // canonical index snapshots serialize; unrelated model calls may overlap.
+  const lane=()=>{let tail=Promise.resolve();return fn=>{const result=tail.then(fn);tail=result.catch(()=>{});return result;};};
+  const indexed=lane(),walletOperation=lane(),generatedExecution=lane();
+  const rawBoard=await rollingBoardPort({node,index,scope,boardArtifact,pluginId:config.pluginId,development:config.development});
+  const board={pending:(...args)=>indexed(()=>rawBoard.pending(...args)),readRequest:(...args)=>indexed(()=>rawBoard.readRequest(...args))};
+  const rawConversation=rollingConversation({index,node,scope:indexScope,development:config.development});
+  const conversation={load:input=>indexed(async()=>{const history=await rawConversation.load(input);return {...history,assertCurrent:()=>indexed(()=>history.assertCurrent())};})};
   const summaryModelId=env.VENICE_SUMMARY_MODEL||config.summaryModelId;
   assert(typeof summaryModelId==='string'&&/^[A-Za-z0-9][A-Za-z0-9._:/-]{0,127}$/.test(summaryModelId),'Cheaper summary model required');
   assert(env.VENICE_WALLET_PRIVATE_KEY,'Provider key required');
@@ -153,15 +159,16 @@ export async function runRollingHostedService({config,env=process.env,onError=()
   const execution=createIsolatedExecution({...config.staticExecution,workspaceRoot,outputRoot});
   await execution.assertAvailable();
   const repositories=threadRepositories({directory:workspaceRoot,namespace:JSON.stringify({scope,pluginId:config.pluginId}),lease,startEmpty:true,
-   validateRevision:input=>execution.execute(input)});
+   validateRevision:input=>generatedExecution(()=>execution.execute(input))});
   const toolbox=githubToolbox({repository,api,repositories});await api('GET','/repos/'+repository);
   const provider=veniceMeteredProvider({client:veniceClient({privateKey:env.VENICE_WALLET_PRIVATE_KEY}),model:env.VENICE_MODEL||undefined,autoTopUp:false});
-  server=await startEscrowService({descriptor,profile:'rolling',concurrency:1,board,host:config.host??'127.0.0.1',port:config.port??8787,
+  server=await startEscrowService({descriptor,profile:'rolling',concurrency:2,board,host:config.host??'127.0.0.1',port:config.port??8787,
    onError:()=>onError(Error('Rolling hosted request requires reconciliation')),run:async request=>{
     await lease.assertHeld();const id=createHash('sha256').update(JSON.stringify({scope,requestId:request.requestId,target:request.target})).digest('hex');
     const store=await fileState(path.join(config.stateDirectory,id+'.json'));
-    const escrow=await createPrivateBokEscrow({node,wallet,artifact,address:scope.receiver,operator:account.address.toString(),board:scope.boardAddress,network:scope,
+    const rawEscrow=await createPrivateBokEscrow({node,wallet,artifact,address:scope.receiver,operator:account.address.toString(),board:scope.boardAddress,network:scope,
      requestId:request.requestId,target:request.target,store,lease,development:config.development,proofMode:config.development?'disabled':'real'});
+    const escrow=new Proxy(rawEscrow,{get(target,key){const value=Reflect.get(target,key);return typeof value==='function'?(...args)=>walletOperation(()=>value(...args)):value;}});
     return runPrivateBokRequest({request,board,escrow,store,provider,conversation,limits:config.limits,runAgent:async({model,conversation,...input})=>
      bokRunner({runner:createAgent({model,toolbox,conversation,summaryModelId,maxCalls:config.limits?.maxCalls??8,instructions:'You are bok, the board development assistant. Answer the explicit request. Each thread has its own persistent source repository. For static applications, provide package.json with a build script, explicit Node tests, and dist output. Use check_workspace to run isolated tests and builds and repair failures before answering. The runtime has Node and no network or dependency installation. Host validation saves accepted revisions; tools cannot alter permissions or deploy.'})}).run(input)});
    }});

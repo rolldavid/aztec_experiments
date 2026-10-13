@@ -6,7 +6,6 @@ import {packText} from './protocol.mjs';
 /** On-chain state owns work. The bounded in-memory queue never resumes paid calls. */
 export async function startEscrowService({descriptor,escrow,board,run,host='127.0.0.1',port=8787,onError=console.error,pollMs=2000,concurrency=2,profile='legacy'}){
  if(!['legacy','rolling'].includes(profile))throw Error('Invalid service profile');
- if(profile==='rolling'&&concurrency!==1)throw Error('Rolling operator wallet requires serialized requests');
  if(!Number.isSafeInteger(concurrency)||concurrency<1||concurrency>16)throw Error('Invalid service concurrency');
  let rollingCursor=null;
  let stopped=false,polling=false,cursor=0,inFlight=Promise.resolve(),pollFailure=null,jobFailure=null,lastSuccess=null;
@@ -35,13 +34,14 @@ export async function startEscrowService({descriptor,escrow,board,run,host='127.
  }
  async function poll(){if(stopped||polling)return;polling=true;try{
   if(profile==='rolling'){
-   if(jobs.size)return;
+   if(jobs.size>=concurrency)return;
    const page=await board.pending(rollingCursor);rollingCursor=page.nextCursor;
    for(const request of page.requests){
-    if(stopped)break;
-    const job={post:request.postId,promise:null};jobs.set(request.requestId,job);
+    if(stopped||jobs.size>=concurrency)break;
+    assert(typeof request.threadId==='string','Canonical thread identity required');
+    if(jobs.has(request.requestId)||[...jobs.values()].some(job=>job.threadId===request.threadId))continue;
+    const job={post:request.postId,threadId:request.threadId,promise:null};jobs.set(request.requestId,job);
     job.promise=Promise.resolve().then(()=>run(request)).then(()=>{jobFailure=null;lastSuccess=new Date().toISOString();},error=>failed(error)).finally(()=>jobs.delete(request.requestId));
-    await job.promise;
    }
    pollFailure=null;return;
   }
