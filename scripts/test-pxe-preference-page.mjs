@@ -817,6 +817,10 @@ if(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1') {
           block=new L2Block(AppendOnlyTreeSnapshot.empty(),header,body,1,0);mined.set(effect.txHash.toString(),{effect,block});
           return {physicalLogs:effect.privateLogs.length};
         },
+        async appendEmpty(){
+          emptyHistory.set(header.getBlockNumber(),block);header=BlockHeader.fromBuffer(header.toBuffer());header.globalVariables.blockNumber++;
+          const body=new Body([]);header.txEffectsTreeRoot=await body.computeTxEffectsTreeRoot();block=new L2Block(AppendOnlyTreeSnapshot.empty(),header,body,1,0);
+        },
         // Real ACIR revision 1 -> 2 over the previously validated head. Chain
         // receipts/tree membership remain labelled synthetic, never real proof.
         async extendRevision(){
@@ -1109,6 +1113,54 @@ if(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1') {
       assert.equal(cursor.complete,true);assert.equal(cursor.head.revision,'2');assert.deepEqual(records.map(x=>BigInt(x.packedEvent[1])),[1n,2n]);
       const active=await r.read();assert.equal(active.notes.length,1);assert.equal(active.notes[0].note.items[1].toBigInt(),2n);
       const all=await r.queue.runSynced(({changeSetId})=>r.stores.noteStore.getNotes({contractAddress:f.board,owner:r.complete.address,scopes:[r.complete.address],status:NoteStatus.ACTIVE_OR_NULLIFIED},changeSetId));assert.equal(all.length,2);
+    });
+    async function completeCursor(f,r){let c=await r.page.processRollingPreferenceRecovery(recoveryInput(f),{contextGuard:async()=>{}});for(let i=0;i<16&&!c.complete;i++)c=await recoveryStep(f,r,c);assert(c.complete);return c;}
+    async function promoteCursor(f,r,c,guard=async()=>{}){const block=c.advance.headPage?await f.compact(c.advance.headPage.blockNumber):null;return r.page.processRollingPreferenceRecovery({...recoveryInput(f),expected:{epoch:c.epoch,sequence:c.sequence},block},{contextGuard:guard});}
+    await test('actual ACIR monotonic promotion revalidates former head and emits no duplicate fold records',async t=>{
+      const f=await acirFixture(t),r=await f.receiver({recovery:true}),old=await completeCursor(f,r),oldState=await r.read();
+      const history=await f.extendRevision(),before=r.page.acirCompleted,tags=f.counters.tagQueries;
+      const status=await r.page.processRollingPreferenceRecovery(recoveryInput(f),{contextGuard:async()=>{}});
+      assert.deepEqual(status.head,old.head);assert.equal(status.advance.anchor.blockNumber,5);assert.equal(status.advance.headPage.blockNumber,4);
+      const promoted=await promoteCursor(f,r,status);assert.equal(r.page.acirCompleted,before+1);assert.equal(f.counters.tagQueries,tags);
+      assert.equal(promoted.sequence,0);assert.notEqual(promoted.epoch,old.epoch);assert.equal(promoted.nextBlock,5);assert.deepEqual(promoted.records,[]);assert.equal(promoted.complete,false);
+      assert.deepEqual(promoted.previous,{database:old.database,epoch:old.epoch,sequence:old.sequence,anchor:old.anchor,head:old.head});
+      assert.equal(await r.db.openMap('note_nullifications_by_nullifier').getAsync(history.oldNullifier),5,'Original validator refreshes former nullifier at new anchor');
+      assert.equal((await r.read()).notes.length,0);assert.equal((await r.read()).events.length,oldState.events.length);
+      const replay=await promoteCursor(f,r,status);assert.deepEqual(replay,promoted);assert.equal(r.page.acirCompleted,before+1,'Lost promotion response replays mailbox without utility');
+      let current=await recoveryStep(f,r,promoted);assert.deepEqual(current.records.map(x=>BigInt(x.packedEvent[1])),[2n]);current=await recoveryStep(f,r,current);assert.equal(current.head.revision,'2');assert.equal(current.complete,true);assert.equal((await r.read()).notes.length,1);assert.equal((await r.read()).events.length,2);
+    });
+    await test('actual ACIR empty append preserves validated active former head with fixed promotion work',async t=>{
+      const f=await acirFixture(t),r=await f.receiver({recovery:true}),old=await completeCursor(f,r);await f.appendEmpty();
+      const status=await r.page.processRollingPreferenceRecovery(recoveryInput(f),{contextGuard:async()=>{}}),before=r.page.acirCompleted;
+      let current=await promoteCursor(f,r,status);assert.equal(r.page.acirCompleted,before+1);assert.deepEqual(current.records,[]);assert.equal((await r.read()).notes.length,1);
+      current=await recoveryStep(f,r,current);assert.deepEqual(current.records,[]);current=await recoveryStep(f,r,current);assert(current.complete);assert.deepEqual(current.head,old.head);assert.equal((await r.read()).events.length,1);
+    });
+    await test('promotion cannot use committed note presence when original page admits zero notes',async t=>{
+      const f=await acirFixture(t),r=await f.receiver({recovery:true});await completeCursor(f,r);await f.appendEmpty();const status=await r.page.processRollingPreferenceRecovery(recoveryInput(f),{contextGuard:async()=>{}}),prior=await r.read();
+      r.page.eventPageDouble=async()=>{};
+      await assert.rejects(promoteCursor(f,r,status),/PXE_PREFERENCE_RECOVERY_FAILED/);assert.deepEqual(await r.page.processRollingPreferenceRecovery(recoveryInput(f),{contextGuard:async()=>{}}),status);assert.deepEqual((await r.read()).notes.map(n=>n.toBuffer()),prior.notes.map(n=>n.toBuffer()));
+    });
+    await test('promotion refuses wrong compact block, and settlement veto rolls back revalidation with cursor',async t=>{
+      const f=await acirFixture(t);let veto=false;const r=await f.receiver({recovery:true,contributor:{settle:async()=>{if(veto)throw Error('labelled promotion veto');}}});await completeCursor(f,r);const history=await f.extendRevision();const status=await r.page.processRollingPreferenceRecovery(recoveryInput(f),{contextGuard:async()=>{}});
+      await assert.rejects(r.page.processRollingPreferenceRecovery({...recoveryInput(f),expected:{epoch:status.epoch,sequence:status.sequence},block:await f.compact(5)},{contextGuard:async()=>{}}),/PXE_PREFERENCE_RECOVERY_FAILED/);
+      veto=true;await assert.rejects(promoteCursor(f,r,status),/labelled promotion veto|PXE_PREFERENCE_RECOVERY_FAILED/);veto=false;
+      assert.deepEqual(await r.page.processRollingPreferenceRecovery(recoveryInput(f),{contextGuard:async()=>{}}),status);assert.equal(await r.db.openMap('note_nullifications_by_nullifier').getAsync(history.oldNullifier),undefined);assert.equal((await r.read()).notes.length,1);assert.equal((await r.read()).events.length,1);
+    });
+    await test('monotonic suffix cannot hide two active heads after inconsistent former-nullifier observation',async t=>{
+      const f=await acirFixture(t),r=await f.receiver({recovery:true});await completeCursor(f,r);const history=await f.extendRevision();history.omitOldSpend();
+      const status=await r.page.processRollingPreferenceRecovery(recoveryInput(f),{contextGuard:async()=>{}}),promoted=await promoteCursor(f,r,status);assert.equal((await r.read()).notes.length,1);
+      const prior=await r.read();await assert.rejects(recoveryStep(f,r,promoted),/PXE_PREFERENCE_RECOVERY_FAILED/);
+      assert.deepEqual(await r.page.processRollingPreferenceRecovery(recoveryInput(f),{contextGuard:async()=>{}}),promoted);assert.deepEqual((await r.read()).notes.map(n=>n.toBuffer()),prior.notes.map(n=>n.toBuffer()));assert.equal((await r.read()).events.length,1);assert.equal(await r.db.openMap('note_nullifications_by_nullifier').getAsync(history.oldNullifier),undefined);
+    });
+    await test('canonical old-anchor discontinuity invalidates extension and restarts full enumeration',async t=>{
+      const f=await acirFixture(t),r=await f.receiver({recovery:true}),old=await completeCursor(f,r);await f.appendEmpty();
+      const original=f.node.getBlockData;f.node.getBlockData=async number=>{const result=await original(number);if(number!==old.anchor.blockNumber)return result;const h=BlockHeader.fromBuffer(result.header.toBuffer());h.globalVariables.timestamp++;return {header:h,blockHash:await h.hash()};};
+      const reset=await r.page.processRollingPreferenceRecovery(recoveryInput(f),{contextGuard:async()=>{}});assert.equal(reset.sequence,0);assert.equal(reset.nextBlock,1);assert.equal(reset.complete,false);assert.notEqual(reset.epoch,old.epoch);assert.equal(reset.advance,undefined);
+    });
+    await test('old-format completed cursor honestly restarts rather than inferring a head locator',async t=>{
+      const f=await acirFixture(t),r=await f.receiver({recovery:true});await completeCursor(f,r);const map=r.db.openMap('rolling_preference_recovery_v1'),rows=[];for await(const row of map.entriesAsync())rows.push(row);
+      const [key,text]=rows.find(([key])=>key!=='meta'),state=JSON.parse(text);state.schemaVersion=1;delete state.previous;delete state.candidate.origin;await map.set(key,JSON.stringify(state));await f.appendEmpty();
+      const restarted=await r.page.processRollingPreferenceRecovery(recoveryInput(f),{contextGuard:async()=>{}});assert.equal(restarted.sequence,0);assert.equal(restarted.nextBlock,1);assert.equal(restarted.advance,undefined);assert.equal(restarted.complete,false);
     });
     await test('actual authenticated head envelopes with inconsistent nullifier source cannot hide two active candidates',async t=>{
       const f=await acirFixture(t),history=await f.extendRevision();history.omitOldSpend();

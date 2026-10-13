@@ -96,3 +96,64 @@ test('canonical read markers alone suppress notifications',async()=>{
 test('foreign/extra mailbox fields do not become authority',async()=>{
  const f=fixture(),r=f.reader();await r.read();f.alter(x=>{x.owner='private sentinel';});await assert.rejects(r.read(),e=>e.code==='ROLLING_COLD_PREFERENCES_UNAVAILABLE'&&!e.message.includes('sentinel'));
 });
+
+// Labelled monotonic SDK transport; real reader AEAD/CAS/fold remain unchanged.
+// Original SDK/ACIR promotion semantics are tested in test-pxe-preference-page.
+function extensionFixture(options){
+ const f=fixture(options),original=f.config.pxe.processRollingPreferenceRecovery;
+ let advancing=false,promoted=false,prior,nextHead,event;
+ f.state.promotions=0;f.state.failPromotionReply=false;
+ f.extend=()=>{
+  prior=structuredClone(f.current());assert(prior.complete);
+  const values=[1n,3n,1n,88n,1n,0n,0n,BigInt(prior.head.digest)];
+  const digest=hash([31337n,1n,2n,...values]);nextHead={initialized:true,schema:1,revision:'3',digest:String(digest)};
+  event={packedEvent:values.map(hex),eventSelector:selector,l2BlockNumber:2,l2BlockHash:hex(12),txHash:hex(103)};
+  advancing=true;
+ };
+ f.config.pxe.processRollingPreferenceRecovery=async p=>{
+  if(p.restart){advancing=false;promoted=false;return original(p);}
+  if(!advancing&&!promoted)return original(p);
+  f.state.requests.push(structuredClone(p));const current=f.current();
+  if(advancing){
+   if(!p.expected)return {...structuredClone(current),advance:{anchor:{blockNumber:2,blockHash:hex(12)},headPage:{blockNumber:1,blockHash:hex(11),txHash:hex(101),txIndex:0,firstLog:0,logCount:2}}};
+   assert.deepEqual(p.expected,{epoch:prior.epoch,sequence:prior.sequence});assert.equal(p.block.blockNumber,1);f.state.promotions++;
+   const previous={database:prior.database,epoch:prior.epoch,sequence:prior.sequence,anchor:prior.anchor,head:prior.head};
+   Object.assign(current,{epoch:'e'.repeat(64),sequence:0,anchor:{blockNumber:2,blockHash:hex(12)},nextBlock:2,nextLog:0,records:[],head:null,complete:false,previous});advancing=false;promoted=true;
+   f.state.mutatePromotion?.(current);
+   if(f.state.failPromotionReply){f.state.failPromotionReply=false;throw Error('labelled lost promotion reply');}
+  }else if(p.expected){
+   assert.deepEqual(p.expected,{epoch:current.epoch,sequence:current.sequence});f.state.steps++;
+   if(current.sequence===0){assert.equal(p.block.blockNumber,2);Object.assign(current,{sequence:1,nextBlock:3,records:[event]});}
+   else{assert.equal(p.block,null);Object.assign(current,{sequence:2,records:[],head:nextHead,complete:true});}
+  }
+  return structuredClone(current);
+ };
+ return f;
+}
+test('authenticated completed prefix extends with only former-head block and new suffix; choices preserved',async()=>{
+ const f=extensionFixture(),r=f.reader();await readAll(r);const before=f.state.transport.length,restarts=f.state.restarts;
+ f.extend();const promotion=await r.read();assert.equal(promotion.complete,false);assert.equal(promotion.progress.processedRevision,'2');assert.equal(promotion.progress.nextBlock,2);assert.equal(f.state.promotions,1);
+ const result=await readAll(r);assert.deepEqual(result.preferences.bookmarks,['77','88']);assert.deepEqual(result.preferences.followedBoards,['0']);assert.equal(result.preferences.head.revision,'3');assert.equal(f.state.restarts,restarts);assert.deepEqual(f.state.transport.slice(before).map(x=>x.number),[1,2]);
+});
+for(const mode of ['reply','CAS'])test('lost promotion '+mode+' resumes exact encrypted predecessor without replaying original logs',async()=>{
+ const f=extensionFixture(),r=f.reader();await readAll(r);f.extend();if(mode==='reply')f.state.failPromotionReply=true;else f.state.failCAS=true;
+ await assert.rejects(r.read(),{code:'ROLLING_COLD_PREFERENCES_UNAVAILABLE'});assert.equal(f.state.promotions,1);
+ const resumed=await f.reader().read();assert.equal(resumed.complete,false);assert.equal(resumed.progress.processedRevision,'2');assert.equal(f.state.promotions,1);
+ const result=await readAll(f.reader());assert.deepEqual(result.preferences.bookmarks,['77','88']);assert.equal(f.state.promotions,1);
+});
+test('lost predecessor encrypted cache cannot resume promoted suffix',async()=>{
+ const f=extensionFixture(),r=f.reader();await readAll(r);f.extend();f.state.failPromotionReply=true;await assert.rejects(r.read());f.db.clear();const before=f.state.restarts;
+ const result=await f.reader().read();assert.equal(result.complete,false);assert.equal(result.progress.processedRevision,'0');assert.equal(result.progress.nextBlock,1);assert.equal(f.state.restarts,before+1);
+});
+for(const field of ['epoch','sequence','head','anchor'])test('promotion predecessor mismatch fails closed: '+field,async()=>{
+ const f=extensionFixture(),r=f.reader();await readAll(r);f.extend();f.state.mutatePromotion=x=>{if(field==='epoch')x.previous.epoch='f'.repeat(64);if(field==='sequence')x.previous.sequence++;if(field==='head')x.previous.head.digest='999';if(field==='anchor')x.previous.anchor.blockHash=hex(999);};
+ await assert.rejects(r.read(),{code:'ROLLING_COLD_PREFERENCES_UNAVAILABLE'});
+});
+test('promotion post-CAS canonical change suppresses stale preferences and retains encrypted recovery state',async()=>{
+ const f=extensionFixture(),r=f.reader();await readAll(r);f.extend();f.state.afterCAS=()=>{f.state.canonical=false;};await assert.rejects(r.read(),{code:'ROLLING_COLD_PREFERENCES_UNAVAILABLE'});assert.equal(f.db.size,1);
+});
+test('new anchor resets marker classification and rechecks canonical marker before publishing',async()=>{
+ const f=extensionFixture({marker:true}),r=f.reader();await readAll(r);f.extend();let reads=0;const get=f.config.node.getBlockData;f.config.node.getBlockData=async n=>{if(n===1)reads++;return get(n);};
+ // New reader captures the instrumented canonical capability; no existing bound capability is replaced.
+ const result=await readAll(f.reader());assert.equal(result.preferences.readMarkers.length,1);assert.equal(result.orphanedReadMarkers.length,0);assert(reads>=3);
+});

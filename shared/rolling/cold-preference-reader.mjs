@@ -14,17 +14,29 @@ function exact(value,keys){check(value&&[Object.prototype,null].includes(Object.
 function hex(x,width=64){check(typeof x==='string'&&new RegExp('^0x[0-9a-f]{'+width+'}$').test(x)&&BigInt(x)>0n);if(width===64)check(BigInt(x)<FIELD_MODULUS);return x;}
 function number(x,max=0xffffffff,min=0){check(Number.isSafeInteger(x)&&x>=min&&x<=max);return x;}
 function list(input,max){check(Array.isArray(input));const n=Object.getOwnPropertyDescriptor(input,'length')?.value;number(n,max);const out=[];for(let i=0;i<n;i++){const d=Object.getOwnPropertyDescriptor(input,String(i));check(d&&'value'in d);out.push(d.value);}check(Reflect.ownKeys(input).length===n+1);return out;}
+function anchor(input){const a=exact(input,['blockNumber','blockHash']);number(a.blockNumber);hex(a.blockHash);return a;}
+function head(input){const h=exact(input,['initialized','schema','revision','digest']);check(typeof h.initialized==='boolean'&&h.schema===1&&typeof h.revision==='string'&&/^(0|[1-9][0-9]*)$/.test(h.revision)&&h.revision.length<=20&&BigInt(h.revision)<(1n<<64n)&&typeof h.digest==='string'&&/^(0|[1-9][0-9]*)$/.test(h.digest)&&h.digest.length<=77&&BigInt(h.digest)<FIELD_MODULUS);check(h.initialized?BigInt(h.revision)>0n&&BigInt(h.digest)>0n:h.revision==='0'&&h.digest==='0');return h;}
+function checkpoint(input){const c=exact(input,['database','epoch','sequence','anchor','head']);for(const k of ['database','epoch'])check(typeof c[k]==='string'&&/^[0-9a-f]{64}$/.test(c[k]));number(c.sequence,Number.MAX_SAFE_INTEGER);c.anchor=anchor(c.anchor);c.head=head(c.head);return c;}
+function completedCheckpoint(r){check(r.complete===true);return checkpoint({database:r.database,epoch:r.epoch,sequence:r.sequence,anchor:r.anchor,head:r.head});}
 const emptyHead=Object.freeze({initialized:false,schema:1,revision:'0',digest:'0'});
 function delivery(input){
- const r=exact(input,['schemaVersion','database','epoch','sequence','anchor','nextBlock','nextLog','records','head','complete']);
+ const optional=['previous','advance'].filter(k=>Object.hasOwn(input,k));
+ const r=exact(input,['schemaVersion','database','epoch','sequence','anchor','nextBlock','nextLog','records','head','complete',...optional]);
  check(r.schemaVersion===1);for(const k of ['database','epoch'])check(typeof r[k]==='string'&&/^[0-9a-f]{64}$/.test(r[k]));
- number(r.sequence,Number.MAX_SAFE_INTEGER);r.anchor=exact(r.anchor,['blockNumber','blockHash']);number(r.anchor.blockNumber);hex(r.anchor.blockHash);
+ number(r.sequence,Number.MAX_SAFE_INTEGER);r.anchor=anchor(r.anchor);
+ if(r.previous){r.previous=checkpoint(r.previous);check(r.previous.database===r.database&&r.previous.epoch!==r.epoch&&r.previous.anchor.blockNumber<r.anchor.blockNumber);}
  number(r.nextBlock,0x100000000,1);number(r.nextLog,24575);check(r.nextBlock<=r.anchor.blockNumber+1);
  r.records=list(r.records,64).map(row=>{const e=exact(row,['packedEvent','eventSelector','l2BlockNumber','l2BlockHash','txHash']);e.packedEvent=list(e.packedEvent,8);check(e.packedEvent.length===8);for(const f of e.packedEvent)check(typeof f==='string'&&/^0x[0-9a-f]{64}$/.test(f)&&BigInt(f)<FIELD_MODULUS);check(typeof e.eventSelector==='string'&&/^0x[0-9a-f]{8}$/.test(e.eventSelector));number(e.l2BlockNumber,0xffffffff,1);hex(e.l2BlockHash);hex(e.txHash);return e;});
  check(typeof r.complete==='boolean'&&r.complete===(r.head!==null));
- if(r.head!==null)r.head=exact(r.head,['initialized','schema','revision','digest']);
+ if(r.head!==null)r.head=head(r.head);
  if(r.complete)check(r.nextBlock===r.anchor.blockNumber+1&&r.nextLog===0&&r.records.length===0);
- if(r.sequence===0)check(r.records.length===0&&r.nextBlock===1&&r.nextLog===0&&!r.complete);
+ if(Object.hasOwn(r,'previous'))check(r.previous!==null);
+ if(r.sequence===0)check(r.records.length===0&&r.nextBlock===(r.previous?r.previous.anchor.blockNumber+1:1)&&r.nextLog===0&&!r.complete);
+ if(Object.hasOwn(r,'advance')){
+  check(r.complete);r.advance=exact(r.advance,['anchor','headPage']);r.advance.anchor=anchor(r.advance.anchor);check(r.advance.anchor.blockNumber>r.anchor.blockNumber);
+  if(r.advance.headPage!==null){const p=exact(r.advance.headPage,['blockNumber','blockHash','txHash','txIndex','firstLog','logCount']);number(p.blockNumber,r.anchor.blockNumber,1);hex(p.blockHash);hex(p.txHash);number(p.txIndex,6142);number(p.firstLog,63);number(p.logCount,8,1);check(p.firstLog+p.logCount<=64);r.advance.headPage=p;}
+  check(r.head.initialized===(r.advance.headPage!==null));
+ }
  return r;
 }
 /**
@@ -37,7 +49,7 @@ function delivery(input){
  * The SDK persists cursor+last delivery atomically with original notes/events.
  * This reader authenticates an encrypted fold cache bound to that database,
  * scope, epoch and canonical anchor. Loss of the reply replays its mailbox, not
- * the utility. Loss of the cache or a new database/anchor restarts enumeration.
+ * the utility. Loss of the cache or a new database restarts enumeration.
  * Snapshot/CAS memory is O(current choices); no total preference cap is invented.
  * One step processes <=8 physical logs (or one empty block) / <=64 emitted rows.
  * Whole-block root authentication has protocol-bounded but unqualified worst-
@@ -46,7 +58,9 @@ function delivery(input){
  *
  * Supported tipsOnly sync runs initially and on a NEW explicit read after a
  * completed scan. A scan retains one canonical selected-tier anchor. A newer
- * anchor currently requires a full restart: not history-independent refresh.
+ * anchor can extend only a complete authenticated checkpoint: a separate step
+ * revalidates its former head page, then scans only the suffix. Fork/generation
+ * changes rebuild honestly; deep-fork work is not history-independent.
  * No result is published until physical completion, key-gated head equality,
  * full digest replay and canonical-marker checks all pass. Aborts suppress
  * publication after pending SDK work settles; they never release a busy lease.
@@ -77,7 +91,7 @@ export function createRollingColdPreferenceReader(input){
   async function canonical(height){number(height);const data=await checked(()=>getBlock(height));check(data&&Number(data.header?.globalVariables?.blockNumber)===height);const observed=hex(data.blockHash.toString());check((await checked(()=>data.header.hash())).toString()===observed);return observed;}
   async function recheck(anchor){await checked(()=>inspect(node,{expectedNetworkScope:network,proofsEnabled}));check(await canonical(anchor.blockNumber)===anchor.blockHash);await guard();}
   const request=async(expected,block=null,restart=false)=>delivery(await checked(()=>process({...config,expected,block,restart},{contextGuard:guard})));
-  function cacheRecord(value){const c=exact(value,['schemaVersion','scope','delivery','prefix','markers']);check(c.schemaVersion===1&&same(c.scope,fullScope));c.delivery=delivery(c.delivery);if(c.markers!==null){c.markers=exact(c.markers,['next','canonical']);number(c.markers.next,Number.MAX_SAFE_INTEGER);c.markers.canonical=list(c.markers.canonical,c.markers.next);check(c.markers.canonical.length===c.markers.next&&c.markers.canonical.every(x=>typeof x==='boolean'));}return c;}
+  function cacheRecord(value){const c=exact(value,['schemaVersion','scope','delivery','prefix','markers']);check(c.schemaVersion===1&&same(c.scope,fullScope));c.delivery=delivery(c.delivery);check(!c.delivery.advance);if(c.markers!==null){c.markers=exact(c.markers,['next','canonical']);number(c.markers.next,Number.MAX_SAFE_INTEGER);c.markers.canonical=list(c.markers.canonical,c.markers.next);check(c.markers.canonical.length===c.markers.next&&c.markers.canonical.every(x=>typeof x==='boolean'));}return c;}
   async function foldBatch(prefix,records,anchor){
    const decoded=records.map(row=>decoder.decode({...row,packedEvent:row.packedEvent.map(x=>Fr.fromString(x)),eventSelector:{toString:()=>row.eventSelector},l2BlockHash:{toString:()=>row.l2BlockHash},txHash:{toString:()=>row.txHash}},{fromBlock:1,toBlock:anchor.blockNumber+1}));
    const blocks=new Map();for(const row of decoded){if(!blocks.has(row.blockNumber))blocks.set(row.blockNumber,await canonical(row.blockNumber));check(blocks.get(row.blockNumber)===row.blockHash);}
@@ -98,12 +112,31 @@ export function createRollingColdPreferenceReader(input){
     if(!started||lastComplete){await checked(sync);started=true;lastComplete=false;}
     let observed=await request(null,null,cache===null),prefix=cache?.prefix??null,markers=cache?.markers??null;
     await recheck(observed.anchor);
+    if(observed.advance){
+     const {advance,...prior}=observed;
+     // No remote digest or SDK head authenticates arbitrary derived sets. Only
+     // our successfully decrypted exact old complete cache may cross epochs.
+     if(!cache||!cache.delivery.complete||!same(cache.delivery,prior))observed=await request(null,null,true);
+     else{
+      check(same(prefix.head,prior.head));
+      const validated=await checked(()=>resumePreferenceFold({scope,head:prior.head,hash,prefix,verifyAuthenticatedPrefix:async candidate=>same(candidate,cache.prefix)}));validated.finish();
+      await recheck(advance.anchor);let block=null;
+      if(advance.headPage){const p=advance.headPage;check(await canonical(p.blockNumber)===p.blockHash);const wire=await checked(()=>fetchBlock({number:p.blockNumber,hash:p.blockHash},{signal}));check(wire.number===p.blockNumber&&wire.hash===p.blockHash);block={blockNumber:wire.number,blockHash:wire.hash,fields:wire.fields,headerFields:wire.headerFields};}
+      observed=await request({epoch:prior.epoch,sequence:prior.sequence},block);
+      check(observed.sequence===0&&observed.records.length===0&&!observed.complete&&!observed.advance&&same(observed.previous,completedCheckpoint(prior))&&same(observed.anchor,advance.anchor));
+     }
+    }
     if(!cache||cache.delivery.database!==observed.database||cache.delivery.epoch!==observed.epoch||!same(cache.delivery.anchor,observed.anchor)){
-     // An existing cursor ahead of a missing/foreign prefix cannot authenticate
-     // derived choices. Explicitly restart only this scoped cursor; no wallet or
-     // note/event erasure, no financial action, and no fabricated empty result.
-     if(observed.sequence!==0)observed=await request(null,null,true);
-     prefix=null;markers=null;
+     const extendsCache=cache?.delivery.complete&&observed.sequence===0&&observed.previous&&same(observed.previous,completedCheckpoint(cache.delivery));
+     if(extendsCache){
+      check(same(prefix.head,cache.delivery.head));await recheck(cache.delivery.anchor);
+      const validated=await checked(()=>resumePreferenceFold({scope,head:cache.delivery.head,hash,prefix,verifyAuthenticatedPrefix:async candidate=>same(candidate,cache.prefix)}));validated.finish();
+     }else{
+      // Missing predecessor cache, old-format cursor, or fork cannot skip prefix.
+      if(observed.sequence!==0||observed.previous)observed=await request(null,null,true);
+      prefix=null;
+     }
+     markers=null;
     }else{
      const old=cache.delivery;
      check(observed.sequence===old.sequence||observed.sequence===old.sequence+1);

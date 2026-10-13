@@ -78,7 +78,14 @@ export class RollingPreferenceRecoveryStore extends BaseStagingStore {
  async applyRollback(_toBlock,db){const text=await db.values.getAsync('meta');if(text!==undefined){const m=JSON.parse(text);await db.values.set('meta',JSON.stringify({database:m.database,generation:id()}));}}
 }
 export function bindRollingPreferenceRecovery(pxe,store,tier,page,headCall){check(!bindings.has(pxe)&&store instanceof RollingPreferenceRecoveryStore&&typeof page==='function'&&typeof headCall==='function');bindings.set(pxe,Object.freeze({store,tier:tier??'proposed',page,headCall}));}
-function receipt(state,records=[],head=null){return {schemaVersion:1,database:state.database,epoch:state.epoch,sequence:state.sequence,anchor:copy(state.anchor),nextBlock:state.nextBlock,nextLog:state.nextLog,records,head,complete:head!==null};}
+function receipt(state,records=[],head=null){return {schemaVersion:1,database:state.database,epoch:state.epoch,sequence:state.sequence,anchor:copy(state.anchor),nextBlock:state.nextBlock,nextLog:state.nextLog,records,head,complete:head!==null,...(state.previous?{previous:copy(state.previous)}:{})};}
+function checkpoint(r){
+ const c=exact({database:r.database,epoch:r.epoch,sequence:r.sequence,anchor:copy(r.anchor),head:copy(r.head)},['database','epoch','sequence','anchor','head']);
+ for(const k of ['database','epoch'])check(typeof c[k]==='string'&&/^[0-9a-f]{64}$/.test(c[k]));integer(c.sequence,Number.MAX_SAFE_INTEGER);
+ c.anchor=exact(c.anchor,['blockNumber','blockHash']);integer(c.anchor.blockNumber);hex(c.anchor.blockHash);
+ c.head=exact(c.head,['initialized','schema','revision','digest']);const h=c.head;check(typeof h.initialized==='boolean'&&h.schema===1&&typeof h.revision==='string'&&/^(0|[1-9][0-9]*)$/.test(h.revision)&&h.revision.length<=20&&BigInt(h.revision)<(1n<<64n)&&typeof h.digest==='string'&&/^(0|[1-9][0-9]*)$/.test(h.digest)&&h.digest.length<=77&&BigInt(h.digest)<Fr.MODULUS);check(h.initialized?BigInt(h.revision)>0n&&BigInt(h.digest)>0n:h.revision==='0'&&h.digest==='0');return c;
+}
+function locator(input){const p=exact(input,['blockNumber','blockHash','txHash','txIndex','firstLog','logCount']);integer(p.blockNumber,0xffffffff,1);hex(p.blockHash);hex(p.txHash);integer(p.txIndex,6142);integer(p.firstLog,63);integer(p.logCount,8,1);check(p.firstLog+p.logCount<=64);return p;}
 export async function runRollingPreferenceRecovery(pxe,input,options){
  try{
   const {p,guard}=snapshot(input,options),binding=bindings.get(pxe);check(binding&&binding.tier===p.tier&&pxe.proverEnabled===p.proofsEnabled);
@@ -107,22 +114,78 @@ export async function runRollingPreferenceRecovery(pxe,input,options){
    await guard();
    const {meta,state:loaded}=await binding.store.load(key,context.changeSetId);
    await guard();
+   const authenticate=async block=>{
+    const checkBlock=async()=>{await canonical();const raw=await pxe.node.getBlockData(block.blockNumber);check(raw&&raw.blockHash.toString()===block.blockHash);const h=BlockHeader.fromBuffer(BlockHeader.prototype.toBuffer.call(raw.header));check((await h.hash()).toString()===block.blockHash&&h.toFields().every((f,i)=>f.toString()===block.headerFields[i]));await guard();return true;};
+    const verified=await authenticateCompactBlock({fields:block.fields,headerFields:block.headerFields,expectedBlockHash:block.blockHash,assertCanonical:checkBlock});frame.validators.push(checkBlock);check(verified.blockNumber===block.blockNumber);return verified;
+   };
+   const ingest=async(block,first,logCount)=>{
+    // A separate operation starts empty. Replaying a former page must freshly
+    // stage its note through the ORIGINAL validator; committed presence is not proof.
+    check(await pxe.noteStore.withChangeSet(context.changeSetId,s=>s.notes.size===0&&s.nullifierEmissions.size===0));
+    check(await pxe.privateEventStore.withChangeSet(context.changeSetId,s=>s.size===0));
+    await binding.page({contractAddress:p.contractAddress,scope:p.scope,expectedClassId:p.expectedClassId,expectedArtifactHash:p.expectedArtifactHash,network:p.network,proofsEnabled:p.proofsEnabled,blockNumber:block.blockNumber,blockHash:block.blockHash,txHash:first.txHash,firstLog:first.logIndex,logCount,compactFields:block.fields,headerFields:block.headerFields},guard,frame);
+     const events=await pxe.privateEventStore.withChangeSet(context.changeSetId,changeSet=>{check(changeSet.size<=8);return Array.from(changeSet.values(),e=>({packedEvent:e.msgContent.map(x=>x.toString()),eventSelector:e.eventSelector.toString(),l2BlockNumber:e.l2BlockNumber,l2BlockHash:e.l2BlockHash.toString(),txHash:e.txHash.toString(),txIndexInBlock:e.txIndexInBlock,eventIndexInTx:e.eventIndexInTx,contract:e.contractAddress.toString(),scoped:e.scopes.has(p.scope)}));});
+     check(events.length<=8);
+     for(const e of events){check(e.contract===p.contractAddress&&e.scoped===true&&e.txHash===first.txHash&&e.txIndexInBlock===first.txIndex&&e.l2BlockNumber===block.blockNumber&&e.l2BlockHash===block.blockHash&&e.packedEvent.length===8);integer(e.eventIndexInTx,63);}
+     const candidates=await pxe.noteStore.withChangeSet(context.changeSetId,stage=>{check(stage.notes.size<=8);return [...stage.notes.values()].map(n=>({nullifier:n.noteDao.siloedNullifier.toString(),slot:n.noteDao.storageSlot.toString(),owner:n.noteDao.owner.toString(),contract:n.noteDao.contractAddress.toString(),txHash:n.noteDao.txHash.toString(),blockNumber:n.noteDao.l2BlockNumber,blockHash:n.noteDao.l2BlockHash,txIndex:n.noteDao.txIndexInBlock}));});
+     check(candidates.length<=8);
+     const eventSnapshot=await pxe.privateEventStore.withChangeSet(context.changeSetId,stage=>[...stage.entries()].map(([key,value])=>[key,value.toBuffer().toString('hex')]));
+     const noteSnapshot=await pxe.noteStore.withChangeSet(context.changeSetId,stage=>({notes:[...stage.notes.entries()].map(([key,value])=>[key,value.toBuffer().toString('hex')]),nullifiers:[...stage.nullifierEmissions]}));
+     frame.validators.push(async()=>{
+      const currentEvents=await pxe.privateEventStore.withChangeSet(context.changeSetId,stage=>[...stage.entries()].map(([key,value])=>[key,value.toBuffer().toString('hex')]));
+      const currentNotes=await pxe.noteStore.withChangeSet(context.changeSetId,stage=>({notes:[...stage.notes.entries()].map(([key,value])=>[key,value.toBuffer().toString('hex')]),nullifiers:[...stage.nullifierEmissions]}));
+      check(same(currentEvents,eventSnapshot)&&same(currentNotes,noteSnapshot));
+     });
+    for(const candidate of candidates)check(candidate.owner===p.scope&&candidate.contract===p.contractAddress&&candidate.txHash===first.txHash&&candidate.blockNumber===block.blockNumber&&candidate.blockHash===block.blockHash&&candidate.txIndex===first.txIndex);
+    return {events,candidates};
+   };
+   const active=async c=>{const notes=await pxe.noteStore.getNotes({contractAddress:address,owner,scopes:[owner],storageSlot:Fr.fromString(c.slot),siloedNullifier:Fr.fromString(c.nullifier)},context.changeSetId);check(notes.length<=1);return notes.length===1;};
    let state=loaded;
-   if(p.restart||!state||state.database!==meta.database||state.generation!==meta.generation||!same(state.anchor,anchorRecord)){
-    state={schemaVersion:1,scope:key,database:meta.database,generation:meta.generation,epoch:id(),anchor:anchorRecord,sequence:0,nextBlock:1,nextLog:0,pending:[],candidate:null,last:null};
+   const reset=async()=>{
+    state={schemaVersion:2,scope:key,database:meta.database,generation:meta.generation,epoch:id(),anchor:anchorRecord,sequence:0,nextBlock:1,nextLog:0,pending:[],candidate:null,previous:null,last:null};
     state.last=receipt(state);await binding.store.save(key,state,context.changeSetId);await beforeCommit();return copy(state.last);
-   }
-   exact(state,['schemaVersion','scope','database','generation','epoch','anchor','sequence','nextBlock','nextLog','pending','candidate','last']);
-   check(state.schemaVersion===1&&state.scope===key&&typeof state.epoch==='string'&&/^[0-9a-f]{64}$/.test(state.epoch));
-   integer(state.sequence,Number.MAX_SAFE_INTEGER);integer(state.nextBlock,anchorRecord.blockNumber+1,1);integer(state.nextLog,24575);
+   };
+   // Old completed rows have no authenticated locator. Never infer one.
+   if(p.restart||!state||state.database!==meta.database||state.generation!==meta.generation||state.schemaVersion!==2)return await reset();
+   exact(state,['schemaVersion','scope','database','generation','epoch','anchor','sequence','nextBlock','nextLog','pending','candidate','previous','last']);
+   check(state.scope===key&&typeof state.epoch==='string'&&/^[0-9a-f]{64}$/.test(state.epoch));
+   integer(state.anchor.blockNumber);hex(state.anchor.blockHash);
+   integer(state.sequence,Number.MAX_SAFE_INTEGER);integer(state.nextBlock,state.anchor.blockNumber+1,1);integer(state.nextLog,24575);
    check(Array.isArray(state.pending)&&state.pending.length<=64&&state.last&&state.last.sequence===state.sequence);
    check(state.last.database===state.database&&state.last.epoch===state.epoch&&same(state.last.anchor,state.anchor)&&state.last.nextBlock===state.nextBlock&&state.last.nextLog===state.nextLog);
-   if(state.candidate){exact(state.candidate,['nullifier','slot']);hex(state.candidate.nullifier);hex(state.candidate.slot);}
-   if(state.sequence===0)check(state.nextBlock===1&&state.nextLog===0&&state.pending.length===0&&state.candidate===null);
+   if(state.previous){exact(state.previous,['database','epoch','sequence','anchor','head']);const previous=checkpoint(state.previous);check(previous.database===state.database&&previous.epoch!==state.epoch&&previous.anchor.blockNumber<state.anchor.blockNumber&&same(state.last.previous,previous));}else check(state.previous===null&&state.last.previous===undefined);
+   if(state.candidate){exact(state.candidate,['nullifier','slot','origin']);hex(state.candidate.nullifier);hex(state.candidate.slot);locator(state.candidate.origin);check(state.candidate.origin.blockNumber<=state.anchor.blockNumber);}
+   if(state.sequence===0)check(state.nextBlock===(state.previous?state.previous.anchor.blockNumber+1:1)&&state.nextLog===0&&state.pending.length===0&&(state.previous!==null||state.candidate===null));
+   if(!same(state.anchor,anchorRecord)){
+    // Monotonic extension is allowed ONLY from a complete previous scan. The
+    // selected old anchor must still be canonical; reorgs rebuild honestly.
+    if(anchorRecord.blockNumber<=state.anchor.blockNumber||!state.last.complete||state.pending.length||state.nextBlock!==state.anchor.blockNumber+1||state.nextLog!==0)return await reset();
+    const priorCanonical=async()=>{const raw=await pxe.node.getBlockData(state.anchor.blockNumber);check(raw);const h=BlockHeader.fromBuffer(BlockHeader.prototype.toBuffer.call(raw.header));check(h.getBlockNumber()===state.anchor.blockNumber&&(await h.hash()).toString()===raw.blockHash.toString());await guard();return raw.blockHash.toString()===state.anchor.blockHash;};
+    if(!await priorCanonical())return await reset();
+    const priorAnchor=copy(state.anchor);
+    frame.validators.push(async()=>{const raw=await pxe.node.getBlockData(priorAnchor.blockNumber);check(raw);const h=BlockHeader.fromBuffer(BlockHeader.prototype.toBuffer.call(raw.header));check(h.getBlockNumber()===priorAnchor.blockNumber&&(await h.hash()).toString()===priorAnchor.blockHash&&raw.blockHash.toString()===priorAnchor.blockHash);await guard();});
+    if(p.expected===null){await beforeCommit();return {...copy(state.last),advance:{anchor:copy(anchorRecord),headPage:state.candidate?copy(state.candidate.origin):null}};}
+    check(p.expected.epoch===state.epoch&&p.expected.sequence===state.sequence);
+    let candidate=state.candidate;
+    if(candidate){
+     const origin=locator(candidate.origin);check(p.block&&p.block.blockNumber===origin.blockNumber&&p.block.blockHash===origin.blockHash);
+     const verified=await authenticate(p.block),logs=verified.ciphertexts.filter(log=>log.txIndex===origin.txIndex&&log.logIndex>=origin.firstLog&&log.logIndex<origin.firstLog+origin.logCount);
+     check(logs.length===origin.logCount&&logs.every((log,i)=>log.txHash===origin.txHash&&log.logIndex===origin.firstLog+i));
+     const replay=await ingest(p.block,logs[0],origin.logCount);
+     const exactFormer=replay.candidates.filter(c=>c.nullifier===candidate.nullifier&&c.slot===candidate.slot);check(exactFormer.length===1);
+     // Replayed old events remain DB-idempotent validator input, never new fold records.
+     for(const c of replay.candidates)if(c.nullifier!==candidate.nullifier)check(!await active(c));
+     if(!await active(candidate))candidate=null;
+    }else check(p.block===null&&state.last.head.initialized===false);
+    const previous=checkpoint(state.last);
+    state={...state,epoch:id(),anchor:anchorRecord,sequence:0,nextBlock:previous.anchor.blockNumber+1,nextLog:0,pending:[],candidate,previous};
+    state.last=receipt(state);await binding.store.save(key,state,context.changeSetId);await beforeCommit();return copy(state.last);
+   }
    // A read/restart has no permission to advance. The durable mailbox covers a
    // lost response; its records are not forgotten until the consumer asks for
    // the next sequence after its own encrypted CAS has succeeded.
    if(p.expected===null){await beforeCommit();return copy(state.last);}
+   if(state.sequence===0&&state.previous&&p.expected.epoch===state.previous.epoch&&p.expected.sequence===state.previous.sequence){await beforeCommit();return copy(state.last);}
    check(p.expected.epoch===state.epoch);
    if(p.expected.sequence===state.sequence-1){await beforeCommit();return copy(state.last);}
    check(p.expected.sequence===state.sequence&&!state.last.complete);
@@ -148,25 +211,12 @@ export async function runRollingPreferenceRecovery(pxe,input,options){
    }else{
     check(p.block&&p.block.blockNumber===state.nextBlock);
     const block=p.block;
-    const checkBlock=async()=>{await canonical();const raw=await pxe.node.getBlockData(block.blockNumber);check(raw&&raw.blockHash.toString()===block.blockHash);const h=BlockHeader.fromBuffer(BlockHeader.prototype.toBuffer.call(raw.header));check((await h.hash()).toString()===block.blockHash&&h.toFields().every((f,i)=>f.toString()===block.headerFields[i]));await guard();return true;};
-    const verified=await authenticateCompactBlock({fields:block.fields,headerFields:block.headerFields,expectedBlockHash:block.blockHash,assertCanonical:checkBlock});
-    frame.validators.push(checkBlock);check(verified.blockNumber===state.nextBlock&&state.nextLog<=verified.ciphertexts.length);
+    const verified=await authenticate(block);check(verified.blockNumber===state.nextBlock&&state.nextLog<=verified.ciphertexts.length);
     if(state.nextLog<verified.ciphertexts.length){
      const first=verified.ciphertexts[state.nextLog],logs=[];for(let i=state.nextLog;i<verified.ciphertexts.length&&logs.length<8&&verified.ciphertexts[i].txIndex===first.txIndex;i++)logs.push(verified.ciphertexts[i]);
-     await binding.page({contractAddress:p.contractAddress,scope:p.scope,expectedClassId:p.expectedClassId,expectedArtifactHash:p.expectedArtifactHash,network:p.network,proofsEnabled:p.proofsEnabled,blockNumber:block.blockNumber,blockHash:block.blockHash,txHash:first.txHash,firstLog:first.logIndex,logCount:logs.length,compactFields:block.fields,headerFields:block.headerFields},guard,frame);
-     const events=await pxe.privateEventStore.withChangeSet(context.changeSetId,changeSet=>{check(changeSet.size<=8);return Array.from(changeSet.values(),e=>({packedEvent:e.msgContent.map(x=>x.toString()),eventSelector:e.eventSelector.toString(),l2BlockNumber:e.l2BlockNumber,l2BlockHash:e.l2BlockHash.toString(),txHash:e.txHash.toString(),txIndexInBlock:e.txIndexInBlock,eventIndexInTx:e.eventIndexInTx,contract:e.contractAddress.toString(),scoped:e.scopes.has(p.scope)}));});
-     check(events.length<=8);
-     for(const e of events){check(e.contract===p.contractAddress&&e.scoped===true&&e.txHash===first.txHash&&e.txIndexInBlock===first.txIndex&&e.l2BlockNumber===block.blockNumber&&e.l2BlockHash===block.blockHash&&e.packedEvent.length===8);integer(e.eventIndexInTx,63);const prior=state.pending.find(x=>x.eventIndexInTx===e.eventIndexInTx);if(prior)check(same(prior,e));else state.pending.push(e);check(state.pending.length<=64);}
-     const candidates=await pxe.noteStore.withChangeSet(context.changeSetId,stage=>{check(stage.notes.size<=8);return [...stage.notes.values()].map(n=>({nullifier:n.noteDao.siloedNullifier.toString(),slot:n.noteDao.storageSlot.toString(),owner:n.noteDao.owner.toString(),contract:n.noteDao.contractAddress.toString()}));});
-     check(candidates.length<=8);
-     const eventSnapshot=await pxe.privateEventStore.withChangeSet(context.changeSetId,stage=>[...stage.entries()].map(([key,value])=>[key,value.toBuffer().toString('hex')]));
-     const noteSnapshot=await pxe.noteStore.withChangeSet(context.changeSetId,stage=>({notes:[...stage.notes.entries()].map(([key,value])=>[key,value.toBuffer().toString('hex')]),nullifiers:[...stage.nullifierEmissions]}));
-     frame.validators.push(async()=>{
-      const currentEvents=await pxe.privateEventStore.withChangeSet(context.changeSetId,stage=>[...stage.entries()].map(([key,value])=>[key,value.toBuffer().toString('hex')]));
-      const currentNotes=await pxe.noteStore.withChangeSet(context.changeSetId,stage=>({notes:[...stage.notes.entries()].map(([key,value])=>[key,value.toBuffer().toString('hex')]),nullifiers:[...stage.nullifierEmissions]}));
-      check(same(currentEvents,eventSnapshot)&&same(currentNotes,noteSnapshot));
-     });
-     for(const candidate of candidates){check(candidate.owner===p.scope&&candidate.contract===p.contractAddress);const active=await pxe.noteStore.getNotes({contractAddress:address,owner,scopes:[owner],storageSlot:Fr.fromString(candidate.slot),siloedNullifier:Fr.fromString(candidate.nullifier)},context.changeSetId);check(active.length<=1);if(active.length){if(state.candidate)check(state.candidate.nullifier===candidate.nullifier&&state.candidate.slot===candidate.slot);else state.candidate={nullifier:candidate.nullifier,slot:candidate.slot};}}
+     const {events,candidates}=await ingest(block,first,logs.length);
+     for(const e of events){const prior=state.pending.find(x=>x.eventIndexInTx===e.eventIndexInTx);if(prior)check(same(prior,e));else state.pending.push(e);check(state.pending.length<=64);}
+     for(const candidate of candidates){if(await active(candidate)){if(state.candidate)check(state.candidate.nullifier===candidate.nullifier&&state.candidate.slot===candidate.slot);else state.candidate={nullifier:candidate.nullifier,slot:candidate.slot,origin:{blockNumber:block.blockNumber,blockHash:block.blockHash,txHash:first.txHash,txIndex:first.txIndex,firstLog:first.logIndex,logCount:logs.length}};}}
      state.nextLog+=logs.length;
      if(state.nextLog===verified.ciphertexts.length||verified.ciphertexts[state.nextLog].txIndex!==first.txIndex){records=state.pending.sort((a,b)=>a.eventIndexInTx-b.eventIndexInTx).map(({contract,scoped,txIndexInBlock,eventIndexInTx,...record})=>record);state.pending=[];}
     }
@@ -178,7 +228,7 @@ export async function runRollingPreferenceRecovery(pxe,input,options){
  }catch{throw Error('PXE_PREFERENCE_RECOVERY_FAILED');}
 }
 `; }
-export const PREFERENCE_PAGE_RECOVERY_PIN = Object.freeze({generated:'rolling-preference-recovery.mjs',sha256:'7665adf9ead08e907315ac95016371bb2c839216e48e5d3882c7f0292b3c99fa'});
+export const PREFERENCE_PAGE_RECOVERY_PIN = Object.freeze({generated:'rolling-preference-recovery.mjs',sha256:'b88264df9cde252a1558991b668aee2b349ac8bf118184ab48f560fec8a42c54'});
 function imports() { return `
 // @ts-ignore Exact reviewed JavaScript module is copied by the pinned installer.
 import { authenticateCompactBlock as rollingPageCompact } from '../rolling-preference-compact.mjs';
