@@ -38,8 +38,10 @@ export async function preflightDeploymentNetwork(manifest,{node,provider,ethers,
  const m=validateDeploymentManifest(manifest),n=m.network,deadline=Date.now()+timeoutMs;
  if(!Number.isInteger(timeoutMs)||timeoutMs<1||timeoutMs>20000)fail('Invalid preflight timeout');
  const read=fn=>boundedTransactionRead(fn,deadline-Date.now());
- const [info,contracts,network,nativeConfig]=await read(()=>Promise.all([node.getNodeInfo(),node.getL1ContractAddresses(),provider.getNetwork(),node.getConfig()]));
- const realProofs=nativeConfig&&Object.getOwnPropertyDescriptor(nativeConfig,'realProofs');
+ const [info,contracts,network]=await read(()=>Promise.all([node.getNodeInfo(),node.getL1ContractAddresses(),provider.getNetwork()]));
+ // Pinned public NodeInfo exposes the native realProofs configuration.
+ // getConfig belongs to the separate admin API, not this public client.
+ const realProofs=info&&Object.getOwnPropertyDescriptor(info,'realProofs');
  if(!realProofs||!Object.hasOwn(realProofs,'value')||typeof realProofs.value!=='boolean')fail('Native proof configuration unavailable');
  const proofsEnabled=realProofs.value;
  if(m.profile==='local-test'?(n.chainId!=='31337'||proofsEnabled):(n.chainId!=='11155111'||!proofsEnabled))fail('Native proof configuration differs from deployment profile');
