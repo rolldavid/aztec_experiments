@@ -303,6 +303,21 @@ export function countRollingColdPhysicalPages(block) {
   let pages=0;for(const effect of effects){assert(Array.isArray(effect.privateLogs)&&effect.privateLogs.length<=64);pages+=Math.ceil(effect.privateLogs.length/8);}
   return Math.max(1,pages);
 }
+// The pinned node defaults to metadata-only responses. Request the real body
+// explicitly; this independent workload oracle is not private-event authority.
+export function createRollingColdPhysicalPageOracle({node,contextGuard}) {
+  return async({fromBlock,anchor,deadlineAt})=>{
+    contextGuard();
+    const before=await node.getBlockData(anchor.blockNumber);assert.equal(String(before?.blockHash),anchor.blockHash);
+    let pages=0;
+    for(let number=fromBlock;number<=anchor.blockNumber;number++){
+      assert(Date.now()<deadlineAt);
+      const block=await node.getBlock(number,{includeTransactions:true});assert(block);assert.equal(block.header.getBlockNumber(),number);
+      pages+=countRollingColdPhysicalPages(block);
+    }
+    assert.equal(String((await node.getBlockData(anchor.blockNumber))?.blockHash),anchor.blockHash);contextGuard();return pages;
+  };
+}
 // Harness-only observation of actual outbound serialized requests. Two fixed
 // gateway origins separate batchers; no caller role, header or private argument
 // is used for attribution. Like the existing wire campaign, restore only our
@@ -919,17 +934,7 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
             // Public native body counts are an independent workload oracle,
             // never private event authority. The reader still authenticates the
             // whole ordered effects root and every original note/event envelope.
-            physicalPages:async({fromBlock,anchor,deadlineAt})=>{
-              coldActor.contextGuard();
-              const before=await ctx.node.getBlockData(anchor.blockNumber);assert.equal(String(before?.blockHash),anchor.blockHash);
-              let pages=0;
-              for(let number=fromBlock;number<=anchor.blockNumber;number++){
-                assert(Date.now()<deadlineAt);
-                const block=await ctx.node.getBlock(number);assert(block);assert.equal(block.header.getBlockNumber(),number);
-                pages+=countRollingColdPhysicalPages(block);
-              }
-              assert.equal(String((await ctx.node.getBlockData(anchor.blockNumber))?.blockHash),anchor.blockHash);coldActor.contextGuard();return pages;
-            }});
+            physicalPages:createRollingColdPhysicalPageOracle({node:ctx.node,contextGuard:()=>coldActor.contextGuard()})});
           privateSnapshot=(phase,options={})=>coldSnapshots.read(phase,Math.min(ctx.applicationDeadlineAt-15000,Date.now()+
             (['bootstrap','restored'].includes(phase)?COLD_REORG_BUDGET.fullReadMs:COLD_REORG_BUDGET.suffixReadMs)),options);
         }

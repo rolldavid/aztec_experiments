@@ -5,7 +5,8 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import http from 'node:http';
 import path from 'node:path';
-import {settleRollingRootOverlap,rollingTrustedProofThreads,countRollingColdPhysicalPages,runRollingPublicRecoveryChecks,persistRollingRecoveryObservation,observeRollingColdRead,assertRollingBrowserCompactAcceptance,createRollingEvidenceDirectory,classifyRollingApplicationFootprint,recordRollingFundingFailure,assertRollingApplicationViews,assertRollingPublicFootprint,closeRollingResources,loadRollingFixtureSDK,observeRollingReadiness} from './rolling-application-fixture.mjs';
+import {createHash} from 'node:crypto';
+import {settleRollingRootOverlap,rollingTrustedProofThreads,countRollingColdPhysicalPages,createRollingColdPhysicalPageOracle,runRollingPublicRecoveryChecks,persistRollingRecoveryObservation,observeRollingColdRead,assertRollingBrowserCompactAcceptance,createRollingEvidenceDirectory,classifyRollingApplicationFootprint,recordRollingFundingFailure,assertRollingApplicationViews,assertRollingPublicFootprint,closeRollingResources,loadRollingFixtureSDK,observeRollingReadiness} from './rolling-application-fixture.mjs';
 import {createRollingProjection} from '../../shared/rolling/public-projection.mjs';
 import {createFileJournalStorage} from '../../apps/src/billboard/user/transaction-journal-store.mjs';
 import {createEncryptedJournalSlot} from '../../shared/journal-record.mjs';
@@ -751,8 +752,10 @@ test('actual cold reorg dispatch enables only the existing two reorg lanes in ad
  assert(branch.includes('expectedJobs=markerReorg?4:3'));
  for(const invariant of ['sameHeightMarkerReviewed','orphanFeeExcludedAfterCanonicalBalanceCheck','historicalInclusionsRetained','exactPriorSignedBytesRetained','actualArchiverAndWorldstateUnwind'])assert(branch.includes(invariant));
  assert(branch.indexOf('forkBudget.remainingMs>=COLD_REORG_BUDGET.forkReserveMs')<branch.indexOf('await replaceRollingL1Suffix'));
- assert(coldSetup.includes('pages+=countRollingColdPhysicalPages(block)'));
- assert(coldSetup.includes('assert.equal(String((await ctx.node.getBlockData(anchor.blockNumber))?.blockHash),anchor.blockHash)'));
+ assert(coldSetup.includes('physicalPages:createRollingColdPhysicalPageOracle({node:ctx.node,contextGuard:()=>coldActor.contextGuard()})'));
+ const oracle=source.slice(source.indexOf('export function createRollingColdPhysicalPageOracle'),source.indexOf('// Harness-only observation of actual outbound serialized requests.'));
+ assert(oracle.includes('pages+=countRollingColdPhysicalPages(block)'));
+ assert(oracle.includes('assert.equal(String((await node.getBlockData(anchor.blockNumber))?.blockHash),anchor.blockHash)'));
 });
 
 test('selected browser profile matches the actual trusted worker without changing bounds',async()=>{
@@ -1052,4 +1055,67 @@ test('reorg fixture fixes a distinct cold route for initial actor and same-store
  for(const owner of ['coldRecoveryActor','coldQuery','coldRPC','coldTransportCapture'])assert(source.includes("['"+owner+"'"));
  assert(source.indexOf("['coldQuery'")<source.indexOf("['coldRPC'"));assert(source.indexOf("['coldRPC'")<source.indexOf("['coldTransportCapture'"));
  assert(source.includes('if(report.passed)rollingColdAttributedSnapshot(coldWire,coldRpc,coldRejectedSends)'));
+});
+
+// Actual pinned rc3 NodeBlockProvider and response projection, with labelled
+// finite public chain shapes behind its normal hold-off interface. No node,
+// proof, private validator or genuine-chain acceptance is claimed here.
+async function physicalOracleFixture() {
+ const entry=import.meta.resolve('@aztec-labs/aztec-node');
+ for(const [relative,hash] of [
+  ['./modules/node_block_provider.js','ecb672ccf26aa1111cfc4954ec18fa8b6095ff9a3c6749650b61fd36ed582506'],
+  ['./aztec-node/block_response_helpers.js','7f6eec7374600248005db7b9a75cf01dbe7bd513f1b8732c63e4570c3b457f77'],
+  ['./modules/block_parameter.js','e0e2efb9d2ec4ba52b2a003ea46ce5bf2e635651d004857d6b9f90f8a49029cc']
+ ])assert.equal(createHash('sha256').update(await fs.readFile(new URL(relative,entry))).digest('hex'),hash);
+ const {NodeBlockProvider}=await import(new URL('./modules/node_block_provider.js',entry).href);
+ const hash='0x'+'11'.repeat(32),calls=[],state={guards:0,metadata:0,change:()=>{}};
+ const blocks=new Map([[],[1,9]].map((lengths,i)=>{const number=i+1;return [number,{number,header:{getBlockNumber:()=>number},archive:{},checkpointNumber:1,indexWithinCheckpoint:i,body:{txEffects:lengths.map(length=>({privateLogs:Array.from({length},()=>({}))}))},hash:async()=>hash}];}));
+ const holdOff={
+  async getBlock(query){assert.equal(this,holdOff);calls.push(['full',query.number]);return blocks.get(query.number);},
+  async getBlockData(query){assert.equal(this,holdOff);calls.push(['metadata',query.number]);state.metadata++;const block=blocks.get(query.number);const result=block&&{...block,blockHash:hash};state.change(result,state.metadata);return result;}
+ };
+ const provider=new NodeBlockProvider({},holdOff);
+ const node={
+  getBlock(number,options){assert.equal(this,node);calls.push(['request',number,options]);return provider.getBlock(number,options);},
+  getBlockData(number){assert.equal(this,node);return provider.getBlockData(number);}
+ };
+ const contextGuard=()=>{state.guards++;if(state.failGuard===state.guards)throw state.guardError;};
+ return {provider,node,blocks,state,calls,read:createRollingColdPhysicalPageOracle({node,contextGuard}),request:{fromBlock:1,anchor:{blockNumber:2,blockHash:hash},deadlineAt:Date.now()+10000}};
+}
+test('actual rc3 default block metadata reproduces the physical oracle failure; explicit transactions supplies the body',async()=>{
+ const f=await physicalOracleFixture(),metadata=await f.provider.getBlock(1);
+ assert.equal(Object.hasOwn(metadata,'body'),false);assert.throws(()=>countRollingColdPhysicalPages(metadata));
+ const full=await f.provider.getBlock(1,{includeTransactions:true});assert.equal(full.body,f.blocks.get(1).body);assert.equal(countRollingColdPhysicalPages(full),1);
+});
+test('actual-used physical oracle requests complete bodies in order between canonical and context checks',async()=>{
+ const f=await physicalOracleFixture();assert.equal(await f.read(f.request),4);assert.equal(f.state.guards,2);
+ assert.deepEqual(f.calls,[['metadata',2],['request',1,{includeTransactions:true}],['full',1],['request',2,{includeTransactions:true}],['full',2],['metadata',2]]);
+});
+for(const kind of ['missing-block','missing-body','wrong-header','missing-header','oversized-logs','oversized-effects'])test(`actual-used physical oracle rejects ${kind} through pinned rc3 full response`,async()=>{
+ const f=await physicalOracleFixture(),block=f.blocks.get(1);
+ if(kind==='missing-block')f.blocks.delete(1);
+ if(kind==='missing-body')delete block.body;
+ if(kind==='wrong-header')block.header.getBlockNumber=()=>77;
+ if(kind==='missing-header')delete block.header;
+ if(kind==='oversized-logs')block.body.txEffects=[{privateLogs:Array(65).fill({})}];
+ if(kind==='oversized-effects')block.body.txEffects=Array(6144).fill({privateLogs:[]});
+ await assert.rejects(f.read(f.request));assert.equal(f.state.guards,1);assert.equal(f.state.metadata,1);
+ assert.deepEqual(f.calls.filter(x=>x[0]==='request'),[['request',1,{includeTransactions:true}]]);
+});
+for(const when of ['before','after'])test(`actual-used physical oracle rejects ${when} canonical anchor change`,async()=>{
+ const f=await physicalOracleFixture();f.state.change=(result,n)=>{if(n===(when==='before'?1:2))result.blockHash='0x'+'22'.repeat(32);};
+ await assert.rejects(f.read(f.request));assert.equal(f.state.guards,1);
+ assert.equal(f.calls.filter(x=>x[0]==='full').length,when==='before'?0:2);
+});
+test('actual-used physical oracle retains deadline before any body request',async()=>{
+ const f=await physicalOracleFixture();f.request.deadlineAt=0;await assert.rejects(f.read(f.request));assert.deepEqual(f.calls,[['metadata',2]]);assert.equal(f.state.guards,1);
+});
+for(const guard of [1,2])test(`actual-used physical oracle preserves falsy context failure at guard ${guard}`,async()=>{
+ const f=await physicalOracleFixture();f.state.failGuard=guard;f.state.guardError=0;let failed=false;
+ try{await f.read(f.request);}catch(error){failed=true;assert.equal(error,0);}assert(failed);assert.equal(f.state.guards,guard);assert.equal(f.state.metadata,guard===1?0:2);
+});
+test('actual-used physical oracle preserves original node rejection without a retry or partial count',async()=>{
+ const f=await physicalOracleFixture(),failure=Error('labelled public fixture failure');let calls=0;
+ f.node.getBlock=function(number,options){assert.equal(this,f.node);assert.equal(number,1);assert.deepEqual(options,{includeTransactions:true});calls++;return Promise.reject(failure);};
+ await assert.rejects(f.read(f.request),error=>error===failure);assert.equal(calls,1);assert.equal(f.state.metadata,1);assert.equal(f.state.guards,1);
 });
