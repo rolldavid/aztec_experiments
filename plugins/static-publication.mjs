@@ -83,7 +83,7 @@ export async function createStaticPublication({directory:root,artifactRoot,origi
  }
  assert.equal(bytes,state.bytes);assert.equal(files,state.files);
  const urls=b=>({published:true,repositoryId:b.repositoryId,threadId:b.threadId,acceptedRevision:b.revision,publicationId:b.id,
-  artifactUrl:origin+'/t/'+b.id+'/r/'+b.revision+'/files/index.html',sourceUrl:origin+'/t/'+b.id+'/r/'+b.revision+'/source.json',latestUrl:origin+'/t/'+b.id+'/latest/'});
+  artifactUrl:origin+'/t/'+b.id+'/r/'+b.revision+'/files/index.html',sourceUrl:origin+'/t/'+b.id+'/r/'+b.revision+'/source.json',latestUrl:origin+'/t/'+b.id+'/latest/',latestSourceUrl:origin+'/t/'+b.id+'/source.json'});
  async function save(next){assert(Buffer.byteLength(JSON.stringify(next))<=8*1024*1024);try{await store.write(next);state=store.read();}catch{poisoned=true;throw reject();}}
  async function exclusive(fn){if(busy||poisoned)throw reject();busy=true;try{return await fn();}catch{throw reject();}finally{busy=false;}}
  return Object.freeze({
@@ -121,10 +121,10 @@ export async function createStaticPublication({directory:root,artifactRoot,origi
     const deny=(status=404)=>{res.writeHead(status,headers);res.end();};
     if(poisoned)return deny(503);if(!['GET','HEAD'].includes(req.method))return deny(405);
     if(req.headers.host!==url.host||req.headers.authorization||req.headers.cookie||typeof req.url!=='string'||req.url.length>1024||/[?#%\\]/.test(req.url))return deny(400);
-    const match=/^\/t\/([0-9a-f]{64})\/(?:latest\/(.*)|r\/([0-9a-f]{40})\/(source\.json|files\/(.*)))$/.exec(req.url);if(!match)return deny();
-    const [,id,latest,revision,kind,file]=match,thread=state.threads[id];if(!thread||thread.disabled||(revision&&revision!==thread.latest))return deny();
+    const match=/^\/t\/([0-9a-f]{64})\/(?:latest\/(.*)|r\/([0-9a-f]{40})\/(source\.json|files\/(.*))|(source\.json))$/.exec(req.url);if(!match)return deny();
+    const [,id,latest,revision,kind,file,latestSource]=match,thread=state.threads[id];if(!thread||thread.disabled||(revision&&revision!==thread.latest))return deny();
     const current=thread.latest,meta=thread.revisions[current],base=path.join(root,id,current);await directory(base);let body,type;
-    if(kind==='source.json'){body=await read(path.join(base,'source.json'),SOURCE_ARCHIVE_MAX);assert.equal(sha(body),meta.binding.sourceArchiveSha256);type='application/json';headers['Content-Disposition']='attachment; filename="source-'+current+'.json"';}
+    if(kind==='source.json'||latestSource==='source.json'){body=await read(path.join(base,'source.json'),SOURCE_ARCHIVE_MAX);assert.equal(sha(body),meta.binding.sourceArchiveSha256);type='application/json';headers['Content-Disposition']='attachment; filename="source-'+current+'.json"';}
     else{const name=revision?file:(latest||'index.html');if(!safe(name))return deny();const f=meta.manifest.find(f=>f.path===name);if(!f)return deny();
      // Every component is checked: O_NOFOLLOW on the final file alone is insufficient.
      let dir=base;await directory(dir);for(const part of ['files',...name.split('/').slice(0,-1)]){dir=path.join(dir,part);await directory(dir);}

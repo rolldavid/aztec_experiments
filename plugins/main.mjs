@@ -1,6 +1,7 @@
 import {prepareNativeRuntime} from '../prover/runtime.mjs';
 import {BackendType,Barretenberg,BarretenbergSync} from '@aztec-foundation/bb.js';
 import fs from 'node:fs/promises';
+import http from 'node:http';
 import path from 'node:path';
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
@@ -24,6 +25,7 @@ import {veniceClient} from './venice.mjs';
 import {githubApi,githubToolbox} from './github-tools.mjs';
 import {threadRepositories} from './thread-repositories.mjs';
 import {createIsolatedExecution} from './isolated-execution.mjs';
+import {createStaticPublication} from './static-publication.mjs';
 import {provingEnabledForNode} from '../shared/proving-policy.mjs';
 
 /** Composition root: only this module knows which implementations are selected. */
@@ -124,8 +126,8 @@ export async function runRollingHostedService({config,env=process.env,onError=()
  await fs.mkdir(config.stateDirectory,{recursive:true,mode:0o700});
  assert.equal(await fs.realpath(config.stateDirectory),config.stateDirectory);const directory=await fs.lstat(config.stateDirectory);
  assert(directory.isDirectory()&&!directory.isSymbolicLink()&&(directory.mode&0o777)===0o700);
- const lease=await acquireHostedLease(config.stateDirectory);let wallet,index,server,closing;
- function close(){return closing??=(async()=>{const errors=[];for(const fn of [()=>server?.close(),()=>wallet?.stop(),()=>index?.close(),()=>lease.close()])try{await fn();}catch(error){errors.push(error);}if(errors.length)throw new AggregateError(errors,'Rolling hosted cleanup failed');})();}
+ const lease=await acquireHostedLease(config.stateDirectory);let wallet,index,server,artifactsServer,closing;
+ function close(){return closing??=(async()=>{const errors=[];for(const fn of [()=>server?.close(),()=>artifactsServer?new Promise(resolve=>{artifactsServer.close(resolve);artifactsServer.closeAllConnections();}):undefined,()=>wallet?.stop(),()=>index?.close(),()=>lease.close()])try{await fn();}catch(error){errors.push(error);}if(errors.length)throw new AggregateError(errors,'Rolling hosted cleanup failed');})();}
 
  try{
   const key=env.PLUGIN_QUERY_API_KEY;if(!config.development)assert(typeof key==='string','Operator query capability required');
@@ -143,7 +145,7 @@ export async function runRollingHostedService({config,env=process.env,onError=()
   // A request owns its own billing journal. Only shared wallet operations and
   // canonical index snapshots serialize; unrelated model calls may overlap.
   const lane=()=>{let tail=Promise.resolve();return fn=>{const result=tail.then(fn);tail=result.catch(()=>{});return result;};};
-  const indexed=lane(),walletOperation=lane(),generatedExecution=lane();
+  const indexed=lane(),walletOperation=lane(),generatedExecution=lane(),publicationOperation=lane();
   const rawBoard=await rollingBoardPort({node,index,scope,boardArtifact,pluginId:config.pluginId,development:config.development});
   const board={pending:(...args)=>indexed(()=>rawBoard.pending(...args)),readRequest:(...args)=>indexed(()=>rawBoard.readRequest(...args))};
   const rawConversation=rollingConversation({index,node,scope:indexScope,development:config.development});
@@ -158,8 +160,13 @@ export async function runRollingHostedService({config,env=process.env,onError=()
   for(const directory of [workspaceRoot,outputRoot])await fs.mkdir(directory,{recursive:true,mode:0o700});
   const execution=createIsolatedExecution({...config.staticExecution,workspaceRoot,outputRoot});
   await execution.assertAvailable();
+  const publicationRoot=path.join(config.stateDirectory,'static-publication');await fs.mkdir(publicationRoot,{recursive:true,mode:0o700});
+  assert(config.staticPublication&&typeof config.staticPublication.origin==='string'&&typeof config.staticPublication.boardOrigin==='string','Separate artifact origin required');
+  const publication=await createStaticPublication({directory:publicationRoot,artifactRoot:outputRoot,origin:config.staticPublication.origin,boardOrigin:config.staticPublication.boardOrigin,development:config.development});
+  artifactsServer=http.createServer((req,res)=>{void publication.handle(req,res);});
+  await new Promise((resolve,reject)=>{artifactsServer.once('error',reject);artifactsServer.listen(config.staticPublication.port??8788,config.staticPublication.host??'127.0.0.1',resolve);});
   const repositories=threadRepositories({directory:workspaceRoot,namespace:JSON.stringify({scope,pluginId:config.pluginId}),lease,startEmpty:true,
-   validateRevision:input=>generatedExecution(()=>execution.execute(input))});
+   validateRevision:input=>generatedExecution(()=>execution.execute(input)),onAccepted:receipt=>publicationOperation(()=>publication.publish(receipt))});
   const toolbox=githubToolbox({repository,api,repositories});await api('GET','/repos/'+repository);
   const provider=veniceMeteredProvider({client:veniceClient({privateKey:env.VENICE_WALLET_PRIVATE_KEY}),model:env.VENICE_MODEL||undefined,autoTopUp:false});
   server=await startEscrowService({descriptor,profile:'rolling',concurrency:2,board,host:config.host??'127.0.0.1',port:config.port??8787,
@@ -172,7 +179,8 @@ export async function runRollingHostedService({config,env=process.env,onError=()
     return runPrivateBokRequest({request,board,escrow,store,provider,conversation,limits:config.limits,runAgent:async({model,conversation,...input})=>
      bokRunner({runner:createAgent({model,toolbox,conversation,summaryModelId,maxCalls:config.limits?.maxCalls??8,instructions:'You are bok, the board development assistant. Answer the explicit request. Each thread has its own persistent source repository. For static applications, provide package.json with a build script, explicit Node tests, and dist output. Use check_workspace to run isolated tests and builds and repair failures before answering. The runtime has Node and no network or dependency installation. Host validation saves accepted revisions; tools cannot alter permissions or deploy.'})}).run(input)});
    }});
-  return {address:server.address,close};
+  return {address:server.address,artifactAddress:artifactsServer.address(),close,
+   setPublicationDisabled:input=>publicationOperation(async()=>{await lease.assertHeld();return publication.setDisabled(input);})};
  }catch{let cleanupFailed=false;try{await close();}catch{cleanupFailed=true;}throw Error(cleanupFailed?'Rolling hosted startup failed; owned cleanup requires attention':'Rolling hosted startup failed');}
 }
 

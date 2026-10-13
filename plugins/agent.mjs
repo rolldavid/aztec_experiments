@@ -14,7 +14,7 @@ export function createAgent({model,toolbox,instructions,maxCalls=12,maxTokens=15
       const receipt=await session.accept?.();if(!receipt)return result;
       const revision={repositoryId:receipt.repositoryId,acceptedRevision:receipt.acceptedRevision};
       if(receipt.publication){
-        const {artifactUrl,sourceUrl}=receipt.publication;
+        const {latestUrl:artifactUrl,latestSourceUrl:sourceUrl}=receipt.publication;
         for(const value of [artifactUrl,sourceUrl])if(typeof value!=='string'||value.length>320||!/^https?:\/\//.test(value)||/[\s\x00-\x1f]/.test(value))throw Error('Invalid publication link');
         const links=`\nApp: ${artifactUrl}\nSource: ${sourceUrl}`,budget=MESSAGE_BYTES-Buffer.byteLength(links);if(budget<0)throw Error('Publication links exceed reply limit');
         let text='',bytes=0;for(const char of result.replyText){const n=Buffer.byteLength(char);if(bytes+n>budget)break;text+=char;bytes+=n;}

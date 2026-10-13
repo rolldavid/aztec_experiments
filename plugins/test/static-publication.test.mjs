@@ -38,7 +38,8 @@ test('actual local HTTP serves latest static bytes and matching exact source dow
 test('atomic latest transition hides old artifact AND source routes while retaining private history',async()=>{
  const f=await fixture();try{
   const a=await receipt(f.artifactRoot),one=await f.publisher.publish(a),b=await receipt(f.artifactRoot,2,revision(1)),two=await f.publisher.publish(b);
-  assert.match(await(await fetch(two.latestUrl)).text(),/revision 2/);assert.equal(one.latestUrl,two.latestUrl);
+  assert.match(await(await fetch(two.latestUrl)).text(),/revision 2/);assert.equal(one.latestUrl,two.latestUrl);assert.equal(one.latestSourceUrl,two.latestSourceUrl);
+  const latestSource=await fetch(one.latestSourceUrl);assert.equal(latestSource.headers.get('x-source-revision'),b.acceptedRevision);assert.equal(sha(Buffer.from(await latestSource.arrayBuffer())),b.validation.sourceArchiveSha256);
   for(const url of [one.artifactUrl,one.sourceUrl])assert.equal((await fetch(url)).status,404);
   assert.equal((await fetch(two.sourceUrl)).status,200);assert((await fs.stat(path.join(f.directory,one.publicationId,revision(1),'source.json'))).isFile());
   await f.publisher.publish(a);assert.match(await(await fetch(two.latestUrl)).text(),/revision 2/);
@@ -49,7 +50,7 @@ test('atomic latest transition hides old artifact AND source routes while retain
 test('host-only moderation persists through revision change and service reopen',async()=>{
  const f=await fixture();try{
   const a=await f.publisher.publish(await receipt(f.artifactRoot));await f.publisher.setDisabled({repositoryId,threadId,disabled:true});
-  assert.equal((await fetch(a.latestUrl)).status,404);assert.equal((await fetch(a.sourceUrl)).status,404);
+  assert.equal((await fetch(a.latestUrl)).status,404);assert.equal((await fetch(a.sourceUrl)).status,404);assert.equal((await fetch(a.latestSourceUrl)).status,404);
   const b=await f.publisher.publish(await receipt(f.artifactRoot,2,revision(1)));const reopened=await f.reopen();assert.equal((await fetch(b.latestUrl)).status,404);
   await reopened.setDisabled({repositoryId,threadId,disabled:false});assert.equal((await fetch(b.latestUrl)).status,200);
   assert.equal((await fetch(b.latestUrl,{method:'POST'})).status,405);assert.equal((await fetch(b.latestUrl)).status,200);
