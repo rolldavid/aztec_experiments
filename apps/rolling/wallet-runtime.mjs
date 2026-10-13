@@ -46,9 +46,12 @@ async function load(){
  // script names before any code executes, including the account singleton.
  const names=['ethers.js','aztec_bundle.js','crs-client.js','wallet-providers.js','passkey-wallet.js','wallet-backup.js','claim-secret-store.js','account.js','engine.js'];
  if(metadata.scripts.some((a,i)=>descriptor(a).url!=='/wallet/'+names[i]))throw failed();
+ if(Object.keys(metadata.artifacts??{}).sort().join()!==(config.bok?'board,bok,privateFee':'board,privateFee'))throw failed();
  const crs=await boundedJSON(descriptor(metadata.crs).url,65536,metadata.crs);
  const boardRaw=await boundedJSON(descriptor(metadata.artifacts?.board).url,32*1024*1024,metadata.artifacts.board);
  const feeRaw=await boundedJSON(descriptor(metadata.artifacts?.privateFee).url,32*1024*1024,metadata.artifacts.privateFee);
+ const bokRaw=config.bok?await boundedJSON(descriptor(metadata.artifacts?.bok).url,32*1024*1024,metadata.artifacts.bok):undefined;
+ if(!config.bok&&metadata.artifacts?.bok!==undefined)throw failed();
  globalThis.BILLBOARD_CRS_MANIFEST=crs;
  // Custody's optional Ethereum connection reads only a detached public scope.
  globalThis._getPublicConfig=()=>structuredClone(config);
@@ -56,14 +59,14 @@ async function load(){
  const sdk=globalThis.__aztec,account=globalThis.BillboardAccount,routing=globalThis.BillboardPrivateFeeRouting;
  if(!sdk?.createTrustedPrivateNode||!account?.configure||!routing?.isPrivateWalletForNode||!globalThis.ethers)throw failed();
  globalThis.BillboardCRS.validateManifest(crs);
- const boardArtifact=sdk.loadContractArtifact(boardRaw),privateFeeArtifact=sdk.loadContractArtifact(feeRaw);
+ const boardArtifact=sdk.loadContractArtifact(boardRaw),privateFeeArtifact=sdk.loadContractArtifact(feeRaw),bokArtifact=bokRaw?sdk.loadContractArtifact(bokRaw):undefined;
  let session,creating;
  return Object.freeze({account,selectPrivateViews,getAccount:()=>globalThis.walletState.aztec,createSession({onProgress}={}){
   if(session)return Promise.resolve(session);if(creating)return creating;
   const selected=globalThis.walletState.aztec;
   if(!selected||globalThis.walletState.invalidated)return Promise.reject(failed());
   const guard=()=>{if(globalThis.walletState.invalidated||globalThis.walletState.aztec!==selected)throw failed();};
-  creating=createRollingWalletSession({sdk,routing,ethers:globalThis.ethers,config,boardArtifact,privateFeeArtifact,account:selected,
+  creating=createRollingWalletSession({sdk,routing,ethers:globalThis.ethers,config,boardArtifact,privateFeeArtifact,bokArtifact,account:selected,
    trustedQuery:query,remoteProver:remote,contextGuard:guard,onProgress,
    claimStore:globalThis.makeClaimSecretStore(selected.secretKey,selected.salt),proofsEnabled:metadata.proofsEnabled}).then(value=>(session=value)).finally(()=>{creating=undefined;});
   return creating;

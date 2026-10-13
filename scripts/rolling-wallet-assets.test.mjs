@@ -31,3 +31,11 @@ test('remote proof metadata binds board, chain, version and mode; nonlocal disab
  const remote=fixture();remote.config.network.chainId='11155111';remote.config.network.ethRpcUrl='https://ethereum.example';remote.trustedQuery={url:'https://private.example/v1/node',allowLocalDev:false};
  assert.equal(validateRollingWalletConfig(remote).value.proofsEnabled,true);remote.proofsEnabled=false;assert.throws(()=>validateRollingWalletConfig(remote));
 });
+
+test('optional Bok browser scope is exact, detached and cannot carry operator credentials',()=>{
+ const v=fixture();v.config.bok={contractAddress:address(5),operatorAddress:address(6),pluginId:address(7)};
+ const result=validateRollingWalletConfig(v);v.config.bok.contractAddress=address(8);assert.equal(result.value.config.bok.contractAddress,address(5));
+ for(const alter of [b=>b.token='PRIVATE_SENTINEL',b=>delete b.pluginId,b=>b.contractAddress=address(0),b=>b.operatorAddress='https://private.example',b=>b.pluginId=7]){
+  const current=structuredClone(result.value);alter(current.config.bok);assert.throws(()=>validateRollingWalletConfig(current));
+ }
+});

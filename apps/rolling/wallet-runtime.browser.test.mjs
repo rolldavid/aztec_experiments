@@ -13,6 +13,7 @@ test('real browser SDK unlock and encrypted recovery survive unavailable private
  const scope={chainId:'31337',rollupVersion:'1',rollupAddress:eth(1),boardAddress:field(2)};
  const config={network:{chainId:'31337',rollupVersion:'1',rollupAddress:eth(1),ethRpcUrl:'http://127.0.0.1:1'},board:{contractAddress:field(2),portalAddress:eth(3)},
   privateFee:{contractAddress:field(4),gasSettings:{gasLimits:{daGas:'1',l2Gas:'1'},teardownGasLimits:{daGas:'1',l2Gas:'1'},maxFeesPerGas:{feePerDaGas:'1',feePerL2Gas:'1'},maxPriorityFeesPerGas:{feePerDaGas:'0',feePerL2Gas:'0'}}}};
+ config.bok={contractAddress:field(5),operatorAddress:field(6),pluginId:field(7)};
  const wallet=await loadRollingWalletAssets({config,trustedQuery:{url:'http://127.0.0.1:1/v1/node',allowLocalDev:true},remoteProver:null,proofsEnabled:true},scope);
  const index={sync:async()=>{},status:()=>({schemaVersion:1,state:'ready'}),query:()=>({schemaVersion:1,scope,complete:true,checkpoint:{number:1,hash:'public'},revision:'1',posts:[],names:{},boards:{},nextCursor:null})};
  const server=await startRollingReader({index,wallet});t.after(()=>server.close());
@@ -27,6 +28,8 @@ test('real browser SDK unlock and encrypted recovery survive unavailable private
  await page.getByRole('button',{name:'Unlock',exact:true}).click();
  await page.getByRole('button',{name:'Create account and download recovery',exact:true}).waitFor({timeout:30000});
  assert.equal(requests.filter(r=>r.url.endsWith('/wallet/aztec_bundle.js')).length,1);
+ assert.equal(requests.filter(r=>r.url.endsWith('/wallet/bok.json')).length,1);
+ const bokServed=await wallet.read('/wallet/bok.json');assert.equal(JSON.parse(bokServed.body).name,'PrivateBok');assert.equal(createHash('sha256').update(bokServed.body).digest('hex'),wallet.runtime.artifacts.bok.sha256);
  assert.equal(requests.some(r=>r.method==='POST'),false);
  const facade=await page.evaluate(async()=>{const {loadRollingWalletRuntime}=await import('/wallet/runtime.mjs');const runtime=await loadRollingWalletRuntime();return {selector:typeof runtime.selectPrivateViews,keys:Object.keys(runtime).sort()};});
  assert.equal(facade.selector,'function');assert.deepEqual(facade.keys,['account','createSession','getAccount','selectPrivateViews']);
