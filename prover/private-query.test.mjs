@@ -1,15 +1,17 @@
 // Development fakes/local HTTP only: these do not qualify node privacy or sync.
+import {createHash} from 'node:crypto';
+import {AztecNodeApiSchema} from '@aztec-labs/stdlib/interfaces/client';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import http from 'node:http';
 import {EventEmitter} from 'node:events';
-import {createPrivateQuery, createPrivateQueryWithInspector, validateQueryNode, QUERY_LIMITS} from './private-query.mjs';
+import {createPrivateQuery, createPrivateQueryWithInspector, validateQueryNode, QUERY_LIMITS, OPERATOR_NODE_METHODS} from './private-query.mjs';
 import {createProverServer} from './server.mjs';
 const rollupAddress = '0x' + '12'.repeat(20);
 const listen = async server => {await new Promise(r => server.listen(0, '127.0.0.1', r)); return 'http://127.0.0.1:' + server.address().port;};
 const close = server => {server.closeAllConnections(); return new Promise(r => server.close(r));};
 const call = (method = 'aztec_getBlockNumber', params = []) => ({jsonrpc:'2.0',id:1,method,params});
-async function fixture(t, {inspect = async () => ({ready:true}), upstreamReply} = {}) {
+async function fixture(t, {inspect = async () => ({ready:true}), upstreamReply, operatorKey} = {}) {
   const received = [];
   const upstream = http.createServer(async (req,res) => {
     let text = ''; for await (const chunk of req) text += chunk;
@@ -19,8 +21,9 @@ async function fixture(t, {inspect = async () => ({ready:true}), upstreamReply} 
     res.end(JSON.stringify(received.at(-1).body.map(c => ({jsonrpc:'2.0',id:c.id,result:7}))));
   });
   const upstreamUrl = await listen(upstream);
-  const privateQuery = createPrivateQueryWithInspector({queryNode:{url:upstreamUrl,rollupAddress},chainId:'31337',rollupVersion:'1',proofsEnabled:false}, inspect);
-  const server = createProverServer({privateQuery,queue:{stats:()=>({submitted:0})},origins:['https://app.example']});
+  const operator=operatorKey===undefined?{}:{serviceMode:'query-only',operatorAuthSha256:createHash('sha256').update(operatorKey).digest('hex')};
+  const privateQuery = createPrivateQueryWithInspector({...operator,queryNode:{url:upstreamUrl,rollupAddress},chainId:'31337',rollupVersion:'1',proofsEnabled:false}, inspect);
+  const server = createProverServer({...operator,privateQuery,...(operatorKey===undefined?{queue:{stats:()=>({submitted:0})}}:{}),origins:['https://app.example']});
   const url = await listen(server);
   t.after(async()=>{await close(server);await close(upstream);});
   const post = (body,headers={}) => fetch(url+'/v1/node',{method:'POST',headers:{'content-type':'application/json',...headers},body:typeof body==='string'?body:JSON.stringify(body)});
@@ -217,4 +220,31 @@ test('compact deadline closes a consumed IncomingMessage socket while retaining 
  assert.equal(req.listenerCount('aborted'),0);assert.equal(held.res.listenerCount('close'),0);
  const third=compactSocketControl({declared:true});const next=query.handleCompact(third.req,third.res);await third.end;
  assert.equal(third.res.status,413);third.socket.completeClose();await next;
+});
+
+
+const queryOperatorKey='23'.repeat(32);
+test('operator authenticates real HTTP before inspector and strips capability from actual upstream',async t=>{
+ let gates=0;const f=await fixture(t,{operatorKey:queryOperatorKey,inspect:async()=>{gates++;return {ready:true};}});
+ const missing=await f.post(call());assert.equal(missing.status,401);assert.equal(gates,0);assert.equal(f.received.length,0);
+ const response=await f.post([call(),{...call('node_getBlockNumber'),id:2}],{'x-aztec-api-key':queryOperatorKey});
+ assert.equal(response.status,200);assert.deepEqual(await response.json(),[{jsonrpc:'2.0',id:1,result:7},{jsonrpc:'2.0',id:2,result:7}]);assert.equal(gates,1);assert.equal(f.received.length,1);
+ assert.equal(f.received[0].headers['x-aztec-api-key'],undefined);assert(!JSON.stringify(f.received).includes(queryOperatorKey));
+});
+test('operator complete batch authorization precedes inspector and every upstream effect',async t=>{
+ let gates=0;const f=await fixture(t,{operatorKey:queryOperatorKey,inspect:async()=>{gates++;}});
+ const headers={'x-aztec-api-key':queryOperatorKey};
+ for(const method of ['aztec_getPeers','aztec_getEncodedEnr','aztec_getPendingTxs','node_getValidatorStats','nodeAdmin_setConfig','aztec_unknown']){
+  for(const calls of [[call(),call(method)],[call(method),call()],[call('aztec_sendTx',[{}]),call(method)]])assert.equal((await f.post(calls,headers)).status,400);
+ }
+ assert.equal(gates,0);assert.equal(f.received.length,0);
+ // Valid permitted reads still work; rejected mixed batches never poison or retry.
+ assert.equal((await f.post(call(),headers)).status,200);assert.equal(gates,1);assert.equal(f.received.length,1);
+});
+test('operator method policy is fixed, schema backed, and excludes discovery or administrative additions',()=>{
+ assert(Object.isFrozen(OPERATOR_NODE_METHODS));assert.equal(new Set(OPERATOR_NODE_METHODS).size,OPERATOR_NODE_METHODS.length);
+ for(const name of OPERATOR_NODE_METHODS)assert(Object.hasOwn(AztecNodeApiSchema,name),name);
+ for(const name of ['sendTx','isValidTx','simulatePublicCalls','getContract','getContractClass','getTxReceipt','getPrivateLogsByTags','getPublicStorageAt','getNoteHashMembershipWitness'])assert(OPERATOR_NODE_METHODS.includes(name),name);
+ for(const name of ['getPeers','getEncodedEnr','getPendingTxs','getPendingTxCount','getValidatorStats','getProposalsForSlot','setConfig','constructor'])assert(!OPERATOR_NODE_METHODS.includes(name),name);
+ assert.throws(()=>createPrivateQueryWithInspector({queryNode:{url:'http://127.0.0.1',rollupAddress},operatorAuthSha256:'ab'.repeat(32)},async()=>{}),/Invalid query operator authentication/);
 });

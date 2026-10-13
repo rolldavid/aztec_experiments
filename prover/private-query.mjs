@@ -6,6 +6,60 @@ import {getVersioningResponseHandler} from '@aztec-labs/stdlib/versioning';
 import {COMPACT_GATEWAY_ROUTE,COMPACT_NATIVE_ROUTE,COMPACT_TRANSPORT_LIMITS,validateCompactTier,validateCompactSelector,readCompactResponse} from '../shared/rolling/compact-client.mjs';
 
 export const QUERY_LIMITS = Object.freeze({bodyBytes: 8 * 1024 ** 2, responseBytes: 32 * 1024 ** 2, batch: 8, concurrent: 8, timeoutMs: 10000});
+// Fixed rc3 deployment/PXE surface. Schema additions are not automatically
+// exposed to an authenticated operator. sendTx is an effect, not a read.
+export const OPERATOR_NODE_METHODS = Object.freeze([
+  "getWorldStateSyncStatus",
+  "findLeavesIndexes",
+  "getNullifierMembershipWitness",
+  "getLowNullifierMembershipWitness",
+  "getPublicDataWitness",
+  "getBlockHashMembershipWitness",
+  "getBlockHashMembershipWitnessAtArchive",
+  "getNoteHashMembershipWitness",
+  "getL1ToL2MessageMembershipWitness",
+  "getL1ToL2MessageIndex",
+  "getL2ToL1Messages",
+  "getL2ToL1MembershipWitness",
+  "getTxEffectMembershipWitness",
+  "getBlockNumber",
+  "getCheckpointNumber",
+  "getChainTips",
+  "getL1Constants",
+  "getSyncedL2SlotNumber",
+  "getSyncedL2EpochNumber",
+  "getSyncedL1Timestamp",
+  "getCheckpointsData",
+  "getBlock",
+  "getBlockData",
+  "getBlocks",
+  "getCheckpoint",
+  "getCheckpoints",
+  "isReady",
+  "getNodeInfo",
+  "getCurrentMinFees",
+  "getPredictedMinFees",
+  "getMaxPriorityFees",
+  "getNodeVersion",
+  "getVersion",
+  "getChainId",
+  "getL1ContractAddresses",
+  "getProtocolContractAddresses",
+  "getPrivateLogsByTags",
+  "getPublicLogsByTags",
+  "sendTx",
+  "getTxReceipt",
+  "getTxEffect",
+  "getTxByHash",
+  "getTxsByHash",
+  "getPublicStorageAt",
+  "simulatePublicCalls",
+  "isValidTx",
+  "getContractClass",
+  "getContract",
+  "getAllowedPublicSetup"
+]);
+const operatorMethods = new Set(OPERATOR_NODE_METHODS);
 const silent = Object.assign(() => {}, Object.fromEntries(['trace','debug','verbose','info','warn','error','fatal'].map(k => [k, () => {}])));
 const unavailable = () => Object.assign(Error('Trusted node unavailable'), {code: 'BB_TRUSTED_NODE_UNAVAILABLE'});
 const errorResponse = (id, code = -32000) => ({jsonrpc: '2.0', id, error: {code, message: 'Trusted node request rejected'}});
@@ -35,7 +89,9 @@ export async function createPrivateQuery(options) {
 
 // Inspector injection is only for labelled unit tests. Production composition
 // above always uses the shared identity/sync/freshness inspector.
-export function createPrivateQueryWithInspector({queryNode, chainId, rollupVersion, proofsEnabled, compactBlocks}, inspectTrustedNode) {
+export function createPrivateQueryWithInspector({queryNode, chainId, rollupVersion, proofsEnabled, compactBlocks, serviceMode, operatorAuthSha256}, inspectTrustedNode) {
+  const operator = operatorAuthSha256 !== undefined;
+  if(operator && (serviceMode !== 'query-only' || typeof operatorAuthSha256 !== 'string' || !/^[0-9a-f]{64}$/.test(operatorAuthSha256))) throw Error('Invalid query operator authentication');
   const config = validateQueryNode(queryNode);
   if (!config || typeof inspectTrustedNode !== 'function') throw Error('Query inspector required');
   const options = Object.freeze({expectedNetworkScope: Object.freeze({chainId: String(chainId), version: String(rollupVersion), rollup: config.rollupAddress}), proofsEnabled, maxLagSeconds: config.maxLagSeconds});
@@ -116,9 +172,13 @@ export function createPrivateQueryWithInspector({queryNode, chainId, rollupVersi
             || typeof call.method !== 'string' || !/^(aztec|node)_[A-Za-z0-9]+$/.test(call.method)
             || !Array.isArray(call.params ?? [])) throw Error();
           const method = call.method.slice(call.method.indexOf('_') + 1);
-          if (!schemaHasMethod(AztecNodeApiSchema, method)) throw Error();
-          const args = await parseWithOptionals(call.params ?? [], getSchemaParameters(AztecNodeApiSchema[method]));
-          prepared.push({id: call.id, method, args});
+          if ((operator && !operatorMethods.has(method)) || !schemaHasMethod(AztecNodeApiSchema, method)) throw Error();
+          prepared.push({id: call.id, method, params: call.params ?? []});
+        }
+        // Reject a forbidden member anywhere before even decoding transaction
+        // parameters. No inspector or send starts until all arguments pass.
+        for(const call of prepared){
+          call.args = await parseWithOptionals(call.params, getSchemaParameters(AztecNodeApiSchema[call.method]));
         }
       } catch {reply(400, errorResponse(null, -32602)); return;}
       try {await inspect();} catch {reply(503, errorResponse(null)); return;}

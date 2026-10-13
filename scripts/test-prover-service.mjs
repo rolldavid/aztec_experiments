@@ -121,3 +121,29 @@ test('actual harmless child: production worker environment omits absent Bok desp
  }finally{if(worker)await worker.close();cp.fork=original;syncBuiltinESMExports();await fs.rm(dir,{recursive:true,force:true});}`;
  const child=spawnSync(process.execPath,['--input-type=module','--eval',script],{encoding:'utf8',timeout:10000,maxBuffer:65536});assert.equal(child.error,undefined);assert.equal(child.status,0,child.stderr);assert.equal(child.signal,null);
 });
+
+
+test('operator authentication is a closed captured query-only digest, before proof allocation',async()=>{
+ const digest='ab'.repeat(32);const input={...queryConfig(),operatorAuthSha256:digest};
+ const captured=validateQueryService(input);input.operatorAuthSha256='cd'.repeat(32);
+ assert.equal(captured.operatorAuthSha256,digest);assert(Object.isFrozen(captured));
+ let reads=0;const sentinel={toString(){reads++;throw Error('PRIVATE');}};
+ for(const operatorAuthSha256 of [null,false,123,sentinel,'','A'.repeat(64),'a'.repeat(63),'a'.repeat(65),'g'.repeat(64)]){
+  await assert.rejects(startProverService({...queryConfig(),operatorAuthSha256}),/Invalid query operator authentication/);
+ }
+ const accessor=queryConfig();Object.defineProperty(accessor,'operatorAuthSha256',{get(){reads++;throw Error('PRIVATE');}});
+ await assert.rejects(startProverService(accessor),/Invalid query-only configuration/);
+ const ordinary={...rollingConfig()};Object.defineProperty(ordinary,'operatorAuthSha256',{get(){reads++;throw Error('PRIVATE');}});
+ await assert.rejects(startProverService(ordinary),/requires query-only mode/);
+ await assert.rejects(startProverService({...rollingConfig(),operatorAuthSha256:undefined}),/requires query-only mode/);
+ assert.equal(reads,0);
+});
+
+test('authenticated query-only service has zero proof resources and denies unauthenticated SDK-shaped HTTP',async()=>{
+ const service=await startProverService({...queryConfig(),operatorAuthSha256:'ab'.repeat(32)});
+ try{
+  assert.deepEqual(service.stats(),{serviceMode:'query-only',proofJobsEnabled:false,queueAllocated:false,workerAllocated:false});
+  const response=await fetch('http://127.0.0.1:'+service.address.port+'/v1/node',{method:'POST',headers:{'content-type':'application/json'},credentials:'omit',referrerPolicy:'no-referrer',body:JSON.stringify({jsonrpc:'2.0',id:1,method:'aztec_getBlockNumber',params:[]})});
+  assert.equal(response.status,401);assert.deepEqual(await response.json(),{error:'Operator request rejected'});
+ }finally{await service.close();await service.close();}
+});

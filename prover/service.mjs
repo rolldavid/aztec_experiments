@@ -16,7 +16,7 @@ export function compactBlockOptions(config){
  return {tier:validateCompactTier(descriptor.value),origins:config.origins};
 }
 
-const queryKeys=new Set(['serviceMode','chainId','rollupVersion','proofs','host','port','origins','queryNode','compactBlocks','compactRequestsPerMinute','trustedProxy']);
+const queryKeys=new Set(['serviceMode','chainId','rollupVersion','proofs','host','port','origins','queryNode','compactBlocks','compactRequestsPerMinute','trustedProxy','operatorAuthSha256']);
 // Capture only own data properties: no ignored proof settings or accessor-backed
 // configuration can smuggle a second lifecycle into this explicit mode.
 export function validateQueryService(config){
@@ -37,6 +37,7 @@ export function validateQueryService(config){
   ||typeof (captured.host??'127.0.0.1')!=='string'||!(captured.host??'127.0.0.1').length||(captured.host??'127.0.0.1').length>253
   ||!Number.isSafeInteger(captured.port??8081)||(captured.port??8081)<0||(captured.port??8081)>65535
   ||(captured.trustedProxy!==undefined&&!isIP(captured.trustedProxy)))throw Error('Invalid query-only configuration');
+ if(captured.operatorAuthSha256!==undefined&&(typeof captured.operatorAuthSha256!=='string'||!/^[0-9a-f]{64}$/.test(captured.operatorAuthSha256)))throw Error('Invalid query operator authentication');
  const rawNode=captured.queryNode;
  if(!rawNode||Object.getPrototypeOf(rawNode)!==Object.prototype)throw Error('Query node required');
  const nodeFields={};for(const key of Reflect.ownKeys(rawNode)){const d=Object.getOwnPropertyDescriptor(rawNode,key);if(!['url','rollupAddress','maxLagSeconds'].includes(key)||!Object.hasOwn(d,'value'))throw Error('Invalid query node configuration');nodeFields[key]=d.value;}
@@ -91,6 +92,7 @@ export async function startProverService(config){
  if(mode&&!Object.hasOwn(mode,'value'))throw Error('Invalid service mode');
  if(mode?.value==='query-only')return startQueryOnlyService(config);
  if(mode&&mode.value!=='prover')throw Error('Invalid service mode');
+ if('operatorAuthSha256' in config)throw Error('Query operator authentication requires query-only mode');
  const scope=captureApplicationScope(config);
  config={...config,...scope};
  if(!/^[1-9][0-9]*$/.test(String(config.chainId))||!/^[1-9][0-9]*$/.test(String(config.rollupVersion))||!Array.isArray(config.origins)||!config.origins.every(o=>{try{return new URL(o).origin===o;}catch{return false;}})||!Number.isSafeInteger(config.threads??1)||(config.threads??1)<1||(config.threads??1)>256)throw Error('Invalid network, origins or threads');

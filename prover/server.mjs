@@ -1,17 +1,29 @@
+import {createHash,timingSafeEqual} from 'node:crypto';
 import {isIP} from 'node:net';
 import http from 'node:http';
 import {decodeJob,MAX_REQUEST_BYTES} from '../shared/remote-prover-wire.mjs';
 import {COMPACT_GATEWAY_ROUTE} from '../shared/rolling/compact-client.mjs';
 /** HTTP adapter depends only on queue and board policy APIs. */
-export function createProverServer({serviceMode='prover',queue,board,chainId,rollupVersion,proofsEnabled=true,origins=[],requestsPerMinute=6,compactRequestsPerMinute=600,trustedProxy,privateQuery}){
+export function createProverServer({serviceMode='prover',queue,board,chainId,rollupVersion,proofsEnabled=true,origins=[],requestsPerMinute=6,compactRequestsPerMinute=600,trustedProxy,privateQuery,operatorAuthSha256}){
  if(!['prover','query-only'].includes(serviceMode)||(serviceMode==='query-only'&&(!privateQuery||queue!==undefined||board!==undefined||proofsEnabled!==true)))throw Error('Invalid service mode');
  const queryOnly=serviceMode==='query-only';
+ if(operatorAuthSha256!==undefined&&(!queryOnly||typeof operatorAuthSha256!=='string'||!/^[0-9a-f]{64}$/.test(operatorAuthSha256)))throw Error('Invalid query operator authentication');
+ const operatorDigest=operatorAuthSha256===undefined?undefined:Buffer.from(operatorAuthSha256,'hex');
  if(!Number.isSafeInteger(compactRequestsPerMinute)||compactRequestsPerMinute<1||compactRequestsPerMinute>6000)throw Error('Invalid compact read rate');
  const clients=new Map();let uploads=0;
  const active=new Set();let closing;
  const handle=async(req,res)=>{
   const reply=(status,value)=>{res.writeHead(status,{'Content-Type':'application/json','Cache-Control':'no-store'});res.end(JSON.stringify(value));};
   res.setHeader('X-Content-Type-Options','nosniff');
+  // This opt-in exposes exactly one authenticated operator route. Check raw
+  // header occurrences, not Node's merged header map, before consuming a body
+  // or entering any inspector. Neither the key nor its digest is forwarded.
+  if(operatorDigest){
+   const reject=status=>{res.setHeader('Connection','close');res.once('finish',()=>req.socket.destroy());reply(status,{error:'Operator request rejected'});};
+   if(req.method!=='POST'||req.url!=='/v1/node'){reject(404);return;}
+   const keys=[];for(let i=0;i<req.rawHeaders.length;i+=2)if(req.rawHeaders[i].toLowerCase()==='x-aztec-api-key')keys.push(req.rawHeaders[i+1]);
+   if(keys.length!==1||typeof keys[0]!=='string'||!/^[0-9a-f]{64}$/.test(keys[0])||!timingSafeEqual(createHash('sha256').update(keys[0],'ascii').digest(),operatorDigest)){reject(401);return;}
+  }
   const origin=req.headers.origin;
   if(origin&&!origins.includes(origin)){reply(403,{error:'Origin rejected'});return;}
   if(origin){res.setHeader('Access-Control-Allow-Origin',origin);res.setHeader('Vary','Origin');res.setHeader('Access-Control-Allow-Credentials','true');}
