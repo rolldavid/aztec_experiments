@@ -887,3 +887,37 @@ test('following-first is confined to preference-browser and retains the actual p
  assert(source.includes('preferenceBrowser){assert.equal(report.proverJobs.completed,3);assert.equal(report.proverJobs.submitted,3)'));
  assert(source.includes('runRollingPreferenceBrowserFixture'));assert(source.includes('actualBok.currentContractClassId'));
 });
+
+test('exact fixture dispatch disables Bok only for preference browser and both reorg lanes',async()=>{
+ // Execute the actual scoped branch with labelled control doubles, no chain.
+ const source=await fs.readFile(new URL('./rolling-application-fixture.mjs',import.meta.url),'utf8');
+ const modes=source.match(/  const preferenceSaved=[^\n]+;/);assert(modes);
+ const scope=source.match(/  const bokEnabled=[^\n]+;/);assert(scope);
+ const classify=new Function('scenario',modes[0]+scope[0]+'return bokEnabled;');
+ const begin=source.indexOf("      if(bokEnabled){\n      await mark('deploy-unused-bok-scope');"),end=source.indexOf('      if(preferenceBrowser){',begin);
+ assert(begin>0&&end>begin);const branch=source.slice(begin,end),AsyncFunction=Object.getPrototypeOf(async function(){}).constructor;
+ const run=new AsyncFunction('bokEnabled','report','mark','save',branch);
+ for(const scenario of ['preference-browser','preference-reorg-initial','preference-reorg-marker']){
+  assert.equal(classify(scenario),false);const report={},stages=[];
+  await run(false,report,async stage=>stages.push(stage),async()=>{});
+  assert.deepEqual(report.bok,{enabled:false,deployed:false,used:false});assert.deepEqual(stages,['bok-capability-disabled']);
+  assert(!Object.hasOwn(report.bok,'address'));assert(!Object.hasOwn(report.bok,'txHash'));
+ }
+ for(const scenario of ['preference-relationships','preference-notifications','notification-browser','preference-saved','anonymous-thread','subboard-policy','composer','bok-post'])assert.equal(classify(scenario),true);
+ const stopped=Error('LABELLED_DEPLOYMENT_ENTRY');await assert.rejects(run(true,{},async stage=>{assert.equal(stage,'deploy-unused-bok-scope');throw stopped;},async()=>{}),error=>error===stopped);
+ assert(branch.includes('await proveApplicationAction('));assert(branch.includes('await ctx.node.sendTx(bokTx)'));assert(branch.includes('actualBok.currentContractClassId'));
+ const config=source.match(/\.\.\.\(bokEnabled\?\{privateBokAddress:String\(bokInstance.address\)\}:\{bokEnabled:false\}\)/);assert(config);
+ const serviceScope=new Function('bokEnabled','bokInstance','return {'+config[0]+'};');
+ assert.deepEqual(serviceScope(false,undefined),{bokEnabled:false});assert.deepEqual(serviceScope(true,{address:'REAL_SCOPE'}),{privateBokAddress:'REAL_SCOPE'});
+ assert(source.includes('await fees.verify(feeTotal)'));assert(source.includes('assert.equal(report.proverJobs.completed,3)'));
+});
+test('actual-used setup clock projection records only public block/time measurements',async()=>{
+ const source=await fs.readFile(new URL('./rolling-application-fixture.mjs',import.meta.url),'utf8');
+ const begin=source.indexOf('  const recordSetupClock=async stage=>{'),end=source.indexOf('  const mark=async stage=>',begin);assert(begin>0&&end>begin);
+ const AsyncFunction=Object.getPrototypeOf(async function(){}).constructor;
+ const run=new AsyncFunction('ctx','report','assert',source.slice(begin,end)+"await recordSetupClock('unit-stage');");
+ const report={};let calls=0;await run({l1Client:{getBlock:async options=>{calls++;assert.deepEqual(options,{blockTag:'latest'});return {number:123n,timestamp:1n,ignored:'PRIVATE_SENTINEL'};}}},report,assert);
+ assert.equal(calls,1);assert.deepEqual(Object.keys(report.setupClock[0]),['stage','wallSeconds','l1Block','l1Timestamp','leadSeconds']);
+ assert.equal(report.setupClock[0].l1Block,'123');assert.equal(report.setupClock[0].l1Timestamp,'1');assert.equal(report.setupClock[0].leadSeconds,1-report.setupClock[0].wallSeconds);assert(!JSON.stringify(report).includes('PRIVATE_SENTINEL'));
+ const failed={};await assert.rejects(run({l1Client:{getBlock:async()=>({number:1n,timestamp:-1n})}},failed,assert));assert.equal(failed.setupClock,undefined);
+});

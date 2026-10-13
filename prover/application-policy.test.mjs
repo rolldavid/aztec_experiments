@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import {bindRollingCircuit, validateRollingPayload, rollingSelectors} from './application-policy.mjs';
+import {bindRollingCircuit, validateRollingPayload, validateRollingJob, rollingSelectors} from './application-policy.mjs';
 import {ARTIFACTS, COMMON_INPUTS, loadRollingArtifacts, sha} from './rolling-artifacts.mjs';
 import {pluginSelectors} from './plugin-policy.mjs';
 import {FunctionSelector, loadContractArtifact} from '@aztec-labs/stdlib/abi';
@@ -171,4 +171,48 @@ test('private preference entrypoints require exact board/network/private flags a
  }
  // Utility heads and internal public dispatch never become paid account actions.
  for(const name of ['preference_head','preference_head_initialized','_set_preference','_mark_thread_read'])assert.throws(()=>bindRollingCircuit('RollingBoard:'+name,{inputs:context('1')},policy),/Unapproved/);
+});
+
+test('actual artifact selectors: absent Bok admits regular board preferences/post but denies every Bok capability',async()=>{
+ // Real normal ABI selectors, fabricated decoded witnesses: no proof acceptance.
+ const raw=loadRollingArtifacts(),selected=await rollingSelectors(raw),policy={...options,privateBokAddress:undefined,selectors:selected};
+ const artifact=name=>loadContractArtifact(raw.find(a=>a.name===name));
+ const board=artifact('RollingBoard'),bok=artifact('PrivateBok');
+ const selector=async fn=>BigInt((await FunctionSelector.fromNameAndParameters(fn)).toString());
+ const fn=(a,name)=>[...a.functions,...a.nonDispatchPublicFunctions].find(f=>f.name===name);
+ const fee=call(3,[...selected.fee.fee][0]);
+ for(const name of ['post','set_preference','mark_thread_read']){
+  const id=await selector(fn(board,name)),p={inputs:context('4'),app_payload:{function_calls:[call(1,id),fee]}};
+  assert.deepEqual(validateRollingPayload(p,policy),{applications:1,fees:1});bindRollingCircuit('RollingBoard:'+name,{inputs:context('1')},policy);
+  for(const change of [p=>p.app_payload.function_calls.pop(),p=>p.inputs.tx_context.chain_id='2',p=>p.inputs.tx_context.version='2',p=>p.app_payload.function_calls[0].target_address.inner='99',p=>p.app_payload.function_calls[0].hide_msg_sender=true]){
+   const bad=structuredClone(p);change(bad);assert.throws(()=>validateRollingPayload(bad,policy));
+  }
+ }
+ assert.equal(selected.bokRequired.size,2);
+ for(const name of ['post_with_bok','configure_plugin']){
+  const id=await selector(fn(board,name));assert(selected.bokRequired.has(id));
+  assert.throws(()=>bindRollingCircuit('RollingBoard:'+name,{inputs:context('1')},policy),/disabled/);
+  for(const isPublic of [false,true])assert.throws(()=>validateRollingPayload({inputs:context('4'),app_payload:{function_calls:[call(1,id,isPublic),fee]}},policy),/disabled/);
+ }
+ for(const name of ['claim','authorize_request','cancel','expire','withdraw','publish_reply','reserve','settle','finish','close_uncertain','reconcile','withdraw_earnings','subtract_more']){
+  const f=fn(bok,name);assert(f,'Actual Bok entrypoint '+name);const id=await selector(f);
+  assert.throws(()=>bindRollingCircuit('PrivateBok:'+name,{inputs:context('2','2')},policy),/disabled/);
+  for(const isPublic of [false,true])assert.throws(()=>validateRollingPayload({inputs:context('4'),app_payload:{function_calls:[call(2,id,isPublic),fee]}},policy),/Unapproved/);
+ }
+ bindRollingCircuit('PrivateFPC:pay_fee',{inputs:context('3')},policy);
+ assert.throws(()=>bindRollingCircuit('PrivateFPC:pay_fee',{inputs:context('99')},policy),/contract/);
+ assert.throws(()=>validateRollingPayload({inputs:context('4'),app_payload:{function_calls:[fee]}},policy),/operation required/);
+ assert.throws(()=>validateRollingPayload({inputs:context('4'),app_payload:{function_calls:[fee]}},{...policy,selectors:{...selected,bokRequired:undefined}}),/Missing restricted/);
+});
+
+
+test('labelled decoded jobs: disabled Bok retains signed-account and fee requirements',()=>{
+ const policy={...options,privateBokAddress:undefined,selectors:{...selectors,bokRequired:new Set([13n,14n])}};
+ const signed={inputs:context('4'),app_payload:{function_calls:[call(1,11),call(3,31)]}};
+ const circuits=[{functionName:'RollingBoard:post'},{functionName:'PrivateFPC:pay_fee'},{functionName:'SchnorrInitializerlessAccount:entrypoint'}];
+ const decoded=[{inputs:context('1')},{inputs:context('3')},signed];
+ validateRollingJob(circuits,decoded,policy);
+ assert.throws(()=>validateRollingJob(circuits.slice(0,2),decoded.slice(0,2),policy),/Signed/);
+ assert.throws(()=>validateRollingJob([circuits[0],circuits[2]],[decoded[0],decoded[2]],policy),/Private fee circuit/);
+ assert.throws(()=>validateRollingJob([...circuits,{functionName:'PrivateBok:subtract_more'}],[...decoded,{inputs:context('2','2')}],policy),/disabled/);
 });

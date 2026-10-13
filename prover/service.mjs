@@ -62,6 +62,28 @@ async function startQueryOnlyService(input){
  }catch(error){await close();throw error;}
 }
 
+// Operator-only capability: absence reaches the worker as an absent environment
+// entry. Capture own primitive scope values before the first await; the caller
+// cannot later turn a restricted service into a Bok prover by mutating config.
+function captureApplicationScope(input){
+ const captured={};
+ for(const key of ['applicationProfile','bokEnabled','board','privateBokAddress','privateFeeAddress']){
+  const d=Object.getOwnPropertyDescriptor(input,key);
+  if((d&&!Object.hasOwn(d,'value'))||(!d&&key in input))throw Error('Invalid application scope');
+  captured[key]=d?.value;
+ }
+ const profile=captured.applicationProfile??'legacy';
+ if(!['legacy','rolling'].includes(profile))throw Error('Invalid application profile');
+ const enabled=captured.bokEnabled===undefined?true:captured.bokEnabled;
+ if(typeof enabled!=='boolean'||(profile!=='rolling'&&captured.bokEnabled!==undefined))throw Error('Invalid Bok capability');
+ const address=value=>typeof value==='string'&&/^0x[0-9a-f]{64}$/.test(value)&&BigInt(value)!==0n;
+ if(profile==='rolling'){
+  if(!address(captured.board)||!address(captured.privateFeeAddress)||captured.board===captured.privateFeeAddress
+   ||(enabled?(!address(captured.privateBokAddress)||[captured.board,captured.privateFeeAddress].includes(captured.privateBokAddress)):captured.privateBokAddress!==undefined))throw Error('Distinct rolling board, Bok and private fee addresses required');
+ }
+ return Object.freeze({...captured,applicationProfile:profile,bokEnabled:enabled});
+}
+
 // Composition root: owns only the resources it creates. Tests and the host use
 // this same entry point; HTTP, queue and worker communicate through interfaces.
 export async function startProverService(config){
@@ -69,13 +91,13 @@ export async function startProverService(config){
  if(mode&&!Object.hasOwn(mode,'value'))throw Error('Invalid service mode');
  if(mode?.value==='query-only')return startQueryOnlyService(config);
  if(mode&&mode.value!=='prover')throw Error('Invalid service mode');
+ const scope=captureApplicationScope(config);
+ config={...config,...scope};
  if(!/^[1-9][0-9]*$/.test(String(config.chainId))||!/^[1-9][0-9]*$/.test(String(config.rollupVersion))||!Array.isArray(config.origins)||!config.origins.every(o=>{try{return new URL(o).origin===o;}catch{return false;}})||!Number.isSafeInteger(config.threads??1)||(config.threads??1)<1||(config.threads??1)>256)throw Error('Invalid network, origins or threads');
  if(!/^0x[0-9a-f]{64}$/.test(config.board)||!['real','disabled'].includes(config.proofs))throw Error('Invalid board/proofs configuration');
  if(config.privateFeeAddress!==undefined&&!/^0x[0-9a-f]{64}$/.test(config.privateFeeAddress))throw Error('Invalid private fee address');
  if(config.pluginAddresses!==undefined&&(!Array.isArray(config.pluginAddresses)||config.pluginAddresses.length>32||config.pluginAddresses.some(address=>!/^0x[0-9a-f]{64}$/.test(address)||BigInt(address)===0n)))throw Error('Invalid plugin address allowlist');
- const applicationProfile=config.applicationProfile??'legacy';
- if(!['legacy','rolling'].includes(applicationProfile))throw Error('Invalid application profile');
- if(applicationProfile==='rolling'&&(!/^0x[0-9a-f]{64}$/.test(config.privateBokAddress)||BigInt(config.privateBokAddress)===0n||!config.privateFeeAddress||BigInt(config.privateFeeAddress)===0n||BigInt(config.board)===0n||new Set([config.board,config.privateBokAddress,config.privateFeeAddress]).size!==3))throw Error('Distinct rolling board, Bok and private fee addresses required');
+ const applicationProfile=scope.applicationProfile;
  const host=config.host??'127.0.0.1',proofsEnabled=config.proofs==='real';
  if(!proofsEnabled&&(!['127.0.0.1','::1','localhost'].includes(host)||String(config.chainId)!=='31337'))throw Error('Disabled proofs require loopback local devnet');
  validateQueryNode(config.queryNode);
@@ -85,7 +107,7 @@ export async function startProverService(config){
  const runtime=proofsEnabled?await prepareNativeRuntime(config):{};
  await loadCircuitCatalog({applicationProfile});
  const directory=await fs.mkdtemp(path.join(config.queueDirectory??'/tmp','board-prover-'));
- const worker=createProcessWorker({applicationProfile,privateBokAddress:config.privateBokAddress,proofsEnabled,threads:config.threads??1,privateFeeAddress:config.privateFeeAddress,pluginAddresses:config.pluginAddresses,...runtime});
+ const worker=createProcessWorker({applicationProfile,privateBokAddress:scope.privateBokAddress,proofsEnabled,threads:config.threads??1,privateFeeAddress:scope.privateFeeAddress,pluginAddresses:config.pluginAddresses,...runtime});
  let queue,server,closing;
  const close=()=>closing??=(async()=>{try{if(server)await server.closeAndDrain();}finally{try{await (queue?queue.close():worker.close());}finally{await fs.rm(directory,{recursive:true,force:true});}}})();
  try{

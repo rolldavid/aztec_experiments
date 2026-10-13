@@ -4,10 +4,11 @@ import {pluginSelectors} from './plugin-policy.mjs';
 
 const boardPrivate = ['register_name', 'authenticate_name', 'create_subboard', 'claim_deposit', 'withdraw', 'post', 'post_with_bok', 'screen', 'set_like', 'set_bio', 'set_avatar', 'set_preference', 'mark_thread_read'];
 const boardPublic = ['set_main_policy', 'reject_subboard', 'configure_plugin', 'remove_post', 'remove_avatar'];
+const bokBoard = new Set(['post_with_bok', 'configure_plugin']);
 const bokPrivate = ['claim', 'authorize_request', 'cancel', 'expire', 'withdraw'];
 const bokPublic = ['publish_reply', 'reserve', 'settle', 'finish', 'close_uncertain', 'reconcile', 'withdraw_earnings'];
 export async function rollingSelectors(rawArtifacts) {
-  const result = {fee: await pluginSelectors()};
+  const result = {fee: await pluginSelectors(), bokRequired: new Set()};
   for (const [name, privateNames, publicNames] of [['RollingBoard', boardPrivate, boardPublic], ['PrivateBok', bokPrivate, bokPublic]]) {
     const raw = rawArtifacts.find(raw => raw.name === name);
     if (!raw) throw Error('Missing rolling policy artifact');
@@ -19,7 +20,9 @@ export async function rollingSelectors(rawArtifacts) {
         // Explicit known selectors only; later contract additions need policy review.
         if (fn) {
           if (fn.functionType !== (visibility === 'private' ? FunctionType.PRIVATE : FunctionType.PUBLIC)) throw Error('Rolling selector visibility changed');
-          selectors[visibility].add(BigInt((await FunctionSelector.fromNameAndParameters(fn)).toString()));
+          const selector=BigInt((await FunctionSelector.fromNameAndParameters(fn)).toString());
+          selectors[visibility].add(selector);
+          if(name && raw.name==='RollingBoard' && bokBoard.has(name))result.bokRequired.add(selector);
         }
       }
     }
@@ -34,6 +37,7 @@ function network(input, metadata) {
 }
 export function bindRollingCircuit(functionName, decoded, {metadata, privateBokAddress, privateFeeAddress}) {
   const [contract, name] = functionName.split(':');
+  if(privateBokAddress===undefined&&(contract==='PrivateBok'||(contract==='RollingBoard'&&bokBoard.has(name))))throw Error('Bok capability disabled');
   if (contract === 'RollingBoard' || contract === 'PrivateBok' || contract === 'PrivateFPC') {
     const input = decoded.inputs;
     network(input, metadata);
@@ -49,11 +53,13 @@ export function bindRollingCircuit(functionName, decoded, {metadata, privateBokA
 }
 export function validateRollingPayload(decoded, {metadata, privateBokAddress, privateFeeAddress, selectors, allowFeeClaim = false}) {
   network(decoded.inputs, metadata);
+  if(privateBokAddress===undefined&&!(selectors.bokRequired instanceof Set))throw Error('Missing restricted rolling selectors');
   let applications = 0, fees = 0;
   for (const call of decoded.app_payload.function_calls) {
     const target = BigInt(call.target_address.inner), selector = BigInt(call.function_selector.inner);
     if (target === 0n && selector === 0n && BigInt(call.args_hash) === selectors.fee.paddingHash && call.is_public === true && call.hide_msg_sender === false && call.is_static === false) continue;
     if (call.hide_msg_sender !== false || call.is_static !== false || typeof call.is_public !== 'boolean') throw Error('Invalid rolling call flags');
+    if(privateBokAddress===undefined&&equal(target,metadata.board)&&selectors.bokRequired.has(selector))throw Error('Bok capability disabled');
     const role = equal(target, metadata.board) ? 'RollingBoard' : equal(target, privateBokAddress) ? 'PrivateBok' : undefined;
     if (role && selectors[role][call.is_public ? 'public' : 'private'].has(selector)) { applications++; continue; }
     if (equal(target, privateFeeAddress) && !call.is_public && selectors.fee.fee.has(selector)) { fees++; continue; }

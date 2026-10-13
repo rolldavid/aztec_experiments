@@ -404,6 +404,7 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
   const preferenceSaved=scenario==='preference-saved',preferenceBrowser=scenario==='preference-browser',preferenceReorg=['preference-reorg-initial','preference-reorg-marker'].includes(scenario),markerReorg=scenario==='preference-reorg-marker';
   const preferences=['preference-relationships','preference-notifications','preference-browser','preference-reorg-initial','preference-reorg-marker','preference-saved','notification-browser'].includes(scenario);
   const rejectedWithdrawal=scenario==='rejected-subboard-withdrawal',subboards=scenario==='subboard-policy',race=scenario==='name-race',recovery=scenario==='trusted-recovery',composer=scenario==='composer',socialWire=scenario==='social-wire',reactionWire=scenario==='reaction-wire',wireSocial=socialWire||reactionWire,captureWire=scenario==='owned-names-wire'||wireSocial||recovery,names=['owned-names','owned-names-wire','composer'].includes(scenario),multi=notificationBrowser||scenario==='account-reactions'||names||wireSocial||recovery||race||subboards,social=['anonymous-thread','repost-reactions','account-reactions'].includes(scenario)||wireSocial||subboards||rejectedWithdrawal;
+  const bokEnabled=!(preferenceBrowser||preferenceReorg);
   const {ROOT,assertNodeVersion,assertAztecPackages}=await import('../toolchain.mjs');
   const directory=await createRollingEvidenceDirectory(ROOT);
   const report={schemaVersion:1,scenario,passed:false,stage:'preflight',transactions:[],cleanup:{},
@@ -412,7 +413,14 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
     storage:{pxe:'Actual SDK store with CLI in-memory IndexedDB adaptation; no browser persistence claim',journal:'Real authenticated encrypted file journals; reopen measured'},
     sourceRevision:execFileSync('git',['rev-parse','HEAD'],{cwd:ROOT,encoding:'utf8'}).trim()};
   const save=()=>fs.writeFile(path.join(directory,'observation.json'),json(report),{mode:0o600});
-  const mark=async stage=>{if(ctx.applicationDeadlineAt!==undefined)assert(Date.now()<ctx.applicationDeadlineAt,'Parent campaign budget exhausted');report.stage=stage;ctx.mark?.('rolling-application:'+stage);await save();};
+  const recordSetupClock=async stage=>{
+    const block=await ctx.l1Client.getBlock({blockTag:'latest'}),wallSeconds=Math.floor(Date.now()/1000);
+    assert(typeof block.number==='bigint'&&typeof block.timestamp==='bigint'&&block.number>=0n&&block.timestamp>=0n&&block.timestamp<=BigInt(Number.MAX_SAFE_INTEGER));
+    (report.setupClock??=[]).push({stage,wallSeconds,l1Block:String(block.number),l1Timestamp:String(block.timestamp),leadSeconds:Number(block.timestamp)-wallSeconds});
+  };
+  const mark=async stage=>{if(ctx.applicationDeadlineAt!==undefined)assert(Date.now()<ctx.applicationDeadlineAt,'Parent campaign budget exhausted');report.stage=stage;ctx.mark?.('rolling-application:'+stage);
+    if(!bokEnabled&&['private-fee-funding','collateral-claim','bok-capability-disabled','real-wall-clock-readiness'].includes(stage))await recordSetupClock(stage);
+    await save();};
   const sourceBinding=async()=>Object.fromEntries(await Promise.all(SOURCES.map(async name=>[name,sha(await fs.readFile(path.join(ROOT,name)))])));
   let fees,feesB,actorA,actorB,coldActor,rootOverlap,activeActor,pxe,rpc,service,failure,restoreIndexedDB,nativeArtifacts,owner,appWallet,journal;
   let coldRecoveryMetrics;
@@ -497,6 +505,7 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
         assert.notEqual(claim.claim.depositor,claimB.claim.depositor);assert.notEqual(String(claim.claim.depositChainId),String(claimB.claim.depositChainId));collateralRole=undefined;
       }
 
+      if(bokEnabled){
       await mark('deploy-unused-bok-scope');
       const operator=ctx.preparation.account.address;
       const deployment=Contract.deploy(setupWallet,loadContractArtifact(bokRaw),[ctx.instance.address,operator,new Fr(31337n),new Fr(BigInt(info.rollupVersion))],
@@ -514,7 +523,11 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
       assert.equal(String((await ctx.node.getBlockData(receipt.blockNumber)).blockHash),String(receipt.blockHash));
       const actualBok=await ctx.node.getContract(bokInstance.address);assert(actualBok);
       assert.equal(String(actualBok.currentContractClassId),String(bokInstance.currentContractClassId));
-      report.bok={address:String(bokInstance.address),txHash:String(bokHash),used:false};await save();
+      report.bok={enabled:true,deployed:true,address:String(bokInstance.address),txHash:String(bokHash),used:false};await save();
+      }else{
+        report.bok={enabled:false,deployed:false,used:false};
+        await mark('bok-capability-disabled');
+      }
       if(preferenceBrowser){
         // Capture the real pre-eligibility anchor; do not drive the setup clock
         // to a posting-only deadline before a fee-only preference can execute.
@@ -550,6 +563,7 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
       }
       report.clock.ready=await sdk.inspectTrustedNode(ctx.node,{expectedNetworkScope:network,proofsEnabled:real});
       report.clock.elapsedMs=Date.now()-clockStart;
+      if(!bokEnabled)await recordSetupClock('real-wall-ready');
       if(preferenceBrowser)report.browserFollowing.readiness={readyAt:Date.now(),wallSeconds:Math.floor(Date.now()/1000),syncedL1Timestamp:String(await ctx.node.getSyncedL1Timestamp()),catchupMs:report.clock.elapsedMs};
       await save();
     }finally{await ctx.node.getSequencer().start();}
@@ -572,7 +586,7 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
       if(preferenceBrowser)assert.equal(process.env.C01_APPLICATION_BB_THREADS,'2','Browser application profile must match trusted worker');
       if(preferenceReorg)assert.equal(process.env.C01_APPLICATION_BB_THREADS,'2','Reorg application profile must match trusted worker');report.trustedProofThreads=trustedProofThreads;
       service=await startProverService({host:'127.0.0.1',port:0,board:String(ctx.instance.address),chainId:31337,rollupVersion:info.rollupVersion,
-        ...(boundedCold?{compactBlocks:{tier:'checkpointed'}}:{}),applicationProfile:'rolling',privateBokAddress:String(bokInstance.address),privateFeeAddress:String(fees.browserFixture.instance.address),
+        ...(boundedCold?{compactBlocks:{tier:'checkpointed'}}:{}),applicationProfile:'rolling',...(bokEnabled?{privateBokAddress:String(bokInstance.address)}:{bokEnabled:false}),privateFeeAddress:String(fees.browserFixture.instance.address),
         proofs:real?'real':'disabled',origins:(composer||preferenceBrowser||notificationBrowser)?[ctx.browserControl.origin]:[],threads:trustedProofThreads,queueDirectory:ctx.directory,crsPath:process.env.CRS_PATH,
         queryNode:{url:rpc.url,rollupAddress:network.rollup,maxLagSeconds:120}});
       endpoint=`http://127.0.0.1:${service.address.port}`;
