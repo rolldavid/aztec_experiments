@@ -13,7 +13,8 @@ const names=['state','invocation_hash','sequence','deadline','budget','available
 async function fixture(overrides={}){
  let saved={operations:{}},proofs=0,sends=0,held=true,sendLost=false,proofFailed=false,wrongCall=false,writeFailure=false;
  const id=H(50),target=H(51),address=H(52),operator=H(53),board=H(54),classId=H(55),txHash=H(56),blockHash=H(57),rollup='0x'+'12'.repeat(20);
- let nodeProofs=overrides.proofMode!=='disabled';
+ const real=overrides.development===false;
+ let nodeProofs=real;
  let chainId='31337',actualClass=classId,actualOperator=operator,blockMismatch=false;
  const row={state:2n,invocation_hash:BigInt(target),sequence:0n,deadline:BigInt(Math.floor(Date.now()/1000)+86400),budget:1000n,available:1000n,reserved:0n,charged:0n,refunded:0n,primary_refund:70n,secondary_refund:71n,primary_done:0n,secondary_done:0n,receipt:0n};
  const block={number:10,hash:new Field(blockHash),header:{globalVariables:{timestamp:BigInt(Math.floor(Date.now()/1000))}}};
@@ -23,7 +24,7 @@ async function fixture(overrides={}){
  const artifact={name:'PrivateBok',storageLayout:Object.fromEntries(['operator','board','l1_chain','version','requests'].map((n,i)=>[n,{slot:new Field(i+1)}])),functions:[],nonDispatchPublicFunctions:[{name:'request',returnType:{kind:'struct',fields:names.map(name=>({name,type:({state:8,sequence:32,deadline:64,budget:128,available:128,reserved:128,charged:128,refunded:128})[name]?{kind:'integer',sign:'unsigned',width:({state:8,sequence:32,deadline:64,budget:128,available:128,reserved:128,charged:128,refunded:128})[name]}:{kind:name.endsWith('_done')?'boolean':'field'}}))}}]};
  let lastCall;
  const methods=new Proxy({}, {get:(_,name)=>(...args)=>({request:async()=>{
-  lastCall={name,to:new Field(address),selector:new Field(9),type:'public',isStatic:false,args:args.map(x=>new Field(x instanceof Field?x.toBigInt():x))};
+  lastCall={name,to:new Field(address),selector:new Field(9),type:'public',isStatic:false,args:args.flat().map(x=>new Field(x instanceof Field?x.toBigInt():x))};
   return {calls:[lastCall]};
  }})});
  const sdk={Fr:Field,AztecAddress:Field,TxHash:Field,Contract:{at:async()=>({methods})},getContractClassFromArtifact:async()=>({id:new Field(classId)}),deriveStorageSlotInMap:async()=>new Field(100),getFunctionReturnType:fn=>fn.returnType,isTrustedProver:p=>p?.trusted===true};
@@ -36,11 +37,11 @@ async function fixture(overrides={}){
  const tx={data:{feePayer:new Field(operator),constants:{txContext:{get chainId(){return new Field(chainId);},version:new Field(1)}}},getTxHash:()=>new Field(txHash),toBuffer:()=>Buffer.from('unit fake transaction'),
   getPublicCallRequestsWithCalldata:()=>[{request:{contractAddress:new Field(wrongCall?99:address),msgSender:new Field(operator)},functionSelector:lastCall.selector,args:lastCall.args}]};
  const wallet={registerContract:async()=>{},completeFeeOptions:async()=>({}),createTxExecutionRequestFromPayloadAndFee:async()=>({}),scopesFrom:()=>[],senderForTagsFrom:()=>new Field(operator),
-  pxe:{proverEnabled:true,proofCreator:{trusted:true,...(overrides.proofMode==='disabled'?{proofsEnabled:false}:{})},proveTx:async()=>{assert(Object.values(saved.privateBokEscrow.operations).some(r=>r.phase==='preparing'),'intent before proof');proofs++;if(proofFailed)throw Error('private witness must not escape');return {chonkProof:{isEmpty:()=>false},toTx:async()=>tx};}}};
+  pxe:{proverEnabled:real,proofCreator:{trusted:true},proveTx:async()=>{assert(Object.values(saved.privateBokEscrow.operations).some(r=>r.phase==='preparing'),'intent before proof');proofs++;if(proofFailed)throw Error('private witness must not escape');return {chonkProof:{isEmpty:()=>false},toTx:async()=>tx};}}};
  const store={read:()=>saved,write:async next=>{if(writeFailure)throw Error('disk secret');saved=structuredClone(next);}};
  const lease={assertHeld:async()=>assert(held,'lost lease')};
- const options={node,wallet,artifact,address,operator,board,network:{chainId:overrides.development===false?1:31337,rollupVersion:1,rollupAddress:rollup},requestId:id,target,store,lease,development:true,timeoutMs:3,pollMs:1,...overrides};
- if(overrides.development===false)chainId='1';
+ const options={node,wallet,artifact,address,operator,board,network:{chainId:real?11155111:31337,rollupVersion:1,rollupAddress:rollup},requestId:id,target,store,lease,development:true,proofMode:real?'real':'disabled',timeoutMs:3,pollMs:1,...overrides};
+ if(overrides.development===false)chainId='11155111';
  const create=()=>createPrivateBokEscrowFactory(sdk)(options),port=await create();
  const op=(method,args,key=0)=>({operationId:digest([method,key]),argsDigest:digest(args.map(x=>typeof x==='bigint'?String(x):x))});
  return {port,create,id,target,row,receipt,effect,tx,block,readAnchors,op,store,options,counts:()=>({proofs,sends}),
@@ -121,7 +122,7 @@ test('unit fake: conservation, target and operation digest mismatches fail close
  await assert.rejects(f.port.request(f.id),/target mismatch/);assert.equal(f.counts().sends,0);
 });
 test('unit fake: explicit local restriction and proof labels cannot be silently changed',async()=>{
- await assert.rejects(fixture({development:false,proofMode:'disabled'}),/Disabled proofs/);
+ await assert.rejects(fixture({development:false,proofMode:'disabled'}),/Native proof policy/);
  const f=await fixture();f.options.network={...f.options.network,chainId:2};await assert.rejects(f.create());
 });
 
@@ -150,8 +151,8 @@ test('unit fake: changed actual fee payer or effect fee cannot pass',async()=>{
  await assert.rejects(g.port.finish(g.id,op));assert.equal(g.journal().operations[op.operationId].observation.transactionFee,'7');
 });
 test('unit fake: malformed schema and changed proof mode reject journal reopening',async()=>{
- const f=await fixture();f.options.proofMode='disabled';f.set('nodeProofs',false);f.set('proverMode',false);await assert.rejects(f.create(),/journal identity mismatch/);
- f.options.proofMode='real';f.set('nodeProofs',true);f.set('proverMode',true);f.options.artifact.nonDispatchPublicFunctions[0].returnType.fields[0].type.width=32;
+ const f=await fixture();f.options.proofMode='real';await assert.rejects(f.create(),/Native proof policy/);
+ f.options.proofMode='disabled';f.options.artifact.nonDispatchPublicFunctions[0].returnType.fields[0].type.width=32;
  await assert.rejects(f.create(),/layout changed/);
 });
 
@@ -184,14 +185,14 @@ test('unit fake: included fee/effect history survives unavailable, pending, drop
 });
 test('unit fake: requested real rejects disabled node or disabled/unknown PXE before proof/send',async()=>{
  for(const [key,value]of [['nodeProofs',false],['pxeEnabled',false],['proverMode',false],['proverTrusted',false]]){
-  const f=await fixture();f.set(key,value);await assert.rejects(f.create());
+  const f=await fixture({development:false});f.set(key,value);await assert.rejects(f.create());
   await assert.rejects(f.port.finish(f.id,f.op('finish',[f.id])));assert.deepEqual(f.counts(),{proofs:0,sends:0});
  }
 });
-test('unit fake: disabled requires matching actual node and routed PXE mode',async()=>{
+test('unit fake: disabled requires matching actual node and native PXE false',async()=>{
  const f=await fixture({proofMode:'disabled'});assert.equal(f.port.mode.nodeVerifiesProofs,false);assert.equal(f.port.mode.pxeProofMode,'disabled');
  const op=f.op('finish',[f.id]);assert.equal((await f.port.finish(f.id,op)).status,'succeeded');
- const g=await fixture({proofMode:'disabled'});g.set('proverMode',true);await assert.rejects(g.create(),/PXE proof mode/);
+ const g=await fixture({proofMode:'disabled'});g.set('pxeEnabled',true);await assert.rejects(g.create(),/PXE native proof policy/);
  const h=await fixture({proofMode:'disabled'});h.set('nodeProofs',true);await assert.rejects(h.create(),/Node proof verification/);
 });
 
@@ -201,4 +202,12 @@ test('unit fake: loss of network verification invalidates current pass while ret
  f.options.node.getNodeInfo=async()=>{throw Error('offline');};await assert.rejects(f.port.inspectOperation(op.operationId));
  assert.equal(f.journal().operations[op.operationId].result.canonical,false);
  assert.deepEqual(f.journal().operations[op.operationId].includedHistory,prior);assert.equal(f.counts().sends,1);
+});
+
+test('unit fake: authenticated reply uses exact flattened ABI and cannot replay after restart',async()=>{
+ const f=await fixture(),fields=Array.from({length:32},(_,i)=>H(i===0?65:0)),args=[f.id,H(66),fields,1,1,0],op=f.op('publish_reply',args);
+ assert.equal((await f.port.publish_reply(...args,op)).status,'succeeded');
+ assert.equal((await (await f.create()).publish_reply(...args,op)).status,'succeeded');assert.equal(f.counts().sends,1);
+ await assert.rejects(f.port.publish_reply(f.id,H(66),fields.slice(1),1,1,0,op));
+ await assert.rejects(fixture({development:true,proofMode:'real'}),/Native proof policy/);
 });

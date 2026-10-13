@@ -1,0 +1,208 @@
+// Labelled controlled canonical-chain/provider ports; no external services or real proofs.
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {runPrivateBokRequest,startEscrowService} from '../escrow-service.mjs';
+import {validateVeniceBilling} from '../venice-metered.mjs';
+import {validateDescriptor,API_VERSION} from '../protocol.mjs';
+const f=n=>'0x'+BigInt(n).toString(16).padStart(64,'0');
+function fixture(){
+ const request={postId:f(1),requestId:f(2),target:f(3),pluginId:f(4)};
+ const current={...request,text:'@bok hello',usable:true,replied:false,mainVersion:1,localVersion:0};
+ const row={state:2,sequence:0,invocation_hash:f(3),budget:1000n,available:1000n,reserved:0n,charged:0n,refunded:0n,receipt:f(0)};
+ let saved={operations:{}};const ops=new Map(),events=[],control={};
+ const store={read:()=>saved,write:async next=>{if(control.writeFailure?.(next))throw Error('disk');saved=structuredClone(next);}};
+ const board={readRequest:async()=>({...current}),pending:async()=>({requests:[request],nextCursor:null})};
+ const escrow={identity:{network:'eip155-31337:aztec-1:public',escrow:f(5)},request:async()=>({canonical:true,request:{...row}}),assertUsable:async()=>{},inspectOperation:async id=>control.unknownReply&&ops.get(id)?.method==='publish_reply'?{status:'pending'}:ops.get(id)??{status:'absent'}};
+ for(const method of ['reserve','settle','close_uncertain','reconcile','finish','publish_reply'])escrow[method]=async(...args)=>{
+  const op=args.pop();events.push(method);assert(!ops.has(op.operationId),'No repeated mutator');
+  if(method==='reserve'){row.available-=args[2];row.reserved=args[2];}
+  if(method==='settle'||method==='reconcile'){row.charged+=args[2];row.available+=row.reserved-args[2];row.reserved=0n;row.sequence++;row.receipt=args[3];}
+  if(method==='close_uncertain'){row.state=3;row.refunded+=row.available;row.available=0n;}
+  if(method==='finish'){row.refunded+=row.available;row.available=0n;row.state=4;}
+  if(method==='publish_reply'){assert.equal(saved.hostedPrivateBok.phase,'reply-intent');assert.equal(row.reserved,0n);current.replied=true;}
+  ops.set(op.operationId,{status:'succeeded',canonical:true,method,argsDigest:op.argsDigest});
+ };
+ const quote={modelId:'fixture',inputBound:100,maxTokens:10,inputPrice:1000000000n,outputPrice:1000000000n,cachePrice:null,maximum:110n};
+ const provider={quote:async()=>quote,execute:async()=>{
+  events.push('paid');assert(Object.values(saved.privateBok.calls).some(c=>c.phase==='possibly-sent'));
+  await control.hold?.();if(control.timeout)throw Error('PRIVATE_PROVIDER_ERROR');
+  const billing=validateVeniceBilling({providerId:'synthetic-'+row.sequence,modelId:'fixture',promptTokens:4,completionTokens:2,cachedTokens:0,inputPrice:'1000000000',outputPrice:'1000000000',cachePrice:null,charge:'6'},quote);
+  return {message:{role:'assistant',content:'public reply'},billing,charge:6n,receipt:billing.receipt};
+ }};
+ const runAgent=async({model,text})=>{assert.equal(text,current.text);const r=await model.complete({messages:[{role:'user',content:text}],maxTokens:10});return {replyText:r.message.content};};
+ const args={request,board,escrow,store,provider,runAgent};return {args,current,row,events,store,control,ops,run:()=>runPrivateBokRequest(args)};
+}
+test('Rolling hosted composition reserves before paid call, settles, authenticates reply and releases remainder',async()=>{
+ const x=fixture();assert.deepEqual(await x.run(),{status:'finished',replayed:false});assert.deepEqual(x.events,['reserve','paid','settle','publish_reply','finish']);
+ assert.equal(x.row.charged,6n);assert.equal(x.row.refunded,994n);assert.equal(x.row.reserved,0n);
+ await x.run();assert.equal(x.events.filter(v=>v==='paid').length,1);assert.equal(x.store.read().hostedPrivateBok.phase,'finished');
+});
+test('unknown provider call remains fenced across hosted restart without another invocation',async()=>{
+ const x=fixture();x.control.timeout=true;await assert.rejects(x.run(),/unknown/);assert.equal(x.row.state,3);assert.equal(x.row.reserved,110n);
+ x.control.timeout=false;await assert.rejects(x.run(),/unresolved/);assert.deepEqual(x.events,['reserve','paid','close_uncertain']);
+ assert(!JSON.stringify(x.store.read()).includes('PRIVATE_PROVIDER_ERROR'));
+});
+test('reply receipt loss permits only inspection then finish, never provider or reply retransmission',async()=>{
+ const x=fixture();x.control.unknownReply=true;await assert.rejects(x.run(),/Reply transaction unresolved/);assert.equal(x.store.read().hostedPrivateBok.phase,'reply-intent');
+ x.control.unknownReply=false;await x.run();assert.deepEqual(x.events,['reserve','paid','settle','publish_reply','finish']);
+});
+test('crash after durable agent intent cannot restart even before a paid call',async()=>{
+ const x=fixture();x.args.runAgent=async()=>{throw Error('interrupted');};await assert.rejects(x.run());
+ x.args.runAgent=()=>assert.fail('No rerun');await assert.rejects(x.run(),/unresolved/);assert.deepEqual(x.events,[]);
+});
+test('canonical invocation or journal identity changes reject before billing',async()=>{
+ const x=fixture();x.current.target=f(99);await assert.rejects(x.run(),/invocation changed/);assert.deepEqual(x.events,[]);
+ const y=fixture();await y.run();y.args.request={...y.args.request,target:f(99)};await assert.rejects(y.run(),/identity changed/);
+ const z=fixture();z.current.usable=false;await assert.rejects(z.run(),/no longer usable/);assert.deepEqual(z.events,[]);
+});
+test('missing reply linkage cannot release credits as a successful authenticated reply',async()=>{
+ const x=fixture(),publish=x.args.escrow.publish_reply;x.args.escrow.publish_reply=async(...args)=>{await publish(...args);x.current.replied=false;};
+ await assert.rejects(x.run(),/Authenticated Rolling reply/);assert(!x.events.includes('finish'));
+});
+test('real HTTP hosted owner drains current request before closing its listener',async()=>{
+ const x=fixture();let release,entered;const started=new Promise(r=>entered=r);x.control.hold=()=>{entered();return new Promise(r=>release=r);};
+ const errors=[];const server=await startEscrowService({descriptor:{applicationProfile:'rolling'},profile:'rolling',concurrency:1,board:x.args.board,run:()=>x.run(),port:0,pollMs:20,onError:e=>errors.push(e)});
+ try{
+  await started;const health=await (await fetch(`http://127.0.0.1:${server.address.port}/health`)).json();assert.equal(health.active,1);
+  let ended=false;const close=server.close().then(()=>ended=true);await new Promise(r=>setTimeout(r,10));assert.equal(ended,false);
+  release();await close;assert.equal(errors.length,0);assert.deepEqual(x.events,['reserve','paid','settle','publish_reply','finish']);
+ }finally{release?.();await server.close();}
+});
+test('explicit Rolling descriptor cannot select legacy account funding',()=>{
+ const scope={chainId:'31337',rollupVersion:'1',rollupAddress:'0x'+'1'.repeat(40),boardAddress:f(1),receiver:f(2)};
+ const d={protocol:API_VERSION,applicationProfile:'rolling',description:'Bok',scope,funding:{protocol:'private-bok-usdc/v1',portalAddress:'0x'+'2'.repeat(40),tokenAddress:'0x'+'3'.repeat(40)}};
+ assert.equal(validateDescriptor(d,scope).applicationProfile,'rolling');assert.throws(()=>validateDescriptor({...d,funding:{...d.funding,protocol:'aztec-escrow-usdc/v1'}},scope));
+});
+
+test('hosted filesystem lease rejects second owner and preserves a replaced lock',async()=>{
+ const fs=await import('node:fs/promises'),os=await import('node:os'),path=await import('node:path');
+ const {acquireHostedLease}=await import('../main.mjs');
+ const root=await fs.mkdtemp(path.join(os.tmpdir(),'bok-lease-'));
+ try{
+  const lease=await acquireHostedLease(root);await lease.assertHeld();
+  assert.equal((await fs.stat(path.join(root,'hosted.lock'))).mode&0o777,0o600);
+  await assert.rejects(acquireHostedLease(root),{code:'EEXIST'});
+  await fs.rename(path.join(root,'hosted.lock'),path.join(root,'original'));
+  await fs.writeFile(path.join(root,'hosted.lock'),'replacement',{flag:'wx',mode:0o600});
+  await assert.rejects(lease.assertHeld(),/changed/);await assert.rejects(lease.close(),/changed/);
+  assert.equal(await fs.readFile(path.join(root,'hosted.lock'),'utf8'),'replacement');
+  await fs.unlink(path.join(root,'hosted.lock'));
+  const next=await acquireHostedLease(root);await next.close();await next.close();
+  await assert.rejects(fs.stat(path.join(root,'hosted.lock')),{code:'ENOENT'});
+  await assert.rejects(next.assertHeld(),/closed/);
+ }finally{await fs.rm(root,{recursive:true,force:true});}
+});
+
+test('actual SDK board projection gates canonical plugin, moderation, anchor and native proof mode',async()=>{
+ const fs=await import('node:fs/promises');
+ const {rollingBoardPort}=await import('../aztec.mjs');
+ const {BarretenbergSync,BackendType}=await import('@aztec-foundation/bb.js');
+ const {Fr}=await import('@aztec-labs/foundation/curves/bn254');
+ const {loadContractArtifact}=await import('@aztec-labs/stdlib/abi');
+ const {getContractClassFromArtifact}=await import('@aztec-labs/stdlib/contract');
+ const {deriveStorageSlotInMap}=await import('@aztec-labs/stdlib/hash');
+ await BarretenbergSync.initSingleton({backend:BackendType.Wasm,skipSrsInit:true});
+ try{
+  const artifact=loadContractArtifact(JSON.parse(await fs.readFile(new URL('../../billboard/target/rolling_contract-RollingBoard.json',import.meta.url))));
+  const scope={chainId:'31337',rollupVersion:'3409706519',rollupAddress:'0x'+'1'.repeat(40),boardAddress:f(8),receiver:f(9)};
+  const classId=String((await getContractClassFromArtifact(artifact)).id),pluginId=f(4);
+  const pluginSlot=(await deriveStorageSlotInMap(artifact.storageLayout.plugins.slot,Fr.fromString(pluginId))).toBigInt();
+  const flagged=(await deriveStorageSlotInMap(artifact.storageLayout.post_flagged.slot,new Fr(1n))).toBigInt();
+  const storage=new Map([[pluginSlot,9n],[pluginSlot+1n,1n],[flagged,0n],[artifact.storageLayout.main_version.slot.toBigInt(),1n]]);
+  const state={realProofs:false,anchor:f(99),currentClass:classId};
+  const post={id:'1',text:'@bok hello',record:{subboard:'0'},position:{blockNumber:3},removal:null,invocation:{adapter:'9',pluginId:'4',requestId:'2',target:'3',reply:null}};
+  const node={getNodeInfo:async()=>({l1ChainId:31337,rollupVersion:3409706519,realProofs:state.realProofs,l1ContractAddresses:{rollupAddress:scope.rollupAddress}}),
+   getBlock:async tag=>({number:5,hash:tag==='checkpointed'?f(99):state.anchor}),getContract:async()=>({originalContractClassId:classId,currentContractClassId:state.currentClass}),
+   getPublicStorageAt:async(anchor,address,slot)=>{assert.deepEqual(anchor,{number:5,hash:f(99)});assert.equal(String(address),scope.boardAddress);return new Fr(storage.get(slot.toBigInt()));}};
+  const index={sync:async()=>{},status:()=>({state:'ready'}),query:(method,args)=>method==='post'?{post}:{posts:[post],nextCursor:null}};
+  const port=await rollingBoardPort({node,index,scope,boardArtifact:artifact,pluginId,development:true});
+  assert.equal((await port.pending(null)).requests[0].target,f(3));assert.equal((await port.readRequest(f(1))).usable,true);
+  post.text=null;assert.equal((await port.readRequest(f(1))).usable,false);post.text='visible';
+  storage.set(flagged,1n);assert.equal((await port.readRequest(f(1))).usable,false);storage.set(flagged,0n);
+  storage.set(pluginSlot+1n,0n);assert.equal((await port.readRequest(f(1))).usable,false);storage.set(pluginSlot+1n,1n);
+  const subboard=(await deriveStorageSlotInMap(artifact.storageLayout.subboards.slot,new Fr(7n))).toBigInt();
+  post.record.subboard='7';storage.set(subboard,1n);storage.set(subboard+4n,0n);
+  assert.equal((await port.readRequest(f(1))).localVersion,1);assert.equal((await port.readRequest(f(1))).usable,true);
+  storage.set(subboard+4n,1n);assert.equal((await port.readRequest(f(1))).usable,false);
+  storage.set(subboard+4n,0n);storage.set(subboard,0n);assert.equal((await port.readRequest(f(1))).usable,false);post.record.subboard='0';
+  state.currentClass=f(77);await assert.rejects(port.readRequest(f(1)));state.currentClass=classId;
+  state.anchor=f(98);await assert.rejects(port.readRequest(f(1)),/anchor/);state.anchor=f(99);
+  state.realProofs=true;await assert.rejects(port.readRequest(f(1)));
+ }finally{BarretenbergSync.destroySingleton();}
+});
+
+test('restarted confirmed reply must remain canonical and linked before releasing unused credits',async()=>{
+ for(const invalidation of ['operation','link']){
+  const x=fixture(),finish=x.args.escrow.finish;
+  x.args.escrow.finish=async()=>{throw Error('controlled shutdown before finish');};
+  await assert.rejects(x.run(),/Chain operation unresolved/);assert.equal(x.store.read().hostedPrivateBok.phase,'reply-confirmed');
+  if(invalidation==='operation')x.control.unknownReply=true;else x.current.replied=false;
+  x.args.escrow.finish=finish;await assert.rejects(x.run(),/Reply transaction unresolved|Authenticated Rolling reply/);
+  assert.deepEqual(x.events,['reserve','paid','settle','publish_reply']);assert.equal(x.row.refunded,0n);
+ }
+});
+
+test('moderation drift during reservation prevents the actual provider call and preserves its fence',async()=>{
+ const x=fixture(),reserve=x.args.escrow.reserve;
+ x.args.escrow.reserve=async(...args)=>{const result=await reserve(...args);x.current.usable=false;return result;};
+ await assert.rejects(x.run(),/unknown/);
+ assert.deepEqual(x.events,['reserve','close_uncertain']);assert.equal(x.row.reserved,110n);assert.equal(x.row.state,3);
+ x.current.usable=true;await assert.rejects(x.run(),/unresolved/);assert(!x.events.includes('paid'));
+});
+
+test('private actor file and SDK decode failures cannot leak private sentinels',async()=>{
+ const fs=await import('node:fs/promises'),os=await import('node:os'),path=await import('node:path');
+ const {inspect}=await import('node:util'),{readHostedActor}=await import('../main.mjs');
+ const root=await fs.mkdtemp(path.join(os.tmpdir(),'bok-private-')),file=path.join(root,'actor.json'),sentinel='PRIVATE-ACTOR-SENTINEL';
+ try{
+  await fs.writeFile(file,'{"secret":"'+sentinel,{mode:0o600});
+  for(const config of [{operatorFile:file},{operator:{secret:sentinel,salt:f(1),signingKey:f(2)}},{operator:{secret:'0x'+'f'.repeat(64),salt:f(1),signingKey:f(2)}}]){
+   await assert.rejects(readHostedActor(config),error=>{assert.equal(error.message,'Invalid private operator configuration');assert(!inspect(error).includes(sentinel));assert.equal(error.cause,undefined);return true;});
+  }
+  const actor=await readHostedActor({operator:{secret:f(1),salt:f(2),signingKey:f(3)}});assert.equal(String(actor.secret),f(1));
+ }finally{await fs.rm(root,{recursive:true,force:true});}
+});
+
+test('captured conversation guard runs after reservation and current policy before each paid call',async()=>{
+ const x=fixture();let captures=0,guards=0;
+ x.args.conversation={load:async()=>{captures++;return {assertCurrent:async()=>{guards++;assert(x.events.includes('reserve'));assert(x.row.reserved>0n);}};}};
+ const run=x.args.runAgent;x.args.runAgent=async input=>{await input.conversation.load({postId:input.postId});return run(input);};
+ await x.run();assert.equal(captures,1);assert.equal(guards,1);assert.equal(x.events.filter(x=>x==='paid').length,1);
+ assert(!JSON.stringify(x.store.read()).includes('assertCurrent'));
+});
+test('history change during reservation fences provider without loading replacement context',async()=>{
+ const x=fixture();let changed=false,captures=0;const reserve=x.args.escrow.reserve;
+ x.args.escrow.reserve=async(...args)=>{await reserve(...args);changed=true;};
+ x.args.conversation={load:async()=>{captures++;return {assertCurrent:async()=>assert(!changed,'Original history changed')};}};
+ const run=x.args.runAgent;x.args.runAgent=async input=>{await input.conversation.load({postId:input.postId});return run(input);};
+ await assert.rejects(x.run(),/unknown/);assert.equal(captures,1);assert(!x.events.includes('paid'));assert.equal(x.row.reserved,110n);
+ await assert.rejects(x.run(),/unresolved/);assert.equal(captures,1);
+});
+test('conversation enabled request cannot execute provider without actual capture',async()=>{
+ const x=fixture();x.args.conversation={load:()=>assert.fail('Must not silently load')};
+ await assert.rejects(x.run(),/unknown/);assert(!x.events.includes('paid'));
+});
+test('production hosted projection selects finalized while development stays checkpointed',async()=>{
+ const {hostedIndexNode}=await import('../main.mjs');const calls=[];
+ const node={getBlockData:async n=>{calls.push(n);return n;},getNodeInfo(){assert.equal(this,node);return 'same';}};
+ const production=hostedIndexNode(node,false),development=hostedIndexNode(node,true);
+ await production.getBlockData('checkpointed');await production.getBlockData(12);await development.getBlockData('checkpointed');
+ assert.deepEqual(calls,['finalized',12,'checkpointed']);assert.equal(production.getNodeInfo(),'same');
+});
+test('actual agent uses the same guarded metering for prior-history summary and current answer',async()=>{
+ const {createAgent}=await import('../agent.mjs');const {bokRunner}=await import('../bok.mjs');
+ const x=fixture(),inputs=[];let captured=0,guards=0,closed=0;
+ const quote=x.args.provider.quote;x.args.provider.quote=async input=>{inputs.push(structuredClone(input));return quote(input);};
+ x.args.conversation={load:async()=>{captured++;return {canonical:true,complete:true,threadId:f(9),
+  messages:[{id:f(9),role:'user',text:'prior request'},{id:f(10),role:'assistant',text:'prior Bok result'},
+   {id:x.args.request.postId,role:'user',text:x.current.text}],assertCurrent:async()=>{guards++;assert(x.row.reserved>0n);}};}};
+ const toolbox={open:async()=>({definitions:[],close:async()=>{closed++;}})};
+ x.args.runAgent=({model,conversation,...input})=>bokRunner({runner:createAgent({model,conversation,toolbox,summaryModelId:'cheap-summary',
+  summaryTokens:10,maxTokens:10,maxCalls:3,instructions:'Test only'})}).run(input);
+ await x.run();assert.equal(captured,1);assert.equal(guards,2);assert.equal(closed,1);
+ assert.deepEqual(x.events,['reserve','paid','settle','reserve','paid','settle','publish_reply','finish']);
+ assert.equal(inputs[0].modelId,'cheap-summary');assert(!inputs[0].messages.at(-1).content.includes(x.current.text));
+ assert(inputs[1].messages.some(m=>m.content.includes('Prior conversation summary')));
+ assert.equal(inputs[1].messages.at(-1).content,x.current.text);
+ assert(!JSON.stringify(inputs).includes('assertCurrent'));assert.equal(x.row.charged,12n);
+});
