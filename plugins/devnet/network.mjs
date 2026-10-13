@@ -66,6 +66,11 @@ export async function persistDevnetCheckpoint({persistent,bootComplete,miningErr
   if(!bootComplete||priorFailure)throw Error('Development checkpoint incomplete; recovery required');
   await save();
 }
+export function developmentAnvilArgs({persistent,port,mnemonic}) {
+ // Match the installed official SDK's local finality depth. This changes only
+ // disposable Anvil configuration, never application or testnet finality checks.
+ return ['--host','127.0.0.1','--port',String(port),'--chain-id','31337','--mnemonic',mnemonic,'--silent',...(persistent?['--no-request-size-limit','--slots-in-an-epoch','1']:[])];
+}
 export async function startDevnet({directory,fundingAddresses,proofs=false,persistent=false,ports:requestedPorts,onProgress=()=>{},onOwned=()=>{}}){
   await fs.mkdir(directory,{recursive:true,mode:0o700});
   const ports=devnetPorts(requestedPorts),statePath=path.join(directory,'network.json'),snapshotPath=path.join(directory,'ethereum-state.json');
@@ -103,7 +108,7 @@ export async function startDevnet({directory,fundingAddresses,proofs=false,persi
     onProgress('Starting disposable Ethereum');
     // Retained snapshots exceed Anvil's default 2MB RPC body limit. This
     // isolated loopback process loads only the private, hash-bound <=128MiB file.
-    anvil=spawn(path.resolve('.build/anvil-1.7.0/anvil'),['--host','127.0.0.1','--port',String(port),'--chain-id','31337','--mnemonic',identity.mnemonic.phrase,'--silent',...(persistent?['--no-request-size-limit']:[])],{stdio:'ignore'});
+    anvil=spawn(path.resolve('.build/anvil-1.7.0/anvil'),developmentAnvilArgs({persistent,port,mnemonic:identity.mnemonic.phrase}),{stdio:'ignore'});
     process.once('exit',terminateChild);
     anvilClosed=new Promise(resolve=>{anvil.once('error',error=>{spawnError=error;resolve();});anvil.once('close',resolve);});
     let ready=false;
