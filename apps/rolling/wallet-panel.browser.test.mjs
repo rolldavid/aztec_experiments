@@ -541,13 +541,13 @@ test('notification campaign reviews, confirms, then navigates to private recover
  const d=page.getByRole('dialog',{name:'Your private account',exact:true});let expires=Date.now()+3000;
  const remaining=()=>{const value=expires-Date.now();assert(value>0);return value;};
  const settled=async ready=>assert.equal(await waitForRollingComposerState({dialog:d,ready,remaining}),'ready');
- let recovered=0;const phases=[];
- async function run(reviewText){expires=Date.now()+3000;await reviewRollingNotificationAction({dialog:d,remaining,settled,reviewText,onReviewed:()=>phases.push('reviewed'),onConfirm:()=>phases.push('confirmed-send'),onConfirmed:()=>phases.push('included'),recover:async()=>{
+ let recovered=0;const phases=[],steps=[];
+ async function run(reviewText){expires=Date.now()+3000;await reviewRollingNotificationAction({dialog:d,remaining,settled,reviewText,onStep:step=>steps.push(step),onReviewed:()=>phases.push('reviewed'),onConfirm:()=>phases.push('confirmed-send'),onConfirmed:()=>phases.push('included'),recover:async()=>{
   const button=d.getByRole('button',{name:'Recover private views',exact:true});await settled(button);await button.click({timeout:remaining()});await settled(d.getByText('Your saved choices are ready.',{exact:true}));recovered++;
  }});}
  await run('Enable thread subscription for 10. This preference is encrypted, not a public ownership list.');assert.equal(recovered,1);assert.equal((await counts(page)).sends,1);
  await d.getByRole('button',{name:'Close account panel',exact:true}).click();await open(page,{type:'read-marker',thread:'10',throughBlock:'80'});
- await run('Mark this thread read through block 80');assert.equal(recovered,2);assert.equal((await counts(page)).sends,2);assert.deepEqual(phases,['reviewed','confirmed-send','included','reviewed','confirmed-send','included']);
+ await run('Mark this thread read through block 80');assert.equal(recovered,2);assert.equal((await counts(page)).sends,2);assert.deepEqual(phases,['reviewed','confirmed-send','included','reviewed','confirmed-send','included']);assert.deepEqual(steps,Array(2).fill(['fee-review','send','confirmation','private-navigation-ready','private-navigation-click','private-recovery','recovered']).flat());
 });
 
 test('cold private view cannot prepare a preference before checking retained financial recovery',async t=>{
