@@ -204,3 +204,24 @@ test('Rolling restart never resends dropped valid original deployment',async()=>
 test('Rolling restart does not silently replace a stale rejected deployment',async()=>{const f=fixture({rolling:true,existing:false,staleDeploy:true});await assert.rejects(f.run(),/synthetic stale/);f.clearLoss();await assert.rejects(f.run(),{code:'BB_RECOVERY_REQUIRED'});assert.equal(f.deploys,1);assert.equal(f.bindings,0);});
 
 test('old SDK preflight without explicit native proof mode fails before wallet or PXE',async()=>{const f=fixture({rolling:true}),original=f.env.aztec.preflightDeploymentNetwork;f.env.aztec.preflightDeploymentNetwork=async(...args)=>{const result=await original(...args);delete result.proofsEnabled;return result;};f.env.aztec.createPXE=async()=>assert.fail('No PXE');await assert.rejects(f.run(),/Verified native proof configuration/);assert.equal(f.deploymentCalls.length,0);});
+
+test('Rolling creation anchor survives distinct portal journal and repeat deployment command',async()=>{
+ const f=fixture({rolling:true,existing:false});const first=await f.run();assert.equal(first.status,'pending-settlement');
+ const creation=[...f.receipts].find(([hash])=>hash!==first.readyTxHash);assert(creation);
+ assert.deepEqual(JSON.parse(JSON.stringify(first.boardDeployment)),{txHash:creation[0],blockNumber:creation[1].blockNumber,blockHash:creation[1].blockHash});
+ const second=await f.run();assert.deepEqual(JSON.parse(JSON.stringify(second.boardDeployment)),JSON.parse(JSON.stringify(first.boardDeployment)));assert.equal(second.readyTxHash,first.readyTxHash);assert.equal(f.deploys,1);assert.equal(f.bindings,1);
+});
+test('Rolling missing historical creation receipt remains explicit and never inferred from binding',async()=>{
+ const f=fixture({rolling:true});const first=await f.run();assert.equal(first.boardDeployment,null);const second=await f.run();assert.equal(second.boardDeployment,null);assert.equal(f.deploys,0);assert.equal(f.bindings,1);
+});
+test('Rolling recovered original creation reorg refuses before another binding',async()=>{
+ const f=fixture({rolling:true,existing:false});const first=await f.run();const r=f.receipts.get(first.boardDeployment.txHash);f.receipts.set(first.boardDeployment.txHash,{...r,blockHash:field(900)});
+ await assert.rejects(f.run());assert.equal(f.deploys,1);assert.equal(f.bindings,1);
+});
+test('Rolling anchor reader guards original receipt twice and rejects terminal failure',async()=>{
+ const context=vm.createContext({});vm.runInContext(source,context);const readAnchor=context.BillboardDeployRolling.readBoardDeploymentAnchor;
+ const receipt={txHash:field(1),blockNumber:1,blockHash:field(2),status:'checkpointed',executionResult:'success'};let guards=0,reads=0;
+ const node={getTxReceipt:async()=>{reads++;return receipt;},getBlock:async()=>({hash:field(2)})};
+ await readAnchor({node,receipt,read:fn=>fn(),contextGuard:async()=>{guards++;}});assert.equal(guards,2);assert.equal(reads,2);
+ node.getTxReceipt=async()=>({...receipt,executionResult:'reverted'});await assert.rejects(readAnchor({node,receipt,read:fn=>fn()}),/unavailable/);
+});

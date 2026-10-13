@@ -197,3 +197,69 @@ loss, restart, cache rebuild and Bok outage. Record source revision, environment
 commands, exact accounting and evidence. Agent review, mock ports, proof-disabled
 development and old testnet results do not satisfy independent expert audit,
 current network clearance or the full14-day qualification period.
+
+## Retained local Rolling development
+
+The current development entry is the existing plugin devnet command, now with an
+explicit Rolling profile. It does not require a model-provider key for the reader,
+private wallet or local chain. Finish the normal pinned builds above first; do not
+repin generated manifests by hand. From the repository root:
+
+```sh
+NODE_BACKEND=js .build/A02-node/node-v24.21.0-darwin-arm64/bin/node \
+  plugins/devnet/start.mjs --profile rolling \
+  --directory /absolute/private/rolling-devnet \
+  --app-port 8080 --node-port 18080 --ethereum-port 18545
+```
+
+Use a dedicated mode-0700 directory. The three ports must be distinct and unused;
+all listeners bind to `127.0.0.1`. Do not stop or repurpose another project's node.
+The existing port4317 design preview is unrelated. Local node proof generation and
+PXE proving are both disabled; `PLUGIN_PROOFS=true` is rejected. The local SDK's
+existing limited-Inbox development profile is explicit, not a production capacity
+claim. `NODE_BACKEND=js` selects the already-supported bcrypto backend used by the
+local application fixtures; it does not change application proof implementation.
+
+Startup reuses the schema-2 deployment CLI, retained transaction journals, current
+Rolling artifact and real canonical ownerless PrivateFPC. The original board
+creation receipt is retained separately from portal binding and supplies the public
+index's initial anchor. The local portal's Ready step uses the existing explicitly
+test-controlled settlement helper; it is not an L1 proof or testnet qualification.
+The public reader/wallet configs are generated from these actual results, then
+served by the existing `apps/rolling/start.mjs` components. Only the local public
+operator receives disposable genesis fee funds. This is not a free token exchange
+or evidence of router liquidity.
+
+Startup also invokes the existing current PrivateBok constructor operation. A
+`constructor-only` readiness result does **not** enable Bok funding or hosted
+responses. Actual token/portal binding, activation, plugin registration, quote
+liquidity and provider configuration remain explicit prerequisites. No invented
+router, quoter or token address is inserted into the wallet configuration. A
+separate private `--hosted-config /absolute/service.json` can opt into the existing
+hosted service; it must explicitly select development mode and supply its own
+validated current deployment. Provider secrets do not belong in either public
+wallet configuration or process arguments.
+
+Stop with Ctrl-C and wait for cleanup. A clean stop retains the original Anvil
+snapshot, validator/genesis identities, Aztec databases, deployment journals and
+public SQLite cache. Run the **same command and directory** to reopen; the original
+transactions are reconciled, never automatically retransmitted. Changed ports,
+genesis identities, pinned toolchain, a missing snapshot, or an unclean owner record
+fail closed. Do not delete a lock, journal or snapshot to force a restart: preserve
+the directory and diagnose the interrupted operation. This is clean-stop recovery;
+automated crash repair is deliberately not claimed. Back up the complete private
+directory only while stopped, and export browser wallet recovery separately.
+
+The existing small configuration/recovery and deployment-engine checks are:
+
+```sh
+NODE_BACKEND=js .build/A02-node/node-v24.21.0-darwin-arm64/bin/node \
+  --test --test-concurrency=1 --test-timeout=60000 \
+  plugins/devnet/operator-test.mjs scripts/test-w03-deploy-engine.mjs
+```
+
+Node's test context always selects the non-operational startup checks. The old
+legacy contract lifecycle remains available only through explicit direct execution
+of `plugins/devnet/operator-test.mjs`; it is not current Rolling acceptance.
+Fresh deployment, stop/reopen and an included wallet action require actual local
+runtime verification after the focused checks and normal build closure.

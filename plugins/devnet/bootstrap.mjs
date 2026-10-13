@@ -86,3 +86,102 @@ export async function bootstrapPluginDevnet({directory,port=8787,host='127.0.0.1
     return {net,wallet,board,adapter,signer,provider,descriptor,serviceConfig,author,operator,token,escrowPortal,chain,portalAddress,close};
   }catch(error){try{await close();}catch(cleanup){throw new AggregateError([error,cleanup],'Local board setup and cleanup failed');}throw error;}
 }
+
+// Current local profile. Production deployment/transaction implementations are
+// reused; only the disposable chain's explicitly labelled settlement is local.
+export async function bootstrapRollingDevnet({directory,ports,onProgress=console.log,onOwned=()=>{}}) {
+ const {readDevnetRecord,writeDevnetRecord,devnetPorts}=await import('./network.mjs');
+ const {deriveMasterMessageSigningSecretKey}=await import('@aztec-labs/stdlib/keys');
+ const {getSchnorrInitializerlessAccountContractAddress}=await import('@aztec-labs/accounts/schnorr');
+ const {GrumpkinScalar}=await import('@aztec-labs/foundation/curves/grumpkin');
+ const {derivePrivateFeeInstance,createPrivateFeeDeployment,requirePublishedPrivateFee}=await import('../../shared/private-fee-client.mjs');
+ const {fileState,onceAztecOperation}=await import('../operations.mjs');
+ const {Tx,TxHash}=await import('@aztec-labs/stdlib/tx');
+ const {operatorCommand}=await import('../operator.mjs');
+ const {spawn}=await import('node:child_process');
+ const selected=devnetPorts(ports),actorPath=path.join(directory,'operator.json');
+ let actor=await readDevnetRecord(actorPath);
+ if(!actor){
+  // A missing actor in an existing network is never permission for a new chain.
+  if(await readDevnetRecord(path.join(directory,'network.json')))throw Error('Original local actor is missing');
+  const secret=Fr.random(),salt=Fr.random(),signingKey=deriveMasterMessageSigningSecretKey(secret);
+  const address=await getSchnorrInitializerlessAccountContractAddress(signingKey,salt,secret);
+  actor={secret:String(secret),salt:String(salt),signingKey:String(signingKey),address:String(address)};
+  await writeDevnetRecord(actorPath,actor,{exclusive:true});
+ }
+ const secret=Fr.fromString(actor.secret),salt=Fr.fromString(actor.salt),signingKey=GrumpkinScalar.fromString(actor.signingKey);
+ const address=await getSchnorrInitializerlessAccountContractAddress(signingKey,salt,secret);
+ if(String(address)!==actor.address||!signingKey.equals(deriveMasterMessageSigningSecretKey(secret)))throw Error('Original local actor identity differs');
+ const net=await startDevnet({directory,fundingAddresses:[address],proofs:false,persistent:true,ports:selected,onProgress,onOwned});
+ let wallet,closed=false,activeChild,activeExit;
+ async function close(){if(closed)return;closed=true;let error;if(activeChild){activeChild.kill('SIGTERM');const timer=setTimeout(()=>activeChild?.kill('SIGKILL'),5000);try{await activeExit;}finally{clearTimeout(timer);}}try{await wallet?.stop();}catch(e){error=e;}try{await net.close();}catch(e){error??=e;}if(error)throw Error('Current development cleanup incomplete');}
+ onOwned({close});
+ async function fixedFile(name,value){const filename=path.join(directory,name),prior=await readDevnetRecord(filename);if(prior){if(JSON.stringify(prior)!==JSON.stringify(value))throw Error('Saved development configuration differs');}else await writeDevnetRecord(filename,value,{exclusive:true});return filename;}
+ async function cli(args){
+  // No developer environment, provider credentials, raw child diagnostics or
+  // arbitrary command input crosses this boundary. Child logs remain private.
+  const log=await fs.open(path.join(directory,`deploy-${Date.now()}.log`),'wx',0o600);
+  const child=spawn(process.execPath,['apps/src/billboard/deploy/cli.mjs',...args],{cwd:process.cwd(),env:{PATH:process.env.PATH,HOME:directory,TMPDIR:directory,NO_PROXY:'127.0.0.1,localhost',NODE_BACKEND:'js',LOG_LEVEL:'silent'},stdio:['ignore','pipe','pipe']});
+  activeChild=child;activeExit=new Promise((resolve,reject)=>{child.once('error',reject);child.once('close',resolve);});let output=[],outputSize=0;for(const pipe of [child.stdout,child.stderr])pipe.on('data',chunk=>{outputSize+=chunk.length;if(outputSize<=1048576)output.push(chunk);else child.kill('SIGTERM');});
+  let timedOut=false;const timer=setTimeout(()=>{timedOut=true;child.kill('SIGTERM');},240000);let kill;
+  const second=setTimeout(()=>{kill=true;child.kill('SIGKILL');},245000);
+  try{const code=await activeExit;if(code!==0||timedOut||kill||outputSize>1048576)throw Error('Deployment CLI incomplete; retain its original journals');}finally{clearTimeout(timer);clearTimeout(second);activeChild=undefined;await log.writeFile(Buffer.concat(output));await log.close();}
+ }
+ try{
+  const info=await net.node.getNodeInfo();if(info.realProofs!==false||info.l1ChainId!==31337)throw Error('Native development proof policy differs');
+  const aztecFile=await fixedFile('aztec-wallet.json',{secretKey:actor.secret,salt:actor.salt,signingKey:actor.signingKey});
+  const ethereumFile=await fixedFile('ethereum-wallet.json',{privateKey:net.identity.privateKey});
+  const manifestPath=path.join(directory,'deployment.json');let manifest=await readDevnetRecord(manifestPath);
+  if(!manifest){
+   const {prepareDeploymentManifest}=await import('../../scripts/prepare-deployment-manifest.mjs');
+   manifest=await prepareDeploymentManifest({schemaVersion:2,profile:'local-test',network:{nodeUrl:net.nodeUrl,ethRpcUrl:net.rpcUrl,chainId:'31337',rollupVersion:String(info.rollupVersion),rollup:String(info.l1ContractAddresses.rollupAddress).toLowerCase(),inbox:String(info.l1ContractAddresses.inboxAddress).toLowerCase(),outbox:String(info.l1ContractAddresses.outboxAddress).toLowerCase()},actors:{aztecDeployer:actor.address,ethereumDeployer:net.identity.address.toLowerCase()},board:{kind:'rolling',salt:String(salt.toBigInt()),minDeposit:'1000000000000000',maxDeposit:'10000000000000000',baseCooldown:'1',kMultiplier:'2',censorWindow:'60',maxSaveUp:'2',policy:'No threats.'}});
+   await writeDevnetRecord(manifestPath,manifest,{exclusive:true});
+  }
+  const reportPath=path.join(directory,'deployment-report.json');
+  const args=['--manifest',manifestPath,'--aztec-wallet',aztecFile,'--eth-wallet',ethereumFile,'--report',reportPath];
+  onProgress('Reconciling current Rolling deployment with the existing CLI');await cli(args);
+  let report=await readDevnetRecord(reportPath);
+  if(report?.status==='pending-settlement'){
+   const hash=TxHash.fromString(report.readyTxHash),effect=await net.node.getTxEffect(hash),leaf=effect?.data?.l2ToL1Msgs.find(x=>!x.isZero());
+   if(!leaf)throw Error('Original Ready effect unavailable');
+   await settleC01ApplicationMessage({node:net.node,config:net.config,dateProvider:net.dateProvider,l1Client:net.deployment.l1Client,directory,rollupAddress:info.l1ContractAddresses.rollupAddress,txHash:hash,expectedLeaf:leaf,kind:'ready',applicationProofs:false});
+   // Original recorded transactions only; the existing engine reconciles them.
+   await cli(args);report=await readDevnetRecord(reportPath);
+  }
+  if(report?.status!=='active'||!report.boardDeployment)throw Error('Original current board deployment anchor unavailable');
+  const feeRaw=await read('apps/src/billboard/private_fee_artifact.json'),feeInstance=await derivePrivateFeeInstance(feeRaw);
+  const store=await fileState(path.join(directory,'private-fee-publication.json'));
+  const identity=JSON.stringify({network:manifest.network,artifact:sha256(toUtf8Bytes(JSON.stringify(feeRaw))),address:String(feeInstance.address),actor:actor.address});
+  const reconcile=async record=>{
+   if(!record.hash||!record.raw)throw Error('Original FPC publication requires reconciliation');
+   const tx=Tx.fromBuffer(Buffer.from(record.raw,'hex'));if(String(tx.getTxHash())!==record.hash)throw Error('FPC publication identity differs');
+   const receipt=await net.node.getTxReceipt(tx.getTxHash());if(!['checkpointed','proven','finalized'].includes(receipt?.status)||receipt.executionResult!=='success'||String((await net.node.getBlock(receipt.blockNumber))?.hash)!==String(receipt.blockHash))throw Error('FPC publication is not canonical');
+   await requirePublishedPrivateFee(net.node,feeInstance);return {status:'succeeded'};
+  };
+  onProgress('Publishing or reconciling the canonical ownerless private fee contract');
+  const published=await onceAztecOperation({store,name:'deploy-escrow',identity,reconcile,execute:async({submit})=>{
+   const recorded=new Proxy(net.node,{get(target,key){if(key==='sendTx')return tx=>submit({hash:String(tx.getTxHash()),raw:tx.toBuffer().toString('hex')},()=>target.sendTx(tx));const value=target[key];return typeof value==='function'?value.bind(target):value;}});
+   wallet=await EmbeddedWallet.create(recorded,{ephemeral:true,pxe:{proverEnabled:false,autoSync:false,syncChainTip:'checkpointed'}});
+   await wallet.createSchnorrInitializerlessAccount(secret,salt,signingKey,'local public deployer');
+   await createPrivateFeeDeployment(wallet,feeRaw).send({from:address,wait:{timeout:120,waitForStatus:TxStatus.CHECKPOINTED}});
+  }});
+  if(published.status!=='succeeded')throw Error('Private fee publication incomplete');
+  if(!wallet){wallet=await EmbeddedWallet.create(net.node,{ephemeral:true,pxe:{proverEnabled:false,autoSync:false,syncChainTip:'checkpointed'}});await wallet.createSchnorrInitializerlessAccount(secret,salt,signingKey,'local public deployer');}
+  const feeOptions=await wallet.completeFeeOptions({from:address,feePayer:feeInstance.address});
+  const gas=Object.fromEntries(Object.entries({gasLimits:['daGas','l2Gas'],teardownGasLimits:['daGas','l2Gas'],maxFeesPerGas:['feePerDaGas','feePerL2Gas'],maxPriorityFeesPerGas:['feePerDaGas','feePerL2Gas']}).map(([group,keys])=>[group,Object.fromEntries(keys.map(key=>[key,String(feeOptions.gasSettings[group][key])]))]));
+  const operatorConfig={applicationProfile:'rolling',nodeUrl:new URL(net.nodeUrl).href,ethereumUrl:new URL(net.rpcUrl).href,chainId:'31337',rollupVersion:String(info.rollupVersion),rollupAddress:String(info.l1ContractAddresses.rollupAddress).toLowerCase(),boardAddress:report.l2Addr,operatorAddress:actor.address,development:true,operatorFile:actorPath};
+  await fixedFile('bok-operator-config.json',operatorConfig);
+  // The existing production constructor operation is durable and reconcile-only.
+  // No token, exchange liquidity, provider or hosted readiness is fabricated.
+  const bok=await operatorCommand({command:'deploy-escrow',config:operatorConfig,statePath:path.join(directory,'bok-operations.json'),actor});
+  if(bok.status!=='succeeded')throw Error('PrivateBok constructor requires reconciliation');
+  await net.useWallClock();
+  const readerConfig={nodeUrl:net.nodeUrl,artifactPath:path.resolve('billboard/target/rolling_contract-RollingBoard.json'),scope:{chainId:'31337',rollupVersion:String(info.rollupVersion),rollupAddress:operatorConfig.rollupAddress,boardAddress:report.l2Addr,classId:manifest.artifacts.boardClassId},deployment:report.boardDeployment,cacheDirectory:path.join(directory,'public-index'),port:selected.appPort};
+  const walletConfig={config:{network:{chainId:'31337',rollupVersion:String(info.rollupVersion),rollupAddress:operatorConfig.rollupAddress,ethRpcUrl:net.rpcUrl},board:{contractAddress:report.l2Addr,portalAddress:report.portalAddr.toLowerCase()},privateFee:{contractAddress:String(feeInstance.address),gasSettings:gas}},trustedQuery:{url:net.nodeUrl,allowLocalDev:true},remoteProver:null,proofsEnabled:false};
+  await writeDevnetRecord(path.join(directory,'rolling-public.json'),readerConfig);await writeDevnetRecord(path.join(directory,'rolling-wallet-public.json'),walletConfig);
+  const readiness={core:'configured',publicIndex:'live-status-required',nativeProofs:false,privateBok:'constructor-only',bokAddress:bok.escrow,hostedService:false,aggregateFunding:'unconfigured-liquidity-required',localSettlement:'explicitly test-controlled, not a network proof'};
+  await writeDevnetRecord(path.join(directory,'readiness.json'),readiness);
+  await wallet.stop();wallet=undefined;
+  return {net,readerConfig,walletConfig,readiness,close};
+ }catch{await close();throw Error('Current Rolling development setup incomplete; retain original state and journals');}
+}

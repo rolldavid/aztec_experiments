@@ -11,9 +11,12 @@ import {computeSecretHash} from '@aztec-labs/stdlib/hash';import {Contract} from
 import {bootstrapPluginDevnet} from './bootstrap.mjs';import {drainDevnetCheckpoints} from './network.mjs';
 import {operatorCommand} from '../operator.mjs';import {packText,handleField} from '../protocol.mjs';
 import {settleC01ApplicationMessage} from '../../scripts/c01-settle-application-message.mjs';
+const focused=process.argv.includes('--focused')||process.env.NODE_TEST_CONTEXT!==undefined;
+if(!focused){
+if(process.env.PLUGIN_PROOFS!==undefined&&process.env.PLUGIN_PROOFS!=='false')throw Error('Development requires proofs disabled');
 const directory=await fs.mkdtemp(path.resolve('.build/plugin-operations-'));
 console.log('BROWSER_DIRECTORY',directory);console.log('RESULT_PATH',path.join(directory,'operations-result.json'));
-const report={passed:false,scenario:'operator-contract-lifecycle',applicationProofs:process.env.PLUGIN_PROOFS==='true'};
+const report={passed:false,scenario:'operator-contract-lifecycle',applicationProofs:false};
 let fixture;
 const read=async p=>JSON.parse(await fs.readFile(p,'utf8'));
 const mark=stage=>{report.stage=stage;console.log('STEP',stage);};
@@ -74,3 +77,19 @@ try{
  report.earnings={withdrawnMicroUSDC:'123',userBalanceMicroUSDC:'999877',distinctOperator:true};report.passed=true;mark('passed');
 }catch(error){report.failure={name:error.name,message:error.message};throw error;}
 finally{try{await fixture?.close();await Barretenberg.destroySingleton();BarretenbergSync.destroySingleton();report.cleanupSucceeded=true;}finally{await fs.writeFile(path.join(directory,'operations-result.json'),JSON.stringify(report,null,2));}}
+
+}
+
+if(focused){
+ const {test}=await import('node:test');const os=await import('node:os');const {createServer}=await import('node:net');
+ const {developmentOptions}=await import('./start.mjs');const {devnetPorts,readDevnetRecord,writeDevnetRecord,validateDevnetResume,assertDevnetPortsFree}=await import('./network.mjs');
+ test('current development defaults are Rolling, loopback ports and no provider prerequisite',()=>{const p=developmentOptions([],{VENICE_WALLET_PRIVATE_KEY:undefined});assert.equal(p.profile,'rolling');assert.deepEqual(p.ports,{ethereumPort:18545,nodePort:18080,appPort:8080});assert.equal(p.hostedConfig,undefined);});
+ test('development flags reject real proofs, duplicate ports and unknown arguments before startup',()=>{assert.throws(()=>developmentOptions([],{PLUGIN_PROOFS:'true'}));assert.throws(()=>developmentOptions(['--app-port','18080']));assert.throws(()=>developmentOptions(['--app-port','8080','--app-port','8081']));assert.throws(()=>developmentOptions(['--network','testnet']));assert.throws(()=>developmentOptions(['--app-port','0']));});
+ test('selected state and separate loopback ports are explicit',()=>{const p=developmentOptions(['--directory','/tmp/owned-local-devnet','--app-port','18081','--node-port','18082','--ethereum-port','18546']);assert.equal(p.directory,'/tmp/owned-local-devnet');assert.equal(p.ports.appPort,18081);});
+ test('occupied development port fails before changing an existing listener',async()=>{const server=createServer();await new Promise(r=>server.listen(0,'127.0.0.1',r));try{await assert.rejects(assertDevnetPortsFree({ethereumPort:server.address().port,nodePort:18083,appPort:18084}),/already owned/);assert(server.listening);}finally{await new Promise(r=>server.close(r));}});
+ test('private state uses exclusive creation, closed reads and atomic replacement',async()=>{const dir=await fs.mkdtemp(path.join(os.tmpdir(),'rolling-dev-state-'));await fs.chmod(dir,0o700);const file=path.join(dir,'state.json');try{assert.equal(await readDevnetRecord(file),null);await writeDevnetRecord(file,{phase:'starting'},{exclusive:true});assert.equal((await fs.stat(file)).mode&0o777,0o600);await assert.rejects(writeDevnetRecord(file,{phase:'replacement'},{exclusive:true}));assert.deepEqual(await readDevnetRecord(file),{phase:'starting'});await writeDevnetRecord(file,{phase:'stopped'});assert.deepEqual(await readDevnetRecord(file),{phase:'stopped'});await fs.chmod(file,0o644);await assert.rejects(readDevnetRecord(file));await fs.unlink(file);await fs.symlink('target.json',file);await assert.rejects(readDevnetRecord(file));}finally{await fs.rm(dir,{recursive:true,force:true});}});
+ const ports=devnetPorts(),fundingAddresses=['0x'+'1'.repeat(64)],toolchainHash='2'.repeat(64);
+ const stopped={schemaVersion:1,phase:'stopped',toolchainHash,ports,fundingAddresses,privateKey:'0x'+'3'.repeat(64),validatorSecret:'0x'+'4'.repeat(64),snapshotHash:'5'.repeat(64),mnemonic:Array(12).fill('synthetic').join(' '),addresses:{rollupAddress:'0x'+'6'.repeat(40)},rollupVersion:7};
+ test('clean restart preserves exact original identity scope',()=>assert.equal(validateDevnetResume(stopped,{fundingAddresses,ports,toolchainHash}),stopped));
+ for(const [name,change] of [['unclean',{phase:'running'}],['starting',{phase:'starting'}],['other genesis',{fundingAddresses:['0x'+'9'.repeat(64)]}],['other ports',{ports:{...ports,nodePort:18085}}],['other binary scope',{toolchainHash:'9'.repeat(64)}],['missing snapshot',{snapshotHash:null}]])test('restart refuses '+name+' without reset',()=>assert.throws(()=>validateDevnetResume({...stopped,...change},{fundingAddresses,ports,toolchainHash}),/recovery required/));
+}

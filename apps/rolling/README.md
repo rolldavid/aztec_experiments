@@ -167,3 +167,23 @@ public feed and deliberately unavailable private endpoint. It proves encrypted
 account creation and failure handling; it does not prove funding or chain actions.
 Browser test identities live only in disposable Chromium contexts. Normal wallet
 recovery remains in the user's browser and must be exported before storage cleanup.
+
+### Start the current local app
+
+For a new current native devnet, use the retained Rolling profile documented in
+[the deployment guide](../../docs/rolling-deployment.md#retained-local-rolling-development):
+
+```sh
+NODE_BACKEND=js .build/A02-node/node-v24.21.0-darwin-arm64/bin/node \
+  plugins/devnet/start.mjs --profile rolling --directory /absolute/private/rolling-devnet
+```
+
+After the normal pinned builds, this composes the existing current deployment CLI,
+canonical public index and private wallet at `http://127.0.0.1:8080`. It uses separate
+loopback RPC ports18080/18545 and requires no provider key for core app startup.
+It does not replace the fixture preview on4317 or reuse unrelated older devnets.
+Local proofs are disabled through the native node/PXE configuration. Readiness
+reports distinguish the usable core from a constructor-only, unfunded PrivateBok;
+missing DEX liquidity or provider configuration is never presented as funded Bok
+readiness. Keep the selected private state directory and wait for clean shutdown
+before reopening it. Wallet recovery remains separately encrypted in the browser.
