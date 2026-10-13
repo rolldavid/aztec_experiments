@@ -46,7 +46,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
  let runtime,session,busy=false,blocked=false,invalidated=false,reloadRequired=false,returnFocus;
  let moderatorStatus=null,bokStatus=null,status=null,intent=null,identities=[],identityRecords=[],cursor=0,error='',notice='',draft={type:'post',subboard:'0',content:''};
  let preferences=null,preferenceProgress=null,accountIdentity=null,recoveryAbort=null,recoveryInspection=null;
- let fundingQuote=null,fundingAutomatic=false,fundingTimer=null,fundingInputs={collateral:'',fee:'',bok:'',gas:'',slippage:'1'};
+ let fundingQuote=null,fundingAutomatic=false,fundingTimer=null,fundingInputs={asset:'ETH',collateral:'',fee:'',bok:'',gas:'',slippage:'1'};
  let profileSnapshot=null,avatarDraft=null,renderEpoch=0,accountEpoch=0,view='action';const previewURLs=new Set();
  const dialog=el('dialog',{'aria-labelledby':'rolling-wallet-title','aria-describedby':'rolling-wallet-description'});
  const title=el('h2',{id:'rolling-wallet-title'},'Your private account');
@@ -57,7 +57,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
  function releasePreviews(){renderEpoch++;for(const url of previewURLs)URL.revokeObjectURL(url);previewURLs.clear();}
  function clearProfileDraft(){profileSnapshot=null;avatarDraft=null;}
  function clearPreferences(){preferences=null;preferenceProgress=null;onPrivateChange();}
- function clearPrivateView(){stopFunding();fundingQuote=null;initializationAttempt++;dialog.removeAttribute('data-rolling-initialization');recoveryInspection=null;accountEpoch++;accountIdentity=null;content.replaceChildren();moderatorStatus=null;clearPreferences();status=null;bokStatus=null;intent=null;identities=[];identityRecords=[];cursor=0;view='action';draft={type:'post',subboard:'0',content:''};releasePreviews();clearProfileDraft();}
+ function clearPrivateView(){stopFunding();fundingQuote=null;fundingInputs={asset:'ETH',collateral:'',fee:'',bok:'',gas:'',slippage:'1'};initializationAttempt++;dialog.removeAttribute('data-rolling-initialization');recoveryInspection=null;accountEpoch++;accountIdentity=null;content.replaceChildren();moderatorStatus=null;clearPreferences();status=null;bokStatus=null;intent=null;identities=[];identityRecords=[];cursor=0;view='action';draft={type:'post',subboard:'0',content:''};releasePreviews();clearProfileDraft();}
  function checkAccount(epoch){if(epoch!==accountEpoch||!unlocked())throw connectionFailure;}
  function privateStatus(){if(!unlocked()||!session)return 'locked';return preferences?'complete':'recovering';}
  function preferenceEnabled(kind,target){if(privateStatus()!=='complete')return null;const key={1:'bookmarks',2:'followedBoards',3:'followedNames',4:'subscriptions'}[kind];return kind===5?preferences.replyNotifications:key?preferences[key].includes(BigInt(target).toString()):null;}
@@ -290,6 +290,9 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
    if(intent.bok.phase==='authorize')content.append(paragraph('First authorize this exact request privately. Publishing the saved post requires a separate review and network fee.'));
    else {content.append(paragraph('The request is already authorized. This publishes its exact saved post; the Bok budget is not authorized again.'));if(Number.isSafeInteger(intent.bok.mainPolicyVersion)&&Number.isSafeInteger(intent.bok.localPolicyVersion))content.append(paragraph(`Reviewed policy versions: parent ${intent.bok.mainPolicyVersion}, local ${intent.bok.localPolicyVersion}.`));}
   }
+  if(session.funding&&intent?.action?.type==='claim-deposit'&&['reverted','cancelled'].includes(intent.status))content.append(button('Review private claim again',()=>void work(async()=>{
+   const epoch=accountEpoch;checkAccount(epoch);await session.funding.reviewRevertedClaim();checkAccount(epoch);await advanceFunding();
+  })));
   if(['authorized','bok-post-reverted'].includes(intent.status)){
    content.append(paragraph(intent.status==='authorized'?'Bok authorization confirmed. Your exact request and post are saved. Nothing else will be sent automatically.':'The post reverted. Its paid network fee is not refunded. Your authorized Bok request and draft remain saved; review current policy and a new network fee before trying again.'),button('Review saved Bok post',()=>void work(async()=>{
     const epoch=accountEpoch,id=intent.intentId;checkAccount(epoch);blocked=true;
@@ -490,17 +493,25 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   const epoch=accountEpoch;checkAccount(epoch);
   const result=await session.funding.advanceClaim();checkAccount(epoch);
   if(result.state==='complete'){stopFunding();notice='Funding and the private claim are confirmed. Your posting deposit, network fees and Bok credit are ready.';await refresh();}
-  else if(['review','review-saved','reverted'].includes(result.state)){
+  else if(['review','review-saved','reverted','cancelled'].includes(result.state)){
    stopFunding();intent=result.intent;
    notice=result.state==='review-saved'?'This saved claim has not been submitted. Review it explicitly before sending; the Ethereum payment will not repeat.':result.state==='reverted'?'The private claim reverted. Review recovery; do not repeat the Ethereum payment.':'The private claim needs a new review. No additional Ethereum payment will be sent.';
   }else{notice=result.state==='waiting'?'Payment confirmed. Waiting for the bridge; no second Ethereum payment will be requested.':'Checking the saved private claim. It will not be submitted again.';scheduleFunding();}
  }
  function aggregateFundingView(){
   if(!session.funding){content.append(paragraph('New funding is unavailable until this deployment has verified exchange and bridge settings. Saved payments can still be recovered.'));return;}
-  content.append(el('h3',{},'Fund your private account'),paragraph('One ETH payment supplies your posting deposit, private network fees and USDC-backed Bok credit. The bridge and one private claim continue here after confirmation.'));
+  content.append(el('h3',{},'Fund your private account'),paragraph('One payment supplies your posting deposit, private network fees and USDC-backed Bok credit. The bridge and one private claim continue here after confirmation.'));
   if(fundingQuote){
-   const q=fundingQuote,b=q.breakdown;
-   content.append(paragraph('Pay with '+q.walletName+'.'),paragraph('Posting deposit: '+decimal(b.collateralWei,18)+' ETH.'),
+   const q=fundingQuote,b=q.breakdown,isUsdc=q.kind==='rolling-aggregate-usdc-v1';
+   if(isUsdc){
+    content.append(paragraph('Pay USDC with '+q.walletName+'. No ETH is required in your wallet.'),
+     paragraph('Posting deposit: '+decimal(b.collateral.amount,18)+' ETH; maximum exchange cost '+decimal(b.collateral.maxUsdc,6)+' USDC.'),
+     paragraph('Network fee credit: '+decimal(b.fee.amount,18)+' fee tokens; maximum exchange cost '+decimal(b.fee.maxUsdc,6)+' USDC.'),
+     paragraph('Bok credit: '+decimal(b.bokAmount,6)+' USDC.'),paragraph('Relay fee: '+decimal(b.relayFeeUsdc,6)+' USDC. Maximum total: '+decimal(b.maximumUsdc,6)+' USDC.'),
+     paragraph('Slippage limit: '+(q.slippageBps/100)+'%. Relay Ethereum gas budget: '+decimal(q.relayGasBudgetWei,18)+' ETH, paid by the configured relayer and reimbursed by the displayed relay fee.'),
+     paragraph('Private claim fee maximum: '+decimal(q.privateFeeCap,18)+' fee tokens ('+q.privateFeeCap+' base units).'),
+     paragraph('Confirming asks for two scoped signatures: collateral consent and exact USDC payment authorization. The configured relayer sends one transaction. Recovery only checks its status; it never repeats that payment.'));
+   }else content.append(paragraph('Pay with '+q.walletName+'.'),paragraph('Posting deposit: '+decimal(b.collateralWei,18)+' ETH.'),
     paragraph('Network fee credit: '+decimal(b.fee.amount,18)+' fee tokens; maximum exchange cost '+decimal(b.fee.maxEth,18)+' ETH.'),
     paragraph('Bok credit: '+decimal(b.bok.amount,6)+' USDC; maximum exchange cost '+decimal(b.bok.maxEth,18)+' ETH.'),
     paragraph('Slippage limit: '+(q.slippageBps/100)+'%. Ethereum gas maximum: '+decimal(b.gasBudgetWei,18)+' ETH.'),
@@ -508,19 +519,21 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
     paragraph('Private claim fee maximum: '+decimal(q.privateFeeCap,18)+' fee tokens ('+q.privateFeeCap+' base units). This ceiling comes from this deployment’s configured gas limits and prices.'),
     paragraph('Confirming first asks your wallet for a scoped collateral consent signature, then one Ethereum payment. It also approves the single private claim within the maximum above. Keep this panel open for bridge progress.'));
    content.append(button('Confirm funding and private claim',()=>void work(async()=>{
-    const epoch=accountEpoch;checkAccount(epoch);fundingQuote=null;await session.funding.confirm();checkAccount(epoch);
-    fundingAutomatic=true;notice='Payment confirmed. Checking bridge delivery…';await advanceFunding();
+    const epoch=accountEpoch;checkAccount(epoch);fundingQuote=null;const payment=await session.funding.confirm();checkAccount(epoch);
+    fundingAutomatic=true;notice=payment?.pending?'Payment submitted. Checking relay and bridge delivery…':'Payment confirmed. Checking bridge delivery…';await advanceFunding();
    }),true),button('Change allocation',()=>{fundingQuote=null;render();}));
   }else if(!fundingAutomatic){
+   if(session.funding.usdcAvailable){const asset=el('select',{'aria-label':'Pay with'});for(const [value,text]of [['ETH','ETH'],['USDC','USDC — no ETH needed']])asset.append(el('option',{value},text));asset.value=fundingInputs.asset;asset.addEventListener('change',()=>{fundingInputs.asset=asset.value;render();});content.append(label('Pay with',asset));}
    const fields={};for(const [key,name]of [['collateral','Posting deposit (ETH)'],['fee','Network fee credit (fee tokens)'],['bok','Bok credit (USDC)'],['gas','Maximum Ethereum gas cost (ETH)'],['slippage','Slippage limit (%)']]){
+    if(key==='gas'&&fundingInputs.asset==='USDC')continue;
     const input=el('input',{type:'text',inputmode:'decimal','aria-label':name});input.value=fundingInputs[key];input.addEventListener('input',()=>fundingInputs[key]=input.value);fields[key]=input;content.append(label(name,input));
    }
    content.append(button('Get fresh quote',()=>void work(async()=>{
     const epoch=accountEpoch;checkAccount(epoch);const values={...fundingInputs};
     if(!/^(?:[0-4](?:\.[0-9]{1,2})?|5(?:\.0{1,2})?)$/.test(values.slippage))throw connectionFailure;
     const slippageBps=Math.round(Number(values.slippage)*100);
-    fundingQuote=await session.funding.prepare({asset:'ETH',collateralWei:units(values.collateral,18),feeAmount:units(values.fee,18),bokAmount:units(values.bok,6),gasBudgetWei:units(values.gas,18),
-     feePoolFee:3000,bokPoolFee:3000,slippageBps,privateFeeCap:session.funding.defaultPrivateFeeCap});checkAccount(epoch);
+    fundingQuote=await session.funding.prepare({asset:values.asset,collateralWei:units(values.collateral,18),feeAmount:units(values.fee,18),bokAmount:units(values.bok,6),
+     ...(values.asset==='USDC'?{collateralPoolFee:3000}:{gasBudgetWei:units(values.gas,18),bokPoolFee:3000}),feePoolFee:3000,slippageBps,privateFeeCap:session.funding.defaultPrivateFeeCap});checkAccount(epoch);
    }),true));
   }
   content.append(button(fundingAutomatic?'Pause bridge checks':'Resume saved funding',()=>{

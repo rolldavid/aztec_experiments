@@ -35,11 +35,12 @@ const application={
  async cancelPrepared(){state.cancels++;write({...read(),status:'cancelled'});return read();},
  async reconcile(){state.reconciles++;await boundary('reconcile');const intent=read();if(state.resolveOutcome){intent.status=state.resolveOutcome;write(intent);}return intent;}
 };
-const funding={defaultPrivateFeeCap:'1000',advanceClaim:()=>advanceAggregateClaim({application,funding}),
- async prepare(input){state.fundingPrepares=(state.fundingPrepares??0)+1;state.fundingAllocation=input;await boundary('funding-quote');return {walletName:'MetaMask',privateFeeCap:input.privateFeeCap,slippageBps:input.slippageBps,breakdown:{collateralWei:input.collateralWei,fee:{amount:input.feeAmount,maxEth:'1000'},bok:{amount:input.bokAmount,maxEth:'2000'},gasBudgetWei:input.gasBudgetWei,maximumTotalWei:(BigInt(input.collateralWei)+3000n+BigInt(input.gasBudgetWei)).toString()}};},
+const funding={get usdcAvailable(){return state.usdcEnabled===true;},defaultPrivateFeeCap:'1000',advanceClaim:()=>advanceAggregateClaim({application,funding}),
+ async prepare(input){state.fundingPrepares=(state.fundingPrepares??0)+1;state.fundingAllocation=input;await boundary('funding-quote');if(input.asset==='USDC')return {kind:'rolling-aggregate-usdc-v1',walletName:'MetaMask',privateFeeCap:input.privateFeeCap,slippageBps:input.slippageBps,relayGasBudgetWei:'1000000000000000',breakdown:{collateral:{amount:input.collateralWei,maxUsdc:'5000000'},fee:{amount:input.feeAmount,maxUsdc:'1000000'},bokAmount:input.bokAmount,relayFeeUsdc:'100000',maximumUsdc:'9350000'}};return {walletName:'MetaMask',privateFeeCap:input.privateFeeCap,slippageBps:input.slippageBps,breakdown:{collateralWei:input.collateralWei,fee:{amount:input.feeAmount,maxEth:'1000'},bok:{amount:input.bokAmount,maxEth:'2000'},gasBudgetWei:input.gasBudgetWei,maximumTotalWei:(BigInt(input.collateralWei)+3000n+BigInt(input.gasBudgetWei)).toString()}};},
  async confirm(){state.fundingPayments=(state.fundingPayments??0)+1;await boundary('funding-payment');state.paymentSaved=true;return this.recover();},
- async inspect(){return {paymentSaved:state.paymentSaved,privateFeeCap:state.fundingCap??'1000',claim:state.fundingClaim??null};},
+ async inspect(){return {paymentSaved:state.paymentSaved,privateFeeCap:state.fundingCap??'1000',claim:state.fundingClaim??null,explicitClaimReview:state.explicitClaimReview===true};},
  async checkpointClaim(value){state.fundingClaim=value;},
+ async reviewRevertedClaim(){if(!['reverted','cancelled'].includes(read()?.status))error();state.fundingClaim=null;state.explicitClaimReview=true;},
  async recover(){state.fundingRecovers=(state.fundingRecovers??0)+1;return {receipt:{txHash:'0x'+'1'.repeat(64)},feeReceipt:{txHash:'0x'+'1'.repeat(64)},bokReceipt:{txHash:'0x'+'1'.repeat(64)}};}
 };
 const runtime={selectPrivateViews,
@@ -736,4 +737,22 @@ test('aggregate funding UI exposes explicit saved review after attempt checkpoin
 test('aggregate funding UI preserves fractional slippage as exact basis points before consent',async t=>{
  const {page}=await browserFixture(t);await page.evaluate(()=>test.aggregateEnabled=true);await open(page);await unlock(page);await aggregateQuote(page,'0.75');
  assert.equal(await page.evaluate(()=>test.fundingAllocation.slippageBps),75);assert(await page.getByText(/Slippage limit: 0.75%/).isVisible());assert.equal(await page.evaluate(()=>test.fundingPayments??0),0);assert.equal((await counts(page)).sends,0);
+});
+
+test('USDC funding UI reviews two signatures and total relay reimbursement without asking the user for ETH gas',async t=>{
+ const {page}=await browserFixture(t);await page.evaluate(()=>{test.aggregateEnabled=true;test.usdcEnabled=true;});await open(page);await unlock(page);await page.getByRole('button',{name:'Recover funding',exact:true}).click();
+ await page.getByLabel('Pay with',{exact:true}).selectOption('USDC');assert.equal(await page.getByLabel('Maximum Ethereum gas cost (ETH)',{exact:true}).count(),0);
+ await page.getByLabel('Posting deposit (ETH)',{exact:true}).fill('0.1');await page.getByLabel('Network fee credit (fee tokens)',{exact:true}).fill('2');await page.getByLabel('Bok credit (USDC)',{exact:true}).fill('3.25');
+ await page.getByRole('button',{name:'Get fresh quote',exact:true}).click();await page.getByRole('button',{name:'Confirm funding and private claim',exact:true}).waitFor();
+ assert(await page.getByText(/two scoped signatures/).isVisible());assert(await page.getByText(/Maximum total: 9.35 USDC/).isVisible());
+ const allocation=await page.evaluate(()=>test.fundingAllocation);assert.equal(allocation.asset,'USDC');assert.equal(allocation.collateralPoolFee,3000);assert.equal(allocation.gasBudgetWei,undefined);assert.equal(await page.evaluate(()=>test.fundingPayments??0),0);
+ await page.getByRole('button',{name:'Confirm funding and private claim',exact:true}).click();await page.getByText('Funding and the private claim are confirmed.',{exact:false}).waitFor();assert.equal(await page.evaluate(()=>test.fundingPayments),1);assert.equal((await counts(page)).sends,1);
+});
+
+for(const status of ['reverted','cancelled'])test(`canonical ${status} funding claim requires explicit renewed review and never repeats the original payment`,async t=>{
+ const {page}=await browserFixture(t);await page.evaluate(()=>test.aggregateEnabled=true);await open(page);await unlock(page);await page.getByRole('button',{name:'Recover funding',exact:true}).click();
+ await page.evaluate(status=>{test.paymentSaved=true;test.fundingClaim={intentId:'42',attempted:true};sessionStorage.setItem('labelled-ui-intent',JSON.stringify({intentId:'42',action:{type:'claim-deposit',receipt:{amount:'100'}},maximumFee:'123',status}));},status);
+ await page.getByRole('button',{name:'Resume saved funding',exact:true}).click();await page.getByRole('button',{name:'Review private claim again',exact:true}).click();
+ await page.getByText('The private claim needs a new review.',{exact:false}).waitFor();assert.equal((await counts(page)).sends,0);assert.equal(await page.evaluate(()=>test.fundingPayments??0),0);
+ await page.getByRole('button',{name:'Confirm and send',exact:true}).click();await page.waitForFunction(()=>test.sends===1);assert.equal(await page.evaluate(()=>test.fundingPayments??0),0);
 });

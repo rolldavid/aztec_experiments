@@ -36,7 +36,7 @@ export async function verifyRollingBokCapability({sdk,node,config,artifact,deplo
  return Object.freeze({address,artifact,instance,operator:new sdk.AztecAddress(new sdk.Fr(BigInt(selected.operatorAddress))),pluginId:selected.pluginId});
 }
 export async function createRollingWalletSession({sdk,routing,ethers,config,boardArtifact,privateFeeArtifact,bokArtifact,account,
- trustedQuery,remoteProver,contextGuard,claimStore,captureFundingWallet,onProgress=()=>{},locks=globalThis.navigator?.locks,proofsEnabled=true}){
+ trustedQuery,remoteProver,contextGuard,claimStore,captureFundingWallet,fundingRelay,onProgress=()=>{},locks=globalThis.navigator?.locks,proofsEnabled=true}){
  if(typeof proofsEnabled!=='boolean'||(!proofsEnabled&&String(config?.network?.chainId)!=='31337')||typeof contextGuard!=='function'||typeof locks?.request!=='function'||!account||!trustedQuery||!routing)throw fail('ROLLING_SESSION_CONFIG');
  const captured={secretKey:account.secretKey,salt:String(account.salt),address:String(account.address)};
  const selected=structuredClone(config),query=structuredClone(trustedQuery),remote=remoteProver?structuredClone(remoteProver):undefined;
@@ -151,7 +151,7 @@ export async function createRollingWalletSession({sdk,routing,ethers,config,boar
      await sdk.inspectTrustedNode(node,{expectedNetworkScope:network,proofsEnabled});await guardRoute();
     };
     aggregate=await createAggregateWallet({sdk,ethers,scope,network,board:deployment.board.address.toString(),bok:bok.address.toString(),owner:captured.address,
-     walletSecret:captured.secretKey,walletSalt:captured.salt,storage:privateStore,provider,captureWallet:captureFundingWallet,contextGuard:guardRoute,verifyScope,reconcileClaim:async id=>{await pxe.sync();await initializeAccount();return app.reconcile(id);}});
+     walletSecret:captured.secretKey,walletSalt:captured.salt,storage:privateStore,provider,captureWallet:captureFundingWallet,contextGuard:guardRoute,verifyScope,claimStore,relay:fundingRelay,reconcileClaim:async id=>{await pxe.sync();await initializeAccount();return app.reconcile(id);}});
     funding.loadAggregate=txHash=>aggregate.loadAggregate(txHash);
    }
    await guard();app=createRollingApplication({sdk:{...sdk,isPrivateWalletForNode:routing.isPrivateWalletForNode},deployment,contextGuard:guard,privateStore,funding,onProgress,
@@ -191,7 +191,7 @@ export async function createRollingWalletSession({sdk,routing,ethers,config,boar
  const application=Object.freeze({...Object.fromEntries(Object.entries(synchronized).map(([name,call])=>[name,(...args)=>locked(()=>call(...args))])),
   readPreferences:options=>locked(()=>readPreferences(options)),
   readColdPreferences:options=>locked(()=>readColdPreferences(options))});
- return Object.freeze({application,funding:aggregate?Object.freeze({advanceClaim:()=>locked(()=>advanceAggregateClaim({application:synchronized,funding:aggregate,contextGuard:guardRoute})),defaultPrivateFeeCap:((BigInt(selected.privateFee.gasSettings.gasLimits.daGas)+BigInt(selected.privateFee.gasSettings.teardownGasLimits.daGas))*BigInt(selected.privateFee.gasSettings.maxFeesPerGas.feePerDaGas)+(BigInt(selected.privateFee.gasSettings.gasLimits.l2Gas)+BigInt(selected.privateFee.gasSettings.teardownGasLimits.l2Gas))*BigInt(selected.privateFee.gasSettings.maxFeesPerGas.feePerL2Gas)).toString(),...Object.fromEntries(['prepare','confirm','recover','inspect','checkpointClaim'].map(name=>[name,(...args)=>locked(()=>aggregate[name](...args))]))}):null,get busy(){return busy;},close(){
+ return Object.freeze({application,funding:aggregate?Object.freeze({usdcAvailable:selected.aggregateFunding.usdcRelayAddress!==undefined,advanceClaim:()=>locked(()=>advanceAggregateClaim({application:synchronized,funding:aggregate,contextGuard:guardRoute})),defaultPrivateFeeCap:((BigInt(selected.privateFee.gasSettings.gasLimits.daGas)+BigInt(selected.privateFee.gasSettings.teardownGasLimits.daGas))*BigInt(selected.privateFee.gasSettings.maxFeesPerGas.feePerDaGas)+(BigInt(selected.privateFee.gasSettings.gasLimits.l2Gas)+BigInt(selected.privateFee.gasSettings.teardownGasLimits.l2Gas))*BigInt(selected.privateFee.gasSettings.maxFeesPerGas.feePerL2Gas)).toString(),...Object.fromEntries(['prepare','confirm','recover','inspect','checkpointClaim','reviewRevertedClaim'].map(name=>[name,(...args)=>locked(()=>aggregate[name](...args))]))}):null,get busy(){return busy;},close(){
   if(closing)return closing;
   if(busy)return Promise.reject(fail('ROLLING_BUSY'));
   if(closed&&!pxe&&!store)return Promise.resolve();

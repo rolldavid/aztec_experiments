@@ -189,7 +189,7 @@ test('public-only actual browser prover initialization diagnostic',{timeout:6000
 
 // EIP1193 custody fixtures exercise the actual runtime capture function; no
 // Ethereum account signature or transaction is requested by capture/guard.
-import {captureRollingFundingWallet} from './wallet-runtime.mjs';
+import {captureRollingFundingWallet,createRollingFundingRelay} from './wallet-runtime.mjs';
 test('funding runtime captures named custody and rechecks chain/account without signature or send',async()=>{
  const calls=[],address='0x'+'12'.repeat(20),signer={getAddress:async()=>address};
  const state={ethSigner:signer,ethProvider:{},ethTransport:{request:async request=>{calls.push(request.method);return '0x7a69';}},ethAccount:address,ethWalletName:'MetaMask'};
@@ -202,4 +202,22 @@ for(const mode of ['chain','account','transport','provider','invalidated'])test(
   if(change){if(mode==='account')state.ethAccount='0x'+'13'.repeat(20);if(mode==='transport')state.ethTransport={};if(mode==='provider')state.ethProvider={};if(mode==='invalidated')state.invalidated=true;}return change&&mode==='chain'?'0x1':'0x7a69';
  }}};
  const wallet=await captureRollingFundingWallet({getState:()=>state,contextGuard:async()=>{},chainId:'31337'});change=true;await assert.rejects(wallet.guard(),{code:'ROLLING_RUNTIME_UNAVAILABLE'});
+});
+
+test('funding relay uses only bounded same-origin fixed requests and never retries a failed POST',async()=>{
+ const old=globalThis.fetch,calls=[];let invalid=false;
+ globalThis.fetch=async(url,options)=>{calls.push({url,options});if(options.method==='POST')throw Error('labelled lost reply');return new Response(JSON.stringify({status:'absent'}),{status:200});};
+ try{
+  const relay=createRollingFundingRelay({contextGuard:async()=>{if(invalid)throw Error('account changed');}});
+  await relay.terms();await assert.rejects(relay.submit('0x1234'));await relay.status('0x'+'12'.repeat(32));
+  assert.deepEqual(calls.map(x=>x.url),['/api/funding/usdc/terms','/api/funding/usdc','/api/funding/usdc/status?planHash=0x'+'12'.repeat(32)]);
+  assert.equal(calls[1].options.body,JSON.stringify({data:'0x1234'}));for(const {options}of calls){assert.equal(options.credentials,'omit');assert.equal(options.redirect,'error');assert.equal(options.referrerPolicy,'no-referrer');assert(options.signal);}
+  invalid=true;await assert.rejects(relay.terms());assert.equal(calls.length,3);assert.throws(()=>relay.status('../escape'));assert.throws(()=>relay.submit({}));
+ }finally{globalThis.fetch=old;}
+});
+test('funding relay caps response bytes and rejects a late account change before publication',async()=>{
+ const old=globalThis.fetch;try{
+  globalThis.fetch=async()=>new Response(' '.repeat(16385),{status:200});const relay=createRollingFundingRelay({contextGuard:async()=>{}});await assert.rejects(relay.terms());
+  let calls=0;globalThis.fetch=async()=>new Response('{}',{status:200});await assert.rejects(createRollingFundingRelay({contextGuard:async()=>{if(++calls>1)throw Error('account changed');}}).terms());
+ }finally{globalThis.fetch=old;}
 });

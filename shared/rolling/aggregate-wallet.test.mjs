@@ -7,9 +7,10 @@ import {computeSecretHash} from '@aztec-labs/stdlib/hash';
 import {poseidon2HashWithSeparator} from '@aztec-labs/foundation/crypto/poseidon';
 import {deriveBoardDepositSecret} from '../deposit-custody.mjs';
 import {claimSecrets} from '../private-fee-funding.mjs';
+import {derivePrivateFeeBridgeSecret} from '../private-fee-client.mjs';
 import {createEncryptedJournalSlot} from '../journal-record.mjs';
 import {createEthereumJournal,verifyEthereumIntentReceipt} from '../ethereum-journal.mjs';
-import {prepareAggregateFunding,aggregateFundingTransaction,aggregateFundingAbi} from './aggregate-funding.mjs';
+import {prepareAggregateFunding,aggregateFundingTransaction,prepareAggregateUsdcFunding,aggregateUsdcFundingTransaction,aggregateFundingAbi} from './aggregate-funding.mjs';
 import {validateAggregateFundingIntent} from './aggregate-recovery.mjs';
 import {createAggregateWallet} from './aggregate-wallet.mjs';
 const a=n=>'0x'+BigInt(n).toString(16).padStart(40,'0'),h=n=>'0x'+BigInt(n).toString(16).padStart(64,'0');
@@ -17,18 +18,18 @@ const router=new ethers.Interface(aggregateFundingAbi),portal=new ethers.Interfa
 const bok=new ethers.Interface(['function active() view returns(bool)','event Deposited(bytes32 indexed account,uint128 amount,bytes32 key,uint256 index)']);
 const fee=new ethers.Interface(['event DepositToAztecPublic(bytes32 indexed to,uint256 amount,bytes32 secretHash,bytes32 key,uint256 index)']);
 const quoter=new ethers.Interface(['function quoteExactOutputSingle((address tokenIn,address tokenOut,uint256 amount,uint24 fee,uint160 sqrtPriceLimitX96)) returns(uint256,uint160,uint32,uint256)']);
-function fixture(){
- const scope={chainId:'31337',router:a(1),routerCodeHash:ethers.keccak256('0x6000'),collateralPortal:a(2),feePortal:a(3),bokPortal:a(4),weth:a(5),swapRouter:a(6),feeToken:a(7),bokToken:a(8),privateFpc:h(9),quoter:a(10),quoterCodeHash:ethers.keccak256('0x6000')};
+function fixture({chainId='31337'}={}){
+ const scope={chainId,router:a(1),routerCodeHash:ethers.keccak256('0x6000'),collateralPortal:a(2),feePortal:a(3),bokPortal:a(4),weth:a(5),swapRouter:a(6),feeToken:a(7),bokToken:a(8),privateFpc:h(9),quoter:a(10),quoterCodeHash:ethers.keccak256('0x6000')};
  const signer=new ethers.Wallet(h(99)),address=signer.address.toLowerCase(),records=new Map();
  const state={sends:0,signatures:0,nonce:7,clock:1000,connected:true,invalid:false,unknown:false,landed:false,reads:0};
  const allocation={asset:'ETH',collateralWei:'100',feeAmount:'200',bokAmount:'300',feePoolFee:3000,bokPoolFee:500,slippageBps:100,gasBudgetWei:'10000',privateFeeCap:'1000'};
  const storage={read:async key=>records.get(key)??null,compareAndSwap:async(key,old,value)=>{assert.equal(records.get(key)??null,old);records.set(key,value);}};
  let tx,receipt;
- const provider={getNetwork:async()=>({chainId:31337n}),getTransactionCount:async()=>state.nonce,getBlockNumber:async()=>state.landed?17:16,
+ const provider={getNetwork:async()=>({chainId:BigInt(chainId)}),getTransactionCount:async()=>state.nonce,getBlockNumber:async()=>state.landed?17:16,
   getBlock:async number=>({number:number==='latest'?16:number,hash:h(number==='latest'?16:number),parentHash:h(Number(number)-1||15),prefetchedTransactions:state.landed?[tx]:[]}),
   getFeeData:async()=>({maxFeePerGas:2n,maxPriorityFeePerGas:1n}),estimateGas:async()=>100n,getCode:async()=> '0x6000',getTransaction:async()=>tx,getTransactionReceipt:async()=>state.landed?receipt:null,
   async send(method,params){state.reads++;
-   if(method==='eth_chainId')return '0x7a69';
+   if(method==='eth_chainId')return '0x'+BigInt(chainId).toString(16);
    if(method==='eth_getBlockByNumber')return {number:'0x10',hash:h(16),timestamp:'0x3e8'};
    if(method==='eth_getCode')return '0x6000';if(method==='eth_getBalance')return '0xffffff';
    assert.equal(method,'eth_call');const {to,data}=params[0];
@@ -50,7 +51,7 @@ function fixture(){
    ]};if(state.unknown)throw Error('Lost acknowledgement');state.landed=true;return {hash:h(20)};
   }}};
  const options={sdk:{Fr,computeSecretHash,poseidon2HashWithSeparator,deriveBoardDepositSecret,claimSecrets,createEncryptedJournalSlot,createEthereumJournal,verifyEthereumIntentReceipt,prepareAggregateFunding,aggregateFundingTransaction,validateAggregateFundingIntent},ethers,scope,
-  network:{chainId:'31337',version:'1',rollup:a(11)},board:h(12),bok:h(13),owner:h(14),walletSecret:h(15),walletSalt:'0',storage,provider,
+  network:{chainId,version:'1',rollup:a(11)},board:h(12),bok:h(13),owner:h(14),walletSecret:h(15),walletSalt:'0',storage,provider,
   captureWallet:async()=>{if(!state.connected)throw Error('No wallet');return wallet;},contextGuard:async()=>{if(state.invalid)throw Error('Context changed');},verifyScope:async()=>{},nowSeconds:()=>state.clock};
  return {options,state,allocation,records,wallet,open:()=>createAggregateWallet(options)};
 }
@@ -156,4 +157,123 @@ for(const code of ['ACTION_REJECTED','INSUFFICIENT_FUNDS'])test('original journa
  await assert.rejects(app.confirm(),{code:code==='ACTION_REJECTED'?'BB_ETH_REQUEST_CANCELLED':'BB_ETH_INSUFFICIENT_FUNDS'});
  assert.equal((await app.inspect()).paymentSaved,false);assert.equal(f.state.sends,0);
  f.wallet.signer.sendTransaction=send;await app.prepare(f.allocation);await app.confirm();assert.equal(f.state.sends,1);
+});
+
+function usdcWalletFixture(){
+ const f=fixture(),s=f.options.scope,relayer=a(71),claims=new Map();
+ Object.assign(s,{usdcCodeHash:ethers.keccak256('0x6000'),usdcImplementation:a(70),usdcImplementationCodeHash:ethers.keccak256('0x6000'),usdcDomain:{name:'USDC',version:'2'},usdcRelayAddress:relayer});
+ Object.assign(f.options.sdk,{prepareAggregateUsdcFunding,aggregateUsdcFundingTransaction,derivePrivateFeeBridgeSecret});
+ const usdc=new ethers.Interface(['function implementation() view returns(address)','function DOMAIN_SEPARATOR() view returns(bytes32)','function balanceOf(address) view returns(uint256)','function authorizationState(address,bytes32) view returns(bool)']);
+ const original=f.options.provider.send;f.state.posts=0;f.state.statusReads=0;f.state.withhold=false;f.state.lost=false;f.state.usdcTx=null;f.state.usdcReceipt=null;
+ f.options.provider.send=async(method,params)=>{
+  if(method==='eth_getBalance'){assert.equal(params[0],relayer);return '0xffffff';}
+  if(method==='eth_call'){
+   const {to,data}=params[0];
+   if(to===s.bokToken){const c=usdc.parseTransaction({data});return usdc.encodeFunctionResult(c.name,[{implementation:s.usdcImplementation,DOMAIN_SEPARATOR:ethers.TypedDataEncoder.hashDomain({...s.usdcDomain,chainId:s.chainId,verifyingContract:s.bokToken}),balanceOf:999999999n,authorizationState:false}[c.name]]);}
+   if(to===s.router&&router.parseTransaction({data}).name==='usdcAuthorizationNonce'){
+    const plan=router.parseTransaction({data}).args[0],hash=ethers.keccak256(ethers.AbiCoder.defaultAbiCoder().encode([router.getFunction('fundUsdc').inputs[0]],[plan]));
+    return router.encodeFunctionResult('usdcAuthorizationNonce',[ethers.keccak256(ethers.AbiCoder.defaultAbiCoder().encode(['bytes32','uint256','address','bytes32'],[ethers.encodeBytes32String('ROLLING_USDC_FUNDING_V1'),s.chainId,s.router,hash]))]);
+   }
+  }
+  return original(method,params);
+ };
+ f.options.claimStore={save:async(scope,record)=>{assert.equal(f.state.signatures%2,0);assert.equal(scope.depositor,f.wallet.address);claims.set(record.secretHash,{scope,record});}};
+ f.options.provider.getTransactionCount=async()=>{throw Error('USDC custody must not derive an Ethereum nonce');};
+ f.options.provider.getTransaction=async()=>f.state.usdcTx;f.options.provider.getTransactionReceipt=async()=>f.state.usdcReceipt;
+ f.options.relay={terms:async()=>({relayer,feeUsdc:'50',gasBudgetWei:'10000'}),submit:async data=>{
+  f.state.posts++;assert.equal(f.state.signatures,2);assert.equal(claims.size,1);assert(f.records.size>0);
+  if(f.state.lost)throw Error('labelled lost relay reply');
+  const p=router.parseTransaction({data}).args.p,hash=ethers.keccak256(ethers.AbiCoder.defaultAbiCoder().encode([router.getFunction('fundUsdc').inputs[0]],[p]));
+  f.state.usdcTx={hash:h(200),from:relayer,to:s.router,nonce:42,chainId:31337n,value:0n,data};
+  const log=(address,iface,name,args)=>({address,...iface.encodeEventLog(iface.getEvent(name),args)});
+  f.state.usdcReceipt={hash:h(200),from:relayer,to:s.router,blockNumber:17,blockHash:h(17),status:1,logs:[
+   log(s.router,router,'UsdcFunded',[p.beneficiary,hash,p.relayer,p.collateral.amount,p.fee.amount,p.bokAmount,p.collateral.maxUsdc,p.fee.maxUsdc,p.relayFeeUsdc,0]),
+   log(s.collateralPortal,portal,'Deposited',[p.beneficiary,p.collateral.amount,p.collateralSecretHash,h(30),1]),
+   log(s.feePortal,fee,'DepositToAztecPublic',[s.privateFpc,p.fee.amount,p.feeSecretHash,h(31),2]),
+   log(s.bokPortal,bok,'Deposited',[p.bokCommitment,p.bokAmount,h(32),3])
+  ]};return {status:'unresolved'};
+ },status:async planHash=>{f.state.statusReads++;return {status:f.state.usdcTx&&!f.state.withhold?'succeeded':'absent',scope:'aggregate-funding',canonical:!!f.state.usdcTx,planHash,...(f.state.usdcTx&&!f.state.withhold?{transactionHash:h(200)}:{})};}};
+ f.wallet.signer.sendTransaction=async()=>{throw Error('USDC user must never send an Ethereum transaction');};
+ f.allocation={asset:'USDC',collateralWei:'100',feeAmount:'200',bokAmount:'300',collateralPoolFee:500,feePoolFee:3000,slippageBps:100,privateFeeCap:'1000'};
+ return {...f,claims};
+}
+test('USDC uses two real signatures, retained random custody and one relay post without user Ethereum send',async()=>{
+ const f=usdcWalletFixture(),app=await f.open(),q=await app.prepare(f.allocation);assert.equal(q.kind,'rolling-aggregate-usdc-v1');assert.equal(f.state.signatures,0);assert.equal(f.claims.size,1);
+ assert.deepEqual(await app.confirm(),{pending:true});assert.equal(f.state.posts,1);assert.equal(f.state.sends,0);
+ f.state.connected=false;const reopened=await f.open(),r=await reopened.recover();assert.equal(r.receipt.sender,a(71));assert.equal(r.receipt.nonce,'42');
+ const context=await reopened.loadAggregate(h(200));assert.equal(context.aggregateCustody.beneficiary,f.wallet.address);assert.equal(context.intent.from,a(71));assert.equal(context.intent.nonce,42);assert.equal(f.state.posts,1);
+ const original=await f.options.sdk.computeSecretHash(Fr.fromString([...f.claims.values()][0].record.secret));assert.equal(original.toString(),r.receipt.secretHash);
+});
+test('USDC lost relay acknowledgement and absent status never authorize a second POST after reopen',async()=>{
+ const f=usdcWalletFixture(),app=await f.open();await app.prepare(f.allocation);f.state.lost=true;await assert.rejects(app.confirm());
+ const reopened=await f.open();await assert.rejects(reopened.recover(),{code:'ROLLING_FUNDING_PENDING'});await assert.rejects(reopened.prepare(f.allocation),{code:'ROLLING_FUNDING_PENDING'});await assert.rejects(reopened.confirm(),{code:'ROLLING_FUNDING_QUOTE_REQUIRED'});assert.equal(f.state.posts,1);assert.equal(f.state.sends,0);
+ assert.equal((await advanceAggregateClaim({application:{},funding:reopened})).state,'waiting');assert.equal(f.state.posts,1);
+});
+test('USDC terms cannot change the pinned relayer and failed custody stops before either signature',async()=>{
+ const f=usdcWalletFixture();f.options.relay.terms=async()=>({relayer:a(72),feeUsdc:'50',gasBudgetWei:'10000'});await assert.rejects((await f.open()).prepare(f.allocation),{code:'ROLLING_FUNDING_RELAY_SCOPE'});assert.equal(f.state.signatures,0);
+ const g=usdcWalletFixture();g.options.claimStore.save=async()=>{throw Error('durable storage failed');};await assert.rejects((await g.open()).prepare(g.allocation));assert.equal(g.state.signatures,0);assert.equal(g.state.posts,0);
+});
+test('USDC service success cannot replace exact canonical transaction and all three effect checks',async()=>{
+ const f=usdcWalletFixture(),app=await f.open();await app.prepare(f.allocation);await app.confirm();f.state.usdcTx.data='0x1234';await assert.rejects(app.recover(),{code:'ROLLING_FUNDING_MISMATCH'});assert.equal(f.state.posts,1);
+});
+
+test('USDC exact canonical saved calldata can recover after relay status is lost, while wrong chain and incomplete effects fail',async()=>{
+ const f=usdcWalletFixture(),app=await f.open();await app.prepare(f.allocation);await app.confirm();f.state.withhold=true;
+ const found=await app.loadAggregate(h(200));assert.equal(found.intent.nonce,42);assert.equal(found.aggregateCustody.beneficiary,f.wallet.address);assert.equal(f.state.posts,1);
+ f.options.provider.getNetwork=async()=>({chainId:1n});await assert.rejects(app.loadAggregate(h(200)),{code:'ROLLING_FUNDING_MISMATCH'});
+ f.options.provider.getNetwork=async()=>({chainId:31337n});f.state.usdcReceipt.logs.pop();await assert.rejects(app.loadAggregate(h(200)));assert.equal(f.state.posts,1);
+});
+
+test('unrelated direct receipts do not depend on a pending USDC relay and verified transaction hashes survive lost status',async()=>{
+ const f=usdcWalletFixture(),app=await f.open();await app.prepare(f.allocation);await app.confirm();await app.recover();
+ f.state.withhold=true;assert.equal((await(await f.open()).recover()).receipt.txHash,h(200));
+ f.options.relay.status=async()=>{throw Error('relay unavailable');};assert.equal(await app.loadAggregate(h(999)),null);assert.equal(f.state.posts,1);
+});
+
+test('canonical reverted private claim is explicitly re-reviewed without repeat payment or automatic send, and manual confirmation relinks',async()=>{
+ const f=fixture();let workflow;f.options.reconcileClaim=id=>workflow.open().reconcile(id);const funding=await f.open();await funding.prepare(f.allocation);await funding.confirm();workflow=durableClaimApplication(f,funding);
+ await advanceAggregateClaim({application:workflow.open(),funding});assert.equal(workflow.state.sends,1);workflow.state.outcome={...workflow.state.outcome,outcome:'reverted'};
+ assert.equal((await advanceAggregateClaim({application:workflow.open(),funding})).state,'reverted');
+ await funding.reviewRevertedClaim();const reviewed=await advanceAggregateClaim({application:workflow.open(),funding:await f.open()});assert.equal(reviewed.state,'review');assert.equal(workflow.state.sends,1);assert.equal(f.state.sends,1);
+ await workflow.open().submitPrepared(reviewed.intent.intentId);const final=await advanceAggregateClaim({application:workflow.open(),funding:await f.open()});assert.equal(final.state,'complete');assert.equal((await funding.inspect()).claim.attempted,true);assert.equal(workflow.state.sends,2);assert.equal(f.state.sends,1);
+ await assert.rejects(funding.reviewRevertedClaim(),{code:'ROLLING_FUNDING_RECOVERY_REQUIRED'});
+});
+test('USDC crash after durable one-shot checkpoint but before POST remains status-only even when relay says absent',async()=>{
+ const f=usdcWalletFixture(),cas=f.options.storage.compareAndSwap;let writes=0;
+ f.options.storage.compareAndSwap=async(...args)=>{await cas(...args);if(++writes===2)throw Error('labelled lost local checkpoint reply');};
+ const app=await f.open();await app.prepare(f.allocation);await assert.rejects(app.confirm());assert.equal(f.state.signatures,2);assert.equal(f.state.posts,0);
+ const recovered=await f.open();assert.equal((await recovered.inspect()).paymentSaved,true);await assert.rejects(recovered.recover(),{code:'ROLLING_FUNDING_PENDING'});await assert.rejects(recovered.prepare(f.allocation),{code:'ROLLING_FUNDING_PENDING'});assert.equal(f.state.posts,0);
+});
+
+test('canonical reverted ETH payment archives the original before explicit fresh quote and original journal acknowledgement',async()=>{
+ const f=fixture(),get=f.options.provider.getTransactionReceipt;let reverted=true;
+ f.options.provider.getTransactionReceipt=async(...args)=>{const r=await get(...args);return r?{...r,status:reverted?0:1,logs:reverted?[]:r.logs}:r;};
+ const funding=await f.open();await funding.prepare(f.allocation);await assert.rejects(funding.confirm(),{code:'BB_ETH_TRANSACTION_FAILED'});
+ const before=f.records.size;const q=await(await f.open()).prepare(f.allocation);assert.equal(q.ethereumNonce,8);assert.equal(f.state.sends,1);assert.equal(f.records.size,before+1);
+ // A new explicit confirmation uses the original Ethereum journal, which
+ // rechecks the acknowledged reverted request before its nonce successor.
+ const next=await f.open();await next.prepare(f.allocation);const send=f.wallet.signer.sendTransaction;f.wallet.signer.sendTransaction=async request=>{const sent=await send(request);reverted=false;return sent;};await next.confirm();assert.equal(f.state.sends,2);
+});
+test('reverted payment successor rejects reorg, replacement, missing finality and archive persistence failure',async()=>{
+ for(const mode of ['reorg','replacement','unfinalized','archive']){
+  const f=fixture({chainId:mode==='unfinalized'?'1':'31337'}),get=f.options.provider.getTransactionReceipt;
+  f.options.provider.getTransactionReceipt=async(...args)=>{const r=await get(...args);return r?{...r,status:0,logs:[]}:r;};
+  const funding=await f.open();await funding.prepare(f.allocation);await assert.rejects(funding.confirm());
+  if(mode==='reorg'){const getBlock=f.options.provider.getBlock;let calls=0;f.options.provider.getBlock=async n=>({...await getBlock(n),...(n===17&&++calls>1?{hash:h(999)}:{})});}
+  if(mode==='replacement'){const getTx=f.options.provider.getTransaction;f.options.provider.getTransaction=async(...a)=>({...await getTx(...a),data:'0x1234'});}
+  if(mode==='unfinalized'){const getBlock=f.options.provider.getBlock;f.options.provider.getBlock=async n=>n==='finalized'?{number:16,hash:h(16)}:getBlock(n);}
+  if(mode==='archive'){const cas=f.options.storage.compareAndSwap;f.options.storage.compareAndSwap=async(key,...args)=>{if(!f.records.has(key))throw Error('archive unavailable');return cas(key,...args);};}
+  await assert.rejects((await f.open()).prepare(f.allocation));assert.equal(f.state.sends,1);assert.equal((await funding.inspect()).paymentSaved,true);
+ }
+});
+test('USDC canonical revert permits only a fresh reviewed plan and keeps the failed original encrypted',async()=>{
+ const f=usdcWalletFixture(),funding=await f.open();await funding.prepare(f.allocation);await funding.confirm();f.state.usdcReceipt.status=0;f.state.usdcReceipt.logs=[];
+ await assert.rejects(funding.recover(),{code:'ROLLING_FUNDING_REVERTED'});
+ const original=[...f.records.values()],q=await(await f.open()).prepare(f.allocation);assert.equal(q.kind,'rolling-aggregate-usdc-v1');assert.equal(f.state.posts,1);assert.equal(f.state.signatures,2);assert.equal(f.records.size,original.length+1);assert.equal(f.state.sends,0);
+});
+test('cancelled saved private claim pauses and requires explicit re-review without repeated payment',async()=>{
+ const f=fixture();let workflow;f.options.reconcileClaim=id=>workflow.open().reconcile(id);const funding=await f.open();await funding.prepare(f.allocation);const receipts=await funding.confirm();workflow=durableClaimApplication(f,funding);
+ const prepared=await workflow.open().prepare({type:'claim-deposit',...receipts});await funding.checkpointClaim({intentId:prepared.intentId,attempted:false});await workflow.open().cancelPrepared(prepared.intentId);
+ assert.equal((await advanceAggregateClaim({application:workflow.open(),funding})).state,'cancelled');assert.equal(workflow.state.sends,0);
+ await funding.reviewRevertedClaim();assert.equal((await advanceAggregateClaim({application:workflow.open(),funding})).state,'review');assert.equal(workflow.state.sends,0);assert.equal(f.state.sends,1);
 });
