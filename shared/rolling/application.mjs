@@ -199,7 +199,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
         token:info.l1ContractAddresses.feeJuiceAddress.toString().toLowerCase(),recipient:fixed.fee};
     }
     const verified=await sdk.prepareFundingClaim({kind,scope:claimScope,receipt,anchor,owner,
-      secrets,...(aggregate?{aggregateIntent:aggregate.intent}:{}),
+      secrets,...(aggregate?{aggregateIntent:aggregate.intent,...(aggregate.aggregateCustody?{aggregateCustody:aggregate.aggregateCustody}:{})}:{}),
       privateFeeArtifact:deployment.privateFee.artifact,ethProvider:fundingProvider,node:session.node,claimStore,contextGuard:guard});
     await guard();check(verified.status==='claim-ready','ROLLING_FUNDING_NOT_READY');return verified.claim;
   }

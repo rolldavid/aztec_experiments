@@ -10,8 +10,8 @@ import { Fr } from '@aztec-labs/foundation/curves/bn254';
 import { AztecAddress } from '@aztec-labs/stdlib/aztec-address';
 import { BarretenbergSync } from '@aztec-foundation/bb.js';
 import { ProtocolContractAddress } from '@aztec-labs/protocol-contracts';
-import { derivePrivateFeeAddress,derivePrivateFeeInstance } from '../shared/private-fee-client.mjs';
-import { fundPrivateFees,recoverPrivateFeeClaim,recoverPrivateFeeFunding,claimSecrets,captureAggregateFundingIntent } from '../shared/private-fee-funding.mjs';
+import { derivePrivateFeeAddress,derivePrivateFeeInstance,derivePrivateFeeBridgeSecret,derivePrivateFeeBridgeSecretHash } from '../shared/private-fee-client.mjs';
+import { fundPrivateFees,recoverPrivateFeeClaim,recoverPrivateFeeFunding,claimSecrets,captureAggregateFundingIntent,captureAggregateFundingCustody } from '../shared/private-fee-funding.mjs';
 import {aggregateFundingAbi} from '../shared/rolling/aggregate-funding.mjs';
 const portal=new Interface(['function ROLLUP() view returns(address)','function UNDERLYING() view returns(address)','function VERSION() view returns(uint256)','function L2_TOKEN_ADDRESS() view returns(bytes32)',
   'function depositToAztecPublic(bytes32 to,uint256 amount,bytes32 secretHash) returns(bytes32 key,uint256 index)','event DepositToAztecPublic(bytes32 indexed to,uint256 amount,bytes32 secretHash,bytes32 key,uint256 index)']);
@@ -194,3 +194,38 @@ for(const [name,mutate] of [
  ['wrong Ethereum nonce',f=>{f.intent.nonce=99;}],
 ])test(`aggregate FPC rejects ${name} without sending`,async()=>{const f=await aggregateClaimFixture();mutate(f);await assert.rejects(f.recover());assert.equal(f.state.calls.length,0);});
 test('aggregate original intent descriptor capture never calls hostile getters',()=>{let calls=0;const intent={};Object.defineProperty(intent,'from',{get(){calls++;throw Error('PRIVATE_SENTINEL');}});assert.throws(()=>captureAggregateFundingIntent(intent),{code:'PRIVATE_FEE_RECOVERY_TRANSACTION_MISMATCH'});assert.equal(calls,0);});
+
+async function usdcPrivateFeeFixture(){
+ const f=await aggregateClaimFixture(),router=new Interface(aggregateFundingAbi),h=n=>'0x'+BigInt(n).toString(16).padStart(64,'0'),a=n=>'0x'+BigInt(n).toString(16).padStart(40,'0');
+ const old=router.parseTransaction({data:f.intent.data}).args[0],salt=new Fr(703),owner=f.input.owner;
+ const secret=await derivePrivateFeeBridgeSecret({salt,owner}),secretHash=await derivePrivateFeeBridgeSecretHash({salt,owner});
+ const plan={beneficiary:sender,relayer:a(70),collateral:{amount:100n,maxUsdc:200n,poolFee:500},collateralSecretHash:old.collateralSecretHash,
+  fee:{amount:4000n,maxUsdc:300n,poolFee:3000},feeSecretHash:secretHash.toString(),bokAmount:300n,bokCommitment:old.bokCommitment,bokSecretHash:old.bokSecretHash,
+  nonce:99n,validAfter:0n,deadline:2000000000n,relayFeeUsdc:10n,authorizationSalt:h(704)};
+ const planHash=keccak256(AbiCoder.defaultAbiCoder().encode([router.getFunction('fundUsdc').inputs[0]],[plan]));
+ Object.assign(f.intent,{from:a(70),nonce:71,value:'0',data:router.encodeFunctionData('fundUsdc',[plan,'0x1234','0x5678']).toLowerCase()});Object.assign(f.intent.expected,{kind:'aggregate-usdc-funding',planHash});
+ Object.assign(f.record,{sender:a(70),nonce:'71'});Object.assign(f.state.transaction,{...f.intent,value:0n});f.state.receipt.from=a(70);
+ f.state.receipt.logs[0]={address:f.intent.to,...router.encodeEventLog(router.getEvent('UsdcFunded'),[sender,planHash,a(70),100,4000,300,150,200,10,150])};
+ f.state.receipt.logs[2]={address:portalAddress,...portal.encodeEventLog(portal.getEvent('DepositToAztecPublic'),[privateFeeAddress.toString(),4000,secretHash.toString(),h(112),9])};
+ const input={node:f.input.node,ethProvider:f.input.ethProvider,owner,walletSecret:f.input.walletSecret,privateFeeArtifact:artifact,record:f.record,aggregateIntent:f.intent,
+  aggregateCustody:{kind:'aggregate-usdc-custody-v1',planHash,beneficiary:sender,privateFeeSalt:salt.toString()},expectedChainId:'1',expectedVersion:'2'};
+ return {...f,input,salt,secret,secretHash,recover:()=>recoverPrivateFeeClaim(input)};
+}
+test('USDC FPC recovers saved random salt independently of relayer or consent nonce',async()=>{
+ const f=await usdcPrivateFeeFixture(),claim=await f.recover();assert.equal(claim.salt.toString(),f.salt.toString());assert.equal(claim.secret.toString(),f.secret.toString());assert.equal(f.record.sender,'0x0000000000000000000000000000000000000046');assert.equal(f.record.nonce,'71');assert.equal(f.state.calls.length,0);
+ const deterministic=await claimSecrets({walletSecret:f.input.walletSecret,owner:f.input.owner,record:f.record});assert.notEqual(deterministic.secretHash.toString(),f.secretHash.toString());
+});
+for(const [label,mutate] of [
+ ['missing custody',f=>delete f.input.aggregateCustody],
+ ['changed salt',f=>{f.input.aggregateCustody.privateFeeSalt=new Fr(999).toString();}],
+ ['changed beneficiary',f=>{f.input.aggregateCustody.beneficiary=f.record.sender;}],
+ ['changed plan binding',f=>{f.input.aggregateCustody.planHash='0x'+'88'.repeat(32);}],
+ ['changed owner',f=>{f.input.owner=AztecAddress.fromFieldUnsafe(new Fr(999));}],
+ ['changed actual transaction nonce',f=>{f.record.nonce='99';}],
+ ['unpublished FPC',f=>{f.input.node.getContract=async()=>null;}],
+])test(`USDC FPC rejects ${label} without any send`,async()=>{const f=await usdcPrivateFeeFixture();mutate(f);await assert.rejects(f.recover());assert.equal(f.state.calls.length,0);});
+test('USDC private custody descriptor grammar is closed and does not invoke getters',async()=>{
+ const f=await usdcPrivateFeeFixture();let touched=0;Object.defineProperty(f.input.aggregateCustody,'privateFeeSalt',{get(){touched++;throw Error('PRIVATE_SENTINEL');}});assert.throws(()=>captureAggregateFundingCustody(f.input.aggregateCustody,captureAggregateFundingIntent(f.intent)));assert.equal(touched,0);
+ const g=await usdcPrivateFeeFixture();g.input.aggregateCustody.extra='PRIVATE_SENTINEL';await assert.rejects(g.recover());
+ const e=await aggregateClaimFixture();assert.throws(()=>captureAggregateFundingCustody({kind:'aggregate-usdc-custody-v1'},captureAggregateFundingIntent(e.intent)));
+});

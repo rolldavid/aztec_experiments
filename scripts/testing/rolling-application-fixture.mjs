@@ -454,6 +454,45 @@ export async function loadRollingFixtureSDK() {
   return Object.assign({},...modules);
 }
 
+// Reuse the production-branded actor for the two existing Bok user operations.
+// Parent owns real chain/miner/funding and keeps this nonserializable handle in RAM.
+export async function createRollingBokApplicationPort({node,network,board,bok,fees,portal,directory,deadlineAt,proofsEnabled,observation}) {
+  assert.equal(proofsEnabled,false,'This development journey must disable native proofs');assert.equal(String(network.chainId),'31337');
+  let adapter,rpc,service,actor,restoreIndexedDB,closed;const cleanup={};
+  const close=()=>closed??=(async()=>{await closeRollingResources([
+    ['actor',()=>actor?.close()],['service',()=>service?.close()],['rpc',()=>rpc?.close()],
+    ['indexedDB',()=>restoreIndexedDB?.()],['artifacts',()=>{if(adapter){try{adapter.verify();}finally{adapter.close();}}}]],cleanup);})();
+  try {
+    const {installRollingNativeArtifacts}=await import('./rolling-native-artifacts.mjs');adapter=installRollingNativeArtifacts();
+    const sdk=await loadRollingFixtureSDK();await import('../../apps/src/billboard/user/engine.js');const routing=globalThis.BillboardPrivateFeeRouting;
+    await fs.mkdir(directory,{recursive:true,mode:0o700});
+    const {startProverService}=await import('../../prover/service.mjs');
+    let sends=0;rpc=await startNodeRpc(node,()=>{sends++;},{beforeForward:()=>{}});
+    service=await startProverService({host:'127.0.0.1',port:0,chainId:network.chainId,rollupVersion:network.version,
+      applicationProfile:'rolling',board:String(board.instance.address),privateBokAddress:bok.config.contractAddress,
+      privateFeeAddress:String(fees.browserFixture.instance.address),proofs:'disabled',origins:[],threads:1,
+      queueDirectory:directory,queryNode:{url:rpc.url,rollupAddress:network.rollup,maxLagSeconds:120}});
+    const endpoint=`http://127.0.0.1:${service.address.port}`;
+    const trusted=await sdk.createTrustedPrivateNode({url:endpoint+'/v1/node',expectedNetworkScope:network,proofsEnabled,allowLocalDev:true});
+    const idb=await import('fake-indexeddb'),keys=Object.keys(idb).filter(k=>k.startsWith('IDB')||k==='indexedDB');
+    const previous=keys.map(k=>[k,Object.getOwnPropertyDescriptor(globalThis,k)]);
+    restoreIndexedDB=()=>{for(const [key,descriptor]of previous)if(descriptor)Object.defineProperty(globalThis,key,descriptor);else delete globalThis[key];};
+    for(const key of keys)Object.defineProperty(globalThis,key,{value:key==='indexedDB'?new idb.IDBFactory():idb[key],writable:true,configurable:true});
+    const {createRollingApplicationActor}=await import('./rolling-application-actor.mjs');const storageDirectory=path.join(directory,'application-journal');
+    actor=await createRollingApplicationActor({sdk,routing,node:trusted,endpoint,network,proofsEnabled,board,bok,fees,portal,
+      storageDirectory,dataDirectory:path.join(directory,'application-pxe'),confirmationDeadlineAt:deadlineAt,
+      externalActivity:()=>({proofJobs:service.stats().submitted,transportSends:sends})});
+    const {createEncryptedJournalSlot}=await import('../../shared/journal-record.mjs');
+    const {createFileJournalStorage}=await import('../../apps/src/billboard/user/transaction-journal-store.mjs');
+    const scope={account:String(actor.owner),...network,board:String(board.instance.address),portal:portal.toLowerCase()};
+    const slot=await createEncryptedJournalSlot({storage:createFileJournalStorage(storageDirectory),walletSecret:String(fees.authorAccount.secret),walletSalt:String(fees.authorAccount.salt),
+      scopeText:JSON.stringify(['ROLLING_WORKFLOW_V1',sdk.l2JournalScopeText(scope)]),keyDomain:'ROLLING_WORKFLOW_V1'});
+    return Object.freeze({actor,close,async readWorkflow(){actor.contextGuard();const saved=await slot.read();actor.contextGuard();assert(saved.value?.bok);return saved.value;},
+      observe(){const stats=service.stats();assert.deepEqual(stats,{jobs:0,bytes:0,running:false,submitted:0,completed:0,failed:0});Object.assign(observation,{applicationActor:true,proofsEnabled:false,proofJobs:stats.submitted,transportSends:sends,cleanup});},
+      toJSON(){throw Error('Private Bok application handle cannot be serialized');}});
+  }catch(error){try{await close();}catch(cleanupError){throw new AggregateError([error,cleanupError],'Bok application setup and cleanup failed');}throw error;}
+}
+
 export async function createRollingEvidenceDirectory(root) {
   const parent=path.join(root,'execution/evidence/G06');
   await fs.mkdir(parent,{recursive:true,mode:0o700});

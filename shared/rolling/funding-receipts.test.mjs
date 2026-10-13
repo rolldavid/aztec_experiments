@@ -44,7 +44,7 @@ before(()=>{originalFetch=globalThis.fetch;globalThis.fetch=async(url,init)=>{
 after(()=>{globalThis.fetch=originalFetch;});
 before(async()=>{artifact=JSON.parse(fs.readFileSync(new URL('../../apps/src/billboard/private_fee_artifact.json',import.meta.url)));canonical=await derivePrivateFeeInstance(artifact);});
 after(async()=>{await BarretenbergSync.destroySingleton();});
-async function fixture(kind='collateral') {
+async function fixture(kind='collateral',retainedFeeSalt=null) {
  const s={chainId:'31337',version:'2',rollup:addr(10),portal:addr(11),recipient:kind==='private-fee'?canonical.address.toString():h(12),...(kind==='collateral'?{}:{token:addr(13)})};
  const r={txHash:h(100),blockHash:h(101),blockNumber:6,sender:addr(14),nonce:'3',amount:'5000',leafIndex:'9',messageKey:null,secretHash:null};
  const owner=h(20),walletSecret=h(21),walletSalt=h(22),salt=h(23);let secret,content,account,secrets;
@@ -52,7 +52,7 @@ async function fixture(kind='collateral') {
   secrets={walletSecret,walletSalt};const derived=await deriveBoardDepositSecret({...secrets,owner,nonce:r.nonce,scope:{l1ChainId:s.chainId,rollupVersion:s.version,rollupAddress:s.rollup,boardAddress:s.recipient,portalAddress:s.portal,depositor:r.sender}});secret=derived.secret;
   content=await sha256Field(getBytes(AbiCoder.defaultAbiCoder().encode(['bytes32','uint256','uint256','address','bytes32','uint256','address','uint256'],[encodeBytes32String('AZTEC_BB_CLAIM_V1'),1,s.chainId,s.portal,s.recipient,s.version,r.sender,r.amount])));
  } else if(kind==='private-fee') {
-  secrets={walletSecret};const derivedSalt=await poseidon2HashWithSeparator([Fr.fromString(walletSecret),new Fr(BigInt(s.chainId)),new Fr(BigInt(s.version)),Fr.fromString(s.recipient),new Fr(BigInt(r.sender)),new Fr(BigInt(r.nonce))],0x42424601);
+  secrets={walletSecret};const derivedSalt=retainedFeeSalt ? Fr.fromString(retainedFeeSalt) : await poseidon2HashWithSeparator([Fr.fromString(walletSecret),new Fr(BigInt(s.chainId)),new Fr(BigInt(s.version)),Fr.fromString(s.recipient),new Fr(BigInt(r.sender)),new Fr(BigInt(r.nonce))],0x42424601);
   secret=(await derivePrivateFeeBridgeSecret({salt:derivedSalt,owner})).toString();
   content=await sha256Field(getBytes(new Interface(['function claim(bytes32,uint256)']).encodeFunctionData('claim',[s.recipient,r.amount])));
  } else {
@@ -217,3 +217,53 @@ test('aggregate Bok preserves private recipient binding and FPC preserves determ
 test('aggregate claim still rejects post-witness reorg and waits for L1 finality',async()=>{const f=await aggregateFixture('bok');f.state.finalized.number=5;assert.deepEqual(await prepareFundingClaim(f.input),{status:'waiting',reason:'l1-finality'});const g=await aggregateFixture('private-fee'),original=g.backend.getL1ToL2MessageMembershipWitness;g.backend.getL1ToL2MessageMembershipWitness=async(...a)=>{const value=await original(...a);g.state.blockHash=h(999);return value;};await assert.rejects(prepareFundingClaim(g.input),{code:'ROLLING_FUNDING_REORG'});});
 
 test('aggregate context property accessor cannot execute during claim preparation',async()=>{const f=await aggregateFixture();let touched=0;Object.defineProperty(f.input,'aggregateIntent',{get(){touched++;throw Error('PRIVATE_SENTINEL');}});await assert.rejects(prepareFundingClaim(f.input),{code:'ROLLING_FUNDING_INVALID'});assert.equal(touched,0);});
+
+// USDC relayer identity is deliberately distinct from all beneficiary custody.
+async function usdcAggregateFixture(kind='collateral') {
+ const privateFeeSalt=h(701),f=await fixture(kind,privateFeeSalt),r=f.input.receipt,s=f.input.scope,abi=new Interface(aggregateFundingAbi),beneficiary=r.sender,relayer=addr(70);
+ const portals={collateralPortal:kind==='collateral'?s.portal:addr(60),feePortal:kind==='private-fee'?s.portal:addr(61),bokPortal:kind==='bok'?s.portal:addr(62)};
+ const plan={beneficiary,relayer,collateral:{amount:'5000',maxUsdc:'100',poolFee:500},collateralSecretHash:kind==='collateral'?r.secretHash:h(30),
+  fee:{amount:'5000',maxUsdc:'200',poolFee:3000},feeSecretHash:kind==='private-fee'?r.secretHash:h(31),
+  bokAmount:'5000',bokCommitment:kind==='bok'?f.eventArgs[0]:h(32),bokSecretHash:kind==='bok'?r.secretHash:h(33),nonce:'99',validAfter:'0',deadline:'2000000000',relayFeeUsdc:'10',authorizationSalt:h(702)};
+ const planHash=keccak256(AbiCoder.defaultAbiCoder().encode([abi.getFunction('fundUsdc').inputs[0]],[plan]));
+ const log=(address,contract,name,args)=>({address,...contract.encodeEventLog(contract.getEvent(name),args)}),selected=f.state.receipt.logs[0];
+ f.state.receipt.logs=[log(addr(63),abi,'UsdcFunded',[beneficiary,planHash,relayer,5000,5000,5000,50,100,10,150]),
+  kind==='collateral'?selected:log(portals.collateralPortal,boardAbi,'Deposited',[beneficiary,5000,plan.collateralSecretHash,h(34),4]),
+  kind==='private-fee'?selected:log(portals.feePortal,feeAbi,'DepositToAztecPublic',[canonical.address.toString(),5000,plan.feeSecretHash,h(35),5]),
+  kind==='bok'?selected:log(portals.bokPortal,bokAbi,'Deposited',[plan.bokCommitment,5000,h(36),6])];
+ r.sender=relayer;r.nonce='71';f.state.tx={...f.state.tx,from:relayer,nonce:71,to:addr(63),value:0n,data:abi.encodeFunctionData('fundUsdc',[plan,'0x1234','0x5678']).toLowerCase()};f.state.receipt.to=addr(63);f.state.receipt.from=relayer;
+ f.input.ethProvider.getCode=async()=> '0x6000';
+ f.input.aggregateIntent={from:relayer,to:addr(63),nonce:71,chainId:s.chainId,data:f.state.tx.data,value:'0',txHash:r.txHash,
+  expected:{kind:'aggregate-usdc-funding',routerCodeHash:keccak256('0x6000'),...portals,privateFpc:canonical.address.toString(),planHash}};
+ f.input.aggregateCustody={kind:'aggregate-usdc-custody-v1',planHash,beneficiary,privateFeeSalt};
+ f.input.claimStore={load:async(scope,hash)=>{assert.equal(scope.depositor,beneficiary);assert.equal(hash,plan.collateralSecretHash);return {secret:f.secret,secretHash:hash};}};
+ return {...f,plan,routerAbi:abi};
+}
+for(const kind of ['collateral','private-fee','bok'])test(`USDC aggregate ${kind} keeps relayer receipt and beneficiary private custody distinct`,async()=>{
+ const f=await usdcAggregateFixture(kind),result=await prepareFundingClaim(f.input);assert.equal(result.status,'claim-ready');assert.equal(f.input.receipt.sender,addr(70));assert.equal(f.input.receipt.nonce,'71');
+ assert.equal(result.evidence.content,f.content);assert(!JSON.stringify(result.evidence).includes(f.input.aggregateCustody.privateFeeSalt));assert(!JSON.stringify(result.evidence).includes('aggregateCustody'));
+ if(kind==='collateral')assert.deepEqual(result.claim.args,[f.plan.beneficiary,'5000',f.secret,'9']);
+ if(kind==='private-fee')assert.equal(result.claim.bridgeClaim.salt,h(701));
+});
+for(const [label,kind,mutate] of [
+ ['missing private context','bok',f=>delete f.input.aggregateCustody],
+ ['wrong retained plan hash','bok',f=>{f.input.aggregateCustody.planHash=h(999);}],
+ ['wrong beneficiary','collateral',f=>{f.input.aggregateCustody.beneficiary=addr(99);}],
+ ['missing claim store','collateral',f=>delete f.input.claimStore],
+ ['absent saved board secret','collateral',f=>{f.input.claimStore.load=async()=>null;}],
+ ['wrong saved board secret','collateral',f=>{f.input.claimStore.load=async()=>({secret:h(999),secretHash:f.input.receipt.secretHash});}],
+ ['wrong retained FPC salt','private-fee',f=>{f.input.aggregateCustody.privateFeeSalt=h(999);}],
+ ['wrong FPC owner','private-fee',f=>{f.input.owner=h(999);}],
+ ['wrong Bok owner','bok',f=>{f.input.owner=h(999);}],
+ ['fake user transaction sender','collateral',f=>{f.input.receipt.sender=f.plan.beneficiary;}],
+ ['missing third allocation','private-fee',f=>f.state.receipt.logs.pop()],
+])test(`USDC aggregate rejects ${label} before witness`,async()=>{const f=await usdcAggregateFixture(kind);mutate(f);await assert.rejects(prepareFundingClaim(f.input));assert(!f.state.reads.includes('witness'));});
+test('USDC custody rejects getters/imported public context and snapshots before awaits',async()=>{
+ const f=await usdcAggregateFixture();let calls=0;Object.defineProperty(f.input.aggregateCustody,'privateFeeSalt',{get(){calls++;throw Error('PRIVATE_SENTINEL');}});await assert.rejects(prepareFundingClaim(f.input));assert.equal(calls,0);
+ const g=await usdcAggregateFixture('private-fee');g.input.contextGuard=async()=>{g.input.aggregateCustody.privateFeeSalt=h(999);g.input.aggregateCustody.beneficiary=addr(99);};assert.equal((await prepareFundingClaim(g.input)).status,'claim-ready');
+ const k=await usdcAggregateFixture('bok');k.input.receipt.aggregateCustody=k.input.aggregateCustody;await assert.rejects(prepareFundingClaim(k.input),{code:'ROLLING_FUNDING_INVALID'});
+});
+test('USDC claims retain finality and post-witness canonical checks',async()=>{
+ const f=await usdcAggregateFixture('private-fee');f.state.finalized.number=5;assert.deepEqual(await prepareFundingClaim(f.input),{status:'waiting',reason:'l1-finality'});
+ const g=await usdcAggregateFixture('bok'),original=g.backend.getL1ToL2MessageMembershipWitness;g.backend.getL1ToL2MessageMembershipWitness=async(...args)=>{const value=await original(...args);g.state.blockHash=h(999);return value;};await assert.rejects(prepareFundingClaim(g.input),{code:'ROLLING_FUNDING_REORG'});
+});

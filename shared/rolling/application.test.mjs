@@ -115,16 +115,17 @@ test('funding recovery mints private fee credit in the same collateral transacti
  assert.equal(feeReads,2);assert.equal(f.state.claimReads.length,2);assert.equal(f.state.sends,1);
  assert.equal(payments.length,2);assert(payments.every(input=>input.claim===bridgeClaim));
 });
-function aggregateClaimFixture(){
+function aggregateClaimFixture(usdc=false){
  const f=fundingFixture(),feeReceipt={...f.receipt,amount:'200',leafIndex:'3'},bokReceipt={...f.receipt,amount:'300',leafIndex:'4'};
  f.options.deployment.bok={address:hex(5),operator:hex(6),pluginId:hex(7),artifact:bokArtifact};
  const retained={intent:{expected:{kind:'aggregate-funding'}},recipientSalt:hex(91),bridgeSecret:hex(92),
   bokScope:{...f.options.deployment.network,portal:'0x'+'77'.repeat(20),recipient:hex(5),token:'0x'+'88'.repeat(20)}};
+ if(usdc){retained.intent.expected.kind='aggregate-usdc-funding';retained.aggregateCustody={kind:'aggregate-usdc-custody-v1',planHash:hex(94),beneficiary:'0x'+'99'.repeat(20),privateFeeSalt:hex(95)};}
  f.options.funding.loadAggregate=async()=>f.state.missingContext?null:retained;
  f.options.accountSession.node.getNodeInfo=async()=>({l1ContractAddresses:{feeJuicePortalAddress:'0x'+'55'.repeat(20),feeJuiceAddress:'0x'+'66'.repeat(20)}});
  f.options.sdk.BatchCall=class {constructor(wallet,interactions){assert.equal(wallet,f.options.accountSession.wallet);this.name='batch';this.interactions=interactions;}};
  f.options.sdk.prepareFundingClaim=async input=>{
-  f.state.claimReads.push(input);assert.equal(input.aggregateIntent,retained.intent);
+  f.state.claimReads.push(input);assert.equal(input.aggregateIntent,retained.intent);assert.equal(input.aggregateCustody,retained.aggregateCustody);
   if(input.kind==='collateral')return {status:'claim-ready',claim:{contract:hex(1),method:'claim_deposit',args:[f.receipt.sender,'100',hex(46),'2']}};
   if(input.kind==='private-fee')return {status:'claim-ready',claim:{contract:hex(2),kind:'private-fee-bridge',bridgeClaim:{amount:'200',salt:hex(90),leafIndex:'3'}}};
   assert.deepEqual(input.secrets,{recipientSalt:hex(91),bridgeSecret:hex(92)});assert.deepEqual(input.scope,retained.bokScope);
@@ -133,10 +134,10 @@ function aggregateClaimFixture(){
  f.state.payments=[];f.options.sdk.preparePrivateFeePayment=async input=>{f.state.payments.push(input);return {availableCredit:200n};};
  return {...f,retained,action:{type:'claim-deposit',receipt:f.receipt,feeReceipt,bokReceipt}};
 }
-test('aggregate recovery batches collateral and Bok claims with bridged fees; encrypted reload never pays again',async()=>{
- const f=aggregateClaimFixture(),prepared=await f.restart().prepare(f.action);
+for(const usdc of [false,true])test(`${usdc?'USDC':'ETH'} aggregate recovery batches collateral and Bok claims with bridged fees; encrypted reload never pays again`,async()=>{
+ const f=aggregateClaimFixture(usdc),prepared=await f.restart().prepare(f.action);
  assert.equal(f.state.sends,0);assert.equal(f.state.claimReads.length,3);
- for(const secret of [hex(46),hex(90),hex(91),hex(92)]){
+ for(const secret of [hex(46),hex(90),hex(91),hex(92),hex(95)]){
   assert(!JSON.stringify(prepared).includes(secret));assert([...f.values.values()].every(value=>!value.includes(secret)));
  }
  assert.equal((await f.restart().submitPrepared(prepared.intentId)).status,'confirmed');

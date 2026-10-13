@@ -89,12 +89,13 @@ The existing deployment engine selects RollingBoard, binds its portal, observes
 Ready and checks canonical configuration. It must still pass the independent
 fresh-identity/origin rehearsal; code support alone is not deployment acceptance.
 
-**Current integration gaps:** the development deployment engine needs its native
-proof-mode/readiness and uncertain-transaction recovery checks qualified. The
-Rolling `plugins/operator.mjs` supports `fees`, `claim-fees` and `deploy-escrow`;
-PrivateBok portal binding, activation and registration still require implementation
-in this profile. Do not switch to the legacy account-linked escrow to fill those
-gaps or submit unjournaled transactions manually.
+The development engine reads the node's native proof configuration and uses
+reconciliation-only recovery for uncertain Rolling transactions. The Rolling
+`plugins/operator.mjs` supports `fees`, `claim-fees`, `deploy-escrow`,
+`deploy-portal`, `bind`, `activate`, `register` and `status`. Each lifecycle step
+verifies its canonical prerequisites and retains uncertain signed transactions.
+The fresh-identity deployment rehearsal and real-proof testnet qualification
+remain open; passing component checks does not establish either acceptance.
 
 The existing constructor commands take a public config, separate private actor
 file and private journal, as documented in [plugin deployment](../plugins/DEPLOYMENT.md).
