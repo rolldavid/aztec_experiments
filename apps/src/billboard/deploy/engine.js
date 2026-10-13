@@ -287,7 +287,8 @@
     try {
     const preflightProvider=new ethers.JsonRpcProvider(config.ethRpcUrl);
     ownedProviders.add(preflightProvider);
-    const {nodeInfo,l1Contracts}=await a.preflightDeploymentNetwork(manifest,{node:rawNode,provider:preflightProvider,ethers});
+    const {nodeInfo,l1Contracts,proofsEnabled}=await a.preflightDeploymentNetwork(manifest,{node:rawNode,provider:preflightProvider,ethers});
+    if(typeof proofsEnabled!=='boolean')throw new Error('Verified native proof configuration is required');
     const proxyCode=await a.boundedTransactionRead(()=>preflightProvider.getCode(CREATE2_PROXY),20000);
     if(typeof proxyCode!=='string'||proxyCode.toLowerCase()!=='0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe03601600081602082378035828234f58015156039578182fd5b8082525050506014600cf3')throw new Error('Required CREATE2 proxy runtime is missing or unsupported');
     const expectedClass=await a.getContractClassFromArtifact(a.loadContractArtifact(artifact));
@@ -393,7 +394,7 @@
     // ============================================================
     env.progress?.('preparing');
     log('Step 3: Initializing CRS...', 'info');
-    if(a.provingEnabledForNode(nodeInfo))await initCRS();
+    if(proofsEnabled)await initCRS();
     log('  CRS ready.', 'success');
 
     // ============================================================
@@ -404,7 +405,7 @@
     const storeConfig = { ...l1Contracts, l1ChainId: nodeInfo.l1ChainId, accountAddress: address.toString(), dataDirectory: dataDirPrefix + l1Contracts.rollupAddress };
     const store = await createStore(storeConfig);
     const pxe = await a.createPXE(aztecNode, {
-      proverEnabled: a.provingEnabledForNode(nodeInfo), autoSync: true,
+      proverEnabled: proofsEnabled, autoSync: true,
       dataDirectory: dataDirPrefix + l1Contracts.rollupAddress,
     }, { store });
     log('  PXE created.', 'success');
@@ -501,7 +502,7 @@
     log('  Predicted L2 address: ' + l2Addr.toString(), 'info');
 
     if (typeof env.createTransactionJournal !== 'function') throw Object.assign(new Error('Deployment recovery storage is required.'), { code: 'BB_JOURNAL_INVALID' });
-    const deploymentJournal = await env.createTransactionJournal({ walletSecret: secretKeyHex, walletSalt: saltVal,
+    const deploymentJournal = await env.createTransactionJournal({ reconcileOnly:rolling, walletSecret: secretKeyHex, walletSalt: saltVal,
       scope: { account: address.toString().toLowerCase(), chainId: String(nodeInfo.l1ChainId), rollup: rollupAddr.toLowerCase(),
         version: String(version), board: l2Addr.toString().toLowerCase(), portal: '0x' + '0'.repeat(40) },
       Tx: a.Tx, node: rawNode, contextGuard: config.contextGuard });
@@ -511,7 +512,7 @@
     const unresolved=()=>Object.assign(new Error('The original deployment transaction requires reconciliation. Preserve its recovery records.'),{code:'BB_RECOVERY_REQUIRED'});
     try { recoveredDeployment = await deploymentJournal.reconcilePrevious(); }
     catch(error) {
-      if(error?.code!=='BB_RECOVERY_REQUIRED'||typeof deploymentJournal.inspect!=='function'||typeof deploymentJournal.allowReplacement!=='function')throw error;
+      if(rolling||error?.code!=='BB_RECOVERY_REQUIRED'||typeof deploymentJournal.inspect!=='function'||typeof deploymentJournal.allowReplacement!=='function')throw error;
       const saved=await deploymentJournal.inspect();
       if(saved?.operation!==publicationOperation&&saved?.operation!==deploymentOperation&&!/^bind-portal:0x[0-9a-f]{40}$/.test(saved?.operation??''))throw error;
       await deploymentJournal.allowReplacement(saved.operation);

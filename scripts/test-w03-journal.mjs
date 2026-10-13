@@ -47,6 +47,16 @@ for(const backend of ['file','indexeddb']) {
   assert.equal(recovered.operation,operation);assert.equal(recovered.receipt.executionResult,'success');assert.equal(f.sent.length,0);
   await restarted.assertCanStart();f.reorg();await assert.rejects(restarted.reconcilePrevious(),{code:'BB_SUBMISSION_UNKNOWN'});
  }));
+ test(`${backend}: operator reconcile-only mode preserves dropped valid intent without any resend`,()=>withStorage(async (f,{storage})=>{
+  const first=await f.newSession();first.setOperation('deploy-rolling-board');await first.prepare(f.tx,await first.assertCanStart());
+  const key=createHash('sha256').update(l2JournalScopeText(f.opts.scope)).digest('hex'),before=await storage.read(key);
+  const reopened=await f.newSession({reconcileOnly:true});await assert.rejects(reopened.reconcilePrevious(),{code:'BB_RECOVERY_REQUIRED'});await assert.rejects(reopened.recover(),{code:'BB_RECOVERY_REQUIRED'});assert.equal(f.sent.length,0);assert.equal(await storage.read(key),before);
+  f.setStatus('checkpointed');assert.equal((await reopened.reconcilePrevious()).receipt.executionResult,'success');assert.equal(f.sent.length,0);
+ }));
+ test(`${backend}: reconcile-only still blocks canonical-to-dropped race`,()=>withStorage(async f=>{
+  const j=await f.newSession();j.setOperation('deploy-rolling-board');await j.prepare(f.tx,await j.assertCanStart());f.setStatus('checkpointed');
+  const reopened=await f.newSession({reconcileOnly:true});assert.equal((await reopened.inspectSavedRecovery('deploy-rolling-board',String(f.tx.getTxHash()))).status,'canonical');f.setStatus('dropped');await assert.rejects(reopened.reconcilePrevious(),{code:'BB_RECOVERY_REQUIRED'});assert.equal(f.sent.length,0);
+ }));
  test(`${backend}: crash before broadcast recovers identical actual SDK transaction without a new proof`,()=>withStorage(async f=>{
   const first=await f.newSession();await first.prepare(f.tx,await first.assertCanStart());assert.equal(f.sent.length,0);
   const resumed=await f.newSession();await assert.rejects(resumed.assertCanStart(),{code:'BB_RECOVERY_REQUIRED'});
