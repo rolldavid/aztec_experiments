@@ -43,7 +43,7 @@ function fixture({rolling=false,lostBinding=false,lostDeploy=false,existing=true
  let bound=null,stops=0,deploys=0,bindings=0,finalized=0;
  const wordHash=(label,words)=>'0x'+(BigInt(ethers.sha256(ethers.AbiCoder.defaultAbiCoder().encode(['bytes32',...words.map(()=> 'uint256')],[ethers.encodeBytes32String(label),...words])))>>8n).toString(16).padStart(64,'0');
  const configHash=wordHash('AZTEC_BB_CONFIG_V1',[1n,31337n,BigInt(rollup),2n,5n,1n,100n,10n,64n,10n,16n]);
- const node={getConfig:async()=>({realProofs:false}),getNodeInfo:async()=>({l1ChainId:31337,rollupVersion:5}),getL1ContractAddresses:async()=>({rollupAddress:rollup,inboxAddress:inbox,outboxAddress:outbox}),
+ const node={getNodeInfo:async()=>({realProofs:false,l1ChainId:31337,rollupVersion:5}),getL1ContractAddresses:async()=>({rollupAddress:rollup,inboxAddress:inbox,outboxAddress:outbox}),
   getBlockNumber:async()=>1,getPublicStorageAt:async()=>new Fr(0),getContract:async()=>existing?(rolling?boardInstance:instance):undefined,
   getTxReceipt:async hash=>receipts.get(String(hash)),getBlock:async()=>({hash:blockHash}),getChainTips:async()=>({finalized:{block:{number:finalized}}}),
   sendTx:async tx=>{if(tx.kind==='deploy'){existing=true;}else {bound=tx.kind.slice(5);}
@@ -224,4 +224,25 @@ test('Rolling anchor reader guards original receipt twice and rejects terminal f
  const node={getTxReceipt:async()=>{reads++;return receipt;},getBlock:async()=>({hash:field(2)})};
  await readAnchor({node,receipt,read:fn=>fn(),contextGuard:async()=>{guards++;}});assert.equal(guards,2);assert.equal(reads,2);
  node.getTxReceipt=async()=>({...receipt,executionResult:'reverted'});await assert.rejects(readAnchor({node,receipt,read:fn=>fn()}),/unavailable/);
+});
+
+test('deployment provider observes changed code immediately without weakening runtime verification',async()=>{
+ const f=fixture();let options;
+ f.env.ethers.JsonRpcProvider=class{constructor(_url,_network,value){options=value;return f.provider;}};
+ const stop=Error('focused provider construction');f.env.aztec.preflightDeploymentNetwork=async()=>{throw stop;};
+ await assert.rejects(f.run(),error=>error===stop);assert.equal(options.cacheTimeout,-1);
+ // Actual installed Ethers cache; only its transport result is a labelled fixture.
+ class CodeProvider extends ethers.JsonRpcProvider {
+  code='0x';reads=0;
+  async _perform(request){assert.equal(request.method,'getCode');this.reads++;return this.code;}
+ }
+ const address='0x'+'1'.repeat(40),runtime=expectedPortalRuntime(runtimeMetadata,f.runtimeValues);
+ for(const [cacheTimeout,expectedReads]of [[250,1],[options.cacheTimeout,2]]){
+  const provider=new CodeProvider('http://127.0.0.1:1',31337,{staticNetwork:true,cacheTimeout});
+  try{assert.equal(await provider.getCode(address),'0x');provider.code=runtime;const observed=await provider.getCode(address);
+   assert.equal(provider.reads,expectedReads);
+   if(cacheTimeout===250)assert.throws(()=>verifyPortalRuntime(observed,runtimeMetadata,f.runtimeValues),/does not match/);
+   else assert.equal(verifyPortalRuntime(observed,runtimeMetadata,f.runtimeValues),true);
+  }finally{provider.destroy();}
+ }
 });
