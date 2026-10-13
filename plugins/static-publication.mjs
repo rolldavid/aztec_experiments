@@ -62,10 +62,10 @@ export async function createStaticPublication({directory:root,artifactRoot,origi
  assert(state.schema===1&&state.threads&&Number.isSafeInteger(state.bytes)&&state.bytes>=0&&state.bytes<=maxBytes&&Number.isSafeInteger(state.files)&&state.files>=0&&state.files<=8192&&Object.keys(state.threads).length<=maxThreads);
  // Reject incomplete filesystem transactions before accepting more work.
  // Immutable directories left after rename are reconciled against their receipt.
- let roots=0;for await(const entry of await fs.opendir(root)){
+ const orphans=new Set();let roots=0;for await(const entry of await fs.opendir(root)){
   assert(++roots<=maxThreads+1);if(entry.name==='catalog.json'){assert(entry.isFile()&&!entry.isSymbolicLink());continue;}
   assert(hex(entry.name,64)&&entry.isDirectory()&&!entry.isSymbolicLink());let revisions=0;
-  for await(const child of await fs.opendir(path.join(root,entry.name)))assert(++revisions<=maxRevisions&&hex(child.name,40)&&child.isDirectory()&&!child.isSymbolicLink());
+  for await(const child of await fs.opendir(path.join(root,entry.name))){assert(++revisions<=maxRevisions&&hex(child.name,40)&&child.isDirectory()&&!child.isSymbolicLink());if(!state.threads[entry.name]?.revisions?.[child.name])orphans.add(entry.name+'/'+child.name);}
  }
  let bytes=0,files=0;
  for(const [id,thread] of Object.entries(state.threads)){
@@ -88,7 +88,8 @@ export async function createStaticPublication({directory:root,artifactRoot,origi
  async function exclusive(fn){if(busy||poisoned)throw reject();busy=true;try{return await fn();}catch{throw reject();}finally{busy=false;}}
  return Object.freeze({
   async publish(receipt){return exclusive(async()=>{
-   const b=binding(receipt),old=state.threads[b.id];
+   const b=binding(receipt),old=state.threads[b.id],pending=b.id+'/'+b.revision;
+   assert(orphans.size===0||(orphans.size===1&&orphans.has(pending)),'Retained publication must be reconciled first');
    if(old){assert(old.repositoryId===b.repositoryId&&old.threadId===b.threadId);const same=old.revisions[b.revision];if(same){assert.deepEqual(same.binding,b);return urls(b);}assert.equal(old.latest,b.readRevision);assert(Object.keys(old.revisions).length<maxRevisions);assert(!Object.values(old.revisions).some(m=>m.binding.invocationId===b.invocationId));}
    else{assert.equal(b.readRevision,null);assert(Object.keys(state.threads).length<maxThreads);}
    const data=await archives(receipt,artifactRoot,b),fileCount=data.files.length+3;assert(state.bytes+data.bytes<=maxBytes&&state.files+fileCount<=8192);
@@ -105,11 +106,11 @@ export async function createStaticPublication({directory:root,artifactRoot,origi
      const dirs=new Set([staging]);
      for(const f of data.files){const dest=path.join(staging,'files',f.path);await fs.mkdir(path.dirname(dest),{recursive:true,mode:0o700});await write(dest,f.bytes);let d=path.dirname(dest);while(d!==staging){dirs.add(d);d=path.dirname(d);}}
      await write(path.join(staging,'publication.json'),JSON.stringify(metadata));for(const dir of [...dirs].sort((a,b)=>b.length-a.length))await sync(dir);
-     await fs.rename(staging,target);renamed=true;await sync(parent);await sync(root);
+     await fs.rename(staging,target);renamed=true;orphans.add(pending);await sync(parent);await sync(root);
     }finally{if(!renamed)try{await fs.rm(staging,{recursive:true,force:true});}catch{poisoned=true;throw reject();}}
    }
    const next={...state,bytes:state.bytes+data.bytes,files:state.files+fileCount,threads:{...state.threads,[b.id]:{repositoryId:b.repositoryId,threadId:b.threadId,latest:b.revision,disabled:old?.disabled??false,revisions:{...old?.revisions,[b.revision]:metadata}}}};
-   await save(next);return urls(b);
+   await save(next);orphans.delete(pending);return urls(b);
   });},
   async setDisabled({repositoryId,threadId,disabled}){return exclusive(async()=>{assert(hex(repositoryId,64)&&field(threadId)&&typeof disabled==='boolean');const id=sha(JSON.stringify([repositoryId,threadId])),old=state.threads[id];assert(old);await save({...state,threads:{...state.threads,[id]:{...old,disabled}}});return {disabled};});},
   async handle(req,res){

@@ -94,6 +94,18 @@ test('failed catalog update preserves immutable revision and safely resumes exac
   const state=JSON.parse(await fs.readFile(path.join(f.directory,'catalog.json')));assert.equal(Object.keys(state.threads[p.publicationId].revisions).length,1);
  }finally{t.mock.restoreAll();await f.close();}
 });
+test('reopened orphan blocks unrelated publication before quota can be bypassed',async t=>{
+ const f=await fixture({maxBytes:2000});try{
+  const first=await receipt(f.artifactRoot),other={...await receipt(f.artifactRoot,2),repositoryId:'c'.repeat(64)},original=fs.rename;
+  t.mock.method(fs,'rename',async function(from,to){if(to===path.join(f.directory,'catalog.json'))throw Error('synthetic save failure');return original.call(this,from,to);});
+  await assert.rejects(f.publisher.publish(first));t.mock.restoreAll();
+  const reopened=await f.reopen();await assert.rejects(reopened.publish(other));
+  assert.equal((await fs.readdir(f.directory)).filter(n=>n!=='catalog.json').length,1);
+  const published=await reopened.publish(first);assert.equal((await fetch(published.latestUrl)).status,200);
+  const state=JSON.parse(await fs.readFile(path.join(f.directory,'catalog.json')));assert(state.bytes>0);assert.equal(Object.keys(state.threads).length,1);
+  await assert.rejects(reopened.publish(other));
+ }finally{t.mock.restoreAll();await f.close();}
+});
 test('bounded retention refuses capacity overflow and preserves latest',async()=>{
  const f=await fixture({maxRevisions:1});try{
   const p=await f.publisher.publish(await receipt(f.artifactRoot));await assert.rejects(f.publisher.publish(await receipt(f.artifactRoot,2,revision(1))));assert.match(await(await fetch(p.latestUrl)).text(),/revision 1/);

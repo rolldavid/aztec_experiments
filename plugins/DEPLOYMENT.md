@@ -298,3 +298,14 @@ and inspect the corresponding accepted receipt before removing incomplete owned
 staging or applying any retention cleanup. Retained immutable revision directories
 from a completed rename can be verified and reused by the exact pending receipt.
 Do not prune history or alter recorded quotas while the publisher is running.
+
+Publication recovery blocks unrelated writes while a renamed immutable revision is
+absent from the catalog. Only its exact accepted receipt may reconcile it; multiple
+unaccounted revisions require operator reconciliation. They are never treated as
+free retention capacity.
+
+Browser isolation provides no board/operator credentials and denies document
+cookies/storage. It does not force generated cross-origin fetches to omit ambient
+cookies belonging to third-party HTTPS sites. The public API browser check uses
+explicit `credentials: omit` in an empty context; it is not a credentialless-browser
+guarantee. Never provision credentials on the artifact origin.
