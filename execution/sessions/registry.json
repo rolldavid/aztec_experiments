@@ -13,34 +13,16 @@
       "branch": "codex/rolling-private-bok-candidate",
       "history_locator": "Codex runtime thread 01a12a75-1b50-7871-a73b-4253a1010194",
       "role": "lead",
-      "state": "Solelead; root andintegrationb440, rootSDK/frontend/wallet manifests identicaltoindependentlyqualifiedisolatedcandidate",
-      "working_branch": "codex/rolling-private-bok-candidate",
+      "state": "running final integration carry-map194application paths verified; 6d0 candidate frozen,2707 paid diagnostic slot reserved",
+      "working_branch": "codex/rolling-runtime-composition",
       "active_edit_paths": [
-        "execution/"
+        "execution/",
+        "apps/rolling/wallet-session.mjs",
+        "apps/rolling/wallet-session.test.mjs",
+        "apps/rolling/wallet-panel.mjs",
+        "apps/rolling/wallet-panel.browser.test.mjs"
       ],
-      "additional_worktree": {
-        "path": "../rolling-lead-social",
-        "branch": "codex/rolling-pxe-store-atomicity",
-        "owner": "lead-20261011",
-        "base": "a75f24f8e11deb8585bf0540e9b26a0bdd20a3e5",
-        "state": "b440integratedtestedsourcefrozen; no runningjob",
-        "allowed_paths": [
-          "scripts/test-sdk-storage-browser.mjs",
-          "scripts/test-sdk-storage.mjs",
-          "scripts/patch-indexeddb-atomicity.mjs",
-          "scripts/test-indexeddb-atomicity-patch.mjs",
-          "scripts/build-sdk.mjs",
-          "scripts/check-sdk.mjs",
-          "package.json",
-          "TESTING.md",
-          "scripts/fixtures/indexeddb-atomicity-6.0.0-rc.1/",
-          "scripts/test-sdk-manifest.mjs",
-          "shared/portal-runtime.json (normal SDK build generated output; must remain byte-identical)",
-          "scripts/testing/assets.mjs",
-          "apps/dist/aztec_bundle.js",
-          "apps/dist/sdk-manifest.json"
-        ]
-      },
+      "additional_worktree": "../rolling-lead-runtime",
       "trusted_sender_claim": {
         "chainId": 11155111,
         "address": "0x374f2eeb49a9cc4a8bb732bb45b3c1fd751fdfc7",
@@ -50,7 +32,7 @@
         "state": "Mint daed763 finalized and fully accounted; permanent lease retained, no further send authorization assumed for this journal",
         "evidence": "evidence/G04/fee-mint-1791758790202.json"
       },
-      "frozen_candidate": "b44010c38da83d04b123382d92ed522b13b6979f",
+      "frozen_candidate": "520db5c5f075b80cc4c060a3f5d5448f56d5d60a",
       "allowed_paths": [
         "execution/",
         "scripts/testing/rolling-notification-fixture.mjs",
@@ -99,7 +81,159 @@
         ],
         "purpose": "Compose reviewed207+7867; explicit stopped-consumer PXE patch and normal SDK/walletbuild before realinitialreorg"
       },
-      "last_reconciled_at": "2026-10-12T21:24:24.486967+00:00"
+      "last_reconciled_at": "2026-10-13T02:21:39.680498+00:00",
+      "browser_native_claim": {
+        "task": "G07-cold-browser-native-composition",
+        "state": "component verified254/76246; realbrowser pending",
+        "owner": "lead-20261011",
+        "branch": "codex/rolling-runtime-composition",
+        "base": "57c0a642acac1c8b79835c6540bf9c82bcbf569e",
+        "paths": [
+          "scripts/testing/rolling-application-fixture.mjs",
+          "scripts/testing/rolling-application-fixture.test.mjs"
+        ],
+        "requirements": [
+          "G07-A01",
+          "G07-A06",
+          "G07-A10"
+        ],
+        "acceptance": "Explicit preference+notification scenario native/gateway compact enablement; exact final observer POST vs native accepted reconciliation, zero failures/pending; expected completed cold windows, tagged discovery0. Preserve all existing genuineproof/accounting checks.",
+        "dependencies": [
+          "eec4159 reviewed browser4files",
+          "Current57c genuine run fullyterminates before application"
+        ],
+        "verification": "Source review plus fixture+driver components, then real browser journey; preparing patch only during current frozen run"
+      },
+      "deployment_composition_claim": {
+        "task": "G02-rc3-deployment-tests",
+        "state": "verified component54bootstrap8package atf954",
+        "owner": "lead-20261011",
+        "base": "74f5ca21217162bd8951d413a8184133f4956fb7",
+        "paths": [
+          "deploy/prover/bootstrap.py",
+          "deploy/prover/package.py",
+          "deploy/prover/BOOTSTRAP.md",
+          "deploy/prover/README.md",
+          "scripts/test-prover-bootstrap.py",
+          "scripts/test-prover-package.py"
+        ],
+        "workerRevision": "fe89343ba031a87c7d7806e8923015a43ed7f9ce",
+        "sourceReview": "evidence/G02/rc3-deployment-fe893-source-review.json",
+        "requirements": [
+          "G02",
+          "G14"
+        ],
+        "acceptance": "Exact6reviewedfiles plus5same-SDK sourcehelpers, allboundedbootstrap/package regressions, actualcurrentLinuxpinmissing rejects package; no packagepayload/paidactions or pinpromotion",
+        "verification": "Existing Python unittest suites <=60s2GiB withpinnedNode subprocess and1160protectedinputs",
+        "candidate": "f9540922873322f0b3df1d76ebfaec97c7906096",
+        "review": "evidence/G02/deployment-f954-package-runtime-review.json"
+      },
+      "cold_failure_observation_claim": {
+        "task": "G07-genuine-cold-failure-observation",
+        "owner": "lead-20261011",
+        "state": "verified component only",
+        "branch": "codex/rolling-runtime-composition",
+        "base": "9bcab84fe4ccff9e577c5f60d58471697bdcd54f",
+        "paths": [
+          "scripts/testing/rolling-application-fixture.mjs",
+          "scripts/testing/rolling-application-fixture.test.mjs"
+        ],
+        "requirements": [
+          "G07-A02",
+          "G07-A08"
+        ],
+        "acceptance": "Retain finite progress/counts/timing plus nativecompact snapshot on success and failure before evidence save; no new request/retry/guard weakening; preserve original read value/error identity and pending ownership; meaningful observer negative fixtures then independentreview.",
+        "candidate": "635f28c8854d1b2ce43791879a79e22ce16cbd1e",
+        "evidence": "../rolling-lead-runtime/execution/evidence/G07/cold-failure-635f28c/postcheck.json",
+        "review": "evidence/G07/cold-failure-635f28c-review.json"
+      },
+      "http_diagnostic_transfer": {
+        "task": "G07",
+        "state": "verified exacttransfer13b40f2",
+        "paths": [
+          "scripts/test-pxe-preference-page.mjs"
+        ],
+        "worker": "design-20261011",
+        "worker_revision": "23f8a24fe7501be605c5210271f8ae3f60691b01",
+        "review": "evidence/G07/cold-http-23f8-runtime-review.json",
+        "acceptance": "Exact source bytes and dependency preservation; separate finitechain diagnostic only"
+      },
+      "batching_install_claim": {
+        "task": "G07-batching-composition",
+        "owner": "lead-20261011",
+        "state": "genuine06e9 coldpass17blocks31.314s; overallfailpublicbudgetassert; independentreviewpending",
+        "base": "f9540922873322f0b3df1d76ebfaec97c7906096",
+        "worker_revision": "b3bffca8626f47f841215b8ec01bcaa167855bc2",
+        "paths": [
+          "shared/trusted-private-node.mjs",
+          "shared/trusted-private-node.test.mjs",
+          "scripts/patch-pxe-preference-page.mjs",
+          "scripts/test-pxe-preference-page.mjs",
+          "node_modules/@aztec-labs/pxe/",
+          "apps/dist/aztec_bundle.js",
+          "apps/dist/sdk-manifest.json"
+        ],
+        "acceptance": "Exactreviewed4filetransfer; stopallconsumers; all10predecessorhashes+physicalsingleinodes; preserveold10andverifyoriginal8backup beforeexplicitrestore/apply. No mixedstate acceptance. Actualcomponentsandbaselinecomparisondiagnostic before normalSDK/frontend/wallet builds andfreshclosure. No newgenuineuntilqualified.",
+        "candidate": "56c22089d0aef06048d34b0f07be0fb4185d2ab9",
+        "review": "evidence/G07/readiness-batching-b3b-source-review.json",
+        "evidence": "../rolling-lead-runtime/execution/evidence/G07/batching-install-preparation/postcheck.json"
+      },
+      "native_closed_composition_claim": {
+        "task": "G02-native-version-closed-composition",
+        "owner": "lead-20261011",
+        "state": "running exact5b reviewed3filetransfer; no runtime untilDesignrelease",
+        "base": "4dd95ef27e66369b8c95c8cc5a488d487743548f",
+        "worker_revision": "5b0f4f67578b11ef1b31951a666585aa97a74af7",
+        "paths": [
+          "deploy/prover/bootstrap.py",
+          "scripts/test-prover-bootstrap.py",
+          "deploy/prover/BOOTSTRAP.md"
+        ],
+        "requirements": [
+          "G02",
+          "G14"
+        ],
+        "acceptance": "Exactreviewed3fileswithsame5helperclosure; newdiagnosticunits thenfullunittests onlyafterheavygrant; no native/cloud/package/paid qualification inferred.",
+        "candidate": "86750a4ee3da320fcaafdaf881aeb22e9de26621"
+      },
+      "monotonic_composition_claim": {
+        "task": "G07-monotonic-combined-composition",
+        "owner": "lead-20261011",
+        "state": "d16a exact4transferred; e71 exact2ordering transfer andstoppedowninstall preparation",
+        "branch": "codex/rolling-runtime-composition",
+        "base": "14b0cfcbf8e26d1a0dbb9e7102184f00fc7b2c12",
+        "worker_revision": "d22f64f52a6a9a031697d2c27fac54c88e33a883",
+        "paths": [
+          "scripts/patch-pxe-preference-page.mjs",
+          "scripts/test-pxe-preference-page.mjs",
+          "shared/rolling/cold-preference-reader.mjs",
+          "shared/rolling/cold-preference-reader.test.mjs",
+          "scripts/testing/rolling-application-fixture.mjs",
+          "scripts/testing/rolling-application-fixture.test.mjs",
+          "node_modules/@aztec-labs/pxe/",
+          "apps/dist/aztec_bundle.js",
+          "apps/dist/sdk-manifest.json"
+        ],
+        "requirements": [
+          "G07-A02",
+          "G07-A06",
+          "G07-A08"
+        ],
+        "acceptance": "Exact4blobs source7f8/runtime1693e899; fullmatchedHTTPreviewpending. Explicitstoppedown8originalrestore+8/2candidateapply onlyafterhashbackupcheck; normalbuilds regenerated+combinedclosure reviewed before genuine. No currentintegration advance."
+      },
+      "native_permission_transfer_claim": {
+        "base": "520db5c5f075b80cc4c060a3f5d5448f56d5d60a",
+        "source": "a2820c290e1cb265757f08be7e263a99085368c7",
+        "paths": [
+          "deploy/prover/bootstrap.py",
+          "deploy/prover/BOOTSTRAP.md",
+          "scripts/test-prover-bootstrap.py"
+        ],
+        "owner": "lead-20261011",
+        "state": "claimed exact3 transfer aftergenuinecleanup; workerreleased",
+        "review": "execution/evidence/G02/native-version-public-directory-source-review.json",
+        "method": "Exact three Git blobs only; source-frozen real journey completed and3157 pretransfer hashes stored; focused15/full69 Python3.14 thenreview."
+      }
     },
     {
       "logical_id": "recovery-probe-20261011",
@@ -112,19 +246,20 @@
       "history_locator": "collaboration runtime /root/recovery_probe, parent 01a12a75-1b50-7871-a73b-4253a1010194",
       "role": "disposable worker",
       "state": "completed",
-      "last_reconciled_at": "2026-10-12T21:24:24.486967+00:00"
+      "last_reconciled_at": "2026-10-13T01:33:33.863289+00:00"
     },
     {
       "logical_id": "controls-20261011",
       "runtime_id": "/root/controls",
       "parent_id": "lead-20261011",
       "task": [
+        "G02",
         "G14"
       ],
-      "branch": "codex/rolling-v6-portal-alignment",
+      "branch": "codex/rolling-native-public-directory",
       "history_locator": "collaboration runtime /root/controls, parent 01a12a75-1b50-7871-a73b-4253a1010194",
       "role": "implementation worker",
-      "state": "Read-only rc3 compatibility comparison for reviewed Design59d utility/SDK patch; old Rolling build intent held for composition",
+      "state": "2707 once-launchEXIT0 cloudexpiryverified; actualreceipt/hostcontrols andownedcleanup pending, soleheavy/service slot",
       "worktree": "../rolling-controls",
       "allowed_paths": [
         "scripts/testing/rolling-native-artifacts.mjs",
@@ -140,25 +275,122 @@
         "Agent-Session": "controls",
         "Parent-Session": "lead"
       },
-      "base": "a3fb6af",
+      "base": "d7f186a2dca8d5c7fd7fc0ab39ace8b0483a56a1",
       "active_edit_paths": [
-        "apps/src/billboard/billboard_artifact.json",
-        "apps/src/billboard/deploy/billboard_artifact.json",
-        "apps/src/billboard/censor/billboard_artifact.json",
-        "apps/src/billboard/private_fee_artifact.json",
-        "plugins/adapter_artifact.json",
-        "apps/src/billboard/portal_bytecode.txt",
-        "apps/src/billboard/deploy/portal_bytecode.txt",
-        "billboard/portal/out/",
-        "billboard/target/",
-        "billboard/portal/cache/",
-        ".build/contracts-manifest.json",
-        "experiments/avatar/target/",
-        "experiments/private-bok/target/",
-        "execution/evidence/G02/"
+        ".build/native-version-operator-*",
+        "execution/evidence/G02/native-version-operator/",
+        "/Users/zac/Library/Application Support/AnonymousMessageBoard/V6/private/native-version-20261013-d73c2bc3015b"
       ],
-      "writer_released": false,
-      "last_reconciled_at": "2026-10-12T21:24:24.486967+00:00"
+      "writer_released": true,
+      "last_reconciled_at": "2026-10-13T02:24:09.655035+00:00",
+      "parser_repair_claim": {
+        "task": "G02-linux-version-absence-repair",
+        "state": "failed actual15s; cleanup verified; independent5601; no retry",
+        "owner": "controls-20261011",
+        "branch": "codex/rolling-rc3-deployment-composition",
+        "paths": [
+          "execution/evidence/G02/rc3-linux-version-state-repair/"
+        ],
+        "acceptance": "Exact measured daemon-container absence form accepted only for exactname/stdoutempty/exit1; allunknowns/collisions/errors remainfailclosed; originalfailedrecordsimmutable; same workload/limits; sourceonly pendingreviewandgrant"
+      },
+      "native_amd64_claim": {
+        "task": "G02-native-amd64-version-feasibility",
+        "state": "running",
+        "owner": "controls-20261011",
+        "branch": "codex/rolling-rc3-deployment-composition",
+        "paths": [
+          "execution/evidence/G02/native-amd64-diagnostic-proposal/"
+        ],
+        "scope": "Read INFRA; readonlyAWS identity/knownresources/currentpricing+officialminimum/version-onlyhardware; prepare small native diagnostic usingexistingFleetdualshutdown controls. No launch/upload/configchanges untillead budgetreconciliation and reviewedconcreteproposal. No activeLinuxpinpromotion.",
+        "budget": "USD300cumulative; currentconservative205.28 remaining94.72, mustfreshreconcile; preliminarydiagnostic10boundnotgrantedspendyet"
+      },
+      "deployment_repair_claim": {
+        "task": "G02-deployment-test-repair",
+        "state": "review4052735; no tests yet",
+        "owner": "controls-20261011",
+        "base": "fe89343ba031a87c7d7806e8923015a43ed7f9ce",
+        "paths": [
+          "deploy/prover/bootstrap.py",
+          "scripts/test-prover-bootstrap.py",
+          "deploy/prover/BOOTSTRAP.md",
+          "execution/evidence/G02/"
+        ],
+        "dependencies": [
+          "9bc actual65068 failed",
+          "independent source diagnosis pending"
+        ],
+        "acceptance": "Repair stale CLI fixture under normalLinuxgate; distinguish Pythonrequirements and slow/hangingtests before bounded rerun. Preserve existing gates/allassertions; no runtime or paidactions before review and leadslot."
+      },
+      "native_amd64_source_claim": {
+        "task": "G02-native-amd64-closed-mode",
+        "owner": "controls-20261011",
+        "state": "review repairs plus finiteactualguestpreflight",
+        "base": "40527355c2a2654b1fbe2a85cf80a90c12c45831",
+        "paths": [
+          "deploy/prover/bootstrap.py",
+          "scripts/test-prover-bootstrap.py",
+          "deploy/prover/BOOTSTRAP.md"
+        ],
+        "dependencies": [
+          "proposal924b",
+          "indreview7d0448"
+        ],
+        "acceptance": "Closed fixednativebinaryversionmode only,reuse existingdualshutdown/receipt/oneattempt; no ordinaryLinuxgatebypass; no rawStatefailureloss; no paid/upload/run until reviewedexactsource and leadledgerreservation.",
+        "candidate": "5b0f4f67578b11ef1b31951a666585aa97a74af7",
+        "source_writer_released": true
+      },
+      "native_operator_claim": {
+        "task": "G02-native-version-operator-preparation",
+        "state": "reserved10 prepgrant oneexactimmutableupload/privatepayload only",
+        "owner": "controls-20261011",
+        "base": "d449fafafeaf7436456d9a6273732d3872a76719",
+        "paths": [
+          ".build/native-version-operator-*",
+          "execution/evidence/G02/native-version-operator/"
+        ],
+        "acceptance": "Derive smallest successors from existing09 once-onlyoperator helpers; exactclosedmode contract, currentbudget10proposal unallocated; source preparation only,no upload/resource/archive/payload/native actions; preserve uncertainreceipt reconciliation andindependent shutdownreadback.",
+        "campaign": "native-version-20261013-d73c2bc3015b"
+      },
+      "public_budget_claim": {
+        "task": "G07-public-reader-remaining-budget",
+        "owner": "controls-20261011",
+        "state": "running source-only narrowboundedColdordering per independentreview",
+        "base": "4dd95ef27e66369b8c95c8cc5a488d487743548f",
+        "branch": "codex/rolling-public-budget",
+        "paths": [
+          "scripts/testing/rolling-application-fixture.mjs",
+          "scripts/testing/rolling-application-fixture.test.mjs"
+        ],
+        "requirements": [
+          "G07-A02",
+          "G07-A08"
+        ],
+        "acceptance": "Move ONLYboundedCold recovery afterpublicfresh/reopen; ordinarynonbounded/browser/reorg/saved ordering unchanged. Explicitrecovery-awirephase, originaloldclose/freshidentity/zeroeffects/metrics/privatecheckpoint unchanged, finalaccounting remainsmandatory. Original540/525/30deadline/reserves unchanged. No productionpublic-index ortransport edits; meaningfulphaseorder/failurepropagation tests andindependentreview."
+      },
+      "native_permission_claim": {
+        "owner": "controls-20261011",
+        "base": "5b0f4f67578b11ef1b31951a666585aa97a74af7",
+        "at": "2026-10-13T01:36:32.542326+00:00",
+        "state": "running local permission reproduction/source repair; no new cloud grant",
+        "allowed_paths": [
+          "deploy/prover/bootstrap.py",
+          "deploy/prover/BOOTSTRAP.md",
+          "scripts/test-prover-bootstrap.py"
+        ],
+        "acceptance": "Explicit public runtime directory traversal under umask077/DynamicUser-equivalent; failold passfixed regression; keep privateconfig/caps/journals0700 and allshutdown/resourcebounds. Historical cause remains unproven; no newpaidaction. Fulltests serialized after genuine."
+      },
+      "corrected_native_operator_claim": {
+        "at": "2026-10-13T01:54:02.470464+00:00",
+        "allowed_paths": [
+          ".build/native-version-operator-2707-core.py",
+          ".build/native-version-operator-2707-launch.py",
+          ".build/native-version-operator-2707-observe.py",
+          ".build/native-version-operator-2707-cleanup.py",
+          ".build/native-version-operator-2707-test.py",
+          "execution/evidence/G02/native-version-operator/corrected-next-operators"
+        ],
+        "acceptance": "FixedimmutableVersionIdHEADexactbytes/hash/SSE/ownerregionbeforeLTintent; preserve12priorcases/addnegativechecks nofinancialaction; oldoperators/journalsunchanged. Newauthorityfieldsunset; source/runtime reviewbeforeleadnewreserve+grant."
+      }
     },
     {
       "logical_id": "reviewer-20261011",
@@ -171,14 +403,14 @@
       "branch": "read-only candidate refs",
       "history_locator": "collaboration runtime /root/reviewer, parent 01a12a75-1b50-7871-a73b-4253a1010194",
       "role": "independent reviewer",
-      "state": "Independent first rc3 base runtime/artifact review then Design59d actual52/52 review",
+      "state": "running2707 finalbindingreview thenintegration/design review",
       "active_edit_paths": [
         "execution/evidence/G07/*independent*",
         "execution/evidence/G07/*review*",
         "execution/evidence/G07/*diagnosis*",
         "execution/evidence/G02/*review*"
       ],
-      "last_reconciled_at": "2026-10-12T21:24:24.486967+00:00"
+      "last_reconciled_at": "2026-10-13T02:21:39.680498+00:00"
     },
     {
       "logical_id": "design-20261011",
@@ -187,10 +419,10 @@
       "task": [
         "G07"
       ],
-      "branch": "codex/rolling-compact-block-prototype",
+      "branch": "codex/rolling-genuine-cold-reorg",
       "history_locator": "collaboration runtime /root/design, parent01a12a75-1b50-7871-a73b-4253a1010194",
       "role": "implementation worker",
-      "state": "59d actual full component+ACIR52/52 passed; final packet plus read-only real cold consumer integration proposal",
+      "state": "running bounded read-only feasibility redesign;282148tests accepted; genuine hold timing",
       "worktree": "../rolling-design",
       "allowed_paths": [
         "billboard/rolling_contract/src/main.nr",
@@ -199,14 +431,143 @@
         "scripts/patch-pxe-preference-page.mjs",
         "scripts/test-pxe-preference-page.mjs"
       ],
-      "base": "c6bbe0d5db2a734758c790c6a6aa880ef3b04a73",
+      "base": "74f5ca21217162bd8951d413a8184133f4956fb7",
       "reference_candidate": "1351ea1b180b11475250463c9c40fdd2e342ab13",
-      "writer_released": true,
+      "writer_released": false,
       "active_edit_paths": [
-        "scripts/test-pxe-preference-page.mjs",
-        "execution/evidence/G07/preference-page/"
+        "scripts/testing/rolling-application-fixture.mjs",
+        "scripts/testing/rolling-application-fixture.test.mjs",
+        "scripts/testing/rolling-preference-recovery.mjs",
+        "scripts/testing/rolling-preference-recovery.test.mjs"
       ],
-      "last_reconciled_at": "2026-10-12T21:24:24.486967+00:00"
+      "last_reconciled_at": "2026-10-13T02:21:39.680498+00:00",
+      "secondary_claim": {
+        "task": "G07-incremental-cold-gap-assessment",
+        "state": "running",
+        "owner": "design-20261011",
+        "base": "7c6de5b2b87a7f2c7f7d08ec1b2765653bd9f7a4",
+        "paths": [
+          "execution/evidence/G07/incremental-cold-assessment.json"
+        ],
+        "acceptance": "Read-only source-backed assessment of remaining G07-A02/A06/A08 incremental/reorg/capacity requirements; concrete smallest subsequent code task and thresholds before measurement. No source changes, tests, provider calls or capacity usage.",
+        "dependencies": [
+          "Frozen coldSDK79f",
+          "Frozen coldreaderce0",
+          "Nativecompactadapter",
+          "Current d877 genuine journey prepared"
+        ]
+      },
+      "monotonic_claim": {
+        "task": "G07-monotonic-cold-extension",
+        "state": "componentsverified; installed/genuinepending",
+        "owner": "design-20261011",
+        "base": "b3bffca8626f47f841215b8ec01bcaa167855bc2",
+        "branch": "codex/rolling-monotonic-batching",
+        "paths": [
+          "scripts/patch-pxe-preference-page.mjs",
+          "scripts/test-pxe-preference-page.mjs",
+          "shared/rolling/cold-preference-reader.mjs",
+          "shared/rolling/cold-preference-reader.test.mjs"
+        ],
+        "requirements": [
+          "G07-A02",
+          "G07-A06",
+          "G07-A08"
+        ],
+        "acceptance": [
+          "Authenticated completed cursor extension scans suffix without full prefix replay",
+          "Original bounded SDK validators reauthenticate former head against new anchor; no custom nullifier authority",
+          "Atomic checkpoint plus authenticated reader prefix, crash/CAS/response loss safe",
+          "Actual reorg invalidates retained completion and requires honest rebuild",
+          "All existing rollback/authenticity tests retained, new negative regressions",
+          "No lifetime cap, privacy regression or partial state publication"
+        ],
+        "dependencies": [
+          "Reviewed ce0/79f coldSDK foundation",
+          "Completed small genuinejourney separately stillrunning57c0",
+          "Distribution manifest12pins lead-owned after source approval"
+        ],
+        "verification": "Source and independent review first; component real ACIR original validators only after explicit serialized grant; genuine append and fork acceptance remains required",
+        "scopeLimits": [
+          "No installed dependency edits",
+          "No normalbuild/generated artifacts",
+          "No backend/protocol/generatedhelper external edits",
+          "No heavy runs beforeleadgrant"
+        ],
+        "candidate": "d22f64f52a6a9a031697d2c27fac54c88e33a883"
+      },
+      "http_diagnostic_claim": {
+        "task": "G07-cold-http-progress-diagnostic",
+        "state": "verified component pending independent runtime review; actual98741 PASS",
+        "owner": "design-20261011",
+        "base": "74f5ca21217162bd8951d413a8184133f4956fb7",
+        "branch": "codex/rolling-cold-http-diagnostic",
+        "paths": [
+          "scripts/test-pxe-preference-page.mjs",
+          "execution/evidence/G07/cold-http-progress/"
+        ],
+        "requirements": [
+          "G07-A01",
+          "G07-A02",
+          "G07-A06",
+          "G07-A08"
+        ],
+        "dependencies": [
+          "b7db061 failurediagnosis",
+          "frozen57c/74 coldSDK baseline",
+          "Existing actual encrypted ACIR finitechain fixture"
+        ],
+        "acceptance": "Productionreader/real HTTPgateway+nativeadapter+original installedSDK validators measurement on labelledfinitechain, no proving; finite perstep sequence/nextBlock/nextLog/timing and nativecounts onfail, tag0, allauth/CAS guards; distinguish nonprogress from workcost/readinessamplification",
+        "verification": "Source review before one <=60s2GiB isolated diagnostic (existing real ACIR opt-ins); no unreviewed repeated actualgenuine",
+        "candidate": "23f8a24fe7501be605c5210271f8ae3f60691b01"
+      },
+      "batching_claim": {
+        "task": "G07-readiness-batching",
+        "owner": "design-20261011",
+        "state": "135 components independently accepted; HTTP targets pass runtime review pending",
+        "base": "23f8a24fe7501be605c5210271f8ae3f60691b01",
+        "paths": [
+          "shared/trusted-private-node.mjs",
+          "shared/trusted-private-node.test.mjs",
+          "scripts/patch-pxe-preference-page.mjs",
+          "scripts/test-pxe-preference-page.mjs"
+        ],
+        "requirements": [
+          "G07-A02",
+          "G07-A08"
+        ],
+        "dependencies": [
+          "actual23f8b4cc reviewed diagnostic",
+          "design0d54f2"
+        ],
+        "acceptance": "Preserve every identity-first/readiness/canonical/context/CAS guard; only concurrent independent publicreads, allstartedpromisesdrain inclfalsy errors; exactsame6steps17SDK4compacttag0; <=400gateway calls and reader<=8500ms engineeringtargets. No installeddeps/generateddistribution mutations. a9ef staysseparate.",
+        "candidate": "b3bffca8626f47f841215b8ec01bcaa167855bc2",
+        "source_writer_released": true
+      },
+      "genuine_extension_claim": {
+        "task": "G07-genuine-cold-extension-reorg",
+        "owner": "design-20261011",
+        "state": "running sourceonly no runtime",
+        "branch": "codex/rolling-genuine-cold-reorg",
+        "base": "6054711b7fe958e0a02f9e0126429a68640bb377",
+        "paths": [
+          "scripts/testing/rolling-application-fixture.mjs",
+          "scripts/testing/rolling-application-fixture.test.mjs",
+          "scripts/testing/rolling-preference-recovery.mjs",
+          "scripts/testing/rolling-preference-recovery.test.mjs"
+        ],
+        "requirements": [
+          "G07-A02",
+          "G07-A06",
+          "G07-A08"
+        ],
+        "dependencies": [
+          "d22 source/components/HTTP accepted",
+          "e71 publicorderingreviewed",
+          "plan e47e3036"
+        ],
+        "acceptance": "Existing3proofinitial/4proofmarker exactfork/journal/fee/digest/publicfootprint retained; switchsnapshotcapability toactuald22cold withnativecompact route; observedsuffix-only vsfullrebuild distinguish honesttrace; fixed540/525limits unchanged, noextraProofs orstubqualification. Sourcefirst meaningfultests; actualgrantrequiresmeasuredphaseadmission."
+      }
     }
   ],
   "integrations": [
@@ -1278,6 +1639,22 @@
       ],
       "status": "candidate only; no new integration advance",
       "recordedAt": "2026-10-12T11:40:28.638450+00:00"
+    },
+    {
+      "candidate": "b5eb2a1",
+      "base": "b82f40f",
+      "source_commits": [
+        "0cbcc1b8b7b3158ebf7ec83c9293b6ff7310635c",
+        "8f891977986304b13d68231a40ffe94cbfb185c6"
+      ],
+      "transferred_commits": [
+        "e65a478",
+        "b5eb2a1"
+      ],
+      "owner": "lead-20261011",
+      "source_session": "controls-20261011",
+      "review": "evidence/G07/cold-wallet-dbb8e62-source-review.json",
+      "scope": "Exact eight blobs/two stable patch transfers; runtime13768 component carry only. Integrationb440 unchanged."
     }
   ]
 }
