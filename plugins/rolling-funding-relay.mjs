@@ -89,7 +89,7 @@ export async function createRollingFundingRelay({config,directory,provider,signe
     await lease.assertHeld();await submit(record,()=>provider.broadcastTransaction(raw));
    }});return {...result,planHash};
   }),
-  status:hash=>owned(async()=>{check(hex(hash));const store=await readStore(hash);if(!store)return {status:'absent',scope:'aggregate-funding',canonical:false,planHash:hash};const record=store.read().operations?.['relay-funding'];check(record?.identity===hash);return reconcile(record);}),
+  status:hash=>owned(async()=>{check(hex(hash));const store=await readStore(hash);if(!store)return {status:ledger.read().activePlan===hash?'unresolved':'absent',scope:'aggregate-funding',canonical:false,planHash:hash};const record=store.read().operations?.['relay-funding'];check(record?.identity===hash);return reconcile(record);}),
   async close(){closed=true;try{await active;}catch{/* retained state owns recovery */}finally{await lease.close();}},
  });
 }
@@ -101,8 +101,11 @@ export async function openRollingFundingRelay(input){
  const config=configOf(policy),url=new URL(ethereumUrl);
  check(url.href===ethereumUrl&&!url.username&&!url.password&&!url.search&&!url.hash&&(url.protocol==='https:'||config.development&&url.protocol==='http:'&&['127.0.0.1','[::1]'].includes(url.hostname)));
  check(typeof signerFile==='string'&&path.isAbsolute(signerFile)&&typeof stateDirectory==='string'&&path.isAbsolute(stateDirectory));
+ await fs.mkdir(stateDirectory,{recursive:true,mode:0o700});
+ check(await fs.realpath(stateDirectory)===stateDirectory);const directory=await fs.lstat(stateDirectory);
+ check(directory.isDirectory()&&!directory.isSymbolicLink()&&(directory.mode&0o777)===0o700&&directory.uid===process.getuid());
  const {acquireHostedLease}=await import('./main.mjs');
- await fs.mkdir(stateDirectory,{recursive:true,mode:0o700});const lease=await acquireHostedLease(stateDirectory);
+ const lease=await acquireHostedLease(stateDirectory);
  let provider;
  try{
   const stat=await fs.stat(signerFile);check(stat.isFile()&&stat.size<=4096&&(stat.mode&0o077)===0);

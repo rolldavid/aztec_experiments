@@ -6,7 +6,7 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import {Wallet,Interface,Transaction,keccak256} from 'ethers';
-import {createRollingFundingRelay} from '../rolling-funding-relay.mjs';
+import {createRollingFundingRelay,openRollingFundingRelay} from '../rolling-funding-relay.mjs';
 import {aggregateUsdcFundingAbi} from '../../shared/rolling/aggregate-funding.mjs';
 const a=n=>'0x'+BigInt(n).toString(16).padStart(40,'0'),h=n=>'0x'+BigInt(n).toString(16).padStart(64,'0');
 const abi=new Interface(aggregateUsdcFundingAbi),quote=new Interface(['function quoteExactOutputSingle((address tokenIn,address tokenOut,uint256 amount,uint24 fee,uint160 sqrtPriceLimitX96)) returns(uint256,uint160,uint32,uint256)']),token=new Interface(['function implementation() view returns(address)']);
@@ -61,4 +61,17 @@ test('malformed or reorged canonical effects cannot finish an unknown payment',a
 test('a concurrent submission cannot allocate the same signer nonce twice',async t=>{
  const f=await fixture(t),call=f.provider.call;let release,entered;const ready=new Promise(r=>entered=r),gate=new Promise(r=>release=r);f.provider.call=async x=>{entered();await gate;return call(x);};
  const first=f.relay.submit(f.input);await ready;await assert.rejects(f.relay.submit(f.input));release();await first;assert.equal(f.state.sends,1);
+});
+
+for(const defect of ['writable','symlink'])test(`private relay directory rejects existing ${defect} before signer reads`,async t=>{
+ const f=await fixture(t),base=await fs.realpath(f.directory),target=path.join(base,'private');await fs.mkdir(target,{mode:defect==='writable'?0o777:0o700});
+ if(defect==='writable')await fs.chmod(target,0o777);
+ const stateDirectory=defect==='symlink'?path.join(base,'linked'):target;if(defect==='symlink')await fs.symlink(target,stateDirectory);
+ await assert.rejects(openRollingFundingRelay({ethereumUrl:'http://127.0.0.1:8545/',signerFile:path.join(base,'does-not-exist.json'),stateDirectory,policy:f.config}),/Funding relay unavailable/);
+ assert.equal(f.state.sends,0);assert(!(await fs.readdir(target)).includes('hosted.lock'));
+});
+test('durable gas reservation without a plan file remains unresolved after restart',async t=>{
+ const f=await fixture(t);await f.relay.close();const file=path.join(f.directory,'funding-budget.json'),budget=JSON.parse(await fs.readFile(file,'utf8'));
+ await fs.writeFile(file,JSON.stringify({...budget,activePlan:h(90),reservedGasWei:'1000'}));const reopened=await f.open();
+ assert.equal((await reopened.status(h(90))).status,'unresolved');assert.equal((await reopened.status(h(91))).status,'absent');await assert.rejects(reopened.submit(f.input));assert.equal(f.state.sends,0);await reopened.close();
 });
