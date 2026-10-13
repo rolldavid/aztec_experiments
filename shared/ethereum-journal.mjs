@@ -62,7 +62,7 @@ function validateIntent(record,scope) {
     }
     return record;
   }
-  if(expected?.kind==='aggregate-funding'){if(scope.token!==undefined)throw invalid();try{validateAggregateFundingIntent(record);}catch{throw invalid();}return record;}
+  if(['aggregate-funding','aggregate-usdc-funding'].includes(expected?.kind)){if(scope.token!==undefined)throw invalid();try{validateAggregateFundingIntent(record);}catch{throw invalid();}return record;}
   const fee=scope.token!==undefined;
   if(!expected||!(fee?['approve','fee-deposit','bok-deposit']:['deposit','withdraw']).includes(expected.kind)||!positive(expected.amount)||BigInt(expected.amount)>=(1n<<(fee?128n:96n)))throw invalid();
   const abi=expected.kind==='bok-deposit'?bokInterface:iface;
@@ -99,7 +99,7 @@ export async function verifyEthereumIntentReceipt(provider,record,txHash,read=fn
   if(receipt.status===0)return {outcome:'reverted',txHash,receipt,event:null};
   if(!Array.isArray(receipt.logs))throw unknown();
   const expected=record.expected;
-  if(expected.kind==='aggregate-funding') {
+  if(['aggregate-funding','aggregate-usdc-funding'].includes(expected.kind)) {
     const event=await verifyAggregateFundingEffects(provider,record,receipt,read);
     const current=await read(()=>provider.getBlock(receipt.blockNumber));if(lower(current?.hash)!==lower(receipt.blockHash))throw unknown();
     return {outcome:'success',txHash,receipt,event};
@@ -221,7 +221,7 @@ export async function createEthereumJournal({storage,walletSecret,walletSalt,sco
     let response;
     const request={from:record.from,to:record.to,data:record.data,value:BigInt(record.value),nonce:record.nonce,chainId:BigInt(record.chainId)};
     try{
-      if(['deposit','fee-deposit','bok-deposit','aggregate-funding'].includes(record.expected.kind)) {
+      if(['deposit','fee-deposit','bok-deposit','aggregate-funding','aggregate-usdc-funding'].includes(record.expected.kind)) {
         // Match the V6 SDK deposit allowance for changing shared Inbox state.
         const estimate=await reader({preserveInsufficientFunds:true})(()=>provider.estimateGas(request));
         if(typeof estimate!=='bigint'||estimate<=0n)throw unknown();
@@ -284,7 +284,7 @@ export async function createEthereumJournal({storage,walletSecret,walletSalt,sco
       const read=reader();await network(read);
       const found=await locate(saved,read);saved=found.saved;
       if(found.result)return confirmed(found.result,saved.value);
-      if(!retry||saved.value.expected.kind==='aggregate-funding')throw unknown();
+      if(!retry||['aggregate-funding','aggregate-usdc-funding'].includes(saved.value.expected.kind))throw unknown();
       // Explicit retry retains the same sender nonce, destination, calldata and
       // value. Even if an earlier broadcast is hidden by RPC, at most one request
       // with this nonce can execute on the canonical Ethereum chain.

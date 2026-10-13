@@ -19,6 +19,33 @@ function fixture(){
  const provider={getCode:async()=> '0x6001',getTransactionReceipt:async()=>receipt,getTransaction:async()=>tx,getBlock:async()=>({number:12,hash:h(21)})};
  return {p,record,receipt,tx,provider,event};
 }
+function usdcFixture(){
+ const f=fixture(),p={beneficiary:a(1),relayer:a(7),collateral:{amount:'100',maxUsdc:'20',poolFee:3000},collateralSecretHash:h(8),fee:{amount:'200',maxUsdc:'30',poolFee:3000},feeSecretHash:h(9),bokAmount:'300',bokCommitment:h(10),bokSecretHash:h(11),nonce:'0',validAfter:'1',deadline:'2000000000',relayFeeUsdc:'5',authorizationSalt:h(15)};
+ const expected={...f.record.expected,kind:'aggregate-usdc-funding',planHash:keccak256(AbiCoder.defaultAbiCoder().encode([abi.getFunction('fundUsdc').inputs[0]],[p]))};
+ const record={...f.record,from:a(7),data:abi.encodeFunctionData('fundUsdc',[p,'0x'+'ab'.repeat(65),'0x'+'cd'.repeat(65)]),value:'0',expected};
+ Object.assign(f.tx,record);f.receipt.from=a(7);f.receipt.logs[0]=f.event(a(2),abi,'UsdcFunded',[a(1),expected.planHash,a(7),100,200,300,15,25,5,10]);
+ return {...f,p,record};
+}
+test('USDC recovery keeps actual relayer transaction identity distinct from collateral beneficiary',async()=>{
+ const f=usdcFixture(),result=await verifyEthereumIntentReceipt(f.provider,f.record,h(20));
+ assert.equal(result.outcome,'success');assert.equal(result.event.beneficiary,a(1));assert.equal(f.tx.from,a(7));
+ assert.equal(result.event.relayFeeUsdc,'5');assert.equal(result.event.refund,'10');
+ assert.deepEqual([result.event.collateral.amount,result.event.privateFee.amount,result.event.bok.amount],['100','200','300']);
+});
+for(const defect of ['beneficiary','relayer','fee','refund','scope','missing','duplicate','calldata','kind','value','signature','amount'])test('USDC recovery rejects '+defect,async()=>{
+ const f=usdcFixture();
+ if(defect==='beneficiary')f.receipt.logs[1]=f.event(a(3),board,'Deposited',[a(7),100,h(8),h(12),1]);
+ if(['relayer','fee','refund'].includes(defect))f.receipt.logs[0]=f.event(a(2),abi,'UsdcFunded',[a(1),f.record.expected.planHash,defect==='relayer'?a(1):a(7),100,200,300,15,25,defect==='fee'?6:5,defect==='refund'?11:10]);
+ if(defect==='scope')f.record.expected.privateFpc=h(100);
+ if(defect==='missing')f.receipt.logs.pop();if(defect==='duplicate')f.receipt.logs.push(f.receipt.logs[3]);
+ if(defect==='calldata'){f.tx.data='0x12345678';assert.equal((await verifyEthereumIntentReceipt(f.provider,f.record,h(20))).outcome,'replaced');return;}
+ if(defect==='kind')f.record.expected.kind='aggregate-funding';
+ if(defect==='value')f.record.value='1';
+ if(defect==='signature')f.record.data=abi.encodeFunctionData('fundUsdc',[f.p,'0x','0x01']);
+ if(defect==='amount')f.record.data=abi.encodeFunctionData('fundUsdc',[{...f.p,bokAmount:0},'0x01','0x01']);
+ if(['kind','value','signature','amount'].includes(defect)){assert.throws(()=>validateAggregateFundingIntent(f.record));return;}
+ await assert.rejects(verifyEthereumIntentReceipt(f.provider,f.record,h(20)));
+});
 test('exact aggregate transaction recovers all three effects and conserved refund',async()=>{
  const f=fixture();assert.equal(validateAggregateFundingIntent(f.record).collateral,100n);
  const result=await verifyEthereumIntentReceipt(f.provider,f.record,h(20));assert.equal(result.outcome,'success');assert.equal(result.event.refund,'10');
@@ -47,11 +74,11 @@ for(const defect of ['amount','value','owner','scope','unknown'])test('aggregate
  if(defect==='value')f.record.value='151';if(defect==='owner')f.record.from=a(8);if(defect==='scope')f.record.expected.feePortal=a(3);if(defect==='unknown')f.record.expected.extra=true;
  assert.throws(()=>validateAggregateFundingIntent(f.record));
 });
-test('unknown aggregate send survives encrypted reopen and ignores explicit retry',async()=>{
- const f=fixture(),storage=createBrowserJournalStorage(new IDBFactory());let sends=0,landed=false;
+for(const [kind,make] of [['ETH',fixture],['USDC',usdcFixture]])test(kind+' unknown aggregate send survives encrypted reopen and ignores explicit retry',async()=>{
+ const f=make(),storage=createBrowserJournalStorage(new IDBFactory());let sends=0,landed=false;
  Object.assign(f.provider,{getNetwork:async()=>({chainId:31337n}),getBlockNumber:async()=>12,getTransactionCount:async()=>0,estimateGas:async()=>100000n,getTransactionReceipt:async()=>landed?f.receipt:null});
- const opts={storage,walletSecret:h(40),walletSalt:h(41),scope:{account:h(42),chainId:'31337',rollup:a(6),version:'1',board:h(43),portal:a(2),depositor:a(1)},provider:f.provider,
- signer:{getAddress:async()=>a(1),sendTransaction:async request=>{assert.equal(request.gasLimit,200000n);sends++;throw Error('lost acknowledgment');}}};
+ const opts={storage,walletSecret:h(40),walletSalt:h(41),scope:{account:h(42),chainId:'31337',rollup:a(6),version:'1',board:h(43),portal:a(2),depositor:f.record.from},provider:f.provider,
+ signer:{getAddress:async()=>f.record.from,sendTransaction:async request=>{assert.equal(request.gasLimit,200000n);sends++;throw Error('lost acknowledgment');}}};
  const intent={data:f.record.data,value:f.record.value,expected:f.record.expected};
  await assert.rejects((await createEthereumJournal(opts)).send(intent),{code:'BB_ETH_SUBMISSION_UNKNOWN'});
  const recovered=await createEthereumJournal(opts);await assert.rejects(recovered.recover({retry:true}),{code:'BB_ETH_RECOVERY_REQUIRED'});assert.equal(sends,1);

@@ -11,22 +11,32 @@ const field=x=>hex(x)&&BigInt(x)<21888242871839275222246405745257275088548364400
 /** Fixed aggregate variant of the existing Ethereum journal; never sends or retries. */
 export function validateAggregateFundingIntent(record){
  const e=record.expected,keys=['kind','routerCodeHash','collateralPortal','feePortal','bokPortal','privateFpc','planHash'];
- check(e&&Object.keys(e).sort().join()===keys.sort().join()&&e.kind==='aggregate-funding');
+ check(e&&Object.keys(e).sort().join()===keys.sort().join()&&['aggregate-funding','aggregate-usdc-funding'].includes(e.kind));
+ const usdc=e.kind==='aggregate-usdc-funding',method=usdc?'fundUsdc':'fund';
+ check(hex(record.from,20)&&hex(record.to,20)&&typeof record.chainId==='string'&&/^[1-9][0-9]{0,19}$/.test(record.chainId));
  for(const key of ['collateralPortal','feePortal','bokPortal'])check(hex(e[key],20));
  check(new Set([record.to,e.collateralPortal,e.feePortal,e.bokPortal]).size===4);
  check(hex(e.routerCodeHash)&&hex(e.planHash)&&field(e.privateFpc));
  const parsed=router.parseTransaction({data:record.data,value:record.value});
- check(parsed?.name==='fund'&&lower(router.encodeFunctionData('fund',parsed.args))===record.data);
- const p=parsed.args[0];check(lower(p.beneficiary)===record.from&&p.collateral>0n&&p.collateral<2n**96n);
- for(const leg of [p.fee,p.bok])check(leg.amount>0n&&leg.amount<2n**128n&&leg.maxEth>0n&&[100n,500n,3000n,10000n].includes(leg.poolFee));
+ check(parsed?.name===method&&lower(router.encodeFunctionData(method,parsed.args))===record.data);
+ const p=parsed.args[0],collateral=usdc?p.collateral.amount:p.collateral;
+ check(lower(usdc?p.relayer:p.beneficiary)===record.from&&hex(lower(p.beneficiary),20)&&collateral>0n&&collateral<2n**96n);
+ if(usdc){
+  check(lower(p.beneficiary)!==record.to&&lower(p.relayer)!==record.to&&hex(p.authorizationSalt)&&p.relayFeeUsdc>0n&&p.deadline>p.validAfter);
+  check(p.bokAmount>0n&&p.bokAmount<2n**128n&&BigInt(record.value)===0n);
+  for(const leg of [p.collateral,p.fee])check(leg.amount>0n&&leg.amount<2n**128n&&leg.maxUsdc>0n&&[100n,500n,3000n,10000n].includes(leg.poolFee));
+ }else{
+  for(const leg of [p.fee,p.bok])check(leg.amount>0n&&leg.amount<2n**128n&&leg.maxEth>0n&&[100n,500n,3000n,10000n].includes(leg.poolFee));
+  check(BigInt(record.value)===p.collateral+p.fee.maxEth+p.bok.maxEth);
+ }
  for(const value of [p.collateralSecretHash,p.feeSecretHash,p.bokCommitment,p.bokSecretHash])check(field(lower(value)));
- check(p.deadline>0n&&parsed.args[1].length>2&&parsed.args[1].length<=8194);
- check(BigInt(record.value)===p.collateral+p.fee.maxEth+p.bok.maxEth);
- check(keccak256(AbiCoder.defaultAbiCoder().encode([router.getFunction('fund').inputs[0]],[p]))===e.planHash);
+ check(p.deadline>0n);
+ for(const signature of parsed.args.slice(1))check(signature.length>2&&signature.length<=8194);
+ check(keccak256(AbiCoder.defaultAbiCoder().encode([router.getFunction(method).inputs[0]],[p]))===e.planHash);
  return p;
 }
 export async function verifyAggregateFundingEffects(provider,record,receipt,read=fn=>fn()){
- const p=validateAggregateFundingIntent(record),e=record.expected;
+ const p=validateAggregateFundingIntent(record),e=record.expected,usdc=e.kind==='aggregate-usdc-funding';
  const code=await read(()=>provider.getCode(record.to,receipt.blockNumber));
  check(typeof code==='string'&&/^0x(?:[0-9a-fA-F]{2})+$/.test(code)&&keccak256(code)===e.routerCodeHash);
  check(Array.isArray(receipt.logs)&&receipt.logs.length<=4096);
@@ -35,16 +45,17 @@ export async function verifyAggregateFundingEffects(provider,record,receipt,read
   check(logs.length===1);const log=logs[0];check(Array.isArray(log.topics)&&log.topics.length<=4&&typeof log.data==='string'&&log.data.length<=4096);
   return abi.parseLog(log).args;
  };
- const funded=one(record.to,router,'Funded');
- check(lower(funded.beneficiary)===record.from&&funded.planHash===e.planHash&&funded.collateral===p.collateral&&funded.feeAmount===p.fee.amount&&funded.bokAmount===p.bok.amount);
- check(funded.feeEth>0n&&funded.feeEth<=p.fee.maxEth&&funded.bokEth>0n&&funded.bokEth<=p.bok.maxEth&&funded.refund===p.fee.maxEth+p.bok.maxEth-funded.feeEth-funded.bokEth);
+ const funded=one(record.to,router,usdc?'UsdcFunded':'Funded');
+ check(lower(funded.beneficiary)===lower(p.beneficiary)&&funded.planHash===e.planHash&&funded.collateral===(usdc?p.collateral.amount:p.collateral)&&funded.feeAmount===p.fee.amount&&funded.bokAmount===(usdc?p.bokAmount:p.bok.amount));
+ if(usdc)check(lower(funded.relayer)===record.from&&funded.relayFeeUsdc===p.relayFeeUsdc&&funded.collateralUsdc>0n&&funded.collateralUsdc<=p.collateral.maxUsdc&&funded.feeUsdc>0n&&funded.feeUsdc<=p.fee.maxUsdc&&funded.refund===p.collateral.maxUsdc+p.fee.maxUsdc-funded.collateralUsdc-funded.feeUsdc);
+ else check(funded.feeEth>0n&&funded.feeEth<=p.fee.maxEth&&funded.bokEth>0n&&funded.bokEth<=p.bok.maxEth&&funded.refund===p.fee.maxEth+p.bok.maxEth-funded.feeEth-funded.bokEth);
  const collateral=one(e.collateralPortal,board,'Deposited'),privateFee=one(e.feePortal,fee,'DepositToAztecPublic'),credit=one(e.bokPortal,bok,'Deposited');
- check(lower(collateral.depositor)===record.from&&collateral.amount===p.collateral&&collateral.secretHash===p.collateralSecretHash);
+ check(lower(collateral.depositor)===lower(p.beneficiary)&&collateral.amount===(usdc?p.collateral.amount:p.collateral)&&collateral.secretHash===p.collateralSecretHash);
  check(privateFee.to===e.privateFpc&&privateFee.amount===p.fee.amount&&privateFee.secretHash===p.feeSecretHash);
- check(credit.account===p.bokCommitment&&credit.amount===p.bok.amount);
+ check(credit.account===p.bokCommitment&&credit.amount===(usdc?p.bokAmount:p.bok.amount));
  for(const event of [collateral,privateFee,credit])check(field(lower(event.key))&&event.index>=0n);
  // Each claim verifier still checks canonical L1 finality and its L1→L2 witness.
- return {planHash:e.planHash,refund:funded.refund.toString(),feeEth:funded.feeEth.toString(),bokEth:funded.bokEth.toString(),
+ return {planHash:e.planHash,beneficiary:lower(p.beneficiary),refund:funded.refund.toString(),...(usdc?{collateralUsdc:String(funded.collateralUsdc),feeUsdc:String(funded.feeUsdc),relayFeeUsdc:String(funded.relayFeeUsdc)}:{feeEth:String(funded.feeEth),bokEth:String(funded.bokEth)}),
   collateral:{amount:String(collateral.amount),secretHash:collateral.secretHash,messageKey:collateral.key,leafIndex:String(collateral.index)},
   privateFee:{amount:String(privateFee.amount),secretHash:privateFee.secretHash,messageKey:privateFee.key,leafIndex:String(privateFee.index)},
   bok:{amount:String(credit.amount),secretHash:p.bokSecretHash,messageKey:credit.key,leafIndex:String(credit.index),commitment:credit.account}};
