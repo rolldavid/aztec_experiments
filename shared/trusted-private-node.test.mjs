@@ -63,6 +63,37 @@ test('development fake: missing node method is fixed unavailable, never an alter
   const f=fixture();delete f.node.getWorldStateSyncStatus;await rejects(()=>inspectTrustedNode(f.node,options),'UNAVAILABLE');assert.deepEqual(f.calls,[['getNodeInfo'],['getChainTips']]);
 });
 
+const deferred=()=>{let resolve;const promise=new Promise(r=>{resolve=r;});return {promise,resolve};};
+const turn=()=>new Promise(resolve=>setImmediate(resolve));
+for(const reason of [undefined,null,false,0])test('development fake: grouped readiness drains a held peer after falsy rejection '+String(reason),async()=>{
+  const f=fixture(),gate=deferred(),entered=deferred();let finished=false;
+  f.node.getChainTips=()=>{throw reason;};
+  f.node.getWorldStateSyncStatus=async()=>{entered.resolve();await gate.promise;return f.state;};
+  const result=inspectTrustedNode(f.node,options).then(()=>{throw Error('must reject');},error=>{finished=true;return error;});
+  await entered.promise;await turn();assert.equal(finished,false);assert.deepEqual(f.calls,[['getNodeInfo']]);
+  gate.resolve();assert.equal((await result).code,'BB_TRUSTED_NODE_UNAVAILABLE');
+});
+test('development fake: fulfilled tip snapshot cannot be rewritten while its peer is pending',async()=>{
+  const f=fixture(),gate=deferred(),entered=deferred();f.tips.proposed.hash=h(99);
+  f.node.getWorldStateSyncStatus=async()=>{entered.resolve();await gate.promise;return f.state;};
+  const result=rejects(()=>inspectTrustedNode(f.node,options),'UNSYNCED');
+  await entered.promise;await turn();f.tips.proposed.hash=h(8);gate.resolve();await result;
+  assert.equal(f.calls.some(x=>x[0]==='getBlockData'),false);
+});
+test('development fake: first canonical pair drains before rejection and does not query freshness',async()=>{
+  const f=fixture(),gate=deferred(),entered=deferred();let finished=false,stamp=0;
+  f.node.getBlockData=async n=>{if(n===7)return undefined;entered.resolve();await gate.promise;return {blockHash:h(8),header:{globalVariables:{blockNumber:8}}};};
+  f.node.getSyncedL1Timestamp=async()=>{stamp++;return 990n;};
+  const result=inspectTrustedNode(f.node,options).then(()=>{throw Error('must reject');},error=>{finished=true;return error;});
+  await entered.promise;await turn();assert.equal(finished,false);gate.resolve();assert.equal((await result).code,'BB_TRUSTED_NODE_UNSYNCED');assert.equal(stamp,0);
+});
+test('development fake: final canonical read remains after held freshness and rejects its reorg',async()=>{
+  const f=fixture(),gate=deferred(),entered=deferred();let fork=false,reads=0;
+  f.node.getBlockData=async n=>{reads++;return {blockHash:h(fork?99:n),header:{globalVariables:{blockNumber:n}}};};
+  f.node.getSyncedL1Timestamp=async()=>{entered.resolve();await gate.promise;return 990n;};
+  const result=rejects(()=>inspectTrustedNode(f.node,options),'UNSYNCED');await entered.promise;assert.equal(reads,2);fork=true;gate.resolve();await result;assert.equal(reads,3);
+});
+
 async function withFetch(run) {const original=globalThis.fetch;try{return await run(value=>{globalThis.fetch=value;});}finally{globalThis.fetch=original;}}
 function responseFor(f,body) {
   return Promise.all(body.map(async request=>{
@@ -141,4 +172,18 @@ test('mock transport: 32 MiB client cap cancels bounded stream before reading re
   });
   await rejects(()=>create(),'UNAVAILABLE');
   assert.equal(requests,1);assert.equal(pulls,3);assert.equal(cancels,1);
+}));
+
+
+test('actual safeRPC with labelled Fetch: fixed public pairs coalesce without merging the final fence',async()=>withFetch(async set=>{
+  const f=fixture(),batches=[];f.node.getSyncedL1Timestamp=async()=>BigInt(Math.floor(Date.now()/1000));
+  set(async(url,init)=>{const body=JSON.parse(init.body);batches.push(body.map(x=>[x.method,x.params]));return new Response(jsonStringify(await responseFor(f,body)),{headers:{'content-type':'application/json'}});});
+  await create();
+  assert.deepEqual(batches,[
+    [['aztec_getNodeInfo',[]]],
+    [['aztec_getChainTips',[]],['aztec_getWorldStateSyncStatus',[]]],
+    [['aztec_getBlockData',[7]],['aztec_getBlockData',[8]]],
+    [['aztec_getSyncedL1Timestamp',[]]],
+    [['aztec_getBlockData',[8]]],
+  ]);
 }));

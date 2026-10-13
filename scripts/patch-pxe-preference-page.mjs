@@ -11,8 +11,8 @@ import { fileURLToPath } from 'node:url';
 // Cursor/root/validator source is opt-in; whole cold recovery remains unqualified.
 const sha = value => createHash('sha256').update(value).digest('hex');
 export const PREFERENCE_PAGE_PINS = Object.freeze([
-  Object.freeze({path:'src/pxe.ts', before:'514cf7905733732522db9f301437d9ec5a1fd3b4a5ee3939980f76ffb4396ebd', after:'8d683958befb11a03e1dad775e1dc213a5f8d12ce026ad1c8a6532e1d8a72c5b'}),
-  Object.freeze({path:'dest/pxe.js', before:'94d98c0a13a0d6a2724ecf03f790461e13328b8aebac3d243f373e982d76a360', after:'dc66b54d0e2e802b807f81fee43cee9baf476e4afbe79ee8df3e3bf11e647d43'}),
+  Object.freeze({path:'src/pxe.ts', before:'514cf7905733732522db9f301437d9ec5a1fd3b4a5ee3939980f76ffb4396ebd', after:'0349e8ed792382a5094389b468424189cb277e432a35a49fcbe0f89d3dbe4040'}),
+  Object.freeze({path:'dest/pxe.js', before:'94d98c0a13a0d6a2724ecf03f790461e13328b8aebac3d243f373e982d76a360', after:'f4eb9e01004d2959c0eea908b36bf81a3719b581dd0e069815d3a21c5357820b'}),
   // rc3 adds queue-pressure timing and warnings; the transform preserves them.
   Object.freeze({path:'src/operation_queue.ts', before:'a78c45878393d8713fdce1de1cda326ec3af6772b092215c8096044d3ab61246', after:'d46768a384214ea5786a60e83b3c417fd788547904cf65f1a0c756616b91d5db'}),
   Object.freeze({path:'dest/operation_queue.js', before:'f8856a4145c38e831d077bc33c5e67f778ea1ad367b3ff93c486175d4c9019b6', after:'a2373a39553acc1ffc6f4cf9be0cc6eb07cefdb033881492601dd92abd15e360'}),
@@ -33,6 +33,14 @@ import { BlockHeader } from '@aztec-labs/stdlib/tx';
 import { FunctionType } from '@aztec-labs/stdlib/abi';
 import { SerializableContractInstance,computeContractAddressFromInstance,computeArtifactHash,getContractClassFromArtifact } from '@aztec-labs/stdlib/contract';
 import { authenticateCompactBlock } from './rolling-preference-compact.mjs';
+// Only fixed public canonical reads use this internal helper. The caller
+// snapshots each fulfilled SDK value before waiting for its peers.
+export async function rollingPreferenceReadBatch(reads){
+ const results=await Promise.allSettled(reads.map(read=>Promise.resolve().then(read)));
+ const rejected=results.find(result=>result.status==='rejected');
+ if(rejected)throw rejected.reason;
+ return results.map(result=>result.value);
+}
 const bindings=new WeakMap(),MAX_STATE=256*1024;
 const fail=()=>{throw Error('PXE_PREFERENCE_RECOVERY_FAILED');};
 const check=x=>{if(!x)fail();};
@@ -83,9 +91,13 @@ export async function runRollingPreferenceRecovery(pxe,input,options){
    const anchorRecord={blockNumber:anchor.getBlockNumber(),blockHash:(await anchor.hash()).toString()};
    const canonical=async()=>{
     const info=await pxe.node.getNodeInfo();check(info.l1ChainId===p.network.chainId&&info.rollupVersion===p.network.version&&info.l1ContractAddresses.rollupAddress.toString().toLowerCase()===p.network.rollup&&info.realProofs===p.proofsEnabled);
-    const observed=await pxe.node.getBlockData(anchorRecord.blockNumber);check(observed&&observed.blockHash.toString()===anchorRecord.blockHash);
-    const h=BlockHeader.fromBuffer(BlockHeader.prototype.toBuffer.call(observed.header));check((await h.hash()).toString()===anchorRecord.blockHash&&h.getBlockNumber()===anchorRecord.blockNumber&&h.globalVariables.chainId.toBigInt()===BigInt(p.network.chainId)&&h.globalVariables.version.toBigInt()===BigInt(p.network.version));
-    const raw=await pxe.node.getContract(address,await anchor.toBlockParameter());check(raw);const instance=SerializableContractInstance.fromBuffer(new SerializableContractInstance(raw).toBuffer());check(instance.currentContractClassId.toString()===p.expectedClassId&&instance.originalContractClassId.toString()===p.expectedClassId&&(await computeContractAddressFromInstance(instance)).equals(address));
+    const parameter=await anchor.toBlockParameter();
+    const [observed,instance]=await rollingPreferenceReadBatch([
+     async()=>{const raw=await pxe.node.getBlockData(anchorRecord.blockNumber);check(raw);return {hash:raw.blockHash.toString(),header:BlockHeader.fromBuffer(BlockHeader.prototype.toBuffer.call(raw.header))};},
+     async()=>{const raw=await pxe.node.getContract(address,parameter);check(raw);return SerializableContractInstance.fromBuffer(new SerializableContractInstance(raw).toBuffer());},
+    ]);
+    check(observed.hash===anchorRecord.blockHash);
+    const h=observed.header;check((await h.hash()).toString()===anchorRecord.blockHash&&h.getBlockNumber()===anchorRecord.blockNumber&&h.globalVariables.chainId.toBigInt()===BigInt(p.network.chainId)&&h.globalVariables.version.toBigInt()===BigInt(p.network.version));check(instance.currentContractClassId.toString()===p.expectedClassId&&instance.originalContractClassId.toString()===p.expectedClassId&&(await computeContractAddressFromInstance(instance)).equals(address));
     await guard();
    };
    await canonical();
@@ -166,12 +178,12 @@ export async function runRollingPreferenceRecovery(pxe,input,options){
  }catch{throw Error('PXE_PREFERENCE_RECOVERY_FAILED');}
 }
 `; }
-export const PREFERENCE_PAGE_RECOVERY_PIN = Object.freeze({generated:'rolling-preference-recovery.mjs',sha256:'d1431574e4c00686f7f50d6b782e8d2bef4db310bca65019612503b651384360'});
+export const PREFERENCE_PAGE_RECOVERY_PIN = Object.freeze({generated:'rolling-preference-recovery.mjs',sha256:'7665adf9ead08e907315ac95016371bb2c839216e48e5d3882c7f0292b3c99fa'});
 function imports() { return `
 // @ts-ignore Exact reviewed JavaScript module is copied by the pinned installer.
 import { authenticateCompactBlock as rollingPageCompact } from '../rolling-preference-compact.mjs';
 // @ts-ignore Exact isolated generated helper; no public manual store authority.
-import { RollingPreferenceRecoveryStore, bindRollingPreferenceRecovery, runRollingPreferenceRecovery } from '../rolling-preference-recovery.mjs';
+import { RollingPreferenceRecoveryStore, bindRollingPreferenceRecovery, runRollingPreferenceRecovery, rollingPreferenceReadBatch } from '../rolling-preference-recovery.mjs';
 import { SiblingPath as RollingPageSiblingPath } from '@aztec-labs/foundation/trees';
 import { Fr as RollingPageFr } from '@aztec-labs/foundation/curves/bn254';
 import { AztecAddress as RollingPageAddress } from '@aztec-labs/stdlib/aztec-address';
@@ -274,17 +286,29 @@ function method(ts) {
             info.l1ContractAddresses.rollupAddress.toString().toLowerCase() === p.network.rollup && info.realProofs === p.proofsEnabled);
           // NUMBER reads are deliberately uncached: hash-pinned history alone is
           // insufficient to establish that a previously observed fork is current.
-          for (const [number, hash] of [[anchor.getBlockNumber(), anchorHash], [p.blockNumber, p.blockHash]]) {
-            const data = await this.node.getBlockData(BlockNumber(number));
-            check(data && data.blockHash.toString() === hash);
-            const h = RollingPageHeader.fromBuffer(RollingPageHeader.prototype.toBuffer.call(data${t('!')}.header));
-            check(h.getBlockNumber() === number && (await h.hash()).toString() === hash &&
+          const coordinates = [[anchor.getBlockNumber(), anchorHash], [p.blockNumber, p.blockHash]];
+          const parameter = await anchor.toBlockParameter();
+          // Keep both observations, even at the same height. No check is reused
+          // across utility, contributor settlement or final commit boundaries.
+          const values = await rollingPreferenceReadBatch([
+            ...coordinates.map(([number]) => async () => {
+              const data = await this.node.getBlockData(BlockNumber(number));
+              check(data);
+              return {hash:data${t('!')}.blockHash.toString(),header:RollingPageHeader.fromBuffer(RollingPageHeader.prototype.toBuffer.call(data${t('!')}.header))};
+            }),
+            async () => {
+              const observed = await this.node.getContract(address, parameter);
+              check(observed);
+              return RollingPageInstance.fromBuffer(new RollingPageInstance(observed${t('!')}).toBuffer());
+            },
+          ]);
+          for (let i=0;i<coordinates.length;i++) {
+            const [number,hash]=coordinates[i],data=values[i],h=data.header;
+            check(data.hash===hash && h.getBlockNumber() === number && (await h.hash()).toString() === hash &&
               h.globalVariables.chainId.toBigInt() === BigInt(p.network.chainId) &&
               h.globalVariables.version.toBigInt() === BigInt(p.network.version));
           }
-          const observed = await this.node.getContract(address, await anchor.toBlockParameter());
-          check(observed);
-          const instance = RollingPageInstance.fromBuffer(new RollingPageInstance(observed${t('!')}).toBuffer());
+          const instance = values[2];
           check(instance.currentContractClassId.equals(classId) &&
             instance.originalContractClassId.equals(classId) &&
             (await computeContractAddressFromInstance(instance)).equals(address));

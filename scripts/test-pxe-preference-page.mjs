@@ -184,6 +184,25 @@ test('Noir page uses original dispatcher and original validator, has no direct s
   assert.doesNotMatch(text,/enqueue_note|enqueue_event|sync_state|get_pending_tagged_logs|set_capsule|get_capsule/);
 });
 
+// Execute only the exact generated internal batch routine. These are scheduling
+// controls, not SDK/chain acceptance or a second implementation of the helper.
+function generatedReadBatch(){
+  const text=preferenceRecoverySource(),start=text.indexOf('export async function rollingPreferenceReadBatch('),end=text.indexOf('const bindings=',start);
+  assert(start>=0&&end>start);return Function(text.slice(start,end).replace('export ','')+';return rollingPreferenceReadBatch;')();
+}
+const batchGate=()=>{let resolve;const promise=new Promise(r=>{resolve=r;});return {promise,resolve};};
+for(const reason of [undefined,null,false,0,Error('labelled rejection')])test('generated batch control drains peers and preserves exact rejection '+String(reason),async()=>{
+  const batch=generatedReadBatch(),gate=batchGate(),entered=batchGate();let done=false,secondStarted=false;
+  const result=batch([()=>{throw reason;},async()=>{secondStarted=true;entered.resolve();await gate.promise;return 1;}]).then(()=>({resolved:true}),error=>({error})).finally(()=>{done=true;});
+  await entered.promise;await new Promise(resolve=>setImmediate(resolve));assert(secondStarted);assert.equal(done,false);
+  gate.resolve();const observed=await result;assert(Object.hasOwn(observed,'error'));assert.equal(observed.error,reason);
+});
+test('generated batch control preserves declaration-order error and result ordering',async()=>{
+  const batch=generatedReadBatch(),a=Error('first'),b=Error('second'),gate=batchGate();
+  const result=batch([async()=>{await gate.promise;throw a;},()=>{throw b;}]).catch(error=>error);gate.resolve();assert.equal(await result,a);
+  assert.deepEqual(await batch([async()=>3,()=>1]),[3,1]);
+});
+
 // The following execution fixture runs the EXACT generated method, with a labelled
 // SDK/queue double. It verifies argument capture and pre-queue safety only. It is
 // not ACIR, store, membership, ciphertext or genuine-recovery qualification.
@@ -364,7 +383,7 @@ if(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1') {
   await restorePristineCopy(recoveryDirectory);
   await patchPreferencePage(recoveryDirectory);
   const patchedImp=p=>import(pathToFileURL(join(recoveryDirectory,'dest',p)));
-  const {RollingPreferenceRecoveryStore,bindRollingPreferenceRecovery,runRollingPreferenceRecovery}=await import(pathToFileURL(join(recoveryDirectory,PREFERENCE_PAGE_RECOVERY_PIN.generated)));
+  const {RollingPreferenceRecoveryStore,bindRollingPreferenceRecovery,runRollingPreferenceRecovery,rollingPreferenceReadBatch}=await import(pathToFileURL(join(recoveryDirectory,PREFERENCE_PAGE_RECOVERY_PIN.generated)));
   const {NoteStore:RecoveryNoteStore}=await patchedImp('storage/note_store/note_store.js');
   const {NoteDao,NoteStatus}=await import('@aztec-labs/stdlib/note');
   const {BlockSynchronizer}=await imp('block_synchronizer/block_synchronizer.js');
@@ -510,7 +529,7 @@ if(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1') {
     // Only class registry / ACIR are labelled doubles here. Actual effect/root,
     // whole ordered compact verifier, generated method, EventService and stores
     // run unchanged. Candidate-ABI ACIR remains a separate mandatory test.
-    const bindings={RollingPageFr:Fr,RollingPageAddress:AztecAddress,RollingPageTxHash:TxHash,RollingPageBlockHash:BlockHash,
+    const bindings={rollingPreferenceReadBatch,RollingPageFr:Fr,RollingPageAddress:AztecAddress,RollingPageTxHash:TxHash,RollingPageBlockHash:BlockHash,
       RollingPageHeader:BlockHeader,RollingPageEffect:TxEffect,RollingPageReceipt:MinedTxReceipt,RollingPageSiblingPath:SiblingPath,
       rollingPageVerifyWitness:verifyTxEffectMembershipWitness,rollingPageCompact:authenticateCompactBlock,
       rollingPageArtifactHash:async()=>Fr.fromString(p.expectedArtifactHash),rollingPageClass:async()=>({id:Fr.fromString(p.expectedClassId)}),
@@ -696,7 +715,7 @@ if(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1') {
           stagedWriteCoordinator:new StagedWriteCoordinator({kvStore:db,stagedStores}),contributors:[syncService,...(contributor?[contributor]:[])],autoSync:false,log});
         queue.start();
         const output=transformPreferencePage(source['dest/pxe.js'],'dest/pxe.js'),start=output.indexOf('async processRollingPreferencePage'),end=output.indexOf('/**\n   * Executes a contract utility',start);
-        const bindings={RollingPageFr:Fr,RollingPageAddress:AztecAddress,RollingPageTxHash:TxHash,RollingPageBlockHash:BlockHash,
+        const bindings={rollingPreferenceReadBatch,RollingPageFr:Fr,RollingPageAddress:AztecAddress,RollingPageTxHash:TxHash,RollingPageBlockHash:BlockHash,
           RollingPageHeader:BlockHeader,RollingPageEffect:TxEffect,RollingPageReceipt:MinedTxReceipt,RollingPageSiblingPath:SiblingPath,
           rollingPageVerifyWitness:verifyTxEffectMembershipWitness,rollingPageCompact:authenticateCompactBlock,
           rollingPageArtifactHash:computeArtifactHash,rollingPageClass:getContractClassFromArtifact,
@@ -927,6 +946,12 @@ if(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1') {
           const digest=await poseidon2HashWithSeparator([new Fr(31337),new Fr(1),f.board.toField(),...e],0x52435031);
           assert.equal(value.preferences.head.digest,String(digest.toBigInt()));assert.equal(stored.notes[0].note.items[2].toBigInt(),digest.toBigInt());
           assert.deepEqual(report.tags,{private:0,public:0});assert.equal(report.native.requests,4);assert.equal(report.native.accepted,4);assert.equal(report.native.errors,0);assert.equal(report.gateway.errors,0);assert.equal(report.sdk.errors,0);
+          assert.equal(report.steps.length,6);assert.equal(report.sdk.calls,17);assert.equal(report.sdk.status,12);assert.equal(report.sdk.advance,5);
+          const readerMs=report.steps.reduce((sum,step)=>sum+step.elapsedMs,0);
+          report.optimization={baselineRequests:475,requestCeiling:400,readerTimeTargetMs:8500,readerMs,requestsMet:report.gateway.requests<=400,timeTargetMet:readerMs<=8500};
+          // Fixed before measurement. A miss is retained as an honest failure,
+          // never permission to drop a fence or rerun unchanged until it passes.
+          assert(report.optimization.requestsMet);assert(report.optimization.timeTargetMet);
           report.stage='complete';await close();assert(report.cleanup.listenersClosed&&report.cleanup.pendingSettled);assert.equal(report.native.pending,0);assert.equal(report.sdk.pending,0);report.readPassed=true;
         }catch{report.stage='failed-'+report.stage;throw Error('Cold HTTP progress diagnostic failed; inspect sanitized phase receipt');}
         finally{
@@ -969,6 +994,51 @@ if(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1') {
       await assert.rejects(f.node.getPrivateLogsByTags({...query,referenceBlock:{number:3,hash:referenceBlock.hash}}));
       await assert.rejects(f.node.getPrivateLogsByTags({...query,referenceBlock:BlockHash.random()}));
       f.invalidate();await assert.rejects(f.node.getPrivateLogsByTags(query));
+    });
+    await test('actual SDK/ACIR fixture: canonical groups start peers, drain failures and fence account changes',async t=>{
+      const f=await acirFixture(t);
+      for(const kind of ['recovery','page'])await t.test(kind+' wrong network rejects before any grouped header or class request',async()=>{
+        const r=await f.receiver({recovery:true}),original=r.page.node;let reads=0;
+        r.page.node={getNodeInfo:async()=>({...await original.getNodeInfo(),l1ChainId:1}),getBlockData:async()=>{reads++;throw Error('must not read');},getContract:async()=>{reads++;throw Error('must not read');}};
+        try{await assert.rejects(kind==='recovery'?r.page.processRollingPreferenceRecovery(recoveryInput(f),{contextGuard:async()=>{}}):r.page.processRollingPreferencePage(f.input,{contextGuard:async()=>{}}),/PXE_PREFERENCE_(PAGE|RECOVERY)_FAILED/);}
+        finally{r.page.node=original;}
+        assert.equal(reads,0);assert.equal(r.page.acirCompleted??0,0);const state=await r.read();assert.equal(state.notes.length,0);assert.equal(state.events.length,0);
+      });
+      for(const kind of ['recovery','page'])await t.test(kind+' grouped public reads retain ownership until a held class lookup settles',async()=>{
+        const r=await f.receiver({recovery:true}),original=r.page.node,gate=batchGate(),entered=batchGate();let reads=0,finished=false,following=false;
+        r.page.node={getNodeInfo:original.getNodeInfo.bind(original),getBlockData:async()=>{reads++;throw null;},getContract:async()=>{entered.resolve();await gate.promise;return f.instance;}};
+        const run=(kind==='recovery'?r.page.processRollingPreferenceRecovery(recoveryInput(f),{contextGuard:async()=>{}}):r.page.processRollingPreferencePage(f.input,{contextGuard:async()=>{}}));
+        const observed=run.then(()=>({success:true}),error=>({error})).finally(()=>{finished=true;});
+        let timer;
+        try{
+          await Promise.race([entered.promise,new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('Grouped peer did not start')),1000);})]);
+          assert.equal(reads,kind==='page'?2:1);assert.equal(finished,false);
+          const later=r.queue.runSynced(()=>{following=true;return 1;});
+          await new Promise(resolve=>setImmediate(resolve));assert.equal(following,false);
+          gate.resolve();const result=await observed;assert.match(result.error?.message,/PXE_PREFERENCE_(PAGE|RECOVERY)_FAILED/);assert.equal(await later,1);
+          assert.equal(r.page.acirCompleted??0,0);r.page.node=original;
+          const state=await r.read();assert.equal(state.notes.length,0);assert.equal(state.events.length,0);
+        }finally{clearTimeout(timer);gate.resolve();await observed;r.page.node=original;}
+      });
+      await t.test('fulfilled headers are detached before the pending class peer can rewrite them',async()=>{
+        const r=await f.receiver(),original=r.page.node,gate=batchGate(),entered=batchGate();const mutable=BlockHeader.fromBuffer(f.header.toBuffer());mutable.globalVariables.version=new Fr(999);
+        r.page.node={getNodeInfo:original.getNodeInfo.bind(original),getBlockData:async()=>({blockHash:BlockHash.fromString(f.input.blockHash),header:mutable}),getContract:async()=>{entered.resolve();await gate.promise;return f.instance;}};
+        const observed=r.page.processRollingPreferencePage(f.input,{contextGuard:async()=>{}}).then(()=>({success:true}),error=>({error}));let timer;
+        try{
+          await Promise.race([entered.promise,new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('Grouped peer did not start')),1000);})]);
+          await new Promise(resolve=>setImmediate(resolve));mutable.globalVariables.version=new Fr(1);gate.resolve();
+          assert.match((await observed).error?.message,/PXE_PREFERENCE_PAGE_FAILED/);assert.equal(r.page.acirCompleted??0,0);
+          r.page.node=original;const state=await r.read();assert.equal(state.notes.length,0);assert.equal(state.events.length,0);
+        }finally{clearTimeout(timer);gate.resolve();await observed;r.page.node=original;}
+      });
+      await t.test('account change while grouped class read awaits rejects before utility or cursor commit',async()=>{
+        const r=await f.receiver({recovery:true}),original=r.page.node;let locked=false;
+        r.page.node={getNodeInfo:original.getNodeInfo.bind(original),getBlockData:original.getBlockData.bind(original),getContract:async(...args)=>{const result=await original.getContract(...args);locked=true;return result;}};
+        try{await assert.rejects(r.page.processRollingPreferenceRecovery(recoveryInput(f),{contextGuard:async()=>{if(locked)throw Error('LABELLED_LOCK');}}),/PXE_PREFERENCE_RECOVERY_FAILED/);}
+        finally{r.page.node=original;}
+        assert.equal(r.page.acirCompleted??0,0);const state=await r.read();assert.equal(state.notes.length,0);assert.equal(state.events.length,0);
+        const start=await r.page.processRollingPreferenceRecovery(recoveryInput(f),{contextGuard:async()=>{}});assert.equal(start.sequence,0);assert.equal(start.complete,false);
+      });
     });
     await test('actual ACIR cursor scans empty history then authentic ciphertexts, replays mailbox, gates terminal head',async t=>{
       const f=await acirFixture(t),r=await f.receiver({recovery:true});

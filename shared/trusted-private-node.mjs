@@ -43,6 +43,14 @@ function block(value) {
   if(!natural(number))throw fail('UNAVAILABLE');
   return {number,hash:hex(hash,32)};
 }
+// Fixed public read groups only. Drain every started call (including a sync
+// throw or falsy rejection) before releasing the caller's operation ownership.
+async function readTogether(reads) {
+  const results=await Promise.allSettled(reads.map(read=>Promise.resolve().then(read)));
+  const rejected=results.find(result=>result.status==='rejected');
+  if(rejected)throw rejected.reason;
+  return results.map(result=>result.value);
+}
 async function canonical(node, expected) {
   const data=await node.getBlockData(expected.number);
   if(!data || data.header?.globalVariables?.blockNumber!==expected.number || hex(data.blockHash,32)!==expected.hash)throw fail('UNSYNCED');
@@ -59,15 +67,24 @@ export async function inspectTrustedNode(node, options) {
     const chainId=info?.l1ChainId,version=info?.rollupVersion,realProofs=info?.realProofs,rollup=info?.l1ContractAddresses?.rollupAddress;
     if(!natural(chainId) || !natural(version) || typeof realProofs!=='boolean')throw fail('UNAVAILABLE');
     if(String(chainId)!==p.chainId || String(version)!==p.version || hex(rollup,20)!==p.rollup || realProofs!==p.proofsEnabled)throw fail('IDENTITY');
-    const tips=await node.getChainTips(), state=await node.getWorldStateSyncStatus();
-    const proposed=block(tips?.proposed), checkpointed=block(tips?.checkpointed?.block), proven=block(tips?.proven?.block), finalized=block(tips?.finalized?.block);
+    // Identity stays first. Snapshot each result on fulfillment, before waiting
+    // for its peer; a batch is not an atomic chain snapshot or a readiness lease.
+    const [tips,state]=await readTogether([
+      async()=>{const value=await node.getChainTips();return {
+        proposed:block(value?.proposed),checkpointed:block(value?.checkpointed?.block),
+        proven:block(value?.proven?.block),finalized:block(value?.finalized?.block)};},
+      async()=>{const value=await node.getWorldStateSyncStatus();return {
+        latest:value?.latestBlockNumber,latestHash:hex(value?.latestBlockHash,32),
+        final:value?.finalizedBlockNumber,oldest:value?.oldestHistoricBlockNumber,synced:value?.treesAreSynched};},
+    ]);
+    const {proposed,checkpointed,proven,finalized}=tips;
     const ordered=[finalized,proven,checkpointed,proposed];
     for(let i=1;i<ordered.length;i++)if(ordered[i-1].number>ordered[i].number || (ordered[i-1].number===ordered[i].number && ordered[i-1].hash!==ordered[i].hash))throw fail('UNSYNCED');
-    const latest=state?.latestBlockNumber,latestHash=state?.latestBlockHash,final=state?.finalizedBlockNumber,oldest=state?.oldestHistoricBlockNumber,synced=state?.treesAreSynched;
+    const {latest,latestHash,final,oldest,synced}=state;
     if(!natural(latest) || !natural(final) || !natural(oldest) || typeof synced!=='boolean')throw fail('UNAVAILABLE');
     if(!synced || latest!==proposed.number || hex(latestHash,32)!==proposed.hash || final!==finalized.number || oldest>checkpointed.number)throw fail('UNSYNCED');
-    if(checkpointed.number!==proposed.number)await canonical(node,checkpointed);
-    await canonical(node,proposed);
+    if(checkpointed.number!==proposed.number)await readTogether([()=>canonical(node,checkpointed),()=>canonical(node,proposed)]);
+    else await canonical(node,proposed);
     const stamp=await node.getSyncedL1Timestamp();
     const suppliedNow=options.nowSeconds,now=suppliedNow===undefined ? Math.floor(Date.now()/1000) : suppliedNow;
     if(!natural(now))throw fail('CONFIG');
