@@ -3,6 +3,7 @@
 // immutable encrypted handoff and >=150s remaining outer budget. Expected public
 // content is assertion-only: never injected into application or persisted here.
 import assert from 'node:assert/strict';
+import {projectRollingInitialization} from '../../apps/rolling/wallet-panel.mjs';
 import {COMPACT_GATEWAY_ROUTE,COMPACT_TRANSPORT_LIMITS,validateCompactSelector} from '../../shared/rolling/compact-client.mjs';
 import {validateRollingBrowserBackup,waitForRollingComposerState} from './rolling-composer-browser.mjs';
 const invalid=()=>Error('Invalid private preference browser control.');
@@ -10,6 +11,20 @@ const fail=()=>{throw Error('Preference browser check failed.');};
 // Reviewed read/simulation inventory retained on pinned rc3. The new unused
 // getBlockHashMembershipWitnessAtArchive method stays denied until a caller is reviewed.
 const nodeReads=new Set(["getWorldStateSyncStatus", "findLeavesIndexes", "getNullifierMembershipWitness", "getLowNullifierMembershipWitness", "getPublicDataWitness", "getBlockHashMembershipWitness", "getNoteHashMembershipWitness", "getL1ToL2MessageMembershipWitness", "getL1ToL2MessageIndex", "getL2ToL1Messages", "getL2ToL1MembershipWitness", "getTxEffectMembershipWitness", "getBlockNumber", "getCheckpointNumber", "getChainTips", "getL1Constants", "getSyncedL2SlotNumber", "getSyncedL2EpochNumber", "getSyncedL1Timestamp", "getCheckpointsData", "getBlock", "getBlockData", "getBlocks", "getCheckpoint", "getCheckpoints", "isReady", "getNodeInfo", "getCurrentMinFees", "getPredictedMinFees", "getMaxPriorityFees", "getNodeVersion", "getVersion", "getChainId", "getL1ContractAddresses", "getProtocolContractAddresses", "getPrivateLogsByTags", "getPublicLogsByTags", "getTxReceipt", "getTxEffect", "getPendingTxs", "getPendingTxCount", "getTxByHash", "getTxsByHash", "getPublicStorageAt", "getValidatorsStats", "getValidatorStats", "getValidatorStatsBatch", "simulatePublicCalls", "isValidTx", "getContractClass", "getContract", "getEncodedEnr", "getAllowedPublicSetup", "getPeers", "getCheckpointAttestationsForSlot", "getProposalsForSlot"]);
+
+// Test-only capture of the fixed public diagnostic attribute. This is never a
+// readiness or recovery-success signal and cannot authorize an action.
+export function decodeRollingInitializationObservation(text){
+ if(text===null)return {status:'absent',value:null};
+ if(typeof text!=='string'||text.length>512)return {status:'invalid',value:null};
+ try{const value=projectRollingInitialization(JSON.parse(text));return {status:value?'captured':'invalid',value};}catch{return {status:'invalid',value:null};}
+}
+export async function captureRollingInitializationObservation(dialog,timeoutMs){
+ try{
+  if(!Number.isSafeInteger(timeoutMs)||timeoutMs<1||timeoutMs>1000)throw invalid();
+  return decodeRollingInitializationObservation(await dialog.getAttribute('data-rolling-initialization',{timeout:timeoutMs}));
+ }catch{return {status:'unavailable',value:null};}
+}
 const stages=new Set(['validation','launch','public-reader','unlock','import','recover','bookmarks','following','main-board','lock','reload','complete']);
 const value=(o,k)=>{const d=Object.getOwnPropertyDescriptor(o,k);if(!d||!Object.hasOwn(d,'value'))throw invalid();return d.value;};
 function exact(o,keys){if(!o||![Object.prototype,null].includes(Object.getPrototypeOf(o))||Reflect.ownKeys(o).length!==keys.length||Object.keys(o).sort().join()!==[...keys].sort().join())throw invalid();}
@@ -136,6 +151,7 @@ export async function runRollingPreferenceBrowser(input){
   mark('unlock');await dialog.getByRole('button',{name:'Unlock',exact:true}).click({timeout:remaining()});await settled(dialog.getByLabel('Recovery file',{exact:true}));
   mark('import');await dialog.getByLabel('Recovery password',{exact:true}).fill(selected.backupPassword,{timeout:remaining()});await dialog.getByLabel('Recovery file',{exact:true}).setInputFiles(selected.backupPath,{timeout:remaining()});await dialog.getByRole('button',{name:'Import recovery',exact:true}).click({timeout:remaining()});
   await settled(dialog.getByRole('button',{name:'Recover private views',exact:true}));safeTraffic();
+  report.initialization=await captureRollingInitializationObservation(dialog,Math.min(1000,remaining()));
   mark('recover');let next=dialog.getByRole('button',{name:'Recover private views',exact:true});
   const complete=dialog.getByText('Your saved choices are ready.',{exact:true}),more=dialog.getByRole('button',{name:'Continue private recovery',exact:true});
   while(true){
@@ -164,13 +180,17 @@ export async function runRollingPreferenceBrowser(input){
   await page.getByRole('heading',{name:'Unlock and recover your private views',exact:true}).waitFor({timeout:remaining()});assert.equal(await page.locator('#content article.post').count(),0);
   assert(await page.evaluate(()=>globalThis.__aztec===undefined&&globalThis.BillboardAccount===undefined));const afterReload=safeTraffic();for(const k of ['walletAssets','privateRequests','feedRequests'])assert.equal(afterReload[k],beforeReload[k]);report.checks.reloadLocked=true;
   mark('complete');report.passed=true;
- }catch{report.passed=false;if(expiresAt!==undefined&&Date.now()>=expiresAt)expired=true;}
+ }catch{report.passed=false;if(expiresAt!==undefined&&Date.now()>=expiresAt)expired=true;
+  if(!report.initialization&&page&&expiresAt!==undefined&&Date.now()<expiresAt)report.initialization=await captureRollingInitializationObservation(page.getByRole('dialog',{name:'Your private account',exact:true}),Math.min(1000,expiresAt-Date.now()));
+ }
  finally{
   clearTimeout(timer);
   if(context)try{await context.close();report.cleanup.contextClosed=true;}catch{report.passed=false;}else report.cleanup.contextClosed=true;
   if(browser)try{await browser.close();report.cleanup.browserClosed=!browser.isConnected();if(!report.cleanup.browserClosed)report.passed=false;}catch{report.passed=false;}else report.cleanup.browserClosed=true;
  }
  report.traffic=observer?.snapshot()??{walletAssets:0,privateRequests:0,feedRequests:0,boardRequests:0,compactRequests:0,compactPreflights:0,tagDiscoveryRequests:0,proofSubmits:0,nodeSubmissions:0,l1Submissions:0,blockedRequests:0,inspectionErrors:0};
+ report.initialization??={status:'unavailable',value:null};
+ if(report.initialization.status==='invalid')report.passed=false;
  if(expired||['proofSubmits','nodeSubmissions','l1Submissions','blockedRequests','inspectionErrors'].some(k=>report.traffic[k]!==0))report.passed=false;
  return {...report,stage,elapsedMs:Date.now()-started,timedOut:expired};
 }

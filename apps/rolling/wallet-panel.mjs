@@ -1,6 +1,21 @@
 // Presentation only. No SDK import or account access before explicit Unlock.
 import {allowance} from './model.mjs';
 import {prepareAvatarUpload} from './avatar-upload.mjs';
+// Presentation-only diagnostic projection. Keep this vocabulary closed even if
+// a runtime or DOM value is malformed; never render or report exception text.
+const initializationSteps=new Set(['account-lock','trusted-node','deployment','account-derive','store-open','pxe-create','account-register','contracts-register','initial-sync','journal-open','wallet-bind','account-manager','application-bind']);
+const deploymentSteps=new Set(['config','node-readiness','artifact-layout','board-class','checkpoint','board-instance','public-config','config-commitment','fee-instance','l1-context','portal-code-and-immutables','canonical-recheck','final-readiness-and-context']);
+const initializationCodes=new Set(['unknown','BB_TRUSTED_NODE_CONFIG','BB_TRUSTED_NODE_IDENTITY','BB_TRUSTED_NODE_UNAVAILABLE','BB_TRUSTED_NODE_UNSYNCED','BB_TRUSTED_NODE_STALE','BB_BROWSER_PROVER_CONFIGURATION','ROLLING_SESSION_CONFIG','ROLLING_OTHER_TAB','ROLLING_CONTEXT_CHANGED','ROLLING_ACCOUNT_MISMATCH','ROLLING_PRIVATE_ROUTE','ROLLING_DEPLOYMENT_INVALID']);
+export function projectRollingInitialization(value){
+ try{
+  if(!value||Object.getPrototypeOf(value)!==Object.prototype||Reflect.ownKeys(value).length!==5)return null;
+  const out={};for(const key of ['stage','step','deploymentStep','state','code']){const d=Object.getOwnPropertyDescriptor(value,key);if(!d||!Object.hasOwn(d,'value'))return null;out[key]=d.value;}
+  if(out.stage!=='session-initialization'||!initializationSteps.has(out.step)||!['started','complete','failed'].includes(out.state))return null;
+  if(out.deploymentStep!==null&&(out.step!=='deployment'||!deploymentSteps.has(out.deploymentStep)))return null;
+  if(out.state==='failed'?!initializationCodes.has(out.code):out.code!==null)return null;
+  return Object.freeze(out);
+ }catch{return null;}
+}
 const TYPES={preference:'Private preference','read-marker':'Mark thread read',bio:'Edit bio',avatar:'Edit avatar',post:'Write a post',reply:'Reply',quote:'Quote a post',repost:'Repost',like:'Like a post',unlike:'Remove a like',name:'Register a name',subboard:'Create a subboard'};
 const IDS=['subboard','parent','root','reference','post'];
 const field=value=>typeof value==='string'&&/^(?:0x[0-9a-f]{64}|0|[1-9][0-9]{0,76})$/.test(value);
@@ -26,6 +41,7 @@ const message='This operation could not be completed. Recovery records were pres
 export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPrivateChange=()=>{}}){
  if(typeof loadRuntime!=='function'||typeof onPublicEffect!=='function'||typeof onPrivateChange!=='function')throw Error('Wallet panel configuration unavailable.');
  const connectionFailure=Object.freeze({}),avatarFailure=Object.freeze({});
+ let initializationAttempt=0;
  let runtime,session,busy=false,blocked=false,invalidated=false,reloadRequired=false,returnFocus;
  let status=null,intent=null,identities=[],identityRecords=[],cursor=0,error='',notice='',draft={type:'post',subboard:'0',content:''};
  let preferences=null,preferenceProgress=null,accountIdentity=null,recoveryAbort=null,recoveryInspection=null;
@@ -39,7 +55,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
  function releasePreviews(){renderEpoch++;for(const url of previewURLs)URL.revokeObjectURL(url);previewURLs.clear();}
  function clearProfileDraft(){profileSnapshot=null;avatarDraft=null;}
  function clearPreferences(){preferences=null;preferenceProgress=null;onPrivateChange();}
- function clearPrivateView(){recoveryInspection=null;accountEpoch++;accountIdentity=null;content.replaceChildren();clearPreferences();status=null;intent=null;identities=[];identityRecords=[];cursor=0;view='action';draft={type:'post',subboard:'0',content:''};releasePreviews();clearProfileDraft();}
+ function clearPrivateView(){initializationAttempt++;dialog.removeAttribute('data-rolling-initialization');recoveryInspection=null;accountEpoch++;accountIdentity=null;content.replaceChildren();clearPreferences();status=null;intent=null;identities=[];identityRecords=[];cursor=0;view='action';draft={type:'post',subboard:'0',content:''};releasePreviews();clearProfileDraft();}
  function checkAccount(epoch){if(epoch!==accountEpoch||!unlocked())throw connectionFailure;}
  function privateStatus(){if(!unlocked()||!session)return 'locked';return preferences?'complete':'recovering';}
  function preferenceEnabled(kind,target){if(privateStatus()!=='complete')return null;const key={1:'bookmarks',2:'followedBoards',3:'followedNames',4:'subscriptions'}[kind];return kind===5?preferences.replyNotifications:key?preferences[key].includes(BigInt(target).toString()):null;}
@@ -110,15 +126,20 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   blocked=false;
  }
  async function connect(){
-  const epoch=accountEpoch;
+  const epoch=accountEpoch,attempt=++initializationAttempt;
+  dialog.removeAttribute('data-rolling-initialization');
   try{
   if(!accountIdentity)accountIdentity=runtime.getAccount();
   if(!session){blocked=true;session=await runtime.createSession({onProgress:progress=>{
+   if(attempt!==initializationAttempt||epoch!==accountEpoch||invalidated||reloadRequired||!unlocked())return;
+   const diagnostic=projectRollingInitialization(progress);
+   if(diagnostic)dialog.setAttribute('data-rolling-initialization',JSON.stringify(diagnostic));
    const stages={estimating:'Checking the action and its maximum fee…',submitting:'Proving and submitting. Keep this page open; do not send again.'};
-   note(stages[progress?.stage]??'Checking the private account…');
+   let stage;try{const own=Object.getOwnPropertyDescriptor(progress??{},'stage');if(own&&Object.hasOwn(own,'value')&&typeof own.value==='string')stage=own.value;}catch{}
+   note(Object.hasOwn(stages,stage)?stages[stage]:'Checking the private account…');
   }});}
   if(view!=='preferences')await refresh();checkAccount(epoch);note('');
-  }catch{throw connectionFailure;}
+  }catch{if(attempt===initializationAttempt)initializationAttempt++;throw connectionFailure;}
  }
  async function unlock(){await work(async()=>{
   note('Loading private account tools…');

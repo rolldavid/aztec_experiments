@@ -299,3 +299,49 @@ test('cold cancellation or account change retains the lock until the original PX
   release();await observed;assert(!session.busy&&!f.state.active);assert.equal(f.state.sends,0);await session.close();
  }
 });
+
+// Labelled SDK/node failures at every constructor boundary; no live chain.
+import {ROLLING_SESSION_STAGES} from './wallet-session.mjs';
+import {projectRollingInitialization} from './wallet-panel.mjs';
+const diagnosticSessionFailures={
+ 'account-lock':(f,error)=>{f.input.locks.request=async()=>{throw error;};},
+ 'trusted-node':(f,error)=>{f.input.sdk.createTrustedPrivateNode=async()=>{throw error;};},
+ deployment:(f,error)=>{f.input.sdk.inspectTrustedNode=async()=>{throw error;};},
+ 'account-derive':(f,error)=>{f.input.sdk.deriveKeys=async()=>{throw error;};},
+ 'store-open':(f,error)=>{f.input.sdk.openPXEStore=async()=>{throw error;};},
+ 'pxe-create':(f,error)=>{f.input.sdk.createPXE=async()=>{throw error;};},
+ 'account-register':(f,error)=>{f.input.sdk.computePartialAddress=async()=>{throw error;};},
+ 'contracts-register':(f,error)=>{f.pxe.registerContractClass=async()=>{throw error;};},
+ 'initial-sync':(f,error)=>{f.pxe.sync=async()=>{throw error;};},
+ 'journal-open':(f,error)=>{f.input.sdk.createBrowserJournalStorage=()=>{throw error;};},
+ 'wallet-bind':(f,error)=>{f.input.routing.createAztecWallet=()=>{throw error;};},
+ 'account-manager':(f,error)=>{f.input.sdk.AccountManager.create=async()=>{throw error;};},
+ 'application-bind':(f,error)=>{f.state.diagnosticFailure=error;},
+};
+for(const [step,inject]of Object.entries(diagnosticSessionFailures))test('labelled session diagnostic preserves failure and lease at '+step,async()=>{
+ const f=await sessionFixture(),observed=[],original=Error('PRIVATE_SENTINEL'),guard=f.input.contextGuard;
+ f.input.contextGuard=async()=>{if(f.state.diagnosticFailure)throw f.state.diagnosticFailure;return guard();};
+ f.input.onProgress=record=>{observed.push(record);if(record.step===step&&record.deploymentStep===null&&record.state==='started')inject(f,original);};
+ let rejected=false,caught;try{await createRollingWalletSession(f.input);}catch(error){rejected=true;caught=error;}
+ assert(rejected);if(step==='deployment')assert.equal(caught.code,'ROLLING_DEPLOYMENT_INVALID');else assert.equal(caught,original);
+ assert.deepEqual(observed.at(-1),{stage:'session-initialization',step,deploymentStep:step==='deployment'?'node-readiness':null,state:'failed',code:'unknown'});
+ assert.equal(observed.filter(r=>r.state==='failed').length,1);assert(!JSON.stringify(observed).includes('PRIVATE_SENTINEL'));assert.equal(f.state.active,false);assert.equal(f.state.sends,0);
+ if(['pxe-create','account-register','contracts-register','initial-sync','journal-open','wallet-bind','account-manager','application-bind'].includes(step))assert.equal(f.state.closes,1);
+});
+test('session diagnostic success is fixed and observer rejection cannot alter setup or cleanup',async()=>{
+ const f=await sessionFixture(),observed=[];f.input.onProgress=record=>{observed.push(record);if(record.state==='started')throw Error('PRIVATE_SENTINEL');return Promise.reject(Error('PRIVATE_SENTINEL'));};
+ const session=await createRollingWalletSession(f.input);
+ assert.deepEqual(observed.filter(r=>r.deploymentStep===null&&r.state==='started').map(r=>r.step),ROLLING_SESSION_STAGES);
+ assert.equal(observed.at(-1).step,'application-bind');assert.equal(observed.at(-1).state,'complete');assert(observed.every(Object.isFrozen));assert(observed.every(r=>projectRollingInitialization(r)!==null));await session.close();assert.equal(f.state.closes,1);
+});
+for(const reason of [undefined,null,false,0,''])test('session diagnostic preserves exact falsy rejection '+String(reason),async()=>{
+ const f=await sessionFixture(),observed=[];f.input.sdk.createPXE=async()=>{throw reason;};f.input.onProgress=r=>{observed.push(r);return Promise.reject(Error('PRIVATE_SENTINEL'));};
+ let failed=false,caught;try{await createRollingWalletSession(f.input);}catch(e){failed=true;caught=e;}
+ assert(failed);assert.equal(caught,reason);assert.equal(observed.at(-1).step,'pxe-create');assert.equal(observed.at(-1).code,'unknown');assert.equal(f.state.closes,1);assert.equal(f.state.active,false);
+});
+test('session diagnostic does not hide account invalidation or invoke exception code accessors',async()=>{
+ const f=await sessionFixture(),observed=[];f.input.onProgress=r=>{observed.push(r);if(r.step==='pxe-create'&&r.state==='started')f.input.account.salt='99';};
+ await assert.rejects(createRollingWalletSession(f.input),{code:'ROLLING_CONTEXT_CHANGED'});assert.equal(observed.at(-1).code,'ROLLING_CONTEXT_CHANGED');assert(!f.state.events.includes('create-pxe'));assert.equal(f.state.closes,1);
+ const g=await sessionFixture();let reads=0;const original=Object.defineProperty(Error('PRIVATE_SENTINEL'),'code',{get(){reads++;throw Error('PRIVATE_SENTINEL');}});g.input.sdk.createTrustedPrivateNode=async()=>{throw original;};g.input.onProgress=r=>observed.push(r);
+ await assert.rejects(createRollingWalletSession(g.input),e=>e===original);assert.equal(reads,0);assert.equal(observed.at(-1).code,'unknown');
+});

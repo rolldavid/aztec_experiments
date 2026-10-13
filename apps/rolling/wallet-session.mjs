@@ -5,8 +5,9 @@ import {createRollingCompactClient} from '../../shared/rolling/compact-client.mj
 import {createRollingPreferenceReader} from '../../shared/rolling/preference-reader.mjs';
 import {createSynchronizedRollingApplication} from '../../shared/rolling/synchronized-application.mjs';
 import {createRollingApplication} from '../../shared/rolling/application.mjs';
-import {verifyRollingDeployment} from '../../shared/rolling/deployment.mjs';
+import {verifyRollingDeployment,observeRollingSetup,rollingSetupErrorCode} from '../../shared/rolling/deployment.mjs';
 const fail=code=>Object.assign(Error('The private account is unavailable. Preserve recovery records.'),{code});
+export const ROLLING_SESSION_STAGES=Object.freeze(['account-lock','trusted-node','deployment','account-derive','store-open','pxe-create','account-register','contracts-register','initial-sync','journal-open','wallet-bind','account-manager','application-bind']);
 const silent=()=>{};
 const logger=Object.freeze({trace:silent,debug:silent,verbose:silent,info:silent,warn:silent,error:silent,fatal:silent,
  level:'silent',module:'rolling-wallet',isLevelEnabled:()=>false,createChild:()=>logger,getBindings:()=>({})});
@@ -31,33 +32,52 @@ export async function createRollingWalletSession({sdk,routing,ethers,config,boar
    catch(error){try{if(store){await store.close();store=undefined;}}catch(cleanupError){throw new AggregateError([error,cleanupError],'Private session cleanup failed');}throw error;}}
   else if(store){await store.close();store=undefined;}
  }
- await locked(async()=>{
+ let initializationStep='account-lock',nestedFailure=null,failedObservation=false;
+ const emit=(state,error)=>observeRollingSetup(onProgress,{stage:'session-initialization',step:initializationStep,deploymentStep:null,state,code:state==='failed'?rollingSetupErrorCode(error):null});
+ const begin=step=>{emit('complete');initializationStep=step;emit('started');};
+ const failed=error=>{if(failedObservation)return;failedObservation=true;if(!nestedFailure)emit('failed',error);};
+ emit('started');
+ try{await locked(async()=>{
   try{
+   begin('trusted-node');
    const network={chainId:String(selected.network.chainId),version:String(selected.network.rollupVersion),rollup:selected.network.rollupAddress};
    const node=await sdk.createTrustedPrivateNode({...query,expectedNetworkScope:network,proofsEnabled});await guard();
-   const deployment=await verifyRollingDeployment({sdk,node,ethers,config:selected,boardArtifact,privateFeeArtifact,contextGuard:guard,proofsEnabled});
+   begin('deployment');
+   const deployment=await verifyRollingDeployment({sdk,node,ethers,config:selected,boardArtifact,privateFeeArtifact,contextGuard:guard,proofsEnabled,onProgress:record=>{
+    const value={stage:'session-initialization',step:'deployment',deploymentStep:record.step,state:record.state,code:record.code};
+    if(record.state==='failed')nestedFailure=Object.freeze(value);observeRollingSetup(onProgress,value);
+   }});
+   begin('account-derive');
    const secret=sdk.Fr.fromHexString(captured.secretKey),salt=new sdk.Fr(BigInt(captured.salt));
    const accountContract=new sdk.SchnorrInitializerlessAccountContract(sdk.deriveSigningKey(secret));
    const keys=await sdk.deriveKeys(secret),artifact=await accountContract.getContractArtifact();
    const instance=await sdk.getContractInstanceFromInstantiationParams(artifact,{salt,publicKeys:keys.publicKeys,
     constructorArtifact:undefined,constructorArgs:undefined,immutablesHash:await accountContract.getImmutablesHash()});
    if(instance.address.toString()!==captured.address)throw fail('ROLLING_ACCOUNT_MISMATCH');
+   begin('store-open');
    await guard();store=await sdk.openPXEStore({l1ChainId:Number(network.chainId),rollupAddress:network.rollup,
     accountAddress:captured.address,dataDirectory:'rolling-wallet-v1'},undefined,logger);
+   begin('pxe-create');
    await guard();pxe=await sdk.createPXE(node,{proverEnabled:true,autoSync:false,syncChainTip:'checkpointed'},{store,remoteProver:remote});await guard();
    if(!sdk.isPrivatePXEForNode(pxe,node))throw fail('ROLLING_PRIVATE_ROUTE');
+   begin('account-register');
    const partialAddress=await sdk.computePartialAddress(instance);await guard();
    await pxe.registerAccount(keys,partialAddress);
+   begin('contracts-register');
    for(const [contractArtifact,contractInstance]of [[artifact,instance],[boardArtifact,deployment.board.instance],[privateFeeArtifact,deployment.privateFee.instance]]){
     await guard();await pxe.registerContractClass(contractArtifact);
     await guard();await pxe.registerContract(contractInstance);
    }
+   begin('initial-sync');
    await guard();await pxe.sync();await guard();
+   begin('journal-open');
    const privateStore=sdk.createBrowserJournalStorage();
    await guard();const journal=await sdk.createL2Journal({storage:privateStore,walletSecret:captured.secretKey,walletSalt:captured.salt,
     scope:{account:captured.address,...network,board:deployment.board.address.toString(),portal:deployment.portal},Tx:sdk.Tx,node,contextGuard:guard});
+   begin('wallet-bind');
    await guard();const wallet=routing.createAztecWallet(sdk,pxe,node,node,silent,secret,{contextGuard:guard,transactionJournal:journal});
    if(wallet.aztecNode!==node||wallet.pxe!==pxe||!routing.isPrivateWalletForNode(wallet,node))throw fail('ROLLING_PRIVATE_ROUTE');
+   begin('account-manager');
    await guard();wallet._accountManager=await sdk.AccountManager.create(wallet,secret,accountContract,{salt});
    if(wallet._accountManager.address.toString()!==captured.address)throw fail('ROLLING_ACCOUNT_MISMATCH');
    // Cold preference recovery needs only registered keys and the scoped PXE
@@ -71,6 +91,7 @@ export async function createRollingWalletSession({sdk,routing,ethers,config,boar
     if(constructor){await new sdk.ContractFunctionInteraction(wallet,instance.address,constructor,[signingPublicKey.x,signingPublicKey.y]).simulate({from:instance.address});await guardRoute();}
     initialized=true;
    };
+   begin('application-bind');
    privateNode=node;privateWallet=wallet;
    await guard();app=createRollingApplication({sdk:{...sdk,isPrivateWalletForNode:routing.isPrivateWalletForNode},deployment,contextGuard:guard,privateStore,onProgress,
     accountSession:{owner:instance.address,wallet,node,journal,walletSecret:captured.secretKey,walletSalt:captured.salt}});
@@ -98,8 +119,9 @@ export async function createRollingWalletSession({sdk,routing,ethers,config,boar
     }
     return coldReader.read(options);
    };
-  }catch(error){closed=true;try{await dispose();}catch(cleanupError){throw new AggregateError([error,cleanupError],'Private session initialization and cleanup failed');}throw error;}
- });
+   emit('complete');
+  }catch(error){failed(error);closed=true;try{await dispose();}catch(cleanupError){throw new AggregateError([error,cleanupError],'Private session initialization and cleanup failed');}throw error;}
+ });}catch(error){failed(error);throw error;}
  async function guardRoute(){
   await guard();
   if(!sdk.isTrustedPrivateNode(privateNode)||!sdk.isPrivatePXEForNode(pxe,privateNode)||privateWallet.aztecNode!==privateNode||privateWallet.pxe!==pxe||!routing.isPrivateWalletForNode(privateWallet,privateNode))throw fail('ROLLING_PRIVATE_ROUTE');

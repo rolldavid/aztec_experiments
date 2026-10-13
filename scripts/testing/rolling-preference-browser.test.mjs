@@ -116,3 +116,24 @@ for(const methods of [['aztec_getPublicLogsByTags'],['aztec_getPrivateLogsByTags
  const body=JSON.stringify(methods.map((method,id)=>({jsonrpc:'2.0',id,method,params:['PRIVATE_SENTINEL']})));assert(t.inspect(req(origins.trustedOrigin+'/v1/node','POST',body)));
  assert.equal(t.snapshot().tagDiscoveryRequests,methods.length);assert.throws(()=>checkRollingColdRecoveryWindow(before,t.snapshot(),{requireCompact:true}));assert(!JSON.stringify(t.snapshot()).includes('PRIVATE_SENTINEL'));
 });
+
+// Fixed diagnostics only: these controls do not connect a wallet or browser.
+import {decodeRollingInitializationObservation,captureRollingInitializationObservation} from './rolling-preference-browser.mjs';
+import {projectRollingInitialization} from '../../apps/rolling/wallet-panel.mjs';
+const setupObservation=()=>({stage:'session-initialization',step:'deployment',deploymentStep:'board-instance',state:'failed',code:'ROLLING_DEPLOYMENT_INVALID'});
+test('initialization observation preserves only fixed detached own-data fields',()=>{
+ const input=setupObservation(),out=projectRollingInitialization(input);assert.deepEqual(out,input);assert(Object.isFrozen(out));input.code='PRIVATE_SENTINEL';assert.equal(out.code,'ROLLING_DEPLOYMENT_INVALID');
+ assert.deepEqual(decodeRollingInitializationObservation(JSON.stringify(out)),{status:'captured',value:out});assert.deepEqual(decodeRollingInitializationObservation(null),{status:'absent',value:null});
+ let reads=0;for(const key of Object.keys(out)){const bad={...out};Object.defineProperty(bad,key,{get(){reads++;throw Error('PRIVATE_SENTINEL');}});assert.equal(projectRollingInitialization(bad),null);}assert.equal(reads,0);
+});
+const diagnosticMutations={extra:r=>r.privateKey='PRIVATE_SENTINEL',stage:r=>r.stage='PRIVATE_SENTINEL',step:r=>r.step='PRIVATE_SENTINEL',nested:r=>r.deploymentStep='PRIVATE_SENTINEL',wrongNesting:r=>r.step='pxe-create',state:r=>r.state='PRIVATE_SENTINEL',code:r=>r.code='PRIVATE_SENTINEL',successCode:r=>r.state='complete',missing:r=>delete r.code,objectCode:r=>r.code={privateKey:'PRIVATE_SENTINEL'}};
+for(const [name,change]of Object.entries(diagnosticMutations))test('initialization report rejects malformed '+name+' without private projection',()=>{
+ const value=setupObservation();change(value);assert.equal(projectRollingInitialization(value),null);const out=decodeRollingInitializationObservation(JSON.stringify(value));assert.deepEqual(out,{status:'invalid',value:null});assert(!JSON.stringify(out).includes('PRIVATE_SENTINEL'));
+});
+test('initialization capture uses a bounded attribute read and sanitizes missing/failed reads',async()=>{
+ const value=setupObservation(),calls=[];const out=await captureRollingInitializationObservation({async getAttribute(...args){calls.push(args);return JSON.stringify(value);}},700);
+ assert.deepEqual(calls,[['data-rolling-initialization',{timeout:700}]]);assert.deepEqual(out,{status:'captured',value});
+ for(const reason of [undefined,null,false,Error('PRIVATE_SENTINEL')])assert.deepEqual(await captureRollingInitializationObservation({async getAttribute(){throw reason;}},1),{status:'unavailable',value:null});
+ let reads=0;for(const limit of [0,1001,NaN,'1']){assert.deepEqual(await captureRollingInitializationObservation({getAttribute(){reads++;}},limit),{status:'unavailable',value:null});}assert.equal(reads,0);
+ for(const input of ['', 'PRIVATE_SENTINEL','x'.repeat(513),{},'null','[]'])assert.deepEqual(decodeRollingInitializationObservation(input),{status:'invalid',value:null});
+});

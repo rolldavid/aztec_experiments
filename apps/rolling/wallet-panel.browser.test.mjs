@@ -33,7 +33,7 @@ const application={
 };
 const runtime={selectPrivateViews,getAccount:()=>state.unlocked?state.rawAccount:null,
  account:{configure:options=>{state.options=options;},async create(){state.creates++;await boundary('create');state.unlocked=true;return envelope;},async importRecovery(){state.imports++;await boundary('import');state.unlocked=true;},async exportRecovery(){state.exports++;await boundary('export');return envelope;},async endSession(){state.ended++;state.unlocked=false;return {reload:true};}},
- async createSession(){state.sessions++;await boundary('session');return {application,busy:false,async close(){state.closes++;await boundary('close');}};}
+ async createSession({onProgress}){state.sessions++;state.sessionProgress=onProgress;for(const record of state.initializationRecords??[])onProgress(record);await boundary('session');return {application,busy:false,async close(){state.closes++;await boundary('close');}};}
 };
 window.panel=mountRollingWalletPanel({loadRuntime:async()=>{state.loads++;await boundary('load');return runtime;},onPublicEffect:()=>{state.effects++;},onPrivateChange:()=>{state.privateChanges++;}});
 document.getElementById('open').onclick=()=>window.panel.open(window.defaults);
@@ -546,4 +546,23 @@ test('cold private view cannot prepare a preference before checking retained fin
  assert.equal(await page.evaluate(()=>test.prepares),0);assert.equal(await page.evaluate(()=>test.sends),0);
  await page.getByRole('button',{name:'Check account recovery',exact:true}).click();await page.getByRole('button',{name:'Check action and review fee',exact:true}).waitFor();
  assert.equal(await page.evaluate(()=>test.statusReads),1);assert.equal(await page.evaluate(()=>test.owned),1);
+});
+
+// Actual DOM with a labelled initialization emitter. No real session or chain.
+test('fixed nested initialization failure preserves generic UI and retry clears stale attempt',async t=>{
+ const {page}=await browserFixture(t);await page.evaluate(()=>{test.failure='session';test.initializationRecords=[{stage:'session-initialization',step:'deployment',deploymentStep:'board-instance',state:'failed',code:'ROLLING_DEPLOYMENT_INVALID'}];});
+ await open(page,{view:'preferences'});await page.getByRole('button',{name:'Unlock',exact:true}).click();await page.getByRole('alert').waitFor();
+ const dialog=page.getByRole('dialog');assert.deepEqual(JSON.parse(await dialog.getAttribute('data-rolling-initialization')),{stage:'session-initialization',step:'deployment',deploymentStep:'board-instance',state:'failed',code:'ROLLING_DEPLOYMENT_INVALID'});
+ assert.match(await page.getByRole('alert').innerText(),/The private connection is unavailable/);assert(!await dialog.innerText().then(s=>s.includes('board-instance')||s.includes('PRIVATE_SENTINEL')));
+ await page.evaluate(()=>{test.oldProgress=test.sessionProgress;test.failure=null;test.hold='session';test.initializationRecords=[];});await page.getByRole('button',{name:'Connect private account',exact:true}).click();await page.waitForFunction(()=>test.sessions===2&&test.release);
+ assert.equal(await dialog.getAttribute('data-rolling-initialization'),null);await page.evaluate(()=>test.oldProgress({stage:'session-initialization',step:'pxe-create',deploymentStep:null,state:'failed',code:'unknown'}));assert.equal(await dialog.getAttribute('data-rolling-initialization'),null);
+ await page.evaluate(()=>{test.sessionProgress({stage:'session-initialization',step:'application-bind',deploymentStep:null,state:'complete',code:null});test.release();});await page.getByRole('button',{name:'Recover private views',exact:true}).waitFor();
+ assert.equal(JSON.parse(await dialog.getAttribute('data-rolling-initialization')).step,'application-bind');assert.deepEqual(await page.evaluate(()=>[test.statusReads,test.owned,test.preferenceReads,test.sends]),[0,0,0,0]);
+});
+test('initialization projection ignores accessors and account invalidation clears late observations',async t=>{
+ const {page}=await browserFixture(t);await page.evaluate(()=>{test.initializationRecords=[{stage:'session-initialization',step:'application-bind',deploymentStep:null,state:'complete',code:null}];});await open(page,{view:'preferences'});await page.getByRole('button',{name:'Unlock',exact:true}).click();await page.getByRole('button',{name:'Recover private views',exact:true}).waitFor();
+ await page.evaluate(()=>{test.getterReads=0;const bad={step:'pxe-create',deploymentStep:null,state:'failed',code:'unknown'};Object.defineProperty(bad,'stage',{get(){test.getterReads++;throw Error('PRIVATE_SENTINEL');}});test.sessionProgress(bad);});assert.equal(await page.evaluate(()=>test.getterReads),0);
+ const dialog=page.getByRole('dialog');assert.equal(JSON.parse(await dialog.getAttribute('data-rolling-initialization')).step,'application-bind');
+ await page.evaluate(()=>{test.rawAccount={address:'OTHER_PRIVATE_SENTINEL'};test.options.onChange({invalidated:true});test.sessionProgress({stage:'session-initialization',step:'pxe-create',deploymentStep:null,state:'failed',code:'unknown'});});
+ assert.equal(await dialog.getAttribute('data-rolling-initialization'),null);await page.getByRole('button',{name:'Reload to unlock',exact:true}).waitFor();assert(!await dialog.innerText().then(s=>s.includes('PRIVATE_SENTINEL')));assert.equal((await counts(page)).sends,0);
 });

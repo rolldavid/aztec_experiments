@@ -86,3 +86,44 @@ test('unactivated canonical portal cannot authorize funding, and activation must
  await assert.rejects(verifyRollingDeployment(f.options),{code:'ROLLING_DEPLOYMENT_INVALID'});
  assert.equal(rereads,1);assert.equal(f.state.destroyed,1);
 });
+
+// Labelled failure injection; original cryptographic artifact work and verifier
+// remain in place. Diagnostics are observations, never validation substitutes.
+import {ROLLING_DEPLOYMENT_STAGES,rollingSetupErrorCode} from './deployment.mjs';
+const diagnosticDeploymentFailures={
+ config:f=>{f.options.config.network=null;},
+ 'node-readiness':(f,error)=>{f.options.sdk.inspectTrustedNode=async()=>{throw error;};},
+ 'artifact-layout':f=>{f.options.boardArtifact.name='Wrong';},
+ 'board-class':(f,error)=>{f.options.sdk.getContractClassFromArtifact=async()=>{throw error;};},
+ checkpoint:(f,error)=>{f.node.getBlockData=async()=>{throw error;};},
+ 'board-instance':(f,error)=>{f.node.getContract=async()=>{throw error;};},
+ 'public-config':(f,error)=>{f.node.getPublicStorageAt=async()=>{throw error;};},
+ 'config-commitment':(f,error)=>{f.options.sdk.sha256ToField=()=>{throw error;};},
+ 'fee-instance':(f,error)=>{f.options.sdk.derivePrivateFeeInstance=async()=>{throw error;};},
+ 'l1-context':(f,error)=>{f.options.ethers.JsonRpcProvider=class{constructor(){throw error;}};},
+ 'portal-code-and-immutables':(f,error)=>{f.provider.getCode=async()=>{throw error;};},
+ 'canonical-recheck':(f,error)=>{f.node.getBlockData=async()=>{throw error;};},
+ 'final-readiness-and-context':(f,error)=>{f.options.sdk.inspectTrustedNode=async()=>{throw error;};},
+};
+for(const [step,inject]of Object.entries(diagnosticDeploymentFailures))test('labelled deployment diagnostic preserves sanitizer at '+step,async()=>{
+ const f=await fixture(),observed=[];f.options.boardArtifact={...artifact};let getterCalls=0;
+ const original=Object.defineProperty(Error('PRIVATE_SENTINEL'),'code',{get(){getterCalls++;throw Error('PRIVATE_SENTINEL');}});
+ f.options.onProgress=record=>{observed.push(record);if(record.step===step&&record.state==='started')inject(f,original);};
+ await assert.rejects(verifyRollingDeployment(f.options),e=>e.code==='ROLLING_DEPLOYMENT_INVALID'&&!e.message.includes('PRIVATE_SENTINEL'));
+ assert.deepEqual(observed.at(-1),{stage:'deployment-initialization',step,state:'failed',code:['config','artifact-layout'].includes(step)?'ROLLING_DEPLOYMENT_INVALID':'unknown'});
+ assert.equal(observed.filter(r=>r.state==='failed').length,1);assert.equal(getterCalls,0);assert(!JSON.stringify(observed).includes('PRIVATE_SENTINEL'));
+ assert.equal(f.state.destroyed,['portal-code-and-immutables','canonical-recheck','final-readiness-and-context'].includes(step)?1:0);
+});
+test('deployment diagnostic success visits fixed stages and throwing observers cannot change result',async()=>{
+ const f=await fixture(),observed=[];f.options.onProgress=record=>{observed.push(record);if(record.state==='started')throw Error('PRIVATE_SENTINEL');return Promise.reject(Error('PRIVATE_SENTINEL'));};
+ const result=await verifyRollingDeployment(f.options);assert.equal(result.configHash,String(f.configHash));assert.equal(f.state.destroyed,1);
+ assert.deepEqual(observed.filter(r=>r.state==='started').map(r=>r.step),ROLLING_DEPLOYMENT_STAGES);
+ assert.deepEqual(observed.filter(r=>r.state==='complete').map(r=>r.step),ROLLING_DEPLOYMENT_STAGES);assert(observed.every(Object.isFrozen));
+});
+test('diagnostic codes are own fixed data only, including falsy failures and hostile thenable observers',async()=>{
+ let calls=0;const getter=Object.defineProperty({},'code',{get(){calls++;throw Error('PRIVATE_SENTINEL');}});
+ for(const value of [null,undefined,false,0,'PRIVATE_SENTINEL',getter,Object.create({code:'BB_TRUSTED_NODE_STALE'}),{code:'PRIVATE_SENTINEL'}])assert.equal(rollingSetupErrorCode(value),'unknown');
+ assert.equal(calls,0);assert.equal(rollingSetupErrorCode({code:'BB_TRUSTED_NODE_STALE'}),'BB_TRUSTED_NODE_STALE');
+ const f=await fixture();f.options.sdk.inspectTrustedNode=async()=>{throw null;};f.options.onProgress=()=>({get then(){throw Error('PRIVATE_SENTINEL');}});
+ await assert.rejects(verifyRollingDeployment(f.options),{code:'ROLLING_DEPLOYMENT_INVALID'});
+});
