@@ -288,6 +288,7 @@ async function privateViewFixture(t,{mutation=null}={}){
    const next=url.searchParams.has('cursor');if(url.pathname==='/api/feed')feed.push(url.pathname+url.search);
    const posts=next?[make(mutation==='duplicate'?'10':'11',mutation==='order'?4:2)]:[make('10',3)];
    const data={schemaVersion:1,scope,complete:true,checkpoint:{number:4,hash},revision:mutation==='snapshot'&&next?'changed':'one',names:{},boards:{},posts,nextCursor:next?null:'page2'};
+   if(url.pathname==='/api/board')Object.assign(data,{boardId:'0',board:null,mainPolicy:{version:'1',text:''},policies:[]});
    if(state.hold&&url.pathname==='/api/feed')await new Promise(resolve=>state.pending.push(resolve));
    res.writeHead(200,{'content-type':'application/json'});res.end(JSON.stringify(data));return;
   }
@@ -378,4 +379,33 @@ test('directory definitive no-results wording appears only on the terminal empty
 for(const mode of ['revision','cursor-loop','reorg'])test('directory empty continuation rejects '+mode+' without another request',async t=>{
  const {page,state}=await pagingFixture(t,{directory:true});state.mode=mode;await page.getByRole('button',{name:'Load more',exact:true}).click();await page.getByRole('alert').waitFor();
  assert.equal(state.calls.length,2);await page.waitForTimeout(100);assert.equal(state.calls.length,2);assert.equal(await page.getByRole('button',{name:'Load more',exact:true}).count(),0);
+});
+
+// Same driver assertion, actual reader/panel, labelled cold-reader results.
+// Public root visibility is independent from incomplete private preferences.
+test('notification partial recovery preserves public roots but never exposes an incomplete private feed',async t=>{
+ const {assertRollingNotificationRecoveryVisibility:checkRecovery}=await import('../../scripts/testing/rolling-notification-browser.mjs');
+ const {page}=await privateViewFixture(t);await recoverPrivateView(page);
+ await page.getByRole('link',{name:'Main board',exact:true}).first().click();await page.locator('#post-10').waitFor();
+ await page.getByRole('button',{name:'Your account',exact:true}).click();
+ const d=page.getByRole('dialog',{name:'Your private account',exact:true});
+ await d.getByRole('button',{name:'Private views',exact:true}).click();
+ await page.evaluate(()=>privateTest.partial=true);await d.getByRole('button',{name:'Recover private views',exact:true}).click();
+ await d.getByRole('button',{name:'Continue private recovery',exact:true}).waitFor();
+ assert.equal(await page.locator('#content article.post').count(),1);
+ assert.equal(await d.getByText('Your saved choices are ready.',{exact:true}).count(),0);
+ await checkRecovery(page,{publicBoard:true});await assert.rejects(checkRecovery(page),/Notification browser check failed/);
+ await page.evaluate(()=>privateTest.partial=false);await d.getByRole('button',{name:'Continue private recovery',exact:true}).click();
+ await d.getByText('Your saved choices are ready.',{exact:true}).waitFor();await d.getByRole('button',{name:'Close account panel',exact:true}).click();
+ assert.equal(await page.locator('#post-10').getByRole('button',{name:'Unsubscribe from thread',exact:true}).count(),1);
+ await page.getByRole('link',{name:'Notifications',exact:true}).click();await page.getByRole('button',{name:'Manage private views',exact:true}).waitFor();
+ await page.getByRole('button',{name:'Manage private views',exact:true}).click();await page.evaluate(()=>privateTest.partial=true);
+ await d.getByRole('button',{name:'Refresh private views',exact:true}).click();await d.getByRole('button',{name:'Continue private recovery',exact:true}).waitFor();
+ await checkRecovery(page);assert.equal(await page.locator('#content article.post').count(),0);
+ await assert.rejects(checkRecovery(page,{publicBoard:true}),/Notification browser check failed/);
+ await page.locator('#content').evaluate(node=>node.insertAdjacentHTML('beforeend','<article class="post">Synthetic forbidden private row</article>'));
+ await assert.rejects(checkRecovery(page),/Notification browser check failed/);
+ await page.locator('#content article.post').evaluate(node=>node.remove());
+ await page.evaluate(()=>privateTest.partial=false);await d.getByRole('button',{name:'Continue private recovery',exact:true}).click();await d.getByText('Your saved choices are ready.',{exact:true}).waitFor();
+ assert.equal(await page.evaluate(()=>privateTest.prepare.length),0);
 });
