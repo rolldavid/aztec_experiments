@@ -4,6 +4,20 @@ import assert from 'node:assert/strict';
 import {runPrivateBokRequest,startEscrowService} from '../escrow-service.mjs';
 import {validateVeniceBilling} from '../venice-metered.mjs';
 import {validateDescriptor,API_VERSION} from '../protocol.mjs';
+import {publishAcceptedRevision} from '../main.mjs';
+test('accepted publication with uncertain private mirror retains exact identity and omits operator URL',async()=>{
+ const receipt=Object.freeze({acceptedRevision:'a'.repeat(40)}),calls=[],publicResult={latestUrl:'https://apps.example/latest/',latestSourceUrl:'https://apps.example/source.json'};
+ const publication={publish:async input=>{assert.equal(input,receipt);calls.push('local');return publicResult;}};
+ let unresolved=true;
+ const mirror={sync:async input=>{assert.equal(input,receipt);calls.push('mirror');if(unresolved)throw Error('GITHUB_BROKER_UNRESOLVED');return {operatorUrl:'https://github.com/private/mirror'};}};
+ await assert.rejects(publishAcceptedRevision({publication,mirror,receipt}),/UNRESOLVED/);
+ unresolved=false;assert.equal(await publishAcceptedRevision({publication,mirror,receipt}),publicResult);
+ assert.deepEqual(calls,['local','mirror','local','mirror']);
+ assert.equal(await publishAcceptedRevision({publication,receipt}),publicResult);
+ let mirrorCalls=0;
+ await assert.rejects(publishAcceptedRevision({publication:{publish:async()=>{throw Error('disk');}},mirror:{sync:async()=>{mirrorCalls++;}},receipt}),/disk/);
+ assert.equal(mirrorCalls,0);
+});
 const f=n=>'0x'+BigInt(n).toString(16).padStart(64,'0');
 function fixture(){
  const request={postId:f(1),requestId:f(2),target:f(3),pluginId:f(4)};

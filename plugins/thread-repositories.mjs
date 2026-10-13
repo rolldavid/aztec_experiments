@@ -55,7 +55,8 @@ export function threadRepositories({directory,namespace,lease,git=repositoryGit,
     await lease.assertHeld();const result=await onAccepted(receipt(record));
     await store.write({...state,operations:{...state.operations,[record.invocationId]:{...record,publication:{status:'complete',result}}}});state=store.read();return result;
    }
-   // Only idempotent local publication is retried; never re-enter provider work.
+   // Trusted publication/mirror capabilities reconcile their durable intents;
+   // never re-enter provider work or retransmit an uncertain external write.
    for(const record of Object.values(state.operations))if(record.status==='accepted'&&record.publication?.status==='pending')await publish(record);
    if(state.operations[invocationId])throw Error('Invocation already has an accepted revision');
    assert(Object.keys(state.operations).length<maxRevisions,'Thread revision limit reached');

@@ -398,3 +398,56 @@ Official setup references: [App manifest registration](https://docs.github.com/e
 [reference updates](https://docs.github.com/en/rest/git/refs#update-a-reference).
 The implementation pins API version2026-03-10. No registration or GitHub mutation
 is performed by the installation preparation packet.
+
+### Rolling hosted configuration and launch
+
+`rolling-hosted-config.example.json` is a **preparation-only** shape for
+`runRollingHostedService`. Its placeholders deliberately fail validation; copying
+it does not deploy or activate anything. It uses the private Rolling descriptor,
+not the legacy `SERVICE.json` account-linked escrow. Replace every placeholder
+from independently verified public deployment receipts and operator inputs.
+`deployment.blockNumber`, organization/App/installation IDs must be JSON integers;
+chain and rollup versions remain decimal strings. `pluginId` is the registered
+nonzero32-byte field; descriptor receiver is the PrivateBok address. Board and
+artifact origins must be different HTTPS origins. The state directory is an
+absolute canonical private0700 directory owned by this service. `operatorFile`
+is a separate private JSON file with `secret`, `salt` and `signingKey` (canonical
+32-byte hex), optionally public `address`; it never belongs in the public config.
+
+The reference `repository` authorizes read-only PR lookup for that repository;
+new thread projects start empty and their accepted local Git state is separate.
+The GitHub App mirrors accepted source to private per-thread repositories in the
+configured dedicated organization. Private `operatorUrl` values are retained in
+broker state and never substituted for public latest-source links. Production
+startup requires `githubApp.enabled: true` and a valid, available installation.
+Leaving it disabled is supported only for disposable development; the example
+intentionally cannot start a production service unchanged.
+
+Provide `VENICE_WALLET_PRIVATE_KEY` and production `PLUGIN_QUERY_API_KEY` through
+the trusted service environment, plus `VENICE_MODEL` if overriding the provider
+model. `summaryModelId` (or `VENICE_SUMMARY_MODEL`) must select a cheaper model;
+the metered provider verifies actual prices. Prefund provider credits separately:
+Rolling rejects `VENICE_AUTO_TOP_UP=true`. `GITHUB_TOKEN` is optional for authorized
+reference-repository reads and is not the mirror credential. No secret belongs
+in a model prompt, source snapshot or generated subprocess environment.
+
+After actual deployment/registration and all prerequisite checks, use pinned Node
+from the trusted service supervisor with those private environment values:
+
+```
+node plugins/main.mjs /absolute/private/path/rolling-hosted.json
+```
+
+The service acquires a no-stale-takeover lock, validates the network, loads the
+operator wallet, verifies isolated execution and App availability, then starts
+its two loopback listeners. The artifact reverse proxy must preserve its configured
+Host and security headers and never attach authentication/cookies. Public health
+is operational status, not qualification. Shutdown drains requests before closing
+artifact listeners, wallet, index and lease. On failure reconcile lock/process
+ownership and journals before restart; never erase them to obtain a clean start.
+
+For development only, use chain31337 with `development: true`, native node
+`realProofs: false`, native PXE `proverEnabled: false`, loopback endpoints and
+separate loopback artifact/board origins. No application cryptographic code is
+changed. A complete independently operated service, real model billing and real
+proof testnet campaign remain acceptance work.

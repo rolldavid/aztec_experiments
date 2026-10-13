@@ -26,6 +26,7 @@ import {githubApi,githubToolbox} from './github-tools.mjs';
 import {threadRepositories} from './thread-repositories.mjs';
 import {createIsolatedExecution} from './isolated-execution.mjs';
 import {createStaticPublication} from './static-publication.mjs';
+import {createGitHubAppBroker} from './github-app-broker.mjs';
 import {provingEnabledForNode} from '../shared/proving-policy.mjs';
 
 /** Composition root: only this module knows which implementations are selected. */
@@ -108,6 +109,15 @@ export function hostedIndexNode(node,development){
  }});
 }
 
+/** Both capabilities retain exact accepted-revision journals. A mirror failure
+ * leaves the repository's publication intent pending; restart reconciles it
+ * without re-entering a model call. Private mirror URLs never enter replies. */
+export async function publishAcceptedRevision({publication,mirror,receipt}){
+ const result=await publication.publish(receipt);
+ if(mirror)await mirror.sync(receipt);
+ return result;
+}
+
 /** Explicit Rolling composition; the legacy account escrow is never selected. */
 export async function runRollingHostedService({config,env=process.env,onError=()=>{}}){
  const [{rollingOperatorConfig,rollingPxeOptions,operatorNodeFetch,fileState},{loadRollingArtifacts},{jsonStringify},
@@ -163,10 +173,16 @@ export async function runRollingHostedService({config,env=process.env,onError=()
   const publicationRoot=path.join(config.stateDirectory,'static-publication');await fs.mkdir(publicationRoot,{recursive:true,mode:0o700});
   assert(config.staticPublication&&typeof config.staticPublication.origin==='string'&&typeof config.staticPublication.boardOrigin==='string','Separate artifact origin required');
   const publication=await createStaticPublication({directory:publicationRoot,artifactRoot:outputRoot,origin:config.staticPublication.origin,boardOrigin:config.staticPublication.boardOrigin,development:config.development});
+  assert(config.development||config.githubApp?.enabled===true,'Dedicated GitHub App installation required');
+  let mirror;
+  if(config.githubApp?.enabled===true){
+   const directory=path.join(config.stateDirectory,'github-app');await fs.mkdir(directory,{recursive:true,mode:0o700});
+   mirror=await createGitHubAppBroker({...config.githubApp,directory,artifactRoot:outputRoot});await mirror.assertAvailable();
+  }
   artifactsServer=http.createServer((req,res)=>{void publication.handle(req,res);});
   await new Promise((resolve,reject)=>{artifactsServer.once('error',reject);artifactsServer.listen(config.staticPublication.port??8788,config.staticPublication.host??'127.0.0.1',resolve);});
   const repositories=threadRepositories({directory:workspaceRoot,namespace:JSON.stringify({scope,pluginId:config.pluginId}),lease,startEmpty:true,
-   validateRevision:input=>generatedExecution(()=>execution.execute(input)),onAccepted:receipt=>publicationOperation(()=>publication.publish(receipt))});
+   validateRevision:input=>generatedExecution(()=>execution.execute(input)),onAccepted:receipt=>publicationOperation(()=>publishAcceptedRevision({publication,mirror,receipt}))});
   const toolbox=githubToolbox({repository,api,repositories});await api('GET','/repos/'+repository);
   const provider=veniceMeteredProvider({client:veniceClient({privateKey:env.VENICE_WALLET_PRIVATE_KEY}),model:env.VENICE_MODEL||undefined,autoTopUp:false});
   server=await startEscrowService({descriptor,profile:'rolling',concurrency:2,board,host:config.host??'127.0.0.1',port:config.port??8787,
