@@ -375,5 +375,15 @@ export async function createRollingPersistentPublicIndex({node,artifact,scope,de
       throw fail(['ROLLING_PUBLIC_INVALID','ROLLING_PUBLIC_UNAVAILABLE','ROLLING_PUBLIC_TIMEOUT','ROLLING_PUBLIC_CACHE_MISMATCH','PUBLIC_FEED_CONFLICT','ROLLING_PUBLIC_STORAGE_CONFLICT','ROLLING_PUBLIC_STORAGE_CAPACITY'].includes(code)?code:'ROLLING_PUBLIC_UNAVAILABLE');}
     finally{busy=false;}
   }
-  return Object.freeze({scope,step,sync:step,status,publication,query});
+  // Trusted operator scan only. Public query cursors remain bound to their
+  // exact publication. The operator verifies its prior chain anchor before
+  // using an after-post key against a newer complete publication.
+  function scanPosts({after=null,limit=64,pendingOnly=false}={}){
+    check(ready&&!busy&&!unavailable,'ROLLING_PUBLIC_NOT_READY');check(typeof pendingOnly==='boolean');check(after===null||field(after));check(Number.isSafeInteger(limit)&&limit>=1&&limit<=100);
+    assertOwned();const page=storage.readPublicPage({expectedControl:control,view:pendingOnly?'pending':'chronological',params:{limit},after,homeSubboards:curated});
+    check(page.trusted===false&&page.generation===control.generation&&page.revision===control.revision);
+    const result={scope,checkpoint:{number:Number(control.checkpoint.number),hash:control.checkpoint.hash},complete:true,...page.value,nextAfter:page.nextAfter,revision:`${epoch}:${control.generation}:${control.revision}`};
+    check(bytes(JSON.stringify(result))<=1048576,'ROLLING_PUBLIC_CAPACITY');assertOwned();return copy(result);
+  }
+  return Object.freeze({scope,step,sync:step,status,publication,query,scanPosts});
 }

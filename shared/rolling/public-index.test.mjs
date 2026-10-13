@@ -486,6 +486,7 @@ test('small decoded late-post history reauthenticates on reopen and removes fork
  const read=index=>{const ids=[];let cursor=null,pages=0;do{const p=index.query('feed',{limit:2,...(cursor?{cursor}:{})});
   assert(p.posts.length<=2);ids.push(...p.posts.map(post=>post.id));cursor=p.nextCursor;assert(++pages<=3);}while(cursor);return ids;};
  const expected=['108','107','106','105','104','10'];assert.deepEqual(read(a.index),expected);
+ const scanned=a.index.scanPosts({limit:2});assert.deepEqual(scanned.posts.map(p=>p.id),['10','104']);assert.equal(scanned.nextAfter,'104');assert.deepEqual(a.index.scanPosts({after:scanned.nextAfter,limit:2}).posts.map(p=>p.id),['105','106']);assert.throws(()=>a.index.query('chronological'));
  const oldCursor=a.index.query('feed',{limit:2}).nextCursor;a.storage.close();f.calls.length=0;
  const b=await f.open();assert.equal(b.storage.inspect().trusted,false);assert.throws(()=>b.index.query('feed'),{code:'ROLLING_PUBLIC_NOT_READY'});
  await f.drain(b.index);for(let n=1;n<=8;n++)assert(f.calls.some(([,number])=>number===n));assert.deepEqual(read(b.index),expected);

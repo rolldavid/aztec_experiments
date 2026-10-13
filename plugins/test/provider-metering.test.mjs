@@ -65,3 +65,24 @@ for(const tools of [undefined,[],[{type:'function',function:{name:'lookup',descr
   assert.equal(attempts,1);assert.equal(body.max_completion_tokens,20);
   if(tools?.length)assert.deepEqual(body.tools,tools);else assert.equal(Object.hasOwn(body,'tools'),false);
  });
+
+for(const [name,inputPrice,outputPrice,accepted] of [['cheaper',.1,.2,true],['same',.56,3.5,false],['higher input',.6,.1,false],['higher output',.1,4,false]])test('summary quote '+name+' verifies live catalog before credits or inference',async()=>{
+ let credits=0,inference=0;const client={balance:async()=>{credits++;return {canConsume:true,balanceUsd:10};},json:async route=>{
+  if(route.endsWith('/models'))return {data:[{id:'kimi-k2-5',model_spec:spec},{id:'summary',model_spec:{...spec,pricing:{input:{usd:inputPrice},output:{usd:outputPrice}}}}]};inference++;
+ }};
+ const p=veniceMeteredProvider({client}),request={...input,modelId:'summary',cheaperThan:null};
+ if(accepted){const q=await p.quote(request,1000000n);assert.equal(q.modelId,'summary');assert.equal(credits,1);}else{await assert.rejects(p.quote(request,1000000n),/cheaper/);assert.equal(credits,0);}
+ assert.equal(inference,0);
+});
+
+for(const [name,mainCache,summaryCache,summaryInput,summaryOutput,accepted] of [
+ ['higher summary cache',.01,.02,.1,.2,false],['null summary cache falls back to input',.01,null,.1,.2,false],
+ ['null main cache falls back to input',null,.1,.1,.2,true],['all equal cache included',.01,.01,.56,3.5,false],
+ ['only cache strictly lower',.1,.01,.56,3.5,true]
+])test('summary '+name+' retains conservative cached-token pricing',async()=>{
+ const withCache=(base,value)=>({...base,...(value===null?{}:{cache_input:{usd:value}})});
+ const main={...spec,pricing:withCache(spec.pricing,mainCache)},summary={...spec,pricing:withCache({input:{usd:summaryInput},output:{usd:summaryOutput}},summaryCache)};
+ let credits=0;const client={json:async()=>({data:[{id:'kimi-k2-5',model_spec:main},{id:'summary',model_spec:summary}]}),balance:async()=>{credits++;return {canConsume:true,balanceUsd:10};}};
+ const work=veniceMeteredProvider({client}).quote({...input,modelId:'summary',cheaperThan:null},1000000n);
+ if(accepted){await work;assert.equal(credits,1);}else{await assert.rejects(work,/cheaper/);assert.equal(credits,0);}
+});

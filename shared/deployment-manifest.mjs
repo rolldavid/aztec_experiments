@@ -38,12 +38,16 @@ export async function preflightDeploymentNetwork(manifest,{node,provider,ethers,
  const m=validateDeploymentManifest(manifest),n=m.network,deadline=Date.now()+timeoutMs;
  if(!Number.isInteger(timeoutMs)||timeoutMs<1||timeoutMs>20000)fail('Invalid preflight timeout');
  const read=fn=>boundedTransactionRead(fn,deadline-Date.now());
- const [info,contracts,network]=await read(()=>Promise.all([node.getNodeInfo(),node.getL1ContractAddresses(),provider.getNetwork()]));
+ const [info,contracts,network,nativeConfig]=await read(()=>Promise.all([node.getNodeInfo(),node.getL1ContractAddresses(),provider.getNetwork(),node.getConfig()]));
+ const realProofs=nativeConfig&&Object.getOwnPropertyDescriptor(nativeConfig,'realProofs');
+ if(!realProofs||!Object.hasOwn(realProofs,'value')||typeof realProofs.value!=='boolean')fail('Native proof configuration unavailable');
+ const proofsEnabled=realProofs.value;
+ if(m.profile==='local-test'?(n.chainId!=='31337'||proofsEnabled):(n.chainId!=='11155111'||!proofsEnabled))fail('Native proof configuration differs from deployment profile');
  if(String(info.l1ChainId)!==n.chainId||String(network.chainId)!==n.chainId||String(info.rollupVersion)!==n.rollupVersion||contracts.rollupAddress?.toString().toLowerCase()!==n.rollup)fail('Deployment network identity mismatch');
  for(const [key,name] of [['inboxAddress','inbox'],['outboxAddress','outbox']])if(contracts[key]&&contracts[key].toString().toLowerCase()!==n[name])fail('Node bridge identity mismatch');
  const rollup=new ethers.Contract(n.rollup,['function getInbox() view returns (address)','function getOutbox() view returns (address)'],provider);
  const [inbox,outbox,...codes]=await read(()=>Promise.all([rollup.getInbox(),rollup.getOutbox(),...['rollup','inbox','outbox'].map(k=>provider.getCode(n[k]))]));
  if(inbox.toLowerCase()!==n.inbox||outbox.toLowerCase()!==n.outbox||codes.some(c=>typeof c!=='string'||!/^0x(?:[0-9a-fA-F]{2})+$/.test(c)))fail('Deployment bridge/code mismatch');
- return {nodeInfo:info,l1Contracts:contracts};
+ return {nodeInfo:info,l1Contracts:contracts,proofsEnabled};
 }
 export async function deploymentPolicyVersion(board,policy){return sha256Field(encodePolicyCommitment(board,policy));}

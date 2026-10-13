@@ -45,3 +45,11 @@ test('health clears a recovered polling failure without waiting for a new job',a
  const health=async()=>(await fetch('http://127.0.0.1:'+server.address.port+'/health')).json();
  try{await until(()=>failures>0);assert.equal((await health()).status,'degraded');offline=false;await until(()=>successfulPolls>0);const recovered=await health();assert.equal(recovered.status,'ready');assert.equal(recovered.lastFailure,null);assert.equal(recovered.lastSuccess,null);}finally{await server.close();}
 });
+
+test('Rolling threads overlap while same-thread requests remain ordered and shutdown drains',async()=>{
+ const requests=[{requestId:'a1',postId:'1',threadId:'a'},{requestId:'a2',postId:'2',threadId:'a'},{requestId:'b1',postId:'3',threadId:'b'}];
+ const started=[],done=new Set(),release=new Map();
+ const server=await startEscrowService({profile:'rolling',descriptor:{},port:0,pollMs:5,concurrency:2,onError:e=>assert.fail(e),board:{pending:async()=>({requests:requests.filter(r=>!done.has(r.requestId)),nextCursor:null})},run:async r=>{started.push(r.requestId);await new Promise(resolve=>release.set(r.requestId,resolve));done.add(r.requestId);}});
+ try{await until(()=>started.length===2);assert.deepEqual(started,['a1','b1']);release.get('a1')();await until(()=>started.length===3);assert.deepEqual(started,['a1','b1','a2']);}
+ finally{for(const resolve of release.values())resolve();await server.close();}
+});

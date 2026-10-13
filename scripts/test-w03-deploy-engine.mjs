@@ -43,7 +43,7 @@ function fixture({rolling=false,lostBinding=false,lostDeploy=false,existing=true
  let bound=null,stops=0,deploys=0,bindings=0,finalized=0;
  const wordHash=(label,words)=>'0x'+(BigInt(ethers.sha256(ethers.AbiCoder.defaultAbiCoder().encode(['bytes32',...words.map(()=> 'uint256')],[ethers.encodeBytes32String(label),...words])))>>8n).toString(16).padStart(64,'0');
  const configHash=wordHash('AZTEC_BB_CONFIG_V1',[1n,31337n,BigInt(rollup),2n,5n,1n,100n,10n,64n,10n,16n]);
- const node={getNodeInfo:async()=>({l1ChainId:31337,rollupVersion:5}),getL1ContractAddresses:async()=>({rollupAddress:rollup,inboxAddress:inbox,outboxAddress:outbox}),
+ const node={getConfig:async()=>({realProofs:false}),getNodeInfo:async()=>({l1ChainId:31337,rollupVersion:5}),getL1ContractAddresses:async()=>({rollupAddress:rollup,inboxAddress:inbox,outboxAddress:outbox}),
   getBlockNumber:async()=>1,getPublicStorageAt:async()=>new Fr(0),getContract:async()=>existing?(rolling?boardInstance:instance):undefined,
   getTxReceipt:async hash=>receipts.get(String(hash)),getBlock:async()=>({hash:blockHash}),getChainTips:async()=>({finalized:{block:{number:finalized}}}),
   sendTx:async tx=>{if(tx.kind==='deploy'){existing=true;}else {bound=tx.kind.slice(5);}
@@ -197,3 +197,10 @@ for(const kind of ['deployer','address','canonical-hash','checkpoint-height'])te
  else f.node.getBlockData=async()=>({blockHash:field(5),header:{globalVariables:{blockNumber:0}}});
  await assert.rejects(f.run(),/Rolling deployment state differs/);assert.equal(f.bindings,0);
 });
+
+test('Rolling raw NodeInfo without alias uses nativefalse PXE and never prepares CRS',async()=>{const f=fixture({rolling:true});let created=0;f.env.initCRS=async()=>assert.fail('Disabled development must not prepare CRS');const original=f.env.aztec.createPXE;f.env.aztec.createPXE=async(node,config,...rest)=>{created++;assert.equal(config.proverEnabled,false);return original(node,config,...rest);};await f.run();assert.equal(created,1);});
+test('Rolling local native real proofs fail before PXE or deployment',async()=>{const f=fixture({rolling:true});f.node.getConfig=async()=>({realProofs:true});f.env.aztec.createPXE=async()=>assert.fail('No PXE');await assert.rejects(f.run(),{code:'BB_DEPLOYMENT_MANIFEST'});assert.equal(f.deploymentCalls.length,0);});
+test('Rolling restart never resends dropped valid original deployment',async()=>{const f=fixture({rolling:true,existing:false,lostDeploy:true});await assert.rejects(f.run(),/synthetic lost/);f.clearLoss();for(const [hash,r]of f.receipts)f.receipts.set(hash,{...r,status:'dropped'});let sends=0;f.node.sendTx=async()=>{sends++;assert.fail('Reconciliation cannot send');};await assert.rejects(f.run(),{code:'BB_RECOVERY_REQUIRED'});assert.equal(sends,0);assert.equal(f.deploys,1);assert.equal(f.bindings,0);});
+test('Rolling restart does not silently replace a stale rejected deployment',async()=>{const f=fixture({rolling:true,existing:false,staleDeploy:true});await assert.rejects(f.run(),/synthetic stale/);f.clearLoss();await assert.rejects(f.run(),{code:'BB_RECOVERY_REQUIRED'});assert.equal(f.deploys,1);assert.equal(f.bindings,0);});
+
+test('old SDK preflight without explicit native proof mode fails before wallet or PXE',async()=>{const f=fixture({rolling:true}),original=f.env.aztec.preflightDeploymentNetwork;f.env.aztec.preflightDeploymentNetwork=async(...args)=>{const result=await original(...args);delete result.proofsEnabled;return result;};f.env.aztec.createPXE=async()=>assert.fail('No PXE');await assert.rejects(f.run(),/Verified native proof configuration/);assert.equal(f.deploymentCalls.length,0);});

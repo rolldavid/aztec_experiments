@@ -36,7 +36,8 @@ export function l2JournalScopeText(scope) {
  * The latest transaction is retained after success. A subsequent request must
  * acknowledge its exact hash, after a fresh canonical receipt check.
  */
-export async function createL2Journal({storage,walletSecret,walletSalt,scope,Tx,node,acknowledgeTx,crypto=globalThis.crypto,waitOptions={},contextGuard} ) {
+export async function createL2Journal({storage,walletSecret,walletSalt,scope,Tx,node,acknowledgeTx,crypto=globalThis.crypto,waitOptions={},contextGuard,reconcileOnly=false} ) {
+  if(typeof reconcileOnly!=='boolean')throw invalid();
   const slot=await createEncryptedJournalSlot({storage,walletSecret,walletSalt,scopeText:l2JournalScopeText(scope),keyDomain:'AZTEC_BB_L2_JOURNAL_KEY_V1',crypto});
   let acknowledged=acknowledgeTx,lastHash=null,operation=null,replacement=null;
   function containsApplicationNullifier(tx,value) {
@@ -181,6 +182,9 @@ export async function createL2Journal({storage,walletSecret,walletSalt,scope,Tx,
       let receipt;try {receipt=await boundedTransactionRead(()=>node.getTxReceipt(saved.tx.getTxHash()));}catch {throw fail();}
       if(receipt?.txHash?.toString()!==saved.tx.getTxHash().toString())throw fail();
       if(receipt.status==='dropped') {
+        // Operator restart observes the original intent; even identical bytes
+        // are a retransmission and require a separate explicit recovery flow.
+        if(reconcileOnly)throw fail();
         let validation;try {validation=await boundedTransactionRead(()=>node.isValidTx(saved.tx));}catch {throw fail();}
         // Re-inclusion or pending status during validation is reconciliation,
         // not permission to broadcast the same bytes again.

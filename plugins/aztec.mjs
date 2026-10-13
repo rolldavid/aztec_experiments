@@ -1,5 +1,8 @@
 import {Contract} from '@aztec-labs/aztec.js/contracts';
 import {NO_FROM} from '@aztec-labs/aztec.js/account';
+import assert from 'node:assert/strict';
+import {deriveStorageSlotInMap} from '@aztec-labs/stdlib/hash';
+import {getContractClassFromArtifact} from '@aztec-labs/stdlib/contract';
 import {Fr} from '@aztec-labs/foundation/curves/bn254';
 import {AztecAddress} from '@aztec-labs/stdlib/aztec-address';
 import {unpackText} from './protocol.mjs';
@@ -28,4 +31,61 @@ export async function aztecBoardPort({node,wallet,scope,boardArtifact,adapterArt
         finalized:headNumber!==undefined&&BigInt(publishedBlock)>0n&&BigInt(publishedBlock)<=BigInt(headNumber)};
     },
   };
+}
+
+
+/** Rolling request identity comes from the authenticated public projection.
+ * Human ownership/private tags never enter this port. Current on-chain plugin,
+ * moderation and policy reads are pinned to the same required-finality block. */
+export async function rollingBoardPort({node,index,scope,boardArtifact,pluginId,development}){
+ assert.equal(boardArtifact.name,'RollingBoard');const board=AztecAddress.fromStringUnsafe(scope.boardAddress);
+ const expectedClass=(await getContractClassFromArtifact(boardArtifact)).id.toString();
+ const toField=x=>'0x'+BigInt(x).toString(16).padStart(64,'0');
+ const plugin=Fr.fromString(pluginId),pluginSlot=await deriveStorageSlotInMap(boardArtifact.storageLayout.plugins.slot,plugin);
+ const checkScope=async()=>{
+  const info=await node.getNodeInfo();assert.equal(String(info.l1ChainId),scope.chainId);assert.equal(String(info.rollupVersion),scope.rollupVersion);
+  assert.equal(String(info.l1ContractAddresses.rollupAddress).toLowerCase(),scope.rollupAddress);assert.equal(info.realProofs,!development);
+ };
+ const requestFrom=async post=>{
+  if(!post?.invocation)return null;const invocation=post.invocation;
+  if(toField(invocation.adapter)!==scope.receiver||toField(invocation.pluginId)!==pluginId)return null;
+  await checkScope();const head=await node.getBlock(development?'checkpointed':'finalized');
+  assert(head&&Number.isSafeInteger(head.number));const anchor={number:head.number,hash:head.hash};
+  const instance=await node.getContract(board,anchor);assert.equal(String(instance?.originalContractClassId),expectedClass);assert.equal(String(instance?.currentContractClassId),expectedClass);
+  const read=slot=>node.getPublicStorageAt(anchor,board,slot);
+  const adapter=await read(pluginSlot),enabled=await read(new Fr(pluginSlot.toBigInt()+1n));
+  const flaggedSlot=await deriveStorageSlotInMap(boardArtifact.storageLayout.post_flagged.slot,new Fr(BigInt(post.id)));
+  const flagged=(await read(flaggedSlot)).toBigInt()!==0n;
+  const mainVersion=Number((await read(boardArtifact.storageLayout.main_version.slot)).toBigInt());assert(Number.isSafeInteger(mainVersion)&&mainVersion>0);
+  let localAllowed=true;
+  if(post.record.subboard!=='0'){
+   const local=await deriveStorageSlotInMap(boardArtifact.storageLayout.subboards.slot,new Fr(BigInt(post.record.subboard)));
+   // Exact pinned SubboardRecord: exists, rules, metadata, creation_version, rejected, reason.
+   localAllowed=(await read(local)).toBigInt()===1n&&(await read(new Fr(local.toBigInt()+4n))).toBigInt()===0n;
+  }
+  // This contract's effective_policy/publish_plugin_reply define immutable local version 1.
+  assert.equal(String((await node.getBlock(head.number))?.hash),String(head.hash),'Board anchor changed');
+  return {postId:toField(post.id),threadId:toField(post.record.root),order:String(post.order),requestId:toField(invocation.requestId),target:toField(invocation.target),pluginId,
+   text:post.text,replied:invocation.reply!==null,mainVersion,localVersion:post.record.subboard==='0'?0:1,
+   usable:localAllowed&&typeof post.text==='string'&&!post.removal&&!flagged&&String(adapter)===scope.receiver&&enabled.toBigInt()===1n&&BigInt(post.position.blockNumber)<=BigInt(head.number)};
+ };
+ const syncReady=async()=>{const deadline=Date.now()+20000;for(let steps=0;steps<512&&Date.now()<deadline;steps++){await index.sync();if(index.status().state==='ready')return;};throw Error('Canonical public index catching up');};
+ return {
+  async pending(cursor){
+   await syncReady();let after=null;
+   if(cursor){
+    assert(cursor&&typeof cursor==='object'&&typeof cursor.after==='string'&&Number.isSafeInteger(cursor.anchor?.number));
+    const block=await node.getBlockData(cursor.anchor.number);
+    if(String(block?.blockHash)===cursor.anchor.hash)after=cursor.after;
+   }
+   const page=index.scanPosts({after,limit:64,pendingOnly:true});assert(page.complete&&Array.isArray(page.posts)&&page.posts.length<=64);
+   const requests=[];
+   for(const post of page.posts){
+    const request=await requestFrom(post);
+    if(request?.usable&&!request.replied)requests.push(request);
+   }
+   return {requests,nextCursor:page.nextAfter===null?null:{after:page.nextAfter,anchor:page.checkpoint}};
+  },
+  async readRequest(postId){await syncReady();return requestFrom(index.query('post',{id:BigInt(postId).toString()}).post);},
+ };
 }

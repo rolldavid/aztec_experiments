@@ -33,6 +33,8 @@ const columns="CASE WHEN length(k)<=78 THEN k END AS k,"+['ord','likes','stamp',
 const seek=(index,where,order)=>`SELECT ${columns} FROM projection INDEXED BY ${index} WHERE g=? AND kind=? AND ${where} ORDER BY ${order.replace(/\b(ord|likes|stamp|idnum|slug|k)\b/g,'projection.$1')} LIMIT ?`;
 export const ROLLING_PUBLIC_QUERY_SQL=Object.freeze({
  feed:seek('projection_order','ord<?','ord DESC'),
+ chronological:seek('projection_order','ord>?','ord ASC'),
+ pending:seek('projection_pending',"kind='posts' AND json_extract(value,'$.invocation') IS NOT NULL AND json_extract(value,'$.invocation.reply') IS NULL AND ord>?",'ord ASC'),
  board:seek('projection_board','board=? AND ord<?','ord DESC'),
  profile:seek('projection_name','name=? AND ord<?','ord DESC'),
  thread:seek('projection_root','root=? AND ord>?','ord ASC'),
@@ -67,6 +69,7 @@ export function createRollingPublicSqliteStore(directory,{scope,...options}={}){
  CREATE TABLE IF NOT EXISTS projection(g TEXT NOT NULL,kind TEXT NOT NULL,k TEXT NOT NULL,value TEXT NOT NULL,
  ord TEXT,board TEXT,name TEXT,root TEXT,likes TEXT,stamp TEXT,slug TEXT,idnum TEXT,PRIMARY KEY(g,kind,k)) WITHOUT ROWID;
  CREATE INDEX IF NOT EXISTS projection_order ON projection(g,kind,ord,k);
+ CREATE INDEX IF NOT EXISTS projection_pending ON projection(g,kind,ord,k) WHERE kind='posts' AND json_extract(value,'$.invocation') IS NOT NULL AND json_extract(value,'$.invocation.reply') IS NULL;
  CREATE INDEX IF NOT EXISTS projection_board ON projection(g,kind,board,ord,k);
  CREATE INDEX IF NOT EXISTS projection_name ON projection(g,kind,name,ord,k);
  CREATE INDEX IF NOT EXISTS projection_root ON projection(g,kind,root,ord,k);
@@ -202,7 +205,7 @@ export function createRollingPublicSqliteStore(directory,{scope,...options}={}){
  // alone earns canonical publication and authenticates opaque external cursors.
  function readPublicPage({expectedControl,view,params={},after=null,homeSubboards=[]}){
   const expected=captureExpected(expectedControl),input=captureExpected(params),curated=['0',...normalizeHomeSubboards(captureExpected(homeSubboards))];
-  const allowed={home:[],feed:[],board:['id'],directory:['query'],thread:['root'],profile:['nameId'],post:['id']};
+  const allowed={home:[],feed:[],chronological:[],pending:[],board:['id'],directory:['query'],thread:['root'],profile:['nameId'],post:['id']};
   requireThat(typeof view==='string'&&Object.hasOwn(allowed,view));requireThat(Object.keys(input).every(k=>k==='limit'||allowed[view].includes(k)));
   const limit=input.limit??50;requireThat(bounded(limit,1,100));
   const field=v=>uint(v)&&BigInt(v)<0x30644e72e131a029b85045b68181585d2833e84879b9709143e1f593f0000001n;
@@ -269,8 +272,8 @@ export function createRollingPublicSqliteStore(directory,{scope,...options}={}){
      if(prior&&view==='board')requireThat(prior.record.subboard===input.id,'ROLLING_PUBLIC_CURSOR_STALE');
      if(prior&&view==='profile')requireThat(prior.record.name_id===input.nameId,'ROLLING_PUBLIC_CURSOR_STALE');
      if(prior&&view==='thread')requireThat(prior.record.root===input.root,'ROLLING_PUBLIC_CURSOR_STALE');
-     const bound=prior?key(prior.order):view==='thread'?low:high;
-     const args=view==='feed'?[bound]:[key(input[idKey]),bound];candidates=rows(view,args,limit+1);
+     const bound=prior?key(prior.order):['thread','chronological','pending'].includes(view)?low:high;
+     const args=['feed','chronological','pending'].includes(view)?[bound]:[key(input[idKey]),bound];candidates=rows(view,args,limit+1);
     }
     const selected=[];value=valueFor(selected);
     for(const row of candidates){if(selected.length===limit){nextAfter=selected.at(-1).id;break;}
