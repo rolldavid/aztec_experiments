@@ -41,6 +41,19 @@ const equalPrivate = (left, right, message) => assert(isDeepStrictEqual(left, ri
 const accepted = [TxStatus.CHECKPOINTED, TxStatus.PROVEN, TxStatus.FINALIZED];
 const fresh = () => { let result; do { result = Fr.random(); } while (result.isZero()); return result; };
 
+// Test observer failures must survive the production owner's intentional
+// receipt-reconciliation catch. Gas is measured before the one actual send.
+export function hostedJourneyObserver(node,{measure=measureApplicationGas}={}){
+ const sent=new Map(),gas=new Map();let failure,failureSeen=false;
+ const observedNode=new Proxy(node,{get(target,key){
+  if(key==='sendTx')return async tx=>{const hash=String(tx.getTxHash());assert(!sent.has(hash),'No hosted retransmission');
+   gas.set(hash,await measure(target,tx));sent.set(hash,tx);return target.sendTx(tx);};
+  const value=Reflect.get(target,key);return typeof value==='function'?value.bind(target):value;
+ }});
+ return {node:observedNode,sent,gas,observe:fn=>async(...args)=>{try{return await fn(...args);}catch(error){if(!failureSeen){failureSeen=true;failure=error;}throw error;}},
+  assertHealthy(){if(failureSeen)throw failure;}};
+}
+
 /**
  * board/bok: actual SDK Contract.at instances for this wallet.
  * privateFee: preparePrivateBokFees result; no new wallet lifetime here.
@@ -52,7 +65,7 @@ const fresh = () => { let result; do { result = Fr.random(); } while (result.isZ
  * actual 1000 private Bok credits are required. No synthetic funding accepted.
  */
 export async function runRollingBokJourney({node, wallet, owner, operator, board, bok, privateFee,
-  claimedDeposit, pluginId, initialHumanFees, outputDirectory, mineL1, finalizeReverted, mark = () => {}, harnessFiles = []}) {
+  claimedDeposit, pluginId, initialHumanFees, boardDeployment, outputDirectory, mineL1, finalizeReverted, mark = () => {}, harnessFiles = []}) {
   assertNodeVersion(); assertAztecPackages();
   assert(path.isAbsolute(outputDirectory)); assert.equal(typeof mineL1, 'function'); assert.equal(typeof finalizeReverted, 'function');
   assert(wallet === privateFee.wallet && owner.equals(privateFee.owner) && operator.equals(privateFee.operator));
@@ -78,7 +91,7 @@ export async function runRollingBokJourney({node, wallet, owner, operator, board
     return fs.writeFile(path.join(outputDirectory, 'journey.json'), json(report), {mode: 0o600});
   };
   const stage = async label => { report.stage = label; await mark('rolling-bok:' + label); await save(); };
-  const sourcePaths = [...new Set(['billboard/rolling_contract/journey.mjs', 'billboard/rolling_contract/reply-acceptance.mjs', 'experiments/private-bok/rejection.mjs', 'billboard/rolling_contract/callback-rollback.mjs',
+  const sourcePaths = [...new Set(['billboard/rolling_contract/journey.mjs', 'plugins/main.mjs', 'plugins/aztec.mjs', 'plugins/escrow-service.mjs', 'plugins/private-bok-escrow.mjs', 'plugins/private-bok-metering.mjs', 'plugins/operations.mjs', 'plugins/protocol.mjs', 'billboard/rolling_contract/reply-acceptance.mjs', 'experiments/private-bok/rejection.mjs', 'billboard/rolling_contract/callback-rollback.mjs',
     'billboard/rolling_contract/src/main.nr', 'billboard/rolling_contract/src/posting.nr', 'billboard/rolling_contract/src/admission.nr',
     'billboard/rolling_contract/src/encoding.nr', 'experiments/private-bok/escrow/src/main.nr',
     'scripts/testing/private-bok-fees.mjs', 'scripts/w01-private-fee-flow.mjs', 'scripts/prove-application-action.mjs',
@@ -374,19 +387,8 @@ export async function runRollingBokJourney({node, wallet, owner, operator, board
     await save();
     const initialEarnings = n(await query(bok, 'earned'));
     report.reply.initialOperatorEarnings = String(initialEarnings); await save(); assert.equal(initialEarnings, 0n);
-    await send('bok-reserve', bok.methods.reserve(requestId, 0, 200n), operator);
-    const reserved = await query(bok, 'request', requestId);
-    report.reply.reserved = accounting(reserved); await save();
-    assert(n(reserved.state) === 2n && n(reserved.invocation_hash) === n(target) && n(reserved.budget) === 400n
-      && n(reserved.available) === 200n && n(reserved.reserved) === 200n && n(reserved.charged) === 0n && n(reserved.refunded) === 0n);
-    const syntheticReceipt = fresh();
-    report.reply.syntheticReceipt = String(syntheticReceipt); await save();
-    await send('bok-settle', bok.methods.settle(requestId, 0, 120n, syntheticReceipt), operator);
-    const settled = await query(bok, 'request', requestId);
-    report.reply.settled = accounting(settled); await save();
-    assert(n(settled.state) === 2n && n(settled.invocation_hash) === n(target) && n(settled.sequence) === 1n
-      && n(settled.available) === 280n && n(settled.reserved) === 0n && n(settled.charged) === 120n
-      && n(settled.refunded) === 0n && n(settled.receipt) === n(syntheticReceipt));
+    // The real hosted request owner now performs reserve/settle/reply/finish.
+    // The model is explicitly inert: it returns only these labelled public facts.
     const replyContent = 'Fixture reply: the quiet reading page is ready.';
     // Reuse only the canonical UTF-8 packing; no second invocation is authorized.
     const packedReply = invocationPreimage({...input, content: replyContent});
@@ -394,7 +396,7 @@ export async function runRollingBokJourney({node, wallet, owner, operator, board
     const [replyMainVersion] = await query(board, 'main_policy');
     const replyLocalVersion = 0, replyCountBefore = n(await query(board, 'get_post_count'));
     const replyArgs = [requestId, pluginId, replyMessage, replyLength, Number(replyMainVersion), replyLocalVersion];
-    const replied = await send('bok-publish-reply', bok.methods.publish_reply(...replyArgs), operator);
+    const checkPublished=async(replied,settled)=>{
     const invocationKey = await poseidon2HashWithSeparator([n(bok.address), n(requestId)], 0x52434249);
     const replyId = await poseidon2HashWithSeparator([n(board.address), n(invocationKey)], 0x52434252);
     const replyDigest = await poseidon2HashWithSeparator([BigInt(replyLength), ...replyMessage.map(n)], 0x52435431);
@@ -432,7 +434,61 @@ export async function runRollingBokJourney({node, wallet, owner, operator, board
       observation.expectedReasonMatched = matchesReplyRejection(rejection, {board, bok}, label);
       await save(); assert(observation.rejected && observation.expectedReasonMatched, 'Expected reply rejection not established');
     }
-    await send('bok-finish', bok.methods.finish(requestId), operator);
+    };
+    const [{createPrivateBokEscrow},{runPrivateBokRequest},{rollingBoardPort},{fileState},{acquireHostedLease},
+      {createRollingPersistentPublicIndex},{createRollingPublicSqliteStore},{ownRollingPersistentPublicIndex},{validateVeniceBilling}]=await Promise.all([
+      import('../../plugins/private-bok-escrow.mjs'),import('../../plugins/escrow-service.mjs'),import('../../plugins/aztec.mjs'),
+      import('../../plugins/operations.mjs'),import('../../plugins/main.mjs'),import('../../shared/rolling/public-index.mjs'),
+      import('../../shared/rolling/public-sqlite.mjs'),import('../../scripts/rolling-public-server.mjs'),import('../../plugins/venice-metered.mjs')]);
+    const hostedDirectory=path.join(outputDirectory,'hosted');await fs.mkdir(hostedDirectory,{mode:0o700});
+    const hostedLease=await acquireHostedLease(hostedDirectory);let publicIndex;
+    let syntheticReceipt,settled;
+    try{
+      assert.equal(report.applicationProofs,false,'Hosted development is native proof-disabled');assert.equal(wallet.pxe.proverEnabled,false);
+      const scope={chainId:String(info.l1ChainId),rollupVersion:String(info.rollupVersion),rollupAddress:String(info.l1ContractAddresses.rollupAddress).toLowerCase(),
+        boardAddress:String(board.address),receiver:String(bok.address)};
+      const indexScope={...scope,classId:String((await getContractClassFromArtifact(board.artifact)).id)};delete indexScope.receiver;
+      const storage=createRollingPublicSqliteStore(path.join(hostedDirectory,'public-index'),{scope:indexScope});
+      try{publicIndex=ownRollingPersistentPublicIndex(await createRollingPersistentPublicIndex({node,artifact:board.artifact,scope:indexScope,deployment:boardDeployment,storage}),storage);}
+      catch(error){storage.close();throw error;}
+      const boardPort=await rollingBoardPort({node,index:publicIndex,scope,boardArtifact:board.artifact,pluginId:String(pluginId),development:true});
+      const store=await fileState(path.join(hostedDirectory,'request.json')),observer=hostedJourneyObserver(node),{sent}=observer;
+      const observedNode=observer.node;
+      const escrow=await createPrivateBokEscrow({node:observedNode,wallet,artifact:bok.artifact,address:String(bok.address),operator:String(operator),board:String(board.address),network:scope,
+        requestId:String(requestId),target:String(target),store,lease:hostedLease,development:true,proofMode:'disabled'});
+      const observed={...escrow};
+      for(const method of ['reserve','settle','publish_reply','finish'])observed[method]=observer.observe(async(...args)=>{
+        const result=await escrow[method](...args);assert.equal(result.status,'succeeded');assert.equal(result.canonical,true);
+        const tx=sent.get(result.txHash);assert(tx,'Exactly one current hosted send');
+        const receipt=await node.getTxReceipt(TxHash.fromString(result.txHash)),effect=(await node.getTxEffect(TxHash.fromString(result.txHash))).data;
+        const gas=observer.gas.get(result.txHash);assert(gas,'Pre-send gas observation required');observedPublic.push({tx,effect});
+        report.transactions.push({label:'hosted-'+method,actorRole:'operator',payerMode:'genesis',txHash:result.txHash,submission:'canonical inclusion',
+          transactionFee:String(receipt.transactionFee),blockNumber:receipt.blockNumber,blockHash:String(receipt.blockHash),footprint:inspect(tx,effect,false,gas)});
+        const row=await query(bok,'request',requestId);
+        if(method==='reserve'){
+          report.reply.reserved=accounting(row);
+          assert(n(row.state)===2n&&n(row.invocation_hash)===n(target)&&n(row.budget)===400n&&n(row.available)===200n&&n(row.reserved)===200n&&n(row.charged)===0n&&n(row.refunded)===0n);
+        }
+        if(method==='settle'){
+          settled=row;syntheticReceipt=Fr.fromString(args[3]);report.reply.syntheticReceipt=String(syntheticReceipt);report.reply.settled=accounting(row);
+          assert(n(row.state)===2n&&n(row.invocation_hash)===n(target)&&n(row.sequence)===1n&&n(row.available)===280n&&n(row.reserved)===0n&&n(row.charged)===120n&&n(row.refunded)===0n&&n(row.receipt)===n(syntheticReceipt));
+        }
+        if(method==='publish_reply')await checkPublished({tx,effect,receipt},settled);
+        await save();return result;
+      });
+      let modelCalls=0;
+      const quote={modelId:'inert-hosted-fixture',inputBound:190,maxTokens:10,inputPrice:1000000000n,outputPrice:1000000000n,cachePrice:null,maximum:200n};
+      const provider={quote:async()=>quote,execute:async()=>{modelCalls++;assert.equal(modelCalls,1);
+        const billing=validateVeniceBilling({providerId:'inert-fixture-'+String(requestId),modelId:quote.modelId,promptTokens:115,completionTokens:5,cachedTokens:0,inputPrice:'1000000000',outputPrice:'1000000000',cachePrice:null,charge:'120'},quote);
+        return {message:{role:'assistant',content:replyContent},billing,charge:120n,receipt:billing.receipt};}};
+      const invocation={postId:String(postId),requestId:String(requestId),target:String(target),pluginId:String(pluginId)};
+      const run=()=>runPrivateBokRequest({request:invocation,board:boardPort,escrow:observed,store,provider,
+        runAgent:async({model,text})=>{assert.equal(text,content);const response=await model.complete({messages:[{role:'user',content:text}],maxTokens:10});observer.assertHealthy();return {replyText:response.message.content};}});
+      assert.equal((await run()).status,'finished');observer.assertHealthy();assert.equal(modelCalls,1);assert.equal(sent.size,4);
+      await run();assert.equal(modelCalls,1);assert.equal(sent.size,4);
+      report.reply.hosted={passed:true,model:'labelled inert provider',actualProviderCall:false,modelCalls,transactionCount:sent.size,repeatSends:0,
+        authenticatedPublicIndex:true,journalRetained:true,journalSha256:sha(await fs.readFile(path.join(hostedDirectory,'request.json')))};
+    }finally{try{await publicIndex?.close();}finally{await hostedLease.close();}}
     const completed = await query(bok, 'request', requestId);
     report.reply.accounting = {...accounting(completed), ownerBalance: String(n(await query(bok, 'balance_of', owner))),
       operatorEarnings: String(n(await query(bok, 'earned')))};
