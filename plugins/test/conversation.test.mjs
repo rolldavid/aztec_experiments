@@ -21,3 +21,11 @@ test('complete paginated thread includes earlier Bok reply and excludes later me
 });
 for(const [name,change] of [['changed revision',h=>h.state.changeRevision=true],['reorg',h=>h.state.reorg=true],['unconfirmed',h=>h.state.finalized=12],['projection ahead of finality despite old posts',h=>h.state.finalized=14],['missing root',h=>h.posts[0].id='7'],['duplicate',h=>h.posts[1].id='1'],['reordered',h=>h.posts[1].order='0'],['wrong root',h=>h.posts[1].record.root='4']])test(name+' never returns partial history',async()=>{const h=fixture();change(h);await assert.rejects(h.load());});
 test('removed prior post is a tombstone without hidden text',async()=>{const h=fixture();h.posts[0].removal={reason:'removed'};h.posts[0].text='HIDDEN_SENTINEL';const r=await h.load();assert.equal(r.messages[0].text,'[Removed post]');assert(!JSON.stringify(r).includes('HIDDEN_SENTINEL'));});
+
+test('retained paid-context guard fences changes after summary and reservation',async()=>{
+ for(const change of [h=>h.state.reorg=true,h=>h.state.revision='r2']){
+  const h=fixture(),history=await h.load();await history.assertCurrent();
+  change(h);await assert.rejects(history.assertCurrent());
+  assert.equal(h.state.reads,2,'guard must not reload a different paid context');
+ }
+});
