@@ -240,3 +240,61 @@ work deadline is bound to the host start timestamp, including runtime startup;
 VM clock drift or exhausted startup time fails closed within the same host cap. A successful checked
 Git tree may be reused by the repository owner only after validating its exact
 parent/tree/revision binding; plain chat requires no build or checkout.
+
+## Local static publication
+
+`createStaticPublication({directory, artifactRoot, origin, boardOrigin,
+development})` provides the local post-acceptance publisher and `handle(req,res)`.
+Both directories must be canonical private owned directories. `artifactRoot` is
+the isolated executor's output root; `directory` is a separate publication store.
+Use a dedicated credential-free HTTP origin, distinct from the board origin;
+production configuration requires HTTPS. TLS, routing and actual public service
+activation remain separate operator work. The handler does not trust forwarded
+host headers and has no publication/moderation HTTP endpoints.
+
+The root repository manager calls `publish({repositoryId, threadId, invocationId,
+readRevision, acceptedRevision, validation})` **after** durable accepted-ref CAS.
+`validation` is the exact successful isolated-execution receipt. Publication
+verifies its source/artifact archives, byte manifests, revision and positive
+container cleanup. It copies only those bounded public bytes into an immutable
+private revision directory, syncs them, then uses the existing durable `fileState`
+primitive to advance the catalog. A new revision must name the prior published
+revision; an exact retry is idempotent and cannot move latest backward. The
+manager retains its pending local-publication intent; recovery never reruns the
+paid model or generated build.
+
+The returned `latestUrl` is stable for the thread. `artifactUrl` and `sourceUrl`
+identify the exact accepted revision. Only the **current latest revision** is
+public: after advancement the old artifact and source URLs return 404, while
+internal history remains for reconciliation and backup. `sourceUrl` downloads
+an exact JSON/base64 source snapshot with its revision and file manifest. It is
+not a Git credential, repository administration endpoint or executable archive.
+Neither private publication metadata nor executor logs are served.
+
+The handler accepts GET/HEAD only, rejects credentials/cookies, ambiguous paths,
+unknown assets and wrong Host, rechecks the catalog after filesystem reads, and
+serves no-cache responses with exact content types and nosniff. CSP runs generated
+HTML/JS in a sandbox without same-origin storage, workers, plugins, forms or
+operator credentials. Public HTTPS API access is allowed; generated content
+remains untrusted. `setDisabled({repositoryId,threadId,disabled})` is a trusted
+host-only moderation capability; it hides both current artifacts and source,
+persists across restarts and revision changes, and also fences in-flight reads.
+
+Default retention bounds are 128 threads, 20 revisions per thread, 256 MiB of
+source/archive/artifact content, 8,192 stored content files and an 8 MiB catalog.
+Eight simultaneous HTTP reads are admitted. Metadata and filesystem allocation
+add overhead within the bounded entry counts; there is no promise that logical
+content bytes equal disk allocation. Capacity exhaustion rejects the update and
+preserves latest. No automatic history deletion, quota increase or paid storage
+provisioning occurs.
+
+Back up the stopped publisher's whole private store together with the repository
+manager's accepted-ref and pending-publication journals. Verify archive and
+manifest hashes and match catalog latest to accepted state before restoring
+service. Do not reconstruct latest from filenames or restore just a pointer.
+An incomplete staging directory, corrupt catalog, or uncertain persistence stops
+publication until explicit operator reconciliation. Preserve the original files
+and inspect the corresponding accepted receipt before removing incomplete owned
+staging or applying any retention cleanup. Retained immutable revision directories
+from a completed rename can be verified and reused by the exact pending receipt.
+Do not prune history or alter recorded quotas while the publisher is running.
