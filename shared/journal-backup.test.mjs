@@ -248,3 +248,25 @@ test('cold export fails if authenticated ciphertext changes during the final sna
  const backup=await createJournalBackup({...f.credentials,storage:{keys:async()=>[record.key],read:async()=>++reads===1?record.encoded:next}});
  await assert.rejects(backup.exportRecords(),{code:'BB_JOURNAL_INVALID'});assert.equal(reads,2);
 });
+test('aggregate funding ciphertext preserves original intent and Bok secrets through backup without plaintext export',async()=>{
+ const f=fixture(),source=storage(),destination=storage(),scopeText=JSON.stringify(['ROLLING_AGGREGATE_FUNDING_V1','31337','1','0x'+'11'.repeat(20),hex(1),'0x'+'22'.repeat(20),hex(3),1]);
+ const slot=await createEncryptedJournalSlot({...f.credentials,storage:source,scopeText,keyDomain:'ROLLING_AGGREGATE_FUNDING_V1'});
+ const saved={intent:{data:'original private funding sentinel'},recipientSalt:hex(4),bridgeSecret:hex(5)};await slot.write(await slot.read(),saved);
+ const records=await (await f.backup(source)).exportRecords();assert(!JSON.stringify(records).includes('original private funding sentinel'));
+ await (await f.backup(destination)).restoreRecords(records);
+ const restored=await createEncryptedJournalSlot({...f.credentials,storage:destination,scopeText,keyDomain:'ROLLING_AGGREGATE_FUNDING_V1'});assert.deepEqual((await restored.read()).value,saved);
+});
+for(const defect of ['extra','number','zero','field','version','canonical'])test('aggregate recovery descriptor rejects '+defect,async()=>{
+ const f=fixture(),source=storage(),frame=['ROLLING_AGGREGATE_FUNDING_V1','31337','1','0x'+'11'.repeat(20),hex(1),'0x'+'22'.repeat(20),hex(3),1];
+ if(defect==='extra')frame.push(1);if(defect==='number')frame[1]=31337;if(defect==='zero')frame[5]='0x'+'00'.repeat(20);if(defect==='field')frame[6]='0x'+'ff'.repeat(32);if(defect==='version')frame[7]=2;
+ const slot=await createEncryptedJournalSlot({...f.credentials,storage:source,scopeText:(defect==='canonical'?' ':'')+JSON.stringify(frame),keyDomain:'ROLLING_AGGREGATE_FUNDING_V1'});
+ await slot.write(await slot.read(),{});await assert.rejects((await f.backup(source)).exportRecords(),{code:'BB_JOURNAL_INVALID'});
+});
+test('archived aggregate txHash framing restores only within the original owner and exact scope',async()=>{
+ const f=fixture(),source=storage(),destination=storage(),frame=['ROLLING_AGGREGATE_FUNDING_V1','31337','1','0x'+'11'.repeat(20),hex(1),'0x'+'22'.repeat(20),hex(3),hex(77),1];
+ const slot=await createEncryptedJournalSlot({...f.credentials,storage:source,scopeText:JSON.stringify(frame),keyDomain:'ROLLING_AGGREGATE_FUNDING_V1'});await slot.write(await slot.read(),{intent:'archive',bridgeSecret:hex(8)});
+ const records=await (await f.backup(source)).exportRecords();await (await f.backup(destination)).restoreRecords(records);
+ for(const [index,value]of [[1,'1'],[5,'0x'+'33'.repeat(20)],[6,hex(4)]]){
+  const changed=[...frame];changed[index]=value;const other=await createEncryptedJournalSlot({...f.credentials,storage:destination,scopeText:JSON.stringify(changed),keyDomain:'ROLLING_AGGREGATE_FUNDING_V1'});assert.equal((await other.read()).value,null);
+ }
+});

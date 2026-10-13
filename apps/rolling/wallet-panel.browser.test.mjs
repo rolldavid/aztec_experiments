@@ -6,7 +6,8 @@ import assert from 'node:assert/strict';
 import http from 'node:http';
 import fs from 'node:fs/promises';
 import {chromium} from 'playwright';
-const fixture=`import {mountRollingWalletPanel} from '/wallet-panel.mjs';
+const fixture=`import {advanceAggregateClaim} from '/aggregate-wallet.mjs';
+import {mountRollingWalletPanel} from '/wallet-panel.mjs';
 import {selectPrivateViews} from '/private-views.mjs';
 const state={loads:0,sessions:0,prepares:0,sends:0,reconciles:0,cancels:0,closes:0,creates:0,imports:0,exports:0,effects:0,ended:0,owned:0,unlocked:true,options:null,failure:null,hold:null,release:null,fee:'fee-ready',profileCalls:0,bioVersion:'3',avatarVersion:'4'};
 window.test=state;state.rawAccount={secretKey:'PRIVATE_SENTINEL',address:'HUMAN_IDENTITY_SENTINEL'};state.privateChanges=0;state.preferenceReads=0;state.statusReads=0;state.headReads=0;state.revision='4';state.recoveryChecks=0;state.replacementPrepares=0;state.resumes=0;state.submitCalls=0;state.preferences={scope:{chainId:'31337',version:'1',board:'1'},head:{schema:1,initialized:true,revision:'4',digest:'42'},bookmarks:['10'],followedBoards:['0'],followedNames:[],subscriptions:['10'],replyNotifications:true,readMarkers:[]};
@@ -34,12 +35,19 @@ const application={
  async cancelPrepared(){state.cancels++;write({...read(),status:'cancelled'});return read();},
  async reconcile(){state.reconciles++;await boundary('reconcile');const intent=read();if(state.resolveOutcome){intent.status=state.resolveOutcome;write(intent);}return intent;}
 };
+const funding={defaultPrivateFeeCap:'1000',advanceClaim:()=>advanceAggregateClaim({application,funding}),
+ async prepare(input){state.fundingPrepares=(state.fundingPrepares??0)+1;state.fundingAllocation=input;await boundary('funding-quote');return {walletName:'MetaMask',privateFeeCap:input.privateFeeCap,slippageBps:input.slippageBps,breakdown:{collateralWei:input.collateralWei,fee:{amount:input.feeAmount,maxEth:'1000'},bok:{amount:input.bokAmount,maxEth:'2000'},gasBudgetWei:input.gasBudgetWei,maximumTotalWei:(BigInt(input.collateralWei)+3000n+BigInt(input.gasBudgetWei)).toString()}};},
+ async confirm(){state.fundingPayments=(state.fundingPayments??0)+1;await boundary('funding-payment');state.paymentSaved=true;return this.recover();},
+ async inspect(){return {paymentSaved:state.paymentSaved,privateFeeCap:state.fundingCap??'1000',claim:state.fundingClaim??null};},
+ async checkpointClaim(value){state.fundingClaim=value;},
+ async recover(){state.fundingRecovers=(state.fundingRecovers??0)+1;return {receipt:{txHash:'0x'+'1'.repeat(64)},feeReceipt:{txHash:'0x'+'1'.repeat(64)},bokReceipt:{txHash:'0x'+'1'.repeat(64)}};}
+};
 const runtime={selectPrivateViews,
  fundingWallets:()=>state.walletChoices??[],fundingWalletStatus:()=>state.fundingWallet??{connected:false},
  async connectFundingWallet(id){state.walletConnects=(state.walletConnects??0)+1;state.walletSelected=id;await boundary('funding-wallet');state.fundingWallet={connected:true,name:'MetaMask',address:'0x'+'1'.repeat(40)};},
  getAccount:()=>state.unlocked?state.rawAccount:null,
  account:{configure:options=>{state.options=options;},async create(){state.creates++;await boundary('create');state.unlocked=true;return envelope;},async importRecovery(){state.imports++;await boundary('import');state.unlocked=true;},async exportRecovery(){state.exports++;await boundary('export');return envelope;},async endSession(){state.ended++;state.unlocked=false;return {reload:true};}},
- async createSession({onProgress}){state.sessions++;state.sessionProgress=onProgress;for(const record of state.initializationRecords??[])onProgress(record);await boundary('session');return {application,busy:false,async close(){state.closes++;await boundary('close');}};}
+ async createSession({onProgress}){state.sessions++;state.sessionProgress=onProgress;for(const record of state.initializationRecords??[])onProgress(record);await boundary('session');return {application,funding:state.aggregateEnabled?funding:null,busy:false,async close(){state.closes++;await boundary('close');}};}
 };
 window.panel=mountRollingWalletPanel({loadRuntime:async()=>{state.loads++;await boundary('load');return runtime;},onPublicEffect:()=>{state.effects++;},onPrivateChange:()=>{state.privateChanges++;}});
 document.getElementById('open').onclick=()=>window.panel.open(window.defaults);
@@ -48,6 +56,7 @@ async function browserFixture(t){
  const server=http.createServer(async(req,res)=>{
   if(req.url==='/'){res.writeHead(200,{'content-type':'text/html','Content-Security-Policy':"default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'none'; img-src blob:; base-uri 'none'; form-action 'none'"});res.end('<!doctype html><meta name="viewport" content="width=device-width"><link rel="stylesheet" href="/style.css"><button id="open">Open account</button><div id="reader">Public reader</div><script type="module" src="/fixture.mjs"></script>');return;}
   if(req.url==='/fixture.mjs'){res.writeHead(200,{'content-type':'text/javascript'});res.end(fixture);return;}
+  if(req.url==='/aggregate-wallet.mjs'){res.writeHead(200,{'content-type':'text/javascript'});res.end(await fs.readFile(new URL('../../shared/rolling/aggregate-wallet.mjs',import.meta.url)));return;}
   if(req.url==='/invocation.mjs'){res.writeHead(200,{'content-type':'text/javascript'});res.end(await fs.readFile(new URL('../../shared/rolling/invocation.mjs',import.meta.url)));return;}
   if(req.url==='/private-views.mjs'){res.writeHead(200,{'content-type':'text/javascript'});res.end(await fs.readFile(new URL('../../shared/rolling/private-views.mjs',import.meta.url)));return;}
   if(!['/wallet-panel.mjs','/avatar-upload.mjs','/model.mjs','/style.css'].includes(req.url)){res.writeHead(404);res.end();return;}
@@ -681,4 +690,50 @@ test('rejected funding connection retains recovery and sends nothing',async t=>{
  await page.getByRole('alert').waitFor();assert(!((await page.getByRole('alert').innerText()).includes('PRIVATE_SENTINEL')));
  assert(await page.getByRole('button',{name:'Check funding receipt',exact:true}).isVisible());
  assert.equal(await page.evaluate(()=>test.sends),0);
+});
+async function aggregateQuote(page,slippage){
+ await page.getByRole('button',{name:'Recover funding',exact:true}).click();
+ await page.getByLabel('Posting deposit (ETH)',{exact:true}).fill('0.1');await page.getByLabel('Network fee credit (fee tokens)',{exact:true}).fill('2');
+ await page.getByLabel('Bok credit (USDC)',{exact:true}).fill('3.25');await page.getByLabel('Maximum Ethereum gas cost (ETH)',{exact:true}).fill('0.003');
+ if(slippage!==undefined)await page.getByLabel('Slippage limit (%)',{exact:true}).fill(slippage);
+ await page.getByRole('button',{name:'Get fresh quote',exact:true}).click();await page.getByRole('button',{name:'Confirm funding and private claim',exact:true}).waitFor();
+}
+test('aggregate funding UI reviews exact allocations and consent before one payment and one bounded private claim',async t=>{
+ const {page}=await browserFixture(t);await page.evaluate(()=>test.aggregateEnabled=true);await open(page);await unlock(page);await aggregateQuote(page);
+ assert.equal(await page.evaluate(()=>test.fundingPayments??0),0);assert.equal((await counts(page)).sends,0);
+ assert.deepEqual(await page.evaluate(()=>test.fundingAllocation),{asset:'ETH',collateralWei:'100000000000000000',feeAmount:'2000000000000000000',bokAmount:'3250000',gasBudgetWei:'3000000000000000',feePoolFee:3000,bokPoolFee:3000,slippageBps:100,privateFeeCap:'1000'});
+ assert(await page.getByText(/scoped collateral consent signature/).isVisible());
+ await page.getByRole('button',{name:'Confirm funding and private claim',exact:true}).click();await page.getByText('Funding and the private claim are confirmed.',{exact:false}).waitFor();
+ assert.equal(await page.evaluate(()=>test.fundingPayments),1);assert.equal((await counts(page)).sends,1);assert.equal(await page.evaluate(()=>test.fundingClaim.attempted),true);
+});
+test('aggregate funding UI pauses a larger private claim fee without another Ethereum payment',async t=>{
+ const {page}=await browserFixture(t);await page.evaluate(()=>{test.aggregateEnabled=true;test.fundingCap='100';});await open(page);await unlock(page);await aggregateQuote(page);
+ await page.getByRole('button',{name:'Confirm funding and private claim',exact:true}).click();await page.getByText('The private claim needs a new review.',{exact:false}).waitFor();
+ assert.equal(await page.evaluate(()=>test.fundingPayments),1);assert.equal((await counts(page)).sends,0);assert.equal(await page.evaluate(()=>test.fundingClaim.attempted),false);
+});
+test('aggregate funding UI reconciles an unknown claim without repeat payment or submission',async t=>{
+ const {page}=await browserFixture(t);await page.evaluate(()=>{test.aggregateEnabled=true;test.submitOutcome='unknown';});await open(page);await unlock(page);await aggregateQuote(page);
+ await page.getByRole('button',{name:'Confirm funding and private claim',exact:true}).click();await page.getByText('Checking the saved private claim.',{exact:false}).waitFor();
+ await page.getByRole('button',{name:'Pause bridge checks',exact:true}).click();await page.getByRole('button',{name:'Resume saved funding',exact:true}).click();
+ await page.waitForFunction(()=>test.reconciles===1);assert.equal(await page.evaluate(()=>test.fundingPayments),1);assert.equal((await counts(page)).sends,1);
+ await page.getByRole('button',{name:'Close account panel'}).click();
+});
+test('aggregate funding UI links an exact prepared claim after checkpoint interruption without preparing twice',async t=>{
+ const {page}=await browserFixture(t);await page.evaluate(()=>test.aggregateEnabled=true);await open(page);await unlock(page);
+ await page.getByRole('button',{name:'Recover funding',exact:true}).click();await page.evaluate(()=>{
+  test.paymentSaved=true;const r={txHash:'0x'+'1'.repeat(64)};sessionStorage.setItem('labelled-ui-intent',JSON.stringify({intentId:'42',action:{type:'claim-deposit',receipt:r,feeReceipt:r,bokReceipt:r},maximumFee:'123',status:'prepared'}));
+ });
+ await page.getByRole('button',{name:'Resume saved funding',exact:true}).click();await page.getByText('Funding and the private claim are confirmed.',{exact:false}).waitFor();
+ assert.equal((await counts(page)).prepares,0);assert.equal((await counts(page)).sends,1);assert.equal(await page.evaluate(()=>test.fundingPayments??0),0);
+});
+test('aggregate funding UI exposes explicit saved review after attempt checkpoint precedes submission',async t=>{
+ const {page}=await browserFixture(t);await page.evaluate(()=>test.aggregateEnabled=true);await open(page);await unlock(page);await page.getByRole('button',{name:'Recover funding',exact:true}).click();
+ await page.evaluate(()=>{test.paymentSaved=true;test.fundingClaim={intentId:'42',attempted:true};sessionStorage.setItem('labelled-ui-intent',JSON.stringify({intentId:'42',action:{type:'claim-deposit',receipt:{}},maximumFee:'123',status:'prepared'}));});
+ await page.getByRole('button',{name:'Resume saved funding',exact:true}).click();await page.getByText('This saved claim has not been submitted.',{exact:false}).waitFor();
+ assert.equal((await counts(page)).sends,0);assert(await page.getByRole('button',{name:'Confirm and send',exact:true}).isVisible());assert.equal(await page.getByRole('button',{name:'Pause bridge checks',exact:true}).count(),0);
+});
+
+test('aggregate funding UI preserves fractional slippage as exact basis points before consent',async t=>{
+ const {page}=await browserFixture(t);await page.evaluate(()=>test.aggregateEnabled=true);await open(page);await unlock(page);await aggregateQuote(page,'0.75');
+ assert.equal(await page.evaluate(()=>test.fundingAllocation.slippageBps),75);assert(await page.getByText(/Slippage limit: 0.75%/).isVisible());assert.equal(await page.evaluate(()=>test.fundingPayments??0),0);assert.equal((await counts(page)).sends,0);
 });

@@ -30,7 +30,7 @@ const sources={...Object.fromEntries(Object.entries(scripts).map(([name,file])=>
 };
 const invalid=()=>Error('Invalid Rolling wallet assets or public configuration');
 const requiredInputs=['apps/rolling/wallet-runtime.mjs','apps/rolling/wallet-session.mjs',
- 'shared/rolling/application.mjs','shared/rolling/synchronized-application.mjs','shared/rolling/deployment.mjs','shared/rolling/name-policy.mjs','shared/rolling/invocation.mjs',
+ 'shared/rolling/aggregate-wallet.mjs','shared/rolling/application.mjs','shared/rolling/synchronized-application.mjs','shared/rolling/deployment.mjs','shared/rolling/name-policy.mjs','shared/rolling/invocation.mjs',
  'shared/journal-record.mjs','shared/l2-journal.mjs','shared/transaction-outcomes.mjs','shared/protocol-commitments.mjs','shared/protocol-schema.mjs',
  'scripts/rolling-wallet-assets.mjs',...Object.values(scripts),'crs-manifest.json','.build/contracts-manifest.json','.build/sdk/sdk-manifest.json'];
 const keys=(value,names)=>{if(!value||typeof value!=='object'||Array.isArray(value)||Object.keys(value).sort().join()!==names.sort().join())throw invalid();};
@@ -46,7 +46,13 @@ function address(value,bytes){if(typeof value!=='string'||!new RegExp('^0x[0-9a-
 export function validateRollingWalletConfig(value,scope){
  keys(value,['config','trustedQuery','remoteProver','proofsEnabled']);
  const copy=structuredClone(value),{config:c,trustedQuery:q,remoteProver:r,proofsEnabled}=copy;
- keys(c,c.bok===undefined?['network','board','privateFee']:['network','board','privateFee','bok']);
+ keys(c,['network','board','privateFee',...(c.bok===undefined?[]:['bok']),...(c.aggregateFunding===undefined?[]:['aggregateFunding'])]);
+ if(c.aggregateFunding!==undefined){
+  const a=c.aggregateFunding;keys(a,['chainId','router','routerCodeHash','collateralPortal','feePortal','bokPortal','weth','swapRouter','feeToken','bokToken','privateFpc','quoter','quoterCodeHash']);
+  if(!c.bok||a.chainId!==c.network.chainId||a.collateralPortal!==c.board.portalAddress||a.privateFpc!==c.privateFee.contractAddress)throw invalid();
+  for(const name of ['router','collateralPortal','feePortal','bokPortal','weth','swapRouter','feeToken','bokToken','quoter'])address(a[name],20);
+  for(const name of ['routerCodeHash','quoterCodeHash','privateFpc'])address(a[name],32);
+ }
  if(c.bok!==undefined){keys(c.bok,['contractAddress','operatorAddress','pluginId']);for(const v of Object.values(c.bok))address(v,32);}keys(c.network,['chainId','rollupVersion','rollupAddress','ethRpcUrl']);
  keys(c.board,['contractAddress','portalAddress']);keys(c.privateFee,['contractAddress','gasSettings']);
  if(typeof c.network.chainId!=='string'||!/^[1-9][0-9]{0,19}$/.test(c.network.chainId)||typeof c.network.rollupVersion!=='string'||!/^[1-9][0-9]{0,9}$/.test(c.network.rollupVersion))throw invalid();
