@@ -63,6 +63,10 @@ export function buildContracts() {
   fs.copyFileSync(raw, canonical);
   const privateFeeRaw = path.join(billboard, 'target/private_fee_contract-PrivateFPC.json');
   processArtifact(privateFeeRaw, privateFeeRaw);
+  // The workspace compiler also overwrites RollingBoard. Process that output
+  // before publishing a successful build to the Rolling wallet consumers.
+  const rollingRaw = path.join(billboard, 'target/rolling_contract-RollingBoard.json');
+  processArtifact(rollingRaw, rollingRaw);
   const privateFeeCanonical = path.join(ROOT, 'apps/src/billboard/private_fee_artifact.json');
   fs.copyFileSync(privateFeeRaw, privateFeeCanonical);
   // Keep legacy consumer copies consistent until consumers are consolidated.
