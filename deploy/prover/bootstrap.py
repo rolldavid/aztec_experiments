@@ -694,6 +694,14 @@ def attest(check=False):
             'egressBytes':count if type(count)==int and count>=0 else 0,
             'runtimeArchiveSha256':record['runtimeArchiveSha256'],'manifestSha256':record['manifestSha256'],
             'proverPolicy':'masked-pending-qualification','linuxQueryQualified':False}
+    if (PRIVATE/'prover-activation-intent.json').exists():
+        try: output.update(activation_support('observe'))
+        except Exception: good=False;output['controlsVerified']=False;output['proverPolicy']='activation-unverified'
+    else:
+        try:
+            for service in ('board-prover.service','board-prover-proxy.service'):
+                if run(['systemctl','show',service,'--property=LoadState','--value'],capture=True,timeout=5)!='masked': raise ValueError('Unexpected prover state')
+        except Exception: good=False;output['controlsVerified']=False;output['proverPolicy']='activation-unverified'
     exercise=BASE/'egress-exercise.json'
     if exercise.exists():
         e=json.loads(exercise.read_text())
@@ -715,6 +723,14 @@ def attest(check=False):
     if not good:
         run(['systemctl','stop','rolling-node.service','board-prover.service','board-prover-proxy.service'])
         run(['systemctl','start','rolling-budget.service'])
+
+def activation_support(operation, expected=None):
+    # Only the immutable packaged source may interpret root-owned activation data.
+    source=RELEASE/'deploy/prover/bootstrap.py'
+    if digest(source)!=PINS['startup']: raise ValueError('Activation source changed')
+    namespace={'__name__':'rolling_activation','__file__':str(source)}
+    exec(compile(source.read_bytes(),str(source),'exec'),namespace)
+    return namespace['prover_activation'](globals(),operation,expected)
 
 def install_attestation(source):
     write('/usr/local/lib/rolling-attest.py',source,0o700)
@@ -984,6 +1000,341 @@ def node_wrapper(args,base):
             for n,handler in previous.items():signal.signal(n,handler)
 
 
+PROVER_UNIT_SHA = '340d19baa4b764e5198fafb261f74001ffefa4c2d9dde111ef0ba07ca7e61cef'
+ACTIVATION_PUBLIC_FILES = ('shared/portal-runtime.mjs','shared/portal-runtime.json',
+                           'shared/protocol-commitments.mjs','shared/protocol-schema.mjs')
+
+def activation_record(value, manifest):
+    """Closed public scope; no endpoint, key, worker option or executable input."""
+    fields={'schemaVersion','manifestSha256','catalogSha256','deploymentEvidenceSha256','chainId','rollupVersion',
+            'rollupAddress','board','privateFeeAddress','privateBokAddress','boardDeployer','bokOwner','bokOperator',
+            'portalAddress','checkpointNumber','checkpointHash'}
+    if type(value) is not dict or set(value)!=fields or type(value['schemaVersion']) is not int or value['schemaVersion']!=1:
+        raise Invalid('Activation schema')
+    fixed={'manifestSha256':manifest,'catalogSha256':CATALOG_SHA,'chainId':QUALIFICATION['service']['chainId'],
+           'rollupVersion':QUALIFICATION['service']['rollupVersion'],'rollupAddress':QUALIFICATION['service']['queryNode']['rollupAddress']}
+    if any(type(value[k]) is not str or value[k]!=v for k,v in fixed.items()): raise Invalid('Activation identity')
+    for name in ('board','privateFeeAddress','privateBokAddress','boardDeployer','bokOwner','bokOperator','portalAddress'):
+        size=40 if name=='portalAddress' else 64
+        if type(value[name]) is not str or not re.fullmatch('0x[a-f0-9]{'+str(size)+'}',value[name]) or int(value[name],16)==0:
+            raise Invalid('Activation address')
+    if len({value[k] for k in ('board','privateFeeAddress','privateBokAddress')})!=3: raise Invalid('Activation distinct addresses')
+    if type(value['checkpointNumber']) is not int or not 0<value['checkpointNumber']<2**32: raise Invalid('Activation checkpoint')
+    for key,pattern in [('checkpointHash','0x[a-f0-9]{64}'),('deploymentEvidenceSha256','[a-f0-9]{64}')]:
+        if type(value[key]) is not str or not re.fullmatch(pattern,value[key]): raise Invalid('Activation digest')
+    return dict(value)
+
+def activation_evidence(value, scope, files):
+    # Root supplies an independently reviewed receipt, not merely an opaque hash.
+    checks={'boardConstructor','boardPortalRuntime','boardReady','privateFeeCanonical','bokConstructor','canonicalAnchors'}
+    expected={k:scope[k] for k in scope if k not in ('deploymentEvidenceSha256','schemaVersion')}
+    artifacts=('billboard/target/rolling_contract-RollingBoard.json','experiments/private-bok/target/private_bok-PrivateBok.json',
+               'apps/src/billboard/private_fee_artifact.json','shared/portal-runtime.json')
+    if type(value) is not dict or set(value)!={'schemaVersion','scope','artifacts','checks','bokScope'} or type(value['schemaVersion']) is not int or value['schemaVersion']!=1:
+        raise Invalid('Deployment receipt schema')
+    if value['scope']!=expected or value['artifacts']!={p:files[p] for p in artifacts}: raise Invalid('Deployment receipt binding')
+    if type(value['checks']) is not dict or set(value['checks'])!=checks or any(x is not True for x in value['checks'].values()): raise Invalid('Deployment checks')
+    if value['bokScope']!='constructor-allowlist-only': raise Invalid('Bok scope')
+    return value
+
+# Fixed source, executed only on the qualified Linux host with its pinned SDK.
+# No wallet, signer, deployment, transaction submission or configurable endpoint.
+ACTIVATION_CHECK = r'''
+import fs from 'node:fs';
+import {Fr} from '@aztec-labs/foundation/curves/bn254';
+import {sha256ToField} from '@aztec-labs/foundation/crypto/sha256';
+import {AztecAddress} from '@aztec-labs/stdlib/aztec-address';
+import {loadContractArtifact} from '@aztec-labs/stdlib/abi';
+import {getContractClassFromArtifact,getContractInstanceFromInstantiationParams,computeContractAddressFromInstance} from '@aztec-labs/stdlib/contract';
+import {RegistryAbi} from '@aztec-foundation/l1-artifacts';
+import {encodeFunctionData,decodeFunctionResult,keccak256,toBytes} from 'viem';
+import {createTrustedPrivateNode,inspectTrustedNode} from './shared/trusted-private-node.mjs';
+import {loadRollingArtifacts} from './prover/rolling-artifacts.mjs';
+import {encodeConfigCommitment} from './shared/protocol-commitments.mjs';
+import {verifyPortalRuntime} from './shared/portal-runtime.mjs';
+const check=x=>{if(!x)throw Error('ACTIVATION_SCOPE');};
+const s=JSON.parse(process.argv[1]);
+const network={chainId:s.chainId,version:s.rollupVersion,rollup:s.rollupAddress};
+const options={url:'http://127.0.0.1:8082/',expectedNetworkScope:network,proofsEnabled:true,allowLocalDev:true,maxLagSeconds:120};
+const num=x=>BigInt(x.toString()),same=(a,b)=>num(a)===num(b);
+const address=x=>AztecAddress.fromString(x),field=x=>new Fr(BigInt(x));
+const node=await createTrustedPrivateNode(options);
+const reference={hash:s.checkpointHash};
+async function anchor(){const b=await node.getBlockData(s.checkpointNumber);check(b?.blockHash.toString()===s.checkpointHash&&b.header.globalVariables.blockNumber===s.checkpointNumber);}
+await anchor();
+const [board,bok]=loadRollingArtifacts().map(raw=>loadContractArtifact(raw));
+const fee=loadContractArtifact(JSON.parse(fs.readFileSync('apps/src/billboard/private_fee_artifact.json','utf8')));
+async function instance(text,artifact,deployer){
+ const a=address(text),i=await node.getContract(a,reference),c=await getContractClassFromArtifact(artifact);
+ check(i&&same(i.address,a)&&same(i.originalContractClassId,c.id)&&same(i.currentContractClassId,c.id)&&same(await computeContractAddressFromInstance(i),a));
+ if(deployer)check(same(i.deployer,deployer));return i;
+}
+await instance(s.board,board,s.boardDeployer);await instance(s.privateBokAddress,bok,s.bokOwner);
+const canonical=await getContractInstanceFromInstantiationParams(fee,{salt:Fr.ZERO,deployer:AztecAddress.ZERO,constructorArgs:[]});
+check(same(canonical.address,s.privateFeeAddress));await instance(s.privateFeeAddress,fee,AztecAddress.ZERO);
+const slot=(a,k)=>num(a.storageLayout[k].slot);
+const read=(a,n)=>node.getPublicStorageAt(reference,address(a),field(n)).then(num);
+const base=slot(board,'config');check(slot(board,'portal_address')===1n&&base===3n&&slot(board,'deposits')===14n);
+const config=[];for(let i=0;i<10;i++)config.push(await read(s.board,base+BigInt(i)));
+const [chain,rollup,version,min,max,baseCooldown,kMultiplier,censorWindow,maxSaveUp,deployer]=config;
+check(same(chain,s.chainId)&&same(rollup,s.rollupAddress)&&same(version,s.rollupVersion)&&same(deployer,s.boardDeployer));
+check(same(await read(s.board,1n),s.portalAddress));
+for(const [name,expected] of Object.entries({board:s.board,operator:s.bokOperator,owner:s.bokOwner,l1_chain:s.chainId,version:s.rollupVersion}))check(same(await read(s.privateBokAddress,slot(bok,name)),expected));
+const economics=Object.fromEntries(Object.entries({minDeposit:min,maxDeposit:max,baseCooldown,kMultiplier,censorWindow,maxSaveUp}).map(([k,v])=>[k,String(v)]));
+const hash=await sha256ToField({toBuffer:()=>encodeConfigCommitment({l1ChainId:s.chainId,rollupAddress:s.rollupAddress,rollupVersion:s.rollupVersion,boardAddress:s.board},economics)});
+const contracts=await node.getL1ContractAddresses();check(same(contracts.rollupAddress,s.rollupAddress));
+let calls=0,last=0;
+async function rpc(method,params){
+ check(++calls<=7);await new Promise(r=>setTimeout(r,Math.max(0,1250-(Date.now()-last))));last=Date.now();
+ const r=await fetch('https://sepolia.gateway.tenderly.co',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:calls,method,params}),redirect:'error',signal:AbortSignal.timeout(8000)});
+ check(r.ok&&r.body);const reader=r.body.getReader(),parts=[];let size=0;
+ try{for(;;){const x=await reader.read();if(x.done)break;size+=x.value.length;check(size<=65536);parts.push(x.value);}}finally{await reader.cancel();reader.releaseLock();}
+ const v=JSON.parse(Buffer.concat(parts).toString('utf8'));check(!v.error&&v.id===calls);return v.result;
+}
+check(same(await rpc('eth_chainId',[]),s.chainId));
+const l1=await rpc('eth_getBlockByNumber',['latest',false]);const lag=Date.now()/1000-Number(BigInt(l1.timestamp));check(/^0x[0-9a-f]{64}$/.test(l1.hash)&&lag>=0&&lag<=120);
+for(const [functionName,args] of [['getCanonicalRollup',[]],['getRollup',[BigInt(s.rollupVersion)]]]){
+ const data=encodeFunctionData({abi:RegistryAbi,functionName,args});
+ const result=await rpc('eth_call',[{to:'0xa0bfb1b494fb49041e5c6e8c2c1be09cd171c6ba',data},l1.number]);
+ check(same(decodeFunctionResult({abi:RegistryAbi,functionName,data:result}),s.rollupAddress));
+}
+const code=await rpc('eth_getCode',[s.portalAddress,l1.number]);
+const metadata=JSON.parse(fs.readFileSync('shared/portal-runtime.json','utf8'));
+verifyPortalRuntime(code,metadata,{MIN_DEPOSIT:min,MAX_DEPOSIT:max,L2_CONTRACT:BigInt(s.board),ROLLUP:rollup,INBOX:num(contracts.inboxAddress),OUTBOX:num(contracts.outboxAddress),VERSION:version,L1_CHAIN_ID:chain,CONFIG_HASH:num(hash)});
+// depositsEnabled() selector, derived by the pinned keccak implementation below.
+const selector=keccak256(toBytes('depositsEnabled()')).slice(0,10);
+check(await rpc('eth_call',[{to:s.portalAddress,data:selector},l1.number])==='0x'+('0'.repeat(63))+'1');
+check((await rpc('eth_getBlockByNumber',[l1.number,false])).hash===l1.hash);
+await anchor();const ready=await inspectTrustedNode(node,options);check(ready.checkpointedBlockNumber>=s.checkpointNumber);
+process.stdout.write(JSON.stringify({ready,scopeVerified:true,checkpointHash:s.checkpointHash,bokScope:'constructor-allowlist-only'}));
+'''
+
+def activation_private(path, expected=None):
+    path=pathlib.Path(path)
+    if path.parent.resolve()!=path.parent or path.parent.stat().st_uid!=0 or stat.S_IMODE(path.parent.stat().st_mode)!=0o700:
+        raise Invalid('Activation private directory')
+    fd=os.open(path,os.O_RDONLY|os.O_NOFOLLOW)
+    try:
+        info=os.fstat(fd)
+        if not stat.S_ISREG(info.st_mode) or info.st_uid!=0 or stat.S_IMODE(info.st_mode)!=0o600 or info.st_size>16384: raise Invalid('Activation private file')
+        data=os.read(fd,16385)
+        if len(data)!=info.st_size or (expected is not None and hashlib.sha256(data).hexdigest()!=expected): raise Invalid('Activation file binding')
+        return json.loads(data)
+    finally:os.close(fd)
+
+def activation_config(scope):
+    return {'serviceMode':'prover','applicationProfile':'rolling','proofs':'real','host':'127.0.0.1','port':8081,'origins':[],
+            'chainId':scope['chainId'],'rollupVersion':scope['rollupVersion'],
+            **{k:scope[k] for k in ('board','privateFeeAddress','privateBokAddress')},
+            'pluginAddresses':[scope['privateBokAddress']],'threads':1,'queueDirectory':'/run/board-prover',
+            'crsPath':'/run/board-prover/crs','queryNode':dict(QUALIFICATION['service']['queryNode'])}
+
+def activation_rule_counter(text, uid):
+    if type(text) is not str or len(text)>16384:raise Invalid('UID traffic readback')
+    rule='-A OUTPUT -m owner --uid-owner '+str(uid)+' -j MARK --set-xmark 0x14/0xffffffff'
+    count=[]
+    for line in text.splitlines():
+        if not line or line.startswith('#') or line=='*mangle' or line=='COMMIT' or re.fullmatch(r':(PREROUTING|INPUT|FORWARD|OUTPUT|POSTROUTING) ACCEPT \[[0-9]+:[0-9]+\]',line):continue
+        m=re.fullmatch(r'\[([0-9]{1,20}):([0-9]{1,20})\] '+re.escape(rule),line)
+        if not m:raise Invalid('Unexpected traffic rule')
+        count.append(int(m[1]))
+    if len(count)!=1:raise Invalid('Missing or duplicate UID mark')
+    return count[0]
+
+def activation_traffic(h, uid, exercise=False, gid=None):
+    run=h['run'];h['verify_controls']()
+    dev=(h['BASE']/'interface').read_text()
+    filters=run(['tc','filter','show','dev',dev,'parent','1:'],capture=True,timeout=5)
+    lines=[x.strip() for x in filters.splitlines() if x.strip()]
+    # tc emits an optional header and exactly one mapping detail. Separators
+    # belong to their fields: stripping a header must not require a trailing
+    # space. Only this all-protocol chain-zero fw mapping is accepted.
+    prefix=r'filter(?: parent 1:)? protocol all pref 1 fw(?: chain 0)?'
+    header=[x for x in lines if re.fullmatch(prefix,x)]
+    detail=[x for x in lines if re.fullmatch(prefix+r' handle 0x14 classid 1:20',x)]
+    if len(header)>1 or len(detail)!=1 or len(header)+len(detail)!=len(lines):
+        raise Invalid('Prover traffic class')
+    before=[activation_rule_counter(run([family+'-save','-c','-t','mangle'],capture=True,timeout=5),uid) for family in ('iptables','ip6tables')]
+    if exercise:
+        # Loopback UDP proves both owner match and MARK target execute. It is
+        # deliberately not a throughput measurement or external traffic probe.
+        code="import socket;\nfor f,a in [(socket.AF_INET,'127.0.0.1'),(socket.AF_INET6,'::1')]:\n s=socket.socket(f,socket.SOCK_DGRAM);s.sendto(b'rolling-mark-check',(a,9));s.close()"
+        run(['setpriv','--reuid='+str(uid),'--regid='+str(uid if gid is None else gid),'--clear-groups','/usr/bin/python3','-c',code],timeout=5)
+        after=[activation_rule_counter(run([family+'-save','-c','-t','mangle'],capture=True,timeout=5),uid) for family in ('iptables','ip6tables')]
+        if any(a<=b for a,b in zip(after,before)):raise Invalid('UID mark exercise')
+    return {'ipv4UidMark':True,'ipv6UidMark':True,'fwmarkClass20':True,'aggregate50Mbps':True}
+
+def activation_identity(h, scope):
+    raw=h['run'](['/usr/bin/env','NODE_BACKEND=js','HARDWARE_CONCURRENCY=1',str(h['RELEASE']/'node/bin/node'),'--input-type=module','--eval',ACTIVATION_CHECK,
+                  json.dumps(scope,separators=(',',':'))],timeout=90,capture=True,cwd=h['RELEASE'])
+    if type(raw) is not str or len(raw)>16384:raise Invalid('Activation scope response')
+    result=json.loads(raw)
+    if type(result) is not dict or set(result)!={'ready','scopeVerified','checkpointHash','bokScope'} or result['scopeVerified'] is not True or result['checkpointHash']!=scope['checkpointHash'] or result['bokScope']!='constructor-allowlist-only':raise Invalid('Activation scope failed')
+    ready=h['readiness_projection'](result['ready'])
+    now=int(dt.datetime.now(dt.timezone.utc).timestamp())
+    if not 0<=now-ready['checkedAtSeconds']<=10:raise Invalid('Stale activation readiness')
+    return ready
+
+def activation_health():
+    import urllib.request
+    class NoRedirect(urllib.request.HTTPRedirectHandler):
+        def redirect_request(self,*args,**kwargs):raise Invalid('Health redirect')
+    opener=urllib.request.build_opener(urllib.request.ProxyHandler({}),NoRedirect())
+    with opener.open('http://127.0.0.1:8081/healthz',timeout=5) as response:
+        data=response.read(16385)
+        if response.status!=200 or len(data)>16384:raise Invalid('Prover health')
+    health=json.loads(data)
+    if type(health) is not dict or set(health)!={'ready','proofs','queue','query'} or health['ready'] is not True or health['proofs']!='real' or health['query']!={'enabled':True,'ready':True}:raise Invalid('Prover health')
+    q=health['queue']
+    if type(q) is not dict or set(q)!={'jobs','bytes','running','submitted','completed','failed'} or type(q['running']) is not bool or any(type(q[k]) is not int or not 0<=q[k]<=2**53-1 for k in q if k!='running'):raise Invalid('Prover queue health')
+    return q
+
+def activation_paths(h, scope):
+    """Create only dedicated public runtime/config paths, never widen PRIVATE."""
+    import pwd,grp
+    run=h['run'];release=h['RELEASE']
+    # Manifest verification precedes this function. Prevalidate the complete
+    # ownership/link/traversal plan before allocating an identity or changing
+    # any path. Official Node npm/npx/corepack links are relative file links.
+    if not release.is_absolute() or release.resolve()!=release:raise Invalid('Release path')
+    entries=[(path,path.lstat()) for path in [release,*release.rglob('*')]]
+    regular={path for path,info in entries if stat.S_ISREG(info.st_mode)}
+    for path,info in entries:
+        if info.st_uid!=0 or not (stat.S_ISREG(info.st_mode) or stat.S_ISDIR(info.st_mode) or stat.S_ISLNK(info.st_mode)):raise Invalid('Release ownership')
+        if stat.S_ISLNK(info.st_mode):
+            try:
+                target=os.readlink(path)
+                if os.path.isabs(target):raise Invalid('Release link')
+                resolved=path.resolve(strict=True)
+                if not resolved.is_relative_to(release) or resolved not in regular:raise Invalid('Release link')
+            except (OSError,RuntimeError) as error:raise Invalid('Release link') from error
+    if not stat.S_ISDIR(entries[0][1].st_mode):raise Invalid('Release directory')
+    parents=(release.parent,release.parent.parent)
+    for parent in parents:
+        info=parent.lstat()
+        if not stat.S_ISDIR(info.st_mode) or info.st_uid!=0 or info.st_mode&0o022:raise Invalid('Release traversal')
+    if os.path.lexists(pathlib.Path('/etc/board-prover')) or os.path.lexists(release.parent.parent/'current'):raise Invalid('Existing prover paths')
+    try:pwd.getpwnam('board-prover')
+    except KeyError:pass
+    else:raise Invalid('Existing prover identity')
+    try:grp.getgrnam('board-prover')
+    except KeyError:pass
+    else:raise Invalid('Existing prover group')
+    run(['useradd','--system','--user-group','--no-create-home','--home-dir','/nonexistent','--shell','/usr/sbin/nologin','board-prover'],timeout=5)
+    user=pwd.getpwnam('board-prover');group=grp.getgrnam('board-prover')
+    if not 1<=user.pw_uid<2**31 or not 1<=user.pw_gid==group.gr_gid<2**31 or user.pw_shell!='/usr/sbin/nologin' or group.gr_mem:raise Invalid('Prover identity')
+    # Only the captured, fully validated public tree is mutated. Never chmod a
+    # symlink (which would follow its target); regular targets are hardened once
+    # through their own inventory entries and link ownership uses no-follow.
+    for path,info in entries:
+        current=path.lstat()
+        if (current.st_dev,current.st_ino,current.st_mode,current.st_uid)!=(info.st_dev,info.st_ino,info.st_mode,info.st_uid):raise Invalid('Release changed')
+        os.chown(path,0,group.gr_gid,follow_symlinks=False)
+        if not stat.S_ISLNK(info.st_mode):os.chmod(path,0o550 if stat.S_ISDIR(info.st_mode) or info.st_mode&0o111 else 0o440,follow_symlinks=False)
+    for parent in parents:os.chmod(parent,0o755,follow_symlinks=False)
+    configdir=pathlib.Path('/etc/board-prover');configdir.mkdir(mode=0o750)
+    os.chown(configdir,0,group.gr_gid);os.chmod(configdir,0o750)
+    config=configdir/'config.json';h['exclusive_record'](config,activation_config(scope));os.chown(config,0,group.gr_gid);os.chmod(config,0o640)
+    os.symlink(release,release.parent.parent/'current')
+    return user.pw_uid,group.gr_gid
+
+def activation_proxy_masked(h):
+    if h['run'](['systemctl','show','board-prover-proxy.service','--property=LoadState','--value'],capture=True,timeout=5)!='masked':raise Invalid('Proxy must remain masked')
+
+def activation_service(h, uid, gid, config_sha):
+    config=pathlib.Path('/etc/board-prover/config.json');info=config.lstat();parent=config.parent.lstat()
+    if not stat.S_ISREG(info.st_mode) or info.st_uid!=0 or info.st_gid!=gid or stat.S_IMODE(info.st_mode)!=0o640 or not stat.S_ISDIR(parent.st_mode) or parent.st_uid!=0 or parent.st_gid!=gid or stat.S_IMODE(parent.st_mode)!=0o750:raise Invalid('Prover config permissions')
+    if h['digest'](config)!=config_sha or h['digest']('/etc/systemd/system/board-prover.service')!=PROVER_UNIT_SHA:raise Invalid('Prover source changed')
+    if pathlib.Path('/opt/board-prover/current').resolve()!=h['RELEASE']:raise Invalid('Prover release changed')
+    raw=h['run'](['systemctl','show','board-prover.service','--property=User,Group,Restart,ActiveState,MainPID,DropInPaths,MemoryMax'],capture=True,timeout=5)
+    if len(raw)>4096:raise Invalid('Prover service properties')
+    values={}
+    for line in raw.splitlines():
+        key,sep,value=line.partition('=')
+        if not sep or key in values:raise Invalid('Prover service properties')
+        values[key]=value
+    exact={'User':'board-prover','Group':'board-prover','Restart':'no','ActiveState':'active','DropInPaths':'','MemoryMax':str(24*1024**3)}
+    if set(values)!=set(exact)|{'MainPID'} or any(values[k]!=v for k,v in exact.items()) or not re.fullmatch('[1-9][0-9]{0,9}',values['MainPID']):raise Invalid('Prover service controls')
+    status=pathlib.Path('/proc')/values['MainPID']/'status'
+    with open(status,'rb') as f:data=f.read(16385)
+    if len(data)>16384:raise Invalid('Prover process identity')
+    for key,number in ((b'Uid:',uid),(b'Gid:',gid)):
+        rows=[line.split()[1:] for line in data.splitlines() if line.startswith(key)]
+        if rows!=[[str(number).encode()]*4]:raise Invalid('Prover process identity')
+
+def prover_activation(h, operation, expected=None):
+    """Root-local operation only. No listener, retry, capability or paid API."""
+    import fcntl,time
+    if os.geteuid()!=0 or operation not in ('activate','observe'):raise Invalid('Activation authority')
+    private=h['PRIVATE'];intent_path=private/'prover-activation-intent.json';result_path=private/'prover-activation-result.json'
+    if operation=='observe':
+        intent=activation_private(intent_path)
+        if type(intent) is not dict or set(intent)!={'schemaVersion','scopeSha256','manifestSha256','startedAt','attempts'} or type(intent['schemaVersion']) is not int or intent['schemaVersion']!=1 or type(intent['attempts']) is not int or intent['attempts']!=1 or intent['manifestSha256']!=h['PINS']['manifest'] or type(intent['scopeSha256']) is not str or not re.fullmatch('[a-f0-9]{64}',intent['scopeSha256']):raise Invalid('Activation intent')
+        if not result_path.exists():
+            if type(intent.get('startedAt')) is not int or not 0<=int(time.time())-intent['startedAt']<=300:raise Invalid('Activation interrupted')
+            return {'proverPolicy':'activation-in-progress','proverActivated':False}
+        result=activation_private(result_path)
+        keys={'schemaVersion','status','manifestSha256','uid','gid','configSha256','traffic','applicationProofQualified','bokScope'}
+        traffic={'ipv4UidMark':True,'ipv6UidMark':True,'fwmarkClass20':True,'aggregate50Mbps':True}
+        if type(result) is not dict or set(result)!=keys or type(result['schemaVersion']) is not int or result['schemaVersion']!=1 or result['status']!='active-loopback' or result['manifestSha256']!=h['PINS']['manifest'] or any(type(result[k]) is not int or not 0<result[k]<2**31 for k in ('uid','gid')) or type(result['configSha256']) is not str or not re.fullmatch('[a-f0-9]{64}',result['configSha256']) or type(result['traffic']) is not dict or set(result['traffic'])!=set(traffic) or any(v is not True for v in result['traffic'].values()) or result['applicationProofQualified'] is not False or result['bokScope']!='constructor-allowlist-only':raise Invalid('Activation result')
+        activation_proxy_masked(h);activation_traffic(h,result['uid'])
+        activation_service(h,result['uid'],result['gid'],result['configSha256']);activation_health()
+        return {'proverPolicy':'active-loopback','proverActivated':True,'applicationScopeSha256':intent['scopeSha256'],
+                'bokScope':'constructor-allowlist-only','applicationProofQualified':False}
+    if type(expected) is not str or not re.fullmatch('[a-f0-9]{64}',expected):raise Invalid('Activation digest')
+    with open(private/'prover-activation-lock','a') as lock:
+        fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
+        if intent_path.exists() or result_path.exists():raise Invalid('Activation already attempted; reconcile only')
+        previous=signal.getsignal(signal.SIGALRM)
+        def expired(*_):raise TimeoutError('Activation deadline')
+        signal.signal(signal.SIGALRM,expired);signal.alarm(300)
+        try:
+            scope=activation_record(activation_private(private/'prover-activation-scope.json',expected),h['PINS']['manifest'])
+            h['verify_release'](h['RELEASE']);h['verify_controls']();activation_proxy_masked(h)
+            manifest=json.loads((h['RELEASE']/'prover-release.json').read_text())
+            evidence=activation_private(private/'prover-deployment-evidence.json',scope['deploymentEvidenceSha256'])
+            activation_evidence(evidence,scope,manifest['files'])
+            final=activation_private(private/'final-receipt.json')
+            q=h['validated_qualification'](final.get('qualification',{}))
+            if final.get('manifestSha256')!=h['PINS']['manifest'] or final.get('bootstrapSourceSha256')!=h['PINS']['bootstrap'] or q.get('passed') is not True or q.get('stage')!='complete' or not q.get('checks') or not all(q['checks'].values()) or not {'anchors','readiness'}<=set(q):raise Invalid('Current query qualification required')
+            deadline=h['read_bounded_json'](h['BASE']/'deadline.json')
+            if timestamp(deadline['budgetStop']).timestamp()-time.time()<900:raise Invalid('Activation budget reserve')
+            unit=h['RELEASE']/'deploy/prover/board-prover.service'
+            if h['digest'](unit)!=PROVER_UNIT_SHA:raise Invalid('Prover unit changed')
+            activation_identity(h,scope);h['verify_controls']()
+            h['exclusive_record'](intent_path,{'schemaVersion':1,'scopeSha256':expected,'manifestSha256':h['PINS']['manifest'],'startedAt':int(time.time()),'attempts':1})
+            uid,gid=activation_paths(h,scope)
+            for family in ('iptables','ip6tables'):
+                # No hidden preexisting policy may override the new owner mark.
+                policy=h['run']([family,'-t','mangle','-S'],capture=True,timeout=5)
+                if set(policy.splitlines())!={'-P '+c+' ACCEPT' for c in ('PREROUTING','INPUT','FORWARD','OUTPUT','POSTROUTING')}:raise Invalid('Existing mangle policy')
+                h['run']([family,'-t','mangle','-A','OUTPUT','-m','owner','--uid-owner',str(uid),'-j','MARK','--set-xmark','0x14/0xffffffff'],timeout=5)
+            traffic=activation_traffic(h,uid,exercise=True,gid=gid)
+            activation_identity(h,scope);h['verify_controls']();activation_proxy_masked(h)
+            # Intent already durable; any ambiguous start is terminal, never replayed.
+            h['run'](['systemctl','unmask','board-prover.service'],timeout=5)
+            h['write']('/etc/systemd/system/board-prover.service',unit.read_text(),0o644)
+            h['run'](['systemctl','daemon-reload'],timeout=5)
+            h['run'](['systemctl','start','board-prover.service'],timeout=15)
+            h['run'](['systemctl','is-active','--quiet','board-prover.service'],timeout=5)
+            deadline=time.monotonic()+30
+            while True:
+                try:queue=activation_health();break
+                except Exception:
+                    if time.monotonic()>=deadline:raise
+                    h['verify_controls']();time.sleep(1)
+            if queue['submitted']!=0:raise Invalid('Unexpected proof job')
+            config_sha=h['digest']('/etc/board-prover/config.json');activation_service(h,uid,gid,config_sha)
+            result={'schemaVersion':1,'status':'active-loopback','manifestSha256':h['PINS']['manifest'],'uid':uid,'gid':gid,
+                    'configSha256':config_sha,'traffic':traffic,'applicationProofQualified':False,'bokScope':'constructor-allowlist-only'}
+            h['exclusive_record'](result_path,result)
+            return result
+        except BaseException:
+            try:h['run'](['systemctl','stop','board-prover.service'],timeout=35)
+            finally:h['run'](['systemctl','start','--no-block','rolling-budget.service'],timeout=5)
+            raise
+        finally:signal.alarm(0);signal.signal(signal.SIGALRM,previous)
+
 def generate(config, now=None):
     config = validate(config, now)
     require_linux_qualification()
@@ -992,7 +1343,7 @@ def generate(config, now=None):
     runtime=tokenize.untokenize(t._replace(string='') if t.type==tokenize.COMMENT else t for t in tokenize.generate_tokens(io.StringIO(HOST).readline))
     pins = {'image':IMAGE, 'manifest':config['manifestSha256'], 'node':NODE_SHA, 'bb':BB_SHA, 'bbVersion':BB_VERSION, 'catalog':CATALOG_SHA, 'bootstrap':hashlib.sha256(runtime.encode()).hexdigest(),'startup':hashlib.sha256(pathlib.Path(__file__).read_bytes()).hexdigest()}
     prefix = 'PINS = '+repr(pins)+'\nNETWORK = '+repr(NETWORK)+'\nQUALIFICATION = '+repr(QUALIFICATION)+'\n'
-    dispatch = "\ntry:\n    if '--qualify' in sys.argv: qualify()\n    elif '--qualification-stop' in sys.argv:\n        qualify(aborted=True);run(['systemctl','start','rolling-qualification-receipt.service'],timeout=40)\n    elif '--qualification-receipt' in sys.argv: final_receipt()\n    else: attest('--check' in sys.argv)\nexcept Exception as error:\n    shutdown_failure(error)\n"
+    dispatch = "\ntry:\n    if sys.argv[1:2]==['--activate-prover']:\n        if len(sys.argv)!=3: raise ValueError('Activation arguments')\n        activation_support('activate',sys.argv[2])\n    elif '--qualify' in sys.argv: qualify()\n    elif '--qualification-stop' in sys.argv:\n        qualify(aborted=True);run(['systemctl','start','rolling-qualification-receipt.service'],timeout=40)\n    elif '--qualification-receipt' in sys.argv: final_receipt()\n    else: attest('--check' in sys.argv)\nexcept Exception as error:\n    shutdown_failure(error)\n"
     program = 'SOURCE = '+repr(prefix+runtime)+'\nCONFIG = '+repr(config)+'\nATTESTATION = SOURCE + '+repr(dispatch)+'\nexec(SOURCE)\nexecute(CONFIG, ATTESTATION)\n'
     encoded = base64.b64encode(lzma.compress(program.encode(),format=lzma.FORMAT_ALONE,
         filters=[{'id':lzma.FILTER_LZMA1,'preset':6,'pb':0}])).decode()

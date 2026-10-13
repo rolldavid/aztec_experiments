@@ -9,6 +9,10 @@ def release_preflight(root):
  bootstrap=importlib.util.module_from_spec(spec);spec.loader.exec_module(bootstrap)
  pin=bootstrap.require_linux_qualification(root)
  bootstrap.startup_sources(root)
+ for relative in ('deploy/prover/board-prover.service',*bootstrap.ACTIVATION_PUBLIC_FILES):
+  path=pathlib.Path(root)/relative
+  if path.is_symlink() or not path.is_file():raise ValueError('Activation source closure missing')
+ if hashlib.sha256((pathlib.Path(root)/'deploy/prover/board-prover.service').read_bytes()).hexdigest()!=bootstrap.PROVER_UNIT_SHA:raise ValueError('Activation service source changed')
  return pin
 
 def rolling_resources(root, node):
@@ -24,7 +28,7 @@ def copy_sources(root, out, rolling=()):
 
  Kept separate so isolated import regressions need no heavyweight Linux archive.
  """
- for rel in ['prover','deploy/prover/bootstrap.py','deploy/prover/startup-stages.mjs','scripts/toolchain.mjs','shared/remote-prover-wire.mjs','shared/trusted-private-node.mjs','shared/rolling/compact-client.mjs','toolchain.json','package.json','package-lock.json','crs-manifest.json','apps/src/billboard/billboard_artifact.json','apps/src/billboard/private_fee_artifact.json','plugins/adapter_artifact.json']+list(rolling):
+ for rel in ['prover','deploy/prover/bootstrap.py','deploy/prover/startup-stages.mjs','deploy/prover/board-prover.service','scripts/toolchain.mjs','shared/remote-prover-wire.mjs','shared/trusted-private-node.mjs','shared/rolling/compact-client.mjs','shared/portal-runtime.mjs','shared/portal-runtime.json','shared/protocol-commitments.mjs','shared/protocol-schema.mjs','toolchain.json','package.json','package-lock.json','crs-manifest.json','apps/src/billboard/billboard_artifact.json','apps/src/billboard/private_fee_artifact.json','plugins/adapter_artifact.json']+list(rolling):
   src=root/rel;dst=out/rel;dst.parent.mkdir(parents=True,exist_ok=True)
   if src.is_dir():shutil.copytree(src,dst,ignore=shutil.ignore_patterns('.DS_Store','._*'))
   else:shutil.copyfile(src,dst)

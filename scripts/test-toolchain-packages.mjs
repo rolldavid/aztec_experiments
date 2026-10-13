@@ -1,9 +1,12 @@
-// Labelled package-file fixtures; these tests do not execute SDK/native code.
+// Labelled package-file fixtures; native execution is explicitly doubled.
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import childProcess from 'node:child_process';
+import {createHash} from 'node:crypto';
+import {syncBuiltinESMExports} from 'node:module';
 import { assertAztecPackages, bbBinary, pins } from './toolchain.mjs';
 
 const labs = '@aztec-labs/aztec.js', bb = '@aztec-foundation/bb.js', transitive = '@aztec-labs/stdlib';
@@ -64,11 +67,15 @@ test('unsupported optional native platform may be absent, current platform may n
   entry.os = [process.platform]; assert.throws(f.check, /ENOENT/);
   entry.os = []; assert.throws(f.check, /Invalid optional/);
 });
-test('only measured Darwin-arm64 native rc6 is qualified; old evidence remains historical', () => {
+test('measured Darwin-arm64 and Linux-x64 rc6 versions are pinned; old evidence remains historical', () => {
   assert.equal(pins.node, '24.21.0');
   assert.equal(pins.nativeProverPackage, pins.aztecPackages[bb]);
-  assert.deepEqual(Object.keys(pins.nativeProver), ['darwin-arm64']);
+  assert.deepEqual(Object.keys(pins.nativeProver), ['darwin-arm64', 'linux-x64']);
   assert.deepEqual(pins.nativeProver['darwin-arm64'], {version:'6.0.0-rc.6', sha256:'8acdba0ecf928087e60bdca0206a508f109e7b62ca621b08fa62263509090217'});
+  assert.deepEqual(pins.nativeProver['linux-x64'], {version:'6.0.0-rc.6', sha256:'fa4b12adaefd5684b53b802346b9fe839ab3d6a4a829a5ea4efd6bd200e0829f'});
+  assert.equal(pins.nativeProverEvidence['linux-x64'].scope, 'version-only');
+  assert.equal(pins.nativeProverEvidence['linux-x64'].receiptSha256, 'b5c70e2421737afb8f1e767dc6a52778acf515e4f158cea2504de84495965f2f');
+  assert.equal(pins.nativeProverEvidence['linux-x64'].reviewSha256, '45f528840c5bd23d6c7fa15374bfd7b935984dd843cf8535d3f05f122d03fe59');
   assert.equal(Object.keys(pins.nativeProverHistory['6.0.0-rc.1']).length, 4);
   assert.equal(pins.nativeProverHistory['6.0.0-rc.1']['darwin-arm64'].sha256, '0c0661547b0e8a856090627c51673bb72db0f34da88166281c5fb080d508b953');
 });
@@ -81,7 +88,7 @@ test('unmeasured platforms cannot use native historical pins or BB overrides', (
   const previousBB = process.env.BB;
   try {
     process.env.BB = '/nonexistent/native-must-not-be-inspected';
-    for (const [os, cpu] of [['linux', 'x64'], ['linux', 'arm64'], ['darwin', 'x64']]) {
+    for (const [os, cpu] of [['linux', 'arm64'], ['darwin', 'x64'], ['win32', 'x64']]) {
       Object.defineProperty(process, 'platform', {...platform, value:os});
       Object.defineProperty(process, 'arch', {...arch, value:cpu});
       assert.throws(bbBinary, /Unsupported native prover platform/);
@@ -93,12 +100,12 @@ test('unmeasured platforms cannot use native historical pins or BB overrides', (
   }
 });
 
-function onMeasuredPlatform(check) {
+function onMeasuredPlatform(check, os = 'darwin', cpu = 'arm64') {
   const platform = Object.getOwnPropertyDescriptor(process, 'platform');
   const arch = Object.getOwnPropertyDescriptor(process, 'arch');
   try {
-    Object.defineProperty(process, 'platform', {...platform, value:'darwin'});
-    Object.defineProperty(process, 'arch', {...arch, value:'arm64'});
+    Object.defineProperty(process, 'platform', {...platform, value:os});
+    Object.defineProperty(process, 'arch', {...arch, value:cpu});
     return check();
   } finally {
     Object.defineProperty(process, 'platform', platform);
@@ -111,7 +118,72 @@ test('historical package binding cannot authorize current platform execution', (
   try {
     pins.nativeProverPackage = '6.0.0-rc.1';
     onMeasuredPlatform(() => assert.throws(bbBinary, /not qualified/));
+    onMeasuredPlatform(() => assert.throws(bbBinary, /not qualified/), 'linux', 'x64');
   } finally { pins.nativeProverPackage = previous; }
+});
+
+// Synchronous scoped double: no Linux/native executable is launched on the Mac.
+// Restore both CommonJS and named ESM bindings even when an assertion throws.
+function withNativeExecutionDouble(callback) {
+  const original = childProcess.execFileSync;
+  const calls = [];
+  let output = '6.0.0-rc.6\n';
+  try {
+    childProcess.execFileSync = (...args) => { calls.push(args); return output; };
+    syncBuiltinESMExports();
+    return callback({calls, output: value => { output = value; }});
+  } finally {
+    childProcess.execFileSync = original;
+    syncBuiltinESMExports();
+  }
+}
+
+test('Linux-x64 wrong checksum rejects before the labelled execution boundary', t => {
+  const f = fixture(t), binary = path.join(f.root, 'wrong-linux-bb');
+  fs.writeFileSync(binary, 'labelled non-executable Linux fixture');
+  const previousBB = process.env.BB;
+  try {
+    process.env.BB = binary;
+    withNativeExecutionDouble(({calls}) => {
+      onMeasuredPlatform(() => assert.throws(bbBinary, /Native prover checksum mismatch for linux-x64/), 'linux', 'x64');
+      assert.equal(calls.length, 0);
+    });
+  } finally { if (previousBB === undefined) delete process.env.BB; else process.env.BB = previousBB; }
+});
+
+test('Linux-x64 matching fixture hash still rejects the wrong reported version', t => {
+  const f = fixture(t), binary = path.join(f.root, 'labelled-linux-bb');
+  fs.writeFileSync(binary, 'labelled non-executable Linux fixture');
+  const previousBB = process.env.BB, previousPin = pins.nativeProver['linux-x64'];
+  try {
+    process.env.BB = binary;
+    pins.nativeProver['linux-x64'] = {...previousPin, sha256:createHash('sha256').update(fs.readFileSync(binary)).digest('hex')};
+    withNativeExecutionDouble(({calls, output}) => {
+      output('6.0.0-rc.1\n');
+      onMeasuredPlatform(() => assert.throws(bbBinary, /Expected prover 6\.0\.0-rc\.6, received 6\.0\.0-rc\.1/), 'linux', 'x64');
+      assert.deepEqual(calls, [[binary, ['--version'], {encoding:'utf8', timeout:10000}]]);
+    });
+  } finally {
+    pins.nativeProver['linux-x64'] = previousPin;
+    if (previousBB === undefined) delete process.env.BB; else process.env.BB = previousBB;
+  }
+});
+
+test('Linux-x64 matching labelled hash and version use the bounded version invocation', t => {
+  const f = fixture(t), binary = path.join(f.root, 'labelled-linux-bb');
+  fs.writeFileSync(binary, 'labelled non-executable Linux fixture');
+  const previousBB = process.env.BB, previousPin = pins.nativeProver['linux-x64'];
+  try {
+    process.env.BB = binary;
+    pins.nativeProver['linux-x64'] = {...previousPin, sha256:createHash('sha256').update(fs.readFileSync(binary)).digest('hex')};
+    withNativeExecutionDouble(({calls}) => {
+      onMeasuredPlatform(() => assert.equal(bbBinary(), binary), 'linux', 'x64');
+      assert.deepEqual(calls, [[binary, ['--version'], {encoding:'utf8', timeout:10000}]]);
+    });
+  } finally {
+    pins.nativeProver['linux-x64'] = previousPin;
+    if (previousBB === undefined) delete process.env.BB; else process.env.BB = previousBB;
+  }
 });
 
 test('current platform rejects a wrong binary checksum before execution', t => {

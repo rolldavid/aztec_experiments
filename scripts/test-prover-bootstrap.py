@@ -1455,4 +1455,315 @@ class NativeVersionDiagnostic(unittest.TestCase):
                 if failure in ('controls','guest'):self.assertNotIn('download',events)
                 if failure=='receipt':self.assertNotIn('upload',events)
 
+class ProverActivation(unittest.TestCase):
+    def scope(self):
+        return {'schemaVersion':1,'manifestSha256':'b'*64,'catalogSha256':b.CATALOG_SHA,'deploymentEvidenceSha256':'e'*64,
+                'chainId':'11155111','rollupVersion':'3409706519','rollupAddress':b.QUALIFICATION['service']['queryNode']['rollupAddress'],
+                **{k:'0x'+str(i)*64 for i,k in enumerate(('board','privateFeeAddress','privateBokAddress','boardDeployer','bokOwner','bokOperator'),1)},
+                'portalAddress':'0x'+'7'*40,'checkpointNumber':101,'checkpointHash':'0x'+'8'*64}
+
+    def evidence(self,s):
+        paths=('billboard/target/rolling_contract-RollingBoard.json','experiments/private-bok/target/private_bok-PrivateBok.json',
+               'apps/src/billboard/private_fee_artifact.json','shared/portal-runtime.json')
+        files={p:'f'*64 for p in paths}
+        e={'schemaVersion':1,'scope':{k:v for k,v in s.items() if k not in ('schemaVersion','deploymentEvidenceSha256')},
+           'artifacts':files,'checks':{k:True for k in ('boardConstructor','boardPortalRuntime','boardReady','privateFeeCanonical','bokConstructor','canonicalAnchors')},'bokScope':'constructor-allowlist-only'}
+        return e,files
+
+    def path_fixture(self,root):
+        # Actual official Node24.21.0 archive link names/targets; only payload
+        # bytes are labelled harmless fixtures. No real chown/user/service runs.
+        from types import SimpleNamespace
+        original_path=pathlib.Path;original_lstat=pathlib.Path.lstat
+        release=root/'opt/board-prover/releases/release';release.mkdir(parents=True)
+        (root/'etc').mkdir();events=[];created=False
+        links={'npm':'../lib/node_modules/npm/bin/npm-cli.js',
+               'npx':'../lib/node_modules/npm/bin/npx-cli.js',
+               'corepack':'../lib/node_modules/corepack/dist/corepack.js'}
+        (release/'node/bin').mkdir(parents=True)
+        for name,target in links.items():
+            destination=(release/'node/bin'/target).resolve();destination.parent.mkdir(parents=True,exist_ok=True)
+            destination.write_text('public executable fixture');destination.chmod(0o755)
+            (release/'node/bin'/name).symlink_to(target)
+        def path(value,*args):return root/'etc/board-prover' if value=='/etc/board-prover' and not args else original_path(value,*args)
+        def lstat(value,*args,**kw):
+            info=original_lstat(value,*args,**kw)
+            # Root ownership is a labelled double; real filesystem types,
+            # target resolution and link contents drive the production helper.
+            if value.is_relative_to(root):
+                values=list(info);values[4]=0;return os.stat_result(values)
+            return info
+        def user(_):
+            if not created:raise KeyError('not allocated')
+            return SimpleNamespace(pw_uid=999,pw_gid=998,pw_shell='/usr/sbin/nologin')
+        def group(_):
+            if not created:raise KeyError('not allocated')
+            return SimpleNamespace(gr_gid=998,gr_mem=[])
+        def run(args,**kw):
+            nonlocal created
+            self.assertEqual(args[0],'useradd');events.append(('useradd',));created=True
+        def record(path,value):
+            events.append(('record',path.name))
+            with path.open('x') as f:json.dump(value,f)
+        patches=[patch('pwd.getpwnam',side_effect=user),patch('grp.getgrnam',side_effect=group),
+                 patch.object(pathlib.Path,'lstat',lstat),patch.object(b,'pathlib',SimpleNamespace(Path=path)),
+                 patch.object(b.os,'chown',side_effect=lambda path,uid,gid,**kw:events.append(('chown',path,uid,gid,kw))),
+                 patch.object(b.os,'chmod',side_effect=lambda path,mode,**kw:events.append(('chmod',path,mode,kw)))]
+        return {'RELEASE':release,'run':run,'exclusive_record':record},events,patches,links
+
+    def test_actual_paths_preserves_official_node_file_links_and_hardens_targets_without_following(self):
+        from contextlib import ExitStack
+        with tempfile.TemporaryDirectory() as t:
+            root=pathlib.Path(t).resolve();h,events,patches,links=self.path_fixture(root)
+            with ExitStack() as stack:
+                for p in patches:stack.enter_context(p)
+                self.assertEqual(b.activation_paths(h,self.scope()),(999,998))
+            for name,target in links.items():
+                link=h['RELEASE']/'node/bin'/name;self.assertEqual(os.readlink(link),target)
+                self.assertIn(('chown',link,0,998,{'follow_symlinks':False}),events)
+                self.assertFalse(any(e[0]=='chmod' and e[1]==link for e in events))
+                self.assertIn(('chmod',link.resolve(),0o550,{'follow_symlinks':False}),events)
+            self.assertEqual((root/'etc/board-prover/config.json').read_text(),json.dumps(b.activation_config(self.scope())))
+            self.assertEqual((h['RELEASE'].parent.parent/'current').resolve(),h['RELEASE'])
+
+    def test_actual_paths_prevalidates_all_links_before_any_identity_or_permission_mutation(self):
+        from contextlib import ExitStack
+        for kind in ('escape','absolute','directory','loop','dangling'):
+            with self.subTest(kind=kind),tempfile.TemporaryDirectory() as t:
+                root=pathlib.Path(t).resolve();h,events,patches,_=self.path_fixture(root)
+                link=h['RELEASE']/'zz-invalid';outside=root/'outside';outside.write_text('private fixture')
+                target={'escape':'../../../../outside','absolute':str(outside),'directory':'node/bin','loop':'zz-invalid','dangling':'absent'}[kind]
+                link.symlink_to(target)
+                with ExitStack() as stack:
+                    for p in patches:stack.enter_context(p)
+                    with self.assertRaises(b.Invalid):b.activation_paths(h,self.scope())
+                self.assertEqual(events,[]);self.assertEqual(outside.read_text(),'private fixture')
+                self.assertFalse((root/'etc/board-prover').exists())
+
+    def test_actual_paths_rejects_late_special_file_or_parent_before_any_mutation(self):
+        from contextlib import ExitStack
+        for kind in ('fifo','parent','existing-current'):
+            with self.subTest(kind=kind),tempfile.TemporaryDirectory() as t:
+                root=pathlib.Path(t).resolve();h,events,patches,_=self.path_fixture(root)
+                if kind=='fifo':os.mkfifo(h['RELEASE']/'zz-fifo')
+                elif kind=='parent':h['RELEASE'].parent.chmod(0o777)
+                else:(h['RELEASE'].parent.parent/'current').symlink_to(root/'absent')
+                with ExitStack() as stack:
+                    for p in patches:stack.enter_context(p)
+                    with self.assertRaises(b.Invalid):b.activation_paths(h,self.scope())
+                self.assertEqual(events,[])
+
+    def test_actual_unsafe_link_after_durable_intent_shuts_down_and_refuses_replay(self):
+        from contextlib import ExitStack
+        with tempfile.TemporaryDirectory() as t:
+            root=pathlib.Path(t).resolve();h,events,patches=self.exercise(root)
+            ph,pe,pp,_=self.path_fixture(root/'fixture')
+            (ph['RELEASE']/'zz-directory').symlink_to('node/bin')
+            (ph['RELEASE']/'deploy/prover').mkdir(parents=True)
+            (ph['RELEASE']/'deploy/prover/board-prover.service').write_text('public fixture unit')
+            (ph['RELEASE']/'prover-release.json').write_text((h['RELEASE']/'prover-release.json').read_text())
+            h['RELEASE']=ph['RELEASE'];original_paths=b.activation_paths
+            # Replace only the earlier labelled path double with the actual
+            # production helper; command and identity doubles remain isolated.
+            patches[4]=patch.object(b,'activation_paths',side_effect=original_paths)
+            with ExitStack() as stack:
+                for p in patches+pp:stack.enter_context(p)
+                with self.assertRaises(b.Invalid):b.prover_activation(h,'activate','a'*64)
+                self.assertTrue((h['PRIVATE']/'prover-activation-intent.json').exists())
+                self.assertEqual(pe,[]);self.assertFalse(any(e and e[0]=='useradd' for e in events))
+                self.assertNotIn(('systemctl','unmask','board-prover.service'),events)
+                self.assertEqual(events[-1],('systemctl','start','--no-block','rolling-budget.service'))
+                before=list(events)
+                with self.assertRaisesRegex(b.Invalid,'already attempted'):b.prover_activation(h,'activate','a'*64)
+                self.assertEqual(events,before)
+
+    def test_closed_scope_rejects_provider_keys_wrong_network_coercion_and_duplicates(self):
+        s=self.scope();self.assertEqual(b.activation_record(s,'b'*64),s)
+        class Hostile:
+            def __str__(self):raise AssertionError('coercion')
+        for changes in ({'url':'PRIVATE_SENTINEL'},{'board':Hostile()},{'chainId':11155111},{'rollupVersion':'2914217885'},
+                        {'privateFeeAddress':s['board']},{'board':'0x'+'0'*64},{'checkpointNumber':True},{'checkpointHash':'PRIVATE_SENTINEL'}):
+            with self.subTest(keys=list(changes)),self.assertRaises(b.Invalid):b.activation_record({**s,**changes},'b'*64)
+
+    def test_evidence_requires_exact_receipt_scope_artifacts_and_ready_not_opaque_hash(self):
+        s=self.scope();e,files=self.evidence(s);self.assertEqual(b.activation_evidence(e,s,files),e)
+        variants=[{**e,'checks':{**e['checks'],'boardReady':False}}, {**e,'checks':{**e['checks'],'boardReady':1}},
+                  {**e,'scope':{**e['scope'],'board':s['privateFeeAddress']}},{**e,'artifacts':{}},{**e,'bokScope':'full-credit-qualified'}]
+        for value in variants:
+            with self.assertRaises(b.Invalid):b.activation_evidence(value,s,files)
+
+    def test_prover_configuration_is_fixed_loopback_no_capabilities_admin_or_extra_plugins(self):
+        s=self.scope();v=b.activation_config(s)
+        self.assertEqual(v['host'],'127.0.0.1');self.assertEqual(v['origins'],[]);self.assertEqual(v['threads'],1)
+        self.assertEqual(v['pluginAddresses'],[s['privateBokAddress']]);self.assertEqual(v['queryNode']['maxLagSeconds'],120)
+        self.assertNotIn('admin',json.dumps(v));self.assertNotIn('ethRpcUrl',v);self.assertEqual(v['proofs'],'real')
+
+    def rules(self,count=3,uid=999):
+        return '*mangle\n'+''.join(':'+c+' ACCEPT [0:0]\n' for c in ('PREROUTING','INPUT','FORWARD','OUTPUT','POSTROUTING'))+f'[{count}:32] -A OUTPUT -m owner --uid-owner {uid} -j MARK --set-xmark 0x14/0xffffffff\nCOMMIT\n'
+
+    def test_uid_rules_reject_missing_duplicate_overwrite_wrong_uid_and_unbounded_output(self):
+        self.assertEqual(b.activation_rule_counter(self.rules(),999),3)
+        for value in ('',self.rules()+self.rules(),self.rules(uid=998),self.rules().replace('0x14','0x10'),self.rules()+'-A POSTROUTING -j MARK --set-mark 0\n','x'*16385):
+            with self.assertRaises(b.Invalid):b.activation_rule_counter(value,999)
+
+    def test_actual_traffic_parser_accepts_closed_header_detail_layouts(self):
+        with tempfile.TemporaryDirectory() as t:
+            base=pathlib.Path(t);(base/'interface').write_text('ens5')
+            for parent in ('',' parent 1:'):
+                for chain in ('',' chain 0'):
+                    header=f'filter{parent} protocol all pref 1 fw{chain}'
+                    detail=header+' handle 0x14 classid 1:20'
+                    for raw in (detail,header+'\n'+detail,'  '+header+'  \n '+detail+' \n'):
+                        with self.subTest(parent=parent,chain=chain,header=raw!=detail):
+                            calls=[]
+                            def run(args,**kw):
+                                calls.append(args);return raw if args[0]=='tc' else self.rules()
+                            self.assertTrue(all(b.activation_traffic({'BASE':base,'run':run,'verify_controls':lambda:1},999).values()))
+                            self.assertEqual([x[0] for x in calls],['tc','iptables-save','ip6tables-save'])
+
+    def test_actual_traffic_parser_rejects_wrong_duplicate_unknown_and_family_mappings(self):
+        header='filter protocol all pref 1 fw chain 0';detail=header+' handle 0x14 classid 1:20'
+        invalid=['',header,header+'\n'+header+'\n'+detail,detail+'\n'+detail,
+                 header+'\n'+detail.replace('0x14','0x15'),header+'\n'+detail.replace('1:20','1:10'),
+                 header+'\n'+detail.replace('chain 0','chain 1'),header+'\n'+detail+' extra',
+                 header+'\n'+detail.replace('protocol all','protocol ip'),
+                 header+'\n'+detail.replace('protocol all','protocol ipv6'),
+                 header+'\n'+detail.replace('pref 1','pref 2'),header+'\n'+detail.replace(' fw',' u32'),
+                 header+'\n'+detail.replace('filter protocol','filter parent 2: protocol'),
+                 header+'\n'+detail.replace(' handle ','handle '),header+'\n'+detail+'\nunknown']
+        with tempfile.TemporaryDirectory() as t:
+            base=pathlib.Path(t);(base/'interface').write_text('ens5')
+            for raw in invalid:
+                with self.subTest(raw=raw):
+                    calls=[]
+                    def run(args,**kw):calls.append(args);return raw
+                    with self.assertRaisesRegex(b.Invalid,'Prover traffic class'):
+                        b.activation_traffic({'BASE':base,'run':run,'verify_controls':lambda:1},999,True)
+                    self.assertEqual([x[0] for x in calls],['tc'])
+
+    def test_both_address_families_must_execute_owner_mark_and_keep_class_mapping(self):
+        with tempfile.TemporaryDirectory() as t:
+            base=pathlib.Path(t);(base/'interface').write_text('ens5');calls=[];counts={'iptables-save':0,'ip6tables-save':0}
+            def run(args,**kw):
+                calls.append(args)
+                if args[0]=='tc':return 'filter protocol all pref 1 fw chain 0\nfilter protocol all pref 1 fw chain 0 handle 0x14 classid 1:20'
+                if args[0] in counts:
+                    counts[args[0]]+=1;return self.rules(counts[args[0]])
+            h={'BASE':base,'run':run,'verify_controls':lambda:1}
+            self.assertTrue(all(b.activation_traffic(h,999,True).values()))
+            self.assertEqual(sum(x[0]=='setpriv' for x in calls),1)
+            original=run
+            h['run']=lambda args,**kw:self.rules(1) if args[0]=='ip6tables-save' else original(args,**kw)
+            with self.assertRaisesRegex(b.Invalid,'UID mark exercise'):b.activation_traffic(h,999,True)
+
+    def exercise(self,root,fail=None):
+        private=root/'private';private.mkdir();release=root/'release';(release/'deploy/prover').mkdir(parents=True)
+        (release/'deploy/prover/board-prover.service').write_text('public fixture unit')
+        s=self.scope();e,files=self.evidence(s);(release/'prover-release.json').write_text(json.dumps({'files':files}))
+        events=[];q={'passed':True,'stage':'complete','checks':{'all':True},'anchors':{},'readiness':{}}
+        def record(path,value):
+            events.append(('record',path.name))
+            with open(path,'x') as f:json.dump(value,f)
+        def run(args,**kw):
+            events.append(tuple(args))
+            if fail=='start' and args[:2]==['systemctl','start'] and args[-1]=='board-prover.service':raise OSError('PRIVATE_SENTINEL')
+            if args[0] in ('iptables','ip6tables') and args[-1]=='-S':return '\n'.join('-P '+c+' ACCEPT' for c in ('PREROUTING','INPUT','FORWARD','OUTPUT','POSTROUTING'))
+        def read(path,expected=None):
+            if path.name=='prover-activation-scope.json':return s
+            if path.name=='prover-deployment-evidence.json':return e
+            return {'manifestSha256':'b'*64,'bootstrapSourceSha256':'d'*64,'qualification':q}
+        def identity(*args):
+            events.append(('identity',))
+            if fail=='identity':raise b.Invalid('scope failed')
+            return ready_fixture()
+        h={'PRIVATE':private,'BASE':root,'RELEASE':release,'PINS':{'manifest':'b'*64,'bootstrap':'d'*64},'run':run,'exclusive_record':record,
+           'verify_release':lambda r:events.append(('verify-release',)),'verify_controls':lambda:events.append(('controls',)),
+           'validated_qualification':lambda r:r,'read_bounded_json':lambda p:{'budgetStop':'2099-01-01T00:00:00Z'},
+           'digest':lambda p:b.PROVER_UNIT_SHA if str(p).endswith('.service') else 'c'*64,'write':lambda *a:events.append(('write-unit',))}
+        patches=[patch.object(b.os,'geteuid',return_value=0),patch.object(b,'activation_private',side_effect=read),
+                 patch.object(b,'activation_proxy_masked',side_effect=lambda h:events.append(('proxy-masked',))),
+                 patch.object(b,'activation_identity',side_effect=identity),patch.object(b,'activation_paths',side_effect=lambda *a:events.append(('paths',)) or (999,998)),
+                 patch.object(b,'activation_traffic',return_value={'ipv4UidMark':True,'ipv6UidMark':True}),
+                 patch.object(b,'activation_service'),patch.object(b,'activation_health',return_value={'submitted':0}),
+                 patch.object(b.signal,'alarm'),patch.object(b.signal,'signal')]
+        return h,events,patches
+
+    def test_one_attempt_intent_precedes_account_rules_unmask_and_start_and_replay_is_refused(self):
+        from contextlib import ExitStack
+        with tempfile.TemporaryDirectory() as t,ExitStack() as stack:
+            h,events,patches=self.exercise(pathlib.Path(t))
+            for p in patches:stack.enter_context(p)
+            result=b.prover_activation(h,'activate','a'*64)
+            self.assertEqual(result['status'],'active-loopback');self.assertFalse(result['applicationProofQualified'])
+            intent=events.index(('record','prover-activation-intent.json'))
+            self.assertLess(intent,events.index(('paths',)));self.assertLess(intent,events.index(('systemctl','unmask','board-prover.service')))
+            self.assertEqual(events.count(('identity',)),2)
+            before=list(events)
+            with self.assertRaisesRegex(b.Invalid,'already attempted'):b.prover_activation(h,'activate','a'*64)
+            self.assertEqual(before,events)
+
+    def test_scope_failure_never_unmasks_and_ambiguous_start_never_retries_but_shuts_down(self):
+        from contextlib import ExitStack
+        for failure in ('identity','start'):
+            with self.subTest(failure=failure),tempfile.TemporaryDirectory() as t,ExitStack() as stack:
+                h,events,patches=self.exercise(pathlib.Path(t),failure)
+                for p in patches:stack.enter_context(p)
+                with self.assertRaises((b.Invalid,OSError)):b.prover_activation(h,'activate','a'*64)
+                self.assertEqual(events[-1],('systemctl','start','--no-block','rolling-budget.service'))
+                starts=events.count(('systemctl','start','board-prover.service'));self.assertEqual(starts,1 if failure=='start' else 0)
+                self.assertFalse((h['PRIVATE']/'prover-activation-result.json').exists())
+
+    def test_sdk_scope_check_uses_release_artifacts_and_canonical_portal_and_bok_checks(self):
+        source=b.ACTIVATION_CHECK
+        for token in ('loadRollingArtifacts()','originalContractClassId','currentContractClassId','computeContractAddressFromInstance',
+                      'getPublicStorageAt','depositsEnabled()','verifyPortalRuntime','getContractInstanceFromInstantiationParams','await anchor();const ready=',
+                      "bokScope:'constructor-allowlist-only'","redirect:'error'",'calls<=7'):
+            self.assertIn(token,source)
+        self.assertNotIn('process.env',source);self.assertNotIn('sendTx',source);self.assertNotIn('wallet',source)
+
+    def test_live_scope_response_requires_fresh_readiness_and_exact_checkpoint(self):
+        s=self.scope();ready=ready_fixture();now=int(dt.datetime.now(dt.timezone.utc).timestamp())
+        ready.update(checkedAtSeconds=now,syncedL1Timestamp=str(now-30))
+        result={'ready':ready,'scopeVerified':True,'checkpointHash':s['checkpointHash'],'bokScope':'constructor-allowlist-only'}
+        h={'RELEASE':pathlib.Path('/public-release'),'readiness_projection':host()['readiness_projection']}
+        captured=[]
+        h['run']=lambda command,**kw:captured.append(command) or json.dumps(result)
+        self.assertEqual(b.activation_identity(h,s),ready)
+        self.assertEqual(json.loads(captured[0][-1]),s) # detached argument, never a mutable scope-file reread
+        for change in ({'scopeVerified':1},{'checkpointHash':'0x'+'0'*64},{'bokScope':'full'}):
+            h['run']=lambda *a,**kw:json.dumps({**result,**change})
+            with self.assertRaises(b.Invalid):b.activation_identity(h,s)
+        old={**ready,'checkedAtSeconds':now-11,'syncedL1Timestamp':str(now-41)}
+        h['run']=lambda *a,**kw:json.dumps({**result,'ready':old})
+        with self.assertRaisesRegex(b.Invalid,'Stale'):b.activation_identity(h,s)
+
+    def test_intent_persistence_failure_cannot_allocate_or_unmask_and_still_shuts_down(self):
+        from contextlib import ExitStack
+        with tempfile.TemporaryDirectory() as t,ExitStack() as stack:
+            h,events,patches=self.exercise(pathlib.Path(t))
+            for p in patches:stack.enter_context(p)
+            def no_disk(*args):raise OSError('ENOSPC_PRIVATE_SENTINEL')
+            h['exclusive_record']=no_disk
+            with self.assertRaises(OSError):b.prover_activation(h,'activate','a'*64)
+            self.assertNotIn(('paths',),events);self.assertNotIn(('systemctl','unmask','board-prover.service'),events)
+            self.assertEqual(events[-1],('systemctl','start','--no-block','rolling-budget.service'))
+
+    def test_pending_attestation_is_not_active_and_expired_intent_fails_closed(self):
+        with tempfile.TemporaryDirectory() as t:
+            h={'PRIVATE':pathlib.Path(t),'PINS':{'manifest':'b'*64}};now=int(dt.datetime.now(dt.timezone.utc).timestamp())
+            intent={'schemaVersion':1,'scopeSha256':'a'*64,'manifestSha256':'b'*64,'startedAt':now,'attempts':1}
+            with patch.object(b.os,'geteuid',return_value=0),patch.object(b,'activation_private',return_value=intent):
+                self.assertEqual(b.prover_activation(h,'observe'),{'proverPolicy':'activation-in-progress','proverActivated':False})
+            for stamp in (now-301,now+20,True,'PRIVATE_SENTINEL'):
+                with patch.object(b.os,'geteuid',return_value=0),patch.object(b,'activation_private',return_value={**intent,'startedAt':stamp}),self.assertRaises(b.Invalid):
+                    b.prover_activation(h,'observe')
+
+    def test_activation_support_is_source_bound_and_not_automatic_at_qualification(self):
+        ns=host();ns['PINS']['startup']='0'*64
+        with patch.dict(ns,{'digest':lambda p:'1'*64}):
+            with self.assertRaisesRegex(ValueError,'source changed'):ns['activation_support']('activate','a'*64)
+        import ast
+        functions={n.name:ast.get_source_segment(b.HOST,n) for n in ast.parse(b.HOST).body if isinstance(n,ast.FunctionDef)}
+        for name in ('_execute','qualify','final_receipt'):self.assertNotIn('activation_support',functions[name])
+
 if __name__=='__main__':unittest.main(verbosity=2)

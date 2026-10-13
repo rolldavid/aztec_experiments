@@ -72,6 +72,19 @@
     "darwin-arm64": {
       "version": "6.0.0-rc.6",
       "sha256": "8acdba0ecf928087e60bdca0206a508f109e7b62ca621b08fa62263509090217"
+    },
+    "linux-x64": {
+      "version": "6.0.0-rc.6",
+      "sha256": "fa4b12adaefd5684b53b802346b9fe839ab3d6a4a829a5ea4efd6bd200e0829f"
+    }
+  },
+  "nativeProverEvidence": {
+    "linux-x64": {
+      "scope": "version-only",
+      "campaign": "native-version-20261013-56d9f2189226",
+      "receiptSha256": "b5c70e2421737afb8f1e767dc6a52778acf515e4f158cea2504de84495965f2f",
+      "review": "execution/evidence/G02/native-retained-successor-56d9f2189226/actual/reviewer-runtime-review.json",
+      "reviewSha256": "45f528840c5bd23d6c7fa15374bfd7b935984dd843cf8535d3f05f122d03fe59"
     }
   },
   "aztecPackages": {

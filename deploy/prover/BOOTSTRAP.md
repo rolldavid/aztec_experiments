@@ -795,3 +795,73 @@ reference repair requires an actual harmless Linux systemd lifecycle regression
 before another paid version attempt. Local transport doubles are not that proof.
 `RemainAfterExit=yes` alone is unsuitable because `--wait` would not complete;
 `CollectMode=inactive` is already the default and permits successful collection.
+# Explicit loopback prover activation
+
+Commissioning remains query-only. It needs no fabricated Rolling/FPC/Bok addresses
+and never starts a proof worker or public proxy. After the exact Linux query
+qualification passes, a separately authorized root operator can invoke:
+
+```
+/usr/bin/python3 /usr/local/lib/rolling-attest.py --activate-prover <scope-file-sha256>
+```
+
+This is a single attempt, not a restart or recovery API. The fixed root-private
+directory `/var/lib/rolling-bootstrap-private` must contain owner-root, mode0600
+`prover-activation-scope.json` and `prover-deployment-evidence.json`. Its mode stays
+0700. The scope has only the fields accepted by `activation_record`: exact release
+manifest/catalog/network, three distinct contract addresses, expected board
+deployer and Bok owner/operator, portal address, canonical L2 checkpoint, and the
+SHA256 of the independently reviewed deployment receipt. The receipt must bind
+that complete scope, four actual release artifact hashes, and positive constructor,
+canonical FPC, portal-runtime, Ready and canonical-anchor checks. An opaque hash
+or a successful old deployment is insufficient.
+
+Activation verifies the packaged source before loading its fixed code. It checks
+the immutable final query receipt, release/native/catalog integrity and unchanged
+shutdown controls, then reads the current node with its real-proof and 120-second
+L1 synchronization policy. SDK-derived class and instance identities, deployers,
+board/Bok public configuration, canonical FPC, portal runtime/immutables and active
+Ready state must match. The portal reads use the one fixed public Tenderly Sepolia
+endpoint with bounded responses, no redirect, retry, fallback, signer or wallet.
+Both L1 and L2 anchors are rechecked. Captured public scope scalars cannot change
+during asynchronous checks. A minimum fifteen minutes must remain on the existing
+absolute budget; activation never extends it.
+
+The durable activation intent precedes account creation, UID rules, unmasking and
+starting the existing service. An existing intent or result rejects a new attempt.
+The dedicated nologin user receives read-only access to manifest-verified public
+release bytes. The complete release tree and parent traversal are validated before
+creating that user or changing ownership. Manifest-verified internal relative
+links to regular files (including official Node npm/npx/corepack links) are kept;
+absolute, escaping, dangling, directory and looping links fail closed. Link
+ownership uses no-follow, links are never chmodded, and their inventoried regular
+targets receive the same read-only permissions as other public files.
+`/etc/board-prover` is root:board-prover0750 and its fixed generated
+configuration is root:board-prover0640. Capabilities, admin keys, cloud data and
+operator journals retain their original private modes and are not copied into the
+service configuration. The unchanged unit keeps its 24GiB ceiling, one active
+worker, no restart and existing bounded worker lifetime.
+
+Both IPv4 and IPv6 owner rules must set mark20. Fixed loopback UDP exercises must
+advance each rule's packet counter, and the actual fw classifier must map mark20
+to class1:20 under the unchanged whole-host 50Mbps ceiling. The readback accepts
+only an optional normal fw header and one all-protocol, preference1, chain0
+mapping detail (including the equivalent omitted default chain notation). Wrong
+handles, classes, families, duplicate rows and unknown fields fail closed. This verifies rule
+execution and classifier configuration; it is not an external throughput test.
+Unexpected existing mangle policy fails closed. The proxy remains masked, the
+service listens only on127.0.0.1:8081, and origins are empty.
+
+The operation has a 300-second alarm, bounded subprocesses and a bounded health
+wait. Failure attempts service termination and the existing host shutdown even
+when persistence fails. An ambiguous start is not replayed. The attestor verifies
+the active unit, live UID/GID, configuration owner/modes/hash, traffic controls and
+fresh query health. It reports activation in progress or active-loopback truthfully
+instead of continuing to claim the service is masked. Drift shuts down the host.
+
+An active loopback service is **not** application-proof qualification, public
+routing authorization or permission to submit a proof job. Bok is explicitly
+`constructor-allowlist-only`; portal credit/service flows require their own
+acceptance. No application transaction, deployment or key-management operation is
+performed by activation. Operator/Fleet grants, current deployed scope and actual
+Linux activation acceptance remain separate gates.

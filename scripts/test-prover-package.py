@@ -42,6 +42,8 @@ class PackagePreflight(unittest.TestCase):
         with self.assertRaises(FileNotFoundError):package.release_preflight(self.root)
         for rel,raw in b.startup_sources(ROOT).items():
             p=self.root/rel;p.parent.mkdir(parents=True,exist_ok=True);p.write_bytes(raw)
+        for rel in ('deploy/prover/board-prover.service',*b.ACTIVATION_PUBLIC_FILES):
+            p=self.root/rel;p.parent.mkdir(parents=True,exist_ok=True);shutil.copyfile(ROOT/rel,p)
         self.assertEqual(package.release_preflight(self.root),{'version':b.BB_VERSION,'sha256':b.BB_SHA})
         (self.root/'prover/compact-node-registration.mjs').write_text('PRIVATE_SENTINEL')
         with self.assertRaisesRegex(ValueError,'Invalid helper source hash'):package.release_preflight(self.root)
@@ -49,6 +51,23 @@ class PackagePreflight(unittest.TestCase):
     def test_pending_artifacts_cannot_enter_package(self):
         with self.assertRaises(subprocess.CalledProcessError):
             package.rolling_resources(self.root, self.node)
+
+    def test_activation_unit_and_public_verifier_closure_are_required(self):
+        spec=importlib.util.spec_from_file_location('activation_bootstrap',ROOT/'deploy/prover/bootstrap.py')
+        b=importlib.util.module_from_spec(spec);spec.loader.exec_module(b)
+        (self.root/'toolchain.json').write_text(json.dumps({'nativeProverPackage':b.BB_VERSION,'nativeProver':{'linux-x64':{'version':b.BB_VERSION,'sha256':b.BB_SHA}}}))
+        for rel,raw in b.startup_sources(ROOT).items():
+            p=self.root/rel;p.parent.mkdir(parents=True,exist_ok=True);p.write_bytes(raw)
+        paths=('deploy/prover/board-prover.service',*b.ACTIVATION_PUBLIC_FILES)
+        for rel in paths:
+            p=self.root/rel;p.parent.mkdir(parents=True,exist_ok=True);shutil.copyfile(ROOT/rel,p)
+        package.release_preflight(self.root)
+        for rel in paths:
+            p=self.root/rel;raw=p.read_bytes();p.unlink()
+            with self.assertRaisesRegex(ValueError,'closure missing'):package.release_preflight(self.root)
+            p.write_bytes(raw)
+        (self.root/paths[0]).write_text('[Service]\nUser=root\n')
+        with self.assertRaisesRegex(ValueError,'service source changed'):package.release_preflight(self.root)
 
     def test_validation_node_must_match_pinned_version(self):
         pins = json.loads((self.root / 'toolchain.json').read_text())
@@ -106,11 +125,13 @@ export const getVersioningResponseHandler=()=>()=>{};
         self.assertEqual(copied.read_bytes(),source.read_bytes())
         inventory={str(p.relative_to(self.release)):hashlib.sha256(p.read_bytes()).hexdigest() for p in self.release.rglob('*') if p.is_file()}
         self.assertEqual(inventory['deploy/prover/bootstrap.py'],hashlib.sha256(source.read_bytes()).hexdigest())
-        self.assertEqual(sorted(str(p.relative_to(self.release)) for p in (self.release/'deploy').rglob('*') if p.is_file()),['deploy/prover/bootstrap.py','deploy/prover/startup-stages.mjs'])
+        self.assertEqual(sorted(str(p.relative_to(self.release)) for p in (self.release/'deploy').rglob('*') if p.is_file()),['deploy/prover/board-prover.service','deploy/prover/bootstrap.py','deploy/prover/startup-stages.mjs'])
         self.assertNotIn('CONFIG = {',copied.read_text())
         stage=ROOT/'deploy/prover/startup-stages.mjs'
         self.assertEqual((self.release/'deploy/prover/startup-stages.mjs').read_bytes(),stage.read_bytes())
         self.assertEqual(inventory['deploy/prover/startup-stages.mjs'],hashlib.sha256(stage.read_bytes()).hexdigest())
+        for relative in ('deploy/prover/board-prover.service','shared/portal-runtime.mjs','shared/portal-runtime.json','shared/protocol-commitments.mjs','shared/protocol-schema.mjs'):
+            self.assertEqual((self.release/relative).read_bytes(),(ROOT/relative).read_bytes())
         isolated=importlib.util.spec_from_file_location('isolated_startup',copied);module=importlib.util.module_from_spec(isolated);isolated.loader.exec_module(module)
         output=module.NodeOutput();output.feed(b'PRIVATE_SENTINEL\n');output.finish(1)
         self.assertEqual(output.value['errors'],['unknown']);self.assertNotIn('PRIVATE_SENTINEL',json.dumps(output.value))

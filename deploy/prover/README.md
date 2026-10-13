@@ -304,3 +304,17 @@ network configuration. Verify archive completeness and storage recovery, then
 collect the required two-account cold/warm/restoration/reorg traces and upstream
 capture with both proof preferences. Genuine proofs, independent privacy review
 and production release gates remain open until their actual evidence exists.
+# Separate commissioning and proof-service activation
+
+The bootstrap commissions and qualifies the current node in query-only mode.
+After genuine current-network Rolling/FPC/Bok deployment evidence exists, the
+root-only activation operation documented in [BOOTSTRAP.md](BOOTSTRAP.md) can
+start the existing proof service on loopback exactly once. It keeps the original
+shutdown deadlines, private administrative boundary and egress ceiling. The
+package now includes the unchanged service unit and the pure public portal/config
+verification closure; these bytes enter the complete release hash inventory.
+
+The activation receipt distinguishes service availability from real application
+proof acceptance. Public routing, proof jobs, Bok credit/service qualification and
+any paid-resource action still require their respective reviewed grants. A failed
+or ambiguous activation shuts down rather than restarting or replaying.
