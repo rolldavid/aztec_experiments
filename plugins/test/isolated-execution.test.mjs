@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
-import {captureStaticSource,validateStaticResult,createIsolatedExecution,STATIC_LIMITS,STATIC_NODE_VERSION} from '../isolated-execution.mjs';
+import {isStaticContainerAbsent,captureStaticSource,validateStaticResult,createIsolatedExecution,STATIC_LIMITS,STATIC_NODE_VERSION} from '../isolated-execution.mjs';
 const revision='a'.repeat(40);
 async function fixture(){
  const root=await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(),'bok-static-')));
@@ -146,4 +146,11 @@ test('actual failed cleanup record poisons capability and blocks reopen until re
   await assert.rejects(runner.assertAvailable(),{code:'STATIC_UNAVAILABLE'});
   await assert.rejects(createIsolatedExecution({workspaceRoot:f.root,outputRoot:f.output}).assertAvailable(),{code:'STATIC_UNAVAILABLE'});
  }finally{t.mock.restoreAll();await f.close();}
+});
+
+test('exact measured container absence never accepts unknown errors, collisions or another target',()=>{
+ const name='bok-static-11111111-1111-1111-1111-111111111111',id='a'.repeat(64),absent=target=>({code:1,stdout:'\n',stderr:'Error response from daemon: No such container: '+target+'\n'});
+ assert(isStaticContainerAbsent(absent(name),name));assert(isStaticContainerAbsent(absent(id),id));
+ for(const change of [{code:0},{code:125},{stdout:id},{stderr:''},{stderr:'daemon unavailable'},{stderr:absent(id).stderr},{stderr:absent(name).stderr+'extra\n'}])assert.equal(isStaticContainerAbsent({...absent(name),...change},name),false);
+ assert.equal(isStaticContainerAbsent(absent(name),'arbitrary'),false);
 });

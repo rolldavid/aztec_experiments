@@ -15,6 +15,11 @@ const safeName=n=>typeof n==='string'&&n.length<=240&&n.split('/').every(p=>/^[A
 const extension=/\.(?:html|css|js|mjs|cjs|json|svg|png|jpe?g|webp|woff2?|txt|map)$/i;
 const finiteError=kind=>Object.assign(Error('Isolated execution '+kind),{code:kind});
 
+// Exact observed Docker28 container-inspect absence, never a global inventory scan.
+export function isStaticContainerAbsent(result,target){
+ return typeof target==='string'&&(/^[0-9a-f]{64}$/.test(target)||/^bok-static-[0-9a-f-]{36}$/.test(target))&&result?.code===1&&typeof result.stdout==='string'&&result.stdout.trim()===''&&result.stderr==='Error response from daemon: No such container: '+target+'\n';
+}
+
 /** Only a trusted host receives this capability. sourceDirectory must be a
  * public, credential-free, per-invocation materialization, not a whole checkout.
  * Capture bytes before Docker; no Git hooks, host package scripts or installs. */
@@ -123,11 +128,11 @@ export function createIsolatedExecution({workspaceRoot,outputRoot,docker='/usr/l
  const invoke=async(args,{input,timeout=5000,max=2*1024*1024,deadline=Date.now()+5000}={})=>{
    const duration=Math.max(1,Math.min(timeout,deadline-Date.now()));
    return new Promise((resolve,reject)=>{const child=spawn(docker,['--host','unix://'+socket,...args],{env:{PATH:'/usr/bin:/bin'},stdio:['pipe','pipe','pipe']});
-    const chunks=[];let size=0,exceeded=false,timed=false;const timer=setTimeout(()=>{timed=true;child.kill('SIGKILL');},duration);
+    const chunks=[],errors=[];let size=0,exceeded=false,timed=false;const timer=setTimeout(()=>{timed=true;child.kill('SIGKILL');},duration);
     const collect=b=>{size+=b.length;if(size>max){exceeded=true;child.kill('SIGKILL');}else chunks.push(b);};
-    child.stdout.on('data',collect);child.stderr.on('data',b=>{size+=b.length;if(size>max){exceeded=true;child.kill('SIGKILL');}});child.stdin.on('error',()=>{});
+    child.stdout.on('data',collect);child.stderr.on('data',b=>{size+=b.length;if(size>max){exceeded=true;child.kill('SIGKILL');}else errors.push(b);});child.stdin.on('error',()=>{});
     child.on('error',()=>{clearTimeout(timer);reject(finiteError('transport'));});
-    child.on('close',code=>{clearTimeout(timer);if(exceeded||timed)reject(finiteError(exceeded?'output-limit':'timeout'));else resolve({code,stdout:Buffer.concat(chunks).toString()});});child.stdin.end(input);
+    child.on('close',code=>{clearTimeout(timer);if(exceeded||timed)reject(finiteError(exceeded?'output-limit':'timeout'));else resolve({code,stdout:Buffer.concat(chunks).toString(),stderr:Buffer.concat(errors).toString()});});child.stdin.end(input);
    });
   };
  const available=async command=>{
@@ -154,7 +159,7 @@ export function createIsolatedExecution({workspaceRoot,outputRoot,docker='/usr/l
    assert(path.isAbsolute(sourceDirectory)&&sourceDirectory.startsWith(workspaceRoot+path.sep));
    const source=await captureStaticSource(sourceDirectory);failureResult.sourceDigest=source.sha256;failureResult.phase='setup';
    failureResult.phase='availability';await available(command);failureResult.phase='setup';
-   const prior=await command(['ps','-aq','--filter','name=^/'+name+'$']);assert.equal(prior.code,0);assert.equal(prior.stdout.trim(),'');
+   const prior=await command(['container','inspect',name,'--format','{{.Id}}']);assert(isStaticContainerAbsent(prior,name));
    output=path.join(outputRoot,name);await fs.mkdir(output,{mode:0o700});
    await fs.writeFile(path.join(output,'intent.json'),JSON.stringify({name,revision,sourceSha256:source.sha256,image:STATIC_IMAGE,limits:STATIC_LIMITS}),{flag:'wx',mode:0o600});
    created=true;
@@ -204,7 +209,7 @@ export function createIsolatedExecution({workspaceRoot,outputRoot,docker='/usr/l
      // start again; only remove the positively owned immutable container ID.
      if(!cid){const c=await inspect(name);assert.equal(c.Name,'/'+name);assert.equal(c.Config.Labels['bok.static.owner'],name);assert.equal(c.Image,STATIC_IMAGE);assert(/^[0-9a-f]{64}$/.test(c.Id));cid=c.Id;}
      const r=await command(['rm','-f',cid]);assert.equal(r.code,0);
-     const absent=await command(['ps','-aq','--no-trunc','--filter','id='+cid]);assert.equal(absent.code,0);assert.equal(absent.stdout.trim(),'');closed=true;
+     const absent=await command(['container','inspect',cid,'--format','{{.Id}}']);assert(isStaticContainerAbsent(absent,cid));closed=true;
     }else closed=true;
    }catch{poisoned=true;const error=finiteError('STATIC_CLEANUP_REQUIRED');error.result=Object.freeze({...failureResult,phase:'cleanup'});throw error;
    }finally{active=false;if(output)try{await fs.writeFile(path.join(output,'cleanup.json'),JSON.stringify({ownedContainerAbsent:closed}),{flag:'wx',mode:0o600});}catch{poisoned=true;const error=finiteError('STATIC_RECORD_FAILED');error.result=Object.freeze({...failureResult,phase:'record'});throw error;}}

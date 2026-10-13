@@ -309,3 +309,11 @@ cookies/storage. It does not force generated cross-origin fetches to omit ambien
 cookies belonging to third-party HTTPS sites. The public API browser check uses
 explicit `credentials: omit` in an empty context; it is not a credentialless-browser
 guarantee. Never provision credentials on the artifact origin.
+
+Container absence uses exact `container inspect` of the fresh invocation name or
+owned immutable ID. The pinned Docker28 daemon's exact no-such-container response
+is required; collision, timeout, changed spelling or unknown daemon error fails
+closed. Global `docker ps` inventory is not needed: a measured local inventory
+stall returned no bytes for5seconds while the same exact-name inspect completed
+in142ms. Execution/resource/cleanup deadlines remain unchanged. Raw Docker
+stderr stays internal and is never part of model-visible failure logs.
