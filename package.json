@@ -21,6 +21,12 @@
     "@aztec-labs/cli": "6.0.0-rc.3",
     "@aztec-labs/cli-wallet": "6.0.0-rc.3",
     "@aztec-labs/txe": "6.0.0-rc.3",
+    "@uniswap/swap-router-contracts": "1.3.1",
+    "@uniswap/v2-periphery": "1.1.0-beta.0",
+    "@uniswap/v3-core": "1.0.1",
+    "@uniswap/v3-periphery": "1.4.4",
+    "circle-openzeppelin": "npm:@openzeppelin/contracts@3.4.2",
+    "circle-solc": "npm:solc@0.6.12",
     "esbuild": "0.25.12",
     "esbuild-plugin-polyfill-node": "0.3.0",
     "playwright": "1.63.0"
