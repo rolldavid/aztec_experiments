@@ -330,7 +330,7 @@ mirror targets. This component does not create organizations, register/install
 Apps, alter permissions, delete repositories, expose an HTTP control endpoint,
 or hand credentials to the model, toolbox, Git subprocesses or generated code.
 
-Use an organization dedicated to these per-thread public source repositories.
+Use an organization dedicated to these per-thread private source repositories.
 Register a private-to-owner GitHub App with repository Administration write,
 Contents write and implicit Metadata read; no Actions, Workflows, organization,
 user or OAuth permissions/events. Install it for all repositories **only in that
@@ -369,7 +369,9 @@ invocation. It has the captured previous remote commit as parent. The host
 rechecks the predecessor then performs only a non-forced ref update: concurrent
 incompatible head changes fail, never force-overwrite. The dedicated repository
 must have a sole mirror writer; this is not a general multi-writer Git merge
-service. Results include the immutable GitHub source URL, never a token.
+service. Results include an operator-only private GitHub URL (`operatorUrl`), never a token.
+Do not append it as a reader-facing source link. Private GitHub history stays
+internal; the publication service alone exposes the current public source and app.
 
 Every repository/blob/tree/commit/ref mutation gets a durable intent before its
 single network call. Lost responses reconcile by exact ownership marker or

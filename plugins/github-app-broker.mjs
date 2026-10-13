@@ -66,10 +66,10 @@ async function broker({enabled=false,directory,artifactRoot,organization,organiz
    async function once(steps,label,method,url,body,credential,project,reconcile){const identity=hash(JSON.stringify([method,url,body]));let record=steps[label];if(record){assert(record.identity===identity);if(record.done)return record.result;const found=await reconcile();if(found===null)throw fail('GITHUB_BROKER_UNRESOLVED');record.result=project(found);record.done=true;await save();return record.result;}
     record={identity,done:false};steps[label]=record;await save();const response=await s.request(method,url,body,credential);record.result=project(response);record.done=true;await save();return record.result;}
    const admin=await s.token();
-   function repository(r){assert(r&&integer(r.id)&&r.name===name&&r.full_name===organization+'/'+name&&r.owner?.id===organizationId&&r.owner?.login===organization&&r.owner?.type==='Organization'&&r.private===false&&r.fork===false&&r.archived===false&&r.description===repo.marker&&typeof r.default_branch==='string'&&/^[a-zA-Z0-9_-]{1,100}$/.test(r.default_branch));return {id:r.id,branch:r.default_branch};}
+   function repository(r){assert(r&&integer(r.id)&&r.name===name&&r.full_name===organization+'/'+name&&r.owner?.id===organizationId&&r.owner?.login===organization&&r.owner?.type==='Organization'&&r.private===true&&r.fork===false&&r.archived===false&&r.description===repo.marker&&typeof r.default_branch==='string'&&/^[a-zA-Z0-9_-]{1,100}$/.test(r.default_branch));return {id:r.id,branch:r.default_branch};}
    // An existing name without OUR durable creation intent is never adopted.
    if(!repo.steps.create){assert(await s.request('GET',route,undefined,admin)===null);}
-   const remote=await once(repo.steps,'create','POST','/orgs/'+organization+'/repos',{name,description:repo.marker,private:false,auto_init:true,has_issues:false,has_projects:false,has_wiki:false},admin,repository,()=>s.request('GET',route,undefined,admin));
+   const remote=await once(repo.steps,'create','POST','/orgs/'+organization+'/repos',{name,description:repo.marker,private:true,auto_init:true,has_issues:false,has_projects:false,has_wiki:false},admin,repository,()=>s.request('GET',route,undefined,admin));
    assert.deepEqual(repository(await s.request('GET',route,undefined,admin)),remote);
    const token=await s.token(remote.id),ref=route+'/git/ref/heads/'+remote.branch,refWrite=route+'/git/refs/heads/'+remote.branch;
    const head=async()=>{const r=await s.request('GET',ref,undefined,token);assert(r?.ref==='refs/heads/'+remote.branch&&r.object?.type==='commit'&&hex(r.object.sha,40));return r.object.sha;};
@@ -86,7 +86,7 @@ async function broker({enabled=false,directory,artifactRoot,organization,organiz
    const before=await head();assert(before===entry.parent||(entry.steps.ref&&before===commit.sha));
    await once(entry.steps,'ref','PATCH',refWrite,{sha:commit.sha,force:false},token,r=>{assert(r?.ref==='refs/heads/'+remote.branch&&r.object?.sha===commit.sha&&r.object.type==='commit');return {sha:commit.sha};},async()=>{const r=await s.request('GET',ref,undefined,token);return r?.object?.sha===commit.sha?r:null;});
    assert.equal(await head(),commit.sha);
-   entry.result={mirrored:true,repositoryId:b.repositoryId,threadId:b.threadId,acceptedRevision:b.acceptedRevision,sourceDigest:b.sourceDigest,remoteRepositoryId:remote.id,remoteCommit:commit.sha,remoteTree:tree.sha,remoteParent:entry.parent,url:'https://github.com/'+organization+'/'+name+'/tree/'+commit.sha};entry.complete=true;repo.latest=b.acceptedRevision;await save();return structuredClone(entry.result);
+   entry.result={mirrored:true,repositoryId:b.repositoryId,threadId:b.threadId,acceptedRevision:b.acceptedRevision,sourceDigest:b.sourceDigest,remoteRepositoryId:remote.id,remoteCommit:commit.sha,remoteTree:tree.sha,remoteParent:entry.parent,operatorUrl:'https://github.com/'+organization+'/'+name+'/tree/'+commit.sha};entry.complete=true;repo.latest=b.acceptedRevision;await save();return structuredClone(entry.result);
   })
  });
 }
