@@ -434,8 +434,8 @@ async function aggregateSessionFixture(){
  const s=f.input.config.aggregateFunding={chainId:'31337',router:eth(80),routerCodeHash:hex(81),collateralPortal:f.input.config.board.portalAddress,feePortal:eth(82),bokPortal:eth(83),weth:eth(84),swapRouter:eth(85),feeToken:eth(86),bokToken:eth(87),privateFpc:f.input.config.privateFee.contractAddress,quoter:eth(88),quoterCodeHash:hex(89)};
  b.values.set(String(BigInt(bokArtifact.storageLayout.portal.slot)),new Fr(BigInt(s.bokPortal)));
  const prior=f.node.getL1ContractAddresses;f.node.getL1ContractAddresses=async()=>({...await prior(),feeJuicePortalAddress:s.feePortal});
- f.input.ethers={...f.input.ethers,Interface};const abi=new Interface(['function UNDERLYING() view returns(address)','function token() view returns(address)','function decimals() view returns(uint8)']);
- f.provider.call=async request=>{assert(f.state.active);const call=abi.parseTransaction(request);return abi.encodeFunctionResult(call.name,[call.name==='UNDERLYING'?s.feeToken:call.name==='token'?s.bokToken:request.to===s.feeToken?18:6]);};
+ f.input.ethers={...f.input.ethers,Interface};const abi=new Interface(['function UNDERLYING() view returns(address)','function token() view returns(address)','function decimals() view returns(uint8)','function escrow() view returns(bytes32)','function version() view returns(uint256)','function chainId() view returns(uint256)','function inbox() view returns(address)','function outbox() view returns(address)','function active() view returns(bool)']);
+ f.provider.call=async request=>{assert(f.state.active);const call=abi.parseTransaction(request),addresses=await f.node.getL1ContractAddresses();return abi.encodeFunctionResult(call.name,[{UNDERLYING:s.feeToken,token:s.bokToken,decimals:request.to===s.feeToken?18:6,escrow:b.input.config.contractAddress,version:1,chainId:31337,inbox:addresses.inboxAddress,outbox:addresses.outboxAddress,active:true}[call.name]]);};
  const expected=Error('Chosen wallet requested only after verified scope');let captures=0;
  f.input.captureFundingWallet=async()=>{assert(f.state.active);captures++;throw expected;};
  return {...f,b,scope:s,expected,captures:()=>captures};
@@ -464,4 +464,27 @@ test('USDC session exposes only explicitly pinned relay capability and retains a
   assert.equal(session.funding.usdcAvailable,true);f.input.config.aggregateFunding.usdcRelayAddress=eth(99);
   await assert.rejects(session.funding.prepare({asset:'USDC',collateralWei:'1',feeAmount:'2',bokAmount:'3',collateralPoolFee:3000,feePoolFee:3000,slippageBps:100,privateFeeCap:'1000'}),error=>error===f.expected);assert.equal(f.captures(),1);assert.equal(f.state.sends,0);
  }finally{await session.close();}
+});
+
+import {verifyRollingTopupScope} from './wallet-session.mjs';
+for(const kind of ['private-fee','bok'])for(const defect of ['none','token','portal','canonical'])test(`direct ${kind} top-up scope checks ${defect} against canonical protocol bindings`,async()=>{
+ const network={chainId:'31337',version:'1',rollup:eth(1)},privateFee=hex(2),portal=eth(3),token=eth(4),recipient=hex(5);
+ const addresses={rollupAddress:network.rollup,feeJuicePortalAddress:portal,feeJuiceAddress:token,inboxAddress:eth(6),outboxAddress:eth(7)};
+ const abi=new Interface(['function ROLLUP() view returns(address)','function UNDERLYING() view returns(address)','function VERSION() view returns(uint256)','function L2_TOKEN_ADDRESS() view returns(bytes32)','function token() view returns(address)','function escrow() view returns(bytes32)','function version() view returns(uint256)','function chainId() view returns(uint256)','function inbox() view returns(address)','function outbox() view returns(address)','function active() view returns(bool)','function decimals() view returns(uint8)']);
+ const node={getL1ContractAddresses:async()=>addresses,getBlockData:async()=>({header:{globalVariables:{blockNumber:10}},blockHash:hex(10)}),getPublicStorageAt:async()=>new Fr(BigInt(portal))};
+ const provider={getBlock:async block=>({number:10,hash:block==='latest'||defect!=='canonical'?hex(10):hex(11)}),call:async({to,data,blockTag})=>{
+  assert.equal(blockTag,10);const name=abi.parseTransaction({data}).name;const values={ROLLUP:network.rollup,UNDERLYING:token,VERSION:1,L2_TOKEN_ADDRESS:hex(9),token,escrow:recipient,version:1,chainId:31337,inbox:addresses.inboxAddress,outbox:addresses.outboxAddress,active:true,decimals:kind==='bok'?6:18};
+  if(defect==='token'&&name==='decimals')values[name]=9;if(defect==='portal'&&['ROLLUP','escrow'].includes(name))values[name]=name==='ROLLUP'?eth(99):hex(99);return abi.encodeFunctionResult(name,[values[name]]);
+ }};
+ const input={sdk:{Fr,ProtocolContractAddress:{FeeJuice:hex(9)}},ethers:{Interface},node,provider,network,privateFee,bok:{address:recipient,artifact:{storageLayout:{portal:{slot:'1'}}}},kind,contextGuard:async()=>{}};
+ if(defect==='none')assert.deepEqual(await verifyRollingTopupScope(input),{portal,token,recipient:kind==='bok'?recipient:privateFee});else await assert.rejects(verifyRollingTopupScope(input),{code:'ROLLING_SESSION_CONFIG'});
+});
+
+import {verifyRollingTopupClaim} from './wallet-session.mjs';
+import {requireSuccessfulReceipt} from '../../shared/transaction-outcomes.mjs';
+for(const defect of ['none','hash','status','execution','canonical','account'])test(`retained top-up claim canonical check ${defect}`,async()=>{
+ const hash='0x'+'11'.repeat(32),blockHash='0x'+'22'.repeat(32),receipt={txHash:hash,status:'checkpointed',executionResult:'success',blockNumber:3,blockHash};let reads=0;
+ if(defect==='hash')receipt.txHash='0x'+'33'.repeat(32);if(defect==='status')receipt.status='pending';if(defect==='execution')receipt.executionResult='reverted';
+ const input={sdk:{TxHash:{fromString:value=>value},boundedTransactionRead:fn=>fn(),requireSuccessfulReceipt},node:{getTxReceipt:async()=>{reads++;return receipt;},getBlock:async number=>{assert.equal(number,3);reads++;return {hash:defect==='canonical'?'0x'+'44'.repeat(32):blockHash};}},txHash:hash,contextGuard:()=>{if(defect==='account')throw Error('account changed');}};
+ if(defect==='none'){await verifyRollingTopupClaim(input);assert.equal(reads,2);}else{await assert.rejects(verifyRollingTopupClaim(input));if(defect==='account')assert.equal(reads,0);}
 });

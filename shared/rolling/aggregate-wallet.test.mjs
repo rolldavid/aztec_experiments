@@ -285,3 +285,70 @@ test('USDC matching imported and retained canonical transaction hashes recover w
  assert.equal((await(await f.open()).recover()).receipt.txHash,h(200));assert.equal(f.state.posts,1);assert.equal(f.state.statusReads,0);
  f.state.usdcReceipt.logs.pop();await assert.rejects(reopened.loadAggregate(h(200)));assert.equal(f.state.posts,1);
 });
+
+import {createStandaloneTopupWallet} from './aggregate-wallet.mjs';
+function topupFixture(kind='bok'){
+ const f=fixture(),s=f.options.scope,scope={portal:kind==='bok'?s.bokPortal:s.feePortal,token:kind==='bok'?s.bokToken:s.feeToken,recipient:kind==='bok'?f.options.bok:s.privateFpc};
+ const token=new ethers.Interface(['function balanceOf(address) view returns(uint256)','function allowance(address,address) view returns(uint256)','function approve(address,uint256) returns(bool)','event Approval(address indexed owner,address indexed spender,uint256 value)']);
+ const deposit=new ethers.Interface(kind==='bok'?['function deposit(bytes32,uint128,bytes32)']:['function depositToAztecPublic(bytes32,uint256,bytes32)']);
+ const transactions=new Map(),receipts=new Map();f.state.allowance=0n;f.state.balance=100000n;f.state.unknown=false;f.state.revert=false;
+ f.options.provider.getTransactionCount=async()=>7+f.state.sends;
+ f.options.provider.getBlockNumber=async()=>16+f.state.sends;
+ f.options.provider.getBlock=async number=>{number=number==='latest'?16+f.state.sends:number;return {number,hash:h(number),parentHash:h(number-1),prefetchedTransactions:[...transactions.values()].filter(t=>t.blockNumber===number)};};
+ f.options.provider.getTransaction=async hash=>transactions.get(hash)??null;f.options.provider.getTransactionReceipt=async hash=>receipts.get(hash)??null;
+ f.options.provider.call=async({to,data})=>{assert.equal(to,scope.token);const parsed=token.parseTransaction({data});return token.encodeFunctionResult(parsed.name,[parsed.name==='balanceOf'?f.state.balance:f.state.allowance]);};
+ f.wallet.signer.sendTransaction=async request=>{
+  f.state.sends++;const hash=h(300+f.state.sends),blockNumber=16+f.state.sends,tx={...request,hash,blockNumber,value:String(request.value),chainId:String(request.chainId)};transactions.set(hash,tx);
+  let log;
+  if(request.to===scope.token){const parsed=token.parseTransaction({data:request.data});assert.equal(parsed.name,'approve');assert.equal(parsed.args[0].toLowerCase(),scope.portal);if(!f.state.revert)f.state.allowance=parsed.args[1];log={address:scope.token,...token.encodeEventLog('Approval',[f.wallet.address,scope.portal,parsed.args[1]])};}
+  else{assert.equal(request.to,scope.portal);const p=deposit.parseTransaction({data:request.data});const abi=kind==='bok'?bok:fee;log={address:scope.portal,...abi.encodeEventLog(kind==='bok'?'Deposited':'DepositToAztecPublic',kind==='bok'?[p.args[0],p.args[1],h(32),3]:[p.args[0],p.args[1],p.args[2],h(31),2])};}
+  receipts.set(hash,{hash,from:f.wallet.address,to:request.to,blockNumber,blockHash:h(blockNumber),status:f.state.revert?0:1,logs:f.state.revert?[]:[log]});
+  if(f.state.unknown)throw Error('labelled lost acknowledgement');return {hash};
+ };
+ f.options.verifyClaim=async hash=>assert.equal(hash,h(70));f.options.resolveScope=async()=>scope;f.options.kind=kind;f.options.reconcileClaim=async()=>({status:'confirmed'});
+ return {...f,scope,transactions,receipts,allocation:{amount:'300',gasBudgetWei:'10000',privateFeeCap:'1000'},open:()=>createStandaloneTopupWallet(f.options)};
+}
+for(const kind of ['private-fee','bok'])test(`direct ${kind} top-up reviews approval and deposit separately, with real journal receipts and no collateral`,async()=>{
+ const f=topupFixture(kind),cap=await f.open();assert.equal((await cap.prepare(f.allocation)).phase,'approval');assert.equal(f.state.sends,0);
+ assert.deepEqual(await cap.confirm(),{approved:true});assert.equal(f.state.sends,1);
+ assert.equal((await advanceAggregateClaim({funding:cap,application:{}})).state,'review-payment');
+ const reopened=await f.open();assert.equal((await reopened.prepare(f.allocation)).phase,'deposit');assert.equal(f.state.sends,1);
+ const result=await reopened.confirm();assert.equal(result.receipt.amount,'300');assert.equal(result.receipt.nonce,'8');assert.equal(f.state.sends,2);
+ const context=await reopened.loadAggregate(result.receipt.txHash);if(kind==='bok'){assert.equal(context.bokScope.recipient,f.scope.recipient);assert(context.bridgeSecret);assert.equal(context.intent,undefined);}else assert.equal(context,null);
+ await assert.rejects(reopened.prepare(f.allocation),{code:'ROLLING_FUNDING_RECOVERY_REQUIRED'});
+ await reopened.checkpointClaim({intentId:h(900),attempted:true});await reopened.prepare(f.allocation);assert.equal(f.state.sends,2);if(kind==='bok')assert.deepEqual(await reopened.loadAggregate(result.receipt.txHash),context);
+});
+test('direct top-up lost submission reply only recovers original receipt; changed scope and extra effects fail',async()=>{
+ const f=topupFixture(),cap=await f.open();f.state.allowance=1000n;await cap.prepare(f.allocation);f.state.unknown=true;await assert.rejects(cap.confirm(),{code:'BB_ETH_SUBMISSION_UNKNOWN'});
+ const reopened=await f.open(),result=await reopened.recover();assert.equal(f.state.sends,1);assert.equal(result.receipt.txHash,h(301));
+ const receipt=f.receipts.get(h(301));receipt.logs.push(receipt.logs[0]);await assert.rejects(reopened.recover());assert.equal(f.state.sends,1);
+ f.options.resolveScope=async()=>({...f.scope,portal:a(999)});assert.equal(await (await f.open()).inspect(),null);
+});
+for(const code of ['ACTION_REJECTED','INSUFFICIENT_FUNDS'])test(`direct top-up ${code} restores only the never-sent draft for explicit review`,async()=>{
+ const f=topupFixture(),cap=await f.open();await cap.prepare(f.allocation);f.wallet.signer.sendTransaction=async()=>{throw Object.assign(Error('labelled'),{code});};
+ await assert.rejects(cap.confirm());assert.equal(await cap.inspect(),null);assert.equal(f.state.sends,0);assert.equal((await cap.prepare(f.allocation)).phase,'approval');
+});
+test('direct top-up re-reviews changed amount after approval and stops changed account or gas before send',async()=>{
+ const f=topupFixture(),cap=await f.open();await cap.prepare(f.allocation);await cap.confirm();assert.equal((await cap.prepare({...f.allocation,amount:'301'})).phase,'approval');assert.equal(f.state.sends,1);
+ await cap.prepare(f.allocation);f.state.invalid=true;await assert.rejects(cap.confirm());assert.equal(f.state.sends,1);
+ f.state.invalid=false;await cap.prepare(f.allocation);f.options.provider.getFeeData=async()=>({maxFeePerGas:99999n});await assert.rejects(cap.confirm());assert.equal(f.state.sends,1);
+});
+
+for(const kind of ['private-fee','bok'])for(const cut of ['prepare','attempt'])test(`direct ${kind} original private claim resumes ${cut} crash without collateral or repeat payment`,async()=>{
+ const f=topupFixture(kind);f.state.allowance=1000n;let workflow;f.options.reconcileClaim=id=>workflow.open().reconcile(id);const funding=await f.open();await funding.prepare(f.allocation);const receipts=await funding.confirm();workflow=durableClaimApplication(f,funding);
+ const prepared=await workflow.open().prepare({type:kind==='bok'?'claim-bok':'claim-private-fee',...receipts});if(cut==='attempt')await funding.checkpointClaim({intentId:prepared.intentId,attempted:true});
+ const result=await advanceAggregateClaim({application:workflow.open(),funding:await f.open()});assert.equal(result.state,cut==='attempt'?'review-saved':'complete');assert.equal(result.intent.action.type,kind==='bok'?'claim-bok':'claim-private-fee');assert.equal(workflow.state.sends,cut==='attempt'?0:1);assert.equal(f.state.sends,1);
+});
+for(const kind of ['private-fee','bok'])test(`direct ${kind} canonical reverted payment needs fresh review and retains failed custody`,async()=>{
+ const f=topupFixture(kind);f.state.allowance=1000n;f.state.revert=true;const funding=await f.open();await funding.prepare(f.allocation);await assert.rejects(funding.confirm(),{code:'BB_ETH_TRANSACTION_FAILED'});const before=f.records.size;
+ const q=await(await f.open()).prepare(f.allocation);assert.equal(q.phase,'deposit');assert.equal(f.state.sends,1);assert.equal(f.records.size,before+1);
+ const receipt=f.receipts.get(h(301));receipt.blockHash=h(999);await assert.rejects(funding.prepare(f.allocation));assert.equal(f.state.sends,1);
+});
+
+for(const kind of ['private-fee','bok'])test(`direct ${kind} confirmed claim survives later workflow replacement but rejects a reorg`,async()=>{
+ const f=topupFixture(kind);f.state.allowance=1000n;let workflow;f.options.reconcileClaim=id=>workflow.open().reconcile(id);const funding=await f.open();await funding.prepare(f.allocation);await funding.confirm();workflow=durableClaimApplication(f,funding);
+ const complete=await advanceAggregateClaim({application:workflow.open(),funding});assert.equal(complete.state,'complete');assert.equal(workflow.state.sends,1);
+ f.options.reconcileClaim=async()=>{throw Error('labelled subsequent workflow replaced old slot');};
+ await (await f.open()).prepare(f.allocation);assert.equal(f.state.sends,1);
+ f.options.verifyClaim=async()=>{throw Error('labelled canonical claim reorg');};await assert.rejects((await f.open()).prepare(f.allocation),/canonical claim reorg/);assert.equal(f.state.sends,1);
+});

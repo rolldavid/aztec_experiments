@@ -1,6 +1,6 @@
 // Load after explicit unlock. All SDK and custody dependencies are supplied by
 // the authenticated application bundle; no fixture or ordinary-node fallback.
-import {createAggregateWallet,advanceAggregateClaim} from '../../shared/rolling/aggregate-wallet.mjs';
+import {createAggregateWallet,createStandaloneTopupWallet,advanceAggregateClaim} from '../../shared/rolling/aggregate-wallet.mjs';
 import {createRollingColdPreferenceReader} from '../../shared/rolling/cold-preference-reader.mjs';
 import {createRollingCompactClient} from '../../shared/rolling/compact-client.mjs';
 import {createRollingPreferenceReader} from '../../shared/rolling/preference-reader.mjs';
@@ -41,7 +41,7 @@ export async function createRollingWalletSession({sdk,routing,ethers,config,boar
  const captured={secretKey:account.secretKey,salt:String(account.salt),address:String(account.address)};
  const selected=structuredClone(config),query=structuredClone(trustedQuery),remote=remoteProver?structuredClone(remoteProver):undefined;
  const lockName='billboard-wallet:'+captured.address;
- let pxe,store,fundingProvider,closed=false,busy=false,app,closing,privateNode,privateWallet,readPreferences,readColdPreferences,initializeAccount,aggregate;
+ let pxe,store,fundingProvider,closed=false,busy=false,app,closing,privateNode,privateWallet,readPreferences,readColdPreferences,initializeAccount,aggregate,topups;
  const assertCaptured=()=>{
   if(closed||captured.secretKey!==account.secretKey||captured.salt!==String(account.salt)||captured.address!==String(account.address))throw fail('ROLLING_CONTEXT_CHANGED');
  };
@@ -154,6 +154,13 @@ export async function createRollingWalletSession({sdk,routing,ethers,config,boar
      walletSecret:captured.secretKey,walletSalt:captured.salt,storage:privateStore,provider,captureWallet:captureFundingWallet,contextGuard:guardRoute,verifyScope,claimStore,relay:fundingRelay,reconcileClaim:async id=>{await pxe.sync();await initializeAccount();return app.reconcile(id);}});
     funding.loadAggregate=txHash=>aggregate.loadAggregate(txHash);
    }
+   if(typeof captureFundingWallet==='function'){
+    const provider=Object.fromEntries(['getNetwork','getTransactionReceipt','getTransaction','getBlock','getCode','call','getTransactionCount','getBlockNumber','estimateGas','getFeeData','waitForTransaction'].map(name=>[name,async(...args)=>{await guardRoute();fundingProvider??=new ethers.JsonRpcProvider(selected.network.ethRpcUrl);const value=await fundingProvider[name](...args);await guardRoute();return value;}]));
+    topups={};for(const kind of ['private-fee',...(bok?['bok']:[])])topups[kind]=await createStandaloneTopupWallet({sdk,ethers,kind,network,board:deployment.board.address.toString(),owner:captured.address,walletSecret:captured.secretKey,walletSalt:captured.salt,storage:privateStore,provider,captureWallet:captureFundingWallet,contextGuard:guardRoute,
+     resolveScope:()=>verifyRollingTopupScope({sdk,ethers,node,provider,network,privateFee:deployment.privateFee.address.toString(),bok,kind,contextGuard:guardRoute}),verifyClaim:txHash=>verifyRollingTopupClaim({sdk,node,txHash,contextGuard:guardRoute}),reconcileClaim:async id=>{await pxe.sync();await initializeAccount();return app.reconcile(id);}});
+    const aggregateLookup=funding.loadAggregate;
+    funding.loadAggregate=async hash=>{const found=aggregateLookup?await aggregateLookup(hash):null;return found??(topups.bok?await topups.bok.loadAggregate(hash):null);};
+   }
    await guard();app=createRollingApplication({sdk:{...sdk,isPrivateWalletForNode:routing.isPrivateWalletForNode},deployment,contextGuard:guard,privateStore,funding,onProgress,
     accountSession:{owner:instance.address,wallet,node,journal,walletSecret:captured.secretKey,walletSalt:captured.salt}});
    // The reader owns synchronization, but the session owns this same account
@@ -188,10 +195,12 @@ export async function createRollingWalletSession({sdk,routing,ethers,config,boar
   if(!sdk.isTrustedPrivateNode(privateNode)||!sdk.isPrivatePXEForNode(pxe,privateNode)||privateWallet.aztecNode!==privateNode||privateWallet.pxe!==pxe||!routing.isPrivateWalletForNode(privateWallet,privateNode))throw fail('ROLLING_PRIVATE_ROUTE');
  }
  const synchronized=createSynchronizedRollingApplication({application:app,synchronize:async()=>{await pxe.sync();await initializeAccount();},contextGuard:guardRoute});
- const application=Object.freeze({...Object.fromEntries(Object.entries(synchronized).map(([name,call])=>[name,(...args)=>locked(()=>call(...args))])),
+ const application=Object.freeze({...Object.fromEntries(Object.entries(synchronized).map(([name,call])=>[name,(...args)=>locked(async()=>{const result=await call(...args);if(['submitPrepared','reconcile'].includes(name)&&result?.status==='confirmed'){const kind=result.action?.type==='claim-bok'?'bok':result.action?.type==='claim-private-fee'?'private-fee':null;if(kind&&topups?.[kind])await topups[kind].recordConfirmedClaim(result);}return result;})])),
   readPreferences:options=>locked(()=>readPreferences(options)),
   readColdPreferences:options=>locked(()=>readColdPreferences(options))});
- return Object.freeze({application,funding:aggregate?Object.freeze({usdcAvailable:selected.aggregateFunding.usdcRelayAddress!==undefined,advanceClaim:()=>locked(()=>advanceAggregateClaim({application:synchronized,funding:aggregate,contextGuard:guardRoute})),defaultPrivateFeeCap:((BigInt(selected.privateFee.gasSettings.gasLimits.daGas)+BigInt(selected.privateFee.gasSettings.teardownGasLimits.daGas))*BigInt(selected.privateFee.gasSettings.maxFeesPerGas.feePerDaGas)+(BigInt(selected.privateFee.gasSettings.gasLimits.l2Gas)+BigInt(selected.privateFee.gasSettings.teardownGasLimits.l2Gas))*BigInt(selected.privateFee.gasSettings.maxFeesPerGas.feePerL2Gas)).toString(),...Object.fromEntries(['prepare','confirm','recover','inspect','checkpointClaim','reviewRevertedClaim'].map(name=>[name,(...args)=>locked(()=>aggregate[name](...args))]))}):null,get busy(){return busy;},close(){
+ const privateFeeCap=((BigInt(selected.privateFee.gasSettings.gasLimits.daGas)+BigInt(selected.privateFee.gasSettings.teardownGasLimits.daGas))*BigInt(selected.privateFee.gasSettings.maxFeesPerGas.feePerDaGas)+(BigInt(selected.privateFee.gasSettings.gasLimits.l2Gas)+BigInt(selected.privateFee.gasSettings.teardownGasLimits.l2Gas))*BigInt(selected.privateFee.gasSettings.maxFeesPerGas.feePerL2Gas)).toString();
+ const topup=topups?Object.freeze(Object.fromEntries(Object.entries(topups).map(([kind,cap])=>[kind,Object.freeze({defaultPrivateFeeCap:privateFeeCap,advanceClaim:()=>locked(()=>advanceAggregateClaim({application:synchronized,funding:cap,contextGuard:guardRoute})),...Object.fromEntries(['prepare','confirm','recover','inspect','checkpointClaim','reviewRevertedClaim'].map(name=>[name,(...args)=>locked(()=>cap[name](...args))]))})]))):null;
+ return Object.freeze({application,topup,funding:aggregate?Object.freeze({usdcAvailable:selected.aggregateFunding.usdcRelayAddress!==undefined,advanceClaim:()=>locked(()=>advanceAggregateClaim({application:synchronized,funding:aggregate,contextGuard:guardRoute})),defaultPrivateFeeCap:((BigInt(selected.privateFee.gasSettings.gasLimits.daGas)+BigInt(selected.privateFee.gasSettings.teardownGasLimits.daGas))*BigInt(selected.privateFee.gasSettings.maxFeesPerGas.feePerDaGas)+(BigInt(selected.privateFee.gasSettings.gasLimits.l2Gas)+BigInt(selected.privateFee.gasSettings.teardownGasLimits.l2Gas))*BigInt(selected.privateFee.gasSettings.maxFeesPerGas.feePerL2Gas)).toString(),...Object.fromEntries(['prepare','confirm','recover','inspect','checkpointClaim','reviewRevertedClaim'].map(name=>[name,(...args)=>locked(()=>aggregate[name](...args))]))}):null,get busy(){return busy;},close(){
   if(closing)return closing;
   if(busy)return Promise.reject(fail('ROLLING_BUSY'));
   if(closed&&!pxe&&!store)return Promise.resolve();
@@ -200,4 +209,37 @@ export async function createRollingWalletSession({sdk,routing,ethers,config,boar
    if(!lock)throw fail('ROLLING_OTHER_TAB');await dispose();
   })).finally(()=>{busy=false;closing=undefined;});return closing;
  }});
+}
+
+/** Discover direct funding endpoints from the authenticated node and Bok
+ * contract, then pin all token/portal reads to one canonical L1 block. */
+export async function verifyRollingTopupScope({sdk,ethers,node,provider,network,privateFee,bok,kind,contextGuard}){
+ const read=async fn=>{await contextGuard();const value=await fn();await contextGuard();return value;},check=ok=>{if(!ok)throw fail('ROLLING_SESSION_CONFIG');};
+ const addresses=await read(()=>node.getL1ContractAddresses());check(addresses.rollupAddress?.toString().toLowerCase()===network.rollup);
+ const abi=new ethers.Interface(['function ROLLUP() view returns(address)','function UNDERLYING() view returns(address)','function VERSION() view returns(uint256)','function L2_TOKEN_ADDRESS() view returns(bytes32)','function token() view returns(address)','function escrow() view returns(bytes32)','function version() view returns(uint256)','function chainId() view returns(uint256)','function inbox() view returns(address)','function outbox() view returns(address)','function active() view returns(bool)','function decimals() view returns(uint8)']);
+ const l1=await read(()=>provider.getBlock('latest'));check(Number.isSafeInteger(l1?.number)&&/^0x[0-9a-f]{64}$/.test(l1?.hash));
+ const call=async(address,name)=>abi.decodeFunctionResult(name,await read(()=>provider.call({to:address,data:abi.encodeFunctionData(name),blockTag:l1.number})))[0];
+ let portal,token,recipient;
+ if(kind==='private-fee'){
+  portal=addresses.feeJuicePortalAddress?.toString().toLowerCase();token=addresses.feeJuiceAddress?.toString().toLowerCase();recipient=privateFee;
+  check(String(await call(portal,'ROLLUP')).toLowerCase()===network.rollup&&String(await call(portal,'UNDERLYING')).toLowerCase()===token&&String(await call(portal,'VERSION'))===network.version&&BigInt(await call(portal,'L2_TOKEN_ADDRESS'))===BigInt(sdk.ProtocolContractAddress.FeeJuice.toString()));
+ }else{
+  check(kind==='bok'&&bok);recipient=bok.address.toString();const head=await read(()=>node.getBlockData('checkpointed')),number=Number(head?.header?.globalVariables?.blockNumber),hash=head?.blockHash?.toString(),slot=bok.artifact.storageLayout?.portal?.slot;
+  check(Number.isSafeInteger(number)&&number>0&&/^0x[0-9a-f]{64}$/.test(hash)&&slot!==undefined);
+  const value=await read(()=>node.getPublicStorageAt({hash},bok.address,new sdk.Fr(BigInt(slot))));check(BigInt(value.toString())>0n&&BigInt(value.toString())<1n<<160n);portal='0x'+BigInt(value.toString()).toString(16).padStart(40,'0');
+  const again=await read(()=>node.getBlockData(number));check(again?.blockHash?.toString()===hash&&Number(again?.header?.globalVariables?.blockNumber)===number);
+  token=String(await call(portal,'token')).toLowerCase();check(BigInt(await call(portal,'escrow'))===BigInt(recipient)&&String(await call(portal,'version'))===network.version&&String(await call(portal,'chainId'))===network.chainId&&await call(portal,'active')===true);
+  check(String(await call(portal,'inbox')).toLowerCase()===addresses.inboxAddress?.toString().toLowerCase()&&String(await call(portal,'outbox')).toLowerCase()===addresses.outboxAddress?.toString().toLowerCase());
+ }
+ check(/^0x[0-9a-f]{40}$/.test(portal)&&/^0x[0-9a-f]{40}$/.test(token)&&BigInt(portal)>0n&&BigInt(token)>0n);
+ check(BigInt(await call(token,'decimals'))===(kind==='bok'?6n:18n));check((await read(()=>provider.getBlock(l1.number)))?.hash===l1.hash);return Object.freeze({portal,token,recipient});
+}
+
+// An encrypted confirmed claim survives replacement of the single active L2
+// workflow, but its exact receipt must still be canonical before another top-up.
+export async function verifyRollingTopupClaim({sdk,node,txHash,contextGuard}){
+ const read=async fn=>{await contextGuard();const result=await sdk.boundedTransactionRead(fn);await contextGuard();return result;};
+ if(!/^0x[0-9a-f]{64}$/.test(txHash)||BigInt(txHash)===0n)throw fail('ROLLING_SESSION_CONFIG');
+ const hash=sdk.TxHash.fromString(txHash),receipt=await read(()=>node.getTxReceipt(hash));sdk.requireSuccessfulReceipt(receipt,hash);
+ const block=await read(()=>node.getBlock(receipt.blockNumber));if(block?.hash?.toString()!==receipt.blockHash.toString())throw fail('ROLLING_SESSION_CONFIG');
 }

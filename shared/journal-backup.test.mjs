@@ -270,3 +270,15 @@ test('archived aggregate txHash framing restores only within the original owner 
   const changed=[...frame];changed[index]=value;const other=await createEncryptedJournalSlot({...f.credentials,storage:destination,scopeText:JSON.stringify(changed),keyDomain:'ROLLING_AGGREGATE_FUNDING_V1'});assert.equal((await other.read()).value,null);
  }
 });
+
+for(const kind of ['private-fee','bok'])test('standalone '+kind+' top-up custody and archived requests round-trip through real AEAD backup',async()=>{
+ const f=fixture(),source=storage(),destination=storage(),base=['ROLLING_TOPUP_FUNDING_V1','31337','1','0x'+'11'.repeat(20),hex(1),hex(2),kind,'0x'+'22'.repeat(20),'0x'+'33'.repeat(20),hex(3)];
+ for(const suffix of [[1],[hex(77),1]]){const scopeText=JSON.stringify([...base,...suffix]),slot=await createEncryptedJournalSlot({...f.credentials,storage:source,scopeText,keyDomain:'ROLLING_TOPUP_FUNDING_V1'});await slot.write(await slot.read(),{intent:{data:'private-topup-sentinel'},bridgeSecret:hex(8)});}
+ const records=await(await f.backup(source)).exportRecords();assert.equal(records.length,2);assert(!JSON.stringify(records).includes('private-topup-sentinel'));await(await f.backup(destination)).restoreRecords(records);
+ for(const suffix of [[1],[hex(77),1]]){const slot=await createEncryptedJournalSlot({...f.credentials,storage:destination,scopeText:JSON.stringify([...base,...suffix]),keyDomain:'ROLLING_TOPUP_FUNDING_V1'});assert.equal((await slot.read()).value.bridgeSecret,hex(8));}
+});
+for(const defect of ['kind','number','zero','recipient','archive','extra','canonical'])test('standalone top-up backup rejects '+defect,async()=>{
+ const f=fixture(),source=storage(),frame=['ROLLING_TOPUP_FUNDING_V1','31337','1','0x'+'11'.repeat(20),hex(1),hex(2),'bok','0x'+'22'.repeat(20),'0x'+'33'.repeat(20),hex(3),1];
+ if(defect==='kind')frame[6]='collateral';if(defect==='number')frame[1]=31337;if(defect==='zero')frame[7]='0x'+'00'.repeat(20);if(defect==='recipient')frame[9]='0x'+'ff'.repeat(32);if(defect==='archive')frame.splice(-1,0,'wrong');if(defect==='extra')frame.push(1);
+ const slot=await createEncryptedJournalSlot({...f.credentials,storage:source,scopeText:(defect==='canonical'?' ':'')+JSON.stringify(frame),keyDomain:'ROLLING_TOPUP_FUNDING_V1'});await slot.write(await slot.read(),{});await assert.rejects((await f.backup(source)).exportRecords(),{code:'BB_JOURNAL_INVALID'});
+});
