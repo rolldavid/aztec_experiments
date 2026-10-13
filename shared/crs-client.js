@@ -5,7 +5,7 @@
   const expected = {
     'g1.dat': { bytes: 37748736, numPoints: 1179648, remote: 'g1_compressed.dat', format: 'bn254-g1-compressed-32-byte' },
     'g2.dat': { bytes: 128, numPoints: 1, remote: 'g2.dat', format: 'bn254-g2-uncompressed-128-byte' },
-    'grumpkin_g1.dat': { bytes: 4194368, numPoints: 65537, remote: 'grumpkin_g1_v2.dat', format: 'grumpkin-g1-v2-uncompressed-64-byte' },
+    'grumpkin_g1.dat': { bytes: 8388608, numPoints: 131072, remote: 'grumpkin_g1_v2.dat', format: 'grumpkin-g1-v2-uncompressed-64-byte' },
   };
   const hasKeys = (value, keys) => value && typeof value === 'object' && !Array.isArray(value)
     && Object.keys(value).length === keys.length && keys.every(key => Object.hasOwn(value, key));
@@ -115,6 +115,8 @@
     if (!ArrayBuffer.isView(bn254?.pointsBuf) || bn254.pointsBuf.BYTES_PER_ELEMENT !== 1 || bn254.pointsBuf.byteLength !== responseBytes) {
       throw new Error('Unexpected BN254 SRS initialization response');
     }
+    // BB authenticates complete 65536-point chunks. Keep the full verified
+    // two-chunk buffer and count; a 65537-point partial chunk is rejected.
     const grumpkin = await bb.srsInitGrumpkinSrs({ pointsBuf: data['grumpkin_g1.dat'], numPoints: files.get('grumpkin_g1.dat').numPoints });
     if (grumpkin?.dummy !== 0) throw new Error('Unexpected Grumpkin SRS initialization response');
     return { g1Format: selectedG1.format, sourceBn254NumPoints: selectedG1.numPoints, initializedBn254NumPoints: numPoints, grumpkinNumPoints: files.get('grumpkin_g1.dat').numPoints };

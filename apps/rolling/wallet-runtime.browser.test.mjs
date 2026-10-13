@@ -153,7 +153,7 @@ test('public-only actual browser prover initialization diagnostic',{timeout:6000
   privateFailures.push(...observed.failures);delete observed.failures;report.initialization=observed;
   assert(observed.passed,'Actual production initializer failed');assert.equal(observed.observerErrors,0);assert.equal(observed.hasAccount,false);
   assert.deepEqual(observed.after,{backend:'WasmWorker',threads:1,skipSrsInit:true});
-  assert.deepEqual(observed.srs,[{kind:'bn254',numPoints:524288,bytes:524288*64,responseBytes:0},{kind:'grumpkin',numPoints:65537,bytes:4194368,dummy:0}]);
+  assert.deepEqual(observed.srs,[{kind:'bn254',numPoints:524288,bytes:524288*64,responseBytes:0},{kind:'grumpkin',numPoints:131072,bytes:8388608,dummy:0}]);
   for(const file of [manifest.derivedG1,...manifest.files.filter(file=>file.name!=='g1.dat')]){
    assert.equal(observed.hashes.filter(row=>row.bytes===file.bytes&&row.sha256===file.sha256).length,1);
    assert.equal(report.assets.filter(row=>row.path==='/crs/'+file.name&&row.status===200).length,1);

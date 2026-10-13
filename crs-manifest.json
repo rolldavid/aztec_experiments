@@ -7,8 +7,8 @@
     "source": "node_modules/@aztec-foundation/bb.js/dest/node/crs/net_crs.js",
     "sourceSha256": "d73da83a2b35584632dc8a70abaaeaa1c762e6f24bd0c778e47fe85919f5a98d",
     "observedAt": "2026-10-12",
-    "method": "Source asset SHA-256 values retain the exact ranged responses measured on 2026-10-10. The installed foundation rc6 downloader is byte-identical to that source. These are locally recorded content pins, not a separate publisher checksum attestation. The rc6 WASM hash is measured from the integrity-locked package; the derived G1 output hash remains an expected mathematical-content constraint pending a fresh rc6 derivation.",
-    "pointBudget": "BN254 preserves at least the existing 1048577-point capacity, rounded to the next 131072-point/4MiB compressed chunk. Grumpkin preserves 65537 points. Capacity for production proofs is verified separately."
+    "method": "Source asset SHA-256 values retain the exact ranged responses measured on 2026-10-10. The installed foundation rc6 downloader is byte-identical to that source. These are locally recorded content pins, not a separate publisher checksum attestation. The rc6 WASM hash is measured from the integrity-locked package; the derived G1 output hash remains an expected mathematical-content constraint pending a fresh rc6 derivation. Grumpkin was reacquired on 2026-10-13 as the exact 0-8388607 range of the 16777216-byte official v2 file (HTTP 206, identity encoding). Both complete 4194304-byte chunks matched the canonical barretenberg/cpp/src/barretenberg/srs/factories/grumpkin_crs_data.hpp anchors in pinned Aztec source 0df91ba1799012435c62c6108a0926b357fef88c: 64236c9455e75aeea77a94587ea607eed2e978d2609a421d66bf10bb9698b8fd and f4acd78e415e4db21fb237888c23105f4919d30e18226faa470a11aec69e49bb. The original 65537-point prefix retained SHA-256 b4988c0ae3dd058b781045aeb70000d7b7fb5ffe557ed4f81c64b437c39a61c9. The new whole-file pin was measured only after those checks.",
+    "pointBudget": "BN254 preserves at least the existing 1048577-point capacity, rounded to the next 131072-point/4MiB compressed chunk. Grumpkin preserves at least 65537 points by rounding up to 131072 points/two complete 65536-point chunks. Capacity for production proofs is verified separately."
   },
   "files": [
     {
@@ -41,14 +41,14 @@
       "name": "grumpkin_g1.dat",
       "url": "https://crs.aztec-cdn.foundation/grumpkin_g1_v2.dat",
       "fallbackUrl": "https://crs.aztec-labs.com/grumpkin_g1_v2.dat",
-      "bytes": 4194368,
-      "numPoints": 65537,
+      "bytes": 8388608,
+      "numPoints": 131072,
       "format": "grumpkin-g1-v2-uncompressed-64-byte",
       "range": {
         "start": 0,
-        "end": 4194367
+        "end": 8388607
       },
-      "sha256": "b4988c0ae3dd058b781045aeb70000d7b7fb5ffe557ed4f81c64b437c39a61c9"
+      "sha256": "e703e36cfe4262d71180d9b8d0ae09ac154ff70bbba3d50d4d640356d01a9daf"
     }
   ],
   "derivedG1": {

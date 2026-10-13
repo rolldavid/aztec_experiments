@@ -84,7 +84,7 @@ export function validateCrsManifest(manifest) {
   const sourceShapes = {
     'g1.dat': { bytes: 37748736, numPoints: 1179648, format: 'bn254-g1-compressed-32-byte', remote: 'g1_compressed.dat' },
     'g2.dat': { bytes: 128, numPoints: 1, format: 'bn254-g2-uncompressed-128-byte', remote: 'g2.dat' },
-    'grumpkin_g1.dat': { bytes: 4194368, numPoints: 65537, format: 'grumpkin-g1-v2-uncompressed-64-byte', remote: 'grumpkin_g1_v2.dat' },
+    'grumpkin_g1.dat': { bytes: 8388608, numPoints: 131072, format: 'grumpkin-g1-v2-uncompressed-64-byte', remote: 'grumpkin_g1_v2.dat' },
   };
   for (const asset of manifest.files) {
     const shape = sourceShapes[asset.name];

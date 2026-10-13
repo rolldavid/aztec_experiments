@@ -60,6 +60,9 @@ test('schema2 separates the72MiB derived asset from bounded network assets', () 
   assert.equal(manifest.derivedG1.derivation.packageVersion, '6.0.0-rc.6');
 });
 for (const [label, mutate] of [
+  ['old partial Grumpkin chunk', m => { Object.assign(m.files[2], {numPoints:65537,bytes:4194368}); m.files[2].range.end=4194367; }],
+  ['single Grumpkin chunk reduces capacity', m => { Object.assign(m.files[2], {numPoints:65536,bytes:4194304}); m.files[2].range.end=4194303; }],
+  ['nonchunk Grumpkin size', m => { Object.assign(m.files[2], {numPoints:65538,bytes:4194432}); m.files[2].range.end=4194431; }],
   ['wrong Grumpkin format', m => { m.files[2].format = 'grumpkin-compressed'; }],
   ['wrong Grumpkin point count', m => { m.files[2].numPoints--; }],
   ['wrong Grumpkin byte length', m => { m.files[2].bytes--; m.files[2].range.end--; }],
@@ -167,4 +170,12 @@ test('derivation interruption kills and closes its actual child', async () => {
     timeoutMs: 10000, signalSource: signals, onSpawn(child) { pid = child.pid; queueMicrotask(() => signals.emit('SIGTERM')); },
   }), /interrupted by SIGTERM/);
   assert.throws(() => process.kill(pid, 0), { code: 'ESRCH' });
+});
+
+test('Grumpkin manifest pins two complete chunks without reducing prior capacity',()=>{
+  const file=manifest.files.find(file=>file.name==='grumpkin_g1.dat');
+  assert.equal(file.numPoints,131072);assert(file.numPoints>=65537);
+  assert.equal(file.bytes,8388608);assert.equal(file.bytes,2*65536*64);
+  assert.deepEqual(file.range,{start:0,end:8388607});
+  assert.equal(file.sha256,'e703e36cfe4262d71180d9b8d0ae09ac154ff70bbba3d50d4d640356d01a9daf');
 });
