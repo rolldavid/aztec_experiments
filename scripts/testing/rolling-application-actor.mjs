@@ -177,7 +177,7 @@ export async function createRollingApplicationActor({sdk,routing,node,endpoint,n
  try{
   activity();await sdk.inspectTrustedNode(node,{expectedNetworkScope:capturedNetwork,proofsEnabled});contextGuard();
   store=await sdk.openPXEStore({l1ChainId:Number(capturedNetwork.chainId),rollupAddress:capturedNetwork.rollup,accountAddress:ownerText,dataDirectory},undefined,quiet);contextGuard();
-  pxe=await Reflect.apply(createPXE,sdk,[node,{proverEnabled:true,autoSync:false,syncChainTip:'checkpointed'},
+  pxe=await Reflect.apply(createPXE,sdk,[node,{proverEnabled:proofsEnabled,autoSync:false,syncChainTip:'checkpointed'},
    {store,remoteProver:{url:endpoint,board:scope.board,timeoutMs:120000,pollMs:100}}]);contextGuard();
   if(observe){
    // Owned instance only, installed once before any application/reader binds.

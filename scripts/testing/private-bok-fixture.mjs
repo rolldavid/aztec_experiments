@@ -52,7 +52,7 @@ export async function runPrivateBokFixture(ctx, caseProfile = 'both', payerMode 
     await provider.send('anvil_setBalance', [signer.address, '0x56bc75e2d63100000']);
     if (payerMode === 'genesis') {
       wallet = await EmbeddedWallet.create(ctx.node, {ephemeral: true, pxe: {
-        proverEnabled: true, autoSync: false, syncChainTip: 'checkpointed',
+        proverEnabled: applicationProofsEnabled(), autoSync: false, syncChainTip: 'checkpointed',
         proverOrOptions: applicationProver({backend: BackendType.NativeUnixSocket, ...applicationNativeProfile(ctx.directory)}),
       }});
       assert.equal(ctx.preparation.authorAccounts.length, 3);

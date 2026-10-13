@@ -38,7 +38,7 @@ export async function prepareW01UnfundedWallet({node,preparation,directory,persi
   const native={backend:BackendType.NativeUnixSocket,...applicationNativeProfile(directory)};
   for(const key of ['backend','bbPath','threads'])assert.equal(Barretenberg.getSingleton().options[key],native[key],'Native singleton differs from selected application profile');
   return EmbeddedWallet.create(node,{ephemeral:persistentDirectory===undefined,pxe:{
-  ...(persistentDirectory===undefined?{}:{dataDirectory:persistentDirectory}),proverEnabled:true,
+  ...(persistentDirectory===undefined?{}:{dataDirectory:persistentDirectory}),proverEnabled:applicationProofsEnabled(),
   proverOrOptions:applicationProver(native),
   autoSync:false,syncChainTip:'checkpointed'}});
  };

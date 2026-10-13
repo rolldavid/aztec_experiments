@@ -61,7 +61,7 @@ export async function prepareAndProveC01Ready({ node, preparation, instance, dep
     const singleton = Barretenberg.getSingleton();
     for (const key of ['backend','bbPath','threads']) assert.equal(singleton.options[key], nativeOptions[key], 'Native singleton mismatch');
     mark('reopen-wallet');
-    wallet = await EmbeddedWallet.create(node, { ephemeral: true, pxe: { proverEnabled: true, proverOrOptions:applicationProver(nativeOptions) } });
+    wallet = await EmbeddedWallet.create(node, { ephemeral: true, pxe: { proverEnabled: applicationProofsEnabled(), proverOrOptions:applicationProver(nativeOptions) } });
     const account = preparation.account;
     const manager = await wallet.createSchnorrInitializerlessAccount(account.secret, account.salt, account.signingKey, 'c01-disposable');
     assert(manager.address.equals(account.address));

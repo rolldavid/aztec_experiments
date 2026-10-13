@@ -74,7 +74,7 @@ export async function proveAndIncludeC02Screening({node,preparation,instance,cla
       const value=Reflect.get(target,key,target);return typeof value==='function'?value.bind(target):value;
     }});
     wallet=await EmbeddedWallet.create(walletNode,{ephemeral:true,
-      pxe:{proverEnabled:true,proverOrOptions:native,autoSync:false,syncChainTip:'checkpointed'}});
+      pxe:{proverEnabled:applicationProofsEnabled(),proverOrOptions:native,autoSync:false,syncChainTip:'checkpointed'}});
     const manager=await wallet.createSchnorrInitializerlessAccount(account.secret,account.salt,account.signingKey,'c02-disposable');
     assert(manager.address.equals(account.address));await wallet.registerContract(instance,boardArtifact);await wallet.pxe.sync();
     const board=Contract.at(instance.address,boardArtifact,wallet);

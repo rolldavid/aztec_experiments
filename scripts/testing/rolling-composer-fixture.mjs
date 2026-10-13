@@ -1,3 +1,4 @@
+import {applicationProofsEnabled} from './proof-policy.mjs';
 // TEST ONLY. Real production reader/assets and encrypted disposable custody.
 // Parent keeps real node/prover/miner alive and verifies both private fee balances.
 import assert from 'node:assert/strict';
@@ -94,7 +95,7 @@ export async function runRollingComposerFixture({ctx,actors,fees,claim,endpoint,
   l1=await startComposerL1Reader({upstream:ctx.config.l1RpcUrls[0],origin:control.origin});
   const gas=fees[0].browserFixture.gas;
   const gasSettings=Object.fromEntries(['gasLimits','teardownGasLimits','maxFeesPerGas','maxPriorityFeesPerGas'].map(name=>[name,Object.fromEntries((name.endsWith('Gas')?['feePerDaGas','feePerL2Gas']:['daGas','l2Gas']).map(key=>[key,String(gas[name][key])]))]));
-  const configuration={config:{network:{chainId:network.chainId,rollupVersion:network.version,rollupAddress:network.rollup,ethRpcUrl:l1.url},board:{contractAddress:String(ctx.instance.address),portalAddress:String(ctx.ready.portalAddress).toLowerCase()},privateFee:{contractAddress:String(fees[0].browserFixture.instance.address),gasSettings}},trustedQuery:{url:endpoint+'/v1/node',allowLocalDev:true},remoteProver:{url:endpoint,board:String(ctx.instance.address),chainId:network.chainId,rollupVersion:network.version,proofsEnabled:true},proofsEnabled:true};
+  const configuration={config:{network:{chainId:network.chainId,rollupVersion:network.version,rollupAddress:network.rollup,ethRpcUrl:l1.url},board:{contractAddress:String(ctx.instance.address),portalAddress:String(ctx.ready.portalAddress).toLowerCase()},privateFee:{contractAddress:String(fees[0].browserFixture.instance.address),gasSettings}},trustedQuery:{url:endpoint+'/v1/node',allowLocalDev:true},remoteProver:{url:endpoint,board:String(ctx.instance.address),chainId:network.chainId,rollupVersion:network.version,proofsEnabled:applicationProofsEnabled()},proofsEnabled:applicationProofsEnabled()};
   const wallet=await loadRollingWalletAssets(configuration,scope);
   const started=await startComposerPublicReader({node:ctx.node,artifact,scope,deployment,cacheDirectory:path.join(ctx.directory,'composer-public-index'),port:Number(new URL(control.origin).port),wallet});
   reader=started.reader;const index=started.index;assert.equal(reader.url,control.origin);

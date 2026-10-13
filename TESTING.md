@@ -9,6 +9,30 @@ Use the pinned Node24, Forge and project-local Anvil versions in BUILDING.md. Ru
 
 Preserve a failed harness check's stage, command outcome and cleanup outcome. Diagnose and fix the underlying cause, then verify the repair; the user has authorized autonomous continuation. Delegate an independent structural review whenever changing the harness. No alternate backend, fee payer, data source or test scenario may stand in for a failed path.
 
+## Development proof configuration
+
+Development and debugging use the existing disposable devnet with proofs disabled.
+The development runner defaults to `BOARD_TEST_PROOFS=disabled` and passes the native
+configuration flags to both sides: devnet/node `realProofs: false` and PXE
+`proverEnabled: false`. To make the selection explicit:
+
+```sh
+BOARD_TEST_PROOFS=disabled npm run test:e2e -- included-board
+```
+
+These are test-runner configuration values; application and SDK verification code
+is unchanged. Reports record the selected mode. Existing acceptance assertions
+that require genuine proofs remain in place; proofs-disabled development results
+cannot satisfy those assertions or qualify real-proof acceptance. Reserve real
+proofs for the testnet acceptance campaign, explicitly selecting its real-proof
+configuration. Historical real-proof evidence and all release gates remain intact.
+
+Browser development scenarios are currently held before resource allocation:
+`apps/rolling/wallet-session.mjs` explicitly enables its native PXE flag. The
+browser fixture's proof-mode metadata cannot override that SDK option. Resolve
+that configuration constraint before browser development; do not use real local
+proofs as a workaround. No browser proofs-disabled result is claimed.
+
 ## Structure
 
 - `scripts/testing/supervisor.mjs` owns application-test child processes, the single 540-second deadline, sampled aggregate 4 GiB limit and cleanup. Browser and native children share this owner; do not wrap these scenarios in another supervisor.
@@ -16,14 +40,14 @@ Preserve a failed harness check's stage, command outcome and cleanup outcome. Di
 - `scenarios.mjs` declares the supported scenarios. `scenario-flows.mjs` states each action sequence. Proof and assertion helpers remain ordinary functions.
 - `assets.mjs` checks source identity, prover setup and operator package contents. Build or asset failures stop before proving.
 
-There are no implicit defaults, cascading environment flags or legacy aliases. The old empty invocation and `--bridge`, `--ready`, `--settle`, `--include`, `--posting-diagnostic` routes are removed. Their unique deployment/binding assertions belong to the included/activated fixtures; private-fee journeys replace the public-fee bridge route.
+There is no implicit scenario, cascading environment flags or legacy aliases. The proof-mode default is the development configuration described above. The old empty invocation and `--bridge`, `--ready`, `--settle`, `--include`, `--posting-diagnostic` routes are removed. Their unique deployment/binding assertions belong to the included/activated fixtures; private-fee journeys replace the public-fee bridge route.
 
 ## Scenarios
 
 | Scenario | What it checks |
 |---|---|
-| `node` | Disposable node startup and genuine transaction verifier configuration |
-| `included-board` | Real board deployment proof and ordinary inclusion |
+| `node` | Disposable devnet startup and selected proof configuration |
+| `included-board` | Board deployment and ordinary inclusion using the selected proof configuration |
 | `activated-board` | Ready binding, actual emitted message and controlled portal activation |
 | `censor-commands` | Packaged moderator handover and successor policy change with private fees |
 | `private-fees` | Private fee funding, collateral claim, exit and Ethereum refund |
@@ -50,7 +74,7 @@ The two genesis-funded constraint scenarios test application authorization and c
 
 ## Boundaries
 
-Application transactions are genuinely proved and checked by the node. Local bridge tests use the installed SDK's explicit Outbox settlement controls. Network epoch proving, Ethereum finality and protocol verifier qualification are outside the application test. No network prover, custom AVM build or Docker is required.
+Development transactions use the native proofs-disabled devnet and PXE flags. Real proofs remain mandatory for testnet acceptance. Local bridge tests use the installed SDK's explicit Outbox settlement controls. Network epoch proving, Ethereum finality and protocol verifier qualification are outside the application test. No network prover, custom AVM build or Docker is required.
 
 Fixture-only budgets are 60 seconds for node startup, 120 seconds for board inclusion and 180 seconds for activation. Full journeys retain 540 seconds. All expensive runs are serial, below ten minutes, and use disposable identities. Native contention uses two client threads; other profiles use one. Resource limits do not establish production capacity. No automatic retries or threshold increases are allowed. Rerun affected checks after diagnosing and repairing the underlying failure.
 

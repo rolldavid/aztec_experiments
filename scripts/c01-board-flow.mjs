@@ -121,8 +121,9 @@ export async function prepareC01BoardFlow({ bbBinaryPath, directory, authorCount
  */
 export async function proveC01BoardDeployment(node, preparation, { rollupAddress, rollupVersion, bbBinaryPath, directory, reportStage=()=>{} }) {
   let wallet, stage = 'preflight', result;
-  const observation = { passed: false, scope: 'real client deployment transaction proof and node admission validation only',
-    initializerVisibility: 'public; client proof authenticates private account/transaction path', sent: false,
+  const observation = { passed: false, applicationProofs: applicationProofsEnabled(),
+    scope: applicationProofsEnabled() ? 'real client deployment transaction proof and node admission validation only' : 'development transaction execution and node admission with native proofs disabled',
+    initializerVisibility: 'public', sent: false,
     included: false, epochProofAccepted: false };
   const mark = name => { stage = name; reportStage('board-'+name); };
   try {
@@ -132,11 +133,11 @@ export async function proveC01BoardDeployment(node, preparation, { rollupAddress
     const checked = await checkedC01BoardArtifact(preparation.boardProfile); assert.deepEqual(checked.artifactHashes, preparation.artifactHashes);
     const info = await node.getNodeInfo();
     assert.equal(Number(info.l1ChainId), 31337); assert.equal(BigInt(info.rollupVersion), BigInt(rollupVersion));
-    assert.equal((await node.getConfig()).realProofs, applicationProofsEnabled(), 'Node must enforce genuine proof verification');
+    assert.equal((await node.getConfig()).realProofs, applicationProofsEnabled(), 'Node proof configuration must match the selected mode');
     const rollup = EthAddress.fromString(rollupAddress.toString()); assert(!rollup.isZero());
     mark('create-proving-wallet');
     wallet = await EmbeddedWallet.create(node, { ephemeral: true,
-      pxe: { proverEnabled: true, proverOrOptions:applicationProver(options) } });
+      pxe: { proverEnabled: applicationProofsEnabled(), proverOrOptions:applicationProver(options) } });
     const account = preparation.account;
     const manager = await wallet.createSchnorrInitializerlessAccount(account.secret, account.salt, account.signingKey, 'c01-disposable');
     assert(manager.address.equals(account.address), 'Prepared account mismatch');
@@ -151,7 +152,7 @@ export async function proveC01BoardDeployment(node, preparation, { rollupAddress
     await wallet.pxe.sync();
     const feeOptions = await wallet.completeFeeOptions({ from: account.address, feePayer: payload.feePayer });
     const request = await wallet.createTxExecutionRequestFromPayloadAndFee(payload, account.address, feeOptions);
-    mark('genuine-client-proof');
+    mark(applicationProofsEnabled() ? 'genuine-client-proof' : 'development-client-execution');
     const started = performance.now();
     const proven = await wallet.pxe.proveTx(request, {
       scopes: wallet.scopesFrom(account.address, [], undefined),
@@ -162,8 +163,8 @@ export async function proveC01BoardDeployment(node, preparation, { rollupAddress
     assert(!proven.chonkProof.isEmpty(), 'Empty client proof returned');
     const proofBytes = proven.chonkProof.toBuffer(); assert(proofBytes.length > 4, 'Missing serialized proof');
     observation.proofMs = Math.round(performance.now() - started);
-    mark('real-node-validation');
-    const validation = await node.isValidTx(tx); // defaults: genuine proof+fee enforcement, no simulation overrides
+    mark('node-validation');
+    const validation = await node.isValidTx(tx); // Selected native node proof policy; fee enforcement remains enabled.
     assert.equal(validation.result, 'valid', 'Real node did not accept the constructed transaction');
     assert.equal(await getFeeJuiceBalance(account.address, node), balance, 'Prove-only step unexpectedly changed fee balance');
     assert.deepEqual((await checkedC01BoardArtifact(preparation.boardProfile)).artifactHashes, preparation.artifactHashes);

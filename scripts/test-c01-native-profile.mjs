@@ -2,6 +2,24 @@ import assert from 'node:assert/strict';
 import {test} from 'node:test';
 import fs from 'node:fs/promises';
 import {applicationNativeProfile,localApplicationInboxProfile} from './c01-native-profile.mjs';
+test('development proof configuration defaults off and preserves explicit acceptance mode',async()=>{
+ const {applicationProofsEnabled}=await import('./testing/proof-policy.mjs');
+ const prior=process.env.BOARD_TEST_PROOFS;
+ try{
+  delete process.env.BOARD_TEST_PROOFS;assert.equal(applicationProofsEnabled(),false);
+  const {runApplication}=await import('./testing/run-application.mjs');
+  await assert.rejects(()=>runApplication('rolling-composer'),/Browser development is held/);
+  process.env.BOARD_TEST_PROOFS='disabled';assert.equal(applicationProofsEnabled(),false);
+  process.env.BOARD_TEST_PROOFS='real';assert.equal(applicationProofsEnabled(),true);
+  for(const mode of ['', 'false', '0', 'REAL']){process.env.BOARD_TEST_PROOFS=mode;assert.throws(applicationProofsEnabled,/Invalid BOARD_TEST_PROOFS/);}
+ }finally{if(prior===undefined)delete process.env.BOARD_TEST_PROOFS;else process.env.BOARD_TEST_PROOFS=prior;}
+ const runner=await fs.readFile(new URL('./testing/run-application.mjs',import.meta.url),'utf8');
+ assert(runner.includes("const proofMode=process.env.BOARD_TEST_PROOFS??'disabled'"));
+ assert(runner.includes("applicationProofs:proofMode==='real'"));assert(runner.includes('BOARD_TEST_PROOFS:proofMode'));
+ for(const name of ['./testing/fixture-worker.mjs','./c01-real-node.mjs']){
+  const source=await fs.readFile(new URL(name,import.meta.url),'utf8');assert(source.includes('realProofs:applicationProofsEnabled()'));
+ }
+});
 test('private prover profile defaults to one and explicitly supports two',()=>{
   assert.deepEqual(applicationNativeProfile('/private/tmp/test',{}),{threads:1,bbPath:'/private/tmp/test/bb-one-thread'});
   for(const threads of ['1','2']) assert.deepEqual(applicationNativeProfile('/private/tmp/test',{C01_APPLICATION_BB_THREADS:threads}),{threads:Number(threads),bbPath:`/private/tmp/test/bb-${threads==='1'?'one-thread':'two-threads'}`});
@@ -66,13 +84,13 @@ test('collateral claim preserves selected profile and rejects stale singleton be
 test('private-fee wallet open and reopen honor both profiles and reject singleton changes before allocation',async()=>{
  const source=await fs.readFile(new URL('./w01-unfunded-wallet.mjs',import.meta.url),'utf8');
  const block=source.slice(source.indexOf(' const open='),source.indexOf(' const close='));assert(block);
- const make=new Function('directory','applicationNativeProfile','BackendType','Barretenberg','assert','EmbeddedWallet','applicationProver','node','persistentDirectory',block+'return open;');
- for(const threads of ['1','2'])for(const persistentDirectory of [undefined,'/private/tmp/test/wallet']){
+ const make=new Function('directory','applicationNativeProfile','BackendType','Barretenberg','assert','EmbeddedWallet','applicationProver','node','persistentDirectory','applicationProofsEnabled',block+'return open;');
+ for(const proofsEnabled of [false,true])for(const threads of ['1','2'])for(const persistentDirectory of [undefined,'/private/tmp/test/wallet']){
   const profile=directory=>applicationNativeProfile(directory,{C01_APPLICATION_BB_THREADS:threads}),expected={backend:'native',...profile('/private/tmp/test')};
   let options={...expected};const calls=[],bb={getSingleton:()=>({options})},node={};
-  const open=make('/private/tmp/test',profile,{NativeUnixSocket:'native'},bb,assert,{create:async(n,o)=>{assert.equal(n,node);calls.push(o);return {}; }},x=>x,node,persistentDirectory);
+  const open=make('/private/tmp/test',profile,{NativeUnixSocket:'native'},bb,assert,{create:async(n,o)=>{assert.equal(n,node);calls.push(o);return {}; }},x=>x,node,persistentDirectory,()=>proofsEnabled);
   await open();await open();assert.equal(calls.length,2);
-  for(const c of calls){assert.deepEqual(c.pxe.proverOrOptions,expected);assert.equal(c.ephemeral,persistentDirectory===undefined);assert.equal(c.pxe.dataDirectory,persistentDirectory);}
+  for(const c of calls){assert.equal(c.pxe.proverEnabled,proofsEnabled);assert.deepEqual(c.pxe.proverOrOptions,expected);assert.equal(c.ephemeral,persistentDirectory===undefined);assert.equal(c.pxe.dataDirectory,persistentDirectory);}
   for(const key of ['backend','bbPath','threads']){options={...expected,[key]:'wrong'};assert.throws(()=>open());assert.equal(calls.length,2);}
  }
 });

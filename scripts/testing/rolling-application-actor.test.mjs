@@ -45,14 +45,14 @@ async function fixture(t,options={}){
  const routing={createAztecWallet(_sdk,p,n,raw,_log,secret,opts){assert.equal(p,pxe);assert.equal(n,node);assert.equal(raw,node);wallet._transactionJournal=opts.transactionJournal;return wallet;},isPrivateWalletForNode:(w,n)=>!state.wrongWallet&&w===wallet&&n===node};
  const sdk={Fr,AztecAddress,Tx,encodeArguments,createL2Journal,SchnorrInitializerlessAccountContract:SyntheticAccountContract,
   isTrustedPrivateNode:n=>!state.wrongNode&&n===node,isPrivatePXEForNode:(p,n)=>!state.wrongPXE&&p===pxe&&n===node,
-  async inspectTrustedNode(n,c){assert.equal(n,node);assert.equal(c.proofsEnabled,true);await step('inspect');},
+  async inspectTrustedNode(n,c){assert.equal(n,node);assert.equal(c.proofsEnabled,options.proofsEnabled??true);await step('inspect');},
   async openPXEStore(config){state.storeConfig=config;await step('open-store');return store;},
-  async createPXE(n,c,o){assert.equal(n,node);assert.equal(o.store,store);assert.deepEqual(c,{proverEnabled:true,autoSync:false,syncChainTip:'checkpointed'});state.remote=o.remoteProver;await step('create-pxe');return pxe;},
+  async createPXE(n,c,o){assert.equal(n,node);assert.equal(o.store,store);assert.deepEqual(c,{proverEnabled:options.proofsEnabled??true,autoSync:false,syncChainTip:'checkpointed'});state.remote=o.remoteProver;await step('create-pxe');return pxe;},
   deriveKeys:async()=>({publicKeys:{}}),getContractInstanceFromInstantiationParams:async()=>({address:owner}),computePartialAddress:async()=>Fr.ONE,
   AccountManager:{async create(w,secret,contract){assert.equal(w,wallet);assert.equal(contract,state.contract);await step('account-manager');return {address:owner};}},
   Contract:{at:()=>({methods:{register_name:(...args)=>({args}),get_deposit_ids:()=>({simulate:async()=>({result:options.collateral?[1n,...Array(9).fill(0n)]:Array(10).fill(0n)})})}})},
   preparePrivateFeePayment:async()=>({availableCredit:100n}),estimatePrivateFeeTransaction:async()=>({maximumFee:10n,payload:{},gasSettings:{}})};
- const input={sdk,routing,node,endpoint:'http://127.0.0.1:12345',network:{chainId:'31337',version:'1',rollup:'0x'+'1'.repeat(40)},proofsEnabled:true,
+ const input={sdk,routing,node,endpoint:'http://127.0.0.1:12345',network:{chainId:'31337',version:'1',rollup:'0x'+'1'.repeat(40)},proofsEnabled:options.proofsEnabled??true,
   board:{instance:{address:address(2)},artifact},fees:{authorAccount:account,browserFixture:{instance:{address:address(3)},artifact:{functions:[]},gas:{}}},
   portal:'0x'+'2'.repeat(40),storageDirectory:path.join(directory,'journals'),dataDirectory:directory,
   externalActivity:()=>({proofJobs:state.proofJobs,transportSends:state.transportSends})};
@@ -64,7 +64,7 @@ test('installed account shape supplies synchronous provider shared by account an
  const account=contract.getAccount({address:address(4)});assert.equal(account.authWitnessProvider,account.entrypoint.auth);
 });
 test('separate actors use separate stores and actual application status without inventing collateral',async t=>{
- const a=await fixture(t,{collateral:true}),b=await fixture(t,{owner:5});let x,y;
+ const a=await fixture(t,{collateral:true}),b=await fixture(t,{owner:5,proofsEnabled:false});let x,y;
  try{x=await createRollingApplicationActor(a.input);y=await createRollingApplicationActor(b.input);
   assert.notEqual(x.pxe,y.pxe);assert.notEqual(x.journal,y.journal);
   assert.equal((await x.application.readAccountStatus()).status,'fee-ready');assert.equal((await y.application.readAccountStatus()).status,'collateral-pending');

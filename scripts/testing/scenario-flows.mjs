@@ -288,7 +288,7 @@ export async function avatarLog(ctx){
   const observation={passed:false,applicationProofs:applicationProofsEnabled(),networkProofs:false};
   let wallet;
   try{
-    wallet=await EmbeddedWallet.create(ctx.node,{ephemeral:true,pxe:{proverEnabled:true,autoSync:false,syncChainTip:'checkpointed',
+    wallet=await EmbeddedWallet.create(ctx.node,{ephemeral:true,pxe:{proverEnabled:applicationProofsEnabled(),autoSync:false,syncChainTip:'checkpointed',
       proverOrOptions:applicationProver({backend:BackendType.NativeUnixSocket,...applicationNativeProfile(ctx.directory)})}});
     const account=ctx.preparation.account;
     const manager=await wallet.createSchnorrInitializerlessAccount(account.secret,account.salt,account.signingKey,'avatar-disposable');

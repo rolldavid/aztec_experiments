@@ -101,7 +101,7 @@ export async function depositAndClaimC01({node,preparation,instance,l1Client,rea
     const probe=boundaryModule?.createT02InboxProbeNode(node);
     const account=authorAccount;
     if(ownsWallet){
-      wallet=await EmbeddedWallet.create(probe?.node??node,{ephemeral:true,pxe:{proverEnabled:true,proverOrOptions:applicationProver(native),autoSync:false,syncChainTip:'checkpointed'}});
+      wallet=await EmbeddedWallet.create(probe?.node??node,{ephemeral:true,pxe:{proverEnabled:applicationProofsEnabled(),proverOrOptions:applicationProver(native),autoSync:false,syncChainTip:'checkpointed'}});
       observation.walletCleanup='pending';
       const manager=await wallet.createSchnorrInitializerlessAccount(account.secret,account.salt,account.signingKey,'c01-disposable');
       assert(manager.address.equals(account.address));

@@ -82,7 +82,7 @@ async function runtime(input, {registerCleanup}) {
     import('@aztec-labs/foundation/json-rpc/client'),
   ]);
   assertNodeVersion(); assertAztecPackages();
-  assert.equal(process.env.BOARD_TEST_PROOFS ?? 'real', input.proofMode);
+  assert.equal(process.env.BOARD_TEST_PROOFS ?? 'disabled', input.proofMode);
   assert.equal(process.env.CRS_PATH, input.paths.crs);
   const binary = bbBinary(), wrapper = path.join(input.paths.nativeDirectory, 'bb-one-thread');
   assert(!binary.includes("'"));
@@ -104,7 +104,7 @@ async function runtime(input, {registerCleanup}) {
   const info = await node.getNodeInfo(); assert.equal(String(info.l1ChainId), '31337'); assert.equal(info.realProofs, input.proofMode === 'real');
   assert.equal(String(info.rollupVersion), input.network.rollupVersion);
   assert.equal(String(info.l1ContractAddresses.rollupAddress).toLowerCase(), input.network.rollupAddress);
-  const wallet = await EmbeddedWallet.create(node, {ephemeral: true, pxe: {proverEnabled: true, autoSync: false, syncChainTip: 'checkpointed',
+  const wallet = await EmbeddedWallet.create(node, {ephemeral: true, pxe: {proverEnabled: input.proofMode === 'real', autoSync: false, syncChainTip: 'checkpointed',
     proverOrOptions: applicationProver({backend: BackendType.NativeUnixSocket, bbPath: wrapper, threads: 1})}});
   registerCleanup(async () => {
     const failures = [];

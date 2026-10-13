@@ -47,7 +47,7 @@ export async function proveAndIncludeT02Screening({node,preparation,instance,cla
   const boardArtifact=await artifact(preparation);
   const native={backend:BackendType.NativeUnixSocket,bbPath:path.join(directory,'bb-one-thread'),threads:1};
   for(const key of ['backend','bbPath','threads'])assert.equal(Barretenberg.getSingleton().options[key],native[key]);
-  wallet=await EmbeddedWallet.create(node,{ephemeral:true,pxe:{proverEnabled:true,proverOrOptions:native,autoSync:false,syncChainTip:'checkpointed'}});
+  wallet=await EmbeddedWallet.create(node,{ephemeral:true,pxe:{proverEnabled:applicationProofsEnabled(),proverOrOptions:native,autoSync:false,syncChainTip:'checkpointed'}});
   for(const identity of [account,moderator]){const manager=await wallet.createSchnorrInitializerlessAccount(identity.secret,identity.salt,identity.signingKey,'t02-disposable');assert(manager.address.equals(identity.address));}
   await wallet.registerContract(instance,boardArtifact);await wallet.pxe.sync();
   const board=Contract.at(instance.address,boardArtifact,wallet);

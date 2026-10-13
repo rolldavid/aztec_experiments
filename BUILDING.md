@@ -202,12 +202,12 @@ assembling its own assets. Never refresh a manifest by hand to accept stale file
 
 Application tests reject stale PrivateBok inputs and either stale output before
 starting the chain, and repeat the fixture's checks at use. The two preference
-campaigns use disposable identities, genuine application proofs, the local HTTP
-prover and controlled local portal settlement:
+development campaigns use disposable identities, native proofs-disabled devnet/PXE configuration, the local HTTP
+service and controlled local portal settlement:
 
 ```sh
-NODE_BACKEND=js BOARD_TEST_PROOFS=real BOARD_TEST_REMOTE=1 node scripts/test-c01-application.mjs rolling-preference-relationships
-NODE_BACKEND=js BOARD_TEST_PROOFS=real BOARD_TEST_REMOTE=1 node scripts/test-c01-application.mjs rolling-preference-notifications
+NODE_BACKEND=js BOARD_TEST_PROOFS=disabled BOARD_TEST_REMOTE=1 node scripts/test-c01-application.mjs rolling-preference-relationships
+NODE_BACKEND=js BOARD_TEST_PROOFS=disabled BOARD_TEST_REMOTE=1 node scripts/test-c01-application.mjs rolling-preference-notifications
 ```
 
 Run them serially under the existing 540-second / 4 GiB supervisor. On macOS,

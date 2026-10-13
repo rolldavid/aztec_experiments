@@ -10,10 +10,13 @@ import {fingerprints,browserFingerprints,verifyCensorPackage,prepareRuntime} fro
 
 const ENTRY=path.join(ROOT,'scripts/test-c01-application.mjs');
 export async function runApplication(name) {
+  const proofMode=process.env.BOARD_TEST_PROOFS??'disabled';
+  assert(['disabled','real'].includes(proofMode),'Invalid BOARD_TEST_PROOFS');
   assertNodeVersion();assertAztecPackages();
   assert.equal(process.platform,'darwin');assert.equal(process.arch,'arm64');
   const scenario=getScenario(name),browser=scenario.browser!=='none',rollingBrowser=['rolling-composer','rolling-preferences','rolling-notifications'].includes(scenario.browser);
-  const report={applicationProofs:process.env.BOARD_TEST_PROOFS!=='disabled',remoteProver:process.env.BOARD_TEST_REMOTE==='1',schemaVersion:2,scenario:name,profile:scenario.description,startedAt:new Date().toISOString(),passed:false,stages:[]};
+  assert(!(rollingBrowser&&proofMode==='disabled'),'Browser development is held: its application PXE configuration still explicitly enables proofs');
+  const report={applicationProofs:proofMode==='real',remoteProver:process.env.BOARD_TEST_REMOTE==='1',schemaVersion:2,scenario:name,profile:scenario.description,startedAt:new Date().toISOString(),passed:false,stages:[]};
   const evidence=path.join(ROOT,'execution/evidence',scenario.evidenceTask,'application-'+randomUUID()+'.json');
   await fs.mkdir(path.dirname(evidence),{recursive:true});
   const directory=await fs.mkdtemp('/private/tmp/board-test-');
@@ -92,7 +95,7 @@ export async function runApplication(name) {
     assert(Number.isSafeInteger(fixtureHeapMiB)&&fixtureHeapMiB>=384&&fixtureHeapMiB<=768);
     report.fixtureHeapMiB=fixtureHeapMiB;
     const exit=await supervisor.start('fixture','/usr/bin/sandbox-exec',['-f',profile,process.execPath,'--max-old-space-size='+fixtureHeapMiB,ENTRY,'fixture-worker',name,directory],{
-      cwd:ROOT,env:{BOARD_TEST_PROOFS:process.env.BOARD_TEST_PROOFS??'real',BOARD_TEST_REMOTE:process.env.BOARD_TEST_REMOTE??'0',HOME:directory,TMPDIR:directory,PATH:path.dirname(process.execPath)+':/usr/bin:/bin',LOG_LEVEL:'silent',LOG_JSON:'1',LANG:'C',HARDWARE_CONCURRENCY:'1',C01_APPLICATION_BB_THREADS:String(scenario.applicationThreads),NODE_BACKEND:'js',FORGE_BIN:'/Users/zac/.foundry/bin/forge',C01_NETWORK_ROOT:directory,C01_ACVM_ROOT:path.join(directory,'acvm'),CRS_PATH:crs,FORGE_BROADCAST_TIMEOUT_MS:'240000',FOUNDRY_SOLC:'/Users/zac/Library/Application Support/svm/0.8.30/solc-0.8.30'},
+      cwd:ROOT,env:{BOARD_TEST_PROOFS:proofMode,BOARD_TEST_REMOTE:process.env.BOARD_TEST_REMOTE??'0',HOME:directory,TMPDIR:directory,PATH:path.dirname(process.execPath)+':/usr/bin:/bin',LOG_LEVEL:'silent',LOG_JSON:'1',LANG:'C',HARDWARE_CONCURRENCY:'1',C01_APPLICATION_BB_THREADS:String(scenario.applicationThreads),NODE_BACKEND:'js',FORGE_BIN:'/Users/zac/.foundry/bin/forge',C01_NETWORK_ROOT:directory,C01_ACVM_ROOT:path.join(directory,'acvm'),CRS_PATH:crs,FORGE_BROADCAST_TIMEOUT_MS:'240000',FOUNDRY_SOLC:'/Users/zac/Library/Application Support/svm/0.8.30/solc-0.8.30'},
       input:{browserControl:control??null,operatorPackage:operatorPackage??null,providerDeadlineAt,applicationDeadlineAt},onRecord:stage('fixture')});
     report.worker=await readResult('worker');
     assert.equal(exit.code,0);assert.equal(report.worker.passed,true);

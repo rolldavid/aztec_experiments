@@ -77,7 +77,7 @@ export async function proveAndIncludeC03Contention({node,preparation,instance,au
     const native={backend:BackendType.NativeUnixSocket,...applicationNativeProfile(directory)};
     for(const key of ['backend','bbPath','threads'])assert.equal(Barretenberg.getSingleton().options[key],native[key]);
     if(process.env.BOARD_TEST_REMOTE==='1')remoteFixture=await startRemoteProverFixture({directory,board:instance.address.toString(),info,bbPath:native.bbPath});
-    wallet=await EmbeddedWallet.create(node,{ephemeral:true,pxe:{proverEnabled:true,proverOrOptions:applicationProver(native,remoteFixture?.config),autoSync:false,syncChainTip:'checkpointed'}});
+    wallet=await EmbeddedWallet.create(node,{ephemeral:true,pxe:{proverEnabled:applicationProofsEnabled(),proverOrOptions:applicationProver(native,remoteFixture?.config),autoSync:false,syncChainTip:'checkpointed'}});
     await mark('register-'+count+'-accounts');
     for(const {account,claimResult} of authorClaims){
       assert(claimResult.passed&&claimResult.exactDeliveredNoteChecked);

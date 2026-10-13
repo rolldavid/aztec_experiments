@@ -59,7 +59,7 @@ export async function prepareC03AuthorClaims({node,preparation,instance,ready,se
     const scope={l1ChainId:'31337',rollupAddress,rollupVersion:String(info.rollupVersion),boardAddress:instance.address.toString(),portalAddress};
     const native={backend:BackendType.NativeUnixSocket,...applicationNativeProfile(directory)};
     for(const key of ['backend','bbPath','threads'])assert.equal(Barretenberg.getSingleton().options[key],native[key]);
-    wallet=await EmbeddedWallet.create(node,{ephemeral:true,pxe:{proverEnabled:true,proverOrOptions:native,autoSync:false,syncChainTip:'checkpointed'}});
+    wallet=await EmbeddedWallet.create(node,{ephemeral:true,pxe:{proverEnabled:applicationProofsEnabled(),proverOrOptions:native,autoSync:false,syncChainTip:'checkpointed'}});
     for(const account of accounts){const manager=await wallet.createSchnorrInitializerlessAccount(account.secret,account.salt,account.signingKey,'contention-author');assert(manager.address.equals(account.address));}
     await wallet.registerContract(instance,artifact);const board=Contract.at(instance.address,artifact,wallet);
     const records=[];mark('deposit-'+count+'-local-receipts');

@@ -1,3 +1,4 @@
+import {applicationProofsEnabled} from './proof-policy.mjs';
 // Test-only browser bridge. The existing campaign owns chain/miner/prover and
 // authenticates every transaction. Private phase files authorize no transaction.
 import assert from 'node:assert/strict';
@@ -114,7 +115,7 @@ export async function runRollingNotificationFixture({ctx,actor,fees,endpoint,net
   l1=await startComposerL1Reader({upstream:ctx.config.l1RpcUrls[0],origin:control.origin});
   const gas=fees.browserFixture.gas;
   const gasSettings=Object.fromEntries(['gasLimits','teardownGasLimits','maxFeesPerGas','maxPriorityFeesPerGas'].map(name=>[name,Object.fromEntries((name.endsWith('Gas')?['feePerDaGas','feePerL2Gas']:['daGas','l2Gas']).map(key=>[key,String(gas[name][key])]))]));
-  const configuration={config:{network:{chainId:network.chainId,rollupVersion:network.version,rollupAddress:network.rollup,ethRpcUrl:l1.url},board:{contractAddress:String(ctx.instance.address),portalAddress:String(ctx.ready.portalAddress).toLowerCase()},privateFee:{contractAddress:String(fees.browserFixture.instance.address),gasSettings}},trustedQuery:{url:endpoint+'/v1/node',allowLocalDev:true},remoteProver:{url:endpoint,board:String(ctx.instance.address),chainId:network.chainId,rollupVersion:network.version,proofsEnabled:true},proofsEnabled:true};
+  const configuration={config:{network:{chainId:network.chainId,rollupVersion:network.version,rollupAddress:network.rollup,ethRpcUrl:l1.url},board:{contractAddress:String(ctx.instance.address),portalAddress:String(ctx.ready.portalAddress).toLowerCase()},privateFee:{contractAddress:String(fees.browserFixture.instance.address),gasSettings}},trustedQuery:{url:endpoint+'/v1/node',allowLocalDev:true},remoteProver:{url:endpoint,board:String(ctx.instance.address),chainId:network.chainId,rollupVersion:network.version,proofsEnabled:applicationProofsEnabled()},proofsEnabled:applicationProofsEnabled()};
   await phase('wallet-assets');
   const wallet=await loadRollingWalletAssets(configuration,scope);
   await phase('public-reader');
