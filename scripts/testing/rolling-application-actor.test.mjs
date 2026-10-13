@@ -23,7 +23,7 @@ import vm from 'node:vm';
 import * as outcomes from '../../shared/transaction-outcomes.mjs';
 import {SchnorrInitializerlessAccountContract} from '@aztec-labs/accounts/schnorr';
 import {createL2Journal} from '../../shared/l2-journal.mjs';
-import {createRollingApplicationActor} from './rolling-application-actor.mjs';
+import {createRollingApplicationActor,bindRollingRootSubmission} from './rolling-application-actor.mjs';
 import {createRollingPrivateRecoveryMetrics} from './rolling-private-recovery-metrics.mjs';
 const artifact=loadContractArtifact(JSON.parse(await fs.readFile(process.env.ROLLING_TEST_ARTIFACT??new URL('../../billboard/target/rolling_contract-RollingBoard.json',import.meta.url),'utf8')));
 const hex=n=>'0x'+BigInt(n).toString(16).padStart(64,'0'),address=n=>AztecAddress.fromBigIntUnsafe(BigInt(n));
@@ -414,4 +414,103 @@ test('explicit cold actor defers account signing and never falls back when exten
 test('ordinary actor rejects an unselected cold capability',async t=>{
  const f=await fixture(t),actor=await createRollingApplicationActor(f.input);
  try{await assert.rejects(actor.application.readColdPreferences(),/not selected/);assert.equal(actor.activity().walletSubmissions,0);}finally{await actor.close();}
+});
+
+
+// Labelled engine/journal adapters. The genuine engine calls exactly these
+// existing methods; no generated proof, chain or funding acceptance here.
+function rootHookFixture(){
+ const operation='ROLLING_WORKFLOW_V1:private',txHash=hex(88),bytes=Buffer.from('PRIVATE_BYTES'),events=[];
+ const state={live:true,prepared:false,observed:null,before:null,prepareResult:{saved:true}};
+ const tx={toBuffer:()=>Buffer.from(bytes),getTxHash:()=>txHash};
+ const journal={
+  setOperation(value){assert.equal(this,journal);assert.equal(value,operation);events.push('set');},
+  assertCanStart(){assert.equal(this,journal);events.push('previous');return state.previous;},
+  async prepare(...args){assert.equal(this,journal);state.prepareArgs=args;events.push('prepare');if(state.prepareWait)await state.prepareWait;state.prepared=true;return state.prepareResult;},
+  inspect(){assert.equal(this,journal);assert(state.prepared);events.push('inspect');return {operation,txHash};},
+  confirmed(value){assert.equal(this,journal);state.receipt=value;events.push('confirmed');},
+ };
+ const hook={journalPrepared(value){assert.equal(this,hook);assert(state.prepared);events.push('observed');state.observed=value;},async beforeSubmit(value){assert.equal(this,hook);events.push('hook');state.before=value;if(state.hookWait)await state.hookWait;}};
+ const capability={select(value){assert.equal(this,capability);assert.equal(value,operation);return hook;}};
+ const opts={transactionJournal:journal,journalOperation:operation,from:'private',fee:{}};
+ return {state,events,tx,bytes,txHash,operation,journal,hook,capability,args:[{},opts],guard:()=>assert(state.live)};
+}
+test('root adapter observes real journal completion and preserves receivers, arguments and result',async()=>{
+ const f=rootHookFixture(),selected=await bindRollingRootSubmission(f.args,f.capability,f.guard),j=selected[1].transactionJournal;
+ assert.equal(selected[0],f.args[0]);assert.equal(f.args[1].transactionJournal,f.journal);assert(!('beforeSubmit'in f.args[1]));
+ j.setOperation(f.operation);assert.equal(j.assertCanStart(),undefined);
+ const previous={encoded:'private'},options={};assert.equal(await j.prepare(f.tx,previous,options),f.state.prepareResult);
+ assert.deepEqual(f.state.prepareArgs,[f.tx,previous,options]);assert.deepEqual(f.state.observed,{operation:f.operation,txHash:f.txHash,bytes:f.bytes});
+ f.state.observed.bytes.fill(0);assert.equal(f.tx.toBuffer().toString(),'PRIVATE_BYTES');
+ await selected[1].beforeSubmit(f.txHash);assert.deepEqual(f.state.before,{operation:f.operation,txHash:f.txHash});
+ const receipt={};j.confirmed(receipt);assert.equal(f.state.receipt,receipt);assert.deepEqual(f.events,['set','previous','prepare','inspect','observed','hook','confirmed']);
+});
+for(const fault of ['hook-collision','wait-collision','unprepared','wrong-hash','context-after-hook','mutated-tx'])test('root adapter rejects '+fault+' without replacing engine safeguards',async()=>{
+ const f=rootHookFixture();if(fault==='hook-collision')f.args[1].beforeSubmit=()=>{};if(fault==='wait-collision')f.args[1].wait={};
+ if(fault.endsWith('collision')){await assert.rejects(bindRollingRootSubmission(f.args,f.capability,f.guard));return;}
+ const selected=await bindRollingRootSubmission(f.args,f.capability,f.guard);
+ if(fault==='unprepared'){await assert.rejects(selected[1].beforeSubmit(f.txHash));return;}
+ if(fault==='mutated-tx')f.journal.prepare=async()=>{f.state.prepared=true;f.tx.toBuffer=()=>Buffer.from('MUTATED');};
+ if(fault==='mutated-tx'){await assert.rejects(selected[1].transactionJournal.prepare(f.tx));assert.equal(f.state.observed,null);return;}
+ await selected[1].transactionJournal.prepare(f.tx);
+ if(fault==='context-after-hook')f.hook.beforeSubmit=()=>{}; // Captured callback, not mutable authority.
+ if(fault==='context-after-hook'){let release;f.state.hookWait=new Promise(r=>{release=r;});const work=selected[1].beforeSubmit(f.txHash);f.state.live=false;release();await assert.rejects(work);}
+ else await assert.rejects(selected[1].beforeSubmit(hex(89)));
+});
+for(const error of [undefined,null,false,0,Error('PRIVATE_ERROR')])test('root adapter preserves journal rejection before any observer '+String(error),async()=>{
+ const f=rootHookFixture();f.journal.prepare=function(){assert.equal(this,f.journal);return Promise.reject(error);};
+ const selected=await bindRollingRootSubmission(f.args,f.capability,f.guard),result=await selected[1].transactionJournal.prepare(f.tx).then(()=>({resolved:true}),reason=>({reason}));
+ assert(!result.resolved);assert.equal(result.reason,error);assert.equal(f.state.observed,null);
+});
+test('root adapter drains malformed asynchronous selector and journal observer',async()=>{
+ const f=rootHookFixture(),error=Error('PRIVATE_CALLBACK');let selectSettled=false;
+ f.capability.select=async()=>{await Promise.resolve();selectSettled=true;throw error;};
+ await assert.rejects(bindRollingRootSubmission(f.args,f.capability,f.guard),e=>e===error);assert(selectSettled);
+ const g=rootHookFixture();let observed=false;g.hook.journalPrepared=async()=>{await Promise.resolve();observed=true;throw error;};
+ const selected=await bindRollingRootSubmission(g.args,g.capability,g.guard);await assert.rejects(selected[1].transactionJournal.prepare(g.tx),e=>e===error);assert(observed);
+});
+test('unselected root adapter preserves existing replacement hook and original option object',async()=>{
+ const f=rootHookFixture();f.args[1].beforeSubmit=()=>{};f.capability.select=()=>undefined;
+ assert.equal(await bindRollingRootSubmission(f.args,f.capability,f.guard),f.args);
+});
+test('actor rejects malformed root capability before mutable store construction',async t=>{
+ const f=await fixture(t);let accessed=0;
+ await assert.rejects(createRollingApplicationActor({...f.input,rootSubmissionGate:{get select(){accessed++;return ()=>{};}}}));
+ assert.equal(accessed,0);assert(!f.state.calls.includes('open-store'));
+ await assert.rejects(createRollingApplicationActor({...f.input,confirmationDeadlineAt:Date.now()+1000,rootSubmissionGate:{select:()=>undefined}}));assert(!f.state.calls.includes('open-store'));
+});
+test('root adapter drains an own-data thenable without invoking accessor results',async()=>{
+ const f=rootHookFixture();let drained=false;f.capability.select=()=>({then(resolve){queueMicrotask(()=>{drained=true;resolve({});});}});
+ await assert.rejects(bindRollingRootSubmission(f.args,f.capability,f.guard));assert(drained);
+ let accessed=0;f.capability.select=()=>({get then(){accessed++;return ()=>{};}});
+ await assert.rejects(bindRollingRootSubmission(f.args,f.capability,f.guard));assert.equal(accessed,0);
+});
+
+test('actual engine and AEAD journal invoke root gate after saved bytes and before one ordinary submission',async t=>{
+ const f=await confirmationFixture(t);let prepared,entered=false;
+ const hook={journalPrepared(value){prepared=value;},async beforeSubmit(value){assert.equal(value.txHash,prepared.txHash);entered=true;assert(!f.events.includes('send'));}};
+ f.input.node.getTxReceipt=async()=>({txHash:f.tx.getTxHash(),status:'checkpointed',executionResult:'success',blockNumber:1,blockHash:hex(3),transactionFee:1n});
+ f.input.node.getBlock=async()=>({hash:hex(3)});
+ const actor=await createRollingApplicationActor({...f.input,rootSubmissionGate:{select:()=>hook}});
+ try{
+  const intent=await actor.application.prepare({type:'name',first:'River',last:'Stone'});
+  const result=await actor.application.submitPrepared(intent.intentId);assert.equal(result.status,'confirmed');assert(entered);
+  assert.equal(prepared.operation,'ROLLING_WORKFLOW_V1:'+intent.intentId);assert.equal(prepared.txHash,txHash(f.tx));assert(prepared.bytes.equals(f.tx.toBuffer()));
+  assert.equal(f.events.filter(x=>x==='proof').length,1);assert.equal(f.events.filter(x=>x==='send').length,1);
+  assert.equal((await actor.journal.inspect()).txHash,prepared.txHash);
+ }finally{await actor.close();}
+});
+test('actual engine held root hook retains actor lease through close and cannot send after lock',async t=>{
+ const f=await confirmationFixture(t);let release,entered,prepared;
+ const held=new Promise(r=>release=r),seen=new Promise(r=>entered=r);
+ const hook={journalPrepared(value){prepared=value;},async beforeSubmit(){entered();await held;f.events.push('hook-settled');}};
+ const actor=await createRollingApplicationActor({...f.input,rootSubmissionGate:{select:()=>hook}});
+ let pending;
+ try{
+  const intent=await actor.application.prepare({type:'name',first:'River',last:'Stone'});
+  pending=actor.application.submitPrepared(intent.intentId);const rejected=assert.rejects(pending,{code:'ROLLING_ACTOR_CONTEXT'});await seen;
+  assert.equal((await actor.journal.inspect()).txHash,prepared.txHash);assert(prepared.bytes.equals(f.tx.toBuffer()));
+  const closing=actor.close();assert.equal(f.state.stops,0);assert(!f.events.includes('send'));
+  release();await rejected;await closing;assert.equal(f.state.stops,1);assert(f.events.indexOf('hook-settled')<f.events.indexOf('stop'));assert(!f.events.includes('send'));
+ }finally{release();if(pending)await pending.catch(()=>{});await actor.close();}
 });

@@ -9,6 +9,7 @@ import {classifyT03PublicFootprint} from '../t03-public-footprint.mjs';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import http from 'node:http';
+import {AsyncLocalStorage} from 'node:async_hooks';
 import {createConnection} from 'node:net';
 import {createHash,randomUUID} from 'node:crypto';
 import {execFileSync} from 'node:child_process';
@@ -24,7 +25,7 @@ export async function runRollingPublicRecoveryChecks({boundedCold,recoverPrivate
   if(boundedCold){await verifyPublic();await recoverPrivate();}
   else{await recoverPrivate();await verifyPublic();}
 }
-export const rollingTrustedProofThreads=scenario=>['notification-browser','preference-browser'].includes(scenario)?2:1;
+export const rollingTrustedProofThreads=scenario=>['notification-browser','preference-browser','preference-reorg-initial','preference-reorg-marker'].includes(scenario)?2:1;
 const discard=()=>{};
 const silent=Object.assign(discard,Object.fromEntries(['trace','debug','verbose','info','warn','error','fatal'].map(k=>[k,discard])),
   {level:'silent',isLevelEnabled:()=>false,getBindings:()=>({}),createChild:()=>silent});
@@ -36,7 +37,7 @@ const SOURCES=['shared/rolling/cold-preference-reader.mjs','shared/rolling/compa
   'shared/rolling/application.mjs','shared/rolling/synchronized-application.mjs','shared/rolling/public-events.mjs','shared/rolling/public-projection.mjs',
   'shared/private-fee-client.mjs','shared/private-fee-estimation.mjs','shared/private-fee-simulation.mjs','shared/l2-journal.mjs','shared/journal-record.mjs',
   'shared/sdk-store.mjs','shared/transaction-outcomes.mjs','apps/src/billboard/user/engine.js','apps/src/billboard/user/transaction-journal-store.mjs',
-  'prover/service.mjs','prover/server.mjs','prover/private-query.mjs','prover/catalog.mjs','prover/rolling-artifacts.mjs','prover/rolling-artifacts.json',
+  'prover/process-worker.mjs','prover/worker.mjs','prover/worker-native-profile.mjs','prover/service.mjs','prover/server.mjs','prover/private-query.mjs','prover/catalog.mjs','prover/rolling-artifacts.mjs','prover/rolling-artifacts.json',
   'apps/src/billboard/private_fee_artifact.json',
   'scripts/testing/rolling-public-acceptance.mjs','shared/rolling/public-index.mjs','shared/public-feed-file-storage.mjs','shared/public-feed-storage.mjs',
   'scripts/rolling-public-server.mjs','apps/rolling/start.mjs','apps/rolling/reader-client.mjs',
@@ -272,7 +273,10 @@ export function countRollingColdPhysicalPages(block) {
   let pages=0;for(const effect of effects){assert(Array.isArray(effect.privateLogs)&&effect.privateLogs.length<=64);pages+=Math.ceil(effect.privateLogs.length/8);}
   return Math.max(1,pages);
 }
-export async function startNodeRpc(node,onSend=()=>{},{faults=false,recoveryMetrics=()=>undefined,compactBlocks}={}) {
+export async function startNodeRpc(node,onSend=()=>{},{faults=false,recoveryMetrics=()=>undefined,compactBlocks,beforeForward}={}) {
+  assert(beforeForward===undefined||typeof beforeForward==='function');const requestScope=new AsyncLocalStorage(),pendingSends=new Set();
+  const ownSend=value=>{const work=Promise.resolve(value);pendingSends.add(work);work.then(()=>pendingSends.delete(work),()=>pendingSends.delete(work));return value;};
+  const drainSends=async()=>{await Promise.allSettled([...pendingSends]);return {pending:pendingSends.size};};
   let fault='healthy',deniedTransaction;const diagnostic={unavailableRequests:0,personalizedDenied:0,sendDenied:0,forwarded:{}};
   const setFault=value=>{assert(faults&&['healthy','unavailable','personalized-once','send-before-forward'].includes(value));fault=value;};
   const {createNamespacedSafeJsonRpcServer}=await import('@aztec-labs/foundation/json-rpc/server');
@@ -283,7 +287,14 @@ export async function startNodeRpc(node,onSend=()=>{},{faults=false,recoveryMetr
     // never accidentally turn an intentionally unsent signed transaction into
     // a submitted one. Preserve the real decoded SDK transaction for evidence.
     if(fault==='send-before-forward'&&name==='sendTx'){diagnostic.sendDenied++;deniedTransaction=args[0];throw Error('Controlled upstream unavailable');}
-    diagnostic.forwarded[name]=(diagnostic.forwarded[name]??0)+1;if(name==='sendTx')onSend(args[0]);return forwardRecoveryObservedNodeCall(node,name,args,recoveryMetrics());
+    if(name==='sendTx'&&beforeForward){
+      const result=beforeForward(args[0],requestScope.getStore());
+      // A malformed asynchronous fence cannot forward or leave an unhandled
+      // rejection. Retain the RPC operation until its returned work settles.
+      if(result!==undefined)return ownSend(Promise.resolve(result).then(()=>{throw Error('Forward fence must be synchronous');}));
+    }
+    diagnostic.forwarded[name]=(diagnostic.forwarded[name]??0)+1;if(name==='sendTx')onSend(args[0]);
+    const result=forwardRecoveryObservedNodeCall(node,name,args,recoveryMetrics());return name==='sendTx'&&beforeForward?ownSend(result):result;
   } ]));
   const rpc=createNamespacedSafeJsonRpcServer({aztec:[api,AztecNodeApiSchema]},
     {maxBatchSize:8,maxBodySizeBytes:8*1024*1024,corsAllowedOrigins:[],log:silent});
@@ -304,14 +315,14 @@ export async function startNodeRpc(node,onSend=()=>{},{faults=false,recoveryMetr
     }
     if(req.method!=='POST'||req.url!=='/'||req.headers.origin!==undefined||!/^application\/json(?:;|$)/i.test(req.headers['content-type']??'')){res.writeHead(403);res.end();return;}
     if(fault==='unavailable'){diagnostic.unavailableRequests++;res.writeHead(503);res.end();return;}
-    callback(req,res);
+    requestScope.run(()=>req.complete&&!req.aborted&&!res.destroyed&&!res.writableEnded&&!req.socket.destroyed,()=>callback(req,res));
   });
   server.requestTimeout=30000;server.headersTimeout=10000;
   try{await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(0,'127.0.0.1',resolve);});}
   catch(error){server.close();server.closeAllConnections();throw error;}
   const port=server.address().port;
-  return {url:`http://127.0.0.1:${port}/`,coldSnapshot:()=>({...compactDiagnostic,pending:pendingCompact.size,privateTags:diagnostic.forwarded.getPrivateLogsByTags??0,publicTags:diagnostic.forwarded.getPublicLogsByTags??0}),compactSnapshot:()=>({...compactDiagnostic,pending:pendingCompact.size}),...(faults?{setFault,snapshot:()=>structuredClone(diagnostic),deniedTransaction:()=>deniedTransaction}:{}),close:async()=>{
-    await new Promise((resolve,reject)=>{server.close(error=>error?reject(error):resolve());server.closeAllConnections();});await Promise.all([...pendingCompact]);await closedPort(port);
+  return {url:`http://127.0.0.1:${port}/`,drainSends,coldSnapshot:()=>({...compactDiagnostic,pending:pendingCompact.size,privateTags:diagnostic.forwarded.getPrivateLogsByTags??0,publicTags:diagnostic.forwarded.getPublicLogsByTags??0}),compactSnapshot:()=>({...compactDiagnostic,pending:pendingCompact.size}),...(faults?{setFault,snapshot:()=>structuredClone(diagnostic),deniedTransaction:()=>deniedTransaction}:{}),close:async()=>{
+    await new Promise((resolve,reject)=>{server.close(error=>error?reject(error):resolve());server.closeAllConnections();});await Promise.all([...pendingCompact]);await drainSends();await closedPort(port);
   }};
 }
 
@@ -373,7 +384,7 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
   const save=()=>fs.writeFile(path.join(directory,'observation.json'),json(report),{mode:0o600});
   const mark=async stage=>{if(ctx.applicationDeadlineAt!==undefined)assert(Date.now()<ctx.applicationDeadlineAt,'Parent campaign budget exhausted');report.stage=stage;ctx.mark?.('rolling-application:'+stage);await save();};
   const sourceBinding=async()=>Object.fromEntries(await Promise.all(SOURCES.map(async name=>[name,sha(await fs.readFile(path.join(ROOT,name)))])));
-  let fees,feesB,actorA,actorB,activeActor,pxe,rpc,service,failure,restoreIndexedDB,nativeArtifacts,owner,appWallet,journal;
+  let fees,feesB,actorA,actorB,coldActor,rootOverlap,activeActor,pxe,rpc,service,failure,restoreIndexedDB,nativeArtifacts,owner,appWallet,journal;
   let coldRecoveryMetrics;
   let wire,ordinaryRpc,completeTrustedRecovery,collisionObserver,withdrawalCompletion,completePreferenceReorg,pausePreferenceBoundary;
   let transportSends=0,feeTotalB=0n,fundingRole,collateralRole;
@@ -509,10 +520,15 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
       await observe('after-first-wall-mine');
       await mark('node-rpc-startup');
       const forwardedSaved=[];
-      rpc=await startNodeRpc(ctx.node,tx=>{assert(transportSends<Number.MAX_SAFE_INTEGER);transportSends++;if(preferenceSaved||notificationBrowser){assert(forwardedSaved.length<(notificationBrowser?4:3));forwardedSaved.push(tx);};},{faults:recovery||preferenceSaved,recoveryMetrics:()=>coldRecoveryMetrics,...(boundedCold?{compactBlocks:{expectedNetworkScope:network,proofsEnabled:real,tier:'checkpointed'}}:{})});
+      if(preferenceReorg){
+        const {createRollingRootProofOverlap}=await import('./rolling-preference-recovery.mjs');
+        rootOverlap=createRollingRootProofOverlap({stats:()=>service.stats(),contextGuard:()=>actorA.contextGuard()});
+      }
+      rpc=await startNodeRpc(ctx.node,tx=>{assert(transportSends<Number.MAX_SAFE_INTEGER);transportSends++;if(preferenceSaved||notificationBrowser){assert(forwardedSaved.length<(notificationBrowser?4:3));forwardedSaved.push(tx);};},{...(preferenceReorg?{beforeForward:(tx,live)=>rootOverlap.beforeForward(tx,live)}:{}),faults:recovery||preferenceSaved,recoveryMetrics:()=>coldRecoveryMetrics,...(boundedCold?{compactBlocks:{expectedNetworkScope:network,proofsEnabled:real,tier:'checkpointed'}}:{})});
       await mark('trusted-service-startup');
       const trustedProofThreads=rollingTrustedProofThreads(scenario);
-      if(preferenceBrowser)assert.equal(process.env.C01_APPLICATION_BB_THREADS,'2','Browser application profile must match trusted worker');report.trustedProofThreads=trustedProofThreads;
+      if(preferenceBrowser)assert.equal(process.env.C01_APPLICATION_BB_THREADS,'2','Browser application profile must match trusted worker');
+      if(preferenceReorg)assert.equal(process.env.C01_APPLICATION_BB_THREADS,'2','Reorg application profile must match trusted worker');report.trustedProofThreads=trustedProofThreads;
       service=await startProverService({host:'127.0.0.1',port:0,board:String(ctx.instance.address),chainId:31337,rollupVersion:info.rollupVersion,
         ...(boundedCold?{compactBlocks:{tier:'checkpointed'}}:{}),applicationProfile:'rolling',privateBokAddress:String(bokInstance.address),privateFeeAddress:String(fees.browserFixture.instance.address),
         proofs:real?'real':'disabled',origins:(composer||preferenceBrowser||notificationBrowser)?[ctx.browserControl.origin]:[],threads:trustedProofThreads,queueDirectory:ctx.directory,crsPath:process.env.CRS_PATH,
@@ -539,7 +555,7 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
       restoreIndexedDB=()=>{for(const [key,descriptor] of previous)if(descriptor)Object.defineProperty(globalThis,key,descriptor);else delete globalThis[key];};
       for(const k of keys)Object.defineProperty(globalThis,k,{value:k==='indexedDB'?new idb.IDBFactory():idb[k],writable:true,configurable:true});
       const {createRollingApplicationActor}=await import('./rolling-application-actor.mjs');
-      const makeActor=(funding,role,dataDirectory='rolling-application-test-'+role,metrics,coldPreferences=false)=>createRollingApplicationActor({sdk,routing,node,endpoint,network,proofsEnabled:real,coldPreferences,...(metrics?{metrics}:{}),
+      const makeActor=(funding,role,dataDirectory='rolling-application-test-'+role,metrics,coldPreferences=false)=>createRollingApplicationActor({sdk,routing,node,endpoint,network,proofsEnabled:real,coldPreferences,...(metrics?{metrics}:{}),...(preferenceReorg&&role==='a'?{rootSubmissionGate:rootOverlap.capability}:{}),
         board:{instance:ctx.instance,artifact:checked.artifact},fees:funding,portal:ctx.ready.portalAddress,
         storageDirectory:path.join(ctx.directory,'rolling-application-journals-'+role),dataDirectory,
         ...(race?{confirmationDeadlineAt:ctx.applicationDeadlineAt-90000}:{}),
@@ -568,6 +584,7 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
         await mark(type);
         const row={action:type,startedAt:Date.now(),submission:'not attempted'};report.transactions.push(row);await save();
         const prepared=await app.prepare(input);actorIntents.set(selected,prepared.intentId);row.maximumFee=prepared.maximumFee;
+        if(preferenceReorg&&type==='preference-root')rootOverlap.arm('ROLLING_WORKFLOW_V1:'+prepared.intentId);
         row.submission='outcome unknown';await save();
         const result=await app.submitPrepared(prepared.intentId);
         const outcome=await journal.inspectOutcome();assert(outcome?.receipt);
@@ -756,13 +773,65 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
           const registered=await action({type:'name',first:'River',last:'Stone'},'preference-name');
           assert.equal(registered.length,1);assert.equal(registered[0].type,'NameRegistered');ids.nameId=registered[0].payload.name_id;
         }
+        const {createRollingColdReorgSnapshots,COLD_REORG_BUDGET}=await import('./rolling-preference-recovery.mjs');
+        let coldSnapshots,privateSnapshot,coldObservation;
+        if(preferenceReorg){
+          assert(real,'Reorg acceptance requires genuine proofs');
+          coldActor=await makeActor(fees,'a-cold',undefined,undefined,true);
+          assert.notEqual(coldActor.pxe,actorA.pxe);assert.notEqual(coldActor.journal,actorA.journal);
+          coldObservation=report.preferenceReorg={passed:false,mode:markerReorg?'initialized-marker-cold':'initialization-hot',fork:{}};
+          coldObservation.cold={};
+          coldSnapshots=createRollingColdReorgSnapshots({
+            readPreferences:options=>coldActor.application.readColdPreferences(options),activity:()=>coldActor.activity(),
+            transport:()=>rpc.coldSnapshot(),persist:save,observation:coldObservation.cold,bootstrap:true,
+            // Public native body counts are an independent workload oracle,
+            // never private event authority. The reader still authenticates the
+            // whole ordered effects root and every original note/event envelope.
+            physicalPages:async({fromBlock,anchor,deadlineAt})=>{
+              coldActor.contextGuard();
+              const before=await ctx.node.getBlockData(anchor.blockNumber);assert.equal(String(before?.blockHash),anchor.blockHash);
+              let pages=0;
+              for(let number=fromBlock;number<=anchor.blockNumber;number++){
+                assert(Date.now()<deadlineAt);
+                const block=await ctx.node.getBlock(number);assert(block);assert.equal(block.header.getBlockNumber(),number);
+                pages+=countRollingColdPhysicalPages(block);
+              }
+              assert.equal(String((await ctx.node.getBlockData(anchor.blockNumber))?.blockHash),anchor.blockHash);coldActor.contextGuard();return pages;
+            }});
+          privateSnapshot=(phase,options={})=>coldSnapshots.read(phase,Math.min(ctx.applicationDeadlineAt-15000,Date.now()+
+            (['bootstrap','restored'].includes(phase)?COLD_REORG_BUDGET.fullReadMs:COLD_REORG_BUDGET.suffixReadMs)),options);
+        }
         await waitPostAdmission();
         const publishRoot=async()=>{
           const published=await action({type:'post',deposit:String(claim.claim.depositChainId),name:ids.nameId??'0',subboard:'0',content:'A genuine preference recovery post.'},'preference-root');
           assert.equal(published.length,1);assert.equal(published[0].type,'PostPublished');ids.rootId=published[0].payload.id;
           return published[0];
         };
-        const rootEvent=notificationBrowser?undefined:await publishRoot();
+        let rootEvent;
+        if(preferenceReorg){
+          coldObservation.overlap={passed:false};await save();
+          try{
+            rootEvent=await rootOverlap.run({submit:publishRoot,
+              admissionDeadlineAt:Math.min(Date.now()+COLD_REORG_BUDGET.fullReadMs,ctx.applicationDeadlineAt-COLD_REORG_BUDGET.forkReserveMs),
+              scanDeadline:()=>Math.min(Date.now()+COLD_REORG_BUDGET.fullReadMs,ctx.applicationDeadlineAt-COLD_REORG_BUDGET.forkReserveMs),
+              bootstrap:async({signal,deadlineAt})=>{
+                const value=await coldSnapshots.read('bootstrap',deadlineAt,{signal});
+                assert.deepEqual(value.head,{initialized:false,schema:1,revision:'0',digest:'0'});
+                for(const key of ['bookmarks','followedBoards','followedNames','subscriptions','readMarkers'])assert.deepEqual(value[key],[]);
+                assert.equal(value.replyNotifications,true);return value;
+              }});
+            coldObservation.overlap.passed=true;
+            // Each successful real worker checks its actual initialized native
+            // backend/thread profile, not just the requested environment.
+            assert(service.stats().completed===1&&service.stats().failed===0);
+            coldObservation.workerProfile={threads:trustedProofThreads,completedWorkerProfileAsserted:true};
+          }finally{
+            // submitOnce's bounded read can settle before an underlying native
+            // call. Keep that original writer owned before any actor disposal.
+            coldObservation.overlap.native=await rpc.drainSends();assert.equal(coldObservation.overlap.native.pending,0);
+            Object.assign(coldObservation.overlap,rootOverlap.snapshot());await save();
+          }
+        }else rootEvent=notificationBrowser?undefined:await publishRoot();
         const rootPosition=rootEvent?.position;
         if(notificationBrowser){
           assert(real,'Notification browser acceptance requires genuine proofs');
@@ -809,7 +878,7 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
           const {EthCheatCodes}=await import('@aztec-labs/ethereum/test');
           const {replaceRollingL1Suffix}=await import('./rolling-preference-reorg.mjs');
           const eth=new EthCheatCodes(ctx.config.l1RpcUrls,ctx.dateProvider,silent);
-          const observation=report.preferenceReorg={passed:false,mode:markerReorg?'initialized-marker-cold':'initialization-hot',fork:{}};
+          const observation=coldObservation;
           const pending=async()=>Number(await ctx.l1Client.readContract({address:network.rollup,abi:RollupAbi,functionName:'getPendingCheckpointNumber'}));
           const tips=()=>ctx.node.getChainTips();
           pausePreferenceBoundary=async()=>{
@@ -818,27 +887,6 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
             for(;;){const t=await tips();if(t.proposed.number===t.checkpointed.block.number&&await pending()===Number(t.checkpointed.checkpoint.number))return t;
               assert(Date.now()<deadline,'Published checkpoint boundary did not converge');await sleep(100);}
           };
-          const {createRollingColdReorgSnapshots,COLD_REORG_BUDGET}=await import('./rolling-preference-recovery.mjs');
-          observation.cold={};
-          const coldSnapshots=createRollingColdReorgSnapshots({
-            readPreferences:options=>actorA.application.readColdPreferences(options),activity:()=>actorA.activity(),
-            transport:()=>rpc.coldSnapshot(),persist:save,observation:observation.cold,
-            // Public native body counts are an independent workload oracle,
-            // never private event authority. The reader still authenticates the
-            // whole ordered effects root and every original note/event envelope.
-            physicalPages:async({fromBlock,anchor,deadlineAt})=>{
-              actorA.contextGuard();
-              const before=await ctx.node.getBlockData(anchor.blockNumber);assert.equal(String(before?.blockHash),anchor.blockHash);
-              let pages=0;
-              for(let number=fromBlock;number<=anchor.blockNumber;number++){
-                assert(Date.now()<deadlineAt);
-                const block=await ctx.node.getBlock(number);assert(block);assert.equal(block.header.getBlockNumber(),number);
-                pages+=countRollingColdPhysicalPages(block);
-              }
-              assert.equal(String((await ctx.node.getBlockData(anchor.blockNumber))?.blockHash),anchor.blockHash);actorA.contextGuard();return pages;
-            }});
-          const privateSnapshot=phase=>coldSnapshots.read(phase,Math.min(ctx.applicationDeadlineAt-15000,Date.now()+
-            (['retained','restored'].includes(phase)?COLD_REORG_BUDGET.fullReadMs:COLD_REORG_BUDGET.suffixReadMs)));
           async function emptySuffix(atLeast,tick){
             const checkpoints=createT04CheckpointScope(ctx.node.getSequencer()),deadline=Math.min(Date.now()+30000,ctx.applicationDeadlineAt-60000);
             try{checkpoints.enable();while((await tips()).checkpointed.block.number<atLeast){assert(Date.now()<deadline,'Empty checkpoint suffix did not publish');await tick();}
@@ -891,6 +939,9 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
                 // reopen of the orphaned prefix, never a fresh-store bypass.
                 actorA=activeActor=await makeActor(fees,'a',undefined,undefined,true);actorIntents.delete(old);actorIntents.set(actorA,intentId);
                 pxe=actorA.pxe;appWallet=actorA.wallet;journal=actorA.journal;app=actorA.application;
+                const oldCold=coldActor;await oldCold.close();assert.throws(()=>oldCold.contextGuard());
+                coldActor=await makeActor(fees,'a-cold',undefined,undefined,true);
+                observation.sameObserverStoreColdReopen=true;
                 observation.sameStoreColdReopen=true;
               }
               assert.equal((await actorA.journal.inspect()).txHash,originalRow.txHash);
@@ -1518,6 +1569,7 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
     wire?.setPhase('cleanup');
     try{await closeRollingResources([
       ...(actorA?[['applicationActorA',()=>actorA.close()]]:[]),
+      ...(coldActor?[['coldRecoveryActor',()=>coldActor.close()]]:[]),
       ...(actorB?[['applicationActorB',()=>actorB.close()]]:[]),
       ...(fees?[['fundingWallet',()=>fees.close()]]:[]),
       ...(feesB?[['fundingWalletB',()=>feesB.close()]]:[]),

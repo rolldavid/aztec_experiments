@@ -730,15 +730,18 @@ test('actual cold reorg dispatch enables only the existing two reorg lanes in ad
  for(const scenario of ['preference-relationships','preference-browser','notification-browser','preference-reorg-initial','preference-reorg-marker'])assert.equal(enabled(scenario),true);
  for(const scenario of ['preference-saved','preference-notifications','name-race','conversation'])assert.equal(enabled(scenario),false);
  const branch=source.slice(source.indexOf('        }else if(preferenceReorg){'),source.indexOf('        }else{\n        const result=await exerciseRollingPreferences'));
- assert(branch.includes('actorA.application.readColdPreferences(options)'));
+ const coldSetup=source.slice(source.indexOf("coldActor=await makeActor(fees,'a-cold'"),source.indexOf('const publishRoot=async()=>'));
+ assert(coldSetup.includes('coldActor.application.readColdPreferences(options)'));
+ assert(coldSetup.includes('activity:()=>coldActor.activity()'));
+ assert(branch.includes('sameObserverStoreColdReopen'));
  assert(!branch.includes('actorA.application.readPreferences('));
  for(const phase of ['retained','orphaned','restored','replacement-height','replacement'])assert(branch.includes("privateSnapshot('"+phase+"')"));
  assert(branch.includes("makeActor(fees,'a',undefined,undefined,true)"));
  assert(branch.includes('expectedJobs=markerReorg?4:3'));
  for(const invariant of ['sameHeightMarkerReviewed','orphanFeeExcludedAfterCanonicalBalanceCheck','historicalInclusionsRetained','exactPriorSignedBytesRetained','actualArchiverAndWorldstateUnwind'])assert(branch.includes(invariant));
  assert(branch.indexOf('forkBudget.remainingMs>=COLD_REORG_BUDGET.forkReserveMs')<branch.indexOf('await replaceRollingL1Suffix'));
- assert(branch.includes('pages+=countRollingColdPhysicalPages(block)'));
- assert(branch.includes('assert.equal(String((await ctx.node.getBlockData(anchor.blockNumber))?.blockHash),anchor.blockHash)'));
+ assert(coldSetup.includes('pages+=countRollingColdPhysicalPages(block)'));
+ assert(coldSetup.includes('assert.equal(String((await ctx.node.getBlockData(anchor.blockNumber))?.blockHash),anchor.blockHash)'));
 });
 
 test('selected browser profile matches the actual trusted worker without changing bounds',async()=>{
@@ -753,4 +756,59 @@ test('selected browser profile matches the actual trusted worker without changin
  assert(source.includes('threads:trustedProofThreads'));
  assert(source.includes("if(preferenceBrowser)assert.equal(process.env.C01_APPLICATION_BB_THREADS,'2'"));
  assert(source.includes('runRollingPreferenceBrowserFixture')); // Same parent, no alternate browser lifecycle.
+});
+
+test('root overlap lanes select two actual worker threads and retain all existing budget and proof assertions',async()=>{
+ const {getScenario}=await import('./scenarios.mjs');
+ for(const scenario of ['preference-reorg-initial','preference-reorg-marker']){
+  const selected=getScenario('rolling-'+scenario);assert.equal(selected.applicationThreads,2);assert.equal(rollingTrustedProofThreads(scenario),2);
+  assert.equal(selected.deadlineMs,540000);assert.equal(selected.fixtureHeapMiB,768);assert.equal(selected.browser,'none');
+ }
+ const source=await fs.readFile(new URL('./rolling-application-fixture.mjs',import.meta.url),'utf8');
+ assert(source.includes("if(preferenceReorg)assert.equal(process.env.C01_APPLICATION_BB_THREADS,'2'"));
+ assert(source.includes('service.stats().completed===1&&service.stats().failed===0'));
+ assert(source.includes('expectedJobs=markerReorg?4:3'));
+ assert(source.includes('rootOverlap.arm(\'ROLLING_WORKFLOW_V1:\'+prepared.intentId)'));
+ assert(source.includes("coldActor=await makeActor(fees,'a-cold',undefined,undefined,true)"));
+ assert(source.includes('sameObserverStoreColdReopen=true'));
+ assert(source.includes("...(coldActor?[['coldRecoveryActor',()=>coldActor.close()]]:[])"));
+});
+test('actual SDK serialized transaction invokes the synchronous request-local fence before onSend and native forward',async()=>{
+ const {startNodeRpc}=await import('./rolling-application-fixture.mjs'),{Tx}=await import('@aztec-labs/stdlib/tx');
+ const {jsonStringify}=await import('@aztec-labs/foundation/json-rpc');const tx=Tx.random();await tx.recomputeHash();
+ const events=[];let reject=true,live;
+ const node={sendTx(value){assert.equal(this,node);assert(Buffer.from(value.toBuffer()).equals(tx.toBuffer()));events.push('native');}};
+ const rpc=await startNodeRpc(node,()=>events.push('onSend'),{beforeForward(value,requestLive){live=requestLive;assert.equal(live(),true);assert.equal(String(value.getTxHash()),String(tx.getTxHash()));events.push('fence');if(reject)throw Error('Controlled rejection');}});
+ const send=async()=>{const response=await fetch(rpc.url,{method:'POST',headers:{'content-type':'application/json'},body:jsonStringify({jsonrpc:'2.0',id:1,method:'aztec_sendTx',params:[tx]})});return response.json();};
+ try{assert((await send()).error);assert.deepEqual(events,['fence']);assert.equal(live(),false);reject=false;
+  assert(!((await send()).error));assert.deepEqual(events,['fence','fence','onSend','native']);assert.equal(live(),false);
+ }finally{await rpc.close();}
+});
+test('request-local cancellation remains isolated and a malformed async fence never forwards later',async()=>{
+ const {startNodeRpc}=await import('./rolling-application-fixture.mjs'),{Tx}=await import('@aztec-labs/stdlib/tx');
+ const {jsonStringify}=await import('@aztec-labs/foundation/json-rpc');const tx=Tx.random();await tx.recomputeHash();
+ let entered,release,firstLive,first=true,forwarded=0,finished;
+ const started=new Promise(r=>entered=r),hold=new Promise(r=>release=r),settled=new Promise(r=>finished=r),abort=new AbortController();
+ const rpc=await startNodeRpc({sendTx(){forwarded++;}},()=>{},{beforeForward(_tx,live){
+  assert(live());if(first){first=false;firstLive=live;entered();return hold.then(()=>{assert.equal(live(),false);finished();});}
+  assert.equal(firstLive(),false);return undefined;
+ }});
+ const send=signal=>fetch(rpc.url,{method:'POST',headers:{'content-type':'application/json'},body:jsonStringify({jsonrpc:'2.0',id:1,method:'aztec_sendTx',params:[tx]}),signal});
+ const pending=send(abort.signal).then(response=>response.json(),error=>error);
+ try{await started;abort.abort();await pending;
+  const deadline=Date.now()+1000;while(firstLive()){assert(Date.now()<deadline);await new Promise(r=>setImmediate(r));}
+  const response=await send();assert(!((await response.json()).error));assert.equal(forwarded,1);
+  release();await settled;await new Promise(r=>setImmediate(r));assert.equal(forwarded,1);
+ }finally{abort.abort();release();await pending;await rpc.close();}
+});
+test('root-fenced RPC close drains an original native send even after its HTTP caller disconnects',async()=>{
+ const {startNodeRpc}=await import('./rolling-application-fixture.mjs'),{Tx}=await import('@aztec-labs/stdlib/tx');
+ const {jsonStringify}=await import('@aztec-labs/foundation/json-rpc');const tx=Tx.random();await tx.recomputeHash();
+ let entered,release,closed=false;const seen=new Promise(r=>entered=r),held=new Promise(r=>release=r),abort=new AbortController();
+ const rpc=await startNodeRpc({async sendTx(){entered();await held;}},()=>{},{beforeForward(_tx,live){assert(live());}});
+ const sent=fetch(rpc.url,{method:'POST',headers:{'content-type':'application/json'},body:jsonStringify({jsonrpc:'2.0',id:1,method:'aztec_sendTx',params:[tx]}),signal:abort.signal}).then(r=>r.text(),e=>e);
+ let closing;
+ try{await seen;abort.abort();await sent;closing=rpc.close().then(()=>{closed=true;});await new Promise(r=>setImmediate(r));assert(!closed);
+  release();await closing;assert(closed);assert.deepEqual(await rpc.drainSends(),{pending:0});
+ }finally{abort.abort();release();await sent;if(closing)await closing;else await rpc.close();}
 });

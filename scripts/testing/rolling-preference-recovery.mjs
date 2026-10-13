@@ -102,8 +102,9 @@ export const compareRecoveredColdRollingPreferences=(checkpoint,capabilities)=>c
 // Private heads/choices stay in this closure and the caller's RAM assertions.
 // The parent supplies an independent count from actual canonical block effects.
 export const COLD_REORG_BUDGET = Object.freeze({fullReadMs:45000,suffixReadMs:15000,forkReserveMs:150000});
-export function createRollingColdReorgSnapshots({readPreferences,activity,transport,physicalPages,persist,observation}) {
- const phases=['retained','orphaned','restored','replacement-height','replacement'];
+export function createRollingColdReorgSnapshots({readPreferences,activity,transport,physicalPages,persist,observation,bootstrap=false}) {
+ check(typeof bootstrap==='boolean');
+ const phases=[...(bootstrap?['bootstrap']:[]),'retained','orphaned','restored','replacement-height','replacement'];
  let next=0,previous,busy=false,failed=false;
  const integer=x=>Number.isSafeInteger(x)&&x>=0;
  function traffic(){
@@ -114,21 +115,21 @@ export function createRollingColdReorgSnapshots({readPreferences,activity,transp
  function delta(after,before){const out={};for(const key of Object.keys(before)){check(after[key]>=before[key]);out[key]=after[key]-before[key];}return out;}
  check([readPreferences,activity,transport,physicalPages,persist].every(x=>typeof x==='function'));
  check(observation&&Object.keys(observation).length===0);observation.phases=[];
- return Object.freeze({async read(phase,deadlineAt){
+ return Object.freeze({async read(phase,deadlineAt,{signal}={}){
   if(busy)throw fail();
   let row,started;
   try{
    check(!failed&&phase===phases[next]&&Number.isSafeInteger(deadlineAt)&&deadlineAt>Date.now());
    busy=true;next++; // A failed measurement is not silently replayable.
-   const mode=phase==='retained'?'initial':phase==='restored'?'rebuild':'append';
+   const mode=phase==='bootstrap'||phase==='retained'&&!bootstrap?'initial':phase==='restored'?'rebuild':'append';
    check(mode==='initial'||previous);
    started=Date.now();const beforeActivity=active(),beforeTraffic=traffic();
    check(beforeTraffic.pending===0);
    row={phase,mode,passed:false,steps:0,elapsedMs:0,first:null,last:null,compact:null};observation.phases.push(row);await persist();
    let prior,anchorBlock,lastTraffic=beforeTraffic,value;
    for(;;){
-    check(Date.now()<deadlineAt);
-    value=await readPreferences({deadlineAt});row.steps++;
+    check(Date.now()<deadlineAt&&!signal?.aborted);
+    value=await readPreferences({deadlineAt,...(signal?{signal}:{})});check(!signal?.aborted);row.steps++;
     check(equal(active(),beforeActivity));const now=traffic(),change=delta(now,lastTraffic);lastTraffic=now;
     check(now.pending===0&&change.failures===0&&change.privateTags===0&&change.publicTags===0);
     check(change.requests===change.accepted&&change.accepted<=1);
@@ -162,7 +163,7 @@ export function createRollingColdReorgSnapshots({readPreferences,activity,transp
    const expected=pages+(mode==='append'&&previous.head.initialized?1:0),after=traffic();
    row.compact=delta(after,beforeTraffic);
    check(after.pending===0&&row.compact.requests===expected&&row.compact.accepted===expected&&row.compact.failures===0&&row.compact.privateTags===0&&row.compact.publicTags===0);
-   check(equal(active(),beforeActivity));check(Date.now()<deadlineAt);
+   check(equal(active(),beforeActivity));check(Date.now()<deadlineAt&&!signal?.aborted);
    row.elapsedMs=Date.now()-started;row.physicalSuffixPages=pages;row.formerHeadPages=expected-pages;row.noReadProofOrSend=true;row.noTagDiscovery=true;
    row.authenticatedPrefixRetained=mode==='append';row.fullEnumeration=mode!=='append';row.passed=true;
    previous={anchor:structuredClone(value.anchor),head:structuredClone(value.preferences.head)};
@@ -170,4 +171,84 @@ export function createRollingColdReorgSnapshots({readPreferences,activity,transp
   }catch{failed=true;if(row){row.passed=false;row.elapsedMs=Date.now()-started;try{row.lastTransport=traffic();await persist();}catch{}}throw fail();}
   finally{busy=false;}
  }});
+}
+
+// One root proof may overlap a separate actor's bootstrap scan. Waiting occurs
+// only at the engine's existing pre-HTTP hook. The HTTP admission fence never
+// waits. Parent owns actors, proof service, deadlines, and real fee collection.
+export function createRollingRootProofOverlap({stats,contextGuard,now=Date.now,sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms))}) {
+ check([stats,contextGuard,now,sleep].every(fn=>typeof fn==='function'));
+ let state='idle',operation,signed,selected=false,hookEntered=false,forwarded=0,rejected=0,poisoned=false;
+ let readyResolve,readyReject,ready,controller,expires=0,baseline,scanPending=false,writePending=false;
+ let failureSet=false,failure,startedAt=0,admittedAt=0,scanStartedAt=0,scanElapsedMs=0;
+ const snapshot=()=>({state,hookEntered,forwarded,rejected,poisoned,scanPending,writePending,
+  proofAdmitted:admittedAt>0,admissionElapsedMs:admittedAt?admittedAt-startedAt:0,scanElapsedMs});
+ const poison=(...errors)=>{if(!failureSet){failureSet=true;failure=errors.length?errors[0]:fail();}poisoned=true;controller?.abort();readyReject?.(failure);};
+ const live=()=>{check(!poisoned&&now()<expires);contextGuard();};
+ const hook=Object.freeze({
+  journalPrepared(value){
+   live();check(selected&&!signed&&value.operation===operation&&/^0x[0-9a-f]{64}$/.test(value.txHash)&&value.bytes instanceof Uint8Array&&value.bytes.length>0);
+   signed={txHash:value.txHash,bytes:Buffer.from(value.bytes)};
+  },
+  async beforeSubmit(value){
+   live();check(!hookEntered&&signed&&value.operation===operation&&value.txHash===signed.txHash);hookEntered=true;
+   await ready;live();check(state==='scanned');state='permitted';
+  },
+ });
+ const capability=Object.freeze({select(value){
+  try{
+   if(state==='done'){check(value!==operation);return undefined;}
+   live();check(state==='running'&&!selected&&value===operation);selected=true;return hook;
+  }catch(error){poison(error);throw error;}
+ }});
+ return Object.freeze({capability,snapshot,
+  arm(value){try{live();check(state==='running'&&!operation&&typeof value==='string'&&/^ROLLING_WORKFLOW_V1:/.test(value));operation=value;}catch(error){poison(error);throw error;}},
+  // Called synchronously with the real request-local liveness capability, before
+  // onSend/counters and node.sendTx. A disconnect AFTER that invocation remains
+  // an unknown financial outcome; the parent must reconcile actual receipts.
+  beforeForward(tx,requestLive){
+   try{
+    check(typeof requestLive==='function'&&requestLive()===true);contextGuard();
+    if(state==='done'){check(!poisoned&&String(tx.getTxHash())!==signed.txHash);return;}
+    live();check(state==='permitted'&&forwarded===0);
+    check(String(tx.getTxHash())===signed.txHash&&Buffer.from(tx.toBuffer()).equals(signed.bytes));
+    state='forwarded';forwarded++;
+   }catch(error){rejected++;poison(error);throw error;}
+  },
+  async run({submit,bootstrap,admissionDeadlineAt,scanDeadline}){
+   check(state==='idle'&&typeof submit==='function'&&typeof bootstrap==='function'&&typeof scanDeadline==='function');
+   check(Number.isSafeInteger(admissionDeadlineAt)&&admissionDeadlineAt>now());
+   state='running';startedAt=now();expires=admissionDeadlineAt;baseline={...stats()};check(baseline.failed===0&&!baseline.running);
+   controller=new AbortController();ready=new Promise((resolve,reject)=>{readyResolve=resolve;readyReject=reject;});ready.catch(()=>{});
+   let write,scan,result,timer;
+   try{
+    writePending=true;
+    write=Promise.resolve().then(submit).then(value=>{writePending=false;return {value};},error=>{writePending=false;poison(error);return {error,failed:true};});
+    for(;;){
+     live();const current=stats();check(current.failed===baseline.failed&&current.submitted>=baseline.submitted&&current.submitted<=baseline.submitted+1);
+     if(current.submitted===baseline.submitted+1){admittedAt=now();break;}
+     check(writePending);await sleep(Math.min(25,Math.max(1,expires-now())));
+    }
+    expires=scanDeadline();check(Number.isSafeInteger(expires)&&expires>now());
+    timer=setTimeout(()=>poison(),Math.max(1,expires-now()));
+    scanPending=true;scanStartedAt=now();
+    scan=Promise.resolve().then(()=>bootstrap({signal:controller.signal,deadlineAt:expires})).then(value=>{scanPending=false;scanElapsedMs=now()-scanStartedAt;return {value};},error=>{scanPending=false;scanElapsedMs=now()-scanStartedAt;poison(error);return {error,failed:true};});
+    const recovered=await scan;if(recovered.failed)throw recovered.error;
+    live();check(stats().submitted===baseline.submitted+1&&stats().failed===baseline.failed&&forwarded===0);
+    clearTimeout(timer);timer=undefined;
+    state='scanned';readyResolve();
+    result=await write;if(result.failed)throw result.error;
+    check(!poisoned&&forwarded===1&&state==='forwarded'&&stats().submitted===baseline.submitted+1&&stats().completed===baseline.completed+1&&stats().failed===baseline.failed);
+    state='done';
+   }catch(error){poison(error);}
+   finally{
+    clearTimeout(timer);
+    // Never close actors here. Their leases remain held until both original
+    // operations actually settle, including non-cancellable SDK/prover work.
+    await Promise.allSettled([...(scan?[scan]:[]),...(write?[write]:[])]);
+    if(failureSet)state='failed';
+   }
+   if(failureSet)throw failure;return result.value;
+  },
+ });
 }

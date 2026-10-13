@@ -16,8 +16,71 @@ const discard=()=>{};
 const quiet=Object.freeze({trace:discard,debug:discard,verbose:discard,info:discard,warn:discard,error:discard,fatal:discard,
  level:'silent',module:'rolling-actor',isLevelEnabled:()=>false,createChild:()=>quiet,getBindings:()=>({})});
 
+// Harness-only adapter around the existing engine journal/hook. It neither
+// writes a journal independently nor substitutes a wallet/PXE/node. The facade
+// forwards every engine method to the original receiver and original arguments.
+async function rejectAsyncHookResult(value){
+ if(value instanceof Promise){await value;throw fail();}
+ if(value&&typeof value==='object'){
+  const descriptor=Object.getOwnPropertyDescriptor(value,'then');
+  if(descriptor){
+   assert(Object.hasOwn(descriptor,'value'),'Accessor hook result is unsupported');
+   if(typeof descriptor.value==='function'){
+    await new Promise((resolve,reject)=>Reflect.apply(descriptor.value,value,[resolve,reject]));throw fail();
+   }
+  }
+ }
+}
+export async function bindRollingRootSubmission(args,capability,contextGuard) {
+ if(!capability)return args;
+ assert(args.length===2&&args[1]&&Object.getPrototypeOf(args[1])===Object.prototype,'Invalid root submission options');
+ const opts=args[1],operation=Object.getOwnPropertyDescriptor(opts,'journalOperation')?.value;
+ assert(typeof operation==='string');
+ const hook=capability.select(operation);
+ // A supplied callback may already have launched a Promise. Drain it before
+ // rejecting a malformed asynchronous selector; never orphan its rejection.
+ await rejectAsyncHookResult(hook);contextGuard();
+ if(hook===undefined)return args;
+ assert(!('beforeSubmit'in opts)&&!('wait'in opts),'Root submission hook collision');
+ const callbacks={};for(const key of ['journalPrepared','beforeSubmit']){
+  const d=hook&&Object.getOwnPropertyDescriptor(hook,key);assert(d&&Object.hasOwn(d,'value')&&typeof d.value==='function');callbacks[key]=d.value;
+ }
+ const original=Object.getOwnPropertyDescriptor(opts,'transactionJournal')?.value;assert(original);
+ for(const key of ['setOperation','assertCanStart','prepare','confirmed','inspect'])assert(typeof original[key]==='function');
+ let prepared;
+ const facade={};for(const key of ['setOperation','assertCanStart','confirmed'])facade[key]=(...values)=>Reflect.apply(original[key],original,values);
+ facade.prepare=async(...values)=>{
+  contextGuard();assert(!prepared,'Duplicate root journal preparation');
+  const tx=values[0],bytes=Buffer.from(tx.toBuffer()),txHash=String(tx.getTxHash());
+  const result=await Reflect.apply(original.prepare,original,values);contextGuard();
+  assert(Buffer.from(tx.toBuffer()).equals(bytes)&&String(tx.getTxHash())===txHash,'Root transaction changed during persistence');
+  const saved=await original.inspect();contextGuard();assert(saved?.operation===operation&&saved.txHash===txHash);
+  prepared={operation,txHash};
+  const observed=Reflect.apply(callbacks.journalPrepared,hook,[{...prepared,bytes:Buffer.from(bytes)}]);
+  await rejectAsyncHookResult(observed);contextGuard();
+  assert.equal(observed,undefined,'Root journal observer must be synchronous');
+  return result;
+ };
+ const selected=Object.defineProperties({},Object.getOwnPropertyDescriptors(opts));
+ Object.defineProperties(selected,{
+  transactionJournal:{value:facade,enumerable:true,configurable:true,writable:true},
+  beforeSubmit:{enumerable:true,value:async hash=>{
+   contextGuard();assert(prepared&&hash===prepared.txHash,'Root signed journal is missing');
+   await Reflect.apply(callbacks.beforeSubmit,hook,[{...prepared}]);contextGuard();
+  }},
+ });
+ return [args[0],selected];
+}
+
 export async function createRollingApplicationActor({sdk,routing,node,endpoint,network,proofsEnabled,board,fees,portal,
- storageDirectory,dataDirectory,log=discard,externalActivity,confirmationDeadlineAt,metrics,coldPreferences=false}){
+ storageDirectory,dataDirectory,log=discard,externalActivity,confirmationDeadlineAt,metrics,coldPreferences=false,rootSubmissionGate}){
+ let rootGate;
+ if(rootSubmissionGate!==undefined){
+  const d=rootSubmissionGate&&Object.getOwnPropertyDescriptor(rootSubmissionGate,'select');
+  assert(d&&Object.hasOwn(d,'value')&&typeof d.value==='function'&&Reflect.ownKeys(rootSubmissionGate).length===1,'Invalid root submission gate');
+  assert(confirmationDeadlineAt===undefined,'Root gate cannot replace confirmation hooks');
+  const select=d.value;rootGate=Object.freeze({select:operation=>Reflect.apply(select,rootSubmissionGate,[operation])});
+ }
  assert.equal(typeof coldPreferences,'boolean');assert(sdk.isTrustedPrivateNode(node));assert.equal(typeof proofsEnabled,'boolean');
  assert.equal(typeof externalActivity,'function');assert.equal(typeof log,'function');
  // Optional trusted harness observer only. Capture its capability before any
@@ -137,7 +200,13 @@ export async function createRollingApplicationActor({sdk,routing,node,endpoint,n
   journal=await sdk.createL2Journal({...journalOptions,storage:createFileJournalStorage(storageDirectory)});contextGuard();
   wallet=routing.createAztecWallet(sdk,pxe,node,node,log,secret,{contextGuard,transactionJournal:journal});contextGuard();
   const send=wallet.sendTx;assert.equal(typeof send,'function');
-  wallet.sendTx=function(...args){contextGuard();const selected=boundedSendArgs(args);assert(walletSubmissions<Number.MAX_SAFE_INTEGER);walletSubmissions++;return send.apply(this,selected);};
+  wallet.sendTx=function(...args){
+   contextGuard();const receiver=this,selected=boundedSendArgs(args);
+   const invoke=values=>{contextGuard();assert(walletSubmissions<Number.MAX_SAFE_INTEGER);walletSubmissions++;return send.apply(receiver,values);};
+   // Default callers retain the original return/Promise/error identity. Only
+   // the explicitly selected harness capability adds an awaited preparation.
+   return rootGate?bindRollingRootSubmission(selected,rootGate,contextGuard).then(invoke):invoke(selected);
+  };
   wallet._accountManager=await sdk.AccountManager.create(wallet,secret,accountContract,{salt});contextGuard();assert.equal(String(wallet._accountManager.address),ownerText);
   let initialized=false;
   initializeAccount=async()=>{

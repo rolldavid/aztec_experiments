@@ -69,16 +69,17 @@ import {createRollingColdReorgSnapshots,COLD_REORG_BUDGET} from './rolling-prefe
 const canonicalHash=n=>'0x'+BigInt(n).toString(16).padStart(64,'0');
 // Labelled parent/transport capabilities only. These verify assertion behavior;
 // the future genuine parent supplies production reader, node and proof counters.
-function coldReorgFixture(fault,initial=false){
+function coldReorgFixture(fault,initial=false,bootstrap=false){
  const observation={},counts={requests:0,accepted:0,failures:0,pending:0,privateTags:0,publicTags:0};
  const activity={proofJobs:2,walletSubmissions:2,transportSends:2,authWitnesses:5};
- const phases=['retained','orphaned','restored','replacement-height','replacement'];
- const ends=[4,6,3,6,7],revisions=initial?['0','1','0','0','1']:['1','2','1','1','2'];let phase=0,queue=[],calls=0;
+ const phases=[...(bootstrap?['bootstrap']:[]),'retained','orphaned','restored','replacement-height','replacement'];
+ const ends=[...(bootstrap?[2]:[]),4,6,3,6,7],revisions=[...(bootstrap?['0']:[]),...(initial?['0','1','0','0','1']:['1','2','1','1','2'])];let phase=0,queue=[],calls=0;
  const state={hold:null,entered:null,oracleCalls:0};
  function prepare(){
-  const first=phase===0||phase===2?1:ends[phase-1]+1,startRevision=phase===0||phase===2?'0':revisions[phase-1],end=ends[phase];
+  const restart=phase===0||phases[phase]==='restored';
+  const first=restart?1:ends[phase-1]+1,startRevision=restart?'0':revisions[phase-1],end=ends[phase];
   const progress=(nextBlock,revision)=>({anchorBlock:end,nextBlock,processedRevision:revision,markersChecked:0,markersTotal:null});
-  queue=[{value:{status:'recovering',complete:false,progress:progress(first,startRevision)},requests:phase!==0&&phase!==2&&revisions[phase-1]!=='0'?1:0}];
+  queue=[{value:{status:'recovering',complete:false,progress:progress(first,startRevision)},requests:!restart&&revisions[phase-1]!=='0'?1:0}];
   if(fault==='dense'&&phase===0)queue.push({value:{status:'recovering',complete:false,progress:progress(first,startRevision)},requests:1});
   for(let block=first;block<=end;block++)queue.push({value:{status:'recovering',complete:false,progress:progress(block+1,block===end?revisions[phase]:startRevision)},requests:1});
   const preferences={head:{initialized:revisions[phase]!=='0',schema:1,revision:revisions[phase],digest:revisions[phase]==='0'?'0':String(101+phase)},bookmarks:['PRIVATE_SENTINEL'],readMarkers:[]};
@@ -102,8 +103,8 @@ function coldReorgFixture(fault,initial=false){
   if(fault==='wrong-head'&&value.complete)value.preferences.head.revision='99';
   if(fault==='callback-error')throw Error('PRIVATE_SENTINEL');return value;
  };
- const consumer=createRollingColdReorgSnapshots({readPreferences,activity:()=>({...activity}),transport:()=>({...counts}),observation,persist:async()=>{},physicalPages:async({fromBlock,anchor})=>{state.oracleCalls++;assert.equal(anchor.blockNumber,ends[phase]);return anchor.blockNumber-fromBlock+1+(fault==='wrong-physical-count'||fault==='dense'&&phase===0?1:0);}});
- return {observation,counts,state,consumer,async run(){const result=await consumer.read(phases[phase],Date.now()+10000);phase++;if(phase<5)prepare();return result;}};
+ const consumer=createRollingColdReorgSnapshots({bootstrap,readPreferences,activity:()=>({...activity}),transport:()=>({...counts}),observation,persist:async()=>{},physicalPages:async({fromBlock,anchor})=>{state.oracleCalls++;assert.equal(anchor.blockNumber,ends[phase]);return anchor.blockNumber-fromBlock+1+(fault==='wrong-physical-count'||fault==='dense'&&phase===0?1:0);}});
+ return {observation,counts,state,consumer,async run(){const result=await consumer.read(phases[phase],Date.now()+10000);phase++;if(phase<phases.length)prepare();return result;}};
 }
 test('labelled real-parent contract requires initial, monotonic, divergent rebuild and replacement without additional transactions',async()=>{
  const f=coldReorgFixture();for(let i=0;i<5;i++)assert.equal((await f.run()).bookmarks[0],'PRIVATE_SENTINEL');
@@ -134,3 +135,83 @@ test('labelled initial-head case promotes an absent head without inventing a for
 });
 
 test('labelled dense unrelated ciphertext page is real progress even when public nextBlock repeats',async()=>{const f=coldReorgFixture('dense');await f.run();assert.equal(f.observation.phases[0].compact.accepted,5);assert.equal(f.observation.phases[0].physicalSuffixPages,5);});
+
+import {createRollingRootProofOverlap} from './rolling-preference-recovery.mjs';
+const deferred=()=>{let resolve,reject;const promise=new Promise((a,b)=>{resolve=a;reject=b;});return {promise,resolve,reject};};
+// Labelled proof/journal/transport doubles: exercise gate ordering and ownership,
+// never genuine proof, inclusion, balance or timing acceptance.
+function overlapFixture(mutate={}){
+ const proof=deferred(),scan=deferred(),entered=deferred(),hooked=deferred();
+ const counts={submitted:0,completed:0,failed:0,running:false},state={sent:0,live:true,context:true,clock:Date.now(),signal:null};
+ const operation='ROLLING_WORKFLOW_V1:PRIVATE_INTENT',txHash=canonicalHash(7),bytes=Buffer.from('PRIVATE_SIGNED_BYTES');
+ const gate=createRollingRootProofOverlap({stats:()=>({...counts}),contextGuard:()=>{assert(state.context);},now:()=>state.clock,sleep:()=>new Promise(resolve=>setImmediate(resolve))});
+ const tx={getTxHash:()=>txHash,toBuffer:()=>Buffer.from(bytes)};
+ const submit=async()=>{
+  if(Object.hasOwn(mutate,'beforeAdmission'))throw mutate.beforeAdmission;
+  gate.arm(operation);const hook=gate.capability.select(operation);counts.submitted++;counts.running=true;
+  await proof.promise;counts.running=false;counts.completed++;
+  hook.journalPrepared({operation,txHash,bytes});hooked.resolve();
+  await hook.beforeSubmit({operation,txHash});
+  mutate.beforeForward?.({state,counts,gate,tx});gate.beforeForward(tx,()=>state.live);state.sent++;return 'included';
+ };
+ const run=()=>gate.run({submit,admissionDeadlineAt:state.clock+10000,scanDeadline:()=>state.clock+10000,
+  bootstrap:async({signal})=>{state.signal=signal;entered.resolve();await scan.promise;mutate.afterScan?.({state,counts});return {};}});
+ return {gate,counts,state,proof,scan,entered,hooked,run,tx,operation};
+}
+test('labelled root gate holds durable proof outside HTTP until bootstrap, then admits one exact send',async()=>{
+ const f=overlapFixture(),work=f.run();await f.entered.promise;f.proof.resolve();await f.hooked.promise;
+ assert.equal(f.state.sent,0);assert.equal(f.gate.snapshot().hookEntered,true);assert.equal(f.gate.snapshot().scanPending,true);
+ f.scan.resolve();assert.equal(await work,'included');assert.equal(f.state.sent,1);assert.equal(f.gate.snapshot().state,'done');
+ assert.throws(()=>f.gate.beforeForward(f.tx,()=>true));assert.equal(f.state.sent,1);
+ assert(!JSON.stringify(f.gate.snapshot()).includes('PRIVATE'));assert(!JSON.stringify(f.gate.snapshot()).includes(canonicalHash(7)));
+});
+test('labelled bootstrap completes first without admitting a transaction before real signed preparation',async()=>{
+ const f=overlapFixture(),work=f.run();await f.entered.promise;f.scan.resolve();await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(f.state.sent,0);assert.equal(f.gate.snapshot().state,'scanned');f.proof.resolve();await work;assert.equal(f.state.sent,1);
+});
+for(const error of [undefined,null,false,0,'',Error('PRIVATE_FAILURE')])test('labelled pre-admission error drains and preserves exact rejection '+String(error),async()=>{
+ const f=overlapFixture({beforeAdmission:error});const result=await f.run().then(()=>({resolved:true}),reason=>({reason}));
+ assert(!result.resolved);assert.equal(result.reason,error);assert.equal(f.state.sent,0);assert.equal(f.gate.snapshot().scanPending,false);assert.equal(f.gate.snapshot().writePending,false);
+});
+test('labelled scan failure poisons later proof completion and waits for original writer',async()=>{
+ const f=overlapFixture(),error=Error('PRIVATE_SCAN'),result=f.run().then(()=>({resolved:true}),reason=>({reason}));await f.entered.promise;
+ f.scan.reject(error);await new Promise(resolve=>setImmediate(resolve));assert(f.gate.snapshot().writePending);assert(f.state.signal.aborted);assert.equal(f.state.sent,0);
+ f.proof.resolve();assert.equal((await result).reason,error);assert.equal(f.gate.snapshot().writePending,false);assert.equal(f.state.sent,0);
+});
+test('labelled proof failure while scan pending aborts but retains original scan ownership',async()=>{
+ const f=overlapFixture(),error=Error('PRIVATE_PROOF');let settled=false;
+ const result=f.run().then(()=>({resolved:true}),reason=>({reason})).finally(()=>{settled=true;});await f.entered.promise;f.proof.reject(error);
+ await new Promise(resolve=>setImmediate(resolve));assert(f.state.signal.aborted);assert(!settled);assert(f.gate.snapshot().scanPending);
+ f.scan.resolve();assert.equal((await result).reason,error);assert.equal(f.state.sent,0);assert(!f.gate.snapshot().scanPending);
+});
+for(const fault of ['disconnected','context','expired','bytes','hash','duplicate','extra-proof'])test('labelled root admission rejects '+fault+' before further forwarding',async()=>{
+ const f=overlapFixture({beforeForward:({state,gate,tx})=>{
+  if(fault==='disconnected')state.live=false;
+  if(fault==='context')state.context=false;
+  if(fault==='expired')state.clock+=10001;
+  if(fault==='bytes')tx.toBuffer=()=>Buffer.from('OTHER');
+  if(fault==='hash')tx.getTxHash=()=>canonicalHash(8);
+  if(fault==='duplicate'){gate.beforeForward(tx,()=>true);state.sent++;gate.beforeForward(tx,()=>true);}
+ },afterScan:({counts})=>{if(fault==='extra-proof')counts.submitted++;}});
+ const work=f.run();const rejected=assert.rejects(work);await f.entered.promise;f.proof.resolve();f.scan.resolve();await rejected;
+ assert.equal(f.state.sent,fault==='duplicate'?1:0);assert.equal(f.gate.snapshot().state,'failed');assert(!f.gate.snapshot().writePending&&!f.gate.snapshot().scanPending);
+});
+test('labelled actual root permit cannot be selected for another operation or reused',async()=>{
+ const f=overlapFixture(),work=f.run();const rejected=assert.rejects(work);await f.entered.promise;
+ assert.throws(()=>f.gate.capability.select('ROLLING_WORKFLOW_V1:OTHER'));assert.throws(()=>f.gate.capability.select(f.operation));
+ // Context invalidation must also fence the original selected hook.
+ f.state.context=false;f.proof.resolve();f.scan.resolve();await rejected;assert.equal(f.state.sent,0);
+});
+
+test('labelled bootstrap adds a complete empty-prefix scan and retains all five original phases',async()=>{
+ const f=coldReorgFixture(undefined,false,true);for(let i=0;i<6;i++)await f.run();
+ assert.equal(f.state.oracleCalls,6);assert.deepEqual(f.observation.phases.map(x=>x.phase),['bootstrap','retained','orphaned','restored','replacement-height','replacement']);
+ assert.deepEqual(f.observation.phases.map(x=>x.mode),['initial','append','append','rebuild','append','append']);
+ assert.deepEqual(f.observation.phases.map(x=>x.first.nextBlock),[1,3,5,1,4,7]);
+ assert(f.observation.phases.every(x=>x.noReadProofOrSend&&x.noTagDiscovery&&x.passed));
+});
+test('labelled aborted cold scan settles original reader before releasing busy state',async()=>{
+ const f=coldReorgFixture(),hold=deferred(),entered=deferred(),abort=new AbortController();f.state.hold=hold.promise;f.state.entered=entered.resolve;
+ const work=f.consumer.read('retained',Date.now()+10000,{signal:abort.signal}),rejected=assert.rejects(work);await entered.promise;abort.abort();
+ await assert.rejects(f.consumer.read('orphaned',Date.now()+10000));hold.resolve();await rejected;assert.equal(f.state.oracleCalls,0);
+});
