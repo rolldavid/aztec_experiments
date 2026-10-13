@@ -16063,11 +16063,11 @@ var __aztec = (() => {
 
   // node_modules/@aztec-labs/foundation/dest/bigint-buffer/index.js
   function toBigIntBE(buf) {
-    const hex20 = buf.toString("hex");
-    if (hex20.length === 0) {
+    const hex22 = buf.toString("hex");
+    if (hex22.length === 0) {
       return BigInt(0);
     }
-    return BigInt(`0x${hex20}`);
+    return BigInt(`0x${hex22}`);
   }
   function toBufferBE(num, width) {
     if (num < 0n) {
@@ -16076,8 +16076,8 @@ var __aztec = (() => {
     if (num === 0n) {
       return Buffer2.alloc(width);
     }
-    const hex20 = num.toString(16);
-    const buffer = Buffer2.from(hex20.padStart(width * 2, "0").slice(0, width * 2), "hex");
+    const hex22 = num.toString(16);
+    const buffer = Buffer2.from(hex22.padStart(width * 2, "0").slice(0, width * 2), "hex");
     if (buffer.length > width) {
       throw new Error(`Number ${num.toString(16)} does not fit in ${width}`);
     }
@@ -18186,14 +18186,14 @@ var __aztec = (() => {
   }
   function base64urlToUint8Array2(base64url13) {
     const base6413 = base64url13.replace(/-/g, "+").replace(/_/g, "/");
-    const padding = "=".repeat((4 - base6413.length % 4) % 4);
-    return base64ToUint8Array2(base6413 + padding);
+    const padding2 = "=".repeat((4 - base6413.length % 4) % 4);
+    return base64ToUint8Array2(base6413 + padding2);
   }
   function uint8ArrayToBase64url2(bytes3) {
     return uint8ArrayToBase642(bytes3).replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
   }
-  function hexToUint8Array3(hex20) {
-    const cleanHex = hex20.replace(/^0x/, "");
+  function hexToUint8Array3(hex22) {
+    const cleanHex = hex22.replace(/^0x/, "");
     if (cleanHex.length % 2 !== 0) {
       throw new Error("Invalid hex string length");
     }
@@ -18571,7 +18571,7 @@ var __aztec = (() => {
     emoji: () => emoji3,
     extendedDuration: () => extendedDuration2,
     guid: () => guid3,
-    hex: () => hex3,
+    hex: () => hex6,
     hostname: () => hostname3,
     html5Email: () => html5Email2,
     httpProtocol: () => httpProtocol2,
@@ -18634,13 +18634,13 @@ var __aztec = (() => {
     const timeRegex = `${time13}(?:${opts.join("|")})`;
     return new RegExp(`^${dateSource2}T(?:${timeRegex})$`);
   }
-  function fixedBase642(bodyLength, padding) {
-    return new RegExp(`^[A-Za-z0-9+/]{${bodyLength}}${padding}$`);
+  function fixedBase642(bodyLength, padding2) {
+    return new RegExp(`^[A-Za-z0-9+/]{${bodyLength}}${padding2}$`);
   }
   function fixedBase64url2(length) {
     return new RegExp(`^[A-Za-z0-9_-]{${length}}$`);
   }
-  var cuid4, cuid23, ulid3, xid3, ksuid3, nanoid3, duration3, extendedDuration2, guid3, uuid3, uuid42, uuid62, uuid72, email3, html5Email2, rfc5322Email2, unicodeEmail2, idnEmail2, browserEmail2, _emoji3, ipv43, ipv63, mac3, cidrv43, cidrv63, base643, base64url3, hostname3, domain4, httpProtocol2, e1643, dateSource2, date5, string4, bigint4, integer2, number5, boolean4, _null4, _undefined4, lowercase2, uppercase2, hex3, md5_hex2, md5_base642, md5_base64url2, sha1_hex2, sha1_base642, sha1_base64url2, sha256_hex2, sha256_base642, sha256_base64url2, sha384_hex2, sha384_base642, sha384_base64url2, sha512_hex2, sha512_base642, sha512_base64url2;
+  var cuid4, cuid23, ulid3, xid3, ksuid3, nanoid3, duration3, extendedDuration2, guid3, uuid3, uuid42, uuid62, uuid72, email3, html5Email2, rfc5322Email2, unicodeEmail2, idnEmail2, browserEmail2, _emoji3, ipv43, ipv63, mac3, cidrv43, cidrv63, base643, base64url3, hostname3, domain4, httpProtocol2, e1643, dateSource2, date5, string4, bigint4, integer2, number5, boolean4, _null4, _undefined4, lowercase2, uppercase2, hex6, md5_hex2, md5_base642, md5_base64url2, sha1_hex2, sha1_base642, sha1_base64url2, sha256_hex2, sha256_base642, sha256_base64url2, sha384_hex2, sha384_base642, sha384_base64url2, sha512_hex2, sha512_base642, sha512_base64url2;
   var init_regexes = __esm({
     "node_modules/@aztec-labs/foundation/node_modules/zod/v4/core/regexes.js"() {
       init_dirname();
@@ -18699,7 +18699,7 @@ var __aztec = (() => {
       _undefined4 = /^undefined$/i;
       lowercase2 = /^[^A-Z]*$/;
       uppercase2 = /^[^a-z]*$/;
-      hex3 = /^[0-9a-fA-F]*$/;
+      hex6 = /^[0-9a-fA-F]*$/;
       md5_hex2 = /^[0-9a-fA-F]{32}$/;
       md5_base642 = /* @__PURE__ */ fixedBase642(22, "==");
       md5_base64url2 = /* @__PURE__ */ fixedBase64url2(22);
@@ -20383,10 +20383,10 @@ var __aztec = (() => {
           const shape = def.shape;
           const propValues = {};
           for (const key in shape) {
-            const field8 = shape[key]._zod;
-            if (field8.values) {
+            const field10 = shape[key]._zod;
+            if (field10.values) {
               propValues[key] ?? (propValues[key] = /* @__PURE__ */ new Set());
-              for (const v of field8.values)
+              for (const v of field10.values)
                 propValues[key].add(v);
             }
           }
@@ -30602,7 +30602,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     bigint: () => bigint5,
     boolean: () => boolean5,
     catch: () => _catch4,
-    check: () => check2,
+    check: () => check4,
     cidrv4: () => cidrv44,
     cidrv6: () => cidrv64,
     codec: () => codec2,
@@ -30622,8 +30622,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     float64: () => float642,
     function: () => _function2,
     guid: () => guid4,
-    hash: () => hash2,
-    hex: () => hex4,
+    hash: () => hash3,
+    hex: () => hex7,
     hostname: () => hostname4,
     httpUrl: () => httpUrl2,
     instanceof: () => _instanceof2,
@@ -30662,7 +30662,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     preprocess: () => preprocess2,
     promise: () => promise2,
     readonly: () => readonly2,
-    record: () => record2,
+    record: () => record3,
     refine: () => refine2,
     set: () => set3,
     strictObject: () => strictObject2,
@@ -30811,10 +30811,10 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
   function hostname4(_params) {
     return _stringFormat2(ZodCustomStringFormat2, "hostname", regexes_exports2.hostname, _params);
   }
-  function hex4(_params) {
+  function hex7(_params) {
     return _stringFormat2(ZodCustomStringFormat2, "hex", regexes_exports2.hex, _params);
   }
-  function hash2(alg, params) {
+  function hash3(alg, params) {
     const enc = params?.enc ?? "hex";
     const format2 = `${alg}_${enc}`;
     const regex = regexes_exports2[format2];
@@ -30948,7 +30948,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
       ...util_exports2.normalizeParams(params)
     });
   }
-  function record2(keyType, valueType, params) {
+  function record3(keyType, valueType, params) {
     if (!valueType || !valueType._zod) {
       return new ZodRecord2({
         type: "record",
@@ -31150,7 +31150,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
       output: params?.output ?? unknown2()
     });
   }
-  function check2(fn) {
+  function check4(fn) {
     const ch = new $ZodCheck2({
       check: "custom"
       // ...util.normalizeParams(params),
@@ -31191,7 +31191,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
   }
   function json2(params) {
     const jsonSchema = lazy2(() => {
-      return union2([string5(params), number6(), boolean5(), _null6(), array2(jsonSchema), record2(string5(), jsonSchema)]);
+      return union2([string5(params), number6(), boolean5(), _null6(), array2(jsonSchema), record3(string5(), jsonSchema)]);
     });
     return jsonSchema;
   }
@@ -31264,8 +31264,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
             reg.add(this, meta13);
             return this;
           },
-          refine(check10, params) {
-            return this.check(refine2(check10, params));
+          refine(check12, params) {
+            return this.check(refine2(check12, params));
           },
           superRefine(refinement, params) {
             return this.check(superRefine2(refinement, params));
@@ -32649,7 +32649,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     bigint: () => bigint5,
     boolean: () => boolean5,
     catch: () => _catch4,
-    check: () => check2,
+    check: () => check4,
     cidrv4: () => cidrv44,
     cidrv6: () => cidrv64,
     clone: () => clone2,
@@ -32685,8 +32685,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     gt: () => _gt2,
     gte: () => _gte2,
     guid: () => guid4,
-    hash: () => hash2,
-    hex: () => hex4,
+    hash: () => hash3,
+    hex: () => hex7,
     hostname: () => hostname4,
     httpUrl: () => httpUrl2,
     includes: () => _includes2,
@@ -32748,7 +32748,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     promise: () => promise2,
     property: () => _property2,
     readonly: () => readonly2,
-    record: () => record2,
+    record: () => record3,
     refine: () => refine2,
     regex: () => _regex2,
     regexes: () => regexes_exports2,
@@ -33342,8 +33342,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
       ];
     }
   }
-  function reduceFn(fn, field8) {
-    return (input2) => fromBufferReduce(fn(input2), field8);
+  function reduceFn(fn, field10) {
+    return (input2) => fromBufferReduce(fn(input2), field10);
   }
   var _computedKey, _computedKey1, BaseField, BaseFr, Fr, Fq;
   var init_field = __esm({
@@ -33981,7 +33981,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
       };
       var Sponge = function Sponge2(_ref) {
         var _this = this;
-        var capacity2 = _ref.capacity, padding = _ref.padding;
+        var capacity2 = _ref.capacity, padding2 = _ref.padding;
         var keccak = (0, _permute["default"])();
         var stateSize = 200;
         var blockSize = capacity2 / 8;
@@ -34003,7 +34003,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
         };
         this.squeeze = function() {
           var options = arguments.length > 0 && arguments[0] !== void 0 ? arguments[0] : {};
-          var output3 = { buffer: options.buffer || _buffer.Buffer.allocUnsafe(blockSize), padding: options.padding || padding, queue: _buffer.Buffer.allocUnsafe(queue3.length), state: new Uint32Array(state.length) };
+          var output3 = { buffer: options.buffer || _buffer.Buffer.allocUnsafe(blockSize), padding: options.padding || padding2, queue: _buffer.Buffer.allocUnsafe(queue3.length), state: new Uint32Array(state.length) };
           queue3.copy(output3.queue);
           for (var i = 0; i < state.length; i++) {
             output3.state[i] = state[i];
@@ -34046,7 +34046,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
         return obj && obj.__esModule ? obj : { "default": obj };
       }
       var createHash = function createHash2(_ref) {
-        var allowedSizes = _ref.allowedSizes, defaultSize = _ref.defaultSize, padding = _ref.padding;
+        var allowedSizes = _ref.allowedSizes, defaultSize = _ref.defaultSize, padding2 = _ref.padding;
         return function Hash4() {
           var _this = this;
           var size2 = arguments.length > 0 && arguments[0] !== void 0 ? arguments[0] : defaultSize;
@@ -34071,7 +34071,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
           this.digest = function() {
             var formatOrOptions = arguments.length > 0 && arguments[0] !== void 0 ? arguments[0] : "binary";
             var options = typeof formatOrOptions === "string" ? { format: formatOrOptions } : formatOrOptions;
-            var buffer = sponge.squeeze({ buffer: options.buffer, padding: options.padding || padding });
+            var buffer = sponge.squeeze({ buffer: options.buffer, padding: options.padding || padding2 });
             if (options.format && options.format !== "binary") {
               return buffer.toString(options.format);
             }
@@ -36937,14 +36937,14 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
   function padHex(hex_, { dir, size: size2 = 32 } = {}) {
     if (size2 === null)
       return hex_;
-    const hex20 = hex_.replace("0x", "");
-    if (hex20.length > size2 * 2)
+    const hex22 = hex_.replace("0x", "");
+    if (hex22.length > size2 * 2)
       throw new SizeExceedsPaddingSizeError({
-        size: Math.ceil(hex20.length / 2),
+        size: Math.ceil(hex22.length / 2),
         targetSize: size2,
         type: "hex"
       });
-    return `0x${hex20[dir === "right" ? "padEnd" : "padStart"](size2 * 2, "0")}`;
+    return `0x${hex22[dir === "right" ? "padEnd" : "padStart"](size2 * 2, "0")}`;
   }
   function padBytes(bytes3, { dir, size: size2 = 32 } = {}) {
     if (size2 === null)
@@ -37022,24 +37022,24 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     return bytesToHex2(value, opts);
   }
   function boolToHex(value, opts = {}) {
-    const hex20 = `0x${Number(value)}`;
+    const hex22 = `0x${Number(value)}`;
     if (typeof opts.size === "number") {
-      assertSize(hex20, { size: opts.size });
-      return pad(hex20, { size: opts.size });
+      assertSize(hex22, { size: opts.size });
+      return pad(hex22, { size: opts.size });
     }
-    return hex20;
+    return hex22;
   }
   function bytesToHex2(value, opts = {}) {
     let string19 = "";
     for (let i = 0; i < value.length; i++) {
       string19 += hexes2[value[i]];
     }
-    const hex20 = `0x${string19}`;
+    const hex22 = `0x${string19}`;
     if (typeof opts.size === "number") {
-      assertSize(hex20, { size: opts.size });
-      return pad(hex20, { dir: "right", size: opts.size });
+      assertSize(hex22, { size: opts.size });
+      return pad(hex22, { dir: "right", size: opts.size });
     }
-    return hex20;
+    return hex22;
   }
   function numberToHex(value_, opts = {}) {
     const { signed, size: size2 } = opts;
@@ -37064,16 +37064,16 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
         value: `${value_}${suffix}`
       });
     }
-    const hex20 = `0x${(signed && value < 0 ? (1n << BigInt(size2 * 8)) + BigInt(value) : value).toString(16)}`;
+    const hex22 = `0x${(signed && value < 0 ? (1n << BigInt(size2 * 8)) + BigInt(value) : value).toString(16)}`;
     if (size2)
-      return pad(hex20, { size: size2 });
-    return hex20;
+      return pad(hex22, { size: size2 });
+    return hex22;
   }
   function stringToHex(value_, opts = {}) {
-    const value = encoder.encode(value_);
+    const value = encoder2.encode(value_);
     return bytesToHex2(value, opts);
   }
-  var hexes2, encoder;
+  var hexes2, encoder2;
   var init_toHex = __esm({
     "node_modules/viem/_esm/utils/encoding/toHex.js"() {
       init_dirname();
@@ -37083,7 +37083,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
       init_pad();
       init_fromHex();
       hexes2 = /* @__PURE__ */ Array.from({ length: 256 }, (_v, i) => i.toString(16).padStart(2, "0"));
-      encoder = /* @__PURE__ */ new TextEncoder();
+      encoder2 = /* @__PURE__ */ new TextEncoder();
     }
   });
 
@@ -37116,12 +37116,12 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     return void 0;
   }
   function hexToBytes2(hex_, opts = {}) {
-    let hex20 = hex_;
+    let hex22 = hex_;
     if (opts.size) {
-      assertSize(hex20, { size: opts.size });
-      hex20 = pad(hex20, { dir: "right", size: opts.size });
+      assertSize(hex22, { size: opts.size });
+      hex22 = pad(hex22, { dir: "right", size: opts.size });
     }
-    let hexString = hex20.slice(2);
+    let hexString = hex22.slice(2);
     if (hexString.length % 2)
       hexString = `0${hexString}`;
     const length = hexString.length / 2;
@@ -37137,18 +37137,18 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     return bytes3;
   }
   function numberToBytes(value, opts) {
-    const hex20 = numberToHex(value, opts);
-    return hexToBytes2(hex20);
+    const hex22 = numberToHex(value, opts);
+    return hexToBytes2(hex22);
   }
   function stringToBytes(value, opts = {}) {
-    const bytes3 = encoder2.encode(value);
+    const bytes3 = encoder3.encode(value);
     if (typeof opts.size === "number") {
       assertSize(bytes3, { size: opts.size });
       return pad(bytes3, { dir: "right", size: opts.size });
     }
     return bytes3;
   }
-  var encoder2, charCodeMap;
+  var encoder3, charCodeMap;
   var init_toBytes = __esm({
     "node_modules/viem/_esm/utils/encoding/toBytes.js"() {
       init_dirname();
@@ -37159,7 +37159,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
       init_pad();
       init_fromHex();
       init_toHex();
-      encoder2 = /* @__PURE__ */ new TextEncoder();
+      encoder3 = /* @__PURE__ */ new TextEncoder();
       charCodeMap = {
         zero: 48,
         nine: 57,
@@ -301937,7 +301937,10 @@ pub contract MultiCallEntrypoint {
     TxContext: () => TxContext,
     TxExecutionRequest: () => TxExecutionRequest,
     TxHash: () => TxHash,
+    aggregateFundingTransaction: () => aggregateFundingTransaction,
+    aggregateUsdcFundingTransaction: () => aggregateUsdcFundingTransaction,
     boundedTransactionRead: () => boundedTransactionRead,
+    claimSecrets: () => claimSecrets,
     classifyDroppedTransaction: () => classifyDroppedTransaction,
     computeArtifactHash: () => computeArtifactHash,
     computeContractAddressFromInstance: () => computeContractAddressFromInstance,
@@ -301947,6 +301950,7 @@ pub contract MultiCallEntrypoint {
     computeSecretHash: () => computeSecretHash,
     createAztecNodeClient: () => createAztecNodeClient2,
     createBrowserJournalStorage: () => createBrowserJournalStorage,
+    createEncryptedJournalSlot: () => createEncryptedJournalSlot,
     createEthereumJournal: () => createEthereumJournal,
     createJournalBackup: () => createJournalBackup,
     createL2Journal: () => createL2Journal,
@@ -301993,6 +301997,8 @@ pub contract MultiCallEntrypoint {
     poseidon2HashBytes: () => poseidon2HashBytes,
     poseidon2HashWithSeparator: () => poseidon2HashWithSeparator,
     preflightDeploymentNetwork: () => preflightDeploymentNetwork,
+    prepareAggregateFunding: () => prepareAggregateFunding,
+    prepareAggregateUsdcFunding: () => prepareAggregateUsdcFunding,
     prepareFundingClaim: () => prepareFundingClaim,
     preparePrivateFeePayment: () => preparePrivateFeePayment,
     provingEnabledForNode: () => provingEnabledForNode,
@@ -302004,7 +302010,9 @@ pub contract MultiCallEntrypoint {
     sha256ToField: () => sha256ToField,
     siloNullifier: () => siloNullifier,
     submitOnceWithReconciliation: () => submitOnceWithReconciliation,
+    validateAggregateFundingIntent: () => validateAggregateFundingIntent,
     validateDeploymentManifest: () => validateDeploymentManifest,
+    verifyAggregateFundingEffects: () => verifyAggregateFundingEffects,
     verifyDeploymentInputs: () => verifyDeploymentInputs,
     verifyEthereumIntentReceipt: () => verifyEthereumIntentReceipt,
     verifyPortalRuntime: () => verifyPortalRuntime,
@@ -302015,6 +302023,6257 @@ pub contract MultiCallEntrypoint {
   init_dirname();
   init_buffer2();
   init_process2();
+
+  // shared/journal-record.mjs
+  init_dirname();
+  init_buffer2();
+  init_process2();
+
+  // shared/transaction-outcomes.mjs
+  init_dirname();
+  init_buffer2();
+  init_process2();
+  var transactionError = (code, message) => Object.assign(new Error(message), { code });
+  var accepted = /* @__PURE__ */ new Set(["checkpointed", "proven", "finalized"]);
+  var pending = /* @__PURE__ */ new Set(["pending", "proposed"]);
+  var hash = (value) => value?.toString?.();
+  async function boundedTransactionRead(fn, timeoutMs = 2e4) {
+    if (!Number.isFinite(timeoutMs) || timeoutMs <= 0 || timeoutMs > 2e4) throw transactionError("BB_SUBMISSION_UNKNOWN", "Transaction read deadline expired.");
+    let timer;
+    try {
+      return await Promise.race([Promise.resolve().then(fn), new Promise((_, reject) => {
+        timer = setTimeout(() => reject(transactionError("BB_SUBMISSION_UNKNOWN", "Transaction RPC timed out. Keep the saved request and reconcile before retrying.")), timeoutMs);
+      })]);
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+  function requireSuccessfulReceipt(receipt2, txHash) {
+    if (hash(receipt2?.txHash) !== hash(txHash) || !accepted.has(receipt2?.status) || receipt2.executionResult !== "success" || !Number.isSafeInteger(receipt2.blockNumber) || receipt2.blockNumber < 1 || !receipt2.blockHash) {
+      throw transactionError("BB_TRANSACTION_FAILED", "Transaction does not have a successful confirmed receipt.");
+    }
+    return receipt2;
+  }
+  async function readCanonicalReceipt(node2, txHash, { readTimeoutMs = 2e4 } = {}) {
+    const receipt2 = await boundedTransactionRead(() => node2.getTxReceipt(txHash), readTimeoutMs);
+    if (hash(receipt2?.txHash) !== hash(txHash)) throw transactionError("BB_SUBMISSION_UNKNOWN", "Receipt identity does not match.");
+    if (pending.has(receipt2.status) || receipt2.status === "dropped") return null;
+    if (!accepted.has(receipt2.status) || !Number.isSafeInteger(receipt2.blockNumber) || receipt2.blockNumber < 1 || !receipt2.blockHash || !["success", "reverted"].includes(receipt2.executionResult)) throw transactionError("BB_SUBMISSION_UNKNOWN", "Receipt is incomplete.");
+    const block2 = await boundedTransactionRead(() => node2.getBlock(receipt2.blockNumber), readTimeoutMs);
+    if (!block2 || hash(block2.hash) !== hash(receipt2.blockHash)) throw transactionError("BB_SUBMISSION_UNKNOWN", "Receipt block is not canonical.");
+    return receipt2;
+  }
+  async function submitOnceWithReconciliation(node2, tx) {
+    try {
+      await boundedTransactionRead(() => node2.sendTx(tx));
+    } catch {
+      let receipt2;
+      try {
+        receipt2 = await boundedTransactionRead(() => node2.getTxReceipt(tx.getTxHash()));
+      } catch {
+      }
+      if (hash(receipt2?.txHash) === hash(tx.getTxHash())) {
+        if (pending.has(receipt2?.status) || accepted.has(receipt2?.status)) return receipt2;
+        if (receipt2?.status === "dropped") return classifyDroppedTransaction(node2, tx, receipt2);
+      }
+      throw transactionError("BB_SUBMISSION_UNKNOWN", "Submission outcome is unknown. Reconcile this transaction before retrying.");
+    }
+  }
+  async function classifyDroppedTransaction(node2, tx, receipt2) {
+    if (receipt2?.status !== "dropped" || hash(receipt2.txHash) !== hash(tx.getTxHash())) throw transactionError("BB_SUBMISSION_UNKNOWN", "Transaction identity is unavailable.");
+    let validation, refreshed;
+    try {
+      validation = await boundedTransactionRead(() => node2.isValidTx(tx));
+      refreshed = await boundedTransactionRead(() => node2.getTxReceipt(tx.getTxHash()));
+    } catch {
+      throw transactionError("BB_SUBMISSION_UNKNOWN", "Dropped transaction could not be reconciled.");
+    }
+    if (hash(refreshed?.txHash) !== hash(tx.getTxHash())) throw transactionError("BB_SUBMISSION_UNKNOWN", "Transaction identity changed.");
+    if (pending.has(refreshed.status) || accepted.has(refreshed.status)) return refreshed;
+    const reasons = ["Existing nullifier", "Block header not found"];
+    if (refreshed.status === "dropped" && validation?.result === "invalid" && Array.isArray(validation.reason) && validation.reason.length && validation.reason.every((reason) => reasons.includes(reason))) {
+      throw Object.assign(transactionError("BB_STATE_CONFLICT", "Transaction state changed. Refresh and create a new proof."), { stateReasons: [...validation.reason] });
+    }
+    throw transactionError("BB_SUBMISSION_UNKNOWN", "Drop reason is unconfirmed. Reconcile before retrying.");
+  }
+  async function waitForCanonicalReceipt(node2, tx, { timeoutMs = 54e4, intervalMs = 5e3, now = Date.now, sleep: sleep2 = (ms) => new Promise((resolve) => setTimeout(resolve, ms)), onPoll = () => {
+  }, readTimeoutMs = 2e4 } = {}) {
+    const txHash = tx.getTxHash(), deadline = now() + timeoutMs;
+    while (now() < deadline) {
+      let receipt2;
+      try {
+        receipt2 = await boundedTransactionRead(() => node2.getTxReceipt(txHash), Math.min(readTimeoutMs, deadline - now()));
+      } catch (error312) {
+        if (error312?.code === "BB_SUBMISSION_UNKNOWN") throw error312;
+      }
+      if (receipt2) {
+        if (hash(receipt2.txHash) !== hash(txHash)) throw transactionError("BB_SUBMISSION_UNKNOWN", "Receipt identity does not match.");
+        if (receipt2.status === "dropped") receipt2 = await classifyDroppedTransaction(node2, tx, receipt2);
+        if (accepted.has(receipt2.status)) {
+          if (!Number.isSafeInteger(receipt2.blockNumber) || receipt2.blockNumber < 1 || !receipt2.blockHash) throw transactionError("BB_SUBMISSION_UNKNOWN", "Receipt block identity is unavailable.");
+          let block2;
+          try {
+            block2 = await boundedTransactionRead(() => node2.getBlock(receipt2.blockNumber), Math.min(readTimeoutMs, deadline - now()));
+          } catch (error312) {
+            if (error312?.code === "BB_SUBMISSION_UNKNOWN") throw error312;
+          }
+          if (!block2 || hash(block2.hash) !== hash(receipt2.blockHash)) throw transactionError("BB_SUBMISSION_UNKNOWN", "Receipt block is not confirmed canonical.");
+          if (!["success", "reverted"].includes(receipt2.executionResult)) throw transactionError("BB_SUBMISSION_UNKNOWN", "Receipt execution result is unavailable.");
+          return receipt2;
+        }
+        if (!pending.has(receipt2.status)) throw transactionError("BB_SUBMISSION_UNKNOWN", "Receipt status is unrecognized.");
+      }
+      onPoll();
+      await sleep2(Math.min(intervalMs, Math.max(0, deadline - now())));
+    }
+    throw transactionError("BB_SUBMISSION_UNKNOWN", "Confirmation timed out. Keep the transaction identifier and reconcile before retrying.");
+  }
+  async function waitForSuccessfulReceipt(node2, tx, options = {}) {
+    return requireSuccessfulReceipt(await waitForCanonicalReceipt(node2, tx, options), tx.getTxHash());
+  }
+
+  // shared/journal-record.mjs
+  var encoder = new TextEncoder();
+  var decoder = new TextDecoder("utf-8", { fatal: true });
+  var hex = (data) => Array.from(data, (b2) => b2.toString(16).padStart(2, "0")).join("");
+  var bytes = (value) => Uint8Array.from(value.match(/../g) || [], (b2) => parseInt(b2, 16));
+  var invalid = () => transactionError("BB_JOURNAL_INVALID", "Transaction recovery storage could not be authenticated or saved.");
+  var MAX_BYTES = 16 * 1024 * 1024;
+  async function journalRecoveryIdentity({ walletSecret, walletSalt, crypto: crypto3 = globalThis.crypto }) {
+    const field10 = 21888242871839275222246405745257275088548364400416034343698204186575808495617n;
+    if (typeof walletSecret !== "string" || !/^0x[0-9a-f]{64}$/.test(walletSecret) || BigInt(walletSecret) <= 0n || BigInt(walletSecret) >= field10) throw invalid();
+    let salt;
+    try {
+      if (!["string", "number", "bigint"].includes(typeof walletSalt) || typeof walletSalt === "number" && !Number.isSafeInteger(walletSalt)) throw invalid();
+      salt = BigInt(walletSalt);
+    } catch {
+      throw invalid();
+    }
+    if (salt < 0n || salt >= field10) throw invalid();
+    const material = encoder.encode("AZTEC_BB_JOURNAL_RECOVERY_KEY_V1\0" + walletSecret + ":" + BigInt(walletSalt).toString(16).padStart(64, "0"));
+    const digest2 = await crypto3.subtle.digest("SHA-256", material);
+    material.fill(0);
+    const owner = hex(new Uint8Array(await crypto3.subtle.digest("SHA-256", digest2)));
+    const key = await crypto3.subtle.importKey("raw", digest2, "AES-GCM", false, ["encrypt", "decrypt"]);
+    return { key, owner };
+  }
+  async function decryptJournalDescriptor(recovery, identity, crypto3 = globalThis.crypto) {
+    let plain;
+    try {
+      if (!recovery || recovery.owner !== identity.owner || typeof recovery.iv !== "string" || !/^[0-9a-f]{24}$/.test(recovery.iv) || typeof recovery.data !== "string" || recovery.data.length > 8192 || !/^(?:[0-9a-f]{2})+$/.test(recovery.data)) throw invalid();
+      plain = new Uint8Array(await crypto3.subtle.decrypt({ name: "AES-GCM", iv: bytes(recovery.iv), additionalData: encoder.encode(identity.owner) }, identity.key, bytes(recovery.data)));
+      return JSON.parse(decoder.decode(plain));
+    } catch {
+      throw invalid();
+    } finally {
+      plain?.fill(0);
+    }
+  }
+  async function createEncryptedJournalSlot({ storage, walletSecret, walletSalt, scopeText, keyDomain, crypto: crypto3 = globalThis.crypto }) {
+    const field10 = 21888242871839275222246405745257275088548364400416034343698204186575808495617n;
+    if (typeof walletSecret !== "string" || !/^0x[0-9a-f]{64}$/.test(walletSecret) || BigInt(walletSecret) <= 0n || BigInt(walletSecret) >= field10) throw invalid();
+    if (!["string", "number", "bigint"].includes(typeof walletSalt) || typeof walletSalt === "number" && !Number.isSafeInteger(walletSalt)) throw invalid();
+    let salt;
+    try {
+      salt = BigInt(walletSalt);
+    } catch {
+      throw invalid();
+    }
+    if (salt < 0n || salt >= field10) throw invalid();
+    const aad = encoder.encode(scopeText), material = encoder.encode(keyDomain + "\0" + walletSecret + ":" + salt.toString(16).padStart(64, "0"));
+    const digest2 = await crypto3.subtle.digest("SHA-256", material);
+    material.fill(0);
+    const key = await crypto3.subtle.importKey("raw", digest2, "AES-GCM", false, ["encrypt", "decrypt"]);
+    const storageKey = hex(new Uint8Array(await crypto3.subtle.digest("SHA-256", aad)));
+    const identity = await journalRecoveryIdentity({ walletSecret, walletSalt, crypto: crypto3 });
+    async function read2() {
+      let encoded, plain;
+      try {
+        encoded = await storage.read(storageKey);
+        if (encoded === null) return { encoded: null, value: null };
+        if (typeof encoded !== "string" || encoded.length > MAX_BYTES * 2 + 16384) throw invalid();
+        const e = JSON.parse(encoded);
+        if (e.version !== 1 || typeof e.iv !== "string" || !/^[0-9a-f]{24}$/.test(e.iv) || typeof e.data !== "string" || e.data.length > MAX_BYTES * 2 || !/^(?:[0-9a-f]{2})+$/.test(e.data)) throw invalid();
+        if (e.recovery) {
+          const descriptor = await decryptJournalDescriptor(e.recovery, identity, crypto3);
+          if (descriptor.scopeText !== scopeText || descriptor.keyDomain !== keyDomain) throw invalid();
+        }
+        plain = new Uint8Array(await crypto3.subtle.decrypt({ name: "AES-GCM", iv: bytes(e.iv), additionalData: aad }, key, bytes(e.data)));
+        return { encoded, value: JSON.parse(decoder.decode(plain)) };
+      } catch {
+        throw invalid();
+      } finally {
+        plain?.fill(0);
+      }
+    }
+    async function write(previous, value) {
+      const plain = encoder.encode(JSON.stringify(value));
+      if (plain.length > MAX_BYTES - 16) throw invalid();
+      const iv = crypto3.getRandomValues(new Uint8Array(12));
+      let encoded;
+      const descriptor = encoder.encode(JSON.stringify({ scopeText, keyDomain })), descriptorIv = crypto3.getRandomValues(new Uint8Array(12));
+      try {
+        const recovery = { owner: identity.owner, iv: hex(descriptorIv), data: hex(new Uint8Array(await crypto3.subtle.encrypt({ name: "AES-GCM", iv: descriptorIv, additionalData: encoder.encode(identity.owner) }, identity.key, descriptor))) };
+        encoded = JSON.stringify({ version: 1, iv: hex(iv), data: hex(new Uint8Array(await crypto3.subtle.encrypt({ name: "AES-GCM", iv, additionalData: aad }, key, plain))), recovery });
+      } finally {
+        plain.fill(0);
+        descriptor.fill(0);
+      }
+      try {
+        await storage.compareAndSwap(storageKey, previous.encoded, encoded);
+      } catch {
+        throw invalid();
+      }
+      const saved = await read2();
+      if (saved.encoded !== encoded) throw invalid();
+      return saved;
+    }
+    return { read: read2, write, storageKey };
+  }
+
+  // shared/rolling/aggregate-funding.mjs
+  init_dirname();
+  init_buffer2();
+  init_process2();
+
+  // node_modules/ethers/lib.esm/ethers.js
+  init_dirname();
+  init_buffer2();
+  init_process2();
+
+  // node_modules/ethers/lib.esm/_version.js
+  init_dirname();
+  init_buffer2();
+  init_process2();
+  var version2 = "6.17.0";
+
+  // node_modules/ethers/lib.esm/abi/index.js
+  init_dirname();
+  init_buffer2();
+  init_process2();
+
+  // node_modules/ethers/lib.esm/abi/abi-coder.js
+  init_dirname();
+  init_buffer2();
+  init_process2();
+
+  // node_modules/ethers/lib.esm/utils/index.js
+  init_dirname();
+  init_buffer2();
+  init_process2();
+
+  // node_modules/ethers/lib.esm/utils/data.js
+  init_dirname();
+  init_buffer2();
+  init_process2();
+
+  // node_modules/ethers/lib.esm/utils/errors.js
+  init_dirname();
+  init_buffer2();
+  init_process2();
+
+  // node_modules/ethers/lib.esm/utils/properties.js
+  init_dirname();
+  init_buffer2();
+  init_process2();
+  function checkType(value, type, name) {
+    const types2 = type.split("|").map((t) => t.trim());
+    for (let i = 0; i < types2.length; i++) {
+      switch (type) {
+        case "any":
+          return;
+        case "bigint":
+        case "boolean":
+        case "number":
+        case "string":
+          if (typeof value === type) {
+            return;
+          }
+      }
+    }
+    const error312 = new Error(`invalid value for type ${type}`);
+    error312.code = "INVALID_ARGUMENT";
+    error312.argument = `value.${name}`;
+    error312.value = value;
+    throw error312;
+  }
+  function defineProperties(target, values, types2) {
+    for (let key in values) {
+      let value = values[key];
+      const type = types2 ? types2[key] : null;
+      if (type) {
+        checkType(value, type, key);
+      }
+      Object.defineProperty(target, key, { enumerable: true, value, writable: false });
+    }
+  }
+
+  // node_modules/ethers/lib.esm/utils/errors.js
+  function stringify(value, seen) {
+    if (value == null) {
+      return "null";
+    }
+    if (seen == null) {
+      seen = /* @__PURE__ */ new Set();
+    }
+    if (typeof value === "object") {
+      if (seen.has(value)) {
+        return "[Circular]";
+      }
+      seen.add(value);
+    }
+    if (Array.isArray(value)) {
+      return "[ " + value.map((v) => stringify(v, seen)).join(", ") + " ]";
+    }
+    if (value instanceof Uint8Array) {
+      const HEX = "0123456789abcdef";
+      let result = "0x";
+      for (let i = 0; i < value.length; i++) {
+        result += HEX[value[i] >> 4];
+        result += HEX[value[i] & 15];
+      }
+      return result;
+    }
+    if (typeof value === "object" && typeof value.toJSON === "function") {
+      return stringify(value.toJSON(), seen);
+    }
+    switch (typeof value) {
+      case "boolean":
+      case "number":
+      case "symbol":
+        return value.toString();
+      case "bigint":
+        return BigInt(value).toString();
+      case "string":
+        return JSON.stringify(value);
+      case "object": {
+        const keys = Object.keys(value);
+        keys.sort();
+        return "{ " + keys.map((k) => `${stringify(k, seen)}: ${stringify(value[k], seen)}`).join(", ") + " }";
+      }
+    }
+    return `[ COULD NOT SERIALIZE ]`;
+  }
+  function isError(error312, code) {
+    return error312 && error312.code === code;
+  }
+  function makeError(message, code, info) {
+    let shortMessage = message;
+    {
+      const details = [];
+      if (info) {
+        if ("message" in info || "code" in info || "name" in info) {
+          throw new Error(`value will overwrite populated values: ${stringify(info)}`);
+        }
+        for (const key in info) {
+          if (key === "shortMessage") {
+            continue;
+          }
+          const value = info[key];
+          details.push(key + "=" + stringify(value));
+        }
+      }
+      details.push(`code=${code}`);
+      details.push(`version=${version2}`);
+      if (details.length) {
+        message += " (" + details.join(", ") + ")";
+      }
+    }
+    let error312;
+    switch (code) {
+      case "INVALID_ARGUMENT":
+        error312 = new TypeError(message);
+        break;
+      case "NUMERIC_FAULT":
+      case "BUFFER_OVERRUN":
+        error312 = new RangeError(message);
+        break;
+      default:
+        error312 = new Error(message);
+    }
+    defineProperties(error312, { code });
+    if (info) {
+      Object.assign(error312, info);
+    }
+    if (error312.shortMessage == null) {
+      defineProperties(error312, { shortMessage });
+    }
+    return error312;
+  }
+  function assert2(check12, message, code, info) {
+    if (!check12) {
+      throw makeError(message, code, info);
+    }
+  }
+  function assertArgument(check12, message, name, value) {
+    assert2(check12, message, "INVALID_ARGUMENT", { argument: name, value });
+  }
+  function assertArgumentCount(count, expectedCount, message) {
+    if (message == null) {
+      message = "";
+    }
+    if (message) {
+      message = ": " + message;
+    }
+    assert2(count >= expectedCount, "missing argument" + message, "MISSING_ARGUMENT", {
+      count,
+      expectedCount
+    });
+    assert2(count <= expectedCount, "too many arguments" + message, "UNEXPECTED_ARGUMENT", {
+      count,
+      expectedCount
+    });
+  }
+  var _normalizeForms = ["NFD", "NFC", "NFKD", "NFKC"].reduce((accum, form) => {
+    try {
+      if ("test".normalize(form) !== "test") {
+        throw new Error("bad");
+      }
+      ;
+      if (form === "NFD") {
+        const check12 = String.fromCharCode(233).normalize("NFD");
+        const expected = String.fromCharCode(101, 769);
+        if (check12 !== expected) {
+          throw new Error("broken");
+        }
+      }
+      accum.push(form);
+    } catch (error312) {
+    }
+    return accum;
+  }, []);
+  function assertNormalize(form) {
+    assert2(_normalizeForms.indexOf(form) >= 0, "platform missing String.prototype.normalize", "UNSUPPORTED_OPERATION", {
+      operation: "String.prototype.normalize",
+      info: { form }
+    });
+  }
+  function assertPrivate(givenGuard, guard, className) {
+    if (className == null) {
+      className = "";
+    }
+    if (givenGuard !== guard) {
+      let method = className, operation = "new";
+      if (className) {
+        method += ".";
+        operation += " " + className;
+      }
+      assert2(false, `private constructor; use ${method}from* methods`, "UNSUPPORTED_OPERATION", {
+        operation
+      });
+    }
+  }
+
+  // node_modules/ethers/lib.esm/utils/data.js
+  function _getBytes(value, name, copy3) {
+    if (value instanceof Uint8Array) {
+      if (copy3) {
+        return new Uint8Array(value);
+      }
+      return value;
+    }
+    if (typeof value === "string" && value.length % 2 === 0 && value.match(/^0x[0-9a-f]*$/i)) {
+      const result = new Uint8Array((value.length - 2) / 2);
+      let offset = 2;
+      for (let i = 0; i < result.length; i++) {
+        result[i] = parseInt(value.substring(offset, offset + 2), 16);
+        offset += 2;
+      }
+      return result;
+    }
+    assertArgument(false, "invalid BytesLike value", name || "value", value);
+  }
+  function getBytes(value, name) {
+    return _getBytes(value, name, false);
+  }
+  function getBytesCopy(value, name) {
+    return _getBytes(value, name, true);
+  }
+  function isHexString(value, length) {
+    if (typeof value !== "string" || !value.match(/^0x[0-9A-Fa-f]*$/)) {
+      return false;
+    }
+    if (typeof length === "number" && value.length !== 2 + 2 * length) {
+      return false;
+    }
+    if (length === true && value.length % 2 !== 0) {
+      return false;
+    }
+    return true;
+  }
+  function isBytesLike(value) {
+    return isHexString(value, true) || value instanceof Uint8Array;
+  }
+  var HexCharacters = "0123456789abcdef";
+  function hexlify(data) {
+    const bytes3 = getBytes(data);
+    let result = "0x";
+    for (let i = 0; i < bytes3.length; i++) {
+      const v = bytes3[i];
+      result += HexCharacters[(v & 240) >> 4] + HexCharacters[v & 15];
+    }
+    return result;
+  }
+  function concat(datas) {
+    return "0x" + datas.map((d) => hexlify(d).substring(2)).join("");
+  }
+  function dataSlice(data, start, end) {
+    const bytes3 = getBytes(data);
+    if (end != null && end > bytes3.length) {
+      assert2(false, "cannot slice beyond data bounds", "BUFFER_OVERRUN", {
+        buffer: bytes3,
+        length: bytes3.length,
+        offset: end
+      });
+    }
+    return hexlify(bytes3.slice(start == null ? 0 : start, end == null ? bytes3.length : end));
+  }
+  function zeroPad(data, length, left) {
+    const bytes3 = getBytes(data);
+    assert2(length >= bytes3.length, "padding exceeds data length", "BUFFER_OVERRUN", {
+      buffer: new Uint8Array(bytes3),
+      length,
+      offset: length + 1
+    });
+    const result = new Uint8Array(length);
+    result.fill(0);
+    if (left) {
+      result.set(bytes3, length - bytes3.length);
+    } else {
+      result.set(bytes3, 0);
+    }
+    return hexlify(result);
+  }
+  function zeroPadValue(data, length) {
+    return zeroPad(data, length, true);
+  }
+  function zeroPadBytes(data, length) {
+    return zeroPad(data, length, false);
+  }
+
+  // node_modules/ethers/lib.esm/utils/maths.js
+  init_dirname();
+  init_buffer2();
+  init_process2();
+  var BN_0 = BigInt(0);
+  var BN_1 = BigInt(1);
+  var maxValue = 9007199254740991;
+  function fromTwos(_value, _width) {
+    const value = getUint(_value, "value");
+    const width = BigInt(getNumber(_width, "width"));
+    assert2(value >> width === BN_0, "overflow", "NUMERIC_FAULT", {
+      operation: "fromTwos",
+      fault: "overflow",
+      value: _value
+    });
+    if (value >> width - BN_1) {
+      const mask2 = (BN_1 << width) - BN_1;
+      return -((~value & mask2) + BN_1);
+    }
+    return value;
+  }
+  function toTwos(_value, _width) {
+    let value = getBigInt(_value, "value");
+    const width = BigInt(getNumber(_width, "width"));
+    const limit = BN_1 << width - BN_1;
+    if (value < BN_0) {
+      value = -value;
+      assert2(value <= limit, "too low", "NUMERIC_FAULT", {
+        operation: "toTwos",
+        fault: "overflow",
+        value: _value
+      });
+      const mask2 = (BN_1 << width) - BN_1;
+      return (~value & mask2) + BN_1;
+    } else {
+      assert2(value < limit, "too high", "NUMERIC_FAULT", {
+        operation: "toTwos",
+        fault: "overflow",
+        value: _value
+      });
+    }
+    return value;
+  }
+  function mask(_value, _bits) {
+    const value = getUint(_value, "value");
+    const bits = BigInt(getNumber(_bits, "bits"));
+    return value & (BN_1 << bits) - BN_1;
+  }
+  function getBigInt(value, name) {
+    switch (typeof value) {
+      case "bigint":
+        return value;
+      case "number":
+        assertArgument(Number.isInteger(value), "underflow", name || "value", value);
+        assertArgument(value >= -maxValue && value <= maxValue, "overflow", name || "value", value);
+        return BigInt(value);
+      case "string":
+        try {
+          if (value === "") {
+            throw new Error("empty string");
+          }
+          if (value[0] === "-" && value[1] !== "-") {
+            return -BigInt(value.substring(1));
+          }
+          return BigInt(value);
+        } catch (e) {
+          assertArgument(false, `invalid BigNumberish string: ${e.message}`, name || "value", value);
+        }
+    }
+    assertArgument(false, "invalid BigNumberish value", name || "value", value);
+  }
+  function getUint(value, name) {
+    const result = getBigInt(value, name);
+    assert2(result >= BN_0, "unsigned value cannot be negative", "NUMERIC_FAULT", {
+      fault: "overflow",
+      operation: "getUint",
+      value
+    });
+    return result;
+  }
+  var Nibbles = "0123456789abcdef";
+  function toBigInt(value) {
+    if (value instanceof Uint8Array) {
+      let result = "0x0";
+      for (const v of value) {
+        result += Nibbles[v >> 4];
+        result += Nibbles[v & 15];
+      }
+      return BigInt(result);
+    }
+    return getBigInt(value);
+  }
+  function getNumber(value, name) {
+    switch (typeof value) {
+      case "bigint":
+        assertArgument(value >= -maxValue && value <= maxValue, "overflow", name || "value", value);
+        return Number(value);
+      case "number":
+        assertArgument(Number.isInteger(value), "underflow", name || "value", value);
+        assertArgument(value >= -maxValue && value <= maxValue, "overflow", name || "value", value);
+        return value;
+      case "string":
+        try {
+          if (value === "") {
+            throw new Error("empty string");
+          }
+          return getNumber(BigInt(value), name);
+        } catch (e) {
+          assertArgument(false, `invalid numeric string: ${e.message}`, name || "value", value);
+        }
+    }
+    assertArgument(false, "invalid numeric value", name || "value", value);
+  }
+  function toNumber(value) {
+    return getNumber(toBigInt(value));
+  }
+  function toBeHex(_value, _width) {
+    const value = getUint(_value, "value");
+    let result = value.toString(16);
+    if (_width == null) {
+      if (result.length % 2) {
+        result = "0" + result;
+      }
+    } else {
+      const width = getNumber(_width, "width");
+      if (width === 0 && value === BN_0) {
+        return "0x";
+      }
+      assert2(width * 2 >= result.length, `value exceeds width (${width} bytes)`, "NUMERIC_FAULT", {
+        operation: "toBeHex",
+        fault: "overflow",
+        value: _value
+      });
+      while (result.length < width * 2) {
+        result = "0" + result;
+      }
+    }
+    return "0x" + result;
+  }
+  function toBeArray(_value, _width) {
+    const value = getUint(_value, "value");
+    if (value === BN_0) {
+      const width = _width != null ? getNumber(_width, "width") : 0;
+      return new Uint8Array(width);
+    }
+    let hex22 = value.toString(16);
+    if (hex22.length % 2) {
+      hex22 = "0" + hex22;
+    }
+    if (_width != null) {
+      const width = getNumber(_width, "width");
+      while (hex22.length < width * 2) {
+        hex22 = "00" + hex22;
+      }
+      assert2(width * 2 === hex22.length, `value exceeds width (${width} bytes)`, "NUMERIC_FAULT", {
+        operation: "toBeArray",
+        fault: "overflow",
+        value: _value
+      });
+    }
+    const result = new Uint8Array(hex22.length / 2);
+    for (let i = 0; i < result.length; i++) {
+      const offset = i * 2;
+      result[i] = parseInt(hex22.substring(offset, offset + 2), 16);
+    }
+    return result;
+  }
+  function toQuantity(value) {
+    let result = hexlify(isBytesLike(value) ? value : toBeArray(value)).substring(2);
+    while (result.startsWith("0")) {
+      result = result.substring(1);
+    }
+    if (result === "") {
+      result = "0";
+    }
+    return "0x" + result;
+  }
+
+  // node_modules/ethers/lib.esm/utils/utf8.js
+  init_dirname();
+  init_buffer2();
+  init_process2();
+  function errorFunc(reason, offset, bytes3, output3, badCodepoint) {
+    assertArgument(false, `invalid codepoint at offset ${offset}; ${reason}`, "bytes", bytes3);
+  }
+  function ignoreFunc(reason, offset, bytes3, output3, badCodepoint) {
+    if (reason === "BAD_PREFIX" || reason === "UNEXPECTED_CONTINUE") {
+      let i = 0;
+      for (let o = offset + 1; o < bytes3.length; o++) {
+        if (bytes3[o] >> 6 !== 2) {
+          break;
+        }
+        i++;
+      }
+      return i;
+    }
+    if (reason === "OVERRUN") {
+      return bytes3.length - offset - 1;
+    }
+    return 0;
+  }
+  function replaceFunc(reason, offset, bytes3, output3, badCodepoint) {
+    if (reason === "OVERLONG") {
+      assertArgument(typeof badCodepoint === "number", "invalid bad code point for replacement", "badCodepoint", badCodepoint);
+      output3.push(badCodepoint);
+      return 0;
+    }
+    output3.push(65533);
+    return ignoreFunc(reason, offset, bytes3, output3, badCodepoint);
+  }
+  var Utf8ErrorFuncs = Object.freeze({
+    error: errorFunc,
+    ignore: ignoreFunc,
+    replace: replaceFunc
+  });
+  function getUtf8CodePoints(_bytes, onError) {
+    if (onError == null) {
+      onError = Utf8ErrorFuncs.error;
+    }
+    const bytes3 = getBytes(_bytes, "bytes");
+    const result = [];
+    let i = 0;
+    while (i < bytes3.length) {
+      const c = bytes3[i++];
+      if (c >> 7 === 0) {
+        result.push(c);
+        continue;
+      }
+      let extraLength = null;
+      let overlongMask = null;
+      if ((c & 224) === 192) {
+        extraLength = 1;
+        overlongMask = 127;
+      } else if ((c & 240) === 224) {
+        extraLength = 2;
+        overlongMask = 2047;
+      } else if ((c & 248) === 240) {
+        extraLength = 3;
+        overlongMask = 65535;
+      } else {
+        if ((c & 192) === 128) {
+          i += onError("UNEXPECTED_CONTINUE", i - 1, bytes3, result);
+        } else {
+          i += onError("BAD_PREFIX", i - 1, bytes3, result);
+        }
+        continue;
+      }
+      if (i - 1 + extraLength >= bytes3.length) {
+        i += onError("OVERRUN", i - 1, bytes3, result);
+        continue;
+      }
+      let res = c & (1 << 8 - extraLength - 1) - 1;
+      for (let j = 0; j < extraLength; j++) {
+        let nextChar = bytes3[i];
+        if ((nextChar & 192) != 128) {
+          i += onError("MISSING_CONTINUE", i, bytes3, result);
+          res = null;
+          break;
+        }
+        ;
+        res = res << 6 | nextChar & 63;
+        i++;
+      }
+      if (res === null) {
+        continue;
+      }
+      if (res > 1114111) {
+        i += onError("OUT_OF_RANGE", i - 1 - extraLength, bytes3, result, res);
+        continue;
+      }
+      if (res >= 55296 && res <= 57343) {
+        i += onError("UTF16_SURROGATE", i - 1 - extraLength, bytes3, result, res);
+        continue;
+      }
+      if (res <= overlongMask) {
+        i += onError("OVERLONG", i - 1 - extraLength, bytes3, result, res);
+        continue;
+      }
+      result.push(res);
+    }
+    return result;
+  }
+  function toUtf8Bytes(str, form) {
+    assertArgument(typeof str === "string", "invalid string value", "str", str);
+    if (form != null) {
+      assertNormalize(form);
+      str = str.normalize(form);
+    }
+    let result = [];
+    for (let i = 0; i < str.length; i++) {
+      const c = str.charCodeAt(i);
+      if (c < 128) {
+        result.push(c);
+      } else if (c < 2048) {
+        result.push(c >> 6 | 192);
+        result.push(c & 63 | 128);
+      } else if ((c & 64512) == 55296) {
+        i++;
+        const c2 = str.charCodeAt(i);
+        assertArgument(i < str.length && (c2 & 64512) === 56320, "invalid surrogate pair", "str", str);
+        const pair = 65536 + ((c & 1023) << 10) + (c2 & 1023);
+        result.push(pair >> 18 | 240);
+        result.push(pair >> 12 & 63 | 128);
+        result.push(pair >> 6 & 63 | 128);
+        result.push(pair & 63 | 128);
+      } else {
+        result.push(c >> 12 | 224);
+        result.push(c >> 6 & 63 | 128);
+        result.push(c & 63 | 128);
+      }
+    }
+    return new Uint8Array(result);
+  }
+  function _toUtf8String(codePoints) {
+    return codePoints.map((codePoint) => {
+      if (codePoint <= 65535) {
+        return String.fromCharCode(codePoint);
+      }
+      codePoint -= 65536;
+      return String.fromCharCode((codePoint >> 10 & 1023) + 55296, (codePoint & 1023) + 56320);
+    }).join("");
+  }
+  function toUtf8String(bytes3, onError) {
+    return _toUtf8String(getUtf8CodePoints(bytes3, onError));
+  }
+
+  // node_modules/ethers/lib.esm/utils/rlp-encode.js
+  init_dirname();
+  init_buffer2();
+  init_process2();
+  function arrayifyInteger(value) {
+    const result = [];
+    while (value) {
+      result.unshift(value & 255);
+      value >>= 8;
+    }
+    return result;
+  }
+  function _encode(object8) {
+    if (Array.isArray(object8)) {
+      let payload = [];
+      object8.forEach(function(child) {
+        payload = payload.concat(_encode(child));
+      });
+      if (payload.length <= 55) {
+        payload.unshift(192 + payload.length);
+        return payload;
+      }
+      const length2 = arrayifyInteger(payload.length);
+      length2.unshift(247 + length2.length);
+      return length2.concat(payload);
+    }
+    const data = Array.prototype.slice.call(getBytes(object8, "object"));
+    if (data.length === 1 && data[0] <= 127) {
+      return data;
+    } else if (data.length <= 55) {
+      data.unshift(128 + data.length);
+      return data;
+    }
+    const length = arrayifyInteger(data.length);
+    length.unshift(183 + length.length);
+    return length.concat(data);
+  }
+  var nibbles = "0123456789abcdef";
+  function encodeRlp(object8) {
+    let result = "0x";
+    for (const v of _encode(object8)) {
+      result += nibbles[v >> 4];
+      result += nibbles[v & 15];
+    }
+    return result;
+  }
+
+  // node_modules/ethers/lib.esm/abi/coders/abstract-coder.js
+  init_dirname();
+  init_buffer2();
+  init_process2();
+  var WordSize = 32;
+  var Padding = new Uint8Array(WordSize);
+  var passProperties = ["then"];
+  var _guard = {};
+  var resultNames = /* @__PURE__ */ new WeakMap();
+  function getNames(result) {
+    return resultNames.get(result);
+  }
+  function setNames(result, names) {
+    resultNames.set(result, names);
+  }
+  function throwError(name, error312) {
+    const wrapped = new Error(`deferred error during ABI decoding triggered accessing ${name}`);
+    wrapped.error = error312;
+    throw wrapped;
+  }
+  function toObject(names, items, deep) {
+    if (names.indexOf(null) >= 0) {
+      return items.map((item, index) => {
+        if (item instanceof Result) {
+          return toObject(getNames(item), item, deep);
+        }
+        return item;
+      });
+    }
+    return names.reduce((accum, name, index) => {
+      let item = items.getValue(name);
+      if (!(name in accum)) {
+        if (deep && item instanceof Result) {
+          item = toObject(getNames(item), item, deep);
+        }
+        accum[name] = item;
+      }
+      return accum;
+    }, {});
+  }
+  var Result = class _Result extends Array {
+    // No longer used; but cannot be removed as it will remove the
+    // #private field from the .d.ts which may break backwards
+    // compatibility
+    #names;
+    /**
+     *  @private
+     */
+    constructor(...args) {
+      const guard = args[0];
+      let items = args[1];
+      let names = (args[2] || []).slice();
+      let wrap3 = true;
+      if (guard !== _guard) {
+        items = args;
+        names = [];
+        wrap3 = false;
+      }
+      super(items.length);
+      items.forEach((item, index) => {
+        this[index] = item;
+      });
+      const nameCounts = names.reduce((accum, name) => {
+        if (typeof name === "string") {
+          accum.set(name, (accum.get(name) || 0) + 1);
+        }
+        return accum;
+      }, /* @__PURE__ */ new Map());
+      setNames(this, Object.freeze(items.map((item, index) => {
+        const name = names[index];
+        if (name != null && nameCounts.get(name) === 1) {
+          return name;
+        }
+        return null;
+      })));
+      this.#names = [];
+      if (this.#names == null) {
+        void this.#names;
+      }
+      if (!wrap3) {
+        return;
+      }
+      Object.freeze(this);
+      const proxy2 = new Proxy(this, {
+        get: (target, prop, receiver) => {
+          if (typeof prop === "string") {
+            if (prop.match(/^[0-9]+$/)) {
+              const index = getNumber(prop, "%index");
+              if (index < 0 || index >= this.length) {
+                throw new RangeError("out of result range");
+              }
+              const item = target[index];
+              if (item instanceof Error) {
+                throwError(`index ${index}`, item);
+              }
+              return item;
+            }
+            if (passProperties.indexOf(prop) >= 0) {
+              return Reflect.get(target, prop, receiver);
+            }
+            const value = target[prop];
+            if (value instanceof Function) {
+              return function(...args2) {
+                return value.apply(this === receiver ? target : this, args2);
+              };
+            } else if (!(prop in target)) {
+              return target.getValue.apply(this === receiver ? target : this, [prop]);
+            }
+          }
+          return Reflect.get(target, prop, receiver);
+        }
+      });
+      setNames(proxy2, getNames(this));
+      return proxy2;
+    }
+    /**
+     *  Returns the Result as a normal Array. If %%deep%%, any children
+     *  which are Result objects are also converted to a normal Array.
+     *
+     *  This will throw if there are any outstanding deferred
+     *  errors.
+     */
+    toArray(deep) {
+      const result = [];
+      this.forEach((item, index) => {
+        if (item instanceof Error) {
+          throwError(`index ${index}`, item);
+        }
+        if (deep && item instanceof _Result) {
+          item = item.toArray(deep);
+        }
+        result.push(item);
+      });
+      return result;
+    }
+    /**
+     *  Returns the Result as an Object with each name-value pair. If
+     *  %%deep%%, any children which are Result objects are also
+     *  converted to an Object.
+     *
+     *  This will throw if any value is unnamed, or if there are
+     *  any outstanding deferred errors.
+     */
+    toObject(deep) {
+      const names = getNames(this);
+      return names.reduce((accum, name, index) => {
+        assert2(name != null, `value at index ${index} unnamed`, "UNSUPPORTED_OPERATION", {
+          operation: "toObject()"
+        });
+        return toObject(names, this, deep);
+      }, {});
+    }
+    /**
+     *  @_ignore
+     */
+    slice(start, end) {
+      if (start == null) {
+        start = 0;
+      }
+      if (start < 0) {
+        start += this.length;
+        if (start < 0) {
+          start = 0;
+        }
+      }
+      if (end == null) {
+        end = this.length;
+      }
+      if (end < 0) {
+        end += this.length;
+        if (end < 0) {
+          end = 0;
+        }
+      }
+      if (end > this.length) {
+        end = this.length;
+      }
+      const _names = getNames(this);
+      const result = [], names = [];
+      for (let i = start; i < end; i++) {
+        result.push(this[i]);
+        names.push(_names[i]);
+      }
+      return new _Result(_guard, result, names);
+    }
+    /**
+     *  @_ignore
+     */
+    filter(callback, thisArg) {
+      const _names = getNames(this);
+      const result = [], names = [];
+      for (let i = 0; i < this.length; i++) {
+        const item = this[i];
+        if (item instanceof Error) {
+          throwError(`index ${i}`, item);
+        }
+        if (callback.call(thisArg, item, i, this)) {
+          result.push(item);
+          names.push(_names[i]);
+        }
+      }
+      return new _Result(_guard, result, names);
+    }
+    /**
+     *  @_ignore
+     */
+    map(callback, thisArg) {
+      const result = [];
+      for (let i = 0; i < this.length; i++) {
+        const item = this[i];
+        if (item instanceof Error) {
+          throwError(`index ${i}`, item);
+        }
+        result.push(callback.call(thisArg, item, i, this));
+      }
+      return result;
+    }
+    /**
+     *  Returns the value for %%name%%.
+     *
+     *  Since it is possible to have a key whose name conflicts with
+     *  a method on a [[Result]] or its superclass Array, or any
+     *  JavaScript keyword, this ensures all named values are still
+     *  accessible by name.
+     */
+    getValue(name) {
+      const index = getNames(this).indexOf(name);
+      if (index === -1) {
+        return void 0;
+      }
+      const value = this[index];
+      if (value instanceof Error) {
+        throwError(`property ${JSON.stringify(name)}`, value.error);
+      }
+      return value;
+    }
+    /**
+     *  Creates a new [[Result]] for %%items%% with each entry
+     *  also accessible by its corresponding name in %%keys%%.
+     */
+    static fromItems(items, keys) {
+      return new _Result(_guard, items, keys);
+    }
+  };
+  function getValue(value) {
+    let bytes3 = toBeArray(value);
+    assert2(bytes3.length <= WordSize, "value out-of-bounds", "BUFFER_OVERRUN", { buffer: bytes3, length: WordSize, offset: bytes3.length });
+    if (bytes3.length !== WordSize) {
+      bytes3 = getBytesCopy(concat([Padding.slice(bytes3.length % WordSize), bytes3]));
+    }
+    return bytes3;
+  }
+  var Coder = class {
+    // The coder name:
+    //   - address, uint256, tuple, array, etc.
+    name;
+    // The fully expanded type, including composite types:
+    //   - address, uint256, tuple(address,bytes), uint256[3][4][],  etc.
+    type;
+    // The localName bound in the signature, in this example it is "baz":
+    //   - tuple(address foo, uint bar) baz
+    localName;
+    // Whether this type is dynamic:
+    //  - Dynamic: bytes, string, address[], tuple(boolean[]), etc.
+    //  - Not Dynamic: address, uint256, boolean[3], tuple(address, uint8)
+    dynamic;
+    constructor(name, type, localName, dynamic) {
+      defineProperties(this, { name, type, localName, dynamic }, {
+        name: "string",
+        type: "string",
+        localName: "string",
+        dynamic: "boolean"
+      });
+    }
+    _throwError(message, value) {
+      assertArgument(false, message, this.localName, value);
+    }
+  };
+  var Writer = class {
+    // An array of WordSize lengthed objects to concatenation
+    #data;
+    #dataLength;
+    constructor() {
+      this.#data = [];
+      this.#dataLength = 0;
+    }
+    get data() {
+      return concat(this.#data);
+    }
+    get length() {
+      return this.#dataLength;
+    }
+    #writeData(data) {
+      this.#data.push(data);
+      this.#dataLength += data.length;
+      return data.length;
+    }
+    appendWriter(writer) {
+      return this.#writeData(getBytesCopy(writer.data));
+    }
+    // Arrayish item; pad on the right to *nearest* WordSize
+    writeBytes(value) {
+      let bytes3 = getBytesCopy(value);
+      const paddingOffset = bytes3.length % WordSize;
+      if (paddingOffset) {
+        bytes3 = getBytesCopy(concat([bytes3, Padding.slice(paddingOffset)]));
+      }
+      return this.#writeData(bytes3);
+    }
+    // Numeric item; pad on the left *to* WordSize
+    writeValue(value) {
+      return this.#writeData(getValue(value));
+    }
+    // Inserts a numeric place-holder, returning a callback that can
+    // be used to asjust the value later
+    writeUpdatableValue() {
+      const offset = this.#data.length;
+      this.#data.push(Padding);
+      this.#dataLength += WordSize;
+      return (value) => {
+        this.#data[offset] = getValue(value);
+      };
+    }
+  };
+  var Reader = class _Reader {
+    // Allows incomplete unpadded data to be read; otherwise an error
+    // is raised if attempting to overrun the buffer. This is required
+    // to deal with an old Solidity bug, in which event data for
+    // external (not public thoguh) was tightly packed.
+    allowLoose;
+    #data;
+    #offset;
+    #bytesRead;
+    #parent;
+    #maxInflation;
+    constructor(data, allowLoose, maxInflation) {
+      defineProperties(this, { allowLoose: !!allowLoose });
+      this.#data = getBytesCopy(data);
+      this.#bytesRead = 0;
+      this.#parent = null;
+      this.#maxInflation = maxInflation != null ? maxInflation : 1024;
+      this.#offset = 0;
+    }
+    get data() {
+      return hexlify(this.#data);
+    }
+    get dataLength() {
+      return this.#data.length;
+    }
+    get consumed() {
+      return this.#offset;
+    }
+    get bytes() {
+      return new Uint8Array(this.#data);
+    }
+    #incrementBytesRead(count) {
+      if (this.#parent) {
+        return this.#parent.#incrementBytesRead(count);
+      }
+      this.#bytesRead += count;
+      assert2(this.#maxInflation < 1 || this.#bytesRead <= this.#maxInflation * this.dataLength, `compressed ABI data exceeds inflation ratio of ${this.#maxInflation} ( see: https://github.com/ethers-io/ethers.js/issues/4537 )`, "BUFFER_OVERRUN", {
+        buffer: getBytesCopy(this.#data),
+        offset: this.#offset,
+        length: count,
+        info: {
+          bytesRead: this.#bytesRead,
+          dataLength: this.dataLength
+        }
+      });
+    }
+    #peekBytes(offset, length, loose) {
+      let alignedLength = Math.ceil(length / WordSize) * WordSize;
+      if (this.#offset + alignedLength > this.#data.length) {
+        if (this.allowLoose && loose && this.#offset + length <= this.#data.length) {
+          alignedLength = length;
+        } else {
+          assert2(false, "data out-of-bounds", "BUFFER_OVERRUN", {
+            buffer: getBytesCopy(this.#data),
+            length: this.#data.length,
+            offset: this.#offset + alignedLength
+          });
+        }
+      }
+      return this.#data.slice(this.#offset, this.#offset + alignedLength);
+    }
+    // Create a sub-reader with the same underlying data, but offset
+    subReader(offset) {
+      const reader = new _Reader(this.#data.slice(this.#offset + offset), this.allowLoose, this.#maxInflation);
+      reader.#parent = this;
+      return reader;
+    }
+    // Read bytes
+    readBytes(length, loose) {
+      let bytes3 = this.#peekBytes(0, length, !!loose);
+      this.#incrementBytesRead(length);
+      this.#offset += bytes3.length;
+      return bytes3.slice(0, length);
+    }
+    // Read a numeric values
+    readValue() {
+      return toBigInt(this.readBytes(WordSize));
+    }
+    readIndex() {
+      return toNumber(this.readBytes(WordSize));
+    }
+  };
+
+  // node_modules/ethers/lib.esm/abi/coders/address.js
+  init_dirname();
+  init_buffer2();
+  init_process2();
+
+  // node_modules/ethers/lib.esm/address/index.js
+  init_dirname();
+  init_buffer2();
+  init_process2();
+
+  // node_modules/ethers/lib.esm/address/address.js
+  init_dirname();
+  init_buffer2();
+  init_process2();
+
+  // node_modules/ethers/lib.esm/crypto/index.js
+  init_dirname();
+  init_buffer2();
+  init_process2();
+
+  // node_modules/ethers/node_modules/@noble/hashes/esm/_assert.js
+  init_dirname();
+  init_buffer2();
+  init_process2();
+  function number(n2) {
+    if (!Number.isSafeInteger(n2) || n2 < 0)
+      throw new Error(`Wrong positive integer: ${n2}`);
+  }
+  function bytes2(b2, ...lengths) {
+    if (!(b2 instanceof Uint8Array))
+      throw new Error("Expected Uint8Array");
+    if (lengths.length > 0 && !lengths.includes(b2.length))
+      throw new Error(`Expected Uint8Array of length ${lengths}, not of length=${b2.length}`);
+  }
+  function exists(instance, checkFinished = true) {
+    if (instance.destroyed)
+      throw new Error("Hash instance has been destroyed");
+    if (checkFinished && instance.finished)
+      throw new Error("Hash#digest() has already been called");
+  }
+  function output(out, instance) {
+    bytes2(out);
+    const min2 = instance.outputLen;
+    if (out.length < min2) {
+      throw new Error(`digestInto() expects output buffer of length at least ${min2}`);
+    }
+  }
+
+  // node_modules/ethers/node_modules/@noble/hashes/esm/utils.js
+  init_dirname();
+  init_buffer2();
+  init_process2();
+  var u8a = (a) => a instanceof Uint8Array;
+  var u32 = (arr) => new Uint32Array(arr.buffer, arr.byteOffset, Math.floor(arr.byteLength / 4));
+  var isLE = new Uint8Array(new Uint32Array([287454020]).buffer)[0] === 68;
+  if (!isLE)
+    throw new Error("Non little-endian hardware is not supported");
+  function utf8ToBytes(str) {
+    if (typeof str !== "string")
+      throw new Error(`utf8ToBytes expected string, got ${typeof str}`);
+    return new Uint8Array(new TextEncoder().encode(str));
+  }
+  function toBytes(data) {
+    if (typeof data === "string")
+      data = utf8ToBytes(data);
+    if (!u8a(data))
+      throw new Error(`expected Uint8Array, got ${typeof data}`);
+    return data;
+  }
+  var Hash = class {
+    // Safe version that clones internal state
+    clone() {
+      return this._cloneInto();
+    }
+  };
+  var toStr = {}.toString;
+  function wrapConstructor(hashCons) {
+    const hashC = (msg) => hashCons().update(toBytes(msg)).digest();
+    const tmp = hashCons();
+    hashC.outputLen = tmp.outputLen;
+    hashC.blockLen = tmp.blockLen;
+    hashC.create = () => hashCons();
+    return hashC;
+  }
+  function wrapXOFConstructorWithOpts(hashCons) {
+    const hashC = (msg, opts) => hashCons(opts).update(toBytes(msg)).digest();
+    const tmp = hashCons({});
+    hashC.outputLen = tmp.outputLen;
+    hashC.blockLen = tmp.blockLen;
+    hashC.create = (opts) => hashCons(opts);
+    return hashC;
+  }
+
+  // node_modules/ethers/node_modules/@noble/hashes/esm/_u64.js
+  init_dirname();
+  init_buffer2();
+  init_process2();
+  var U32_MASK64 = /* @__PURE__ */ BigInt(2 ** 32 - 1);
+  var _32n = /* @__PURE__ */ BigInt(32);
+  function fromBig(n2, le = false) {
+    if (le)
+      return { h: Number(n2 & U32_MASK64), l: Number(n2 >> _32n & U32_MASK64) };
+    return { h: Number(n2 >> _32n & U32_MASK64) | 0, l: Number(n2 & U32_MASK64) | 0 };
+  }
+  function split(lst, le = false) {
+    let Ah = new Uint32Array(lst.length);
+    let Al = new Uint32Array(lst.length);
+    for (let i = 0; i < lst.length; i++) {
+      const { h, l } = fromBig(lst[i], le);
+      [Ah[i], Al[i]] = [h, l];
+    }
+    return [Ah, Al];
+  }
+  var rotlSH = (h, l, s) => h << s | l >>> 32 - s;
+  var rotlSL = (h, l, s) => l << s | h >>> 32 - s;
+  var rotlBH = (h, l, s) => l << s - 32 | h >>> 64 - s;
+  var rotlBL = (h, l, s) => h << s - 32 | l >>> 64 - s;
+
+  // node_modules/ethers/lib.esm/crypto/keccak.js
+  init_dirname();
+  init_buffer2();
+  init_process2();
+
+  // node_modules/ethers/node_modules/@noble/hashes/esm/sha3.js
+  init_dirname();
+  init_buffer2();
+  init_process2();
+  var [SHA3_PI, SHA3_ROTL, _SHA3_IOTA] = [[], [], []];
+  var _0n = /* @__PURE__ */ BigInt(0);
+  var _1n = /* @__PURE__ */ BigInt(1);
+  var _2n = /* @__PURE__ */ BigInt(2);
+  var _7n = /* @__PURE__ */ BigInt(7);
+  var _256n = /* @__PURE__ */ BigInt(256);
+  var _0x71n = /* @__PURE__ */ BigInt(113);
+  for (let round = 0, R = _1n, x = 1, y = 0; round < 24; round++) {
+    [x, y] = [y, (2 * x + 3 * y) % 5];
+    SHA3_PI.push(2 * (5 * y + x));
+    SHA3_ROTL.push((round + 1) * (round + 2) / 2 % 64);
+    let t = _0n;
+    for (let j = 0; j < 7; j++) {
+      R = (R << _1n ^ (R >> _7n) * _0x71n) % _256n;
+      if (R & _2n)
+        t ^= _1n << (_1n << /* @__PURE__ */ BigInt(j)) - _1n;
+    }
+    _SHA3_IOTA.push(t);
+  }
+  var [SHA3_IOTA_H, SHA3_IOTA_L] = /* @__PURE__ */ split(_SHA3_IOTA, true);
+  var rotlH = (h, l, s) => s > 32 ? rotlBH(h, l, s) : rotlSH(h, l, s);
+  var rotlL = (h, l, s) => s > 32 ? rotlBL(h, l, s) : rotlSL(h, l, s);
+  function keccakP(s, rounds = 24) {
+    const B = new Uint32Array(5 * 2);
+    for (let round = 24 - rounds; round < 24; round++) {
+      for (let x = 0; x < 10; x++)
+        B[x] = s[x] ^ s[x + 10] ^ s[x + 20] ^ s[x + 30] ^ s[x + 40];
+      for (let x = 0; x < 10; x += 2) {
+        const idx1 = (x + 8) % 10;
+        const idx0 = (x + 2) % 10;
+        const B0 = B[idx0];
+        const B1 = B[idx0 + 1];
+        const Th = rotlH(B0, B1, 1) ^ B[idx1];
+        const Tl = rotlL(B0, B1, 1) ^ B[idx1 + 1];
+        for (let y = 0; y < 50; y += 10) {
+          s[x + y] ^= Th;
+          s[x + y + 1] ^= Tl;
+        }
+      }
+      let curH = s[2];
+      let curL = s[3];
+      for (let t = 0; t < 24; t++) {
+        const shift = SHA3_ROTL[t];
+        const Th = rotlH(curH, curL, shift);
+        const Tl = rotlL(curH, curL, shift);
+        const PI = SHA3_PI[t];
+        curH = s[PI];
+        curL = s[PI + 1];
+        s[PI] = Th;
+        s[PI + 1] = Tl;
+      }
+      for (let y = 0; y < 50; y += 10) {
+        for (let x = 0; x < 10; x++)
+          B[x] = s[y + x];
+        for (let x = 0; x < 10; x++)
+          s[y + x] ^= ~B[(x + 2) % 10] & B[(x + 4) % 10];
+      }
+      s[0] ^= SHA3_IOTA_H[round];
+      s[1] ^= SHA3_IOTA_L[round];
+    }
+    B.fill(0);
+  }
+  var Keccak = class _Keccak extends Hash {
+    // NOTE: we accept arguments in bytes instead of bits here.
+    constructor(blockLen, suffix, outputLen, enableXOF = false, rounds = 24) {
+      super();
+      this.blockLen = blockLen;
+      this.suffix = suffix;
+      this.outputLen = outputLen;
+      this.enableXOF = enableXOF;
+      this.rounds = rounds;
+      this.pos = 0;
+      this.posOut = 0;
+      this.finished = false;
+      this.destroyed = false;
+      number(outputLen);
+      if (0 >= this.blockLen || this.blockLen >= 200)
+        throw new Error("Sha3 supports only keccak-f1600 function");
+      this.state = new Uint8Array(200);
+      this.state32 = u32(this.state);
+    }
+    keccak() {
+      keccakP(this.state32, this.rounds);
+      this.posOut = 0;
+      this.pos = 0;
+    }
+    update(data) {
+      exists(this);
+      const { blockLen, state } = this;
+      data = toBytes(data);
+      const len = data.length;
+      for (let pos = 0; pos < len; ) {
+        const take = Math.min(blockLen - this.pos, len - pos);
+        for (let i = 0; i < take; i++)
+          state[this.pos++] ^= data[pos++];
+        if (this.pos === blockLen)
+          this.keccak();
+      }
+      return this;
+    }
+    finish() {
+      if (this.finished)
+        return;
+      this.finished = true;
+      const { state, suffix, pos, blockLen } = this;
+      state[pos] ^= suffix;
+      if ((suffix & 128) !== 0 && pos === blockLen - 1)
+        this.keccak();
+      state[blockLen - 1] ^= 128;
+      this.keccak();
+    }
+    writeInto(out) {
+      exists(this, false);
+      bytes2(out);
+      this.finish();
+      const bufferOut = this.state;
+      const { blockLen } = this;
+      for (let pos = 0, len = out.length; pos < len; ) {
+        if (this.posOut >= blockLen)
+          this.keccak();
+        const take = Math.min(blockLen - this.posOut, len - pos);
+        out.set(bufferOut.subarray(this.posOut, this.posOut + take), pos);
+        this.posOut += take;
+        pos += take;
+      }
+      return out;
+    }
+    xofInto(out) {
+      if (!this.enableXOF)
+        throw new Error("XOF is not possible for this instance");
+      return this.writeInto(out);
+    }
+    xof(bytes3) {
+      number(bytes3);
+      return this.xofInto(new Uint8Array(bytes3));
+    }
+    digestInto(out) {
+      output(out, this);
+      if (this.finished)
+        throw new Error("digest() was already called");
+      this.writeInto(out);
+      this.destroy();
+      return out;
+    }
+    digest() {
+      return this.digestInto(new Uint8Array(this.outputLen));
+    }
+    destroy() {
+      this.destroyed = true;
+      this.state.fill(0);
+    }
+    _cloneInto(to) {
+      const { blockLen, suffix, outputLen, rounds, enableXOF } = this;
+      to || (to = new _Keccak(blockLen, suffix, outputLen, enableXOF, rounds));
+      to.state32.set(this.state32);
+      to.pos = this.pos;
+      to.posOut = this.posOut;
+      to.finished = this.finished;
+      to.rounds = rounds;
+      to.suffix = suffix;
+      to.outputLen = outputLen;
+      to.enableXOF = enableXOF;
+      to.destroyed = this.destroyed;
+      return to;
+    }
+  };
+  var gen = (suffix, blockLen, outputLen) => wrapConstructor(() => new Keccak(blockLen, suffix, outputLen));
+  var sha3_224 = /* @__PURE__ */ gen(6, 144, 224 / 8);
+  var sha3_256 = /* @__PURE__ */ gen(6, 136, 256 / 8);
+  var sha3_384 = /* @__PURE__ */ gen(6, 104, 384 / 8);
+  var sha3_512 = /* @__PURE__ */ gen(6, 72, 512 / 8);
+  var keccak_224 = /* @__PURE__ */ gen(1, 144, 224 / 8);
+  var keccak_256 = /* @__PURE__ */ gen(1, 136, 256 / 8);
+  var keccak_384 = /* @__PURE__ */ gen(1, 104, 384 / 8);
+  var keccak_512 = /* @__PURE__ */ gen(1, 72, 512 / 8);
+  var genShake = (suffix, blockLen, outputLen) => wrapXOFConstructorWithOpts((opts = {}) => new Keccak(blockLen, suffix, opts.dkLen === void 0 ? outputLen : opts.dkLen, true));
+  var shake128 = /* @__PURE__ */ genShake(31, 168, 128 / 8);
+  var shake256 = /* @__PURE__ */ genShake(31, 136, 256 / 8);
+
+  // node_modules/ethers/lib.esm/crypto/keccak.js
+  var locked = false;
+  var _keccak256 = function(data) {
+    return keccak_256(data);
+  };
+  var __keccak256 = _keccak256;
+  function keccak256(_data) {
+    const data = getBytes(_data, "data");
+    return hexlify(__keccak256(data));
+  }
+  keccak256._ = _keccak256;
+  keccak256.lock = function() {
+    locked = true;
+  };
+  keccak256.register = function(func) {
+    if (locked) {
+      throw new TypeError("keccak256 is locked");
+    }
+    __keccak256 = func;
+  };
+  Object.freeze(keccak256);
+
+  // node_modules/ethers/lib.esm/address/address.js
+  var BN_02 = BigInt(0);
+  var BN_36 = BigInt(36);
+  function getChecksumAddress(address6) {
+    address6 = address6.toLowerCase();
+    const chars = address6.substring(2).split("");
+    const expanded = new Uint8Array(40);
+    for (let i = 0; i < 40; i++) {
+      expanded[i] = chars[i].charCodeAt(0);
+    }
+    const hashed = getBytes(keccak256(expanded));
+    for (let i = 0; i < 40; i += 2) {
+      if (hashed[i >> 1] >> 4 >= 8) {
+        chars[i] = chars[i].toUpperCase();
+      }
+      if ((hashed[i >> 1] & 15) >= 8) {
+        chars[i + 1] = chars[i + 1].toUpperCase();
+      }
+    }
+    return "0x" + chars.join("");
+  }
+  var ibanLookup = {};
+  for (let i = 0; i < 10; i++) {
+    ibanLookup[String(i)] = String(i);
+  }
+  for (let i = 0; i < 26; i++) {
+    ibanLookup[String.fromCharCode(65 + i)] = String(10 + i);
+  }
+  var safeDigits = 15;
+  function ibanChecksum(address6) {
+    address6 = address6.toUpperCase();
+    address6 = address6.substring(4) + address6.substring(0, 2) + "00";
+    let expanded = address6.split("").map((c) => {
+      return ibanLookup[c];
+    }).join("");
+    while (expanded.length >= safeDigits) {
+      let block2 = expanded.substring(0, safeDigits);
+      expanded = parseInt(block2, 10) % 97 + expanded.substring(block2.length);
+    }
+    let checksum = String(98 - parseInt(expanded, 10) % 97);
+    while (checksum.length < 2) {
+      checksum = "0" + checksum;
+    }
+    return checksum;
+  }
+  var Base36 = (function() {
+    ;
+    const result = {};
+    for (let i = 0; i < 36; i++) {
+      const key = "0123456789abcdefghijklmnopqrstuvwxyz"[i];
+      result[key] = BigInt(i);
+    }
+    return result;
+  })();
+  function fromBase36(value) {
+    value = value.toLowerCase();
+    let result = BN_02;
+    for (let i = 0; i < value.length; i++) {
+      result = result * BN_36 + Base36[value[i]];
+    }
+    return result;
+  }
+  function getAddress(address6) {
+    assertArgument(typeof address6 === "string", "invalid address", "address", address6);
+    if (address6.match(/^(0x)?[0-9a-fA-F]{40}$/)) {
+      if (!address6.startsWith("0x")) {
+        address6 = "0x" + address6;
+      }
+      const result = getChecksumAddress(address6);
+      assertArgument(!address6.match(/([A-F].*[a-f])|([a-f].*[A-F])/) || result === address6, "bad address checksum", "address", address6);
+      return result;
+    }
+    if (address6.match(/^XE[0-9]{2}[0-9A-Za-z]{30,31}$/)) {
+      assertArgument(address6.substring(2, 4) === ibanChecksum(address6), "bad icap checksum", "address", address6);
+      let result = fromBase36(address6.substring(4)).toString(16);
+      while (result.length < 40) {
+        result = "0" + result;
+      }
+      return getChecksumAddress("0x" + result);
+    }
+    assertArgument(false, "invalid address", "address", address6);
+  }
+
+  // node_modules/ethers/lib.esm/address/contract-address.js
+  init_dirname();
+  init_buffer2();
+  init_process2();
+  function getCreateAddress(tx) {
+    const from = getAddress(tx.from);
+    const nonce = getBigInt(tx.nonce, "tx.nonce");
+    let nonceHex = nonce.toString(16);
+    if (nonceHex === "0") {
+      nonceHex = "0x";
+    } else if (nonceHex.length % 2) {
+      nonceHex = "0x0" + nonceHex;
+    } else {
+      nonceHex = "0x" + nonceHex;
+    }
+    return getAddress(dataSlice(keccak256(encodeRlp([from, nonceHex])), 12));
+  }
+  function getCreate2Address(_from, _salt, _initCodeHash) {
+    const from = getAddress(_from);
+    const salt = getBytes(_salt, "salt");
+    const initCodeHash = getBytes(_initCodeHash, "initCodeHash");
+    assertArgument(salt.length === 32, "salt must be 32 bytes", "salt", _salt);
+    assertArgument(initCodeHash.length === 32, "initCodeHash must be 32 bytes", "initCodeHash", _initCodeHash);
+    return getAddress(dataSlice(keccak256(concat(["0xff", from, salt, initCodeHash])), 12));
+  }
+
+  // node_modules/ethers/lib.esm/abi/typed.js
+  init_dirname();
+  init_buffer2();
+  init_process2();
+  var _gaurd = {};
+  function n(value, width) {
+    let signed = false;
+    if (width < 0) {
+      signed = true;
+      width *= -1;
+    }
+    return new Typed(_gaurd, `${signed ? "" : "u"}int${width}`, value, { signed, width });
+  }
+  function b(value, size2) {
+    return new Typed(_gaurd, `bytes${size2 ? size2 : ""}`, value, { size: size2 });
+  }
+  var _typedSymbol = Symbol.for("_ethers_typed");
+  var Typed = class _Typed {
+    /**
+     *  The type, as a Solidity-compatible type.
+     */
+    type;
+    /**
+     *  The actual value.
+     */
+    value;
+    #options;
+    /**
+     *  @_ignore:
+     */
+    _typedSymbol;
+    /**
+     *  @_ignore:
+     */
+    constructor(gaurd, type, value, options) {
+      if (options == null) {
+        options = null;
+      }
+      assertPrivate(_gaurd, gaurd, "Typed");
+      defineProperties(this, { _typedSymbol, type, value });
+      this.#options = options;
+      this.format();
+    }
+    /**
+     *  Format the type as a Human-Readable type.
+     */
+    format() {
+      if (this.type === "array") {
+        throw new Error("");
+      } else if (this.type === "dynamicArray") {
+        throw new Error("");
+      } else if (this.type === "tuple") {
+        return `tuple(${this.value.map((v) => v.format()).join(",")})`;
+      }
+      return this.type;
+    }
+    /**
+     *  The default value returned by this type.
+     */
+    defaultValue() {
+      return 0;
+    }
+    /**
+     *  The minimum value for numeric types.
+     */
+    minValue() {
+      return 0;
+    }
+    /**
+     *  The maximum value for numeric types.
+     */
+    maxValue() {
+      return 0;
+    }
+    /**
+     *  Returns ``true`` and provides a type guard is this is a [[TypedBigInt]].
+     */
+    isBigInt() {
+      return !!this.type.match(/^u?int[0-9]+$/);
+    }
+    /**
+     *  Returns ``true`` and provides a type guard is this is a [[TypedData]].
+     */
+    isData() {
+      return this.type.startsWith("bytes");
+    }
+    /**
+     *  Returns ``true`` and provides a type guard is this is a [[TypedString]].
+     */
+    isString() {
+      return this.type === "string";
+    }
+    /**
+     *  Returns the tuple name, if this is a tuple. Throws otherwise.
+     */
+    get tupleName() {
+      if (this.type !== "tuple") {
+        throw TypeError("not a tuple");
+      }
+      return this.#options;
+    }
+    // Returns the length of this type as an array
+    // - `null` indicates the length is unforced, it could be dynamic
+    // - `-1` indicates the length is dynamic
+    // - any other value indicates it is a static array and is its length
+    /**
+     *  Returns the length of the array type or ``-1`` if it is dynamic.
+     *
+     *  Throws if the type is not an array.
+     */
+    get arrayLength() {
+      if (this.type !== "array") {
+        throw TypeError("not an array");
+      }
+      if (this.#options === true) {
+        return -1;
+      }
+      if (this.#options === false) {
+        return this.value.length;
+      }
+      return null;
+    }
+    /**
+     *  Returns a new **Typed** of %%type%% with the %%value%%.
+     */
+    static from(type, value) {
+      return new _Typed(_gaurd, type, value);
+    }
+    /**
+     *  Return a new ``uint8`` type for %%v%%.
+     */
+    static uint8(v) {
+      return n(v, 8);
+    }
+    /**
+     *  Return a new ``uint16`` type for %%v%%.
+     */
+    static uint16(v) {
+      return n(v, 16);
+    }
+    /**
+     *  Return a new ``uint24`` type for %%v%%.
+     */
+    static uint24(v) {
+      return n(v, 24);
+    }
+    /**
+     *  Return a new ``uint32`` type for %%v%%.
+     */
+    static uint32(v) {
+      return n(v, 32);
+    }
+    /**
+     *  Return a new ``uint40`` type for %%v%%.
+     */
+    static uint40(v) {
+      return n(v, 40);
+    }
+    /**
+     *  Return a new ``uint48`` type for %%v%%.
+     */
+    static uint48(v) {
+      return n(v, 48);
+    }
+    /**
+     *  Return a new ``uint56`` type for %%v%%.
+     */
+    static uint56(v) {
+      return n(v, 56);
+    }
+    /**
+     *  Return a new ``uint64`` type for %%v%%.
+     */
+    static uint64(v) {
+      return n(v, 64);
+    }
+    /**
+     *  Return a new ``uint72`` type for %%v%%.
+     */
+    static uint72(v) {
+      return n(v, 72);
+    }
+    /**
+     *  Return a new ``uint80`` type for %%v%%.
+     */
+    static uint80(v) {
+      return n(v, 80);
+    }
+    /**
+     *  Return a new ``uint88`` type for %%v%%.
+     */
+    static uint88(v) {
+      return n(v, 88);
+    }
+    /**
+     *  Return a new ``uint96`` type for %%v%%.
+     */
+    static uint96(v) {
+      return n(v, 96);
+    }
+    /**
+     *  Return a new ``uint104`` type for %%v%%.
+     */
+    static uint104(v) {
+      return n(v, 104);
+    }
+    /**
+     *  Return a new ``uint112`` type for %%v%%.
+     */
+    static uint112(v) {
+      return n(v, 112);
+    }
+    /**
+     *  Return a new ``uint120`` type for %%v%%.
+     */
+    static uint120(v) {
+      return n(v, 120);
+    }
+    /**
+     *  Return a new ``uint128`` type for %%v%%.
+     */
+    static uint128(v) {
+      return n(v, 128);
+    }
+    /**
+     *  Return a new ``uint136`` type for %%v%%.
+     */
+    static uint136(v) {
+      return n(v, 136);
+    }
+    /**
+     *  Return a new ``uint144`` type for %%v%%.
+     */
+    static uint144(v) {
+      return n(v, 144);
+    }
+    /**
+     *  Return a new ``uint152`` type for %%v%%.
+     */
+    static uint152(v) {
+      return n(v, 152);
+    }
+    /**
+     *  Return a new ``uint160`` type for %%v%%.
+     */
+    static uint160(v) {
+      return n(v, 160);
+    }
+    /**
+     *  Return a new ``uint168`` type for %%v%%.
+     */
+    static uint168(v) {
+      return n(v, 168);
+    }
+    /**
+     *  Return a new ``uint176`` type for %%v%%.
+     */
+    static uint176(v) {
+      return n(v, 176);
+    }
+    /**
+     *  Return a new ``uint184`` type for %%v%%.
+     */
+    static uint184(v) {
+      return n(v, 184);
+    }
+    /**
+     *  Return a new ``uint192`` type for %%v%%.
+     */
+    static uint192(v) {
+      return n(v, 192);
+    }
+    /**
+     *  Return a new ``uint200`` type for %%v%%.
+     */
+    static uint200(v) {
+      return n(v, 200);
+    }
+    /**
+     *  Return a new ``uint208`` type for %%v%%.
+     */
+    static uint208(v) {
+      return n(v, 208);
+    }
+    /**
+     *  Return a new ``uint216`` type for %%v%%.
+     */
+    static uint216(v) {
+      return n(v, 216);
+    }
+    /**
+     *  Return a new ``uint224`` type for %%v%%.
+     */
+    static uint224(v) {
+      return n(v, 224);
+    }
+    /**
+     *  Return a new ``uint232`` type for %%v%%.
+     */
+    static uint232(v) {
+      return n(v, 232);
+    }
+    /**
+     *  Return a new ``uint240`` type for %%v%%.
+     */
+    static uint240(v) {
+      return n(v, 240);
+    }
+    /**
+     *  Return a new ``uint248`` type for %%v%%.
+     */
+    static uint248(v) {
+      return n(v, 248);
+    }
+    /**
+     *  Return a new ``uint256`` type for %%v%%.
+     */
+    static uint256(v) {
+      return n(v, 256);
+    }
+    /**
+     *  Return a new ``uint256`` type for %%v%%.
+     */
+    static uint(v) {
+      return n(v, 256);
+    }
+    /**
+     *  Return a new ``int8`` type for %%v%%.
+     */
+    static int8(v) {
+      return n(v, -8);
+    }
+    /**
+     *  Return a new ``int16`` type for %%v%%.
+     */
+    static int16(v) {
+      return n(v, -16);
+    }
+    /**
+     *  Return a new ``int24`` type for %%v%%.
+     */
+    static int24(v) {
+      return n(v, -24);
+    }
+    /**
+     *  Return a new ``int32`` type for %%v%%.
+     */
+    static int32(v) {
+      return n(v, -32);
+    }
+    /**
+     *  Return a new ``int40`` type for %%v%%.
+     */
+    static int40(v) {
+      return n(v, -40);
+    }
+    /**
+     *  Return a new ``int48`` type for %%v%%.
+     */
+    static int48(v) {
+      return n(v, -48);
+    }
+    /**
+     *  Return a new ``int56`` type for %%v%%.
+     */
+    static int56(v) {
+      return n(v, -56);
+    }
+    /**
+     *  Return a new ``int64`` type for %%v%%.
+     */
+    static int64(v) {
+      return n(v, -64);
+    }
+    /**
+     *  Return a new ``int72`` type for %%v%%.
+     */
+    static int72(v) {
+      return n(v, -72);
+    }
+    /**
+     *  Return a new ``int80`` type for %%v%%.
+     */
+    static int80(v) {
+      return n(v, -80);
+    }
+    /**
+     *  Return a new ``int88`` type for %%v%%.
+     */
+    static int88(v) {
+      return n(v, -88);
+    }
+    /**
+     *  Return a new ``int96`` type for %%v%%.
+     */
+    static int96(v) {
+      return n(v, -96);
+    }
+    /**
+     *  Return a new ``int104`` type for %%v%%.
+     */
+    static int104(v) {
+      return n(v, -104);
+    }
+    /**
+     *  Return a new ``int112`` type for %%v%%.
+     */
+    static int112(v) {
+      return n(v, -112);
+    }
+    /**
+     *  Return a new ``int120`` type for %%v%%.
+     */
+    static int120(v) {
+      return n(v, -120);
+    }
+    /**
+     *  Return a new ``int128`` type for %%v%%.
+     */
+    static int128(v) {
+      return n(v, -128);
+    }
+    /**
+     *  Return a new ``int136`` type for %%v%%.
+     */
+    static int136(v) {
+      return n(v, -136);
+    }
+    /**
+     *  Return a new ``int144`` type for %%v%%.
+     */
+    static int144(v) {
+      return n(v, -144);
+    }
+    /**
+     *  Return a new ``int52`` type for %%v%%.
+     */
+    static int152(v) {
+      return n(v, -152);
+    }
+    /**
+     *  Return a new ``int160`` type for %%v%%.
+     */
+    static int160(v) {
+      return n(v, -160);
+    }
+    /**
+     *  Return a new ``int168`` type for %%v%%.
+     */
+    static int168(v) {
+      return n(v, -168);
+    }
+    /**
+     *  Return a new ``int176`` type for %%v%%.
+     */
+    static int176(v) {
+      return n(v, -176);
+    }
+    /**
+     *  Return a new ``int184`` type for %%v%%.
+     */
+    static int184(v) {
+      return n(v, -184);
+    }
+    /**
+     *  Return a new ``int92`` type for %%v%%.
+     */
+    static int192(v) {
+      return n(v, -192);
+    }
+    /**
+     *  Return a new ``int200`` type for %%v%%.
+     */
+    static int200(v) {
+      return n(v, -200);
+    }
+    /**
+     *  Return a new ``int208`` type for %%v%%.
+     */
+    static int208(v) {
+      return n(v, -208);
+    }
+    /**
+     *  Return a new ``int216`` type for %%v%%.
+     */
+    static int216(v) {
+      return n(v, -216);
+    }
+    /**
+     *  Return a new ``int224`` type for %%v%%.
+     */
+    static int224(v) {
+      return n(v, -224);
+    }
+    /**
+     *  Return a new ``int232`` type for %%v%%.
+     */
+    static int232(v) {
+      return n(v, -232);
+    }
+    /**
+     *  Return a new ``int240`` type for %%v%%.
+     */
+    static int240(v) {
+      return n(v, -240);
+    }
+    /**
+     *  Return a new ``int248`` type for %%v%%.
+     */
+    static int248(v) {
+      return n(v, -248);
+    }
+    /**
+     *  Return a new ``int256`` type for %%v%%.
+     */
+    static int256(v) {
+      return n(v, -256);
+    }
+    /**
+     *  Return a new ``int256`` type for %%v%%.
+     */
+    static int(v) {
+      return n(v, -256);
+    }
+    /**
+     *  Return a new ``bytes1`` type for %%v%%.
+     */
+    static bytes1(v) {
+      return b(v, 1);
+    }
+    /**
+     *  Return a new ``bytes2`` type for %%v%%.
+     */
+    static bytes2(v) {
+      return b(v, 2);
+    }
+    /**
+     *  Return a new ``bytes3`` type for %%v%%.
+     */
+    static bytes3(v) {
+      return b(v, 3);
+    }
+    /**
+     *  Return a new ``bytes4`` type for %%v%%.
+     */
+    static bytes4(v) {
+      return b(v, 4);
+    }
+    /**
+     *  Return a new ``bytes5`` type for %%v%%.
+     */
+    static bytes5(v) {
+      return b(v, 5);
+    }
+    /**
+     *  Return a new ``bytes6`` type for %%v%%.
+     */
+    static bytes6(v) {
+      return b(v, 6);
+    }
+    /**
+     *  Return a new ``bytes7`` type for %%v%%.
+     */
+    static bytes7(v) {
+      return b(v, 7);
+    }
+    /**
+     *  Return a new ``bytes8`` type for %%v%%.
+     */
+    static bytes8(v) {
+      return b(v, 8);
+    }
+    /**
+     *  Return a new ``bytes9`` type for %%v%%.
+     */
+    static bytes9(v) {
+      return b(v, 9);
+    }
+    /**
+     *  Return a new ``bytes10`` type for %%v%%.
+     */
+    static bytes10(v) {
+      return b(v, 10);
+    }
+    /**
+     *  Return a new ``bytes11`` type for %%v%%.
+     */
+    static bytes11(v) {
+      return b(v, 11);
+    }
+    /**
+     *  Return a new ``bytes12`` type for %%v%%.
+     */
+    static bytes12(v) {
+      return b(v, 12);
+    }
+    /**
+     *  Return a new ``bytes13`` type for %%v%%.
+     */
+    static bytes13(v) {
+      return b(v, 13);
+    }
+    /**
+     *  Return a new ``bytes14`` type for %%v%%.
+     */
+    static bytes14(v) {
+      return b(v, 14);
+    }
+    /**
+     *  Return a new ``bytes15`` type for %%v%%.
+     */
+    static bytes15(v) {
+      return b(v, 15);
+    }
+    /**
+     *  Return a new ``bytes16`` type for %%v%%.
+     */
+    static bytes16(v) {
+      return b(v, 16);
+    }
+    /**
+     *  Return a new ``bytes17`` type for %%v%%.
+     */
+    static bytes17(v) {
+      return b(v, 17);
+    }
+    /**
+     *  Return a new ``bytes18`` type for %%v%%.
+     */
+    static bytes18(v) {
+      return b(v, 18);
+    }
+    /**
+     *  Return a new ``bytes19`` type for %%v%%.
+     */
+    static bytes19(v) {
+      return b(v, 19);
+    }
+    /**
+     *  Return a new ``bytes20`` type for %%v%%.
+     */
+    static bytes20(v) {
+      return b(v, 20);
+    }
+    /**
+     *  Return a new ``bytes21`` type for %%v%%.
+     */
+    static bytes21(v) {
+      return b(v, 21);
+    }
+    /**
+     *  Return a new ``bytes22`` type for %%v%%.
+     */
+    static bytes22(v) {
+      return b(v, 22);
+    }
+    /**
+     *  Return a new ``bytes23`` type for %%v%%.
+     */
+    static bytes23(v) {
+      return b(v, 23);
+    }
+    /**
+     *  Return a new ``bytes24`` type for %%v%%.
+     */
+    static bytes24(v) {
+      return b(v, 24);
+    }
+    /**
+     *  Return a new ``bytes25`` type for %%v%%.
+     */
+    static bytes25(v) {
+      return b(v, 25);
+    }
+    /**
+     *  Return a new ``bytes26`` type for %%v%%.
+     */
+    static bytes26(v) {
+      return b(v, 26);
+    }
+    /**
+     *  Return a new ``bytes27`` type for %%v%%.
+     */
+    static bytes27(v) {
+      return b(v, 27);
+    }
+    /**
+     *  Return a new ``bytes28`` type for %%v%%.
+     */
+    static bytes28(v) {
+      return b(v, 28);
+    }
+    /**
+     *  Return a new ``bytes29`` type for %%v%%.
+     */
+    static bytes29(v) {
+      return b(v, 29);
+    }
+    /**
+     *  Return a new ``bytes30`` type for %%v%%.
+     */
+    static bytes30(v) {
+      return b(v, 30);
+    }
+    /**
+     *  Return a new ``bytes31`` type for %%v%%.
+     */
+    static bytes31(v) {
+      return b(v, 31);
+    }
+    /**
+     *  Return a new ``bytes32`` type for %%v%%.
+     */
+    static bytes32(v) {
+      return b(v, 32);
+    }
+    /**
+     *  Return a new ``address`` type for %%v%%.
+     */
+    static address(v) {
+      return new _Typed(_gaurd, "address", v);
+    }
+    /**
+     *  Return a new ``bool`` type for %%v%%.
+     */
+    static bool(v) {
+      return new _Typed(_gaurd, "bool", !!v);
+    }
+    /**
+     *  Return a new ``bytes`` type for %%v%%.
+     */
+    static bytes(v) {
+      return new _Typed(_gaurd, "bytes", v);
+    }
+    /**
+     *  Return a new ``string`` type for %%v%%.
+     */
+    static string(v) {
+      return new _Typed(_gaurd, "string", v);
+    }
+    /**
+     *  Return a new ``array`` type for %%v%%, allowing %%dynamic%% length.
+     */
+    static array(v, dynamic) {
+      throw new Error("not implemented yet");
+      return new _Typed(_gaurd, "array", v, dynamic);
+    }
+    /**
+     *  Return a new ``tuple`` type for %%v%%, with the optional %%name%%.
+     */
+    static tuple(v, name) {
+      throw new Error("not implemented yet");
+      return new _Typed(_gaurd, "tuple", v, name);
+    }
+    /**
+     *  Return a new ``uint8`` type for %%v%%.
+     */
+    static overrides(v) {
+      return new _Typed(_gaurd, "overrides", Object.assign({}, v));
+    }
+    /**
+     *  Returns true only if %%value%% is a [[Typed]] instance.
+     */
+    static isTyped(value) {
+      return value && typeof value === "object" && "_typedSymbol" in value && value._typedSymbol === _typedSymbol;
+    }
+    /**
+     *  If the value is a [[Typed]] instance, validates the underlying value
+     *  and returns it, otherwise returns value directly.
+     *
+     *  This is useful for functions that with to accept either a [[Typed]]
+     *  object or values.
+     */
+    static dereference(value, type) {
+      if (_Typed.isTyped(value)) {
+        if (value.type !== type) {
+          throw new Error(`invalid type: expecetd ${type}, got ${value.type}`);
+        }
+        return value.value;
+      }
+      return value;
+    }
+  };
+
+  // node_modules/ethers/lib.esm/abi/coders/address.js
+  var AddressCoder = class extends Coder {
+    constructor(localName) {
+      super("address", "address", localName, false);
+    }
+    defaultValue() {
+      return "0x0000000000000000000000000000000000000000";
+    }
+    encode(writer, _value) {
+      let value = Typed.dereference(_value, "string");
+      try {
+        value = getAddress(value);
+      } catch (error312) {
+        return this._throwError(error312.message, _value);
+      }
+      return writer.writeValue(value);
+    }
+    decode(reader) {
+      return getAddress(toBeHex(reader.readValue(), 20));
+    }
+  };
+
+  // node_modules/ethers/lib.esm/abi/coders/array.js
+  init_dirname();
+  init_buffer2();
+  init_process2();
+
+  // node_modules/ethers/lib.esm/abi/coders/anonymous.js
+  init_dirname();
+  init_buffer2();
+  init_process2();
+  var AnonymousCoder = class extends Coder {
+    coder;
+    constructor(coder) {
+      super(coder.name, coder.type, "_", coder.dynamic);
+      this.coder = coder;
+    }
+    defaultValue() {
+      return this.coder.defaultValue();
+    }
+    encode(writer, value) {
+      return this.coder.encode(writer, value);
+    }
+    decode(reader) {
+      return this.coder.decode(reader);
+    }
+  };
+
+  // node_modules/ethers/lib.esm/abi/coders/array.js
+  function pack(writer, coders, values) {
+    let arrayValues = [];
+    if (Array.isArray(values)) {
+      arrayValues = values;
+    } else if (values && typeof values === "object") {
+      let unique = {};
+      arrayValues = coders.map((coder) => {
+        const name = coder.localName;
+        assert2(name, "cannot encode object for signature with missing names", "INVALID_ARGUMENT", { argument: "values", info: { coder }, value: values });
+        assert2(!unique[name], "cannot encode object for signature with duplicate names", "INVALID_ARGUMENT", { argument: "values", info: { coder }, value: values });
+        unique[name] = true;
+        return values[name];
+      });
+    } else {
+      assertArgument(false, "invalid tuple value", "tuple", values);
+    }
+    assertArgument(coders.length === arrayValues.length, "types/value length mismatch", "tuple", values);
+    let staticWriter = new Writer();
+    let dynamicWriter = new Writer();
+    let updateFuncs = [];
+    coders.forEach((coder, index) => {
+      let value = arrayValues[index];
+      if (coder.dynamic) {
+        let dynamicOffset = dynamicWriter.length;
+        coder.encode(dynamicWriter, value);
+        let updateFunc = staticWriter.writeUpdatableValue();
+        updateFuncs.push((baseOffset) => {
+          updateFunc(baseOffset + dynamicOffset);
+        });
+      } else {
+        coder.encode(staticWriter, value);
+      }
+    });
+    updateFuncs.forEach((func) => {
+      func(staticWriter.length);
+    });
+    let length = writer.appendWriter(staticWriter);
+    length += writer.appendWriter(dynamicWriter);
+    return length;
+  }
+  function unpack(reader, coders) {
+    let values = [];
+    let keys = [];
+    let baseReader = reader.subReader(0);
+    coders.forEach((coder) => {
+      let value = null;
+      if (coder.dynamic) {
+        let offset = reader.readIndex();
+        let offsetReader = baseReader.subReader(offset);
+        try {
+          value = coder.decode(offsetReader);
+        } catch (error312) {
+          if (isError(error312, "BUFFER_OVERRUN")) {
+            throw error312;
+          }
+          value = error312;
+          value.baseType = coder.name;
+          value.name = coder.localName;
+          value.type = coder.type;
+        }
+      } else {
+        try {
+          value = coder.decode(reader);
+        } catch (error312) {
+          if (isError(error312, "BUFFER_OVERRUN")) {
+            throw error312;
+          }
+          value = error312;
+          value.baseType = coder.name;
+          value.name = coder.localName;
+          value.type = coder.type;
+        }
+      }
+      if (value == void 0) {
+        throw new Error("investigate");
+      }
+      values.push(value);
+      keys.push(coder.localName || null);
+    });
+    return Result.fromItems(values, keys);
+  }
+  var ArrayCoder = class extends Coder {
+    coder;
+    length;
+    constructor(coder, length, localName) {
+      const type = coder.type + "[" + (length >= 0 ? length : "") + "]";
+      const dynamic = length === -1 || coder.dynamic;
+      super("array", type, localName, dynamic);
+      defineProperties(this, { coder, length });
+    }
+    defaultValue() {
+      const defaultChild = this.coder.defaultValue();
+      const result = [];
+      for (let i = 0; i < this.length; i++) {
+        result.push(defaultChild);
+      }
+      return result;
+    }
+    encode(writer, _value) {
+      const value = Typed.dereference(_value, "array");
+      if (!Array.isArray(value)) {
+        this._throwError("expected array value", value);
+      }
+      let count = this.length;
+      if (count === -1) {
+        count = value.length;
+        writer.writeValue(value.length);
+      }
+      assertArgumentCount(value.length, count, "coder array" + (this.localName ? " " + this.localName : ""));
+      let coders = [];
+      for (let i = 0; i < value.length; i++) {
+        coders.push(this.coder);
+      }
+      return pack(writer, coders, value);
+    }
+    decode(reader) {
+      let count = this.length;
+      if (count === -1) {
+        count = reader.readIndex();
+        assert2(count * WordSize <= reader.dataLength, "insufficient data length", "BUFFER_OVERRUN", { buffer: reader.bytes, offset: count * WordSize, length: reader.dataLength });
+      }
+      let coders = [];
+      for (let i = 0; i < count; i++) {
+        coders.push(new AnonymousCoder(this.coder));
+      }
+      return unpack(reader, coders);
+    }
+  };
+
+  // node_modules/ethers/lib.esm/abi/coders/boolean.js
+  init_dirname();
+  init_buffer2();
+  init_process2();
+  var BooleanCoder = class extends Coder {
+    constructor(localName) {
+      super("bool", "bool", localName, false);
+    }
+    defaultValue() {
+      return false;
+    }
+    encode(writer, _value) {
+      const value = Typed.dereference(_value, "bool");
+      return writer.writeValue(value ? 1 : 0);
+    }
+    decode(reader) {
+      return !!reader.readValue();
+    }
+  };
+
+  // node_modules/ethers/lib.esm/abi/coders/bytes.js
+  init_dirname();
+  init_buffer2();
+  init_process2();
+  var DynamicBytesCoder = class extends Coder {
+    constructor(type, localName) {
+      super(type, type, localName, true);
+    }
+    defaultValue() {
+      return "0x";
+    }
+    encode(writer, value) {
+      value = getBytesCopy(value);
+      let length = writer.writeValue(value.length);
+      length += writer.writeBytes(value);
+      return length;
+    }
+    decode(reader) {
+      return reader.readBytes(reader.readIndex(), true);
+    }
+  };
+  var BytesCoder = class extends DynamicBytesCoder {
+    constructor(localName) {
+      super("bytes", localName);
+    }
+    decode(reader) {
+      return hexlify(super.decode(reader));
+    }
+  };
+
+  // node_modules/ethers/lib.esm/abi/coders/fixed-bytes.js
+  init_dirname();
+  init_buffer2();
+  init_process2();
+  var FixedBytesCoder = class extends Coder {
+    size;
+    constructor(size2, localName) {
+      let name = "bytes" + String(size2);
+      super(name, name, localName, false);
+      defineProperties(this, { size: size2 }, { size: "number" });
+    }
+    defaultValue() {
+      return "0x0000000000000000000000000000000000000000000000000000000000000000".substring(0, 2 + this.size * 2);
+    }
+    encode(writer, _value) {
+      let data = getBytesCopy(Typed.dereference(_value, this.type));
+      if (data.length !== this.size) {
+        this._throwError("incorrect data length", _value);
+      }
+      return writer.writeBytes(data);
+    }
+    decode(reader) {
+      return hexlify(reader.readBytes(this.size));
+    }
+  };
+
+  // node_modules/ethers/lib.esm/abi/coders/null.js
+  init_dirname();
+  init_buffer2();
+  init_process2();
+  var Empty = new Uint8Array([]);
+  var NullCoder = class extends Coder {
+    constructor(localName) {
+      super("null", "", localName, false);
+    }
+    defaultValue() {
+      return null;
+    }
+    encode(writer, value) {
+      if (value != null) {
+        this._throwError("not null", value);
+      }
+      return writer.writeBytes(Empty);
+    }
+    decode(reader) {
+      reader.readBytes(0);
+      return null;
+    }
+  };
+
+  // node_modules/ethers/lib.esm/abi/coders/number.js
+  init_dirname();
+  init_buffer2();
+  init_process2();
+  var BN_03 = BigInt(0);
+  var BN_12 = BigInt(1);
+  var BN_MAX_UINT256 = BigInt("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+  var NumberCoder = class extends Coder {
+    size;
+    signed;
+    constructor(size2, signed, localName) {
+      const name = (signed ? "int" : "uint") + size2 * 8;
+      super(name, name, localName, false);
+      defineProperties(this, { size: size2, signed }, { size: "number", signed: "boolean" });
+    }
+    defaultValue() {
+      return 0;
+    }
+    encode(writer, _value) {
+      let value = getBigInt(Typed.dereference(_value, this.type));
+      let maxUintValue = mask(BN_MAX_UINT256, WordSize * 8);
+      if (this.signed) {
+        let bounds = mask(maxUintValue, this.size * 8 - 1);
+        if (value > bounds || value < -(bounds + BN_12)) {
+          this._throwError("value out-of-bounds", _value);
+        }
+        value = toTwos(value, 8 * WordSize);
+      } else if (value < BN_03 || value > mask(maxUintValue, this.size * 8)) {
+        this._throwError("value out-of-bounds", _value);
+      }
+      return writer.writeValue(value);
+    }
+    decode(reader) {
+      let value = mask(reader.readValue(), this.size * 8);
+      if (this.signed) {
+        value = fromTwos(value, this.size * 8);
+      }
+      return value;
+    }
+  };
+
+  // node_modules/ethers/lib.esm/abi/coders/string.js
+  init_dirname();
+  init_buffer2();
+  init_process2();
+  var StringCoder = class extends DynamicBytesCoder {
+    constructor(localName) {
+      super("string", localName);
+    }
+    defaultValue() {
+      return "";
+    }
+    encode(writer, _value) {
+      return super.encode(writer, toUtf8Bytes(Typed.dereference(_value, "string")));
+    }
+    decode(reader) {
+      return toUtf8String(super.decode(reader));
+    }
+  };
+
+  // node_modules/ethers/lib.esm/abi/coders/tuple.js
+  init_dirname();
+  init_buffer2();
+  init_process2();
+  var TupleCoder = class extends Coder {
+    coders;
+    constructor(coders, localName) {
+      let dynamic = false;
+      const types2 = [];
+      coders.forEach((coder) => {
+        if (coder.dynamic) {
+          dynamic = true;
+        }
+        types2.push(coder.type);
+      });
+      const type = "tuple(" + types2.join(",") + ")";
+      super("tuple", type, localName, dynamic);
+      defineProperties(this, { coders: Object.freeze(coders.slice()) });
+    }
+    defaultValue() {
+      const values = [];
+      this.coders.forEach((coder) => {
+        values.push(coder.defaultValue());
+      });
+      const uniqueNames = this.coders.reduce((accum, coder) => {
+        const name = coder.localName;
+        if (name) {
+          if (!accum[name]) {
+            accum[name] = 0;
+          }
+          accum[name]++;
+        }
+        return accum;
+      }, {});
+      this.coders.forEach((coder, index) => {
+        let name = coder.localName;
+        if (!name || uniqueNames[name] !== 1) {
+          return;
+        }
+        if (name === "length") {
+          name = "_length";
+        }
+        if (values[name] != null) {
+          return;
+        }
+        values[name] = values[index];
+      });
+      return Object.freeze(values);
+    }
+    encode(writer, _value) {
+      const value = Typed.dereference(_value, "tuple");
+      return pack(writer, this.coders, value);
+    }
+    decode(reader) {
+      return unpack(reader, this.coders);
+    }
+  };
+
+  // node_modules/ethers/lib.esm/abi/fragments.js
+  init_dirname();
+  init_buffer2();
+  init_process2();
+
+  // node_modules/ethers/lib.esm/hash/index.js
+  init_dirname();
+  init_buffer2();
+  init_process2();
+
+  // node_modules/ethers/lib.esm/hash/id.js
+  init_dirname();
+  init_buffer2();
+  init_process2();
+  function id(value) {
+    return keccak256(toUtf8Bytes(value));
+  }
+
+  // node_modules/ethers/lib.esm/hash/typed-data.js
+  init_dirname();
+  init_buffer2();
+  init_process2();
+  var padding = new Uint8Array(32);
+  padding.fill(0);
+  var BN__1 = BigInt(-1);
+  var BN_04 = BigInt(0);
+  var BN_13 = BigInt(1);
+  var BN_MAX_UINT2562 = BigInt("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+  function hexPadRight(value) {
+    const bytes3 = getBytes(value);
+    const padOffset = bytes3.length % 32;
+    if (padOffset) {
+      return concat([bytes3, padding.slice(padOffset)]);
+    }
+    return hexlify(bytes3);
+  }
+  var hexTrue = toBeHex(BN_13, 32);
+  var hexFalse = toBeHex(BN_04, 32);
+  var domainFieldTypes = {
+    name: "string",
+    version: "string",
+    chainId: "uint256",
+    verifyingContract: "address",
+    salt: "bytes32"
+  };
+  var domainFieldNames = [
+    "name",
+    "version",
+    "chainId",
+    "verifyingContract",
+    "salt"
+  ];
+  function checkString(key) {
+    return function(value) {
+      assertArgument(typeof value === "string", `invalid domain value for ${JSON.stringify(key)}`, `domain.${key}`, value);
+      return value;
+    };
+  }
+  var domainChecks = {
+    name: checkString("name"),
+    version: checkString("version"),
+    chainId: function(_value) {
+      const value = getBigInt(_value, "domain.chainId");
+      assertArgument(value >= 0, "invalid chain ID", "domain.chainId", _value);
+      if (Number.isSafeInteger(value)) {
+        return Number(value);
+      }
+      return toQuantity(value);
+    },
+    verifyingContract: function(value) {
+      try {
+        return getAddress(value).toLowerCase();
+      } catch (error312) {
+      }
+      assertArgument(false, `invalid domain value "verifyingContract"`, "domain.verifyingContract", value);
+    },
+    salt: function(value) {
+      const bytes3 = getBytes(value, "domain.salt");
+      assertArgument(bytes3.length === 32, `invalid domain value "salt"`, "domain.salt", value);
+      return hexlify(bytes3);
+    }
+  };
+  function getBaseEncoder(type) {
+    {
+      const match = type.match(/^(u?)int(\d+)$/);
+      if (match) {
+        const signed = match[1] === "";
+        const width = parseInt(match[2]);
+        assertArgument(width % 8 === 0 && width !== 0 && width <= 256 && match[2] === String(width), "invalid numeric width", "type", type);
+        const boundsUpper = mask(BN_MAX_UINT2562, signed ? width - 1 : width);
+        const boundsLower = signed ? (boundsUpper + BN_13) * BN__1 : BN_04;
+        return function(_value) {
+          const value = getBigInt(_value, "value");
+          assertArgument(value >= boundsLower && value <= boundsUpper, `value out-of-bounds for ${type}`, "value", value);
+          return toBeHex(signed ? toTwos(value, 256) : value, 32);
+        };
+      }
+    }
+    {
+      const match = type.match(/^bytes(\d+)$/);
+      if (match) {
+        const width = parseInt(match[1]);
+        assertArgument(width !== 0 && width <= 32 && match[1] === String(width), "invalid bytes width", "type", type);
+        return function(value) {
+          const bytes3 = getBytes(value);
+          assertArgument(bytes3.length === width, `invalid length for ${type}`, "value", value);
+          return hexPadRight(value);
+        };
+      }
+    }
+    switch (type) {
+      case "address":
+        return function(value) {
+          return zeroPadValue(getAddress(value), 32);
+        };
+      case "bool":
+        return function(value) {
+          return !value ? hexFalse : hexTrue;
+        };
+      case "bytes":
+        return function(value) {
+          return keccak256(value);
+        };
+      case "string":
+        return function(value) {
+          return id(value);
+        };
+    }
+    return null;
+  }
+  function encodeType(name, fields2) {
+    return `${name}(${fields2.map(({ name: name2, type }) => type + " " + name2).join(",")})`;
+  }
+  function splitArray(type) {
+    const match = type.match(/^([^\x5b]*)((\x5b\d*\x5d)*)(\x5b(\d*)\x5d)$/);
+    if (match) {
+      return {
+        base: match[1],
+        index: match[2] + match[4],
+        array: {
+          base: match[1],
+          prefix: match[1] + match[2],
+          count: match[5] ? parseInt(match[5]) : -1
+        }
+      };
+    }
+    return { base: type };
+  }
+  var TypedDataEncoder = class _TypedDataEncoder {
+    /**
+     *  The primary type for the structured [[types]].
+     *
+     *  This is derived automatically from the [[types]], since no
+     *  recursion is possible, once the DAG for the types is consturcted
+     *  internally, the primary type must be the only remaining type with
+     *  no parent nodes.
+     */
+    primaryType;
+    #types;
+    /**
+     *  The types.
+     */
+    get types() {
+      return JSON.parse(this.#types);
+    }
+    #fullTypes;
+    #encoderCache;
+    /**
+     *  Create a new **TypedDataEncoder** for %%types%%.
+     *
+     *  This performs all necessary checking that types are valid and
+     *  do not violate the [[link-eip-712]] structural constraints as
+     *  well as computes the [[primaryType]].
+     */
+    constructor(_types) {
+      this.#fullTypes = /* @__PURE__ */ new Map();
+      this.#encoderCache = /* @__PURE__ */ new Map();
+      const links = /* @__PURE__ */ new Map();
+      const parents = /* @__PURE__ */ new Map();
+      const subtypes = /* @__PURE__ */ new Map();
+      const types2 = {};
+      Object.keys(_types).forEach((type) => {
+        types2[type] = _types[type].map(({ name, type: type2 }) => {
+          let { base, index } = splitArray(type2);
+          if (base === "int" && !_types["int"]) {
+            base = "int256";
+          }
+          if (base === "uint" && !_types["uint"]) {
+            base = "uint256";
+          }
+          return { name, type: base + (index || "") };
+        });
+        links.set(type, /* @__PURE__ */ new Set());
+        parents.set(type, []);
+        subtypes.set(type, /* @__PURE__ */ new Set());
+      });
+      this.#types = JSON.stringify(types2);
+      for (const name in types2) {
+        const uniqueNames = /* @__PURE__ */ new Set();
+        for (const field10 of types2[name]) {
+          assertArgument(!uniqueNames.has(field10.name), `duplicate variable name ${JSON.stringify(field10.name)} in ${JSON.stringify(name)}`, "types", _types);
+          uniqueNames.add(field10.name);
+          const baseType = splitArray(field10.type).base;
+          assertArgument(baseType !== name, `circular type reference to ${JSON.stringify(baseType)}`, "types", _types);
+          const encoder8 = getBaseEncoder(baseType);
+          if (encoder8) {
+            continue;
+          }
+          assertArgument(parents.has(baseType), `unknown type ${JSON.stringify(baseType)}`, "types", _types);
+          parents.get(baseType).push(name);
+          links.get(name).add(baseType);
+        }
+      }
+      const primaryTypes = Array.from(parents.keys()).filter((n2) => parents.get(n2).length === 0);
+      assertArgument(primaryTypes.length !== 0, "missing primary type", "types", _types);
+      assertArgument(primaryTypes.length === 1, `ambiguous primary types or unused types: ${primaryTypes.map((t) => JSON.stringify(t)).join(", ")}`, "types", _types);
+      defineProperties(this, { primaryType: primaryTypes[0] });
+      function checkCircular(type, found) {
+        assertArgument(!found.has(type), `circular type reference to ${JSON.stringify(type)}`, "types", _types);
+        found.add(type);
+        for (const child of links.get(type)) {
+          if (!parents.has(child)) {
+            continue;
+          }
+          checkCircular(child, found);
+          for (const subtype of found) {
+            subtypes.get(subtype).add(child);
+          }
+        }
+        found.delete(type);
+      }
+      checkCircular(this.primaryType, /* @__PURE__ */ new Set());
+      for (const [name, set8] of subtypes) {
+        const st = Array.from(set8);
+        st.sort();
+        this.#fullTypes.set(name, encodeType(name, types2[name]) + st.map((t) => encodeType(t, types2[t])).join(""));
+      }
+    }
+    /**
+     *  Returnthe encoder for the specific %%type%%.
+     */
+    getEncoder(type) {
+      let encoder8 = this.#encoderCache.get(type);
+      if (!encoder8) {
+        encoder8 = this.#getEncoder(type);
+        this.#encoderCache.set(type, encoder8);
+      }
+      return encoder8;
+    }
+    #getEncoder(type) {
+      {
+        const encoder8 = getBaseEncoder(type);
+        if (encoder8) {
+          return encoder8;
+        }
+      }
+      const array7 = splitArray(type).array;
+      if (array7) {
+        const subtype = array7.prefix;
+        const subEncoder = this.getEncoder(subtype);
+        return (value) => {
+          assertArgument(array7.count === -1 || array7.count === value.length, `array length mismatch; expected length ${array7.count}`, "value", value);
+          let result = value.map(subEncoder);
+          if (this.#fullTypes.has(subtype)) {
+            result = result.map(keccak256);
+          }
+          return keccak256(concat(result));
+        };
+      }
+      const fields2 = this.types[type];
+      if (fields2) {
+        const encodedType = id(this.#fullTypes.get(type));
+        return (value) => {
+          const values = fields2.map(({ name, type: type2 }) => {
+            const result = this.getEncoder(type2)(value[name]);
+            if (this.#fullTypes.has(type2)) {
+              return keccak256(result);
+            }
+            return result;
+          });
+          values.unshift(encodedType);
+          return concat(values);
+        };
+      }
+      assertArgument(false, `unknown type: ${type}`, "type", type);
+    }
+    /**
+     *  Return the full type for %%name%%.
+     */
+    encodeType(name) {
+      const result = this.#fullTypes.get(name);
+      assertArgument(result, `unknown type: ${JSON.stringify(name)}`, "name", name);
+      return result;
+    }
+    /**
+     *  Return the encoded %%value%% for the %%type%%.
+     */
+    encodeData(type, value) {
+      return this.getEncoder(type)(value);
+    }
+    /**
+     *  Returns the hash of %%value%% for the type of %%name%%.
+     */
+    hashStruct(name, value) {
+      return keccak256(this.encodeData(name, value));
+    }
+    /**
+     *  Return the fulled encoded %%value%% for the [[types]].
+     */
+    encode(value) {
+      return this.encodeData(this.primaryType, value);
+    }
+    /**
+     *  Return the hash of the fully encoded %%value%% for the [[types]].
+     */
+    hash(value) {
+      return this.hashStruct(this.primaryType, value);
+    }
+    /**
+     *  @_ignore:
+     */
+    _visit(type, value, callback) {
+      {
+        const encoder8 = getBaseEncoder(type);
+        if (encoder8) {
+          return callback(type, value);
+        }
+      }
+      const array7 = splitArray(type).array;
+      if (array7) {
+        assertArgument(array7.count === -1 || array7.count === value.length, `array length mismatch; expected length ${array7.count}`, "value", value);
+        return value.map((v) => this._visit(array7.prefix, v, callback));
+      }
+      const fields2 = this.types[type];
+      if (fields2) {
+        return fields2.reduce((accum, { name, type: type2 }) => {
+          accum[name] = this._visit(type2, value[name], callback);
+          return accum;
+        }, {});
+      }
+      assertArgument(false, `unknown type: ${type}`, "type", type);
+    }
+    /**
+     *  Call %%calback%% for each value in %%value%%, passing the type and
+     *  component within %%value%%.
+     *
+     *  This is useful for replacing addresses or other transformation that
+     *  may be desired on each component, based on its type.
+     */
+    visit(value, callback) {
+      return this._visit(this.primaryType, value, callback);
+    }
+    /**
+     *  Create a new **TypedDataEncoder** for %%types%%.
+     */
+    static from(types2) {
+      return new _TypedDataEncoder(types2);
+    }
+    /**
+     *  Return the primary type for %%types%%.
+     */
+    static getPrimaryType(types2) {
+      return _TypedDataEncoder.from(types2).primaryType;
+    }
+    /**
+     *  Return the hashed struct for %%value%% using %%types%% and %%name%%.
+     */
+    static hashStruct(name, types2, value) {
+      return _TypedDataEncoder.from(types2).hashStruct(name, value);
+    }
+    /**
+     *  Return the domain hash for %%domain%%.
+     */
+    static hashDomain(domain10) {
+      const domainFields = [];
+      for (const name in domain10) {
+        if (domain10[name] == null) {
+          continue;
+        }
+        const type = domainFieldTypes[name];
+        assertArgument(type, `invalid typed-data domain key: ${JSON.stringify(name)}`, "domain", domain10);
+        domainFields.push({ name, type });
+      }
+      domainFields.sort((a, b2) => {
+        return domainFieldNames.indexOf(a.name) - domainFieldNames.indexOf(b2.name);
+      });
+      return _TypedDataEncoder.hashStruct("EIP712Domain", { EIP712Domain: domainFields }, domain10);
+    }
+    /**
+     *  Return the fully encoded [[link-eip-712]] %%value%% for %%types%% with %%domain%%.
+     */
+    static encode(domain10, types2, value) {
+      return concat([
+        "0x1901",
+        _TypedDataEncoder.hashDomain(domain10),
+        _TypedDataEncoder.from(types2).hash(value)
+      ]);
+    }
+    /**
+     *  Return the hash of the fully encoded [[link-eip-712]] %%value%% for %%types%% with %%domain%%.
+     */
+    static hash(domain10, types2, value) {
+      return keccak256(_TypedDataEncoder.encode(domain10, types2, value));
+    }
+    // Replaces all address types with ENS names with their looked up address
+    /**
+     * Resolves to the value from resolving all addresses in %%value%% for
+     * %%types%% and the %%domain%%.
+     */
+    static async resolveNames(domain10, types2, value, resolveName) {
+      domain10 = Object.assign({}, domain10);
+      for (const key in domain10) {
+        if (domain10[key] == null) {
+          delete domain10[key];
+        }
+      }
+      const ensCache = {};
+      if (domain10.verifyingContract && !isHexString(domain10.verifyingContract, 20)) {
+        ensCache[domain10.verifyingContract] = "0x";
+      }
+      const encoder8 = _TypedDataEncoder.from(types2);
+      encoder8.visit(value, (type, value2) => {
+        if (type === "address" && !isHexString(value2, 20)) {
+          ensCache[value2] = "0x";
+        }
+        return value2;
+      });
+      for (const name in ensCache) {
+        ensCache[name] = await resolveName(name);
+      }
+      if (domain10.verifyingContract && ensCache[domain10.verifyingContract]) {
+        domain10.verifyingContract = ensCache[domain10.verifyingContract];
+      }
+      value = encoder8.visit(value, (type, value2) => {
+        if (type === "address" && ensCache[value2]) {
+          return ensCache[value2];
+        }
+        return value2;
+      });
+      return { domain: domain10, value };
+    }
+    /**
+     *  Returns the JSON-encoded payload expected by nodes which implement
+     *  the JSON-RPC [[link-eip-712]] method.
+     */
+    static getPayload(domain10, types2, value) {
+      _TypedDataEncoder.hashDomain(domain10);
+      const domainValues = {};
+      const domainTypes = [];
+      domainFieldNames.forEach((name) => {
+        const value2 = domain10[name];
+        if (value2 == null) {
+          return;
+        }
+        domainValues[name] = domainChecks[name](value2);
+        domainTypes.push({ name, type: domainFieldTypes[name] });
+      });
+      const encoder8 = _TypedDataEncoder.from(types2);
+      types2 = encoder8.types;
+      const typesWithDomain = Object.assign({}, types2);
+      assertArgument(typesWithDomain.EIP712Domain == null, "types must not contain EIP712Domain type", "types.EIP712Domain", types2);
+      typesWithDomain.EIP712Domain = domainTypes;
+      encoder8.encode(value);
+      return {
+        types: typesWithDomain,
+        domain: domainValues,
+        primaryType: encoder8.primaryType,
+        message: encoder8.visit(value, (type, value2) => {
+          if (type.match(/^bytes(\d*)/)) {
+            return hexlify(getBytes(value2));
+          }
+          if (type.match(/^u?int/)) {
+            return getBigInt(value2).toString();
+          }
+          switch (type) {
+            case "address":
+              return value2.toLowerCase();
+            case "bool":
+              return !!value2;
+            case "string":
+              assertArgument(typeof value2 === "string", "invalid string", "value", value2);
+              return value2;
+          }
+          assertArgument(false, "unsupported type", "type", type);
+        })
+      };
+    }
+  };
+
+  // node_modules/ethers/lib.esm/abi/fragments.js
+  function setify(items) {
+    const result = /* @__PURE__ */ new Set();
+    items.forEach((k) => result.add(k));
+    return Object.freeze(result);
+  }
+  var _kwVisibDeploy = "external public payable override";
+  var KwVisibDeploy = setify(_kwVisibDeploy.split(" "));
+  var _kwVisib = "constant external internal payable private public pure view override";
+  var KwVisib = setify(_kwVisib.split(" "));
+  var _kwTypes = "constructor error event fallback function receive struct";
+  var KwTypes = setify(_kwTypes.split(" "));
+  var _kwModifiers = "calldata memory storage payable indexed";
+  var KwModifiers = setify(_kwModifiers.split(" "));
+  var _kwOther = "tuple returns";
+  var _keywords = [_kwTypes, _kwModifiers, _kwOther, _kwVisib].join(" ");
+  var Keywords = setify(_keywords.split(" "));
+  var SimpleTokens = {
+    "(": "OPEN_PAREN",
+    ")": "CLOSE_PAREN",
+    "[": "OPEN_BRACKET",
+    "]": "CLOSE_BRACKET",
+    ",": "COMMA",
+    "@": "AT"
+  };
+  var regexWhitespacePrefix = new RegExp("^(\\s*)");
+  var regexNumberPrefix = new RegExp("^([0-9]+)");
+  var regexIdPrefix = new RegExp("^([a-zA-Z$_][a-zA-Z0-9$_]*)");
+  var regexId = new RegExp("^([a-zA-Z$_][a-zA-Z0-9$_]*)$");
+  var regexType = new RegExp("^(address|bool|bytes([0-9]*)|string|u?int([0-9]*))$");
+  var TokenString = class _TokenString {
+    #offset;
+    #tokens;
+    get offset() {
+      return this.#offset;
+    }
+    get length() {
+      return this.#tokens.length - this.#offset;
+    }
+    constructor(tokens) {
+      this.#offset = 0;
+      this.#tokens = tokens.slice();
+    }
+    clone() {
+      return new _TokenString(this.#tokens);
+    }
+    reset() {
+      this.#offset = 0;
+    }
+    #subTokenString(from = 0, to = 0) {
+      return new _TokenString(this.#tokens.slice(from, to).map((t) => {
+        return Object.freeze(Object.assign({}, t, {
+          match: t.match - from,
+          linkBack: t.linkBack - from,
+          linkNext: t.linkNext - from
+        }));
+      }));
+    }
+    // Pops and returns the value of the next token, if it is a keyword in allowed; throws if out of tokens
+    popKeyword(allowed) {
+      const top = this.peek();
+      if (top.type !== "KEYWORD" || !allowed.has(top.text)) {
+        throw new Error(`expected keyword ${top.text}`);
+      }
+      return this.pop().text;
+    }
+    // Pops and returns the value of the next token if it is `type`; throws if out of tokens
+    popType(type) {
+      if (this.peek().type !== type) {
+        const top = this.peek();
+        throw new Error(`expected ${type}; got ${top.type} ${JSON.stringify(top.text)}`);
+      }
+      return this.pop().text;
+    }
+    // Pops and returns a "(" TOKENS ")"
+    popParen() {
+      const top = this.peek();
+      if (top.type !== "OPEN_PAREN") {
+        throw new Error("bad start");
+      }
+      const result = this.#subTokenString(this.#offset + 1, top.match + 1);
+      this.#offset = top.match + 1;
+      return result;
+    }
+    // Pops and returns the items within "(" ITEM1 "," ITEM2 "," ... ")"
+    popParams() {
+      const top = this.peek();
+      if (top.type !== "OPEN_PAREN") {
+        throw new Error("bad start");
+      }
+      const result = [];
+      while (this.#offset < top.match - 1) {
+        const link = this.peek().linkNext;
+        result.push(this.#subTokenString(this.#offset + 1, link));
+        this.#offset = link;
+      }
+      this.#offset = top.match + 1;
+      return result;
+    }
+    // Returns the top Token, throwing if out of tokens
+    peek() {
+      if (this.#offset >= this.#tokens.length) {
+        throw new Error("out-of-bounds");
+      }
+      return this.#tokens[this.#offset];
+    }
+    // Returns the next value, if it is a keyword in `allowed`
+    peekKeyword(allowed) {
+      const top = this.peekType("KEYWORD");
+      return top != null && allowed.has(top) ? top : null;
+    }
+    // Returns the value of the next token if it is `type`
+    peekType(type) {
+      if (this.length === 0) {
+        return null;
+      }
+      const top = this.peek();
+      return top.type === type ? top.text : null;
+    }
+    // Returns the next token; throws if out of tokens
+    pop() {
+      const result = this.peek();
+      this.#offset++;
+      return result;
+    }
+    toString() {
+      const tokens = [];
+      for (let i = this.#offset; i < this.#tokens.length; i++) {
+        const token = this.#tokens[i];
+        tokens.push(`${token.type}:${token.text}`);
+      }
+      return `<TokenString ${tokens.join(" ")}>`;
+    }
+  };
+  function lex(text) {
+    const tokens = [];
+    const throwError2 = (message) => {
+      const token = offset < text.length ? JSON.stringify(text[offset]) : "$EOI";
+      throw new Error(`invalid token ${token} at ${offset}: ${message}`);
+    };
+    let brackets = [];
+    let commas = [];
+    let offset = 0;
+    while (offset < text.length) {
+      let cur = text.substring(offset);
+      let match = cur.match(regexWhitespacePrefix);
+      if (match) {
+        offset += match[1].length;
+        cur = text.substring(offset);
+      }
+      const token = { depth: brackets.length, linkBack: -1, linkNext: -1, match: -1, type: "", text: "", offset, value: -1 };
+      tokens.push(token);
+      let type = SimpleTokens[cur[0]] || "";
+      if (type) {
+        token.type = type;
+        token.text = cur[0];
+        offset++;
+        if (type === "OPEN_PAREN") {
+          brackets.push(tokens.length - 1);
+          commas.push(tokens.length - 1);
+        } else if (type == "CLOSE_PAREN") {
+          if (brackets.length === 0) {
+            throwError2("no matching open bracket");
+          }
+          token.match = brackets.pop();
+          tokens[token.match].match = tokens.length - 1;
+          token.depth--;
+          token.linkBack = commas.pop();
+          tokens[token.linkBack].linkNext = tokens.length - 1;
+        } else if (type === "COMMA") {
+          token.linkBack = commas.pop();
+          tokens[token.linkBack].linkNext = tokens.length - 1;
+          commas.push(tokens.length - 1);
+        } else if (type === "OPEN_BRACKET") {
+          token.type = "BRACKET";
+        } else if (type === "CLOSE_BRACKET") {
+          let suffix = tokens.pop().text;
+          if (tokens.length > 0 && tokens[tokens.length - 1].type === "NUMBER") {
+            const value = tokens.pop().text;
+            suffix = value + suffix;
+            tokens[tokens.length - 1].value = getNumber(value);
+          }
+          if (tokens.length === 0 || tokens[tokens.length - 1].type !== "BRACKET") {
+            throw new Error("missing opening bracket");
+          }
+          tokens[tokens.length - 1].text += suffix;
+        }
+        continue;
+      }
+      match = cur.match(regexIdPrefix);
+      if (match) {
+        token.text = match[1];
+        offset += token.text.length;
+        if (Keywords.has(token.text)) {
+          token.type = "KEYWORD";
+          continue;
+        }
+        if (token.text.match(regexType)) {
+          token.type = "TYPE";
+          continue;
+        }
+        token.type = "ID";
+        continue;
+      }
+      match = cur.match(regexNumberPrefix);
+      if (match) {
+        token.text = match[1];
+        token.type = "NUMBER";
+        offset += token.text.length;
+        continue;
+      }
+      throw new Error(`unexpected token ${JSON.stringify(cur[0])} at position ${offset}`);
+    }
+    return new TokenString(tokens.map((t) => Object.freeze(t)));
+  }
+  function allowSingle(set8, allowed) {
+    let included = [];
+    for (const key in allowed.keys()) {
+      if (set8.has(key)) {
+        included.push(key);
+      }
+    }
+    if (included.length > 1) {
+      throw new Error(`conflicting types: ${included.join(", ")}`);
+    }
+  }
+  function consumeName(type, tokens) {
+    if (tokens.peekKeyword(KwTypes)) {
+      const keyword = tokens.pop().text;
+      if (keyword !== type) {
+        throw new Error(`expected ${type}, got ${keyword}`);
+      }
+    }
+    return tokens.popType("ID");
+  }
+  function consumeKeywords(tokens, allowed) {
+    const keywords = /* @__PURE__ */ new Set();
+    while (true) {
+      const keyword = tokens.peekType("KEYWORD");
+      if (keyword == null || allowed && !allowed.has(keyword)) {
+        break;
+      }
+      tokens.pop();
+      if (keywords.has(keyword)) {
+        throw new Error(`duplicate keywords: ${JSON.stringify(keyword)}`);
+      }
+      keywords.add(keyword);
+    }
+    return Object.freeze(keywords);
+  }
+  function consumeMutability(tokens) {
+    let modifiers2 = consumeKeywords(tokens, KwVisib);
+    allowSingle(modifiers2, setify("constant payable nonpayable".split(" ")));
+    allowSingle(modifiers2, setify("pure view payable nonpayable".split(" ")));
+    if (modifiers2.has("view")) {
+      return "view";
+    }
+    if (modifiers2.has("pure")) {
+      return "pure";
+    }
+    if (modifiers2.has("payable")) {
+      return "payable";
+    }
+    if (modifiers2.has("nonpayable")) {
+      return "nonpayable";
+    }
+    if (modifiers2.has("constant")) {
+      return "view";
+    }
+    return "nonpayable";
+  }
+  function consumeParams(tokens, allowIndexed) {
+    return tokens.popParams().map((t) => ParamType.from(t, allowIndexed));
+  }
+  function consumeGas(tokens) {
+    if (tokens.peekType("AT")) {
+      tokens.pop();
+      if (tokens.peekType("NUMBER")) {
+        return getBigInt(tokens.pop().text);
+      }
+      throw new Error("invalid gas");
+    }
+    return null;
+  }
+  function consumeEoi(tokens) {
+    if (tokens.length) {
+      throw new Error(`unexpected tokens at offset ${tokens.offset}: ${tokens.toString()}`);
+    }
+  }
+  var regexArrayType = new RegExp(/^(.*)\[([0-9]*)\]$/);
+  function verifyBasicType(type) {
+    const match = type.match(regexType);
+    assertArgument(match, "invalid type", "type", type);
+    if (type === "uint") {
+      return "uint256";
+    }
+    if (type === "int") {
+      return "int256";
+    }
+    if (match[2]) {
+      const length = parseInt(match[2]);
+      assertArgument(length !== 0 && length <= 32, "invalid bytes length", "type", type);
+    } else if (match[3]) {
+      const size2 = parseInt(match[3]);
+      assertArgument(size2 !== 0 && size2 <= 256 && size2 % 8 === 0, "invalid numeric width", "type", type);
+    }
+    return type;
+  }
+  var _guard2 = {};
+  var internal = Symbol.for("_ethers_internal");
+  var ParamTypeInternal = "_ParamTypeInternal";
+  var ErrorFragmentInternal = "_ErrorInternal";
+  var EventFragmentInternal = "_EventInternal";
+  var ConstructorFragmentInternal = "_ConstructorInternal";
+  var FallbackFragmentInternal = "_FallbackInternal";
+  var FunctionFragmentInternal = "_FunctionInternal";
+  var StructFragmentInternal = "_StructInternal";
+  var ParamType = class _ParamType {
+    /**
+     *  The local name of the parameter (or ``""`` if unbound)
+     */
+    name;
+    /**
+     *  The fully qualified type (e.g. ``"address"``, ``"tuple(address)"``,
+     *  ``"uint256[3][]"``)
+     */
+    type;
+    /**
+     *  The base type (e.g. ``"address"``, ``"tuple"``, ``"array"``)
+     */
+    baseType;
+    /**
+     *  True if the parameters is indexed.
+     *
+     *  For non-indexable types this is ``null``.
+     */
+    indexed;
+    /**
+     *  The components for the tuple.
+     *
+     *  For non-tuple types this is ``null``.
+     */
+    components;
+    /**
+     *  The array length, or ``-1`` for dynamic-lengthed arrays.
+     *
+     *  For non-array types this is ``null``.
+     */
+    arrayLength;
+    /**
+     *  The type of each child in the array.
+     *
+     *  For non-array types this is ``null``.
+     */
+    arrayChildren;
+    /**
+     *  @private
+     */
+    constructor(guard, name, type, baseType, indexed, components, arrayLength, arrayChildren) {
+      assertPrivate(guard, _guard2, "ParamType");
+      Object.defineProperty(this, internal, { value: ParamTypeInternal });
+      if (components) {
+        components = Object.freeze(components.slice());
+      }
+      if (baseType === "array") {
+        if (arrayLength == null || arrayChildren == null) {
+          throw new Error("");
+        }
+      } else if (arrayLength != null || arrayChildren != null) {
+        throw new Error("");
+      }
+      if (baseType === "tuple") {
+        if (components == null) {
+          throw new Error("");
+        }
+      } else if (components != null) {
+        throw new Error("");
+      }
+      defineProperties(this, {
+        name,
+        type,
+        baseType,
+        indexed,
+        components,
+        arrayLength,
+        arrayChildren
+      });
+    }
+    /**
+     *  Return a string representation of this type.
+     *
+     *  For example,
+     *
+     *  ``sighash" => "(uint256,address)"``
+     *
+     *  ``"minimal" => "tuple(uint256,address) indexed"``
+     *
+     *  ``"full" => "tuple(uint256 foo, address bar) indexed baz"``
+     */
+    format(format2) {
+      if (format2 == null) {
+        format2 = "sighash";
+      }
+      if (format2 === "json") {
+        const name = this.name || "";
+        if (this.isArray()) {
+          const result3 = JSON.parse(this.arrayChildren.format("json"));
+          result3.name = name;
+          result3.type += `[${this.arrayLength < 0 ? "" : String(this.arrayLength)}]`;
+          return JSON.stringify(result3);
+        }
+        const result2 = {
+          type: this.baseType === "tuple" ? "tuple" : this.type,
+          name
+        };
+        if (typeof this.indexed === "boolean") {
+          result2.indexed = this.indexed;
+        }
+        if (this.isTuple()) {
+          result2.components = this.components.map((c) => JSON.parse(c.format(format2)));
+        }
+        return JSON.stringify(result2);
+      }
+      let result = "";
+      if (this.isArray()) {
+        result += this.arrayChildren.format(format2);
+        result += `[${this.arrayLength < 0 ? "" : String(this.arrayLength)}]`;
+      } else {
+        if (this.isTuple()) {
+          result += "(" + this.components.map((comp) => comp.format(format2)).join(format2 === "full" ? ", " : ",") + ")";
+        } else {
+          result += this.type;
+        }
+      }
+      if (format2 !== "sighash") {
+        if (this.indexed === true) {
+          result += " indexed";
+        }
+        if (format2 === "full" && this.name) {
+          result += " " + this.name;
+        }
+      }
+      return result;
+    }
+    /**
+     *  Returns true if %%this%% is an Array type.
+     *
+     *  This provides a type gaurd ensuring that [[arrayChildren]]
+     *  and [[arrayLength]] are non-null.
+     */
+    isArray() {
+      return this.baseType === "array";
+    }
+    /**
+     *  Returns true if %%this%% is a Tuple type.
+     *
+     *  This provides a type gaurd ensuring that [[components]]
+     *  is non-null.
+     */
+    isTuple() {
+      return this.baseType === "tuple";
+    }
+    /**
+     *  Returns true if %%this%% is an Indexable type.
+     *
+     *  This provides a type gaurd ensuring that [[indexed]]
+     *  is non-null.
+     */
+    isIndexable() {
+      return this.indexed != null;
+    }
+    /**
+     *  Walks the **ParamType** with %%value%%, calling %%process%%
+     *  on each type, destructing the %%value%% recursively.
+     */
+    walk(value, process8) {
+      if (this.isArray()) {
+        if (!Array.isArray(value)) {
+          throw new Error("invalid array value");
+        }
+        if (this.arrayLength !== -1 && value.length !== this.arrayLength) {
+          throw new Error("array is wrong length");
+        }
+        const _this = this;
+        return value.map((v) => _this.arrayChildren.walk(v, process8));
+      }
+      if (this.isTuple()) {
+        if (!Array.isArray(value)) {
+          throw new Error("invalid tuple value");
+        }
+        if (value.length !== this.components.length) {
+          throw new Error("array is wrong length");
+        }
+        const _this = this;
+        return value.map((v, i) => _this.components[i].walk(v, process8));
+      }
+      return process8(this.type, value);
+    }
+    #walkAsync(promises, value, process8, setValue) {
+      if (this.isArray()) {
+        if (!Array.isArray(value)) {
+          throw new Error("invalid array value");
+        }
+        if (this.arrayLength !== -1 && value.length !== this.arrayLength) {
+          throw new Error("array is wrong length");
+        }
+        const childType = this.arrayChildren;
+        const result2 = value.slice();
+        result2.forEach((value2, index) => {
+          childType.#walkAsync(promises, value2, process8, (value3) => {
+            result2[index] = value3;
+          });
+        });
+        setValue(result2);
+        return;
+      }
+      if (this.isTuple()) {
+        const components = this.components;
+        let result2;
+        if (Array.isArray(value)) {
+          result2 = value.slice();
+        } else {
+          if (value == null || typeof value !== "object") {
+            throw new Error("invalid tuple value");
+          }
+          result2 = components.map((param) => {
+            if (!param.name) {
+              throw new Error("cannot use object value with unnamed components");
+            }
+            if (!(param.name in value)) {
+              throw new Error(`missing value for component ${param.name}`);
+            }
+            return value[param.name];
+          });
+        }
+        if (result2.length !== this.components.length) {
+          throw new Error("array is wrong length");
+        }
+        result2.forEach((value2, index) => {
+          components[index].#walkAsync(promises, value2, process8, (value3) => {
+            result2[index] = value3;
+          });
+        });
+        setValue(result2);
+        return;
+      }
+      const result = process8(this.type, value);
+      if (result.then) {
+        promises.push((async function() {
+          setValue(await result);
+        })());
+      } else {
+        setValue(result);
+      }
+    }
+    /**
+     *  Walks the **ParamType** with %%value%%, asynchronously calling
+     *  %%process%% on each type, destructing the %%value%% recursively.
+     *
+     *  This can be used to resolve ENS names by walking and resolving each
+     *  ``"address"`` type.
+     */
+    async walkAsync(value, process8) {
+      const promises = [];
+      const result = [value];
+      this.#walkAsync(promises, value, process8, (value2) => {
+        result[0] = value2;
+      });
+      if (promises.length) {
+        await Promise.all(promises);
+      }
+      return result[0];
+    }
+    /**
+     *  Creates a new **ParamType** for %%obj%%.
+     *
+     *  If %%allowIndexed%% then the ``indexed`` keyword is permitted,
+     *  otherwise the ``indexed`` keyword will throw an error.
+     */
+    static from(obj, allowIndexed) {
+      if (_ParamType.isParamType(obj)) {
+        return obj;
+      }
+      if (typeof obj === "string") {
+        try {
+          return _ParamType.from(lex(obj), allowIndexed);
+        } catch (error312) {
+          assertArgument(false, "invalid param type", "obj", obj);
+        }
+      } else if (obj instanceof TokenString) {
+        let type2 = "", baseType = "";
+        let comps = null;
+        if (consumeKeywords(obj, setify(["tuple"])).has("tuple") || obj.peekType("OPEN_PAREN")) {
+          baseType = "tuple";
+          comps = obj.popParams().map((t) => _ParamType.from(t));
+          type2 = `tuple(${comps.map((c) => c.format()).join(",")})`;
+        } else {
+          type2 = verifyBasicType(obj.popType("TYPE"));
+          baseType = type2;
+        }
+        let arrayChildren = null;
+        let arrayLength = null;
+        while (obj.length && obj.peekType("BRACKET")) {
+          const bracket = obj.pop();
+          arrayChildren = new _ParamType(_guard2, "", type2, baseType, null, comps, arrayLength, arrayChildren);
+          arrayLength = bracket.value;
+          type2 += bracket.text;
+          baseType = "array";
+          comps = null;
+        }
+        let indexed2 = null;
+        const keywords = consumeKeywords(obj, KwModifiers);
+        if (keywords.has("indexed")) {
+          if (!allowIndexed) {
+            throw new Error("");
+          }
+          indexed2 = true;
+        }
+        const name2 = obj.peekType("ID") ? obj.pop().text : "";
+        if (obj.length) {
+          throw new Error("leftover tokens");
+        }
+        return new _ParamType(_guard2, name2, type2, baseType, indexed2, comps, arrayLength, arrayChildren);
+      }
+      const name = obj.name;
+      assertArgument(!name || typeof name === "string" && name.match(regexId), "invalid name", "obj.name", name);
+      let indexed = obj.indexed;
+      if (indexed != null) {
+        assertArgument(allowIndexed, "parameter cannot be indexed", "obj.indexed", obj.indexed);
+        indexed = !!indexed;
+      }
+      let type = obj.type;
+      let arrayMatch = type.match(regexArrayType);
+      if (arrayMatch) {
+        const arrayLength = parseInt(arrayMatch[2] || "-1");
+        const arrayChildren = _ParamType.from({
+          type: arrayMatch[1],
+          components: obj.components
+        });
+        return new _ParamType(_guard2, name || "", type, "array", indexed, null, arrayLength, arrayChildren);
+      }
+      if (type === "tuple" || type.startsWith(
+        "tuple("
+        /* fix: ) */
+      ) || type.startsWith(
+        "("
+        /* fix: ) */
+      )) {
+        const comps = obj.components != null ? obj.components.map((c) => _ParamType.from(c)) : null;
+        const tuple7 = new _ParamType(_guard2, name || "", type, "tuple", indexed, comps, null, null);
+        return tuple7;
+      }
+      type = verifyBasicType(obj.type);
+      return new _ParamType(_guard2, name || "", type, type, indexed, null, null, null);
+    }
+    /**
+     *  Returns true if %%value%% is a **ParamType**.
+     */
+    static isParamType(value) {
+      return value && value[internal] === ParamTypeInternal;
+    }
+  };
+  var Fragment = class _Fragment {
+    /**
+     *  The type of the fragment.
+     */
+    type;
+    /**
+     *  The inputs for the fragment.
+     */
+    inputs;
+    /**
+     *  @private
+     */
+    constructor(guard, type, inputs) {
+      assertPrivate(guard, _guard2, "Fragment");
+      inputs = Object.freeze(inputs.slice());
+      defineProperties(this, { type, inputs });
+    }
+    /**
+     *  Creates a new **Fragment** for %%obj%%, wich can be any supported
+     *  ABI frgament type.
+     */
+    static from(obj) {
+      if (typeof obj === "string") {
+        try {
+          _Fragment.from(JSON.parse(obj));
+        } catch (e) {
+        }
+        return _Fragment.from(lex(obj));
+      }
+      if (obj instanceof TokenString) {
+        const type = obj.peekKeyword(KwTypes);
+        switch (type) {
+          case "constructor":
+            return ConstructorFragment.from(obj);
+          case "error":
+            return ErrorFragment.from(obj);
+          case "event":
+            return EventFragment.from(obj);
+          case "fallback":
+          case "receive":
+            return FallbackFragment.from(obj);
+          case "function":
+            return FunctionFragment.from(obj);
+          case "struct":
+            return StructFragment.from(obj);
+        }
+      } else if (typeof obj === "object") {
+        switch (obj.type) {
+          case "constructor":
+            return ConstructorFragment.from(obj);
+          case "error":
+            return ErrorFragment.from(obj);
+          case "event":
+            return EventFragment.from(obj);
+          case "fallback":
+          case "receive":
+            return FallbackFragment.from(obj);
+          case "function":
+            return FunctionFragment.from(obj);
+          case "struct":
+            return StructFragment.from(obj);
+        }
+        assert2(false, `unsupported type: ${obj.type}`, "UNSUPPORTED_OPERATION", {
+          operation: "Fragment.from"
+        });
+      }
+      assertArgument(false, "unsupported frgament object", "obj", obj);
+    }
+    /**
+     *  Returns true if %%value%% is a [[ConstructorFragment]].
+     */
+    static isConstructor(value) {
+      return ConstructorFragment.isFragment(value);
+    }
+    /**
+     *  Returns true if %%value%% is an [[ErrorFragment]].
+     */
+    static isError(value) {
+      return ErrorFragment.isFragment(value);
+    }
+    /**
+     *  Returns true if %%value%% is an [[EventFragment]].
+     */
+    static isEvent(value) {
+      return EventFragment.isFragment(value);
+    }
+    /**
+     *  Returns true if %%value%% is a [[FunctionFragment]].
+     */
+    static isFunction(value) {
+      return FunctionFragment.isFragment(value);
+    }
+    /**
+     *  Returns true if %%value%% is a [[StructFragment]].
+     */
+    static isStruct(value) {
+      return StructFragment.isFragment(value);
+    }
+  };
+  var NamedFragment = class extends Fragment {
+    /**
+     *  The name of the fragment.
+     */
+    name;
+    /**
+     *  @private
+     */
+    constructor(guard, type, name, inputs) {
+      super(guard, type, inputs);
+      assertArgument(typeof name === "string" && name.match(regexId), "invalid identifier", "name", name);
+      inputs = Object.freeze(inputs.slice());
+      defineProperties(this, { name });
+    }
+  };
+  function joinParams(format2, params) {
+    return "(" + params.map((p) => p.format(format2)).join(format2 === "full" ? ", " : ",") + ")";
+  }
+  var ErrorFragment = class _ErrorFragment extends NamedFragment {
+    /**
+     *  @private
+     */
+    constructor(guard, name, inputs) {
+      super(guard, "error", name, inputs);
+      Object.defineProperty(this, internal, { value: ErrorFragmentInternal });
+    }
+    /**
+     *  The Custom Error selector.
+     */
+    get selector() {
+      return id(this.format("sighash")).substring(0, 10);
+    }
+    /**
+     *  Returns a string representation of this fragment as %%format%%.
+     */
+    format(format2) {
+      if (format2 == null) {
+        format2 = "sighash";
+      }
+      if (format2 === "json") {
+        return JSON.stringify({
+          type: "error",
+          name: this.name,
+          inputs: this.inputs.map((input2) => JSON.parse(input2.format(format2)))
+        });
+      }
+      const result = [];
+      if (format2 !== "sighash") {
+        result.push("error");
+      }
+      result.push(this.name + joinParams(format2, this.inputs));
+      return result.join(" ");
+    }
+    /**
+     *  Returns a new **ErrorFragment** for %%obj%%.
+     */
+    static from(obj) {
+      if (_ErrorFragment.isFragment(obj)) {
+        return obj;
+      }
+      if (typeof obj === "string") {
+        return _ErrorFragment.from(lex(obj));
+      } else if (obj instanceof TokenString) {
+        const name = consumeName("error", obj);
+        const inputs = consumeParams(obj);
+        consumeEoi(obj);
+        return new _ErrorFragment(_guard2, name, inputs);
+      }
+      return new _ErrorFragment(_guard2, obj.name, obj.inputs ? obj.inputs.map(ParamType.from) : []);
+    }
+    /**
+     *  Returns ``true`` and provides a type guard if %%value%% is an
+     *  **ErrorFragment**.
+     */
+    static isFragment(value) {
+      return value && value[internal] === ErrorFragmentInternal;
+    }
+  };
+  var EventFragment = class _EventFragment extends NamedFragment {
+    /**
+     *  Whether this event is anonymous.
+     */
+    anonymous;
+    /**
+     *  @private
+     */
+    constructor(guard, name, inputs, anonymous) {
+      super(guard, "event", name, inputs);
+      Object.defineProperty(this, internal, { value: EventFragmentInternal });
+      defineProperties(this, { anonymous });
+    }
+    /**
+     *  The Event topic hash.
+     */
+    get topicHash() {
+      return id(this.format("sighash"));
+    }
+    /**
+     *  Returns a string representation of this event as %%format%%.
+     */
+    format(format2) {
+      if (format2 == null) {
+        format2 = "sighash";
+      }
+      if (format2 === "json") {
+        return JSON.stringify({
+          type: "event",
+          anonymous: this.anonymous,
+          name: this.name,
+          inputs: this.inputs.map((i) => JSON.parse(i.format(format2)))
+        });
+      }
+      const result = [];
+      if (format2 !== "sighash") {
+        result.push("event");
+      }
+      result.push(this.name + joinParams(format2, this.inputs));
+      if (format2 !== "sighash" && this.anonymous) {
+        result.push("anonymous");
+      }
+      return result.join(" ");
+    }
+    /**
+     *  Return the topic hash for an event with %%name%% and %%params%%.
+     */
+    static getTopicHash(name, params) {
+      params = (params || []).map((p) => ParamType.from(p));
+      const fragment = new _EventFragment(_guard2, name, params, false);
+      return fragment.topicHash;
+    }
+    /**
+     *  Returns a new **EventFragment** for %%obj%%.
+     */
+    static from(obj) {
+      if (_EventFragment.isFragment(obj)) {
+        return obj;
+      }
+      if (typeof obj === "string") {
+        try {
+          return _EventFragment.from(lex(obj));
+        } catch (error312) {
+          assertArgument(false, "invalid event fragment", "obj", obj);
+        }
+      } else if (obj instanceof TokenString) {
+        const name = consumeName("event", obj);
+        const inputs = consumeParams(obj, true);
+        const anonymous = !!consumeKeywords(obj, setify(["anonymous"])).has("anonymous");
+        consumeEoi(obj);
+        return new _EventFragment(_guard2, name, inputs, anonymous);
+      }
+      return new _EventFragment(_guard2, obj.name, obj.inputs ? obj.inputs.map((p) => ParamType.from(p, true)) : [], !!obj.anonymous);
+    }
+    /**
+     *  Returns ``true`` and provides a type guard if %%value%% is an
+     *  **EventFragment**.
+     */
+    static isFragment(value) {
+      return value && value[internal] === EventFragmentInternal;
+    }
+  };
+  var ConstructorFragment = class _ConstructorFragment extends Fragment {
+    /**
+     *  Whether the constructor can receive an endowment.
+     */
+    payable;
+    /**
+     *  The recommended gas limit for deployment or ``null``.
+     */
+    gas;
+    /**
+     *  @private
+     */
+    constructor(guard, type, inputs, payable, gas) {
+      super(guard, type, inputs);
+      Object.defineProperty(this, internal, { value: ConstructorFragmentInternal });
+      defineProperties(this, { payable, gas });
+    }
+    /**
+     *  Returns a string representation of this constructor as %%format%%.
+     */
+    format(format2) {
+      assert2(format2 != null && format2 !== "sighash", "cannot format a constructor for sighash", "UNSUPPORTED_OPERATION", { operation: "format(sighash)" });
+      if (format2 === "json") {
+        return JSON.stringify({
+          type: "constructor",
+          stateMutability: this.payable ? "payable" : "undefined",
+          payable: this.payable,
+          gas: this.gas != null ? this.gas : void 0,
+          inputs: this.inputs.map((i) => JSON.parse(i.format(format2)))
+        });
+      }
+      const result = [`constructor${joinParams(format2, this.inputs)}`];
+      if (this.payable) {
+        result.push("payable");
+      }
+      if (this.gas != null) {
+        result.push(`@${this.gas.toString()}`);
+      }
+      return result.join(" ");
+    }
+    /**
+     *  Returns a new **ConstructorFragment** for %%obj%%.
+     */
+    static from(obj) {
+      if (_ConstructorFragment.isFragment(obj)) {
+        return obj;
+      }
+      if (typeof obj === "string") {
+        try {
+          return _ConstructorFragment.from(lex(obj));
+        } catch (error312) {
+          assertArgument(false, "invalid constuctor fragment", "obj", obj);
+        }
+      } else if (obj instanceof TokenString) {
+        consumeKeywords(obj, setify(["constructor"]));
+        const inputs = consumeParams(obj);
+        const payable = !!consumeKeywords(obj, KwVisibDeploy).has("payable");
+        const gas = consumeGas(obj);
+        consumeEoi(obj);
+        return new _ConstructorFragment(_guard2, "constructor", inputs, payable, gas);
+      }
+      return new _ConstructorFragment(_guard2, "constructor", obj.inputs ? obj.inputs.map(ParamType.from) : [], !!obj.payable, obj.gas != null ? obj.gas : null);
+    }
+    /**
+     *  Returns ``true`` and provides a type guard if %%value%% is a
+     *  **ConstructorFragment**.
+     */
+    static isFragment(value) {
+      return value && value[internal] === ConstructorFragmentInternal;
+    }
+  };
+  var FallbackFragment = class _FallbackFragment extends Fragment {
+    /**
+     *  If the function can be sent value during invocation.
+     */
+    payable;
+    constructor(guard, inputs, payable) {
+      super(guard, "fallback", inputs);
+      Object.defineProperty(this, internal, { value: FallbackFragmentInternal });
+      defineProperties(this, { payable });
+    }
+    /**
+     *  Returns a string representation of this fallback as %%format%%.
+     */
+    format(format2) {
+      const type = this.inputs.length === 0 ? "receive" : "fallback";
+      if (format2 === "json") {
+        const stateMutability = this.payable ? "payable" : "nonpayable";
+        return JSON.stringify({ type, stateMutability });
+      }
+      return `${type}()${this.payable ? " payable" : ""}`;
+    }
+    /**
+     *  Returns a new **FallbackFragment** for %%obj%%.
+     */
+    static from(obj) {
+      if (_FallbackFragment.isFragment(obj)) {
+        return obj;
+      }
+      if (typeof obj === "string") {
+        try {
+          return _FallbackFragment.from(lex(obj));
+        } catch (error312) {
+          assertArgument(false, "invalid fallback fragment", "obj", obj);
+        }
+      } else if (obj instanceof TokenString) {
+        const errorObj = obj.toString();
+        const topIsValid = obj.peekKeyword(setify(["fallback", "receive"]));
+        assertArgument(topIsValid, "type must be fallback or receive", "obj", errorObj);
+        const type = obj.popKeyword(setify(["fallback", "receive"]));
+        if (type === "receive") {
+          const inputs2 = consumeParams(obj);
+          assertArgument(inputs2.length === 0, `receive cannot have arguments`, "obj.inputs", inputs2);
+          consumeKeywords(obj, setify(["payable"]));
+          consumeEoi(obj);
+          return new _FallbackFragment(_guard2, [], true);
+        }
+        let inputs = consumeParams(obj);
+        if (inputs.length) {
+          assertArgument(inputs.length === 1 && inputs[0].type === "bytes", "invalid fallback inputs", "obj.inputs", inputs.map((i) => i.format("minimal")).join(", "));
+        } else {
+          inputs = [ParamType.from("bytes")];
+        }
+        const mutability = consumeMutability(obj);
+        assertArgument(mutability === "nonpayable" || mutability === "payable", "fallback cannot be constants", "obj.stateMutability", mutability);
+        if (consumeKeywords(obj, setify(["returns"])).has("returns")) {
+          const outputs = consumeParams(obj);
+          assertArgument(outputs.length === 1 && outputs[0].type === "bytes", "invalid fallback outputs", "obj.outputs", outputs.map((i) => i.format("minimal")).join(", "));
+        }
+        consumeEoi(obj);
+        return new _FallbackFragment(_guard2, inputs, mutability === "payable");
+      }
+      if (obj.type === "receive") {
+        return new _FallbackFragment(_guard2, [], true);
+      }
+      if (obj.type === "fallback") {
+        const inputs = [ParamType.from("bytes")];
+        const payable = obj.stateMutability === "payable";
+        return new _FallbackFragment(_guard2, inputs, payable);
+      }
+      assertArgument(false, "invalid fallback description", "obj", obj);
+    }
+    /**
+     *  Returns ``true`` and provides a type guard if %%value%% is a
+     *  **FallbackFragment**.
+     */
+    static isFragment(value) {
+      return value && value[internal] === FallbackFragmentInternal;
+    }
+  };
+  var FunctionFragment = class _FunctionFragment extends NamedFragment {
+    /**
+     *  If the function is constant (e.g. ``pure`` or ``view`` functions).
+     */
+    constant;
+    /**
+     *  The returned types for the result of calling this function.
+     */
+    outputs;
+    /**
+     *  The state mutability (e.g. ``payable``, ``nonpayable``, ``view``
+     *  or ``pure``)
+     */
+    stateMutability;
+    /**
+     *  If the function can be sent value during invocation.
+     */
+    payable;
+    /**
+     *  The recommended gas limit to send when calling this function.
+     */
+    gas;
+    /**
+     *  @private
+     */
+    constructor(guard, name, stateMutability, inputs, outputs, gas) {
+      super(guard, "function", name, inputs);
+      Object.defineProperty(this, internal, { value: FunctionFragmentInternal });
+      outputs = Object.freeze(outputs.slice());
+      const constant = stateMutability === "view" || stateMutability === "pure";
+      const payable = stateMutability === "payable";
+      defineProperties(this, { constant, gas, outputs, payable, stateMutability });
+    }
+    /**
+     *  The Function selector.
+     */
+    get selector() {
+      return id(this.format("sighash")).substring(0, 10);
+    }
+    /**
+     *  Returns a string representation of this function as %%format%%.
+     */
+    format(format2) {
+      if (format2 == null) {
+        format2 = "sighash";
+      }
+      if (format2 === "json") {
+        return JSON.stringify({
+          type: "function",
+          name: this.name,
+          constant: this.constant,
+          stateMutability: this.stateMutability !== "nonpayable" ? this.stateMutability : void 0,
+          payable: this.payable,
+          gas: this.gas != null ? this.gas : void 0,
+          inputs: this.inputs.map((i) => JSON.parse(i.format(format2))),
+          outputs: this.outputs.map((o) => JSON.parse(o.format(format2)))
+        });
+      }
+      const result = [];
+      if (format2 !== "sighash") {
+        result.push("function");
+      }
+      result.push(this.name + joinParams(format2, this.inputs));
+      if (format2 !== "sighash") {
+        if (this.stateMutability !== "nonpayable") {
+          result.push(this.stateMutability);
+        }
+        if (this.outputs && this.outputs.length) {
+          result.push("returns");
+          result.push(joinParams(format2, this.outputs));
+        }
+        if (this.gas != null) {
+          result.push(`@${this.gas.toString()}`);
+        }
+      }
+      return result.join(" ");
+    }
+    /**
+     *  Return the selector for a function with %%name%% and %%params%%.
+     */
+    static getSelector(name, params) {
+      params = (params || []).map((p) => ParamType.from(p));
+      const fragment = new _FunctionFragment(_guard2, name, "view", params, [], null);
+      return fragment.selector;
+    }
+    /**
+     *  Returns a new **FunctionFragment** for %%obj%%.
+     */
+    static from(obj) {
+      if (_FunctionFragment.isFragment(obj)) {
+        return obj;
+      }
+      if (typeof obj === "string") {
+        try {
+          return _FunctionFragment.from(lex(obj));
+        } catch (error312) {
+          assertArgument(false, "invalid function fragment", "obj", obj);
+        }
+      } else if (obj instanceof TokenString) {
+        const name = consumeName("function", obj);
+        const inputs = consumeParams(obj);
+        const mutability = consumeMutability(obj);
+        let outputs = [];
+        if (consumeKeywords(obj, setify(["returns"])).has("returns")) {
+          outputs = consumeParams(obj);
+        }
+        const gas = consumeGas(obj);
+        consumeEoi(obj);
+        return new _FunctionFragment(_guard2, name, mutability, inputs, outputs, gas);
+      }
+      let stateMutability = obj.stateMutability;
+      if (stateMutability == null) {
+        stateMutability = "payable";
+        if (typeof obj.constant === "boolean") {
+          stateMutability = "view";
+          if (!obj.constant) {
+            stateMutability = "payable";
+            if (typeof obj.payable === "boolean" && !obj.payable) {
+              stateMutability = "nonpayable";
+            }
+          }
+        } else if (typeof obj.payable === "boolean" && !obj.payable) {
+          stateMutability = "nonpayable";
+        }
+      }
+      return new _FunctionFragment(_guard2, obj.name, stateMutability, obj.inputs ? obj.inputs.map(ParamType.from) : [], obj.outputs ? obj.outputs.map(ParamType.from) : [], obj.gas != null ? obj.gas : null);
+    }
+    /**
+     *  Returns ``true`` and provides a type guard if %%value%% is a
+     *  **FunctionFragment**.
+     */
+    static isFragment(value) {
+      return value && value[internal] === FunctionFragmentInternal;
+    }
+  };
+  var StructFragment = class _StructFragment extends NamedFragment {
+    /**
+     *  @private
+     */
+    constructor(guard, name, inputs) {
+      super(guard, "struct", name, inputs);
+      Object.defineProperty(this, internal, { value: StructFragmentInternal });
+    }
+    /**
+     *  Returns a string representation of this struct as %%format%%.
+     */
+    format() {
+      throw new Error("@TODO");
+    }
+    /**
+     *  Returns a new **StructFragment** for %%obj%%.
+     */
+    static from(obj) {
+      if (typeof obj === "string") {
+        try {
+          return _StructFragment.from(lex(obj));
+        } catch (error312) {
+          assertArgument(false, "invalid struct fragment", "obj", obj);
+        }
+      } else if (obj instanceof TokenString) {
+        const name = consumeName("struct", obj);
+        const inputs = consumeParams(obj);
+        consumeEoi(obj);
+        return new _StructFragment(_guard2, name, inputs);
+      }
+      return new _StructFragment(_guard2, obj.name, obj.inputs ? obj.inputs.map(ParamType.from) : []);
+    }
+    // @TODO: fix this return type
+    /**
+     *  Returns ``true`` and provides a type guard if %%value%% is a
+     *  **StructFragment**.
+     */
+    static isFragment(value) {
+      return value && value[internal] === StructFragmentInternal;
+    }
+  };
+
+  // node_modules/ethers/lib.esm/abi/abi-coder.js
+  var PanicReasons = /* @__PURE__ */ new Map();
+  PanicReasons.set(0, "GENERIC_PANIC");
+  PanicReasons.set(1, "ASSERT_FALSE");
+  PanicReasons.set(17, "OVERFLOW");
+  PanicReasons.set(18, "DIVIDE_BY_ZERO");
+  PanicReasons.set(33, "ENUM_RANGE_ERROR");
+  PanicReasons.set(34, "BAD_STORAGE_DATA");
+  PanicReasons.set(49, "STACK_UNDERFLOW");
+  PanicReasons.set(50, "ARRAY_RANGE_ERROR");
+  PanicReasons.set(65, "OUT_OF_MEMORY");
+  PanicReasons.set(81, "UNINITIALIZED_FUNCTION_CALL");
+  var paramTypeBytes = new RegExp(/^bytes([0-9]*)$/);
+  var paramTypeNumber = new RegExp(/^(u?int)([0-9]*)$/);
+  var defaultCoder = null;
+  var defaultMaxInflation = 1024;
+  function getBuiltinCallException(action, tx, data, abiCoder) {
+    let message = "missing revert data";
+    let reason = null;
+    const invocation = null;
+    let revert = null;
+    if (data) {
+      message = "execution reverted";
+      const bytes3 = getBytes(data);
+      data = hexlify(data);
+      if (bytes3.length === 0) {
+        message += " (no data present; likely require(false) occurred";
+        reason = "require(false)";
+      } else if (bytes3.length % 32 !== 4) {
+        message += " (could not decode reason; invalid data length)";
+      } else if (hexlify(bytes3.slice(0, 4)) === "0x08c379a0") {
+        try {
+          reason = abiCoder.decode(["string"], bytes3.slice(4))[0];
+          revert = {
+            signature: "Error(string)",
+            name: "Error",
+            args: [reason]
+          };
+          message += `: ${JSON.stringify(reason)}`;
+        } catch (error312) {
+          message += " (could not decode reason; invalid string data)";
+        }
+      } else if (hexlify(bytes3.slice(0, 4)) === "0x4e487b71") {
+        try {
+          const code = Number(abiCoder.decode(["uint256"], bytes3.slice(4))[0]);
+          revert = {
+            signature: "Panic(uint256)",
+            name: "Panic",
+            args: [code]
+          };
+          reason = `Panic due to ${PanicReasons.get(code) || "UNKNOWN"}(${code})`;
+          message += `: ${reason}`;
+        } catch (error312) {
+          message += " (could not decode panic code)";
+        }
+      } else {
+        message += " (unknown custom error)";
+      }
+    }
+    const transaction = {
+      to: tx.to ? getAddress(tx.to) : null,
+      data: tx.data || "0x"
+    };
+    if (tx.from) {
+      transaction.from = getAddress(tx.from);
+    }
+    return makeError(message, "CALL_EXCEPTION", {
+      action,
+      data,
+      reason,
+      transaction,
+      invocation,
+      revert
+    });
+  }
+  var AbiCoder = class _AbiCoder {
+    #getCoder(param) {
+      if (param.isArray()) {
+        return new ArrayCoder(this.#getCoder(param.arrayChildren), param.arrayLength, param.name);
+      }
+      if (param.isTuple()) {
+        return new TupleCoder(param.components.map((c) => this.#getCoder(c)), param.name);
+      }
+      switch (param.baseType) {
+        case "address":
+          return new AddressCoder(param.name);
+        case "bool":
+          return new BooleanCoder(param.name);
+        case "string":
+          return new StringCoder(param.name);
+        case "bytes":
+          return new BytesCoder(param.name);
+        case "":
+          return new NullCoder(param.name);
+      }
+      let match = param.type.match(paramTypeNumber);
+      if (match) {
+        let size2 = parseInt(match[2] || "256");
+        assertArgument(size2 !== 0 && size2 <= 256 && size2 % 8 === 0, "invalid " + match[1] + " bit length", "param", param);
+        return new NumberCoder(size2 / 8, match[1] === "int", param.name);
+      }
+      match = param.type.match(paramTypeBytes);
+      if (match) {
+        let size2 = parseInt(match[1]);
+        assertArgument(size2 !== 0 && size2 <= 32, "invalid bytes length", "param", param);
+        return new FixedBytesCoder(size2, param.name);
+      }
+      assertArgument(false, "invalid type", "type", param.type);
+    }
+    /**
+     *  Get the default values for the given %%types%%.
+     *
+     *  For example, a ``uint`` is by default ``0`` and ``bool``
+     *  is by default ``false``.
+     */
+    getDefaultValue(types2) {
+      const coders = types2.map((type) => this.#getCoder(ParamType.from(type)));
+      const coder = new TupleCoder(coders, "_");
+      return coder.defaultValue();
+    }
+    /**
+     *  Encode the %%values%% as the %%types%% into ABI data.
+     *
+     *  @returns DataHexstring
+     */
+    encode(types2, values) {
+      assertArgumentCount(values.length, types2.length, "types/values length mismatch");
+      const coders = types2.map((type) => this.#getCoder(ParamType.from(type)));
+      const coder = new TupleCoder(coders, "_");
+      const writer = new Writer();
+      coder.encode(writer, values);
+      return writer.data;
+    }
+    /**
+     *  Decode the ABI %%data%% as the %%types%% into values.
+     *
+     *  If %%loose%% decoding is enabled, then strict padding is
+     *  not enforced. Some older versions of Solidity incorrectly
+     *  padded event data emitted from ``external`` functions.
+     */
+    decode(types2, data, loose) {
+      const coders = types2.map((type) => this.#getCoder(ParamType.from(type)));
+      const coder = new TupleCoder(coders, "_");
+      return coder.decode(new Reader(data, loose, defaultMaxInflation));
+    }
+    static _setDefaultMaxInflation(value) {
+      assertArgument(typeof value === "number" && Number.isInteger(value), "invalid defaultMaxInflation factor", "value", value);
+      defaultMaxInflation = value;
+    }
+    /**
+     *  Returns the shared singleton instance of a default [[AbiCoder]].
+     *
+     *  On the first call, the instance is created internally.
+     */
+    static defaultAbiCoder() {
+      if (defaultCoder == null) {
+        defaultCoder = new _AbiCoder();
+      }
+      return defaultCoder;
+    }
+    /**
+     *  Returns an ethers-compatible [[CallExceptionError]] Error for the given
+     *  result %%data%% for the [[CallExceptionAction]] %%action%% against
+     *  the Transaction %%tx%%.
+     */
+    static getBuiltinCallException(action, tx, data) {
+      return getBuiltinCallException(action, tx, data, _AbiCoder.defaultAbiCoder());
+    }
+  };
+
+  // node_modules/ethers/lib.esm/abi/bytes32.js
+  init_dirname();
+  init_buffer2();
+  init_process2();
+  function encodeBytes32String(text) {
+    const bytes3 = toUtf8Bytes(text);
+    if (bytes3.length > 31) {
+      throw new Error("bytes32 string must be less than 32 bytes");
+    }
+    return zeroPadBytes(bytes3, 32);
+  }
+
+  // node_modules/ethers/lib.esm/abi/interface.js
+  init_dirname();
+  init_buffer2();
+  init_process2();
+  var LogDescription = class {
+    /**
+     *  The matching fragment for the ``topic0``.
+     */
+    fragment;
+    /**
+     *  The name of the Event.
+     */
+    name;
+    /**
+     *  The full Event signature.
+     */
+    signature;
+    /**
+     *  The topic hash for the Event.
+     */
+    topic;
+    /**
+     *  The arguments passed into the Event with ``emit``.
+     */
+    args;
+    /**
+     *  @_ignore:
+     */
+    constructor(fragment, topic, args) {
+      const name = fragment.name, signature = fragment.format();
+      defineProperties(this, {
+        fragment,
+        name,
+        signature,
+        topic,
+        args
+      });
+    }
+  };
+  var TransactionDescription = class {
+    /**
+     *  The matching fragment from the transaction ``data``.
+     */
+    fragment;
+    /**
+     *  The name of the Function from the transaction ``data``.
+     */
+    name;
+    /**
+     *  The arguments passed to the Function from the transaction ``data``.
+     */
+    args;
+    /**
+     *  The full Function signature from the transaction ``data``.
+     */
+    signature;
+    /**
+     *  The selector for the Function from the transaction ``data``.
+     */
+    selector;
+    /**
+     *  The ``value`` (in wei) from the transaction.
+     */
+    value;
+    /**
+     *  @_ignore:
+     */
+    constructor(fragment, selector, args, value) {
+      const name = fragment.name, signature = fragment.format();
+      defineProperties(this, {
+        fragment,
+        name,
+        args,
+        signature,
+        selector,
+        value
+      });
+    }
+  };
+  var ErrorDescription = class {
+    /**
+     *  The matching fragment.
+     */
+    fragment;
+    /**
+     *  The name of the Error.
+     */
+    name;
+    /**
+     *  The arguments passed to the Error with ``revert``.
+     */
+    args;
+    /**
+     *  The full Error signature.
+     */
+    signature;
+    /**
+     *  The selector for the Error.
+     */
+    selector;
+    /**
+     *  @_ignore:
+     */
+    constructor(fragment, selector, args) {
+      const name = fragment.name, signature = fragment.format();
+      defineProperties(this, {
+        fragment,
+        name,
+        args,
+        signature,
+        selector
+      });
+    }
+  };
+  var Indexed = class {
+    /**
+     *  The ``keccak256`` of the value logged.
+     */
+    hash;
+    /**
+     *  @_ignore:
+     */
+    _isIndexed;
+    /**
+     *  Returns ``true`` if %%value%% is an **Indexed**.
+     *
+     *  This provides a Type Guard for property access.
+     */
+    static isIndexed(value) {
+      return !!(value && value._isIndexed);
+    }
+    /**
+     *  @_ignore:
+     */
+    constructor(hash12) {
+      defineProperties(this, { hash: hash12, _isIndexed: true });
+    }
+  };
+  var PanicReasons2 = {
+    "0": "generic panic",
+    "1": "assert(false)",
+    "17": "arithmetic overflow",
+    "18": "division or modulo by zero",
+    "33": "enum overflow",
+    "34": "invalid encoded storage byte array accessed",
+    "49": "out-of-bounds array access; popping on an empty array",
+    "50": "out-of-bounds access of an array or bytesN",
+    "65": "out of memory",
+    "81": "uninitialized function"
+  };
+  var BuiltinErrors = {
+    "0x08c379a0": {
+      signature: "Error(string)",
+      name: "Error",
+      inputs: ["string"],
+      reason: (message) => {
+        return `reverted with reason string ${JSON.stringify(message)}`;
+      }
+    },
+    "0x4e487b71": {
+      signature: "Panic(uint256)",
+      name: "Panic",
+      inputs: ["uint256"],
+      reason: (code) => {
+        let reason = "unknown panic code";
+        if (code >= 0 && code <= 255 && PanicReasons2[code.toString()]) {
+          reason = PanicReasons2[code.toString()];
+        }
+        return `reverted with panic code 0x${code.toString(16)} (${reason})`;
+      }
+    }
+  };
+  var Interface = class _Interface {
+    /**
+     *  All the Contract ABI members (i.e. methods, events, errors, etc).
+     */
+    fragments;
+    /**
+     *  The Contract constructor.
+     */
+    deploy;
+    /**
+     *  The Fallback method, if any.
+     */
+    fallback;
+    /**
+     *  If receiving ether is supported.
+     */
+    receive;
+    #errors;
+    #events;
+    #functions;
+    //    #structs: Map<string, StructFragment>;
+    #abiCoder;
+    /**
+     *  Create a new Interface for the %%fragments%%.
+     */
+    constructor(fragments) {
+      let abi2 = [];
+      if (typeof fragments === "string") {
+        abi2 = JSON.parse(fragments);
+      } else {
+        abi2 = fragments;
+      }
+      this.#functions = /* @__PURE__ */ new Map();
+      this.#errors = /* @__PURE__ */ new Map();
+      this.#events = /* @__PURE__ */ new Map();
+      const frags = [];
+      for (const a of abi2) {
+        try {
+          frags.push(Fragment.from(a));
+        } catch (error312) {
+          console.log(`[Warning] Invalid Fragment ${JSON.stringify(a)}:`, error312.message);
+        }
+      }
+      defineProperties(this, {
+        fragments: Object.freeze(frags)
+      });
+      let fallback = null;
+      let receive = false;
+      this.#abiCoder = this.getAbiCoder();
+      this.fragments.forEach((fragment, index) => {
+        let bucket;
+        switch (fragment.type) {
+          case "constructor":
+            if (this.deploy) {
+              console.log("duplicate definition - constructor");
+              return;
+            }
+            defineProperties(this, { deploy: fragment });
+            return;
+          case "fallback":
+            if (fragment.inputs.length === 0) {
+              receive = true;
+            } else {
+              assertArgument(!fallback || fragment.payable !== fallback.payable, "conflicting fallback fragments", `fragments[${index}]`, fragment);
+              fallback = fragment;
+              receive = fallback.payable;
+            }
+            return;
+          case "function":
+            bucket = this.#functions;
+            break;
+          case "event":
+            bucket = this.#events;
+            break;
+          case "error":
+            bucket = this.#errors;
+            break;
+          default:
+            return;
+        }
+        const signature = fragment.format();
+        if (bucket.has(signature)) {
+          return;
+        }
+        bucket.set(signature, fragment);
+      });
+      if (!this.deploy) {
+        defineProperties(this, {
+          deploy: ConstructorFragment.from("constructor()")
+        });
+      }
+      defineProperties(this, { fallback, receive });
+    }
+    /**
+     *  Returns the entire Human-Readable ABI, as an array of
+     *  signatures, optionally as %%minimal%% strings, which
+     *  removes parameter names and unneceesary spaces.
+     */
+    format(minimal) {
+      const format2 = minimal ? "minimal" : "full";
+      const abi2 = this.fragments.map((f) => f.format(format2));
+      return abi2;
+    }
+    /**
+     *  Return the JSON-encoded ABI. This is the format Solidiy
+     *  returns.
+     */
+    formatJson() {
+      const abi2 = this.fragments.map((f) => f.format("json"));
+      return JSON.stringify(abi2.map((j) => JSON.parse(j)));
+    }
+    /**
+     *  The ABI coder that will be used to encode and decode binary
+     *  data.
+     */
+    getAbiCoder() {
+      return AbiCoder.defaultAbiCoder();
+    }
+    // Find a function definition by any means necessary (unless it is ambiguous)
+    #getFunction(key, values, forceUnique) {
+      if (isHexString(key)) {
+        const selector = key.toLowerCase();
+        for (const fragment of this.#functions.values()) {
+          if (selector === fragment.selector) {
+            return fragment;
+          }
+        }
+        return null;
+      }
+      if (key.indexOf("(") === -1) {
+        const matching = [];
+        for (const [name, fragment] of this.#functions) {
+          if (name.split(
+            "("
+            /* fix:) */
+          )[0] === key) {
+            matching.push(fragment);
+          }
+        }
+        if (values) {
+          const lastValue = values.length > 0 ? values[values.length - 1] : null;
+          let valueLength = values.length;
+          let allowOptions = true;
+          if (Typed.isTyped(lastValue) && lastValue.type === "overrides") {
+            allowOptions = false;
+            valueLength--;
+          }
+          for (let i = matching.length - 1; i >= 0; i--) {
+            const inputs = matching[i].inputs.length;
+            if (inputs !== valueLength && (!allowOptions || inputs !== valueLength - 1)) {
+              matching.splice(i, 1);
+            }
+          }
+          for (let i = matching.length - 1; i >= 0; i--) {
+            const inputs = matching[i].inputs;
+            for (let j = 0; j < values.length; j++) {
+              if (!Typed.isTyped(values[j])) {
+                continue;
+              }
+              if (j >= inputs.length) {
+                if (values[j].type === "overrides") {
+                  continue;
+                }
+                matching.splice(i, 1);
+                break;
+              }
+              if (values[j].type !== inputs[j].baseType) {
+                matching.splice(i, 1);
+                break;
+              }
+            }
+          }
+        }
+        if (matching.length === 1 && values && values.length !== matching[0].inputs.length) {
+          const lastArg = values[values.length - 1];
+          if (lastArg == null || Array.isArray(lastArg) || typeof lastArg !== "object") {
+            matching.splice(0, 1);
+          }
+        }
+        if (matching.length === 0) {
+          return null;
+        }
+        if (matching.length > 1 && forceUnique) {
+          const matchStr = matching.map((m2) => JSON.stringify(m2.format())).join(", ");
+          assertArgument(false, `ambiguous function description (i.e. matches ${matchStr})`, "key", key);
+        }
+        return matching[0];
+      }
+      const result = this.#functions.get(FunctionFragment.from(key).format());
+      if (result) {
+        return result;
+      }
+      return null;
+    }
+    /**
+     *  Get the function name for %%key%%, which may be a function selector,
+     *  function name or function signature that belongs to the ABI.
+     */
+    getFunctionName(key) {
+      const fragment = this.#getFunction(key, null, false);
+      assertArgument(fragment, "no matching function", "key", key);
+      return fragment.name;
+    }
+    /**
+     *  Returns true if %%key%% (a function selector, function name or
+     *  function signature) is present in the ABI.
+     *
+     *  In the case of a function name, the name may be ambiguous, so
+     *  accessing the [[FunctionFragment]] may require refinement.
+     */
+    hasFunction(key) {
+      return !!this.#getFunction(key, null, false);
+    }
+    /**
+     *  Get the [[FunctionFragment]] for %%key%%, which may be a function
+     *  selector, function name or function signature that belongs to the ABI.
+     *
+     *  If %%values%% is provided, it will use the Typed API to handle
+     *  ambiguous cases where multiple functions match by name.
+     *
+     *  If the %%key%% and %%values%% do not refine to a single function in
+     *  the ABI, this will throw.
+     */
+    getFunction(key, values) {
+      return this.#getFunction(key, values || null, true);
+    }
+    /**
+     *  Iterate over all functions, calling %%callback%%, sorted by their name.
+     */
+    forEachFunction(callback) {
+      const names = Array.from(this.#functions.keys());
+      names.sort((a, b2) => a.localeCompare(b2));
+      for (let i = 0; i < names.length; i++) {
+        const name = names[i];
+        callback(this.#functions.get(name), i);
+      }
+    }
+    // Find an event definition by any means necessary (unless it is ambiguous)
+    #getEvent(key, values, forceUnique) {
+      if (isHexString(key)) {
+        const eventTopic = key.toLowerCase();
+        for (const fragment of this.#events.values()) {
+          if (eventTopic === fragment.topicHash) {
+            return fragment;
+          }
+        }
+        return null;
+      }
+      if (key.indexOf("(") === -1) {
+        const matching = [];
+        for (const [name, fragment] of this.#events) {
+          if (name.split(
+            "("
+            /* fix:) */
+          )[0] === key) {
+            matching.push(fragment);
+          }
+        }
+        if (values) {
+          for (let i = matching.length - 1; i >= 0; i--) {
+            if (matching[i].inputs.length < values.length) {
+              matching.splice(i, 1);
+            }
+          }
+          for (let i = matching.length - 1; i >= 0; i--) {
+            const inputs = matching[i].inputs;
+            for (let j = 0; j < values.length; j++) {
+              if (!Typed.isTyped(values[j])) {
+                continue;
+              }
+              if (values[j].type !== inputs[j].baseType) {
+                matching.splice(i, 1);
+                break;
+              }
+            }
+          }
+        }
+        if (matching.length === 0) {
+          return null;
+        }
+        if (matching.length > 1 && forceUnique) {
+          const matchStr = matching.map((m2) => JSON.stringify(m2.format())).join(", ");
+          assertArgument(false, `ambiguous event description (i.e. matches ${matchStr})`, "key", key);
+        }
+        return matching[0];
+      }
+      const result = this.#events.get(EventFragment.from(key).format());
+      if (result) {
+        return result;
+      }
+      return null;
+    }
+    /**
+     *  Get the event name for %%key%%, which may be a topic hash,
+     *  event name or event signature that belongs to the ABI.
+     */
+    getEventName(key) {
+      const fragment = this.#getEvent(key, null, false);
+      assertArgument(fragment, "no matching event", "key", key);
+      return fragment.name;
+    }
+    /**
+     *  Returns true if %%key%% (an event topic hash, event name or
+     *  event signature) is present in the ABI.
+     *
+     *  In the case of an event name, the name may be ambiguous, so
+     *  accessing the [[EventFragment]] may require refinement.
+     */
+    hasEvent(key) {
+      return !!this.#getEvent(key, null, false);
+    }
+    /**
+     *  Get the [[EventFragment]] for %%key%%, which may be a topic hash,
+     *  event name or event signature that belongs to the ABI.
+     *
+     *  If %%values%% is provided, it will use the Typed API to handle
+     *  ambiguous cases where multiple events match by name.
+     *
+     *  If the %%key%% and %%values%% do not refine to a single event in
+     *  the ABI, this will throw.
+     */
+    getEvent(key, values) {
+      return this.#getEvent(key, values || null, true);
+    }
+    /**
+     *  Iterate over all events, calling %%callback%%, sorted by their name.
+     */
+    forEachEvent(callback) {
+      const names = Array.from(this.#events.keys());
+      names.sort((a, b2) => a.localeCompare(b2));
+      for (let i = 0; i < names.length; i++) {
+        const name = names[i];
+        callback(this.#events.get(name), i);
+      }
+    }
+    /**
+     *  Get the [[ErrorFragment]] for %%key%%, which may be an error
+     *  selector, error name or error signature that belongs to the ABI.
+     *
+     *  If %%values%% is provided, it will use the Typed API to handle
+     *  ambiguous cases where multiple errors match by name.
+     *
+     *  If the %%key%% and %%values%% do not refine to a single error in
+     *  the ABI, this will throw.
+     */
+    getError(key, values) {
+      if (isHexString(key)) {
+        const selector = key.toLowerCase();
+        if (BuiltinErrors[selector]) {
+          return ErrorFragment.from(BuiltinErrors[selector].signature);
+        }
+        for (const fragment of this.#errors.values()) {
+          if (selector === fragment.selector) {
+            return fragment;
+          }
+        }
+        return null;
+      }
+      if (key.indexOf("(") === -1) {
+        const matching = [];
+        for (const [name, fragment] of this.#errors) {
+          if (name.split(
+            "("
+            /* fix:) */
+          )[0] === key) {
+            matching.push(fragment);
+          }
+        }
+        if (matching.length === 0) {
+          if (key === "Error") {
+            return ErrorFragment.from("error Error(string)");
+          }
+          if (key === "Panic") {
+            return ErrorFragment.from("error Panic(uint256)");
+          }
+          return null;
+        } else if (matching.length > 1) {
+          const matchStr = matching.map((m2) => JSON.stringify(m2.format())).join(", ");
+          assertArgument(false, `ambiguous error description (i.e. ${matchStr})`, "name", key);
+        }
+        return matching[0];
+      }
+      key = ErrorFragment.from(key).format();
+      if (key === "Error(string)") {
+        return ErrorFragment.from("error Error(string)");
+      }
+      if (key === "Panic(uint256)") {
+        return ErrorFragment.from("error Panic(uint256)");
+      }
+      const result = this.#errors.get(key);
+      if (result) {
+        return result;
+      }
+      return null;
+    }
+    /**
+     *  Iterate over all errors, calling %%callback%%, sorted by their name.
+     */
+    forEachError(callback) {
+      const names = Array.from(this.#errors.keys());
+      names.sort((a, b2) => a.localeCompare(b2));
+      for (let i = 0; i < names.length; i++) {
+        const name = names[i];
+        callback(this.#errors.get(name), i);
+      }
+    }
+    // Get the 4-byte selector used by Solidity to identify a function
+    /*
+    getSelector(fragment: ErrorFragment | FunctionFragment): string {
+        if (typeof(fragment) === "string") {
+            const matches: Array<Fragment> = [ ];
+    
+            try { matches.push(this.getFunction(fragment)); } catch (error) { }
+            try { matches.push(this.getError(<string>fragment)); } catch (_) { }
+    
+            if (matches.length === 0) {
+                logger.throwArgumentError("unknown fragment", "key", fragment);
+            } else if (matches.length > 1) {
+                logger.throwArgumentError("ambiguous fragment matches function and error", "key", fragment);
+            }
+    
+            fragment = matches[0];
+        }
+    
+        return dataSlice(id(fragment.format()), 0, 4);
+    }
+        */
+    // Get the 32-byte topic hash used by Solidity to identify an event
+    /*
+    getEventTopic(fragment: EventFragment): string {
+        //if (typeof(fragment) === "string") { fragment = this.getEvent(eventFragment); }
+        return id(fragment.format());
+    }
+    */
+    _decodeParams(params, data) {
+      return this.#abiCoder.decode(params, data);
+    }
+    _encodeParams(params, values) {
+      return this.#abiCoder.encode(params, values);
+    }
+    /**
+     *  Encodes a ``tx.data`` object for deploying the Contract with
+     *  the %%values%% as the constructor arguments.
+     */
+    encodeDeploy(values) {
+      return this._encodeParams(this.deploy.inputs, values || []);
+    }
+    /**
+     *  Decodes the result %%data%% (e.g. from an ``eth_call``) for the
+     *  specified error (see [[getError]] for valid values for
+     *  %%key%%).
+     *
+     *  Most developers should prefer the [[parseCallResult]] method instead,
+     *  which will automatically detect a ``CALL_EXCEPTION`` and throw the
+     *  corresponding error.
+     */
+    decodeErrorResult(fragment, data) {
+      if (typeof fragment === "string") {
+        const f = this.getError(fragment);
+        assertArgument(f, "unknown error", "fragment", fragment);
+        fragment = f;
+      }
+      assertArgument(dataSlice(data, 0, 4) === fragment.selector, `data signature does not match error ${fragment.name}.`, "data", data);
+      return this._decodeParams(fragment.inputs, dataSlice(data, 4));
+    }
+    /**
+     *  Encodes the transaction revert data for a call result that
+     *  reverted from the the Contract with the sepcified %%error%%
+     *  (see [[getError]] for valid values for %%fragment%%) with the %%values%%.
+     *
+     *  This is generally not used by most developers, unless trying to mock
+     *  a result from a Contract.
+     */
+    encodeErrorResult(fragment, values) {
+      if (typeof fragment === "string") {
+        const f = this.getError(fragment);
+        assertArgument(f, "unknown error", "fragment", fragment);
+        fragment = f;
+      }
+      return concat([
+        fragment.selector,
+        this._encodeParams(fragment.inputs, values || [])
+      ]);
+    }
+    /**
+     *  Decodes the %%data%% from a transaction ``tx.data`` for
+     *  the function specified (see [[getFunction]] for valid values
+     *  for %%fragment%%).
+     *
+     *  Most developers should prefer the [[parseTransaction]] method
+     *  instead, which will automatically detect the fragment.
+     */
+    decodeFunctionData(fragment, data) {
+      if (typeof fragment === "string") {
+        const f = this.getFunction(fragment);
+        assertArgument(f, "unknown function", "fragment", fragment);
+        fragment = f;
+      }
+      assertArgument(dataSlice(data, 0, 4) === fragment.selector, `data signature does not match function ${fragment.name}.`, "data", data);
+      return this._decodeParams(fragment.inputs, dataSlice(data, 4));
+    }
+    /**
+     *  Encodes the ``tx.data`` for a transaction that calls the function
+     *  specified (see [[getFunction]] for valid values for %%fragment%%) with
+     *  the %%values%%.
+     */
+    encodeFunctionData(fragment, values) {
+      if (typeof fragment === "string") {
+        const f = this.getFunction(fragment);
+        assertArgument(f, "unknown function", "fragment", fragment);
+        fragment = f;
+      }
+      return concat([
+        fragment.selector,
+        this._encodeParams(fragment.inputs, values || [])
+      ]);
+    }
+    /**
+     *  Decodes the result %%data%% (e.g. from an ``eth_call``) for the
+     *  specified function (see [[getFunction]] for valid values for
+     *  %%key%%).
+     *
+     *  Most developers should prefer the [[parseCallResult]] method instead,
+     *  which will automatically detect a ``CALL_EXCEPTION`` and throw the
+     *  corresponding error.
+     */
+    decodeFunctionResult(fragment, data) {
+      if (typeof fragment === "string") {
+        const f = this.getFunction(fragment);
+        assertArgument(f, "unknown function", "fragment", fragment);
+        fragment = f;
+      }
+      let message = "invalid length for result data";
+      const bytes3 = getBytesCopy(data);
+      if (bytes3.length % 32 === 0) {
+        try {
+          return this.#abiCoder.decode(fragment.outputs, bytes3);
+        } catch (error312) {
+          message = "could not decode result data";
+        }
+      }
+      assert2(false, message, "BAD_DATA", {
+        value: hexlify(bytes3),
+        info: { method: fragment.name, signature: fragment.format() }
+      });
+    }
+    makeError(_data, tx) {
+      const data = getBytes(_data, "data");
+      const error312 = AbiCoder.getBuiltinCallException("call", tx, data);
+      const customPrefix = "execution reverted (unknown custom error)";
+      if (error312.message.startsWith(customPrefix)) {
+        const selector = hexlify(data.slice(0, 4));
+        const ef = this.getError(selector);
+        if (ef) {
+          try {
+            const args = this.#abiCoder.decode(ef.inputs, data.slice(4));
+            error312.revert = {
+              name: ef.name,
+              signature: ef.format(),
+              args
+            };
+            error312.reason = error312.revert.signature;
+            error312.message = `execution reverted: ${error312.reason}`;
+          } catch (e) {
+            error312.message = `execution reverted (coult not decode custom error)`;
+          }
+        }
+      }
+      const parsed = this.parseTransaction(tx);
+      if (parsed) {
+        error312.invocation = {
+          method: parsed.name,
+          signature: parsed.signature,
+          args: parsed.args
+        };
+      }
+      return error312;
+    }
+    /**
+     *  Encodes the result data (e.g. from an ``eth_call``) for the
+     *  specified function (see [[getFunction]] for valid values
+     *  for %%fragment%%) with %%values%%.
+     *
+     *  This is generally not used by most developers, unless trying to mock
+     *  a result from a Contract.
+     */
+    encodeFunctionResult(fragment, values) {
+      if (typeof fragment === "string") {
+        const f = this.getFunction(fragment);
+        assertArgument(f, "unknown function", "fragment", fragment);
+        fragment = f;
+      }
+      return hexlify(this.#abiCoder.encode(fragment.outputs, values || []));
+    }
+    /*
+        spelunk(inputs: Array<ParamType>, values: ReadonlyArray<any>, processfunc: (type: string, value: any) => Promise<any>): Promise<Array<any>> {
+            const promises: Array<Promise<>> = [ ];
+            const process = function(type: ParamType, value: any): any {
+                if (type.baseType === "array") {
+                    return descend(type.child
+                }
+                if (type. === "address") {
+                }
+            };
+    
+            const descend = function (inputs: Array<ParamType>, values: ReadonlyArray<any>) {
+                if (inputs.length !== values.length) { throw new Error("length mismatch"); }
+                
+            };
+    
+            const result: Array<any> = [ ];
+            values.forEach((value, index) => {
+                if (value == null) {
+                    topics.push(null);
+                } else if (param.baseType === "array" || param.baseType === "tuple") {
+                    logger.throwArgumentError("filtering with tuples or arrays not supported", ("contract." + param.name), value);
+                } else if (Array.isArray(value)) {
+                    topics.push(value.map((value) => encodeTopic(param, value)));
+                } else {
+                    topics.push(encodeTopic(param, value));
+                }
+            });
+        }
+    */
+    // Create the filter for the event with search criteria (e.g. for eth_filterLog)
+    encodeFilterTopics(fragment, values) {
+      if (typeof fragment === "string") {
+        const f = this.getEvent(fragment);
+        assertArgument(f, "unknown event", "eventFragment", fragment);
+        fragment = f;
+      }
+      assert2(values.length <= fragment.inputs.length, `too many arguments for ${fragment.format()}`, "UNEXPECTED_ARGUMENT", { count: values.length, expectedCount: fragment.inputs.length });
+      const topics = [];
+      if (!fragment.anonymous) {
+        topics.push(fragment.topicHash);
+      }
+      const encodeTopic = (param, value) => {
+        if (param.type === "string") {
+          return id(value);
+        } else if (param.type === "bytes") {
+          return keccak256(hexlify(value));
+        }
+        if (param.type === "bool" && typeof value === "boolean") {
+          value = value ? "0x01" : "0x00";
+        } else if (param.type.match(/^u?int/)) {
+          value = toBeHex(value);
+        } else if (param.type.match(/^bytes/)) {
+          value = zeroPadBytes(value, 32);
+        } else if (param.type === "address") {
+          this.#abiCoder.encode(["address"], [value]);
+        }
+        return zeroPadValue(hexlify(value), 32);
+      };
+      values.forEach((value, index) => {
+        const param = fragment.inputs[index];
+        if (!param.indexed) {
+          assertArgument(value == null, "cannot filter non-indexed parameters; must be null", "contract." + param.name, value);
+          return;
+        }
+        if (value == null) {
+          topics.push(null);
+        } else if (param.baseType === "array" || param.baseType === "tuple") {
+          assertArgument(false, "filtering with tuples or arrays not supported", "contract." + param.name, value);
+        } else if (Array.isArray(value)) {
+          topics.push(value.map((value2) => encodeTopic(param, value2)));
+        } else {
+          topics.push(encodeTopic(param, value));
+        }
+      });
+      while (topics.length && topics[topics.length - 1] === null) {
+        topics.pop();
+      }
+      return topics;
+    }
+    encodeEventLog(fragment, values) {
+      if (typeof fragment === "string") {
+        const f = this.getEvent(fragment);
+        assertArgument(f, "unknown event", "eventFragment", fragment);
+        fragment = f;
+      }
+      const topics = [];
+      const dataTypes = [];
+      const dataValues = [];
+      if (!fragment.anonymous) {
+        topics.push(fragment.topicHash);
+      }
+      assertArgument(values.length === fragment.inputs.length, "event arguments/values mismatch", "values", values);
+      fragment.inputs.forEach((param, index) => {
+        const value = values[index];
+        if (param.indexed) {
+          if (param.type === "string") {
+            topics.push(id(value));
+          } else if (param.type === "bytes") {
+            topics.push(keccak256(value));
+          } else if (param.baseType === "tuple" || param.baseType === "array") {
+            throw new Error("not implemented");
+          } else {
+            topics.push(this.#abiCoder.encode([param.type], [value]));
+          }
+        } else {
+          dataTypes.push(param);
+          dataValues.push(value);
+        }
+      });
+      return {
+        data: this.#abiCoder.encode(dataTypes, dataValues),
+        topics
+      };
+    }
+    // Decode a filter for the event and the search criteria
+    decodeEventLog(fragment, data, topics) {
+      if (typeof fragment === "string") {
+        const f = this.getEvent(fragment);
+        assertArgument(f, "unknown event", "eventFragment", fragment);
+        fragment = f;
+      }
+      if (topics != null && !fragment.anonymous) {
+        const eventTopic = fragment.topicHash;
+        assertArgument(isHexString(topics[0], 32) && topics[0].toLowerCase() === eventTopic, "fragment/topic mismatch", "topics[0]", topics[0]);
+        topics = topics.slice(1);
+      }
+      const indexed = [];
+      const nonIndexed = [];
+      const dynamic = [];
+      fragment.inputs.forEach((param, index) => {
+        if (param.indexed) {
+          if (param.type === "string" || param.type === "bytes" || param.baseType === "tuple" || param.baseType === "array") {
+            indexed.push(ParamType.from({ type: "bytes32", name: param.name }));
+            dynamic.push(true);
+          } else {
+            indexed.push(param);
+            dynamic.push(false);
+          }
+        } else {
+          nonIndexed.push(param);
+          dynamic.push(false);
+        }
+      });
+      const resultIndexed = topics != null ? this.#abiCoder.decode(indexed, concat(topics)) : null;
+      const resultNonIndexed = this.#abiCoder.decode(nonIndexed, data, true);
+      const values = [];
+      const keys = [];
+      let nonIndexedIndex = 0, indexedIndex = 0;
+      fragment.inputs.forEach((param, index) => {
+        let value = null;
+        if (param.indexed) {
+          if (resultIndexed == null) {
+            value = new Indexed(null);
+          } else if (dynamic[index]) {
+            value = new Indexed(resultIndexed[indexedIndex++]);
+          } else {
+            try {
+              value = resultIndexed[indexedIndex++];
+            } catch (error312) {
+              value = error312;
+            }
+          }
+        } else {
+          try {
+            value = resultNonIndexed[nonIndexedIndex++];
+          } catch (error312) {
+            value = error312;
+          }
+        }
+        values.push(value);
+        keys.push(param.name || null);
+      });
+      return Result.fromItems(values, keys);
+    }
+    /**
+     *  Parses a transaction, finding the matching function and extracts
+     *  the parameter values along with other useful function details.
+     *
+     *  If the matching function cannot be found, return null.
+     */
+    parseTransaction(tx) {
+      const data = getBytes(tx.data, "tx.data");
+      const value = getBigInt(tx.value != null ? tx.value : 0, "tx.value");
+      const fragment = this.getFunction(hexlify(data.slice(0, 4)));
+      if (!fragment) {
+        return null;
+      }
+      const args = this.#abiCoder.decode(fragment.inputs, data.slice(4));
+      return new TransactionDescription(fragment, fragment.selector, args, value);
+    }
+    parseCallResult(data) {
+      throw new Error("@TODO");
+    }
+    /**
+     *  Parses a receipt log, finding the matching event and extracts
+     *  the parameter values along with other useful event details.
+     *
+     *  If the matching event cannot be found, returns null.
+     */
+    parseLog(log3) {
+      const fragment = this.getEvent(log3.topics[0]);
+      if (!fragment || fragment.anonymous) {
+        return null;
+      }
+      return new LogDescription(fragment, fragment.topicHash, this.decodeEventLog(fragment, log3.data, log3.topics));
+    }
+    /**
+     *  Parses a revert data, finding the matching error and extracts
+     *  the parameter values along with other useful error details.
+     *
+     *  If the matching error cannot be found, returns null.
+     */
+    parseError(data) {
+      const hexData = hexlify(data);
+      const fragment = this.getError(dataSlice(hexData, 0, 4));
+      if (!fragment) {
+        return null;
+      }
+      const args = this.#abiCoder.decode(fragment.inputs, dataSlice(hexData, 4));
+      return new ErrorDescription(fragment, fragment.selector, args);
+    }
+    /**
+     *  Creates a new [[Interface]] from the ABI %%value%%.
+     *
+     *  The %%value%% may be provided as an existing [[Interface]] object,
+     *  a JSON-encoded ABI or any Human-Readable ABI format.
+     */
+    static from(value) {
+      if (value instanceof _Interface) {
+        return value;
+      }
+      if (typeof value === "string") {
+        return new _Interface(JSON.parse(value));
+      }
+      if (typeof value.formatJson === "function") {
+        return new _Interface(value.formatJson());
+      }
+      if (typeof value.format === "function") {
+        return new _Interface(value.format("json"));
+      }
+      return new _Interface(value);
+    }
+  };
+
+  // shared/rolling/aggregate-funding.mjs
+  var usdcTuple = "(address beneficiary,address relayer,(uint256 amount,uint256 maxUsdc,uint24 poolFee) collateral,bytes32 collateralSecretHash,(uint256 amount,uint256 maxUsdc,uint24 poolFee) fee,bytes32 feeSecretHash,uint256 bokAmount,bytes32 bokCommitment,bytes32 bokSecretHash,uint256 nonce,uint256 validAfter,uint256 deadline,uint256 relayFeeUsdc,bytes32 authorizationSalt)";
+  var aggregateUsdcFundingAbi = Object.freeze([
+    `function fundUsdc(${usdcTuple} p,bytes collateralConsent,bytes authorization)`,
+    `function usdcAuthorizationNonce(${usdcTuple} p) view returns(bytes32)`,
+    "event UsdcFunded(address indexed beneficiary,bytes32 indexed planHash,address indexed relayer,uint256 collateral,uint256 feeAmount,uint256 bokAmount,uint256 collateralUsdc,uint256 feeUsdc,uint256 relayFeeUsdc,uint256 refund)"
+  ]);
+  var aggregateFundingAbi = Object.freeze([
+    ...aggregateUsdcFundingAbi,
+    "function fund((address beneficiary,uint256 collateral,bytes32 collateralSecretHash,(uint256 amount,uint256 maxEth,uint24 poolFee) fee,bytes32 feeSecretHash,(uint256 amount,uint256 maxEth,uint24 poolFee) bok,bytes32 bokCommitment,bytes32 bokSecretHash,uint256 nonce,uint256 deadline) p,bytes consent) payable",
+    "event Funded(address indexed beneficiary,bytes32 indexed planHash,uint256 collateral,uint256 feeAmount,uint256 bokAmount,uint256 feeEth,uint256 bokEth,uint256 refund)",
+    ...["collateralPortal", "feePortal", "bokPortal", "weth", "swapRouter", "feeToken", "bokToken"].map((n2) => `function ${n2}() view returns(address)`),
+    "function privateFpc() view returns(bytes32)",
+    "function chainId() view returns(uint256)"
+  ]);
+  var router = new Interface(aggregateFundingAbi);
+  var portal = new Interface([
+    "function depositNonces(address) view returns(uint256)",
+    "function depositsEnabled() view returns(bool)",
+    "function getDeposit(address) view returns(uint128)",
+    "function MIN_DEPOSIT() view returns(uint256)",
+    "function MAX_DEPOSIT() view returns(uint256)"
+  ]);
+  var bok = new Interface(["function active() view returns(bool)"]);
+  var quoter = new Interface(["function quoteExactOutputSingle((address tokenIn,address tokenOut,uint256 amount,uint24 fee,uint160 sqrtPriceLimitX96)) returns(uint256 amountIn,uint160 sqrtPriceX96After,uint32 initializedTicksCrossed,uint256 gasEstimate)"]);
+  var P = 21888242871839275222246405745257275088548364400416034343698204186575808495617n;
+  var prepared = /* @__PURE__ */ new WeakSet();
+  function fail(code) {
+    throw Object.assign(new Error("Aggregate funding is unavailable."), { code: `AGGREGATE_${code}` });
+  }
+  function check(x, code = "INVALID") {
+    if (!x) fail(code);
+  }
+  function record(x, keys) {
+    check(x && [Object.prototype, null].includes(Object.getPrototypeOf(x)) && Reflect.ownKeys(x).length === keys.length);
+    const r = {};
+    for (const k of keys) {
+      const d = Object.getOwnPropertyDescriptor(x, k);
+      check(d && "value" in d);
+      r[k] = d.value;
+    }
+    return r;
+  }
+  function hex2(x, n2 = 32) {
+    check(typeof x === "string" && new RegExp(`^0x[0-9a-f]{${n2 * 2}}$`).test(x) && BigInt(x) > 0n);
+    return x;
+  }
+  function uint(x, bits = 256) {
+    check(typeof x === "string" && /^(0|[1-9][0-9]{0,77})$/.test(x) && BigInt(x) < 2n ** BigInt(bits));
+    return BigInt(x);
+  }
+  function field(x) {
+    hex2(x);
+    check(BigInt(x) < P);
+    return x;
+  }
+  function quantity(x) {
+    check(typeof x === "string" && /^0x(?:0|[1-9a-f][0-9a-f]{0,63})$/.test(x), "PUBLIC_READ_FAILED");
+    return BigInt(x);
+  }
+  function blockSnapshot(x) {
+    check(x && Object.getPrototypeOf(x) === Object.prototype, "PUBLIC_READ_FAILED");
+    const out = {};
+    for (const k of ["number", "hash", "timestamp"]) {
+      const d = Object.getOwnPropertyDescriptor(x, k);
+      check(d && "value" in d, "PUBLIC_READ_FAILED");
+      out[k] = d.value;
+    }
+    quantity(out.number);
+    quantity(out.timestamp);
+    hex2(out.hash);
+    return out;
+  }
+  function freeze(x) {
+    if (x && typeof x === "object") {
+      Object.values(x).forEach(freeze);
+      Object.freeze(x);
+    }
+    return x;
+  }
+  var collateralConsentTypes = freeze({ DepositFor: [{ name: "beneficiary", type: "address" }, { name: "executor", type: "address" }, { name: "amount", type: "uint256" }, { name: "secretHash", type: "bytes32" }, { name: "nonce", type: "uint256" }, { name: "deadline", type: "uint256" }] });
+  async function prepareAggregateFunding(input2, { provider, nowSeconds = () => Math.floor(Date.now() / 1e3) } = {}) {
+    const x = record(input2, ["scope", "allocation", "wallet"]);
+    const s = record(x.scope, ["chainId", "router", "routerCodeHash", "collateralPortal", "feePortal", "bokPortal", "weth", "swapRouter", "feeToken", "bokToken", "privateFpc", "quoter", "quoterCodeHash"]);
+    uint(s.chainId, 64);
+    check(BigInt(s.chainId) > 0n);
+    for (const k of ["router", "collateralPortal", "feePortal", "bokPortal", "weth", "swapRouter", "feeToken", "bokToken", "quoter"]) hex2(s[k], 20);
+    for (const k of ["routerCodeHash", "quoterCodeHash"]) hex2(s[k]);
+    field(s.privateFpc);
+    const a = record(x.allocation, ["asset", "collateralWei", "feeAmount", "bokAmount", "feePoolFee", "bokPoolFee", "slippageBps", "collateralSecretHash", "feeSecretHash", "bokCommitment", "bokSecretHash"]);
+    check(a.asset === "ETH", "USDC_GAS_ROUTE_UNQUALIFIED");
+    for (const k of ["collateralWei", "feeAmount", "bokAmount"]) check(uint(a[k], k === "collateralWei" ? 96 : 128) > 0n);
+    for (const k of ["feePoolFee", "bokPoolFee"]) check([100, 500, 3e3, 1e4].includes(a[k]));
+    check(Number.isSafeInteger(a.slippageBps) && a.slippageBps >= 0 && a.slippageBps <= 500);
+    for (const k of ["collateralSecretHash", "feeSecretHash", "bokCommitment", "bokSecretHash"]) field(a[k]);
+    const w = record(x.wallet, ["address", "chainId", "canSendTransaction", "canSignTypedData", "gasBudgetWei"]);
+    hex2(w.address, 20);
+    uint(w.chainId, 64);
+    check(w.chainId === s.chainId && w.canSendTransaction === true && w.canSignTypedData === true, "WALLET_CAPABILITY");
+    check(uint(w.gasBudgetWei) > 0n, "USER_GAS_REQUIRED");
+    check(provider && typeof provider.request === "function");
+    const request = async (method, params) => {
+      try {
+        return await provider.request({ method, params });
+      } catch {
+        fail("PUBLIC_READ_FAILED");
+      }
+    };
+    check(quantity(await request("eth_chainId", [])) === BigInt(s.chainId), "CHAIN");
+    const block2 = blockSnapshot(await request("eth_getBlockByNumber", ["latest", false]));
+    const now = nowSeconds();
+    check(Number.isSafeInteger(now) && now >= 0 && BigInt(block2.timestamp) <= BigInt(now) && BigInt(now) - BigInt(block2.timestamp) <= 60n, "STALE_QUOTE");
+    const tag = block2.number;
+    for (const [address6, expected] of [[s.router, s.routerCodeHash], [s.quoter, s.quoterCodeHash]]) {
+      const code = await request("eth_getCode", [address6, tag]);
+      check(typeof code === "string" && /^0x(?:[0-9a-f]{2})+$/.test(code) && keccak256(code) === expected, "RUNTIME");
+    }
+    const call2 = async (address6, abi2, name, args = []) => {
+      const data = await request("eth_call", [{ to: address6, data: abi2.encodeFunctionData(name, args) }, tag]);
+      try {
+        return abi2.decodeFunctionResult(name, data);
+      } catch {
+        fail("PUBLIC_READ_FAILED");
+      }
+    };
+    for (const key of ["collateralPortal", "feePortal", "bokPortal", "weth", "swapRouter", "feeToken", "bokToken", "privateFpc", "chainId"]) check(String((await call2(s.router, router, key))[0]).toLowerCase() === s[key], "SCOPE");
+    check((await call2(s.collateralPortal, portal, "depositsEnabled"))[0] === true && (await call2(s.bokPortal, bok, "active"))[0] === true, "PORTAL_NOT_READY");
+    check((await call2(s.collateralPortal, portal, "getDeposit", [w.address]))[0] === 0n, "EXISTING_DEPOSIT");
+    const minimum = (await call2(s.collateralPortal, portal, "MIN_DEPOSIT"))[0], maximum = (await call2(s.collateralPortal, portal, "MAX_DEPOSIT"))[0];
+    check(BigInt(a.collateralWei) >= minimum && BigInt(a.collateralWei) <= maximum, "COLLATERAL_BOUNDS");
+    const nonce = (await call2(s.collateralPortal, portal, "depositNonces", [w.address]))[0].toString();
+    const quote = async (token, amount, poolFee) => {
+      const q = (await call2(s.quoter, quoter, "quoteExactOutputSingle", [[s.weth, token, amount, poolFee, 0]]))[0];
+      check(q > 0n, "LIQUIDITY_UNQUALIFIED");
+      return { amount, maxEth: ((q * BigInt(1e4 + a.slippageBps) + 9999n) / 10000n).toString(), poolFee, quotedEth: q.toString() };
+    };
+    const fee2 = await quote(s.feeToken, a.feeAmount, a.feePoolFee), credit = await quote(s.bokToken, a.bokAmount, a.bokPoolFee);
+    const current = blockSnapshot(await request("eth_getBlockByNumber", [tag, false]));
+    check(current.hash === block2.hash && current.timestamp === block2.timestamp, "QUOTE_REORG");
+    const deadline = (BigInt(block2.timestamp) + 120n).toString();
+    const plan = {
+      beneficiary: w.address,
+      collateral: a.collateralWei,
+      collateralSecretHash: a.collateralSecretHash,
+      fee: { amount: fee2.amount, maxEth: fee2.maxEth, poolFee: fee2.poolFee },
+      feeSecretHash: a.feeSecretHash,
+      bok: { amount: credit.amount, maxEth: credit.maxEth, poolFee: credit.poolFee },
+      bokCommitment: a.bokCommitment,
+      bokSecretHash: a.bokSecretHash,
+      nonce,
+      deadline
+    };
+    const value = (BigInt(plan.collateral) + BigInt(fee2.maxEth) + BigInt(credit.maxEth)).toString();
+    const balance = await request("eth_getBalance", [w.address, "latest"]);
+    check(quantity(balance) >= BigInt(value) + BigInt(w.gasBudgetWei), "INSUFFICIENT_USER_FUNDS");
+    const finished = nowSeconds();
+    check(Number.isSafeInteger(finished) && finished >= now && finished - now <= 30 && BigInt(finished) <= BigInt(deadline), "STALE_QUOTE");
+    const consent = {
+      domain: { name: "RollingCollateral", version: "1", chainId: s.chainId, verifyingContract: s.collateralPortal },
+      types: collateralConsentTypes,
+      value: { beneficiary: w.address, executor: s.router, amount: plan.collateral, secretHash: plan.collateralSecretHash, nonce, deadline }
+    };
+    const result = freeze({
+      kind: "rolling-aggregate-eth-v1",
+      scope: s,
+      plan,
+      value,
+      quoteAnchor: { number: tag, hash: block2.hash, timestamp: block2.timestamp },
+      breakdown: { collateralWei: plan.collateral, fee: fee2, bok: credit, gasBudgetWei: w.gasBudgetWei, maximumTotalWei: (BigInt(value) + BigInt(w.gasBudgetWei)).toString() },
+      consent,
+      consentDigest: TypedDataEncoder.hash(consent.domain, consent.types, consent.value),
+      planHash: keccak256(AbiCoder.defaultAbiCoder().encode([router.getFunction("fund").inputs[0]], [plan])),
+      ready: false,
+      requiredClaims: ["collateral", "private-fee", "bok"]
+    });
+    prepared.add(result);
+    return result;
+  }
+  function aggregateFundingTransaction(preparation, consent, { nowSeconds = Math.floor(Date.now() / 1e3) } = {}) {
+    check(prepared.has(preparation), "UNVERIFIED_QUOTE");
+    check(Number.isSafeInteger(nowSeconds) && BigInt(nowSeconds) <= BigInt(preparation.plan.deadline), "STALE_QUOTE");
+    check(typeof consent === "string" && /^0x(?:[0-9a-fA-F]{2}){1,4096}$/.test(consent), "CONSENT");
+    return freeze({
+      from: preparation.plan.beneficiary,
+      to: preparation.scope.router,
+      chainId: preparation.scope.chainId,
+      value: preparation.value,
+      data: router.encodeFunctionData("fund", [preparation.plan, consent]),
+      planHash: preparation.planHash,
+      recovery: "reconcile-only"
+    });
+  }
+  var usdcAbi = new Interface(["function implementation() view returns(address)", "function DOMAIN_SEPARATOR() view returns(bytes32)", "function balanceOf(address) view returns(uint256)", "function authorizationState(address,bytes32) view returns(bool)"]);
+  var preparedUsdc = /* @__PURE__ */ new WeakSet();
+  var usdcAuthorizationTypes = freeze({ ReceiveWithAuthorization: [{ name: "from", type: "address" }, { name: "to", type: "address" }, { name: "value", type: "uint256" }, { name: "validAfter", type: "uint256" }, { name: "validBefore", type: "uint256" }, { name: "nonce", type: "bytes32" }] });
+  async function prepareAggregateUsdcFunding(input2, { provider, nowSeconds = () => Math.floor(Date.now() / 1e3) } = {}) {
+    const x = record(input2, ["scope", "allocation", "wallet", "relay"]);
+    const s = record(x.scope, ["chainId", "router", "routerCodeHash", "collateralPortal", "feePortal", "bokPortal", "weth", "swapRouter", "feeToken", "bokToken", "privateFpc", "quoter", "quoterCodeHash", "usdcCodeHash", "usdcImplementation", "usdcImplementationCodeHash", "usdcDomain"]);
+    check(uint(s.chainId, 64) > 0n);
+    for (const key of ["router", "collateralPortal", "feePortal", "bokPortal", "weth", "swapRouter", "feeToken", "bokToken", "quoter", "usdcImplementation"]) hex2(s[key], 20);
+    for (const key of ["routerCodeHash", "quoterCodeHash", "usdcCodeHash", "usdcImplementationCodeHash"]) hex2(s[key]);
+    field(s.privateFpc);
+    s.usdcDomain = record(s.usdcDomain, ["name", "version"]);
+    for (const key of ["name", "version"]) check(typeof s.usdcDomain[key] === "string" && /^[A-Za-z0-9 .-]{1,64}$/.test(s.usdcDomain[key]));
+    const a = record(x.allocation, ["asset", "collateralWei", "feeAmount", "bokAmount", "collateralPoolFee", "feePoolFee", "slippageBps", "collateralSecretHash", "feeSecretHash", "bokCommitment", "bokSecretHash", "authorizationSalt"]);
+    check(a.asset === "USDC");
+    for (const key of ["collateralWei", "feeAmount", "bokAmount"]) check(uint(a[key], key === "collateralWei" ? 96 : 128) > 0n);
+    for (const key of ["collateralPoolFee", "feePoolFee"]) check([100, 500, 3e3, 1e4].includes(a[key]));
+    check(Number.isSafeInteger(a.slippageBps) && a.slippageBps >= 0 && a.slippageBps <= 500);
+    for (const key of ["collateralSecretHash", "feeSecretHash", "bokCommitment", "bokSecretHash"]) field(a[key]);
+    hex2(a.authorizationSalt);
+    const w = record(x.wallet, ["address", "chainId", "canSignTypedData"]);
+    hex2(w.address, 20);
+    check(w.chainId === s.chainId && w.canSignTypedData === true, "WALLET_CAPABILITY");
+    const relay = record(x.relay, ["address", "feeUsdc", "gasBudgetWei"]);
+    hex2(relay.address, 20);
+    check(relay.address !== w.address && relay.address !== s.router, "RELAY_SCOPE");
+    check(uint(relay.feeUsdc, 128) > 0n && uint(relay.gasBudgetWei) > 0n, "RELAY_BUDGET");
+    check(provider && typeof provider.request === "function");
+    const request = async (method, params) => {
+      try {
+        return await provider.request({ method, params });
+      } catch {
+        fail("PUBLIC_READ_FAILED");
+      }
+    };
+    check(quantity(await request("eth_chainId", [])) === BigInt(s.chainId), "CHAIN");
+    const block2 = blockSnapshot(await request("eth_getBlockByNumber", ["latest", false])), tag = block2.number, now = nowSeconds();
+    check(Number.isSafeInteger(now) && now >= 0 && BigInt(block2.timestamp) <= BigInt(now) && BigInt(now) - BigInt(block2.timestamp) <= 60n, "STALE_QUOTE");
+    for (const [address6, expected] of [[s.router, s.routerCodeHash], [s.quoter, s.quoterCodeHash], [s.bokToken, s.usdcCodeHash], [s.usdcImplementation, s.usdcImplementationCodeHash]]) {
+      const code = await request("eth_getCode", [address6, tag]);
+      check(typeof code === "string" && /^0x(?:[0-9a-f]{2})+$/.test(code) && keccak256(code) === expected, "RUNTIME");
+    }
+    const call2 = async (address6, abi2, name, args = []) => {
+      const value = await request("eth_call", [{ to: address6, data: abi2.encodeFunctionData(name, args) }, tag]);
+      try {
+        return abi2.decodeFunctionResult(name, value);
+      } catch {
+        fail("PUBLIC_READ_FAILED");
+      }
+    };
+    for (const key of ["collateralPortal", "feePortal", "bokPortal", "weth", "swapRouter", "feeToken", "bokToken", "privateFpc", "chainId"]) check(String((await call2(s.router, router, key))[0]).toLowerCase() === s[key], "SCOPE");
+    check(String((await call2(s.bokToken, usdcAbi, "implementation"))[0]).toLowerCase() === s.usdcImplementation, "USDC_IMPLEMENTATION");
+    const domain10 = { ...s.usdcDomain, chainId: s.chainId, verifyingContract: s.bokToken };
+    check((await call2(s.bokToken, usdcAbi, "DOMAIN_SEPARATOR"))[0] === TypedDataEncoder.hashDomain(domain10), "USDC_DOMAIN");
+    check((await call2(s.collateralPortal, portal, "depositsEnabled"))[0] === true && (await call2(s.bokPortal, bok, "active"))[0] === true, "PORTAL_NOT_READY");
+    check((await call2(s.collateralPortal, portal, "getDeposit", [w.address]))[0] === 0n, "EXISTING_DEPOSIT");
+    check(BigInt(a.collateralWei) >= (await call2(s.collateralPortal, portal, "MIN_DEPOSIT"))[0] && BigInt(a.collateralWei) <= (await call2(s.collateralPortal, portal, "MAX_DEPOSIT"))[0], "COLLATERAL_BOUNDS");
+    const nonce = String((await call2(s.collateralPortal, portal, "depositNonces", [w.address]))[0]);
+    const quote = async (token, amount, poolFee) => {
+      const quoted = (await call2(s.quoter, quoter, "quoteExactOutputSingle", [[s.bokToken, token, amount, poolFee, 0]]))[0];
+      check(quoted > 0n, "LIQUIDITY_UNQUALIFIED");
+      return { amount, maxUsdc: ((quoted * BigInt(1e4 + a.slippageBps) + 9999n) / 10000n).toString(), poolFee, quotedUsdc: quoted.toString() };
+    };
+    const collateral = await quote(s.weth, a.collateralWei, a.collateralPoolFee), fee2 = await quote(s.feeToken, a.feeAmount, a.feePoolFee);
+    const deadline = (BigInt(block2.timestamp) + 120n).toString(), validAfter = "0";
+    const plan = {
+      beneficiary: w.address,
+      relayer: relay.address,
+      collateral: { amount: a.collateralWei, maxUsdc: collateral.maxUsdc, poolFee: collateral.poolFee },
+      collateralSecretHash: a.collateralSecretHash,
+      fee: { amount: a.feeAmount, maxUsdc: fee2.maxUsdc, poolFee: fee2.poolFee },
+      feeSecretHash: a.feeSecretHash,
+      bokAmount: a.bokAmount,
+      bokCommitment: a.bokCommitment,
+      bokSecretHash: a.bokSecretHash,
+      nonce,
+      validAfter,
+      deadline,
+      relayFeeUsdc: relay.feeUsdc,
+      authorizationSalt: a.authorizationSalt
+    };
+    const planHash = keccak256(AbiCoder.defaultAbiCoder().encode([usdcTuple], [plan]));
+    const authorizationNonce = keccak256(AbiCoder.defaultAbiCoder().encode(["bytes32", "uint256", "address", "bytes32"], [encodeBytes32String("ROLLING_USDC_FUNDING_V1"), s.chainId, s.router, planHash]));
+    check((await call2(s.router, router, "usdcAuthorizationNonce", [plan]))[0] === authorizationNonce, "SCOPE");
+    check((await call2(s.bokToken, usdcAbi, "authorizationState", [w.address, authorizationNonce]))[0] === false, "AUTHORIZATION_SPENT");
+    const maximumUsdc = (BigInt(collateral.maxUsdc) + BigInt(fee2.maxUsdc) + BigInt(a.bokAmount) + BigInt(relay.feeUsdc)).toString();
+    check((await call2(s.bokToken, usdcAbi, "balanceOf", [w.address]))[0] >= BigInt(maximumUsdc), "INSUFFICIENT_USER_FUNDS");
+    check(quantity(await request("eth_getBalance", [relay.address, "latest"])) >= BigInt(relay.gasBudgetWei), "RELAY_GAS_REQUIRED");
+    const current = blockSnapshot(await request("eth_getBlockByNumber", [tag, false]));
+    check(current.hash === block2.hash && current.timestamp === block2.timestamp, "QUOTE_REORG");
+    const finished = nowSeconds();
+    check(Number.isSafeInteger(finished) && finished >= now && finished - now <= 30 && BigInt(finished) < BigInt(deadline), "STALE_QUOTE");
+    const consent = { domain: { name: "RollingCollateral", version: "1", chainId: s.chainId, verifyingContract: s.collateralPortal }, types: collateralConsentTypes, value: { beneficiary: w.address, executor: s.router, amount: a.collateralWei, secretHash: a.collateralSecretHash, nonce, deadline } };
+    const authorization = { domain: domain10, types: usdcAuthorizationTypes, value: { from: w.address, to: s.router, value: maximumUsdc, validAfter, validBefore: deadline, nonce: authorizationNonce } };
+    const result = freeze({
+      kind: "rolling-aggregate-usdc-v1",
+      scope: s,
+      plan,
+      planHash,
+      value: "0",
+      maximumUsdc,
+      authorizationNonce,
+      quoteAnchor: { number: tag, hash: block2.hash, timestamp: block2.timestamp },
+      consent,
+      authorization,
+      consentDigest: TypedDataEncoder.hash(consent.domain, consent.types, consent.value),
+      authorizationDigest: TypedDataEncoder.hash(domain10, authorization.types, authorization.value),
+      breakdown: { collateral, fee: fee2, bokAmount: a.bokAmount, relayFeeUsdc: relay.feeUsdc, maximumUsdc },
+      relayGasBudgetWei: relay.gasBudgetWei,
+      ready: false,
+      requiredClaims: ["collateral", "private-fee", "bok"],
+      relayPreflightRequired: true,
+      failureGasRisk: "relayer-unreimbursed-on-revert"
+    });
+    preparedUsdc.add(result);
+    return result;
+  }
+  function aggregateUsdcFundingTransaction(preparation, collateralConsent, authorization, { nowSeconds = Math.floor(Date.now() / 1e3) } = {}) {
+    check(preparedUsdc.has(preparation), "UNVERIFIED_QUOTE");
+    check(Number.isSafeInteger(nowSeconds) && BigInt(nowSeconds) > BigInt(preparation.plan.validAfter) && BigInt(nowSeconds) < BigInt(preparation.plan.deadline), "STALE_QUOTE");
+    for (const signature of [collateralConsent, authorization]) check(typeof signature === "string" && /^0x(?:[0-9a-fA-F]{2}){1,4096}$/.test(signature), "CONSENT");
+    return freeze({
+      from: preparation.plan.relayer,
+      to: preparation.scope.router,
+      chainId: preparation.scope.chainId,
+      value: "0",
+      data: router.encodeFunctionData("fundUsdc", [preparation.plan, collateralConsent, authorization]),
+      beneficiary: preparation.plan.beneficiary,
+      planHash: preparation.planHash,
+      authorizationNonce: preparation.authorizationNonce,
+      recovery: "reconcile-only"
+    });
+  }
+
+  // shared/rolling/aggregate-recovery.mjs
+  init_dirname();
+  init_buffer2();
+  init_process2();
+  var router2 = new Interface(aggregateFundingAbi);
+  var board = new Interface(["event Deposited(address indexed depositor,uint128 amount,bytes32 secretHash,bytes32 key,uint256 index)"]);
+  var fee = new Interface(["event DepositToAztecPublic(bytes32 indexed to,uint256 amount,bytes32 secretHash,bytes32 key,uint256 index)"]);
+  var bok2 = new Interface(["event Deposited(bytes32 indexed account,uint128 amount,bytes32 key,uint256 index)"]);
+  var lower = (x) => typeof x === "string" ? x.toLowerCase() : "";
+  var check2 = (x) => {
+    if (!x) throw Object.assign(Error("Aggregate funding recovery is unresolved."), { code: "BB_ETH_RECOVERY_REQUIRED" });
+  };
+  var hex3 = (x, n2 = 32) => typeof x === "string" && new RegExp("^0x[0-9a-f]{" + n2 * 2 + "}$").test(x) && BigInt(x) > 0n;
+  var field2 = (x) => hex3(x) && BigInt(x) < 21888242871839275222246405745257275088548364400416034343698204186575808495617n;
+  function validateAggregateFundingIntent(record8) {
+    const e = record8.expected, keys = ["kind", "routerCodeHash", "collateralPortal", "feePortal", "bokPortal", "privateFpc", "planHash"];
+    check2(e && Object.keys(e).sort().join() === keys.sort().join() && ["aggregate-funding", "aggregate-usdc-funding"].includes(e.kind));
+    const usdc = e.kind === "aggregate-usdc-funding", method = usdc ? "fundUsdc" : "fund";
+    check2(hex3(record8.from, 20) && hex3(record8.to, 20) && typeof record8.chainId === "string" && /^[1-9][0-9]{0,19}$/.test(record8.chainId));
+    for (const key of ["collateralPortal", "feePortal", "bokPortal"]) check2(hex3(e[key], 20));
+    check2((/* @__PURE__ */ new Set([record8.to, e.collateralPortal, e.feePortal, e.bokPortal])).size === 4);
+    check2(hex3(e.routerCodeHash) && hex3(e.planHash) && field2(e.privateFpc));
+    const parsed = router2.parseTransaction({ data: record8.data, value: record8.value });
+    check2(parsed?.name === method && lower(router2.encodeFunctionData(method, parsed.args)) === record8.data);
+    const p = parsed.args[0], collateral = usdc ? p.collateral.amount : p.collateral;
+    check2(lower(usdc ? p.relayer : p.beneficiary) === record8.from && hex3(lower(p.beneficiary), 20) && collateral > 0n && collateral < 2n ** 96n);
+    if (usdc) {
+      check2(lower(p.beneficiary) !== record8.to && lower(p.relayer) !== record8.to && hex3(p.authorizationSalt) && p.relayFeeUsdc > 0n && p.deadline > p.validAfter);
+      check2(p.bokAmount > 0n && p.bokAmount < 2n ** 128n && BigInt(record8.value) === 0n);
+      for (const leg of [p.collateral, p.fee]) check2(leg.amount > 0n && leg.amount < 2n ** 128n && leg.maxUsdc > 0n && [100n, 500n, 3000n, 10000n].includes(leg.poolFee));
+    } else {
+      for (const leg of [p.fee, p.bok]) check2(leg.amount > 0n && leg.amount < 2n ** 128n && leg.maxEth > 0n && [100n, 500n, 3000n, 10000n].includes(leg.poolFee));
+      check2(BigInt(record8.value) === p.collateral + p.fee.maxEth + p.bok.maxEth);
+    }
+    for (const value of [p.collateralSecretHash, p.feeSecretHash, p.bokCommitment, p.bokSecretHash]) check2(field2(lower(value)));
+    check2(p.deadline > 0n);
+    for (const signature of parsed.args.slice(1)) check2(signature.length > 2 && signature.length <= 8194);
+    check2(keccak256(AbiCoder.defaultAbiCoder().encode([router2.getFunction(method).inputs[0]], [p])) === e.planHash);
+    return p;
+  }
+  async function verifyAggregateFundingEffects(provider, record8, receipt2, read2 = (fn) => fn()) {
+    const p = validateAggregateFundingIntent(record8), e = record8.expected, usdc = e.kind === "aggregate-usdc-funding";
+    const code = await read2(() => provider.getCode(record8.to, receipt2.blockNumber));
+    check2(typeof code === "string" && /^0x(?:[0-9a-fA-F]{2})+$/.test(code) && keccak256(code) === e.routerCodeHash);
+    check2(Array.isArray(receipt2.logs) && receipt2.logs.length <= 4096);
+    const one = (address6, abi2, name) => {
+      const topic = abi2.getEvent(name).topicHash, logs = receipt2.logs.filter((l) => lower(l.address) === address6 && lower(l.topics?.[0]) === topic);
+      check2(logs.length === 1);
+      const log3 = logs[0];
+      check2(Array.isArray(log3.topics) && log3.topics.length <= 4 && typeof log3.data === "string" && log3.data.length <= 4096);
+      return abi2.parseLog(log3).args;
+    };
+    const funded = one(record8.to, router2, usdc ? "UsdcFunded" : "Funded");
+    check2(lower(funded.beneficiary) === lower(p.beneficiary) && funded.planHash === e.planHash && funded.collateral === (usdc ? p.collateral.amount : p.collateral) && funded.feeAmount === p.fee.amount && funded.bokAmount === (usdc ? p.bokAmount : p.bok.amount));
+    if (usdc) check2(lower(funded.relayer) === record8.from && funded.relayFeeUsdc === p.relayFeeUsdc && funded.collateralUsdc > 0n && funded.collateralUsdc <= p.collateral.maxUsdc && funded.feeUsdc > 0n && funded.feeUsdc <= p.fee.maxUsdc && funded.refund === p.collateral.maxUsdc + p.fee.maxUsdc - funded.collateralUsdc - funded.feeUsdc);
+    else check2(funded.feeEth > 0n && funded.feeEth <= p.fee.maxEth && funded.bokEth > 0n && funded.bokEth <= p.bok.maxEth && funded.refund === p.fee.maxEth + p.bok.maxEth - funded.feeEth - funded.bokEth);
+    const collateral = one(e.collateralPortal, board, "Deposited"), privateFee = one(e.feePortal, fee, "DepositToAztecPublic"), credit = one(e.bokPortal, bok2, "Deposited");
+    check2(lower(collateral.depositor) === lower(p.beneficiary) && collateral.amount === (usdc ? p.collateral.amount : p.collateral) && collateral.secretHash === p.collateralSecretHash);
+    check2(privateFee.to === e.privateFpc && privateFee.amount === p.fee.amount && privateFee.secretHash === p.feeSecretHash);
+    check2(credit.account === p.bokCommitment && credit.amount === (usdc ? p.bokAmount : p.bok.amount));
+    for (const event of [collateral, privateFee, credit]) check2(field2(lower(event.key)) && event.index >= 0n);
+    return {
+      planHash: e.planHash,
+      beneficiary: lower(p.beneficiary),
+      refund: funded.refund.toString(),
+      ...usdc ? { collateralUsdc: String(funded.collateralUsdc), feeUsdc: String(funded.feeUsdc), relayFeeUsdc: String(funded.relayFeeUsdc) } : { feeEth: String(funded.feeEth), bokEth: String(funded.bokEth) },
+      collateral: { amount: String(collateral.amount), secretHash: collateral.secretHash, messageKey: collateral.key, leafIndex: String(collateral.index) },
+      privateFee: { amount: String(privateFee.amount), secretHash: privateFee.secretHash, messageKey: privateFee.key, leafIndex: String(privateFee.index) },
+      bok: { amount: String(credit.amount), secretHash: p.bokSecretHash, messageKey: credit.key, leafIndex: String(credit.index), commitment: credit.account }
+    };
+  }
 
   // shared/browser-runtime-policy.mjs
   init_dirname();
@@ -302128,7 +308387,7 @@ pub contract MultiCallEntrypoint {
     bigint: () => bigint2,
     boolean: () => boolean2,
     catch: () => _catch2,
-    check: () => check,
+    check: () => check3,
     cidrv4: () => cidrv42,
     cidrv6: () => cidrv62,
     clone: () => clone,
@@ -302168,8 +308427,8 @@ pub contract MultiCallEntrypoint {
     gt: () => _gt,
     gte: () => _gte,
     guid: () => guid2,
-    hash: () => hash,
-    hex: () => hex2,
+    hash: () => hash2,
+    hex: () => hex5,
     hostname: () => hostname2,
     httpUrl: () => httpUrl,
     iban: () => iban2,
@@ -302219,10 +308478,10 @@ pub contract MultiCallEntrypoint {
     null: () => _null3,
     nullable: () => nullable,
     nullish: () => nullish2,
-    number: () => number2,
+    number: () => number3,
     object: () => object,
     optional: () => optional,
-    output: () => output,
+    output: () => output2,
     overwrite: () => _overwrite,
     parse: () => parse2,
     parseAsync: () => parseAsync2,
@@ -302236,7 +308495,7 @@ pub contract MultiCallEntrypoint {
     properties: () => properties,
     property: () => _property,
     readonly: () => readonly,
-    record: () => record,
+    record: () => record2,
     refine: () => refine,
     regex: () => _regex,
     regexes: () => regexes_exports,
@@ -302441,7 +308700,7 @@ pub contract MultiCallEntrypoint {
     _e164: () => _e164,
     _email: () => _email,
     _emoji: () => _emoji2,
-    _encode: () => _encode,
+    _encode: () => _encode2,
     _encodeAsync: () => _encodeAsync,
     _endsWith: () => _endsWith,
     _enum: () => _enum,
@@ -302604,7 +308863,7 @@ pub contract MultiCallEntrypoint {
     util: () => util_exports,
     validate: () => validate,
     validateAsync: () => validateAsync,
-    version: () => version2,
+    version: () => version3,
     withParser: () => withParser
   });
   init_dirname();
@@ -302625,7 +308884,7 @@ pub contract MultiCallEntrypoint {
     NUMBER_FORMAT_RANGES: () => NUMBER_FORMAT_RANGES,
     aborted: () => aborted,
     allowsEval: () => allowsEval,
-    assert: () => assert2,
+    assert: () => assert3,
     assertEqual: () => assertEqual,
     assertIs: () => assertIs,
     assertNever: () => assertNever,
@@ -302712,7 +308971,7 @@ pub contract MultiCallEntrypoint {
   function assertNever(_x) {
     throw new Error("Unexpected value in exhaustive check");
   }
-  function assert2(_) {
+  function assert3(_) {
   }
   function getEnumValues(entries) {
     const numericValues = Object.values(entries).filter((v) => typeof v === "number");
@@ -303324,14 +309583,14 @@ pub contract MultiCallEntrypoint {
   }
   function base64urlToUint8Array(base64url13) {
     const base6413 = base64url13.replace(/-/g, "+").replace(/_/g, "/");
-    const padding = "=".repeat((4 - base6413.length % 4) % 4);
-    return base64ToUint8Array(base6413 + padding);
+    const padding2 = "=".repeat((4 - base6413.length % 4) % 4);
+    return base64ToUint8Array(base6413 + padding2);
   }
   function uint8ArrayToBase64url(bytes3) {
     return uint8ArrayToBase64(bytes3).replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
   }
-  function hexToUint8Array(hex20) {
-    const cleanHex = hex20.replace(/^0x/, "");
+  function hexToUint8Array(hex22) {
+    const cleanHex = hex22.replace(/^0x/, "");
     if (cleanHex.length % 2 !== 0) {
       throw new Error("Invalid hex string length");
     }
@@ -303895,7 +310154,7 @@ pub contract MultiCallEntrypoint {
       result = await result;
     return result.issues.length === 0;
   };
-  var _encode = (_Err) => {
+  var _encode2 = (_Err) => {
     const parse13 = _parse(_Err);
     const fn = (schema, value, _ctx, _params) => {
       const ctx = _ctx ? { ..._ctx, direction: "backward" } : { direction: "backward" };
@@ -303903,7 +310162,7 @@ pub contract MultiCallEntrypoint {
     };
     return fn;
   };
-  var encode = /* @__PURE__ */ _encode($ZodRealError);
+  var encode = /* @__PURE__ */ _encode2($ZodRealError);
   var _decode = (_Err) => {
     const parse13 = _parse(_Err);
     const fn = (schema, value, _ctx, _params) => {
@@ -303981,7 +310240,7 @@ pub contract MultiCallEntrypoint {
     emoji: () => emoji,
     extendedDuration: () => extendedDuration,
     guid: () => guid,
-    hex: () => hex,
+    hex: () => hex4,
     hostname: () => hostname,
     html5Email: () => html5Email,
     httpProtocol: () => httpProtocol,
@@ -303999,7 +310258,7 @@ pub contract MultiCallEntrypoint {
     nanoid: () => nanoid,
     nanoidOfLength: () => nanoidOfLength,
     null: () => _null,
-    number: () => number,
+    number: () => number2,
     rfc5322Email: () => rfc5322Email,
     sha1_base64: () => sha1_base64,
     sha1_base64url: () => sha1_base64url,
@@ -304102,15 +310361,15 @@ pub contract MultiCallEntrypoint {
   };
   var bigint = /^-?\d+n?$/;
   var integer = /^-?\d+$/;
-  var number = /^-?\d+(?:\.\d+)?$/;
+  var number2 = /^-?\d+(?:\.\d+)?$/;
   var boolean = /^(?:true|false)$/i;
   var _null = /^null$/i;
   var _undefined = /^undefined$/i;
   var lowercase = /^[^A-Z]*$/;
   var uppercase = /^[^a-z]*$/;
-  var hex = /^[0-9a-fA-F]*$/;
-  function fixedBase64(bodyLength, padding) {
-    return new RegExp(`^[A-Za-z0-9+/]{${bodyLength}}${padding}$`);
+  var hex4 = /^[0-9a-fA-F]*$/;
+  function fixedBase64(bodyLength, padding2) {
+    return new RegExp(`^[A-Za-z0-9+/]{${bodyLength}}${padding2}$`);
   }
   function fixedBase64url(length) {
     return new RegExp(`^[A-Za-z0-9_-]{${length}}$`);
@@ -304627,7 +310886,7 @@ ${content.join("\n")}
   init_dirname();
   init_buffer2();
   init_process2();
-  var version2 = {
+  var version3 = {
     major: 4,
     minor: 6,
     patch: 2
@@ -304639,7 +310898,7 @@ ${content.join("\n")}
     inst ?? (inst = {});
     inst._zod.def = def;
     inst._zod.bag = inst._zod.bag || {};
-    inst._zod.version = version2;
+    inst._zod.version = version3;
     const defChecks = inst._zod.def.checks;
     const checks = inst._zod.traits.has("$ZodCheck") ? [inst, ...defChecks ?? []] : defChecks?.length ? [...defChecks] : [];
     for (const ch of checks) {
@@ -305187,7 +311446,7 @@ ${content.join("\n")}
   });
   var $ZodNumber = /* @__PURE__ */ $constructor("$ZodNumber", (inst, def) => {
     $ZodType.init(inst, def);
-    inst._zod.pattern = number;
+    inst._zod.pattern = number2;
     inst._zod.parse = (payload, _ctx) => {
       if (def.coerce)
         try {
@@ -305530,14 +311789,14 @@ ${content.join("\n")}
       const shape = zod.def.shape;
       const propValues = {};
       for (const key in shape) {
-        const field8 = shape[key]._zod;
-        if (field8.values) {
+        const field10 = shape[key]._zod;
+        if (field10.values) {
           if (!Object.prototype.hasOwnProperty.call(propValues, key)) {
             assignProp(propValues, key, /* @__PURE__ */ new Set());
           }
-          for (const v of field8.values)
+          for (const v of field10.values)
             propValues[key].add(v);
-          if (field8.optin !== void 0)
+          if (field10.optin !== void 0)
             propValues[key].add(void 0);
         }
       }
@@ -306264,7 +312523,7 @@ ${content.join("\n")}
           if (keyResult instanceof Promise) {
             throw new Error("Async schemas not supported in object keys currently");
           }
-          const checkNumericKey = typeof key === "string" && number.test(key) && keyResult.issues.length;
+          const checkNumericKey = typeof key === "string" && number2.test(key) && keyResult.issues.length;
           if (checkNumericKey) {
             const retryResult = def.keyType._zod.run({ value: Number(key), issues: [] }, ctx);
             if (retryResult instanceof Promise) {
@@ -306831,7 +313090,7 @@ ${content.join("\n")}
     if (minimum !== void 0 || maximum !== void 0)
       return string({ minimum, maximum }).source;
     const own2 = schema._zod.pattern;
-    return (isInt && own2 === number ? integer : own2)?.source;
+    return (isInt && own2 === number2 ? integer : own2)?.source;
   }
   function partPattern(schema) {
     const def = schema._zod.def;
@@ -307110,7 +313369,7 @@ ${content.join("\n")}
       return PROVEN;
     stack.add(inst);
     let result = NONE;
-    const check10 = (child) => {
+    const check12 = (child) => {
       if (result !== PROVEN && child?._zod) {
         const answer = isRecursive(child, stack, resolve);
         if (answer > result)
@@ -307139,35 +313398,35 @@ ${content.join("\n")}
       case "object": {
         const raw = rawShape(def);
         merge7(raw ? shape(raw, true) : ASSUMED);
-        check10(def.catchall);
+        check12(def.catchall);
         break;
       }
       case "properties":
         merge7(shape(def.shape, false));
         break;
       case "array":
-        check10(def.element);
+        check12(def.element);
         break;
       case "tuple":
         for (const el of def.items)
-          check10(el);
-        check10(def.rest);
+          check12(el);
+        check12(def.rest);
         break;
       case "record":
       case "map":
-        check10(def.keyType);
-        check10(def.valueType);
+        check12(def.keyType);
+        check12(def.valueType);
         break;
       case "set":
-        check10(def.valueType);
+        check12(def.valueType);
         break;
       case "union":
         for (const el of def.options)
-          check10(el);
+          check12(el);
         break;
       case "intersection":
-        check10(def.left);
-        check10(def.right);
+        check12(def.left);
+        check12(def.right);
         break;
       case "optional":
       case "nullable":
@@ -307178,15 +313437,15 @@ ${content.join("\n")}
       case "nonoptional":
       case "promise":
       case "success":
-        check10(def.innerType);
+        check12(def.innerType);
         break;
       case "pipe":
-        check10(def.in);
-        check10(def.out);
+        check12(def.in);
+        check12(def.out);
         break;
       case "function":
-        check10(def.input);
-        check10(def.output);
+        check12(def.input);
+        check12(def.output);
         break;
       // `$ZodLazy` caches its inner on the def, so a resolved edge is followed exactly
       case "lazy": {
@@ -307227,10 +313486,10 @@ ${content.join("\n")}
           if (!value || typeof value !== "object")
             continue;
           if (value._zod)
-            check10(value);
+            check12(value);
           else if (Array.isArray(value))
             for (const el of value)
-              check10(el);
+              check12(el);
         }
       }
     }
@@ -315317,8 +321576,8 @@ ${code}
     if (!schemaChecks || schemaChecks.length === 0)
       return accessor;
     let currentAccessor = accessor;
-    for (const check10 of schemaChecks) {
-      const def = check10._zod.def;
+    for (const check12 of schemaChecks) {
+      const def = check12._zod.def;
       if (def.when && !WHEN_DEFAULTED_CHECKS.has(def.check)) {
         throw new ZodCompileUnsupportedError(`check with a custom "when" condition`);
       }
@@ -315366,7 +321625,7 @@ ${code}
           currentAccessor = generateStringFormatCheck(doc, ctx, def, currentAccessor);
           break;
         case "custom":
-          currentAccessor = generateCustomRefineCheck(doc, ctx, check10, currentAccessor);
+          currentAccessor = generateCustomRefineCheck(doc, ctx, check12, currentAccessor);
           break;
         case "bigint_format":
           generateBigIntFormatCheck(doc, def, currentAccessor);
@@ -315382,7 +321641,7 @@ ${code}
           break;
         case "overwrite": {
           const newAccessor = newVar(ctx);
-          generateOverwriteCheck(doc, ctx, check10, currentAccessor, newAccessor);
+          generateOverwriteCheck(doc, ctx, check12, currentAccessor, newAccessor);
           currentAccessor = newAccessor;
           break;
         }
@@ -315505,8 +321764,8 @@ ${code}
     const propAccessor = `${accessor}[${JSON.stringify(def.property)}]`;
     generateCheck(doc, ctx, def.schema, propAccessor);
   }
-  function generateOverwriteCheck(doc, ctx, check10, currentAccessor, newAccessor) {
-    const tx = check10._zod.def.tx;
+  function generateOverwriteCheck(doc, ctx, check12, currentAccessor, newAccessor) {
+    const tx = check12._zod.def.tx;
     if (!tx) {
       throw new ZodCompileUnsupportedError("overwrite check without a transform function");
     }
@@ -315522,8 +321781,8 @@ ${code}
   function pushIssue(issue7) {
     this.issues.push(issue7);
   }
-  function generateCustomRefineCheck(doc, ctx, check10, accessor) {
-    const def = check10._zod.def;
+  function generateCustomRefineCheck(doc, ctx, check12, accessor) {
+    const def = check12._zod.def;
     if (def.fn) {
       if (isAsyncFunction(def.fn)) {
         throw new ZodCompileAsyncError("z.compile: async .refine() predicates are not supported");
@@ -315536,11 +321795,11 @@ ${code}
       doc.write(`if (!${resVar}) return INVALID;`);
       return accessor;
     }
-    if (check10._zod.check) {
-      if (isAsyncFunction(check10._zod.check)) {
+    if (check12._zod.check) {
+      if (isAsyncFunction(check12._zod.check)) {
         throw new ZodCompileAsyncError("z.compile: async .superRefine() / check functions are not supported");
       }
-      const checkFn = check10._zod.check;
+      const checkFn = check12._zod.check;
       const helperFn = (value) => {
         const fakePayload = { value, issues: [], addIssue: pushIssue };
         const result = checkFn(fakePayload);
@@ -316507,7 +322766,7 @@ ${code}
       if (keyFn.definite === false)
         ctx.definite = false;
       const keyFast = addConstant(ctx, keyFn);
-      const numericConst = addConstant(ctx, number);
+      const numericConst = addConstant(ctx, number2);
       const outKeyVar = newVar(ctx);
       emitOwnKeys(doc, ctx, accessor, kVar, (d) => {
         d.write(`let ${outKeyVar} = ${keyFast}(${kVar});`);
@@ -318688,11 +324947,11 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     }
     const allKeys = new Set(Object.keys(shape));
     const requiredKeys = new Set([...allKeys].filter((key) => {
-      const field8 = def.shape[key];
+      const field10 = def.shape[key];
       if (ctx.io === "input") {
-        return inputOptin(field8) === void 0;
+        return inputOptin(field10) === void 0;
       } else {
-        return field8._zod.optout === void 0;
+        return field10._zod.optout === void 0;
       }
     }));
     if (requiredKeys.size > 0) {
@@ -318863,7 +325122,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
       return rest;
     rest.type = "string";
     if (!values)
-      rest.pattern = (types2.includes("number") ? number : integer).source;
+      rest.pattern = (types2.includes("number") ? number2 : integer).source;
     return rest;
   }
   var pendingRecords = /* @__PURE__ */ new WeakMap();
@@ -318874,8 +325133,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
         bySchema.set(entry.schema, entry);
     }
     const rewrites = /* @__PURE__ */ new Map();
-    for (const record7 of pendingRecords.get(ctx) ?? []) {
-      const seen = ctx.seen.get(record7);
+    for (const record8 of pendingRecords.get(ctx) ?? []) {
+      const seen = ctx.seen.get(record8);
       const names = (seen?.def ?? seen?.schema)?.propertyNames;
       if (!names || names === true || rewrites.has(names))
         continue;
@@ -319288,7 +325547,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     bigint: () => bigint2,
     boolean: () => boolean2,
     catch: () => _catch2,
-    check: () => check,
+    check: () => check3,
     cidrv4: () => cidrv42,
     cidrv6: () => cidrv62,
     codec: () => codec,
@@ -319309,8 +325568,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     float64: () => float64,
     function: () => _function,
     guid: () => guid2,
-    hash: () => hash,
-    hex: () => hex2,
+    hash: () => hash2,
+    hex: () => hex5,
     hostname: () => hostname2,
     httpUrl: () => httpUrl,
     iban: () => iban2,
@@ -319341,7 +325600,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     null: () => _null3,
     nullable: () => nullable,
     nullish: () => nullish2,
-    number: () => number2,
+    number: () => number3,
     object: () => object,
     optional: () => optional,
     partialRecord: () => partialRecord,
@@ -319351,7 +325610,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     promise: () => promise,
     properties: () => properties,
     readonly: () => readonly,
-    record: () => record,
+    record: () => record2,
     refine: () => refine,
     set: () => set,
     strictObject: () => strictObject,
@@ -319479,7 +325738,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
   var parseAsync2 = /* @__PURE__ */ _parseAsync(ZodRealError);
   var safeParse2 = /* @__PURE__ */ _safeParse(ZodRealError);
   var safeParseAsync2 = /* @__PURE__ */ _safeParseAsync(ZodRealError);
-  var encode2 = /* @__PURE__ */ _encode(ZodRealError);
+  var encode2 = /* @__PURE__ */ _encode2(ZodRealError);
   var decode2 = /* @__PURE__ */ _decode(ZodRealError);
   var encodeAsync2 = /* @__PURE__ */ _encodeAsync(ZodRealError);
   var decodeAsync2 = /* @__PURE__ */ _decodeAsync(ZodRealError);
@@ -319526,8 +325785,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
       reg.add(this, meta13);
       return this;
     },
-    refine(check10, params) {
-      return this.check(refine(check10, params));
+    refine(check12, params) {
+      return this.check(refine(check12, params));
     },
     superRefine(refinement, params) {
       return this.check(superRefine(refinement, params));
@@ -319636,8 +325895,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     validateAsync(data, params) {
       return validateAsync(this, data, params);
     },
-    encode: function _encode2(data, params) {
-      return encode2(this, data, params, { callee: _encode2 });
+    encode: function _encode3(data, params) {
+      return encode2(this, data, params, { callee: _encode3 });
     },
     decode: function _decode2(data, params) {
       return decode2(this, data, params, { callee: _decode2 });
@@ -320017,10 +326276,10 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
   function hostname2(_params) {
     return _stringFormat(ZodCustomStringFormat, "hostname", regexes_exports.hostname, _params);
   }
-  function hex2(_params) {
+  function hex5(_params) {
     return _stringFormat(ZodCustomStringFormat, "hex", regexes_exports.hex, _params);
   }
-  function hash(alg, params) {
+  function hash2(alg, params) {
     const enc = params?.enc ?? "hex";
     const format2 = `${alg}_${enc}`;
     const regex = regexes_exports[format2];
@@ -320098,7 +326357,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
       }
     })
   );
-  function number2(params) {
+  function number3(params) {
     return _number(ZodNumber, params);
   }
   var ZodNumberFormat = /* @__PURE__ */ $constructor("ZodNumberFormat", (inst, def) => {
@@ -320463,7 +326722,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     inst.keyType = def.keyType;
     inst.valueType = def.valueType;
   });
-  function record(keyType, valueType, params) {
+  function record2(keyType, valueType, params) {
     if (!valueType || !valueType._zod) {
       return new ZodRecord({
         type: "record",
@@ -320891,7 +327150,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
   function properties(shape, params) {
     return _properties(ZodProperties, shape, params);
   }
-  function check(fn) {
+  function check3(fn) {
     const ch = new $ZodCheck({
       check: "custom"
       // ...util.normalizeParams(params),
@@ -320946,7 +327205,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
   }, ...args);
   function json(params) {
     const jsonSchema = lazy(() => {
-      return union([string2(params), number2(), boolean2(), _null3(), array(jsonSchema), record(string2(), jsonSchema)]);
+      return union([string2(params), number3(), boolean2(), _null3(), array(jsonSchema), record2(string2(), jsonSchema)]);
     });
     return jsonSchema;
   }
@@ -321965,7 +328224,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
       catch: (s, rewritten) => rewritten ? s._zod.def.innerType : s
     });
   }
-  function output(schema) {
+  function output2(schema) {
     return visit(schema, {
       pipe: (s) => outSide(s._zod.def),
       // A prefault value is fed through the schema, which makes it input-side, so a rewritten inner type leaves it stranded.
@@ -321979,7 +328238,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     bigint: () => bigint3,
     boolean: () => boolean3,
     date: () => date4,
-    number: () => number3,
+    number: () => number4,
     string: () => string3
   });
   init_dirname();
@@ -321988,7 +328247,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
   function string3(params) {
     return _coercedString(ZodString, params);
   }
-  function number3(params) {
+  function number4(params) {
     return _coercedNumber(ZodNumber, params);
   }
   function boolean3(params) {
@@ -322008,5164 +328267,6 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
   init_dirname();
   init_buffer2();
   init_process2();
-
-  // node_modules/ethers/lib.esm/ethers.js
-  init_dirname();
-  init_buffer2();
-  init_process2();
-
-  // node_modules/ethers/lib.esm/_version.js
-  init_dirname();
-  init_buffer2();
-  init_process2();
-  var version3 = "6.17.0";
-
-  // node_modules/ethers/lib.esm/abi/index.js
-  init_dirname();
-  init_buffer2();
-  init_process2();
-
-  // node_modules/ethers/lib.esm/abi/abi-coder.js
-  init_dirname();
-  init_buffer2();
-  init_process2();
-
-  // node_modules/ethers/lib.esm/utils/index.js
-  init_dirname();
-  init_buffer2();
-  init_process2();
-
-  // node_modules/ethers/lib.esm/utils/data.js
-  init_dirname();
-  init_buffer2();
-  init_process2();
-
-  // node_modules/ethers/lib.esm/utils/errors.js
-  init_dirname();
-  init_buffer2();
-  init_process2();
-
-  // node_modules/ethers/lib.esm/utils/properties.js
-  init_dirname();
-  init_buffer2();
-  init_process2();
-  function checkType(value, type, name) {
-    const types2 = type.split("|").map((t) => t.trim());
-    for (let i = 0; i < types2.length; i++) {
-      switch (type) {
-        case "any":
-          return;
-        case "bigint":
-        case "boolean":
-        case "number":
-        case "string":
-          if (typeof value === type) {
-            return;
-          }
-      }
-    }
-    const error312 = new Error(`invalid value for type ${type}`);
-    error312.code = "INVALID_ARGUMENT";
-    error312.argument = `value.${name}`;
-    error312.value = value;
-    throw error312;
-  }
-  function defineProperties(target, values, types2) {
-    for (let key in values) {
-      let value = values[key];
-      const type = types2 ? types2[key] : null;
-      if (type) {
-        checkType(value, type, key);
-      }
-      Object.defineProperty(target, key, { enumerable: true, value, writable: false });
-    }
-  }
-
-  // node_modules/ethers/lib.esm/utils/errors.js
-  function stringify(value, seen) {
-    if (value == null) {
-      return "null";
-    }
-    if (seen == null) {
-      seen = /* @__PURE__ */ new Set();
-    }
-    if (typeof value === "object") {
-      if (seen.has(value)) {
-        return "[Circular]";
-      }
-      seen.add(value);
-    }
-    if (Array.isArray(value)) {
-      return "[ " + value.map((v) => stringify(v, seen)).join(", ") + " ]";
-    }
-    if (value instanceof Uint8Array) {
-      const HEX = "0123456789abcdef";
-      let result = "0x";
-      for (let i = 0; i < value.length; i++) {
-        result += HEX[value[i] >> 4];
-        result += HEX[value[i] & 15];
-      }
-      return result;
-    }
-    if (typeof value === "object" && typeof value.toJSON === "function") {
-      return stringify(value.toJSON(), seen);
-    }
-    switch (typeof value) {
-      case "boolean":
-      case "number":
-      case "symbol":
-        return value.toString();
-      case "bigint":
-        return BigInt(value).toString();
-      case "string":
-        return JSON.stringify(value);
-      case "object": {
-        const keys = Object.keys(value);
-        keys.sort();
-        return "{ " + keys.map((k) => `${stringify(k, seen)}: ${stringify(value[k], seen)}`).join(", ") + " }";
-      }
-    }
-    return `[ COULD NOT SERIALIZE ]`;
-  }
-  function isError(error312, code) {
-    return error312 && error312.code === code;
-  }
-  function makeError(message, code, info) {
-    let shortMessage = message;
-    {
-      const details = [];
-      if (info) {
-        if ("message" in info || "code" in info || "name" in info) {
-          throw new Error(`value will overwrite populated values: ${stringify(info)}`);
-        }
-        for (const key in info) {
-          if (key === "shortMessage") {
-            continue;
-          }
-          const value = info[key];
-          details.push(key + "=" + stringify(value));
-        }
-      }
-      details.push(`code=${code}`);
-      details.push(`version=${version3}`);
-      if (details.length) {
-        message += " (" + details.join(", ") + ")";
-      }
-    }
-    let error312;
-    switch (code) {
-      case "INVALID_ARGUMENT":
-        error312 = new TypeError(message);
-        break;
-      case "NUMERIC_FAULT":
-      case "BUFFER_OVERRUN":
-        error312 = new RangeError(message);
-        break;
-      default:
-        error312 = new Error(message);
-    }
-    defineProperties(error312, { code });
-    if (info) {
-      Object.assign(error312, info);
-    }
-    if (error312.shortMessage == null) {
-      defineProperties(error312, { shortMessage });
-    }
-    return error312;
-  }
-  function assert3(check10, message, code, info) {
-    if (!check10) {
-      throw makeError(message, code, info);
-    }
-  }
-  function assertArgument(check10, message, name, value) {
-    assert3(check10, message, "INVALID_ARGUMENT", { argument: name, value });
-  }
-  function assertArgumentCount(count, expectedCount, message) {
-    if (message == null) {
-      message = "";
-    }
-    if (message) {
-      message = ": " + message;
-    }
-    assert3(count >= expectedCount, "missing argument" + message, "MISSING_ARGUMENT", {
-      count,
-      expectedCount
-    });
-    assert3(count <= expectedCount, "too many arguments" + message, "UNEXPECTED_ARGUMENT", {
-      count,
-      expectedCount
-    });
-  }
-  var _normalizeForms = ["NFD", "NFC", "NFKD", "NFKC"].reduce((accum, form) => {
-    try {
-      if ("test".normalize(form) !== "test") {
-        throw new Error("bad");
-      }
-      ;
-      if (form === "NFD") {
-        const check10 = String.fromCharCode(233).normalize("NFD");
-        const expected = String.fromCharCode(101, 769);
-        if (check10 !== expected) {
-          throw new Error("broken");
-        }
-      }
-      accum.push(form);
-    } catch (error312) {
-    }
-    return accum;
-  }, []);
-  function assertNormalize(form) {
-    assert3(_normalizeForms.indexOf(form) >= 0, "platform missing String.prototype.normalize", "UNSUPPORTED_OPERATION", {
-      operation: "String.prototype.normalize",
-      info: { form }
-    });
-  }
-  function assertPrivate(givenGuard, guard, className) {
-    if (className == null) {
-      className = "";
-    }
-    if (givenGuard !== guard) {
-      let method = className, operation = "new";
-      if (className) {
-        method += ".";
-        operation += " " + className;
-      }
-      assert3(false, `private constructor; use ${method}from* methods`, "UNSUPPORTED_OPERATION", {
-        operation
-      });
-    }
-  }
-
-  // node_modules/ethers/lib.esm/utils/data.js
-  function _getBytes(value, name, copy3) {
-    if (value instanceof Uint8Array) {
-      if (copy3) {
-        return new Uint8Array(value);
-      }
-      return value;
-    }
-    if (typeof value === "string" && value.length % 2 === 0 && value.match(/^0x[0-9a-f]*$/i)) {
-      const result = new Uint8Array((value.length - 2) / 2);
-      let offset = 2;
-      for (let i = 0; i < result.length; i++) {
-        result[i] = parseInt(value.substring(offset, offset + 2), 16);
-        offset += 2;
-      }
-      return result;
-    }
-    assertArgument(false, "invalid BytesLike value", name || "value", value);
-  }
-  function getBytes(value, name) {
-    return _getBytes(value, name, false);
-  }
-  function getBytesCopy(value, name) {
-    return _getBytes(value, name, true);
-  }
-  function isHexString(value, length) {
-    if (typeof value !== "string" || !value.match(/^0x[0-9A-Fa-f]*$/)) {
-      return false;
-    }
-    if (typeof length === "number" && value.length !== 2 + 2 * length) {
-      return false;
-    }
-    if (length === true && value.length % 2 !== 0) {
-      return false;
-    }
-    return true;
-  }
-  var HexCharacters = "0123456789abcdef";
-  function hexlify(data) {
-    const bytes3 = getBytes(data);
-    let result = "0x";
-    for (let i = 0; i < bytes3.length; i++) {
-      const v = bytes3[i];
-      result += HexCharacters[(v & 240) >> 4] + HexCharacters[v & 15];
-    }
-    return result;
-  }
-  function concat(datas) {
-    return "0x" + datas.map((d) => hexlify(d).substring(2)).join("");
-  }
-  function dataSlice(data, start, end) {
-    const bytes3 = getBytes(data);
-    if (end != null && end > bytes3.length) {
-      assert3(false, "cannot slice beyond data bounds", "BUFFER_OVERRUN", {
-        buffer: bytes3,
-        length: bytes3.length,
-        offset: end
-      });
-    }
-    return hexlify(bytes3.slice(start == null ? 0 : start, end == null ? bytes3.length : end));
-  }
-  function zeroPad(data, length, left) {
-    const bytes3 = getBytes(data);
-    assert3(length >= bytes3.length, "padding exceeds data length", "BUFFER_OVERRUN", {
-      buffer: new Uint8Array(bytes3),
-      length,
-      offset: length + 1
-    });
-    const result = new Uint8Array(length);
-    result.fill(0);
-    if (left) {
-      result.set(bytes3, length - bytes3.length);
-    } else {
-      result.set(bytes3, 0);
-    }
-    return hexlify(result);
-  }
-  function zeroPadValue(data, length) {
-    return zeroPad(data, length, true);
-  }
-  function zeroPadBytes(data, length) {
-    return zeroPad(data, length, false);
-  }
-
-  // node_modules/ethers/lib.esm/utils/maths.js
-  init_dirname();
-  init_buffer2();
-  init_process2();
-  var BN_0 = BigInt(0);
-  var BN_1 = BigInt(1);
-  var maxValue = 9007199254740991;
-  function fromTwos(_value, _width) {
-    const value = getUint(_value, "value");
-    const width = BigInt(getNumber(_width, "width"));
-    assert3(value >> width === BN_0, "overflow", "NUMERIC_FAULT", {
-      operation: "fromTwos",
-      fault: "overflow",
-      value: _value
-    });
-    if (value >> width - BN_1) {
-      const mask2 = (BN_1 << width) - BN_1;
-      return -((~value & mask2) + BN_1);
-    }
-    return value;
-  }
-  function toTwos(_value, _width) {
-    let value = getBigInt(_value, "value");
-    const width = BigInt(getNumber(_width, "width"));
-    const limit = BN_1 << width - BN_1;
-    if (value < BN_0) {
-      value = -value;
-      assert3(value <= limit, "too low", "NUMERIC_FAULT", {
-        operation: "toTwos",
-        fault: "overflow",
-        value: _value
-      });
-      const mask2 = (BN_1 << width) - BN_1;
-      return (~value & mask2) + BN_1;
-    } else {
-      assert3(value < limit, "too high", "NUMERIC_FAULT", {
-        operation: "toTwos",
-        fault: "overflow",
-        value: _value
-      });
-    }
-    return value;
-  }
-  function mask(_value, _bits) {
-    const value = getUint(_value, "value");
-    const bits = BigInt(getNumber(_bits, "bits"));
-    return value & (BN_1 << bits) - BN_1;
-  }
-  function getBigInt(value, name) {
-    switch (typeof value) {
-      case "bigint":
-        return value;
-      case "number":
-        assertArgument(Number.isInteger(value), "underflow", name || "value", value);
-        assertArgument(value >= -maxValue && value <= maxValue, "overflow", name || "value", value);
-        return BigInt(value);
-      case "string":
-        try {
-          if (value === "") {
-            throw new Error("empty string");
-          }
-          if (value[0] === "-" && value[1] !== "-") {
-            return -BigInt(value.substring(1));
-          }
-          return BigInt(value);
-        } catch (e) {
-          assertArgument(false, `invalid BigNumberish string: ${e.message}`, name || "value", value);
-        }
-    }
-    assertArgument(false, "invalid BigNumberish value", name || "value", value);
-  }
-  function getUint(value, name) {
-    const result = getBigInt(value, name);
-    assert3(result >= BN_0, "unsigned value cannot be negative", "NUMERIC_FAULT", {
-      fault: "overflow",
-      operation: "getUint",
-      value
-    });
-    return result;
-  }
-  var Nibbles = "0123456789abcdef";
-  function toBigInt(value) {
-    if (value instanceof Uint8Array) {
-      let result = "0x0";
-      for (const v of value) {
-        result += Nibbles[v >> 4];
-        result += Nibbles[v & 15];
-      }
-      return BigInt(result);
-    }
-    return getBigInt(value);
-  }
-  function getNumber(value, name) {
-    switch (typeof value) {
-      case "bigint":
-        assertArgument(value >= -maxValue && value <= maxValue, "overflow", name || "value", value);
-        return Number(value);
-      case "number":
-        assertArgument(Number.isInteger(value), "underflow", name || "value", value);
-        assertArgument(value >= -maxValue && value <= maxValue, "overflow", name || "value", value);
-        return value;
-      case "string":
-        try {
-          if (value === "") {
-            throw new Error("empty string");
-          }
-          return getNumber(BigInt(value), name);
-        } catch (e) {
-          assertArgument(false, `invalid numeric string: ${e.message}`, name || "value", value);
-        }
-    }
-    assertArgument(false, "invalid numeric value", name || "value", value);
-  }
-  function toNumber(value) {
-    return getNumber(toBigInt(value));
-  }
-  function toBeHex(_value, _width) {
-    const value = getUint(_value, "value");
-    let result = value.toString(16);
-    if (_width == null) {
-      if (result.length % 2) {
-        result = "0" + result;
-      }
-    } else {
-      const width = getNumber(_width, "width");
-      if (width === 0 && value === BN_0) {
-        return "0x";
-      }
-      assert3(width * 2 >= result.length, `value exceeds width (${width} bytes)`, "NUMERIC_FAULT", {
-        operation: "toBeHex",
-        fault: "overflow",
-        value: _value
-      });
-      while (result.length < width * 2) {
-        result = "0" + result;
-      }
-    }
-    return "0x" + result;
-  }
-  function toBeArray(_value, _width) {
-    const value = getUint(_value, "value");
-    if (value === BN_0) {
-      const width = _width != null ? getNumber(_width, "width") : 0;
-      return new Uint8Array(width);
-    }
-    let hex20 = value.toString(16);
-    if (hex20.length % 2) {
-      hex20 = "0" + hex20;
-    }
-    if (_width != null) {
-      const width = getNumber(_width, "width");
-      while (hex20.length < width * 2) {
-        hex20 = "00" + hex20;
-      }
-      assert3(width * 2 === hex20.length, `value exceeds width (${width} bytes)`, "NUMERIC_FAULT", {
-        operation: "toBeArray",
-        fault: "overflow",
-        value: _value
-      });
-    }
-    const result = new Uint8Array(hex20.length / 2);
-    for (let i = 0; i < result.length; i++) {
-      const offset = i * 2;
-      result[i] = parseInt(hex20.substring(offset, offset + 2), 16);
-    }
-    return result;
-  }
-
-  // node_modules/ethers/lib.esm/utils/utf8.js
-  init_dirname();
-  init_buffer2();
-  init_process2();
-  function errorFunc(reason, offset, bytes3, output3, badCodepoint) {
-    assertArgument(false, `invalid codepoint at offset ${offset}; ${reason}`, "bytes", bytes3);
-  }
-  function ignoreFunc(reason, offset, bytes3, output3, badCodepoint) {
-    if (reason === "BAD_PREFIX" || reason === "UNEXPECTED_CONTINUE") {
-      let i = 0;
-      for (let o = offset + 1; o < bytes3.length; o++) {
-        if (bytes3[o] >> 6 !== 2) {
-          break;
-        }
-        i++;
-      }
-      return i;
-    }
-    if (reason === "OVERRUN") {
-      return bytes3.length - offset - 1;
-    }
-    return 0;
-  }
-  function replaceFunc(reason, offset, bytes3, output3, badCodepoint) {
-    if (reason === "OVERLONG") {
-      assertArgument(typeof badCodepoint === "number", "invalid bad code point for replacement", "badCodepoint", badCodepoint);
-      output3.push(badCodepoint);
-      return 0;
-    }
-    output3.push(65533);
-    return ignoreFunc(reason, offset, bytes3, output3, badCodepoint);
-  }
-  var Utf8ErrorFuncs = Object.freeze({
-    error: errorFunc,
-    ignore: ignoreFunc,
-    replace: replaceFunc
-  });
-  function getUtf8CodePoints(_bytes, onError) {
-    if (onError == null) {
-      onError = Utf8ErrorFuncs.error;
-    }
-    const bytes3 = getBytes(_bytes, "bytes");
-    const result = [];
-    let i = 0;
-    while (i < bytes3.length) {
-      const c = bytes3[i++];
-      if (c >> 7 === 0) {
-        result.push(c);
-        continue;
-      }
-      let extraLength = null;
-      let overlongMask = null;
-      if ((c & 224) === 192) {
-        extraLength = 1;
-        overlongMask = 127;
-      } else if ((c & 240) === 224) {
-        extraLength = 2;
-        overlongMask = 2047;
-      } else if ((c & 248) === 240) {
-        extraLength = 3;
-        overlongMask = 65535;
-      } else {
-        if ((c & 192) === 128) {
-          i += onError("UNEXPECTED_CONTINUE", i - 1, bytes3, result);
-        } else {
-          i += onError("BAD_PREFIX", i - 1, bytes3, result);
-        }
-        continue;
-      }
-      if (i - 1 + extraLength >= bytes3.length) {
-        i += onError("OVERRUN", i - 1, bytes3, result);
-        continue;
-      }
-      let res = c & (1 << 8 - extraLength - 1) - 1;
-      for (let j = 0; j < extraLength; j++) {
-        let nextChar = bytes3[i];
-        if ((nextChar & 192) != 128) {
-          i += onError("MISSING_CONTINUE", i, bytes3, result);
-          res = null;
-          break;
-        }
-        ;
-        res = res << 6 | nextChar & 63;
-        i++;
-      }
-      if (res === null) {
-        continue;
-      }
-      if (res > 1114111) {
-        i += onError("OUT_OF_RANGE", i - 1 - extraLength, bytes3, result, res);
-        continue;
-      }
-      if (res >= 55296 && res <= 57343) {
-        i += onError("UTF16_SURROGATE", i - 1 - extraLength, bytes3, result, res);
-        continue;
-      }
-      if (res <= overlongMask) {
-        i += onError("OVERLONG", i - 1 - extraLength, bytes3, result, res);
-        continue;
-      }
-      result.push(res);
-    }
-    return result;
-  }
-  function toUtf8Bytes(str, form) {
-    assertArgument(typeof str === "string", "invalid string value", "str", str);
-    if (form != null) {
-      assertNormalize(form);
-      str = str.normalize(form);
-    }
-    let result = [];
-    for (let i = 0; i < str.length; i++) {
-      const c = str.charCodeAt(i);
-      if (c < 128) {
-        result.push(c);
-      } else if (c < 2048) {
-        result.push(c >> 6 | 192);
-        result.push(c & 63 | 128);
-      } else if ((c & 64512) == 55296) {
-        i++;
-        const c2 = str.charCodeAt(i);
-        assertArgument(i < str.length && (c2 & 64512) === 56320, "invalid surrogate pair", "str", str);
-        const pair = 65536 + ((c & 1023) << 10) + (c2 & 1023);
-        result.push(pair >> 18 | 240);
-        result.push(pair >> 12 & 63 | 128);
-        result.push(pair >> 6 & 63 | 128);
-        result.push(pair & 63 | 128);
-      } else {
-        result.push(c >> 12 | 224);
-        result.push(c >> 6 & 63 | 128);
-        result.push(c & 63 | 128);
-      }
-    }
-    return new Uint8Array(result);
-  }
-  function _toUtf8String(codePoints) {
-    return codePoints.map((codePoint) => {
-      if (codePoint <= 65535) {
-        return String.fromCharCode(codePoint);
-      }
-      codePoint -= 65536;
-      return String.fromCharCode((codePoint >> 10 & 1023) + 55296, (codePoint & 1023) + 56320);
-    }).join("");
-  }
-  function toUtf8String(bytes3, onError) {
-    return _toUtf8String(getUtf8CodePoints(bytes3, onError));
-  }
-
-  // node_modules/ethers/lib.esm/utils/rlp-encode.js
-  init_dirname();
-  init_buffer2();
-  init_process2();
-  function arrayifyInteger(value) {
-    const result = [];
-    while (value) {
-      result.unshift(value & 255);
-      value >>= 8;
-    }
-    return result;
-  }
-  function _encode3(object8) {
-    if (Array.isArray(object8)) {
-      let payload = [];
-      object8.forEach(function(child) {
-        payload = payload.concat(_encode3(child));
-      });
-      if (payload.length <= 55) {
-        payload.unshift(192 + payload.length);
-        return payload;
-      }
-      const length2 = arrayifyInteger(payload.length);
-      length2.unshift(247 + length2.length);
-      return length2.concat(payload);
-    }
-    const data = Array.prototype.slice.call(getBytes(object8, "object"));
-    if (data.length === 1 && data[0] <= 127) {
-      return data;
-    } else if (data.length <= 55) {
-      data.unshift(128 + data.length);
-      return data;
-    }
-    const length = arrayifyInteger(data.length);
-    length.unshift(183 + length.length);
-    return length.concat(data);
-  }
-  var nibbles = "0123456789abcdef";
-  function encodeRlp(object8) {
-    let result = "0x";
-    for (const v of _encode3(object8)) {
-      result += nibbles[v >> 4];
-      result += nibbles[v & 15];
-    }
-    return result;
-  }
-
-  // node_modules/ethers/lib.esm/abi/coders/abstract-coder.js
-  init_dirname();
-  init_buffer2();
-  init_process2();
-  var WordSize = 32;
-  var Padding = new Uint8Array(WordSize);
-  var passProperties = ["then"];
-  var _guard = {};
-  var resultNames = /* @__PURE__ */ new WeakMap();
-  function getNames(result) {
-    return resultNames.get(result);
-  }
-  function setNames(result, names) {
-    resultNames.set(result, names);
-  }
-  function throwError(name, error312) {
-    const wrapped = new Error(`deferred error during ABI decoding triggered accessing ${name}`);
-    wrapped.error = error312;
-    throw wrapped;
-  }
-  function toObject(names, items, deep) {
-    if (names.indexOf(null) >= 0) {
-      return items.map((item, index) => {
-        if (item instanceof Result) {
-          return toObject(getNames(item), item, deep);
-        }
-        return item;
-      });
-    }
-    return names.reduce((accum, name, index) => {
-      let item = items.getValue(name);
-      if (!(name in accum)) {
-        if (deep && item instanceof Result) {
-          item = toObject(getNames(item), item, deep);
-        }
-        accum[name] = item;
-      }
-      return accum;
-    }, {});
-  }
-  var Result = class _Result extends Array {
-    // No longer used; but cannot be removed as it will remove the
-    // #private field from the .d.ts which may break backwards
-    // compatibility
-    #names;
-    /**
-     *  @private
-     */
-    constructor(...args) {
-      const guard = args[0];
-      let items = args[1];
-      let names = (args[2] || []).slice();
-      let wrap3 = true;
-      if (guard !== _guard) {
-        items = args;
-        names = [];
-        wrap3 = false;
-      }
-      super(items.length);
-      items.forEach((item, index) => {
-        this[index] = item;
-      });
-      const nameCounts = names.reduce((accum, name) => {
-        if (typeof name === "string") {
-          accum.set(name, (accum.get(name) || 0) + 1);
-        }
-        return accum;
-      }, /* @__PURE__ */ new Map());
-      setNames(this, Object.freeze(items.map((item, index) => {
-        const name = names[index];
-        if (name != null && nameCounts.get(name) === 1) {
-          return name;
-        }
-        return null;
-      })));
-      this.#names = [];
-      if (this.#names == null) {
-        void this.#names;
-      }
-      if (!wrap3) {
-        return;
-      }
-      Object.freeze(this);
-      const proxy2 = new Proxy(this, {
-        get: (target, prop, receiver) => {
-          if (typeof prop === "string") {
-            if (prop.match(/^[0-9]+$/)) {
-              const index = getNumber(prop, "%index");
-              if (index < 0 || index >= this.length) {
-                throw new RangeError("out of result range");
-              }
-              const item = target[index];
-              if (item instanceof Error) {
-                throwError(`index ${index}`, item);
-              }
-              return item;
-            }
-            if (passProperties.indexOf(prop) >= 0) {
-              return Reflect.get(target, prop, receiver);
-            }
-            const value = target[prop];
-            if (value instanceof Function) {
-              return function(...args2) {
-                return value.apply(this === receiver ? target : this, args2);
-              };
-            } else if (!(prop in target)) {
-              return target.getValue.apply(this === receiver ? target : this, [prop]);
-            }
-          }
-          return Reflect.get(target, prop, receiver);
-        }
-      });
-      setNames(proxy2, getNames(this));
-      return proxy2;
-    }
-    /**
-     *  Returns the Result as a normal Array. If %%deep%%, any children
-     *  which are Result objects are also converted to a normal Array.
-     *
-     *  This will throw if there are any outstanding deferred
-     *  errors.
-     */
-    toArray(deep) {
-      const result = [];
-      this.forEach((item, index) => {
-        if (item instanceof Error) {
-          throwError(`index ${index}`, item);
-        }
-        if (deep && item instanceof _Result) {
-          item = item.toArray(deep);
-        }
-        result.push(item);
-      });
-      return result;
-    }
-    /**
-     *  Returns the Result as an Object with each name-value pair. If
-     *  %%deep%%, any children which are Result objects are also
-     *  converted to an Object.
-     *
-     *  This will throw if any value is unnamed, or if there are
-     *  any outstanding deferred errors.
-     */
-    toObject(deep) {
-      const names = getNames(this);
-      return names.reduce((accum, name, index) => {
-        assert3(name != null, `value at index ${index} unnamed`, "UNSUPPORTED_OPERATION", {
-          operation: "toObject()"
-        });
-        return toObject(names, this, deep);
-      }, {});
-    }
-    /**
-     *  @_ignore
-     */
-    slice(start, end) {
-      if (start == null) {
-        start = 0;
-      }
-      if (start < 0) {
-        start += this.length;
-        if (start < 0) {
-          start = 0;
-        }
-      }
-      if (end == null) {
-        end = this.length;
-      }
-      if (end < 0) {
-        end += this.length;
-        if (end < 0) {
-          end = 0;
-        }
-      }
-      if (end > this.length) {
-        end = this.length;
-      }
-      const _names = getNames(this);
-      const result = [], names = [];
-      for (let i = start; i < end; i++) {
-        result.push(this[i]);
-        names.push(_names[i]);
-      }
-      return new _Result(_guard, result, names);
-    }
-    /**
-     *  @_ignore
-     */
-    filter(callback, thisArg) {
-      const _names = getNames(this);
-      const result = [], names = [];
-      for (let i = 0; i < this.length; i++) {
-        const item = this[i];
-        if (item instanceof Error) {
-          throwError(`index ${i}`, item);
-        }
-        if (callback.call(thisArg, item, i, this)) {
-          result.push(item);
-          names.push(_names[i]);
-        }
-      }
-      return new _Result(_guard, result, names);
-    }
-    /**
-     *  @_ignore
-     */
-    map(callback, thisArg) {
-      const result = [];
-      for (let i = 0; i < this.length; i++) {
-        const item = this[i];
-        if (item instanceof Error) {
-          throwError(`index ${i}`, item);
-        }
-        result.push(callback.call(thisArg, item, i, this));
-      }
-      return result;
-    }
-    /**
-     *  Returns the value for %%name%%.
-     *
-     *  Since it is possible to have a key whose name conflicts with
-     *  a method on a [[Result]] or its superclass Array, or any
-     *  JavaScript keyword, this ensures all named values are still
-     *  accessible by name.
-     */
-    getValue(name) {
-      const index = getNames(this).indexOf(name);
-      if (index === -1) {
-        return void 0;
-      }
-      const value = this[index];
-      if (value instanceof Error) {
-        throwError(`property ${JSON.stringify(name)}`, value.error);
-      }
-      return value;
-    }
-    /**
-     *  Creates a new [[Result]] for %%items%% with each entry
-     *  also accessible by its corresponding name in %%keys%%.
-     */
-    static fromItems(items, keys) {
-      return new _Result(_guard, items, keys);
-    }
-  };
-  function getValue(value) {
-    let bytes3 = toBeArray(value);
-    assert3(bytes3.length <= WordSize, "value out-of-bounds", "BUFFER_OVERRUN", { buffer: bytes3, length: WordSize, offset: bytes3.length });
-    if (bytes3.length !== WordSize) {
-      bytes3 = getBytesCopy(concat([Padding.slice(bytes3.length % WordSize), bytes3]));
-    }
-    return bytes3;
-  }
-  var Coder = class {
-    // The coder name:
-    //   - address, uint256, tuple, array, etc.
-    name;
-    // The fully expanded type, including composite types:
-    //   - address, uint256, tuple(address,bytes), uint256[3][4][],  etc.
-    type;
-    // The localName bound in the signature, in this example it is "baz":
-    //   - tuple(address foo, uint bar) baz
-    localName;
-    // Whether this type is dynamic:
-    //  - Dynamic: bytes, string, address[], tuple(boolean[]), etc.
-    //  - Not Dynamic: address, uint256, boolean[3], tuple(address, uint8)
-    dynamic;
-    constructor(name, type, localName, dynamic) {
-      defineProperties(this, { name, type, localName, dynamic }, {
-        name: "string",
-        type: "string",
-        localName: "string",
-        dynamic: "boolean"
-      });
-    }
-    _throwError(message, value) {
-      assertArgument(false, message, this.localName, value);
-    }
-  };
-  var Writer = class {
-    // An array of WordSize lengthed objects to concatenation
-    #data;
-    #dataLength;
-    constructor() {
-      this.#data = [];
-      this.#dataLength = 0;
-    }
-    get data() {
-      return concat(this.#data);
-    }
-    get length() {
-      return this.#dataLength;
-    }
-    #writeData(data) {
-      this.#data.push(data);
-      this.#dataLength += data.length;
-      return data.length;
-    }
-    appendWriter(writer) {
-      return this.#writeData(getBytesCopy(writer.data));
-    }
-    // Arrayish item; pad on the right to *nearest* WordSize
-    writeBytes(value) {
-      let bytes3 = getBytesCopy(value);
-      const paddingOffset = bytes3.length % WordSize;
-      if (paddingOffset) {
-        bytes3 = getBytesCopy(concat([bytes3, Padding.slice(paddingOffset)]));
-      }
-      return this.#writeData(bytes3);
-    }
-    // Numeric item; pad on the left *to* WordSize
-    writeValue(value) {
-      return this.#writeData(getValue(value));
-    }
-    // Inserts a numeric place-holder, returning a callback that can
-    // be used to asjust the value later
-    writeUpdatableValue() {
-      const offset = this.#data.length;
-      this.#data.push(Padding);
-      this.#dataLength += WordSize;
-      return (value) => {
-        this.#data[offset] = getValue(value);
-      };
-    }
-  };
-  var Reader = class _Reader {
-    // Allows incomplete unpadded data to be read; otherwise an error
-    // is raised if attempting to overrun the buffer. This is required
-    // to deal with an old Solidity bug, in which event data for
-    // external (not public thoguh) was tightly packed.
-    allowLoose;
-    #data;
-    #offset;
-    #bytesRead;
-    #parent;
-    #maxInflation;
-    constructor(data, allowLoose, maxInflation) {
-      defineProperties(this, { allowLoose: !!allowLoose });
-      this.#data = getBytesCopy(data);
-      this.#bytesRead = 0;
-      this.#parent = null;
-      this.#maxInflation = maxInflation != null ? maxInflation : 1024;
-      this.#offset = 0;
-    }
-    get data() {
-      return hexlify(this.#data);
-    }
-    get dataLength() {
-      return this.#data.length;
-    }
-    get consumed() {
-      return this.#offset;
-    }
-    get bytes() {
-      return new Uint8Array(this.#data);
-    }
-    #incrementBytesRead(count) {
-      if (this.#parent) {
-        return this.#parent.#incrementBytesRead(count);
-      }
-      this.#bytesRead += count;
-      assert3(this.#maxInflation < 1 || this.#bytesRead <= this.#maxInflation * this.dataLength, `compressed ABI data exceeds inflation ratio of ${this.#maxInflation} ( see: https://github.com/ethers-io/ethers.js/issues/4537 )`, "BUFFER_OVERRUN", {
-        buffer: getBytesCopy(this.#data),
-        offset: this.#offset,
-        length: count,
-        info: {
-          bytesRead: this.#bytesRead,
-          dataLength: this.dataLength
-        }
-      });
-    }
-    #peekBytes(offset, length, loose) {
-      let alignedLength = Math.ceil(length / WordSize) * WordSize;
-      if (this.#offset + alignedLength > this.#data.length) {
-        if (this.allowLoose && loose && this.#offset + length <= this.#data.length) {
-          alignedLength = length;
-        } else {
-          assert3(false, "data out-of-bounds", "BUFFER_OVERRUN", {
-            buffer: getBytesCopy(this.#data),
-            length: this.#data.length,
-            offset: this.#offset + alignedLength
-          });
-        }
-      }
-      return this.#data.slice(this.#offset, this.#offset + alignedLength);
-    }
-    // Create a sub-reader with the same underlying data, but offset
-    subReader(offset) {
-      const reader = new _Reader(this.#data.slice(this.#offset + offset), this.allowLoose, this.#maxInflation);
-      reader.#parent = this;
-      return reader;
-    }
-    // Read bytes
-    readBytes(length, loose) {
-      let bytes3 = this.#peekBytes(0, length, !!loose);
-      this.#incrementBytesRead(length);
-      this.#offset += bytes3.length;
-      return bytes3.slice(0, length);
-    }
-    // Read a numeric values
-    readValue() {
-      return toBigInt(this.readBytes(WordSize));
-    }
-    readIndex() {
-      return toNumber(this.readBytes(WordSize));
-    }
-  };
-
-  // node_modules/ethers/lib.esm/abi/coders/address.js
-  init_dirname();
-  init_buffer2();
-  init_process2();
-
-  // node_modules/ethers/lib.esm/address/index.js
-  init_dirname();
-  init_buffer2();
-  init_process2();
-
-  // node_modules/ethers/lib.esm/address/address.js
-  init_dirname();
-  init_buffer2();
-  init_process2();
-
-  // node_modules/ethers/lib.esm/crypto/index.js
-  init_dirname();
-  init_buffer2();
-  init_process2();
-
-  // node_modules/ethers/node_modules/@noble/hashes/esm/_assert.js
-  init_dirname();
-  init_buffer2();
-  init_process2();
-  function number4(n2) {
-    if (!Number.isSafeInteger(n2) || n2 < 0)
-      throw new Error(`Wrong positive integer: ${n2}`);
-  }
-  function bytes(b2, ...lengths) {
-    if (!(b2 instanceof Uint8Array))
-      throw new Error("Expected Uint8Array");
-    if (lengths.length > 0 && !lengths.includes(b2.length))
-      throw new Error(`Expected Uint8Array of length ${lengths}, not of length=${b2.length}`);
-  }
-  function exists(instance, checkFinished = true) {
-    if (instance.destroyed)
-      throw new Error("Hash instance has been destroyed");
-    if (checkFinished && instance.finished)
-      throw new Error("Hash#digest() has already been called");
-  }
-  function output2(out, instance) {
-    bytes(out);
-    const min2 = instance.outputLen;
-    if (out.length < min2) {
-      throw new Error(`digestInto() expects output buffer of length at least ${min2}`);
-    }
-  }
-
-  // node_modules/ethers/node_modules/@noble/hashes/esm/utils.js
-  init_dirname();
-  init_buffer2();
-  init_process2();
-  var u8a = (a) => a instanceof Uint8Array;
-  var u32 = (arr) => new Uint32Array(arr.buffer, arr.byteOffset, Math.floor(arr.byteLength / 4));
-  var isLE = new Uint8Array(new Uint32Array([287454020]).buffer)[0] === 68;
-  if (!isLE)
-    throw new Error("Non little-endian hardware is not supported");
-  function utf8ToBytes(str) {
-    if (typeof str !== "string")
-      throw new Error(`utf8ToBytes expected string, got ${typeof str}`);
-    return new Uint8Array(new TextEncoder().encode(str));
-  }
-  function toBytes(data) {
-    if (typeof data === "string")
-      data = utf8ToBytes(data);
-    if (!u8a(data))
-      throw new Error(`expected Uint8Array, got ${typeof data}`);
-    return data;
-  }
-  var Hash = class {
-    // Safe version that clones internal state
-    clone() {
-      return this._cloneInto();
-    }
-  };
-  var toStr = {}.toString;
-  function wrapConstructor(hashCons) {
-    const hashC = (msg) => hashCons().update(toBytes(msg)).digest();
-    const tmp = hashCons();
-    hashC.outputLen = tmp.outputLen;
-    hashC.blockLen = tmp.blockLen;
-    hashC.create = () => hashCons();
-    return hashC;
-  }
-  function wrapXOFConstructorWithOpts(hashCons) {
-    const hashC = (msg, opts) => hashCons(opts).update(toBytes(msg)).digest();
-    const tmp = hashCons({});
-    hashC.outputLen = tmp.outputLen;
-    hashC.blockLen = tmp.blockLen;
-    hashC.create = (opts) => hashCons(opts);
-    return hashC;
-  }
-
-  // node_modules/ethers/node_modules/@noble/hashes/esm/_u64.js
-  init_dirname();
-  init_buffer2();
-  init_process2();
-  var U32_MASK64 = /* @__PURE__ */ BigInt(2 ** 32 - 1);
-  var _32n = /* @__PURE__ */ BigInt(32);
-  function fromBig(n2, le = false) {
-    if (le)
-      return { h: Number(n2 & U32_MASK64), l: Number(n2 >> _32n & U32_MASK64) };
-    return { h: Number(n2 >> _32n & U32_MASK64) | 0, l: Number(n2 & U32_MASK64) | 0 };
-  }
-  function split(lst, le = false) {
-    let Ah = new Uint32Array(lst.length);
-    let Al = new Uint32Array(lst.length);
-    for (let i = 0; i < lst.length; i++) {
-      const { h, l } = fromBig(lst[i], le);
-      [Ah[i], Al[i]] = [h, l];
-    }
-    return [Ah, Al];
-  }
-  var rotlSH = (h, l, s) => h << s | l >>> 32 - s;
-  var rotlSL = (h, l, s) => l << s | h >>> 32 - s;
-  var rotlBH = (h, l, s) => l << s - 32 | h >>> 64 - s;
-  var rotlBL = (h, l, s) => h << s - 32 | l >>> 64 - s;
-
-  // node_modules/ethers/lib.esm/crypto/keccak.js
-  init_dirname();
-  init_buffer2();
-  init_process2();
-
-  // node_modules/ethers/node_modules/@noble/hashes/esm/sha3.js
-  init_dirname();
-  init_buffer2();
-  init_process2();
-  var [SHA3_PI, SHA3_ROTL, _SHA3_IOTA] = [[], [], []];
-  var _0n = /* @__PURE__ */ BigInt(0);
-  var _1n = /* @__PURE__ */ BigInt(1);
-  var _2n = /* @__PURE__ */ BigInt(2);
-  var _7n = /* @__PURE__ */ BigInt(7);
-  var _256n = /* @__PURE__ */ BigInt(256);
-  var _0x71n = /* @__PURE__ */ BigInt(113);
-  for (let round = 0, R = _1n, x = 1, y = 0; round < 24; round++) {
-    [x, y] = [y, (2 * x + 3 * y) % 5];
-    SHA3_PI.push(2 * (5 * y + x));
-    SHA3_ROTL.push((round + 1) * (round + 2) / 2 % 64);
-    let t = _0n;
-    for (let j = 0; j < 7; j++) {
-      R = (R << _1n ^ (R >> _7n) * _0x71n) % _256n;
-      if (R & _2n)
-        t ^= _1n << (_1n << /* @__PURE__ */ BigInt(j)) - _1n;
-    }
-    _SHA3_IOTA.push(t);
-  }
-  var [SHA3_IOTA_H, SHA3_IOTA_L] = /* @__PURE__ */ split(_SHA3_IOTA, true);
-  var rotlH = (h, l, s) => s > 32 ? rotlBH(h, l, s) : rotlSH(h, l, s);
-  var rotlL = (h, l, s) => s > 32 ? rotlBL(h, l, s) : rotlSL(h, l, s);
-  function keccakP(s, rounds = 24) {
-    const B = new Uint32Array(5 * 2);
-    for (let round = 24 - rounds; round < 24; round++) {
-      for (let x = 0; x < 10; x++)
-        B[x] = s[x] ^ s[x + 10] ^ s[x + 20] ^ s[x + 30] ^ s[x + 40];
-      for (let x = 0; x < 10; x += 2) {
-        const idx1 = (x + 8) % 10;
-        const idx0 = (x + 2) % 10;
-        const B0 = B[idx0];
-        const B1 = B[idx0 + 1];
-        const Th = rotlH(B0, B1, 1) ^ B[idx1];
-        const Tl = rotlL(B0, B1, 1) ^ B[idx1 + 1];
-        for (let y = 0; y < 50; y += 10) {
-          s[x + y] ^= Th;
-          s[x + y + 1] ^= Tl;
-        }
-      }
-      let curH = s[2];
-      let curL = s[3];
-      for (let t = 0; t < 24; t++) {
-        const shift = SHA3_ROTL[t];
-        const Th = rotlH(curH, curL, shift);
-        const Tl = rotlL(curH, curL, shift);
-        const PI = SHA3_PI[t];
-        curH = s[PI];
-        curL = s[PI + 1];
-        s[PI] = Th;
-        s[PI + 1] = Tl;
-      }
-      for (let y = 0; y < 50; y += 10) {
-        for (let x = 0; x < 10; x++)
-          B[x] = s[y + x];
-        for (let x = 0; x < 10; x++)
-          s[y + x] ^= ~B[(x + 2) % 10] & B[(x + 4) % 10];
-      }
-      s[0] ^= SHA3_IOTA_H[round];
-      s[1] ^= SHA3_IOTA_L[round];
-    }
-    B.fill(0);
-  }
-  var Keccak = class _Keccak extends Hash {
-    // NOTE: we accept arguments in bytes instead of bits here.
-    constructor(blockLen, suffix, outputLen, enableXOF = false, rounds = 24) {
-      super();
-      this.blockLen = blockLen;
-      this.suffix = suffix;
-      this.outputLen = outputLen;
-      this.enableXOF = enableXOF;
-      this.rounds = rounds;
-      this.pos = 0;
-      this.posOut = 0;
-      this.finished = false;
-      this.destroyed = false;
-      number4(outputLen);
-      if (0 >= this.blockLen || this.blockLen >= 200)
-        throw new Error("Sha3 supports only keccak-f1600 function");
-      this.state = new Uint8Array(200);
-      this.state32 = u32(this.state);
-    }
-    keccak() {
-      keccakP(this.state32, this.rounds);
-      this.posOut = 0;
-      this.pos = 0;
-    }
-    update(data) {
-      exists(this);
-      const { blockLen, state } = this;
-      data = toBytes(data);
-      const len = data.length;
-      for (let pos = 0; pos < len; ) {
-        const take = Math.min(blockLen - this.pos, len - pos);
-        for (let i = 0; i < take; i++)
-          state[this.pos++] ^= data[pos++];
-        if (this.pos === blockLen)
-          this.keccak();
-      }
-      return this;
-    }
-    finish() {
-      if (this.finished)
-        return;
-      this.finished = true;
-      const { state, suffix, pos, blockLen } = this;
-      state[pos] ^= suffix;
-      if ((suffix & 128) !== 0 && pos === blockLen - 1)
-        this.keccak();
-      state[blockLen - 1] ^= 128;
-      this.keccak();
-    }
-    writeInto(out) {
-      exists(this, false);
-      bytes(out);
-      this.finish();
-      const bufferOut = this.state;
-      const { blockLen } = this;
-      for (let pos = 0, len = out.length; pos < len; ) {
-        if (this.posOut >= blockLen)
-          this.keccak();
-        const take = Math.min(blockLen - this.posOut, len - pos);
-        out.set(bufferOut.subarray(this.posOut, this.posOut + take), pos);
-        this.posOut += take;
-        pos += take;
-      }
-      return out;
-    }
-    xofInto(out) {
-      if (!this.enableXOF)
-        throw new Error("XOF is not possible for this instance");
-      return this.writeInto(out);
-    }
-    xof(bytes3) {
-      number4(bytes3);
-      return this.xofInto(new Uint8Array(bytes3));
-    }
-    digestInto(out) {
-      output2(out, this);
-      if (this.finished)
-        throw new Error("digest() was already called");
-      this.writeInto(out);
-      this.destroy();
-      return out;
-    }
-    digest() {
-      return this.digestInto(new Uint8Array(this.outputLen));
-    }
-    destroy() {
-      this.destroyed = true;
-      this.state.fill(0);
-    }
-    _cloneInto(to) {
-      const { blockLen, suffix, outputLen, rounds, enableXOF } = this;
-      to || (to = new _Keccak(blockLen, suffix, outputLen, enableXOF, rounds));
-      to.state32.set(this.state32);
-      to.pos = this.pos;
-      to.posOut = this.posOut;
-      to.finished = this.finished;
-      to.rounds = rounds;
-      to.suffix = suffix;
-      to.outputLen = outputLen;
-      to.enableXOF = enableXOF;
-      to.destroyed = this.destroyed;
-      return to;
-    }
-  };
-  var gen = (suffix, blockLen, outputLen) => wrapConstructor(() => new Keccak(blockLen, suffix, outputLen));
-  var sha3_224 = /* @__PURE__ */ gen(6, 144, 224 / 8);
-  var sha3_256 = /* @__PURE__ */ gen(6, 136, 256 / 8);
-  var sha3_384 = /* @__PURE__ */ gen(6, 104, 384 / 8);
-  var sha3_512 = /* @__PURE__ */ gen(6, 72, 512 / 8);
-  var keccak_224 = /* @__PURE__ */ gen(1, 144, 224 / 8);
-  var keccak_256 = /* @__PURE__ */ gen(1, 136, 256 / 8);
-  var keccak_384 = /* @__PURE__ */ gen(1, 104, 384 / 8);
-  var keccak_512 = /* @__PURE__ */ gen(1, 72, 512 / 8);
-  var genShake = (suffix, blockLen, outputLen) => wrapXOFConstructorWithOpts((opts = {}) => new Keccak(blockLen, suffix, opts.dkLen === void 0 ? outputLen : opts.dkLen, true));
-  var shake128 = /* @__PURE__ */ genShake(31, 168, 128 / 8);
-  var shake256 = /* @__PURE__ */ genShake(31, 136, 256 / 8);
-
-  // node_modules/ethers/lib.esm/crypto/keccak.js
-  var locked = false;
-  var _keccak256 = function(data) {
-    return keccak_256(data);
-  };
-  var __keccak256 = _keccak256;
-  function keccak256(_data) {
-    const data = getBytes(_data, "data");
-    return hexlify(__keccak256(data));
-  }
-  keccak256._ = _keccak256;
-  keccak256.lock = function() {
-    locked = true;
-  };
-  keccak256.register = function(func) {
-    if (locked) {
-      throw new TypeError("keccak256 is locked");
-    }
-    __keccak256 = func;
-  };
-  Object.freeze(keccak256);
-
-  // node_modules/ethers/lib.esm/address/address.js
-  var BN_02 = BigInt(0);
-  var BN_36 = BigInt(36);
-  function getChecksumAddress(address6) {
-    address6 = address6.toLowerCase();
-    const chars = address6.substring(2).split("");
-    const expanded = new Uint8Array(40);
-    for (let i = 0; i < 40; i++) {
-      expanded[i] = chars[i].charCodeAt(0);
-    }
-    const hashed = getBytes(keccak256(expanded));
-    for (let i = 0; i < 40; i += 2) {
-      if (hashed[i >> 1] >> 4 >= 8) {
-        chars[i] = chars[i].toUpperCase();
-      }
-      if ((hashed[i >> 1] & 15) >= 8) {
-        chars[i + 1] = chars[i + 1].toUpperCase();
-      }
-    }
-    return "0x" + chars.join("");
-  }
-  var ibanLookup = {};
-  for (let i = 0; i < 10; i++) {
-    ibanLookup[String(i)] = String(i);
-  }
-  for (let i = 0; i < 26; i++) {
-    ibanLookup[String.fromCharCode(65 + i)] = String(10 + i);
-  }
-  var safeDigits = 15;
-  function ibanChecksum(address6) {
-    address6 = address6.toUpperCase();
-    address6 = address6.substring(4) + address6.substring(0, 2) + "00";
-    let expanded = address6.split("").map((c) => {
-      return ibanLookup[c];
-    }).join("");
-    while (expanded.length >= safeDigits) {
-      let block2 = expanded.substring(0, safeDigits);
-      expanded = parseInt(block2, 10) % 97 + expanded.substring(block2.length);
-    }
-    let checksum = String(98 - parseInt(expanded, 10) % 97);
-    while (checksum.length < 2) {
-      checksum = "0" + checksum;
-    }
-    return checksum;
-  }
-  var Base36 = (function() {
-    ;
-    const result = {};
-    for (let i = 0; i < 36; i++) {
-      const key = "0123456789abcdefghijklmnopqrstuvwxyz"[i];
-      result[key] = BigInt(i);
-    }
-    return result;
-  })();
-  function fromBase36(value) {
-    value = value.toLowerCase();
-    let result = BN_02;
-    for (let i = 0; i < value.length; i++) {
-      result = result * BN_36 + Base36[value[i]];
-    }
-    return result;
-  }
-  function getAddress(address6) {
-    assertArgument(typeof address6 === "string", "invalid address", "address", address6);
-    if (address6.match(/^(0x)?[0-9a-fA-F]{40}$/)) {
-      if (!address6.startsWith("0x")) {
-        address6 = "0x" + address6;
-      }
-      const result = getChecksumAddress(address6);
-      assertArgument(!address6.match(/([A-F].*[a-f])|([a-f].*[A-F])/) || result === address6, "bad address checksum", "address", address6);
-      return result;
-    }
-    if (address6.match(/^XE[0-9]{2}[0-9A-Za-z]{30,31}$/)) {
-      assertArgument(address6.substring(2, 4) === ibanChecksum(address6), "bad icap checksum", "address", address6);
-      let result = fromBase36(address6.substring(4)).toString(16);
-      while (result.length < 40) {
-        result = "0" + result;
-      }
-      return getChecksumAddress("0x" + result);
-    }
-    assertArgument(false, "invalid address", "address", address6);
-  }
-
-  // node_modules/ethers/lib.esm/address/contract-address.js
-  init_dirname();
-  init_buffer2();
-  init_process2();
-  function getCreateAddress(tx) {
-    const from = getAddress(tx.from);
-    const nonce = getBigInt(tx.nonce, "tx.nonce");
-    let nonceHex = nonce.toString(16);
-    if (nonceHex === "0") {
-      nonceHex = "0x";
-    } else if (nonceHex.length % 2) {
-      nonceHex = "0x0" + nonceHex;
-    } else {
-      nonceHex = "0x" + nonceHex;
-    }
-    return getAddress(dataSlice(keccak256(encodeRlp([from, nonceHex])), 12));
-  }
-  function getCreate2Address(_from, _salt, _initCodeHash) {
-    const from = getAddress(_from);
-    const salt = getBytes(_salt, "salt");
-    const initCodeHash = getBytes(_initCodeHash, "initCodeHash");
-    assertArgument(salt.length === 32, "salt must be 32 bytes", "salt", _salt);
-    assertArgument(initCodeHash.length === 32, "initCodeHash must be 32 bytes", "initCodeHash", _initCodeHash);
-    return getAddress(dataSlice(keccak256(concat(["0xff", from, salt, initCodeHash])), 12));
-  }
-
-  // node_modules/ethers/lib.esm/abi/typed.js
-  init_dirname();
-  init_buffer2();
-  init_process2();
-  var _gaurd = {};
-  function n(value, width) {
-    let signed = false;
-    if (width < 0) {
-      signed = true;
-      width *= -1;
-    }
-    return new Typed(_gaurd, `${signed ? "" : "u"}int${width}`, value, { signed, width });
-  }
-  function b(value, size2) {
-    return new Typed(_gaurd, `bytes${size2 ? size2 : ""}`, value, { size: size2 });
-  }
-  var _typedSymbol = Symbol.for("_ethers_typed");
-  var Typed = class _Typed {
-    /**
-     *  The type, as a Solidity-compatible type.
-     */
-    type;
-    /**
-     *  The actual value.
-     */
-    value;
-    #options;
-    /**
-     *  @_ignore:
-     */
-    _typedSymbol;
-    /**
-     *  @_ignore:
-     */
-    constructor(gaurd, type, value, options) {
-      if (options == null) {
-        options = null;
-      }
-      assertPrivate(_gaurd, gaurd, "Typed");
-      defineProperties(this, { _typedSymbol, type, value });
-      this.#options = options;
-      this.format();
-    }
-    /**
-     *  Format the type as a Human-Readable type.
-     */
-    format() {
-      if (this.type === "array") {
-        throw new Error("");
-      } else if (this.type === "dynamicArray") {
-        throw new Error("");
-      } else if (this.type === "tuple") {
-        return `tuple(${this.value.map((v) => v.format()).join(",")})`;
-      }
-      return this.type;
-    }
-    /**
-     *  The default value returned by this type.
-     */
-    defaultValue() {
-      return 0;
-    }
-    /**
-     *  The minimum value for numeric types.
-     */
-    minValue() {
-      return 0;
-    }
-    /**
-     *  The maximum value for numeric types.
-     */
-    maxValue() {
-      return 0;
-    }
-    /**
-     *  Returns ``true`` and provides a type guard is this is a [[TypedBigInt]].
-     */
-    isBigInt() {
-      return !!this.type.match(/^u?int[0-9]+$/);
-    }
-    /**
-     *  Returns ``true`` and provides a type guard is this is a [[TypedData]].
-     */
-    isData() {
-      return this.type.startsWith("bytes");
-    }
-    /**
-     *  Returns ``true`` and provides a type guard is this is a [[TypedString]].
-     */
-    isString() {
-      return this.type === "string";
-    }
-    /**
-     *  Returns the tuple name, if this is a tuple. Throws otherwise.
-     */
-    get tupleName() {
-      if (this.type !== "tuple") {
-        throw TypeError("not a tuple");
-      }
-      return this.#options;
-    }
-    // Returns the length of this type as an array
-    // - `null` indicates the length is unforced, it could be dynamic
-    // - `-1` indicates the length is dynamic
-    // - any other value indicates it is a static array and is its length
-    /**
-     *  Returns the length of the array type or ``-1`` if it is dynamic.
-     *
-     *  Throws if the type is not an array.
-     */
-    get arrayLength() {
-      if (this.type !== "array") {
-        throw TypeError("not an array");
-      }
-      if (this.#options === true) {
-        return -1;
-      }
-      if (this.#options === false) {
-        return this.value.length;
-      }
-      return null;
-    }
-    /**
-     *  Returns a new **Typed** of %%type%% with the %%value%%.
-     */
-    static from(type, value) {
-      return new _Typed(_gaurd, type, value);
-    }
-    /**
-     *  Return a new ``uint8`` type for %%v%%.
-     */
-    static uint8(v) {
-      return n(v, 8);
-    }
-    /**
-     *  Return a new ``uint16`` type for %%v%%.
-     */
-    static uint16(v) {
-      return n(v, 16);
-    }
-    /**
-     *  Return a new ``uint24`` type for %%v%%.
-     */
-    static uint24(v) {
-      return n(v, 24);
-    }
-    /**
-     *  Return a new ``uint32`` type for %%v%%.
-     */
-    static uint32(v) {
-      return n(v, 32);
-    }
-    /**
-     *  Return a new ``uint40`` type for %%v%%.
-     */
-    static uint40(v) {
-      return n(v, 40);
-    }
-    /**
-     *  Return a new ``uint48`` type for %%v%%.
-     */
-    static uint48(v) {
-      return n(v, 48);
-    }
-    /**
-     *  Return a new ``uint56`` type for %%v%%.
-     */
-    static uint56(v) {
-      return n(v, 56);
-    }
-    /**
-     *  Return a new ``uint64`` type for %%v%%.
-     */
-    static uint64(v) {
-      return n(v, 64);
-    }
-    /**
-     *  Return a new ``uint72`` type for %%v%%.
-     */
-    static uint72(v) {
-      return n(v, 72);
-    }
-    /**
-     *  Return a new ``uint80`` type for %%v%%.
-     */
-    static uint80(v) {
-      return n(v, 80);
-    }
-    /**
-     *  Return a new ``uint88`` type for %%v%%.
-     */
-    static uint88(v) {
-      return n(v, 88);
-    }
-    /**
-     *  Return a new ``uint96`` type for %%v%%.
-     */
-    static uint96(v) {
-      return n(v, 96);
-    }
-    /**
-     *  Return a new ``uint104`` type for %%v%%.
-     */
-    static uint104(v) {
-      return n(v, 104);
-    }
-    /**
-     *  Return a new ``uint112`` type for %%v%%.
-     */
-    static uint112(v) {
-      return n(v, 112);
-    }
-    /**
-     *  Return a new ``uint120`` type for %%v%%.
-     */
-    static uint120(v) {
-      return n(v, 120);
-    }
-    /**
-     *  Return a new ``uint128`` type for %%v%%.
-     */
-    static uint128(v) {
-      return n(v, 128);
-    }
-    /**
-     *  Return a new ``uint136`` type for %%v%%.
-     */
-    static uint136(v) {
-      return n(v, 136);
-    }
-    /**
-     *  Return a new ``uint144`` type for %%v%%.
-     */
-    static uint144(v) {
-      return n(v, 144);
-    }
-    /**
-     *  Return a new ``uint152`` type for %%v%%.
-     */
-    static uint152(v) {
-      return n(v, 152);
-    }
-    /**
-     *  Return a new ``uint160`` type for %%v%%.
-     */
-    static uint160(v) {
-      return n(v, 160);
-    }
-    /**
-     *  Return a new ``uint168`` type for %%v%%.
-     */
-    static uint168(v) {
-      return n(v, 168);
-    }
-    /**
-     *  Return a new ``uint176`` type for %%v%%.
-     */
-    static uint176(v) {
-      return n(v, 176);
-    }
-    /**
-     *  Return a new ``uint184`` type for %%v%%.
-     */
-    static uint184(v) {
-      return n(v, 184);
-    }
-    /**
-     *  Return a new ``uint192`` type for %%v%%.
-     */
-    static uint192(v) {
-      return n(v, 192);
-    }
-    /**
-     *  Return a new ``uint200`` type for %%v%%.
-     */
-    static uint200(v) {
-      return n(v, 200);
-    }
-    /**
-     *  Return a new ``uint208`` type for %%v%%.
-     */
-    static uint208(v) {
-      return n(v, 208);
-    }
-    /**
-     *  Return a new ``uint216`` type for %%v%%.
-     */
-    static uint216(v) {
-      return n(v, 216);
-    }
-    /**
-     *  Return a new ``uint224`` type for %%v%%.
-     */
-    static uint224(v) {
-      return n(v, 224);
-    }
-    /**
-     *  Return a new ``uint232`` type for %%v%%.
-     */
-    static uint232(v) {
-      return n(v, 232);
-    }
-    /**
-     *  Return a new ``uint240`` type for %%v%%.
-     */
-    static uint240(v) {
-      return n(v, 240);
-    }
-    /**
-     *  Return a new ``uint248`` type for %%v%%.
-     */
-    static uint248(v) {
-      return n(v, 248);
-    }
-    /**
-     *  Return a new ``uint256`` type for %%v%%.
-     */
-    static uint256(v) {
-      return n(v, 256);
-    }
-    /**
-     *  Return a new ``uint256`` type for %%v%%.
-     */
-    static uint(v) {
-      return n(v, 256);
-    }
-    /**
-     *  Return a new ``int8`` type for %%v%%.
-     */
-    static int8(v) {
-      return n(v, -8);
-    }
-    /**
-     *  Return a new ``int16`` type for %%v%%.
-     */
-    static int16(v) {
-      return n(v, -16);
-    }
-    /**
-     *  Return a new ``int24`` type for %%v%%.
-     */
-    static int24(v) {
-      return n(v, -24);
-    }
-    /**
-     *  Return a new ``int32`` type for %%v%%.
-     */
-    static int32(v) {
-      return n(v, -32);
-    }
-    /**
-     *  Return a new ``int40`` type for %%v%%.
-     */
-    static int40(v) {
-      return n(v, -40);
-    }
-    /**
-     *  Return a new ``int48`` type for %%v%%.
-     */
-    static int48(v) {
-      return n(v, -48);
-    }
-    /**
-     *  Return a new ``int56`` type for %%v%%.
-     */
-    static int56(v) {
-      return n(v, -56);
-    }
-    /**
-     *  Return a new ``int64`` type for %%v%%.
-     */
-    static int64(v) {
-      return n(v, -64);
-    }
-    /**
-     *  Return a new ``int72`` type for %%v%%.
-     */
-    static int72(v) {
-      return n(v, -72);
-    }
-    /**
-     *  Return a new ``int80`` type for %%v%%.
-     */
-    static int80(v) {
-      return n(v, -80);
-    }
-    /**
-     *  Return a new ``int88`` type for %%v%%.
-     */
-    static int88(v) {
-      return n(v, -88);
-    }
-    /**
-     *  Return a new ``int96`` type for %%v%%.
-     */
-    static int96(v) {
-      return n(v, -96);
-    }
-    /**
-     *  Return a new ``int104`` type for %%v%%.
-     */
-    static int104(v) {
-      return n(v, -104);
-    }
-    /**
-     *  Return a new ``int112`` type for %%v%%.
-     */
-    static int112(v) {
-      return n(v, -112);
-    }
-    /**
-     *  Return a new ``int120`` type for %%v%%.
-     */
-    static int120(v) {
-      return n(v, -120);
-    }
-    /**
-     *  Return a new ``int128`` type for %%v%%.
-     */
-    static int128(v) {
-      return n(v, -128);
-    }
-    /**
-     *  Return a new ``int136`` type for %%v%%.
-     */
-    static int136(v) {
-      return n(v, -136);
-    }
-    /**
-     *  Return a new ``int144`` type for %%v%%.
-     */
-    static int144(v) {
-      return n(v, -144);
-    }
-    /**
-     *  Return a new ``int52`` type for %%v%%.
-     */
-    static int152(v) {
-      return n(v, -152);
-    }
-    /**
-     *  Return a new ``int160`` type for %%v%%.
-     */
-    static int160(v) {
-      return n(v, -160);
-    }
-    /**
-     *  Return a new ``int168`` type for %%v%%.
-     */
-    static int168(v) {
-      return n(v, -168);
-    }
-    /**
-     *  Return a new ``int176`` type for %%v%%.
-     */
-    static int176(v) {
-      return n(v, -176);
-    }
-    /**
-     *  Return a new ``int184`` type for %%v%%.
-     */
-    static int184(v) {
-      return n(v, -184);
-    }
-    /**
-     *  Return a new ``int92`` type for %%v%%.
-     */
-    static int192(v) {
-      return n(v, -192);
-    }
-    /**
-     *  Return a new ``int200`` type for %%v%%.
-     */
-    static int200(v) {
-      return n(v, -200);
-    }
-    /**
-     *  Return a new ``int208`` type for %%v%%.
-     */
-    static int208(v) {
-      return n(v, -208);
-    }
-    /**
-     *  Return a new ``int216`` type for %%v%%.
-     */
-    static int216(v) {
-      return n(v, -216);
-    }
-    /**
-     *  Return a new ``int224`` type for %%v%%.
-     */
-    static int224(v) {
-      return n(v, -224);
-    }
-    /**
-     *  Return a new ``int232`` type for %%v%%.
-     */
-    static int232(v) {
-      return n(v, -232);
-    }
-    /**
-     *  Return a new ``int240`` type for %%v%%.
-     */
-    static int240(v) {
-      return n(v, -240);
-    }
-    /**
-     *  Return a new ``int248`` type for %%v%%.
-     */
-    static int248(v) {
-      return n(v, -248);
-    }
-    /**
-     *  Return a new ``int256`` type for %%v%%.
-     */
-    static int256(v) {
-      return n(v, -256);
-    }
-    /**
-     *  Return a new ``int256`` type for %%v%%.
-     */
-    static int(v) {
-      return n(v, -256);
-    }
-    /**
-     *  Return a new ``bytes1`` type for %%v%%.
-     */
-    static bytes1(v) {
-      return b(v, 1);
-    }
-    /**
-     *  Return a new ``bytes2`` type for %%v%%.
-     */
-    static bytes2(v) {
-      return b(v, 2);
-    }
-    /**
-     *  Return a new ``bytes3`` type for %%v%%.
-     */
-    static bytes3(v) {
-      return b(v, 3);
-    }
-    /**
-     *  Return a new ``bytes4`` type for %%v%%.
-     */
-    static bytes4(v) {
-      return b(v, 4);
-    }
-    /**
-     *  Return a new ``bytes5`` type for %%v%%.
-     */
-    static bytes5(v) {
-      return b(v, 5);
-    }
-    /**
-     *  Return a new ``bytes6`` type for %%v%%.
-     */
-    static bytes6(v) {
-      return b(v, 6);
-    }
-    /**
-     *  Return a new ``bytes7`` type for %%v%%.
-     */
-    static bytes7(v) {
-      return b(v, 7);
-    }
-    /**
-     *  Return a new ``bytes8`` type for %%v%%.
-     */
-    static bytes8(v) {
-      return b(v, 8);
-    }
-    /**
-     *  Return a new ``bytes9`` type for %%v%%.
-     */
-    static bytes9(v) {
-      return b(v, 9);
-    }
-    /**
-     *  Return a new ``bytes10`` type for %%v%%.
-     */
-    static bytes10(v) {
-      return b(v, 10);
-    }
-    /**
-     *  Return a new ``bytes11`` type for %%v%%.
-     */
-    static bytes11(v) {
-      return b(v, 11);
-    }
-    /**
-     *  Return a new ``bytes12`` type for %%v%%.
-     */
-    static bytes12(v) {
-      return b(v, 12);
-    }
-    /**
-     *  Return a new ``bytes13`` type for %%v%%.
-     */
-    static bytes13(v) {
-      return b(v, 13);
-    }
-    /**
-     *  Return a new ``bytes14`` type for %%v%%.
-     */
-    static bytes14(v) {
-      return b(v, 14);
-    }
-    /**
-     *  Return a new ``bytes15`` type for %%v%%.
-     */
-    static bytes15(v) {
-      return b(v, 15);
-    }
-    /**
-     *  Return a new ``bytes16`` type for %%v%%.
-     */
-    static bytes16(v) {
-      return b(v, 16);
-    }
-    /**
-     *  Return a new ``bytes17`` type for %%v%%.
-     */
-    static bytes17(v) {
-      return b(v, 17);
-    }
-    /**
-     *  Return a new ``bytes18`` type for %%v%%.
-     */
-    static bytes18(v) {
-      return b(v, 18);
-    }
-    /**
-     *  Return a new ``bytes19`` type for %%v%%.
-     */
-    static bytes19(v) {
-      return b(v, 19);
-    }
-    /**
-     *  Return a new ``bytes20`` type for %%v%%.
-     */
-    static bytes20(v) {
-      return b(v, 20);
-    }
-    /**
-     *  Return a new ``bytes21`` type for %%v%%.
-     */
-    static bytes21(v) {
-      return b(v, 21);
-    }
-    /**
-     *  Return a new ``bytes22`` type for %%v%%.
-     */
-    static bytes22(v) {
-      return b(v, 22);
-    }
-    /**
-     *  Return a new ``bytes23`` type for %%v%%.
-     */
-    static bytes23(v) {
-      return b(v, 23);
-    }
-    /**
-     *  Return a new ``bytes24`` type for %%v%%.
-     */
-    static bytes24(v) {
-      return b(v, 24);
-    }
-    /**
-     *  Return a new ``bytes25`` type for %%v%%.
-     */
-    static bytes25(v) {
-      return b(v, 25);
-    }
-    /**
-     *  Return a new ``bytes26`` type for %%v%%.
-     */
-    static bytes26(v) {
-      return b(v, 26);
-    }
-    /**
-     *  Return a new ``bytes27`` type for %%v%%.
-     */
-    static bytes27(v) {
-      return b(v, 27);
-    }
-    /**
-     *  Return a new ``bytes28`` type for %%v%%.
-     */
-    static bytes28(v) {
-      return b(v, 28);
-    }
-    /**
-     *  Return a new ``bytes29`` type for %%v%%.
-     */
-    static bytes29(v) {
-      return b(v, 29);
-    }
-    /**
-     *  Return a new ``bytes30`` type for %%v%%.
-     */
-    static bytes30(v) {
-      return b(v, 30);
-    }
-    /**
-     *  Return a new ``bytes31`` type for %%v%%.
-     */
-    static bytes31(v) {
-      return b(v, 31);
-    }
-    /**
-     *  Return a new ``bytes32`` type for %%v%%.
-     */
-    static bytes32(v) {
-      return b(v, 32);
-    }
-    /**
-     *  Return a new ``address`` type for %%v%%.
-     */
-    static address(v) {
-      return new _Typed(_gaurd, "address", v);
-    }
-    /**
-     *  Return a new ``bool`` type for %%v%%.
-     */
-    static bool(v) {
-      return new _Typed(_gaurd, "bool", !!v);
-    }
-    /**
-     *  Return a new ``bytes`` type for %%v%%.
-     */
-    static bytes(v) {
-      return new _Typed(_gaurd, "bytes", v);
-    }
-    /**
-     *  Return a new ``string`` type for %%v%%.
-     */
-    static string(v) {
-      return new _Typed(_gaurd, "string", v);
-    }
-    /**
-     *  Return a new ``array`` type for %%v%%, allowing %%dynamic%% length.
-     */
-    static array(v, dynamic) {
-      throw new Error("not implemented yet");
-      return new _Typed(_gaurd, "array", v, dynamic);
-    }
-    /**
-     *  Return a new ``tuple`` type for %%v%%, with the optional %%name%%.
-     */
-    static tuple(v, name) {
-      throw new Error("not implemented yet");
-      return new _Typed(_gaurd, "tuple", v, name);
-    }
-    /**
-     *  Return a new ``uint8`` type for %%v%%.
-     */
-    static overrides(v) {
-      return new _Typed(_gaurd, "overrides", Object.assign({}, v));
-    }
-    /**
-     *  Returns true only if %%value%% is a [[Typed]] instance.
-     */
-    static isTyped(value) {
-      return value && typeof value === "object" && "_typedSymbol" in value && value._typedSymbol === _typedSymbol;
-    }
-    /**
-     *  If the value is a [[Typed]] instance, validates the underlying value
-     *  and returns it, otherwise returns value directly.
-     *
-     *  This is useful for functions that with to accept either a [[Typed]]
-     *  object or values.
-     */
-    static dereference(value, type) {
-      if (_Typed.isTyped(value)) {
-        if (value.type !== type) {
-          throw new Error(`invalid type: expecetd ${type}, got ${value.type}`);
-        }
-        return value.value;
-      }
-      return value;
-    }
-  };
-
-  // node_modules/ethers/lib.esm/abi/coders/address.js
-  var AddressCoder = class extends Coder {
-    constructor(localName) {
-      super("address", "address", localName, false);
-    }
-    defaultValue() {
-      return "0x0000000000000000000000000000000000000000";
-    }
-    encode(writer, _value) {
-      let value = Typed.dereference(_value, "string");
-      try {
-        value = getAddress(value);
-      } catch (error312) {
-        return this._throwError(error312.message, _value);
-      }
-      return writer.writeValue(value);
-    }
-    decode(reader) {
-      return getAddress(toBeHex(reader.readValue(), 20));
-    }
-  };
-
-  // node_modules/ethers/lib.esm/abi/coders/array.js
-  init_dirname();
-  init_buffer2();
-  init_process2();
-
-  // node_modules/ethers/lib.esm/abi/coders/anonymous.js
-  init_dirname();
-  init_buffer2();
-  init_process2();
-  var AnonymousCoder = class extends Coder {
-    coder;
-    constructor(coder) {
-      super(coder.name, coder.type, "_", coder.dynamic);
-      this.coder = coder;
-    }
-    defaultValue() {
-      return this.coder.defaultValue();
-    }
-    encode(writer, value) {
-      return this.coder.encode(writer, value);
-    }
-    decode(reader) {
-      return this.coder.decode(reader);
-    }
-  };
-
-  // node_modules/ethers/lib.esm/abi/coders/array.js
-  function pack(writer, coders, values) {
-    let arrayValues = [];
-    if (Array.isArray(values)) {
-      arrayValues = values;
-    } else if (values && typeof values === "object") {
-      let unique = {};
-      arrayValues = coders.map((coder) => {
-        const name = coder.localName;
-        assert3(name, "cannot encode object for signature with missing names", "INVALID_ARGUMENT", { argument: "values", info: { coder }, value: values });
-        assert3(!unique[name], "cannot encode object for signature with duplicate names", "INVALID_ARGUMENT", { argument: "values", info: { coder }, value: values });
-        unique[name] = true;
-        return values[name];
-      });
-    } else {
-      assertArgument(false, "invalid tuple value", "tuple", values);
-    }
-    assertArgument(coders.length === arrayValues.length, "types/value length mismatch", "tuple", values);
-    let staticWriter = new Writer();
-    let dynamicWriter = new Writer();
-    let updateFuncs = [];
-    coders.forEach((coder, index) => {
-      let value = arrayValues[index];
-      if (coder.dynamic) {
-        let dynamicOffset = dynamicWriter.length;
-        coder.encode(dynamicWriter, value);
-        let updateFunc = staticWriter.writeUpdatableValue();
-        updateFuncs.push((baseOffset) => {
-          updateFunc(baseOffset + dynamicOffset);
-        });
-      } else {
-        coder.encode(staticWriter, value);
-      }
-    });
-    updateFuncs.forEach((func) => {
-      func(staticWriter.length);
-    });
-    let length = writer.appendWriter(staticWriter);
-    length += writer.appendWriter(dynamicWriter);
-    return length;
-  }
-  function unpack(reader, coders) {
-    let values = [];
-    let keys = [];
-    let baseReader = reader.subReader(0);
-    coders.forEach((coder) => {
-      let value = null;
-      if (coder.dynamic) {
-        let offset = reader.readIndex();
-        let offsetReader = baseReader.subReader(offset);
-        try {
-          value = coder.decode(offsetReader);
-        } catch (error312) {
-          if (isError(error312, "BUFFER_OVERRUN")) {
-            throw error312;
-          }
-          value = error312;
-          value.baseType = coder.name;
-          value.name = coder.localName;
-          value.type = coder.type;
-        }
-      } else {
-        try {
-          value = coder.decode(reader);
-        } catch (error312) {
-          if (isError(error312, "BUFFER_OVERRUN")) {
-            throw error312;
-          }
-          value = error312;
-          value.baseType = coder.name;
-          value.name = coder.localName;
-          value.type = coder.type;
-        }
-      }
-      if (value == void 0) {
-        throw new Error("investigate");
-      }
-      values.push(value);
-      keys.push(coder.localName || null);
-    });
-    return Result.fromItems(values, keys);
-  }
-  var ArrayCoder = class extends Coder {
-    coder;
-    length;
-    constructor(coder, length, localName) {
-      const type = coder.type + "[" + (length >= 0 ? length : "") + "]";
-      const dynamic = length === -1 || coder.dynamic;
-      super("array", type, localName, dynamic);
-      defineProperties(this, { coder, length });
-    }
-    defaultValue() {
-      const defaultChild = this.coder.defaultValue();
-      const result = [];
-      for (let i = 0; i < this.length; i++) {
-        result.push(defaultChild);
-      }
-      return result;
-    }
-    encode(writer, _value) {
-      const value = Typed.dereference(_value, "array");
-      if (!Array.isArray(value)) {
-        this._throwError("expected array value", value);
-      }
-      let count = this.length;
-      if (count === -1) {
-        count = value.length;
-        writer.writeValue(value.length);
-      }
-      assertArgumentCount(value.length, count, "coder array" + (this.localName ? " " + this.localName : ""));
-      let coders = [];
-      for (let i = 0; i < value.length; i++) {
-        coders.push(this.coder);
-      }
-      return pack(writer, coders, value);
-    }
-    decode(reader) {
-      let count = this.length;
-      if (count === -1) {
-        count = reader.readIndex();
-        assert3(count * WordSize <= reader.dataLength, "insufficient data length", "BUFFER_OVERRUN", { buffer: reader.bytes, offset: count * WordSize, length: reader.dataLength });
-      }
-      let coders = [];
-      for (let i = 0; i < count; i++) {
-        coders.push(new AnonymousCoder(this.coder));
-      }
-      return unpack(reader, coders);
-    }
-  };
-
-  // node_modules/ethers/lib.esm/abi/coders/boolean.js
-  init_dirname();
-  init_buffer2();
-  init_process2();
-  var BooleanCoder = class extends Coder {
-    constructor(localName) {
-      super("bool", "bool", localName, false);
-    }
-    defaultValue() {
-      return false;
-    }
-    encode(writer, _value) {
-      const value = Typed.dereference(_value, "bool");
-      return writer.writeValue(value ? 1 : 0);
-    }
-    decode(reader) {
-      return !!reader.readValue();
-    }
-  };
-
-  // node_modules/ethers/lib.esm/abi/coders/bytes.js
-  init_dirname();
-  init_buffer2();
-  init_process2();
-  var DynamicBytesCoder = class extends Coder {
-    constructor(type, localName) {
-      super(type, type, localName, true);
-    }
-    defaultValue() {
-      return "0x";
-    }
-    encode(writer, value) {
-      value = getBytesCopy(value);
-      let length = writer.writeValue(value.length);
-      length += writer.writeBytes(value);
-      return length;
-    }
-    decode(reader) {
-      return reader.readBytes(reader.readIndex(), true);
-    }
-  };
-  var BytesCoder = class extends DynamicBytesCoder {
-    constructor(localName) {
-      super("bytes", localName);
-    }
-    decode(reader) {
-      return hexlify(super.decode(reader));
-    }
-  };
-
-  // node_modules/ethers/lib.esm/abi/coders/fixed-bytes.js
-  init_dirname();
-  init_buffer2();
-  init_process2();
-  var FixedBytesCoder = class extends Coder {
-    size;
-    constructor(size2, localName) {
-      let name = "bytes" + String(size2);
-      super(name, name, localName, false);
-      defineProperties(this, { size: size2 }, { size: "number" });
-    }
-    defaultValue() {
-      return "0x0000000000000000000000000000000000000000000000000000000000000000".substring(0, 2 + this.size * 2);
-    }
-    encode(writer, _value) {
-      let data = getBytesCopy(Typed.dereference(_value, this.type));
-      if (data.length !== this.size) {
-        this._throwError("incorrect data length", _value);
-      }
-      return writer.writeBytes(data);
-    }
-    decode(reader) {
-      return hexlify(reader.readBytes(this.size));
-    }
-  };
-
-  // node_modules/ethers/lib.esm/abi/coders/null.js
-  init_dirname();
-  init_buffer2();
-  init_process2();
-  var Empty = new Uint8Array([]);
-  var NullCoder = class extends Coder {
-    constructor(localName) {
-      super("null", "", localName, false);
-    }
-    defaultValue() {
-      return null;
-    }
-    encode(writer, value) {
-      if (value != null) {
-        this._throwError("not null", value);
-      }
-      return writer.writeBytes(Empty);
-    }
-    decode(reader) {
-      reader.readBytes(0);
-      return null;
-    }
-  };
-
-  // node_modules/ethers/lib.esm/abi/coders/number.js
-  init_dirname();
-  init_buffer2();
-  init_process2();
-  var BN_03 = BigInt(0);
-  var BN_12 = BigInt(1);
-  var BN_MAX_UINT256 = BigInt("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
-  var NumberCoder = class extends Coder {
-    size;
-    signed;
-    constructor(size2, signed, localName) {
-      const name = (signed ? "int" : "uint") + size2 * 8;
-      super(name, name, localName, false);
-      defineProperties(this, { size: size2, signed }, { size: "number", signed: "boolean" });
-    }
-    defaultValue() {
-      return 0;
-    }
-    encode(writer, _value) {
-      let value = getBigInt(Typed.dereference(_value, this.type));
-      let maxUintValue = mask(BN_MAX_UINT256, WordSize * 8);
-      if (this.signed) {
-        let bounds = mask(maxUintValue, this.size * 8 - 1);
-        if (value > bounds || value < -(bounds + BN_12)) {
-          this._throwError("value out-of-bounds", _value);
-        }
-        value = toTwos(value, 8 * WordSize);
-      } else if (value < BN_03 || value > mask(maxUintValue, this.size * 8)) {
-        this._throwError("value out-of-bounds", _value);
-      }
-      return writer.writeValue(value);
-    }
-    decode(reader) {
-      let value = mask(reader.readValue(), this.size * 8);
-      if (this.signed) {
-        value = fromTwos(value, this.size * 8);
-      }
-      return value;
-    }
-  };
-
-  // node_modules/ethers/lib.esm/abi/coders/string.js
-  init_dirname();
-  init_buffer2();
-  init_process2();
-  var StringCoder = class extends DynamicBytesCoder {
-    constructor(localName) {
-      super("string", localName);
-    }
-    defaultValue() {
-      return "";
-    }
-    encode(writer, _value) {
-      return super.encode(writer, toUtf8Bytes(Typed.dereference(_value, "string")));
-    }
-    decode(reader) {
-      return toUtf8String(super.decode(reader));
-    }
-  };
-
-  // node_modules/ethers/lib.esm/abi/coders/tuple.js
-  init_dirname();
-  init_buffer2();
-  init_process2();
-  var TupleCoder = class extends Coder {
-    coders;
-    constructor(coders, localName) {
-      let dynamic = false;
-      const types2 = [];
-      coders.forEach((coder) => {
-        if (coder.dynamic) {
-          dynamic = true;
-        }
-        types2.push(coder.type);
-      });
-      const type = "tuple(" + types2.join(",") + ")";
-      super("tuple", type, localName, dynamic);
-      defineProperties(this, { coders: Object.freeze(coders.slice()) });
-    }
-    defaultValue() {
-      const values = [];
-      this.coders.forEach((coder) => {
-        values.push(coder.defaultValue());
-      });
-      const uniqueNames = this.coders.reduce((accum, coder) => {
-        const name = coder.localName;
-        if (name) {
-          if (!accum[name]) {
-            accum[name] = 0;
-          }
-          accum[name]++;
-        }
-        return accum;
-      }, {});
-      this.coders.forEach((coder, index) => {
-        let name = coder.localName;
-        if (!name || uniqueNames[name] !== 1) {
-          return;
-        }
-        if (name === "length") {
-          name = "_length";
-        }
-        if (values[name] != null) {
-          return;
-        }
-        values[name] = values[index];
-      });
-      return Object.freeze(values);
-    }
-    encode(writer, _value) {
-      const value = Typed.dereference(_value, "tuple");
-      return pack(writer, this.coders, value);
-    }
-    decode(reader) {
-      return unpack(reader, this.coders);
-    }
-  };
-
-  // node_modules/ethers/lib.esm/abi/fragments.js
-  init_dirname();
-  init_buffer2();
-  init_process2();
-
-  // node_modules/ethers/lib.esm/hash/index.js
-  init_dirname();
-  init_buffer2();
-  init_process2();
-
-  // node_modules/ethers/lib.esm/hash/id.js
-  init_dirname();
-  init_buffer2();
-  init_process2();
-  function id(value) {
-    return keccak256(toUtf8Bytes(value));
-  }
-
-  // node_modules/ethers/lib.esm/abi/fragments.js
-  function setify(items) {
-    const result = /* @__PURE__ */ new Set();
-    items.forEach((k) => result.add(k));
-    return Object.freeze(result);
-  }
-  var _kwVisibDeploy = "external public payable override";
-  var KwVisibDeploy = setify(_kwVisibDeploy.split(" "));
-  var _kwVisib = "constant external internal payable private public pure view override";
-  var KwVisib = setify(_kwVisib.split(" "));
-  var _kwTypes = "constructor error event fallback function receive struct";
-  var KwTypes = setify(_kwTypes.split(" "));
-  var _kwModifiers = "calldata memory storage payable indexed";
-  var KwModifiers = setify(_kwModifiers.split(" "));
-  var _kwOther = "tuple returns";
-  var _keywords = [_kwTypes, _kwModifiers, _kwOther, _kwVisib].join(" ");
-  var Keywords = setify(_keywords.split(" "));
-  var SimpleTokens = {
-    "(": "OPEN_PAREN",
-    ")": "CLOSE_PAREN",
-    "[": "OPEN_BRACKET",
-    "]": "CLOSE_BRACKET",
-    ",": "COMMA",
-    "@": "AT"
-  };
-  var regexWhitespacePrefix = new RegExp("^(\\s*)");
-  var regexNumberPrefix = new RegExp("^([0-9]+)");
-  var regexIdPrefix = new RegExp("^([a-zA-Z$_][a-zA-Z0-9$_]*)");
-  var regexId = new RegExp("^([a-zA-Z$_][a-zA-Z0-9$_]*)$");
-  var regexType = new RegExp("^(address|bool|bytes([0-9]*)|string|u?int([0-9]*))$");
-  var TokenString = class _TokenString {
-    #offset;
-    #tokens;
-    get offset() {
-      return this.#offset;
-    }
-    get length() {
-      return this.#tokens.length - this.#offset;
-    }
-    constructor(tokens) {
-      this.#offset = 0;
-      this.#tokens = tokens.slice();
-    }
-    clone() {
-      return new _TokenString(this.#tokens);
-    }
-    reset() {
-      this.#offset = 0;
-    }
-    #subTokenString(from = 0, to = 0) {
-      return new _TokenString(this.#tokens.slice(from, to).map((t) => {
-        return Object.freeze(Object.assign({}, t, {
-          match: t.match - from,
-          linkBack: t.linkBack - from,
-          linkNext: t.linkNext - from
-        }));
-      }));
-    }
-    // Pops and returns the value of the next token, if it is a keyword in allowed; throws if out of tokens
-    popKeyword(allowed) {
-      const top = this.peek();
-      if (top.type !== "KEYWORD" || !allowed.has(top.text)) {
-        throw new Error(`expected keyword ${top.text}`);
-      }
-      return this.pop().text;
-    }
-    // Pops and returns the value of the next token if it is `type`; throws if out of tokens
-    popType(type) {
-      if (this.peek().type !== type) {
-        const top = this.peek();
-        throw new Error(`expected ${type}; got ${top.type} ${JSON.stringify(top.text)}`);
-      }
-      return this.pop().text;
-    }
-    // Pops and returns a "(" TOKENS ")"
-    popParen() {
-      const top = this.peek();
-      if (top.type !== "OPEN_PAREN") {
-        throw new Error("bad start");
-      }
-      const result = this.#subTokenString(this.#offset + 1, top.match + 1);
-      this.#offset = top.match + 1;
-      return result;
-    }
-    // Pops and returns the items within "(" ITEM1 "," ITEM2 "," ... ")"
-    popParams() {
-      const top = this.peek();
-      if (top.type !== "OPEN_PAREN") {
-        throw new Error("bad start");
-      }
-      const result = [];
-      while (this.#offset < top.match - 1) {
-        const link = this.peek().linkNext;
-        result.push(this.#subTokenString(this.#offset + 1, link));
-        this.#offset = link;
-      }
-      this.#offset = top.match + 1;
-      return result;
-    }
-    // Returns the top Token, throwing if out of tokens
-    peek() {
-      if (this.#offset >= this.#tokens.length) {
-        throw new Error("out-of-bounds");
-      }
-      return this.#tokens[this.#offset];
-    }
-    // Returns the next value, if it is a keyword in `allowed`
-    peekKeyword(allowed) {
-      const top = this.peekType("KEYWORD");
-      return top != null && allowed.has(top) ? top : null;
-    }
-    // Returns the value of the next token if it is `type`
-    peekType(type) {
-      if (this.length === 0) {
-        return null;
-      }
-      const top = this.peek();
-      return top.type === type ? top.text : null;
-    }
-    // Returns the next token; throws if out of tokens
-    pop() {
-      const result = this.peek();
-      this.#offset++;
-      return result;
-    }
-    toString() {
-      const tokens = [];
-      for (let i = this.#offset; i < this.#tokens.length; i++) {
-        const token = this.#tokens[i];
-        tokens.push(`${token.type}:${token.text}`);
-      }
-      return `<TokenString ${tokens.join(" ")}>`;
-    }
-  };
-  function lex(text) {
-    const tokens = [];
-    const throwError2 = (message) => {
-      const token = offset < text.length ? JSON.stringify(text[offset]) : "$EOI";
-      throw new Error(`invalid token ${token} at ${offset}: ${message}`);
-    };
-    let brackets = [];
-    let commas = [];
-    let offset = 0;
-    while (offset < text.length) {
-      let cur = text.substring(offset);
-      let match = cur.match(regexWhitespacePrefix);
-      if (match) {
-        offset += match[1].length;
-        cur = text.substring(offset);
-      }
-      const token = { depth: brackets.length, linkBack: -1, linkNext: -1, match: -1, type: "", text: "", offset, value: -1 };
-      tokens.push(token);
-      let type = SimpleTokens[cur[0]] || "";
-      if (type) {
-        token.type = type;
-        token.text = cur[0];
-        offset++;
-        if (type === "OPEN_PAREN") {
-          brackets.push(tokens.length - 1);
-          commas.push(tokens.length - 1);
-        } else if (type == "CLOSE_PAREN") {
-          if (brackets.length === 0) {
-            throwError2("no matching open bracket");
-          }
-          token.match = brackets.pop();
-          tokens[token.match].match = tokens.length - 1;
-          token.depth--;
-          token.linkBack = commas.pop();
-          tokens[token.linkBack].linkNext = tokens.length - 1;
-        } else if (type === "COMMA") {
-          token.linkBack = commas.pop();
-          tokens[token.linkBack].linkNext = tokens.length - 1;
-          commas.push(tokens.length - 1);
-        } else if (type === "OPEN_BRACKET") {
-          token.type = "BRACKET";
-        } else if (type === "CLOSE_BRACKET") {
-          let suffix = tokens.pop().text;
-          if (tokens.length > 0 && tokens[tokens.length - 1].type === "NUMBER") {
-            const value = tokens.pop().text;
-            suffix = value + suffix;
-            tokens[tokens.length - 1].value = getNumber(value);
-          }
-          if (tokens.length === 0 || tokens[tokens.length - 1].type !== "BRACKET") {
-            throw new Error("missing opening bracket");
-          }
-          tokens[tokens.length - 1].text += suffix;
-        }
-        continue;
-      }
-      match = cur.match(regexIdPrefix);
-      if (match) {
-        token.text = match[1];
-        offset += token.text.length;
-        if (Keywords.has(token.text)) {
-          token.type = "KEYWORD";
-          continue;
-        }
-        if (token.text.match(regexType)) {
-          token.type = "TYPE";
-          continue;
-        }
-        token.type = "ID";
-        continue;
-      }
-      match = cur.match(regexNumberPrefix);
-      if (match) {
-        token.text = match[1];
-        token.type = "NUMBER";
-        offset += token.text.length;
-        continue;
-      }
-      throw new Error(`unexpected token ${JSON.stringify(cur[0])} at position ${offset}`);
-    }
-    return new TokenString(tokens.map((t) => Object.freeze(t)));
-  }
-  function allowSingle(set8, allowed) {
-    let included = [];
-    for (const key in allowed.keys()) {
-      if (set8.has(key)) {
-        included.push(key);
-      }
-    }
-    if (included.length > 1) {
-      throw new Error(`conflicting types: ${included.join(", ")}`);
-    }
-  }
-  function consumeName(type, tokens) {
-    if (tokens.peekKeyword(KwTypes)) {
-      const keyword = tokens.pop().text;
-      if (keyword !== type) {
-        throw new Error(`expected ${type}, got ${keyword}`);
-      }
-    }
-    return tokens.popType("ID");
-  }
-  function consumeKeywords(tokens, allowed) {
-    const keywords = /* @__PURE__ */ new Set();
-    while (true) {
-      const keyword = tokens.peekType("KEYWORD");
-      if (keyword == null || allowed && !allowed.has(keyword)) {
-        break;
-      }
-      tokens.pop();
-      if (keywords.has(keyword)) {
-        throw new Error(`duplicate keywords: ${JSON.stringify(keyword)}`);
-      }
-      keywords.add(keyword);
-    }
-    return Object.freeze(keywords);
-  }
-  function consumeMutability(tokens) {
-    let modifiers2 = consumeKeywords(tokens, KwVisib);
-    allowSingle(modifiers2, setify("constant payable nonpayable".split(" ")));
-    allowSingle(modifiers2, setify("pure view payable nonpayable".split(" ")));
-    if (modifiers2.has("view")) {
-      return "view";
-    }
-    if (modifiers2.has("pure")) {
-      return "pure";
-    }
-    if (modifiers2.has("payable")) {
-      return "payable";
-    }
-    if (modifiers2.has("nonpayable")) {
-      return "nonpayable";
-    }
-    if (modifiers2.has("constant")) {
-      return "view";
-    }
-    return "nonpayable";
-  }
-  function consumeParams(tokens, allowIndexed) {
-    return tokens.popParams().map((t) => ParamType.from(t, allowIndexed));
-  }
-  function consumeGas(tokens) {
-    if (tokens.peekType("AT")) {
-      tokens.pop();
-      if (tokens.peekType("NUMBER")) {
-        return getBigInt(tokens.pop().text);
-      }
-      throw new Error("invalid gas");
-    }
-    return null;
-  }
-  function consumeEoi(tokens) {
-    if (tokens.length) {
-      throw new Error(`unexpected tokens at offset ${tokens.offset}: ${tokens.toString()}`);
-    }
-  }
-  var regexArrayType = new RegExp(/^(.*)\[([0-9]*)\]$/);
-  function verifyBasicType(type) {
-    const match = type.match(regexType);
-    assertArgument(match, "invalid type", "type", type);
-    if (type === "uint") {
-      return "uint256";
-    }
-    if (type === "int") {
-      return "int256";
-    }
-    if (match[2]) {
-      const length = parseInt(match[2]);
-      assertArgument(length !== 0 && length <= 32, "invalid bytes length", "type", type);
-    } else if (match[3]) {
-      const size2 = parseInt(match[3]);
-      assertArgument(size2 !== 0 && size2 <= 256 && size2 % 8 === 0, "invalid numeric width", "type", type);
-    }
-    return type;
-  }
-  var _guard2 = {};
-  var internal = Symbol.for("_ethers_internal");
-  var ParamTypeInternal = "_ParamTypeInternal";
-  var ErrorFragmentInternal = "_ErrorInternal";
-  var EventFragmentInternal = "_EventInternal";
-  var ConstructorFragmentInternal = "_ConstructorInternal";
-  var FallbackFragmentInternal = "_FallbackInternal";
-  var FunctionFragmentInternal = "_FunctionInternal";
-  var StructFragmentInternal = "_StructInternal";
-  var ParamType = class _ParamType {
-    /**
-     *  The local name of the parameter (or ``""`` if unbound)
-     */
-    name;
-    /**
-     *  The fully qualified type (e.g. ``"address"``, ``"tuple(address)"``,
-     *  ``"uint256[3][]"``)
-     */
-    type;
-    /**
-     *  The base type (e.g. ``"address"``, ``"tuple"``, ``"array"``)
-     */
-    baseType;
-    /**
-     *  True if the parameters is indexed.
-     *
-     *  For non-indexable types this is ``null``.
-     */
-    indexed;
-    /**
-     *  The components for the tuple.
-     *
-     *  For non-tuple types this is ``null``.
-     */
-    components;
-    /**
-     *  The array length, or ``-1`` for dynamic-lengthed arrays.
-     *
-     *  For non-array types this is ``null``.
-     */
-    arrayLength;
-    /**
-     *  The type of each child in the array.
-     *
-     *  For non-array types this is ``null``.
-     */
-    arrayChildren;
-    /**
-     *  @private
-     */
-    constructor(guard, name, type, baseType, indexed, components, arrayLength, arrayChildren) {
-      assertPrivate(guard, _guard2, "ParamType");
-      Object.defineProperty(this, internal, { value: ParamTypeInternal });
-      if (components) {
-        components = Object.freeze(components.slice());
-      }
-      if (baseType === "array") {
-        if (arrayLength == null || arrayChildren == null) {
-          throw new Error("");
-        }
-      } else if (arrayLength != null || arrayChildren != null) {
-        throw new Error("");
-      }
-      if (baseType === "tuple") {
-        if (components == null) {
-          throw new Error("");
-        }
-      } else if (components != null) {
-        throw new Error("");
-      }
-      defineProperties(this, {
-        name,
-        type,
-        baseType,
-        indexed,
-        components,
-        arrayLength,
-        arrayChildren
-      });
-    }
-    /**
-     *  Return a string representation of this type.
-     *
-     *  For example,
-     *
-     *  ``sighash" => "(uint256,address)"``
-     *
-     *  ``"minimal" => "tuple(uint256,address) indexed"``
-     *
-     *  ``"full" => "tuple(uint256 foo, address bar) indexed baz"``
-     */
-    format(format2) {
-      if (format2 == null) {
-        format2 = "sighash";
-      }
-      if (format2 === "json") {
-        const name = this.name || "";
-        if (this.isArray()) {
-          const result3 = JSON.parse(this.arrayChildren.format("json"));
-          result3.name = name;
-          result3.type += `[${this.arrayLength < 0 ? "" : String(this.arrayLength)}]`;
-          return JSON.stringify(result3);
-        }
-        const result2 = {
-          type: this.baseType === "tuple" ? "tuple" : this.type,
-          name
-        };
-        if (typeof this.indexed === "boolean") {
-          result2.indexed = this.indexed;
-        }
-        if (this.isTuple()) {
-          result2.components = this.components.map((c) => JSON.parse(c.format(format2)));
-        }
-        return JSON.stringify(result2);
-      }
-      let result = "";
-      if (this.isArray()) {
-        result += this.arrayChildren.format(format2);
-        result += `[${this.arrayLength < 0 ? "" : String(this.arrayLength)}]`;
-      } else {
-        if (this.isTuple()) {
-          result += "(" + this.components.map((comp) => comp.format(format2)).join(format2 === "full" ? ", " : ",") + ")";
-        } else {
-          result += this.type;
-        }
-      }
-      if (format2 !== "sighash") {
-        if (this.indexed === true) {
-          result += " indexed";
-        }
-        if (format2 === "full" && this.name) {
-          result += " " + this.name;
-        }
-      }
-      return result;
-    }
-    /**
-     *  Returns true if %%this%% is an Array type.
-     *
-     *  This provides a type gaurd ensuring that [[arrayChildren]]
-     *  and [[arrayLength]] are non-null.
-     */
-    isArray() {
-      return this.baseType === "array";
-    }
-    /**
-     *  Returns true if %%this%% is a Tuple type.
-     *
-     *  This provides a type gaurd ensuring that [[components]]
-     *  is non-null.
-     */
-    isTuple() {
-      return this.baseType === "tuple";
-    }
-    /**
-     *  Returns true if %%this%% is an Indexable type.
-     *
-     *  This provides a type gaurd ensuring that [[indexed]]
-     *  is non-null.
-     */
-    isIndexable() {
-      return this.indexed != null;
-    }
-    /**
-     *  Walks the **ParamType** with %%value%%, calling %%process%%
-     *  on each type, destructing the %%value%% recursively.
-     */
-    walk(value, process8) {
-      if (this.isArray()) {
-        if (!Array.isArray(value)) {
-          throw new Error("invalid array value");
-        }
-        if (this.arrayLength !== -1 && value.length !== this.arrayLength) {
-          throw new Error("array is wrong length");
-        }
-        const _this = this;
-        return value.map((v) => _this.arrayChildren.walk(v, process8));
-      }
-      if (this.isTuple()) {
-        if (!Array.isArray(value)) {
-          throw new Error("invalid tuple value");
-        }
-        if (value.length !== this.components.length) {
-          throw new Error("array is wrong length");
-        }
-        const _this = this;
-        return value.map((v, i) => _this.components[i].walk(v, process8));
-      }
-      return process8(this.type, value);
-    }
-    #walkAsync(promises, value, process8, setValue) {
-      if (this.isArray()) {
-        if (!Array.isArray(value)) {
-          throw new Error("invalid array value");
-        }
-        if (this.arrayLength !== -1 && value.length !== this.arrayLength) {
-          throw new Error("array is wrong length");
-        }
-        const childType = this.arrayChildren;
-        const result2 = value.slice();
-        result2.forEach((value2, index) => {
-          childType.#walkAsync(promises, value2, process8, (value3) => {
-            result2[index] = value3;
-          });
-        });
-        setValue(result2);
-        return;
-      }
-      if (this.isTuple()) {
-        const components = this.components;
-        let result2;
-        if (Array.isArray(value)) {
-          result2 = value.slice();
-        } else {
-          if (value == null || typeof value !== "object") {
-            throw new Error("invalid tuple value");
-          }
-          result2 = components.map((param) => {
-            if (!param.name) {
-              throw new Error("cannot use object value with unnamed components");
-            }
-            if (!(param.name in value)) {
-              throw new Error(`missing value for component ${param.name}`);
-            }
-            return value[param.name];
-          });
-        }
-        if (result2.length !== this.components.length) {
-          throw new Error("array is wrong length");
-        }
-        result2.forEach((value2, index) => {
-          components[index].#walkAsync(promises, value2, process8, (value3) => {
-            result2[index] = value3;
-          });
-        });
-        setValue(result2);
-        return;
-      }
-      const result = process8(this.type, value);
-      if (result.then) {
-        promises.push((async function() {
-          setValue(await result);
-        })());
-      } else {
-        setValue(result);
-      }
-    }
-    /**
-     *  Walks the **ParamType** with %%value%%, asynchronously calling
-     *  %%process%% on each type, destructing the %%value%% recursively.
-     *
-     *  This can be used to resolve ENS names by walking and resolving each
-     *  ``"address"`` type.
-     */
-    async walkAsync(value, process8) {
-      const promises = [];
-      const result = [value];
-      this.#walkAsync(promises, value, process8, (value2) => {
-        result[0] = value2;
-      });
-      if (promises.length) {
-        await Promise.all(promises);
-      }
-      return result[0];
-    }
-    /**
-     *  Creates a new **ParamType** for %%obj%%.
-     *
-     *  If %%allowIndexed%% then the ``indexed`` keyword is permitted,
-     *  otherwise the ``indexed`` keyword will throw an error.
-     */
-    static from(obj, allowIndexed) {
-      if (_ParamType.isParamType(obj)) {
-        return obj;
-      }
-      if (typeof obj === "string") {
-        try {
-          return _ParamType.from(lex(obj), allowIndexed);
-        } catch (error312) {
-          assertArgument(false, "invalid param type", "obj", obj);
-        }
-      } else if (obj instanceof TokenString) {
-        let type2 = "", baseType = "";
-        let comps = null;
-        if (consumeKeywords(obj, setify(["tuple"])).has("tuple") || obj.peekType("OPEN_PAREN")) {
-          baseType = "tuple";
-          comps = obj.popParams().map((t) => _ParamType.from(t));
-          type2 = `tuple(${comps.map((c) => c.format()).join(",")})`;
-        } else {
-          type2 = verifyBasicType(obj.popType("TYPE"));
-          baseType = type2;
-        }
-        let arrayChildren = null;
-        let arrayLength = null;
-        while (obj.length && obj.peekType("BRACKET")) {
-          const bracket = obj.pop();
-          arrayChildren = new _ParamType(_guard2, "", type2, baseType, null, comps, arrayLength, arrayChildren);
-          arrayLength = bracket.value;
-          type2 += bracket.text;
-          baseType = "array";
-          comps = null;
-        }
-        let indexed2 = null;
-        const keywords = consumeKeywords(obj, KwModifiers);
-        if (keywords.has("indexed")) {
-          if (!allowIndexed) {
-            throw new Error("");
-          }
-          indexed2 = true;
-        }
-        const name2 = obj.peekType("ID") ? obj.pop().text : "";
-        if (obj.length) {
-          throw new Error("leftover tokens");
-        }
-        return new _ParamType(_guard2, name2, type2, baseType, indexed2, comps, arrayLength, arrayChildren);
-      }
-      const name = obj.name;
-      assertArgument(!name || typeof name === "string" && name.match(regexId), "invalid name", "obj.name", name);
-      let indexed = obj.indexed;
-      if (indexed != null) {
-        assertArgument(allowIndexed, "parameter cannot be indexed", "obj.indexed", obj.indexed);
-        indexed = !!indexed;
-      }
-      let type = obj.type;
-      let arrayMatch = type.match(regexArrayType);
-      if (arrayMatch) {
-        const arrayLength = parseInt(arrayMatch[2] || "-1");
-        const arrayChildren = _ParamType.from({
-          type: arrayMatch[1],
-          components: obj.components
-        });
-        return new _ParamType(_guard2, name || "", type, "array", indexed, null, arrayLength, arrayChildren);
-      }
-      if (type === "tuple" || type.startsWith(
-        "tuple("
-        /* fix: ) */
-      ) || type.startsWith(
-        "("
-        /* fix: ) */
-      )) {
-        const comps = obj.components != null ? obj.components.map((c) => _ParamType.from(c)) : null;
-        const tuple7 = new _ParamType(_guard2, name || "", type, "tuple", indexed, comps, null, null);
-        return tuple7;
-      }
-      type = verifyBasicType(obj.type);
-      return new _ParamType(_guard2, name || "", type, type, indexed, null, null, null);
-    }
-    /**
-     *  Returns true if %%value%% is a **ParamType**.
-     */
-    static isParamType(value) {
-      return value && value[internal] === ParamTypeInternal;
-    }
-  };
-  var Fragment = class _Fragment {
-    /**
-     *  The type of the fragment.
-     */
-    type;
-    /**
-     *  The inputs for the fragment.
-     */
-    inputs;
-    /**
-     *  @private
-     */
-    constructor(guard, type, inputs) {
-      assertPrivate(guard, _guard2, "Fragment");
-      inputs = Object.freeze(inputs.slice());
-      defineProperties(this, { type, inputs });
-    }
-    /**
-     *  Creates a new **Fragment** for %%obj%%, wich can be any supported
-     *  ABI frgament type.
-     */
-    static from(obj) {
-      if (typeof obj === "string") {
-        try {
-          _Fragment.from(JSON.parse(obj));
-        } catch (e) {
-        }
-        return _Fragment.from(lex(obj));
-      }
-      if (obj instanceof TokenString) {
-        const type = obj.peekKeyword(KwTypes);
-        switch (type) {
-          case "constructor":
-            return ConstructorFragment.from(obj);
-          case "error":
-            return ErrorFragment.from(obj);
-          case "event":
-            return EventFragment.from(obj);
-          case "fallback":
-          case "receive":
-            return FallbackFragment.from(obj);
-          case "function":
-            return FunctionFragment.from(obj);
-          case "struct":
-            return StructFragment.from(obj);
-        }
-      } else if (typeof obj === "object") {
-        switch (obj.type) {
-          case "constructor":
-            return ConstructorFragment.from(obj);
-          case "error":
-            return ErrorFragment.from(obj);
-          case "event":
-            return EventFragment.from(obj);
-          case "fallback":
-          case "receive":
-            return FallbackFragment.from(obj);
-          case "function":
-            return FunctionFragment.from(obj);
-          case "struct":
-            return StructFragment.from(obj);
-        }
-        assert3(false, `unsupported type: ${obj.type}`, "UNSUPPORTED_OPERATION", {
-          operation: "Fragment.from"
-        });
-      }
-      assertArgument(false, "unsupported frgament object", "obj", obj);
-    }
-    /**
-     *  Returns true if %%value%% is a [[ConstructorFragment]].
-     */
-    static isConstructor(value) {
-      return ConstructorFragment.isFragment(value);
-    }
-    /**
-     *  Returns true if %%value%% is an [[ErrorFragment]].
-     */
-    static isError(value) {
-      return ErrorFragment.isFragment(value);
-    }
-    /**
-     *  Returns true if %%value%% is an [[EventFragment]].
-     */
-    static isEvent(value) {
-      return EventFragment.isFragment(value);
-    }
-    /**
-     *  Returns true if %%value%% is a [[FunctionFragment]].
-     */
-    static isFunction(value) {
-      return FunctionFragment.isFragment(value);
-    }
-    /**
-     *  Returns true if %%value%% is a [[StructFragment]].
-     */
-    static isStruct(value) {
-      return StructFragment.isFragment(value);
-    }
-  };
-  var NamedFragment = class extends Fragment {
-    /**
-     *  The name of the fragment.
-     */
-    name;
-    /**
-     *  @private
-     */
-    constructor(guard, type, name, inputs) {
-      super(guard, type, inputs);
-      assertArgument(typeof name === "string" && name.match(regexId), "invalid identifier", "name", name);
-      inputs = Object.freeze(inputs.slice());
-      defineProperties(this, { name });
-    }
-  };
-  function joinParams(format2, params) {
-    return "(" + params.map((p) => p.format(format2)).join(format2 === "full" ? ", " : ",") + ")";
-  }
-  var ErrorFragment = class _ErrorFragment extends NamedFragment {
-    /**
-     *  @private
-     */
-    constructor(guard, name, inputs) {
-      super(guard, "error", name, inputs);
-      Object.defineProperty(this, internal, { value: ErrorFragmentInternal });
-    }
-    /**
-     *  The Custom Error selector.
-     */
-    get selector() {
-      return id(this.format("sighash")).substring(0, 10);
-    }
-    /**
-     *  Returns a string representation of this fragment as %%format%%.
-     */
-    format(format2) {
-      if (format2 == null) {
-        format2 = "sighash";
-      }
-      if (format2 === "json") {
-        return JSON.stringify({
-          type: "error",
-          name: this.name,
-          inputs: this.inputs.map((input2) => JSON.parse(input2.format(format2)))
-        });
-      }
-      const result = [];
-      if (format2 !== "sighash") {
-        result.push("error");
-      }
-      result.push(this.name + joinParams(format2, this.inputs));
-      return result.join(" ");
-    }
-    /**
-     *  Returns a new **ErrorFragment** for %%obj%%.
-     */
-    static from(obj) {
-      if (_ErrorFragment.isFragment(obj)) {
-        return obj;
-      }
-      if (typeof obj === "string") {
-        return _ErrorFragment.from(lex(obj));
-      } else if (obj instanceof TokenString) {
-        const name = consumeName("error", obj);
-        const inputs = consumeParams(obj);
-        consumeEoi(obj);
-        return new _ErrorFragment(_guard2, name, inputs);
-      }
-      return new _ErrorFragment(_guard2, obj.name, obj.inputs ? obj.inputs.map(ParamType.from) : []);
-    }
-    /**
-     *  Returns ``true`` and provides a type guard if %%value%% is an
-     *  **ErrorFragment**.
-     */
-    static isFragment(value) {
-      return value && value[internal] === ErrorFragmentInternal;
-    }
-  };
-  var EventFragment = class _EventFragment extends NamedFragment {
-    /**
-     *  Whether this event is anonymous.
-     */
-    anonymous;
-    /**
-     *  @private
-     */
-    constructor(guard, name, inputs, anonymous) {
-      super(guard, "event", name, inputs);
-      Object.defineProperty(this, internal, { value: EventFragmentInternal });
-      defineProperties(this, { anonymous });
-    }
-    /**
-     *  The Event topic hash.
-     */
-    get topicHash() {
-      return id(this.format("sighash"));
-    }
-    /**
-     *  Returns a string representation of this event as %%format%%.
-     */
-    format(format2) {
-      if (format2 == null) {
-        format2 = "sighash";
-      }
-      if (format2 === "json") {
-        return JSON.stringify({
-          type: "event",
-          anonymous: this.anonymous,
-          name: this.name,
-          inputs: this.inputs.map((i) => JSON.parse(i.format(format2)))
-        });
-      }
-      const result = [];
-      if (format2 !== "sighash") {
-        result.push("event");
-      }
-      result.push(this.name + joinParams(format2, this.inputs));
-      if (format2 !== "sighash" && this.anonymous) {
-        result.push("anonymous");
-      }
-      return result.join(" ");
-    }
-    /**
-     *  Return the topic hash for an event with %%name%% and %%params%%.
-     */
-    static getTopicHash(name, params) {
-      params = (params || []).map((p) => ParamType.from(p));
-      const fragment = new _EventFragment(_guard2, name, params, false);
-      return fragment.topicHash;
-    }
-    /**
-     *  Returns a new **EventFragment** for %%obj%%.
-     */
-    static from(obj) {
-      if (_EventFragment.isFragment(obj)) {
-        return obj;
-      }
-      if (typeof obj === "string") {
-        try {
-          return _EventFragment.from(lex(obj));
-        } catch (error312) {
-          assertArgument(false, "invalid event fragment", "obj", obj);
-        }
-      } else if (obj instanceof TokenString) {
-        const name = consumeName("event", obj);
-        const inputs = consumeParams(obj, true);
-        const anonymous = !!consumeKeywords(obj, setify(["anonymous"])).has("anonymous");
-        consumeEoi(obj);
-        return new _EventFragment(_guard2, name, inputs, anonymous);
-      }
-      return new _EventFragment(_guard2, obj.name, obj.inputs ? obj.inputs.map((p) => ParamType.from(p, true)) : [], !!obj.anonymous);
-    }
-    /**
-     *  Returns ``true`` and provides a type guard if %%value%% is an
-     *  **EventFragment**.
-     */
-    static isFragment(value) {
-      return value && value[internal] === EventFragmentInternal;
-    }
-  };
-  var ConstructorFragment = class _ConstructorFragment extends Fragment {
-    /**
-     *  Whether the constructor can receive an endowment.
-     */
-    payable;
-    /**
-     *  The recommended gas limit for deployment or ``null``.
-     */
-    gas;
-    /**
-     *  @private
-     */
-    constructor(guard, type, inputs, payable, gas) {
-      super(guard, type, inputs);
-      Object.defineProperty(this, internal, { value: ConstructorFragmentInternal });
-      defineProperties(this, { payable, gas });
-    }
-    /**
-     *  Returns a string representation of this constructor as %%format%%.
-     */
-    format(format2) {
-      assert3(format2 != null && format2 !== "sighash", "cannot format a constructor for sighash", "UNSUPPORTED_OPERATION", { operation: "format(sighash)" });
-      if (format2 === "json") {
-        return JSON.stringify({
-          type: "constructor",
-          stateMutability: this.payable ? "payable" : "undefined",
-          payable: this.payable,
-          gas: this.gas != null ? this.gas : void 0,
-          inputs: this.inputs.map((i) => JSON.parse(i.format(format2)))
-        });
-      }
-      const result = [`constructor${joinParams(format2, this.inputs)}`];
-      if (this.payable) {
-        result.push("payable");
-      }
-      if (this.gas != null) {
-        result.push(`@${this.gas.toString()}`);
-      }
-      return result.join(" ");
-    }
-    /**
-     *  Returns a new **ConstructorFragment** for %%obj%%.
-     */
-    static from(obj) {
-      if (_ConstructorFragment.isFragment(obj)) {
-        return obj;
-      }
-      if (typeof obj === "string") {
-        try {
-          return _ConstructorFragment.from(lex(obj));
-        } catch (error312) {
-          assertArgument(false, "invalid constuctor fragment", "obj", obj);
-        }
-      } else if (obj instanceof TokenString) {
-        consumeKeywords(obj, setify(["constructor"]));
-        const inputs = consumeParams(obj);
-        const payable = !!consumeKeywords(obj, KwVisibDeploy).has("payable");
-        const gas = consumeGas(obj);
-        consumeEoi(obj);
-        return new _ConstructorFragment(_guard2, "constructor", inputs, payable, gas);
-      }
-      return new _ConstructorFragment(_guard2, "constructor", obj.inputs ? obj.inputs.map(ParamType.from) : [], !!obj.payable, obj.gas != null ? obj.gas : null);
-    }
-    /**
-     *  Returns ``true`` and provides a type guard if %%value%% is a
-     *  **ConstructorFragment**.
-     */
-    static isFragment(value) {
-      return value && value[internal] === ConstructorFragmentInternal;
-    }
-  };
-  var FallbackFragment = class _FallbackFragment extends Fragment {
-    /**
-     *  If the function can be sent value during invocation.
-     */
-    payable;
-    constructor(guard, inputs, payable) {
-      super(guard, "fallback", inputs);
-      Object.defineProperty(this, internal, { value: FallbackFragmentInternal });
-      defineProperties(this, { payable });
-    }
-    /**
-     *  Returns a string representation of this fallback as %%format%%.
-     */
-    format(format2) {
-      const type = this.inputs.length === 0 ? "receive" : "fallback";
-      if (format2 === "json") {
-        const stateMutability = this.payable ? "payable" : "nonpayable";
-        return JSON.stringify({ type, stateMutability });
-      }
-      return `${type}()${this.payable ? " payable" : ""}`;
-    }
-    /**
-     *  Returns a new **FallbackFragment** for %%obj%%.
-     */
-    static from(obj) {
-      if (_FallbackFragment.isFragment(obj)) {
-        return obj;
-      }
-      if (typeof obj === "string") {
-        try {
-          return _FallbackFragment.from(lex(obj));
-        } catch (error312) {
-          assertArgument(false, "invalid fallback fragment", "obj", obj);
-        }
-      } else if (obj instanceof TokenString) {
-        const errorObj = obj.toString();
-        const topIsValid = obj.peekKeyword(setify(["fallback", "receive"]));
-        assertArgument(topIsValid, "type must be fallback or receive", "obj", errorObj);
-        const type = obj.popKeyword(setify(["fallback", "receive"]));
-        if (type === "receive") {
-          const inputs2 = consumeParams(obj);
-          assertArgument(inputs2.length === 0, `receive cannot have arguments`, "obj.inputs", inputs2);
-          consumeKeywords(obj, setify(["payable"]));
-          consumeEoi(obj);
-          return new _FallbackFragment(_guard2, [], true);
-        }
-        let inputs = consumeParams(obj);
-        if (inputs.length) {
-          assertArgument(inputs.length === 1 && inputs[0].type === "bytes", "invalid fallback inputs", "obj.inputs", inputs.map((i) => i.format("minimal")).join(", "));
-        } else {
-          inputs = [ParamType.from("bytes")];
-        }
-        const mutability = consumeMutability(obj);
-        assertArgument(mutability === "nonpayable" || mutability === "payable", "fallback cannot be constants", "obj.stateMutability", mutability);
-        if (consumeKeywords(obj, setify(["returns"])).has("returns")) {
-          const outputs = consumeParams(obj);
-          assertArgument(outputs.length === 1 && outputs[0].type === "bytes", "invalid fallback outputs", "obj.outputs", outputs.map((i) => i.format("minimal")).join(", "));
-        }
-        consumeEoi(obj);
-        return new _FallbackFragment(_guard2, inputs, mutability === "payable");
-      }
-      if (obj.type === "receive") {
-        return new _FallbackFragment(_guard2, [], true);
-      }
-      if (obj.type === "fallback") {
-        const inputs = [ParamType.from("bytes")];
-        const payable = obj.stateMutability === "payable";
-        return new _FallbackFragment(_guard2, inputs, payable);
-      }
-      assertArgument(false, "invalid fallback description", "obj", obj);
-    }
-    /**
-     *  Returns ``true`` and provides a type guard if %%value%% is a
-     *  **FallbackFragment**.
-     */
-    static isFragment(value) {
-      return value && value[internal] === FallbackFragmentInternal;
-    }
-  };
-  var FunctionFragment = class _FunctionFragment extends NamedFragment {
-    /**
-     *  If the function is constant (e.g. ``pure`` or ``view`` functions).
-     */
-    constant;
-    /**
-     *  The returned types for the result of calling this function.
-     */
-    outputs;
-    /**
-     *  The state mutability (e.g. ``payable``, ``nonpayable``, ``view``
-     *  or ``pure``)
-     */
-    stateMutability;
-    /**
-     *  If the function can be sent value during invocation.
-     */
-    payable;
-    /**
-     *  The recommended gas limit to send when calling this function.
-     */
-    gas;
-    /**
-     *  @private
-     */
-    constructor(guard, name, stateMutability, inputs, outputs, gas) {
-      super(guard, "function", name, inputs);
-      Object.defineProperty(this, internal, { value: FunctionFragmentInternal });
-      outputs = Object.freeze(outputs.slice());
-      const constant = stateMutability === "view" || stateMutability === "pure";
-      const payable = stateMutability === "payable";
-      defineProperties(this, { constant, gas, outputs, payable, stateMutability });
-    }
-    /**
-     *  The Function selector.
-     */
-    get selector() {
-      return id(this.format("sighash")).substring(0, 10);
-    }
-    /**
-     *  Returns a string representation of this function as %%format%%.
-     */
-    format(format2) {
-      if (format2 == null) {
-        format2 = "sighash";
-      }
-      if (format2 === "json") {
-        return JSON.stringify({
-          type: "function",
-          name: this.name,
-          constant: this.constant,
-          stateMutability: this.stateMutability !== "nonpayable" ? this.stateMutability : void 0,
-          payable: this.payable,
-          gas: this.gas != null ? this.gas : void 0,
-          inputs: this.inputs.map((i) => JSON.parse(i.format(format2))),
-          outputs: this.outputs.map((o) => JSON.parse(o.format(format2)))
-        });
-      }
-      const result = [];
-      if (format2 !== "sighash") {
-        result.push("function");
-      }
-      result.push(this.name + joinParams(format2, this.inputs));
-      if (format2 !== "sighash") {
-        if (this.stateMutability !== "nonpayable") {
-          result.push(this.stateMutability);
-        }
-        if (this.outputs && this.outputs.length) {
-          result.push("returns");
-          result.push(joinParams(format2, this.outputs));
-        }
-        if (this.gas != null) {
-          result.push(`@${this.gas.toString()}`);
-        }
-      }
-      return result.join(" ");
-    }
-    /**
-     *  Return the selector for a function with %%name%% and %%params%%.
-     */
-    static getSelector(name, params) {
-      params = (params || []).map((p) => ParamType.from(p));
-      const fragment = new _FunctionFragment(_guard2, name, "view", params, [], null);
-      return fragment.selector;
-    }
-    /**
-     *  Returns a new **FunctionFragment** for %%obj%%.
-     */
-    static from(obj) {
-      if (_FunctionFragment.isFragment(obj)) {
-        return obj;
-      }
-      if (typeof obj === "string") {
-        try {
-          return _FunctionFragment.from(lex(obj));
-        } catch (error312) {
-          assertArgument(false, "invalid function fragment", "obj", obj);
-        }
-      } else if (obj instanceof TokenString) {
-        const name = consumeName("function", obj);
-        const inputs = consumeParams(obj);
-        const mutability = consumeMutability(obj);
-        let outputs = [];
-        if (consumeKeywords(obj, setify(["returns"])).has("returns")) {
-          outputs = consumeParams(obj);
-        }
-        const gas = consumeGas(obj);
-        consumeEoi(obj);
-        return new _FunctionFragment(_guard2, name, mutability, inputs, outputs, gas);
-      }
-      let stateMutability = obj.stateMutability;
-      if (stateMutability == null) {
-        stateMutability = "payable";
-        if (typeof obj.constant === "boolean") {
-          stateMutability = "view";
-          if (!obj.constant) {
-            stateMutability = "payable";
-            if (typeof obj.payable === "boolean" && !obj.payable) {
-              stateMutability = "nonpayable";
-            }
-          }
-        } else if (typeof obj.payable === "boolean" && !obj.payable) {
-          stateMutability = "nonpayable";
-        }
-      }
-      return new _FunctionFragment(_guard2, obj.name, stateMutability, obj.inputs ? obj.inputs.map(ParamType.from) : [], obj.outputs ? obj.outputs.map(ParamType.from) : [], obj.gas != null ? obj.gas : null);
-    }
-    /**
-     *  Returns ``true`` and provides a type guard if %%value%% is a
-     *  **FunctionFragment**.
-     */
-    static isFragment(value) {
-      return value && value[internal] === FunctionFragmentInternal;
-    }
-  };
-  var StructFragment = class _StructFragment extends NamedFragment {
-    /**
-     *  @private
-     */
-    constructor(guard, name, inputs) {
-      super(guard, "struct", name, inputs);
-      Object.defineProperty(this, internal, { value: StructFragmentInternal });
-    }
-    /**
-     *  Returns a string representation of this struct as %%format%%.
-     */
-    format() {
-      throw new Error("@TODO");
-    }
-    /**
-     *  Returns a new **StructFragment** for %%obj%%.
-     */
-    static from(obj) {
-      if (typeof obj === "string") {
-        try {
-          return _StructFragment.from(lex(obj));
-        } catch (error312) {
-          assertArgument(false, "invalid struct fragment", "obj", obj);
-        }
-      } else if (obj instanceof TokenString) {
-        const name = consumeName("struct", obj);
-        const inputs = consumeParams(obj);
-        consumeEoi(obj);
-        return new _StructFragment(_guard2, name, inputs);
-      }
-      return new _StructFragment(_guard2, obj.name, obj.inputs ? obj.inputs.map(ParamType.from) : []);
-    }
-    // @TODO: fix this return type
-    /**
-     *  Returns ``true`` and provides a type guard if %%value%% is a
-     *  **StructFragment**.
-     */
-    static isFragment(value) {
-      return value && value[internal] === StructFragmentInternal;
-    }
-  };
-
-  // node_modules/ethers/lib.esm/abi/abi-coder.js
-  var PanicReasons = /* @__PURE__ */ new Map();
-  PanicReasons.set(0, "GENERIC_PANIC");
-  PanicReasons.set(1, "ASSERT_FALSE");
-  PanicReasons.set(17, "OVERFLOW");
-  PanicReasons.set(18, "DIVIDE_BY_ZERO");
-  PanicReasons.set(33, "ENUM_RANGE_ERROR");
-  PanicReasons.set(34, "BAD_STORAGE_DATA");
-  PanicReasons.set(49, "STACK_UNDERFLOW");
-  PanicReasons.set(50, "ARRAY_RANGE_ERROR");
-  PanicReasons.set(65, "OUT_OF_MEMORY");
-  PanicReasons.set(81, "UNINITIALIZED_FUNCTION_CALL");
-  var paramTypeBytes = new RegExp(/^bytes([0-9]*)$/);
-  var paramTypeNumber = new RegExp(/^(u?int)([0-9]*)$/);
-  var defaultCoder = null;
-  var defaultMaxInflation = 1024;
-  function getBuiltinCallException(action, tx, data, abiCoder) {
-    let message = "missing revert data";
-    let reason = null;
-    const invocation = null;
-    let revert = null;
-    if (data) {
-      message = "execution reverted";
-      const bytes3 = getBytes(data);
-      data = hexlify(data);
-      if (bytes3.length === 0) {
-        message += " (no data present; likely require(false) occurred";
-        reason = "require(false)";
-      } else if (bytes3.length % 32 !== 4) {
-        message += " (could not decode reason; invalid data length)";
-      } else if (hexlify(bytes3.slice(0, 4)) === "0x08c379a0") {
-        try {
-          reason = abiCoder.decode(["string"], bytes3.slice(4))[0];
-          revert = {
-            signature: "Error(string)",
-            name: "Error",
-            args: [reason]
-          };
-          message += `: ${JSON.stringify(reason)}`;
-        } catch (error312) {
-          message += " (could not decode reason; invalid string data)";
-        }
-      } else if (hexlify(bytes3.slice(0, 4)) === "0x4e487b71") {
-        try {
-          const code = Number(abiCoder.decode(["uint256"], bytes3.slice(4))[0]);
-          revert = {
-            signature: "Panic(uint256)",
-            name: "Panic",
-            args: [code]
-          };
-          reason = `Panic due to ${PanicReasons.get(code) || "UNKNOWN"}(${code})`;
-          message += `: ${reason}`;
-        } catch (error312) {
-          message += " (could not decode panic code)";
-        }
-      } else {
-        message += " (unknown custom error)";
-      }
-    }
-    const transaction = {
-      to: tx.to ? getAddress(tx.to) : null,
-      data: tx.data || "0x"
-    };
-    if (tx.from) {
-      transaction.from = getAddress(tx.from);
-    }
-    return makeError(message, "CALL_EXCEPTION", {
-      action,
-      data,
-      reason,
-      transaction,
-      invocation,
-      revert
-    });
-  }
-  var AbiCoder = class _AbiCoder {
-    #getCoder(param) {
-      if (param.isArray()) {
-        return new ArrayCoder(this.#getCoder(param.arrayChildren), param.arrayLength, param.name);
-      }
-      if (param.isTuple()) {
-        return new TupleCoder(param.components.map((c) => this.#getCoder(c)), param.name);
-      }
-      switch (param.baseType) {
-        case "address":
-          return new AddressCoder(param.name);
-        case "bool":
-          return new BooleanCoder(param.name);
-        case "string":
-          return new StringCoder(param.name);
-        case "bytes":
-          return new BytesCoder(param.name);
-        case "":
-          return new NullCoder(param.name);
-      }
-      let match = param.type.match(paramTypeNumber);
-      if (match) {
-        let size2 = parseInt(match[2] || "256");
-        assertArgument(size2 !== 0 && size2 <= 256 && size2 % 8 === 0, "invalid " + match[1] + " bit length", "param", param);
-        return new NumberCoder(size2 / 8, match[1] === "int", param.name);
-      }
-      match = param.type.match(paramTypeBytes);
-      if (match) {
-        let size2 = parseInt(match[1]);
-        assertArgument(size2 !== 0 && size2 <= 32, "invalid bytes length", "param", param);
-        return new FixedBytesCoder(size2, param.name);
-      }
-      assertArgument(false, "invalid type", "type", param.type);
-    }
-    /**
-     *  Get the default values for the given %%types%%.
-     *
-     *  For example, a ``uint`` is by default ``0`` and ``bool``
-     *  is by default ``false``.
-     */
-    getDefaultValue(types2) {
-      const coders = types2.map((type) => this.#getCoder(ParamType.from(type)));
-      const coder = new TupleCoder(coders, "_");
-      return coder.defaultValue();
-    }
-    /**
-     *  Encode the %%values%% as the %%types%% into ABI data.
-     *
-     *  @returns DataHexstring
-     */
-    encode(types2, values) {
-      assertArgumentCount(values.length, types2.length, "types/values length mismatch");
-      const coders = types2.map((type) => this.#getCoder(ParamType.from(type)));
-      const coder = new TupleCoder(coders, "_");
-      const writer = new Writer();
-      coder.encode(writer, values);
-      return writer.data;
-    }
-    /**
-     *  Decode the ABI %%data%% as the %%types%% into values.
-     *
-     *  If %%loose%% decoding is enabled, then strict padding is
-     *  not enforced. Some older versions of Solidity incorrectly
-     *  padded event data emitted from ``external`` functions.
-     */
-    decode(types2, data, loose) {
-      const coders = types2.map((type) => this.#getCoder(ParamType.from(type)));
-      const coder = new TupleCoder(coders, "_");
-      return coder.decode(new Reader(data, loose, defaultMaxInflation));
-    }
-    static _setDefaultMaxInflation(value) {
-      assertArgument(typeof value === "number" && Number.isInteger(value), "invalid defaultMaxInflation factor", "value", value);
-      defaultMaxInflation = value;
-    }
-    /**
-     *  Returns the shared singleton instance of a default [[AbiCoder]].
-     *
-     *  On the first call, the instance is created internally.
-     */
-    static defaultAbiCoder() {
-      if (defaultCoder == null) {
-        defaultCoder = new _AbiCoder();
-      }
-      return defaultCoder;
-    }
-    /**
-     *  Returns an ethers-compatible [[CallExceptionError]] Error for the given
-     *  result %%data%% for the [[CallExceptionAction]] %%action%% against
-     *  the Transaction %%tx%%.
-     */
-    static getBuiltinCallException(action, tx, data) {
-      return getBuiltinCallException(action, tx, data, _AbiCoder.defaultAbiCoder());
-    }
-  };
-
-  // node_modules/ethers/lib.esm/abi/bytes32.js
-  init_dirname();
-  init_buffer2();
-  init_process2();
-  function encodeBytes32String(text) {
-    const bytes3 = toUtf8Bytes(text);
-    if (bytes3.length > 31) {
-      throw new Error("bytes32 string must be less than 32 bytes");
-    }
-    return zeroPadBytes(bytes3, 32);
-  }
-
-  // node_modules/ethers/lib.esm/abi/interface.js
-  init_dirname();
-  init_buffer2();
-  init_process2();
-  var LogDescription = class {
-    /**
-     *  The matching fragment for the ``topic0``.
-     */
-    fragment;
-    /**
-     *  The name of the Event.
-     */
-    name;
-    /**
-     *  The full Event signature.
-     */
-    signature;
-    /**
-     *  The topic hash for the Event.
-     */
-    topic;
-    /**
-     *  The arguments passed into the Event with ``emit``.
-     */
-    args;
-    /**
-     *  @_ignore:
-     */
-    constructor(fragment, topic, args) {
-      const name = fragment.name, signature = fragment.format();
-      defineProperties(this, {
-        fragment,
-        name,
-        signature,
-        topic,
-        args
-      });
-    }
-  };
-  var TransactionDescription = class {
-    /**
-     *  The matching fragment from the transaction ``data``.
-     */
-    fragment;
-    /**
-     *  The name of the Function from the transaction ``data``.
-     */
-    name;
-    /**
-     *  The arguments passed to the Function from the transaction ``data``.
-     */
-    args;
-    /**
-     *  The full Function signature from the transaction ``data``.
-     */
-    signature;
-    /**
-     *  The selector for the Function from the transaction ``data``.
-     */
-    selector;
-    /**
-     *  The ``value`` (in wei) from the transaction.
-     */
-    value;
-    /**
-     *  @_ignore:
-     */
-    constructor(fragment, selector, args, value) {
-      const name = fragment.name, signature = fragment.format();
-      defineProperties(this, {
-        fragment,
-        name,
-        args,
-        signature,
-        selector,
-        value
-      });
-    }
-  };
-  var ErrorDescription = class {
-    /**
-     *  The matching fragment.
-     */
-    fragment;
-    /**
-     *  The name of the Error.
-     */
-    name;
-    /**
-     *  The arguments passed to the Error with ``revert``.
-     */
-    args;
-    /**
-     *  The full Error signature.
-     */
-    signature;
-    /**
-     *  The selector for the Error.
-     */
-    selector;
-    /**
-     *  @_ignore:
-     */
-    constructor(fragment, selector, args) {
-      const name = fragment.name, signature = fragment.format();
-      defineProperties(this, {
-        fragment,
-        name,
-        args,
-        signature,
-        selector
-      });
-    }
-  };
-  var Indexed = class {
-    /**
-     *  The ``keccak256`` of the value logged.
-     */
-    hash;
-    /**
-     *  @_ignore:
-     */
-    _isIndexed;
-    /**
-     *  Returns ``true`` if %%value%% is an **Indexed**.
-     *
-     *  This provides a Type Guard for property access.
-     */
-    static isIndexed(value) {
-      return !!(value && value._isIndexed);
-    }
-    /**
-     *  @_ignore:
-     */
-    constructor(hash12) {
-      defineProperties(this, { hash: hash12, _isIndexed: true });
-    }
-  };
-  var PanicReasons2 = {
-    "0": "generic panic",
-    "1": "assert(false)",
-    "17": "arithmetic overflow",
-    "18": "division or modulo by zero",
-    "33": "enum overflow",
-    "34": "invalid encoded storage byte array accessed",
-    "49": "out-of-bounds array access; popping on an empty array",
-    "50": "out-of-bounds access of an array or bytesN",
-    "65": "out of memory",
-    "81": "uninitialized function"
-  };
-  var BuiltinErrors = {
-    "0x08c379a0": {
-      signature: "Error(string)",
-      name: "Error",
-      inputs: ["string"],
-      reason: (message) => {
-        return `reverted with reason string ${JSON.stringify(message)}`;
-      }
-    },
-    "0x4e487b71": {
-      signature: "Panic(uint256)",
-      name: "Panic",
-      inputs: ["uint256"],
-      reason: (code) => {
-        let reason = "unknown panic code";
-        if (code >= 0 && code <= 255 && PanicReasons2[code.toString()]) {
-          reason = PanicReasons2[code.toString()];
-        }
-        return `reverted with panic code 0x${code.toString(16)} (${reason})`;
-      }
-    }
-  };
-  var Interface = class _Interface {
-    /**
-     *  All the Contract ABI members (i.e. methods, events, errors, etc).
-     */
-    fragments;
-    /**
-     *  The Contract constructor.
-     */
-    deploy;
-    /**
-     *  The Fallback method, if any.
-     */
-    fallback;
-    /**
-     *  If receiving ether is supported.
-     */
-    receive;
-    #errors;
-    #events;
-    #functions;
-    //    #structs: Map<string, StructFragment>;
-    #abiCoder;
-    /**
-     *  Create a new Interface for the %%fragments%%.
-     */
-    constructor(fragments) {
-      let abi2 = [];
-      if (typeof fragments === "string") {
-        abi2 = JSON.parse(fragments);
-      } else {
-        abi2 = fragments;
-      }
-      this.#functions = /* @__PURE__ */ new Map();
-      this.#errors = /* @__PURE__ */ new Map();
-      this.#events = /* @__PURE__ */ new Map();
-      const frags = [];
-      for (const a of abi2) {
-        try {
-          frags.push(Fragment.from(a));
-        } catch (error312) {
-          console.log(`[Warning] Invalid Fragment ${JSON.stringify(a)}:`, error312.message);
-        }
-      }
-      defineProperties(this, {
-        fragments: Object.freeze(frags)
-      });
-      let fallback = null;
-      let receive = false;
-      this.#abiCoder = this.getAbiCoder();
-      this.fragments.forEach((fragment, index) => {
-        let bucket;
-        switch (fragment.type) {
-          case "constructor":
-            if (this.deploy) {
-              console.log("duplicate definition - constructor");
-              return;
-            }
-            defineProperties(this, { deploy: fragment });
-            return;
-          case "fallback":
-            if (fragment.inputs.length === 0) {
-              receive = true;
-            } else {
-              assertArgument(!fallback || fragment.payable !== fallback.payable, "conflicting fallback fragments", `fragments[${index}]`, fragment);
-              fallback = fragment;
-              receive = fallback.payable;
-            }
-            return;
-          case "function":
-            bucket = this.#functions;
-            break;
-          case "event":
-            bucket = this.#events;
-            break;
-          case "error":
-            bucket = this.#errors;
-            break;
-          default:
-            return;
-        }
-        const signature = fragment.format();
-        if (bucket.has(signature)) {
-          return;
-        }
-        bucket.set(signature, fragment);
-      });
-      if (!this.deploy) {
-        defineProperties(this, {
-          deploy: ConstructorFragment.from("constructor()")
-        });
-      }
-      defineProperties(this, { fallback, receive });
-    }
-    /**
-     *  Returns the entire Human-Readable ABI, as an array of
-     *  signatures, optionally as %%minimal%% strings, which
-     *  removes parameter names and unneceesary spaces.
-     */
-    format(minimal) {
-      const format2 = minimal ? "minimal" : "full";
-      const abi2 = this.fragments.map((f) => f.format(format2));
-      return abi2;
-    }
-    /**
-     *  Return the JSON-encoded ABI. This is the format Solidiy
-     *  returns.
-     */
-    formatJson() {
-      const abi2 = this.fragments.map((f) => f.format("json"));
-      return JSON.stringify(abi2.map((j) => JSON.parse(j)));
-    }
-    /**
-     *  The ABI coder that will be used to encode and decode binary
-     *  data.
-     */
-    getAbiCoder() {
-      return AbiCoder.defaultAbiCoder();
-    }
-    // Find a function definition by any means necessary (unless it is ambiguous)
-    #getFunction(key, values, forceUnique) {
-      if (isHexString(key)) {
-        const selector = key.toLowerCase();
-        for (const fragment of this.#functions.values()) {
-          if (selector === fragment.selector) {
-            return fragment;
-          }
-        }
-        return null;
-      }
-      if (key.indexOf("(") === -1) {
-        const matching = [];
-        for (const [name, fragment] of this.#functions) {
-          if (name.split(
-            "("
-            /* fix:) */
-          )[0] === key) {
-            matching.push(fragment);
-          }
-        }
-        if (values) {
-          const lastValue = values.length > 0 ? values[values.length - 1] : null;
-          let valueLength = values.length;
-          let allowOptions = true;
-          if (Typed.isTyped(lastValue) && lastValue.type === "overrides") {
-            allowOptions = false;
-            valueLength--;
-          }
-          for (let i = matching.length - 1; i >= 0; i--) {
-            const inputs = matching[i].inputs.length;
-            if (inputs !== valueLength && (!allowOptions || inputs !== valueLength - 1)) {
-              matching.splice(i, 1);
-            }
-          }
-          for (let i = matching.length - 1; i >= 0; i--) {
-            const inputs = matching[i].inputs;
-            for (let j = 0; j < values.length; j++) {
-              if (!Typed.isTyped(values[j])) {
-                continue;
-              }
-              if (j >= inputs.length) {
-                if (values[j].type === "overrides") {
-                  continue;
-                }
-                matching.splice(i, 1);
-                break;
-              }
-              if (values[j].type !== inputs[j].baseType) {
-                matching.splice(i, 1);
-                break;
-              }
-            }
-          }
-        }
-        if (matching.length === 1 && values && values.length !== matching[0].inputs.length) {
-          const lastArg = values[values.length - 1];
-          if (lastArg == null || Array.isArray(lastArg) || typeof lastArg !== "object") {
-            matching.splice(0, 1);
-          }
-        }
-        if (matching.length === 0) {
-          return null;
-        }
-        if (matching.length > 1 && forceUnique) {
-          const matchStr = matching.map((m2) => JSON.stringify(m2.format())).join(", ");
-          assertArgument(false, `ambiguous function description (i.e. matches ${matchStr})`, "key", key);
-        }
-        return matching[0];
-      }
-      const result = this.#functions.get(FunctionFragment.from(key).format());
-      if (result) {
-        return result;
-      }
-      return null;
-    }
-    /**
-     *  Get the function name for %%key%%, which may be a function selector,
-     *  function name or function signature that belongs to the ABI.
-     */
-    getFunctionName(key) {
-      const fragment = this.#getFunction(key, null, false);
-      assertArgument(fragment, "no matching function", "key", key);
-      return fragment.name;
-    }
-    /**
-     *  Returns true if %%key%% (a function selector, function name or
-     *  function signature) is present in the ABI.
-     *
-     *  In the case of a function name, the name may be ambiguous, so
-     *  accessing the [[FunctionFragment]] may require refinement.
-     */
-    hasFunction(key) {
-      return !!this.#getFunction(key, null, false);
-    }
-    /**
-     *  Get the [[FunctionFragment]] for %%key%%, which may be a function
-     *  selector, function name or function signature that belongs to the ABI.
-     *
-     *  If %%values%% is provided, it will use the Typed API to handle
-     *  ambiguous cases where multiple functions match by name.
-     *
-     *  If the %%key%% and %%values%% do not refine to a single function in
-     *  the ABI, this will throw.
-     */
-    getFunction(key, values) {
-      return this.#getFunction(key, values || null, true);
-    }
-    /**
-     *  Iterate over all functions, calling %%callback%%, sorted by their name.
-     */
-    forEachFunction(callback) {
-      const names = Array.from(this.#functions.keys());
-      names.sort((a, b2) => a.localeCompare(b2));
-      for (let i = 0; i < names.length; i++) {
-        const name = names[i];
-        callback(this.#functions.get(name), i);
-      }
-    }
-    // Find an event definition by any means necessary (unless it is ambiguous)
-    #getEvent(key, values, forceUnique) {
-      if (isHexString(key)) {
-        const eventTopic = key.toLowerCase();
-        for (const fragment of this.#events.values()) {
-          if (eventTopic === fragment.topicHash) {
-            return fragment;
-          }
-        }
-        return null;
-      }
-      if (key.indexOf("(") === -1) {
-        const matching = [];
-        for (const [name, fragment] of this.#events) {
-          if (name.split(
-            "("
-            /* fix:) */
-          )[0] === key) {
-            matching.push(fragment);
-          }
-        }
-        if (values) {
-          for (let i = matching.length - 1; i >= 0; i--) {
-            if (matching[i].inputs.length < values.length) {
-              matching.splice(i, 1);
-            }
-          }
-          for (let i = matching.length - 1; i >= 0; i--) {
-            const inputs = matching[i].inputs;
-            for (let j = 0; j < values.length; j++) {
-              if (!Typed.isTyped(values[j])) {
-                continue;
-              }
-              if (values[j].type !== inputs[j].baseType) {
-                matching.splice(i, 1);
-                break;
-              }
-            }
-          }
-        }
-        if (matching.length === 0) {
-          return null;
-        }
-        if (matching.length > 1 && forceUnique) {
-          const matchStr = matching.map((m2) => JSON.stringify(m2.format())).join(", ");
-          assertArgument(false, `ambiguous event description (i.e. matches ${matchStr})`, "key", key);
-        }
-        return matching[0];
-      }
-      const result = this.#events.get(EventFragment.from(key).format());
-      if (result) {
-        return result;
-      }
-      return null;
-    }
-    /**
-     *  Get the event name for %%key%%, which may be a topic hash,
-     *  event name or event signature that belongs to the ABI.
-     */
-    getEventName(key) {
-      const fragment = this.#getEvent(key, null, false);
-      assertArgument(fragment, "no matching event", "key", key);
-      return fragment.name;
-    }
-    /**
-     *  Returns true if %%key%% (an event topic hash, event name or
-     *  event signature) is present in the ABI.
-     *
-     *  In the case of an event name, the name may be ambiguous, so
-     *  accessing the [[EventFragment]] may require refinement.
-     */
-    hasEvent(key) {
-      return !!this.#getEvent(key, null, false);
-    }
-    /**
-     *  Get the [[EventFragment]] for %%key%%, which may be a topic hash,
-     *  event name or event signature that belongs to the ABI.
-     *
-     *  If %%values%% is provided, it will use the Typed API to handle
-     *  ambiguous cases where multiple events match by name.
-     *
-     *  If the %%key%% and %%values%% do not refine to a single event in
-     *  the ABI, this will throw.
-     */
-    getEvent(key, values) {
-      return this.#getEvent(key, values || null, true);
-    }
-    /**
-     *  Iterate over all events, calling %%callback%%, sorted by their name.
-     */
-    forEachEvent(callback) {
-      const names = Array.from(this.#events.keys());
-      names.sort((a, b2) => a.localeCompare(b2));
-      for (let i = 0; i < names.length; i++) {
-        const name = names[i];
-        callback(this.#events.get(name), i);
-      }
-    }
-    /**
-     *  Get the [[ErrorFragment]] for %%key%%, which may be an error
-     *  selector, error name or error signature that belongs to the ABI.
-     *
-     *  If %%values%% is provided, it will use the Typed API to handle
-     *  ambiguous cases where multiple errors match by name.
-     *
-     *  If the %%key%% and %%values%% do not refine to a single error in
-     *  the ABI, this will throw.
-     */
-    getError(key, values) {
-      if (isHexString(key)) {
-        const selector = key.toLowerCase();
-        if (BuiltinErrors[selector]) {
-          return ErrorFragment.from(BuiltinErrors[selector].signature);
-        }
-        for (const fragment of this.#errors.values()) {
-          if (selector === fragment.selector) {
-            return fragment;
-          }
-        }
-        return null;
-      }
-      if (key.indexOf("(") === -1) {
-        const matching = [];
-        for (const [name, fragment] of this.#errors) {
-          if (name.split(
-            "("
-            /* fix:) */
-          )[0] === key) {
-            matching.push(fragment);
-          }
-        }
-        if (matching.length === 0) {
-          if (key === "Error") {
-            return ErrorFragment.from("error Error(string)");
-          }
-          if (key === "Panic") {
-            return ErrorFragment.from("error Panic(uint256)");
-          }
-          return null;
-        } else if (matching.length > 1) {
-          const matchStr = matching.map((m2) => JSON.stringify(m2.format())).join(", ");
-          assertArgument(false, `ambiguous error description (i.e. ${matchStr})`, "name", key);
-        }
-        return matching[0];
-      }
-      key = ErrorFragment.from(key).format();
-      if (key === "Error(string)") {
-        return ErrorFragment.from("error Error(string)");
-      }
-      if (key === "Panic(uint256)") {
-        return ErrorFragment.from("error Panic(uint256)");
-      }
-      const result = this.#errors.get(key);
-      if (result) {
-        return result;
-      }
-      return null;
-    }
-    /**
-     *  Iterate over all errors, calling %%callback%%, sorted by their name.
-     */
-    forEachError(callback) {
-      const names = Array.from(this.#errors.keys());
-      names.sort((a, b2) => a.localeCompare(b2));
-      for (let i = 0; i < names.length; i++) {
-        const name = names[i];
-        callback(this.#errors.get(name), i);
-      }
-    }
-    // Get the 4-byte selector used by Solidity to identify a function
-    /*
-    getSelector(fragment: ErrorFragment | FunctionFragment): string {
-        if (typeof(fragment) === "string") {
-            const matches: Array<Fragment> = [ ];
-    
-            try { matches.push(this.getFunction(fragment)); } catch (error) { }
-            try { matches.push(this.getError(<string>fragment)); } catch (_) { }
-    
-            if (matches.length === 0) {
-                logger.throwArgumentError("unknown fragment", "key", fragment);
-            } else if (matches.length > 1) {
-                logger.throwArgumentError("ambiguous fragment matches function and error", "key", fragment);
-            }
-    
-            fragment = matches[0];
-        }
-    
-        return dataSlice(id(fragment.format()), 0, 4);
-    }
-        */
-    // Get the 32-byte topic hash used by Solidity to identify an event
-    /*
-    getEventTopic(fragment: EventFragment): string {
-        //if (typeof(fragment) === "string") { fragment = this.getEvent(eventFragment); }
-        return id(fragment.format());
-    }
-    */
-    _decodeParams(params, data) {
-      return this.#abiCoder.decode(params, data);
-    }
-    _encodeParams(params, values) {
-      return this.#abiCoder.encode(params, values);
-    }
-    /**
-     *  Encodes a ``tx.data`` object for deploying the Contract with
-     *  the %%values%% as the constructor arguments.
-     */
-    encodeDeploy(values) {
-      return this._encodeParams(this.deploy.inputs, values || []);
-    }
-    /**
-     *  Decodes the result %%data%% (e.g. from an ``eth_call``) for the
-     *  specified error (see [[getError]] for valid values for
-     *  %%key%%).
-     *
-     *  Most developers should prefer the [[parseCallResult]] method instead,
-     *  which will automatically detect a ``CALL_EXCEPTION`` and throw the
-     *  corresponding error.
-     */
-    decodeErrorResult(fragment, data) {
-      if (typeof fragment === "string") {
-        const f = this.getError(fragment);
-        assertArgument(f, "unknown error", "fragment", fragment);
-        fragment = f;
-      }
-      assertArgument(dataSlice(data, 0, 4) === fragment.selector, `data signature does not match error ${fragment.name}.`, "data", data);
-      return this._decodeParams(fragment.inputs, dataSlice(data, 4));
-    }
-    /**
-     *  Encodes the transaction revert data for a call result that
-     *  reverted from the the Contract with the sepcified %%error%%
-     *  (see [[getError]] for valid values for %%fragment%%) with the %%values%%.
-     *
-     *  This is generally not used by most developers, unless trying to mock
-     *  a result from a Contract.
-     */
-    encodeErrorResult(fragment, values) {
-      if (typeof fragment === "string") {
-        const f = this.getError(fragment);
-        assertArgument(f, "unknown error", "fragment", fragment);
-        fragment = f;
-      }
-      return concat([
-        fragment.selector,
-        this._encodeParams(fragment.inputs, values || [])
-      ]);
-    }
-    /**
-     *  Decodes the %%data%% from a transaction ``tx.data`` for
-     *  the function specified (see [[getFunction]] for valid values
-     *  for %%fragment%%).
-     *
-     *  Most developers should prefer the [[parseTransaction]] method
-     *  instead, which will automatically detect the fragment.
-     */
-    decodeFunctionData(fragment, data) {
-      if (typeof fragment === "string") {
-        const f = this.getFunction(fragment);
-        assertArgument(f, "unknown function", "fragment", fragment);
-        fragment = f;
-      }
-      assertArgument(dataSlice(data, 0, 4) === fragment.selector, `data signature does not match function ${fragment.name}.`, "data", data);
-      return this._decodeParams(fragment.inputs, dataSlice(data, 4));
-    }
-    /**
-     *  Encodes the ``tx.data`` for a transaction that calls the function
-     *  specified (see [[getFunction]] for valid values for %%fragment%%) with
-     *  the %%values%%.
-     */
-    encodeFunctionData(fragment, values) {
-      if (typeof fragment === "string") {
-        const f = this.getFunction(fragment);
-        assertArgument(f, "unknown function", "fragment", fragment);
-        fragment = f;
-      }
-      return concat([
-        fragment.selector,
-        this._encodeParams(fragment.inputs, values || [])
-      ]);
-    }
-    /**
-     *  Decodes the result %%data%% (e.g. from an ``eth_call``) for the
-     *  specified function (see [[getFunction]] for valid values for
-     *  %%key%%).
-     *
-     *  Most developers should prefer the [[parseCallResult]] method instead,
-     *  which will automatically detect a ``CALL_EXCEPTION`` and throw the
-     *  corresponding error.
-     */
-    decodeFunctionResult(fragment, data) {
-      if (typeof fragment === "string") {
-        const f = this.getFunction(fragment);
-        assertArgument(f, "unknown function", "fragment", fragment);
-        fragment = f;
-      }
-      let message = "invalid length for result data";
-      const bytes3 = getBytesCopy(data);
-      if (bytes3.length % 32 === 0) {
-        try {
-          return this.#abiCoder.decode(fragment.outputs, bytes3);
-        } catch (error312) {
-          message = "could not decode result data";
-        }
-      }
-      assert3(false, message, "BAD_DATA", {
-        value: hexlify(bytes3),
-        info: { method: fragment.name, signature: fragment.format() }
-      });
-    }
-    makeError(_data, tx) {
-      const data = getBytes(_data, "data");
-      const error312 = AbiCoder.getBuiltinCallException("call", tx, data);
-      const customPrefix = "execution reverted (unknown custom error)";
-      if (error312.message.startsWith(customPrefix)) {
-        const selector = hexlify(data.slice(0, 4));
-        const ef = this.getError(selector);
-        if (ef) {
-          try {
-            const args = this.#abiCoder.decode(ef.inputs, data.slice(4));
-            error312.revert = {
-              name: ef.name,
-              signature: ef.format(),
-              args
-            };
-            error312.reason = error312.revert.signature;
-            error312.message = `execution reverted: ${error312.reason}`;
-          } catch (e) {
-            error312.message = `execution reverted (coult not decode custom error)`;
-          }
-        }
-      }
-      const parsed = this.parseTransaction(tx);
-      if (parsed) {
-        error312.invocation = {
-          method: parsed.name,
-          signature: parsed.signature,
-          args: parsed.args
-        };
-      }
-      return error312;
-    }
-    /**
-     *  Encodes the result data (e.g. from an ``eth_call``) for the
-     *  specified function (see [[getFunction]] for valid values
-     *  for %%fragment%%) with %%values%%.
-     *
-     *  This is generally not used by most developers, unless trying to mock
-     *  a result from a Contract.
-     */
-    encodeFunctionResult(fragment, values) {
-      if (typeof fragment === "string") {
-        const f = this.getFunction(fragment);
-        assertArgument(f, "unknown function", "fragment", fragment);
-        fragment = f;
-      }
-      return hexlify(this.#abiCoder.encode(fragment.outputs, values || []));
-    }
-    /*
-        spelunk(inputs: Array<ParamType>, values: ReadonlyArray<any>, processfunc: (type: string, value: any) => Promise<any>): Promise<Array<any>> {
-            const promises: Array<Promise<>> = [ ];
-            const process = function(type: ParamType, value: any): any {
-                if (type.baseType === "array") {
-                    return descend(type.child
-                }
-                if (type. === "address") {
-                }
-            };
-    
-            const descend = function (inputs: Array<ParamType>, values: ReadonlyArray<any>) {
-                if (inputs.length !== values.length) { throw new Error("length mismatch"); }
-                
-            };
-    
-            const result: Array<any> = [ ];
-            values.forEach((value, index) => {
-                if (value == null) {
-                    topics.push(null);
-                } else if (param.baseType === "array" || param.baseType === "tuple") {
-                    logger.throwArgumentError("filtering with tuples or arrays not supported", ("contract." + param.name), value);
-                } else if (Array.isArray(value)) {
-                    topics.push(value.map((value) => encodeTopic(param, value)));
-                } else {
-                    topics.push(encodeTopic(param, value));
-                }
-            });
-        }
-    */
-    // Create the filter for the event with search criteria (e.g. for eth_filterLog)
-    encodeFilterTopics(fragment, values) {
-      if (typeof fragment === "string") {
-        const f = this.getEvent(fragment);
-        assertArgument(f, "unknown event", "eventFragment", fragment);
-        fragment = f;
-      }
-      assert3(values.length <= fragment.inputs.length, `too many arguments for ${fragment.format()}`, "UNEXPECTED_ARGUMENT", { count: values.length, expectedCount: fragment.inputs.length });
-      const topics = [];
-      if (!fragment.anonymous) {
-        topics.push(fragment.topicHash);
-      }
-      const encodeTopic = (param, value) => {
-        if (param.type === "string") {
-          return id(value);
-        } else if (param.type === "bytes") {
-          return keccak256(hexlify(value));
-        }
-        if (param.type === "bool" && typeof value === "boolean") {
-          value = value ? "0x01" : "0x00";
-        } else if (param.type.match(/^u?int/)) {
-          value = toBeHex(value);
-        } else if (param.type.match(/^bytes/)) {
-          value = zeroPadBytes(value, 32);
-        } else if (param.type === "address") {
-          this.#abiCoder.encode(["address"], [value]);
-        }
-        return zeroPadValue(hexlify(value), 32);
-      };
-      values.forEach((value, index) => {
-        const param = fragment.inputs[index];
-        if (!param.indexed) {
-          assertArgument(value == null, "cannot filter non-indexed parameters; must be null", "contract." + param.name, value);
-          return;
-        }
-        if (value == null) {
-          topics.push(null);
-        } else if (param.baseType === "array" || param.baseType === "tuple") {
-          assertArgument(false, "filtering with tuples or arrays not supported", "contract." + param.name, value);
-        } else if (Array.isArray(value)) {
-          topics.push(value.map((value2) => encodeTopic(param, value2)));
-        } else {
-          topics.push(encodeTopic(param, value));
-        }
-      });
-      while (topics.length && topics[topics.length - 1] === null) {
-        topics.pop();
-      }
-      return topics;
-    }
-    encodeEventLog(fragment, values) {
-      if (typeof fragment === "string") {
-        const f = this.getEvent(fragment);
-        assertArgument(f, "unknown event", "eventFragment", fragment);
-        fragment = f;
-      }
-      const topics = [];
-      const dataTypes = [];
-      const dataValues = [];
-      if (!fragment.anonymous) {
-        topics.push(fragment.topicHash);
-      }
-      assertArgument(values.length === fragment.inputs.length, "event arguments/values mismatch", "values", values);
-      fragment.inputs.forEach((param, index) => {
-        const value = values[index];
-        if (param.indexed) {
-          if (param.type === "string") {
-            topics.push(id(value));
-          } else if (param.type === "bytes") {
-            topics.push(keccak256(value));
-          } else if (param.baseType === "tuple" || param.baseType === "array") {
-            throw new Error("not implemented");
-          } else {
-            topics.push(this.#abiCoder.encode([param.type], [value]));
-          }
-        } else {
-          dataTypes.push(param);
-          dataValues.push(value);
-        }
-      });
-      return {
-        data: this.#abiCoder.encode(dataTypes, dataValues),
-        topics
-      };
-    }
-    // Decode a filter for the event and the search criteria
-    decodeEventLog(fragment, data, topics) {
-      if (typeof fragment === "string") {
-        const f = this.getEvent(fragment);
-        assertArgument(f, "unknown event", "eventFragment", fragment);
-        fragment = f;
-      }
-      if (topics != null && !fragment.anonymous) {
-        const eventTopic = fragment.topicHash;
-        assertArgument(isHexString(topics[0], 32) && topics[0].toLowerCase() === eventTopic, "fragment/topic mismatch", "topics[0]", topics[0]);
-        topics = topics.slice(1);
-      }
-      const indexed = [];
-      const nonIndexed = [];
-      const dynamic = [];
-      fragment.inputs.forEach((param, index) => {
-        if (param.indexed) {
-          if (param.type === "string" || param.type === "bytes" || param.baseType === "tuple" || param.baseType === "array") {
-            indexed.push(ParamType.from({ type: "bytes32", name: param.name }));
-            dynamic.push(true);
-          } else {
-            indexed.push(param);
-            dynamic.push(false);
-          }
-        } else {
-          nonIndexed.push(param);
-          dynamic.push(false);
-        }
-      });
-      const resultIndexed = topics != null ? this.#abiCoder.decode(indexed, concat(topics)) : null;
-      const resultNonIndexed = this.#abiCoder.decode(nonIndexed, data, true);
-      const values = [];
-      const keys = [];
-      let nonIndexedIndex = 0, indexedIndex = 0;
-      fragment.inputs.forEach((param, index) => {
-        let value = null;
-        if (param.indexed) {
-          if (resultIndexed == null) {
-            value = new Indexed(null);
-          } else if (dynamic[index]) {
-            value = new Indexed(resultIndexed[indexedIndex++]);
-          } else {
-            try {
-              value = resultIndexed[indexedIndex++];
-            } catch (error312) {
-              value = error312;
-            }
-          }
-        } else {
-          try {
-            value = resultNonIndexed[nonIndexedIndex++];
-          } catch (error312) {
-            value = error312;
-          }
-        }
-        values.push(value);
-        keys.push(param.name || null);
-      });
-      return Result.fromItems(values, keys);
-    }
-    /**
-     *  Parses a transaction, finding the matching function and extracts
-     *  the parameter values along with other useful function details.
-     *
-     *  If the matching function cannot be found, return null.
-     */
-    parseTransaction(tx) {
-      const data = getBytes(tx.data, "tx.data");
-      const value = getBigInt(tx.value != null ? tx.value : 0, "tx.value");
-      const fragment = this.getFunction(hexlify(data.slice(0, 4)));
-      if (!fragment) {
-        return null;
-      }
-      const args = this.#abiCoder.decode(fragment.inputs, data.slice(4));
-      return new TransactionDescription(fragment, fragment.selector, args, value);
-    }
-    parseCallResult(data) {
-      throw new Error("@TODO");
-    }
-    /**
-     *  Parses a receipt log, finding the matching event and extracts
-     *  the parameter values along with other useful event details.
-     *
-     *  If the matching event cannot be found, returns null.
-     */
-    parseLog(log3) {
-      const fragment = this.getEvent(log3.topics[0]);
-      if (!fragment || fragment.anonymous) {
-        return null;
-      }
-      return new LogDescription(fragment, fragment.topicHash, this.decodeEventLog(fragment, log3.data, log3.topics));
-    }
-    /**
-     *  Parses a revert data, finding the matching error and extracts
-     *  the parameter values along with other useful error details.
-     *
-     *  If the matching error cannot be found, returns null.
-     */
-    parseError(data) {
-      const hexData = hexlify(data);
-      const fragment = this.getError(dataSlice(hexData, 0, 4));
-      if (!fragment) {
-        return null;
-      }
-      const args = this.#abiCoder.decode(fragment.inputs, dataSlice(hexData, 4));
-      return new ErrorDescription(fragment, fragment.selector, args);
-    }
-    /**
-     *  Creates a new [[Interface]] from the ABI %%value%%.
-     *
-     *  The %%value%% may be provided as an existing [[Interface]] object,
-     *  a JSON-encoded ABI or any Human-Readable ABI format.
-     */
-    static from(value) {
-      if (value instanceof _Interface) {
-        return value;
-      }
-      if (typeof value === "string") {
-        return new _Interface(JSON.parse(value));
-      }
-      if (typeof value.formatJson === "function") {
-        return new _Interface(value.formatJson());
-      }
-      if (typeof value.format === "function") {
-        return new _Interface(value.format("json"));
-      }
-      return new _Interface(value);
-    }
-  };
 
   // node_modules/@aztec-labs/foundation/dest/curves/bn254/index.js
   init_dirname();
@@ -327562,8 +328663,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     * @returns A boolean value representing the field at the current index.
     */
     readBoolean() {
-      const field8 = this.readField();
-      const value = field8.toBigInt();
+      const field10 = this.readField();
+      const value = field10.toBigInt();
       if (value > 1n) {
         throw new Error("Field is not a boolean.");
       }
@@ -327577,8 +328678,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     * @returns The read 32-bit unsigned integer value.
     */
     readU32() {
-      const field8 = this.readField();
-      const value = field8.toBigInt();
+      const field10 = this.readField();
+      const value = field10.toBigInt();
       if (value >= 1n << 32n) {
         throw new Error("Field is not a u32.");
       }
@@ -327592,8 +328693,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     * @returns The read 64-bit unsigned integer value as a bigint.
     */
     readU64() {
-      const field8 = this.readField();
-      const value = field8.toBigInt();
+      const field10 = this.readField();
+      const value = field10.toBigInt();
       if (value >= 1n << 64n) {
         throw new Error("Field is not a u64.");
       }
@@ -328450,7 +329551,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     bigint: () => bigint8,
     boolean: () => boolean8,
     catch: () => _catch6,
-    check: () => check3,
+    check: () => check5,
     cidrv4: () => cidrv46,
     cidrv6: () => cidrv66,
     clone: () => clone3,
@@ -328486,8 +329587,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     gt: () => _gt3,
     gte: () => _gte3,
     guid: () => guid6,
-    hash: () => hash3,
-    hex: () => hex6,
+    hash: () => hash4,
+    hex: () => hex9,
     hostname: () => hostname6,
     httpUrl: () => httpUrl3,
     includes: () => _includes3,
@@ -328549,7 +329650,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     promise: () => promise3,
     property: () => _property3,
     readonly: () => readonly3,
-    record: () => record3,
+    record: () => record4,
     refine: () => refine3,
     regex: () => _regex3,
     regexes: () => regexes_exports3,
@@ -329647,14 +330748,14 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
   }
   function base64urlToUint8Array3(base64url13) {
     const base6413 = base64url13.replace(/-/g, "+").replace(/_/g, "/");
-    const padding = "=".repeat((4 - base6413.length % 4) % 4);
-    return base64ToUint8Array3(base6413 + padding);
+    const padding2 = "=".repeat((4 - base6413.length % 4) % 4);
+    return base64ToUint8Array3(base6413 + padding2);
   }
   function uint8ArrayToBase64url3(bytes3) {
     return uint8ArrayToBase643(bytes3).replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
   }
-  function hexToUint8Array4(hex20) {
-    const cleanHex = hex20.replace(/^0x/, "");
+  function hexToUint8Array4(hex22) {
+    const cleanHex = hex22.replace(/^0x/, "");
     if (cleanHex.length % 2 !== 0) {
       throw new Error("Invalid hex string length");
     }
@@ -329930,7 +331031,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     emoji: () => emoji5,
     extendedDuration: () => extendedDuration3,
     guid: () => guid5,
-    hex: () => hex5,
+    hex: () => hex8,
     hostname: () => hostname5,
     html5Email: () => html5Email3,
     httpProtocol: () => httpProtocol3,
@@ -330048,9 +331149,9 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
   var _undefined7 = /^undefined$/i;
   var lowercase3 = /^[^A-Z]*$/;
   var uppercase3 = /^[^a-z]*$/;
-  var hex5 = /^[0-9a-fA-F]*$/;
-  function fixedBase643(bodyLength, padding) {
-    return new RegExp(`^[A-Za-z0-9+/]{${bodyLength}}${padding}$`);
+  var hex8 = /^[0-9a-fA-F]*$/;
+  function fixedBase643(bodyLength, padding2) {
+    return new RegExp(`^[A-Za-z0-9+/]{${bodyLength}}${padding2}$`);
   }
   function fixedBase64url3(length) {
     return new RegExp(`^[A-Za-z0-9_-]{${length}}$`);
@@ -331425,10 +332526,10 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
       const shape = def.shape;
       const propValues = {};
       for (const key in shape) {
-        const field8 = shape[key]._zod;
-        if (field8.values) {
+        const field10 = shape[key]._zod;
+        if (field10.values) {
           propValues[key] ?? (propValues[key] = /* @__PURE__ */ new Set());
-          for (const v of field8.values)
+          for (const v of field10.values)
             propValues[key].add(v);
         }
       }
@@ -341049,7 +342150,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     bigint: () => bigint8,
     boolean: () => boolean8,
     catch: () => _catch6,
-    check: () => check3,
+    check: () => check5,
     cidrv4: () => cidrv46,
     cidrv6: () => cidrv66,
     codec: () => codec3,
@@ -341069,8 +342170,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     float64: () => float643,
     function: () => _function3,
     guid: () => guid6,
-    hash: () => hash3,
-    hex: () => hex6,
+    hash: () => hash4,
+    hex: () => hex9,
     hostname: () => hostname6,
     httpUrl: () => httpUrl3,
     instanceof: () => _instanceof3,
@@ -341109,7 +342210,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     preprocess: () => preprocess3,
     promise: () => promise3,
     readonly: () => readonly3,
-    record: () => record3,
+    record: () => record4,
     refine: () => refine3,
     set: () => set4,
     strictObject: () => strictObject3,
@@ -341370,8 +342471,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
         reg.add(this, meta13);
         return this;
       },
-      refine(check10, params) {
-        return this.check(refine3(check10, params));
+      refine(check12, params) {
+        return this.check(refine3(check12, params));
       },
       superRefine(refinement, params) {
         return this.check(superRefine3(refinement, params));
@@ -341711,10 +342812,10 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
   function hostname6(_params) {
     return _stringFormat3(ZodCustomStringFormat3, "hostname", regexes_exports3.hostname, _params);
   }
-  function hex6(_params) {
+  function hex9(_params) {
     return _stringFormat3(ZodCustomStringFormat3, "hex", regexes_exports3.hex, _params);
   }
-  function hash3(alg, params) {
+  function hash4(alg, params) {
     const enc = params?.enc ?? "hex";
     const format2 = `${alg}_${enc}`;
     const regex = regexes_exports3[format2];
@@ -342095,7 +343196,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     inst.keyType = def.keyType;
     inst.valueType = def.valueType;
   });
-  function record3(keyType, valueType, params) {
+  function record4(keyType, valueType, params) {
     if (!valueType || !valueType._zod) {
       return new ZodRecord3({
         type: "record",
@@ -342514,7 +343615,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     ZodType3.init(inst, def);
     inst._zod.processJSONSchema = (ctx, json7, params) => customProcessor3(inst, ctx, json7, params);
   });
-  function check3(fn) {
+  function check5(fn) {
     const ch = new $ZodCheck3({
       check: "custom"
       // ...util.normalizeParams(params),
@@ -342562,7 +343663,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
   }, ...args);
   function json3(params) {
     const jsonSchema = lazy3(() => {
-      return union3([string8(params), number9(), boolean8(), _null9(), array3(jsonSchema), record3(string8(), jsonSchema)]);
+      return union3([string8(params), number9(), boolean8(), _null9(), array3(jsonSchema), record4(string8(), jsonSchema)]);
     });
     return jsonSchema;
   }
@@ -344027,7 +345128,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
         case "string":
           return `str<${param.length}>`;
         case "struct":
-          return `(${param.fields.map((field8) => `${this.decodeParameter(field8)}`).join(this.separator)})`;
+          return `(${param.fields.map((field10) => `${this.decodeParameter(field10)}`).join(this.separator)})`;
         default:
           throw new Error(`Unsupported type: ${param.kind}`);
       }
@@ -345294,8 +346395,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     value += BigInt(blockEndMarker.numTxs);
     return new Fr(value);
   }
-  function isBlockEndMarker(field8) {
-    const prefix = field8.toBigInt() >> NUM_TXS_BIT_SIZE + BLOCK_NUMBER_BIT_SIZE + TIMESTAMP_BIT_SIZE;
+  function isBlockEndMarker(field10) {
+    const prefix = field10.toBigInt() >> NUM_TXS_BIT_SIZE + BLOCK_NUMBER_BIT_SIZE + TIMESTAMP_BIT_SIZE;
     return prefix === BigInt(BLOCK_END_PREFIX);
   }
 
@@ -345379,8 +346480,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     value += BigInt(txStartMarker.numBlobFields);
     return new Fr(value);
   }
-  function decodeTxStartMarker(field8) {
-    let value = field8.toBigInt();
+  function decodeTxStartMarker(field10) {
+    let value = field10.toBigInt();
     const numBlobFields = Number(value & 2n ** NUM_BLOB_FIELDS_BIT_SIZE - 1n);
     value >>= NUM_BLOB_FIELDS_BIT_SIZE;
     const revertCode = Number(value & 2n ** REVERT_CODE_BIT_SIZE - 1n);
@@ -345628,12 +346729,12 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
   init_dirname();
   init_buffer2();
   init_process2();
-  var import_hash3 = __toESM(require_hash(), 1);
+  var import_hash4 = __toESM(require_hash(), 1);
   init_field();
   init_free_funcs();
   init_serialize();
   function sha2562(data) {
-    return Buffer2.from(import_hash3.default.sha256().update(data).digest());
+    return Buffer2.from(import_hash4.default.sha256().update(data).digest());
   }
   function sha256Trunc(data) {
     return truncateAndPad(sha2562(data));
@@ -346598,9 +347699,9 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     */
     static PREIMAGE_SIZE_IN_BYTES = 32;
     toHashPreimage() {
-      const padding = Buffer2.alloc(_RevertCode.PREIMAGE_SIZE_IN_BYTES - _RevertCode.PACKED_SIZE_IN_BYTES);
+      const padding2 = Buffer2.alloc(_RevertCode.PREIMAGE_SIZE_IN_BYTES - _RevertCode.PACKED_SIZE_IN_BYTES);
       return Buffer2.concat([
-        padding,
+        padding2,
         this.toBuffer()
       ]);
     }
@@ -346622,8 +347723,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
       }
       return new _RevertCode(toRevertCodeEnum(code));
     }
-    static fromField(field8) {
-      return _RevertCode.fromNumber(field8.toNumber());
+    static fromField(field10) {
+      return _RevertCode.fromNumber(field10.toNumber());
     }
     static fromFields(fields2) {
       const reader = FieldReader.asReader(fields2);
@@ -346912,7 +348013,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
       return new _PrivateLog(obj.fields.map((f) => Fr.fromPlainObject(f)), obj.emittedLength);
     }
     equals(other) {
-      return this.fields.every((field8, i) => field8.equals(other.fields[i])) && this.emittedLength === other.emittedLength;
+      return this.fields.every((field10, i) => field10.equals(other.fields[i])) && this.emittedLength === other.emittedLength;
     }
     [_computedKey16]() {
       return `PrivateLog {
@@ -347084,7 +348185,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
       }, () => Fr.random()));
     }
     equals(other) {
-      return this.fields.length === other.fields.length && this.contractAddress.equals(other.contractAddress) && this.fields.every((field8, i) => field8.equals(other.fields[i]));
+      return this.fields.length === other.fields.length && this.contractAddress.equals(other.contractAddress) && this.fields.every((field10, i) => field10.equals(other.fields[i]));
     }
     toHumanReadable() {
       return `PublicLog: (contractAddress: ${this.contractAddress} fields: ${this.fields})`;
@@ -348106,7 +349207,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     bigint: () => bigint11,
     boolean: () => boolean11,
     catch: () => _catch8,
-    check: () => check4,
+    check: () => check6,
     cidrv4: () => cidrv48,
     cidrv6: () => cidrv68,
     clone: () => clone4,
@@ -348142,8 +349243,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     gt: () => _gt4,
     gte: () => _gte4,
     guid: () => guid8,
-    hash: () => hash5,
-    hex: () => hex8,
+    hash: () => hash6,
+    hex: () => hex11,
     hostname: () => hostname8,
     httpUrl: () => httpUrl4,
     includes: () => _includes4,
@@ -348205,7 +349306,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     promise: () => promise4,
     property: () => _property4,
     readonly: () => readonly4,
-    record: () => record4,
+    record: () => record5,
     refine: () => refine4,
     regex: () => _regex4,
     regexes: () => regexes_exports4,
@@ -349303,14 +350404,14 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
   }
   function base64urlToUint8Array4(base64url13) {
     const base6413 = base64url13.replace(/-/g, "+").replace(/_/g, "/");
-    const padding = "=".repeat((4 - base6413.length % 4) % 4);
-    return base64ToUint8Array4(base6413 + padding);
+    const padding2 = "=".repeat((4 - base6413.length % 4) % 4);
+    return base64ToUint8Array4(base6413 + padding2);
   }
   function uint8ArrayToBase64url4(bytes3) {
     return uint8ArrayToBase644(bytes3).replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
   }
-  function hexToUint8Array5(hex20) {
-    const cleanHex = hex20.replace(/^0x/, "");
+  function hexToUint8Array5(hex22) {
+    const cleanHex = hex22.replace(/^0x/, "");
     if (cleanHex.length % 2 !== 0) {
       throw new Error("Invalid hex string length");
     }
@@ -349586,7 +350687,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     emoji: () => emoji7,
     extendedDuration: () => extendedDuration4,
     guid: () => guid7,
-    hex: () => hex7,
+    hex: () => hex10,
     hostname: () => hostname7,
     html5Email: () => html5Email4,
     httpProtocol: () => httpProtocol4,
@@ -349704,9 +350805,9 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
   var _undefined10 = /^undefined$/i;
   var lowercase4 = /^[^A-Z]*$/;
   var uppercase4 = /^[^a-z]*$/;
-  var hex7 = /^[0-9a-fA-F]*$/;
-  function fixedBase644(bodyLength, padding) {
-    return new RegExp(`^[A-Za-z0-9+/]{${bodyLength}}${padding}$`);
+  var hex10 = /^[0-9a-fA-F]*$/;
+  function fixedBase644(bodyLength, padding2) {
+    return new RegExp(`^[A-Za-z0-9+/]{${bodyLength}}${padding2}$`);
   }
   function fixedBase64url4(length) {
     return new RegExp(`^[A-Za-z0-9_-]{${length}}$`);
@@ -351081,10 +352182,10 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
       const shape = def.shape;
       const propValues = {};
       for (const key in shape) {
-        const field8 = shape[key]._zod;
-        if (field8.values) {
+        const field10 = shape[key]._zod;
+        if (field10.values) {
           propValues[key] ?? (propValues[key] = /* @__PURE__ */ new Set());
-          for (const v of field8.values)
+          for (const v of field10.values)
             propValues[key].add(v);
         }
       }
@@ -360705,7 +361806,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     bigint: () => bigint11,
     boolean: () => boolean11,
     catch: () => _catch8,
-    check: () => check4,
+    check: () => check6,
     cidrv4: () => cidrv48,
     cidrv6: () => cidrv68,
     codec: () => codec4,
@@ -360725,8 +361826,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     float64: () => float644,
     function: () => _function4,
     guid: () => guid8,
-    hash: () => hash5,
-    hex: () => hex8,
+    hash: () => hash6,
+    hex: () => hex11,
     hostname: () => hostname8,
     httpUrl: () => httpUrl4,
     instanceof: () => _instanceof4,
@@ -360765,7 +361866,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     preprocess: () => preprocess4,
     promise: () => promise4,
     readonly: () => readonly4,
-    record: () => record4,
+    record: () => record5,
     refine: () => refine4,
     set: () => set5,
     strictObject: () => strictObject4,
@@ -361026,8 +362127,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
         reg.add(this, meta13);
         return this;
       },
-      refine(check10, params) {
-        return this.check(refine4(check10, params));
+      refine(check12, params) {
+        return this.check(refine4(check12, params));
       },
       superRefine(refinement, params) {
         return this.check(superRefine4(refinement, params));
@@ -361367,10 +362468,10 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
   function hostname8(_params) {
     return _stringFormat4(ZodCustomStringFormat4, "hostname", regexes_exports4.hostname, _params);
   }
-  function hex8(_params) {
+  function hex11(_params) {
     return _stringFormat4(ZodCustomStringFormat4, "hex", regexes_exports4.hex, _params);
   }
-  function hash5(alg, params) {
+  function hash6(alg, params) {
     const enc = params?.enc ?? "hex";
     const format2 = `${alg}_${enc}`;
     const regex = regexes_exports4[format2];
@@ -361751,7 +362852,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     inst.keyType = def.keyType;
     inst.valueType = def.valueType;
   });
-  function record4(keyType, valueType, params) {
+  function record5(keyType, valueType, params) {
     if (!valueType || !valueType._zod) {
       return new ZodRecord4({
         type: "record",
@@ -362170,7 +363271,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     ZodType4.init(inst, def);
     inst._zod.processJSONSchema = (ctx, json7, params) => customProcessor4(inst, ctx, json7, params);
   });
-  function check4(fn) {
+  function check6(fn) {
     const ch = new $ZodCheck4({
       check: "custom"
       // ...util.normalizeParams(params),
@@ -362218,7 +363319,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
   }, ...args);
   function json4(params) {
     const jsonSchema = lazy4(() => {
-      return union4([string11(params), number12(), boolean11(), _null12(), array4(jsonSchema), record4(string11(), jsonSchema)]);
+      return union4([string11(params), number12(), boolean11(), _null12(), array4(jsonSchema), record5(string11(), jsonSchema)]);
     });
     return jsonSchema;
   }
@@ -363424,20 +364525,20 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
   var hexes = /* @__PURE__ */ Array.from({ length: 256 }, (_, i) => i.toString(16).padStart(2, "0"));
   function bytesToHex(bytes3) {
     abytes2(bytes3);
-    let hex20 = "";
+    let hex22 = "";
     for (let i = 0; i < bytes3.length; i++) {
-      hex20 += hexes[bytes3[i]];
+      hex22 += hexes[bytes3[i]];
     }
-    return hex20;
+    return hex22;
   }
   function numberToHexUnpadded(num) {
-    const hex20 = num.toString(16);
-    return hex20.length & 1 ? "0" + hex20 : hex20;
+    const hex22 = num.toString(16);
+    return hex22.length & 1 ? "0" + hex22 : hex22;
   }
-  function hexToNumber(hex20) {
-    if (typeof hex20 !== "string")
-      throw new Error("hex string expected, got " + typeof hex20);
-    return hex20 === "" ? _0n2 : BigInt("0x" + hex20);
+  function hexToNumber(hex22) {
+    if (typeof hex22 !== "string")
+      throw new Error("hex string expected, got " + typeof hex22);
+    return hex22 === "" ? _0n2 : BigInt("0x" + hex22);
   }
   var asciis = { _0: 48, _9: 57, A: 65, F: 70, a: 97, f: 102 };
   function asciiToBase16(ch) {
@@ -363449,19 +364550,19 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
       return ch - (asciis.a - 10);
     return;
   }
-  function hexToBytes(hex20) {
-    if (typeof hex20 !== "string")
-      throw new Error("hex string expected, got " + typeof hex20);
-    const hl = hex20.length;
+  function hexToBytes(hex22) {
+    if (typeof hex22 !== "string")
+      throw new Error("hex string expected, got " + typeof hex22);
+    const hl = hex22.length;
     const al = hl / 2;
     if (hl % 2)
       throw new Error("hex string expected, got unpadded hex of length " + hl);
     const array7 = new Uint8Array(al);
     for (let ai = 0, hi = 0; ai < al; ai++, hi += 2) {
-      const n1 = asciiToBase16(hex20.charCodeAt(hi));
-      const n2 = asciiToBase16(hex20.charCodeAt(hi + 1));
+      const n1 = asciiToBase16(hex22.charCodeAt(hi));
+      const n2 = asciiToBase16(hex22.charCodeAt(hi + 1));
       if (n1 === void 0 || n2 === void 0) {
-        const char = hex20[hi] + hex20[hi + 1];
+        const char = hex22[hi] + hex22[hi + 1];
         throw new Error('hex string expected, got non-hex character "' + char + '" at index ' + hi);
       }
       array7[ai] = n1 * 16 + n2;
@@ -363484,16 +364585,16 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
   function numberToVarBytesBE(n2) {
     return hexToBytes(numberToHexUnpadded(n2));
   }
-  function ensureBytes(title3, hex20, expectedLength) {
+  function ensureBytes(title3, hex22, expectedLength) {
     let res;
-    if (typeof hex20 === "string") {
+    if (typeof hex22 === "string") {
       try {
-        res = hexToBytes(hex20);
+        res = hexToBytes(hex22);
       } catch (e) {
         throw new Error(title3 + " must be hex string or Uint8Array, cause: " + e);
       }
-    } else if (isBytes2(hex20)) {
-      res = Uint8Array.from(hex20);
+    } else if (isBytes2(hex22)) {
+      res = Uint8Array.from(hex22);
     } else {
       throw new Error(title3 + " must be hex string or Uint8Array");
     }
@@ -363703,17 +364804,17 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
       throw new Error("invert: does not exist");
     return mod(x, modulo);
   }
-  function tonelliShanks(P) {
-    const legendreC = (P - _1n3) / _2n3;
+  function tonelliShanks(P2) {
+    const legendreC = (P2 - _1n3) / _2n3;
     let Q, S, Z;
-    for (Q = P - _1n3, S = 0; Q % _2n3 === _0n3; Q /= _2n3, S++)
+    for (Q = P2 - _1n3, S = 0; Q % _2n3 === _0n3; Q /= _2n3, S++)
       ;
-    for (Z = _2n3; Z < P && pow(Z, legendreC, P) !== P - _1n3; Z++) {
+    for (Z = _2n3; Z < P2 && pow(Z, legendreC, P2) !== P2 - _1n3; Z++) {
       if (Z > 1e3)
         throw new Error("Cannot find square root: likely non-prime P");
     }
     if (S === 1) {
-      const p1div4 = (P + _1n3) / _4n;
+      const p1div4 = (P2 + _1n3) / _4n;
       return function tonelliFast(Fp3, n2) {
         const root = Fp3.pow(n2, p1div4);
         if (!Fp3.eql(Fp3.sqr(root), n2))
@@ -363747,9 +364848,9 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
       return x;
     };
   }
-  function FpSqrt(P) {
-    if (P % _4n === _3n) {
-      const p1div4 = (P + _1n3) / _4n;
+  function FpSqrt(P2) {
+    if (P2 % _4n === _3n) {
+      const p1div4 = (P2 + _1n3) / _4n;
       return function sqrt3mod4(Fp3, n2) {
         const root = Fp3.pow(n2, p1div4);
         if (!Fp3.eql(Fp3.sqr(root), n2))
@@ -363757,8 +364858,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
         return root;
       };
     }
-    if (P % _8n === _5n) {
-      const c1 = (P - _5n) / _8n;
+    if (P2 % _8n === _5n) {
+      const c1 = (P2 - _5n) / _8n;
       return function sqrt5mod8(Fp3, n2) {
         const n22 = Fp3.mul(n2, _2n3);
         const v = Fp3.pow(n22, c1);
@@ -363770,9 +364871,9 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
         return root;
       };
     }
-    if (P % _16n === _9n) {
+    if (P2 % _16n === _9n) {
     }
-    return tonelliShanks(P);
+    return tonelliShanks(P2);
   }
   var FIELD_FIELDS = [
     "create",
@@ -363793,7 +364894,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     "mulN",
     "sqrN"
   ];
-  function validateField(field8) {
+  function validateField(field10) {
     const initial = {
       ORDER: "bigint",
       MASK: "bigint",
@@ -363804,7 +364905,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
       map7[val] = "function";
       return map7;
     }, initial);
-    return validateObject(field8, opts);
+    return validateObject(field10, opts);
   }
   function FpPow(f, num, power) {
     if (power < _0n3)
@@ -363949,18 +365050,18 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
         throw new Error("invalid point at index " + i);
     });
   }
-  function validateMSMScalars(scalars, field8) {
+  function validateMSMScalars(scalars, field10) {
     if (!Array.isArray(scalars))
       throw new Error("array of scalars expected");
     scalars.forEach((s, i) => {
-      if (!field8.isValid(s))
+      if (!field10.isValid(s))
         throw new Error("invalid scalar at index " + i);
     });
   }
   var pointPrecomputes = /* @__PURE__ */ new WeakMap();
   var pointWindowSizes = /* @__PURE__ */ new WeakMap();
-  function getW(P) {
-    return pointWindowSizes.get(P) || 1;
+  function getW(P2) {
+    return pointWindowSizes.get(P2) || 1;
   }
   function wNAF(c, bits) {
     return {
@@ -364073,32 +365174,32 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
         }
         return acc;
       },
-      getPrecomputes(W2, P, transform7) {
-        let comp = pointPrecomputes.get(P);
+      getPrecomputes(W2, P2, transform7) {
+        let comp = pointPrecomputes.get(P2);
         if (!comp) {
-          comp = this.precomputeWindow(P, W2);
+          comp = this.precomputeWindow(P2, W2);
           if (W2 !== 1)
-            pointPrecomputes.set(P, transform7(comp));
+            pointPrecomputes.set(P2, transform7(comp));
         }
         return comp;
       },
-      wNAFCached(P, n2, transform7) {
-        const W2 = getW(P);
-        return this.wNAF(W2, this.getPrecomputes(W2, P, transform7), n2);
+      wNAFCached(P2, n2, transform7) {
+        const W2 = getW(P2);
+        return this.wNAF(W2, this.getPrecomputes(W2, P2, transform7), n2);
       },
-      wNAFCachedUnsafe(P, n2, transform7, prev) {
-        const W2 = getW(P);
+      wNAFCachedUnsafe(P2, n2, transform7, prev) {
+        const W2 = getW(P2);
         if (W2 === 1)
-          return this.unsafeLadder(P, n2, prev);
-        return this.wNAFUnsafe(W2, this.getPrecomputes(W2, P, transform7), n2, prev);
+          return this.unsafeLadder(P2, n2, prev);
+        return this.wNAFUnsafe(W2, this.getPrecomputes(W2, P2, transform7), n2, prev);
       },
       // We calculate precomputes for elliptic curve point multiplication
       // using windowed method. This specifies window size and
       // stores precomputed values. Usually only base point would be precomputed.
-      setWindowSize(P, W2) {
+      setWindowSize(P2, W2) {
         validateW(W2, bits);
-        pointWindowSizes.set(P, W2);
-        pointPrecomputes.delete(P);
+        pointWindowSizes.set(P2, W2);
+        pointPrecomputes.delete(P2);
       }
     };
   }
@@ -364252,12 +365353,12 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
         const { Err: E } = DER;
         if (num < _0n5)
           throw new E("integer: negative integers are not allowed");
-        let hex20 = numberToHexUnpadded(num);
-        if (Number.parseInt(hex20[0], 16) & 8)
-          hex20 = "00" + hex20;
-        if (hex20.length & 1)
+        let hex22 = numberToHexUnpadded(num);
+        if (Number.parseInt(hex22[0], 16) & 8)
+          hex22 = "00" + hex22;
+        if (hex22.length & 1)
           throw new E("unexpected DER parsing assertion: unpadded hex");
-        return hex20;
+        return hex22;
       },
       decode(data) {
         const { Err: E } = DER;
@@ -364268,9 +365369,9 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
         return b2n(data);
       }
     },
-    toSig(hex20) {
+    toSig(hex22) {
       const { Err: E, _int: int7, _tlv: tlv } = DER;
-      const data = typeof hex20 === "string" ? h2b(hex20) : hex20;
+      const data = typeof hex22 === "string" ? h2b(hex22) : hex22;
       abytes2(data);
       const { v: seqBytes, l: seqLeftBytes } = tlv.decode(48, data);
       if (seqLeftBytes.length)
@@ -364422,10 +365523,10 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
        * Converts hash string or Uint8Array to Point.
        * @param hex short/long ECDSA hex
        */
-      static fromHex(hex20) {
-        const P = Point3.fromAffine(fromBytes(ensureBytes("pointHex", hex20)));
-        P.assertValidity();
-        return P;
+      static fromHex(hex22) {
+        const P2 = Point3.fromAffine(fromBytes(ensureBytes("pointHex", hex22)));
+        P2.assertValidity();
+        return P2;
       }
       // Multiplies generator point by privateKey.
       static fromPrivateKey(privateKey) {
@@ -364642,7 +365743,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
        */
       multiplyAndAddUnsafe(Q, a, b2) {
         const G = Point3.BASE;
-        const mul = (P, a2) => a2 === _0n5 || a2 === _1n5 || !P.equals(G) ? P.multiplyUnsafe(a2) : P.multiply(a2);
+        const mul = (P2, a2) => a2 === _0n5 || a2 === _1n5 || !P2.equals(G) ? P2.multiplyUnsafe(a2) : P2.multiply(a2);
         const sum2 = mul(this, a).add(mul(Q, b2));
         return sum2.is0() ? void 0 : sum2;
       }
@@ -364776,15 +365877,15 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
         this.assertValidity();
       }
       // pair (bytes of r, bytes of s)
-      static fromCompact(hex20) {
+      static fromCompact(hex22) {
         const l = CURVE.nByteLength;
-        hex20 = ensureBytes("compactSignature", hex20, l * 2);
-        return new Signature3(slcNum(hex20, 0, l), slcNum(hex20, l, 2 * l));
+        hex22 = ensureBytes("compactSignature", hex22, l * 2);
+        return new Signature3(slcNum(hex22, 0, l), slcNum(hex22, l, 2 * l));
       }
       // DER encoded ECDSA signature
       // https://bitcoin.stackexchange.com/questions/57644/what-are-the-parts-of-a-bitcoin-transaction-input-script
-      static fromDER(hex20) {
-        const { r, s } = DER.toSig(ensureBytes("DER", hex20));
+      static fromDER(hex22) {
+        const { r, s } = DER.toSig(ensureBytes("DER", hex22));
         return new Signature3(r, s);
       }
       assertValidity() {
@@ -364971,7 +366072,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
       if (!isHex3 && !isObj)
         throw new Error("invalid signature, expected Uint8Array, hex string or Signature instance");
       let _sig = void 0;
-      let P;
+      let P2;
       try {
         if (isObj)
           _sig = new Signature3(sg.r, sg.s);
@@ -364986,7 +366087,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
           if (!_sig && format2 !== "der")
             _sig = Signature3.fromCompact(sg);
         }
-        P = Point3.fromHex(publicKey);
+        P2 = Point3.fromHex(publicKey);
       } catch (error312) {
         return false;
       }
@@ -365001,7 +366102,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
       const is = invN(s);
       const u1 = modN(h * is);
       const u2 = modN(r * is);
-      const R = Point3.BASE.multiplyAndAddUnsafe(P, u1, u2)?.toAffine();
+      const R = Point3.BASE.multiplyAndAddUnsafe(P2, u1, u2)?.toAffine();
       if (!R)
         return false;
       const v = modN(R.x);
@@ -365231,12 +366332,12 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     }
     return u;
   }
-  function isogenyMap(field8, map7) {
+  function isogenyMap(field10, map7) {
     const COEFF = map7.map((i) => Array.from(i).reverse());
     return (x, y) => {
-      const [xNum, xDen, yNum, yDen] = COEFF.map((val) => val.reduce((acc, i) => field8.add(field8.mul(acc, x), i)));
-      x = field8.div(xNum, xDen);
-      y = field8.mul(y, field8.div(yNum, yDen));
+      const [xNum, xDen, yNum, yDen] = COEFF.map((val) => val.reduce((acc, i) => field10.add(field10.mul(acc, x), i)));
+      x = field10.div(xNum, xDen);
+      y = field10.mul(y, field10.div(yNum, yDen));
       return { x, y };
     };
   }
@@ -365250,17 +366351,17 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
         const u = hash_to_field(msg, 2, { ...def, DST: def.DST, ...options });
         const u0 = Point3.fromAffine(mapToCurve(u[0]));
         const u1 = Point3.fromAffine(mapToCurve(u[1]));
-        const P = u0.add(u1).clearCofactor();
-        P.assertValidity();
-        return P;
+        const P2 = u0.add(u1).clearCofactor();
+        P2.assertValidity();
+        return P2;
       },
       // Encodes byte string to elliptic curve.
       // encode_to_curve from https://www.rfc-editor.org/rfc/rfc9380#section-3
       encodeToCurve(msg, options) {
         const u = hash_to_field(msg, 1, { ...def, DST: def.encodeDST, ...options });
-        const P = Point3.fromAffine(mapToCurve(u[0])).clearCofactor();
-        P.assertValidity();
-        return P;
+        const P2 = Point3.fromAffine(mapToCurve(u[0])).clearCofactor();
+        P2.assertValidity();
+        return P2;
       },
       // Same as encodeToCurve, but without hash
       mapToCurve(scalars) {
@@ -365269,9 +366370,9 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
         for (const i of scalars)
           if (typeof i !== "bigint")
             throw new Error("mapToCurve: expected array of bigints");
-        const P = Point3.fromAffine(mapToCurve(scalars)).clearCofactor();
-        P.assertValidity();
-        return P;
+        const P2 = Point3.fromAffine(mapToCurve(scalars)).clearCofactor();
+        P2.assertValidity();
+        return P2;
       }
     };
   }
@@ -365283,23 +366384,23 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
   var _2n5 = BigInt(2);
   var divNearest = (a, b2) => (a + b2 / _2n5) / b2;
   function sqrtMod(y) {
-    const P = secp256k1P;
+    const P2 = secp256k1P;
     const _3n6 = BigInt(3), _6n = BigInt(6), _11n = BigInt(11), _22n = BigInt(22);
     const _23n = BigInt(23), _44n = BigInt(44), _88n = BigInt(88);
-    const b2 = y * y * y % P;
-    const b3 = b2 * b2 * y % P;
-    const b6 = pow2(b3, _3n6, P) * b3 % P;
-    const b9 = pow2(b6, _3n6, P) * b3 % P;
-    const b11 = pow2(b9, _2n5, P) * b2 % P;
-    const b22 = pow2(b11, _11n, P) * b11 % P;
-    const b44 = pow2(b22, _22n, P) * b22 % P;
-    const b88 = pow2(b44, _44n, P) * b44 % P;
-    const b176 = pow2(b88, _88n, P) * b88 % P;
-    const b220 = pow2(b176, _44n, P) * b44 % P;
-    const b223 = pow2(b220, _3n6, P) * b3 % P;
-    const t1 = pow2(b223, _23n, P) * b22 % P;
-    const t2 = pow2(t1, _6n, P) * b2 % P;
-    const root = pow2(t2, _2n5, P);
+    const b2 = y * y * y % P2;
+    const b3 = b2 * b2 * y % P2;
+    const b6 = pow2(b3, _3n6, P2) * b3 % P2;
+    const b9 = pow2(b6, _3n6, P2) * b3 % P2;
+    const b11 = pow2(b9, _2n5, P2) * b2 % P2;
+    const b22 = pow2(b11, _11n, P2) * b11 % P2;
+    const b44 = pow2(b22, _22n, P2) * b22 % P2;
+    const b88 = pow2(b44, _44n, P2) * b44 % P2;
+    const b176 = pow2(b88, _88n, P2) * b88 % P2;
+    const b220 = pow2(b176, _44n, P2) * b44 % P2;
+    const b223 = pow2(b220, _3n6, P2) * b3 % P2;
+    const t1 = pow2(b223, _23n, P2) * b22 % P2;
+    const t2 = pow2(t1, _6n, P2) * b2 % P2;
+    const root = pow2(t2, _2n5, P2);
     if (!Fpk1.eql(Fpk1.sqr(root), y))
       throw new Error("Cannot find square root");
     return root;
@@ -367224,12 +368325,12 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
   function encodeData({ data, primaryType, types: types2 }) {
     const encodedTypes = [{ type: "bytes32" }];
     const encodedValues = [hashType({ primaryType, types: types2 })];
-    for (const field8 of types2[primaryType]) {
+    for (const field10 of types2[primaryType]) {
       const [type, value] = encodeField({
         types: types2,
-        name: field8.name,
-        type: field8.type,
-        value: data[field8.name]
+        name: field10.name,
+        type: field10.type,
+        value: data[field10.name]
       });
       encodedTypes.push(type);
       encodedValues.push(value);
@@ -367237,10 +368338,10 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     return encodeAbiParameters(encodedTypes, encodedValues);
   }
   function hashType({ primaryType, types: types2 }) {
-    const encodedHashType = toHex(encodeType({ primaryType, types: types2 }));
+    const encodedHashType = toHex(encodeType2({ primaryType, types: types2 }));
     return keccak2563(encodedHashType);
   }
-  function encodeType({ primaryType, types: types2 }) {
+  function encodeType2({ primaryType, types: types2 }) {
     let result = "";
     const unsortedDeps = findTypeDependencies({ primaryType, types: types2 });
     unsortedDeps.delete(primaryType);
@@ -367257,8 +368358,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
       return results;
     }
     results.add(primaryType);
-    for (const field8 of types2[primaryType]) {
-      findTypeDependencies({ primaryType: field8.type, types: types2 }, results);
+    for (const field10 of types2[primaryType]) {
+      findTypeDependencies({ primaryType: field10.type, types: types2 }, results);
     }
     return results;
   }
@@ -367907,8 +369008,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
       }
       return millerLoopBatch(res, withFinalExponent);
     }
-    function pairing(Q, P, withFinalExponent = true) {
-      return pairingBatch([{ g1: Q, g2: P }], withFinalExponent);
+    function pairing(Q, P2, withFinalExponent = true) {
+      return pairingBatch([{ g1: Q, g2: P2 }], withFinalExponent);
     }
     const utils = {
       randomPrivateKey: () => {
@@ -367954,12 +369055,12 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
       return ShortSignature.toRawBytes(sigPoint);
     }
     function verify(signature, message, publicKey, htfOpts) {
-      const P = normP1(publicKey);
+      const P2 = normP1(publicKey);
       const Hm = normP2Hash(message, htfOpts);
       const G = G1.ProjectivePoint.BASE;
       const S = normP2(signature);
       const exp = pairingBatch([
-        { g1: P.negate(), g2: Hm },
+        { g1: P2.negate(), g2: Hm },
         // ePHM = pairing(P.negate(), Hm, false);
         { g1: G, g2: S }
         // eGS = pairing(G, S, false);
@@ -367967,12 +369068,12 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
       return Fp122.eql(exp, Fp122.ONE);
     }
     function verifyShortSignature(signature, message, publicKey, htfOpts) {
-      const P = normP2(publicKey);
+      const P2 = normP2(publicKey);
       const Hm = normP1Hash(message, htfOpts);
       const G = G2.ProjectivePoint.BASE;
       const S = normP1(signature);
       const exp = pairingBatch([
-        { g1: Hm, g2: P },
+        { g1: Hm, g2: P2 },
         // eHmP = pairing(Hm, P, false);
         { g1: S, g2: G.negate() }
         // eSG = pairing(S, G.negate(), false);
@@ -368118,8 +369219,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     function psi2(x, y) {
       return [Fp22.mul(x, PSI2_X), Fp22.neg(y)];
     }
-    const mapAffine = (fn) => (c, P) => {
-      const affine = P.toAffine();
+    const mapAffine = (fn) => (c, P2) => {
+      const affine = P2.toAffine();
       const p = fn(affine.x, affine.y);
       return c.fromAffine({ x: p[0], y: p[1] });
     };
@@ -368824,8 +369925,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     const { x, y } = point.toAffine();
     if (isZero)
       return COMPRESSED_ZERO.slice();
-    const P = Fp.ORDER;
-    const sort = Boolean(y * _2n9 / P);
+    const P2 = Fp.ORDER;
+    const sort = Boolean(y * _2n9 / P2);
     return setMask(numberToBytesBE(x, Fp.BYTES), { compressed: true, sort });
   }
   function signatureG2ToRawBytes(point) {
@@ -368889,7 +369990,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
       fromBytes: (bytes3) => {
         const { compressed, infinity, sort, value } = parseMask(bytes3);
         if (value.length === 48 && compressed) {
-          const P = Fp.ORDER;
+          const P2 = Fp.ORDER;
           const compressedValue = bytesToNumberBE(value);
           const x = Fp.create(compressedValue & Fp.MASK);
           if (infinity) {
@@ -368901,7 +370002,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
           let y = Fp.sqrt(right);
           if (!y)
             throw new Error("invalid compressed G1 point");
-          if (y * _2n9 / P !== BigInt(sort))
+          if (y * _2n9 / P2 !== BigInt(sort))
             y = Fp.neg(y);
           return { x: Fp.create(x), y: Fp.create(y) };
         } else if (value.length === 96 && !compressed) {
@@ -368923,8 +370024,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
         if (isCompressed) {
           if (isZero)
             return COMPRESSED_ZERO.slice();
-          const P = Fp.ORDER;
-          const sort = Boolean(y * _2n9 / P);
+          const P2 = Fp.ORDER;
+          const sort = Boolean(y * _2n9 / P2);
           return setMask(numberToBytesBE(x, Fp.BYTES), { compressed: true, sort });
         } else {
           if (isZero) {
@@ -368936,9 +370037,9 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
         }
       },
       ShortSignature: {
-        fromHex(hex20) {
-          const { infinity, sort, value } = parseMask(ensureBytes("signatureHex", hex20, 48));
-          const P = Fp.ORDER;
+        fromHex(hex22) {
+          const { infinity, sort, value } = parseMask(ensureBytes("signatureHex", hex22, 48));
+          const P2 = Fp.ORDER;
           const compressedValue = bytesToNumberBE(value);
           if (infinity)
             return bls12_381.G1.ProjectivePoint.ZERO;
@@ -368948,7 +370049,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
           if (!y)
             throw new Error("invalid compressed G1 point");
           const aflag = BigInt(sort);
-          if (y * _2n9 / P !== aflag)
+          if (y * _2n9 / P2 !== aflag)
             y = Fp.neg(y);
           const point = bls12_381.G1.ProjectivePoint.fromAffine({ x, y });
           point.assertValidity();
@@ -368995,25 +370096,25 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
       // point.isTorsionFree() should return true for valid points
       // It returns false for shitty points.
       // https://eprint.iacr.org/2021/1130.pdf
-      isTorsionFree: (c, P) => {
-        return P.multiplyUnsafe(BLS_X).negate().equals(G2psi(c, P));
+      isTorsionFree: (c, P2) => {
+        return P2.multiplyUnsafe(BLS_X).negate().equals(G2psi(c, P2));
       },
       // Maps the point into the prime-order subgroup G2.
       // clear_cofactor_bls12381_g2 from cfrg-hash-to-curve-11
       // https://eprint.iacr.org/2017/419.pdf
       // prettier-ignore
-      clearCofactor: (c, P) => {
+      clearCofactor: (c, P2) => {
         const x = BLS_X;
-        let t1 = P.multiplyUnsafe(x).negate();
-        let t2 = G2psi(c, P);
-        let t3 = P.double();
+        let t1 = P2.multiplyUnsafe(x).negate();
+        let t2 = G2psi(c, P2);
+        let t3 = P2.double();
         t3 = G2psi2(c, t3);
         t3 = t3.subtract(t2);
         t2 = t1.add(t2);
         t2 = t2.multiplyUnsafe(x).negate();
         t3 = t3.add(t2);
         t3 = t3.subtract(t1);
-        const Q = t3.subtract(P);
+        const Q = t3.subtract(P2);
         return Q;
       },
       fromBytes: (bytes3) => {
@@ -369027,7 +370128,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
         const slc = (b2, from, to) => bytesToNumberBE(b2.slice(from, to));
         if (value.length === 96 && compressed) {
           const b2 = bls12_381.params.G2b;
-          const P = Fp.ORDER;
+          const P2 = Fp.ORDER;
           if (infinity) {
             if (value.reduce((p, c) => p !== 0 ? c + 1 : c, 0) > 0) {
               throw new Error("invalid compressed G2 point");
@@ -369039,7 +370140,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
           const x = Fp2.create({ c0: Fp.create(x_0), c1: Fp.create(x_1) });
           const right = Fp2.add(Fp2.pow(x, _3n5), b2);
           let y = Fp2.sqrt(right);
-          const Y_bit = y.c1 === _0n10 ? y.c0 * _2n9 / P : y.c1 * _2n9 / P ? _1n10 : _0n10;
+          const Y_bit = y.c1 === _0n10 ? y.c0 * _2n9 / P2 : y.c1 * _2n9 / P2 ? _1n10 : _0n10;
           y = sort && Y_bit > 0 ? y : Fp2.neg(y);
           return { x, y };
         } else if (value.length === 192 && !compressed) {
@@ -369059,13 +370160,13 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
         }
       },
       toBytes: (c, point, isCompressed) => {
-        const { BYTES: len, ORDER: P } = Fp;
+        const { BYTES: len, ORDER: P2 } = Fp;
         const isZero = point.equals(c.ZERO);
         const { x, y } = point.toAffine();
         if (isCompressed) {
           if (isZero)
             return concatBytes2(COMPRESSED_ZERO, numberToBytesBE(_0n10, len));
-          const flag = Boolean(y.c1 === _0n10 ? y.c0 * _2n9 / P : y.c1 * _2n9 / P);
+          const flag = Boolean(y.c1 === _0n10 ? y.c0 * _2n9 / P2 : y.c1 * _2n9 / P2);
           return concatBytes2(setMask(numberToBytesBE(x.c1, len), { compressed: true, sort: flag }), numberToBytesBE(x.c0, len));
         } else {
           if (isZero)
@@ -369077,9 +370178,9 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
       },
       Signature: {
         // TODO: Optimize, it's very slow because of sqrt.
-        fromHex(hex20) {
-          const { infinity, sort, value } = parseMask(ensureBytes("signatureHex", hex20));
-          const P = Fp.ORDER;
+        fromHex(hex22) {
+          const { infinity, sort, value } = parseMask(ensureBytes("signatureHex", hex22));
+          const P2 = Fp.ORDER;
           const half = value.length / 2;
           if (half !== 48 && half !== 96)
             throw new Error("invalid compressed signature length, must be 96 or 192");
@@ -369096,8 +370197,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
             throw new Error("Failed to find a square root");
           const { re: y0, im: y1 } = Fp2.reim(y);
           const aflag1 = BigInt(sort);
-          const isGreater = y1 > _0n10 && y1 * _2n9 / P !== aflag1;
-          const isZero = y1 === _0n10 && y0 * _2n9 / P !== aflag1;
+          const isGreater = y1 > _0n10 && y1 * _2n9 / P2 !== aflag1;
+          const isZero = y1 === _0n10 && y0 * _2n9 / P2 !== aflag1;
           if (isGreater || isZero)
             y = Fp2.neg(y);
           const point = bls12_381.G2.ProjectivePoint.fromAffine({ x, y });
@@ -369304,8 +370405,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     * @param field - a BN254 Fr instance.
     * @returns the BLS12Fr instance
     */
-    static fromBN254Fr(field8) {
-      return _BLS12Fr.fromBuffer(field8.toBuffer());
+    static fromBN254Fr(field10) {
+      return _BLS12Fr.fromBuffer(field10.toBuffer());
     }
     /**
     * Creates a BN254 Fr instance from a BLS12Fr instance.
@@ -370066,8 +371167,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
       const total = this.cacheSize + fields2.length;
       const numChunkedFields = Math.floor((total - 1) / rate) * rate;
       if (numChunkedFields === 0) {
-        for (const field8 of fields2) {
-          this.cache[this.cacheSize++] = field8;
+        for (const field10 of fields2) {
+          this.cache[this.cacheSize++] = field10;
         }
         return;
       }
@@ -370173,10 +371274,10 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
       ...content
     ], DomainSeparator.EVENT_COMMITMENT);
   }
-  function computeSiloedPrivateLogFirstField(contract, field8) {
+  function computeSiloedPrivateLogFirstField(contract, field10) {
     return poseidon2HashWithSeparator([
       contract,
-      field8
+      field10
     ], DomainSeparator.PRIVATE_LOG_FIRST_FIELD);
   }
   function computePublicDataTreeLeafSlot(contractAddress, storageSlot) {
@@ -371017,8 +372118,8 @@ ${err2.message}`);
             const value = this.decodeNext(abiType.fields[1].type);
             return isSome ? value : void 0;
           }
-          for (const field8 of abiType.fields) {
-            struct[field8.name] = this.decodeNext(field8.type);
+          for (const field10 of abiType.fields) {
+            struct[field10.name] = this.decodeNext(field10.type);
           }
           return struct;
         }
@@ -371046,11 +372147,11 @@ ${err2.message}`);
     * @returns The next field in the flattened buffer.
     */
     getNextField() {
-      const field8 = this.flattened.shift();
-      if (!field8) {
+      const field10 = this.flattened.shift();
+      if (!field10) {
         throw new Error("Not enough return values");
       }
-      return field8;
+      return field10;
     }
   };
   function decodeFromAbi(type, buffer) {
@@ -371081,9 +372182,9 @@ ${err2.message}`);
         case "array":
           return abiType.length * _ArgumentEncoder.typeSize(abiType.type);
         case "struct":
-          return abiType.fields.reduce((acc, field8) => acc + _ArgumentEncoder.typeSize(field8.type), 0);
+          return abiType.fields.reduce((acc, field10) => acc + _ArgumentEncoder.typeSize(field10.type), 0);
         case "tuple":
-          return abiType.fields.reduce((acc, field8) => acc + _ArgumentEncoder.typeSize(field8), 0);
+          return abiType.fields.reduce((acc, field10) => acc + _ArgumentEncoder.typeSize(field10), 0);
         default: {
           const exhaustiveCheck = abiType;
           throw new Error(`Unhandled abi type: ${exhaustiveCheck}`);
@@ -371207,8 +372308,8 @@ ${err2.message}`);
             this.#encodeBoundedVec(abiType, arg, name);
             break;
           }
-          for (const field8 of abiType.fields) {
-            this.encodeArgument(field8.type, arg[field8.name], `${name}.${field8.name}`);
+          for (const field10 of abiType.fields) {
+            this.encodeArgument(field10.type, arg[field10.name], `${name}.${field10.name}`);
           }
           break;
         }
@@ -371443,7 +372544,7 @@ ${err2.message}`);
         if (returnStruct.kind !== "struct") {
           throw new Error("Could not generate contract function artifact");
         }
-        returnType = returnStruct.fields.find((field8) => field8.name === "return_type")?.type;
+        returnType = returnStruct.fields.find((field10) => field10.name === "return_type")?.type;
       }
     }
     return {
@@ -371497,16 +372598,16 @@ ${err2.message}`);
       if (storageExport.kind !== "struct") {
         return false;
       }
-      const contractNameField = storageExport.fields.find((field8) => field8.name === "contract_name")?.value;
+      const contractNameField = storageExport.fields.find((field10) => field10.name === "contract_name")?.value;
       return contractNameField.value === contractName;
     });
-    const storageFields = storageForContract ? storageForContract.fields.find((field8) => field8.name == "fields").value.fields : [];
+    const storageFields = storageForContract ? storageForContract.fields.find((field10) => field10.name == "fields").value.fields : [];
     if (storageFields.length === 0) {
       return {};
     }
-    return storageFields.reduce((acc, field8) => {
-      const name = field8.name;
-      const slot = field8.value.fields[0].value;
+    return storageFields.reduce((acc, field10) => {
+      const name = field10.name;
+      const slot = field10.value.fields[0].value;
       acc[name] = {
         slot: `0x${slot.value}`
       };
@@ -373602,9 +374703,9 @@ ${err2.message}`);
   init_dirname();
   init_buffer2();
   init_process2();
-  var import_hash7 = __toESM(require_hash(), 1);
+  var import_hash8 = __toESM(require_hash(), 1);
   init_serialize();
-  var sha5122 = (data) => Buffer2.from(import_hash7.default.sha512().update(data).digest());
+  var sha5122 = (data) => Buffer2.from(import_hash8.default.sha512().update(data).digest());
   var sha512ToGrumpkinScalar = (data) => {
     const buffer = serializeToBuffer(data);
     return GrumpkinScalar.fromBufferReduce(sha5122(buffer));
@@ -375085,7 +376186,7 @@ ${err2.message}`);
       ]);
     }
     isEmpty() {
-      return this.fields.every((field8) => field8.isZero());
+      return this.fields.every((field10) => field10.isZero());
     }
     static empty() {
       return new _ChonkProof([]);
@@ -375195,7 +376296,7 @@ ${err2.message}`);
       return new ChonkProof(this.fieldsWithPublicInputs.slice(numPublicInputs), this.compressedProof);
     }
     isEmpty() {
-      return this.fieldsWithPublicInputs.every((field8) => field8.isZero());
+      return this.fieldsWithPublicInputs.every((field10) => field10.isZero());
     }
     static empty() {
       return ChonkProof.empty().attachPublicInputs([]);
@@ -375222,7 +376323,7 @@ ${err2.message}`);
     }
     // Called when constructing from bb proving results.
     static fromBufferArray(fields2) {
-      const proof = fields2.map((field8) => Fr.fromBuffer(Buffer2.from(field8)));
+      const proof = fields2.map((field10) => Fr.fromBuffer(Buffer2.from(field10)));
       return new _ChonkProofWithPublicInputs(proof);
     }
   };
@@ -377108,215 +378209,6 @@ ${val.stack}`;
   init_dirname();
   init_buffer2();
   init_process2();
-
-  // shared/journal-record.mjs
-  init_dirname();
-  init_buffer2();
-  init_process2();
-
-  // shared/transaction-outcomes.mjs
-  init_dirname();
-  init_buffer2();
-  init_process2();
-  var transactionError = (code, message) => Object.assign(new Error(message), { code });
-  var accepted = /* @__PURE__ */ new Set(["checkpointed", "proven", "finalized"]);
-  var pending = /* @__PURE__ */ new Set(["pending", "proposed"]);
-  var hash7 = (value) => value?.toString?.();
-  async function boundedTransactionRead(fn, timeoutMs = 2e4) {
-    if (!Number.isFinite(timeoutMs) || timeoutMs <= 0 || timeoutMs > 2e4) throw transactionError("BB_SUBMISSION_UNKNOWN", "Transaction read deadline expired.");
-    let timer;
-    try {
-      return await Promise.race([Promise.resolve().then(fn), new Promise((_, reject) => {
-        timer = setTimeout(() => reject(transactionError("BB_SUBMISSION_UNKNOWN", "Transaction RPC timed out. Keep the saved request and reconcile before retrying.")), timeoutMs);
-      })]);
-    } finally {
-      clearTimeout(timer);
-    }
-  }
-  function requireSuccessfulReceipt(receipt2, txHash) {
-    if (hash7(receipt2?.txHash) !== hash7(txHash) || !accepted.has(receipt2?.status) || receipt2.executionResult !== "success" || !Number.isSafeInteger(receipt2.blockNumber) || receipt2.blockNumber < 1 || !receipt2.blockHash) {
-      throw transactionError("BB_TRANSACTION_FAILED", "Transaction does not have a successful confirmed receipt.");
-    }
-    return receipt2;
-  }
-  async function readCanonicalReceipt(node2, txHash, { readTimeoutMs = 2e4 } = {}) {
-    const receipt2 = await boundedTransactionRead(() => node2.getTxReceipt(txHash), readTimeoutMs);
-    if (hash7(receipt2?.txHash) !== hash7(txHash)) throw transactionError("BB_SUBMISSION_UNKNOWN", "Receipt identity does not match.");
-    if (pending.has(receipt2.status) || receipt2.status === "dropped") return null;
-    if (!accepted.has(receipt2.status) || !Number.isSafeInteger(receipt2.blockNumber) || receipt2.blockNumber < 1 || !receipt2.blockHash || !["success", "reverted"].includes(receipt2.executionResult)) throw transactionError("BB_SUBMISSION_UNKNOWN", "Receipt is incomplete.");
-    const block2 = await boundedTransactionRead(() => node2.getBlock(receipt2.blockNumber), readTimeoutMs);
-    if (!block2 || hash7(block2.hash) !== hash7(receipt2.blockHash)) throw transactionError("BB_SUBMISSION_UNKNOWN", "Receipt block is not canonical.");
-    return receipt2;
-  }
-  async function submitOnceWithReconciliation(node2, tx) {
-    try {
-      await boundedTransactionRead(() => node2.sendTx(tx));
-    } catch {
-      let receipt2;
-      try {
-        receipt2 = await boundedTransactionRead(() => node2.getTxReceipt(tx.getTxHash()));
-      } catch {
-      }
-      if (hash7(receipt2?.txHash) === hash7(tx.getTxHash())) {
-        if (pending.has(receipt2?.status) || accepted.has(receipt2?.status)) return receipt2;
-        if (receipt2?.status === "dropped") return classifyDroppedTransaction(node2, tx, receipt2);
-      }
-      throw transactionError("BB_SUBMISSION_UNKNOWN", "Submission outcome is unknown. Reconcile this transaction before retrying.");
-    }
-  }
-  async function classifyDroppedTransaction(node2, tx, receipt2) {
-    if (receipt2?.status !== "dropped" || hash7(receipt2.txHash) !== hash7(tx.getTxHash())) throw transactionError("BB_SUBMISSION_UNKNOWN", "Transaction identity is unavailable.");
-    let validation, refreshed;
-    try {
-      validation = await boundedTransactionRead(() => node2.isValidTx(tx));
-      refreshed = await boundedTransactionRead(() => node2.getTxReceipt(tx.getTxHash()));
-    } catch {
-      throw transactionError("BB_SUBMISSION_UNKNOWN", "Dropped transaction could not be reconciled.");
-    }
-    if (hash7(refreshed?.txHash) !== hash7(tx.getTxHash())) throw transactionError("BB_SUBMISSION_UNKNOWN", "Transaction identity changed.");
-    if (pending.has(refreshed.status) || accepted.has(refreshed.status)) return refreshed;
-    const reasons = ["Existing nullifier", "Block header not found"];
-    if (refreshed.status === "dropped" && validation?.result === "invalid" && Array.isArray(validation.reason) && validation.reason.length && validation.reason.every((reason) => reasons.includes(reason))) {
-      throw Object.assign(transactionError("BB_STATE_CONFLICT", "Transaction state changed. Refresh and create a new proof."), { stateReasons: [...validation.reason] });
-    }
-    throw transactionError("BB_SUBMISSION_UNKNOWN", "Drop reason is unconfirmed. Reconcile before retrying.");
-  }
-  async function waitForCanonicalReceipt(node2, tx, { timeoutMs = 54e4, intervalMs = 5e3, now = Date.now, sleep: sleep2 = (ms) => new Promise((resolve) => setTimeout(resolve, ms)), onPoll = () => {
-  }, readTimeoutMs = 2e4 } = {}) {
-    const txHash = tx.getTxHash(), deadline = now() + timeoutMs;
-    while (now() < deadline) {
-      let receipt2;
-      try {
-        receipt2 = await boundedTransactionRead(() => node2.getTxReceipt(txHash), Math.min(readTimeoutMs, deadline - now()));
-      } catch (error312) {
-        if (error312?.code === "BB_SUBMISSION_UNKNOWN") throw error312;
-      }
-      if (receipt2) {
-        if (hash7(receipt2.txHash) !== hash7(txHash)) throw transactionError("BB_SUBMISSION_UNKNOWN", "Receipt identity does not match.");
-        if (receipt2.status === "dropped") receipt2 = await classifyDroppedTransaction(node2, tx, receipt2);
-        if (accepted.has(receipt2.status)) {
-          if (!Number.isSafeInteger(receipt2.blockNumber) || receipt2.blockNumber < 1 || !receipt2.blockHash) throw transactionError("BB_SUBMISSION_UNKNOWN", "Receipt block identity is unavailable.");
-          let block2;
-          try {
-            block2 = await boundedTransactionRead(() => node2.getBlock(receipt2.blockNumber), Math.min(readTimeoutMs, deadline - now()));
-          } catch (error312) {
-            if (error312?.code === "BB_SUBMISSION_UNKNOWN") throw error312;
-          }
-          if (!block2 || hash7(block2.hash) !== hash7(receipt2.blockHash)) throw transactionError("BB_SUBMISSION_UNKNOWN", "Receipt block is not confirmed canonical.");
-          if (!["success", "reverted"].includes(receipt2.executionResult)) throw transactionError("BB_SUBMISSION_UNKNOWN", "Receipt execution result is unavailable.");
-          return receipt2;
-        }
-        if (!pending.has(receipt2.status)) throw transactionError("BB_SUBMISSION_UNKNOWN", "Receipt status is unrecognized.");
-      }
-      onPoll();
-      await sleep2(Math.min(intervalMs, Math.max(0, deadline - now())));
-    }
-    throw transactionError("BB_SUBMISSION_UNKNOWN", "Confirmation timed out. Keep the transaction identifier and reconcile before retrying.");
-  }
-  async function waitForSuccessfulReceipt(node2, tx, options = {}) {
-    return requireSuccessfulReceipt(await waitForCanonicalReceipt(node2, tx, options), tx.getTxHash());
-  }
-
-  // shared/journal-record.mjs
-  var encoder3 = new TextEncoder();
-  var decoder = new TextDecoder("utf-8", { fatal: true });
-  var hex9 = (data) => Array.from(data, (b2) => b2.toString(16).padStart(2, "0")).join("");
-  var bytes2 = (value) => Uint8Array.from(value.match(/../g) || [], (b2) => parseInt(b2, 16));
-  var invalid = () => transactionError("BB_JOURNAL_INVALID", "Transaction recovery storage could not be authenticated or saved.");
-  var MAX_BYTES = 16 * 1024 * 1024;
-  async function journalRecoveryIdentity({ walletSecret, walletSalt, crypto: crypto3 = globalThis.crypto }) {
-    const field8 = 21888242871839275222246405745257275088548364400416034343698204186575808495617n;
-    if (typeof walletSecret !== "string" || !/^0x[0-9a-f]{64}$/.test(walletSecret) || BigInt(walletSecret) <= 0n || BigInt(walletSecret) >= field8) throw invalid();
-    let salt;
-    try {
-      if (!["string", "number", "bigint"].includes(typeof walletSalt) || typeof walletSalt === "number" && !Number.isSafeInteger(walletSalt)) throw invalid();
-      salt = BigInt(walletSalt);
-    } catch {
-      throw invalid();
-    }
-    if (salt < 0n || salt >= field8) throw invalid();
-    const material = encoder3.encode("AZTEC_BB_JOURNAL_RECOVERY_KEY_V1\0" + walletSecret + ":" + BigInt(walletSalt).toString(16).padStart(64, "0"));
-    const digest2 = await crypto3.subtle.digest("SHA-256", material);
-    material.fill(0);
-    const owner = hex9(new Uint8Array(await crypto3.subtle.digest("SHA-256", digest2)));
-    const key = await crypto3.subtle.importKey("raw", digest2, "AES-GCM", false, ["encrypt", "decrypt"]);
-    return { key, owner };
-  }
-  async function decryptJournalDescriptor(recovery, identity, crypto3 = globalThis.crypto) {
-    let plain;
-    try {
-      if (!recovery || recovery.owner !== identity.owner || typeof recovery.iv !== "string" || !/^[0-9a-f]{24}$/.test(recovery.iv) || typeof recovery.data !== "string" || recovery.data.length > 8192 || !/^(?:[0-9a-f]{2})+$/.test(recovery.data)) throw invalid();
-      plain = new Uint8Array(await crypto3.subtle.decrypt({ name: "AES-GCM", iv: bytes2(recovery.iv), additionalData: encoder3.encode(identity.owner) }, identity.key, bytes2(recovery.data)));
-      return JSON.parse(decoder.decode(plain));
-    } catch {
-      throw invalid();
-    } finally {
-      plain?.fill(0);
-    }
-  }
-  async function createEncryptedJournalSlot({ storage, walletSecret, walletSalt, scopeText, keyDomain, crypto: crypto3 = globalThis.crypto }) {
-    const field8 = 21888242871839275222246405745257275088548364400416034343698204186575808495617n;
-    if (typeof walletSecret !== "string" || !/^0x[0-9a-f]{64}$/.test(walletSecret) || BigInt(walletSecret) <= 0n || BigInt(walletSecret) >= field8) throw invalid();
-    if (!["string", "number", "bigint"].includes(typeof walletSalt) || typeof walletSalt === "number" && !Number.isSafeInteger(walletSalt)) throw invalid();
-    let salt;
-    try {
-      salt = BigInt(walletSalt);
-    } catch {
-      throw invalid();
-    }
-    if (salt < 0n || salt >= field8) throw invalid();
-    const aad = encoder3.encode(scopeText), material = encoder3.encode(keyDomain + "\0" + walletSecret + ":" + salt.toString(16).padStart(64, "0"));
-    const digest2 = await crypto3.subtle.digest("SHA-256", material);
-    material.fill(0);
-    const key = await crypto3.subtle.importKey("raw", digest2, "AES-GCM", false, ["encrypt", "decrypt"]);
-    const storageKey = hex9(new Uint8Array(await crypto3.subtle.digest("SHA-256", aad)));
-    const identity = await journalRecoveryIdentity({ walletSecret, walletSalt, crypto: crypto3 });
-    async function read2() {
-      let encoded, plain;
-      try {
-        encoded = await storage.read(storageKey);
-        if (encoded === null) return { encoded: null, value: null };
-        if (typeof encoded !== "string" || encoded.length > MAX_BYTES * 2 + 16384) throw invalid();
-        const e = JSON.parse(encoded);
-        if (e.version !== 1 || typeof e.iv !== "string" || !/^[0-9a-f]{24}$/.test(e.iv) || typeof e.data !== "string" || e.data.length > MAX_BYTES * 2 || !/^(?:[0-9a-f]{2})+$/.test(e.data)) throw invalid();
-        if (e.recovery) {
-          const descriptor = await decryptJournalDescriptor(e.recovery, identity, crypto3);
-          if (descriptor.scopeText !== scopeText || descriptor.keyDomain !== keyDomain) throw invalid();
-        }
-        plain = new Uint8Array(await crypto3.subtle.decrypt({ name: "AES-GCM", iv: bytes2(e.iv), additionalData: aad }, key, bytes2(e.data)));
-        return { encoded, value: JSON.parse(decoder.decode(plain)) };
-      } catch {
-        throw invalid();
-      } finally {
-        plain?.fill(0);
-      }
-    }
-    async function write(previous, value) {
-      const plain = encoder3.encode(JSON.stringify(value));
-      if (plain.length > MAX_BYTES - 16) throw invalid();
-      const iv = crypto3.getRandomValues(new Uint8Array(12));
-      let encoded;
-      const descriptor = encoder3.encode(JSON.stringify({ scopeText, keyDomain })), descriptorIv = crypto3.getRandomValues(new Uint8Array(12));
-      try {
-        const recovery = { owner: identity.owner, iv: hex9(descriptorIv), data: hex9(new Uint8Array(await crypto3.subtle.encrypt({ name: "AES-GCM", iv: descriptorIv, additionalData: encoder3.encode(identity.owner) }, identity.key, descriptor))) };
-        encoded = JSON.stringify({ version: 1, iv: hex9(iv), data: hex9(new Uint8Array(await crypto3.subtle.encrypt({ name: "AES-GCM", iv, additionalData: aad }, key, plain))), recovery });
-      } finally {
-        plain.fill(0);
-        descriptor.fill(0);
-      }
-      try {
-        await storage.compareAndSwap(storageKey, previous.encoded, encoded);
-      } catch {
-        throw invalid();
-      }
-      const saved = await read2();
-      if (saved.encoded !== encoded) throw invalid();
-      return saved;
-    }
-    return { read: read2, write, storageKey };
-  }
-
-  // shared/ethereum-journal.mjs
   var CREATE2_PROXY = "0x4e59b44847b379578588920ca78fbf26c0b4956c";
   var iface = new Interface([
     "function activate(uint256 epoch,uint256 checkpointCount,uint256 leafIndex,bytes32[] path)",
@@ -377334,12 +378226,12 @@ ${val.stack}`;
     "function deposit(bytes32 account,uint128 amount,bytes32 secretHash)",
     "event Deposited(bytes32 indexed account,uint128 amount,bytes32 key,uint256 index)"
   ]);
-  var field = (value) => hash8(value) && BigInt(value) > 0n && BigInt(value) < 21888242871839275222246405745257275088548364400416034343698204186575808495617n;
+  var field3 = (value) => hash8(value) && BigInt(value) > 0n && BigInt(value) < 21888242871839275222246405745257275088548364400416034343698204186575808495617n;
   var unknown5 = () => transactionError("BB_ETH_RECOVERY_REQUIRED", "Recover the saved Ethereum request before starting another payment.");
   var invalid2 = () => transactionError("BB_JOURNAL_INVALID", "Ethereum recovery storage is invalid. Preserve it before continuing.");
   var address = (v) => typeof v === "string" && /^0x[0-9a-f]{40}$/.test(v);
   var hash8 = (v) => typeof v === "string" && /^0x[0-9a-f]{64}$/.test(v);
-  var lower = (v) => typeof v === "string" ? v.toLowerCase() : "";
+  var lower2 = (v) => typeof v === "string" ? v.toLowerCase() : "";
   var positive = (v) => typeof v === "string" && /^[1-9][0-9]{0,77}$/.test(v);
   var integer5 = (v) => Number.isSafeInteger(v) && v >= 0;
   function validatedScope(scope) {
@@ -377357,85 +378249,100 @@ ${val.stack}`;
     }
     return expected?.kind === "approve" ? scope.token : scope.portal;
   }
-  function validateIntent(record7, scope) {
-    if (!record7 || record7.version !== 1 || record7.from !== scope.depositor || record7.to !== intentDestination(record7.expected, scope) || record7.chainId !== scope.chainId || !integer5(record7.nonce) || !integer5(record7.startBlock) || !hash8(record7.startHash) || !integer5(record7.nextBlock) || record7.nextBlock < 1 || record7.cursorHash !== null && !hash8(record7.cursorHash) || record7.txHash !== null && !hash8(record7.txHash) || typeof record7.data !== "string" || record7.data.length > 131072 || !/^0x(?:[0-9a-f]{2})+$/.test(record7.data) || typeof record7.value !== "string" || !/^(0|[1-9][0-9]{0,77})$/.test(record7.value)) throw invalid2();
-    const expected = record7.expected;
+  function validateIntent(record8, scope) {
+    if (!record8 || record8.version !== 1 || record8.from !== scope.depositor || record8.to !== intentDestination(record8.expected, scope) || record8.chainId !== scope.chainId || !integer5(record8.nonce) || !integer5(record8.startBlock) || !hash8(record8.startHash) || !integer5(record8.nextBlock) || record8.nextBlock < 1 || record8.cursorHash !== null && !hash8(record8.cursorHash) || record8.txHash !== null && !hash8(record8.txHash) || typeof record8.data !== "string" || record8.data.length > 131072 || !/^0x(?:[0-9a-f]{2})+$/.test(record8.data) || typeof record8.value !== "string" || !/^(0|[1-9][0-9]{0,77})$/.test(record8.value)) throw invalid2();
+    const expected = record8.expected;
     if (scope.deployment !== void 0) {
-      if (!expected || !["create-portal", "create2-portal", "activate-portal"].includes(expected.kind) || !address(expected.portal) || record7.value !== "0") throw invalid2();
+      if (!expected || !["create-portal", "create2-portal", "activate-portal"].includes(expected.kind) || !address(expected.portal) || record8.value !== "0") throw invalid2();
       if (expected.kind === "create-portal") {
-        if (keccak256(record7.data) !== scope.deployment || lower(getCreateAddress({ from: record7.from, nonce: record7.nonce })) !== expected.portal) throw invalid2();
+        if (keccak256(record8.data) !== scope.deployment || lower2(getCreateAddress({ from: record8.from, nonce: record8.nonce })) !== expected.portal) throw invalid2();
       } else if (expected.kind === "create2-portal") {
-        if (record7.data.slice(0, 66) !== scope.board || keccak256("0x" + record7.data.slice(66)) !== scope.deployment || lower(getCreate2Address(CREATE2_PROXY, scope.board, scope.deployment)) !== expected.portal) throw invalid2();
+        if (record8.data.slice(0, 66) !== scope.board || keccak256("0x" + record8.data.slice(66)) !== scope.deployment || lower2(getCreate2Address(CREATE2_PROXY, scope.board, scope.deployment)) !== expected.portal) throw invalid2();
       } else {
         if (expected.portal !== scope.portal || !hash8(expected.configHash)) throw invalid2();
         let parsed2;
         try {
-          parsed2 = iface.parseTransaction({ data: record7.data });
+          parsed2 = iface.parseTransaction({ data: record8.data });
         } catch {
           throw invalid2();
         }
-        if (parsed2?.name !== "activate" || iface.encodeFunctionData(parsed2.fragment, parsed2.args).toLowerCase() !== record7.data) throw invalid2();
+        if (parsed2?.name !== "activate" || iface.encodeFunctionData(parsed2.fragment, parsed2.args).toLowerCase() !== record8.data) throw invalid2();
       }
-      return record7;
+      return record8;
     }
-    const fee = scope.token !== void 0;
-    if (!expected || !(fee ? ["approve", "fee-deposit", "bok-deposit"] : ["deposit", "withdraw"]).includes(expected.kind) || !positive(expected.amount) || BigInt(expected.amount) >= 1n << (fee ? 128n : 96n)) throw invalid2();
+    if (["aggregate-funding", "aggregate-usdc-funding"].includes(expected?.kind)) {
+      if (scope.token !== void 0) throw invalid2();
+      try {
+        validateAggregateFundingIntent(record8);
+      } catch {
+        throw invalid2();
+      }
+      return record8;
+    }
+    const fee2 = scope.token !== void 0;
+    if (!expected || !(fee2 ? ["approve", "fee-deposit", "bok-deposit"] : ["deposit", "withdraw"]).includes(expected.kind) || !positive(expected.amount) || BigInt(expected.amount) >= 1n << (fee2 ? 128n : 96n)) throw invalid2();
     const abi2 = expected.kind === "bok-deposit" ? bokInterface : iface;
     let parsed;
     try {
-      parsed = abi2.parseTransaction({ data: record7.data, value: record7.value });
+      parsed = abi2.parseTransaction({ data: record8.data, value: record8.value });
     } catch {
       throw invalid2();
     }
     const method = expected.kind === "fee-deposit" ? "depositToAztecPublic" : expected.kind === "bok-deposit" ? "deposit" : expected.kind;
-    if (!parsed || parsed.name !== method || abi2.encodeFunctionData(parsed.fragment, parsed.args).toLowerCase() !== record7.data) throw invalid2();
+    if (!parsed || parsed.name !== method || abi2.encodeFunctionData(parsed.fragment, parsed.args).toLowerCase() !== record8.data) throw invalid2();
     if (expected.kind === "deposit") {
-      if (!hash8(expected.secretHash) || lower(parsed.args[0]) !== expected.secretHash || record7.value !== expected.amount) throw invalid2();
+      if (!hash8(expected.secretHash) || lower2(parsed.args[0]) !== expected.secretHash || record8.value !== expected.amount) throw invalid2();
     } else {
-      if (record7.value !== "0") throw invalid2();
-      if (expected.kind === "approve" && (expected.spender !== scope.portal || lower(parsed.args[0]) !== scope.portal || String(parsed.args[1]) !== expected.amount)) throw invalid2();
-      if (expected.kind === "fee-deposit" && (expected.recipient !== scope.board || !hash8(expected.secretHash) || lower(parsed.args[0]) !== scope.board || String(parsed.args[1]) !== expected.amount || lower(parsed.args[2]) !== expected.secretHash)) throw invalid2();
-      if (expected.kind === "bok-deposit" && (!field(expected.recipient) || !field(expected.secretHash) || lower(parsed.args[0]) !== expected.recipient || String(parsed.args[1]) !== expected.amount || lower(parsed.args[2]) !== expected.secretHash)) throw invalid2();
+      if (record8.value !== "0") throw invalid2();
+      if (expected.kind === "approve" && (expected.spender !== scope.portal || lower2(parsed.args[0]) !== scope.portal || String(parsed.args[1]) !== expected.amount)) throw invalid2();
+      if (expected.kind === "fee-deposit" && (expected.recipient !== scope.board || !hash8(expected.secretHash) || lower2(parsed.args[0]) !== scope.board || String(parsed.args[1]) !== expected.amount || lower2(parsed.args[2]) !== expected.secretHash)) throw invalid2();
+      if (expected.kind === "bok-deposit" && (!field3(expected.recipient) || !field3(expected.secretHash) || lower2(parsed.args[0]) !== expected.recipient || String(parsed.args[1]) !== expected.amount || lower2(parsed.args[2]) !== expected.secretHash)) throw invalid2();
     }
-    return record7;
+    return record8;
   }
-  function matchesRequest(tx, record7) {
+  function matchesRequest(tx, record8) {
     try {
-      return lower(tx.from) === record7.from && (tx.to == null ? null : lower(tx.to)) === record7.to && Number(tx.nonce) === record7.nonce && String(tx.chainId) === record7.chainId && lower(tx.data) === record7.data && BigInt(tx.value) === BigInt(record7.value);
+      return lower2(tx.from) === record8.from && (tx.to == null ? null : lower2(tx.to)) === record8.to && Number(tx.nonce) === record8.nonce && String(tx.chainId) === record8.chainId && lower2(tx.data) === record8.data && BigInt(tx.value) === BigInt(record8.value);
     } catch {
       return false;
     }
   }
-  async function verifyEthereumIntentReceipt(provider, record7, txHash, read2 = (fn) => fn()) {
+  async function verifyEthereumIntentReceipt(provider, record8, txHash, read2 = (fn) => fn()) {
     const receipt2 = await read2(() => provider.getTransactionReceipt(txHash));
     if (!receipt2) return null;
-    if (lower(receipt2.hash) !== txHash || !integer5(receipt2.blockNumber) || !hash8(lower(receipt2.blockHash)) || ![0, 1].includes(receipt2.status)) throw unknown5();
+    if (lower2(receipt2.hash) !== txHash || !integer5(receipt2.blockNumber) || !hash8(lower2(receipt2.blockHash)) || ![0, 1].includes(receipt2.status)) throw unknown5();
     const [tx, block2] = await Promise.all([read2(() => provider.getTransaction(txHash)), read2(() => provider.getBlock(receipt2.blockNumber))]);
-    if (!tx || lower(tx.hash) !== txHash || lower(tx.from) !== record7.from || Number(tx.nonce) !== record7.nonce || String(tx.chainId) !== record7.chainId || lower(block2?.hash) !== lower(receipt2.blockHash) || lower(receipt2.from) !== record7.from || lower(receipt2.to) !== lower(tx.to)) throw unknown5();
-    const direct = matchesRequest(tx, record7);
+    if (!tx || lower2(tx.hash) !== txHash || lower2(tx.from) !== record8.from || Number(tx.nonce) !== record8.nonce || String(tx.chainId) !== record8.chainId || lower2(block2?.hash) !== lower2(receipt2.blockHash) || lower2(receipt2.from) !== record8.from || lower2(receipt2.to) !== lower2(tx.to)) throw unknown5();
+    const direct = matchesRequest(tx, record8);
     const effectKinds = ["deposit", "withdraw", "approve", "fee-deposit"];
-    if (!direct && !effectKinds.includes(record7.expected.kind)) return { outcome: "replaced", txHash, receipt: receipt2, event: null };
+    if (!direct && !effectKinds.includes(record8.expected.kind)) return { outcome: "replaced", txHash, receipt: receipt2, event: null };
     if (receipt2.status === 0) return { outcome: "reverted", txHash, receipt: receipt2, event: null };
     if (!Array.isArray(receipt2.logs)) throw unknown5();
-    const expected = record7.expected;
+    const expected = record8.expected;
+    if (["aggregate-funding", "aggregate-usdc-funding"].includes(expected.kind)) {
+      const event = await verifyAggregateFundingEffects(provider, record8, receipt2, read2);
+      const current = await read2(() => provider.getBlock(receipt2.blockNumber));
+      if (lower2(current?.hash) !== lower2(receipt2.blockHash)) throw unknown5();
+      return { outcome: "success", txHash, receipt: receipt2, event };
+    }
     if (expected.kind === "bok-deposit") {
       const topic2 = bokInterface.getEvent("Deposited").topicHash.toLowerCase(), events2 = [];
       for (const log3 of receipt2.logs) {
-        if (lower(log3.address) !== record7.to || lower(log3.topics?.[0]) !== topic2) continue;
+        if (lower2(log3.address) !== record8.to || lower2(log3.topics?.[0]) !== topic2) continue;
         let parsed;
         try {
           parsed = bokInterface.parseLog(log3);
         } catch {
           throw unknown5();
         }
-        if (!parsed || lower(parsed.args.account) !== expected.recipient || String(parsed.args.amount) !== expected.amount || !field(lower(parsed.args.key))) throw unknown5();
+        if (!parsed || lower2(parsed.args.account) !== expected.recipient || String(parsed.args.amount) !== expected.amount || !field3(lower2(parsed.args.key))) throw unknown5();
         events2.push(parsed.args);
       }
       if (events2.length !== 1) throw unknown5();
       return { outcome: "success", txHash, receipt: receipt2, event: events2[0] };
     }
     if (["create-portal", "create2-portal"].includes(expected.kind)) {
-      if (expected.kind === "create-portal" && lower(receipt2.contractAddress) !== expected.portal) throw unknown5();
+      if (expected.kind === "create-portal" && lower2(receipt2.contractAddress) !== expected.portal) throw unknown5();
       const code = await read2(() => provider.getCode(expected.portal, receipt2.blockNumber));
       if (typeof code !== "string" || code === "0x" || !/^0x(?:[0-9a-fA-F]{2})+$/.test(code)) throw unknown5();
       return { outcome: "success", txHash, receipt: receipt2, event: null };
@@ -377443,7 +378350,7 @@ ${val.stack}`;
     const eventName = { deposit: "Deposited", withdraw: "Withdrawn", approve: "Approval", "fee-deposit": "DepositToAztecPublic", "activate-portal": "Activated" }[expected.kind];
     const topic = iface.getEvent(eventName).topicHash.toLowerCase(), events = [];
     for (const log3 of receipt2.logs) {
-      if (lower(log3.address) !== record7.to || lower(log3.topics?.[0]) !== topic) continue;
+      if (lower2(log3.address) !== record8.to || lower2(log3.topics?.[0]) !== topic) continue;
       let parsed;
       try {
         parsed = iface.parseLog(log3);
@@ -377452,12 +378359,12 @@ ${val.stack}`;
       }
       if (!parsed) throw unknown5();
       if (expected.kind === "activate-portal") {
-        if (lower(parsed.args.configHash) !== expected.configHash) throw unknown5();
+        if (lower2(parsed.args.configHash) !== expected.configHash) throw unknown5();
       } else if (expected.kind === "approve") {
-        if (lower(parsed.args.owner) !== record7.from || lower(parsed.args.spender) !== expected.spender || String(parsed.args.value) !== expected.amount) throw unknown5();
+        if (lower2(parsed.args.owner) !== record8.from || lower2(parsed.args.spender) !== expected.spender || String(parsed.args.value) !== expected.amount) throw unknown5();
       } else if (expected.kind === "fee-deposit") {
-        if (lower(parsed.args.to) !== expected.recipient || String(parsed.args.amount) !== expected.amount || lower(parsed.args.secretHash) !== expected.secretHash) throw unknown5();
-      } else if (lower(parsed.args.depositor) !== record7.from || String(parsed.args.amount) !== expected.amount || expected.kind === "deposit" && lower(parsed.args.secretHash) !== expected.secretHash) throw unknown5();
+        if (lower2(parsed.args.to) !== expected.recipient || String(parsed.args.amount) !== expected.amount || lower2(parsed.args.secretHash) !== expected.secretHash) throw unknown5();
+      } else if (lower2(parsed.args.depositor) !== record8.from || String(parsed.args.amount) !== expected.amount || expected.kind === "deposit" && lower2(parsed.args.secretHash) !== expected.secretHash) throw unknown5();
       events.push(parsed.args);
     }
     if (!direct && events.length === 0) return { outcome: "replaced", txHash, receipt: receipt2, event: null };
@@ -377501,36 +378408,36 @@ ${val.stack}`;
       return { ...result, request };
     }
     async function locate(saved, read2) {
-      let record7 = saved.value;
-      if (record7.txHash) {
-        const result = await verifyEthereumIntentReceipt(provider, record7, record7.txHash, read2);
+      let record8 = saved.value;
+      if (record8.txHash) {
+        const result = await verifyEthereumIntentReceipt(provider, record8, record8.txHash, read2);
         if (result) return { saved, result };
       }
       const head = await read2(() => provider.getBlockNumber());
       if (!integer5(head)) throw unknown5();
-      if (record7.nextBlock > 1) {
-        const anchor2 = await read2(() => provider.getBlock(record7.nextBlock - 1));
-        const expected = record7.cursorHash ?? record7.startHash;
-        if (lower(anchor2?.hash) !== expected || head < record7.nextBlock - 1) {
-          saved = await slot.write(saved, { ...record7, nextBlock: 1, cursorHash: null });
-          record7 = saved.value;
+      if (record8.nextBlock > 1) {
+        const anchor2 = await read2(() => provider.getBlock(record8.nextBlock - 1));
+        const expected = record8.cursorHash ?? record8.startHash;
+        if (lower2(anchor2?.hash) !== expected || head < record8.nextBlock - 1) {
+          saved = await slot.write(saved, { ...record8, nextBlock: 1, cursorHash: null });
+          record8 = saved.value;
         }
       }
       const tip = await read2(() => provider.getBlock(head));
-      if (tip?.number !== head || !hash8(lower(tip.hash))) throw unknown5();
-      const minedNonce = await read2(() => provider.getTransactionCount(record7.from, head));
+      if (tip?.number !== head || !hash8(lower2(tip.hash))) throw unknown5();
+      const minedNonce = await read2(() => provider.getTransactionCount(record8.from, head));
       if (!integer5(minedNonce)) throw unknown5();
-      if (minedNonce <= record7.nonce) {
+      if (minedNonce <= record8.nonce) {
         const current = await read2(() => provider.getBlock(head));
-        if (lower(current?.hash) !== lower(tip.hash)) throw unknown5();
-        saved = await slot.write(saved, { ...record7, nextBlock: head + 1, cursorHash: lower(tip.hash) });
+        if (lower2(current?.hash) !== lower2(tip.hash)) throw unknown5();
+        saved = await slot.write(saved, { ...record8, nextBlock: head + 1, cursorHash: lower2(tip.hash) });
         return { saved, result: null };
       }
-      let cursorHash = record7.cursorHash, nextBlock = record7.nextBlock, previousHash = record7.nextBlock === 1 ? null : record7.cursorHash ?? record7.startHash;
+      let cursorHash = record8.cursorHash, nextBlock = record8.nextBlock, previousHash = record8.nextBlock === 1 ? null : record8.cursorHash ?? record8.startHash;
       for (let number20 = nextBlock; number20 <= head; number20++) {
         const block2 = await read2(() => provider.getBlock(number20, true));
-        if (!block2 || block2.number !== number20 || !hash8(lower(block2.hash)) || previousHash && lower(block2.parentHash) !== previousHash) throw unknown5();
-        previousHash = lower(block2.hash);
+        if (!block2 || block2.number !== number20 || !hash8(lower2(block2.hash)) || previousHash && lower2(block2.parentHash) !== previousHash) throw unknown5();
+        previousHash = lower2(block2.hash);
         let transactions;
         try {
           transactions = block2.prefetchedTransactions;
@@ -377539,19 +378446,19 @@ ${val.stack}`;
         }
         if (!Array.isArray(transactions)) throw unknown5();
         for (const tx of transactions) {
-          if (lower(tx.from) !== record7.from || Number(tx.nonce) !== record7.nonce) continue;
-          if (!hash8(lower(tx.hash))) throw unknown5();
-          const result = await verifyEthereumIntentReceipt(provider, record7, lower(tx.hash), read2);
-          if (!result || result.receipt.blockNumber !== number20 || lower(result.receipt.blockHash) !== lower(block2.hash)) throw unknown5();
+          if (lower2(tx.from) !== record8.from || Number(tx.nonce) !== record8.nonce) continue;
+          if (!hash8(lower2(tx.hash))) throw unknown5();
+          const result = await verifyEthereumIntentReceipt(provider, record8, lower2(tx.hash), read2);
+          if (!result || result.receipt.blockNumber !== number20 || lower2(result.receipt.blockHash) !== lower2(block2.hash)) throw unknown5();
           saved = await slot.write(saved, { ...saved.value, txHash: result.txHash });
           return { saved, result };
         }
-        cursorHash = lower(block2.hash);
+        cursorHash = lower2(block2.hash);
         nextBlock = number20 + 1;
-        if ((number20 - record7.nextBlock + 1) % 10 === 0 || number20 === head) {
+        if ((number20 - record8.nextBlock + 1) % 10 === 0 || number20 === head) {
           const current = await read2(() => provider.getBlock(number20));
-          if (lower(current?.hash) !== cursorHash) throw unknown5();
-          saved = await slot.write(saved, { ...record7, nextBlock, cursorHash });
+          if (lower2(current?.hash) !== cursorHash) throw unknown5();
+          saved = await slot.write(saved, { ...record8, nextBlock, cursorHash });
         }
       }
       return { saved, result: null };
@@ -377567,15 +378474,15 @@ ${val.stack}`;
       return saved;
     }
     async function broadcast(saved, previous) {
-      const record7 = saved.value;
+      const record8 = saved.value;
       if (!signer) throw unknown5();
       await network(reader());
-      if (lower(await signer.getAddress()) !== record7.from) throw unknown5();
+      if (lower2(await signer.getAddress()) !== record8.from) throw unknown5();
       if (contextGuard) await contextGuard();
       let response;
-      const request = { from: record7.from, to: record7.to, data: record7.data, value: BigInt(record7.value), nonce: record7.nonce, chainId: BigInt(record7.chainId) };
+      const request = { from: record8.from, to: record8.to, data: record8.data, value: BigInt(record8.value), nonce: record8.nonce, chainId: BigInt(record8.chainId) };
       try {
-        if (["deposit", "fee-deposit", "bok-deposit"].includes(record7.expected.kind)) {
+        if (["deposit", "fee-deposit", "bok-deposit", "aggregate-funding", "aggregate-usdc-funding"].includes(record8.expected.kind)) {
           const estimate = await reader({ preserveInsufficientFunds: true })(() => provider.estimateGas(request));
           if (typeof estimate !== "bigint" || estimate <= 0n) throw unknown5();
           request.gasLimit = estimate * 2n;
@@ -377594,8 +378501,8 @@ ${val.stack}`;
         }
         throw transactionError("BB_ETH_SUBMISSION_UNKNOWN", "Ethereum submission is uncertain. Keep its saved request and use recovery.");
       }
-      if (!hash8(lower(response?.hash))) throw unknown5();
-      return slot.write(saved, { ...record7, txHash: lower(response.hash) });
+      if (!hash8(lower2(response?.hash))) throw unknown5();
+      return slot.write(saved, { ...record8, txHash: lower2(response.hash) });
     }
     async function finish(saved) {
       const read2 = reader();
@@ -377611,9 +378518,9 @@ ${val.stack}`;
       async inspectSummary() {
         const saved = await load();
         if (!saved.value) return null;
-        const record7 = saved.value;
-        const result = record7.txHash ? await verifyEthereumIntentReceipt(provider, record7, record7.txHash, reader()) : null;
-        return { kind: record7.expected.kind, txHash: record7.txHash, outcome: result?.outcome ?? "unknown" };
+        const record8 = saved.value;
+        const result = record8.txHash ? await verifyEthereumIntentReceipt(provider, record8, record8.txHash, reader()) : null;
+        return { kind: record8.expected.kind, txHash: record8.txHash, outcome: result?.outcome ?? "unknown" };
       },
       assertCanStart,
       get lastTxHash() {
@@ -377622,29 +378529,29 @@ ${val.stack}`;
       async send(intent) {
         const previous = await assertCanStart(), read2 = reader();
         await network(read2);
-        if (!signer || lower(await signer.getAddress()) !== scope.depositor) throw unknown5();
+        if (!signer || lower2(await signer.getAddress()) !== scope.depositor) throw unknown5();
         const start = await read2(() => provider.getBlock("latest"));
         const pendingNonce = await read2(() => provider.getTransactionCount(scope.depositor, "pending"));
         if (!integer5(pendingNonce)) throw unknown5();
         const nonce = Math.max(pendingNonce, previous.value ? previous.value.nonce + 1 : 0, minimumNonce);
         const { data, value, expected } = typeof intent === "function" ? await intent(nonce) : intent;
-        if (!start || !integer5(start.number) || !hash8(lower(start.hash)) || !integer5(nonce)) throw unknown5();
-        const record7 = validateIntent({
+        if (!start || !integer5(start.number) || !hash8(lower2(start.hash)) || !integer5(nonce)) throw unknown5();
+        const record8 = validateIntent({
           version: 1,
           from: scope.depositor,
           to: intentDestination(expected, scope),
           chainId: scope.chainId,
           nonce,
-          data: lower(data),
+          data: lower2(data),
           value: String(value),
           expected,
           startBlock: start.number,
-          startHash: lower(start.hash),
+          startHash: lower2(start.hash),
           nextBlock: start.number + 1,
           cursorHash: null,
           txHash: null
         }, scope);
-        const saved = await slot.write(previous, record7);
+        const saved = await slot.write(previous, record8);
         const result = await finish(await broadcast(saved, previous));
         if (result.outcome !== "success") throw transactionError("BB_ETH_TRANSACTION_FAILED", "The Ethereum request reverted or was replaced. Reconcile it before another action.");
         return result;
@@ -377661,7 +378568,7 @@ ${val.stack}`;
         const found = await locate(saved, read2);
         saved = found.saved;
         if (found.result) return confirmed(found.result, saved.value);
-        if (!retry3) throw unknown5();
+        if (!retry3 || ["aggregate-funding", "aggregate-usdc-funding"].includes(saved.value.expected.kind)) throw unknown5();
         return finish(await broadcast(saved));
       }
     };
@@ -377671,41 +378578,41 @@ ${val.stack}`;
   var DOMAIN = 1111639041;
   var MODULUS = 21888242871839275222246405745257275088548364400416034343698204186575808495617n;
   var abi = new Interface(["event Deposited(address indexed depositor,uint128 amount,bytes32 secretHash,bytes32 key,uint256 index)", "function deposit(bytes32 secretHash) payable"]);
-  var fail = () => Object.assign(Error("Deposit recovery could not be verified."), { code: "BB_DEPOSIT_LOOKUP_FAILED" });
-  function uint(value, bits) {
-    if (!["bigint", "number", "string"].includes(typeof value) || typeof value === "number" && !Number.isSafeInteger(value) || typeof value === "string" && !/^(?:0|[1-9][0-9]*|0x[0-9a-f]+)$/.test(value)) throw fail();
+  var fail2 = () => Object.assign(Error("Deposit recovery could not be verified."), { code: "BB_DEPOSIT_LOOKUP_FAILED" });
+  function uint2(value, bits) {
+    if (!["bigint", "number", "string"].includes(typeof value) || typeof value === "number" && !Number.isSafeInteger(value) || typeof value === "string" && !/^(?:0|[1-9][0-9]*|0x[0-9a-f]+)$/.test(value)) throw fail2();
     let n2;
     try {
       n2 = BigInt(value);
     } catch {
-      throw fail();
+      throw fail2();
     }
-    if (n2 < 0n || n2 >= 1n << BigInt(bits)) throw fail();
+    if (n2 < 0n || n2 >= 1n << BigInt(bits)) throw fail2();
     return n2;
   }
-  function field2(value) {
-    const n2 = uint(value, 254);
-    if (n2 >= MODULUS) throw fail();
+  function field4(value) {
+    const n2 = uint2(value, 254);
+    if (n2 >= MODULUS) throw fail2();
     return new Fr(n2);
   }
   function address2(value, bits) {
-    if (typeof value !== "string" || !(bits === 160 ? /^0x[0-9a-f]{40}$/ : /^0x[0-9a-f]{64}$/).test(value) || BigInt(value) === 0n) throw fail();
-    return field2(value);
+    if (typeof value !== "string" || !(bits === 160 ? /^0x[0-9a-f]{40}$/ : /^0x[0-9a-f]{64}$/).test(value) || BigInt(value) === 0n) throw fail2();
+    return field4(value);
   }
   async function deriveBoardDepositSecret({ walletSecret, walletSalt, scope, owner, nonce }) {
-    const secretKey = field2(walletSecret);
-    if (secretKey.toBigInt() === 0n) throw fail();
-    if (uint(scope.l1ChainId, 64) === 0n || uint(scope.rollupVersion, 32) === 0n) throw fail();
-    const secret = await poseidon2HashWithSeparator([new Fr(1), secretKey, field2(walletSalt), new Fr(uint(scope.l1ChainId, 64)), new Fr(uint(scope.rollupVersion, 32)), address2(scope.rollupAddress, 160), address2(scope.boardAddress, 254), address2(scope.portalAddress, 160), address2(scope.depositor, 160), address2(owner, 254), new Fr(uint(nonce, 64))], DOMAIN);
+    const secretKey = field4(walletSecret);
+    if (secretKey.toBigInt() === 0n) throw fail2();
+    if (uint2(scope.l1ChainId, 64) === 0n || uint2(scope.rollupVersion, 32) === 0n) throw fail2();
+    const secret = await poseidon2HashWithSeparator([new Fr(1), secretKey, field4(walletSalt), new Fr(uint2(scope.l1ChainId, 64)), new Fr(uint2(scope.rollupVersion, 32)), address2(scope.rollupAddress, 160), address2(scope.boardAddress, 254), address2(scope.portalAddress, 160), address2(scope.depositor, 160), address2(owner, 254), new Fr(uint2(nonce, 64))], DOMAIN);
     const secretHash = await computeSecretHash(secret);
-    if (secret.toBigInt() === 0n || secretHash.toBigInt() === 0n) throw fail();
+    if (secret.toBigInt() === 0n || secretHash.toBigInt() === 0n) throw fail2();
     return { secret: secret.toString(), secretHash: secretHash.toString() };
   }
   async function recoverBoardDepositSecret({ provider, read: read2, scope, active, head, walletSecret, walletSalt, owner, guard = async () => {
   }, progress }) {
     const topics = abi.encodeFilterTopics("Deposited", [scope.depositor]);
     const identity = JSON.stringify([scope, active.amount.toString(), active.secretHash, active.key, active.index.toString()]);
-    if (!Number.isSafeInteger(head.number) || head.number < 0 || !/^0x[0-9a-f]{64}$/.test(head.hash)) throw fail();
+    if (!Number.isSafeInteger(head.number) || head.number < 0 || !/^0x[0-9a-f]{64}$/.test(head.hash)) throw fail2();
     let saved = await progress?.read(identity);
     if (saved && (saved.schema !== 1 || !["boundary", "scan"].includes(saved.phase) || !Number.isSafeInteger(saved.low) || !Number.isSafeInteger(saved.high) || saved.low < 0 || saved.high < saved.low || !Number.isSafeInteger(saved.end) || saved.end < saved.low - 1 || saved.end > saved.headNumber || !/^0x[0-9a-f]{64}$/.test(saved.headHash) || !Number.isSafeInteger(saved.headNumber) || saved.headNumber < saved.high)) {
       await progress.clear(identity);
@@ -377720,7 +378627,7 @@ ${val.stack}`;
     while (low < high) {
       await guard();
       const mid = Math.floor((low + high) / 2), code = await read2(() => provider.getCode(scope.portalAddress, mid));
-      if (typeof code !== "string" || !/^0x(?:[0-9a-fA-F]{2})*$/.test(code)) throw fail();
+      if (typeof code !== "string" || !/^0x(?:[0-9a-fA-F]{2})*$/.test(code)) throw fail2();
       if (code === "0x") low = mid + 1;
       else high = mid;
       await checkpoint2("boundary", head.number);
@@ -377733,19 +378640,19 @@ ${val.stack}`;
         const parsed = abi.parseLog(log3);
         if (!parsed || !same2(parsed.args)) continue;
         const tx = await read2(() => provider.getTransaction(log3.transactionHash));
-        if (!tx || String(tx.chainId) !== scope.l1ChainId || tx.from.toLowerCase() !== scope.depositor) throw fail();
+        if (!tx || String(tx.chainId) !== scope.l1ChainId || tx.from.toLowerCase() !== scope.depositor) throw fail2();
         const derived2 = await deriveBoardDepositSecret({ walletSecret, walletSalt, scope, owner, nonce: tx.nonce });
         if (derived2.secretHash !== active.secretHash.toLowerCase()) throw Object.assign(Error("Different private account."), { code: "BB_CLAIM_SECRET_MISSING" });
-        const record7 = { from: scope.depositor, to: scope.portalAddress, chainId: scope.l1ChainId, nonce: tx.nonce, data: abi.encodeFunctionData("deposit", [derived2.secretHash]).toLowerCase(), value: String(active.amount), scope, expected: { kind: "deposit", amount: String(active.amount), secretHash: derived2.secretHash } };
-        const result = await verifyEthereumIntentReceipt(provider, record7, log3.transactionHash.toLowerCase(), read2);
-        if (result?.outcome !== "success" || !same2(result.event) || (await read2(() => provider.getBlock(head.number)))?.hash !== head.hash) throw fail();
+        const record8 = { from: scope.depositor, to: scope.portalAddress, chainId: scope.l1ChainId, nonce: tx.nonce, data: abi.encodeFunctionData("deposit", [derived2.secretHash]).toLowerCase(), value: String(active.amount), scope, expected: { kind: "deposit", amount: String(active.amount), secretHash: derived2.secretHash } };
+        const result = await verifyEthereumIntentReceipt(provider, record8, log3.transactionHash.toLowerCase(), read2);
+        if (result?.outcome !== "success" || !same2(result.event) || (await read2(() => provider.getBlock(head.number)))?.hash !== head.hash) throw fail2();
         await progress?.clear(identity);
         return derived2;
       }
       await checkpoint2("scan", Math.max(low - 1, end - 2e3));
     }
     await progress?.clear(identity);
-    throw fail();
+    throw fail2();
   }
 
   // shared/private-fee-funding.mjs
@@ -378687,19 +379594,19 @@ ${val.stack}`;
         const response = api.megaAppVkAsFields({
           verificationKey: input2
         });
-        return response.fields.map((field8) => Fr.fromBuffer(Buffer2.from(field8)));
+        return response.fields.map((field10) => Fr.fromBuffer(Buffer2.from(field10)));
       }
       case CircuitKind.Kernel: {
         const response = api.megaKernelVkAsFields({
           verificationKey: input2
         });
-        return response.fields.map((field8) => Fr.fromBuffer(Buffer2.from(field8)));
+        return response.fields.map((field10) => Fr.fromBuffer(Buffer2.from(field10)));
       }
       case CircuitKind.HidingKernel: {
         const response = api.megaZKVkAsFields({
           verificationKey: input2
         });
-        return response.fields.map((field8) => Fr.fromBuffer(Buffer2.from(field8)));
+        return response.fields.map((field10) => Fr.fromBuffer(Buffer2.from(field10)));
       }
       default: {
         const _exhaustive = kind;
@@ -380456,7 +381363,7 @@ ${val.stack}`;
       if (obj.message instanceof Error) throw obj.message;
       throw new AssertionError2(obj);
     }
-    function fail12(actual, expected, message, operator, stackStartFn) {
+    function fail13(actual, expected, message, operator, stackStartFn) {
       var argsLen = arguments.length;
       var internalMessage;
       if (argsLen === 0) {
@@ -380477,7 +381384,7 @@ ${val.stack}`;
         actual,
         expected,
         operator: operator === void 0 ? "fail" : operator,
-        stackStartFn: stackStartFn || fail12
+        stackStartFn: stackStartFn || fail13
       };
       if (message !== void 0) {
         errArgs.message = message;
@@ -380489,7 +381396,7 @@ ${val.stack}`;
       }
       throw err2;
     }
-    assert10.fail = fail12;
+    assert10.fail = fail13;
     assert10.AssertionError = AssertionError2;
     function innerOk(fn, argLen, value, message) {
       if (!value) {
@@ -380918,7 +381825,7 @@ ${val.stack}`;
   var doesNotReject = exports6.doesNotReject;
   var doesNotThrow = exports6.doesNotThrow;
   var equal = exports6.equal;
-  var fail2 = exports6.fail;
+  var fail3 = exports6.fail;
   var ifError = exports6.ifError;
   var notDeepEqual = exports6.notDeepEqual;
   var notDeepStrictEqual = exports6.notDeepStrictEqual;
@@ -383231,7 +384138,7 @@ Partial Address: ${this.partialAddress.toString()}
       return this.svc.isEmpty() && this.sdc.isEmpty();
     }
     writeToTree(delayedPublicMutableSlot, storageWrite) {
-      const fieldPromises = this.toFields().map((field8, i) => storageWrite(delayedPublicMutableSlot.add(new Fr(i)), field8));
+      const fieldPromises = this.toFields().map((field10, i) => storageWrite(delayedPublicMutableSlot.add(new Fr(i)), field10));
       return Promise.all(fieldPromises);
     }
     async hash() {
@@ -383346,32 +384253,32 @@ Partial Address: ${this.partialAddress.toString()}
       this.code = code;
     }
   };
-  var check5 = (ok2, code) => {
+  var check7 = (ok2, code) => {
     if (!ok2) throw new PrivateFeePreparationError(code);
   };
-  function uint2(value, bits) {
+  function uint3(value, bits) {
     if (value?.toBigInt) value = value.toBigInt();
     if (typeof value === "number") {
-      check5(Number.isSafeInteger(value), "PRIVATE_FEE_INVALID_VALUE");
+      check7(Number.isSafeInteger(value), "PRIVATE_FEE_INVALID_VALUE");
       value = BigInt(value);
     }
     if (typeof value === "string") {
-      check5(/^(0|[1-9][0-9]*)$/.test(value) && value.length <= 78, "PRIVATE_FEE_INVALID_VALUE");
+      check7(/^(0|[1-9][0-9]*)$/.test(value) && value.length <= 78, "PRIVATE_FEE_INVALID_VALUE");
       value = BigInt(value);
     }
-    check5(typeof value === "bigint" && value >= 0n && value < 1n << BigInt(bits), "PRIVATE_FEE_INVALID_VALUE");
+    check7(typeof value === "bigint" && value >= 0n && value < 1n << BigInt(bits), "PRIVATE_FEE_INVALID_VALUE");
     return value;
   }
-  function field3(value) {
+  function field5(value) {
     if (value instanceof Fr) return new Fr(value.toBigInt());
     if (typeof value === "string" && /^0x[0-9a-f]{64}$/.test(value)) return Fr.fromString(value);
-    return new Fr(uint2(value, 254));
+    return new Fr(uint3(value, 254));
   }
   function address3(value) {
     const text = value instanceof AztecAddress ? value.toString() : value;
-    check5(typeof text === "string" && /^0x[0-9a-f]{64}$/.test(text), "PRIVATE_FEE_INVALID_ADDRESS");
+    check7(typeof text === "string" && /^0x[0-9a-f]{64}$/.test(text), "PRIVATE_FEE_INVALID_ADDRESS");
     const result = new AztecAddress(Fr.fromString(text));
-    check5(!result.isZero(), "PRIVATE_FEE_INVALID_ADDRESS");
+    check7(!result.isZero(), "PRIVATE_FEE_INVALID_ADDRESS");
     return result;
   }
   var equal2 = (a, b2) => a?.toString() === b2?.toString();
@@ -383379,9 +384286,9 @@ Partial Address: ${this.partialAddress.toString()}
     const artifact = loadContractArtifact(value);
     const functions = getAllFunctionAbis(artifact);
     const publicFunctions = functions.filter((f) => f.functionType === "public" && f.name !== "public_dispatch");
-    check5(artifact.name === "PrivateFPC" && !functions.some((f) => f.isInitializer) && publicFunctions.length === 1 && publicFunctions[0].name === "_complete_refund" && publicFunctions[0].isOnlySelf && publicFunctions[0].parameters.length === 2, "PRIVATE_FEE_ARTIFACT_INVALID");
+    check7(artifact.name === "PrivateFPC" && !functions.some((f) => f.isInitializer) && publicFunctions.length === 1 && publicFunctions[0].name === "_complete_refund" && publicFunctions[0].isOnlySelf && publicFunctions[0].parameters.length === 2, "PRIVATE_FEE_ARTIFACT_INVALID");
     for (const [name, count] of [["pay_fee", 1], ["mint_and_pay_fee", 4]]) {
-      check5(artifact.functions.some((f) => f.name === name && f.functionType === "private" && f.parameters.length === count), "PRIVATE_FEE_ARTIFACT_INVALID");
+      check7(artifact.functions.some((f) => f.name === name && f.functionType === "private" && f.parameters.length === count), "PRIVATE_FEE_ARTIFACT_INVALID");
     }
     return artifact;
   }
@@ -383392,30 +384299,30 @@ Partial Address: ${this.partialAddress.toString()}
     return Contract.deploy(wallet, artifactOf(privateFeeArtifact), [], void 0, { salt: Fr.ZERO, universalDeploy: true });
   }
   async function requirePublishedPrivateFee(node2, canonical2) {
-    check5(node2?.getContract, "PRIVATE_FEE_PROVIDER_REQUIRED");
+    check7(node2?.getContract, "PRIVATE_FEE_PROVIDER_REQUIRED");
     const instance = await node2.getContract(canonical2.address, "latest");
-    check5(instance, "PRIVATE_FEE_NOT_PUBLISHED");
-    check5(equal2(instance.address, canonical2.address) && equal2(instance.originalContractClassId, canonical2.originalContractClassId) && equal2(instance.currentContractClassId, canonical2.currentContractClassId) && equal2(await computeContractAddressFromInstance(instance), canonical2.address), "PRIVATE_FEE_CLASS_MISMATCH");
+    check7(instance, "PRIVATE_FEE_NOT_PUBLISHED");
+    check7(equal2(instance.address, canonical2.address) && equal2(instance.originalContractClassId, canonical2.originalContractClassId) && equal2(instance.currentContractClassId, canonical2.currentContractClassId) && equal2(await computeContractAddressFromInstance(instance), canonical2.address), "PRIVATE_FEE_CLASS_MISMATCH");
   }
   async function derivePrivateFeeAddress(privateFeeArtifact) {
     return (await derivePrivateFeeInstance(privateFeeArtifact)).address;
   }
   async function derivePrivateFeeBridgeSecret({ salt, owner }) {
-    const fixedSalt = field3(salt);
-    check5(!fixedSalt.isZero(), "PRIVATE_FEE_INVALID_CLAIM");
+    const fixedSalt = field5(salt);
+    check7(!fixedSalt.isZero(), "PRIVATE_FEE_INVALID_CLAIM");
     return poseidon2HashWithSeparator([fixedSalt, address3(owner).toField()], 3952304070);
   }
   async function derivePrivateFeeBridgeSecretHash(input2) {
     return computeSecretHash(await derivePrivateFeeBridgeSecret(input2));
   }
   function normalizePrivateFeeGasSettings(value) {
-    check5(value, "PRIVATE_FEE_CONFIGURATION_REQUIRED");
-    const da = uint2(value.gasLimits?.daGas, 32), l2 = uint2(value.gasLimits?.l2Gas, 32);
-    const tda = uint2(value.teardownGasLimits?.daGas, 32), tl2 = uint2(value.teardownGasLimits?.l2Gas, 32);
-    const fda = uint2(value.maxFeesPerGas?.feePerDaGas, 128), fl2 = uint2(value.maxFeesPerGas?.feePerL2Gas, 128);
-    const pda = uint2(value.maxPriorityFeesPerGas?.feePerDaGas, 128), pl2 = uint2(value.maxPriorityFeesPerGas?.feePerL2Gas, 128);
+    check7(value, "PRIVATE_FEE_CONFIGURATION_REQUIRED");
+    const da = uint3(value.gasLimits?.daGas, 32), l2 = uint3(value.gasLimits?.l2Gas, 32);
+    const tda = uint3(value.teardownGasLimits?.daGas, 32), tl2 = uint3(value.teardownGasLimits?.l2Gas, 32);
+    const fda = uint3(value.maxFeesPerGas?.feePerDaGas, 128), fl2 = uint3(value.maxFeesPerGas?.feePerL2Gas, 128);
+    const pda = uint3(value.maxPriorityFeesPerGas?.feePerDaGas, 128), pl2 = uint3(value.maxPriorityFeesPerGas?.feePerL2Gas, 128);
     const maximumFee = da * fda + l2 * fl2;
-    check5(da > 0n && l2 > 0n && maximumFee > 0n && maximumFee < 1n << 128n && tda <= da && tl2 > 0n && tl2 <= l2 && pda <= fda && pl2 <= fl2, "PRIVATE_FEE_INVALID_GAS");
+    check7(da > 0n && l2 > 0n && maximumFee > 0n && maximumFee < 1n << 128n && tda <= da && tl2 > 0n && tl2 <= l2 && pda <= fda && pl2 <= fl2, "PRIVATE_FEE_INVALID_GAS");
     return { gasSettings: new GasSettings(new Gas(Number(da), Number(l2)), new Gas(Number(tda), Number(tl2)), new GasFees(fda, fl2), new GasFees(pda, pl2)), maximumFee };
   }
   async function preparePrivateFeePayment(input2) {
@@ -383427,34 +384334,34 @@ Partial Address: ${this.partialAddress.toString()}
     }
   }
   async function prepare({ wallet, node: node2, owner, privateFeeAddress, privateFeeArtifact, expectedChainId, expectedVersion, gasSettings, claim: claim2 } = {}) {
-    check5(wallet?.getChainInfo && wallet?.registerContract && node2?.getNodeInfo && node2?.getContract, "PRIVATE_FEE_PROVIDER_REQUIRED");
-    check5(privateFeeAddress && privateFeeArtifact, "PRIVATE_FEE_CONFIGURATION_REQUIRED");
-    const author = address3(owner), payer = address3(privateFeeAddress), chainId = uint2(expectedChainId, 64), version12 = uint2(expectedVersion, 32);
-    check5(!author.equals(payer), "PRIVATE_FEE_OWNER_IS_PAYER");
+    check7(wallet?.getChainInfo && wallet?.registerContract && node2?.getNodeInfo && node2?.getContract, "PRIVATE_FEE_PROVIDER_REQUIRED");
+    check7(privateFeeAddress && privateFeeArtifact, "PRIVATE_FEE_CONFIGURATION_REQUIRED");
+    const author = address3(owner), payer = address3(privateFeeAddress), chainId = uint3(expectedChainId, 64), version12 = uint3(expectedVersion, 32);
+    check7(!author.equals(payer), "PRIVATE_FEE_OWNER_IS_PAYER");
     const fixed = normalizePrivateFeeGasSettings(gasSettings);
     const [walletChain, nodeInfo] = await Promise.all([wallet.getChainInfo(), node2.getNodeInfo()]);
-    check5(uint2(walletChain.chainId, 64) === chainId && uint2(walletChain.version, 32) === version12 && uint2(nodeInfo.l1ChainId, 64) === chainId && uint2(nodeInfo.rollupVersion, 32) === version12, "PRIVATE_FEE_CHAIN_MISMATCH");
+    check7(uint3(walletChain.chainId, 64) === chainId && uint3(walletChain.version, 32) === version12 && uint3(nodeInfo.l1ChainId, 64) === chainId && uint3(nodeInfo.rollupVersion, 32) === version12, "PRIVATE_FEE_CHAIN_MISMATCH");
     const minimum = await node2.getCurrentMinFees();
-    check5(["feePerDaGas", "feePerL2Gas"].every((key) => fixed.gasSettings.maxFeesPerGas[key] >= uint2(minimum[key], 128)), "PRIVATE_FEE_CAP_TOO_LOW");
+    check7(["feePerDaGas", "feePerL2Gas"].every((key) => fixed.gasSettings.maxFeesPerGas[key] >= uint3(minimum[key], 128)), "PRIVATE_FEE_CAP_TOO_LOW");
     const artifact = artifactOf(privateFeeArtifact), canonical2 = await derivePrivateFeeInstance(artifact);
-    check5(equal2(canonical2.address, payer), "PRIVATE_FEE_NONCANONICAL_ADDRESS");
+    check7(equal2(canonical2.address, payer), "PRIVATE_FEE_NONCANONICAL_ADDRESS");
     await requirePublishedPrivateFee(node2, canonical2);
     let paymentMethod, availableCredit;
     if (claim2 !== void 0) {
-      check5(claim2 && typeof claim2 === "object" && !Array.isArray(claim2), "PRIVATE_FEE_INVALID_CLAIM");
-      const amount = uint2(claim2.amount, 128), salt = field3(claim2.salt), leafIndex = field3(claim2.leafIndex);
-      check5(amount > 0n, "PRIVATE_FEE_CLAIM_INSUFFICIENT");
+      check7(claim2 && typeof claim2 === "object" && !Array.isArray(claim2), "PRIVATE_FEE_INVALID_CLAIM");
+      const amount = uint3(claim2.amount, 128), salt = field5(claim2.salt), leafIndex = field5(claim2.leafIndex);
+      check7(amount > 0n, "PRIVATE_FEE_CLAIM_INSUFFICIENT");
       availableCredit = amount;
       const secret = await derivePrivateFeeBridgeSecret({ salt, owner: author });
-      check5(claim2.secret === void 0 || equal2(field3(claim2.secret), secret), "PRIVATE_FEE_CLAIM_SECRET_MISMATCH");
+      check7(claim2.secret === void 0 || equal2(field5(claim2.secret), secret), "PRIVATE_FEE_CLAIM_SECRET_MISMATCH");
       paymentMethod = new PrivateMintAndPayFeePaymentMethod(payer, { amount, salt, leafIndex, secret }, 1n);
     }
     await wallet.registerContract(canonical2, artifact);
     if (!paymentMethod) {
-      check5(wallet.executeUtility, "PRIVATE_FEE_PROVIDER_REQUIRED");
+      check7(wallet.executeUtility, "PRIVATE_FEE_PROVIDER_REQUIRED");
       const { result } = await Contract.at(payer, artifact, wallet).methods.balance_of(author).simulate({ from: author });
-      availableCredit = uint2(result, 128);
-      check5(availableCredit > 0n, "PRIVATE_FEE_BALANCE_INSUFFICIENT");
+      availableCredit = uint3(result, 128);
+      check7(availableCredit > 0n, "PRIVATE_FEE_BALANCE_INSUFFICIENT");
       paymentMethod = new PrivateFeePaymentMethod(payer, 1n);
     }
     const refund = getAllFunctionAbis(artifact).find((f) => f.name === "_complete_refund");
@@ -383474,52 +384381,52 @@ Partial Address: ${this.partialAddress.toString()}
   var tokenAbi = new Interface(["function balanceOf(address) view returns (uint256)", "function allowance(address,address) view returns (uint256)", "function approve(address,uint256) returns (bool)"]);
   var SCHEMA = "private-fee-funding-v1";
   var PrivateFeeFundingError = class extends Error {
-    constructor(code, record7) {
+    constructor(code, record8) {
       super(code);
       this.name = "PrivateFeeFundingError";
       this.code = code;
-      if (record7) this.recoveryRecord = Object.freeze({ ...record7 });
+      if (record8) this.recoveryRecord = Object.freeze({ ...record8 });
     }
   };
-  var check6 = (ok2, code) => {
+  var check8 = (ok2, code) => {
     if (!ok2) throw new PrivateFeeFundingError(code);
   };
-  function uint3(value, bits = 128) {
+  function uint4(value, bits = 128) {
     if (value?.toBigInt) value = value.toBigInt();
     if (typeof value === "number") {
-      check6(Number.isSafeInteger(value), "PRIVATE_FEE_FUNDING_INVALID");
+      check8(Number.isSafeInteger(value), "PRIVATE_FEE_FUNDING_INVALID");
       value = BigInt(value);
     }
     if (typeof value === "string") {
-      check6(/^(0|[1-9][0-9]*)$/.test(value) && value.length <= 78, "PRIVATE_FEE_FUNDING_INVALID");
+      check8(/^(0|[1-9][0-9]*)$/.test(value) && value.length <= 78, "PRIVATE_FEE_FUNDING_INVALID");
       value = BigInt(value);
     }
-    check6(typeof value === "bigint" && value >= 0n && value < 1n << BigInt(bits), "PRIVATE_FEE_FUNDING_INVALID");
+    check8(typeof value === "bigint" && value >= 0n && value < 1n << BigInt(bits), "PRIVATE_FEE_FUNDING_INVALID");
     return value;
   }
   function address4(value) {
     const result = getAddress(value?.toString());
-    check6(result !== "0x0000000000000000000000000000000000000000", "PRIVATE_FEE_FUNDING_INVALID");
+    check8(result !== "0x0000000000000000000000000000000000000000", "PRIVATE_FEE_FUNDING_INVALID");
     return result;
   }
   function secretField(value) {
     const text = value instanceof Fr ? value.toString() : value;
-    check6(typeof text === "string" && /^0x[0-9a-f]{64}$/.test(text), "PRIVATE_FEE_FUNDING_INVALID");
+    check8(typeof text === "string" && /^0x[0-9a-f]{64}$/.test(text), "PRIVATE_FEE_FUNDING_INVALID");
     const result = Fr.fromString(text);
-    check6(!result.isZero(), "PRIVATE_FEE_FUNDING_INVALID");
+    check8(!result.isZero(), "PRIVATE_FEE_FUNDING_INVALID");
     return result;
   }
   var eq = (a, b2) => String(a).toLowerCase() === String(b2).toLowerCase();
-  var copy = (record7) => Object.freeze({ ...record7 });
+  var copy = (record8) => Object.freeze({ ...record8 });
   async function read(provider, to, abi2, name, args = []) {
     return abi2.decodeFunctionResult(name, await provider.call({ to, data: abi2.encodeFunctionData(name, args) }))[0];
   }
   async function verifyScope({ node: node2, ethProvider, privateFeeArtifact, privateFeeAddress, expectedChainId, expectedVersion }) {
-    check6(node2?.getNodeInfo && ethProvider?.getNetwork, "PRIVATE_FEE_FUNDING_PROVIDER_REQUIRED");
-    const chainId = uint3(expectedChainId, 64), version12 = uint3(expectedVersion, 32);
+    check8(node2?.getNodeInfo && ethProvider?.getNetwork, "PRIVATE_FEE_FUNDING_PROVIDER_REQUIRED");
+    const chainId = uint4(expectedChainId, 64), version12 = uint4(expectedVersion, 32);
     const [info, network, canonical2] = await Promise.all([node2.getNodeInfo(), ethProvider.getNetwork(), derivePrivateFeeInstance(privateFeeArtifact)]);
-    check6(uint3(network.chainId, 64) === chainId && uint3(info.l1ChainId, 64) === chainId && uint3(info.rollupVersion, 32) === version12, "PRIVATE_FEE_FUNDING_CHAIN_MISMATCH");
-    check6(eq(canonical2.address, privateFeeAddress), "PRIVATE_FEE_FUNDING_ADDRESS_MISMATCH");
+    check8(uint4(network.chainId, 64) === chainId && uint4(info.l1ChainId, 64) === chainId && uint4(info.rollupVersion, 32) === version12, "PRIVATE_FEE_FUNDING_CHAIN_MISMATCH");
+    check8(eq(canonical2.address, privateFeeAddress), "PRIVATE_FEE_FUNDING_ADDRESS_MISMATCH");
     await requirePublishedPrivateFee(node2, canonical2);
     const scope = {
       chainId: chainId.toString(),
@@ -383535,33 +384442,90 @@ Partial Address: ${this.partialAddress.toString()}
       read(ethProvider, scope.portalAddress, portalAbi, "VERSION"),
       read(ethProvider, scope.portalAddress, portalAbi, "L2_TOKEN_ADDRESS")
     ]);
-    check6(eq(rollup, scope.rollupAddress) && eq(token, scope.tokenAddress) && uint3(portalVersion, 32) === version12 && eq(l2Token, ProtocolContractAddress.FeeJuice), "PRIVATE_FEE_FUNDING_PORTAL_MISMATCH");
+    check8(eq(rollup, scope.rollupAddress) && eq(token, scope.tokenAddress) && uint4(portalVersion, 32) === version12 && eq(l2Token, ProtocolContractAddress.FeeJuice), "PRIVATE_FEE_FUNDING_PORTAL_MISMATCH");
     return scope;
   }
-  async function claimSecrets({ walletSecret, owner, record: record7 }) {
+  async function claimSecrets({ walletSecret, owner, record: record8 }) {
     const salt = await poseidon2HashWithSeparator([
       secretField(walletSecret),
-      new Fr(uint3(record7.chainId, 64)),
-      new Fr(uint3(record7.version, 32)),
-      Fr.fromString(record7.privateFeeAddress),
-      new Fr(BigInt(record7.sender)),
-      new Fr(uint3(record7.nonce, 64))
+      new Fr(uint4(record8.chainId, 64)),
+      new Fr(uint4(record8.version, 32)),
+      Fr.fromString(record8.privateFeeAddress),
+      new Fr(BigInt(record8.sender)),
+      new Fr(uint4(record8.nonce, 64))
     ], 1111639553);
     const secret = await derivePrivateFeeBridgeSecret({ salt, owner });
     const secretHash = await derivePrivateFeeBridgeSecretHash({ salt, owner });
     return { salt, secret, secretHash };
   }
-  function validRecord(record7) {
-    check6(record7 && record7.schema === SCHEMA, "PRIVATE_FEE_RECOVERY_INVALID");
+  function captureAggregateFundingIntent(input2) {
+    if (input2 === void 0) return void 0;
+    const invalid4 = "PRIVATE_FEE_RECOVERY_TRANSACTION_MISMATCH";
+    const capture = (value, keys) => {
+      check8(value && [Object.prototype, null].includes(Object.getPrototypeOf(value)), invalid4);
+      const result = {};
+      for (const key of keys) {
+        const d = Object.getOwnPropertyDescriptor(value, key);
+        check8(d && "value" in d, invalid4);
+        result[key] = d.value;
+      }
+      return result;
+    };
+    const r = capture(input2, ["from", "to", "nonce", "chainId", "data", "value", "expected"]);
+    check8(r.expected && Reflect.ownKeys(r.expected).length === 7, invalid4);
+    r.expected = capture(r.expected, ["kind", "routerCodeHash", "collateralPortal", "feePortal", "bokPortal", "privateFpc", "planHash"]);
+    for (const key of ["from", "to"]) check8(typeof r[key] === "string" && /^0x[0-9a-f]{40}$/.test(r[key]) && BigInt(r[key]) > 0n, invalid4);
+    check8(Number.isSafeInteger(r.nonce) && r.nonce >= 0 && typeof r.chainId === "string" && /^[1-9][0-9]{0,19}$/.test(r.chainId) && BigInt(r.chainId) < 2n ** 64n, invalid4);
+    check8(typeof r.data === "string" && /^0x(?:[0-9a-f]{2})+$/.test(r.data) && r.data.length <= 16384 && typeof r.value === "string" && /^(0|[1-9][0-9]{0,77})$/.test(r.value) && (r.expected.kind === "aggregate-usdc-funding" || r.value !== "0"), invalid4);
+    const hash12 = Object.getOwnPropertyDescriptor(input2, "txHash");
+    if (hash12) {
+      check8("value" in hash12 && (hash12.value === null || typeof hash12.value === "string" && /^0x[0-9a-f]{64}$/.test(hash12.value)), invalid4);
+      r.txHash = hash12.value;
+    }
+    try {
+      validateAggregateFundingIntent(r);
+    } catch {
+      throw new PrivateFeeFundingError(invalid4);
+    }
+    Object.freeze(r.expected);
+    return Object.freeze(r);
+  }
+  function captureAggregateFundingCustody(input2, intent) {
+    const invalid4 = "PRIVATE_FEE_RECOVERY_TRANSACTION_MISMATCH";
+    const usdc = intent?.expected.kind === "aggregate-usdc-funding";
+    if (!usdc) {
+      check8(input2 === void 0, invalid4);
+      return void 0;
+    }
+    const keys = ["kind", "planHash", "beneficiary", "privateFeeSalt"];
+    check8(input2 && [Object.prototype, null].includes(Object.getPrototypeOf(input2)) && Reflect.ownKeys(input2).length === keys.length, invalid4);
+    const r = {};
+    for (const key of keys) {
+      const d = Object.getOwnPropertyDescriptor(input2, key);
+      check8(d && "value" in d, invalid4);
+      r[key] = d.value;
+    }
+    check8(r.kind === "aggregate-usdc-custody-v1" && r.planHash === intent.expected.planHash && typeof r.beneficiary === "string" && /^0x[0-9a-f]{40}$/.test(r.beneficiary) && BigInt(r.beneficiary) > 0n && typeof r.privateFeeSalt === "string" && /^0x[0-9a-f]{64}$/.test(r.privateFeeSalt) && BigInt(r.privateFeeSalt) > 0n && BigInt(r.privateFeeSalt) < 21888242871839275222246405745257275088548364400416034343698204186575808495617n, invalid4);
+    let plan;
+    try {
+      plan = validateAggregateFundingIntent(intent);
+    } catch {
+      throw new PrivateFeeFundingError(invalid4);
+    }
+    check8(plan.beneficiary.toLowerCase() === r.beneficiary, invalid4);
+    return Object.freeze(r);
+  }
+  function validRecord(record8) {
+    check8(record8 && record8.schema === SCHEMA, "PRIVATE_FEE_RECOVERY_INVALID");
     const allowed = ["schema", "chainId", "version", "rollupAddress", "portalAddress", "tokenAddress", "privateFeeAddress", "sender", "nonce", "amount", "txHash", "leafIndex"];
-    check6(Object.keys(record7).every((key) => allowed.includes(key)), "PRIVATE_FEE_RECOVERY_INVALID");
-    check6(uint3(record7.amount) > 0n, "PRIVATE_FEE_RECOVERY_INVALID");
-    uint3(record7.nonce, 64);
-    address4(record7.sender);
-    if (record7.txHash !== void 0) check6(/^0x[0-9a-fA-F]{64}$/.test(record7.txHash), "PRIVATE_FEE_RECOVERY_INVALID");
+    check8(Object.keys(record8).every((key) => allowed.includes(key)), "PRIVATE_FEE_RECOVERY_INVALID");
+    check8(uint4(record8.amount) > 0n, "PRIVATE_FEE_RECOVERY_INVALID");
+    uint4(record8.nonce, 64);
+    address4(record8.sender);
+    if (record8.txHash !== void 0) check8(typeof record8.txHash === "string" && /^0x[0-9a-fA-F]{64}$/.test(record8.txHash), "PRIVATE_FEE_RECOVERY_INVALID");
   }
   async function fundingJournal(input2, scope, sender) {
-    check6(input2.journalStorage?.read && input2.journalStorage?.compareAndSwap && input2.walletSalt !== void 0, "BB_JOURNAL_INVALID");
+    check8(input2.journalStorage?.read && input2.journalStorage?.compareAndSwap && input2.walletSalt !== void 0, "BB_JOURNAL_INVALID");
     return createEthereumJournal({
       storage: input2.journalStorage,
       walletSecret: secretField(input2.walletSecret).toString(),
@@ -383576,67 +384540,67 @@ Partial Address: ${this.partialAddress.toString()}
   async function recoverPrivateFeeFunding(input2) {
     const ethProvider = input2.ethProvider;
     const scope = await verifyScope({ ...input2, ethProvider });
-    if (input2.ethSigner) check6(uint3((await input2.ethSigner.provider.getNetwork()).chainId, 64) === uint3(scope.chainId, 64), "PRIVATE_FEE_FUNDING_CHAIN_MISMATCH");
+    if (input2.ethSigner) check8(uint4((await input2.ethSigner.provider.getNetwork()).chainId, 64) === uint4(scope.chainId, 64), "PRIVATE_FEE_FUNDING_CHAIN_MISMATCH");
     const sender = address4(input2.sender ?? await input2.ethSigner?.getAddress());
     const journal = await fundingJournal({ ...input2, ethProvider }, scope, sender);
     const result = await journal.recover({ retry: input2.retry === true });
     if (result.outcome !== "success") return { outcome: result.outcome, lastEthereumTxHash: result.txHash };
     if (result.request.expected.kind === "approve") return { outcome: "approved", amount: result.request.expected.amount, lastEthereumTxHash: result.txHash };
-    const record7 = { schema: SCHEMA, ...scope, sender, nonce: String(result.request.nonce), amount: result.request.expected.amount, txHash: result.txHash, leafIndex: String(result.event.index) };
-    const { secretHash } = await claimSecrets({ ...input2, record: record7 });
-    check6(eq(secretHash, result.request.expected.secretHash), "PRIVATE_FEE_RECOVERY_TRANSACTION_MISMATCH");
-    if (input2.saveRecovery) await input2.saveRecovery(copy(record7));
-    return { outcome: "funded", lastEthereumTxHash: result.txHash, record: copy(record7) };
+    const record8 = { schema: SCHEMA, ...scope, sender, nonce: String(result.request.nonce), amount: result.request.expected.amount, txHash: result.txHash, leafIndex: String(result.event.index) };
+    const { secretHash } = await claimSecrets({ ...input2, record: record8 });
+    check8(eq(secretHash, result.request.expected.secretHash), "PRIVATE_FEE_RECOVERY_TRANSACTION_MISMATCH");
+    if (input2.saveRecovery) await input2.saveRecovery(copy(record8));
+    return { outcome: "funded", lastEthereumTxHash: result.txHash, record: copy(record8) };
   }
   async function fundPrivateFees(input2) {
-    let record7, depositAttempted = false, phase = "validate-input";
+    let record8, depositAttempted = false, phase = "validate-input";
     try {
       const { node: node2, ethSigner, ethProvider, owner, walletSecret, privateFeeAddress, privateFeeArtifact, amount, saveRecovery, expectedChainId, expectedVersion } = input2 ?? {};
-      check6(ethProvider?.getNetwork && ethSigner?.provider && ethSigner?.sendTransaction && typeof saveRecovery === "function", "PRIVATE_FEE_FUNDING_PROVIDER_REQUIRED");
+      check8(ethProvider?.getNetwork && ethSigner?.provider && ethSigner?.sendTransaction && typeof saveRecovery === "function", "PRIVATE_FEE_FUNDING_PROVIDER_REQUIRED");
       secretField(walletSecret);
       secretField(owner?.toString());
-      const quantity = uint3(amount);
-      check6(quantity > 0n, "PRIVATE_FEE_FUNDING_INVALID");
+      const quantity2 = uint4(amount);
+      check8(quantity2 > 0n, "PRIVATE_FEE_FUNDING_INVALID");
       phase = "verify-scope";
       const scope = await verifyScope({ node: node2, ethProvider, privateFeeArtifact, privateFeeAddress, expectedChainId, expectedVersion });
-      check6(uint3((await ethSigner.provider.getNetwork()).chainId, 64) === uint3(scope.chainId, 64), "PRIVATE_FEE_FUNDING_CHAIN_MISMATCH");
+      check8(uint4((await ethSigner.provider.getNetwork()).chainId, 64) === uint4(scope.chainId, 64), "PRIVATE_FEE_FUNDING_CHAIN_MISMATCH");
       const sender = address4(await ethSigner.getAddress());
       phase = "journal-preflight";
       const journal = await fundingJournal(input2, scope, sender);
       await journal.assertCanStart();
       phase = "read-token-funding";
       const [balance, allowance] = await Promise.all([read(ethProvider, scope.tokenAddress, tokenAbi, "balanceOf", [sender]), read(ethProvider, scope.tokenAddress, tokenAbi, "allowance", [sender, scope.portalAddress])]);
-      check6(balance >= quantity, "PRIVATE_FEE_FUNDING_TOKEN_BALANCE");
-      if (allowance < quantity) {
+      check8(balance >= quantity2, "PRIVATE_FEE_FUNDING_TOKEN_BALANCE");
+      if (allowance < quantity2) {
         phase = "submit-approval";
-        await journal.send({ data: tokenAbi.encodeFunctionData("approve", [scope.portalAddress, quantity]), value: "0", expected: { kind: "approve", amount: quantity.toString(), spender: scope.portalAddress.toLowerCase() } });
+        await journal.send({ data: tokenAbi.encodeFunctionData("approve", [scope.portalAddress, quantity2]), value: "0", expected: { kind: "approve", amount: quantity2.toString(), spender: scope.portalAddress.toLowerCase() } });
         phase = "verify-allowance";
-        check6(await read(ethProvider, scope.tokenAddress, tokenAbi, "allowance", [sender, scope.portalAddress]) >= quantity, "PRIVATE_FEE_FUNDING_APPROVAL_FAILED");
+        check8(await read(ethProvider, scope.tokenAddress, tokenAbi, "allowance", [sender, scope.portalAddress]) >= quantity2, "PRIVATE_FEE_FUNDING_APPROVAL_FAILED");
       }
-      check6(eq(await ethSigner.getAddress(), sender), "PRIVATE_FEE_FUNDING_ACCOUNT_CHANGED");
+      check8(eq(await ethSigner.getAddress(), sender), "PRIVATE_FEE_FUNDING_ACCOUNT_CHANGED");
       phase = "select-deposit-nonce";
       const deposited = await journal.send(async (nonce) => {
-        record7 = { schema: SCHEMA, ...scope, sender, nonce: nonce.toString(), amount: quantity.toString() };
-        const { secretHash } = await claimSecrets({ walletSecret, owner, record: record7 });
+        record8 = { schema: SCHEMA, ...scope, sender, nonce: nonce.toString(), amount: quantity2.toString() };
+        const { secretHash } = await claimSecrets({ walletSecret, owner, record: record8 });
         phase = "save-before-deposit";
-        await saveRecovery(copy(record7));
-        check6(uint3((await ethProvider.getNetwork()).chainId, 64) === uint3(scope.chainId, 64) && eq(await ethSigner.getAddress(), sender), "PRIVATE_FEE_FUNDING_ACCOUNT_CHANGED");
+        await saveRecovery(copy(record8));
+        check8(uint4((await ethProvider.getNetwork()).chainId, 64) === uint4(scope.chainId, 64) && eq(await ethSigner.getAddress(), sender), "PRIVATE_FEE_FUNDING_ACCOUNT_CHANGED");
         phase = "submit-deposit";
         depositAttempted = true;
-        return { data: portalAbi.encodeFunctionData("depositToAztecPublic", [scope.privateFeeAddress, quantity, secretHash.toString()]), value: "0", expected: { kind: "fee-deposit", amount: quantity.toString(), secretHash: secretHash.toString(), recipient: scope.privateFeeAddress.toLowerCase() } };
+        return { data: portalAbi.encodeFunctionData("depositToAztecPublic", [scope.privateFeeAddress, quantity2, secretHash.toString()]), value: "0", expected: { kind: "fee-deposit", amount: quantity2.toString(), secretHash: secretHash.toString(), recipient: scope.privateFeeAddress.toLowerCase() } };
       });
-      record7 = { ...record7, txHash: deposited.txHash };
+      record8 = { ...record8, txHash: deposited.txHash };
       phase = "save-deposit-hash";
-      await saveRecovery(copy(record7));
+      await saveRecovery(copy(record8));
       phase = "recover-confirmed-claim";
-      const claim2 = await recoverPrivateFeeClaim({ node: node2, ethProvider, owner, walletSecret, privateFeeArtifact, record: record7, expectedChainId, expectedVersion });
-      record7 = { ...record7, leafIndex: claim2.leafIndex.toBigInt().toString() };
+      const claim2 = await recoverPrivateFeeClaim({ node: node2, ethProvider, owner, walletSecret, privateFeeArtifact, record: record8, expectedChainId, expectedVersion });
+      record8 = { ...record8, leafIndex: claim2.leafIndex.toBigInt().toString() };
       phase = "save-confirmed-claim";
-      await saveRecovery(copy(record7));
-      return copy(record7);
+      await saveRecovery(copy(record8));
+      return copy(record8);
     } catch (error312) {
       const journalCode = ["BB_ETH_REQUEST_CANCELLED", "BB_ETH_INSUFFICIENT_FUNDS", "BB_JOURNAL_INVALID", "BB_ETH_RECOVERY_REQUIRED", "BB_ETH_SUBMISSION_UNKNOWN", "BB_ETH_TRANSACTION_FAILED"].includes(error312?.code);
-      const wrapped = journalCode ? new PrivateFeeFundingError(error312.code, record7) : depositAttempted ? new PrivateFeeFundingError("PRIVATE_FEE_FUNDING_SUBMISSION_UNKNOWN", record7) : error312 instanceof PrivateFeeFundingError ? error312 : new PrivateFeeFundingError("PRIVATE_FEE_FUNDING_FAILED");
+      const wrapped = journalCode ? new PrivateFeeFundingError(error312.code, record8) : depositAttempted ? new PrivateFeeFundingError("PRIVATE_FEE_FUNDING_SUBMISSION_UNKNOWN", record8) : error312 instanceof PrivateFeeFundingError ? error312 : new PrivateFeeFundingError("PRIVATE_FEE_FUNDING_FAILED");
       const names = /* @__PURE__ */ new Set(["Error", "TypeError", "RangeError", "AssertionError", "PrivateFeeFundingError"]);
       const codes = /* @__PURE__ */ new Set([
         "NONCE_EXPIRED",
@@ -383667,38 +384631,67 @@ Partial Address: ${this.partialAddress.toString()}
   }
   async function recoverPrivateFeeClaim(input2) {
     try {
-      const { node: node2, ethProvider, owner, walletSecret, privateFeeArtifact, record: record7, expectedChainId, expectedVersion } = input2 ?? {};
-      validRecord(record7);
-      check6(record7.txHash, "PRIVATE_FEE_RECOVERY_HASH_REQUIRED");
-      const scope = await verifyScope({ node: node2, ethProvider, privateFeeArtifact, privateFeeAddress: record7.privateFeeAddress, expectedChainId, expectedVersion });
-      check6(Object.entries(scope).every(([key, value]) => eq(value, record7[key])), "PRIVATE_FEE_RECOVERY_SCOPE_MISMATCH");
-      const { salt, secret, secretHash } = await claimSecrets({ walletSecret, owner, record: record7 });
-      const [receipt2, transaction] = await Promise.all([ethProvider.getTransactionReceipt(record7.txHash), ethProvider.getTransaction(record7.txHash)]);
-      check6(receipt2 && transaction, "PRIVATE_FEE_RECOVERY_PENDING");
-      check6(receipt2.status === 1, "PRIVATE_FEE_RECOVERY_REVERTED");
+      const { node: node2, ethProvider, owner, walletSecret, privateFeeArtifact, expectedChainId, expectedVersion } = input2 ?? {};
+      check8(input2.record && [Object.prototype, null].includes(Object.getPrototypeOf(input2.record)), "PRIVATE_FEE_RECOVERY_INVALID");
+      const recordData = {};
+      for (const key of Reflect.ownKeys(input2.record)) {
+        const d = Object.getOwnPropertyDescriptor(input2.record, key);
+        check8(typeof key === "string" && d && "value" in d, "PRIVATE_FEE_RECOVERY_INVALID");
+        recordData[key] = d.value;
+      }
+      validRecord(recordData);
+      check8(recordData.txHash, "PRIVATE_FEE_RECOVERY_HASH_REQUIRED");
+      const aggregateDescriptor = Object.getOwnPropertyDescriptor(input2, "aggregateIntent");
+      check8(!aggregateDescriptor || "value" in aggregateDescriptor, "PRIVATE_FEE_RECOVERY_INVALID");
+      const record8 = Object.freeze({
+        ...recordData,
+        chainId: uint4(recordData.chainId, 64).toString(),
+        version: uint4(recordData.version, 32).toString(),
+        rollupAddress: address4(recordData.rollupAddress),
+        portalAddress: address4(recordData.portalAddress),
+        tokenAddress: address4(recordData.tokenAddress),
+        privateFeeAddress: secretField(recordData.privateFeeAddress).toString(),
+        sender: address4(recordData.sender),
+        nonce: uint4(recordData.nonce, 64).toString(),
+        amount: uint4(recordData.amount).toString(),
+        ...recordData.leafIndex === void 0 ? {} : { leafIndex: uint4(recordData.leafIndex, 254).toString() }
+      }), aggregateIntent = captureAggregateFundingIntent(aggregateDescriptor?.value);
+      const custodyDescriptor = Object.getOwnPropertyDescriptor(input2, "aggregateCustody");
+      check8(!custodyDescriptor || "value" in custodyDescriptor, "PRIVATE_FEE_RECOVERY_INVALID");
+      const aggregateCustody = captureAggregateFundingCustody(custodyDescriptor?.value, aggregateIntent);
+      const scope = await verifyScope({ node: node2, ethProvider, privateFeeArtifact, privateFeeAddress: record8.privateFeeAddress, expectedChainId, expectedVersion });
+      check8(Object.entries(scope).every(([key, value]) => eq(value, record8[key])), "PRIVATE_FEE_RECOVERY_SCOPE_MISMATCH");
+      const retainedSalt = aggregateCustody ? Fr.fromString(aggregateCustody.privateFeeSalt) : null;
+      const { salt, secret, secretHash } = aggregateCustody ? { salt: retainedSalt, secret: await derivePrivateFeeBridgeSecret({ salt: retainedSalt, owner }), secretHash: await derivePrivateFeeBridgeSecretHash({ salt: retainedSalt, owner }) } : await claimSecrets({ walletSecret, owner, record: record8 });
+      const [receipt2, transaction] = await Promise.all([ethProvider.getTransactionReceipt(record8.txHash), ethProvider.getTransaction(record8.txHash)]);
+      check8(receipt2 && transaction, "PRIVATE_FEE_RECOVERY_PENDING");
+      check8(receipt2.status === 1, "PRIVATE_FEE_RECOVERY_REVERTED");
       const block2 = await ethProvider.getBlock(receipt2.blockNumber);
-      check6(block2 && eq(block2.hash, receipt2.blockHash), "PRIVATE_FEE_RECOVERY_REORG");
-      const expectedData = portalAbi.encodeFunctionData("depositToAztecPublic", [scope.privateFeeAddress, uint3(record7.amount), secretHash.toString()]);
-      const intent = {
-        from: record7.sender.toLowerCase(),
+      check8(block2 && eq(block2.hash, receipt2.blockHash), "PRIVATE_FEE_RECOVERY_REORG");
+      const expectedData = portalAbi.encodeFunctionData("depositToAztecPublic", [scope.privateFeeAddress, uint4(record8.amount), secretHash.toString()]);
+      const intent = aggregateIntent ?? {
+        from: record8.sender.toLowerCase(),
         to: scope.portalAddress.toLowerCase(),
-        nonce: Number(uint3(record7.nonce, 64)),
+        nonce: Number(uint4(record8.nonce, 64)),
         chainId: scope.chainId,
         data: expectedData.toLowerCase(),
         value: "0",
-        expected: { kind: "fee-deposit", recipient: scope.privateFeeAddress.toLowerCase(), amount: String(record7.amount), secretHash: secretHash.toString().toLowerCase() }
+        expected: { kind: "fee-deposit", recipient: scope.privateFeeAddress.toLowerCase(), amount: String(record8.amount), secretHash: secretHash.toString().toLowerCase() }
       };
+      if (aggregateIntent) check8(aggregateIntent.from === record8.sender.toLowerCase() && aggregateIntent.nonce === Number(uint4(record8.nonce, 64)) && aggregateIntent.chainId === scope.chainId && aggregateIntent.expected.feePortal === scope.portalAddress.toLowerCase() && aggregateIntent.expected.privateFpc === scope.privateFeeAddress.toLowerCase() && (!aggregateIntent.txHash || aggregateIntent.txHash === record8.txHash.toLowerCase()), "PRIVATE_FEE_RECOVERY_TRANSACTION_MISMATCH");
       let verified2;
       try {
-        verified2 = await verifyEthereumIntentReceipt(ethProvider, intent, record7.txHash.toLowerCase());
+        verified2 = await verifyEthereumIntentReceipt(ethProvider, intent, record8.txHash.toLowerCase());
       } catch {
         throw new PrivateFeeFundingError("PRIVATE_FEE_RECOVERY_TRANSACTION_MISMATCH");
       }
-      check6(verified2?.outcome === "success", "PRIVATE_FEE_RECOVERY_TRANSACTION_MISMATCH");
-      const event = verified2.event;
-      const leafIndex = new Fr(uint3(event.index, 254));
-      check6(record7.leafIndex === void 0 || uint3(record7.leafIndex, 254) === leafIndex.toBigInt(), "PRIVATE_FEE_RECOVERY_EVENT_MISMATCH");
-      return { amount: uint3(record7.amount), salt, secret, leafIndex, messageKey: event.key };
+      check8(verified2?.outcome === "success", "PRIVATE_FEE_RECOVERY_TRANSACTION_MISMATCH");
+      if (aggregateCustody) check8(verified2.event.beneficiary === aggregateCustody.beneficiary, "PRIVATE_FEE_RECOVERY_EVENT_MISMATCH");
+      const event = aggregateIntent ? { key: verified2.event.privateFee.messageKey, index: verified2.event.privateFee.leafIndex } : verified2.event;
+      if (aggregateIntent) check8(verified2.event.privateFee.amount === String(record8.amount) && verified2.event.privateFee.secretHash === secretHash.toString(), "PRIVATE_FEE_RECOVERY_EVENT_MISMATCH");
+      const leafIndex = new Fr(uint4(event.index, 254));
+      check8(record8.leafIndex === void 0 || uint4(record8.leafIndex, 254) === leafIndex.toBigInt(), "PRIVATE_FEE_RECOVERY_EVENT_MISMATCH");
+      return { amount: uint4(record8.amount), salt, secret, leafIndex, messageKey: event.key };
     } catch (error312) {
       if (error312 instanceof PrivateFeeFundingError) throw error312;
       throw new PrivateFeeFundingError("PRIVATE_FEE_RECOVERY_FAILED");
@@ -383708,7 +384701,7 @@ Partial Address: ${this.partialAddress.toString()}
     const inner = await computeFeeJuiceMessageNullifier(Fr.fromString(claim2.messageKey), claim2.secret);
     const nullifier = await siloNullifier(ProtocolContractAddress.FeeJuice, inner);
     const indices = await node2.findLeavesIndexes("latest", MerkleTreeId.NULLIFIER_TREE, [nullifier]);
-    check6(Array.isArray(indices) && indices.length === 1, "PRIVATE_FEE_RECOVERY_FAILED");
+    check8(Array.isArray(indices) && indices.length === 1, "PRIVATE_FEE_RECOVERY_FAILED");
     return indices[0] !== void 0;
   }
 
@@ -386195,7 +387188,7 @@ Partial Address: ${this.partialAddress.toString()}
     UNSYNCED: "Trusted private node state is incomplete or inconsistent.",
     STALE: "Trusted private node synchronization is stale."
   });
-  function fail3(kind) {
+  function fail4(kind) {
     const error312 = Object.assign(new Error(messages2[kind]), { code: "BB_TRUSTED_NODE_" + kind });
     failures.add(error312);
     return error312;
@@ -386203,32 +387196,32 @@ Partial Address: ${this.partialAddress.toString()}
   var natural = (value) => Number.isSafeInteger(value) && value >= 0;
   function decimal(value, bits) {
     if (typeof value === "number") {
-      if (!natural(value)) throw fail3("CONFIG");
+      if (!natural(value)) throw fail4("CONFIG");
       value = String(value);
     }
-    if (typeof value !== "string" || !/^[1-9][0-9]{0,19}$/.test(value) || BigInt(value) >= 1n << BigInt(bits)) throw fail3("CONFIG");
-    if (BigInt(value) > BigInt(Number.MAX_SAFE_INTEGER)) throw fail3("CONFIG");
+    if (typeof value !== "string" || !/^[1-9][0-9]{0,19}$/.test(value) || BigInt(value) >= 1n << BigInt(bits)) throw fail4("CONFIG");
+    if (BigInt(value) > BigInt(Number.MAX_SAFE_INTEGER)) throw fail4("CONFIG");
     return value;
   }
-  function hex10(value, bytes3) {
+  function hex12(value, bytes3) {
     const text = typeof value === "string" ? value : value?.toString();
-    if (typeof text !== "string" || !new RegExp("^0x[0-9a-fA-F]{" + bytes3 * 2 + "}$").test(text)) throw fail3("UNAVAILABLE");
+    if (typeof text !== "string" || !new RegExp("^0x[0-9a-fA-F]{" + bytes3 * 2 + "}$").test(text)) throw fail4("UNAVAILABLE");
     return text.toLowerCase();
   }
   function policy(options) {
     try {
       const { expectedNetworkScope: s, proofsEnabled, maxLagSeconds = 120 } = options;
-      const chainId = decimal(s.chainId, 64), version12 = decimal(s.version, 32), rollup = hex10(s.rollup, 20);
-      if (BigInt(rollup) === 0n || typeof proofsEnabled !== "boolean" || !proofsEnabled && chainId !== "31337" || !Number.isSafeInteger(maxLagSeconds) || maxLagSeconds < 1 || maxLagSeconds > 600) throw fail3("CONFIG");
+      const chainId = decimal(s.chainId, 64), version12 = decimal(s.version, 32), rollup = hex12(s.rollup, 20);
+      if (BigInt(rollup) === 0n || typeof proofsEnabled !== "boolean" || !proofsEnabled && chainId !== "31337" || !Number.isSafeInteger(maxLagSeconds) || maxLagSeconds < 1 || maxLagSeconds > 600) throw fail4("CONFIG");
       return { chainId, version: version12, rollup, proofsEnabled, maxLagSeconds };
     } catch {
-      throw fail3("CONFIG");
+      throw fail4("CONFIG");
     }
   }
   function block(value) {
     const number20 = value?.number, hash12 = value?.hash;
-    if (!natural(number20)) throw fail3("UNAVAILABLE");
-    return { number: number20, hash: hex10(hash12, 32) };
+    if (!natural(number20)) throw fail4("UNAVAILABLE");
+    return { number: number20, hash: hex12(hash12, 32) };
   }
   async function readTogether(reads) {
     const results = await Promise.allSettled(reads.map((read2) => Promise.resolve().then(read2)));
@@ -386238,15 +387231,15 @@ Partial Address: ${this.partialAddress.toString()}
   }
   async function canonical(node2, expected) {
     const data = await node2.getBlockData(expected.number);
-    if (!data || data.header?.globalVariables?.blockNumber !== expected.number || hex10(data.blockHash, 32) !== expected.hash) throw fail3("UNSYNCED");
+    if (!data || data.header?.globalVariables?.blockNumber !== expected.number || hex12(data.blockHash, 32) !== expected.hash) throw fail4("UNSYNCED");
   }
   async function inspectTrustedNode(node2, options) {
     const p = policy(options);
     try {
       const info = await node2.getNodeInfo();
       const chainId = info?.l1ChainId, version12 = info?.rollupVersion, realProofs = info?.realProofs, rollup = info?.l1ContractAddresses?.rollupAddress;
-      if (!natural(chainId) || !natural(version12) || typeof realProofs !== "boolean") throw fail3("UNAVAILABLE");
-      if (String(chainId) !== p.chainId || String(version12) !== p.version || hex10(rollup, 20) !== p.rollup || realProofs !== p.proofsEnabled) throw fail3("IDENTITY");
+      if (!natural(chainId) || !natural(version12) || typeof realProofs !== "boolean") throw fail4("UNAVAILABLE");
+      if (String(chainId) !== p.chainId || String(version12) !== p.version || hex12(rollup, 20) !== p.rollup || realProofs !== p.proofsEnabled) throw fail4("IDENTITY");
       const [tips, state] = await readTogether([
         async () => {
           const value = await node2.getChainTips();
@@ -386261,7 +387254,7 @@ Partial Address: ${this.partialAddress.toString()}
           const value = await node2.getWorldStateSyncStatus();
           return {
             latest: value?.latestBlockNumber,
-            latestHash: hex10(value?.latestBlockHash, 32),
+            latestHash: hex12(value?.latestBlockHash, 32),
             final: value?.finalizedBlockNumber,
             oldest: value?.oldestHistoricBlockNumber,
             synced: value?.treesAreSynched
@@ -386270,18 +387263,18 @@ Partial Address: ${this.partialAddress.toString()}
       ]);
       const { proposed, checkpointed, proven, finalized } = tips;
       const ordered = [finalized, proven, checkpointed, proposed];
-      for (let i = 1; i < ordered.length; i++) if (ordered[i - 1].number > ordered[i].number || ordered[i - 1].number === ordered[i].number && ordered[i - 1].hash !== ordered[i].hash) throw fail3("UNSYNCED");
+      for (let i = 1; i < ordered.length; i++) if (ordered[i - 1].number > ordered[i].number || ordered[i - 1].number === ordered[i].number && ordered[i - 1].hash !== ordered[i].hash) throw fail4("UNSYNCED");
       const { latest, latestHash, final, oldest, synced } = state;
-      if (!natural(latest) || !natural(final) || !natural(oldest) || typeof synced !== "boolean") throw fail3("UNAVAILABLE");
-      if (!synced || latest !== proposed.number || hex10(latestHash, 32) !== proposed.hash || final !== finalized.number || oldest > checkpointed.number) throw fail3("UNSYNCED");
+      if (!natural(latest) || !natural(final) || !natural(oldest) || typeof synced !== "boolean") throw fail4("UNAVAILABLE");
+      if (!synced || latest !== proposed.number || hex12(latestHash, 32) !== proposed.hash || final !== finalized.number || oldest > checkpointed.number) throw fail4("UNSYNCED");
       if (checkpointed.number !== proposed.number) await readTogether([() => canonical(node2, checkpointed), () => canonical(node2, proposed)]);
       else await canonical(node2, proposed);
       const stamp = await node2.getSyncedL1Timestamp();
       const suppliedNow = options.nowSeconds, now = suppliedNow === void 0 ? Math.floor(Date.now() / 1e3) : suppliedNow;
-      if (!natural(now)) throw fail3("CONFIG");
-      if (typeof stamp !== "bigint" || stamp < 0n || stamp > BigInt(Number.MAX_SAFE_INTEGER)) throw fail3("UNAVAILABLE");
+      if (!natural(now)) throw fail4("CONFIG");
+      if (typeof stamp !== "bigint" || stamp < 0n || stamp > BigInt(Number.MAX_SAFE_INTEGER)) throw fail4("UNAVAILABLE");
       const lag = now - Number(stamp);
-      if (lag < 0 || lag > p.maxLagSeconds) throw fail3("STALE");
+      if (lag < 0 || lag > p.maxLagSeconds) throw fail4("STALE");
       await canonical(node2, proposed);
       return Object.freeze({
         ready: true,
@@ -386299,7 +387292,7 @@ Partial Address: ${this.partialAddress.toString()}
         lagSeconds: lag
       });
     } catch (error312) {
-      throw failures.has(error312) ? error312 : fail3("UNAVAILABLE");
+      throw failures.has(error312) ? error312 : fail4("UNAVAILABLE");
     }
   }
   var discard = () => {
@@ -386308,14 +387301,14 @@ Partial Address: ${this.partialAddress.toString()}
   var MAX_RESPONSE_BYTES = 32 * 1024 * 1024;
   function endpoint(value, allowLocalDev) {
     try {
-      if (typeof value !== "string" || value.length > 2048 || /[\s\\]/.test(value)) throw fail3("CONFIG");
+      if (typeof value !== "string" || value.length > 2048 || /[\s\\]/.test(value)) throw fail4("CONFIG");
       const url7 = new URL(value);
-      if (url7.username || url7.password || url7.search || url7.hash || value.includes("?") || value.includes("#")) throw fail3("CONFIG");
+      if (url7.username || url7.password || url7.search || url7.hash || value.includes("?") || value.includes("#")) throw fail4("CONFIG");
       const local = ["127.0.0.1", "[::1]", "localhost"].includes(url7.hostname);
-      if (url7.protocol !== "https:" && !(allowLocalDev === true && local && url7.protocol === "http:")) throw fail3("CONFIG");
+      if (url7.protocol !== "https:" && !(allowLocalDev === true && local && url7.protocol === "http:")) throw fail4("CONFIG");
       return url7.href;
     } catch {
-      throw fail3("CONFIG");
+      throw fail4("CONFIG");
     }
   }
   async function privateFetch(host, body, extraHeaders = {}) {
@@ -386330,7 +387323,7 @@ Partial Address: ${this.partialAddress.toString()}
         cache: "no-store",
         signal: AbortSignal.timeout(3e4)
       });
-      if (!response.ok || response.redirected || !response.body) throw fail3("UNAVAILABLE");
+      if (!response.ok || response.redirected || !response.body) throw fail4("UNAVAILABLE");
       const reader = response.body.getReader(), chunks = [];
       let size2 = 0;
       try {
@@ -386338,7 +387331,7 @@ Partial Address: ${this.partialAddress.toString()}
           const { done, value } = await reader.read();
           if (done) break;
           size2 += value.byteLength;
-          if (size2 > MAX_RESPONSE_BYTES) throw fail3("UNAVAILABLE");
+          if (size2 > MAX_RESPONSE_BYTES) throw fail4("UNAVAILABLE");
           chunks.push(value);
         }
       } finally {
@@ -386353,7 +387346,7 @@ Partial Address: ${this.partialAddress.toString()}
       }
       return { response: JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(bytes3)), headers: response.headers };
     } catch {
-      throw fail3("UNAVAILABLE");
+      throw fail4("UNAVAILABLE");
     }
   }
   async function createTrustedPrivateNode({ url: url7, expectedNetworkScope, proofsEnabled = true, allowLocalDev = false, maxLagSeconds = 120 }) {
@@ -386370,7 +387363,7 @@ Partial Address: ${this.partialAddress.toString()}
         try {
           return await rpc[name](...args);
         } catch {
-          throw fail3("UNAVAILABLE");
+          throw fail4("UNAVAILABLE");
         }
       };
       return [name, { enumerable: true, get: () => method }];
@@ -386399,37 +387392,37 @@ Partial Address: ${this.partialAddress.toString()}
       throw new Error(`Invalid ${label} fields`);
     }
   }
-  function uint4(value, bits, label) {
+  function uint5(value, bits, label) {
     if (typeof value !== "string" || !/^(0|[1-9][0-9]*)$/.test(value) || value.length > 78 || BigInt(value) >= 1n << BigInt(bits)) throw new Error(`Invalid ${label}`);
     return value;
   }
-  function hex11(value, bytes3, label) {
+  function hex13(value, bytes3, label) {
     if (typeof value !== "string" || !new RegExp(`^0x[0-9a-f]{${bytes3 * 2}}$`).test(value)) throw new Error(`Invalid ${label}`);
     return value;
   }
-  function field4(value, label) {
-    hex11(value, 32, label);
+  function field6(value, label) {
+    hex13(value, 32, label);
     if (BigInt(value) >= FIELD_MODULUS) throw new Error(`Invalid ${label}`);
     return value;
   }
-  function freeze(value) {
+  function freeze2(value) {
     if (value && typeof value === "object") {
-      Object.values(value).forEach(freeze);
+      Object.values(value).forEach(freeze2);
       Object.freeze(value);
     }
     return value;
   }
   function validateScope(scope) {
     exact(scope, ["l1ChainId", "rollupAddress", "rollupVersion", "boardAddress", "portalAddress"], "network scope");
-    uint4(scope.l1ChainId, 64, "L1 chain ID");
-    uint4(scope.rollupVersion, 32, "rollup version");
-    hex11(scope.rollupAddress, 20, "rollup address");
-    hex11(scope.portalAddress, 20, "portal address");
-    field4(scope.boardAddress, "board address");
+    uint5(scope.l1ChainId, 64, "L1 chain ID");
+    uint5(scope.rollupVersion, 32, "rollup version");
+    hex13(scope.rollupAddress, 20, "rollup address");
+    hex13(scope.portalAddress, 20, "portal address");
+    field6(scope.boardAddress, "board address");
     if (BigInt(scope.boardAddress) === 0n || BigInt(scope.portalAddress) === 0n || BigInt(scope.rollupAddress) === 0n) {
       throw new Error("Unconfigured scope");
     }
-    return freeze({ ...scope });
+    return freeze2({ ...scope });
   }
 
   // shared/protocol-commitments.mjs
@@ -386468,11 +387461,11 @@ Partial Address: ${this.partialAddress.toString()}
     return "0x00" + [...digest2.slice(0, 31)].map((byte) => byte.toString(16).padStart(2, "0")).join("");
   }
   function encodePolicyCommitment(boardAddress, policyText) {
-    const board = scalar(boardAddress);
-    if (board === 0n || typeof policyText !== "string" || !policyText.isWellFormed() || policyText.includes("\0")) throw new Error("Invalid policy");
+    const board2 = scalar(boardAddress);
+    if (board2 === 0n || typeof policyText !== "string" || !policyText.isWellFormed() || policyText.includes("\0")) throw new Error("Invalid policy");
     const bytes3 = encoder5.encode(policyText);
     if (bytes3.length === 0 || bytes3.length > 1488) throw new Error("Invalid policy length");
-    return concat3([domain7("AZTEC_BB_POLICY_V1"), word(1n), word(board), word(BigInt(bytes3.length)), bytes3]);
+    return concat3([domain7("AZTEC_BB_POLICY_V1"), word(1n), word(board2), word(BigInt(bytes3.length)), bytes3]);
   }
   function encodeEscrowCommitment(kind, scope, receipt2) {
     const s = validateScope(scope);
@@ -386516,24 +387509,24 @@ Partial Address: ${this.partialAddress.toString()}
   var feeClaimAbi = new Interface(["function claim(bytes32,uint256)"]);
   var MODULUS2 = 21888242871839275222246405745257275088548364400416034343698204186575808495617n;
   var failures2 = /* @__PURE__ */ new WeakSet();
-  function fail4(code) {
+  function fail5(code) {
     const error312 = Object.assign(new Error("Funding receipt could not be verified."), { code: "ROLLING_FUNDING_" + code });
     failures2.add(error312);
     return error312;
   }
   function requireThat(value, code = "MISMATCH") {
-    if (!value) throw fail4(code);
+    if (!value) throw fail5(code);
   }
-  function uint5(value, bits = 128) {
+  function uint6(value, bits = 128) {
     requireThat(typeof value === "string" && /^(0|[1-9][0-9]{0,77})$/.test(value) && BigInt(value) < 1n << BigInt(bits), "INVALID");
     return value;
   }
-  function hex12(value, bytes3 = 32) {
+  function hex14(value, bytes3 = 32) {
     requireThat(typeof value === "string" && new RegExp("^0x[0-9a-f]{" + bytes3 * 2 + "}$").test(value), "INVALID");
     return value;
   }
-  function field5(value, zero2 = false) {
-    hex12(value);
+  function field7(value, zero2 = false) {
+    hex14(value);
     requireThat(BigInt(value) < MODULUS2 && (zero2 || BigInt(value) > 0n), "INVALID");
     return value;
   }
@@ -386554,36 +387547,36 @@ Partial Address: ${this.partialAddress.toString()}
     }
     return value;
   }
-  var lower2 = (value) => String(value).toLowerCase();
-  var equal3 = (a, b2) => lower2(a) === lower2(b2);
+  var lower3 = (value) => String(value).toLowerCase();
+  var equal3 = (a, b2) => lower3(a) === lower3(b2);
   function validated(input2) {
     const kind = input2.kind;
     requireThat(["collateral", "private-fee", "bok"].includes(kind), "INVALID");
     const scope = object5(input2.scope, ["chainId", "version", "rollup", "portal", "recipient", ...kind === "collateral" ? [] : ["token"]]);
-    uint5(scope.chainId, 64);
-    uint5(scope.version, 32);
+    uint6(scope.chainId, 64);
+    uint6(scope.version, 32);
     requireThat(BigInt(scope.chainId) > 0n && BigInt(scope.chainId) <= BigInt(Number.MAX_SAFE_INTEGER) && BigInt(scope.version) > 0n, "INVALID");
     for (const key of ["rollup", "portal", ...kind === "collateral" ? [] : ["token"]]) {
-      hex12(scope[key], 20);
+      hex14(scope[key], 20);
       requireThat(BigInt(scope[key]) > 0n, "INVALID");
     }
-    field5(scope.recipient);
+    field7(scope.recipient);
     const receipt2 = object5(input2.receipt, ["txHash", "blockHash", "blockNumber", "sender", "nonce", "amount", "leafIndex", "messageKey", "secretHash"]);
-    hex12(receipt2.txHash);
-    hex12(receipt2.blockHash);
-    hex12(receipt2.sender, 20);
-    uint5(receipt2.nonce, 53);
-    uint5(receipt2.amount, kind === "collateral" ? 96 : 128);
-    uint5(receipt2.leafIndex, L1_TO_L2_MSG_TREE_HEIGHT);
+    hex14(receipt2.txHash);
+    hex14(receipt2.blockHash);
+    hex14(receipt2.sender, 20);
+    uint6(receipt2.nonce, 53);
+    uint6(receipt2.amount, kind === "collateral" ? 96 : 128);
+    uint6(receipt2.leafIndex, L1_TO_L2_MSG_TREE_HEIGHT);
     requireThat(BigInt(receipt2.amount) > 0n && BigInt(receipt2.sender) > 0n, "INVALID");
-    field5(receipt2.messageKey);
-    field5(receipt2.secretHash);
+    field7(receipt2.messageKey);
+    field7(receipt2.secretHash);
     requireThat(Number.isSafeInteger(receipt2.blockNumber) && receipt2.blockNumber >= 0, "INVALID");
     const anchor2 = object5(input2.anchor, ["number", "hash", "root"]);
     requireThat(Number.isSafeInteger(anchor2.number) && anchor2.number >= 0, "INVALID");
-    field5(anchor2.hash);
-    field5(anchor2.root, true);
-    field5(input2.owner);
+    field7(anchor2.hash);
+    field7(anchor2.root, true);
+    field7(input2.owner);
     requireThat(typeof input2.contextGuard === "function", "INVALID");
     return frozen({ kind, scope, receipt: receipt2, anchor: anchor2, owner: input2.owner });
   }
@@ -386592,7 +387585,13 @@ Partial Address: ${this.partialAddress.toString()}
     try {
       const { kind, scope: s, receipt: r, anchor: a, owner } = validated(input2);
       const secrets = object5(input2.secrets, kind === "collateral" ? ["walletSecret", "walletSalt"] : kind === "private-fee" ? ["walletSecret"] : ["recipientSalt", "bridgeSecret"]);
-      for (const [key, value] of Object.entries(secrets)) field5(value, key === "walletSalt");
+      for (const [key, value] of Object.entries(secrets)) field7(value, key === "walletSalt");
+      const aggregateDescriptor = Object.getOwnPropertyDescriptor(input2, "aggregateIntent");
+      requireThat(!aggregateDescriptor || "value" in aggregateDescriptor, "INVALID");
+      const aggregateIntent = captureAggregateFundingIntent(aggregateDescriptor?.value);
+      const custodyDescriptor = Object.getOwnPropertyDescriptor(input2, "aggregateCustody");
+      requireThat(!custodyDescriptor || "value" in custodyDescriptor, "INVALID");
+      const aggregateCustody = captureAggregateFundingCustody(custodyDescriptor?.value, aggregateIntent);
       const guard = input2.contextGuard, privateFeeArtifact = input2.privateFeeArtifact;
       const suppliedNode = input2.node, suppliedProvider = input2.ethProvider, suppliedStore = input2.claimStore;
       requireThat(isTrustedPrivateNode(suppliedNode), "UNTRUSTED_NODE");
@@ -386602,8 +387601,10 @@ Partial Address: ${this.partialAddress.toString()}
         return [name, fn.bind(source)];
       })));
       const nodeReads = capture(suppliedNode, ["getNodeInfo", "getContract", "getBlockData", "getL1ToL2MessageMembershipWitness"]);
-      const providerReads = capture(suppliedProvider, ["getNetwork", "getTransactionReceipt", "getTransaction", "getBlock", "call"]);
+      const providerMethods = ["getNetwork", "getTransactionReceipt", "getTransaction", "getBlock", "call", ...aggregateIntent ? ["getCode"] : []];
+      const providerReads = capture(suppliedProvider, providerMethods);
       const loadClaim = suppliedStore === void 0 ? null : capture(suppliedStore, ["load"]).load;
+      if (aggregateCustody && kind === "collateral") requireThat(loadClaim, "INVALID");
       const deadline = Date.now() + 2e4;
       const read2 = async (fn) => {
         let timer;
@@ -386619,17 +387620,17 @@ Partial Address: ${this.partialAddress.toString()}
               return value;
             })(),
             new Promise((_, reject) => {
-              timer = setTimeout(() => reject(fail4("UNKNOWN")), Math.max(1, deadline - Date.now()));
+              timer = setTimeout(() => reject(fail5("UNKNOWN")), Math.max(1, deadline - Date.now()));
             })
           ]);
         } catch {
           readFailed = true;
-          throw fail4("UNKNOWN");
+          throw fail5("UNKNOWN");
         } finally {
           clearTimeout(timer);
         }
       };
-      const provider = Object.fromEntries(["getNetwork", "getTransactionReceipt", "getTransaction", "getBlock", "call"].map((name) => [name, (...args) => read2(() => providerReads[name](...args))]));
+      const provider = Object.fromEntries(providerMethods.map((name) => [name, (...args) => read2(() => providerReads[name](...args))]));
       const node2 = Object.fromEntries(["getNodeInfo", "getContract"].map((name) => [name, (...args) => read2(() => nodeReads[name](...args))]));
       const info = await node2.getNodeInfo(), network = await provider.getNetwork();
       requireThat(String(info.l1ChainId) === s.chainId && String(info.rollupVersion) === s.version && equal3(info.l1ContractAddresses?.rollupAddress, s.rollup) && String(network.chainId) === s.chainId);
@@ -386644,7 +387645,7 @@ Partial Address: ${this.partialAddress.toString()}
       requireThat(receipt2.status === 0 || receipt2.status === 1, "UNKNOWN");
       const finalized = await provider.getBlock("finalized");
       requireThat(finalized && Number.isSafeInteger(finalized.number) && finalized.number >= 0, "UNKNOWN");
-      hex12(lower2(finalized.hash));
+      hex14(lower3(finalized.hash));
       if (finalized.number < r.blockNumber) return frozen({ status: "waiting", reason: "l1-finality" });
       const tx = await provider.getTransaction(r.txHash);
       requireThat(tx, "UNKNOWN");
@@ -386653,19 +387654,36 @@ Partial Address: ${this.partialAddress.toString()}
         await checkL1();
         return frozen({ status: "reverted" });
       }
-      requireThat(Array.isArray(receipt2.logs) && receipt2.logs.length <= 4096 && typeof tx.data === "string" && tx.data.length <= 8192, "UNKNOWN");
+      requireThat(Array.isArray(receipt2.logs) && receipt2.logs.length <= 4096 && typeof tx.data === "string" && tx.data.length <= (aggregateIntent ? 16384 : 8192), "UNKNOWN");
       for (const log3 of receipt2.logs) if (equal3(log3.address, s.portal)) requireThat(Array.isArray(log3.topics) && log3.topics.length <= 4 && log3.topics.every((t) => typeof t === "string" && /^0x[0-9a-fA-F]{64}$/.test(t)) && typeof log3.data === "string" && log3.data.length <= 4096, "UNKNOWN");
+      let aggregate;
+      if (aggregateIntent) {
+        const portalKey = { collateral: "collateralPortal", "private-fee": "feePortal", bok: "bokPortal" }[kind];
+        requireThat(aggregateIntent.from === r.sender && aggregateIntent.nonce === Number(r.nonce) && aggregateIntent.chainId === s.chainId && aggregateIntent.expected[portalKey] === s.portal && (!aggregateIntent.txHash || aggregateIntent.txHash === r.txHash));
+        let verified2;
+        try {
+          verified2 = await verifyEthereumIntentReceipt(provider, aggregateIntent, r.txHash);
+        } catch {
+          throw fail5(readFailed ? "UNKNOWN" : "MISMATCH");
+        }
+        requireThat(verified2?.outcome === "success" && verified2.receipt.blockNumber === r.blockNumber && equal3(verified2.receipt.blockHash, r.blockHash));
+        if (aggregateCustody) requireThat(verified2.event.beneficiary === aggregateCustody.beneficiary);
+        aggregate = verified2.event[kind === "private-fee" ? "privateFee" : kind];
+        requireThat(aggregate.amount === r.amount && aggregate.secretHash === r.secretHash && aggregate.messageKey === r.messageKey && aggregate.leafIndex === r.leafIndex);
+      }
       const call2 = async (to, abi2, name) => abi2.decodeFunctionResult(name, await provider.call({ to, data: abi2.encodeFunctionData(name), blockTag: r.blockNumber }))[0];
       const boardScope = { l1ChainId: s.chainId, rollupAddress: s.rollup, rollupVersion: s.version, boardAddress: s.recipient, portalAddress: s.portal };
       let content, secret, claim2, messageRecipient = s.recipient;
       if (kind === "collateral") {
         for (const [name, value] of [["ROLLUP", s.rollup], ["L2_CONTRACT", s.recipient], ["VERSION", s.version], ["L1_CHAIN_ID", s.chainId]]) requireThat(equal3(await call2(s.portal, boardAbi, name), value));
-        const custodyScope = { ...boardScope, depositor: r.sender };
+        const depositor = aggregateCustody?.beneficiary ?? r.sender;
+        const custodyScope = { ...boardScope, depositor };
         const saved = loadClaim ? await read2(() => loadClaim(custodyScope, r.secretHash)) : null;
+        if (aggregateCustody) requireThat(saved, "INVALID");
         const derived2 = saved ?? await deriveBoardDepositSecret({ ...secrets, scope: custodyScope, owner, nonce: r.nonce });
-        secret = field5(derived2.secret);
+        secret = field7(derived2.secret);
         requireThat(derived2.secretHash === r.secretHash);
-        const record7 = {
+        const record8 = {
           from: r.sender,
           to: s.portal,
           nonce: Number(r.nonce),
@@ -386674,17 +387692,19 @@ Partial Address: ${this.partialAddress.toString()}
           value: r.amount,
           expected: { kind: "deposit", amount: r.amount, secretHash: r.secretHash }
         };
-        let result;
-        try {
-          result = await verifyEthereumIntentReceipt(provider, record7, r.txHash);
-        } catch {
-          throw fail4(readFailed ? "UNKNOWN" : "MISMATCH");
+        if (!aggregate) {
+          let result;
+          try {
+            result = await verifyEthereumIntentReceipt(provider, record8, r.txHash);
+          } catch {
+            throw fail5(readFailed ? "UNKNOWN" : "MISMATCH");
+          }
+          requireThat(result?.outcome === "success" && equal3(result.event.key, r.messageKey) && String(result.event.index) === r.leafIndex);
         }
-        requireThat(result?.outcome === "success" && equal3(result.event.key, r.messageKey) && String(result.event.index) === r.leafIndex);
-        content = await sha256Field(encodeEscrowCommitment("claim", boardScope, { depositor: r.sender, amount: r.amount }));
-        claim2 = { contract: s.recipient, method: "claim_deposit", args: [r.sender, r.amount, secret, r.leafIndex] };
+        content = await sha256Field(encodeEscrowCommitment("claim", boardScope, { depositor, amount: r.amount }));
+        claim2 = { contract: s.recipient, method: "claim_deposit", args: [depositor, r.amount, secret, r.leafIndex] };
       } else if (kind === "private-fee") {
-        const record7 = {
+        const record8 = {
           schema: "private-fee-funding-v1",
           chainId: s.chainId,
           version: s.version,
@@ -386698,7 +387718,7 @@ Partial Address: ${this.partialAddress.toString()}
           txHash: r.txHash,
           leafIndex: r.leafIndex
         };
-        const recovered = await recoverPrivateFeeClaim({ node: node2, ethProvider: provider, owner: new AztecAddress(Fr.fromString(owner)), walletSecret: secrets.walletSecret, privateFeeArtifact, record: record7, expectedChainId: s.chainId, expectedVersion: s.version });
+        const recovered = await recoverPrivateFeeClaim({ node: node2, ethProvider: provider, owner: new AztecAddress(Fr.fromString(owner)), walletSecret: secrets.walletSecret, privateFeeArtifact, record: record8, aggregateIntent, aggregateCustody, expectedChainId: s.chainId, expectedVersion: s.version });
         requireThat(equal3(recovered.messageKey, r.messageKey));
         secret = recovered.secret.toString();
         const feeAbi = new Interface(["function ROLLUP() view returns(address)", "function UNDERLYING() view returns(address)", "function VERSION() view returns(uint256)", "function L2_TOKEN_ADDRESS() view returns(bytes32)"]);
@@ -386711,7 +387731,8 @@ Partial Address: ${this.partialAddress.toString()}
         for (const [name, rollupName] of [["inbox", "getInbox"], ["outbox", "getOutbox"]]) requireThat(equal3(await call2(s.portal, bokAbi, name), await call2(s.rollup, rollupAbi, rollupName)));
         const recipient = (await poseidon2HashWithSeparator([new Fr(BigInt(s.chainId)), new Fr(BigInt(s.portal)), Fr.fromString(s.recipient), new Fr(BigInt(s.version)), Fr.fromString(owner), Fr.fromString(secrets.recipientSalt)], 1112228609)).toString();
         secret = secrets.bridgeSecret;
-        requireThat(equal3(tx.to, s.portal) && BigInt(tx.value) === 0n && equal3(tx.data, bokAbi.encodeFunctionData("deposit", [recipient, r.amount, r.secretHash])));
+        if (aggregate) requireThat(aggregate.commitment === recipient);
+        else requireThat(equal3(tx.to, s.portal) && BigInt(tx.value) === 0n && equal3(tx.data, bokAbi.encodeFunctionData("deposit", [recipient, r.amount, r.secretHash])));
         const topic = bokAbi.getEvent("Deposited").topicHash;
         const logs = receipt2.logs.filter((log3) => equal3(log3.address, s.portal) && equal3(log3.topics?.[0], topic));
         requireThat(logs.length === 1);
@@ -386748,7 +387769,7 @@ Partial Address: ${this.partialAddress.toString()}
       const finalAgain = await provider.getBlock(finalized.number);
       requireThat(finalAgain && equal3(finalAgain.hash, finalized.hash), "REORG");
       await read2(() => Promise.resolve());
-      return frozen({ status: "claim-ready", claim: claim2, evidence: { kind, txHash: r.txHash, l1: { number: r.blockNumber, hash: r.blockHash }, finalizedL1: { number: finalized.number, hash: lower2(finalized.hash) }, l2: { number: a.number, hash: a.hash }, messageKey: r.messageKey, leafIndex: r.leafIndex, content } });
+      return frozen({ status: "claim-ready", claim: claim2, evidence: { kind, txHash: r.txHash, l1: { number: r.blockNumber, hash: r.blockHash }, finalizedL1: { number: finalized.number, hash: lower3(finalized.hash) }, l2: { number: a.number, hash: a.hash }, messageKey: r.messageKey, leafIndex: r.leafIndex, content } });
     } catch (error312) {
       if (failures2.has(error312)) throw error312;
       let mismatch = false;
@@ -386756,8 +387777,8 @@ Partial Address: ${this.partialAddress.toString()}
         mismatch = !readFailed && error312 instanceof PrivateFeeFundingError && ["PRIVATE_FEE_RECOVERY_TRANSACTION_MISMATCH", "PRIVATE_FEE_RECOVERY_EVENT_MISMATCH", "PRIVATE_FEE_RECOVERY_SCOPE_MISMATCH"].includes(Object.getOwnPropertyDescriptor(error312, "code")?.value);
       } catch {
       }
-      if (mismatch) throw fail4("MISMATCH");
-      throw fail4("UNKNOWN");
+      if (mismatch) throw fail5("MISMATCH");
+      throw fail5("UNKNOWN");
     }
   }
 
@@ -389359,21 +390380,21 @@ Partial Address: ${this.partialAddress.toString()}
   init_dirname();
   init_buffer2();
   init_process2();
-  function mapFieldToNoir(field8) {
-    return field8.toString();
+  function mapFieldToNoir(field10) {
+    return field10.toString();
   }
-  function mapFieldFromNoir(field8) {
-    return Fr.fromHexString(field8);
+  function mapFieldFromNoir(field10) {
+    return Fr.fromHexString(field10);
   }
   function mapBigIntToNoir(bigInt) {
     return new Fr(bigInt).toString();
   }
-  function mapBigIntFromNoir(field8) {
-    return Fr.fromHexString(field8).toBigInt();
+  function mapBigIntFromNoir(field10) {
+    return Fr.fromHexString(field10).toBigInt();
   }
-  function mapWrappedFieldToNoir(field8) {
+  function mapWrappedFieldToNoir(field10) {
     return {
-      inner: mapFieldToNoir(field8)
+      inner: mapFieldToNoir(field10)
     };
   }
   function mapU64ToNoir(u64) {
@@ -390779,7 +391800,7 @@ Partial Address: ${this.partialAddress.toString()}
       }
       const level = LogLevels[levelNumber];
       const msg = msgRaw.map((acvmField) => String.fromCharCode(Fr.fromString(acvmField).toNumber())).join("");
-      const fieldsFr = fields2.map((field8) => Fr.fromString(field8));
+      const fieldsFr = fields2.map((field10) => Fr.fromString(field10));
       log3[level]("debug_log " + applyStringFormatting(msg, fieldsFr));
     } else if (name === "noOp") {
     } else {
@@ -391175,14 +392196,14 @@ Partial Address: ${this.partialAddress.toString()}
 
   // shared/remote-prover-client.mjs
   var failure2 = (code) => Object.assign(Error("Remote proof did not complete."), { code });
-  function createRemoteProverClient({ url: url7, board, chainId, rollupVersion, proofsEnabled = true, fetchImpl = globalThis.fetch, timeoutMs = 18e5, pollMs = 1e3, onStatus = () => {
+  function createRemoteProverClient({ url: url7, board: board2, chainId, rollupVersion, proofsEnabled = true, fetchImpl = globalThis.fetch, timeoutMs = 18e5, pollMs = 1e3, onStatus = () => {
   } }) {
     const endpoint3 = new URL(url7);
     if (endpoint3.username || endpoint3.password || endpoint3.search || endpoint3.hash || !(endpoint3.protocol === "https:" || endpoint3.protocol === "http:" && ["localhost", "127.0.0.1", "[::1]"].includes(endpoint3.hostname))) throw Error("Remote prover requires HTTPS or loopback");
     const base = endpoint3.href.replace(/\/$/, "");
     return Object.freeze({ async prove(steps, publicInputs = []) {
       const signal = AbortSignal.timeout(timeoutMs);
-      const metadata = { board, chainId: String(chainId), rollupVersion: String(rollupVersion), mode: proofsEnabled ? "real" : "disabled", circuits: await Promise.all(steps.map((s) => circuitId(s.bytecode, s.vk))) };
+      const metadata = { board: board2, chainId: String(chainId), rollupVersion: String(rollupVersion), mode: proofsEnabled ? "real" : "disabled", circuits: await Promise.all(steps.map((s) => circuitId(s.bytecode, s.vk))) };
       const body = encodeJob(metadata, steps.map((s) => serializeWitness(s.witness)));
       async function request(path, options = {}) {
         let response, text;
@@ -391270,9 +392291,9 @@ Partial Address: ${this.partialAddress.toString()}
     headerFields: BLOCK_HEADER_LENGTH
   });
   var verified = /* @__PURE__ */ new WeakSet();
-  var fail5 = () => Object.assign(new Error("Compact block is invalid or unavailable."), { code: "ROLLING_COMPACT_BLOCK_INVALID" });
+  var fail6 = () => Object.assign(new Error("Compact block is invalid or unavailable."), { code: "ROLLING_COMPACT_BLOCK_INVALID" });
   var requireThat2 = (value) => {
-    if (!value) throw fail5();
+    if (!value) throw fail6();
   };
   var fieldText = (value) => {
     requireThat2(typeof value === "string" && /^0x[0-9a-f]{64}$/.test(value));
@@ -391292,8 +392313,8 @@ Partial Address: ${this.partialAddress.toString()}
     for (let i = 0; i < length; i++) result.push(fieldText(ownValue(input2, String(i))));
     return result;
   }
-  function integer7(field8, maximum) {
-    const value = field8.toBigInt();
+  function integer7(field10, maximum) {
+    const value = field10.toBigInt();
     requireThat2(value <= BigInt(maximum));
     return Number(value);
   }
@@ -391411,7 +392432,7 @@ Partial Address: ${this.partialAddress.toString()}
       verified.add(result);
       return result;
     } catch {
-      throw fail5();
+      throw fail6();
     }
   }
 
@@ -391858,71 +392879,71 @@ Partial Address: ${this.partialAddress.toString()}
   }
   var bindings = /* @__PURE__ */ new WeakMap();
   var MAX_STATE = 256 * 1024;
-  var fail6 = () => {
+  var fail7 = () => {
     throw Error("PXE_PREFERENCE_RECOVERY_FAILED");
   };
-  var check7 = (x) => {
-    if (!x) fail6();
+  var check9 = (x) => {
+    if (!x) fail7();
   };
   var copy2 = (x) => JSON.parse(JSON.stringify(x));
   var same = (a, b2) => JSON.stringify(a) === JSON.stringify(b2);
   var id2 = () => Array.from(crypto.getRandomValues(new Uint8Array(32)), (x) => x.toString(16).padStart(2, "0")).join("");
   function exact2(x, keys) {
-    check7(x && Object.getPrototypeOf(x) === Object.prototype);
+    check9(x && Object.getPrototypeOf(x) === Object.prototype);
     const ds = Object.getOwnPropertyDescriptors(x);
-    check7(Reflect.ownKeys(ds).length === keys.length);
+    check9(Reflect.ownKeys(ds).length === keys.length);
     const r = {};
     for (const k of keys) {
-      check7(ds[k] && "value" in ds[k]);
+      check9(ds[k] && "value" in ds[k]);
       r[k] = ds[k].value;
     }
     return r;
   }
-  function hex13(x, zero2 = false, width = 64) {
-    check7(typeof x === "string" && new RegExp("^0x[0-9a-f]{" + width + "}$").test(x));
-    if (width === 64) check7(BigInt(x) < Fr.MODULUS);
-    check7(zero2 || BigInt(x) > 0n);
+  function hex15(x, zero2 = false, width = 64) {
+    check9(typeof x === "string" && new RegExp("^0x[0-9a-f]{" + width + "}$").test(x));
+    if (width === 64) check9(BigInt(x) < Fr.MODULUS);
+    check9(zero2 || BigInt(x) > 0n);
     return x;
   }
   function integer8(x, max = 4294967295, min2 = 0) {
-    check7(Number.isSafeInteger(x) && x >= min2 && x <= max);
+    check9(Number.isSafeInteger(x) && x >= min2 && x <= max);
     return x;
   }
   function fields(x, max, min2 = 0) {
-    check7(Array.isArray(x));
+    check9(Array.isArray(x));
     const len = Object.getOwnPropertyDescriptor(x, "length")?.value;
     integer8(len, max, min2);
     const out = [];
     for (let i = 0; i < len; i++) {
       const d = Object.getOwnPropertyDescriptor(x, String(i));
-      check7(d && "value" in d);
-      out.push(hex13(d.value, true));
+      check9(d && "value" in d);
+      out.push(hex15(d.value, true));
     }
     return out;
   }
   function snapshot(input2, options) {
     const p = exact2(input2, ["contractAddress", "scope", "expectedClassId", "expectedArtifactHash", "network", "proofsEnabled", "tier", "expected", "block", "restart"]);
-    for (const k of ["contractAddress", "scope", "expectedClassId", "expectedArtifactHash"]) hex13(p[k]);
+    for (const k of ["contractAddress", "scope", "expectedClassId", "expectedArtifactHash"]) hex15(p[k]);
     p.network = exact2(p.network, ["chainId", "version", "rollup"]);
     integer8(p.network.chainId, Number.MAX_SAFE_INTEGER, 1);
     integer8(p.network.version, 4294967295, 1);
-    hex13(p.network.rollup, false, 40);
-    check7(typeof p.restart === "boolean" && (!p.restart || p.expected === null));
-    check7(typeof p.proofsEnabled === "boolean" && ["proposed", "checkpointed", "proven", "finalized"].includes(p.tier));
+    hex15(p.network.rollup, false, 40);
+    check9(typeof p.restart === "boolean" && (!p.restart || p.expected === null));
+    check9(typeof p.proofsEnabled === "boolean" && ["proposed", "checkpointed", "proven", "finalized"].includes(p.tier));
     if (p.expected !== null) {
       p.expected = exact2(p.expected, ["epoch", "sequence"]);
-      check7(typeof p.expected.epoch === "string" && /^[0-9a-f]{64}$/.test(p.expected.epoch));
+      check9(typeof p.expected.epoch === "string" && /^[0-9a-f]{64}$/.test(p.expected.epoch));
       integer8(p.expected.sequence, Number.MAX_SAFE_INTEGER);
     }
     if (p.block !== null) {
       p.block = exact2(p.block, ["blockNumber", "blockHash", "fields", "headerFields"]);
       integer8(p.block.blockNumber, 4294967295, 1);
-      hex13(p.block.blockHash);
+      hex15(p.block.blockHash);
       p.block.fields = fields(p.block.fields, 24575, 7);
       p.block.headerFields = fields(p.block.headerFields, 23, 23);
     }
     const { contextGuard } = exact2(options, ["contextGuard"]);
-    check7(typeof contextGuard === "function");
+    check9(typeof contextGuard === "function");
     return { p, guard: contextGuard };
   }
   var RollingPreferenceRecoveryStore = class extends BaseStagingStore {
@@ -391937,17 +392958,17 @@ Partial Address: ${this.partialAddress.toString()}
           meta13 = JSON.stringify({ database: id2(), generation: id2() });
           stage.set("meta", meta13);
         }
-        check7(typeof meta13 === "string" && meta13.length < 256);
+        check9(typeof meta13 === "string" && meta13.length < 256);
         const m2 = JSON.parse(meta13);
-        check7(typeof m2.database === "string" && /^[0-9a-f]{64}$/.test(m2.database) && typeof m2.generation === "string" && /^[0-9a-f]{64}$/.test(m2.generation));
+        check9(typeof m2.database === "string" && /^[0-9a-f]{64}$/.test(m2.database) && typeof m2.generation === "string" && /^[0-9a-f]{64}$/.test(m2.generation));
         const raw = stage.get(key) ?? rawState;
-        check7(raw === void 0 || typeof raw === "string" && raw.length <= MAX_STATE);
+        check9(raw === void 0 || typeof raw === "string" && raw.length <= MAX_STATE);
         return { meta: m2, state: raw === void 0 ? null : JSON.parse(raw) };
       });
     }
     save(key, state, changeSetId) {
       const text = JSON.stringify(state);
-      check7(text.length <= MAX_STATE);
+      check9(text.length <= MAX_STATE);
       return this.withChangeSet(changeSetId, (stage) => {
         stage.set(key, text);
       });
@@ -391964,7 +392985,7 @@ Partial Address: ${this.partialAddress.toString()}
     }
   };
   function bindRollingPreferenceRecovery(pxe, store, tier, page, headCall) {
-    check7(!bindings.has(pxe) && store instanceof RollingPreferenceRecoveryStore && typeof page === "function" && typeof headCall === "function");
+    check9(!bindings.has(pxe) && store instanceof RollingPreferenceRecoveryStore && typeof page === "function" && typeof headCall === "function");
     bindings.set(pxe, Object.freeze({ store, tier: tier ?? "proposed", page, headCall }));
   }
   function receipt(state, records = [], head = null) {
@@ -391972,32 +392993,32 @@ Partial Address: ${this.partialAddress.toString()}
   }
   function checkpoint(r) {
     const c = exact2({ database: r.database, epoch: r.epoch, sequence: r.sequence, anchor: copy2(r.anchor), head: copy2(r.head) }, ["database", "epoch", "sequence", "anchor", "head"]);
-    for (const k of ["database", "epoch"]) check7(typeof c[k] === "string" && /^[0-9a-f]{64}$/.test(c[k]));
+    for (const k of ["database", "epoch"]) check9(typeof c[k] === "string" && /^[0-9a-f]{64}$/.test(c[k]));
     integer8(c.sequence, Number.MAX_SAFE_INTEGER);
     c.anchor = exact2(c.anchor, ["blockNumber", "blockHash"]);
     integer8(c.anchor.blockNumber);
-    hex13(c.anchor.blockHash);
+    hex15(c.anchor.blockHash);
     c.head = exact2(c.head, ["initialized", "schema", "revision", "digest"]);
     const h = c.head;
-    check7(typeof h.initialized === "boolean" && h.schema === 1 && typeof h.revision === "string" && /^(0|[1-9][0-9]*)$/.test(h.revision) && h.revision.length <= 20 && BigInt(h.revision) < 1n << 64n && typeof h.digest === "string" && /^(0|[1-9][0-9]*)$/.test(h.digest) && h.digest.length <= 77 && BigInt(h.digest) < Fr.MODULUS);
-    check7(h.initialized ? BigInt(h.revision) > 0n && BigInt(h.digest) > 0n : h.revision === "0" && h.digest === "0");
+    check9(typeof h.initialized === "boolean" && h.schema === 1 && typeof h.revision === "string" && /^(0|[1-9][0-9]*)$/.test(h.revision) && h.revision.length <= 20 && BigInt(h.revision) < 1n << 64n && typeof h.digest === "string" && /^(0|[1-9][0-9]*)$/.test(h.digest) && h.digest.length <= 77 && BigInt(h.digest) < Fr.MODULUS);
+    check9(h.initialized ? BigInt(h.revision) > 0n && BigInt(h.digest) > 0n : h.revision === "0" && h.digest === "0");
     return c;
   }
   function locator(input2) {
     const p = exact2(input2, ["blockNumber", "blockHash", "txHash", "txIndex", "firstLog", "logCount"]);
     integer8(p.blockNumber, 4294967295, 1);
-    hex13(p.blockHash);
-    hex13(p.txHash);
+    hex15(p.blockHash);
+    hex15(p.txHash);
     integer8(p.txIndex, 6142);
     integer8(p.firstLog, 63);
     integer8(p.logCount, 8, 1);
-    check7(p.firstLog + p.logCount <= 64);
+    check9(p.firstLog + p.logCount <= 64);
     return p;
   }
   async function runRollingPreferenceRecovery(pxe, input2, options) {
     try {
       const { p, guard } = snapshot(input2, options), binding3 = bindings.get(pxe);
-      check7(binding3 && binding3.tier === p.tier && pxe.proverEnabled === p.proofsEnabled);
+      check9(binding3 && binding3.tier === p.tier && pxe.proverEnabled === p.proofsEnabled);
       const address6 = AztecAddress.fromFieldUnsafe(Fr.fromString(p.contractAddress)), owner = AztecAddress.fromFieldUnsafe(Fr.fromString(p.scope));
       const key = JSON.stringify([p.network, p.proofsEnabled, p.tier, p.contractAddress, p.expectedClassId, p.expectedArtifactHash, p.scope, 1]);
       let beforeCommit;
@@ -392008,31 +393029,31 @@ Partial Address: ${this.partialAddress.toString()}
         const anchorRecord = { blockNumber: anchor2.getBlockNumber(), blockHash: (await anchor2.hash()).toString() };
         const canonical2 = async () => {
           const info = await pxe.node.getNodeInfo();
-          check7(info.l1ChainId === p.network.chainId && info.rollupVersion === p.network.version && info.l1ContractAddresses.rollupAddress.toString().toLowerCase() === p.network.rollup && info.realProofs === p.proofsEnabled);
+          check9(info.l1ChainId === p.network.chainId && info.rollupVersion === p.network.version && info.l1ContractAddresses.rollupAddress.toString().toLowerCase() === p.network.rollup && info.realProofs === p.proofsEnabled);
           const parameter = await anchor2.toBlockParameter();
           const [observed, instance] = await rollingPreferenceReadBatch([
             async () => {
               const raw = await pxe.node.getBlockData(anchorRecord.blockNumber);
-              check7(raw);
+              check9(raw);
               return { hash: raw.blockHash.toString(), header: BlockHeader.fromBuffer(BlockHeader.prototype.toBuffer.call(raw.header)) };
             },
             async () => {
               const raw = await pxe.node.getContract(address6, parameter);
-              check7(raw);
+              check9(raw);
               return SerializableContractInstance.fromBuffer(new SerializableContractInstance(raw).toBuffer());
             }
           ]);
-          check7(observed.hash === anchorRecord.blockHash);
+          check9(observed.hash === anchorRecord.blockHash);
           const h = observed.header;
-          check7((await h.hash()).toString() === anchorRecord.blockHash && h.getBlockNumber() === anchorRecord.blockNumber && h.globalVariables.chainId.toBigInt() === BigInt(p.network.chainId) && h.globalVariables.version.toBigInt() === BigInt(p.network.version));
-          check7(instance.currentContractClassId.toString() === p.expectedClassId && instance.originalContractClassId.toString() === p.expectedClassId && (await computeContractAddressFromInstance(instance)).equals(address6));
+          check9((await h.hash()).toString() === anchorRecord.blockHash && h.getBlockNumber() === anchorRecord.blockNumber && h.globalVariables.chainId.toBigInt() === BigInt(p.network.chainId) && h.globalVariables.version.toBigInt() === BigInt(p.network.version));
+          check9(instance.currentContractClassId.toString() === p.expectedClassId && instance.originalContractClassId.toString() === p.expectedClassId && (await computeContractAddressFromInstance(instance)).equals(address6));
           await guard();
         };
         await canonical2();
         const artifact = await pxe.contractStore.getContractArtifact(Fr.fromString(p.expectedClassId));
-        check7(artifact && artifact.name === "RollingBoard");
+        check9(artifact && artifact.name === "RollingBoard");
         const artifactHash = await computeArtifactHash(artifact);
-        check7(artifactHash.toString() === p.expectedArtifactHash && (await getContractClassFromArtifact({ ...artifact, artifactHash })).id.toString() === p.expectedClassId);
+        check9(artifactHash.toString() === p.expectedArtifactHash && (await getContractClassFromArtifact({ ...artifact, artifactHash })).id.toString() === p.expectedClassId);
         beforeCommit = async () => {
           for (const validate2 of frame.validators) await validate2();
           await canonical2();
@@ -392045,48 +393066,48 @@ Partial Address: ${this.partialAddress.toString()}
           const checkBlock = async () => {
             await canonical2();
             const raw = await pxe.node.getBlockData(block2.blockNumber);
-            check7(raw && raw.blockHash.toString() === block2.blockHash);
+            check9(raw && raw.blockHash.toString() === block2.blockHash);
             const h = BlockHeader.fromBuffer(BlockHeader.prototype.toBuffer.call(raw.header));
-            check7((await h.hash()).toString() === block2.blockHash && h.toFields().every((f, i) => f.toString() === block2.headerFields[i]));
+            check9((await h.hash()).toString() === block2.blockHash && h.toFields().every((f, i) => f.toString() === block2.headerFields[i]));
             await guard();
             return true;
           };
           const verified2 = await authenticateCompactBlock({ fields: block2.fields, headerFields: block2.headerFields, expectedBlockHash: block2.blockHash, assertCanonical: checkBlock });
           frame.validators.push(checkBlock);
-          check7(verified2.blockNumber === block2.blockNumber);
+          check9(verified2.blockNumber === block2.blockNumber);
           return verified2;
         };
         const ingest = async (block2, first2, logCount) => {
-          check7(await pxe.noteStore.withChangeSet(context.changeSetId, (s) => s.notes.size === 0 && s.nullifierEmissions.size === 0));
-          check7(await pxe.privateEventStore.withChangeSet(context.changeSetId, (s) => s.size === 0));
+          check9(await pxe.noteStore.withChangeSet(context.changeSetId, (s) => s.notes.size === 0 && s.nullifierEmissions.size === 0));
+          check9(await pxe.privateEventStore.withChangeSet(context.changeSetId, (s) => s.size === 0));
           await binding3.page({ contractAddress: p.contractAddress, scope: p.scope, expectedClassId: p.expectedClassId, expectedArtifactHash: p.expectedArtifactHash, network: p.network, proofsEnabled: p.proofsEnabled, blockNumber: block2.blockNumber, blockHash: block2.blockHash, txHash: first2.txHash, firstLog: first2.logIndex, logCount, compactFields: block2.fields, headerFields: block2.headerFields }, guard, frame);
           const events = await pxe.privateEventStore.withChangeSet(context.changeSetId, (changeSet) => {
-            check7(changeSet.size <= 8);
+            check9(changeSet.size <= 8);
             return Array.from(changeSet.values(), (e) => ({ packedEvent: e.msgContent.map((x) => x.toString()), eventSelector: e.eventSelector.toString(), l2BlockNumber: e.l2BlockNumber, l2BlockHash: e.l2BlockHash.toString(), txHash: e.txHash.toString(), txIndexInBlock: e.txIndexInBlock, eventIndexInTx: e.eventIndexInTx, contract: e.contractAddress.toString(), scoped: e.scopes.has(p.scope) }));
           });
-          check7(events.length <= 8);
+          check9(events.length <= 8);
           for (const e of events) {
-            check7(e.contract === p.contractAddress && e.scoped === true && e.txHash === first2.txHash && e.txIndexInBlock === first2.txIndex && e.l2BlockNumber === block2.blockNumber && e.l2BlockHash === block2.blockHash && e.packedEvent.length === 8);
+            check9(e.contract === p.contractAddress && e.scoped === true && e.txHash === first2.txHash && e.txIndexInBlock === first2.txIndex && e.l2BlockNumber === block2.blockNumber && e.l2BlockHash === block2.blockHash && e.packedEvent.length === 8);
             integer8(e.eventIndexInTx, 63);
           }
           const candidates = await pxe.noteStore.withChangeSet(context.changeSetId, (stage) => {
-            check7(stage.notes.size <= 8);
+            check9(stage.notes.size <= 8);
             return [...stage.notes.values()].map((n2) => ({ nullifier: n2.noteDao.siloedNullifier.toString(), slot: n2.noteDao.storageSlot.toString(), owner: n2.noteDao.owner.toString(), contract: n2.noteDao.contractAddress.toString(), txHash: n2.noteDao.txHash.toString(), blockNumber: n2.noteDao.l2BlockNumber, blockHash: n2.noteDao.l2BlockHash, txIndex: n2.noteDao.txIndexInBlock }));
           });
-          check7(candidates.length <= 8);
+          check9(candidates.length <= 8);
           const eventSnapshot = await pxe.privateEventStore.withChangeSet(context.changeSetId, (stage) => [...stage.entries()].map(([key2, value]) => [key2, value.toBuffer().toString("hex")]));
           const noteSnapshot = await pxe.noteStore.withChangeSet(context.changeSetId, (stage) => ({ notes: [...stage.notes.entries()].map(([key2, value]) => [key2, value.toBuffer().toString("hex")]), nullifiers: [...stage.nullifierEmissions] }));
           frame.validators.push(async () => {
             const currentEvents = await pxe.privateEventStore.withChangeSet(context.changeSetId, (stage) => [...stage.entries()].map(([key2, value]) => [key2, value.toBuffer().toString("hex")]));
             const currentNotes = await pxe.noteStore.withChangeSet(context.changeSetId, (stage) => ({ notes: [...stage.notes.entries()].map(([key2, value]) => [key2, value.toBuffer().toString("hex")]), nullifiers: [...stage.nullifierEmissions] }));
-            check7(same(currentEvents, eventSnapshot) && same(currentNotes, noteSnapshot));
+            check9(same(currentEvents, eventSnapshot) && same(currentNotes, noteSnapshot));
           });
-          for (const candidate of candidates) check7(candidate.owner === p.scope && candidate.contract === p.contractAddress && candidate.txHash === first2.txHash && candidate.blockNumber === block2.blockNumber && candidate.blockHash === block2.blockHash && candidate.txIndex === first2.txIndex);
+          for (const candidate of candidates) check9(candidate.owner === p.scope && candidate.contract === p.contractAddress && candidate.txHash === first2.txHash && candidate.blockNumber === block2.blockNumber && candidate.blockHash === block2.blockHash && candidate.txIndex === first2.txIndex);
           return { events, candidates };
         };
         const active = async (c) => {
           const notes = await pxe.noteStore.getNotes({ contractAddress: address6, owner, scopes: [owner], storageSlot: Fr.fromString(c.slot), siloedNullifier: Fr.fromString(c.nullifier) }, context.changeSetId);
-          check7(notes.length <= 1);
+          check9(notes.length <= 1);
           return notes.length === 1;
         };
         let state = loaded;
@@ -392099,34 +393120,34 @@ Partial Address: ${this.partialAddress.toString()}
         };
         if (p.restart || !state || state.database !== meta13.database || state.generation !== meta13.generation || state.schemaVersion !== 2) return await reset3();
         exact2(state, ["schemaVersion", "scope", "database", "generation", "epoch", "anchor", "sequence", "nextBlock", "nextLog", "pending", "candidate", "previous", "last"]);
-        check7(state.scope === key && typeof state.epoch === "string" && /^[0-9a-f]{64}$/.test(state.epoch));
+        check9(state.scope === key && typeof state.epoch === "string" && /^[0-9a-f]{64}$/.test(state.epoch));
         integer8(state.anchor.blockNumber);
-        hex13(state.anchor.blockHash);
+        hex15(state.anchor.blockHash);
         integer8(state.sequence, Number.MAX_SAFE_INTEGER);
         integer8(state.nextBlock, state.anchor.blockNumber + 1, 1);
         integer8(state.nextLog, 24575);
-        check7(Array.isArray(state.pending) && state.pending.length <= 64 && state.last && state.last.sequence === state.sequence);
-        check7(state.last.database === state.database && state.last.epoch === state.epoch && same(state.last.anchor, state.anchor) && state.last.nextBlock === state.nextBlock && state.last.nextLog === state.nextLog);
+        check9(Array.isArray(state.pending) && state.pending.length <= 64 && state.last && state.last.sequence === state.sequence);
+        check9(state.last.database === state.database && state.last.epoch === state.epoch && same(state.last.anchor, state.anchor) && state.last.nextBlock === state.nextBlock && state.last.nextLog === state.nextLog);
         if (state.previous) {
           exact2(state.previous, ["database", "epoch", "sequence", "anchor", "head"]);
           const previous = checkpoint(state.previous);
-          check7(previous.database === state.database && previous.epoch !== state.epoch && previous.anchor.blockNumber < state.anchor.blockNumber && same(state.last.previous, previous));
-        } else check7(state.previous === null && state.last.previous === void 0);
+          check9(previous.database === state.database && previous.epoch !== state.epoch && previous.anchor.blockNumber < state.anchor.blockNumber && same(state.last.previous, previous));
+        } else check9(state.previous === null && state.last.previous === void 0);
         if (state.candidate) {
           exact2(state.candidate, ["nullifier", "slot", "origin"]);
-          hex13(state.candidate.nullifier);
-          hex13(state.candidate.slot);
+          hex15(state.candidate.nullifier);
+          hex15(state.candidate.slot);
           locator(state.candidate.origin);
-          check7(state.candidate.origin.blockNumber <= state.anchor.blockNumber);
+          check9(state.candidate.origin.blockNumber <= state.anchor.blockNumber);
         }
-        if (state.sequence === 0) check7(state.nextBlock === (state.previous ? state.previous.anchor.blockNumber + 1 : 1) && state.nextLog === 0 && state.pending.length === 0 && (state.previous !== null || state.candidate === null));
+        if (state.sequence === 0) check9(state.nextBlock === (state.previous ? state.previous.anchor.blockNumber + 1 : 1) && state.nextLog === 0 && state.pending.length === 0 && (state.previous !== null || state.candidate === null));
         if (!same(state.anchor, anchorRecord)) {
           if (anchorRecord.blockNumber <= state.anchor.blockNumber || !state.last.complete || state.pending.length || state.nextBlock !== state.anchor.blockNumber + 1 || state.nextLog !== 0) return await reset3();
           const priorCanonical = async () => {
             const raw = await pxe.node.getBlockData(state.anchor.blockNumber);
-            check7(raw);
+            check9(raw);
             const h = BlockHeader.fromBuffer(BlockHeader.prototype.toBuffer.call(raw.header));
-            check7(h.getBlockNumber() === state.anchor.blockNumber && (await h.hash()).toString() === raw.blockHash.toString());
+            check9(h.getBlockNumber() === state.anchor.blockNumber && (await h.hash()).toString() === raw.blockHash.toString());
             await guard();
             return raw.blockHash.toString() === state.anchor.blockHash;
           };
@@ -392134,28 +393155,28 @@ Partial Address: ${this.partialAddress.toString()}
           const priorAnchor = copy2(state.anchor);
           frame.validators.push(async () => {
             const raw = await pxe.node.getBlockData(priorAnchor.blockNumber);
-            check7(raw);
+            check9(raw);
             const h = BlockHeader.fromBuffer(BlockHeader.prototype.toBuffer.call(raw.header));
-            check7(h.getBlockNumber() === priorAnchor.blockNumber && (await h.hash()).toString() === priorAnchor.blockHash && raw.blockHash.toString() === priorAnchor.blockHash);
+            check9(h.getBlockNumber() === priorAnchor.blockNumber && (await h.hash()).toString() === priorAnchor.blockHash && raw.blockHash.toString() === priorAnchor.blockHash);
             await guard();
           });
           if (p.expected === null) {
             await beforeCommit();
             return { ...copy2(state.last), advance: { anchor: copy2(anchorRecord), headPage: state.candidate ? copy2(state.candidate.origin) : null } };
           }
-          check7(p.expected.epoch === state.epoch && p.expected.sequence === state.sequence);
+          check9(p.expected.epoch === state.epoch && p.expected.sequence === state.sequence);
           let candidate = state.candidate;
           if (candidate) {
             const origin = locator(candidate.origin);
-            check7(p.block && p.block.blockNumber === origin.blockNumber && p.block.blockHash === origin.blockHash);
+            check9(p.block && p.block.blockNumber === origin.blockNumber && p.block.blockHash === origin.blockHash);
             const verified2 = await authenticate(p.block), logs = verified2.ciphertexts.filter((log3) => log3.txIndex === origin.txIndex && log3.logIndex >= origin.firstLog && log3.logIndex < origin.firstLog + origin.logCount);
-            check7(logs.length === origin.logCount && logs.every((log3, i) => log3.txHash === origin.txHash && log3.logIndex === origin.firstLog + i));
+            check9(logs.length === origin.logCount && logs.every((log3, i) => log3.txHash === origin.txHash && log3.logIndex === origin.firstLog + i));
             const replay = await ingest(p.block, logs[0], origin.logCount);
             const exactFormer = replay.candidates.filter((c) => c.nullifier === candidate.nullifier && c.slot === candidate.slot);
-            check7(exactFormer.length === 1);
-            for (const c of replay.candidates) if (c.nullifier !== candidate.nullifier) check7(!await active(c));
+            check9(exactFormer.length === 1);
+            for (const c of replay.candidates) if (c.nullifier !== candidate.nullifier) check9(!await active(c));
             if (!await active(candidate)) candidate = null;
-          } else check7(p.block === null && state.last.head.initialized === false);
+          } else check9(p.block === null && state.last.head.initialized === false);
           const previous = checkpoint(state.last);
           state = { ...state, epoch: id2(), anchor: anchorRecord, sequence: 0, nextBlock: previous.anchor.blockNumber + 1, nextLog: 0, pending: [], candidate, previous };
           state.last = receipt(state);
@@ -392171,24 +393192,24 @@ Partial Address: ${this.partialAddress.toString()}
           await beforeCommit();
           return copy2(state.last);
         }
-        check7(p.expected.epoch === state.epoch);
+        check9(p.expected.epoch === state.epoch);
         if (p.expected.sequence === state.sequence - 1) {
           await beforeCommit();
           return copy2(state.last);
         }
-        check7(p.expected.sequence === state.sequence && !state.last.complete);
+        check9(p.expected.sequence === state.sequence && !state.last.complete);
         let records = [], head = null;
         if (state.nextBlock > anchorRecord.blockNumber) {
-          check7(p.block === null && state.pending.length === 0);
+          check9(p.block === null && state.pending.length === 0);
           const call2 = await pxe.contractStore.getFunctionCall("preference_head", [owner], address6, Fr.fromString(p.expectedClassId));
-          check7(call2.type === FunctionType.UTILITY);
+          check9(call2.type === FunctionType.UTILITY);
           const noteStore = new Proxy(pxe.noteStore, { get(target, k) {
             if (k === "getNotes") return (filter, changeSetId) => {
-              check7(changeSetId === context.changeSetId && filter.contractAddress.equals(address6) && filter.owner?.equals(owner) && filter.status === 1 && filter.scopes.length === 1 && filter.scopes[0].equals(owner));
+              check9(changeSetId === context.changeSetId && filter.contractAddress.equals(address6) && filter.owner?.equals(owner) && filter.status === 1 && filter.scopes.length === 1 && filter.scopes[0].equals(owner));
               if (!state.candidate) return Promise.resolve([]);
-              check7(filter.storageSlot?.toString() === state.candidate.slot && filter.siloedNullifier === void 0);
+              check9(filter.storageSlot?.toString() === state.candidate.slot && filter.siloedNullifier === void 0);
               return target.getNotes({ ...filter, siloedNullifier: Fr.fromString(state.candidate.nullifier) }, changeSetId).then((notes) => {
-                check7(notes.length === 1);
+                check9(notes.length === 1);
                 return notes;
               });
             };
@@ -392198,52 +393219,52 @@ Partial Address: ${this.partialAddress.toString()}
           await guard();
           const result = await binding3.headCall(call2, noteStore, owner, anchor2, context.changeSetId);
           await guard();
-          check7(result.offchainEffects.length === 0 && result.result.length === 4);
+          check9(result.offchainEffects.length === 0 && result.result.length === 4);
           const values = result.result.map((x) => x.toBigInt());
-          check7((values[0] === 0n || values[0] === 1n) && values[1] === 1n && values[2] >= 0n && values[2] < 1n << 64n);
+          check9((values[0] === 0n || values[0] === 1n) && values[1] === 1n && values[2] >= 0n && values[2] < 1n << 64n);
           head = { initialized: values[0] === 1n, schema: 1, revision: String(values[2]), digest: String(values[3]) };
-          check7(head.initialized ? !!state.candidate && values[2] > 0n && values[3] > 0n : !state.candidate && values[2] === 0n && values[3] === 0n);
+          check9(head.initialized ? !!state.candidate && values[2] > 0n && values[3] > 0n : !state.candidate && values[2] === 0n && values[3] === 0n);
         } else {
-          check7(p.block && p.block.blockNumber === state.nextBlock);
+          check9(p.block && p.block.blockNumber === state.nextBlock);
           const block2 = p.block;
           const verified2 = await authenticate(block2);
-          check7(verified2.blockNumber === state.nextBlock && state.nextLog <= verified2.ciphertexts.length);
+          check9(verified2.blockNumber === state.nextBlock && state.nextLog <= verified2.ciphertexts.length);
           if (state.nextLog < verified2.ciphertexts.length) {
             const first2 = verified2.ciphertexts[state.nextLog], logs = [];
             for (let i = state.nextLog; i < verified2.ciphertexts.length && logs.length < 8 && verified2.ciphertexts[i].txIndex === first2.txIndex; i++) logs.push(verified2.ciphertexts[i]);
             const { events, candidates } = await ingest(block2, first2, logs.length);
             for (const e of events) {
               const prior = state.pending.find((x) => x.eventIndexInTx === e.eventIndexInTx);
-              if (prior) check7(same(prior, e));
+              if (prior) check9(same(prior, e));
               else state.pending.push(e);
-              check7(state.pending.length <= 64);
+              check9(state.pending.length <= 64);
             }
             for (const candidate of candidates) {
               if (await active(candidate)) {
-                if (state.candidate) check7(state.candidate.nullifier === candidate.nullifier && state.candidate.slot === candidate.slot);
+                if (state.candidate) check9(state.candidate.nullifier === candidate.nullifier && state.candidate.slot === candidate.slot);
                 else state.candidate = { nullifier: candidate.nullifier, slot: candidate.slot, origin: { blockNumber: block2.blockNumber, blockHash: block2.blockHash, txHash: first2.txHash, txIndex: first2.txIndex, firstLog: first2.logIndex, logCount: logs.length } };
               }
             }
             state.nextLog += logs.length;
             if (state.nextLog === verified2.ciphertexts.length || verified2.ciphertexts[state.nextLog].txIndex !== first2.txIndex) {
-              records = state.pending.sort((a, b2) => a.eventIndexInTx - b2.eventIndexInTx).map(({ contract, scoped, txIndexInBlock, eventIndexInTx, ...record7 }) => record7);
+              records = state.pending.sort((a, b2) => a.eventIndexInTx - b2.eventIndexInTx).map(({ contract, scoped, txIndexInBlock, eventIndexInTx, ...record8 }) => record8);
               state.pending = [];
             }
           }
           if (state.nextLog === verified2.ciphertexts.length) {
-            check7(state.pending.length === 0);
+            check9(state.pending.length === 0);
             state.nextBlock++;
             state.nextLog = 0;
           }
         }
-        check7(state.sequence < Number.MAX_SAFE_INTEGER);
+        check9(state.sequence < Number.MAX_SAFE_INTEGER);
         state.sequence++;
         state.last = receipt(state, records, head);
         await binding3.store.save(key, state, context.changeSetId);
         await beforeCommit();
         return copy2(state.last);
       }, { beforeCommit: async () => {
-        check7(typeof beforeCommit === "function");
+        check9(typeof beforeCommit === "function");
         await beforeCommit();
       } });
     } catch {
@@ -392608,8 +393629,8 @@ Partial Address: ${this.partialAddress.toString()}
       return "0x" + this.toBuffer().toString("hex");
     }
     static fromString(str) {
-      const hex20 = str.replace(/^0x/, "");
-      return _NoteDao.fromBuffer(Buffer2.from(hex20, "hex"));
+      const hex22 = str.replace(/^0x/, "");
+      return _NoteDao.fromBuffer(Buffer2.from(hex22, "hex"));
     }
     /**
     * Returns true if this note is equal to the `other` one.
@@ -393481,7 +394502,7 @@ Partial Address: ${this.partialAddress.toString()}
     "043d269d2aa5e4cff642ac81dbf816db480fff3cd9f462b7a2c8c1bf14621699",
     "116ae380e0db24fb20e252d05a1afd523bb143bb5b50dc7e2ccf1db7fd5f50e9",
     "13eeb174d4119b221a22721853261759f57a65a57e864ad78b840b23cde69e02"
-  ].map((hex20) => Buffer2.from(hex20, "hex")));
+  ].map((hex22) => Buffer2.from(hex22, "hex")));
 
   // node_modules/@aztec-labs/noir-protocol-circuits-types/dest/artifacts/vks/tree.js
   function getVKTreeRoot() {
@@ -394336,8 +395357,8 @@ ${val.stack}`;
     return `0x${adaptBufferSize(buffer).toString("hex")}`;
   }
   function toACVMWitness(witnessStartIndex, fields2) {
-    return fields2.reduce((witness, field8, index) => {
-      witness.set(index + witnessStartIndex, toACVMField(field8));
+    return fields2.reduce((witness, field10, index) => {
+      witness.set(index + witnessStartIndex, toACVMField(field10));
       return witness;
     }, /* @__PURE__ */ new Map());
   }
@@ -395593,8 +396614,8 @@ ${val.stack}`;
     LogSource2[LogSource2["PUBLIC_AND_PRIVATE"] = 2] = "PUBLIC_AND_PRIVATE";
     return LogSource2;
   })({});
-  function logSourceFromField(field8) {
-    const sourceNum = field8.toNumber();
+  function logSourceFromField(field10) {
+    const sourceNum = field10.toNumber();
     if (!(sourceNum in LogSource)) {
       const validNames = Object.keys(LogSource).filter((k) => isNaN(Number(k)));
       throw new Error(`Invalid LogSource value ${sourceNum}, expected one of ${validNames.join(", ")}`);
@@ -396784,9 +397805,9 @@ ${val.stack}`;
   function structFieldLabels(fields2) {
     return fields2.map((f) => isStructMapping(f.type) ? structFieldLabels(f.type.fields) : f.type.label).join(",");
   }
-  function uintFromField(field8, bits) {
+  function uintFromField(field10, bits) {
     const max = 2n ** BigInt(bits) - 1n;
-    const value = field8.toBigInt();
+    const value = field10.toBigInt();
     if (value > max) {
       throw new Error(`u${bits} overflow: value ${value} exceeds max (${max})`);
     }
@@ -397988,7 +399009,7 @@ ${val.stack}`;
             throw new Error(`Param '${param.name}' has no deserialization defined`);
           }
           const slotCount = slotsOf(param.type);
-          const readers = inputs.slice(offset, offset + slotCount).map((slot) => new FieldReader(slot.map((hex20) => Fr.fromString(hex20))));
+          const readers = inputs.slice(offset, offset + slotCount).map((slot) => new FieldReader(slot.map((hex22) => Fr.fromString(hex22))));
           offset += slotCount;
           const value = param.type.deserialization.fn(readers);
           assertReadersConsumed(readers);
@@ -406125,29 +407146,29 @@ See docs for context: https://docs.aztec.network/errors/14`);
       return this.#executeUtility(simulator, call2, [], [owner], anchor2, changeSetId);
     }
     async #rollingPreferencePage(input2, options, frame) {
-      const fail12 = () => {
+      const fail13 = () => {
         throw new Error("PXE_PREFERENCE_PAGE_FAILED");
       };
-      const check10 = (ok2) => {
-        if (!ok2) fail12();
+      const check12 = (ok2) => {
+        if (!ok2) fail13();
       };
       const own2 = (object8, key) => {
         const d = object8 && Object.getOwnPropertyDescriptor(object8, key);
-        if (!d || !("value" in d)) return fail12();
+        if (!d || !("value" in d)) return fail13();
         return d.value;
       };
       const exact4 = (object8, keys) => {
-        check10(object8 && Object.getPrototypeOf(object8) === Object.prototype);
-        check10(Reflect.ownKeys(object8).length === keys.length);
+        check12(object8 && Object.getPrototypeOf(object8) === Object.prototype);
+        check12(Reflect.ownKeys(object8).length === keys.length);
         return Object.fromEntries(keys.map((key) => [key, own2(object8, key)]));
       };
-      const field8 = (value) => {
-        check10(typeof value === "string" && /^0x[0-9a-f]{64}$/.test(value));
-        check10(BigInt(value) > 0n && BigInt(value) < Fr.MODULUS);
+      const field10 = (value) => {
+        check12(typeof value === "string" && /^0x[0-9a-f]{64}$/.test(value));
+        check12(BigInt(value) > 0n && BigInt(value) < Fr.MODULUS);
         return value;
       };
       const natural2 = (value, maximum, minimum = 0) => {
-        check10(Number.isSafeInteger(value) && value >= minimum && value <= maximum);
+        check12(Number.isSafeInteger(value) && value >= minimum && value <= maximum);
         return value;
       };
       try {
@@ -406167,36 +407188,36 @@ See docs for context: https://docs.aztec.network/errors/14`);
           "headerFields"
         ]);
         const snapshotFields2 = (value, maximum, minimum) => {
-          check10(Array.isArray(value));
+          check12(Array.isArray(value));
           const length = natural2(own2(value, "length"), maximum, minimum);
           const copy3 = [];
           for (let i = 0; i < length; i++) {
             const item = own2(value, String(i));
-            check10(typeof item === "string" && /^0x[0-9a-f]{64}$/.test(item) && BigInt(item) < Fr.MODULUS);
+            check12(typeof item === "string" && /^0x[0-9a-f]{64}$/.test(item) && BigInt(item) < Fr.MODULUS);
             copy3.push(item);
           }
           return copy3;
         };
         p.compactFields = snapshotFields2(p.compactFields, 24575, 7);
         p.headerFields = snapshotFields2(p.headerFields, 23, 23);
-        check10((p.compactFields.length + p.headerFields.length) * 69 + 2048 <= 2 * 1024 * 1024);
+        check12((p.compactFields.length + p.headerFields.length) * 69 + 2048 <= 2 * 1024 * 1024);
         const guard = exact4(options, ["contextGuard"]).contextGuard;
-        check10(typeof guard === "function");
-        for (const key of ["contractAddress", "scope", "expectedClassId", "expectedArtifactHash", "blockHash", "txHash"]) p[key] = field8(p[key]);
+        check12(typeof guard === "function");
+        for (const key of ["contractAddress", "scope", "expectedClassId", "expectedArtifactHash", "blockHash", "txHash"]) p[key] = field10(p[key]);
         p.network = exact4(p.network, ["chainId", "version", "rollup"]);
         natural2(p.network.chainId, Number.MAX_SAFE_INTEGER, 1);
         natural2(p.network.version, 4294967295, 1);
-        check10(typeof p.network.rollup === "string" && /^0x[0-9a-f]{40}$/.test(p.network.rollup));
-        check10(typeof p.proofsEnabled === "boolean" && p.proofsEnabled === this.proverEnabled);
+        check12(typeof p.network.rollup === "string" && /^0x[0-9a-f]{40}$/.test(p.network.rollup));
+        check12(typeof p.proofsEnabled === "boolean" && p.proofsEnabled === this.proverEnabled);
         natural2(p.blockNumber, 4294967295, 1);
         natural2(p.firstLog, MAX_PRIVATE_LOGS_PER_TX - 1);
         natural2(p.logCount, 8, 1);
-        check10(p.firstLog + p.logCount <= MAX_PRIVATE_LOGS_PER_TX);
+        check12(p.firstLog + p.logCount <= MAX_PRIVATE_LOGS_PER_TX);
         const address6 = AztecAddress.fromFieldUnsafe(Fr.fromString(p.contractAddress)), scope = AztecAddress.fromFieldUnsafe(Fr.fromString(p.scope));
         const classId = Fr.fromString(p.expectedClassId), txHash = TxHash.fromString(p.txHash);
         let validateCommit;
         const beforeCommit = async () => {
-          check10(typeof validateCommit === "function");
+          check12(typeof validateCommit === "function");
           await validateCommit();
         };
         await guard();
@@ -406204,52 +407225,52 @@ See docs for context: https://docs.aztec.network/errors/14`);
           await guard();
           const anchor2 = BlockHeader.fromBuffer(BlockHeader.prototype.toBuffer.call(anchorBlockHeader));
           const anchorHash = (await anchor2.hash()).toString();
-          check10(p.blockNumber <= anchor2.getBlockNumber());
+          check12(p.blockNumber <= anchor2.getBlockNumber());
           const canonical2 = async () => {
             const info = await this.node.getNodeInfo();
-            check10(info.l1ChainId === p.network.chainId && info.rollupVersion === p.network.version && info.l1ContractAddresses.rollupAddress.toString().toLowerCase() === p.network.rollup && info.realProofs === p.proofsEnabled);
+            check12(info.l1ChainId === p.network.chainId && info.rollupVersion === p.network.version && info.l1ContractAddresses.rollupAddress.toString().toLowerCase() === p.network.rollup && info.realProofs === p.proofsEnabled);
             const coordinates = [[anchor2.getBlockNumber(), anchorHash], [p.blockNumber, p.blockHash]];
             const parameter = await anchor2.toBlockParameter();
             const values = await rollingPreferenceReadBatch([
               ...coordinates.map(([number20]) => async () => {
                 const data = await this.node.getBlockData(BlockNumber(number20));
-                check10(data);
+                check12(data);
                 return { hash: data.blockHash.toString(), header: BlockHeader.fromBuffer(BlockHeader.prototype.toBuffer.call(data.header)) };
               }),
               async () => {
                 const observed = await this.node.getContract(address6, parameter);
-                check10(observed);
+                check12(observed);
                 return SerializableContractInstance.fromBuffer(new SerializableContractInstance(observed).toBuffer());
               }
             ]);
             for (let i = 0; i < coordinates.length; i++) {
               const [number20, hash12] = coordinates[i], data = values[i], h = data.header;
-              check10(data.hash === hash12 && h.getBlockNumber() === number20 && (await h.hash()).toString() === hash12 && h.globalVariables.chainId.toBigInt() === BigInt(p.network.chainId) && h.globalVariables.version.toBigInt() === BigInt(p.network.version));
+              check12(data.hash === hash12 && h.getBlockNumber() === number20 && (await h.hash()).toString() === hash12 && h.globalVariables.chainId.toBigInt() === BigInt(p.network.chainId) && h.globalVariables.version.toBigInt() === BigInt(p.network.version));
             }
             const instance = values[2];
-            check10(instance.currentContractClassId.equals(classId) && instance.originalContractClassId.equals(classId) && (await computeContractAddressFromInstance(instance)).equals(address6));
+            check12(instance.currentContractClassId.equals(classId) && instance.originalContractClassId.equals(classId) && (await computeContractAddressFromInstance(instance)).equals(address6));
             await guard();
           };
           await canonical2();
           const artifact = await this.contractStore.getContractArtifact(classId);
-          check10(artifact && artifact.name === "RollingBoard");
+          check12(artifact && artifact.name === "RollingBoard");
           const artifactHash = await computeArtifactHash(artifact);
-          check10(artifactHash.toString() === p.expectedArtifactHash);
+          check12(artifactHash.toString() === p.expectedArtifactHash);
           const computedClass = await getContractClassFromArtifact({ ...artifact, artifactHash });
-          check10(computedClass.id.equals(classId));
+          check12(computedClass.id.equals(classId));
           const call2 = await this.contractStore.getFunctionCall(
             "recover_preference_page",
             [scope, txHash.hash, p.blockNumber, Fr.fromString(p.blockHash), p.firstLog, p.logCount],
             address6,
             classId
           );
-          check10(call2.type === FunctionType.UTILITY);
+          check12(call2.type === FunctionType.UTILITY);
           const array7 = (value, max) => {
-            check10(Array.isArray(value) && value.length <= max);
+            check12(Array.isArray(value) && value.length <= max);
             return value;
           };
           const effectBytes = (effect2) => {
-            check10(effect2 instanceof TxEffect && effect2.txHash.equals(txHash));
+            check12(effect2 instanceof TxEffect && effect2.txHash.equals(txHash));
             array7(effect2.noteHashes, MAX_NOTE_HASHES_PER_TX);
             array7(effect2.nullifiers, MAX_NULLIFIERS_PER_TX);
             array7(effect2.l2ToL1Msgs, MAX_L2_TO_L1_MSGS_PER_TX);
@@ -406258,24 +407279,24 @@ See docs for context: https://docs.aztec.network/errors/14`);
             array7(effect2.publicLogs, FLAT_PUBLIC_LOGS_PAYLOAD_LENGTH / PUBLIC_LOG_HEADER_LENGTH);
             array7(effect2.contractClassLogs, MAX_CONTRACT_CLASS_LOGS_PER_TX);
             for (const log3 of effect2.privateLogs) {
-              check10(array7(log3.fields, PRIVATE_LOG_SIZE_IN_FIELDS).length === PRIVATE_LOG_SIZE_IN_FIELDS);
+              check12(array7(log3.fields, PRIVATE_LOG_SIZE_IN_FIELDS).length === PRIVATE_LOG_SIZE_IN_FIELDS);
               natural2(log3.emittedLength, PRIVATE_LOG_SIZE_IN_FIELDS, 1);
-              check10(log3.hasZeroPadding());
+              check12(log3.hasZeroPadding());
             }
             let publicFields = 0;
             for (const log3 of effect2.publicLogs) {
               publicFields += array7(log3.fields, FLAT_PUBLIC_LOGS_PAYLOAD_LENGTH).length + PUBLIC_LOG_HEADER_LENGTH;
-              check10(publicFields <= FLAT_PUBLIC_LOGS_PAYLOAD_LENGTH);
+              check12(publicFields <= FLAT_PUBLIC_LOGS_PAYLOAD_LENGTH);
             }
             for (const log3 of effect2.contractClassLogs) {
-              check10(array7(log3.fields.fields, CONTRACT_CLASS_LOG_SIZE_IN_FIELDS).length === CONTRACT_CLASS_LOG_SIZE_IN_FIELDS);
+              check12(array7(log3.fields.fields, CONTRACT_CLASS_LOG_SIZE_IN_FIELDS).length === CONTRACT_CLASS_LOG_SIZE_IN_FIELDS);
               natural2(log3.emittedLength, CONTRACT_CLASS_LOG_SIZE_IN_FIELDS, 1);
             }
-            check10(p.firstLog + p.logCount <= effect2.privateLogs.length);
+            check12(p.firstLog + p.logCount <= effect2.privateLogs.length);
             return TxEffect.prototype.toBuffer.call(effect2);
           };
           const receipt2 = await this.node.getTxReceipt(txHash, { includeTxEffect: true });
-          check10(receipt2 instanceof MinedTxReceipt && receipt2.isMined() && receipt2.txHash.equals(txHash) && receipt2.blockNumber === p.blockNumber && receipt2.blockHash.toString() === p.blockHash && receipt2.txEffect);
+          check12(receipt2 instanceof MinedTxReceipt && receipt2.isMined() && receipt2.txHash.equals(txHash) && receipt2.blockNumber === p.blockNumber && receipt2.blockHash.toString() === p.blockHash && receipt2.txEffect);
           const receiptFields = {
             status: own2(receipt2, "status"),
             executionResult: own2(receipt2, "executionResult"),
@@ -406285,28 +407306,28 @@ See docs for context: https://docs.aztec.network/errors/14`);
             txIndexInBlock: own2(receipt2, "txIndexInBlock"),
             epochNumber: own2(receipt2, "epochNumber")
           };
-          check10(["proposed", "checkpointed", "proven", "finalized"].includes(receiptFields.status));
-          check10(["success", "reverted"].includes(receiptFields.executionResult) && typeof receiptFields.transactionFee === "bigint");
+          check12(["proposed", "checkpointed", "proven", "finalized"].includes(receiptFields.status));
+          check12(["success", "reverted"].includes(receiptFields.executionResult) && typeof receiptFields.transactionFee === "bigint");
           natural2(receiptFields.slotNumber, Number.MAX_SAFE_INTEGER);
           natural2(receiptFields.epochNumber, Number.MAX_SAFE_INTEGER);
           natural2(receiptFields.txIndexInBlock, 6141);
           const bytes3 = effectBytes(receipt2.txEffect);
           const effect = TxEffect.fromBuffer(bytes3);
-          check10(receiptFields.transactionFee === effect.transactionFee.toBigInt() && receiptFields.executionResult === (effect.revertCode.isOK() ? "success" : "reverted"));
+          check12(receiptFields.transactionFee === effect.transactionFee.toBigInt() && receiptFields.executionResult === (effect.revertCode.isOK() ? "success" : "reverted"));
           const metadata = await this.node.getBlockData(BlockNumber(p.blockNumber));
-          check10(metadata && metadata.blockHash.toString() === p.blockHash);
+          check12(metadata && metadata.blockHash.toString() === p.blockHash);
           const header = BlockHeader.fromBuffer(BlockHeader.prototype.toBuffer.call(metadata.header));
-          check10((await header.hash()).toString() === p.blockHash && header.globalVariables.slotNumber === receiptFields.slotNumber);
+          check12((await header.hash()).toString() === p.blockHash && header.globalVariables.slotNumber === receiptFields.slotNumber);
           const witness = await this.node.getTxEffectMembershipWitness(txHash);
-          check10(witness && witness.blockNumber === p.blockNumber && witness.root.equals(header.txEffectsTreeRoot));
+          check12(witness && witness.blockNumber === p.blockNumber && witness.root.equals(header.txEffectsTreeRoot));
           const pathLength = witness.siblingPath.pathSize;
           natural2(pathLength, 13);
-          check10(witness.siblingPath.toBufferArray().length === pathLength);
+          check12(witness.siblingPath.toBufferArray().length === pathLength);
           const leafIndex = witness.leafIndex;
-          check10(typeof leafIndex === "bigint" && leafIndex >= 0n && leafIndex < 1n << BigInt(pathLength));
+          check12(typeof leafIndex === "bigint" && leafIndex >= 0n && leafIndex < 1n << BigInt(pathLength));
           const pinnedWitness = { leafIndex, siblingPath: new SiblingPath(pathLength, witness.siblingPath.toBufferArray().map((value) => Buffer2.from(value))) };
-          check10(await verifyTxEffectMembershipWitness(await effect.computeTxEffectsTreeLeaf(), pinnedWitness, header.txEffectsTreeRoot));
-          check10(header.toFields().every((value, index) => value.toString() === p.headerFields[index]));
+          check12(await verifyTxEffectMembershipWitness(await effect.computeTxEffectsTreeLeaf(), pinnedWitness, header.txEffectsTreeRoot));
+          check12(header.toFields().every((value, index) => value.toString() === p.headerFields[index]));
           const verified2 = await authenticateCompactBlock({
             fields: p.compactFields,
             headerFields: p.headerFields,
@@ -406317,15 +407338,15 @@ See docs for context: https://docs.aztec.network/errors/14`);
             }
           });
           const selected = verified2.ciphertexts.filter((log3) => log3.txHash === p.txHash);
-          check10(selected.length === effect.privateLogs.length && selected.length > 0);
+          check12(selected.length === effect.privateLogs.length && selected.length > 0);
           for (let i = 0; i < selected.length; i++) {
             const emitted = effect.privateLogs[i].getEmittedFields();
-            check10(selected[i].txIndex === receiptFields.txIndexInBlock && selected[i].logIndex === i && selected[i].fields.length === emitted.length && emitted.every((value, index) => value.toString() === selected[i].fields[index]));
+            check12(selected[i].txIndex === receiptFields.txIndexInBlock && selected[i].logIndex === i && selected[i].fields.length === emitted.length && emitted.every((value, index) => value.toString() === selected[i].fields[index]));
           }
           const detachedReceipt = () => MinedTxReceipt.from({ ...receiptFields, txHash: TxHash.fromString(p.txHash), blockHash: BlockHash.fromString(p.blockHash), txEffect: TxEffect.fromBuffer(bytes3), debugLogs: void 0 });
           const pinnedNode = new Proxy(this.node, { get(target, key) {
             if (key === "getTxReceipt") return async (hash12, opts) => {
-              check10(hash12 instanceof TxHash && hash12.equals(txHash) && exact4(opts, ["includeTxEffect"]).includeTxEffect === true);
+              check12(hash12 instanceof TxHash && hash12.equals(txHash) && exact4(opts, ["includeTxEffect"]).includeTxEffect === true);
               return detachedReceipt();
             };
             const value = Reflect.get(target, key, target);
@@ -406352,13 +407373,13 @@ See docs for context: https://docs.aztec.network/errors/14`);
           });
           await guard();
           const result = await this.#executeUtility(simulator, call2, [], [scope], anchor2, changeSetId);
-          check10(result.offchainEffects.length === 0 && result.result.length === 1);
+          check12(result.offchainEffects.length === 0 && result.result.length === 1);
           const admitted = Number(result.result[0].toBigInt());
           natural2(admitted, p.logCount);
           validateCommit = async () => {
             await canonical2();
             const after = await this.node.getTxReceipt(txHash, { includeTxEffect: true });
-            check10(after instanceof MinedTxReceipt && after.isMined() && after.txHash.equals(txHash) && after.blockNumber === p.blockNumber && after.blockHash.toString() === p.blockHash && after.txIndexInBlock === receiptFields.txIndexInBlock && after.slotNumber === receiptFields.slotNumber && after.transactionFee === receiptFields.transactionFee && after.executionResult === receiptFields.executionResult && effectBytes(after.txEffect).equals(bytes3));
+            check12(after instanceof MinedTxReceipt && after.isMined() && after.txHash.equals(txHash) && after.blockNumber === p.blockNumber && after.blockHash.toString() === p.blockHash && after.txIndexInBlock === receiptFields.txIndexInBlock && after.slotNumber === receiptFields.slotNumber && after.transactionFee === receiptFields.transactionFee && after.executionResult === receiptFields.executionResult && effectBytes(after.txEffect).equals(bytes3));
             await guard();
           };
           await validateCommit();
@@ -410997,7 +412018,7 @@ See docs for context: https://docs.aztec.network/errors/14`);
         this.#activeStore = scheduled(tx.store);
         for (const container of this.#containers) container.db = this.#activeStore;
         const heartbeat = new Promise((resolveHeartbeat) => {
-          const fail12 = (error312) => {
+          const fail13 = (error312) => {
             callbackPending = false;
             rejectPending(error312);
             try {
@@ -411011,7 +412032,7 @@ See docs for context: https://docs.aztec.network/errors/14`);
             try {
               request = unwrap(tx.store).get("");
             } catch (error312) {
-              fail12(error312);
+              fail13(error312);
               return;
             }
             request.onsuccess = () => {
@@ -411019,7 +412040,7 @@ See docs for context: https://docs.aztec.network/errors/14`);
               if (callbackPending || pending2.length || inflight.size) next();
               else resolveHeartbeat({ ok: true });
             };
-            request.onerror = () => fail12(request.error);
+            request.onerror = () => fail13(request.error);
           };
           next();
         });
@@ -411081,10 +412102,10 @@ See docs for context: https://docs.aztec.network/errors/14`);
   };
 
   // shared/sdk-store.mjs
-  function address5(value, length, field8) {
+  function address5(value, length, field10) {
     const text = typeof value === "string" ? value : value?.toString();
     if (typeof text !== "string" || !new RegExp(`^0x[0-9a-fA-F]{${length}}$`).test(text) || /^0x0+$/.test(text)) {
-      throw new Error(`PXE storage requires a valid ${field8}`);
+      throw new Error(`PXE storage requires a valid ${field10}`);
     }
     return text.toLowerCase();
   }
@@ -411337,7 +412358,7 @@ See docs for context: https://docs.aztec.network/errors/14`);
     bigint: () => bigint14,
     boolean: () => boolean14,
     catch: () => _catch10,
-    check: () => check8,
+    check: () => check10,
     cidrv4: () => cidrv410,
     cidrv6: () => cidrv610,
     clone: () => clone5,
@@ -411374,7 +412395,7 @@ See docs for context: https://docs.aztec.network/errors/14`);
     gte: () => _gte5,
     guid: () => guid10,
     hash: () => hash10,
-    hex: () => hex15,
+    hex: () => hex17,
     hostname: () => hostname10,
     httpUrl: () => httpUrl5,
     includes: () => _includes5,
@@ -411436,7 +412457,7 @@ See docs for context: https://docs.aztec.network/errors/14`);
     promise: () => promise5,
     property: () => _property5,
     readonly: () => readonly5,
-    record: () => record5,
+    record: () => record6,
     refine: () => refine5,
     regex: () => _regex5,
     regexes: () => regexes_exports5,
@@ -412534,14 +413555,14 @@ See docs for context: https://docs.aztec.network/errors/14`);
   }
   function base64urlToUint8Array5(base64url13) {
     const base6413 = base64url13.replace(/-/g, "+").replace(/_/g, "/");
-    const padding = "=".repeat((4 - base6413.length % 4) % 4);
-    return base64ToUint8Array5(base6413 + padding);
+    const padding2 = "=".repeat((4 - base6413.length % 4) % 4);
+    return base64ToUint8Array5(base6413 + padding2);
   }
   function uint8ArrayToBase64url5(bytes3) {
     return uint8ArrayToBase645(bytes3).replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
   }
-  function hexToUint8Array6(hex20) {
-    const cleanHex = hex20.replace(/^0x/, "");
+  function hexToUint8Array6(hex22) {
+    const cleanHex = hex22.replace(/^0x/, "");
     if (cleanHex.length % 2 !== 0) {
       throw new Error("Invalid hex string length");
     }
@@ -412817,7 +413838,7 @@ See docs for context: https://docs.aztec.network/errors/14`);
     emoji: () => emoji9,
     extendedDuration: () => extendedDuration5,
     guid: () => guid9,
-    hex: () => hex14,
+    hex: () => hex16,
     hostname: () => hostname9,
     html5Email: () => html5Email5,
     httpProtocol: () => httpProtocol5,
@@ -412935,9 +413956,9 @@ See docs for context: https://docs.aztec.network/errors/14`);
   var _undefined13 = /^undefined$/i;
   var lowercase5 = /^[^A-Z]*$/;
   var uppercase5 = /^[^a-z]*$/;
-  var hex14 = /^[0-9a-fA-F]*$/;
-  function fixedBase645(bodyLength, padding) {
-    return new RegExp(`^[A-Za-z0-9+/]{${bodyLength}}${padding}$`);
+  var hex16 = /^[0-9a-fA-F]*$/;
+  function fixedBase645(bodyLength, padding2) {
+    return new RegExp(`^[A-Za-z0-9+/]{${bodyLength}}${padding2}$`);
   }
   function fixedBase64url5(length) {
     return new RegExp(`^[A-Za-z0-9_-]{${length}}$`);
@@ -414312,10 +415333,10 @@ See docs for context: https://docs.aztec.network/errors/14`);
       const shape = def.shape;
       const propValues = {};
       for (const key in shape) {
-        const field8 = shape[key]._zod;
-        if (field8.values) {
+        const field10 = shape[key]._zod;
+        if (field10.values) {
           propValues[key] ?? (propValues[key] = /* @__PURE__ */ new Set());
-          for (const v of field8.values)
+          for (const v of field10.values)
             propValues[key].add(v);
         }
       }
@@ -423936,7 +424957,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     bigint: () => bigint14,
     boolean: () => boolean14,
     catch: () => _catch10,
-    check: () => check8,
+    check: () => check10,
     cidrv4: () => cidrv410,
     cidrv6: () => cidrv610,
     codec: () => codec5,
@@ -423957,7 +424978,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     function: () => _function5,
     guid: () => guid10,
     hash: () => hash10,
-    hex: () => hex15,
+    hex: () => hex17,
     hostname: () => hostname10,
     httpUrl: () => httpUrl5,
     instanceof: () => _instanceof5,
@@ -423996,7 +425017,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     preprocess: () => preprocess5,
     promise: () => promise5,
     readonly: () => readonly5,
-    record: () => record5,
+    record: () => record6,
     refine: () => refine5,
     set: () => set6,
     strictObject: () => strictObject5,
@@ -424257,8 +425278,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
         reg.add(this, meta13);
         return this;
       },
-      refine(check10, params) {
-        return this.check(refine5(check10, params));
+      refine(check12, params) {
+        return this.check(refine5(check12, params));
       },
       superRefine(refinement, params) {
         return this.check(superRefine5(refinement, params));
@@ -424598,7 +425619,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
   function hostname10(_params) {
     return _stringFormat5(ZodCustomStringFormat5, "hostname", regexes_exports5.hostname, _params);
   }
-  function hex15(_params) {
+  function hex17(_params) {
     return _stringFormat5(ZodCustomStringFormat5, "hex", regexes_exports5.hex, _params);
   }
   function hash10(alg, params) {
@@ -424982,7 +426003,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     inst.keyType = def.keyType;
     inst.valueType = def.valueType;
   });
-  function record5(keyType, valueType, params) {
+  function record6(keyType, valueType, params) {
     if (!valueType || !valueType._zod) {
       return new ZodRecord5({
         type: "record",
@@ -425401,7 +426422,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     ZodType5.init(inst, def);
     inst._zod.processJSONSchema = (ctx, json7, params) => customProcessor5(inst, ctx, json7, params);
   });
-  function check8(fn) {
+  function check10(fn) {
     const ch = new $ZodCheck5({
       check: "custom"
       // ...util.normalizeParams(params),
@@ -425449,7 +426470,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
   }, ...args);
   function json5(params) {
     const jsonSchema = lazy5(() => {
-      return union5([string14(params), number15(), boolean14(), _null15(), array5(jsonSchema), record5(string14(), jsonSchema)]);
+      return union5([string14(params), number15(), boolean14(), _null15(), array5(jsonSchema), record6(string14(), jsonSchema)]);
     });
     return jsonSchema;
   }
@@ -426183,7 +427204,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     bigint: () => bigint17,
     boolean: () => boolean17,
     catch: () => _catch12,
-    check: () => check9,
+    check: () => check11,
     cidrv4: () => cidrv412,
     cidrv6: () => cidrv612,
     clone: () => clone6,
@@ -426220,7 +427241,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     gte: () => _gte6,
     guid: () => guid12,
     hash: () => hash11,
-    hex: () => hex17,
+    hex: () => hex19,
     hostname: () => hostname12,
     httpUrl: () => httpUrl6,
     includes: () => _includes6,
@@ -426282,7 +427303,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     promise: () => promise6,
     property: () => _property6,
     readonly: () => readonly6,
-    record: () => record6,
+    record: () => record7,
     refine: () => refine6,
     regex: () => _regex6,
     regexes: () => regexes_exports6,
@@ -427380,14 +428401,14 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
   }
   function base64urlToUint8Array6(base64url13) {
     const base6413 = base64url13.replace(/-/g, "+").replace(/_/g, "/");
-    const padding = "=".repeat((4 - base6413.length % 4) % 4);
-    return base64ToUint8Array6(base6413 + padding);
+    const padding2 = "=".repeat((4 - base6413.length % 4) % 4);
+    return base64ToUint8Array6(base6413 + padding2);
   }
   function uint8ArrayToBase64url6(bytes3) {
     return uint8ArrayToBase646(bytes3).replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
   }
-  function hexToUint8Array7(hex20) {
-    const cleanHex = hex20.replace(/^0x/, "");
+  function hexToUint8Array7(hex22) {
+    const cleanHex = hex22.replace(/^0x/, "");
     if (cleanHex.length % 2 !== 0) {
       throw new Error("Invalid hex string length");
     }
@@ -427663,7 +428684,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     emoji: () => emoji11,
     extendedDuration: () => extendedDuration6,
     guid: () => guid11,
-    hex: () => hex16,
+    hex: () => hex18,
     hostname: () => hostname11,
     html5Email: () => html5Email6,
     httpProtocol: () => httpProtocol6,
@@ -427781,9 +428802,9 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
   var _undefined16 = /^undefined$/i;
   var lowercase6 = /^[^A-Z]*$/;
   var uppercase6 = /^[^a-z]*$/;
-  var hex16 = /^[0-9a-fA-F]*$/;
-  function fixedBase646(bodyLength, padding) {
-    return new RegExp(`^[A-Za-z0-9+/]{${bodyLength}}${padding}$`);
+  var hex18 = /^[0-9a-fA-F]*$/;
+  function fixedBase646(bodyLength, padding2) {
+    return new RegExp(`^[A-Za-z0-9+/]{${bodyLength}}${padding2}$`);
   }
   function fixedBase64url6(length) {
     return new RegExp(`^[A-Za-z0-9_-]{${length}}$`);
@@ -429158,10 +430179,10 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
       const shape = def.shape;
       const propValues = {};
       for (const key in shape) {
-        const field8 = shape[key]._zod;
-        if (field8.values) {
+        const field10 = shape[key]._zod;
+        if (field10.values) {
           propValues[key] ?? (propValues[key] = /* @__PURE__ */ new Set());
-          for (const v of field8.values)
+          for (const v of field10.values)
             propValues[key].add(v);
         }
       }
@@ -438782,7 +439803,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     bigint: () => bigint17,
     boolean: () => boolean17,
     catch: () => _catch12,
-    check: () => check9,
+    check: () => check11,
     cidrv4: () => cidrv412,
     cidrv6: () => cidrv612,
     codec: () => codec6,
@@ -438803,7 +439824,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     function: () => _function6,
     guid: () => guid12,
     hash: () => hash11,
-    hex: () => hex17,
+    hex: () => hex19,
     hostname: () => hostname12,
     httpUrl: () => httpUrl6,
     instanceof: () => _instanceof6,
@@ -438842,7 +439863,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     preprocess: () => preprocess6,
     promise: () => promise6,
     readonly: () => readonly6,
-    record: () => record6,
+    record: () => record7,
     refine: () => refine6,
     set: () => set7,
     strictObject: () => strictObject6,
@@ -439103,8 +440124,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
         reg.add(this, meta13);
         return this;
       },
-      refine(check10, params) {
-        return this.check(refine6(check10, params));
+      refine(check12, params) {
+        return this.check(refine6(check12, params));
       },
       superRefine(refinement, params) {
         return this.check(superRefine6(refinement, params));
@@ -439444,7 +440465,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
   function hostname12(_params) {
     return _stringFormat6(ZodCustomStringFormat6, "hostname", regexes_exports6.hostname, _params);
   }
-  function hex17(_params) {
+  function hex19(_params) {
     return _stringFormat6(ZodCustomStringFormat6, "hex", regexes_exports6.hex, _params);
   }
   function hash11(alg, params) {
@@ -439828,7 +440849,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     inst.keyType = def.keyType;
     inst.valueType = def.valueType;
   });
-  function record6(keyType, valueType, params) {
+  function record7(keyType, valueType, params) {
     if (!valueType || !valueType._zod) {
       return new ZodRecord6({
         type: "record",
@@ -440247,7 +441268,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     ZodType6.init(inst, def);
     inst._zod.processJSONSchema = (ctx, json7, params) => customProcessor6(inst, ctx, json7, params);
   });
-  function check9(fn) {
+  function check11(fn) {
     const ch = new $ZodCheck6({
       check: "custom"
       // ...util.normalizeParams(params),
@@ -440295,7 +441316,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
   }, ...args);
   function json6(params) {
     const jsonSchema = lazy6(() => {
-      return union6([string17(params), number18(), boolean17(), _null18(), array6(jsonSchema), record6(string17(), jsonSchema)]);
+      return union6([string17(params), number18(), boolean17(), _null18(), array6(jsonSchema), record7(string17(), jsonSchema)]);
     });
     return jsonSchema;
   }
@@ -442749,8 +443770,8 @@ ${context.join("\n")}`;
       throw Object.assign(new Error("The previous fee payment must be confirmed before another is sent."), { code: "BB_ETH_RECOVERY_REQUIRED" });
     }
     if (!claim2) {
-      const record7 = await fund(previous?.lastEthereumTxHash);
-      claim2 = await recoverClaim(record7);
+      const record8 = await fund(previous?.lastEthereumTxHash);
+      claim2 = await recoverClaim(record8);
     }
     onProgress("Fee funding confirmed on Ethereum. Waiting for it to become available on Aztec\u2026", "info");
     await waitForMessage(claim2);
@@ -442772,7 +443793,7 @@ ${context.join("\n")}`;
   init_dirname();
   init_buffer2();
   init_process2();
-  var fail7 = () => transactionError("BB_RECOVERY_REQUIRED", "Recover the saved transaction before starting another operation.");
+  var fail8 = () => transactionError("BB_RECOVERY_REQUIRED", "Recover the saved transaction before starting another operation.");
   var invalid3 = () => transactionError("BB_JOURNAL_INVALID", "Transaction recovery storage could not be authenticated. Preserve it before continuing.");
   function replacementOptions(options = {}) {
     try {
@@ -442825,24 +443846,24 @@ ${context.join("\n")}`;
       const saved = await slot.read();
       if (saved.value === null) return { ...saved, tx: null };
       try {
-        const record7 = saved.value;
-        if (record7.version !== 1 || typeof record7.txHash !== "string" || !/^0x[0-9a-f]{64}$/.test(record7.txHash) || typeof record7.tx !== "string" || !/^(?:[0-9a-f]{2})+$/.test(record7.tx)) throw invalid3();
-        if (record7.replacementPolicy !== void 0 && (record7.replacementPolicy !== "missing-anchor" || !Array.isArray(record7.replacements) || !record7.replacements.length)) throw invalid3();
-        if (record7.operation !== void 0 && record7.operation !== null && (typeof record7.operation !== "string" || !record7.operation.length || record7.operation.length > 16384)) throw invalid3();
-        if (record7.replacements !== void 0) {
-          if (!Array.isArray(record7.replacements) || record7.replacements.length > 8) throw invalid3();
-          const seen = /* @__PURE__ */ new Set([record7.txHash]);
-          for (const prior of record7.replacements) {
+        const record8 = saved.value;
+        if (record8.version !== 1 || typeof record8.txHash !== "string" || !/^0x[0-9a-f]{64}$/.test(record8.txHash) || typeof record8.tx !== "string" || !/^(?:[0-9a-f]{2})+$/.test(record8.tx)) throw invalid3();
+        if (record8.replacementPolicy !== void 0 && (record8.replacementPolicy !== "missing-anchor" || !Array.isArray(record8.replacements) || !record8.replacements.length)) throw invalid3();
+        if (record8.operation !== void 0 && record8.operation !== null && (typeof record8.operation !== "string" || !record8.operation.length || record8.operation.length > 16384)) throw invalid3();
+        if (record8.replacements !== void 0) {
+          if (!Array.isArray(record8.replacements) || record8.replacements.length > 8) throw invalid3();
+          const seen = /* @__PURE__ */ new Set([record8.txHash]);
+          for (const prior of record8.replacements) {
             if (!prior || Object.keys(prior).sort().join() !== "tx,txHash" || typeof prior.tx !== "string" || !/^(?:[0-9a-f]{2})+$/.test(prior.tx) || typeof prior.txHash !== "string" || seen.has(prior.txHash)) throw invalid3();
             const old = Tx2.fromBuffer(Buffer2.from(prior.tx, "hex"));
-            if (record7.applicationNullifier !== void 0 && !containsApplicationNullifier(old, record7.applicationNullifier)) throw invalid3();
+            if (record8.applicationNullifier !== void 0 && !containsApplicationNullifier(old, record8.applicationNullifier)) throw invalid3();
             if (old.getTxHash().toString() !== prior.txHash || Buffer2.from(old.toBuffer()).toString("hex") !== prior.tx) throw invalid3();
             seen.add(prior.txHash);
           }
         }
-        const tx = Tx2.fromBuffer(Buffer2.from(record7.tx, "hex"));
-        if (record7.applicationNullifier !== void 0 && !containsApplicationNullifier(tx, record7.applicationNullifier)) throw invalid3();
-        if (tx.getTxHash().toString() !== record7.txHash || Buffer2.from(tx.toBuffer()).toString("hex") !== record7.tx) throw invalid3();
+        const tx = Tx2.fromBuffer(Buffer2.from(record8.tx, "hex"));
+        if (record8.applicationNullifier !== void 0 && !containsApplicationNullifier(tx, record8.applicationNullifier)) throw invalid3();
+        if (tx.getTxHash().toString() !== record8.txHash || Buffer2.from(tx.toBuffer()).toString("hex") !== record8.tx) throw invalid3();
         return { ...saved, tx };
       } catch {
         throw invalid3();
@@ -442855,7 +443876,7 @@ ${context.join("\n")}`;
           await rejectedAttempts(previous, { requireMissingAnchor: replacement.requireMissingAnchor });
           return previous;
         }
-        if (acknowledged !== previous.tx.getTxHash().toString()) throw fail7();
+        if (acknowledged !== previous.tx.getTxHash().toString()) throw fail8();
         const receipt2 = await waitForCanonicalReceipt(node2, previous.tx, waitOptions);
         if (receipt2.executionResult === "reverted" && receipt2.status !== "finalized") {
           throw transactionError("BB_TRANSACTION_FINALITY_PENDING", "The previous transaction reverted. Wait for network finality before starting another action; keep its saved record.");
@@ -442867,7 +443888,7 @@ ${context.join("\n")}`;
     const strictMode = (saved, requested) => requested || saved.value.replacementPolicy === "missing-anchor";
     async function attemptState(attempt, active) {
       const reading = Object.fromEntries(["getTxReceipt", "isValidTx", "getBlock"].map((name) => [name, (...args) => {
-        if (!active()) throw fail7();
+        if (!active()) throw fail8();
         return node2[name](...args);
       }]));
       const result = { txHash: attempt.txHash, status: "unknown", stateReasons: [] };
@@ -442916,7 +443937,7 @@ ${context.join("\n")}`;
     }
     async function rejectedAttempts(saved, { requireMissingAnchor = false, priorOnly = false } = {}) {
       const rows = await inspectAttempts(saved, priorOnly);
-      if (!rejected(rows, strictMode(saved, requireMissingAnchor))) throw fail7();
+      if (!rejected(rows, strictMode(saved, requireMissingAnchor))) throw fail8();
       return [...rows.at(-1).stateReasons];
     }
     async function prepare2(tx, previous, { applicationNullifier } = {}) {
@@ -442928,13 +443949,13 @@ ${context.join("\n")}`;
       let replacements = [];
       const authorization = replacement, selectedOperation = operation;
       if (authorization) {
-        if (authorization.encoded !== previous.encoded || selectedOperation !== previous.value.operation || !selectedOperation) throw fail7();
-        if (previous.value.applicationNullifier !== void 0 && applicationNullifier !== previous.value.applicationNullifier) throw fail7();
+        if (authorization.encoded !== previous.encoded || selectedOperation !== previous.value.operation || !selectedOperation) throw fail8();
+        if (previous.value.applicationNullifier !== void 0 && applicationNullifier !== previous.value.applicationNullifier) throw fail8();
         await rejectedAttempts(previous, { requireMissingAnchor: authorization.requireMissingAnchor });
         replacements = [...previous.value.replacements || [], { txHash: previous.value.txHash, tx: previous.value.tx }];
-        if (replacements.length > 8 || replacements.some((prior) => prior.txHash === tx.getTxHash().toString())) throw fail7();
+        if (replacements.length > 8 || replacements.some((prior) => prior.txHash === tx.getTxHash().toString())) throw fail8();
       }
-      if (operation !== selectedOperation || replacement !== authorization) throw fail7();
+      if (operation !== selectedOperation || replacement !== authorization) throw fail8();
       await slot.write(previous, { version: 1, txHash: tx.getTxHash().toString(), tx: Buffer2.from(tx.toBuffer()).toString("hex"), operation: selectedOperation, ...authorization?.requireMissingAnchor ? { replacementPolicy: "missing-anchor" } : {}, ...applicationNullifier !== void 0 ? { applicationNullifier } : {}, ...replacements.length ? { replacements } : {} });
       replacement = null;
     }
@@ -442943,12 +443964,12 @@ ${context.join("\n")}`;
       lastHash = acknowledged;
     }
     function bindRecovery(saved, binding3) {
-      if (binding3 && (!saved.tx || saved.value.operation !== binding3.expectedOperation || saved.value.txHash !== binding3.expectedTxHash)) throw fail7();
+      if (binding3 && (!saved.tx || saved.value.operation !== binding3.expectedOperation || saved.value.txHash !== binding3.expectedTxHash)) throw fail8();
     }
     async function savedRecoveryStatus(saved) {
       let active = true;
       const reading = Object.fromEntries(["getTxReceipt", "isValidTx", "getBlock"].map((name) => [name, (...args) => {
-        if (!active) throw fail7();
+        if (!active) throw fail8();
         return node2[name](...args);
       }]));
       try {
@@ -442979,36 +444000,36 @@ ${context.join("\n")}`;
       try {
         receipt2 = await boundedTransactionRead(() => node2.getTxReceipt(saved.tx.getTxHash()));
       } catch {
-        throw fail7();
+        throw fail8();
       }
-      if (receipt2?.txHash?.toString() !== saved.tx.getTxHash().toString()) throw fail7();
+      if (receipt2?.txHash?.toString() !== saved.tx.getTxHash().toString()) throw fail8();
       if (receipt2.status === "dropped") {
-        if (reconcileOnly) throw fail7();
+        if (reconcileOnly) throw fail8();
         let validation;
         try {
           validation = await boundedTransactionRead(() => node2.isValidTx(saved.tx));
         } catch {
-          throw fail7();
+          throw fail8();
         }
         try {
           receipt2 = await boundedTransactionRead(() => node2.getTxReceipt(saved.tx.getTxHash()), waitOptions.readTimeoutMs ?? 2e4);
         } catch {
-          throw fail7();
+          throw fail8();
         }
-        if (receipt2?.txHash?.toString() !== saved.value.txHash) throw fail7();
+        if (receipt2?.txHash?.toString() !== saved.value.txHash) throw fail8();
         if (receipt2.status === "dropped") {
-          if (validation?.result !== "valid") throw fail7();
+          if (validation?.result !== "valid") throw fail8();
           if (contextGuard) await contextGuard();
           if (saved.value.replacementPolicy === "missing-anchor") {
             await rejectedAttempts(saved, { requireMissingAnchor: true, priorOnly: true });
           }
           if (binding3?.beforeSubmit) await binding3.beforeSubmit(saved.value.txHash);
-          if ((await read2()).encoded !== saved.encoded) throw fail7();
+          if ((await read2()).encoded !== saved.encoded) throw fail8();
           if (contextGuard) await contextGuard();
-          if ((await read2()).encoded !== saved.encoded) throw fail7();
+          if ((await read2()).encoded !== saved.encoded) throw fail8();
           if (contextGuard) await contextGuard();
           await submitOnceWithReconciliation(node2, saved.tx);
-        } else if (!["pending", "proposed", "checkpointed", "proven", "finalized"].includes(receipt2.status)) throw fail7();
+        } else if (!["pending", "proposed", "checkpointed", "proven", "finalized"].includes(receipt2.status)) throw fail8();
       }
       const result = await waitForCanonicalReceipt(node2, saved.tx, waitOptions);
       confirmed(result);
@@ -443026,7 +444047,7 @@ ${context.join("\n")}`;
         const saved = await read2();
         if (!saved.tx) return null;
         const receipt2 = await readCanonicalReceipt(node2, saved.tx.getTxHash(), waitOptions);
-        if ((await read2()).encoded !== saved.encoded) throw fail7();
+        if ((await read2()).encoded !== saved.encoded) throw fail8();
         return { operation: saved.value.operation ?? null, txHash: saved.value.txHash, applicationNullifier: saved.value.applicationNullifier ?? null, outcome: receipt2?.executionResult ?? "pending", receipt: receipt2 };
       },
       /** Read-only status, not a permit. Each row is bound to exact authenticated Tx
@@ -443036,7 +444057,7 @@ ${context.join("\n")}`;
         const expected = expectedOperation(operationInput), requested = replacementOptions(options);
         const saved = await read2();
         if (!saved.tx) return Object.freeze({ status: "empty", operation: null, txHash: null, predecessorTxHashes: Object.freeze([]), requireMissingAnchor: requested, attempts: Object.freeze([]) });
-        if (saved.value.operation !== expected) throw fail7();
+        if (saved.value.operation !== expected) throw fail8();
         const requireMissingAnchor = strictMode(saved, requested);
         let rows;
         try {
@@ -443044,7 +444065,7 @@ ${context.join("\n")}`;
         } catch {
           rows = attemptsOf(saved).map((attempt) => ({ txHash: attempt.txHash, status: "unknown", stateReasons: [] }));
         }
-        if ((await read2()).encoded !== saved.encoded) throw fail7();
+        if ((await read2()).encoded !== saved.encoded) throw fail8();
         const status = rows.some((row) => row.status === "canonical") ? "canonical" : rows.some((row) => row.status === "pending") ? "pending" : !rejected(rows, requireMissingAnchor) ? "unknown" : (saved.value.replacements?.length ?? 0) >= 8 ? "limit-reached" : "available";
         return Object.freeze({
           status,
@@ -443071,7 +444092,7 @@ ${context.join("\n")}`;
             status = "unknown";
           }
         }
-        if ((await read2()).encoded !== saved.encoded) throw fail7();
+        if ((await read2()).encoded !== saved.encoded) throw fail8();
         if (contextGuard) await contextGuard();
         return Object.freeze({ status, operation: saved.value.operation ?? null, txHash: saved.value.txHash });
       },
@@ -443079,10 +444100,10 @@ ${context.join("\n")}`;
         replacement = null;
         const expected = expectedOperation(operationInput), requested = replacementOptions(options);
         const saved = await read2();
-        if (!saved.tx || saved.value.operation !== expected || (saved.value.replacements?.length ?? 0) >= 8) throw fail7();
+        if (!saved.tx || saved.value.operation !== expected || (saved.value.replacements?.length ?? 0) >= 8) throw fail8();
         const requireMissingAnchor = strictMode(saved, requested);
         const reasons = await rejectedAttempts(saved, { requireMissingAnchor });
-        if ((await read2()).encoded !== saved.encoded) throw fail7();
+        if ((await read2()).encoded !== saved.encoded) throw fail8();
         replacement = { encoded: saved.encoded, requireMissingAnchor };
         operation = expected;
         return reasons;
@@ -443094,9 +444115,9 @@ ${context.join("\n")}`;
         const expected = expectedOperation(operationInput), requested = replacementOptions(options);
         if (typeof currentTxHash !== "string" || !/^0x[0-9a-f]{64}$/.test(currentTxHash)) throw invalid3();
         const saved = await read2();
-        if (!saved.tx || saved.value.operation !== expected || saved.value.txHash !== currentTxHash || !saved.value.replacements?.length) throw fail7();
+        if (!saved.tx || saved.value.operation !== expected || saved.value.txHash !== currentTxHash || !saved.value.replacements?.length) throw fail8();
         await rejectedAttempts(saved, { requireMissingAnchor: requested, priorOnly: true });
-        if ((await read2()).encoded !== saved.encoded) throw fail7();
+        if ((await read2()).encoded !== saved.encoded) throw fail8();
         return true;
       },
       setOperation(value) {
@@ -443115,7 +444136,7 @@ ${context.join("\n")}`;
         const saved = await read2();
         if (!saved.tx) return null;
         const receipt2 = await recoverSaved(saved, binding3);
-        if ((await read2()).encoded !== saved.encoded) throw fail7();
+        if ((await read2()).encoded !== saved.encoded) throw fail8();
         return { receipt: receipt2, operation: saved.value.operation ?? null };
       }
     };
@@ -473986,8 +475007,9 @@ mod tests {
   var FIELD_MODULUS2 = 0x30644e72e131a029b85045b68181585d2833e84879b9709143e1f593f0000001n;
 
   // shared/journal-backup.mjs
-  var fail8 = () => transactionError("BB_JOURNAL_INVALID", "Recovery records could not be authenticated or conflict with newer local records. Preserve both copies.");
+  var fail9 = () => transactionError("BB_JOURNAL_INVALID", "Recovery records could not be authenticated or conflict with newer local records. Preserve both copies.");
   var domains = /* @__PURE__ */ new Map([
+    ["ROLLING_AGGREGATE_FUNDING_V1", "ROLLING_AGGREGATE_FUNDING_V1"],
     ["AZTEC_BB_L2_JOURNAL_KEY_V1", "AZTEC_BB_L2_JOURNAL_V1"],
     ["AZTEC_BB_ETH_JOURNAL_KEY_V1", "AZTEC_BB_ETH_JOURNAL_V1"],
     ["ROLLING_WORKFLOW_V1", "ROLLING_WORKFLOW_V1"],
@@ -473996,58 +475018,67 @@ mod tests {
   ]);
   var LIMIT = 16 * 1024 * 1024;
   function validDescriptor(descriptor) {
-    if (!descriptor || Object.keys(descriptor).sort().join() !== "keyDomain,scopeText" || !domains.has(descriptor.keyDomain) || typeof descriptor.scopeText !== "string") throw fail8();
+    if (!descriptor || Object.keys(descriptor).sort().join() !== "keyDomain,scopeText" || !domains.has(descriptor.keyDomain) || typeof descriptor.scopeText !== "string") throw fail9();
     const frame = JSON.parse(descriptor.scopeText);
-    if (frame[0] !== domains.get(descriptor.keyDomain)) throw fail8();
+    if (frame[0] !== domains.get(descriptor.keyDomain)) throw fail9();
+    if (descriptor.keyDomain === "ROLLING_AGGREGATE_FUNDING_V1") {
+      if (!Array.isArray(frame) || ![8, 9].includes(frame.length) || frame.at(-1) !== 1 || descriptor.scopeText !== JSON.stringify(frame)) throw fail9();
+      if (frame.length === 9 && (typeof frame[7] !== "string" || !/^0x[0-9a-f]{64}$/.test(frame[7]))) throw fail9();
+      for (const index of [1, 2]) if (typeof frame[index] !== "string" || !/^[1-9][0-9]{0,19}$/.test(frame[index]) || BigInt(frame[index]) >= FIELD_MODULUS2) throw fail9();
+      for (const index of [3, 4, 5, 6]) {
+        const width = index === 3 || index === 5 ? 40 : 64, value = frame[index];
+        if (typeof value !== "string" || !new RegExp(`^0x[0-9a-f]{${width}}$`).test(value) || BigInt(value) === 0n || width === 64 && BigInt(value) >= FIELD_MODULUS2) throw fail9();
+      }
+    }
     if (descriptor.keyDomain === "ROLLING_PREFERENCES_V1") {
-      if (!Array.isArray(frame) || frame.length !== 8 || frame[7] !== 1 || descriptor.scopeText !== JSON.stringify(frame)) throw fail8();
+      if (!Array.isArray(frame) || frame.length !== 8 || frame[7] !== 1 || descriptor.scopeText !== JSON.stringify(frame)) throw fail9();
       for (const index of [1, 2]) {
         const value = frame[index];
-        if (typeof value !== "string" || value.length > 78 || !/^[1-9][0-9]*$/.test(value) || BigInt(value) >= FIELD_MODULUS2) throw fail8();
+        if (typeof value !== "string" || value.length > 78 || !/^[1-9][0-9]*$/.test(value) || BigInt(value) >= FIELD_MODULUS2) throw fail9();
       }
       for (const index of [3, 4, 5, 6]) {
         const value = frame[index], width = index === 3 ? 40 : 64;
-        if (typeof value !== "string" || !new RegExp(`^0x[0-9a-f]{${width}}$`).test(value) || BigInt(value) === 0n || index !== 3 && BigInt(value) >= FIELD_MODULUS2) throw fail8();
+        if (typeof value !== "string" || !new RegExp(`^0x[0-9a-f]{${width}}$`).test(value) || BigInt(value) === 0n || index !== 3 && BigInt(value) >= FIELD_MODULUS2) throw fail9();
       }
     }
     if (descriptor.keyDomain === "ROLLING_COLD_PREFERENCES_V1") {
-      if (!Array.isArray(frame) || frame.length !== 11 || frame[10] !== 1 || descriptor.scopeText !== JSON.stringify(frame)) throw fail8();
-      if (!Number.isSafeInteger(frame[1]) || frame[1] < 1 || !Number.isSafeInteger(frame[2]) || frame[2] < 1 || frame[2] > 4294967295) throw fail8();
+      if (!Array.isArray(frame) || frame.length !== 11 || frame[10] !== 1 || descriptor.scopeText !== JSON.stringify(frame)) throw fail9();
+      if (!Number.isSafeInteger(frame[1]) || frame[1] < 1 || !Number.isSafeInteger(frame[2]) || frame[2] < 1 || frame[2] > 4294967295) throw fail9();
       for (const index of [3, 4, 5, 6, 7]) {
         const value = frame[index], width = index === 3 ? 40 : 64;
-        if (typeof value !== "string" || !new RegExp(`^0x[0-9a-f]{${width}}$`).test(value) || BigInt(value) === 0n || index !== 3 && BigInt(value) >= FIELD_MODULUS2) throw fail8();
+        if (typeof value !== "string" || !new RegExp(`^0x[0-9a-f]{${width}}$`).test(value) || BigInt(value) === 0n || index !== 3 && BigInt(value) >= FIELD_MODULUS2) throw fail9();
       }
-      if (typeof frame[8] !== "boolean" || !["proposed", "checkpointed", "proven", "finalized"].includes(frame[9])) throw fail8();
+      if (typeof frame[8] !== "boolean" || !["proposed", "checkpointed", "proven", "finalized"].includes(frame[9])) throw fail9();
     }
     if (descriptor.keyDomain === "ROLLING_WORKFLOW_V1") {
-      if (!Array.isArray(frame) || frame.length !== 2 || typeof frame[1] !== "string") throw fail8();
+      if (!Array.isArray(frame) || frame.length !== 2 || typeof frame[1] !== "string") throw fail9();
       const nested = JSON.parse(frame[1]), names = ["account", "chainId", "rollup", "version", "board", "portal"];
-      if (!Array.isArray(nested) || nested.length !== 7 || nested[0] !== "AZTEC_BB_L2_JOURNAL_V1" || nested.some((value) => typeof value !== "string")) throw fail8();
+      if (!Array.isArray(nested) || nested.length !== 7 || nested[0] !== "AZTEC_BB_L2_JOURNAL_V1" || nested.some((value) => typeof value !== "string")) throw fail9();
       const canonical2 = l2JournalScopeText(Object.fromEntries(names.map((name, index) => [name, nested[index + 1]])));
-      if (frame[1] !== canonical2 || descriptor.scopeText !== JSON.stringify(["ROLLING_WORKFLOW_V1", canonical2])) throw fail8();
+      if (frame[1] !== canonical2 || descriptor.scopeText !== JSON.stringify(["ROLLING_WORKFLOW_V1", canonical2])) throw fail9();
     }
   }
   async function createJournalBackup({ storage, walletSecret, walletSalt }) {
     const identity = await journalRecoveryIdentity({ walletSecret, walletSalt });
-    async function authenticate(record7) {
+    async function authenticate(record8) {
       try {
-        if (!record7 || typeof record7.key !== "string" || !/^[0-9a-f]{64}$/.test(record7.key) || typeof record7.encoded !== "string" || record7.encoded.length > LIMIT) throw fail8();
-        const envelope = JSON.parse(record7.encoded), descriptor = await decryptJournalDescriptor(envelope.recovery, identity);
+        if (!record8 || typeof record8.key !== "string" || !/^[0-9a-f]{64}$/.test(record8.key) || typeof record8.encoded !== "string" || record8.encoded.length > LIMIT) throw fail9();
+        const envelope = JSON.parse(record8.encoded), descriptor = await decryptJournalDescriptor(envelope.recovery, identity);
         validDescriptor(descriptor);
         const slot = await createEncryptedJournalSlot({ walletSecret, walletSalt, ...descriptor, storage: { read: async (key) => {
-          if (key !== record7.key) throw fail8();
-          return record7.encoded;
+          if (key !== record8.key) throw fail9();
+          return record8.encoded;
         } } });
-        if (slot.storageKey !== record7.key) throw fail8();
+        if (slot.storageKey !== record8.key) throw fail9();
         await slot.read();
-        return record7;
+        return record8;
       } catch {
-        throw fail8();
+        throw fail9();
       }
     }
     return {
       async exportRecords() {
-        if (typeof storage.keys !== "function") throw fail8();
+        if (typeof storage.keys !== "function") throw fail9();
         const keys = await storage.keys(), records = [];
         let total = 0;
         for (const key of keys) {
@@ -474057,41 +475088,41 @@ mod tests {
           try {
             envelope = JSON.parse(encoded);
           } catch {
-            throw fail8();
+            throw fail9();
           }
-          if (!envelope.recovery) throw fail8();
+          if (!envelope.recovery) throw fail9();
           if (envelope.recovery.owner !== identity.owner) continue;
           total += encoded.length;
-          if (total > LIMIT) throw fail8();
+          if (total > LIMIT) throw fail9();
           records.push(await authenticate({ key, encoded }));
         }
         const finalKeys = await storage.keys();
-        if (JSON.stringify([...keys].sort()) !== JSON.stringify([...finalKeys].sort())) throw fail8();
-        for (const record7 of records) if (await storage.read(record7.key) !== record7.encoded) throw fail8();
+        if (JSON.stringify([...keys].sort()) !== JSON.stringify([...finalKeys].sort())) throw fail9();
+        for (const record8 of records) if (await storage.read(record8.key) !== record8.encoded) throw fail9();
         return records;
       },
       async restoreRecords(records) {
-        if (!Array.isArray(records) || records.length > 1e4) throw fail8();
+        if (!Array.isArray(records) || records.length > 1e4) throw fail9();
         const seen = /* @__PURE__ */ new Set();
         let total = 0;
-        for (const record7 of records) {
-          await authenticate(record7);
-          total += record7.encoded.length;
-          if (total > LIMIT || seen.has(record7.key)) throw fail8();
-          seen.add(record7.key);
-          const current = await storage.read(record7.key);
-          if (current !== null && current !== record7.encoded) throw fail8();
+        for (const record8 of records) {
+          await authenticate(record8);
+          total += record8.encoded.length;
+          if (total > LIMIT || seen.has(record8.key)) throw fail9();
+          seen.add(record8.key);
+          const current = await storage.read(record8.key);
+          if (current !== null && current !== record8.encoded) throw fail9();
         }
-        for (const record7 of records) {
-          const current = await storage.read(record7.key);
-          if (current === record7.encoded) continue;
-          if (current !== null) throw fail8();
+        for (const record8 of records) {
+          const current = await storage.read(record8.key);
+          if (current === record8.encoded) continue;
+          if (current !== null) throw fail9();
           try {
-            await storage.compareAndSwap(record7.key, null, record7.encoded);
+            await storage.compareAndSwap(record8.key, null, record8.encoded);
           } catch {
-            throw fail8();
+            throw fail9();
           }
-          if (await storage.read(record7.key) !== record7.encoded) throw fail8();
+          if (await storage.read(record8.key) !== record8.encoded) throw fail9();
         }
       }
     };
@@ -474102,17 +475133,17 @@ mod tests {
   init_buffer2();
   init_process2();
   var unsupported = () => Object.assign(new Error("Application note attribution is unavailable or ambiguous; preserve the original transaction."), { code: "BB_APPLICATION_ATTRIBUTION_UNSUPPORTED" });
-  var field6 = (value) => value instanceof Fr;
-  async function extractApplicationNullifier(provingResult, tx, board, expectedNoteNullifier) {
+  var field8 = (value) => value instanceof Fr;
+  async function extractApplicationNullifier(provingResult, tx, board2, expectedNoteNullifier) {
     let attributionStage = "board", diagnostics = {};
     const type = (value) => value === null ? "null" : Array.isArray(value) ? "array" : typeof value;
     try {
-      diagnostics.boardType = type(board);
-      diagnostics.boardIsAddress = board instanceof AztecAddress;
-      if (!(board instanceof AztecAddress) || board.isZero()) throw unsupported();
+      diagnostics.boardType = type(board2);
+      diagnostics.boardIsAddress = board2 instanceof AztecAddress;
+      if (!(board2 instanceof AztecAddress) || board2.isZero()) throw unsupported();
       attributionStage = "expected-note";
       diagnostics.expectedProvided = expectedNoteNullifier !== void 0;
-      if (expectedNoteNullifier !== void 0 && (!field6(expectedNoteNullifier) || expectedNoteNullifier.isZero())) throw unsupported();
+      if (expectedNoteNullifier !== void 0 && (!field8(expectedNoteNullifier) || expectedNoteNullifier.isZero())) throw unsupported();
       attributionStage = "proof-inputs";
       diagnostics.proofInputsPresent = !!provingResult?.publicInputs;
       diagnostics.txDataPresent = !!tx?.data;
@@ -474131,7 +475162,7 @@ mod tests {
         diagnostics.callAddressIsAddress = address6 instanceof AztecAddress;
         diagnostics.nestedType = type(call2.nestedExecutionResults);
         if (!(address6 instanceof AztecAddress) || !Array.isArray(call2.nestedExecutionResults) || call2.nestedExecutionResults.length > 128) throw unsupported();
-        if (address6.equals(board)) {
+        if (address6.equals(board2)) {
           diagnostics.boardCalls++;
           if (applicationCall) throw unsupported();
           applicationCall = call2;
@@ -474151,10 +475182,10 @@ mod tests {
         attributionStage = "nullifier-fields";
         const n2 = values.array[i];
         diagnostics.itemIndex = i;
-        diagnostics.valueIsField = field6(n2?.value);
-        diagnostics.noteHashIsField = field6(n2?.noteHash);
+        diagnostics.valueIsField = field8(n2?.value);
+        diagnostics.noteHashIsField = field8(n2?.noteHash);
         diagnostics.counterType = type(n2?.counter);
-        if (!field6(n2?.value) || !field6(n2?.noteHash) || !Number.isSafeInteger(n2?.counter) || n2.counter < 0) throw unsupported();
+        if (!field8(n2?.value) || !field8(n2?.noteHash) || !Number.isSafeInteger(n2?.counter) || n2.counter < 0) throw unsupported();
         attributionStage = "nullifier-padding";
         if (i >= values.claimedLength && (!n2.value.isZero() || !n2.noteHash.isZero() || n2.counter !== 0)) throw unsupported();
       }
@@ -474163,7 +475194,7 @@ mod tests {
       if (active.some((note) => note.value.isZero())) throw unsupported();
       attributionStage = "silo-nullifier";
       const candidates = [];
-      for (const note of active) candidates.push(await siloNullifier(board, note.value));
+      for (const note of active) candidates.push(await siloNullifier(board2, note.value));
       attributionStage = "expected-membership";
       const matches = expectedNoteNullifier === void 0 ? candidates : candidates.filter((value) => value.equals(expectedNoteNullifier));
       diagnostics.expectedMatchCount = matches.length;
@@ -474173,9 +475204,9 @@ mod tests {
       const final = tx.data.getNonEmptyNullifiers();
       diagnostics.finalType = type(final);
       diagnostics.finalCount = Array.isArray(final) ? final.length : null;
-      diagnostics.finalFieldsValid = Array.isArray(final) && final.length <= 128 && final.every(field6);
+      diagnostics.finalFieldsValid = Array.isArray(final) && final.length <= 128 && final.every(field8);
       diagnostics.matchCount = diagnostics.finalFieldsValid ? final.filter((n2) => n2.equals(siloed)).length : null;
-      if (siloed.isZero() || !Array.isArray(final) || final.length > 128 || !final.every(field6) || final.filter((n2) => n2.equals(siloed)).length !== 1) throw unsupported();
+      if (siloed.isZero() || !Array.isArray(final) || final.length > 128 || !final.every(field8) || final.filter((n2) => n2.equals(siloed)).length !== 1) throw unsupported();
       return siloed;
     } catch {
       throw Object.assign(unsupported(), { attributionStage, attributionDiagnostics: diagnostics });
@@ -474187,62 +475218,62 @@ mod tests {
   init_buffer2();
   init_process2();
   var FR2 = 21888242871839275222246405745257275088548364400416034343698204186575808495617n;
-  var fail9 = (message) => {
+  var fail10 = (message) => {
     throw Object.assign(Error(message), { code: "BB_DEPLOYMENT_MANIFEST" });
   };
   function exact3(value, keys, label) {
-    if (!value || typeof value !== "object" || Array.isArray(value) || Object.keys(value).sort().join() !== [...keys].sort().join()) fail9("Invalid " + label + " fields");
+    if (!value || typeof value !== "object" || Array.isArray(value) || Object.keys(value).sort().join() !== [...keys].sort().join()) fail10("Invalid " + label + " fields");
   }
-  function uint6(v, bits, label) {
-    if (typeof v !== "string" || !/^[1-9][0-9]*$/.test(v) || v.length > 78 || BigInt(v) >= 1n << BigInt(bits)) fail9("Invalid " + label);
+  function uint7(v, bits, label) {
+    if (typeof v !== "string" || !/^[1-9][0-9]*$/.test(v) || v.length > 78 || BigInt(v) >= 1n << BigInt(bits)) fail10("Invalid " + label);
     return v;
   }
-  function hex18(v, size2, label) {
-    if (typeof v !== "string" || !new RegExp("^0x[0-9a-f]{" + size2 * 2 + "}$").test(v) || BigInt(v) === 0n) fail9("Invalid " + label);
+  function hex20(v, size2, label) {
+    if (typeof v !== "string" || !new RegExp("^0x[0-9a-f]{" + size2 * 2 + "}$").test(v) || BigInt(v) === 0n) fail10("Invalid " + label);
     return v;
   }
-  function field7(v, label) {
-    hex18(v, 32, label);
-    if (BigInt(v) >= FR2) fail9("Invalid " + label);
+  function field9(v, label) {
+    hex20(v, 32, label);
+    if (BigInt(v) >= FR2) fail10("Invalid " + label);
     return v;
   }
   function endpoint2(v) {
-    if (typeof v !== "string" || v.length > 4096 || v !== v.trim()) fail9("Invalid deployment endpoint");
+    if (typeof v !== "string" || v.length > 4096 || v !== v.trim()) fail10("Invalid deployment endpoint");
     let u;
     try {
       u = new URL(v);
     } catch {
-      fail9("Invalid deployment endpoint");
+      fail10("Invalid deployment endpoint");
     }
-    if (!["http:", "https:"].includes(u.protocol) || u.username || u.password || u.search || u.hash) fail9("Deployment endpoints must exclude credentials, query and fragment");
+    if (!["http:", "https:"].includes(u.protocol) || u.username || u.password || u.search || u.hash) fail10("Deployment endpoints must exclude credentials, query and fragment");
     return u.href;
   }
   function validateDeploymentManifest(value) {
     exact3(value, ["schemaVersion", "profile", "network", "actors", "board", "artifacts"], "deployment manifest");
-    if (![1, 2].includes(value.schemaVersion) || !["local-test", "operator"].includes(value.profile)) fail9("Invalid deployment profile");
+    if (![1, 2].includes(value.schemaVersion) || !["local-test", "operator"].includes(value.profile)) fail10("Invalid deployment profile");
     const n2 = value.network, b2 = value.board, a = value.actors, f = value.artifacts, rolling = value.schemaVersion === 2;
     exact3(n2, ["nodeUrl", "ethRpcUrl", "chainId", "rollupVersion", "rollup", "inbox", "outbox"], "network");
     endpoint2(n2.nodeUrl);
     endpoint2(n2.ethRpcUrl);
-    uint6(n2.chainId, 64, "chain");
-    uint6(n2.rollupVersion, 32, "rollup version");
-    for (const k of ["rollup", "inbox", "outbox"]) hex18(n2[k], 20, k);
+    uint7(n2.chainId, 64, "chain");
+    uint7(n2.rollupVersion, 32, "rollup version");
+    for (const k of ["rollup", "inbox", "outbox"]) hex20(n2[k], 20, k);
     exact3(a, ["aztecDeployer", "ethereumDeployer"], "actors");
-    field7(a.aztecDeployer, "Aztec deployer");
-    hex18(a.ethereumDeployer, 20, "Ethereum deployer");
+    field9(a.aztecDeployer, "Aztec deployer");
+    hex20(a.ethereumDeployer, 20, "Ethereum deployer");
     exact3(b2, ["salt", "minDeposit", "maxDeposit", "baseCooldown", "kMultiplier", "censorWindow", "maxSaveUp", rolling ? "kind" : "censor", "policy"], "board");
-    if (rolling && b2.kind !== "rolling") fail9("Invalid board kind");
-    if (typeof b2.salt !== "string" || !/^(0|[1-9][0-9]*)$/.test(b2.salt) || b2.salt.length > 78 || BigInt(b2.salt) >= FR2) fail9("Invalid contract salt");
-    uint6(b2.minDeposit, 96, "minimum deposit");
-    uint6(b2.maxDeposit, 96, "maximum deposit");
-    if (BigInt(b2.minDeposit) > BigInt(b2.maxDeposit)) fail9("Reversed deposit bounds");
-    for (const k of ["baseCooldown", "censorWindow"]) uint6(b2[k], 32, k);
-    for (const k of ["kMultiplier", "maxSaveUp"]) uint6(b2[k], 16, k);
-    if (!rolling) field7(b2.censor, "censor");
-    if (typeof b2.policy !== "string" || !b2.policy.isWellFormed() || b2.policy.includes("\0") || !b2.policy.trim() || new TextEncoder().encode(b2.policy).length > (rolling ? 992 : 1488)) fail9("Explicit nonempty policy required");
+    if (rolling && b2.kind !== "rolling") fail10("Invalid board kind");
+    if (typeof b2.salt !== "string" || !/^(0|[1-9][0-9]*)$/.test(b2.salt) || b2.salt.length > 78 || BigInt(b2.salt) >= FR2) fail10("Invalid contract salt");
+    uint7(b2.minDeposit, 96, "minimum deposit");
+    uint7(b2.maxDeposit, 96, "maximum deposit");
+    if (BigInt(b2.minDeposit) > BigInt(b2.maxDeposit)) fail10("Reversed deposit bounds");
+    for (const k of ["baseCooldown", "censorWindow"]) uint7(b2[k], 32, k);
+    for (const k of ["kMultiplier", "maxSaveUp"]) uint7(b2[k], 16, k);
+    if (!rolling) field9(b2.censor, "censor");
+    if (typeof b2.policy !== "string" || !b2.policy.isWellFormed() || b2.policy.includes("\0") || !b2.policy.trim() || new TextEncoder().encode(b2.policy).length > (rolling ? 992 : 1488)) fail10("Explicit nonempty policy required");
     exact3(f, ["boardJsonSha256", "boardClassId", "portalCreationSha256", "portalRuntimeMetadataSha256"], "artifacts");
-    for (const k of Object.keys(f)) hex18(f[k], 32, k);
-    field7(f.boardClassId, "board class");
+    for (const k of Object.keys(f)) hex20(f[k], 32, k);
+    field9(f.boardClassId, "board class");
     return structuredClone(value);
   }
   function deploymentManifestConfig(manifest) {
@@ -474251,32 +475282,32 @@ mod tests {
   }
   function verifyDeploymentInputs(manifest, { artifact, portalBytecode, runtimeMetadata, config: config9, ethers }) {
     const m2 = validateDeploymentManifest(manifest), expected = deploymentManifestConfig(m2);
-    for (const k of ["aztecNodeUrl", "ethRpcUrl"]) if (endpoint2(config9[k]) !== endpoint2(expected[k])) fail9("Manifest endpoint mismatch");
-    for (const k of ["contractSalt", "minDepositWei", "maxDepositWei", "baseCooldown", "kMultiplier", "censorWindow", "maxSaveUp"]) if (config9[k] === void 0 || BigInt(config9[k]) !== BigInt(expected[k])) fail9("Manifest parameter mismatch: " + k);
-    if ((m2.schemaVersion === 2 ? config9.boardProfile !== "rolling" || config9.censor !== void 0 : config9.boardProfile !== void 0 || config9.censor?.toLowerCase() !== m2.board.censor) || config9.moderationPolicy !== m2.board.policy) fail9("Manifest policy/censor mismatch");
-    if (m2.schemaVersion === 2 && artifact?.name !== "RollingBoard") fail9("Rolling artifact required");
+    for (const k of ["aztecNodeUrl", "ethRpcUrl"]) if (endpoint2(config9[k]) !== endpoint2(expected[k])) fail10("Manifest endpoint mismatch");
+    for (const k of ["contractSalt", "minDepositWei", "maxDepositWei", "baseCooldown", "kMultiplier", "censorWindow", "maxSaveUp"]) if (config9[k] === void 0 || BigInt(config9[k]) !== BigInt(expected[k])) fail10("Manifest parameter mismatch: " + k);
+    if ((m2.schemaVersion === 2 ? config9.boardProfile !== "rolling" || config9.censor !== void 0 : config9.boardProfile !== void 0 || config9.censor?.toLowerCase() !== m2.board.censor) || config9.moderationPolicy !== m2.board.policy) fail10("Manifest policy/censor mismatch");
+    if (m2.schemaVersion === 2 && artifact?.name !== "RollingBoard") fail10("Rolling artifact required");
     const hash12 = (o) => ethers.sha256(ethers.toUtf8Bytes(JSON.stringify(o)));
-    if (hash12(artifact) !== m2.artifacts.boardJsonSha256 || ethers.sha256(portalBytecode) !== m2.artifacts.portalCreationSha256 || hash12(runtimeMetadata) !== m2.artifacts.portalRuntimeMetadataSha256) fail9("Deployment artifact identity mismatch");
+    if (hash12(artifact) !== m2.artifacts.boardJsonSha256 || ethers.sha256(portalBytecode) !== m2.artifacts.portalCreationSha256 || hash12(runtimeMetadata) !== m2.artifacts.portalRuntimeMetadataSha256) fail10("Deployment artifact identity mismatch");
     return { manifest: m2, intentDigest: hash12(m2) };
   }
   async function preflightDeploymentNetwork(manifest, { node: node2, provider, ethers, timeoutMs = 2e4 }) {
     const m2 = validateDeploymentManifest(manifest), n2 = m2.network, deadline = Date.now() + timeoutMs;
-    if (!Number.isInteger(timeoutMs) || timeoutMs < 1 || timeoutMs > 2e4) fail9("Invalid preflight timeout");
+    if (!Number.isInteger(timeoutMs) || timeoutMs < 1 || timeoutMs > 2e4) fail10("Invalid preflight timeout");
     const read2 = (fn) => boundedTransactionRead(fn, deadline - Date.now());
     const [info, contracts, network, nativeConfig] = await read2(() => Promise.all([node2.getNodeInfo(), node2.getL1ContractAddresses(), provider.getNetwork(), node2.getConfig()]));
     const realProofs = nativeConfig && Object.getOwnPropertyDescriptor(nativeConfig, "realProofs");
-    if (!realProofs || !Object.hasOwn(realProofs, "value") || typeof realProofs.value !== "boolean") fail9("Native proof configuration unavailable");
+    if (!realProofs || !Object.hasOwn(realProofs, "value") || typeof realProofs.value !== "boolean") fail10("Native proof configuration unavailable");
     const proofsEnabled = realProofs.value;
-    if (m2.profile === "local-test" ? n2.chainId !== "31337" || proofsEnabled : n2.chainId !== "11155111" || !proofsEnabled) fail9("Native proof configuration differs from deployment profile");
-    if (String(info.l1ChainId) !== n2.chainId || String(network.chainId) !== n2.chainId || String(info.rollupVersion) !== n2.rollupVersion || contracts.rollupAddress?.toString().toLowerCase() !== n2.rollup) fail9("Deployment network identity mismatch");
-    for (const [key, name] of [["inboxAddress", "inbox"], ["outboxAddress", "outbox"]]) if (contracts[key] && contracts[key].toString().toLowerCase() !== n2[name]) fail9("Node bridge identity mismatch");
+    if (m2.profile === "local-test" ? n2.chainId !== "31337" || proofsEnabled : n2.chainId !== "11155111" || !proofsEnabled) fail10("Native proof configuration differs from deployment profile");
+    if (String(info.l1ChainId) !== n2.chainId || String(network.chainId) !== n2.chainId || String(info.rollupVersion) !== n2.rollupVersion || contracts.rollupAddress?.toString().toLowerCase() !== n2.rollup) fail10("Deployment network identity mismatch");
+    for (const [key, name] of [["inboxAddress", "inbox"], ["outboxAddress", "outbox"]]) if (contracts[key] && contracts[key].toString().toLowerCase() !== n2[name]) fail10("Node bridge identity mismatch");
     const rollup = new ethers.Contract(n2.rollup, ["function getInbox() view returns (address)", "function getOutbox() view returns (address)"], provider);
     const [inbox, outbox, ...codes] = await read2(() => Promise.all([rollup.getInbox(), rollup.getOutbox(), ...["rollup", "inbox", "outbox"].map((k) => provider.getCode(n2[k]))]));
-    if (inbox.toLowerCase() !== n2.inbox || outbox.toLowerCase() !== n2.outbox || codes.some((c) => typeof c !== "string" || !/^0x(?:[0-9a-fA-F]{2})+$/.test(c))) fail9("Deployment bridge/code mismatch");
+    if (inbox.toLowerCase() !== n2.inbox || outbox.toLowerCase() !== n2.outbox || codes.some((c) => typeof c !== "string" || !/^0x(?:[0-9a-fA-F]{2})+$/.test(c))) fail10("Deployment bridge/code mismatch");
     return { nodeInfo: info, l1Contracts: contracts, proofsEnabled };
   }
-  async function deploymentPolicyVersion(board, policy2) {
-    return sha256Field(encodePolicyCommitment(board, policy2));
+  async function deploymentPolicyVersion(board2, policy2) {
+    return sha256Field(encodePolicyCommitment(board2, policy2));
   }
 
   // shared/portal-runtime.mjs
@@ -474284,27 +475315,27 @@ mod tests {
   init_buffer2();
   init_process2();
   var PORTAL_IMMUTABLES = Object.freeze(["MIN_DEPOSIT", "MAX_DEPOSIT", "L2_CONTRACT", "ROLLUP", "INBOX", "OUTBOX", "VERSION", "L1_CHAIN_ID", "CONFIG_HASH"]);
-  var hex19 = (value) => typeof value === "string" && /^0x(?:[0-9a-fA-F]{2})+$/.test(value);
-  var fail10 = () => {
+  var hex21 = (value) => typeof value === "string" && /^0x(?:[0-9a-fA-F]{2})+$/.test(value);
+  var fail11 = () => {
     throw new Error("Invalid portal runtime metadata or immutable values");
   };
   function expectedPortalRuntime(metadata, values) {
-    if (!metadata || metadata.schemaVersion !== 1 || !hex19(metadata.runtimeTemplate) || !metadata.immutables || !values) fail10();
+    if (!metadata || metadata.schemaVersion !== 1 || !hex21(metadata.runtimeTemplate) || !metadata.immutables || !values) fail11();
     const names = Object.keys(metadata.immutables).sort();
-    if (JSON.stringify(names) !== JSON.stringify([...PORTAL_IMMUTABLES].sort()) || JSON.stringify(Object.keys(values).sort()) !== JSON.stringify(names)) fail10();
+    if (JSON.stringify(names) !== JSON.stringify([...PORTAL_IMMUTABLES].sort()) || JSON.stringify(Object.keys(values).sort()) !== JSON.stringify(names)) fail11();
     const bytes3 = metadata.runtimeTemplate.slice(2).toLowerCase().match(/../g), occupied = /* @__PURE__ */ new Set();
     for (const name of names) {
       const raw = values[name];
-      if (!(typeof raw === "bigint" || typeof raw === "string" && /^(?:0|[1-9][0-9]*|0x[0-9a-fA-F]+)$/.test(raw))) fail10();
+      if (!(typeof raw === "bigint" || typeof raw === "string" && /^(?:0|[1-9][0-9]*|0x[0-9a-fA-F]+)$/.test(raw))) fail11();
       const value = BigInt(raw), width = ["ROLLUP", "INBOX", "OUTBOX"].includes(name) ? 160n : 256n;
-      if (value < 0n || value >= 1n << width) fail10();
+      if (value < 0n || value >= 1n << width) fail11();
       const word2 = value.toString(16).padStart(64, "0").match(/../g), refs = metadata.immutables[name];
-      if (!Array.isArray(refs) || !refs.length) fail10();
+      if (!Array.isArray(refs) || !refs.length) fail11();
       for (const ref of refs) {
-        if (!ref || Object.keys(ref).sort().join(",") !== "length,start" || ref.length !== 32 || !Number.isSafeInteger(ref.start) || ref.start < 0 || ref.start + 32 > bytes3.length) fail10();
+        if (!ref || Object.keys(ref).sort().join(",") !== "length,start" || ref.length !== 32 || !Number.isSafeInteger(ref.start) || ref.start < 0 || ref.start + 32 > bytes3.length) fail11();
         for (let i = 0; i < 32; i++) {
           const offset = ref.start + i;
-          if (occupied.has(offset) || bytes3[offset] !== "00") fail10();
+          if (occupied.has(offset) || bytes3[offset] !== "00") fail11();
           occupied.add(offset);
           bytes3[offset] = word2[i];
         }
@@ -474314,7 +475345,7 @@ mod tests {
   }
   function verifyPortalRuntime(actual, metadata, values) {
     const expected = expectedPortalRuntime(metadata, values);
-    if (!hex19(actual) || actual.toLowerCase() !== expected) throw new Error("Deployed portal runtime does not match the verified build and configuration");
+    if (!hex21(actual) || actual.toLowerCase() !== expected) throw new Error("Deployed portal runtime does not match the verified build and configuration");
     return true;
   }
 
@@ -474322,11 +475353,12 @@ mod tests {
   var portal_runtime_default = {
     schemaVersion: 1,
     compiler: "0.8.27+commit.40a35a09",
-    creationBytecodeSha256: "44c9dc171e2cbad385055fd42e5304c732aec118f9595df08f4ad56b981647cc",
-    runtimeTemplateSha256: "cdc1d999616ab3b9e14507c0b774356afdcb9c67170e712e3c0bf7c3eaaa54df",
-    astSha256: "896ac0de950b5a04e7ae4f28b891abfabf1e1f1360ee311166e8b436c6edfeb4",
+    creationBytecodeSha256: "4c627a49ebbc09876457f1be6b44bcd733d063cdb798ddb3531f684fe4734b52",
+    runtimeTemplateSha256: "f525c6566b3ddae1ea0a9864cfc7444eb21bb1f49f22cdcd65d359b0baa4d22b",
+    astSha256: "5fa6a655c1907c7692a11ba77f35b6c7555b48700095781e05e4cb4c945072c3",
     sources: {
       "node_modules/@aztec-foundation/l1-artifacts/l1-contracts/lib/openzeppelin-contracts/contracts/access/Ownable.sol": "38578bd71c0a909840e67202db527cc6b4e6b437e0f39f0c909da32c1e30cb81",
+      "node_modules/@aztec-foundation/l1-artifacts/l1-contracts/lib/openzeppelin-contracts/contracts/interfaces/IERC1271.sol": "599887e85d375f463f30e3c4cf139ea541e73c7b3535eb040da5e8d8145a4f14",
       "node_modules/@aztec-foundation/l1-artifacts/l1-contracts/lib/openzeppelin-contracts/contracts/interfaces/IERC1363.sol": "54f427f63724d9760211dfa9e0cc5d79d86c0724becd81f8e638e2e27b0e2669",
       "node_modules/@aztec-foundation/l1-artifacts/l1-contracts/lib/openzeppelin-contracts/contracts/interfaces/IERC165.sol": "49abfb8fa26e3f1715fe05948a96e3762b805bd4a77d103eb40ba96b1acfa144",
       "node_modules/@aztec-foundation/l1-artifacts/l1-contracts/lib/openzeppelin-contracts/contracts/interfaces/IERC20.sol": "cb42f0b4d269ba8ef2629c176a7f99bf4fb50837c92f45596b54822b26e3df4b",
@@ -474344,6 +475376,7 @@ mod tests {
       "node_modules/@aztec-foundation/l1-artifacts/l1-contracts/lib/openzeppelin-contracts/contracts/utils/cryptography/ECDSA.sol": "0964ddd02f4a7a8cf9ba130e3aeead588ca3d425d5bc13cc4221358c69108ed0",
       "node_modules/@aztec-foundation/l1-artifacts/l1-contracts/lib/openzeppelin-contracts/contracts/utils/cryptography/EIP712.sol": "e7f41ef62494c6c26ddaaac0f2790fa365b635e7c5aaacbeafba3067574e38d7",
       "node_modules/@aztec-foundation/l1-artifacts/l1-contracts/lib/openzeppelin-contracts/contracts/utils/cryptography/MessageHashUtils.sol": "93e4c09f9c65d37a14d796601b67a67fc918e16957a6328261f8635e136adf76",
+      "node_modules/@aztec-foundation/l1-artifacts/l1-contracts/lib/openzeppelin-contracts/contracts/utils/cryptography/SignatureChecker.sol": "37a06b31bce546a771a6450bdccf8f88ab3fef1d91e1aa5a2e10324cbbd9b2f0",
       "node_modules/@aztec-foundation/l1-artifacts/l1-contracts/lib/openzeppelin-contracts/contracts/utils/introspection/IERC165.sol": "7c5c3f98ab876991e7dd34b84d41137e836306eb9f36f6386a631f5be3f5d6d4",
       "node_modules/@aztec-foundation/l1-artifacts/l1-contracts/lib/openzeppelin-contracts/contracts/utils/math/Math.sol": "09cb9f69a90143e02968299e7ec7fa846a8ecd4d8e6ff1b0628387c7565cf3c5",
       "node_modules/@aztec-foundation/l1-artifacts/l1-contracts/lib/openzeppelin-contracts/contracts/utils/math/SafeCast.sol": "9769274bf53f26a7c7896c526ea1980dc9bea5bf5c2a5fd04870008c4afc1de9",
@@ -474416,150 +475449,150 @@ mod tests {
       "node_modules/@aztec-foundation/l1-artifacts/l1-contracts/src/shared/libraries/CompressedTimeMath.sol": "50cdddd2fcd567671cfd53da38a093e4d327332205945e90e0c16bb580873510",
       "node_modules/@aztec-foundation/l1-artifacts/l1-contracts/src/shared/libraries/SignatureLib.sol": "438b8c0cf4e760c12b90e8d485d1675104ed77d39d507097b8b92ac7bfef1cad",
       "node_modules/@aztec-foundation/l1-artifacts/l1-contracts/src/shared/libraries/TimeMath.sol": "eefd1773f655d8bfae082e7bb2fae011a647437d78643e002f8a541c06bdbb02",
-      "src/BillboardPortal.sol": "d51ff02b1855844f3f0f54eee9443b25967d9add43591a9e0fed2fee46302479",
+      "src/BillboardPortal.sol": "83db7b29b2bdf17f103a18e2c576fa414e789fe6bd5540eb66a995131f2b7e5c",
       "src/PortalMessages.sol": "8d04182a35d47eabb3da6cabb69012584d5b722ebddb295c6079e257644fb350"
     },
-    runtimeTemplate: "0x6080604052600436106100f2575f3560e01c8063c0b03d1311610087578063e1254fba11610057578063e1254fba146103ba578063e1e158a51461040f578063ff50abdc14610442578063ffa1ad7414610457575f5ffd5b8063c0b03d1314610314578063cb7fc7d414610335578063d28cb06f14610354578063dd5967c314610387575f5ffd5b80639299a4cc116100c25780639299a4cc146102535780639611c5c214610286578063b214faa5146102b9578063b7010697146102e1575f5ffd5b8063142a3da31461013a5780631b142ea71461019e5780632f90b184146101e95780635392fd1c1461022a575f5ffd5b366101365760405162461bcd60e51b815260206004820152600f60248201526e0aadce6ded8d2c6d2e8cac8408aa89608b1b60448201526064015b60405180910390fd5b5f5ffd5b348015610145575f5ffd5b5061015961015436600461108a565b61048a565b604051610195919081516001600160801b0316815260208083015190820152604080830151908201526060918201519181019190915260800190565b60405180910390f35b3480156101a9575f5ffd5b506101d17f000000000000000000000000000000000000000000000000000000000000000081565b6040516001600160a01b039091168152602001610195565b3480156101f4575f5ffd5b5061021c7f000000000000000000000000000000000000000000000000000000000000000081565b604051908152602001610195565b348015610235575f5ffd5b506003546102439060ff1681565b6040519015158152602001610195565b34801561025e575f5ffd5b5061021c7f000000000000000000000000000000000000000000000000000000000000000081565b348015610291575f5ffd5b506101d17f000000000000000000000000000000000000000000000000000000000000000081565b6102cc6102c73660046110b7565b61050f565b60408051928352602083019190915201610195565b3480156102ec575f5ffd5b506101d17f000000000000000000000000000000000000000000000000000000000000000081565b34801561031f575f5ffd5b5061033361032e3660046110ce565b6109cf565b005b348015610340575f5ffd5b5061033361034f3660046110ce565b610be7565b34801561035f575f5ffd5b5061021c7f000000000000000000000000000000000000000000000000000000000000000081565b348015610392575f5ffd5b5061021c7f000000000000000000000000000000000000000000000000000000000000000081565b3480156103c5575f5ffd5b506103f76103d436600461108a565b6001600160a01b03165f908152600160205260409020546001600160801b031690565b6040516001600160801b039091168152602001610195565b34801561041a575f5ffd5b5061021c7f000000000000000000000000000000000000000000000000000000000000000081565b34801561044d575f5ffd5b5061021c60025481565b348015610462575f5ffd5b5061021c7f000000000000000000000000000000000000000000000000000000000000000081565b6104ba60405180608001604052805f6001600160801b031681526020015f81526020015f81526020015f81525090565b506001600160a01b03165f90815260016020818152604092839020835160808101855281546001600160801b031681529281015491830191909152600281015492820192909252600390910154606082015290565b5f5f610519610d30565b7f000000000000000000000000000000000000000000000000000000000000000046146105785760405162461bcd60e51b815260206004820152600d60248201526c10da185a5b8818da185b99d959609a1b604482015260640161012d565b60035460ff166105be5760405162461bcd60e51b815260206004820152601160248201527011195c1bdcda5d1cc8191a5cd8589b1959607a1b604482015260640161012d565b7f00000000000000000000000000000000000000000000000000000000000000003410156106225760405162461bcd60e51b815260206004820152601160248201527010995b1bddc81b5a5b8819195c1bdcda5d607a1b604482015260640161012d565b7f00000000000000000000000000000000000000000000000000000000000000003411156106865760405162461bcd60e51b815260206004820152601160248201527010589bdd99481b585e0819195c1bdcda5d607a1b604482015260640161012d565b82158015906106b457507f30644e72e131a029b85045b68181585d2833e84879b9709143e1f593f000000183105b6106f65760405162461bcd60e51b8152602060048201526013602482015272092dcecc2d8d2c840e6cac6e4cae840d0c2e6d606b1b604482015260640161012d565b335f908152600160205260409020546001600160801b03161561075b5760405162461bcd60e51b815260206004820152601e60248201527f416c7265616479206861766520616e20616374697665206465706f7369740000604482015260640161012d565b335f90815260016020526040812080546001600160801b031916346001600160801b038116918217909255600280549293919290919061079c90849061116c565b925050819055507f00000000000000000000000000000000000000000000000000000000000000006001600160a01b0316631f6d510b60405180604001604052807f000000000000000000000000000000000000000000000000000000000000000081526020017f00000000000000000000000000000000000000000000000000000000000000008152506108965f7f0000000000000000000000000000000000000000000000000000000000000000307f00000000000000000000000000000000000000000000000000000000000000007f0000000000000000000000000000000000000000000000000000000000000000338a610d58565b6040516001600160e01b031960e085901b16815282516004820152602090920151602483015260448201526064810187905260840160408051808303815f875af11580156108e6573d5f5f3e3d5ffd5b505050506040513d601f19601f8201168201806040525081019061090a919061117f565b60408051608080820183526001600160801b0386811680845260208085018c815285870189815260608088018a8152335f8181526001808852908c90209a518b546001600160801b0319169916989098178a55935196890196909655905160028801559351600390960195909555855191825281018b9052938401869052830184905293965091945090917fd387ec9906cc390806c5cae9d53299c3459a901b63def34f50cdffaca6404e15910160405180910390a2506109ca60015f55565b915091565b6109d7610d30565b335f908152600160205260408120546001600160801b031690819003610a335760405162461bcd60e51b8152602060048201526011602482015270139bc81858dd1a5d994819195c1bdcda5d607a1b604482015260640161012d565b335f908152600160208190526040822080546001600160801b03191681559081018290556002808201839055600390910182905580546001600160801b0384169290610a809084906111a1565b90915550610b039050610af960017f0000000000000000000000000000000000000000000000000000000000000000307f00000000000000000000000000000000000000000000000000000000000000007f00000000000000000000000000000000000000000000000000000000000000003388610d58565b8787878787610e03565b6040515f9033906001600160801b038416908381818185875af1925050503d805f8114610b4b576040519150601f19603f3d011682016040523d82523d5f602084013e610b50565b606091505b5050905080610b975760405162461bcd60e51b8152602060048201526013602482015272115512081d1c985b9cd9995c8819985a5b1959606a1b604482015260640161012d565b6040516001600160801b038316815233907fab48b3d59a240196dc5bdd7f7a638fca310f8194c7d350c3dd7765861311ddf89060200160405180910390a25050610be060015f55565b5050505050565b610bef610d30565b60035460ff1615610c365760405162461bcd60e51b8152602060048201526011602482015270105b1c9958591e481858dd1a5d985d1959607a1b604482015260640161012d565b610cd0610cc67f0000000000000000000000000000000000000000000000000000000000000000307f00000000000000000000000000000000000000000000000000000000000000007f00000000000000000000000000000000000000000000000000000000000000007f0000000000000000000000000000000000000000000000000000000000000000610f84565b8686868686610e03565b6003805460ff191660011790556040517f0000000000000000000000000000000000000000000000000000000000000000907fe1abfe35306def8dbc83e3cb0bc76ffd144cee4ab7707b4e888afd4d24c2d6ca905f90a2610be060015f55565b60025f5403610d5257604051633ee5aeb560e01b815260040160405180910390fd5b60025f55565b5f610df788610d7b5770415a5445435f42425f434c41494d5f563160781b610d90565b6f415a5445435f42425f455849545f563160801b5b604080516020810192909252600190820152606081018990526001600160a01b03808916608083015260a0820188905260c08201879052851660e08201526001600160801b038416610100820152610120015b604051602081830303815290604052610fef565b98975050505050505050565b7f00000000000000000000000000000000000000000000000000000000000000004614610e625760405162461bcd60e51b815260206004820152600d60248201526c10da185a5b8818da185b99d959609a1b604482015260640161012d565b6040805160a0810182527f0000000000000000000000000000000000000000000000000000000000000000606082019081527f000000000000000000000000000000000000000000000000000000000000000060808301528152815180830183523081527f00000000000000000000000000000000000000000000000000000000000000006020828101919091528201528082018890529051632e5dd1df60e21b81527f00000000000000000000000000000000000000000000000000000000000000006001600160a01b03169063b977477c90610f4e9084908a908a908a908a908a906004016111b4565b5f604051808303815f87803b158015610f65575f5ffd5b505af1158015610f77573d5f5f3e3d5ffd5b5050505050505050505050565b6040805170415a5445435f42425f52454144595f563160781b6020820152600191810191909152606081018690526001600160a01b038516608082015260a0810184905260c0810183905260e081018290525f90610fe59061010001610de3565b9695505050505050565b6040805160018082528183019092525f916020820181803683370190505060028360405161101d9190611262565b602060405180830381855afa158015611038573d5f5f3e3d5ffd5b5050506040513d601f19601f8201168201806040525081019061105b919061126d565b60405160200161106c929190611284565b604051602081830303815290604052611084906112a2565b92915050565b5f6020828403121561109a575f5ffd5b81356001600160a01b03811681146110b0575f5ffd5b9392505050565b5f602082840312156110c7575f5ffd5b5035919050565b5f5f5f5f5f608086880312156110e2575f5ffd5b853594506020860135935060408601359250606086013567ffffffffffffffff81111561110d575f5ffd5b8601601f8101881361111d575f5ffd5b803567ffffffffffffffff811115611133575f5ffd5b8860208260051b8401011115611147575f5ffd5b959894975092955050506020019190565b634e487b7160e01b5f52601160045260245ffd5b8082018082111561108457611084611158565b5f5f60408385031215611190575f5ffd5b505080516020909101519092909150565b8181038181111561108457611084611158565b6111c981885180518252602090810151910152565b60208781015180516001600160a01b03166040848101919091529101516060830152870151608082015260a0810186905260c0810185905260e08101849052610120610100820181905281018290525f6001600160fb1b0383111561122c575f5ffd5b8260051b80856101408501379190910161014001979650505050505050565b5f81518060208401855e5f93019283525090919050565b5f6110b0828461124b565b5f6020828403121561127d575f5ffd5b5051919050565b5f61128f828561124b565b60ff199390931683525050601f01919050565b805160208083015191908110156112c2575f198160200360031b1b821691505b5091905056fea2646970667358221220059290469e28c5c1c9df386d5edb9406b10243d301623d35503ce04432e57a6864736f6c634300081b0033",
+    runtimeTemplate: "0x60806040526004361061011e575f3560e01c8063b70106971161009d578063e1254fba11610062578063e1254fba1461044b578063e1e158a5146104a0578063f961ade3146104d3578063ff50abdc146104fe578063ffa1ad7414610513575f5ffd5b8063b701069714610372578063c0b03d13146103a5578063cb7fc7d4146103c6578063d28cb06f146103e5578063dd5967c314610418575f5ffd5b80635392fd1c116100e35780635392fd1c1461029d5780639299a4cc146102c65780639611c5c2146102f9578063acf660041461032c578063b214faa51461035f575f5ffd5b8063142a3da3146101665780631b142ea7146101ca5780632f90b18414610215578063312a84cd14610256578063338781f914610275575f5ffd5b366101625760405162461bcd60e51b815260206004820152600f60248201526e0aadce6ded8d2c6d2e8cac8408aa89608b1b60448201526064015b60405180910390fd5b5f5ffd5b348015610171575f5ffd5b506101856101803660046116f0565b610546565b6040516101c1919081516001600160801b0316815260208083015190820152604080830151908201526060918201519181019190915260800190565b60405180910390f35b3480156101d5575f5ffd5b506101fd7f000000000000000000000000000000000000000000000000000000000000000081565b6040516001600160a01b0390911681526020016101c1565b348015610220575f5ffd5b506102487f000000000000000000000000000000000000000000000000000000000000000081565b6040519081526020016101c1565b348015610261575f5ffd5b50610248610270366004611709565b6105c9565b61028861028336600461175a565b610712565b604080519283526020830191909152016101c1565b3480156102a8575f5ffd5b506004546102b69060ff1681565b60405190151581526020016101c1565b3480156102d1575f5ffd5b506102487f000000000000000000000000000000000000000000000000000000000000000081565b348015610304575f5ffd5b506101fd7f000000000000000000000000000000000000000000000000000000000000000081565b348015610337575f5ffd5b506102487f68c39ea23cd0ceb8cdddfd4de7049a0554c0db1068136dcdfb41d11826ac94fb81565b61028861036d3660046117f4565b6108c1565b34801561037d575f5ffd5b506101fd7f000000000000000000000000000000000000000000000000000000000000000081565b3480156103b0575f5ffd5b506103c46103bf36600461180b565b6108e7565b005b3480156103d1575f5ffd5b506103c46103e036600461180b565b610afe565b3480156103f0575f5ffd5b506102487f000000000000000000000000000000000000000000000000000000000000000081565b348015610423575f5ffd5b506102487f000000000000000000000000000000000000000000000000000000000000000081565b348015610456575f5ffd5b506104886104653660046116f0565b6001600160a01b03165f908152600260205260409020546001600160801b031690565b6040516001600160801b0390911681526020016101c1565b3480156104ab575f5ffd5b506102487f000000000000000000000000000000000000000000000000000000000000000081565b3480156104de575f5ffd5b506102486104ed3660046116f0565b60016020525f908152604090205481565b348015610509575f5ffd5b5061024860035481565b34801561051e575f5ffd5b506102487f000000000000000000000000000000000000000000000000000000000000000081565b61057660405180608001604052805f6001600160801b031681526020015f81526020015f81526020015f81525090565b506001600160a01b03165f90815260026020818152604092839020835160808101855281546001600160801b03168152600182015492810192909252918201549281019290925260030154606082015290565b604080517f8b73c3c69bb8fe3d512ecc4cf759cc79239f7b179b0ffacaa9a75d522b39400f6020808301919091527f8c30e2326f6955b482eef26e6d0f12e410e4abc4400eb476aebf36471bcca991828401527fc89efdaa54c0f20c7adf612882df0950f5a951637e0307cdcb4c672f298b8bc660608301524660808301523060a0808401919091528351808403909101815260c0830184528051908201207f68c39ea23cd0ceb8cdddfd4de7049a0554c0db1068136dcdfb41d11826ac94fb60e08401526001600160a01b038a811661010085015289166101208401526101408301889052610160830187905261018083018690526101a0808401869052845180850390910181526101c0840194859052805192019190912061190160f01b84526101c283018290526101e29092019190915260429091205f91905b98975050505050505050565b5f5f61071c610c47565b6001600160a01b038816158015906107345750844211155b6107805760405162461bcd60e51b815260206004820152601760248201527f496e76616c6964206465706f73697420636f6e73656e740000000000000000006044820152606401610159565b6001600160a01b0388165f9081526001602052604090205486146107de5760405162461bcd60e51b8152602060048201526015602482015274496e76616c6964206465706f736974206e6f6e636560581b6044820152606401610159565b5f6107ed8933348b8b8b6105c9565b905061082f898287878080601f0160208091040260200160405190810160405280939291908181526020018383808284375f92019190915250610c6f92505050565b61087b5760405162461bcd60e51b815260206004820152601960248201527f496e76616c6964206465706f736974207369676e6174757265000000000000006044820152606401610159565b6108868760016118a9565b6001600160a01b038a165f908152600160205260409020556108a88989610ce2565b92509250506108b660015f55565b965096945050505050565b5f5f6108cb610c47565b6108d53384610ce2565b915091506108e260015f55565b915091565b6108ef610c47565b335f908152600260205260408120546001600160801b03169081900361094b5760405162461bcd60e51b8152602060048201526011602482015270139bc81858dd1a5d994819195c1bdcda5d607a1b6044820152606401610159565b335f908152600260208190526040822080546001600160801b031916815560018101839055908101829055600390810182905580546001600160801b03841692906109979084906118bc565b90915550610a1a9050610a1060017f0000000000000000000000000000000000000000000000000000000000000000307f00000000000000000000000000000000000000000000000000000000000000007f000000000000000000000000000000000000000000000000000000000000000033886111c8565b8787878787611267565b6040515f9033906001600160801b038416908381818185875af1925050503d805f8114610a62576040519150601f19603f3d011682016040523d82523d5f602084013e610a67565b606091505b5050905080610aae5760405162461bcd60e51b8152602060048201526013602482015272115512081d1c985b9cd9995c8819985a5b1959606a1b6044820152606401610159565b6040516001600160801b038316815233907fab48b3d59a240196dc5bdd7f7a638fca310f8194c7d350c3dd7765861311ddf89060200160405180910390a25050610af760015f55565b5050505050565b610b06610c47565b60045460ff1615610b4d5760405162461bcd60e51b8152602060048201526011602482015270105b1c9958591e481858dd1a5d985d1959607a1b6044820152606401610159565b610be7610bdd7f0000000000000000000000000000000000000000000000000000000000000000307f00000000000000000000000000000000000000000000000000000000000000007f00000000000000000000000000000000000000000000000000000000000000007f00000000000000000000000000000000000000000000000000000000000000006113e8565b8686868686611267565b6004805460ff191660011790556040517f0000000000000000000000000000000000000000000000000000000000000000907fe1abfe35306def8dbc83e3cb0bc76ffd144cee4ab7707b4e888afd4d24c2d6ca905f90a2610af760015f55565b60025f5403610c6957604051633ee5aeb560e01b815260040160405180910390fd5b60025f55565b5f836001600160a01b03163b5f03610ccd575f5f610c8d8585611453565b5090925090505f816003811115610ca657610ca66118cf565b148015610cc45750856001600160a01b0316826001600160a01b0316145b92505050610cdb565b610cd884848461149c565b90505b9392505050565b5f5f7f00000000000000000000000000000000000000000000000000000000000000004614610d435760405162461bcd60e51b815260206004820152600d60248201526c10da185a5b8818da185b99d959609a1b6044820152606401610159565b60045460ff16610d895760405162461bcd60e51b815260206004820152601160248201527011195c1bdcda5d1cc8191a5cd8589b1959607a1b6044820152606401610159565b7f0000000000000000000000000000000000000000000000000000000000000000341015610ded5760405162461bcd60e51b815260206004820152601160248201527010995b1bddc81b5a5b8819195c1bdcda5d607a1b6044820152606401610159565b7f0000000000000000000000000000000000000000000000000000000000000000341115610e515760405162461bcd60e51b815260206004820152601160248201527010589bdd99481b585e0819195c1bdcda5d607a1b6044820152606401610159565b8215801590610e7f57507f30644e72e131a029b85045b68181585d2833e84879b9709143e1f593f000000183105b610ec15760405162461bcd60e51b8152602060048201526013602482015272092dcecc2d8d2c840e6cac6e4cae840d0c2e6d606b1b6044820152606401610159565b6001600160a01b0384165f908152600260205260409020546001600160801b031615610f2f5760405162461bcd60e51b815260206004820152601e60248201527f416c7265616479206861766520616e20616374697665206465706f73697400006044820152606401610159565b6001600160a01b0384165f90815260026020526040812080546001600160801b031916346001600160801b0381169182179092556003805492939192909190610f799084906118a9565b925050819055507f00000000000000000000000000000000000000000000000000000000000000006001600160a01b0316631f6d510b60405180604001604052807f000000000000000000000000000000000000000000000000000000000000000081526020017f00000000000000000000000000000000000000000000000000000000000000008152506110735f7f0000000000000000000000000000000000000000000000000000000000000000307f00000000000000000000000000000000000000000000000000000000000000007f00000000000000000000000000000000000000000000000000000000000000008d8a6111c8565b6040516001600160e01b031960e085901b16815282516004820152602090920151602483015260448201526064810187905260840160408051808303815f875af11580156110c3573d5f5f3e3d5ffd5b505050506040513d601f19601f820116820180604052508101906110e791906118e3565b604080516080810182526001600160801b03808616825260208083018a8152838501878152606085018781526001600160a01b038e165f8181526002958690528890209651875496166001600160801b0319909616959095178655915160018601555191840191909155516003909201919091559051929550909350907fd387ec9906cc390806c5cae9d53299c3459a901b63def34f50cdffaca6404e15906111b89084908890889088906001600160801b0394909416845260208401929092526040830152606082015260800190565b60405180910390a2509250929050565b5f610706886111eb5770415a5445435f42425f434c41494d5f563160781b611200565b6f415a5445435f42425f455849545f563160801b5b604080516020810192909252600190820152606081018990526001600160a01b03808916608083015260a0820188905260c08201879052851660e08201526001600160801b038416610100820152610120015b604051602081830303815290604052611572565b7f000000000000000000000000000000000000000000000000000000000000000046146112c65760405162461bcd60e51b815260206004820152600d60248201526c10da185a5b8818da185b99d959609a1b6044820152606401610159565b6040805160a0810182527f0000000000000000000000000000000000000000000000000000000000000000606082019081527f000000000000000000000000000000000000000000000000000000000000000060808301528152815180830183523081527f00000000000000000000000000000000000000000000000000000000000000006020828101919091528201528082018890529051632e5dd1df60e21b81527f00000000000000000000000000000000000000000000000000000000000000006001600160a01b03169063b977477c906113b29084908a908a908a908a908a90600401611905565b5f604051808303815f87803b1580156113c9575f5ffd5b505af11580156113db573d5f5f3e3d5ffd5b5050505050505050505050565b6040805170415a5445435f42425f52454144595f563160781b6020820152600191810191909152606081018690526001600160a01b038516608082015260a0810184905260c0810183905260e081018290525f906114499061010001611253565b9695505050505050565b5f5f5f835160410361148a576020840151604085015160608601515f1a61147c8882858561160d565b955095509550505050611495565b505081515f91506002905b9250925092565b5f5f5f856001600160a01b031685856040516024016114bc92919061199c565b60408051601f198184030181529181526020820180516001600160e01b0316630b135d3f60e11b179052516114f191906119ef565b5f60405180830381855afa9150503d805f8114611529576040519150601f19603f3d011682016040523d82523d5f602084013e61152e565b606091505b509150915081801561154257506020815110155b801561144957508051630b135d3f60e11b9061156790830160209081019084016119fa565b149695505050505050565b6040805160018082528183019092525f91602082018180368337019050506002836040516115a091906119ef565b602060405180830381855afa1580156115bb573d5f5f3e3d5ffd5b5050506040513d601f19601f820116820180604052508101906115de91906119fa565b6040516020016115ef929190611a11565b60405160208183030381529060405261160790611a2f565b92915050565b5f80807f7fffffffffffffffffffffffffffffff5d576e7357a4501ddfe92f46681b20a084111561164657505f915060039050826116cb565b604080515f808252602082018084528a905260ff891692820192909252606081018790526080810186905260019060a0016020604051602081039080840390855afa158015611697573d5f5f3e3d5ffd5b5050604051601f1901519150506001600160a01b0381166116c257505f9250600191508290506116cb565b92505f91508190505b9450945094915050565b80356001600160a01b03811681146116eb575f5ffd5b919050565b5f60208284031215611700575f5ffd5b610cdb826116d5565b5f5f5f5f5f5f60c0878903121561171e575f5ffd5b611727876116d5565b9550611735602088016116d5565b95989597505050506040840135936060810135936080820135935060a0909101359150565b5f5f5f5f5f5f60a0878903121561176f575f5ffd5b611778876116d5565b9550602087013594506040870135935060608701359250608087013567ffffffffffffffff8111156117a8575f5ffd5b8701601f810189136117b8575f5ffd5b803567ffffffffffffffff8111156117ce575f5ffd5b8960208284010111156117df575f5ffd5b60208201935080925050509295509295509295565b5f60208284031215611804575f5ffd5b5035919050565b5f5f5f5f5f6080868803121561181f575f5ffd5b853594506020860135935060408601359250606086013567ffffffffffffffff81111561184a575f5ffd5b8601601f8101881361185a575f5ffd5b803567ffffffffffffffff811115611870575f5ffd5b8860208260051b8401011115611884575f5ffd5b959894975092955050506020019190565b634e487b7160e01b5f52601160045260245ffd5b8082018082111561160757611607611895565b8181038181111561160757611607611895565b634e487b7160e01b5f52602160045260245ffd5b5f5f604083850312156118f4575f5ffd5b505080516020909101519092909150565b61191a81885180518252602090810151910152565b60208781015180516001600160a01b03166040848101919091529101516060830152870151608082015260a0810186905260c0810185905260e08101849052610120610100820181905281018290525f6001600160fb1b0383111561197d575f5ffd5b8260051b80856101408501379190910161014001979650505050505050565b828152604060208201525f82518060408401528060208501606085015e5f606082850101526060601f19601f8301168401019150509392505050565b5f81518060208401855e5f93019283525090919050565b5f610cdb82846119d8565b5f60208284031215611a0a575f5ffd5b5051919050565b5f611a1c82856119d8565b60ff199390931683525050601f01919050565b80516020808301519190811015611a4f575f198160200360031b1b821691505b5091905056fea2646970667358221220fca0f0f2c17a8e9658ca38b539e6f5a183d6a6a009be71d337bb2abccb4b792864736f6c634300081b0033",
     immutables: {
       MIN_DEPOSIT: [
         {
-          start: 1056,
+          start: 1201,
           length: 32
         },
         {
-          start: 1472,
+          start: 3467,
           length: 32
         }
       ],
       MAX_DEPOSIT: [
         {
-          start: 920,
+          start: 1065,
           length: 32
         },
         {
-          start: 1572,
+          start: 3567,
           length: 32
         }
       ],
       L2_CONTRACT: [
         {
-          start: 612,
+          start: 727,
           length: 32
         },
         {
-          start: 2015,
+          start: 2505,
           length: 32
         },
         {
-          start: 2127,
+          start: 2935,
           length: 32
         },
         {
-          start: 2738,
+          start: 4028,
           length: 32
         },
         {
-          start: 3168,
+          start: 4140,
           length: 32
         },
         {
-          start: 3694,
+          start: 4818,
           length: 32
         }
       ],
       ROLLUP: [
         {
-          start: 663,
+          start: 778,
           length: 32
         }
       ],
       INBOX: [
         {
-          start: 754,
+          start: 899,
           length: 32
         },
         {
-          start: 1957,
+          start: 3970,
           length: 32
         }
       ],
       OUTBOX: [
         {
-          start: 431,
+          start: 475,
           length: 32
         },
         {
-          start: 3847,
+          start: 4971,
           length: 32
         }
       ],
       VERSION: [
         {
-          start: 1128,
+          start: 1316,
           length: 32
         },
         {
-          start: 2053,
+          start: 2538,
           length: 32
         },
         {
-          start: 2160,
+          start: 2968,
           length: 32
         },
         {
-          start: 2771,
+          start: 4066,
           length: 32
         },
         {
-          start: 3201,
+          start: 4173,
           length: 32
         },
         {
-          start: 3734,
+          start: 4858,
           length: 32
         }
       ],
       L1_CHAIN_ID: [
         {
-          start: 506,
+          start: 550,
           length: 32
         },
         {
-          start: 1307,
+          start: 2471,
           length: 32
         },
         {
-          start: 2093,
+          start: 2901,
           length: 32
         },
         {
-          start: 2704,
+          start: 3302,
           length: 32
         },
         {
-          start: 3134,
+          start: 4106,
           length: 32
         },
         {
-          start: 3589,
+          start: 4713,
           length: 32
         },
         {
-          start: 3784,
+          start: 4908,
           length: 32
         }
       ],
       CONFIG_HASH: [
         {
-          start: 869,
+          start: 1014,
           length: 32
         },
         {
-          start: 3234,
+          start: 3001,
           length: 32
         },
         {
-          start: 3298,
+          start: 3065,
           length: 32
         }
       ]
@@ -474577,8 +475610,8 @@ mod tests {
   init_process2();
   function createPrivateFeeSimulator(wallet, node2) {
     async function privateSimulation(payload, from, gasSettings) {
-      const fee = await wallet.completeFeeOptions({ from, feePayer: payload.feePayer, gasSettings, forEstimation: true });
-      const request = await wallet.createTxExecutionRequestFromPayloadAndFee(payload, from, fee);
+      const fee2 = await wallet.completeFeeOptions({ from, feePayer: payload.feePayer, gasSettings, forEstimation: true });
+      const request = await wallet.createTxExecutionRequestFromPayloadAndFee(payload, from, fee2);
       return wallet.pxe.simulateTx(request, {
         simulatePublic: false,
         skipTxValidation: true,
@@ -474600,21 +475633,21 @@ mod tests {
 
   // shared/private-fee-estimation.mjs
   var dimensions = ["daGas", "l2Gas"];
-  var fail11 = (code) => Object.assign(new Error(code), { code });
+  var fail12 = (code) => Object.assign(new Error(code), { code });
   var min = (a, b2) => a < b2 ? a : b2;
   var successful = (r) => r.publicInputs && (!r.publicInputs.forPublic || r.publicOutput?.txEffect?.revertCode?.isOK()) && !r.publicOutput?.revertReason;
   var outOfGas = (e) => /^(?:Out of gas(?: exception)?(?::|$)|Not enough (?:DAGAS|L2GAS)(?:, (?:DAGAS|L2GAS))? gas left$)/i.test(e?.getOriginalMessage?.() ?? "");
-  function refundExhausted(error312, prepared) {
+  function refundExhausted(error312, prepared2) {
     const stack = error312?.getCallStack?.(), frame = stack?.[0];
-    return stack?.length === 1 && outOfGas(error312) && frame?.contractAddress?.toString() === prepared.paymentMethod.address.toString() && frame?.functionSelector?.toString() === prepared.refundSelector;
+    return stack?.length === 1 && outOfGas(error312) && frame?.contractAddress?.toString() === prepared2.paymentMethod.address.toString() && frame?.functionSelector?.toString() === prepared2.refundSelector;
   }
   function cost(gas, prices) {
     return BigInt(gas.daGas) * prices.feePerDaGas + BigInt(gas.l2Gas) * prices.feePerL2Gas;
   }
-  function allocate(budget, lower3, caps, prices) {
-    const rates = [prices.feePerDaGas, prices.feePerL2Gas], values = dimensions.map((k) => lower3[k]);
-    if (dimensions.some((k) => lower3[k] > caps[k]) || cost(lower3, prices) > budget) return null;
-    let remaining = budget - cost(lower3, prices);
+  function allocate(budget, lower4, caps, prices) {
+    const rates = [prices.feePerDaGas, prices.feePerL2Gas], values = dimensions.map((k) => lower4[k]);
+    if (dimensions.some((k) => lower4[k] > caps[k]) || cost(lower4, prices) > budget) return null;
+    let remaining = budget - cost(lower4, prices);
     const needs = dimensions.map((k, i) => BigInt(caps[k] - values[i]) * rates[i]), total = needs[0] + needs[1];
     for (let i = 0; i < 2; i++) if (rates[i] === 0n) values[i] = caps[dimensions[i]];
     else if (total) values[i] += Number(min(needs[i], remaining * needs[i] / total) / rates[i]);
@@ -474626,14 +475659,14 @@ mod tests {
     }
     return new Gas(...values);
   }
-  async function estimatePrivateFeeTransaction({ wallet, node: node2, interaction, prepared, from, guard = () => {
+  async function estimatePrivateFeeTransaction({ wallet, node: node2, interaction, prepared: prepared2, from, guard = () => {
   }, simulator = createPrivateFeeSimulator(wallet, node2) }) {
-    const ceiling = GasSettings.from(prepared.gasSettings), available = BigInt(prepared.availableCredit), network = (await node2.getNodeInfo()).txsLimits.gas;
+    const ceiling = GasSettings.from(prepared2.gasSettings), available = BigInt(prepared2.availableCredit), network = (await node2.getNodeInfo()).txsLimits.gas;
     const caps = new Gas(Math.min(ceiling.gasLimits.daGas, network.daGas, MAX_TX_DA_GAS), Math.min(ceiling.gasLimits.l2Gas, network.l2Gas, MAX_PROCESSABLE_L2_GAS));
     const settings = (gasLimits, teardownGasLimits) => GasSettings.from({ gasLimits, teardownGasLimits, maxFeesPerGas: ceiling.maxFeesPerGas, maxPriorityFeesPerGas: ceiling.maxPriorityFeesPerGas });
     const maximum = min(available, cost(caps, ceiling.maxFeesPerGas) + 1n), application = await interaction.request();
-    if (available <= 0n) throw fail11("PRIVATE_FEE_BALANCE_INSUFFICIENT");
-    const payloadFor = async (reservation2) => mergeExecutionPayloads([await prepared.paymentMethod.withReservation(reservation2).getExecutionPayload(), application]);
+    if (available <= 0n) throw fail12("PRIVATE_FEE_BALANCE_INSUFFICIENT");
+    const payloadFor = async (reservation2) => mergeExecutionPayloads([await prepared2.paymentMethod.withReservation(reservation2).getExecutionPayload(), application]);
     const privateSettings = GasSettings.forEstimation({ maxFeesPerGas: GasFees.empty(), maxPriorityFeesPerGas: GasFees.empty() });
     privateSettings.teardownGasLimits = Gas.empty();
     await guard();
@@ -474642,8 +475675,8 @@ mod tests {
     for (let pass = 0; pass < 8; pass++) {
       await guard();
       const payload = await payloadFor(reservation);
-      const privateResult = await simulator.private(payload, from, privateSettings), lower3 = privateResult.gasUsed.totalGas;
-      const gasLimits = allocate(reservation - 1n, lower3, caps, ceiling.maxFeesPerGas);
+      const privateResult = await simulator.private(payload, from, privateSettings), lower4 = privateResult.gasUsed.totalGas;
+      const gasLimits = allocate(reservation - 1n, lower4, caps, ceiling.maxFeesPerGas);
       if (gasLimits) {
         let probe;
         try {
@@ -474653,16 +475686,16 @@ mod tests {
         }
         if (probe) {
           const error312 = probe.publicOutput?.revertReason;
-          if (error312 && !refundExhausted(error312, prepared)) {
+          if (error312 && !refundExhausted(error312, prepared2)) {
             if (!outOfGas(error312)) throw error312;
-          } else if (!probe.publicInputs || !probe.publicOutput) throw fail11("BB_SIMULATION_FAILED");
+          } else if (!probe.publicInputs || !probe.publicOutput) throw fail12("BB_SIMULATION_FAILED");
           else {
             const main = probe.gasUsed.totalGas;
             const teardown = new Gas(...dimensions.map((k) => Math.max(0, Math.min(ceiling.teardownGasLimits[k], gasLimits[k] - main[k]))));
             const full = await simulator.public(payload, from, settings(gasLimits, teardown));
             if (successful(full)) {
               let limits = getGasLimits(full.gasUsed, caps, 0.1);
-              if (dimensions.some((k) => full.gasUsed.teardownGas[k] > ceiling.teardownGasLimits[k])) throw fail11("BB_GAS_LIMIT_EXCEEDED");
+              if (dimensions.some((k) => full.gasUsed.teardownGas[k] > ceiling.teardownGasLimits[k])) throw fail12("BB_GAS_LIMIT_EXCEEDED");
               for (const k of dimensions) limits.teardownGasLimits[k] = Math.min(limits.teardownGasLimits[k], ceiling.teardownGasLimits[k]);
               if (cost(limits.gasLimits, ceiling.maxFeesPerGas) > available) limits = getGasLimits(full.gasUsed, caps, 0);
               const gasSettings = settings(limits.gasLimits, limits.teardownGasLimits), required7 = gasSettings.getFeeLimit().toBigInt();
@@ -474670,19 +475703,19 @@ mod tests {
                 const finalReservation = required7 || 1n, finalPayload = await payloadFor(finalReservation);
                 await guard();
                 const final = await simulator.public(finalPayload, from, gasSettings, true);
-                if (!successful(final)) throw final.publicOutput?.revertReason ?? fail11("BB_SIMULATION_FAILED");
-                if (dimensions.some((k) => final.gasUsed.totalGas[k] > gasSettings.gasLimits[k] || final.gasUsed.teardownGas[k] > gasSettings.teardownGasLimits[k])) throw fail11("BB_GAS_LIMIT_EXCEEDED");
+                if (!successful(final)) throw final.publicOutput?.revertReason ?? fail12("BB_SIMULATION_FAILED");
+                if (dimensions.some((k) => final.gasUsed.totalGas[k] > gasSettings.gasLimits[k] || final.gasUsed.teardownGas[k] > gasSettings.teardownGasLimits[k])) throw fail12("BB_GAS_LIMIT_EXCEEDED");
                 await guard();
                 return { payload: finalPayload, gasSettings, reservation: finalReservation, maximumFee: required7, passes: pass + 1 };
               }
-            } else if (!outOfGas(full.publicOutput?.revertReason)) throw full.publicOutput?.revertReason ?? fail11("BB_SIMULATION_FAILED");
+            } else if (!outOfGas(full.publicOutput?.revertReason)) throw full.publicOutput?.revertReason ?? fail12("BB_SIMULATION_FAILED");
           }
         }
       }
       if (reservation === maximum) break;
       reservation = min(maximum, reservation * 2n);
     }
-    throw fail11("BB_FEE_ESTIMATION_UNSTABLE");
+    throw fail12("BB_FEE_ESTIMATION_UNSTABLE");
   }
   async function sendPrivateFeeTransaction(input2) {
     const estimated = await estimatePrivateFeeTransaction(input2);
