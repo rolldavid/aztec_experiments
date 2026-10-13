@@ -1156,8 +1156,8 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
             },action,readPreferences:options=>actorA.application.readPreferences(options),activity:()=>actorA.activity(),deadlineAt:ctx.applicationDeadlineAt});
           preferenceCheckpoint=result.checkpoint;report.preferences=result.observation;
         }else{
-        const result=await exerciseRollingPreferences({proofsEnabled:real,mode,root:ids.rootId,name:ids.nameId,rootBlock:Number(rootPosition.blockNumber),rootHash:rootPosition.blockHash,
-          action,readPreferences:options=>actorA.application.readPreferences(options),activity:()=>actorA.activity(),deadlineAt:ctx.applicationDeadlineAt});
+        const result=await exerciseRollingPreferences({mode,root:ids.rootId,name:ids.nameId,rootBlock:Number(rootPosition.blockNumber),rootHash:rootPosition.blockHash,
+          proofsEnabled:real,action,readPreferences:options=>actorA.application.readPreferences(options),activity:()=>actorA.activity(),deadlineAt:ctx.applicationDeadlineAt});
         preferenceCheckpoint=result.checkpoint;report.preferences=result.observation;
         }
         const expectedNames=ids.nameId?{[ids.nameId]:projection.identity(ids.nameId)}:{};
