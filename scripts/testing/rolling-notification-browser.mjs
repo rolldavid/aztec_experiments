@@ -95,14 +95,14 @@ export async function readNotificationReply(directory,rootId){
 }
 
 // Shared with production-panel DOM regression; callbacks observe the phase only.
-export async function reviewRollingNotificationAction({dialog:d,remaining,settled,reviewText,onReviewed,onConfirm,onConfirmed,recover}){
- await settled(d.getByRole('button',{name:'Check action and review fee',exact:true}));
+export async function reviewRollingNotificationAction({dialog:d,remaining,settled,reviewText,onReviewed,onConfirm,onConfirmed,recover,onStep=()=>{}}){
+ onStep('fee-review');await settled(d.getByRole('button',{name:'Check action and review fee',exact:true}));
  await d.getByRole('button',{name:'Check action and review fee',exact:true}).click({timeout:remaining()});await settled(d.getByRole('button',{name:'Confirm and send',exact:true}));
  await d.getByText(reviewText,{exact:true}).waitFor({timeout:remaining()});
  check(await d.getByText(/^Maximum network fee: [1-9][0-9]* fee-juice units\. This is a maximum, not a guaranteed final charge\.$/).count()===1);
- onReviewed();onConfirm();await d.getByRole('button',{name:'Confirm and send',exact:true}).click({timeout:remaining()});
- await settled(d.getByText('Transaction confirmed on the verified chain.',{exact:true}));onConfirmed();
- const privateViews=d.getByRole('button',{name:'Private views',exact:true});await settled(privateViews);await privateViews.click({timeout:remaining()});await recover();
+ onReviewed();onConfirm();onStep('send');await d.getByRole('button',{name:'Confirm and send',exact:true}).click({timeout:remaining()});
+ onStep('confirmation');await settled(d.getByText('Transaction confirmed on the verified chain.',{exact:true}));onConfirmed();
+ const privateViews=d.getByRole('button',{name:'Private views',exact:true});onStep('private-navigation-ready');await settled(privateViews);onStep('private-navigation-click');await privateViews.click({timeout:remaining()});onStep('private-recovery');await recover();onStep('recovered');
 }
 
 // Fee-only is checked only after the user explicitly opens an action. Cold
@@ -138,7 +138,7 @@ export function finalizeRollingNotificationReport(report,{traffic,stage,elapsedM
 }
 export async function runRollingNotificationBrowser(input){
  const started=Date.now();let stage='validation',browser,context,page,timer,expiresAt,expired=false,observer,proofsEnabled=true;
- const report={schemaVersion:1,passed:false,diagnostic:null,failureCategory:null,checks:Object.fromEntries(NOTIFICATION_BROWSER_CHECKS.map(k=>[k,false])),recoverySteps:0,coldRecovery:{windows:0,compactRequests:0,tagDiscoveryRequests:0},traffic:null,cleanup:{contextClosed:false,browserClosed:false}};
+ const report={schemaVersion:1,passed:false,diagnostic:null,actionStep:null,failureKind:null,failureCategory:null,checks:Object.fromEntries(NOTIFICATION_BROWSER_CHECKS.map(k=>[k,false])),recoverySteps:0,coldRecovery:{windows:0,compactRequests:0,tagDiscoveryRequests:0},traffic:null,cleanup:{contextClosed:false,browserClosed:false}};
  try{
   const {directory,onStage=()=>{},...control}=input;check(typeof onStage==='function');const c=await validateRollingNotificationBrowserControl(control,{directory});
   proofsEnabled=c.proofsEnabled;report.proofsEnabled=proofsEnabled;observer=createRollingNotificationTraffic({origin:c.origin,trustedOrigin:c.trustedOrigin,ethereumOrigin:c.ethereumOrigin},{proofsEnabled});expiresAt=started+c.timeoutMs;
@@ -164,8 +164,8 @@ export async function runRollingNotificationBrowser(input){
   async function settled(ready){const state=await waitForRollingComposerState({dialog:dialog(),ready,remaining});if(state!=='ready'){report.diagnostic=state;throw failed();}}
   async function recover({before=traffic(),requireCompact=false}={}){
    const d=dialog(),done=d.getByText('Your saved choices are ready.',{exact:true}),more=d.getByRole('button',{name:'Continue private recovery',exact:true});
-   let next=d.getByRole('button',{name:'Recover private views',exact:true});await settled(next);
-   for(;;){await next.click({timeout:remaining()});report.recoverySteps++;await settled(done.or(more));unchanged(before);if(await done.isVisible())break;check(await page.locator('#content article.post').count()===0);next=more;}
+   let next=d.getByRole('button',{name:'Recover private views',exact:true});report.actionStep='recovery-ready';await settled(next);
+   for(;;){report.actionStep='recovery-click';await next.click({timeout:remaining()});report.recoverySteps++;report.actionStep='recovery-result';await settled(done.or(more));unchanged(before);if(await done.isVisible())break;check(await page.locator('#content article.post').count()===0);next=more;}
    check(await page.evaluate(async()=>(await indexedDB.databases()).length>0));
    const window=checkRollingColdRecoveryWindow(before,traffic(),{requireCompact});
    for(const key of ['windows','compactRequests','tagDiscoveryRequests'])report.coldRecovery[key]+=window[key];
@@ -180,7 +180,7 @@ export async function runRollingNotificationBrowser(input){
    await dialog().getByLabel('Recovery password',{exact:true}).fill(c.backupPassword,{timeout:remaining()});await dialog().getByLabel('Recovery file',{exact:true}).setInputFiles(c.backupPath,{timeout:remaining()});
    await dialog().getByRole('button',{name:'Import recovery',exact:true}).click({timeout:remaining()});await settled(dialog().getByRole('button',{name:'Recover private views',exact:true}));
    await recover({before,requireCompact:true});unchanged(before);
-   await dialog().getByRole('button',{name:'Close account panel',exact:true}).click({timeout:remaining()});
+   report.actionStep='close-recovered-panel';await dialog().getByRole('button',{name:'Close account panel',exact:true}).click({timeout:remaining()});
   }
   // Parent fixture has exactly two public posts; no page filtering or skipped
   // cursor can turn missing data into suppression. Read ONLY public response JSON.
@@ -193,11 +193,11 @@ export async function runRollingNotificationBrowser(input){
   }
   async function reviewSend(kind,reviewText){
    let recoveryBefore;
-   await reviewRollingNotificationAction({dialog:dialog(),remaining,settled,reviewText,
+   await reviewRollingNotificationAction({dialog:dialog(),remaining,settled,reviewText,onStep:step=>{report.actionStep=step;},
     onReviewed:()=>{check(!traffic().writePhaseOpen);report.checks[kind==='subscription'?'subscriptionReviewed':'markerReviewed']=true;},
     onConfirm:()=>{observer.begin(kind);mark(kind==='subscription'?'subscribe-send':'marker-send');},
     onConfirmed:()=>{observer.end();recoveryBefore=traffic();report.checks[kind==='subscription'?'subscriptionConfirmed':'markerConfirmed']=true;},recover:()=>recover({before:recoveryBefore})});
-   await dialog().getByRole('button',{name:'Close account panel',exact:true}).click({timeout:remaining()});
+   report.actionStep='close-recovered-panel';await dialog().getByRole('button',{name:'Close account panel',exact:true}).click({timeout:remaining()});
   }
   mark('locked');await importKeys();report.checks.freshNativeDatabase=true;report.checks.publicBeforeUnlock=true;
   mark('root-view');await view('Main board',[c.expected.rootId]);const root=()=>page.locator('#post-'+c.expected.rootId);mark('root-message');await assertRollingNotificationPostText(root(),c.expected.rootText);
@@ -226,7 +226,7 @@ export async function runRollingNotificationBrowser(input){
   await context.close();context=null;mark('reopen');await newContext();await importKeys();report.checks.freshReopen=true;
   await suppressed();report.checks.recoveredSuppression=true;unchanged(beforeRecovery);report.checks.noFinancialRecovery=true;
   const t=traffic();check(t.proofSubmits===(proofsEnabled?2:0)&&t.nodeSubmissions===2&&t.completedWritePhases===2&&!t.writePhaseOpen);mark('complete');report.passed=true;
- }catch{report.passed=false;report.failureCategory='browser-check-failed';if(expiresAt!==undefined&&Date.now()>=expiresAt)expired=true;}
+ }catch(error){try{const name=Object.getOwnPropertyDescriptor(error??{},'name')?.value;report.failureKind=['TimeoutError','TypeError','ReferenceError','AssertionError','Error'].includes(name)?name:'unknown';}catch{report.failureKind='unknown';}report.passed=false;report.failureCategory='browser-check-failed';if(expiresAt!==undefined&&Date.now()>=expiresAt)expired=true;}
  finally{clearTimeout(timer);if(context)try{await context.close();report.cleanup.contextClosed=true;}catch{report.passed=false;}else report.cleanup.contextClosed=true;
   if(browser)try{await browser.close();report.cleanup.browserClosed=!browser.isConnected();if(!report.cleanup.browserClosed)report.passed=false;}catch{report.passed=false;}else report.cleanup.browserClosed=true;}
  if(expiresAt!==undefined&&Date.now()>=expiresAt)expired=true;
