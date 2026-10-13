@@ -85,3 +85,23 @@ test('publication lost acknowledgement reconciles the exact accepted receipt wit
  const second=await h.open(2,1,threadRepositories(options));assert.equal(second.readRevision,firstReceipt.acceptedRevision);assert.equal(calls,2);assert.equal(validations,1);await second.close();
  const third=await h.open(3,1,threadRepositories(options));assert.equal(calls,2);await third.close();
 });
+
+test('actual isolated repair becomes the exact durable thread revision',{skip:process.env.BOK_THREAD_CONTAINER_TESTS!=='1',timeout:120000},async t=>{
+ const {githubToolbox}=await import('../github-tools.mjs'),{createIsolatedExecution}=await import('../isolated-execution.mjs');
+ const h=await fixture(t),output=path.join(h.root,'artifacts');await fs.mkdir(output,{mode:0o700});let validations=0;
+ const execution=createIsolatedExecution({workspaceRoot:h.root,outputRoot:output,workMs:30000});await execution.assertAvailable();
+ const options={...h.options,startEmpty:true,validateRevision:input=>{validations++;return execution.execute(input).catch(error=>{console.log(JSON.stringify({isolatedFailure:error.result??{code:error.code}}));throw error;});}};
+ const toolbox=manager=>githubToolbox({repository:'owner/project',repositories:manager,api:async()=>assert.fail('No external GitHub')});
+ const first=await toolbox(threadRepositories(options)).open({threadId:id(1),id:id(1),postId:id(9)});
+ try{
+  for(const [file,content] of Object.entries({'package.json':JSON.stringify({scripts:{build:'node build.cjs'}}),'app.cjs':"module.exports='broken';",'main.test.cjs':"require('node:test')('application value',()=>require('node:assert/strict').equal(require('./app.cjs'),'working'));",'build.cjs':"const fs=require('node:fs');fs.mkdirSync('dist');fs.writeFileSync('dist/index.html','<!doctype html><title>'+require('./app.cjs')+'</title>');"}))await first.call('write_file',{path:file,content});
+  const failed=await first.call('check_workspace',{});console.log(JSON.stringify({negativeCheck:failed}));assert.equal(failed.passed,false);assert.match(failed.log,/application value/);
+  await first.call('write_file',{path:'app.cjs',content:"module.exports='working';"});const checked=await first.call('check_workspace',{});assert.equal(checked.passed,true);
+  const accepted=await first.accept();assert.equal(accepted.acceptedRevision,checked.revision);assert.equal(validations,2);assert.equal(accepted.validation.testsPassed,true);assert.equal(accepted.validation.buildPassed,true);
+  assert.equal(await fs.readFile(path.join(accepted.validation.outputDirectory,'dist/index.html'),'utf8'),'<!doctype html><title>working</title>');
+  console.log(JSON.stringify({acceptedRevision:accepted.acceptedRevision,sourceDigest:accepted.validation.sourceDigest,testsPassed:true,buildPassed:true,validations,proofs:'not involved; actual Git and isolated Node'}));
+  await first.close();const next=await toolbox(threadRepositories(options)).open({threadId:id(1),id:id(2),postId:id(10)});
+  try{assert.equal((await next.call('read_file',{path:'app.cjs'})).text,"module.exports='working';");assert.equal(await next.accept(),null);assert.equal(validations,2);}finally{await next.close();}
+  for(const name of await fs.readdir(output))assert.equal(JSON.parse(await fs.readFile(path.join(output,name,'cleanup.json'))).ownedContainerAbsent,true);
+ }finally{await first.close();}
+});
