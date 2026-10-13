@@ -361413,8 +361413,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     l1;
     attestations;
     verbatimAttestations;
-    constructor(checkpoint, l1, attestations, verbatimAttestations) {
-      this.checkpoint = checkpoint;
+    constructor(checkpoint2, l1, attestations, verbatimAttestations) {
+      this.checkpoint = checkpoint2;
       this.l1 = l1;
       this.attestations = attestations;
       this.verbatimAttestations = verbatimAttestations;
@@ -361440,7 +361440,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     }
     static fromBuffer(bufferOrReader) {
       const reader = BufferReader.asReader(bufferOrReader);
-      const checkpoint = reader.readObject(Checkpoint);
+      const checkpoint2 = reader.readObject(Checkpoint);
       const l1BlockNumber = reader.readBigInt();
       const l1BlockHash = reader.readString(MAX_BLOCK_HASH_STRING_LENGTH);
       const l1Timestamp = reader.readBigInt();
@@ -361449,7 +361449,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
         signatureIndices: bufferToHex(reader.readBuffer()),
         signaturesOrAddresses: bufferToHex(reader.readBuffer())
       };
-      return new _PublishedCheckpoint(checkpoint, new L1PublishedData(l1BlockNumber, l1Timestamp, l1BlockHash), attestations, verbatimAttestations);
+      return new _PublishedCheckpoint(checkpoint2, new L1PublishedData(l1BlockNumber, l1Timestamp, l1BlockHash), attestations, verbatimAttestations);
     }
     toBuffer() {
       const signatureIndices = hexToBuffer(this.verbatimAttestations.signatureIndices);
@@ -372742,8 +372742,8 @@ ${val.stack}`;
     static fromFields(fields2) {
       return new _ConsensusPayload(fields2.header, fields2.archive, fields2.feeAssetPriceModifier, fields2.signatureContext);
     }
-    static fromCheckpoint(checkpoint, signatureContext) {
-      return new _ConsensusPayload(checkpoint.header, checkpoint.archive.root, checkpoint.feeAssetPriceModifier, signatureContext);
+    static fromCheckpoint(checkpoint2, signatureContext) {
+      return new _ConsensusPayload(checkpoint2.header, checkpoint2.archive.root, checkpoint2.feeAssetPriceModifier, signatureContext);
     }
     static empty() {
       return new _ConsensusPayload(CheckpointHeader.empty(), Fr.ZERO, 0n, EMPTY_COORDINATION_SIGNATURE_CONTEXT);
@@ -382837,7 +382837,31 @@ ${val.stack}`;
     bindings.set(pxe, Object.freeze({ store, tier: tier ?? "proposed", page, headCall }));
   }
   function receipt(state, records = [], head = null) {
-    return { schemaVersion: 1, database: state.database, epoch: state.epoch, sequence: state.sequence, anchor: copy(state.anchor), nextBlock: state.nextBlock, nextLog: state.nextLog, records, head, complete: head !== null };
+    return { schemaVersion: 1, database: state.database, epoch: state.epoch, sequence: state.sequence, anchor: copy(state.anchor), nextBlock: state.nextBlock, nextLog: state.nextLog, records, head, complete: head !== null, ...state.previous ? { previous: copy(state.previous) } : {} };
+  }
+  function checkpoint(r) {
+    const c = exact({ database: r.database, epoch: r.epoch, sequence: r.sequence, anchor: copy(r.anchor), head: copy(r.head) }, ["database", "epoch", "sequence", "anchor", "head"]);
+    for (const k of ["database", "epoch"]) check5(typeof c[k] === "string" && /^[0-9a-f]{64}$/.test(c[k]));
+    integer6(c.sequence, Number.MAX_SAFE_INTEGER);
+    c.anchor = exact(c.anchor, ["blockNumber", "blockHash"]);
+    integer6(c.anchor.blockNumber);
+    hex10(c.anchor.blockHash);
+    c.head = exact(c.head, ["initialized", "schema", "revision", "digest"]);
+    const h = c.head;
+    check5(typeof h.initialized === "boolean" && h.schema === 1 && typeof h.revision === "string" && /^(0|[1-9][0-9]*)$/.test(h.revision) && h.revision.length <= 20 && BigInt(h.revision) < 1n << 64n && typeof h.digest === "string" && /^(0|[1-9][0-9]*)$/.test(h.digest) && h.digest.length <= 77 && BigInt(h.digest) < Fr.MODULUS);
+    check5(h.initialized ? BigInt(h.revision) > 0n && BigInt(h.digest) > 0n : h.revision === "0" && h.digest === "0");
+    return c;
+  }
+  function locator(input2) {
+    const p = exact(input2, ["blockNumber", "blockHash", "txHash", "txIndex", "firstLog", "logCount"]);
+    integer6(p.blockNumber, 4294967295, 1);
+    hex10(p.blockHash);
+    hex10(p.txHash);
+    integer6(p.txIndex, 6142);
+    integer6(p.firstLog, 63);
+    integer6(p.logCount, 8, 1);
+    check5(p.firstLog + p.logCount <= 64);
+    return p;
   }
   async function runRollingPreferenceRecovery(pxe, input2, options) {
     try {
@@ -382886,28 +382910,133 @@ ${val.stack}`;
         await guard();
         const { meta: meta13, state: loaded } = await binding3.store.load(key, context.changeSetId);
         await guard();
+        const authenticate = async (block2) => {
+          const checkBlock = async () => {
+            await canonical2();
+            const raw = await pxe.node.getBlockData(block2.blockNumber);
+            check5(raw && raw.blockHash.toString() === block2.blockHash);
+            const h = BlockHeader.fromBuffer(BlockHeader.prototype.toBuffer.call(raw.header));
+            check5((await h.hash()).toString() === block2.blockHash && h.toFields().every((f, i) => f.toString() === block2.headerFields[i]));
+            await guard();
+            return true;
+          };
+          const verified2 = await authenticateCompactBlock({ fields: block2.fields, headerFields: block2.headerFields, expectedBlockHash: block2.blockHash, assertCanonical: checkBlock });
+          frame.validators.push(checkBlock);
+          check5(verified2.blockNumber === block2.blockNumber);
+          return verified2;
+        };
+        const ingest = async (block2, first2, logCount) => {
+          check5(await pxe.noteStore.withChangeSet(context.changeSetId, (s) => s.notes.size === 0 && s.nullifierEmissions.size === 0));
+          check5(await pxe.privateEventStore.withChangeSet(context.changeSetId, (s) => s.size === 0));
+          await binding3.page({ contractAddress: p.contractAddress, scope: p.scope, expectedClassId: p.expectedClassId, expectedArtifactHash: p.expectedArtifactHash, network: p.network, proofsEnabled: p.proofsEnabled, blockNumber: block2.blockNumber, blockHash: block2.blockHash, txHash: first2.txHash, firstLog: first2.logIndex, logCount, compactFields: block2.fields, headerFields: block2.headerFields }, guard, frame);
+          const events = await pxe.privateEventStore.withChangeSet(context.changeSetId, (changeSet) => {
+            check5(changeSet.size <= 8);
+            return Array.from(changeSet.values(), (e) => ({ packedEvent: e.msgContent.map((x) => x.toString()), eventSelector: e.eventSelector.toString(), l2BlockNumber: e.l2BlockNumber, l2BlockHash: e.l2BlockHash.toString(), txHash: e.txHash.toString(), txIndexInBlock: e.txIndexInBlock, eventIndexInTx: e.eventIndexInTx, contract: e.contractAddress.toString(), scoped: e.scopes.has(p.scope) }));
+          });
+          check5(events.length <= 8);
+          for (const e of events) {
+            check5(e.contract === p.contractAddress && e.scoped === true && e.txHash === first2.txHash && e.txIndexInBlock === first2.txIndex && e.l2BlockNumber === block2.blockNumber && e.l2BlockHash === block2.blockHash && e.packedEvent.length === 8);
+            integer6(e.eventIndexInTx, 63);
+          }
+          const candidates = await pxe.noteStore.withChangeSet(context.changeSetId, (stage) => {
+            check5(stage.notes.size <= 8);
+            return [...stage.notes.values()].map((n2) => ({ nullifier: n2.noteDao.siloedNullifier.toString(), slot: n2.noteDao.storageSlot.toString(), owner: n2.noteDao.owner.toString(), contract: n2.noteDao.contractAddress.toString(), txHash: n2.noteDao.txHash.toString(), blockNumber: n2.noteDao.l2BlockNumber, blockHash: n2.noteDao.l2BlockHash, txIndex: n2.noteDao.txIndexInBlock }));
+          });
+          check5(candidates.length <= 8);
+          const eventSnapshot = await pxe.privateEventStore.withChangeSet(context.changeSetId, (stage) => [...stage.entries()].map(([key2, value]) => [key2, value.toBuffer().toString("hex")]));
+          const noteSnapshot = await pxe.noteStore.withChangeSet(context.changeSetId, (stage) => ({ notes: [...stage.notes.entries()].map(([key2, value]) => [key2, value.toBuffer().toString("hex")]), nullifiers: [...stage.nullifierEmissions] }));
+          frame.validators.push(async () => {
+            const currentEvents = await pxe.privateEventStore.withChangeSet(context.changeSetId, (stage) => [...stage.entries()].map(([key2, value]) => [key2, value.toBuffer().toString("hex")]));
+            const currentNotes = await pxe.noteStore.withChangeSet(context.changeSetId, (stage) => ({ notes: [...stage.notes.entries()].map(([key2, value]) => [key2, value.toBuffer().toString("hex")]), nullifiers: [...stage.nullifierEmissions] }));
+            check5(same(currentEvents, eventSnapshot) && same(currentNotes, noteSnapshot));
+          });
+          for (const candidate of candidates) check5(candidate.owner === p.scope && candidate.contract === p.contractAddress && candidate.txHash === first2.txHash && candidate.blockNumber === block2.blockNumber && candidate.blockHash === block2.blockHash && candidate.txIndex === first2.txIndex);
+          return { events, candidates };
+        };
+        const active = async (c) => {
+          const notes = await pxe.noteStore.getNotes({ contractAddress: address6, owner, scopes: [owner], storageSlot: Fr.fromString(c.slot), siloedNullifier: Fr.fromString(c.nullifier) }, context.changeSetId);
+          check5(notes.length <= 1);
+          return notes.length === 1;
+        };
         let state = loaded;
-        if (p.restart || !state || state.database !== meta13.database || state.generation !== meta13.generation || !same(state.anchor, anchorRecord)) {
-          state = { schemaVersion: 1, scope: key, database: meta13.database, generation: meta13.generation, epoch: id(), anchor: anchorRecord, sequence: 0, nextBlock: 1, nextLog: 0, pending: [], candidate: null, last: null };
+        const reset3 = async () => {
+          state = { schemaVersion: 2, scope: key, database: meta13.database, generation: meta13.generation, epoch: id(), anchor: anchorRecord, sequence: 0, nextBlock: 1, nextLog: 0, pending: [], candidate: null, previous: null, last: null };
+          state.last = receipt(state);
+          await binding3.store.save(key, state, context.changeSetId);
+          await beforeCommit();
+          return copy(state.last);
+        };
+        if (p.restart || !state || state.database !== meta13.database || state.generation !== meta13.generation || state.schemaVersion !== 2) return await reset3();
+        exact(state, ["schemaVersion", "scope", "database", "generation", "epoch", "anchor", "sequence", "nextBlock", "nextLog", "pending", "candidate", "previous", "last"]);
+        check5(state.scope === key && typeof state.epoch === "string" && /^[0-9a-f]{64}$/.test(state.epoch));
+        integer6(state.anchor.blockNumber);
+        hex10(state.anchor.blockHash);
+        integer6(state.sequence, Number.MAX_SAFE_INTEGER);
+        integer6(state.nextBlock, state.anchor.blockNumber + 1, 1);
+        integer6(state.nextLog, 24575);
+        check5(Array.isArray(state.pending) && state.pending.length <= 64 && state.last && state.last.sequence === state.sequence);
+        check5(state.last.database === state.database && state.last.epoch === state.epoch && same(state.last.anchor, state.anchor) && state.last.nextBlock === state.nextBlock && state.last.nextLog === state.nextLog);
+        if (state.previous) {
+          exact(state.previous, ["database", "epoch", "sequence", "anchor", "head"]);
+          const previous = checkpoint(state.previous);
+          check5(previous.database === state.database && previous.epoch !== state.epoch && previous.anchor.blockNumber < state.anchor.blockNumber && same(state.last.previous, previous));
+        } else check5(state.previous === null && state.last.previous === void 0);
+        if (state.candidate) {
+          exact(state.candidate, ["nullifier", "slot", "origin"]);
+          hex10(state.candidate.nullifier);
+          hex10(state.candidate.slot);
+          locator(state.candidate.origin);
+          check5(state.candidate.origin.blockNumber <= state.anchor.blockNumber);
+        }
+        if (state.sequence === 0) check5(state.nextBlock === (state.previous ? state.previous.anchor.blockNumber + 1 : 1) && state.nextLog === 0 && state.pending.length === 0 && (state.previous !== null || state.candidate === null));
+        if (!same(state.anchor, anchorRecord)) {
+          if (anchorRecord.blockNumber <= state.anchor.blockNumber || !state.last.complete || state.pending.length || state.nextBlock !== state.anchor.blockNumber + 1 || state.nextLog !== 0) return await reset3();
+          const priorCanonical = async () => {
+            const raw = await pxe.node.getBlockData(state.anchor.blockNumber);
+            check5(raw);
+            const h = BlockHeader.fromBuffer(BlockHeader.prototype.toBuffer.call(raw.header));
+            check5(h.getBlockNumber() === state.anchor.blockNumber && (await h.hash()).toString() === raw.blockHash.toString());
+            await guard();
+            return raw.blockHash.toString() === state.anchor.blockHash;
+          };
+          if (!await priorCanonical()) return await reset3();
+          const priorAnchor = copy(state.anchor);
+          frame.validators.push(async () => {
+            const raw = await pxe.node.getBlockData(priorAnchor.blockNumber);
+            check5(raw);
+            const h = BlockHeader.fromBuffer(BlockHeader.prototype.toBuffer.call(raw.header));
+            check5(h.getBlockNumber() === priorAnchor.blockNumber && (await h.hash()).toString() === priorAnchor.blockHash && raw.blockHash.toString() === priorAnchor.blockHash);
+            await guard();
+          });
+          if (p.expected === null) {
+            await beforeCommit();
+            return { ...copy(state.last), advance: { anchor: copy(anchorRecord), headPage: state.candidate ? copy(state.candidate.origin) : null } };
+          }
+          check5(p.expected.epoch === state.epoch && p.expected.sequence === state.sequence);
+          let candidate = state.candidate;
+          if (candidate) {
+            const origin = locator(candidate.origin);
+            check5(p.block && p.block.blockNumber === origin.blockNumber && p.block.blockHash === origin.blockHash);
+            const verified2 = await authenticate(p.block), logs = verified2.ciphertexts.filter((log3) => log3.txIndex === origin.txIndex && log3.logIndex >= origin.firstLog && log3.logIndex < origin.firstLog + origin.logCount);
+            check5(logs.length === origin.logCount && logs.every((log3, i) => log3.txHash === origin.txHash && log3.logIndex === origin.firstLog + i));
+            const replay = await ingest(p.block, logs[0], origin.logCount);
+            const exactFormer = replay.candidates.filter((c) => c.nullifier === candidate.nullifier && c.slot === candidate.slot);
+            check5(exactFormer.length === 1);
+            for (const c of replay.candidates) if (c.nullifier !== candidate.nullifier) check5(!await active(c));
+            if (!await active(candidate)) candidate = null;
+          } else check5(p.block === null && state.last.head.initialized === false);
+          const previous = checkpoint(state.last);
+          state = { ...state, epoch: id(), anchor: anchorRecord, sequence: 0, nextBlock: previous.anchor.blockNumber + 1, nextLog: 0, pending: [], candidate, previous };
           state.last = receipt(state);
           await binding3.store.save(key, state, context.changeSetId);
           await beforeCommit();
           return copy(state.last);
         }
-        exact(state, ["schemaVersion", "scope", "database", "generation", "epoch", "anchor", "sequence", "nextBlock", "nextLog", "pending", "candidate", "last"]);
-        check5(state.schemaVersion === 1 && state.scope === key && typeof state.epoch === "string" && /^[0-9a-f]{64}$/.test(state.epoch));
-        integer6(state.sequence, Number.MAX_SAFE_INTEGER);
-        integer6(state.nextBlock, anchorRecord.blockNumber + 1, 1);
-        integer6(state.nextLog, 24575);
-        check5(Array.isArray(state.pending) && state.pending.length <= 64 && state.last && state.last.sequence === state.sequence);
-        check5(state.last.database === state.database && state.last.epoch === state.epoch && same(state.last.anchor, state.anchor) && state.last.nextBlock === state.nextBlock && state.last.nextLog === state.nextLog);
-        if (state.candidate) {
-          exact(state.candidate, ["nullifier", "slot"]);
-          hex10(state.candidate.nullifier);
-          hex10(state.candidate.slot);
-        }
-        if (state.sequence === 0) check5(state.nextBlock === 1 && state.nextLog === 0 && state.pending.length === 0 && state.candidate === null);
         if (p.expected === null) {
+          await beforeCommit();
+          return copy(state.last);
+        }
+        if (state.sequence === 0 && state.previous && p.expected.epoch === state.previous.epoch && p.expected.sequence === state.previous.sequence) {
           await beforeCommit();
           return copy(state.last);
         }
@@ -382946,54 +383075,22 @@ ${val.stack}`;
         } else {
           check5(p.block && p.block.blockNumber === state.nextBlock);
           const block2 = p.block;
-          const checkBlock = async () => {
-            await canonical2();
-            const raw = await pxe.node.getBlockData(block2.blockNumber);
-            check5(raw && raw.blockHash.toString() === block2.blockHash);
-            const h = BlockHeader.fromBuffer(BlockHeader.prototype.toBuffer.call(raw.header));
-            check5((await h.hash()).toString() === block2.blockHash && h.toFields().every((f, i) => f.toString() === block2.headerFields[i]));
-            await guard();
-            return true;
-          };
-          const verified2 = await authenticateCompactBlock({ fields: block2.fields, headerFields: block2.headerFields, expectedBlockHash: block2.blockHash, assertCanonical: checkBlock });
-          frame.validators.push(checkBlock);
+          const verified2 = await authenticate(block2);
           check5(verified2.blockNumber === state.nextBlock && state.nextLog <= verified2.ciphertexts.length);
           if (state.nextLog < verified2.ciphertexts.length) {
             const first2 = verified2.ciphertexts[state.nextLog], logs = [];
             for (let i = state.nextLog; i < verified2.ciphertexts.length && logs.length < 8 && verified2.ciphertexts[i].txIndex === first2.txIndex; i++) logs.push(verified2.ciphertexts[i]);
-            await binding3.page({ contractAddress: p.contractAddress, scope: p.scope, expectedClassId: p.expectedClassId, expectedArtifactHash: p.expectedArtifactHash, network: p.network, proofsEnabled: p.proofsEnabled, blockNumber: block2.blockNumber, blockHash: block2.blockHash, txHash: first2.txHash, firstLog: first2.logIndex, logCount: logs.length, compactFields: block2.fields, headerFields: block2.headerFields }, guard, frame);
-            const events = await pxe.privateEventStore.withChangeSet(context.changeSetId, (changeSet) => {
-              check5(changeSet.size <= 8);
-              return Array.from(changeSet.values(), (e) => ({ packedEvent: e.msgContent.map((x) => x.toString()), eventSelector: e.eventSelector.toString(), l2BlockNumber: e.l2BlockNumber, l2BlockHash: e.l2BlockHash.toString(), txHash: e.txHash.toString(), txIndexInBlock: e.txIndexInBlock, eventIndexInTx: e.eventIndexInTx, contract: e.contractAddress.toString(), scoped: e.scopes.has(p.scope) }));
-            });
-            check5(events.length <= 8);
+            const { events, candidates } = await ingest(block2, first2, logs.length);
             for (const e of events) {
-              check5(e.contract === p.contractAddress && e.scoped === true && e.txHash === first2.txHash && e.txIndexInBlock === first2.txIndex && e.l2BlockNumber === block2.blockNumber && e.l2BlockHash === block2.blockHash && e.packedEvent.length === 8);
-              integer6(e.eventIndexInTx, 63);
               const prior = state.pending.find((x) => x.eventIndexInTx === e.eventIndexInTx);
               if (prior) check5(same(prior, e));
               else state.pending.push(e);
               check5(state.pending.length <= 64);
             }
-            const candidates = await pxe.noteStore.withChangeSet(context.changeSetId, (stage) => {
-              check5(stage.notes.size <= 8);
-              return [...stage.notes.values()].map((n2) => ({ nullifier: n2.noteDao.siloedNullifier.toString(), slot: n2.noteDao.storageSlot.toString(), owner: n2.noteDao.owner.toString(), contract: n2.noteDao.contractAddress.toString() }));
-            });
-            check5(candidates.length <= 8);
-            const eventSnapshot = await pxe.privateEventStore.withChangeSet(context.changeSetId, (stage) => [...stage.entries()].map(([key2, value]) => [key2, value.toBuffer().toString("hex")]));
-            const noteSnapshot = await pxe.noteStore.withChangeSet(context.changeSetId, (stage) => ({ notes: [...stage.notes.entries()].map(([key2, value]) => [key2, value.toBuffer().toString("hex")]), nullifiers: [...stage.nullifierEmissions] }));
-            frame.validators.push(async () => {
-              const currentEvents = await pxe.privateEventStore.withChangeSet(context.changeSetId, (stage) => [...stage.entries()].map(([key2, value]) => [key2, value.toBuffer().toString("hex")]));
-              const currentNotes = await pxe.noteStore.withChangeSet(context.changeSetId, (stage) => ({ notes: [...stage.notes.entries()].map(([key2, value]) => [key2, value.toBuffer().toString("hex")]), nullifiers: [...stage.nullifierEmissions] }));
-              check5(same(currentEvents, eventSnapshot) && same(currentNotes, noteSnapshot));
-            });
             for (const candidate of candidates) {
-              check5(candidate.owner === p.scope && candidate.contract === p.contractAddress);
-              const active = await pxe.noteStore.getNotes({ contractAddress: address6, owner, scopes: [owner], storageSlot: Fr.fromString(candidate.slot), siloedNullifier: Fr.fromString(candidate.nullifier) }, context.changeSetId);
-              check5(active.length <= 1);
-              if (active.length) {
+              if (await active(candidate)) {
                 if (state.candidate) check5(state.candidate.nullifier === candidate.nullifier && state.candidate.slot === candidate.slot);
-                else state.candidate = { nullifier: candidate.nullifier, slot: candidate.slot };
+                else state.candidate = { nullifier: candidate.nullifier, slot: candidate.slot, origin: { blockNumber: block2.blockNumber, blockHash: block2.blockHash, txHash: first2.txHash, txIndex: first2.txIndex, firstLog: first2.logIndex, logCount: logs.length } };
               }
             }
             state.nextLog += logs.length;
@@ -395095,10 +395192,10 @@ ${context.join("\n")}`;
         hash: stored.hash
       };
     }
-    setTipCheckpoint(tag, checkpoint) {
+    setTipCheckpoint(tag, checkpoint2) {
       return this.l2TipCheckpointsStore.set(tag, {
-        number: checkpoint.number,
-        hash: checkpoint.hash
+        number: checkpoint2.number,
+        hash: checkpoint2.hash
       });
     }
     getStoredBlockHash(blockNumber) {
@@ -473936,14 +474033,14 @@ mod tests {
       saved = null;
     }
     let low = saved?.low ?? 0, high = saved?.high ?? head.number;
-    const checkpoint = (phase, end) => progress?.write(identity, { schema: 1, phase, low, high, end, headNumber: head.number, headHash: head.hash });
+    const checkpoint2 = (phase, end) => progress?.write(identity, { schema: 1, phase, low, high, end, headNumber: head.number, headHash: head.hash });
     while (low < high) {
       await guard();
       const mid = Math.floor((low + high) / 2), code = await read2(() => provider.getCode(scope.portalAddress, mid));
       if (typeof code !== "string" || !/^0x(?:[0-9a-fA-F]{2})*$/.test(code)) throw fail9();
       if (code === "0x") low = mid + 1;
       else high = mid;
-      await checkpoint("boundary", head.number);
+      await checkpoint2("boundary", head.number);
     }
     const same2 = (event) => String(event.amount) === String(active.amount) && event.secretHash.toLowerCase() === active.secretHash.toLowerCase() && event.key.toLowerCase() === active.key.toLowerCase() && String(event.index) === String(active.index);
     for (let end = saved?.phase === "scan" ? saved.end : head.number; end >= low; end -= 2e3) {
@@ -473962,7 +474059,7 @@ mod tests {
         await progress?.clear(identity);
         return derived2;
       }
-      await checkpoint("scan", Math.max(low - 1, end - 2e3));
+      await checkpoint2("scan", Math.max(low - 1, end - 2e3));
     }
     await progress?.clear(identity);
     throw fail9();
