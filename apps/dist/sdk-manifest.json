@@ -2054,7 +2054,7 @@
     "shared/sdk-store.mjs": "474807edf283d8166f93442ccfe4485ccaa7c056fefa5d4e9b2a4669554a5bfa",
     "shared/transaction-outcomes.mjs": "13c01eee9ad9cb263b4d166c0c68f4308577714574c46e8f675b0fba65f0dcb2",
     "shared/trusted-private-node.mjs": "50fa3642a777cb2eca66e595d72a6e639781cc7d0fc2deb4d1903c0a2a0d81d5",
-    "toolchain.json": "cf2ba7f7983293c20e0bd018ba795abb47e23fbd34681a7f632618364129cb5d"
+    "toolchain.json": "8a5ade97648d006124ee1a7f2e40c55375be90d116f3c4c90e2e56456f89d8a8"
   },
   "outputs": {
     "acvm_js_bg.wasm": "117fd939c3762470aec0920178b90b76293e1d92e75650e756483352c5ddcb1a",
