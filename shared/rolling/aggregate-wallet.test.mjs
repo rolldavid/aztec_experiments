@@ -6,9 +6,9 @@ import {Fr} from '@aztec-labs/foundation/curves/bn254';
 import {computeSecretHash} from '@aztec-labs/stdlib/hash';
 import {poseidon2HashWithSeparator} from '@aztec-labs/foundation/crypto/poseidon';
 import {deriveBoardDepositSecret} from '../deposit-custody.mjs';
-import {derivePrivateFeeBridgeSecret} from '../private-fee-client.mjs';
+import {claimSecrets} from '../private-fee-funding.mjs';
 import {createEncryptedJournalSlot} from '../journal-record.mjs';
-import {createEthereumJournal} from '../ethereum-journal.mjs';
+import {createEthereumJournal,verifyEthereumIntentReceipt} from '../ethereum-journal.mjs';
 import {prepareAggregateFunding,aggregateFundingTransaction,aggregateFundingAbi} from './aggregate-funding.mjs';
 import {validateAggregateFundingIntent} from './aggregate-recovery.mjs';
 import {createAggregateWallet} from './aggregate-wallet.mjs';
@@ -49,10 +49,7 @@ function fixture(){
     log(scope.bokPortal,bok,'Deposited',[p.bokCommitment,p.bok.amount,h(32),3])
    ]};if(state.unknown)throw Error('Lost acknowledgement');state.landed=true;return {hash:h(20)};
   }}};
- // Until the exported original claimSecrets is composed, this labelled salt
- // derivation double exercises the real FPC bridge hash without a new key API.
- const claimSecrets=async({owner,record})=>{assert.equal(record.nonce,7);const salt=new Fr(18),secret=await derivePrivateFeeBridgeSecret({salt,owner});return {salt,secret,secretHash:await computeSecretHash(secret)};};
- const options={sdk:{Fr,computeSecretHash,poseidon2HashWithSeparator,deriveBoardDepositSecret,claimSecrets,createEncryptedJournalSlot,createEthereumJournal,prepareAggregateFunding,aggregateFundingTransaction,validateAggregateFundingIntent},ethers,scope,
+ const options={sdk:{Fr,computeSecretHash,poseidon2HashWithSeparator,deriveBoardDepositSecret,claimSecrets,createEncryptedJournalSlot,createEthereumJournal,verifyEthereumIntentReceipt,prepareAggregateFunding,aggregateFundingTransaction,validateAggregateFundingIntent},ethers,scope,
   network:{chainId:'31337',version:'1',rollup:a(11)},board:h(12),bok:h(13),owner:h(14),walletSecret:h(15),walletSalt:'0',storage,provider,
   captureWallet:async()=>{if(!state.connected)throw Error('No wallet');return wallet;},contextGuard:async()=>{if(state.invalid)throw Error('Context changed');},verifyScope:async()=>{},nowSeconds:()=>state.clock};
  return {options,state,allocation,records,wallet,open:()=>createAggregateWallet(options)};
@@ -81,4 +78,82 @@ for(const mode of ['expired','account','signature'])test('aggregate confirmation
  if(mode==='expired')f.state.clock=1121;if(mode==='account')f.state.invalid=true;if(mode==='signature')f.wallet.signer.signTypedData=(...args)=>new ethers.Wallet(h(98)).signTypedData(...args);
  await assert.rejects(app.confirm());assert.equal(f.state.sends,0);
 });
-test('unrelated tx hash cannot load retained secret context',async()=>{const f=fixture(),app=await f.open();await app.prepare(f.allocation);await app.confirm();await assert.rejects(app.loadAggregate(h(21)),{code:'ROLLING_FUNDING_MISMATCH'});});
+test('unrelated tx hash cannot load retained secret context',async()=>{const f=fixture(),app=await f.open();await app.prepare(f.allocation);await app.confirm();assert.equal(await app.loadAggregate(h(21)),null);});
+test('gas increase stops before the original payment intent is written',async()=>{
+ const f=fixture(),app=await f.open();await app.prepare(f.allocation);f.options.provider.getFeeData=async()=>({maxFeePerGas:10000n});
+ await assert.rejects(app.confirm(),{code:'ROLLING_FUNDING_GAS_CHANGED'});assert.equal(f.state.sends,0);assert.equal((await app.inspect()).paymentSaved,false);
+});
+test('private claim attempt survives encrypted reopen and cannot change its identity or erase attempted state',async()=>{
+ const f=fixture(),app=await f.open();await app.prepare(f.allocation);await app.confirm();
+ await app.checkpointClaim({intentId:h(100),attempted:false});await app.checkpointClaim({intentId:h(100),attempted:true});
+ const reopened=await f.open();assert.deepEqual((await reopened.inspect()).claim,{intentId:h(100),attempted:true});assert.equal((await reopened.inspect()).privateFeeCap,'1000');
+ await assert.rejects(reopened.checkpointClaim({intentId:h(101),attempted:true}));await assert.rejects(reopened.checkpointClaim({intentId:h(100),attempted:false}));assert.equal(f.state.sends,1);
+});
+test('direct receipt lookup remains available with no aggregate record or unrelated retained aggregate',async()=>{
+ const f=fixture(),app=await f.open();assert.equal(await app.loadAggregate(h(81)),null);
+ await app.prepare(f.allocation);assert.equal(await app.loadAggregate(h(81)),null);await app.confirm();assert.equal(await app.loadAggregate(h(81)),null);
+});
+test('matching aggregate pending or corrupted context is never treated as an unrelated direct receipt',async()=>{
+ const f=fixture(),app=await f.open();await app.prepare(f.allocation);f.state.unknown=true;await assert.rejects(app.confirm());
+ await assert.rejects(app.loadAggregate(h(20)));assert.equal(f.state.sends,1);
+ const key=[...f.records.keys()][0];const envelope=JSON.parse(f.records.get(key));envelope.data='00'+envelope.data.slice(2);f.records.set(key,JSON.stringify(envelope));await assert.rejects(app.loadAggregate(h(81)));
+});
+test('archive is durable before a successor quote; active collateral prevents overwrite and original secrets survive later draft',async()=>{
+ const f=fixture();f.options.reconcileClaim=async()=>({status:'confirmed'});const app=await f.open();await app.prepare(f.allocation);await app.confirm();
+ await app.checkpointClaim({intentId:h(100),attempted:true});const original=await app.loadAggregate(h(20));
+ const send=f.options.provider.send;f.options.provider.send=async(method,params)=>{
+  if(method==='eth_call'&&params[0].to===f.options.scope.collateralPortal&&portal.parseTransaction({data:params[0].data}).name==='getDeposit')return portal.encodeFunctionResult('getDeposit',[100]);
+  return send(method,params);
+ };
+ await assert.rejects(app.prepare(f.allocation),{code:'AGGREGATE_EXISTING_DEPOSIT'});
+ assert.equal(f.records.size,3);assert.equal((await app.inspect()).paymentSaved,true);
+ f.options.provider.send=send;const reopened=await f.open();await reopened.prepare(f.allocation);assert.equal((await reopened.inspect()).paymentSaved,false);
+ assert.deepEqual(await reopened.loadAggregate(h(20)),original);assert.equal(f.state.sends,1);
+ const foreign=await createAggregateWallet({...f.options,owner:h(77)});assert.equal(await foreign.loadAggregate(h(20)),null);
+});
+
+import fs from 'node:fs';
+import {AztecAddress} from '@aztec-labs/stdlib/aztec-address';
+import {encodeArguments,loadContractArtifact} from '@aztec-labs/stdlib/abi';
+import {createRollingApplication} from './application.mjs';
+import {advanceAggregateClaim} from './aggregate-wallet.mjs';
+const boardArtifact=loadContractArtifact(JSON.parse(fs.readFileSync(process.env.ROLLING_TEST_ARTIFACT??new URL('../../billboard/target/rolling_contract-RollingBoard.json',import.meta.url))));
+const bokArtifact=loadContractArtifact(JSON.parse(fs.readFileSync(new URL('../../experiments/private-bok/target/private_bok-PrivateBok.json',import.meta.url))));
+function durableClaimApplication(f,funding){
+ // Original application, ABIs and AES-GCM/CAS workflow; the canonical L2
+ // outcome and bridge witness adapter are labelled finite SDK fixtures.
+ const state={sends:0,prepares:0,outcome:null},owner=new AztecAddress(Fr.fromString(f.options.owner));
+ const node={getBlockData:async()=>({header:{globalVariables:{blockNumber:3}},blockHash:h(60)}),getNodeInfo:async()=>({l1ContractAddresses:{feeJuicePortalAddress:f.options.scope.feePortal,feeJuiceAddress:f.options.scope.feeToken}})};
+ const journal={assertCanStart:async()=>{},inspectOutcome:async()=>state.outcome,inspect:async()=>state.outcome,confirmed:()=>{}};
+ const wallet={aztecNode:node,pxe:{getSyncedBlockHeader:async()=>({globalVariables:{blockNumber:3},hash:async()=>h(60),state:{l1ToL2MessageTree:{root:new Fr(61)}}})},getAccounts:async()=>[owner],getChainInfo:async()=>({chainId:31337,version:1}),sendTx:async(_payload,options)=>{
+  state.sends++;state.outcome={operation:options.journalOperation,outcome:'success',txHash:h(70),receipt:{txHash:h(70),status:'checkpointed',blockNumber:3,blockHash:h(60),transactionFee:1n}};return {receipt:{}};
+ }};
+ const sdk={Fr,AztecAddress,encodeArguments,isTrustedPrivateNode:n=>n===node,isPrivateWalletForNode:(w,n)=>w===wallet&&n===node,isPrivatePXEForNode:(p,n)=>p===wallet.pxe&&n===node,inspectTrustedNode:async()=>{},
+  Contract:{at:()=>({methods:new Proxy({},{get:(_,name)=>(...args)=>({name,args,simulate:async()=>({result:[0n,...Array(9).fill(0n)]})})})})},
+  BatchCall:class{constructor(_wallet,interactions){this.interactions=interactions;}},
+  preparePrivateFeePayment:async()=>({availableCredit:100n}),estimatePrivateFeeTransaction:async({interaction})=>{state.prepares++;return {maximumFee:10n,payload:interaction,gasSettings:{}};},
+  prepareFundingClaim:async input=>({status:'claim-ready',claim:input.kind==='collateral'?{contract:f.options.board,method:'claim_deposit',args:[input.receipt.sender,input.receipt.amount,h(80),input.receipt.leafIndex]}:input.kind==='private-fee'?{contract:f.options.scope.privateFpc,kind:'private-fee-bridge',bridgeClaim:{amount:input.receipt.amount,salt:h(81),leafIndex:input.receipt.leafIndex}}:{contract:f.options.bok,method:'claim',args:[input.receipt.amount,input.secrets.recipientSalt,input.secrets.bridgeSecret,input.receipt.leafIndex]}})};
+ const options={sdk,deployment:{board:{address:f.options.board,artifact:boardArtifact},network:f.options.network,portal:f.options.scope.collateralPortal,
+  privateFee:{address:f.options.scope.privateFpc,artifact:{},gasSettings:{}},bok:{address:f.options.bok,operator:h(16),pluginId:h(17),artifact:bokArtifact}},
+  accountSession:{owner,wallet,node,journal,walletSecret:f.options.walletSecret,walletSalt:f.options.walletSalt},privateStore:f.options.storage,contextGuard:async()=>{},funding:{provider:f.options.provider,loadAggregate:hash=>funding.loadAggregate(hash)}};
+ return {state,open:()=>createRollingApplication(options)};
+}
+test('original encrypted application workflow relinks after prepare-before-checkpoint interruption and sends once',async()=>{
+ const f=fixture(),funding=await f.open();await funding.prepare(f.allocation);const receipts=await funding.confirm();
+ const workflow=durableClaimApplication(f,funding),first=workflow.open(),prepared=await first.prepare({type:'claim-deposit',...receipts});assert.equal((await funding.inspect()).claim,null);
+ const next=await advanceAggregateClaim({application:workflow.open(),funding:await f.open()});assert.equal(next.state,'complete');assert.equal(next.intent.intentId,prepared.intentId);assert.equal(workflow.state.sends,1);assert.equal(f.state.sends,1);
+ assert.equal((await advanceAggregateClaim({application:workflow.open(),funding:await f.open()})).state,'complete');assert.equal(workflow.state.sends,1);
+});
+test('original encrypted application exposes prepared recovery after attempted checkpoint before submission',async()=>{
+ const f=fixture(),funding=await f.open();await funding.prepare(f.allocation);const receipts=await funding.confirm();const workflow=durableClaimApplication(f,funding);
+ const prepared=await workflow.open().prepare({type:'claim-deposit',...receipts});await funding.checkpointClaim({intentId:prepared.intentId,attempted:true});
+ const next=await advanceAggregateClaim({application:workflow.open(),funding:await f.open()});assert.equal(next.state,'review-saved');assert.equal(next.intent.intentId,prepared.intentId);assert.equal(workflow.state.sends,0);assert.equal(f.state.sends,1);
+});
+
+for(const code of ['ACTION_REJECTED','INSUFFICIENT_FUNDS'])test('original journal '+code+' rollback permits a fresh quote without erasing unknown outcomes',async()=>{
+ const f=fixture(),app=await f.open();await app.prepare(f.allocation);const send=f.wallet.signer.sendTransaction;
+ f.wallet.signer.sendTransaction=async()=>{throw Object.assign(Error('labelled wallet refusal'),{code});};
+ await assert.rejects(app.confirm(),{code:code==='ACTION_REJECTED'?'BB_ETH_REQUEST_CANCELLED':'BB_ETH_INSUFFICIENT_FUNDS'});
+ assert.equal((await app.inspect()).paymentSaved,false);assert.equal(f.state.sends,0);
+ f.wallet.signer.sendTransaction=send;await app.prepare(f.allocation);await app.confirm();assert.equal(f.state.sends,1);
+});

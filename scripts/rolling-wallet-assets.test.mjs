@@ -39,3 +39,11 @@ test('optional Bok browser scope is exact, detached and cannot carry operator cr
   const current=structuredClone(result.value);alter(current.config.bok);assert.throws(()=>validateRollingWalletConfig(current));
  }
 });
+test('aggregate wallet metadata requires an explicit exact router/quoter scope and matching authenticated deployment',()=>{
+ const v=fixture();v.config.bok={contractAddress:address(5),operatorAddress:address(6),pluginId:address(7)};
+ v.config.aggregateFunding={chainId:'31337',router:eth(8),routerCodeHash:address(9),collateralPortal:v.config.board.portalAddress,feePortal:eth(10),bokPortal:eth(11),weth:eth(12),swapRouter:eth(13),feeToken:eth(14),bokToken:eth(15),privateFpc:v.config.privateFee.contractAddress,quoter:eth(16),quoterCodeHash:address(17)};
+ assert.deepEqual(validateRollingWalletConfig(v).value.config.aggregateFunding,v.config.aggregateFunding);
+ for(const mutate of [x=>delete x.config.bok,x=>x.config.aggregateFunding.chainId='1',x=>x.config.aggregateFunding.privateFpc=address(99),x=>x.config.aggregateFunding.collateralPortal=eth(99),x=>x.config.aggregateFunding.quoterCodeHash='',x=>x.config.aggregateFunding.secret='PRIVATE_SENTINEL']){
+  const bad=structuredClone(v);mutate(bad);assert.throws(()=>validateRollingWalletConfig(bad));
+ }
+});

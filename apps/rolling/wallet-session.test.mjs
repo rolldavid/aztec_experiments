@@ -421,3 +421,39 @@ test('Bok capability absent stays unavailable and rejects half configured scopes
  const f=await bokCapabilityFixture();f.input.config={...f.input.config,token:'PRIVATE_SENTINEL'};
  await assert.rejects(verifyRollingBokCapability(f.input),{code:'ROLLING_SESSION_CONFIG'});assert.equal(f.state.reads.length,0);
 });
+
+import {createEncryptedJournalSlot} from '../../shared/journal-record.mjs';
+import {Interface} from 'ethers';
+async function aggregateSessionFixture(){
+ const f=await sessionFixture(),b=await bokCapabilityFixture();
+ b.values.set(String(BigInt(bokArtifact.storageLayout.board.slot)),Fr.fromString(String(f.board.address)));
+ const getContract=f.node.getContract,getStorage=f.node.getPublicStorageAt;
+ f.node.getContract=(address,...args)=>String(address)===b.input.config.contractAddress?b.state.instance:getContract(address,...args);
+ f.node.getPublicStorageAt=(reference,address,slot)=>String(address)===b.input.config.contractAddress?b.values.get(String(slot.toBigInt())):getStorage(reference,address,slot);
+ f.input.config.bok=b.input.config;f.input.bokArtifact=bokArtifact;f.input.sdk.createEncryptedJournalSlot=createEncryptedJournalSlot;
+ const s=f.input.config.aggregateFunding={chainId:'31337',router:eth(80),routerCodeHash:hex(81),collateralPortal:f.input.config.board.portalAddress,feePortal:eth(82),bokPortal:eth(83),weth:eth(84),swapRouter:eth(85),feeToken:eth(86),bokToken:eth(87),privateFpc:f.input.config.privateFee.contractAddress,quoter:eth(88),quoterCodeHash:hex(89)};
+ b.values.set(String(BigInt(bokArtifact.storageLayout.portal.slot)),new Fr(BigInt(s.bokPortal)));
+ const prior=f.node.getL1ContractAddresses;f.node.getL1ContractAddresses=async()=>({...await prior(),feeJuicePortalAddress:s.feePortal});
+ f.input.ethers={...f.input.ethers,Interface};const abi=new Interface(['function UNDERLYING() view returns(address)','function token() view returns(address)','function decimals() view returns(uint8)']);
+ f.provider.call=async request=>{assert(f.state.active);const call=abi.parseTransaction(request);return abi.encodeFunctionResult(call.name,[call.name==='UNDERLYING'?s.feeToken:call.name==='token'?s.bokToken:request.to===s.feeToken?18:6]);};
+ const expected=Error('Chosen wallet requested only after verified scope');let captures=0;
+ f.input.captureFundingWallet=async()=>{assert(f.state.active);captures++;throw expected;};
+ return {...f,b,scope:s,expected,captures:()=>captures};
+}
+test('aggregate configured session retains direct receipt recovery with an empty private aggregate slot and no funding wallet',async()=>{
+ const f=await aggregateSessionFixture();f.input.sdk.prepareFundingClaim=async input=>{assert.equal(input.aggregateIntent,undefined);assert.equal(typeof await input.ethProvider.getCode(eth(22),20),'string');return {status:'waiting'};};
+ f.pxe.getSyncedBlockHeader=async()=>({globalVariables:{blockNumber:10},hash:async()=>hex(55),state:{l1ToL2MessageTree:{root:new Fr(1)}}});
+ const session=await createRollingWalletSession(f.input);try{
+  const receipt={txHash:hex(40),blockHash:hex(41),blockNumber:2,sender:eth(33),nonce:'1',amount:'100',leafIndex:'2',messageKey:hex(43),secretHash:hex(44)};
+  await assert.rejects(session.application.prepare({type:'claim-deposit',receipt}),{code:'ROLLING_FUNDING_NOT_READY'});assert.equal(f.captures(),0);assert.equal(f.state.sends,0);
+ }finally{await session.close();}
+});
+for(const defect of ['none','bok-portal','fee-portal','token-decimals'])test('aggregate session validates canonical '+defect+' bindings before custody capture',async()=>{
+ const f=await aggregateSessionFixture();
+ if(defect==='bok-portal')f.b.values.set(String(BigInt(bokArtifact.storageLayout.portal.slot)),new Fr(999));
+ if(defect==='fee-portal')f.node.getL1ContractAddresses=async()=>({rollupAddress:eth(11),inboxAddress:eth(33),outboxAddress:eth(44),feeJuicePortalAddress:eth(999)});
+ if(defect==='token-decimals'){const original=f.provider.call;f.provider.call=async request=>request.to===f.scope.bokToken?'0x'+BigInt(18).toString(16).padStart(64,'0'):original(request);}
+ const session=await createRollingWalletSession(f.input);try{
+  await assert.rejects(session.funding.prepare({}),defect==='none'?error=>error===f.expected:{code:'ROLLING_SESSION_CONFIG'});assert.equal(f.captures(),defect==='none'?1:0);assert.equal(f.state.sends,0);
+ }finally{await session.close();}
+});

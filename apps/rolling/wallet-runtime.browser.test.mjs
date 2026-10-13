@@ -186,3 +186,20 @@ test('public-only actual browser prover initialization diagnostic',{timeout:6000
   assert.equal(report.pageErrors,0);report.stage='complete';report.passed=true;
  }catch(error){privateError(report.stage,error);throw Error('Public-only initializer diagnostic failed; inspect owned private report');}
 });
+
+// EIP1193 custody fixtures exercise the actual runtime capture function; no
+// Ethereum account signature or transaction is requested by capture/guard.
+import {captureRollingFundingWallet} from './wallet-runtime.mjs';
+test('funding runtime captures named custody and rechecks chain/account without signature or send',async()=>{
+ const calls=[],address='0x'+'12'.repeat(20),signer={getAddress:async()=>address};
+ const state={ethSigner:signer,ethProvider:{},ethTransport:{request:async request=>{calls.push(request.method);return '0x7a69';}},ethAccount:address,ethWalletName:'MetaMask'};
+ const wallet=await captureRollingFundingWallet({getState:()=>state,contextGuard:async()=>{},chainId:'31337'});assert.equal(wallet.name,'MetaMask');await wallet.guard();assert.deepEqual(calls,['eth_chainId','eth_chainId']);assert.equal(wallet.signer,signer);
+ state.ethProvider={};await assert.rejects(wallet.guard(),{code:'ROLLING_RUNTIME_UNAVAILABLE'});
+});
+for(const mode of ['chain','account','transport','provider','invalidated'])test('funding runtime invalidates '+mode+' during custody read',async()=>{
+ const address='0x'+'12'.repeat(20);let change=false;
+ const state={ethSigner:{getAddress:async()=>address},ethProvider:{},ethAccount:address,ethWalletName:'Phantom',ethTransport:{request:async()=>{
+  if(change){if(mode==='account')state.ethAccount='0x'+'13'.repeat(20);if(mode==='transport')state.ethTransport={};if(mode==='provider')state.ethProvider={};if(mode==='invalidated')state.invalidated=true;}return change&&mode==='chain'?'0x1':'0x7a69';
+ }}};
+ const wallet=await captureRollingFundingWallet({getState:()=>state,contextGuard:async()=>{},chainId:'31337'});change=true;await assert.rejects(wallet.guard(),{code:'ROLLING_RUNTIME_UNAVAILABLE'});
+});

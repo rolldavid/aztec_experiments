@@ -89,19 +89,23 @@ async function load(){
   const guard=()=>{if(globalThis.walletState.invalidated||globalThis.walletState.aztec!==selected)throw failed();};
   creating=createRollingWalletSession({sdk,routing,ethers:globalThis.ethers,config,boardArtifact,privateFeeArtifact,bokArtifact,account:selected,
    trustedQuery:query,remoteProver:remote,contextGuard:guard,onProgress,
-   captureFundingWallet:async()=>{
-    guard();const state=globalThis.walletState,signer=state.ethSigner,provider=state.ethProvider,transport=state.ethTransport;
-    const address=state.ethAccount?.toLowerCase(),name=state.ethWalletName;
-    if(!signer||!provider||!transport||typeof name!=='string'||!/^0x[0-9a-f]{40}$/.test(address))throw failed();
-    const walletGuard=async()=>{
-     guard();if(state!==globalThis.walletState||state.ethSigner!==signer||state.ethProvider!==provider||state.ethTransport!==transport||state.ethAccount?.toLowerCase()!==address)throw failed();
-     const chain=await transport.request({method:'eth_chainId',params:[]});guard();
-     if(typeof chain!=='string'||!/^0x[0-9a-fA-F]+$/.test(chain)||BigInt(chain)!==BigInt(config.network.chainId)||(await signer.getAddress()).toLowerCase()!==address)throw failed();
-     guard();if(state.ethSigner!==signer||state.ethTransport!==transport||state.ethAccount?.toLowerCase()!==address)throw failed();
-    };
-    await walletGuard();return Object.freeze({address,name,signer,guard:walletGuard});
-   },
+   captureFundingWallet:()=>captureRollingFundingWallet({getState:()=>globalThis.walletState,contextGuard:guard,chainId:config.network.chainId}),
    claimStore:globalThis.makeClaimSecretStore(selected.secretKey,selected.salt),proofsEnabled:metadata.proofsEnabled}).then(value=>(session=value)).finally(()=>{creating=undefined;});
   return creating;
  }});
+}
+
+/** Captures the chosen custody transport only when a user requests a quote.
+ * This capability never escapes the private session or reconnects implicitly. */
+export async function captureRollingFundingWallet({getState,contextGuard,chainId}){
+ await contextGuard();const state=getState(),signer=state.ethSigner,provider=state.ethProvider,transport=state.ethTransport;
+ const address=state.ethAccount?.toLowerCase(),name=state.ethWalletName;
+ if(!signer||!provider||!transport||typeof name!=='string'||!/^0x[0-9a-f]{40}$/.test(address))throw failed();
+ const check=()=>{if(state!==getState()||state.invalidated||state.ethSigner!==signer||state.ethProvider!==provider||state.ethTransport!==transport||state.ethAccount?.toLowerCase()!==address)throw failed();};
+ const guard=async()=>{
+  await contextGuard();check();const chain=await transport.request({method:'eth_chainId',params:[]});check();await contextGuard();check();
+  if(typeof chain!=='string'||!/^0x[0-9a-fA-F]+$/.test(chain)||BigInt(chain)!==BigInt(chainId))throw failed();
+  const current=await signer.getAddress();check();await contextGuard();check();if(typeof current!=='string'||current.toLowerCase()!==address)throw failed();
+ };
+ await guard();return Object.freeze({address,name,signer,guard});
 }

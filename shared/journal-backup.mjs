@@ -17,7 +17,8 @@ function validDescriptor(descriptor) {
  const frame=JSON.parse(descriptor.scopeText);
  if(frame[0]!==domains.get(descriptor.keyDomain))throw fail();
  if(descriptor.keyDomain==='ROLLING_AGGREGATE_FUNDING_V1') {
-  if(!Array.isArray(frame)||frame.length!==8||frame[7]!==1||descriptor.scopeText!==JSON.stringify(frame))throw fail();
+  if(!Array.isArray(frame)||![8,9].includes(frame.length)||frame.at(-1)!==1||descriptor.scopeText!==JSON.stringify(frame))throw fail();
+  if(frame.length===9&&(typeof frame[7]!=='string'||!/^0x[0-9a-f]{64}$/.test(frame[7])))throw fail();
   for(const index of [1,2])if(typeof frame[index]!=='string'||!/^[1-9][0-9]{0,19}$/.test(frame[index])||BigInt(frame[index])>=FIELD_MODULUS)throw fail();
   for(const index of [3,4,5,6]){
    const width=index===3||index===5?40:64,value=frame[index];
