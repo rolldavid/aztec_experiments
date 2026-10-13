@@ -23,15 +23,17 @@ export function createRollingReaderAssetHandler(wallet){
  };
 }
 export const serveRollingReaderAsset=createRollingReaderAssetHandler();
-export function startRollingReader({index,port=0,wallet}){
- return startRollingPublicServer({index,port,staticHandler:createRollingReaderAssetHandler(wallet)});
+export function startRollingReader({index,port=0,wallet,fundingRelay}){
+ return startRollingPublicServer({index,port,fundingRelay,staticHandler:createRollingReaderAssetHandler(wallet)});
 }
 if(process.argv[1]&&import.meta.url===pathToFileURL(process.argv[1]).href){
  try{
-  if(![3,4].includes(process.argv.length))throw Error('A public deployment configuration and optional wallet configuration are required');
+  if(![3,4,5].includes(process.argv.length))throw Error('A public deployment configuration and optional wallet configuration are required');
   const config=JSON.parse(await fs.readFile(process.argv[2],'utf8'));
   const wallet=process.argv[3]?await loadRollingWalletAssets(JSON.parse(await fs.readFile(process.argv[3],'utf8')),config.scope):undefined;
-  const server=await startRollingReader({...await createRollingPublicIndexFromConfig(config),wallet});
+  const index=await createRollingPublicIndexFromConfig(config);
+  let fundingRelay;try{if(process.argv[4]){const {openRollingFundingRelay}=await import('../../plugins/rolling-funding-relay.mjs');fundingRelay=await openRollingFundingRelay(JSON.parse(await fs.readFile(process.argv[4],'utf8')));}}catch(error){await index.index.close?.();throw error;}
+  const server=await startRollingReader({...index,wallet,fundingRelay});
   process.stdout.write(JSON.stringify({rollingChatUrl:server.url,scope:wallet?'Public reader with private account actions':'Public reader; wallet deployment not configured'})+'\n');
   let closing=false;
   for(const signal of ['SIGINT','SIGTERM'])process.on(signal,()=>{if(closing)return;closing=true;server.close().then(()=>process.exit(0),()=>process.exit(1));});

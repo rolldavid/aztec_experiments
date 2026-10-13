@@ -122,7 +122,7 @@ export function operatorNodeFetch({endpoint,key,serialize,fetchImpl=globalThis.f
  * the sole send. Every retained record is read-only reconciliation, even dropped.
  * execute uses the normal SDK send pipeline through the supplied once callback. */
 export async function onceAztecOperation({store,name,identity,journalIdentity=identity,scope='constructor-only',execute,reconcile}) {
- if(!['deploy-escrow','claim-fees','deploy-portal','bind','activate','register'].includes(name)||typeof identity!=='string'||typeof journalIdentity!=='string')throw rejected();
+ if(!['deploy-escrow','claim-fees','deploy-portal','bind','activate','register','relay-funding'].includes(name)||typeof identity!=='string'||typeof journalIdentity!=='string')throw rejected();
  const old=store.read().operations[name];
  if(old){
   if(old.schemaVersion!==1||old.policy!=='reconcile-only'||old.identity!==identity||(old.journalIdentity??old.identity)!==journalIdentity||!['preparing','submission-unknown'].includes(old.phase))throw Error('Saved operation scope mismatch');
@@ -239,8 +239,9 @@ export function verifyPluginPortalRuntime(actual,deployed) {
 }
 /** No send path: authenticate retained signed L1 bytes, receipt, original block
  * and required finality before checking the operation's exact on-chain effect. */
-export async function reconcileRollingEthereum({record,development,reads}) {
- const unknown=()=>({status:'unresolved',scope:'portal-registration',canonical:false,...(typeof record?.hash==='string'?{transactionHash:record.hash}:{})});
+export async function reconcileRollingEthereum({record,development,reads,scope='portal-registration'}) {
+ if(!['portal-registration','aggregate-funding'].includes(scope))throw rejected();
+ const unknown=()=>({status:'unresolved',scope,canonical:false,...(typeof record?.hash==='string'?{transactionHash:record.hash}:{})});
  try{
   if(record?.phase!=='submission-unknown'||!/^0x[0-9a-f]{64}$/.test(record.hash)||typeof record.raw!=='string'||!/^(?:[0-9a-f]{2})+$/.test(record.raw)||!await reads.signed(record))return unknown();
   const receipt=await reads.receipt(record.hash);
@@ -250,7 +251,7 @@ export async function reconcileRollingEthereum({record,development,reads}) {
   const head=await reads.head(development?'latest':'finalized');if(!Number.isSafeInteger(head?.number)||head.number<anchor.number)return unknown();
   if(receipt.status===1&&!await reads.effect(record,anchor,receipt))return unknown();
   if((await reads.block(anchor.number))?.hash!==anchor.hash)return unknown();
-  return {status:receipt.status===1?'succeeded':'failed',scope:'portal-registration',canonical:true,transactionHash:record.hash,blockNumber:anchor.number,blockHash:anchor.hash};
+  return {status:receipt.status===1?'succeeded':'failed',scope,canonical:true,transactionHash:record.hash,blockNumber:anchor.number,blockHash:anchor.hash};
  }catch{return unknown();}
 }
 

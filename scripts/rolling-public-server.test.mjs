@@ -213,3 +213,26 @@ test('close rejects pipelined request admission while draining the already admit
  await new Promise(resolve=>setTimeout(resolve,20));assert.equal(calls,1);assert.equal(disposed,false);release();await ended;await closing;
  assert.equal(calls,1);assert.equal(disposed,true);assert.match(response,/HTTP\/1\.1 503/);assert(!response.includes('PRIVATE_SENTINEL'));
 });
+
+test('optional funding endpoint is exact, bounded and independent of public index readiness',async t=>{
+ const calls=[],relay={terms:()=>({relayer:'0x'+'11'.repeat(20),feeUsdc:'50',gasBudgetWei:'1000'}),submit:async body=>{calls.push(body);return {status:'unresolved',canonical:false,planHash:'0x'+'22'.repeat(32)};},status:async hash=>({status:'absent',canonical:false,planHash:hash}),close:async()=>calls.push('closed')};
+ const index={sync:async()=>{},status:()=>({state:'unavailable'}),query:()=>{throw Error('not-ready');}};
+ const server=await startRollingPublicServer({index,fundingRelay:relay,pollMs:30000});t.after(()=>server.close());
+ assert.equal((await fetch(server.url+'/api/funding/usdc/terms')).status,200);
+ const send=(route,body,headers={'content-type':'application/json'})=>fetch(server.url+route,{method:'POST',headers,body});
+ const r=await send('/api/funding/usdc',JSON.stringify({data:'0x1234'}));assert.equal(r.status,200);assert.equal(r.headers.get('access-control-allow-origin'),null);assert.deepEqual(calls,[{data:'0x1234'}]);
+ for(const [route,body,headers] of [['/api/funding/usdc?retry=true','{}'],['/api/funding/usdc','bad'],['/api/funding/usdc','{}',{'content-type':'text/plain'}],['/api/funding/usdc','{}',{'content-type':'application/json','sec-fetch-site':'cross-site'}],['/api/funding/usdc','x'.repeat(32769)]])assert.equal((await send(route,body,headers)).status,400);
+ assert.equal(calls.length,1);
+ assert.equal((await fetch(server.url+'/api/funding/usdc/status?planHash=0x'+'22'.repeat(32))).status,200);
+ assert.equal((await fetch(server.url+'/api/funding/usdc/status?planHash=bad')).status,400);
+ assert.equal((await fetch(server.url+'/api/funding/usdc/terms?privateKey=x')).status,400);
+ await server.close();assert.equal(calls.at(-1),'closed');
+});
+
+test('funding close joins disconnected owned requests before closing its signer capability',async()=>{
+ let release,entered,closed=false;const ready=new Promise(r=>entered=r),gate=new Promise(r=>release=r);
+ const relay={submit:async()=>{entered();await gate;return {status:'unresolved'};},close:async()=>{closed=true;}};
+ const server=await startRollingPublicServer({index:{sync:async()=>{},status:()=>({state:'ready'})},fundingRelay:relay,pollMs:30000});
+ const controller=new AbortController(),request=fetch(server.url+'/api/funding/usdc',{method:'POST',headers:{'content-type':'application/json'},body:'{}',signal:controller.signal}).catch(()=>{});
+ await ready;controller.abort();const closing=server.close();await new Promise(r=>setTimeout(r,10));assert.equal(closed,false);release();await request;await closing;assert.equal(closed,true);
+});

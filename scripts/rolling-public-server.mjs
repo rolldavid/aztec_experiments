@@ -7,15 +7,16 @@ const headers={'Content-Type':'application/json; charset=utf-8','X-Content-Type-
   'Content-Security-Policy':"default-src 'none'; frame-ancestors 'none'; base-uri 'none'",'Referrer-Policy':'no-referrer'};
 /** Same-origin composition: API owns /api and /api/*; lead owns an exact static
  * asset allowlist through staticHandler(req,res). No CORS, RPC proxy, wallet or
- * operator routes. sync is one serial loop; close waits for its bounded read.
+ * arbitrary operator routes. Optional USDC funding accepts only its exact signed plan. sync is one serial loop; close waits for its bounded read.
  * GET /api/{status,home,feed,board,directory,thread,profile,post}; no request bodies or extras.
  */
-export async function startRollingPublicServer({index,host='127.0.0.1',port=0,staticHandler,pollMs=1000}){
+export async function startRollingPublicServer({index,host='127.0.0.1',port=0,staticHandler,pollMs=1000,fundingRelay}){
   if(host!=='127.0.0.1'||!Number.isInteger(port)||port<0||port>65535||!Number.isInteger(pollMs)||pollMs<100||pollMs>30000){
     const error=Error('Invalid public server configuration');
-    try{await index.close?.();}catch(cleanup){throw new AggregateError([error,cleanup],'Public reader configuration and cleanup failed');}throw error;
+    const failures=[error];for(const cleanup of [()=>index.close?.(),()=>fundingRelay?.close()])try{await cleanup();}catch(failure){failures.push(failure);}
+    if(failures.length>1)throw new AggregateError(failures,'Public reader configuration and cleanup failed');throw error;
   }
-  let closed=false,timer,active,closing;const requests=new Set();
+  let closed=false,timer,active,closing;const requests=new Set();let fundingWindow=0,fundingRequests=0;
   const loop=()=>{active=(async()=>{try{await index.sync();}catch{/* status remains unavailable; no raw upstream error logging */}
     finally{if(!closed)timer=setTimeout(loop,pollMs);}})();};
   const handle=async(req,res)=>{
@@ -26,6 +27,24 @@ export async function startRollingPublicServer({index,host='127.0.0.1',port=0,st
       const url=new URL(req.url,'http://127.0.0.1');
       if(url.pathname!=='/api'&&!url.pathname.startsWith('/api/')){
         if(staticHandler){await staticHandler(req,res);return;}return reply(404,{schemaVersion:1,error:'not-found'});
+      }
+      if(fundingRelay&&url.pathname.startsWith('/api/funding/usdc')){
+        const invalid=()=>reply(400,{schemaVersion:1,error:'invalid-request'});
+        const now=Date.now();if(now-fundingWindow>=60000){fundingWindow=now;fundingRequests=0;}
+        if(++fundingRequests>60)return reply(429,{schemaVersion:1,error:'unavailable'});
+        if(req.headers['sec-fetch-site']&&!['same-origin','none'].includes(req.headers['sec-fetch-site']))return invalid();
+        if(req.method==='GET'&&!req.headers['transfer-encoding']&&(!req.headers['content-length']||req.headers['content-length']==='0')){
+          if(url.pathname==='/api/funding/usdc/terms'&&!url.search)return reply(200,fundingRelay.terms());
+          const params=[...url.searchParams];
+          if(url.pathname==='/api/funding/usdc/status'&&params.length===1&&params[0][0]==='planHash'&&/^0x[0-9a-f]{64}$/.test(params[0][1]))return reply(200,await fundingRelay.status(params[0][1]));
+          return invalid();
+        }
+        if(req.method!=='POST'||url.pathname!=='/api/funding/usdc'||url.search||req.headers['content-type']!=='application/json'||req.headers['content-encoding']||Number(req.headers['content-length']??0)>32768)return invalid();
+        let size=0;const chunks=[];const timeout=setTimeout(()=>req.destroy(),10000);
+        try{for await(const chunk of req){size+=chunk.length;if(size>32768){req.destroy();return;}chunks.push(chunk);}}
+        finally{clearTimeout(timeout);}
+        let input;try{input=JSON.parse(Buffer.concat(chunks).toString('utf8'));}catch{return invalid();}
+        return reply(200,await fundingRelay.submit(input));
       }
       if(req.method!=='GET'){res.setHeader('Allow','GET');return reply(405,{schemaVersion:1,error:'method-not-allowed'});}
       if(req.headers['transfer-encoding']||req.headers['content-length']&&req.headers['content-length']!=='0')return reply(400,{schemaVersion:1,error:'invalid-request'});
@@ -63,6 +82,7 @@ export async function startRollingPublicServer({index,host='127.0.0.1',port=0,st
     await listener;
     for(const result of await pending)if(result.status==='rejected')failures.push(result.reason);
     try{await index.close?.();}catch(error){failures.push(error);}
+    try{await fundingRelay?.close();}catch(error){failures.push(error);}
     if(failures.length===1)throw failures[0];if(failures.length)throw new AggregateError(failures,'Public reader cleanup failed');
   })();
   try{await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(port,host,resolve);});}
