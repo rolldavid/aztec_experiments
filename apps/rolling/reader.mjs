@@ -8,6 +8,7 @@ let controller,sequence=0,route=location.hash.slice(1)||'/home',main,loadedPages
 let walletPanel,privatePanel;
 const privateViews=new Set(['following','bookmarks','notifications']);
 function privateChanged(){
+ for(const node of app.querySelectorAll('[data-moderator-action]'))showModeratorButton(node);
  if(privateViews.has(route.split('/')[1])){controller?.abort();main?.replaceChildren();void render();}
  else for(const node of app.querySelectorAll('[data-private-setting]'))node.textContent=preferenceLabel(node.dataset.privateSetting,Number(node.dataset.kind),node.dataset.target);
 }
@@ -54,6 +55,11 @@ function preferenceLabel(label,kind,target){return privatePanel?.preferenceEnabl
 function preferenceButton(label,kind,target){
  return button(preferenceLabel(label,kind,target),()=>openWallet({type:'preference',kind,target,enabled:privatePanel?.preferenceEnabled?.(kind,target)!==true}),{'data-private-setting':label,'data-kind':kind,'data-target':target});
 }
+function showModeratorButton(node){node.hidden=privatePanel?.moderatorAuthorized?.()!==true;node.style.display=node.hidden?'none':'';}
+function moderatorButton(label,defaults){
+ const node=button(label,()=>{if(privatePanel?.moderatorAuthorized?.()===true)void openWallet(defaults);},{'data-moderator-action':''});
+ showModeratorButton(node);return node;
+}
 function postCard(post,data){
  if(!post||!field(post.id)||!post.record||!field(post.record.root))throw Error('Invalid public post');
  const r=post.record,isBot=Boolean(post.bot),named=!isBot&&r.name_id!=='0'?data.names?.[r.name_id]:null,board=data.board?.id===r.subboard?data.board:data.boards?.[r.subboard];
@@ -84,6 +90,7 @@ function postCard(post,data){
   button('Like',()=>openWallet({type:'like',post:post.id})),unlike(),button('Quote',()=>openWallet({type:'quote',reference:post.id,subboard:r.subboard})),
   button('Repost',()=>openWallet({type:'repost',reference:post.id,subboard:r.subboard})),preferenceButton('Bookmark',1,post.id),preferenceButton('Subscribe to thread',4,r.root),
   typeof post.position?.blockNumber==='string'&&/^(0|[1-9][0-9]{0,9})$/.test(post.position.blockNumber)&&BigInt(post.position.blockNumber)<=0xffffffffn?button('Mark thread read',()=>openWallet({type:'read-marker',thread:r.root,throughBlock:String(post.position.blockNumber)})):null));
+ article.append(moderatorButton('Remove this post',{type:'moderate-post',post:post.id}));
  return article;
 }
 function timestamp(value){const n=Number(value);if(!Number.isSafeInteger(n)||n<0)return '';const date=new Date(n*1000);return Number.isFinite(date.getTime())?date.toLocaleString(undefined,{dateStyle:'medium',timeStyle:'short'}):'';}
@@ -101,7 +108,7 @@ function shell(title,{boardId=null}={}){
 }
 function boardCard(board){
  const rules=el('details',{},el('summary',{},'Effective rules'),el('h3',{},'Parent rules'),policyVersion(board.mainVersion)?el('p',{class:'quiet'},'Current parent policy v'+board.mainVersion):null,richText(board.mainRules),el('h3',{},'Local rules'),richText(board.rules));
- return el('article',{class:'post'},el('h2',{},field(board.id)?link(text(board.name),'/board/'+board.id):text(board.name)),el('p',{class:'quiet'},'/'+text(board.slug)),el('p',{},text(board.description)),board.rejected?el('p',{class:'removed'},'Rejected by the main board: '+text(board.rejection?.reason)):null,board.rejected&&policyVersion(board.rejection?.mainVersion)?el('p',{class:'quiet'},'Subboard rejected under parent policy v'+board.rejection.mainVersion):null,rules);
+ return el('article',{class:'post'},el('h2',{},field(board.id)?link(text(board.name),'/board/'+board.id):text(board.name)),el('p',{class:'quiet'},'/'+text(board.slug)),el('p',{},text(board.description)),board.rejected?el('p',{class:'removed'},'Rejected by the main board: '+text(board.rejection?.reason)):null,board.rejected&&policyVersion(board.rejection?.mainVersion)?el('p',{class:'quiet'},'Subboard rejected under parent policy v'+board.rejection.mainVersion):null,rules,board.rejected?null:moderatorButton('Reject this subboard',{type:'reject-subboard',subboard:board.id}));
 }
 function boardOverview(data){
  const section=el('section',{'aria-label':'Board information'}),board=data.board,policy=data.mainPolicy;
@@ -114,6 +121,8 @@ function boardOverview(data){
  if(board)rules.append(el('h2',{},'Immutable local rules'),richText(board.rules),el('p',{class:'quiet'},'Both current parent rules and local rules apply.'));
  else rules.append(el('p',{class:'quiet'},'The main board follows these parent rules.'));
  section.append(rules);
+ if(!board)section.append(moderatorButton('Update parent rules',{type:'set-main-policy'}));
+ else if(!board.rejected)section.append(moderatorButton('Reject this subboard',{type:'reject-subboard',subboard:board.id}));
  if(board?.rejection&&policyVersion(board.rejection.mainVersion)){
   const applied=data.policies.find(p=>p.version===board.rejection.mainVersion);
   if(applied)section.append(el('details',{},el('summary',{},'Parent rules at rejection · v'+applied.version),richText(applied.text)));
@@ -185,7 +194,7 @@ async function render(){
    main.querySelector('h1').textContent=data.board?text(data.board.name):'Main board';container.setAttribute('aria-label','Posts in '+(data.board?text(data.board.name):'Main board'));main.append(boardOverview(data),preferenceButton('Follow board',2,parameters.id));
    const compose=document.querySelector('[data-board-compose]');if(compose)compose.disabled=Boolean(data.board?.rejected);
   }
-  if(api==='profile'&&data.identity){main.querySelector('h1').textContent=text(data.identity.first)+' '+text(data.identity.last);main.append(createPublicProfile(data.identity,{signal}),preferenceButton('Follow name',3,parameters.nameId));}
+  if(api==='profile'&&data.identity){main.querySelector('h1').textContent=text(data.identity.first)+' '+text(data.identity.last);main.append(createPublicProfile(data.identity,{signal}),preferenceButton('Follow name',3,parameters.nameId),moderatorButton('Remove this avatar',{type:'moderate-avatar',name:parameters.nameId}));}
   if(!container.childElementCount)container.append(el('div',{class:'empty'},el('h2',{},'A little quiet here'),el('p',{},api==='directory'?(cursor?'No matches in this page. Continue searching.':'No subboards match this search.'):'No posts to show yet.')));
   main.append(container);
   if(expectedRoot)main.append(el('p',{},link('Read the conversation from the beginning','/thread/'+expectedRoot)));

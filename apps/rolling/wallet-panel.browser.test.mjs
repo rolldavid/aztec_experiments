@@ -18,6 +18,7 @@ const write=value=>sessionStorage.setItem('labelled-ui-intent',JSON.stringify(va
 const error=()=>{throw Object.defineProperty(Error('PRIVATE_SENTINEL'), 'code',{get(){throw Error('GETTER_SENTINEL');}});};
 async function boundary(name){if(state.hold===name)await new Promise(resolve=>state.release=resolve);if(state.failure===name)error();}
 const application={
+ async readModeratorStatus(){await boundary('moderator');return {authorized:state.moderator===true};},
  async readBokStatus(){return {available:state.bokCredit!==undefined,...(state.bokCredit!==undefined?{availableCredit:state.bokCredit}:{})};},
  async prepareBokPost(id){state.bokContinues=(state.bokContinues??0)+1;await boundary('bok-continue');const prior=read();if(prior.intentId!==id||!['authorized','bok-post-reverted'].includes(prior.status))error();const next={...prior,intentId:'43',status:'prepared',maximumFee:'234',bok:{...prior.bok,phase:'post',authorizationTxHash:'0x'+'7'.repeat(64)}};write(next);return next;},
  async resumeSaved(id,input){state.resumes++;state.resumeInput={id,...input};state.sends++;await boundary('saved-resume');const next={...read(),txHash:input.expectedTxHash,status:state.resumeOutcome??'confirmed'};write(next);return next;},
@@ -28,7 +29,7 @@ const application={
  async readPreferenceHead(){state.headReads++;await boundary('head');return {schema:1,initialized:true,revision:state.revision,digest:'42'};},
  async readColdPreferences(){state.preferenceReads++;await boundary('preferences');return state.partial?{status:'recovering',complete:false,progress:{nextBlock:33,anchorBlock:80,processedRevision:'2',markersChecked:0,markersTotal:null}}:{status:'complete',complete:true,preferences:state.preferences};},
  async readProfile({name}){state.profileCalls++;await boundary('profile');return {name:'0x'+BigInt(name).toString(16).padStart(64,'0'),bioVersion:state.bioVersion,avatarVersion:state.avatarVersion};},
- async prepare(action){state.prepares++;if(['bio','avatar'].includes(action.type)&&action.expectedVersion!==state[action.type+'Version'])error();write({intentId:'42',action,maximumFee:'123',status:'prepared',...(action.type==='bok'?{bok:{phase:'authorize',budget:action.budget,availableCredit:state.bokCredit}}:{})});await boundary('prepare');return read();},
+ async prepare(action){state.prepares++;if(['bio','avatar'].includes(action.type)&&action.expectedVersion!==state[action.type+'Version'])error();write({intentId:'42',action,maximumFee:'123',status:'prepared',...(['moderate-post','moderate-avatar','reject-subboard','set-main-policy'].includes(action.type)?{moderation:{mainVersion:3,...(action.type==='moderate-avatar'?{avatarVersion:2}:{})}}:{}),...(action.type==='bok'?{bok:{phase:'authorize',budget:action.budget,availableCredit:state.bokCredit}}:{})});await boundary('prepare');return read();},
  async submitPrepared(id){state.submitCalls++;state.sends++;write({...read(),status:'submitting'});await boundary('submit');const intent={...read(),status:state.submitOutcome??(read().bok?.phase==='authorize'?'authorized':'confirmed')};write(intent);return intent;},
  async cancelPrepared(){state.cancels++;write({...read(),status:'cancelled'});return read();},
  async reconcile(){state.reconciles++;await boundary('reconcile');const intent=read();if(state.resolveOutcome){intent.status=state.resolveOutcome;write(intent);}return intent;}
@@ -621,4 +622,38 @@ test('Bok reverted post stays in explicit saved-request recovery after reopen wi
  assert.equal((await counts(page)).sends,0);assert.equal((await counts(page)).prepares,0);
  await page.getByRole('button',{name:'Review saved Bok post',exact:true}).click();await page.getByRole('button',{name:'Confirm and send',exact:true}).waitFor();
  assert.equal((await counts(page)).sends,0);assert.equal((await counts(page)).prepares,0);assert.equal(await page.getByRole('button',{name:'Cancel prepared action',exact:true}).count(),0);
+});
+
+test('Moderator controls stay hidden from ordinary authors including forged action defaults',async t=>{
+ const {page}=await browserFixture(t);await open(page,{type:'moderate-post'});await unlock(page);assert.equal(await page.locator('option[value="moderate-post"]').count(),0);assert.equal(await page.getByLabel('Public moderation reason',{exact:true}).count(),0);assert.equal((await counts(page)).sends,0);
+});
+test('Moderator removal reviews literal reason, target, policy and fee with explicit confirmation',async t=>{
+ const {page}=await browserFixture(t);await page.evaluate(()=>test.moderator=true);await open(page);await unlock(page);await page.getByLabel('Action',{exact:true}).selectOption('moderate-post');
+ await page.getByLabel('Post ID',{exact:true}).fill('8');await page.getByLabel('Public moderation reason',{exact:true}).fill('<script>Literal rule breach</script>');
+ await page.getByRole('button',{name:'Check action and review fee',exact:true}).click();await page.getByRole('button',{name:'Confirm and send',exact:true}).waitFor();
+ await page.getByText('Reviewed parent rules version: 3.',{exact:true}).waitFor();assert.equal(await page.locator('dialog script').count(),0);assert.equal((await counts(page)).sends,0);
+ assert.deepEqual(await page.evaluate(()=>JSON.parse(sessionStorage.getItem('labelled-ui-intent')).action),{type:'moderate-post',post:'8',reason:'<script>Literal rule breach</script>'});
+ await page.getByRole('button',{name:'Confirm and send',exact:true}).click();await page.getByText('Transaction confirmed on the verified chain.',{exact:true}).waitFor();assert.equal((await counts(page)).sends,1);
+});
+test('Moderator form exposes only contract-supported operations and bounds UTF8 input',async t=>{
+ const {page}=await browserFixture(t);await page.evaluate(()=>test.moderator=true);await open(page);await unlock(page);
+ for(const kind of ['moderate-avatar','reject-subboard','set-main-policy']){await page.getByLabel('Action',{exact:true}).selectOption(kind);const field=kind==='set-main-policy'?page.getByLabel('New parent rules',{exact:true}):page.getByLabel('Public moderation reason',{exact:true});if(kind!=='set-main-policy')await page.getByLabel(kind==='moderate-avatar'?'Profile name ID':'Subboard ID',{exact:true}).fill('7');await field.fill('é'.repeat(kind==='set-main-policy'?497:109));assert.equal(await page.getByRole('button',{name:'Check action and review fee',exact:true}).isDisabled(),true);}
+ assert.equal((await counts(page)).prepares,0);assert.equal(await page.locator('option[value="hide-post"]').count(),0);
+});
+
+test('Moderator avatar review identifies the public target without claiming ownership or needing collateral',async t=>{
+ const {page}=await browserFixture(t);await page.evaluate(()=>{test.moderator=true;test.fee='collateral-pending';});await open(page);await unlock(page);
+ await page.getByLabel('Action',{exact:true}).selectOption('moderate-avatar');await page.getByLabel('Profile name ID',{exact:true}).fill('99');await page.getByLabel('Public moderation reason',{exact:true}).fill('Image violates parent rules');
+ await page.getByRole('button',{name:'Check action and review fee',exact:true}).click();await page.getByRole('button',{name:'Confirm and send',exact:true}).waitFor();
+ await page.getByText('name: 99',{exact:true}).waitFor();await page.getByText('Reviewed avatar version: 2.',{exact:true}).waitFor();assert.equal((await counts(page)).sends,0);
+ assert.equal((await page.getByRole('dialog').innerText()).includes('Selected owned name'),false);
+});
+
+test('Moderator contextual defaults retain exact public avatar target and capability clears synchronously on account invalidation',async t=>{
+ const {page}=await browserFixture(t);await page.evaluate(()=>test.moderator=true);await open(page);await unlock(page);
+ assert.equal(await page.evaluate(()=>panel.moderatorAuthorized()),true);
+ await page.getByRole('button',{name:'Close account panel'}).click();await open(page,{type:'moderate-avatar',name:'99'});
+ await page.getByLabel('Profile name ID',{exact:true}).waitFor();assert.equal(await page.getByLabel('Profile name ID',{exact:true}).inputValue(),'99');
+ await page.evaluate(()=>test.options.onChange({invalidated:true}));assert.equal(await page.evaluate(()=>panel.moderatorAuthorized()),false);
+ assert.equal((await counts(page)).sends,0);
 });

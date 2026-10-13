@@ -230,11 +230,12 @@ async function boardFixture(t,{rejected=false}={}){
    const base={schemaVersion:1,scope:{boardAddress:'public'},complete:true,checkpoint:{number:3,hash:'public'},revision:'epoch:1',names:{},boards:{'20':{id:'20',name:'Workshop',slug:'workshop'}},nextCursor:null};
    let body=url.pathname==='/api/directory'?{...base,boards:[board]}:{...base,posts:[post('10','0'),post('11','20')]};
    if(url.pathname==='/api/board')body={...base,boardId:id,board:id==='0'?null:board,mainPolicy:{version:'2',digest:'2',text:'Current parent rules'},policies:[{version:'1',digest:'1',text:'Historical parent rules'},{version:'2',digest:'2',text:'Current parent rules'}],posts:[post(cursor?'22':id==='0'?'10':'21',id)],nextCursor:id==='20'&&!cursor?'20:1:1':null};
+   if(url.pathname==='/api/profile')body={...base,identity:{id:'7',first:'River',last:'Lane'},posts:[]};
    if(url.pathname==='/api/board'&&state.mode==='wrong-board')body.boardId='99';
    if(url.pathname==='/api/board'&&state.mode==='foreign-post')body.posts[0].record.subboard='99';
    res.writeHead(200,{'content-type':'application/json'});res.end(JSON.stringify(body));return;
   }
-  if(url.pathname==='/wallet-panel.mjs'){res.writeHead(200,{'content-type':'text/javascript'});res.end('export function mountRollingWalletPanel(){return {open(value){(window.boardActions??=[]).push(value);},close(){}}}');return;}
+  if(url.pathname==='/wallet-panel.mjs'){res.writeHead(200,{'content-type':'text/javascript'});res.end('export function mountRollingWalletPanel({onPrivateChange}){window.moderatorFixture={authorized:false,change(value){this.authorized=value;onPrivateChange();}};return {moderatorAuthorized:()=>moderatorFixture.authorized,open(value){(window.boardActions??=[]).push(value);},close(){}}}');return;}
   const name=url.pathname==='/'?'live.html':url.pathname.slice(1);if(!files.has(name)){res.writeHead(404);res.end();return;}
   res.writeHead(200,{'content-type':name.endsWith('.mjs')?'text/javascript':name.endsWith('.css')?'text/css':'text/html'});res.end(await fs.readFile(path.join(root,name)));
  });await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));t.after(()=>new Promise(resolve=>server.close(resolve)));
@@ -408,4 +409,31 @@ test('notification partial recovery preserves public roots but never exposes an 
  await page.locator('#content article.post').evaluate(node=>node.remove());
  await page.evaluate(()=>privateTest.partial=false);await d.getByRole('button',{name:'Continue private recovery',exact:true}).click();await d.getByText('Your saved choices are ready.',{exact:true}).waitFor();
  assert.equal(await page.evaluate(()=>privateTest.prepare.length),0);
+});
+
+// The panel capability here is a labelled local authority double. Production
+// authority and transaction rechecks are exercised by application/panel suites.
+test('contextual moderator actions use public targets only after local authorization and clear on invalidation',async t=>{
+ const {page,state,requests}=await boardFixture(t);
+ assert.equal(await page.getByRole('button',{name:'Remove this post',exact:true}).count(),0);
+ assert(!requests.some(p=>p.includes('wallet')));
+ await page.getByRole('button',{name:'Your account',exact:true}).click();await page.waitForFunction(()=>window.moderatorFixture);
+ const before=state.calls.length;await page.evaluate(()=>moderatorFixture.change(true));
+ await page.locator('#post-10').getByRole('button',{name:'Remove this post',exact:true}).click();
+ assert.deepEqual(await page.evaluate(()=>boardActions.at(-1)),{type:'moderate-post',post:'10'});assert.equal(state.calls.length,before);
+ await page.evaluate(()=>location.hash='/board/0');await page.getByRole('button',{name:'Update parent rules',exact:true}).click();
+ assert.deepEqual(await page.evaluate(()=>boardActions.at(-1)),{type:'set-main-policy'});
+ await page.evaluate(()=>location.hash='/board/20');await page.getByRole('button',{name:'Reject this subboard',exact:true}).click();
+ assert.deepEqual(await page.evaluate(()=>boardActions.at(-1)),{type:'reject-subboard',subboard:'20'});
+ await page.evaluate(()=>location.hash='/profile/7');await page.getByRole('button',{name:'Remove this avatar',exact:true}).click();
+ assert.deepEqual(await page.evaluate(()=>boardActions.at(-1)),{type:'moderate-avatar',name:'7'});
+ const count=await page.evaluate(()=>boardActions.length);await page.evaluate(()=>{moderatorFixture.change(false);document.querySelector('[data-moderator-action]').click();});
+ assert.equal(await page.getByRole('button',{name:'Remove this avatar',exact:true}).count(),0);assert.equal(await page.evaluate(()=>boardActions.length),count);
+ assert(state.calls.every(p=>!/[?&](owner|moderator|owned|account)=/.test(p)));
+});
+test('moderator context actions respect rejected and already removed public state',async t=>{
+ const {page}=await boardFixture(t,{rejected:true});await page.getByRole('button',{name:'Your account',exact:true}).click();await page.waitForFunction(()=>window.moderatorFixture);await page.evaluate(()=>moderatorFixture.change(true));
+ await page.evaluate(()=>location.hash='/board/20');await page.getByRole('heading',{name:'Workshop',level:1}).waitFor();
+ assert.equal(await page.getByRole('button',{name:'Reject this subboard',exact:true}).count(),0);assert.equal(await page.getByRole('button',{name:'Remove this post',exact:true}).count(),0);
+ await page.evaluate(()=>location.hash='/directory');await page.getByRole('heading',{name:'Workshop'}).waitFor();assert.equal(await page.getByRole('button',{name:'Reject this subboard',exact:true}).count(),0);
 });
