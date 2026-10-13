@@ -20,3 +20,13 @@ for(const mutation of ['node-chain','l1-chain','version','rollup','node-inbox','
 });
 test('one aggregate preflight deadline covers both read stages',async()=>{const d=network();d.node.getNodeInfo=async()=>{await new Promise(r=>setTimeout(r,25));return {l1ChainId:31337,rollupVersion:1};};d.provider.getCode=()=>new Promise(()=>{});const begin=Date.now();await assert.rejects(preflightDeploymentNetwork(manifest(),{...d,timeoutMs:40}));assert.ok(Date.now()-begin<150);});
 test('invalid time budget rejected',async()=>{for(const timeoutMs of [0,-1,20001,NaN,1.5])await assert.rejects(preflightDeploymentNetwork(manifest(),{...network(),timeoutMs}));});
+
+const rollingManifest=()=>{const m=manifest();m.schemaVersion=2;delete m.board.censor;m.board.kind='rolling';m.artifacts.boardJsonSha256=hash({name:'RollingBoard'});return m;};
+test('explicit Rolling profile has no separate censor and binds the artifact and configuration',()=>{
+ const m=rollingManifest(),config=deploymentManifestConfig(m);assert.equal(config.boardProfile,'rolling');assert.equal(config.censor,undefined);
+ const args={...inputs(m),artifact:{name:'RollingBoard'},config};assert.ok(verifyDeploymentInputs(m,args).intentDigest);
+ for(const mutate of [x=>delete x.config.boardProfile,x=>x.config.censor=field(9),x=>x.artifact={name:'Billboard'}]){const x={...args,config:{...config}};mutate(x);assert.throws(()=>verifyDeploymentInputs(m,x));}
+});
+for(const change of [m=>m.board.kind='billboard',m=>delete m.board.kind,m=>m.board.censor=field(4),m=>m.schemaVersion=3,m=>m.board.policy='é'.repeat(497),m=>m.board.policy='x'.repeat(993)])test('Rolling manifest rejects incompatible schema or policy '+change.toString(),()=>{const m=rollingManifest();change(m);assert.throws(()=>validateDeploymentManifest(m));});
+test('Rolling policy byte bound admits exactly 32 canonical packed fields',()=>{const m=rollingManifest();m.board.policy='é'.repeat(496);assert.equal(Buffer.byteLength(validateDeploymentManifest(m).board.policy),992);});
+test('legacy profile cannot be silently interpreted as Rolling',()=>{const m=manifest(),i=inputs(m);i.config.boardProfile='rolling';assert.throws(()=>verifyDeploymentInputs(m,i));});
