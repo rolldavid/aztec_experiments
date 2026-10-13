@@ -5,7 +5,7 @@ import {pathToFileURL} from 'node:url';
 import {BackendType,Barretenberg,BarretenbergSync} from '@aztec-foundation/bb.js';
 import {createAztecNodeClient} from '../shared/aztec-node-client.mjs';
 import {waitForTx} from '@aztec-labs/aztec.js/node';
-import {BatchCall,Contract,Contract as AztecContract} from '@aztec-labs/aztec.js/contracts';
+import {BatchCall,Contract,Contract as AztecContract,NO_WAIT} from '@aztec-labs/aztec.js/contracts';
 import {getFeeJuiceBalance} from '@aztec-labs/aztec.js/utils';
 import {FeeJuicePaymentMethodWithClaim} from '@aztec-labs/aztec.js/fee';
 import {NO_FROM} from '@aztec-labs/aztec.js/account';
@@ -15,18 +15,21 @@ import {Fr} from '@aztec-labs/foundation/curves/bn254';
 import {AztecAddress} from '@aztec-labs/stdlib/aztec-address';
 import {EthAddress} from '@aztec-labs/foundation/eth-address';
 import {loadContractArtifact} from '@aztec-labs/stdlib/abi';
-import {getContractClassFromArtifact} from '@aztec-labs/stdlib/contract';
+import {getContractClassFromArtifact,getContractInstanceFromInstantiationParams,computeContractAddressFromInstance} from '@aztec-labs/stdlib/contract';
 import {Tx,TxHash,TxStatus} from '@aztec-labs/stdlib/tx';
 import {JsonRpcProvider,Wallet,Contract as EthereumContract,ContractFactory,getCreateAddress,keccak256,parseUnits,formatUnits,sha256,toUtf8Bytes} from 'ethers';
 import {API_VERSION,packText,handleField,validateDescriptor} from './protocol.mjs';
 import {provingEnabledForNode} from '../shared/proving-policy.mjs';
-import {fileState,recordedTransaction,outboxArguments} from './operations.mjs';
+import {fileState,recordedTransaction,outboxArguments,operatorApplicationProfile,rollingOperatorConfig,operatorNodeFetch,onceAztecOperation,reconcileRollingOperation,rollingPxeOptions,bindRollingJournal,readOperatorActor,projectRollingReceipt} from './operations.mjs';
+import {loadRollingArtifacts} from '../prover/rolling-artifacts.mjs';
+import {jsonStringify} from '@aztec-labs/foundation/json-rpc';
 const read=async p=>JSON.parse(await fs.readFile(p,'utf8'));
 
 /** Each command performs one reviewable operation; state contains exact tx hashes.
  * Keys are read from a separate mode-0600 actor file, never deployment output.
  */
-export async function operatorCommand({command,config,statePath,actor,ethereumKey,amount,recipient,claim,onProgress=()=>{}}){
+export async function operatorCommand({command,config,statePath,actor,ethereumKey,amount,recipient,claim,queryApiKey,onProgress=()=>{}}){
+ if(operatorApplicationProfile(config)==='rolling'){try{return await rollingOperatorCommand({command,config,statePath,actor,claim,queryApiKey,onProgress});}catch{throw Error('Rolling operator unavailable; preserve the journal and reconcile retained operations');}}
  const [adapterJson,portalJson,boardJson]=await Promise.all([read(new URL('./adapter_artifact.json',import.meta.url)),read(new URL('../billboard/portal/out/PluginPortal.sol/PluginPortal.json',import.meta.url)),read(new URL('../apps/src/billboard/billboard_artifact.json',import.meta.url))]);
  const fingerprints=[adapterJson,portalJson,boardJson].map(x=>sha256(toUtf8Bytes(JSON.stringify(x))));
  const node=createAztecNodeClient(config.nodeUrl);onProgress('network-identity');const info=await node.getNodeInfo();
@@ -133,14 +136,93 @@ export async function operatorCommand({command,config,statePath,actor,ethereumKe
   throw Error('Unknown operator command');
  }finally{try{await wallet?.stop();}finally{provider.destroy();await lock?.close();await fs.unlink(statePath+'.lock');}}
 }
+// Constructor-only current application profile. Legacy lifecycle above is untouched.
+// PLUGIN_QUERY_API_KEY is runtime-only; never put it in CONFIG. The example's
+// placeholders intentionally fail closed until current network/board are verified.
+// fees is read-only; claim-fees and deploy-escrow each consume one journal slot.
+// Repeating either reconciles its original intent, including unknown/preparing
+// outcomes. A successful constructor result does not enable portal/registration
+// or hosted service operations. No private human caller is a Bok descriptor field.
+async function rollingOperatorCommand({command,config:input,statePath,actor,claim,queryApiKey,onProgress}){
+ let wallet,provider,lock;
+ const lockPath=statePath+'.lock';
+ try{
+  const config=rollingOperatorConfig(input);
+  if(!['fees','claim-fees','deploy-escrow'].includes(command))throw Error('Unsupported constructor command');
+  if(!config.development&&queryApiKey===undefined)throw Error('Operator authentication required');
+  if(typeof actor?.address!=='string'||!/^0x[0-9a-f]{64}$/.test(actor.address)||BigInt(actor.address)===0n)throw Error('Invalid deployer');
+  const from=AztecAddress.fromStringUnsafe(actor.address);
+  const node=createAztecNodeClient(config.nodeUrl,{fetch:operatorNodeFetch({endpoint:config.nodeUrl,key:queryApiKey,serialize:jsonStringify})});
+  provider=new JsonRpcProvider(config.ethereumUrl,undefined,{cacheTimeout:-1});
+  const checkNetwork=async()=>{
+   const info=await node.getNodeInfo();
+   if(String((await provider.getNetwork()).chainId)!==config.chainId||String(info.l1ChainId)!==config.chainId||String(info.rollupVersion)!==config.rollupVersion||String(info.l1ContractAddresses.rollupAddress).toLowerCase()!==config.rollupAddress||info.realProofs!==!config.development)throw Error('Network scope mismatch');
+   return info;
+  };
+  await checkNetwork();
+  if(command==='fees')return {publicFeeJuice:String(await getFeeJuiceBalance(from,node)),account:from.toString()};
+  const [boardRaw,bokRaw]=loadRollingArtifacts(),artifact=loadContractArtifact(bokRaw),boardArtifact=loadContractArtifact(boardRaw);
+  const classId=(await getContractClassFromArtifact(artifact)).id.toString();
+  const boardClass=(await getContractClassFromArtifact(boardArtifact)).id.toString();
+  const constructorArgs=[AztecAddress.fromStringUnsafe(config.boardAddress),AztecAddress.fromStringUnsafe(config.operatorAddress),BigInt(config.chainId),BigInt(config.rollupVersion)];
+  const binding={profile:'rolling-private-bok-constructor/v1',config,actor:from.toString(),artifactSha256:sha256(toUtf8Bytes(JSON.stringify(bokRaw))),classId,boardClass,constructor:constructorArgs.map(String)};
+  await fs.mkdir(path.dirname(path.resolve(statePath)),{recursive:true,mode:0o700});
+  lock=await fs.open(lockPath,'wx',0o600);await lock.writeFile(String(process.pid));await lock.sync();
+  const store=await fileState(statePath),identity=JSON.stringify(binding);
+  await bindRollingJournal(store,identity,()=>Fr.random().toString());
+  const salt=Fr.fromString(store.read().salt);
+  const instance=await getContractInstanceFromInstantiationParams(artifact,{constructorArgs,constructorArtifact:'init',deployer:from,salt});
+  const expected={version:instance.version,...Object.fromEntries(['address','deployer','originalContractClassId','currentContractClassId','salt','initializationHash','immutablesHash'].map(k=>[k,String(instance[k])])),storage:{board:config.boardAddress,operator:config.operatorAddress,owner:from.toString(),l1_chain:new Fr(BigInt(config.chainId)).toString(),version:new Fr(BigInt(config.rollupVersion)).toString()}};
+  const reconcile=async record=>{
+   await checkNetwork();
+   return reconcileRollingOperation({record,development:config.development,expected:command==='deploy-escrow'?expected:undefined,reads:{
+    signed:async(raw,hash)=>{const tx=Tx.fromBuffer(Buffer.from(raw,'hex'));return tx.getTxHash().toString()===hash&&String(tx.data.constants.txContext.chainId)===new Fr(BigInt(config.chainId)).toString()&&String(tx.data.constants.txContext.version)===new Fr(BigInt(config.rollupVersion)).toString();},
+    receipt:async hash=>projectRollingReceipt(await node.getTxReceipt(TxHash.fromString(hash))),block:number=>node.getBlock(number),effect:hash=>node.getTxEffect(TxHash.fromString(hash)),
+    instance:(address,anchor)=>node.getContract(AztecAddress.fromStringUnsafe(address),anchor),address:async value=>(await computeContractAddressFromInstance(value)).toString(),
+    storage:async(address,field,anchor)=>String(await node.getPublicStorageAt(anchor,AztecAddress.fromStringUnsafe(address),artifact.storageLayout[field].slot)),
+   }});
+  };
+  const result=await onceAztecOperation({store,name:command,identity, reconcile,execute:async({submit,bindDeployment})=>{
+   // This branch cannot be reached for any retained operation, even without a hash.
+   await checkNetwork();
+   const board=await node.getContract(AztecAddress.fromStringUnsafe(config.boardAddress),'latest');
+   if(String(board?.address)!==config.boardAddress||String(board?.originalContractClassId)!==boardClass||String(board?.currentContractClassId)!==boardClass)throw Error('Current Rolling board required');
+   const recordedNode=new Proxy(node,{get(target,key){if(key!=='sendTx')return Reflect.get(target,key);return async tx=>{
+    if(String(tx.data.constants.txContext.chainId)!==new Fr(BigInt(config.chainId)).toString()||String(tx.data.constants.txContext.version)!==new Fr(BigInt(config.rollupVersion)).toString())throw Error('Transaction scope mismatch');
+    await checkNetwork();
+    return submit({hash:tx.getTxHash().toString(),raw:tx.toBuffer().toString('hex')},()=>node.sendTx(tx));
+   };}});
+   const pxe=await rollingPxeOptions(config.development,async()=>({backend:BackendType.NativeUnixSocket,...await prepareNativeRuntime({}),threads:1}));
+   onProgress('initialize-private-wallet');wallet=await EmbeddedWallet.create(recordedNode,{ephemeral:true,pxe});
+   const account=await wallet.createSchnorrInitializerlessAccount(Fr.fromString(actor.secret),Fr.fromString(actor.salt),GrumpkinScalar.fromString(actor.signingKey),'public Bok deployment operator');
+   if(!account.address.equals(from))throw Error('Actor mismatch');
+   if(command==='claim-fees'){
+    // One fee claim per explicit state campaign. Resuming never opens the secret file.
+    if(typeof claim!=='string')throw Error('Fee claim required');
+    const c=await read(claim),paymentMethod=new FeeJuicePaymentMethodWithClaim(from,{claimAmount:BigInt(c.claimAmount),claimSecret:Fr.fromString(c.claimSecret),messageLeafIndex:BigInt(c.messageLeafIndex)});
+    await new BatchCall(wallet,[]).send({from,wait:NO_WAIT,fee:{paymentMethod}});
+   }else{
+    if(await getFeeJuiceBalance(from,node)===0n)throw Error('Public Fee Juice required');
+    const deployment=Contract.deploy(wallet,artifact,constructorArgs,'init',{deployer:from,salt});
+    if(String((await deployment.getInstance()).address)!==expected.address)throw Error('Computed deployment mismatch');
+    await bindDeployment(expected);await deployment.send({from,wait:NO_WAIT});
+   }
+  }});
+  return {...result,profile:'rolling-private-bok-constructor/v1'};
+ }catch{throw Error('Rolling operator unavailable; preserve the journal and reconcile retained operations');}
+ finally{
+  try{await wallet?.stop();}finally{provider?.destroy();if(lock){await lock.close();await fs.unlink(lockPath);}}
+ }
+}
+
 if(process.argv[1]&&import.meta.url===pathToFileURL(process.argv[1]).href){
  const [command,configPath,statePath,...args]=process.argv.slice(2);
  try{
   if(!command||!configPath||!statePath)throw Error('Usage: operator.mjs COMMAND CONFIG STATE [--amount VALUE --recipient ADDRESS]');
-  const config=await read(configPath),actor=await read(process.env.PLUGIN_ACTOR_FILE||config.operatorFile);
+  const config=await read(configPath),actor=await readOperatorActor({command,config,actorPath:process.env.PLUGIN_ACTOR_FILE,read});
   const options=Object.fromEntries(Array.from({length:args.length/2},(_,i)=>[args[i*2].replace(/^--/,''),args[i*2+1]]));
-  const result=await operatorCommand({command,config,statePath,actor,ethereumKey:process.env.PLUGIN_ETHEREUM_PRIVATE_KEY,...options});console.log(JSON.stringify(result,null,2));
- }catch(error){console.error(error.shortMessage||error.message);process.exitCode=1;}
+  const result=await operatorCommand({command,config,statePath,actor,ethereumKey:process.env.PLUGIN_ETHEREUM_PRIVATE_KEY,queryApiKey:process.env.PLUGIN_QUERY_API_KEY,...options});console.log(JSON.stringify(result,null,2));
+ }catch(error){console.error('Operator command failed; retain local state and reconcile before any new attempt');process.exitCode=1;}
  finally{await Barretenberg.destroySingleton();BarretenbergSync.destroySingleton();}
  process.exit(process.exitCode||0);
 }

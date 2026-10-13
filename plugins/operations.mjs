@@ -52,3 +52,156 @@ export async function outboxArguments(node,txHash,{requireFinalized=true}={}){
  if(!witness)throw Error('Portal message awaits network settlement; run this command again later');
  return [BigInt(witness.epochNumber),BigInt(witness.numCheckpointsInEpoch),witness.leafIndex,witness.siblingPath.toBufferArray().map(b=>'0x'+Buffer.from(b).toString('hex'))];
 }
+
+// Explicit opt-in. Legacy callers above retain their existing transaction policy.
+const rejected = () => Error('Rolling operator input rejected');
+function dataRecord(value, keys) {
+ if(!value || Object.getPrototypeOf(value)!==Object.prototype)throw rejected();
+ const out={};
+ for(const key of Reflect.ownKeys(value)){
+  const d=Object.getOwnPropertyDescriptor(value,key);
+  if(typeof key!=='string'||!keys.includes(key)||!d||!Object.hasOwn(d,'value'))throw rejected();
+  out[key]=d.value;
+ }
+ return out;
+}
+export function operatorApplicationProfile(value) {
+ if(!value||typeof value!=='object')throw rejected();
+ const d=Object.getOwnPropertyDescriptor(value,'applicationProfile');
+ if(!d){if('applicationProfile'in value)throw rejected();return 'legacy';}
+ if(!Object.hasOwn(d,'value')||!['legacy','rolling'].includes(d.value))throw rejected();
+ return d.value;
+}
+export function rollingOperatorConfig(value) {
+ const c=dataRecord(value,['applicationProfile','nodeUrl','ethereumUrl','chainId','rollupVersion','rollupAddress','boardAddress','operatorAddress','development','operatorFile']);
+ if(c.applicationProfile!=='rolling'||typeof c.development!=='boolean')throw rejected();
+ for(const key of ['chainId','rollupVersion'])if(typeof c[key]!=='string'||! /^[1-9][0-9]{0,19}$/.test(c[key])||BigInt(c[key])>=2n**64n)throw rejected();
+ for(const [key,n] of [['rollupAddress',40],['boardAddress',64],['operatorAddress',64]])if(typeof c[key]!=='string'||!new RegExp('^0x[0-9a-f]{'+n+'}$').test(c[key])||BigInt(c[key])===0n)throw rejected();
+ if(c.development?c.chainId!=='31337':c.chainId!=='11155111')throw rejected();
+ for(const key of ['nodeUrl','ethereumUrl']){
+  if(typeof c[key]!=='string'||c[key].length>2048)throw rejected();
+  let url;try{url=new URL(c[key]);}catch{throw rejected();}
+  if(url.username||url.password||url.search||url.hash||url.href!==c[key]||!(url.protocol==='https:'||(c.development&&url.protocol==='http:'&&['127.0.0.1','[::1]'].includes(url.hostname))))throw rejected();
+  if(key==='nodeUrl'&&!c.development&&url.pathname!=='/v1/node')throw rejected();
+ }
+ if(c.operatorFile!==undefined&&(typeof c.operatorFile!=='string'||!c.operatorFile.startsWith('/')||c.operatorFile.length>4096))throw rejected();
+ // The actor locator is private local input, never part of a deployment identity.
+ const {operatorFile,...publicConfig}=c;return Object.freeze(publicConfig);
+}
+
+/** SDK custom fetch, scoped to one configured endpoint. Never use a global injector.
+ * Synthetic fetch/serializer injection is for controlled transport tests only. */
+export function operatorNodeFetch({endpoint,key,serialize,fetchImpl=globalThis.fetch}) {
+ if(typeof endpoint!=='string'||(key!==undefined&&(typeof key!=='string'||!/^[0-9a-f]{64}$/.test(key)))||typeof serialize!=='function')throw rejected();
+ const url=new URL(endpoint);
+ if(url.username||url.password||url.search||url.hash||url.href!==endpoint)throw rejected();
+ return async(host,body,extraHeaders={})=>{
+  let timer,reader;
+  const controller=new AbortController();
+  try{
+   if(host!==endpoint||Object.getPrototypeOf(extraHeaders)!==Object.prototype||Reflect.ownKeys(extraHeaders).length)throw rejected();
+   const encoded=serialize(body);if(typeof encoded!=='string'||Buffer.byteLength(encoded)>8*1024**2)throw rejected();
+   timer=setTimeout(()=>controller.abort(),10000);
+   const response=await fetchImpl(endpoint,{method:'POST',redirect:'error',credentials:'omit',headers:{'content-type':'application/json',...(key?{'x-aztec-api-key':key}:{})},body:encoded,signal:controller.signal});
+   if(response.status!==200||response.redirected)throw rejected();
+   reader=response.body.getReader();const chunks=[];let size=0;
+   for(;;){const {done,value}=await reader.read();if(done)break;size+=value.byteLength;if(size>32*1024**2)throw rejected();chunks.push(Buffer.from(value));}
+   const decoded=JSON.parse(Buffer.concat(chunks).toString('utf8'));
+   if(!Array.isArray(body)||!Array.isArray(decoded)||decoded.length!==body.length)throw rejected();
+   for(let i=0;i<decoded.length;i++){const row=decoded[i];if(!row||typeof row!=='object'||Array.isArray(row)||row.id!==body[i].id||row.jsonrpc!=='2.0'||(Object.hasOwn(row,'result')===Object.hasOwn(row,'error')))throw rejected();}
+   // Do not let arbitrary upstream error text become an SDK/CLI exception.
+   for(const row of Array.isArray(decoded)?decoded:[decoded])if(row&&Object.hasOwn(row,'error'))row.error={code:-32000,message:'Operator RPC rejected'};
+   return {response:decoded,headers:response.headers};
+  }catch{throw Error('Operator RPC unavailable');}
+  finally{clearTimeout(timer);controller.abort();try{await reader?.cancel();}catch{}}
+ };
+}
+
+/** Durable intent before wallet/proof construction; durable signed bytes before
+ * the sole send. Every retained record is read-only reconciliation, even dropped.
+ * execute uses the normal SDK send pipeline through the supplied once callback. */
+export async function onceAztecOperation({store,name,identity,execute,reconcile}) {
+ if(!['deploy-escrow','claim-fees'].includes(name)||typeof identity!=='string')throw rejected();
+ const old=store.read().operations[name];
+ if(old){
+  if(old.schemaVersion!==1||old.policy!=='reconcile-only'||old.identity!==identity||!['preparing','submission-unknown'].includes(old.phase))throw Error('Saved operation scope mismatch');
+  return reconcile(old);
+ }
+ const write=async record=>store.write({...store.read(),operations:{...store.read().operations,[name]:record}});
+ let record={schemaVersion:1,policy:'reconcile-only',identity,phase:'preparing'},sent=false;
+ await write(record);
+ try{
+  await execute({
+   bindDeployment:async deployment=>{if(sent||record.deployment)throw rejected();record={...record,deployment};await write(record);},
+   submit:async({hash,raw},broadcast)=>{
+    if(sent||typeof hash!=='string'||!/^0x[0-9a-f]{64}$/.test(hash)||typeof raw!=='string'||! /^(?:[0-9a-f]{2})+$/.test(raw)||raw.length>16*1024**2)throw rejected();
+    sent=true;record={...record,phase:'submission-unknown',hash,raw};await write(record);
+    return broadcast();
+   },
+  });
+ }catch{
+  // No new attempt, even when preparation or persistence failed before a hash.
+  // The disk record remains authoritative; the writer may be poisoned.
+  return {status:'unresolved',scope:'constructor-only',canonical:false};
+ }
+ return reconcile(record);
+}
+
+/** Read-only reconciliation. SDK adapters provide exact typed reads; the closed
+ * result never publishes raw receipt/errors or upgrades constructor to service readiness. */
+export async function reconcileRollingOperation({record,development,expected,reads}) {
+ const unknown=()=>({status:'unresolved',scope:'constructor-only',canonical:false,...(typeof record.hash==='string'?{transactionHash:record.hash}:{})});
+ if(typeof record.hash!=='string'||!/^0x[0-9a-f]{64}$/.test(record.hash))return unknown();
+ try{
+  if(record.phase!=='submission-unknown'||typeof record.raw!=='string'||! /^(?:[0-9a-f]{2})+$/.test(record.raw)||record.raw.length>16*1024**2||!await reads.signed(record.raw,record.hash))return unknown();
+  const r=await reads.receipt(record.hash);
+  if(String(r?.txHash)!==record.hash||!['checkpointed','proven','finalized'].includes(r.status)||(!development&&r.status!=='finalized')||!['success','reverted'].includes(r.executionResult)||!Number.isSafeInteger(r.blockNumber)||r.blockNumber<1||typeof r.blockHash!=='string'||!/^0x[0-9a-f]{64}$/.test(r.blockHash))return unknown();
+  const anchor={number:r.blockNumber,hash:r.blockHash};
+  const block=await reads.block(anchor.number),effect=await reads.effect(record.hash);
+  if(String(block?.hash)!==anchor.hash||String(effect?.l2BlockHash)!==anchor.hash||effect?.l2BlockNumber!==anchor.number||String(effect?.data?.txHash)!==record.hash||effect.data.revertCode.isOK()!==(r.executionResult==='success'))return unknown();
+  if(expected&&r.executionResult==='success'){
+   if(JSON.stringify(record.deployment)!==JSON.stringify(expected))return unknown();
+   const instance=await reads.instance(expected.address,anchor);
+   for(const field of ['address','deployer','originalContractClassId','currentContractClassId','salt','initializationHash','immutablesHash'])if(String(instance?.[field])!==expected[field])return unknown();
+   if(instance.version!==expected.version||await reads.address(instance)!==expected.address)return unknown();
+   // Actual public immutable constructor values, including derived owner, at receipt anchor.
+   for(const [field,value] of Object.entries(expected.storage))if(await reads.storage(expected.address,field,anchor)!==value)return unknown();
+  }
+  if(String((await reads.block(anchor.number))?.hash)!==anchor.hash)return unknown();
+  return {status:r.executionResult==='success'?'succeeded':'failed',scope:'constructor-only',canonical:true,transactionHash:record.hash,blockNumber:anchor.number,blockHash:anchor.hash,...(expected&&r.executionResult==='success'?{escrow:expected.address,portalReady:false,registrationReady:false,hostedServiceReady:false}:{})};
+ }catch{return unknown();}
+}
+
+export async function rollingPxeOptions(development,nativeOptions) {
+ if(typeof development!=='boolean')throw rejected();
+ return development?{proverEnabled:false}:{proverEnabled:true,proverOrOptions:await nativeOptions()};
+}
+
+export async function bindRollingJournal(store,identity,newSalt) {
+ const value=store.read();
+ if(!value||typeof value!=='object'||Array.isArray(value)||!value.operations||typeof value.operations!=='object'||Array.isArray(value.operations))throw Error('Journal scope mismatch');
+ if(value.identity===undefined){
+  if(Object.keys(value).some(k=>k!=='operations')||Object.keys(value.operations).length)throw Error('Historical journal requires reconciliation');
+  await store.write({...value,identity,salt:newSalt()});return;
+ }
+ if(value.identity!==identity||Object.keys(value).some(k=>!['identity','salt','operations'].includes(k))||typeof value.salt!=='string')throw Error('Journal scope mismatch');
+ for(const [name,record] of Object.entries(value.operations)){
+  if(!['deploy-escrow','claim-fees'].includes(name)||!record||record.schemaVersion!==1||record.policy!=='reconcile-only'||record.identity!==identity||!['preparing','submission-unknown'].includes(record.phase))throw Error('Historical journal requires reconciliation');
+ }
+}
+
+// CLI input ordering: unsupported rolling commands/configurations fail before
+// opening any actor file. Legacy file selection keeps its existing behavior.
+export async function readOperatorActor({command,config,actorPath,read}) {
+ if(operatorApplicationProfile(config)==='rolling'){
+  rollingOperatorConfig(config);
+  if(!['fees','claim-fees','deploy-escrow'].includes(command))throw rejected();
+ }
+ return read(actorPath||config.operatorFile);
+}
+
+// Only called after the pinned SDK schema has created its TxHash/BlockHash.
+// The reconciliation boundary consumes detached primitives, never raw errors.
+export function projectRollingReceipt(receipt) {
+ return {txHash:receipt.txHash?.toString(),status:receipt.status,executionResult:receipt.executionResult,blockNumber:receipt.blockNumber,blockHash:receipt.blockHash?.toString()};
+}
