@@ -48,7 +48,11 @@ export function validateRollingWalletConfig(value,scope){
  const copy=structuredClone(value),{config:c,trustedQuery:q,remoteProver:r,proofsEnabled}=copy;
  keys(c,['network','board','privateFee',...(c.bok===undefined?[]:['bok']),...(c.aggregateFunding===undefined?[]:['aggregateFunding'])]);
  if(c.aggregateFunding!==undefined){
-  const a=c.aggregateFunding;keys(a,['chainId','router','routerCodeHash','collateralPortal','feePortal','bokPortal','weth','swapRouter','feeToken','bokToken','privateFpc','quoter','quoterCodeHash']);
+  const a=c.aggregateFunding;keys(a,['chainId','router','routerCodeHash','collateralPortal','feePortal','bokPortal','weth','swapRouter','feeToken','bokToken','privateFpc','quoter','quoterCodeHash',...(a.usdcRelayAddress===undefined?[]:['usdcRelayAddress','usdcCodeHash','usdcImplementation','usdcImplementationCodeHash','usdcDomain'])]);
+  if(a.usdcRelayAddress!==undefined){
+   address(a.usdcRelayAddress,20);address(a.usdcImplementation,20);address(a.usdcCodeHash,32);address(a.usdcImplementationCodeHash,32);
+   keys(a.usdcDomain,['name','version']);for(const value of Object.values(a.usdcDomain))if(typeof value!=='string'||!/^[-A-Za-z0-9 .]{1,64}$/.test(value))throw invalid();
+  }
   if(!c.bok||a.chainId!==c.network.chainId||a.collateralPortal!==c.board.portalAddress||a.privateFpc!==c.privateFee.contractAddress)throw invalid();
   for(const name of ['router','collateralPortal','feePortal','bokPortal','weth','swapRouter','feeToken','bokToken','quoter'])address(a[name],20);
   for(const name of ['routerCodeHash','quoterCodeHash','privateFpc'])address(a[name],32);

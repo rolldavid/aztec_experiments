@@ -4,8 +4,8 @@ import {selectPrivateViews} from '../../shared/rolling/private-views.mjs';
 import {createRollingWalletSession} from './wallet-session.mjs';
 const failed=()=>Object.assign(Error('Private account setup is unavailable. Reload before trying again.'),{code:'ROLLING_RUNTIME_UNAVAILABLE'});
 const digest=async bytes=>Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes)),x=>x.toString(16).padStart(2,'0')).join('');
-async function boundedJSON(url,limit,expected){
- const response=await fetch(url,{credentials:'omit',redirect:'error',cache:'no-store',referrerPolicy:'no-referrer',signal:AbortSignal.timeout(30000)});
+async function boundedJSON(url,limit,expected,request={}){
+ const response=await fetch(url,{...request,credentials:'omit',redirect:'error',cache:'no-store',referrerPolicy:'no-referrer',signal:AbortSignal.timeout(30000)});
  if(!response.ok||!response.body)throw failed();
  const reader=response.body.getReader(),chunks=[];let size=0;
  try{for(;;){const {done,value}=await reader.read();if(done)break;size+=value.length;if(size>limit)throw failed();chunks.push(value);}}
@@ -89,6 +89,7 @@ async function load(){
   const guard=()=>{if(globalThis.walletState.invalidated||globalThis.walletState.aztec!==selected)throw failed();};
   creating=createRollingWalletSession({sdk,routing,ethers:globalThis.ethers,config,boardArtifact,privateFeeArtifact,bokArtifact,account:selected,
    trustedQuery:query,remoteProver:remote,contextGuard:guard,onProgress,
+   fundingRelay:createRollingFundingRelay({contextGuard:guard}),
    captureFundingWallet:()=>captureRollingFundingWallet({getState:()=>globalThis.walletState,contextGuard:guard,chainId:config.network.chainId}),
    claimStore:globalThis.makeClaimSecretStore(selected.secretKey,selected.salt),proofsEnabled:metadata.proofsEnabled}).then(value=>(session=value)).finally(()=>{creating=undefined;});
   return creating;
@@ -108,4 +109,17 @@ export async function captureRollingFundingWallet({getState,contextGuard,chainId
   const current=await signer.getAddress();check();await contextGuard();check();if(typeof current!=='string'||current.toLowerCase()!==address)throw failed();
  };
  await guard();return Object.freeze({address,name,signer,guard});
+}
+
+/** Fixed same-origin public funding routes. Neither endpoint nor generic RPC
+ * parameters are supplied by wallet state, terms or recovery records. */
+export function createRollingFundingRelay({contextGuard}){
+ const read=async(path,request)=>{await contextGuard();const value=await boundedJSON(path,16384,undefined,request);await contextGuard();return value;};
+ return Object.freeze({terms:()=>read('/api/funding/usdc/terms'),submit:data=>{
+  if(typeof data!=='string'||!/^0x(?:[0-9a-f]{2})+$/.test(data)||data.length>16384)throw failed();
+  return read('/api/funding/usdc',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({data})});
+ },status:planHash=>{
+  if(typeof planHash!=='string'||!/^0x[0-9a-f]{64}$/.test(planHash))throw failed();
+  return read('/api/funding/usdc/status?planHash='+planHash);
+ }});
 }

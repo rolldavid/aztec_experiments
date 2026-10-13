@@ -457,3 +457,11 @@ for(const defect of ['none','bok-portal','fee-portal','token-decimals'])test('ag
   await assert.rejects(session.funding.prepare({}),defect==='none'?error=>error===f.expected:{code:'ROLLING_SESSION_CONFIG'});assert.equal(f.captures(),defect==='none'?1:0);assert.equal(f.state.sends,0);
  }finally{await session.close();}
 });
+test('USDC session exposes only explicitly pinned relay capability and retains authenticated custody ordering',async()=>{
+ const f=await aggregateSessionFixture();Object.assign(f.scope,{usdcRelayAddress:eth(90),usdcCodeHash:hex(91),usdcImplementation:eth(92),usdcImplementationCodeHash:hex(93),usdcDomain:{name:'USDC',version:'2'}});
+ f.input.claimStore={save:async()=>{throw Error('must not reach storage before captured wallet');},load:async()=>null};f.input.fundingRelay={terms:async()=>{throw Error('must not query terms before wallet capture');}};
+ const session=await createRollingWalletSession(f.input);try{
+  assert.equal(session.funding.usdcAvailable,true);f.input.config.aggregateFunding.usdcRelayAddress=eth(99);
+  await assert.rejects(session.funding.prepare({asset:'USDC',collateralWei:'1',feeAmount:'2',bokAmount:'3',collateralPoolFee:3000,feePoolFee:3000,slippageBps:100,privateFeeCap:'1000'}),error=>error===f.expected);assert.equal(f.captures(),1);assert.equal(f.state.sends,0);
+ }finally{await session.close();}
+});
