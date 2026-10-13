@@ -87,6 +87,60 @@ export async function bootstrapPluginDevnet({directory,port=8787,host='127.0.0.1
   }catch(error){try{await close();}catch(cleanup){throw new AggregateError([error,cleanup],'Local board setup and cleanup failed');}throw error;}
 }
 
+// Local inventory only. This uses the same signed-once journal as the operator;
+// a retained preparing/unknown intent never creates another token or transaction.
+export async function deployDevelopmentToken({provider,signer,artifact,store,rollupAddress}) {
+ const {onceAztecOperation,reconcileRollingEthereum,matchRollingEthereumSigned}=await import('../operations.mjs');
+ const {Contract:Token,Transaction,getCreateAddress,keccak256}=await import('ethers');
+ if(String((await provider.getNetwork()).chainId)!=='31337'||!artifact?.bytecode?.object||!artifact?.deployedBytecode?.object)throw Error('Development token prerequisite differs');
+ const from=signer.address.toLowerCase(),factory=new ContractFactory(artifact.abi,artifact.bytecode.object);
+ const creation=(await factory.getDeployTransaction(from)).data.toLowerCase();
+ const identity=JSON.stringify({kind:'local-dev-usdc-v1',chainId:'31337',rollupAddress:String(rollupAddress).toLowerCase(),from,creation,runtime:artifact.deployedBytecode.object.toLowerCase(),initialInventory:'1000000000'});
+ const reconcile=record=>reconcileRollingEthereum({record,development:true,reads:{
+  signed:async r=>r.deployment?.address===getCreateAddress({from,nonce:r.deployment.nonce}).toLowerCase()&&matchRollingEthereumSigned({parse:Transaction.from,record:r,chainId:'31337',to:null,data:creation,from,nonce:r.deployment.nonce}),
+  receipt:hash=>provider.getTransactionReceipt(hash),block:n=>provider.getBlock(n),head:tag=>provider.getBlock(tag),
+  effect:async(r,anchor,receipt)=>{
+   const address=r.deployment.address;
+   if(receipt.contractAddress?.toLowerCase()!==address||(await provider.getCode(address,anchor.number)).toLowerCase()!==artifact.deployedBytecode.object.toLowerCase())return false;
+   const token=new Token(address,artifact.abi,provider),at={blockTag:anchor.number};
+   return Number(await token.decimals(at))===6&&await token.totalSupply(at)===1000000000n&&await token.balanceOf(from,at)===1000000000n;
+  },
+ }});
+ const result=await onceAztecOperation({store,name:'deploy-portal',identity,scope:'development-token',reconcile,execute:async({bindDeployment,submit})=>{
+  const transaction=await signer.populateTransaction({data:creation,value:0n});
+  if(transaction.chainId!==31337n||BigInt(transaction.value??0)!==0n||!Number.isSafeInteger(transaction.nonce)||transaction.nonce<0)throw Error('Development token transaction differs');
+  await bindDeployment({from,nonce:transaction.nonce,address:getCreateAddress({from,nonce:transaction.nonce}).toLowerCase()});
+  const raw=await signer.signTransaction(transaction);
+  await submit({hash:keccak256(raw),raw:raw.slice(2)},()=>provider.broadcastTransaction(raw));
+ }});
+ return {...result,...(result.status==='succeeded'?{tokenAddress:store.read().operations['deploy-portal'].deployment.address,inventory:'1000000000',decimals:6,kind:'local-development-issuance'}:{})};
+}
+
+export function requireDevelopmentBokRecords({tokenState,lifecycleConfig,operatorState}) {
+ const advanced=['deploy-portal','bind','activate','register'].some(name=>operatorState?.operations?.[name]);
+ if((advanced||lifecycleConfig)&&!tokenState?.operations?.['deploy-portal']||advanced&&!lifecycleConfig)throw Error('Original development Bok records missing; recovery required');
+}
+
+// Read-only polling of the existing operator commands is safe because each
+// command reconciles its original durable intent before any preparation/send.
+export async function activateDevelopmentBok({run,settle,expected,waitMs=120000,pollMs=1000}) {
+ if(!Number.isSafeInteger(waitMs)||waitMs<1||waitMs>120000||!Number.isSafeInteger(pollMs)||pollMs<0||pollMs>1000)throw Error('Invalid local lifecycle deadline');
+ const deadline=Date.now()+waitMs;
+ const complete=async command=>{
+  for(;;){
+   const result=await run(command);
+   if(result?.status==='succeeded'&&result.canonical===true)return result;
+   if(result?.status!=='unresolved'||Date.now()>=deadline)throw Error('Original Bok operation requires reconciliation');
+   await pause(Math.min(pollMs,Math.max(0,deadline-Date.now())));
+  }
+ };
+ await complete('deploy-portal');await complete('bind');
+ await settle();
+ await complete('activate');await complete('register');const status=await complete('status');
+ if(status.scope!=='portal-registration'||status.escrow!==expected.escrow||status.pluginId!==expected.pluginId||!/^0x[0-9a-f]{40}$/.test(status.portal??'')||BigInt(status.portal)===0n||status.portalReady!==true||status.registrationReady!==true||status.hostedServiceReady!==false)throw Error('Canonical Bok status differs');
+ return {status,walletBok:{contractAddress:status.escrow,operatorAddress:expected.operatorAddress,pluginId:status.pluginId}};
+}
+
 // Current local profile. Production deployment/transaction implementations are
 // reused; only the disposable chain's explicitly labelled settlement is local.
 export async function bootstrapRollingDevnet({directory,ports,onProgress=console.log,onOwned=()=>{}}) {
@@ -114,8 +168,8 @@ export async function bootstrapRollingDevnet({directory,ports,onProgress=console
  const address=await getSchnorrInitializerlessAccountContractAddress(signingKey,salt,secret);
  if(String(address)!==actor.address||!signingKey.equals(deriveMasterMessageSigningSecretKey(secret)))throw Error('Original local actor identity differs');
  const net=await startDevnet({directory,fundingAddresses:[address],proofs:false,persistent:true,ports:selected,onProgress,onOwned});
- let wallet,closing,activeChild,activeExit;
- function close(){return closing??=(async()=>{let error;if(activeChild){activeChild.kill('SIGTERM');const timer=setTimeout(()=>activeChild?.kill('SIGKILL'),5000);try{await activeExit;}finally{clearTimeout(timer);}}try{await wallet?.stop();}catch(e){error=e;}try{await net.close();}catch(e){error??=e;}if(error)throw Error('Current development cleanup incomplete');})();}
+ let wallet,tokenProvider,closing,activeChild,activeExit;
+ function close(){return closing??=(async()=>{let error;if(activeChild){activeChild.kill('SIGTERM');const timer=setTimeout(()=>activeChild?.kill('SIGKILL'),5000);try{await activeExit;}finally{clearTimeout(timer);}}try{await wallet?.stop();}catch(e){error=e;}try{tokenProvider?.destroy();}catch(e){error??=e;}try{await net.close();}catch(e){error??=e;}if(error)throw Error('Current development cleanup incomplete');})();}
  onOwned({close});
  async function fixedFile(name,value){const filename=path.join(directory,name),prior=await readDevnetRecord(filename);if(prior){if(JSON.stringify(prior)!==JSON.stringify(value))throw Error('Saved development configuration differs');}else await writeDevnetRecord(filename,value,{exclusive:true});return filename;}
  async function cli(args){
@@ -172,15 +226,41 @@ export async function bootstrapRollingDevnet({directory,ports,onProgress=console
   const gas=Object.fromEntries(Object.entries({gasLimits:['daGas','l2Gas'],teardownGasLimits:['daGas','l2Gas'],maxFeesPerGas:['feePerDaGas','feePerL2Gas'],maxPriorityFeesPerGas:['feePerDaGas','feePerL2Gas']}).map(([group,keys])=>[group,Object.fromEntries(keys.map(key=>[key,String(feeOptions.gasSettings[group][key])]))]));
   const operatorConfig={applicationProfile:'rolling',nodeUrl:new URL(net.nodeUrl).href,ethereumUrl:new URL(net.rpcUrl).href,chainId:'31337',rollupVersion:String(info.rollupVersion),rollupAddress:String(info.l1ContractAddresses.rollupAddress).toLowerCase(),boardAddress:report.l2Addr,operatorAddress:actor.address,development:true,operatorFile:actorPath};
   await fixedFile('bok-operator-config.json',operatorConfig);
-  // The existing production constructor operation is durable and reconcile-only.
-  // No token, exchange liquidity, provider or hosted readiness is fabricated.
-  const bok=await operatorCommand({command:'deploy-escrow',config:operatorConfig,statePath:path.join(directory,'bok-operations.json'),actor});
-  if(bok.status!=='succeeded')throw Error('PrivateBok constructor requires reconciliation');
+  // Keep the original constructor config and campaign unchanged. Lifecycle
+  // settings are a separately captured optional scope in the existing operator.
+  const statePath=path.join(directory,'bok-operations.json');
+  const bok=await operatorCommand({command:'deploy-escrow',config:operatorConfig,statePath,actor});
+  if(bok.status!=='succeeded'||bok.canonical!==true)throw Error('PrivateBok constructor requires reconciliation');
+  tokenProvider=new JsonRpcProvider(net.rpcUrl,undefined,{cacheTimeout:-1,batchMaxCount:1});
+  const tokenStatePath=path.join(directory,'development-token-operations.json');
+  requireDevelopmentBokRecords({tokenState:await readDevnetRecord(tokenStatePath),lifecycleConfig:await readDevnetRecord(path.join(directory,'bok-lifecycle-config.json')),operatorState:await readDevnetRecord(statePath)});
+  const tokenStore=await fileState(tokenStatePath);
+  const tokenArgs={provider:tokenProvider,signer:new Wallet(net.identity.privateKey,tokenProvider),artifact:await read('billboard/portal/out/DevUSDC.sol/DevUSDC.json'),store:tokenStore,rollupAddress:info.l1ContractAddresses.rollupAddress};
+  let token;const tokenDeadline=Date.now()+30000;
+  do{token=await deployDevelopmentToken(tokenArgs);if(token.status==='succeeded')break;if(token.status!=='unresolved'||Date.now()>=tokenDeadline)throw Error('Original development token requires reconciliation');await pause(1000);}while(true);
+  const lifecycleConfig={...operatorConfig,lifecycle:{tokenAddress:token.tokenAddress,pluginId:handleField('bok')}};
+  await fixedFile('bok-lifecycle-config.json',lifecycleConfig);
+  onProgress('Reconciling the local PrivateBok portal and Rolling registration');
+  const activated=await activateDevelopmentBok({expected:{escrow:bok.escrow,operatorAddress:actor.address,pluginId:lifecycleConfig.lifecycle.pluginId},
+   run:command=>operatorCommand({command,config:lifecycleConfig,statePath,actor,ethereumKey:net.identity.privateKey}),
+   settle:async()=>{
+    const record=await readDevnetRecord(statePath),binding=record?.operations?.bind;
+    if(!binding?.hash)throw Error('Original Bok Ready transaction missing');
+    const hash=TxHash.fromString(binding.hash),effect=await net.node.getTxEffect(hash),leaves=effect?.data?.l2ToL1Msgs.filter(x=>!x.isZero());
+    if(leaves?.length!==1)throw Error('Original Bok Ready effect unavailable');
+    // A settled or activated record must not repeat local settlement mutations.
+    const witness=await net.node.getL2ToL1MembershipWitness(hash,leaves[0]);
+    const {OutboxContract}=await import('@aztec-labs/ethereum/contracts');
+    const outbox=new OutboxContract(net.deployment.l1Client,info.l1ContractAddresses.outboxAddress.toString());
+    const settled=witness&&!witness.root.isZero()&&String(await outbox.getRootData(witness.epochNumber,witness.numCheckpointsInEpoch)).toLowerCase()===witness.root.toString().toLowerCase();
+    if(!settled)await settleC01ApplicationMessage({node:net.node,config:net.config,dateProvider:net.dateProvider,l1Client:net.deployment.l1Client,directory,rollupAddress:info.l1ContractAddresses.rollupAddress,txHash:hash,expectedLeaf:leaves[0],kind:'ready',applicationProofs:false});
+   },
+  });
   await net.useWallClock();
   const readerConfig={nodeUrl:net.nodeUrl,artifactPath:path.resolve('billboard/target/rolling_contract-RollingBoard.json'),scope:{chainId:'31337',rollupVersion:String(info.rollupVersion),rollupAddress:operatorConfig.rollupAddress,boardAddress:report.l2Addr,classId:manifest.artifacts.boardClassId},deployment:report.boardDeployment,cacheDirectory:path.join(directory,'public-index'),port:selected.appPort};
-  const walletConfig={config:{network:{chainId:'31337',rollupVersion:String(info.rollupVersion),rollupAddress:operatorConfig.rollupAddress,ethRpcUrl:net.rpcUrl},board:{contractAddress:report.l2Addr,portalAddress:report.portalAddr.toLowerCase()},privateFee:{contractAddress:String(feeInstance.address),gasSettings:gas}},trustedQuery:{url:net.nodeUrl,allowLocalDev:true},remoteProver:null,proofsEnabled:false};
+  const walletConfig={config:{network:{chainId:'31337',rollupVersion:String(info.rollupVersion),rollupAddress:operatorConfig.rollupAddress,ethRpcUrl:net.rpcUrl},board:{contractAddress:report.l2Addr,portalAddress:report.portalAddr.toLowerCase()},privateFee:{contractAddress:String(feeInstance.address),gasSettings:gas},bok:activated.walletBok},trustedQuery:{url:net.nodeUrl,allowLocalDev:true},remoteProver:null,proofsEnabled:false};
   await writeDevnetRecord(path.join(directory,'rolling-public.json'),readerConfig);await writeDevnetRecord(path.join(directory,'rolling-wallet-public.json'),walletConfig);
-  const readiness={core:'configured',publicIndex:'live-status-required',nativeProofs:false,privateBok:'constructor-only',bokAddress:bok.escrow,hostedService:false,aggregateFunding:'unconfigured-liquidity-required',localSettlement:'explicitly test-controlled, not a network proof'};
+  const readiness={core:'configured',publicIndex:'live-status-required',nativeProofs:false,privateBok:'portal-active-registered',bokAddress:bok.escrow,bokPortal:activated.status.portal,developmentToken:token.tokenAddress,developmentInventory:{kind:token.kind,amount:token.inventory,decimals:token.decimals,recipient:net.identity.address.toLowerCase()},userBokCredit:'unfunded',hostedService:false,aggregateFunding:'unconfigured-liquidity-required',localSettlement:'explicitly test-controlled, not a network proof'};
   await writeDevnetRecord(path.join(directory,'readiness.json'),readiness);
   await wallet.stop();wallet=undefined;
   return {net,readerConfig,walletConfig,readiness,close};

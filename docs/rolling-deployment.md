@@ -236,15 +236,33 @@ served by the existing `apps/rolling/start.mjs` components. Only the local publi
 operator receives disposable genesis fee funds. This is not a free token exchange
 or evidence of router liquidity.
 
-Startup also invokes the existing current PrivateBok constructor operation. A
-`constructor-only` readiness result does **not** enable Bok funding or hosted
-responses. Actual token/portal binding, activation, plugin registration, quote
-liquidity and provider configuration remain explicit prerequisites. No invented
-router, quoter or token address is inserted into the wallet configuration. A
-separate private `--hosted-config /absolute/service.json` can opt into the existing
+Startup retains the existing current PrivateBok constructor campaign, then deploys
+the actual `DevUSDC` contract (chain 31337 only, six decimals, fixed issuance of
+1,000,000,000 base units to the local deployment actor). Its separate
+`development-token-operations.json` saves signed creation bytes before the sole
+broadcast. Reopening checks the exact original transaction, canonical receipt,
+whole runtime and initial inventory at the creation block; it never retransmits
+an unknown operation. This is explicit development issuance, not a swap or user
+credit, and this token does not implement Circle EIP-3009 authorization.
+
+`bok-lifecycle-config.json` captures the real token and Bok plugin ID separately
+from the original constructor identity. The existing operator then reconciles
+`deploy-portal`, `bind`, `activate`, `register` and `status` in order, with the
+existing official local Ready settlement helper between binding and activation.
+An already matching canonical Outbox root skips repeated settlement. This remains
+explicit test-controlled local settlement, not a network proof. Only canonical
+portal-active/registered status writes the wallet's `config.bok` identity; missing
+original token/lifecycle records halt an advanced campaign. The public readiness
+record reports the deployment actor's test inventory and **unfunded user Bok
+credit**, separately from hosted service and aggregate liquidity.
+
+No router, quoter, DEX liquidity, private fee credit or model provider is invented.
+A separate private `--hosted-config /absolute/service.json` can opt into the existing
 hosted service; it must explicitly select development mode and supply its own
-validated current deployment. Provider secrets do not belong in either public
-wallet configuration or process arguments.
+validated current deployment. Provider secrets and deployment actor keys do not
+belong in public wallet configuration or process arguments. A fresh app user
+receives no local deployment privileges. Actual initial funding, authenticated
+hosted replies and zero-ETH USDC conversion remain separate acceptance checks.
 
 Stop with Ctrl-C and wait for cleanup. A clean stop retains the original Anvil
 snapshot, validator/genesis identities, Aztec databases, deployment journals and

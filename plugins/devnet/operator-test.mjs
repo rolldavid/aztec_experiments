@@ -116,4 +116,52 @@ if(focused){
   }finally{await fs.rm(dir,{recursive:true,force:true});}
  });
 
+ const {deployDevelopmentToken,activateDevelopmentBok,requireDevelopmentBokRecords}=await import('./bootstrap.mjs');
+ const bokExpected={escrow:'0x'+'4'.repeat(64),operatorAddress:'0x'+'5'.repeat(64),pluginId:'0x'+'1'.repeat(64)};
+ const bokStatus={status:'succeeded',canonical:true,scope:'portal-registration',escrow:bokExpected.escrow,pluginId:bokExpected.pluginId,portal:'0x'+'6'.repeat(40),portalReady:true,registrationReady:true,hostedServiceReady:false};
+ test('actual lifecycle composition exposes wallet Bok only after ordered canonical status (controlled operator)',async()=>{
+  const calls=[];let binds=0;const value=await activateDevelopmentBok({expected:bokExpected,pollMs:0,run:async command=>{calls.push(command);if(command==='bind'&&binds++===0)return {status:'unresolved'};return command==='status'?bokStatus:{status:'succeeded',canonical:true};},settle:async()=>calls.push('settle')});
+  assert.deepEqual(calls,['deploy-portal','bind','bind','settle','activate','register','status']);
+  assert.deepEqual(value.walletBok,{contractAddress:bokExpected.escrow,operatorAddress:bokExpected.operatorAddress,pluginId:bokExpected.pluginId});
+  assert.equal(value.status.hostedServiceReady,false);
+ });
+ test('lifecycle refuses failed, noncanonical or unresolved retained operation without later activation',async()=>{
+  for(const result of [{status:'failed',canonical:true},{status:'succeeded',canonical:false},{status:'unresolved'}]){const calls=[];await assert.rejects(activateDevelopmentBok({expected:bokExpected,waitMs:1,pollMs:1,run:async command=>{calls.push(command);return result;},settle:async()=>calls.push('settle')}),/reconciliation/);assert(calls.every(x=>x==='deploy-portal'));}
+ });
+ test('settlement failure and canonical status drift cannot publish wallet Bok configuration',async()=>{
+  const calls=[];await assert.rejects(activateDevelopmentBok({expected:bokExpected,run:async c=>{calls.push(c);return bokStatus;},settle:async()=>{throw Error('controlled missing Ready');}}),/missing Ready/);assert.deepEqual(calls,['deploy-portal','bind']);
+  for(const change of [{escrow:'0x'+'7'.repeat(64)},{pluginId:'0x'+'2'.repeat(64)},{portal:'0x'+'0'.repeat(40)},{portalReady:false},{registrationReady:false},{hostedServiceReady:true},{scope:'constructor-only'}])await assert.rejects(activateDevelopmentBok({expected:bokExpected,run:async c=>c==='status'?{...bokStatus,...change}:bokStatus,settle:async()=>{}}),/status differs/);
+ });
+ async function tokenFixture(){
+  const {Wallet,Interface,Transaction,getCreateAddress}=await import('ethers');const wallet=Wallet.createRandom(),iface=new Interface(['constructor(address recipient)','function decimals() view returns(uint8)','function totalSupply() view returns(uint256)','function balanceOf(address) view returns(uint256)']);
+  const artifact={abi:JSON.parse(iface.formatJson()),bytecode:{object:'0x60006000'},deployedBytecode:{object:'0x6000'}},address=getCreateAddress({from:wallet.address,nonce:4}).toLowerCase(),blockHash='0x'+'8'.repeat(64);
+  let record={operations:{}},receipt,mutate={},sends=0,prepares=0;
+  const store={read:()=>record,write:async next=>{record=structuredClone(next);}};
+  const provider={getNetwork:async()=>({chainId:31337n}),getTransactionReceipt:async()=>mutate.missing?null:receipt,getBlock:async()=>({number:7,hash:mutate.reorg?'0x'+'9'.repeat(64):blockHash}),getCode:async()=>mutate.code??artifact.deployedBytecode.object,
+   call:async tx=>{const parsed=iface.parseTransaction(tx);return iface.encodeFunctionResult(parsed.name,[parsed.name==='decimals'?6:mutate.inventory??1000000000n]);},
+   broadcastTransaction:async raw=>{sends++;const tx=Transaction.from(raw);receipt={hash:tx.hash,status:1,blockNumber:7,blockHash,contractAddress:address};return {hash:tx.hash};}};
+  const signer={address:wallet.address,populateTransaction:async tx=>{prepares++;return {...tx,nonce:4,chainId:31337n,type:2,gasLimit:1000000n,maxFeePerGas:2n,maxPriorityFeePerGas:1n};},signTransaction:tx=>wallet.signTransaction(tx)};
+  return {args:{provider,signer,artifact,store,rollupAddress:'0x'+'1'.repeat(40)},mutate,counts:()=>({sends,prepares}),address};
+ }
+ test('actual development token journal signs once and reconciles exact creation/runtime/inventory (controlled chain)',async()=>{
+  const f=await tokenFixture();const first=await deployDevelopmentToken(f.args);assert.equal(first.status,'succeeded');assert.equal(first.tokenAddress,f.address);assert.equal(first.kind,'local-development-issuance');assert.equal(first.inventory,'1000000000');
+  const before=JSON.stringify(f.args.store.read());assert.equal((await deployDevelopmentToken(f.args)).status,'succeeded');assert.equal(JSON.stringify(f.args.store.read()),before);assert.deepEqual(f.counts(),{sends:1,prepares:1});
+  for(const mutation of [{missing:true},{reorg:true},{code:'0x6001'},{inventory:999n}]){Object.assign(f.mutate,mutation);assert.equal((await deployDevelopmentToken(f.args)).status,'unresolved');for(const key of Object.keys(mutation))delete f.mutate[key];assert.deepEqual(f.counts(),{sends:1,prepares:1});}
+ });
+ test('development token unknown/preparing state is retained and never resubmitted',async()=>{
+  const f=await tokenFixture();f.args.provider.broadcastTransaction=async()=>{throw Error('controlled lost acknowledgement');};assert.equal((await deployDevelopmentToken(f.args)).status,'unresolved');const before=JSON.stringify(f.args.store.read());await deployDevelopmentToken(f.args);assert.equal(JSON.stringify(f.args.store.read()),before);assert.equal(f.counts().prepares,1);
+  const g=await tokenFixture();g.args.signer.signTransaction=async()=>{throw Error('controlled preparation stop');};assert.equal((await deployDevelopmentToken(g.args)).status,'unresolved');await deployDevelopmentToken(g.args);assert.equal(g.counts().prepares,1);assert.equal(g.args.store.read().operations['deploy-portal'].phase,'preparing');
+ });
+ test('development inventory refuses another chain or changed creation scope before any send',async()=>{
+  const f=await tokenFixture();f.args.provider.getNetwork=async()=>({chainId:11155111n});await assert.rejects(deployDevelopmentToken(f.args),/prerequisite/);assert.deepEqual(f.counts(),{sends:0,prepares:0});
+  const g=await tokenFixture();await deployDevelopmentToken(g.args);await assert.rejects(deployDevelopmentToken({...g.args,rollupAddress:'0x'+'2'.repeat(40)}),/scope mismatch/);assert.deepEqual(g.counts(),{sends:1,prepares:1});
+ });
+
+ test('missing token or lifecycle records cannot reset an advanced retained Bok campaign',()=>{
+  const tokenState={operations:{'deploy-portal':{phase:'submission-unknown'}}},lifecycleConfig={lifecycle:{tokenAddress:'controlled'}},operatorState={operations:{'deploy-escrow':{}}};
+  requireDevelopmentBokRecords({operatorState});requireDevelopmentBokRecords({operatorState,tokenState});requireDevelopmentBokRecords({operatorState,tokenState,lifecycleConfig});
+  for(const name of ['deploy-portal','bind','activate','register']){const advanced={operations:{[name]:{}}};assert.throws(()=>requireDevelopmentBokRecords({operatorState:advanced}),/records missing/);assert.throws(()=>requireDevelopmentBokRecords({operatorState:advanced,tokenState}),/records missing/);requireDevelopmentBokRecords({operatorState:advanced,tokenState,lifecycleConfig});}
+  assert.throws(()=>requireDevelopmentBokRecords({operatorState,lifecycleConfig}),/records missing/);
+ });
+
 }

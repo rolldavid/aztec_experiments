@@ -183,7 +183,13 @@ canonical public index and private wallet at `http://127.0.0.1:8080`. It uses se
 loopback RPC ports18080/18545 and requires no provider key for core app startup.
 It does not replace the fixture preview on4317 or reuse unrelated older devnets.
 Local proofs are disabled through the native node/PXE configuration. Readiness
-reports distinguish the usable core from a constructor-only, unfunded PrivateBok;
-missing DEX liquidity or provider configuration is never presented as funded Bok
-readiness. Keep the selected private state directory and wait for clean shutdown
+reports distinguish the usable core and canonically registered PrivateBok portal
+from user funding and hosted replies. Startup deploys a real local-only DevUSDC
+contract with a fixed 1,000 USDC test inventory held by the local deployment actor,
+then reuses the operator's portal deployment, binding, local Ready settlement,
+activation and registration journals. Only successful canonical status exposes
+`config.bok` to the wallet. This does not give app users the deployment actor's
+keys or credits. The token does not implement Circle authorization, and no DEX
+liquidity, fee conversion or provider configuration is invented. Missing liquidity
+and hosted credentials remain explicit prerequisites. Keep the selected private state directory and wait for clean shutdown
 before reopening it. Wallet recovery remains separately encrypted in the browser.
