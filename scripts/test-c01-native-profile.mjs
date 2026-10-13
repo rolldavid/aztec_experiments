@@ -95,3 +95,102 @@ test('private-fee wallet open and reopen honor both profiles and reject singleto
   for(const key of ['backend','bbPath','threads']){options={...expected,[key]:'wrong'};assert.throws(()=>open());assert.equal(calls.length,2);}
  }
 });
+
+// Public-clock controlled RPCs exercise the actual helpers, not Anvil acceptance.
+const clockProfile={name:'rolling-bok-post',fixture:'activated-board',boardProfile:'rolling',browser:'none',initialClockOffsetSeconds:120};
+const clockBody=(number,timestamp,transactions=[])=>({jsonrpc:'2.0',id:3,result:{number:'0x'+number.toString(16),timestamp:'0x'+timestamp.toString(16),transactions}});
+async function clockHelpers(){return import('./testing/fixture-worker.mjs');}
+test('past genesis is fixed and limited to the explicit disposable Bok scenario',async()=>{
+ const {applicationInitialClock}=await clockHelpers();const {getScenario}=await import('./testing/scenarios.mjs');
+ for(const name of ['rolling-bok-post']){
+  const scenario=getScenario(name),clock=applicationInitialClock(scenario,()=>1000000);
+  assert.deepEqual(clock,{offsetSeconds:120,capturedWallSeconds:1000,genesisTimestamp:880});assert(Object.isFrozen(clock));
+ }
+ for(const name of ['node','included-board','activated-board','rolling-preference-reorg-initial','rolling-preference-browser','rolling-preference-reorg-marker','private-bok'])assert.equal(applicationInitialClock(getScenario(name),()=>{throw Error('Default must not read clock');}),null);
+
+
+ const diagnostic=getScenario('rolling-bok-post');assert.equal(diagnostic.deadlineMs,540000);assert.equal(diagnostic.applicationThreads,1);assert.equal(diagnostic.fixture,'activated-board');assert.equal(diagnostic.boardProfile,'rolling');assert.equal(diagnostic.browser,'none');
+});
+test('clock profile rejects alternative offsets and mismatched capability before reading wall time',async()=>{
+ const {applicationInitialClock}=await clockHelpers();let calls=0;const now=()=>{calls++;return 1000000;};
+ for(const initialClockOffsetSeconds of [undefined,null,0,119,121,'120',true,NaN,Infinity])assert.throws(()=>applicationInitialClock({...clockProfile,initialClockOffsetSeconds},now));
+ for(const change of [{name:'node'},{name:'other'},{fixture:'included-board'},{boardProfile:'other'},{browser:'chromium'}])assert.throws(()=>applicationInitialClock({...clockProfile,...change},now));
+ const absent={...clockProfile};delete absent.initialClockOffsetSeconds;assert.throws(()=>applicationInitialClock(absent,now));assert.equal(calls,0);
+});
+test('clock configuration rejects accessors without invoking them and cannot inherit an enabling name',async()=>{
+ const {applicationInitialClock}=await clockHelpers();let accesses=0;
+ for(const key of ['name','initialClockOffsetSeconds','fixture','boardProfile','browser']){
+  const scenario={...clockProfile};Object.defineProperty(scenario,key,{get(){accesses++;throw Error('Private sentinel');}});assert.throws(()=>applicationInitialClock(scenario,()=>1000000));
+ }
+ const inherited=Object.assign(Object.create({name:clockProfile.name}),{...clockProfile});delete inherited.name;
+ assert.throws(()=>applicationInitialClock(inherited,()=>1000000));assert.equal(accesses,0);
+});
+test('initial clock captures wall once and rejects unsafe time before spawn',async()=>{
+ const {applicationInitialClock}=await clockHelpers();let calls=0;const clock=applicationInitialClock(clockProfile,()=>{calls++;return 1000123;});assert.equal(calls,1);assert.equal(clock.genesisTimestamp,880);
+ for(const value of [undefined,null,'1000000',NaN,Infinity,120999,1000000.5])assert.throws(()=>applicationInitialClock(clockProfile,()=>value));
+ const failure={fixed:'sentinel'};assert.throws(()=>applicationInitialClock(clockProfile,()=>{throw failure;}),e=>e===failure);
+});
+test('actual spawn block appends only the captured timestamp and leaves default argv unchanged',async()=>{
+ const {applicationInitialClock}=await clockHelpers();const source=await fs.readFile(new URL('./testing/fixture-worker.mjs',import.meta.url),'utf8');
+ const first=source.indexOf('    const initialClock=applicationInitialClock(scenario);'),last=source.indexOf('    anvilClosed=',first);assert(first>0&&last>first);
+ const run=new Function('applicationInitialClock','scenario','spawn','anvilPath','port','identity','directory','process',`let anvil;const output={};${source.slice(first,last)}return {anvil,output};`);
+ let wallCalls=0;const calls=[],spawn=(...args)=>{calls.push(args);return 'owned-child';};
+ const evaluate=scenario=>run(s=>applicationInitialClock(s,()=>{wallCalls++;return 1000000;}),scenario,spawn,'/owned/anvil',12345,{mnemonic:{phrase:'synthetic-fixture-phrase'}},'/owned/directory',{env:{}});
+ const enabled=evaluate(clockProfile);assert.equal(enabled.anvil,'owned-child');assert.deepEqual(calls[0][1].slice(-2),['--timestamp','880']);assert.equal(enabled.output.initialClock.genesis,null);
+ const ordinary=evaluate({name:'included-board'});assert.deepEqual(calls[1][1],calls[0][1].slice(0,-2));assert.deepEqual(ordinary.output,{});assert.equal(wallCalls,1);
+});
+test('actual clock helper verifies block zero through one fixed public RPC before deployment',async t=>{
+ const {applicationInitialClock,observeApplicationInitialClock}=await clockHelpers();const calls=[];
+ t.mock.method(globalThis,'fetch',async(url,options)=>{calls.push({url,options});return {ok:true,json:async()=>clockBody(0,880)};});
+ const row=await observeApplicationInitialClock('http://127.0.0.1:12345',applicationInitialClock(clockProfile,()=>1000000),'genesis',()=>1001000);
+ assert.deepEqual(row,{blockNumber:0,timestamp:880,wallSeconds:1001,leadSeconds:-121});assert(Object.isFrozen(row));assert.equal(calls.length,1);
+ assert.deepEqual(JSON.parse(calls[0].options.body),{jsonrpc:'2.0',id:3,method:'eth_getBlockByNumber',params:['0x0',false]});assert.equal(calls[0].options.method,'POST');assert(calls[0].options.signal instanceof AbortSignal);
+});
+test('genesis mismatch or transaction-bearing block rejects without a second request',async t=>{
+ const {applicationInitialClock,observeApplicationInitialClock}=await clockHelpers();const clock=applicationInitialClock(clockProfile,()=>1000000);let body,calls=0;
+ t.mock.method(globalThis,'fetch',async()=>{calls++;return {ok:true,json:async()=>body};});
+ for(body of [clockBody(0,881),clockBody(1,880),clockBody(0,880,['0x'+'11'.repeat(32)])])await assert.rejects(()=>observeApplicationInitialClock('http://127.0.0.1:12345',clock,'genesis',()=>1000000));assert.equal(calls,3);
+});
+test('first protocol block accepts elapsed wall offset and the next-block minimum without genesis equality',async t=>{
+ const {applicationInitialClock,observeApplicationInitialClock}=await clockHelpers();const clock=applicationInitialClock(clockProfile,()=>1000000);let timestamp=883;const calls=[];
+ t.mock.method(globalThis,'fetch',async(url,options)=>{calls.push(JSON.parse(options.body));return {ok:true,json:async()=>clockBody(1,timestamp,['synthetic-public-txhash'])};});
+ assert.equal((await observeApplicationInitialClock('http://127.0.0.1:12345',clock,'first-protocol',()=>1005000)).timestamp,883);
+ timestamp=881;assert.equal((await observeApplicationInitialClock('http://127.0.0.1:12345',clock,'first-protocol',()=>1000000)).timestamp,881);
+ assert(calls.every(call=>call.params[0]==='0x1'&&call.params[1]===false));
+});
+test('first protocol block rejects lost offset, wrong block, missing transaction and nonadvancement',async t=>{
+ const {applicationInitialClock,observeApplicationInitialClock}=await clockHelpers();const clock=applicationInitialClock(clockProfile,()=>1000000);let body;
+ t.mock.method(globalThis,'fetch',async()=>({ok:true,json:async()=>body}));
+ for(body of [clockBody(1,1000,['x']),clockBody(2,883,['x']),clockBody(1,883),clockBody(1,880,['x'])])await assert.rejects(()=>observeApplicationInitialClock('http://127.0.0.1:12345',clock,'first-protocol',()=>1005000));
+});
+test('clock observation rejects malformed or failed public RPC without fallback',async t=>{
+ const {applicationInitialClock,observeApplicationInitialClock}=await clockHelpers();const clock=applicationInitialClock(clockProfile,()=>1000000);let body,ok=true,calls=0;
+ t.mock.method(globalThis,'fetch',async()=>{calls++;return {ok,json:async()=>body};});
+ const bad=[null,{...clockBody(0,880),id:4},{...clockBody(0,880),error:{code:-1}},{...clockBody(0,880),jsonrpc:'1.0'},clockBody(0,880)];bad[4].result.timestamp='0x0370';
+ for(body of bad)await assert.rejects(()=>observeApplicationInitialClock('http://127.0.0.1:12345',clock,'genesis',()=>1000000));
+ body=clockBody(0,880);ok=false;await assert.rejects(()=>observeApplicationInitialClock('http://127.0.0.1:12345',clock,'genesis',()=>1000000));assert.equal(calls,6);
+});
+test('clock observation preserves original and falsy request failures',async t=>{
+ const {applicationInitialClock,observeApplicationInitialClock}=await clockHelpers();const clock=applicationInitialClock(clockProfile,()=>1000000);let failure;
+ t.mock.method(globalThis,'fetch',async()=>{throw failure;});
+ for(failure of [undefined,null,false,0,{synthetic:'failure'}]){let caught=false;try{await observeApplicationInitialClock('http://127.0.0.1:12345',clock,'genesis',()=>1000000);}catch(error){caught=true;assert.equal(error,failure);}assert(caught);}
+});
+test('clock observation records actual future activation debt without hiding or editing it',async t=>{
+ const {applicationInitialClock,observeApplicationInitialClock}=await clockHelpers();const clock=applicationInitialClock(clockProfile,()=>1000000);const calls=[];
+ t.mock.method(globalThis,'fetch',async(url,options)=>{calls.push(JSON.parse(options.body));return {ok:true,json:async()=>clockBody(64,1050)};});
+ for(const stage of ['post-activation','node-handoff'])assert.deepEqual(await observeApplicationInitialClock('http://127.0.0.1:12345',clock,stage,()=>1020000),{blockNumber:64,timestamp:1050,wallSeconds:1020,leadSeconds:30});
+ assert(calls.every(call=>call.params[0]==='latest'));
+});
+test('clock observation rejects backward wall time or unknown stage without producing a row',async t=>{
+ const {applicationInitialClock,observeApplicationInitialClock}=await clockHelpers();const clock=applicationInitialClock(clockProfile,()=>1000000);let calls=0;
+ t.mock.method(globalThis,'fetch',async()=>{calls++;return {ok:true,json:async()=>clockBody(0,880)};});
+ await assert.rejects(()=>observeApplicationInitialClock('http://127.0.0.1:12345',clock,'unknown',()=>1000000));assert.equal(calls,0);
+ await assert.rejects(()=>observeApplicationInitialClock('http://127.0.0.1:12345',clock,'genesis',()=>999000));assert.equal(calls,1);
+});
+test('actual worker checks genesis before protocol work and retains deployment activation and real node order',async()=>{
+ const source=await fs.readFile(new URL('./testing/fixture-worker.mjs',import.meta.url),'utf8');
+ const points=["const initialClock=applicationInitialClock(scenario);","anvil=spawn(","output.initialClock.genesis=await observeApplicationInitialClock", "mark('prepare-genesis')",'const result=await deployC01ApplicationProtocol(',"output.initialClock.firstProtocolBlock=await observeApplicationInitialClock", "mark('wait-for-local-validator-activation')",'output.initialClock.postActivation=await observeApplicationInitialClock', 'output.initialClock.nodeHandoff=await observeApplicationInitialClock','output.node=await qualifyC01RealNode('];
+ let last=-1;for(const text of points){const at=source.indexOf(text,last+1);assert(at>last,text);last=at;}
+ assert.equal((source.match(/evm_setNextBlockTimestamp/g)||[]).length,1);assert(source.includes('Number(current.timestamp)+seconds'));assert(source.includes('const seconds=config.aztecSlotDuration*config.aztecEpochDuration'));
+ assert(!source.includes('evm_setTime'));assert(!source.includes('setBlockTimestampInterval'));assert(!source.includes('setNextBlockTimestamp\',params:[initialClock'));
+});

@@ -118,3 +118,11 @@ test('actual-used application send observation keeps successful result identity'
  const observed=await observeRollingBokApplicationSubmit({async submitPrepared(){observer.sent.set('one',tx);observer.gas.set('one',gas);return result;}},{},observer);
  assert.equal(observed.failed,false);assert.equal(observed.result,result);assert.equal(observed.tx,tx);
 });
+
+// Import the exact hosted factory seam before a real journey allocates its chain.
+// No provider, lease, service, wallet or transaction is started by this check.
+test('real Bok journey hosted factory exports are available in the composed source',async()=>{
+ const [{acquireHostedLease},{rollingBoardPort},{runPrivateBokRequest}]=await Promise.all([
+  import('../../plugins/main.mjs'),import('../../plugins/aztec.mjs'),import('../../plugins/escrow-service.mjs')]);
+ for(const factory of [acquireHostedLease,rollingBoardPort,runPrivateBokRequest])assert.equal(typeof factory,'function');
+});
