@@ -11,7 +11,7 @@ const integer = (value, bits) => {
 const amount = value => { assert(typeof value === 'bigint', 'Amount must be bigint'); return integer(value, 128); };
 const sequence = value => { assert(Number.isSafeInteger(value) && value >= 0 && value <= 0xffffffff, 'Invalid call sequence'); return value; };
 const statuses = ['pending', 'proposed', 'checkpointed', 'proven', 'finalized', 'dropped'];
-const methods = ['reserve','settle','close_uncertain','reconcile','finish'];
+const methods = ['reserve','settle','close_uncertain','reconcile','finish','publish_reply'];
 const requestFields = ['state','invocation_hash','sequence','deadline','budget','available','reserved','charged','refunded','primary_refund','secondary_refund','primary_done','secondary_done','receipt'];
 
 /** Existing pinned V6 SDK only; no wallet/node/service lifecycle is created here. */
@@ -42,11 +42,11 @@ export function createPrivateBokEscrowFactory(sdk) {
   const {Contract,Fr,AztecAddress,TxHash,getContractClassFromArtifact,deriveStorageSlotInMap,getFunctionReturnType,isTrustedProver} = sdk;
   assert.equal(typeof lease?.assertHeld, 'function'); assert.equal(typeof store?.read, 'function'); assert.equal(typeof store?.write, 'function');
   assert.equal(typeof development, 'boolean'); assert(['real','disabled'].includes(proofMode));
-  assert(proofMode === 'real' || development, 'Disabled proofs require explicit local development');
+  assert(proofMode === (development ? 'disabled' : 'real'), 'Native proof policy requires disabled development and real testnet');
   assert(Number.isSafeInteger(timeoutMs) && timeoutMs > 0 && timeoutMs <= 120000);
   assert(Number.isSafeInteger(pollMs) && pollMs > 0 && pollMs <= timeoutMs);
   const chainId = String(integer(network.chainId, 64)), version = String(integer(network.rollupVersion, 64));
-  assert(BigInt(chainId) > 0n && BigInt(version) > 0n); if (development) assert.equal(chainId, '31337');
+  assert(BigInt(chainId) > 0n && BigInt(version) > 0n); assert.equal(chainId, development ? '31337' : '11155111');
   const rollup = hex(String(network.rollupAddress).toLowerCase(),20); assert(BigInt(rollup)>0n,'Zero rollup address');
   const addr = AztecAddress.fromStringUnsafe(hex(address)), op = AztecAddress.fromStringUnsafe(hex(operator));
   const boardAddress = hex(board), id = hex(requestId), invocation = hex(target);
@@ -82,11 +82,12 @@ export function createPrivateBokEscrowFactory(sdk) {
    await held();const info=await node.getNodeInfo();
    // Pinned PXE private-in-TypeScript fields remain ordinary JS properties. Do not
    // accept an unknown/custom prover or mistake a nonempty development blob for a proof.
-   assert.equal(wallet.pxe?.proverEnabled,true,'PXE proving pipeline must be enabled');
-   const prover=wallet.pxe.proofCreator;
-   assert(isTrustedProver(prover),'Unsupported local proof creator');
-   const configuredMode=prover.proofsEnabled===undefined?'real':prover.proofsEnabled===true?'real':prover.proofsEnabled===false?'disabled':null;
-   assert.equal(configuredMode,proofMode,'PXE proof mode mismatch');
+   assert.equal(wallet.pxe?.proverEnabled,!development,'PXE native proof policy mismatch');
+   if(!development){
+    const prover=wallet.pxe.proofCreator;
+    assert(isTrustedProver(prover),'Unsupported local proof creator');
+    assert(prover.proofsEnabled===undefined||prover.proofsEnabled===true,'PXE proof mode mismatch');
+   }
    assert.equal(info.realProofs,proofMode==='real','Node proof verification mode mismatch');
    assert.equal(String(info.l1ChainId),chainId,'Chain changed'); assert.equal(String(info.rollupVersion),version,'Rollup version changed');
    assert.equal(String(info.l1ContractAddresses.rollupAddress).toLowerCase(),rollup,'Rollup changed');
@@ -178,11 +179,11 @@ export function createPrivateBokEscrowFactory(sdk) {
    await anchored();
    await update(operationId,{method,argsDigest,args:args.map(v=>typeof v==='bigint'?String(v):v),phase:'preparing',proofMode});
    try{
-    const encoded=args.map((v,i)=>i===0||((method==='settle'||method==='reconcile')&&i===3)?Fr.fromString(v):v);
+    const encoded=args.map((v,i)=>Array.isArray(v)?v.map(value=>Fr.fromString(value)):i===0||(method==='publish_reply'&&i===1)||((method==='settle'||method==='reconcile')&&i===3)?Fr.fromString(v):v);
     const interaction=contract.methods[method](...encoded),payload=await interaction.request({from:op,additionalScopes:[]});
     assert.equal(payload.calls.length,1);const call=payload.calls[0];
     assert.equal(call.name,method);assert.equal(String(call.to),String(addr));assert.equal(call.type,'public');assert.equal(call.isStatic,false);
-    assert.deepEqual(call.args.map(x=>x.toBigInt()),args.map(x=>BigInt(x)),'Payload arguments changed');
+    assert.deepEqual(call.args.map(x=>x.toBigInt()),args.flat().map(x=>BigInt(x)),'Payload arguments changed');
     const fee=await wallet.completeFeeOptions({from:op,feePayer:payload.feePayer});
     const txRequest=await wallet.createTxExecutionRequestFromPayloadAndFee(payload,op,fee);
     const proven=await wallet.pxe.proveTx(txRequest,{scopes:wallet.scopesFrom(op,[]),senderForTags:wallet.senderForTagsFrom(op)});
@@ -214,6 +215,11 @@ export function createPrivateBokEscrowFactory(sdk) {
    close_uncertain:exclusive((request,operation)=>send('close_uncertain',[request],operation)),
    reconcile:exclusive((request,callId,actual,receipt,operation)=>send('reconcile',[request,sequence(callId),amount(actual),hex(receipt)],operation)),
    finish:exclusive((request,operation)=>send('finish',[request],operation)),
+   publish_reply:exclusive((request,pluginId,fields,length,mainVersion,localVersion,operation)=>{
+    assert(Array.isArray(fields)&&fields.length===32);const message=fields.map(value=>hex(value));
+    assert(Number.isSafeInteger(length)&&length>0&&length<=992);
+    return send('publish_reply',[request,hex(pluginId),message,Number(integer(length,16)),sequence(mainVersion),sequence(localVersion)],operation);
+   }),
   };
   return Object.freeze(port);
  };

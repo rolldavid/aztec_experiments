@@ -133,6 +133,7 @@ export async function runRollingBokFixture(ctx) {
       report.journey = await runRollingBokJourney({node, wallet, owner, operator, board: Contract.at(ctx.instance.address, ctx.preparation.artifact, wallet), bok,
         privateFee: privateFees, claimedDeposit: {depositId: claim.claim.depositChainId, logicalFields: claim.claim.logicalFields,
           txHash: claim.claimTxHash, evidenceRef: claimEvidence, economics: c01BoardEconomics(ctx.preparation)},
+        boardDeployment:{blockNumber:Number(ctx.inclusion.blockNumber),blockHash:String((await node.getBlock(Number(ctx.inclusion.blockNumber))).hash),txHash:String(ctx.inclusion.txHash)},
         pluginId: new Fr(1n), initialHumanFees: {owner: ownerFees, otherUser: 0n}, outputDirectory: path.join(outputDirectory, 'journey'), mineL1, finalizeReverted, mark, harnessFiles: files});
       assert(report.journey.passed);
       report.humanActualFees = report.journey.humanActualFees;
