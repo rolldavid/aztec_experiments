@@ -374883,6 +374883,12 @@ ${val.stack}`;
     if (!natural(number20)) throw fail2("UNAVAILABLE");
     return { number: number20, hash: hex9(hash12, 32) };
   }
+  async function readTogether(reads) {
+    const results = await Promise.allSettled(reads.map((read2) => Promise.resolve().then(read2)));
+    const rejected = results.find((result) => result.status === "rejected");
+    if (rejected) throw rejected.reason;
+    return results.map((result) => result.value);
+  }
   async function canonical(node2, expected) {
     const data = await node2.getBlockData(expected.number);
     if (!data || data.header?.globalVariables?.blockNumber !== expected.number || hex9(data.blockHash, 32) !== expected.hash) throw fail2("UNSYNCED");
@@ -374894,15 +374900,35 @@ ${val.stack}`;
       const chainId = info?.l1ChainId, version12 = info?.rollupVersion, realProofs = info?.realProofs, rollup = info?.l1ContractAddresses?.rollupAddress;
       if (!natural(chainId) || !natural(version12) || typeof realProofs !== "boolean") throw fail2("UNAVAILABLE");
       if (String(chainId) !== p.chainId || String(version12) !== p.version || hex9(rollup, 20) !== p.rollup || realProofs !== p.proofsEnabled) throw fail2("IDENTITY");
-      const tips = await node2.getChainTips(), state = await node2.getWorldStateSyncStatus();
-      const proposed = block(tips?.proposed), checkpointed = block(tips?.checkpointed?.block), proven = block(tips?.proven?.block), finalized = block(tips?.finalized?.block);
+      const [tips, state] = await readTogether([
+        async () => {
+          const value = await node2.getChainTips();
+          return {
+            proposed: block(value?.proposed),
+            checkpointed: block(value?.checkpointed?.block),
+            proven: block(value?.proven?.block),
+            finalized: block(value?.finalized?.block)
+          };
+        },
+        async () => {
+          const value = await node2.getWorldStateSyncStatus();
+          return {
+            latest: value?.latestBlockNumber,
+            latestHash: hex9(value?.latestBlockHash, 32),
+            final: value?.finalizedBlockNumber,
+            oldest: value?.oldestHistoricBlockNumber,
+            synced: value?.treesAreSynched
+          };
+        }
+      ]);
+      const { proposed, checkpointed, proven, finalized } = tips;
       const ordered = [finalized, proven, checkpointed, proposed];
       for (let i = 1; i < ordered.length; i++) if (ordered[i - 1].number > ordered[i].number || ordered[i - 1].number === ordered[i].number && ordered[i - 1].hash !== ordered[i].hash) throw fail2("UNSYNCED");
-      const latest = state?.latestBlockNumber, latestHash = state?.latestBlockHash, final = state?.finalizedBlockNumber, oldest = state?.oldestHistoricBlockNumber, synced = state?.treesAreSynched;
+      const { latest, latestHash, final, oldest, synced } = state;
       if (!natural(latest) || !natural(final) || !natural(oldest) || typeof synced !== "boolean") throw fail2("UNAVAILABLE");
       if (!synced || latest !== proposed.number || hex9(latestHash, 32) !== proposed.hash || final !== finalized.number || oldest > checkpointed.number) throw fail2("UNSYNCED");
-      if (checkpointed.number !== proposed.number) await canonical(node2, checkpointed);
-      await canonical(node2, proposed);
+      if (checkpointed.number !== proposed.number) await readTogether([() => canonical(node2, checkpointed), () => canonical(node2, proposed)]);
+      else await canonical(node2, proposed);
       const stamp = await node2.getSyncedL1Timestamp();
       const suppliedNow = options.nowSeconds, now = suppliedNow === void 0 ? Math.floor(Date.now() / 1e3) : suppliedNow;
       if (!natural(now)) throw fail2("CONFIG");
@@ -382693,6 +382719,12 @@ ${val.stack}`;
   };
 
   // node_modules/@aztec-labs/pxe/rolling-preference-recovery.mjs
+  async function rollingPreferenceReadBatch(reads) {
+    const results = await Promise.allSettled(reads.map((read2) => Promise.resolve().then(read2)));
+    const rejected = results.find((result) => result.status === "rejected");
+    if (rejected) throw rejected.reason;
+    return results.map((result) => result.value);
+  }
   var bindings = /* @__PURE__ */ new WeakMap();
   var MAX_STATE = 256 * 1024;
   var fail4 = () => {
@@ -382822,13 +382854,22 @@ ${val.stack}`;
         const canonical2 = async () => {
           const info = await pxe.node.getNodeInfo();
           check5(info.l1ChainId === p.network.chainId && info.rollupVersion === p.network.version && info.l1ContractAddresses.rollupAddress.toString().toLowerCase() === p.network.rollup && info.realProofs === p.proofsEnabled);
-          const observed = await pxe.node.getBlockData(anchorRecord.blockNumber);
-          check5(observed && observed.blockHash.toString() === anchorRecord.blockHash);
-          const h = BlockHeader.fromBuffer(BlockHeader.prototype.toBuffer.call(observed.header));
+          const parameter = await anchor2.toBlockParameter();
+          const [observed, instance] = await rollingPreferenceReadBatch([
+            async () => {
+              const raw = await pxe.node.getBlockData(anchorRecord.blockNumber);
+              check5(raw);
+              return { hash: raw.blockHash.toString(), header: BlockHeader.fromBuffer(BlockHeader.prototype.toBuffer.call(raw.header)) };
+            },
+            async () => {
+              const raw = await pxe.node.getContract(address6, parameter);
+              check5(raw);
+              return SerializableContractInstance.fromBuffer(new SerializableContractInstance(raw).toBuffer());
+            }
+          ]);
+          check5(observed.hash === anchorRecord.blockHash);
+          const h = observed.header;
           check5((await h.hash()).toString() === anchorRecord.blockHash && h.getBlockNumber() === anchorRecord.blockNumber && h.globalVariables.chainId.toBigInt() === BigInt(p.network.chainId) && h.globalVariables.version.toBigInt() === BigInt(p.network.version));
-          const raw = await pxe.node.getContract(address6, await anchor2.toBlockParameter());
-          check5(raw);
-          const instance = SerializableContractInstance.fromBuffer(new SerializableContractInstance(raw).toBuffer());
           check5(instance.currentContractClassId.toString() === p.expectedClassId && instance.originalContractClassId.toString() === p.expectedClassId && (await computeContractAddressFromInstance(instance)).equals(address6));
           await guard();
         };
@@ -397783,15 +397824,25 @@ See docs for context: https://docs.aztec.network/errors/14`);
           const canonical2 = async () => {
             const info = await this.node.getNodeInfo();
             check10(info.l1ChainId === p.network.chainId && info.rollupVersion === p.network.version && info.l1ContractAddresses.rollupAddress.toString().toLowerCase() === p.network.rollup && info.realProofs === p.proofsEnabled);
-            for (const [number20, hash12] of [[anchor2.getBlockNumber(), anchorHash], [p.blockNumber, p.blockHash]]) {
-              const data = await this.node.getBlockData(BlockNumber(number20));
-              check10(data && data.blockHash.toString() === hash12);
-              const h = BlockHeader.fromBuffer(BlockHeader.prototype.toBuffer.call(data.header));
-              check10(h.getBlockNumber() === number20 && (await h.hash()).toString() === hash12 && h.globalVariables.chainId.toBigInt() === BigInt(p.network.chainId) && h.globalVariables.version.toBigInt() === BigInt(p.network.version));
+            const coordinates = [[anchor2.getBlockNumber(), anchorHash], [p.blockNumber, p.blockHash]];
+            const parameter = await anchor2.toBlockParameter();
+            const values = await rollingPreferenceReadBatch([
+              ...coordinates.map(([number20]) => async () => {
+                const data = await this.node.getBlockData(BlockNumber(number20));
+                check10(data);
+                return { hash: data.blockHash.toString(), header: BlockHeader.fromBuffer(BlockHeader.prototype.toBuffer.call(data.header)) };
+              }),
+              async () => {
+                const observed = await this.node.getContract(address6, parameter);
+                check10(observed);
+                return SerializableContractInstance.fromBuffer(new SerializableContractInstance(observed).toBuffer());
+              }
+            ]);
+            for (let i = 0; i < coordinates.length; i++) {
+              const [number20, hash12] = coordinates[i], data = values[i], h = data.header;
+              check10(data.hash === hash12 && h.getBlockNumber() === number20 && (await h.hash()).toString() === hash12 && h.globalVariables.chainId.toBigInt() === BigInt(p.network.chainId) && h.globalVariables.version.toBigInt() === BigInt(p.network.version));
             }
-            const observed = await this.node.getContract(address6, await anchor2.toBlockParameter());
-            check10(observed);
-            const instance = SerializableContractInstance.fromBuffer(new SerializableContractInstance(observed).toBuffer());
+            const instance = values[2];
             check10(instance.currentContractClassId.equals(classId) && instance.originalContractClassId.equals(classId) && (await computeContractAddressFromInstance(instance)).equals(address6));
             await guard();
           };
