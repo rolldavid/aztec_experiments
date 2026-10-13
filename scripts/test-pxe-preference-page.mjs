@@ -268,11 +268,13 @@ await writeFile(receipt,JSON.stringify({cleaned,exists}));
 // PrivateEventStore and the actual application IndexedDB adapter on explicitly
 // labelled fake-indexeddb. This is not native Chromium storage qualification.
 // Transactions/inclusion are synthetic; processed ACIR is a separate opt-in.
+const coldHttpDiagnostic=process.env.ROLLING_COLD_HTTP_DIAGNOSTIC==='1';
+if(coldHttpDiagnostic)assert(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1'&&process.env.ROLLING_PREFERENCE_PAGE_ACIR==='1','HTTP diagnostic requires both actual SDK/ACIR opt-ins');
 if(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1') {
  await test('owned isolated SDK and ACIR suite',async suite=>{
   const {pathToFileURL}=await import('node:url');
   const after=fn=>suite.after(fn);
-  const test=(...args)=>suite.test(...args);
+  const test=(name,fn)=>suite.test(name,{skip:coldHttpDiagnostic&&!name.startsWith('cold HTTP progress')?'HTTP diagnostic only; original case unrun':false},fn);
   // Bind the reviewed b440 atomicity repair before importing the adapter. No
   // shared dependency is patched by this test. Historical v1 failures remain
   // unresolved evidence; selecting the application's store does not fix v1.
@@ -669,7 +671,7 @@ if(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1') {
       };
       const node=new Proxy(api,{get(target,key){if(key==='then')return undefined;if(key in target)return Reflect.get(target,key);
         return ()=>{counters.unexpectedCalls++;throw Error('UNIMPLEMENTED_SYNTHETIC_CHAIN_METHOD');};}});
-      async function receiver({withKeys=true,completeAddress,contributor,pristine=false,extraStore,recovery=false,foreignKeys=false,eventPageDouble}={}) {
+      async function receiver({withKeys=true,completeAddress,contributor,pristine=false,extraStore,recovery=false,foreignKeys=false,eventPageDouble,transportNode=node}={}) {
         const accountKeys=foreignKeys?await deriveKeys(Fr.random()):derived;
         const secretKeys=foreignKeys?Object.fromEntries(Object.keys(keys).map(key=>[key,accountKeys[key]])):keys;
         const expectedComplete=withKeys?await CompleteAddress.fromPublicKeysAndPartialAddress(accountKeys.publicKeys,partialAddress):completeAddress;
@@ -681,11 +683,11 @@ if(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1') {
         const complete=withKeys?await stores.keyStore.addAccount(secretKeys,partialAddress):completeAddress;
         assert(complete);assert(complete.address.equals(expectedComplete.address),'Application store owner differs from actual key registration');
         await stores.addressStore.addCompleteAddress(complete);
-        const classService=new ContractClassService(node,stores.contractStore);
-        const syncService=new ContractSyncService(node,stores.contractStore,classService,stores.noteStore,log,{concurrentContractSyncEnabled:false});
+        const classService=new ContractClassService(transportNode,stores.contractStore);
+        const syncService=new ContractSyncService(transportNode,stores.contractStore,classService,stores.noteStore,log,{concurrentContractSyncEnabled:false});
         const simulator=new WASMSimulator();
         const args={...stores,contractClassService:classService,contractSyncService:syncService,
-          aztecNode:node,txResolver:new TxResolverService(node),simulator};
+          aztecNode:transportNode,txResolver:new TxResolverService(transportNode),simulator};
         const functionSimulator=new ContractFunctionSimulator(args);
         const recoveryStore=recovery?new RollingPreferenceRecoveryStore(db):null;
         const stagedStores=[...(recoveryStore?[recoveryStore]:[]),stores.capsuleStore,stores.senderTaggingStore,stores.recipientTaggingStore,stores.privateEventStore,stores.noteStore,stores.factStore,...(extraStore?[extraStore]:[])];
@@ -716,7 +718,7 @@ if(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1') {
           }
           ${output.slice(start,end).trim()}
         }`)(...Object.values(bindings));
-        const page=new Class();Object.assign(page,stores,{node,proverEnabled:false,operationQueue:queue,
+        const page=new Class();Object.assign(page,stores,{node:transportNode,proverEnabled:false,operationQueue:queue,
           contractClassService:classService,contractSyncService:syncService,txResolver:args.txResolver,simulator,eventPageDouble});
         if(recoveryStore)page.bindRecoveryStore(recoveryStore);
         const eventAbi=artifact.outputs.structs.events.find(e=>e.path==='RollingBoard::PreferenceChanged');
@@ -752,7 +754,13 @@ if(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1') {
         blockHash:(await header.hash()).toString(),txHash:effect.txHash.toString(),firstLog:0,logCount:effect.privateLogs.length,
         compactFields:block.toBlobFields().map(x=>x.toString()),headerFields:header.toFields().map(x=>x.toString())};
       const tagsBefore=counters.tagQueries;
-      return {receiver,sender,input,header,initialHeader,board,contractClass,counters,tagsBefore,node,block,
+      return {receiver,sender,input,header,initialHeader,board,instance,contractClass,counters,tagsBefore,node,block,
+        async publicBlock(parameter){
+          if(typeof parameter==='number')return historyBlock(parameter);
+          assert(parameter&&Object.keys(parameter).length===1&&parameter.hash instanceof BlockHash);
+          for(let n=1;n<=header.getBlockNumber();n++){const value=await historyBlock(n);if((await value.header.hash()).equals(parameter.hash))return value;}
+          throw Error('Unknown finite fixture block');
+        },
         // Deliberately synthetic event-only effect for the isolated ordering
         // algorithm test below. Original EventService authenticates commitments;
         // this path does not claim ACIR, head completeness or chain acceptance.
@@ -822,6 +830,113 @@ if(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1') {
     async function recoveryStep(f,r,current,guard=async()=>{}){
       const block=current.nextBlock<=current.anchor.blockNumber?await f.compact(current.nextBlock):null;
       return r.page.processRollingPreferenceRecovery({...recoveryInput(f),expected:{epoch:current.epoch,sequence:current.sequence},block},{contextGuard:guard});
+    }
+    // Explicit opt-in diagnostic. It reuses exact baseline generated methods,
+    // original ACIR/services/queue and the real production reader/gateway. The
+    // finite chain and receiver identity/initial-sync adapter are labelled seams,
+    // not full createPXE, real inclusion, proof or browser qualification.
+    if(coldHttpDiagnostic){
+      await test('cold HTTP progress with actual encrypted ACIR and original bounded cursor',async t=>{
+        const http=await import('node:http');
+        const {createNamespacedSafeJsonRpcServer}=await import('@aztec-labs/foundation/json-rpc/server');
+        const {AztecNodeApiSchema}=await import('@aztec-labs/stdlib/interfaces/client');
+        const {L1ContractsNames}=await import('@aztec-labs/ethereum/l1-contract-addresses');
+        const {ProtocolContractsNames}=await import('@aztec-labs/stdlib/contract');
+        const {poseidon2HashWithSeparator}=await import('@aztec-labs/foundation/crypto/poseidon');
+        const trusted=await import('../shared/trusted-private-node.mjs');
+        const {createPrivateQuery}=await import('../prover/private-query.mjs');
+        const {createProverServer}=await import('../prover/server.mjs');
+        const {createCompactBlockNativeAdapter}=await import('../prover/compact-block-native.mjs');
+        const {createRollingCompactClient}=await import('../shared/rolling/compact-client.mjs');
+        const {createRollingColdPreferenceReader}=await import('../shared/rolling/cold-preference-reader.mjs');
+        const directory=join(root,'execution/evidence/G07/cold-http-progress');await mkdir(directory,{recursive:true});
+        const output=join(directory,'actual-'+Date.now()+'.json');
+        const started=performance.now(),report={schemaVersion:1,passed:false,stage:'fixture',
+          scope:'Actual baseline reader, generated SDK method, ACIR, crypto, atomic Node fake-indexeddb and HTTP transports; synthetic finite chain, proofs disabled, labelled receiver identity and initial-sync seam',readPassed:false,
+          steps:[],sdk:{calls:0,status:0,advance:0,errors:0,pending:0,initialSyncChecks:0},native:{requests:0,accepted:0,errors:0,pending:0},
+          forwarded:{},gateway:{requests:0,errors:0},tags:{private:0,public:0},cleanup:{listenersClosed:false,pendingSettled:false,databasesDeleted:false}};
+        const save=()=>writeFile(output,JSON.stringify({...report,elapsedMs:Math.round(performance.now()-started)},null,2)+'\n');
+        const pending=new Set(),servers=[];let lastMailbox,receiver,closed=false;
+        const own=work=>{pending.add(work);void work.then(()=>pending.delete(work),()=>pending.delete(work));return work;};
+        const listen=async server=>{servers.push(server);await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(0,'127.0.0.1',resolve);});return 'http://127.0.0.1:'+server.address().port;};
+        const close=async()=>{if(closed)return;closed=true;for(const server of [...servers].reverse()){
+          if(server.closeAndDrain)await server.closeAndDrain();else{const stopped=new Promise((resolve,reject)=>server.close(e=>e&&e.code!=='ERR_SERVER_NOT_RUNNING'?reject(e):resolve()));server.closeAllConnections();await stopped;}
+        }await Promise.allSettled([...pending]);report.cleanup.listenersClosed=servers.every(x=>!x.listening);report.cleanup.pendingSettled=pending.size===0;};
+        try{
+          const f=await acirFixture(t),network={chainId:'31337',version:'1',rollup:f.input.network.rollup};
+          const anchorHash=(await f.header.hash()).toString(),blockId={number:4,hash:anchorHash},tip={block:blockId,checkpoint:{number:1,hash:hex(1)}};
+          const raw={
+            getNodeInfo:async()=>({nodeVersion:'6.0.0-rc.3',l1ChainId:31337,rollupVersion:1,realProofs:false,
+              l1ContractAddresses:Object.fromEntries(L1ContractsNames.map(key=>[key,EthAddress.fromString(network.rollup)])),
+              protocolContractAddresses:Object.fromEntries(ProtocolContractsNames.map(key=>[key,AztecAddress.fromFieldUnsafe(new Fr(1))])),txsLimits:{gas:{daGas:1,l2Gas:1}}}),
+            getChainTips:async()=>({proposed:blockId,checkpointed:tip,proven:tip,finalized:tip}),
+            getWorldStateSyncStatus:async()=>({finalizedBlockNumber:4,latestBlockNumber:4,latestBlockHash:anchorHash,oldestHistoricBlockNumber:1,treesAreSynched:true}),
+            getSyncedL1Timestamp:async()=>BigInt(Math.floor(Date.now()/1000)),
+            getBlockData:async selector=>{const b=await f.publicBlock(selector);return {header:b.header,archive:b.archive,blockHash:await b.header.hash(),checkpointNumber:b.checkpointNumber,indexWithinCheckpoint:b.indexWithinCheckpoint};},
+            getBlock:async selector=>{const b=await f.publicBlock(selector);return {header:b.header,archive:b.archive,hash:await b.header.hash(),number:b.header.getBlockNumber(),checkpointNumber:b.checkpointNumber,indexWithinCheckpoint:b.indexWithinCheckpoint,body:b.body};},
+          };
+          // Only actual finite fixture capabilities are forwarded. Unknown calls
+          // reject through the existing fixture; no generic success/default data.
+          const api=Object.fromEntries(Object.keys(AztecNodeApiSchema).map(name=>[name,async(...args)=>{
+            report.forwarded[name]=(report.forwarded[name]??0)+1;
+            if(name==='getPrivateLogsByTags')report.tags.private++;if(name==='getPublicLogsByTags')report.tags.public++;
+            return Reflect.apply(raw[name]??f.node[name],raw,args);
+          }]));
+          const rpc=createNamespacedSafeJsonRpcServer({aztec:[api,AztecNodeApiSchema]},{maxBatchSize:8,maxBodySizeBytes:8*1024*1024,corsAllowedOrigins:[],log});
+          const compact=createCompactBlockNativeAdapter({node:raw,expectedNetworkScope:network,proofsEnabled:false,tier:'checkpointed'});
+          const callback=rpc.getApp().callback();
+          const upstream=http.createServer((req,res)=>{
+            if(req.url==='/rolling/compact-block-v1'){
+              report.native.requests++;report.native.pending++;
+              res.once('finish',()=>{if(res.statusCode===200)report.native.accepted++;else report.native.errors++;});
+              const work=compact.handle(req,res);own(work).then(()=>report.native.pending--,()=>{report.native.pending--;report.native.errors++;res.destroy();});return;
+            }
+            if(req.method!=='POST'||req.url!=='/'||req.headers.origin!==undefined){res.writeHead(403);res.end();return;}
+            own(Promise.resolve(callback(req,res))).catch(()=>res.destroy());
+          });
+          const upstreamUrl=await listen(upstream);
+          const query=await createPrivateQuery({queryNode:{url:upstreamUrl,rollupAddress:network.rollup},chainId:'31337',rollupVersion:'1',proofsEnabled:false,compactBlocks:{tier:'checkpointed',origins:[]}});
+          const gateway=createProverServer({privateQuery:query,queue:{stats:()=>({submitted:0})},proofsEnabled:false,origins:[]});
+          gateway.prependListener('request',(_req,res)=>{report.gateway.requests++;res.once('finish',()=>{if(res.statusCode>=400)report.gateway.errors++;});});
+          const origin=await listen(gateway);report.stage='trusted-node';await save();
+          const node=await trusted.createTrustedPrivateNode({url:origin+'/v1/node',expectedNetworkScope:network,proofsEnabled:false,allowLocalDev:true});
+          receiver=await f.receiver({recovery:true,transportNode:node});const pxe=receiver.page;
+          const method=pxe.processRollingPreferenceRecovery;
+          pxe.processRollingPreferenceRecovery=function(...args){report.sdk.calls++;report.sdk.pending++;report.sdk[args[0].expected===null?'status':'advance']++;
+            const work=Reflect.apply(method,this,args);work.then(value=>{lastMailbox={sequence:value.sequence,nextBlock:value.nextBlock,nextLog:value.nextLog,complete:value.complete};report.sdk.pending--;},()=>{report.sdk.errors++;report.sdk.pending--;});return work;};
+          // Exact identity predicate is a labelled adapter for the existing
+          // generated-method receiver. It cannot brand arbitrary caller input.
+          pxe.sync=async()=>{report.sdk.initialSyncChecks++;assert.equal((await node.getBlockData(4)).blockHash.toString(),anchorHash);};
+          const sdk={Fr,EventSelector,decodeFunctionSignature,poseidon2HashWithSeparator,inspectTrustedNode:trusted.inspectTrustedNode,isTrustedPrivateNode:trusted.isTrustedPrivateNode,isPrivatePXEForNode:(p,n)=>p===pxe&&n===node};
+          const values=new Map(),privateStore={read:async key=>values.get(key)??null,compareAndSwap:async(key,old,next)=>{assert.equal(values.get(key)??null,old);values.set(key,next);}};
+          const contextGuard=async()=>assert(!closed);
+          const reader=createRollingColdPreferenceReader({sdk,pxe,node,owner:receiver.complete.address,
+            deployment:{board:{address:f.board,instance:f.instance,artifact},network,proofsEnabled:false},expectedArtifactHash:f.input.expectedArtifactHash,tier:'checkpointed',
+            compact:createRollingCompactClient({url:origin,tier:'checkpointed',contextGuard,allowLocalDev:true}),contextGuard,privateStore,walletSecret:hex(901),walletSalt:'902'});
+          report.stage='read';const deadlineAt=Date.now()+45000;let value,previous;
+          for(let i=0;i<12;i++){
+            const stepStart=performance.now();try{value=await reader.read({deadlineAt});}
+            finally{report.steps.push({step:i,elapsedMs:Math.round(performance.now()-stepStart),...(lastMailbox??{}),sdkCalls:report.sdk.calls,nativeRequests:report.native.requests});await save();}
+            assert(lastMailbox);if(previous&&!value.complete)assert(lastMailbox.sequence>previous.sequence,'Finite fixture cursor must progress');previous={...lastMailbox};
+            if(value.complete)break;
+          }
+          assert(value?.complete);assert.equal(value.preferences.head.revision,'1');assert.deepEqual(value.preferences.bookmarks,['77']);
+          assert.deepEqual(value.preferences.followedBoards,[]);assert.deepEqual(value.preferences.followedNames,[]);assert.deepEqual(value.preferences.subscriptions,[]);assert.deepEqual(value.preferences.readMarkers,[]);assert.equal(value.preferences.replyNotifications,true);
+          const stored=await receiver.read();assert.equal(stored.events.length,1);assert.equal(stored.notes.length,1);
+          const e=stored.events[0].packedEvent;assert(e&&e.length===8);
+          const digest=await poseidon2HashWithSeparator([new Fr(31337),new Fr(1),f.board.toField(),...e],0x52435031);
+          assert.equal(value.preferences.head.digest,String(digest.toBigInt()));assert.equal(stored.notes[0].note.items[2].toBigInt(),digest.toBigInt());
+          assert.deepEqual(report.tags,{private:0,public:0});assert.equal(report.native.requests,4);assert.equal(report.native.accepted,4);assert.equal(report.native.errors,0);assert.equal(report.gateway.errors,0);assert.equal(report.sdk.errors,0);
+          report.stage='complete';await close();assert(report.cleanup.listenersClosed&&report.cleanup.pendingSettled);assert.equal(report.native.pending,0);assert.equal(report.sdk.pending,0);report.readPassed=true;
+        }catch{report.stage='failed-'+report.stage;throw Error('Cold HTTP progress diagnostic failed; inspect sanitized phase receipt');}
+        finally{
+          // Registered after the fixture's own queue/store deletion hooks, so a
+          // successful read cannot masquerade as completed cleanup.
+          t.after(async()=>{try{await close();report.cleanup.databasesDeleted=(await factory.databases()).length===0;assert(report.cleanup.databasesDeleted);report.passed=report.readPassed&&report.cleanup.listenersClosed&&report.cleanup.pendingSettled;}finally{await save();}});
+          await close();await save();
+        }
+      });
+      return; // Explicit diagnostic mode; original default suite is unchanged.
     }
     await test('labelled chain tag RPC serves only retained actual encrypted logs with canonical metadata and exact query bounds',async t=>{
       const f=await acirFixture(t),effect=f.block.body.txEffects[0],log=effect.privateLogs[0];
