@@ -5,7 +5,7 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import http from 'node:http';
 import path from 'node:path';
-import {persistRollingRecoveryObservation,observeRollingColdRead,assertRollingBrowserCompactAcceptance,createRollingEvidenceDirectory,classifyRollingApplicationFootprint,recordRollingFundingFailure,assertRollingApplicationViews,assertRollingPublicFootprint,closeRollingResources,loadRollingFixtureSDK,observeRollingReadiness} from './rolling-application-fixture.mjs';
+import {runRollingPublicRecoveryChecks,persistRollingRecoveryObservation,observeRollingColdRead,assertRollingBrowserCompactAcceptance,createRollingEvidenceDirectory,classifyRollingApplicationFootprint,recordRollingFundingFailure,assertRollingApplicationViews,assertRollingPublicFootprint,closeRollingResources,loadRollingFixtureSDK,observeRollingReadiness} from './rolling-application-fixture.mjs';
 import {createRollingProjection} from '../../shared/rolling/public-projection.mjs';
 import {createFileJournalStorage} from '../../apps/src/billboard/user/transaction-journal-store.mjs';
 import {createEncryptedJournalSlot} from '../../shared/journal-record.mjs';
@@ -669,4 +669,45 @@ test('actual cold persistence helper retains falsy recovery failure alongside sa
 test('cold persistence helper propagates sole save failure and does not invent retry',async()=>{
   const failure=Error('save');await assert.rejects(persistRollingRecoveryObservation(async()=>{throw failure;},false,undefined),e=>e===failure);
   let calls=0;await persistRollingRecoveryObservation(async()=>{calls++;},true,undefined);assert.equal(calls,1);
+});
+
+// Labelled scheduling doubles: these test the actual ordering helper, not chain
+// acceptance or shorter runtime. All real callbacks remain mandatory in fixture.
+for(const boundedCold of [true,false])test(`public/private acceptance is sequential and once only (boundedCold=${boundedCold})`,async()=>{
+ const order=boundedCold?['public','private']:['private','public'],calls=[];let release,active=0,peak=0;
+ const held=new Promise(resolve=>{release=resolve;});
+ const phase=name=>async()=>{calls.push(name);active++;peak=Math.max(peak,active);if(name===order[0])await held;active--;};
+ const running=runRollingPublicRecoveryChecks({boundedCold,recoverPrivate:phase('private'),verifyPublic:phase('public')});
+ assert.deepEqual(calls,[order[0]]);release();await running;
+ assert.deepEqual(calls,order);assert.equal(active,0);assert.equal(peak,1);
+});
+for(const boundedCold of [true,false])for(const failing of [0,1])test(`public/private acceptance preserves phase ${failing} failure with no later work (boundedCold=${boundedCold})`,async()=>{
+ const order=boundedCold?['public','private']:['private','public'],calls=[],error=Error('Labelled exact failure');
+ const phase=name=>async()=>{calls.push(name);if(name===order[failing])throw error;};
+ await assert.rejects(runRollingPublicRecoveryChecks({boundedCold,recoverPrivate:phase('private'),verifyPublic:phase('public')}),actual=>actual===error);
+ assert.deepEqual(calls,order.slice(0,failing+1));
+});
+test('invalid public/private ordering inputs cannot start either callback',async()=>{
+ let calls=0;const callback=async()=>{calls++;};
+ for(const change of [{boundedCold:1},{boundedCold:undefined},{recoverPrivate:null},{verifyPublic:null}])await assert.rejects(runRollingPublicRecoveryChecks({boundedCold:false,recoverPrivate:callback,verifyPublic:callback,...change}));
+ assert.equal(calls,0);
+});
+test('actual fixture binds unchanged public and private gates before final accounting',async()=>{
+ const source=await fs.readFile(new URL('./rolling-application-fixture.mjs',import.meta.url),'utf8');
+ const coldStart=source.indexOf('const recoverPrivatePreferences=async()=>{'),publicStart=source.indexOf('const verifyCanonicalPublic=async()=>{');
+ const dispatch=source.indexOf('await runRollingPublicRecoveryChecks({boundedCold,recoverPrivate:recoverPrivatePreferences,verifyPublic:verifyCanonicalPublic});');
+ assert(coldStart>0&&publicStart>coldStart&&dispatch>publicStart);
+ const cold=source.slice(coldStart,publicStart),publicChecks=source.slice(publicStart,dispatch);
+ assert.equal((cold.match(/await mark\('preference-keys-only-recovery'\)/g)||[]).length,1);
+ assert(cold.includes("if(boundedCold)wire?.setPhase('recovery-a')"));
+ assert(cold.includes('compareRecoveredColdRollingPreferences'));assert(cold.includes('assert.equal(String(replacement.owner),String(old.owner))'));
+ assert(cold.includes('coldRecoveryMetrics=metrics'));assert(cold.includes('coldRecoveryMetrics=undefined'));
+ assert(cold.includes('persistRollingRecoveryObservation(save,recoveryFailed,recoveryError)'));
+ assert.equal((publicChecks.match(/await verifyRollingPublicReader\(/g)||[]).length,1);
+ assert(publicChecks.includes('decoder.decodeTransaction(ctx.node,hash)'));assert(publicChecks.includes('deadlineAt:ctx.applicationDeadlineAt'));
+ assert(!publicChecks.includes('actorA.'));assert(!publicChecks.includes('actorB.'));
+ assert(source.indexOf('let verifyRollingPublicReader;')<coldStart);assert(publicChecks.includes("({verifyRollingPublicReader}=await import('./rolling-public-acceptance.mjs'));"));
+ assert(source.indexOf('await verifyRollingPublicReader({',dispatch)>dispatch,'Later stale-readiness check retains the outer import binding');
+ const browser=source.indexOf('if(preferenceBrowser){',dispatch),accounting=source.indexOf('report.actualHumanFees=String(feeTotal+feeTotalB)',dispatch);
+ assert(browser>dispatch&&accounting>browser);assert(source.slice(browser,accounting).includes('await fees.verify(feeTotal)'));
 });

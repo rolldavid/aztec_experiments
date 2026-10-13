@@ -15,6 +15,15 @@ import {execFileSync} from 'node:child_process';
 import {setTimeout as sleep} from 'node:timers/promises';
 const sha = bytes => createHash('sha256').update(bytes).digest('hex');
 const json = value => JSON.stringify(value,(_,v)=>typeof v==='bigint'?String(v):v,2)+'\n';
+// Public history/cache checks do not consume the actor's private store. Run
+// those unchanged bounded checks first only for the bounded cold-reader lane;
+// its private recovery retains the same checkpoint, deadline and final accounting.
+export async function runRollingPublicRecoveryChecks({boundedCold,recoverPrivate,verifyPublic}){
+  assert.equal(typeof boundedCold,'boolean');
+  assert.equal(typeof recoverPrivate,'function');assert.equal(typeof verifyPublic,'function');
+  if(boundedCold){await verifyPublic();await recoverPrivate();}
+  else{await recoverPrivate();await verifyPublic();}
+}
 const discard=()=>{};
 const silent=Object.assign(discard,Object.fromEntries(['trace','debug','verbose','info','warn','error','fatal'].map(k=>[k,discard])),
   {level:'silent',isLevelEnabled:()=>false,getBindings:()=>({}),createChild:()=>silent});
@@ -1240,7 +1249,10 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
         report.journalReopen.actors.push({sameHash:true,newProofJobs:0,transactionBytesRetained:true});
       }
       journal=actorA.journal;assert.equal(service.stats().submitted,jobsBefore);
+      let verifyRollingPublicReader; // Also used by the later stale-readiness check.
+      const recoverPrivatePreferences=async()=>{
       if(preferences&&!preferenceBrowser&&!preferenceReorg&&!preferenceSaved&&!notificationBrowser){
+        if(boundedCold)wire?.setPhase('recovery-a');
         await mark('preference-keys-only-recovery');
         const {compareRecoveredRollingPreferences,compareRecoveredColdRollingPreferences}=await import('./rolling-preference-recovery.mjs');
         const old=actorA,dataDirectory='rolling-preference-cold-'+randomUUID(),role='preference-cold-'+randomUUID();
@@ -1285,6 +1297,8 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
           await persistRollingRecoveryObservation(save,recoveryFailed,recoveryError);
         }
       }
+      };
+      const verifyCanonicalPublic=async()=>{
       await mark('canonical-projection-rebuild');
       const rebuilt=createRollingProjection({isValidatedEvent:isRollingEvent});
       for(const hash of hashes)rebuilt.stage(await decoder.decodeTransaction(ctx.node,hash)).apply();
@@ -1295,11 +1309,13 @@ export async function runRollingApplicationFixture(ctx,scenario='conversation') 
       assert.equal(String((await ctx.node.getBlockData(Number(report.initialPublicAnchor.blockNumber))).blockHash),report.initialPublicAnchor.blockHash);
       report.rebuild={passed:true,canonicalTransactionsRefetched:hashes.length,normalizedCacheTreatedAsAuthority:false};
       wire?.setPhase('public-read');await mark('canonical-public-http-reopen');report.publicReader={};await save();
-      const {verifyRollingPublicReader}=await import('./rolling-public-acceptance.mjs');
+      ({verifyRollingPublicReader}=await import('./rolling-public-acceptance.mjs'));
       await verifyRollingPublicReader({node:ctx.node,artifact:checked.artifact,
         scope:{chainId:network.chainId,rollupVersion:network.version,rollupAddress:network.rollup,boardAddress:String(ctx.instance.address),classId:String((await sdk.getContractClassFromArtifact(checked.artifact)).id)},
         deployment:{blockNumber:Number(report.initialPublicAnchor.blockNumber),blockHash:report.initialPublicAnchor.blockHash,txHash:report.initialPublicAnchor.txHash},
         cacheDirectory:path.join(ctx.directory,'rolling-public-index'),ids,scenario:names?'owned-names':(recovery||race)?'profiles':scenario,wire:wire?{nodeUrl:ordinaryRpc.url,artifactPath:path.join(ROOT,'billboard/target/rolling_contract-RollingBoard.json'),onReader:url=>wire.registerEndpoint('public-reader',url)}:undefined,expectedProfiles:names?report.publicViews:undefined,expectedProfile:report.profiles?.expectedIdentity,expectedHTTP:report.social?.expectedHTTP,deadlineAt:ctx.applicationDeadlineAt,observation:report.publicReader});await save();
+      };
+      await runRollingPublicRecoveryChecks({boundedCold,recoverPrivate:recoverPrivatePreferences,verifyPublic:verifyCanonicalPublic});
       if(preferenceBrowser){
         assert(real,'Genuine browser acceptance requires real proof setup');await mark('production-browser-preferences');report.preferenceBrowser={};
         const {runRollingPreferenceBrowserFixture}=await import('./rolling-preference-browser-fixture.mjs');
