@@ -1,6 +1,7 @@
 // Labelled capability doubles test the acceptance consumer, never chain recovery.
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {readFile} from 'node:fs/promises';
 import {exerciseRollingPreferences,compareRecoveredRollingPreferences,compareRecoveredColdRollingPreferences} from './rolling-preference-recovery.mjs';
 function fixture(mode='relationships',fault){
  let revision=0,proofJobs=0,transportSends=0,walletSubmissions=0,readCount=0;
@@ -70,7 +71,7 @@ const canonicalHash=n=>'0x'+BigInt(n).toString(16).padStart(64,'0');
 // Labelled parent/transport capabilities only. These verify assertion behavior;
 // the future genuine parent supplies production reader, node and proof counters.
 function coldReorgFixture(fault,initial=false,bootstrap=false,routing={}){
- const observation={},counts={requests:0,accepted:0,failures:0,pending:0,privateTags:0,publicTags:0};
+ const observation=routing.observation??{},counts={requests:0,accepted:0,failures:0,pending:0,privateTags:0,publicTags:0};
  const activity={proofJobs:2,walletSubmissions:2,transportSends:2,authWitnesses:5};
  const phases=[...(bootstrap?['bootstrap']:[]),'retained','orphaned','restored','replacement-height','replacement'];
  const ends=[...(bootstrap?[2]:[]),4,6,3,6,7],revisions=[...(bootstrap?['0']:[]),...(initial?['0','1','0','0','1']:['1','2','1','1','2'])];let phase=0,queue=[],calls=0;
@@ -101,9 +102,10 @@ function coldReorgFixture(fault,initial=false,bootstrap=false,routing={}){
   if(fault==='old-anchor'&&phase===1)value.progress.anchorBlock=4;
   if(fault==='orphan-marker'&&value.complete)value.orphanedReadMarkers=[{secret:'PRIVATE_SENTINEL'}];
   if(fault==='wrong-head'&&value.complete)value.preferences.head.revision='99';
-  if(fault==='callback-error')throw Error('PRIVATE_SENTINEL');await routing.onRead?.({calls,value,counts});return value;
+  if(fault==='callback-error')throw Error('PRIVATE_SENTINEL');await routing.onRead?.({calls,value,counts,activity,phase,state});return value;
  };
- const consumer=createRollingColdReorgSnapshots({bootstrap,readPreferences,activity:()=>({...activity}),transport:()=>routing.transport?routing.transport(counts):({...counts}),observation,persist:async()=>{},physicalPages:async({fromBlock,anchor})=>{state.oracleCalls++;await routing.onOracle?.({counts});assert.equal(anchor.blockNumber,ends[phase]);return anchor.blockNumber-fromBlock+1+(fault==='wrong-physical-count'||fault==='dense'&&phase===0?1:0);}});
+ const options={bootstrap,readPreferences,activity:()=>routing.activity?routing.activity(activity):({...activity}),transport:()=>routing.transport?routing.transport(counts):({...counts}),observation,persist:()=>routing.persist?.({observation,counts,activity,state}),physicalPages:async({fromBlock,anchor})=>{state.oracleCalls++;await routing.onOracle?.({counts,activity,state});assert.equal(anchor.blockNumber,ends[phase]);return anchor.blockNumber-fromBlock+1+(fault==='wrong-physical-count'||fault==='dense'&&phase===0?1:0);}};
+ routing.configure?.(options);const consumer=createRollingColdReorgSnapshots(options);
  return {observation,counts,state,consumer,async run(){const result=await consumer.read(phases[phase],Date.now()+10000);phase++;if(phase<phases.length)prepare();return result;}};
 }
 test('labelled real-parent contract requires initial, monotonic, divergent rebuild and replacement without additional transactions',async()=>{
@@ -135,6 +137,176 @@ test('labelled initial-head case promotes an absent head without inventing a for
 });
 
 test('labelled dense unrelated ciphertext page is real progress even when public nextBlock repeats',async()=>{const f=coldReorgFixture('dense');await f.run();assert.equal(f.observation.phases[0].compact.accepted,5);assert.equal(f.observation.phases[0].physicalSuffixPages,5);});
+
+// Exercise the exact private wrapper source without adding a test injection API
+// to the consumer. This covers every finite source ID, including defensive
+// local-object operations that a valid capability cannot naturally make fail.
+// The semantic controls below separately exercise actual consumer wiring.
+test('cold diagnostic exact-source wrappers preserve every finite ID, result, first failure and falsy exception',async()=>{
+ const source=await readFile(new URL('./rolling-preference-recovery.mjs',import.meta.url),'utf8');
+ const helper=source.slice(source.indexOf('export function createRollingColdReorgSnapshots'),source.indexOf('// One root proof'));
+ const wrapper=helper.slice(helper.indexOf(' const trace='),helper.indexOf(' const setup='));
+ const sentinel=Error('fixed test sentinel'),factory=Function('fail',wrapper+';return trace;')(()=>sentinel);
+ const ids=new Set([...helper.matchAll(/(?:t|setup)\.(?:operation|predicate|awaited|get)\('([^']+)'/g)].map(m=>m[1]).filter(id=>!id.endsWith('-')));
+ for(const key of ['requests','accepted','failures','pending','privateTags','publicTags'])for(const prefix of ['traffic-field-','traffic-copy-'])ids.add(prefix+key);
+ for(const key of ['proofJobs','transportSends','walletSubmissions','authWitnesses'])for(const prefix of ['activity-field-','activity-copy-'])ids.add(prefix+key);
+ for(const m of helper.matchAll(/optional\('([^']+)'/g))ids.add(m[1]);
+ assert(ids.size>80);assert([...ids].every(id=>/^[a-z][a-zA-Z-]+$/.test(id)));
+ for(const id of ids){
+  const value=Object.freeze({private:'PRIVATE_SENTINEL'});let calls=0;const success={},t=factory(()=>success);
+  assert.equal(t.operation(id,()=>{calls++;return value;}),value);assert.equal(await t.awaited(id,()=>{calls++;return Promise.resolve(value);}),value);assert.equal(calls,2);assert.deepEqual(success,{});
+  const predicate={},p=factory(()=>predicate);assert.throws(()=>p.predicate(id,()=>false),e=>e===sentinel);assert.deepEqual(predicate.failure,{id,kind:'predicate'});
+  for(const reason of [undefined,null,false,0,'',value]){
+   const observed={},trace=factory(()=>observed);let caught=false;
+   try{trace.operation(id,()=>{throw reason;});}catch(error){caught=true;assert.equal(error,reason);}assert(caught);assert.deepEqual(observed.failure,{id,kind:'throw'});
+   try{await trace.awaited('secondary-fixed-id',()=>Promise.reject('PRIVATE_SECONDARY'));}catch{}assert.deepEqual(observed.failure,{id,kind:'throw'});
+   const rejected={},r=factory(()=>rejected);const result=await r.awaited(id,()=>Promise.reject(reason)).then(()=>({ok:true}),error=>({error}));assert(!result.ok);assert.equal(result.error,reason);assert.deepEqual(rejected.failure,{id,kind:'rejection'});
+   const hostile=factory(()=>{throw 'PRIVATE_OBSERVER';});const out=await hostile.awaited(id,()=>Promise.reject(reason)).then(()=>({ok:true}),error=>({error}));assert(!out.ok);assert.equal(out.error,reason);
+  }
+ }
+});
+// Diagnostic controls are labelled doubles, not evidence of chain recovery.
+const sanitizedColdFailure=e=>e instanceof Error&&e.message==='Rolling preference recovery acceptance failed.'&&!Object.hasOwn(e,'cause')&&!Object.hasOwn(e,'actual')&&!Object.hasOwn(e,'expected');
+const diagnosticFailure=f=>f.observation.phases.at(-1)?.failure??f.observation.failure;
+const throwGetter=(object,key,reason)=>Object.defineProperty(object,key,{configurable:true,enumerable:true,get(){throw reason;}});
+const predicateMutations=[
+ ['activity-after-read',({activity})=>activity.proofJobs++],
+ ['traffic-after-read',({counts})=>counts.publicTags++],
+ ['page-accepted',({counts})=>{counts.requests++;}],
+ ['result-complete-flag',({value})=>{value.complete=1;}],
+ ['progress-position',({value})=>{value.progress.nextBlock=0;}],
+ ['progress-revision',({value})=>{value.progress.processedRevision='01';}],
+ ['progress-anchor-fixed',({value,calls})=>{if(calls===2)value.progress.anchorBlock++;}],
+ ['first-incomplete',({value})=>{value.complete=true;}],
+ ['initial-position',({value})=>{value.progress.nextBlock=2;}],
+ ['progress-monotonic',({value,calls})=>{if(calls===3)value.progress.nextBlock=1;}],
+ ['progress-moved',({value,calls,counts})=>{if(calls===2){value.progress.nextBlock=1;counts.requests--;counts.accepted--;}}],
+ ['result-recovering',({value})=>{value.status='complete';}],
+ ['complete-result',({value})=>{if(value.complete)value.orphanedReadMarkers=[{}];}],
+ ['complete-anchor',({value})=>{if(value.complete)value.anchor.blockHash='invalid';}],
+ ['complete-progress',({value})=>{if(value.complete)value.progress.markersTotal=1;}],
+ ['complete-head',({value})=>{if(value.complete)value.preferences.head.revision='99';}],
+];
+for(const [id,onRead] of predicateMutations)test('cold diagnostic exact false predicate '+id,async()=>{
+ const f=coldReorgFixture(undefined,false,false,{onRead});await assert.rejects(f.run(),sanitizedColdFailure);
+ assert.deepEqual(diagnosticFailure(f),{id,kind:'predicate'});assert(!JSON.stringify(f.observation).includes('PRIVATE_SENTINEL'));
+});
+for(const [id,options] of [
+ ['traffic-shape',{transport:()=>({})}],
+ ['activity-shape',{activity:()=>({})}],
+ ['traffic-initial-pending',{transport:counts=>({...counts,pending:1})}],
+ ['physical-page-count',{configure:o=>{o.physicalPages=()=>0;}}],
+ ['traffic-final',{onOracle:({counts})=>counts.privateTags++}],
+ ['activity-final',{onOracle:({activity})=>activity.authWitnesses++}],
+])test('cold diagnostic exact capability predicate '+id,async()=>{
+ const f=coldReorgFixture(undefined,false,false,options);await assert.rejects(f.run(),sanitizedColdFailure);assert.deepEqual(diagnosticFailure(f),{id,kind:'predicate'});
+});
+for(const [fault,id] of [['wrong-append-first','append-position'],['old-anchor','append-position']])test('cold diagnostic append location '+fault,async()=>{
+ const f=coldReorgFixture(fault);await f.run();await assert.rejects(f.run(),sanitizedColdFailure);assert.deepEqual(diagnosticFailure(f),{id,kind:'predicate'});
+});
+test('cold diagnostic exact append prefix and rebuild anchor predicates',async()=>{
+ for(const id of ['append-prefix','rebuild-anchor']){
+  const f=coldReorgFixture(undefined,false,false,{onRead:({phase,value})=>{
+   if(id==='append-prefix'&&phase===1)value.progress.processedRevision='99';
+   if(id==='rebuild-anchor'&&phase===2)value.progress.anchorBlock=6;
+  }});await f.run();if(id==='rebuild-anchor')await f.run();await assert.rejects(f.run(),sanitizedColdFailure);assert.deepEqual(diagnosticFailure(f),{id,kind:'predicate'});
+ }
+});
+test('cold diagnostic admission and abort locations never invoke an extra read',async()=>{
+ const expired=coldReorgFixture();await assert.rejects(expired.consumer.read('retained',Date.now()-1),sanitizedColdFailure);assert.deepEqual(diagnosticFailure(expired),{id:'read-admission',kind:'predicate'});
+ for(const [id,at] of [['read-deadline','before'],['read-signal','read'],['deadline-final','oracle']]){
+  const abort=new AbortController();if(at==='before')abort.abort();
+  const f=coldReorgFixture(undefined,false,false,{onRead:()=>{if(at==='read')abort.abort();},onOracle:()=>{if(at==='oracle')abort.abort();}});
+  await assert.rejects(f.consumer.read('retained',Date.now()+10000,{signal:abort.signal}),sanitizedColdFailure);assert.deepEqual(diagnosticFailure(f),{id,kind:'predicate'});
+ }
+});
+test('cold diagnostic monotonic counter failure is distinct from a forbidden positive delta',async()=>{
+ let n=0;const f=coldReorgFixture(undefined,false,false,{transport:counts=>({...counts,requests:n++===0?1:0})});
+ await assert.rejects(f.run(),sanitizedColdFailure);assert.deepEqual(diagnosticFailure(f),{id:'delta-monotonic',kind:'predicate'});
+});
+const getterMutations=[
+ ['value-complete',v=>[v,'complete'],false],['value-progress',v=>[v,'progress'],false],
+ ['progress-anchorBlock',v=>[v.progress,'anchorBlock'],false],['progress-nextBlock',v=>[v.progress,'nextBlock'],false],
+ ['progress-markersChecked',v=>[v.progress,'markersChecked'],false],['progress-processedRevision',v=>[v.progress,'processedRevision'],false],
+ ['value-status',v=>[v,'status'],false],['value-preferences',v=>[v,'preferences'],true],
+ ['value-orphanedReadMarkers',v=>[v,'orphanedReadMarkers'],true],['orphaned-markers-length',v=>{v.orphanedReadMarkers={};return [v.orphanedReadMarkers,'length'];},true],
+ ['value-anchor',v=>[v,'anchor'],true],['anchor-block-number',v=>[v.anchor,'blockNumber'],true],['anchor-block-hash',v=>[v.anchor,'blockHash'],true],
+ ['terminal-progress-markersTotal',v=>[v.progress,'markersTotal'],true],
+ ['preferences-head',v=>[v.preferences,'head'],true],['head-revision',v=>[v.preferences.head,'revision'],true],
+];
+for(const [id,locate,terminal] of getterMutations)test('cold diagnostic thrown getter '+id+' retains fixed public error',async()=>{
+ const sentinel={private:'PRIVATE_SENTINEL'};const f=coldReorgFixture(undefined,false,false,{onRead:({value})=>{
+  if(terminal&&!value.complete)return;const [object,key]=locate(value);throwGetter(object,key,sentinel);
+ }});await assert.rejects(f.run(),sanitizedColdFailure);assert.deepEqual(diagnosticFailure(f),{id,kind:'throw'});assert(!JSON.stringify(f.observation).includes('PRIVATE_SENTINEL'));
+});
+for(const group of ['traffic','activity'])for(const copy of [false,true])test('cold diagnostic '+group+(copy?' copy':' field')+' property receiver and repeated copy read',async()=>{
+ const key=group==='traffic'?'requests':'proofJobs';let reads=0,receiver=true;
+ const build=counts=>{const x={...counts};Object.defineProperty(x,key,{enumerable:true,get(){receiver&&=this===x;if(++reads===(copy?2:1))throw false;return counts[key];}});return x;};
+ const f=coldReorgFixture(undefined,false,false,{[group==='traffic'?'transport':'activity']:build});await assert.rejects(f.run(),sanitizedColdFailure);
+ assert.equal(reads,copy?2:1);assert(receiver);assert.deepEqual(diagnosticFailure(f),{id:group+(copy?'-copy-':'-field-')+key,kind:'throw'});
+});
+for(const reason of [undefined,null,false,0,'',Object.freeze({private:'PRIVATE_SENTINEL'})])for(const kind of ['throw','rejection'])test('cold diagnostic '+kind+' preserves falsy/internal reason '+String(reason),async()=>{
+ const f=coldReorgFixture(undefined,false,false,{configure:o=>{o.readPreferences=()=>{if(kind==='throw')throw reason;return Promise.reject(reason);};}});
+ await assert.rejects(f.run(),sanitizedColdFailure);assert.deepEqual(diagnosticFailure(f),{id:'read-preferences',kind});assert(!JSON.stringify(f.observation).includes('PRIVATE_SENTINEL'));
+});
+for(const [id,configure] of [
+ ['traffic-call',o=>{o.transport=()=>{throw 0;};}],['activity-call',o=>{o.activity=()=>{throw null;};}],
+ ['persist-start',o=>{o.persist=()=>{throw undefined;};}],['physical-pages',o=>{o.physicalPages=()=>{throw false;};}],
+])test('cold diagnostic synchronous callback boundary '+id,async()=>{
+ const f=coldReorgFixture(undefined,false,false,{configure});await assert.rejects(f.run(),sanitizedColdFailure);assert.deepEqual(diagnosticFailure(f),{id,kind:'throw'});
+});
+for(const point of ['progress','complete'])test('cold diagnostic persist-'+point+' rejection does not become a successful checkpoint',async()=>{
+ const f=coldReorgFixture(undefined,false,false,{persist:({observation})=>{const r=observation.phases[0];if(point==='complete'?r.passed:r.steps>0)return Promise.reject('PRIVATE_SENTINEL');}});
+ await assert.rejects(f.run(),sanitizedColdFailure);assert.deepEqual(diagnosticFailure(f),{id:'persist-'+point,kind:'rejection'});assert.equal(f.observation.phases[0].passed,false);
+});
+test('cold diagnostic first failure survives later reporting and persistence failures',async()=>{
+ const f=coldReorgFixture('wrong-head',false,false,{persist:({observation})=>{
+  const row=observation.phases[0];if(row.failure){throwGetter(row,'passed',Error('PRIVATE_SECONDARY'));throw Error('PRIVATE_PERSIST');}
+ },transport:counts=>({...counts})});await assert.rejects(f.run(),sanitizedColdFailure);assert.deepEqual(diagnosticFailure(f),{id:'complete-head',kind:'predicate'});
+ assert(!JSON.stringify(f.observation.failure??f.observation.phases[0].failure).includes('PRIVATE'));
+});
+test('cold diagnostic publication trap cannot replace sanitized failure or create success',async()=>{
+ let attempted=0;const observation=new Proxy({}, {defineProperty(target,key,descriptor){if(key==='failure'){attempted++;throw Error('PRIVATE_OBSERVER');}return Reflect.defineProperty(target,key,descriptor);}});
+ const f=coldReorgFixture(undefined,false,false,{observation,configure:o=>{o.activity=()=>{throw false;};}});
+ await assert.rejects(f.run(),sanitizedColdFailure);assert.equal(attempted,1);assert.equal(observation.failure,undefined);
+});
+test('cold diagnostic successful access order/count and short circuit match pre-observation helper',async()=>{
+ const seen=[];const f=coldReorgFixture(undefined,false,false,{onRead:({value,calls})=>{
+  if(calls!==1)return;const p=value.progress;value.progress=new Proxy(p,{get(target,key,receiver){seen.push(String(key));return Reflect.get(target,key,receiver);}});
+ }});await f.run();assert.deepEqual(seen,['anchorBlock','anchorBlock','nextBlock','nextBlock','nextBlock','anchorBlock','markersChecked','processedRevision','processedRevision','anchorBlock','anchorBlock','nextBlock','markersChecked','nextBlock','processedRevision','anchorBlock','nextBlock','processedRevision','markersChecked','markersTotal']);
+ const short=coldReorgFixture(undefined,false,false,{onRead:({value})=>{value.progress.anchorBlock=0;throwGetter(value.progress,'nextBlock',Error('PRIVATE_UNREACHABLE'));}});
+ await assert.rejects(short.run(),sanitizedColdFailure);assert.deepEqual(diagnosticFailure(short),{id:'progress-position',kind:'predicate'});
+});
+
+test('cold diagnostic setup failures retain exact predicate and original thrown setter',()=>{
+ for(const [id,mutate] of [
+  ['setup-bootstrap',o=>{o.bootstrap=0;}],['setup-capabilities',o=>{o.transport=null;}],['setup-observation',o=>{o.observation.notEmpty=true;}],
+ ]){
+  const observation={};assert.throws(()=>coldReorgFixture(undefined,false,false,{observation,configure:mutate}),sanitizedColdFailure);assert.deepEqual(observation.failure,{id,kind:'predicate'});
+ }
+ const reason={private:'PRIVATE_SETUP'},observation=new Proxy({}, {set(){throw reason;}});
+ assert.throws(()=>coldReorgFixture(undefined,false,false,{observation}),e=>e===reason);assert.deepEqual(observation.failure,{id:'setup-phases',kind:'throw'});
+});
+test('cold diagnostic a second busy rejection does not overwrite or terminate the active operation',async()=>{
+ const f=coldReorgFixture(),hold=deferred(),entered=deferred();f.state.hold=hold.promise;f.state.entered=entered.resolve;
+ const work=f.run();await entered.promise;await assert.rejects(f.consumer.read('orphaned',Date.now()+10000),sanitizedColdFailure);
+ assert.deepEqual(f.observation.failure,{id:'read-not-busy',kind:'predicate'});assert.equal(f.observation.phases[0].failure,undefined);
+ f.state.hold=null;hold.resolve();await work;assert(f.observation.phases[0].passed);
+});
+test('cold diagnostic a throwing failure-status observer cannot escape the external sanitizer',async()=>{
+ let armed=false,secondary=0;const f=coldReorgFixture('wrong-head',false,false,{persist:({observation})=>{
+  const row=observation.phases[0];if(!armed){armed=true;Object.defineProperty(row,'passed',{enumerable:true,configurable:true,get(){return false;},set(){secondary++;throw Error('PRIVATE_STATUS');}});}
+ }});await assert.rejects(f.run(),sanitizedColdFailure);assert.equal(secondary,1);assert.deepEqual(diagnosticFailure(f),{id:'complete-head',kind:'predicate'});
+});
+test('cold diagnostic a rejected thenable is classified at the await without double invocation',async()=>{
+ let gets=0,calls=0;const reason=Object.freeze({private:'PRIVATE_THENABLE'}),f=coldReorgFixture(undefined,false,false,{configure:o=>{
+  o.readPreferences=()=>{calls++;return {get then(){gets++;throw reason;}};};
+ }});await assert.rejects(f.run(),sanitizedColdFailure);assert.equal(calls,1);assert.equal(gets,1);assert.deepEqual(diagnosticFailure(f),{id:'read-preferences',kind:'rejection'});
+});
+test('cold diagnostic physical oracle rejection remains one opaque operation with no repeated call',async()=>{
+ let calls=0;const f=coldReorgFixture(undefined,false,false,{configure:o=>{o.physicalPages=()=>{calls++;return Promise.reject(undefined);};}});
+ await assert.rejects(f.run(),sanitizedColdFailure);assert.equal(calls,1);assert.deepEqual(diagnosticFailure(f),{id:'physical-pages',kind:'rejection'});
+});
 
 import {createRollingRootProofOverlap} from './rolling-preference-recovery.mjs';
 const deferred=()=>{let resolve,reject;const promise=new Promise((a,b)=>{resolve=a;reject=b;});return {promise,resolve,reject};};
