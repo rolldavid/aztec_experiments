@@ -292,10 +292,10 @@ test('MetaMask retained readiness denies all payment/proof requests without subs
 
 test('MetaMask retained readiness imports the existing encrypted recovery through actual accessible input names only',async()=>{
  const {inspectMetaMaskAggregateReadiness}=await import('./t04-metamask.mjs');const events=[];
- const dialog={getByRole(role,{name}){assert.equal(role,'button');assert(['Unlock','Import recovery','Recover funding'].includes(name));return{isVisible:async()=>true,click:async()=>events.push(name),waitFor:async()=>events.push(name)};},getByLabel(name){assert(['Recovery password','Recovery file'].includes(name));return{fill:async()=>events.push(name),setInputFiles:async p=>{assert.equal(p,'/private/recovery/initial-recovery.json');events.push(name);}};}};
+ const dialog={getByRole(role,{name}){assert.equal(role,'button');assert(['Unlock','Import recovery','Recover funding'].includes(name));return{or:()=>({first:()=>({waitFor:async()=>events.push('wait-surface')})}),isVisible:async()=>true,click:async()=>events.push(name),waitFor:async()=>events.push(name)};},getByLabel(name){assert(['Recovery password','Recovery file'].includes(name));return{fill:async()=>events.push(name),setInputFiles:async p=>{assert.equal(p,'/private/recovery/initial-recovery.json');events.push(name);}};}};
  const page={getByRole(role,options){if(role==='dialog')return dialog;assert.equal(options.name,'Your account');return{click:async()=>events.push('open')};}};
  await inspectMetaMaskAggregateReadiness({page,control:{password:'not-retained-in-report',recoveryDirectory:'/private/recovery'},mark:x=>events.push(x)});
- assert.deepEqual(events,['aggregate-retained-readiness','open','Unlock','Recovery password','Recovery file','Import recovery','Recover funding']);
+ assert.deepEqual(events,['aggregate-retained-readiness','open','wait-surface','Unlock','Recovery password','Recovery file','Import recovery','Recover funding']);
 });
 
 test('MetaMask startup exception requires the pinned extension parent and exact sandboxed cache iframe',async()=>{
@@ -344,4 +344,16 @@ test('MetaMask startup cache worker permits only pinned static reads after a ver
  const base='https://metamask.github.io/phishing-warning/v5.1.0/',good={method:'GET',url:base+'workbox-e6d70522.js',workerUrl:base+'service-worker.js',startupFrameObserved:true};
  assert.equal(check(good),true);assert.equal(check({...good,url:base+'bundle.js?__WB_REVISION__='+'a'.repeat(32)}),true);
  for(const change of [{method:'POST'},{startupFrameObserved:false},{workerUrl:'http://127.0.0.1/service-worker.js'},{url:base+'unknown.js'},{url:base+'bundle.js?private=data'},{url:base+'../bundle.js'},{url:base+'bundle.js#secret'}])assert.equal(check({...good,...change}),false);
+});
+
+for(const mode of ['delayed-unlock','already-loaded','load-failure'])test('retained readiness waits for actual account surface: '+mode,async()=>{
+ const {inspectMetaMaskAggregateReadiness}=await import('./t04-metamask.mjs');const events=[];let appeared=mode==='already-loaded',unlocked=mode==='already-loaded';const original=Error('surface unavailable');
+ const ready={first(){return this;},async waitFor(){events.push('wait-surface');await new Promise(resolve=>setImmediate(resolve));if(mode==='load-failure')throw original;appeared=true;}};
+ const unlock={or(other){assert.equal(other,password);return ready;},async isVisible(){return appeared&&!unlocked;},async click(){assert(appeared);unlocked=true;events.push('unlock');}};
+ const password={async fill(value){assert(unlocked,'Recovery input cannot exist before the delayed Unlock');assert.equal(value,'test-password');events.push('password');}};
+ const dialog={getByRole(role,{name}){assert.equal(role,'button');if(name==='Unlock')return unlock;return{async click(){assert.equal(name,'Import recovery');assert(unlocked);events.push('import');},async waitFor(){assert.equal(name,'Recover funding');events.push('ready');}};},getByLabel(name){if(name==='Recovery password')return password;assert.equal(name,'Recovery file');return{async setInputFiles(value){assert.equal(value,'/private/recovery/initial-recovery.json');assert(unlocked);events.push('file');}};}};
+ const page={getByRole(role,{name}={}){if(role==='dialog')return dialog;assert.equal(name,'Your account');return{async click(){events.push('open');}};}};
+ const run=inspectMetaMaskAggregateReadiness({page,control:{password:'test-password',recoveryDirectory:'/private/recovery'},mark:()=>{}});
+ if(mode==='load-failure'){await assert.rejects(run,error=>error===original);assert.deepEqual(events,['open','wait-surface']);}
+ else{await run;assert.deepEqual(events,['open','wait-surface',...(mode==='delayed-unlock'?['unlock']:[]),'password','file','import','ready']);}
 });

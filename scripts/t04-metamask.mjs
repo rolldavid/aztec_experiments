@@ -327,8 +327,13 @@ export function countMetaMaskAggregateNodeSubmissions({url,method,body},trustedQ
 // A retained disposable profile may diagnose initialization without admitting any payment.
 export async function inspectMetaMaskAggregateReadiness({page,control,mark}){
  mark('aggregate-retained-readiness');await page.getByRole('button',{name:'Your account',exact:true}).click();const dialog=page.getByRole('dialog');
- if(await dialog.getByRole('button',{name:'Unlock',exact:true}).isVisible())await dialog.getByRole('button',{name:'Unlock',exact:true}).click();
- await dialog.getByLabel('Recovery password',{exact:true}).fill(control.password);
+ const unlock=dialog.getByRole('button',{name:'Unlock',exact:true}),password=dialog.getByLabel('Recovery password',{exact:true});
+ // The panel loads lazily. Wait for either supported state; an immediate
+ // visibility snapshot can otherwise skip Unlock before it exists. The paid
+ // recovery caller may already have loaded the runtime and recovery inputs.
+ await unlock.or(password).first().waitFor();
+ if(await unlock.isVisible())await unlock.click();
+ await password.fill(control.password);
  await dialog.getByLabel('Recovery file',{exact:true}).setInputFiles(path.join(control.recoveryDirectory,'initial-recovery.json'));
  await dialog.getByRole('button',{name:'Import recovery',exact:true}).click();
  await dialog.getByRole('button',{name:'Recover funding',exact:true}).waitFor();
