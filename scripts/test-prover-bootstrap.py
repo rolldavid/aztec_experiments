@@ -2066,7 +2066,7 @@ class ActivationDelivery(unittest.TestCase):
         record(private/'final-receipt.json',{'manifestSha256':'b'*64,'bootstrapSourceSha256':'d'*64,'qualification':{'passed':True,'stage':'complete','checks':{'all':True},'anchors':{},'readiness':{}}})
         record(root/'deadline.json',{'budgetStop':config()['budgetStop']});record(release/'prover-release.json',{'files':files})
         h={'PRIVATE':private,'BASE':root,'RELEASE':release,'PINS':{'manifest':'b'*64,'bootstrap':'d'*64,'activationDelivery':b.activation_delivery_digest(request)},
-           'exclusive_record':record,'read_bounded_json':read,'verify_controls':lambda:events.append(('controls',)),
+           'exclusive_record':record,'write':ns['write'],'read_bounded_json':read,'verify_controls':lambda:events.append(('controls',)),
            'verify_release':lambda r:events.append(('release',)),'validated_qualification':lambda q:q}
         envelope={'schemaVersion':1,'campaign':request['campaign'],'scope':scope,'evidence':evidence}
         clock=[int(NOW.timestamp())];raw=lambda:json.dumps(envelope,separators=(',',':')).encode()
@@ -2124,13 +2124,14 @@ class ActivationDelivery(unittest.TestCase):
                     activate.assert_not_called();self.assertFalse((h['PRIVATE']/'activation-delivery-observed.json').exists())
 
     def test_delivery_missing_or_interrupted_history_is_not_retried(self):
-        for defect in ('request','window','attempt','result'):
+        for defect in ('request','window','attempt','result','pair'):
             with self.subTest(defect=defect),tempfile.TemporaryDirectory() as t:
                 h,events,e,clock,raw,read=self.fixture(pathlib.Path(t));p=h['PRIVATE']
                 with patch.object(b.os,'geteuid',return_value=0),patch.object(b,'activation_private',side_effect=read),patch('time.time',side_effect=lambda:clock[0]),patch.object(b,'activation_delivery_fetch',return_value=None) as fetch:
                     b.activation_delivery(h);clock[0]+=30
-                    name={'request':'request','window':'window','attempt':'attempt-1','result':'attempt-1-result'}[defect]
+                    name={'request':'request','window':'window','attempt':'attempt-1','result':'attempt-1-result','pair':'attempt-1'}[defect]
                     (p/('activation-delivery-'+name+'.json')).unlink()
+                    if defect=='pair':(p/'activation-delivery-attempt-1-result.json').unlink()
                     with self.assertRaises((b.Invalid,OSError)):b.activation_delivery(h)
                     self.assertEqual(fetch.call_count,1)
 
@@ -2138,7 +2139,7 @@ class ActivationDelivery(unittest.TestCase):
         for count in (0,60):
             with self.subTest(count=count),tempfile.TemporaryDirectory() as t:
                 h,events,e,clock,raw,read=self.fixture(pathlib.Path(t));p=h['PRIVATE'];start=clock[0]
-                h['exclusive_record'](p/'activation-delivery-window.json',{'startedAt':start,'stopAt':start+1800})
+                h['exclusive_record'](p/'activation-delivery-window.json',{'startedAt':start,'stopAt':start+1800,'attempts':count,'lastAttemptAt':start+(count-1)*30 if count else None})
                 for i in range(1,count+1):
                     h['exclusive_record'](p/('activation-delivery-attempt-'+str(i)+'.json'),{'number':i,'startedAt':start+(i-1)*30})
                     h['exclusive_record'](p/('activation-delivery-attempt-'+str(i)+'-result.json'),{'status':'pending'})

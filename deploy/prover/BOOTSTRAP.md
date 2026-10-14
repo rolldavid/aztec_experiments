@@ -967,6 +967,9 @@ Consequently an activation that cannot finish within that existing outer owner
 fails closed; the delivery mechanism never extends the activation budget.
 
 Each attempt and pending result is an exclusive fsynced root-private record.
+The existing window record also persists the high-water count before each read;
+missing even a complete last attempt/result pair cannot lower the count. A
+partial counter write fails closed rather than resetting it.
 Before staging either activation input, the attestor exclusively retains the
 chosen object version, body hash and exact scope-file hash. It then calls the
 existing once-only activation, which independently rechecks live identity,

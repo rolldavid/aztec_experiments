@@ -1219,19 +1219,23 @@ def activation_delivery(h):
         paths=list(private.glob(prefix+'attempt-*.json'))
         if not window.exists():
             if paths:raise Invalid('Delivery window disappeared')
-            h['exclusive_record'](window,{'startedAt':now,'stopAt':min(now+1800,stop)})
+            h['exclusive_record'](window,{'startedAt':now,'stopAt':min(now+1800,stop),'attempts':0,'lastAttemptAt':None})
         limits=activation_private(window)
-        if set(limits)!={'startedAt','stopAt'} or any(type(v) is not int for v in limits.values()) or limits['stopAt']!=min(limits['startedAt']+1800,stop) or not limits['startedAt']<=now<limits['stopAt']:raise Invalid('Delivery window expired')
-        if len(paths)>120 or len(paths)%2:raise Invalid('Delivery interrupted read; reconcile only')
-        count=len(paths)//2;last=None
+        if set(limits)!={'startedAt','stopAt','attempts','lastAttemptAt'} or any(type(limits[k]) is not int for k in ('startedAt','stopAt','attempts')) or not 0<=limits['attempts']<=60 or limits['stopAt']!=min(limits['startedAt']+1800,stop) or not limits['startedAt']<=now<limits['stopAt']:raise Invalid('Delivery window expired')
+        count=limits['attempts'];last=None
+        if len(paths)!=2*count:raise Invalid('Delivery interrupted read; reconcile only')
         for number in range(1,count+1):
             attempt=activation_private(private/(prefix+'attempt-'+str(number)+'.json'))
             outcome=activation_private(private/(prefix+'attempt-'+str(number)+'-result.json'))
             if set(attempt)!={'number','startedAt'} or type(attempt['number']) is not int or attempt['number']!=number or type(attempt['startedAt']) is not int or not limits['startedAt']<=attempt['startedAt']<=now or (last is not None and attempt['startedAt']<last+30) or outcome!={'status':'pending'}:raise Invalid('Delivery attempt history')
             last=attempt['startedAt']
+        if limits['lastAttemptAt']!=last or (last is not None and type(limits['lastAttemptAt']) is not int):raise Invalid('Delivery high-water changed')
         if count>=60:raise Invalid('Delivery attempts exhausted')
         if last is not None and now<last+30:return {'activationDelivery':'pending-object'}
         h['verify_controls']()
+        # A partial/truncated update or missing attempt pair fails closed on the
+        # next visit; deleting a completed pair cannot reduce the durable count.
+        h['write'](window,json.dumps({**limits,'attempts':count+1,'lastAttemptAt':now},separators=(',',':')))
         h['exclusive_record'](private/(prefix+'attempt-'+str(count+1)+'.json'),{'number':count+1,'startedAt':now})
         fetched=activation_delivery_fetch(request['getUrl'])
         if fetched is None:
