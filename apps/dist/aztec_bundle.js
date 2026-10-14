@@ -475110,8 +475110,8 @@ mod tests {
           return record8.encoded;
         } } });
         if (slot.storageKey !== record8.key) throw fail9();
-        await slot.read();
-        return record8;
+        const { value } = await slot.read();
+        return { record: record8, descriptor, value };
       } catch {
         throw fail9();
       }
@@ -475134,7 +475134,7 @@ mod tests {
           if (envelope.recovery.owner !== identity.owner) continue;
           total += encoded.length;
           if (total > LIMIT) throw fail9();
-          records.push(await authenticate({ key, encoded }));
+          records.push((await authenticate({ key, encoded })).record);
         }
         const finalKeys = await storage.keys();
         if (JSON.stringify([...keys].sort()) !== JSON.stringify([...finalKeys].sort())) throw fail9();
@@ -475143,18 +475143,28 @@ mod tests {
       },
       async restoreRecords(records) {
         if (!Array.isArray(records) || records.length > 1e4) throw fail9();
-        const seen = /* @__PURE__ */ new Set();
+        const seen = /* @__PURE__ */ new Set(), retained = /* @__PURE__ */ new Map();
         let total = 0;
         for (const record8 of records) {
-          await authenticate(record8);
+          const incoming = await authenticate(record8);
           total += record8.encoded.length;
           if (total > LIMIT || seen.has(record8.key)) throw fail9();
           seen.add(record8.key);
           const current = await storage.read(record8.key);
-          if (current !== null && current !== record8.encoded) throw fail9();
+          if (current !== null && current !== record8.encoded) {
+            const local = await authenticate({ key: record8.key, encoded: current });
+            if (local.descriptor.keyDomain !== incoming.descriptor.keyDomain || local.descriptor.scopeText !== incoming.descriptor.scopeText) throw fail9();
+            const cache = ["ROLLING_PREFERENCES_V1", "ROLLING_COLD_PREFERENCES_V1"].includes(incoming.descriptor.keyDomain);
+            if (!cache && JSON.stringify(local.value) !== JSON.stringify(incoming.value)) throw fail9();
+            retained.set(record8.key, current);
+          }
         }
         for (const record8 of records) {
           const current = await storage.read(record8.key);
+          if (retained.has(record8.key)) {
+            if (current !== retained.get(record8.key)) throw fail9();
+            continue;
+          }
           if (current === record8.encoded) continue;
           if (current !== null) throw fail9();
           try {
