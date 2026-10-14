@@ -99,7 +99,8 @@ export async function runRollingPreferenceRecovery(pxe,input,options){
    const frame={...context,validators:[]};
    const anchor=BlockHeader.fromBuffer(BlockHeader.prototype.toBuffer.call(context.anchorBlockHeader));
    const anchorRecord={blockNumber:anchor.getBlockNumber(),blockHash:(await anchor.hash()).toString()};
-   const canonical=async()=>{
+   let canonicalPending=null;
+   const canonicalSnapshot=async()=>{
     const info=await pxe.node.getNodeInfo();check(info.l1ChainId===p.network.chainId&&info.rollupVersion===p.network.version&&info.l1ContractAddresses.rollupAddress.toString().toLowerCase()===p.network.rollup&&info.realProofs===p.proofsEnabled);
     const parameter=await anchor.toBlockParameter();
     const [observed,instance]=await rollingPreferenceReadBatch([
@@ -109,6 +110,14 @@ export async function runRollingPreferenceRecovery(pxe,input,options){
     check(observed.hash===anchorRecord.blockHash);
     const h=observed.header;check((await h.hash()).toString()===anchorRecord.blockHash&&h.getBlockNumber()===anchorRecord.blockNumber&&h.globalVariables.chainId.toBigInt()===BigInt(p.network.chainId)&&h.globalVariables.version.toBigInt()===BigInt(p.network.version));check(instance.currentContractClassId.toString()===p.expectedClassId&&instance.originalContractClassId.toString()===p.expectedClassId&&(await computeContractAddressFromInstance(instance)).equals(address));
     await guard();
+   };
+   // Concurrent empty-block validators share only the identical in-flight scope
+   // read. Never retain a settled result: each later authentication/commit
+   // boundary obtains fresh network, anchor and contract authority.
+   const canonical=()=>{
+    if(canonicalPending)return canonicalPending;
+    canonicalPending=canonicalSnapshot().finally(()=>{canonicalPending=null;});
+    return canonicalPending;
    };
    await canonical();
    const artifact=await pxe.contractStore.getContractArtifact(Fr.fromString(p.expectedClassId));check(artifact&&artifact.name==='RollingBoard');
@@ -240,7 +249,7 @@ export async function runRollingPreferenceRecovery(pxe,input,options){
  }catch{throw Error('PXE_PREFERENCE_RECOVERY_FAILED');}
 }
 `; }
-export const PREFERENCE_PAGE_RECOVERY_PIN = Object.freeze({generated:'rolling-preference-recovery.mjs',sha256:'437a296acf2d579ddbabb6b1ea5fed33ae165f2020065fb07dbcc69699a2432a'});
+export const PREFERENCE_PAGE_RECOVERY_PIN = Object.freeze({generated:'rolling-preference-recovery.mjs',sha256:'44ff91fded24333cf5b7d9b1702abafb21f523d628d3ac41eb3bd3e5deac81a2'});
 function imports() { return `
 // @ts-ignore Exact reviewed JavaScript module is copied by the pinned installer.
 import { authenticateCompactBlock as rollingPageCompact } from '../rolling-preference-compact.mjs';

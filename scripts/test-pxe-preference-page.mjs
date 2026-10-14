@@ -1055,7 +1055,16 @@ if(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1') {
        try{await assert.rejects(r.page.processRollingPreferenceRecovery({...base,block:blocks},{contextGuard:async()=>{if(abort)throw Error('labelled aborted account');}}),/PXE_PREFERENCE_RECOVERY_FAILED/);}finally{r.page.node.getBlockData=original;abort=false;middleReads=0;}
        assert.deepEqual(await r.page.processRollingPreferenceRecovery(recoveryInput(f),{contextGuard:async()=>{}}),start);
       }
-      const next=await r.page.processRollingPreferenceRecovery({...base,block:blocks},{contextGuard:async()=>{}});assert.equal(next.nextBlock,4);assert.equal(next.sequence,1);assert.deepEqual(next.records,[]);assert.equal(next.complete,false);assert.equal(r.page.acirCompleted??0,0);
+      const originalInfo=r.page.node.getNodeInfo;
+      for(const failure of ['network changes after initial scope read','shared scope read rejects']){
+       let infoReads=0;r.page.node.getNodeInfo=async()=>{infoReads++;if(infoReads>=2){if(failure==='shared scope read rejects')throw Error('labelled scope failure');return {...await originalInfo(),l1ChainId:1};}return originalInfo();};
+       try{await assert.rejects(r.page.processRollingPreferenceRecovery({...base,block:blocks},{contextGuard:async()=>{}}),/PXE_PREFERENCE_RECOVERY_FAILED/);}finally{r.page.node.getNodeInfo=originalInfo;}
+       assert.deepEqual(await r.page.processRollingPreferenceRecovery(recoveryInput(f),{contextGuard:async()=>{}}),start);
+      }
+      let infoReads=0;const physicalReads=new Map();r.page.node.getNodeInfo=async()=>{infoReads++;return originalInfo();};r.page.node.getBlockData=async(...args)=>{if(args[0]<=3)physicalReads.set(args[0],(physicalReads.get(args[0])??0)+1);return original(...args);};
+      let next;try{next=await r.page.processRollingPreferenceRecovery({...base,block:blocks},{contextGuard:async()=>{}});}finally{r.page.node.getNodeInfo=originalInfo;r.page.node.getBlockData=original;}
+      assert(infoReads>=7&&infoReads<=9,'Concurrent scope reads coalesce while later authentication and both commit boundaries remain fresh: '+infoReads);for(const n of [1,2,3])assert.equal(physicalReads.get(n),4,'Both authentication checks and both commit passes still verify each physical block');
+      assert.equal(next.nextBlock,4);assert.equal(next.sequence,1);assert.deepEqual(next.records,[]);assert.equal(next.complete,false);assert.equal(r.page.acirCompleted??0,0);
       assert.deepEqual(await r.page.processRollingPreferenceRecovery({...base,block:blocks},{contextGuard:async()=>{}}),next);
       const withRecord=await recoveryStep(f,r,next),complete=await recoveryStep(f,r,withRecord);assert.equal(withRecord.records.length,1);assert.equal(complete.complete,true);assert.equal(complete.head.revision,'1');assert.equal(f.counters.tagQueries,f.tagsBefore);
     });
