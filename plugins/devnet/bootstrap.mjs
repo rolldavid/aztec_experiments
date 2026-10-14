@@ -159,12 +159,41 @@ export async function failRollingBootstrap(error,close) {
  throw new Error(message,{cause:error});
 }
 
+// Compose only public reader metadata from the original, already reconciled
+// constructor operation. Latest portal/register transactions are never anchors.
+export async function developmentAccountingReaderConfig({readerConfig,operatorConfig,constructorResult,journal,boardRaw,bokRaw,bokArtifactPath,directory}) {
+ try{
+  let config=structuredClone(operatorConfig);const result=structuredClone(constructorResult),reader=structuredClone(readerConfig);
+  boardRaw=structuredClone(boardRaw);bokRaw=structuredClone(bokRaw);
+  const record=journal?.operations?.['deploy-escrow'];
+  if(!record||record.schemaVersion!==1||record.policy!=='reconcile-only'||record.phase!=='submission-unknown'||typeof record.identity!=='string'||record.identity!==journal.identity||record.journalIdentity&&record.journalIdentity!==journal.identity)throw Error();
+  const saved=structuredClone(record.deployment),salt=journal.salt,hash=record.hash,savedIdentity=record.identity;
+  const {rollingOperatorConfig}=await import('../operations.mjs');config=rollingOperatorConfig(config);
+  if(result?.status!=='succeeded'||result.canonical!==true||result.scope!=='constructor-only'||result.profile!=='rolling-private-bok-constructor/v1'||result.transactionHash!==hash||!/^0x[0-9a-f]{64}$/.test(hash??'')||!Number.isSafeInteger(result.blockNumber)||result.blockNumber<reader.deployment.blockNumber||!/^0x[0-9a-f]{64}$/.test(result.blockHash??''))throw Error();
+  if(!path.isAbsolute(directory)||!path.isAbsolute(bokArtifactPath)||config.applicationProfile!=='rolling'||config.development!==true||config.chainId!=='31337'||!saved||salt!==saved.salt)throw Error();
+  const {getContractInstanceFromInstantiationParams,getContractClassFromArtifact}=await import('@aztec-labs/stdlib/contract');
+  const {AztecAddress}=await import('@aztec-labs/stdlib/aztec-address');
+  const boardArtifact=loadContractArtifact(boardRaw),bokArtifact=loadContractArtifact(bokRaw),classId=(await getContractClassFromArtifact(bokArtifact)).id.toString(),boardClass=(await getContractClassFromArtifact(boardArtifact)).id.toString();
+  for(const k of ['chainId','rollupVersion','rollupAddress','boardAddress'])if(config[k]!==reader.scope[k])throw Error();
+  if(reader.scope.classId!==boardClass)throw Error();
+  const args=[AztecAddress.fromStringUnsafe(config.boardAddress),AztecAddress.fromStringUnsafe(config.operatorAddress),BigInt(config.chainId),BigInt(config.rollupVersion)];
+  const instance=await getContractInstanceFromInstantiationParams(bokArtifact,{constructorArtifact:'init',constructorArgs:args,deployer:AztecAddress.fromStringUnsafe(config.operatorAddress),salt:Fr.fromString(salt)});
+  const expected={version:instance.version,...Object.fromEntries(['address','deployer','originalContractClassId','currentContractClassId','salt','initializationHash','immutablesHash'].map(k=>[k,String(instance[k])])),storage:{board:config.boardAddress,operator:config.operatorAddress,owner:config.operatorAddress,l1_chain:new Fr(BigInt(config.chainId)).toString(),version:new Fr(BigInt(config.rollupVersion)).toString()}};
+  const identity=JSON.stringify({profile:'rolling-private-bok-constructor/v1',config,actor:config.operatorAddress,artifactSha256:sha256(toUtf8Bytes(JSON.stringify(bokRaw))),classId,boardClass,constructor:args.map(String)});
+  if(identity!==savedIdentity||JSON.stringify(expected)!==JSON.stringify(saved)||result.escrow!==expected.address)throw Error();
+  const bok={address:expected.address,classId,operatorAddress:config.operatorAddress,deployer:expected.deployer,salt, deployment:{blockNumber:result.blockNumber,blockHash:result.blockHash,txHash:hash}};
+  return {...reader,bokArtifactPath,scope:{...reader.scope,bok},cacheDirectory:path.join(directory,'public-index-bok')};
+ }catch{throw Error('Original Bok accounting deployment identity unavailable');}
+}
+
 // Current local profile. Production deployment/transaction implementations are
 // reused; only the disposable chain's explicitly labelled settlement is local.
 export async function bootstrapRollingDevnet({directory,ports,onProgress=console.log,onOwned=()=>{}}) {
  const {readLiquidityArtifacts,readFundingRouterArtifact,deployCircleInventory,deployDevelopmentLiquidity}=await import('./liquidity.mjs');
  // Complete all public artifact preparation before starting retained services.
  const liquidityArtifacts=await readLiquidityArtifacts(),fundingRouterArtifact=await readFundingRouterArtifact();
+ const {loadRollingArtifacts,ROOT,ARTIFACTS}=await import('../../prover/rolling-artifacts.mjs');
+ const [accountingBoardRaw,accountingBokRaw]=loadRollingArtifacts();
  const {readDevnetRecord,writeDevnetRecord,devnetPorts,assertFreshDevnetDirectory}=await import('./network.mjs');
  const {deriveMasterMessageSigningSecretKey}=await import('@aztec-labs/stdlib/keys');
  const {getSchnorrInitializerlessAccountContractAddress}=await import('@aztec-labs/accounts/schnorr');
@@ -253,6 +282,7 @@ export async function bootstrapRollingDevnet({directory,ports,onProgress=console
   const statePath=path.join(directory,'bok-operations.json');
   const bok=await completeDevelopmentOperation({command:'deploy-escrow',run:command=>operatorCommand({command,config:operatorConfig,statePath,actor})});
   if(bok.status!=='succeeded'||bok.canonical!==true)throw Error('PrivateBok constructor requires reconciliation');
+  const readerConfig=await developmentAccountingReaderConfig({directory,operatorConfig,constructorResult:bok,journal:await readDevnetRecord(statePath),boardRaw:accountingBoardRaw,bokRaw:accountingBokRaw,bokArtifactPath:path.join(ROOT,ARTIFACTS.PrivateBok),readerConfig:{nodeUrl:net.nodeUrl,artifactPath:path.join(ROOT,ARTIFACTS.RollingBoard),scope:{chainId:'31337',rollupVersion:String(info.rollupVersion),rollupAddress:operatorConfig.rollupAddress,boardAddress:report.l2Addr,classId:manifest.artifacts.boardClassId},deployment:report.boardDeployment,cacheDirectory:path.join(directory,'public-index'),port:selected.appPort}});
   tokenProvider=new JsonRpcProvider(net.rpcUrl,undefined,{cacheTimeout:-1,batchMaxCount:1});
   const retainedLifecycle=await readDevnetRecord(path.join(directory,'bok-lifecycle-config.json'));
   const circleDirectory=path.join(directory,'circle-liquidity');
@@ -283,7 +313,7 @@ export async function bootstrapRollingDevnet({directory,ports,onProgress=console
    scope:{...localScope,collateralPortal:report.portalAddr.toLowerCase(),feePortal:String(info.l1ContractAddresses.feeJuicePortalAddress).toLowerCase(),bokPortal:activated.status.portal,feeToken:String(info.l1ContractAddresses.feeJuiceAddress).toLowerCase(),bokToken:token.tokenAddress,feeAssetHandler:String(net.deployment.l1ContractAddresses.feeAssetHandlerAddress).toLowerCase(),privateFpc:String(feeInstance.address)}});
   await writeDevnetRecord(path.join(directory,'liquidity-public.json'),{...liquidity,circle:token});
   await net.useWallClock();
-  const readerConfig={nodeUrl:net.nodeUrl,artifactPath:path.resolve('billboard/target/rolling_contract-RollingBoard.json'),scope:{chainId:'31337',rollupVersion:String(info.rollupVersion),rollupAddress:operatorConfig.rollupAddress,boardAddress:report.l2Addr,classId:manifest.artifacts.boardClassId},deployment:report.boardDeployment,cacheDirectory:path.join(directory,'public-index'),port:selected.appPort};
+
   const walletConfig={config:{network:{chainId:'31337',rollupVersion:String(info.rollupVersion),rollupAddress:operatorConfig.rollupAddress,ethRpcUrl:net.rpcUrl},board:{contractAddress:report.l2Addr,portalAddress:report.portalAddr.toLowerCase()},privateFee:{contractAddress:String(feeInstance.address),gasSettings:gas},bok:activated.walletBok,aggregateFunding:liquidity.scope},trustedQuery:{url:net.nodeUrl,allowLocalDev:true},remoteProver:null,proofsEnabled:false};
   await writeDevnetRecord(path.join(directory,'rolling-public.json'),readerConfig);await writeDevnetRecord(path.join(directory,'rolling-wallet-public.json'),walletConfig);
   const readiness={core:'configured',publicIndex:'live-status-required',nativeProofs:false,privateBok:'portal-active-registered',bokAddress:bok.escrow,bokPortal:activated.status.portal,developmentToken:token.tokenAddress,developmentInventory:{kind:token.kind,amount:token.inventory,decimals:token.decimals,recipient:net.identity.address.toLowerCase()},userBokCredit:'unfunded',hostedService:false,fundingRelay:'configured-not-started',aggregateFunding:'genuine-local-pools-quoted-user-payment-unrun',localSettlement:'explicitly test-controlled, not a network proof'};

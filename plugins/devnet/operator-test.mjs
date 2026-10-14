@@ -326,4 +326,41 @@ if(focused){
   }finally{await fs.rm(dir,{recursive:true,force:true});}
  });
 
+ const {developmentAccountingReaderConfig}=await import('./bootstrap.mjs');
+ let accountingFixturePromise;
+ const accountingFixture=()=>accountingFixturePromise??=(async()=>{
+  const {getContractInstanceFromInstantiationParams,getContractClassFromArtifact}=await import('@aztec-labs/stdlib/contract');
+  const {AztecAddress}=await import('@aztec-labs/stdlib/aztec-address');
+  const {sha256,toUtf8Bytes}=await import('ethers');const {rollingOperatorConfig}=await import('../operations.mjs');
+  const boardRaw=JSON.parse(await fs.readFile(new URL('../../billboard/target/rolling_contract-RollingBoard.json',import.meta.url),'utf8'));
+  const bokRaw=JSON.parse(await fs.readFile(new URL('../../experiments/private-bok/target/private_bok-PrivateBok.json',import.meta.url),'utf8'));
+  const board=AztecAddress.fromBigIntUnsafe(42n),operator=AztecAddress.fromBigIntUnsafe(43n),salt=new Fr(45n).toString();
+  const operatorConfig={applicationProfile:'rolling',nodeUrl:'http://127.0.0.1:18080/',ethereumUrl:'http://127.0.0.1:18545/',chainId:'31337',rollupVersion:'1',rollupAddress:'0x'+'11'.repeat(20),boardAddress:String(board),operatorAddress:String(operator),development:true,operatorFile:'/private/synthetic-actor-sentinel.json'};
+  const args=[board,operator,31337n,1n],artifact=loadContractArtifact(bokRaw),boardClass=(await getContractClassFromArtifact(loadContractArtifact(boardRaw))).id.toString(),classId=(await getContractClassFromArtifact(artifact)).id.toString();
+  const instance=await getContractInstanceFromInstantiationParams(artifact,{constructorArtifact:'init',constructorArgs:args,deployer:operator,salt:Fr.fromString(salt)});
+  const deployment={version:instance.version,...Object.fromEntries(['address','deployer','originalContractClassId','currentContractClassId','salt','initializationHash','immutablesHash'].map(k=>[k,String(instance[k])])),storage:{board:String(board),operator:String(operator),owner:String(operator),l1_chain:new Fr(31337n).toString(),version:Fr.ONE.toString()}};
+  const identity=JSON.stringify({profile:'rolling-private-bok-constructor/v1',config:rollingOperatorConfig(operatorConfig),actor:String(operator),artifactSha256:sha256(toUtf8Bytes(JSON.stringify(bokRaw))),classId,boardClass,constructor:args.map(String)});
+  const hash='0x'+'13'.repeat(32),blockHash='0x'+'14'.repeat(32),directory='/private/synthetic-campaign';
+  const journal={identity,salt,operations:{'deploy-escrow':{schemaVersion:1,policy:'reconcile-only',phase:'submission-unknown',identity,hash,raw:'private-signed-record-sentinel',deployment},bind:{hash:'0x'+'15'.repeat(32)},register:{hash:'0x'+'16'.repeat(32)}}};
+  const readerConfig={nodeUrl:operatorConfig.nodeUrl,artifactPath:'/public/RollingBoard.json',scope:{chainId:'31337',rollupVersion:'1',rollupAddress:operatorConfig.rollupAddress,boardAddress:String(board),classId:boardClass},deployment:{blockNumber:3,blockHash:'0x'+'12'.repeat(32),txHash:'0x'+'11'.repeat(32)},cacheDirectory:directory+'/public-index',port:8080};
+  return {directory,readerConfig,operatorConfig,journal,boardRaw,bokRaw,bokArtifactPath:'/public/PrivateBok.json',constructorResult:{status:'succeeded',canonical:true,scope:'constructor-only',profile:'rolling-private-bok-constructor/v1',transactionHash:hash,blockNumber:7,blockHash,escrow:deployment.address}};
+ })();
+ test('accounting startup derives exact public scope from original real ABI constructor and preserves old cache',async()=>{
+  const input=structuredClone(await accountingFixture()),before=structuredClone(input),out=await developmentAccountingReaderConfig(input);
+  assert.deepEqual(input,before);assert.equal(out.cacheDirectory,input.directory+'/public-index-bok');assert.equal(input.readerConfig.cacheDirectory,input.directory+'/public-index');
+  assert.deepEqual(out.scope.bok,{address:input.constructorResult.escrow,classId:input.journal.operations['deploy-escrow'].deployment.originalContractClassId,operatorAddress:input.operatorConfig.operatorAddress,deployer:input.operatorConfig.operatorAddress,salt:input.journal.salt,deployment:{blockNumber:7,blockHash:input.constructorResult.blockHash,txHash:input.constructorResult.transactionHash}});
+  assert.equal(out.bokArtifactPath,input.bokArtifactPath);assert.deepEqual(out.deployment,input.readerConfig.deployment);assert(!JSON.stringify(out).includes('sentinel'));
+ });
+ test('accounting startup refuses missing changed or noncanonical original constructor without latest fallback',async()=>{
+  const mutations=[x=>{delete x.journal.operations['deploy-escrow'];},x=>{x.journal.operations['deploy-escrow'].phase='preparing';},x=>{x.constructorResult.transactionHash=x.journal.operations.register.hash;},x=>{x.constructorResult.canonical=false;},x=>{x.constructorResult.blockNumber=2;},x=>{x.journal.salt=Fr.ONE.toString();},x=>{x.journal.operations['deploy-escrow'].deployment.currentContractClassId=Fr.ONE.toString();},x=>{x.operatorConfig.operatorAddress=Fr.ONE.toString();},x=>{x.readerConfig.scope.classId=Fr.ONE.toString();},x=>{x.journal.identity+='changed';},x=>{x.constructorResult.escrow=Fr.ONE.toString();}];
+  for(const mutate of mutations){const input=structuredClone(await accountingFixture());mutate(input);await assert.rejects(developmentAccountingReaderConfig(input),e=>e.message==='Original Bok accounting deployment identity unavailable'&&!String(e.stack).includes('sentinel'));}
+ });
+ test('accounting startup extended reader scope leaves strict public wallet validation unchanged',async()=>{
+  const input=await accountingFixture(),out=await developmentAccountingReaderConfig(input),{validateRollingWalletConfig}=await import('../../scripts/rolling-wallet-assets.mjs');
+  const gasSettings={gasLimits:{daGas:'1',l2Gas:'1'},teardownGasLimits:{daGas:'1',l2Gas:'1'},maxFeesPerGas:{feePerDaGas:'1',feePerL2Gas:'1'},maxPriorityFeesPerGas:{feePerDaGas:'0',feePerL2Gas:'0'}};
+  const wallet={config:{network:{chainId:'31337',rollupVersion:'1',rollupAddress:input.operatorConfig.rollupAddress,ethRpcUrl:input.operatorConfig.ethereumUrl},board:{contractAddress:input.operatorConfig.boardAddress,portalAddress:'0x'+'17'.repeat(20)},privateFee:{contractAddress:Fr.ONE.toString(),gasSettings}},trustedQuery:{url:input.operatorConfig.nodeUrl,allowLocalDev:true},remoteProver:null,proofsEnabled:false};
+  assert.deepEqual(validateRollingWalletConfig(wallet,out.scope),validateRollingWalletConfig(wallet,input.readerConfig.scope));
+  assert.throws(()=>validateRollingWalletConfig(wallet,{...out.scope,boardAddress:Fr.ONE.toString()}));
+ });
+
 }
