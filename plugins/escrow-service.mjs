@@ -4,7 +4,7 @@ import {createHash} from 'node:crypto';
 import {privateBokMetering} from './private-bok-metering.mjs';
 import {packText} from './protocol.mjs';
 /** On-chain state owns work. The bounded in-memory queue never resumes paid calls. */
-export async function startEscrowService({descriptor,escrow,board,run,host='127.0.0.1',port=8787,onError=console.error,pollMs=2000,concurrency=2,profile='legacy'}){
+export async function startEscrowService({descriptor,escrow,board,run,host='127.0.0.1',port=8787,onError=console.error,pollMs=2000,concurrency=2,profile='legacy',recoverPending=async()=>[]}){
  if(!['legacy','rolling'].includes(profile))throw Error('Invalid service profile');
  if(!Number.isSafeInteger(concurrency)||concurrency<1||concurrency>16)throw Error('Invalid service concurrency');
  let rollingCursor=null,rollingQueue=[];
@@ -35,7 +35,8 @@ export async function startEscrowService({descriptor,escrow,board,run,host='127.
  async function poll(){if(stopped||polling)return;polling=true;try{
   if(profile==='rolling'){
    if(jobs.size>=concurrency)return;
-   if(!rollingQueue.length){const page=await board.pending(rollingCursor);rollingCursor=page.nextCursor;assert(Array.isArray(page.requests)&&page.requests.length<=64);rollingQueue=page.requests;}
+   if(!rollingQueue.length){const page=await board.pending(rollingCursor);rollingCursor=page.nextCursor;assert(Array.isArray(page.requests)&&page.requests.length<=64);const recovery=await recoverPending();assert(Array.isArray(recovery)&&recovery.length<=16);
+    rollingQueue=[...new Map([...recovery,...page.requests].map(request=>[request.requestId,request])).values()];}
    for(const request of [...rollingQueue]){
     if(stopped||jobs.size>=concurrency)break;
     assert(typeof request.threadId==='string','Canonical thread identity required');

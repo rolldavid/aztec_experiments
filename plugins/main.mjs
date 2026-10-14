@@ -1,6 +1,7 @@
 import {prepareNativeRuntime} from '../prover/runtime.mjs';
 import {BackendType,Barretenberg,BarretenbergSync} from '@aztec-foundation/bb.js';
 import fs from 'node:fs/promises';
+import {constants as fsConstants} from 'node:fs';
 import http from 'node:http';
 import path from 'node:path';
 import assert from 'node:assert/strict';
@@ -118,6 +119,42 @@ export async function publishAcceptedRevision({publication,mirror,receipt}){
  return result;
 }
 
+/** Discover interrupted reply/finish work from the existing private journals.
+ * The public pending feed deliberately excludes replied posts. This bounded
+ * directory cursor is only a hint: original scope and fresh chain state bind
+ * every returned request, and the normal request owner reconciles exact hashes.
+ */
+export function hostedRecoveryScanner({directory,scope,pluginId,board,lease}){
+ let entries,closed=false;
+ const field=value=>typeof value==='string'&&/^0x[0-9a-f]{64}$/.test(value)&&BigInt(value)>0n;
+ const network=`eip155-${scope.chainId}:aztec-${scope.rollupVersion}:${scope.rollupAddress}`;
+ const scan=async()=>{
+  assert(!closed,'Recovery scanner closed');await lease.assertHeld();
+  entries??=await fs.opendir(directory);const requests=[];
+  for(let scanned=0;scanned<64&&requests.length<16;scanned++){
+   const entry=await entries.read();if(!entry){await entries.close();entries=null;break;}
+   if(!/^[0-9a-f]{64}\.json$/.test(entry.name))continue;
+   const file=path.join(directory,entry.name);let handle,saved;
+   try{
+    handle=await fs.open(file,fsConstants.O_RDONLY|fsConstants.O_NOFOLLOW);const stat=await handle.stat();
+    assert(stat.isFile()&&stat.size<=8388608);
+    const bytes=Buffer.alloc(stat.size+1);const {bytesRead}=await handle.read(bytes,0,bytes.length,0);assert.equal(bytesRead,stat.size);
+    saved=JSON.parse(bytes.subarray(0,bytesRead).toString('utf8')).hostedPrivateBok;
+   }catch{throw Error('Invalid hosted recovery journal');}finally{await handle?.close();}
+   if(!saved||!['reply-intent','reply-confirmed'].includes(saved.phase))continue;
+   const b=saved.binding;assert(b&&b.network===network&&b.escrow===scope.receiver&&b.pluginId===pluginId&&field(b.requestId)&&field(b.target)&&field(b.postId),'Hosted recovery identity changed');
+   const id=createHash('sha256').update(JSON.stringify({scope,requestId:b.requestId,target:b.target})).digest('hex');
+   assert.equal(entry.name,id+'.json','Hosted recovery filename changed');
+   const current=await board.readRequest(b.postId);
+   assert(current&&current.requestId===b.requestId&&current.target===b.target&&current.pluginId===pluginId&&current.postId===b.postId&&field(current.threadId),'Canonical recovery invocation changed');
+   await lease.assertHeld();requests.push(current);
+  }
+  return requests;
+ };
+ scan.close=async()=>{closed=true;if(entries){await entries.close();entries=null;}};
+ return scan;
+}
+
 /** Explicit Rolling composition; the legacy account escrow is never selected. */
 export async function runRollingHostedService({config,env=process.env,onError=()=>{}}){
  const [{rollingOperatorConfig,rollingPxeOptions,operatorNodeFetch,fileState},{loadRollingArtifacts},{jsonStringify},
@@ -136,8 +173,8 @@ export async function runRollingHostedService({config,env=process.env,onError=()
  await fs.mkdir(config.stateDirectory,{recursive:true,mode:0o700});
  assert.equal(await fs.realpath(config.stateDirectory),config.stateDirectory);const directory=await fs.lstat(config.stateDirectory);
  assert(directory.isDirectory()&&!directory.isSymbolicLink()&&(directory.mode&0o777)===0o700);
- const lease=await acquireHostedLease(config.stateDirectory);let wallet,index,server,artifactsServer,closing;
- function close(){return closing??=(async()=>{const errors=[];for(const fn of [()=>server?.close(),()=>artifactsServer?new Promise(resolve=>{artifactsServer.close(resolve);artifactsServer.closeAllConnections();}):undefined,()=>wallet?.stop(),()=>index?.close(),()=>lease.close()])try{await fn();}catch(error){errors.push(error);}if(errors.length)throw new AggregateError(errors,'Rolling hosted cleanup failed');})();}
+ const lease=await acquireHostedLease(config.stateDirectory);let wallet,index,server,artifactsServer,recoverPending,closing;
+ function close(){return closing??=(async()=>{const errors=[];for(const fn of [()=>server?.close(),()=>recoverPending?.close(),()=>artifactsServer?new Promise(resolve=>{artifactsServer.close(resolve);artifactsServer.closeAllConnections();}):undefined,()=>wallet?.stop(),()=>index?.close(),()=>lease.close()])try{await fn();}catch(error){errors.push(error);}if(errors.length)throw new AggregateError(errors,'Rolling hosted cleanup failed');})();}
 
  try{
   const key=env.PLUGIN_QUERY_API_KEY;if(!config.development)assert(typeof key==='string','Operator query capability required');
@@ -185,7 +222,8 @@ export async function runRollingHostedService({config,env=process.env,onError=()
    validateRevision:input=>generatedExecution(()=>execution.execute(input)),onAccepted:receipt=>publicationOperation(()=>publishAcceptedRevision({publication,mirror,receipt}))});
   const toolbox=githubToolbox({repository,api,repositories});await api('GET','/repos/'+repository);
   const provider=veniceMeteredProvider({client:veniceClient({privateKey:env.VENICE_WALLET_PRIVATE_KEY}),model:env.VENICE_MODEL||undefined,autoTopUp:false});
-  server=await startEscrowService({descriptor,profile:'rolling',concurrency:2,board,host:config.host??'127.0.0.1',port:config.port??8787,
+  recoverPending=hostedRecoveryScanner({directory:config.stateDirectory,scope,pluginId:config.pluginId,board,lease});
+  server=await startEscrowService({descriptor,profile:'rolling',concurrency:2,board,recoverPending,host:config.host??'127.0.0.1',port:config.port??8787,
    onError:()=>onError(Error('Rolling hosted request requires reconciliation')),run:async request=>{
     await lease.assertHeld();const id=createHash('sha256').update(JSON.stringify({scope,requestId:request.requestId,target:request.target})).digest('hex');
     const store=await fileState(path.join(config.stateDirectory,id+'.json'));

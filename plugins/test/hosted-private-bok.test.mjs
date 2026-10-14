@@ -4,7 +4,11 @@ import assert from 'node:assert/strict';
 import {runPrivateBokRequest,startEscrowService} from '../escrow-service.mjs';
 import {validateVeniceBilling} from '../venice-metered.mjs';
 import {validateDescriptor,API_VERSION} from '../protocol.mjs';
-import {publishAcceptedRevision} from '../main.mjs';
+import {publishAcceptedRevision,hostedRecoveryScanner} from '../main.mjs';
+import fs from 'node:fs/promises';
+import os from 'node:os';
+import path from 'node:path';
+import {createHash} from 'node:crypto';
 test('accepted publication with uncertain private mirror retains exact identity and omits operator URL',async()=>{
  const receipt=Object.freeze({acceptedRevision:'a'.repeat(40)}),calls=[],publicResult={latestUrl:'https://apps.example/latest/',latestSourceUrl:'https://apps.example/source.json'};
  const publication={publish:async input=>{assert.equal(input,receipt);calls.push('local');return publicResult;}};
@@ -250,4 +254,57 @@ test('actual agent uses the same guarded metering for prior-history summary and 
  assert(inputs[1].messages.some(m=>m.content.includes('Prior conversation summary')));
  assert.equal(inputs[1].messages.at(-1).content,x.current.text);
  assert(!JSON.stringify(inputs).includes('assertCurrent'));assert.equal(x.row.charged,12n);
+});
+
+// Real retained filesystem; canonical board and chain effects remain labelled controls.
+async function recoveryFixture(){
+ const x=fixture(),scope={chainId:'31337',rollupVersion:'1',rollupAddress:'public',receiver:f(5)},directory=await fs.mkdtemp(path.join(os.tmpdir(),'bok-recovery-discovery-'));
+ x.current.threadId=f(9);let held=true;
+ const lease={assertHeld:async()=>assert(held,'Lost lease')};
+ const id=createHash('sha256').update(JSON.stringify({scope,requestId:x.args.request.requestId,target:x.args.request.target})).digest('hex');
+ const file=path.join(directory,id+'.json');
+ const scan=hostedRecoveryScanner({directory,scope,pluginId:f(4),board:x.args.board,lease});
+ const save=()=>fs.writeFile(file,JSON.stringify(x.store.read()),{mode:0o600});
+ return {...x,directory,file,scan,save,loseLease:()=>{held=false;},close:async()=>{await scan.close();await fs.rm(directory,{recursive:true,force:true});}};
+}
+test('hosted recovery discovers replied pending finish outside the public pending feed',async()=>{
+ const x=await recoveryFixture();let server;
+ try{
+  const finish=x.args.escrow.finish;let pending=true;
+  x.args.escrow.finish=async(...args)=>{await finish(...args);};
+  const inspect=x.args.escrow.inspectOperation;
+  x.args.escrow.inspectOperation=async id=>{const result=await inspect(id);return pending&&result?.method==='finish'?{status:'pending'}:result;};
+  await assert.rejects(x.run(),/unresolved/);assert.equal(x.current.replied,true);await x.save();
+  x.args.board.pending=async()=>({requests:[],nextCursor:null});pending=false;
+  let done;const completed=new Promise(resolve=>{done=resolve;});const errors=[];
+  server=await startEscrowService({descriptor:{},profile:'rolling',board:x.args.board,recoverPending:x.scan,port:0,pollMs:20,onError:error=>errors.push(error),run:async request=>{assert.equal(request.threadId,f(9));await x.run();await x.save();done();}});
+  await Promise.race([completed,new Promise((_,reject)=>{const timer=setTimeout(()=>reject(Error('Recovery not discovered')),2000);timer.unref();})]);
+  assert.deepEqual(errors,[]);assert.equal(x.store.read().hostedPrivateBok.phase,'finished');assert.equal(x.row.charged,6n);assert.equal(x.row.refunded,994n);
+  assert.deepEqual(x.events,['reserve','paid','settle','publish_reply','finish']);
+ }finally{await server?.close();await x.close();}
+});
+test('hosted recovery skips finished and uncertain paid-call journals',async()=>{
+ const x=await recoveryFixture();try{
+  await x.run();await x.save();assert.deepEqual(await x.scan(),[]);
+  x.store.read().hostedPrivateBok.phase='running';await x.save();assert.deepEqual(await x.scan(),[]);
+ }finally{await x.close();}
+});
+test('hosted recovery rejects scope and canonical request drift before dispatch',async()=>{
+ for(const invalid of ['scope','filename','canonical','lease']){
+  const x=await recoveryFixture();try{
+   await x.run();x.store.read().hostedPrivateBok.phase='reply-confirmed';
+   if(invalid==='scope')x.store.read().hostedPrivateBok.binding.escrow=f(99);await x.save();
+   if(invalid==='filename')await fs.rename(x.file,path.join(x.directory,'a'.repeat(64)+'.json'));
+   if(invalid==='canonical')x.current.target=f(99);if(invalid==='lease')x.loseLease();
+   await assert.rejects(x.scan());
+  }finally{await x.close();}
+ }
+});
+test('hosted recovery rejects symlink and malformed journals without private parser output',async()=>{
+ for(const invalid of ['symlink','json']){
+  const x=await recoveryFixture();try{
+   if(invalid==='symlink')await fs.symlink('/dev/null',x.file);else await fs.writeFile(x.file,'PRIVATE-STATE-SENTINEL');
+   await assert.rejects(x.scan(),error=>error.message==='Invalid hosted recovery journal');
+  }finally{await x.close();}
+ }
 });
