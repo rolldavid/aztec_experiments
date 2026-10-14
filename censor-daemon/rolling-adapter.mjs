@@ -50,7 +50,7 @@ export function rollingModerationAdapter({index,node,scope,lease,state,deadline,
   if(!query.post)return null;
   const board=index.query('board',{id:query.post.record.subboard,limit:1});
   assert.equal(board.revision,query.revision,'Mixed public projection');
-  return {...rollingModerationInput(query.post,board,await deadline(id,query.checkpoint)),publicPost:query.post,checkpoint:query.checkpoint};
+  return {...rollingModerationInput(query.post,board,await deadline(id,query.checkpoint)),publicPost:query.post,checkpoint:query.checkpoint,revision:query.revision};
  };
  const inspect=async record=>{
   await held();const operation=saved().operations[record.key];
@@ -69,9 +69,14 @@ export function rollingModerationAdapter({index,node,scope,lease,state,deadline,
    for(const id of ids){const input=await current(id);if(!input){missingPostIds.push(id);continue;}
     // Removed public text is deliberately redacted. Preserve the original
     // evaluated bytes only from our own durable queue via the caller below.
+    assert.equal(input.revision,page.revision,'Mixed public projection');
     posts.push(input.post);policies.set(input.policy.policyVersion,input.policy);
    }
-   assert.equal(index.publication().checkpoint.hash,page.checkpoint.hash);
+   // The owned reader exposes guarded queries, not the persistent index's
+   // internal publication method. Recheck canonical authority and revision.
+   const final=index.query('home',{limit:1});
+   assert.equal(final.revision,page.revision,'Mixed public projection');
+   assert.deepEqual(final.checkpoint,page.checkpoint,'Public checkpoint changed');
    return {scope,checkpoint:page.checkpoint,posts,policies:[...policies.values()],complete:false,scanComplete:page.nextAfter===null,missingPostIds};
   },
   inspectRemoval:inspect,

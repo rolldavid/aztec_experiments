@@ -136,29 +136,31 @@ test('timing sink failure does not change a saved successful submission',async t
 // Rolling profile: real SQLite and the production adapter/worker, with explicitly
 // labelled canonical-index, native-wallet and model doubles. No live acceptance.
 import {rollingModerationAdapter} from './rolling-adapter.mjs';
+import {ownRollingPersistentPublicIndex} from '../scripts/rolling-public-server.mjs';
 import {processRollingModerationCycle} from './worker.mjs';
 function rollingFixture(t){
  const dir=fs.mkdtempSync(path.join(os.tmpdir(),'rolling-moderator-'));
  const rscope={...scope,l1ChainId:'31337'},checkpoint={number:10,hash:hex(100)};
  let now=1000000,value={operations:{}};
  const stores=[],open=()=>{const store=openJobStore({filename:path.join(dir,'jobs.sqlite'),scope:rscope,modelVersion:hex(4),profile:'rolling',development:true,now:()=>now,retryDelayMs:1});stores.push(store);return store;};
- const f={store:open(),open,posts:[],version:'1',rules:'No spam',localRules:'No advertising',calls:{evaluate:0,prepare:0,broadcast:0,authority:0},advance:()=>now+=1000};
+ const f={store:open(),open,posts:[],revision:'1',version:'1',rules:'No spam',localRules:'No advertising',calls:{evaluate:0,prepare:0,broadcast:0,authority:0},advance:()=>now+=1000};
  const post=id=>({id:String(id),record:{subboard:id===3?'0':'7'},text:'message '+id,timestamp:'1000',order:String(id),mainVersion:'1',localVersion:id===3?'0':'1',position:{blockNumber:'10',blockHash:hex(100),txHash:hex(1000+id)},removal:null,bot:id===2?{pluginId:'9'}:null});
  f.posts=[post(1),post(2)];
  const main=()=>({version:f.version,digest:hex(30+Number(f.version)),text:f.rules});
- const index={async sync(){},status:()=>({complete:true}),publication:()=>({checkpoint}),
-  scanPosts:()=>({posts:f.posts,checkpoint,nextAfter:null}),
-  query(view,{id}){if(view==='post')return {post:f.posts.find(p=>p.id===id)??null,checkpoint,revision:'1'};
-   return {boardId:id,mainPolicy:main(),board:id==='0'?null:{id,rules:f.localRules},checkpoint,revision:'1'};}};
+ const index={async sync(){},status:()=>({complete:true,checkpoint,revision:f.revision}),
+  scanPosts:()=>({posts:f.posts,checkpoint,nextAfter:null,revision:f.revision}),
+  query(view,{id}){if(view==='home'){if(f.finalReadError)throw Error('Public reader unavailable');return {checkpoint,revision:f.finalRevision??f.revision};}if(view==='post')return {post:f.posts.find(p=>p.id===id)??null,checkpoint,revision:f.revision};
+   return {boardId:id,mainPolicy:main(),board:id==='0'?null:{id,rules:f.localRules},checkpoint,revision:f.revision};}};
  const node={getBlockData:async number=>({blockHash:number===10?hex(100):hex(60),header:{globalVariables:{blockNumber:number}}}),getTxReceipt:async hash=>({txHash:hash,status:'checkpointed',executionResult:'success',blockNumber:11,blockHash:hex(60)})};
  const state={read:()=>value,async write(next){value=next;}};
  const prepare=async record=>{f.calls.prepare++;return {hash:hex(50+Number(BigInt(record.job.postId))),sha256:'ab'.repeat(32),maximumFee:'100'};};
- f.signer=rollingModerationAdapter({index,node,scope:rscope,lease:{async assertHeld(){}},state,deadline:async()=> '2000',development:true,
+ const owned=ownRollingPersistentPublicIndex(index,{close(){}});
+ f.signer=rollingModerationAdapter({index:owned,node,scope:rscope,lease:{async assertHeld(){}},state,deadline:async()=> '2000',development:true,
   prepare:async record=>f.prepare?f.prepare(record):prepare(record),assertAuthority:async()=>{f.calls.authority++;if(f.authorityError)throw Error('changed');},
   broadcast:async tx=>{f.calls.broadcast++;if(f.broadcastError)throw Error('lost response');const p=f.posts.find(p=>BigInt(p.id)===BigInt(tx.hash)-50n);p.text=null;p.removal={policy:String(BigInt(f.version)+(p.record.subboard==='0'?0n:1n<<32n)),reason:'Spam',penalized:false,position:{blockNumber:'11',blockHash:hex(60),txHash:tx.hash}};}});
  f.evaluate=async()=>{f.calls.evaluate++;return {isViolation:false};};
  f.run=(options={})=>processRollingModerationCycle({store:f.store,signer:f.signer,evaluate:(...args)=>f.evaluate(...args),worker:'rolling-fixture',maxJobs:4,...options});
- f.state=()=>value;f.index=index;f.node=node;f.checkpoint=checkpoint;f.post=post;
+ f.state=()=>value;f.index=index;f.ownedIndex=owned;f.node=node;f.checkpoint=checkpoint;f.post=post;
  t.after(()=>{for(const s of stores)try{s.close();}catch{}fs.rmSync(dir,{recursive:true,force:true});});return f;
 }
 test('Rolling human and Bok posts use identical parent/local union and survive reopen',async t=>{
@@ -237,11 +239,11 @@ for(const record of [{kind:'1',reference:'0'},{kind:'3',reference:'0'},{kind:'2'
  const f=rollingFixture(t);f.posts[0].text='';f.posts[0].record={...f.posts[0].record,...record};await assert.rejects(f.run(),/Invalid public job text/);assert.equal(f.store.list().length,0);assert.equal(f.calls.broadcast,0);
 });
 test('Rolling persistent index drains multiple bounded steps before moderation',async t=>{
- const f=rollingFixture(t);let steps=0;f.index.sync=async()=>{steps++;};f.index.status=()=>({complete:steps>=4});
+ const f=rollingFixture(t);let steps=0;f.index.sync=async()=>{steps++;};f.index.status=()=>({complete:steps>=4,checkpoint:f.checkpoint});
  assert.equal((await f.run()).complete,true);assert(steps>=4);assert.equal(f.calls.evaluate,4);
 });
 test('Rolling index catchup remains bounded and does not infer completion',async t=>{
- const f=rollingFixture(t);let steps=0;f.index.sync=async()=>{steps++;};f.index.status=()=>({complete:false});
+ const f=rollingFixture(t);let steps=0;f.index.sync=async()=>{steps++;};f.index.status=()=>({complete:false,checkpoint:f.checkpoint});
  await assert.rejects(f.run(),/catching up/);assert.equal(steps,512);assert.equal(f.calls.evaluate,0);assert.equal(f.calls.broadcast,0);
 });
 test('Rolling main violations remove human and Bok despite hostile local override',async t=>{
@@ -259,4 +261,12 @@ for(const stage of ['main','local'])test('Rolling '+stage+' inference failure pe
  assert.equal((await f.run({maxJobs:1})).complete,false);assert.equal(f.calls.broadcast,0);assert.equal(f.calls.prepare,0);
  assert.equal(f.store.list()[0].job.state,'retryable-error');assert.equal(f.store.list()[0].intent,null);
  assert.deepEqual(seen,stage==='main'?['No spam']:['No spam','No advertising']);
+});
+
+test('Rolling adapter ingests through actual owned public-reader facade without internal publication method',async t=>{
+ const f=rollingFixture(t);assert.equal(f.ownedIndex.publication,undefined);const snapshot=await f.signer.list();assert.equal(snapshot.posts.length,2);assert.equal((await f.run()).complete,true);
+});
+for(const failure of ['changed revision','unavailable final query'])test('Rolling final guarded query rejects '+failure+' before model or signing',async t=>{
+ const f=rollingFixture(t);if(failure==='changed revision')f.finalRevision='2';else f.finalReadError=true;
+ await assert.rejects(f.run(),failure==='changed revision'?/Mixed public projection/:/unavailable/);assert.deepEqual(f.calls,{evaluate:0,prepare:0,broadcast:0,authority:0});assert.equal(f.store.list().length,0);
 });
