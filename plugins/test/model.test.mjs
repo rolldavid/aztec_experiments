@@ -17,7 +17,7 @@ function conversationFixture(){
  let closed=0;
  const toolbox={open:async()=>({definitions:[],summary:x=>x,close:async()=>{closed++;}})};
  const model={complete:async input=>{calls.push(input);return {message:{role:'assistant',content:input.modelId==='cheap'?'Prior decisions and repository references':'Done'}};}};
- const options={model,toolbox,instructions:'Help',conversation:{load:async()=>structuredClone(history)},summaryModelId:'cheap',summaryTokens:100,maxCalls:3};
+ const options={model,toolbox,instructions:'Help',conversation:{load:async()=>({...structuredClone(history),assertCurrent:async()=>{}})},summaryModelId:'cheap',summaryTokens:100,maxCalls:3};
  return {calls,history,options,closed:()=>closed,run:()=>createAgent(options).run({text:'LATEST_SENTINEL',postId:id(3),id:'request',modelId:'main'})};
 }
 test('paid history summary excludes latest and main receives summary plus exact latest',async()=>{
@@ -61,4 +61,50 @@ for(const code of ['STATIC_CLEANUP_REQUIRED','STATIC_RECORD_FAILED','STATIC_UNAV
  let models=0,tools=0,closed=0;const toolbox={open:async()=>({definitions:[],call:async()=>{tools++;throw Object.assign(Error('requires operator reconciliation'),{code,result:{passed:false,phase:'cleanup'}});},close:async()=>{closed++;}})};
  const model={complete:async()=>{models++;return {message:{role:'assistant',tool_calls:[{id:'1',function:{name:'check_workspace',arguments:'{}'}},{id:'2',function:{name:'check_workspace',arguments:'{}'}}]}};}};
  await assert.rejects(createAgent({toolbox,model,instructions:'Help'}).run({id:'a',postId:'b',text:'Build'}),e=>e.code===code);assert.equal(models,1);assert.equal(tools,1);assert.equal(closed,1);
+});
+
+const originalCall=(args,callId='original')=>({id:callId,function:{name:'read_thread_messages',arguments:JSON.stringify(args)}});
+function retrievalFixture(){
+ const f=conversationFixture();let checks=0,loads=0;
+ f.options.conversation.load=async()=>{loads++;return {...structuredClone(f.history),assertCurrent:async()=>{checks++;}};};
+ f.options.maxCalls=5;
+ return {...f,checks:()=>checks,loads:()=>loads};
+}
+test('main retrieves exact original user and Bok messages omitted by summary without replacing captured history',async()=>{
+ const f=retrievalFixture();let main=0;
+ f.options.model.complete=async input=>{
+  f.calls.push(input);if(input.modelId==='cheap')return {message:{role:'assistant',content:'Summary omits path'}};
+  if(++main===1){assert(input.tools.some(t=>t.function.name==='read_thread_messages'));return {message:{role:'assistant',tool_calls:[originalCall({threadId:id(1),offset:0,limit:1})]}};}
+  const page=JSON.parse(input.messages.at(-1).content);assert.equal(page.contentTrust,'untrusted');assert.equal(page.threadId,id(1));
+  if(main===2){assert.deepEqual(page.messages,[f.history.messages[0]]);assert.equal(page.nextOffset,1);return {message:{role:'assistant',tool_calls:[originalCall({threadId:id(1),offset:1,limit:8},'second')]}};}
+  assert.deepEqual(page.messages,[f.history.messages[1]]);assert.equal(page.nextOffset,null);assert(!JSON.stringify(page).includes('LATEST_SENTINEL'));return {message:{role:'assistant',content:'Original app.ts retained'}};
+ };
+ assert.equal((await f.run()).replyText,'Original app.ts retained');assert.equal(f.loads(),1);assert.equal(f.checks(),6);assert.equal(f.closed(),1);assert.equal(f.calls.length,4);
+});
+for(const [name,args] of [['other thread',{threadId:id(9),offset:0,limit:1}],['negative',{threadId:id(1),offset:-1,limit:1}],['over limit',{threadId:id(1),offset:0,limit:9}],['fraction',{threadId:id(1),offset:0.5,limit:1}],['past end',{threadId:id(1),offset:3,limit:1}],['extra',{threadId:id(1),offset:0,limit:1,owner:'ignored'}]])test('original-message retrieval rejects '+name+' without disclosure or external tool',async()=>{
+ const f=retrievalFixture();let main=0;f.options.model.complete=async input=>{if(input.modelId==='cheap')return {message:{role:'assistant',content:'Summary'}};if(++main===1)return {message:{role:'assistant',tool_calls:[originalCall(args)]}};assert.deepEqual(JSON.parse(input.messages.at(-1).content),{error:'Invalid original-message request'});return {message:{role:'assistant',content:'Rejected'}};};
+ await f.run();assert.equal(f.checks(),0);assert.equal(f.loads(),1);
+});
+for(const failAt of [1,2,3])test('original-message canonical failure at check '+failAt+' stops before another paid model call',async()=>{
+ const f=retrievalFixture();let checks=0,models=0;f.options.conversation.load=async()=>({...structuredClone(f.history),assertCurrent:async()=>{if(++checks===failAt)throw Error('reorg');}});
+ f.options.model.complete=async input=>{models++;if(input.modelId==='cheap')return {message:{role:'assistant',content:'Summary'}};return {message:{role:'assistant',tool_calls:[originalCall({threadId:id(1),offset:0,limit:1})]}};};
+ await assert.rejects(f.run());assert.equal(models,2);assert.equal(f.closed(),1);
+});
+test('original-message page bounds escaped bytes and keeps continuation without truncating JSON',async()=>{
+ const f=retrievalFixture();f.history.messages=[...Array.from({length:8},(_,i)=>({id:id(i+10),role:'user',text:'\u0001'.repeat(992)})),f.history.messages.at(-1)];let main=0;
+ f.options.model.complete=async input=>{if(input.modelId==='cheap')return {message:{role:'assistant',content:'Summary'}};if(++main===1)return {message:{role:'assistant',tool_calls:[originalCall({threadId:id(1),offset:0,limit:8})]}};const raw=input.messages.at(-1).content,page=JSON.parse(raw);assert(Buffer.byteLength(raw)<=14000);assert(page.messages.length>0&&page.messages.length<8);assert.equal(page.nextOffset,page.messages.length);for(const row of page.messages)assert.equal(row.text,'\u0001'.repeat(992));return {message:{role:'assistant',content:'Bounded'}};};
+ await f.run();assert.equal(f.loads(),1);
+});
+test('original-message retrieval keeps the existing paid model-call ceiling',async()=>{
+ const f=retrievalFixture();f.options.maxCalls=2;let calls=0;f.options.model.complete=async input=>{calls++;return {message:input.modelId==='cheap'?{role:'assistant',content:'Summary'}:{role:'assistant',tool_calls:[originalCall({threadId:id(1),offset:0,limit:1})]}};};assert.match((await f.run()).replyText,/step limit/);assert.equal(calls,2);assert.equal(f.loads(),1);
+});
+test('original-message retrieval uses immutable captured rows after a caller changes its source object',async()=>{
+ const f=retrievalFixture(),captured={...structuredClone(f.history),assertCurrent:async()=>{}};f.options.conversation.load=async()=>captured;let main=0;
+ f.options.model.complete=async input=>{if(input.modelId==='cheap'){captured.messages[0].text='MUTATED';captured.threadId=id(999);return {message:{role:'assistant',content:'Summary'}};}if(++main===1)return {message:{role:'assistant',tool_calls:[originalCall({threadId:id(1),offset:0,limit:1})]}};const page=JSON.parse(input.messages.at(-1).content);assert.equal(page.threadId,id(1));assert.deepEqual(page.messages,[f.history.messages[0]]);return {message:{role:'assistant',content:'Original'}};};await f.run();
+});
+test('original-message history without canonical guard is unavailable before any paid call',async()=>{
+ const f=conversationFixture();f.options.conversation.load=async()=>structuredClone(f.history);await assert.rejects(f.run(),/Complete conversation unavailable/);assert.equal(f.calls.length,0);assert.equal(f.closed(),1);
+});
+test('original-message end page is empty and cannot expose latest invoking message',async()=>{
+ const f=retrievalFixture();let main=0;f.options.model.complete=async input=>{if(input.modelId==='cheap')return {message:{role:'assistant',content:'Summary'}};if(++main===1)return {message:{role:'assistant',tool_calls:[originalCall({threadId:id(1),offset:2,limit:8})]}};assert.deepEqual(JSON.parse(input.messages.at(-1).content),{contentTrust:'untrusted',threadId:id(1),messages:[],nextOffset:null});return {message:{role:'assistant',content:'End'}};};await f.run();
 });
