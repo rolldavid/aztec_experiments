@@ -527,3 +527,31 @@ test('prepared claim confirms exactly once through existing UI after two origina
  for(const change of [{enabled:false},{surface:{...surface,state:'review'}},{surface:{...surface,busy:true}},{surface:{...surface,buttons:{confirm:{enabled:false}}}}]){const f=fixture();await assert.rejects(confirm({...f.args,...change}));assert.equal(f.events.length,0);}
  const failed=fixture({clickError:false});await assert.rejects(confirm(failed.args),e=>e===false);await assert.rejects(confirm(failed.args));assert.equal(failed.events.filter(x=>x==='confirm').length,1);
 });
+
+for(const prepared of [false,true])test('explicit retained readiness recognizes restored prepared surface: '+prepared,async()=>{
+ const {inspectMetaMaskAggregateReadiness:inspect}=await import('./t04-metamask.mjs');const events=[];
+ const controls=Object.fromEntries(['Unlock','Import recovery','Recover funding','Confirm and send'].map(name=>[name,{waitFor:async()=>{events.push('wait:'+name);if(name==='Recover funding'&&prepared)throw Error('wrong surface');},click:async()=>events.push('click:'+name),isVisible:async()=>name==='Recover funding'?!prepared:name==='Unlock',or(other){return{first:()=>({waitFor:async()=>{assert(name==='Unlock'||name==='Recover funding');if(name==='Recover funding')assert.equal(other,controls['Confirm and send']);events.push('wait:either:'+name);}})};}}]));
+ const dialog={getByRole:(_,{name})=>controls[name],getByLabel:name=>({fill:async()=>events.push(name),setInputFiles:async()=>events.push(name)})},page={getByRole:role=>role==='dialog'?dialog:{click:async()=>events.push('open')}};
+ assert.equal(await inspect({page,control:{password:'private',recoveryDirectory:'/private/recovery'},mark:()=>{},allowPrepared:true}),prepared?'prepared':'funding');
+ assert(events.includes('wait:either:Recover funding'));assert(!events.includes('click:Confirm and send'));
+ if(prepared)await assert.rejects(inspect({page,control:{password:'private',recoveryDirectory:'/private/recovery'},mark:()=>{}}),/wrong surface/);
+});
+test('restored prepared confirmation still requires explicit mode and original-record checks',async()=>{
+ const {confirmMetaMaskPreparedClaim:confirm}=await import('./t04-metamask.mjs');const events=[],report={confirmations:0},surface={state:'review',busy:false,buttons:{confirm:{enabled:true}}};
+ const args={enabled:true,restoredPrepared:true,surface,report,binding:{},page:{evaluate:async(_,{preparedReview})=>{events.push(preparedReview);return{preparedReviewAllowed:true};}},dialog:{getByRole:(_,{name})=>({click:async()=>events.push(name)})}};
+ await assert.rejects(confirm({...args,enabled:false}));await assert.rejects(confirm({...args,restoredPrepared:false}));assert.equal(events.length,0);
+ await confirm(args);assert.deepEqual(events,['capture','consume','Confirm and send']);await assert.rejects(confirm(args));assert.equal(events.length,3);
+});
+
+test('existing browser owner grants application budget only to explicit aggregate Bok continuation',async()=>{
+ const {runInNewContext}=await import('node:vm'),source=await fs.readFile(new URL('./run-bounded-browser-check.mjs',import.meta.url),'utf8');
+ const body=source.match(/export function browserCheckDeadline\([\s\S]*?\n}/)[0].replace('export ','');const choose=runInNewContext('('+body+')');
+ assert.equal(choose({walletExtension:true,aggregate:true}),120000);assert.equal(choose({walletExtension:true,aggregate:true,retainedBok:'false'}),120000);
+ assert.equal(choose({walletExtension:true,aggregate:true,retainedBok:'true'}),540000);assert.equal(choose({passkey:true}),60000);assert.equal(choose({}),540000);
+ for(const input of [{retainedBok:'true'},{walletExtension:true,retainedBok:'true'},{walletExtension:true,aggregate:true,retainedBok:'1'}])assert.throws(()=>choose(input));
+ assert(source.includes('T04_BROWSER_DEADLINE_AT:String(browserDeadlineAt)'));assert(source.includes('Date.now()+deadlineMs-15000'));
+});
+test('Bok canonical phases consume one original deadline rather than restarting wait budgets',async()=>{
+ const {retainedBokRemaining}=await import('./t04-metamask.mjs');let now=1000;const remaining=retainedBokRemaining(526000,()=>now);assert.equal(remaining(),525000);now+=120000;assert.equal(remaining(),405000);now+=400000;assert.equal(remaining(),5000);now+=5000;assert.throws(remaining);
+ for(const deadline of [NaN,Infinity,1000,526001])assert.throws(()=>retainedBokRemaining(deadline,()=>1000));
+});

@@ -7,6 +7,13 @@ import {createHash} from 'node:crypto';
 import {ROOT,assertNodeVersion,anvilBinary} from './toolchain.mjs';
 import {walletExtensionMode,phantomPackage} from './t04-phantom.mjs';
 import {Supervisor,describeFailure} from './testing/supervisor.mjs';
+// Keep the existing wallet cap unless the operator explicitly selects the full
+// aggregate/Bok application journey. One owner deadline covers every phase.
+export function browserCheckDeadline({passkey,walletExtension,aggregate,retainedBok}){
+ if(retainedBok!==undefined&&!['true','false'].includes(retainedBok))throw Error('Invalid retained Bok flag');
+ if(retainedBok==='true'&&!(walletExtension&&aggregate))throw Error('Bok continuation requires aggregate wallet mode');
+ return passkey?60000:walletExtension?(retainedBok==='true'?540000:120000):540000;
+}
 assertNodeVersion();
 const [script,output,...args]=process.argv.slice(2);
 const passkey=['scripts/test-passkey-browser.mjs','scripts/test-w02-browser.mjs'].includes(script);
@@ -15,6 +22,7 @@ const walletExtension=script==='scripts/test-wallet-extension-browser.mjs';
 const extensionMode=walletExtension?walletExtensionMode(args):null;
 const phantom=extensionMode?.startsWith('phantom');
 const aggregate=extensionMode?.startsWith('metamask-aggregate-');
+const deadlineMs=browserCheckDeadline({passkey,walletExtension,aggregate,retainedBok:process.env.T04_RETAINED_BOK});
 assert(['scripts/test-w02-browser.mjs','scripts/test-passkey-browser.mjs','scripts/test-wallet-extension-browser.mjs','scripts/test-public-feed-browser.mjs','scripts/test-u01-hosting-browser.mjs','scripts/test-u01-config-browser.mjs','scripts/test-u01-keyboard-browser.mjs','scripts/test-u01-journey-browser.mjs','scripts/test-u01-fee-deploy-ui.mjs'].includes(script),'Choose a UI component test; run application scenarios directly');
 const reportPath=path.resolve(ROOT,output);
 assert(reportPath.startsWith(path.join(ROOT,'execution/evidence',(passkey||publicFeed||walletExtension)?'T04':'U01')+path.sep));
@@ -22,13 +30,14 @@ await fs.mkdir(path.dirname(reportPath),{recursive:true});
 const file=await fs.open(reportPath,'wx');
 const directory=await fs.mkdtemp(path.join(os.tmpdir(),'board-ui-'));
 const report={script,args,passed:false,observations:[]};
-const owner=new Supervisor({deadlineMs:passkey?60000:walletExtension?120000:540000,report});
+const browserDeadlineAt=Date.now()+deadlineMs-15000;
+const owner=new Supervisor({deadlineMs,report});
 try{
  const names=[script,...(passkey?['shared/passkey-wallet.js','shared/account.js','shared/application.js','shared/wallet-buttons.js','shared/wallet-backup.js']:[]),...(phantom?['scripts/t04-phantom.mjs',phantomPackage.archive,'shared/app-env.js','shared/wallet-providers.js','shared/account.js','shared/wallet-buttons.js','shared/rolling/aggregate-funding.mjs','node_modules/ethers/dist/ethers.umd.min.js','package-lock.json']:[]),...(aggregate?['apps/rolling/wallet-panel.mjs','scripts/t04-metamask.mjs','scripts/t04-phantom.mjs','shared/rolling/aggregate-funding.mjs','shared/rolling/aggregate-recovery.mjs','shared/ethereum-journal.mjs','.build/metamask-13.49.0/metamask-chrome-13.49.0.zip','package-lock.json',process.env.T04_AGGREGATE_CONTROL]:[]),...(walletExtension&&!phantom&&!aggregate?[path.relative(ROOT,anvilBinary()),'toolchain.json','scripts/t04-metamask.mjs','scripts/t04-extension-collateral.mjs','shared/protocol-commitments.mjs','billboard/portal/out/BillboardPortal.sol/BillboardPortal.json','scripts/toolchain.mjs','shared/private-fee-client.mjs','apps/src/billboard/private_fee_artifact.json','apps/dist/fee-juice.html','apps/dist/aztec_bundle.js','shared/wallet-backup.js','shared/wallet-buttons.js','shared/private-fee-funding.mjs','shared/ethereum-journal.mjs','apps/src/fee-juice/engine.js','.build/metamask-13.49.0/metamask-chrome-13.49.0.zip','.build/portal-tests/out/PortalV1.t.sol/RootPublisher.json','package-lock.json']:[]),...(publicFeed?['shared/public-feed-projection.mjs','shared/public-feed-storage.mjs','shared/public-feed-file-storage.mjs','shared/public-feed-connection.mjs','shared/public-feed-cli.mjs','shared/public-feed.mjs','shared/public-feed-source.mjs','apps/dist/public-feed.js','apps/dist/feed.html']:[]),...(script==='scripts/test-u01-hosting-browser.mjs'?['scripts/browser-history-entry.mjs','scripts/screening-history-fixture.mjs','shared/sdk-store.mjs','package-lock.json']:[]),'scripts/run-bounded-browser-check.mjs','scripts/testing/supervisor.mjs','scripts/owned-test-process-tree.mjs','deploy/hosting-config.mjs',...(phantom||aggregate?[]:['.build/apps-manifest.json','.build/sdk/sdk-manifest.json'])];
  const fingerprints=async()=>Object.fromEntries(await Promise.all(names.map(async name=>[name,createHash('sha256').update(await fs.readFile(path.resolve(ROOT,name))).digest('hex')])));
  report.sourceHashes=await fingerprints();
  const exit=await owner.start('ui',process.execPath,['--max-old-space-size='+String(walletExtension?256:publicFeed?128:64),path.join(ROOT,script),...args],{
-  cwd:ROOT,env:{...process.env,NODE_OPTIONS:'',U01_BOUNDED_BROWSER:'true',BILLBOARD_TEST_TMPDIR:directory,TMPDIR:directory,TMP:directory,TEMP:directory},
+  cwd:ROOT,env:{...process.env,T04_BROWSER_DEADLINE_AT:String(browserDeadlineAt),NODE_OPTIONS:'',U01_BOUNDED_BROWSER:'true',BILLBOARD_TEST_TMPDIR:directory,TMPDIR:directory,TMP:directory,TEMP:directory},
   onRecord:record=>report.observations.push(record),
  });
  assert.equal(exit.code,0);assert(report.observations.length>0);assert(report.observations.every(record=>record.passed===true));

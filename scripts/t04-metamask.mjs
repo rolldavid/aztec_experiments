@@ -325,7 +325,7 @@ export function countMetaMaskAggregateNodeSubmissions({url,method,body},trustedQ
 }
 
 // A retained disposable profile may diagnose initialization without admitting any payment.
-export async function inspectMetaMaskAggregateReadiness({page,control,mark}){
+export async function inspectMetaMaskAggregateReadiness({page,control,mark,allowPrepared=false}){
  mark('aggregate-retained-readiness');await page.getByRole('button',{name:'Your account',exact:true}).click();const dialog=page.getByRole('dialog');
  const unlock=dialog.getByRole('button',{name:'Unlock',exact:true}),password=dialog.getByLabel('Recovery password',{exact:true});
  // The panel loads lazily. Wait for either supported state; an immediate
@@ -336,7 +336,11 @@ export async function inspectMetaMaskAggregateReadiness({page,control,mark}){
  await password.fill(control.password);
  await dialog.getByLabel('Recovery file',{exact:true}).setInputFiles(path.join(control.recoveryDirectory,'initial-recovery.json'));
  await dialog.getByRole('button',{name:'Import recovery',exact:true}).click();
- await dialog.getByRole('button',{name:'Recover funding',exact:true}).waitFor();
+ const recover=dialog.getByRole('button',{name:'Recover funding',exact:true});
+ if(!allowPrepared){await recover.waitFor();return 'funding';}
+ const confirm=dialog.getByRole('button',{name:'Confirm and send',exact:true});
+ await recover.or(confirm).first().waitFor();
+ return await recover.isVisible()?'funding':'prepared';
 }
 export function assertMetaMaskReadinessRequest({url,method,body},ethereumUrl){
  const actual=new URL(url),ethereum=new URL(ethereumUrl);
@@ -449,26 +453,34 @@ export async function driveMetaMaskPaidRecovery({page,walletPage,control:c,provi
  const attempts={forbiddenWalletCalls:0,deniedMethods:[]};report.paidRecoveryAttempts=attempts;
  await page.exposeFunction('__paidRecoveryDenied',method=>{attempts.forbiddenWalletCalls++;if(attempts.deniedMethods.length<16)attempts.deniedMethods.push(typeof method==='string'&&/^[A-Za-z][A-Za-z0-9_]{0,63}$/.test(method)?method:'unknown');});
  await page.evaluate(installMetaMaskPaidRecoveryGuard);
- await inspectMetaMaskAggregateReadiness({page,control:c,mark});
+ const readiness=await inspectMetaMaskAggregateReadiness({page,control:c,mark,allowPrepared:reviewPrepared});
  const binding={network:c.walletConfig.config.network,board:c.walletConfig.config.board,router:scope.router,intent,transactionHash};
  assert.equal((await page.evaluate(inspectMetaMaskPaidBinding,binding)).paymentMatches,true,'Retained payment differs from the canonical payment');
- const dialog=page.getByRole('dialog');await dialog.getByRole('button',{name:'Recover funding',exact:true}).click();
- mark('aggregate-paid-recovery-connect');await dialog.getByRole('button',{name:'Connect MetaMask',exact:true}).click();
- await confirmMetaMaskRecoveryAccountSelection(walletPage);
- await dialog.getByText('Funding wallet connected. No payment has been sent.',{exact:true}).waitFor();
- assert.equal((await page.evaluate(()=>walletState.ethAccount)).toLowerCase(),account);
- mark('aggregate-paid-private-claim');await dialog.getByRole('button',{name:'Resume saved funding',exact:true}).click();
+ const dialog=page.getByRole('dialog');
+ const openFunding=async()=>{
+  await dialog.getByRole('button',{name:'Recover funding',exact:true}).click();
+  mark('aggregate-paid-recovery-connect');await dialog.getByRole('button',{name:'Connect MetaMask',exact:true}).click();
+  await confirmMetaMaskRecoveryAccountSelection(walletPage);
+  await dialog.getByText('Funding wallet connected. No payment has been sent.',{exact:true}).waitFor();
+  assert.equal((await page.evaluate(()=>walletState.ethAccount)).toLowerCase(),account);
+ };
+ if(readiness!=='prepared'){
+  await openFunding();
+  mark('aggregate-paid-private-claim');await dialog.getByRole('button',{name:'Resume saved funding',exact:true}).click();
+ }
  const recoveryDeadline=Date.now()+80000;
  const remaining=()=>{const ms=recoveryDeadline-Date.now();assert(ms>0,'Paid recovery observation deadline');return ms;};
  let recovery=await observeMetaMaskPaidRecovery({page,dialog,binding,report,timeout:remaining()});
- if(reviewPrepared&&recovery.state==='review-saved'){
+ if(reviewPrepared&&(recovery.state==='review-saved'||readiness==='prepared')){
   report.preparedClaimReview={initial:report.paidRecoveryObservation,confirmations:0};
-  await confirmMetaMaskPreparedClaim({page,dialog,binding,enabled:reviewPrepared,surface:recovery,report:report.preparedClaimReview});
+  await confirmMetaMaskPreparedClaim({page,dialog,binding,enabled:reviewPrepared,surface:recovery,restoredPrepared:readiness==='prepared',report:report.preparedClaimReview});
   recovery=await observeMetaMaskPaidRecovery({page,dialog,binding,report,timeout:remaining()});
   assert(['claim-confirmed','claim-confirmed-feed-unavailable'].includes(recovery.state),'Explicit saved claim is not confirmed; no second submission');
   const confirmed=await page.evaluate(inspectMetaMaskPaidBinding,binding);assert.equal(confirmed.claimConfirmed,true);assert.equal(confirmed.paymentMatches,true);
   // This existing action now only reconciles the confirmed saved claim. It does
   // not prepare another claim, alter the original cap or repeat Ethereum payment.
+  if(readiness==='prepared')await openFunding();
+  else await dialog.getByRole('button',{name:'Recover funding',exact:true}).click();
   await dialog.getByRole('button',{name:'Resume saved funding',exact:true}).click();
   recovery=await observeMetaMaskPaidRecovery({page,dialog,binding,report,timeout:remaining()});
  }
@@ -484,9 +496,10 @@ export function retainedPreparedClaimFlag(value,{paidRecovery=false,readinessOnl
  assert(value===undefined||value==='true'||value==='false','Invalid saved claim review flag');
  const enabled=value==='true';if(enabled)assert(paidRecovery&&!readinessOnly&&!continueUnfunded,'Saved claim review requires paid recovery only');return enabled;
 }
-export async function confirmMetaMaskPreparedClaim({page,dialog,binding,enabled=false,surface,report}){
+export async function confirmMetaMaskPreparedClaim({page,dialog,binding,enabled=false,surface,report,restoredPrepared=false}){
  assert.equal(enabled,true,'Explicit saved claim review is required');
- assert.equal(surface.state,'review-saved');assert.equal(surface.busy,false);assert.equal(surface.buttons.confirm.enabled,true);
+ assert.equal(typeof restoredPrepared,'boolean');
+ assert.equal(surface.state,restoredPrepared?'review':'review-saved');assert.equal(surface.busy,false);assert.equal(surface.buttons.confirm.enabled,true);
  assert.equal(report.confirmations,0,'Saved claim confirmation already attempted');
  assert.equal((await page.evaluate(inspectMetaMaskPaidBinding,{...binding,preparedReview:'capture'})).preparedReviewAllowed,true,'Original unsent prepared claim or fee cap differs');
  assert.equal((await page.evaluate(inspectMetaMaskPaidBinding,{...binding,preparedReview:'consume'})).preparedReviewAllowed,true,'Original prepared claim changed before confirmation');
@@ -617,19 +630,20 @@ export function assertRetainedBokEvents({postEvents,replyEvents,accountingEvents
  return {canonicalReply:true,canonicalTerminalAccounting:true,charged:accounting.charged,refunded:accounting.refunded};
 }
 
-export async function driveRetainedBokJourney({page,control,approval,mark,report}){
+export async function driveRetainedBokJourney({page,control,approval,mark,report,deadlineAt}){
+ const remaining=retainedBokRemaining(deadlineAt);
  assert.equal(report.paidRecovery?.readyFromConfirmedPrivateClaim,true);approval=validateRetainedBokApproval(approval,control);
  const [{createAztecNodeClient},{loadContractArtifact},{loadRollingArtifacts},{createRollingEventDecoder}]=await Promise.all([import('@aztec-labs/aztec.js/node'),import('@aztec-labs/stdlib/abi'),import('../prover/rolling-artifacts.mjs'),import('../shared/rolling/public-events.mjs')]);
  const node=createAztecNodeClient(control.walletConfig.trustedQuery.url),[board,bok]=loadRollingArtifacts();
  const decoder=await createRollingEventDecoder({artifact:loadContractArtifact(board),bokArtifact:loadContractArtifact(bok),scope:approval.publicScope});
  const dialog=page.getByRole('dialog'),inspect=async(phase,status,options={})=>{const value=await page.evaluate(inspectRetainedBokWorkflow,{config:control.walletConfig.config,approval,phase,status,...options});assertRetainedBokReview(value,options);return value;};
  report.retainedBok={authorizationConfirmed:false,postConfirmed:false,canonicalReply:false,canonicalTerminalAccounting:false,providerBillingIndependentlyAttested:false};
- const publicIntent=await driveRetainedBokConfirmations({dialog,approval,inspect,mark,report});
+ const publicIntent=await driveRetainedBokConfirmations({dialog,approval,inspect,mark,report,remaining});
  const authorizationEvents=await decoder.decodeTransaction(node,publicIntent.authorizationTxHash);const opened=authorizationEvents.filter(e=>e.type==='AccountingChanged'&&e.payload.request_id===publicIntent.requestId);assert.equal(opened.length,1);assert.equal(opened[0].payload.state,'1');assert.equal(opened[0].payload.budget,approval.budget);assert.equal(opened[0].payload.available,approval.budget);assert.equal(opened[0].payload.reserved,'0');
  const {TxHash}=await import('@aztec-labs/stdlib/tx');const fees={};for(const [kind,hash,cap] of [['authorization',publicIntent.authorizationTxHash,approval.authorizeFeeCap],['post',publicIntent.transactionHash,approval.postFeeCap]]){const receipt=await node.getTxReceipt(TxHash.fromString(hash));assert.equal(receipt.executionResult,'success');assert.equal(typeof receipt.transactionFee,'bigint');assert(receipt.transactionFee>=0n&&receipt.transactionFee<=BigInt(cap));fees[kind]=String(receipt.transactionFee);}
  const postEvents=await decoder.decodeTransaction(node,publicIntent.transactionHash),invocation=postEvents.filter(e=>e.type==='PluginInvoked'&&e.payload.request_id===publicIntent.requestId);assert.equal(invocation.length,1);const postId=invocation[0].payload.post_id;report.retainedBok.postConfirmed=true;
  mark('retained-bok-reply-accounting');let handle;
- try{handle=await page.waitForFunction(discoverRetainedBokCompletion,{postId,requestId:publicIntent.requestId,scope:approval.publicScope},{timeout:80000,polling:1000});const discovered=await handle.jsonValue();
+ try{handle=await page.waitForFunction(discoverRetainedBokCompletion,{postId,requestId:publicIntent.requestId,scope:approval.publicScope},{timeout:remaining(),polling:1000});const discovered=await handle.jsonValue();
   const replyEvents=await decoder.decodeTransaction(node,discovered.reply.position.txHash),accountingEvents=await decoder.decodeTransaction(node,discovered.accounting.position.txHash);
   // Recheck all event anchors after the final decoded transaction; a moved
   // canonical block invalidates the complete observation.
@@ -638,10 +652,14 @@ export async function driveRetainedBokJourney({page,control,approval,mark,report
  }finally{await handle?.dispose();await page.evaluate(()=>{delete window.__retainedBokWorkflow;});}
 }
 
-export async function driveRetainedBokConfirmations({dialog,approval,inspect,mark,report}){
+export function retainedBokRemaining(deadlineAt,now=Date.now){
+ const initial=now();assert(Number.isSafeInteger(deadlineAt)&&deadlineAt>initial&&deadlineAt-initial<=525000,'Invalid original Bok deadline');
+ return ()=>{const ms=deadlineAt-now();assert(ms>0&&ms<=525000,'Original Bok deadline exhausted');return ms;};
+}
+export async function driveRetainedBokConfirmations({dialog,approval,inspect,mark,report,remaining=()=>80000}){
  mark('retained-bok-authorize-review');await dialog.getByRole('button',{name:'Actions',exact:true}).click();await dialog.getByLabel('Action',{exact:true}).selectOption('bok');await dialog.getByLabel('Message',{exact:true}).fill(approval.content);await dialog.getByLabel('Maximum Bok credits',{exact:true}).fill(approval.budget);
  await dialog.getByRole('button',{name:'Check action and review fee',exact:true}).click();await dialog.getByRole('button',{name:'Confirm and send',exact:true}).waitFor();await inspect('authorize','prepared',{capture:true});
- mark('retained-bok-authorize');await dialog.getByRole('button',{name:'Confirm and send',exact:true}).click();await dialog.getByRole('button',{name:'Review saved Bok post',exact:true}).waitFor({timeout:80000});await inspect('authorize','confirmed',{capture:true});report.retainedBok.authorizationConfirmed=true;
+ mark('retained-bok-authorize');await dialog.getByRole('button',{name:'Confirm and send',exact:true}).click();await dialog.getByRole('button',{name:'Review saved Bok post',exact:true}).waitFor({timeout:remaining()});await inspect('authorize','confirmed',{capture:true});report.retainedBok.authorizationConfirmed=true;
  mark('retained-bok-post-review');await dialog.getByRole('button',{name:'Review saved Bok post',exact:true}).click();await dialog.getByRole('button',{name:'Confirm and send',exact:true}).waitFor();await inspect('post','prepared');
- mark('retained-bok-post');await dialog.getByRole('button',{name:'Confirm and send',exact:true}).click();await dialog.getByText('Transaction confirmed on the verified chain.',{exact:true}).waitFor({timeout:80000});const {public:publicIntent}=await inspect('post','confirmed',{published:true});return publicIntent;
+ mark('retained-bok-post');await dialog.getByRole('button',{name:'Confirm and send',exact:true}).click();await dialog.getByText('Transaction confirmed on the verified chain.',{exact:true}).waitFor({timeout:remaining()});const {public:publicIntent}=await inspect('post','confirmed',{published:true});return publicIntent;
 }
