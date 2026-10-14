@@ -138,15 +138,17 @@ const methods={'moderate-post':'remove_post','moderate-avatar':'remove_avatar','
  * These are asynchronous L2 claims only; direct L1 token payments still need user gas.
  * Bok authorization and posting are separately confirmed and journalled. The encrypted
  * workflow retains the exact request, target and draft between them; no automatic resend.
- * This slice excludes new bridge payments and L1 exits;
- * withdraw is ONLY existing funded deposit's L2 exit. These remain integration work.
+ * withdraw creates the existing funded deposit's L2 exit. Its encrypted original
+ * receipt remains in this workflow until the captured session refund verifier
+ * confirms the separate original-depositor Ethereum journal outcome.
  */
 export function createRollingApplication({sdk,deployment,accountSession,privateStore,publicReader,funding,onProgress=()=>{},contextGuard}){
   void publicReader; // Private methods must never send anything to this dependency.
-  let busy=false,slotPromise;
+  let busy=false,slotPromise,balanceContinuation=null;
   const session=accountSession;
   const owner=session?.owner?.toString();
   const fundingProvider=funding?.provider,claimStore=funding?.claimStore;
+  const verifyWithdrawal=typeof funding?.verifyWithdrawal==='function'?funding.verifyWithdrawal.bind(funding):null;
   const loadAggregate=typeof funding?.loadAggregate==='function'?funding.loadAggregate.bind(funding):null;
   const fixed=deployment&&{board:deployment.board.address.toString(),network:clone(deployment.network),portal:deployment.portal,
     fee:deployment.privateFee.address.toString(),gas:JSON.parse(JSON.stringify(deployment.privateFee.gasSettings,(_,v)=>typeof v==='bigint'?v.toString():v)),proofsEnabled:deployment.proofsEnabled!==false};
@@ -244,7 +246,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
   }
   const operation=id=>`ROLLING_WORKFLOW_V1:${id}`;
   function summary(record){return {intentId:record.id,action:clone(record.action),status:record.status,maximumFee:record.maximumFee,
-    nonce:record.nonce,txHash:record.txHash??null,...(record.moderation?{moderation:clone(record.moderation)}:{}),stage:record.bok?`bok-${record.bok.phase}`:'single-transaction',...(record.bok?{bok:{phase:record.bok.phase,budget:record.bok.budget,availableCredit:record.bok.availableCredit,authorizationTxHash:record.bok.authorizationTxHash??null,...(record.bok.phase==='post'?{mainPolicyVersion:record.args[2].expected_main_policy_version,localPolicyVersion:record.args[2].expected_local_policy_version}:{})}}:{}),...(record.replacementReview?{replacementReview:clone(record.replacementReview)}:{}),
+    nonce:record.nonce,txHash:record.txHash??null,...(record.withdrawal?{withdrawal:clone(record.withdrawal),actualNetworkFee:record.actualNetworkFee??null}:{}),...(record.moderation?{moderation:clone(record.moderation)}:{}),stage:record.bok?`bok-${record.bok.phase}`:'single-transaction',...(record.bok?{bok:{phase:record.bok.phase,budget:record.bok.budget,availableCredit:record.bok.availableCredit,authorizationTxHash:record.bok.authorizationTxHash??null,...(record.bok.phase==='post'?{mainPolicyVersion:record.args[2].expected_main_policy_version,localPolicyVersion:record.args[2].expected_local_policy_version}:{})}}:{}),...(record.replacementReview?{replacementReview:clone(record.replacementReview)}:{}),
     ...(preferenceAction(record)?{inclusionHistory:clone(record.inclusionHistory??[])}:{})};}
   function checkBokRecord(record){for(const savedScope of [record?.bok?.scope,record?.fundingBok?.scope])if(savedScope)check(bok&&JSON.stringify(savedScope)===JSON.stringify(bok),'ROLLING_CONTEXT_CHANGED');}
   async function savedIntent(id){const saved=await (await slot()).read();check(saved.value?.id===id,'ROLLING_INTENT_NOT_FOUND');checkBokRecord(saved.value);return saved;}
@@ -261,7 +263,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
     if(!found||found.operation!==operation(saved.value.id))return {...summary(saved.value),status:'unknown'};
     if(!['success','reverted'].includes(found.outcome))return {...summary(saved.value),status:'unknown',txHash:found.txHash};
     acknowledge(found,{operation:operation(saved.value.id),txHash:saved.value.replacementReview?found.txHash:(saved.value.txHash??found.txHash)});
-    const next={...saved.value,status:found.outcome==='success'?'confirmed':'reverted',txHash:found.txHash,...(preferenceAction(saved.value)?{inclusionHistory:inclusionHistory(saved.value,found)}:{})};
+    const next={...saved.value,...(saved.value.withdrawal?{actualNetworkFee:String(chainValue(found.receipt.transactionFee))}:{}),status:found.outcome==='success'?'confirmed':'reverted',txHash:found.txHash,...(preferenceAction(saved.value)?{inclusionHistory:inclusionHistory(saved.value,found)}:{})};
     await (await slot()).write(saved,next);return {...summary(next),...(next.bok?.phase==='authorize'&&next.status==='confirmed'?{status:'authorized'}:next.bok?.phase==='post'&&next.status==='reverted'?{status:'bok-post-reverted'}:{})};
   }
   const preferenceAction=record=>['preference','read-marker'].includes(record.action.type);
@@ -470,7 +472,50 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
     if(record.encoded)check(JSON.stringify(encoded)===JSON.stringify(record.encoded),'ROLLING_INTENT_CHANGED');
     return {call,encoded};
   }
+  async function collateralInfo(id,board,timestamp){
+    const values=await utility(board,'get_deposit_info',[session.owner,id]);
+    check(Array.isArray(values)&&values.length===10,'ROLLING_INVALID_RESPONSE');
+    const v=values.map(chainValue);check(v[0]===1n&&v[1]===BigInt(id)&&v[2]>0n&&v[2]<(1n<<96n)&&v[3]>0n&&v[3]<(1n<<160n)&&
+      v[5]<(1n<<64n)&&v[7]<=v[5]&&v[8]<=v[5]&&v[9]<(1n<<64n),'ROLLING_INVALID_RESPONSE');
+    return {id:field(id,true),amount:String(v[2]),depositor:'0x'+v[3].toString(16).padStart(40,'0'),
+      nextAllowedTime:String(v[9]),screenedSequence:String(v[7]),lastRealSequence:String(v[8]),
+      eligible:v[7]>=v[8]&&timestamp>=v[9],reason:v[7]<v[8]?'screening-required':timestamp<v[9]?'time-locked':'eligible'};
+  }
+  async function balanceAnchor(){
+    await guard();const header=await session.wallet.pxe.getSyncedBlockHeader();await guard();
+    const blockNumber=Number(header.globalVariables.blockNumber),timestamp=chainValue(header.globalVariables.timestamp);
+    check(Number.isSafeInteger(blockNumber)&&blockNumber>0,'ROLLING_INVALID_RESPONSE');
+    return {blockNumber,blockHash:hashText(await header.hash()),timestamp:String(timestamp)};
+  }
+  async function checkBalanceAnchor(anchor){
+    const current=await balanceAnchor();check(same(current,anchor),'ROLLING_CONTEXT_CHANGED');
+    const block=await session.node.getBlockData(anchor.blockNumber);check(Number(block?.header?.globalVariables?.blockNumber)===anchor.blockNumber&&hashText(block.blockHash)===anchor.blockHash,'ROLLING_CONTEXT_CHANGED');await guard();
+  }
+  async function refundComplete(record){return !!verifyWithdrawal&&await verifyWithdrawal(clone(summary(record)))===true;}
   return Object.freeze({
+    async readWithdrawal(){return exclusive(async()=>{await guard();const saved=await (await slot()).read();
+      if(saved.value?.action?.type!=='withdraw'||!saved.value.withdrawal)return null;
+      if(['prepared','cancelled'].includes(saved.value.status))return summary(saved.value);
+      return outcome(saved);
+    });},
+    async readBalances({cursor=0}={}){return exclusive(async()=>{
+      const continuation=balanceContinuation;check(cursor===0||typeof cursor==='string'&&continuation?.token===cursor,'ROLLING_BALANCE_CURSOR_INVALID');
+      const offset=cursor===0?0:continuation.offset;check(offset<=0xffffffff-10);const anchor=await balanceAnchor(),board=await contract();
+      if(cursor!==0)check(same(anchor,continuation.anchor),'ROLLING_BALANCE_CURSOR_INVALID');
+      const ids=await utility(board,'get_deposit_ids',[session.owner,offset]);check(Array.isArray(ids)&&ids.length===10,'ROLLING_INVALID_RESPONSE');
+      const deposits=[],seen=new Set();let empty=false;
+      for(const value of ids){const id=field(value);if(BigInt(id)===0n){empty=true;continue;}check(!empty&&!seen.has(id),'ROLLING_INVALID_RESPONSE');seen.add(id);deposits.push(await collateralInfo(id,board,BigInt(anchor.timestamp)));}
+      const feeContract=await sdk.Contract.at(new sdk.AztecAddress(new sdk.Fr(BigInt(fixed.fee))),deployment.privateFee.artifact,session.wallet);
+      const fee=chainValue(await utility(feeContract,'balance_of',[session.owner],deployment.privateFee.artifact));check(fee<(1n<<128n),'ROLLING_INVALID_RESPONSE');
+      let credit=null;if(bok){const current=await bokContract(),available=chainValue(await utility(current,'balance_of',[session.owner],deployment.bok.artifact));check(available<(1n<<128n),'ROLLING_INVALID_RESPONSE');
+        credit={available:String(available),token:'USDC',availableMeaning:'unallocated-private-credit',requestsComplete:false,requests:[]};
+
+      }
+      const pending=(await (await slot()).read()).value;
+      const reservation=pending&&['submitting','unknown'].includes(pending.status)?{status:'unresolved',maximumFee:pending.maximumFee}:null;
+      await checkBalanceAnchor(anchor);balanceContinuation=empty?null:{token:crypto.randomUUID(),offset:offset+10,anchor:clone(anchor)};return {anchor,fee:{available:String(fee),token:'FEE',complete:true,availableMeaning:'settled-private-credit',pendingReservation:reservation,withdrawal:'not-supported'},bok:credit,
+        collateral:{deposits,complete:empty,nextCursor:balanceContinuation?.token??null}};
+    });},
     async readModeratorStatus(){return exclusive(moderatorStatus);},
     async readBokStatus(){return exclusive(async()=>{if(!bok)return {available:false};try{return {available:true,availableCredit:String(await bokCredit()),pluginId:bok.pluginId};}catch(error){if(error?.code==='ROLLING_BOK_UNAVAILABLE')return {available:false};throw error;}});},
     async readAccountStatus(){
@@ -479,7 +524,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
         if(saved.value&&saved.value.status!=='cancelled'){
           checkBokRecord(saved.value);
           if(!['confirmed','reverted'].includes(saved.value.status))return {status:'recovering',intent:summary(saved.value)};
-          const canonical=await outcome(saved);if(!['confirmed','reverted'].includes(canonical.status))return {status:'recovering',intent:canonical};
+          const canonical=await outcome(saved);if(canonical.status==='confirmed'&&saved.value.withdrawal&&!await refundComplete({...saved.value,txHash:canonical.txHash}))return {status:'recovering',intent:canonical};if(!['confirmed','reverted'].includes(canonical.status))return {status:'recovering',intent:canonical};
         }
         let fee;try{fee=await payment();}catch(error){if(error.code==='PRIVATE_FEE_BALANCE_INSUFFICIENT')return {status:'fee-needed'};throw error;}
         const ids=await utility(await contract(),'get_deposit_ids',[session.owner,0]);check(Array.isArray(ids)&&ids.length===10,'ROLLING_INVALID_RESPONSE');
@@ -515,7 +560,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
       await guard();return {identities:records.map(record=>record.id),records,nextCursor:empty?null:cursor+8};});},
     async prepare(input){return exclusive(async()=>{await guard();const action=clone(input),store=await slot();let prior=await store.read();
       if(prior.value&&prior.value.status!=='cancelled'){check(['confirmed','reverted'].includes(prior.value.status),'ROLLING_RECOVERY_REQUIRED');
-        const final=await outcome(prior);check(['confirmed','reverted'].includes(final.status),'ROLLING_RECOVERY_REQUIRED');prior=await store.read();}
+        const final=await outcome(prior);check(['confirmed','reverted'].includes(final.status),'ROLLING_RECOVERY_REQUIRED');if(final.status==='confirmed'&&prior.value.withdrawal)check(await refundComplete({...prior.value,txHash:final.txHash}),'ROLLING_WITHDRAWAL_RECOVERY_REQUIRED');prior=await store.read();}
       const previousTx=await session.journal.assertCanStart();
       const predecessor=previousTx?.value?{operation:previousTx.value.operation??null,txHash:previousTx.value.txHash}:null;
       const nonce=field(sdk.Fr.random().toString(),true),id=field(sdk.Fr.random().toString(),true),board=await contract();
@@ -523,6 +568,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
       const moderation=moderationTypes.has(action.type)?await moderationArguments(action,board):null;
       const args=moderation?moderation.args:plain(await argumentsFor(action,board,nonce));
       const record={version:1,id,action,args,method:methods[action.type],nonce,predecessor,status:'prepared',...(moderation?{moderation:moderation.review}:{})};
+      if(action.type==='withdraw'){const anchor=await balanceAnchor();record.withdrawal=await collateralInfo(action.deposit,board,BigInt(anchor.timestamp));check(record.withdrawal.eligible,'ROLLING_WITHDRAWAL_NOT_READY');await checkBalanceAnchor(anchor);}
       if(action.type==='claim-deposit'&&action.bokReceipt!==undefined)record.fundingBok=await bokFundingClaim(action);
       if(action.type==='claim-bok')record.fundingBok={scope:clone(bok),args:clone(args)};
       if(action.type==='bok'){
@@ -613,6 +659,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
       });
     },
     async submitPrepared(id){return exclusive(async()=>{await guard();const saved=await savedIntent(id),replacing=saved.value.status==='replacement-prepared';check(replacing||saved.value.status==='prepared','ROLLING_RECOVERY_REQUIRED');
+      if(saved.value.withdrawal){const anchor=await balanceAnchor(),current=await collateralInfo(saved.value.action.deposit,await contract(),BigInt(anchor.timestamp));check(current.eligible&&same(current,saved.value.withdrawal),'ROLLING_WITHDRAWAL_NOT_READY');await checkBalanceAnchor(anchor);}
       if(replacing){
         await checkReplacementReview(saved.value);
         const inspected=await session.journal.inspectReplacement(operation(id),{requireMissingAnchor:true});

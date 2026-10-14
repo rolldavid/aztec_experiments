@@ -1,5 +1,6 @@
 // Load after explicit unlock. All SDK and custody dependencies are supplied by
 // the authenticated application bundle; no fixture or ordinary-node fallback.
+import {encodeEscrowCommitment,sha256Field} from '../../shared/protocol-commitments.mjs';
 import {createAggregateWallet,createStandaloneTopupWallet,advanceAggregateClaim,submitWithStandaloneTopupCheckpoint} from '../../shared/rolling/aggregate-wallet.mjs';
 import {createRollingColdPreferenceReader} from '../../shared/rolling/cold-preference-reader.mjs';
 import {createRollingCompactClient} from '../../shared/rolling/compact-client.mjs';
@@ -35,13 +36,89 @@ export async function verifyRollingBokCapability({sdk,node,config,artifact,deplo
  await sdk.inspectTrustedNode(node,{expectedNetworkScope:deployment.network,proofsEnabled:deployment.proofsEnabled});await contextGuard();
  return Object.freeze({address,artifact,instance,operator:new sdk.AztecAddress(new sdk.Fr(BigInt(selected.operatorAddress))),pluginId:selected.pluginId});
 }
+// L2 workflow retains private exit identity; Ethereum journal owns refund sends.
+export function createCollateralWithdrawal({sdk,ethers,provider,node,application,scope,storage,walletSecret,walletSalt,captureWallet,contextGuard}){
+ const fixed=structuredClone(scope),abi=()=>new ethers.Interface(['function withdraw(uint256 epoch,uint256 checkpointCount,uint256 leafIndex,bytes32[] path)']);
+ const check=ok=>{if(!ok)throw fail('ROLLING_WITHDRAWAL_RECOVERY_REQUIRED');};
+ const hash=v=>{const s=v?.toString();check(typeof s==='string'&&/^0x[0-9a-f]{64}$/.test(s));return s;};
+ const pending=new Set();
+ const own=fn=>{const promise=Promise.resolve().then(fn);pending.add(promise);promise.then(()=>pending.delete(promise),()=>pending.delete(promise));return promise;};
+ const originalProvider=provider;provider=Object.fromEntries(['getNetwork','getTransactionReceipt','getTransaction','getBlock','getCode','call','getTransactionCount','getBlockNumber','estimateGas','getFeeData','waitForTransaction'].map(name=>{const call=originalProvider[name]?.bind(originalProvider);return [name,(...args)=>own(()=>call(...args))];}));
+ const read=async fn=>{await contextGuard();const original=own(fn);const out=await sdk.boundedTransactionRead(()=>original,20000);await contextGuard();return out;};
+ const run=async fn=>{try{return await fn();}finally{while(pending.size)await Promise.allSettled([...pending]);}};
+
+ let quote=null;
+ async function original(record){
+  const r=record??await application.readWithdrawal();check(r?.action?.type==='withdraw'&&r.status==='confirmed'&&r.withdrawal?.eligible===true);hash(r.txHash);
+  const w=r.withdrawal;check(/^0x[0-9a-f]{40}$/.test(w.depositor)&&BigInt(w.depositor)>0n&&/^[1-9][0-9]*$/.test(w.amount)&&BigInt(w.amount)<(1n<<96n));return structuredClone(r);
+ }
+ const journal=(r,extra={})=>sdk.createEthereumJournal({storage,walletSecret,walletSalt,scope:{...fixed,depositor:r.withdrawal.depositor},provider,contextGuard,...extra});
+ async function membership(r){
+  const network=await read(()=>provider.getNetwork());check(String(network.chainId)===fixed.chainId);
+  const content=sdk.Fr.fromHexString(await sha256Field(encodeEscrowCommitment('exit',{l1ChainId:fixed.chainId,rollupAddress:fixed.rollup,rollupVersion:fixed.version,boardAddress:fixed.board,portalAddress:fixed.portal},{depositor:r.withdrawal.depositor,amount:r.withdrawal.amount})));
+  const leaf=await sdk.computeL2ToL1MessageHash({l2Sender:new sdk.AztecAddress(new sdk.Fr(BigInt(fixed.board))),l1Recipient:sdk.EthAddress.fromString(fixed.portal),content,rollupVersion:new sdk.Fr(BigInt(fixed.version)),chainId:new sdk.Fr(BigInt(fixed.chainId))});
+  const tx=sdk.TxHash.fromString(r.txHash),receipt=await read(()=>node.getTxReceipt(tx));
+  check(['checkpointed','proven','finalized'].includes(receipt?.status)&&receipt.executionResult==='success'&&hash(receipt.txHash)===r.txHash&&Number.isSafeInteger(receipt.blockNumber)&&receipt.blockNumber>0);
+  const blockHash=hash(receipt.blockHash),effect=await read(()=>node.getTxEffect(tx));
+  check(Number(effect?.l2BlockNumber)===receipt.blockNumber&&hash(effect.l2BlockHash)===blockHash&&Array.isArray(effect.data?.l2ToL1Msgs)&&effect.data.l2ToL1Msgs.filter(v=>hash(v)===hash(leaf)).length===1);
+  const witness=await read(()=>node.getL2ToL1MembershipWitness(tx,leaf));check(witness);
+  const epoch=BigInt(witness.epochNumber),count=BigInt(witness.numCheckpointsInEpoch),index=BigInt(witness.leafIndex),path=witness.siblingPath.toBufferArray().map(v=>ethers.hexlify(v));
+  check(epoch>=0n&&count>0n&&index>=0n&&path.length<=256&&path.every(v=>/^0x[0-9a-f]{64}$/.test(v)));
+  const block=await read(()=>node.getBlockData(receipt.blockNumber));check(hash(block.blockHash)===blockHash&&Number(block.header?.globalVariables?.blockNumber)===receipt.blockNumber);
+  return abi().encodeFunctionData('withdraw',[epoch,count,index,path]).toLowerCase();
+ }
+ const cost=result=>{const r=result.receipt,price=r?.gasPrice??r?.effectiveGasPrice;return typeof r?.gasUsed==='bigint'&&r.gasUsed>=0n&&typeof price==='bigint'&&price>=0n?String(r.gasUsed*price):null;};
+ async function finalized(result){
+  if(fixed.chainId!=='31337'){const final=await read(()=>provider.getBlock('finalized'));check(Number.isSafeInteger(final?.number)&&final.number>=result.receipt.blockNumber);const again=await read(()=>provider.getBlock(result.receipt.blockNumber));check(hash(again.hash)===hash(result.receipt.blockHash));}
+ }
+ async function verified(r,search=false){
+  const j=await journal(r),saved=await read(()=>j.inspectSummary());if(!saved||saved.kind!=='withdraw')return null;if(saved.outcome==='unknown'&&!search)return null;
+  const result=await read(()=>j.recover({retry:false}));check(result?.request?.expected?.kind==='withdraw'&&result.request.from===r.withdrawal.depositor&&result.request.to===fixed.portal);
+  if(result.request.expected.amount!==r.withdrawal.amount||result.request.data!==await membership(r)){check(['success','reverted'].includes(result.outcome));return null;}
+  await finalized(result);
+  return result;
+ }
+ const capability={
+  async verify(record){const r=await original(record),result=await verified(r);return result?.outcome==='success';},
+  async recover(){const r=await original(),result=await verified(r,true);check(result);return {status:result.outcome==='success'?'refunded':result.outcome,txHash:result.txHash,amount:r.withdrawal.amount,gasCostWei:cost(result)};},
+  async prepare({maximumGasWei}={}){
+   quote=null;check(typeof maximumGasWei==='string'&&/^[1-9][0-9]{0,25}$/.test(maximumGasWei));
+   const r=await original(),wallet=await captureWallet();await read(wallet.guard);check(wallet.address.toLowerCase()===r.withdrawal.depositor&&String(wallet.chainId)===fixed.chainId);
+   const j=await journal(r),saved=await read(()=>j.inspectSummary());let previous=null;
+   if(saved){const old=await read(()=>j.recover({retry:false}));check(['success','reverted'].includes(old.outcome));await finalized(old);
+    if(old.request.expected.kind==='withdraw'&&old.request.data===await membership(r))check(old.outcome==='reverted');previous=old.txHash;}
+   const data=await membership(r),request={from:r.withdrawal.depositor,to:fixed.portal,data,value:0n};
+   // Real portal eth_call checks settled Outbox membership and the original
+   // depositor receipt, including when the board has since been rejected.
+   await read(()=>provider.call(request));const gas=await read(()=>provider.estimateGas(request)),fees=await read(()=>provider.getFeeData()),price=fees.maxFeePerGas??fees.gasPrice;
+   check(typeof gas==='bigint'&&gas>0n&&typeof price==='bigint'&&price>0n&&gas*2n*price<=BigInt(maximumGasWei));
+   quote={r,wallet,data,maximumGasWei,previous};return Object.freeze({amount:r.withdrawal.amount,recipient:r.withdrawal.depositor,maximumGasWei,estimatedGasWei:String(gas*2n*price),walletName:wallet.name});
+  },
+  cancel(){quote=null;},
+  async confirm(){
+   const q=quote;quote=null;check(q);const r=await original();check(r.intentId===q.r.intentId&&r.txHash===q.r.txHash&&JSON.stringify(r.withdrawal)===JSON.stringify(q.r.withdrawal));
+   await read(q.wallet.guard);check(await membership(r)===q.data);
+   const signer={getAddress:()=>q.wallet.signer.getAddress(),sendTransaction:async request=>{
+    await read(q.wallet.guard);check(await membership(r)===q.data);await read(()=>provider.call(request));
+    const gas=await read(()=>provider.estimateGas(request)),fees=await read(()=>provider.getFeeData()),price=fees.maxFeePerGas??fees.gasPrice;
+    check(typeof gas==='bigint'&&gas>0n&&typeof price==='bigint'&&price>0n&&gas*2n*price<=BigInt(q.maximumGasWei));await read(q.wallet.guard);check(await membership(r)===q.data);
+    return q.wallet.signer.sendTransaction({...request,gasLimit:gas*2n,...(fees.maxFeePerGas!=null?{maxFeePerGas:price,maxPriorityFeePerGas:fees.maxPriorityFeePerGas??0n}:{gasPrice:price})});
+   }};
+   const j=await journal(r,{signer,acknowledgeTx:q.previous,contextGuard:async()=>{await contextGuard();await q.wallet.guard();}});
+   const result=await read(()=>j.send({data:q.data,value:'0',expected:{kind:'withdraw',amount:r.withdrawal.amount}}));
+   check(result.outcome==='success');await finalized(result);return {status:'refunded',txHash:result.txHash,amount:r.withdrawal.amount,gasCostWei:cost(result)};
+  }
+ };
+ return Object.freeze(Object.fromEntries(Object.entries(capability).map(([name,fn])=>[name,(...args)=>run(()=>fn(...args))])));
+}
+
 export async function createRollingWalletSession({sdk,routing,ethers,config,boardArtifact,privateFeeArtifact,bokArtifact,account,
  trustedQuery,remoteProver,contextGuard,claimStore,captureFundingWallet,fundingRelay,onProgress=()=>{},locks=globalThis.navigator?.locks,proofsEnabled=true}){
  if(typeof proofsEnabled!=='boolean'||(!proofsEnabled&&String(config?.network?.chainId)!=='31337')||typeof contextGuard!=='function'||typeof locks?.request!=='function'||!account||!trustedQuery||!routing)throw fail('ROLLING_SESSION_CONFIG');
  const captured={secretKey:account.secretKey,salt:String(account.salt),address:String(account.address)};
  const selected=structuredClone(config),query=structuredClone(trustedQuery),remote=remoteProver?structuredClone(remoteProver):undefined;
  const lockName='billboard-wallet:'+captured.address;
- let pxe,store,fundingProvider,closed=false,busy=false,app,closing,privateNode,privateWallet,readPreferences,readColdPreferences,initializeAccount,aggregate,topups;
+ let pxe,store,fundingProvider,closed=false,busy=false,app,closing,privateNode,privateWallet,readPreferences,readColdPreferences,initializeAccount,aggregate,topups,withdrawal;
  const assertCaptured=()=>{
   if(closed||captured.secretKey!==account.secretKey||captured.salt!==String(account.salt)||captured.address!==String(account.address))throw fail('ROLLING_CONTEXT_CHANGED');
  };
@@ -121,7 +198,7 @@ export async function createRollingWalletSession({sdk,routing,ethers,config,boar
    privateNode=node;privateWallet=wallet;
    // Read-only Ethereum access is lazy and scoped to this private session.
    // No signer is supplied: importing a recovery receipt cannot pay again.
-   const funding={claimStore,provider:Object.fromEntries(['getNetwork','getTransactionReceipt','getTransaction','getBlock','getCode','call'].map(name=>[name,async(...args)=>{
+   const funding={claimStore,verifyWithdrawal:record=>withdrawal?withdrawal.verify(record):false,provider:Object.fromEntries(['getNetwork','getTransactionReceipt','getTransaction','getBlock','getCode','call','getTransactionCount','getBlockNumber','estimateGas','getFeeData','waitForTransaction'].map(name=>[name,async(...args)=>{
     await guardRoute();fundingProvider??=new ethers.JsonRpcProvider(selected.network.ethRpcUrl);
     const result=await fundingProvider[name](...args);await guardRoute();return result;
    }]))};
@@ -187,6 +264,7 @@ export async function createRollingWalletSession({sdk,routing,ethers,config,boar
     }
     return coldReader.read(options);
    };
+   withdrawal=createCollateralWithdrawal({sdk,ethers,provider:funding.provider,node,application:app,scope:{account:captured.address,...network,board:selected.board.contractAddress,portal:selected.board.portalAddress},storage:privateStore,walletSecret:secret,walletSalt:salt,captureWallet:captureFundingWallet??(async()=>{throw fail('ROLLING_FUNDING_UNAVAILABLE');}),contextGuard:guardRoute});
    emit('complete');
   }catch(error){failed(error);closed=true;try{await dispose();}catch(cleanupError){throw new AggregateError([error,cleanupError],'Private session initialization and cleanup failed');}throw error;}
  });}catch(error){failed(error);throw error;}
@@ -200,7 +278,7 @@ export async function createRollingWalletSession({sdk,routing,ethers,config,boar
   readColdPreferences:options=>locked(()=>readColdPreferences(options))});
  const privateFeeCap=((BigInt(selected.privateFee.gasSettings.gasLimits.daGas)+BigInt(selected.privateFee.gasSettings.teardownGasLimits.daGas))*BigInt(selected.privateFee.gasSettings.maxFeesPerGas.feePerDaGas)+(BigInt(selected.privateFee.gasSettings.gasLimits.l2Gas)+BigInt(selected.privateFee.gasSettings.teardownGasLimits.l2Gas))*BigInt(selected.privateFee.gasSettings.maxFeesPerGas.feePerL2Gas)).toString();
  const topup=topups?Object.freeze(Object.fromEntries(Object.entries(topups).map(([kind,cap])=>[kind,Object.freeze({defaultPrivateFeeCap:privateFeeCap,advanceClaim:()=>locked(()=>advanceAggregateClaim({application:synchronized,funding:cap,contextGuard:guardRoute})),...Object.fromEntries(['prepare','confirm','recover','inspect','checkpointClaim','reviewRevertedClaim'].map(name=>[name,(...args)=>locked(()=>cap[name](...args))]))})]))):null;
- return Object.freeze({application,topup,funding:aggregate?Object.freeze({usdcAvailable:selected.aggregateFunding.usdcRelayAddress!==undefined,advanceClaim:()=>locked(()=>advanceAggregateClaim({application:synchronized,funding:aggregate,contextGuard:guardRoute})),defaultPrivateFeeCap:((BigInt(selected.privateFee.gasSettings.gasLimits.daGas)+BigInt(selected.privateFee.gasSettings.teardownGasLimits.daGas))*BigInt(selected.privateFee.gasSettings.maxFeesPerGas.feePerDaGas)+(BigInt(selected.privateFee.gasSettings.gasLimits.l2Gas)+BigInt(selected.privateFee.gasSettings.teardownGasLimits.l2Gas))*BigInt(selected.privateFee.gasSettings.maxFeesPerGas.feePerL2Gas)).toString(),...Object.fromEntries(['prepare','confirm','recover','inspect','checkpointClaim','reviewRevertedClaim'].map(name=>[name,(...args)=>locked(()=>aggregate[name](...args))]))}):null,get busy(){return busy;},close(){
+ return Object.freeze({application,withdrawal:Object.freeze(Object.fromEntries(['prepare','confirm','recover','cancel'].map(name=>[name,(...args)=>locked(()=>withdrawal[name](...args))]))),topup,funding:aggregate?Object.freeze({usdcAvailable:selected.aggregateFunding.usdcRelayAddress!==undefined,advanceClaim:()=>locked(()=>advanceAggregateClaim({application:synchronized,funding:aggregate,contextGuard:guardRoute})),defaultPrivateFeeCap:((BigInt(selected.privateFee.gasSettings.gasLimits.daGas)+BigInt(selected.privateFee.gasSettings.teardownGasLimits.daGas))*BigInt(selected.privateFee.gasSettings.maxFeesPerGas.feePerDaGas)+(BigInt(selected.privateFee.gasSettings.gasLimits.l2Gas)+BigInt(selected.privateFee.gasSettings.teardownGasLimits.l2Gas))*BigInt(selected.privateFee.gasSettings.maxFeesPerGas.feePerL2Gas)).toString(),...Object.fromEntries(['prepare','confirm','recover','inspect','checkpointClaim','reviewRevertedClaim'].map(name=>[name,(...args)=>locked(()=>aggregate[name](...args))]))}):null,get busy(){return busy;},close(){
   if(closing)return closing;
   if(busy)return Promise.reject(fail('ROLLING_BUSY'));
   if(closed&&!pxe&&!store)return Promise.resolve();

@@ -39,7 +39,7 @@ export { computePartialAddress, computeContractAddressFromInstance, computeArtif
 export { deriveKeys, deriveKeysFromMasterSecretKeys, deriveMasterMessageSigningSecretKey,
   deriveMasterMessageSigningSecretKey as deriveSigningKey,
   deriveMasterMessageSigningSecretKey as deriveMasterMessageSigningSecretKeyAlias } from '@aztec-labs/stdlib/keys';
-export { computeSecretHash, deriveStorageSlotInMap, siloNullifier } from '@aztec-labs/stdlib/hash';
+export { computeL2ToL1MessageHash, computeSecretHash, deriveStorageSlotInMap, siloNullifier } from '@aztec-labs/stdlib/hash';
 export { computeFeeJuiceMessageNullifier,
   computeFeeJuiceMessageNullifier as computeL1ToL2MessageNullifier,
   getNonNullifiedL1ToL2MessageWitness } from '@aztec-labs/stdlib/messaging';

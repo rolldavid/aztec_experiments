@@ -488,3 +488,57 @@ for(const defect of ['none','hash','status','execution','canonical','account'])t
  const input={sdk:{TxHash:{fromString:value=>value},boundedTransactionRead:fn=>fn(),requireSuccessfulReceipt},node:{getTxReceipt:async()=>{reads++;return receipt;},getBlock:async number=>{assert.equal(number,3);reads++;return {hash:defect==='canonical'?'0x'+'44'.repeat(32):blockHash};}},txHash:hash,contextGuard:()=>{if(defect==='account')throw Error('account changed');}};
  if(defect==='none'){await verifyRollingTopupClaim(input);assert.equal(reads,2);}else{await assert.rejects(verifyRollingTopupClaim(input));if(defect==='account')assert.equal(reads,0);}
 });
+
+import {createCollateralWithdrawal} from './wallet-session.mjs';
+import {createEthereumJournal} from '../../shared/ethereum-journal.mjs';
+import {computeL2ToL1MessageHash} from '@aztec-labs/stdlib/hash';
+import {EthAddress} from '@aztec-labs/foundation/eth-address';
+import {TxHash} from '@aztec-labs/stdlib/tx';
+import {hexlify} from 'ethers';
+import {encodeEscrowCommitment} from '../../shared/protocol-commitments.mjs';
+async function withdrawalFixture({chainId='31337'}={}){
+ const scope={account:hex(3),chainId,version:'1',rollup:eth(11),board:hex(1),portal:eth(22)},record={intentId:hex(8),action:{type:'withdraw',deposit:hex(9)},status:'confirmed',txHash:hex(77),withdrawal:{eligible:true,amount:'100',depositor:eth(33)}};
+ const content=sha256ToField([Buffer.from(encodeEscrowCommitment('exit',{l1ChainId:scope.chainId,rollupAddress:scope.rollup,rollupVersion:scope.version,boardAddress:scope.board,portalAddress:scope.portal},{amount:'100',depositor:eth(33)}))]);
+ const leaf=computeL2ToL1MessageHash({l2Sender:new AztecAddress(new Fr(BigInt(scope.board))),l1Recipient:EthAddress.fromString(scope.portal),content,chainId:new Fr(BigInt(chainId)),rollupVersion:new Fr(1)});
+ const state={sends:0,calls:0,guard:true,connected:eth(33),price:2n,settled:true,unknown:false,head:10,tx:null,receipt:null,fork:false};const values=new Map();
+ const storage={read:async key=>values.get(key)??null,compareAndSwap:async(key,previous,next)=>{assert.equal(values.get(key)??null,previous);if(next===null)values.delete(key);else values.set(key,next);}};
+ const provider={getNetwork:async()=>({chainId:BigInt(chainId)}),getBlockNumber:async()=>state.head,getBlock:async n=>n==='finalized'?{number:state.finalized??state.head,hash:hex(state.finalized??state.head)}:({number:n==='latest'?state.head:n,hash:state.fork?hex(999):hex(n==='latest'?state.head:n),parentHash:hex(Number(n==='latest'?state.head:n)-1),prefetchedTransactions:state.tx?[state.tx]:[]}),getTransactionCount:async()=>state.tx?1:0,getTransaction:async h=>state.tx?.hash===h?state.tx:null,getTransactionReceipt:async h=>state.receipt?.hash===h?state.receipt:null,waitForTransaction:async()=>state.receipt,estimateGas:async()=>100n,getFeeData:async()=>({gasPrice:state.price}),call:async()=>{state.calls++;if(!state.settled)throw Error('Outbox not settled');return '0x';}};
+ const node={getTxReceipt:async()=>({txHash:record.txHash,status:'checkpointed',executionResult:'success',blockNumber:1,blockHash:hex(42)}),getTxEffect:async()=>({l2BlockNumber:1,l2BlockHash:hex(42),data:{l2ToL1Msgs:[leaf]}}),getBlockData:async()=>({header:{globalVariables:{blockNumber:1}},blockHash:state.l2Fork?hex(99):hex(42)}),getL2ToL1MembershipWitness:async()=>({epochNumber:1,numCheckpointsInEpoch:1,leafIndex:0n,siblingPath:{toBufferArray:()=>[]}})};
+ const abi=new Interface(['event Withdrawn(address indexed depositor,uint128 amount)']);
+ const signer={getAddress:async()=>state.connected,sendTransaction:async request=>{state.sends++;state.head++;state.tx={...request,hash:hex(88)};state.receipt={hash:hex(88),from:eth(33),to:scope.portal,status:1,gasUsed:100n,gasPrice:2n,blockNumber:state.head,blockHash:hex(state.head),logs:[{address:scope.portal,...abi.encodeEventLog(abi.getEvent('Withdrawn'),[eth(33),100n])}]};if(state.unknown)throw Error('lost response');return state.tx;}};
+ const opts={sdk:{createEthereumJournal,Fr,AztecAddress,EthAddress,TxHash,computeL2ToL1MessageHash,sha256ToField,boundedTransactionRead:fn=>fn()},ethers:{Interface,hexlify},provider,node,application:{readWithdrawal:async()=>record},scope,storage,walletSecret:hex(8),walletSalt:hex(9),contextGuard:async()=>{assert(state.guard);},captureWallet:async()=>({address:state.connected,chainId,name:'Development wallet',signer,guard:async()=>{assert(state.guard&&state.connected===eth(33));}})};
+ return {state,record,opts,values,cap:createCollateralWithdrawal(opts),restart:()=>createCollateralWithdrawal(opts)};
+}
+test('RC22 collateral refund uses actual encrypted Ethereum journal, exact original depositor and one explicit send',async()=>{
+ const f=await withdrawalFixture();const review=await f.cap.prepare({maximumGasWei:'1000'});assert.equal(review.amount,'100');assert.equal(review.estimatedGasWei,'400');assert.equal(f.state.sends,0);
+ const result=await f.cap.confirm();assert.equal(result.status,'refunded');assert.equal(result.gasCostWei,'200');assert.equal(f.state.sends,1);assert.equal(f.state.tx.value,0n);
+ assert.equal(await f.restart().verify(f.record),true);assert.equal((await f.restart().recover()).status,'refunded');assert.equal(f.state.sends,1);
+ await assert.rejects(f.restart().prepare({maximumGasWei:'1000'}));assert.equal(f.state.sends,1);
+ assert([...f.values.values()].every(v=>!v.includes(f.record.withdrawal.depositor)));
+});
+test('RC22 lost refund response recovers read-only across reopen without another send',async()=>{
+ const f=await withdrawalFixture();await f.cap.prepare({maximumGasWei:'1000'});f.state.unknown=true;
+ await assert.rejects(f.cap.confirm(),{code:'BB_ETH_SUBMISSION_UNKNOWN'});assert.equal(f.state.sends,1);
+ assert.equal((await f.restart().recover()).status,'refunded');assert.equal(f.state.sends,1);
+});
+for(const change of ['wallet','chain-anchor','gas','settlement','cancel'])test(`RC22 refund ${change} change never reaches a send`,async()=>{
+ const f=await withdrawalFixture();await f.cap.prepare({maximumGasWei:'1000'});
+ if(change==='wallet')f.state.connected=eth(44);if(change==='chain-anchor')f.state.l2Fork=true;if(change==='gas')f.state.price=100n;if(change==='settlement')f.state.settled=false;if(change==='cancel')f.cap.cancel();
+ await assert.rejects(f.cap.confirm());assert.equal(f.state.sends,0);
+});
+test('RC22 refund receipt reorg cannot unlock workflow or authorize another payment',async()=>{
+ const f=await withdrawalFixture();await f.cap.prepare({maximumGasWei:'1000'});await f.cap.confirm();f.state.fork=true;
+ await assert.rejects(f.restart().verify(f.record));assert.equal(f.state.sends,1);
+});
+test('RC22 timeout retains ownership of the original provider read before returning failure',async()=>{
+ const f=await withdrawalFixture(),original=Error('bounded read timeout');let release,started;const began=new Promise(resolve=>started=resolve),held=new Promise(resolve=>release=resolve);
+ f.opts.provider.getNetwork=async()=>{started();await held;return {chainId:31337n};};f.opts.sdk.boundedTransactionRead=async fn=>Promise.race([fn(),began.then(()=>{throw original;})]);
+ let settled=false;const result=f.restart().prepare({maximumGasWei:'1000'}).catch(error=>{assert.equal(error,original);settled=true;});
+ await began;await new Promise(resolve=>setImmediate(resolve));assert.equal(settled,false);release();await result;assert.equal(settled,true);assert.equal(f.state.sends,0);
+});
+test('RC22 testnet refund waits for finalized Ethereum inclusion and resumes without another send',async()=>{
+ const f=await withdrawalFixture({chainId:'11155111'});await f.cap.prepare({maximumGasWei:'1000'});f.state.finalized=9;
+ await assert.rejects(f.cap.confirm(),{code:'ROLLING_WITHDRAWAL_RECOVERY_REQUIRED'});assert.equal(f.state.sends,1);
+ await assert.rejects(f.restart().verify(f.record),{code:'ROLLING_WITHDRAWAL_RECOVERY_REQUIRED'});
+ f.state.finalized=f.state.head;assert.equal((await f.restart().recover()).status,'refunded');assert.equal(f.state.sends,1);
+});

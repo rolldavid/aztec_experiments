@@ -1,6 +1,6 @@
 // The caller owns the account lock, PXE lifetime and trusted-route guard.
 // autoSync:false requires synchronization before every private application operation.
-const methods=['readModeratorStatus','readBokStatus','prepareBokPost','readAccountStatus','readPreferenceHead','readProfile','ownedIdentities','prepare','submitPrepared','cancelPrepared','reconcile','inspectRecovery','prepareReplacement','resumeSaved'];
+const methods=['readBalances','readWithdrawal','readModeratorStatus','readBokStatus','prepareBokPost','readAccountStatus','readPreferenceHead','readProfile','ownedIdentities','prepare','submitPrepared','cancelPrepared','reconcile','inspectRecovery','prepareReplacement','resumeSaved'];
 // This financial confirmation must bind the caller's selection before the
 // synchronization await, not retain a mutable object until the raw app runs.
 function savedResumeArguments(args){
@@ -12,13 +12,21 @@ function savedResumeArguments(args){
   return [id,{expectedTxHash:descriptor.value}];
  }catch{throw Object.assign(Error('Invalid Rolling action'),{code:'ROLLING_INVALID_ACTION'});}
 }
+function balanceArguments(args){
+ try{
+  if(args.length===0)return [{cursor:0}];
+  const [input]=args,d=input&&Object.getOwnPropertyDescriptor(input,'cursor');
+  if(args.length!==1||Object.getPrototypeOf(input)!==Object.prototype||Reflect.ownKeys(input).length!==1||!d||!Object.hasOwn(d,'value')||!(d.value===0||typeof d.value==='string'))throw 0;
+  return [{cursor:d.value}];
+ }catch{throw Object.assign(Error('Invalid Rolling balance cursor'),{code:'ROLLING_BALANCE_CURSOR_INVALID'});}
+}
 export function createSynchronizedRollingApplication({application,synchronize,contextGuard}){
  if(typeof synchronize!=='function'||typeof contextGuard!=='function')throw Error('Rolling synchronization unavailable');
  const calls=methods.map(name=>{
   if(typeof application?.[name]!=='function')throw Error('Rolling application unavailable');
   const call=application[name].bind(application);
   return [name,async(...args)=>{
-   const captured=name==='resumeSaved'?savedResumeArguments(args):args;
+   const captured=name==='resumeSaved'?savedResumeArguments(args):name==='readBalances'?balanceArguments(args):args;
    await contextGuard();await synchronize();await contextGuard();return call(...captured);
   }];
  });

@@ -3,7 +3,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {OperationQueue} from '../../node_modules/@aztec-labs/pxe/dest/operation_queue.js';
 import {createSynchronizedRollingApplication} from './synchronized-application.mjs';
-const names=['readModeratorStatus','readBokStatus','prepareBokPost','readAccountStatus','readPreferenceHead','readProfile','ownedIdentities','prepare','submitPrepared','cancelPrepared','reconcile','inspectRecovery','prepareReplacement','resumeSaved'];
+const names=['readBalances','readWithdrawal','readModeratorStatus','readBokStatus','prepareBokPost','readAccountStatus','readPreferenceHead','readProfile','ownedIdentities','prepare','submitPrepared','cancelPrepared','reconcile','inspectRecovery','prepareReplacement','resumeSaved'];
 test('explicit synchronization exposes a newly included name through the actual autoSync:false SDK queue',async()=>{
  let anchor=14,head=14,closed=0,syncs=0;
  const synchronizer={sync:async()=>{syncs++;anchor=head;}};
@@ -57,4 +57,10 @@ test('saved resume options are captured before synchronization without invoking 
  let reads=0,calls=0;const guarded=createSynchronizedRollingApplication({application:raw,contextGuard:()=>{calls++;},synchronize:()=>{calls++;}});
  await assert.rejects(guarded.resumeSaved('intent',{get expectedTxHash(){reads++;throw Error('PRIVATE_SENTINEL');}}),{code:'ROLLING_INVALID_ACTION'});
  assert.equal(reads,0);assert.equal(calls,0);
+});
+test('RC22 balance cursor is captured before synchronization and accessor input is never evaluated',async()=>{
+ let release;const gate=new Promise(resolve=>release=resolve),input={cursor:'original-page'};
+ const raw=Object.fromEntries(names.map(name=>[name,(...args)=>args]));const app=createSynchronizedRollingApplication({application:raw,contextGuard:()=>{},synchronize:()=>gate});
+ const pending=app.readBalances(input);input.cursor='replacement';release();assert.deepEqual(await pending,[{cursor:'original-page'}]);
+ let reads=0;await assert.rejects(app.readBalances({get cursor(){reads++;return 0;}}),{code:'ROLLING_BALANCE_CURSOR_INVALID'});assert.equal(reads,0);
 });
