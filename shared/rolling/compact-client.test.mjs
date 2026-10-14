@@ -1,7 +1,7 @@
 // Labelled transport doubles: no node, chain, private authentication or browser qualification.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createRollingCompactClient,validateCompactSelector,validateCompactResponse,readCompactResponse,COMPACT_TRANSPORT_LIMITS} from './compact-client.mjs';
+import {createRollingCompactClient,validateCompactSelector,validateCompactResponse,readCompactResponse,COMPACT_TRANSPORT_LIMITS,compactHasNoPrivateLogs,compactPrivateLogCountHint} from './compact-client.mjs';
 const hash='0x'+'01'.repeat(32),selector={schemaVersion:1,number:7,hash,tier:'checkpointed'};
 const body=()=>({schemaVersion:1,number:7,hash,headerFields:Array(23).fill('0x'+'00'.repeat(32)),fields:Array(7).fill('0x'+'00'.repeat(32))});
 const response=value=>new Response(JSON.stringify(value),{headers:{'content-type':'application/json'}});
@@ -90,4 +90,24 @@ test('empty-prefix option is captured own boolean and never forwarded as a selec
  let calls=0;const client=fixture(t,async(url,options)=>{calls++;assert.deepEqual(Object.keys(JSON.parse(options.body)).sort(),['hash','number','schemaVersion','tier']);return response({...body(),number:1});});
  for(const options of [{emptyPrefix:'true'},{get emptyPrefix(){throw Error('PRIVATE');}},{emptyPrefix:true,account:hash}])await assert.rejects(client.readMany([{number:1,hash}],options));assert.equal(calls,0);
  await client.readMany([{number:1,hash}],{emptyPrefix:true});assert.equal(calls,1);
+});
+
+const markerHex=n=>'0x'+n.toString(16).padStart(64,'0');
+const noPrivateLogWire=()=>[markerHex((2624615704n<<184n)|4n),markerHex(1n),markerHex(0n),markerHex(2n),markerHex((3951939007n<<112n)|1n),...Array(6).fill(markerHex(0n))];
+test('conservative zero-ciphertext hint recognizes transaction bodies without granting authority',()=>{
+ const values=noPrivateLogWire();assert.equal(compactHasNoPrivateLogs(values),true);
+ for(const bit of [104n,88n]){const log=[...values];log[0]=markerHex(BigInt(log[0])|(1n<<bit));assert.equal(compactHasNoPrivateLogs(log),false);}
+ for(const mutate of [v=>v[0]=markerHex(3n),v=>v[0]=markerHex((2624615704n<<184n)|999n),v=>v[4]=markerHex(0n),v=>v[4]=markerHex((3951939007n<<112n)|2n),v=>v.push(markerHex(0n))]){const invalid=[...values];mutate(invalid);assert.equal(compactHasNoPrivateLogs(invalid),false);}
+ let getters=0;const hostile=[...values];Object.defineProperty(hostile,'0',{get(){getters++;throw Error('PRIVATE');}});assert.equal(compactHasNoPrivateLogs(hostile),false);assert.equal(getters,0);
+ const large=Array(1000).fill(markerHex(0n));assert.equal(compactHasNoPrivateLogs(large),false);
+});
+test('zero-ciphertext prefix passes transaction-only bodies and stops before log-bearing body',async t=>{
+ const calls=[];const client=fixture(t,async(_url,o)=>{const p=JSON.parse(o.body);calls.push(p.number);const b={...body(),number:p.number,fields:noPrivateLogWire()};if(p.number===3)b.fields[0]=markerHex(BigInt(b.fields[0])|(1n<<104n));return response(b);});
+ const result=await client.readMany(Array.from({length:8},(_,i)=>({number:i+1,hash})),{emptyPrefix:true});assert.deepEqual(calls,[1,2,3]);assert.equal(result.length,3);assert(result.slice(0,2).every(b=>compactHasNoPrivateLogs(b.fields)));assert.equal(compactHasNoPrivateLogs(result[2].fields),false);
+});
+
+test('mixed transport hint and exact budget stop before a ninth declared log',async t=>{
+ const calls=[];const client=fixture(t,async(_url,o)=>{const p=JSON.parse(o.body);calls.push(p.number);const wire=noPrivateLogWire();wire[0]=markerHex(BigInt(wire[0])|(1n<<104n)|(1n<<88n));assert.equal(compactPrivateLogCountHint(wire),1);return response({...body(),number:p.number,fields:wire});});
+ const result=await client.readMany(Array.from({length:32},(_,i)=>({number:i+1,hash})),{privateLogBudget:8});assert.equal(result.length,8);assert.deepEqual(calls,[1,2,3,4,5,6,7,8]);
+ const before=calls.length;for(const options of [{privateLogBudget:9},{privateLogBudget:-1},{privateLogBudget:1.5},{privateLogBudget:8,emptyPrefix:true},{get privateLogBudget(){throw Error('PRIVATE');}}])await assert.rejects(client.readMany([{number:1,hash}],options));assert.equal(calls.length,before);
 });

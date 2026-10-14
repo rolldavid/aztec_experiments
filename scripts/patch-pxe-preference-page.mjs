@@ -94,7 +94,7 @@ function snapshot(input,options){
  check(typeof p.proofsEnabled==='boolean'&&['proposed','checkpointed','proven','finalized'].includes(p.tier));
  if(p.expected!==null){p.expected=exact(p.expected,['epoch','sequence']);check(typeof p.expected.epoch==='string'&&/^[0-9a-f]{64}$/.test(p.expected.epoch));integer(p.expected.sequence,Number.MAX_SAFE_INTEGER);}
  if(p.block!==null){const block=value=>{const b=exact(value,['blockNumber','blockHash','fields','headerFields']);integer(b.blockNumber,0xffffffff,1);hex(b.blockHash);b.fields=fields(b.fields,24575,7);b.headerFields=fields(b.headerFields,23,23);return b;};
-  if(Array.isArray(p.block)){integer(p.block.length,32,1);const values=p.block;check(Reflect.ownKeys(values).length===values.length+1);p.block=Array.from({length:values.length},(_,i)=>{const d=Object.getOwnPropertyDescriptor(values,String(i));check(d&&'value'in d);return block(d.value);});check(p.block.every((b,i)=>b.fields.length===7&&(i===0||b.blockNumber===p.block[i-1].blockNumber+1)));}
+  if(Array.isArray(p.block)){integer(p.block.length,32,1);const values=p.block;check(Reflect.ownKeys(values).length===values.length+1);let bytes=0;p.block=Array.from({length:values.length},(_,i)=>{const d=Object.getOwnPropertyDescriptor(values,String(i));check(d&&'value'in d);const b=block(d.value);bytes+=(b.fields.length+b.headerFields.length)*69+2048;check(bytes<=2*1024*1024);return b;});check(p.block.every((b,i)=>i===0||b.blockNumber===p.block[i-1].blockNumber+1));}
   else p.block=block(p.block);
  }
  const {contextGuard}=exact(options,['contextGuard']);check(typeof contextGuard==='function');return {p,guard:contextGuard};
@@ -171,25 +171,38 @@ export async function runRollingPreferenceRecovery(pxe,input,options){
     const checkBlock=async()=>{await frame.archive(block.blockNumber,block.blockHash,block.headerFields);await guard();return true;};
     const verified=await authenticateCompactBlock({fields:block.fields,headerFields:block.headerFields,expectedBlockHash:block.blockHash,assertCanonical:checkBlock});register(checkBlock);check(verified.blockNumber===block.blockNumber);return verified;
    };
+   const stageSnapshot=async()=>({
+    events:await pxe.privateEventStore.withChangeSet(context.changeSetId,stage=>{check(stage.size<=8);return [...stage.entries()].map(([key,value])=>[key,value.toBuffer().toString('hex')]);}),
+    notes:await pxe.noteStore.withChangeSet(context.changeSetId,stage=>{check(stage.notes.size<=8&&stage.nullifierEmissions.size<=8);return [...stage.notes.entries()].map(([key,value])=>[key,value.toBuffer().toString('hex')]);}),
+    nullifiers:await pxe.noteStore.withChangeSet(context.changeSetId,stage=>[...stage.nullifierEmissions]),
+   });
+   const containsStage=(current,prior)=>{for(const kind of ['events','notes','nullifiers']){const map=new Map(current[kind]);for(const [key,value] of prior[kind])check(map.has(key)&&same(map.get(key),value));}};
+   let stagedSeal=null;
+   frame.validators.push(async()=>{if(stagedSeal)check(same(await stageSnapshot(),stagedSeal));});
    const ingest=async(block,first,logCount)=>{
-    // A separate operation starts empty. Replaying a former page must freshly
-    // stage its note through the ORIGINAL validator; committed presence is not proof.
-    check(await pxe.noteStore.withChangeSet(context.changeSetId,s=>s.notes.size===0&&s.nullifierEmissions.size===0));
-    check(await pxe.privateEventStore.withChangeSet(context.changeSetId,s=>s.size===0));
+    // One bounded frame may ingest several transactions. Prior validated staged
+    // entries remain byte-identical; no stage is cleared or treated as proof.
+    const prior=await stageSnapshot();
+    if(stagedSeal)check(same(prior,stagedSeal));else check(prior.events.length===0&&prior.notes.length===0&&prior.nullifiers.length===0);
     await binding.page({contractAddress:p.contractAddress,scope:p.scope,expectedClassId:p.expectedClassId,expectedArtifactHash:p.expectedArtifactHash,network:p.network,proofsEnabled:p.proofsEnabled,blockNumber:block.blockNumber,blockHash:block.blockHash,txHash:first.txHash,firstLog:first.logIndex,logCount,compactFields:block.fields,headerFields:block.headerFields},guard,frame);
-     const events=await pxe.privateEventStore.withChangeSet(context.changeSetId,changeSet=>{check(changeSet.size<=8);return Array.from(changeSet.values(),e=>({packedEvent:e.msgContent.map(x=>x.toString()),eventSelector:e.eventSelector.toString(),l2BlockNumber:e.l2BlockNumber,l2BlockHash:e.l2BlockHash.toString(),txHash:e.txHash.toString(),txIndexInBlock:e.txIndexInBlock,eventIndexInTx:e.eventIndexInTx,contract:e.contractAddress.toString(),scoped:e.scopes.has(p.scope)}));});
-     check(events.length<=8);
-     for(const e of events){check(e.contract===p.contractAddress&&e.scoped===true&&e.txHash===first.txHash&&e.txIndexInBlock===first.txIndex&&e.l2BlockNumber===block.blockNumber&&e.l2BlockHash===block.blockHash&&e.packedEvent.length===8);integer(e.eventIndexInTx,63);}
-     const candidates=await pxe.noteStore.withChangeSet(context.changeSetId,stage=>{check(stage.notes.size<=8);return [...stage.notes.values()].map(n=>({nullifier:n.noteDao.siloedNullifier.toString(),slot:n.noteDao.storageSlot.toString(),owner:n.noteDao.owner.toString(),contract:n.noteDao.contractAddress.toString(),txHash:n.noteDao.txHash.toString(),blockNumber:n.noteDao.l2BlockNumber,blockHash:n.noteDao.l2BlockHash,txIndex:n.noteDao.txIndexInBlock}));});
-     check(candidates.length<=8);
-     const eventSnapshot=await pxe.privateEventStore.withChangeSet(context.changeSetId,stage=>[...stage.entries()].map(([key,value])=>[key,value.toBuffer().toString('hex')]));
-     const noteSnapshot=await pxe.noteStore.withChangeSet(context.changeSetId,stage=>({notes:[...stage.notes.entries()].map(([key,value])=>[key,value.toBuffer().toString('hex')]),nullifiers:[...stage.nullifierEmissions]}));
-     frame.validators.push(async()=>{
-      const currentEvents=await pxe.privateEventStore.withChangeSet(context.changeSetId,stage=>[...stage.entries()].map(([key,value])=>[key,value.toBuffer().toString('hex')]));
-      const currentNotes=await pxe.noteStore.withChangeSet(context.changeSetId,stage=>({notes:[...stage.notes.entries()].map(([key,value])=>[key,value.toBuffer().toString('hex')]),nullifiers:[...stage.nullifierEmissions]}));
-      check(same(currentEvents,eventSnapshot)&&same(currentNotes,noteSnapshot));
-     });
-    for(const candidate of candidates)check(candidate.owner===p.scope&&candidate.contract===p.contractAddress&&candidate.txHash===first.txHash&&candidate.blockNumber===block.blockNumber&&candidate.blockHash===block.blockHash&&candidate.txIndex===first.txIndex);
+    const after=await stageSnapshot();containsStage(after,prior);
+    const previousEvents=new Map(prior.events),previousNotes=new Map(prior.notes);
+    const events=await pxe.privateEventStore.withChangeSet(context.changeSetId,changeSet=>{
+     const selected=[];for(const [key,e] of changeSet){
+      const current=e.txHash.toString()===first.txHash;
+      if(!previousEvents.has(key)||current){check(e.contractAddress.toString()===p.contractAddress&&e.scopes.has(p.scope)&&current&&e.txIndexInBlock===first.txIndex&&e.l2BlockNumber===block.blockNumber&&e.l2BlockHash.toString()===block.blockHash&&e.msgContent.length===8);integer(e.eventIndexInTx,63);}
+      if(current)selected.push({packedEvent:e.msgContent.map(x=>x.toString()),eventSelector:e.eventSelector.toString(),l2BlockNumber:e.l2BlockNumber,l2BlockHash:e.l2BlockHash.toString(),txHash:e.txHash.toString(),txIndexInBlock:e.txIndexInBlock,eventIndexInTx:e.eventIndexInTx,contract:e.contractAddress.toString(),scoped:e.scopes.has(p.scope)});
+     }return selected;
+    });
+    const candidates=await pxe.noteStore.withChangeSet(context.changeSetId,stage=>{
+     const selected=[];for(const [key,n] of stage.notes){const d=n.noteDao,current=d.txHash.toString()===first.txHash;
+      if(!previousNotes.has(key)||current)check(d.owner.toString()===p.scope&&d.contractAddress.toString()===p.contractAddress&&current&&d.l2BlockNumber===block.blockNumber&&d.l2BlockHash===block.blockHash&&d.txIndexInBlock===first.txIndex);
+      if(current)selected.push({nullifier:d.siloedNullifier.toString(),slot:d.storageSlot.toString(),owner:d.owner.toString(),contract:d.contractAddress.toString(),txHash:d.txHash.toString(),blockNumber:d.l2BlockNumber,blockHash:d.l2BlockHash,txIndex:d.txIndexInBlock});
+     }return selected;
+    });
+    // Every ingested prefix remains present and immutable through settlement;
+    // the final seal additionally refuses any unexplained extra entry.
+    frame.validators.push(async()=>containsStage(await stageSnapshot(),after));stagedSeal=after;
     return {events,candidates};
    };
    const active=async c=>{const notes=await pxe.noteStore.getNotes({contractAddress:address,owner,scopes:[owner],storageSlot:Fr.fromString(c.slot),siloedNullifier:Fr.fromString(c.nullifier)},context.changeSetId);check(notes.length<=1);return notes.length===1;};
@@ -264,28 +277,32 @@ export async function runRollingPreferenceRecovery(pxe,input,options){
     const values=result.result.map(x=>x.toBigInt());check((values[0]===0n||values[0]===1n)&&values[1]===1n&&values[2]>=0n&&values[2]<(1n<<64n));
     head={initialized:values[0]===1n,schema:1,revision:String(values[2]),digest:String(values[3])};
     check(head.initialized?!!state.candidate&&values[2]>0n&&values[3]>0n:!state.candidate&&values[2]===0n&&values[3]===0n);
-   }else if(Array.isArray(p.block)){
-    // Only fully empty authenticated physical blocks may share one cursor commit.
-    // Nonempty blocks retain the original eight-log page/validator path.
-    check(state.nextLog===0&&state.pending.length===0&&p.block[0].blockNumber===state.nextBlock&&p.block.at(-1).blockNumber<=anchorRecord.blockNumber);
-    const validators=[];
-    for(let offset=0;offset<p.block.length;offset+=4){const blocks=p.block.slice(offset,offset+4),verified=await rollingPreferenceReadBatch(blocks.map(block=>async()=>authenticate(block,validate=>validators.push(validate))));
-     for(let i=0;i<verified.length;i++)check(verified[i].blockNumber===state.nextBlock+i&&verified[i].txCount===0&&verified[i].ciphertexts.length===0);state.nextBlock+=verified.length;
-    }
-    frame.validators.push(async()=>{for(let offset=0;offset<validators.length;offset+=4)await rollingPreferenceReadBatch(validators.slice(offset,offset+4));});
    }else{
-    check(p.block&&p.block.blockNumber===state.nextBlock);
-    const block=p.block;
-    const verified=await authenticate(block);check(verified.blockNumber===state.nextBlock&&state.nextLog<=verified.ciphertexts.length);
-    if(state.nextLog<verified.ciphertexts.length){
-     const first=verified.ciphertexts[state.nextLog],logs=[];for(let i=state.nextLog;i<verified.ciphertexts.length&&logs.length<8&&verified.ciphertexts[i].txIndex===first.txIndex;i++)logs.push(verified.ciphertexts[i]);
-     const {events,candidates}=await ingest(block,first,logs.length);
-     for(const e of events){const prior=state.pending.find(x=>x.eventIndexInTx===e.eventIndexInTx);if(prior)check(same(prior,e));else state.pending.push(e);check(state.pending.length<=64);}
-     for(const candidate of candidates){if(await active(candidate)){if(state.candidate)check(state.candidate.nullifier===candidate.nullifier&&state.candidate.slot===candidate.slot);else state.candidate={nullifier:candidate.nullifier,slot:candidate.slot,origin:{blockNumber:block.blockNumber,blockHash:block.blockHash,txHash:first.txHash,txIndex:first.txIndex,firstLog:first.logIndex,logCount:logs.length}};}}
-     state.nextLog+=logs.length;
-     if(state.nextLog===verified.ciphertexts.length||verified.ciphertexts[state.nextLog].txIndex!==first.txIndex){records=state.pending.sort((a,b)=>a.eventIndexInTx-b.eventIndexInTx).map(({contract,scoped,txIndexInBlock,eventIndexInTx,...record})=>record);state.pending=[];}
-    }
-    if(state.nextLog===verified.ciphertexts.length){check(state.pending.length===0);state.nextBlock++;state.nextLog=0;}
+    const consume=async(block,verified,multiple)=>{
+     check(block.blockNumber===state.nextBlock&&verified.blockNumber===state.nextBlock&&state.nextLog<=verified.ciphertexts.length);
+     let used=0;
+     while(state.nextLog<verified.ciphertexts.length){
+      const first=verified.ciphertexts[state.nextLog],logs=[];for(let i=state.nextLog;i<verified.ciphertexts.length&&logs.length<8-used&&verified.ciphertexts[i].txIndex===first.txIndex;i++)logs.push(verified.ciphertexts[i]);check(logs.length>0);
+      const {events,candidates}=await ingest(block,first,logs.length);
+      for(const e of events){const prior=state.pending.find(x=>x.eventIndexInTx===e.eventIndexInTx);if(prior)check(same(prior,e));else state.pending.push(e);check(state.pending.length<=64);}
+      for(const candidate of candidates){if(await active(candidate)){if(state.candidate)check(state.candidate.nullifier===candidate.nullifier&&state.candidate.slot===candidate.slot);else state.candidate={nullifier:candidate.nullifier,slot:candidate.slot,origin:{blockNumber:block.blockNumber,blockHash:block.blockHash,txHash:first.txHash,txIndex:first.txIndex,firstLog:first.logIndex,logCount:logs.length}};}}
+      state.nextLog+=logs.length;used+=logs.length;
+      if(state.nextLog===verified.ciphertexts.length||verified.ciphertexts[state.nextLog].txIndex!==first.txIndex){records.push(...state.pending.sort((a,b)=>a.eventIndexInTx-b.eventIndexInTx).map(({contract,scoped,txIndexInBlock,eventIndexInTx,...record})=>record));state.pending=[];check(records.length<=64);}
+      if(!multiple)break;
+     }
+     if(state.nextLog===verified.ciphertexts.length){check(state.pending.length===0);state.nextBlock++;state.nextLog=0;}
+    };
+    if(Array.isArray(p.block)){
+     check(state.nextLog===0&&state.pending.length===0&&p.block[0].blockNumber===state.nextBlock&&p.block.at(-1).blockNumber<=anchorRecord.blockNumber);
+     const validators=[],verified=[];let physicalLogs=0;
+     // Authenticate the entire bounded input before staging any private record.
+     // The untrusted transport count is never used for this admission decision.
+     for(let offset=0;offset<p.block.length;offset+=4){const values=await rollingPreferenceReadBatch(p.block.slice(offset,offset+4).map(block=>async()=>authenticate(block,validate=>validators.push(validate))));
+      for(const value of values){check(value.blockNumber===state.nextBlock+verified.length);physicalLogs+=value.ciphertexts.length;check(physicalLogs<=8);verified.push(value);}
+     }
+     frame.validators.push(async()=>{for(let offset=0;offset<validators.length;offset+=4)await rollingPreferenceReadBatch(validators.slice(offset,offset+4));});
+     for(let i=0;i<verified.length;i++)await consume(p.block[i],verified[i],true);
+    }else{check(p.block);await consume(p.block,await authenticate(p.block),false);}
    }
    check(state.sequence<Number.MAX_SAFE_INTEGER);state.sequence++;state.last=receipt(state,records,head);
    await binding.store.save(key,state,context.changeSetId);await beforeCommit();return copy(state.last);
@@ -293,7 +310,7 @@ export async function runRollingPreferenceRecovery(pxe,input,options){
  }catch{throw Error('PXE_PREFERENCE_RECOVERY_FAILED');}
 }
 `; }
-export const PREFERENCE_PAGE_RECOVERY_PIN = Object.freeze({generated:'rolling-preference-recovery.mjs',sha256:'f63feaa140c37aaba6109dbcda119a1373ed1f8a1d3df993c2768f5ec268ff29'});
+export const PREFERENCE_PAGE_RECOVERY_PIN = Object.freeze({generated:'rolling-preference-recovery.mjs',sha256:'d5ae2317780bff1a0e80b071d4319cd2cc6074a51b3b9255fb6b00112602ee0a'});
 function imports() { return `
 // @ts-ignore Exact reviewed JavaScript module is copied by the pinned installer.
 import { authenticateCompactBlock as rollingPageCompact } from '../rolling-preference-compact.mjs';

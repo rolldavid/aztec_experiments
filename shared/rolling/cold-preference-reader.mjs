@@ -5,6 +5,7 @@ import {createEncryptedJournalSlot} from '../journal-record.mjs';
 import {createPreferenceFold,resumePreferenceFold,PREFERENCE_DOMAIN} from './preferences.mjs';
 import {createPreferenceEventDecoder} from './preference-events.mjs';
 import {FIELD_MODULUS} from './invocation.mjs';
+import {compactPrivateLogCountHint} from './compact-client.mjs';
 const DOMAIN='ROLLING_COLD_PREFERENCES_V1';
 export const COLD_PREFERENCE_LIMITS=Object.freeze({physicalLogs:8,transactionEvents:64,markerBlocks:32,markers:512});
 const failure=code=>Object.assign(Error('Saved choices could not be recovered. Keep your recovery data and try again after checking the connection.'),{code});
@@ -53,14 +54,14 @@ function delivery(input){
  * scope, epoch and canonical anchor. Loss of the reply replays its mailbox, not
  * the utility. Loss of the cache or a new database restarts enumeration.
  * Snapshot/CAS memory is O(current choices); no total preference cap is invented.
- * One step processes <=8 physical logs (or one empty block) / <=64 emitted rows.
+ * One step processes <=8 physical logs across <=32 bounded blocks / <=64 emitted rows.
  * Whole-block root authentication has protocol-bounded but unqualified worst-
  * case CPU. Deep reorg rollback and original SDK initial sync remain separately
  * measured concerns. No generic contract sync or global complete flag is used.
  *
  * Supported tipsOnly sync runs initially and on a NEW explicit read after a
  * completed scan. A scan retains one canonical selected-tier anchor. A newer
- * anchor can extend only a complete authenticated checkpoint: a separate step
+ * anchor can extend a complete or partial authenticated checkpoint: a separate step
  * revalidates its former head page, then scans only the suffix. Fork/generation
  * changes rebuild honestly; deep-fork work is not history-independent.
  * No result is published until physical completion, key-gated head equality,
@@ -156,19 +157,22 @@ export function createRollingColdPreferenceReader(input){
     if(!isNew&&!observed.complete){
      let block=null;
      if(observed.nextBlock<=observed.anchor.blockNumber){
-      const count=fetchBlocks&&observed.nextLog===0?Math.min(32,observed.anchor.blockNumber-observed.nextBlock+1):1,blocks=[];
-      // Bound lookahead to four public heights. Stop physical reads at the first
-      // nonempty body instead of fetching 31 bodies that this page cannot use.
+      const count=fetchBlocks&&observed.nextLog===0?Math.min(32,observed.anchor.blockNumber-observed.nextBlock+1):1,blocks=[];let remainingLogs=8;
+      // Bound lookahead to four public heights and eight declared logs total.
+      // This is transport selection only; the SDK independently authenticates
+      // every body and enforces the actual eight-log bound before staging.
       for(let offset=0;offset<count;offset+=4){
        const width=Math.min(4,count-offset),group=await Promise.allSettled(Array.from({length:width},async(_,i)=>{const number=observed.nextBlock+offset+i;return {number,hash:await canonical(number)};}));const failed=group.find(r=>r.status==='rejected');if(failed)throw failed.reason;const selectors=group.map(r=>r.value);
-       const wires=width>1?await checked(()=>fetchBlocks(selectors,{signal,emptyPrefix:true})):[await checked(()=>fetchBlock(selectors[0],{signal}))];check(wires.length>0&&wires.length<=width);check(wires.length===width||wires.at(-1).fields.length!==7);
-       for(let i=0;i<wires.length;i++){const wire=wires[i];check(wire.number===selectors[i].number&&wire.hash===selectors[i].hash);blocks.push({blockNumber:wire.number,blockHash:wire.hash,fields:wire.fields,headerFields:wire.headerFields});if(wire.fields.length!==7)break;}
-       if(blocks.at(-1).fields.length!==7)break;
+       const wires=width>1?await checked(()=>fetchBlocks(selectors,{signal,privateLogBudget:remainingLogs})):[await checked(()=>fetchBlock(selectors[0],{signal}))];check(wires.length>0&&wires.length<=width);
+       let stop=false;
+       for(let i=0;i<wires.length;i++){const wire=wires[i];check(wire.number===selectors[i].number&&wire.hash===selectors[i].hash);const logs=compactPrivateLogCountHint(wire.fields);
+        if(logs===null||logs>remainingLogs){if(blocks.length===0)blocks.push({blockNumber:wire.number,blockHash:wire.hash,fields:wire.fields,headerFields:wire.headerFields});check(i===wires.length-1);stop=true;break;}
+        blocks.push({blockNumber:wire.number,blockHash:wire.hash,fields:wire.fields,headerFields:wire.headerFields});remainingLogs-=logs;
+        if(remainingLogs===0){check(i===wires.length-1);stop=true;break;}
+       }
+       check(wires.length===width||stop);if(stop)break;
       }
-      // Transport shape selects a prefix; only the SDK authenticates emptiness,
-      // compact roots and canonical headers before advancing the atomic cursor.
-      let empty=0;if(observed.nextLog===0)while(empty<blocks.length&&blocks[empty].fields.length===7)empty++;
-      block=empty>1?blocks.slice(0,empty):blocks[0];
+      check(blocks.length>0);block=blocks.length>1?blocks:blocks[0];
      }
      observed=await request({epoch:observed.epoch,sequence:observed.sequence},block);
      check(observed.database===cache.delivery.database&&observed.epoch===cache.delivery.epoch&&observed.sequence===cache.delivery.sequence+1);markers=null;

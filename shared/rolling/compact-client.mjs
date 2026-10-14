@@ -26,6 +26,27 @@ function fields(value,max,min){
  const result=[];for(let i=0;i<length;i++){const d=Object.getOwnPropertyDescriptor(value,String(i));check(d&&Object.hasOwn(d,'value'));result.push(field(d.value));}
  check(Reflect.ownKeys(value).length===length+1);return Object.freeze(result);
 }
+// Conservative scheduling hint only, matching the pinned rc3 blob markers.
+// It never authenticates a body, proves emptiness, or permits a cursor advance.
+// The SDK still decodes and authenticates all transactions/roots/archive proofs.
+// Large or unfamiliar bodies use the original scalar path. This per-body cap
+// keeps a 32-block mixed page within the existing 2MiB input budget.
+export function compactPrivateLogCountHint(input){
+ try{
+  const values=fields(input,24575,7);if((values.length+23)*69+2048>65536)return null;
+  if(values.length===7)return 0; // Existing empty shape is still only a hint.
+  let cursor=0,count=0,logs=0;
+  while(cursor<values.length-7){
+   const marker=BigInt(values[cursor]);if(marker>>184n!==2624615704n)return null;
+   const length=Number(marker&0xffffffffn),privateLogs=Number((marker>>104n)&0xffffn),privateLength=Number((marker>>88n)&0xffffn);
+   if(length<4||cursor+length>values.length-7||privateLogs>64||privateLength<privateLogs||privateLength>privateLogs*16)return null;
+   logs+=privateLogs;cursor+=length;count++;if(count>6142)return null;
+  }
+  if(cursor!==values.length-7)return null;
+  const end=BigInt(values[cursor]);return end>>112n===3951939007n&&Number(end&0xffffn)===count?logs:null;
+ }catch{return null;}
+}
+export function compactHasNoPrivateLogs(input){return compactPrivateLogCountHint(input)===0;}
 export function validateCompactResponse(value,selector){
  const p=exact(value,['schemaVersion','number','hash','headerFields','fields']);
  check(p.schemaVersion===1&&p.number===selector.number&&p.hash===selector.hash);
@@ -80,15 +101,15 @@ export function createRollingCompactClient(input){
  return Object.freeze({async read(input,options={}){
   if(active)throw fail();active=true;try{return await read(input,options);}finally{active=false;}
  },async readMany(inputs,options={}){
-  if(active)throw fail();let captured,settings,emptyPrefix;
-  try{const o=exact(options,[],['signal','emptyPrefix']);check(o.emptyPrefix===undefined||typeof o.emptyPrefix==='boolean');emptyPrefix=o.emptyPrefix===true;settings={signal:o.signal};check(settings.signal===undefined||settings.signal instanceof AbortSignal);check(Array.isArray(inputs)&&inputs.length>0&&inputs.length<=32);check(Reflect.ownKeys(inputs).length===inputs.length+1);captured=Array.from({length:inputs.length},(_,i)=>{const d=Object.getOwnPropertyDescriptor(inputs,String(i));check(d&&Object.hasOwn(d,'value'));const p=exact(d.value,['number','hash']);validateCompactSelector({schemaVersion:1,...p,tier},tier);return Object.freeze(p);});check(captured.every((p,i)=>i===0||p.number===captured[i-1].number+1));}catch{throw fail();}
+  if(active)throw fail();let captured,settings,emptyPrefix,logBudget;
+  try{const o=exact(options,[],['signal','emptyPrefix','privateLogBudget']);check(o.emptyPrefix===undefined||typeof o.emptyPrefix==='boolean');check(o.privateLogBudget===undefined||(Number.isSafeInteger(o.privateLogBudget)&&o.privateLogBudget>=0&&o.privateLogBudget<=8&&o.emptyPrefix===undefined));emptyPrefix=o.emptyPrefix===true;logBudget=emptyPrefix?0:o.privateLogBudget;settings={signal:o.signal};check(settings.signal===undefined||settings.signal instanceof AbortSignal);check(Array.isArray(inputs)&&inputs.length>0&&inputs.length<=32);check(Reflect.ownKeys(inputs).length===inputs.length+1);captured=Array.from({length:inputs.length},(_,i)=>{const d=Object.getOwnPropertyDescriptor(inputs,String(i));check(d&&Object.hasOwn(d,'value'));const p=exact(d.value,['number','hash']);validateCompactSelector({schemaVersion:1,...p,tier},tier);return Object.freeze(p);});check(captured.every((p,i)=>i===0||p.number===captured[i-1].number+1));}catch{throw fail();}
   active=true;
   try{const values=[];for(const selector of captured){
    // Native and trusted compact endpoints admit one physical block at a time.
-   // Keep that admission bound; the SDK still commits authenticated empty pages in batches.
+   // Keep that admission bound; the SDK still authenticates all bodies before each bounded batch commit.
    const value=await read(selector,settings);values.push(value);
    // Selection only: the SDK still authenticates every body it consumes.
-   if(emptyPrefix&&value.fields.length!==7)break;
+   if(logBudget!==undefined){const logs=compactPrivateLogCountHint(value.fields);if(logs===null||logs>logBudget)break;logBudget-=logs;if(!emptyPrefix&&logBudget===0)break;}
   }return Object.freeze(values);}finally{active=false;}
  }});
 }

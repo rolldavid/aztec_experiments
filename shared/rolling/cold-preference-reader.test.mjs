@@ -240,7 +240,7 @@ for(const boundary of [1,2,7])test('history reader stops transport lookahead at 
  f.config.node.getBlockData=async n=>{canonical.push(n);return originalCanonical(n);};
  const originalRead=f.config.compact.read;
  f.config.compact.read=async p=>{calls.push(p.number);assert(p.number<=boundary,'unused future body must not be fetched');const wire=await originalRead(p);if(p.number===boundary)wire.fields=Array(19).fill(hex(0));return wire;};
- f.config.compact.readMany=async(selectors,options)=>{assert.equal(options.emptyPrefix,true);const wires=[];for(const p of selectors){const wire=await f.config.compact.read(p);wires.push(wire);if(wire.fields.length!==7)break;}return wires;};
+ f.config.compact.readMany=async(selectors,options)=>{assert.equal(options.privateLogBudget,8);const wires=[];for(const p of selectors){const wire=await f.config.compact.read(p);wires.push(wire);if(wire.fields.length!==7)break;}return wires;};
  f.config.pxe.processRollingPreferenceRecovery=async p=>{if(p.expected){submitted=p.block;const size=Array.isArray(p.block)?p.block.length:1;current={...current,sequence:current.sequence+1,nextBlock:current.nextBlock+size};}return structuredClone(current);};
  const reader=f.reader();await reader.read();const result=await reader.read();assert.deepEqual(calls,Array.from({length:boundary},(_,i)=>i+1));assert.equal(result.preferences,undefined);assert.equal(result.progress.nextBlock,1+Math.max(1,boundary-1));assert.equal(result.progress.processedRevision,'0');
  if(boundary===1){assert(!Array.isArray(submitted));assert.equal(submitted.fields.length,19);}else if(boundary===2){assert(!Array.isArray(submitted));assert.equal(submitted.fields.length,7);}else{assert(Array.isArray(submitted));assert.equal(submitted.length,boundary-1);assert(submitted.every(b=>b.fields.length===7));}
@@ -250,4 +250,22 @@ test('short empty transport prefix fails before any SDK advance or encrypted CAS
  const f=fixture(),process=f.config.pxe.processRollingPreferenceRecovery;f.config.pxe.processRollingPreferenceRecovery=async p=>{const value=await process(p);value.anchor={blockNumber:64,blockHash:hex(74)};return value;};
  f.config.compact.readMany=async selectors=>[await f.config.compact.read(selectors[0])];
  const reader=f.reader();await reader.read();const persisted=[...f.db.entries()];await assert.rejects(reader.read(),{code:'ROLLING_COLD_PREFERENCES_UNAVAILABLE'});assert.equal(f.state.steps,0);assert.deepEqual([...f.db.entries()],persisted);
+});
+
+test('transaction-only physical history batches without treating transport hint as authentication',async()=>{
+ const f=fixture();let current={schemaVersion:1,database:'a'.repeat(64),epoch:'b'.repeat(64),sequence:0,anchor:{blockNumber:32,blockHash:hex(42)},nextBlock:1,nextLog:0,records:[],head:null,complete:false},submitted;
+ const originalRead=f.config.compact.read;
+ f.config.compact.read=async p=>({...await originalRead(p),fields:[hex((2624615704n<<184n)|4n),hex(1),hex(0),hex(2),hex((3951939007n<<112n)|1n),...Array(6).fill(hex(0))]});
+ f.config.compact.readMany=async selectors=>Promise.all(selectors.map(p=>f.config.compact.read(p)));
+ f.config.pxe.processRollingPreferenceRecovery=async p=>{if(p.expected){submitted=p.block;assert(Array.isArray(submitted)&&submitted.length===32);current={...current,sequence:1,nextBlock:33};}return structuredClone(current);};
+ const reader=f.reader();await reader.read();const result=await reader.read();assert.equal(result.progress.nextBlock,33);assert.equal(result.complete,false);assert.equal(result.preferences,undefined);assert(submitted.every(b=>b.fields.length>7));
+});
+
+test('mixed transport prefix shares one SDK request only within the unchanged eight-log budget',async()=>{
+ const f=fixture();let current={schemaVersion:1,database:'a'.repeat(64),epoch:'b'.repeat(64),sequence:0,anchor:{blockNumber:32,blockHash:hex(42)},nextBlock:1,nextLog:0,records:[],head:null,complete:false},submitted;const calls=[];
+ const originalRead=f.config.compact.read;
+ f.config.compact.read=async p=>{calls.push(p.number);return {...await originalRead(p),fields:[hex((2624615704n<<184n)|(1n<<104n)|(1n<<88n)|4n),hex(1),hex(0),hex(2),hex((3951939007n<<112n)|1n),...Array(6).fill(hex(0))]};};
+ f.config.compact.readMany=async(selectors,options)=>{const out=[];for(const p of selectors){out.push(await f.config.compact.read(p));if(out.length===options.privateLogBudget)break;}return out;};
+ f.config.pxe.processRollingPreferenceRecovery=async p=>{if(p.expected){submitted=p.block;assert(Array.isArray(submitted)&&submitted.length===8);current={...current,sequence:1,nextBlock:9};}return structuredClone(current);};
+ const reader=f.reader();await reader.read();const result=await reader.read();assert.equal(result.progress.nextBlock,9);assert.equal(result.complete,false);assert.deepEqual(calls,[1,2,3,4,5,6,7,8]);
 });

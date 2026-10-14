@@ -597,7 +597,7 @@ if(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1') {
     assert.equal(sha(artifactBytes),'20c4946741d2afd5be7f2f18aad6409780b2f4db74f415bea30f95ee9a76fe24','Wrong processed ACIR fixture');
     const artifact=loadContractArtifact(JSON.parse(artifactBytes));
     const log={...quiet,getBindings:()=>({}),createChild(){return this;}};
-    async function acirFixture(t) {
+    async function acirFixture(t,{zeroCiphertextHistory=false}={}) {
       const contractClass=await getContractClassFromArtifact(artifact),artifactHash=await computeArtifactHash(artifact);
       // A real, deterministically derived instance of the actual processed class.
       // Its chain registration/initialization is synthetic test data, not a claim
@@ -639,7 +639,7 @@ if(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1') {
       async function historyBlock(number){
         if(number===header.getBlockNumber()){assert(block);return block;}
         assert(Number.isSafeInteger(number)&&number>0&&number<header.getBlockNumber(),'Unexpected synthetic history selector');
-        if(!emptyHistory.has(number)){const h=BlockHeader.empty();h.globalVariables.chainId=new Fr(31337);h.globalVariables.version=new Fr(1);h.globalVariables.blockNumber=number;h.lastArchive=new AppendOnlyTreeSnapshot((await archiveAt(number)).root,number);const body=new Body([]);h.txEffectsTreeRoot=await body.computeTxEffectsTreeRoot();emptyHistory.set(number,new L2Block(AppendOnlyTreeSnapshot.empty(),h,body,1,0));}
+        if(!emptyHistory.has(number)){const h=BlockHeader.empty();h.globalVariables.chainId=new Fr(31337);h.globalVariables.version=new Fr(1);h.globalVariables.blockNumber=number;h.lastArchive=new AppendOnlyTreeSnapshot((await archiveAt(number)).root,number);const body=new Body(zeroCiphertextHistory?[new TxEffect(RevertCode.OK,TxHash.fromBigInt(BigInt(1000+number)),Fr.ZERO,[],[new Fr(2000+number)],[],[],[],[],[])]:[]);h.txEffectsTreeRoot=await body.computeTxEffectsTreeRoot();emptyHistory.set(number,new L2Block(AppendOnlyTreeSnapshot.empty(),h,body,1,0));}
         return emptyHistory.get(number);
       }
       // Labelled chain transport only: expose genuine simulated ciphertexts
@@ -1060,10 +1060,62 @@ if(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1') {
         const start=await r.page.processRollingPreferenceRecovery(recoveryInput(f),{contextGuard:async()=>{}});assert.equal(start.sequence,0);assert.equal(start.complete,false);
       });
     });
+    await test('actual ACIR mixed bounded page preserves both revisions and exact staged union',async t=>{
+      const f=await acirFixture(t);await f.extendRevision();const tags=f.counters.tagQueries;
+      const r=await f.receiver({recovery:true}),scalar=await f.receiver({recovery:true}),blocks=await Promise.all([1,2,3,4,5].map(n=>f.compact(n)));
+      const start=await r.page.processRollingPreferenceRecovery(recoveryInput(f),{contextGuard:async()=>{}}),base={...recoveryInput(f),expected:{epoch:start.epoch,sequence:start.sequence}};
+      let one=await scalar.page.processRollingPreferenceRecovery(recoveryInput(f),{contextGuard:async()=>{}}),scalarRecords=[];while(one.nextBlock<=5){one=await recoveryStep(f,scalar,one);scalarRecords.push(...one.records);}
+      const batch=await r.page.processRollingPreferenceRecovery({...base,block:blocks},{contextGuard:async()=>{}});
+      assert.equal(batch.nextBlock,6);assert.equal(batch.sequence,1);assert.deepEqual(batch.records,scalarRecords);assert.deepEqual(batch.records.map(x=>BigInt(x.packedEvent[1])),[1n,2n]);assert.equal(r.page.acirCompleted,2);assert.equal(scalar.page.acirCompleted,2);
+      assert.deepEqual(await r.read(),await scalar.read());assert.deepEqual(await r.page.processRollingPreferenceRecovery({...base,block:blocks},{contextGuard:async()=>{}}),batch);assert.equal(r.page.acirCompleted,2);
+      const complete=await recoveryStep(f,r,batch);assert.equal(complete.head.revision,'2');assert.equal(complete.complete,true);assert.equal(f.counters.tagQueries,tags);
+    });
+    await test('actual ACIR mixed page settlement and prefix tampering discard every staged revision',async t=>{
+      const f=await acirFixture(t);await f.extendRevision();const blocks=await Promise.all([1,2,3,4,5].map(n=>f.compact(n)));
+      for(const fault of ['prior-note','prior-event','extra-entry','nullifier','account','canonical','receipt'])await t.test(fault,async()=>{
+       let enabled=false,locked=false,capturedNotes,capturedEvents,r;const originalReceipt=f.node.getTxReceipt;let receiptChanged=false;
+       const contributor={settle:async id=>{if(!enabled||r.page.acirCompleted!==2)return;
+        if(fault==='extra-entry')await r.page.privateEventStore.withChangeSet(id,stage=>stage.set('unexplained-extra',stage.values().next().value));
+        if(fault==='nullifier')await r.page.noteStore.withChangeSet(id,stage=>{assert(stage.nullifierEmissions.size>0);const key=stage.nullifierEmissions.keys().next().value;stage.nullifierEmissions.set(key,999);});
+        if(fault==='receipt')receiptChanged=true;
+       }};
+       r=await f.receiver({recovery:true,contributor});const start=await r.page.processRollingPreferenceRecovery(recoveryInput(f),{contextGuard:async()=>{}});
+       const noteWith=r.page.noteStore.withChangeSet.bind(r.page.noteStore),eventWith=r.page.privateEventStore.withChangeSet.bind(r.page.privateEventStore);
+       r.page.noteStore.withChangeSet=(id,fn)=>noteWith(id,stage=>{capturedNotes=stage;return fn(stage);});r.page.privateEventStore.withChangeSet=(id,fn)=>eventWith(id,stage=>{capturedEvents=stage;return fn(stage);});
+       r.page.afterUtility=()=>{if(r.page.acirCompleted!==2)return;if(fault==='prior-note')capturedNotes.notes.values().next().value.scopes.add('unexpected-scope');if(fault==='prior-event')capturedEvents.delete(capturedEvents.keys().next().value);if(fault==='account')locked=true;if(fault==='canonical')f.invalidate();};
+       f.node.getTxReceipt=async(...args)=>{const value=await originalReceipt(...args);if(receiptChanged)value.transactionFee+=1n;return value;};enabled=true;
+       try{await assert.rejects(r.page.processRollingPreferenceRecovery({...recoveryInput(f),expected:{epoch:start.epoch,sequence:start.sequence},block:blocks},{contextGuard:async()=>{if(locked)throw Error('labelled account change');}}),/PXE_PREFERENCE_RECOVERY_FAILED/);}
+       finally{enabled=false;locked=false;receiptChanged=false;f.restore();f.node.getTxReceipt=originalReceipt;r.page.afterUtility=null;r.page.noteStore.withChangeSet=noteWith;r.page.privateEventStore.withChangeSet=eventWith;}
+       assert.equal(r.page.acirCompleted,2);assert.deepEqual(await r.page.processRollingPreferenceRecovery(recoveryInput(f),{contextGuard:async()=>{}}),start);const values=await r.read();assert.equal(values.events.length,0);assert.equal(values.notes.length,0);
+      });
+    });
+    await test('actual SDK mixed batch enforces eight logs and aggregate bytes before private staging',async t=>{
+      const f=await acirFixture(t);await f.denseForeignPrefix();const r=await f.receiver({recovery:true}),start=await r.page.processRollingPreferenceRecovery(recoveryInput(f),{contextGuard:async()=>{}}),blocks=await Promise.all([1,2,3,4].map(n=>f.compact(n))),base={...recoveryInput(f),expected:{epoch:start.epoch,sequence:start.sequence}};
+      await assert.rejects(r.page.processRollingPreferenceRecovery({...base,block:blocks},{contextGuard:async()=>{}}),/PXE_PREFERENCE_RECOVERY_FAILED/);assert.equal(r.page.acirCompleted??0,0);assert.deepEqual(await r.page.processRollingPreferenceRecovery(recoveryInput(f),{contextGuard:async()=>{}}),start);
+      const before=f.counters.archiveProofs,oversize=Array.from({length:32},(_,i)=>({...blocks[0],blockNumber:i+1,fields:Array(1000).fill(Fr.ZERO.toString())}));
+      await assert.rejects(r.page.processRollingPreferenceRecovery({...base,block:oversize},{contextGuard:async()=>{}}),/PXE_PREFERENCE_RECOVERY_FAILED/);assert.equal(f.counters.archiveProofs,before);assert.equal(r.page.acirCompleted??0,0);
+      let scalar=start;for(let i=0;i<12&&!scalar.complete;i++)scalar=await recoveryStep(f,r,scalar);assert.equal(scalar.complete,true);assert.equal(scalar.head.revision,'1');
+    });
+    await test('actual SDK zero-ciphertext transaction batch matches scalar authenticated recovery',async t=>{
+      const f=await acirFixture(t,{zeroCiphertextHistory:true}),r=await f.receiver({recovery:true}),scalar=await f.receiver({recovery:true});
+      const start=await r.page.processRollingPreferenceRecovery(recoveryInput(f),{contextGuard:async()=>{}}),blocks=await Promise.all([1,2,3].map(n=>f.compact(n)));
+      assert(blocks.every(b=>b.fields.length>7),'Real nonempty TxEffect bodies are required');
+      const {compactHasNoPrivateLogs}=await import('../shared/rolling/compact-client.mjs');assert(blocks.every(b=>compactHasNoPrivateLogs(b.fields)));assert.equal(compactHasNoPrivateLogs((await f.compact(4)).fields),false);
+      const base={...recoveryInput(f),expected:{epoch:start.epoch,sequence:start.sequence}};
+      for(const malformed of [[...blocks,{...await f.compact(4),blockHash:hex(999)}],[blocks[0],{...blocks[1],fields:blocks[1].fields.map((v,i)=>i===3?Fr.ZERO.toString():v)},blocks[2]]]){
+        await assert.rejects(r.page.processRollingPreferenceRecovery({...base,block:malformed},{contextGuard:async()=>{}}),/PXE_PREFERENCE_RECOVERY_FAILED/);
+        assert.deepEqual(await r.page.processRollingPreferenceRecovery(recoveryInput(f),{contextGuard:async()=>{}}),start);
+      }
+      let one=await scalar.page.processRollingPreferenceRecovery(recoveryInput(f),{contextGuard:async()=>{}});for(let i=0;i<3;i++)one=await recoveryStep(f,scalar,one);
+      const batch=await r.page.processRollingPreferenceRecovery({...base,block:blocks},{contextGuard:async()=>{}});
+      assert.equal(batch.nextBlock,one.nextBlock);assert.equal(batch.nextLog,one.nextLog);assert.deepEqual(batch.records,one.records);assert.equal(batch.sequence,1);assert.equal(one.sequence,3);assert.equal(r.page.acirCompleted??0,0);assert.deepEqual(await r.read(),await scalar.read());
+      assert.deepEqual(await r.page.processRollingPreferenceRecovery({...base,block:blocks},{contextGuard:async()=>{}}),batch,'Lost response replays exact durable mailbox');
+      const withRecord=await recoveryStep(f,r,batch),complete=await recoveryStep(f,r,withRecord);assert.equal(withRecord.records.length,1);assert.equal(complete.head.revision,'1');assert.equal(complete.complete,true);assert.equal(f.counters.tagQueries,f.tagsBefore);
+    });
     await test('actual SDK empty batch authenticates every physical block and advances one durable sequence',async t=>{
       const f=await acirFixture(t),r=await f.receiver({recovery:true}),start=await r.page.processRollingPreferenceRecovery(recoveryInput(f),{contextGuard:async()=>{}});
       const blocks=await Promise.all([1,2,3].map(n=>f.compact(n))),base={...recoveryInput(f),expected:{epoch:start.epoch,sequence:start.sequence}};
-      for(const block of [[blocks[0],blocks[2]],[blocks[0],{...blocks[1],blockHash:hex(999)}],[...blocks,await f.compact(4)]])await assert.rejects(r.page.processRollingPreferenceRecovery({...base,block},{contextGuard:async()=>{}}),/PXE_PREFERENCE_RECOVERY_FAILED/);
+      for(const block of [[blocks[0],blocks[2]],[blocks[0],{...blocks[1],blockHash:hex(999)}],[...blocks,{...await f.compact(4),blockHash:hex(999)}]])await assert.rejects(r.page.processRollingPreferenceRecovery({...base,block},{contextGuard:async()=>{}}),/PXE_PREFERENCE_RECOVERY_FAILED/);
       assert.deepEqual(await r.page.processRollingPreferenceRecovery(recoveryInput(f),{contextGuard:async()=>{}}),start);
       const original=r.page.node.getBlockData,originalWitness=r.page.node.getBlockHashMembershipWitness;let anchorReads=0,abort=false;
       for(const failure of ['anchor reorg first commit','anchor reorg final commit','account invalidation','missing middle witness','wrong middle root','wrong middle index','short middle path','middle path accessor']){
