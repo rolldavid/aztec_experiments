@@ -291,11 +291,21 @@ export async function reconcileRollingEthereum({record,development,reads,scope='
 
 /** Reuse ethers transport but refuse redirects and throttled retransmission
  * before FetchRequest can create another request (redirect loses its options). */
-export function operatorEthereumRequest(FetchRequest,endpoint) {
+export function operatorEthereumRequest(FetchRequest,endpoint,{spacingMs=0}={}) {
+ if(!Number.isSafeInteger(spacingMs)||spacingMs<0||spacingMs>1000)throw rejected();
  const request=new FetchRequest(endpoint),getUrl=request.getUrlFunc;
+ let dispatch=Promise.resolve(),lastDispatch=-Infinity;
  request.timeout=10000;request.setThrottleParams({maxAttempts:1});request.retryFunc=()=>false;
  request.getUrlFunc=async(req,signal)=>{
   if(req.url!==endpoint)throw Error('Operator Ethereum RPC unavailable');
+  if(spacingMs){
+   const turn=dispatch.then(async()=>{
+    const delay=lastDispatch+spacingMs-performance.now();
+    if(delay>0)await new Promise(resolve=>setTimeout(resolve,delay));
+    signal?.checkSignal();lastDispatch=performance.now();
+   });
+   dispatch=turn.catch(()=>{});await turn;
+  }
   const result=await getUrl(req,signal);
   if(result.statusCode!==200||result.body?.byteLength>2*1024**2)throw Error('Operator Ethereum RPC unavailable');
   return result;

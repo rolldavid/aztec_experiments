@@ -89,8 +89,20 @@ test('actual ethers request never follows a redirect or retries throttled signed
  const server=createServer((req,res)=>{count++;req.resume();res.writeHead(status,{location:endpoint,'retry-after':'1'});res.end('bounded public fixture');});
  try{
   server.listen(0,'127.0.0.1');await once(server,'listening');endpoint='http://127.0.0.1:'+server.address().port+'/';
-  for(status of [307,429]){const request=operatorEthereumRequest(FetchRequest,endpoint);request.body=JSON.stringify({jsonrpc:'2.0',method:'eth_sendRawTransaction',params:['0x00'],id:1});await assert.rejects(request.send(),/Operator Ethereum RPC unavailable/);}
-  assert.equal(count,2);
+  for(const spacingMs of [0,40])for(status of [307,429]){const request=operatorEthereumRequest(FetchRequest,endpoint,{spacingMs});request.body=JSON.stringify({jsonrpc:'2.0',method:'eth_sendRawTransaction',params:['0x00'],id:1});await assert.rejects(request.send(),/Operator Ethereum RPC unavailable/);}
+  assert.equal(count,4);
+ }finally{await new Promise(r=>server.close(r));server.closeAllConnections();}
+});
+
+test('actual ethers cloned requests share paced dispatch without dropping chain reads',async()=>{
+ const {FetchRequest}=await import('ethers'),seen=[];
+ const server=createServer((req,res)=>{const chunks=[];req.on('data',c=>chunks.push(c));req.on('end',()=>{const body=JSON.parse(Buffer.concat(chunks));seen.push({method:body.method,at:performance.now()});res.writeHead(200,{'content-type':'application/json'});res.end(JSON.stringify({jsonrpc:'2.0',id:body.id,result:'0xaa36a7'}));});});
+ try{
+  server.listen(0,'127.0.0.1');await once(server,'listening');const endpoint='http://127.0.0.1:'+server.address().port+'/',request=operatorEthereumRequest(FetchRequest,endpoint,{spacingMs:100});
+  await Promise.all(['eth_chainId','eth_getBalance','eth_chainId'].map((method,id)=>{const clone=request.clone();clone.body=JSON.stringify({jsonrpc:'2.0',method,params:[],id});return clone.send();}));
+  assert.deepEqual(seen.map(x=>x.method),['eth_chainId','eth_getBalance','eth_chainId']);
+  assert(seen[2].at-seen[0].at>=180,'Cloned dispatch must not burst');
+  for(const spacingMs of [-1,1001,NaN])assert.throws(()=>operatorEthereumRequest(FetchRequest,endpoint,{spacingMs}));
  }finally{await new Promise(r=>server.close(r));server.closeAllConnections();}
 });
 

@@ -379,7 +379,7 @@ export async function seedTestnetLiquidity({plan:input,statePath,stage,keyFile})
    const f=await fs.open(markerPath,'wx',0o600);try{await f.writeFile(JSON.stringify({schemaVersion:1,binding,campaign:plan.campaign}));await f.sync();}finally{await f.close();}
    const d=await fs.open(directory,'r');try{await d.sync();}finally{await d.close();}
   }
-  const store=await fileState(statePath);provider=new JsonRpcProvider(operatorEthereumRequest(FetchRequest,plan.ethereumUrl),undefined,{batchMaxCount:1});
+  const store=await fileState(statePath);provider=new JsonRpcProvider(operatorEthereumRequest(FetchRequest,plan.ethereumUrl,{spacingMs:200}),undefined,{batchMaxCount:1});
   const tokenAbi=['function balanceOf(address) view returns(uint256)','function allowance(address,address) view returns(uint256)','event Transfer(address indexed from,address indexed to,uint256 value)'];
   const tokenInterface=new Interface(tokenAbi),factory=new EthereumContract(c.factory,['function getPool(address,address,uint24) view returns(address)','function feeAmountTickSpacing(uint24) view returns(int24)'],provider);
   const manager=new EthereumContract(c.positions,['function ownerOf(uint256) view returns(address)','function positions(uint256) view returns(uint96,address,address,address,uint24,int24,int24,uint128,uint256,uint256,uint128,uint128)','event Transfer(address indexed from,address indexed to,uint256 indexed tokenId)','event IncreaseLiquidity(uint256 indexed tokenId,uint128 liquidity,uint256 amount0,uint256 amount1)'],provider);
