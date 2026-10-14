@@ -68,14 +68,15 @@ export function validateDevnetResume(record,{fundingAddresses,ports,toolchainHas
   return record;
 }
 // Native JSON avoids materializing gzip+hex RPC copies of the complete history.
-// Retained development histories exceed 2 GiB; the bounded 4 GiB file cap
-// streams in 64 KiB chunks and preserves the legacy 128 MiB RPC cap.
+// The retained development checkpoint reached 4.254 GB. A bounded 6 GiB
+// native file cap permits continued recovery without pruning its history.
+// Hashing still streams in 64 KiB chunks; the legacy RPC cap stays 128 MiB.
 export async function inspectNativeDevnetSnapshot(filename,{sync=false}={}){
  if(typeof sync!=='boolean')throw Error('Invalid native snapshot sync option');
  const fd=await fs.open(filename,(sync?constants.O_RDWR:constants.O_RDONLY)|constants.O_NOFOLLOW);
  try{
   const before=await fd.stat();
-  if(!before.isFile()||before.uid!==process.getuid()||(before.mode&0o777)!==0o600||before.size<2||before.size>4294967296)throw Error('Invalid native development snapshot');
+  if(!before.isFile()||before.uid!==process.getuid()||(before.mode&0o777)!==0o600||before.size<2||before.size>6442450944)throw Error('Invalid native development snapshot');
   const hash=createHash('sha256');for await(const chunk of fd.createReadStream({autoClose:false,highWaterMark:65536}))hash.update(chunk);
   if(sync)await fd.sync();
   const after=await fd.stat(),named=await fs.lstat(filename);
@@ -314,7 +315,7 @@ export async function startDevnet({directory,fundingAddresses,proofs=false,persi
   try{
     onProgress('Starting disposable Ethereum');
     // Retained snapshots exceed Anvil's default 2MB RPC body limit. This
-    // isolated loopback process loads only the private, hash-bound <=4GiB native file.
+    // isolated loopback process loads only the private, hash-bound <=6GiB native file.
     // Legacy RPC imports retain their separate 128MiB limit.
     // Each launch owns a distinct recovery-only dump; it is NEVER an automatic
     // resume checkpoint. Precreation preserves private mode under native rewrites.
