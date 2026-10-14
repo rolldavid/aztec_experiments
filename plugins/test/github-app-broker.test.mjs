@@ -177,3 +177,14 @@ for(const absent of [false,true])test('template generation uncertain result '+(a
 for(const kind of ['owner','private','template','commit','actions','workflow'])test('template '+kind+' mismatch rejects before repository creation',async()=>{
  const f=await fixture({templateMode:true});try{const original=f.config.fetchImpl,b=await createGitHubAppBroker({...f.config,fetchImpl:async(url,options)=>{const response=await original(url,options),route=new URL(url).pathname;if(options.method!=='GET'||!route.startsWith('/repos/'+f.config.creationTemplate.fullName))return response;const v=await response.json();if(route==='/repos/'+f.config.creationTemplate.fullName){if(kind==='owner')v.owner.id++;if(kind==='private')v.private=false;if(kind==='template')v.is_template=false;}if(kind==='commit'&&route.endsWith('/git/ref/heads/main'))v.object.sha='f'.repeat(40);if(kind==='actions'&&route.endsWith('/actions/permissions'))v.enabled=true;if(kind==='workflow'&&route.includes('/git/trees/'))v.tree[0].path='.github/workflows/run.yml';return new Response(JSON.stringify(v),{status:response.status});}});await assert.rejects(b.sync(await receipt(f)));assert(!f.calls.some(c=>c.method==='POST'&&!c.route.endsWith('/access_tokens')));}finally{await f.close();}
 });
+
+
+test('real GitHub commit response omits terminal LF without changing exact Git identity',async()=>{
+ const f=await fixture();try{const config=f.config;
+  const original=config.fetchImpl,b=await createGitHubAppBroker({...config,fetchImpl:async(url,options)=>{const response=await original(url,options);if(options.method==='POST'&&url.endsWith('/git/commits')){const body=await response.json();assert(body.message.endsWith('\n'));body.message=body.message.slice(0,-1);return new Response(JSON.stringify(body));}return response;}});
+  assert((await b.sync(await receipt(f))).mirrored);
+ }finally{await f.close();}
+});
+test('changed commit message interior remains rejected and no ref advances',async()=>{
+ const f=await fixture();try{const original=f.config.fetchImpl,b=await createGitHubAppBroker({...f.config,fetchImpl:async(url,options)=>{const response=await original(url,options);if(options.method==='POST'&&url.endsWith('/git/commits')){const body=await response.json();body.message=body.message.replace('Accepted source','Changed source').trimEnd();return new Response(JSON.stringify(body));}return response;}});await assert.rejects(b.sync(await receipt(f)));assert(!f.calls.some(c=>c.method==='PATCH'));}finally{await f.close();}
+});

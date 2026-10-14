@@ -423,6 +423,19 @@ for identity and Actions checks; source writes use its Contents-only token.
 An uncertain generation response may mint the existing selected-installation
 Administration-only token solely to read back the exact intended name and marker,
 then either reconcile or remain blocked. It never repeats generation.
+The 14 October live template attempt returned422 after creating the exact private
+repository metadata, but left it empty and outside the selected installation.
+Operator selection, disabling Actions, and one pinned README initialization were
+required before the original journal could reconcile. This is assisted recovery,
+not automatic-creation acceptance. Never treat a failed HTTP response as proof
+that no resource was created. Verify with the trusted owner when an App-scoped404
+could conceal it.
+
+GitHub's commit API may omit the terminal newline in its displayed message.
+The broker permits only that single LF difference while still requiring the
+exact locally computed Git object SHA, tree and parent. An uncertain commit is
+read back by that same expected SHA, never reposted.
+
 Template configuration is journal-bound. Transition from a definitively denied
 legacy creation requires explicit operator reconciliation and a new journal
 directory; preserve the failed journal. Do not reset or change its intent.
