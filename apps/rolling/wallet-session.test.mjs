@@ -621,3 +621,10 @@ test('RC22 Bok refund finalized receipt remains necessary after an explicit send
  const f=await withdrawalFixture({bok:true,chainId:'11155111'});await f.cap.prepare({maximumGasWei:'1000'});f.state.finalized=9;await assert.rejects(f.cap.confirm());assert.equal(f.state.sends,1);
  f.state.finalized=f.state.head;assert.equal(await f.restart().verify(f.record),true);f.state.fork=true;await assert.rejects(f.restart().recover());assert.equal(f.state.sends,1);
 });
+
+test('RC22 expiry selection passes through existing session synchronization and refuses absent owned accounting before send',async()=>{
+ const f=await sessionFixture(),session=await createRollingWalletSession(f.input);const before=f.state.syncs;
+ await assert.rejects(session.application.prepare({type:'expire-bok-request',requestId:hex(11)}),{code:'ROLLING_BOK_ACCOUNTING_INCOMPLETE'});
+ assert.equal(f.state.syncs,before+1);assert.equal(f.state.sends,0);assert.equal(f.state.active,false);
+ await session.close();await assert.rejects(session.application.prepare({type:'expire-bok-request',requestId:hex(11)}),{code:'ROLLING_CONTEXT_CHANGED'});assert.equal(f.state.sends,0);
+});

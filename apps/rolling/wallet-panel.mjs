@@ -22,7 +22,7 @@ export function projectRollingInitialization(value){
  }catch{return null;}
 }
 const MODERATOR_TYPES=new Set(['moderate-post','moderate-avatar','reject-subboard','set-main-policy']);
-const TYPES={'withdraw-bok':'Withdraw Bok credit','cancel-bok-request':'Release an unused Bok request',withdraw:'Withdraw posting collateral',screen:'Screen posting history','moderate-post':'Remove a post','moderate-avatar':'Remove an avatar','reject-subboard':'Reject a subboard','set-main-policy':'Update parent rules',bok:'Ask Bok with a post',preference:'Private preference','read-marker':'Mark thread read',bio:'Edit bio',avatar:'Edit avatar',post:'Write a post',reply:'Reply',quote:'Quote a post',repost:'Repost',like:'Like a post',unlike:'Remove a like',name:'Register a name',subboard:'Create a subboard'};
+const TYPES={'withdraw-bok':'Withdraw Bok credit','cancel-bok-request':'Release an unused Bok request','expire-bok-request':'Expire a Bok request',withdraw:'Withdraw posting collateral',screen:'Screen posting history','moderate-post':'Remove a post','moderate-avatar':'Remove an avatar','reject-subboard':'Reject a subboard','set-main-policy':'Update parent rules',bok:'Ask Bok with a post',preference:'Private preference','read-marker':'Mark thread read',bio:'Edit bio',avatar:'Edit avatar',post:'Write a post',reply:'Reply',quote:'Quote a post',repost:'Repost',like:'Like a post',unlike:'Remove a like',name:'Register a name',subboard:'Create a subboard'};
 const IDS=['subboard','parent','root','reference','post'];
 const field=value=>typeof value==='string'&&/^(?:0x[0-9a-f]{64}|0|[1-9][0-9]{0,76})$/.test(value);
 const el=(tag,attrs={},...children)=>{const node=document.createElement(tag);for(const [key,value]of Object.entries(attrs))node.setAttribute(key,value);for(const child of children.flat())if(child!==null&&child!==undefined)node.append(child instanceof Node?child:document.createTextNode(String(child)));return node;};
@@ -279,8 +279,10 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
    if(bokAccounting?.complete){
     content.append(paragraph('Complete owned-request accounting at block '+bokAccounting.anchor.blockNumber+'. Allocated '+decimal(bokAccounting.totals.available,6)+', reserved '+decimal(bokAccounting.totals.reserved,6)+', charged '+decimal(bokAccounting.totals.charged,6)+', returned '+decimal(bokAccounting.totals.refunded,6)+' USDC. Returned credit is already part of your unallocated balance; it is not added again.'));
     for(const r of bokAccounting.requests){const area=el('section',{'aria-label':'Owned Bok request'});area.append(paragraph('Request '+r.requestId.slice(0,10)+'… — allocated '+decimal(r.available,6)+', reserved '+decimal(r.reserved,6)+', charged '+decimal(r.charged,6)+', returned '+decimal(r.refunded,6)+' USDC.'));
-     if(['1','2'].includes(r.state)&&r.reserved==='0')area.append(button('Review release of unused credit',()=>void work(async()=>{intent=await session.application.prepare({type:'cancel-bok-request',requestId:r.requestId});})));
-     else area.append(paragraph(r.state==='4'?'This request is closed.':'Reserved or fenced work must resolve before unused credit can be released.'));content.append(area);
+     if(['1','2'].includes(r.state)){
+      if(r.reserved==='0')area.append(button('Review release of unused credit',()=>void work(async()=>{intent=await session.application.prepare({type:'cancel-bok-request',requestId:r.requestId});})));
+      area.append(paragraph('Expiry is checked by the contract. After its deadline, only unreserved credit returns; any unresolved reservation stays fenced.'),button('Review request expiry',()=>void work(async()=>{intent=await session.application.prepare({type:'expire-bok-request',requestId:r.requestId});})));
+     }else area.append(paragraph(r.state==='4'?'This request is closed. Returned credit is already included in your unallocated balance.':'This request is fenced. Unreserved credit has returned; the reserved amount remains locked until the operator reconciles its actual charge.'));content.append(area);
     }
    }else content.append(paragraph('Complete request accounting is not yet available; unlisted reservations are not zero.'));
    if(typeof session.application.readBokAccounting==='function'){
@@ -323,6 +325,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
    if(typeof intent.maximumFee==='string')content.append(paragraph(`Original maximum fee: ${intent.maximumFee} fee-juice units. This earlier ceiling is not the replacement fee or an actual charge.`));
    if(intent.replacementReview?.marker)content.append(el('p',{class:'recovery-values'},`Reviewed read position: block ${intent.replacementReview.marker.throughBlock}; block fingerprint ${intent.replacementReview.marker.blockHash}.`));
   }else if(feeReady)content.append(paragraph(intent.replacementReview?`Original maximum fee: ${intent.maximumFee} fee-juice units. This earlier ceiling is not the saved replacement fee or a record of a charge.`:`Maximum network fee: ${reviewedFee} fee-juice units. This is a maximum, not a guaranteed final charge.`));
+  if(intent.action?.type==='expire-bok-request')content.append(paragraph('Ask the contract to expire this exact saved request. Its deadline is checked again before sending. Only unreserved credit can return; an unresolved reservation remains fenced for the actual charge. Confirmation does not mean the whole budget was refunded. Refresh private balances and complete request accounting afterward.'));
   if(intent.withdrawal)content.append(paragraph(intent.withdrawal.kind==='bok'?'Exit '+decimal(intent.withdrawal.amount,6)+' USDC of unallocated Bok credit to '+intent.withdrawal.depositor+'. Reserved request credit is not spent. A separate Ethereum claim follows after settlement and needs its own gas review.':'Exit '+decimal(intent.withdrawal.amount,18)+' ETH of posting collateral. This first transaction consumes your private deposit. A separate Ethereum refund to the original depositor follows after settlement and needs its own gas review. Moderation does not remove withdrawal rights.'));
   if(intent.action?.type==='bio'&&intent.action.content==='')content.append(paragraph('Clear the current profile bio. Historical versions remain public.'));
   let avatarReady=intent.action?.type!=='avatar'||intent.action.data==='';
@@ -347,7 +350,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
    }),true));return;
   }
   let confirm;
-  const privateAction=['preference','read-marker'].includes(intent.action?.type),fundingAction=['claim-deposit','claim-private-fee','claim-bok'].includes(intent.action?.type);
+  const privateAction=['preference','read-marker'].includes(intent.action?.type),expiryAction=intent.action?.type==='expire-bok-request',fundingAction=['claim-deposit','claim-private-fee','claim-bok'].includes(intent.action?.type);
   if(fundingAction){content.append(paragraph(intent.action.type==='claim-deposit'?'Claim the previously paid posting collateral privately. No second Ethereum payment will be requested.':'Claim the previously paid '+(intent.action.type==='claim-bok'?'Bok credit':'network fee credit')+' privately. Posting collateral is unchanged. No second Ethereum payment will be requested.'),paragraph((intent.action.type==='claim-deposit'?'Collateral: ':intent.action.type==='claim-bok'?'Bok credit: ':'Network fees: ')+intent.action.receipt.amount+' base units.'));if(intent.action.feeReceipt)content.append(paragraph('Previously bridged transaction fees: '+intent.action.feeReceipt.amount+' fee-juice units. The fee claim and collateral claim share one transaction.'));}
   if(privateAction){content.append(paragraph(intent.action.type==='read-marker'?'Mark this thread read through block '+intent.action.throughBlock:preferenceDescription(intent.action)));}
   if(prepared){
@@ -357,7 +360,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
     const id=intent.intentId;intent={...intent,status:'unknown'};blocked=true;
     try{const result=await session.application.submitPrepared(id);checkAccount(epoch);await receive(result);}catch{note('Submission outcome is unknown. Check this transaction; do not submit again.');throw Error('Unknown outcome');}
    }),true);confirm.dataset.unavailable=String(!avatarReady||!feeReady);
-   content.append(paragraph(['withdraw','withdraw-bok'].includes(intent.action?.type)?'This private exit starts withdrawal. It does not send the Ethereum refund or publish a post.':fundingAction?'Your saved funding receipt will be checked again before sending this private claim.':privateAction?'Your exact private setting is saved. Sending records an encrypted onchain update and charges a network fee.':'Your exact action is saved. Sending publishes it onchain and cannot be undone.'),confirm);
+   content.append(paragraph(['withdraw','withdraw-bok'].includes(intent.action?.type)?'This private exit starts withdrawal. It does not send the Ethereum refund or publish a post.':expiryAction?'This private expiry attempt charges a network fee. It never releases an unresolved reserved charge.':fundingAction?'Your saved funding receipt will be checked again before sending this private claim.':privateAction?'Your exact private setting is saved. Sending records an encrypted onchain update and charges a network fee.':'Your exact action is saved. Sending publishes it onchain and cannot be undone.'),confirm);
    if(!replacement&&intent.bok?.phase!=='post')content.append(button('Cancel prepared action',()=>void work(async()=>{await session.application.cancelPrepared(intent.intentId);intent=null;await refresh();notice='Prepared action cancelled. No new transaction was sent.';})));
   }else{
    content.append(paragraph('No automatic resend is allowed. A missing receipt does not mean the transaction failed.'),button('Check existing transaction',()=>void work(async()=>{await receive(await session.application.reconcile(intent.intentId));})));
@@ -377,7 +380,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   if(['confirmed','reverted'].includes(result.status)&&['bio','avatar'].includes(result.action?.type))profileSnapshot=null;
   if(result.status==='authorized'){notice='Bok request authorized. Review the saved post when ready; it has not been published.';return;}
   if(result.status==='confirmed'){
-   notice='Transaction confirmed on the verified chain.';
+   notice=result.action?.type==='expire-bok-request'?'Expiry transaction confirmed. Only unreserved credit can return; refresh private balances and complete request accounting to see refunded and still-reserved amounts.':'Transaction confirmed on the verified chain.';
    try{await onPublicEffect();}catch{notice+=' Public feed refresh is unavailable; the transaction remains confirmed.';}
    await refresh();
   }else if(result.status==='reverted'){
@@ -404,7 +407,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
  function preferenceDescription(action){const labels={1:'bookmark',2:'board follow',3:'name follow',4:'thread subscription',5:'reply notifications'};return `${action.enabled?'Enable':'Disable'} ${labels[action.kind]??'private setting'}${action.kind===5?'':' for '+action.target}. This preference is encrypted, not a public ownership list.`;}
  function form(){
   if(MODERATOR_TYPES.has(draft.type)&&moderatorStatus?.authorized!==true)draft={type:'post',subboard:'0',content:''};
-  const type=el('select',{'aria-label':'Action'});for(const [value,text]of Object.entries(TYPES)){if(['withdraw','withdraw-bok','cancel-bok-request','screen'].includes(value)||value==='bok'&&bokStatus?.available!==true||MODERATOR_TYPES.has(value)&&moderatorStatus?.authorized!==true)continue;const option=el('option',{value},text);option.selected=draft.type===value;type.append(option);}
+  const type=el('select',{'aria-label':'Action'});for(const [value,text]of Object.entries(TYPES)){if(['withdraw','withdraw-bok','cancel-bok-request','expire-bok-request','screen'].includes(value)||value==='bok'&&bokStatus?.available!==true||MODERATOR_TYPES.has(value)&&moderatorStatus?.authorized!==true)continue;const option=el('option',{value},text);option.selected=draft.type===value;type.append(option);}
   type.addEventListener('change',()=>{clearProfileDraft();draft={type:type.value,subboard:'0',content:''};render();});content.append(label('Action',type));
   const fields=new Map();
   function input(name,text,{area=false,initial='',required=true}={}){

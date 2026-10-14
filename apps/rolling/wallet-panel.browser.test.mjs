@@ -842,3 +842,24 @@ test('RC22 Bok panel separates private exit and saved-recipient Ethereum refund 
  await page.reload();await page.waitForFunction(()=>window.ready);await open(page);await page.getByRole('button',{name:'Unlock',exact:true}).click();await page.getByRole('button',{name:'Check existing refund',exact:true}).waitFor();await page.getByRole('button',{name:'Check existing refund',exact:true}).click();await page.getByText(/Refund unknown/).waitFor();assert.equal(await page.evaluate(()=>test.sends),0);assert.equal(await page.evaluate(()=>test.refundSends??0),0);
  await page.getByRole('button',{name:'Review Ethereum refund',exact:true}).click();await page.getByRole('button',{name:'Confirm Ethereum refund',exact:true}).click();await page.getByText(/Ethereum refund confirmed: 1.25 USDC/).waitFor();assert.equal(await page.evaluate(()=>test.refundSends),1);assert.equal(await page.evaluate(()=>test.sends),0);
 });
+
+async function openExpiryReview(page){
+ await openBalances(page);await page.evaluate(()=>{test.accountingPages=[{complete:true,anchor:{blockNumber:7},available:'3000000',totals:{available:'2000000',reserved:'1000000',charged:'500000',refunded:'500000'},requests:[{requestId:'0x'+'1'.repeat(64),state:'2',available:'2000000',reserved:'1000000',charged:'500000',refunded:'500000'}]}];});
+ await page.getByRole('button',{name:'Check all Bok requests',exact:true}).click();await page.getByRole('button',{name:'Review request expiry',exact:true}).click();await page.getByRole('button',{name:'Confirm and send',exact:true}).waitFor();
+}
+test('RC22 expiry panel requires a separate fee review and cancellation does not send',async t=>{
+ const {page}=await browserFixture(t);await openExpiryReview(page);
+ assert.equal(await page.evaluate(()=>JSON.parse(sessionStorage.getItem('labelled-ui-intent')).action.type),'expire-bok-request');
+ assert(await page.getByText(/Maximum network fee: 123/).isVisible());assert(await page.getByText(/Confirmation does not mean the whole budget was refunded/).isVisible());
+ assert.equal(await page.evaluate(()=>test.sends),0);await page.getByRole('button',{name:'Cancel prepared action',exact:true}).click();assert.equal(await page.evaluate(()=>test.sends),0);
+});
+test('RC22 expiry panel preserves unknown transaction on reopen and reports canonical partial refund without another send',async t=>{
+ const {page}=await browserFixture(t);await openExpiryReview(page);await page.evaluate(()=>test.submitOutcome='unknown');await page.getByRole('button',{name:'Confirm and send',exact:true}).click();await page.getByRole('button',{name:'Check existing transaction',exact:true}).waitFor();
+ assert.equal(await page.evaluate(()=>test.sends),1);await page.reload();await page.waitForFunction(()=>window.ready);await open(page);await page.getByRole('button',{name:'Unlock',exact:true}).click();await page.getByRole('button',{name:'Check existing transaction',exact:true}).waitFor();
+ assert.equal(await page.getByRole('button',{name:'Confirm and send',exact:true}).count(),0);
+ await page.evaluate(()=>test.resolveOutcome='confirmed');await page.getByRole('button',{name:'Check existing transaction',exact:true}).click();await page.getByText(/Expiry transaction confirmed/).waitFor();
+ assert.equal(await page.evaluate(()=>test.sends),0,'new labelled page performs only reconciliation');
+ await page.evaluate(()=>{test.balances={fee:{available:'2000000000000000000'},bok:{available:'5000000'},collateral:{deposits:[],nextCursor:null}};test.accountingPages=[{complete:true,anchor:{blockNumber:8},available:'5000000',totals:{available:'0',reserved:'1000000',charged:'500000',refunded:'2500000'},requests:[{requestId:'0x'+'1'.repeat(64),state:'3',available:'0',reserved:'1000000',charged:'500000',refunded:'2500000'}]}];});
+ await page.getByRole('button',{name:'Balances and withdrawals',exact:true}).click();await page.getByRole('button',{name:'Check private balances',exact:true}).click();await page.getByRole('button',{name:'Check all Bok requests',exact:true}).click();
+ assert(await page.getByText('Unallocated Bok credit: 5 USDC.',{exact:true}).isVisible());assert(await page.getByText(/This request is fenced. Unreserved credit has returned/).isVisible());assert(await page.getByRole('region',{name:'Owned Bok request',exact:true}).getByText(/reserved 1, charged 0.5, returned 2.5 USDC/).isVisible());assert.equal(await page.getByRole('button',{name:'Review request expiry',exact:true}).count(),0);assert.equal(await page.getByRole('button',{name:'Review release of unused credit',exact:true}).count(),0);assert.equal(await page.evaluate(()=>test.sends),0);
+});

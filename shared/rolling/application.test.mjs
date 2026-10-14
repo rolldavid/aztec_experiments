@@ -1280,3 +1280,58 @@ test('RC22 real persistent-index cursor crosses both wallet accounting boundarie
  f.options.readBokAccountingPage=createUniformBokAccountingReader({origin:'https://board.invalid',fetcher:async url=>{urls.push(url);const params=new URL(url).searchParams,cursor=params.get('cursor');assert.equal(params.get('limit'),'50');assert.deepEqual([...params.keys()],cursor?['limit','cursor']:['limit']);const actual=index.query('feed',{limit:1,...(cursor?{cursor}:{})});assert.equal(actual.nextCursor,cursor?null:first.nextCursor);return new Response(JSON.stringify(f.pages[cursor?1:0]));}});
  f.app=f.restart();const result=await finishBokAccounting(f);assert.equal(result.complete,true);assert.equal(result.requests[0].requestId,hex(13));assert.equal(urls.length,2);assert.equal(new URL(urls[1]).searchParams.get('cursor'),first.nextCursor);assert.equal(f.state.sends,0);
 });
+
+// Real installed expire ABI and encrypted workflow; deadline/settlement outcomes
+// below are labelled simulation/node doubles, not contract execution acceptance.
+function expiryFixture(){
+ const f=bokAccountingFixture(),estimate=f.options.sdk.estimatePrivateFeeTransaction;
+ f.options.sdk.estimatePrivateFeeTransaction=async input=>{if(input.interaction.name==='expire'&&f.state.expiryRejected)throw Error('Contract simulation: request not expired');return estimate(input);};
+ f.app=f.restart();return f;
+}
+test('RC22 expiry privately selects an owned active reserved request and saves exact fee review encrypted',async()=>{
+ const f=expiryFixture();await finishBokAccounting(f);f.state.bokEnabled=false;
+ const intent=await f.app.prepare({type:'expire-bok-request',requestId:hex(11)});
+ assert.equal(intent.maximumFee,'10');assert.equal(intent.status,'prepared');assert.equal(f.state.sends,0);
+ assert.equal(f.state.calls.at(-1).name,'expire');assert.deepEqual(f.state.calls.at(-1).args,[hex(11)]);
+ const abi=bokArtifact.functions.find(fn=>fn.name==='expire');assert.equal(abi.functionType,'private');assert.equal(encodeArguments(abi,[hex(11)]).length,1);
+ assert([...f.values.values()].every(cipher=>!cipher.includes(hex(11))));assert.equal(intent.bokRequestScope,undefined);assert.equal(intent.refunded,undefined);
+ assert(!f.state.privateReads.some(r=>r.name==='request'));assert(f.trace.every(r=>Object.keys(r).every(k=>['limit','cursor'].includes(k))));
+ assert.equal((await f.restart().submitPrepared(intent.intentId)).status,'confirmed');assert.equal(f.state.sends,1);
+ assert.equal((await f.restart().reconcile(intent.intentId)).status,'confirmed');assert.equal(f.state.sends,1);
+});
+for(const fault of ['missing-page','foreign','fenced','closed'])test('RC22 expiry rejects '+fault+' selection without estimation or send',async()=>{
+ const f=expiryFixture();if(fault==='fenced'||fault==='closed')f.pages[0].requests[0].state=fault==='fenced'?'3':'4';
+ if(fault!=='missing-page')await finishBokAccounting(f);
+ await assert.rejects(f.app.prepare({type:'expire-bok-request',requestId:hex(fault==='foreign'?12:11)}),{code:'ROLLING_BOK_ACCOUNTING_INCOMPLETE'});
+ assert.equal(f.state.estimates,0);assert.equal(f.state.sends,0);
+});
+test('RC22 expiry relies on simulation deadline at preparation and repeats it before submission',async()=>{
+ const f=expiryFixture();await finishBokAccounting(f);f.state.expiryRejected=true;
+ await assert.rejects(f.app.prepare({type:'expire-bok-request',requestId:hex(11)}),/not expired/);assert.equal(f.state.sends,0);
+ f.state.expiryRejected=false;const intent=await f.app.prepare({type:'expire-bok-request',requestId:hex(11)});f.state.expiryRejected=true;
+ await assert.rejects(f.restart().submitPrepared(intent.intentId),/not expired/);assert.equal(f.state.sends,0);
+ assert.equal((await f.restart().reconcile(intent.intentId)).status,'prepared');
+});
+test('RC22 expiry preserves fee ceiling and original Bok scope across restart',async()=>{
+ const f=expiryFixture();await finishBokAccounting(f);const intent=await f.app.prepare({type:'expire-bok-request',requestId:hex(11)});
+ f.state.fee=11n;await assert.rejects(f.restart().submitPrepared(intent.intentId),{code:'ROLLING_FEE_CHANGED'});assert.equal(f.state.sends,0);
+ f.state.fee=10n;f.options.deployment.bok.operator=hex(99);await assert.rejects(f.restart().submitPrepared(intent.intentId),{code:'ROLLING_CONTEXT_CHANGED'});assert.equal(f.state.sends,0);
+});
+test('RC22 expiry unknown send stays recoverable without reprepare or retransmission',async()=>{
+ const f=expiryFixture();await finishBokAccounting(f);const intent=await f.app.prepare({type:'expire-bok-request',requestId:hex(11)});f.state.failSend=true;
+ await assert.rejects(f.app.submitPrepared(intent.intentId));assert.equal(f.state.sends,1);
+ const app=f.restart();assert.equal((await app.reconcile(intent.intentId)).status,'unknown');
+ await assert.rejects(app.submitPrepared(intent.intentId),{code:'ROLLING_RECOVERY_REQUIRED'});await assert.rejects(app.prepare({type:'expire-bok-request',requestId:hex(11)}),{code:'ROLLING_RECOVERY_REQUIRED'});assert.equal(f.state.sends,1);
+ f.state.outcome={operation:f.state.sent.opts.journalOperation,outcome:'success',txHash:hex(77),receipt:{txHash:hex(77),status:'checkpointed',blockNumber:1,blockHash:hex(42)}};
+ assert.equal((await app.reconcile(intent.intentId)).status,'confirmed');assert.equal(f.state.sends,1);
+});
+test('RC22 expiry accounting keeps unknown reserved liability fenced and never adds returned credit twice',async()=>{
+ const f=expiryFixture();await finishBokAccounting(f);const intent=await f.app.prepare({type:'expire-bok-request',requestId:hex(11)});await f.app.submitPrepared(intent.intentId);
+ // Canonical public snapshots are controlled here. First only unreserved40
+ // returns, then reconciliation charges7 of the20 reservation and returns13.
+ Object.assign(f.pages[0].requests[0],{state:'3',available:'0',reserved:'20',charged:'30',refunded:'50'});f.state.bokCredit=1040n;
+ let page=await finishBokAccounting(f);assert.equal(page.available,'1040');assert.equal(page.totals.reserved,'20');assert.equal(page.totals.refunded,'50');assert.equal(page.totals.charged,'30');
+ await assert.rejects(f.app.prepare({type:'expire-bok-request',requestId:hex(11)}),{code:'ROLLING_BOK_ACCOUNTING_INCOMPLETE'});
+ Object.assign(f.pages[0].requests[0],{state:'4',sequence:'2',reserved:'0',charged:'37',refunded:'63'});f.state.bokCredit=1053n;
+ page=await finishBokAccounting(f);assert.equal(page.available,'1053');assert.equal(page.totals.reserved,'0');assert.equal(page.totals.charged,'37');assert.equal(page.totals.refunded,'63');assert.equal(f.state.sends,1);
+});
