@@ -144,7 +144,7 @@ try{
   await discoverTestMetaMask(page);if(!continueUnfunded&&!paidRecovery)await addMetaMaskNetwork({page,walletPage,extensionId,rpcUrl:control.ethereumUrl,mark:value=>{stage=value;}});
   await page.getByRole('dialog').getByRole('button',{name:'Close account panel',exact:true}).click();
   if(continueUnfunded||paidRecovery)await walletPage.goto('chrome-extension://'+extensionId+'/sidepanel.html');
-  if(paidRecovery){report.scope='Saved canonical payment to private claim through actual UI; no new Ethereum payment. Native development only.';await driveMetaMaskPaidRecovery({page,walletPage,control,provider,transactionHash:process.env.T04_AGGREGATE_PAID_HASH,mark:value=>{stage=value;},report});}
+  if(paidRecovery){report.scope='Saved canonical payment to private claim through actual UI; no new Ethereum payment. Native development only.';const finalizePaid=await driveMetaMaskPaidRecovery({page,walletPage,control,provider,transactionHash:process.env.T04_AGGREGATE_PAID_HASH,mark:value=>{stage=value;},report});const finalizeTraffic=finalizeAggregate;finalizeAggregate=()=>{finalizeTraffic();finalizePaid();};}
   else {const finalizePayment=await driveMetaMaskAggregateFunding({context,page,walletPage,control,provider,mark:value=>{stage=value;},report,continueUnfunded});
   const finalizeTraffic=finalizeAggregate;finalizeAggregate=()=>{finalizeTraffic();finalizePayment();};}
   assert.equal(blocked,0);assert.equal(proofRequests,0);Object.assign(report,{passed:true,realExtension:true,extensionVersion:'13.49.0.0',browserVersion:context.browser().version(),proofRequests,l2Submissions,privateRecoveryRetained:true});

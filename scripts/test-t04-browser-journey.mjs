@@ -310,3 +310,30 @@ test('MetaMask unfunded continuation rejects any saved journal or prior Ethereum
  const {assertMetaMaskUnfundedContinuation:check}=await import('./t04-metamask.mjs');const input={ethereumNonce:0,consentNonce:0n,emptyRecovery:true};check(input);
  for(const change of [{ethereumNonce:1},{ethereumNonce:'0'},{consentNonce:1n},{consentNonce:0},{emptyRecovery:false},{emptyRecovery:null},{emptyRecovery:undefined}])assert.throws(()=>check({...input,...change}));
 });
+
+
+test('paid MetaMask recovery binds encrypted scope, exact payment and all claim legs',async()=>{
+ const {inspectMetaMaskPaidBinding}=await import('./t04-metamask.mjs'),{runInNewContext}=await import('node:vm');
+ const network={chainId:'31337',rollupVersion:'17',rollupAddress:'rollup'},board={contractAddress:'board',portalAddress:'portal'},router='router',owner='owner';
+ const intent={from:'payer',to:router,chainId:'31337',nonce:1,data:'0x1234',value:'9',expected:{planHash:'plan',kind:'aggregate-funding'}};
+ const input={network,board,router,intent,transactionHash:hash};
+ const funding={intent:structuredClone(intent),claim:{intentId:'claim'}};
+ const claim={id:'claim',status:'confirmed',txHash:'0x'+'cd'.repeat(32),action:{type:'claim-deposit',receipt:{txHash:hash},feeReceipt:{txHash:hash},bokReceipt:{txHash:hash}}};
+ // Labelled storage doubles exercise the exact function serialized into Playwright,
+ // including both real application scope formats. No wallet/payment qualification.
+ async function inspect(f=funding,c=claim){
+  const slots=[];const window={walletState:{aztec:{address:{toString:()=>owner},secretKey:1,salt:2}},__aztec:{createBrowserJournalStorage:()=>({}),createEncryptedJournalSlot:async args=>{slots.push(args);return {read:async()=>({value:args.keyDomain==='ROLLING_AGGREGATE_FUNDING_V1'?f:c})};}}};
+  const result=await runInNewContext('('+inspectMetaMaskPaidBinding.toString()+')(input)',{window,input});
+  assert.equal(slots[0].scopeText,JSON.stringify(['ROLLING_AGGREGATE_FUNDING_V1','31337','17','rollup','board','router',owner,1]));
+  assert.equal(slots[1].scopeText,JSON.stringify(['ROLLING_WORKFLOW_V1',JSON.stringify(['AZTEC_BB_L2_JOURNAL_V1',owner,'31337','rollup','17','board','portal'])]));
+  return JSON.parse(JSON.stringify(result));
+ }
+ assert.deepEqual(await inspect(),{paymentMatches:true,claimMatches:true,claimConfirmed:true,claimTxHash:claim.txHash});
+ for(const mutate of [x=>x.intent.data='0x5678',x=>x.intent.nonce=2,x=>x.intent.expected.planHash='different',x=>x.relay={transactionHash:'0x'+'ef'.repeat(32)}]){const f=structuredClone(funding);mutate(f);assert.equal((await inspect(f)).paymentMatches,false);}
+ assert.equal((await inspect(null)).paymentMatches,false);
+ for(const mutate of [x=>x.id='another',x=>x.action.type='claim-bok',...['receipt','feeReceipt','bokReceipt'].map(k=>x=>x.action[k].txHash='0x'+'ef'.repeat(32))]){const c=structuredClone(claim);mutate(c);assert.equal((await inspect(funding,c)).claimMatches,false);}
+ assert.equal((await inspect(funding,{...claim,status:'submitted'})).claimConfirmed,false);
+ assert.equal((await inspect(funding,null)).claimConfirmed,false);
+ const usdc={relay:{request:structuredClone(intent),transactionHash:hash},claim:funding.claim};delete usdc.relay.request.nonce;
+ assert.equal((await inspect(usdc)).claimConfirmed,true);
+});

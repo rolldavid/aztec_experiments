@@ -374,8 +374,13 @@ export async function driveMetaMaskPaidRecovery({page,walletPage,control:c,provi
  const intent={from:tx.from.toLowerCase(),to:scope.router,chainId:'31337',nonce:tx.nonce,data:tx.data.toLowerCase(),value:String(tx.value),expected};validateAggregateFundingIntent(intent);
  const effect=await verifyEthereumIntentReceipt(provider,intent,transactionHash);assert.equal(effect.outcome,'success');
  const nonce=await provider.getTransactionCount(account,'pending');assert.equal(nonce,c.asset==='ETH'?1:0);
- await page.evaluate(()=>{const original=__testMetaMask.request.bind(__testMetaMask);window.__paidRecoveryWalletWrites=0;__testMetaMask.request=async request=>{if(!['eth_accounts','eth_requestAccounts','eth_chainId'].includes(request.method)){window.__paidRecoveryWalletWrites++;throw Error('Paid recovery forbids another wallet operation');}return original(request);};});
- await inspectMetaMaskAggregateReadiness({page,control:c,mark});const dialog=page.getByRole('dialog');await dialog.getByRole('button',{name:'Recover funding',exact:true}).click();
+ const attempts={forbiddenWalletCalls:0};report.paidRecoveryAttempts=attempts;
+ await page.exposeFunction('__paidRecoveryDenied',()=>{attempts.forbiddenWalletCalls++;});
+ await page.evaluate(()=>{const original=__testMetaMask.request.bind(__testMetaMask);__testMetaMask.request=async request=>{if(!['eth_accounts','eth_requestAccounts','eth_chainId'].includes(request.method)){await window.__paidRecoveryDenied();throw Error('Paid recovery forbids another wallet operation');}return original(request);};});
+ await inspectMetaMaskAggregateReadiness({page,control:c,mark});
+ const binding={network:c.walletConfig.config.network,board:c.walletConfig.config.board,router:scope.router,intent,transactionHash};
+ assert.equal((await page.evaluate(inspectMetaMaskPaidBinding,binding)).paymentMatches,true,'Retained payment differs from the canonical payment');
+ const dialog=page.getByRole('dialog');await dialog.getByRole('button',{name:'Recover funding',exact:true}).click();
  mark('aggregate-paid-recovery-connect');await dialog.getByRole('button',{name:'Connect MetaMask',exact:true}).click();
  if(await walletPage.getByTestId('confirm-btn').isVisible())await walletPage.getByTestId('confirm-btn').click();
  await dialog.getByText('Funding wallet connected. No payment has been sent.',{exact:true}).waitFor();
@@ -385,6 +390,23 @@ export async function driveMetaMaskPaidRecovery({page,walletPage,control:c,provi
  // another review, fail visibly; never infer approval from a missing receipt.
  await dialog.getByText('Funding and the private claim are confirmed. Your posting deposit, network fees and Bok credit are ready.',{exact:true}).waitFor({timeout:80000});
  await dialog.getByText('Private Bok balance: '+formatUnits(a.bokAmount,6).replace(/\.0$/,'')+' USDC-backed credits.',{exact:true}).waitFor();
- assert.equal(await page.evaluate(()=>window.__paidRecoveryWalletWrites),0);assert.equal(await provider.getTransactionCount(account,'pending'),nonce);
- report.paidRecovery={asset:c.asset,transactionHash,planHash,originalCanonicalEffectsVerified:true,readyFromConfirmedPrivateClaim:true,userSends:0,relayPosts:0,signatures:0,postQualified:false};
+ const claimed=await page.evaluate(inspectMetaMaskPaidBinding,binding);assert.equal(claimed.paymentMatches,true);assert.equal(claimed.claimMatches,true);assert.equal(claimed.claimConfirmed,true);
+ assert.equal(attempts.forbiddenWalletCalls,0);assert.equal(await provider.getTransactionCount(account,'pending'),nonce);
+ report.paidRecovery={asset:c.asset,transactionHash,planHash,claimTransactionHash:claimed.claimTxHash,originalCanonicalEffectsVerified:true,readyFromConfirmedPrivateClaim:true,userSends:0,relayPosts:0,signatures:0,postQualified:false};
+ return ()=>assert.equal(attempts.forbiddenWalletCalls,0,'A late wallet operation was attempted');
+}
+
+// Executed inside the real wallet page. Only booleans and the public claim hash
+// leave it; private keys, decrypted custody and user grouping remain in-page.
+export async function inspectMetaMaskPaidBinding({network:n,board,router,intent,transactionHash}){
+ const sdk=window.__aztec,wallet=window.walletState.aztec,owner=wallet.address.toString(),storage=sdk.createBrowserJournalStorage();
+ const open=async(scopeText,keyDomain)=>(await(await sdk.createEncryptedJournalSlot({storage,walletSecret:wallet.secretKey,walletSalt:wallet.salt,scopeText,keyDomain})).read()).value;
+ const funding=await open(JSON.stringify(['ROLLING_AGGREGATE_FUNDING_V1',n.chainId,n.rollupVersion,n.rollupAddress,board.contractAddress,router,owner,1]),'ROLLING_AGGREGATE_FUNDING_V1');
+ const saved=funding?.intent??funding?.relay?.request;
+ const paymentMatches=!!saved&&['from','to','chainId','data','value'].every(k=>saved[k]===intent[k])&&(saved.nonce===undefined||saved.nonce===intent.nonce)&&Object.keys(intent.expected).every(k=>saved.expected?.[k]===intent.expected[k])&&(funding.relay?.transactionHash===undefined||funding.relay.transactionHash===transactionHash);
+ const scope=JSON.stringify(['AZTEC_BB_L2_JOURNAL_V1',owner,n.chainId,n.rollupAddress,n.rollupVersion,board.contractAddress,board.portalAddress]);
+ const claim=await open(JSON.stringify(['ROLLING_WORKFLOW_V1',scope]),'ROLLING_WORKFLOW_V1');
+ const claimMatches=paymentMatches&&!!funding?.claim&&claim?.id===funding.claim.intentId&&claim?.action?.type==='claim-deposit'&&['receipt','feeReceipt','bokReceipt'].every(k=>claim.action[k]?.txHash===transactionHash);
+ const claimConfirmed=claimMatches&&claim.status==='confirmed'&&/^0x[0-9a-f]{64}$/.test(claim.txHash);
+ return {paymentMatches,claimMatches,claimConfirmed,claimTxHash:claimConfirmed?claim.txHash:null};
 }
