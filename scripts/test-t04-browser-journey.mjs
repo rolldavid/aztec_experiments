@@ -699,3 +699,51 @@ test('network-only extension probe uses sixty seconds and cannot request Bok con
  assert.equal(choose({walletExtension:true,aggregate:true,networkOnly:'true'}),60000);
  assert.throws(()=>choose({walletExtension:true,aggregate:true,networkOnly:'true',retainedBok:'true'}));assert.throws(()=>choose({networkOnly:'true'}));
 });
+
+test('unsigned export checks original scoped custody and complete ciphertext records without modifying them',async()=>{
+ const {inspectMetaMaskUnsignedExport}=await import('./t04-metamask.mjs'),{runInNewContext}=await import('node:vm');const key='0x'+'1'.repeat(64),salt='0x'+'0'.repeat(64),owner='0x'+'2'.repeat(64),network={chainId:'31337',rollupVersion:'6',rollupAddress:'0x'+'3'.repeat(40)},board={contractAddress:'0x'+'4'.repeat(64)},router='0x'+'5'.repeat(40);
+ const saved={value:{kind:'usdc',intent:null,claim:null,relay:{submitted:false,request:null,planHash:'PRIVATE_PLAN'},aggregateCustody:{planHash:'PRIVATE_PLAN'}}},journals=[{key:'6'.repeat(64),encoded:'PRIVATE_CIPHERTEXT'}];let payload={wallet:{secretKey:key,salt},claims:[{}],journals};
+ const sandbox={window:{walletState:{aztec:{secretKey:key,salt,address:{toString:()=>owner}}},__aztec:{createBrowserJournalStorage:()=>({}),createEncryptedJournalSlot:async args=>{assert.equal(args.scopeText,JSON.stringify(['ROLLING_AGGREGATE_FUNDING_V1','31337','6',network.rollupAddress,board.contractAddress,router,owner,1]));return{read:async()=>saved};},createJournalBackup:async()=>({exportRecords:async()=>journals})},BillboardWalletBackup:{decrypt:async()=>payload}}};
+ const inspect=arg=>{sandbox.input={network,board,router,...arg};return runInNewContext('('+inspectMetaMaskUnsignedExport.toString()+')(input)',sandbox);};
+ assert.equal((await inspect({phase:'capture'})).journalPresent,true);assert.equal((await inspect({phase:'verify',envelope:{},password:'PRIVATE_PASSWORD'})).originalPreserved,true);
+ await inspect({phase:'capture'});saved.value.relay.submitted=true;await assert.rejects(inspect({phase:'verify'}),/unsigned funding/);saved.value.relay.submitted=false;
+ await inspect({phase:'capture'});payload={...payload,journals:[]};await assert.rejects(inspect({phase:'verify'}),/export differs/);
+});
+test('encrypted download failure records only a fixed category and preserves original error',async()=>{
+ const {saveEncryptedDownload}=await import('./t04-metamask.mjs');const dir=await fs.mkdtemp(path.join(os.tmpdir(),'t04-download-'));
+ try{for(const message of ['Target page, context or browser has been closed','canceled','PRIVATE_SENTINEL']){const original=Error(message),observation={};await assert.rejects(saveEncryptedDownload({suggestedFilename:()=> 'rolling-chat-encrypted-recovery.json',saveAs:async()=>{throw original;}},path.join(dir,'never.json'),observation),e=>e===original);assert.equal(observation.failure,message.startsWith('Target')?'target-closed':message==='canceled'?'cancelled':'unknown');assert(!JSON.stringify(observation).includes('PRIVATE_SENTINEL'));}}finally{await fs.rm(dir,{recursive:true,force:true});}
+});
+test('unsigned export mode remains a sixty second non-Bok owner',async()=>{
+ const {runInNewContext}=await import('node:vm'),source=await fs.readFile(new URL('./run-bounded-browser-check.mjs',import.meta.url),'utf8');const choose=runInNewContext('('+source.match(/export function browserCheckDeadline\([\s\S]*?\n}/)[0].replace('export ','')+')',{assert});
+ assert.equal(choose({walletExtension:true,aggregate:true,exportOnly:'true'}),60000);assert.throws(()=>choose({walletExtension:true,aggregate:true,exportOnly:'true',retainedBok:'true'}));assert.throws(()=>choose({walletExtension:true,aggregate:true,exportOnly:'true',networkOnly:'true'}));
+});
+
+// Opt-in local browser diagnostic: no application, extension, identity or network.
+test('pinned Chromium pure blob download survives persistent profile reopen', {skip:process.env.T04_PURE_BLOB_DIAGNOSTIC!=='true',timeout:25000}, async()=>{
+ const {chromium}=await import('playwright');const {walletChromiumLaunch}=await import('./t04-metamask.mjs');
+ const directory=await fs.mkdtemp(path.resolve('.build/t04-pure-blob-'));await fs.chmod(directory,0o700);
+ const observation={schemaVersion:1,profile:'disposable',networkRequests:0,launches:[]};
+ try {
+  for(let launch=1;launch<=2;launch++){
+   const row={launch,version:null,downloadStarted:false,saved:false,contextClosedBeforeCleanup:false,failure:null};observation.launches.push(row);
+   let context,cleanup=false;
+   try{
+    context=await chromium.launchPersistentContext(path.join(directory,'profile'),{...walletChromiumLaunch(),headless:true,acceptDownloads:true,args:['--js-flags=--max-old-space-size=256']});
+    context.on('close',()=>{if(!cleanup)row.contextClosedBeforeCleanup=true;});
+    row.version=context.browser().version();assert.equal(row.version,process.env.T04_CHROMIUM_EXECUTABLE?'155.0.8059.79':'153.0.8010.12');
+    await context.route('**/*',route=>{observation.networkRequests++;return route.abort();});
+    const page=context.pages()[0];page.setDefaultTimeout(5000);
+    await page.setContent('<button id="download">Download</button>');
+    await page.evaluate(()=>document.querySelector('button').onclick=()=>{const url=URL.createObjectURL(new Blob(['local-download-probe'],{type:'application/json'}));const a=document.createElement('a');a.href=url;a.download='probe.json';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);});
+    const pending=page.waitForEvent('download',{timeout:5000});await page.locator('#download').click();const download=await pending;row.downloadStarted=true;
+    const destination=path.join(directory,`saved-${launch}.json`);await download.saveAs(destination);assert.equal(await fs.readFile(destination,'utf8'),'local-download-probe');row.saved=true;
+   }catch(error){row.failure=row.contextClosedBeforeCleanup?'target-closed':'other';throw error;}finally{cleanup=true;await context?.close().catch(()=>{});}
+  }
+ }finally{await fs.writeFile(path.join(directory,'observation.json'),JSON.stringify(observation,null,2)+'\n',{flag:'wx',mode:0o600});console.log('PURE_BLOB_OBSERVATION '+JSON.stringify({directory,...observation}));}
+});
+
+test('test browser override is explicit and rejects unpinned executables',async t=>{
+ const {walletChromiumLaunch}=await import('./t04-metamask.mjs');assert.deepEqual(walletChromiumLaunch({}),{channel:'chromium'});
+ for(const executable of ['', 'relative', '/usr/bin/true'])assert.throws(()=>walletChromiumLaunch({T04_CHROMIUM_EXECUTABLE:executable}));
+ const dir=await fs.mkdtemp(path.join(os.tmpdir(),'t04-browser-pin-'));t.after(()=>fs.rm(dir,{recursive:true,force:true}));const executable=path.join(dir,'Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing');await fs.mkdir(path.dirname(executable),{recursive:true});await fs.writeFile(executable,'changed');assert.throws(()=>walletChromiumLaunch({T04_CHROMIUM_EXECUTABLE:executable}),/executable changed/);
+});

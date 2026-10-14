@@ -340,8 +340,12 @@ export async function driveMetaMaskAggregateFunding({context,page,walletPage,con
  // The route remains installed until the caller closes the context, so a late
  // duplicate payment cannot escape admission during teardown.
 }
-async function saveEncryptedDownload(download,destination){
- assert.equal(download.suggestedFilename(),'rolling-chat-encrypted-recovery.json');assert(!fs.existsSync(destination));await download.saveAs(destination);fs.chmodSync(destination,0o600);
+export async function saveEncryptedDownload(download,destination,observation){
+ assert.equal(download.suggestedFilename(),'rolling-chat-encrypted-recovery.json');assert(!fs.existsSync(destination));
+ try{await download.saveAs(destination);}catch(error){
+  if(observation)try{const d=Object.getOwnPropertyDescriptor(error??{},'message'),message=d&&'value' in d&&typeof d.value==='string'?d.value:'';observation.failure=/Target.*closed|browser.*closed|context.*closed/i.test(message)?'target-closed':/cancel/i.test(message)?'cancelled':/crash/i.test(message)?'crashed':'unknown';}catch{}
+  throw error;
+ }fs.chmodSync(destination,0o600);
  const value=JSON.parse(fs.readFileSync(destination,'utf8'));assert.equal(value.kind,'aztec-billboard-encrypted-wallet');assert.equal(value.schemaVersion,1);assert.equal(value.kdf,'PBKDF2-SHA256');assert.equal(value.iterations,600000);assert.match(value.ciphertext,/^[0-9a-f]+$/);
 }
 
@@ -355,6 +359,35 @@ export function countMetaMaskAggregateNodeSubmissions({url,method,body},trustedQ
  assert(typeof body==='string'&&Buffer.byteLength(body)<=8*1024*1024);
  const parsed=JSON.parse(body),batch=Array.isArray(parsed)?parsed:[parsed];assert(batch.length>0&&batch.length<=100);
  let count=0;for(const item of batch){assert(item&&typeof item==='object'&&!Array.isArray(item)&&typeof item.method==='string');if(item.method==='aztec_sendTx')count++;}return count;
+}
+
+// Original private records remain inside page RAM; only fixed booleans leave it.
+export async function inspectMetaMaskUnsignedExport({network:n,board,router,phase,envelope,password}){
+ const sdk=window.__aztec,wallet=window.walletState.aztec,storage=sdk.createBrowserJournalStorage();
+ const slot=await sdk.createEncryptedJournalSlot({storage,walletSecret:wallet.secretKey,walletSalt:wallet.salt,scopeText:JSON.stringify(['ROLLING_AGGREGATE_FUNDING_V1',n.chainId,n.rollupVersion,n.rollupAddress,board.contractAddress,router,wallet.address.toString(),1]),keyDomain:'ROLLING_AGGREGATE_FUNDING_V1'});
+ const saved=await slot.read(),value=saved.value;
+ const unsigned=value?.kind==='usdc'&&value.intent===null&&value.claim===null&&value.relay?.submitted===false&&value.relay?.request===null&&!value.relay?.transactionHash&&value.aggregateCustody?.planHash===value.relay?.planHash;
+ if(!unsigned)throw Error('Original unsigned funding is unavailable');
+ const journals=await(await sdk.createJournalBackup({storage,walletSecret:wallet.secretKey,walletSalt:wallet.salt})).exportRecords();
+ if(phase==='capture'){if(!journals.length)throw Error('Original journal is unavailable');globalThis.__unsignedExportSnapshot=JSON.stringify({saved,journals});return {unsigned:true,journalPresent:true};}
+ if(phase!=='verify'||globalThis.__unsignedExportSnapshot!==JSON.stringify({saved,journals}))throw Error('Original recovery changed during export');
+ const payload=await window.BillboardWalletBackup.decrypt(envelope,password);
+ const complete=JSON.stringify(payload.journals)===JSON.stringify(journals)&&payload.claims.length>0&&payload.wallet.secretKey===wallet.secretKey.toString()&&payload.wallet.salt===wallet.salt.toString();
+ if(!complete)throw Error('Encrypted recovery export differs');delete globalThis.__unsignedExportSnapshot;
+ return {unsigned:true,journalPresent:true,originalPreserved:true,completeEncryptedExport:true};
+}
+export async function exportMetaMaskUnsignedRecovery({page,control,mark,report}){
+ await inspectMetaMaskAggregateReadiness({page,control,mark});
+ const binding={network:control.walletConfig.config.network,board:control.walletConfig.config.board,router:control.walletConfig.config.aggregateFunding.router};
+ report.unsignedExport=await page.evaluate(inspectMetaMaskUnsignedExport,{...binding,phase:'capture'});
+ mark('aggregate-export-original-unsigned');const dialog=page.getByRole('dialog');
+ await dialog.getByText('Backup and account security',{exact:true}).click();await dialog.getByLabel('New recovery password',{exact:true}).fill(control.password);
+ const [download]=await Promise.all([page.waitForEvent('download'),dialog.getByRole('button',{name:'Download encrypted recovery',exact:true}).click()]);
+ report.unsignedExport.downloadStarted=true;
+ const destination=path.join(control.recoveryDirectory,'unsigned-recovery-export-1.json');
+ await saveEncryptedDownload(download,destination,report.unsignedExport);
+ assert(fs.statSync(destination).size<=34*1024*1024);
+ Object.assign(report.unsignedExport,await page.evaluate(inspectMetaMaskUnsignedExport,{...binding,phase:'verify',envelope:JSON.parse(fs.readFileSync(destination,'utf8')),password:control.password}));
 }
 
 // A retained disposable profile may diagnose initialization without admitting any payment.
@@ -796,4 +829,16 @@ export function installWalletFatalObservation(runtime,write,getStage){
   write({passed:false,scope:'Fatal wallet driver observation; original exit is unchanged',failure});
  }catch{}};
  runtime.on('uncaughtExceptionMonitor',observe);return()=>runtime.removeListener('uncaughtExceptionMonitor',observe);
+}
+
+// Explicit, pinned test-browser upgrade; the existing bundled browser is default.
+export function walletChromiumLaunch(env=process.env){
+ const executablePath=env.T04_CHROMIUM_EXECUTABLE;
+ if(executablePath===undefined)return {channel:'chromium'};
+ assert(path.isAbsolute(executablePath)&&executablePath.endsWith('/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing'),'Invalid pinned test browser');
+ const sha=file=>{const hash=createHash('sha256'),buffer=Buffer.alloc(65536),fd=fs.openSync(file,'r');try{let n;while((n=fs.readSync(fd,buffer,0,buffer.length,null))>0)hash.update(buffer.subarray(0,n));return hash.digest('hex');}finally{fs.closeSync(fd);}};
+ assert.equal(sha(executablePath),'c41c446837b5888d9574dbe462a4f01f02459bffee534eb945d2418984135a92','Pinned test browser executable changed');
+ const framework=path.resolve(path.dirname(executablePath),'../Frameworks/Google Chrome for Testing Framework.framework/Versions/155.0.8059.79/Google Chrome for Testing Framework');
+ assert.equal(sha(framework),'f20c7ab27196bfdaa20026299acd6d14b6619db3fc4680192fdc7785d1414263','Pinned test browser framework changed');
+ return {executablePath};
 }
