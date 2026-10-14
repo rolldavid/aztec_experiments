@@ -162,7 +162,7 @@ export async function createRollingWalletSession({sdk,routing,ethers,config,boar
   try{
    begin('trusted-node');
    const network={chainId:String(selected.network.chainId),version:String(selected.network.rollupVersion),rollup:selected.network.rollupAddress};
-   const node=await sdk.createTrustedPrivateNode({...query,expectedNetworkScope:network,proofsEnabled});await guard();
+   const node=await sdk.createTrustedPrivateNode({...query,expectedNetworkScope:network,proofsEnabled,readinessTier:'checkpointed'});await guard();
    begin('deployment');
    const verifiedDeployment=await verifyRollingDeployment({sdk,node,ethers,config:selected,boardArtifact,privateFeeArtifact,contextGuard:guard,proofsEnabled,onProgress:record=>{
     const value={stage:'session-initialization',step:'deployment',deploymentStep:record.step,state:record.state,code:record.code};

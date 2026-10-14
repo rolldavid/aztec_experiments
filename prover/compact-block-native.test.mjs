@@ -282,3 +282,9 @@ test('internal compact observer rejects accessor configuration without evaluatin
  const f=await fixture();let reads=0;Object.defineProperty(f.config,'onFailure',{get(){reads++;throw Error('PRIVATE');}});
  assert.throws(()=>createCompactBlockNativeAdapter(f.config),/Invalid compact block native configuration/);assert.equal(reads,0);
 });
+
+for(const tier of ['checkpointed','proposed'])test('historical native compact readiness is explicit for '+tier,async()=>{
+ const f=await fixture(undefined,tier),tips=f.node.getChainTips;
+ f.node.getChainTips=async()=>({...await tips(),proposed:{number:8,hash:BlockHash.fromString(new Fr(8).toString())}});
+ await server(f,async({send})=>{const response=await send();assert.equal(response.status,tier==='checkpointed'?200:503);assert.equal(f.state.reads,tier==='checkpointed'?1:0);});
+});

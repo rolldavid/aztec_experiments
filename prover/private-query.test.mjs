@@ -1,5 +1,10 @@
 // Development fakes/local HTTP only: these do not qualify node privacy or sync.
 import {createHash} from 'node:crypto';
+import {jsonStringify} from '@aztec-labs/foundation/json-rpc';
+import {Fr} from '@aztec-labs/foundation/curves/bn254';
+import {BlockHeader,GlobalVariables} from '@aztec-labs/stdlib/tx';
+import {AppendOnlyTreeSnapshot} from '@aztec-labs/stdlib/trees';
+import {SiblingPath} from '@aztec-labs/foundation/trees';
 import {AztecNodeApiSchema} from '@aztec-labs/stdlib/interfaces/client';
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -11,7 +16,7 @@ const rollupAddress = '0x' + '12'.repeat(20);
 const listen = async server => {await new Promise(r => server.listen(0, '127.0.0.1', r)); return 'http://127.0.0.1:' + server.address().port;};
 const close = server => {server.closeAllConnections(); return new Promise(r => server.close(r));};
 const call = (method = 'aztec_getBlockNumber', params = []) => ({jsonrpc:'2.0',id:1,method,params});
-async function fixture(t, {inspect = async () => ({ready:true}), upstreamReply, operatorKey, onQueryFailure} = {}) {
+async function fixture(t, {inspect = async () => ({ready:true}), upstreamReply, operatorKey, onQueryFailure,compactBlocks} = {}) {
   const received = [];
   const upstream = http.createServer(async (req,res) => {
     let text = ''; for await (const chunk of req) text += chunk;
@@ -22,7 +27,7 @@ async function fixture(t, {inspect = async () => ({ready:true}), upstreamReply, 
   });
   const upstreamUrl = await listen(upstream);
   const operator=operatorKey===undefined?{}:{serviceMode:'query-only',operatorAuthSha256:createHash('sha256').update(operatorKey).digest('hex')};
-  const privateQuery = createPrivateQueryWithInspector({...operator,queryNode:{url:upstreamUrl,rollupAddress},chainId:'31337',rollupVersion:'1',proofsEnabled:false}, inspect, {onQueryFailure});
+  const privateQuery = createPrivateQueryWithInspector({...operator,queryNode:{url:upstreamUrl,rollupAddress},chainId:'31337',rollupVersion:'1',proofsEnabled:false,...(compactBlocks?{compactBlocks}:{})}, inspect, {onQueryFailure});
   const server = createProverServer({...operator,privateQuery,...(operatorKey===undefined?{queue:{stats:()=>({submitted:0})}}:{}),origins:['https://app.example']});
   const url = await listen(server);
   t.after(async()=>{await close(server);await close(upstream);});
@@ -284,4 +289,77 @@ test('service carries readiness observer internally without extending serialized
   const service=await startProverService(config,{onQueryFailure:code=>observed.push(code)});t.after(()=>service.close());
   const response=await fetch('http://127.0.0.1:'+service.address.port+'/v1/node',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(call())});
   assert.equal(response.status,503);assert.deepEqual(observed,['BB_TRUSTED_NODE_UNAVAILABLE']);
+});
+
+// Fixed historical dispatch uses actual installed argument/response schemas;
+// canonical block contents below are labelled fixtures, not chain evidence.
+const historyHash=n=>'0x'+BigInt(n).toString(16).padStart(64,'0');
+async function historyFixture(t,{strict=false,change,inspectChange}={}){
+ const inspected=[],operations=[];let final=false;
+ const ready={ready:true,latestBlockNumber:7,latestBlockHash:historyHash(7),readinessTier:'checkpointed',readinessBlockNumber:7,readinessBlockHash:historyHash(7),oldestHistoricBlockNumber:1};
+ const block=n=>({header:BlockHeader.empty({globalVariables:GlobalVariables.empty({blockNumber:n}),txEffectsTreeRoot:new Fr(77)}),archive:AppendOnlyTreeSnapshot.empty(),blockHash:historyHash(n),checkpointNumber:1,indexWithinCheckpoint:0});
+ const mined={txHash:historyHash(100),status:'checkpointed',executionResult:'success',transactionFee:'0',blockHash:historyHash(6),blockNumber:6,slotNumber:1,txIndexInBlock:0,epochNumber:0};
+ const f=await fixture(t,{compactBlocks:{tier:'checkpointed',origins:[]},inspect:async(_node,opts)=>{
+  inspected.push(opts.readinessTier??'proposed');if(inspectChange)await inspectChange(opts,inspected);if(!opts.readinessTier&&strict)throw Error('strict unavailable');
+  if(inspected.length>1)final=true;return ready;},upstreamReply:async(_req,res,rows)=>{
+   const values=[];for(const row of rows){const method=row.method.split('_').slice(1).join('_');operations.push(method);let result;
+    if(method==='getBlockData'){const selector=row.params[0];const n=typeof selector==='number'?selector:selector.number??Number(BigInt(selector.hash));result=block(n);}
+    else if(method==='getTxReceipt')result={...mined};
+    else if(method==='getTxEffectMembershipWitness')result={blockNumber:6,root:new Fr(77),categoriesHash:new Fr(1),leafIndex:0n,siblingPath:new SiblingPath(0,[])};
+    else if(method==='getBlockHashMembershipWitness')result=undefined;
+    else if(method==='getWorldStateSyncStatus')result={latestBlockNumber:7,latestBlockHash:historyHash(7),finalizedBlockNumber:3,oldestHistoricBlockNumber:1,treesAreSynched:true};
+    else result=7;
+    if(change)result=await change({method,result,row,final,operations});values.push({jsonrpc:'2.0',id:row.id,result:result??null});}
+   res.setHeader('content-type','application/json');res.end(jsonStringify(values));
+  }});
+ return {...f,inspected,operations,ready};
+}
+test('historical gateway: parsed numeric and anchored header selectors use checkpoint policy and final fences',async t=>{
+ const f=await historyFixture(t,{strict:true});for(const selector of [6,{number:6,hash:historyHash(6)},{hash:historyHash(6)}]){
+  const response=await f.post(call('aztec_getBlockData',[selector]));assert.equal(response.status,200);assert.equal((await response.json()).result.blockHash,historyHash(6));
+ }assert.deepEqual(f.inspected,Array(6).fill('checkpointed'));assert(f.operations.filter(x=>x==='getBlockData').length>=15);
+});
+test('historical gateway: public inspector metadata is explicitly checkpoint gated, health remains proposed',async t=>{
+ const f=await historyFixture(t,{strict:true});const response=await f.post(call('aztec_getWorldStateSyncStatus'));assert.equal(response.status,200);assert.equal((await response.json()).result.latestBlockNumber,7);
+ assert.equal((await f.privateQuery.health()).ready,false);assert.deepEqual(f.inspected,['checkpointed','checkpointed','proposed']);
+});
+for(const selector of ['latest','proposed',{tag:'checkpointed'},{archive:historyHash(1)}])test('historical gateway: nonfixed selector '+JSON.stringify(selector)+' stays strict',async t=>{
+ const f=await historyFixture(t,{strict:true});assert.equal((await f.post(call('aztec_getBlockData',[selector]))).status,503);assert.deepEqual(f.inspected,['proposed']);assert.deepEqual(f.operations,[]);
+});
+test('historical gateway: mixed latest batch gates strictly before any forwarding',async t=>{
+ const f=await historyFixture(t,{strict:true});assert.equal((await f.post([call('aztec_getBlockData',[6]),{...call('aztec_getBlockNumber'),id:2}])).status,503);assert.deepEqual(f.operations,[]);assert.deepEqual(f.inspected,['proposed']);
+});
+for(const [label,change]of[
+ ['forked resolution',({method,result,operations})=>method==='getBlockData'&&operations.length===2?{...result,blockHash:historyHash(99)}:result],
+ ['final anchor reorg',({method,result,final})=>method==='getBlockData'&&final?{...result,blockHash:historyHash(99)}:result],
+])test('historical gateway: rejects '+label,async t=>{const f=await historyFixture(t,{strict:true,change});assert.equal((await f.post(call('aztec_getBlockData',[6]))).status,503);});
+for(const height of [0,8])test('historical gateway: unavailable/pruned selector '+height+' cannot bypass bounds',async t=>{const f=await historyFixture(t,{strict:true});assert.equal((await f.post(call('aztec_getBlockData',[height]))).status,503);});
+test('historical gateway: typed mined receipt and effect witness resolve canonical history',async t=>{
+ const f=await historyFixture(t,{strict:true});for(const method of ['getTxReceipt','getTxEffectMembershipWitness']){const response=await f.post(call('aztec_'+method,[historyHash(100)]));assert.equal(response.status,200);assert.equal((await response.json()).result.blockNumber,6);}
+ assert.equal(f.operations.filter(x=>x==='getTxReceipt').length,2);assert(f.inspected.every(x=>x==='checkpointed'));
+});
+test('historical gateway: pending receipt needs stronger proposed policy and is never fabricated missing',async t=>{
+ const f=await historyFixture(t,{change:({method,result})=>method==='getTxReceipt'?{txHash:historyHash(100),status:'pending'}:result});const response=await f.post(call('aztec_getTxReceipt',[historyHash(100)]));assert.equal(response.status,200);assert.equal((await response.json()).result.status,'pending');assert.deepEqual(f.inspected,['checkpointed','proposed']);assert.equal(f.operations.filter(x=>x==='getTxReceipt').length,1);
+});
+test('historical gateway: wrong witness root produces fixed RPC failure, never historical success',async t=>{
+ const f=await historyFixture(t,{strict:true,change:({method,result})=>method==='getTxEffectMembershipWitness'?{...result,root:new Fr(999)}:result});const response=await f.post(call('aztec_getTxEffectMembershipWitness',[historyHash(100)]));assert.equal(response.status,200);const value=await response.json();assert(value.error);assert(!Object.hasOwn(value,'result'));
+});
+test('historical gateway: failing final fence drains held sibling before response/slot release',async t=>{
+ let entered,release;const started=new Promise(r=>{entered=r;}),held=new Promise(r=>{release=r;});
+ const f=await historyFixture(t,{strict:true,change:async({method,result,final})=>{if(method==='getBlockData'&&final){if(result.header.globalVariables.blockNumber===6)return {...result,blockHash:historyHash(99)};entered();await held;}return result;}});
+ let closed=false;const response=f.post(call('aztec_getBlockData',[6])).then(value=>{closed=true;return value;});await started;await new Promise(r=>setImmediate(r));assert.equal(closed,false);release();assert.equal((await response).status,503);
+});
+
+test('historical gateway: explicit archive membership selector is canonicalized while archive-root form stays strict',async t=>{
+ const f=await historyFixture(t,{strict:true});const response=await f.post(call('aztec_getBlockHashMembershipWitness',[{number:6,hash:historyHash(6)},historyHash(5)]));assert.equal(response.status,200);assert.deepEqual(await response.json(),{jsonrpc:'2.0',id:1,result:null});assert(f.operations.includes('getBlockHashMembershipWitness'));assert.deepEqual(f.inspected,['checkpointed','checkpointed']);
+});
+test('historical gateway: mismatched receipt identity fails closed rather than escalating it into success',async t=>{
+ const f=await historyFixture(t,{change:({method,result})=>method==='getTxReceipt'?{...result,txHash:historyHash(999)}:result});assert.equal((await f.post(call('aztec_getTxReceipt',[historyHash(100)]))).status,503);assert.deepEqual(f.inspected,['checkpointed']);
+});
+test('historical gateway: pending and above-checkpoint receipts cannot bypass unavailable strict readiness',async t=>{
+ for(const pending of [true,false]){const f=await historyFixture(t,{strict:true,change:({method,result})=>method==='getTxReceipt'?(pending?{txHash:historyHash(100),status:'pending'}:{...result,blockNumber:8,blockHash:historyHash(8)}):result});assert.equal((await f.post(call('aztec_getTxReceipt',[historyHash(100)]))).status,503);assert.deepEqual(f.inspected,['checkpointed','proposed']);}
+});
+
+test('historical gateway: returned header must match the resolved canonical selector',async t=>{
+ const f=await historyFixture(t,{strict:true,change:({method,result,operations,final})=>method==='getBlockData'&&!final&&operations.length===3?{...result,blockHash:historyHash(99)}:result});const response=await f.post(call('aztec_getBlockData',[6]));assert.equal(response.status,200);assert((await response.json()).error);
 });

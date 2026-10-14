@@ -1,3 +1,4 @@
+import {BlockHash} from '@aztec-labs/stdlib/block';
 import {getTrustedNodeFailureDiagnostic} from '../shared/trusted-private-node.mjs';
 import {createSafeJsonRpcClient} from '@aztec-labs/foundation/json-rpc/client';
 import {jsonStringify} from '@aztec-labs/foundation/json-rpc';
@@ -156,13 +157,41 @@ export function createPrivateQueryWithInspector({queryNode, chainId, rollupVersi
     try{Promise.resolve(onQueryFailure(code,getTrustedNodeFailureDiagnostic(error))).then(()=>pendingObservers.delete(code),()=>pendingObservers.delete(code));}
     catch{pendingObservers.delete(code);}
   };
-  const inspect = async () => {try{return await inspectTrustedNode(node, options);}catch(error){reportFailure(error);throw error;}};
+  const inspect = async (readinessTier) => {try{return await inspectTrustedNode(node, readinessTier?{...options,readinessTier}:options);}catch(error){reportFailure(error);throw error;}};
   const health = async () => {
     if (active >= QUERY_LIMITS.concurrent) return {enabled: true, ready: false, reason: 'busy'};
     active++;
     try {await inspect(); return {enabled: true, ready: true};}
     catch {return {enabled: true, ready: false, reason: 'unavailable'};}
     finally {active--;}
+  };
+  // Historical readiness is an explicit closed read policy, never inferred for
+  // an arbitrary SDK method. Arguments have already passed the official schema.
+  const metadataReads=new Set(['getNodeInfo','getChainTips','getWorldStateSyncStatus','getSyncedL1Timestamp']);
+  const selectorIndex=new Map(['getBlockData','getBlock','findLeavesIndexes','getNullifierMembershipWitness','getLowNullifierMembershipWitness','getPublicDataWitness','getBlockHashMembershipWitness','getNoteHashMembershipWitness','getPublicStorageAt'].map(name=>[name,0]));
+  selectorIndex.set('getContract',1);
+  const txReads=new Set(['getTxReceipt','getTxEffectMembershipWitness']);
+  const fixedSelector=value=>Number.isSafeInteger(value)&&value>=0 || value instanceof BlockHash ||
+    (!!value&&typeof value==='object'&&!Array.isArray(value)&&Object.keys(value).length>0&&Object.keys(value).every(k=>k==='number'||k==='hash')&&
+      (value.number===undefined||Number.isSafeInteger(value.number)&&value.number>=0)&&(value.hash===undefined||value.hash instanceof BlockHash));
+  const historicalKind=call=>metadataReads.has(call.method)?'metadata':txReads.has(call.method)?'transaction':
+    selectorIndex.has(call.method)&&fixedSelector(call.args[selectorIndex.get(call.method)])?'selector':null;
+  const canonicalRecord=async(selector,ready,limit=ready.readinessBlockNumber)=>{
+    const data=await node.getBlockData(selector),number=data?.header?.globalVariables?.blockNumber,hash=data?.blockHash;
+    if(!Number.isSafeInteger(number)||number<ready.oldestHistoricBlockNumber||number>limit||!(hash instanceof BlockHash))throw unavailable();
+    const requestedNumber=typeof selector==='number'?selector:selector?.number;
+    const requestedHash=selector instanceof BlockHash?selector:selector?.hash;
+    if(requestedNumber!==undefined&&requestedNumber!==number||requestedHash!==undefined&&requestedHash.toString()!==hash.toString())throw unavailable();
+    // Resolve hash selectors back through the canonical height too. A block-by-
+    // hash result alone may name an orphan retained by an archive.
+    const current=await node.getBlockData(number);
+    if(current?.header?.globalVariables?.blockNumber!==number||current?.blockHash?.toString()!==hash.toString())throw unavailable();
+    return {number,hash:hash.toString(),root:data.header.txEffectsTreeRoot?.toString()};
+  };
+  const recheckRecords=async records=>{
+    const results=await Promise.allSettled(records.map(async record=>{const data=await node.getBlockData(record.number);
+      if(data?.header?.globalVariables?.blockNumber!==record.number||data?.blockHash?.toString()!==record.hash)throw unavailable();}));
+    if(results.some(result=>result.status==='rejected'))throw unavailable();
   };
   const handle = async (req, res) => {
     const reply = (status, body) => {res.writeHead(status, {'Content-Type': 'application/json', 'Cache-Control': 'no-store'}); res.end(jsonStringify(body));};
@@ -198,10 +227,43 @@ export function createPrivateQueryWithInspector({queryNode, chainId, rollupVersi
           call.args = await parseWithOptionals(call.params, getSchemaParameters(AztecNodeApiSchema[call.method]));
         }
       } catch {reply(400, errorResponse(null, -32602)); return;}
-      try {await inspect();} catch {reply(503, errorResponse(null)); return;}
-      const results = await Promise.all(prepared.map(async ({id, method, args}) => {
+      let historical=false,ready,records=[];
+      try {
+        historical=!!compact&&compact.tier!=='proposed'&&prepared.every(call=>historicalKind(call));
+        ready=await inspect(historical?compact.tier:undefined);
+        if(historical){
+          let strict=false;
+          for(const call of prepared){
+            const kind=historicalKind(call);
+            if(kind==='selector'){
+              // Public header metadata authenticates the world's own height;
+              // stateful reads remain bounded by the selected readiness tier.
+              call.anchor=await canonicalRecord(call.args[selectorIndex.get(call.method)],ready,call.method==='getBlockData'?ready.latestBlockNumber:ready.readinessBlockNumber);
+            }else if(kind==='transaction'){
+              const receipt=await node.getTxReceipt(call.args[0],call.method==='getTxReceipt'?call.args[1]:undefined);
+              call.receipt=receipt;if(call.method==='getTxReceipt')call.cached={value:receipt};
+              if(receipt&&!receipt.txHash.equals(call.args[0]))throw unavailable();
+              if(!receipt?.isMined()||receipt.blockNumber>ready.readinessBlockNumber){strict=true;continue;}
+              call.anchor=await canonicalRecord({number:receipt.blockNumber,hash:receipt.blockHash},ready);
+            }
+            if(call.anchor)records.push(call.anchor);
+          }
+          // Unknown/pending tx status still needs ordinary proposed readiness.
+          // This is a stronger policy before publication, not a retry or a
+          // replacement for an unavailable historical result.
+          if(strict){const strictReady=await inspect();historical=false;
+            for(const call of prepared)if(call.receipt?.isMined()&&!call.anchor){call.anchor=await canonicalRecord({number:call.receipt.blockNumber,hash:call.receipt.blockHash},strictReady,strictReady.latestBlockNumber);records.push(call.anchor);}
+          }
+          else records.push({number:ready.readinessBlockNumber,hash:ready.readinessBlockHash},{number:ready.latestBlockNumber,hash:ready.latestBlockHash});
+        }
+      } catch {reply(503, errorResponse(null)); return;}
+      const results = await Promise.all(prepared.map(async ({id, method, args,anchor,cached}) => {
         try {
-          const result = await node[method](...args);
+          const result = cached?cached.value:await node[method](...args);
+          if(historical&&anchor&&method==='getBlockData'&&(!result||result.header.globalVariables.blockNumber!==anchor.number||result.blockHash.toString()!==anchor.hash))throw unavailable();
+          if(historical&&anchor&&method==='getBlock'&&(!result||result.number!==anchor.number||result.hash.toString()!==anchor.hash))throw unavailable();
+          if(anchor&&method==='getTxReceipt'&&(!result?.isMined()||!result.txHash.equals(args[0])||result.blockNumber!==anchor.number||result.blockHash.toString()!==anchor.hash))throw unavailable();
+          if(anchor&&method==='getTxEffectMembershipWitness'&&(!result||result.blockNumber!==anchor.number||result.root.toString()!==anchor.root))throw unavailable();
           // The pinned safe client already validates/decodes defined outputs.
           // Its null shortcut bypasses validation, so check only that case:
           // required values must fail, genuine optional/void absence may pass.
@@ -210,6 +272,7 @@ export function createPrivateQueryWithInspector({queryNode, chainId, rollupVersi
         }
         catch {return errorResponse(id);}
       }));
+      if(historical||records.length){try{await inspect(historical?compact.tier:undefined);await recheckRecords(records);}catch{reply(503,errorResponse(null));return;}}
       const encoded = jsonStringify(batch ? results : results[0]);
       if (Buffer.byteLength(encoded) > QUERY_LIMITS.responseBytes) {reply(502, errorResponse(null)); return;}
       res.writeHead(200, {'Content-Type': 'application/json', 'Cache-Control': 'no-store'}); res.end(encoded);
@@ -254,10 +317,10 @@ export function createPrivateQueryWithInspector({queryNode, chainId, rollupVersi
         bytes+=chunk.length;if(bytes>COMPACT_TRANSPORT_LIMITS.requestBytes){status=413;throw unavailable();}chunks.push(chunk);
       }
       alive();const selector=validateCompactSelector(JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(Buffer.concat(chunks))),compact.tier);
-      status=503;await inspect();alive();
+      status=503;await inspect(compact.tier);alive();
       const response=await compactFetch(new URL(COMPACT_NATIVE_ROUTE,config.url),{method:'POST',headers:{'content-type':'application/json'},
         body:JSON.stringify(selector),redirect:'error',credentials:'omit',referrerPolicy:'no-referrer',signal:controller.signal});
-      const value=await readCompactResponse(response,selector);alive();await inspect();alive();
+      const value=await readCompactResponse(response,selector);alive();await inspect(compact.tier);alive();
       reply(200,value);
     }catch{if(status===413)await rejectAndClose();else rejected(status);}
     finally{clearTimeout(timer);req.off('aborted',abort);res.off('close',close);active--;compactActive=false;}

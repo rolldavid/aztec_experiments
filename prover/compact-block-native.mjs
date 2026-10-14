@@ -158,7 +158,7 @@ export function createCompactBlockNativeAdapter(options) {
       alive();const request=selector(JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(Buffer.concat(chunks))),config.tier);
       status=503;
       const canonical=async boundary=>{
-        stage=boundary+'-readiness';alive();await inspectTrustedNode(api,config);alive();
+        stage=boundary+'-readiness';alive();await inspectTrustedNode(api,{...config,readinessTier:config.tier});alive();
         stage=boundary+'-canonical';
         const tips=await api.getChainTips();alive();
         const tip=config.tier==='proposed'?tips.proposed:tips[config.tier]?.block;

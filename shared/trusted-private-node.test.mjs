@@ -284,3 +284,27 @@ test('development fake: synchronization failure drains held timestamp before rej
  const result=inspectTrustedNode(f.node,options).then(()=>assert.fail('must reject'),error=>{finished=true;return error;});
  await entered.promise;await turn();assert.equal(finished,false);assert.equal(f.calls.some(x=>x[0]==='getBlockData'),false);gate.resolve();assert.equal((await result).code,'BB_TRUSTED_NODE_UNAVAILABLE');
 });
+
+function historicalFixture(){const f=fixture();f.tips.proposed={number:1471,hash:h(1471)};for(const k of ['checkpointed','proven'])f.tips[k].block={number:1470,hash:h(1470)};f.tips.finalized.block={number:1469,hash:h(1469)};Object.assign(f.state,{latestBlockNumber:1470,latestBlockHash:h(1470),finalizedBlockNumber:1469,oldestHistoricBlockNumber:1});return f;}
+test('explicit checkpoint readiness authenticates measured1471/1470 historical state and reports honest heads',async()=>{
+ const f=historicalFixture(),r=await inspectTrustedNode(f.node,{...options,readinessTier:'checkpointed'});
+ assert.equal(r.latestBlockNumber,1470);assert.equal(r.latestBlockHash,h(1470));assert.equal(r.readinessBlockNumber,1470);assert.equal(r.readinessBlockHash,h(1470));assert.equal(r.readinessTier,'checkpointed');
+ assert.equal(f.calls.filter(x=>x[0]==='getNodeInfo').length,1);assert.equal(f.calls.filter(x=>x[0]==='getBlockData').length,4);
+ await rejects(()=>inspectTrustedNode(historicalFixture().node,options),'UNSYNCED');
+});
+for(const [label,change]of[
+ ['world below anchor',f=>{f.state.latestBlockNumber=1469;f.state.latestBlockHash=h(1469);}],
+ ['world above proposed',f=>{f.state.latestBlockNumber=1472;f.state.latestBlockHash=h(1472);}],
+ ['world fork at own height',f=>{f.state.latestBlockHash=h(999);}],
+ ['pruned anchor',f=>{f.state.oldestHistoricBlockNumber=1471;}],
+ ['finality mismatch',f=>{f.state.finalizedBlockNumber=1468;}],
+ ['not synced',f=>{f.state.treesAreSynched=false;}],
+ ['stale',f=>{f.node.getSyncedL1Timestamp=async()=>1n;}],
+])test('explicit historical readiness rejects '+label,async()=>{const f=historicalFixture();change(f);await rejects(()=>inspectTrustedNode(f.node,{...options,readinessTier:'checkpointed'}),label==='stale'?'STALE':'UNSYNCED');});
+for(const stage of ['selected','world','final-selected','final-world'])test('explicit historical readiness preserves '+stage+' canonical fence',async()=>{
+ const f=historicalFixture(),names=['selected','world','final-selected','final-world'];let reads=0;
+ f.node.getBlockData=async n=>({header:{globalVariables:{blockNumber:n}},blockHash:h(names[reads++]===stage?999:n)});
+ let failure;try{await inspectTrustedNode(f.node,{...options,readinessTier:'checkpointed'});}catch(e){failure=e;}
+ assert.equal(getTrustedNodeFailureDiagnostic(failure).canonical.stage,stage);
+});
+test('historical readiness accepts only explicit closed tiers',async()=>{await rejects(()=>inspectTrustedNode(fixture().node,{...options,readinessTier:'latest'}),'CONFIG');});

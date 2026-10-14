@@ -42,10 +42,11 @@ function hex(value, bytes) {
 }
 function policy(options) {
   try {
-    const {expectedNetworkScope:s,proofsEnabled,maxLagSeconds=120}=options;
+    const {expectedNetworkScope:s,proofsEnabled,maxLagSeconds=120,readinessTier='proposed'}=options;
+    if(!['proposed','checkpointed','proven','finalized'].includes(readinessTier))throw fail('CONFIG');
     const chainId=decimal(s.chainId,64), version=decimal(s.version,32),rollup=hex(s.rollup,20);
     if(BigInt(rollup)===0n || typeof proofsEnabled!=='boolean' || (!proofsEnabled && chainId!=='31337') || !Number.isSafeInteger(maxLagSeconds) || maxLagSeconds<1 || maxLagSeconds>600)throw fail('CONFIG');
-    return {chainId,version,rollup,proofsEnabled,maxLagSeconds};
+    return {chainId,version,rollup,proofsEnabled,maxLagSeconds,readinessTier};
   } catch { throw fail('CONFIG'); }
 }
 function block(value) {
@@ -101,15 +102,16 @@ export async function inspectTrustedNode(node, options) {
     ]);
     snapshots.push(snapshotDiagnostic(tips,state,stamp));
     const {proposed,checkpointed,proven,finalized}=tips;
+    const selected=tips[p.readinessTier],historical=p.readinessTier!=='proposed';
     const ordered=[finalized,proven,checkpointed,proposed];
     for(let i=1;i<ordered.length;i++)if(ordered[i-1].number>ordered[i].number || (ordered[i-1].number===ordered[i].number && ordered[i-1].hash!==ordered[i].hash))throw unsynced('TIP_ORDER');
     const {latest,latestHash,final,oldest,synced}=state;
     if(!natural(latest) || !natural(final) || !natural(oldest) || typeof synced!=='boolean')throw fail('UNAVAILABLE');
     if(!synced)throw unsynced('STATE_NOT_SYNCED');
-    if(oldest>checkpointed.number)throw unsynced('CHECKPOINT_PRUNED');
+    if(oldest>checkpointed.number || oldest>selected.number)throw unsynced('CHECKPOINT_PRUNED');
     if(final>latest)throw unsynced('IMPOSSIBLE_FINALITY');
     if(latest===proposed.number && latestHash!==proposed.hash)throw unsynced('SAME_HEIGHT_HASH');
-    if(latest!==proposed.number || final!==finalized.number){
+    if((historical?(latest<selected.number||latest>proposed.number):latest!==proposed.number) || final!==finalized.number){
       // These independently returned public metadata records can straddle a
       // natural head/finality transition. Discard the whole snapshot and read
       // it once more, starting with identity. Neither an inconsistent snapshot
@@ -118,7 +120,9 @@ export async function inspectTrustedNode(node, options) {
       if(snapshot===0)continue;
       throw unsynced('METADATA_MISMATCH');
     }
-    if(checkpointed.number!==proposed.number)await readTogether([()=>canonical(node,checkpointed,unsynced,'checkpointed'),()=>canonical(node,proposed,unsynced,'proposed')]);
+    const world={number:latest,hash:latestHash};
+    if(historical)await readTogether([()=>canonical(node,selected,unsynced,'selected'),()=>canonical(node,world,unsynced,'world')]);
+    else if(checkpointed.number!==proposed.number)await readTogether([()=>canonical(node,checkpointed,unsynced,'checkpointed'),()=>canonical(node,proposed,unsynced,'proposed')]);
     else await canonical(node,proposed,unsynced,'proposed');
     const suppliedNow=options.nowSeconds,now=suppliedNow===undefined ? Math.floor(Date.now()/1000) : suppliedNow;
     if(!natural(now))throw fail('CONFIG');
@@ -126,9 +130,11 @@ export async function inspectTrustedNode(node, options) {
     if(lag<0 || lag>p.maxLagSeconds)throw fail('STALE');
     // Recheck the selected canonical anchor after synchronization reads. A reorg
     // invalidates this readiness snapshot; never manufacture missing state.
-    await canonical(node,proposed,unsynced,'final');
+    if(historical)await readTogether([()=>canonical(node,selected,unsynced,'final-selected'),()=>canonical(node,world,unsynced,'final-world')]);
+    else await canonical(node,proposed,unsynced,'final');
     return Object.freeze({ready:true,chainId:p.chainId,rollupVersion:p.version,rollupAddress:p.rollup,proofsEnabled:p.proofsEnabled,
-      latestBlockNumber:proposed.number,latestBlockHash:proposed.hash,checkpointedBlockNumber:checkpointed.number,
+      latestBlockNumber:latest,latestBlockHash:latestHash,checkpointedBlockNumber:checkpointed.number,
+      ...(historical?{readinessTier:p.readinessTier,readinessBlockNumber:selected.number,readinessBlockHash:selected.hash}:{}),
       finalizedBlockNumber:finalized.number,oldestHistoricBlockNumber:oldest,
       syncedL1Timestamp:String(stamp),checkedAtSeconds:now,lagSeconds:lag});
     }
@@ -168,8 +174,8 @@ async function privateFetch(host, body, extraHeaders={}) {
 /** Uses installed SDK schemas/serialization/version checks, with silent logging.
  * No transport retries, redirects, alternate endpoint or ordinary-node fallback.
  */
-export async function createTrustedPrivateNode({url,expectedNetworkScope,proofsEnabled=true,allowLocalDev=false,maxLagSeconds=120}) {
-  const p=policy({expectedNetworkScope,proofsEnabled,maxLagSeconds}),host=endpoint(url,allowLocalDev);
+export async function createTrustedPrivateNode({url,expectedNetworkScope,proofsEnabled=true,allowLocalDev=false,maxLagSeconds=120,readinessTier='proposed'}) {
+  const p=policy({expectedNetworkScope,proofsEnabled,maxLagSeconds,readinessTier}),host=endpoint(url,allowLocalDev);
   const rpc=createSafeJsonRpcClient(host,AztecNodeApiSchema,{namespaceMethods:'aztec',maxBatchSize:3,fetch:privateFetch,log:silent,
     onResponse:getVersioningResponseHandler({l1ChainId:Number(p.chainId),rollupVersion:Number(p.version),l1RollupAddress:p.rollup})});
   // The installed PXE wraps this facade with recording and caching Proxies.
@@ -182,7 +188,7 @@ export async function createTrustedPrivateNode({url,expectedNetworkScope,proofsE
    };
    return [name,{enumerable:true,get:()=>method}];
   }))));
-  await inspectTrustedNode(node,{expectedNetworkScope,proofsEnabled,maxLagSeconds});
+  await inspectTrustedNode(node,{expectedNetworkScope,proofsEnabled,maxLagSeconds,readinessTier});
   trusted.add(node);return node;
 }
 export function isTrustedPrivateNode(node) { return trusted.has(node); }

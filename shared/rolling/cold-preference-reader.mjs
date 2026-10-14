@@ -92,7 +92,7 @@ export function createRollingColdPreferenceReader(input){
   async function checked(fn){await guard();const value=await fn();await guard();return value;}
   const hash=async(fields,domain)=>(await checked(()=>poseidon(fields,domain))).toBigInt();
   async function canonical(height){number(height);const data=await checked(()=>getBlock(height));check(data&&Number(data.header?.globalVariables?.blockNumber)===height);const observed=hex(data.blockHash.toString());check((await checked(()=>data.header.hash())).toString()===observed);return observed;}
-  async function recheck(anchor){await checked(()=>inspect(node,{expectedNetworkScope:network,proofsEnabled}));check(await canonical(anchor.blockNumber)===anchor.blockHash);await guard();}
+  async function recheck(anchor){await checked(()=>inspect(node,{expectedNetworkScope:network,proofsEnabled,readinessTier:tier}));check(await canonical(anchor.blockNumber)===anchor.blockHash);await guard();}
   const request=async(expected,block=null,restart=false)=>delivery(await checked(()=>process({...config,expected,block,restart},{contextGuard:guard})));
   function cacheRecord(value){const c=exact(value,['schemaVersion','scope','delivery','prefix','markers']);check(c.schemaVersion===1&&same(c.scope,fullScope));c.delivery=delivery(c.delivery);check(!c.delivery.advance);if(c.markers!==null){c.markers=exact(c.markers,['next','canonical']);number(c.markers.next,Number.MAX_SAFE_INTEGER);c.markers.canonical=list(c.markers.canonical,c.markers.next);check(c.markers.canonical.length===c.markers.next&&c.markers.canonical.every(x=>typeof x==='boolean'));}return c;}
   async function foldBatch(prefix,records,anchor){
@@ -108,7 +108,7 @@ export function createRollingColdPreferenceReader(input){
    const keys=Reflect.ownKeys(options);check(keys.every(k=>k==='signal'||k==='deadlineAt'));const settings=exact(options,keys);
    const signal=settings.signal,deadlineAt=settings.deadlineAt??Date.now()+10000;check(signal===undefined||signal instanceof AbortSignal);check(Number.isSafeInteger(deadlineAt));active={signal,deadlineAt};
    try{
-    await guard();await checked(()=>inspect(node,{expectedNetworkScope:network,proofsEnabled}));
+    await guard();await checked(()=>inspect(node,{expectedNetworkScope:network,proofsEnabled,readinessTier:tier}));
     if(!slot)slot=await checked(()=>createEncryptedJournalSlot({storage:{read:key=>checked(()=>readStore(key)),compareAndSwap:(...args)=>checked(()=>casStore(...args))},walletSecret,walletSalt,scopeText:JSON.stringify([DOMAIN,...fullScope]),keyDomain:DOMAIN}));
     if(!decoder)decoder=await checked(()=>createPreferenceEventDecoder({sdk:decoderSdk,artifact}));
     const saved=await checked(()=>slot.read()),cache=saved.value===null?null:cacheRecord(saved.value);

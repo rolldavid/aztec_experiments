@@ -26,7 +26,7 @@ test('invalidated account rejects before trusted-node construction; lock callbac
 test('query construction receives captured scope and preserves failure without fallback',async()=>{
  const {input}=options(),original=Error('Trusted service unavailable');let calls=0;
  input.sdk={createTrustedPrivateNode:async value=>{calls++;assert.deepEqual(value,{url:'http://127.0.0.1:1',allowLocalDev:true,
-  expectedNetworkScope:{chainId:'31337',version:'1',rollup:'0x'+'1'.repeat(40)},proofsEnabled:true});throw original;}};
+  expectedNetworkScope:{chainId:'31337',version:'1',rollup:'0x'+'1'.repeat(40)},proofsEnabled:true,readinessTier:'checkpointed'});throw original;}};
  await assert.rejects(createRollingWalletSession(input),error=>error===original);assert.equal(calls,1);
 });
 

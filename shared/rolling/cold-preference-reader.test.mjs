@@ -39,7 +39,7 @@ function fixture({marker=false}={}){
  }};
  const sdk={Fr:Field,EventSelector:{fromSignature:async()=>({toString:()=>selector})},decodeFunctionSignature:()=> 'labelled ABI signature',
   isTrustedPrivateNode:x=>x===node&&state.valid,isPrivatePXEForNode:(p,n)=>p===pxe&&n===node&&state.valid,
-  inspectTrustedNode:async()=>{assert(state.valid);},poseidon2HashWithSeparator:async fields=>{state.hashes++;return new Field(hash(fields));}};
+  inspectTrustedNode:async(_node,options)=>{assert(state.valid);assert.equal(options.readinessTier,'checkpointed');},poseidon2HashWithSeparator:async fields=>{state.hashes++;return new Field(hash(fields));}};
  const compact={read:async p=>{state.transport.push({...p});return {schemaVersion:1,number:p.number,hash:p.hash,fields:Array(7).fill(hex(0)),headerFields:Array(23).fill(hex(0))};}};
  const config={sdk,pxe,node,owner,deployment,expectedArtifactHash:hex(5),tier:'checkpointed',compact,contextGuard:async()=>{assert(state.valid);},privateStore,walletSecret:hex(6),walletSalt:'7'};
  return {state,db,config,privateStore,events,current:()=>current,alter:f=>f(current),reader:()=>createRollingColdPreferenceReader(config)};
