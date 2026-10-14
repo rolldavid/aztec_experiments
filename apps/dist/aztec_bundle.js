@@ -387265,66 +387265,72 @@ Partial Address: ${this.partialAddress.toString()}
   async function inspectTrustedNode(node2, options) {
     const p = policy(options);
     try {
-      const info = await node2.getNodeInfo();
-      const chainId = info?.l1ChainId, version12 = info?.rollupVersion, realProofs = info?.realProofs, rollup = info?.l1ContractAddresses?.rollupAddress;
-      if (!natural(chainId) || !natural(version12) || typeof realProofs !== "boolean") throw fail4("UNAVAILABLE");
-      if (String(chainId) !== p.chainId || String(version12) !== p.version || hex12(rollup, 20) !== p.rollup || realProofs !== p.proofsEnabled) throw fail4("IDENTITY");
-      const [tips, state, stamp] = await readTogether([
-        async () => {
-          const value = await node2.getChainTips();
-          return {
-            proposed: block(value?.proposed),
-            checkpointed: block(value?.checkpointed?.block),
-            proven: block(value?.proven?.block),
-            finalized: block(value?.finalized?.block)
-          };
-        },
-        async () => {
-          const value = await node2.getWorldStateSyncStatus();
-          return {
-            latest: value?.latestBlockNumber,
-            latestHash: hex12(value?.latestBlockHash, 32),
-            final: value?.finalizedBlockNumber,
-            oldest: value?.oldestHistoricBlockNumber,
-            synced: value?.treesAreSynched
-          };
-        },
-        // Timestamp is independent public metadata. Snapshot it with the tips,
-        // then retain both canonical checks after this entire group settles.
-        async () => {
-          const value = await node2.getSyncedL1Timestamp();
-          if (typeof value !== "bigint" || value < 0n || value > BigInt(Number.MAX_SAFE_INTEGER)) throw fail4("UNAVAILABLE");
-          return value;
+      for (let snapshot2 = 0; snapshot2 < 2; snapshot2++) {
+        const info = await node2.getNodeInfo();
+        const chainId = info?.l1ChainId, version12 = info?.rollupVersion, realProofs = info?.realProofs, rollup = info?.l1ContractAddresses?.rollupAddress;
+        if (!natural(chainId) || !natural(version12) || typeof realProofs !== "boolean") throw fail4("UNAVAILABLE");
+        if (String(chainId) !== p.chainId || String(version12) !== p.version || hex12(rollup, 20) !== p.rollup || realProofs !== p.proofsEnabled) throw fail4("IDENTITY");
+        const [tips, state, stamp] = await readTogether([
+          async () => {
+            const value = await node2.getChainTips();
+            return {
+              proposed: block(value?.proposed),
+              checkpointed: block(value?.checkpointed?.block),
+              proven: block(value?.proven?.block),
+              finalized: block(value?.finalized?.block)
+            };
+          },
+          async () => {
+            const value = await node2.getWorldStateSyncStatus();
+            return {
+              latest: value?.latestBlockNumber,
+              latestHash: hex12(value?.latestBlockHash, 32),
+              final: value?.finalizedBlockNumber,
+              oldest: value?.oldestHistoricBlockNumber,
+              synced: value?.treesAreSynched
+            };
+          },
+          // Timestamp is independent public metadata. Snapshot it with the tips,
+          // then retain both canonical checks after this entire group settles.
+          async () => {
+            const value = await node2.getSyncedL1Timestamp();
+            if (typeof value !== "bigint" || value < 0n || value > BigInt(Number.MAX_SAFE_INTEGER)) throw fail4("UNAVAILABLE");
+            return value;
+          }
+        ]);
+        const { proposed, checkpointed, proven, finalized } = tips;
+        const ordered = [finalized, proven, checkpointed, proposed];
+        for (let i = 1; i < ordered.length; i++) if (ordered[i - 1].number > ordered[i].number || ordered[i - 1].number === ordered[i].number && ordered[i - 1].hash !== ordered[i].hash) throw fail4("UNSYNCED");
+        const { latest, latestHash, final, oldest, synced } = state;
+        if (!natural(latest) || !natural(final) || !natural(oldest) || typeof synced !== "boolean") throw fail4("UNAVAILABLE");
+        if (!synced || oldest > checkpointed.number || final > latest || latest === proposed.number && latestHash !== proposed.hash) throw fail4("UNSYNCED");
+        if (latest !== proposed.number || final !== finalized.number) {
+          if (snapshot2 === 0) continue;
+          throw fail4("UNSYNCED");
         }
-      ]);
-      const { proposed, checkpointed, proven, finalized } = tips;
-      const ordered = [finalized, proven, checkpointed, proposed];
-      for (let i = 1; i < ordered.length; i++) if (ordered[i - 1].number > ordered[i].number || ordered[i - 1].number === ordered[i].number && ordered[i - 1].hash !== ordered[i].hash) throw fail4("UNSYNCED");
-      const { latest, latestHash, final, oldest, synced } = state;
-      if (!natural(latest) || !natural(final) || !natural(oldest) || typeof synced !== "boolean") throw fail4("UNAVAILABLE");
-      if (!synced || latest !== proposed.number || hex12(latestHash, 32) !== proposed.hash || final !== finalized.number || oldest > checkpointed.number) throw fail4("UNSYNCED");
-      if (checkpointed.number !== proposed.number) await readTogether([() => canonical(node2, checkpointed), () => canonical(node2, proposed)]);
-      else await canonical(node2, proposed);
-      const suppliedNow = options.nowSeconds, now = suppliedNow === void 0 ? Math.floor(Date.now() / 1e3) : suppliedNow;
-      if (!natural(now)) throw fail4("CONFIG");
-      const lag = now - Number(stamp);
-      if (lag < 0 || lag > p.maxLagSeconds) throw fail4("STALE");
-      await canonical(node2, proposed);
-      return Object.freeze({
-        ready: true,
-        chainId: p.chainId,
-        rollupVersion: p.version,
-        rollupAddress: p.rollup,
-        proofsEnabled: p.proofsEnabled,
-        latestBlockNumber: proposed.number,
-        latestBlockHash: proposed.hash,
-        checkpointedBlockNumber: checkpointed.number,
-        finalizedBlockNumber: finalized.number,
-        oldestHistoricBlockNumber: oldest,
-        syncedL1Timestamp: String(stamp),
-        checkedAtSeconds: now,
-        lagSeconds: lag
-      });
+        if (checkpointed.number !== proposed.number) await readTogether([() => canonical(node2, checkpointed), () => canonical(node2, proposed)]);
+        else await canonical(node2, proposed);
+        const suppliedNow = options.nowSeconds, now = suppliedNow === void 0 ? Math.floor(Date.now() / 1e3) : suppliedNow;
+        if (!natural(now)) throw fail4("CONFIG");
+        const lag = now - Number(stamp);
+        if (lag < 0 || lag > p.maxLagSeconds) throw fail4("STALE");
+        await canonical(node2, proposed);
+        return Object.freeze({
+          ready: true,
+          chainId: p.chainId,
+          rollupVersion: p.version,
+          rollupAddress: p.rollup,
+          proofsEnabled: p.proofsEnabled,
+          latestBlockNumber: proposed.number,
+          latestBlockHash: proposed.hash,
+          checkpointedBlockNumber: checkpointed.number,
+          finalizedBlockNumber: finalized.number,
+          oldestHistoricBlockNumber: oldest,
+          syncedL1Timestamp: String(stamp),
+          checkedAtSeconds: now,
+          lagSeconds: lag
+        });
+      }
     } catch (error312) {
       throw failures.has(error312) ? error312 : fail4("UNAVAILABLE");
     }
