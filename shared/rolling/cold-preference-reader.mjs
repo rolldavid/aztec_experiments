@@ -87,14 +87,36 @@ export function createRollingColdPreferenceReader(input){
   const fullScope=Object.freeze([chainId,version,network.rollup,board,classId,expectedArtifactHash,account,proofsEnabled,tier,1]);
   const config=Object.freeze({contractAddress:board,scope:account,expectedClassId:classId,expectedArtifactHash,network:{chainId,version,rollup:network.rollup},proofsEnabled,tier});
   const readStore=privateStore.read.bind(privateStore),casStore=privateStore.compareAndSwap.bind(privateStore);
-  let active=null,slot=null,decoder=null,started=false,lastComplete=false;
+  let active=null,slot=null,decoder=null,started=false,lastComplete=false,resumeMailbox=false;
   function current(){check(trusted(node)&&routed(pxe,node)&&owner.toString()===account&&deployment.board.address.toString()===board&&deployment.board.instance.currentContractClassId.toString()===classId&&deployment.board.instance.originalContractClassId.toString()===classId&&same(deployment.network,network)&&(deployment.proofsEnabled!==false)===proofsEnabled);if(active?.signal?.aborted||Date.now()>=active?.deadlineAt)throw failure('ROLLING_COLD_PREFERENCES_STOPPED');}
   async function guard(){current();await contextGuard();current();}
   async function checked(fn){await guard();const value=await fn();await guard();return value;}
   const hash=async(fields,domain)=>(await checked(()=>poseidon(fields,domain))).toBigInt();
   async function canonical(height){number(height);const data=await checked(()=>getBlock(height));check(data&&Number(data.header?.globalVariables?.blockNumber)===height);const observed=hex(data.blockHash.toString());check((await checked(()=>data.header.hash())).toString()===observed);return observed;}
   async function recheck(anchor){await checked(()=>inspect(node,{expectedNetworkScope:network,proofsEnabled,readinessTier:tier}));check(await canonical(anchor.blockNumber)===anchor.blockHash);await guard();}
-  const request=async(expected,block=null,restart=false)=>delivery(await checked(()=>process({...config,expected,block,restart},{contextGuard:guard})));
+  const request=async(expected,block=null,restart=false,optimistic=false)=>delivery(await checked(()=>process({...config,expected,block,restart,...(optimistic?{optimistic:true}:{})},{contextGuard:guard})));
+  async function fetchPage(observed,signal){
+     let block=null;
+     if(observed.nextBlock<=observed.anchor.blockNumber){
+      const count=fetchBlocks&&observed.nextLog===0?Math.min(32,observed.anchor.blockNumber-observed.nextBlock+1):1,blocks=[];let remainingLogs=8;
+      // Bound lookahead to four public heights and eight declared logs total.
+      // This is transport selection only; the SDK independently authenticates
+      // every body and enforces the actual eight-log bound before staging.
+      for(let offset=0;offset<count;offset+=4){
+       const width=Math.min(4,count-offset),group=await Promise.allSettled(Array.from({length:width},async(_,i)=>{const number=observed.nextBlock+offset+i;return {number,hash:await canonical(number)};}));const failed=group.find(r=>r.status==='rejected');if(failed)throw failed.reason;const selectors=group.map(r=>r.value);
+       const wires=width>1?await checked(()=>fetchBlocks(selectors,{signal,privateLogBudget:remainingLogs})):[await checked(()=>fetchBlock(selectors[0],{signal}))];check(wires.length>0&&wires.length<=width);
+       let stop=false;
+       for(let i=0;i<wires.length;i++){const wire=wires[i];check(wire.number===selectors[i].number&&wire.hash===selectors[i].hash);const logs=compactPrivateLogCountHint(wire.fields);
+        if(logs===null||logs>remainingLogs){if(blocks.length===0)blocks.push({blockNumber:wire.number,blockHash:wire.hash,fields:wire.fields,headerFields:wire.headerFields});check(i===wires.length-1);stop=true;break;}
+        blocks.push({blockNumber:wire.number,blockHash:wire.hash,fields:wire.fields,headerFields:wire.headerFields});remainingLogs-=logs;
+        if(remainingLogs===0){check(i===wires.length-1);stop=true;break;}
+       }
+       check(wires.length===width||stop);if(stop)break;
+      }
+      check(blocks.length>0);block=blocks.length>1?blocks:blocks[0];
+     }
+     return block;
+  }
   function cacheRecord(value){const c=exact(value,['schemaVersion','scope','delivery','prefix','markers']);check(c.schemaVersion===1&&same(c.scope,fullScope));c.delivery=delivery(c.delivery);check(!c.delivery.advance);if(c.markers!==null){c.markers=exact(c.markers,['next','canonical']);number(c.markers.next,Number.MAX_SAFE_INTEGER);c.markers.canonical=list(c.markers.canonical,c.markers.next);check(c.markers.canonical.length===c.markers.next&&c.markers.canonical.every(x=>typeof x==='boolean'));}return c;}
   async function foldBatch(prefix,records,anchor){
    const decoded=records.map(row=>decoder.decode({...row,packedEvent:row.packedEvent.map(x=>Fr.fromString(x)),eventSelector:{toString:()=>row.eventSelector},l2BlockHash:{toString:()=>row.l2BlockHash},txHash:{toString:()=>row.txHash}},{fromBlock:1,toBlock:anchor.blockNumber+1}));
@@ -113,9 +135,23 @@ export function createRollingColdPreferenceReader(input){
     if(!slot)slot=await checked(()=>createEncryptedJournalSlot({storage:{read:key=>checked(()=>readStore(key)),compareAndSwap:(...args)=>checked(()=>casStore(...args))},walletSecret,walletSalt,scopeText:JSON.stringify([DOMAIN,...fullScope]),keyDomain:DOMAIN}));
     if(!decoder)decoder=await checked(()=>createPreferenceEventDecoder({sdk:decoderSdk,artifact}));
     const saved=await checked(()=>slot.read()),cache=saved.value===null?null:cacheRecord(saved.value);
+    const optimistic=started&&!lastComplete&&!resumeMailbox&&cache&&!cache.delivery.complete;
     if(!started||lastComplete){await checked(sync);started=true;lastComplete=false;}
-    let observed=await request(null,null,cache===null),prefix=cache?.prefix??null,markers=cache?.markers??null,deferredAdvance=null;
-    await recheck(observed.anchor);
+    let observed,prefix=cache?.prefix??null,markers=cache?.markers??null,deferredAdvance=null;
+    if(optimistic){
+     // The encrypted receipt supplies only a speculative public transport range.
+     // The original queued SDK operation must accept its exact epoch/sequence,
+     // replay an unacknowledged mailbox, or return the existing reset/advance
+     // handshake before it can authenticate or consume any supplied body.
+     await recheck(cache.delivery.anchor);let block;
+     try{block=await fetchPage(cache.delivery,signal);}catch(error){
+      // This failed step stays failed. Its next explicit read first resumes the
+      // ordinary durable mailbox protocol; no alternate call hides this error.
+      resumeMailbox=true;throw error;
+     }
+     observed=await request({epoch:cache.delivery.epoch,sequence:cache.delivery.sequence},block,false,true);
+    }else {observed=await request(null,null,cache===null);resumeMailbox=false;}
+    if(!optimistic||!same(observed.anchor,cache.delivery.anchor))await recheck(observed.anchor);
     if(observed.advance){
      const {advance,...prior}=observed;
      // A lost mailbox response must reach the encrypted cache before its epoch
@@ -155,25 +191,7 @@ export function createRollingColdPreferenceReader(input){
     }
     const isNew=!cache||cache.delivery.epoch!==observed.epoch||cache.delivery.database!==observed.database||observed.sequence!==cache.delivery.sequence;
     if(!isNew&&!observed.complete){
-     let block=null;
-     if(observed.nextBlock<=observed.anchor.blockNumber){
-      const count=fetchBlocks&&observed.nextLog===0?Math.min(32,observed.anchor.blockNumber-observed.nextBlock+1):1,blocks=[];let remainingLogs=8;
-      // Bound lookahead to four public heights and eight declared logs total.
-      // This is transport selection only; the SDK independently authenticates
-      // every body and enforces the actual eight-log bound before staging.
-      for(let offset=0;offset<count;offset+=4){
-       const width=Math.min(4,count-offset),group=await Promise.allSettled(Array.from({length:width},async(_,i)=>{const number=observed.nextBlock+offset+i;return {number,hash:await canonical(number)};}));const failed=group.find(r=>r.status==='rejected');if(failed)throw failed.reason;const selectors=group.map(r=>r.value);
-       const wires=width>1?await checked(()=>fetchBlocks(selectors,{signal,privateLogBudget:remainingLogs})):[await checked(()=>fetchBlock(selectors[0],{signal}))];check(wires.length>0&&wires.length<=width);
-       let stop=false;
-       for(let i=0;i<wires.length;i++){const wire=wires[i];check(wire.number===selectors[i].number&&wire.hash===selectors[i].hash);const logs=compactPrivateLogCountHint(wire.fields);
-        if(logs===null||logs>remainingLogs){if(blocks.length===0)blocks.push({blockNumber:wire.number,blockHash:wire.hash,fields:wire.fields,headerFields:wire.headerFields});check(i===wires.length-1);stop=true;break;}
-        blocks.push({blockNumber:wire.number,blockHash:wire.hash,fields:wire.fields,headerFields:wire.headerFields});remainingLogs-=logs;
-        if(remainingLogs===0){check(i===wires.length-1);stop=true;break;}
-       }
-       check(wires.length===width||stop);if(stop)break;
-      }
-      check(blocks.length>0);block=blocks.length>1?blocks:blocks[0];
-     }
+     const block=await fetchPage(observed,signal);
      observed=await request({epoch:observed.epoch,sequence:observed.sequence},block);
      check(observed.database===cache.delivery.database&&observed.epoch===cache.delivery.epoch&&observed.sequence===cache.delivery.sequence+1);markers=null;
     }

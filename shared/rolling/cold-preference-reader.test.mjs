@@ -29,6 +29,7 @@ function fixture({marker=false}={}){
  const pxe={sync:async()=>{state.syncs++;},processRollingPreferenceRecovery:async(p)=>{
   state.requests.push(structuredClone(p));if(state.pending)await state.pending;
   if(p.restart){state.restarts++;current={...structuredClone(empty),epoch:(current.epoch==='b'.repeat(64)?'c':'b').repeat(64),database:current.database};}
+  if(p.expected&&p.expected.epoch===current.epoch&&p.expected.sequence===current.sequence-1)return structuredClone(current); // Original SDK durable mailbox replay.
   if(p.expected){state.steps++;assert.equal(p.expected.epoch,current.epoch);assert.equal(p.expected.sequence,current.sequence);current={...current,sequence:current.sequence+1};
    if(current.sequence<=2){current.records=[structuredClone(events[current.sequence-1])];current.nextLog=current.sequence;current.nextBlock=current.sequence===2?2:1;}
    else{current.nextLog=0;current.nextBlock=2;current.records=[];current.head={initialized:true,schema:1,revision:'2',digest:String(digest)};current.complete=true;}
@@ -50,6 +51,20 @@ test('labelled SDK delivery: real AEAD/fold complete only after dense events and
  const result=await readAll(reader);assert.deepEqual(result.preferences.bookmarks,['77']);assert.deepEqual(result.preferences.followedBoards,['0']);assert.equal(result.preferences.head.revision,'2');assert.equal(f.state.syncs,1);assert.equal(f.state.steps,3);
  assert(f.db.size===1);for(const encrypted of f.db.values())assert(!encrypted.includes('bookmarks')&&!encrypted.includes('packedEvent'));
  assert(f.state.transport.every(x=>Object.keys(x).sort().join(',')==='hash,number'));
+});
+test('stable encrypted cursor advances with one queued step and the original final mailbox fence',async()=>{
+ const f=fixture(),r=f.reader();await r.read();const before=f.state.requests.length;
+ const result=await r.read();assert.equal(result.progress.processedRevision,'1');assert.equal(f.state.steps,1);
+ const calls=f.state.requests.slice(before);assert.equal(calls.length,2);assert.equal(calls[0].optimistic,true);assert.equal(calls[0].expected.sequence,0);assert.equal(calls[1].expected,null);
+});
+test('failed speculative transport stays failed; the next explicit read resumes the mailbox',async()=>{
+ const f=fixture(),read=f.config.compact.read;let fail=false;
+ f.config.compact.read=async p=>{if(fail){fail=false;throw Error('labelled transport failure');}return read(p);};
+ const r=f.reader();await r.read();f.state.failCAS=true;await assert.rejects(r.read(),{code:'ROLLING_COLD_PREFERENCES_UNAVAILABLE'});
+ const requests=f.state.requests.length,encrypted=[...f.db];fail=true;
+ await assert.rejects(r.read(),{code:'ROLLING_COLD_PREFERENCES_UNAVAILABLE'});
+ assert.equal(f.state.requests.length,requests,'No alternate mailbox operation hides the failed transport');assert.deepEqual([...f.db],encrypted);assert.equal(f.state.steps,1);
+ const resumed=await r.read();assert.equal(resumed.progress.processedRevision,'1');assert.equal(f.state.requests[requests].expected,null);assert.equal(f.state.steps,1,'The committed SDK delivery is replayed, not ingested twice');
 });
 for(const mode of ['reply','CAS'])test('labelled '+mode+' loss replays durable delivery without a second SDK page',async()=>{
  const f=fixture(),r=f.reader();await r.read();if(mode==='reply')f.state.failReply=true;else f.state.failCAS=true;
@@ -115,7 +130,7 @@ function extensionFixture(options){
   if(!advancing&&!promoted)return original(p);
   f.state.requests.push(structuredClone(p));const current=f.current();
   if(advancing){
-   if(!p.expected)return {...structuredClone(current),advance:{anchor:{blockNumber:2,blockHash:hex(12)},headPage:{blockNumber:1,blockHash:hex(11),txHash:hex(101),txIndex:0,firstLog:0,logCount:2}}};
+   if(!p.expected||p.optimistic)return {...structuredClone(current),advance:{anchor:{blockNumber:2,blockHash:hex(12)},headPage:{blockNumber:1,blockHash:hex(11),txHash:hex(101),txIndex:0,firstLog:0,logCount:2}}};
    assert.deepEqual(p.expected,{epoch:prior.epoch,sequence:prior.sequence});assert.equal(p.block.blockNumber,1);f.state.promotions++;
    const previous={database:prior.database,epoch:prior.epoch,sequence:prior.sequence,anchor:prior.anchor,head:prior.head};
    Object.assign(current,{epoch:'e'.repeat(64),sequence:0,anchor:{blockNumber:2,blockHash:hex(12)},nextBlock:2,nextLog:0,records:[],head:null,complete:false,previous});advancing=false;promoted=true;
@@ -140,7 +155,7 @@ function incompleteExtensionFixture(){
   if(!advancing&&!promoted)return original(p);
   const current=f.current();
   if(advancing){
-   if(!p.expected)return {...structuredClone(current),advance:{anchor:{blockNumber:2,blockHash:hex(12)},headPage:null}};
+   if(!p.expected||p.optimistic)return {...structuredClone(current),advance:{anchor:{blockNumber:2,blockHash:hex(12)},headPage:null}};
    assert.deepEqual(p.expected,{epoch:prior.epoch,sequence:prior.sequence});assert.equal(p.block,null);f.state.promotions++;
    const resumed=Object.fromEntries(['database','epoch','sequence','anchor','nextBlock','nextLog'].map(k=>[k,structuredClone(prior[k])]));
    Object.assign(current,{epoch:'e'.repeat(64),sequence:0,anchor:{blockNumber:2,blockHash:hex(12)},records:[],resumed});advancing=false;promoted=true;f.state.mutatePromotion?.(current);

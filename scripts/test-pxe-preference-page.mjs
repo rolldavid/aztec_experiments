@@ -383,7 +383,7 @@ if(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1') {
   await restorePristineCopy(recoveryDirectory);
   await patchPreferencePage(recoveryDirectory);
   const patchedImp=p=>import(pathToFileURL(join(recoveryDirectory,'dest',p)));
-  const {RollingPreferenceRecoveryStore,bindRollingPreferenceRecovery,runRollingPreferenceRecovery,rollingPreferenceReadBatch,createRollingPreferenceArchive}=await import(pathToFileURL(join(recoveryDirectory,PREFERENCE_PAGE_RECOVERY_PIN.generated)));
+  const {RollingPreferenceRecoveryStore,bindRollingPreferenceRecovery,runRollingPreferenceRecovery,rollingPreferenceReadBatch,createRollingPreferenceArchive,createRollingPreferenceArtifactVerifier}=await import(pathToFileURL(join(recoveryDirectory,PREFERENCE_PAGE_RECOVERY_PIN.generated)));
   const {NoteStore:RecoveryNoteStore}=await patchedImp('storage/note_store/note_store.js');
   const {NoteDao,NoteStatus}=await import('@aztec-labs/stdlib/note');
   const {BlockSynchronizer}=await imp('block_synchronizer/block_synchronizer.js');
@@ -576,7 +576,7 @@ if(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1') {
   // Separate opt-in: real processed ACIR, encryption, scoped keys and original
   // validators. Only the chain is synthetic. No proof, mining or fee acceptance.
   if(process.env.ROLLING_PREFERENCE_PAGE_ACIR==='1') {
-    const {loadContractArtifact,FunctionType,decodeFunctionSignature}=await import('@aztec-labs/stdlib/abi');
+    const {loadContractArtifact,FunctionType,decodeFunctionSignature,contractArtifactToBuffer,contractArtifactFromBuffer}=await import('@aztec-labs/stdlib/abi');
     const {computeArtifactHash,getContractClassFromArtifact,SerializableContractInstance,computeContractAddressFromInstance,getContractInstanceFromInstantiationParams,CompleteAddress}=await import('@aztec-labs/stdlib/contract');
     const {deriveKeys}=await import('@aztec-labs/stdlib/keys');
     const {EthAddress}=await import('@aztec-labs/foundation/eth-address');
@@ -596,6 +596,22 @@ if(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1') {
     const artifactBytes=await readFile(join(root,'.build/preference-page-rc3-fixture/RollingBoard.json'));
     assert.equal(sha(artifactBytes),'20c4946741d2afd5be7f2f18aad6409780b2f4db74f415bea30f95ee9a76fe24','Wrong processed ACIR fixture');
     const artifact=loadContractArtifact(JSON.parse(artifactBytes));
+    await test('actual artifact identity reuse rejects changed bytes, foreign identities and mutation during hashing',async()=>{
+      const hash=(await computeArtifactHash(artifact)).toString(),classId=(await getContractClassFromArtifact(artifact)).id.toString();
+      const clone=()=>contractArtifactFromBuffer(contractArtifactToBuffer(artifact));
+      const verify=createRollingPreferenceArtifactVerifier(),original=clone();
+      await verify(original,hash,classId);await verify(original,hash,classId);await verify(clone(),hash,classId);
+      for(const mutate of [
+        value=>{value.name='ForeignBoard';},
+        value=>{value.functions.find(f=>f.bytecode.length).bytecode[0]^=1;},
+        value=>{value.functions.find(f=>f.functionType===FunctionType.UTILITY).name+='Changed';},
+        value=>{const fn=value.functions.find(f=>f.functionType===FunctionType.PRIVATE);fn.verificationKey=value.functions.find(f=>f.functionType===FunctionType.PRIVATE&&f.verificationKey!==fn.verificationKey).verificationKey;},
+      ]){const changed=clone();mutate(changed);await assert.rejects(verify(changed,hash,classId),undefined,mutate.toString());await verify(original,hash,classId);}
+      await assert.rejects(verify(original,new Fr(99).toString(),classId));
+      await assert.rejects(verify(original,hash,new Fr(99).toString()));
+      const racing=clone(),fresh=createRollingPreferenceArtifactVerifier();const pending=fresh(racing,hash,classId);racing.functions.find(f=>f.bytecode.length).bytecode[0]^=1;
+      await assert.rejects(pending,/PXE_PREFERENCE_RECOVERY_FAILED/);await fresh(clone(),hash,classId);
+    });
     const log={...quiet,getBindings:()=>({}),createChild(){return this;}};
     async function acirFixture(t,{zeroCiphertextHistory=false}={}) {
       const contractClass=await getContractClassFromArtifact(artifact),artifactHash=await computeArtifactHash(artifact);
@@ -1017,12 +1033,12 @@ if(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1') {
     });
     await test('actual SDK/ACIR fixture: canonical groups start peers, drain failures and fence account changes',async t=>{
       const f=await acirFixture(t);
-      for(const kind of ['recovery','page'])await t.test(kind+' wrong network rejects before any grouped header or class request',async()=>{
+      for(const kind of ['recovery','page'])await t.test(kind+' wrong network rejects before ingestion and drains any fixed public peers',async()=>{
         const r=await f.receiver({recovery:true}),original=r.page.node;let reads=0;
-        r.page.node={getNodeInfo:async()=>({...await original.getNodeInfo(),l1ChainId:1}),getBlockData:async()=>{reads++;throw Error('must not read');},getContract:async()=>{reads++;throw Error('must not read');}};
+        r.page.node={getNodeInfo:async()=>({...await original.getNodeInfo(),l1ChainId:1}),getBlockData:async()=>{reads++;return original.getBlockData(f.header.getBlockNumber());},getContract:async(...args)=>{reads++;return original.getContract(...args);}};
         try{await assert.rejects(kind==='recovery'?r.page.processRollingPreferenceRecovery(recoveryInput(f),{contextGuard:async()=>{}}):r.page.processRollingPreferencePage(f.input,{contextGuard:async()=>{}}),/PXE_PREFERENCE_(PAGE|RECOVERY)_FAILED/);}
         finally{r.page.node=original;}
-        assert.equal(reads,0);assert.equal(r.page.acirCompleted??0,0);const state=await r.read();assert.equal(state.notes.length,0);assert.equal(state.events.length,0);
+        assert.equal(reads,kind==='recovery'?2:0);assert.equal(r.page.acirCompleted??0,0);const state=await r.read();assert.equal(state.notes.length,0);assert.equal(state.events.length,0);
       });
       for(const kind of ['recovery','page'])await t.test(kind+' grouped public reads retain ownership until a held class lookup settles',async()=>{
         const r=await f.receiver({recovery:true}),original=r.page.node,gate=batchGate(),entered=batchGate();let reads=0,finished=false,following=false;
@@ -1143,6 +1159,25 @@ if(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1') {
       assert.equal(next.nextBlock,4);assert.equal(next.sequence,1);assert.deepEqual(next.records,[]);assert.equal(next.complete,false);assert.equal(r.page.acirCompleted??0,0);
       assert.deepEqual(await r.page.processRollingPreferenceRecovery({...base,block:blocks},{contextGuard:async()=>{}}),next);
       const withRecord=await recoveryStep(f,r,next),complete=await recoveryStep(f,r,withRecord);assert.equal(withRecord.records.length,1);assert.equal(complete.complete,true);assert.equal(complete.head.revision,'1');assert.equal(f.counters.tagQueries,f.tagsBefore);
+    });
+    await test('actual optimistic recovery advances once, replays without body ingestion and advertises anchor promotion',async t=>{
+      const f=await acirFixture(t),r=await f.receiver({recovery:true}),base=recoveryInput(f);
+      const start=await r.page.processRollingPreferenceRecovery(base,{contextGuard:async()=>{}});
+      const body=await f.compact(1);
+      const optimistic={...base,optimistic:true,expected:{epoch:start.epoch,sequence:start.sequence},block:body};
+      const first=await r.page.processRollingPreferenceRecovery(optimistic,{contextGuard:async()=>{}});assert.equal(first.nextBlock,2);assert.equal(first.sequence,1);
+      const calls=r.page.acirCompleted??0,proofs=f.counters.archiveProofs;
+      const badBody={...body,fields:body.fields.map(()=>hex(0))};
+      assert.deepEqual(await r.page.processRollingPreferenceRecovery({...optimistic,block:badBody},{contextGuard:async()=>{}}),first);
+      assert.equal(r.page.acirCompleted??0,calls);assert.equal(f.counters.archiveProofs,proofs,'Replayed mailbox cannot consume speculative invalid body');
+      await assert.rejects(r.page.processRollingPreferenceRecovery({...optimistic,expected:{epoch:first.epoch,sequence:first.sequence},block:{...badBody,blockNumber:2}},{contextGuard:async()=>{}}),/PXE_PREFERENCE_RECOVERY_FAILED/);
+      assert.deepEqual(await r.page.processRollingPreferenceRecovery(base,{contextGuard:async()=>{}}),first,'Failed actual body authentication preserves the durable mailbox');
+      await assert.rejects(r.page.processRollingPreferenceRecovery({...optimistic,expected:{epoch:'f'.repeat(64),sequence:0}},{contextGuard:async()=>{}}),/PXE_PREFERENCE_RECOVERY_FAILED/);
+      await f.appendEmpty();
+      const status=await r.page.processRollingPreferenceRecovery({...optimistic,expected:{epoch:first.epoch,sequence:first.sequence},block:badBody},{contextGuard:async()=>{}});
+      const {advance,...prior}=status;assert.deepEqual(prior,first);assert.equal(advance.anchor.blockNumber,5);assert.equal(r.page.acirCompleted??0,calls);
+      await assert.rejects(r.page.processRollingPreferenceRecovery({...optimistic,expected:{epoch:'e'.repeat(64),sequence:0}},{contextGuard:async()=>{}}),/PXE_PREFERENCE_RECOVERY_FAILED/);
+      const promoted=await promoteCursor(f,r,status);assert.equal(promoted.nextBlock,2);assert.equal(promoted.sequence,0);assert.deepEqual(promoted.resumed,Object.fromEntries(['database','epoch','sequence','anchor','nextBlock','nextLog'].map(k=>[k,first[k]])));
     });
     await test('actual ACIR cursor scans empty history then authentic ciphertexts, replays mailbox, gates terminal head',async t=>{
       const f=await acirFixture(t),r=await f.receiver({recovery:true});
@@ -1313,7 +1348,7 @@ if(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1') {
       let current=await r.page.processRollingPreferenceRecovery(recoveryInput(f),{contextGuard:async()=>{}});
       while(current.nextBlock<4)current=await recoveryStep(f,r,current);
       const original=structuredClone(current);enabled=true;
-      await assert.rejects(recoveryStep(f,r,current,async()=>{if(locked)throw Error('synthetic locked context');}),/PXE_PREFERENCE_RECOVERY_FAILED/);
+      await assert.rejects(r.page.processRollingPreferenceRecovery({...recoveryInput(f),optimistic:true,expected:{epoch:current.epoch,sequence:current.sequence},block:await f.compact(current.nextBlock)},{contextGuard:async()=>{if(locked)throw Error('synthetic locked context');}}),/PXE_PREFERENCE_RECOVERY_FAILED/);
       enabled=false;locked=false;
       assert.deepEqual(await r.page.processRollingPreferenceRecovery(recoveryInput(f),{contextGuard:async()=>{}}),original);
       const state=await r.read();assert.equal(state.notes.length,0);assert.equal(state.events.length,0);
@@ -1326,7 +1361,8 @@ if(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1') {
       // The official synchronizer owns this same atomic rollbackables list. This
       // test invokes its exact per-store rollback contract inside the same KV tx.
       await r.db.transactionAsync(async()=>{for(const store of r.stagedStores)await store.rollbackToBlock(3);});
-      const restarted=await r.page.processRollingPreferenceRecovery(recoveryInput(f),{contextGuard:async()=>{}});
+      const restarted=await r.page.processRollingPreferenceRecovery({...recoveryInput(f),optimistic:true,expected:{epoch:current.epoch,sequence:current.sequence},block:null},{contextGuard:async()=>{}});
+      assert.deepEqual(await r.page.processRollingPreferenceRecovery(recoveryInput(f),{contextGuard:async()=>{}}),restarted);
       assert.notEqual(restarted.epoch,current.epoch);assert.equal(restarted.nextBlock,1);assert.equal(restarted.sequence,0);
       const state=await r.read();assert.equal(state.notes.length,0);assert.equal(state.events.length,0);
     });
