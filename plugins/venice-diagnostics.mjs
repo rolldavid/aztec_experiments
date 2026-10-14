@@ -13,7 +13,7 @@ const stages=new Set(['missing-result/usage','cap','cached-billing','final-recei
 const categories=new Set(['http-rejection','transport-unknown','response-json-invalid','billing-validation']);
 const finishReasons=new Set(['stop','length','tool_calls','content_filter','function_call']);
 // Closed response metadata only; never retain model text or provider-supplied labels.
-export function veniceFinishReason(value){return typeof value==='string'&&finishReasons.has(value)?value:null;}
+export function veniceFinishReason(value){return value===undefined?null:typeof value==='string'&&finishReasons.has(value)?value:'invalid';}
 function data(value,key) {
  try {const d=Object.getOwnPropertyDescriptor(value,key);return d&&Object.hasOwn(d,'value')?d.value:undefined;}catch{return undefined;}
 }

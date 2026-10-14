@@ -335,15 +335,15 @@ test('safe diagnostic remains available when original uncertainty chain operatio
 
 import {createAgent} from './agent.mjs';
 import {bokRunner} from './bok.mjs';
-test('paid truncated response settles once, stops agent, returns explicit incomplete result and refunds unused budget',async()=>{
+for(const reason of ['length','PRIVATE_SENTINEL',null])test('paid incomplete response '+String(reason)+' settles once, stops agent and refunds unused budget',async()=>{
  const h=fixture(),metering=h.create();let tools=0,accepts=0,closed=0;
- h.controls.execute=()=>{const billing=bill();return {message:{role:'assistant',content:'PRIVATE_SENTINEL',tool_calls:[{id:'1',type:'function',function:{name:'write_file',arguments:'{"path":'}}]},finishReason:'length',charge:6n,receipt:billing.receipt,billing};};
+ h.controls.execute=()=>{const billing=bill();return {message:{role:'assistant',content:'PRIVATE_SENTINEL',tool_calls:[{id:'1',type:'function',function:{name:'write_file',arguments:'{"path":'}}]},finishReason:reason,charge:6n,receipt:billing.receipt,billing};};
  const toolbox={open:async()=>({definitions:[],call:async()=>{tools++;},accept:async()=>{accepts++;},close:async()=>{closed++;}})};
  const runner=bokRunner({runner:createAgent({maxTokens:10,instructions:'Help',model:{complete:request=>metering.complete(0,request)},toolbox})});
  const result=await runner.run({text:'@bok build',id:'request',postId:'post'});
- assert.match(result.replyText,/output limit.*incomplete/);assert.equal(result.revision,undefined);assert.doesNotMatch(JSON.stringify(result),/PRIVATE_SENTINEL/);
+ assert.match(result.replyText,/incomplete/);assert.equal(result.revision,undefined);assert.doesNotMatch(JSON.stringify(result),/PRIVATE_SENTINEL/);
  assert.deepEqual({tools,accepts,closed},{tools:0,accepts:0,closed:1});assert.equal(h.r.charged,6n);assert.equal(h.counts.settle,1);
- const saved=h.store.read().privateBok.calls[0];assert.equal(saved.phase,'settled');assert.equal(saved.finishReason,'length');
+ const saved=h.store.read().privateBok.calls[0];assert.equal(saved.phase,'settled');assert.equal(saved.finishReason,reason==='length'?'length':'invalid');
  assert.doesNotMatch(JSON.stringify(h.store.read()),/PRIVATE_SENTINEL|write_file/);
  assert.equal((await h.create().resume(0)).replyAvailable,false);assert.equal(h.counts.execute,1);
  await metering.finish();assert.equal(h.r.refunded,994n);assert.equal(h.r.charged,6n);assert.equal(h.counts.close_uncertain,0);assert.equal(h.counts.finish,1);

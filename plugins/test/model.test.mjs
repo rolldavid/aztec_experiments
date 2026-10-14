@@ -143,6 +143,8 @@ test('final tool at model limit cannot accept after captured original history ch
 });
 
 for(const [label,result,code] of [
+ ['unknown completion reason',{finishReason:'cancelled',message:{role:'assistant',content:'Partial'}},'MODEL_TOOL_RESPONSE_INVALID'],
+ ['null completion reason',{finishReason:null,message:{role:'assistant',content:'Partial'}},'MODEL_TOOL_RESPONSE_INVALID'],
  ['truncated final text',{finishReason:'length',message:{role:'assistant',content:'Done. App ready.'}},'MODEL_OUTPUT_LIMIT'],
  ['truncated complete-looking tools',{finishReason:'length',message:{role:'assistant',tool_calls:[{id:'a',type:'function',function:{name:'write_file',arguments:'{}'}}]}},'MODEL_OUTPUT_LIMIT'],
  ['filtered final text',{finishReason:'content_filter',message:{role:'assistant',content:'Partial'}},'MODEL_CONTENT_FILTER'],
@@ -165,4 +167,12 @@ for(const finishReason of ['stop','tool_calls'])test('completed '+finishReason+'
  const model={complete:async()=>++calls===1?{finishReason,message:{role:'assistant',tool_calls:[{id:'1',type:'function',function:{name:'check',arguments:'{}'}}]}}:{finishReason:'stop',message:{role:'assistant',content:'Ready'}}};
  const result=await createAgent({toolbox,model,instructions:'Help'}).run({id:'request',postId:'post',text:'Build'});
  assert.equal(result.revision.acceptedRevision,'accepted');assert.deepEqual({calls,tools,accepted,closed},{calls:2,tools:1,accepted:1,closed:1});
+});
+
+for(const argumentsValue of ['null','[]','true','1','"text"'])test('non-object second tool arguments '+argumentsValue+' reject whole batch before writes',async()=>{
+ let calls=0,tools=0,accepted=0,closed=0;
+ const toolbox={open:async()=>({definitions:[],call:async()=>{tools++;},accept:async()=>{accepted++;},close:async()=>{closed++;}})};
+ const model={complete:async()=>{calls++;return {finishReason:'tool_calls',message:{role:'assistant',tool_calls:[{id:'a',function:{name:'write_file',arguments:'{}'}},{id:'b',function:{name:'write_file',arguments:argumentsValue}}]}};}};
+ await assert.rejects(createAgent({model,toolbox,instructions:'Help'}).run({id:'request',postId:'post',text:'Build'}),error=>error.code==='MODEL_TOOL_RESPONSE_INVALID');
+ assert.deepEqual({calls,tools,accepted,closed},{calls:1,tools:0,accepted:0,closed:1});
 });

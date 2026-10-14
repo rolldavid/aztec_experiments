@@ -87,8 +87,8 @@ for(const [name,mainCache,summaryCache,summaryInput,summaryOutput,accepted] of [
  if(accepted){await work;assert.equal(credits,1);}else{await assert.rejects(work,/cheaper/);assert.equal(credits,0);}
 });
 
-for(const reason of ['stop','length','tool_calls','content_filter','function_call','PRIVATE_SENTINEL',undefined])test('metered adapter retains billing and closed completion metadata: '+String(reason),async()=>{
+for(const reason of ['stop','length','tool_calls','content_filter','function_call','PRIVATE_SENTINEL',null,undefined])test('metered adapter retains billing and closed completion metadata: '+String(reason),async()=>{
  const response=valid();response.choices[0].finish_reason=reason;const h=malformed(response),q=await h.provider.quote(input,1000000n),result=await h.provider.execute(input,q);
- assert.equal(result.charge,47n);assert.equal(result.billing.charge,'47');assert.equal(result.finishReason,reason==='PRIVATE_SENTINEL'?undefined:reason);assert.equal(h.calls(),1);
- assert.equal(Object.hasOwn(result,'finishReason'),reason!==undefined&&reason!=='PRIVATE_SENTINEL');
+ assert.equal(result.charge,47n);assert.equal(result.billing.charge,'47');assert.equal(result.finishReason,reason==='PRIVATE_SENTINEL'||reason===null?'invalid':reason);assert.equal(h.calls(),1);
+ assert.equal(Object.hasOwn(result,'finishReason'),reason!==undefined);
 });

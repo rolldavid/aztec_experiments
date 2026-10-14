@@ -5,14 +5,15 @@ function completeResponse(result){
   const fail=code=>{throw Object.assign(Error('Model response is incomplete.'),{code});};
   if(result?.finishReason==='length')fail('MODEL_OUTPUT_LIMIT');
   if(result?.finishReason==='content_filter')fail('MODEL_CONTENT_FILTER');
-  if(result?.finishReason==='function_call')fail('MODEL_TOOL_RESPONSE_INVALID');
+  if(result?.finishReason!==undefined&&!['stop','tool_calls'].includes(result.finishReason))fail('MODEL_TOOL_RESPONSE_INVALID');
   const message=result?.message,calls=message?.tool_calls;
   if(message?.role!=='assistant'||calls!=null&&!Array.isArray(calls))fail('MODEL_TOOL_RESPONSE_INVALID');
   const seen=new Set();
   for(const call of calls??[]){
     if(typeof call?.id!=='string'||!call.id||seen.has(call.id)||call.type!==undefined&&call.type!=='function'||
       typeof call.function?.name!=='string'||!call.function.name||typeof call.function.arguments!=='string')fail('MODEL_TOOL_RESPONSE_INVALID');
-    try{JSON.parse(call.function.arguments);}catch{fail('MODEL_TOOL_RESPONSE_INVALID');}
+    let args;try{args=JSON.parse(call.function.arguments);}catch{fail('MODEL_TOOL_RESPONSE_INVALID');}
+    if(!args||typeof args!=='object'||Array.isArray(args))fail('MODEL_TOOL_RESPONSE_INVALID');
     seen.add(call.id);
   }
   return message;
