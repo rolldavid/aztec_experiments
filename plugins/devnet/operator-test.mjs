@@ -512,13 +512,13 @@ if(focused){
  });
  test('development native RPC mounts original compact route and retains ordinary node RPC',async()=>{
   const {startDevelopmentNodeRpc}=await import('./network.mjs');
-  const unused=async()=>{throw Error('Unexpected native read');};
+  const events=[];const unused=async()=>{throw Error('Unexpected native read');};
   const node={getNodeInfo:unused,getChainTips:unused,getWorldStateSyncStatus:unused,getSyncedL1Timestamp:unused,getBlockData:unused,getBlock:unused,getBlockNumber:async()=>7};
-  const service=await startDevelopmentNodeRpc({node,config:{l1ChainId:31337,rollupVersion:1,rollupAddress:'0x'+'1'.repeat(40),realProofs:false}});
+  const service=await startDevelopmentNodeRpc({node,config:{l1ChainId:31337,rollupVersion:1,rollupAddress:'0x'+'1'.repeat(40),realProofs:false},onProgress:value=>{events.push(JSON.parse(value));return new Promise(()=>{});}});
   try{
    const wrongMethod=await fetch(service.url+'/rolling/compact-block-v1');assert.equal(wrongMethod.status,405);await wrongMethod.body.cancel();
    const origin=await fetch(service.url+'/rolling/compact-block-v1',{method:'POST',headers:{origin:'http://127.0.0.1:8081','content-type':'application/json'},body:'{}'});assert.equal(origin.status,415);await origin.body.cancel();
-   const malformed=await fetch(service.url+'/rolling/compact-block-v1',{method:'POST',headers:{'content-type':'application/json'},body:'{}'});assert.equal(malformed.status,400);await malformed.body.cancel();
+   const malformed=await fetch(service.url+'/rolling/compact-block-v1',{method:'POST',headers:{'content-type':'application/json'},body:'{}'});assert.equal(malformed.status,400);await malformed.body.cancel();assert.deepEqual({...events[0],at:0},{event:'development-compact-unavailable',at:0,stage:'request',status:400,diagnostic:null});
    const ordinary=await fetch(service.url,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:1,method:'aztec_getBlockNumber',params:[]})});assert.equal(ordinary.status,200);assert.equal((await ordinary.json()).result,7);
   }finally{await service.close();}
   await assert.rejects(fetch(service.url,{signal:AbortSignal.timeout(1000)}));

@@ -127,11 +127,12 @@ test('native errors are sanitized and subsequent explicit requests can run',asyn
  await server(f,async({send})=>{await denied(await send(),503);broken=false;assert.equal((await send()).status,200);});
 });
 test('singleflight: abort does not release ownership before original native await settles',async()=>{
- const f=await fixture(),entered=deferred(),release=deferred(),read=f.node.getBlock;
+ const f=await fixture(),entered=deferred(),release=deferred(),read=f.node.getBlock,events=[];
+ f.config.onFailure=value=>events.push(value);
  f.node.getBlock=async function(...args){entered.resolve();await release.promise;return read.apply(this,args);};
  await server(f,async({send,settle})=>{
   const controller=new AbortController(),first=send(f.request,{signal:controller.signal}).catch(e=>e);
-  await entered.promise;await denied(await send(),429);controller.abort();await first;
+  await entered.promise;await denied(await send(),429);assert.deepEqual(events,[{stage:'capacity',status:429,diagnostic:null}]);controller.abort();await first;
   await denied(await send(),429);release.resolve();
   // Wait on the actual original HTTP handler, not a detached timeout or retry.
   await settle();
@@ -241,4 +242,43 @@ test('deadline retains the native call until actual settlement',async t=>{
  const third=compactSocketControl({declared:true});const next=adapter.handle(third.req,third.res);await third.end;
  assert.equal(third.res.status,413);third.socket.completeClose();await next;
  assert.equal(held.req.listenerCount('aborted'),0);assert.equal(held.res.listenerCount('close'),0);
+});
+
+for(const boundary of ['before','after'])test('internal compact observer preserves genuine '+boundary+' readiness diagnostic without changing HTTP',async()=>{
+ const f=await fixture(),events=[],state=f.node.getWorldStateSyncStatus,read=f.node.getBlock;let broken=boundary==='before';
+ f.node.getWorldStateSyncStatus=async()=>({...await state(),treesAreSynched:!broken});
+ f.node.getBlock=async function(...args){const result=await read.apply(this,args);broken=true;return result;};
+ f.config.onFailure=value=>events.push(value);
+ await server(f,async({send})=>{await denied(await send(),503);assert.equal(events.length,1);
+  const event=events[0];assert.equal(event.stage,boundary+'-readiness');assert.equal(event.status,503);
+  assert.equal(event.diagnostic.reason,'STATE_NOT_SYNCED');assert(Object.isFrozen(event));assert(Object.isFrozen(event.diagnostic));
+  assert.deepEqual(Object.keys(event),['stage','status','diagnostic']);assert.equal(f.state.reads,boundary==='before'?0:1);
+ });
+});
+test('internal compact observer never reads forged errors or selector payloads',async()=>{
+ const f=await fixture(),events=[];let reads=0;const hostile=Object.create(null);
+ for(const name of ['code','diagnostic','message','stack'])Object.defineProperty(hostile,name,{get(){reads++;throw Error('PRIVATE_SENTINEL');}});
+ f.node.getBlock=()=>{throw hostile;};f.config.onFailure=value=>events.push(value);
+ await server(f,async({send})=>{await denied(await send(),503);assert.deepEqual(events,[{stage:'body',status:503,diagnostic:null}]);
+  await denied(await send({...f.request,owner:'PRIVATE_SENTINEL'}),400);assert.deepEqual(events[1],{stage:'request',status:400,diagnostic:null});assert.equal(reads,0);assert(!JSON.stringify(events).includes('PRIVATE'));
+ });
+});
+test('internal compact observer bounds cadence and pending work without holding native ownership',async t=>{
+ const f=await fixture(),held=deferred(),events=[];let now=Date.now();t.mock.method(Date,'now',()=>now);
+ f.node.getBlock=()=>{throw Error('PRIVATE_SENTINEL');};f.config.onFailure=value=>{events.push(value);return held.promise;};
+ await server(f,async({send})=>{
+  await denied(await send(),503);await denied(await send(),503);assert.equal(events.length,1);
+  now+=60001;await denied(await send(),503);assert.equal(events.length,1);
+  held.resolve();await held.promise;await denied(await send(),503);assert.equal(events.length,2);
+ });
+});
+for(const mode of ['throw','reject'])test('internal compact observer '+mode+' cannot change failure or subsequent success',async()=>{
+ const f=await fixture(),read=f.node.getBlock;let broken=true;
+ f.node.getBlock=function(...args){if(broken)throw Error('PRIVATE_SENTINEL');return read.apply(this,args);};
+ f.config.onFailure=()=>{if(mode==='throw')throw Error('PRIVATE_SINK');return Promise.reject(Error('PRIVATE_SINK'));};
+ await server(f,async({send})=>{await denied(await send(),503);broken=false;assert.equal((await send()).status,200);});
+});
+test('internal compact observer rejects accessor configuration without evaluating it',async()=>{
+ const f=await fixture();let reads=0;Object.defineProperty(f.config,'onFailure',{get(){reads++;throw Error('PRIVATE');}});
+ assert.throws(()=>createCompactBlockNativeAdapter(f.config),/Invalid compact block native configuration/);assert.equal(reads,0);
 });
