@@ -9,6 +9,7 @@ import {Interface,parseEther,formatUnits,Wallet,AbiCoder,keccak256,encodeBytes32
 import {aggregateFundingAbi,collateralConsentTypes,usdcAuthorizationTypes} from '../shared/rolling/aggregate-funding.mjs';
 import {verifyEthereumIntentReceipt} from '../shared/ethereum-journal.mjs';
 import {validateAggregateFundingIntent} from '../shared/rolling/aggregate-recovery.mjs';
+import {unpackRollingText} from '../shared/rolling/public-events.mjs';
 export function assertMetaMaskTransaction({stage,request,account,chainId,tokenAddress,feePortalAddress,privateFeeAddress,boardPortalAddress,fundingAmount,collateralAmount,expectedChainId=31337n}){
  assert(Array.isArray(request)&&request.length===1);const tx=request[0];
  assert([31337n,11155111n].includes(BigInt(expectedChainId)),'Only disposable devnet or Sepolia testnet');
@@ -621,6 +622,8 @@ export function assertRetainedBokEvents({postEvents,replyEvents,accountingEvents
  const one=(events,type,test)=>{const rows=events.filter(e=>e.type===type&&test(e.payload));assert.equal(rows.length,1);return rows[0];};
  const invocation=one(postEvents,'PluginInvoked',p=>p.request_id===publicIntent.requestId&&p.target===publicIntent.target&&p.plugin_id===BigInt(pluginId).toString());
  const post=one(postEvents,'PostPublished',p=>p.id===invocation.payload.post_id);assert.equal(post.payload.record.root,post.payload.id);assert.equal(post.payload.record.parent,'0');
+ assert.equal(unpackRollingText(post.payload.message,post.payload.length,32*31),approval.content,'Canonical original Bok post differs from approval');
+ assert.equal(createHash('sha256').update(approval.content).digest('hex'),approval.contentSha256);
  const linked=one(replyEvents,'PluginReplyPublished',p=>p.request_id===publicIntent.requestId&&p.target===publicIntent.target&&p.parent_id===post.payload.id&&p.plugin_id===BigInt(pluginId).toString());
  const reply=one(replyEvents,'PostPublished',p=>p.id===linked.payload.post_id);assert.equal(reply.payload.record.kind,'4');assert.equal(reply.payload.record.parent,post.payload.id);assert.equal(reply.payload.record.root,post.payload.id);assert.equal(reply.position.txHash,linked.position.txHash);
  assert.equal(discovered.parent.id,post.payload.id);assert.equal(discovered.reply.id,reply.payload.id);assert.equal(discovered.reply.position.txHash,reply.position.txHash);
@@ -680,4 +683,19 @@ export async function driveRetainedBokConfirmations({dialog,approval,inspect,mar
  mark('retained-bok-authorize');remaining();await dialog.getByRole('button',{name:'Confirm and send',exact:true}).click();await dialog.getByRole('button',{name:'Review saved Bok post',exact:true}).waitFor({timeout:remaining()});await inspect('authorize','confirmed',{capture:true});report.retainedBok.authorizationConfirmed=true;
  mark('retained-bok-post-review');await dialog.getByRole('button',{name:'Review saved Bok post',exact:true}).click();await dialog.getByRole('button',{name:'Confirm and send',exact:true}).waitFor({timeout:remaining()});await inspect('post','prepared');
  mark('retained-bok-post');remaining();await dialog.getByRole('button',{name:'Confirm and send',exact:true}).click();await dialog.getByText('Transaction confirmed on the verified chain.',{exact:true}).waitFor({timeout:remaining()});const {public:publicIntent}=await inspect('post','confirmed',{published:true});return publicIntent;
+}
+
+// Diagnostic only: Node still owns fatal exception handling and its exit status.
+// The Supervisor otherwise ignores stderr, so retain a closed safe stdout record.
+export function installWalletFatalObservation(runtime,write,getStage){
+ let emitted=false;
+ const observe=error=>{try{
+  if(emitted)return;emitted=true;
+  const own=key=>{const d=error&&Object.getOwnPropertyDescriptor(error,key);return d&&Object.hasOwn(d,'value')?d.value:undefined;};
+  const code=own('code'),stack=own('stack'),name=own('name');
+  const failure={stage:getStage(),errorClass:['Error','TypeError','RangeError','ReferenceError','AssertionError'].includes(name)?name:'Error',code:['ERR_WORKER_OUT_OF_MEMORY','ERR_WORKER_INIT_FAILED','ERR_DLOPEN_FAILED','ERR_MODULE_NOT_FOUND','ERR_SOCKET_CONNECTION_TIMEOUT','ECONNRESET','ENOENT','ERR_ASSERTION'].includes(code)?code:'unknown'};
+  const location=typeof stack==='string'&&stack.match(/(?:t04-metamask|test-wallet-extension-browser|coreBundle|native_socket)\.(?:mjs|js):\d+:\d+/);if(location)failure.location=location[0];
+  write({passed:false,scope:'Fatal wallet driver observation; original exit is unchanged',failure});
+ }catch{}};
+ runtime.on('uncaughtExceptionMonitor',observe);return()=>runtime.removeListener('uncaughtExceptionMonitor',observe);
 }

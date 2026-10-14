@@ -478,9 +478,10 @@ test('retained Bok public discovery uses only public post IDs and uniform bounde
 
 test('retained Bok canonical event checks reject wrong reply linkage and unfinished or dishonest accounting',async()=>{
  const {assertRetainedBokEvents}=await import('./t04-metamask.mjs'),p={requestId:'30',target:'40'},position={txHash:hash},post={id:'10',record:{root:'10',parent:'0'}},reply={id:'20',record:{root:'10',parent:'10',kind:'4'}},accounting={request_id:'30',state:'4',sequence:'1',budget:'100',available:'0',reserved:'0',charged:'6',refunded:'94'};
- const base={publicIntent:p,pluginId:'5',approval:{budget:'100'},postEvents:[{type:'PluginInvoked',payload:{request_id:'30',target:'40',plugin_id:'5',post_id:'10'}},{type:'PostPublished',payload:post}],replyEvents:[{type:'PluginReplyPublished',payload:{request_id:'30',target:'40',plugin_id:'5',parent_id:'10',post_id:'20'},position},{type:'PostPublished',payload:reply,position}],accountingEvents:[{type:'AccountingChanged',payload:accounting}],discovered:{parent:{id:'10'},reply:{id:'20',position},accounting:{...accounting}}};
+ const content='original',contentSha256=(await import('node:crypto')).createHash('sha256').update(content).digest('hex');post.length=String(Buffer.byteLength(content));post.message=[BigInt('0x'+Buffer.from(content).toString('hex').padEnd(62,'0')).toString(),...Array(31).fill('0')];
+ const base={publicIntent:p,pluginId:'5',approval:{budget:'100',content,contentSha256},postEvents:[{type:'PluginInvoked',payload:{request_id:'30',target:'40',plugin_id:'5',post_id:'10'}},{type:'PostPublished',payload:post}],replyEvents:[{type:'PluginReplyPublished',payload:{request_id:'30',target:'40',plugin_id:'5',parent_id:'10',post_id:'20'},position},{type:'PostPublished',payload:reply,position}],accountingEvents:[{type:'AccountingChanged',payload:accounting}],discovered:{parent:{id:'10'},reply:{id:'20',position},accounting:{...accounting}}};
  assert.deepEqual(assertRetainedBokEvents(base),{canonicalReply:true,canonicalTerminalAccounting:true,charged:'6',refunded:'94'});
- for(const change of [b=>b.replyEvents[0].payload.target='41',b=>b.replyEvents[1].payload.record.kind='0',b=>b.accountingEvents[0].payload.state='3',b=>b.accountingEvents[0].payload.reserved='1',b=>b.accountingEvents[0].payload.refunded='100',b=>b.accountingEvents[0].payload.charged='0',b=>b.discovered.accounting.charged='7',b=>b.replyEvents.push(b.replyEvents[0])]){const bad=structuredClone(base);change(bad);assert.throws(()=>assertRetainedBokEvents(bad));}
+ for(const change of [b=>b.approval.content='different',b=>b.approval.contentSha256='0'.repeat(64),b=>b.postEvents[1].payload.message[0]='0',b=>b.replyEvents[0].payload.target='41',b=>b.replyEvents[1].payload.record.kind='0',b=>b.accountingEvents[0].payload.state='3',b=>b.accountingEvents[0].payload.reserved='1',b=>b.accountingEvents[0].payload.refunded='100',b=>b.accountingEvents[0].payload.charged='0',b=>b.discovered.accounting.charged='7',b=>b.replyEvents.push(b.replyEvents[0])]){const bad=structuredClone(base);change(bad);assert.throws(()=>assertRetainedBokEvents(bad));}
 });
 
 test('retained Bok discovery fails closed on mixed snapshots, duplicate matches and pagination exhaustion',async()=>{
@@ -582,4 +583,14 @@ test('read-only Bok observation accepts only exact original public identifiers a
  f.approval.contentSha256=(await import('node:crypto')).createHash('sha256').update(f.approval.content).digest('hex');
  const expired={...f.approval,expiresAt:1};assert.throws(()=>validateRetainedBokApproval(expired,f.control));assert.deepEqual(validateRetainedBokApproval(expired,f.control,Date.now(),{observation:true}),expired);
  const changed={...expired,budget:String(BigInt(f.control.allocation.bokAmount)+1n)};assert.throws(()=>validateRetainedBokApproval(changed,f.control,Date.now(),{observation:true}));
+});
+
+test('fatal wallet diagnostics retain only closed fields without intercepting errors or invoking getters',async()=>{
+ const {installWalletFatalObservation}=await import('./t04-metamask.mjs'),{EventEmitter}=await import('node:events');
+ const runtime=new EventEmitter(),records=[],stop=installWalletFatalObservation(runtime,x=>records.push(x),()=> 'aggregate-extension');
+ assert.equal(runtime.listenerCount('uncaughtException'),0);assert.equal(runtime.listenerCount('unhandledRejection'),0);
+ const error={code:'ERR_WORKER_INIT_FAILED',message:'PRIVATE_SENTINEL',stack:'Error PRIVATE_SENTINEL at test-wallet-extension-browser.mjs:140:12'};
+ Object.defineProperty(error,'name',{get(){throw Error('getter must not run');}});runtime.emit('uncaughtExceptionMonitor',error);runtime.emit('uncaughtExceptionMonitor',error);
+ assert.equal(records.length,1);assert.equal(records[0].failure.code,'ERR_WORKER_INIT_FAILED');assert.equal(records[0].failure.location,'test-wallet-extension-browser.mjs:140:12');assert(!JSON.stringify(records).includes('PRIVATE_SENTINEL'));stop();assert.equal(runtime.listenerCount('uncaughtExceptionMonitor'),0);
+ const throwing=new EventEmitter();installWalletFatalObservation(throwing,()=>{throw false;},()=>{throw 0;});assert.doesNotThrow(()=>throwing.emit('uncaughtExceptionMonitor',false));
 });

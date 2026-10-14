@@ -24,7 +24,7 @@ import {recoverPrivateFeeClaim} from '../shared/private-fee-funding.mjs';
 import {BarretenbergSync} from '@aztec-foundation/bb.js';
 import {derivePrivateFeeAddress,derivePrivateFeeInstance} from '../shared/private-fee-client.mjs';
 import {generateHosting} from '../deploy/hosting-config.mjs';
-import {discoverTestMetaMask,onboardMetaMask,unpackMetaMask,addMetaMaskNetwork,guardBrowserRequest,readMetaMaskAggregateControl,driveMetaMaskAggregateFunding,countMetaMaskAggregateNodeSubmissions,inspectMetaMaskAggregateReadiness,assertMetaMaskReadinessRequest,isMetaMaskStartupFrameRequest,isMetaMaskStartupWorkerRequest,driveMetaMaskPaidRecovery,retainedPreparedClaimFlag,readRetainedBokApproval,driveRetainedBokJourney,readRetainedBokObservation,observeRetainedBokJourney,retainedBokRemaining} from './t04-metamask.mjs';
+import {discoverTestMetaMask,onboardMetaMask,unpackMetaMask,addMetaMaskNetwork,guardBrowserRequest,readMetaMaskAggregateControl,driveMetaMaskAggregateFunding,countMetaMaskAggregateNodeSubmissions,inspectMetaMaskAggregateReadiness,assertMetaMaskReadinessRequest,isMetaMaskStartupFrameRequest,isMetaMaskStartupWorkerRequest,driveMetaMaskPaidRecovery,retainedPreparedClaimFlag,readRetainedBokApproval,driveRetainedBokJourney,readRetainedBokObservation,observeRetainedBokJourney,retainedBokRemaining,installWalletFatalObservation} from './t04-metamask.mjs';
 import {projectRollingInitialization} from '../apps/rolling/wallet-panel.mjs';
 import {verifyExtensionCollateral} from './t04-extension-collateral.mjs';
 import {ROOT,assertNodeVersion,anvilBinary} from './toolchain.mjs';
@@ -35,6 +35,7 @@ const directory=await fs.mkdtemp(path.join(process.env.BILLBOARD_TEST_TMPDIR,'ex
 const mode=walletExtensionMode(process.argv.slice(2));
 const children=[];let context,provider,walletPage,page,readFundingState,httpServer,finalizeAggregate,stage='preflight';
 const report={passed:false,scope:'Real MetaMask onboarding, custom local network and application connection only; fee signing not yet qualified'};
+installWalletFatalObservation(process,value=>console.log(JSON.stringify(value)),()=>stage);
 const port=async()=>{const server=net.createServer();await new Promise(r=>server.listen(0,'127.0.0.1',r));const value=server.address().port;await new Promise(r=>server.close(r));return value;};
 const ready=async read=>{for(let i=0;i<50;i++){try{if(await read())return;}catch{}await new Promise(r=>setTimeout(r,100));}throw Error('Local test server unavailable');};
 const httpsReady=origin=>new Promise((resolve,reject)=>{const request=https.get(origin+'/feed.html',{rejectUnauthorized:false,timeout:500},response=>{response.resume();response.on('end',()=>resolve(response.statusCode===200));});request.on('error',reject);request.on('timeout',()=>request.destroy(Error('Local HTTPS unavailable')));});
