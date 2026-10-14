@@ -2055,7 +2055,7 @@
     "shared/rolling/funding-receipts.mjs": "570fb4dcdc5135eaaf4943c7d85dc70ab916eaed189e972ba5f2dec5bd028e95",
     "shared/rolling/invocation.mjs": "4bfd93fbbf0f31a667ce0e0f5ca7d4c89b06fc0646beeba35963420ebf9d8b36",
     "shared/routed-kernel-prover.mjs": "0609acd27845c13b2ed99c85ae0628d77f9023dad70477bf1c0b94ab5e7cdba5",
-    "shared/sdk-entry.mjs": "a2a7fe4d00ae5381686289bb8f08e3bb5412fafbfe4e092273246e450b600b90",
+    "shared/sdk-entry.mjs": "0097d34805d4b6408866bfbda28a84dab5573153f4a79c0ace95f17fc41e0248",
     "shared/sdk-store.mjs": "474807edf283d8166f93442ccfe4485ccaa7c056fefa5d4e9b2a4669554a5bfa",
     "shared/transaction-outcomes.mjs": "13c01eee9ad9cb263b4d166c0c68f4308577714574c46e8f675b0fba65f0dcb2",
     "shared/trusted-private-node.mjs": "50fa3642a777cb2eca66e595d72a6e639781cc7d0fc2deb4d1903c0a2a0d81d5",
@@ -2063,7 +2063,7 @@
   },
   "outputs": {
     "acvm_js_bg.wasm": "117fd939c3762470aec0920178b90b76293e1d92e75650e756483352c5ddcb1a",
-    "aztec_bundle.js": "0b70ec63237e95fc387642fc5911b3185c48389178fada0c47e1a4442c27f4ef",
+    "aztec_bundle.js": "e52b3407d2a57b7fa7d54fd659776fe329ad579ec11b869719fe3d5a223047aa",
     "bb-main.worker.js": "a20e91000929692e4dda7c9b99d273fa3a565d433a1918239aaebd88ca104174",
     "bb-thread.worker.js": "80d2a3036eb1a04094200890d660fb503f7cc3103bdcb003b3ccea2fdfecc663",
     "noirc_abi_wasm_bg.wasm": "51dbfae8ef59b40e88f093fcc59df503a937649dd17ff4e5ecc1eeb4e95594d9",

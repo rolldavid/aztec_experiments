@@ -301946,6 +301946,7 @@ pub contract MultiCallEntrypoint {
     computeContractAddressFromInstance: () => computeContractAddressFromInstance,
     computeFeeJuiceMessageNullifier: () => computeFeeJuiceMessageNullifier,
     computeL1ToL2MessageNullifier: () => computeFeeJuiceMessageNullifier,
+    computeL2ToL1MessageHash: () => computeL2ToL1MessageHash,
     computePartialAddress: () => computePartialAddress,
     computeSecretHash: () => computeSecretHash,
     createAztecNodeClient: () => createAztecNodeClient2,
@@ -371299,6 +371300,15 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     return poseidon2HashWithSeparator([
       secret
     ], DomainSeparator.SECRET_HASH);
+  }
+  function computeL2ToL1MessageHash({ l2Sender, l1Recipient, content, rollupVersion, chainId }) {
+    return sha256ToField([
+      l2Sender,
+      rollupVersion,
+      l1Recipient,
+      chainId,
+      content
+    ]);
   }
 
   // node_modules/@aztec-labs/stdlib/dest/messaging/l1_actor.js

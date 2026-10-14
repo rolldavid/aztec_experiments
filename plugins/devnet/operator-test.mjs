@@ -310,4 +310,20 @@ if(focused){
   assert.throws(()=>validateDevnetResume({...stopped,phase:'running',recoveryPath:'/tmp/anvil-recovery-00000000-0000-4000-8000-000000000000.json'},{fundingAddresses,ports,toolchainHash}),/recovery required/);
  });
 
+ test('native file checkpoint streams private bytes and rejects unsafe files and mismatched formats',async()=>{
+  const {inspectNativeDevnetSnapshot,developmentAnvilArgs}=await import('./network.mjs'),{createHash}=await import('node:crypto');
+  const dir=await fs.mkdtemp(path.join(os.tmpdir(),'native-checkpoint-')),name='anvil-recovery-00000000-0000-4000-8000-000000000000.json',file=path.join(dir,name);
+  try{
+   const bytes=Buffer.from('{"block":1}');await fs.writeFile(file,bytes,{mode:0o600});assert.deepEqual(await inspectNativeDevnetSnapshot(file),{sha256:createHash('sha256').update(bytes).digest('hex'),bytes:bytes.length});
+   await fs.chmod(file,0o644);await assert.rejects(inspectNativeDevnetSnapshot(file));await fs.chmod(file,0o600);
+   const link=path.join(dir,'link');await fs.symlink(file,link);await assert.rejects(inspectNativeDevnetSnapshot(link));
+   await fs.truncate(file,2147483649);await assert.rejects(inspectNativeDevnetSnapshot(file));await fs.truncate(file,1);await assert.rejects(inspectNativeDevnetSnapshot(file));
+   const record={...stopped,snapshotFormat:'native-json-v1',snapshotFile:name,snapshotHead:{number:'0x10',hash:'0x'+'a'.repeat(64),pending:'7',proven:'7'}};
+   assert.equal(validateDevnetResume(record,{fundingAddresses,ports,toolchainHash}),record);
+   for(const change of [{snapshotFormat:'unknown'},{snapshotFile:'../'+name},{snapshotHead:{...record.snapshotHead,proven:'6'}},{snapshotHead:{...record.snapshotHead,hash:'invalid'}}])assert.throws(()=>validateDevnetResume({...record,...change},{fundingAddresses,ports,toolchainHash}));
+   const options={persistent:true,port:18545,mnemonic:'synthetic-only',loadPath:file,recoveryPath:path.join(dir,'anvil-recovery-11111111-1111-4111-8111-111111111111.json')};
+   assert.deepEqual(developmentAnvilArgs(options).slice(-2),['--load-state',file]);assert.throws(()=>developmentAnvilArgs({...options,recoveryPath:file}));
+  }finally{await fs.rm(dir,{recursive:true,force:true});}
+ });
+
 }

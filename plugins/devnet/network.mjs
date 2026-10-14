@@ -49,7 +49,25 @@ export function validateDevnetResume(record,{fundingAddresses,ports,toolchainHas
     JSON.stringify(record.ports)!==JSON.stringify(ports)||JSON.stringify(record.fundingAddresses)!==JSON.stringify(fundingAddresses.map(String))||
     !/^0x[0-9a-f]{64}$/.test(record.privateKey??'')||!/^0x[0-9a-f]{64}$/.test(record.validatorSecret??'')||
     !/^[0-9a-f]{64}$/.test(record.snapshotHash??'')||typeof record.mnemonic!=='string'||record.mnemonic.split(' ').length!==12||!record.addresses||!Number.isSafeInteger(record.rollupVersion))throw Error('Devnet recovery required; preserve the original state');
+  if(record.snapshotFormat!==undefined){
+    if(record.snapshotFormat!=='native-json-v1'||!/^anvil-recovery-[0-9a-f-]{36}\.json$/.test(record.snapshotFile??'')||
+       !/^0x[0-9a-f]+$/.test(record.snapshotHead?.number??'')||!/^0x[0-9a-f]{64}$/.test(record.snapshotHead?.hash??'')||
+       !/^(0|[1-9][0-9]*)$/.test(record.snapshotHead?.pending??'')||record.snapshotHead.pending!==record.snapshotHead.proven)throw Error('Invalid native development checkpoint');
+  }
   return record;
+}
+// Native JSON avoids materializing gzip+hex RPC copies of the complete history.
+// This separate 2 GiB representation cap preserves the legacy 128 MiB RPC cap.
+export async function inspectNativeDevnetSnapshot(filename){
+ const fd=await fs.open(filename,constants.O_RDONLY|constants.O_NOFOLLOW);
+ try{
+  const before=await fd.stat();
+  if(!before.isFile()||before.uid!==process.getuid()||(before.mode&0o777)!==0o600||before.size<2||before.size>2147483648)throw Error('Invalid native development snapshot');
+  const hash=createHash('sha256');for await(const chunk of fd.createReadStream({autoClose:false,highWaterMark:65536}))hash.update(chunk);
+  const after=await fd.stat(),named=await fs.lstat(filename);
+  if(before.dev!==named.dev||before.ino!==named.ino||before.size!==after.size||before.mtimeMs!==after.mtimeMs||before.ctimeMs!==after.ctimeMs)throw Error('Native development snapshot changed');
+  return {sha256:hash.digest('hex'),bytes:before.size};
+ }finally{await fd.close();}
 }
 export async function assertDevnetPortsFree(ports) {
   const listeners=[];try{for(const port of Object.values(devnetPorts(ports))){const server=net.createServer();listeners.push(server);await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(port,'127.0.0.1',resolve);});}}
@@ -66,11 +84,12 @@ export async function persistDevnetCheckpoint({persistent,bootComplete,miningErr
   if(!bootComplete||priorFailure)throw Error('Development checkpoint incomplete; recovery required');
   await save();
 }
-export function developmentAnvilArgs({persistent,port,mnemonic,recoveryPath}) {
+export function developmentAnvilArgs({persistent,port,mnemonic,recoveryPath,loadPath}) {
  if(persistent&&(!path.isAbsolute(recoveryPath??'')||!/^anvil-recovery-[0-9a-f-]{36}\.json$/.test(path.basename(recoveryPath))))throw Error('Invalid development recovery path');
+ if(loadPath!==undefined&&(!persistent||!path.isAbsolute(loadPath)||!/^anvil-recovery-[0-9a-f-]{36}\.json$/.test(path.basename(loadPath))||loadPath===recoveryPath))throw Error('Invalid native development load path');
  // Match the installed official SDK's local finality depth. This changes only
  // disposable Anvil configuration, never application or testnet finality checks.
- return ['--host','127.0.0.1','--port',String(port),'--chain-id','31337','--mnemonic',mnemonic,'--silent',...(persistent?['--no-request-size-limit','--slots-in-an-epoch','1','--dump-state',recoveryPath,'--state-interval','30','--preserve-historical-states']:[])];
+ return ['--host','127.0.0.1','--port',String(port),'--chain-id','31337','--mnemonic',mnemonic,'--silent',...(persistent?['--no-request-size-limit','--slots-in-an-epoch','1','--dump-state',recoveryPath,'--state-interval','30','--preserve-historical-states',...(loadPath?['--load-state',loadPath]:[])]:[])];
 }
 // Native local-network flags only. Retained committee-one rollups are never
 // mutated into this mode: they require their original recovery path.
@@ -132,17 +151,21 @@ export async function startDevnet({directory,fundingAddresses,proofs=false,persi
   if(persistent)await writeDevnetRecord(statePath,{...state,phase:'starting'},{exclusive:!saved});
   let deployment,rollup,nativeStarted=false,bootComplete=false,wallMode=false,settling=false,clockTick;
   const terminateChild=()=>{if(anvil&&anvil.exitCode===null)anvil.kill('SIGTERM');};
-  let node,nodeServer,anvil,mining,stopMining=false,miningError,spawnError,anvilClosed,closing;
+  let node,nodeServer,anvil,mining,stopMining=false,miningError,spawnError,anvilClosed,closing,recoveryPath,checkpointHead;
   function close(){return closing??=(async()=>{
     stopMining=true;const failures=[];
     for(const [stage,cleanup] of [['mining',()=>mining],['node-rpc',()=>nodeServer&&new Promise(resolve=>{nodeServer.close(resolve);nodeServer.closeAllConnections();})],['settlement',async()=>{if(nativeStarted)await settleNativeDevelopment({node,rollup,resume:false});}],['node-stop',()=>node?.stop()],['checkpoint',async()=>{
       await persistDevnetCheckpoint({persistent,bootComplete,miningError,priorFailure:failures.length>0,save:async()=>{
-        const snapshot=await deployment.l1Client.request({method:'anvil_dumpState',params:[true]});
-        if(typeof snapshot!=='string'||!/^0x[0-9a-f]+$/i.test(snapshot)||snapshot.length>134217728)throw Error('Invalid development snapshot');
-        const bytes=JSON.stringify(snapshot);await writeDevnetRecord(snapshotPath,snapshot);
-        await writeDevnetRecord(statePath,{...state,phase:'stopped',snapshotHash:createHash('sha256').update(bytes+'\n').digest('hex')});
+        const head=await deployment.l1Client.getBlock({blockTag:'latest'}),pending=String(await rollup.getCheckpointNumber()),proven=String(await rollup.getProvenCheckpointNumber());
+        if(pending!==proven)throw Error('Development checkpoint is not settled');
+        checkpointHead={number:'0x'+head.number.toString(16),hash:head.hash.toLowerCase(),pending,proven};
       }});
-    }],['anvil-stop',async()=>{if(anvil&&anvil.exitCode===null&&!spawnError){anvil.kill('SIGTERM');await anvilClosed;}}]]){
+    }],['anvil-stop',async()=>{if(anvil&&!spawnError){if(anvil.exitCode===null)anvil.kill('SIGTERM');const exit=await anvilClosed;if(exit.code!==0)throw Error('Native Ethereum did not stop cleanly');}}],['checkpoint',async()=>{
+      await persistDevnetCheckpoint({persistent,bootComplete,miningError,priorFailure:failures.length>0,save:async()=>{
+        const snapshot=await inspectNativeDevnetSnapshot(recoveryPath);if(!checkpointHead)throw Error('Development checkpoint head missing');
+        await writeDevnetRecord(statePath,{...state,phase:'stopped',snapshotFormat:'native-json-v1',snapshotFile:path.basename(recoveryPath),snapshotHead:checkpointHead,snapshotHash:snapshot.sha256});
+      }});
+    }]]){
       try{await cleanup();}catch(error){failures.push(developmentCleanupFailure(stage,error));}
     }
     process.removeListener('exit',terminateChild);
@@ -155,11 +178,13 @@ export async function startDevnet({directory,fundingAddresses,proofs=false,persi
     // isolated loopback process loads only the private, hash-bound <=128MiB file.
     // Each launch owns a distinct recovery-only dump; it is NEVER an automatic
     // resume checkpoint. Precreation preserves private mode under native rewrites.
-    const recoveryPath=persistent?path.join(directory,'anvil-recovery-'+randomUUID()+'.json'):undefined;
+    recoveryPath=persistent?path.join(directory,'anvil-recovery-'+randomUUID()+'.json'):undefined;
+    const loadPath=saved?.snapshotFormat==='native-json-v1'?path.join(directory,saved.snapshotFile):undefined;
+    if(loadPath&&(await inspectNativeDevnetSnapshot(loadPath)).sha256!==saved.snapshotHash)throw Error('Native development snapshot differs');
     if(recoveryPath){const fd=await fs.open(recoveryPath,'wx',0o600);await fd.close();}
-    anvil=spawn(path.resolve('.build/anvil-1.7.0/anvil'),developmentAnvilArgs({persistent,port,mnemonic:identity.mnemonic.phrase,recoveryPath}),{stdio:'ignore'});
+    anvil=spawn(path.resolve('.build/anvil-1.7.0/anvil'),developmentAnvilArgs({persistent,port,mnemonic:identity.mnemonic.phrase,recoveryPath,loadPath}),{stdio:'ignore'});
     process.once('exit',terminateChild);
-    anvilClosed=new Promise(resolve=>{anvil.once('error',error=>{spawnError=error;resolve();});anvil.once('close',resolve);});
+    anvilClosed=new Promise(resolve=>{anvil.once('error',error=>{spawnError=error;resolve({code:null});});anvil.once('close',(code,signal)=>resolve({code,signal}));});
     let ready=false;
     for(let i=0;i<60;i++){
       if(spawnError)throw spawnError;
@@ -168,7 +193,12 @@ export async function startDevnet({directory,fundingAddresses,proofs=false,persi
       if(ready)break;await pause(100);
     }
     if(!ready)throw Error('Local Ethereum failed to start');
-    if(saved){
+    if(loadPath){
+      if((await inspectNativeDevnetSnapshot(loadPath)).sha256!==saved.snapshotHash)throw Error('Native development snapshot changed during load');
+      const c=createExtendedL1Client([rpcUrl],identity.privateKey,foundry),head=await c.getBlock({blockTag:'latest'});
+      const r=new RollupContract(c,saved.addresses.rollupAddress);
+      if('0x'+head.number.toString(16)!==saved.snapshotHead.number||head.hash.toLowerCase()!==saved.snapshotHead.hash||String(await r.getCheckpointNumber())!==saved.snapshotHead.pending||String(await r.getProvenCheckpointNumber())!==saved.snapshotHead.proven)throw Error('Native development checkpoint identity differs');
+    }else if(saved){
       const fd=await fs.open(snapshotPath,constants.O_RDONLY|constants.O_NOFOLLOW);let bytes;try{const st=await fd.stat();if(!st.isFile()||(st.mode&0o077)||st.size>134217728)throw Error('Invalid development snapshot');bytes=await fd.readFile();}finally{await fd.close();}
       if(createHash('sha256').update(bytes).digest('hex')!==saved.snapshotHash)throw Error('Development snapshot differs');
       const c=createExtendedL1Client([rpcUrl],identity.privateKey,foundry);if(await c.request({method:'anvil_loadState',params:[JSON.parse(bytes)]})!==true)throw Error('Development snapshot did not load');
