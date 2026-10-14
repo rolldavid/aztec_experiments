@@ -426,16 +426,16 @@ for(const mode of ['delayed-unlock','already-loaded','load-failure'])test('retai
 });
 
 function retainedBokFixture(){
- const field=n=>'0x'+BigInt(n).toString(16).padStart(64,'0'),config={network:{chainId:'31337',rollupVersion:'1',rollupAddress:'rollup'},board:{contractAddress:field(1),portalAddress:'portal'},bok:{contractAddress:field(2),operatorAddress:field(3),pluginId:field(4)}};
+ const field=n=>'0x'+BigInt(n).toString(16).padStart(64,'0'),config={network:{chainId:'31337',rollupVersion:'1',rollupAddress:'0x'+'11'.repeat(20)},board:{contractAddress:field(1),portalAddress:'portal'},bok:{contractAddress:field(2),operatorAddress:field(3),pluginId:field(4)}};
  const control={runtimeSha256:'a'.repeat(64),walletConfig:{config},allocation:{bokAmount:'100',feeAmount:'1000'}};
- const approval={schemaVersion:1,runtimeSha256:control.runtimeSha256,content:'test request',contentSha256:'',budget:'100',authorizeFeeCap:'100',postFeeCap:'200',expiresAt:Date.now()+300000,publicScope:{...config.network,boardAddress:config.board.contractAddress,bok:{address:config.bok.contractAddress,operatorAddress:config.bok.operatorAddress}}};
+ const approval={schemaVersion:1,runtimeSha256:control.runtimeSha256,content:'test request',contentSha256:'',budget:'100',authorizeFeeCap:'100',postFeeCap:'200',expiresAt:Date.now()+300000,publicScope:{...config.network,boardAddress:config.board.contractAddress,classId:field(20),bok:{address:config.bok.contractAddress,classId:field(21),operatorAddress:config.bok.operatorAddress,deployer:config.bok.operatorAddress,salt:field(22),deployment:{blockNumber:1,blockHash:hash,txHash:hash}}}};
  const record={id:field(10),nonce:'private-nonce',action:{type:'bok',content:approval.content,subboard:'0',name:'0',budget:'100',deposit:'private-deposit'},maximumFee:'90',status:'prepared',bok:{phase:'authorize',scope:{address:config.bok.contractAddress,pluginId:config.bok.pluginId},requestId:field(11),target:field(12),budget:'100'}};
  return {field,config,control,approval,record};
 }
 test('retained Bok opt-in defaults to no action and bounds exact approval before launch',async()=>{
  const {validateRetainedBokApproval,readRetainedBokApproval}=await import('./t04-metamask.mjs'),{createHash}=await import('node:crypto'),f=retainedBokFixture();f.approval.contentSha256=createHash('sha256').update(f.approval.content).digest('hex');
  assert.equal(readRetainedBokApproval(undefined,f.control),null);assert.throws(()=>readRetainedBokApproval('/private/a',f.control));assert.throws(()=>readRetainedBokApproval('/private/a',f.control,{enabled:true}));assert.deepEqual(validateRetainedBokApproval(f.approval,f.control),f.approval);
- for(const change of [a=>a.content+='changed',a=>a.budget='101',a=>a.authorizeFeeCap='900',a=>a.runtimeSha256='b'.repeat(64),a=>a.expiresAt=Date.now()-1,a=>a.expiresAt=Date.now()+3600001,a=>a.publicScope.bok.address=f.field(99),a=>a.extra=true]){const a=structuredClone(f.approval);change(a);assert.throws(()=>validateRetainedBokApproval(a,f.control));}
+ for(const change of [a=>a.content+='changed',a=>a.budget='101',a=>a.authorizeFeeCap='900',a=>a.runtimeSha256='b'.repeat(64),a=>a.expiresAt=Date.now()-1,a=>a.expiresAt=Date.now()+3600001,a=>a.publicScope.bok.address=f.field(99),a=>delete a.publicScope.classId,a=>delete a.publicScope.bok.deployment,a=>a.publicScope.bok.deployment.blockNumber=0,a=>a.extra=true]){const a=structuredClone(f.approval);change(a);assert.throws(()=>validateRetainedBokApproval(a,f.control));}
 });
 test('retained Bok thread approval requires both exact public IDs and rejects mixed root/reply modes',async()=>{
  const {validateRetainedBokApproval:validate}=await import('./t04-metamask.mjs'),{createHash}=await import('node:crypto'),f=retainedBokFixture();f.approval.contentSha256=createHash('sha256').update(f.approval.content).digest('hex');

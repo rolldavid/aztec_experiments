@@ -9,7 +9,7 @@ import {Interface,parseEther,formatUnits,Wallet,AbiCoder,keccak256,encodeBytes32
 import {aggregateFundingAbi,collateralConsentTypes,usdcAuthorizationTypes} from '../shared/rolling/aggregate-funding.mjs';
 import {verifyEthereumIntentReceipt} from '../shared/ethereum-journal.mjs';
 import {validateAggregateFundingIntent} from '../shared/rolling/aggregate-recovery.mjs';
-import {unpackRollingText} from '../shared/rolling/public-events.mjs';
+import {unpackRollingText,validateRollingScope} from '../shared/rolling/public-events.mjs';
 export function assertMetaMaskTransaction({stage,request,account,chainId,tokenAddress,feePortalAddress,privateFeeAddress,boardPortalAddress,fundingAmount,collateralAmount,expectedChainId=31337n}){
  assert(Array.isArray(request)&&request.length===1);const tx=request[0];
  assert([31337n,11155111n].includes(BigInt(expectedChainId)),'Only disposable devnet or Sepolia testnet');
@@ -832,7 +832,7 @@ export function validateRetainedBokApproval(value,control,now=Date.now(),{observ
  assert(BigInt(value.budget)<=BigInt(control.allocation.bokAmount));
  assert(BigInt(value.authorizeFeeCap)+BigInt(value.postFeeCap)<=BigInt(control.allocation.feeAmount));
  assert(Number.isSafeInteger(value.expiresAt)&&value.expiresAt>0&&(observation||value.expiresAt>now&&value.expiresAt<=now+3600000));
- const n=control.walletConfig.config.network,b=control.walletConfig.config.bok,s=value.publicScope;
+ const n=control.walletConfig.config.network,b=control.walletConfig.config.bok,s=value.publicScope;validateRollingScope(s);
  assert(s&&s.bok);for(const k of ['chainId','rollupVersion','rollupAddress'])assert.equal(s[k],n[k]);
  assert.equal(s.boardAddress,control.walletConfig.config.board.contractAddress);assert.equal(s.bok.address,b.contractAddress);assert.equal(s.bok.operatorAddress,b.operatorAddress);
  return structuredClone(value);
