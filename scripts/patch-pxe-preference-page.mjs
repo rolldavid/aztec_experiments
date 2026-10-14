@@ -116,12 +116,17 @@ export class RollingPreferenceRecoveryStore extends BaseStagingStore {
  async applyRollback(_toBlock,db){const text=await db.values.getAsync('meta');if(text!==undefined){const m=JSON.parse(text);await db.values.set('meta',JSON.stringify({database:m.database,generation:id()}));}}
 }
 export function bindRollingPreferenceRecovery(pxe,store,tier,page,headCall){check(!bindings.has(pxe)&&store instanceof RollingPreferenceRecoveryStore&&typeof page==='function'&&typeof headCall==='function');bindings.set(pxe,Object.freeze({store,tier:tier??'proposed',page,headCall}));}
-function receipt(state,records=[],head=null){return {schemaVersion:1,database:state.database,epoch:state.epoch,sequence:state.sequence,anchor:copy(state.anchor),nextBlock:state.nextBlock,nextLog:state.nextLog,records,head,complete:head!==null,...(state.previous?{previous:copy(state.previous)}:{})};}
+function receipt(state,records=[],head=null){return {schemaVersion:1,database:state.database,epoch:state.epoch,sequence:state.sequence,anchor:copy(state.anchor),nextBlock:state.nextBlock,nextLog:state.nextLog,records,head,complete:head!==null,...(state.previous?{previous:copy(state.previous)}:{}),...(state.resumed?{resumed:copy(state.resumed)}:{})};}
 function checkpoint(r){
  const c=exact({database:r.database,epoch:r.epoch,sequence:r.sequence,anchor:copy(r.anchor),head:copy(r.head)},['database','epoch','sequence','anchor','head']);
  for(const k of ['database','epoch'])check(typeof c[k]==='string'&&/^[0-9a-f]{64}$/.test(c[k]));integer(c.sequence,Number.MAX_SAFE_INTEGER);
  c.anchor=exact(c.anchor,['blockNumber','blockHash']);integer(c.anchor.blockNumber);hex(c.anchor.blockHash);
  c.head=exact(c.head,['initialized','schema','revision','digest']);const h=c.head;check(typeof h.initialized==='boolean'&&h.schema===1&&typeof h.revision==='string'&&/^(0|[1-9][0-9]*)$/.test(h.revision)&&h.revision.length<=20&&BigInt(h.revision)<(1n<<64n)&&typeof h.digest==='string'&&/^(0|[1-9][0-9]*)$/.test(h.digest)&&h.digest.length<=77&&BigInt(h.digest)<Fr.MODULUS);check(h.initialized?BigInt(h.revision)>0n&&BigInt(h.digest)>0n:h.revision==='0'&&h.digest==='0');return c;
+}
+function resumedCheckpoint(r){
+ const c={database:r.database,epoch:r.epoch,sequence:r.sequence,anchor:copy(r.anchor),nextBlock:r.nextBlock,nextLog:r.nextLog};
+ for(const k of ['database','epoch'])check(typeof c[k]==='string'&&/^[0-9a-f]{64}$/.test(c[k]));integer(c.sequence,Number.MAX_SAFE_INTEGER);
+ exact(c.anchor,['blockNumber','blockHash']);integer(c.anchor.blockNumber);hex(c.anchor.blockHash);integer(c.nextBlock,c.anchor.blockNumber+1,1);integer(c.nextLog,24575);return c;
 }
 function locator(input){const p=exact(input,['blockNumber','blockHash','txHash','txIndex','firstLog','logCount']);integer(p.blockNumber,0xffffffff,1);hex(p.blockHash);hex(p.txHash);integer(p.txIndex,6142);integer(p.firstLog,63);integer(p.logCount,8,1);check(p.firstLog+p.logCount<=64);return p;}
 export async function runRollingPreferenceRecovery(pxe,input,options){
@@ -195,19 +200,21 @@ export async function runRollingPreferenceRecovery(pxe,input,options){
    };
    // Old completed rows have no authenticated locator. Never infer one.
    if(p.restart||!state||state.database!==meta.database||state.generation!==meta.generation||state.schemaVersion!==2)return await reset();
-   exact(state,['schemaVersion','scope','database','generation','epoch','anchor','sequence','nextBlock','nextLog','pending','candidate','previous','last']);
+   exact(state,['schemaVersion','scope','database','generation','epoch','anchor','sequence','nextBlock','nextLog','pending','candidate','previous','last',...(Object.hasOwn(state,'resumed')?['resumed']:[])]);
    check(state.scope===key&&typeof state.epoch==='string'&&/^[0-9a-f]{64}$/.test(state.epoch));
    integer(state.anchor.blockNumber);hex(state.anchor.blockHash);
    integer(state.sequence,Number.MAX_SAFE_INTEGER);integer(state.nextBlock,state.anchor.blockNumber+1,1);integer(state.nextLog,24575);
    check(Array.isArray(state.pending)&&state.pending.length<=64&&state.last&&state.last.sequence===state.sequence);
    check(state.last.database===state.database&&state.last.epoch===state.epoch&&same(state.last.anchor,state.anchor)&&state.last.nextBlock===state.nextBlock&&state.last.nextLog===state.nextLog);
    if(state.previous){exact(state.previous,['database','epoch','sequence','anchor','head']);const previous=checkpoint(state.previous);check(previous.database===state.database&&previous.epoch!==state.epoch&&previous.anchor.blockNumber<state.anchor.blockNumber&&same(state.last.previous,previous));}else check(state.previous===null&&state.last.previous===undefined);
+   if(state.resumed){exact(state.resumed,['database','epoch','sequence','anchor','nextBlock','nextLog']);const prior=resumedCheckpoint(state.resumed);check(state.previous===null&&prior.database===state.database&&prior.epoch!==state.epoch&&prior.anchor.blockNumber<state.anchor.blockNumber&&same(state.last.resumed,prior));}else check(state.last.resumed===undefined);
    if(state.candidate){exact(state.candidate,['nullifier','slot','origin']);hex(state.candidate.nullifier);hex(state.candidate.slot);locator(state.candidate.origin);check(state.candidate.origin.blockNumber<=state.anchor.blockNumber);}
-   if(state.sequence===0)check(state.nextBlock===(state.previous?state.previous.anchor.blockNumber+1:1)&&state.nextLog===0&&state.pending.length===0&&(state.previous!==null||state.candidate===null));
+   if(state.sequence===0){if(state.resumed)check(state.nextBlock===state.resumed.nextBlock&&state.nextLog===state.resumed.nextLog);else check(state.nextBlock===(state.previous?state.previous.anchor.blockNumber+1:1)&&state.nextLog===0&&state.pending.length===0&&(state.previous!==null||state.candidate===null));}
    if(!same(state.anchor,anchorRecord)){
-    // Monotonic extension is allowed ONLY from a complete previous scan. The
-    // selected old anchor must still be canonical; reorgs rebuild honestly.
-    if(anchorRecord.blockNumber<=state.anchor.blockNumber||!state.last.complete||state.pending.length||state.nextBlock!==state.anchor.blockNumber+1||state.nextLog!==0)return await reset();
+    // Canonical descendants may extend complete OR interrupted scans. The
+    // reader must authenticate the exact encrypted predecessor before asking
+    // for this explicit promotion; former head authority is refreshed below.
+    if(anchorRecord.blockNumber<=state.anchor.blockNumber||(state.last.complete&&(state.pending.length||state.nextBlock!==state.anchor.blockNumber+1||state.nextLog!==0)))return await reset();
     const priorCanonical=async()=>{const raw=await pxe.node.getBlockData(state.anchor.blockNumber);check(raw);const h=BlockHeader.fromBuffer(BlockHeader.prototype.toBuffer.call(raw.header));check(h.getBlockNumber()===state.anchor.blockNumber&&(await h.hash()).toString()===raw.blockHash.toString());await guard();return raw.blockHash.toString()===state.anchor.blockHash;};
     if(!await priorCanonical())return await reset();
     const priorAnchor=copy(state.anchor);
@@ -224,16 +231,17 @@ export async function runRollingPreferenceRecovery(pxe,input,options){
      // Replayed old events remain DB-idempotent validator input, never new fold records.
      for(const c of replay.candidates)if(c.nullifier!==candidate.nullifier)check(!await active(c));
      if(!await active(candidate))candidate=null;
-    }else check(p.block===null&&state.last.head.initialized===false);
-    const previous=checkpoint(state.last);
-    state={...state,epoch:id(),anchor:anchorRecord,sequence:0,nextBlock:previous.anchor.blockNumber+1,nextLog:0,pending:[],candidate,previous};
+    }else check(p.block===null&&(!state.last.complete||state.last.head.initialized===false));
+    const complete=state.last.complete,previous=complete?checkpoint(state.last):null,resumed=complete?null:resumedCheckpoint(state.last);
+    state={...state,epoch:id(),anchor:anchorRecord,sequence:0,nextBlock:complete?previous.anchor.blockNumber+1:state.nextBlock,nextLog:complete?0:state.nextLog,pending:complete?[]:state.pending,candidate,previous};
+    if(resumed)state.resumed=resumed;else delete state.resumed;
     state.last=receipt(state);await binding.store.save(key,state,context.changeSetId);await beforeCommit();return copy(state.last);
    }
    // A read/restart has no permission to advance. The durable mailbox covers a
    // lost response; its records are not forgotten until the consumer asks for
    // the next sequence after its own encrypted CAS has succeeded.
    if(p.expected===null){await beforeCommit();return copy(state.last);}
-   if(state.sequence===0&&state.previous&&p.expected.epoch===state.previous.epoch&&p.expected.sequence===state.previous.sequence){await beforeCommit();return copy(state.last);}
+   if(state.sequence===0){const prior=state.previous??state.resumed;if(prior&&p.expected.epoch===prior.epoch&&p.expected.sequence===prior.sequence){await beforeCommit();return copy(state.last);}}
    check(p.expected.epoch===state.epoch);
    if(p.expected.sequence===state.sequence-1){await beforeCommit();return copy(state.last);}
    check(p.expected.sequence===state.sequence&&!state.last.complete);
@@ -285,7 +293,7 @@ export async function runRollingPreferenceRecovery(pxe,input,options){
  }catch{throw Error('PXE_PREFERENCE_RECOVERY_FAILED');}
 }
 `; }
-export const PREFERENCE_PAGE_RECOVERY_PIN = Object.freeze({generated:'rolling-preference-recovery.mjs',sha256:'ee77680e4b571d035642c47695d9066b5166cb226950932181f531b31fccf87f'});
+export const PREFERENCE_PAGE_RECOVERY_PIN = Object.freeze({generated:'rolling-preference-recovery.mjs',sha256:'f63feaa140c37aaba6109dbcda119a1373ed1f8a1d3df993c2768f5ec268ff29'});
 function imports() { return `
 // @ts-ignore Exact reviewed JavaScript module is copied by the pinned installer.
 import { authenticateCompactBlock as rollingPageCompact } from '../rolling-preference-compact.mjs';

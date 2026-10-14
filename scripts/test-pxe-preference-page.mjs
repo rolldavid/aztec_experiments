@@ -1162,6 +1162,36 @@ if(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1') {
       const active=await r.read();assert.equal(active.notes.length,1);assert.equal(active.notes[0].note.items[1].toBigInt(),2n);
       const all=await r.queue.runSynced(({changeSetId})=>r.stores.noteStore.getNotes({contractAddress:f.board,owner:r.complete.address,scopes:[r.complete.address],status:NoteStatus.ACTIVE_OR_NULLIFIED},changeSetId));assert.equal(all.length,2);
     });
+    await test('actual ACIR incomplete cursor advertises monotonic continuation without discarding its prefix',async t=>{
+      const f=await acirFixture(t),r=await f.receiver({recovery:true});
+      let prior=await r.page.processRollingPreferenceRecovery(recoveryInput(f),{contextGuard:async()=>{}});prior=await recoveryStep(f,r,prior);assert.equal(prior.nextBlock,2);assert.equal(prior.complete,false);
+      await f.appendEmpty();const status=await r.page.processRollingPreferenceRecovery(recoveryInput(f),{contextGuard:async()=>{}});
+      assert.equal(status.epoch,prior.epoch);assert.equal(status.nextBlock,2);assert.equal(status.advance.anchor.blockNumber,5);
+    });
+    await test('actual ACIR incomplete promotion preserves position, mailbox replay and current head revalidation',async t=>{
+      const f=await acirFixture(t),r=await f.receiver({recovery:true});let prior=await r.page.processRollingPreferenceRecovery(recoveryInput(f),{contextGuard:async()=>{}});
+      while(prior.nextBlock<=4)prior=await recoveryStep(f,r,prior);assert(!prior.complete);assert.equal((await r.read()).notes.length,1);
+      const history=await f.extendRevision(),status=await r.page.processRollingPreferenceRecovery(recoveryInput(f),{contextGuard:async()=>{}}),before=r.page.acirCompleted;
+      let promoted=await promoteCursor(f,r,status);assert.equal(promoted.nextBlock,prior.nextBlock);assert.equal(promoted.nextLog,prior.nextLog);assert.equal(promoted.sequence,0);assert.equal(promoted.previous,undefined);assert.deepEqual(promoted.records,[]);
+      assert.deepEqual(promoted.resumed,Object.fromEntries(['database','epoch','sequence','anchor','nextBlock','nextLog'].map(k=>[k,prior[k]])));
+      assert.equal(r.page.acirCompleted,before+1);assert.equal(await r.db.openMap('note_nullifications_by_nullifier').getAsync(history.oldNullifier),5);assert.equal((await r.read()).notes.length,0);
+      assert.deepEqual(await promoteCursor(f,r,status),promoted);assert.equal(r.page.acirCompleted,before+1);
+      promoted=await recoveryStep(f,r,promoted);assert.deepEqual(promoted.records.map(x=>BigInt(x.packedEvent[1])),[2n]);promoted=await recoveryStep(f,r,promoted);assert(promoted.complete);assert.equal(promoted.head.revision,'2');assert.equal((await r.read()).events.length,2);
+    });
+    await test('incomplete promotion preserves original staged pending event order across physical pages',async t=>{
+      const f=await acirFixture(t),ordered=await f.orderingEffect();
+      const r=await f.receiver({recovery:true,eventPageDouble:async(page,guard,frame,pxe)=>{await guard();const request=ordered.requests[page.firstLog===0?1:0];await new EventService(frame.anchorBlockHeader,pxe.privateEventStore,frame.changeSetId,quiet).validateAndStoreEvents([request],r.complete.address,ordered.data);}});
+      let cursor=await r.page.processRollingPreferenceRecovery(recoveryInput(f),{contextGuard:async()=>{}});while(cursor.nextBlock<4)cursor=await recoveryStep(f,r,cursor);cursor=await recoveryStep(f,r,cursor);assert.equal(cursor.nextLog,8);assert.deepEqual(cursor.records,[]);
+      await f.appendEmpty();const status=await r.page.processRollingPreferenceRecovery(recoveryInput(f),{contextGuard:async()=>{}});cursor=await promoteCursor(f,r,status);assert.equal(cursor.nextBlock,4);assert.equal(cursor.nextLog,8);assert.deepEqual(cursor.records,[]);
+      cursor=await recoveryStep(f,r,cursor);assert.equal(cursor.nextBlock,5);assert.deepEqual(cursor.records.map(x=>BigInt(x.packedEvent[1])),[1n,2n]);assert.equal((await r.read()).events.length,2);
+    });
+    await test('incomplete promotion settlement veto and old-anchor reorg preserve atomic safety',async t=>{
+      const f=await acirFixture(t);let veto=false;const r=await f.receiver({recovery:true,contributor:{settle:async()=>{if(veto)throw Error('labelled incomplete veto');}}});
+      let prior=await r.page.processRollingPreferenceRecovery(recoveryInput(f),{contextGuard:async()=>{}});while(prior.nextBlock<=4)prior=await recoveryStep(f,r,prior);const history=await f.extendRevision(),status=await r.page.processRollingPreferenceRecovery(recoveryInput(f),{contextGuard:async()=>{}});
+      veto=true;await assert.rejects(promoteCursor(f,r,status),/labelled incomplete veto|PXE_PREFERENCE_RECOVERY_FAILED/);veto=false;assert.deepEqual(await r.page.processRollingPreferenceRecovery(recoveryInput(f),{contextGuard:async()=>{}}),status);assert.equal(await r.db.openMap('note_nullifications_by_nullifier').getAsync(history.oldNullifier),undefined);assert.equal((await r.read()).notes.length,1);assert.equal((await r.read()).events.length,1);
+      const original=f.node.getBlockData;f.node.getBlockData=async n=>{const result=await original(n);if(n!==prior.anchor.blockNumber)return result;const h=BlockHeader.fromBuffer(result.header.toBuffer());h.globalVariables.timestamp++;return {header:h,blockHash:await h.hash()};};
+      const reset=await r.page.processRollingPreferenceRecovery(recoveryInput(f),{contextGuard:async()=>{}});assert.equal(reset.nextBlock,1);assert.notEqual(reset.epoch,prior.epoch);assert.equal(reset.advance,undefined);assert.equal(reset.resumed,undefined);
+    });
     async function completeCursor(f,r){let c=await r.page.processRollingPreferenceRecovery(recoveryInput(f),{contextGuard:async()=>{}});for(let i=0;i<16&&!c.complete;i++)c=await recoveryStep(f,r,c);assert(c.complete);return c;}
     async function promoteCursor(f,r,c,guard=async()=>{}){const block=c.advance.headPage?await f.compact(c.advance.headPage.blockNumber):null;return r.page.processRollingPreferenceRecovery({...recoveryInput(f),expected:{epoch:c.epoch,sequence:c.sequence},block},{contextGuard:guard});}
     await test('actual ACIR monotonic promotion revalidates former head and emits no duplicate fold records',async t=>{

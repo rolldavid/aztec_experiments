@@ -130,6 +130,51 @@ function extensionFixture(options){
  };
  return f;
 }
+// Labelled SDK continuation receipt; real encrypted prefix and mailbox folding.
+function incompleteExtensionFixture(){
+ const f=fixture(),original=f.config.pxe.processRollingPreferenceRecovery;let advancing=false,promoted=false,prior,baseSequence;
+ f.state.promotions=0;
+ f.extend=()=>{prior=structuredClone(f.current());assert(!prior.complete);baseSequence=prior.sequence;advancing=true;};
+ f.config.pxe.processRollingPreferenceRecovery=async p=>{
+  if(p.restart){advancing=false;promoted=false;return original(p);}
+  if(!advancing&&!promoted)return original(p);
+  const current=f.current();
+  if(advancing){
+   if(!p.expected)return {...structuredClone(current),advance:{anchor:{blockNumber:2,blockHash:hex(12)},headPage:null}};
+   assert.deepEqual(p.expected,{epoch:prior.epoch,sequence:prior.sequence});assert.equal(p.block,null);f.state.promotions++;
+   const resumed=Object.fromEntries(['database','epoch','sequence','anchor','nextBlock','nextLog'].map(k=>[k,structuredClone(prior[k])]));
+   Object.assign(current,{epoch:'e'.repeat(64),sequence:0,anchor:{blockNumber:2,blockHash:hex(12)},records:[],resumed});advancing=false;promoted=true;f.state.mutatePromotion?.(current);
+   if(f.state.failPromotionReply){f.state.failPromotionReply=false;throw Error('labelled lost incomplete promotion reply');}
+   return structuredClone(current);
+  }
+  if(!p.expected)return structuredClone(current);
+  // Translate fixture counters only; production SDK cursor tests run separately.
+  const sequence=current.sequence;current.sequence+=baseSequence;
+  const result=await original({...p,expected:{...p.expected,sequence:sequence+baseSequence}});
+  f.alter(x=>{x.sequence-=baseSequence;if(x.complete)x.nextBlock=3;});result.sequence-=baseSequence;if(result.complete)result.nextBlock=3;return result;
+ };
+ return f;
+}
+test('incomplete canonical continuation preserves exact encrypted prefix and partial-log position',async()=>{
+ const f=incompleteExtensionFixture(),r=f.reader();await r.read();await r.read();f.extend();const before=f.state.transport.length;
+ const resumed=await f.reader().read();assert.equal(resumed.complete,false);assert.equal(resumed.progress.processedRevision,'1');assert.equal(resumed.progress.nextBlock,1);assert.equal(f.current().nextLog,1);assert.equal(f.state.promotions,1);assert.equal(f.state.transport.length,before);
+ const done=await readAll(f.reader());assert.deepEqual(done.preferences.bookmarks,['77']);assert.deepEqual(done.preferences.followedBoards,['0']);assert.equal(f.state.steps,3);
+});
+for(const mode of ['reply','CAS'])test('incomplete promotion '+mode+' loss preserves authenticated predecessor',async()=>{
+ const f=incompleteExtensionFixture(),r=f.reader();await r.read();await r.read();f.extend();if(mode==='reply')f.state.failPromotionReply=true;else f.state.failCAS=true;
+ await assert.rejects(r.read());const resumed=await f.reader().read();assert.equal(resumed.progress.processedRevision,'1');assert.equal(f.state.promotions,1);assert.equal((await readAll(f.reader())).preferences.head.revision,'2');
+});
+test('chain advance drains an unacknowledged mailbox before promoting its prefix',async()=>{
+ const f=incompleteExtensionFixture(),r=f.reader();await r.read();f.state.failReply=true;await assert.rejects(r.read());f.extend();
+ const drained=await f.reader().read();assert.equal(drained.progress.processedRevision,'1');assert.equal(drained.progress.anchorBlock,1);assert.equal(f.state.promotions,0);assert.equal(f.state.steps,1);
+ const resumed=await f.reader().read();assert.equal(resumed.progress.processedRevision,'1');assert.equal(resumed.progress.anchorBlock,2);assert.equal(f.state.promotions,1);assert.equal((await readAll(f.reader())).preferences.head.revision,'2');
+});
+for(const key of ['epoch','sequence','nextBlock','nextLog'])test('incomplete promotion mismatched predecessor fails closed: '+key,async()=>{
+ const f=incompleteExtensionFixture(),r=f.reader();await r.read();await r.read();f.extend();f.state.mutatePromotion=x=>{if(key==='epoch')x.resumed.epoch='f'.repeat(64);else x.resumed[key]++;};await assert.rejects(r.read(),{code:'ROLLING_COLD_PREFERENCES_UNAVAILABLE'});
+});
+test('incomplete promotion without encrypted predecessor restarts full enumeration',async()=>{
+ const f=incompleteExtensionFixture(),r=f.reader();await r.read();await r.read();f.extend();f.state.failPromotionReply=true;await assert.rejects(r.read());f.db.clear();const result=await f.reader().read();assert.equal(result.progress.processedRevision,'0');assert.equal(result.progress.nextBlock,1);
+});
 test('authenticated completed prefix extends with only former-head block and new suffix; choices preserved',async()=>{
  const f=extensionFixture(),r=f.reader();await readAll(r);const before=f.state.transport.length,restarts=f.state.restarts;
  f.extend();const promotion=await r.read();assert.equal(promotion.complete,false);assert.equal(promotion.progress.processedRevision,'2');assert.equal(promotion.progress.nextBlock,2);assert.equal(f.state.promotions,1);

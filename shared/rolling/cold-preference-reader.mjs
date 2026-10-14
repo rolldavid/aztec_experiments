@@ -18,24 +18,26 @@ function anchor(input){const a=exact(input,['blockNumber','blockHash']);number(a
 function head(input){const h=exact(input,['initialized','schema','revision','digest']);check(typeof h.initialized==='boolean'&&h.schema===1&&typeof h.revision==='string'&&/^(0|[1-9][0-9]*)$/.test(h.revision)&&h.revision.length<=20&&BigInt(h.revision)<(1n<<64n)&&typeof h.digest==='string'&&/^(0|[1-9][0-9]*)$/.test(h.digest)&&h.digest.length<=77&&BigInt(h.digest)<FIELD_MODULUS);check(h.initialized?BigInt(h.revision)>0n&&BigInt(h.digest)>0n:h.revision==='0'&&h.digest==='0');return h;}
 function checkpoint(input){const c=exact(input,['database','epoch','sequence','anchor','head']);for(const k of ['database','epoch'])check(typeof c[k]==='string'&&/^[0-9a-f]{64}$/.test(c[k]));number(c.sequence,Number.MAX_SAFE_INTEGER);c.anchor=anchor(c.anchor);c.head=head(c.head);return c;}
 function completedCheckpoint(r){check(r.complete===true);return checkpoint({database:r.database,epoch:r.epoch,sequence:r.sequence,anchor:r.anchor,head:r.head});}
+function resumedCheckpoint(r){const c={database:r.database,epoch:r.epoch,sequence:r.sequence,anchor:r.anchor,nextBlock:r.nextBlock,nextLog:r.nextLog};for(const k of ['database','epoch'])check(typeof c[k]==='string'&&/^[0-9a-f]{64}$/.test(c[k]));number(c.sequence,Number.MAX_SAFE_INTEGER);c.anchor=anchor(c.anchor);number(c.nextBlock,c.anchor.blockNumber+1,1);number(c.nextLog,24575);return c;}
 const emptyHead=Object.freeze({initialized:false,schema:1,revision:'0',digest:'0'});
 function delivery(input){
- const optional=['previous','advance'].filter(k=>Object.hasOwn(input,k));
+ const optional=['previous','resumed','advance'].filter(k=>Object.hasOwn(input,k));
  const r=exact(input,['schemaVersion','database','epoch','sequence','anchor','nextBlock','nextLog','records','head','complete',...optional]);
  check(r.schemaVersion===1);for(const k of ['database','epoch'])check(typeof r[k]==='string'&&/^[0-9a-f]{64}$/.test(r[k]));
  number(r.sequence,Number.MAX_SAFE_INTEGER);r.anchor=anchor(r.anchor);
+ if(r.resumed){r.resumed=resumedCheckpoint(exact(r.resumed,['database','epoch','sequence','anchor','nextBlock','nextLog']));check(!r.previous&&r.resumed.database===r.database&&r.resumed.epoch!==r.epoch&&r.resumed.anchor.blockNumber<r.anchor.blockNumber);}
  if(r.previous){r.previous=checkpoint(r.previous);check(r.previous.database===r.database&&r.previous.epoch!==r.epoch&&r.previous.anchor.blockNumber<r.anchor.blockNumber);}
  number(r.nextBlock,0x100000000,1);number(r.nextLog,24575);check(r.nextBlock<=r.anchor.blockNumber+1);
  r.records=list(r.records,64).map(row=>{const e=exact(row,['packedEvent','eventSelector','l2BlockNumber','l2BlockHash','txHash']);e.packedEvent=list(e.packedEvent,8);check(e.packedEvent.length===8);for(const f of e.packedEvent)check(typeof f==='string'&&/^0x[0-9a-f]{64}$/.test(f)&&BigInt(f)<FIELD_MODULUS);check(typeof e.eventSelector==='string'&&/^0x[0-9a-f]{8}$/.test(e.eventSelector));number(e.l2BlockNumber,0xffffffff,1);hex(e.l2BlockHash);hex(e.txHash);return e;});
  check(typeof r.complete==='boolean'&&r.complete===(r.head!==null));
  if(r.head!==null)r.head=head(r.head);
  if(r.complete)check(r.nextBlock===r.anchor.blockNumber+1&&r.nextLog===0&&r.records.length===0);
- if(Object.hasOwn(r,'previous'))check(r.previous!==null);
- if(r.sequence===0)check(r.records.length===0&&r.nextBlock===(r.previous?r.previous.anchor.blockNumber+1:1)&&r.nextLog===0&&!r.complete);
+ if(Object.hasOwn(r,'previous'))check(r.previous!==null);if(Object.hasOwn(r,'resumed'))check(r.resumed!==null);
+ if(r.sequence===0)check(r.records.length===0&&r.nextBlock===(r.previous?r.previous.anchor.blockNumber+1:r.resumed?r.resumed.nextBlock:1)&&r.nextLog===(r.resumed?.nextLog??0)&&!r.complete);
  if(Object.hasOwn(r,'advance')){
-  check(r.complete);r.advance=exact(r.advance,['anchor','headPage']);r.advance.anchor=anchor(r.advance.anchor);check(r.advance.anchor.blockNumber>r.anchor.blockNumber);
+  r.advance=exact(r.advance,['anchor','headPage']);r.advance.anchor=anchor(r.advance.anchor);check(r.advance.anchor.blockNumber>r.anchor.blockNumber);
   if(r.advance.headPage!==null){const p=exact(r.advance.headPage,['blockNumber','blockHash','txHash','txIndex','firstLog','logCount']);number(p.blockNumber,r.anchor.blockNumber,1);hex(p.blockHash);hex(p.txHash);number(p.txIndex,6142);number(p.firstLog,63);number(p.logCount,8,1);check(p.firstLog+p.logCount<=64);r.advance.headPage=p;}
-  check(r.head.initialized===(r.advance.headPage!==null));
+  if(r.complete)check(r.head.initialized===(r.advance.headPage!==null));
  }
  return r;
 }
@@ -111,30 +113,37 @@ export function createRollingColdPreferenceReader(input){
     if(!decoder)decoder=await checked(()=>createPreferenceEventDecoder({sdk:decoderSdk,artifact}));
     const saved=await checked(()=>slot.read()),cache=saved.value===null?null:cacheRecord(saved.value);
     if(!started||lastComplete){await checked(sync);started=true;lastComplete=false;}
-    let observed=await request(null,null,cache===null),prefix=cache?.prefix??null,markers=cache?.markers??null;
+    let observed=await request(null,null,cache===null),prefix=cache?.prefix??null,markers=cache?.markers??null,deferredAdvance=null;
     await recheck(observed.anchor);
     if(observed.advance){
      const {advance,...prior}=observed;
-     // No remote digest or SDK head authenticates arbitrary derived sets. Only
-     // our successfully decrypted exact old complete cache may cross epochs.
-     if(!cache||!cache.delivery.complete||!same(cache.delivery,prior))observed=await request(null,null,true);
-     else{
-      check(same(prefix.head,prior.head));
-      const validated=await checked(()=>resumePreferenceFold({scope,head:prior.head,hash,prefix,verifyAuthenticatedPrefix:async candidate=>same(candidate,cache.prefix)}));validated.finish();
+     // A lost mailbox response must reach the encrypted cache before its epoch
+     // can be promoted. Do not discard the unacknowledged records or relabel a
+     // prefix that has not yet been authenticated and persisted by this reader.
+     if(!cache)observed=await request(null,null,true);
+     else if(!same(cache.delivery,prior)){
+      check(cache.delivery.database===prior.database&&cache.delivery.epoch===prior.epoch&&same(cache.delivery.anchor,prior.anchor)&&prior.sequence===cache.delivery.sequence+1);
+      observed=prior;deferredAdvance=advance;
+     }else{
+      const priorHead=prior.complete?prior.head:prefix.head;check(same(prefix.head,priorHead));
+      const validated=await checked(()=>resumePreferenceFold({scope,head:priorHead,hash,prefix,verifyAuthenticatedPrefix:async candidate=>same(candidate,cache.prefix)}));if(prior.complete)validated.finish();
       await recheck(advance.anchor);let block=null;
       if(advance.headPage){const p=advance.headPage;check(await canonical(p.blockNumber)===p.blockHash);const wire=await checked(()=>fetchBlock({number:p.blockNumber,hash:p.blockHash},{signal}));check(wire.number===p.blockNumber&&wire.hash===p.blockHash);block={blockNumber:wire.number,blockHash:wire.hash,fields:wire.fields,headerFields:wire.headerFields};}
       observed=await request({epoch:prior.epoch,sequence:prior.sequence},block);
-      check(observed.sequence===0&&observed.records.length===0&&!observed.complete&&!observed.advance&&same(observed.previous,completedCheckpoint(prior))&&same(observed.anchor,advance.anchor));
+      check(observed.sequence===0&&observed.records.length===0&&!observed.complete&&!observed.advance&&same(observed.anchor,advance.anchor));
+      if(prior.complete)check(same(observed.previous,completedCheckpoint(prior))&&!observed.resumed);
+      else check(same(observed.resumed,resumedCheckpoint(prior))&&!observed.previous);
      }
     }
     if(!cache||cache.delivery.database!==observed.database||cache.delivery.epoch!==observed.epoch||!same(cache.delivery.anchor,observed.anchor)){
      const extendsCache=cache?.delivery.complete&&observed.sequence===0&&observed.previous&&same(observed.previous,completedCheckpoint(cache.delivery));
-     if(extendsCache){
-      check(same(prefix.head,cache.delivery.head));await recheck(cache.delivery.anchor);
-      const validated=await checked(()=>resumePreferenceFold({scope,head:cache.delivery.head,hash,prefix,verifyAuthenticatedPrefix:async candidate=>same(candidate,cache.prefix)}));validated.finish();
+     const resumesCache=cache&&!cache.delivery.complete&&observed.sequence===0&&observed.resumed&&same(observed.resumed,resumedCheckpoint(cache.delivery));
+     if(extendsCache||resumesCache){
+      const priorHead=cache.delivery.complete?cache.delivery.head:prefix.head;check(same(prefix.head,priorHead));await recheck(cache.delivery.anchor);
+      const validated=await checked(()=>resumePreferenceFold({scope,head:priorHead,hash,prefix,verifyAuthenticatedPrefix:async candidate=>same(candidate,cache.prefix)}));if(cache.delivery.complete)validated.finish();
      }else{
       // Missing predecessor cache, old-format cursor, or fork cannot skip prefix.
-      if(observed.sequence!==0||observed.previous)observed=await request(null,null,true);
+      if(observed.sequence!==0||observed.previous||observed.resumed)observed=await request(null,null,true);
       prefix=null;
      }
      markers=null;
@@ -177,7 +186,7 @@ export function createRollingColdPreferenceReader(input){
     await recheck(observed.anchor);
     // Recheck the authoritative SDK mailbox after encryption/CAS; an intervening
     // scoped restart, rollback or anchor change cannot publish a stale result.
-    check(same(await request(null),observed));await recheck(observed.anchor);
+    let confirmed=await request(null);if(deferredAdvance){const {advance,...prior}=confirmed;check(same(advance,deferredAdvance));await recheck(advance.anchor);confirmed=prior;}check(same(confirmed,observed));await recheck(observed.anchor);
     const progress=Object.freeze({nextBlock:observed.nextBlock,anchorBlock:observed.anchor.blockNumber,processedRevision:prefix.head.revision,markersChecked:markers?.next??0,markersTotal:completed?.readMarkers.length??null});
     if(!completed||markers.next<completed.readMarkers.length)return Object.freeze({status:'recovering',complete:false,progress});
     lastComplete=true;
