@@ -179,23 +179,20 @@ start a local chain.
 
 ## Rolling Chat development assets
 
-The Rolling Chat application and its PrivateBok dependency have additional normal
-builds. After installing the pinned tools and dependencies above, run these in
-order, with no application test or wallet using the generated assets concurrently:
+The normal build includes RollingBoard and its separate PrivateBok workspace.
+After installing the pinned tools and dependencies above, run these in order,
+with no application test or wallet using the generated assets concurrently:
 
 ```sh
-node scripts/build-contracts.mjs
-node billboard/rolling_contract/build.mjs
-node experiments/private-bok/build.mjs
-node scripts/build-sdk.mjs
-node scripts/build-crs.mjs
+npm run build
 node scripts/rolling-wallet-assets.mjs
 ```
 
-The canonical contract build comes first because its workspace compilation can
-replace the Rolling artifact with raw compiler output. The Rolling build then
-transpiles it and generates every private verification key. PrivateBok has its own
-manifest and two processed artifacts; changes to the shared Noir dependency
+The canonical contract build compiles and processes RollingBoard before the
+separate PrivateBok build; both generate every private verification key. The two
+clean CI passes remove both targets and compare PrivateBok’s build manifest and
+both processed artifacts byte for byte. PrivateBok has its own manifest; changes
+to the shared Noir dependency
 inventory require its normal rebuild even when the escrow source is unchanged.
 The wallet build checks the canonical contract and SDK input manifests before
 assembling its own assets. Never refresh a manifest by hand to accept stale files.
