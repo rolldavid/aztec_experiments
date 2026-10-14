@@ -395,12 +395,12 @@ test('paid recovery account selection retains original provider rejection',async
  await assert.rejects(provider.request({method:'wallet_requestPermissions',params:[{eth_accounts:{}}]}),error=>error===original);assert.equal(denied,0);
 });
 
-for(const outcome of ['delayed-connect','other-confirmation','missing-prompt'])test('paid recovery waits for authentic MetaMask account selection: '+outcome,async()=>{
+for(const outcome of ['delayed-connect','other-confirmation','warning-confirmation','missing-prompt'])test('paid recovery waits for authentic MetaMask account selection: '+outcome,async()=>{
  const {confirmMetaMaskRecoveryAccountSelection}=await import('./t04-metamask.mjs');const events=[],original=Error('prompt unavailable');let visible=false;
- const confirm={async waitFor(){events.push('wait');await new Promise(resolve=>setImmediate(resolve));if(outcome==='missing-prompt')throw original;visible=true;},async innerText(){assert(visible);events.push('label');return outcome==='other-confirmation'?'Sign':' Connect ';},async click(){assert(visible);events.push('click');}};
+ const confirm={async waitFor(){events.push('wait');await new Promise(resolve=>setImmediate(resolve));if(outcome==='missing-prompt')throw original;visible=true;},async innerText(){assert(visible);events.push('label');return outcome==='other-confirmation'?'Sign':outcome==='warning-confirmation'?'Continue at your own risk':' Connect ';},async click(){assert(visible);events.push('click');}};
  const run=confirmMetaMaskRecoveryAccountSelection({getByTestId(id){assert.equal(id,'confirm-btn');return confirm;}});
  if(outcome==='missing-prompt'){await assert.rejects(run,error=>error===original);assert.deepEqual(events,['wait']);}
- else if(outcome==='other-confirmation'){await assert.rejects(run,/Connect/);assert.deepEqual(events,['wait','label']);}
+ else if(['other-confirmation','warning-confirmation'].includes(outcome)){await assert.rejects(run,/Connect/);assert.deepEqual(events,['wait','label']);}
  else{await run;assert.deepEqual(events,['wait','label','click']);}
 });
 
@@ -622,4 +622,19 @@ test('wallet stage memory observations contain only page classes and cannot repl
  assert.deepEqual(records,[{kind:'wallet-stage',stage:'aggregate-private-account',pages:expected}]);assert(!JSON.stringify(records).includes('PRIVATE_SENTINEL'));
  assert.doesNotThrow(()=>recordMetaMaskStage(()=>{throw false;},context,'http://127.0.0.1:8081','aggregate-private-account'));
  assert.doesNotThrow(()=>recordMetaMaskStage(()=>{}, {pages:()=>{throw 0;}},'http://127.0.0.1:8081','aggregate-private-account'));
+});
+
+test('aggregate account permission observation preserves pending, resolved and rejected provider behavior',async()=>{
+ const {installMetaMaskAggregateObserver}=await import('./t04-metamask.mjs'),{runInNewContext}=await import('node:vm');
+ for(const outcome of ['resolved','rejected','falsy-rejection','observer-failure','admission-denied']){
+  const events=[],request={method:'wallet_requestPermissions',params:[{eth_accounts:{}}]},result={PRIVATE_SENTINEL:true},original=outcome==='falsy-rejection'?false:Error('PRIVATE_SENTINEL');let release;
+  const provider={async request(value){assert.equal(this,provider);assert.equal(value,request);events.push('provider');await new Promise(resolve=>release=resolve);if(outcome!=='resolved')throw original;return result;}};
+  const sandbox={__testMetaMask:provider,structuredClone,__aggregateWalletBefore:async value=>{assert.deepEqual(value,request);events.push('entered');if(outcome==='admission-denied')throw original;},__aggregateWalletAfter:async value=>{assert.equal(value.result,result);events.push('resolved');},__aggregateWalletPermissionRejected:async(...args)=>{assert.equal(args.length,0);events.push('rejected');if(outcome==='observer-failure')throw Error('observer');}};
+  runInNewContext('('+installMetaMaskAggregateObserver.toString()+')()',sandbox);
+  const run=provider.request(request);
+  if(outcome==='admission-denied'){await assert.rejects(run,error=>error===original);assert.deepEqual(events,['entered']);continue;}
+  await new Promise(resolve=>setImmediate(resolve));assert.deepEqual(events,['entered','provider']);release();
+  if(outcome==='resolved'){assert.equal(await run,result);assert.deepEqual(events,['entered','provider','resolved']);}
+  else{await assert.rejects(run,error=>error===original);assert.deepEqual(events,['entered','provider','rejected']);}
+ }
 });

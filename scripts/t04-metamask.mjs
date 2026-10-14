@@ -220,6 +220,7 @@ export async function driveMetaMaskAggregateFunding({context,page,walletPage,con
  if(c.asset==='USDC'){const token=new Interface(['function balanceOf(address) view returns(uint256)']);const balance=token.decodeFunctionResult('balanceOf',await provider.call({to:scope.bokToken,data:token.encodeFunctionData('balanceOf',[account])}))[0];assert(balance>=BigInt(a.maximumUsdc));}
  const initialNonce=await provider.getTransactionCount(account,'pending');assert.equal(initialNonce,0,'Fresh disposable user only');
  let intent=null,hash=null,relayPosts=0,userSends=0,confirmedSignatures=0;const signatures=[],typed=[],pending=[],errors=[];
+ const permission={entered:false,resolved:false,rejected:false};report.aggregatePermission=permission;
  const remember=error=>{errors.push(error);};
  const inspectData=(data,from)=>{
   const method=c.asset==='ETH'?'fund':'fundUsdc',parsed=aggregateInterface.parseTransaction({data});assert.equal(parsed.name,method);
@@ -252,18 +253,16 @@ export async function driveMetaMaskAggregateFunding({context,page,walletPage,con
     const tx=request.params[0];intent=inspectData(tx.data,account);
     assertMetaMaskAggregatePayment({asset:c.asset,request:request.params,account,chainId:'31337',intent,maximumGasWei:a.gasBudgetWei});userSends++;pending.push('payment');return;
    }
-   if(request.method==='wallet_requestPermissions'){assert.deepEqual(request.params,[{eth_accounts:{}}]);return;}
+   if(request.method==='wallet_requestPermissions'){assert.deepEqual(request.params,[{eth_accounts:{}}]);permission.entered=true;return;}
    if(request.method==='wallet_switchEthereumChain'){assert.deepEqual(request.params,[{chainId:'0x7a69'}]);return;}
    assert(['eth_chainId','eth_accounts','eth_requestAccounts','eth_blockNumber','eth_getBalance','eth_getTransactionCount','eth_estimateGas','eth_gasPrice','eth_maxPriorityFeePerGas','eth_feeHistory','eth_getBlockByNumber','eth_getTransactionByHash','eth_getTransactionReceipt','eth_call','eth_getCode'].includes(request.method),'Unexpected wallet method');
   }catch(error){remember(error);throw Error('Aggregate wallet request rejected');}
  });
  await page.exposeFunction('__aggregateWalletAfter',({method,result})=>{
-  try{if(method==='eth_signTypedData_v4'){const t=typed[signatures.length];assert.equal(verifyTypedData(t.domain,t.types,t.value,result).toLowerCase(),account);signatures.push(result);}else if(method==='eth_sendTransaction'){assert.match(result,/^0x[0-9a-f]{64}$/);hash=result;}}catch(error){remember(error);throw Error('Aggregate wallet result rejected');}
+  try{if(method==='wallet_requestPermissions')permission.resolved=true;else if(method==='eth_signTypedData_v4'){const t=typed[signatures.length];assert.equal(verifyTypedData(t.domain,t.types,t.value,result).toLowerCase(),account);signatures.push(result);}else if(method==='eth_sendTransaction'){assert.match(result,/^0x[0-9a-f]{64}$/);hash=result;}}catch(error){remember(error);throw Error('Aggregate wallet result rejected');}
  });
- await page.evaluate(()=>{
-  const original=__testMetaMask.request.bind(__testMetaMask);
-  __testMetaMask.request=async request=>{await __aggregateWalletBefore(structuredClone(request));const result=await original(request);await __aggregateWalletAfter({method:request.method,result});return result;};
- });
+ await page.exposeFunction('__aggregateWalletPermissionRejected',()=>{permission.rejected=true;});
+ await page.evaluate(installMetaMaskAggregateObserver);
  const routeTasks=new Set();
  const relayRoute=async route=>{
   const task=(async()=>{try{
@@ -290,7 +289,7 @@ export async function driveMetaMaskAggregateFunding({context,page,walletPage,con
   }
   const dialog=page.getByRole('dialog');await dialog.getByRole('button',{name:'Recover funding',exact:true}).click();
   mark('aggregate-connect-wallet');await dialog.getByRole('button',{name:'Connect MetaMask',exact:true}).click();
-  await walletPage.getByTestId('confirm-btn').click();
+  await confirmMetaMaskRecoveryAccountSelection(walletPage);
   await dialog.getByText('Funding wallet connected. No payment has been sent.',{exact:true}).waitFor();
   assert.equal((await page.evaluate(()=>walletState.ethAccount)).toLowerCase(),account);
   if(c.asset==='USDC')await dialog.getByLabel('Pay with',{exact:true}).selectOption('USDC');
@@ -405,6 +404,21 @@ export function installMetaMaskPaidRecoveryGuard(){
    throw Error('Paid recovery forbids another wallet operation');
   }
   return original(request);
+ };
+}
+
+// Serialized into the application page. Preserve provider receiver, request,
+// result and rejection identity; no error value crosses the observation port.
+export function installMetaMaskAggregateObserver(){
+ const original=__testMetaMask.request.bind(__testMetaMask);
+ __testMetaMask.request=async request=>{
+  await __aggregateWalletBefore(structuredClone(request));
+  let result;
+  try{result=await original(request);}catch(error){
+   if(request.method==='wallet_requestPermissions')try{await __aggregateWalletPermissionRejected();}catch{}
+   throw error;
+  }
+  await __aggregateWalletAfter({method:request.method,result});return result;
  };
 }
 
