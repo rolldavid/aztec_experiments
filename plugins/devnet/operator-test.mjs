@@ -318,7 +318,7 @@ if(focused){
    const bytes=Buffer.from('{"block":1}');await fs.writeFile(file,bytes,{mode:0o600});assert.deepEqual(await inspectNativeDevnetSnapshot(file),{sha256:createHash('sha256').update(bytes).digest('hex'),bytes:bytes.length});
    await fs.chmod(file,0o644);await assert.rejects(inspectNativeDevnetSnapshot(file));await fs.chmod(file,0o600);
    const link=path.join(dir,'link');await fs.symlink(file,link);await assert.rejects(inspectNativeDevnetSnapshot(link));
-   await fs.truncate(file,6442450945);assert((await fs.stat(file)).blocks*512<1048576,'Oversize boundary fixture must remain sparse');await assert.rejects(inspectNativeDevnetSnapshot(file));await fs.truncate(file,1);await assert.rejects(inspectNativeDevnetSnapshot(file));
+   await fs.truncate(file,7516192769);assert((await fs.stat(file)).blocks*512<1048576,'Oversize boundary fixture must remain sparse');await assert.rejects(inspectNativeDevnetSnapshot(file));await fs.truncate(file,1);await assert.rejects(inspectNativeDevnetSnapshot(file));
    const record={...stopped,snapshotFormat:'native-json-v1',snapshotFile:name,snapshotHead:{number:'0x10',hash:'0x'+'a'.repeat(64),pending:'7',proven:'7'}};
    assert.equal(validateDevnetResume(record,{fundingAddresses,ports,toolchainHash}),record);
    for(const change of [{snapshotFormat:'unknown'},{snapshotFile:'../'+name},{snapshotHead:{...record.snapshotHead,proven:'6'}},{snapshotHead:{...record.snapshotHead,hash:'invalid'}}])assert.throws(()=>validateDevnetResume({...record,...change},{fundingAddresses,ports,toolchainHash}));
@@ -594,7 +594,7 @@ if(focused){
   const source=await fs.readFile(new URL('./network.mjs',import.meta.url),'utf8');
   const {assertDevelopmentStorageCapacity}=await import('./network.mjs');const original=fs.statfs;let reads=0;
   const check=bytes=>{fs.statfs=async(directory,options)=>{reads++;assert.equal(directory,'/private/state');assert.equal(options.bigint,true);return {bavail:bytes,bsize:1n};};return assertDevelopmentStorageCapacity('/private/state');};
-  try{await assert.rejects(check(8589934591n),/8 GiB free/);await check(8589934592n);assert.equal(reads,2);}finally{fs.statfs=original;}
+  try{await assert.rejects(check(9663676415n),/9 GiB free/);await check(9663676416n);assert.equal(reads,2);}finally{fs.statfs=original;}
   assert(source.indexOf('if(persistent)await assertDevelopmentStorageCapacity(directory)')<source.indexOf("await writeDevnetRecord(statePath,{...state,phase:'starting'}"));
  });
 

@@ -68,15 +68,16 @@ export function validateDevnetResume(record,{fundingAddresses,ports,toolchainHas
   return record;
 }
 // Native JSON avoids materializing gzip+hex RPC copies of the complete history.
-// The retained development checkpoint reached 4.254 GB. A bounded 6 GiB
-// native file cap permits continued recovery without pruning its history.
+// The retained development checkpoint reached 6.340 GB. A bounded 7 GiB
+// native file cap accommodates the measured next 100 blocks (~0.509 GB)
+// after cleanup restored a 43.119 GB reduction, without pruning history.
 // Hashing still streams in 64 KiB chunks; the legacy RPC cap stays 128 MiB.
 export async function inspectNativeDevnetSnapshot(filename,{sync=false}={}){
  if(typeof sync!=='boolean')throw Error('Invalid native snapshot sync option');
  const fd=await fs.open(filename,(sync?constants.O_RDWR:constants.O_RDONLY)|constants.O_NOFOLLOW);
  try{
   const before=await fd.stat();
-  if(!before.isFile()||before.uid!==process.getuid()||(before.mode&0o777)!==0o600||before.size<2||before.size>6442450944)throw Error('Invalid native development snapshot');
+  if(!before.isFile()||before.uid!==process.getuid()||(before.mode&0o777)!==0o600||before.size<2||before.size>7516192768)throw Error('Invalid native development snapshot');
   const hash=createHash('sha256');for await(const chunk of fd.createReadStream({autoClose:false,highWaterMark:65536}))hash.update(chunk);
   if(sync)await fd.sync();
   const after=await fd.stat(),named=await fs.lstat(filename);
@@ -88,7 +89,7 @@ export async function inspectNativeDevnetSnapshot(filename,{sync=false}={}){
 // This admission check is not a reservation against unrelated disk consumers.
 export async function assertDevelopmentStorageCapacity(directory) {
  const stats=await fs.statfs(directory,{bigint:true});
- if(stats.bavail*stats.bsize<8589934592n)throw Error('Development storage requires at least 8 GiB free; preserve existing state');
+ if(stats.bavail*stats.bsize<9663676416n)throw Error('Development storage requires at least 9 GiB free; preserve existing state');
 }
 // A native exit code cannot establish dump completeness: Anvil logs dump
 // errors and can exit zero. Sync the candidate, retain its exact predecessor
@@ -317,7 +318,7 @@ export async function startDevnet({directory,fundingAddresses,proofs=false,persi
   try{
     onProgress('Starting disposable Ethereum');
     // Retained snapshots exceed Anvil's default 2MB RPC body limit. This
-    // isolated loopback process loads only the private, hash-bound <=6GiB native file.
+    // isolated loopback process loads only the private, hash-bound <=7GiB native file.
     // Legacy RPC imports retain their separate 128MiB limit.
     // Each launch owns a distinct recovery-only dump; it is NEVER an automatic
     // resume checkpoint. Precreation preserves private mode under native rewrites.
