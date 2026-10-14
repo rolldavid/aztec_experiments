@@ -63,6 +63,7 @@ async function canonical(node, expected) {
 export async function inspectTrustedNode(node, options) {
   const p=policy(options);
   try {
+    for(let snapshot=0;snapshot<2;snapshot++){
     const info=await node.getNodeInfo();
     const chainId=info?.l1ChainId,version=info?.rollupVersion,realProofs=info?.realProofs,rollup=info?.l1ContractAddresses?.rollupAddress;
     if(!natural(chainId) || !natural(version) || typeof realProofs!=='boolean')throw fail('UNAVAILABLE');
@@ -86,7 +87,16 @@ export async function inspectTrustedNode(node, options) {
     for(let i=1;i<ordered.length;i++)if(ordered[i-1].number>ordered[i].number || (ordered[i-1].number===ordered[i].number && ordered[i-1].hash!==ordered[i].hash))throw fail('UNSYNCED');
     const {latest,latestHash,final,oldest,synced}=state;
     if(!natural(latest) || !natural(final) || !natural(oldest) || typeof synced!=='boolean')throw fail('UNAVAILABLE');
-    if(!synced || latest!==proposed.number || hex(latestHash,32)!==proposed.hash || final!==finalized.number || oldest>checkpointed.number)throw fail('UNSYNCED');
+    if(!synced || oldest>checkpointed.number || final>latest || (latest===proposed.number && latestHash!==proposed.hash))throw fail('UNSYNCED');
+    if(latest!==proposed.number || final!==finalized.number){
+      // These independently returned public metadata records can straddle a
+      // natural head/finality transition. Discard the whole snapshot and read
+      // it once more, starting with identity. Neither an inconsistent snapshot
+      // nor any transport, canonical, freshness or same-height fork failure is
+      // permission to proceed. All already-started reads have been drained.
+      if(snapshot===0)continue;
+      throw fail('UNSYNCED');
+    }
     if(checkpointed.number!==proposed.number)await readTogether([()=>canonical(node,checkpointed),()=>canonical(node,proposed)]);
     else await canonical(node,proposed);
     const suppliedNow=options.nowSeconds,now=suppliedNow===undefined ? Math.floor(Date.now()/1000) : suppliedNow;
@@ -100,6 +110,7 @@ export async function inspectTrustedNode(node, options) {
       latestBlockNumber:proposed.number,latestBlockHash:proposed.hash,checkpointedBlockNumber:checkpointed.number,
       finalizedBlockNumber:finalized.number,oldestHistoricBlockNumber:oldest,
       syncedL1Timestamp:String(stamp),checkedAtSeconds:now,lagSeconds:lag});
+    }
   } catch(error) { throw failures.has(error) ? error : fail('UNAVAILABLE'); }
 }
 

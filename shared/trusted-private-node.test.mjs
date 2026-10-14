@@ -31,6 +31,52 @@ test('development fake: bounded public readiness, only public methods and canoni
   assert.ok(Object.isFrozen(r));assert.deepEqual(f.calls.filter(x=>x[0]==='getBlockData'),[['getBlockData',7],['getBlockData',8],['getBlockData',8]]);
   assert.equal(isTrustedPrivateNode(f.node),false);
 });
+test('development fake: one complete fresh snapshot handles measured 1420/1419 head transition',async()=>{
+  const f=fixture(),originalInfo=f.node.getNodeInfo;let snapshots=0;
+  f.tips.proposed={number:1420,hash:h(1420)};
+  for(const key of ['checkpointed','proven'])f.tips[key].block={number:1419,hash:h(1419)};
+  f.tips.finalized.block={number:1418,hash:h(1418)};
+  Object.assign(f.state,{latestBlockNumber:1419,latestBlockHash:h(1419),finalizedBlockNumber:1418});
+  f.node.getNodeInfo=async()=>{if(++snapshots===2){assert.equal(f.calls.some(x=>x[0]==='getBlockData'),false);f.state.latestBlockNumber=1420;f.state.latestBlockHash=h(1420);}return originalInfo();};
+  const result=await inspectTrustedNode(f.node,options);
+  assert.equal(result.latestBlockNumber,1420);assert.equal(result.latestBlockHash,h(1420));assert.equal(snapshots,2);
+  for(const method of ['getChainTips','getWorldStateSyncStatus','getSyncedL1Timestamp'])assert.equal(f.calls.filter(x=>x[0]===method).length,2);
+  assert.deepEqual(f.calls.filter(x=>x[0]==='getBlockData'),[['getBlockData',1419],['getBlockData',1420],['getBlockData',1420]]);
+});
+test('development fake: finality transition gets one complete fresh snapshot',async()=>{
+  const f=fixture(),originalInfo=f.node.getNodeInfo;let snapshots=0;f.state.finalizedBlockNumber=2;
+  f.node.getNodeInfo=async()=>{if(++snapshots===2)f.state.finalizedBlockNumber=3;return originalInfo();};
+  const result=await inspectTrustedNode(f.node,options);assert.equal(result.finalizedBlockNumber,3);assert.equal(snapshots,2);
+});
+for(const field of ['head','finality'])test('development fake: persistent '+field+' mismatch stops at two snapshots',async()=>{
+  const f=fixture();if(field==='head'){f.state.latestBlockNumber=7;f.state.latestBlockHash=h(7);}else f.state.finalizedBlockNumber=2;
+  await rejects(()=>inspectTrustedNode(f.node,options),'UNSYNCED');
+  assert.equal(f.calls.filter(x=>x[0]==='getNodeInfo').length,2);assert.equal(f.calls.some(x=>x[0]==='getBlockData'),false);
+});
+for(const [label,change,code]of[
+  ['identity',f=>f.info.l1ChainId++,'IDENTITY'],
+  ['unsynced',f=>f.state.treesAreSynched=false,'UNSYNCED'],
+  ['malformed',f=>f.state.latestBlockNumber='8','UNAVAILABLE'],
+  ['same-height fork',f=>f.state.latestBlockHash=h(99),'UNSYNCED'],
+  ['canonical reorg',f=>f.node.getBlockData=async n=>({header:{globalVariables:{blockNumber:n}},blockHash:h(99)}),'UNSYNCED'],
+  ['stale',f=>f.node.getSyncedL1Timestamp=async()=>879n,'STALE'],
+  ['transport',f=>f.node.getChainTips=async()=>{throw Error('PRIVATE_SENTINEL');},'UNAVAILABLE'],
+])test('development fake: fresh snapshot still rejects '+label,async()=>{
+  const f=fixture(),originalInfo=f.node.getNodeInfo;let snapshots=0;f.state.latestBlockNumber=7;f.state.latestBlockHash=h(7);
+  f.node.getNodeInfo=async()=>{if(++snapshots===2){f.state.latestBlockNumber=8;f.state.latestBlockHash=h(8);change(f);}return originalInfo();};
+  await rejects(()=>inspectTrustedNode(f.node,options),code);assert.equal(snapshots,2);
+});
+for(const [label,change,code]of[
+  ['unsynced',f=>f.state.treesAreSynched=false,'UNSYNCED'],
+  ['malformed',f=>f.state.latestBlockNumber='8','UNAVAILABLE'],
+  ['same-height fork',f=>f.state.latestBlockHash=h(99),'UNSYNCED'],
+  ['impossible finality',f=>f.state.finalizedBlockNumber=9,'UNSYNCED'],
+  ['pruned checkpoint',f=>f.state.oldestHistoricBlockNumber=8,'UNSYNCED'],
+  ['canonical reorg',f=>f.node.getBlockData=async n=>({header:{globalVariables:{blockNumber:n}},blockHash:h(99)}),'UNSYNCED'],
+  ['transport',f=>f.node.getChainTips=async()=>{throw Error('PRIVATE_SENTINEL');},'UNAVAILABLE'],
+])test('development fake: '+label+' does not reacquire a snapshot',async()=>{
+  const f=fixture();change(f);await rejects(()=>inspectTrustedNode(f.node,options),code);assert.equal(f.calls.filter(x=>x[0]==='getNodeInfo').length,1);
+});
 for(const [name,mutate] of [
   ['chain',f=>f.info.l1ChainId++],['version',f=>f.info.rollupVersion++],['rollup',f=>f.info.l1ContractAddresses.rollupAddress='0x'+'34'.repeat(20)],['proof policy',f=>f.info.realProofs=false]
 ])test('development fake: rejects wrong '+name+' before sync/private calls',async()=>{const f=fixture();mutate(f);await rejects(()=>inspectTrustedNode(f.node,options),'IDENTITY');assert.deepEqual(f.calls,[['getNodeInfo']]);});
@@ -65,6 +111,15 @@ test('development fake: missing node method is fixed unavailable, never an alter
 
 const deferred=()=>{let resolve;const promise=new Promise(r=>{resolve=r;});return {promise,resolve};};
 const turn=()=>new Promise(resolve=>setImmediate(resolve));
+test('development fake: mismatched snapshot drains held peer before reacquisition',async()=>{
+  const f=fixture(),gate=deferred(),entered=deferred(),originalInfo=f.node.getNodeInfo;let snapshots=0,stamps=0,finished=false;
+  f.state.latestBlockNumber=7;f.state.latestBlockHash=h(7);
+  f.node.getNodeInfo=async()=>{if(++snapshots===2){f.state.latestBlockNumber=8;f.state.latestBlockHash=h(8);}return originalInfo();};
+  f.node.getSyncedL1Timestamp=async()=>{if(++stamps===1){entered.resolve();await gate.promise;}return 990n;};
+  const result=inspectTrustedNode(f.node,options).then(value=>{finished=true;return value;});
+  await entered.promise;await turn();assert.equal(finished,false);assert.equal(snapshots,1);assert.equal(f.calls.some(x=>x[0]==='getBlockData'),false);
+  gate.resolve();assert.equal((await result).ready,true);assert.equal(snapshots,2);assert.equal(stamps,2);
+});
 for(const reason of [undefined,null,false,0])test('development fake: grouped readiness drains a held peer after falsy rejection '+String(reason),async()=>{
   const f=fixture(),gate=deferred(),entered=deferred();let finished=false;
   f.node.getChainTips=()=>{throw reason;};
