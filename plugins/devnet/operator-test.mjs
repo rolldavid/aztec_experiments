@@ -447,4 +447,25 @@ if(focused){
   await owner.useWallClock();assert.equal(owner.refresh(),false);
  });
 
+ test('native startup readiness admits measured retained load beyond six seconds without another spawn',async()=>{
+  const {waitForDevelopmentEthereum}=await import('./network.mjs');let time=0,calls=0;
+  const input={rpcUrl:'http://127.0.0.1:19545',address:'0xabc',child:{exitCode:null,signalCode:null},now:()=>time,wait:async ms=>{assert(ms<=100);time+=ms;},fetchImpl:async(url,options)=>{calls++;assert.equal(url,'http://127.0.0.1:19545');assert.deepEqual(JSON.parse(options.body),{jsonrpc:'2.0',id:1,method:'eth_accounts',params:[]});if(time<8495)throw Error('still loading');return {json:async()=>({result:['0xAbC']})};}};
+  assert.deepEqual(await waitForDevelopmentEthereum({...input,retainedNative:true}),{elapsedMs:8500,attempts:86});assert.equal(calls,86);
+  time=0;calls=0;await assert.rejects(waitForDevelopmentEthereum(input),/failed to start/);assert.equal(time,6000);assert.equal(calls,60);
+ });
+ test('native startup readiness has a finite original-process deadline and never accepts wrong identity',async()=>{
+  const {waitForDevelopmentEthereum}=await import('./network.mjs');let time=0,calls=0;
+  const input={rpcUrl:'http://127.0.0.1:19545',address:'0xabc',child:{exitCode:null,signalCode:null},retainedNative:true,now:()=>time,wait:async ms=>{time+=ms;},fetchImpl:async()=>{calls++;return {json:async()=>({result:['0xdef']})};}};
+  await assert.rejects(waitForDevelopmentEthereum(input),/failed to start/);assert.equal(time,30000);assert.equal(calls,300);
+  time=0;await assert.rejects(waitForDevelopmentEthereum({...input,fetchImpl:async()=>{time=30000;return {json:async()=>({result:['0xabc']})};}}),/failed to start/);assert.equal(time,30000);
+ });
+ test('native startup readiness preserves spawn errors and rejects exit before or during a read',async()=>{
+  const {waitForDevelopmentEthereum}=await import('./network.mjs');const original=Error('controlled spawn');let reads=0;
+  const child={exitCode:null,signalCode:null},input={rpcUrl:'http://127.0.0.1:19545',address:'0xabc',child,fetchImpl:async()=>{reads++;return {json:async()=>({result:['0xabc']})};}};
+  await assert.rejects(waitForDevelopmentEthereum({...input,spawnFailure:()=>original}),e=>e===original);assert.equal(reads,0);
+  child.exitCode=1;await assert.rejects(waitForDevelopmentEthereum(input),/exited during startup/);assert.equal(reads,0);
+  child.exitCode=null;child.signalCode='SIGTERM';await assert.rejects(waitForDevelopmentEthereum(input),/exited during startup/);assert.equal(reads,0);
+  child.signalCode=null;await assert.rejects(waitForDevelopmentEthereum({...input,fetchImpl:async()=>{child.exitCode=0;return {json:async()=>({result:['0xabc']})};}}),/exited during startup/);
+ });
+
 }

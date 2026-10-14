@@ -91,6 +91,23 @@ export function developmentAnvilArgs({persistent,port,mnemonic,recoveryPath,load
  // disposable Anvil configuration, never application or testnet finality checks.
  return ['--host','127.0.0.1','--port',String(port),'--chain-id','31337','--mnemonic',mnemonic,'--silent',...(persistent?['--no-request-size-limit','--slots-in-an-epoch','1','--dump-state',recoveryPath,'--state-interval','30','--preserve-historical-states',...(loadPath?['--load-state',loadPath]:[])]:[])];
 }
+// A retained multi-gigabyte native snapshot loads before Anvil opens RPC.
+// One spawned process, bounded read-only polling; no restart or metadata recovery.
+export async function waitForDevelopmentEthereum({rpcUrl,address,child,spawnFailure=()=>null,retainedNative=false,now=()=>performance.now(),wait=pause,fetchImpl=fetch}) {
+ const started=now(),deadline=started+(retainedNative?30000:6000);
+ const check=()=>{const error=spawnFailure();if(error)throw error;if(child.exitCode!==null||child.signalCode!==null)throw Error('Local Ethereum exited during startup');};
+ let attempts=0;
+ while(now()<deadline){
+  check();let matches=false;attempts++;
+  try{
+   const response=await fetchImpl(rpcUrl,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:1,method:'eth_accounts',params:[]}),signal:AbortSignal.timeout(Math.max(1,Math.min(500,Math.ceil(deadline-now()))))});
+   matches=(await response.json()).result?.[0]?.toLowerCase()===address.toLowerCase();
+  }catch{} // Transient refusal while the same original process loads its state.
+  check();if(matches&&now()<deadline)return {elapsedMs:Math.round(now()-started),attempts};
+  const remaining=deadline-now();if(remaining>0)await wait(Math.min(100,remaining));
+ }
+ check();throw Error('Local Ethereum failed to start');
+}
 // Native local-network flags only. Retained committee-one rollups are never
 // mutated into this mode: they require their original recovery path.
 export function developmentSequencerProfile({persistent,proofs=false}) {
@@ -200,14 +217,7 @@ export async function startDevnet({directory,fundingAddresses,proofs=false,persi
     anvil=spawn(path.resolve('.build/anvil-1.7.0/anvil'),developmentAnvilArgs({persistent,port,mnemonic:identity.mnemonic.phrase,recoveryPath,loadPath}),{stdio:'ignore'});
     process.once('exit',terminateChild);
     anvilClosed=new Promise(resolve=>{anvil.once('error',error=>{spawnError=error;resolve({code:null});});anvil.once('close',(code,signal)=>resolve({code,signal}));});
-    let ready=false;
-    for(let i=0;i<60;i++){
-      if(spawnError)throw spawnError;
-      if(anvil.exitCode!==null)throw Error('Local Ethereum exited during startup');
-      try{const response=await fetch(rpcUrl,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:1,method:'eth_accounts',params:[]}),signal:AbortSignal.timeout(500)});ready=(await response.json()).result?.[0]?.toLowerCase()===identity.address.toLowerCase();}catch{}
-      if(ready)break;await pause(100);
-    }
-    if(!ready)throw Error('Local Ethereum failed to start');
+    await waitForDevelopmentEthereum({rpcUrl,address:identity.address,child:anvil,spawnFailure:()=>spawnError,retainedNative:!!loadPath});
     if(loadPath){
       if((await inspectNativeDevnetSnapshot(loadPath)).sha256!==saved.snapshotHash)throw Error('Native development snapshot changed during load');
       const c=createExtendedL1Client([rpcUrl],identity.privateKey,foundry),head=await c.getBlock({blockTag:'latest'});
