@@ -392966,11 +392966,25 @@ Partial Address: ${this.partialAddress.toString()}
       integer8(p.expected.sequence, Number.MAX_SAFE_INTEGER);
     }
     if (p.block !== null) {
-      p.block = exact2(p.block, ["blockNumber", "blockHash", "fields", "headerFields"]);
-      integer8(p.block.blockNumber, 4294967295, 1);
-      hex15(p.block.blockHash);
-      p.block.fields = fields(p.block.fields, 24575, 7);
-      p.block.headerFields = fields(p.block.headerFields, 23, 23);
+      const block2 = (value) => {
+        const b2 = exact2(value, ["blockNumber", "blockHash", "fields", "headerFields"]);
+        integer8(b2.blockNumber, 4294967295, 1);
+        hex15(b2.blockHash);
+        b2.fields = fields(b2.fields, 24575, 7);
+        b2.headerFields = fields(b2.headerFields, 23, 23);
+        return b2;
+      };
+      if (Array.isArray(p.block)) {
+        integer8(p.block.length, 32, 1);
+        const values = p.block;
+        check9(Reflect.ownKeys(values).length === values.length + 1);
+        p.block = Array.from({ length: values.length }, (_, i) => {
+          const d = Object.getOwnPropertyDescriptor(values, String(i));
+          check9(d && "value" in d);
+          return block2(d.value);
+        });
+        check9(p.block.every((b2, i) => b2.fields.length === 7 && (i === 0 || b2.blockNumber === p.block[i - 1].blockNumber + 1)));
+      } else p.block = block2(p.block);
     }
     const { contextGuard } = exact2(options, ["contextGuard"]);
     check9(typeof contextGuard === "function");
@@ -393092,7 +393106,7 @@ Partial Address: ${this.partialAddress.toString()}
         await guard();
         const { meta: meta13, state: loaded } = await binding3.store.load(key, context.changeSetId);
         await guard();
-        const authenticate = async (block2) => {
+        const authenticate = async (block2, register = (validate2) => frame.validators.push(validate2)) => {
           const checkBlock = async () => {
             await canonical2();
             const raw = await pxe.node.getBlockData(block2.blockNumber);
@@ -393103,7 +393117,7 @@ Partial Address: ${this.partialAddress.toString()}
             return true;
           };
           const verified2 = await authenticateCompactBlock({ fields: block2.fields, headerFields: block2.headerFields, expectedBlockHash: block2.blockHash, assertCanonical: checkBlock });
-          frame.validators.push(checkBlock);
+          register(checkBlock);
           check9(verified2.blockNumber === block2.blockNumber);
           return verified2;
         };
@@ -393254,6 +393268,17 @@ Partial Address: ${this.partialAddress.toString()}
           check9((values[0] === 0n || values[0] === 1n) && values[1] === 1n && values[2] >= 0n && values[2] < 1n << 64n);
           head = { initialized: values[0] === 1n, schema: 1, revision: String(values[2]), digest: String(values[3]) };
           check9(head.initialized ? !!state.candidate && values[2] > 0n && values[3] > 0n : !state.candidate && values[2] === 0n && values[3] === 0n);
+        } else if (Array.isArray(p.block)) {
+          check9(state.nextLog === 0 && state.pending.length === 0 && p.block[0].blockNumber === state.nextBlock && p.block.at(-1).blockNumber <= anchorRecord.blockNumber);
+          const validators = [];
+          for (let offset = 0; offset < p.block.length; offset += 4) {
+            const blocks = p.block.slice(offset, offset + 4), verified2 = await rollingPreferenceReadBatch(blocks.map((block2) => async () => authenticate(block2, (validate2) => validators.push(validate2))));
+            for (let i = 0; i < verified2.length; i++) check9(verified2[i].blockNumber === state.nextBlock + i && verified2[i].txCount === 0 && verified2[i].ciphertexts.length === 0);
+            state.nextBlock += verified2.length;
+          }
+          frame.validators.push(async () => {
+            for (let offset = 0; offset < validators.length; offset += 4) await rollingPreferenceReadBatch(validators.slice(offset, offset + 4));
+          });
         } else {
           check9(p.block && p.block.blockNumber === state.nextBlock);
           const block2 = p.block;
