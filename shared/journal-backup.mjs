@@ -75,8 +75,8 @@ export async function createJournalBackup({storage,walletSecret,walletSalt}) {
    const envelope=JSON.parse(record.encoded),descriptor=await decryptJournalDescriptor(envelope.recovery,identity);
    validDescriptor(descriptor);
    const slot=await createEncryptedJournalSlot({walletSecret,walletSalt,...descriptor,storage:{read:async key=>{if(key!==record.key)throw fail();return record.encoded;}}});
-   if(slot.storageKey!==record.key)throw fail();await slot.read();
-   return record;
+   if(slot.storageKey!==record.key)throw fail();const {value}=await slot.read();
+   return {record,descriptor,value};
   }catch{throw fail();}
  }
  return {
@@ -91,7 +91,7 @@ export async function createJournalBackup({storage,walletSecret,walletSalt}) {
     if(!envelope.recovery)throw fail();
     if(envelope.recovery.owner!==identity.owner)continue;
     total+=encoded.length;if(total>LIMIT)throw fail();
-    records.push(await authenticate({key,encoded}));
+    records.push((await authenticate({key,encoded})).record);
    }
    const finalKeys=await storage.keys();
    if(JSON.stringify([...keys].sort())!==JSON.stringify([...finalKeys].sort()))throw fail();
@@ -100,16 +100,28 @@ export async function createJournalBackup({storage,walletSecret,walletSalt}) {
   },
   async restoreRecords(records) {
    if(!Array.isArray(records)||records.length>10000)throw fail();
-   const seen=new Set();let total=0;
+   const seen=new Set(),retained=new Map();let total=0;
    for(const record of records) {
-    await authenticate(record);total+=record.encoded.length;
+    const incoming=await authenticate(record);total+=record.encoded.length;
     if(total>LIMIT||seen.has(record.key))throw fail();seen.add(record.key);
-    const current=await storage.read(record.key);if(current!==null&&current!==record.encoded)throw fail();
+    const current=await storage.read(record.key);
+    if(current!==null&&current!==record.encoded){
+     const local=await authenticate({key:record.key,encoded:current});
+     if(local.descriptor.keyDomain!==incoming.descriptor.keyDomain||local.descriptor.scopeText!==incoming.descriptor.scopeText)throw fail();
+     // Fresh AEAD IVs do not imply a different financial intent. Keep local
+     // bytes only when the entire authenticated JSON payload is identical.
+     // Preference snapshots are derived caches, not transaction authorities;
+     // their readers revalidate canonical completeness before publishing them.
+     const cache=['ROLLING_PREFERENCES_V1','ROLLING_COLD_PREFERENCES_V1'].includes(incoming.descriptor.keyDomain);
+     if(!cache&&JSON.stringify(local.value)!==JSON.stringify(incoming.value))throw fail();
+     retained.set(record.key,current);
+    }
    }
    // Each atomic write is idempotent; partial restoration can be resumed. Never
    // replace an existing intent, even when an older backup decrypts correctly.
    for(const record of records) {
     const current=await storage.read(record.key);
+    if(retained.has(record.key)){if(current!==retained.get(record.key))throw fail();continue;}
     if(current===record.encoded)continue;if(current!==null)throw fail();
     try{await storage.compareAndSwap(record.key,null,record.encoded);}catch{throw fail();}
     if(await storage.read(record.key)!==record.encoded)throw fail();

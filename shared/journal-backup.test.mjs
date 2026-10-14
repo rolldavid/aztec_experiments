@@ -138,7 +138,7 @@ test('preference restore preserves newer cache, rejects duplicate records and pe
  await backup.restoreRecords([record]);await backup.restoreRecords([record]);
  const slot=await createEncryptedJournalSlot({...f.credentials,storage:destination,keyDomain:PREFERENCES,scopeText:JSON.stringify(preferenceFrame(f))});
  await slot.write(await slot.read(),{revision:'2'});const newer=await destination.read(record.key);
- await assert.rejects(backup.restoreRecords([record]),{code:'BB_JOURNAL_INVALID'});assert.equal(await destination.read(record.key),newer);
+ await backup.restoreRecords([record]);assert.equal(await destination.read(record.key),newer);
 });
 
 // Cold-cache framing is the production reader's full eleven-field descriptor.
@@ -236,7 +236,7 @@ test('cold cache restore preserves newer records and rejects duplicate input and
  await backup.restoreRecords([record]);
  const slot=await createEncryptedJournalSlot({...f.credentials,storage:destination,keyDomain:COLD_PREFERENCES,scopeText:JSON.stringify(coldPreferenceFrame(f))});
  await slot.write(await slot.read(),{delivery:{complete:false,sequence:2}});const newer=await destination.read(record.key);
- await assert.rejects(backup.restoreRecords([record]),{code:'BB_JOURNAL_INVALID'});assert.equal(await destination.read(record.key),newer);
+ await backup.restoreRecords([record]);assert.equal(await destination.read(record.key),newer);
  const raced=storage(),racing=await createJournalBackup({...f.credentials,storage:{keys:raced.keys,read:raced.read,compareAndSwap:async(key,previous,next)=>{
   await raced.compareAndSwap(key,null,newer);return raced.compareAndSwap(key,previous,next);
  }}});
@@ -281,4 +281,26 @@ for(const defect of ['kind','number','zero','recipient','archive','extra','canon
  const f=fixture(),source=storage(),frame=['ROLLING_TOPUP_FUNDING_V1','31337','1','0x'+'11'.repeat(20),hex(1),hex(2),'bok','0x'+'22'.repeat(20),'0x'+'33'.repeat(20),hex(3),1];
  if(defect==='kind')frame[6]='collateral';if(defect==='number')frame[1]=31337;if(defect==='zero')frame[7]='0x'+'00'.repeat(20);if(defect==='recipient')frame[9]='0x'+'ff'.repeat(32);if(defect==='archive')frame.splice(-1,0,'wrong');if(defect==='extra')frame.push(1);
  const slot=await createEncryptedJournalSlot({...f.credentials,storage:source,scopeText:(defect==='canonical'?' ':'')+JSON.stringify(frame),keyDomain:'ROLLING_TOPUP_FUNDING_V1'});await slot.write(await slot.read(),{});await assert.rejects((await f.backup(source)).exportRecords(),{code:'BB_JOURNAL_INVALID'});
+});
+
+// RC22/RC26: read-only cache refresh or fresh AEAD IVs must not make an
+// otherwise current backup unusable. Financial state conflicts remain fenced.
+test('authenticated identical financial payload with fresh ciphertext keeps local bytes',async()=>{
+ const f=fixture(),source=storage(),destination=storage(),scopeText=l2JournalScopeText(f.scope),keyDomain='AZTEC_BB_L2_JOURNAL_KEY_V1';
+ const a=await createEncryptedJournalSlot({...f.credentials,storage:source,scopeText,keyDomain}),b=await createEncryptedJournalSlot({...f.credentials,storage:destination,scopeText,keyDomain});
+ const value={status:'unknown',hash:hex(55),intent:{nonce:3,data:'private sentinel'}};
+ await a.write(await a.read(),value);await b.write(await b.read(),value);
+ const records=await (await f.backup(source)).exportRecords(),local=await destination.read(b.storageKey);assert.notEqual(records[0].encoded,local);
+ await (await f.backup(destination)).restoreRecords(records);assert.equal(await destination.read(b.storageKey),local);
+ await b.write(await b.read(),{...value,status:'prepared'});const changed=await destination.read(b.storageKey);
+ await assert.rejects((await f.backup(destination)).restoreRecords(records),{code:'BB_JOURNAL_INVALID'});assert.equal(await destination.read(b.storageKey),changed);
+});
+test('retaining a local derived cache still authenticates it and rejects mutation during restore',async()=>{
+ const f=fixture(),source=storage(),destination=storage(),{record}=await preferenceRecord(f,source);
+ await (await f.backup(destination)).restoreRecords([record]);const {record:local}=await preferenceRecord(f,destination,{value:{revision:'2'}});
+ let reads=0;const racing=await createJournalBackup({...f.credentials,storage:{read:async()=>++reads===1?local.encoded:record.encoded}});
+ await assert.rejects(racing.restoreRecords([record]),{code:'BB_JOURNAL_INVALID'});
+ const corrupted=JSON.parse(local.encoded);corrupted.data=(corrupted.data[0]==='0'?'1':'0')+corrupted.data.slice(1);
+ const invalid=await createJournalBackup({...f.credentials,storage:{read:async()=>JSON.stringify(corrupted)}});
+ await assert.rejects(invalid.restoreRecords([record]),{code:'BB_JOURNAL_INVALID'});
 });
