@@ -17,8 +17,14 @@ export async function startRollingPublicServer({index,host='127.0.0.1',port=0,st
     if(failures.length>1)throw new AggregateError(failures,'Public reader configuration and cleanup failed');throw error;
   }
   let closed=false,timer,active,closing;const requests=new Set();let fundingWindow=0,fundingRequests=0;
-  const loop=()=>{active=(async()=>{try{await index.sync();}catch{/* status remains unavailable; no raw upstream error logging */}
-    finally{if(!closed)timer=setTimeout(loop,pollMs);}})();};
+  const loop=()=>{active=(async()=>{let catchup=false;try{
+      const before=index.status?.().revision;await index.sync();const after=index.status?.();
+      // A changed durable revision while still syncing is known bounded work,
+      // including reorg rollback. Yield to HTTP/timers before the next step;
+      // readiness, no progress, and failures retain the ordinary poll interval.
+      catchup=after?.state==='syncing'&&typeof after.revision==='string'&&after.revision!==before;
+    }catch{/* status remains unavailable; no raw upstream error logging */}
+    finally{if(!closed)timer=setTimeout(loop,catchup?0:pollMs);}})();};
   const handle=async(req,res)=>{
     const reply=(status,body)=>{let text=JSON.stringify(body);if(Buffer.byteLength(text)>1048576){status=503;text='{"schemaVersion":1,"error":"unavailable"}';}
       res.writeHead(status,headers);res.end(text);};

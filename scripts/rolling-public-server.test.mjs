@@ -244,3 +244,34 @@ test('Bok HTTP acquisition is uniform limit/cursor only and distinguishes unsupp
  assert.equal(pageCalls,2);
  f.index.query=()=>{throw Object.assign(Error('private upstream'),{code:'ROLLING_PUBLIC_ACCOUNTING_UNSUPPORTED'});};const response=await f.get('/api/bok-accounting');assert.equal(response.status,501);assert.deepEqual(await response.json(),{schemaVersion:1,error:'accounting-unsupported'});
 });
+
+
+test('cold catch-up yields between 420 bounded steps without normal polling delays', {timeout:5000}, async t=>{
+ let steps=0,inflight=0,peak=0,ready=false,resolveReady,timerTicks=0;
+ const completed=new Promise(resolve=>{resolveReady=resolve;});
+ const index={status:()=>({state:ready?'ready':'syncing',revision:'epoch:1:'+steps}),sync:async()=>{
+  inflight++;peak=Math.max(peak,inflight);await Promise.resolve();steps++;inflight--;
+  if(steps===421){ready=true;resolveReady();}
+ },query:()=>({complete:true,posts:[]})};
+ const tick=setInterval(()=>timerTicks++,5);t.after(()=>clearInterval(tick));
+ const server=await startRollingPublicServer({index,pollMs:30000});t.after(()=>server.close());
+ const status=await fetch(server.url+'/api/status');assert.equal(status.status,200);assert.equal((await status.json()).state,'syncing');
+ assert.equal((await fetch(server.url+'/api/feed')).status,503,'partial catch-up remains unavailable');
+ await completed;assert.equal(steps,421);assert.equal(peak,1);assert(timerTicks>1,'scheduled work yields to timers and HTTP');
+ assert.equal((await fetch(server.url+'/api/feed')).status,200);await new Promise(r=>setTimeout(r,20));assert.equal(steps,421,'ready state returns to normal polling');
+});
+for(const condition of ['no-progress','ready','error','unknown-revision'])test('catch-up preserves normal polling on '+condition,async t=>{
+ let steps=0,revision='epoch:1:0';
+ const index={status:()=>({state:condition==='ready'?'ready':'syncing',revision:condition==='unknown-revision'?undefined:revision}),sync:async()=>{
+  steps++;if(condition==='ready'||condition==='error')revision='epoch:1:'+steps;if(condition==='error')throw Error('PRIVATE_SENTINEL');
+ }};
+ const server=await startRollingPublicServer({index,pollMs:100});t.after(()=>server.close());
+ await new Promise(r=>setTimeout(r,25));assert.equal(steps,1);await new Promise(r=>setTimeout(r,110));assert(steps>=2&&steps<=3);
+});
+test('close owns an in-flight catch-up step and cancels its next immediate turn',async()=>{
+ let steps=0,release,entered,disposed=false;
+ const gate=new Promise(r=>release=r),begun=new Promise(r=>entered=r);
+ const index={status:()=>({state:'syncing',revision:'epoch:1:'+steps}),sync:async()=>{steps++;if(steps===2){entered();await gate;}},close:async()=>{disposed=true;}};
+ const server=await startRollingPublicServer({index,pollMs:30000});
+ try{await begun;const closing=server.close();await Promise.resolve();assert.equal(disposed,false);release();await closing;assert.equal(disposed,true);await new Promise(r=>setTimeout(r,20));assert.equal(steps,2);}finally{release();await server.close();}
+});
