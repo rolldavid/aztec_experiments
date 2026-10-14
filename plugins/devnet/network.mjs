@@ -4,7 +4,7 @@ import {bbBinary} from '../../scripts/toolchain.mjs';
 // Disposable local development network. No production defaults are modified.
 import fs from 'node:fs/promises';
 import {constants} from 'node:fs';
-import {createHash} from 'node:crypto';
+import {createHash,randomUUID} from 'node:crypto';
 import {createExtendedL1Client} from '@aztec-labs/ethereum/client';
 import {foundry} from 'viem/chains';
 import path from 'node:path';
@@ -61,15 +61,16 @@ export async function assertFreshDevnetDirectory(directory) {
 }
 // Only a completely stopped, healthy network may mark its snapshot restartable.
 export async function persistDevnetCheckpoint({persistent,bootComplete,miningError,priorFailure,save}) {
-  if(miningError)throw Error('Development miner failed; recovery required');
+  if(miningError)throw Error('Development miner failed; recovery required',{cause:miningError});
   if(!persistent)return;
   if(!bootComplete||priorFailure)throw Error('Development checkpoint incomplete; recovery required');
   await save();
 }
-export function developmentAnvilArgs({persistent,port,mnemonic}) {
+export function developmentAnvilArgs({persistent,port,mnemonic,recoveryPath}) {
+ if(persistent&&(!path.isAbsolute(recoveryPath??'')||!/^anvil-recovery-[0-9a-f-]{36}\.json$/.test(path.basename(recoveryPath))))throw Error('Invalid development recovery path');
  // Match the installed official SDK's local finality depth. This changes only
  // disposable Anvil configuration, never application or testnet finality checks.
- return ['--host','127.0.0.1','--port',String(port),'--chain-id','31337','--mnemonic',mnemonic,'--silent',...(persistent?['--no-request-size-limit','--slots-in-an-epoch','1']:[])];
+ return ['--host','127.0.0.1','--port',String(port),'--chain-id','31337','--mnemonic',mnemonic,'--silent',...(persistent?['--no-request-size-limit','--slots-in-an-epoch','1','--dump-state',recoveryPath,'--state-interval','30','--preserve-historical-states']:[])];
 }
 // Native local-network flags only. Retained committee-one rollups are never
 // mutated into this mode: they require their original recovery path.
@@ -89,15 +90,31 @@ export function developmentIdleWarpTarget({wallSeconds,slotDuration,ethereumSlot
 export async function assertDevelopmentCommittee(rollup) {
  if(await rollup.getTargetCommitteeSize()!==0)throw Error('Retained rollup is incompatible with native local settlement; preserve its records');
 }
+const cleanupStages=new Set(['mining','node-rpc','settlement','node-stop','checkpoint','anvil-stop','sync','prove','tips','pending','proven','verify','service','server','relay','fixture','barretenberg','barretenberg-sync','lease']);
+export function developmentCleanupFailure(stage,cause,observations) {
+ if(!cleanupStages.has(stage))throw Error('Invalid development cleanup stage');
+ return Object.assign(Error('Development cleanup failed at '+stage,{cause}),{developmentStage:stage,...(observations?{observations}: {})});
+}
+// Fixed public projection only; raw provider errors remain exclusively in memory.
+export function developmentShutdownSummary(error) {
+ const failures=[],seen=new Set();
+ function visit(e,depth=0){if(!e||typeof e!=='object'||seen.has(e)||depth>12||failures.length>=24)return;seen.add(e);
+  if(cleanupStages.has(e.developmentStage)){const item={stage:e.developmentStage};const o=e.observations;
+   if(o){item.observations={};for(const k of ['pending','proven','checkpoint','proposedBlock','checkpointedBlock'])if(Number.isSafeInteger(o[k])&&o[k]>=0)item.observations[k]=o[k];if(typeof o.sameBlockHash==='boolean')item.observations.sameBlockHash=o.sameBlockHash;}
+   failures.push(item);}
+  if(e instanceof AggregateError)for(const child of e.errors.slice(0,24))visit(child,depth+1);visit(e.cause,depth+1);
+ }visit(error);return {schemaVersion:1,status:'recovery-required',failures};
+}
 export async function settleNativeDevelopment({node,rollup,resume=true}) {
  const sequencer=node.getAutomineSequencer();
  if(!sequencer)throw Error('Native local sequencer unavailable');
- sequencer.pause();
+ sequencer.pause();let stage='sync',observations;
  try{
-  await sequencer.syncPoint();await sequencer.prove();await sequencer.syncPoint();
-  const tips=await node.getChainTips(),pending=await rollup.getCheckpointNumber(),proven=await rollup.getProvenCheckpointNumber();
-  if(BigInt(proven)<BigInt(pending)||BigInt(tips.checkpointed.checkpoint.number)!==BigInt(pending)||tips.proposed.number!==tips.checkpointed.block.number||tips.proposed.hash!==tips.checkpointed.block.hash)throw Error('Native development checkpoints remain unsettled; recovery required');
- }finally{if(resume)sequencer.resume();}
+  await sequencer.syncPoint();stage='prove';await sequencer.prove();stage='sync';await sequencer.syncPoint();
+  stage='tips';const tips=await node.getChainTips();stage='pending';const pending=await rollup.getCheckpointNumber();stage='proven';const proven=await rollup.getProvenCheckpointNumber();stage='verify';
+  observations={pending:Number(pending),proven:Number(proven),checkpoint:Number(tips.checkpointed.checkpoint.number),proposedBlock:tips.proposed.number,checkpointedBlock:tips.checkpointed.block.number,sameBlockHash:tips.proposed.hash===tips.checkpointed.block.hash};
+  if(BigInt(proven)<BigInt(pending)||BigInt(tips.checkpointed.checkpoint.number)!==BigInt(pending)||tips.proposed.number!==tips.checkpointed.block.number||!observations.sameBlockHash)throw Error('Native development checkpoints remain unsettled; recovery required');
+ }catch(cause){throw developmentCleanupFailure(stage,cause,observations);}finally{if(resume)sequencer.resume();}
 }
 export async function startDevnet({directory,fundingAddresses,proofs=false,persistent=false,ports:requestedPorts,onProgress=()=>{},onOwned=()=>{}}){
   await fs.mkdir(directory,{recursive:true,mode:0o700});
@@ -118,15 +135,15 @@ export async function startDevnet({directory,fundingAddresses,proofs=false,persi
   let node,nodeServer,anvil,mining,stopMining=false,miningError,spawnError,anvilClosed,closing;
   function close(){return closing??=(async()=>{
     stopMining=true;const failures=[];
-    for(const cleanup of [()=>mining,()=>nodeServer&&new Promise(resolve=>{nodeServer.close(resolve);nodeServer.closeAllConnections();}),async()=>{if(nativeStarted)await settleNativeDevelopment({node,rollup,resume:false});},()=>node?.stop(),async()=>{
+    for(const [stage,cleanup] of [['mining',()=>mining],['node-rpc',()=>nodeServer&&new Promise(resolve=>{nodeServer.close(resolve);nodeServer.closeAllConnections();})],['settlement',async()=>{if(nativeStarted)await settleNativeDevelopment({node,rollup,resume:false});}],['node-stop',()=>node?.stop()],['checkpoint',async()=>{
       await persistDevnetCheckpoint({persistent,bootComplete,miningError,priorFailure:failures.length>0,save:async()=>{
         const snapshot=await deployment.l1Client.request({method:'anvil_dumpState',params:[true]});
         if(typeof snapshot!=='string'||!/^0x[0-9a-f]+$/i.test(snapshot)||snapshot.length>134217728)throw Error('Invalid development snapshot');
         const bytes=JSON.stringify(snapshot);await writeDevnetRecord(snapshotPath,snapshot);
         await writeDevnetRecord(statePath,{...state,phase:'stopped',snapshotHash:createHash('sha256').update(bytes+'\n').digest('hex')});
       }});
-    },async()=>{if(anvil&&anvil.exitCode===null&&!spawnError){anvil.kill('SIGTERM');await anvilClosed;}}]){
-      try{await cleanup();}catch(error){failures.push(error);}
+    }],['anvil-stop',async()=>{if(anvil&&anvil.exitCode===null&&!spawnError){anvil.kill('SIGTERM');await anvilClosed;}}]]){
+      try{await cleanup();}catch(error){failures.push(developmentCleanupFailure(stage,error));}
     }
     process.removeListener('exit',terminateChild);
     if(failures.length)throw new AggregateError(failures,'Devnet cleanup failed');
@@ -136,7 +153,11 @@ export async function startDevnet({directory,fundingAddresses,proofs=false,persi
     onProgress('Starting disposable Ethereum');
     // Retained snapshots exceed Anvil's default 2MB RPC body limit. This
     // isolated loopback process loads only the private, hash-bound <=128MiB file.
-    anvil=spawn(path.resolve('.build/anvil-1.7.0/anvil'),developmentAnvilArgs({persistent,port,mnemonic:identity.mnemonic.phrase}),{stdio:'ignore'});
+    // Each launch owns a distinct recovery-only dump; it is NEVER an automatic
+    // resume checkpoint. Precreation preserves private mode under native rewrites.
+    const recoveryPath=persistent?path.join(directory,'anvil-recovery-'+randomUUID()+'.json'):undefined;
+    if(recoveryPath){const fd=await fs.open(recoveryPath,'wx',0o600);await fd.close();}
+    anvil=spawn(path.resolve('.build/anvil-1.7.0/anvil'),developmentAnvilArgs({persistent,port,mnemonic:identity.mnemonic.phrase,recoveryPath}),{stdio:'ignore'});
     process.once('exit',terminateChild);
     anvilClosed=new Promise(resolve=>{anvil.once('error',error=>{spawnError=error;resolve();});anvil.once('close',resolve);});
     let ready=false;

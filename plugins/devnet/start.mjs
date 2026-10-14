@@ -1,7 +1,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import {pathToFileURL} from 'node:url';
-import {devnetPorts,readDevnetRecord} from './network.mjs';
+import {devnetPorts,readDevnetRecord,writeDevnetRecord,developmentCleanupFailure,developmentShutdownSummary} from './network.mjs';
 
 export function developmentOptions(args=[],env={}) {
  const options={};for(let i=0;i<args.length;i+=2){const key=args[i];if(!['--profile','--directory','--app-port','--node-port','--ethereum-port','--hosted-config'].includes(key)||Object.hasOwn(options,key)||!args[i+1])throw Error('Invalid development option');options[key]=args[i+1];}
@@ -44,10 +44,10 @@ export async function startDevelopment(options) {
  const {bootstrapPluginDevnet,bootstrapRollingDevnet}=await import('./bootstrap.mjs');
  const {directory}=options,lease=await acquireDevelopmentLease(directory);
  let fixture,server,service,fundingRelay,closing;
- const shutdown=()=>close().then(()=>process.exit(0),()=>process.exit(1));
+ const shutdown=()=>close().then(()=>process.exit(0),error=>{console.error(JSON.stringify(developmentShutdownSummary(error)));process.exit(1);});
  if(options.handleSignals){process.once('SIGINT',shutdown);process.once('SIGTERM',shutdown);}
- function close(){return closing??=(async()=>{process.removeListener('SIGINT',shutdown);process.removeListener('SIGTERM',shutdown);const errors=[];for(const stop of [()=>service?.close(),()=>server?.close(),()=>fundingRelay?.close(),()=>fixture?.close(),()=>Barretenberg.destroySingleton(),()=>BarretenbergSync.destroySingleton()])try{await stop();}catch(error){errors.push(error);}
-  if(!errors.length)await lease.close();if(errors.length)throw new AggregateError(errors,'Development cleanup requires reconciliation');
+ function close(){return closing??=(async()=>{process.removeListener('SIGINT',shutdown);process.removeListener('SIGTERM',shutdown);const errors=[];for(const [stage,stop] of [['service',()=>service?.close()],['server',()=>server?.close()],['relay',()=>fundingRelay?.close()],['fixture',()=>fixture?.close()],['barretenberg',()=>Barretenberg.destroySingleton()],['barretenberg-sync',()=>BarretenbergSync.destroySingleton()]])try{await stop();}catch(error){errors.push(developmentCleanupFailure(stage,error));}
+  if(!errors.length)try{await lease.close();}catch(error){errors.push(developmentCleanupFailure('lease',error));}if(errors.length){const error=new AggregateError(errors,'Development cleanup requires reconciliation');try{await writeDevnetRecord(path.join(directory,'shutdown-failure.json'),developmentShutdownSummary(error));}catch(recordError){throw new AggregateError([error,recordError],'Development cleanup diagnostic could not be retained',{cause:error});}throw error;}
  })();}
  try{
   if(options.profile==='legacy'){
@@ -66,10 +66,7 @@ export async function startDevelopment(options) {
   await lease.assertHeld();
   if(fundingRelay)fixture.readiness={...fixture.readiness,usdcRelay:'configured',aggregateFunding:'eth-usdc-configured'};
   return {url:server?.url,profile:options.profile,close,readiness:fixture.readiness??'legacy-development-only'};
- }catch(error){
-  try{await close();}catch(cleanup){throw new AggregateError([error,cleanup],'Development startup and cleanup require reconciliation');}
-  throw new Error('Development startup failed; preserve state and reconcile its saved operations',{cause:error});
- }
+ }catch(cause){try{await close();}catch(cleanup){throw new AggregateError([cause,cleanup],'Development startup and cleanup failed',{cause});}throw Error('Development startup failed; preserve state and reconcile its saved operations',{cause});}
 }
 if(process.argv[1]&&import.meta.url===pathToFileURL(process.argv[1]).href){
  let runtime;

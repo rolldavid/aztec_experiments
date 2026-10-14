@@ -156,8 +156,8 @@ if(focused){
  });
 
  test('retained local Anvil uses official SDK finality depth without removing snapshot or application guards',async()=>{
-  const {developmentAnvilArgs}=await import('./network.mjs');const args=developmentAnvilArgs({persistent:true,port:18545,mnemonic:'synthetic-only'});
-  assert.deepEqual(args,['--host','127.0.0.1','--port','18545','--chain-id','31337','--mnemonic','synthetic-only','--silent','--no-request-size-limit','--slots-in-an-epoch','1']);
+  const {developmentAnvilArgs}=await import('./network.mjs');const args=developmentAnvilArgs({persistent:true,port:18545,mnemonic:'synthetic-only',recoveryPath:'/tmp/anvil-recovery-00000000-0000-4000-8000-000000000000.json'});
+  assert.deepEqual(args,['--host','127.0.0.1','--port','18545','--chain-id','31337','--mnemonic','synthetic-only','--silent','--no-request-size-limit','--slots-in-an-epoch','1','--dump-state','/tmp/anvil-recovery-00000000-0000-4000-8000-000000000000.json','--state-interval','30','--preserve-historical-states']);
   assert(!developmentAnvilArgs({persistent:false,port:18546,mnemonic:'synthetic-only'}).includes('--slots-in-an-epoch'));
  });
 
@@ -241,10 +241,10 @@ if(focused){
   const node={getAutomineSequencer:()=>native,getChainTips:async()=>({checkpointed:{checkpoint:{number:4},block:{number:7,hash:'a'}},proposed:{number:7,hash:'a'}})},rollup={getCheckpointNumber:async()=>4,getProvenCheckpointNumber:async()=>proven};
   await settleNativeDevelopment({node,rollup,resume:false});assert.deepEqual(calls,['pause','sync','prove','sync']);
   calls=[];await settleNativeDevelopment({node,rollup});assert.equal(calls.at(-1),'resume');
-  native.prove=async()=>{};proven=3;await assert.rejects(settleNativeDevelopment({node,rollup,resume:false}),/unsettled/);
-  proven=4;rollup.getCheckpointNumber=async()=>5;await assert.rejects(settleNativeDevelopment({node,rollup}),/unsettled/);
-  rollup.getCheckpointNumber=async()=>4;node.getChainTips=async()=>({checkpointed:{checkpoint:{number:4},block:{number:7,hash:'a'}},proposed:{number:7,hash:'b'}});await assert.rejects(settleNativeDevelopment({node,rollup}),/unsettled/);
-  native.prove=async()=>{throw Error('controlled native failure');};await assert.rejects(settleNativeDevelopment({node,rollup,resume:false}),/controlled native failure/);
+  native.prove=async()=>{};proven=3;await assert.rejects(settleNativeDevelopment({node,rollup,resume:false}),e=>e.developmentStage==='verify'&&/unsettled/.test(e.cause.message));
+  proven=4;rollup.getCheckpointNumber=async()=>5;await assert.rejects(settleNativeDevelopment({node,rollup}),e=>e.developmentStage==='verify'&&/unsettled/.test(e.cause.message));
+  rollup.getCheckpointNumber=async()=>4;node.getChainTips=async()=>({checkpointed:{checkpoint:{number:4},block:{number:7,hash:'a'}},proposed:{number:7,hash:'b'}});await assert.rejects(settleNativeDevelopment({node,rollup}),e=>e.developmentStage==='verify'&&/unsettled/.test(e.cause.message));
+  native.prove=async()=>{throw Error('controlled native failure');};await assert.rejects(settleNativeDevelopment({node,rollup,resume:false}),e=>e.developmentStage==='prove'&&e.cause.message==='controlled native failure');
  });
  test('initialized relay directory or budget loss refuses before funding or replacement (actual filesystem)',async()=>{
   const {prepareDevelopmentRelay}=await import('./liquidity.mjs'),dir=await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(),'relay-loss-'))),state=path.join(dir,'relay-state');let stages=0;
@@ -288,6 +288,26 @@ if(focused){
   assert((await sample(false,0)).some(lag=>lag<0),'old wall target reproduces future time');
   for(let genesis=0;genesis<5;genesis++)for(const lag of await sample(true,genesis)){assert(lag>=0,'fixed clock is not future');assert(lag<120,'original freshness bound retained');}
   for(const values of [{wallSeconds:1000,slotDuration:0,ethereumSlotDuration:1},{wallSeconds:1000,slotDuration:119,ethereumSlotDuration:1},{wallSeconds:1000.5,slotDuration:5,ethereumSlotDuration:1}])assert.throws(()=>developmentIdleWarpTarget(values),/Invalid native idle clock/);
+ });
+
+ test('shutdown diagnostics retain exact private causes with finite stages and safe settlement operands',async()=>{
+  const {settleNativeDevelopment,developmentCleanupFailure,developmentShutdownSummary}=await import('./network.mjs');
+  const privateError=Error('private-sentinel-not-public');let failure;
+  const native={pause(){},async syncPoint(){},async prove(){},resume(){}};
+  const node={getAutomineSequencer:()=>native,getChainTips:async()=>({checkpointed:{checkpoint:{number:229},block:{number:229,hash:'a'}},proposed:{number:229,hash:'b'}})};
+  try{await settleNativeDevelopment({node,rollup:{getCheckpointNumber:async()=>229,getProvenCheckpointNumber:async()=>229},resume:false});}catch(e){failure=e;}
+  assert.equal(failure.developmentStage,'verify');
+  const summary=developmentShutdownSummary(new AggregateError([developmentCleanupFailure('settlement',failure),developmentCleanupFailure('checkpoint',privateError)],'private-sentinel-not-public'));
+  assert.deepEqual(summary.failures,[{stage:'settlement'},{stage:'verify',observations:{pending:229,proven:229,checkpoint:229,proposedBlock:229,checkpointedBlock:229,sameBlockHash:false}},{stage:'checkpoint'}]);
+  assert(!JSON.stringify(summary).includes('private-sentinel'));assert.equal(developmentCleanupFailure('checkpoint',privateError).cause,privateError);
+  node.getChainTips=async()=>{throw privateError;};await assert.rejects(settleNativeDevelopment({node,rollup:{},resume:false}),e=>e.developmentStage==='tips'&&e.cause===privateError);
+ });
+ test('native recovery dump is distinct from qualified checkpoint and cannot admit an unclean restart',async()=>{
+  const {developmentAnvilArgs,persistDevnetCheckpoint}=await import('./network.mjs');
+  assert.throws(()=>developmentAnvilArgs({persistent:true,port:18545,mnemonic:'synthetic-only'}),/recovery path/);
+  assert.throws(()=>developmentAnvilArgs({persistent:true,port:18545,mnemonic:'synthetic-only',recoveryPath:'/tmp/ethereum-state.json'}),/recovery path/);
+  let saved=false;await assert.rejects(persistDevnetCheckpoint({persistent:true,bootComplete:true,priorFailure:true,save:async()=>{saved=true;}}));assert.equal(saved,false);
+  assert.throws(()=>validateDevnetResume({...stopped,phase:'running',recoveryPath:'/tmp/anvil-recovery-00000000-0000-4000-8000-000000000000.json'},{fundingAddresses,ports,toolchainHash}),/recovery required/);
  });
 
 }
