@@ -700,7 +700,9 @@ export async function driveMetaMaskPaidRecovery({page,walletPage,control:c,provi
   recovery=await observeMetaMaskPaidRecovery({page,dialog,binding,report,timeout:remaining()});
  }
  assert.equal(recovery.state,'success','Saved funding recovery is not confirmed; inspect the closed diagnostic state');
- await dialog.getByText('Private Bok balance: '+formatUnits(a.bokAmount,6).replace(/\.0$/,'')+' USDC-backed credits.',{exact:true}).waitFor();
+ // The original claim amount stays bound above; current free credit may legitimately
+ // be lower after a confirmed request or withdrawal. New budgets are simulated separately.
+ await dialog.getByText(/^Private Bok balance: (?:0|[1-9][0-9]*)(?:\.[0-9]{1,6})? USDC-backed credits\.$/).waitFor();
  const claimed=await page.evaluate(inspectMetaMaskPaidBinding,binding);assert.equal(claimed.paymentMatches,true);assert.equal(claimed.claimMatches,true);assert.equal(claimed.claimConfirmed,true);
  assert.equal(attempts.forbiddenWalletCalls,0);assert.equal(await provider.getTransactionCount(account,'pending'),nonce);
  report.paidRecovery={asset:c.asset,transactionHash,planHash,claimTransactionHash:claimed.claimTxHash,originalCanonicalEffectsVerified:true,readyFromConfirmedPrivateClaim:true,userSends:0,relayPosts:0,signatures:0,postQualified:false};
