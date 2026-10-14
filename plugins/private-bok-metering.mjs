@@ -140,6 +140,18 @@ export function privateBokMetering({provider,escrow,store,identity,limits={}}){
    ![2,4].includes(r.state)||r.available+r.refunded!==amount(c.before.available)+amount(c.before.refunded)-actual)throw Error('Settlement accounting mismatch');
   await setCall(id,{phase:'settled'});return outcome(callRecord(id));
  };
+ // Read-only admission before the hosted owner durably binds recovery evidence.
+ const validateReconciliation=async(id,billing)=>{
+  callId(id);const j=journal(),c=j.calls[id],keys=Object.keys(j.calls);
+  if(!c||keys.length!==id+1||keys.some((key,index)=>key!==String(index)||j.calls[key]?.id!==index||index<id&&j.calls[key].phase!=='settled')||!['possibly-sent','fenced','received','settled'].includes(c.phase))throw Error('No current unknown provider call');
+  const b=billingFor(id,billing);
+  if(c.billing&&hash(b)!==hash(measured(c)))throw Error('Original provider billing changed');
+  const r=await read();
+  const reserved=reservedMatches(r,c)&&[2,3].includes(r.state);
+  const settled=['received','settled'].includes(c.phase)&&r.sequence===id+1&&r.reserved===0n&&r.receipt===b.receipt&&[2,4].includes(r.state)&&r.budget===amount(c.before.budget)&&r.charged===amount(c.before.charged)+BigInt(b.charge)&&r.available+r.refunded===amount(c.before.available)+amount(c.before.refunded)-BigInt(b.charge);
+  if(!reserved&&!settled)throw Error('Current reconciliation sequence or accounting mismatch');
+  return b;
+ };
  const resume=async id=>{
   callId(id);const c=callRecord(id);if(!c)throw Error('No recorded call');
   if(c.phase==='settled')return outcome(c);
@@ -191,11 +203,10 @@ export function privateBokMetering({provider,escrow,store,identity,limits={}}){
    return {...settled,replyAvailable:true,message:result.message};
   }),
   resume:exclusive(resume),
+  validateReconciliation:exclusive(validateReconciliation),
   reconcile:exclusive(async(id,billing)=>{
-   callId(id);const c=callRecord(id);
-   if(!c||!['possibly-sent','fenced','received','settled'].includes(c.phase))throw Error('No unknown provider call');
+   const b=await validateReconciliation(id,billing),c=callRecord(id);
    // Trusted operator must obtain this evidence for the ORIGINAL paid call, never make another one.
-   const b=billingFor(id,billing);
    // An interrupted reconciliation may already have saved billing or settled
    // onchain. Only the exact original record may continue its original intent.
    if(c.billing&&hash(b)!==hash(measured(c)))throw Error('Original provider billing changed');

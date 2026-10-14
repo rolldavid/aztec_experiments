@@ -27,6 +27,7 @@ export async function reconcileHostedBilling({receipt,escrow,store,lease,limits}
  const checkedStore={read:()=>store.read(),write:async value=>{await lease.assertHeld();await store.write(value);}};
  const deny=async()=>{throw Error('Provider calls forbidden during billing recovery');};
  const metering=privateBokMetering({provider:{quote:deny,execute:deny},escrow,store:checkedStore,identity,limits});
+ await metering.validateReconciliation(receipt.callId,billing);
  // Retain the original evidence before any chain action. The metering journal
  // independently persists exact reconciliation intents before their sole sends.
  if(!saved.billingRecovery)await checkedStore.write({...original,hostedPrivateBok:{...saved,phase:'accounting-recovery',billingRecovery:recovery}});

@@ -95,6 +95,23 @@ test('interrupted billing reconciliation resumes original chain operation and ne
  hidden=false;assert.equal((await x.recover()).status,'accounted-without-reply');assert.equal(x.row.refunded,994n);
  assert.deepEqual(x.events,['reserve','paid','close_uncertain','reconcile']);
 });
+test('earlier settled receipt and changed limits cannot trap the current two-call billing recovery',async()=>{
+ const x=fixture();x.args.runAgent=async({model})=>{
+  await model.complete({messages:[{role:'user',content:'first'}],maxTokens:10});
+  x.control.timeout=true;await model.complete({messages:[{role:'user',content:'second'}],maxTokens:10});
+ };
+ await assert.rejects(x.run(),/unknown/);
+ const saved=structuredClone(x.store.read()),lease={assertHeld:async()=>{}},first=saved.privateBok.calls[0],last=saved.privateBok.calls[1];
+ const receipt={schemaVersion:1,binding:saved.hostedPrivateBok.binding,callId:0,inputDigest:first.inputDigest,billing:first.billing,evidenceSha256:'ab'.repeat(32)};
+ const run=(value,limits)=>reconcileHostedBilling({receipt:value,escrow:x.args.escrow,store:x.store,lease,limits});
+ await assert.rejects(run(receipt),/current unknown/);assert.deepEqual(x.store.read(),saved);
+ const billing=validateVeniceBilling({...first.billing,providerId:'second-original',receipt:undefined},{...last.quote,inputPrice:1000000000n,outputPrice:1000000000n,maximum:110n});
+ const correct={...receipt,callId:1,inputDigest:last.inputDigest,billing};
+ await assert.rejects(run(correct,{maxCalls:7}),/limits mismatch/);assert.deepEqual(x.store.read(),saved);
+ const sequence=x.row.sequence;x.row.sequence=9;await assert.rejects(run(correct),/sequence or accounting/);assert.deepEqual(x.store.read(),saved);x.row.sequence=sequence;
+ assert.equal((await run(correct)).status,'accounted-without-reply');assert.equal(x.row.charged,12n);assert.equal(x.row.refunded,988n);
+ assert.deepEqual(x.events,['reserve','paid','settle','reserve','paid','close_uncertain','reconcile']);
+});
 test('billing recovery retains original lease and never treats reply recovery as lost billing',async()=>{
  const x=await unknownBillingFixture();x.control.leaseLost=true;await assert.rejects(x.recover());assert.deepEqual(x.events,['reserve','paid','close_uncertain']);
  x.control.leaseLost=false;x.store.read().hostedPrivateBok.phase='reply-confirmed';await assert.rejects(x.recover(),/No unresolved/);assert.deepEqual(x.events,['reserve','paid','close_uncertain']);
