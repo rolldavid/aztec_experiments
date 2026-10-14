@@ -452,8 +452,8 @@ checkpoint on graceful exit, avoiding multi-gigabyte snapshots every 30 seconds.
 An abrupt stop can lose progress since the last dump; an unclean record still
 requires reconciliation, and historical effects must never be replayed blindly.
 
-Native snapshots retain a bounded streamed 6 GiB ceiling and complete
-historical state. Startup requires at least 8 GiB free before changing the saved
+Native snapshots retain a bounded streamed 7 GiB ceiling and complete
+historical state. Startup requires at least 9 GiB free before changing the saved
 phase. This is admission headroom, not a reservation or an ongoing disk quota.
 After a clean stop, the runner streams and fsyncs the new snapshot before
 publishing its stopped record, which retains the exact predecessor filename,
