@@ -397,6 +397,8 @@ export function inspectMetaMaskPaidRecoverySurface({settledOnly=false}={}){
  const dialog=document.querySelector('dialog[open]');if(!dialog)return settledOnly?null:{state:'unavailable',busy:false,notices:[],buttons:{}};
  const visible=node=>node.getClientRects().length>0;
  const vocabulary={
+  'claim-confirmed':'Transaction confirmed on the verified chain.',
+  'claim-confirmed-feed-unavailable':'Transaction confirmed on the verified chain. Public feed refresh is unavailable; the transaction remains confirmed.',
   success:'Funding and the private claim are confirmed. Your posting deposit, network fees and Bok credit are ready.',
   'review-saved':'This saved claim has not been submitted. Review it explicitly before sending; the Ethereum payment will not repeat.',
   review:'The private claim needs a new review. No additional Ethereum payment will be sent.',
@@ -410,15 +412,15 @@ export function inspectMetaMaskPaidRecoverySurface({settledOnly=false}={}){
   const node=[...dialog.querySelectorAll('button')].find(node=>visible(node)&&node.textContent===text);buttons[code]={visible:!!node,enabled:!!node&&!node.disabled};
  }
  const busy=dialog.getAttribute('aria-busy')==='true',alert=[...dialog.querySelectorAll('[role="alert"]')].some(visible);
- const state=alert?'error':['review-saved','review','reverted','receipt-review','success','waiting-bridge','pending'].find(code=>notices.includes(code))??(buttons.confirm.visible?'review':'unknown');
+ const state=alert?'error':['review-saved','review','reverted','receipt-review','success','claim-confirmed','claim-confirmed-feed-unavailable','waiting-bridge','pending'].find(code=>notices.includes(code))??(buttons.confirm.visible?'review':'unknown');
  if(settledOnly&&(busy||state==='unknown'))return null;
  return {state,busy,notices,buttons};
 }
 
-export async function observeMetaMaskPaidRecovery({page,dialog,binding,report}){
+export async function observeMetaMaskPaidRecovery({page,dialog,binding,report,timeout=80000}){
  let handle,surface;report.paidRecoveryObservation={};
  try{
-  handle=await page.waitForFunction(inspectMetaMaskPaidRecoverySurface,{settledOnly:true},{timeout:80000});
+  handle=await page.waitForFunction(inspectMetaMaskPaidRecoverySurface,{settledOnly:true},{timeout});
   surface=await handle.jsonValue();report.paidRecoveryObservation.surface=surface;
   // One completed advance is enough to classify a wait. Stop only the existing
   // automatic read loop; never approve a claim or replay a payment here.
@@ -431,7 +433,8 @@ export async function observeMetaMaskPaidRecovery({page,dialog,binding,report}){
  }
 }
 
-export async function driveMetaMaskPaidRecovery({page,walletPage,control:c,provider,transactionHash,mark,report}){
+export async function driveMetaMaskPaidRecovery({page,walletPage,control:c,provider,transactionHash,mark,report,reviewPrepared=false}){
+ assert.equal(typeof reviewPrepared,'boolean');
  assert.match(transactionHash,/^0x[0-9a-f]{64}$/);
  const scope=c.walletConfig.config.aggregateFunding,a=c.allocation,account=Wallet.fromPhrase(c.mnemonic).address.toLowerCase();
  const tx=await provider.getTransaction(transactionHash);assert(tx);assert.equal(tx.to.toLowerCase(),scope.router);
@@ -455,9 +458,20 @@ export async function driveMetaMaskPaidRecovery({page,walletPage,control:c,provi
  await dialog.getByText('Funding wallet connected. No payment has been sent.',{exact:true}).waitFor();
  assert.equal((await page.evaluate(()=>walletState.ethAccount)).toLowerCase(),account);
  mark('aggregate-paid-private-claim');await dialog.getByRole('button',{name:'Resume saved funding',exact:true}).click();
- // Recovery has the original explicit claim authorization. If it instead needs
- // another review, fail visibly; never infer approval from a missing receipt.
- const recovery=await observeMetaMaskPaidRecovery({page,dialog,binding,report});
+ const recoveryDeadline=Date.now()+80000;
+ const remaining=()=>{const ms=recoveryDeadline-Date.now();assert(ms>0,'Paid recovery observation deadline');return ms;};
+ let recovery=await observeMetaMaskPaidRecovery({page,dialog,binding,report,timeout:remaining()});
+ if(reviewPrepared&&recovery.state==='review-saved'){
+  report.preparedClaimReview={initial:report.paidRecoveryObservation,confirmations:0};
+  await confirmMetaMaskPreparedClaim({page,dialog,binding,enabled:reviewPrepared,surface:recovery,report:report.preparedClaimReview});
+  recovery=await observeMetaMaskPaidRecovery({page,dialog,binding,report,timeout:remaining()});
+  assert(['claim-confirmed','claim-confirmed-feed-unavailable'].includes(recovery.state),'Explicit saved claim is not confirmed; no second submission');
+  const confirmed=await page.evaluate(inspectMetaMaskPaidBinding,binding);assert.equal(confirmed.claimConfirmed,true);assert.equal(confirmed.paymentMatches,true);
+  // This existing action now only reconciles the confirmed saved claim. It does
+  // not prepare another claim, alter the original cap or repeat Ethereum payment.
+  await dialog.getByRole('button',{name:'Resume saved funding',exact:true}).click();
+  recovery=await observeMetaMaskPaidRecovery({page,dialog,binding,report,timeout:remaining()});
+ }
  assert.equal(recovery.state,'success','Saved funding recovery is not confirmed; inspect the closed diagnostic state');
  await dialog.getByText('Private Bok balance: '+formatUnits(a.bokAmount,6).replace(/\.0$/,'')+' USDC-backed credits.',{exact:true}).waitFor();
  const claimed=await page.evaluate(inspectMetaMaskPaidBinding,binding);assert.equal(claimed.paymentMatches,true);assert.equal(claimed.claimMatches,true);assert.equal(claimed.claimConfirmed,true);
@@ -466,9 +480,25 @@ export async function driveMetaMaskPaidRecovery({page,walletPage,control:c,provi
  return ()=>assert.equal(attempts.forbiddenWalletCalls,0,'A late wallet operation was attempted');
 }
 
+export function retainedPreparedClaimFlag(value,{paidRecovery=false,readinessOnly=false,continueUnfunded=false}={}){
+ assert(value===undefined||value==='true'||value==='false','Invalid saved claim review flag');
+ const enabled=value==='true';if(enabled)assert(paidRecovery&&!readinessOnly&&!continueUnfunded,'Saved claim review requires paid recovery only');return enabled;
+}
+export async function confirmMetaMaskPreparedClaim({page,dialog,binding,enabled=false,surface,report}){
+ assert.equal(enabled,true,'Explicit saved claim review is required');
+ assert.equal(surface.state,'review-saved');assert.equal(surface.busy,false);assert.equal(surface.buttons.confirm.enabled,true);
+ assert.equal(report.confirmations,0,'Saved claim confirmation already attempted');
+ assert.equal((await page.evaluate(inspectMetaMaskPaidBinding,{...binding,preparedReview:'capture'})).preparedReviewAllowed,true,'Original unsent prepared claim or fee cap differs');
+ assert.equal((await page.evaluate(inspectMetaMaskPaidBinding,{...binding,preparedReview:'consume'})).preparedReviewAllowed,true,'Original prepared claim changed before confirmation');
+ report.confirmations++; // No retry even when the click or native readiness guard fails.
+ await dialog.getByRole('button',{name:'Confirm and send',exact:true}).click();
+ // The real submitPrepared entry point revalidates trusted-node freshness, all
+ // receipts, journal admission and its saved maximum before recording a send.
+}
+
 // Executed inside the real wallet page. Only booleans and the public claim hash
 // leave it; private keys, decrypted custody and user grouping remain in-page.
-export async function inspectMetaMaskPaidBinding({network:n,board,router,intent,transactionHash}){
+export async function inspectMetaMaskPaidBinding({network:n,board,router,intent,transactionHash,preparedReview}){
  const sdk=window.__aztec,wallet=window.walletState.aztec,owner=wallet.address.toString(),storage=sdk.createBrowserJournalStorage();
  const open=async(scopeText,keyDomain)=>(await(await sdk.createEncryptedJournalSlot({storage,walletSecret:wallet.secretKey,walletSalt:wallet.salt,scopeText,keyDomain})).read()).value;
  const funding=await open(JSON.stringify(['ROLLING_AGGREGATE_FUNDING_V1',n.chainId,n.rollupVersion,n.rollupAddress,board.contractAddress,router,owner,1]),'ROLLING_AGGREGATE_FUNDING_V1');
@@ -480,10 +510,22 @@ export async function inspectMetaMaskPaidBinding({network:n,board,router,intent,
  const claimConfirmed=claimMatches&&claim.status==='confirmed'&&/^0x[0-9a-f]{64}$/.test(claim.txHash);
  const decimal=value=>typeof value==='string'&&/^(0|[1-9][0-9]{0,76})$/.test(value);
  const feeWithinSavedCap=claimMatches&&decimal(claim.maximumFee)&&decimal(funding.privateFeeCap)?BigInt(claim.maximumFee)<=BigInt(funding.privateFeeCap):null;
+ let preparedReviewAllowed;
+ if(preparedReview!==undefined){
+  const journal=await open(scope,'AZTEC_BB_L2_JOURNAL_KEY_V1');
+  const eligible=paymentMatches&&claimMatches&&funding.claim.attempted===true&&claim.status==='prepared'&&claim.txHash==null&&journal==null&&feeWithinSavedCap===true;
+  // The original records and context remain in private page RAM, never evidence.
+  const snapshot=JSON.stringify({scope,router,intent,transactionHash,funding,claim});
+  const prior=window.__retainedPreparedClaimReview;
+  if(preparedReview==='capture'&&eligible&&!prior)window.__retainedPreparedClaimReview={snapshot,used:false};
+  const captured=window.__retainedPreparedClaimReview;
+  preparedReviewAllowed=eligible&&['capture','consume'].includes(preparedReview)&&!!captured&&!captured.used&&captured.snapshot===snapshot;
+  if(preparedReview==='consume'&&preparedReviewAllowed)captured.used=true; // Before the UI can send, even if click throws.
+ }
  return {paymentMatches,claimMatches,claimConfirmed,claimTxHash:claimConfirmed?claim.txHash:null,
   paymentSaved:!!saved,claimPresent:!!funding?.claim,attempted:funding?.claim?.attempted===true,
   workflowPrepared:claim?.status==='prepared',workflowStatus:claim==null?'absent':['prepared','submitting','unknown','submitted','confirmed','reverted','cancelled'].includes(claim.status)?claim.status:'other',
-  feeWithinSavedCap,explicitClaimReview:funding?.explicitClaimReview===true};
+  feeWithinSavedCap,explicitClaimReview:funding?.explicitClaimReview===true,...(preparedReview!==undefined?{preparedReviewAllowed}: {})};
 }
 
 

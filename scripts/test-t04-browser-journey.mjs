@@ -348,7 +348,7 @@ test('paid MetaMask recovery binds encrypted scope, exact payment and all claim 
 
 test('paid recovery surface projects only closed visible notices and controls',async()=>{
  const {inspectMetaMaskPaidRecoverySurface}=await import('./t04-metamask.mjs'),{runInNewContext}=await import('node:vm');
- const notice={success:'Funding and the private claim are confirmed. Your posting deposit, network fees and Bok credit are ready.','review-saved':'This saved claim has not been submitted. Review it explicitly before sending; the Ethereum payment will not repeat.',review:'The private claim needs a new review. No additional Ethereum payment will be sent.',reverted:'The private claim reverted. Review recovery; do not repeat the Ethereum payment.','waiting-bridge':'Payment confirmed. Waiting for the bridge; no second Ethereum payment will be requested.',pending:'Checking the saved private claim. It will not be submitted again.'};
+ const notice={'claim-confirmed':'Transaction confirmed on the verified chain.','claim-confirmed-feed-unavailable':'Transaction confirmed on the verified chain. Public feed refresh is unavailable; the transaction remains confirmed.',success:'Funding and the private claim are confirmed. Your posting deposit, network fees and Bok credit are ready.','review-saved':'This saved claim has not been submitted. Review it explicitly before sending; the Ethereum payment will not repeat.',review:'The private claim needs a new review. No additional Ethereum payment will be sent.',reverted:'The private claim reverted. Review recovery; do not repeat the Ethereum payment.','waiting-bridge':'Payment confirmed. Waiting for the bridge; no second Ethereum payment will be requested.',pending:'Checking the saved private claim. It will not be submitted again.'};
  const node=(textContent,shown=true,disabled=false)=>({textContent,disabled,getClientRects:()=>shown?[{}]:[]});
  function inspect({text='PRIVATE_SENTINEL',busy=false,alert=false,hidden=false,confirm=false,settledOnly=false}={}){
   const dialog={getAttribute:key=>{assert.equal(key,'aria-busy');return String(busy);},querySelectorAll:selector=>selector==='.notice'?[node(text,!hidden)]:selector==='[role="alert"]'?alert?[node('PRIVATE_SENTINEL')]:[]:[node('Pause bridge checks',true,busy),node('Confirm and send',confirm),node('PRIVATE_SENTINEL')]};
@@ -491,4 +491,39 @@ test('retained Bok discovery fails closed on mixed snapshots, duplicate matches 
   const run=runInNewContext(`(${discoverRetainedBokCompletion})`,{fetch,AbortSignal,encodeURIComponent})({postId:'10',requestId:'30',scope});
   if(mode==='mixed')assert.equal(await run,false);else await assert.rejects(run,/BOK_PUBLIC_/);assert(paths.length<=10);
  }
+});
+
+test('explicit prepared claim review flag is default-off and paid-recovery-only',async()=>{
+ const {retainedPreparedClaimFlag:flag}=await import('./t04-metamask.mjs');
+ assert.equal(flag(undefined),false);assert.equal(flag('false'),false);assert.equal(flag('true',{paidRecovery:true}),true);
+ for(const value of ['',true,'TRUE','1'])assert.throws(()=>flag(value,{paidRecovery:true}));
+ for(const mode of [{},{paidRecovery:true,readinessOnly:true},{paidRecovery:true,continueUnfunded:true}])assert.throws(()=>flag('true',mode));
+});
+test('prepared claim review binds original encrypted records, three receipts, empty journal and saved cap',async()=>{
+ const {inspectMetaMaskPaidBinding}=await import('./t04-metamask.mjs'),{runInNewContext}=await import('node:vm');
+ const input={network:{chainId:'31337',rollupVersion:'17',rollupAddress:'rollup'},board:{contractAddress:'board',portalAddress:'portal'},router:'router',transactionHash:hash,intent:{from:'payer',to:'router',chainId:'31337',nonce:1,data:'0x1234',value:'9',expected:{planHash:'plan'}}};
+ const original={funding:{intent:structuredClone(input.intent),privateFeeCap:'10',claim:{intentId:'claim',attempted:true}},claim:{id:'claim',status:'prepared',maximumFee:'10',action:{type:'claim-deposit',receipt:{txHash:hash},feeReceipt:{txHash:hash},bokReceipt:{txHash:hash}}},journal:null};
+ function fixture(mutate=()=>{}){
+  const records=structuredClone(original);mutate(records);
+  const window={walletState:{aztec:{address:{toString:()=> 'private-owner'},secretKey:'private-secret',salt:1}},__aztec:{createBrowserJournalStorage:()=>({}),createEncryptedJournalSlot:async({keyDomain})=>({read:async()=>({value:keyDomain==='ROLLING_AGGREGATE_FUNDING_V1'?records.funding:keyDomain==='ROLLING_WORKFLOW_V1'?records.claim:records.journal})})}};
+  const read=preparedReview=>runInNewContext('('+inspectMetaMaskPaidBinding.toString()+')(input)',{window,input:{...input,preparedReview}});
+  return {records,read};
+ }
+ const good=fixture();assert.equal((await good.read('capture')).preparedReviewAllowed,true);assert.equal((await good.read('consume')).preparedReviewAllowed,true);assert.equal((await good.read('consume')).preparedReviewAllowed,false);assert.equal((await good.read('capture')).preparedReviewAllowed,false);
+ const mutations=[r=>r.funding.intent.data='0x5678',r=>r.funding.privateFeeCap='9',r=>r.claim.maximumFee='11',r=>delete r.funding.privateFeeCap,r=>r.funding.claim.attempted=false,r=>r.claim.id='other',r=>r.claim.action.type='post',...['submitting','submitted','unknown','confirmed','reverted','cancelled'].map(status=>r=>r.claim.status=status),...['receipt','feeReceipt','bokReceipt'].map(k=>r=>r.claim.action[k].txHash='0x'+'ff'.repeat(32)),r=>r.claim.txHash=hash,r=>r.journal={operation:'anything',txHash:hash}];
+ for(const mutate of mutations)assert.equal((await fixture(mutate).read('capture')).preparedReviewAllowed,false);
+ for(const mutate of [r=>r.claim.maximumFee='9',r=>r.funding.privateFeeCap='11',r=>r.claim.nonce='different',r=>r.funding.claim.explicitReview=true,r=>r.journal={txHash:hash}]){
+  const f=fixture();assert.equal((await f.read('capture')).preparedReviewAllowed,true);mutate(f.records);assert.equal((await f.read('consume')).preparedReviewAllowed,false);
+ }
+ const absent=fixture();assert.equal((await absent.read('consume')).preparedReviewAllowed,false);assert.equal((await absent.read('invalid')).preparedReviewAllowed,false);
+ const safe=JSON.stringify(await fixture().read('capture'));for(const privateValue of ['private-owner','private-secret','0x1234','privateFeeCap','"10"'])assert(!safe.includes(privateValue));
+});
+test('prepared claim confirms exactly once through existing UI after two original-record checks',async()=>{
+ const {confirmMetaMaskPreparedClaim:confirm}=await import('./t04-metamask.mjs');
+ const surface={state:'review-saved',busy:false,buttons:{confirm:{enabled:true}}};
+ function fixture({allowed=[true,true],clickError}={}){const events=[],report={confirmations:0};return {events,report,args:{enabled:true,surface,report,binding:{transactionHash:hash},page:{evaluate:async(_fn,input)=>{events.push(input.preparedReview);return {preparedReviewAllowed:allowed.shift()};}},dialog:{getByRole:(role,options)=>{assert.equal(role,'button');assert.deepEqual(options,{name:'Confirm and send',exact:true});return {click:async()=>{events.push('confirm');if(clickError!==undefined)throw clickError;}};}}}};}
+ const f=fixture();await confirm(f.args);assert.deepEqual(f.events,['capture','consume','confirm']);await assert.rejects(confirm(f.args));assert.equal(f.report.confirmations,1);assert.equal(f.events.length,3);
+ for(const allowed of [[false],[true,false]]){const f=fixture({allowed});await assert.rejects(confirm(f.args));assert(!f.events.includes('confirm'));assert.equal(f.report.confirmations,0);}
+ for(const change of [{enabled:false},{surface:{...surface,state:'review'}},{surface:{...surface,busy:true}},{surface:{...surface,buttons:{confirm:{enabled:false}}}}]){const f=fixture();await assert.rejects(confirm({...f.args,...change}));assert.equal(f.events.length,0);}
+ const failed=fixture({clickError:false});await assert.rejects(confirm(failed.args),e=>e===false);await assert.rejects(confirm(failed.args));assert.equal(failed.events.filter(x=>x==='confirm').length,1);
 });
