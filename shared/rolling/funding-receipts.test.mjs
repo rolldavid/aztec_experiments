@@ -44,7 +44,7 @@ before(()=>{originalFetch=globalThis.fetch;globalThis.fetch=async(url,init)=>{
 after(()=>{globalThis.fetch=originalFetch;});
 before(async()=>{artifact=JSON.parse(fs.readFileSync(new URL('../../apps/src/billboard/private_fee_artifact.json',import.meta.url)));canonical=await derivePrivateFeeInstance(artifact);});
 after(async()=>{await BarretenbergSync.destroySingleton();});
-async function fixture(kind='collateral',retainedFeeSalt=null) {
+async function fixture(kind='collateral',retainedFeeSalt=null,feeMessageMode='canonical') {
  const s={chainId:'31337',version:'2',rollup:addr(10),portal:addr(11),recipient:kind==='private-fee'?canonical.address.toString():h(12),...(kind==='collateral'?{}:{token:addr(13)})};
  const r={txHash:h(100),blockHash:h(101),blockNumber:6,sender:addr(14),nonce:'3',amount:'5000',leafIndex:'9',messageKey:null,secretHash:null};
  const owner=h(20),walletSecret=h(21),walletSalt=h(22),salt=h(23);let secret,content,account,secrets;
@@ -61,7 +61,10 @@ async function fixture(kind='collateral',retainedFeeSalt=null) {
   content=await sha256Field(getBytes(AbiCoder.defaultAbiCoder().encode(['bytes32','uint256','address','bytes32','uint256','bytes32','uint128'],[encodeBytes32String('PLUGIN_CREDIT_V1'),s.chainId,s.portal,s.recipient,s.version,account,r.amount])));
  }
  r.secretHash=(await computeSecretHash(Fr.fromString(secret))).toString();
- const message=new L1ToL2Message(new L1Actor(EthAddress.fromString(s.portal),Number(s.chainId)),new L2Actor(new AztecAddress(Fr.fromString(kind==='private-fee'?ProtocolContractAddress.FeeJuice.toString():s.recipient)),Number(s.version)),Fr.fromString(content),Fr.fromString(r.secretHash),new Fr(BigInt(r.leafIndex)));
+ // Installed Inbox.sol maps only the authenticated fee asset portal to L1 sender 0x03.
+ if(kind==='private-fee'&&feeMessageMode==='wrong-content')content=h(404);
+ const messageSender=kind==='private-fee'&&feeMessageMode!=='portal-sender'?addr(3):s.portal;
+ const message=new L1ToL2Message(new L1Actor(EthAddress.fromString(messageSender),Number(s.chainId)),new L2Actor(new AztecAddress(Fr.fromString(kind==='private-fee'?ProtocolContractAddress.FeeJuice.toString():s.recipient)),Number(s.version)),Fr.fromString(content),Fr.fromString(r.secretHash),new Fr(BigInt(r.leafIndex)));
  r.messageKey=message.hash().toString();
  const siblings=Array.from({length:L1_TO_L2_MSG_TREE_HEIGHT},(_,i)=>new Fr(BigInt(200+i)));
  let root=message.hash(),cursor=BigInt(r.leafIndex);
@@ -119,6 +122,9 @@ for(const [label,change,code] of [
 ])test(`reject ${label} without raw diagnostic or claim`,async()=>{const f=await fixture();change(f);await assert.rejects(()=>prepareFundingClaim(f.input),error=>{assert.equal(error.code,'ROLLING_FUNDING_'+code);assert(!JSON.stringify(error).includes('PRIVATE_SENTINEL'));return true;});});
 test('Bok binds recipient commitment, token and exact hidden-secret calldata',async()=>{
  for(const mutate of [f=>{f.input.owner=h(25);},f=>{f.state.bindings.token=addr(99);},f=>{f.state.tx.data=f.abi.encodeFunctionData('deposit',[f.eventArgs[0],'5000',h(9)]);}]){const f=await fixture('bok');mutate(f);await assert.rejects(()=>prepareFundingClaim(f.input),{code:'ROLLING_FUNDING_MISMATCH'});}
+});
+for(const mode of ['portal-sender','wrong-content'])test(`FPC rejects self-consistent ${mode} message despite canonical payment`,async()=>{
+ const f=await fixture('private-fee',null,mode);await assert.rejects(prepareFundingClaim(f.input),{code:'ROLLING_FUNDING_MISMATCH'});assert(!f.state.reads.includes('witness'));
 });
 test('FPC recovery rejects foreign owner, token and altered public amount',async()=>{
  for(const mutate of [f=>{f.input.owner=h(25);},f=>{f.state.bindings.UNDERLYING=addr(99);},f=>{f.input.receipt.amount='5001';}]){const f=await fixture('private-fee');mutate(f);await assert.rejects(()=>prepareFundingClaim(f.input));}
