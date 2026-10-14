@@ -20,7 +20,7 @@ import {Tx,TxHash,TxStatus} from '@aztec-labs/stdlib/tx';
 import {JsonRpcProvider,FetchRequest,Wallet,Transaction,Contract as EthereumContract,ContractFactory,getCreateAddress,keccak256,parseUnits,formatUnits,sha256,toUtf8Bytes,Interface} from 'ethers';
 import {API_VERSION,packText,handleField,validateDescriptor} from './protocol.mjs';
 import {provingEnabledForNode} from '../shared/proving-policy.mjs';
-import {fileState,recordedTransaction,outboxArguments,operatorApplicationProfile,rollingOperatorConfig,operatorNodeFetch,onceAztecOperation,reconcileRollingOperation,rollingPxeOptions,bindRollingJournal,readOperatorActor,projectRollingReceipt,rollingLifecycleConfig,rollingOperatorCommandScope,verifyPluginPortalRuntime,reconcileRollingEthereum,operatorEthereumRequest,matchRollingEthereumSigned,requireRollingReadyEffect,readHostedPrivateFile,captureSepoliaLiquidityPlan,sepoliaLiquidityContracts,sepoliaLiquidityTransactions,sepoliaLiquidityDeadline,runSepoliaLiquidityStage,captureSepoliaSeedResolution,runSepoliaLiquidityCancellation,runSepoliaLiquidityContinuation,resolveSepoliaSeedNonce,captureSepoliaSeedContinuationPlan} from './operations.mjs';
+import {fileState,recordedTransaction,outboxArguments,operatorApplicationProfile,rollingOperatorConfig,operatorNodeFetch,onceAztecOperation,reconcileRollingOperation,rollingPxeOptions,bindRollingJournal,readOperatorActor,projectRollingReceipt,rollingLifecycleConfig,rollingOperatorCommandScope,verifyPluginPortalRuntime,reconcileRollingEthereum,operatorEthereumRequest,matchRollingEthereumSigned,requireRollingReadyEffect,readHostedPrivateFile,captureSepoliaLiquidityPlan,sepoliaLiquidityContracts,sepoliaLiquidityTransactions,sepoliaLiquidityDeadline,runSepoliaLiquidityStage,captureSepoliaSeedResolution,captureSepoliaSeedSuccessor,runSepoliaLiquiditySuccessor,runSepoliaLiquidityCancellation,runSepoliaLiquidityContinuation,resolveSepoliaSeedNonce,captureSepoliaSeedContinuationPlan} from './operations.mjs';
 import {deriveStorageSlotInMap,computeL2ToL1MessageHash} from '@aztec-labs/stdlib/hash';
 import {sha256ToField} from '@aztec-labs/foundation/crypto/sha256';
 import {contractInputs,sha as artifactSha} from '../scripts/artifact-provenance.mjs';
@@ -379,11 +379,12 @@ export async function openSepoliaSeedJournal(statePath,binding,campaign,{existin
 /** Trusted local CLI only; no provider, model or generated-code capability. */
 export async function seedTestnetLiquidity({plan:input,statePath,stage,keyFile,recovery}){
  const originalPlan=captureSepoliaLiquidityPlan(input),c=sepoliaLiquidityContracts;
- if(recovery&&(!['cancel','continue'].includes(recovery.kind)||Object.keys(recovery).sort().join()!==(recovery.kind==='cancel'?'kind,resolution':'kind,remainingPlan,resolution')))throw Error('Invalid seed recovery');
+ if(recovery){const keys=recovery.kind==='cancel'?['kind','resolution']:recovery.kind==='successor'?['kind','resolution','successor']:recovery.kind==='continue'?['kind','remainingPlan','resolution',...(Object.hasOwn(recovery,'successor')?['successor']:[])]:[];if(!keys.length||Object.keys(recovery).sort().join()!==keys.sort().join())throw Error('Invalid seed recovery');}
  const resolution=recovery?captureSepoliaSeedResolution(recovery.resolution,originalPlan):null;
+ const successor=recovery&&Object.hasOwn(recovery,'successor')?captureSepoliaSeedSuccessor(recovery.successor,originalPlan,resolution):undefined;
  const plan=recovery?.kind==='continue'?captureSepoliaSeedContinuationPlan(recovery.remainingPlan,originalPlan):originalPlan;
- if(recovery?.kind==='cancel'&&stage!=='approve-usdc'||!(await sepoliaLiquidityTransactions(plan)).some(s=>s.name===stage))throw Error('Invalid fixed seed stage');
- const deadline=()=>recovery?.kind==='cancel'?resolution.expiresAt:sepoliaLiquidityDeadline(plan,stage);
+ if(['cancel','successor'].includes(recovery?.kind)&&stage!=='approve-usdc'||!(await sepoliaLiquidityTransactions(plan)).some(s=>s.name===stage))throw Error('Invalid fixed seed stage');
+ const deadline=()=>recovery?.kind==='successor'?successor.expiresAt:recovery?.kind==='cancel'?resolution.expiresAt:sepoliaLiquidityDeadline(plan,stage);
  let lock,provider;const lockPath=statePath+'.lock';let lockIdentity;
  try{
   const directory=path.dirname(path.resolve(statePath)),st=await fs.lstat(directory);
@@ -393,13 +394,19 @@ export async function seedTestnetLiquidity({plan:input,statePath,stage,keyFile,r
   lock=await fs.open(lockPath,'wx',0o600);lockIdentity=await lock.stat();await lock.writeFile(JSON.stringify({pid:process.pid,campaign:plan.campaign}));await lock.sync();
   const binding=sha256(toUtf8Bytes(JSON.stringify(originalPlan)));
   const originalStore=await openSepoliaSeedJournal(statePath,binding,originalPlan.campaign,{existingOnly:!!recovery});
-  let store=originalStore,cancellationStore;
+  let store=originalStore,cancellationStore,successorStore;
   if(recovery){
    if(originalStore.read().operations?.['approve-usdc']?.hash!==resolution.originalTransactionHash)throw Error('Original seed transaction changed');
    const cancellationBinding=sha256(toUtf8Bytes(JSON.stringify(['SEPOLIA_SEED_CANCELLATION_V1',originalPlan,resolution])));
    if(recovery.kind==='cancel')try{await fs.lstat(statePath+'.cancel-approve-usdc.json.initialized.json');}catch(e){if(e.code!=='ENOENT')throw e;const now=Date.now();if(now>=resolution.expiresAt*1000||resolution.expiresAt*1000-now>86400000)throw Error('Cancellation signing window unavailable');}
-   cancellationStore=await openSepoliaSeedJournal(statePath+'.cancel-approve-usdc.json',cancellationBinding,originalPlan.campaign,{existingOnly:recovery.kind==='continue'});
+   cancellationStore=await openSepoliaSeedJournal(statePath+'.cancel-approve-usdc.json',cancellationBinding,originalPlan.campaign,{existingOnly:recovery.kind!=='cancel'});
    if(recovery.kind==='cancel')store=cancellationStore;
+   if(successor){
+    const successorPath=statePath+'.successor-cancel-approve-usdc.json',successorBinding=sha256(toUtf8Bytes(JSON.stringify(['SEPOLIA_SEED_SUCCESSOR_V1',originalPlan,resolution,successor])));
+    if(recovery.kind==='successor')try{await fs.lstat(successorPath+'.initialized.json');}catch(e){if(e.code!=='ENOENT')throw e;const now=Date.now();if(now>=successor.expiresAt*1000||successor.expiresAt*1000-now>86400000)throw Error('Successor signing window unavailable');}
+    successorStore=await openSepoliaSeedJournal(successorPath,successorBinding,originalPlan.campaign,{existingOnly:recovery.kind==='continue'});
+    if(recovery.kind==='successor')store=successorStore;
+   }
   }
   provider=new JsonRpcProvider(operatorEthereumRequest(FetchRequest,plan.ethereumUrl,{spacingMs:200}),undefined,{batchMaxCount:1});
   const tokenAbi=['function balanceOf(address) view returns(uint256)','function allowance(address,address) view returns(uint256)','event Transfer(address indexed from,address indexed to,uint256 value)'];
@@ -464,14 +471,14 @@ export async function seedTestnetLiquidity({plan:input,statePath,stage,keyFile,r
    },
   };
   if(recovery?.kind==='continue'){
-   const winner=await resolveSepoliaSeedNonce({plan:originalPlan,resolution,originalStore,store:cancellationStore,ports});
+   const winner=await resolveSepoliaSeedNonce({plan:originalPlan,resolution,originalStore,store:cancellationStore,successor,successorStore,ports});
    if(winner.status!=='succeeded'||!winner.canonical)throw Error('Finalized original nonce winner required');
-   const first=winner.winner==='cancellation'?'approve-usdc':'seed-usdc-fee';
+   const first=winner.winner==='original'?'seed-usdc-fee':'approve-usdc';
    if(['inventory-usdc','inventory-eth','approve-fee'].includes(stage)||winner.winner==='original'&&stage==='approve-usdc')throw Error('Completed seed prefix cannot repeat');
    try{await fs.lstat(statePath+'.remaining.json.initialized.json');}catch(e){if(e.code!=='ENOENT')throw e;if(stage!==first)throw Error('Remaining seed must start at first unfinished stage');const now=Date.now();if(now>=plan.expiresAt*1000||plan.expiresAt*1000-now>86400000)throw Error('Remaining seed signing window unavailable');}
-   store=await openSepoliaSeedJournal(statePath+'.remaining.json',sha256(toUtf8Bytes(JSON.stringify(['SEPOLIA_SEED_REMAINING_V1',originalPlan,resolution,plan]))),plan.campaign);
+   store=await openSepoliaSeedJournal(statePath+'.remaining.json',sha256(toUtf8Bytes(JSON.stringify(['SEPOLIA_SEED_REMAINING_V1',originalPlan,resolution,plan,...(successor===undefined?[]:[successor])]))),plan.campaign);
   }
-  const result=recovery?.kind==='cancel'?await runSepoliaLiquidityCancellation({plan:originalPlan,resolution,originalStore,store,ports}):recovery?.kind==='continue'?await runSepoliaLiquidityContinuation({plan:originalPlan,resolution,originalStore,cancellationStore,remainingPlan:plan,stage,store,ports}):await runSepoliaLiquidityStage({plan,stage,store,ports});
+  const result=recovery?.kind==='successor'?await runSepoliaLiquiditySuccessor({plan:originalPlan,resolution,originalStore,cancellationStore,successor,store,ports}):recovery?.kind==='cancel'?await runSepoliaLiquidityCancellation({plan:originalPlan,resolution,originalStore,store,ports}):recovery?.kind==='continue'?await runSepoliaLiquidityContinuation({plan:originalPlan,resolution,originalStore,cancellationStore,successor,successorStore,remainingPlan:plan,stage,store,ports}):await runSepoliaLiquidityStage({plan,stage,store,ports});
   return {...result,campaign:plan.campaign,stage};
  }catch{throw Error('Sepolia seed unavailable; preserve original plan and journals, reconcile before another operation');}
  finally{provider?.destroy();if(lock){await lock.close();const current=await fs.lstat(lockPath);if(current.dev!==lockIdentity.dev||current.ino!==lockIdentity.ino)throw Error('Original seed owner lock changed');await fs.unlink(lockPath);}}
@@ -481,15 +488,17 @@ if(process.argv[1]&&import.meta.url===pathToFileURL(process.argv[1]).href){
  const [command,configPath,statePath,...args]=process.argv.slice(2);
  try{
   if(!command||!configPath||!statePath)throw Error('Usage: operator.mjs COMMAND CONFIG STATE [--amount VALUE --recipient ADDRESS]');
-  if(['seed-testnet-liquidity','cancel-seed-testnet-liquidity','continue-seed-testnet-liquidity'].includes(command)){
+  if(['seed-testnet-liquidity','cancel-seed-testnet-liquidity','successor-seed-testnet-cancellation','continue-seed-testnet-liquidity'].includes(command)){
    const load=async file=>JSON.parse((await readHostedPrivateFile(path.resolve(file),65536)).toString('utf8'));
    const plan=await load(configPath);let stage,keyFile,recovery;
    if(command==='seed-testnet-liquidity'){
     if(args.length!==4||args[0]!=='--stage'||args[2]!=='--key-file')throw Error();[stage,keyFile]=[args[1],args[3]];
    }else if(command==='cancel-seed-testnet-liquidity'){
     if(args.length!==4||args[0]!=='--resolution'||args[2]!=='--key-file')throw Error();stage='approve-usdc';keyFile=args[3];recovery={kind:'cancel',resolution:await load(args[1])};
+   }else if(command==='successor-seed-testnet-cancellation'){
+    if(args.length!==6||args[0]!=='--resolution'||args[2]!=='--successor'||args[4]!=='--key-file')throw Error();stage='approve-usdc';keyFile=args[5];recovery={kind:'successor',resolution:await load(args[1]),successor:await load(args[3])};
    }else{
-    if(args.length!==8||args[0]!=='--resolution'||args[2]!=='--remaining-plan'||args[4]!=='--stage'||args[6]!=='--key-file')throw Error();stage=args[5];keyFile=args[7];recovery={kind:'continue',resolution:await load(args[1]),remainingPlan:await load(args[3])};
+    if(![8,10].includes(args.length)||args[0]!=='--resolution'||args[2]!=='--remaining-plan'||args[4]!=='--stage'||args[6]!=='--key-file'||args.length===10&&args[8]!=='--successor')throw Error();stage=args[5];keyFile=args[7];recovery={kind:'continue',resolution:await load(args[1]),remainingPlan:await load(args[3]),...(args.length===10?{successor:await load(args[9])}:{})};
    }
    const result=await seedTestnetLiquidity({plan,statePath:path.resolve(statePath),stage,keyFile:path.resolve(keyFile),recovery});console.log(JSON.stringify(result));
   }else{

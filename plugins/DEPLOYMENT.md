@@ -730,3 +730,67 @@ mutation. It does not repeat provider work to recover publication. Successful
 controlled protocol and local Git tests are source/component evidence only: actual
 personal App installation, existing-repository permission checks, live PR behavior
 and representative model-generated project acceptance remain separate gates.
+
+### Explicit Sepolia seed cancellation successor
+
+A missing transaction/receipt is an unresolved outcome, not permission to replay
+signed bytes or repeat a completed seed stage. Preserve the original plan, seed
+journal, first cancellation resolution and cancellation journal. First reconcile
+all known hashes and the current canonical sender nonce. If a known transaction
+has finalized successfully, use the remaining-only continuation; its allowance
+checks distinguish an original approval from a self-cancellation.
+
+When the trusted lead explicitly chooses one fresh same-nonce cancellation, the
+existing operator supports `successor-seed-testnet-cancellation`. It accepts a
+separate private mode 0600 successor JSON with exactly these fields:
+
+- `schemaVersion`: `1`.
+- `originalPlanSha256` and `originalTransactionHash`: the unchanged first
+  cancellation resolution's bindings.
+- `cancellationTransactionHash`: the retained first cancellation's signed hash.
+- `cancellationIdentitySha256`: SHA256 of that record's exact `identity` UTF-8
+  string; the operator independently reconstructs and validates this identity.
+- `expiresAt`: explicit Unix seconds, future and no more than 24 hours away when
+  the new journal is initialized and when the operation is admitted.
+- `maxFeePerGas` and `maxPriorityFeePerGas`: decimal wei strings selected from
+  fresh network/provider evidence. Both must exceed the first cancellation's
+  caps; the maximum fee must remain below 5 gwei and cover the priority fee.
+
+The sender, chain 11155111, nonce, self-recipient, zero value, empty calldata and
+21000 gas limit are reconstructed from the immutable original signed approval;
+none is configurable in the successor input. This is one fixed successor slot,
+not a fee-escalation loop. The first cancellation must have retained signed bytes;
+a preparing-without-hash record cannot be replaced through this path.
+
+```sh
+node plugins/operator.mjs successor-seed-testnet-cancellation ORIGINAL_PLAN ORIGINAL_STATE \
+  --resolution FIRST_RESOLUTION --successor SUCCESSOR --key-file PRIVATE_KEY_REFERENCE
+```
+
+The existing strict sender lock, private journal writer, canonical code/nonce/
+balance/allowance checks, bounded transport and safe broadcast diagnostics apply.
+The separate `ORIGINAL_STATE.successor-cancel-approve-usdc.json` and its initialized
+marker are immutable in identity. Preparing state is durable before signing and
+signed bytes are durable before the single transport. Re-entry only reconciles;
+unknown/preparing outcomes never sign or send again. Do not change fees/deadlines,
+remove markers, rename state, or transmit earlier bytes to obtain another attempt.
+
+Original approval, first cancellation and successor are reconciled before and
+after submission. A raced original approval must have its real finalized allowance
+and is reported as the original winner. Failed receipts, changed canonical blocks,
+nonfinal receipts, wrong effects and conflicting winners do not unlock funding.
+After a successful finalized winner, use the existing remaining-only command with
+the unchanged successor appended:
+
+```sh
+node plugins/operator.mjs continue-seed-testnet-liquidity ORIGINAL_PLAN ORIGINAL_STATE \
+  --resolution FIRST_RESOLUTION --remaining-plan FRESH_REMAINING_PLAN \
+  --stage FIRST_UNFINISHED_STAGE --key-file PRIVATE_KEY_REFERENCE --successor SUCCESSOR
+```
+
+This preserves completed inventory/FEE approval and skips USDC approval only when
+the original approval won. Either cancellation winner requires the remaining USDC
+approval at the next nonce. The successor never modifies the original/first
+cancellation journals or silently extends the expired funding plan. Controlled
+real-signature tests establish these recovery semantics; an actual finalized
+Sepolia winner and real-proof application acceptance remain separate evidence.

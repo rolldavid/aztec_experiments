@@ -448,7 +448,7 @@ async function inspectSeedResolution({plan:input,resolution:inputResolution,orig
  if(state.seedLiquidity?.schemaVersion!==1||state.seedLiquidity.binding!==resolution.originalPlanSha256||!Array.isArray(entered)||entered.length!==index+1||entered.some((name,i)=>name!==steps[i].name)||Object.keys(state.operations??{}).sort().join()!==[...entered].sort().join())throw rejected();
  for(const step of steps.slice(0,index+1)){
   const record=state.operations[step.name];
-  if(record?.schemaVersion!==1||record.identity!==identity+':'+step.name||record.policy!=='reconcile-only'||record.phase!=='submission-unknown'||!await matchSepoliaLiquiditySigned(record,step))throw rejected();
+  if(record?.schemaVersion!==1||record.identity!==identity+':'+step.name||(record.journalIdentity??record.identity)!==identity+':'+step.name||record.policy!=='reconcile-only'||record.phase!=='submission-unknown'||!await matchSepoliaLiquiditySigned(record,step))throw rejected();
   if(step.name!=='approve-usdc'&&(await seedReconcile(ports,step,record)).status!=='succeeded')throw Error('Original finalized seed prefix unavailable');
  }
  if(original.hash!==resolution.originalTransactionHash)throw rejected();
@@ -482,7 +482,49 @@ export async function runSepoliaLiquidityCancellation(args){
  }});
  return (await inspectSeedResolution(args)).result;
 }
-export async function resolveSepoliaSeedNonce(args){return (await inspectSeedResolution(args)).result;}
+// One explicitly planned successor to the first uncertain cancellation. The
+// fixed journal slot cannot become an automatic fee-bumping/retry mechanism.
+export function captureSepoliaSeedSuccessor(input,originalInput,resolutionInput){
+ const plan=captureSepoliaLiquidityPlan(originalInput),resolution=captureSepoliaSeedResolution(resolutionInput,plan);
+ const s=seedObject(input,['schemaVersion','originalPlanSha256','originalTransactionHash','cancellationTransactionHash','cancellationIdentitySha256','expiresAt','maxFeePerGas','maxPriorityFeePerGas']);
+ if(s.schemaVersion!==1||s.originalPlanSha256!==resolution.originalPlanSha256||s.originalTransactionHash!==resolution.originalTransactionHash||typeof s.cancellationTransactionHash!=='string'||!/^0x[0-9a-f]{64}$/.test(s.cancellationTransactionHash)||s.cancellationTransactionHash===s.originalTransactionHash||typeof s.cancellationIdentitySha256!=='string'||!/^[0-9a-f]{64}$/.test(s.cancellationIdentitySha256)||!Number.isSafeInteger(s.expiresAt)||s.expiresAt<1)throw rejected();
+ seedUint(s.maxFeePerGas,4999999999n);seedUint(s.maxPriorityFeePerGas,BigInt(s.maxFeePerGas));
+ const bumped=v=>(BigInt(v)*120n+99n)/100n;
+ if(BigInt(s.maxFeePerGas)<=bumped(plan.maxFeePerGas)||BigInt(s.maxPriorityFeePerGas)<=bumped(plan.maxPriorityFeePerGas))throw rejected();
+ return Object.freeze(s);
+}
+async function inspectSeedSuccessor({plan:input,resolution,originalStore,cancellationStore,successor:inputSuccessor,store,ports}){
+ const checked=await inspectSeedResolution({plan:input,resolution,originalStore,store:cancellationStore,ports});
+ const {plan,retained:first,cancellationIdentity}=checked,successor=captureSepoliaSeedSuccessor(inputSuccessor,plan,checked.resolution);
+ if(first?.phase!=='submission-unknown'||first.hash!==successor.cancellationTransactionHash||createHash('sha256').update(cancellationIdentity).digest('hex')!==successor.cancellationIdentitySha256)throw rejected();
+ const step=Object.freeze({...checked.step,maxFeePerGas:successor.maxFeePerGas,maxPriorityFeePerGas:successor.maxPriorityFeePerGas});
+ const successorIdentity=JSON.stringify(['SEPOLIA_SEED_SUCCESSOR_V1',plan,checked.resolution,successor,step]),saved=store.read();
+ if(Object.keys(saved).some(k=>k!=='operations')||Object.keys(saved.operations??{}).some(k=>k!=='relay-funding'))throw rejected();
+ const retained=saved.operations?.['relay-funding'];
+ if(retained&&(retained.schemaVersion!==1||retained.policy!=='reconcile-only'||retained.identity!==successorIdentity||(retained.journalIdentity??retained.identity)!==successorIdentity||!['preparing','submission-unknown'].includes(retained.phase)))throw rejected();
+ if(retained?.phase==='submission-unknown'&&!await matchSepoliaLiquiditySigned(retained,step))throw rejected();
+ const successorResult=retained?await seedReconcile(ports,step,retained,true):{status:'unresolved',scope:'liquidity-seed',canonical:false};
+ if(checked.result.canonical&&successorResult.canonical)throw Error('Conflicting finalized nonce winners');
+ const result=checked.result.canonical?checked.result:successorResult.canonical?{...successorResult,winner:'successor'}:successorResult;
+ return {...checked,successor,step,successorIdentity,retained,result};
+}
+export async function runSepoliaLiquiditySuccessor(args){
+ const {store,ports,now=()=>Date.now()}=args,checked=await inspectSeedSuccessor(args);
+ const {plan,successor,step,successorIdentity,retained,result}=checked;
+ if(result.canonical||retained)return result;
+ if(now()>=successor.expiresAt*1000||successor.expiresAt*1000-now()>86400000)throw rejected();
+ await ports.preflightCancellation(plan,step,successor);
+ const reread=await inspectSeedSuccessor(args);if(reread.result.canonical)return reread.result;
+ await onceAztecOperation({store,name:'relay-funding',identity:successorIdentity,scope:'liquidity-seed',observeBroadcast:true,reconcile:r=>seedReconcile(ports,step,r,true),execute:async({bindDeployment,submit})=>{
+  await bindDeployment({from:step.from,nonce:step.nonce,originalHash:successor.originalTransactionHash,cancellationHash:successor.cancellationTransactionHash});
+  const signed=await ports.sign(step),{keccak256}=await import('ethers'),record={raw:signed.replace(/^0x/,''),hash:keccak256(signed)};
+  if(!await matchSepoliaLiquiditySigned(record,step))throw rejected();await submit(record,()=>ports.broadcast(signed));
+ }});
+ return (await inspectSeedSuccessor(args)).result;
+}
+export async function resolveSepoliaSeedNonce(args){
+ return (args.successor===undefined?await inspectSeedResolution(args):await inspectSeedSuccessor({...args,cancellationStore:args.store,store:args.successorStore})).result;
+}
 export function captureSepoliaSeedContinuationPlan(nextInput,originalInput){
  const plan=captureSepoliaLiquidityPlan(nextInput),original=captureSepoliaLiquidityPlan(originalInput);
  const mutable=new Set(['campaign','ownerNonce','expiresAt','cleanupExpiresAt','gasLimits','maxFeePerGas','maxPriorityFeePerGas']);
@@ -490,14 +532,14 @@ export function captureSepoliaSeedContinuationPlan(nextInput,originalInput){
  if(plan.campaign===original.campaign||!Number.isSafeInteger(original.ownerNonce+2)||plan.ownerNonce!==original.ownerNonce+2||plan.expiresAt<=original.expiresAt)throw rejected();
  return plan;
 }
-export async function runSepoliaLiquidityContinuation({plan:input,resolution,originalStore,cancellationStore,remainingPlan:nextInput,stage,store,ports,now=()=>Date.now()}){
- const checked=await inspectSeedResolution({plan:input,resolution,originalStore,store:cancellationStore,ports});
+export async function runSepoliaLiquidityContinuation({plan:input,resolution,originalStore,cancellationStore,successor,successorStore,remainingPlan:nextInput,stage,store,ports,now=()=>Date.now()}){
+ const checked=successor===undefined?await inspectSeedResolution({plan:input,resolution,originalStore,store:cancellationStore,ports}):await inspectSeedSuccessor({plan:input,resolution,originalStore,cancellationStore,successor,store:successorStore,ports});
  if(checked.result.status!=='succeeded'||!checked.result.canonical)throw Error('Finalized original nonce winner required');
  const plan=captureSepoliaSeedContinuationPlan(nextInput,checked.plan),original=checked.plan;
  let nonce=plan.ownerNonce;
- const steps=Object.freeze((await sepoliaLiquidityTransactions(plan)).filter(s=>!['inventory-usdc','inventory-eth','approve-fee'].includes(s.name)&&(checked.result.winner==='cancellation'||s.name!=='approve-usdc')).map(s=>Object.freeze({...s,nonce:nonce++})));
+ const steps=Object.freeze((await sepoliaLiquidityTransactions(plan)).filter(s=>!['inventory-usdc','inventory-eth','approve-fee'].includes(s.name)&&(checked.result.winner!=='original'||s.name!=='approve-usdc')).map(s=>Object.freeze({...s,nonce:nonce++})));
  if(!steps.some(s=>s.name===stage))throw rejected();
- const identity=JSON.stringify(['SEPOLIA_SEED_REMAINING_V1',original,checked.resolution,checked.result.winner,checked.result.transactionHash,plan]);
+ const identity=JSON.stringify(['SEPOLIA_SEED_REMAINING_V1',original,checked.resolution,checked.result.winner,checked.result.transactionHash,plan,...(successor===undefined?[]:[checked.successor])]);
  if(!Number.isSafeInteger(nonce))throw rejected();
  const initial=!store.read().seedLiquidity;
  if(initial&&(now()>=plan.expiresAt*1000||plan.expiresAt*1000-now()>86400000))throw rejected();

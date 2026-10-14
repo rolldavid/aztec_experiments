@@ -437,3 +437,71 @@ test('Seed Ethereum transport exposes only numeric HTTP failure status without r
  const request=operatorEthereumRequest(Request,'https://example.invalid/');
  await assert.rejects(request.getUrlFunc(request),error=>{assert.deepEqual(seedBroadcastFailure(error),{state:'rejected',httpStatus:429,rpcCode:null,ethersCode:'unknown'});assert.equal(error.message,'Operator Ethereum RPC unavailable');return true;});assert.equal(calls,1);assert.equal(request.retryFunc(),false);
 });
+
+async function seedSuccessorFixture(){
+ const f=await seedResolutionFixture();await f.ops.runSepoliaLiquidityCancellation(f.args);
+ const {createHash}=await import('node:crypto'),first=f.saved.operations['relay-funding'];let successorState={operations:{}};
+ const successor={schemaVersion:1,originalPlanSha256:f.args.resolution.originalPlanSha256,originalTransactionHash:f.args.resolution.originalTransactionHash,cancellationTransactionHash:first.hash,cancellationIdentitySha256:createHash('sha256').update(first.identity).digest('hex'),expiresAt:f.args.resolution.expiresAt+600,maxFeePerGas:'3000000',maxPriorityFeePerGas:'2000000'};
+ const store={read:()=>successorState,write:async value=>{successorState=structuredClone(value);}};
+ const args={...f.args,cancellationStore:f.args.store,store,successor};
+ return {...f,args,first,originalSnapshot:JSON.stringify(f.original),firstSnapshot:JSON.stringify(f.saved),get successorState(){return successorState;},continuation:()=>({...f.continuation(),successor,successorStore:store}),originalFixture:f};
+}
+test('Seed successor explicit fees bind both retained intents and persist signed bytes before its only transport',async()=>{
+ const f=await seedSuccessorFixture(),send=f.args.ports.broadcast;
+ f.args.ports.broadcast=async raw=>{const r=f.successorState.operations['relay-funding'];assert.equal(r.phase,'submission-unknown');assert.equal(r.raw,raw.slice(2));assert.equal(r.deployment.originalHash,f.args.successor.originalTransactionHash);assert.equal(r.deployment.cancellationHash,f.first.hash);return send(raw);};
+ assert.equal((await f.ops.runSepoliaLiquiditySuccessor(f.args)).status,'unresolved');
+ const s=f.signedSteps[1];assert.deepEqual([s.chainId,s.from,s.to,s.nonce,s.value,s.data,s.gasLimit,s.maxFeePerGas,s.maxPriorityFeePerGas],['11155111',f.args.plan.owner,f.args.plan.owner,f.signedSteps[0].nonce,'0','0x','21000','3000000','2000000']);
+ const saved=JSON.stringify(f.successorState);await f.ops.runSepoliaLiquiditySuccessor({...f.args,now:()=>Number.MAX_SAFE_INTEGER});assert.equal(JSON.stringify(f.successorState),saved);assert.equal(f.signedSteps.length,2);assert.equal(f.broadcasts.length,2);assert.equal(JSON.stringify(f.original),f.originalSnapshot);assert.equal(JSON.stringify(f.originalFixture.saved),f.firstSnapshot);
+});
+test('Seed successor rejects malformed binding or authority before any second signature',async()=>{
+ for(const change of ['plan','original-hash','first-hash','first-identity','extra','same-fee','same-tip','cap','tip-cap','expired','far-future','first-preparing','first-bytes','original-bytes','original-journal','first-journal']){
+  const f=await seedSuccessorFixture(),s={...f.args.successor};let args={...f.args,successor:s};
+  if(change==='plan')s.originalPlanSha256='b'.repeat(64);if(change==='original-hash')s.originalTransactionHash='0x'+'b'.repeat(64);if(change==='first-hash')s.cancellationTransactionHash='0x'+'b'.repeat(64);if(change==='first-identity')s.cancellationIdentitySha256='b'.repeat(64);if(change==='extra')s.nonce=99;
+  if(change==='same-fee')s.maxFeePerGas=f.signedSteps[0].maxFeePerGas;if(change==='same-tip')s.maxPriorityFeePerGas=f.signedSteps[0].maxPriorityFeePerGas;if(change==='cap')s.maxFeePerGas='5000000000';if(change==='tip-cap')s.maxPriorityFeePerGas='3000001';
+  if(change==='expired')args.now=()=>s.expiresAt*1000;if(change==='far-future')s.expiresAt=Math.floor(args.now()/1000)+86401;
+  if(change==='first-preparing')f.first.phase='preparing';if(change==='first-bytes')f.first.raw=f.original.operations['approve-usdc'].raw;if(change==='original-bytes')f.original.operations['approve-usdc'].raw=f.first.raw;if(change==='original-journal')f.original.operations['approve-usdc'].journalIdentity='changed';if(change==='first-journal')f.first.journalIdentity='changed';
+  await assert.rejects(f.ops.runSepoliaLiquiditySuccessor(args),change);assert.equal(f.signedSteps.length,1,change);assert.equal(f.broadcasts.length,1,change);
+ }
+});
+test('Seed successor reconciles any of three finalized winners without replay and continues only remaining stages',async()=>{
+ for(const winner of ['original','cancellation','successor']){
+  const f=await seedSuccessorFixture();await f.ops.runSepoliaLiquiditySuccessor(f.args);
+  const hashes={original:f.args.successor.originalTransactionHash,cancellation:f.first.hash,successor:f.successorState.operations['relay-funding'].hash};f.confirm(hashes[winner]);
+  const r=await f.ops.runSepoliaLiquiditySuccessor(f.args);assert.equal(r.winner,winner);assert.equal(r.status,'succeeded');assert.equal(r.transactionHash,hashes[winner]);assert.equal(f.signedSteps.length,2);
+  const next=f.continuation(),stage=winner==='original'?'seed-usdc-fee':'approve-usdc';await f.ops.runSepoliaLiquidityContinuation({...next,stage});assert.equal(f.signedSteps[2].name,stage);assert.equal(f.signedSteps[2].nonce,next.remainingPlan.ownerNonce);
+  for(const forbidden of ['inventory-usdc','approve-fee',...(winner==='original'?['approve-usdc']:[])])await assert.rejects(f.ops.runSepoliaLiquidityContinuation({...next,stage:forbidden}));
+  assert.equal(JSON.stringify(f.original),f.originalSnapshot);assert.equal(JSON.stringify(f.originalFixture.saved),f.firstSnapshot);
+ }
+});
+test('Seed successor original or first cancellation wins before signing including preflight races',async()=>{
+ for(const winner of ['original','cancellation'])for(const moment of ['before','preflight']){
+  const f=await seedSuccessorFixture(),hash=winner==='original'?f.args.successor.originalTransactionHash:f.first.hash;
+  if(moment==='before')f.confirm(hash);else f.args.ports.preflightCancellation=async()=>{f.confirm(hash);};
+  const r=await f.ops.runSepoliaLiquiditySuccessor(f.args);assert.equal(r.winner,winner);assert.equal(r.status,'succeeded');assert.equal(f.signedSteps.length,1);assert.equal(f.broadcasts.length,1);assert.deepEqual(f.successorState,{operations:{}});
+ }
+});
+test('Seed successor lost acknowledgement reconciles raced original allowance and never relabels it cancellation',async()=>{
+ const f=await seedSuccessorFixture();f.args.ports.broadcast=async raw=>{f.broadcasts.push(raw);f.confirm(f.args.successor.originalTransactionHash);throw Error('lost response');};
+ let originalEffect=0;f.args.ports.effect=async step=>{if(step.name==='approve-usdc')originalEffect++;return true;};
+ const r=await f.ops.runSepoliaLiquiditySuccessor(f.args);assert.equal(r.winner,'original');assert.equal(r.status,'succeeded');assert(originalEffect>0);
+ f.args.ports.effect=async step=>step.name!=='approve-usdc';assert.equal((await f.ops.runSepoliaLiquiditySuccessor(f.args)).canonical,false);await assert.rejects(f.ops.runSepoliaLiquidityContinuation({...f.continuation(),stage:'seed-usdc-fee'}));assert.equal(f.signedSteps.length,2);
+});
+test('Seed successor preparing and transport failures are fenced even after deadline expiry',async()=>{
+ for(const failure of ['sign','broadcast']){
+  const f=await seedSuccessorFixture();let attempts=0;
+  if(failure==='sign')f.args.ports.sign=async()=>{attempts++;assert.equal(f.successorState.operations['relay-funding'].phase,'preparing');throw Error();};
+  else f.args.ports.broadcast=async()=>{attempts++;assert.equal(f.successorState.operations['relay-funding'].phase,'submission-unknown');throw Error();};
+  await f.ops.runSepoliaLiquiditySuccessor(f.args);const snapshot=JSON.stringify(f.successorState);
+  await f.ops.runSepoliaLiquiditySuccessor({...f.args,now:()=>Number.MAX_SAFE_INTEGER});assert.equal(attempts,1);assert.equal(JSON.stringify(f.successorState),snapshot);
+ }
+});
+test('Seed successor failed receipts reorg nonfinal wrong effect and conflicting winners block continuation',async()=>{
+ for(const failure of ['failed','reorg','nonfinal','effect','original-conflict','first-conflict','changed-successor','changed-first']){
+  const f=await seedSuccessorFixture();await f.ops.runSepoliaLiquiditySuccessor(f.args);const r=f.successorState.operations['relay-funding'];f.confirm(r.hash,failure==='failed'?0:1,12);f.setFinalized(failure==='nonfinal'?11:12);
+  if(failure==='reorg')f.setCanonical('0x'+'b'.repeat(64),12);if(failure==='effect')f.args.ports.cancellationEffect=async()=>false;
+  if(failure==='original-conflict')f.confirm(f.args.successor.originalTransactionHash);if(failure==='first-conflict')f.confirm(f.first.hash);
+  if(failure==='changed-successor')r.raw=f.first.raw;if(failure==='changed-first')f.first.raw=r.raw;
+  await assert.rejects(f.ops.runSepoliaLiquidityContinuation({...f.continuation(),stage:'approve-usdc'}),failure);assert.equal(f.signedSteps.length,2);
+  if(failure==='failed'){const result=await f.ops.runSepoliaLiquiditySuccessor(f.args);assert.equal(result.status,'failed');assert.equal(result.winner,'successor');assert.equal(result.canonical,true);}
+ }
+});
