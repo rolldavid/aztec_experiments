@@ -141,6 +141,51 @@ export async function activateDevelopmentBok({run,settle,expected,waitMs=120000,
  return {status,walletBok:{contractAddress:status.escrow,operatorAddress:expected.operatorAddress,pluginId:status.pluginId}};
 }
 
+// Read-only polling of the existing operator commands is safe because each
+// command reconciles its original durable intent before any preparation/send.
+export async function completeDevelopmentOperation({run,command,timeoutMs=120000,pollMs=1000}) {
+ if(!['deploy-escrow','deploy-portal','bind','activate','register','status'].includes(command)||!Number.isSafeInteger(timeoutMs)||timeoutMs<1||timeoutMs>120000||!Number.isSafeInteger(pollMs)||pollMs<0||pollMs>1000)throw Error('Invalid local lifecycle deadline');
+ const deadline=Date.now()+timeoutMs;
+ for(;;){
+  const result=await run(command);
+  if(result?.status==='succeeded'&&result.canonical===true)return result;
+  if(result?.status!=='unresolved'||Date.now()>=deadline)throw Error('Original Bok operation requires reconciliation');
+  await pause(Math.min(pollMs,Math.max(0,deadline-Date.now())));
+ }
+}
+
+// The local settlement helper updates proven state/Outbox, but the installed
+// archiver derives finalized L2 from proven state at L1's finalized block. Let the
+// already-owned ordinary miner advance; do not repeat settlement or the CLI.
+export async function waitDevelopmentFinality({node,txHash,timeoutMs=120000,pollMs=1000}) {
+ const {boundedTransactionRead}=await import('../../shared/transaction-outcomes.mjs');
+ if(!Number.isSafeInteger(timeoutMs)||timeoutMs<1||timeoutMs>120000||!Number.isSafeInteger(pollMs)||pollMs<0||pollMs>1000)throw Error('Invalid development finality deadline');
+ const deadline=Date.now()+timeoutMs,hash=String(txHash);let original;
+ const read=fn=>boundedTransactionRead(fn,Math.min(20000,Math.max(1,deadline-Date.now())));
+ for(;;){
+  if(Date.now()>=deadline)throw Error('Original Ready awaits finality; retain deployment state');
+  const receipt=await read(()=>node.getTxReceipt(txHash));
+  if(String(receipt?.txHash)!==hash||!['checkpointed','proven','finalized'].includes(receipt?.status)||receipt.executionResult!=='success'||!Number.isSafeInteger(receipt.blockNumber)||receipt.blockNumber<1||!/^0x[0-9a-f]{64}$/i.test(String(receipt.blockHash)))throw Error('Original Ready receipt unavailable');
+  const anchor={number:receipt.blockNumber,hash:String(receipt.blockHash)};
+  if(original&&(original.number!==anchor.number||original.hash!==anchor.hash))throw Error('Original Ready anchor changed');
+  original??=anchor;
+  if(String((await read(()=>node.getBlock(anchor.number)))?.hash)!==anchor.hash)throw Error('Original Ready anchor changed');
+  const tips=await read(()=>node.getChainTips()),number=tips?.finalized?.block?.number;
+  if(!Number.isSafeInteger(number)||number<0)throw Error('Invalid finalized chain tip');
+  if(number>=anchor.number){
+   if(String((await read(()=>node.getBlock(anchor.number)))?.hash)!==anchor.hash)throw Error('Original Ready anchor changed');
+   return anchor;
+  }
+  await pause(Math.min(pollMs,Math.max(0,deadline-Date.now())));
+ }
+}
+
+export async function failRollingBootstrap(error,close) {
+ const message='Current Rolling development setup incomplete; retain original state and journals';
+ try{await close();}catch(cleanup){throw new AggregateError([error,cleanup],message,{cause:error});}
+ throw new Error(message,{cause:error});
+}
+
 // Current local profile. Production deployment/transaction implementations are
 // reused; only the disposable chain's explicitly labelled settlement is local.
 export async function bootstrapRollingDevnet({directory,ports,onProgress=console.log,onOwned=()=>{}}) {
@@ -200,6 +245,7 @@ export async function bootstrapRollingDevnet({directory,ports,onProgress=console
    const hash=TxHash.fromString(report.readyTxHash),effect=await net.node.getTxEffect(hash),leaf=effect?.data?.l2ToL1Msgs.find(x=>!x.isZero());
    if(!leaf)throw Error('Original Ready effect unavailable');
    await settleC01ApplicationMessage({node:net.node,config:net.config,dateProvider:net.dateProvider,l1Client:net.deployment.l1Client,directory,rollupAddress:info.l1ContractAddresses.rollupAddress,txHash:hash,expectedLeaf:leaf,kind:'ready',applicationProofs:false});
+   await waitDevelopmentFinality({node:net.node,txHash:hash});
    // Original recorded transactions only; the existing engine reconciles them.
    await cli(args);report=await readDevnetRecord(reportPath);
   }
@@ -229,7 +275,7 @@ export async function bootstrapRollingDevnet({directory,ports,onProgress=console
   // Keep the original constructor config and campaign unchanged. Lifecycle
   // settings are a separately captured optional scope in the existing operator.
   const statePath=path.join(directory,'bok-operations.json');
-  const bok=await operatorCommand({command:'deploy-escrow',config:operatorConfig,statePath,actor});
+  const bok=await completeDevelopmentOperation({command:'deploy-escrow',run:command=>operatorCommand({command,config:operatorConfig,statePath,actor})});
   if(bok.status!=='succeeded'||bok.canonical!==true)throw Error('PrivateBok constructor requires reconciliation');
   tokenProvider=new JsonRpcProvider(net.rpcUrl,undefined,{cacheTimeout:-1,batchMaxCount:1});
   const tokenStatePath=path.join(directory,'development-token-operations.json');
@@ -264,5 +310,5 @@ export async function bootstrapRollingDevnet({directory,ports,onProgress=console
   await writeDevnetRecord(path.join(directory,'readiness.json'),readiness);
   await wallet.stop();wallet=undefined;
   return {net,readerConfig,walletConfig,readiness,close};
- }catch{await close();throw Error('Current Rolling development setup incomplete; retain original state and journals');}
+ }catch(error){await failRollingBootstrap(error,close);}
 }

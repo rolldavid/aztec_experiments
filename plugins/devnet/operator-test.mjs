@@ -115,6 +115,46 @@ if(focused){
    for(const name of ['ethereum-state.json','node','deployment.json','bok-operations.json']){const p=path.join(dir,name);if(name==='node')await fs.mkdir(p);else await fs.writeFile(p,'retained',{mode:0o600});await assert.rejects(assertFreshDevnetDirectory(dir),/metadata missing/);assert(await fs.lstat(p));await fs.rm(p,{recursive:true});}
   }finally{await fs.rm(dir,{recursive:true,force:true});}
  });
+ const {waitDevelopmentFinality,failRollingBootstrap}=await import('./bootstrap.mjs');
+ const readyHash='0x'+'a'.repeat(64),readyBlockHash='0x'+'b'.repeat(64);
+ const readyReceipt={txHash:readyHash,status:'proven',executionResult:'success',blockNumber:3,blockHash:readyBlockHash};
+ const finalityNode=()=>({getTxReceipt:async()=>readyReceipt,getBlock:async()=>({hash:readyBlockHash}),getChainTips:async()=>({finalized:{block:{number:3}}})});
+ test('default finality deadline admits an immediately finalized canonical receipt',async()=>assert.deepEqual(await waitDevelopmentFinality({node:finalityNode(),txHash:readyHash}),{number:3,hash:readyBlockHash}));
+ test('actual finality wait observes pending then finalized with reads only',async()=>{
+  const node=finalityNode();let reads=0;node.getChainTips=async()=>({finalized:{block:{number:++reads<3?2:3}}});
+  assert.deepEqual(await waitDevelopmentFinality({node,txHash:readyHash,timeoutMs:100,pollMs:0}),{number:3,hash:readyBlockHash});assert.equal(reads,3);
+ });
+ test('finality timeout or stalled read preserves pending state without CLI or settlement replay',async()=>{
+  const node=finalityNode();node.getChainTips=async()=>({finalized:{block:{number:2}}});await assert.rejects(waitDevelopmentFinality({node,txHash:readyHash,timeoutMs:5,pollMs:1}),/finality/);
+  node.getChainTips=()=>new Promise(()=>{});await assert.rejects(waitDevelopmentFinality({node,txHash:readyHash,timeoutMs:5,pollMs:0}));
+ });
+ test('finality wait refuses changed original receipt, reorg, reverted effect and invalid tip',async()=>{
+  for(const mutation of [n=>n.getTxReceipt=async()=>({...readyReceipt,txHash:'0x'+'c'.repeat(64)}),n=>n.getTxReceipt=async()=>({...readyReceipt,executionResult:'reverted'}),n=>n.getBlock=async()=>({hash:'0x'+'c'.repeat(64)}),n=>n.getChainTips=async()=>({finalized:{block:{number:'3'}}})]){const node=finalityNode();mutation(node);await assert.rejects(waitDevelopmentFinality({node,txHash:readyHash,timeoutMs:50,pollMs:0}));}
+  const node=finalityNode();let reads=0;node.getTxReceipt=async()=>({...readyReceipt,blockNumber:++reads===1?3:4});node.getChainTips=async()=>({finalized:{block:{number:2}}});await assert.rejects(waitDevelopmentFinality({node,txHash:readyHash,timeoutMs:50,pollMs:0}),/anchor changed/);
+ });
+ test('bootstrap failure retains exact original private cause and cleanup failure behind generic message',async()=>{
+  const original=Error('synthetic-private-diagnostic'),cleanup=Error('controlled cleanup');let closes=0;
+  await assert.rejects(failRollingBootstrap(original,async()=>{closes++;}),e=>e.cause===original&&!e.message.includes(original.message));assert.equal(closes,1);
+  await assert.rejects(failRollingBootstrap(original,async()=>{throw cleanup;}),e=>e instanceof AggregateError&&e.cause===original&&e.errors[0]===original&&e.errors[1]===cleanup&&!e.message.includes(original.message));
+ });
+
+ test('retained local Anvil uses official SDK finality depth without removing snapshot or application guards',async()=>{
+  const {developmentAnvilArgs}=await import('./network.mjs');const args=developmentAnvilArgs({persistent:true,port:18545,mnemonic:'synthetic-only'});
+  assert.deepEqual(args,['--host','127.0.0.1','--port','18545','--chain-id','31337','--mnemonic','synthetic-only','--silent','--no-request-size-limit','--slots-in-an-epoch','1']);
+  assert(!developmentAnvilArgs({persistent:false,port:18546,mnemonic:'synthetic-only'}).includes('--slots-in-an-epoch'));
+ });
+ test('constructor waits for same recorded operation without preparing or sending again',async()=>{
+  const {completeDevelopmentOperation}=await import('./bootstrap.mjs'),{onceAztecOperation}=await import('../operations.mjs');let state={operations:{}},prepares=0,sends=0,reads=0;const store={read:()=>state,write:async s=>{state=s;}};
+  const result=await completeDevelopmentOperation({command:'deploy-escrow',timeoutMs:100,pollMs:0,run:command=>onceAztecOperation({store,name:command,identity:'retained-constructor',reconcile:async()=>++reads<3?{status:'unresolved',canonical:false}:{status:'succeeded',canonical:true,escrow:('0x'+'b'.repeat(64))},execute:async({submit})=>{prepares++;await submit({hash:'0x'+'7'.repeat(64),raw:'ab'},async()=>{sends++;});}})});
+  assert.equal(result.escrow,('0x'+'b'.repeat(64)));assert.equal(reads,3);assert.equal(prepares,1);assert.equal(sends,1);assert.equal(state.operations['deploy-escrow'].phase,'submission-unknown');
+ });
+ test('constructor deadline retains unknown or hashless intent and refuses a second execution',async()=>{
+  const {completeDevelopmentOperation}=await import('./bootstrap.mjs'),{onceAztecOperation}=await import('../operations.mjs');
+  for(const phase of ['preparing','submission-unknown']){const original={schemaVersion:1,policy:'reconcile-only',phase,identity:'saved',...(phase==='submission-unknown'?{hash:'0x'+'8'.repeat(64),raw:'ab'}:{})},state={operations:{'deploy-escrow':original}};let executes=0,writes=0;
+   await assert.rejects(completeDevelopmentOperation({command:'deploy-escrow',timeoutMs:3,pollMs:1,run:command=>onceAztecOperation({store:{read:()=>state,write:async()=>{writes++;}},name:command,identity:'saved',reconcile:async()=>({status:'unresolved',canonical:false}),execute:async()=>{executes++;}})}),/reconciliation/);
+   assert.equal(executes,0);assert.equal(writes,0);assert.equal(state.operations['deploy-escrow'],original);
+  }
+ });
 
  const {deployDevelopmentToken,activateDevelopmentBok,requireDevelopmentBokRecords}=await import('./bootstrap.mjs');
  const bokExpected={escrow:'0x'+'4'.repeat(64),operatorAddress:'0x'+'5'.repeat(64),pluginId:'0x'+'1'.repeat(64)};

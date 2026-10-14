@@ -287,3 +287,12 @@ legacy contract lifecycle remains available only through explicit direct executi
 of `plugins/devnet/operator-test.mjs`; it is not current Rolling acceptance.
 Fresh deployment, stop/reopen and an included wallet action require actual local
 runtime verification after the focused checks and normal build closure.
+
+Local finality uses Anvil's supported `--slots-in-an-epoch 1`, matching the
+installed Aztec SDK's test-node default. This affects only the retained loopback
+31337 development chain; the original snapshot and transaction identities remain
+unchanged. After explicit local Ready settlement, bootstrap waits up to 120 seconds
+using read-only canonical receipt/block and finalized-tip checks before one CLI
+resume. It neither replays settlement/transactions while waiting nor relaxes the
+deployment engine's finalized-chain guard. The original private startup cause is
+retained through cleanup, while the public CLI error remains generic.
