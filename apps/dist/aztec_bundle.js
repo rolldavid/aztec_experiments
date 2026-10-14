@@ -393071,7 +393071,8 @@ Partial Address: ${this.partialAddress.toString()}
         const frame = { ...context, validators: [] };
         const anchor2 = BlockHeader.fromBuffer(BlockHeader.prototype.toBuffer.call(context.anchorBlockHeader));
         const anchorRecord = { blockNumber: anchor2.getBlockNumber(), blockHash: (await anchor2.hash()).toString() };
-        const canonical2 = async () => {
+        let canonicalPending = null;
+        const canonicalSnapshot = async () => {
           const info = await pxe.node.getNodeInfo();
           check9(info.l1ChainId === p.network.chainId && info.rollupVersion === p.network.version && info.l1ContractAddresses.rollupAddress.toString().toLowerCase() === p.network.rollup && info.realProofs === p.proofsEnabled);
           const parameter = await anchor2.toBlockParameter();
@@ -393092,6 +393093,13 @@ Partial Address: ${this.partialAddress.toString()}
           check9((await h.hash()).toString() === anchorRecord.blockHash && h.getBlockNumber() === anchorRecord.blockNumber && h.globalVariables.chainId.toBigInt() === BigInt(p.network.chainId) && h.globalVariables.version.toBigInt() === BigInt(p.network.version));
           check9(instance.currentContractClassId.toString() === p.expectedClassId && instance.originalContractClassId.toString() === p.expectedClassId && (await computeContractAddressFromInstance(instance)).equals(address6));
           await guard();
+        };
+        const canonical2 = () => {
+          if (canonicalPending) return canonicalPending;
+          canonicalPending = canonicalSnapshot().finally(() => {
+            canonicalPending = null;
+          });
+          return canonicalPending;
         };
         await canonical2();
         const artifact = await pxe.contractStore.getContractArtifact(Fr.fromString(p.expectedClassId));
