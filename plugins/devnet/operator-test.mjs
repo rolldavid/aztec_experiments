@@ -500,4 +500,35 @@ if(focused){
   }finally{await sdk.queue.end();}
  });
 
+ test('development query gateway pins existing disabled service and canonical compact tier',async()=>{
+  const {developmentQueryServiceConfig}=await import('./bootstrap.mjs');
+  const config=developmentQueryServiceConfig({directory:'/private/tmp/development',appPort:8081,nodeUrl:'http://127.0.0.1:18081',rollupAddress:'0x'+'1'.repeat(40),rollupVersion:1,board:'0x'+'2'.repeat(64),privateFeeAddress:'0x'+'3'.repeat(64),privateBokAddress:'0x'+'4'.repeat(64)});
+  assert.equal(config.host,'127.0.0.1');assert.equal(config.port,0);assert.equal(config.chainId,31337);assert.equal(config.proofs,'disabled');assert.equal(config.applicationProfile,'rolling');assert.equal(config.bokEnabled,true);
+  assert.deepEqual(config.compactBlocks,{tier:'checkpointed'});assert.deepEqual(config.origins,['http://127.0.0.1:8081','http://localhost:8081']);assert.equal(config.queryNode.url,'http://127.0.0.1:18081');assert.equal(config.queryNode.maxLagSeconds,120);
+  const source=await fs.readFile(new URL('./bootstrap.mjs',import.meta.url),'utf8');assert(source.includes("queryService.address.port+'/v1/node'"));assert(source.includes('trustedQuery:{url:queryUrl,allowLocalDev:true}'));
+  assert(source.indexOf('await queryService?.close()')<source.indexOf('await net.close()',source.indexOf('await queryService?.close()')));
+ });
+ test('development native RPC mounts original compact route and retains ordinary node RPC',async()=>{
+  const {startDevelopmentNodeRpc}=await import('./network.mjs');
+  const unused=async()=>{throw Error('Unexpected native read');};
+  const node={getNodeInfo:unused,getChainTips:unused,getWorldStateSyncStatus:unused,getSyncedL1Timestamp:unused,getBlockData:unused,getBlock:unused,getBlockNumber:async()=>7};
+  const service=await startDevelopmentNodeRpc({node,config:{l1ChainId:31337,rollupVersion:1,rollupAddress:'0x'+'1'.repeat(40),realProofs:false}});
+  try{
+   const wrongMethod=await fetch(service.url+'/rolling/compact-block-v1');assert.equal(wrongMethod.status,405);await wrongMethod.body.cancel();
+   const origin=await fetch(service.url+'/rolling/compact-block-v1',{method:'POST',headers:{origin:'http://127.0.0.1:8081','content-type':'application/json'},body:'{}'});assert.equal(origin.status,415);await origin.body.cancel();
+   const malformed=await fetch(service.url+'/rolling/compact-block-v1',{method:'POST',headers:{'content-type':'application/json'},body:'{}'});assert.equal(malformed.status,400);await malformed.body.cancel();
+   const ordinary=await fetch(service.url,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:1,method:'aztec_getBlockNumber',params:[]})});assert.equal(ordinary.status,200);assert.equal((await ordinary.json()).result,7);
+  }finally{await service.close();}
+  await assert.rejects(fetch(service.url,{signal:AbortSignal.timeout(1000)}));
+ });
+ test('development compact shutdown waits for its original pending native request',async()=>{
+  const {startDevelopmentNodeRpc}=await import('./network.mjs');let release,started;
+  const entered=new Promise(resolve=>{started=resolve;}),held=new Promise(resolve=>{release=resolve;});const unused=async()=>{throw Error('Unexpected native read');};
+  const node={getNodeInfo:async()=>{started();await held;throw Error('Controlled native failure');},getChainTips:unused,getWorldStateSyncStatus:unused,getSyncedL1Timestamp:unused,getBlockData:unused,getBlock:unused};
+  const service=await startDevelopmentNodeRpc({node,config:{l1ChainId:31337,rollupVersion:1,rollupAddress:'0x'+'1'.repeat(40),realProofs:false}});
+  let closing;const response=fetch(service.url+'/rolling/compact-block-v1',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({schemaVersion:1,number:1,hash:'0x'+'1'.padStart(64,'0'),tier:'checkpointed'})}).then(r=>r.body.cancel(),()=>{});
+  try{await entered;let complete=false;closing=service.close().then(()=>{complete=true;});await new Promise(resolve=>setTimeout(resolve,20));assert.equal(complete,false);release();await closing;await response;assert.equal(complete,true);}
+  finally{release();await service.close();await response;}
+ });
+
 }

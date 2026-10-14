@@ -193,6 +193,13 @@ export async function initializeDevelopmentDeployer(wallet,secret,salt,signingKe
  return wallet.createSchnorrInitializerlessAccount(secret,salt,signingKey,'local public deployer');
 }
 
+// The ordinary disabled-proof service already provides the trusted RPC and
+// bounded compact gateway. No query-only production policy is changed here.
+export function developmentQueryServiceConfig({directory,appPort,nodeUrl,rollupAddress,rollupVersion,board,privateFeeAddress,privateBokAddress}) {
+ return {host:'127.0.0.1',port:0,applicationProfile:'rolling',bokEnabled:true,board,privateBokAddress,privateFeeAddress,
+  chainId:31337,rollupVersion,proofs:'disabled',origins:[`http://127.0.0.1:${appPort}`,`http://localhost:${appPort}`],threads:1,queueDirectory:directory,
+  queryNode:{url:nodeUrl,rollupAddress,maxLagSeconds:120},compactBlocks:{tier:'checkpointed'}};
+}
 // Current local profile. Production deployment/transaction implementations are
 // reused; only the disposable chain's explicitly labelled settlement is local.
 export async function bootstrapRollingDevnet({directory,ports,onProgress=console.log,onOwned=()=>{}}) {
@@ -225,8 +232,8 @@ export async function bootstrapRollingDevnet({directory,ports,onProgress=console
  const address=await getSchnorrInitializerlessAccountContractAddress(signingKey,salt,secret);
  if(String(address)!==actor.address||!signingKey.equals(deriveMasterMessageSigningSecretKey(secret)))throw Error('Original local actor identity differs');
  const net=await startDevnet({directory,fundingAddresses:[address],proofs:false,persistent:true,ports:selected,onProgress,onOwned});
- let wallet,tokenProvider,closing,activeChild,activeExit;
- function close(){return closing??=(async()=>{let error;if(activeChild){activeChild.kill('SIGTERM');const timer=setTimeout(()=>activeChild?.kill('SIGKILL'),5000);try{await activeExit;}finally{clearTimeout(timer);}}try{await wallet?.stop();}catch(e){error=e;}try{tokenProvider?.destroy();}catch(e){error??=e;}try{await net.close();}catch(e){error??=e;}if(error)throw Error('Current development cleanup incomplete',{cause:error});})();}
+ let wallet,tokenProvider,closing,activeChild,activeExit,queryService;
+ function close(){return closing??=(async()=>{let error;if(activeChild){activeChild.kill('SIGTERM');const timer=setTimeout(()=>activeChild?.kill('SIGKILL'),5000);try{await activeExit;}finally{clearTimeout(timer);}}try{await queryService?.close();}catch(e){error=e;}try{await wallet?.stop();}catch(e){error??=e;}try{tokenProvider?.destroy();}catch(e){error??=e;}try{await net.close();}catch(e){error??=e;}if(error)throw Error('Current development cleanup incomplete',{cause:error});})();}
  onOwned({close});
  async function fixedFile(name,value){const filename=path.join(directory,name),prior=await readDevnetRecord(filename);if(prior){if(JSON.stringify(prior)!==JSON.stringify(value))throw Error('Saved development configuration differs');}else await writeDevnetRecord(filename,value,{exclusive:true});return filename;}
  async function cli(args){
@@ -321,7 +328,10 @@ export async function bootstrapRollingDevnet({directory,ports,onProgress=console
   await writeDevnetRecord(path.join(directory,'liquidity-public.json'),{...liquidity,circle:token});
   await net.useWallClock();
 
-  const walletConfig={config:{network:{chainId:'31337',rollupVersion:String(info.rollupVersion),rollupAddress:operatorConfig.rollupAddress,ethRpcUrl:net.rpcUrl},board:{contractAddress:report.l2Addr,portalAddress:report.portalAddr.toLowerCase()},privateFee:{contractAddress:String(feeInstance.address),gasSettings:gas},bok:activated.walletBok,aggregateFunding:liquidity.scope},trustedQuery:{url:net.nodeUrl,allowLocalDev:true},remoteProver:null,proofsEnabled:false};
+  const {startProverService}=await import('../../prover/service.mjs');
+  queryService=await startProverService(developmentQueryServiceConfig({directory,appPort:selected.appPort,nodeUrl:net.nodeUrl,rollupAddress:operatorConfig.rollupAddress,rollupVersion:info.rollupVersion,board:report.l2Addr,privateFeeAddress:String(feeInstance.address),privateBokAddress:bok.escrow}));
+  const queryUrl='http://127.0.0.1:'+queryService.address.port+'/v1/node';
+  const walletConfig={config:{network:{chainId:'31337',rollupVersion:String(info.rollupVersion),rollupAddress:operatorConfig.rollupAddress,ethRpcUrl:net.rpcUrl},board:{contractAddress:report.l2Addr,portalAddress:report.portalAddr.toLowerCase()},privateFee:{contractAddress:String(feeInstance.address),gasSettings:gas},bok:activated.walletBok,aggregateFunding:liquidity.scope},trustedQuery:{url:queryUrl,allowLocalDev:true},remoteProver:null,proofsEnabled:false};
   await writeDevnetRecord(path.join(directory,'rolling-public.json'),readerConfig);await writeDevnetRecord(path.join(directory,'rolling-wallet-public.json'),walletConfig);
   const readiness={core:'configured',publicIndex:'live-status-required',nativeProofs:false,privateBok:'portal-active-registered',bokAddress:bok.escrow,bokPortal:activated.status.portal,developmentToken:token.tokenAddress,developmentInventory:{kind:token.kind,amount:token.inventory,decimals:token.decimals,recipient:net.identity.address.toLowerCase()},userBokCredit:'unfunded',hostedService:false,fundingRelay:'configured-not-started',aggregateFunding:'genuine-local-pools-quoted-user-payment-unrun',localSettlement:'explicitly test-controlled, not a network proof'};
   await writeDevnetRecord(path.join(directory,'readiness.json'),readiness);

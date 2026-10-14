@@ -24,6 +24,7 @@ import {initTelemetryClient} from '@aztec-labs/telemetry-client';
 import {RollupContract} from '@aztec-labs/ethereum/contracts/rollup';
 import {createNamespacedSafeJsonRpcServer} from '@aztec-labs/foundation/json-rpc/server';
 import {AztecNodeApiSchema} from '@aztec-labs/stdlib/interfaces/client';
+import {createCompactBlockNativeAdapter,COMPACT_BLOCK_NATIVE_ROUTE} from '../../prover/compact-block-native.mjs';
 import {deployC01ApplicationProtocol} from '../../scripts/c01-application-deployment.mjs';
 import {synchronizeC01MinedClock} from '../../scripts/c01-client-mining.mjs';
 const pause=ms=>new Promise(resolve=>setTimeout(resolve,ms));
@@ -178,6 +179,27 @@ export async function settleNativeDevelopment({node,rollup,resume=true}) {
   if(BigInt(proven)<BigInt(pending)||BigInt(tips.checkpointed.checkpoint.number)!==BigInt(pending)||tips.proposed.number!==tips.checkpointed.block.number||!observations.sameBlockHash)throw Error('Native development checkpoints remain unsettled; recovery required');
  }catch(cause){throw developmentCleanupFailure(stage,cause,observations);}finally{if(resume)sequencer.resume();}
 }
+// Reuse the native compact encoder beside the existing development RPC. The
+// owner drains pending native work before stopping the node or checkpointing it.
+export async function startDevelopmentNodeRpc({node,config,port=0,origins=[]}) {
+ const compact=createCompactBlockNativeAdapter({node,expectedNetworkScope:{chainId:config.l1ChainId,version:config.rollupVersion,rollup:String(config.rollupAddress)},proofsEnabled:config.realProofs,tier:'checkpointed'});
+ const rpc=createNamespacedSafeJsonRpcServer({node:[node,AztecNodeApiSchema],aztec:[node,AztecNodeApiSchema]},{maxBatchSize:100,maxBodySizeBytes:10*1024*1024,corsAllowedOrigins:origins});
+ const callback=rpc.getApp().callback(),pending=new Set(),failures=[];let closing,closed=false;
+ const server=http.createServer((req,res)=>{
+  if(closed){res.writeHead(503);res.end();return;}
+  if(req.url!==COMPACT_BLOCK_NATIVE_ROUTE){callback(req,res);return;}
+  const operation=compact.handle(req,res);pending.add(operation);
+  operation.then(()=>pending.delete(operation),error=>{pending.delete(operation);failures.push(error);res.destroy();});
+ });
+ server.requestTimeout=30000;server.headersTimeout=10000;
+ const close=()=>closing??=(async()=>{closed=true;
+  try{await new Promise((resolve,reject)=>{server.close(error=>error?reject(error):resolve());server.closeAllConnections();});}catch(error){failures.push(error);}
+  await Promise.allSettled([...pending]);if(failures.length)throw new AggregateError(failures,'Development compact requests failed during shutdown');
+ })();
+ try{await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(port,'127.0.0.1',resolve);});}
+ catch(error){server.closeAllConnections();if(server.listening)await close();throw error;}
+ return {url:'http://127.0.0.1:'+server.address().port,close};
+}
 export async function startDevnet({directory,fundingAddresses,proofs=false,persistent=false,ports:requestedPorts,onProgress=()=>{},onOwned=()=>{}}){
   await fs.mkdir(directory,{recursive:true,mode:0o700});
   const ports=devnetPorts(requestedPorts),statePath=path.join(directory,'network.json'),snapshotPath=path.join(directory,'ethereum-state.json');
@@ -197,7 +219,7 @@ export async function startDevnet({directory,fundingAddresses,proofs=false,persi
   let node,nodeServer,anvil,mining,stopMining=false,miningError,spawnError,anvilClosed,closing,recoveryPath,checkpointHead;
   function close(){return closing??=(async()=>{
     stopMining=true;const failures=[];
-    for(const [stage,cleanup] of [['mining',()=>mining],['node-rpc',()=>nodeServer&&new Promise(resolve=>{nodeServer.close(resolve);nodeServer.closeAllConnections();})],['settlement',async()=>{if(nativeStarted)await settleNativeDevelopment({node,rollup,resume:false});}],['node-stop',()=>node?.stop()],['checkpoint',async()=>{
+    for(const [stage,cleanup] of [['mining',()=>mining],['node-rpc',()=>nodeServer?.close()],['settlement',async()=>{if(nativeStarted)await settleNativeDevelopment({node,rollup,resume:false});}],['node-stop',()=>node?.stop()],['checkpoint',async()=>{
       await persistDevnetCheckpoint({persistent,bootComplete,miningError,priorFailure:failures.length>0,save:async()=>{
         const head=await deployment.l1Client.getBlock({blockTag:'latest'}),pending=String(await rollup.getCheckpointNumber()),proven=String(await rollup.getProvenCheckpointNumber());
         if(pending!==proven)throw Error('Development checkpoint is not settled');
@@ -285,10 +307,9 @@ export async function startDevnet({directory,fundingAddresses,proofs=false,persi
     if(persistent){await sequencer.start();nativeStarted=true;}
     mining=(async()=>{while(!stopMining){try{if(persistent){if(settling){await pause(100);continue;}clockTick=(async()=>{const latest=await deployment.l1Client.getBlock({blockTag:'latest'});if(settling||stopMining)return;const wallSeconds=Math.floor(Date.now()/1000);if(developmentIdleWarpRequired({wallSeconds,l1Timestamp:Number(latest.timestamp),refresh:wallRefreshRequested}))await sequencer.warpTo(developmentIdleWarpTarget({wallSeconds,slotDuration:idleSlotDuration,ethereumSlotDuration:config.ethereumSlotDuration}));})();await clockTick;}else if(wallMode){const latest=await deployment.l1Client.getBlock({blockTag:'latest'});const wall=Math.floor(Date.now()/1000);if(BigInt(wall)<=latest.timestamp){await pause(100);continue;}await deployment.l1Client.request({method:'evm_mine',params:[wall]});}else await deployment.l1Client.request({method:'evm_mine',params:[]});if(!persistent){const b=await deployment.l1Client.getBlock({blockTag:'latest'});synchronizeC01MinedClock(dateProvider,Number(b.timestamp));}await pause(1000);}catch(error){miningError=error;stopMining=true;}}})();
     if(!persistent)await sequencer.start();
-    const rpc=createNamespacedSafeJsonRpcServer({node:[node,AztecNodeApiSchema],aztec:[node,AztecNodeApiSchema]},{maxBatchSize:100,maxBodySizeBytes:10*1024*1024,corsAllowedOrigins:[`http://localhost:${ports.appPort}`,`http://127.0.0.1:${ports.appPort}`]});
-    nodeServer=http.createServer(rpc.getApp().callback());await new Promise((resolve,reject)=>{nodeServer.once('error',reject);nodeServer.listen(persistent?ports.nodePort:0,'127.0.0.1',resolve);});
+    nodeServer=await startDevelopmentNodeRpc({node,config:nodeConfig,port:persistent?ports.nodePort:0,origins:[`http://localhost:${ports.appPort}`,`http://127.0.0.1:${ports.appPort}`]});
     bootComplete=true;
-    return {node,config:nodeConfig,rpcUrl,nodeUrl:'http://127.0.0.1:'+nodeServer.address().port,identity,deployment,dateProvider,close,async settleCheckpoints(){if(!persistent||settling)throw Error('Native settlement requires exclusive persistent local mode');settling=true;try{await clockTick;await settleNativeDevelopment({node,rollup});}finally{settling=false;}},async useWallClock(){if(miningError)throw miningError;if(!persistent)await deployment.l1Client.request({method:'evm_setAutomine',params:[false]});wallMode=true;wallRefreshRequested=persistent;try{const deadline=Date.now()+120000;while(Date.now()<deadline){if(miningError)throw miningError;const b=await deployment.l1Client.getBlock({blockTag:'latest'});if(miningError)throw miningError;if(b.timestamp<=BigInt(Math.floor(Date.now()/1000))&&Math.floor(Date.now()/1000)-Number(b.timestamp)<5)return;await pause(200);}if(miningError)throw miningError;throw Error('Development clock did not reach wall time');}finally{wallRefreshRequested=false;}},checkHealth(){if(miningError)throw miningError;}};
+    return {node,config:nodeConfig,rpcUrl,nodeUrl:nodeServer.url,identity,deployment,dateProvider,close,async settleCheckpoints(){if(!persistent||settling)throw Error('Native settlement requires exclusive persistent local mode');settling=true;try{await clockTick;await settleNativeDevelopment({node,rollup});}finally{settling=false;}},async useWallClock(){if(miningError)throw miningError;if(!persistent)await deployment.l1Client.request({method:'evm_setAutomine',params:[false]});wallMode=true;wallRefreshRequested=persistent;try{const deadline=Date.now()+120000;while(Date.now()<deadline){if(miningError)throw miningError;const b=await deployment.l1Client.getBlock({blockTag:'latest'});if(miningError)throw miningError;if(b.timestamp<=BigInt(Math.floor(Date.now()/1000))&&Math.floor(Date.now()/1000)-Number(b.timestamp)<5)return;await pause(200);}if(miningError)throw miningError;throw Error('Development clock did not reach wall time');}finally{wallRefreshRequested=false;}},checkHealth(){if(miningError)throw miningError;}};
   }catch(error){try{await close();}catch(cleanup){throw new AggregateError([error,cleanup],'Devnet startup and cleanup failed');}throw error;}
 }
 

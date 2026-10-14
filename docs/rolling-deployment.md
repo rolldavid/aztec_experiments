@@ -28,6 +28,16 @@ Use one curated main board for this installation. User-created subboards belong
 to that board; a separately operated main board uses its own hosting and is not
 automatically indexed or promoted by another installation.
 
+The retained native development runner also mounts the existing compact-history
+adapter and starts the existing trusted query service on an ephemeral loopback
+port. Browser configuration points to that service's `/v1/node`; cold recovery
+uses its `/v1/compact-block` route and authenticates the returned blocks in the
+PXE. Native and PXE proof flags remain disabled. Startup rewrites the generated
+public wallet configuration; reload existing browser sessions after restarting
+this runner. Shutdown drains the query service and native compact requests before
+stopping/checkpointing the same retained chain. No fresh deployment or funding is
+needed to add these development services.
+
 ## Reproducible build
 
 Use `toolchain.json`, `.nvmrc` and both npm lockfiles as the source of exact
