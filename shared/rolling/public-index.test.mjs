@@ -536,3 +536,25 @@ test('Bok accounting missing descriptor is unsupported; mismatched cache and abs
  const wrong=createRollingPublicSqliteStore(f.directory,{scope});try{assert.throws(()=>wrong.inspect());}finally{wrong.close();}
  const c=await f.open();f.node.getPublicStorageAt=async()=>Fr.ZERO;await assert.rejects(c.index.step());assert.equal(c.index.status().complete,false);
 });
+
+for(const fault of ['original-anchor','current-instance'])for(const verification of [1,2,3])
+ test(`Bok memo ${fault} failure at verification ${verification} prevents publication`,async t=>{
+  const f=await bokIndexFixture(t);f.put(3,[f.accounting(7)]);const {storage,index}=await f.open();await f.drain(index);
+  assert.equal(index.query('bok-accounting').requests.length,1);
+  f.put(4,[]);f.blocks.get(4).body.txEffects=[];f.setHead(4);
+  const before=storage.inspect().control,getContract=f.node.getContract,getBlockData=f.node.getBlockData;let currentReads=0;
+  f.node.getContract=async(target,anchor)=>{
+   const value=await getContract(target,anchor);
+   if(target.toString()===f.capturedScope.bok.address&&!anchor){currentReads++;if(fault==='current-instance'&&currentReads>=verification)return {...value,currentContractClassId:Fr.ZERO};}
+   return value;
+  };
+  f.node.getBlockData=async number=>{
+   const value=await getBlockData(number);
+   return fault==='original-anchor'&&number===2&&currentReads>=verification?{...value,blockHash:wrap(hex(9999))}:value;
+  };
+  await assert.rejects(index.step());assert.equal(currentReads,verification);
+  assert.equal(index.status().complete,false);assert.throws(()=>index.query('bok-accounting'),{code:'ROLLING_PUBLIC_NOT_READY'});
+  assert.throws(()=>index.publication());await assert.rejects(index.step(),{code:'ROLLING_PUBLIC_REOPEN_REQUIRED'});
+  const after=storage.inspect().control;
+  assert.equal(BigInt(after.segmentCount)-BigInt(before.segmentCount),verification===3?1n:0n,'post-commit failure keeps the durable segment unavailable; earlier failures commit nothing');
+ });

@@ -166,3 +166,32 @@ test('Bok accounting descriptor binds constructor, salt, class and original cano
  await bokDecoder.verifyBok(node,fn=>fn());
  for(const change of [{getPublicStorageAt:async()=>Fr.ZERO},{getBlockData:async()=>({blockHash:Fr.ZERO})},{getTxEffect:async()=>null},{getContract:async()=>({...bokInstance,currentContractClassId:Fr.ZERO})}])await assert.rejects(bokDecoder.verifyBok({...node,...change},fn=>fn()));
 });
+
+function countedBokNode(){
+ const calls={original:0,current:0,receipt:0,effect:0,storage:0,anchor:0},state={hash,changedCurrent:false,failAnchor:false,badStorage:false};
+ const values={board:scope.boardAddress,operator:bokScope.bok.operatorAddress,owner:bokScope.bok.deployer,l1_chain:new Fr(31337n).toString(),version:new Fr(1n).toString()};
+ const bySlot=new Map(Object.entries(values).map(([k,v])=>[String(bokArtifact.storageLayout[k].slot),v]));
+ const node={getContract:async(_address,anchor)=>{calls[anchor?'original':'current']++;return !anchor&&state.changedCurrent?{...bokInstance,currentContractClassId:Fr.ONE}:bokInstance;},
+  getTxReceipt:async()=>{calls.receipt++;return {txHash,status:'checkpointed',executionResult:'success',blockNumber:1,blockHash:{toString:()=>hash}};},
+  getTxEffect:async()=>{calls.effect++;return {l2BlockNumber:1,l2BlockHash:{toString:()=>hash},data:{txHash,revertCode:{isOK:()=>true}}};},
+  getPublicStorageAt:async(_a,_b,slot)=>{calls.storage++;return {toString:()=>state.badStorage?Fr.ZERO.toString():bySlot.get(String(slot))};},
+  getBlockData:async()=>{calls.anchor++;if(state.failAnchor)throw Error('controlled anchor read failure');return {blockHash:{toString:()=>state.hash}};}};
+ return {node,calls,state};
+}
+test('Bok immutable attestation reuses only original reads while current instance and anchor remain fresh',async()=>{
+ const local=await createRollingEventDecoder({artifact,bokArtifact,scope:bokScope}),f=countedBokNode();
+ await local.verifyBok(f.node,fn=>fn());assert.deepEqual(f.calls,{original:1,current:1,receipt:1,effect:1,storage:5,anchor:1});
+ await local.verifyBok(f.node,fn=>fn());assert.deepEqual(f.calls,{original:1,current:2,receipt:1,effect:1,storage:5,anchor:2});
+ const other=countedBokNode();await local.verifyBok(other.node,fn=>fn());assert.equal(other.calls.original,1,'node identity cannot inherit another attestation');
+ const reopened=await createRollingEventDecoder({artifact,bokArtifact,scope:bokScope});await reopened.verifyBok(f.node,fn=>fn());assert.equal(f.calls.original,2,'new decoder reauthenticates immutable facts');
+});
+test('Bok attestation cache refuses reorg/current drift and never caches failed reads',async()=>{
+ for(const fault of ['reorg','current','read']){
+  const local=await createRollingEventDecoder({artifact,bokArtifact,scope:bokScope}),f=countedBokNode();await local.verifyBok(f.node,fn=>fn());
+  if(fault==='reorg')f.state.hash=Fr.ONE.toString();if(fault==='current')f.state.changedCurrent=true;if(fault==='read')f.state.failAnchor=true;
+  await assert.rejects(local.verifyBok(f.node,fn=>fn()));
+  f.state.hash=hash;f.state.changedCurrent=false;f.state.failAnchor=false;f.state.badStorage=true;
+  await assert.rejects(local.verifyBok(f.node,fn=>fn()));assert.equal(f.calls.original,2,'failure invalidates prior success');
+  f.state.badStorage=false;await local.verifyBok(f.node,fn=>fn());assert.equal(f.calls.original,3,'partial failed attestation is never retained');
+ }
+});

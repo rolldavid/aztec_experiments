@@ -132,22 +132,35 @@ export async function createRollingEventDecoder({artifact,scope,bokArtifact}) {
   bokInstance=await getContractInstanceFromInstantiationParams(bokArtifact,{constructorArtifact:'init',constructorArgs:[AztecAddress.fromStringUnsafe(scope.boardAddress),AztecAddress.fromStringUnsafe(scope.bok.operatorAddress),BigInt(scope.chainId),BigInt(scope.rollupVersion)],deployer:AztecAddress.fromStringUnsafe(scope.bok.deployer),salt:Fr.fromString(scope.bok.salt)});
   check(bokInstance.address.toString()===scope.bok.address&&bokInstance.originalContractClassId.toString()===scope.bok.classId);
  }
+ // Only successful immutable deployment facts are reused, scoped to this
+ // exact frozen descriptor, captured artifact and node object. This private
+ // key cannot cross decoders; nothing survives process/reopen.
+ const bokAttestations=new WeakMap(),bokAttestationKey=Object.freeze({scope,artifact:bokArtifact});
  async function verifyBok(node,read){
   if(!scope.bok)return;
   const b=scope.bok,d=b.deployment,anchor={number:d.blockNumber,hash:d.blockHash},address=bokInstance.address;
-  const instance=await read(()=>node.getContract(address,anchor));check(instance?.version===bokInstance.version);
-  for(const k of ['deployer','salt','originalContractClassId','currentContractClassId','initializationHash','immutablesHash'])check(instance[k]?.toString()===bokInstance[k].toString());
-  check((await computeContractAddressFromInstance(instance)).toString()===b.address);
-  const current=await read(()=>node.getContract(address));check(current?.version===bokInstance.version);
-  for(const k of ['deployer','salt','originalContractClassId','currentContractClassId','initializationHash','immutablesHash'])check(current[k]?.toString()===bokInstance[k].toString());
-  check((await computeContractAddressFromInstance(current)).toString()===b.address);
-  const tx=TxHash.fromString(d.txHash),receipt=await read(()=>node.getTxReceipt(tx)),effect=await read(()=>node.getTxEffect(tx));
-  check(receipt.txHash.equals(tx)&&[TxStatus.CHECKPOINTED,TxStatus.PROVEN,TxStatus.FINALIZED].includes(receipt.status)&&receipt.executionResult===TxExecutionResult.SUCCESS&&receipt.blockNumber===d.blockNumber&&receipt.blockHash.toString()===d.blockHash);
-  check(effect?.l2BlockNumber===d.blockNumber&&effect.l2BlockHash.toString()===d.blockHash&&effect.data.txHash.equals(tx)&&effect.data.revertCode.isOK());
-  const values={board:scope.boardAddress,operator:b.operatorAddress,owner:b.deployer,l1_chain:new Fr(BigInt(scope.chainId)).toString(),version:new Fr(BigInt(scope.rollupVersion)).toString()};
-  for(const [k,value] of Object.entries(values))check((await read(()=>node.getPublicStorageAt(anchor,address,bokSlots[k]))).toString()===value);
-  const block=await read(()=>node.getBlockData(d.blockNumber));check(block?.blockHash.toString()===d.blockHash);
+  try{
+   const reused=bokAttestations.get(node)===bokAttestationKey;
+   if(!reused){
+    const instance=await read(()=>node.getContract(address,anchor));check(instance?.version===bokInstance.version);
+    for(const k of ['deployer','salt','originalContractClassId','currentContractClassId','initializationHash','immutablesHash'])check(instance[k]?.toString()===bokInstance[k].toString());
+    check((await computeContractAddressFromInstance(instance)).toString()===b.address);
+    const tx=TxHash.fromString(d.txHash),receipt=await read(()=>node.getTxReceipt(tx)),effect=await read(()=>node.getTxEffect(tx));
+    check(receipt.txHash.equals(tx)&&[TxStatus.CHECKPOINTED,TxStatus.PROVEN,TxStatus.FINALIZED].includes(receipt.status)&&receipt.executionResult===TxExecutionResult.SUCCESS&&receipt.blockNumber===d.blockNumber&&receipt.blockHash.toString()===d.blockHash);
+    check(effect?.l2BlockNumber===d.blockNumber&&effect.l2BlockHash.toString()===d.blockHash&&effect.data.txHash.equals(tx)&&effect.data.revertCode.isOK());
+    const values={board:scope.boardAddress,operator:b.operatorAddress,owner:b.deployer,l1_chain:new Fr(BigInt(scope.chainId)).toString(),version:new Fr(BigInt(scope.rollupVersion)).toString()};
+    for(const [k,value] of Object.entries(values))check((await read(()=>node.getPublicStorageAt(anchor,address,bokSlots[k]))).toString()===value);
+   }
+   // These reads are fresh on EVERY verification, including the existing
+   // pre/post-commit checks. A reorg or current-instance change invalidates reuse.
+   const current=await read(()=>node.getContract(address));check(current?.version===bokInstance.version);
+   for(const k of ['deployer','salt','originalContractClassId','currentContractClassId','initializationHash','immutablesHash'])check(current[k]?.toString()===bokInstance[k].toString());
+   check((await computeContractAddressFromInstance(current)).toString()===b.address);
+   const block=await read(()=>node.getBlockData(d.blockNumber));check(block?.blockHash.toString()===d.blockHash);
+   bokAttestations.set(node,bokAttestationKey);
+  }catch(error){bokAttestations.delete(node);throw error;}
  }
+
  const definitions=new Map();
  for(const type of [...ROLLING_EVENTS,...(scope.bok?['AccountingChanged']:[])]){const isBok=type==='AccountingChanged',source=isBok?bokArtifact:artifact;const abis=source.outputs.structs.events.filter(e=>e.path===`${isBok?'PrivateBok':'RollingBoard'}::${type}`);check(abis.length===1);const abi=structuredClone(abis[0]);
   const selector=await EventSelector.fromSignature(decodeFunctionSignature(type,abi.fields));const tag=await computeLogTag(selector.toField(),DomainSeparator.EVENT_LOG_TAG);
