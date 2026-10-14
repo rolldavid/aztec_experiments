@@ -8,6 +8,7 @@ import {BarretenbergSync} from '@aztec-foundation/bb.js';
 import {after} from 'node:test';
 import {nameRegistration,NAME_DOMAIN} from './name-policy.mjs';
 import {Fr} from '@aztec-labs/foundation/curves/bn254';
+import {deriveStorageSlotInMap} from '@aztec-labs/stdlib/hash';
 import {AztecAddress} from '@aztec-labs/stdlib/aztec-address';
 import {encodeArguments,loadContractArtifact,decodeFromAbi,getFunctionReturnType} from '@aztec-labs/stdlib/abi';
 import {createL2Journal} from '../l2-journal.mjs';
@@ -60,8 +61,8 @@ function fixture(){
     assert.equal(opts.transactionJournal,journal);if(state.failSend)throw Error('unknown after send');
     state.outcome={operation:opts.journalOperation,outcome:'success',txHash:hex(77),receipt:{txHash:hex(77),status:'checkpointed',blockNumber:1,blockHash:hex(42),transactionFee:2n}};return {receipt:{}};
   }};
-  const node={getBlockData:async height=>({header:{globalVariables:{blockNumber:height}},blockHash:hex(42)})};wallet.aztecNode=node;wallet.pxe={getSyncedBlockHeader:async()=>({globalVariables:{blockNumber:1,timestamp:100n},hash:async()=>hex(42)})};let random=100n;
-  const sdk={poseidon2HashWithSeparator,Fr:class extends Fr {static random(){return new Fr(random++);}},AztecAddress,encodeArguments,Contract:{at:()=>board},isTrustedPrivateNode:n=>n===node,isPrivateWalletForNode:(w,n)=>w===wallet&&n===node,isPrivatePXEForNode:(p,n)=>p===wallet.pxe&&n===node,
+  const node={getBlockData:async height=>({header:{globalVariables:{blockNumber:height==='checkpointed'?1:height}},blockHash:hex(42)}),getPublicStorageAt:async(reference,address,slot)=>{(state.nameReads??=[]).push({reference,address:address.toString(),slot:slot.toString()});if(state.nameReadError)throw state.nameReadError;if(state.beforeNameRead)await state.beforeNameRead();return new Fr(state.nameRegistered??0n);}};wallet.aztecNode=node;wallet.pxe={getSyncedBlockHeader:async()=>({globalVariables:{blockNumber:1,timestamp:100n},hash:async()=>hex(42)})};let random=100n;
+  const sdk={poseidon2HashWithSeparator,deriveStorageSlotInMap,Fr:class extends Fr {static random(){return new Fr(random++);}},AztecAddress,encodeArguments,Contract:{at:()=>board},isTrustedPrivateNode:n=>n===node,isPrivateWalletForNode:(w,n)=>w===wallet&&n===node,isPrivatePXEForNode:(p,n)=>p===wallet.pxe&&n===node,
     inspectTrustedNode:async()=>{if(!state.guard)throw Error('stale trusted node');},
     preparePrivateFeePayment:async()=>({availableCredit:100n}),estimatePrivateFeeTransaction:async input=>{
       await input.guard();state.estimates++;state.calls.push(input.interaction);
@@ -179,10 +180,29 @@ test('funding metadata cannot supply a private secret or silently create a payme
  const f=fundingFixture();await assert.rejects(f.app.prepare({type:'claim-deposit',receipt:{...f.receipt,secret:hex(55)}}));assert.equal(f.state.claimReads.length,0);assert.equal(f.state.sends,0);
  const plain=fixture();await assert.rejects(plain.app.prepare({type:'claim-deposit',receipt:f.receipt}),{code:'ROLLING_FUNDING_UNAVAILABLE'});
 });
+test('name availability uses normalized canonical ID and rejects a collision before fees or journal writes',async()=>{
+ const f=fixture();f.state.nameRegistered=1n;
+ await assert.rejects(f.app.prepare({type:'name',first:'  JoHN ',last:' DOE '}),{code:'ROLLING_NAME_TAKEN'});
+ const expected=hex((await poseidon2HashWithSeparator(nameRegistration('john','doe').preimage.map(n=>new Fr(n)),NAME_DOMAIN)).toBigInt());
+ const slot=(await deriveStorageSlotInMap(artifact.storageLayout.registered_names.slot,new Fr(BigInt(expected)))).toString();
+ assert.deepEqual(f.state.nameReads,[{reference:{hash:hex(42)},address:hex(1),slot}]);assert.deepEqual(f.state.privateReads,[]);
+ assert.equal(f.state.estimates,0);assert.equal(f.state.sends,0);assert.equal(f.values.size,0);
+});
+test('name availability failures and changing canonical anchors never become available or taken',async()=>{
+ for(const kind of ['transport','malformed','reorg','account','missing-layout']){
+  const f=fixture();if(kind==='transport')f.state.nameReadError=Error('PRIVATE_SENTINEL');
+  if(kind==='malformed')f.state.nameRegistered=2n;
+  if(kind==='reorg')f.options.accountSession.node.getBlockData=async n=>({header:{globalVariables:{blockNumber:n==='checkpointed'?1:n}},blockHash:hex(n==='checkpointed'?42:43)});
+  if(kind==='account')f.state.beforeNameRead=async()=>{f.options.accountSession.owner=new AztecAddress(new Fr(99n));};
+  if(kind==='missing-layout'){f.options.deployment.board.artifact={...artifact,storageLayout:{...artifact.storageLayout,registered_names:undefined}};}
+  await assert.rejects(f.app.prepare({type:'name',first:'John',last:'Doe'}),{code:'ROLLING_NAME_AVAILABILITY_UNAVAILABLE'});
+  assert.equal(f.state.estimates,0);assert.equal(f.state.sends,0);assert.equal(f.values.size,0);
+ }
+});
 test('name preparation is encrypted, real ABI encoded and immutable across mutation/restart',async()=>{
   const f=fixture(),action={type:'name',first:'Private Sentinel',last:'Moss'};
   const prepared=await f.app.prepare(action);action.first='Different';
-  assert.equal(f.state.sends,0);assert.ok([...f.values.values()].every(v=>!v.includes('Private Sentinel')));
+  assert.equal(f.state.sends,0);assert.equal(prepared.nameAvailability.anchor.blockNumber,1);assert.equal(prepared.nameAvailability.id,hex((await poseidon2HashWithSeparator(nameRegistration('Private Sentinel','Moss').preimage.map(n=>new Fr(n)),NAME_DOMAIN)).toBigInt()));assert.ok([...f.values.values()].every(v=>!v.includes('Private Sentinel')));
   const result=await f.restart().submitPrepared(prepared.intentId);
   assert.equal(result.status,'confirmed');assert.equal(f.state.sends,1);assert.equal(f.state.sent.payload.name,'register_name');
   assert.equal(f.state.sent.payload.args[1],16);assert.equal(result.action.first,'Private Sentinel');

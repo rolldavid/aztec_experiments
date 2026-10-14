@@ -254,7 +254,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
   const operation=id=>`ROLLING_WORKFLOW_V1:${id}`;
   function summary(record){return {intentId:record.id,action:clone(record.action),status:record.status,maximumFee:record.maximumFee,
     nonce:record.nonce,txHash:record.txHash??null,...(record.withdrawal?{withdrawal:clone(record.withdrawal),actualNetworkFee:record.actualNetworkFee??null}:{}),...(record.moderation?{moderation:clone(record.moderation)}:{}),stage:record.bok?`bok-${record.bok.phase}`:'single-transaction',...(record.bok?{bok:{phase:record.bok.phase,budget:record.bok.budget,availableCredit:record.bok.availableCredit,authorizationTxHash:record.bok.authorizationTxHash??null,...(record.bok.phase==='post'?{mainPolicyVersion:record.args[2].expected_main_policy_version,localPolicyVersion:record.args[2].expected_local_policy_version}:{})}}:{}),...(record.bokReleaseSource?{bokRelease:{sourceIntentId:record.bokReleaseSource.id}}:{}),...(record.replacementReview?{replacementReview:clone(record.replacementReview)}:{}),
-    ...(preferenceAction(record)?{inclusionHistory:clone(record.inclusionHistory??[])}:{})};}
+    ...(record.nameAvailability?{nameAvailability:clone(record.nameAvailability)}:{}),...(preferenceAction(record)?{inclusionHistory:clone(record.inclusionHistory??[])}:{})};}
   function checkBokRecord(record){for(const savedScope of [record?.bok?.scope,record?.fundingBok?.scope,record?.bokRequestScope,record?.bokReleaseSource?.bok?.scope])if(savedScope)check(bok&&JSON.stringify(savedScope)===JSON.stringify(bok),'ROLLING_CONTEXT_CHANGED');}
   async function savedIntent(id){const saved=await (await slot()).read();check(saved.value?.id===id,'ROLLING_INTENT_NOT_FOUND');checkBokRecord(saved.value);return saved;}
   function acknowledge(found,expected){
@@ -371,6 +371,25 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
     check(Array.isArray(value)&&value.length===5&&value[0]===true&&BigInt(value[2])===0n,'ROLLING_PARENT_UNAVAILABLE');
     check(field(value[1]?.root,true)===root&&field(value[1]?.subboard)===field(action.subboard??'0'),'ROLLING_THREAD_CHANGED');
     await checkBalanceAnchor(anchor);
+  }
+  async function nameAvailability(action){
+    const registration=nameRegistration(action.first,action.last);
+    const id=field((await sdk.poseidon2HashWithSeparator(registration.preimage.map(n=>new sdk.Fr(n)),NAME_DOMAIN)).toString(),true);
+    let registered,anchor;
+    try{
+      await guard();const map=deployment.board.artifact.storageLayout?.registered_names?.slot;
+      check(map!==undefined,'ROLLING_ABI_MISMATCH');
+      const head=await session.node.getBlockData('checkpointed'),blockNumber=Number(head?.header?.globalVariables?.blockNumber),blockHash=hashText(head?.blockHash);
+      check(Number.isSafeInteger(blockNumber)&&blockNumber>0,'ROLLING_INVALID_RESPONSE');anchor={blockNumber,blockHash};
+      const slot=await sdk.deriveStorageSlotInMap(new sdk.Fr(BigInt(map)),new sdk.Fr(BigInt(id)));await guard();
+      // Match RollingBoard's Map<Field,PublicMutable<bool>> at this exact canonical
+      // checkpoint. A public view simulation does not bind its read to this hash.
+      registered=chainValue(await session.node.getPublicStorageAt({hash:blockHash},new sdk.AztecAddress(new sdk.Fr(BigInt(fixed.board))),slot));
+      check(registered===0n||registered===1n,'ROLLING_INVALID_RESPONSE');await guard();
+      const again=await session.node.getBlockData(blockNumber);
+      check(Number(again?.header?.globalVariables?.blockNumber)===blockNumber&&hashText(again?.blockHash)===blockHash,'ROLLING_CONTEXT_CHANGED');await guard();
+    }catch{throw fail('ROLLING_NAME_AVAILABILITY_UNAVAILABLE');}
+    check(registered===0n,'ROLLING_NAME_TAKEN');return {id,anchor};
   }
   async function bokInvocationTarget(draft,nonce,content){
     const preimage=invocationPreimage({chainId:BigInt(scope.chainId),rollupVersion:BigInt(scope.version),board:BigInt(fixed.board),plugin:BigInt(bok.address),
@@ -654,6 +673,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
       const moderation=moderationTypes.has(action.type)?await moderationArguments(action,board):null;
       const args=moderation?moderation.args:plain(await argumentsFor(action,board,nonce));
       const record={version:1,id,action,args,method:methods[action.type],nonce,predecessor,status:'prepared',...(moderation?{moderation:moderation.review}:{})};
+      if(action.type==='name')record.nameAvailability=await nameAvailability(action);
       if(action.type==='withdraw'){const anchor=await balanceAnchor();record.withdrawal=await collateralInfo(action.deposit,board,BigInt(anchor.timestamp));check(record.withdrawal.eligible,'ROLLING_WITHDRAWAL_NOT_READY');await checkBalanceAnchor(anchor);}
       if(action.type==='withdraw-bok'){
         check(resolveBokWithdrawal,'ROLLING_BOK_UNAVAILABLE');const anchor=await balanceAnchor(),available=chainValue(await utility(await bokContract(),'balance_of',[session.owner],deployment.bok.artifact));check(available>=uint128(action.amount),'ROLLING_BOK_CREDIT_INSUFFICIENT');
