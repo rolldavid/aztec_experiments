@@ -157,3 +157,121 @@ test('MetaMask confirmation guard binds exact account, chain, target, amount and
   }
  }
 });
+
+test('Phantom mode is explicit signature-only and leaves the original MetaMask mode unchanged',async()=>{
+ const {walletExtensionMode}=await import('./t04-phantom.mjs');
+ assert.equal(walletExtensionMode([]),'metamask');assert.equal(walletExtensionMode(['--wallet=phantom','--onboarding-only']),'phantom-onboarding');assert.equal(walletExtensionMode(['--wallet=phantom','--signatures-only']),'phantom');
+ for(const args of [['--wallet=phantom'],['--wallet=metamask'],['--wallet=phantom','--signatures-only','--send'],['--wallet=phantom','--chain=31337']])assert.throws(()=>walletExtensionMode(args));
+});
+test('Phantom package pin rejects a modified official package before extracting any files',async()=>{
+ const {phantomZip,phantomPackage}=await import('./t04-phantom.mjs');
+ const bytes=await fs.readFile(new URL('../'+phantomPackage.archive,import.meta.url));
+ assert.equal(phantomZip(bytes).subarray(0,2).toString(),'PK');bytes[bytes.length-1]^=1;assert.throws(()=>phantomZip(bytes));
+ assert.throws(()=>phantomZip(Buffer.alloc(12)));
+});
+test('Phantom exact G04 typed payloads verify distinct domains and reject mutation or a different signer',async()=>{
+ const {Wallet}=await import('ethers');
+ const {phantomTypedData,assertPhantomSignature}=await import('./t04-phantom.mjs');
+ const {collateralConsentTypes,usdcAuthorizationTypes}=await import('../shared/rolling/aggregate-funding.mjs');
+ const wallet=Wallet.createRandom(),other=Wallet.createRandom(),inputs={account:wallet.address,portal:Wallet.createRandom().address,router:Wallet.createRandom().address,token:Wallet.createRandom().address,nonce:'0x'+'19'.repeat(32),now:1800000000};
+ const data=phantomTypedData(inputs);assert.deepEqual(data.map(x=>x.types),[collateralConsentTypes,usdcAuthorizationTypes]);
+ const digests=[];
+ for(const item of data){
+  assert.equal(item.domain.chainId,11155111);const signature=await wallet.signTypedData(item.domain,item.types,item.value);
+  digests.push(assertPhantomSignature(item,signature,wallet.address));
+  assert.throws(()=>assertPhantomSignature(item,signature,other.address));
+  assert.throws(()=>assertPhantomSignature({...item,domain:{...item.domain,chainId:31337}},signature,wallet.address));
+  assert.throws(()=>assertPhantomSignature({...item,value:{...item.value,...(item.value.amount?{amount:'2'}:{value:'2'})}},signature,wallet.address));
+ }
+ assert.notEqual(digests[0],digests[1]);
+ assert.throws(()=>phantomTypedData({...inputs,nonce:'private'}));assert.throws(()=>phantomTypedData({...inputs,now:NaN}));
+});
+test('Phantom signature-only request admission denies financial sends and arbitrary signing',async()=>{
+ const {phantomMethods,assertPhantomMethod}=await import('./t04-phantom.mjs');
+ for(const method of phantomMethods)assertPhantomMethod(method);
+ for(const method of ['eth_sendTransaction','eth_sendRawTransaction','wallet_sendCalls','personal_sign','eth_sign','wallet_addEthereumChain',null])assert.throws(()=>assertPhantomMethod(method));
+ assert(Object.isFrozen(phantomMethods));
+});
+test('Phantom onboarding acknowledges discovered accounts before the password form',async()=>{
+ const {onboardPhantom}=await import('./t04-phantom.mjs');
+ const calls=[],marks=[];let phase='start',checked=false,termsClicked=false;
+ const control=name=>({locator(){return control(name+'-container');},async isChecked(){return checked;},async click(){calls.push(name);if(name==='onboarding-form-terms-of-service-checkbox-container')termsClicked=true;if(name==='onboarding-form-submit-button'){if(phase==='start')phase='accounts';else if(phase==='password'){assert.equal(checked,true);phase='done';}}if(name==='Continue'&&phase==='accounts')phase='password';},async fill(){if(name==='onboarding-form-password-input')assert.equal(phase,'password');},async check(){},async waitFor(){if(name==='Import Accounts')assert.equal(phase,'accounts');}});
+ const page={setDefaultTimeout(){},async goto(){},async waitForFunction(){assert.equal(termsClicked,true);checked=true;},getByTestId:control,getByText:control,getByRole(_role,{name}){return control(name);}};
+ await onboardPhantom({pages:()=>[],newPage:async()=>page},Array(12).fill('test').join(' '),'disposable-password',value=>marks.push(value),{passwordOnly:true});
+ assert(calls.indexOf('Continue')>calls.indexOf('onboarding-form-submit-button'));assert.equal(phase,'done');
+ assert.deepEqual(marks,['phantom-import-choice','phantom-import-phrase','phantom-import-accounts','phantom-password','phantom-terms','phantom-password-submit']);
+});
+for(const defer of [true,false])test('Phantom completion '+(defer?'prefers the offered defer control':'uses only a disposable username and records remote retention'),async()=>{
+ const {completePhantomOnboarding}=await import('./t04-phantom.mjs');let phase='username',closed=false,blurred=false;const profiles=[],names=[];
+ const control=name=>({async isEnabled(){return blurred;},async press(key){assert.equal(name,'username');assert.equal(key,'Tab');assert.equal(names.length,1);blurred=true;},async isVisible(){return name==='onboarding-create-username-continue'?phase==='username':name==='onboarding-create-username-complete-later'?defer&&phase==='username':name==='username'?phase==='username':name==='onboarding-claiming-username-get-started'?phase==='claimed':name==='Get Started'?phase==='done':false;},async fill(value){names.push(value);},async click(){if(name==='onboarding-create-username-complete-later')phase='done';if(name==='onboarding-create-username-continue')phase='claimed';},async waitFor(){}});
+ const page={getByTestId:control,getByPlaceholder:control,getByRole(_,{name}){return control(name);},isClosed:()=>closed,async close(){closed=true;}};
+ const wallet={setDefaultTimeout(){},async goto(){},getByTestId:control};
+ assert.equal(await completePhantomOnboarding({pages:()=>[],newPage:async()=>wallet},page,()=>{},value=>profiles.push(value)),wallet);
+ assert.equal(closed,true);
+ if(defer){assert.deepEqual(names,[]);assert.deepEqual(profiles,[]);}else{assert.equal(blurred,true);assert.match(names[0],/^test[0-9a-f]{12}$/);assert.deepEqual(profiles,[{attempted:true,created:false,externalDeletionVerified:false},{attempted:true,created:true,externalDeletionVerified:false}]);}
+});
+
+
+test('MetaMask aggregate admission binds one exact local ETH payment and its gas ceiling',async()=>{
+ const {Interface,AbiCoder,keccak256}=await import('ethers');
+ const {aggregateFundingAbi}=await import('../shared/rolling/aggregate-funding.mjs');
+ const {assertMetaMaskAggregatePayment}=await import('./t04-metamask.mjs');
+ const address=n=>'0x'+BigInt(n).toString(16).padStart(40,'0'),field=n=>'0x'+BigInt(n).toString(16).padStart(64,'0');
+ const abi=new Interface(aggregateFundingAbi),plan={beneficiary:address(1),collateral:'100',collateralSecretHash:field(8),fee:{amount:'200',maxEth:'20',poolFee:3000},feeSecretHash:field(9),bok:{amount:'300',maxEth:'30',poolFee:3000},bokCommitment:field(10),bokSecretHash:field(11),nonce:'7',deadline:'2000000000'};
+ const expected={kind:'aggregate-funding',routerCodeHash:keccak256('0x6001'),collateralPortal:address(3),feePortal:address(4),bokPortal:address(5),privateFpc:field(6),planHash:keccak256(AbiCoder.defaultAbiCoder().encode([abi.getFunction('fund').inputs[0]],[plan]))};
+ const intent={from:address(1),to:address(2),chainId:'31337',nonce:2,data:abi.encodeFunctionData('fund',[plan,'0x'+'ab'.repeat(65)]),value:'150',expected};
+ const tx={from:intent.from,to:intent.to,chainId:'0x7a69',nonce:'0x2',data:intent.data,value:'0x96',gas:'0x64',maxFeePerGas:'0xa',maxPriorityFeePerGas:'0x1'};
+ const input={asset:'ETH',request:[tx],account:intent.from,chainId:'31337',intent,maximumGasWei:'1000'};
+ assert.deepEqual(assertMetaMaskAggregatePayment(input),{planHash:expected.planHash,collateral:'100',feeAmount:'200',bokAmount:'300'});
+ for(const mutation of [{from:address(9)},{to:address(9)},{chainId:'0x1'},{nonce:'0x7'},{data:tx.data+'00'},{value:'0x97'},{gas:'0x65'},{gas:undefined},{maxPriorityFeePerGas:'0xb'},{gasPrice:'0xa'},{authorizationList:[]}])assert.throws(()=>assertMetaMaskAggregatePayment({...input,request:[{...tx,...mutation}]}));
+ for(const mutation of [{asset:'USDC'},{chainId:'1'},{request:[tx,tx]},{maximumGasWei:'999'},{intent:{...intent,expected:{...expected,kind:'aggregate-usdc-funding'}}}])assert.throws(()=>assertMetaMaskAggregatePayment({...input,...mutation}));
+});
+
+
+test('MetaMask aggregate modes require an explicit asset and do not change legacy or Phantom modes',async()=>{
+ const {walletExtensionMode}=await import('./t04-phantom.mjs');
+ for(const asset of ['ETH','USDC'])assert.equal(walletExtensionMode(['--wallet=metamask','--aggregate-devnet='+asset]),'metamask-aggregate-'+asset);
+ for(const args of [['--wallet=metamask'],['--wallet=metamask','--aggregate-devnet=DAI'],['--wallet=metamask','--aggregate-devnet=ETH','--retry'],['--aggregate-devnet=ETH','--wallet=metamask']])assert.throws(()=>walletExtensionMode(args));
+ assert.equal(walletExtensionMode([]),'metamask');assert.equal(walletExtensionMode(['--wallet=phantom','--signatures-only']),'phantom');
+});
+
+test('MetaMask aggregate launch rejects absent, nonlocal or unpinned deployment and preserves private control ownership',async t=>{
+ const {Wallet}=await import('ethers');const {validateMetaMaskAggregateControl,readMetaMaskAggregateControl}=await import('./t04-metamask.mjs');
+ const a=n=>'0x'+BigInt(n).toString(16).padStart(40,'0'),h=n=>'0x'+BigInt(n).toString(16).padStart(64,'0');
+ const directory=await fs.mkdtemp(path.join(os.tmpdir(),'t04-aggregate-'));await fs.chmod(directory,0o700);t.after(()=>fs.rm(directory,{recursive:true,force:true}));
+ const scope={chainId:'31337',router:a(1),routerCodeHash:h(1),collateralPortal:a(2),feePortal:a(3),bokPortal:a(4),weth:a(5),swapRouter:a(6),feeToken:a(7),bokToken:a(8),privateFpc:h(9),quoter:a(10),quoterCodeHash:h(2),usdcRelayAddress:a(11),usdcCodeHash:h(3),usdcImplementation:a(12),usdcImplementationCodeHash:h(4),usdcDomain:{name:'Local USD Coin',version:'2'}};
+ const c={schemaVersion:1,asset:'USDC',origin:'http://127.0.0.1:8080',ethereumUrl:'http://127.0.0.1:8545',walletConfig:{proofsEnabled:false,config:{network:{chainId:'31337',ethRpcUrl:'http://127.0.0.1:8545'},board:{portalAddress:a(2)},aggregateFunding:scope}},mnemonic:Wallet.createRandom().mnemonic.phrase,password:'disposable-test-password',recoveryDirectory:directory,runtimeSha256:'a'.repeat(64),allocation:{collateralWei:'1',feeAmount:'2',bokAmount:'3',gasBudgetWei:'4',maximumPaymentWei:'5',maximumUsdc:'6',slippageBps:100}};
+ assert.deepEqual(validateMetaMaskAggregateControl(c,'USDC'),c);
+ for(const change of [x=>delete x.walletConfig.config.aggregateFunding,x=>x.walletConfig.proofsEnabled=true,x=>x.origin='https://public.example',x=>x.walletConfig.config.network.chainId='1',x=>x.walletConfig.config.aggregateFunding.usdcRelayAddress=undefined,x=>x.walletConfig.config.aggregateFunding.usdcDomain.version='1',x=>x.runtimeSha256='unknown',x=>x.allocation.slippageBps=501,x=>x.allocation.maximumUsdc='0',x=>x.password='short',x=>x.extra=true]){const bad=structuredClone(c);change(bad);assert.throws(()=>validateMetaMaskAggregateControl(bad,'USDC'));}
+ assert.throws(()=>readMetaMaskAggregateControl(undefined,'USDC'));
+ const file=path.join(directory,'control.json');await fs.writeFile(file,JSON.stringify(c),{mode:0o600});assert.deepEqual(readMetaMaskAggregateControl(file,'USDC'),c);
+ await fs.chmod(file,0o644);assert.throws(()=>readMetaMaskAggregateControl(file,'USDC'));await fs.chmod(file,0o600);
+ await fs.mkdir(path.join(directory,'extension'));assert.throws(()=>readMetaMaskAggregateControl(file,'USDC'),/new disposable profile/);await fs.rmdir(path.join(directory,'extension'));
+ await fs.mkdir(path.join(directory,'profile'));assert.throws(()=>readMetaMaskAggregateControl(file,'USDC'),/new disposable profile/);
+});
+
+test('MetaMask aggregate typed consent binds exact local scope, allocation, nonce, expiry and two-signature USDC ordering',async()=>{
+ const {assertMetaMaskAggregateTypedData}=await import('./t04-metamask.mjs');const {collateralConsentTypes,usdcAuthorizationTypes}=await import('../shared/rolling/aggregate-funding.mjs');
+ const a=n=>'0x'+BigInt(n).toString(16).padStart(40,'0'),h='0x'+'01'.repeat(32),account=a(1),scope={router:a(2),collateralPortal:a(3),bokToken:a(4),usdcDomain:{name:'Local USD Coin',version:'2'}},allocation={collateralWei:'100',maximumUsdc:'200'};
+ const consent={domain:{name:'RollingCollateral',version:'1',chainId:'31337',verifyingContract:a(3)},types:collateralConsentTypes,primaryType:'DepositFor',message:{beneficiary:account,executor:a(2),amount:'100',secretHash:h,nonce:'7',deadline:'1100'}};
+ const input={data:consent,account,scope,allocation,index:0,asset:'ETH',consentNonce:7n,nowSeconds:1000};assert.equal(assertMetaMaskAggregateTypedData(input).value.nonce,'7');
+ const {TypedDataEncoder}=await import('ethers');const wire=TypedDataEncoder.getPayload(consent.domain,consent.types,consent.message);assert.equal(assertMetaMaskAggregateTypedData({...input,data:wire}).value.nonce,'7');
+ const invalidDomain=structuredClone(wire);invalidDomain.types.EIP712Domain=[];assert.throws(()=>assertMetaMaskAggregateTypedData({...input,data:invalidDomain}));
+ for(const change of [d=>d.domain.chainId='1',d=>d.domain.verifyingContract=a(9),d=>d.message.beneficiary=a(9),d=>d.message.executor=a(9),d=>d.message.amount='101',d=>d.message.nonce='0',d=>d.message.deadline='999',d=>d.message.deadline='1121',d=>d.message.extra='secret',d=>d.primaryType='Permit']){const data=structuredClone(consent);change(data);assert.throws(()=>assertMetaMaskAggregateTypedData({...input,data}));}
+ const authorization={domain:{name:'Local USD Coin',version:'2',chainId:'31337',verifyingContract:a(4)},types:usdcAuthorizationTypes,primaryType:'ReceiveWithAuthorization',message:{from:account,to:a(2),value:'200',validAfter:'999',validBefore:'1100',nonce:h}};
+ assert.equal(assertMetaMaskAggregateTypedData({...input,data:authorization,index:1,asset:'USDC'}).value.value,'200');
+ for(const change of [x=>x.asset='ETH',x=>x.index=2,x=>x.data.message.value='201',x=>x.data.message.to=a(9),x=>x.data.domain.name='Other Coin',x=>x.data.message.validAfter='1000']){const bad=structuredClone({...input,data:authorization,index:1,asset:'USDC'});change(bad);assert.throws(()=>assertMetaMaskAggregateTypedData(bad));}
+});
+
+
+test('MetaMask aggregate observer counts every actual configured root RPC send and rejects malformed batches',async()=>{
+ const {countMetaMaskAggregateNodeSubmissions:count}=await import('./t04-metamask.mjs');
+ const endpoint='http://127.0.0.1:19080/',body=JSON.stringify([{method:'aztec_getBlock'},{method:'aztec_sendTx',params:[{}]},{method:'aztec_sendTx',params:[{}]}]);
+ assert.equal(count({url:endpoint,method:'POST',body},endpoint),2);
+ assert.equal(count({url:endpoint+'v1/node',method:'POST',body},endpoint),0);
+ assert.equal(count({url:endpoint+'v1/node',method:'POST',body},endpoint+'v1/node'),2);
+ assert.equal(count({url:'http://127.0.0.1:8545/',method:'POST',body},endpoint),0);
+ assert.equal(count({url:endpoint,method:'GET',body:null},endpoint),0);
+ for(const malformed of ['{','[]','null','[null]','[{}]',JSON.stringify(Array(101).fill({method:'aztec_getBlock'}))])assert.throws(()=>count({url:endpoint,method:'POST',body:malformed},endpoint));
+ assert.throws(()=>count({url:endpoint+'?elsewhere=true',method:'POST',body},endpoint));
+});
