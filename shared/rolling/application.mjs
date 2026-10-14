@@ -253,9 +253,9 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
   }
   const operation=id=>`ROLLING_WORKFLOW_V1:${id}`;
   function summary(record){return {intentId:record.id,action:clone(record.action),status:record.status,maximumFee:record.maximumFee,
-    nonce:record.nonce,txHash:record.txHash??null,...(record.withdrawal?{withdrawal:clone(record.withdrawal),actualNetworkFee:record.actualNetworkFee??null}:{}),...(record.moderation?{moderation:clone(record.moderation)}:{}),stage:record.bok?`bok-${record.bok.phase}`:'single-transaction',...(record.bok?{bok:{phase:record.bok.phase,budget:record.bok.budget,availableCredit:record.bok.availableCredit,authorizationTxHash:record.bok.authorizationTxHash??null,...(record.bok.phase==='post'?{mainPolicyVersion:record.args[2].expected_main_policy_version,localPolicyVersion:record.args[2].expected_local_policy_version}:{})}}:{}),...(record.replacementReview?{replacementReview:clone(record.replacementReview)}:{}),
+    nonce:record.nonce,txHash:record.txHash??null,...(record.withdrawal?{withdrawal:clone(record.withdrawal),actualNetworkFee:record.actualNetworkFee??null}:{}),...(record.moderation?{moderation:clone(record.moderation)}:{}),stage:record.bok?`bok-${record.bok.phase}`:'single-transaction',...(record.bok?{bok:{phase:record.bok.phase,budget:record.bok.budget,availableCredit:record.bok.availableCredit,authorizationTxHash:record.bok.authorizationTxHash??null,...(record.bok.phase==='post'?{mainPolicyVersion:record.args[2].expected_main_policy_version,localPolicyVersion:record.args[2].expected_local_policy_version}:{})}}:{}),...(record.bokReleaseSource?{bokRelease:{sourceIntentId:record.bokReleaseSource.id}}:{}),...(record.replacementReview?{replacementReview:clone(record.replacementReview)}:{}),
     ...(preferenceAction(record)?{inclusionHistory:clone(record.inclusionHistory??[])}:{})};}
-  function checkBokRecord(record){for(const savedScope of [record?.bok?.scope,record?.fundingBok?.scope,record?.bokRequestScope])if(savedScope)check(bok&&JSON.stringify(savedScope)===JSON.stringify(bok),'ROLLING_CONTEXT_CHANGED');}
+  function checkBokRecord(record){for(const savedScope of [record?.bok?.scope,record?.fundingBok?.scope,record?.bokRequestScope,record?.bokReleaseSource?.bok?.scope])if(savedScope)check(bok&&JSON.stringify(savedScope)===JSON.stringify(bok),'ROLLING_CONTEXT_CHANGED');}
   async function savedIntent(id){const saved=await (await slot()).read();check(saved.value?.id===id,'ROLLING_INTENT_NOT_FOUND');checkBokRecord(saved.value);return saved;}
   function acknowledge(found,expected){
     check(found&&found.operation===expected.operation&&found.txHash===expected.txHash&&
@@ -271,7 +271,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
     if(!['success','reverted'].includes(found.outcome))return {...summary(saved.value),status:'unknown',txHash:found.txHash};
     acknowledge(found,{operation:operation(saved.value.id),txHash:saved.value.replacementReview?found.txHash:(saved.value.txHash??found.txHash)});
     const next={...saved.value,...(saved.value.withdrawal?{actualNetworkFee:String(chainValue(found.receipt.transactionFee))}:{}),status:found.outcome==='success'?'confirmed':'reverted',txHash:found.txHash,...(preferenceAction(saved.value)?{inclusionHistory:inclusionHistory(saved.value,found)}:{})};
-    await (await slot()).write(saved,next);return {...summary(next),...(next.bok?.phase==='authorize'&&next.status==='confirmed'?{status:'authorized'}:next.bok?.phase==='post'&&next.status==='reverted'?{status:'bok-post-reverted'}:{})};
+    await (await slot()).write(saved,next);return {...summary(next),...(next.bok?.phase==='authorize'&&next.status==='confirmed'?{status:'authorized'}:next.bok?.phase==='post'&&next.status==='reverted'?{status:'bok-post-reverted'}:next.bokReleaseSource&&next.status==='reverted'?{status:'bok-release-reverted'}:{})};
   }
   const preferenceAction=record=>['preference','read-marker'].includes(record.action.type);
   const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
@@ -459,6 +459,26 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
       ['reserved','charged','refunded','sequence'].every(key=>BigInt(request[key])===0n),'ROLLING_BOK_REQUEST_CHANGED');
     await guard();
   }
+  // The encrypted original authorization is the ownership/identity source for
+  // this narrow recovery. No public accounting query receives a human's IDs.
+  async function checkBokRelease(source,type){
+    checkBokRecord(source);
+    check(source.action.type==='bok'&&['authorize','post'].includes(source.bok?.phase)&&
+      ['cancel-bok-request','expire-bok-request'].includes(type),'ROLLING_RECOVERY_UNSUPPORTED');
+    const hash=source.bok.authorizationTxHash??source.txHash;
+    check(typeof hash==='string'&&/^0x[0-9a-f]{64}$/.test(hash),'ROLLING_RECOVERY_REQUIRED');
+    await guard();
+    const receipt=await session.node.getTxReceipt(sdk.TxHash.fromString(hash));
+    check(receipt&&['checkpointed','proven','finalized'].includes(receipt.status)&&receipt.executionResult==='success'&&
+      hashText(receipt.txHash)===hash&&Number.isSafeInteger(receipt.blockNumber)&&receipt.blockNumber>0,'ROLLING_RECOVERY_REQUIRED');
+    const block=await session.node.getBlockData(receipt.blockNumber);
+    check(Number(block?.header?.globalVariables?.blockNumber)===receipt.blockNumber&&hashText(block.blockHash)===hashText(receipt.blockHash),'ROLLING_RECOVERY_REQUIRED');
+    const request=await utility(await bokContract(),'request',[source.bok.requestId],deployment.bok.artifact);
+    check(request&&['1','2'].includes(String(BigInt(request.state)))&&field(request.invocation_hash,true)===source.bok.target&&
+      BigInt(request.budget)===BigInt(source.bok.budget)&&(type==='expire-bok-request'||BigInt(request.reserved)===0n),'ROLLING_BOK_REQUEST_CHANGED');
+    // Deadline and refund amounts remain authoritative contract simulation rules.
+    await guard();
+  }
   async function selectedContract(record){return record.action.type==='claim-private-fee'?null:record.bok?.phase==='authorize'||['claim-bok','withdraw-bok','cancel-bok-request','expire-bok-request'].includes(record.action.type)?bokContract():contract();}
   async function interaction(board,record){
     check((record.bok?.phase==='post'?'post_with_bok':methods[record.action.type])===record.method,'ROLLING_INTENT_CHANGED');
@@ -644,6 +664,20 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
         prepared:await payment(action,record),from:session.owner,guard});
       record.maximumFee=estimated.maximumFee.toString();await guard();await store.write(prior,record);return summary(record);
     });},
+    async prepareBokRelease(id,input){return exclusive(async()=>{
+      const {type}=exactData(input,['type']);check(['cancel-bok-request','expire-bok-request'].includes(type),'ROLLING_INVALID_ACTION');
+      await guard();let saved=await savedIntent(id);const final=await outcome(saved);
+      check(['authorized','bok-post-reverted','bok-release-reverted'].includes(final.status),'ROLLING_RECOVERY_REQUIRED');
+      saved=await savedIntent(id);const source=clone(saved.value.bokReleaseSource??saved.value),prior=clone(saved.value);delete prior.bokReleasePrior;
+      await checkBokRelease(source,type);await session.journal.assertCanStart();
+      const record={version:1,id:field(sdk.Fr.random().toString(),true),action:{type,requestId:source.bok.requestId},
+        args:[source.bok.requestId],method:methods[type],nonce:field(sdk.Fr.random().toString(),true),status:'prepared',
+        predecessor:{operation:operation(saved.value.id),txHash:saved.value.txHash},bokRequestScope:clone(bok),bokReleaseSource:source,bokReleasePrior:prior};
+      const selected=await interaction(await bokContract(),record);record.encoded=selected.encoded;
+      progress('estimating');const estimate=await sdk.estimatePrivateFeeTransaction({wallet:session.wallet,node:session.node,interaction:selected.call,
+        prepared:await payment(),from:session.owner,guard});record.maximumFee=estimate.maximumFee.toString();
+      await checkBokRelease(source,type);await (await slot()).write(saved,record);return summary(record);
+    });},
     async prepareBokPost(id){return exclusive(async()=>{
       await guard();let saved=await savedIntent(id);check(['authorize','post'].includes(saved.value.bok?.phase),'ROLLING_RECOVERY_UNSUPPORTED');
       const previousPhase=saved.value.bok.phase,authorized=await outcome(saved);
@@ -730,6 +764,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
       if(saved.value.action.type==='claim-deposit')check(same(await collateralClaim(saved.value.action),saved.value.args),'ROLLING_FUNDING_MISMATCH');
       if(saved.value.fundingBok)check(same(await (saved.value.action.type==='claim-bok'?privateBokClaim(saved.value.action.receipt):bokFundingClaim(saved.value.action)),saved.value.fundingBok),'ROLLING_FUNDING_MISMATCH');
       if(saved.value.action.type==='claim-private-fee')check(saved.value.fundingFee,'ROLLING_FUNDING_MISMATCH');
+      if(saved.value.bokReleaseSource)await checkBokRelease(saved.value.bokReleaseSource,saved.value.action.type);
       await checkModeration(saved.value);
       if(saved.value.bok?.phase==='authorize'){const available=await bokCredit();check(available>=BigInt(saved.value.bok.budget),'ROLLING_BOK_CREDIT_INSUFFICIENT');}
       if(saved.value.bok?.phase==='post')await waitingBok(saved.value);
@@ -740,7 +775,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
       await (await slot()).write(saved,{...saved.value,status:'submitting'}); // Durable no-replay fence before wallet lifecycle.
       await guard();progress('submitting');
       await session.wallet.sendTx(estimated.payload,{from:session.owner,fee:{gasSettings:estimated.gasSettings},
-        transactionJournal:session.journal,journalOperation:operation(id),...(saved.value.moderation?{beforeSubmit:async()=>{await checkModeration(saved.value);await guard();}}:{}),...(saved.value.bok?{beforeSubmit:async()=>{
+        transactionJournal:session.journal,journalOperation:operation(id),...(saved.value.bokReleaseSource?{beforeSubmit:()=>checkBokRelease(saved.value.bokReleaseSource,saved.value.action.type)}:{}),...(saved.value.moderation?{beforeSubmit:async()=>{await checkModeration(saved.value);await guard();}}:{}),...(saved.value.bok?{beforeSubmit:async()=>{
           if(saved.value.bok.phase==='post')await waitingBok(saved.value);else await bokContext();await guard();
         }}:{}),...(replacing?{beforeSubmit:async hash=>{
           await session.journal.assertReplacementPredecessors(operation(id),hash,{requireMissingAnchor:true});
@@ -753,7 +788,13 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
     async cancelPrepared(id){return exclusive(async()=>{await guard();const saved=await savedIntent(id);
       check(saved.value.status==='prepared'&&saved.value.bok?.phase!=='post','ROLLING_RECOVERY_REQUIRED');
       const tx=await session.journal.inspect();check(!tx||tx.operation!==operation(id),'ROLLING_RECOVERY_REQUIRED');
-      await guard();const cancelled={...saved.value,status:'cancelled'};await (await slot()).write(saved,cancelled);return summary(cancelled);
+      await guard();if(saved.value.bokReleaseSource){
+        // A cancelled fee review must not discard the funded draft or unblock unrelated actions.
+        const source=saved.value.bokReleasePrior;check(source,'ROLLING_RECOVERY_REQUIRED');const found=await session.journal.inspectOutcome();
+        check(found?.operation===operation(source.id),'ROLLING_RECOVERY_REQUIRED');
+        await (await slot()).write(saved,source);return outcome(await (await slot()).read());
+      }
+      const cancelled={...saved.value,status:'cancelled'};await (await slot()).write(saved,cancelled);return summary(cancelled);
     });},
     async reconcile(id){return exclusive(async()=>{await guard();const saved=await savedIntent(id);
       if(['prepared','cancelled','replacement-prepared'].includes(saved.value.status))return {...summary(saved.value),...(saved.value.replacementReview?{replacementReview:clone(saved.value.replacementReview)}:{})};return outcome(saved);

@@ -3,7 +3,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {OperationQueue} from '../../node_modules/@aztec-labs/pxe/dest/operation_queue.js';
 import {createSynchronizedRollingApplication} from './synchronized-application.mjs';
-const names=['readBokAccounting','readBalances','readWithdrawal','readModeratorStatus','readBokStatus','prepareBokPost','readAccountStatus','readPreferenceHead','readProfile','ownedIdentities','prepare','submitPrepared','cancelPrepared','reconcile','inspectRecovery','prepareReplacement','resumeSaved'];
+const names=['readBokAccounting','readBalances','readWithdrawal','readModeratorStatus','readBokStatus','prepareBokPost','prepareBokRelease','readAccountStatus','readPreferenceHead','readProfile','ownedIdentities','prepare','submitPrepared','cancelPrepared','reconcile','inspectRecovery','prepareReplacement','resumeSaved'];
 test('explicit synchronization exposes a newly included name through the actual autoSync:false SDK queue',async()=>{
  let anchor=14,head=14,closed=0,syncs=0;
  const synchronizer={sync:async()=>{syncs++;anchor=head;}};
@@ -23,7 +23,7 @@ test('failed synchronization and context changes prevent every private operation
   const application=createSynchronizedRollingApplication({application:Object.fromEntries(names.map(n=>[n,()=>{calls++;}])),
    contextGuard:()=>{guards++;if(failure==='before'||failure==='after'&&guards===2)throw error;},
    synchronize:()=>{syncs++;if(failure==='sync')throw error;}});
-  await assert.rejects(application[name](...(name==='resumeSaved'?['intent',{expectedTxHash:'0x'+'11'.repeat(32)}]:[])),value=>value===error);assert.equal(calls,0);assert.equal(syncs,failure==='before'?0:1);
+  await assert.rejects(application[name](...(name==='resumeSaved'?['intent',{expectedTxHash:'0x'+'11'.repeat(32)}]:name==='prepareBokRelease'?['intent',{type:'cancel-bok-request'}]:[])),value=>value===error);assert.equal(calls,0);assert.equal(syncs,failure==='before'?0:1);
  }
 });
 test('capabilities and method receivers are captured before asynchronous synchronization',async()=>{
@@ -63,4 +63,15 @@ test('RC22 balance cursor is captured before synchronization and accessor input 
  const raw=Object.fromEntries(names.map(name=>[name,(...args)=>args]));const app=createSynchronizedRollingApplication({application:raw,contextGuard:()=>{},synchronize:()=>gate});
  const pending=app.readBalances(input);input.cursor='replacement';release();assert.deepEqual(await pending,[{cursor:'original-page'}]);
  let reads=0;await assert.rejects(app.readBalances({get cursor(){reads++;return 0;}}),{code:'ROLLING_BALANCE_CURSOR_INVALID'});assert.equal(reads,0);
+});
+
+test('interrupted Bok release captures exact id and action before synchronization without getters or extra fields',async()=>{
+ let release;const gate=new Promise(resolve=>release=resolve),input={type:'cancel-bok-request'};
+ const raw=Object.fromEntries(names.map(name=>[name,(...args)=>args]));
+ const app=createSynchronizedRollingApplication({application:raw,contextGuard:()=>{},synchronize:()=>gate});
+ const pending=app.prepareBokRelease('original-intent',input);input.type='expire-bok-request';release();
+ assert.deepEqual(await pending,['original-intent',{type:'cancel-bok-request'}]);
+ let reads=0,syncs=0;const guarded=createSynchronizedRollingApplication({application:raw,contextGuard:()=>{syncs++;},synchronize:()=>{syncs++;}});
+ for(const bad of [{get type(){reads++;return 'cancel-bok-request';}},{type:'expire-bok-request',requestId:'other'},{type:'post'},Object.create({type:'cancel-bok-request'})])await assert.rejects(guarded.prepareBokRelease('original-intent',bad),{code:'ROLLING_INVALID_ACTION'});
+ assert.equal(reads,0);assert.equal(syncs,0);
 });

@@ -343,11 +343,17 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   if(fundingCapability()&&['claim-deposit','claim-private-fee','claim-bok'].includes(intent?.action?.type)&&['reverted','cancelled'].includes(intent.status))content.append(button('Review private claim again',()=>void work(async()=>{
    const epoch=accountEpoch;checkAccount(epoch);await fundingCapability().reviewRevertedClaim();checkAccount(epoch);await advanceFunding();
   })));
-  if(['authorized','bok-post-reverted'].includes(intent.status)){
-   content.append(paragraph(intent.status==='authorized'?'Bok authorization confirmed. Your exact request and post are saved. Nothing else will be sent automatically.':'The post reverted. Its paid network fee is not refunded. Your authorized Bok request and draft remain saved; review current policy and a new network fee before trying again.'),button('Review saved Bok post',()=>void work(async()=>{
+  if(['authorized','bok-post-reverted','bok-release-reverted'].includes(intent.status)){
+   if(intent.status==='bok-post-reverted')content.append(paragraph('The post reverted. Its paid network fee is not refunded.'));
+   content.append(paragraph('Your funded request and original draft remain saved. Continuing the post, releasing unused credit, or requesting expiry each needs a separate fee review. Expiry requires the contract deadline; unresolved reservations remain fenced.'));
+   if(intent.status!=='bok-release-reverted')content.append(button('Review saved Bok post',()=>void work(async()=>{
     const epoch=accountEpoch,id=intent.intentId;checkAccount(epoch);blocked=true;
     const result=await session.application.prepareBokPost(id);checkAccount(epoch);intent=result;blocked=false;notice='Review the saved post and its separate network fee before sending.';
-   }),true));return;
+   }),true));
+   for(const [type,label]of [['cancel-bok-request','Review release of this saved request'],['expire-bok-request','Review expiry of this saved request']])content.append(button(label,()=>void work(async()=>{
+    const epoch=accountEpoch,id=intent.intentId;checkAccount(epoch);const result=await session.application.prepareBokRelease(id,{type});checkAccount(epoch);intent=result;blocked=false;notice='Review the private transaction fee. No release or expiry has been sent.';
+   })));
+   return;
   }
   let confirm;
   const privateAction=['preference','read-marker'].includes(intent.action?.type),expiryAction=intent.action?.type==='expire-bok-request',fundingAction=['claim-deposit','claim-private-fee','claim-bok'].includes(intent.action?.type);

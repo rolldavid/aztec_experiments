@@ -11,7 +11,7 @@ import {Fr} from '@aztec-labs/foundation/curves/bn254';
 import {AztecAddress} from '@aztec-labs/stdlib/aztec-address';
 import {encodeArguments,loadContractArtifact,decodeFromAbi,getFunctionReturnType} from '@aztec-labs/stdlib/abi';
 import {createL2Journal} from '../l2-journal.mjs';
-import {Tx,mergeExecutionPayloads} from '@aztec-labs/stdlib/tx';
+import {Tx,TxHash,mergeExecutionPayloads} from '@aztec-labs/stdlib/tx';
 import {BatchCall} from '@aztec-labs/aztec.js/contracts';
 import {PrivateMintAndPayFeePaymentMethod} from '../private-fee-payment.mjs';
 import {derivePrivateFeeBridgeSecret} from '../private-fee-client.mjs';
@@ -1334,4 +1334,66 @@ test('RC22 expiry accounting keeps unknown reserved liability fenced and never a
  await assert.rejects(f.app.prepare({type:'expire-bok-request',requestId:hex(11)}),{code:'ROLLING_BOK_ACCOUNTING_INCOMPLETE'});
  Object.assign(f.pages[0].requests[0],{state:'4',sequence:'2',reserved:'0',charged:'37',refunded:'63'});f.state.bokCredit=1053n;
  page=await finishBokAccounting(f);assert.equal(page.available,'1053');assert.equal(page.totals.reserved,'0');assert.equal(page.totals.charged,'37');assert.equal(page.totals.refunded,'63');assert.equal(f.state.sends,1);
+});
+
+// Real ABI/encrypted workflow; canonical node and transaction execution are labelled doubles.
+async function interruptedBokFixture(){
+ const f=bokFixture();f.options.sdk.TxHash=TxHash;
+ f.options.accountSession.node.getTxReceipt=async tx=>{assert(tx instanceof TxHash);if(f.state.authReadError)throw Error('unavailable');return {status:'checkpointed',executionResult:'success',txHash:hex(77),blockNumber:1,blockHash:hex(f.state.authReorg?43:42)};};
+ f.app=f.restart();const prepared=await f.app.prepare(bokAction());await f.app.submitPrepared(prepared.intentId);return {...f,authorizedId:prepared.intentId};
+}
+test('Bok interrupted authorization releases only its original request and cancelling review restores encrypted draft',async()=>{
+ const f=await interruptedBokFixture(),request=f.state.bokRequestId;
+ await assert.rejects(f.app.prepare({type:'name',first:'River',last:'Stone'}),{code:'ROLLING_RECOVERY_REQUIRED'});
+ const review=await f.restart().prepareBokRelease(f.authorizedId,{type:'cancel-bok-request'});
+ assert.equal(review.action.requestId,request);assert.deepEqual(f.state.calls.at(-1).args,[request]);assert.equal(f.state.sends,1);assert.equal(review.bokRelease.sourceIntentId,f.authorizedId);
+ const restored=await f.restart().cancelPrepared(review.intentId);assert.equal(restored.status,'authorized');assert.equal(restored.action.content,bokAction().content);
+ await assert.rejects(f.app.prepare({type:'name',first:'River',last:'Stone'}),{code:'ROLLING_RECOVERY_REQUIRED'});
+ const again=await f.restart().prepareBokRelease(f.authorizedId,{type:'cancel-bok-request'});const result=await f.restart().submitPrepared(again.intentId);
+ assert.equal(result.status,'confirmed');assert.equal(f.state.sends,2);assert.equal(f.state.sent.payload.name,'cancel');assert.deepEqual(f.state.sent.payload.args,[request]);
+ assert([...f.values.values()].every(v=>!v.includes('Private Sentinel')));
+});
+test('Bok interrupted release rejects unknown authorization, foreign input, changed request and canonical reorg',async()=>{
+ for(const mode of ['unknown','extra','wrong-id','reorg','unavailable','target','reserved','closed','scope']){
+  const f=await interruptedBokFixture();let id=f.authorizedId,input={type:'cancel-bok-request'};
+  if(mode==='unknown')f.state.outcome.outcome='unknown';if(mode==='extra')input.requestId=hex(99);if(mode==='wrong-id')id=hex(99);
+  if(mode==='reorg')f.state.authReorg=true;if(mode==='unavailable')f.state.authReadError=true;
+  if(mode==='target')f.state.bokRequest.invocation_hash=hex(99);if(mode==='reserved')f.state.bokRequest.reserved='0x01';if(mode==='closed')f.state.bokRequest.state='0x04';
+  if(mode==='scope')f.options.deployment.bok.operator=hex(99);
+  await assert.rejects(f.restart().prepareBokRelease(id,input));assert.equal(f.state.sends,1);assert.equal(f.state.estimates,2);
+ }
+});
+test('Bok interrupted expiry enforces actual simulation deadline and preserves reserved liability',async()=>{
+ const f=await interruptedBokFixture();f.state.bokRequest.reserved='0x14';
+ const estimate=f.options.sdk.estimatePrivateFeeTransaction;f.options.sdk.estimatePrivateFeeTransaction=async input=>{if(input.interaction.name==='expire'&&!f.state.expired)throw Error('Request not expired');return estimate(input);};
+ await assert.rejects(f.restart().prepareBokRelease(f.authorizedId,{type:'expire-bok-request'}),/Request not expired/);assert.equal(f.state.sends,1);
+ f.state.expired=true;const review=await f.restart().prepareBokRelease(f.authorizedId,{type:'expire-bok-request'});f.state.expired=false;
+ await assert.rejects(f.restart().submitPrepared(review.intentId),/Request not expired/);assert.equal(f.state.sends,1);
+ f.state.expired=true;await f.restart().submitPrepared(review.intentId);assert.equal(f.state.sends,2);assert.equal(f.state.sent.payload.name,'expire');assert.equal(f.state.bokRequest.reserved,'0x14','No client-side reservation deletion');
+});
+test('Bok interrupted release rechecks fee and original canonical authorization at actual send boundary',async()=>{
+ for(const mode of ['fee','reorg','send-race']){
+  const f=await interruptedBokFixture(),review=await f.restart().prepareBokRelease(f.authorizedId,{type:'cancel-bok-request'});
+  if(mode==='fee')f.state.fee=11n;if(mode==='reorg')f.state.authReorg=true;if(mode==='send-race')f.state.beforeBokSubmit=async()=>{f.state.authReorg=true;};
+  await assert.rejects(f.restart().submitPrepared(review.intentId));assert.equal(f.state.sends,1);
+ }
+});
+test('Bok interrupted release unknown submission is retained and never automatically retried',async()=>{
+ const f=await interruptedBokFixture(),review=await f.restart().prepareBokRelease(f.authorizedId,{type:'cancel-bok-request'});f.state.failSend=true;
+ await assert.rejects(f.restart().submitPrepared(review.intentId));assert.equal(f.state.sends,2);
+ await assert.rejects(f.restart().prepareBokRelease(review.intentId,{type:'cancel-bok-request'}),{code:'ROLLING_RECOVERY_REQUIRED'});
+ await assert.rejects(f.restart().submitPrepared(review.intentId),{code:'ROLLING_RECOVERY_REQUIRED'});assert.equal(f.state.sends,2);
+});
+test('Bok interrupted reverted post can release without re-enabling a rejected plugin or publishing again',async()=>{
+ const f=await interruptedBokFixture(),post=await f.app.prepareBokPost(f.authorizedId);await f.app.submitPrepared(post.intentId);f.state.outcome.outcome='reverted';
+ assert.equal((await f.restart().reconcile(post.intentId)).status,'bok-post-reverted');f.state.bokEnabled=false;
+ const review=await f.restart().prepareBokRelease(post.intentId,{type:'cancel-bok-request'});const restored=await f.restart().cancelPrepared(review.intentId);assert.equal(restored.status,'bok-post-reverted');
+ const again=await f.restart().prepareBokRelease(post.intentId,{type:'cancel-bok-request'});await f.restart().submitPrepared(again.intentId);assert.equal(f.state.sends,3);assert.equal(f.state.sent.payload.name,'cancel');
+});
+test('Bok interrupted reverted release keeps original identity through another cancelled fee review',async()=>{
+ const f=await interruptedBokFixture(),first=await f.app.prepareBokRelease(f.authorizedId,{type:'cancel-bok-request'});await f.app.submitPrepared(first.intentId);f.state.outcome.outcome='reverted';
+ assert.equal((await f.restart().reconcile(first.intentId)).status,'bok-release-reverted');
+ await assert.rejects(f.restart().prepare({type:'name',first:'River',last:'Stone'}),{code:'ROLLING_RECOVERY_REQUIRED'});
+ const second=await f.restart().prepareBokRelease(first.intentId,{type:'expire-bok-request'});assert.equal(second.bokRelease.sourceIntentId,f.authorizedId);
+ assert.equal((await f.restart().cancelPrepared(second.intentId)).status,'bok-release-reverted');assert.equal(f.state.sends,2);
 });
