@@ -143,10 +143,11 @@ export function createRollingColdPreferenceReader(input){
      // The original queued SDK operation must accept its exact epoch/sequence,
      // replay an unacknowledged mailbox, or return the existing reset/advance
      // handshake before it can authenticate or consume any supplied body.
-     await recheck(cache.delivery.anchor);let block;
-     try{block=await fetchPage(cache.delivery,signal);}catch(error){
-      // This failed step stays failed. Its next explicit read first resumes the
-      // ordinary durable mailbox protocol; no alternate call hides this error.
+     let block;
+     try{await recheck(cache.delivery.anchor);block=await fetchPage(cache.delivery,signal);}catch(error){
+      // A missing/orphaned speculative anchor or failed transport stays failed.
+      // The next explicit read reaches the ordinary SDK mailbox/reset protocol;
+      // no alternate operation hides this error or relabels the cached prefix.
       resumeMailbox=true;throw error;
      }
      observed=await request({epoch:cache.delivery.epoch,sequence:cache.delivery.sequence},block,false,true);

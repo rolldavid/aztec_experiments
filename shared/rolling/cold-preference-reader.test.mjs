@@ -57,6 +57,22 @@ test('stable encrypted cursor advances with one queued step and the original fin
  const result=await r.read();assert.equal(result.progress.processedRevision,'1');assert.equal(f.state.steps,1);
  const calls=f.state.requests.slice(before);assert.equal(calls.length,2);assert.equal(calls[0].optimistic,true);assert.equal(calls[0].expected.sequence,0);assert.equal(calls[1].expected,null);
 });
+for(const mode of ['changed','missing'])test('orphaned cached anchor '+mode+' fails once then the next explicit read reaches the authoritative reset',async()=>{
+ const f=fixture();let orphaned=false,reset=false;
+ f.config.node.getBlockData=async number=>orphaned&&!reset&&mode==='missing'?null:({header:{globalVariables:{blockNumber:number},hash:async()=>new Field(orphaned?99:11)},blockHash:new Field(orphaned?99:11)});
+ // The SDK can reset an orphaned generation only when the ordinary mailbox
+ // operation is reached. No speculative input may itself relabel the prefix.
+ const original=f.config.pxe.processRollingPreferenceRecovery;
+ f.config.pxe.processRollingPreferenceRecovery=async p=>{
+  if(orphaned&&p.expected===null&&f.current().anchor.blockHash===hex(11)){reset=true;Object.assign(f.current(),{epoch:'e'.repeat(64),sequence:0,anchor:{blockNumber:1,blockHash:hex(99)},nextBlock:1,nextLog:0,records:[],head:null,complete:false});}
+  return original(p);
+ };
+ const r=f.reader();await r.read();const before=f.state.requests.length,encrypted=[...f.db];orphaned=true;
+ await assert.rejects(r.read(),{code:'ROLLING_COLD_PREFERENCES_UNAVAILABLE'});
+ assert.equal(f.state.requests.length,before);assert.deepEqual([...f.db],encrypted);
+ const resumed=await r.read();assert.equal(resumed.complete,false);assert.equal(resumed.progress.nextBlock,1);assert.equal(resumed.progress.processedRevision,'0');
+ assert.equal(f.state.requests[before].expected,null);assert.equal(f.state.steps,0);assert.equal(f.current().epoch,'e'.repeat(64));
+});
 test('failed speculative transport stays failed; the next explicit read resumes the mailbox',async()=>{
  const f=fixture(),read=f.config.compact.read;let fail=false;
  f.config.compact.read=async p=>{if(fail){fail=false;throw Error('labelled transport failure');}return read(p);};
