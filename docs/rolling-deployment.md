@@ -448,20 +448,28 @@ requires reconciliation, and historical effects must never be replayed blindly.
 Native snapshots retain the existing streamed 4 GiB ceiling and complete
 historical state. Startup requires at least 8 GiB free before changing the saved
 phase. This is admission headroom, not a reservation or an ongoing disk quota.
-After a clean stop, the runner hashes the new snapshot and durably writes its
-stopped record before deleting only the previous exact hash-verified native
-checkpoint. Successful runs therefore retain one qualified snapshot plus at most
-one active candidate. Failed or interrupted runs preserve recovery candidates;
-older orphan files require explicit operator reconciliation, never a directory
-sweep. The legacy 128 MiB RPC import limit remains separate.
+After a clean stop, the runner streams and fsyncs the new snapshot before
+publishing its stopped record, which retains the exact predecessor filename,
+hash and canonical head. A zero Anvil exit code is not proof of dump completeness:
+Anvil can log a dump error and still exit zero. The next normal startup must load
+the new file and verify its exact canonical head and protocol checkpoint numbers
+before removing the predecessor. A truncated dump therefore fails startup while
+the good predecessor remains available for explicit owner recovery; there is no
+automatic rollback or replay. Normal operation retains two full snapshots at
+most (current plus candidate, or predecessor plus newly stopped candidate); the
+next startup briefly allocates its empty candidate before validating that load.
+Failed or interrupted runs preserve recovery candidates; older orphan files
+require explicit operator reconciliation, never a directory sweep. The legacy
+128 MiB RPC import limit remains separate.
 
 Anvil's supported `--cache-path` points to a new private `anvil-cache-*` directory
-owned by that run. Its historical-state cache is removed only after Anvil exits
-cleanly and the new checkpoint record is committed. A failed shutdown retains
-it. Cleanup verifies directory identity and never sweeps `~/.foundry`, other
-runs, journals or original Aztec databases. Complete historical-state retention
-remains enabled; neither cache pruning nor reduced history is used to pass
-recovery acceptance. Long sessions must monitor free space and stop gracefully
+owned by that run. Its path and directory identity remain in the stopped record.
+The cache is removed only after the next normal startup successfully loads and
+verifies that dump. A failed shutdown or failed load retains it. Cleanup verifies
+directory identity and never sweeps `~/.foundry`, other runs, journals or original
+Aztec databases. Complete historical-state retention remains enabled; neither
+cache pruning nor reduced history is used to pass recovery acceptance. Long
+sessions must monitor free space and stop gracefully
 before consuming checkpoint headroom.
 
 The relay initialization marker lives beside `relay-state`, not inside it. Once

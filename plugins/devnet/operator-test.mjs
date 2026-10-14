@@ -551,14 +551,32 @@ if(focused){
   }
  });
 
- test('native checkpoint replacement commits before removing only its exact qualified predecessor',async()=>{
-  const {commitNativeDevnetCheckpoint,inspectNativeDevnetSnapshot}=await import('./network.mjs');
+ test('native checkpoint replacement retains predecessor and cache until actual matching load qualification',async()=>{
+  const {commitNativeDevnetCheckpoint,pruneLoadedNativeDevnetPredecessor,inspectNativeDevnetSnapshot,createDevelopmentAnvilCache}=await import('./network.mjs');
   const directory=await fs.mkdtemp(path.join(os.tmpdir(),'native-retention-'));const statePath=path.join(directory,'network.json'),previous=path.join(directory,'anvil-recovery-00000000-0000-4000-8000-000000000000.json'),recoveryPath=path.join(directory,'anvil-recovery-11111111-1111-4111-8111-111111111111.json'),unrelated=path.join(directory,'anvil-recovery-22222222-2222-4222-8222-222222222222.json');
-  try{for(const file of [previous,recoveryPath,unrelated])await fs.writeFile(file,'{}',{mode:0o600});const saved={snapshotFormat:'native-json-v1',snapshotFile:path.basename(previous),snapshotHash:(await inspectNativeDevnetSnapshot(previous)).sha256};
-   await commitNativeDevnetCheckpoint({directory,statePath,state:{schemaVersion:1},saved,recoveryPath,checkpointHead:{number:'0x1'}});
+  try{for(const file of [previous,recoveryPath,unrelated])await fs.writeFile(file,'{}',{mode:0o600});const anvilCache=await createDevelopmentAnvilCache(directory),checkpointHead={number:'0x1',hash:'0x'+'a'.repeat(64),pending:'1',proven:'1'},saved={...stopped,snapshotFormat:'native-json-v1',snapshotFile:path.basename(previous),snapshotHash:(await inspectNativeDevnetSnapshot(previous)).sha256,snapshotHead:checkpointHead};
+   await commitNativeDevnetCheckpoint({directory,statePath,state:saved,saved,recoveryPath,checkpointHead,anvilCache});
    const record=JSON.parse(await fs.readFile(statePath));assert.equal(record.phase,'stopped');assert.equal(record.snapshotFile,path.basename(recoveryPath));assert.equal(record.snapshotHash,(await inspectNativeDevnetSnapshot(recoveryPath)).sha256);
-   await assert.rejects(fs.stat(previous),{code:'ENOENT'});assert.equal(await fs.readFile(unrelated,'utf8'),'{}');assert.equal(await fs.readFile(recoveryPath,'utf8'),'{}');
+   assert.equal(record.snapshotPredecessor.snapshotFile,path.basename(previous));assert.equal(await fs.readFile(previous,'utf8'),'{}');assert((await fs.stat(anvilCache.path)).isDirectory());
+   const restored={directory,statePath,state:record,head:{number:1n,hash:checkpointHead.hash},pending:'1',proven:'1'};
+   await assert.rejects(pruneLoadedNativeDevnetPredecessor({...restored,pending:'2'}),/identity differs/);assert.equal(await fs.readFile(previous,'utf8'),'{}');assert((await fs.stat(anvilCache.path)).isDirectory());
+   const next=await pruneLoadedNativeDevnetPredecessor(restored);assert.equal(next.snapshotPredecessor,undefined);assert.equal(next.snapshotCache,undefined);
+   await assert.rejects(fs.stat(previous),{code:'ENOENT'});await assert.rejects(fs.stat(anvilCache.path),{code:'ENOENT'});assert.equal(await fs.readFile(unrelated,'utf8'),'{}');assert.equal(await fs.readFile(recoveryPath,'utf8'),'{}');
   }finally{await fs.rm(directory,{recursive:true,force:true});}
+ });
+ test('truncated native dump retains good predecessor and cache, with candidate sync before metadata publication',async()=>{
+  const {commitNativeDevnetCheckpoint,inspectNativeDevnetSnapshot,createDevelopmentAnvilCache}=await import('./network.mjs');
+  const directory=await fs.mkdtemp(path.join(os.tmpdir(),'native-truncated-')),statePath=path.join(directory,'network.json'),previous=path.join(directory,'anvil-recovery-00000000-0000-4000-8000-000000000000.json'),recoveryPath=path.join(directory,'anvil-recovery-11111111-1111-4111-8111-111111111111.json');
+  const open=fs.open,events=[];
+  try{await fs.writeFile(previous,'{}',{mode:0o600});await fs.writeFile(recoveryPath,'{"block":[',{mode:0o600});const anvilCache=await createDevelopmentAnvilCache(directory),checkpointHead={number:'0x1',hash:'0x'+'a'.repeat(64),pending:'1',proven:'1'},saved={...stopped,snapshotFormat:'native-json-v1',snapshotFile:path.basename(previous),snapshotHash:(await inspectNativeDevnetSnapshot(previous)).sha256,snapshotHead:checkpointHead};
+   fs.open=async(...args)=>{if(args[0]===statePath+'.tmp')events.push('metadata-open');const fd=await open(...args);if(args[0]!==recoveryPath)return fd;return new Proxy(fd,{get(target,key){if(key==='sync')return async()=>{await target.sync();events.push('candidate-synced');};const value=Reflect.get(target,key,target);return typeof value==='function'?value.bind(target):value;}});};
+   await commitNativeDevnetCheckpoint({directory,statePath,state:saved,saved,recoveryPath,checkpointHead,anvilCache});
+   assert(events.indexOf('candidate-synced')>=0&&events.indexOf('candidate-synced')<events.indexOf('metadata-open'));
+   assert.throws(()=>JSON.parse('{"block":['));
+   assert.equal(await fs.readFile(previous,'utf8'),'{}');assert.equal(await fs.readFile(recoveryPath,'utf8'),'{"block":[');assert((await fs.stat(anvilCache.path)).isDirectory());
+   const record=JSON.parse(await fs.readFile(statePath));assert.equal(record.snapshotPredecessor.snapshotHash,saved.snapshotHash);assert.equal(record.snapshotPredecessor.snapshotHead.hash,checkpointHead.hash);
+   const source=await fs.readFile(new URL('./network.mjs',import.meta.url),'utf8');assert(source.indexOf('state=await pruneLoadedNativeDevnetPredecessor(')>source.indexOf('await restoreDevelopmentNativeClock(c,head)'));
+  }finally{fs.open=open;await fs.rm(directory,{recursive:true,force:true});}
  });
  test('native checkpoint validation or record-commit failure preserves previous and candidate snapshots',async()=>{
   const {commitNativeDevnetCheckpoint,inspectNativeDevnetSnapshot}=await import('./network.mjs');
@@ -572,10 +590,9 @@ if(focused){
  });
  test('storage admission rejects insufficient space before mutating the retained phase or creating its candidate',async()=>{
   const source=await fs.readFile(new URL('./network.mjs',import.meta.url),'utf8');
-  const start=source.indexOf('export async function assertDevelopmentStorageCapacity('),end=source.indexOf('// The qualified predecessor',start),body=source.slice(start,end).replace('export ','');
-  const build=new Function('fs',body+';return assertDevelopmentStorageCapacity;');let reads=0;
-  const check=bytes=>build({statfs:async(directory,options)=>{reads++;assert.equal(directory,'/private/state');assert.equal(options.bigint,true);return {bavail:bytes,bsize:1n};}})('/private/state');
-  await assert.rejects(check(8589934591n),/8 GiB free/);await check(8589934592n);assert.equal(reads,2);
+  const {assertDevelopmentStorageCapacity}=await import('./network.mjs');const original=fs.statfs;let reads=0;
+  const check=bytes=>{fs.statfs=async(directory,options)=>{reads++;assert.equal(directory,'/private/state');assert.equal(options.bigint,true);return {bavail:bytes,bsize:1n};};return assertDevelopmentStorageCapacity('/private/state');};
+  try{await assert.rejects(check(8589934591n),/8 GiB free/);await check(8589934592n);assert.equal(reads,2);}finally{fs.statfs=original;}
   assert(source.indexOf('if(persistent)await assertDevelopmentStorageCapacity(directory)')<source.indexOf("await writeDevnetRecord(statePath,{...state,phase:'starting'}"));
  });
 
@@ -585,7 +602,7 @@ if(focused){
    await assert.rejects(removeDevelopmentAnvilCache({...owned,ino:owned.ino+1}),/ownership changed/);assert((await fs.stat(owned.path)).isDirectory());
    await removeDevelopmentAnvilCache(owned);await assert.rejects(fs.stat(owned.path),{code:'ENOENT'});assert.equal(await fs.readFile(path.join(other,'keep'),'utf8'),'retained');
    await fs.symlink(other,owned.path);await assert.rejects(removeDevelopmentAnvilCache(owned),/ownership changed/);assert.equal(await fs.readFile(path.join(other,'keep'),'utf8'),'retained');
-   const source=await fs.readFile(new URL('./network.mjs',import.meta.url),'utf8');assert(source.indexOf('if(anvilCache)await removeDevelopmentAnvilCache(anvilCache)')>source.indexOf('await commitNativeDevnetCheckpoint({directory,statePath,state,saved,recoveryPath,checkpointHead})'));
+   const source=await fs.readFile(new URL('./network.mjs',import.meta.url),'utf8');assert(source.includes('if(cache)await removeDevelopmentAnvilCache({path:path.join(directory,cache.directory),dev:cache.dev,ino:cache.ino})'));assert(!source.includes('if(anvilCache)await removeDevelopmentAnvilCache(anvilCache)'));
   }finally{await fs.rm(directory,{recursive:true,force:true});}
  });
 

@@ -55,17 +55,29 @@ export function validateDevnetResume(record,{fundingAddresses,ports,toolchainHas
        !/^0x[0-9a-f]+$/.test(record.snapshotHead?.number??'')||!/^0x[0-9a-f]{64}$/.test(record.snapshotHead?.hash??'')||
        !/^(0|[1-9][0-9]*)$/.test(record.snapshotHead?.pending??'')||record.snapshotHead.pending!==record.snapshotHead.proven)throw Error('Invalid native development checkpoint');
   }
+  if(record.snapshotPredecessor!==undefined){
+    const p=record.snapshotPredecessor;
+    if(record.snapshotFormat!=='native-json-v1'||!p||Object.keys(p).sort().join()!=='snapshotFile,snapshotHash,snapshotHead'||p.snapshotFile===record.snapshotFile||
+       !/^anvil-recovery-[0-9a-f-]{36}\.json$/.test(p.snapshotFile??'')||!/^[0-9a-f]{64}$/.test(p.snapshotHash??'')||
+       !/^0x[0-9a-f]+$/.test(p.snapshotHead?.number??'')||!/^0x[0-9a-f]{64}$/.test(p.snapshotHead?.hash??'')||
+       !/^(0|[1-9][0-9]*)$/.test(p.snapshotHead?.pending??'')||p.snapshotHead.pending!==p.snapshotHead.proven)throw Error('Invalid native predecessor checkpoint');
+  }
+  if(record.snapshotCache!==undefined){const c=record.snapshotCache;
+    if(record.snapshotFormat!=='native-json-v1'||!c||Object.keys(c).sort().join()!=='dev,directory,ino'||!/^anvil-cache-[0-9a-f-]{36}$/.test(c.directory??'')||!Number.isSafeInteger(c.dev)||c.dev<0||!Number.isSafeInteger(c.ino)||c.ino<0)throw Error('Invalid native snapshot cache');
+  }
   return record;
 }
 // Native JSON avoids materializing gzip+hex RPC copies of the complete history.
 // Retained development histories exceed 2 GiB; the bounded 4 GiB file cap
 // streams in 64 KiB chunks and preserves the legacy 128 MiB RPC cap.
-export async function inspectNativeDevnetSnapshot(filename){
- const fd=await fs.open(filename,constants.O_RDONLY|constants.O_NOFOLLOW);
+export async function inspectNativeDevnetSnapshot(filename,{sync=false}={}){
+ if(typeof sync!=='boolean')throw Error('Invalid native snapshot sync option');
+ const fd=await fs.open(filename,(sync?constants.O_RDWR:constants.O_RDONLY)|constants.O_NOFOLLOW);
  try{
   const before=await fd.stat();
   if(!before.isFile()||before.uid!==process.getuid()||(before.mode&0o777)!==0o600||before.size<2||before.size>4294967296)throw Error('Invalid native development snapshot');
   const hash=createHash('sha256');for await(const chunk of fd.createReadStream({autoClose:false,highWaterMark:65536}))hash.update(chunk);
+  if(sync)await fd.sync();
   const after=await fd.stat(),named=await fs.lstat(filename);
   if(before.dev!==named.dev||before.ino!==named.ino||before.size!==after.size||before.mtimeMs!==after.mtimeMs||before.ctimeMs!==after.ctimeMs)throw Error('Native development snapshot changed');
   return {sha256:hash.digest('hex'),bytes:before.size};
@@ -77,19 +89,37 @@ export async function assertDevelopmentStorageCapacity(directory) {
  const stats=await fs.statfs(directory,{bigint:true});
  if(stats.bavail*stats.bsize<8589934592n)throw Error('Development storage requires at least 8 GiB free; preserve existing state');
 }
-// The qualified predecessor is removed only after its replacement and stopped
-// record are durable. Failed validation/commit retains every recovery file.
-export async function commitNativeDevnetCheckpoint({directory,statePath,state,saved,recoveryPath,checkpointHead}) {
+// A native exit code cannot establish dump completeness: Anvil logs dump
+// errors and can exit zero. Sync the candidate, retain its exact predecessor
+// and cache, then validate completeness through the next normal native load.
+export async function commitNativeDevnetCheckpoint({directory,statePath,state,saved,recoveryPath,checkpointHead,anvilCache}) {
  const valid=file=>path.dirname(file)===directory&&/^anvil-recovery-[0-9a-f-]{36}\.json$/.test(path.basename(file));
  if(!path.isAbsolute(directory)||path.normalize(directory)!==directory||statePath!==path.join(directory,'network.json')||!valid(recoveryPath)||!checkpointHead)throw Error('Invalid native checkpoint ownership');
- const snapshot=await inspectNativeDevnetSnapshot(recoveryPath);
+ const snapshot=await inspectNativeDevnetSnapshot(recoveryPath,{sync:true});
  const previous=saved?.snapshotFormat==='native-json-v1'?path.join(directory,saved.snapshotFile):null;
  if(previous&&(!valid(previous)||previous===recoveryPath||(await inspectNativeDevnetSnapshot(previous)).sha256!==saved.snapshotHash))throw Error('Previous native checkpoint differs; preserve recovery files');
- await writeDevnetRecord(statePath,{...state,phase:'stopped',snapshotFormat:'native-json-v1',snapshotFile:path.basename(recoveryPath),snapshotHead:checkpointHead,snapshotHash:snapshot.sha256});
- if(previous){
-  if((await inspectNativeDevnetSnapshot(previous)).sha256!==saved.snapshotHash)throw Error('Previous native checkpoint changed; preserve recovery files');
-  await fs.unlink(previous);const parent=await fs.open(directory,'r');try{await parent.sync();}finally{await parent.close();}
- }
+ const {snapshotPredecessor:oldPredecessor,snapshotCache:oldCache,...rest}=state;
+ await writeDevnetRecord(statePath,{...rest,phase:'stopped',snapshotFormat:'native-json-v1',snapshotFile:path.basename(recoveryPath),snapshotHead:checkpointHead,snapshotHash:snapshot.sha256,
+  ...(previous?{snapshotPredecessor:{snapshotFile:saved.snapshotFile,snapshotHash:saved.snapshotHash,snapshotHead:saved.snapshotHead}}:{}),
+  ...(anvilCache?{snapshotCache:{directory:path.basename(anvilCache.path),dev:anvilCache.dev,ino:anvilCache.ino}}:{})});
+}
+// Called only after Anvil loaded the new file, and before any new chain work.
+// A malformed dump or mismatched restored head leaves predecessor+cache intact.
+export async function pruneLoadedNativeDevnetPredecessor({directory,statePath,state,head,pending,proven}) {
+ if('0x'+head.number.toString(16)!==state.snapshotHead.number||head.hash.toLowerCase()!==state.snapshotHead.hash||String(pending)!==state.snapshotHead.pending||String(proven)!==state.snapshotHead.proven)throw Error('Native development checkpoint identity differs');
+ const previous=state.snapshotPredecessor,cache=state.snapshotCache;
+ if(!previous&&!cache)return state;
+ // Reuse the complete record's strict filename/pointer validation.
+ validateDevnetResume(state,{fundingAddresses:state.fundingAddresses,ports:state.ports,toolchainHash:state.toolchainHash});
+ if(statePath!==path.join(directory,'network.json')||!path.isAbsolute(directory))throw Error('Invalid native checkpoint ownership');
+ if((await inspectNativeDevnetSnapshot(path.join(directory,state.snapshotFile))).sha256!==state.snapshotHash)throw Error('Loaded native checkpoint changed; preserve files');
+ const priorPath=previous?path.join(directory,previous.snapshotFile):null;
+ if(priorPath&&(await inspectNativeDevnetSnapshot(priorPath)).sha256!==previous.snapshotHash)throw Error('Previous native checkpoint changed; preserve files');
+ if(cache)await removeDevelopmentAnvilCache({path:path.join(directory,cache.directory),dev:cache.dev,ino:cache.ino});
+ const {snapshotPredecessor:discardPrevious,snapshotCache:discardCache,...next}=state;
+ await writeDevnetRecord(statePath,{...next,phase:'starting'});
+ if(priorPath){await fs.unlink(priorPath);const parent=await fs.open(directory,'r');try{await parent.sync();}finally{await parent.close();}}
+ return next;
 }
 // Anvil's supported cache-path owns its historical-state TempDir. Keep this
 // run's root on failure; never sweep the shared ~/.foundry cache or other runs.
@@ -272,8 +302,7 @@ export async function startDevnet({directory,fundingAddresses,proofs=false,persi
       }});
     }],['anvil-stop',async()=>{if(anvil&&!spawnError){if(anvil.exitCode===null)anvil.kill('SIGTERM');const exit=await anvilClosed;if(exit.code!==0)throw Error('Native Ethereum did not stop cleanly');}}],['checkpoint',async()=>{
       await persistDevnetCheckpoint({persistent,bootComplete,miningError,priorFailure:failures.length>0,save:async()=>{
-        await commitNativeDevnetCheckpoint({directory,statePath,state,saved,recoveryPath,checkpointHead});
-        if(anvilCache)await removeDevelopmentAnvilCache(anvilCache);
+        await commitNativeDevnetCheckpoint({directory,statePath,state,saved,recoveryPath,checkpointHead,anvilCache});
       }});
     }]]){
       try{await cleanup();}catch(error){failures.push(developmentCleanupFailure(stage,error));}
@@ -302,8 +331,10 @@ export async function startDevnet({directory,fundingAddresses,proofs=false,persi
       if((await inspectNativeDevnetSnapshot(loadPath)).sha256!==saved.snapshotHash)throw Error('Native development snapshot changed during load');
       const c=createExtendedL1Client([rpcUrl],identity.privateKey,foundry),head=await c.getBlock({blockTag:'latest'});
       const r=new RollupContract(c,saved.addresses.rollupAddress);
-      if('0x'+head.number.toString(16)!==saved.snapshotHead.number||head.hash.toLowerCase()!==saved.snapshotHead.hash||String(await r.getCheckpointNumber())!==saved.snapshotHead.pending||String(await r.getProvenCheckpointNumber())!==saved.snapshotHead.proven)throw Error('Native development checkpoint identity differs');
+      const restoredPending=String(await r.getCheckpointNumber()),restoredProven=String(await r.getProvenCheckpointNumber());
+      if('0x'+head.number.toString(16)!==saved.snapshotHead.number||head.hash.toLowerCase()!==saved.snapshotHead.hash||restoredPending!==saved.snapshotHead.pending||restoredProven!==saved.snapshotHead.proven)throw Error('Native development checkpoint identity differs');
       await restoreDevelopmentNativeClock(c,head);
+      state=await pruneLoadedNativeDevnetPredecessor({directory,statePath,state,head,pending:restoredPending,proven:restoredProven});
     }else if(saved){
       const fd=await fs.open(snapshotPath,constants.O_RDONLY|constants.O_NOFOLLOW);let bytes;try{const st=await fd.stat();if(!st.isFile()||(st.mode&0o077)||st.size>134217728)throw Error('Invalid development snapshot');bytes=await fd.readFile();}finally{await fd.close();}
       if(createHash('sha256').update(bytes).digest('hex')!==saved.snapshotHash)throw Error('Development snapshot differs');
