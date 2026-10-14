@@ -246,8 +246,12 @@ liabilities, fee liquidity, wallet outcome uncertainty, moderator delay, Bok
 reserved/settled credit, unresolved paid calls, queue length and storage capacity.
 Record measured rates and workload. Existing service templates in `deploy/` are
 starting points tied to their profiles; do not claim the legacy moderator unit
-already operates Rolling rules. Rolling moderation service wiring and its real
-model evaluation remain required deployment acceptance.
+already operates Rolling rules. The explicit `--rolling-config` profile in
+`censor-daemon/daemon.mjs` operates Rolling posts through the native wallet and
+canonical public index; see `censor-daemon/README.md` for its operator configuration.
+Its focused tests use labelled chain/model doubles. Actual native-wallet removal,
+real model evaluation under the new prompt identity, targeted real-proof testnet
+acceptance, specialist review and elapsed qualification remain separate gates.
 
 Stop and drain the owning service before consistent private backup. Back up Bok's
 accepted Git repositories, invocation/payment journals, summaries, execution

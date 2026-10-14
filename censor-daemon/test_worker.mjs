@@ -132,3 +132,98 @@ test('timing sink failure does not change a saved successful submission',async t
  const f=setup(t);f.violation();await f.run({log:value=>{if(value.startsWith('{'))throw Error('unavailable log sink');}});
  assert.equal(f.calls.submit,1);assert.equal(f.record().job.state,'submitted');assert.equal(f.record().job.transactionHash,hex(50));
 });
+
+// Rolling profile: real SQLite and the production adapter/worker, with explicitly
+// labelled canonical-index, native-wallet and model doubles. No live acceptance.
+import {rollingModerationAdapter} from './rolling-adapter.mjs';
+import {processRollingModerationCycle} from './worker.mjs';
+function rollingFixture(t){
+ const dir=fs.mkdtempSync(path.join(os.tmpdir(),'rolling-moderator-'));
+ const rscope={...scope,l1ChainId:'31337'},checkpoint={number:10,hash:hex(100)};
+ let now=1000000,value={operations:{}};
+ const stores=[],open=()=>{const store=openJobStore({filename:path.join(dir,'jobs.sqlite'),scope:rscope,modelVersion:hex(4),profile:'rolling',development:true,now:()=>now,retryDelayMs:1});stores.push(store);return store;};
+ const f={store:open(),open,posts:[],version:'1',rules:'No spam',localRules:'No advertising',calls:{evaluate:0,prepare:0,broadcast:0,authority:0},advance:()=>now+=1000};
+ const post=id=>({id:String(id),record:{subboard:id===3?'0':'7'},text:'message '+id,timestamp:'1000',order:String(id),mainVersion:'1',localVersion:id===3?'0':'1',position:{blockNumber:'10',blockHash:hex(100),txHash:hex(1000+id)},removal:null,bot:id===2?{pluginId:'9'}:null});
+ f.posts=[post(1),post(2)];
+ const main=()=>({version:f.version,digest:hex(30+Number(f.version)),text:f.rules});
+ const index={async sync(){},status:()=>({complete:true}),publication:()=>({checkpoint}),
+  scanPosts:()=>({posts:f.posts,checkpoint,nextAfter:null}),
+  query(view,{id}){if(view==='post')return {post:f.posts.find(p=>p.id===id)??null,checkpoint,revision:'1'};
+   return {boardId:id,mainPolicy:main(),board:id==='0'?null:{id,rules:f.localRules},checkpoint,revision:'1'};}};
+ const node={getBlockData:async number=>({blockHash:number===10?hex(100):hex(60),header:{globalVariables:{blockNumber:number}}}),getTxReceipt:async hash=>({txHash:hash,status:'checkpointed',executionResult:'success',blockNumber:11,blockHash:hex(60)})};
+ const state={read:()=>value,async write(next){value=next;}};
+ const prepare=async record=>{f.calls.prepare++;return {hash:hex(50+Number(BigInt(record.job.postId))),sha256:'ab'.repeat(32),maximumFee:'100'};};
+ f.signer=rollingModerationAdapter({index,node,scope:rscope,lease:{async assertHeld(){}},state,deadline:async()=> '2000',development:true,
+  prepare:async record=>f.prepare?f.prepare(record):prepare(record),assertAuthority:async()=>{f.calls.authority++;if(f.authorityError)throw Error('changed');},
+  broadcast:async tx=>{f.calls.broadcast++;if(f.broadcastError)throw Error('lost response');const p=f.posts.find(p=>BigInt(p.id)===BigInt(tx.hash)-50n);p.text=null;p.removal={policy:String(BigInt(f.version)+(p.record.subboard==='0'?0n:1n<<32n)),reason:'Spam',penalized:false,position:{blockNumber:'11',blockHash:hex(60),txHash:tx.hash}};}});
+ f.evaluate=async()=>{f.calls.evaluate++;return {isViolation:false};};
+ f.run=(options={})=>processRollingModerationCycle({store:f.store,signer:f.signer,evaluate:(...args)=>f.evaluate(...args),worker:'rolling-fixture',maxJobs:4,...options});
+ f.state=()=>value;f.node=node;f.checkpoint=checkpoint;f.post=post;
+ t.after(()=>{for(const s of stores)try{s.close();}catch{}fs.rmSync(dir,{recursive:true,force:true});});return f;
+}
+test('Rolling human and Bok posts use identical parent/local union and survive reopen',async t=>{
+ const f=rollingFixture(t),seen=[];f.evaluate=async(text,policy)=>{seen.push(JSON.parse(policy));return {isViolation:false};};
+ assert.equal((await f.run()).complete,true);assert.deepEqual(seen,[{mainRules:'No spam',localRules:'No advertising'},{mainRules:'No spam',localRules:'No advertising'}]);
+ f.store=f.open();await f.run();assert.equal(seen.length,2);
+});
+test('Rolling parent policy change reevaluates completed human and Bok posts',async t=>{
+ const f=rollingFixture(t);await f.run();f.version='2';f.rules='No spam or advertising';await f.run();assert.equal(f.calls.evaluate,4);assert.equal(f.store.list().length,4);
+});
+test('Rolling policy changes during inference cannot submit old verdict',async t=>{
+ const f=rollingFixture(t);f.evaluate=async()=>{f.version=String(Number(f.version)+1);return {isViolation:true,reason:'Spam'};};await f.run({maxJobs:1});assert.equal(f.calls.broadcast,0);assert.equal(f.store.list().filter(r=>r.intent).length,0);
+});
+test('Rolling native disabled-development removal requires canonical PostRemoved and preserves nonpenalized outcome',async t=>{
+ const f=rollingFixture(t);f.evaluate=async()=>({isViolation:true,reason:'Spam'});assert.equal((await f.run()).complete,true);
+ assert.equal(f.calls.broadcast,2);for(const r of f.store.list()){assert.equal(r.job.state,'confirmed-flag');assert.equal(r.flagEvent.type,'PostRemoved');assert.equal(r.flagEvent.payload.penalized,false);}
+ f.store=f.open();await f.run();assert.equal(f.calls.broadcast,2);
+});
+test('Rolling uncertain broadcast remains fenced through restart without duplicate send',async t=>{
+ const f=rollingFixture(t);f.broadcastError=true;f.evaluate=async()=>({isViolation:true,reason:'Spam'});await f.run();assert.equal(f.calls.broadcast,1);
+ f.store=f.open();f.advance();await f.run();assert.equal(f.calls.broadcast,1);assert.equal(f.calls.prepare,1);assert.equal(f.store.list()[0].job.state,'reconciling');
+});
+test('Rolling preparing crash cannot create a new transaction after restart',async t=>{
+ const f=rollingFixture(t);f.prepare=async()=>{throw Error('wallet unavailable');};f.evaluate=async()=>({isViolation:true,reason:'Spam'});await f.run();f.store=f.open();f.advance();await f.run();assert.equal(f.calls.broadcast,0);assert.equal(Object.values(f.state().rollingModeration.operations)[0].phase,'preparing');
+});
+test('Rolling changed authority fails before prepare or broadcast',async t=>{
+ const f=rollingFixture(t);f.authorityError=true;f.evaluate=async()=>({isViolation:true,reason:'Spam'});await f.run();assert.equal(f.calls.prepare,0);assert.equal(f.calls.broadcast,0);
+});
+test('Rolling removed post reorg reopens exact uncertainty fence',async t=>{
+ const f=rollingFixture(t);f.evaluate=async()=>({isViolation:true,reason:'Spam'});await f.run();f.posts=[f.post(1),f.post(2)];f.advance();await f.run();assert.equal(f.calls.broadcast,2);assert(f.store.list().every(r=>r.job.state==='reconciling'));
+});
+test('Rolling explicit missing canonical post invalidates completed evaluation',async t=>{
+ const f=rollingFixture(t);await f.run();f.posts=[];await f.run();assert(f.store.list().every(r=>r.orphaned&&r.job.state==='manual-review'));
+});
+test('Rolling wrong canonical block cannot complete removal',async t=>{
+ const f=rollingFixture(t);f.node.getBlockData=async n=>({blockHash:hex(999),header:{globalVariables:{blockNumber:n}}});f.evaluate=async()=>({isViolation:true,reason:'Spam'});await f.run();assert.equal(f.calls.broadcast,1);assert.equal(f.store.list()[0].job.state,'reconciling');
+});
+test('Rolling authority or policy change after proof preparation prevents broadcast',async t=>{
+ const f=rollingFixture(t);f.evaluate=async()=>({isViolation:true,reason:'Spam'});f.prepare=async()=>{f.authorityError=true;return {hash:hex(51),sha256:'ab'.repeat(32),maximumFee:'100'};};await f.run();assert.equal(f.calls.broadcast,0);assert.equal(Object.values(f.state().rollingModeration.operations)[0].phase,'preparing');
+});
+test('Rolling fee failure leaves preparing fence without broadcast or automatic reproving',async t=>{
+ const f=rollingFixture(t);let calls=0;f.evaluate=async()=>({isViolation:true,reason:'Spam'});f.prepare=async()=>{calls++;throw Error('Moderator fee ceiling exceeded');};await f.run();f.advance();await f.run();assert.equal(calls,1);assert.equal(f.calls.broadcast,0);
+});
+test('Rolling confirmed removal reorg under newer policy invalidates old completion',async t=>{
+ const f=rollingFixture(t);f.evaluate=async()=>({isViolation:true,reason:'Spam'});await f.run();f.version='2';f.posts=[f.post(1),f.post(2)];f.advance();await f.run();assert.equal(f.calls.broadcast,2);assert(f.store.list().filter(r=>r.intent).every(r=>r.job.state==='reconciling'));
+});
+test('Rolling canonical removal retained after restart does not falsely reopen completion',async t=>{
+ const f=rollingFixture(t);f.evaluate=async()=>({isViolation:true,reason:'Spam'});await f.run();f.store=f.open();f.advance();assert.equal((await f.run()).complete,true);assert(f.store.list().every(r=>r.job.state==='confirmed-flag'));assert.equal(f.calls.broadcast,2);
+});
+
+import {prepareRollingRemoval} from './rolling-adapter.mjs';
+class ModerationField{constructor(n){this.n=BigInt(n);}toBigInt(){return this.n;}toString(){return hex(this.n);}static fromString(n){return new ModerationField(n);}}
+function nativeRemovalFixture(){
+ const f={proofs:0,fee:100n},Fr=ModerationField,config={boardAddress:hex(99),operatorAddress:hex(88),chainId:'31337',rollupVersion:'1',maxTransactionFee:'100'};
+ const record={job:{postId:hex(1)},intent:{reason:'Spam'},policy:{context:{mainVersion:'1',localVersion:'1'}}},account={address:Fr.fromString(config.operatorAddress)};
+ const contract={methods:{remove_post:(...args)=>({async request(){f.call={name:'remove_post',to:config.boardAddress,type:'public',isStatic:false,selector:'selector',args:args.flat().map(x=>new Fr(BigInt(String(x))))};f.changeCall?.(f.call);return {calls:f.extraCall?[f.call,f.call]:[f.call]};}})}};
+ const gas={getFeeLimit:()=>new Fr(f.fee)},wallet={completeFeeOptions:async()=>({gasSettings:gas}),createTxExecutionRequestFromPayloadAndFee:async payload=>payload,scopesFrom:()=>[],senderForTagsFrom:()=>undefined,
+  pxe:{async proveTx(){f.proofs++;return {chonkProof:{isEmpty:()=>false},async toTx(){return {data:{feePayer:config.operatorAddress,constants:{txContext:{chainId:new Fr(31337),version:new Fr(1),gasSettings:gas}}},
+   getPublicCallRequestsWithCalldata:()=>[{request:{contractAddress:f.wrongProvenTarget?hex(100):config.boardAddress,msgSender:config.operatorAddress},functionSelector:'selector',args:f.call.args}],getTxHash:()=>hex(77),toBuffer:()=>Buffer.from('labelled transaction double')};}};}}};
+ f.run=()=>prepareRollingRemoval({record,contract,wallet,account,config,Fr});return f;
+}
+test('Rolling native preparation binds exact public remove_post and fee ceiling',async()=>{const f=nativeRemovalFixture(),tx=await f.run();assert.equal(tx.hash,hex(77));assert.equal(tx.maximumFee,'100');assert.equal(f.proofs,1);});
+test('Rolling native fee ceiling rejects before proving',async()=>{const f=nativeRemovalFixture();f.fee=101n;await assert.rejects(f.run(),/fee ceiling/);assert.equal(f.proofs,0);});
+for(const field of ['name','to','type','args'])test('Rolling native payload rejects changed '+field,async()=>{
+ const f=nativeRemovalFixture();f.changeCall=call=>{call[field]=field==='args'?[new ModerationField(0)]:field==='name'?'remove_avatar':field==='to'?hex(100):'private';};await assert.rejects(f.run());assert.equal(f.proofs,0);
+});
+test('Rolling native payload rejects an extra call before proving',async()=>{const f=nativeRemovalFixture();f.extraCall=true;await assert.rejects(f.run());assert.equal(f.proofs,0);});
+test('Rolling native proven transaction rejects another target before journal or send',async()=>{const f=nativeRemovalFixture();f.wrongProvenTarget=true;await assert.rejects(f.run());assert.equal(f.proofs,1);});
