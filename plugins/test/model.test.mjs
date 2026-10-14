@@ -79,7 +79,7 @@ test('main retrieves exact original user and Bok messages omitted by summary wit
   if(main===2){assert.deepEqual(page.messages,[f.history.messages[0]]);assert.equal(page.nextOffset,1);return {message:{role:'assistant',tool_calls:[originalCall({threadId:id(1),offset:1,limit:8},'second')]}};}
   assert.deepEqual(page.messages,[f.history.messages[1]]);assert.equal(page.nextOffset,null);assert(!JSON.stringify(page).includes('LATEST_SENTINEL'));return {message:{role:'assistant',content:'Original app.ts retained'}};
  };
- assert.equal((await f.run()).replyText,'Original app.ts retained');assert.equal(f.loads(),1);assert.equal(f.checks(),6);assert.equal(f.closed(),1);assert.equal(f.calls.length,4);
+ assert.equal((await f.run()).replyText,'Original app.ts retained');assert.equal(f.loads(),1);assert.equal(f.checks(),7);assert.equal(f.closed(),1);assert.equal(f.calls.length,4);
 });
 for(const [name,args] of [['other thread',{threadId:id(9),offset:0,limit:1}],['negative',{threadId:id(1),offset:-1,limit:1}],['over limit',{threadId:id(1),offset:0,limit:9}],['fraction',{threadId:id(1),offset:0.5,limit:1}],['past end',{threadId:id(1),offset:3,limit:1}],['extra',{threadId:id(1),offset:0,limit:1,owner:'ignored'}]])test('original-message retrieval rejects '+name+' without disclosure or external tool',async()=>{
  const f=retrievalFixture();let main=0;f.options.model.complete=async input=>{if(input.modelId==='cheap')return {message:{role:'assistant',content:'Summary'}};if(++main===1)return {message:{role:'assistant',tool_calls:[originalCall(args)]}};assert.deepEqual(JSON.parse(input.messages.at(-1).content),{error:'Invalid original-message request'});return {message:{role:'assistant',content:'Rejected'}};};
@@ -119,4 +119,25 @@ test('connected private source refuses a static-publication result or arbitrary 
  const toolbox={open:async()=>({privateSource:true,definitions:[],accept:async()=>({publication}),close:async()=>{}})};
  await assert.rejects(createAgent({toolbox,instructions:'Help',model:{complete:async()=>({message:{role:'assistant',content:'private'}})}}).run({id:'a',postId:'b',text:'Edit'}),/Invalid connected repository result/);
  }
+});
+
+
+for(const terminal of ['step-limit','output-limit','balance'])test('bounded '+terminal+' exit accepts through the host without another paid call',async()=>{
+ let calls=0,accepted=0,closed=0;const toolbox={open:async()=>({definitions:[],call:async()=>({passed:true}),summary:text=>text+' 🌎'.repeat(400),accept:async()=>{accepted++;assert.equal(closed,0);return {repositoryId:'repo',acceptedRevision:'a'.repeat(40),publication:{latestUrl:'https://apps.example/app/',latestSourceUrl:'https://apps.example/source.json'}};},close:async()=>{closed++;}})};
+ const model={complete:async()=>{calls++;if(terminal==='balance')throw Object.assign(Error('cannot reserve'),{code:'INSUFFICIENT_BALANCE'});return {message:terminal==='output-limit'?{role:'assistant',content:'🌎'.repeat(249)}:{role:'assistant',tool_calls:[{id:'check',function:{name:'check_workspace',arguments:'{}'}}]}};}};
+ const result=await createAgent({model,toolbox,instructions:'Build',maxCalls:1}).run({id:'a',postId:'b',text:'Build'});assert.equal(calls,1);assert.equal(accepted,1);assert.equal(closed,1);assert.equal(result.revision.acceptedRevision,'a'.repeat(40));assert.match(result.replyText,/App: https:\/\/apps.example/);assert(Buffer.byteLength(result.replyText)<=992);assert(result.replyText.isWellFormed());
+});
+for(const terminal of ['step-limit','output-limit','balance'])test('bounded '+terminal+' exit cannot publish model or tool summaries from private connected source',async()=>{
+ let calls=0,accepted=0;const toolbox={open:async()=>({privateSource:true,definitions:[],call:async()=>({passed:true}),summary:()=> 'PRIVATE_SOURCE_SENTINEL',accept:async()=>{accepted++;return {repositoryId:'repo',acceptedRevision:'a'.repeat(40),publication:{connected:true,url:'https://github.com/owner/project/pull/7'}};},close:async()=>{}})};
+ const model={complete:async()=>{calls++;if(terminal==='balance')throw Object.assign(Error('private'),{code:'INSUFFICIENT_BALANCE',userMessage:'PRIVATE_SOURCE_SENTINEL'});return {message:terminal==='output-limit'?{role:'assistant',content:'PRIVATE_SOURCE_SENTINEL'.repeat(100)}:{role:'assistant',tool_calls:[{id:'check',function:{name:'check_workspace',arguments:'{}'}}]}};}};
+ const result=await createAgent({model,toolbox,instructions:'Build',maxCalls:1}).run({id:'a',postId:'b',text:'Build'});assert.equal(calls,1);assert.equal(accepted,1);assert.equal(result.replyText,'Repository changes are ready for operator review: https://github.com/owner/project/pull/7');assert(!JSON.stringify(result).includes('PRIVATE_SOURCE'));
+});
+test('balance failure during acceptance is never a second acceptance attempt',async()=>{
+ let accepted=0,closed=0;const toolbox={open:async()=>({definitions:[],summary:x=>x,accept:async()=>{accepted++;throw Object.assign(Error('acceptance balance failure'),{code:'INSUFFICIENT_BALANCE'});},close:async()=>{closed++;}})};
+ await assert.rejects(createAgent({toolbox,instructions:'Build',model:{complete:async()=>({message:{role:'assistant',content:'Done'}})}}).run({id:'a',postId:'b',text:'Build'}),/acceptance balance/);assert.equal(accepted,1);assert.equal(closed,1);
+});
+test('final tool at model limit cannot accept after captured original history changes',async()=>{
+ const f=retrievalFixture();f.options.maxCalls=2;let checks=0,accepted=0,models=0;f.options.conversation.load=async()=>({...structuredClone(f.history),assertCurrent:async()=>{if(++checks===3)throw Error('reorg after final tool');}});
+ f.options.toolbox.open=async()=>({definitions:[],summary:x=>x,accept:async()=>{accepted++;},close:async()=>{}});f.options.model.complete=async input=>{models++;return {message:input.modelId==='cheap'?{role:'assistant',content:'Summary'}:{role:'assistant',tool_calls:[originalCall({threadId:id(1),offset:0,limit:1})]}};};
+ await assert.rejects(f.run(),e=>e.code==='BOK_HISTORY_CHANGED');assert.equal(models,2);assert.equal(accepted,0);assert.equal(checks,3);
 });

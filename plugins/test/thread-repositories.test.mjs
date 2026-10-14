@@ -140,3 +140,24 @@ test('connected thread keeps exact operator mapping and accepted source across p
  const other=await box(manager).open({threadId:id(2),id:id(13),postId:id(22)});assert.equal(other.privateSource,false);assert.deepEqual((await other.call('list_files',{prefix:''})).files,[]);assert.equal(reads,1);await other.close();
  connection.workBranch='bok/rebound';await assert.rejects(box(threadRepositories(options)).open({threadId:id(1),id:id(14),postId:id(23)}));
 });
+
+for(const terminal of ['step-limit','output-limit','balance'])test('agent '+terminal+' exit retains the exact checked actual Git revision and publication',async t=>{
+ const {createAgent}=await import('../agent.mjs'),{githubToolbox}=await import('../github-tools.mjs'),h=await fixture(t);let validations=0,published=0,calls=0,checked;
+ // Actual Git acceptance and persistence; the narrow validation/publication ports
+ // are injected. Real isolated build and external publication remain separate.
+ const manager=threadRepositories({...h.options,startEmpty:true,validateRevision:async({sourceDirectory,revision})=>{validations++;assert.equal(await fs.readFile(path.join(sourceDirectory,'app.js'),'utf8'),'valid source');checked=revision;return {passed:true,revision,sourceDigest:'a'.repeat(64)};},onAccepted:async()=>{published++;return {latestUrl:'https://apps.example/app/',latestSourceUrl:'https://apps.example/source.json'};}});
+ const actualToolbox=githubToolbox({repository:'owner/project',repositories:manager,api:async()=>assert.fail('No external GitHub call')}),toolbox={open:args=>actualToolbox.open({...args,threadId:id(9)})};
+ const model={complete:async()=>{if(++calls===1)return {message:{role:'assistant',tool_calls:[{id:'write',function:{name:'write_file',arguments:JSON.stringify({path:'app.js',content:'valid source'})}},{id:'check',function:{name:'check_workspace',arguments:'{}'}}]}};if(terminal==='balance')throw Object.assign(Error('reservation unavailable'),{code:'INSUFFICIENT_BALANCE'});return {message:{role:'assistant',content:'x'.repeat(993)}};}};
+ const result=await createAgent({model,toolbox,instructions:'Build',maxCalls:terminal==='step-limit'?1:2}).run({id:id(1),postId:id(9),text:'Build'});
+ assert.equal(validations,1,'Acceptance reuses exact successful check, without another build');assert.equal(published,1);assert.equal(calls,terminal==='step-limit'?1:2);assert.equal(result.revision.acceptedRevision,checked);assert.match(result.replyText,/App: https:\/\/apps.example/);assert(Buffer.byteLength(result.replyText)<=992);
+ const next=await manager.open({threadId:id(9),invocationId:id(2),repository:'owner/project'});try{assert.equal(next.readRevision,checked);await h.checkout(next);assert.equal(await fs.readFile(path.join(next.work,'app.js'),'utf8'),'valid source');}finally{await next.close();}
+});
+
+for(const changedAfterCheck of [false,true])test('agent terminal acceptance refuses invalid actual source, changed after check='+changedAfterCheck,async t=>{
+ const {createAgent}=await import('../agent.mjs'),{githubToolbox}=await import('../github-tools.mjs'),h=await fixture(t);let validations=0,published=0,calls=0;
+ const manager=threadRepositories({...h.options,startEmpty:true,validateRevision:async({sourceDirectory,revision})=>{validations++;if(await fs.readFile(path.join(sourceDirectory,'app.js'),'utf8')!=='valid')throw Object.assign(Error('Invalid generated output'),{code:'STATIC_FAILED',result:{passed:false,phase:'test',revision}});return {passed:true,revision,sourceDigest:'a'.repeat(64)};},onAccepted:async()=>{published++;}});
+ const actualToolbox=githubToolbox({repository:'owner/project',repositories:manager,api:async()=>assert.fail('No external GitHub call')}),toolbox={open:args=>actualToolbox.open({...args,threadId:id(9)})};
+ const model={complete:async()=>{calls++;const tools=calls===1?[{id:'write',function:{name:'write_file',arguments:JSON.stringify({path:'app.js',content:changedAfterCheck?'valid':'invalid'})}},{id:'check',function:{name:'check_workspace',arguments:'{}'}}]:[{id:'change',function:{name:'write_file',arguments:JSON.stringify({path:'app.js',content:'invalid after check'})}}];return {message:{role:'assistant',tool_calls:tools}};}};
+ await assert.rejects(createAgent({model,toolbox,instructions:'Build',maxCalls:changedAfterCheck?2:1}).run({id:id(1),postId:id(9),text:'Build'}),/Invalid generated output/);assert.equal(published,0);assert.equal(validations,2);assert.equal(calls,changedAfterCheck?2:1);
+ const next=await manager.open({threadId:id(9),invocationId:id(2),repository:'owner/project'});try{assert.equal(next.readRevision,null);}finally{await next.close();}
+});
