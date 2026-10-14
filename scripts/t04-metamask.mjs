@@ -968,7 +968,8 @@ export function retainedBokRemaining(deadlineAt,now=Date.now){
  return ()=>{const ms=deadlineAt-now();assert(ms>0&&ms<=525000,'Original Bok deadline exhausted');return ms;};
 }
 export async function driveRetainedBokConfirmations({page,dialog,approval,inspect,mark,report,remaining=()=>80000}){
- const reviewReady=async()=>{const confirm=dialog.getByRole('button',{name:'Confirm and send',exact:true});await confirm.or(dialog.getByRole('alert',{exact:true})).first().waitFor({timeout:remaining()});assert(await confirm.isVisible(),'Bok preparation failed before confirmation; preserve the original workflow');};
+ const waitForState=async(expected,message)=>{await expected.or(dialog.getByRole('alert',{exact:true})).first().waitFor({timeout:remaining()});assert(await expected.isVisible(),message+'; preserve the original workflow');};
+ const reviewReady=()=>waitForState(dialog.getByRole('button',{name:'Confirm and send',exact:true}),'Bok preparation failed before confirmation');
  mark('retained-bok-authorize-review');
  const reply=Object.hasOwn(approval,'parent')&&approval.parent!=='0';
  if(reply){
@@ -981,9 +982,9 @@ export async function driveRetainedBokConfirmations({page,dialog,approval,inspec
  else await dialog.getByText('New conversation',{exact:true}).waitFor({timeout:remaining()});
  await dialog.getByLabel('Message',{exact:true}).fill(approval.content);await dialog.getByLabel('Maximum Bok credits',{exact:true}).fill(approval.budget);
  await dialog.getByRole('button',{name:'Check action and review fee',exact:true}).click();await reviewReady();await inspect('authorize','prepared',{capture:true});
- mark('retained-bok-authorize');remaining();await dialog.getByRole('button',{name:'Confirm and send',exact:true}).click();await dialog.getByRole('button',{name:'Review saved Bok post',exact:true}).waitFor({timeout:remaining()});await inspect('authorize','confirmed',{capture:true});report.retainedBok.authorizationConfirmed=true;
+ mark('retained-bok-authorize');remaining();await dialog.getByRole('button',{name:'Confirm and send',exact:true}).click();await waitForState(dialog.getByRole('button',{name:'Review saved Bok post',exact:true}),'Bok authorization did not complete');await inspect('authorize','confirmed',{capture:true});report.retainedBok.authorizationConfirmed=true;
  mark('retained-bok-post-review');await dialog.getByRole('button',{name:'Review saved Bok post',exact:true}).click();await reviewReady();await inspect('post','prepared');
- mark('retained-bok-post');remaining();await dialog.getByRole('button',{name:'Confirm and send',exact:true}).click();await dialog.getByText('Transaction confirmed on the verified chain.',{exact:true}).waitFor({timeout:remaining()});const {public:publicIntent}=await inspect('post','confirmed',{published:true});return publicIntent;
+ mark('retained-bok-post');remaining();await dialog.getByRole('button',{name:'Confirm and send',exact:true}).click();await waitForState(dialog.getByText('Transaction confirmed on the verified chain.',{exact:true}),'Bok publication did not complete');const {public:publicIntent}=await inspect('post','confirmed',{published:true});return publicIntent;
 }
 
 // Diagnostic only: Node still owns fatal exception handling and its exit status.

@@ -1087,3 +1087,14 @@ for(const failedPhase of ['authorize','post'])test('Bok '+failedPhase+' preparat
  await assert.rejects(driveRetainedBokConfirmations({dialog,approval:{},report:{retainedBok:{}},mark:()=>{},inspect:async()=>({})}),/Bok preparation failed/);
  assert(errorRaced);assert.equal(sends,failedPhase==='authorize'?0:1);
 });
+
+for(const failedPhase of ['authorize','post'])test('Bok '+failedPhase+' confirmation error stops without replay or a full-deadline wait',async()=>{
+ const {driveRetainedBokConfirmations}=await import('./t04-metamask.mjs');let phase='authorize',sends=0,failedWaits=0;
+ const node=name=>({name,or(other){assert.equal(other.name,undefined);return this;},first(){return this;},
+  waitFor:async()=>{if((name==='Review saved Bok post'&&failedPhase==='authorize')||(name==='Transaction confirmed on the verified chain.'&&failedPhase==='post'))failedWaits++;},
+  isVisible:async()=>!((name==='Review saved Bok post'&&failedPhase==='authorize')||(name==='Transaction confirmed on the verified chain.'&&failedPhase==='post')),
+  fill:async()=>{},selectOption:async()=>{},click:async()=>{if(name==='Review saved Bok post')phase='post';if(name==='Confirm and send')sends++;}});
+ const dialog={getByRole:(_,{name})=>node(name),getByLabel:node,getByText:node},inspections=[];
+ await assert.rejects(driveRetainedBokConfirmations({dialog,approval:{},report:{retainedBok:{}},mark:()=>{},inspect:async(p,s)=>{inspections.push(p+'-'+s);return{};}}),failedPhase==='authorize'?/Bok authorization did not complete/:/Bok publication did not complete/);
+ assert.equal(failedWaits,1);assert.equal(sends,failedPhase==='authorize'?1:2);assert(!inspections.includes(failedPhase+'-confirmed'));
+});
