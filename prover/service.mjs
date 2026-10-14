@@ -52,9 +52,9 @@ export function validateQueryService(config){
 async function listen(server,port,host){
  await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(port,host,()=>{server.removeListener('error',reject);resolve();});});
 }
-async function startQueryOnlyService(input){
+async function startQueryOnlyService(input,observers){
  const config=validateQueryService(input);
- const privateQuery=await createPrivateQuery({...config,proofsEnabled:true,compactBlocks:compactBlockOptions(config)});
+ const privateQuery=await createPrivateQuery({...config,proofsEnabled:true,compactBlocks:compactBlockOptions(config)},observers);
  const server=createProverServer({...config,privateQuery,proofsEnabled:true});
  const close=()=>server.closeAndDrain();
  try{
@@ -87,10 +87,10 @@ function captureApplicationScope(input){
 
 // Composition root: owns only the resources it creates. Tests and the host use
 // this same entry point; HTTP, queue and worker communicate through interfaces.
-export async function startProverService(config){
+export async function startProverService(config,observers){
  const mode=Object.getOwnPropertyDescriptor(config,'serviceMode');
  if(mode&&!Object.hasOwn(mode,'value'))throw Error('Invalid service mode');
- if(mode?.value==='query-only')return startQueryOnlyService(config);
+ if(mode?.value==='query-only')return startQueryOnlyService(config,observers);
  if(mode&&mode.value!=='prover')throw Error('Invalid service mode');
  if('operatorAuthSha256' in config)throw Error('Query operator authentication requires query-only mode');
  const scope=captureApplicationScope(config);
@@ -103,7 +103,7 @@ export async function startProverService(config){
  const host=config.host??'127.0.0.1',proofsEnabled=config.proofs==='real';
  if(!proofsEnabled&&(!['127.0.0.1','::1','localhost'].includes(host)||String(config.chainId)!=='31337'))throw Error('Disabled proofs require loopback local devnet');
  validateQueryNode(config.queryNode);
- const privateQuery=await createPrivateQuery({...config,proofsEnabled,compactBlocks:compactBlockOptions(config)});
+ const privateQuery=await createPrivateQuery({...config,proofsEnabled,compactBlocks:compactBlockOptions(config)},observers);
  // Query-only returns above, before any proof-only module or resource exists.
  const [{prepareNativeRuntime},{loadCircuitCatalog},{createProcessWorker},{createProofQueue}]=await Promise.all([import('./runtime.mjs'),import('./catalog.mjs'),import('./process-worker.mjs'),import('./queue.mjs')]);
  const runtime=proofsEnabled?await prepareNativeRuntime(config):{};

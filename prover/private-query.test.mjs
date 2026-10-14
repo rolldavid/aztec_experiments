@@ -11,7 +11,7 @@ const rollupAddress = '0x' + '12'.repeat(20);
 const listen = async server => {await new Promise(r => server.listen(0, '127.0.0.1', r)); return 'http://127.0.0.1:' + server.address().port;};
 const close = server => {server.closeAllConnections(); return new Promise(r => server.close(r));};
 const call = (method = 'aztec_getBlockNumber', params = []) => ({jsonrpc:'2.0',id:1,method,params});
-async function fixture(t, {inspect = async () => ({ready:true}), upstreamReply, operatorKey} = {}) {
+async function fixture(t, {inspect = async () => ({ready:true}), upstreamReply, operatorKey, onQueryFailure} = {}) {
   const received = [];
   const upstream = http.createServer(async (req,res) => {
     let text = ''; for await (const chunk of req) text += chunk;
@@ -22,12 +22,12 @@ async function fixture(t, {inspect = async () => ({ready:true}), upstreamReply, 
   });
   const upstreamUrl = await listen(upstream);
   const operator=operatorKey===undefined?{}:{serviceMode:'query-only',operatorAuthSha256:createHash('sha256').update(operatorKey).digest('hex')};
-  const privateQuery = createPrivateQueryWithInspector({...operator,queryNode:{url:upstreamUrl,rollupAddress},chainId:'31337',rollupVersion:'1',proofsEnabled:false}, inspect);
+  const privateQuery = createPrivateQueryWithInspector({...operator,queryNode:{url:upstreamUrl,rollupAddress},chainId:'31337',rollupVersion:'1',proofsEnabled:false}, inspect, {onQueryFailure});
   const server = createProverServer({...operator,privateQuery,...(operatorKey===undefined?{queue:{stats:()=>({submitted:0})}}:{}),origins:['https://app.example']});
   const url = await listen(server);
   t.after(async()=>{await close(server);await close(upstream);});
   const post = (body,headers={}) => fetch(url+'/v1/node',{method:'POST',headers:{'content-type':'application/json',...headers},body:typeof body==='string'?body:JSON.stringify(body)});
-  return {url,post,received,privateQuery};
+  return {url,post,received,privateQuery,upstreamUrl};
 }
 test('query disabled by default; fixed loopback configuration only',async()=>{
   assert.equal(await createPrivateQuery({}),undefined);
@@ -247,4 +247,35 @@ test('operator method policy is fixed, schema backed, and excludes discovery or 
  for(const name of ['sendTx','isValidTx','simulatePublicCalls','getContract','getContractClass','getTxReceipt','getPrivateLogsByTags','getPublicStorageAt','getNoteHashMembershipWitness'])assert(OPERATOR_NODE_METHODS.includes(name),name);
  for(const name of ['getPeers','getEncodedEnr','getPendingTxs','getPendingTxCount','getValidatorStats','getProposalsForSlot','setConfig','constructor'])assert(!OPERATOR_NODE_METHODS.includes(name),name);
  assert.throws(()=>createPrivateQueryWithInspector({queryNode:{url:'http://127.0.0.1',rollupAddress},operatorAuthSha256:'ab'.repeat(32)},async()=>{}),/Invalid query operator authentication/);
+});
+
+// Public failures stay generic; diagnostics go only to the trusted caller.
+test('internal readiness observer is allowlisted, coalesced and cannot change fail-closed HTTP',async t=>{
+  let failure=Object.assign(Error('private request and identity'),{code:'BB_TRUSTED_NODE_UNSYNCED'}),now=100000;
+  t.mock.method(Date,'now',()=>now);const observed=[];
+  const f=await fixture(t,{inspect:async()=>{throw failure;},onQueryFailure:code=>{observed.push(code);throw Error('observer private');}});
+  for(let i=0;i<4;i++){const response=await f.post(call());assert.equal(response.status,503);assert.deepEqual(await response.json(),{jsonrpc:'2.0',id:null,error:{code:-32000,message:'Trusted node request rejected'}});}
+  assert.deepEqual(observed,['BB_TRUSTED_NODE_UNSYNCED']);assert.equal(f.received.length,0);
+  now+=60000;await f.privateQuery.health();assert.equal(observed.length,2);
+  let getters=0;failure=Object.defineProperty({},'code',{get(){getters++;throw Error('private');}});
+  await f.privateQuery.health();assert.equal(getters,0);assert.equal(observed.at(-1),'BB_TRUSTED_NODE_UNAVAILABLE');
+  now+=60000;failure={code:'PRIVATE_CUSTOM'};await f.privateQuery.health();assert.equal(observed.at(-1),'BB_TRUSTED_NODE_UNAVAILABLE');
+  for(const code of ['BB_TRUSTED_NODE_CONFIG','BB_TRUSTED_NODE_IDENTITY']){failure={code};await f.privateQuery.health();assert.equal(observed.at(-1),code);}
+  for(const value of [undefined,null,7]){now+=60000;failure=value;await f.privateQuery.health();assert.equal(observed.at(-1),'BB_TRUSTED_NODE_UNAVAILABLE');}
+  assert(observed.every(code=>typeof code==='string'&&!code.includes('PRIVATE')));
+});
+test('internal readiness observer does not await pending or rejected observers',async t=>{
+  let release,now=100000,calls=0;const pending=new Promise(resolve=>{release=resolve;});t.mock.method(Date,'now',()=>now);
+  const f=await fixture(t,{inspect:async()=>{throw {code:'BB_TRUSTED_NODE_STALE'};},onQueryFailure:()=>{calls++;return calls===1?pending:Promise.reject(Error('private sink'));}});
+  assert.equal((await f.post(call())).status,503);now+=60000;assert.equal((await f.post(call())).status,503);assert.equal(calls,1);
+  release();await new Promise(resolve=>setImmediate(resolve));assert.equal((await f.post(call())).status,503);assert.equal(calls,2);
+  await new Promise(resolve=>setImmediate(resolve));assert.equal(f.received.length,0);
+});
+test('service carries readiness observer internally without extending serialized configuration',async t=>{
+  const {startProverService,validateQueryService}=await import('./service.mjs');const observed=[];const f=await fixture(t);
+  const config={serviceMode:'query-only',proofs:'real',chainId:'31337',rollupVersion:'1',host:'127.0.0.1',port:0,origins:[],queryNode:{url:f.upstreamUrl,rollupAddress}};
+  assert.throws(()=>validateQueryService({...config,onQueryFailure:()=>{}}),/Invalid query-only/);
+  const service=await startProverService(config,{onQueryFailure:code=>observed.push(code)});t.after(()=>service.close());
+  const response=await fetch('http://127.0.0.1:'+service.address.port+'/v1/node',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(call())});
+  assert.equal(response.status,503);assert.deepEqual(observed,['BB_TRUSTED_NODE_UNAVAILABLE']);
 });

@@ -329,7 +329,7 @@ export async function bootstrapRollingDevnet({directory,ports,onProgress=console
   await net.useWallClock();
 
   const {startProverService}=await import('../../prover/service.mjs');
-  queryService=await startProverService(developmentQueryServiceConfig({directory,appPort:selected.appPort,nodeUrl:net.nodeUrl,rollupAddress:operatorConfig.rollupAddress,rollupVersion:info.rollupVersion,board:report.l2Addr,privateFeeAddress:String(feeInstance.address),privateBokAddress:bok.escrow}));
+  queryService=await startProverService(developmentQueryServiceConfig({directory,appPort:selected.appPort,nodeUrl:net.nodeUrl,rollupAddress:operatorConfig.rollupAddress,rollupVersion:info.rollupVersion,board:report.l2Addr,privateFeeAddress:String(feeInstance.address),privateBokAddress:bok.escrow}),{onQueryFailure:code=>onProgress(JSON.stringify({event:'development-query-unavailable',code,at:Date.now()}))});
   const queryUrl='http://127.0.0.1:'+queryService.address.port+'/v1/node';
   const walletConfig={config:{network:{chainId:'31337',rollupVersion:String(info.rollupVersion),rollupAddress:operatorConfig.rollupAddress,ethRpcUrl:net.rpcUrl},board:{contractAddress:report.l2Addr,portalAddress:report.portalAddr.toLowerCase()},privateFee:{contractAddress:String(feeInstance.address),gasSettings:gas},bok:activated.walletBok,aggregateFunding:liquidity.scope},trustedQuery:{url:queryUrl,allowLocalDev:true},remoteProver:null,proofsEnabled:false};
   await writeDevnetRecord(path.join(directory,'rolling-public.json'),readerConfig);await writeDevnetRecord(path.join(directory,'rolling-wallet-public.json'),walletConfig);

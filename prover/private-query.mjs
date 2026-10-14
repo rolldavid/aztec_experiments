@@ -81,15 +81,16 @@ export function validateQueryNode(config) {
   return Object.freeze({url: url.href, rollupAddress: config.rollupAddress, maxLagSeconds: config.maxLagSeconds ?? 120});
 }
 
-export async function createPrivateQuery(options) {
+export async function createPrivateQuery(options, observers) {
   if (options.queryNode === undefined) return undefined;
   const {inspectTrustedNode} = await import('../shared/trusted-private-node.mjs');
-  return createPrivateQueryWithInspector(options, inspectTrustedNode);
+  return createPrivateQueryWithInspector(options, inspectTrustedNode, observers);
 }
 
 // Inspector injection is only for labelled unit tests. Production composition
 // above always uses the shared identity/sync/freshness inspector.
-export function createPrivateQueryWithInspector({queryNode, chainId, rollupVersion, proofsEnabled, compactBlocks, serviceMode, operatorAuthSha256}, inspectTrustedNode) {
+export function createPrivateQueryWithInspector({queryNode, chainId, rollupVersion, proofsEnabled, compactBlocks, serviceMode, operatorAuthSha256}, inspectTrustedNode, {onQueryFailure} = {}) {
+  if(onQueryFailure!==undefined&&typeof onQueryFailure!=='function')throw Error('Invalid internal query observer');
   const operator = operatorAuthSha256 !== undefined;
   if(operator && (serviceMode !== 'query-only' || typeof operatorAuthSha256 !== 'string' || !/^[0-9a-f]{64}$/.test(operatorAuthSha256))) throw Error('Invalid query operator authentication');
   const config = validateQueryNode(queryNode);
@@ -139,7 +140,22 @@ export function createPrivateQueryWithInspector({queryNode, chainId, rollupVersi
     },
   });
   let active = 0;
-  const inspect = () => inspectTrustedNode(node, options);
+  // Internal operator diagnostics only: fixed codes, no request correlation or
+  // raw errors. At most one notification per category/minute, and at most one
+  // pending observer per category. No timer, retries or response-policy change.
+  const codes=new Set(['BB_TRUSTED_NODE_CONFIG','BB_TRUSTED_NODE_IDENTITY','BB_TRUSTED_NODE_UNAVAILABLE','BB_TRUSTED_NODE_UNSYNCED','BB_TRUSTED_NODE_STALE']);
+  const reported=new Map(),pendingObservers=new Set();
+  const reportFailure=error=>{
+    if(!onQueryFailure)return;
+    let code='BB_TRUSTED_NODE_UNAVAILABLE';
+    try{const descriptor=Object.getOwnPropertyDescriptor(error,'code');if(descriptor&&Object.hasOwn(descriptor,'value')&&codes.has(descriptor.value))code=descriptor.value;}catch{}
+    const now=Date.now(),prior=reported.get(code);
+    if(pendingObservers.has(code)||(prior!==undefined&&now-prior<60000))return;
+    reported.set(code,now);pendingObservers.add(code);
+    try{Promise.resolve(onQueryFailure(code)).then(()=>pendingObservers.delete(code),()=>pendingObservers.delete(code));}
+    catch{pendingObservers.delete(code);}
+  };
+  const inspect = async () => {try{return await inspectTrustedNode(node, options);}catch(error){reportFailure(error);throw error;}};
   const health = async () => {
     if (active >= QUERY_LIMITS.concurrent) return {enabled: true, ready: false, reason: 'busy'};
     active++;
