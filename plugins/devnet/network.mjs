@@ -77,6 +77,15 @@ export function developmentSequencerProfile({persistent,proofs=false}) {
  if(persistent&&proofs!==false)throw Error('Persistent local development requires native proofs disabled');
  return {useAutomineSequencer:persistent,automineEnableProveEpoch:persistent,aztecTargetCommitteeSize:persistent?0:1};
 }
+// warpTo rounds UP to the next Aztec slot, then local settlement mines L1.
+// Keep one full slot plus two L1 slots behind real wall time so idle production
+// cannot manufacture a future timestamp. Real Date and wallet freshness stay intact.
+export function developmentIdleWarpTarget({wallSeconds,slotDuration,ethereumSlotDuration}) {
+ for(const value of [wallSeconds,slotDuration,ethereumSlotDuration])if(!Number.isSafeInteger(value)||value<1)throw Error('Invalid native idle clock');
+ const margin=slotDuration+2*ethereumSlotDuration;
+ if(!Number.isSafeInteger(margin)||margin>=120||wallSeconds<=margin)throw Error('Invalid native idle clock');
+ return wallSeconds-margin;
+}
 export async function assertDevelopmentCommittee(rollup) {
  if(await rollup.getTargetCommitteeSize()!==0)throw Error('Retained rollup is incompatible with native local settlement; preserve its records');
 }
@@ -161,6 +170,7 @@ export async function startDevnet({directory,fundingAddresses,proofs=false,persi
     if(saved){const code=await deployment.l1Client.getBytecode({address:saved.addresses.rollupAddress});if(!code||code==='0x'||Number(await deployment.l1Client.getChainId())!==31337)throw Error('Restored rollup is unavailable');}
     rollup=new RollupContract(deployment.l1Client,deployment.l1ContractAddresses.rollupAddress.toString());
     if(persistent)await assertDevelopmentCommittee(rollup);
+    const idleSlotDuration=persistent?await rollup.getSlotDuration():config.aztecSlotDuration;
     let active=persistent||!!saved;
     for(let i=0;i<8&&!active;i++){
       active=(await rollup.getCurrentEpochCommittee())?.some(a=>a.toString().toLowerCase()===identity.address.toLowerCase());if(active)break;
@@ -185,7 +195,7 @@ export async function startDevnet({directory,fundingAddresses,proofs=false,persi
     if(!persistent)await node.validatorClient.registerHandlers();
     sequencer.updateConfig({minTxsPerBlock:1,buildCheckpointIfEmpty:false});
     if(persistent){await sequencer.start();nativeStarted=true;}
-    mining=(async()=>{while(!stopMining){try{if(persistent){if(settling){await pause(100);continue;}clockTick=sequencer.warpTo(Math.floor(Date.now()/1000));await clockTick;}else if(wallMode){const latest=await deployment.l1Client.getBlock({blockTag:'latest'});const wall=Math.floor(Date.now()/1000);if(BigInt(wall)<=latest.timestamp){await pause(100);continue;}await deployment.l1Client.request({method:'evm_mine',params:[wall]});}else await deployment.l1Client.request({method:'evm_mine',params:[]});if(!persistent){const b=await deployment.l1Client.getBlock({blockTag:'latest'});synchronizeC01MinedClock(dateProvider,Number(b.timestamp));}await pause(1000);}catch(error){miningError=error;stopMining=true;}}})();
+    mining=(async()=>{while(!stopMining){try{if(persistent){if(settling){await pause(100);continue;}clockTick=sequencer.warpTo(developmentIdleWarpTarget({wallSeconds:Math.floor(Date.now()/1000),slotDuration:idleSlotDuration,ethereumSlotDuration:config.ethereumSlotDuration}));await clockTick;}else if(wallMode){const latest=await deployment.l1Client.getBlock({blockTag:'latest'});const wall=Math.floor(Date.now()/1000);if(BigInt(wall)<=latest.timestamp){await pause(100);continue;}await deployment.l1Client.request({method:'evm_mine',params:[wall]});}else await deployment.l1Client.request({method:'evm_mine',params:[]});if(!persistent){const b=await deployment.l1Client.getBlock({blockTag:'latest'});synchronizeC01MinedClock(dateProvider,Number(b.timestamp));}await pause(1000);}catch(error){miningError=error;stopMining=true;}}})();
     if(!persistent)await sequencer.start();
     const rpc=createNamespacedSafeJsonRpcServer({node:[node,AztecNodeApiSchema],aztec:[node,AztecNodeApiSchema]},{maxBatchSize:100,maxBodySizeBytes:10*1024*1024,corsAllowedOrigins:[`http://localhost:${ports.appPort}`,`http://127.0.0.1:${ports.appPort}`]});
     nodeServer=http.createServer(rpc.getApp().callback());await new Promise((resolve,reject)=>{nodeServer.once('error',reject);nodeServer.listen(persistent?ports.nodePort:0,'127.0.0.1',resolve);});

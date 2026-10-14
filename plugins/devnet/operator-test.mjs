@@ -269,4 +269,25 @@ if(focused){
   wrong=true;await assert.rejects(verifyDevelopmentV3({swap,quoter,factory,weth}),/identity differs/);
  });
 
+ test('native idle target uses actual installed warp rounding without a future clock (controlled L1)',async()=>{
+  const {AutomineSequencer}=await import('@aztec-labs/sequencer-client/automine');
+  const {developmentIdleWarpTarget}=await import('./network.mjs');
+  const {RollupContract}=await import('@aztec-labs/ethereum/contracts/rollup');assert.equal(typeof RollupContract.prototype.getSlotDuration,'function');
+  async function sample(conservative,genesis){
+   let current=990,scheduled,wall=1000;const observations=[];
+   const sdk=new AutomineSequencer({l1Constants:{l1GenesisTime:BigInt(genesis),slotDuration:5},ethCheatCodes:{lastBlockTimestamp:async()=>current,setNextBlockTimestamp:async t=>{assert(t>current);scheduled=t;}},dateProvider:{now:()=>current*1000,setTime:()=>{}},log:{debug(){},verbose(){}}});
+   // Only L1 publication/settlement is controlled; warpTo, its serial queue,
+   // runWarp and actual installed slot arithmetic all run unchanged.
+   sdk.runBuild=async({allowEmpty})=>{assert.equal(allowEmpty,true);current=scheduled+2;return {};};sdk.queue.start();
+   try{for(;wall<1025;wall++){
+    const target=conservative?developmentIdleWarpTarget({wallSeconds:wall,slotDuration:5,ethereumSlotDuration:1}):wall;
+    await sdk.warpTo(target);observations.push(wall-current);
+   }}finally{await sdk.queue.end();}
+   return observations;
+  }
+  assert((await sample(false,0)).some(lag=>lag<0),'old wall target reproduces future time');
+  for(let genesis=0;genesis<5;genesis++)for(const lag of await sample(true,genesis)){assert(lag>=0,'fixed clock is not future');assert(lag<120,'original freshness bound retained');}
+  for(const values of [{wallSeconds:1000,slotDuration:0,ethereumSlotDuration:1},{wallSeconds:1000,slotDuration:119,ethereumSlotDuration:1},{wallSeconds:1000.5,slotDuration:5,ethereumSlotDuration:1}])assert.throws(()=>developmentIdleWarpTarget(values),/Invalid native idle clock/);
+ });
+
 }
