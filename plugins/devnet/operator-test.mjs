@@ -468,4 +468,36 @@ if(focused){
   child.signalCode=null;await assert.rejects(waitForDevelopmentEthereum({...input,fetchImpl:async()=>{child.exitCode=0;return {json:async()=>({result:['0xabc']})};}}),/exited during startup/);
  });
 
+ test('restored native clock resets only the verified timestamp and preserves the exact head',async()=>{
+  const {restoreDevelopmentNativeClock}=await import('./network.mjs');const head={number:439n,hash:'0x'+'1'.repeat(64),timestamp:1791963551n},calls=[];
+  const client={async request(arg){assert.equal(this,client);calls.push(arg);return 0;},async getBlock(arg){assert.equal(this,client);calls.push(arg);return {...head};}};
+  await restoreDevelopmentNativeClock(client,head);assert.deepEqual(calls,[{method:'evm_setTime',params:[1791963551]},{blockTag:'latest'}]);
+  const source=await fs.readFile(new URL('./network.mjs',import.meta.url),'utf8');
+  assert(source.indexOf('await restoreDevelopmentNativeClock(c,head)')>source.indexOf("throw Error('Native development checkpoint identity differs')"));
+  assert(source.indexOf('await restoreDevelopmentNativeClock(c,head)')<source.indexOf('node=await createAztecNodeService'));
+ });
+ test('restored native clock rejects RPC failure without fallback and preserves falsy errors',async()=>{
+  const {restoreDevelopmentNativeClock}=await import('./network.mjs');const head={number:1n,hash:'0x'+'1'.repeat(64),timestamp:100n};
+  for(const original of [Error('controlled RPC rejection'),null,undefined,false,0]){let reads=0,calls=0,caught=false;
+   try{await restoreDevelopmentNativeClock({request:async()=>{calls++;throw original;},getBlock:async()=>{reads++;}},head);}catch(error){caught=true;assert.equal(error,original);}
+   assert(caught);assert.equal(calls,1);assert.equal(reads,0);
+  }
+ });
+ test('restored native clock rejects changed head and invalid timestamp',async()=>{
+  const {restoreDevelopmentNativeClock}=await import('./network.mjs');const head={number:1n,hash:'0x'+'1'.repeat(64),timestamp:100n};
+  for(const change of [{number:2n},{hash:'0x'+'2'.repeat(64)},{timestamp:101n}])await assert.rejects(restoreDevelopmentNativeClock({request:async()=>0,getBlock:async()=>({...head,...change})},head),/checkpoint changed/);
+  for(const timestamp of [-1n,9007199254740992n,1.5]){let calls=0;await assert.rejects(restoreDevelopmentNativeClock({request:async()=>{calls++;}}, {...head,timestamp}),/Invalid restored native timestamp/);assert.equal(calls,0);}
+ });
+ test('restored native clock permits actual installed lag-safe warp after Anvil wall-floor rejection',async()=>{
+  const {restoreDevelopmentNativeClock,developmentIdleWarpTarget}=await import('./network.mjs');const {AutomineSequencer}=await import('@aztec-labs/sequencer-client/automine');
+  let current=1000,floor=2000,scheduled,builds=0;const head={number:1n,hash:'0x'+'1'.repeat(64),timestamp:1000n};
+  const sdk=new AutomineSequencer({l1Constants:{l1GenesisTime:0n,slotDuration:5},ethCheatCodes:{lastBlockTimestamp:async()=>current,setNextBlockTimestamp:async t=>{if(t<floor)throw Error('Timestamp error: lower than previous');scheduled=t;}},dateProvider:{now:()=>current*1000,setTime(){}},log:{debug(){},verbose(){}}});
+  sdk.runBuild=async()=>{builds++;current=scheduled+2;return {};};sdk.queue.start();
+  const target=developmentIdleWarpTarget({wallSeconds:2000,slotDuration:5,ethereumSlotDuration:1});
+  try{await assert.rejects(sdk.warpTo(target),/lower than previous/);assert.equal(builds,0);
+   await restoreDevelopmentNativeClock({request:async({method,params})=>{assert.equal(method,'evm_setTime');floor=params[0];return 0;},getBlock:async()=>({...head})},head);
+   await sdk.warpTo(target);assert.equal(builds,1);assert(current<=2000);assert(2000-current<120);
+  }finally{await sdk.queue.end();}
+ });
+
 }

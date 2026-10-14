@@ -91,6 +91,16 @@ export function developmentAnvilArgs({persistent,port,mnemonic,recoveryPath,load
  // disposable Anvil configuration, never application or testnet finality checks.
  return ['--host','127.0.0.1','--port',String(port),'--chain-id','31337','--mnemonic',mnemonic,'--silent',...(persistent?['--no-request-size-limit','--slots-in-an-epoch','1','--dump-state',recoveryPath,'--state-interval','30','--preserve-historical-states',...(loadPath?['--load-state',loadPath]:[])]:[])];
 }
+// Anvil restores block history but initializes its timestamp floor to wall time.
+// Reset only that local clock after authenticating the saved checkpoint, before
+// starting the node/miner. No block is mined or rewritten by evm_setTime.
+export async function restoreDevelopmentNativeClock(client, head) {
+ const timestamp=Number(head.timestamp);
+ if(!Number.isSafeInteger(timestamp)||timestamp<0||BigInt(timestamp)!==BigInt(head.timestamp))throw Error('Invalid restored native timestamp');
+ await client.request({method:'evm_setTime',params:[timestamp]});
+ const after=await client.getBlock({blockTag:'latest'});
+ if(after.number!==head.number||after.hash!==head.hash||after.timestamp!==head.timestamp)throw Error('Native development checkpoint changed during clock restore');
+}
 // A retained multi-gigabyte native snapshot loads before Anvil opens RPC.
 // One spawned process, bounded read-only polling; no restart or metadata recovery.
 export async function waitForDevelopmentEthereum({rpcUrl,address,child,spawnFailure=()=>null,retainedNative=false,now=()=>performance.now(),wait=pause,fetchImpl=fetch}) {
@@ -223,6 +233,7 @@ export async function startDevnet({directory,fundingAddresses,proofs=false,persi
       const c=createExtendedL1Client([rpcUrl],identity.privateKey,foundry),head=await c.getBlock({blockTag:'latest'});
       const r=new RollupContract(c,saved.addresses.rollupAddress);
       if('0x'+head.number.toString(16)!==saved.snapshotHead.number||head.hash.toLowerCase()!==saved.snapshotHead.hash||String(await r.getCheckpointNumber())!==saved.snapshotHead.pending||String(await r.getProvenCheckpointNumber())!==saved.snapshotHead.proven)throw Error('Native development checkpoint identity differs');
+      await restoreDevelopmentNativeClock(c,head);
     }else if(saved){
       const fd=await fs.open(snapshotPath,constants.O_RDONLY|constants.O_NOFOLLOW);let bytes;try{const st=await fd.stat();if(!st.isFile()||(st.mode&0o077)||st.size>134217728)throw Error('Invalid development snapshot');bytes=await fd.readFile();}finally{await fd.close();}
       if(createHash('sha256').update(bytes).digest('hex')!==saved.snapshotHash)throw Error('Development snapshot differs');
