@@ -416,9 +416,15 @@ Actions, pinned default-branch commit, and a single regular README.md (at most
 4096 bytes) with a verified Git tree hash. Generation copies only the default
 branch into a private repository. No generated code runs during bootstrap.
 
-The generation token selects only the template ID and requests Administration
-write plus Contents read, as required by GitHub's documented template endpoint.
-After creation, a separate Administration-only token selects the new mirror ID
+Template validation uses a token selecting only the template ID. Generation uses
+Administration write plus Contents read over the selected installation, without
+`repository_ids` that could exclude the repository being created. Before issuing
+the generation request, the broker enumerates every selected repository (at most
+129 over two pages) and rejects anything except the pinned private template and
+private mirrors already owned by its durable journal. It rejects `all` selection,
+unknown IDs, changed owners/markers, duplicates and incomplete pagination. This
+is not an all-repositories installation or a permission expansion. After creation,
+a separate Administration-only token selects the new mirror ID
 for identity and Actions checks; source writes use its Contents-only token.
 An uncertain generation response may mint the existing selected-installation
 Administration-only token solely to read back the exact intended name and marker,

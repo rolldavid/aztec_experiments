@@ -75,7 +75,7 @@ async function broker({creationTemplate=null,connectedRepositories=[],enabled=fa
    assert(typeof r?.token==='string'&&r.token.length>0&&r.token.length<=16384&&Date.parse(r.expires_at)>now()+120000);
    for(const [name,level] of Object.entries(permissions))assert(r.permissions?.[name]===level);
    for(const [name,level] of Object.entries(r.permissions))assert((name==='metadata'&&level==='read')||(Object.hasOwn(permissions,name)&&level===permissions[name]));
-   if(repositoryId)assert(Array.isArray(r.repositories)&&r.repositories.length===1&&r.repositories[0].id===repositoryId);return r.token;
+   if(repositoryId)assert(Array.isArray(r.repositories)&&r.repositories.length===1&&r.repositories[0].id===repositoryId);else if(purpose==='template')assert(r.repository_selection==='selected');return r.token;
   }
   async function template(){
    assert(creationTemplate);const c=creationTemplate,credential=await token(c.repositoryId,false,'template'),route='/repos/'+c.fullName,r=await request('GET',route,undefined,credential);
@@ -89,7 +89,20 @@ async function broker({creationTemplate=null,connectedRepositories=[],enabled=fa
    assert.equal(treeHash([{path:leaf.path,gitSha:leaf.sha}]),tree.sha);
    return {credential,route};
   }
-  return {request,available,token,template};
+  async function creationCredential(){
+   assert(creationTemplate);const credential=await token(undefined,false,'template'),allowed=new Map([[creationTemplate.repositoryId,{fullName:creationTemplate.fullName}]]);
+   for(const [id,r] of Object.entries(state.repositories)){const created=r.steps?.create;if(created?.done){assert(integer(created.result?.id));allowed.set(created.result.id,{fullName:owner+'/bok-'+id,marker:r.marker});}}
+   const seen=new Set();let total=null;
+   for(let page=1;page<=2;page++){
+    const list=await request('GET','/installation/repositories?per_page=100&page='+page,undefined,credential);
+    assert(Number.isSafeInteger(list?.total_count)&&list.total_count>0&&list.total_count<=129&&Array.isArray(list.repositories)&&list.repositories.length<=100);
+    if(total===null)total=list.total_count;else assert.equal(list.total_count,total);
+    for(const r of list.repositories){const expected=allowed.get(r.id);assert(expected&&!seen.has(r.id)&&r.full_name===expected.fullName&&r.owner?.id===ownerId&&r.owner.login===owner&&r.owner.type==='User'&&r.private===true&&r.fork===false&&r.archived===false&&(!expected.marker||r.description===expected.marker));seen.add(r.id);}
+    if(seen.size===total)break;assert(list.repositories.length===100&&page===1);
+   }
+   assert.equal(seen.size,total);assert(seen.has(creationTemplate.repositoryId));return credential;
+  }
+  return {request,available,token,template,creationCredential};
  }
  // Connected repositories use the same private state/lease and exact-once mutation
  // journal. Neither installation Administration nor the legacy ambient token is
@@ -188,7 +201,7 @@ async function broker({creationTemplate=null,connectedRepositories=[],enabled=fa
    const template=creationTemplate?await s.template():null;let admin=template?.credential??await s.token();
    function repository(r){assert(r&&integer(r.id)&&r.name===name&&r.full_name===owner+'/'+name&&r.owner?.id===ownerId&&r.owner?.login===owner&&r.owner?.type==='User'&&r.private===true&&r.fork===false&&r.archived===false&&r.description===repo.marker&&typeof r.default_branch==='string'&&/^[a-zA-Z0-9_-]{1,100}$/.test(r.default_branch));return {id:r.id,branch:r.default_branch};}
    // An existing name without OUR durable creation intent is never adopted.
-   if(!repo.steps.create){assert(await s.request('GET',route,undefined,admin)===null);}
+   if(!repo.steps.create){if(template)admin=await s.creationCredential();assert(await s.request('GET',route,undefined,admin)===null);}
    const createRoute=template?template.route+'/generate':'/user/repos',createBody=template?{owner,name,description:repo.marker,private:true,include_all_branches:false}:{name,description:repo.marker,private:true,auto_init:true,has_issues:false,has_projects:false,has_wiki:false};
    const remote=await once(repo.steps,'create','POST',createRoute,createBody,admin,repository,async()=>s.request('GET',route,undefined,template?await s.token():admin));
    if(template)admin=await s.token(remote.id,false,'admin');
