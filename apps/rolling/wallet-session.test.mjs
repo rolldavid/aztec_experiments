@@ -649,3 +649,15 @@ test('confirmed withdrawal session opens the real refund journal with captured p
   assert.equal((await workflow.read()).value.txHash,txHash);assert.equal(f.state.sends,0);
  }finally{await session.close();}
 });
+
+// Compose the real custody adapter with the withdrawal capability. The node and
+// EIP1193 replies remain explicit doubles; no real wallet transaction occurs.
+import {captureRollingFundingWallet} from './wallet-runtime.mjs';
+for(const bok of [false,true])test(`actual custody runtime prepares original ${bok?'Bok':'collateral'} refund and rejects chain changes`,async()=>{
+ const f=await withdrawalFixture({bok}),captured=await f.opts.captureWallet();let chain='0x7a69';
+ const state={ethSigner:captured.signer,ethProvider:{},ethTransport:{request:async({method})=>{assert.equal(method,'eth_chainId');return chain;}},ethAccount:captured.address,ethWalletName:'MetaMask'};
+ f.opts.captureWallet=()=>captureRollingFundingWallet({getState:()=>state,contextGuard:f.opts.contextGuard,chainId:f.opts.scope.chainId});
+ const cap=createCollateralWithdrawal(f.opts),quote=await cap.prepare({maximumGasWei:'1000'});
+ assert.equal(quote.recipient,captured.address);assert.equal(quote.estimatedGasWei,'400');assert.equal(f.state.sends,0);
+ chain='0x1';await assert.rejects(cap.confirm(),{code:'ROLLING_RUNTIME_UNAVAILABLE'});assert.equal(f.state.sends,0);
+});

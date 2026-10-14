@@ -108,7 +108,7 @@ export async function captureRollingFundingWallet({getState,contextGuard,chainId
   if(typeof chain!=='string'||!/^0x[0-9a-fA-F]+$/.test(chain)||BigInt(chain)!==BigInt(chainId))throw failed();
   const current=await signer.getAddress();check();await contextGuard();check();if(typeof current!=='string'||current.toLowerCase()!==address)throw failed();
  };
- await guard();return Object.freeze({address,name,signer,guard});
+ await guard();return Object.freeze({address,name,chainId:String(BigInt(chainId)),signer,guard});
 }
 
 /** Fixed same-origin public funding routes. Neither endpoint nor generic RPC
