@@ -5,7 +5,7 @@
     {
       "name": "RollingBoard",
       "path": "billboard/target/rolling_contract-RollingBoard.json",
-      "sha256": "20c4946741d2afd5be7f2f18aad6409780b2f4db74f415bea30f95ee9a76fe24"
+      "sha256": "91b9a2fe0b2e886b26cc012a3edcbbcaae40724b3d596d56a5f1701028993c59"
     },
     {
       "name": "PrivateBok",
@@ -18,7 +18,7 @@
     "noir-dependencies.json": "bafc55482a422c076bb5a0622e5f14c4a3bb525fedc95dee884a3afbfce9e717",
     "toolchain.json": "8a5ade97648d006124ee1a7f2e40c55375be90d116f3c4c90e2e56456f89d8a8",
     "package-lock.json": "825107bb65912344f28356160e513b30b553fe28e42c4c275ed66c70b1df0320",
-    "scripts/build-contracts.mjs": "60c03915c83790a3fa0d6572db2df4780efc4bb9761feeffcd421d79d548c62a",
+    "scripts/build-contracts.mjs": "7793217d18593a1c4e3a802d664e6e9ea4d2d7822fce3ebeea24d17b452703d6",
     "scripts/check-noir-dependencies.mjs": "17be15dc0297b52fe959b9581067284c19e8426ecfc72463c1bd36c963123549",
     "scripts/normalize-noir.mjs": "d1dc22ad5e50d016e9e1fce6d8c5d3cadc21db431b4eb94717a347f5c0c69a5d",
     "billboard/Nargo.toml": "c2ebd5861978eb15cf7f0f7501c1a849d1db8907ad17f9c8e2082128046b3973",
