@@ -60,6 +60,31 @@ test('reply receipt loss permits only inspection then finish, never provider or 
  const x=fixture();x.control.unknownReply=true;await assert.rejects(x.run(),/Reply transaction unresolved/);assert.equal(x.store.read().hostedPrivateBok.phase,'reply-intent');
  x.control.unknownReply=false;await x.run();assert.deepEqual(x.events,['reserve','paid','settle','publish_reply','finish']);
 });
+test('pending hosted finish resumes only its canonical original operation without provider or reply replay',async()=>{
+ const x=fixture();let original;
+ x.args.escrow.finish=async(request,operation)=>{
+  assert.equal(request,x.args.request.requestId);assert.equal(original,undefined,'No finish retransmission');
+  original=structuredClone(operation);x.events.push('finish');
+  x.ops.set(operation.operationId,{status:'pending',canonical:false,method:'finish',argsDigest:operation.argsDigest,txHash:f(91)});
+ };
+ await assert.rejects(x.run(),/Chain operation unresolved/);
+ assert.equal(x.store.read().hostedPrivateBok.phase,'reply-confirmed');assert.equal(x.store.read().privateBok.finished,false);
+ assert.equal(x.row.refunded,0n);assert.equal(x.row.available,994n);assert.equal(x.row.charged,6n);
+ assert.deepEqual(x.events,['reserve','paid','settle','publish_reply','finish']);
+ // Each run reconstructs the owner and metering from the same durable-store
+ // double; an unresolved original finish permits inspection only.
+ await assert.rejects(x.run(),/Chain operation unresolved/);assert.equal(x.row.refunded,0n);
+ x.ops.set(original.operationId,{...x.ops.get(original.operationId),status:'succeeded',canonical:false});
+ await assert.rejects(x.run(),/Chain operation unresolved/);assert.equal(x.row.refunded,0n);
+ // Labelled canonical-chain transition, not a second call to the mutator.
+ x.ops.set(original.operationId,{...x.ops.get(original.operationId),canonical:true,transactionFee:'7'});
+ x.row.refunded=x.row.available;x.row.available=0n;x.row.state=4;
+ assert.deepEqual(await x.run(),{status:'finished',replayed:false});assert.equal(x.store.read().privateBok.finished,true);
+ assert.equal(x.row.refunded,994n);assert.equal(x.row.charged,6n);assert.equal(x.row.reserved,0n);
+ assert.equal(x.ops.get(original.operationId).txHash,f(91));assert.equal(x.ops.get(original.operationId).argsDigest,original.argsDigest);
+ await x.run();assert.deepEqual(x.events,['reserve','paid','settle','publish_reply','finish']);
+ assert.equal(x.store.read().hostedPrivateBok.phase,'finished');
+});
 test('crash after durable agent intent cannot restart even before a paid call',async()=>{
  const x=fixture();x.args.runAgent=async()=>{throw Error('interrupted');};await assert.rejects(x.run());
  x.args.runAgent=()=>assert.fail('No rerun');await assert.rejects(x.run(),/unresolved/);assert.deepEqual(x.events,[]);

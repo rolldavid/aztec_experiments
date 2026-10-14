@@ -72,6 +72,21 @@ test('unit fake: pending outcome remains pending after restart and never reprove
  assert.equal((await f.port.reserve(f.id,0,400n,op)).status,'pending');
  const next=await f.create();assert.equal((await next.reserve(f.id,0,400n,op)).status,'pending');assert.deepEqual(f.counts(),{proofs:1,sends:1});
 });
+test('unit fake: pending finish reopens original hash and records canonical fee without resubmission',async()=>{
+ const f=await fixture(),op=f.op('finish',[f.id]);f.receipt.status='pending';
+ const pending=await f.port.finish(f.id,op);assert.equal(pending.status,'pending');assert.equal(pending.canonical,false);
+ const original=structuredClone(f.journal().operations[op.operationId]);
+ assert.equal(original.method,'finish');assert.equal(original.txHash,String(f.tx.getTxHash()));assert.equal(original.transactionSha256,digestBytes(f.tx.toBuffer()));
+ const reopened=await f.create();assert.equal((await reopened.finish(f.id,op)).status,'pending');assert.deepEqual(f.counts(),{proofs:1,sends:1});
+ f.receipt.status='checkpointed';
+ const result=await reopened.inspectOperation(op.operationId);assert.equal(result.status,'succeeded');assert.equal(result.canonical,true);
+ assert.equal(result.txHash,original.txHash);assert.equal(result.argsDigest,original.argsDigest);assert.equal(result.transactionFee,'7');
+ const recorded=f.journal().operations[op.operationId];assert.equal(recorded.transactionSha256,original.transactionSha256);
+ assert.equal(recorded.observation.transactionFee,'7');assert.equal(recorded.observation.effectSha256,digestBytes(f.effect.data.toBuffer()));
+ assert.equal(recorded.includedHistory.length,1);assert.equal(recorded.includedHistory[0].txHash,original.txHash);
+ assert.deepEqual(await (await f.create()).finish(f.id,op),result);assert.deepEqual(f.counts(),{proofs:1,sends:1});
+ function digestBytes(bytes){return createHash('sha256').update(bytes).digest('hex');}
+});
 test('unit fake: failure before send consumes intent without leaking error or reproving',async()=>{
  const f=await fixture();f.set('proofFailed',true);const op=f.op('finish',[f.id]);
  await assert.rejects(f.port.finish(f.id,op),/operation unresolved/);const next=await f.create();
