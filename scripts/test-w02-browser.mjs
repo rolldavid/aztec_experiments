@@ -30,7 +30,7 @@ async function readyUser(page) {
 try {
   await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
   const origin='http://localhost:'+server.address().port;
-  browser=await chromium.launch({headless:true,executablePath:'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'});
+  browser=await chromium.launch({headless:true,...(process.env.CHROME_PATH?{executablePath:process.env.CHROME_PATH}:{})});
   async function open(pageName='user.html') {
     const context=await browser.newContext({acceptDownloads:true});
     await context.route('**/*',route=>{if(new URL(route.request().url()).origin!==origin){externalRequests++;return route.abort();}return route.continue();});
