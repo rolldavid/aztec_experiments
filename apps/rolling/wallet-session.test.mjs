@@ -76,7 +76,7 @@ import {Tx} from '@aztec-labs/stdlib/tx';
 import {encodeArguments} from '@aztec-labs/stdlib/abi';
 import {IDBFactory} from 'fake-indexeddb';
 import {createBrowserJournalStorage} from '../../shared/journal-indexeddb.mjs';
-import {createL2Journal} from '../../shared/l2-journal.mjs';
+import {createL2Journal,l2JournalScopeText} from '../../shared/l2-journal.mjs';
 const ownedIdString=value=>hex(value.toBigInt());
 async function sessionFixture(){
  const f=await deploymentFixture(),state={active:false,events:[],stops:0,closes:0,syncs:0,sends:0,registrations:0};
@@ -627,4 +627,25 @@ test('RC22 expiry selection passes through existing session synchronization and 
  await assert.rejects(session.application.prepare({type:'expire-bok-request',requestId:hex(11)}),{code:'ROLLING_BOK_ACCOUNTING_INCOMPLETE'});
  assert.equal(f.state.syncs,before+1);assert.equal(f.state.sends,0);assert.equal(f.state.active,false);
  await session.close();await assert.rejects(session.application.prepare({type:'expire-bok-request',requestId:hex(11)}),{code:'ROLLING_CONTEXT_CHANGED'});assert.equal(f.state.sends,0);
+});
+
+// Session wiring regression: canonical L2 outcome is a double; journal key
+// derivation, authentication and retained workflow storage use real crypto.
+test('confirmed withdrawal session opens the real refund journal with captured primitive credentials',async()=>{
+ const f=await sessionFixture(),id=hex(301),txHash=hex(302),calls=[];
+ const scope={account:f.input.account.address,chainId:'31337',version:'1',rollup:f.input.config.network.rollupAddress,board:f.input.config.board.contractAddress,portal:f.input.config.board.portalAddress};
+ const workflow=await createEncryptedJournalSlot({storage:f.privateStore,walletSecret:f.input.account.secretKey,walletSalt:f.input.account.salt,
+  scopeText:JSON.stringify(['ROLLING_WORKFLOW_V1',l2JournalScopeText(scope)]),keyDomain:'ROLLING_WORKFLOW_V1'});
+ const record={id,action:{type:'withdraw',deposit:hex(303)},status:'confirmed',txHash,maximumFee:'10',nonce:hex(304),withdrawal:{eligible:true,amount:'100',depositor:eth(33)}};
+ await workflow.write(await workflow.read(),record);
+ f.input.sdk.createL2Journal=async()=>({inspectOutcome:async()=>({operation:'ROLLING_WORKFLOW_V1:'+id,txHash,outcome:'success',receipt:{txHash,transactionFee:1n}}),confirmed:()=>{}});
+ f.input.sdk.boundedTransactionRead=fn=>fn();
+ f.input.sdk.createEthereumJournal=async options=>{calls.push(options);return createEthereumJournal(options);};
+ const session=await createRollingWalletSession(f.input);
+ try{
+  const result=await session.application.readAccountStatus();
+  assert.equal(result.status,'recovering');assert.equal(result.intent.txHash,txHash);
+  assert.equal(calls.length,1);assert.equal(calls[0].walletSecret,f.input.account.secretKey);assert.equal(calls[0].walletSalt,f.input.account.salt);
+  assert.equal((await workflow.read()).value.txHash,txHash);assert.equal(f.state.sends,0);
+ }finally{await session.close();}
 });
