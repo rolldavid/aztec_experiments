@@ -387210,6 +387210,21 @@ Partial Address: ${this.partialAddress.toString()}
   // shared/trusted-private-node.mjs
   var trusted = /* @__PURE__ */ new WeakSet();
   var failures = /* @__PURE__ */ new WeakSet();
+  var diagnostics = /* @__PURE__ */ new WeakMap();
+  function snapshotDiagnostic(tips, state, stamp) {
+    const tip = (value) => Object.freeze({ number: value.number, hash: value.hash });
+    return Object.freeze({
+      tips: Object.freeze(Object.fromEntries(["proposed", "checkpointed", "proven", "finalized"].map((k) => [k, tip(tips[k])]))),
+      state: Object.freeze({
+        latest: natural(state.latest) ? state.latest : null,
+        latestHash: state.latestHash,
+        final: natural(state.final) ? state.final : null,
+        oldest: natural(state.oldest) ? state.oldest : null,
+        synced: typeof state.synced === "boolean" ? state.synced : null
+      }),
+      timestamp: String(stamp)
+    });
+  }
   var messages2 = Object.freeze({
     CONFIG: "Trusted private node configuration is invalid.",
     IDENTITY: "Trusted private node network or proof policy does not match.",
@@ -387258,12 +387273,20 @@ Partial Address: ${this.partialAddress.toString()}
     if (rejected) throw rejected.reason;
     return results.map((result) => result.value);
   }
-  async function canonical(node2, expected) {
-    const data = await node2.getBlockData(expected.number);
-    if (!data || data.header?.globalVariables?.blockNumber !== expected.number || hex12(data.blockHash, 32) !== expected.hash) throw fail4("UNSYNCED");
+  async function canonical(node2, expected, unsynced, stage) {
+    const data = await node2.getBlockData(expected.number), number20 = data?.header?.globalVariables?.blockNumber;
+    const detail = (hash13) => Object.freeze({ stage, requested: expected.number, expectedHash: expected.hash, observedNumber: natural(number20) ? number20 : null, observedHash: hash13 });
+    if (!data || number20 !== expected.number) throw unsynced("CANONICAL_ANCHOR", detail(null));
+    const hash12 = hex12(data.blockHash, 32);
+    if (hash12 !== expected.hash) throw unsynced("CANONICAL_ANCHOR", detail(hash12));
   }
   async function inspectTrustedNode(node2, options) {
-    const p = policy(options);
+    const p = policy(options), snapshots = [];
+    const unsynced = (reason, canonical2 = null) => {
+      const error312 = fail4("UNSYNCED");
+      diagnostics.set(error312, Object.freeze({ reason, snapshots: Object.freeze([...snapshots]), canonical: canonical2 }));
+      return error312;
+    };
     try {
       for (let snapshot2 = 0; snapshot2 < 2; snapshot2++) {
         const info = await node2.getNodeInfo();
@@ -387298,23 +387321,27 @@ Partial Address: ${this.partialAddress.toString()}
             return value;
           }
         ]);
+        snapshots.push(snapshotDiagnostic(tips, state, stamp));
         const { proposed, checkpointed, proven, finalized } = tips;
         const ordered = [finalized, proven, checkpointed, proposed];
-        for (let i = 1; i < ordered.length; i++) if (ordered[i - 1].number > ordered[i].number || ordered[i - 1].number === ordered[i].number && ordered[i - 1].hash !== ordered[i].hash) throw fail4("UNSYNCED");
+        for (let i = 1; i < ordered.length; i++) if (ordered[i - 1].number > ordered[i].number || ordered[i - 1].number === ordered[i].number && ordered[i - 1].hash !== ordered[i].hash) throw unsynced("TIP_ORDER");
         const { latest, latestHash, final, oldest, synced } = state;
         if (!natural(latest) || !natural(final) || !natural(oldest) || typeof synced !== "boolean") throw fail4("UNAVAILABLE");
-        if (!synced || oldest > checkpointed.number || final > latest || latest === proposed.number && latestHash !== proposed.hash) throw fail4("UNSYNCED");
+        if (!synced) throw unsynced("STATE_NOT_SYNCED");
+        if (oldest > checkpointed.number) throw unsynced("CHECKPOINT_PRUNED");
+        if (final > latest) throw unsynced("IMPOSSIBLE_FINALITY");
+        if (latest === proposed.number && latestHash !== proposed.hash) throw unsynced("SAME_HEIGHT_HASH");
         if (latest !== proposed.number || final !== finalized.number) {
           if (snapshot2 === 0) continue;
-          throw fail4("UNSYNCED");
+          throw unsynced("METADATA_MISMATCH");
         }
-        if (checkpointed.number !== proposed.number) await readTogether([() => canonical(node2, checkpointed), () => canonical(node2, proposed)]);
-        else await canonical(node2, proposed);
+        if (checkpointed.number !== proposed.number) await readTogether([() => canonical(node2, checkpointed, unsynced, "checkpointed"), () => canonical(node2, proposed, unsynced, "proposed")]);
+        else await canonical(node2, proposed, unsynced, "proposed");
         const suppliedNow = options.nowSeconds, now = suppliedNow === void 0 ? Math.floor(Date.now() / 1e3) : suppliedNow;
         if (!natural(now)) throw fail4("CONFIG");
         const lag = now - Number(stamp);
         if (lag < 0 || lag > p.maxLagSeconds) throw fail4("STALE");
-        await canonical(node2, proposed);
+        await canonical(node2, proposed, unsynced, "final");
         return Object.freeze({
           ready: true,
           chainId: p.chainId,
@@ -475292,35 +475319,35 @@ mod tests {
   var unsupported = () => Object.assign(new Error("Application note attribution is unavailable or ambiguous; preserve the original transaction."), { code: "BB_APPLICATION_ATTRIBUTION_UNSUPPORTED" });
   var field8 = (value) => value instanceof Fr;
   async function extractApplicationNullifier(provingResult, tx, board2, expectedNoteNullifier) {
-    let attributionStage = "board", diagnostics = {};
+    let attributionStage = "board", diagnostics2 = {};
     const type = (value) => value === null ? "null" : Array.isArray(value) ? "array" : typeof value;
     try {
-      diagnostics.boardType = type(board2);
-      diagnostics.boardIsAddress = board2 instanceof AztecAddress;
+      diagnostics2.boardType = type(board2);
+      diagnostics2.boardIsAddress = board2 instanceof AztecAddress;
       if (!(board2 instanceof AztecAddress) || board2.isZero()) throw unsupported();
       attributionStage = "expected-note";
-      diagnostics.expectedProvided = expectedNoteNullifier !== void 0;
+      diagnostics2.expectedProvided = expectedNoteNullifier !== void 0;
       if (expectedNoteNullifier !== void 0 && (!field8(expectedNoteNullifier) || expectedNoteNullifier.isZero())) throw unsupported();
       attributionStage = "proof-inputs";
-      diagnostics.proofInputsPresent = !!provingResult?.publicInputs;
-      diagnostics.txDataPresent = !!tx?.data;
+      diagnostics2.proofInputsPresent = !!provingResult?.publicInputs;
+      diagnostics2.txDataPresent = !!tx?.data;
       if (!provingResult?.publicInputs?.toBuffer || !tx?.data?.toBuffer || !provingResult.publicInputs.toBuffer().equals(tx.data.toBuffer())) throw unsupported();
       attributionStage = "execution-tree";
-      diagnostics.callsVisited = 0;
-      diagnostics.boardCalls = 0;
+      diagnostics2.callsVisited = 0;
+      diagnostics2.boardCalls = 0;
       const queue3 = [provingResult?.privateExecutionResult?.entrypoint], seen = /* @__PURE__ */ new Set();
       let applicationCall;
       while (queue3.length) {
         const call2 = queue3.pop();
         if (!call2 || seen.has(call2) || seen.size >= 128) throw unsupported();
         seen.add(call2);
-        diagnostics.callsVisited = seen.size;
+        diagnostics2.callsVisited = seen.size;
         const address6 = call2.publicInputs?.callContext?.contractAddress;
-        diagnostics.callAddressIsAddress = address6 instanceof AztecAddress;
-        diagnostics.nestedType = type(call2.nestedExecutionResults);
+        diagnostics2.callAddressIsAddress = address6 instanceof AztecAddress;
+        diagnostics2.nestedType = type(call2.nestedExecutionResults);
         if (!(address6 instanceof AztecAddress) || !Array.isArray(call2.nestedExecutionResults) || call2.nestedExecutionResults.length > 128) throw unsupported();
         if (address6.equals(board2)) {
-          diagnostics.boardCalls++;
+          diagnostics2.boardCalls++;
           if (applicationCall) throw unsupported();
           applicationCall = call2;
         }
@@ -475329,19 +475356,19 @@ mod tests {
       }
       attributionStage = "nullifier-shape";
       const values = applicationCall?.publicInputs?.nullifiers;
-      diagnostics.nullifiersType = type(values);
-      diagnostics.arrayType = type(values?.array);
-      diagnostics.arrayLength = Array.isArray(values?.array) ? values.array.length : null;
-      diagnostics.claimedLengthType = type(values?.claimedLength);
-      diagnostics.claimedLength = Number.isSafeInteger(values?.claimedLength) && values.claimedLength >= 0 && values.claimedLength <= 128 ? values.claimedLength : null;
+      diagnostics2.nullifiersType = type(values);
+      diagnostics2.arrayType = type(values?.array);
+      diagnostics2.arrayLength = Array.isArray(values?.array) ? values.array.length : null;
+      diagnostics2.claimedLengthType = type(values?.claimedLength);
+      diagnostics2.claimedLength = Number.isSafeInteger(values?.claimedLength) && values.claimedLength >= 0 && values.claimedLength <= 128 ? values.claimedLength : null;
       if (!Array.isArray(values?.array) || values.array.length > 64 || !Number.isSafeInteger(values.claimedLength) || values.claimedLength < 1 || values.claimedLength > values.array.length || expectedNoteNullifier === void 0 && values.claimedLength !== 1) throw unsupported();
       for (let i = 0; i < values.array.length; i++) {
         attributionStage = "nullifier-fields";
         const n2 = values.array[i];
-        diagnostics.itemIndex = i;
-        diagnostics.valueIsField = field8(n2?.value);
-        diagnostics.noteHashIsField = field8(n2?.noteHash);
-        diagnostics.counterType = type(n2?.counter);
+        diagnostics2.itemIndex = i;
+        diagnostics2.valueIsField = field8(n2?.value);
+        diagnostics2.noteHashIsField = field8(n2?.noteHash);
+        diagnostics2.counterType = type(n2?.counter);
         if (!field8(n2?.value) || !field8(n2?.noteHash) || !Number.isSafeInteger(n2?.counter) || n2.counter < 0) throw unsupported();
         attributionStage = "nullifier-padding";
         if (i >= values.claimedLength && (!n2.value.isZero() || !n2.noteHash.isZero() || n2.counter !== 0)) throw unsupported();
@@ -475354,19 +475381,19 @@ mod tests {
       for (const note of active) candidates.push(await siloNullifier(board2, note.value));
       attributionStage = "expected-membership";
       const matches = expectedNoteNullifier === void 0 ? candidates : candidates.filter((value) => value.equals(expectedNoteNullifier));
-      diagnostics.expectedMatchCount = matches.length;
+      diagnostics2.expectedMatchCount = matches.length;
       if (matches.length !== 1) throw unsupported();
       const siloed = matches[0];
       attributionStage = "final-membership";
       const final = tx.data.getNonEmptyNullifiers();
-      diagnostics.finalType = type(final);
-      diagnostics.finalCount = Array.isArray(final) ? final.length : null;
-      diagnostics.finalFieldsValid = Array.isArray(final) && final.length <= 128 && final.every(field8);
-      diagnostics.matchCount = diagnostics.finalFieldsValid ? final.filter((n2) => n2.equals(siloed)).length : null;
+      diagnostics2.finalType = type(final);
+      diagnostics2.finalCount = Array.isArray(final) ? final.length : null;
+      diagnostics2.finalFieldsValid = Array.isArray(final) && final.length <= 128 && final.every(field8);
+      diagnostics2.matchCount = diagnostics2.finalFieldsValid ? final.filter((n2) => n2.equals(siloed)).length : null;
       if (siloed.isZero() || !Array.isArray(final) || final.length > 128 || !final.every(field8) || final.filter((n2) => n2.equals(siloed)).length !== 1) throw unsupported();
       return siloed;
     } catch {
-      throw Object.assign(unsupported(), { attributionStage, attributionDiagnostics: diagnostics });
+      throw Object.assign(unsupported(), { attributionStage, attributionDiagnostics: diagnostics2 });
     }
   }
 
