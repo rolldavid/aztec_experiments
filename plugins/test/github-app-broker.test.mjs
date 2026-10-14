@@ -86,7 +86,7 @@ async function connectedFixture(t){
    if(suffix==='')out={id:c.repositoryId,full_name:c.fullName,owner:{id:badOwner?999:ownerId,login:owner,type:'User'},archived:false,fork:false,private:true};
    else if(suffix.startsWith('/git/ref/heads/')){const branch=suffix.slice('/git/ref/heads/'.length),sha=refs.get(branch);out=sha?{ref:'refs/heads/'+branch,object:{type:'commit',sha}}:null;}
    else if(suffix==='/git/refs'||suffix.startsWith('/git/refs/heads/')){const branch=body.ref?.slice('refs/heads/'.length)??suffix.slice('/git/refs/heads/'.length);assert.equal(branch,c.workBranch);if(method==='PATCH')assert.equal(body.force,false);else assert(!refs.has(branch));refs.set(branch,body.sha);out={ref:'refs/heads/'+branch,object:{type:'commit',sha:body.sha}};}
-   else if(suffix==='/pulls'&&method==='POST'){assert.equal(body.base,'main');assert.equal(body.head,c.workBranch);assert.equal(body.draft,true);assert.equal(pr,null);pr={number:1,state:'open',base:{ref:'main',repo:{id:c.repositoryId}},head:{ref:c.workBranch,repo:{id:c.repositoryId},sha:refs.get(c.workBranch)},html_url:'https://github.com/'+c.fullName+'/pull/1'};out=pr;}
+   else if(suffix==='/pulls'&&method==='POST'){assert.equal(body.base,'main');assert.equal(body.head,c.workBranch);assert.equal(body.draft,true);assert.equal(pr,null);pr={number:1,state:'open',draft:true,base:{ref:'main',repo:{id:c.repositoryId}},head:{ref:c.workBranch,repo:{id:c.repositoryId},sha:refs.get(c.workBranch)},html_url:'https://github.com/'+c.fullName+'/pull/1'};out=pr;}
    else if(suffix.startsWith('/pulls')){if(pr)pr.head.sha=refs.get(c.workBranch);out=suffix==='/pulls'?(pr?[pr]:[]):pr;}
    else if(method==='GET')out=objects.get(suffix.split('/').at(-1))??null;
    else if(suffix==='/git/blobs'){const sha=putBlob(Buffer.from(body.content,'base64'));out=objects.get(sha);}
@@ -98,7 +98,7 @@ async function connectedFixture(t){
   return response(out,out===null?404:200);
  };
  const config={...f.config,fetchImpl,connectedRepositories:[c]};let broker=await createGitHubAppBroker(config);
- return {...f,c,calls,objects,refs,baseTree,get broker(){return broker;},reopen:async(changes={})=>broker=await createGitHubAppBroker({...config,...changes}),badOwner:()=>badOwner=true,broad:()=>broad=true,lose:(method,suffix,absent=false)=>lost={method,suffix,absent},receipt:async(n=2,previous=null,files)=>({...await receipt(f,n,previous,files),connection:structuredClone(c)})};
+ return {...f,c,calls,objects,refs,baseTree,get broker(){return broker;},reopen:async(changes={})=>broker=await createGitHubAppBroker({...config,...changes}),badOwner:()=>badOwner=true,broad:()=>broad=true,setPr:change=>{if(!pr)pr={number:1,state:'open',draft:true,base:{ref:c.baseBranch,repo:{id:c.repositoryId}},head:{ref:c.workBranch,repo:{id:c.repositoryId},sha:c.baseCommit},html_url:'https://github.com/'+c.fullName+'/pull/1'};Object.assign(pr,change);},lose:(method,suffix,absent=false)=>lost={method,suffix,absent},receipt:async(n=2,previous=null,files)=>({...await receipt(f,n,previous,files),connection:structuredClone(c)})};
 }
 test('connected snapshot uses exact numeric token and excludes protected content; PR patches preserve original base',async t=>{
  const f=await connectedFixture(t),source=await f.broker.readConnected(f.c.threadId);assert.deepEqual(source.files.map(x=>x.path),['app.cjs']);assert.equal(Buffer.from(source.files[0].data,'base64').toString(),'original');
@@ -118,3 +118,10 @@ for(const kind of ['owner','token','base','branch','mapping','protected'])test('
  await assert.rejects(f.broker.syncConnected(r));assert(!f.calls.some(x=>x.method==='PATCH'||x.method==='POST'&&!x.route.endsWith('/access_tokens')));
 });
 test('connected mapping rejects duplicate thread/work branch and base writes',async t=>{const f=await connectedFixture(t);for(const mappings of [[f.c,f.c],[{...f.c,workBranch:'main'}],[{...f.c,repositoryId:'987'}],[{...f.c,fullName:'other/project'}]])await assert.rejects(f.reopen({connectedRepositories:mappings}));});
+
+for(const kind of ['closed','ready','historical collision','wrong base','wrong head repo'])test('connected '+kind+' PR admission rejects before any GitHub mutation',async t=>{
+ const f=await connectedFixture(t);let r;
+ if(kind==='historical collision'){f.setPr({state:'closed'});r=await f.receipt();}
+ else{await f.broker.syncConnected(await f.receipt());r=await f.receipt(3,'2'.repeat(40));if(kind==='closed')f.setPr({state:'closed'});if(kind==='ready')f.setPr({draft:false});if(kind==='wrong base')f.setPr({base:{ref:'different',repo:{id:f.c.repositoryId}}});if(kind==='wrong head repo')f.setPr({head:{ref:f.c.workBranch,repo:{id:999},sha:f.refs.get(f.c.workBranch)}});}
+ const mutations=()=>f.calls.filter(c=>c.method!=='GET'&&!c.route.endsWith('/access_tokens')).length,before=mutations();await assert.rejects(f.broker.syncConnected(r));assert.equal(mutations(),before);
+});

@@ -109,10 +109,19 @@ async function broker({connectedRepositories=[],enabled=false,directory,artifact
    if(entry)assert.deepEqual(entry.binding,b);else{assert(repo.latest===b.readRevision&&Object.keys(repo.revisions).length<64&&!Object.values(repo.revisions).some(r=>!r.complete||r.binding.invocationId===b.invocationId));entry={binding:b,date:new Date(Math.floor(now()/1000)*1000).toISOString().replace('.000Z','Z'),steps:{},complete:false};repo.revisions[b.acceptedRevision]=entry;await save();}
    const once=(label,method,route,body,project,reconcile)=>onceConnected(s,entry.steps,label,method,s.route+route,body,project,reconcile);
    const read=(route)=>s.request('GET',s.route+route,undefined,s.credential);
+   const prResult=(r,expectedSha)=>{assert(integer(r?.number)&&r.state==='open'&&r.draft===true&&r.base?.repo?.id===c.repositoryId&&r.head?.repo?.id===c.repositoryId&&r.base.ref===c.baseBranch&&r.head.ref===c.workBranch&&r.head.sha===expectedSha&&r.html_url==='https://github.com/'+c.fullName+'/pull/'+r.number);return {number:r.number,url:r.html_url};};
+   const pullList=()=>read('/pulls?state=all&head='+encodeURIComponent(owner+':'+c.workBranch)+'&base='+encodeURIComponent(c.baseBranch)+'&per_page=100');
    const previous=repo.latest?repo.revisions[repo.latest]:null,parent=previous?.remoteCommit??c.baseCommit;
    const current=await s.head(c.workBranch);
    if(entry.complete){assert(repo.latest!==b.acceptedRevision||current===entry.remoteCommit);return structuredClone(entry.result);}
    assert(current===(previous?.remoteCommit??null)||(entry.steps.ref&&current===entry.remoteCommit),'Connected work branch changed');
+   // A human closing or marking the PR ready revokes automated updates. Check
+   // before ANY remote mutation, including initial branch/PR-name collisions.
+   if(previous)prResult(await read('/pulls/'+previous.result.number),current);
+   else{const list=await pullList();assert(Array.isArray(list)&&list.length<=1);
+    if(!entry.steps.pr)assert.equal(list.length,0,'Existing PR is not owned');
+    else{if(!list.length)throw fail('GITHUB_BROKER_UNRESOLVED');prResult(list[0],entry.remoteCommit);}
+   }
    const omitted=repo.base.leaves.filter(f=>!f.editable),original=new Map(repo.base.leaves.map(f=>[f.path,f]));
    for(const f of captured.files)assert(!omitted.some(o=>o.path.toLowerCase()===f.path.toLowerCase()||o.path.toLowerCase().startsWith(f.path.toLowerCase()+'/')||f.path.toLowerCase().startsWith(o.path.toLowerCase()+'/')),'Excluded base path changed');
    const files=captured.files.map(f=>({...f,mode:original.get(f.path)?.mode??'100644'})),leaves=[...omitted,...files];
@@ -128,11 +137,10 @@ async function broker({connectedRepositories=[],enabled=false,directory,artifact
    assert.equal(await s.head(c.baseBranch),c.baseCommit);const before=await s.head(c.workBranch);assert(before===(previous?.remoteCommit??null)||(entry.steps.ref&&before===commit.sha));
    const branch='/git/refs'+(previous?'/heads/'+c.workBranch:''),body=previous?{sha:commit.sha,force:false}:{ref:'refs/heads/'+c.workBranch,sha:commit.sha};
    await once('ref',previous?'PATCH':'POST',branch,body,r=>{assert(r?.ref==='refs/heads/'+c.workBranch&&r.object?.sha===commit.sha&&r.object.type==='commit');return {sha:commit.sha};},async()=>{const r=await read('/git/ref/heads/'+c.workBranch);return r?.object?.sha===commit.sha?r:null;});
-   const prResult=r=>{assert(integer(r?.number)&&r.state==='open'&&r.base?.repo?.id===c.repositoryId&&r.head?.repo?.id===c.repositoryId&&r.base.ref===c.baseBranch&&r.head.ref===c.workBranch&&r.head.sha===commit.sha&&r.html_url==='https://github.com/'+c.fullName+'/pull/'+r.number);return {number:r.number,url:r.html_url};};
-   let pr;if(previous){pr=prResult(await read('/pulls/'+previous.result.number));}else{
-    if(!entry.steps.pr)assert.deepEqual(await read('/pulls?state=all&head='+encodeURIComponent(owner+':'+c.workBranch)+'&base='+encodeURIComponent(c.baseBranch)+'&per_page=100'),[]);
-    pr=await once('pr','POST','/pulls',{title:'Bok accepted revision',body:'Validated thread source '+b.acceptedRevision,head:c.workBranch,base:c.baseBranch,draft:true},prResult,async()=>{const list=await read('/pulls?state=all&head='+encodeURIComponent(owner+':'+c.workBranch)+'&base='+encodeURIComponent(c.baseBranch)+'&per_page=100');assert(Array.isArray(list)&&list.length<=1);return list[0]??null;});
+   let pr;if(previous){pr=prResult(await read('/pulls/'+previous.result.number),commit.sha);}else{
+    pr=await once('pr','POST','/pulls',{title:'Bok accepted revision',body:'Validated thread source '+b.acceptedRevision,head:c.workBranch,base:c.baseBranch,draft:true},r=>prResult(r,commit.sha),async()=>{const list=await pullList();assert(Array.isArray(list)&&list.length<=1);return list[0]??null;});
    }
+   assert.deepEqual(prResult(await read('/pulls/'+pr.number),commit.sha),pr);
    assert.equal(await s.head(c.workBranch),commit.sha);assert.equal(await s.head(c.baseBranch),c.baseCommit);
    entry.result={connected:true,...pr,repositoryId:b.repositoryId,acceptedRevision:b.acceptedRevision,remoteCommit:commit.sha};entry.complete=true;repo.latest=b.acceptedRevision;await save();return structuredClone(entry.result);
   }),

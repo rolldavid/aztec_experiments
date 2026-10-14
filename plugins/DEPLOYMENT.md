@@ -618,7 +618,7 @@ and be absent before its first use; the broker never adopts a pre-existing branc
 or PR. Repository IDs and work branches cannot be shared by conflicting thread
 mappings. The same thread resumes its accepted local source across participants;
 unmapped threads keep the existing empty-workspace behavior. A changed mapping,
-base branch head, remotely changed work branch, closed/merged PR, or ambiguous
+base branch head, remotely changed work branch, closed/merged or ready-for-review PR, or ambiguous
 mutation requires operator reconciliation. Do not delete journals to resolve it.
 
 For this optional feature add repository Pull requests write to the existing App
@@ -630,7 +630,10 @@ base-ref update, protection/rules change, ambient token or credentialed clone is
 used. Existing branch protections, approval policies and CI configuration remain
 in place. The operator must review the repository's existing CI and secret access
 policies before allowing untrusted thread contributions; this feature does not
-change those policies. Draft PRs require the repository's normal review/merge flow.
+change those policies. Draft PRs require the repository's normal review/merge flow. Marking a PR ready for
+review stops further automated branch updates; open/draft status, both repository
+IDs, base/work refs and the expected parent are checked before remote mutations
+and again after publication.
 
 The original base tree is verified by its Git hash. The local generated workspace
 contains only bounded regular source files; `.github`, secret/control paths,
