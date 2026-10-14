@@ -106,6 +106,13 @@ export function developmentIdleWarpTarget({wallSeconds,slotDuration,ethereumSlot
  if(!Number.isSafeInteger(margin)||margin>=120||wallSeconds<=margin)throw Error('Invalid native idle clock');
  return wallSeconds-margin;
 }
+// Idle polling is read-only until L1 lags wall time by thirty seconds. Native
+// pending-transaction builds remain independent; explicit readiness refreshes
+// use this same owner loop rather than a second miner or sequencer caller.
+export function developmentIdleWarpRequired({wallSeconds,l1Timestamp,refresh=false}) {
+ if(!Number.isSafeInteger(wallSeconds)||wallSeconds<1||!Number.isSafeInteger(l1Timestamp)||l1Timestamp<0||typeof refresh!=='boolean')throw Error('Invalid native idle cadence');
+ return refresh||wallSeconds-l1Timestamp>=30;
+}
 export async function assertDevelopmentCommittee(rollup) {
  if(await rollup.getTargetCommitteeSize()!==0)throw Error('Retained rollup is incompatible with native local settlement; preserve its records');
 }
@@ -149,7 +156,7 @@ export async function startDevnet({directory,fundingAddresses,proofs=false,persi
   const port=persistent?ports.ethereumPort:await freePort(),rpcUrl='http://127.0.0.1:'+port;
   let state=saved??{schemaVersion:1,toolchainHash,ports,fundingAddresses:fundingAddresses.map(String),privateKey:identity.privateKey,mnemonic:identity.mnemonic.phrase,validatorSecret:String(validatorSecret)};
   if(persistent)await writeDevnetRecord(statePath,{...state,phase:'starting'},{exclusive:!saved});
-  let deployment,rollup,nativeStarted=false,bootComplete=false,wallMode=false,settling=false,clockTick;
+  let deployment,rollup,nativeStarted=false,bootComplete=false,wallMode=false,wallRefreshRequested=false,settling=false,clockTick;
   const terminateChild=()=>{if(anvil&&anvil.exitCode===null)anvil.kill('SIGTERM');};
   let node,nodeServer,anvil,mining,stopMining=false,miningError,spawnError,anvilClosed,closing,recoveryPath,checkpointHead;
   function close(){return closing??=(async()=>{
@@ -246,12 +253,12 @@ export async function startDevnet({directory,fundingAddresses,proofs=false,persi
     if(!persistent)await node.validatorClient.registerHandlers();
     sequencer.updateConfig({minTxsPerBlock:1,buildCheckpointIfEmpty:false});
     if(persistent){await sequencer.start();nativeStarted=true;}
-    mining=(async()=>{while(!stopMining){try{if(persistent){if(settling){await pause(100);continue;}clockTick=sequencer.warpTo(developmentIdleWarpTarget({wallSeconds:Math.floor(Date.now()/1000),slotDuration:idleSlotDuration,ethereumSlotDuration:config.ethereumSlotDuration}));await clockTick;}else if(wallMode){const latest=await deployment.l1Client.getBlock({blockTag:'latest'});const wall=Math.floor(Date.now()/1000);if(BigInt(wall)<=latest.timestamp){await pause(100);continue;}await deployment.l1Client.request({method:'evm_mine',params:[wall]});}else await deployment.l1Client.request({method:'evm_mine',params:[]});if(!persistent){const b=await deployment.l1Client.getBlock({blockTag:'latest'});synchronizeC01MinedClock(dateProvider,Number(b.timestamp));}await pause(1000);}catch(error){miningError=error;stopMining=true;}}})();
+    mining=(async()=>{while(!stopMining){try{if(persistent){if(settling){await pause(100);continue;}clockTick=(async()=>{const latest=await deployment.l1Client.getBlock({blockTag:'latest'});if(settling||stopMining)return;const wallSeconds=Math.floor(Date.now()/1000);if(developmentIdleWarpRequired({wallSeconds,l1Timestamp:Number(latest.timestamp),refresh:wallRefreshRequested}))await sequencer.warpTo(developmentIdleWarpTarget({wallSeconds,slotDuration:idleSlotDuration,ethereumSlotDuration:config.ethereumSlotDuration}));})();await clockTick;}else if(wallMode){const latest=await deployment.l1Client.getBlock({blockTag:'latest'});const wall=Math.floor(Date.now()/1000);if(BigInt(wall)<=latest.timestamp){await pause(100);continue;}await deployment.l1Client.request({method:'evm_mine',params:[wall]});}else await deployment.l1Client.request({method:'evm_mine',params:[]});if(!persistent){const b=await deployment.l1Client.getBlock({blockTag:'latest'});synchronizeC01MinedClock(dateProvider,Number(b.timestamp));}await pause(1000);}catch(error){miningError=error;stopMining=true;}}})();
     if(!persistent)await sequencer.start();
     const rpc=createNamespacedSafeJsonRpcServer({node:[node,AztecNodeApiSchema],aztec:[node,AztecNodeApiSchema]},{maxBatchSize:100,maxBodySizeBytes:10*1024*1024,corsAllowedOrigins:[`http://localhost:${ports.appPort}`,`http://127.0.0.1:${ports.appPort}`]});
     nodeServer=http.createServer(rpc.getApp().callback());await new Promise((resolve,reject)=>{nodeServer.once('error',reject);nodeServer.listen(persistent?ports.nodePort:0,'127.0.0.1',resolve);});
     bootComplete=true;
-    return {node,config:nodeConfig,rpcUrl,nodeUrl:'http://127.0.0.1:'+nodeServer.address().port,identity,deployment,dateProvider,close,async settleCheckpoints(){if(!persistent||settling)throw Error('Native settlement requires exclusive persistent local mode');settling=true;try{await clockTick;await settleNativeDevelopment({node,rollup});}finally{settling=false;}},async useWallClock(){if(!persistent)await deployment.l1Client.request({method:'evm_setAutomine',params:[false]});wallMode=true;const deadline=Date.now()+120000;while(Date.now()<deadline){const b=await deployment.l1Client.getBlock({blockTag:'latest'});if(b.timestamp<=BigInt(Math.floor(Date.now()/1000))&&Math.floor(Date.now()/1000)-Number(b.timestamp)<5)return;await pause(200);}throw Error('Development clock did not reach wall time');},checkHealth(){if(miningError)throw miningError;}};
+    return {node,config:nodeConfig,rpcUrl,nodeUrl:'http://127.0.0.1:'+nodeServer.address().port,identity,deployment,dateProvider,close,async settleCheckpoints(){if(!persistent||settling)throw Error('Native settlement requires exclusive persistent local mode');settling=true;try{await clockTick;await settleNativeDevelopment({node,rollup});}finally{settling=false;}},async useWallClock(){if(!persistent)await deployment.l1Client.request({method:'evm_setAutomine',params:[false]});wallMode=true;wallRefreshRequested=persistent;try{const deadline=Date.now()+120000;while(Date.now()<deadline){const b=await deployment.l1Client.getBlock({blockTag:'latest'});if(b.timestamp<=BigInt(Math.floor(Date.now()/1000))&&Math.floor(Date.now()/1000)-Number(b.timestamp)<5)return;await pause(200);}throw Error('Development clock did not reach wall time');}finally{wallRefreshRequested=false;}},checkHealth(){if(miningError)throw miningError;}};
   }catch(error){try{await close();}catch(cleanup){throw new AggregateError([error,cleanup],'Devnet startup and cleanup failed');}throw error;}
 }
 

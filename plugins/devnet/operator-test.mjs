@@ -377,4 +377,36 @@ if(focused){
   await assert.rejects(initializeDevelopmentDeployer({pxe:{async sync(){syncs++;}},async createSchnorrInitializerlessAccount(){throw constructorFailure;}}),e=>e===constructorFailure);assert.equal(syncs,1);
  });
 
+ test('native idle cadence uses measured thirty-second lag and preserves explicit readiness refresh',async()=>{
+  const {developmentIdleWarpRequired}=await import('./network.mjs');
+  for(const lag of [-10,0,1,29])assert.equal(developmentIdleWarpRequired({wallSeconds:1000,l1Timestamp:1000-lag}),false);
+  for(const lag of [30,31,1000])assert.equal(developmentIdleWarpRequired({wallSeconds:1000,l1Timestamp:1000-lag}),true);
+  assert.equal(developmentIdleWarpRequired({wallSeconds:1000,l1Timestamp:990,refresh:true}),true);
+  for(const change of [{wallSeconds:NaN},{l1Timestamp:1.5},{l1Timestamp:-1},{refresh:'yes'}])assert.throws(()=>developmentIdleWarpRequired({wallSeconds:1000,l1Timestamp:990,...change}),/Invalid native idle cadence/);
+ });
+ test('native idle cadence bounds empty checkpoints while installed pending-build queue stays immediate',async()=>{
+  const {AutomineSequencer}=await import('@aztec-labs/sequencer-client/automine');
+  const {developmentIdleWarpTarget,developmentIdleWarpRequired}=await import('./network.mjs');
+  async function sample(cadenced){
+   let current=997,scheduled,wall=1000,empty=0,pending=0;const lags=[];
+   const sdk=new AutomineSequencer({l1Constants:{l1GenesisTime:0n,slotDuration:5},ethCheatCodes:{lastBlockTimestamp:async()=>current,setNextBlockTimestamp:async t=>{assert(t>current);scheduled=t;}},dateProvider:{now:()=>current*1000,setTime:()=>{}},log:{debug(){},verbose(){}}});
+   // Actual installed queues, pending-build dispatch and warp rounding; only
+   // L1 publication/settlement is a finite controlled clock, not a real chain.
+   sdk.runBuild=async({allowEmpty})=>{if(allowEmpty){empty++;current=scheduled+2;}else{pending++;current+=5;}return {};};sdk.running=true;sdk.queue.start();
+   try{for(;wall<1180;wall++){
+    if(wall===1010){assert(wall-current<30);await sdk.buildIfPending();assert.equal(pending,1);}
+    if(!cadenced||developmentIdleWarpRequired({wallSeconds:wall,l1Timestamp:current}))await sdk.warpTo(developmentIdleWarpTarget({wallSeconds:wall,slotDuration:5,ethereumSlotDuration:1}));
+    lags.push(wall-current);
+   }
+   // Explicit useWallClock refresh bypasses only the idle cadence; the same
+   // conservative target and installed queue retain the nonfuture condition.
+   if(developmentIdleWarpRequired({wallSeconds:wall,l1Timestamp:current,refresh:true}))await sdk.warpTo(developmentIdleWarpTarget({wallSeconds:wall,slotDuration:5,ethereumSlotDuration:1}));
+   assert(wall-current>=0&&wall-current<5);
+   }finally{await sdk.queue.end();}
+   return {empty,pending,lags};
+  }
+  const old=await sample(false),now=await sample(true);assert(old.empty>30);assert(now.empty<=8&&now.empty>=5);assert.equal(now.pending,1);
+  assert(now.lags.every(lag=>lag>=0&&lag<30),'idle age remains below original 60/120 second guards');
+ });
+
 }
