@@ -393080,7 +393080,7 @@ Partial Address: ${this.partialAddress.toString()}
     bindings.set(pxe, Object.freeze({ store, tier: tier ?? "proposed", page, headCall }));
   }
   function receipt(state, records = [], head = null) {
-    return { schemaVersion: 1, database: state.database, epoch: state.epoch, sequence: state.sequence, anchor: copy2(state.anchor), nextBlock: state.nextBlock, nextLog: state.nextLog, records, head, complete: head !== null, ...state.previous ? { previous: copy2(state.previous) } : {} };
+    return { schemaVersion: 1, database: state.database, epoch: state.epoch, sequence: state.sequence, anchor: copy2(state.anchor), nextBlock: state.nextBlock, nextLog: state.nextLog, records, head, complete: head !== null, ...state.previous ? { previous: copy2(state.previous) } : {}, ...state.resumed ? { resumed: copy2(state.resumed) } : {} };
   }
   function checkpoint(r) {
     const c = exact2({ database: r.database, epoch: r.epoch, sequence: r.sequence, anchor: copy2(r.anchor), head: copy2(r.head) }, ["database", "epoch", "sequence", "anchor", "head"]);
@@ -393093,6 +393093,17 @@ Partial Address: ${this.partialAddress.toString()}
     const h = c.head;
     check9(typeof h.initialized === "boolean" && h.schema === 1 && typeof h.revision === "string" && /^(0|[1-9][0-9]*)$/.test(h.revision) && h.revision.length <= 20 && BigInt(h.revision) < 1n << 64n && typeof h.digest === "string" && /^(0|[1-9][0-9]*)$/.test(h.digest) && h.digest.length <= 77 && BigInt(h.digest) < Fr.MODULUS);
     check9(h.initialized ? BigInt(h.revision) > 0n && BigInt(h.digest) > 0n : h.revision === "0" && h.digest === "0");
+    return c;
+  }
+  function resumedCheckpoint(r) {
+    const c = { database: r.database, epoch: r.epoch, sequence: r.sequence, anchor: copy2(r.anchor), nextBlock: r.nextBlock, nextLog: r.nextLog };
+    for (const k of ["database", "epoch"]) check9(typeof c[k] === "string" && /^[0-9a-f]{64}$/.test(c[k]));
+    integer8(c.sequence, Number.MAX_SAFE_INTEGER);
+    exact2(c.anchor, ["blockNumber", "blockHash"]);
+    integer8(c.anchor.blockNumber);
+    hex15(c.anchor.blockHash);
+    integer8(c.nextBlock, c.anchor.blockNumber + 1, 1);
+    integer8(c.nextLog, 24575);
     return c;
   }
   function locator(input2) {
@@ -393215,7 +393226,7 @@ Partial Address: ${this.partialAddress.toString()}
           return copy2(state.last);
         };
         if (p.restart || !state || state.database !== meta13.database || state.generation !== meta13.generation || state.schemaVersion !== 2) return await reset3();
-        exact2(state, ["schemaVersion", "scope", "database", "generation", "epoch", "anchor", "sequence", "nextBlock", "nextLog", "pending", "candidate", "previous", "last"]);
+        exact2(state, ["schemaVersion", "scope", "database", "generation", "epoch", "anchor", "sequence", "nextBlock", "nextLog", "pending", "candidate", "previous", "last", ...Object.hasOwn(state, "resumed") ? ["resumed"] : []]);
         check9(state.scope === key && typeof state.epoch === "string" && /^[0-9a-f]{64}$/.test(state.epoch));
         integer8(state.anchor.blockNumber);
         hex15(state.anchor.blockHash);
@@ -393229,6 +393240,11 @@ Partial Address: ${this.partialAddress.toString()}
           const previous = checkpoint(state.previous);
           check9(previous.database === state.database && previous.epoch !== state.epoch && previous.anchor.blockNumber < state.anchor.blockNumber && same(state.last.previous, previous));
         } else check9(state.previous === null && state.last.previous === void 0);
+        if (state.resumed) {
+          exact2(state.resumed, ["database", "epoch", "sequence", "anchor", "nextBlock", "nextLog"]);
+          const prior = resumedCheckpoint(state.resumed);
+          check9(state.previous === null && prior.database === state.database && prior.epoch !== state.epoch && prior.anchor.blockNumber < state.anchor.blockNumber && same(state.last.resumed, prior));
+        } else check9(state.last.resumed === void 0);
         if (state.candidate) {
           exact2(state.candidate, ["nullifier", "slot", "origin"]);
           hex15(state.candidate.nullifier);
@@ -393236,9 +393252,12 @@ Partial Address: ${this.partialAddress.toString()}
           locator(state.candidate.origin);
           check9(state.candidate.origin.blockNumber <= state.anchor.blockNumber);
         }
-        if (state.sequence === 0) check9(state.nextBlock === (state.previous ? state.previous.anchor.blockNumber + 1 : 1) && state.nextLog === 0 && state.pending.length === 0 && (state.previous !== null || state.candidate === null));
+        if (state.sequence === 0) {
+          if (state.resumed) check9(state.nextBlock === state.resumed.nextBlock && state.nextLog === state.resumed.nextLog);
+          else check9(state.nextBlock === (state.previous ? state.previous.anchor.blockNumber + 1 : 1) && state.nextLog === 0 && state.pending.length === 0 && (state.previous !== null || state.candidate === null));
+        }
         if (!same(state.anchor, anchorRecord)) {
-          if (anchorRecord.blockNumber <= state.anchor.blockNumber || !state.last.complete || state.pending.length || state.nextBlock !== state.anchor.blockNumber + 1 || state.nextLog !== 0) return await reset3();
+          if (anchorRecord.blockNumber <= state.anchor.blockNumber || state.last.complete && (state.pending.length || state.nextBlock !== state.anchor.blockNumber + 1 || state.nextLog !== 0)) return await reset3();
           const priorCanonical = async () => {
             const raw = await pxe.node.getBlockData(state.anchor.blockNumber);
             check9(raw);
@@ -393272,9 +393291,11 @@ Partial Address: ${this.partialAddress.toString()}
             check9(exactFormer.length === 1);
             for (const c of replay.candidates) if (c.nullifier !== candidate.nullifier) check9(!await active(c));
             if (!await active(candidate)) candidate = null;
-          } else check9(p.block === null && state.last.head.initialized === false);
-          const previous = checkpoint(state.last);
-          state = { ...state, epoch: id2(), anchor: anchorRecord, sequence: 0, nextBlock: previous.anchor.blockNumber + 1, nextLog: 0, pending: [], candidate, previous };
+          } else check9(p.block === null && (!state.last.complete || state.last.head.initialized === false));
+          const complete = state.last.complete, previous = complete ? checkpoint(state.last) : null, resumed = complete ? null : resumedCheckpoint(state.last);
+          state = { ...state, epoch: id2(), anchor: anchorRecord, sequence: 0, nextBlock: complete ? previous.anchor.blockNumber + 1 : state.nextBlock, nextLog: complete ? 0 : state.nextLog, pending: complete ? [] : state.pending, candidate, previous };
+          if (resumed) state.resumed = resumed;
+          else delete state.resumed;
           state.last = receipt(state);
           await binding3.store.save(key, state, context.changeSetId);
           await beforeCommit();
@@ -393284,9 +393305,12 @@ Partial Address: ${this.partialAddress.toString()}
           await beforeCommit();
           return copy2(state.last);
         }
-        if (state.sequence === 0 && state.previous && p.expected.epoch === state.previous.epoch && p.expected.sequence === state.previous.sequence) {
-          await beforeCommit();
-          return copy2(state.last);
+        if (state.sequence === 0) {
+          const prior = state.previous ?? state.resumed;
+          if (prior && p.expected.epoch === prior.epoch && p.expected.sequence === prior.sequence) {
+            await beforeCommit();
+            return copy2(state.last);
+          }
         }
         check9(p.expected.epoch === state.epoch);
         if (p.expected.sequence === state.sequence - 1) {
