@@ -180,7 +180,7 @@ for(const boundary of [1,2,7])test('history reader stops transport lookahead at 
  assert(canonical.filter(n=>n!==64).every(n=>n<=Math.ceil(boundary/4)*4));assert.equal(f.db.size,1);
 });
 test('short empty transport prefix fails before any SDK advance or encrypted CAS',async()=>{
- const f=fixture();f.alter(p=>{p.anchor={blockNumber:64,blockHash:hex(74)};});
+ const f=fixture(),process=f.config.pxe.processRollingPreferenceRecovery;f.config.pxe.processRollingPreferenceRecovery=async p=>{const value=await process(p);value.anchor={blockNumber:64,blockHash:hex(74)};return value;};
  f.config.compact.readMany=async selectors=>[await f.config.compact.read(selectors[0])];
  const reader=f.reader();await reader.read();const persisted=[...f.db.entries()];await assert.rejects(reader.read(),{code:'ROLLING_COLD_PREFERENCES_UNAVAILABLE'});assert.equal(f.state.steps,0);assert.deepEqual([...f.db.entries()],persisted);
 });
