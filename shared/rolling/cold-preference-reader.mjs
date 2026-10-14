@@ -147,12 +147,17 @@ export function createRollingColdPreferenceReader(input){
     if(!isNew&&!observed.complete){
      let block=null;
      if(observed.nextBlock<=observed.anchor.blockNumber){
-      const count=fetchBlocks&&observed.nextLog===0?Math.min(32,observed.anchor.blockNumber-observed.nextBlock+1):1,selectors=[];
-      for(let offset=0;offset<count;offset+=4){const group=await Promise.allSettled(Array.from({length:Math.min(4,count-offset)},async(_,i)=>{const number=observed.nextBlock+offset+i;return {number,hash:await canonical(number)};}));const failed=group.find(r=>r.status==='rejected');if(failed)throw failed.reason;selectors.push(...group.map(r=>r.value));}
-      const wires=count>1?await checked(()=>fetchBlocks(selectors,{signal})):[await checked(()=>fetchBlock(selectors[0],{signal}))];check(wires.length===count);
-      const blocks=wires.map((wire,i)=>{check(wire.number===selectors[i].number&&wire.hash===selectors[i].hash);return {blockNumber:wire.number,blockHash:wire.hash,fields:wire.fields,headerFields:wire.headerFields};});
-      // This selects a transport batch only. The SDK independently authenticates
-      // every compact root and canonical header before advancing any cursor.
+      const count=fetchBlocks&&observed.nextLog===0?Math.min(32,observed.anchor.blockNumber-observed.nextBlock+1):1,blocks=[];
+      // Bound lookahead to four public heights. Stop physical reads at the first
+      // nonempty body instead of fetching 31 bodies that this page cannot use.
+      for(let offset=0;offset<count;offset+=4){
+       const width=Math.min(4,count-offset),group=await Promise.allSettled(Array.from({length:width},async(_,i)=>{const number=observed.nextBlock+offset+i;return {number,hash:await canonical(number)};}));const failed=group.find(r=>r.status==='rejected');if(failed)throw failed.reason;const selectors=group.map(r=>r.value);
+       const wires=width>1?await checked(()=>fetchBlocks(selectors,{signal,emptyPrefix:true})):[await checked(()=>fetchBlock(selectors[0],{signal}))];check(wires.length>0&&wires.length<=width);check(wires.length===width||wires.at(-1).fields.length!==7);
+       for(let i=0;i<wires.length;i++){const wire=wires[i];check(wire.number===selectors[i].number&&wire.hash===selectors[i].hash);blocks.push({blockNumber:wire.number,blockHash:wire.hash,fields:wire.fields,headerFields:wire.headerFields});if(wire.fields.length!==7)break;}
+       if(blocks.at(-1).fields.length!==7)break;
+      }
+      // Transport shape selects a prefix; only the SDK authenticates emptiness,
+      // compact roots and canonical headers before advancing the atomic cursor.
       let empty=0;if(observed.nextLog===0)while(empty<blocks.length&&blocks[empty].fields.length===7)empty++;
       block=empty>1?blocks.slice(0,empty):blocks[0];
      }

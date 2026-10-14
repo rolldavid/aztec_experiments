@@ -80,13 +80,15 @@ export function createRollingCompactClient(input){
  return Object.freeze({async read(input,options={}){
   if(active)throw fail();active=true;try{return await read(input,options);}finally{active=false;}
  },async readMany(inputs,options={}){
-  if(active)throw fail();let captured,settings;
-  try{settings=exact(options,[],['signal']);check(settings.signal===undefined||settings.signal instanceof AbortSignal);check(Array.isArray(inputs)&&inputs.length>0&&inputs.length<=32);check(Reflect.ownKeys(inputs).length===inputs.length+1);captured=Array.from({length:inputs.length},(_,i)=>{const d=Object.getOwnPropertyDescriptor(inputs,String(i));check(d&&Object.hasOwn(d,'value'));const p=exact(d.value,['number','hash']);validateCompactSelector({schemaVersion:1,...p,tier},tier);return Object.freeze(p);});check(captured.every((p,i)=>i===0||p.number===captured[i-1].number+1));}catch{throw fail();}
+  if(active)throw fail();let captured,settings,emptyPrefix;
+  try{const o=exact(options,[],['signal','emptyPrefix']);check(o.emptyPrefix===undefined||typeof o.emptyPrefix==='boolean');emptyPrefix=o.emptyPrefix===true;settings={signal:o.signal};check(settings.signal===undefined||settings.signal instanceof AbortSignal);check(Array.isArray(inputs)&&inputs.length>0&&inputs.length<=32);check(Reflect.ownKeys(inputs).length===inputs.length+1);captured=Array.from({length:inputs.length},(_,i)=>{const d=Object.getOwnPropertyDescriptor(inputs,String(i));check(d&&Object.hasOwn(d,'value'));const p=exact(d.value,['number','hash']);validateCompactSelector({schemaVersion:1,...p,tier},tier);return Object.freeze(p);});check(captured.every((p,i)=>i===0||p.number===captured[i-1].number+1));}catch{throw fail();}
   active=true;
   try{const values=[];for(const selector of captured){
    // Native and trusted compact endpoints admit one physical block at a time.
    // Keep that admission bound; the SDK still commits authenticated empty pages in batches.
-   values.push(await read(selector,settings));
+   const value=await read(selector,settings);values.push(value);
+   // Selection only: the SDK still authenticates every body it consumes.
+   if(emptyPrefix&&value.fields.length!==7)break;
   }return Object.freeze(values);}finally{active=false;}
  }});
 }

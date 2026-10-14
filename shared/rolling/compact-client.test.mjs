@@ -82,3 +82,12 @@ test('failed public history read settles before batch release and never starts t
  const pending=client.readMany(Array.from({length:8},(_,i)=>({number:i+1,hash}))).finally(()=>{finished=true;});const observed=assert.rejects(pending);
  await new Promise(r=>setImmediate(r));assert.equal(calls,1);assert.equal(finished,false);await assert.rejects(client.read(args()));held.release();await observed;assert.equal(calls,1);
 });
+for(const boundary of [1,3,32])test('empty-prefix selection stops at nonempty body '+boundary+' before unavailable future body',async t=>{
+ const calls=[];const client=fixture(t,async(url,options)=>{const p=JSON.parse(options.body);calls.push(p.number);if(p.number>boundary)return new Response('{}',{status:503});return response({...body(),number:p.number,fields:Array(p.number===boundary?19:7).fill(hash)});});
+ const result=await client.readMany(Array.from({length:32},(_,i)=>({number:i+1,hash})),{emptyPrefix:true});assert.deepEqual(calls,Array.from({length:boundary},(_,i)=>i+1));assert.equal(result.length,boundary);assert.equal(result.at(-1).fields.length,19);
+});
+test('empty-prefix option is captured own boolean and never forwarded as a selector',async t=>{
+ let calls=0;const client=fixture(t,async(url,options)=>{calls++;assert.deepEqual(Object.keys(JSON.parse(options.body)).sort(),['hash','number','schemaVersion','tier']);return response({...body(),number:1});});
+ for(const options of [{emptyPrefix:'true'},{get emptyPrefix(){throw Error('PRIVATE');}},{emptyPrefix:true,account:hash}])await assert.rejects(client.readMany([{number:1,hash}],options));assert.equal(calls,0);
+ await client.readMany([{number:1,hash}],{emptyPrefix:true});assert.equal(calls,1);
+});
