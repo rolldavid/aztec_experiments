@@ -119,6 +119,7 @@ if(focused){
  const readyHash='0x'+'a'.repeat(64),readyBlockHash='0x'+'b'.repeat(64);
  const readyReceipt={txHash:readyHash,status:'proven',executionResult:'success',blockNumber:3,blockHash:readyBlockHash};
  const finalityNode=()=>({getTxReceipt:async()=>readyReceipt,getBlock:async()=>({hash:readyBlockHash}),getChainTips:async()=>({finalized:{block:{number:3}}})});
+ test('default finality deadline admits an immediately finalized canonical receipt',async()=>assert.deepEqual(await waitDevelopmentFinality({node:finalityNode(),txHash:readyHash}),{number:3,hash:readyBlockHash}));
  test('actual finality wait observes pending then finalized with reads only',async()=>{
   const node=finalityNode();let reads=0;node.getChainTips=async()=>({finalized:{block:{number:++reads<3?2:3}}});
   assert.deepEqual(await waitDevelopmentFinality({node,txHash:readyHash,timeoutMs:100,pollMs:0}),{number:3,hash:readyBlockHash});assert.equal(reads,3);

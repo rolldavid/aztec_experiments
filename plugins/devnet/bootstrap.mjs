@@ -94,7 +94,7 @@ export async function waitDevelopmentFinality({node,txHash,timeoutMs=120000,poll
  const {boundedTransactionRead}=await import('../../shared/transaction-outcomes.mjs');
  if(!Number.isSafeInteger(timeoutMs)||timeoutMs<1||timeoutMs>120000||!Number.isSafeInteger(pollMs)||pollMs<0||pollMs>1000)throw Error('Invalid development finality deadline');
  const deadline=Date.now()+timeoutMs,hash=String(txHash);let original;
- const read=fn=>boundedTransactionRead(fn,Math.max(1,deadline-Date.now()));
+ const read=fn=>boundedTransactionRead(fn,Math.min(20000,Math.max(1,deadline-Date.now())));
  for(;;){
   if(Date.now()>=deadline)throw Error('Original Ready awaits finality; retain deployment state');
   const receipt=await read(()=>node.getTxReceipt(txHash));
