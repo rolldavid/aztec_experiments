@@ -95,7 +95,9 @@ function postCard(post,data){
 }
 function timestamp(value){const n=Number(value);if(!Number.isSafeInteger(n)||n<0)return '';const date=new Date(n*1000);return Number.isFinite(date.getTime())?date.toLocaleString(undefined,{dateStyle:'medium',timeStyle:'short'}):'';}
 function shell(title,{boardId=null}={}){
+ document.title=title+' · Rolling Chat';
  const rail=el('aside',{class:'rail',id:'community-navigation'},link('◉ rolling.chat','/home',{class:'brand'}),el('nav',{class:'nav-group','aria-label':'Community'},link('Home','/home'),link('Main board','/board/0'),link('Explore subboards','/directory'),link('Following','/following'),link('Bookmarks','/bookmarks'),link('Notifications','/notifications')),el('p',{class:'rail-foot'},'Public conversations. Private participation.'));
+ for(const entry of rail.querySelectorAll('nav a'))if(entry.hash.slice(1)===route||entry.hash==='#/directory'&&route.startsWith('/directory/')){entry.setAttribute('aria-current','page');entry.classList.add('active');}
  const closeMenu=()=>{rail.classList.remove('open');rail.inert=narrow.matches;document.querySelector('.workspace').inert=false;menu.setAttribute('aria-expanded','false');menu.focus();};
  const menu=button('☰',()=>{rail.inert=false;rail.classList.add('open');document.querySelector('.workspace').inert=true;menu.setAttribute('aria-expanded','true');rail.querySelector('a').focus();},{class:'menu-toggle','aria-label':'Open navigation','aria-expanded':'false','aria-controls':'community-navigation'});
  rail.append(button('×',closeMenu,{class:'mobile-close','aria-label':'Close navigation'}));rail.inert=narrow.matches;
@@ -195,6 +197,7 @@ async function render(){
    const compose=document.querySelector('[data-board-compose]');if(compose)compose.disabled=Boolean(data.board?.rejected);
   }
   if(api==='profile'&&data.identity){main.querySelector('h1').textContent=text(data.identity.first)+' '+text(data.identity.last);main.append(createPublicProfile(data.identity,{signal}),preferenceButton('Follow name',3,parameters.nameId),moderatorButton('Remove this avatar',{type:'moderate-avatar',name:parameters.nameId}));}
+  document.title=main.querySelector('h1').textContent+' · Rolling Chat';
   if(!container.childElementCount)container.append(el('div',{class:'empty'},el('h2',{},'A little quiet here'),el('p',{},api==='directory'?(cursor?'No matches in this page. Continue searching.':'No subboards match this search.'):'No posts to show yet.')));
   main.append(container);
   if(expectedRoot)main.append(el('p',{},link('Read the conversation from the beginning','/thread/'+expectedRoot)));
@@ -230,7 +233,7 @@ async function render(){
    observer.observe(more);
   }
 
- }catch(error){if(signal.aborted)return;loading.remove();main.append(el('div',{class:'empty',role:'alert'},el('h2',{},error.code==='READER_SYNCING'?'Conversations are being checked':api==='board'&&error.code==='READER_NOT_FOUND'?'Board not found':'Conversations could not load'),el('p',{},'No account or transaction has changed.'),button('Try again',()=>render())));}
+ }catch(error){if(signal.aborted)return;loading.remove();main.append(el('div',{class:'empty',role:'alert'},el('h2',{},error.code==='READER_SYNCING'?'Conversations are being checked':error.code==='READER_NOT_FOUND'?({board:'Board',profile:'Profile',post:'Post',thread:'Conversation'}[api]??'Page')+' not found':'Conversations could not load'),el('p',{},'No account or transaction has changed.'),button('Try again',()=>render())));focusRoute(route,positions.get(route),current===1);}
 }
 addEventListener('pagehide',()=>{sequence++;controller?.abort();});
 addEventListener('pageshow',event=>{if(event.persisted)render();});

@@ -234,7 +234,7 @@ export function createRollingPublicSqliteStore(directory,{scope,...options}={}){
    let fixed={};if(view==='board'){
     const board=input.id==='0'?null:boardValue(input.id);requireThat(input.id==='0'||board,'ROLLING_PUBLIC_NOT_FOUND');fixed={boardId:input.id,board};
    }else if(view==='thread')requireThat(point('posts',input.root)?.record.root===input.root);
-   else if(view==='profile')fixed={identity:identity(input.nameId)};
+   else if(view==='profile'){requireThat(point('names',input.nameId),'ROLLING_PUBLIC_NOT_FOUND');fixed={identity:identity(input.nameId)};}
    const valueFor=posts=>{
     const value={...fixed,posts},names={},boards={};
     for(const p of posts){if(p.record.name_id!=='0'&&!Object.hasOwn(names,p.record.name_id))names[p.record.name_id]=identity(p.record.name_id);

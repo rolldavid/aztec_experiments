@@ -8,23 +8,24 @@ import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {chromium} from 'playwright';
 const root=fileURLToPath(new URL('.',import.meta.url));
+const launchBrowser=()=>chromium.launch({headless:true,...(process.env.T04_CHROMIUM_EXECUTABLE?{executablePath:process.env.T04_CHROMIUM_EXECUTABLE}:{})});
 test('public reader: navigation, unsafe content, failure recovery and narrow keyboard menu',async t=>{
- const files=new Set(['live.html','reader.mjs','reader-client.mjs','profile-view.mjs','model.mjs','navigation.mjs','style.css']);let unavailable=false;
+ const files=new Set(['live.html','reader.mjs','reader-client.mjs','profile-view.mjs','model.mjs','navigation.mjs','style.css']);let unavailable=false,longLabels=false;
  const scope={boardAddress:'0x'+'1'.repeat(64)},identity={id:'7',first:'River',last:'Lane'};
  const post={id:'10',record:{root:'10',parent:'0',reference:'0',kind:'1',subboard:'0',name_id:'7'},text:'A real interface, tested with synthetic public data. [Unsafe](javascript:alert(1)) <script>private()</script>',timestamp:'1791734400',likes:'2',bot:null};
  const later={...post,id:'20',record:{...post.record,parent:'10'},text:'The linked reply is outside the first page.'};
  const server=http.createServer(async(req,res)=>{
   const url=new URL(req.url,'http://localhost');
   if(url.pathname.startsWith('/api/')){
-   res.writeHead(unavailable?503:200,{'content-type':'application/json'});
+   res.writeHead(unavailable?503:url.pathname==='/api/profile'&&url.searchParams.get('nameId')==='999'?404:200,{'content-type':'application/json'});
    const kind=url.pathname.slice(5),base={schemaVersion:1,scope,complete:true,checkpoint:{number:3,hash:'public'},revision:'1',names:{'7':identity},boards:{},nextCursor:null};
-   res.end(JSON.stringify(kind==='directory'?{...base,boards:[{id:'20',slug:'workshop',name:'Workshop',description:'Build together',mainRules:'Respect people',rules:'Show your work',rejected:false}]}:kind==='profile'?{...base,identity,posts:[post]}:kind==='post'?{...base,post:url.searchParams.get('id')==='20'?later:post}:kind==='home'?{...base,posts:[url.searchParams.has('cursor')?later:post],nextCursor:url.searchParams.has('cursor')?null:'2:1'}:{...base,posts:[post]}));return;
+   res.end(JSON.stringify(kind==='directory'?{...base,boards:[{id:'20',slug:'workshop',name:longLabels?'W'.repeat(90):'Workshop',description:longLabels?'x'.repeat(900):'Build together',mainRules:'Respect people',rules:'Show your work',rejected:false}]}:kind==='profile'?{...base,identity,posts:[post]}:kind==='post'?{...base,post:url.searchParams.get('id')==='20'?later:post}:kind==='home'?{...base,posts:[url.searchParams.has('cursor')?later:post],nextCursor:url.searchParams.has('cursor')?null:'2:1'}:{...base,posts:[post]}));return;
   }
   const name=url.pathname==='/'?'live.html':url.pathname.slice(1);if(!files.has(name)){res.writeHead(404);res.end();return;}
   res.writeHead(200,{'content-type':name.endsWith('.mjs')?'text/javascript':name.endsWith('.css')?'text/css':'text/html','Content-Security-Policy':"default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'"});res.end(await fs.readFile(path.join(root,name)));
  });await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));t.after(()=>new Promise(resolve=>server.close(resolve)));
- const browser=await chromium.launch({headless:true});t.after(()=>browser.close());const page=await browser.newPage({viewport:{width:1440,height:1000}}),errors=[],requests=[];
- page.on('pageerror',error=>errors.push(error.message));page.on('request',request=>requests.push(request.url()));
+ const browser=await launchBrowser();t.after(()=>browser.close());const page=await browser.newPage({viewport:{width:1440,height:1000}}),errors=[],requests=[];
+ page.setDefaultTimeout(5000);page.on('pageerror',error=>errors.push(error.message));page.on('request',request=>requests.push(request.url()));
  await page.addInitScript(()=>{window.IntersectionObserver=undefined;}); // Exercise the accessible manual fallback.
  await page.goto(`http://127.0.0.1:${server.address().port}/`);await page.getByRole('article').waitFor();
  assert.equal(await page.locator('article script').count(),0);assert.equal(await page.locator('a[href^="javascript:"]').count(),0);
@@ -40,6 +41,15 @@ test('public reader: navigation, unsafe content, failure recovery and narrow key
  await page.getByText('Effective rules',{exact:true}).click();assert(await page.getByText('Respect people',{exact:true}).isVisible());
  await page.setViewportSize({width:390,height:844});await page.getByRole('button',{name:'Open navigation',exact:true}).click();
  assert.equal(await page.locator('.workspace').evaluate(node=>node.inert),true);await page.keyboard.press('Escape');assert.equal(await page.locator('.workspace').evaluate(node=>node.inert),false);
+ longLabels=true;await page.evaluate(()=>location.hash='/directory/long');await page.getByRole('heading',{name:'W'.repeat(90),exact:true}).waitFor();
+ assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,'Valid long board labels must wrap on mobile');
+ assert.equal(await page.getByRole('heading',{name:'W'.repeat(90),exact:true}).evaluate(n=>n.scrollWidth<=n.clientWidth),true,'Long board name must remain readable, not clipped');
+ assert.equal(await page.locator('nav [aria-current="page"]').textContent(),'Explore subboards');
+ assert.equal(await page.title(),'Explore subboards · Rolling Chat');
+ assert((await page.getByRole('searchbox',{name:'Search subboards'}).boundingBox()).height>=42);
+ longLabels=false;await page.evaluate(()=>location.hash='/profile/999');await page.getByRole('heading',{name:'Profile not found',exact:true}).waitFor();
+ assert.equal(await page.evaluate(()=>document.activeElement.tagName),'H1');
+ assert.equal(await page.title(),'Profile · Rolling Chat');
  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
  unavailable=true;await page.evaluate(()=>location.hash='/home');await page.getByRole('heading',{name:'Conversations are being checked'}).waitFor();
  unavailable=false;await page.getByRole('button',{name:'Try again',exact:true}).click();await page.locator('#post-20').waitFor();assert.equal(await page.getByRole('article').count(),2);
@@ -74,7 +84,7 @@ async function socialFixture(t,{wallet='recorder',policies=[]}={}){
   if(!files.has(name)){res.writeHead(404);res.end();return;}
   res.writeHead(200,{'content-type':name.endsWith('.mjs')?'text/javascript':name.endsWith('.css')?'text/css':'text/html','Content-Security-Policy':"default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src blob:; base-uri 'none'; form-action 'none'"});res.end(await fs.readFile(path.join(root,name)));
  });await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));t.after(()=>new Promise(resolve=>server.close(resolve)));
- const browser=await chromium.launch({headless:true});t.after(()=>browser.close());const page=await browser.newPage(),requests=[],errors=[];
+ const browser=await launchBrowser();t.after(()=>browser.close());const page=await browser.newPage(),requests=[],errors=[];
  page.on('request',request=>requests.push(new URL(request.url()).pathname));page.on('pageerror',error=>errors.push(error.message));
  t.after(()=>assert.deepEqual(errors,[]));await page.goto(`http://127.0.0.1:${server.address().port}/`);await page.locator('#post-13').waitFor();return {page,requests,reason};
 }
@@ -154,7 +164,7 @@ async function pagingFixture(t,{observer='controlled',directory=false}={}){
   const name=url.pathname==='/'?'live.html':url.pathname.slice(1);if(!files.has(name)){res.writeHead(404);res.end();return;}
   res.writeHead(200,{'content-type':name.endsWith('.mjs')?'text/javascript':name.endsWith('.css')?'text/css':'text/html'});res.end(await fs.readFile(path.join(root,name)));
  });await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));t.after(()=>{for(const release of state.pending.splice(0))release();return new Promise(resolve=>server.close(resolve));});
- const browser=await chromium.launch({headless:true});t.after(()=>browser.close());const page=await browser.newPage({viewport:{width:1000,height:500}}),errors=[];
+ const browser=await launchBrowser();t.after(()=>browser.close());const page=await browser.newPage({viewport:{width:1000,height:500}}),errors=[];page.setDefaultTimeout(5000);
  page.on('pageerror',error=>errors.push(error.message));t.after(()=>assert.deepEqual(errors,[]));
  if(observer==='none')await page.addInitScript(()=>{window.IntersectionObserver=undefined;});
  if(observer==='controlled')await page.addInitScript(()=>{
@@ -239,7 +249,7 @@ async function boardFixture(t,{rejected=false}={}){
   const name=url.pathname==='/'?'live.html':url.pathname.slice(1);if(!files.has(name)){res.writeHead(404);res.end();return;}
   res.writeHead(200,{'content-type':name.endsWith('.mjs')?'text/javascript':name.endsWith('.css')?'text/css':'text/html'});res.end(await fs.readFile(path.join(root,name)));
  });await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));t.after(()=>new Promise(resolve=>server.close(resolve)));
- const browser=await chromium.launch({headless:true});t.after(()=>browser.close());const page=await browser.newPage(),requests=[],errors=[];page.on('request',r=>requests.push(new URL(r.url()).pathname));page.on('pageerror',e=>errors.push(e.message));t.after(()=>assert.deepEqual(errors,[]));
+ const browser=await launchBrowser();t.after(()=>browser.close());const page=await browser.newPage(),requests=[],errors=[];page.on('request',r=>requests.push(new URL(r.url()).pathname));page.on('pageerror',e=>errors.push(e.message));t.after(()=>assert.deepEqual(errors,[]));
  await page.addInitScript(()=>{window.IntersectionObserver=undefined;});await page.goto(`http://127.0.0.1:${server.address().port}/`);await page.locator('#post-10').waitFor();return {page,state,requests,hostile};
 }
 
@@ -304,7 +314,7 @@ export async function loadRollingWalletRuntime(){return {selectPrivateViews,getA
   const name=url.pathname==='/'?'live.html':url.pathname.slice(1);if(!files.has(name)){res.writeHead(404);res.end();return;}
   res.writeHead(200,{'content-type':name.endsWith('.mjs')?'text/javascript':name.endsWith('.css')?'text/css':'text/html'});res.end(await fs.readFile(path.join(root,name)));
  });await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));t.after(()=>new Promise(resolve=>server.close(resolve)));
- const browser=await chromium.launch({headless:true});t.after(()=>browser.close());const page=await browser.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));t.after(()=>assert.deepEqual(errors,[]));await page.addInitScript(()=>window.IntersectionObserver=undefined);
+ const browser=await launchBrowser();t.after(()=>browser.close());const page=await browser.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));t.after(()=>assert.deepEqual(errors,[]));await page.addInitScript(()=>window.IntersectionObserver=undefined);
  await page.goto(`http://127.0.0.1:${server.address().port}/#/bookmarks`);await page.getByRole('heading',{name:'Unlock and recover your private views'}).waitFor();return {page,requests,feed,state};
 }
 async function recoverPrivateView(page){await page.getByRole('button',{name:'Open private recovery'}).click();await page.getByRole('button',{name:'Unlock',exact:true}).click();await page.getByRole('button',{name:'Recover private views',exact:true}).click();await page.getByText('Your saved choices are ready.').waitFor();await page.getByRole('button',{name:'Close account panel'}).click();}

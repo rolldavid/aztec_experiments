@@ -436,6 +436,18 @@ for(const view of ['feed','home','board','thread','profile','post','directory'])
  assert.deepEqual(stripPersistentEnvelope(a.index.query(view,params)),stripPersistentEnvelope(old.query(view,params)));
  assert.equal(a.index.query('post',{id:'999'}).post,null);
 });
+test('missing public profiles return404 in legacy and persistent HTTP while malformed names stay400',async t=>{
+ const f=await persistentFixture(t),old=await f.create(),a=await f.open();await old.sync();await f.drain(a.index);
+ for(const index of [old,a.index]){
+  assert.throws(()=>index.query('profile',{nameId:'999'}),{code:'ROLLING_PUBLIC_NOT_FOUND'});
+  const server=await startRollingPublicServer({index,pollMs:30000});
+  try{
+   const missing=await fetch(server.url+'/api/profile?nameId=999&limit=30');assert.equal(missing.status,404);assert.deepEqual(await missing.json(),{schemaVersion:1,error:'not-found'});
+   assert.equal((await fetch(server.url+'/api/profile?nameId=0x1')).status,400);
+   const existing=await fetch(server.url+'/api/profile?nameId='+f.nameId+'&limit=1');assert.equal(existing.status,200);assert.equal((await existing.json()).identity.last,'Doe');
+  }finally{await server.close();}
+ }
+});
 test('persistent opaque cursors bind public view, parameters, limit, control and restart epoch',async t=>{
  const f=await persistentFixture(t);f.put(4,[await f.post(20,4)]);f.setHead(4);const a=await f.open();await f.drain(a.index);
  const first=a.index.query('feed',{limit:1});assert.match(first.nextCursor,/^[0-9a-f]{32}:[0-9a-f]{64}:[0-9a-f]{16}$/);assert.equal(first.nextCursor.length,114);

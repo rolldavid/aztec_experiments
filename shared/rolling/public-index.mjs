@@ -152,7 +152,7 @@ export async function createRollingPublicIndex({node,artifact,scope,deployment,s
       else if(view==='board'){check(field(params.id));check(params.id==='0'||projection.board(params.id),'ROLLING_PUBLIC_NOT_FOUND');result=projection.boardFeed(params.id,options);}
       else if(view==='directory')result=projection.directory({...options,query:params.query??''});
       else if(view==='thread'){check(field(params.root));result=projection.thread(params.root,options);}
-      else if(view==='profile'){check(field(params.nameId));result=projection.profile(params.nameId,options);}
+      else if(view==='profile'){check(field(params.nameId));check(projection.identity(params.nameId),'ROLLING_PUBLIC_NOT_FOUND');result=projection.profile(params.nameId,options);}
       else if(view==='post'){check(field(params.id));result={post:projection.post(params.id)};}
       else throw fail('ROLLING_PUBLIC_INVALID');
       if(result.nextCursor)result.nextCursor=epoch+':'+result.nextCursor;
