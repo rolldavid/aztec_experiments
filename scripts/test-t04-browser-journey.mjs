@@ -677,3 +677,25 @@ test('aggregate connection failure projection preserves provider errors and excl
   await assert.rejects(provider.request({method:'eth_chainId'}),e=>e===error);assert.equal(records.length,1);assert.equal(records[0].method,'eth_chainId');assert.equal(records[0].code,typeof code==='number'?code:'unknown');assert(!JSON.stringify(records).includes('PRIVATE_SENTINEL'));
  }
 });
+
+test('retained MetaMask network setup handles selected, registered and missing local network without payment',async()=>{
+ const {configureMetaMaskLocalNetwork}=await import('./t04-metamask.mjs'),{runInNewContext}=await import('node:vm');
+ for(const mode of ['selected','registered','missing','rejected']){
+  let chain=mode==='selected'?'0x7a69':'0x1',listener,approve,clicks=0;const methods=[],original={code:4001};
+  const provider={on(event,fn){assert.equal(event,'chainChanged');listener=fn;},removeListener(){listener=null;},async request(req){methods.push(req.method);if(req.method==='eth_chainId')return chain;
+   if(req.method==='wallet_switchEthereumChain'){assert.equal(req.params[0].chainId,'0x7a69');if(mode==='missing')throw {code:4902};if(mode==='rejected')throw original;chain='0x7a69';return null;}
+   assert.equal(req.method,'wallet_addEthereumChain');assert.equal(req.params[0].rpcUrls[0],'http://127.0.0.1:18546');await new Promise(r=>approve=r);return null;
+  }};
+  const sandbox={__testMetaMask:provider},page={evaluate:async(fn,arg)=>{sandbox.arg=arg;return runInNewContext('('+fn.toString()+')(arg)',sandbox);}};
+  const walletPage={url:()=> 'chrome-extension://test/sidepanel.html',getByText:()=>({first:()=>({waitFor:async()=>{}})}),getByTestId:id=>({waitFor:async()=>{while(!approve)await new Promise(r=>setImmediate(r));},click:async()=>{assert.equal(id,'confirm-footer-button');clicks++;chain='0x7a69';listener(chain);approve();}})};
+  const run=configureMetaMaskLocalNetwork({page,walletPage,extensionId:'test',rpcUrl:'http://127.0.0.1:18546',mark:()=>{}});
+  if(mode==='rejected')await assert.rejects(run,e=>e===original);else assert.equal(await run,mode==='selected'?'already-selected':'selected');
+  assert.equal(clicks,mode==='missing'?1:0);assert(!methods.some(m=>/send|sign/i.test(m)));
+ }
+});
+test('network-only extension probe uses sixty seconds and cannot request Bok continuation',async()=>{
+ const {runInNewContext}=await import('node:vm'),source=await fs.readFile(new URL('./run-bounded-browser-check.mjs',import.meta.url),'utf8');
+ const choose=runInNewContext('('+source.match(/export function browserCheckDeadline\([\s\S]*?\n}/)[0].replace('export ','')+')',{assert});
+ assert.equal(choose({walletExtension:true,aggregate:true,networkOnly:'true'}),60000);
+ assert.throws(()=>choose({walletExtension:true,aggregate:true,networkOnly:'true',retainedBok:'true'}));assert.throws(()=>choose({networkOnly:'true'}));
+});

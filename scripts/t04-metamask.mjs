@@ -95,6 +95,16 @@ export async function addMetaMaskNetwork({page,walletPage,extensionId,rpcUrl,mar
  ]);
 }
 
+export async function configureMetaMaskLocalNetwork(options){
+ const {page,mark}=options;
+ const chain=()=>page.evaluate(()=>globalThis.__testMetaMask.request({method:'eth_chainId'}));
+ if(await chain()==='0x7a69')return 'already-selected';
+ mark('switch-local-network');
+ const unknown=await page.evaluate(async()=>{try{await globalThis.__testMetaMask.request({method:'wallet_switchEthereumChain',params:[{chainId:'0x7a69'}]});return false;}catch(error){if(error?.code===4902)return true;throw error;}});
+ if(unknown)await addMetaMaskNetwork(options);
+ assert.equal(await chain(),'0x7a69');return 'selected';
+}
+
 // Observe the real provider request unchanged. Only the explicit test hook can
 // approve it; unexpected or overlapping transactions stop the test.
 export async function observeMetaMaskTransactions(page){
@@ -265,7 +275,7 @@ export async function driveMetaMaskAggregateFunding({context,page,walletPage,con
   try{if(connectionMethods.has(method))connection.resolved=method;if(method==='wallet_requestPermissions')permission.resolved=true;else if(method==='eth_signTypedData_v4'){const t=typed[signatures.length];assert.equal(verifyTypedData(t.domain,t.types,t.value,result).toLowerCase(),account);signatures.push(result);}else if(method==='eth_sendTransaction'){assert.match(result,/^0x[0-9a-f]{64}$/);hash=result;}}catch(error){remember(error);throw Error('Aggregate wallet result rejected');}
  });
  await page.exposeFunction('__aggregateWalletPermissionRejected',()=>{permission.rejected=true;});
- await page.exposeFunction('__aggregateWalletConnectionRejected',record=>{assert(connectionMethods.has(record.method));assert([4001,4100,4200,4900,4901,-32002,-32603,'unknown'].includes(record.code));connection.rejected=record;});
+ await page.exposeFunction('__aggregateWalletConnectionRejected',record=>{assert(connectionMethods.has(record.method));assert([4001,4100,4200,4900,4901,4902,-32002,-32603,'unknown'].includes(record.code));connection.rejected=record;});
  await page.evaluate(installMetaMaskAggregateObserver);
  const routeTasks=new Set();
  const relayRoute=async route=>{
@@ -422,7 +432,7 @@ export function installMetaMaskAggregateObserver(){
    if(request.method==='wallet_requestPermissions')try{await __aggregateWalletPermissionRejected();}catch{}
    try{if(['wallet_requestPermissions','eth_chainId','wallet_switchEthereumChain','eth_requestAccounts','eth_accounts'].includes(request.method)){
     const descriptor=error!==null&&(typeof error==='object'||typeof error==='function')?Object.getOwnPropertyDescriptor(error,'code'):null;
-    const code=descriptor&&Object.hasOwn(descriptor,'value')&&[4001,4100,4200,4900,4901,-32002,-32603].includes(descriptor.value)?descriptor.value:'unknown';
+    const code=descriptor&&Object.hasOwn(descriptor,'value')&&[4001,4100,4200,4900,4901,4902,-32002,-32603].includes(descriptor.value)?descriptor.value:'unknown';
     await __aggregateWalletConnectionRejected({method:request.method,code});
    }}catch{}
    throw error;
