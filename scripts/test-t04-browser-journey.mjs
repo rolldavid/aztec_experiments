@@ -248,6 +248,12 @@ test('MetaMask aggregate launch rejects absent, nonlocal or unpinned deployment 
  await fs.chmod(file,0o644);assert.throws(()=>readMetaMaskAggregateControl(file,'USDC'));await fs.chmod(file,0o600);
  await fs.mkdir(path.join(directory,'extension'));assert.throws(()=>readMetaMaskAggregateControl(file,'USDC'),/new disposable profile/);await fs.rmdir(path.join(directory,'extension'));
  await fs.mkdir(path.join(directory,'profile'));assert.throws(()=>readMetaMaskAggregateControl(file,'USDC'),/new disposable profile/);
+ assert.throws(()=>readMetaMaskAggregateControl(file,'USDC',{readinessOnly:true}));await fs.mkdir(path.join(directory,'extension'));
+ assert.throws(()=>readMetaMaskAggregateControl(file,'USDC',{readinessOnly:true}));await fs.writeFile(path.join(directory,'initial-recovery.json'),'{}',{mode:0o600});
+ assert.deepEqual(readMetaMaskAggregateControl(file,'USDC',{readinessOnly:true}),c);assert.deepEqual(readMetaMaskAggregateControl(file,'USDC',{continueUnfunded:true}),c);
+ assert.throws(()=>readMetaMaskAggregateControl(file,'USDC',{readinessOnly:true,continueUnfunded:true}));
+ await fs.writeFile(path.join(directory,'prepared-recovery.json'),'{}',{mode:0o600});assert.throws(()=>readMetaMaskAggregateControl(file,'USDC',{continueUnfunded:true}));await fs.unlink(path.join(directory,'prepared-recovery.json'));assert.throws(()=>readMetaMaskAggregateControl(file,'USDC'));
+ await fs.chmod(path.join(directory,'initial-recovery.json'),0o644);assert.throws(()=>readMetaMaskAggregateControl(file,'USDC',{readinessOnly:true}));
 });
 
 test('MetaMask aggregate typed consent binds exact local scope, allocation, nonce, expiry and two-signature USDC ordering',async()=>{
@@ -274,4 +280,32 @@ test('MetaMask aggregate observer counts every actual configured root RPC send a
  assert.equal(count({url:endpoint,method:'GET',body:null},endpoint),0);
  for(const malformed of ['{','[]','null','[null]','[{}]',JSON.stringify(Array(101).fill({method:'aztec_getBlock'}))])assert.throws(()=>count({url:endpoint,method:'POST',body:malformed},endpoint));
  assert.throws(()=>count({url:endpoint+'?elsewhere=true',method:'POST',body},endpoint));
+});
+
+test('MetaMask retained readiness denies all payment/proof requests without substituting reads',async()=>{
+ const {assertMetaMaskReadinessRequest:check}=await import('./t04-metamask.mjs');const endpoint='http://127.0.0.1:18545';
+ for(const method of ['eth_chainId','eth_call','eth_getCode','eth_getTransactionReceipt'])check({url:endpoint,method:'POST',body:JSON.stringify({method})},endpoint);
+ for(const method of ['eth_sendTransaction','eth_sendRawTransaction','eth_signTypedData_v4','anvil_setBalance','personal_sign'])assert.throws(()=>check({url:endpoint,method:'POST',body:JSON.stringify([{method:'eth_chainId'},{method}])},endpoint));
+ for(const suffix of ['/api/funding/usdc','/v1/jobs'])assert.throws(()=>check({url:'http://127.0.0.1:8080'+suffix,method:'POST',body:'{}'},endpoint));
+ for(const body of ['[]','null','{}','[null]','not json'])assert.throws(()=>check({url:endpoint,method:'POST',body},endpoint));
+});
+
+test('MetaMask retained readiness imports the existing encrypted recovery through actual accessible input names only',async()=>{
+ const {inspectMetaMaskAggregateReadiness}=await import('./t04-metamask.mjs');const events=[];
+ const dialog={getByRole(role,{name}){assert.equal(role,'button');assert(['Unlock','Import recovery','Recover funding'].includes(name));return{isVisible:async()=>true,click:async()=>events.push(name),waitFor:async()=>events.push(name)};},getByLabel(name){assert(['Recovery password','Recovery file'].includes(name));return{fill:async()=>events.push(name),setInputFiles:async p=>{assert.equal(p,'/private/recovery/initial-recovery.json');events.push(name);}};}};
+ const page={getByRole(role,options){if(role==='dialog')return dialog;assert.equal(options.name,'Your account');return{click:async()=>events.push('open')};}};
+ await inspectMetaMaskAggregateReadiness({page,control:{password:'not-retained-in-report',recoveryDirectory:'/private/recovery'},mark:x=>events.push(x)});
+ assert.deepEqual(events,['aggregate-retained-readiness','open','Unlock','Recovery password','Recovery file','Import recovery','Recover funding']);
+});
+
+test('MetaMask startup exception requires the pinned extension parent and exact sandboxed cache iframe',async()=>{
+ const {isMetaMaskStartupFrameRequest:check}=await import('./t04-metamask.mjs');
+ const extensionOrigin='chrome-extension://'+'a'.repeat(32),url='https://metamask.github.io/phishing-warning/v5.1.0/';
+ const input={method:'GET',url,parentUrl:extensionOrigin+'/home.html',extensionOrigin,frameSource:url+'#extensionStartup',sandbox:'allow-scripts allow-same-origin'};assert.equal(check(input),true);
+ for(const change of [{method:'POST'},{url:url+'script.js'},{url:url+'?account=x'},{parentUrl:'http://127.0.0.1:8080/'},{parentUrl:'chrome-extension://'+'b'.repeat(32)+'/home.html'},{frameSource:url+'#hostname=127.0.0.1'},{frameSource:url},{sandbox:'allow-scripts allow-same-origin allow-top-navigation'},{extensionOrigin:'chrome-extension://invalid'},{parentUrl:null}])assert.equal(check({...input,...change}),false);
+});
+
+test('MetaMask unfunded continuation rejects any saved journal or prior Ethereum/consent nonce',async()=>{
+ const {assertMetaMaskUnfundedContinuation:check}=await import('./t04-metamask.mjs');const input={ethereumNonce:0,consentNonce:0n,emptyRecovery:true};check(input);
+ for(const change of [{ethereumNonce:1},{ethereumNonce:'0'},{consentNonce:1n},{consentNonce:0},{emptyRecovery:false},{emptyRecovery:null},{emptyRecovery:undefined}])assert.throws(()=>check({...input,...change}));
 });

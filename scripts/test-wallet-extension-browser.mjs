@@ -24,7 +24,8 @@ import {recoverPrivateFeeClaim} from '../shared/private-fee-funding.mjs';
 import {BarretenbergSync} from '@aztec-foundation/bb.js';
 import {derivePrivateFeeAddress,derivePrivateFeeInstance} from '../shared/private-fee-client.mjs';
 import {generateHosting} from '../deploy/hosting-config.mjs';
-import {discoverTestMetaMask,onboardMetaMask,unpackMetaMask,addMetaMaskNetwork,guardBrowserRequest,readMetaMaskAggregateControl,driveMetaMaskAggregateFunding,countMetaMaskAggregateNodeSubmissions} from './t04-metamask.mjs';
+import {discoverTestMetaMask,onboardMetaMask,unpackMetaMask,addMetaMaskNetwork,guardBrowserRequest,readMetaMaskAggregateControl,driveMetaMaskAggregateFunding,countMetaMaskAggregateNodeSubmissions,inspectMetaMaskAggregateReadiness,assertMetaMaskReadinessRequest,isMetaMaskStartupFrameRequest} from './t04-metamask.mjs';
+import {projectRollingInitialization} from '../apps/rolling/wallet-panel.mjs';
 import {verifyExtensionCollateral} from './t04-extension-collateral.mjs';
 import {ROOT,assertNodeVersion,anvilBinary} from './toolchain.mjs';
 assertNodeVersion();
@@ -101,7 +102,7 @@ try{
   Object.assign(report,{passed:true,realExtension:true,extensionVersion:phantomPackage.version,browserVersion:context.browser().version(),namedSelection:true,chainId:11155111,accountChangeInvalidated:true,transactionRequests:0,relayRequests:0,methods});
   }
  }else if(mode.startsWith('metamask-aggregate-')){
-  stage='aggregate-launch-inputs';const control=readMetaMaskAggregateControl(process.env.T04_AGGREGATE_CONTROL,mode.slice('metamask-aggregate-'.length));
+  stage='aggregate-launch-inputs';const readinessOnly=process.env.T04_AGGREGATE_READINESS_ONLY==='true',continueUnfunded=process.env.T04_AGGREGATE_CONTINUE_UNFUNDED==='true',retained=readinessOnly||continueUnfunded,control=readMetaMaskAggregateControl(process.env.T04_AGGREGATE_CONTROL,mode.slice('metamask-aggregate-'.length),{readinessOnly,continueUnfunded});
   report.scope='Real selected MetaMask aggregate devnet payment and canonical public bridge effects only. Private claims/post/Bok execution and real-proof testnet acceptance remain separate.';
   // Fail before opening a profile if the actual served metadata is not the
   // explicitly supplied source-bound deployment. Nothing is injected into it.
@@ -110,34 +111,43 @@ try{
   const metadata=JSON.parse(metadataBytes);for(const key of ['config','trustedQuery','remoteProver','proofsEnabled'])assert.deepEqual(metadata[key],control.walletConfig[key]);
   // This archive has no manifest key: its unpacked path determines extension ID.
   // Retain the exact path with the private profile for subsequent recovery.
-  const extension=unpackMetaMask(control.recoveryDirectory),profile=path.join(control.recoveryDirectory,'profile');await fs.mkdir(profile,{mode:0o700});
+  const extension=retained?path.join(control.recoveryDirectory,'extension'):unpackMetaMask(control.recoveryDirectory),profile=path.join(control.recoveryDirectory,'profile');if(!retained)await fs.mkdir(profile,{mode:0o700});
   report.privateRecoveryRetained=true; // Parent retains this fresh private directory; never an existing user profile.
   provider=new JsonRpcProvider(control.ethereumUrl,undefined,{cacheTimeout:-1});assert.equal((await provider.getNetwork()).chainId,31337n);
   stage='aggregate-extension';context=await chromium.launchPersistentContext(profile,{channel:'chromium',headless:true,acceptDownloads:true,args:['--disable-extensions-except='+extension,'--load-extension='+extension,'--js-flags=--max-old-space-size=256']});
   const allowed=new Set([control.origin,control.ethereumUrl,new URL(control.walletConfig.trustedQuery.url).origin]);
   if(control.walletConfig.remoteProver)allowed.add(new URL(control.walletConfig.remoteProver.url).origin);
   for(const origin of allowed){const url=new URL(origin);assert.equal(url.protocol,'http:');assert.equal(url.hostname,'127.0.0.1');}
-  let blocked=0,proofRequests=0,l2Submissions=0;
-  finalizeAggregate=()=>{Object.assign(report,{blockedRequests:blocked,proofRequests,l2Submissions});assert.equal(blocked,0);assert.equal(proofRequests,0);};
+  const extensionIdentity=(context.serviceWorkers()[0]?Promise.resolve(context.serviceWorkers()[0]):context.waitForEvent('serviceworker',{timeout:15000})).then(worker=>'chrome-extension://'+new URL(worker.url()).host);
+  let blocked=0,proofRequests=0,l2Submissions=0,extensionStartupDocuments=0;const blockedDetails=[];
+  const recordBlocked=(url,reason,frame)=>{blocked++;if(blockedDetails.length<8)blockedDetails.push({origin:url.origin,path:url.pathname.replace(/0x[0-9a-fA-F]{16,}/g,'[hex]').slice(0,160),reason,extensionParent:frame?.parentFrame()?.url().startsWith('chrome-extension:')===true,startupFrame:frame?.url().endsWith('#extensionStartup')===true,topLevel:frame?.parentFrame()===null});};
+  finalizeAggregate=()=>{Object.assign(report,{blockedRequests:blocked,blockedDetails,proofRequests,l2Submissions,extensionStartupDocuments});assert.equal(blocked,0);assert.equal(proofRequests,0);};
   await context.route('**/*',async route=>{
    const request=route.request(),worker=request.serviceWorker(),frame=worker?null:request.frame(),url=new URL(request.url());
    if(worker?worker.url().startsWith('chrome-extension:'):frame.url().startsWith('chrome-extension:'))return route.continue();
-   if(['http:','https:'].includes(url.protocol)&&!allowed.has(url.origin)){blocked++;return route.abort();}
+   if(frame?.parentFrame()?.url().startsWith('chrome-extension:')&&url.href==='https://metamask.github.io/phishing-warning/v5.1.0/'){
+    const element=await frame.frameElement();try{if(isMetaMaskStartupFrameRequest({method:request.method(),url:request.url(),parentUrl:frame.parentFrame().url(),extensionOrigin:await extensionIdentity,frameSource:await element.getAttribute('src'),sandbox:await element.getAttribute('sandbox')})){extensionStartupDocuments++;return route.continue();}}finally{await element.dispose();}
+   }
+   if(['http:','https:'].includes(url.protocol)&&!allowed.has(url.origin)){recordBlocked(url,'origin',frame);return route.abort();}
    if(request.method()==='POST'&&url.pathname==='/v1/jobs'){proofRequests++;return route.abort();}
-   try{l2Submissions+=countMetaMaskAggregateNodeSubmissions({url:request.url(),method:request.method(),body:request.postData()},control.walletConfig.trustedQuery.url);}catch{blocked++;return route.abort();}
+   try{const observed={url:request.url(),method:request.method(),body:request.postData()},sends=countMetaMaskAggregateNodeSubmissions(observed,control.walletConfig.trustedQuery.url);l2Submissions+=sends;if(readinessOnly){assert.equal(sends,0);assertMetaMaskReadinessRequest(observed,control.ethereumUrl);}}catch{recordBlocked(url,'rpc-or-readiness',frame);return route.abort();}
    return route.continue();
   });
-  const worker=context.serviceWorkers()[0]??await context.waitForEvent('serviceworker',{timeout:15000}),extensionId=new URL(worker.url()).host;
-  walletPage=await onboardMetaMask(context,control.mnemonic,control.password,extensionId,value=>{stage=value;});
+  const extensionId=new URL(await extensionIdentity).host;
+  if(!retained)walletPage=await onboardMetaMask(context,control.mnemonic,control.password,extensionId,value=>{stage=value;});
+  if(continueUnfunded){walletPage=await context.newPage();walletPage.setDefaultTimeout(10000);await walletPage.goto('chrome-extension://'+extensionId+'/home.html');if(await walletPage.getByTestId('unlock-password').isVisible()){await walletPage.getByTestId('unlock-password').fill(control.password);await walletPage.getByTestId('unlock-submit').click();}}
   page=await context.newPage();page.setDefaultTimeout(10000);await page.goto(control.origin);
+  if(readinessOnly){report.scope='Retained disposable account initialization only; no signatures, funding, proof or L2 sends';await inspectMetaMaskAggregateReadiness({page,control,mark:value=>{stage=value;}});report.passed=true;report.readinessOnly=true;}else{
   // Discovery and network addition use the authentic extension; no account or
   // native PXE implementation is replaced by this development test.
   await page.getByRole('button',{name:'Your account',exact:true}).click();await page.getByRole('dialog').getByRole('button',{name:'Unlock',exact:true}).click();
-  await discoverTestMetaMask(page);await addMetaMaskNetwork({page,walletPage,extensionId,rpcUrl:control.ethereumUrl,mark:value=>{stage=value;}});
+  await discoverTestMetaMask(page);if(!continueUnfunded)await addMetaMaskNetwork({page,walletPage,extensionId,rpcUrl:control.ethereumUrl,mark:value=>{stage=value;}});
   await page.getByRole('dialog').getByRole('button',{name:'Close account panel',exact:true}).click();
-  const finalizePayment=await driveMetaMaskAggregateFunding({context,page,walletPage,control,provider,mark:value=>{stage=value;},report});
+  if(continueUnfunded)await walletPage.goto('chrome-extension://'+extensionId+'/sidepanel.html');
+  const finalizePayment=await driveMetaMaskAggregateFunding({context,page,walletPage,control,provider,mark:value=>{stage=value;},report,continueUnfunded});
   const finalizeTraffic=finalizeAggregate;finalizeAggregate=()=>{finalizeTraffic();finalizePayment();};
   assert.equal(blocked,0);assert.equal(proofRequests,0);Object.assign(report,{passed:true,realExtension:true,extensionVersion:'13.49.0.0',browserVersion:context.browser().version(),proofRequests,l2Submissions,privateRecoveryRetained:true});
+  }
  }else{
  const extension=unpackMetaMask(directory);
  const rpcUrl='http://127.0.0.1:'+await port();
@@ -246,6 +256,7 @@ try{
 }catch(error){
  report.passed=false;report.failure={stage,errorClass:error.name};
  const location=String(error.stack).match(/(?:t04-phantom|t04-metamask|t04-extension-collateral|test-wallet-extension-browser)\.mjs:\d+:\d+/);if(location)report.failure.location=location[0];process.exitCode=1;
+ if(mode.startsWith('metamask-aggregate-')&&page&&!page.isClosed())try{const raw=await page.getByRole('dialog').getAttribute('data-rolling-initialization',{timeout:1000});report.initialization=raw&&raw.length<=1024?projectRollingInitialization(JSON.parse(raw)):null;report.privatePanelControls={};for(const label of ['Recover funding','Connect private account','Check account recovery','Import recovery'])report.privatePanelControls[label]=await page.getByRole('dialog').getByRole('button',{name:label,exact:true}).isVisible();}catch{report.initializationDiagnosticFailed=true;}
  if(readFundingState)try{report.canonicalFundingState=await readFundingState();}catch{report.fundingDiagnosticFailed=true;}
  if(page&&!page.isClosed())try{report.applicationState=await page.evaluate(()=>({ethereumConnected:!!window.walletState?.ethAccount,aztecLoaded:!!window.walletState?.aztec?.address,setupError:!!document.querySelector('#setupStatus .error'),feeAddressReady:!!document.getElementById('azaddr')?.value,invalidated:window.walletState?.invalidated===true}));}catch(diagnostic){report.applicationDiagnosticFailure={errorClass:diagnostic.name};}
  if(context&&mode.startsWith('phantom'))try{

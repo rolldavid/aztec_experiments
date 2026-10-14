@@ -156,13 +156,16 @@ export function validateMetaMaskAggregateControl(value,asset){
  assert(Number.isSafeInteger(value.allocation.slippageBps)&&value.allocation.slippageBps>=0&&value.allocation.slippageBps<=500);
  return structuredClone(value);
 }
-export function readMetaMaskAggregateControl(filename,asset){
+export function readMetaMaskAggregateControl(filename,asset,{readinessOnly=false,continueUnfunded=false}={}){
+ assert(!(readinessOnly&&continueUnfunded));const retained=readinessOnly||continueUnfunded;
  assert(path.isAbsolute(filename??''),'Required private launch control is absent');
  const stat=fs.lstatSync(filename);assert(stat.isFile()&&!stat.isSymbolicLink()&&stat.uid===process.getuid()&&(stat.mode&0o777)===0o600&&stat.size<=65536);
  const c=validateMetaMaskAggregateControl(JSON.parse(fs.readFileSync(filename,'utf8')),asset),dir=fs.lstatSync(c.recoveryDirectory);
  assert(dir.isDirectory()&&!dir.isSymbolicLink()&&dir.uid===process.getuid()&&(dir.mode&0o777)===0o700);
  assert.equal(fs.realpathSync(c.recoveryDirectory),c.recoveryDirectory);
- for(const name of ['profile','extension'])assert(!fs.existsSync(path.join(c.recoveryDirectory,name)),'Use a new disposable profile; never replay an existing funding run');
+ for(const name of ['profile','extension']){const location=path.join(c.recoveryDirectory,name);if(retained){const entry=fs.lstatSync(location);assert(entry.isDirectory()&&!entry.isSymbolicLink()&&entry.uid===process.getuid());}else assert(!fs.existsSync(location),'Use a new disposable profile; never replay an existing funding run');}
+ if(retained){const backup=fs.lstatSync(path.join(c.recoveryDirectory,'initial-recovery.json'));assert(backup.isFile()&&!backup.isSymbolicLink()&&backup.uid===process.getuid()&&(backup.mode&0o777)===0o600);}
+ if(continueUnfunded)assert(!fs.existsSync(path.join(c.recoveryDirectory,'prepared-recovery.json')),'Prepared funding must use journal recovery, never this continuation');
  return c;
 }
 export function assertMetaMaskAggregateTypedData({data,account,scope,allocation,index,asset,consentNonce,nowSeconds}){
@@ -192,7 +195,7 @@ export function assertMetaMaskAggregateTypedData({data,account,scope,allocation,
 
 // Bounded driver of the actual served application. Resources belong to the
 // existing caller. Only public effects enter the report; signatures stay in RAM.
-export async function driveMetaMaskAggregateFunding({context,page,walletPage,control,provider,mark,report}){
+export async function driveMetaMaskAggregateFunding({context,page,walletPage,control,provider,mark,report,continueUnfunded=false}){
  const c=control,scope=c.walletConfig.config.aggregateFunding,a=c.allocation,account=Wallet.fromPhrase(c.mnemonic).address.toLowerCase();
  const portal=new Interface(['function depositNonces(address) view returns(uint256)']);
  const consentNonce=portal.decodeFunctionResult('depositNonces',await provider.call({to:scope.collateralPortal,data:portal.encodeFunctionData('depositNonces',[account])}))[0];
@@ -255,11 +258,21 @@ export async function driveMetaMaskAggregateFunding({context,page,walletPage,con
  };
  await page.route(c.origin+'/api/funding/usdc',relayRoute);
  try{
-  mark('aggregate-private-account');await page.getByRole('button',{name:'Your account',exact:true}).click();const dialog=page.getByRole('dialog');
-  if(await dialog.getByRole('button',{name:'Unlock',exact:true}).isVisible())await dialog.getByRole('button',{name:'Unlock',exact:true}).click();await dialog.getByLabel('Recovery password',{exact:true}).fill(c.password);
-  const [initial]=await Promise.all([page.waitForEvent('download'),dialog.getByRole('button',{name:'Create account and download recovery',exact:true}).click()]);
-  await saveEncryptedDownload(initial,path.join(c.recoveryDirectory,'initial-recovery.json'));
-  await dialog.getByRole('button',{name:'Recover funding',exact:true}).click();
+  mark('aggregate-private-account');
+  if(continueUnfunded){
+   assert.equal(consentNonce,0n,'Previously signed funding must be reconciled');
+   await inspectMetaMaskAggregateReadiness({page,control:c,mark});
+   // Inspect the real encrypted journal export inside the page; only booleans
+   // leave it. No backup custody or private account identity is reported.
+   const empty=await page.evaluate(async password=>{const envelope=await window.BillboardAccount.exportRecovery(password),payload=await window.BillboardWalletBackup.decrypt(envelope,password);return Array.isArray(payload.journals)&&payload.journals.length===0&&Array.isArray(payload.claims)&&payload.claims.length===0;},c.password);
+   assertMetaMaskUnfundedContinuation({ethereumNonce:initialNonce,consentNonce,emptyRecovery:empty});report.retainedUnfundedContinuation=true;
+  }else{
+   await page.getByRole('button',{name:'Your account',exact:true}).click();const initialDialog=page.getByRole('dialog');
+   if(await initialDialog.getByRole('button',{name:'Unlock',exact:true}).isVisible())await initialDialog.getByRole('button',{name:'Unlock',exact:true}).click();await initialDialog.getByLabel('Recovery password',{exact:true}).fill(c.password);
+   const [initial]=await Promise.all([page.waitForEvent('download'),initialDialog.getByRole('button',{name:'Create account and download recovery',exact:true}).click()]);
+   await saveEncryptedDownload(initial,path.join(c.recoveryDirectory,'initial-recovery.json'));
+  }
+  const dialog=page.getByRole('dialog');await dialog.getByRole('button',{name:'Recover funding',exact:true}).click();
   mark('aggregate-connect-wallet');await dialog.getByRole('button',{name:'Connect MetaMask',exact:true}).click();
   await walletPage.getByTestId('confirm-btn').click();
   await dialog.getByText('Funding wallet connected. No payment has been sent.',{exact:true}).waitFor();
@@ -289,7 +302,7 @@ export async function driveMetaMaskAggregateFunding({context,page,walletPage,con
    await new Promise(resolve=>setTimeout(resolve,100));
   }
   throw Error('Aggregate payment observation deadline');
- }finally{await Promise.allSettled([...routeTasks]);}
+ }finally{await Promise.allSettled([...routeTasks]);report.aggregateAttempts={userSends,relayPosts,signatures:signatures.length,paymentHashObserved:hash!==null};}
  // The route remains installed until the caller closes the context, so a late
  // duplicate payment cannot escape admission during teardown.
 }
@@ -308,4 +321,38 @@ export function countMetaMaskAggregateNodeSubmissions({url,method,body},trustedQ
  assert(typeof body==='string'&&Buffer.byteLength(body)<=8*1024*1024);
  const parsed=JSON.parse(body),batch=Array.isArray(parsed)?parsed:[parsed];assert(batch.length>0&&batch.length<=100);
  let count=0;for(const item of batch){assert(item&&typeof item==='object'&&!Array.isArray(item)&&typeof item.method==='string');if(item.method==='aztec_sendTx')count++;}return count;
+}
+
+// A retained disposable profile may diagnose initialization without admitting any payment.
+export async function inspectMetaMaskAggregateReadiness({page,control,mark}){
+ mark('aggregate-retained-readiness');await page.getByRole('button',{name:'Your account',exact:true}).click();const dialog=page.getByRole('dialog');
+ if(await dialog.getByRole('button',{name:'Unlock',exact:true}).isVisible())await dialog.getByRole('button',{name:'Unlock',exact:true}).click();
+ await dialog.getByLabel('Recovery password',{exact:true}).fill(control.password);
+ await dialog.getByLabel('Recovery file',{exact:true}).setInputFiles(path.join(control.recoveryDirectory,'initial-recovery.json'));
+ await dialog.getByRole('button',{name:'Import recovery',exact:true}).click();
+ await dialog.getByRole('button',{name:'Recover funding',exact:true}).waitFor();
+}
+export function assertMetaMaskReadinessRequest({url,method,body},ethereumUrl){
+ const actual=new URL(url),ethereum=new URL(ethereumUrl);
+ if(method!=='POST')return;
+ assert(!actual.pathname.startsWith('/api/funding/')&&!actual.pathname.endsWith('/v1/jobs'),'Readiness cannot fund or prove');
+ if(actual.origin===ethereum.origin&&actual.pathname===ethereum.pathname){
+  const value=JSON.parse(body),batch=Array.isArray(value)?value:[value];assert(batch.length>0&&batch.length<=100);
+  for(const item of batch)assert(['eth_chainId','eth_blockNumber','eth_getBalance','eth_getTransactionCount','eth_estimateGas','eth_gasPrice','eth_maxPriorityFeePerGas','eth_feeHistory','eth_getBlockByNumber','eth_getBlockByHash','eth_getTransactionByHash','eth_getTransactionReceipt','eth_call','eth_getCode','eth_getLogs','eth_getStorageAt'].includes(item?.method));
+ }
+}
+
+// Only the pinned extension's own startup cache iframe may fetch its exact
+// warning document. Application frames and real warning navigation do not match.
+export function isMetaMaskStartupFrameRequest({method,url,parentUrl,extensionOrigin,frameSource,sandbox}){
+ try{
+  const expected='https://metamask.github.io/phishing-warning/v5.1.0/';
+  return method==='GET'&&url===expected&&/^chrome-extension:\/\/[a-p]{32}$/.test(extensionOrigin)&&new URL(parentUrl).protocol==='chrome-extension:'&&('chrome-extension://'+new URL(parentUrl).host)===extensionOrigin&&frameSource===expected+'#extensionStartup'&&sandbox==='allow-scripts allow-same-origin';
+ }catch{return false;}
+}
+
+export function assertMetaMaskUnfundedContinuation({ethereumNonce,consentNonce,emptyRecovery}){
+ assert.equal(ethereumNonce,0,'An existing Ethereum transaction requires journal recovery');
+ assert.equal(consentNonce,0n,'An existing consent requires journal recovery');
+ assert.equal(emptyRecovery,true,'Retained intent requires original journal recovery');
 }
