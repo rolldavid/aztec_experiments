@@ -420,7 +420,11 @@ no Actions, Workflows, organization, user OAuth permissions or event subscriptio
 Select only the intended per-thread private repositories. GitHub automatically
 adds App-created repositories to that App's selected installation. Never fall back
 to all repositories or select an unrelated repository as a setup seed.
-Disable Actions before use; source capture additionally rejects `.github` paths.
+The broker disables Actions on each dedicated mirror through a durable settings
+intent and verifies the disabled state before any source publication. A lost
+response is reconciled by readback without replay; later re-enabling blocks
+publication. Connected repositories retain their existing settings. Source
+capture additionally rejects `.github` paths.
 The concrete installation and actual personal-account creation permission are
 external setup gates, not facts established by controlled tests.
 The token used for creation requests Administration write. This permission is
