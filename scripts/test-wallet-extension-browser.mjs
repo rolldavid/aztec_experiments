@@ -122,7 +122,7 @@ try{
   const extension=retained?path.join(control.recoveryDirectory,'extension'):unpackMetaMask(control.recoveryDirectory),profile=path.join(control.recoveryDirectory,'profile');if(!retained)await fs.mkdir(profile,{mode:0o700});
   report.privateRecoveryRetained=true; // Parent retains this fresh private directory; never an existing user profile.
   provider=new JsonRpcProvider(control.ethereumUrl,undefined,{cacheTimeout:-1});assert.equal((await provider.getNetwork()).chainId,31337n);
-  stage='aggregate-extension';context=await chromium.launchPersistentContext(profile,{...walletChromiumLaunch(),headless:true,acceptDownloads:true,args:['--disable-extensions-except='+extension,'--load-extension='+extension,'--js-flags=--max-old-space-size=256']});
+  stage='aggregate-extension';context=await chromium.launchPersistentContext(profile,{...walletChromiumLaunch(process.env,{aggregate:true}),headless:true,acceptDownloads:true,args:['--disable-extensions-except='+extension,'--load-extension='+extension,'--js-flags=--max-old-space-size=256']});
   report.browserVersion=context.browser().version();
   report.browserLifecycle={contextClosed:false,disconnected:false,pageCrashed:false};context.on('close',()=>{report.browserLifecycle.contextClosed=true;});context.browser().on('disconnected',()=>{report.browserLifecycle.disconnected=true;});context.on('page',p=>p.on('crash',()=>{report.browserLifecycle.pageCrashed=true;}));
   const markAggregate=value=>{stage=value;recordMetaMaskStage(value=>console.log(JSON.stringify(value)),context,control.origin,stage);};

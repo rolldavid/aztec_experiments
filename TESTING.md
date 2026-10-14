@@ -112,3 +112,55 @@ The cappedEIP1559 receipt regression in the local-mining test prevents reintrodu
 the Anvil1.4.1 receipt-accounting defect.
 
 The locked dependency bootstrap also applies the hash-pinned IndexedDB atomicity repair before SDK builds. Run `npm run bootstrap:dependencies` only in an isolated checkout with no active dependency consumers, then rebuild the SDK. `node --test scripts/test-indexeddb-atomicity-patch.mjs scripts/test-sdk-storage.mjs` checks patch integrity and labelled fake-IndexedDB behavior; `node scripts/test-sdk-storage-browser.mjs` verifies the actual built adapter in Chromium with disposable storage. Both immediate and delayed callback failures must roll back all writes, survive reopen, preserve the error, and leave the queue usable. Native LMDB tests do not qualify browser storage.
+
+## Retained MetaMask download browser (macOS ARM64)
+
+Aggregate wallet checks use Chrome for Testing **155.0.8059.79**, including fresh
+funding that later reopens a profile. They fail clearly if this pin is absent;
+there is no fallback to bundled153. Other browser component checks keep their
+existing default. Chromium153 crashes while downloading after a previous download
+in a persistent profile ([upstream42506](https://github.com/microsoft/playwright/issues/42506),
+[Chromium fix8378127](https://chromium-review.googlesource.com/c/chromium/src/+/8378127)).
+The local disposable Blob check reproduced153's second-launch crash and passed
+both launches on155. This is a browser compatibility fix, not payment acceptance.
+
+Install the official, versioned mac-arm64 archive without replacing the project
+Playwright package. Verify the matching
+[official metadata](https://googlechromelabs.github.io/chrome-for-testing/155.0.8059.79.json)
+(version155.0.8059.79, platformmac-arm64) first. From the repository root:
+
+```sh
+mkdir -p .build/cft-155.0.8059.79-mac-arm64
+curl --fail --proto '=https' --max-time 120 \
+  https://storage.googleapis.com/chrome-for-testing-public/155.0.8059.79/mac-arm64/chrome-mac-arm64.zip \
+  -o .build/cft-155.0.8059.79-mac-arm64/chrome.zip
+echo 'e141a7cbf948780bb7d381860bd5a7944c6736f79b9918b9826fccb199d28ea4  .build/cft-155.0.8059.79-mac-arm64/chrome.zip' | shasum -a 256 -c -
+ditto -x -k .build/cft-155.0.8059.79-mac-arm64/chrome.zip .build/cft-155.0.8059.79-mac-arm64/unpacked
+```
+
+The archive is192,617,424bytes. These SHA256 values are measured from the official
+HTTPS payload, not a separately published vendor checksum. The driver also checks
+the executable (`c41c446837b5888d9574dbe462a4f01f02459bffee534eb945d2418984135a92`)
+and framework (`f20c7ab27196bfdaa20026299acd6d14b6619db3fc4680192fdc7785d1414263`)
+with bounded streaming reads before launch. `T04_CHROMIUM_EXECUTABLE` may locate
+this same hash-verified build elsewhere; arbitrary versions are rejected.
+
+Use the existing bounded owner and private control file. For an existing unsigned
+USDC journal, the export-only diagnostic is:
+
+```sh
+T04_AGGREGATE_CONTROL=/absolute/private/usdc-control.json \
+T04_AGGREGATE_READINESS_ONLY=true T04_AGGREGATE_EXPORT_ONLY=true \
+node scripts/run-bounded-browser-check.mjs scripts/test-wallet-extension-browser.mjs \
+  execution/evidence/T04/unique-export-report.json --wallet=metamask --aggregate-devnet=USDC
+```
+
+It has the existing60s/4GiB bound, admits no quote/signature/payment/claim, and
+authenticates unchanged private records against the downloaded encrypted export.
+Keep the report and export destinations absent before launch. Before opening a
+retained153 development profile with155, stop its sole browser owner, preserve a
+0700 original copy, and run only a separate copy at the same profile path. Keep
+the unpacked extension path unchanged because it determines extension identity.
+Never erase History, disable browser security, use a personal wallet profile, or
+restore an older profile after any financial action. Runtime metadata, identity,
+allocation and original fee approvals remain bound by the existing control.

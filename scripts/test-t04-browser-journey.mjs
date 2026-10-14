@@ -743,7 +743,7 @@ test('pinned Chromium pure blob download survives persistent profile reopen', {s
 });
 
 test('test browser override is explicit and rejects unpinned executables',async t=>{
- const {walletChromiumLaunch}=await import('./t04-metamask.mjs');assert.deepEqual(walletChromiumLaunch({}),{channel:'chromium'});
+ const {walletChromiumLaunch}=await import('./t04-metamask.mjs');assert.deepEqual(walletChromiumLaunch({}),{channel:'chromium'});const syncFs=(await import('node:fs')).default,exists=syncFs.existsSync;let selected;try{syncFs.existsSync=file=>{selected=file;return false;};assert.throws(()=>walletChromiumLaunch({},{aggregate:true}),/no fallback to153/);assert.match(selected,/cft-155\.0\.8059\.79-mac-arm64/);}finally{syncFs.existsSync=exists;}
  for(const executable of ['', 'relative', '/usr/bin/true'])assert.throws(()=>walletChromiumLaunch({T04_CHROMIUM_EXECUTABLE:executable}));
  const dir=await fs.mkdtemp(path.join(os.tmpdir(),'t04-browser-pin-'));t.after(()=>fs.rm(dir,{recursive:true,force:true}));const executable=path.join(dir,'Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing');await fs.mkdir(path.dirname(executable),{recursive:true});await fs.writeFile(executable,'changed');assert.throws(()=>walletChromiumLaunch({T04_CHROMIUM_EXECUTABLE:executable}),/executable changed/);
 });

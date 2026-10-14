@@ -832,10 +832,11 @@ export function installWalletFatalObservation(runtime,write,getStage){
 }
 
 // Explicit, pinned test-browser upgrade; the existing bundled browser is default.
-export function walletChromiumLaunch(env=process.env){
- const executablePath=env.T04_CHROMIUM_EXECUTABLE;
+export function walletChromiumLaunch(env=process.env,{aggregate=false}={}){
+ const executablePath=env.T04_CHROMIUM_EXECUTABLE??(aggregate?path.join(ROOT,'.build/cft-155.0.8059.79-mac-arm64/unpacked/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing'):undefined);
  if(executablePath===undefined)return {channel:'chromium'};
  assert(path.isAbsolute(executablePath)&&executablePath.endsWith('/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing'),'Invalid pinned test browser');
+ assert(fs.existsSync(executablePath),'Install pinned Chrome for Testing155.0.8059.79 using TESTING.md; no fallback to153');
  const sha=file=>{const hash=createHash('sha256'),buffer=Buffer.alloc(65536),fd=fs.openSync(file,'r');try{let n;while((n=fs.readSync(fd,buffer,0,buffer.length,null))>0)hash.update(buffer.subarray(0,n));return hash.digest('hex');}finally{fs.closeSync(fd);}};
  assert.equal(sha(executablePath),'c41c446837b5888d9574dbe462a4f01f02459bffee534eb945d2418984135a92','Pinned test browser executable changed');
  const framework=path.resolve(path.dirname(executablePath),'../Frameworks/Google Chrome for Testing Framework.framework/Versions/155.0.8059.79/Google Chrome for Testing Framework');
