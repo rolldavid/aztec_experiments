@@ -1279,11 +1279,11 @@ if(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1') {
         const state=await r.read();assert.equal(state.events.length,0);assert.equal(state.notes.length,0);assert.equal(r.syncService.syncedContracts.size,0);
       });
       await t.test('late account failure drains and discards real decrypted staged records',async()=>{
-        const r=await f.receiver();let guards=0;
+        const r=await f.receiver();let locked=false,postUtilityGuards=0;r.page.afterUtility=()=>{locked=true;};
         await assert.rejects(r.page.processRollingPreferencePage(f.input,{contextGuard:async()=>{
-          guards++;if(guards===8){assert.equal(r.page.acirCompleted,1);assert.equal(r.page.stagedNoteCount,1);throw Error('SYNTHETIC_ACCOUNT_LOCK');}
+          if(locked){postUtilityGuards++;assert.equal(r.page.acirCompleted,1);assert.equal(r.page.stagedNoteCount,1);throw Error('SYNTHETIC_ACCOUNT_LOCK');}
         }}),/PXE_PREFERENCE_PAGE_FAILED/);
-        assert.equal(guards,8);assert.equal(r.page.acirCompleted,1);assert.equal(r.page.stagedNoteCount,1);
+        assert.equal(postUtilityGuards,1);assert.equal(r.page.acirCompleted,1);assert.equal(r.page.stagedNoteCount,1);
         const state=await r.read();assert.equal(state.events.length,0);assert.equal(state.notes.length,0);assert.equal(r.syncService.syncedContracts.size,0);
       });
       await t.test('canonical change after actual decryption discards both staged stores',async()=>{
@@ -1299,7 +1299,7 @@ if(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1') {
         const contributor={settle:async()=>{if(fail){settled++;assert.equal(r.page.acirCompleted,1);assert.equal(r.page.stagedNoteCount,1);throw Error('SYNTHETIC_CONTRIBUTOR_FAILURE');}}};
         r=await f.receiver({contributor});let guards=0;
         await assert.rejects(r.page.processRollingPreferencePage(f.input,{contextGuard:async()=>{guards++;}}),/PXE_PREFERENCE_PAGE_FAILED/);
-        assert.equal(guards,8);assert.equal(settled,2);fail=false;
+        assert.equal(guards,13,'Original eight guards plus five archive validation guards before settlement');assert.equal(settled,2);fail=false;
         const state=await r.read();assert.equal(state.events.length,0);assert.equal(state.notes.length,0);assert.equal(r.syncService.syncedContracts.size,0);
       });
       for(const race of ['canonical','account'])await t.test(`successful settlement ${race} race: pristine commits, patched discards actual ACIR rows`,async()=>{
@@ -1375,7 +1375,7 @@ if(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1') {
       await t.test('canonical encrypted head and event commit without contract-sync completion',async()=>{
         let settled=false,postSettleGuards=0;const contributor={onOperationEnd(){},settle:async()=>{settled=true;}};
         const r=await f.receiver({contributor});assert.deepEqual(await r.page.processRollingPreferencePage(f.input,{contextGuard:async()=>{if(settled)postSettleGuards++;}}),{schemaVersion:1,processed:f.input.logCount,admitted:2});
-        assert.equal(postSettleGuards,2,'One post-settle canonical guard plus final account guard');
+        assert.equal(postSettleGuards,3,'Post-settle archive, canonical and final account guards');
         const state=await r.read();assert.equal(state.events.length,1);assert.equal(state.notes.length,1);
         assert.deepEqual(state.events[0].packedEvent.map(x=>x.toBigInt()),[1n,1n,1n,77n,1n,0n,0n,0n]);
         assert(state.notes[0].owner.equals(r.complete.address));assert.equal(state.notes[0].note.items.length,4);
