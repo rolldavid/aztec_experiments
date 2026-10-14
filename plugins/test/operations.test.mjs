@@ -409,3 +409,31 @@ test('Seed continuation current allowance or balance failure blocks signing whil
  f.args.ports.preflightContinuation=async()=>{throw Error('current allowance mismatch');};await assert.rejects(f.ops.runSepoliaLiquidityContinuation({...f.continuation(),stage:'seed-usdc-fee'}),/allowance/);
  assert.equal(f.signedSteps.length,0);assert.equal(JSON.stringify(f.original),original);
 });
+
+test('Seed broadcast diagnostics retain only finite data descriptors, never private exception content',async()=>{
+ const {seedBroadcastFailure}=await import('../operations.mjs');
+ assert.deepEqual(seedBroadcastFailure({code:'UNKNOWN_ERROR',info:{error:{code:-32005,message:'secret'},response:{statusCode:429}},message:'secret',payload:{raw:'secret'}}),{state:'rejected',httpStatus:429,rpcCode:-32005,ethersCode:'UNKNOWN_ERROR'});
+ let reads=0;const hostile={get code(){reads++;throw null;},get info(){reads++;throw false;},get httpStatus(){reads++;throw 0;}};
+ for(const value of [hostile,null,false,0,'secret',{code:'PRIVATE_CODE',httpStatus:999,info:{error:{code:123}}}])assert.deepEqual(seedBroadcastFailure(value),{state:'rejected',httpStatus:null,rpcCode:null,ethersCode:'unknown'});
+ assert.equal(reads,0);
+});
+test('Seed sole broadcast records prepared and terminal classification without changing unknown reconciliation',async()=>{
+ for(const outcome of ['returned','rejected','falsy']){
+  const store=memory();let sends=0,prepares=0;
+  const args={store,name:'relay-funding',identity:'seed',observeBroadcast:true,execute:async({submit})=>{prepares++;await submit(signed,async()=>{sends++;assert.equal(store.read().operations['relay-funding'].broadcastAttempt.state,'prepared');if(outcome==='rejected')throw {code:'SERVER_ERROR',httpStatus:503,info:{error:{code:-32603}},message:'private'};if(outcome==='falsy')throw false;return 'normal-result';});},reconcile:async()=>({status:'unresolved',canonical:false})};
+  await onceAztecOperation(args);const record=store.read().operations['relay-funding'];assert.equal(record.broadcastAttempt.state,outcome==='returned'?'returned':'rejected');assert.equal(record.hash,signed.hash);assert.equal(record.raw,signed.raw);assert(!JSON.stringify(record).includes('private'));
+  const retained=JSON.stringify(store.read());await onceAztecOperation(args);assert.equal(JSON.stringify(store.read()),retained);assert.equal(prepares,1);assert.equal(sends,1);
+ }
+});
+test('Seed diagnostic write failure leaves durable prepared intent and never repeats broadcast',async()=>{
+ const store=memory(),write=store.write;let writes=0,sends=0;
+ store.write=async value=>{if(++writes===3)throw Error('disk');await write(value);};
+ const args={store,name:'relay-funding',identity:'seed',observeBroadcast:true,execute:({submit})=>submit(signed,async()=>{sends++;throw {code:'TIMEOUT'};}),reconcile:async()=>({status:'unresolved'})};
+ await onceAztecOperation(args);assert.equal(store.read().operations['relay-funding'].broadcastAttempt.state,'prepared');await onceAztecOperation(args);assert.equal(sends,1);
+});
+test('Seed Ethereum transport exposes only numeric HTTP failure status without retry',async()=>{
+ const {operatorEthereumRequest,seedBroadcastFailure}=await import('../operations.mjs');let calls=0;
+ class Request{constructor(url){this.url=url;this.getUrlFunc=async()=>{calls++;return {statusCode:429,body:new Uint8Array()};};}setThrottleParams(value){assert.equal(value.maxAttempts,1);}}
+ const request=operatorEthereumRequest(Request,'https://example.invalid/');
+ await assert.rejects(request.getUrlFunc(request),error=>{assert.deepEqual(seedBroadcastFailure(error),{state:'rejected',httpStatus:429,rpcCode:null,ethersCode:'unknown'});assert.equal(error.message,'Operator Ethereum RPC unavailable');return true;});assert.equal(calls,1);assert.equal(request.retryFunc(),false);
+});

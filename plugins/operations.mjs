@@ -152,10 +152,20 @@ export function operatorNodeFetch({endpoint,key,serialize,fetchImpl=globalThis.f
  };
 }
 
+// Read data descriptors only: provider exceptions can contain private request data
+// or hostile getters. None of their text, payloads or arbitrary codes are retained.
+export function seedBroadcastFailure(error) {
+ const data=(value,key)=>{try{const d=Object.getOwnPropertyDescriptor(value,key);return d&&Object.hasOwn(d,'value')?d.value:undefined;}catch{return undefined;}};
+ const info=data(error,'info'),rpc=data(info,'error'),response=data(info,'response');
+ const code=data(error,'code'),rpcCode=data(rpc,'code')??(typeof code==='number'?code:undefined),http=data(error,'httpStatus')??data(response,'statusCode');
+ const allowed=new Set(['UNKNOWN_ERROR','NETWORK_ERROR','SERVER_ERROR','TIMEOUT','BAD_DATA','CANCELLED','NONCE_EXPIRED','REPLACEMENT_UNDERPRICED','INSUFFICIENT_FUNDS','TRANSACTION_REPLACED','CALL_EXCEPTION','UNSUPPORTED_OPERATION','INVALID_ARGUMENT']);
+ return Object.freeze({state:'rejected',httpStatus:Number.isInteger(http)&&http>=100&&http<=599?http:null,rpcCode:Number.isInteger(rpcCode)&&rpcCode>=-32768&&rpcCode<=-32000?rpcCode:null,ethersCode:allowed.has(code)?code:'unknown'});
+}
+
 /** Durable intent before wallet/proof construction; durable signed bytes before
  * the sole send. Every retained record is read-only reconciliation, even dropped.
  * execute uses the normal SDK send pipeline through the supplied once callback. */
-export async function onceAztecOperation({store,name,identity,journalIdentity=identity,scope='constructor-only',execute,reconcile}) {
+export async function onceAztecOperation({store,name,identity,journalIdentity=identity,scope='constructor-only',execute,reconcile,observeBroadcast=false}) {
  if(!['deploy-escrow','claim-fees','deploy-portal','bind','activate','register','relay-funding'].includes(name)||typeof identity!=='string'||typeof journalIdentity!=='string')throw rejected();
  const old=store.read().operations[name];
  if(old){
@@ -170,8 +180,17 @@ export async function onceAztecOperation({store,name,identity,journalIdentity=id
    bindDeployment:async deployment=>{if(sent||record.deployment)throw rejected();record={...record,deployment};await write(record);},
    submit:async({hash,raw},broadcast)=>{
     if(sent||typeof hash!=='string'||!/^0x[0-9a-f]{64}$/.test(hash)||typeof raw!=='string'||! /^(?:[0-9a-f]{2})+$/.test(raw)||raw.length>16*1024**2)throw rejected();
-    sent=true;record={...record,phase:'submission-unknown',hash,raw};await write(record);
-    return broadcast();
+    // Prepared means persisted before dispatch, not proof that dispatch occurred.
+    sent=true;record={...record,phase:'submission-unknown',hash,raw,...(observeBroadcast?{broadcastAttempt:{state:'prepared'}}:{})};await write(record);
+    if(!observeBroadcast)return broadcast();
+    let result;
+    try{result=await broadcast();}catch(error){
+     record={...record,broadcastAttempt:seedBroadcastFailure(error)};
+     // A diagnostic persistence failure cannot authorize a retry or replace the
+     // already durable signed intent. The outer owner still returns unresolved.
+     try{await write(record);}catch{}throw error;
+    }
+    record={...record,broadcastAttempt:{state:'returned'}};await write(record);return result;
    },
   });
  }catch{
@@ -307,7 +326,7 @@ export function operatorEthereumRequest(FetchRequest,endpoint,{spacingMs=0}={}) 
    dispatch=turn.catch(()=>{});await turn;
   }
   const result=await getUrl(req,signal);
-  if(result.statusCode!==200||result.body?.byteLength>2*1024**2)throw Error('Operator Ethereum RPC unavailable');
+  if(result.statusCode!==200||result.body?.byteLength>2*1024**2)throw Object.assign(Error('Operator Ethereum RPC unavailable'),{httpStatus:Number.isInteger(result.statusCode)&&result.statusCode>=100&&result.statusCode<=599?result.statusCode:null});
   return result;
  };
  return request;
@@ -406,7 +425,7 @@ async function runSepoliaSeedSteps({plan,steps,identity,stage,store,ports,now}){
  await ports.preflight(plan,step,steps);
  await store.write({...state,seedLiquidity:{...progress,entered:[...entered,stage]}});
  const stageStore={read:()=>({operations:store.read().operations[stage]?{'relay-funding':store.read().operations[stage]}:{}}),write:async next=>store.write({...store.read(),operations:{...store.read().operations,[stage]:next.operations['relay-funding']}})};
- return onceAztecOperation({store:stageStore,name:'relay-funding',identity:identity+':'+stage,scope:'liquidity-seed',reconcile:r=>reconcile(step,r),execute:async({bindDeployment,submit})=>{
+ return onceAztecOperation({store:stageStore,name:'relay-funding',identity:identity+':'+stage,scope:'liquidity-seed',observeBroadcast:true,reconcile:r=>reconcile(step,r),execute:async({bindDeployment,submit})=>{
   await bindDeployment({from:step.from,nonce:step.nonce});const signed=await ports.sign(step);const {keccak256}=await import('ethers');const record={raw:signed.replace(/^0x/,''),hash:keccak256(signed)};
   if(!await matchSepoliaLiquiditySigned(record,step))throw rejected();await submit(record,()=>ports.broadcast(signed));
  }});
@@ -456,7 +475,7 @@ export async function runSepoliaLiquidityCancellation(args){
  // Scope/current nonce may have changed while preflight was reading. Recheck
  // both exact winners, then let signing's nonce and deadline checks close the gap.
  const reread=await inspectSeedResolution(args);if(reread.result.canonical)return reread.result;
- await onceAztecOperation({store,name:'relay-funding',identity:cancellationIdentity,scope:'liquidity-seed',reconcile:r=>seedReconcile(ports,step,r,true),execute:async({bindDeployment,submit})=>{
+ await onceAztecOperation({store,name:'relay-funding',identity:cancellationIdentity,scope:'liquidity-seed',observeBroadcast:true,reconcile:r=>seedReconcile(ports,step,r,true),execute:async({bindDeployment,submit})=>{
   await bindDeployment({from:step.from,nonce:step.nonce,originalHash:resolution.originalTransactionHash});
   const signed=await ports.sign(step),{keccak256}=await import('ethers'),record={raw:signed.replace(/^0x/,''),hash:keccak256(signed)};
   if(!await matchSepoliaLiquiditySigned(record,step))throw rejected();await submit(record,()=>ports.broadcast(signed));
