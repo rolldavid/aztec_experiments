@@ -94,6 +94,25 @@ export async function createRollingFundingRelay({config,directory,provider,signe
  });
 }
 
+// The marker lives outside the mutable operation directory. Once initialization
+// begins, missing state is a recovery condition, never a fresh spending budget.
+export async function prepareFundingRelayState({stateDirectory,policy}) {
+ const identity=keccak256(new TextEncoder().encode(JSON.stringify(configOf(policy))));
+ const marker=stateDirectory+'.initialized.json';let saved;
+ async function privateFile(filename){const st=await fs.lstat(filename);check(st.isFile()&&!st.isSymbolicLink()&&(st.mode&0o077)===0&&st.uid===process.getuid()&&st.size<=16384);return JSON.parse(await fs.readFile(filename,'utf8'));}
+ try{saved=await privateFile(marker);}catch(error){if(error.code!=='ENOENT')throw error;}
+ if(saved){
+  check(saved.schemaVersion===1&&saved.identity===identity);
+  const directory=await fs.lstat(stateDirectory);check(directory.isDirectory()&&!directory.isSymbolicLink()&&(directory.mode&0o777)===0o700&&directory.uid===process.getuid()&&await fs.realpath(stateDirectory)===stateDirectory);
+  const budget=await privateFile(path.join(stateDirectory,'funding-budget.json'));check(budget.identity===identity);return;
+ }
+ await fs.mkdir(stateDirectory,{recursive:true,mode:0o700});const directory=await fs.lstat(stateDirectory);
+ check(directory.isDirectory()&&!directory.isSymbolicLink()&&(directory.mode&0o777)===0o700&&directory.uid===process.getuid()&&await fs.realpath(stateDirectory)===stateDirectory);
+ check((await fs.readdir(stateDirectory)).length===0);
+ const handle=await fs.open(marker,'wx',0o600);try{await handle.writeFile(JSON.stringify({schemaVersion:1,identity})+'\n');await handle.sync();}finally{await handle.close();}
+ const parent=await fs.open(path.dirname(marker),'r');try{await parent.sync();}finally{await parent.close();}
+}
+
 /** Private operator composition. This file is never served as a browser asset;
  * neither signer files nor provider credentials enter generated-code workers. */
 export async function openRollingFundingRelay(input){
@@ -101,9 +120,7 @@ export async function openRollingFundingRelay(input){
  const config=configOf(policy),url=new URL(ethereumUrl);
  check(url.href===ethereumUrl&&!url.username&&!url.password&&!url.search&&!url.hash&&(url.protocol==='https:'||config.development&&url.protocol==='http:'&&['127.0.0.1','[::1]'].includes(url.hostname)));
  check(typeof signerFile==='string'&&path.isAbsolute(signerFile)&&typeof stateDirectory==='string'&&path.isAbsolute(stateDirectory));
- await fs.mkdir(stateDirectory,{recursive:true,mode:0o700});
- check(await fs.realpath(stateDirectory)===stateDirectory);const directory=await fs.lstat(stateDirectory);
- check(directory.isDirectory()&&!directory.isSymbolicLink()&&(directory.mode&0o777)===0o700&&directory.uid===process.getuid());
+ await prepareFundingRelayState({stateDirectory,policy:config});
  const {acquireHostedLease}=await import('./main.mjs');
  const lease=await acquireHostedLease(stateDirectory);
  let provider;

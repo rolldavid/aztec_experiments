@@ -6,7 +6,7 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import {Wallet,Interface,Transaction,keccak256} from 'ethers';
-import {createRollingFundingRelay,openRollingFundingRelay} from '../rolling-funding-relay.mjs';
+import {createRollingFundingRelay,openRollingFundingRelay,prepareFundingRelayState} from '../rolling-funding-relay.mjs';
 import {aggregateUsdcFundingAbi} from '../../shared/rolling/aggregate-funding.mjs';
 const a=n=>'0x'+BigInt(n).toString(16).padStart(40,'0'),h=n=>'0x'+BigInt(n).toString(16).padStart(64,'0');
 const abi=new Interface(aggregateUsdcFundingAbi),quote=new Interface(['function quoteExactOutputSingle((address tokenIn,address tokenOut,uint256 amount,uint24 fee,uint160 sqrtPriceLimitX96)) returns(uint256,uint160,uint32,uint256)']),token=new Interface(['function implementation() view returns(address)']);
@@ -110,4 +110,28 @@ test('development relay refuses remote network and escaping signer paths before 
  await assert.rejects(openDevelopmentFundingRelay({fixture:f.value,directory:f.directory,open:f.open}),/scope differs/);f.input.signerFile=signerFile;
  f.value.walletConfig.config.network.chainId='11155111';await assert.rejects(openDevelopmentFundingRelay({fixture:f.value,directory:f.directory,open:f.open}),/scope differs/);
  assert.deepEqual(f.counts(),{opens:0,closes:0});
+});
+
+for(const loss of ['budget','directory','marker'])test(`retained relay initialization refuses missing ${loss} without recreating spending state`,async t=>{
+ const f=await fixture(t),base=await fs.realpath(f.directory),stateDirectory=path.join(base,'retained');
+ await prepareFundingRelayState({stateDirectory,policy:f.config});
+ const marker=stateDirectory+'.initialized.json',budget=path.join(stateDirectory,'funding-budget.json');
+ const identity=JSON.parse(await fs.readFile(marker,'utf8')).identity;
+ await fs.writeFile(budget,JSON.stringify({identity,reservedGasWei:'1000',activePlan:h(90)}),{mode:0o600});
+ await prepareFundingRelayState({stateDirectory,policy:f.config});
+ if(loss==='directory')await fs.rm(stateDirectory,{recursive:true});else await fs.unlink(loss==='budget'?budget:marker);
+ await assert.rejects(prepareFundingRelayState({stateDirectory,policy:f.config}));
+ if(loss==='directory')await assert.rejects(fs.stat(stateDirectory),{code:'ENOENT'});
+ if(loss==='budget')await assert.rejects(fs.stat(budget),{code:'ENOENT'});
+ if(loss==='marker')await assert.rejects(fs.stat(marker),{code:'ENOENT'});
+ assert.equal(f.state.sends,0);
+});
+test('relay initialization crash and changed policy cannot grant a fresh budget',async t=>{
+ const f=await fixture(t),base=await fs.realpath(f.directory),stateDirectory=path.join(base,'new');
+ await prepareFundingRelayState({stateDirectory,policy:f.config});
+ const marker=stateDirectory+'.initialized.json',before=await fs.readFile(marker);
+ assert.equal((await fs.stat(marker)).mode&0o777,0o600);
+ await assert.rejects(prepareFundingRelayState({stateDirectory,policy:f.config}));
+ await assert.rejects(prepareFundingRelayState({stateDirectory,policy:{...f.config,totalGasBudgetWei:'3000'}}));
+ assert.deepEqual(await fs.readFile(marker),before);assert.deepEqual(await fs.readdir(stateDirectory),[]);
 });
