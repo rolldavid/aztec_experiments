@@ -69,16 +69,16 @@ test('guard remains owned while pending; no detached Promise race',async t=>{
  const held=gate();const client=fixture(t,async()=>response(body()),async()=>held.promise);
  const controller=new AbortController();const pending=client.read(args(),{signal:controller.signal});controller.abort();await assert.rejects(client.read(args()));held.release();await assert.rejects(pending);
 });
-test('bounded public history batch has four reads in flight, preserves order and single ownership',async t=>{
+test('bounded public history batch respects single-flight gateway admission and preserves order',async t=>{
  let active=0,peak=0,calls=0;const held=gate();
- const client=fixture(t,async(url,options)=>{const p=JSON.parse(options.body);calls++;active++;peak=Math.max(peak,active);if(calls<=4)await held.promise;active--;return response({...body(),number:p.number});});
+ const client=fixture(t,async(url,options)=>{const p=JSON.parse(options.body);calls++;if(active)return new Response('{}',{status:429});active++;peak=Math.max(peak,active);if(calls===1)await held.promise;active--;return response({...body(),number:p.number});});
  const pending=client.readMany(Array.from({length:32},(_,i)=>({number:i+1,hash})));
- await new Promise(r=>setImmediate(r));assert.equal(calls,4);await assert.rejects(client.read(args()));held.release();
- const result=await pending;assert.equal(peak,4);assert.deepEqual(result.map(x=>x.number),Array.from({length:32},(_,i)=>i+1));assert.equal(calls,32);
+ await new Promise(r=>setImmediate(r));assert.equal(calls,1);await assert.rejects(client.read(args()));held.release();
+ const result=await pending;assert.equal(peak,1);assert.deepEqual(result.map(x=>x.number),Array.from({length:32},(_,i)=>i+1));assert.equal(calls,32);
  await assert.rejects(client.readMany(Array.from({length:33},(_,i)=>({number:i+1,hash}))));await assert.rejects(client.readMany([{number:1,hash},{number:3,hash}]));assert.equal(calls,32);
 });
-test('failed public batch drains all peers and never starts a following group',async t=>{
- const held=gate();let calls=0,finished=false;const client=fixture(t,async(url,options)=>{calls++;const p=JSON.parse(options.body);if(p.number===1)throw Error('labelled');await held.promise;return response({...body(),number:p.number});});
+test('failed public history read settles before batch release and never starts the next selector',async t=>{
+ const held=gate();let calls=0,finished=false;const client=fixture(t,async()=>{calls++;await held.promise;return new Response('{}',{status:503});});
  const pending=client.readMany(Array.from({length:8},(_,i)=>({number:i+1,hash}))).finally(()=>{finished=true;});const observed=assert.rejects(pending);
- await new Promise(r=>setImmediate(r));assert.equal(calls,4);assert.equal(finished,false);await assert.rejects(client.read(args()));held.release();await observed;assert.equal(calls,4);
+ await new Promise(r=>setImmediate(r));assert.equal(calls,1);assert.equal(finished,false);await assert.rejects(client.read(args()));held.release();await observed;assert.equal(calls,1);
 });
