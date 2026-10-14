@@ -393037,8 +393037,27 @@ Partial Address: ${this.partialAddress.toString()}
       return header;
     };
   }
+  function createRollingPreferenceArtifactVerifier() {
+    let verified2 = null;
+    return async (artifact, expectedHash, expectedClass) => {
+      hex15(expectedHash);
+      hex15(expectedClass);
+      check9(artifact && artifact.name === "RollingBoard");
+      const bytes3 = contractArtifactToBuffer(artifact);
+      if (verified2 && verified2.hash === expectedHash && verified2.classId === expectedClass && verified2.bytes.equals(bytes3)) return;
+      const captured = contractArtifactFromBuffer(bytes3);
+      check9(captured.name === "RollingBoard");
+      const hash12 = await computeArtifactHash(captured);
+      check9(hash12.toString() === expectedHash);
+      check9((await getContractClassFromArtifact({ ...captured, artifactHash: hash12 })).id.toString() === expectedClass);
+      check9(contractArtifactToBuffer(artifact).equals(bytes3));
+      verified2 = { bytes: bytes3, hash: expectedHash, classId: expectedClass };
+    };
+  }
   function snapshot(input2, options) {
-    const p = exact2(input2, ["contractAddress", "scope", "expectedClassId", "expectedArtifactHash", "network", "proofsEnabled", "tier", "expected", "block", "restart"]);
+    const p = exact2(input2, ["contractAddress", "scope", "expectedClassId", "expectedArtifactHash", "network", "proofsEnabled", "tier", "expected", "block", "restart", ...Object.hasOwn(input2, "optimistic") ? ["optimistic"] : []]);
+    check9(p.optimistic === void 0 || p.optimistic === true);
+    check9(!p.optimistic || p.expected !== null && p.restart === false);
     for (const k of ["contractAddress", "scope", "expectedClassId", "expectedArtifactHash"]) hex15(p[k]);
     p.network = exact2(p.network, ["chainId", "version", "rollup"]);
     integer8(p.network.chainId, Number.MAX_SAFE_INTEGER, 1);
@@ -393120,7 +393139,7 @@ Partial Address: ${this.partialAddress.toString()}
   };
   function bindRollingPreferenceRecovery(pxe, store, tier, page, headCall) {
     check9(!bindings.has(pxe) && store instanceof RollingPreferenceRecoveryStore && typeof page === "function" && typeof headCall === "function");
-    bindings.set(pxe, Object.freeze({ store, tier: tier ?? "proposed", page, headCall }));
+    bindings.set(pxe, Object.freeze({ store, tier: tier ?? "proposed", page, headCall, verifyArtifact: createRollingPreferenceArtifactVerifier() }));
   }
   function receipt(state, records = [], head = null) {
     return { schemaVersion: 1, database: state.database, epoch: state.epoch, sequence: state.sequence, anchor: copy2(state.anchor), nextBlock: state.nextBlock, nextLog: state.nextLog, records, head, complete: head !== null, ...state.previous ? { previous: copy2(state.previous) } : {}, ...state.resumed ? { resumed: copy2(state.resumed) } : {} };
@@ -393175,10 +393194,12 @@ Partial Address: ${this.partialAddress.toString()}
         const anchorRecord = { blockNumber: anchor2.getBlockNumber(), blockHash: (await anchor2.hash()).toString() };
         let canonicalPending = null;
         const canonicalSnapshot = async () => {
-          const info = await pxe.node.getNodeInfo();
-          check9(info.l1ChainId === p.network.chainId && info.rollupVersion === p.network.version && info.l1ContractAddresses.rollupAddress.toString().toLowerCase() === p.network.rollup && info.realProofs === p.proofsEnabled);
           const parameter = await anchor2.toBlockParameter();
-          const [observed, instance] = await rollingPreferenceReadBatch([
+          const [info, observed, instance] = await rollingPreferenceReadBatch([
+            async () => {
+              const value = await pxe.node.getNodeInfo();
+              return { chainId: value.l1ChainId, version: value.rollupVersion, rollup: value.l1ContractAddresses.rollupAddress.toString().toLowerCase(), proofs: value.realProofs };
+            },
             async () => {
               const raw = await pxe.node.getBlockData(anchorRecord.blockNumber);
               check9(raw);
@@ -393190,6 +393211,7 @@ Partial Address: ${this.partialAddress.toString()}
               return SerializableContractInstance.fromBuffer(new SerializableContractInstance(raw).toBuffer());
             }
           ]);
+          check9(info.chainId === p.network.chainId && info.version === p.network.version && info.rollup === p.network.rollup && info.proofs === p.proofsEnabled);
           check9(observed.hash === anchorRecord.blockHash);
           const h = observed.header;
           check9((await h.hash()).toString() === anchorRecord.blockHash && h.getBlockNumber() === anchorRecord.blockNumber && h.globalVariables.chainId.toBigInt() === BigInt(p.network.chainId) && h.globalVariables.version.toBigInt() === BigInt(p.network.version));
@@ -393206,8 +393228,7 @@ Partial Address: ${this.partialAddress.toString()}
         await canonical2();
         const artifact = await pxe.contractStore.getContractArtifact(Fr.fromString(p.expectedClassId));
         check9(artifact && artifact.name === "RollingBoard");
-        const artifactHash = await computeArtifactHash(artifact);
-        check9(artifactHash.toString() === p.expectedArtifactHash && (await getContractClassFromArtifact({ ...artifact, artifactHash })).id.toString() === p.expectedClassId);
+        await binding3.verifyArtifact(artifact, p.expectedArtifactHash, p.expectedClassId);
         beforeCommit = async () => {
           for (const validate2 of frame.validators) await validate2();
           await canonical2();
@@ -393325,6 +393346,10 @@ Partial Address: ${this.partialAddress.toString()}
           if (state.resumed) check9(state.nextBlock === state.resumed.nextBlock && state.nextLog === state.resumed.nextLog);
           else check9(state.nextBlock === (state.previous ? state.previous.anchor.blockNumber + 1 : 1) && state.nextLog === 0 && state.pending.length === 0 && (state.previous !== null || state.candidate === null));
         }
+        if (p.optimistic) {
+          const prior = state.sequence === 0 ? state.previous ?? state.resumed : null;
+          check9(p.expected.epoch === state.epoch && (p.expected.sequence === state.sequence || p.expected.sequence === state.sequence - 1) || prior && p.expected.epoch === prior.epoch && p.expected.sequence === prior.sequence);
+        }
         if (!same(state.anchor, anchorRecord)) {
           if (anchorRecord.blockNumber <= state.anchor.blockNumber || state.last.complete && (state.pending.length || state.nextBlock !== state.anchor.blockNumber + 1 || state.nextLog !== 0)) return await reset3();
           const priorCanonical = async () => {
@@ -393344,7 +393369,7 @@ Partial Address: ${this.partialAddress.toString()}
             check9(h.getBlockNumber() === priorAnchor.blockNumber && (await h.hash()).toString() === priorAnchor.blockHash && raw.blockHash.toString() === priorAnchor.blockHash);
             await guard();
           });
-          if (p.expected === null) {
+          if (p.expected === null || p.optimistic) {
             await beforeCommit();
             return { ...copy2(state.last), advance: { anchor: copy2(anchorRecord), headPage: state.candidate ? copy2(state.candidate.origin) : null } };
           }
