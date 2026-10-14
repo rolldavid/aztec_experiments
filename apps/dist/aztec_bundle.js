@@ -378233,6 +378233,8 @@ ${val.stack}`;
     "event Withdrawn(address indexed depositor,uint128 amount)"
   ]);
   var bokInterface = new Interface([
+    "function withdraw(address recipient,uint128 amount,bytes32 nonce,uint256 epoch,uint256 checkpoints,uint256 index,bytes32[] path)",
+    "event Withdrawn(address indexed recipient,uint128 amount,bytes32 nonce)",
     "function deposit(bytes32 account,uint128 amount,bytes32 secretHash)",
     "event Deposited(bytes32 indexed account,uint128 amount,bytes32 key,uint256 index)"
   ]);
@@ -378290,15 +378292,15 @@ ${val.stack}`;
       return record8;
     }
     const fee2 = scope.token !== void 0;
-    if (!expected || !(fee2 ? ["approve", "fee-deposit", "bok-deposit"] : ["deposit", "withdraw"]).includes(expected.kind) || !positive(expected.amount) || BigInt(expected.amount) >= 1n << (fee2 ? 128n : 96n)) throw invalid2();
-    const abi2 = expected.kind === "bok-deposit" ? bokInterface : iface;
+    if (!expected || !(fee2 ? ["approve", "fee-deposit", "bok-deposit", "bok-withdraw"] : ["deposit", "withdraw"]).includes(expected.kind) || !positive(expected.amount) || BigInt(expected.amount) >= 1n << (fee2 ? 128n : 96n)) throw invalid2();
+    const abi2 = ["bok-deposit", "bok-withdraw"].includes(expected.kind) ? bokInterface : iface;
     let parsed;
     try {
       parsed = abi2.parseTransaction({ data: record8.data, value: record8.value });
     } catch {
       throw invalid2();
     }
-    const method = expected.kind === "fee-deposit" ? "depositToAztecPublic" : expected.kind === "bok-deposit" ? "deposit" : expected.kind;
+    const method = expected.kind === "fee-deposit" ? "depositToAztecPublic" : expected.kind === "bok-deposit" ? "deposit" : expected.kind === "bok-withdraw" ? "withdraw" : expected.kind;
     if (!parsed || parsed.name !== method || abi2.encodeFunctionData(parsed.fragment, parsed.args).toLowerCase() !== record8.data) throw invalid2();
     if (expected.kind === "deposit") {
       if (!hash8(expected.secretHash) || lower2(parsed.args[0]) !== expected.secretHash || record8.value !== expected.amount) throw invalid2();
@@ -378307,6 +378309,7 @@ ${val.stack}`;
       if (expected.kind === "approve" && (expected.spender !== scope.portal || lower2(parsed.args[0]) !== scope.portal || String(parsed.args[1]) !== expected.amount)) throw invalid2();
       if (expected.kind === "fee-deposit" && (expected.recipient !== scope.board || !hash8(expected.secretHash) || lower2(parsed.args[0]) !== scope.board || String(parsed.args[1]) !== expected.amount || lower2(parsed.args[2]) !== expected.secretHash)) throw invalid2();
       if (expected.kind === "bok-deposit" && (!field3(expected.recipient) || !field3(expected.secretHash) || lower2(parsed.args[0]) !== expected.recipient || String(parsed.args[1]) !== expected.amount || lower2(parsed.args[2]) !== expected.secretHash)) throw invalid2();
+      if (expected.kind === "bok-withdraw" && (!address(expected.recipient) || BigInt(expected.recipient) === 0n || !field3(expected.exitNonce) || lower2(parsed.args[0]) !== expected.recipient || String(parsed.args[1]) !== expected.amount || lower2(parsed.args[2]) !== expected.exitNonce)) throw invalid2();
     }
     return record8;
   }
@@ -378334,6 +378337,22 @@ ${val.stack}`;
       const current = await read2(() => provider.getBlock(receipt2.blockNumber));
       if (lower2(current?.hash) !== lower2(receipt2.blockHash)) throw unknown5();
       return { outcome: "success", txHash, receipt: receipt2, event };
+    }
+    if (expected.kind === "bok-withdraw") {
+      const topic2 = bokInterface.getEvent("Withdrawn").topicHash.toLowerCase(), events2 = [];
+      for (const log3 of receipt2.logs) {
+        if (lower2(log3.address) !== record8.to || lower2(log3.topics?.[0]) !== topic2) continue;
+        let parsed;
+        try {
+          parsed = bokInterface.parseLog(log3);
+        } catch {
+          throw unknown5();
+        }
+        if (!parsed || lower2(parsed.args.recipient) !== expected.recipient || String(parsed.args.amount) !== expected.amount || lower2(parsed.args.nonce) !== expected.exitNonce) throw unknown5();
+        events2.push(parsed.args);
+      }
+      if (events2.length !== 1) throw unknown5();
+      return { outcome: "success", txHash, receipt: receipt2, event: events2[0] };
     }
     if (expected.kind === "bok-deposit") {
       const topic2 = bokInterface.getEvent("Deposited").topicHash.toLowerCase(), events2 = [];
