@@ -97,6 +97,14 @@ export function developmentSequencerProfile({persistent,proofs=false}) {
  if(persistent&&proofs!==false)throw Error('Persistent local development requires native proofs disabled');
  return {useAutomineSequencer:persistent,automineEnableProveEpoch:persistent,aztecTargetCommitteeSize:persistent?0:1};
 }
+// Keep original deployment storage readable in persistent local campaigns.
+// A distinct native store reconstructs from the existing canonical archiver;
+// the original node/world-state directory and transaction journals stay intact.
+export function developmentWorldStateProfile({persistent,directory}) {
+ if(!persistent)return {};
+ if(typeof directory!=='string'||!path.isAbsolute(directory)||path.normalize(directory)!==directory)throw Error('Invalid persistent world state directory');
+ return {worldStateCheckpointHistory:0,worldStateDataDirectory:path.join(directory,'world-state-archive')};
+}
 // warpTo rounds UP to the next Aztec slot, then local settlement mines L1.
 // Keep one full slot plus two L1 slots behind real wall time so idle production
 // cannot manufacture a future timestamp. Real Date and wallet freshness stay intact.
@@ -242,7 +250,7 @@ export async function startDevnet({directory,fundingAddresses,proofs=false,persi
     // same mined clock used below before the archiver checks Ethereum drift.
     synchronizeC01MinedClock(dateProvider,Number((await deployment.l1Client.getBlock({blockTag:'latest'})).timestamp));
     const nodeConfig={...config,...(persistent?{allowUnsafeInboxCatchupCapacity:true}:localApplicationInboxProfile(config)),...deployment.l1ContractAddresses,rollupVersion:deployment.rollupVersion,
-      dataDirectory:path.join(directory,'node'),bootstrapNodes:[],txPublicSetupAllowListExtend:[],
+      dataDirectory:path.join(directory,'node'),...developmentWorldStateProfile({persistent,directory}),bootstrapNodes:[],txPublicSetupAllowListExtend:[],
       sequencerPublisherPrivateKeys:[new SecretValue(identity.privateKey)],validatorPrivateKeys:new SecretValue([identity.privateKey]),coinbase:validator,
       allowEphemeralSigningProtection:true,enableProverNode:false,proverAgentCount:0,
       bbBinaryPath:bbBinary(),bbWorkingDirectory:path.join(directory,'bb-work'),bbIVCConcurrency:1,bbChonkVerifyConcurrency:1,numConcurrentIVCVerifiers:1};

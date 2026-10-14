@@ -409,4 +409,23 @@ if(focused){
   assert(now.lags.every(lag=>lag>=0&&lag<30),'idle age remains below original 60/120 second guards');
  });
 
+ test('persistent development retains world state history separately without changing legacy configuration',async()=>{
+  const {developmentWorldStateProfile}=await import('./network.mjs');
+  assert.deepEqual(developmentWorldStateProfile({persistent:true,directory:'/private/campaign'}),{worldStateCheckpointHistory:0,worldStateDataDirectory:'/private/campaign/world-state-archive'});
+  assert.deepEqual(developmentWorldStateProfile({persistent:false,directory:'legacy-relative'}),{});
+  for(const directory of ['relative','/private/campaign/../other',undefined])assert.throws(()=>developmentWorldStateProfile({persistent:true,directory}),/Invalid persistent world state/);
+  const {worldStateConfigMappings}=await import('@aztec-labs/world-state/config');assert.equal(worldStateConfigMappings.worldStateCheckpointHistory.defaultValue,64);assert.equal(worldStateConfigMappings.worldStateDataDirectory.env,'WS_DATA_DIRECTORY');
+ });
+ test('installed world state history-zero finalizes without pruning original checkpoints (controlled database)',async()=>{
+  const {ServerWorldStateSynchronizer}=await import('@aztec-labs/world-state');const {developmentWorldStateProfile}=await import('./network.mjs');
+  let finalized=0,archiveReads=0,closed=0;const stopAtPruning=Error('controlled finite-history pruning read');
+  const db={getCommitted:()=>({}),getStatusSummary:async()=>({oldestHistoricalBlock:1}),setFinalized:async number=>{finalized++;return {finalizedBlockNumber:number};},close:async()=>{closed++;}};
+  const blocks={getBlockData:async()=>{archiveReads++;throw stopAtPruning;}},log={info(){},debug(){},verbose(){},trace(){}};
+  const infinite=new ServerWorldStateSynchronizer(db,blocks,developmentWorldStateProfile({persistent:true,directory:'/private/campaign'}),{},log);
+  try{await infinite.handleChainFinalized(400);assert.equal(finalized,1);assert.equal(archiveReads,0);}finally{await infinite.stop();}
+  const finite=new ServerWorldStateSynchronizer(db,blocks,{worldStateCheckpointHistory:64},{},log);
+  try{await assert.rejects(finite.handleChainFinalized(400),e=>e===stopAtPruning);assert.equal(archiveReads,1);}finally{await finite.stop();}
+  assert.equal(closed,2);
+ });
+
 }
