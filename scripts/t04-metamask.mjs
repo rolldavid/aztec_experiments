@@ -625,7 +625,7 @@ export async function observeMetaMaskPaidRecovery({page,dialog,binding,report,ti
  }
 }
 
-async function retainedCanonicalPayment(c,provider,transactionHash){
+async function retainedCanonicalPayment(c,provider,transactionHash,{advanced=false}={}){
  assert.match(transactionHash,/^0x[0-9a-f]{64}$/);
  const scope=c.walletConfig.config.aggregateFunding,a=c.allocation,account=Wallet.fromPhrase(c.mnemonic).address.toLowerCase();
  const tx=await provider.getTransaction(transactionHash);assert(tx);assert.equal(tx.to.toLowerCase(),scope.router);
@@ -636,7 +636,7 @@ async function retainedCanonicalPayment(c,provider,transactionHash){
  const expected={kind:c.asset==='ETH'?'aggregate-funding':'aggregate-usdc-funding',routerCodeHash:scope.routerCodeHash,collateralPortal:scope.collateralPortal,feePortal:scope.feePortal,bokPortal:scope.bokPortal,privateFpc:scope.privateFpc,planHash};
  const intent={from:tx.from.toLowerCase(),to:scope.router,chainId:'31337',nonce:tx.nonce,data:tx.data.toLowerCase(),value:String(tx.value),expected};validateAggregateFundingIntent(intent);
  const effect=await verifyEthereumIntentReceipt(provider,intent,transactionHash);assert.equal(effect.outcome,'success');
- const nonce=await provider.getTransactionCount(account,'pending');assert.equal(nonce,c.asset==='ETH'?1:0);
+ const nonce=await provider.getTransactionCount(account,'pending');if(advanced){assert(Number.isSafeInteger(nonce)&&nonce>=(c.asset==='ETH'?1:0));assert.equal(nonce,await provider.getTransactionCount(account,'latest'),'Unresolved Ethereum transaction prevents continuation');}else assert.equal(nonce,c.asset==='ETH'?1:0);
  return {scope,a,account,intent,nonce};
 }
 
@@ -658,6 +658,52 @@ export async function exportMetaMaskReadyRecovery({page,control,provider,transac
  const after=await check();assert.deepEqual(after,before);
  assert.equal(await page.evaluate(async({envelope,password})=>{const expected=await window.BillboardWalletBackup.decrypt(await window.BillboardAccount.exportRecovery(password),password),actual=await window.BillboardWalletBackup.decrypt(envelope,password);return JSON.stringify(actual)===JSON.stringify(expected);},{envelope:JSON.parse(fs.readFileSync(destination,'utf8')),password:control.password}),true,'Ready export differs from current custody');
  report.readyExport={sha256:exported.sha256,claimTransactionHash:before.claimTxHash,currentConfirmedClaim:true,keysOnlyUnlock:true,currentCustodyExported:true,canonicalClaim};
+}
+
+// Historical Ready ciphertext is read only. It is never passed to account import
+// or restoreRecords, and only fixed conclusions/public hashes leave the page.
+export function readRetainedReadyExport(sha256,control){
+ assert.match(sha256??'',/^[a-f0-9]{64}$/);
+ const filename=path.join(control.recoveryDirectory,'ready-recovery-export.json'),stat=fs.lstatSync(filename);
+ assert(stat.isFile()&&!stat.isSymbolicLink()&&stat.uid===process.getuid()&&(stat.mode&0o777)===0o600&&stat.nlink===1&&stat.size<=34*1024*1024);
+ const bytes=fs.readFileSync(filename);assert.equal(createHash('sha256').update(bytes).digest('hex'),sha256,'Original Ready export changed');
+ return {envelope:JSON.parse(bytes),sha256};
+}
+export async function inspectRetainedReadyContinuity({network:n,board,router,intent,transactionHash,envelope,password}){
+ const check=ok=>{if(!ok)throw Error('Original Ready claim continuity differs');},sdk=window.__aztec,w=window.walletState.aztec;
+ const payload=await window.BillboardWalletBackup.decrypt(envelope,password);
+ check(payload.wallet?.secretKey===w.secretKey.toString()&&payload.wallet?.salt===w.salt.toString()&&Array.isArray(payload.journals));
+ const records=new Map();for(const r of payload.journals){check(typeof r?.key==='string'&&typeof r.encoded==='string'&&!records.has(r.key));records.set(r.key,r.encoded);}
+ const historical={read:async key=>records.get(key)??null},current=sdk.createBrowserJournalStorage();
+ const open=async(storage,scopeText,keyDomain)=>(await(await sdk.createEncryptedJournalSlot({storage,walletSecret:w.secretKey,walletSalt:w.salt,scopeText,keyDomain})).read()).value;
+ const fundingScope=JSON.stringify(['ROLLING_AGGREGATE_FUNDING_V1',n.chainId,n.rollupVersion,n.rollupAddress,board.contractAddress,router,w.address.toString(),1]);
+ const workflowScope=JSON.stringify(['ROLLING_WORKFLOW_V1',JSON.stringify(['AZTEC_BB_L2_JOURNAL_V1',w.address.toString(),n.chainId,n.rollupAddress,n.rollupVersion,board.contractAddress,board.portalAddress])]);
+ const originalFunding=await open(historical,fundingScope,'ROLLING_AGGREGATE_FUNDING_V1'),funding=await open(current,fundingScope,'ROLLING_AGGREGATE_FUNDING_V1');
+ check(!!funding&&JSON.stringify(originalFunding)===JSON.stringify(funding));
+ const paid=funding.intent??funding.relay?.request;
+ check(!!paid&&['from','to','chainId','data','value'].every(k=>paid[k]===intent[k])&&(paid.nonce===undefined||paid.nonce===intent.nonce)&&Object.keys(intent.expected).every(k=>paid.expected?.[k]===intent.expected[k])&&(funding.relay?.transactionHash===undefined||funding.relay.transactionHash===transactionHash));
+ const claim=await open(historical,workflowScope,'ROLLING_WORKFLOW_V1'),currentWorkflow=await open(current,workflowScope,'ROLLING_WORKFLOW_V1');
+ check(!!funding.claim&&funding.claim.attempted===true&&claim?.id===funding.claim.intentId&&claim.action?.type==='claim-deposit'&&['receipt','feeReceipt','bokReceipt'].every(k=>claim.action[k]?.txHash===transactionHash));
+ const hash=value=>typeof value==='string'&&/^0x[0-9a-f]{64}$/.test(value),decimal=value=>typeof value==='string'&&/^(0|[1-9][0-9]{0,76})$/.test(value);
+ check(claim.status==='confirmed'&&hash(claim.txHash)&&decimal(claim.maximumFee)&&decimal(funding.privateFeeCap)&&BigInt(claim.maximumFee)<=BigInt(funding.privateFeeCap));
+ // A newer workflow can be accepted only after the actual application's own
+ // canonical recovery check. Prepared/unknown/submitted work cannot be replaced.
+ check(!!currentWorkflow&&['confirmed','reverted','cancelled'].includes(currentWorkflow.status));
+ const runtime=await import('/wallet/runtime.mjs'),session=await(await runtime.loadRollingWalletRuntime()).createSession(),status=await session.application.readAccountStatus();
+ check(status.status==='fee-ready');
+ check(JSON.stringify(await open(current,fundingScope,'ROLLING_AGGREGATE_FUNDING_V1'))===JSON.stringify(funding));
+ return {sameCustody:true,originalFundingUnchanged:true,originalClaimConfirmed:true,claimTransactionHash:claim.txHash,currentAccountStatus:status.status};
+}
+export async function driveMetaMaskReadyContinuation({page,control,provider,transactionHash,readyExport,mark,report,deadlineAt}){
+ const {scope,intent,account,nonce}=await retainedCanonicalPayment(control,provider,transactionHash,{advanced:true});
+ const attempts={forbiddenWalletCalls:0,deniedMethods:[]};report.paidRecoveryAttempts=attempts;
+ await page.exposeFunction('__paidRecoveryDenied',()=>{attempts.forbiddenWalletCalls++;});await page.evaluate(installMetaMaskPaidRecoveryGuard);
+ await inspectMetaMaskAggregateReadiness({page,control,mark,keysOnly:true,remaining:retainedBokRemaining(deadlineAt)});
+ const continuity=await page.evaluate(inspectRetainedReadyContinuity,{network:control.walletConfig.config.network,board:control.walletConfig.config.board,router:scope.router,intent,transactionHash,envelope:readyExport.envelope,password:control.password});
+ const canonicalClaim=await verifyRetainedClaimReceipt({control,transactionHash:continuity.claimTransactionHash});
+ assert.equal(attempts.forbiddenWalletCalls,0);assert.equal(await provider.getTransactionCount(account,'pending'),nonce);
+ report.paidRecovery={asset:control.asset,transactionHash,planHash:intent.expected.planHash,claimTransactionHash:continuity.claimTransactionHash,originalCanonicalEffectsVerified:true,readyFromConfirmedPrivateClaim:true,userSends:0,relayPosts:0,signatures:0,postQualified:false,readyExportSha256:readyExport.sha256,continuity,canonicalClaim};
+ return ()=>assert.equal(attempts.forbiddenWalletCalls,0,'A late wallet operation was attempted');
 }
 
 export async function driveMetaMaskPaidRecovery({page,walletPage,control:c,provider,transactionHash,mark,report,reviewPrepared=false,recoveryFile,deadlineAt}){
@@ -863,16 +909,28 @@ export async function driveRetainedBokJourney({page,control,approval,mark,report
  assert.equal(report.paidRecovery?.readyFromConfirmedPrivateClaim,true);approval=validateRetainedBokApproval(approval,control);
  const dialog=page.getByRole('dialog'),inspect=async(phase,status,options={})=>{const value=await page.evaluate(inspectRetainedBokWorkflow,{config:control.walletConfig.config,approval,phase,status,...options});assertRetainedBokReview(value,options);return value;};
  report.retainedBok={authorizationConfirmed:false,postConfirmed:false,canonicalReply:false,canonicalTerminalAccounting:false,providerBillingIndependentlyAttested:false};
+ const observation=approval.completion==='post-only'?reserveRetainedBokObservation(approval.observationFile):null;
  try{
-  const publicIntent=await driveRetainedBokConfirmations({dialog,approval,inspect,mark,report,remaining});
-  if(approval.completion==='post-only'){writeRetainedBokObservation(approval.observationFile,publicIntent);report.retainedBok.publicIntent=publicIntent;}
+  const publicIntent=await driveRetainedBokConfirmations({page,dialog,approval,inspect,mark,report,remaining});
+  if(observation){observation.complete(publicIntent);report.retainedBok.publicIntent=publicIntent;}
   await observeRetainedBokJourney({page,control,approval,publicIntent,mark,report,remaining,postOnly:approval.completion==='post-only'});
- }finally{await page.evaluate(()=>{delete window.__retainedBokWorkflow;});}
+ }finally{observation?.close();await page.evaluate(()=>{delete window.__retainedBokWorkflow;});}
 }
 
+export function reserveRetainedBokObservation(filename){
+ const fd=fs.openSync(filename,'wx+',0o600),original=fs.fstatSync(fd);let closed=false,completed=false;
+ const close=()=>{if(!closed){closed=true;fs.closeSync(fd);}};
+ try{fs.writeFileSync(fd,JSON.stringify({schemaVersion:1,state:'entered'})+'\n');fs.fsyncSync(fd);const parent=fs.openSync(path.dirname(filename),'r');try{fs.fsyncSync(parent);}finally{fs.closeSync(parent);}}
+ catch(error){close();throw error;} // Keep the entered sentinel even if initialization failed.
+ return {close,complete(publicIntent){
+  assert(!closed&&!completed);exactKeys(publicIntent,['authorizationTxHash','transactionHash','requestId','target']);for(const k of ['authorizationTxHash','transactionHash'])assert.match(publicIntent[k],/^0x[0-9a-f]{64}$/);for(const k of ['requestId','target'])positive(publicIntent[k]);
+  const current=fs.lstatSync(filename);assert(current.isFile()&&!current.isSymbolicLink()&&current.dev===original.dev&&current.ino===original.ino&&current.uid===process.getuid()&&current.nlink===1&&(current.mode&0o777)===0o600,'Original observer reservation changed');
+  const bytes=Buffer.from(JSON.stringify(publicIntent)+'\n');let offset=0;while(offset<bytes.length){const written=fs.writeSync(fd,bytes,offset,bytes.length-offset,offset);assert(written>0);offset+=written;}fs.ftruncateSync(fd,bytes.length);fs.fsyncSync(fd);completed=true;
+ }};
+}
 export function writeRetainedBokObservation(filename,publicIntent){
  exactKeys(publicIntent,['authorizationTxHash','transactionHash','requestId','target']);for(const k of ['authorizationTxHash','transactionHash'])assert.match(publicIntent[k],/^0x[0-9a-f]{64}$/);for(const k of ['requestId','target'])positive(publicIntent[k]);
- const value=JSON.stringify(publicIntent);const fd=fs.openSync(filename,'wx',0o600);try{fs.writeFileSync(fd,value+'\n');fs.fsyncSync(fd);}finally{fs.closeSync(fd);}
+ const reservation=reserveRetainedBokObservation(filename);try{reservation.complete(publicIntent);}finally{reservation.close();}
 }
 
 export function readRetainedBokObservation(filename){
@@ -909,9 +967,18 @@ export function retainedBokRemaining(deadlineAt,now=Date.now){
  const initial=now();assert(Number.isSafeInteger(deadlineAt)&&deadlineAt>initial&&deadlineAt-initial<=525000,'Invalid original Bok deadline');
  return ()=>{const ms=deadlineAt-now();assert(ms>0&&ms<=525000,'Original Bok deadline exhausted');return ms;};
 }
-export async function driveRetainedBokConfirmations({dialog,approval,inspect,mark,report,remaining=()=>80000}){
- mark('retained-bok-authorize-review');await dialog.getByRole('button',{name:'Actions',exact:true}).click();await dialog.getByLabel('Action',{exact:true}).selectOption('bok');await dialog.getByLabel('Message',{exact:true}).fill(approval.content);await dialog.getByLabel('Maximum Bok credits',{exact:true}).fill(approval.budget);
- if(Object.hasOwn(approval,'parent')){await dialog.getByLabel('Reply to post ID',{exact:true}).fill(approval.parent);await dialog.getByLabel('Root thread ID',{exact:true}).fill(approval.root);}
+export async function driveRetainedBokConfirmations({page,dialog,approval,inspect,mark,report,remaining=()=>80000}){
+ mark('retained-bok-authorize-review');
+ const reply=Object.hasOwn(approval,'parent')&&approval.parent!=='0';
+ if(reply){
+  await dialog.getByRole('button',{name:'Close account panel',exact:true}).click();
+  await page.evaluate(({root,parent})=>{location.hash='/thread/'+root+'/'+parent;},{root:approval.root,parent:approval.parent});
+  await page.locator('#post-'+approval.parent).getByRole('button',{name:'Reply',exact:true}).click({timeout:remaining()});
+ }else await dialog.getByRole('button',{name:'Actions',exact:true}).click();
+ await dialog.getByLabel('Action',{exact:true}).selectOption('bok');
+ if(reply){await dialog.getByText('Replying in this conversation',{exact:true}).waitFor({timeout:remaining()});assert.equal(await dialog.getByRole('link',{name:'View conversation',exact:true}).getAttribute('href'),'#/thread/'+approval.root+'/'+approval.parent);}
+ else await dialog.getByText('New conversation',{exact:true}).waitFor({timeout:remaining()});
+ await dialog.getByLabel('Message',{exact:true}).fill(approval.content);await dialog.getByLabel('Maximum Bok credits',{exact:true}).fill(approval.budget);
  await dialog.getByRole('button',{name:'Check action and review fee',exact:true}).click();await dialog.getByRole('button',{name:'Confirm and send',exact:true}).waitFor({timeout:remaining()});await inspect('authorize','prepared',{capture:true});
  mark('retained-bok-authorize');remaining();await dialog.getByRole('button',{name:'Confirm and send',exact:true}).click();await dialog.getByRole('button',{name:'Review saved Bok post',exact:true}).waitFor({timeout:remaining()});await inspect('authorize','confirmed',{capture:true});report.retainedBok.authorizationConfirmed=true;
  mark('retained-bok-post-review');await dialog.getByRole('button',{name:'Review saved Bok post',exact:true}).click();await dialog.getByRole('button',{name:'Confirm and send',exact:true}).waitFor({timeout:remaining()});await inspect('post','prepared');
