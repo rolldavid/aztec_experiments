@@ -253,7 +253,7 @@ test('operator method policy is fixed, schema backed, and excludes discovery or 
 test('internal readiness observer is allowlisted, coalesced and cannot change fail-closed HTTP',async t=>{
   let failure=Object.assign(Error('private request and identity'),{code:'BB_TRUSTED_NODE_UNSYNCED'}),now=100000;
   t.mock.method(Date,'now',()=>now);const observed=[];
-  const f=await fixture(t,{inspect:async()=>{throw failure;},onQueryFailure:code=>{observed.push(code);throw Error('observer private');}});
+  const f=await fixture(t,{inspect:async()=>{throw failure;},onQueryFailure:(code,diagnostic)=>{assert.equal(diagnostic,null);observed.push(code);throw Error('observer private');}});
   for(let i=0;i<4;i++){const response=await f.post(call());assert.equal(response.status,503);assert.deepEqual(await response.json(),{jsonrpc:'2.0',id:null,error:{code:-32000,message:'Trusted node request rejected'}});}
   assert.deepEqual(observed,['BB_TRUSTED_NODE_UNSYNCED']);assert.equal(f.received.length,0);
   now+=60000;await f.privateQuery.health();assert.equal(observed.length,2);
@@ -263,6 +263,12 @@ test('internal readiness observer is allowlisted, coalesced and cannot change fa
   for(const code of ['BB_TRUSTED_NODE_CONFIG','BB_TRUSTED_NODE_IDENTITY']){failure={code};await f.privateQuery.health();assert.equal(observed.at(-1),code);}
   for(const value of [undefined,null,7]){now+=60000;failure=value;await f.privateQuery.health();assert.equal(observed.at(-1),'BB_TRUSTED_NODE_UNAVAILABLE');}
   assert(observed.every(code=>typeof code==='string'&&!code.includes('PRIVATE')));
+});
+test('internal readiness observer forwards only genuine detached diagnostic and keeps HTTP generic',async t=>{
+ const {inspectTrustedNode,getTrustedNodeFailureDiagnostic}=await import('../shared/trusted-private-node.mjs');const hash='0x'+'1'.repeat(64),block={number:1,hash};
+ const node={getNodeInfo:async()=>({l1ChainId:31337,rollupVersion:1,realProofs:false,l1ContractAddresses:{rollupAddress}}),getChainTips:async()=>({proposed:block,checkpointed:{block},proven:{block},finalized:{block}}),getWorldStateSyncStatus:async()=>({latestBlockNumber:1,latestBlockHash:hash,finalizedBlockNumber:1,oldestHistoricBlockNumber:0,treesAreSynched:false}),getSyncedL1Timestamp:async()=>1n};
+ let failure;try{await inspectTrustedNode(node,{expectedNetworkScope:{chainId:'31337',version:'1',rollup:rollupAddress},proofsEnabled:false});}catch(e){failure=e;}const expected=getTrustedNodeFailureDiagnostic(failure);assert.equal(expected.reason,'STATE_NOT_SYNCED');const observed=[];
+ const f=await fixture(t,{inspect:async()=>{throw failure;},onQueryFailure:(code,diagnostic)=>observed.push({code,diagnostic})});const response=await f.post(call());assert.equal(response.status,503);assert.deepEqual(await response.json(),{jsonrpc:'2.0',id:null,error:{code:-32000,message:'Trusted node request rejected'}});assert.deepEqual(observed,[{code:'BB_TRUSTED_NODE_UNSYNCED',diagnostic:expected}]);assert.equal(f.received.length,0);
 });
 test('internal readiness observer does not await pending or rejected observers',async t=>{
   let release,now=100000,calls=0;const pending=new Promise(resolve=>{release=resolve;});t.mock.method(Date,'now',()=>now);

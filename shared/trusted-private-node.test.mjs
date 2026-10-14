@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {inspectTrustedNode,createTrustedPrivateNode,isTrustedPrivateNode} from './trusted-private-node.mjs';
+import {inspectTrustedNode,createTrustedPrivateNode,isTrustedPrivateNode,getTrustedNodeFailureDiagnostic} from './trusted-private-node.mjs';
 import {BlockHeader} from '@aztec-labs/stdlib/tx';
 import {AppendOnlyTreeSnapshot} from '@aztec-labs/stdlib/trees';
 import {L1ContractsNames} from '@aztec-labs/ethereum/l1-contract-addresses';
@@ -25,6 +25,34 @@ function fixture() {
 }
 const rejects=(run,code)=>assert.rejects(run,error=>error.code==='BB_TRUSTED_NODE_'+code&&!String(error.stack).includes('PRIVATE_SENTINEL')&&!Object.hasOwn(error,'cause'));
 
+test('internal diagnostics require genuine error provenance and never inspect forged getters',()=>{
+ let reads=0;const forged=Object.defineProperties({},{code:{get(){reads++;throw Error('PRIVATE_SENTINEL');}},diagnostic:{get(){reads++;throw Error('PRIVATE_SENTINEL');}}});
+ for(const value of [undefined,null,1,'PRIVATE_SENTINEL',forged,Error('PRIVATE_SENTINEL'),new Proxy({},{get(){reads++;throw Error('PRIVATE_SENTINEL');}})])assert.equal(getTrustedNodeFailureDiagnostic(value),null);assert.equal(reads,0);
+});
+for(const [reason,mutate]of[
+ ['TIP_ORDER',f=>f.tips.proven.block.number=9],['STATE_NOT_SYNCED',f=>f.state.treesAreSynched=false],
+ ['CHECKPOINT_PRUNED',f=>f.state.oldestHistoricBlockNumber=8],['IMPOSSIBLE_FINALITY',f=>f.state.finalizedBlockNumber=9],
+ ['SAME_HEIGHT_HASH',f=>f.state.latestBlockHash=h(99)],['METADATA_MISMATCH',f=>f.state.finalizedBlockNumber=2],
+])test('internal diagnostic captures bounded detached public snapshots at '+reason,async()=>{
+ const f=fixture();mutate(f);f.state.extra='PRIVATE_SENTINEL';let error;try{await inspectTrustedNode(f.node,options);}catch(e){error=e;}assert.equal(error.code,'BB_TRUSTED_NODE_UNSYNCED');
+ const d=getTrustedNodeFailureDiagnostic(error);assert.equal(d.reason,reason);assert.equal(d.snapshots.length,reason==='METADATA_MISMATCH'?2:1);assert.equal(d.canonical,null);const saved=JSON.stringify(d);assert(!saved.includes('PRIVATE_SENTINEL'));assert.equal(Object.keys(error).join(','),'code');
+ f.state.latestBlockNumber=999;f.tips.proposed.number=999;assert.equal(JSON.stringify(d),saved);assert(Object.isFrozen(d)&&Object.isFrozen(d.snapshots)&&Object.isFrozen(d.snapshots[0].state)&&Object.isFrozen(d.snapshots[0].tips.proposed));assert.throws(()=>{d.snapshots[0].state.latest=999;},TypeError);
+});
+test('internal diagnostics preserve both different snapshots without relaxing persistent mismatch',async()=>{
+ const f=fixture();f.state.latestBlockNumber=7;f.state.latestBlockHash=h(7);const info=f.node.getNodeInfo;let n=0;f.node.getNodeInfo=async()=>{if(++n===2){f.state.latestBlockNumber=6;f.state.latestBlockHash=h(6);}return info();};
+ let error;try{await inspectTrustedNode(f.node,options);}catch(e){error=e;}assert.deepEqual(getTrustedNodeFailureDiagnostic(error).snapshots.map(x=>x.state.latest),[7,6]);assert.equal(n,2);assert.equal(f.calls.some(x=>x[0]==='getBlockData'),false);
+});
+for(const stage of ['checkpointed','proposed','final'])test('internal canonical diagnostic identifies '+stage+' fence without leaking malformed fields',async()=>{
+ const f=fixture();let proposed=0;f.node.getBlockData=async n=>{const current=n===7?'checkpointed':++proposed===1?'proposed':'final';return {header:{globalVariables:{blockNumber:n}},blockHash:current===stage?h(99):h(n),extra:'PRIVATE_SENTINEL'};};
+ let error;try{await inspectTrustedNode(f.node,options);}catch(e){error=e;}const d=getTrustedNodeFailureDiagnostic(error);assert.equal(d.reason,'CANONICAL_ANCHOR');assert.equal(d.canonical.stage,stage);assert.equal(d.canonical.observedHash,h(99));assert.equal(d.canonical.requested,stage==='checkpointed'?7:8);assert(!JSON.stringify(d).includes('PRIVATE_SENTINEL'));
+});
+test('internal canonical diagnostic redacts invalid coordinates and does not evaluate unused hash getter',async()=>{
+ const f=fixture();let getters=0;f.node.getBlockData=async()=>({header:{globalVariables:{blockNumber:'PRIVATE_SENTINEL'}},get blockHash(){getters++;throw Error('PRIVATE_SENTINEL');}});let error;try{await inspectTrustedNode(f.node,options);}catch(e){error=e;}
+ const d=getTrustedNodeFailureDiagnostic(error);assert.equal(d.reason,'CANONICAL_ANCHOR');assert.equal(d.canonical.observedNumber,null);assert.equal(d.canonical.observedHash,null);assert.equal(getters,0);assert(!JSON.stringify(d).includes('PRIVATE_SENTINEL'));
+});
+test('internal malformed or upstream errors have no diagnostic authority',async()=>{
+ for(const mutate of [f=>f.state.latestBlockNumber='PRIVATE_SENTINEL',f=>f.node.getChainTips=async()=>{throw Error('PRIVATE_SENTINEL');},f=>Object.defineProperty(f.state,'treesAreSynched',{get(){throw Error('PRIVATE_SENTINEL');}})]){const f=fixture();mutate(f);let error;try{await inspectTrustedNode(f.node,options);}catch(e){error=e;}assert.equal(error.code,'BB_TRUSTED_NODE_UNAVAILABLE');assert.equal(getTrustedNodeFailureDiagnostic(error),null);}
+});
 test('development fake: bounded public readiness, only public methods and canonical recheck',async()=>{
   const f=fixture(),r=await inspectTrustedNode(f.node,options);
   assert.deepEqual(r,{ready:true,chainId:'31337',rollupVersion:'1',rollupAddress:rollup,proofsEnabled:true,latestBlockNumber:8,latestBlockHash:h(8),checkpointedBlockNumber:7,finalizedBlockNumber:3,oldestHistoricBlockNumber:0,syncedL1Timestamp:'990',checkedAtSeconds:1000,lagSeconds:10});

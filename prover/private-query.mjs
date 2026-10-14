@@ -1,3 +1,4 @@
+import {getTrustedNodeFailureDiagnostic} from '../shared/trusted-private-node.mjs';
 import {createSafeJsonRpcClient} from '@aztec-labs/foundation/json-rpc/client';
 import {jsonStringify} from '@aztec-labs/foundation/json-rpc';
 import {getSchemaParameters, getSchemaReturnType, parseWithOptionals, schemaHasMethod} from '@aztec-labs/foundation/schemas';
@@ -152,7 +153,7 @@ export function createPrivateQueryWithInspector({queryNode, chainId, rollupVersi
     const now=Date.now(),prior=reported.get(code);
     if(pendingObservers.has(code)||(prior!==undefined&&now-prior<60000))return;
     reported.set(code,now);pendingObservers.add(code);
-    try{Promise.resolve(onQueryFailure(code)).then(()=>pendingObservers.delete(code),()=>pendingObservers.delete(code));}
+    try{Promise.resolve(onQueryFailure(code,getTrustedNodeFailureDiagnostic(error))).then(()=>pendingObservers.delete(code),()=>pendingObservers.delete(code));}
     catch{pendingObservers.delete(code);}
   };
   const inspect = async () => {try{return await inspectTrustedNode(node, options);}catch(error){reportFailure(error);throw error;}};
