@@ -462,7 +462,7 @@ test('retained Bok UI confirms only two exact saved reviews and stops before any
  const {driveRetainedBokConfirmations}=await import('./t04-metamask.mjs');
  for(const failure of [null,'authorize-prepared','authorize-confirmed','post-prepared']){
   const events=[],original={failure},approval={content:'PRIVATE_LOCAL_PROMPT',budget:'100'},report={retainedBok:{}};
-  const node=name=>({async click(){events.push('click:'+name);},async waitFor(){events.push('wait:'+name);},async fill(){events.push('fill:'+name);},async selectOption(value){assert.equal(value,'bok');events.push('select');}});
+  const node=name=>({or(){return this;},first(){return this;},isVisible:async()=>true,async click(){events.push('click:'+name);},async waitFor(){events.push('wait:'+name);},async fill(){events.push('fill:'+name);},async selectOption(value){assert.equal(value,'bok');events.push('select');}});
   const dialog={getByRole:(_,o)=>node(o.name),getByLabel:name=>node(name),getByText:text=>node(text)};
   const inspect=async(phase,status)=>{events.push('inspect:'+phase+'-'+status);if(failure===phase+'-'+status)throw original;return {public:{transactionHash:hash}};};
   const run=driveRetainedBokConfirmations({dialog,approval,inspect,mark:()=>{},report});
@@ -566,7 +566,7 @@ test('Bok canonical phases consume one original deadline rather than restarting 
 
 for(const phase of ['authorize','post'])test('Bok deadline expiring during '+phase+' inspection prevents its confirmation',async()=>{
  const {driveRetainedBokConfirmations}=await import('./t04-metamask.mjs');let expired=false,clicks=0;const waits=[];
- const node=name=>({click:async()=>{if(name==='Confirm and send')clicks++;},waitFor:async options=>{waits.push(options?.timeout);},fill:async()=>{},selectOption:async()=>{}});
+ const node=name=>({or(){return this;},first(){return this;},isVisible:async()=>true,click:async()=>{if(name==='Confirm and send')clicks++;},waitFor:async options=>{waits.push(options?.timeout);},fill:async()=>{},selectOption:async()=>{}});
  const dialog={getByRole:(_,{name})=>node(name),getByLabel:node,getByText:node};
  await assert.rejects(driveRetainedBokConfirmations({dialog,approval:{},report:{retainedBok:{}},mark:()=>{},inspect:async(p,status)=>{if(p===phase&&status==='prepared')expired=true;return{};},remaining:()=>{assert(!expired,'expired');return 1234;}}),/expired/);
  assert.equal(clicks,phase==='authorize'?0:1);assert(waits.every(x=>x===1234));
@@ -1002,7 +1002,7 @@ test('readiness-only runner forwards its original owner deadline to the actual i
 });
 
 test('retained Bok reply uses the real thread Reply action and immutable conversation context',async()=>{
- const {driveRetainedBokConfirmations}=await import('./t04-metamask.mjs');const fills=[],events=[];const node=name=>({click:async()=>events.push(name),waitFor:async()=>{},getAttribute:async()=>'#/thread/7/8',fill:async value=>fills.push([name,value]),selectOption:async()=>events.push('select-bok')});const dialog={getByRole:(_,{name})=>node(name),getByLabel:name=>node(name),getByText:node},page={evaluate:async(fn,arg)=>{assert.deepEqual(arg,{root:'7',parent:'8'});events.push('navigate-thread');},locator:selector=>{assert.equal(selector,'#post-8');return{getByRole:(_,{name})=>{assert.equal(name,'Reply');return node('reader-reply');}};}};
+ const {driveRetainedBokConfirmations}=await import('./t04-metamask.mjs');const fills=[],events=[];const node=name=>({or(){return this;},first(){return this;},isVisible:async()=>true,click:async()=>events.push(name),waitFor:async()=>{},getAttribute:async()=>'#/thread/7/8',fill:async value=>fills.push([name,value]),selectOption:async()=>events.push('select-bok')});const dialog={getByRole:(_,{name})=>node(name),getByLabel:name=>node(name),getByText:node},page={evaluate:async(fn,arg)=>{assert.deepEqual(arg,{root:'7',parent:'8'});events.push('navigate-thread');},locator:selector=>{assert.equal(selector,'#post-8');return{getByRole:(_,{name})=>{assert.equal(name,'Reply');return node('reader-reply');}};}};
  await driveRetainedBokConfirmations({page,dialog,approval:{content:'bounded reply',budget:'400000',parent:'8',root:'7'},inspect:async()=>({public:{transactionHash:hash}}),mark:()=>{},report:{retainedBok:{}}});
  assert.deepEqual(fills,[['Message','bounded reply'],['Maximum Bok credits','400000']]);assert.deepEqual(events.slice(0,4),['Close account panel','navigate-thread','reader-reply','select-bok']);assert.equal(events.filter(x=>x==='Confirm and send').length,2);
 });
@@ -1076,4 +1076,14 @@ test('Ready continuation observes existing custody and canonical claim without o
 
 test('failed observation fsync leaves an exclusive blocker before any confirmation',async t=>{
  const {reserveRetainedBokObservation:reserve}=await import('./t04-metamask.mjs'),sync=await import('node:fs'),{runInNewContext}=await import('node:vm'),dir=await fs.mkdtemp(path.join(os.tmpdir(),'bok-fsync-'));t.after(()=>fs.rm(dir,{recursive:true,force:true}));const filename=path.join(dir,'bok-failure-observation.json'),failure=Error('synthetic fsync failure'),broken={...sync,fsyncSync(){throw failure;}};assert.throws(()=>runInNewContext('('+reserve+')',{fs:broken,path,assert,process})(filename),e=>e===failure);assert.equal(JSON.parse(await fs.readFile(filename,'utf8')).state,'entered');assert.throws(()=>reserve(filename),{code:'EEXIST'});
+});
+
+for(const failedPhase of ['authorize','post'])test('Bok '+failedPhase+' preparation error stops before confirmation without waiting the full deadline',async()=>{
+ const {driveRetainedBokConfirmations}=await import('./t04-metamask.mjs');let phase='authorize',sends=0,errorRaced=false;
+ const node=name=>({or(other){assert.equal(other.name,undefined);errorRaced=true;return this;},first(){return this;},name,
+  waitFor:async()=>{},isVisible:async()=>phase!==failedPhase,fill:async()=>{},selectOption:async()=>{},
+  click:async()=>{if(name==='Review saved Bok post')phase='post';if(name==='Confirm and send')sends++;}});
+ const dialog={getByRole:(_,{name})=>node(name),getByLabel:node,getByText:node};
+ await assert.rejects(driveRetainedBokConfirmations({dialog,approval:{},report:{retainedBok:{}},mark:()=>{},inspect:async()=>({})}),/Bok preparation failed/);
+ assert(errorRaced);assert.equal(sends,failedPhase==='authorize'?0:1);
 });

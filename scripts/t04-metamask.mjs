@@ -968,6 +968,7 @@ export function retainedBokRemaining(deadlineAt,now=Date.now){
  return ()=>{const ms=deadlineAt-now();assert(ms>0&&ms<=525000,'Original Bok deadline exhausted');return ms;};
 }
 export async function driveRetainedBokConfirmations({page,dialog,approval,inspect,mark,report,remaining=()=>80000}){
+ const reviewReady=async()=>{const confirm=dialog.getByRole('button',{name:'Confirm and send',exact:true});await confirm.or(dialog.getByRole('alert',{exact:true})).first().waitFor({timeout:remaining()});assert(await confirm.isVisible(),'Bok preparation failed before confirmation; preserve the original workflow');};
  mark('retained-bok-authorize-review');
  const reply=Object.hasOwn(approval,'parent')&&approval.parent!=='0';
  if(reply){
@@ -979,9 +980,9 @@ export async function driveRetainedBokConfirmations({page,dialog,approval,inspec
  if(reply){await dialog.getByText('Replying in this conversation',{exact:true}).waitFor({timeout:remaining()});assert.equal(await dialog.getByRole('link',{name:'View conversation',exact:true}).getAttribute('href'),'#/thread/'+approval.root+'/'+approval.parent);}
  else await dialog.getByText('New conversation',{exact:true}).waitFor({timeout:remaining()});
  await dialog.getByLabel('Message',{exact:true}).fill(approval.content);await dialog.getByLabel('Maximum Bok credits',{exact:true}).fill(approval.budget);
- await dialog.getByRole('button',{name:'Check action and review fee',exact:true}).click();await dialog.getByRole('button',{name:'Confirm and send',exact:true}).waitFor({timeout:remaining()});await inspect('authorize','prepared',{capture:true});
+ await dialog.getByRole('button',{name:'Check action and review fee',exact:true}).click();await reviewReady();await inspect('authorize','prepared',{capture:true});
  mark('retained-bok-authorize');remaining();await dialog.getByRole('button',{name:'Confirm and send',exact:true}).click();await dialog.getByRole('button',{name:'Review saved Bok post',exact:true}).waitFor({timeout:remaining()});await inspect('authorize','confirmed',{capture:true});report.retainedBok.authorizationConfirmed=true;
- mark('retained-bok-post-review');await dialog.getByRole('button',{name:'Review saved Bok post',exact:true}).click();await dialog.getByRole('button',{name:'Confirm and send',exact:true}).waitFor({timeout:remaining()});await inspect('post','prepared');
+ mark('retained-bok-post-review');await dialog.getByRole('button',{name:'Review saved Bok post',exact:true}).click();await reviewReady();await inspect('post','prepared');
  mark('retained-bok-post');remaining();await dialog.getByRole('button',{name:'Confirm and send',exact:true}).click();await dialog.getByText('Transaction confirmed on the verified chain.',{exact:true}).waitFor({timeout:remaining()});const {public:publicIntent}=await inspect('post','confirmed',{published:true});return publicIntent;
 }
 
