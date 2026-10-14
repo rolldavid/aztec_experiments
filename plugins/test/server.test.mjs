@@ -50,7 +50,7 @@ test('health clears a recovered polling failure without waiting for a new job',a
 // admission. Actual SQLite ordering and rollback are tested in public-sqlite.
 const canonicalRequest=(rows,done,postId)=>{
  const row=rows.find(r=>r.postId===postId);assert(row);
- return {usable:!done.has(row.requestId)&&!rows.some(r=>r.threadId===row.threadId&&!done.has(r.requestId)&&BigInt(r.order)<BigInt(row.order))};
+ return {predecessorsClear:!done.has(row.requestId)&&!rows.some(r=>r.threadId===row.threadId&&!done.has(r.requestId)&&BigInt(r.order)<BigInt(row.order))};
 };
 test('Rolling threads overlap while same-thread requests remain ordered and shutdown drains',async()=>{
  const requests=[{requestId:'a1',postId:'1',threadId:'a',order:'1'},{requestId:'a2',postId:'2',threadId:'a',order:'2'},{requestId:'b1',postId:'3',threadId:'b',order:'4'}];
@@ -132,7 +132,7 @@ test('Rolling recovery hints cannot overtake an unresolved predecessor outside t
  const unrelated=Array.from({length:64},(_,i)=>({requestId:'old'+i,postId:'old'+i,threadId:'old'+i,order:String(i)}));
  const a1={requestId:'a1',postId:'a1',threadId:'a',order:'64'},a2={requestId:'a2',postId:'a2',threadId:'a',order:'65'},c={requestId:'c',postId:'c',threadId:'c',order:'66'};
  const rows=[...unrelated,a1,a2,c],done=new Set(),started=[],release=new Map();let rejectedHints=0;
- const server=await startEscrowService({profile:'rolling',descriptor:{},port:0,pollMs:5,concurrency:2,onError:()=>{},recoverPending:async()=>done.has('a2')?[]:[a2],board:{readRequest:async id=>{const result=canonicalRequest(rows,done,id);if(id==='a2'&&!result.usable)rejectedHints++;return result;},pending:async cursor=>({requests:(cursor===null?unrelated:[a1,c]).filter(r=>!done.has(r.requestId)),nextCursor:cursor===null?'later':null})},run:async r=>{
+ const server=await startEscrowService({profile:'rolling',descriptor:{},port:0,pollMs:5,concurrency:2,onError:()=>{},recoverPending:async()=>done.has('a2')?[]:[a2],board:{readRequest:async id=>{const result=canonicalRequest(rows,done,id);if(id==='a2'&&!result.predecessorsClear)rejectedHints++;return result;},pending:async cursor=>({requests:(cursor===null?unrelated:[a1,c]).filter(r=>!done.has(r.requestId)),nextCursor:cursor===null?'later':null})},run:async r=>{
   if(r.requestId.startsWith('old')||r.requestId==='a1')throw Error('Original operation fenced');
   started.push(r.requestId);await new Promise(resolve=>release.set(r.requestId,resolve));done.add(r.requestId);
  }});
@@ -142,6 +142,6 @@ test('Rolling recovery hints cannot overtake an unresolved predecessor outside t
 
 test('Rolling shutdown during canonical admission cannot launch a new job',async()=>{
  const row={requestId:'a',postId:'a',threadId:'a',order:'1'};let admit,reading=false,runs=0;
- const server=await startEscrowService({profile:'rolling',descriptor:{},port:0,pollMs:5,onError:e=>assert.fail(e),board:{pending:async()=>({requests:[row],nextCursor:null}),readRequest:async()=>{reading=true;await new Promise(resolve=>{admit=resolve;});return {usable:true};}},run:async()=>{runs++;}});
+ const server=await startEscrowService({profile:'rolling',descriptor:{},port:0,pollMs:5,onError:e=>assert.fail(e),board:{pending:async()=>({requests:[row],nextCursor:null}),readRequest:async()=>{reading=true;await new Promise(resolve=>{admit=resolve;});return {predecessorsClear:true};}},run:async()=>{runs++;}});
  await until(()=>reading);const closed=server.close();admit();await closed;assert.equal(runs,0);
 });

@@ -39,7 +39,7 @@ export async function reconcileHostedBilling({receipt,escrow,store,lease,limits}
 /** A terminal failure may release its thread only after authenticating the
  * original billing journal against a fresh canonical request. This capability
  * cannot call the provider, write a journal or submit a chain operation. */
-export async function isHostedTerminalWithoutReply({request,escrow,store}){
+export async function isHostedTerminalWithoutReply({request,escrow,store,anchor}){
  const original=store.read(),saved=original.hostedPrivateBok,journal=original.privateBok;
  if(saved?.phase!=='accounted-without-reply')return false;
  const identity={...escrow.identity,requestId:request.requestId,target:request.target};
@@ -52,6 +52,8 @@ export async function isHostedTerminalWithoutReply({request,escrow,store}){
  for(const method of ['assertUsable','inspectOperation','reserve','settle','close_uncertain','reconcile','finish'])readOnlyEscrow[method]=deny;
  const metering=privateBokMetering({provider:{quote:deny,execute:deny},escrow:readOnlyEscrow,store:{read:()=>original,write:deny},identity,limits:journal.limits});
  const last=calls.at(-1);await metering.validateReconciliation(last.id,last.billing);
+ assert.equal(observation.anchor?.number,anchor?.number,'Terminal checkpoint changed');assert.equal(observation.anchor?.hash,anchor?.hash,'Terminal checkpoint changed');
+ assert(anchor&&Number.isSafeInteger(anchor.number)&&typeof anchor.hash==='string','Terminal checkpoint required');
  assert.equal(observation.request.state,4,'Terminal request not canonical finished');
  assert.equal(BigInt(observation.request.available),0n);assert.equal(BigInt(observation.request.reserved),0n);
  assert.deepEqual(store.read(),original,'Terminal journal changed during admission');return true;
@@ -110,7 +112,7 @@ export async function startEscrowService({descriptor,escrow,board,run,host='127.
     rollingQueue=rollingQueue.filter(row=>row.requestId!==request.requestId);
     // Recheck the indexed canonical predecessor before dispatch, including
     // replied recovery hints and rows retained across a changing publication.
-    if(!(await board.readRequest(request.postId))?.usable)continue;
+    if((await board.readRequest(request.postId))?.predecessorsClear!==true)continue;
     if(stopped)break;
     const job={post:request.postId,threadId:request.threadId,promise:null};jobs.set(request.requestId,job);
     job.promise=Promise.resolve().then(()=>run(request)).then(()=>{jobFailure=null;lastSuccess=new Date().toISOString();},error=>failed(error)).finally(()=>{
@@ -133,7 +135,7 @@ export async function startEscrowService({descriptor,escrow,board,run,host='127.
   pollFailure=null;
  }catch(error){failed(error,'poll');}finally{polling=false;}}
  const timer=setInterval(()=>{if(!polling)inFlight=poll();},pollMs);inFlight=poll();
- return {address:server.address(),async close(){stopped=true;clearInterval(timer);await inFlight;await Promise.all([...jobs.values()].map(job=>job.promise));await new Promise(resolve=>{server.close(resolve);server.closeAllConnections();});}};
+ return {address:server.address(),async close(){stopped=true;clearInterval(timer);await inFlight;await Promise.all([...jobs.values()].map(job=>job.promise));await board.close?.();await new Promise(resolve=>{server.close(resolve);server.closeAllConnections();});}};
 }
 
 
@@ -148,7 +150,7 @@ export async function runPrivateBokRequest({request,board,escrow,store,provider,
  let saved=store.read().hostedPrivateBok;
  if(saved)assert.deepEqual(saved.binding,binding,'Hosted request identity changed');
  const current=await board.readRequest(request.postId);
- assert(current&&current.requestId===request.requestId&&current.target===request.target&&current.pluginId===request.pluginId,'Canonical invocation changed');
+ assert(current&&current.requestId===request.requestId&&current.target===request.target&&current.pluginId===request.pluginId&&current.predecessorsClear===true,'Canonical invocation changed');
  let historyGuard;
  const requestConversation=conversation?Object.freeze({async load(input){
   assert(!historyGuard,'Conversation already captured');assert.equal(input.postId,request.postId);

@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import {runPrivateBokRequest,startEscrowService,reconcileHostedBilling,isHostedTerminalWithoutReply} from '../escrow-service.mjs';
 import {validateVeniceBilling} from '../venice-metered.mjs';
 import {validateDescriptor,API_VERSION,unpackText} from '../protocol.mjs';
-import {publishAcceptedRevision,hostedRecoveryScanner,runHostedBillingReconciliation,acquireHostedLease,serializeHostedEscrow} from '../main.mjs';
+import {publishAcceptedRevision,hostedRecoveryScanner,runHostedBillingReconciliation,acquireHostedLease,serializeHostedEscrow,hostedTerminalNode} from '../main.mjs';
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
@@ -26,12 +26,12 @@ test('accepted publication with uncertain private mirror retains exact identity 
 const f=n=>'0x'+BigInt(n).toString(16).padStart(64,'0');
 function fixture(){
  const request={postId:f(1),requestId:f(2),target:f(3),pluginId:f(4),order:'1'};
- const current={...request,text:'@bok hello',usable:true,replied:false,mainVersion:1,localVersion:0};
+ const current={...request,text:'@bok hello',usable:true,predecessorsClear:true,replied:false,mainVersion:1,localVersion:0};
  const row={state:2,sequence:0,invocation_hash:f(3),budget:1000n,available:1000n,reserved:0n,charged:0n,refunded:0n,receipt:f(0)};
  let saved={operations:{}};const ops=new Map(),events=[],control={};
  const store={read:()=>saved,write:async next=>{if(control.writeFailure?.(next))throw Error('disk');saved=structuredClone(next);}};
  const board={readRequest:async()=>({...current}),pending:async()=>({requests:[{...request,threadId:f(9)}],nextCursor:null})};
- const escrow={identity:{network:'eip155-31337:aztec-1:public',escrow:f(5)},request:async()=>({canonical:true,request:{...row}}),assertUsable:async()=>{},inspectOperation:async id=>control.unknownReply&&ops.get(id)?.method==='publish_reply'?{status:'pending'}:ops.get(id)??{status:'absent'}};
+ const escrow={identity:{network:'eip155-31337:aztec-1:public',escrow:f(5)},request:async()=>({canonical:true,request:{...row},anchor:{number:7,hash:f(77)}}),assertUsable:async()=>{},inspectOperation:async id=>control.unknownReply&&ops.get(id)?.method==='publish_reply'?{status:'pending'}:ops.get(id)??{status:'absent'}};
  for(const method of ['reserve','settle','close_uncertain','reconcile','finish','publish_reply'])escrow[method]=async(...args)=>{
   const op=args.pop();events.push(method);assert(!ops.has(op.operationId),'No repeated mutator');
   if(method==='reserve'){row.available-=args[2];row.reserved=args[2];}
@@ -247,8 +247,8 @@ test('actual SDK board projection gates canonical plugin, moderation, anchor and
   assert.equal((await port.pending(rejected.nextCursor)).requests[0].postId,f(1));assert.equal(scans,2);
   node.getBlockData=async()=>({blockHash:f(88)});assert.equal((await port.pending(rejected.nextCursor)).requests.length,0);index.scanPosts=originalScan;
   post.text=null;assert.equal((await port.readRequest(f(1))).usable,false);post.text='visible';
-  storage.set(flagged,1n);assert.equal((await port.readRequest(f(1))).usable,false);storage.set(flagged,0n);
-  storage.set(pluginSlot+1n,0n);assert.equal((await port.readRequest(f(1))).usable,false);storage.set(pluginSlot+1n,1n);
+  storage.set(flagged,1n);assert.equal((await port.readRequest(f(1))).usable,false);assert.equal((await port.readRequest(f(1))).predecessorsClear,true);storage.set(flagged,0n);
+  storage.set(pluginSlot+1n,0n);assert.equal((await port.readRequest(f(1))).usable,false);assert.equal((await port.readRequest(f(1))).predecessorsClear,true);storage.set(pluginSlot+1n,1n);
   const subboard=(await deriveStorageSlotInMap(artifact.storageLayout.subboards.slot,new Fr(7n))).toBigInt();
   post.record.subboard='7';storage.set(subboard,1n);storage.set(subboard+4n,0n);
   assert.equal((await port.readRequest(f(1))).localVersion,1);assert.equal((await port.readRequest(f(1))).usable,true);
@@ -257,6 +257,7 @@ test('actual SDK board projection gates canonical plugin, moderation, anchor and
   state.currentClass=f(77);await assert.rejects(port.readRequest(f(1)));state.currentClass=classId;
   state.anchor=f(98);await assert.rejects(port.readRequest(f(1)),/anchor/);state.anchor=f(99);
   state.realProofs=true;await assert.rejects(port.readRequest(f(1)));
+  await port.close();await assert.rejects(port.readRequest(f(1)),/admission closed/);await assert.rejects(port.pending(),/admission closed/);
  }finally{BarretenbergSync.destroySingleton();}
 });
 
@@ -436,7 +437,7 @@ test('terminal no-reply admission authenticates original limits and canonical se
  const x=await unknownBillingFixture();await x.recover();const before=structuredClone(x.store.read()),events=[...x.events];let reads=0;
  const escrow={identity:x.args.escrow.identity,request:async id=>{reads++;return x.args.escrow.request(id);}};
  assert.equal(before.privateBok.limits.maxTokens,1500);
- assert.equal(await isHostedTerminalWithoutReply({request:x.args.request,store:x.store,escrow}),true);
+ assert.equal(await isHostedTerminalWithoutReply({request:x.args.request,store:x.store,escrow,anchor:{number:7,hash:f(77)}}),true);
  assert.equal(reads,1);assert.deepEqual(x.store.read(),before);assert.deepEqual(x.events,events);
 });
 for(const change of ['phase','finished','call','receipt','charge','budget','state','reserved','target','plugin','limits','sequence'])test('terminal no-reply admission refuses changed '+change,async()=>{
@@ -453,7 +454,7 @@ for(const change of ['phase','finished','call','receipt','charge','budget','stat
  if(change==='plugin')saved.hostedPrivateBok.binding.pluginId=f(99);
  if(change==='limits')saved.privateBok.limits.maxReservation='1';
  if(change==='sequence')x.row.sequence++;
- const events=[...x.events],before=structuredClone(saved),run=()=>isHostedTerminalWithoutReply({request:x.args.request,store:x.store,escrow:x.args.escrow});
+ const events=[...x.events],before=structuredClone(saved),run=()=>isHostedTerminalWithoutReply({request:x.args.request,store:x.store,escrow:x.args.escrow,anchor:{number:7,hash:f(77)}});
  if(change==='phase')assert.equal(await run(),false);else await assert.rejects(run());
  assert.deepEqual(x.store.read(),before);assert.deepEqual(x.events,events);
 });
@@ -480,4 +481,37 @@ test('timed-out predecessor read retains sole ownership until it settles',async(
  for(let n=0;n<3;n++)await assert.rejects(rollingPredecessorsClear({index,request,isTerminal,admission,timeoutMs:5}),/prior read pending/);
  assert.equal(calls,1);release(true);await new Promise(r=>setImmediate(r));assert.equal(admission.pending,null);
  assert.equal(await rollingPredecessorsClear({index,request,isTerminal:async()=>true,admission}),true);
+});
+
+test('saved reply recovery remains dispatchable after moderation or plugin disable',async()=>{
+ const x=fixture();x.control.unknownReply=true;await assert.rejects(x.run(),/unresolved/);
+ assert.equal(x.store.read().hostedPrivateBok.phase,'reply-intent');x.control.unknownReply=false;x.current.usable=false;x.current.predecessorsClear=true;
+ const events=[...x.events];x.args.board.pending=async()=>({requests:[],nextCursor:null});
+ const server=await startEscrowService({descriptor:{},profile:'rolling',board:x.args.board,recoverPending:async()=>x.store.read().hostedPrivateBok.phase==='finished'?[]:[{...x.args.request,threadId:f(9)}],run:()=>x.run(),port:0,pollMs:5,onError:e=>assert.fail(e)});
+ try{const end=Date.now()+300;while(x.store.read().hostedPrivateBok.phase!=='finished'&&Date.now()<end)await new Promise(r=>setTimeout(r,5));assert.equal(x.store.read().hostedPrivateBok.phase,'finished');assert.deepEqual(x.events,[...events,'finish']);assert.equal(x.row.refunded,994n);}finally{await server.close();}
+});
+test('service shutdown drains timed-out owned predecessor reads before closing',async()=>{
+ const {rollingPredecessorsClear}=await import('../aztec.mjs');const admission={};let release,failed=0,reads=0,closed=false;
+ const row={postId:'1',threadId:'1',order:'0',requestId:'1',target:'8',pluginId:'4',adapter:'9'},request={postId:f(99),threadId:f(1),order:'100',pluginId:f(4),adapter:f(9)};
+ const index={scanPendingPredecessors:()=>{reads++;return {rows:[row],nextAfter:null,revision:'one'};}};
+ const board={pending:async()=>{await rollingPredecessorsClear({index,request,admission,timeoutMs:5,isTerminal:()=>new Promise(r=>release=r)});return {requests:[],nextCursor:null};},close:async()=>{await admission.pending?.catch(()=>{});}};
+ const server=await startEscrowService({descriptor:{},profile:'rolling',board,run:async()=>assert.fail('No dispatch'),port:0,pollMs:50,onError:()=>failed++});
+ while(!failed)await new Promise(r=>setTimeout(r,2));const closing=server.close().then(()=>closed=true);
+ try{await new Promise(r=>setTimeout(r,10));assert.equal(closed,false,'Shutdown retains resources until owned read ends');}finally{release(true);await closing;}
+ const count=reads;await new Promise(r=>setTimeout(r,10));assert.equal(reads,count);
+});
+
+for(const development of [true,false])test('terminal node pins '+(development?'checkpointed':'finalized')+' reads and retains original canonical rechecks',async()=>{
+ const anchor={number:7,hash:f(77)},calls=[];let hash=anchor.hash;
+ const node={getBlock:async function(selector){assert.equal(this,node);calls.push(selector);return {number:typeof selector==='number'?selector:9,hash:selector===7?hash:f(99)};},getNodeInfo(){assert.equal(this,node);return 'original';}};
+ const port=hostedTerminalNode(node,anchor,development),selector=development?'checkpointed':'finalized';
+ assert.equal((await port.getBlock(selector)).number,7);assert.equal((await port.getBlock(selector)).hash,f(77));
+ assert.equal(port.getNodeInfo(),'original');assert.deepEqual(calls,[7,7],'newer tip never supplies a terminal exemption');
+ hash=f(88);await assert.rejects(port.getBlock(selector),/checkpoint changed/);
+ assert.equal((await port.getBlock(7)).hash,f(88),'numbered canonical recheck remains authoritative');
+});
+test('terminal accounting from a different checkpoint cannot exempt a predecessor',async()=>{
+ const x=await unknownBillingFixture();await x.recover();const before=structuredClone(x.store.read());
+ await assert.rejects(isHostedTerminalWithoutReply({request:x.args.request,store:x.store,escrow:x.args.escrow,anchor:{number:8,hash:f(88)}}),/checkpoint changed/);
+ assert.deepEqual(x.store.read(),before);
 });

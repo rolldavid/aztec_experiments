@@ -202,6 +202,21 @@ export function serializeHostedEscrow(port,walletOperation){
  ])));
 }
 
+/** Pin only the required-finality selector for read-only terminal accounting.
+ * Numbered canonical rechecks and all other methods retain the original node. */
+export function hostedTerminalNode(node,anchor,development){
+ assert(anchor&&Number.isSafeInteger(anchor.number)&&anchor.number>=0&&/^0x[0-9a-f]{64}$/.test(anchor.hash));assert.equal(typeof development,'boolean');
+ const captured={...anchor},finality=development?'checkpointed':'finalized';
+ return new Proxy(node,{get(target,key){
+  if(key==='getBlock')return async(selector,...args)=>{
+   if(selector!==finality)return target.getBlock(selector,...args);
+   const block=await target.getBlock(captured.number,...args);
+   assert.equal(block?.number,captured.number,'Terminal checkpoint changed');assert.equal(String(block?.hash),captured.hash,'Terminal checkpoint changed');return block;
+  };
+  const value=Reflect.get(target,key);return typeof value==='function'?value.bind(target):value;
+ }});
+}
+
 /** Explicit Rolling composition; the legacy account escrow is never selected. */
 export async function runRollingHostedService({config,env=process.env,onError=()=>{}}){
  assert(Array.isArray(config.connectedRepositories??[])&&(config.connectedRepositories??[]).length<=32,'Invalid connected repository configuration');
@@ -221,8 +236,8 @@ export async function runRollingHostedService({config,env=process.env,onError=()
  await fs.mkdir(config.stateDirectory,{recursive:true,mode:0o700});
  assert.equal(await fs.realpath(config.stateDirectory),config.stateDirectory);const directory=await fs.lstat(config.stateDirectory);
  assert(directory.isDirectory()&&!directory.isSymbolicLink()&&(directory.mode&0o777)===0o700);
- const lease=await acquireHostedLease(config.stateDirectory);let wallet,index,server,artifactsServer,recoverPending,closing;
- function close(){return closing??=(async()=>{const errors=[];for(const fn of [()=>server?.close(),()=>recoverPending?.close(),()=>artifactsServer?new Promise(resolve=>{artifactsServer.close(resolve);artifactsServer.closeAllConnections();}):undefined,()=>wallet?.stop(),()=>index?.close(),()=>lease.close()])try{await fn();}catch(error){errors.push(error);}if(errors.length)throw new AggregateError(errors,'Rolling hosted cleanup failed');})();}
+ const lease=await acquireHostedLease(config.stateDirectory);let wallet,index,server,artifactsServer,recoverPending,rawBoard,closing;
+ function close(){return closing??=(async()=>{const errors=[];for(const fn of [()=>server?.close(),()=>recoverPending?.close(),()=>rawBoard?.close(),()=>artifactsServer?new Promise(resolve=>{artifactsServer.close(resolve);artifactsServer.closeAllConnections();}):undefined,()=>wallet?.stop(),()=>index?.close(),()=>lease.close()])try{await fn();}catch(error){errors.push(error);}if(errors.length)throw new AggregateError(errors,'Rolling hosted cleanup failed');})();}
 
  try{
   const key=env.PLUGIN_QUERY_API_KEY;if(!config.development)assert(typeof key==='string','Operator query capability required');
@@ -241,7 +256,7 @@ export async function runRollingHostedService({config,env=process.env,onError=()
   // canonical index snapshots serialize; unrelated model calls may overlap.
   const lane=()=>{let tail=Promise.resolve();return fn=>{const result=tail.then(fn);tail=result.catch(()=>{});return result;};};
   const indexed=lane(),walletOperation=lane(),generatedExecution=lane(),publicationOperation=lane();
-  const isTerminalWithoutReply=async request=>{
+  const isTerminalWithoutReply=async(request,anchor)=>{
    await lease.assertHeld();const id=createHash('sha256').update(JSON.stringify({scope,requestId:request.requestId,target:request.target})).digest('hex');
    const file=path.join(config.stateDirectory,id+'.json');
    try{await fs.lstat(file);}catch(error){if(error.code==='ENOENT')return false;throw error;}
@@ -249,13 +264,14 @@ export async function runRollingHostedService({config,env=process.env,onError=()
    if(original.hostedPrivateBok?.phase!=='accounted-without-reply')return false;
    assert(original.privateBokEscrow,'Original terminal escrow journal required');
    const store={read:()=>original,write:async()=>{throw Error('Terminal admission is read only');}};
-   const rawEscrow=await walletOperation(()=>createPrivateBokEscrow({node,wallet,artifact,address:scope.receiver,operator:account.address.toString(),board:scope.boardAddress,network:scope,
+   const terminalNode=hostedTerminalNode(node,anchor,config.development);
+   const rawEscrow=await walletOperation(()=>createPrivateBokEscrow({node:terminalNode,wallet,artifact,address:scope.receiver,operator:account.address.toString(),board:scope.boardAddress,network:scope,
     requestId:request.requestId,target:request.target,store,lease,development:config.development,proofMode:config.development?'disabled':'real'}));
-   const result=await isHostedTerminalWithoutReply({request,escrow:serializeHostedEscrow(rawEscrow,walletOperation),store});
+   const result=await isHostedTerminalWithoutReply({request,escrow:serializeHostedEscrow(rawEscrow,walletOperation),store,anchor});
    await lease.assertHeld();assert.deepEqual(JSON.parse((await readHostedPrivateFile(file)).toString('utf8')),original,'Terminal journal changed during admission');return result;
   };
-  const rawBoard=await rollingBoardPort({node,index,scope,boardArtifact,pluginId:config.pluginId,development:config.development,isTerminalWithoutReply});
-  const board={pending:(...args)=>indexed(()=>rawBoard.pending(...args)),readRequest:(...args)=>indexed(()=>rawBoard.readRequest(...args))};
+  rawBoard=await rollingBoardPort({node,index,scope,boardArtifact,pluginId:config.pluginId,development:config.development,isTerminalWithoutReply});
+  const board={close:()=>rawBoard.close(),pending:(...args)=>indexed(()=>rawBoard.pending(...args)),readRequest:(...args)=>indexed(()=>rawBoard.readRequest(...args))};
   const rawConversation=rollingConversation({index,node,scope:indexScope,development:config.development});
   const conversation={load:input=>indexed(async()=>{const history=await rawConversation.load(input);return {...history,assertCurrent:()=>indexed(()=>history.assertCurrent())};})};
   const summaryModelId=env.VENICE_SUMMARY_MODEL||config.summaryModelId;

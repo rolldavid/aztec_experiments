@@ -38,6 +38,7 @@ export async function aztecBoardPort({node,wallet,scope,boardArtifact,adapterArt
 // A long terminal prefix has a visible bounded timeout, never an inferred pass.
 export async function rollingPredecessorsClear({index,request,isTerminal=async()=>false,timeoutMs=20000,admission={}}){
  assert(Number.isSafeInteger(timeoutMs)&&timeoutMs>0&&timeoutMs<=20000);
+ assert(!admission.closed,'Canonical predecessor admission closed');
  assert(!admission.pending,'Canonical predecessor admission unavailable: prior read pending');
  let timer,expired=false;const timeout=new Promise((_,reject)=>{timer=setTimeout(()=>{expired=true;reject(Error('Canonical predecessor admission unavailable: deadline'));},timeoutMs);});
  const scan=async()=>{
@@ -100,14 +101,15 @@ export async function rollingBoardPort({node,index,scope,boardArtifact,pluginId,
   // This contract's effective_policy/publish_plugin_reply define immutable local version 1.
   assert.equal(String((await node.getBlock(head.number))?.hash),String(head.hash),'Board anchor changed');
   const identity={postId:toField(post.id),threadId:toField(post.record.root),order:String(post.order),requestId:toField(invocation.requestId),target:toField(invocation.target),pluginId,adapter:scope.receiver};
-  const predecessorsClear=await rollingPredecessorsClear({index,request:identity,isTerminal:isTerminalWithoutReply,admission});
+  const predecessorsClear=await rollingPredecessorsClear({index,request:identity,isTerminal:row=>isTerminalWithoutReply?.(row,anchor)??false,admission});
   assert.equal(String((await node.getBlock(head.number))?.hash),String(head.hash),'Board anchor changed during predecessor admission');
-  return {...identity,
+  return {...identity,predecessorsClear,
    text:post.text,replied:invocation.reply!==null,mainVersion,localVersion:post.record.subboard==='0'?0:1,
    usable:localAllowed&&typeof post.text==='string'&&!post.removal&&!flagged&&String(adapter)===scope.receiver&&enabled.toBigInt()===1n&&BigInt(post.position.blockNumber)<=BigInt(head.number)&&predecessorsClear};
  };
- const syncReady=async()=>{const deadline=Date.now()+20000;for(let steps=0;steps<512&&Date.now()<deadline;steps++){await index.sync();if(index.status().state==='ready')return;};throw Error('Canonical public index catching up');};
+ const syncReady=async()=>{assert(!admission.closed,'Canonical predecessor admission closed');const deadline=Date.now()+20000;for(let steps=0;steps<512&&Date.now()<deadline;steps++){await index.sync();if(index.status().state==='ready')return;};throw Error('Canonical public index catching up');};
  return {
+  async close(){admission.closed=true;await admission.pending?.catch(()=>{});},
   async pending(cursor){
    await syncReady();let after=null;
    if(cursor){
