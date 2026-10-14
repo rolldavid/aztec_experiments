@@ -309,3 +309,103 @@ test('Sepolia seed finalized mint after expiry retains bounded exact zero-allowa
   assert.equal((await runSepoliaLiquidityStage({...args,now:()=>plan.cleanupExpiresAt*1000+1})).status,'unresolved');assert.deepEqual([signed,sent],[1,1]);
  }
 });
+
+// Controlled RPC results with real ethers signatures; no network or funded key.
+async function seedResolutionFixture(){
+ const {Wallet,keccak256}=await import('ethers'),ops=await import('../operations.mjs');
+ const owner=new Wallet('0x'+'61'.repeat(32)),inventory=new Wallet('0x'+'62'.repeat(32));
+ const plan=ops.captureSepoliaLiquidityPlan({...seedPlan(),owner:owner.address.toLowerCase(),inventoryOwner:inventory.address.toLowerCase()}),steps=await ops.sepoliaLiquidityTransactions(plan),identity=JSON.stringify(plan),{createHash}=await import('node:crypto');
+ const binding=createHash('sha256').update(identity).digest('hex'),anchor='0x'+'a'.repeat(64);let original={seedLiquidity:{schemaVersion:1,binding,entered:[]},operations:{}},saved={operations:{}},remaining={operations:{}};
+ const receipts=new Map(),blockHashes=new Map(),signedSteps=[],broadcasts=[];let finalized=11,canonical=anchor,validEffect=true,preflights=0;
+ const sign=s=>(s.from===plan.owner?owner:inventory).signTransaction({type:2,chainId:11155111,nonce:s.nonce,to:s.to,data:s.data,value:s.value,gasLimit:s.gasLimit,maxFeePerGas:s.maxFeePerGas,maxPriorityFeePerGas:s.maxPriorityFeePerGas});
+ for(const step of steps.slice(0,steps.findIndex(s=>s.name==='approve-usdc')+1)){
+  const raw=await sign(step),hash=keccak256(raw);original.seedLiquidity.entered.push(step.name);original.operations[step.name]={schemaVersion:1,policy:'reconcile-only',identity:identity+':'+step.name,phase:'submission-unknown',raw:raw.slice(2),hash};
+  if(step.name!=='approve-usdc')receipts.set(hash,{hash,status:1,blockNumber:10,blockHash:anchor});
+ }
+ const resolution={schemaVersion:1,originalPlanSha256:binding,originalTransactionHash:original.operations['approve-usdc'].hash,expiresAt:plan.expiresAt+60};
+ const ports={receipt:async h=>receipts.get(h)??null,block:async n=>({hash:blockHashes.get(n)??canonical}),head:async tag=>{assert.equal(tag,'finalized');return {number:finalized};},effect:async()=>validEffect,cancellationEffect:async()=>validEffect,
+  preflightCancellation:async()=>{preflights++;},preflightContinuation:async()=>{preflights++;},preflight:async()=>{preflights++;},sign:async s=>{signedSteps.push(s);return sign(s);},broadcast:async raw=>{broadcasts.push(raw);}};
+ const args={plan,resolution,originalStore:{read:()=>original},store:{read:()=>saved,write:async value=>{saved=structuredClone(value);}},ports,now:()=>plan.expiresAt*1000};
+ const continuation=()=>({...args,cancellationStore:args.store,store:{read:()=>remaining,write:async value=>{remaining=structuredClone(value);}},remainingPlan:{...plan,campaign:'sepolia-seed-resolved-controlled',ownerNonce:steps.find(s=>s.name==='approve-usdc').nonce+1,expiresAt:plan.expiresAt+600,cleanupExpiresAt:plan.cleanupExpiresAt+600}});
+ const confirm=(hash,status=1,blockNumber=10)=>receipts.set(hash,{hash,status,blockNumber,blockHash:anchor});
+ return {ops,args,continuation,original,receipts,signedSteps,broadcasts,confirm,get saved(){return saved;},get remaining(){return remaining;},get preflights(){return preflights;},setFinalized:n=>finalized=n,setCanonical:(h,n)=>n===undefined?canonical=h:blockHashes.set(n,h),setEffect:b=>validEffect=b};
+}
+test('Seed cancellation uses exact20percent bump self zero21000 and never replays unknown original or cancellation',async()=>{
+ const f=await seedResolutionFixture(),original=JSON.stringify(f.original);await f.ops.runSepoliaLiquidityCancellation(f.args);
+ assert.equal(f.signedSteps.length,1);const s=f.signedSteps[0],old=(await f.ops.sepoliaLiquidityTransactions(f.args.plan)).find(x=>x.name==='approve-usdc');
+ assert.deepEqual([s.from,s.to,s.nonce,s.value,s.data,s.gasLimit],[old.from,old.from,old.nonce,'0','0x','21000']);assert.equal(s.maxFeePerGas,String((BigInt(old.maxFeePerGas)*120n+99n)/100n));assert.equal(s.maxPriorityFeePerGas,String((BigInt(old.maxPriorityFeePerGas)*120n+99n)/100n));
+ await f.ops.runSepoliaLiquidityCancellation({...f.args,now:()=>Number.MAX_SAFE_INTEGER});assert.equal(f.broadcasts.length,1);assert.equal(f.signedSteps.length,1);assert.equal(JSON.stringify(f.original),original);
+});
+test('Seed original winner before cancellation requires zero signatures and carries only mint/revokes',async()=>{
+ const f=await seedResolutionFixture();f.confirm(f.args.resolution.originalTransactionHash);
+ assert.equal((await f.ops.runSepoliaLiquidityCancellation(f.args)).winner,'original');assert.equal(f.signedSteps.length,0);
+ const next=f.continuation();await f.ops.runSepoliaLiquidityContinuation({...next,stage:'seed-usdc-fee'});
+ assert.equal(f.signedSteps.length,1);assert.equal(f.signedSteps[0].name,'seed-usdc-fee');assert.equal(f.signedSteps[0].nonce,next.remainingPlan.ownerNonce);
+ for(const stage of ['inventory-usdc','approve-fee','approve-usdc'])await assert.rejects(f.ops.runSepoliaLiquidityContinuation({...next,stage}));assert.equal(f.broadcasts.length,1);
+});
+test('Seed original wins after cancellation attempt and neither signed operation is replayed',async()=>{
+ const f=await seedResolutionFixture();f.args.ports.broadcast=async raw=>{f.broadcasts.push(raw);f.confirm(f.args.resolution.originalTransactionHash);throw Error('response lost');};
+ const result=await f.ops.runSepoliaLiquidityCancellation(f.args);assert.equal(result.winner,'original');assert.equal(result.status,'succeeded');
+ await f.ops.runSepoliaLiquidityCancellation(f.args);assert.equal(f.broadcasts.length,1);
+});
+test('Seed cancellation finalized winner carries exact prefix and only remaining approval with fresh nonce',async()=>{
+ const f=await seedResolutionFixture(),original=JSON.stringify(f.original);await f.ops.runSepoliaLiquidityCancellation(f.args);f.confirm(f.saved.operations['relay-funding'].hash);
+ assert.equal((await f.ops.runSepoliaLiquidityCancellation(f.args)).winner,'cancellation');const next=f.continuation();await f.ops.runSepoliaLiquidityContinuation({...next,stage:'approve-usdc'});
+ assert.equal(f.signedSteps[1].name,'approve-usdc');assert.equal(f.signedSteps[1].nonce,next.remainingPlan.ownerNonce);assert.deepEqual(f.remaining.seedLiquidity.entered,['approve-usdc']);assert.equal(JSON.stringify(f.original),original);
+ await f.ops.runSepoliaLiquidityContinuation({...next,stage:'approve-usdc'});assert.equal(f.signedSteps.length,2);
+});
+test('Seed cancellation nonfinal reorg failed effects and conflicting winners never admit continuation',async()=>{
+ for(const failure of ['nonfinal','reorg','effect','failed','both']){
+  const f=await seedResolutionFixture();await f.ops.runSepoliaLiquidityCancellation(f.args);f.confirm(f.saved.operations['relay-funding'].hash,failure==='failed'?0:1,12);f.setFinalized(failure==='nonfinal'?11:12);
+  if(failure==='reorg')f.setCanonical('0x'+'b'.repeat(64),12);if(failure==='effect')f.args.ports.cancellationEffect=async()=>false;if(failure==='both')f.confirm(f.args.resolution.originalTransactionHash);
+  await assert.rejects(f.ops.runSepoliaLiquidityContinuation({...f.continuation(),stage:'approve-usdc'}));assert.equal(f.signedSteps.length,1);
+ }
+});
+test('Seed cancellation rejects altered identity missing prefix later entered stage expired authority before sign',async()=>{
+ for(const change of ['plan','hash','prefix','later','expired','fee','zero-tip']){
+  const f=await seedResolutionFixture();let args={...f.args};
+  if(change==='plan')args.resolution={...args.resolution,originalPlanSha256:'b'.repeat(64)};
+  if(change==='hash')args.resolution={...args.resolution,originalTransactionHash:'0x'+'b'.repeat(64)};
+  if(change==='prefix')f.receipts.clear();if(change==='later')f.original.seedLiquidity.entered.push('seed-usdc-fee');
+  if(change==='expired')args.now=()=>args.resolution.expiresAt*1000;
+  if(change==='fee')args.plan={...args.plan,maxFeePerGas:'5000000000'};
+  if(change==='zero-tip')args.plan={...args.plan,maxPriorityFeePerGas:'0'};
+  await assert.rejects(f.ops.runSepoliaLiquidityCancellation(args));assert.equal(f.signedSteps.length,0);assert.equal(f.broadcasts.length,0);
+ }
+});
+test('Seed cancellation preparing or broadcast failure stays reconcile only across reentry',async()=>{
+ for(const mode of ['sign','broadcast']){
+  const f=await seedResolutionFixture();if(mode==='sign')f.args.ports.sign=async()=>{throw false;};else f.args.ports.broadcast=async raw=>{f.broadcasts.push(raw);throw null;};
+  await f.ops.runSepoliaLiquidityCancellation(f.args);const saved=JSON.stringify(f.saved);await f.ops.runSepoliaLiquidityCancellation(f.args);assert.equal(JSON.stringify(f.saved),saved);assert.equal(f.preflights,1);assert.equal(f.broadcasts.length,mode==='sign'?0:1);
+ }
+});
+test('Seed continuation rejects economic scope changed nonce skipped prefix and missing original signed bytes',async()=>{
+ for(const change of ['amount','nonce','scope','missing','skip']){
+  const f=await seedResolutionFixture();f.confirm(f.args.resolution.originalTransactionHash);const next=f.continuation();
+  if(change==='amount')next.remainingPlan.feeAmount='1';if(change==='nonce')next.remainingPlan.ownerNonce++;
+  if(change==='scope')next.remainingPlan.inventoryOwner='0x'+'9'.repeat(40);if(change==='missing')delete f.original.operations['approve-fee'].raw;
+  await assert.rejects(f.ops.runSepoliaLiquidityContinuation({...next,stage:change==='skip'?'revoke-fee':'seed-usdc-fee'}));assert.equal(f.signedSteps.length,0);
+ }
+});
+test('Seed resolved continuation completes bounded original economics without replaying prefix',async()=>{
+ for(const winner of ['original','cancellation']){
+  const f=await seedResolutionFixture(),original=JSON.stringify(f.original);
+  if(winner==='original')f.confirm(f.args.resolution.originalTransactionHash);else{await f.ops.runSepoliaLiquidityCancellation(f.args);f.confirm(f.saved.operations['relay-funding'].hash);}
+  const next=f.continuation(),names=[...(winner==='cancellation'?['approve-usdc']:[]),'seed-usdc-fee','seed-weth-fee','revoke-fee','revoke-usdc'];
+  for(const stage of names){await f.ops.runSepoliaLiquidityContinuation({...next,stage});f.confirm(f.remaining.operations[stage].hash);}
+  assert.deepEqual(f.remaining.seedLiquidity.entered,names);assert.equal(JSON.stringify(f.original),original);
+  assert.deepEqual(f.signedSteps.filter(s=>s.to!==s.from).map(s=>s.name),names);
+  assert.deepEqual(f.signedSteps.filter(s=>s.to!==s.from).map(s=>s.nonce),names.map((_,i)=>next.remainingPlan.ownerNonce+i));
+  await f.ops.runSepoliaLiquidityContinuation({...next,stage:'revoke-usdc',now:()=>Number.MAX_SAFE_INTEGER});assert.equal(f.broadcasts.length,names.length+(winner==='cancellation'?1:0));
+ }
+});
+test('Seed cancellation rejects changed retained signed cancellation bytes even when original wins',async()=>{
+ const f=await seedResolutionFixture();await f.ops.runSepoliaLiquidityCancellation(f.args);
+ Object.assign(f.saved.operations['relay-funding'],{raw:f.original.operations['approve-usdc'].raw,hash:f.original.operations['approve-usdc'].hash});
+ f.confirm(f.args.resolution.originalTransactionHash);await assert.rejects(f.ops.runSepoliaLiquidityCancellation(f.args));assert.equal(f.broadcasts.length,1);
+});
+test('Seed continuation current allowance or balance failure blocks signing while keeping original prefix intact',async()=>{
+ const f=await seedResolutionFixture();f.confirm(f.args.resolution.originalTransactionHash);const original=JSON.stringify(f.original);
+ f.args.ports.preflightContinuation=async()=>{throw Error('current allowance mismatch');};await assert.rejects(f.ops.runSepoliaLiquidityContinuation({...f.continuation(),stage:'seed-usdc-fee'}),/allowance/);
+ assert.equal(f.signedSteps.length,0);assert.equal(JSON.stringify(f.original),original);
+});

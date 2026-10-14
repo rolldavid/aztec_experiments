@@ -144,3 +144,38 @@ test('actual Sepolia CLI rejects invalid plan and missing retained state before 
   await assert.rejects(seedTestnetLiquidity({plan,statePath,stage:'inventory-usdc',keyFile:'/unavailable'}),/preserve original plan/);assert.deepEqual(await fs.readdir(directory),['state.json.initialized.json']);
  }finally{await fs.rm(directory,{recursive:true});}
 });
+test('Sepolia recovery marked journals preserve original files and reject deleted cancellation or continuation state',async()=>{
+ const os=await import('node:os'),path=await import('node:path'),{openSepoliaSeedJournal}=await import('../operator.mjs');
+ const dir=await fs.mkdtemp(path.join(os.tmpdir(),'seed-recovery-'));await fs.chmod(dir,0o700);
+ try{
+  for(const name of ['original.json','original.json.cancel-approve-usdc.json','original.json.remaining.json']){
+   const file=path.join(dir,name),store=await openSepoliaSeedJournal(file,'original-binding','campaign');
+   assert.deepEqual(store.read(),{operations:{}});await store.write({operations:{retained:{hash:f(3)}}});const original=await fs.readFile(file);
+   const readonly=await openSepoliaSeedJournal(file,'original-binding','campaign',{existingOnly:true});assert.equal(readonly.write,undefined);assert.equal(readonly.read().operations.retained.hash,f(3));assert.deepEqual(await fs.readFile(file),original);
+   await assert.rejects(openSepoliaSeedJournal(file,'changed','campaign'));await fs.unlink(file);await assert.rejects(openSepoliaSeedJournal(file,'original-binding','campaign'));assert.equal((await fs.stat(file+'.initialized.json')).mode&0o777,0o600);
+  }
+ }finally{await fs.rm(dir,{recursive:true});}
+});
+test('Sepolia cancellation and continuation share original exclusive lock and require original marked state before RPC',async()=>{
+ const os=await import('node:os'),path=await import('node:path'),{seedTestnetLiquidity}=await import('../operator.mjs'),{captureSepoliaLiquidityPlan}=await import('../operations.mjs'),{createHash}=await import('node:crypto');
+ const dir=await fs.mkdtemp(path.join(os.tmpdir(),'seed-recovery-lock-'));await fs.chmod(dir,0o700);const statePath=path.join(dir,'original.json'),plan=captureSepoliaLiquidityPlan(sepoliaPlan());
+ const resolution={schemaVersion:1,originalPlanSha256:createHash('sha256').update(JSON.stringify(plan)).digest('hex'),originalTransactionHash:f(9),expiresAt:plan.expiresAt+60};
+ try{
+  for(const recovery of [{kind:'cancel',resolution},{kind:'continue',resolution,remainingPlan:{...plan,campaign:'sepolia-seed-cli-remaining',ownerNonce:16,expiresAt:plan.expiresAt+600,cleanupExpiresAt:plan.cleanupExpiresAt+600}}]){
+   await assert.rejects(seedTestnetLiquidity({plan,statePath,stage:'approve-usdc',keyFile:'/unavailable',recovery}),/preserve original/);assert.deepEqual(await fs.readdir(dir),[]);
+   const lock=statePath+'.lock';await fs.writeFile(lock,'existing-owner',{mode:0o600});
+   await assert.rejects(seedTestnetLiquidity({plan,statePath,stage:'approve-usdc',keyFile:'/unavailable',recovery}),/preserve original/);assert.equal(await fs.readFile(lock,'utf8'),'existing-owner');await fs.unlink(lock);
+  }
+ }finally{await fs.rm(dir,{recursive:true});}
+});
+test('Sepolia invalid original hash or expired cancellation cannot permanently bind a new recovery journal',async()=>{
+ const os=await import('node:os'),path=await import('node:path'),{seedTestnetLiquidity,openSepoliaSeedJournal}=await import('../operator.mjs'),{captureSepoliaLiquidityPlan}=await import('../operations.mjs'),{createHash}=await import('node:crypto');
+ const dir=await fs.mkdtemp(path.join(os.tmpdir(),'seed-recovery-admission-'));await fs.chmod(dir,0o700);const statePath=path.join(dir,'original.json'),plan=captureSepoliaLiquidityPlan(sepoliaPlan()),hash=createHash('sha256').update(JSON.stringify(plan)).digest('hex');
+ try{
+  const original=await openSepoliaSeedJournal(statePath,'0x'+hash,plan.campaign);await original.write({operations:{'approve-usdc':{hash:f(9)}}});const names=(await fs.readdir(dir)).sort(),bytes=await fs.readFile(statePath);
+  for(const resolution of [{schemaVersion:1,originalPlanSha256:hash,originalTransactionHash:f(8),expiresAt:Math.floor(Date.now()/1000)+60},{schemaVersion:1,originalPlanSha256:hash,originalTransactionHash:f(9),expiresAt:1}]){
+   await assert.rejects(seedTestnetLiquidity({plan,statePath,stage:'approve-usdc',keyFile:'/unavailable',recovery:{kind:'cancel',resolution}}),/preserve original/);
+   assert.deepEqual((await fs.readdir(dir)).sort(),names);assert.deepEqual(await fs.readFile(statePath),bytes);
+  }
+ }finally{await fs.rm(dir,{recursive:true});}
+});

@@ -387,8 +387,12 @@ export async function matchSepoliaLiquiditySigned(record,step){
 /** Dependencies perform real ABI reads; this owner only sequences a fixed plan.
  * No retained intent (including preparing-without-hash) may prepare/sign again. */
 export async function runSepoliaLiquidityStage({plan:input,stage,store,ports,now=()=>Date.now()}){
- const plan=captureSepoliaLiquidityPlan(input),steps=await sepoliaLiquidityTransactions(plan),index=steps.findIndex(s=>s.name===stage);if(index<0)throw rejected();
- const identity=JSON.stringify(plan),binding=createHash('sha256').update(identity).digest('hex');let state=store.read();
+ const plan=captureSepoliaLiquidityPlan(input),steps=await sepoliaLiquidityTransactions(plan);
+ return runSepoliaSeedSteps({plan,steps,identity:JSON.stringify(plan),stage,store,ports,now});
+}
+async function runSepoliaSeedSteps({plan,steps,identity,stage,store,ports,now}){
+ const index=steps.findIndex(s=>s.name===stage);if(index<0)throw rejected();
+ const binding=createHash('sha256').update(identity).digest('hex');let state=store.read();
  if(!state.seedLiquidity){if(Object.keys(state).some(k=>k!=='operations')||Object.keys(state.operations??{}).length)throw rejected();await store.write({operations:{},seedLiquidity:{schemaVersion:1,binding,entered:[]}});state=store.read();}
  const progress=state.seedLiquidity,entered=progress.entered;
  if(progress.schemaVersion!==1||progress.binding!==binding||!Array.isArray(entered)||entered.length>steps.length||entered.some((s,i)=>s!==steps[i].name)||Object.keys(state.operations??{}).sort().join()!==[...entered].sort().join())throw Error('Original seed stage inventory missing or changed');
@@ -406,4 +410,81 @@ export async function runSepoliaLiquidityStage({plan:input,stage,store,ports,now
   await bindDeployment({from:step.from,nonce:step.nonce});const signed=await ports.sign(step);const {keccak256}=await import('ethers');const record={raw:signed.replace(/^0x/,''),hash:keccak256(signed)};
   if(!await matchSepoliaLiquiditySigned(record,step))throw rejected();await submit(record,()=>ports.broadcast(signed));
  }});
+}
+
+// Narrow resolution of the existing USDC approval, not a generic skip-list or
+// replacement engine. Original approval bytes and prefix journal stay immutable.
+export function captureSepoliaSeedResolution(input,originalInput){
+ const plan=captureSepoliaLiquidityPlan(originalInput),r=seedObject(input,['schemaVersion','originalPlanSha256','originalTransactionHash','expiresAt']);
+ if(r.schemaVersion!==1||r.originalPlanSha256!==createHash('sha256').update(JSON.stringify(plan)).digest('hex')||!/^0x[0-9a-f]{64}$/.test(r.originalTransactionHash)||!Number.isSafeInteger(r.expiresAt)||r.expiresAt<1||!plan.includeUsdcPool)throw rejected();
+ return Object.freeze(r);
+}
+const seedReconcile=(ports,step,record,cancellation=false)=>reconcileRollingEthereum({record,development:false,scope:'liquidity-seed',reads:{
+ signed:r=>matchSepoliaLiquiditySigned(r,step),receipt:h=>ports.receipt(h),block:n=>ports.block(n),head:tag=>ports.head(tag),
+ effect:(_r,a,r)=>cancellation?ports.cancellationEffect(step,a,r):ports.effect(step,a,r),
+}});
+async function inspectSeedResolution({plan:input,resolution:inputResolution,originalStore,store,ports}){
+ const plan=captureSepoliaLiquidityPlan(input),resolution=captureSepoliaSeedResolution(inputResolution,plan),steps=await sepoliaLiquidityTransactions(plan),index=steps.findIndex(s=>s.name==='approve-usdc');
+ const identity=JSON.stringify(plan),state=originalStore.read(),entered=state.seedLiquidity?.entered,original=state.operations?.['approve-usdc'];
+ if(state.seedLiquidity?.schemaVersion!==1||state.seedLiquidity.binding!==resolution.originalPlanSha256||!Array.isArray(entered)||entered.length!==index+1||entered.some((name,i)=>name!==steps[i].name)||Object.keys(state.operations??{}).sort().join()!==[...entered].sort().join())throw rejected();
+ for(const step of steps.slice(0,index+1)){
+  const record=state.operations[step.name];
+  if(record?.schemaVersion!==1||record.identity!==identity+':'+step.name||record.policy!=='reconcile-only'||record.phase!=='submission-unknown'||!await matchSepoliaLiquiditySigned(record,step))throw rejected();
+  if(step.name!=='approve-usdc'&&(await seedReconcile(ports,step,record)).status!=='succeeded')throw Error('Original finalized seed prefix unavailable');
+ }
+ if(original.hash!==resolution.originalTransactionHash)throw rejected();
+ const base=steps[index],bump=value=>String((BigInt(value)*120n+99n)/100n),step=Object.freeze({...base,to:plan.owner,data:'0x',value:'0',gasLimit:'21000',maxFeePerGas:bump(base.maxFeePerGas),maxPriorityFeePerGas:bump(base.maxPriorityFeePerGas)});
+ if(BigInt(step.maxFeePerGas)>5n*10n**9n||BigInt(step.maxFeePerGas)<=BigInt(base.maxFeePerGas)||BigInt(step.maxPriorityFeePerGas)<=BigInt(base.maxPriorityFeePerGas))throw rejected();
+ const cancellationIdentity=JSON.stringify(['SEPOLIA_SEED_CANCELLATION_V1',plan,resolution,step]),saved=store.read();
+ if(Object.keys(saved).some(k=>k!=='operations')||Object.keys(saved.operations??{}).some(k=>k!=='relay-funding'))throw rejected();
+ const retained=saved.operations?.['relay-funding'];
+ if(retained&&(retained.schemaVersion!==1||retained.policy!=='reconcile-only'||retained.identity!==cancellationIdentity||(retained.journalIdentity??retained.identity)!==cancellationIdentity||!['preparing','submission-unknown'].includes(retained.phase)))throw rejected();
+ if(retained?.phase==='submission-unknown'&&!await matchSepoliaLiquiditySigned(retained,step))throw rejected();
+ const originalResult=await seedReconcile(ports,base,original);
+ const cancellationResult=retained?await seedReconcile(ports,step,retained,true):{status:'unresolved',scope:'liquidity-seed',canonical:false};
+ if(originalResult.canonical&&cancellationResult.canonical)throw Error('Conflicting finalized nonce winners');
+ const result=originalResult.canonical?{...originalResult,winner:'original'}:cancellationResult.canonical?{...cancellationResult,winner:'cancellation'}:cancellationResult;
+ return {plan,resolution,steps,index,step,cancellationIdentity,retained,result};
+}
+export async function runSepoliaLiquidityCancellation(args){
+ const {store,ports,now=()=>Date.now()}=args,checked=await inspectSeedResolution(args);
+ const {plan,resolution,step,cancellationIdentity,retained,result}=checked;
+ if(result.canonical)return result;
+ if(retained)return result; // Even a preparing record without signed bytes is never replayed.
+ if(now()>=resolution.expiresAt*1000||resolution.expiresAt*1000-now()>86400000)throw rejected();
+ await ports.preflightCancellation(plan,step,resolution);
+ // Scope/current nonce may have changed while preflight was reading. Recheck
+ // both exact winners, then let signing's nonce and deadline checks close the gap.
+ const reread=await inspectSeedResolution(args);if(reread.result.canonical)return reread.result;
+ await onceAztecOperation({store,name:'relay-funding',identity:cancellationIdentity,scope:'liquidity-seed',reconcile:r=>seedReconcile(ports,step,r,true),execute:async({bindDeployment,submit})=>{
+  await bindDeployment({from:step.from,nonce:step.nonce,originalHash:resolution.originalTransactionHash});
+  const signed=await ports.sign(step),{keccak256}=await import('ethers'),record={raw:signed.replace(/^0x/,''),hash:keccak256(signed)};
+  if(!await matchSepoliaLiquiditySigned(record,step))throw rejected();await submit(record,()=>ports.broadcast(signed));
+ }});
+ return (await inspectSeedResolution(args)).result;
+}
+export async function resolveSepoliaSeedNonce(args){return (await inspectSeedResolution(args)).result;}
+export function captureSepoliaSeedContinuationPlan(nextInput,originalInput){
+ const plan=captureSepoliaLiquidityPlan(nextInput),original=captureSepoliaLiquidityPlan(originalInput);
+ const mutable=new Set(['campaign','ownerNonce','expiresAt','cleanupExpiresAt','gasLimits','maxFeePerGas','maxPriorityFeePerGas']);
+ for(const key of Object.keys(original))if(!mutable.has(key)&&JSON.stringify(plan[key])!==JSON.stringify(original[key]))throw rejected();
+ if(plan.campaign===original.campaign||!Number.isSafeInteger(original.ownerNonce+2)||plan.ownerNonce!==original.ownerNonce+2||plan.expiresAt<=original.expiresAt)throw rejected();
+ return plan;
+}
+export async function runSepoliaLiquidityContinuation({plan:input,resolution,originalStore,cancellationStore,remainingPlan:nextInput,stage,store,ports,now=()=>Date.now()}){
+ const checked=await inspectSeedResolution({plan:input,resolution,originalStore,store:cancellationStore,ports});
+ if(checked.result.status!=='succeeded'||!checked.result.canonical)throw Error('Finalized original nonce winner required');
+ const plan=captureSepoliaSeedContinuationPlan(nextInput,checked.plan),original=checked.plan;
+ let nonce=plan.ownerNonce;
+ const steps=Object.freeze((await sepoliaLiquidityTransactions(plan)).filter(s=>!['inventory-usdc','inventory-eth','approve-fee'].includes(s.name)&&(checked.result.winner==='cancellation'||s.name!=='approve-usdc')).map(s=>Object.freeze({...s,nonce:nonce++})));
+ if(!steps.some(s=>s.name===stage))throw rejected();
+ const identity=JSON.stringify(['SEPOLIA_SEED_REMAINING_V1',original,checked.resolution,checked.result.winner,checked.result.transactionHash,plan]);
+ if(!Number.isSafeInteger(nonce))throw rejected();
+ const initial=!store.read().seedLiquidity;
+ if(initial&&(now()>=plan.expiresAt*1000||plan.expiresAt*1000-now()>86400000))throw rejected();
+ const wrapped={...ports,preflight:async(p,step,all)=>{
+  if(step===steps[0])await ports.preflightContinuation(p,checked.result.winner);
+  return ports.preflight(p,step,all);
+ }};
+ return runSepoliaSeedSteps({plan,steps,identity,stage,store,ports:wrapped,now});
 }
