@@ -11,8 +11,8 @@ import { fileURLToPath } from 'node:url';
 // Cursor/root/validator source is opt-in; whole cold recovery remains unqualified.
 const sha = value => createHash('sha256').update(value).digest('hex');
 export const PREFERENCE_PAGE_PINS = Object.freeze([
-  Object.freeze({path:'src/pxe.ts', before:'514cf7905733732522db9f301437d9ec5a1fd3b4a5ee3939980f76ffb4396ebd', after:'0349e8ed792382a5094389b468424189cb277e432a35a49fcbe0f89d3dbe4040'}),
-  Object.freeze({path:'dest/pxe.js', before:'94d98c0a13a0d6a2724ecf03f790461e13328b8aebac3d243f373e982d76a360', after:'f4eb9e01004d2959c0eea908b36bf81a3719b581dd0e069815d3a21c5357820b'}),
+  Object.freeze({path:'src/pxe.ts', before:'514cf7905733732522db9f301437d9ec5a1fd3b4a5ee3939980f76ffb4396ebd', after:'7247725291539583344c11d3d865f3cceb8cc0ea6e0f87e3e0c1c35024b36fd7'}),
+  Object.freeze({path:'dest/pxe.js', before:'94d98c0a13a0d6a2724ecf03f790461e13328b8aebac3d243f373e982d76a360', after:'9ee9438a134ad3b4deaddf49ca1e6f8d9097e1a4bacc534f9ad845417d5be9a2'}),
   // rc3 adds queue-pressure timing and warnings; the transform preserves them.
   Object.freeze({path:'src/operation_queue.ts', before:'a78c45878393d8713fdce1de1cda326ec3af6772b092215c8096044d3ab61246', after:'d46768a384214ea5786a60e83b3c417fd788547904cf65f1a0c756616b91d5db'}),
   Object.freeze({path:'dest/operation_queue.js', before:'f8856a4145c38e831d077bc33c5e67f778ea1ad367b3ff93c486175d4c9019b6', after:'a2373a39553acc1ffc6f4cf9be0cc6eb07cefdb033881492601dd92abd15e360'}),
@@ -30,6 +30,9 @@ import { BaseStagingStore } from './dest/storage/base_staging_store.js';
 import { Fr } from '@aztec-labs/foundation/curves/bn254';
 import { AztecAddress } from '@aztec-labs/stdlib/aztec-address';
 import { BlockHeader } from '@aztec-labs/stdlib/tx';
+import { BlockHash } from '@aztec-labs/stdlib/block';
+import { ARCHIVE_HEIGHT } from '@aztec-labs/constants';
+import { computeMerkleHash } from '@aztec-labs/stdlib/hash';
 import { FunctionType } from '@aztec-labs/stdlib/abi';
 import { SerializableContractInstance,computeContractAddressFromInstance,computeArtifactHash,getContractClassFromArtifact } from '@aztec-labs/stdlib/contract';
 import { authenticateCompactBlock } from './rolling-preference-compact.mjs';
@@ -51,6 +54,38 @@ function exact(x,keys){check(x&&Object.getPrototypeOf(x)===Object.prototype);con
 function hex(x,zero=false,width=64){check(typeof x==='string'&&new RegExp('^0x[0-9a-f]{'+width+'}$').test(x));if(width===64)check(BigInt(x)<Fr.MODULUS);check(zero||BigInt(x)>0n);return x;}
 function integer(x,max=0xffffffff,min=0){check(Number.isSafeInteger(x)&&x>=min&&x<=max);return x;}
 function fields(x,max,min=0){check(Array.isArray(x));const len=Object.getOwnPropertyDescriptor(x,'length')?.value;integer(len,max,min);const out=[];for(let i=0;i<len;i++){const d=Object.getOwnPropertyDescriptor(x,String(i));check(d&&'value'in d);out.push(hex(d.value,true));}return out;}
+// Immutable historical membership is authenticated once per bounded queue frame.
+// This does NOT establish current canonicality: callers retain fresh anchor,
+// network and contract checks at entry and both original commit boundaries.
+export function createRollingPreferenceArchive(node,anchorHeader,guard){
+ const anchor=BlockHeader.fromBuffer(BlockHeader.prototype.toBuffer.call(anchorHeader)),proofs=new Map();
+ return async(number,hash,headerFields)=>{
+  integer(number,anchor.getBlockNumber(),1);hex(hash);const captured=fields(headerFields,23,23);
+  const header=BlockHeader.fromFields(captured.map(Fr.fromString));
+  check(header.getBlockNumber()===number&&(await header.hash()).toString()===hash);
+  check(header.globalVariables.chainId.equals(anchor.globalVariables.chainId)&&header.globalVariables.version.equals(anchor.globalVariables.version));
+  await guard();
+  if(number===anchor.getBlockNumber()){check((await anchor.hash()).toString()===hash);return header;}
+  const key=number+':'+hash;
+  if(!proofs.has(key)){
+   check(proofs.size<32);
+   proofs.set(key,(async()=>{
+    const witness=await node.getBlockHashMembershipWitness(await anchor.toBlockParameter(),BlockHash.fromString(hash));
+    await guard();
+    const index=Object.getOwnPropertyDescriptor(witness??{},'leafIndex')?.value,siblings=Object.getOwnPropertyDescriptor(witness??{},'siblingPath')?.value;
+    check(typeof index==='bigint'&&index===BigInt(number)&&index<BigInt(anchor.lastArchive.nextAvailableLeafIndex));
+    check(Array.isArray(siblings)&&siblings.length===ARCHIVE_HEIGHT&&ARCHIVE_HEIGHT===30);
+    // Snapshot every SDK field before the first hash await; no mutable proof
+    // object can change the authenticated path while verification yields.
+    const path=Array.from({length:ARCHIVE_HEIGHT},(_,i)=>{const d=Object.getOwnPropertyDescriptor(siblings,String(i));check(d&&'value'in d&&d.value instanceof Fr);return Fr.fromBuffer(Fr.prototype.toBuffer.call(d.value));});
+    let value=Fr.fromString(hash),position=index;
+    for(const sibling of path){value=position&1n?await computeMerkleHash(sibling,value):await computeMerkleHash(value,sibling);position>>=1n;}
+    check(position===0n&&value.equals(anchor.lastArchive.root));await guard();
+   })());
+  }
+  await proofs.get(key);await guard();return header;
+ };
+}
 function snapshot(input,options){
  const p=exact(input,['contractAddress','scope','expectedClassId','expectedArtifactHash','network','proofsEnabled','tier','expected','block','restart']);
  for(const k of ['contractAddress','scope','expectedClassId','expectedArtifactHash'])hex(p[k]);
@@ -98,6 +133,7 @@ export async function runRollingPreferenceRecovery(pxe,input,options){
   return await pxe.operationQueue.runSynced(async context=>{
    const frame={...context,validators:[]};
    const anchor=BlockHeader.fromBuffer(BlockHeader.prototype.toBuffer.call(context.anchorBlockHeader));
+   frame.archive=createRollingPreferenceArchive(pxe.node,anchor,guard);
    const anchorRecord={blockNumber:anchor.getBlockNumber(),blockHash:(await anchor.hash()).toString()};
    let canonicalPending=null;
    const canonicalSnapshot=async()=>{
@@ -127,7 +163,7 @@ export async function runRollingPreferenceRecovery(pxe,input,options){
    const {meta,state:loaded}=await binding.store.load(key,context.changeSetId);
    await guard();
    const authenticate=async(block,register=validate=>frame.validators.push(validate))=>{
-    const checkBlock=async()=>{await canonical();const raw=await pxe.node.getBlockData(block.blockNumber);check(raw&&raw.blockHash.toString()===block.blockHash);const h=BlockHeader.fromBuffer(BlockHeader.prototype.toBuffer.call(raw.header));check((await h.hash()).toString()===block.blockHash&&h.toFields().every((f,i)=>f.toString()===block.headerFields[i]));await guard();return true;};
+    const checkBlock=async()=>{await frame.archive(block.blockNumber,block.blockHash,block.headerFields);await guard();return true;};
     const verified=await authenticateCompactBlock({fields:block.fields,headerFields:block.headerFields,expectedBlockHash:block.blockHash,assertCanonical:checkBlock});register(checkBlock);check(verified.blockNumber===block.blockNumber);return verified;
    };
    const ingest=async(block,first,logCount)=>{
@@ -249,12 +285,12 @@ export async function runRollingPreferenceRecovery(pxe,input,options){
  }catch{throw Error('PXE_PREFERENCE_RECOVERY_FAILED');}
 }
 `; }
-export const PREFERENCE_PAGE_RECOVERY_PIN = Object.freeze({generated:'rolling-preference-recovery.mjs',sha256:'44ff91fded24333cf5b7d9b1702abafb21f523d628d3ac41eb3bd3e5deac81a2'});
+export const PREFERENCE_PAGE_RECOVERY_PIN = Object.freeze({generated:'rolling-preference-recovery.mjs',sha256:'ee77680e4b571d035642c47695d9066b5166cb226950932181f531b31fccf87f'});
 function imports() { return `
 // @ts-ignore Exact reviewed JavaScript module is copied by the pinned installer.
 import { authenticateCompactBlock as rollingPageCompact } from '../rolling-preference-compact.mjs';
 // @ts-ignore Exact isolated generated helper; no public manual store authority.
-import { RollingPreferenceRecoveryStore, bindRollingPreferenceRecovery, runRollingPreferenceRecovery, rollingPreferenceReadBatch } from '../rolling-preference-recovery.mjs';
+import { RollingPreferenceRecoveryStore, bindRollingPreferenceRecovery, runRollingPreferenceRecovery, rollingPreferenceReadBatch, createRollingPreferenceArchive } from '../rolling-preference-recovery.mjs';
 import { SiblingPath as RollingPageSiblingPath } from '@aztec-labs/foundation/trees';
 import { Fr as RollingPageFr } from '@aztec-labs/foundation/curves/bn254';
 import { AztecAddress as RollingPageAddress } from '@aztec-labs/stdlib/aztec-address';
@@ -351,16 +387,17 @@ function method(ts) {
         const anchor = RollingPageHeader.fromBuffer(RollingPageHeader.prototype.toBuffer.call(anchorBlockHeader));
         const anchorHash = (await anchor.hash()).toString();
         check(p.blockNumber <= anchor.getBlockNumber());
+        const archive = frame?.archive ?? createRollingPreferenceArchive(this.node,anchor,guard);
         const canonical = async () => {
           const info = await this.node.getNodeInfo();
           check(info.l1ChainId === p.network.chainId && info.rollupVersion === p.network.version &&
             info.l1ContractAddresses.rollupAddress.toString().toLowerCase() === p.network.rollup && info.realProofs === p.proofsEnabled);
           // NUMBER reads are deliberately uncached: hash-pinned history alone is
           // insufficient to establish that a previously observed fork is current.
-          const coordinates = [[anchor.getBlockNumber(), anchorHash], [p.blockNumber, p.blockHash]];
+          const coordinates = [[anchor.getBlockNumber(), anchorHash]];
           const parameter = await anchor.toBlockParameter();
-          // Keep both observations, even at the same height. No check is reused
-          // across utility, contributor settlement or final commit boundaries.
+          // Refresh the canonical anchor at every utility/settlement/commit
+          // boundary. Historical membership is immutable under that anchor.
           const values = await rollingPreferenceReadBatch([
             ...coordinates.map(([number]) => async () => {
               const data = await this.node.getBlockData(BlockNumber(number));
@@ -379,10 +416,11 @@ function method(ts) {
               h.globalVariables.chainId.toBigInt() === BigInt(p.network.chainId) &&
               h.globalVariables.version.toBigInt() === BigInt(p.network.version));
           }
-          const instance = values[2];
+          const instance = values[1];
           check(instance.currentContractClassId.equals(classId) &&
             instance.originalContractClassId.equals(classId) &&
             (await computeContractAddressFromInstance(instance)).equals(address));
+          await archive(p.blockNumber,p.blockHash,p.headerFields);
           await guard();
         };
         await canonical();
@@ -436,9 +474,7 @@ function method(ts) {
         const effect = RollingPageEffect.fromBuffer(bytes);
         check(receiptFields.transactionFee === effect.transactionFee.toBigInt() &&
           receiptFields.executionResult === (effect.revertCode.isOK() ? 'success' : 'reverted'));
-        const metadata = await this.node.getBlockData(BlockNumber(p.blockNumber));
-        check(metadata && metadata.blockHash.toString() === p.blockHash);
-        const header = RollingPageHeader.fromBuffer(RollingPageHeader.prototype.toBuffer.call(metadata${t('!')}.header));
+        const header = await archive(p.blockNumber,p.blockHash,p.headerFields);
         check((await header.hash()).toString() === p.blockHash && header.globalVariables.slotNumber === receiptFields.slotNumber);
         const witness = await this.node.getTxEffectMembershipWitness(txHash);
         check(witness && witness.blockNumber === p.blockNumber && witness.root.equals(header.txEffectsTreeRoot));

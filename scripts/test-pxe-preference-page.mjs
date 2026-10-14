@@ -351,14 +351,14 @@ if(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1') {
   const {AztecAddress}=await import('@aztec-labs/stdlib/aztec-address');
   const {BlockHash,Body,L2Block}=await import('@aztec-labs/stdlib/block');
   const {AppendOnlyTreeSnapshot}=await import('@aztec-labs/stdlib/trees');
-  const {SiblingPath}=await import('@aztec-labs/foundation/trees');
+  const {SiblingPath,MembershipWitness}=await import('@aztec-labs/foundation/trees');
   const {PrivateLog}=await import('@aztec-labs/stdlib/logs');
   const {RevertCode}=await import('@aztec-labs/stdlib/avm');
   const constants=await import('@aztec-labs/constants');
   const {authenticateCompactBlock}=await import('../shared/rolling/compact-block.mjs');
   const {BlockHeader,TxHash,TxEffect,MinedTxReceipt,computeTxEffectMembershipWitness,verifyTxEffectMembershipWitness}=await import('@aztec-labs/stdlib/tx');
   const {EventSelector}=await import('@aztec-labs/stdlib/abi');
-  const {computePrivateEventCommitment,siloNullifier}=await import('@aztec-labs/stdlib/hash');
+  const {computePrivateEventCommitment,siloNullifier,computeMerkleHash}=await import('@aztec-labs/stdlib/hash');
   const {BarretenbergSync}=await import('@aztec-foundation/bb.js');
   const imp=p=>import(pathToFileURL(join(installed,'dest',p)));
   const pristineQueueDirectory=await realpath(await mkdtemp(join(root,'.build/preference-page-pristine-queue-')));
@@ -383,7 +383,7 @@ if(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1') {
   await restorePristineCopy(recoveryDirectory);
   await patchPreferencePage(recoveryDirectory);
   const patchedImp=p=>import(pathToFileURL(join(recoveryDirectory,'dest',p)));
-  const {RollingPreferenceRecoveryStore,bindRollingPreferenceRecovery,runRollingPreferenceRecovery,rollingPreferenceReadBatch}=await import(pathToFileURL(join(recoveryDirectory,PREFERENCE_PAGE_RECOVERY_PIN.generated)));
+  const {RollingPreferenceRecoveryStore,bindRollingPreferenceRecovery,runRollingPreferenceRecovery,rollingPreferenceReadBatch,createRollingPreferenceArchive}=await import(pathToFileURL(join(recoveryDirectory,PREFERENCE_PAGE_RECOVERY_PIN.generated)));
   const {NoteStore:RecoveryNoteStore}=await patchedImp('storage/note_store/note_store.js');
   const {NoteDao,NoteStatus}=await import('@aztec-labs/stdlib/note');
   const {BlockSynchronizer}=await imp('block_synchronizer/block_synchronizer.js');
@@ -529,7 +529,7 @@ if(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1') {
     // Only class registry / ACIR are labelled doubles here. Actual effect/root,
     // whole ordered compact verifier, generated method, EventService and stores
     // run unchanged. Candidate-ABI ACIR remains a separate mandatory test.
-    const bindings={rollingPreferenceReadBatch,RollingPageFr:Fr,RollingPageAddress:AztecAddress,RollingPageTxHash:TxHash,RollingPageBlockHash:BlockHash,
+    const bindings={rollingPreferenceReadBatch,createRollingPreferenceArchive,RollingPageFr:Fr,RollingPageAddress:AztecAddress,RollingPageTxHash:TxHash,RollingPageBlockHash:BlockHash,
       RollingPageHeader:BlockHeader,RollingPageEffect:TxEffect,RollingPageReceipt:MinedTxReceipt,RollingPageSiblingPath:SiblingPath,
       rollingPageVerifyWitness:verifyTxEffectMembershipWitness,rollingPageCompact:authenticateCompactBlock,
       rollingPageArtifactHash:async()=>Fr.fromString(p.expectedArtifactHash),rollingPageClass:async()=>({id:Fr.fromString(p.expectedClassId)}),
@@ -621,12 +621,25 @@ if(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1') {
       const partialAddress=new Fr(552);let header=BlockHeader.empty();
       header.globalVariables.blockNumber=2;header.globalVariables.chainId=new Fr(31337);header.globalVariables.version=new Fr(1);
       const initialHeader=BlockHeader.fromBuffer(header.toBuffer());
-      let block,effect,canonicalChanged=false;const counters={tagQueries:0,tagResults:0,unexpectedCalls:0};
-      const emptyHistory=new Map(),mined=new Map(),omittedNullifiers=new Set();
+      let block,effect,canonicalChanged=false;const counters={tagQueries:0,tagResults:0,unexpectedCalls:0,archiveProofs:0};
+      const emptyHistory=new Map(),mined=new Map(),omittedNullifiers=new Set(),archiveFixtures=new Map();
+      // Synthetic chain, genuine official archive hashing. Include genesis at
+      // leaf0; each later leaf index is exactly its physical block number.
+      async function archiveAt(number){
+        const leaves=[Fr.ZERO];for(let n=1;n<number;n++)leaves.push(Fr.fromBuffer((await (await historyBlock(n)).header.hash()).toBuffer()));
+        const key=leaves.map(x=>x.toString()).join(':');if(archiveFixtures.has(key))return archiveFixtures.get(key);
+        let level=new Map(leaves.map((x,i)=>[i,x])),zero=Fr.ZERO;const paths=leaves.map(()=>[]);
+        for(let depth=0;depth<30;depth++){
+          for(let i=0;i<leaves.length;i++)paths[i].push(level.get((i>>depth)^1)??zero);
+          const parents=new Map();for(const index of new Set([...level.keys()].map(i=>Math.floor(i/2))))parents.set(index,await computeMerkleHash(level.get(index*2)??zero,level.get(index*2+1)??zero));
+          level=parents;zero=await computeMerkleHash(zero,zero);
+        }
+        const value={root:level.get(0),leaves,paths};archiveFixtures.set(key,value);return value;
+      }
       async function historyBlock(number){
         if(number===header.getBlockNumber()){assert(block);return block;}
         assert(Number.isSafeInteger(number)&&number>0&&number<header.getBlockNumber(),'Unexpected synthetic history selector');
-        if(!emptyHistory.has(number)){const h=BlockHeader.empty();h.globalVariables.chainId=new Fr(31337);h.globalVariables.version=new Fr(1);h.globalVariables.blockNumber=number;const body=new Body([]);h.txEffectsTreeRoot=await body.computeTxEffectsTreeRoot();emptyHistory.set(number,new L2Block(AppendOnlyTreeSnapshot.empty(),h,body,1,0));}
+        if(!emptyHistory.has(number)){const h=BlockHeader.empty();h.globalVariables.chainId=new Fr(31337);h.globalVariables.version=new Fr(1);h.globalVariables.blockNumber=number;h.lastArchive=new AppendOnlyTreeSnapshot((await archiveAt(number)).root,number);const body=new Body([]);h.txEffectsTreeRoot=await body.computeTxEffectsTreeRoot();emptyHistory.set(number,new L2Block(AppendOnlyTreeSnapshot.empty(),h,body,1,0));}
         return emptyHistory.get(number);
       }
       // Labelled chain transport only: expose genuine simulated ciphertexts
@@ -674,6 +687,7 @@ if(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1') {
         getNodeInfo:async()=>({l1ChainId:31337,rollupVersion:1,realProofs:false,l1ContractAddresses:{rollupAddress:{toString:()=>request().network.rollup}}}),
         getContract:async address=>{const value=instances.get(address.toString());assert(value,'Unexpected synthetic contract');return value;},
         getBlockData:async number=>{const h=number===header.getBlockNumber()?header:(await historyBlock(number)).header;return {header:h,blockHash:canonicalChanged?BlockHash.random():await h.hash()};},
+        getBlockHashMembershipWitness:async(reference,hash)=>{counters.archiveProofs++;assert.equal(reference.hash.toString(),(await header.hash()).toString());const a=await archiveAt(header.getBlockNumber());assert(a.root.equals(header.lastArchive.root));const index=a.leaves.findIndex(x=>x.toString()===hash.toString());return index<0?undefined:new MembershipWitness(30,BigInt(index),a.paths[index].map(x=>Fr.fromBuffer(x.toBuffer())));},
         getBlock:async()=>block,
         findLeavesIndexes:async(_anchor,tree,values)=>{
           assert([MerkleTreeId.NULLIFIER_TREE,MerkleTreeId.NOTE_HASH_TREE].includes(tree));
@@ -715,7 +729,7 @@ if(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1') {
           stagedWriteCoordinator:new StagedWriteCoordinator({kvStore:db,stagedStores}),contributors:[syncService,...(contributor?[contributor]:[])],autoSync:false,log});
         queue.start();
         const output=transformPreferencePage(source['dest/pxe.js'],'dest/pxe.js'),start=output.indexOf('async processRollingPreferencePage'),end=output.indexOf('/**\n   * Executes a contract utility',start);
-        const bindings={rollingPreferenceReadBatch,RollingPageFr:Fr,RollingPageAddress:AztecAddress,RollingPageTxHash:TxHash,RollingPageBlockHash:BlockHash,
+        const bindings={rollingPreferenceReadBatch,createRollingPreferenceArchive,RollingPageFr:Fr,RollingPageAddress:AztecAddress,RollingPageTxHash:TxHash,RollingPageBlockHash:BlockHash,
           RollingPageHeader:BlockHeader,RollingPageEffect:TxEffect,RollingPageReceipt:MinedTxReceipt,RollingPageSiblingPath:SiblingPath,
           rollingPageVerifyWitness:verifyTxEffectMembershipWitness,rollingPageCompact:authenticateCompactBlock,
           rollingPageArtifactHash:computeArtifactHash,rollingPageClass:getContractClassFromArtifact,
@@ -766,7 +780,7 @@ if(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1') {
       // BlockHeader.hash caches; never mutate an already hashed header into a
       // different canonical block. This copy has no cached hash.
       header=BlockHeader.fromBuffer(header.toBuffer());
-      header.globalVariables.blockNumber=4;const body=new Body([effect]);header.txEffectsTreeRoot=await body.computeTxEffectsTreeRoot();
+      header.globalVariables.blockNumber=4;header.lastArchive=new AppendOnlyTreeSnapshot((await archiveAt(4)).root,4);const body=new Body([effect]);header.txEffectsTreeRoot=await body.computeTxEffectsTreeRoot();
       block=new L2Block(AppendOnlyTreeSnapshot.empty(),header,body,1,0);mined.set(effect.txHash.toString(),{effect,block});
       const input={...request(),contractAddress:board.toString(),scope:sender.complete.address.toString(),
         expectedClassId:contractClass.id.toString(),expectedArtifactHash:artifactHash.toString(),blockNumber:4,
@@ -819,6 +833,7 @@ if(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1') {
         },
         async appendEmpty(){
           emptyHistory.set(header.getBlockNumber(),block);header=BlockHeader.fromBuffer(header.toBuffer());header.globalVariables.blockNumber++;
+          header.lastArchive=new AppendOnlyTreeSnapshot((await archiveAt(header.getBlockNumber())).root,header.getBlockNumber());
           const body=new Body([]);header.txEffectsTreeRoot=await body.computeTxEffectsTreeRoot();block=new L2Block(AppendOnlyTreeSnapshot.empty(),header,body,1,0);
         },
         // Real ACIR revision 1 -> 2 over the previously validated head. Chain
@@ -843,6 +858,7 @@ if(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1') {
           const next=new TxEffect(RevertCode.OK,TxHash.fromBigInt(554n),Fr.ZERO,data.noteHashes.filter(x=>!x.isZero()),data.nullifiers.filter(x=>!x.isZero()),[],[],data.privateLogs.filter(x=>!x.isEmpty()),[],[]);
           assert(next.nullifiers.some(value=>value.equals(oldHead.siloedNullifier)),'Second actual revision must consume original head');
           emptyHistory.set(4,block);header=BlockHeader.fromBuffer(header.toBuffer());header.globalVariables.blockNumber=5;
+          header.lastArchive=new AppendOnlyTreeSnapshot((await archiveAt(5)).root,5);
           const body=new Body([next]);header.txEffectsTreeRoot=await body.computeTxEffectsTreeRoot();block=new L2Block(AppendOnlyTreeSnapshot.empty(),header,body,1,0);mined.set(next.txHash.toString(),{effect:next,block});
           return {oldNullifier:oldHead.siloedNullifier.toString(),omitOldSpend(){omittedNullifiers.add(oldHead.siloedNullifier.toString());}};
         },
@@ -1016,7 +1032,7 @@ if(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1') {
         let timer;
         try{
           await Promise.race([entered.promise,new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('Grouped peer did not start')),1000);})]);
-          assert.equal(reads,kind==='page'?2:1);assert.equal(finished,false);
+          assert.equal(reads,1);assert.equal(finished,false);
           const later=r.queue.runSynced(()=>{following=true;return 1;});
           await new Promise(resolve=>setImmediate(resolve));assert.equal(following,false);
           gate.resolve();const result=await observed;assert.match(result.error?.message,/PXE_PREFERENCE_(PAGE|RECOVERY)_FAILED/);assert.equal(await later,1);
@@ -1049,10 +1065,18 @@ if(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1') {
       const blocks=await Promise.all([1,2,3].map(n=>f.compact(n))),base={...recoveryInput(f),expected:{epoch:start.epoch,sequence:start.sequence}};
       for(const block of [[blocks[0],blocks[2]],[blocks[0],{...blocks[1],blockHash:hex(999)}],[...blocks,await f.compact(4)]])await assert.rejects(r.page.processRollingPreferenceRecovery({...base,block},{contextGuard:async()=>{}}),/PXE_PREFERENCE_RECOVERY_FAILED/);
       assert.deepEqual(await r.page.processRollingPreferenceRecovery(recoveryInput(f),{contextGuard:async()=>{}}),start);
-      const original=r.page.node.getBlockData;let middleReads=0,abort=false;
-      for(const failure of ['middle reorg before commit','account invalidation']){
-       r.page.node.getBlockData=async(...args)=>{const value=await original(...args);if(args[0]===2){middleReads++;if(failure==='account invalidation')abort=true;if(failure==='middle reorg before commit'&&middleReads>=3){const header=BlockHeader.fromBuffer(value.header.toBuffer());header.globalVariables.timestamp++;return {...value,header,blockHash:await header.hash()};}}return value;};
-       try{await assert.rejects(r.page.processRollingPreferenceRecovery({...base,block:blocks},{contextGuard:async()=>{if(abort)throw Error('labelled aborted account');}}),/PXE_PREFERENCE_RECOVERY_FAILED/);}finally{r.page.node.getBlockData=original;abort=false;middleReads=0;}
+      const original=r.page.node.getBlockData,originalWitness=r.page.node.getBlockHashMembershipWitness;let anchorReads=0,abort=false;
+      for(const failure of ['anchor reorg first commit','anchor reorg final commit','account invalidation','missing middle witness','wrong middle root','wrong middle index','short middle path','middle path accessor']){
+       r.page.node.getBlockData=async(...args)=>{const value=await original(...args);if(args[0]===4&&++anchorReads>=(failure==='anchor reorg first commit'?2:3)&&failure.startsWith('anchor reorg')){const header=BlockHeader.fromBuffer(value.header.toBuffer());header.globalVariables.timestamp++;return {...value,header,blockHash:await header.hash()};}return value;};
+       r.page.node.getBlockHashMembershipWitness=async(...args)=>{const witness=await originalWitness(...args);if(witness?.leafIndex===2n){
+        if(failure==='account invalidation')abort=true;
+        if(failure==='missing middle witness')return undefined;
+        if(failure==='wrong middle root')witness.siblingPath[0]=new Fr(999);
+        if(failure==='wrong middle index')witness.leafIndex=1n;
+        if(failure==='short middle path')witness.siblingPath.pop();
+        if(failure==='middle path accessor')Object.defineProperty(witness.siblingPath,'0',{get(){throw Error('must not invoke proof accessor');}});
+       }return witness;};
+       try{await assert.rejects(r.page.processRollingPreferenceRecovery({...base,block:blocks},{contextGuard:async()=>{if(abort)throw Error('labelled aborted account');}}),/PXE_PREFERENCE_RECOVERY_FAILED/);}finally{r.page.node.getBlockData=original;r.page.node.getBlockHashMembershipWitness=originalWitness;abort=false;anchorReads=0;}
        assert.deepEqual(await r.page.processRollingPreferenceRecovery(recoveryInput(f),{contextGuard:async()=>{}}),start);
       }
       const originalInfo=r.page.node.getNodeInfo;
@@ -1061,9 +1085,9 @@ if(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1') {
        try{await assert.rejects(r.page.processRollingPreferenceRecovery({...base,block:blocks},{contextGuard:async()=>{}}),/PXE_PREFERENCE_RECOVERY_FAILED/);}finally{r.page.node.getNodeInfo=originalInfo;}
        assert.deepEqual(await r.page.processRollingPreferenceRecovery(recoveryInput(f),{contextGuard:async()=>{}}),start);
       }
-      let infoReads=0;const physicalReads=new Map();r.page.node.getNodeInfo=async()=>{infoReads++;return originalInfo();};r.page.node.getBlockData=async(...args)=>{if(args[0]<=3)physicalReads.set(args[0],(physicalReads.get(args[0])??0)+1);return original(...args);};
-      let next;try{next=await r.page.processRollingPreferenceRecovery({...base,block:blocks},{contextGuard:async()=>{}});}finally{r.page.node.getNodeInfo=originalInfo;r.page.node.getBlockData=original;}
-      assert(infoReads>=7&&infoReads<=9,'Concurrent scope reads coalesce while later authentication and both commit boundaries remain fresh: '+infoReads);for(const n of [1,2,3])assert.equal(physicalReads.get(n),4,'Both authentication checks and both commit passes still verify each physical block');
+      let infoReads=0;const physicalReads=new Map(),witnessReads=new Map();r.page.node.getNodeInfo=async()=>{infoReads++;return originalInfo();};r.page.node.getBlockData=async(...args)=>{if(args[0]<=3)physicalReads.set(args[0],(physicalReads.get(args[0])??0)+1);return original(...args);};r.page.node.getBlockHashMembershipWitness=async(...args)=>{const witness=await originalWitness(...args);witnessReads.set(Number(witness.leafIndex),(witnessReads.get(Number(witness.leafIndex))??0)+1);return witness;};
+      let next;try{next=await r.page.processRollingPreferenceRecovery({...base,block:blocks},{contextGuard:async()=>{}});}finally{r.page.node.getNodeInfo=originalInfo;r.page.node.getBlockData=original;r.page.node.getBlockHashMembershipWitness=originalWitness;}
+      assert.equal(infoReads,3,'Initial and both commit boundaries retain fresh scope checks');for(const n of [1,2,3]){assert.equal(physicalReads.get(n)??0,0,'Archive proof replaces redundant historical number reads');assert.equal(witnessReads.get(n),1,'Immutable membership verified once per block and queue frame');}
       assert.equal(next.nextBlock,4);assert.equal(next.sequence,1);assert.deepEqual(next.records,[]);assert.equal(next.complete,false);assert.equal(r.page.acirCompleted??0,0);
       assert.deepEqual(await r.page.processRollingPreferenceRecovery({...base,block:blocks},{contextGuard:async()=>{}}),next);
       const withRecord=await recoveryStep(f,r,next),complete=await recoveryStep(f,r,withRecord);assert.equal(withRecord.records.length,1);assert.equal(complete.complete,true);assert.equal(complete.head.revision,'1');assert.equal(f.counters.tagQueries,f.tagsBefore);
@@ -1145,7 +1169,7 @@ if(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1') {
       const history=await f.extendRevision(),before=r.page.acirCompleted,tags=f.counters.tagQueries;
       const status=await r.page.processRollingPreferenceRecovery(recoveryInput(f),{contextGuard:async()=>{}});
       assert.deepEqual(status.head,old.head);assert.equal(status.advance.anchor.blockNumber,5);assert.equal(status.advance.headPage.blockNumber,4);
-      const promoted=await promoteCursor(f,r,status);assert.equal(r.page.acirCompleted,before+1);assert.equal(f.counters.tagQueries,tags);
+      const proofCalls=f.counters.archiveProofs,promoted=await promoteCursor(f,r,status);assert.equal(r.page.acirCompleted,before+1);assert.equal(f.counters.tagQueries,tags);assert.equal(f.counters.archiveProofs-proofCalls,1,'Normal historical page authenticates one archive witness across both commit boundaries');
       assert.equal(promoted.sequence,0);assert.notEqual(promoted.epoch,old.epoch);assert.equal(promoted.nextBlock,5);assert.deepEqual(promoted.records,[]);assert.equal(promoted.complete,false);
       assert.deepEqual(promoted.previous,{database:old.database,epoch:old.epoch,sequence:old.sequence,anchor:old.anchor,head:old.head});
       assert.equal(await r.db.openMap('note_nullifications_by_nullifier').getAsync(history.oldNullifier),5,'Original validator refreshes former nullifier at new anchor');
