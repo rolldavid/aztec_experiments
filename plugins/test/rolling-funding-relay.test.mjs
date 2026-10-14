@@ -75,3 +75,39 @@ test('durable gas reservation without a plan file remains unresolved after resta
  await fs.writeFile(file,JSON.stringify({...budget,activePlan:h(90),reservedGasWei:'1000'}));const reopened=await f.open();
  assert.equal((await reopened.status(h(90))).status,'unresolved');assert.equal((await reopened.status(h(91))).status,'absent');await assert.rejects(reopened.submit(f.input));assert.equal(f.state.sends,0);await reopened.close();
 });
+
+// Development composition uses the same real relay factory above; these checks
+// isolate only admission and lifecycle ordering, without a node or payment.
+async function developmentRelayFixture(t){
+ const f=await fixture(t),directory=await fs.realpath(f.directory),signerFile=path.join(directory,'signer.json');
+ await fs.writeFile(signerFile,JSON.stringify({ethereumKey:h(1)}),{mode:0o600});
+ const policy=f.config,scope=Object.fromEntries(['chainId','router','routerCodeHash','collateralPortal','feePortal','bokPortal','privateFpc','weth','quoter','quoterCodeHash','usdcCodeHash','usdcImplementation','usdcImplementationCodeHash'].map(k=>[k,policy[k]]));
+ Object.assign(scope,{bokToken:policy.usdc,usdcRelayAddress:policy.relayer});
+ const input={ethereumUrl:'http://127.0.0.1:18545/',signerFile,stateDirectory:path.join(directory,'service'),policy};
+ const value={fundingRelayConfig:input,walletConfig:{config:{network:{chainId:'31337',ethRpcUrl:input.ethereumUrl},aggregateFunding:scope}}};
+ let opens=0,closes=0;
+ return {directory,value,scope,input,open:async c=>{assert.equal(c,input);opens++;return {terms(){throw Error('pending original payment');},status:async()=>({status:'unresolved'}),close:async()=>{closes++;}};},counts:()=>({opens,closes})};
+}
+test('development relay preserves pending status recovery without requiring new-plan terms',async t=>{
+ const {openDevelopmentFundingRelay}=await import('../devnet/start.mjs'),f=await developmentRelayFixture(t);
+ const relay=await openDevelopmentFundingRelay({fixture:f.value,directory:f.directory,open:f.open});
+ assert.deepEqual(await relay.status(),{status:'unresolved'});assert.throws(()=>relay.terms(),/pending original/);
+ await Promise.all([relay.close(),relay.close()]);assert.deepEqual(f.counts(),{opens:1,closes:1});
+});
+test('development USDC capability requires matching private relay configuration before opening',async t=>{
+ const {openDevelopmentFundingRelay}=await import('../devnet/start.mjs'),f=await developmentRelayFixture(t);
+ for(const key of ['router','collateralPortal','feePortal','bokPortal','usdcImplementation','usdcRelayAddress']){
+  const saved=f.scope[key];f.scope[key]=a(999);await assert.rejects(openDevelopmentFundingRelay({fixture:f.value,directory:f.directory,open:f.open}),/scope differs/);f.scope[key]=saved;
+ }
+ const saved=f.value.fundingRelayConfig;delete f.value.fundingRelayConfig;
+ await assert.rejects(openDevelopmentFundingRelay({fixture:f.value,directory:f.directory,open:f.open}),/scope differs/);
+ delete f.scope.usdcRelayAddress;assert.equal(await openDevelopmentFundingRelay({fixture:f.value,directory:f.directory,open:f.open}),undefined);
+ f.value.fundingRelayConfig=saved;assert.deepEqual(f.counts(),{opens:0,closes:0});
+});
+test('development relay refuses remote network and escaping signer paths before opening',async t=>{
+ const {openDevelopmentFundingRelay}=await import('../devnet/start.mjs'),f=await developmentRelayFixture(t);
+ const signerFile=f.input.signerFile;f.input.signerFile=path.join(path.dirname(f.directory),'outside-signer.json');
+ await assert.rejects(openDevelopmentFundingRelay({fixture:f.value,directory:f.directory,open:f.open}),/scope differs/);f.input.signerFile=signerFile;
+ f.value.walletConfig.config.network.chainId='11155111';await assert.rejects(openDevelopmentFundingRelay({fixture:f.value,directory:f.directory,open:f.open}),/scope differs/);
+ assert.deepEqual(f.counts(),{opens:0,closes:0});
+});

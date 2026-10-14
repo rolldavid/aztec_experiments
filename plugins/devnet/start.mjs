@@ -20,14 +20,33 @@ export async function acquireDevelopmentLease(directory) {
  const {acquireHostedLease}=await import('../main.mjs');return acquireHostedLease(directory);
 }
 
+// Private fixture configuration is admitted only when it describes the same
+// public payment scope. Pending relay operations remain reachable after restart;
+// terms() can correctly refuse a new plan while status() recovers the old one.
+export async function openDevelopmentFundingRelay({fixture,directory,open=async config=>(await import('../rolling-funding-relay.mjs')).openRollingFundingRelay(config)}) {
+ const input=fixture.fundingRelayConfig,scope=fixture.walletConfig?.config?.aggregateFunding;
+ const fail=()=>{throw Error('Development funding relay scope differs');};
+ if(!input){if(scope?.usdcRelayAddress!==undefined)fail();return undefined;}
+ const policy=input.policy,network=fixture.walletConfig?.config?.network;
+ if(!scope||!policy||policy.development!==true||policy.chainId!=='31337'||scope.chainId!==policy.chainId||network?.chainId!==policy.chainId||input.ethereumUrl!==new URL(network.ethRpcUrl).href)fail();
+ for(const key of ['router','routerCodeHash','collateralPortal','feePortal','bokPortal','privateFpc','weth','quoter','quoterCodeHash','usdcCodeHash','usdcImplementation','usdcImplementationCodeHash'])if(scope[key]!==policy[key])fail();
+ if(scope.bokToken!==policy.usdc||scope.usdcRelayAddress!==policy.relayer)fail();
+ for(const name of ['signerFile','stateDirectory']){
+  const value=input[name];if(typeof value!=='string'||!path.isAbsolute(value)||path.resolve(value)!==value||!value.startsWith(directory+path.sep))fail();
+ }
+ if(await fs.realpath(input.signerFile)!==input.signerFile)fail();
+ const relay=await open(input);let closing;
+ return {...relay,close:()=>closing??=relay.close()};
+}
+
 export async function startDevelopment(options) {
  const {Barretenberg,BarretenbergSync}=await import('@aztec-foundation/bb.js');
  const {bootstrapPluginDevnet,bootstrapRollingDevnet}=await import('./bootstrap.mjs');
  const {directory}=options,lease=await acquireDevelopmentLease(directory);
- let fixture,server,service,closing;
+ let fixture,server,service,fundingRelay,closing;
  const shutdown=()=>close().then(()=>process.exit(0),()=>process.exit(1));
  if(options.handleSignals){process.once('SIGINT',shutdown);process.once('SIGTERM',shutdown);}
- function close(){return closing??=(async()=>{process.removeListener('SIGINT',shutdown);process.removeListener('SIGTERM',shutdown);const errors=[];for(const stop of [()=>service?.close(),()=>server?.close(),()=>fixture?.close(),()=>Barretenberg.destroySingleton(),()=>BarretenbergSync.destroySingleton()])try{await stop();}catch(error){errors.push(error);}
+ function close(){return closing??=(async()=>{process.removeListener('SIGINT',shutdown);process.removeListener('SIGTERM',shutdown);const errors=[];for(const stop of [()=>service?.close(),()=>server?.close(),()=>fundingRelay?.close(),()=>fixture?.close(),()=>Barretenberg.destroySingleton(),()=>BarretenbergSync.destroySingleton()])try{await stop();}catch(error){errors.push(error);}
   if(!errors.length)await lease.close();if(errors.length)throw new AggregateError(errors,'Development cleanup requires reconciliation');
  })();}
  try{
@@ -39,11 +58,13 @@ export async function startDevelopment(options) {
    const {createRollingPublicIndexFromConfig}=await import('../../scripts/rolling-public-server.mjs');
    const {startRollingReader}=await import('../../apps/rolling/start.mjs');
    const wallet=await loadRollingWalletAssets(fixture.walletConfig,fixture.readerConfig.scope);
+   fundingRelay=await openDevelopmentFundingRelay({fixture,directory});
    const index=await createRollingPublicIndexFromConfig(fixture.readerConfig);
-   try{server=await startRollingReader({...index,wallet});}catch(error){await index.index.close();throw error;}
+   try{server=await startRollingReader({...index,wallet,fundingRelay});}catch(error){await index.index.close();throw error;}
   }
   if(options.hostedConfig){const config=await readDevnetRecord(options.hostedConfig);if(!config||config.development!==true)throw Error('Explicit local hosted configuration required');const {runHostedService}=await import('../main.mjs');service=await runHostedService({config});}
   await lease.assertHeld();
+  if(fundingRelay)fixture.readiness={...fixture.readiness,usdcRelay:'configured',aggregateFunding:'eth-usdc-configured'};
   return {url:server?.url,profile:options.profile,close,readiness:fixture.readiness??'legacy-development-only'};
  }catch(error){
   try{await close();}catch(cleanup){throw new AggregateError([error,cleanup],'Development startup and cleanup require reconciliation');}
