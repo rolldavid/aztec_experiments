@@ -660,7 +660,7 @@ export async function exportMetaMaskReadyRecovery({page,control,provider,transac
  report.readyExport={sha256:exported.sha256,claimTransactionHash:before.claimTxHash,currentConfirmedClaim:true,keysOnlyUnlock:true,currentCustodyExported:true,canonicalClaim};
 }
 
-export async function driveMetaMaskPaidRecovery({page,walletPage,control:c,provider,transactionHash,mark,report,reviewPrepared=false,recoveryFile}){
+export async function driveMetaMaskPaidRecovery({page,walletPage,control:c,provider,transactionHash,mark,report,reviewPrepared=false,recoveryFile,deadlineAt}){
  assert.equal(typeof reviewPrepared,'boolean');
  assert.match(transactionHash,/^0x[0-9a-f]{64}$/);
  const {scope,a,account,intent,nonce}=await retainedCanonicalPayment(c,provider,transactionHash),planHash=intent.expected.planHash;
@@ -668,9 +668,9 @@ export async function driveMetaMaskPaidRecovery({page,walletPage,control:c,provi
  await page.exposeFunction('__paidRecoveryPermission',state=>{assert(['entered','resolved','rejected'].includes(state));permission[state]=true;});
  await page.exposeFunction('__paidRecoveryDenied',method=>{attempts.forbiddenWalletCalls++;if(attempts.deniedMethods.length<16)attempts.deniedMethods.push(typeof method==='string'&&/^[A-Za-z][A-Za-z0-9_]{0,63}$/.test(method)?method:'unknown');});
  await page.evaluate(installMetaMaskPaidRecoveryGuard);
- const readiness=await inspectMetaMaskAggregateReadiness({page,control:c,mark,allowPrepared:reviewPrepared,recoveryFile});
+ const readiness=await inspectMetaMaskAggregateReadiness({page,control:c,mark,allowPrepared:reviewPrepared,recoveryFile,remaining:deadlineAt===undefined?undefined:retainedBokRemaining(deadlineAt)});
  const binding={network:c.walletConfig.config.network,board:c.walletConfig.config.board,router:scope.router,intent,transactionHash};
- assert.equal((await page.evaluate(inspectMetaMaskPaidBinding,binding)).paymentMatches,true,'Retained payment differs from the canonical payment');
+ report.paidRecoveryBefore=await page.evaluate(inspectMetaMaskPaidBinding,binding);assert.equal(report.paidRecoveryBefore.paymentMatches,true,'Retained payment differs from the canonical payment');
  const dialog=page.getByRole('dialog');
  const openFunding=async()=>{
   await dialog.getByRole('button',{name:'Recover funding',exact:true}).click();
@@ -773,7 +773,9 @@ export function isMetaMaskStartupWorkerRequest({method,url,workerUrl,startupFram
 // never widened by opting into two further, individually reviewed L2 actions.
 export function validateRetainedBokApproval(value,control,now=Date.now(),{observation=false}={}){
  if(value?.schemaVersion===2)return validateRetainedBokRecoveryApproval(value,control,now);
- exactKeys(value,['schemaVersion','runtimeSha256','content','contentSha256','budget','authorizeFeeCap','postFeeCap','expiresAt','publicScope']);
+ const threaded=Object.hasOwn(value??{},'parent')||Object.hasOwn(value??{},'root');
+ exactKeys(value,['schemaVersion','runtimeSha256','content','contentSha256','budget','authorizeFeeCap','postFeeCap','expiresAt','publicScope',...(threaded?['parent','root']:[])]);
+ if(threaded){for(const key of ['parent','root'])assert(typeof value[key]==='string'&&/^(0|[1-9][0-9]{0,76})$/.test(value[key]));assert.equal(value.parent==='0',value.root==='0');}
  assert.equal(value.schemaVersion,1);assert.equal(value.runtimeSha256,control.runtimeSha256);
  assert(typeof value.content==='string'&&Buffer.byteLength(value.content)>0&&Buffer.byteLength(value.content)<=512&&!value.content.includes('\0'));
  assert.equal(createHash('sha256').update(value.content).digest('hex'),value.contentSha256);
@@ -802,7 +804,7 @@ export async function inspectRetainedBokWorkflow({config,approval,phase,status,c
  const slot=await sdk.createEncryptedJournalSlot({storage:sdk.createBrowserJournalStorage(),walletSecret:w.secretKey,walletSalt:w.salt,scopeText:JSON.stringify(['ROLLING_WORKFLOW_V1',scope]),keyDomain:'ROLLING_WORKFLOW_V1'});
  const r=(await slot.read()).value,old=window.__retainedBokWorkflow;
  const decimal=v=>typeof v==='string'&&/^(0|[1-9][0-9]{0,76})$/.test(v),hash=v=>typeof v==='string'&&/^0x[0-9a-f]{64}$/.test(v);
- const correct=!!r&&r.action?.type==='bok'&&r.action.content===approval.content&&r.action.subboard==='0'&&r.action.name==='0'&&r.action.budget===approval.budget&&r.bok?.phase===phase&&r.status===status&&r.bok.budget===approval.budget&&r.bok.scope?.address===config.bok.contractAddress&&r.bok.scope?.pluginId===config.bok.pluginId&&Date.now()<approval.expiresAt;
+ const correct=!!r&&r.action?.type==='bok'&&r.action.content===approval.content&&r.action.subboard==='0'&&r.action.name==='0'&&r.action.budget===approval.budget&&(r.action.parent??'0')===(approval.parent??'0')&&(r.action.root??'0')===(approval.root??'0')&&r.bok?.phase===phase&&r.status===status&&r.bok.budget===approval.budget&&r.bok.scope?.address===config.bok.contractAddress&&r.bok.scope?.pluginId===config.bok.pluginId&&Date.now()<approval.expiresAt;
  const feeWithinCap=correct&&decimal(r.maximumFee)&&BigInt(r.maximumFee)<=BigInt(phase==='authorize'?approval.authorizeFeeCap:approval.postFeeCap);
  const sameDraft=!old||r&&r.nonce===old.nonce&&r.bok?.requestId===old.requestId&&r.bok?.target===old.target&&JSON.stringify(r.action)===old.action&&r.bok.budget===old.budget;
  const originalAuthorization=phase==='authorize'||!!old&&r?.bok?.authorizationTxHash===old.authorizationTxHash&&hash(old.authorizationTxHash);
@@ -836,11 +838,11 @@ export async function discoverRetainedBokCompletion({postId,requestId,scope}){
 export function assertRetainedBokEvents({postEvents,replyEvents,accountingEvents,publicIntent,approval,pluginId,discovered}){
  const one=(events,type,test)=>{const rows=events.filter(e=>e.type===type&&test(e.payload));assert.equal(rows.length,1);return rows[0];};
  const invocation=one(postEvents,'PluginInvoked',p=>p.request_id===publicIntent.requestId&&p.target===publicIntent.target&&p.plugin_id===BigInt(pluginId).toString());
- const post=one(postEvents,'PostPublished',p=>p.id===invocation.payload.post_id);assert.equal(post.payload.record.root,post.payload.id);assert.equal(post.payload.record.parent,'0');
+ const post=one(postEvents,'PostPublished',p=>p.id===invocation.payload.post_id);const expectedParent=approval.parent??'0',expectedRoot=(approval.root??'0')==='0'?post.payload.id:approval.root;assert.equal(post.payload.record.root,expectedRoot);assert.equal(post.payload.record.parent,expectedParent);
  assert.equal(unpackRollingText(post.payload.message,post.payload.length,32*31),approval.content,'Canonical original Bok post differs from approval');
  assert.equal(createHash('sha256').update(approval.content).digest('hex'),approval.contentSha256);
  const linked=one(replyEvents,'PluginReplyPublished',p=>p.request_id===publicIntent.requestId&&p.target===publicIntent.target&&p.parent_id===post.payload.id&&p.plugin_id===BigInt(pluginId).toString());
- const reply=one(replyEvents,'PostPublished',p=>p.id===linked.payload.post_id);assert.equal(reply.payload.record.kind,'4');assert.equal(reply.payload.record.parent,post.payload.id);assert.equal(reply.payload.record.root,post.payload.id);assert.equal(reply.position.txHash,linked.position.txHash);
+ const reply=one(replyEvents,'PostPublished',p=>p.id===linked.payload.post_id);assert.equal(reply.payload.record.kind,'4');assert.equal(reply.payload.record.parent,post.payload.id);assert.equal(reply.payload.record.root,expectedRoot);assert.equal(reply.position.txHash,linked.position.txHash);
  assert.equal(discovered.parent.id,post.payload.id);assert.equal(discovered.reply.id,reply.payload.id);assert.equal(discovered.reply.position.txHash,reply.position.txHash);
  const accounting=one(accountingEvents,'AccountingChanged',p=>p.request_id===publicIntent.requestId&&p.state==='4').payload;
  assert.equal(accounting.budget,approval.budget);assert.equal(accounting.available,'0');assert.equal(accounting.reserved,'0');assert(BigInt(accounting.charged)>0n);assert.equal(BigInt(accounting.charged)+BigInt(accounting.refunded),BigInt(approval.budget));
@@ -894,6 +896,7 @@ export function retainedBokRemaining(deadlineAt,now=Date.now){
 }
 export async function driveRetainedBokConfirmations({dialog,approval,inspect,mark,report,remaining=()=>80000}){
  mark('retained-bok-authorize-review');await dialog.getByRole('button',{name:'Actions',exact:true}).click();await dialog.getByLabel('Action',{exact:true}).selectOption('bok');await dialog.getByLabel('Message',{exact:true}).fill(approval.content);await dialog.getByLabel('Maximum Bok credits',{exact:true}).fill(approval.budget);
+ if(Object.hasOwn(approval,'parent')){await dialog.getByLabel('Reply to post ID',{exact:true}).fill(approval.parent);await dialog.getByLabel('Root thread ID',{exact:true}).fill(approval.root);}
  await dialog.getByRole('button',{name:'Check action and review fee',exact:true}).click();await dialog.getByRole('button',{name:'Confirm and send',exact:true}).waitFor({timeout:remaining()});await inspect('authorize','prepared',{capture:true});
  mark('retained-bok-authorize');remaining();await dialog.getByRole('button',{name:'Confirm and send',exact:true}).click();await dialog.getByRole('button',{name:'Review saved Bok post',exact:true}).waitFor({timeout:remaining()});await inspect('authorize','confirmed',{capture:true});report.retainedBok.authorizationConfirmed=true;
  mark('retained-bok-post-review');await dialog.getByRole('button',{name:'Review saved Bok post',exact:true}).click();await dialog.getByRole('button',{name:'Confirm and send',exact:true}).waitFor({timeout:remaining()});await inspect('post','prepared');

@@ -437,6 +437,11 @@ test('retained Bok opt-in defaults to no action and bounds exact approval before
  assert.equal(readRetainedBokApproval(undefined,f.control),null);assert.throws(()=>readRetainedBokApproval('/private/a',f.control));assert.throws(()=>readRetainedBokApproval('/private/a',f.control,{enabled:true}));assert.deepEqual(validateRetainedBokApproval(f.approval,f.control),f.approval);
  for(const change of [a=>a.content+='changed',a=>a.budget='101',a=>a.authorizeFeeCap='900',a=>a.runtimeSha256='b'.repeat(64),a=>a.expiresAt=Date.now()-1,a=>a.expiresAt=Date.now()+3600001,a=>a.publicScope.bok.address=f.field(99),a=>a.extra=true]){const a=structuredClone(f.approval);change(a);assert.throws(()=>validateRetainedBokApproval(a,f.control));}
 });
+test('retained Bok thread approval requires both exact public IDs and rejects mixed root/reply modes',async()=>{
+ const {validateRetainedBokApproval:validate}=await import('./t04-metamask.mjs'),{createHash}=await import('node:crypto'),f=retainedBokFixture();f.approval.contentSha256=createHash('sha256').update(f.approval.content).digest('hex');
+ for(const pair of [{parent:'0',root:'0'},{parent:'12',root:'10'}]){const a={...f.approval,...pair};assert.deepEqual(validate(a,f.control),a);}
+ for(const pair of [{parent:'1'},{root:'1'},{parent:'0',root:'1'},{parent:'1',root:'0'},{parent:1,root:'1'},{parent:'01',root:'1'}])assert.throws(()=>validate({...f.approval,...pair},f.control));
+});
 test('retained Bok approval file requires private regular owned input',async t=>{
  const {readRetainedBokApproval}=await import('./t04-metamask.mjs'),{createHash}=await import('node:crypto'),f=retainedBokFixture(),dir=await fs.mkdtemp(path.join(os.tmpdir(),'bok-approval-')),file=path.join(dir,'approval.json');t.after(()=>fs.rm(dir,{recursive:true,force:true}));
  f.approval.contentSha256=createHash('sha256').update(f.approval.content).digest('hex');await fs.writeFile(file,JSON.stringify(f.approval),{mode:0o600});assert.deepEqual(readRetainedBokApproval(file,f.control,{enabled:true,paidRecovery:true}),f.approval);
@@ -450,7 +455,7 @@ test('retained Bok saved workflow keeps private identifiers in page until confir
  record.status='confirmed';record.txHash=f.field(20);assertRetainedBokReview(await run({phase:'authorize',status:'confirmed',capture:true}));
  record={...record,status:'prepared',txHash:null,bok:{...record.bok,phase:'post',authorizationTxHash:f.field(20)}};assertRetainedBokReview(await run({phase:'post',status:'prepared'}));assert.equal((await run({phase:'post',status:'prepared',published:true})).public,undefined);
  record.status='confirmed';record.txHash=f.field(21);const published=await run({phase:'post',status:'confirmed',published:true});assertRetainedBokReview(published,{published:true});assert.deepEqual(published.public,{transactionHash:f.field(21),authorizationTxHash:f.field(20),requestId:'11',target:'12'});
- for(const change of [r=>r.action.content+='changed',r=>r.maximumFee='201',r=>r.nonce='different',r=>r.bok.requestId=f.field(99),r=>r.bok.authorizationTxHash=f.field(99),r=>r.status='unknown']){const before=structuredClone(record);change(record);const result=await run({phase:'post',status:'confirmed',published:true});assert.throws(()=>assertRetainedBokReview(result,{published:true}));record=before;}
+ for(const change of [r=>r.action.content+='changed',r=>r.action.parent='8',r=>r.action.root='7',r=>r.maximumFee='201',r=>r.nonce='different',r=>r.bok.requestId=f.field(99),r=>r.bok.authorizationTxHash=f.field(99),r=>r.status='unknown']){const before=structuredClone(record);change(record);const result=await run({phase:'post',status:'confirmed',published:true});assert.throws(()=>assertRetainedBokReview(result,{published:true}));record=before;}
 });
 
 test('retained Bok UI confirms only two exact saved reviews and stops before any invalid confirmation',async()=>{
@@ -482,6 +487,7 @@ test('retained Bok canonical event checks reject wrong reply linkage and unfinis
  const content='original',contentSha256=(await import('node:crypto')).createHash('sha256').update(content).digest('hex');post.length=String(Buffer.byteLength(content));post.message=[BigInt('0x'+Buffer.from(content).toString('hex').padEnd(62,'0')).toString(),...Array(31).fill('0')];
  const base={publicIntent:p,pluginId:'5',approval:{budget:'100',content,contentSha256},postEvents:[{type:'PluginInvoked',payload:{request_id:'30',target:'40',plugin_id:'5',post_id:'10'}},{type:'PostPublished',payload:post}],replyEvents:[{type:'PluginReplyPublished',payload:{request_id:'30',target:'40',plugin_id:'5',parent_id:'10',post_id:'20'},position},{type:'PostPublished',payload:reply,position}],accountingEvents:[{type:'AccountingChanged',payload:accounting}],discovered:{parent:{id:'10'},reply:{id:'20',position},accounting:{...accounting}}};
  assert.deepEqual(assertRetainedBokEvents(base),{canonicalReply:true,canonicalTerminalAccounting:true,charged:'6',refunded:'94'});
+ const threaded=structuredClone(base);threaded.approval.parent='8';threaded.approval.root='7';threaded.postEvents[1].payload.record={root:'7',parent:'8'};threaded.replyEvents[1].payload.record.root='7';assert.equal(assertRetainedBokEvents(threaded).canonicalReply,true);for(const change of [b=>b.postEvents[1].payload.record.parent='9',b=>b.postEvents[1].payload.record.root='8',b=>b.replyEvents[1].payload.record.root='10']){const bad=structuredClone(threaded);change(bad);assert.throws(()=>assertRetainedBokEvents(bad));}
  for(const change of [b=>b.approval.content='different',b=>b.approval.contentSha256='0'.repeat(64),b=>b.postEvents[1].payload.message[0]='0',b=>b.replyEvents[0].payload.target='41',b=>b.replyEvents[1].payload.record.kind='0',b=>b.accountingEvents[0].payload.state='3',b=>b.accountingEvents[0].payload.reserved='1',b=>b.accountingEvents[0].payload.refunded='100',b=>b.accountingEvents[0].payload.charged='0',b=>b.discovered.accounting.charged='7',b=>b.replyEvents.push(b.replyEvents[0])]){const bad=structuredClone(base);change(bad);assert.throws(()=>assertRetainedBokEvents(bad));}
 });
 
@@ -984,4 +990,31 @@ test('full backup import paid guard reports denied signatures to the same Node r
  const provider={request:async()=>{calls++;return '0x7a69';}};runInNewContext(`(${installMetaMaskPaidRecoveryGuard})`,{window,__testMetaMask:provider})();// Before full import and before the later refund guard.
  await assert.rejects(provider.request({method:'eth_signTypedData_v4',params:[]}));assert.equal(calls,0);assert.equal(admission.snapshot().denied,1);assert.throws(()=>admission.finish(),/forbidden refund/);
  await assert.rejects(provider.request({method:'eth_sendTransaction',params:[]}));assert.equal(admission.snapshot().denied,2);
+});
+
+
+test('readiness-only runner forwards its original owner deadline to the actual initialization helper',async()=>{
+ const {runInNewContext}=await import('node:vm'),source=await fs.readFile(new URL('./test-wallet-extension-browser.mjs',import.meta.url),'utf8');
+ const branch=source.slice(source.indexOf('else if(readinessOnly){report.scope='),source.indexOf('report.readinessOnly=true;')+'report.readinessOnly=true;'.length);
+ const call=branch.match(/await inspectMetaMaskAggregateReadiness\(.*?\);/)[0];let observed;
+ await runInNewContext('(async()=>{'+call+'})()',{page:{},control:{},markAggregate(){},process:{env:{T04_BROWSER_DEADLINE_AT:'120000'}},retainedBokRemaining:deadline=>{assert.equal(deadline,120000);return()=>75000;},inspectMetaMaskAggregateReadiness:async options=>{observed=options.remaining();}});
+ assert.equal(observed,75000);
+});
+
+test('retained Bok reply UI fills only approved parent and root before the two existing reviews',async()=>{
+ const {driveRetainedBokConfirmations}=await import('./t04-metamask.mjs');const fills=[],events=[];const node=name=>({click:async()=>events.push(name),waitFor:async()=>{},fill:async value=>fills.push([name,value]),selectOption:async()=>{}});const dialog={getByRole:(_,{name})=>node(name),getByLabel:name=>node(name),getByText:node};
+ await driveRetainedBokConfirmations({dialog,approval:{content:'bounded reply',budget:'400000',parent:'8',root:'7'},inspect:async()=>({public:{transactionHash:hash}}),mark:()=>{},report:{retainedBok:{}}});
+ assert.deepEqual(fills.slice(-2),[['Reply to post ID','8'],['Root thread ID','7']]);assert.equal(events.filter(x=>x==='Confirm and send').length,2);
+});
+
+test('retained Bok reply saved review binds approved thread before any authorization',async()=>{
+ const {inspectRetainedBokWorkflow:inspect}=await import('./t04-metamask.mjs'),{runInNewContext}=await import('node:vm'),f=retainedBokFixture();Object.assign(f.approval,{parent:'8',root:'7'});Object.assign(f.record.action,{parent:'8',root:'7'});
+ const window={walletState:{aztec:{address:{toString:()=> 'private-owner'},secretKey:'private-secret',salt:'private-salt'}},__aztec:{createBrowserJournalStorage:()=>({}),createEncryptedJournalSlot:async()=>({read:async()=>({value:f.record})})}};const run=()=>runInNewContext('('+inspect+')',{window})({config:f.config,approval:f.approval,phase:'authorize',status:'prepared'});
+ assert.equal((await run()).correct,true);f.record.action.root='9';assert.equal((await run()).correct,false);f.record.action.root='7';f.record.action.parent='9';assert.equal((await run()).correct,false);
+});
+
+test('paid recovery forwards owner deadline and records original private binding before resume',async()=>{
+ const {runInNewContext}=await import('node:vm'),source=await fs.readFile(new URL('./test-wallet-extension-browser.mjs',import.meta.url),'utf8');const paid=source.slice(source.indexOf('else if(paidRecovery){report.scope='));const call=paid.match(/await driveMetaMaskPaidRecovery\(.*?\);/)[0];let observed;
+ await runInNewContext('(async()=>{'+call+'})()',{page:{},walletPage:{},control:{},provider:{},reviewPrepared:false,markAggregate(){},report:{},process:{env:{T04_BROWSER_DEADLINE_AT:'120000',T04_AGGREGATE_PAID_HASH:hash}},driveMetaMaskPaidRecovery:async options=>{observed=options.deadlineAt;}});assert.equal(observed,120000);
+ const helper=await fs.readFile(new URL('./t04-metamask.mjs',import.meta.url),'utf8'),start=helper.indexOf('export async function driveMetaMaskPaidRecovery'),end=helper.indexOf('export function retainedPreparedClaimFlag',start),body=helper.slice(start,end);assert(body.indexOf('report.paidRecoveryBefore=')<body.indexOf("mark('aggregate-paid-private-claim')"));assert(body.includes('remaining:deadlineAt===undefined?undefined:retainedBokRemaining(deadlineAt)'));
 });
