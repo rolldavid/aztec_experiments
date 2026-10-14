@@ -438,6 +438,32 @@ checkpoint before saving the original-chain snapshot. A failed settlement does
 not produce a clean restart record. This is development-only synthetic settlement,
 not real testnet proof acceptance; the legacy disposable profile is unchanged.
 
+Persistent Anvil uses an explicit `--state-interval 86400` with `--dump-state`.
+This is a 24-hour interval, not disabled persistence: pinned Anvil defaults to
+60 seconds when omitted and rejects zero. Normal bounded development sessions
+checkpoint on graceful exit, avoiding multi-gigabyte snapshots every 30 seconds.
+An abrupt stop can lose progress since the last dump; an unclean record still
+requires reconciliation, and historical effects must never be replayed blindly.
+
+Native snapshots retain the existing streamed 4 GiB ceiling and complete
+historical state. Startup requires at least 8 GiB free before changing the saved
+phase. This is admission headroom, not a reservation or an ongoing disk quota.
+After a clean stop, the runner hashes the new snapshot and durably writes its
+stopped record before deleting only the previous exact hash-verified native
+checkpoint. Successful runs therefore retain one qualified snapshot plus at most
+one active candidate. Failed or interrupted runs preserve recovery candidates;
+older orphan files require explicit operator reconciliation, never a directory
+sweep. The legacy 128 MiB RPC import limit remains separate.
+
+Anvil's supported `--cache-path` points to a new private `anvil-cache-*` directory
+owned by that run. Its historical-state cache is removed only after Anvil exits
+cleanly and the new checkpoint record is committed. A failed shutdown retains
+it. Cleanup verifies directory identity and never sweeps `~/.foundry`, other
+runs, journals or original Aztec databases. Complete historical-state retention
+remains enabled; neither cache pruning nor reduced history is used to pass
+recovery acceptance. Long sessions must monitor free space and stop gracefully
+before consuming checkpoint headroom.
+
 The relay initialization marker lives beside `relay-state`, not inside it. Once
 that marker exists, loss of its original directory or `funding-budget.json` is a
 recovery failure before any relay funding stage. Never delete the marker or

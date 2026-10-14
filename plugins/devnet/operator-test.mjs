@@ -157,8 +157,8 @@ if(focused){
  });
 
  test('retained local Anvil uses official SDK finality depth without removing snapshot or application guards',async()=>{
-  const {developmentAnvilArgs}=await import('./network.mjs');const args=developmentAnvilArgs({persistent:true,port:18545,mnemonic:'synthetic-only',recoveryPath:'/tmp/anvil-recovery-00000000-0000-4000-8000-000000000000.json'});
-  assert.deepEqual(args,['--host','127.0.0.1','--port','18545','--chain-id','31337','--mnemonic','synthetic-only','--silent','--no-request-size-limit','--slots-in-an-epoch','1','--dump-state','/tmp/anvil-recovery-00000000-0000-4000-8000-000000000000.json','--state-interval','30','--preserve-historical-states']);
+  const {developmentAnvilArgs}=await import('./network.mjs');const args=developmentAnvilArgs({persistent:true,port:18545,mnemonic:'synthetic-only',recoveryPath:'/tmp/anvil-recovery-00000000-0000-4000-8000-000000000000.json',cachePath:'/tmp/anvil-cache-00000000-0000-4000-8000-000000000000'});
+  assert.deepEqual(args,['--host','127.0.0.1','--port','18545','--chain-id','31337','--mnemonic','synthetic-only','--silent','--no-request-size-limit','--slots-in-an-epoch','1','--dump-state','/tmp/anvil-recovery-00000000-0000-4000-8000-000000000000.json','--state-interval','86400','--preserve-historical-states','--cache-path','/tmp/anvil-cache-00000000-0000-4000-8000-000000000000']);
   assert(!developmentAnvilArgs({persistent:false,port:18546,mnemonic:'synthetic-only'}).includes('--slots-in-an-epoch'));
  });
 
@@ -308,7 +308,7 @@ if(focused){
   assert.throws(()=>developmentAnvilArgs({persistent:true,port:18545,mnemonic:'synthetic-only'}),/recovery path/);
   assert.throws(()=>developmentAnvilArgs({persistent:true,port:18545,mnemonic:'synthetic-only',recoveryPath:'/tmp/ethereum-state.json'}),/recovery path/);
   let saved=false;await assert.rejects(persistDevnetCheckpoint({persistent:true,bootComplete:true,priorFailure:true,save:async()=>{saved=true;}}));assert.equal(saved,false);
-  assert.throws(()=>validateDevnetResume({...stopped,phase:'running',recoveryPath:'/tmp/anvil-recovery-00000000-0000-4000-8000-000000000000.json'},{fundingAddresses,ports,toolchainHash}),/recovery required/);
+  assert.throws(()=>validateDevnetResume({...stopped,phase:'running',recoveryPath:'/tmp/anvil-recovery-00000000-0000-4000-8000-000000000000.json',cachePath:'/tmp/anvil-cache-00000000-0000-4000-8000-000000000000'},{fundingAddresses,ports,toolchainHash}),/recovery required/);
  });
 
  test('native file checkpoint streams private bytes and rejects unsafe files and mismatched formats',async()=>{
@@ -322,7 +322,7 @@ if(focused){
    const record={...stopped,snapshotFormat:'native-json-v1',snapshotFile:name,snapshotHead:{number:'0x10',hash:'0x'+'a'.repeat(64),pending:'7',proven:'7'}};
    assert.equal(validateDevnetResume(record,{fundingAddresses,ports,toolchainHash}),record);
    for(const change of [{snapshotFormat:'unknown'},{snapshotFile:'../'+name},{snapshotHead:{...record.snapshotHead,proven:'6'}},{snapshotHead:{...record.snapshotHead,hash:'invalid'}}])assert.throws(()=>validateDevnetResume({...record,...change},{fundingAddresses,ports,toolchainHash}));
-   const options={persistent:true,port:18545,mnemonic:'synthetic-only',loadPath:file,recoveryPath:path.join(dir,'anvil-recovery-11111111-1111-4111-8111-111111111111.json')};
+   const options={persistent:true,port:18545,mnemonic:'synthetic-only',loadPath:file,recoveryPath:path.join(dir,'anvil-recovery-11111111-1111-4111-8111-111111111111.json'),cachePath:path.join(dir,'anvil-cache-11111111-1111-4111-8111-111111111111')};
    assert.deepEqual(developmentAnvilArgs(options).slice(-2),['--load-state',file]);assert.throws(()=>developmentAnvilArgs({...options,recoveryPath:file}));
   }finally{await fs.rm(dir,{recursive:true,force:true});}
  });
@@ -549,6 +549,44 @@ if(focused){
    const outcome=await run({l1Client:{getBlock:async()=>{reads++;if(stage==='read-l1-head')throw original;return {timestamp:1n};}}},{warpTo:async()=>{warps++;throw original;}},text=>{events++;assert.equal(JSON.parse(text).stage,stage);throw Error('sink failure');},reportDevelopmentMiningFailure);
    assert.equal(outcome.miningError,original);assert.equal(outcome.stopMining,true);assert.equal(reads,1);assert.equal(warps,stage==='warp-l1-clock'?1:0);assert.equal(events,1);
   }
+ });
+
+ test('native checkpoint replacement commits before removing only its exact qualified predecessor',async()=>{
+  const {commitNativeDevnetCheckpoint,inspectNativeDevnetSnapshot}=await import('./network.mjs');
+  const directory=await fs.mkdtemp(path.join(os.tmpdir(),'native-retention-'));const statePath=path.join(directory,'network.json'),previous=path.join(directory,'anvil-recovery-00000000-0000-4000-8000-000000000000.json'),recoveryPath=path.join(directory,'anvil-recovery-11111111-1111-4111-8111-111111111111.json'),unrelated=path.join(directory,'anvil-recovery-22222222-2222-4222-8222-222222222222.json');
+  try{for(const file of [previous,recoveryPath,unrelated])await fs.writeFile(file,'{}',{mode:0o600});const saved={snapshotFormat:'native-json-v1',snapshotFile:path.basename(previous),snapshotHash:(await inspectNativeDevnetSnapshot(previous)).sha256};
+   await commitNativeDevnetCheckpoint({directory,statePath,state:{schemaVersion:1},saved,recoveryPath,checkpointHead:{number:'0x1'}});
+   const record=JSON.parse(await fs.readFile(statePath));assert.equal(record.phase,'stopped');assert.equal(record.snapshotFile,path.basename(recoveryPath));assert.equal(record.snapshotHash,(await inspectNativeDevnetSnapshot(recoveryPath)).sha256);
+   await assert.rejects(fs.stat(previous),{code:'ENOENT'});assert.equal(await fs.readFile(unrelated,'utf8'),'{}');assert.equal(await fs.readFile(recoveryPath,'utf8'),'{}');
+  }finally{await fs.rm(directory,{recursive:true,force:true});}
+ });
+ test('native checkpoint validation or record-commit failure preserves previous and candidate snapshots',async()=>{
+  const {commitNativeDevnetCheckpoint,inspectNativeDevnetSnapshot}=await import('./network.mjs');
+  const directory=await fs.mkdtemp(path.join(os.tmpdir(),'native-retention-failure-')),statePath=path.join(directory,'network.json'),previous=path.join(directory,'anvil-recovery-00000000-0000-4000-8000-000000000000.json'),recoveryPath=path.join(directory,'anvil-recovery-11111111-1111-4111-8111-111111111111.json');
+  try{await fs.writeFile(previous,'{}',{mode:0o600});await fs.writeFile(recoveryPath,'{}',{mode:0o600});const saved={snapshotFormat:'native-json-v1',snapshotFile:path.basename(previous),snapshotHash:(await inspectNativeDevnetSnapshot(previous)).sha256};const input={directory,statePath,state:{},saved,recoveryPath,checkpointHead:{number:'0x1'}};
+   await assert.rejects(commitNativeDevnetCheckpoint({...input,saved:{...saved,snapshotHash:'0'.repeat(64)}}),/Previous native checkpoint differs/);
+   await assert.rejects(commitNativeDevnetCheckpoint({...input,saved:{...saved,snapshotFile:'../'+saved.snapshotFile}}),/ownership|differs/);
+   await fs.writeFile(statePath+'.tmp','exclusive owner',{mode:0o600});await assert.rejects(commitNativeDevnetCheckpoint(input),{code:'EEXIST'});
+   for(const file of [previous,recoveryPath])assert.equal(await fs.readFile(file,'utf8'),'{}');await assert.rejects(fs.stat(statePath),{code:'ENOENT'});
+  }finally{await fs.rm(directory,{recursive:true,force:true});}
+ });
+ test('storage admission rejects insufficient space before mutating the retained phase or creating its candidate',async()=>{
+  const source=await fs.readFile(new URL('./network.mjs',import.meta.url),'utf8');
+  const start=source.indexOf('export async function assertDevelopmentStorageCapacity('),end=source.indexOf('// The qualified predecessor',start),body=source.slice(start,end).replace('export ','');
+  const build=new Function('fs',body+';return assertDevelopmentStorageCapacity;');let reads=0;
+  const check=bytes=>build({statfs:async(directory,options)=>{reads++;assert.equal(directory,'/private/state');assert.equal(options.bigint,true);return {bavail:bytes,bsize:1n};}})('/private/state');
+  await assert.rejects(check(8589934591n),/8 GiB free/);await check(8589934592n);assert.equal(reads,2);
+  assert(source.indexOf('if(persistent)await assertDevelopmentStorageCapacity(directory)')<source.indexOf("await writeDevnetRecord(statePath,{...state,phase:'starting'}"));
+ });
+
+ test('Anvil cache cleanup owns one private run directory, refuses replacement and never follows a link',async()=>{
+  const {createDevelopmentAnvilCache,removeDevelopmentAnvilCache}=await import('./network.mjs');const directory=await fs.mkdtemp(path.join(os.tmpdir(),'anvil-cache-owner-'));
+  try{const owned=await createDevelopmentAnvilCache(directory),other=path.join(directory,'unrelated');await fs.mkdir(other);await fs.writeFile(path.join(other,'keep'),'retained');await fs.symlink(other,path.join(owned.path,'link'));
+   await assert.rejects(removeDevelopmentAnvilCache({...owned,ino:owned.ino+1}),/ownership changed/);assert((await fs.stat(owned.path)).isDirectory());
+   await removeDevelopmentAnvilCache(owned);await assert.rejects(fs.stat(owned.path),{code:'ENOENT'});assert.equal(await fs.readFile(path.join(other,'keep'),'utf8'),'retained');
+   await fs.symlink(other,owned.path);await assert.rejects(removeDevelopmentAnvilCache(owned),/ownership changed/);assert.equal(await fs.readFile(path.join(other,'keep'),'utf8'),'retained');
+   const source=await fs.readFile(new URL('./network.mjs',import.meta.url),'utf8');assert(source.indexOf('if(anvilCache)await removeDevelopmentAnvilCache(anvilCache)')>source.indexOf('await commitNativeDevnetCheckpoint({directory,statePath,state,saved,recoveryPath,checkpointHead})'));
+  }finally{await fs.rm(directory,{recursive:true,force:true});}
  });
 
 }

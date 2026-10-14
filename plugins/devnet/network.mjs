@@ -71,6 +71,38 @@ export async function inspectNativeDevnetSnapshot(filename){
   return {sha256:hash.digest('hex'),bytes:before.size};
  }finally{await fd.close();}
 }
+// Reserve room for a maximum-size replacement plus native working/cache growth.
+// This admission check is not a reservation against unrelated disk consumers.
+export async function assertDevelopmentStorageCapacity(directory) {
+ const stats=await fs.statfs(directory,{bigint:true});
+ if(stats.bavail*stats.bsize<8589934592n)throw Error('Development storage requires at least 8 GiB free; preserve existing state');
+}
+// The qualified predecessor is removed only after its replacement and stopped
+// record are durable. Failed validation/commit retains every recovery file.
+export async function commitNativeDevnetCheckpoint({directory,statePath,state,saved,recoveryPath,checkpointHead}) {
+ const valid=file=>path.dirname(file)===directory&&/^anvil-recovery-[0-9a-f-]{36}\.json$/.test(path.basename(file));
+ if(!path.isAbsolute(directory)||path.normalize(directory)!==directory||statePath!==path.join(directory,'network.json')||!valid(recoveryPath)||!checkpointHead)throw Error('Invalid native checkpoint ownership');
+ const snapshot=await inspectNativeDevnetSnapshot(recoveryPath);
+ const previous=saved?.snapshotFormat==='native-json-v1'?path.join(directory,saved.snapshotFile):null;
+ if(previous&&(!valid(previous)||previous===recoveryPath||(await inspectNativeDevnetSnapshot(previous)).sha256!==saved.snapshotHash))throw Error('Previous native checkpoint differs; preserve recovery files');
+ await writeDevnetRecord(statePath,{...state,phase:'stopped',snapshotFormat:'native-json-v1',snapshotFile:path.basename(recoveryPath),snapshotHead:checkpointHead,snapshotHash:snapshot.sha256});
+ if(previous){
+  if((await inspectNativeDevnetSnapshot(previous)).sha256!==saved.snapshotHash)throw Error('Previous native checkpoint changed; preserve recovery files');
+  await fs.unlink(previous);const parent=await fs.open(directory,'r');try{await parent.sync();}finally{await parent.close();}
+ }
+}
+// Anvil's supported cache-path owns its historical-state TempDir. Keep this
+// run's root on failure; never sweep the shared ~/.foundry cache or other runs.
+export async function createDevelopmentAnvilCache(directory) {
+ const filename=path.join(directory,'anvil-cache-'+randomUUID());await fs.mkdir(filename,{mode:0o700});
+ const stat=await fs.lstat(filename);return Object.freeze({path:filename,dev:stat.dev,ino:stat.ino});
+}
+export async function removeDevelopmentAnvilCache(owned) {
+ if(!owned||!path.isAbsolute(owned.path)||!/^anvil-cache-[0-9a-f-]{36}$/.test(path.basename(owned.path)))throw Error('Invalid development cache ownership');
+ const stat=await fs.lstat(owned.path);
+ if(!stat.isDirectory()||stat.isSymbolicLink()||stat.uid!==process.getuid()||(stat.mode&0o777)!==0o700||stat.dev!==owned.dev||stat.ino!==owned.ino)throw Error('Development cache ownership changed; preserve files');
+ await fs.rm(owned.path,{recursive:true});
+}
 export async function assertDevnetPortsFree(ports) {
   const listeners=[];try{for(const port of Object.values(devnetPorts(ports))){const server=net.createServer();listeners.push(server);await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(port,'127.0.0.1',resolve);});}}
   catch{throw Error('A selected development port is already owned');}finally{await Promise.all(listeners.filter(s=>s.listening).map(s=>new Promise(r=>s.close(r))));}
@@ -86,12 +118,13 @@ export async function persistDevnetCheckpoint({persistent,bootComplete,miningErr
   if(!bootComplete||priorFailure)throw Error('Development checkpoint incomplete; recovery required');
   await save();
 }
-export function developmentAnvilArgs({persistent,port,mnemonic,recoveryPath,loadPath}) {
+export function developmentAnvilArgs({persistent,port,mnemonic,recoveryPath,loadPath,cachePath}) {
  if(persistent&&(!path.isAbsolute(recoveryPath??'')||!/^anvil-recovery-[0-9a-f-]{36}\.json$/.test(path.basename(recoveryPath))))throw Error('Invalid development recovery path');
+ if(persistent&&(!path.isAbsolute(cachePath??'')||path.dirname(cachePath)!==path.dirname(recoveryPath)||!/^anvil-cache-[0-9a-f-]{36}$/.test(path.basename(cachePath))))throw Error('Invalid development cache path');
  if(loadPath!==undefined&&(!persistent||!path.isAbsolute(loadPath)||!/^anvil-recovery-[0-9a-f-]{36}\.json$/.test(path.basename(loadPath))||loadPath===recoveryPath))throw Error('Invalid native development load path');
  // Match the installed official SDK's local finality depth. This changes only
  // disposable Anvil configuration, never application or testnet finality checks.
- return ['--host','127.0.0.1','--port',String(port),'--chain-id','31337','--mnemonic',mnemonic,'--silent',...(persistent?['--no-request-size-limit','--slots-in-an-epoch','1','--dump-state',recoveryPath,'--state-interval','30','--preserve-historical-states',...(loadPath?['--load-state',loadPath]:[])]:[])];
+ return ['--host','127.0.0.1','--port',String(port),'--chain-id','31337','--mnemonic',mnemonic,'--silent',...(persistent?['--no-request-size-limit','--slots-in-an-epoch','1','--dump-state',recoveryPath,'--state-interval','86400','--preserve-historical-states','--cache-path',cachePath,...(loadPath?['--load-state',loadPath]:[])]:[])];
 }
 // Anvil restores block history but initializes its timestamp floor to wall time.
 // Reset only that local clock after authenticating the saved checkpoint, before
@@ -220,6 +253,7 @@ export async function startDevnet({directory,fundingAddresses,proofs=false,persi
   if(persistent&&proofs!==false)throw Error('Persistent local development requires native proofs disabled');
   if(saved)validateDevnetResume(saved,{fundingAddresses,ports,toolchainHash});
   else if(persistent)await assertFreshDevnetDirectory(directory);
+  if(persistent)await assertDevelopmentStorageCapacity(directory);
   const identity=saved?Wallet.fromPhrase(saved.mnemonic):Wallet.createRandom(),validatorSecret=saved?Fr.fromString(saved.validatorSecret):Fr.random();
   if(saved&&identity.privateKey!==saved.privateKey)throw Error('Original development signer differs');
   const port=persistent?ports.ethereumPort:await freePort(),rpcUrl='http://127.0.0.1:'+port;
@@ -227,7 +261,7 @@ export async function startDevnet({directory,fundingAddresses,proofs=false,persi
   if(persistent)await writeDevnetRecord(statePath,{...state,phase:'starting'},{exclusive:!saved});
   let deployment,rollup,nativeStarted=false,bootComplete=false,wallMode=false,wallRefreshRequested=false,settling=false,clockTick;
   const terminateChild=()=>{if(anvil&&anvil.exitCode===null)anvil.kill('SIGTERM');};
-  let node,nodeServer,anvil,mining,stopMining=false,miningError,spawnError,anvilClosed,closing,recoveryPath,checkpointHead;
+  let node,nodeServer,anvil,mining,stopMining=false,miningError,spawnError,anvilClosed,closing,recoveryPath,checkpointHead,anvilCache;
   function close(){return closing??=(async()=>{
     stopMining=true;const failures=[];
     for(const [stage,cleanup] of [['mining',()=>mining],['node-rpc',()=>nodeServer?.close()],['settlement',async()=>{if(nativeStarted)await settleNativeDevelopment({node,rollup,resume:false});}],['node-stop',()=>node?.stop()],['checkpoint',async()=>{
@@ -238,8 +272,8 @@ export async function startDevnet({directory,fundingAddresses,proofs=false,persi
       }});
     }],['anvil-stop',async()=>{if(anvil&&!spawnError){if(anvil.exitCode===null)anvil.kill('SIGTERM');const exit=await anvilClosed;if(exit.code!==0)throw Error('Native Ethereum did not stop cleanly');}}],['checkpoint',async()=>{
       await persistDevnetCheckpoint({persistent,bootComplete,miningError,priorFailure:failures.length>0,save:async()=>{
-        const snapshot=await inspectNativeDevnetSnapshot(recoveryPath);if(!checkpointHead)throw Error('Development checkpoint head missing');
-        await writeDevnetRecord(statePath,{...state,phase:'stopped',snapshotFormat:'native-json-v1',snapshotFile:path.basename(recoveryPath),snapshotHead:checkpointHead,snapshotHash:snapshot.sha256});
+        await commitNativeDevnetCheckpoint({directory,statePath,state,saved,recoveryPath,checkpointHead});
+        if(anvilCache)await removeDevelopmentAnvilCache(anvilCache);
       }});
     }]]){
       try{await cleanup();}catch(error){failures.push(developmentCleanupFailure(stage,error));}
@@ -251,14 +285,16 @@ export async function startDevnet({directory,fundingAddresses,proofs=false,persi
   try{
     onProgress('Starting disposable Ethereum');
     // Retained snapshots exceed Anvil's default 2MB RPC body limit. This
-    // isolated loopback process loads only the private, hash-bound <=128MiB file.
+    // isolated loopback process loads only the private, hash-bound <=4GiB native file.
+    // Legacy RPC imports retain their separate 128MiB limit.
     // Each launch owns a distinct recovery-only dump; it is NEVER an automatic
     // resume checkpoint. Precreation preserves private mode under native rewrites.
     recoveryPath=persistent?path.join(directory,'anvil-recovery-'+randomUUID()+'.json'):undefined;
     const loadPath=saved?.snapshotFormat==='native-json-v1'?path.join(directory,saved.snapshotFile):undefined;
     if(loadPath&&(await inspectNativeDevnetSnapshot(loadPath)).sha256!==saved.snapshotHash)throw Error('Native development snapshot differs');
     if(recoveryPath){const fd=await fs.open(recoveryPath,'wx',0o600);await fd.close();}
-    anvil=spawn(path.resolve('.build/anvil-1.7.0/anvil'),developmentAnvilArgs({persistent,port,mnemonic:identity.mnemonic.phrase,recoveryPath,loadPath}),{stdio:'ignore'});
+    if(persistent)anvilCache=await createDevelopmentAnvilCache(directory);
+    anvil=spawn(path.resolve('.build/anvil-1.7.0/anvil'),developmentAnvilArgs({persistent,port,mnemonic:identity.mnemonic.phrase,recoveryPath,loadPath,cachePath:anvilCache?.path}),{stdio:'ignore'});
     process.once('exit',terminateChild);
     anvilClosed=new Promise(resolve=>{anvil.once('error',error=>{spawnError=error;resolve({code:null});});anvil.once('close',(code,signal)=>resolve({code,signal}));});
     await waitForDevelopmentEthereum({rpcUrl,address:identity.address,child:anvil,spawnFailure:()=>spawnError,retainedNative:!!loadPath});
