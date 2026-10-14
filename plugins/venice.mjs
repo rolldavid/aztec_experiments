@@ -1,6 +1,6 @@
 import {VeniceSigner} from 'venice-x402-client';
 import {isAddress} from 'ethers';
-import {veniceDiagnosticError,recordVeniceResponse} from './venice-diagnostics.mjs';
+import {veniceDiagnosticError,recordVeniceResponse,veniceFinishReason} from './venice-diagnostics.mjs';
 
 const ORIGIN='https://api.venice.ai';
 const USDC='0x833589fcd6edb6e08f4c7c32d4f71b54bda02913';
@@ -107,7 +107,8 @@ export function veniceModel({client,model='kimi-k2-5',autoTopUp=false,maxTopUpUs
     // to the action allowance; this is not a claim about the final provider debit.
     const cost=(usage.prompt_tokens*input+usage.completion_tokens*output)/1e6;
     if(!money(cost))throw Error('Venice returned an invalid cost');
-    return {message,cost};
+    const finishReason=veniceFinishReason(result.choices[0].finish_reason);
+    return {message,cost,...(finishReason?{finishReason}:{})};
   }
   return {complete(input){const operation=pending.then(()=>complete(input));pending=operation.then(()=>{},()=>{});return operation;}};
 }

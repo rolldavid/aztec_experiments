@@ -115,3 +115,10 @@ for(const [name,response,category,status] of [
  let calls=0;const client=veniceClient({signer:{address:wallet.address,signIn:async()=> 'fixture'},fetchImpl:async()=>{calls++;return response();}});
  await assert.rejects(client.json('/api/v1/chat/completions',{method:'POST',body:{}}),error=>{assert.deepEqual(getVeniceDiagnostic(error),{category,httpStatus:status,code:null,param:null,billingStage:null});assert(!error.stack.includes('PRIVATE_SENTINEL'));return true;});assert.equal(calls,1);
 });
+
+for(const reason of ['stop','length','tool_calls','content_filter','function_call','PRIVATE_SENTINEL',undefined])test('legacy adapter propagates only closed completion metadata: '+String(reason),async()=>{
+ const client={balance:async()=>({canConsume:true}),json:async path=>path.endsWith('/models')?catalog:{...answer,choices:[{...answer.choices[0],finish_reason:reason}]}};
+ const result=await veniceModel({client}).complete({messages:[],tools:[],maxTokens:200});
+ assert.equal(result.cost,.00091);assert.equal(result.finishReason,reason==='PRIVATE_SENTINEL'?undefined:reason);
+ assert.equal(Object.hasOwn(result,'finishReason'),reason!==undefined&&reason!=='PRIVATE_SENTINEL');
+});

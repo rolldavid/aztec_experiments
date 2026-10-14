@@ -1,6 +1,6 @@
 import {sha256,toUtf8Bytes} from 'ethers';
 import {quoteCall,usageCharge,ceilDiv} from './metering.mjs';
-import {veniceDiagnosticError,getVeniceResponseStatus} from './venice-diagnostics.mjs';
+import {veniceDiagnosticError,getVeniceResponseStatus,veniceFinishReason} from './venice-diagnostics.mjs';
 const fieldMod=21888242871839275222246405745257275088548364400416034343698204186575808495617n;
 // Public billing facts only. Unknown response metadata and message content never enter this record.
 const idPattern=/^[A-Za-z0-9][A-Za-z0-9._:/-]{0,127}$/;
@@ -69,7 +69,8 @@ export function veniceMeteredProvider({client,model='kimi-k2-5',autoTopUp=false,
     stage='final-receipt-validation';
     const charge=ceilDiv(BigInt(prompt-cached)*quote.inputPrice+BigInt(cached)*(quote.cachePrice??0n)+BigInt(completion)*quote.outputPrice,1000000000n);
     const billing=validateVeniceBilling({providerId:result.id,modelId:quote.modelId,promptTokens:prompt,completionTokens:completion,cachedTokens:cached,inputPrice:String(quote.inputPrice),outputPrice:String(quote.outputPrice),cachePrice:quote.cachePrice===null?null:String(quote.cachePrice),charge:String(charge)},quote);
-    return {message,charge,receipt:billing.receipt,billing};
+    const finishReason=veniceFinishReason(result.choices[0].finish_reason);
+    return {message,charge,receipt:billing.receipt,billing,...(finishReason?{finishReason}:{})};
    }catch{throw veniceDiagnosticError('billing-validation',{httpStatus:getVeniceResponseStatus(result),billingStage:stage});}
   },
  };

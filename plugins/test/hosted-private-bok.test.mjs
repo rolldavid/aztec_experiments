@@ -3,7 +3,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {runPrivateBokRequest,startEscrowService,reconcileHostedBilling} from '../escrow-service.mjs';
 import {validateVeniceBilling} from '../venice-metered.mjs';
-import {validateDescriptor,API_VERSION} from '../protocol.mjs';
+import {validateDescriptor,API_VERSION,unpackText} from '../protocol.mjs';
 import {publishAcceptedRevision,hostedRecoveryScanner,runHostedBillingReconciliation,acquireHostedLease,serializeHostedEscrow} from '../main.mjs';
 import fs from 'node:fs/promises';
 import os from 'node:os';
@@ -413,4 +413,18 @@ test('operator-connected source and artifacts never enter static publication or 
  const receipt={connection:{threadId:f(1)},acceptedRevision:'a'.repeat(40)},result={connected:true,url:'https://github.com/owner/existing/pull/1'};
  const publication={publish:async()=>assert.fail('Private source must not be published')},mirror={sync:async()=>assert.fail('Private source must not be mirrored as a new thread'),syncConnected:async input=>{assert.equal(input,receipt);return result;}};
  assert.equal(await publishAcceptedRevision({publication,mirror,receipt}),result);await assert.rejects(publishAcceptedRevision({publication,receipt}),/broker unavailable/);
+});
+
+import {createAgent} from '../agent.mjs';
+import {bokRunner} from '../bok.mjs';
+test('truncated paid completion publishes explicit failure and finishes genuine accounting without accepting an app',async()=>{
+ const x=fixture(),execute=x.args.provider.execute;let tools=0,accepts=0,closed=0;
+ x.args.provider.execute=async(...args)=>({...await execute(...args),finishReason:'length'});
+ const toolbox={open:async()=>({definitions:[],call:async()=>{tools++;},accept:async()=>{accepts++;},close:async()=>{closed++;}})};
+ x.args.runAgent=async({model,text})=>bokRunner({runner:createAgent({model,maxTokens:10,instructions:'Help',toolbox})}).run({text,id:'fixture',postId:x.args.request.postId});
+ assert.deepEqual(await x.run(),{status:'finished',replayed:false});
+ assert.deepEqual(x.events,['reserve','paid','settle','publish_reply','finish']);assert.deepEqual({tools,accepts,closed},{tools:0,accepts:0,closed:1});
+ assert.equal(x.row.charged,6n);assert.equal(x.row.refunded,994n);assert.equal(x.row.reserved,0n);
+ const saved=x.store.read();assert.match(unpackText(saved.hostedPrivateBok.args[2],saved.hostedPrivateBok.args[3]),/output limit.*incomplete/);assert.equal(saved.privateBok.calls[0].finishReason,'length');
+ await x.run();assert.equal(x.events.filter(event=>event==='paid').length,1);
 });

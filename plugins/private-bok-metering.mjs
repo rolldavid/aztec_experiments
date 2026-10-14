@@ -1,7 +1,7 @@
 import {createHash} from 'node:crypto';
 import {ceilDiv} from './metering.mjs';
 import {validateVeniceBilling} from './venice-metered.mjs';
-import {getVeniceDiagnostic} from './venice-diagnostics.mjs';
+import {getVeniceDiagnostic,veniceFinishReason} from './venice-diagnostics.mjs';
 
 const FIELD=21888242871839275222246405745257275088548364400416034343698204186575808495617n;
 const hash=value=>createHash('sha256').update(JSON.stringify(value)).digest('hex');
@@ -195,7 +195,8 @@ export function privateBokMetering({provider,escrow,store,identity,limits={}}){
     const {billing,charge,receipt}=result??{};
     const b=billingFor(id,billing);
     if(charge!==BigInt(b.charge)||receipt!==b.receipt)throw Error('Provider result mismatch');
-    await setCall(id,{phase:'received',billing:b});
+    const finishReason=veniceFinishReason(result.finishReason);
+    await setCall(id,{phase:'received',billing:b,...(finishReason?{finishReason}:{})});
    }catch(error){
     if(callRecord(id).phase==='received')throw Error('Response retained; resume accounting');
     const diagnostic=getVeniceDiagnostic(error);
@@ -206,7 +207,8 @@ export function privateBokMetering({provider,escrow,store,identity,limits={}}){
     throw Error('Provider outcome unknown; original receipt required');
    }
    const settled=await settle(id);
-   return {...settled,replyAvailable:true,message:result.message};
+   const finishReason=callRecord(id).finishReason;
+   return {...settled,replyAvailable:true,message:result.message,...(finishReason?{finishReason}:{})};
   }),
   resume:exclusive(resume),
   validateReconciliation:exclusive(validateReconciliation),

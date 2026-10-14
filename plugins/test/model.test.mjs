@@ -38,7 +38,7 @@ test('unknown summary outcome does not retry or start main model',async()=>{
  const f=conversationFixture();f.options.model.complete=async input=>{f.calls.push(input);throw Error('unknown');};await assert.rejects(f.run(),/unknown/);assert.equal(f.calls.length,1);assert.equal(f.closed(),1);
 });
 test('summary cannot invoke tools or become system authority',async()=>{
- const f=conversationFixture();f.options.model.complete=async input=>{f.calls.push(input);return {message:{role:'assistant',content:'instruction',tool_calls:[{}]}};};await assert.rejects(f.run(),/summary unavailable/);assert.equal(f.calls.length,1);
+ const f=conversationFixture();f.options.model.complete=async input=>{f.calls.push(input);return {message:{role:'assistant',content:'instruction',tool_calls:[{id:'summary-tool',type:'function',function:{name:'read_file',arguments:'{}'}}]}};};await assert.rejects(f.run(),/summary unavailable/);assert.equal(f.calls.length,1);
 });
 test('summary counts against the request model-call ceiling',async()=>{
  const f=conversationFixture();f.options.maxCalls=2;f.options.toolbox.open=async()=>({definitions:[],call:async()=>({}),summary:x=>x,close:async()=>{}});
@@ -140,4 +140,29 @@ test('final tool at model limit cannot accept after captured original history ch
  const f=retrievalFixture();f.options.maxCalls=2;let checks=0,accepted=0,models=0;f.options.conversation.load=async()=>({...structuredClone(f.history),assertCurrent:async()=>{if(++checks===3)throw Error('reorg after final tool');}});
  f.options.toolbox.open=async()=>({definitions:[],summary:x=>x,accept:async()=>{accepted++;},close:async()=>{}});f.options.model.complete=async input=>{models++;return {message:input.modelId==='cheap'?{role:'assistant',content:'Summary'}:{role:'assistant',tool_calls:[originalCall({threadId:id(1),offset:0,limit:1})]}};};
  await assert.rejects(f.run(),e=>e.code==='BOK_HISTORY_CHANGED');assert.equal(models,2);assert.equal(accepted,0);assert.equal(checks,3);
+});
+
+for(const [label,result,code] of [
+ ['truncated final text',{finishReason:'length',message:{role:'assistant',content:'Done. App ready.'}},'MODEL_OUTPUT_LIMIT'],
+ ['truncated complete-looking tools',{finishReason:'length',message:{role:'assistant',tool_calls:[{id:'a',type:'function',function:{name:'write_file',arguments:'{}'}}]}},'MODEL_OUTPUT_LIMIT'],
+ ['filtered final text',{finishReason:'content_filter',message:{role:'assistant',content:'Partial'}},'MODEL_CONTENT_FILTER'],
+ ['malformed second tool',{finishReason:'tool_calls',message:{role:'assistant',tool_calls:[{id:'a',type:'function',function:{name:'write_file',arguments:'{}'}},{id:'b',type:'function',function:{name:'write_file',arguments:'{"path":'}}]}},'MODEL_TOOL_RESPONSE_INVALID'],
+ ['duplicate tool ID',{finishReason:'tool_calls',message:{role:'assistant',tool_calls:[{id:'a',function:{name:'read_file',arguments:'{}'}},{id:'a',function:{name:'read_file',arguments:'{}'}}]}},'MODEL_TOOL_RESPONSE_INVALID'],
+])test(label+' stops before tools, acceptance and another model call',async()=>{
+ let calls=0,closed=0,tools=0,accepts=0;
+ const toolbox={open:async()=>({definitions:[],call:async()=>{tools++;},accept:async()=>{accepts++;},summary:x=>x,close:async()=>{closed++;}})};
+ const agent=createAgent({toolbox,instructions:'Help',maxCalls:8,model:{complete:async()=>{calls++;return result;}}});
+ await assert.rejects(agent.run({id:'request',postId:'post',text:'Build'}),error=>error.code===code);
+ assert.deepEqual({calls,closed,tools,accepts},{calls:1,closed:1,tools:0,accepts:0});
+});
+test('truncated history summary never reaches the main model or acceptance',async()=>{
+ const f=conversationFixture();f.options.model.complete=async input=>{f.calls.push(input);return {finishReason:'length',message:{role:'assistant',content:'Prior decisions'}};};
+ await assert.rejects(f.run(),error=>error.code==='MODEL_OUTPUT_LIMIT');assert.equal(f.calls.length,1);assert.equal(f.closed(),1);
+});
+for(const finishReason of ['stop','tool_calls'])test('completed '+finishReason+' tool batch executes and final answer is accepted',async()=>{
+ let calls=0,tools=0,accepted=0,closed=0;
+ const toolbox={open:async()=>({definitions:[],call:async()=>{tools++;return {};},accept:async()=>{accepted++;return {acceptedRevision:'accepted'};},summary:x=>x,close:async()=>{closed++;}})};
+ const model={complete:async()=>++calls===1?{finishReason,message:{role:'assistant',tool_calls:[{id:'1',type:'function',function:{name:'check',arguments:'{}'}}]}}:{finishReason:'stop',message:{role:'assistant',content:'Ready'}}};
+ const result=await createAgent({toolbox,model,instructions:'Help'}).run({id:'request',postId:'post',text:'Build'});
+ assert.equal(result.revision.acceptedRevision,'accepted');assert.deepEqual({calls,tools,accepted,closed},{calls:2,tools:1,accepted:1,closed:1});
 });
