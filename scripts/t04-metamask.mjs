@@ -773,8 +773,9 @@ export function isMetaMaskStartupWorkerRequest({method,url,workerUrl,startupFram
 // never widened by opting into two further, individually reviewed L2 actions.
 export function validateRetainedBokApproval(value,control,now=Date.now(),{observation=false}={}){
  if(value?.schemaVersion===2)return validateRetainedBokRecoveryApproval(value,control,now);
- const threaded=Object.hasOwn(value??{},'parent')||Object.hasOwn(value??{},'root');
- exactKeys(value,['schemaVersion','runtimeSha256','content','contentSha256','budget','authorizeFeeCap','postFeeCap','expiresAt','publicScope',...(threaded?['parent','root']:[])]);
+ const threaded=Object.hasOwn(value??{},'parent')||Object.hasOwn(value??{},'root'),postOnly=Object.hasOwn(value??{},'completion')||Object.hasOwn(value??{},'observationFile');
+ exactKeys(value,['schemaVersion','runtimeSha256','content','contentSha256','budget','authorizeFeeCap','postFeeCap','expiresAt','publicScope',...(threaded?['parent','root']:[]),...(postOnly?['completion','observationFile']:[])]);
+ if(postOnly){assert.equal(value.completion,'post-only');assert(path.isAbsolute(value.observationFile??''));assert.equal(path.dirname(value.observationFile),control.recoveryDirectory);assert.match(path.basename(value.observationFile),/^bok-[a-z0-9-]{1,64}-observation\.json$/);assert.equal(fs.realpathSync(control.recoveryDirectory),control.recoveryDirectory);if(!observation)assert(!fs.existsSync(value.observationFile),'Original posted request must be observed, never resubmitted');}
  if(threaded){for(const key of ['parent','root'])assert(typeof value[key]==='string'&&/^(0|[1-9][0-9]{0,76})$/.test(value[key]));assert.equal(value.parent==='0',value.root==='0');}
  assert.equal(value.schemaVersion,1);assert.equal(value.runtimeSha256,control.runtimeSha256);
  assert(typeof value.content==='string'&&Buffer.byteLength(value.content)>0&&Buffer.byteLength(value.content)<=512&&!value.content.includes('\0'));
@@ -835,12 +836,17 @@ export async function discoverRetainedBokCompletion({postId,requestId,scope}){
  }
  throw Error('BOK_PUBLIC_INCOMPLETE');
 }
-export function assertRetainedBokEvents({postEvents,replyEvents,accountingEvents,publicIntent,approval,pluginId,discovered}){
+export function assertRetainedBokPostEvents({postEvents,publicIntent,approval,pluginId}){
  const one=(events,type,test)=>{const rows=events.filter(e=>e.type===type&&test(e.payload));assert.equal(rows.length,1);return rows[0];};
  const invocation=one(postEvents,'PluginInvoked',p=>p.request_id===publicIntent.requestId&&p.target===publicIntent.target&&p.plugin_id===BigInt(pluginId).toString());
  const post=one(postEvents,'PostPublished',p=>p.id===invocation.payload.post_id);const expectedParent=approval.parent??'0',expectedRoot=(approval.root??'0')==='0'?post.payload.id:approval.root;assert.equal(post.payload.record.root,expectedRoot);assert.equal(post.payload.record.parent,expectedParent);
  assert.equal(unpackRollingText(post.payload.message,post.payload.length,32*31),approval.content,'Canonical original Bok post differs from approval');
  assert.equal(createHash('sha256').update(approval.content).digest('hex'),approval.contentSha256);
+ return {postId:post.payload.id,root:expectedRoot};
+}
+export function assertRetainedBokEvents({postEvents,replyEvents,accountingEvents,publicIntent,approval,pluginId,discovered}){
+ const one=(events,type,test)=>{const rows=events.filter(e=>e.type===type&&test(e.payload));assert.equal(rows.length,1);return rows[0];};
+ const {postId,root:expectedRoot}=assertRetainedBokPostEvents({postEvents,publicIntent,approval,pluginId}),post={payload:{id:postId}};
  const linked=one(replyEvents,'PluginReplyPublished',p=>p.request_id===publicIntent.requestId&&p.target===publicIntent.target&&p.parent_id===post.payload.id&&p.plugin_id===BigInt(pluginId).toString());
  const reply=one(replyEvents,'PostPublished',p=>p.id===linked.payload.post_id);assert.equal(reply.payload.record.kind,'4');assert.equal(reply.payload.record.parent,post.payload.id);assert.equal(reply.payload.record.root,expectedRoot);assert.equal(reply.position.txHash,linked.position.txHash);
  assert.equal(discovered.parent.id,post.payload.id);assert.equal(discovered.reply.id,reply.payload.id);assert.equal(discovered.reply.position.txHash,reply.position.txHash);
@@ -857,8 +863,14 @@ export async function driveRetainedBokJourney({page,control,approval,mark,report
  report.retainedBok={authorizationConfirmed:false,postConfirmed:false,canonicalReply:false,canonicalTerminalAccounting:false,providerBillingIndependentlyAttested:false};
  try{
   const publicIntent=await driveRetainedBokConfirmations({dialog,approval,inspect,mark,report,remaining});
-  await observeRetainedBokJourney({page,control,approval,publicIntent,mark,report,remaining});
+  if(approval.completion==='post-only'){writeRetainedBokObservation(approval.observationFile,publicIntent);report.retainedBok.publicIntent=publicIntent;}
+  await observeRetainedBokJourney({page,control,approval,publicIntent,mark,report,remaining,postOnly:approval.completion==='post-only'});
  }finally{await page.evaluate(()=>{delete window.__retainedBokWorkflow;});}
+}
+
+export function writeRetainedBokObservation(filename,publicIntent){
+ exactKeys(publicIntent,['authorizationTxHash','transactionHash','requestId','target']);for(const k of ['authorizationTxHash','transactionHash'])assert.match(publicIntent[k],/^0x[0-9a-f]{64}$/);for(const k of ['requestId','target'])positive(publicIntent[k]);
+ const value=JSON.stringify(publicIntent);const fd=fs.openSync(filename,'wx',0o600);try{fs.writeFileSync(fd,value+'\n');fs.fsyncSync(fd);}finally{fs.closeSync(fd);}
 }
 
 export function readRetainedBokObservation(filename){
@@ -872,7 +884,7 @@ export async function waitRetainedBokCompletion({page,input,remaining}){
  // each bounded public read before deciding whether completion was discovered.
  for(;;){remaining();const value=await page.evaluate(discoverRetainedBokCompletion,input);remaining();if(value){assert(value.parent&&value.reply&&value.accounting);return value;}await page.waitForTimeout(Math.min(1000,remaining()));}
 }
-export async function observeRetainedBokJourney({page,control,approval,publicIntent,mark,report,remaining}){
+export async function observeRetainedBokJourney({page,control,approval,publicIntent,mark,report,remaining,postOnly=false}){
  report.retainedBok??={authorizationConfirmed:false,postConfirmed:false,canonicalReply:false,canonicalTerminalAccounting:false,providerBillingIndependentlyAttested:false};
  const [{createAztecNodeClient},{loadContractArtifact},{loadRollingArtifacts},{createRollingEventDecoder}]=await Promise.all([import('@aztec-labs/aztec.js/node'),import('@aztec-labs/stdlib/abi'),import('../prover/rolling-artifacts.mjs'),import('../shared/rolling/public-events.mjs')]);
  const node=createAztecNodeClient(control.walletConfig.trustedQuery.url),[board,bok]=loadRollingArtifacts();
@@ -880,6 +892,7 @@ export async function observeRetainedBokJourney({page,control,approval,publicInt
  const authorizationEvents=await decoder.decodeTransaction(node,publicIntent.authorizationTxHash);const opened=authorizationEvents.filter(e=>e.type==='AccountingChanged'&&e.payload.request_id===publicIntent.requestId);assert.equal(opened.length,1);assert.equal(opened[0].payload.state,'1');assert.equal(opened[0].payload.budget,approval.budget);assert.equal(opened[0].payload.available,approval.budget);assert.equal(opened[0].payload.reserved,'0');report.retainedBok.authorizationConfirmed=true;
  const {TxHash}=await import('@aztec-labs/stdlib/tx');const fees={};for(const [kind,hash,cap] of [['authorization',publicIntent.authorizationTxHash,approval.authorizeFeeCap],['post',publicIntent.transactionHash,approval.postFeeCap]]){const receipt=await node.getTxReceipt(TxHash.fromString(hash));assert.equal(receipt.executionResult,'success');assert.equal(typeof receipt.transactionFee,'bigint');assert(receipt.transactionFee>=0n&&receipt.transactionFee<=BigInt(cap));fees[kind]=String(receipt.transactionFee);}
  const postEvents=await decoder.decodeTransaction(node,publicIntent.transactionHash),invocation=postEvents.filter(e=>e.type==='PluginInvoked'&&e.payload.request_id===publicIntent.requestId);assert.equal(invocation.length,1);const postId=invocation[0].payload.post_id;report.retainedBok.postConfirmed=true;
+ if(postOnly){assert.equal(approval.completion,'post-only');assertRetainedBokPostEvents({postEvents,publicIntent,approval,pluginId:control.walletConfig.config.bok.pluginId});for(const event of [...authorizationEvents,...postEvents])assert.equal((await node.getBlockData(Number(event.position.blockNumber))).blockHash.toString(),event.position.blockHash);Object.assign(report.retainedBok,{canonicalPost:true,postId,completion:'post-only',networkFees:fees,authorizationTransactionHash:publicIntent.authorizationTxHash,postTransactionHash:publicIntent.transactionHash});return;}
  mark('retained-bok-reply-accounting');
  const discovered=await waitRetainedBokCompletion({page,input:{postId,requestId:publicIntent.requestId,scope:approval.publicScope},remaining});
   const replyEvents=await decoder.decodeTransaction(node,discovered.reply.position.txHash),accountingEvents=await decoder.decodeTransaction(node,discovered.accounting.position.txHash);
