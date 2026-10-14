@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import {runPrivateBokRequest,startEscrowService,reconcileHostedBilling} from '../escrow-service.mjs';
 import {validateVeniceBilling} from '../venice-metered.mjs';
 import {validateDescriptor,API_VERSION} from '../protocol.mjs';
-import {publishAcceptedRevision,hostedRecoveryScanner,runHostedBillingReconciliation,acquireHostedLease} from '../main.mjs';
+import {publishAcceptedRevision,hostedRecoveryScanner,runHostedBillingReconciliation,acquireHostedLease,serializeHostedEscrow} from '../main.mjs';
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
@@ -385,4 +385,26 @@ test('hosted recovery rejects symlink, FIFO and malformed journals without priva
    await assert.rejects(x.scan(),error=>error.message==='Invalid hosted recovery journal');
   }finally{await x.close();}
  }
+});
+
+// Controlled frozen-port shape matches createPrivateBokEscrow; no chain/provider calls.
+test('hosted frozen escrow port preserves metadata and method receivers through the wallet lane',async()=>{
+ const identity=Object.freeze({escrow:f(90)}),mode=Object.freeze({proofMode:'disabled'}),calls=[];
+ const methods=['request','assertUsable','inspectOperation','reserve','settle','close_uncertain','reconcile','finish','publish_reply'];
+ const raw=Object.freeze({identity,mode,...Object.fromEntries(methods.map(method=>[method,function(...args){assert.equal(this,raw);calls.push({method,args});return method;}]))});
+ let queued=0;const port=serializeHostedEscrow(raw,async fn=>{queued++;return fn();});
+ assert.equal(port.identity,identity);assert.equal(port.mode,mode);
+ for(const method of methods){assert.equal(port[method],port[method]);assert.equal(await port[method](1,'public'),method);}
+ assert.equal(queued,methods.length);assert.deepEqual(calls,methods.map(method=>({method,args:[1,'public']})));assert(Object.isFrozen(port));
+});
+test('hosted frozen escrow ports share serialization and preserve the first exact rejected operation',async()=>{
+ let tail=Promise.resolve(),active=0,maximum=0;const failure=Error('controlled operation failure'),events=[];
+ const lane=fn=>{const value=tail.then(fn);tail=value.catch(()=>{});return value;};
+ const make=label=>serializeHostedEscrow(Object.freeze({request:async reject=>{active++;maximum=Math.max(maximum,active);events.push(label);try{await new Promise(resolve=>setImmediate(resolve));if(reject)throw failure;return label;}finally{active--;}}}),lane);
+ const one=make('one'),two=make('two');const values=await Promise.allSettled([one.request(true),two.request(false),one.request(false)]);
+ assert.equal(values[0].reason,failure);assert.equal(values[1].value,'two');assert.equal(values[2].value,'one');assert.equal(maximum,1);assert.equal(active,0);assert.deepEqual(events,['one','two','one']);
+});
+test('hosted request reaches existing reserve paid settle reply and finish through the frozen escrow wrapper',async()=>{
+ const x=fixture();let queued=0;x.args.escrow=serializeHostedEscrow(Object.freeze(x.args.escrow),async fn=>{queued++;return fn();});
+ const result=await x.run();assert.equal(result.status,'finished');assert(queued>0);assert.deepEqual(x.events,['reserve','paid','settle','publish_reply','finish']);
 });

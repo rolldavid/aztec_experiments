@@ -192,6 +192,15 @@ export async function runHostedBillingReconciliation({config,receiptFile,env=pro
  return result;
 }
 
+/** Serialize the trusted escrow port through the shared wallet lane. */
+export function serializeHostedEscrow(port,walletOperation){
+ // The source port is frozen: a Proxy cannot replace its non-configurable
+ // method values. A distinct frozen port preserves metadata and stable methods.
+ return Object.freeze(Object.fromEntries(Object.entries(port).map(([key,value])=>[
+  key,typeof value==='function'?(...args)=>walletOperation(()=>Reflect.apply(value,port,args)):value,
+ ])));
+}
+
 /** Explicit Rolling composition; the legacy account escrow is never selected. */
 export async function runRollingHostedService({config,env=process.env,onError=()=>{}}){
  const [{rollingOperatorConfig,rollingPxeOptions,operatorNodeFetch,fileState},{loadRollingArtifacts},{jsonStringify},
@@ -266,7 +275,7 @@ export async function runRollingHostedService({config,env=process.env,onError=()
     const store=await fileState(path.join(config.stateDirectory,id+'.json'));
     const rawEscrow=await walletOperation(()=>createPrivateBokEscrow({node,wallet,artifact,address:scope.receiver,operator:account.address.toString(),board:scope.boardAddress,network:scope,
      requestId:request.requestId,target:request.target,store,lease,development:config.development,proofMode:config.development?'disabled':'real'}));
-    const escrow=new Proxy(rawEscrow,{get(target,key){const value=Reflect.get(target,key);return typeof value==='function'?(...args)=>walletOperation(()=>value(...args)):value;}});
+    const escrow=serializeHostedEscrow(rawEscrow,walletOperation);
     return runPrivateBokRequest({request,board,escrow,store,provider,conversation,limits:config.limits,runAgent:async({model,conversation,...input})=>
      bokRunner({runner:createAgent({model,toolbox,conversation,summaryModelId,maxCalls:config.limits?.maxCalls??8,instructions:'You are bok, the board development assistant. Answer the explicit request. Each thread has its own persistent source repository. For static applications, provide package.json with a build script, explicit Node tests, and dist output. Use check_workspace to run isolated tests and builds and repair failures before answering. The runtime has Node and no network or dependency installation. Host validation saves accepted revisions; tools cannot alter permissions or deploy.'})}).run(input)});
    }});
