@@ -87,7 +87,7 @@ export function githubToolbox({repository,api,allowWrites=false,draftPr=false,ru
     return {
       privateSource:!!workspace?.connection,
       definitions:workspace?[...definitions.filter(x=>x.function.name!=='create_pr'&&(!workspace.connection||x.function.name!=='read_pr')),definition('check_workspace','Run isolated tests and static build for current source; repair failures before finishing',{})]:definitions,
-      summary:reason=>workspace?.connection?'Connected repository work did not publish a pull request.':(reason+(prUrl?' PR: '+prUrl:' No PR was published.')).slice(0,900),
+      summary:reason=>workspace?.connection?'Connected repository work did not publish a pull request.':(workspace?reason:reason+(prUrl?' PR: '+prUrl:' No PR was published.')).slice(0,900),
       async call(name,args){
         if(name==='check_workspace'&&workspace){
           await ensureFiles();let result;try{result=await workspace.check();}catch(error){if(error.code!=='STATIC_FAILED'||!error.result)throw error;result=error.result;}
