@@ -87,62 +87,13 @@ export async function bootstrapPluginDevnet({directory,port=8787,host='127.0.0.1
   }catch(error){try{await close();}catch(cleanup){throw new AggregateError([error,cleanup],'Local board setup and cleanup failed');}throw error;}
 }
 
-// Local inventory only. This uses the same signed-once journal as the operator;
-// a retained preparing/unknown intent never creates another token or transaction.
-export async function deployDevelopmentToken({provider,signer,artifact,store,rollupAddress}) {
- const {onceAztecOperation,reconcileRollingEthereum,matchRollingEthereumSigned}=await import('../operations.mjs');
- const {Contract:Token,Transaction,getCreateAddress,keccak256}=await import('ethers');
- if(String((await provider.getNetwork()).chainId)!=='31337'||!artifact?.bytecode?.object||!artifact?.deployedBytecode?.object)throw Error('Development token prerequisite differs');
- const from=signer.address.toLowerCase(),factory=new ContractFactory(artifact.abi,artifact.bytecode.object);
- const creation=(await factory.getDeployTransaction(from)).data.toLowerCase();
- const identity=JSON.stringify({kind:'local-dev-usdc-v1',chainId:'31337',rollupAddress:String(rollupAddress).toLowerCase(),from,creation,runtime:artifact.deployedBytecode.object.toLowerCase(),initialInventory:'1000000000'});
- const reconcile=record=>reconcileRollingEthereum({record,development:true,reads:{
-  signed:async r=>r.deployment?.address===getCreateAddress({from,nonce:r.deployment.nonce}).toLowerCase()&&matchRollingEthereumSigned({parse:Transaction.from,record:r,chainId:'31337',to:null,data:creation,from,nonce:r.deployment.nonce}),
-  receipt:hash=>provider.getTransactionReceipt(hash),block:n=>provider.getBlock(n),head:tag=>provider.getBlock(tag),
-  effect:async(r,anchor,receipt)=>{
-   const address=r.deployment.address;
-   if(receipt.contractAddress?.toLowerCase()!==address||(await provider.getCode(address,anchor.number)).toLowerCase()!==artifact.deployedBytecode.object.toLowerCase())return false;
-   const token=new Token(address,artifact.abi,provider),at={blockTag:anchor.number};
-   return Number(await token.decimals(at))===6&&await token.totalSupply(at)===1000000000n&&await token.balanceOf(from,at)===1000000000n;
-  },
- }});
- const result=await onceAztecOperation({store,name:'deploy-portal',identity,scope:'development-token',reconcile,execute:async({bindDeployment,submit})=>{
-  const transaction=await signer.populateTransaction({data:creation,value:0n});
-  if(transaction.chainId!==31337n||BigInt(transaction.value??0)!==0n||!Number.isSafeInteger(transaction.nonce)||transaction.nonce<0)throw Error('Development token transaction differs');
-  await bindDeployment({from,nonce:transaction.nonce,address:getCreateAddress({from,nonce:transaction.nonce}).toLowerCase()});
-  const raw=await signer.signTransaction(transaction);
-  await submit({hash:keccak256(raw),raw:raw.slice(2)},()=>provider.broadcastTransaction(raw));
- }});
- return {...result,...(result.status==='succeeded'?{tokenAddress:store.read().operations['deploy-portal'].deployment.address,inventory:'1000000000',decimals:6,kind:'local-development-issuance'}:{})};
-}
-
-export function requireDevelopmentBokRecords({tokenState,lifecycleConfig,operatorState}) {
- const advanced=['deploy-portal','bind','activate','register'].some(name=>operatorState?.operations?.[name]);
- if((advanced||lifecycleConfig)&&!tokenState?.operations?.['deploy-portal']||advanced&&!lifecycleConfig)throw Error('Original development Bok records missing; recovery required');
-}
-
 // Read-only polling of the existing operator commands is safe because each
 // command reconciles its original durable intent before any preparation/send.
-export async function activateDevelopmentBok({run,settle,expected,waitMs=120000,pollMs=1000}) {
- if(!Number.isSafeInteger(waitMs)||waitMs<1||waitMs>120000||!Number.isSafeInteger(pollMs)||pollMs<0||pollMs>1000)throw Error('Invalid local lifecycle deadline');
- const deadline=Date.now()+waitMs;
- const complete=async command=>{
-  for(;;){
-   const result=await run(command);
-   if(result?.status==='succeeded'&&result.canonical===true)return result;
-   if(result?.status!=='unresolved'||Date.now()>=deadline)throw Error('Original Bok operation requires reconciliation');
-   await pause(Math.min(pollMs,Math.max(0,deadline-Date.now())));
-  }
- };
- await complete('deploy-portal');await complete('bind');
- await settle();
- await complete('activate');await complete('register');const status=await complete('status');
- if(status.scope!=='portal-registration'||status.escrow!==expected.escrow||status.pluginId!==expected.pluginId||!/^0x[0-9a-f]{40}$/.test(status.portal??'')||BigInt(status.portal)===0n||status.portalReady!==true||status.registrationReady!==true||status.hostedServiceReady!==false)throw Error('Canonical Bok status differs');
- return {status,walletBok:{contractAddress:status.escrow,operatorAddress:expected.operatorAddress,pluginId:status.pluginId}};
+export function requireDevelopmentCircleScope({lifecycle,operations,circleScope,legacyToken}) {
+ const advanced=['deploy-portal','bind','activate','register'].some(name=>operations?.[name]);
+ if(legacyToken?.operations?.['deploy-portal']||(advanced&&!lifecycle)||(lifecycle&&!circleScope))throw Error('Original Circle lifecycle records missing');
 }
 
-// Read-only polling of the existing operator commands is safe because each
-// command reconciles its original durable intent before any preparation/send.
 export async function completeDevelopmentOperation({run,command,timeoutMs=120000,pollMs=1000}) {
  if(!['deploy-escrow','deploy-portal','bind','activate','register','status'].includes(command)||!Number.isSafeInteger(timeoutMs)||timeoutMs<1||timeoutMs>120000||!Number.isSafeInteger(pollMs)||pollMs<0||pollMs>1000)throw Error('Invalid local lifecycle deadline');
  const deadline=Date.now()+timeoutMs;
@@ -152,6 +103,14 @@ export async function completeDevelopmentOperation({run,command,timeoutMs=120000
   if(result?.status!=='unresolved'||Date.now()>=deadline)throw Error('Original Bok operation requires reconciliation');
   await pause(Math.min(pollMs,Math.max(0,deadline-Date.now())));
  }
+}
+export async function activateDevelopmentBok({run,settle,expected,waitMs=120000,pollMs=1000}) {
+ const complete=command=>completeDevelopmentOperation({run,command,timeoutMs:waitMs,pollMs});
+ await complete('deploy-portal');await complete('bind');
+ await settle();
+ await complete('activate');await complete('register');const status=await complete('status');
+ if(status.scope!=='portal-registration'||status.escrow!==expected.escrow||status.pluginId!==expected.pluginId||!/^0x[0-9a-f]{40}$/.test(status.portal??'')||BigInt(status.portal)===0n||status.portalReady!==true||status.registrationReady!==true||status.hostedServiceReady!==false)throw Error('Canonical Bok status differs');
+ return {status,walletBok:{contractAddress:status.escrow,operatorAddress:expected.operatorAddress,pluginId:status.pluginId}};
 }
 
 // The local settlement helper updates proven state/Outbox, but the installed
@@ -189,6 +148,9 @@ export async function failRollingBootstrap(error,close) {
 // Current local profile. Production deployment/transaction implementations are
 // reused; only the disposable chain's explicitly labelled settlement is local.
 export async function bootstrapRollingDevnet({directory,ports,onProgress=console.log,onOwned=()=>{}}) {
+ const {readLiquidityArtifacts,readFundingRouterArtifact,deployCircleInventory,deployDevelopmentLiquidity}=await import('./liquidity.mjs');
+ // Complete all public artifact preparation before starting retained services.
+ const liquidityArtifacts=await readLiquidityArtifacts(),fundingRouterArtifact=await readFundingRouterArtifact();
  const {readDevnetRecord,writeDevnetRecord,devnetPorts,assertFreshDevnetDirectory}=await import('./network.mjs');
  const {deriveMasterMessageSigningSecretKey}=await import('@aztec-labs/stdlib/keys');
  const {getSchnorrInitializerlessAccountContractAddress}=await import('@aztec-labs/accounts/schnorr');
@@ -278,12 +240,13 @@ export async function bootstrapRollingDevnet({directory,ports,onProgress=console
   const bok=await completeDevelopmentOperation({command:'deploy-escrow',run:command=>operatorCommand({command,config:operatorConfig,statePath,actor})});
   if(bok.status!=='succeeded'||bok.canonical!==true)throw Error('PrivateBok constructor requires reconciliation');
   tokenProvider=new JsonRpcProvider(net.rpcUrl,undefined,{cacheTimeout:-1,batchMaxCount:1});
-  const tokenStatePath=path.join(directory,'development-token-operations.json');
-  requireDevelopmentBokRecords({tokenState:await readDevnetRecord(tokenStatePath),lifecycleConfig:await readDevnetRecord(path.join(directory,'bok-lifecycle-config.json')),operatorState:await readDevnetRecord(statePath)});
-  const tokenStore=await fileState(tokenStatePath);
-  const tokenArgs={provider:tokenProvider,signer:new Wallet(net.identity.privateKey,tokenProvider),artifact:await read('billboard/portal/out/DevUSDC.sol/DevUSDC.json'),store:tokenStore,rollupAddress:info.l1ContractAddresses.rollupAddress};
-  let token;const tokenDeadline=Date.now()+30000;
-  do{token=await deployDevelopmentToken(tokenArgs);if(token.status==='succeeded')break;if(token.status!=='unresolved'||Date.now()>=tokenDeadline)throw Error('Original development token requires reconciliation');await pause(1000);}while(true);
+  const retainedLifecycle=await readDevnetRecord(path.join(directory,'bok-lifecycle-config.json'));
+  const circleDirectory=path.join(directory,'circle-liquidity');
+  // Never reinterpret a previously bound DevUSDC portal as Circle. Original
+  // lifecycle identity remains authoritative and fixedFile rejects a change.
+  requireDevelopmentCircleScope({lifecycle:retainedLifecycle,operations:(await readDevnetRecord(statePath))?.operations,circleScope:await readDevnetRecord(path.join(circleDirectory,'scope.json')),legacyToken:await readDevnetRecord(path.join(directory,'development-token-operations.json'))});
+  const localScope={chainId:'31337',rollupAddress:operatorConfig.rollupAddress,boardAddress:report.l2Addr};
+  const token=await deployCircleInventory({directory:circleDirectory,provider:tokenProvider,signer:new Wallet(net.identity.privateKey,tokenProvider),artifacts:liquidityArtifacts,scope:localScope});
   const lifecycleConfig={...operatorConfig,lifecycle:{tokenAddress:token.tokenAddress,pluginId:handleField('bok')}};
   await fixedFile('bok-lifecycle-config.json',lifecycleConfig);
   onProgress('Reconciling the local PrivateBok portal and Rolling registration');
@@ -302,13 +265,16 @@ export async function bootstrapRollingDevnet({directory,ports,onProgress=console
     if(!settled)await settleC01ApplicationMessage({node:net.node,config:net.config,dateProvider:net.dateProvider,l1Client:net.deployment.l1Client,directory,rollupAddress:info.l1ContractAddresses.rollupAddress,txHash:hash,expectedLeaf:leaves[0],kind:'ready',applicationProofs:false});
    },
   });
+  const {fundingRelayConfig,...liquidity}=await deployDevelopmentLiquidity({directory:path.join(directory,'exchange-liquidity'),provider:tokenProvider,signer:new Wallet(net.identity.privateKey,tokenProvider),artifacts:liquidityArtifacts,fundingRouterArtifact,circle:token,
+   scope:{...localScope,collateralPortal:report.portalAddr.toLowerCase(),feePortal:String(info.l1ContractAddresses.feeJuicePortalAddress).toLowerCase(),bokPortal:activated.status.portal,feeToken:String(info.l1ContractAddresses.feeJuiceAddress).toLowerCase(),bokToken:token.tokenAddress,feeAssetHandler:String(net.deployment.l1ContractAddresses.feeAssetHandlerAddress).toLowerCase(),privateFpc:String(feeInstance.address)}});
+  await writeDevnetRecord(path.join(directory,'liquidity-public.json'),{...liquidity,circle:token});
   await net.useWallClock();
   const readerConfig={nodeUrl:net.nodeUrl,artifactPath:path.resolve('billboard/target/rolling_contract-RollingBoard.json'),scope:{chainId:'31337',rollupVersion:String(info.rollupVersion),rollupAddress:operatorConfig.rollupAddress,boardAddress:report.l2Addr,classId:manifest.artifacts.boardClassId},deployment:report.boardDeployment,cacheDirectory:path.join(directory,'public-index'),port:selected.appPort};
-  const walletConfig={config:{network:{chainId:'31337',rollupVersion:String(info.rollupVersion),rollupAddress:operatorConfig.rollupAddress,ethRpcUrl:net.rpcUrl},board:{contractAddress:report.l2Addr,portalAddress:report.portalAddr.toLowerCase()},privateFee:{contractAddress:String(feeInstance.address),gasSettings:gas},bok:activated.walletBok},trustedQuery:{url:net.nodeUrl,allowLocalDev:true},remoteProver:null,proofsEnabled:false};
+  const walletConfig={config:{network:{chainId:'31337',rollupVersion:String(info.rollupVersion),rollupAddress:operatorConfig.rollupAddress,ethRpcUrl:net.rpcUrl},board:{contractAddress:report.l2Addr,portalAddress:report.portalAddr.toLowerCase()},privateFee:{contractAddress:String(feeInstance.address),gasSettings:gas},bok:activated.walletBok,aggregateFunding:liquidity.scope},trustedQuery:{url:net.nodeUrl,allowLocalDev:true},remoteProver:null,proofsEnabled:false};
   await writeDevnetRecord(path.join(directory,'rolling-public.json'),readerConfig);await writeDevnetRecord(path.join(directory,'rolling-wallet-public.json'),walletConfig);
-  const readiness={core:'configured',publicIndex:'live-status-required',nativeProofs:false,privateBok:'portal-active-registered',bokAddress:bok.escrow,bokPortal:activated.status.portal,developmentToken:token.tokenAddress,developmentInventory:{kind:token.kind,amount:token.inventory,decimals:token.decimals,recipient:net.identity.address.toLowerCase()},userBokCredit:'unfunded',hostedService:false,aggregateFunding:'unconfigured-liquidity-required',localSettlement:'explicitly test-controlled, not a network proof'};
+  const readiness={core:'configured',publicIndex:'live-status-required',nativeProofs:false,privateBok:'portal-active-registered',bokAddress:bok.escrow,bokPortal:activated.status.portal,developmentToken:token.tokenAddress,developmentInventory:{kind:token.kind,amount:token.inventory,decimals:token.decimals,recipient:net.identity.address.toLowerCase()},userBokCredit:'unfunded',hostedService:false,fundingRelay:'configured-not-started',aggregateFunding:'genuine-local-pools-quoted-user-payment-unrun',localSettlement:'explicitly test-controlled, not a network proof'};
   await writeDevnetRecord(path.join(directory,'readiness.json'),readiness);
   await wallet.stop();wallet=undefined;
-  return {net,readerConfig,walletConfig,readiness,close};
+  return {net,readerConfig,walletConfig,readiness,fundingRelayConfig,close};
  }catch(error){await failRollingBootstrap(error,close);}
 }

@@ -236,14 +236,27 @@ served by the existing `apps/rolling/start.mjs` components. Only the local publi
 operator receives disposable genesis fee funds. This is not a free token exchange
 or evidence of router liquidity.
 
-Startup retains the existing current PrivateBok constructor campaign, then deploys
-the actual `DevUSDC` contract (chain 31337 only, six decimals, fixed issuance of
-1,000,000,000 base units to the local deployment actor). Its separate
-`development-token-operations.json` saves signed creation bytes before the sole
-broadcast. Reopening checks the exact original transaction, canonical receipt,
-whole runtime and initial inventory at the creation block; it never retransmits
-an unknown operation. This is explicit development issuance, not a swap or user
-credit, and this token does not implement Circle EIP-3009 authorization.
+Before startup, prepare the genuine local liquidity artifacts:
+
+```sh
+node plugins/devnet/liquidity.mjs --prepare-artifacts
+```
+
+This checks locked Uniswap package versions and artifact hashes, verifies Circle
+commit `fc85788bc7c23cefe3df1a757133048bfddadeaa` and all compiler source inputs,
+and compiles that official source with pinned solc 0.6.12 and OpenZeppelin 3.4.2.
+The bounded compiler writes `.build/local-liquidity/`; it does not deploy anything.
+An explicit dependency-root argument can reuse an existing matching installation.
+Use published Uniswap bytecode, preserving its pool CREATE2 identity.
+
+Startup reconciles the original PrivateBok constructor before deploying Circle's
+FiatTokenV2_2 implementation, FiatTokenProxy and MasterMinter. It locks the
+implementation and retains a separate private proxy administrator. Initialization
+and the fixed 1,000,000 USDC local issuance use original signed-once journals.
+The real authorization domain and six-decimal token identity are checked before
+Bok portal binding. Missing original scope or administrator records halt recovery;
+unknown operations are reconciled without retransmission. Existing token-bound
+campaigns cannot silently change to another token.
 
 `bok-lifecycle-config.json` captures the real token and Bok plugin ID separately
 from the original constructor identity. The existing operator then reconciles
@@ -256,7 +269,25 @@ original token/lifecycle records halt an advanced campaign. The public readiness
 record reports the deployment actor's test inventory and **unfunded user Bok
 credit**, separately from hosted service and aggregate liquidity.
 
-No router, quoter, DEX liquidity, private fee credit or model provider is invented.
+The exchange stage deploys official WETH9, Uniswap V3 factory, position manager,
+SwapRouter02 and QuoterV2, then seeds three actual pools (WETH/FEE, WETH/USDC,
+USDC/FEE). Declared seed ratios are local inventory policy, not market quotes.
+Only actual canonical QuoterV2 reads become route-availability evidence. Exact
+approvals are revoked after seeding; the local issuance and ten ETH WETH inventory
+belong to the deployment actor. The existing RollingFundingRouter binds all three
+real portals and the verified private FPC. No private user fee credit or model
+provider is invented. Real user payment, private claims and named-wallet behavior
+remain separate acceptance; target testnet addresses and liquidity must be
+measured independently. A dedicated private relay signer is funded once with
+0.1 local ETH through the same retained transaction machinery; it is never the
+operator or proxy administrator. Its fixed 0.01 ETH per-operation ceiling and
+0.1 ETH total budget are persisted. The initial USDC fee uses the real pool quote
+for that ceiling plus 5%; later price changes can block new payments, not silently
+change signed terms. Bootstrap returns private relay configuration with
+`configured-not-started` status. The host opens the existing relay ledger before
+serving its status/recovery route; a pending payment does not justify another
+funding transaction or key. Failed on-chain relay transactions still consume the
+relay's ETH gas, and no user payment or reimbursement is claimed by setup.
 A separate private `--hosted-config /absolute/service.json` can opt into the existing
 hosted service; it must explicitly select development mode and supply its own
 validated current deployment. Provider secrets and deployment actor keys do not

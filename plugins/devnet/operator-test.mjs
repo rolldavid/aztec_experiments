@@ -115,6 +115,23 @@ if(focused){
    for(const name of ['ethereum-state.json','node','deployment.json','bok-operations.json']){const p=path.join(dir,name);if(name==='node')await fs.mkdir(p);else await fs.writeFile(p,'retained',{mode:0o600});await assert.rejects(assertFreshDevnetDirectory(dir),/metadata missing/);assert(await fs.lstat(p));await fs.rm(p,{recursive:true});}
   }finally{await fs.rm(dir,{recursive:true,force:true});}
  });
+
+ const {activateDevelopmentBok}=await import('./bootstrap.mjs');
+ const bokExpected={escrow:'0x'+'4'.repeat(64),operatorAddress:'0x'+'5'.repeat(64),pluginId:'0x'+'1'.repeat(64)};
+ const bokStatus={status:'succeeded',canonical:true,scope:'portal-registration',escrow:bokExpected.escrow,pluginId:bokExpected.pluginId,portal:'0x'+'6'.repeat(40),portalReady:true,registrationReady:true,hostedServiceReady:false};
+ test('actual lifecycle composition exposes wallet Bok only after ordered canonical status (controlled operator)',async()=>{
+  const calls=[];let binds=0;const value=await activateDevelopmentBok({expected:bokExpected,pollMs:0,run:async command=>{calls.push(command);if(command==='bind'&&binds++===0)return {status:'unresolved'};return command==='status'?bokStatus:{status:'succeeded',canonical:true};},settle:async()=>calls.push('settle')});
+  assert.deepEqual(calls,['deploy-portal','bind','bind','settle','activate','register','status']);
+  assert.deepEqual(value.walletBok,{contractAddress:bokExpected.escrow,operatorAddress:bokExpected.operatorAddress,pluginId:bokExpected.pluginId});
+  assert.equal(value.status.hostedServiceReady,false);
+ });
+ test('lifecycle refuses failed, noncanonical or unresolved retained operation without later activation',async()=>{
+  for(const result of [{status:'failed',canonical:true},{status:'succeeded',canonical:false},{status:'unresolved'}]){const calls=[];await assert.rejects(activateDevelopmentBok({expected:bokExpected,waitMs:1,pollMs:1,run:async command=>{calls.push(command);return result;},settle:async()=>calls.push('settle')}),/reconciliation/);assert(calls.every(x=>x==='deploy-portal'));}
+ });
+ test('settlement failure and canonical status drift cannot publish wallet Bok configuration',async()=>{
+  const calls=[];await assert.rejects(activateDevelopmentBok({expected:bokExpected,run:async c=>{calls.push(c);return bokStatus;},settle:async()=>{throw Error('controlled missing Ready');}}),/missing Ready/);assert.deepEqual(calls,['deploy-portal','bind']);
+  for(const change of [{escrow:'0x'+'7'.repeat(64)},{pluginId:'0x'+'2'.repeat(64)},{portal:'0x'+'0'.repeat(40)},{portalReady:false},{registrationReady:false},{hostedServiceReady:true},{scope:'constructor-only'}])await assert.rejects(activateDevelopmentBok({expected:bokExpected,run:async c=>c==='status'?{...bokStatus,...change}:bokStatus,settle:async()=>{}}),/status differs/);
+ });
  const {waitDevelopmentFinality,failRollingBootstrap}=await import('./bootstrap.mjs');
  const readyHash='0x'+'a'.repeat(64),readyBlockHash='0x'+'b'.repeat(64);
  const readyReceipt={txHash:readyHash,status:'proven',executionResult:'success',blockNumber:3,blockHash:readyBlockHash};
@@ -143,10 +160,11 @@ if(focused){
   assert.deepEqual(args,['--host','127.0.0.1','--port','18545','--chain-id','31337','--mnemonic','synthetic-only','--silent','--no-request-size-limit','--slots-in-an-epoch','1']);
   assert(!developmentAnvilArgs({persistent:false,port:18546,mnemonic:'synthetic-only'}).includes('--slots-in-an-epoch'));
  });
+
  test('constructor waits for same recorded operation without preparing or sending again',async()=>{
   const {completeDevelopmentOperation}=await import('./bootstrap.mjs'),{onceAztecOperation}=await import('../operations.mjs');let state={operations:{}},prepares=0,sends=0,reads=0;const store={read:()=>state,write:async s=>{state=s;}};
-  const result=await completeDevelopmentOperation({command:'deploy-escrow',timeoutMs:100,pollMs:0,run:command=>onceAztecOperation({store,name:command,identity:'retained-constructor',reconcile:async()=>++reads<3?{status:'unresolved',canonical:false}:{status:'succeeded',canonical:true,escrow:('0x'+'b'.repeat(64))},execute:async({submit})=>{prepares++;await submit({hash:'0x'+'7'.repeat(64),raw:'ab'},async()=>{sends++;});}})});
-  assert.equal(result.escrow,('0x'+'b'.repeat(64)));assert.equal(reads,3);assert.equal(prepares,1);assert.equal(sends,1);assert.equal(state.operations['deploy-escrow'].phase,'submission-unknown');
+  const result=await completeDevelopmentOperation({command:'deploy-escrow',timeoutMs:100,pollMs:0,run:command=>onceAztecOperation({store,name:command,identity:'retained-constructor',reconcile:async()=>++reads<3?{status:'unresolved',canonical:false}:{status:'succeeded',canonical:true,escrow:bokExpected.escrow},execute:async({submit})=>{prepares++;await submit({hash:'0x'+'7'.repeat(64),raw:'ab'},async()=>{sends++;});}})});
+  assert.equal(result.escrow,bokExpected.escrow);assert.equal(reads,3);assert.equal(prepares,1);assert.equal(sends,1);assert.equal(state.operations['deploy-escrow'].phase,'submission-unknown');
  });
  test('constructor deadline retains unknown or hashless intent and refuses a second execution',async()=>{
   const {completeDevelopmentOperation}=await import('./bootstrap.mjs'),{onceAztecOperation}=await import('../operations.mjs');
@@ -156,52 +174,55 @@ if(focused){
   }
  });
 
- const {deployDevelopmentToken,activateDevelopmentBok,requireDevelopmentBokRecords}=await import('./bootstrap.mjs');
- const bokExpected={escrow:'0x'+'4'.repeat(64),operatorAddress:'0x'+'5'.repeat(64),pluginId:'0x'+'1'.repeat(64)};
- const bokStatus={status:'succeeded',canonical:true,scope:'portal-registration',escrow:bokExpected.escrow,pluginId:bokExpected.pluginId,portal:'0x'+'6'.repeat(40),portalReady:true,registrationReady:true,hostedServiceReady:false};
- test('actual lifecycle composition exposes wallet Bok only after ordered canonical status (controlled operator)',async()=>{
-  const calls=[];let binds=0;const value=await activateDevelopmentBok({expected:bokExpected,pollMs:0,run:async command=>{calls.push(command);if(command==='bind'&&binds++===0)return {status:'unresolved'};return command==='status'?bokStatus:{status:'succeeded',canonical:true};},settle:async()=>calls.push('settle')});
-  assert.deepEqual(calls,['deploy-portal','bind','bind','settle','activate','register','status']);
-  assert.deepEqual(value.walletBok,{contractAddress:bokExpected.escrow,operatorAddress:bokExpected.operatorAddress,pluginId:bokExpected.pluginId});
-  assert.equal(value.status.hostedServiceReady,false);
+ const {linkLiquidityBytecode,localPoolPrice,liquidityStage,liquidityPins}=await import('./liquidity.mjs');
+ test('genuine dependency pins bind Circle source/compiler and matching official V3 artifact family',()=>{
+  assert.equal(liquidityPins.circleCommit,'fc85788bc7c23cefe3df1a757133048bfddadeaa');assert.equal(Object.keys(liquidityPins.circleSources).length,31);assert.equal(liquidityPins.packages.find(p=>p.package==='@uniswap/swap-router-contracts').version,'1.3.1');assert.match(liquidityPins.compilerSha256,/^[a-f0-9]{64}$/);
  });
- test('lifecycle refuses failed, noncanonical or unresolved retained operation without later activation',async()=>{
-  for(const result of [{status:'failed',canonical:true},{status:'succeeded',canonical:false},{status:'unresolved'}]){const calls=[];await assert.rejects(activateDevelopmentBok({expected:bokExpected,waitMs:1,pollMs:1,run:async command=>{calls.push(command);return result;},settle:async()=>calls.push('settle')}),/reconciliation/);assert(calls.every(x=>x==='deploy-portal'));}
+ test('actual bytecode linker accepts only exact non-overlapping declared library offsets',()=>{
+  const a={bytecode:'0x60'+'_'.repeat(40)+'00',linkReferences:{file:{Library:[{start:1,length:20}]}}},addr='0x'+'1'.repeat(40);
+  assert.equal(linkLiquidityBytecode(a,{Library:addr}),'0x60'+addr.slice(2)+'00');assert.throws(()=>linkLiquidityBytecode(a,{}));assert.throws(()=>linkLiquidityBytecode({...a,linkReferences:{file:{Library:[{start:1,length:20},{start:1,length:20}]}}},{Library:addr}));assert.throws(()=>linkLiquidityBytecode({...a,linkReferences:{}},{}));
  });
- test('settlement failure and canonical status drift cannot publish wallet Bok configuration',async()=>{
-  const calls=[];await assert.rejects(activateDevelopmentBok({expected:bokExpected,run:async c=>{calls.push(c);return bokStatus;},settle:async()=>{throw Error('controlled missing Ready');}}),/missing Ready/);assert.deepEqual(calls,['deploy-portal','bind']);
-  for(const change of [{escrow:'0x'+'7'.repeat(64)},{pluginId:'0x'+'2'.repeat(64)},{portal:'0x'+'0'.repeat(40)},{portalReady:false},{registrationReady:false},{hostedServiceReady:true},{scope:'constructor-only'}])await assert.rejects(activateDevelopmentBok({expected:bokExpected,run:async c=>c==='status'?{...bokStatus,...change}:bokStatus,settle:async()=>{}}),/status differs/);
+ test('pool initialization uses integer decimal-aware sorted real inventory, not invented quotes',()=>{
+  const a='0x'+'1'.repeat(40),b='0x'+'2'.repeat(40),p=localPoolPrice(a,b,1000000000000000000n,1000000000n),q=localPoolPrice(b,a,1000000000n,1000000000000000000n);assert.deepEqual(p,q);assert.equal(p.amount0,1000000000000000000n);assert(p.sqrtPriceX96>0n);assert.throws(()=>localPoolPrice(a,a,1n,1n));assert.throws(()=>localPoolPrice(a,b,0n,1n));
  });
- async function tokenFixture(){
-  const {Wallet,Interface,Transaction,getCreateAddress}=await import('ethers');const wallet=Wallet.createRandom(),iface=new Interface(['constructor(address recipient)','function decimals() view returns(uint8)','function totalSupply() view returns(uint256)','function balanceOf(address) view returns(uint256)']);
-  const artifact={abi:JSON.parse(iface.formatJson()),bytecode:{object:'0x60006000'},deployedBytecode:{object:'0x6000'}},address=getCreateAddress({from:wallet.address,nonce:4}).toLowerCase(),blockHash='0x'+'8'.repeat(64);
-  let record={operations:{}},receipt,mutate={},sends=0,prepares=0;
-  const store={read:()=>record,write:async next=>{record=structuredClone(next);}};
-  const provider={getNetwork:async()=>({chainId:31337n}),getTransactionReceipt:async()=>mutate.missing?null:receipt,getBlock:async()=>({number:7,hash:mutate.reorg?'0x'+'9'.repeat(64):blockHash}),getCode:async()=>mutate.code??artifact.deployedBytecode.object,
-   call:async tx=>{const parsed=iface.parseTransaction(tx);return iface.encodeFunctionResult(parsed.name,[parsed.name==='decimals'?6:mutate.inventory??1000000000n]);},
-   broadcastTransaction:async raw=>{sends++;const tx=Transaction.from(raw);receipt={hash:tx.hash,status:1,blockNumber:7,blockHash,contractAddress:address};return {hash:tx.hash};}};
-  const signer={address:wallet.address,populateTransaction:async tx=>{prepares++;return {...tx,nonce:4,chainId:31337n,type:2,gasLimit:1000000n,maxFeePerGas:2n,maxPriorityFeePerGas:1n};},signTransaction:tx=>wallet.signTransaction(tx)};
-  return {args:{provider,signer,artifact,store,rollupAddress:'0x'+'1'.repeat(40)},mutate,counts:()=>({sends,prepares}),address};
- }
- test('actual development token journal signs once and reconciles exact creation/runtime/inventory (controlled chain)',async()=>{
-  const f=await tokenFixture();const first=await deployDevelopmentToken(f.args);assert.equal(first.status,'succeeded');assert.equal(first.tokenAddress,f.address);assert.equal(first.kind,'local-development-issuance');assert.equal(first.inventory,'1000000000');
-  const before=JSON.stringify(f.args.store.read());assert.equal((await deployDevelopmentToken(f.args)).status,'succeeded');assert.equal(JSON.stringify(f.args.store.read()),before);assert.deepEqual(f.counts(),{sends:1,prepares:1});
-  for(const mutation of [{missing:true},{reorg:true},{code:'0x6001'},{inventory:999n}]){Object.assign(f.mutate,mutation);assert.equal((await deployDevelopmentToken(f.args)).status,'unresolved');for(const key of Object.keys(mutation))delete f.mutate[key];assert.deepEqual(f.counts(),{sends:1,prepares:1});}
- });
- test('development token unknown/preparing state is retained and never resubmitted',async()=>{
-  const f=await tokenFixture();f.args.provider.broadcastTransaction=async()=>{throw Error('controlled lost acknowledgement');};assert.equal((await deployDevelopmentToken(f.args)).status,'unresolved');const before=JSON.stringify(f.args.store.read());await deployDevelopmentToken(f.args);assert.equal(JSON.stringify(f.args.store.read()),before);assert.equal(f.counts().prepares,1);
-  const g=await tokenFixture();g.args.signer.signTransaction=async()=>{throw Error('controlled preparation stop');};assert.equal((await deployDevelopmentToken(g.args)).status,'unresolved');await deployDevelopmentToken(g.args);assert.equal(g.counts().prepares,1);assert.equal(g.args.store.read().operations['deploy-portal'].phase,'preparing');
- });
- test('development inventory refuses another chain or changed creation scope before any send',async()=>{
-  const f=await tokenFixture();f.args.provider.getNetwork=async()=>({chainId:11155111n});await assert.rejects(deployDevelopmentToken(f.args),/prerequisite/);assert.deepEqual(f.counts(),{sends:0,prepares:0});
-  const g=await tokenFixture();await deployDevelopmentToken(g.args);await assert.rejects(deployDevelopmentToken({...g.args,rollupAddress:'0x'+'2'.repeat(40)}),/scope mismatch/);assert.deepEqual(g.counts(),{sends:1,prepares:1});
+ test('actual local liquidity journal sends signed intent once and refuses unknown/reorg recovery (controlled chain)',async()=>{
+  const {Wallet,Transaction}=await import('ethers');const dir=await fs.mkdtemp(path.join(os.tmpdir(),'rolling-liquidity-stage-')),wallet=Wallet.createRandom(),hash='0x'+'8'.repeat(64);let sent=0,prepared=0,receipt,reorg=false,missing=false,receiptReads=0,moved=false;
+  const provider={getNetwork:async()=>({chainId:31337n}),getTransactionReceipt:async()=>{receiptReads++;if(receiptReads===2)moved=true;return missing?null:moved?{...receipt,blockNumber:99}:receipt;},getBlock:async()=>({number:4,hash:reorg?'0x'+'9'.repeat(64):hash}),broadcastTransaction:async raw=>{sent++;receipt={hash:Transaction.from(raw).hash,status:1,blockNumber:4,blockHash:hash};return {hash:receipt.hash};}};
+  const signer={address:wallet.address,populateTransaction:async t=>{prepared++;return {...t,nonce:0,chainId:31337n,type:2,gasLimit:100000n,maxFeePerGas:2n,maxPriorityFeePerGas:1n};},signTransaction:t=>wallet.signTransaction(t)},args={directory:dir,name:'controlled-call',identity:'controlled',provider,signer,transaction:{to:'0x'+'1'.repeat(40),data:'0x1234',value:0n},effect:async()=>true,timeoutMs:1};
+  try{assert.equal((await liquidityStage(args)).status,1);assert.equal(receiptReads,1,'return the canonical captured receipt without another lookup');await assert.rejects(liquidityStage(args),/reconciliation/);moved=false;await liquidityStage(args);assert.equal(sent,1);assert.equal(prepared,1);for(const mode of ['reorg','missing']){reorg=mode==='reorg';missing=mode==='missing';await assert.rejects(liquidityStage(args),/reconciliation/);}assert.equal(sent,1);assert.equal(prepared,1);await assert.rejects(liquidityStage({...args,identity:'changed'}),/scope mismatch/);const saved=await readDevnetRecord(path.join(dir,'controlled-call.json'));assert.equal(saved.operations['relay-funding'].phase,'submission-unknown');reorg=false;missing=false;const stageFile=path.join(dir,'controlled-call.json');await fs.unlink(stageFile);await assert.rejects(liquidityStage(args),/entered liquidity stage missing/);assert.equal(sent,1);await fs.writeFile(stageFile,JSON.stringify(saved),{mode:0o600});await fs.unlink(path.join(dir,'progress.json'));await assert.rejects(liquidityStage(args),/progress missing/);assert.equal(sent,1);assert.equal(prepared,1);}finally{await fs.rm(dir,{recursive:true,force:true});}
  });
 
- test('missing token or lifecycle records cannot reset an advanced retained Bok campaign',()=>{
-  const tokenState={operations:{'deploy-portal':{phase:'submission-unknown'}}},lifecycleConfig={lifecycle:{tokenAddress:'controlled'}},operatorState={operations:{'deploy-escrow':{}}};
-  requireDevelopmentBokRecords({operatorState});requireDevelopmentBokRecords({operatorState,tokenState});requireDevelopmentBokRecords({operatorState,tokenState,lifecycleConfig});
-  for(const name of ['deploy-portal','bind','activate','register']){const advanced={operations:{[name]:{}}};assert.throws(()=>requireDevelopmentBokRecords({operatorState:advanced}),/records missing/);assert.throws(()=>requireDevelopmentBokRecords({operatorState:advanced,tokenState}),/records missing/);requireDevelopmentBokRecords({operatorState:advanced,tokenState,lifecycleConfig});}
-  assert.throws(()=>requireDevelopmentBokRecords({operatorState,lifecycleConfig}),/records missing/);
+ test('prepared official artifact loader accepts exact measured output and rejects changed ABI bytecode links or symlinks',async()=>{
+  const {readLiquidityArtifacts}=await import('./liquidity.mjs'),dir=await fs.mkdtemp(path.join(os.tmpdir(),'rolling-liquidity-artifact-'));
+  const original=await fs.readFile(path.resolve('.build/local-liquidity/artifacts.json'));
+  try{
+   await fs.writeFile(path.join(dir,'artifacts.json'),original);assert.equal(Object.keys(await readLiquidityArtifacts(dir)).length,11);
+   for(const change of [r=>r.artifacts.FiatTokenV2_2.abi=[],r=>r.artifacts.FiatTokenV2_2.bytecode='0x00',r=>r.artifacts.FiatTokenV2_2.linkReferences={},r=>r.pinsSha256='0'.repeat(64)]){const r=JSON.parse(original);change(r);await fs.writeFile(path.join(dir,'artifacts.json'),JSON.stringify(r)+'\n');await assert.rejects(readLiquidityArtifacts(dir),/pin differs/);}
+   await fs.unlink(path.join(dir,'artifacts.json'));await fs.symlink(path.resolve('.build/local-liquidity/artifacts.json'),path.join(dir,'artifacts.json'));await assert.rejects(readLiquidityArtifacts(dir),/type/);
+  }finally{await fs.rm(dir,{recursive:true,force:true});}
+ });
+ test('advanced Bok lifecycle cannot reconstruct missing original Circle/config scope',async()=>{
+  const {requireDevelopmentCircleScope}=await import('./bootstrap.mjs');
+  requireDevelopmentCircleScope({operations:{'deploy-escrow':{phase:'submission-unknown'}}});
+  for(const name of ['deploy-portal','bind','activate','register'])assert.throws(()=>requireDevelopmentCircleScope({operations:{[name]:{}},circleScope:{}}),/records missing/);
+  assert.throws(()=>requireDevelopmentCircleScope({lifecycle:{},operations:{}}),/records missing/);
+  requireDevelopmentCircleScope({lifecycle:{},operations:{register:{}},circleScope:{}});
+  assert.throws(()=>requireDevelopmentCircleScope({legacyToken:{operations:{'deploy-portal':{}}}}),/records missing/);
+ });
+
+ test('dedicated local relay retains private signer and measured reimbursement policy across reopen (controlled chain)',async()=>{
+  const {prepareDevelopmentRelay}=await import('./liquidity.mjs'),dir=await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(),'rolling-relay-record-'))),address=n=>'0x'+n.toString(16).padStart(40,'0'),hash='0x'+'a'.repeat(64);
+  const scope={router:address(1),routerCodeHash:hash,collateralPortal:address(2),feePortal:address(3),bokPortal:address(4),privateFpc:'0x'+'1'.repeat(64),bokToken:address(5),weth:address(6),quoter:address(7),quoterCodeHash:hash},circle={codeHash:hash,implementation:address(8),implementationCodeHash:hash};let quotes=0,fundCalls=0;
+  const provider={_getConnection:()=>({url:'http://127.0.0.1:18545/'}),getBlock:async()=>({hash})},quoter={quoteExactOutputSingle:{staticCall:async args=>{quotes++;assert.deepEqual(args,[scope.bokToken,scope.weth,10000000000000000n,3000,0]);return [101n];}}};
+  const stage=async(name,tx)=>{fundCalls++;assert.equal(name,'relay-fund');assert.equal(tx.value,100000000000000000n);assert.equal(tx.data,'0x');await fs.writeFile(path.join(dir,'progress.json'),JSON.stringify({entered:['relay-fund']}));};
+  const args={directory:dir,provider,stage,scope,circle,quoter,anchor:{number:3,hash},fundingSender:address(99)};
+  try{
+   await fs.writeFile(path.join(dir,'progress.json'),JSON.stringify({entered:[]}));const first=await prepareDevelopmentRelay(args),key=await fs.readFile(first.signerFile);
+   assert.equal(first.policy.feeUsdc,'107');assert.equal((await fs.stat(first.signerFile)).mode&0o777,0o600);assert.equal((await fs.stat(first.stateDirectory)).mode&0o777,0o700);
+   assert.deepEqual(await prepareDevelopmentRelay(args),first);assert.deepEqual(await fs.readFile(first.signerFile),key);assert.equal(quotes,1);assert.equal(fundCalls,2,'existing signed-once stage is revisited for reconciliation');
+   await fs.unlink(first.signerFile);await assert.rejects(prepareDevelopmentRelay(args),/Original relay signer missing/);assert.equal(fundCalls,2);
+   await fs.writeFile(first.signerFile,key,{mode:0o600});await fs.unlink(path.join(dir,'relay-policy.json'));await assert.rejects(prepareDevelopmentRelay(args),/Original relay policy missing/);assert.equal(fundCalls,2);
+  }finally{await fs.rm(dir,{recursive:true,force:true});}
  });
 
 }

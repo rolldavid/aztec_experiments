@@ -184,12 +184,17 @@ loopback RPC ports18080/18545 and requires no provider key for core app startup.
 It does not replace the fixture preview on4317 or reuse unrelated older devnets.
 Local proofs are disabled through the native node/PXE configuration. Readiness
 reports distinguish the usable core and canonically registered PrivateBok portal
-from user funding and hosted replies. Startup deploys a real local-only DevUSDC
-contract with a fixed 1,000 USDC test inventory held by the local deployment actor,
-then reuses the operator's portal deployment, binding, local Ready settlement,
-activation and registration journals. Only successful canonical status exposes
-`config.bok` to the wallet. This does not give app users the deployment actor's
-keys or credits. The token does not implement Circle authorization, and no DEX
-liquidity, fee conversion or provider configuration is invented. Missing liquidity
-and hosted credentials remain explicit prerequisites. Keep the selected private state directory and wait for clean shutdown
+from user funding and hosted replies. Prepare pinned official Circle and Uniswap
+artifacts before startup with `node plugins/devnet/liquidity.mjs --prepare-artifacts`
+(after installing the locked dependencies). Startup uses the real Circle
+FiatTokenV2_2 proxy, a separate private proxy administrator, and explicit local
+issuance of 1,000,000 USDC to the deployment actor. Existing signed-once journals
+own each deployment, initialization and pool-seeding transaction. Three real
+Uniswap V3 pools connect WETH, USDC and the local FEE token; canonical QuoterV2
+reads establish route availability. This inventory is development issuance, not a
+user swap, credit or subsidy. Only canonical Bok lifecycle status exposes
+`config.bok`; only verified router/pool identity and quotes expose aggregate
+funding configuration. Actual user funding and hosted provider credentials remain
+separate requirements. No app user receives deployment keys or mint authority.
+Keep the selected private state directory and wait for clean shutdown
 before reopening it. Wallet recovery remains separately encrypted in the browser.
