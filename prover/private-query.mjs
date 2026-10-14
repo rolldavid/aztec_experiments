@@ -176,9 +176,9 @@ export function createPrivateQueryWithInspector({queryNode, chainId, rollupVersi
       (value.number===undefined||Number.isSafeInteger(value.number)&&value.number>=0)&&(value.hash===undefined||value.hash instanceof BlockHash));
   const historicalKind=call=>metadataReads.has(call.method)?'metadata':txReads.has(call.method)?'transaction':
     selectorIndex.has(call.method)&&fixedSelector(call.args[selectorIndex.get(call.method)])?'selector':null;
-  const canonicalRecord=async(selector,ready,limit=ready.readinessBlockNumber)=>{
+  const canonicalRecord=async(selector,ready,limit=ready.readinessBlockNumber,stateful=true)=>{
     const data=await node.getBlockData(selector),number=data?.header?.globalVariables?.blockNumber,hash=data?.blockHash;
-    if(!Number.isSafeInteger(number)||number<ready.oldestHistoricBlockNumber||number>limit||!(hash instanceof BlockHash))throw unavailable();
+    if(!Number.isSafeInteger(number)||number<(stateful?ready.oldestHistoricBlockNumber:0)||number>limit||!(hash instanceof BlockHash))throw unavailable();
     const requestedNumber=typeof selector==='number'?selector:selector?.number;
     const requestedHash=selector instanceof BlockHash?selector:selector?.hash;
     if(requestedNumber!==undefined&&requestedNumber!==number||requestedHash!==undefined&&requestedHash.toString()!==hash.toString())throw unavailable();
@@ -238,7 +238,9 @@ export function createPrivateQueryWithInspector({queryNode, chainId, rollupVersi
             if(kind==='selector'){
               // Public header metadata authenticates the world's own height;
               // stateful reads remain bounded by the selected readiness tier.
-              call.anchor=await canonicalRecord(call.args[selectorIndex.get(call.method)],ready,call.method==='getBlockData'?ready.latestBlockNumber:ready.readinessBlockNumber);
+              // Archiver headers/bodies (including PXE genesis) do not depend
+              // on retained world-state snapshots; witness/state reads do.
+              call.anchor=await canonicalRecord(call.args[selectorIndex.get(call.method)],ready,call.method==='getBlockData'?ready.latestBlockNumber:ready.readinessBlockNumber,!['getBlock','getBlockData'].includes(call.method));
             }else if(kind==='transaction'){
               const receipt=await node.getTxReceipt(call.args[0],call.method==='getTxReceipt'?call.args[1]:undefined);
               call.receipt=receipt;if(call.method==='getTxReceipt')call.cached={value:receipt};

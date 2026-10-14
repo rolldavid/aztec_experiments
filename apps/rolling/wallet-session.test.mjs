@@ -36,6 +36,7 @@ import {BlockHash} from '@aztec-labs/stdlib/block';
 import {AztecAddress} from '@aztec-labs/stdlib/aztec-address';
 import {loadContractArtifact,decodeFromAbi,getFunctionReturnType,EventSelector,decodeFunctionSignature} from '@aztec-labs/stdlib/abi';
 import {poseidon2HashWithSeparator} from '@aztec-labs/foundation/crypto/poseidon';
+import {deriveStorageSlotInMap} from '@aztec-labs/stdlib/hash';
 import {nameRegistration,NAME_DOMAIN} from '../../shared/rolling/name-policy.mjs';
 import {computeArtifactHash,getContractClassFromArtifact,getContractInstanceFromInstantiationParams,computeContractAddressFromInstance} from '@aztec-labs/stdlib/contract';
 import {sha256ToField} from '@aztec-labs/foundation/crypto/sha256';
@@ -81,6 +82,12 @@ const ownedIdString=value=>hex(value.toBigInt());
 async function sessionFixture(){
  const f=await deploymentFixture(),state={active:false,events:[],stops:0,closes:0,syncs:0,sends:0,registrations:0};
  const registered=nameRegistration('River','Stone'),ownedId=await poseidon2HashWithSeparator(registered.preimage.map(n=>new Fr(n)),NAME_DOMAIN);
+ const available=nameRegistration('Fresh','Willow'),availableId=await poseidon2HashWithSeparator(available.preimage.map(n=>new Fr(n)),NAME_DOMAIN);
+ const nameSlots=new Map();for(const [id,value]of [[ownedId,1n],[availableId,0n]])nameSlots.set((await deriveStorageSlotInMap(artifact.storageLayout.registered_names.slot,id)).toBigInt(),value);
+ const storage=f.node.getPublicStorageAt;f.node.getPublicStorageAt=async(reference,address,slot)=>{
+  if(nameSlots.has(slot.toBigInt())){assert(state.active);assert.deepEqual(reference,{hash:hex(55)});assert(address.equals(f.board.address));(state.nameReads??=[]).push(slot.toString());return new Fr(nameSlots.get(slot.toBigInt()));}
+  return storage(reference,address,slot);
+ };
  const ownedAbi=artifact.functions.find(fn=>fn.name==='owned_name_records');assert(ownedAbi,'Normal profile artifact required');
  const packed=bytes=>[new Fr(bytes.slice(0,31).reduce((n,b)=>(n<<8n)|BigInt(b),0n)),new Fr(BigInt(bytes[31])<<240n)];
  const ownedRecords=decodeFromAbi(getFunctionReturnType(ownedAbi),[ownedId,Fr.ONE,new Fr(5),...packed(registered.arguments[0]),new Fr(5),...packed(registered.arguments[2]),...Array.from({length:56},()=>Fr.ZERO)]);
@@ -99,7 +106,7 @@ async function sessionFixture(){
  const wallet={aztecNode:f.node,pxe,getAccounts:async()=>[accountInstance.address],getChainInfo:async()=>({chainId:31337,version:1}),sendTx:async()=>{held('send');state.sends++;throw Error('unknown send');}};
  const routing={createAztecWallet:(_sdk,p,n,raw)=>{held('create-wallet');assert.equal(p,pxe);assert.equal(n,f.node);assert.equal(raw,f.node);return wallet;},
   isPrivateWalletForNode:(w,n)=>!state.wrongWallet&&w===wallet&&n===f.node};
- const sdk={...f.options.sdk,computeArtifactHash,poseidon2HashWithSeparator,EventSelector,decodeFunctionSignature,Fr,deriveKeys,deriveSigningKey,SchnorrInitializerlessAccountContract,getContractInstanceFromInstantiationParams,computePartialAddress,Tx,encodeArguments,
+ const sdk={...f.options.sdk,computeArtifactHash,poseidon2HashWithSeparator,deriveStorageSlotInMap,EventSelector,decodeFunctionSignature,Fr,deriveKeys,deriveSigningKey,SchnorrInitializerlessAccountContract,getContractInstanceFromInstantiationParams,computePartialAddress,Tx,encodeArguments,
   createTrustedPrivateNode:async options=>{held('trusted-node');state.trustedProofsEnabled=options.proofsEnabled;assert.equal(options.url,'http://127.0.0.1:3/v1/node');return f.node;},
   openPXEStore:async options=>{held('open-store');assert.equal(options.accountAddress,account.address);assert.equal(options.dataDirectory,'rolling-wallet-v1');return store;},
   createPXE:async(n,c,o)=>{held('create-pxe');state.pxeConfig=structuredClone(c);assert.equal(n,f.node);assert.equal(o.store,store);assert.deepEqual(o.remoteProver,{url:'http://127.0.0.1:3',board:String(f.board.address)});if(state.failCreatePXE)throw Error('pxe failed');return pxe;},
@@ -132,13 +139,13 @@ test('constructs verified deployment/account, registers with one trusted PXE, an
  assert.equal(f.state.registrations,1);assert.equal(f.state.events.filter(x=>x==='register-contract').length,3);
  const names=await session.application.ownedIdentities();assert.deepEqual(names.identities,[ownedIdString(f.ownedId)]);assert.deepEqual(names.records,[{id:ownedIdString(f.ownedId),first:'River',last:'Stone'}]);
  assert.equal((await session.application.readAccountStatus()).status,'fee-ready');
- const intent=await session.application.prepare({type:'name',first:'River',last:'Stone'});assert.equal(intent.status,'prepared');
+ const intent=await session.application.prepare({type:'name',first:'Fresh',last:'Willow'});assert.equal(intent.status,'prepared');assert.equal(f.state.nameReads.length,1);assert.deepEqual(intent.nameAvailability.anchor,{blockNumber:10,blockHash:hex(55)});
  assert.equal((await session.application.cancelPrepared(intent.intentId)).status,'cancelled');
  await session.close();await session.close();assert.equal(f.state.stops,1);assert.equal(f.state.closes,1);assert.equal(f.state.active,false);
  await assert.rejects(session.application.ownedIdentities(),{code:'ROLLING_CONTEXT_CHANGED'});
 });
 test('replacement session preserves actual encrypted Rolling intent and unknown fence without a second send',async()=>{
- const f=await sessionFixture(),first=await createRollingWalletSession(f.input),intent=await first.application.prepare({type:'name',first:'River',last:'Stone'});
+ const f=await sessionFixture(),first=await createRollingWalletSession(f.input),intent=await first.application.prepare({type:'name',first:'Fresh',last:'Willow'});
  await assert.rejects(first.application.submitPrepared(intent.intentId),/unknown send/);await first.close();
  const second=await createRollingWalletSession(f.input);assert.equal((await second.application.reconcile(intent.intentId)).status,'unknown');
  await assert.rejects(second.application.submitPrepared(intent.intentId),{code:'ROLLING_RECOVERY_REQUIRED'});assert.equal(f.state.sends,1);await second.close();
@@ -264,7 +271,7 @@ test('account change during private preference event read prevents publication w
  assert.equal(f.state.sends,0);assert.equal(f.state.active,false);await session.close();
 });
 test('failed preference read preserves session and existing prepared financial intent',async()=>{
- const f=await sessionFixture(),session=await createRollingWalletSession(f.input),intent=await session.application.prepare({type:'name',first:'River',last:'Stone'});
+ const f=await sessionFixture(),session=await createRollingWalletSession(f.input),intent=await session.application.prepare({type:'name',first:'Fresh',last:'Willow'});
  f.state.failEvents=true;await assert.rejects(session.application.readPreferences(),{code:'ROLLING_PREFERENCE_READER_UNAVAILABLE'});
  const restored=await session.application.readAccountStatus();assert.equal(restored.intent.intentId,intent.intentId);assert.equal(f.state.sends,0);
  f.state.failEvents=false;assert.equal((await session.application.readPreferences()).status,'complete');await session.close();

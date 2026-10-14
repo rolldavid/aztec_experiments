@@ -304,6 +304,7 @@ async function historyFixture(t,{strict=false,change,inspectChange}={}){
   if(inspected.length>1)final=true;return ready;},upstreamReply:async(_req,res,rows)=>{
    const values=[];for(const row of rows){const method=row.method.split('_').slice(1).join('_');operations.push(method);let result;
     if(method==='getBlockData'){const selector=row.params[0];const n=typeof selector==='number'?selector:selector.number??Number(BigInt(selector.hash));result=block(n);}
+    else if(method==='getBlock'){const selector=row.params[0],n=typeof selector==='number'?selector:selector.number??Number(BigInt(selector.hash));const data=block(n);result={header:data.header,archive:data.archive,hash:data.blockHash,number:n,checkpointNumber:1,indexWithinCheckpoint:0};}
     else if(method==='getTxReceipt')result={...mined};
     else if(method==='getTxEffectMembershipWitness')result={blockNumber:6,root:new Fr(77),categoriesHash:new Fr(1),leafIndex:0n,siblingPath:new SiblingPath(0,[])};
     else if(method==='getBlockHashMembershipWitness')result=undefined;
@@ -333,7 +334,7 @@ for(const [label,change]of[
  ['forked resolution',({method,result,operations})=>method==='getBlockData'&&operations.length===2?{...result,blockHash:historyHash(99)}:result],
  ['final anchor reorg',({method,result,final})=>method==='getBlockData'&&final?{...result,blockHash:historyHash(99)}:result],
 ])test('historical gateway: rejects '+label,async t=>{const f=await historyFixture(t,{strict:true,change});assert.equal((await f.post(call('aztec_getBlockData',[6]))).status,503);});
-for(const height of [0,8])test('historical gateway: unavailable/pruned selector '+height+' cannot bypass bounds',async t=>{const f=await historyFixture(t,{strict:true});assert.equal((await f.post(call('aztec_getBlockData',[height]))).status,503);});
+for(const height of [0,8])test('historical gateway: unavailable/pruned state selector '+height+' cannot bypass bounds',async t=>{const f=await historyFixture(t,{strict:true});assert.equal((await f.post(call('aztec_getBlockHashMembershipWitness',[height,historyHash(1)]))).status,503);});
 test('historical gateway: typed mined receipt and effect witness resolve canonical history',async t=>{
  const f=await historyFixture(t,{strict:true});for(const method of ['getTxReceipt','getTxEffectMembershipWitness']){const response=await f.post(call('aztec_'+method,[historyHash(100)]));assert.equal(response.status,200);assert.equal((await response.json()).result.blockNumber,6);}
  assert.equal(f.operations.filter(x=>x==='getTxReceipt').length,2);assert(f.inspected.every(x=>x==='checkpointed'));
@@ -362,4 +363,15 @@ test('historical gateway: pending and above-checkpoint receipts cannot bypass un
 
 test('historical gateway: returned header must match the resolved canonical selector',async t=>{
  const f=await historyFixture(t,{strict:true,change:({method,result,operations,final})=>method==='getBlockData'&&!final&&operations.length===3?{...result,blockHash:historyHash(99)}:result});const response=await f.post(call('aztec_getBlockData',[6]));assert.equal(response.status,200);assert((await response.json()).error);
+});
+
+test('historical gateway: typed genesis BlockResponse survives world-state pruning at1',async t=>{
+ const f=await historyFixture(t,{strict:true});const response=await f.post(call('aztec_getBlock',[0]));assert.equal(response.status,200);const value=await response.json();assert.equal(value.result.number,0);assert.equal(value.result.hash,historyHash(0));assert.equal(value.result.header.globalVariables.blockNumber,0);assert(f.inspected.every(x=>x==='checkpointed'));
+});
+
+test('historical gateway: genesis header metadata remains canonical despite world-state pruning',async t=>{
+ const f=await historyFixture(t,{strict:true});const response=await f.post(call('aztec_getBlockData',[0]));assert.equal(response.status,200);assert.equal((await response.json()).result.blockHash,historyHash(0));
+});
+test('historical gateway: orphaned genesis response cannot bypass final canonical fence',async t=>{
+ const f=await historyFixture(t,{strict:true,change:({method,result,final})=>method==='getBlockData'&&final?{...result,blockHash:historyHash(99)}:result});assert.equal((await f.post(call('aztec_getBlock',[0]))).status,503);
 });
