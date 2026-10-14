@@ -87,6 +87,19 @@ export async function bootstrapPluginDevnet({directory,port=8787,host='127.0.0.1
   }catch(error){try{await close();}catch(cleanup){throw new AggregateError([error,cleanup],'Local board setup and cleanup failed');}throw error;}
 }
 
+// Read-only polling of the existing operator commands is safe because each
+// command reconciles its original durable intent before any preparation/send.
+export async function completeDevelopmentOperation({run,command,timeoutMs=120000,pollMs=1000}) {
+ if(!['deploy-escrow','deploy-portal','bind','activate','register','status'].includes(command)||!Number.isSafeInteger(timeoutMs)||timeoutMs<1||timeoutMs>120000||!Number.isSafeInteger(pollMs)||pollMs<0||pollMs>1000)throw Error('Invalid local lifecycle deadline');
+ const deadline=Date.now()+timeoutMs;
+ for(;;){
+  const result=await run(command);
+  if(result?.status==='succeeded'&&result.canonical===true)return result;
+  if(result?.status!=='unresolved'||Date.now()>=deadline)throw Error('Original Bok operation requires reconciliation');
+  await pause(Math.min(pollMs,Math.max(0,deadline-Date.now())));
+ }
+}
+
 // The local settlement helper updates proven state/Outbox, but the installed
 // archiver derives finalized L2 from proven state at L1's finalized block. Let the
 // already-owned ordinary miner advance; do not repeat settlement or the CLI.
@@ -207,7 +220,7 @@ export async function bootstrapRollingDevnet({directory,ports,onProgress=console
   await fixedFile('bok-operator-config.json',operatorConfig);
   // The existing production constructor operation is durable and reconcile-only.
   // No token, exchange liquidity, provider or hosted readiness is fabricated.
-  const bok=await operatorCommand({command:'deploy-escrow',config:operatorConfig,statePath:path.join(directory,'bok-operations.json'),actor});
+  const bok=await completeDevelopmentOperation({command:'deploy-escrow',run:command=>operatorCommand({command,config:operatorConfig,statePath:path.join(directory,'bok-operations.json'),actor})});
   if(bok.status!=='succeeded')throw Error('PrivateBok constructor requires reconciliation');
   await net.useWallClock();
   const readerConfig={nodeUrl:net.nodeUrl,artifactPath:path.resolve('billboard/target/rolling_contract-RollingBoard.json'),scope:{chainId:'31337',rollupVersion:String(info.rollupVersion),rollupAddress:operatorConfig.rollupAddress,boardAddress:report.l2Addr,classId:manifest.artifacts.boardClassId},deployment:report.boardDeployment,cacheDirectory:path.join(directory,'public-index'),port:selected.appPort};

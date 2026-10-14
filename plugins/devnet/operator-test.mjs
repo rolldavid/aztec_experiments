@@ -143,5 +143,17 @@ if(focused){
   assert.deepEqual(args,['--host','127.0.0.1','--port','18545','--chain-id','31337','--mnemonic','synthetic-only','--silent','--no-request-size-limit','--slots-in-an-epoch','1']);
   assert(!developmentAnvilArgs({persistent:false,port:18546,mnemonic:'synthetic-only'}).includes('--slots-in-an-epoch'));
  });
+ test('constructor waits for same recorded operation without preparing or sending again',async()=>{
+  const {completeDevelopmentOperation}=await import('./bootstrap.mjs'),{onceAztecOperation}=await import('../operations.mjs');let state={operations:{}},prepares=0,sends=0,reads=0;const store={read:()=>state,write:async s=>{state=s;}};
+  const result=await completeDevelopmentOperation({command:'deploy-escrow',timeoutMs:100,pollMs:0,run:command=>onceAztecOperation({store,name:command,identity:'retained-constructor',reconcile:async()=>++reads<3?{status:'unresolved',canonical:false}:{status:'succeeded',canonical:true,escrow:('0x'+'b'.repeat(64))},execute:async({submit})=>{prepares++;await submit({hash:'0x'+'7'.repeat(64),raw:'ab'},async()=>{sends++;});}})});
+  assert.equal(result.escrow,('0x'+'b'.repeat(64)));assert.equal(reads,3);assert.equal(prepares,1);assert.equal(sends,1);assert.equal(state.operations['deploy-escrow'].phase,'submission-unknown');
+ });
+ test('constructor deadline retains unknown or hashless intent and refuses a second execution',async()=>{
+  const {completeDevelopmentOperation}=await import('./bootstrap.mjs'),{onceAztecOperation}=await import('../operations.mjs');
+  for(const phase of ['preparing','submission-unknown']){const original={schemaVersion:1,policy:'reconcile-only',phase,identity:'saved',...(phase==='submission-unknown'?{hash:'0x'+'8'.repeat(64),raw:'ab'}:{})},state={operations:{'deploy-escrow':original}};let executes=0,writes=0;
+   await assert.rejects(completeDevelopmentOperation({command:'deploy-escrow',timeoutMs:3,pollMs:1,run:command=>onceAztecOperation({store:{read:()=>state,write:async()=>{writes++;}},name:command,identity:'saved',reconcile:async()=>({status:'unresolved',canonical:false}),execute:async()=>{executes++;}})}),/reconciliation/);
+   assert.equal(executes,0);assert.equal(writes,0);assert.equal(state.operations['deploy-escrow'],original);
+  }
+ });
 
 }
