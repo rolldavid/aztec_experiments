@@ -69,13 +69,17 @@ export async function inspectTrustedNode(node, options) {
     if(String(chainId)!==p.chainId || String(version)!==p.version || hex(rollup,20)!==p.rollup || realProofs!==p.proofsEnabled)throw fail('IDENTITY');
     // Identity stays first. Snapshot each result on fulfillment, before waiting
     // for its peer; a batch is not an atomic chain snapshot or a readiness lease.
-    const [tips,state]=await readTogether([
+    const [tips,state,stamp]=await readTogether([
       async()=>{const value=await node.getChainTips();return {
         proposed:block(value?.proposed),checkpointed:block(value?.checkpointed?.block),
         proven:block(value?.proven?.block),finalized:block(value?.finalized?.block)};},
       async()=>{const value=await node.getWorldStateSyncStatus();return {
         latest:value?.latestBlockNumber,latestHash:hex(value?.latestBlockHash,32),
         final:value?.finalizedBlockNumber,oldest:value?.oldestHistoricBlockNumber,synced:value?.treesAreSynched};},
+      // Timestamp is independent public metadata. Snapshot it with the tips,
+      // then retain both canonical checks after this entire group settles.
+      async()=>{const value=await node.getSyncedL1Timestamp();
+        if(typeof value!=='bigint' || value<0n || value>BigInt(Number.MAX_SAFE_INTEGER))throw fail('UNAVAILABLE');return value;},
     ]);
     const {proposed,checkpointed,proven,finalized}=tips;
     const ordered=[finalized,proven,checkpointed,proposed];
@@ -85,10 +89,8 @@ export async function inspectTrustedNode(node, options) {
     if(!synced || latest!==proposed.number || hex(latestHash,32)!==proposed.hash || final!==finalized.number || oldest>checkpointed.number)throw fail('UNSYNCED');
     if(checkpointed.number!==proposed.number)await readTogether([()=>canonical(node,checkpointed),()=>canonical(node,proposed)]);
     else await canonical(node,proposed);
-    const stamp=await node.getSyncedL1Timestamp();
     const suppliedNow=options.nowSeconds,now=suppliedNow===undefined ? Math.floor(Date.now()/1000) : suppliedNow;
     if(!natural(now))throw fail('CONFIG');
-    if(typeof stamp!=='bigint' || stamp<0n || stamp>BigInt(Number.MAX_SAFE_INTEGER))throw fail('UNAVAILABLE');
     const lag=now-Number(stamp);
     if(lag<0 || lag>p.maxLagSeconds)throw fail('STALE');
     // Recheck the selected canonical anchor after synchronization reads. A reorg
