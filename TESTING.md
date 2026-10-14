@@ -164,3 +164,22 @@ the unpacked extension path unchanged because it determines extension identity.
 Never erase History, disable browser security, use a personal wallet profile, or
 restore an older profile after any financial action. Runtime metadata, identity,
 allocation and original fee approvals remain bound by the existing control.
+
+An interrupted **unsigned** USDC review is a separate opt-in continuation, never
+the empty-account continuation. After a complete export is verified, select
+`T04_AGGREGATE_CONTINUE_UNSIGNED=true` and
+`T04_AGGREGATE_UNSIGNED_EXPORT_SHA256=<verified SHA256>` with the original private
+control. The driver reads `unsigned-recovery-export-2.json` (0600) from that
+control’s retained recovery directory and requires its exact hash, scope, live
+claim records, journal records, owner and wallet custody to match. Any existing
+intent, submitted relay request, transaction hash, claim or nonzero Ethereum/portal
+consent nonce rejects the continuation. `prepared-recovery.json` must still be
+absent. Do not combine this flag with readiness/export/paid/Bok/network-only modes.
+
+The existing application then obtains an explicitly reviewed fresh quote using
+the original allocation and limits. The private claim fee ceiling must equal the
+original encrypted ceiling before signatures are admitted. A new complete
+`prepared-recovery.json` is downloaded before the two typed consents and sole
+relay POST. No store is cleared; preserve the earlier encrypted export. Any
+submitted/unknown payment must use reconciliation instead. The existing120s/4GiB
+owner and canonical payment/three-claim/Ready assertions remain unchanged.

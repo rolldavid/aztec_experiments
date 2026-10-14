@@ -181,8 +181,8 @@ export function validateMetaMaskAggregateControl(value,asset){
  assert(Number.isSafeInteger(value.allocation.slippageBps)&&value.allocation.slippageBps>=0&&value.allocation.slippageBps<=500);
  return structuredClone(value);
 }
-export function readMetaMaskAggregateControl(filename,asset,{readinessOnly=false,continueUnfunded=false,paidRecovery=false}={}){
- assert([readinessOnly,continueUnfunded,paidRecovery].filter(Boolean).length<=1);const retained=readinessOnly||continueUnfunded||paidRecovery;
+export function readMetaMaskAggregateControl(filename,asset,{readinessOnly=false,continueUnfunded=false,continueUnsigned=false,paidRecovery=false}={}){
+ assert([readinessOnly,continueUnfunded,continueUnsigned,paidRecovery].filter(Boolean).length<=1);const retained=readinessOnly||continueUnfunded||continueUnsigned||paidRecovery;
  assert(path.isAbsolute(filename??''),'Required private launch control is absent');
  const stat=fs.lstatSync(filename);assert(stat.isFile()&&!stat.isSymbolicLink()&&stat.uid===process.getuid()&&(stat.mode&0o777)===0o600&&stat.size<=65536);
  const c=validateMetaMaskAggregateControl(JSON.parse(fs.readFileSync(filename,'utf8')),asset),dir=fs.lstatSync(c.recoveryDirectory);
@@ -190,7 +190,7 @@ export function readMetaMaskAggregateControl(filename,asset,{readinessOnly=false
  assert.equal(fs.realpathSync(c.recoveryDirectory),c.recoveryDirectory);
  for(const name of ['profile','extension']){const location=path.join(c.recoveryDirectory,name);if(retained){const entry=fs.lstatSync(location);assert(entry.isDirectory()&&!entry.isSymbolicLink()&&entry.uid===process.getuid());}else assert(!fs.existsSync(location),'Use a new disposable profile; never replay an existing funding run');}
  if(retained){const backup=fs.lstatSync(path.join(c.recoveryDirectory,'initial-recovery.json'));assert(backup.isFile()&&!backup.isSymbolicLink()&&backup.uid===process.getuid()&&(backup.mode&0o777)===0o600);}
- if(continueUnfunded)assert(!fs.existsSync(path.join(c.recoveryDirectory,'prepared-recovery.json')),'Prepared funding must use journal recovery, never this continuation');
+ if(continueUnfunded||continueUnsigned)assert(!fs.existsSync(path.join(c.recoveryDirectory,'prepared-recovery.json')),'Prepared funding must use journal recovery, never this continuation');
  if(paidRecovery){const backup=fs.lstatSync(path.join(c.recoveryDirectory,'prepared-recovery.json'));assert(backup.isFile()&&!backup.isSymbolicLink()&&backup.uid===process.getuid()&&(backup.mode&0o777)===0o600);}
  return c;
 }
@@ -221,7 +221,7 @@ export function assertMetaMaskAggregateTypedData({data,account,scope,allocation,
 
 // Bounded driver of the actual served application. Resources belong to the
 // existing caller. Only public effects enter the report; signatures stay in RAM.
-export async function driveMetaMaskAggregateFunding({context,page,walletPage,control,provider,mark,report,continueUnfunded=false,deadlineAt}){
+export async function driveMetaMaskAggregateFunding({context,page,walletPage,control,provider,mark,report,continueUnfunded=false,unsignedContinuation=null,deadlineAt}){
  const c=control,scope=c.walletConfig.config.aggregateFunding,a=c.allocation,account=Wallet.fromPhrase(c.mnemonic).address.toLowerCase();
  const portal=new Interface(['function depositNonces(address) view returns(uint256)']);
  const consentNonce=portal.decodeFunctionResult('depositNonces',await provider.call({to:scope.collateralPortal,data:portal.encodeFunctionData('depositNonces',[account])}))[0];
@@ -229,7 +229,7 @@ export async function driveMetaMaskAggregateFunding({context,page,walletPage,con
  const initialBalance=await provider.getBalance(account);if(c.asset==='USDC')assert.equal(initialBalance,0n);else assert(initialBalance>=BigInt(a.maximumPaymentWei)+BigInt(a.gasBudgetWei));
  if(c.asset==='USDC'){const token=new Interface(['function balanceOf(address) view returns(uint256)']);const balance=token.decodeFunctionResult('balanceOf',await provider.call({to:scope.bokToken,data:token.encodeFunctionData('balanceOf',[account])}))[0];assert(balance>=BigInt(a.maximumUsdc));}
  const initialNonce=await provider.getTransactionCount(account,'pending');assert.equal(initialNonce,0,'Fresh disposable user only');
- let intent=null,hash=null,relayPosts=0,userSends=0,confirmedSignatures=0;const signatures=[],typed=[],pending=[],errors=[];
+ let unsignedApproved=unsignedContinuation===null;let intent=null,hash=null,relayPosts=0,userSends=0,confirmedSignatures=0;const signatures=[],typed=[],pending=[],errors=[];
  const permission={entered:false,resolved:false,rejected:false};report.aggregatePermission=permission;
  const connectionMethods=new Set(['wallet_requestPermissions','eth_chainId','wallet_switchEthereumChain','eth_requestAccounts','eth_accounts']);
  const connection={entered:null,resolved:null,rejected:null};report.aggregateConnection=connection;
@@ -258,6 +258,7 @@ export async function driveMetaMaskAggregateFunding({context,page,walletPage,con
   try{
    if(connectionMethods.has(request.method))connection.entered=request.method;
    if(request.method==='eth_signTypedData_v4'){
+    assert(unsignedApproved,'Original unsigned custody must be verified before signing');
     assert.equal(request.params[0].toLowerCase(),account);assert.equal(typed.length,signatures.length);
     const data=JSON.parse(request.params[1]);typed.push(assertMetaMaskAggregateTypedData({data,account,scope,allocation:a,index:typed.length,asset:c.asset,consentNonce,nowSeconds:Math.floor(Date.now()/1000)}));pending.push('signature');return;
    }
@@ -281,20 +282,24 @@ export async function driveMetaMaskAggregateFunding({context,page,walletPage,con
  const relayRoute=async route=>{
   const task=(async()=>{try{
    const req=route.request();if(req.method()!=='POST')return await route.continue();
-   assert.equal(c.asset,'USDC');assert.equal(relayPosts,0);assert.equal(signatures.length,2);const body=JSON.parse(req.postData());exactKeys(body,['data']);
+   assert(unsignedApproved);assert.equal(c.asset,'USDC');assert.equal(relayPosts,0);assert.equal(signatures.length,2);const body=JSON.parse(req.postData());exactKeys(body,['data']);
    intent=inspectData(body.data,scope.usdcRelayAddress);relayPosts++;await route.continue();
   }catch(error){remember(error);await route.abort();}})();routeTasks.add(task);try{await task;}finally{routeTasks.delete(task);}
  };
  await page.route(c.origin+'/api/funding/usdc',relayRoute);
  try{
   mark('aggregate-private-account');
-  if(continueUnfunded){
+  if(continueUnfunded||unsignedContinuation){
    assert.equal(consentNonce,0n,'Previously signed funding must be reconciled');
    await inspectMetaMaskAggregateReadiness({page,control:c,mark});
    // Inspect the real encrypted journal export inside the page; only booleans
    // leave it. No backup custody or private account identity is reported.
-   const empty=await page.evaluate(async password=>{const envelope=await window.BillboardAccount.exportRecovery(password),payload=await window.BillboardWalletBackup.decrypt(envelope,password);return Array.isArray(payload.journals)&&payload.journals.length===0&&Array.isArray(payload.claims)&&payload.claims.length===0;},c.password);
-   assertMetaMaskUnfundedContinuation({ethereumNonce:initialNonce,consentNonce,emptyRecovery:empty});report.retainedUnfundedContinuation=true;
+   if(unsignedContinuation){
+    assert.equal(initialNonce,0);assert.equal(c.asset,'USDC');
+    report.retainedUnsigned=await page.evaluate(inspectMetaMaskUnsignedExport,{network:c.walletConfig.config.network,board:c.walletConfig.config.board,router:scope.router,phase:'continuation',envelope:unsignedContinuation.envelope,password:c.password,account});
+    assertMetaMaskUnsignedAdmission({ethereumNonce:initialNonce,consentNonce,binding:report.retainedUnsigned});
+   }else{const empty=await page.evaluate(async password=>{const envelope=await window.BillboardAccount.exportRecovery(password),payload=await window.BillboardWalletBackup.decrypt(envelope,password);return Array.isArray(payload.journals)&&payload.journals.length===0&&Array.isArray(payload.claims)&&payload.claims.length===0;},c.password);
+   assertMetaMaskUnfundedContinuation({ethereumNonce:initialNonce,consentNonce,emptyRecovery:empty});report.retainedUnfundedContinuation=true;}
   }else{
    await page.getByRole('button',{name:'Your account',exact:true}).click();const initialDialog=page.getByRole('dialog');
    if(await initialDialog.getByRole('button',{name:'Unlock',exact:true}).isVisible())await initialDialog.getByRole('button',{name:'Unlock',exact:true}).click();await initialDialog.getByLabel('Recovery password',{exact:true}).fill(c.password);
@@ -310,11 +315,13 @@ export async function driveMetaMaskAggregateFunding({context,page,walletPage,con
   for(const [label,value]of [['Posting deposit (ETH)',formatUnits(a.collateralWei,18)],['Network fee credit (fee tokens)',formatUnits(a.feeAmount,18)],['Bok credit (USDC)',formatUnits(a.bokAmount,6)],['Slippage limit (%)',String(a.slippageBps/100)]])await dialog.getByLabel(label,{exact:true}).fill(value);
   if(c.asset==='ETH')await dialog.getByLabel('Maximum Ethereum gas cost (ETH)',{exact:true}).fill(formatUnits(a.gasBudgetWei,18));
   mark('aggregate-review');await dialog.getByRole('button',{name:'Get fresh quote',exact:true}).click();await dialog.getByRole('button',{name:'Confirm funding and private claim',exact:true}).waitFor();
+  // A fresh review must retain the original encrypted fee approval.
+  if(unsignedContinuation){const checked=await page.evaluate(inspectMetaMaskUnsignedExport,{network:c.walletConfig.config.network,board:c.walletConfig.config.board,router:scope.router,phase:'requote',account});assert.equal(checked.originalFeeCapPreserved,true);report.retainedUnsigned.originalFeeCapPreserved=true;}
   // Custody written by prepare must be exported before any signature/payment.
   await dialog.getByText('Backup and account security',{exact:true}).click();await dialog.getByLabel('New recovery password',{exact:true}).fill(c.password);
   const [prepared]=await Promise.all([page.waitForEvent('download'),dialog.getByRole('button',{name:'Download encrypted recovery',exact:true}).click()]);await saveEncryptedDownload(prepared,path.join(c.recoveryDirectory,'prepared-recovery.json'));
   assert.equal(userSends,0);assert.equal(relayPosts,0);assert.equal(signatures.length,0);
-  mark('aggregate-confirm');await dialog.getByRole('button',{name:'Confirm funding and private claim',exact:true}).click();
+  unsignedApproved=true;mark('aggregate-confirm');await dialog.getByRole('button',{name:'Confirm funding and private claim',exact:true}).click();
   const expires=Date.now()+60000;
   while(Date.now()<expires){
    if(errors.length)throw errors[0];
@@ -361,19 +368,44 @@ export function countMetaMaskAggregateNodeSubmissions({url,method,body},trustedQ
  let count=0;for(const item of batch){assert(item&&typeof item==='object'&&!Array.isArray(item)&&typeof item.method==='string');if(item.method==='aztec_sendTx')count++;}return count;
 }
 
+
+export function assertMetaMaskUnsignedAdmission({ethereumNonce,consentNonce,binding}){
+ assert.equal(ethereumNonce,0);assert.equal(consentNonce,0n);for(const key of ['unsigned','journalPresent','originalPreserved','completeEncryptedExport'])assert.equal(binding?.[key],true);
+}
+export function readMetaMaskUnsignedContinuation(flag,sha256,control,{readinessOnly=false,continueUnfunded=false,paidRecovery=false,observationOnly=false,retainedBok=false,networkOnly=false}={}){
+ assert(flag===undefined||flag==='true'||flag==='false','Invalid unsigned continuation flag');
+ if(flag!=='true'){assert.equal(sha256,undefined);return null;}
+ assert.equal(control.asset,'USDC');assert(!readinessOnly&&!continueUnfunded&&!paidRecovery&&!observationOnly&&!retainedBok&&!networkOnly);
+ assert.match(sha256??'',/^[a-f0-9]{64}$/);
+ const file=path.join(control.recoveryDirectory,'unsigned-recovery-export-2.json'),stat=fs.lstatSync(file);
+ assert(stat.isFile()&&!stat.isSymbolicLink()&&stat.uid===process.getuid()&&(stat.mode&0o777)===0o600&&stat.size<=34*1024*1024);
+ const bytes=fs.readFileSync(file);assert.equal(createHash('sha256').update(bytes).digest('hex'),sha256,'Original unsigned export changed');
+ return {envelope:JSON.parse(bytes),sha256};
+}
+
 // Original private records remain inside page RAM; only fixed booleans leave it.
-export async function inspectMetaMaskUnsignedExport({network:n,board,router,phase,envelope,password}){
+export async function inspectMetaMaskUnsignedExport({network:n,board,router,phase,envelope,password,account}){
  const sdk=window.__aztec,wallet=window.walletState.aztec,storage=sdk.createBrowserJournalStorage();
  const slot=await sdk.createEncryptedJournalSlot({storage,walletSecret:wallet.secretKey,walletSalt:wallet.salt,scopeText:JSON.stringify(['ROLLING_AGGREGATE_FUNDING_V1',n.chainId,n.rollupVersion,n.rollupAddress,board.contractAddress,router,wallet.address.toString(),1]),keyDomain:'ROLLING_AGGREGATE_FUNDING_V1'});
  const saved=await slot.read(),value=saved.value;
- const unsigned=value?.kind==='usdc'&&value.intent===null&&value.claim===null&&value.relay?.submitted===false&&value.relay?.request===null&&!value.relay?.transactionHash&&value.aggregateCustody?.planHash===value.relay?.planHash;
+ const unsigned=value?.kind==='usdc'&&value.intent===null&&value.claim===null&&value.relay?.submitted===false&&value.relay?.request===null&&!value.relay?.transactionHash&&!value.txHash&&!value.confirmedRequest&&!value.previousTxHash&&value.aggregateCustody?.planHash===value.relay?.planHash;
  if(!unsigned)throw Error('Original unsigned funding is unavailable');
+ const claims=await window.BillboardClaimBackup.exportRecords(wallet);
  const journals=await(await sdk.createJournalBackup({storage,walletSecret:wallet.secretKey,walletSalt:wallet.salt})).exportRecords();
- if(phase==='capture'){if(!journals.length)throw Error('Original journal is unavailable');globalThis.__unsignedExportSnapshot=JSON.stringify({saved,journals});return {unsigned:true,journalPresent:true};}
- if(phase!=='verify'||globalThis.__unsignedExportSnapshot!==JSON.stringify({saved,journals}))throw Error('Original recovery changed during export');
+ if(phase==='capture'){if(!journals.length)throw Error('Original journal is unavailable');globalThis.__unsignedExportSnapshot=JSON.stringify({saved,journals,claims});return {unsigned:true,journalPresent:true};}
+ if(phase==='requote'){
+  if(value.depositor!==account||value.aggregateCustody?.beneficiary!==account||value.privateFeeCap!==globalThis.__unsignedContinuationCap)throw Error('Original unsigned fee approval changed');
+  delete globalThis.__unsignedContinuationCap;return {originalFeeCapPreserved:true};
+ }
+ if(phase!=='continuation'&&(phase!=='verify'||globalThis.__unsignedExportSnapshot!==JSON.stringify({saved,journals,claims})))throw Error('Original recovery changed during export');
  const payload=await window.BillboardWalletBackup.decrypt(envelope,password);
- const complete=JSON.stringify(payload.journals)===JSON.stringify(journals)&&payload.claims.length>0&&payload.wallet.secretKey===wallet.secretKey.toString()&&payload.wallet.salt===wallet.salt.toString();
- if(!complete)throw Error('Encrypted recovery export differs');delete globalThis.__unsignedExportSnapshot;
+ const complete=JSON.stringify(payload.journals)===JSON.stringify(journals)&&claims.length>0&&JSON.stringify(payload.claims)===JSON.stringify(claims)&&payload.wallet.secretKey===wallet.secretKey.toString()&&payload.wallet.salt===wallet.salt.toString();
+ if(!complete)throw Error('Encrypted recovery export differs');
+ if(phase==='continuation'){
+  if(value.depositor!==account||value.aggregateCustody?.beneficiary!==account||value.aggregateCustody?.kind!=='aggregate-usdc-custody-v1'||typeof value.privateFeeCap!=='string'||! /^[1-9][0-9]{0,76}$/.test(value.privateFeeCap))throw Error('Original unsigned scope differs');
+  globalThis.__unsignedContinuationCap=value.privateFeeCap;
+ }
+ delete globalThis.__unsignedExportSnapshot;
  return {unsigned:true,journalPresent:true,originalPreserved:true,completeEncryptedExport:true};
 }
 export async function exportMetaMaskUnsignedRecovery({page,control,mark,report}){

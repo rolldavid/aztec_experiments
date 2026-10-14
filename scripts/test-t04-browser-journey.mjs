@@ -250,9 +250,9 @@ test('MetaMask aggregate launch rejects absent, nonlocal or unpinned deployment 
  await fs.mkdir(path.join(directory,'profile'));assert.throws(()=>readMetaMaskAggregateControl(file,'USDC'),/new disposable profile/);
  assert.throws(()=>readMetaMaskAggregateControl(file,'USDC',{readinessOnly:true}));await fs.mkdir(path.join(directory,'extension'));
  assert.throws(()=>readMetaMaskAggregateControl(file,'USDC',{readinessOnly:true}));await fs.writeFile(path.join(directory,'initial-recovery.json'),'{}',{mode:0o600});
- assert.deepEqual(readMetaMaskAggregateControl(file,'USDC',{readinessOnly:true}),c);assert.deepEqual(readMetaMaskAggregateControl(file,'USDC',{continueUnfunded:true}),c);
+ assert.deepEqual(readMetaMaskAggregateControl(file,'USDC',{readinessOnly:true}),c);assert.deepEqual(readMetaMaskAggregateControl(file,'USDC',{continueUnfunded:true}),c);assert.deepEqual(readMetaMaskAggregateControl(file,'USDC',{continueUnsigned:true}),c);assert.throws(()=>readMetaMaskAggregateControl(file,'USDC',{continueUnsigned:true,continueUnfunded:true}));
  assert.throws(()=>readMetaMaskAggregateControl(file,'USDC',{readinessOnly:true,continueUnfunded:true}));
- assert.throws(()=>readMetaMaskAggregateControl(file,'USDC',{paidRecovery:true}));await fs.writeFile(path.join(directory,'prepared-recovery.json'),'{}',{mode:0o600});assert.deepEqual(readMetaMaskAggregateControl(file,'USDC',{paidRecovery:true}),c);assert.throws(()=>readMetaMaskAggregateControl(file,'USDC',{paidRecovery:true,continueUnfunded:true}));assert.throws(()=>readMetaMaskAggregateControl(file,'USDC',{paidRecovery:true,readinessOnly:true}));assert.throws(()=>readMetaMaskAggregateControl(file,'USDC',{continueUnfunded:true}));await fs.unlink(path.join(directory,'prepared-recovery.json'));assert.throws(()=>readMetaMaskAggregateControl(file,'USDC'));
+ assert.throws(()=>readMetaMaskAggregateControl(file,'USDC',{paidRecovery:true}));await fs.writeFile(path.join(directory,'prepared-recovery.json'),'{}',{mode:0o600});assert.deepEqual(readMetaMaskAggregateControl(file,'USDC',{paidRecovery:true}),c);assert.throws(()=>readMetaMaskAggregateControl(file,'USDC',{paidRecovery:true,continueUnfunded:true}));assert.throws(()=>readMetaMaskAggregateControl(file,'USDC',{paidRecovery:true,readinessOnly:true}));assert.throws(()=>readMetaMaskAggregateControl(file,'USDC',{continueUnfunded:true}));assert.throws(()=>readMetaMaskAggregateControl(file,'USDC',{continueUnsigned:true}));await fs.unlink(path.join(directory,'prepared-recovery.json'));assert.throws(()=>readMetaMaskAggregateControl(file,'USDC'));
  await fs.chmod(path.join(directory,'initial-recovery.json'),0o644);assert.throws(()=>readMetaMaskAggregateControl(file,'USDC',{readinessOnly:true}));
 });
 
@@ -702,12 +702,20 @@ test('network-only extension probe uses sixty seconds and cannot request Bok con
 
 test('unsigned export checks original scoped custody and complete ciphertext records without modifying them',async()=>{
  const {inspectMetaMaskUnsignedExport}=await import('./t04-metamask.mjs'),{runInNewContext}=await import('node:vm');const key='0x'+'1'.repeat(64),salt='0x'+'0'.repeat(64),owner='0x'+'2'.repeat(64),network={chainId:'31337',rollupVersion:'6',rollupAddress:'0x'+'3'.repeat(40)},board={contractAddress:'0x'+'4'.repeat(64)},router='0x'+'5'.repeat(40);
- const saved={value:{kind:'usdc',intent:null,claim:null,relay:{submitted:false,request:null,planHash:'PRIVATE_PLAN'},aggregateCustody:{planHash:'PRIVATE_PLAN'}}},journals=[{key:'6'.repeat(64),encoded:'PRIVATE_CIPHERTEXT'}];let payload={wallet:{secretKey:key,salt},claims:[{}],journals};
- const sandbox={window:{walletState:{aztec:{secretKey:key,salt,address:{toString:()=>owner}}},__aztec:{createBrowserJournalStorage:()=>({}),createEncryptedJournalSlot:async args=>{assert.equal(args.scopeText,JSON.stringify(['ROLLING_AGGREGATE_FUNDING_V1','31337','6',network.rollupAddress,board.contractAddress,router,owner,1]));return{read:async()=>saved};},createJournalBackup:async()=>({exportRecords:async()=>journals})},BillboardWalletBackup:{decrypt:async()=>payload}}};
+ const saved={value:{kind:'usdc',intent:null,claim:null,relay:{submitted:false,request:null,planHash:'PRIVATE_PLAN'},aggregateCustody:{planHash:'PRIVATE_PLAN'}}},journals=[{key:'6'.repeat(64),encoded:'PRIVATE_CIPHERTEXT'}];const claims=[{scope:['original'],record:{secret:'PRIVATE_COLLATERAL'}}];let payload={wallet:{secretKey:key,salt},claims,journals};
+ const sandbox={window:{walletState:{aztec:{secretKey:key,salt,address:{toString:()=>owner}}},__aztec:{createBrowserJournalStorage:()=>({}),createEncryptedJournalSlot:async args=>{assert.equal(args.scopeText,JSON.stringify(['ROLLING_AGGREGATE_FUNDING_V1','31337','6',network.rollupAddress,board.contractAddress,router,owner,1]));return{read:async()=>saved};},createJournalBackup:async()=>({exportRecords:async()=>journals})},BillboardClaimBackup:{exportRecords:async()=>claims},BillboardWalletBackup:{decrypt:async()=>payload}}};
  const inspect=arg=>{sandbox.input={network,board,router,...arg};return runInNewContext('('+inspectMetaMaskUnsignedExport.toString()+')(input)',sandbox);};
  assert.equal((await inspect({phase:'capture'})).journalPresent,true);assert.equal((await inspect({phase:'verify',envelope:{},password:'PRIVATE_PASSWORD'})).originalPreserved,true);
  await inspect({phase:'capture'});saved.value.relay.submitted=true;await assert.rejects(inspect({phase:'verify'}),/unsigned funding/);saved.value.relay.submitted=false;
+ for(const bad of [[],[{scope:['unrelated'],record:{secret:'OTHER_PRIVATE'}}]]){await inspect({phase:'capture'});payload={...payload,claims:bad};await assert.rejects(inspect({phase:'verify'}),/export differs/);}
+ payload={...payload,claims};await inspect({phase:'capture'});claims.push({scope:['changed'],record:{secret:'CHANGED'}});await assert.rejects(inspect({phase:'verify'}),/changed during export/);claims.pop();
  await inspect({phase:'capture'});payload={...payload,journals:[]};await assert.rejects(inspect({phase:'verify'}),/export differs/);
+ payload={wallet:{secretKey:key,salt},claims,journals};Object.assign(saved.value,{depositor:'0x'+'9'.repeat(40),privateFeeCap:'123',aggregateCustody:{kind:'aggregate-usdc-custody-v1',planHash:'PRIVATE_PLAN',beneficiary:'0x'+'9'.repeat(40)}});
+ const account=saved.value.depositor;assert.equal((await inspect({phase:'continuation',account})).completeEncryptedExport,true);
+ await assert.rejects(inspect({phase:'continuation',account:'0x'+'8'.repeat(40)}),/scope differs/);
+ for(const mutation of [{intent:{}},{claim:{}},{txHash:'hash'},{previousTxHash:'hash'},{relay:{...saved.value.relay,submitted:true}},{relay:{...saved.value.relay,request:{}}},{relay:{...saved.value.relay,transactionHash:'hash'}}]){const original={...saved.value};Object.assign(saved.value,mutation);await assert.rejects(inspect({phase:'continuation',account}),/unsigned funding/);saved.value=original;}
+ await inspect({phase:'continuation',account});saved.value.privateFeeCap='124';await assert.rejects(inspect({phase:'requote',account}),/fee approval changed/);saved.value.privateFeeCap='123';assert.equal((await inspect({phase:'requote',account})).originalFeeCapPreserved,true);
+ await assert.rejects(inspect({phase:'requote',account}),/fee approval changed/);
 });
 test('encrypted download failure records only a fixed category and preserves original error',async()=>{
  const {saveEncryptedDownload}=await import('./t04-metamask.mjs');const dir=await fs.mkdtemp(path.join(os.tmpdir(),'t04-download-'));
@@ -746,4 +754,17 @@ test('test browser override is explicit and rejects unpinned executables',async 
  const {walletChromiumLaunch}=await import('./t04-metamask.mjs');assert.deepEqual(walletChromiumLaunch({}),{channel:'chromium'});const syncFs=(await import('node:fs')).default,exists=syncFs.existsSync;let selected;try{syncFs.existsSync=file=>{selected=file;return false;};assert.throws(()=>walletChromiumLaunch({},{aggregate:true}),/no fallback to153/);assert.match(selected,/cft-155\.0\.8059\.79-mac-arm64/);}finally{syncFs.existsSync=exists;}
  for(const executable of ['', 'relative', '/usr/bin/true'])assert.throws(()=>walletChromiumLaunch({T04_CHROMIUM_EXECUTABLE:executable}));
  const dir=await fs.mkdtemp(path.join(os.tmpdir(),'t04-browser-pin-'));t.after(()=>fs.rm(dir,{recursive:true,force:true}));const executable=path.join(dir,'Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing');await fs.mkdir(path.dirname(executable),{recursive:true});await fs.writeFile(executable,'changed');assert.throws(()=>walletChromiumLaunch({T04_CHROMIUM_EXECUTABLE:executable}),/executable changed/);
+});
+
+test('retained unsigned continuation requires explicit USDC export hash and exclusive mode',async t=>{
+ const {readMetaMaskUnsignedContinuation:read}=await import('./t04-metamask.mjs'),{createHash}=await import('node:crypto');const dir=await fs.mkdtemp(path.join(os.tmpdir(),'t04-unsigned-'));t.after(()=>fs.rm(dir,{recursive:true,force:true}));const c={asset:'USDC',recoveryDirectory:dir},bytes=Buffer.from('{"encrypted":"synthetic"}'),hash=createHash('sha256').update(bytes).digest('hex');
+ await fs.writeFile(path.join(dir,'unsigned-recovery-export-2.json'),bytes,{mode:0o600});assert.equal(read(undefined,undefined,c),null);assert.equal(read('true',hash,c).sha256,hash);
+ for(const flag of ['yes','',false])assert.throws(()=>read(flag,hash,c));assert.throws(()=>read('false',hash,c));assert.throws(()=>read('true',hash,{...c,asset:'ETH'}));assert.throws(()=>read('true','0'.repeat(64),c));
+ for(const mode of ['readinessOnly','continueUnfunded','paidRecovery','observationOnly','retainedBok','networkOnly'])assert.throws(()=>read('true',hash,c,{[mode]:true}));
+ await fs.chmod(path.join(dir,'unsigned-recovery-export-2.json'),0o644);assert.throws(()=>read('true',hash,c));
+});
+
+test('retained unsigned admission rejects nonzero nonces and incomplete original custody',async()=>{
+ const {assertMetaMaskUnsignedAdmission:check}=await import('./t04-metamask.mjs');const binding={unsigned:true,journalPresent:true,originalPreserved:true,completeEncryptedExport:true},input={ethereumNonce:0,consentNonce:0n,binding};check(input);
+ for(const change of [{ethereumNonce:1},{consentNonce:1n},{ethereumNonce:undefined},{binding:null},...Object.keys(binding).map(key=>({binding:{...binding,[key]:false}}))])assert.throws(()=>check({...input,...change}));
 });
