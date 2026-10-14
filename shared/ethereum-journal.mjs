@@ -16,6 +16,8 @@ const iface=new Interface([
   'event Withdrawn(address indexed depositor,uint128 amount)',
 ]);
 const bokInterface=new Interface([
+  'function withdraw(address recipient,uint128 amount,bytes32 nonce,uint256 epoch,uint256 checkpoints,uint256 index,bytes32[] path)',
+  'event Withdrawn(address indexed recipient,uint128 amount,bytes32 nonce)',
   'function deposit(bytes32 account,uint128 amount,bytes32 secretHash)',
   'event Deposited(bytes32 indexed account,uint128 amount,bytes32 key,uint256 index)',
 ]);
@@ -64,10 +66,10 @@ function validateIntent(record,scope) {
   }
   if(['aggregate-funding','aggregate-usdc-funding'].includes(expected?.kind)){if(scope.token!==undefined)throw invalid();try{validateAggregateFundingIntent(record);}catch{throw invalid();}return record;}
   const fee=scope.token!==undefined;
-  if(!expected||!(fee?['approve','fee-deposit','bok-deposit']:['deposit','withdraw']).includes(expected.kind)||!positive(expected.amount)||BigInt(expected.amount)>=(1n<<(fee?128n:96n)))throw invalid();
-  const abi=expected.kind==='bok-deposit'?bokInterface:iface;
+  if(!expected||!(fee?['approve','fee-deposit','bok-deposit','bok-withdraw']:['deposit','withdraw']).includes(expected.kind)||!positive(expected.amount)||BigInt(expected.amount)>=(1n<<(fee?128n:96n)))throw invalid();
+  const abi=['bok-deposit','bok-withdraw'].includes(expected.kind)?bokInterface:iface;
   let parsed;try{parsed=abi.parseTransaction({data:record.data,value:record.value});}catch{throw invalid();}
-  const method=expected.kind==='fee-deposit'?'depositToAztecPublic':expected.kind==='bok-deposit'?'deposit':expected.kind;
+  const method=expected.kind==='fee-deposit'?'depositToAztecPublic':expected.kind==='bok-deposit'?'deposit':expected.kind==='bok-withdraw'?'withdraw':expected.kind;
   if(!parsed||parsed.name!==method||abi.encodeFunctionData(parsed.fragment,parsed.args).toLowerCase()!==record.data)throw invalid();
   if(expected.kind==='deposit') {
     if(!hash(expected.secretHash)||lower(parsed.args[0])!==expected.secretHash||record.value!==expected.amount)throw invalid();
@@ -76,6 +78,7 @@ function validateIntent(record,scope) {
     if(expected.kind==='approve'&&(expected.spender!==scope.portal||lower(parsed.args[0])!==scope.portal||String(parsed.args[1])!==expected.amount))throw invalid();
     if(expected.kind==='fee-deposit'&&(expected.recipient!==scope.board||!hash(expected.secretHash)||lower(parsed.args[0])!==scope.board||String(parsed.args[1])!==expected.amount||lower(parsed.args[2])!==expected.secretHash))throw invalid();
     if(expected.kind==='bok-deposit'&&(!field(expected.recipient)||!field(expected.secretHash)||lower(parsed.args[0])!==expected.recipient||String(parsed.args[1])!==expected.amount||lower(parsed.args[2])!==expected.secretHash))throw invalid();
+    if(expected.kind==='bok-withdraw'&&(!address(expected.recipient)||BigInt(expected.recipient)===0n||!field(expected.exitNonce)||lower(parsed.args[0])!==expected.recipient||String(parsed.args[1])!==expected.amount||lower(parsed.args[2])!==expected.exitNonce))throw invalid();
   }
   return record;
 }
@@ -103,6 +106,16 @@ export async function verifyEthereumIntentReceipt(provider,record,txHash,read=fn
     const event=await verifyAggregateFundingEffects(provider,record,receipt,read);
     const current=await read(()=>provider.getBlock(receipt.blockNumber));if(lower(current?.hash)!==lower(receipt.blockHash))throw unknown();
     return {outcome:'success',txHash,receipt,event};
+  }
+  if(expected.kind==='bok-withdraw') {
+    // Exact calldata authenticates nonce/recipient; a portal event is not a
+    // substitute for the saved original request or a wallet envelope.
+    const topic=bokInterface.getEvent('Withdrawn').topicHash.toLowerCase(),events=[];
+    for(const log of receipt.logs){if(lower(log.address)!==record.to||lower(log.topics?.[0])!==topic)continue;
+      let parsed;try{parsed=bokInterface.parseLog(log);}catch{throw unknown();}
+      if(!parsed||lower(parsed.args.recipient)!==expected.recipient||String(parsed.args.amount)!==expected.amount||lower(parsed.args.nonce)!==expected.exitNonce)throw unknown();events.push(parsed.args);
+    }
+    if(events.length!==1)throw unknown();return {outcome:'success',txHash,receipt,event:events[0]};
   }
   if(expected.kind==='bok-deposit') {
     // This portal's event omits secretHash. Only the exact saved calldata can

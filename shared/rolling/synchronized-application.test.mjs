@@ -3,7 +3,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {OperationQueue} from '../../node_modules/@aztec-labs/pxe/dest/operation_queue.js';
 import {createSynchronizedRollingApplication} from './synchronized-application.mjs';
-const names=['readBalances','readWithdrawal','readModeratorStatus','readBokStatus','prepareBokPost','readAccountStatus','readPreferenceHead','readProfile','ownedIdentities','prepare','submitPrepared','cancelPrepared','reconcile','inspectRecovery','prepareReplacement','resumeSaved'];
+const names=['readBokAccounting','readBalances','readWithdrawal','readModeratorStatus','readBokStatus','prepareBokPost','readAccountStatus','readPreferenceHead','readProfile','ownedIdentities','prepare','submitPrepared','cancelPrepared','reconcile','inspectRecovery','prepareReplacement','resumeSaved'];
 test('explicit synchronization exposes a newly included name through the actual autoSync:false SDK queue',async()=>{
  let anchor=14,head=14,closed=0,syncs=0;
  const synchronizer={sync:async()=>{syncs++;anchor=head;}};

@@ -1200,3 +1200,57 @@ test('RC22 unresolved local fee reservation is explicit and never double-deducts
  await assert.rejects(f.app.submitPrepared(review.intentId));const balances=await f.restart().readBalances();
  assert.equal(balances.fee.available,'1000');assert.deepEqual(balances.fee.pendingReservation,{status:'unresolved',maximumFee:'10'});assert.equal(f.state.sends,1);
 });
+
+// Labelled public snapshot transport and private ownership utilities. No live archive.
+function bokAccountingFixture(ids=[11n]){
+ const f=bokFixture(),instance={currentContractClassId:hex(90),originalContractClassId:hex(90),deployer:hex(3),salt:hex(4)};
+ f.options.deployment.bok.instance=instance;f.options.deployment.bok.artifact=structuredClone(bokArtifact);
+ if(!f.options.deployment.bok.artifact.functions.some(x=>x.name==='owned_requests'))f.options.deployment.bok.artifact.functions.push({name:'owned_requests',returnType:{kind:'array',length:8,type:{kind:'field'}}});
+ f.state.responses={owned_requests:[...ids,...Array(8-ids.length).fill(0n)]};
+ const descriptor={address:hex(5),classId:hex(90),operatorAddress:hex(6),deployer:hex(3),salt:hex(4),deployment:{blockNumber:1,blockHash:hex(42),txHash:hex(40)}};
+ const row=id=>({requestId:hex(id),state:'2',sequence:'1',budget:'100',available:'40',reserved:'20',charged:'30',refunded:'10',position:{blockNumber:'1',blockHash:hex(42),txHash:hex(45),txIndexWithinBlock:'0',logIndexWithinTx:String(id)}});
+ f.pages=[{schemaVersion:1,scope:{chainId:'31337',rollupVersion:'1',rollupAddress:f.options.deployment.network.rollup,boardAddress:hex(1),bok:descriptor},bokScope:descriptor,checkpoint:{number:1,hash:hex(42)},revision:'epoch:1:1',complete:true,requests:[row(11),row(12)],nextCursor:'next-page'},{schemaVersion:1,scope:{chainId:'31337',rollupVersion:'1',rollupAddress:f.options.deployment.network.rollup,boardAddress:hex(1),bok:descriptor},bokScope:descriptor,checkpoint:{number:1,hash:hex(42)},revision:'epoch:1:1',complete:true,requests:[row(13)],nextCursor:null}];
+ f.trace=[];f.options.readBokAccountingPage=async input=>{f.trace.push(structuredClone(input));return f.pages[input.cursor===null?0:1];};
+ f.options.funding={resolveBokWithdrawal:async()=>({portal:'0x'+'22'.repeat(20),token:'0x'+'44'.repeat(20),recipient:hex(5)}),verifyWithdrawal:async()=>f.state.refunded===true};f.app=f.restart();return f;
+}
+async function finishBokAccounting(f){let page=await f.app.readBokAccounting();while(!page.complete)page=await f.app.readBokAccounting({cursor:page.nextCursor});return page;}
+test('RC22 Bok accounting downloads identical complete public pages for disjoint private owners',async()=>{
+ const a=bokAccountingFixture([11n]),b=bokAccountingFixture([13n]),empty=bokAccountingFixture([]);
+ const result=await finishBokAccounting(a),other=await finishBokAccounting(b),none=await finishBokAccounting(empty);
+ assert.deepEqual(a.trace,b.trace);assert.deepEqual(a.trace,empty.trace);assert.deepEqual(a.trace,[{limit:50,cursor:null},{limit:50,cursor:'next-page'}]);assert.equal(result.available,'1000');assert.equal(result.totals.refunded,'10');assert.equal(result.requests[0].requestId,hex(11));assert.equal(other.requests[0].requestId,hex(13));assert.deepEqual(none.requests,[]);assert.equal(a.state.sends,0);assert(!a.state.privateReads.some(r=>r.name==='request'));
+});
+for(const change of ['missing','revision','checkpoint','conservation','order','scope','pxe','cursor'])test('RC22 Bok accounting rejects incomplete or changed '+change,async()=>{
+ const f=bokAccountingFixture([11n]),first=await f.app.readBokAccounting();assert.equal(first.complete,false);assert.equal(f.trace.length,0);
+ if(change==='missing')f.pages[0].requests.shift();if(change==='revision')f.pages[1].revision='changed';if(change==='checkpoint')f.pages[0].checkpoint.hash=hex(99);if(change==='conservation')f.pages[0].requests[0].reserved='21';if(change==='order')f.pages[1].requests[0].requestId=hex(11);if(change==='scope')f.pages[0].bokScope.address=hex(9);if(change==='pxe')f.options.accountSession.wallet.pxe.getSyncedBlockHeader=async()=>({globalVariables:{blockNumber:2,timestamp:101n},hash:async()=>hex(43)});
+ await assert.rejects(async()=>{let page=await f.app.readBokAccounting({cursor:change==='cursor'?'wrong':first.nextCursor});while(!page.complete)page=await f.app.readBokAccounting({cursor:page.nextCursor});});assert.equal(f.state.sends,0);
+});
+test('RC22 Bok exit uses actual ABI and encrypted original scope, independent of rejected board/plugin',async()=>{
+ const f=bokAccountingFixture();f.state.bokEnabled=false;f.state.effectivePolicy=[1n,1n,1n,1n,true];
+ const action={type:'withdraw-bok',amount:'500',recipient:'0x'+'33'.repeat(20)},intent=await f.app.prepare(action);assert.equal(intent.withdrawal.kind,'bok');assert.equal(intent.withdrawal.amount,'500');assert.equal(f.state.calls.at(-1).name,'withdraw');assert.equal(f.state.calls.at(-1).args.length,3);
+ await f.restart().submitPrepared(intent.intentId);assert.equal((await f.restart().readWithdrawal()).withdrawal.nonce,intent.withdrawal.nonce);await assert.rejects(f.restart().prepare({type:'name',first:'River',last:'Stone'}),{code:'ROLLING_WITHDRAWAL_RECOVERY_REQUIRED'});
+ f.state.refunded=true;assert.equal((await f.restart().prepare({type:'name',first:'River',last:'Stone'})).status,'prepared');
+});
+test('RC22 Bok exit cannot spend reserved request credit or replace an unknown send',async()=>{
+ const f=bokAccountingFixture();f.state.bokCredit=10n;await assert.rejects(f.app.prepare({type:'withdraw-bok',amount:'11',recipient:'0x'+'33'.repeat(20)}),{code:'ROLLING_BOK_CREDIT_INSUFFICIENT'});assert.equal(f.state.sends,0);
+ const intent=await f.app.prepare({type:'withdraw-bok',amount:'10',recipient:'0x'+'33'.repeat(20)});f.state.failSend=true;await assert.rejects(f.app.submitPrepared(intent.intentId));await assert.rejects(f.restart().submitPrepared(intent.intentId),{code:'ROLLING_RECOVERY_REQUIRED'});assert.equal(f.state.sends,1);
+});
+test('RC22 request cancellation only selects owned unreserved waiting or active requests',async()=>{
+ const f=bokAccountingFixture();await finishBokAccounting(f);await assert.rejects(f.app.prepare({type:'cancel-bok-request',requestId:hex(11)}),{code:'ROLLING_BOK_ACCOUNTING_INCOMPLETE'});
+ f.pages[0].requests[0].available='60';f.pages[0].requests[0].reserved='0';await finishBokAccounting(f);const intent=await f.app.prepare({type:'cancel-bok-request',requestId:hex(11)});assert.equal(intent.action.type,'cancel-bok-request');assert.equal(f.state.calls.at(-1).name,'cancel');assert.equal(f.state.sends,0);
+});
+
+test('RC22 full private ownership page requires a distinct empty page before any uniform public fetch',async()=>{
+ const f=bokAccountingFixture(Array.from({length:8},(_,i)=>BigInt(i+11)));let page=await f.app.readBokAccounting();assert.equal(page.phase,'owned-requests');assert.equal(f.trace.length,0);
+ const first=page.nextCursor;f.state.responses.owned_requests=Array(8).fill(0n);page=await f.app.readBokAccounting({cursor:first});assert.equal(page.phase,'public-accounting');assert.equal(f.trace.length,0);
+ assert.deepEqual(f.state.privateReads.filter(r=>r.name==='owned_requests').map(r=>r.args[1]),[0,8]);await assert.rejects(f.app.readBokAccounting({cursor:first}),{code:'ROLLING_BALANCE_CURSOR_INVALID'});assert.equal(f.state.sends,0);
+});
+for(const defect of ['zero-tail','duplicate','empty-continuation','deployment','negative','noncanonical-cursor'])test('RC22 accounting rejects '+defect,async()=>{
+ const f=bokAccountingFixture();
+ if(defect==='zero-tail')f.state.responses.owned_requests=[0n,11n,...Array(6).fill(0n)];
+ if(defect==='duplicate')f.state.responses.owned_requests=[11n,11n,...Array(6).fill(0n)];
+ if(defect==='empty-continuation')f.pages[0].requests=[];
+ if(defect==='deployment')f.pages[0].bokScope.deployment.blockNumber=2;
+ if(defect==='negative')f.pages[0].requests[0].available='-1';
+ if(defect==='noncanonical-cursor')f.pages[0].nextCursor='';
+ await assert.rejects(finishBokAccounting(f));assert.equal(f.state.sends,0);
+});

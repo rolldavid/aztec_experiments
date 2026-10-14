@@ -39,9 +39,25 @@ export async function verifyRollingBokCapability({sdk,node,config,artifact,deplo
  await sdk.inspectTrustedNode(node,{expectedNetworkScope:deployment.network,proofsEnabled:deployment.proofsEnabled});await contextGuard();
  return Object.freeze({address,artifact,instance,operator:new sdk.AztecAddress(new sdk.Fr(BigInt(selected.operatorAddress))),pluginId:selected.pluginId});
 }
+// Fixed public-only acquisition. No private identity/ID/filter can be supplied.
+export function createUniformBokAccountingReader({fetcher=globalThis.fetch,origin=globalThis.location?.origin}={}){
+ return async({limit,cursor})=>{
+  if(limit!==50||!(cursor===null||typeof cursor==='string'&&/^[A-Za-z0-9_-]{1,120}$/.test(cursor)))throw fail('ROLLING_BOK_ACCOUNTING_UNAVAILABLE');
+  const url=new URL('/api/bok-accounting',origin);url.searchParams.set('limit','50');if(cursor!==null)url.searchParams.set('cursor',cursor);
+  const response=await fetcher(url.href,{method:'GET',credentials:'omit',redirect:'error',cache:'no-store',referrerPolicy:'no-referrer',signal:AbortSignal.timeout(20000)});
+  if(!response.ok)throw fail('ROLLING_BOK_ACCOUNTING_UNAVAILABLE');
+  const reader=response.body.getReader(),parts=[];let size=0,failed=false;
+  try{for(;;){const {done,value}=await reader.read();if(done)break;size+=value.byteLength;if(size>1024*1024)throw fail('ROLLING_BOK_ACCOUNTING_UNAVAILABLE');parts.push(value);}}
+  catch(error){failed=true;throw error;}
+  finally{try{await reader.cancel();}catch(error){if(!failed)throw error;}finally{reader.releaseLock();}}
+  const data=new Uint8Array(size);let offset=0;for(const part of parts){data.set(part,offset);offset+=part.length;}return JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(data));
+ };
+}
 // L2 workflow retains private exit identity; Ethereum journal owns refund sends.
-export function createCollateralWithdrawal({sdk,ethers,provider,node,application,scope,storage,walletSecret,walletSalt,captureWallet,contextGuard}){
- const fixed=structuredClone(scope),abi=()=>new ethers.Interface(['function withdraw(uint256 epoch,uint256 checkpointCount,uint256 leafIndex,bytes32[] path)']);
+export function createCollateralWithdrawal({sdk,ethers,provider,node,application,scope,storage,walletSecret,walletSalt,captureWallet,contextGuard,resolveBokScope}){
+ const fixed=structuredClone(scope),abi=bok=>new ethers.Interface([bok?'function withdraw(address recipient,uint128 amount,bytes32 nonce,uint256 epoch,uint256 checkpointCount,uint256 leafIndex,bytes32[] path)':'function withdraw(uint256 epoch,uint256 checkpointCount,uint256 leafIndex,bytes32[] path)']);
+ const isBok=r=>r.withdrawal?.kind==='bok';
+ const exitScope=r=>isBok(r)?{...fixed,board:r.withdrawal.bokScope.recipient,portal:r.withdrawal.bokScope.portal,token:r.withdrawal.bokScope.token}:fixed;
  const check=ok=>{if(!ok)throw fail('ROLLING_WITHDRAWAL_RECOVERY_REQUIRED');};
  const hash=v=>{const s=v?.toString();check(typeof s==='string'&&/^0x[0-9a-f]{64}$/.test(s));return s;};
  const pending=new Set();
@@ -52,14 +68,15 @@ export function createCollateralWithdrawal({sdk,ethers,provider,node,application
 
  let quote=null;
  async function original(record){
-  const r=record??await application.readWithdrawal();check(r?.action?.type==='withdraw'&&r.status==='confirmed'&&r.withdrawal?.eligible===true);hash(r.txHash);
-  const w=r.withdrawal;check(/^0x[0-9a-f]{40}$/.test(w.depositor)&&BigInt(w.depositor)>0n&&/^[1-9][0-9]*$/.test(w.amount)&&BigInt(w.amount)<(1n<<96n));return structuredClone(r);
+  const r=record??await application.readWithdrawal();check(['withdraw','withdraw-bok'].includes(r?.action?.type)&&r.status==='confirmed'&&r.withdrawal?.eligible===true);hash(r.txHash);
+  const w=r.withdrawal;check((r.action.type==='withdraw-bok')===isBok(r));check(/^0x[0-9a-f]{40}$/.test(w.depositor)&&BigInt(w.depositor)>0n&&/^[1-9][0-9]*$/.test(w.amount)&&BigInt(w.amount)<(1n<<(isBok(r)?128n:96n)));if(isBok(r)){check(typeof resolveBokScope==='function'&&hash(w.nonce)&&BigInt(w.nonce)>0n&&sdk.Fr.fromHexString(w.nonce).toString()===w.nonce&&JSON.stringify(await read(resolveBokScope))===JSON.stringify(w.bokScope));}return structuredClone(r);
  }
- const journal=(r,extra={})=>sdk.createEthereumJournal({storage,walletSecret,walletSalt,scope:{...fixed,depositor:r.withdrawal.depositor},provider,contextGuard,...extra});
+ const journal=(r,extra={})=>sdk.createEthereumJournal({storage,walletSecret,walletSalt,scope:{...exitScope(r),depositor:r.withdrawal.depositor},provider,contextGuard,...extra});
  async function membership(r){
   const network=await read(()=>provider.getNetwork());check(String(network.chainId)===fixed.chainId);
-  const content=sdk.Fr.fromHexString(await sha256Field(encodeEscrowCommitment('exit',{l1ChainId:fixed.chainId,rollupAddress:fixed.rollup,rollupVersion:fixed.version,boardAddress:fixed.board,portalAddress:fixed.portal},{depositor:r.withdrawal.depositor,amount:r.withdrawal.amount})));
-  const leaf=await sdk.computeL2ToL1MessageHash({l2Sender:new sdk.AztecAddress(new sdk.Fr(BigInt(fixed.board))),l1Recipient:sdk.EthAddress.fromString(fixed.portal),content,rollupVersion:new sdk.Fr(BigInt(fixed.version)),chainId:new sdk.Fr(BigInt(fixed.chainId))});
+  const selected=exitScope(r),bok=isBok(r);
+  const content=sdk.Fr.fromHexString(await sha256Field(bok?ethers.getBytes(ethers.AbiCoder.defaultAbiCoder().encode(['bytes32','uint256','address','bytes32','uint256','address','uint128','bytes32'],[ethers.encodeBytes32String('PLUGIN_EXIT_V1'),fixed.chainId,selected.portal,selected.board,fixed.version,r.withdrawal.depositor,r.withdrawal.amount,r.withdrawal.nonce])):encodeEscrowCommitment('exit',{l1ChainId:fixed.chainId,rollupAddress:fixed.rollup,rollupVersion:fixed.version,boardAddress:fixed.board,portalAddress:fixed.portal},{depositor:r.withdrawal.depositor,amount:r.withdrawal.amount})));
+  const leaf=await sdk.computeL2ToL1MessageHash({l2Sender:new sdk.AztecAddress(new sdk.Fr(BigInt(selected.board))),l1Recipient:sdk.EthAddress.fromString(selected.portal),content,rollupVersion:new sdk.Fr(BigInt(fixed.version)),chainId:new sdk.Fr(BigInt(fixed.chainId))});
   const tx=sdk.TxHash.fromString(r.txHash),receipt=await read(()=>node.getTxReceipt(tx));
   check(['checkpointed','proven','finalized'].includes(receipt?.status)&&receipt.executionResult==='success'&&hash(receipt.txHash)===r.txHash&&Number.isSafeInteger(receipt.blockNumber)&&receipt.blockNumber>0);
   const blockHash=hash(receipt.blockHash),effect=await read(()=>node.getTxEffect(tx));
@@ -68,15 +85,15 @@ export function createCollateralWithdrawal({sdk,ethers,provider,node,application
   const epoch=BigInt(witness.epochNumber),count=BigInt(witness.numCheckpointsInEpoch),index=BigInt(witness.leafIndex),path=witness.siblingPath.toBufferArray().map(v=>ethers.hexlify(v));
   check(epoch>=0n&&count>0n&&index>=0n&&path.length<=256&&path.every(v=>/^0x[0-9a-f]{64}$/.test(v)));
   const block=await read(()=>node.getBlockData(receipt.blockNumber));check(hash(block.blockHash)===blockHash&&Number(block.header?.globalVariables?.blockNumber)===receipt.blockNumber);
-  return abi().encodeFunctionData('withdraw',[epoch,count,index,path]).toLowerCase();
+  return abi(bok).encodeFunctionData('withdraw',[...(bok?[r.withdrawal.depositor,r.withdrawal.amount,r.withdrawal.nonce]:[]),epoch,count,index,path]).toLowerCase();
  }
  const cost=result=>{const r=result.receipt,price=r?.gasPrice??r?.effectiveGasPrice;return typeof r?.gasUsed==='bigint'&&r.gasUsed>=0n&&typeof price==='bigint'&&price>=0n?String(r.gasUsed*price):null;};
  async function finalized(result){
   if(fixed.chainId!=='31337'){const final=await read(()=>provider.getBlock('finalized'));check(Number.isSafeInteger(final?.number)&&final.number>=result.receipt.blockNumber);const again=await read(()=>provider.getBlock(result.receipt.blockNumber));check(hash(again.hash)===hash(result.receipt.blockHash));}
  }
  async function verified(r,search=false){
-  const j=await journal(r),saved=await read(()=>j.inspectSummary());if(!saved||saved.kind!=='withdraw')return null;if(saved.outcome==='unknown'&&!search)return null;
-  const result=await read(()=>j.recover({retry:false}));check(result?.request?.expected?.kind==='withdraw'&&result.request.from===r.withdrawal.depositor&&result.request.to===fixed.portal);
+  const j=await journal(r),saved=await read(()=>j.inspectSummary());if(!saved||saved.kind!==(isBok(r)?'bok-withdraw':'withdraw'))return null;if(saved.outcome==='unknown'&&!search)return null;
+  const result=await read(()=>j.recover({retry:false}));check(result?.request?.expected?.kind===(isBok(r)?'bok-withdraw':'withdraw')&&result.request.from===r.withdrawal.depositor&&result.request.to===exitScope(r).portal);
   if(result.request.expected.amount!==r.withdrawal.amount||result.request.data!==await membership(r)){check(['success','reverted'].includes(result.outcome));return null;}
   await finalized(result);
   return result;
@@ -89,8 +106,8 @@ export function createCollateralWithdrawal({sdk,ethers,provider,node,application
    const r=await original(),wallet=await captureWallet();await read(wallet.guard);check(wallet.address.toLowerCase()===r.withdrawal.depositor&&String(wallet.chainId)===fixed.chainId);
    const j=await journal(r),saved=await read(()=>j.inspectSummary());let previous=null;
    if(saved){const old=await read(()=>j.recover({retry:false}));check(['success','reverted'].includes(old.outcome));await finalized(old);
-    if(old.request.expected.kind==='withdraw'&&old.request.data===await membership(r))check(old.outcome==='reverted');previous=old.txHash;}
-   const data=await membership(r),request={from:r.withdrawal.depositor,to:fixed.portal,data,value:0n};
+    if(old.request.expected.kind===(isBok(r)?'bok-withdraw':'withdraw')&&old.request.data===await membership(r))check(old.outcome==='reverted');previous=old.txHash;}
+   const data=await membership(r),request={from:r.withdrawal.depositor,to:exitScope(r).portal,data,value:0n};
    // Real portal eth_call checks settled Outbox membership and the original
    // depositor receipt, including when the board has since been rejected.
    await read(()=>provider.call(request));const gas=await read(()=>provider.estimateGas(request)),fees=await read(()=>provider.getFeeData()),price=fees.maxFeePerGas??fees.gasPrice;
@@ -108,7 +125,7 @@ export function createCollateralWithdrawal({sdk,ethers,provider,node,application
     return q.wallet.signer.sendTransaction({...request,gasLimit:gas*2n,...(fees.maxFeePerGas!=null?{maxFeePerGas:price,maxPriorityFeePerGas:fees.maxPriorityFeePerGas??0n}:{gasPrice:price})});
    }};
    const j=await journal(r,{signer,acknowledgeTx:q.previous,contextGuard:async()=>{await contextGuard();await q.wallet.guard();}});
-   const result=await read(()=>j.send({data:q.data,value:'0',expected:{kind:'withdraw',amount:r.withdrawal.amount}}));
+   const result=await read(()=>j.send({data:q.data,value:'0',expected:{kind:isBok(r)?'bok-withdraw':'withdraw',amount:r.withdrawal.amount,...(isBok(r)?{recipient:r.withdrawal.depositor,exitNonce:r.withdrawal.nonce}:{})}}));
    check(result.outcome==='success');await finalized(result);return {status:'refunded',txHash:result.txHash,amount:r.withdrawal.amount,gasCostWei:cost(result)};
   }
  };
@@ -205,6 +222,7 @@ export async function createRollingWalletSession({sdk,routing,ethers,config,boar
     await guardRoute();fundingProvider??=new ethers.JsonRpcProvider(selected.network.ethRpcUrl);
     const result=await fundingProvider[name](...args);await guardRoute();return result;
    }]))};
+   funding.resolveBokWithdrawal=()=>verifyRollingTopupScope({sdk,ethers,node,provider:funding.provider,network,privateFee:deployment.privateFee.address.toString(),bok,kind:'bok',contextGuard:guardRoute});
    if(selected.aggregateFunding!==undefined){
     const scope=selected.aggregateFunding;
     if(!bok||scope.chainId!==network.chainId||scope.collateralPortal!==deployment.portal||scope.privateFpc!==deployment.privateFee.address.toString()||typeof captureFundingWallet!=='function')throw fail('ROLLING_SESSION_CONFIG');
@@ -241,7 +259,7 @@ export async function createRollingWalletSession({sdk,routing,ethers,config,boar
     const aggregateLookup=funding.loadAggregate;
     funding.loadAggregate=async hash=>{const found=aggregateLookup?await aggregateLookup(hash):null;return found??(topups.bok?await topups.bok.loadAggregate(hash):null);};
    }
-   await guard();app=createRollingApplication({sdk:{...sdk,isPrivateWalletForNode:routing.isPrivateWalletForNode},deployment,contextGuard:guard,privateStore,funding,onProgress,
+   await guard();app=createRollingApplication({sdk:{...sdk,isPrivateWalletForNode:routing.isPrivateWalletForNode},deployment,contextGuard:guard,privateStore,funding,onProgress,readBokAccountingPage:createUniformBokAccountingReader(),
     accountSession:{owner:instance.address,wallet,node,journal,walletSecret:captured.secretKey,walletSalt:captured.salt}});
    // The reader owns synchronization, but the session owns this same account
    // lock and PXE lifetime. Its head capability is the raw guarded application
@@ -267,7 +285,7 @@ export async function createRollingWalletSession({sdk,routing,ethers,config,boar
     }
     return coldReader.read(options);
    };
-   withdrawal=createCollateralWithdrawal({sdk,ethers,provider:funding.provider,node,application:app,scope:{account:captured.address,...network,board:selected.board.contractAddress,portal:selected.board.portalAddress},storage:privateStore,walletSecret:secret,walletSalt:salt,captureWallet:captureFundingWallet??(async()=>{throw fail('ROLLING_FUNDING_UNAVAILABLE');}),contextGuard:guardRoute});
+   withdrawal=createCollateralWithdrawal({sdk,ethers,provider:funding.provider,node,application:app,scope:{account:captured.address,...network,board:selected.board.contractAddress,portal:selected.board.portalAddress},storage:privateStore,walletSecret:secret,walletSalt:salt,captureWallet:captureFundingWallet??(async()=>{throw fail('ROLLING_FUNDING_UNAVAILABLE');}),contextGuard:guardRoute,resolveBokScope:funding.resolveBokWithdrawal});
    emit('complete');
   }catch(error){failed(error);closed=true;try{await dispose();}catch(cleanupError){throw new AggregateError([error,cleanupError],'Private session initialization and cleanup failed');}throw error;}
  });}catch(error){failed(error);throw error;}
