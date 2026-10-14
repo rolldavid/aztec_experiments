@@ -17,10 +17,10 @@ import {EthAddress} from '@aztec-labs/foundation/eth-address';
 import {loadContractArtifact} from '@aztec-labs/stdlib/abi';
 import {getContractClassFromArtifact,getContractInstanceFromInstantiationParams,computeContractAddressFromInstance} from '@aztec-labs/stdlib/contract';
 import {Tx,TxHash,TxStatus} from '@aztec-labs/stdlib/tx';
-import {JsonRpcProvider,FetchRequest,Wallet,Transaction,Contract as EthereumContract,ContractFactory,getCreateAddress,keccak256,parseUnits,formatUnits,sha256,toUtf8Bytes} from 'ethers';
+import {JsonRpcProvider,FetchRequest,Wallet,Transaction,Contract as EthereumContract,ContractFactory,getCreateAddress,keccak256,parseUnits,formatUnits,sha256,toUtf8Bytes,Interface} from 'ethers';
 import {API_VERSION,packText,handleField,validateDescriptor} from './protocol.mjs';
 import {provingEnabledForNode} from '../shared/proving-policy.mjs';
-import {fileState,recordedTransaction,outboxArguments,operatorApplicationProfile,rollingOperatorConfig,operatorNodeFetch,onceAztecOperation,reconcileRollingOperation,rollingPxeOptions,bindRollingJournal,readOperatorActor,projectRollingReceipt,rollingLifecycleConfig,rollingOperatorCommandScope,verifyPluginPortalRuntime,reconcileRollingEthereum,operatorEthereumRequest,matchRollingEthereumSigned,requireRollingReadyEffect} from './operations.mjs';
+import {fileState,recordedTransaction,outboxArguments,operatorApplicationProfile,rollingOperatorConfig,operatorNodeFetch,onceAztecOperation,reconcileRollingOperation,rollingPxeOptions,bindRollingJournal,readOperatorActor,projectRollingReceipt,rollingLifecycleConfig,rollingOperatorCommandScope,verifyPluginPortalRuntime,reconcileRollingEthereum,operatorEthereumRequest,matchRollingEthereumSigned,requireRollingReadyEffect,readHostedPrivateFile,captureSepoliaLiquidityPlan,sepoliaLiquidityContracts,sepoliaLiquidityTransactions,runSepoliaLiquidityStage} from './operations.mjs';
 import {deriveStorageSlotInMap,computeL2ToL1MessageHash} from '@aztec-labs/stdlib/hash';
 import {sha256ToField} from '@aztec-labs/foundation/crypto/sha256';
 import {contractInputs,sha as artifactSha} from '../scripts/artifact-provenance.mjs';
@@ -359,13 +359,91 @@ async function rollingOperatorCommand({command,config:input,statePath,actor,ethe
  }
 }
 
+
+/** Trusted local CLI only; no provider, model or generated-code capability. */
+export async function seedTestnetLiquidity({plan:input,statePath,stage,keyFile}){
+ const plan=captureSepoliaLiquidityPlan(input),c=sepoliaLiquidityContracts;
+ if(!(await sepoliaLiquidityTransactions(plan)).some(s=>s.name===stage))throw Error('Invalid fixed seed stage');
+ let lock,provider;const lockPath=statePath+'.lock';let lockIdentity;
+ try{
+  const directory=path.dirname(path.resolve(statePath)),st=await fs.lstat(directory);
+  if(!path.isAbsolute(statePath)||st.isSymbolicLink()||await fs.realpath(directory)!==directory||st.uid!==process.getuid()||(st.mode&0o777)!==0o700)throw Error();
+  // Only this command's own inode may be removed. The lead also holds exclusive
+  // sender leases across all Ethereum operators for this finite campaign.
+  lock=await fs.open(lockPath,'wx',0o600);lockIdentity=await lock.stat();await lock.writeFile(JSON.stringify({pid:process.pid,campaign:plan.campaign}));await lock.sync();
+  const markerPath=statePath+'.initialized.json',binding=sha256(toUtf8Bytes(JSON.stringify(plan)));let marker;
+  try{marker=JSON.parse((await readHostedPrivateFile(markerPath,16384)).toString('utf8'));}catch(error){try{await fs.lstat(markerPath);throw error;}catch(e){if(e.code!=='ENOENT')throw e;}}
+  if(marker){if(marker.schemaVersion!==1||marker.binding!==binding||marker.campaign!==plan.campaign)throw Error();await readHostedPrivateFile(statePath);}
+  else{
+   try{await fs.lstat(statePath);throw Error('Original seed initialization marker missing');}catch(e){if(e.code!=='ENOENT')throw e;}
+   const f=await fs.open(markerPath,'wx',0o600);try{await f.writeFile(JSON.stringify({schemaVersion:1,binding,campaign:plan.campaign}));await f.sync();}finally{await f.close();}
+   const d=await fs.open(directory,'r');try{await d.sync();}finally{await d.close();}
+  }
+  const store=await fileState(statePath);provider=new JsonRpcProvider(operatorEthereumRequest(FetchRequest,plan.ethereumUrl),undefined,{batchMaxCount:1});
+  const tokenAbi=['function balanceOf(address) view returns(uint256)','function allowance(address,address) view returns(uint256)','event Transfer(address indexed from,address indexed to,uint256 value)'];
+  const tokenInterface=new Interface(tokenAbi),factory=new EthereumContract(c.factory,['function getPool(address,address,uint24) view returns(address)','function feeAmountTickSpacing(uint24) view returns(int24)'],provider);
+  const manager=new EthereumContract(c.positions,['function ownerOf(uint256) view returns(address)','function positions(uint256) view returns(uint96,address,address,address,uint24,int24,int24,uint128,uint256,uint256,uint128,uint128)','event Transfer(address indexed from,address indexed to,uint256 indexed tokenId)','event IncreaseLiquidity(uint256 indexed tokenId,uint128 liquidity,uint256 amount0,uint256 amount1)'],provider);
+  const token=address=>new EthereumContract(address,tokenAbi,provider);
+  const transaction=step=>({type:2,chainId:11155111n,from:step.from,to:step.to,data:step.data,value:BigInt(step.value),nonce:step.nonce,gasLimit:BigInt(step.gasLimit),maxFeePerGas:BigInt(step.maxFeePerGas),maxPriorityFeePerGas:BigInt(step.maxPriorityFeePerGas),accessList:[]});
+  async function scope(blockTag){
+   if((await provider.getNetwork()).chainId!==11155111n)throw Error();
+   for(const [name,address]of Object.entries(c))if(keccak256(await provider.getCode(address,blockTag))!==plan.codeHashes[name])throw Error();
+   const circle=new EthereumContract(c.usdc,['function implementation() view returns(address)','function decimals() view returns(uint8)'],provider);
+   if((await circle.implementation({blockTag})).toLowerCase()!==plan.usdcImplementation||keccak256(await provider.getCode(plan.usdcImplementation,blockTag))!==plan.usdcImplementationCodeHash||await circle.decimals({blockTag})!==6n)throw Error();
+   if(await provider.getCode(plan.owner,blockTag)!=='0x'||await factory.feeAmountTickSpacing(3000,{blockTag})!==60n)throw Error();
+  }
+  const ports={
+   receipt:h=>provider.getTransactionReceipt(h),block:n=>provider.getBlock(n),head:tag=>provider.getBlock(tag),
+   preflight:async(_p,step,steps)=>{
+    const head=await provider.getBlock('latest');await scope(head.number);
+    if(Date.now()>=plan.expiresAt*1000||head.baseFeePerGas+BigInt(plan.maxPriorityFeePerGas)>BigInt(plan.maxFeePerGas)||await provider.getTransactionCount(step.from,'pending')!==step.nonce)throw Error();
+    const remaining=steps.slice(steps.findIndex(s=>s.name===step.name));
+    const gas=remaining.reduce((v,s)=>v+BigInt(s.gasLimit)*BigInt(s.maxFeePerGas),0n),seed=remaining.filter(s=>s.pool).reduce((v,s)=>v+BigInt(s.value),0n);
+    const ownerBalance=await provider.getBalance(plan.owner,head.number),inventoryBalance=await provider.getBalance(plan.inventoryOwner,head.number);
+    if(ownerBalance+inventoryBalance<gas+seed+BigInt(plan.futureReserveWei)||(step.from===plan.owner?ownerBalance:inventoryBalance)<BigInt(step.value)+BigInt(step.gasLimit)*BigInt(step.maxFeePerGas))throw Error();
+    if(step.name==='inventory-usdc'&&await token(c.usdc).balanceOf(plan.inventoryOwner,{blockTag:head.number})<BigInt(plan.usdcAmount))throw Error();
+    if(step.name==='approve-fee'&&await token(c.fee).balanceOf(plan.owner,{blockTag:head.number})<BigInt(plan.feeAmount)*(plan.includeWethPool?2n:1n))throw Error();
+    if(step.pool&&(await factory.getPool(step.pool.token0,step.pool.token1,3000,{blockTag:head.number}))!=='0x0000000000000000000000000000000000000000')throw Error('Pool appeared before original seed; require new reviewed plan');
+    const tx=transaction(step);await provider.call({...tx,blockTag:head.number});const estimated=await provider.estimateGas(tx);if(estimated>tx.gasLimit||(await provider.getBlock(head.number))?.hash!==head.hash)throw Error();
+   },
+   sign:async step=>{
+    if(Date.now()>=plan.expiresAt*1000||await provider.getTransactionCount(step.from,'pending')!==step.nonce)throw Error();
+    const key=JSON.parse((await readHostedPrivateFile(keyFile,16384)).toString('utf8'));
+    const signer=typeof key.privateKey==='string'?new Wallet(key.privateKey):typeof key.mnemonic==='string'?Wallet.fromPhrase(key.mnemonic):null;
+    if(signer?.address.toLowerCase()!==step.from)throw Error();const {from,...tx}=transaction(step);return signer.signTransaction(tx);
+   },
+   broadcast:async raw=>{if(Date.now()>=plan.expiresAt*1000)throw Error();return provider.broadcastTransaction(raw);},
+   effect:async(step,anchor,receipt)=>{
+    await scope(anchor.number);const blockTag=anchor.number;
+    if(receipt.to?.toLowerCase()!==step.to||receipt.from?.toLowerCase()!==step.from)return false;
+    if(step.name==='inventory-eth')return true; // Exact signed value/recipient, successful canonical receipt and plain EOA recipient.
+    if(step.name==='inventory-usdc')return receipt.logs.filter(l=>l.address.toLowerCase()===c.usdc).some(l=>{try{const e=tokenInterface.parseLog(l);return e.name==='Transfer'&&e.args.from.toLowerCase()===plan.inventoryOwner&&e.args.to.toLowerCase()===plan.owner&&e.args.value===BigInt(plan.usdcAmount);}catch{return false;}});
+    if(!step.pool){const expected=step.name==='approve-fee'?BigInt(plan.feeAmount)*(plan.includeWethPool?2n:1n):step.name==='approve-usdc'?BigInt(plan.usdcAmount):0n;return await token(step.to).allowance(plan.owner,c.positions,{blockTag})===expected;}
+    const events=receipt.logs.filter(l=>l.address.toLowerCase()===c.positions).flatMap(l=>{try{return [manager.interface.parseLog(l)];}catch{return [];}}),increases=events.filter(e=>e?.name==='IncreaseLiquidity'),nfts=events.filter(e=>e?.name==='Transfer'&&e.args.from==='0x0000000000000000000000000000000000000000'&&e.args.to.toLowerCase()===plan.owner);
+    if(increases.length!==1||nfts.length!==1)return false;const e=increases[0].args,p=step.pool;
+    if(e.tokenId!==nfts[0].args.tokenId||e.liquidity<=0n||e.amount0<BigInt(p.minimum0)||e.amount0>BigInt(p.amount0)||e.amount1<BigInt(p.minimum1)||e.amount1>BigInt(p.amount1)||(await manager.ownerOf(e.tokenId,{blockTag})).toLowerCase()!==plan.owner)return false;
+    const position=await manager.positions(e.tokenId,{blockTag}),poolAddress=await factory.getPool(p.token0,p.token1,3000,{blockTag}),pool=new EthereumContract(poolAddress,['function token0() view returns(address)','function token1() view returns(address)','function fee() view returns(uint24)','function liquidity() view returns(uint128)'],provider);
+    return position[2].toLowerCase()===p.token0&&position[3].toLowerCase()===p.token1&&position[4]===3000n&&position[5]===-887220n&&position[6]===887220n&&position[7]===e.liquidity&&(await pool.token0({blockTag})).toLowerCase()===p.token0&&(await pool.token1({blockTag})).toLowerCase()===p.token1&&await pool.fee({blockTag})===3000n&&await pool.liquidity({blockTag})>=e.liquidity&&await provider.getBalance(c.positions,blockTag)===0n;
+   },
+  };
+  return {...await runSepoliaLiquidityStage({plan,stage,store,ports}),campaign:plan.campaign,stage};
+ }catch{throw Error('Sepolia seed unavailable; preserve original plan and journals, reconcile before another operation');}
+ finally{provider?.destroy();if(lock){await lock.close();const current=await fs.lstat(lockPath);if(current.dev!==lockIdentity.dev||current.ino!==lockIdentity.ino)throw Error('Original seed owner lock changed');await fs.unlink(lockPath);}}
+}
+
 if(process.argv[1]&&import.meta.url===pathToFileURL(process.argv[1]).href){
  const [command,configPath,statePath,...args]=process.argv.slice(2);
  try{
   if(!command||!configPath||!statePath)throw Error('Usage: operator.mjs COMMAND CONFIG STATE [--amount VALUE --recipient ADDRESS]');
+  if(command==='seed-testnet-liquidity'){
+   if(args.length!==4||args[0]!=='--stage'||args[2]!=='--key-file')throw Error();
+   const plan=JSON.parse((await readHostedPrivateFile(path.resolve(configPath),65536)).toString('utf8'));
+   const result=await seedTestnetLiquidity({plan,statePath:path.resolve(statePath),stage:args[1],keyFile:path.resolve(args[3])});console.log(JSON.stringify(result));
+  }else{
   const config=await read(configPath),actor=await readOperatorActor({command,config,actorPath:process.env.PLUGIN_ACTOR_FILE,read});
   const options=Object.fromEntries(Array.from({length:args.length/2},(_,i)=>[args[i*2].replace(/^--/,''),args[i*2+1]]));
   const result=await operatorCommand({command,config,statePath,actor,ethereumKey:process.env.PLUGIN_ETHEREUM_PRIVATE_KEY,queryApiKey:process.env.PLUGIN_QUERY_API_KEY,...options});console.log(JSON.stringify(result,null,2));
+  }
  }catch(error){console.error('Operator command failed; retain local state and reconcile before any new attempt');process.exitCode=1;}
  finally{await Barretenberg.destroySingleton();BarretenbergSync.destroySingleton();}
  process.exit(process.exitCode||0);

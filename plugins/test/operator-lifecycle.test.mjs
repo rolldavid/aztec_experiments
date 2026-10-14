@@ -112,3 +112,22 @@ test('Ready reread remains bound to original canonical transaction block and uni
  assert(requireRollingReadyEffect(effect,receipt,leaf));
  for(const patch of [{l2BlockNumber:10},{l2BlockHash:f(10)},{data:{...effect.data,txHash:f(10)}},{data:{...effect.data,revertCode:{isOK:()=>false}}},{data:{...effect.data,l2ToL1Msgs:[leaf,leaf]}},{data:{...effect.data,l2ToL1Msgs:[zero]}}])assert.throws(()=>requireRollingReadyEffect({...effect,...patch},receipt,leaf));
 });
+
+test('Sepolia seed uses installed official mint ABI with finite deadline minimums owner and exact ETH refund',async()=>{
+ const {sepoliaLiquidityTransactions}=await import('../operations.mjs'),{Interface}=await import('ethers');
+ const abi=new Interface(['function multicall(bytes[]) payable returns(bytes[])','function createAndInitializePoolIfNecessary(address,address,uint24,uint160) payable returns(address)','function mint((address token0,address token1,uint24 fee,int24 tickLower,int24 tickUpper,uint256 amount0Desired,uint256 amount1Desired,uint256 amount0Min,uint256 amount1Min,address recipient,uint256 deadline)) payable returns(uint256,uint128,uint256,uint256)','function refundETH() payable']);
+ const p=sepoliaPlan();const steps=await sepoliaLiquidityTransactions(p),usdc=steps.find(s=>s.name==='seed-usdc-fee'),weth=steps.find(s=>s.name==='seed-weth-fee');assert(steps.indexOf(usdc)<steps.indexOf(weth));
+ for(const s of [usdc,weth]){const calls=abi.decodeFunctionData('multicall',s.data)[0],init=abi.decodeFunctionData('createAndInitializePoolIfNecessary',calls[0]),mint=abi.decodeFunctionData('mint',calls[1])[0];assert.equal(init[2],3000n);assert.equal(mint.fee,3000n);assert.equal(mint.tickLower,-887220n);assert.equal(mint.tickUpper,887220n);assert.equal(mint.recipient.toLowerCase(),p.owner);assert.equal(mint.deadline,BigInt(p.expiresAt));assert.equal(mint.amount0Min,(mint.amount0Desired*99n+99n)/100n);assert.equal(mint.amount1Min,(mint.amount1Desired*99n+99n)/100n);assert.equal(calls.length,s===weth?3:2);if(s===weth)assert.equal(abi.parseTransaction({data:calls[2]}).name,'refundETH');}
+ assert.equal(usdc.value,'0');assert.equal(weth.value,p.ethAmount);
+ const single=await sepoliaLiquidityTransactions({...p,includeWethPool:false,ethAmount:'0',gasLimits:Object.fromEntries(Object.entries(p.gasLimits).filter(([k])=>k!=='seed-weth-fee'))});assert(!single.some(s=>s.name==='seed-weth-fee'));
+});
+function sepoliaPlan(){return {schemaVersion:1,campaign:'sepolia-seed-cli-controlled',chainId:'11155111',ethereumUrl:'https://example.org/',owner:a(1),inventoryOwner:a(2),ownerNonce:14,inventoryNonce:10,expiresAt:2000000000,feeAmount:'10000000000000000000',usdcAmount:'48000',ethAmount:'1000000000000',inventoryEth:'0',includeWethPool:true,gasLimits:{'inventory-usdc':'150000','approve-fee':'150000','approve-usdc':'150000','seed-usdc-fee':'40000000','seed-weth-fee':'40000000','revoke-fee':'150000','revoke-usdc':'150000'},maxFeePerGas:'1100000',maxPriorityFeePerGas:'1000000',futureReserveWei:'132000000000000',usdcImplementation:'0xda317c1d3e835dd5f1be459006471acaa1289068',usdcImplementationCodeHash:'0x'+'b'.repeat(64),codeHashes:Object.fromEntries(['factory','positions','fee','usdc','weth'].map(n=>[n,f(1)]))};}
+test('actual Sepolia CLI rejects invalid plan and missing retained state before provider or private key loading',async()=>{
+ const os=await import('node:os'),path=await import('node:path'),{seedTestnetLiquidity}=await import('../operator.mjs'),{sha256,toUtf8Bytes}=await import('ethers'),{captureSepoliaLiquidityPlan}=await import('../operations.mjs');
+ const directory=await fs.mkdtemp(path.join(os.tmpdir(),'seed-cli-'));await fs.chmod(directory,0o700);const statePath=path.join(directory,'state.json');
+ try{
+  await assert.rejects(seedTestnetLiquidity({plan:{...sepoliaPlan(),chainId:'31337'},statePath,stage:'inventory-usdc',keyFile:'/unavailable'}));assert.deepEqual(await fs.readdir(directory),[]);
+  const plan=captureSepoliaLiquidityPlan(sepoliaPlan());await fs.writeFile(statePath+'.initialized.json',JSON.stringify({schemaVersion:1,binding:sha256(toUtf8Bytes(JSON.stringify(plan))),campaign:plan.campaign}),{mode:0o600});
+  await assert.rejects(seedTestnetLiquidity({plan,statePath,stage:'inventory-usdc',keyFile:'/unavailable'}),/preserve original plan/);assert.deepEqual(await fs.readdir(directory),['state.json.initialized.json']);
+ }finally{await fs.rm(directory,{recursive:true});}
+});

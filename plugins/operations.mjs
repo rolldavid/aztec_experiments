@@ -274,7 +274,7 @@ export function verifyPluginPortalRuntime(actual,deployed) {
 /** No send path: authenticate retained signed L1 bytes, receipt, original block
  * and required finality before checking the operation's exact on-chain effect. */
 export async function reconcileRollingEthereum({record,development,reads,scope='portal-registration'}) {
- if(!['portal-registration','aggregate-funding'].includes(scope))throw rejected();
+ if(!['portal-registration','aggregate-funding','liquidity-seed'].includes(scope))throw rejected();
  const unknown=()=>({status:'unresolved',scope,canonical:false,...(typeof record?.hash==='string'?{transactionHash:record.hash}:{})});
  try{
   if(record?.phase!=='submission-unknown'||!/^0x[0-9a-f]{64}$/.test(record.hash)||typeof record.raw!=='string'||!/^(?:[0-9a-f]{2})+$/.test(record.raw)||!await reads.signed(record))return unknown();
@@ -315,4 +315,83 @@ export function requireRollingReadyEffect(effect,receipt,leaf) {
  if(String(effect?.data?.txHash)!==receipt.transactionHash||effect?.l2BlockNumber!==receipt.blockNumber||String(effect?.l2BlockHash)!==receipt.blockHash||effect?.data?.revertCode?.isOK()!==true)throw rejected();
  const messages=effect.data.l2ToL1Msgs.filter(x=>!x.isZero());
  if(messages.length!==1||!messages[0].equals(leaf))throw rejected();return true;
+}
+
+// One finite, operator-owned Sepolia inventory plan. This does not reuse the
+// development bootstrap's minting, deployment or synthetic settlement authority.
+export const sepoliaLiquidityContracts=Object.freeze({
+ factory:'0x0227628f3f023bb0b980b67d528571c95c6dac1c',positions:'0x1238536071e1c677a632429e3655c799b22cda52',
+ fee:'0x762c132040fda6183066fa3b14d985ee55aa3c18',usdc:'0x1c7d4b196cb0c7b01d743fbc6116a902379c7238',weth:'0xfff9976782d46cc05630d1f6ebab18b2324d6b14',
+});
+function seedObject(value,keys){
+ if(!value||Object.getPrototypeOf(value)!==Object.prototype||Reflect.ownKeys(value).length!==keys.length)throw rejected();
+ const copy={};for(const key of keys){const d=Object.getOwnPropertyDescriptor(value,key);if(!d||!('value'in d)||!d.enumerable)throw rejected();copy[key]=d.value;}return copy;
+}
+const seedUint=(v,max=(1n<<128n)-1n,zero=false)=>{if(typeof v!=='string'||! /^(0|[1-9][0-9]{0,76})$/.test(v)||BigInt(v)>max||(!zero&&v==='0'))throw rejected();return v;};
+const seedAddress=v=>{if(typeof v!=='string'||!/^0x[0-9a-f]{40}$/.test(v)||BigInt(v)===0n)throw rejected();return v;};
+export function captureSepoliaLiquidityPlan(input){
+ const p=seedObject(input,['schemaVersion','campaign','chainId','ethereumUrl','owner','inventoryOwner','ownerNonce','inventoryNonce','expiresAt','feeAmount','usdcAmount','ethAmount','inventoryEth','includeWethPool','gasLimits','maxFeePerGas','maxPriorityFeePerGas','futureReserveWei','usdcImplementation','usdcImplementationCodeHash','codeHashes']);
+ if(p.schemaVersion!==1||p.chainId!=='11155111'||typeof p.campaign!=='string'||!/^sepolia-seed-[a-z0-9-]{8,64}$/.test(p.campaign)||typeof p.ethereumUrl!=='string'||typeof p.includeWethPool!=='boolean')throw rejected();
+ const url=new URL(p.ethereumUrl);if(url.protocol!=='https:'||url.username||url.password||url.search||url.hash)throw rejected();
+ seedAddress(p.usdcImplementation);if(typeof p.usdcImplementationCodeHash!=='string'||!/^0x[0-9a-f]{64}$/.test(p.usdcImplementationCodeHash)||BigInt(p.usdcImplementationCodeHash)===0n)throw rejected();
+ seedAddress(p.owner);seedAddress(p.inventoryOwner);if(p.owner===p.inventoryOwner)throw rejected();
+ for(const name of ['ownerNonce','inventoryNonce','expiresAt'])if(!Number.isSafeInteger(p[name])||p[name]<0)throw rejected();
+ seedUint(p.feeAmount,500n*10n**18n);seedUint(p.usdcAmount,10n*10n**6n);seedUint(p.ethAmount,10n**14n,!p.includeWethPool);seedUint(p.inventoryEth,10n**16n,true);
+ if(!p.includeWethPool&&p.ethAmount!=='0')throw rejected();
+ seedUint(p.maxFeePerGas,5n*10n**9n);seedUint(p.maxPriorityFeePerGas,BigInt(p.maxFeePerGas),true);seedUint(p.futureReserveWei);
+ const names=['inventory-usdc',...(p.inventoryEth==='0'?[]:['inventory-eth']),'approve-fee','approve-usdc','seed-usdc-fee',...(p.includeWethPool?['seed-weth-fee']:[]),'revoke-fee','revoke-usdc'];
+ p.gasLimits=seedObject(p.gasLimits,names);let gas=0n;for(const name of names){seedUint(p.gasLimits[name],60000000n);gas+=BigInt(p.gasLimits[name]);}if(gas>120000000n)throw rejected();
+ p.codeHashes=seedObject(p.codeHashes,Object.keys(sepoliaLiquidityContracts));for(const hash of Object.values(p.codeHashes))if(typeof hash!=='string'||!/^0x[0-9a-f]{64}$/.test(hash)||BigInt(hash)===0n)throw rejected();
+ return Object.freeze({...p,gasLimits:Object.freeze(p.gasLimits),codeHashes:Object.freeze(p.codeHashes)});
+}
+export async function sepoliaLiquidityTransactions(input){
+ const p=captureSepoliaLiquidityPlan(input),{Interface}=await import('ethers'),c=sepoliaLiquidityContracts;
+ const erc=new Interface(['function transfer(address,uint256) returns(bool)','function approve(address,uint256) returns(bool)']);
+ const manager=new Interface(['function createAndInitializePoolIfNecessary(address,address,uint24,uint160) payable returns(address)','function mint((address token0,address token1,uint24 fee,int24 tickLower,int24 tickUpper,uint256 amount0Desired,uint256 amount1Desired,uint256 amount0Min,uint256 amount1Min,address recipient,uint256 deadline)) payable returns(uint256,uint128,uint256,uint256)','function refundETH() payable','function multicall(bytes[]) payable returns(bytes[])']);
+ const steps=[];let ownerNonce=p.ownerNonce,inventoryNonce=p.inventoryNonce;
+ function add(name,from,to,data,value='0',extra={}){steps.push(Object.freeze({name,from,to,data,value,chainId:'11155111',nonce:from===p.owner?ownerNonce++:inventoryNonce++,gasLimit:p.gasLimits[name],maxFeePerGas:p.maxFeePerGas,maxPriorityFeePerGas:p.maxPriorityFeePerGas,...extra}));}
+ add('inventory-usdc',p.inventoryOwner,c.usdc,erc.encodeFunctionData('transfer',[p.owner,p.usdcAmount]));
+ if(p.inventoryEth!=='0')add('inventory-eth',p.inventoryOwner,p.owner,'0x',p.inventoryEth);
+ add('approve-fee',p.owner,c.fee,erc.encodeFunctionData('approve',[c.positions,BigInt(p.feeAmount)*(p.includeWethPool?2n:1n)]));
+ add('approve-usdc',p.owner,c.usdc,erc.encodeFunctionData('approve',[c.positions,p.usdcAmount]));
+ function pool(name,token,amount){
+  const [token0,token1]=[token,c.fee].sort(),amount0=token0===token?BigInt(amount):BigInt(p.feeAmount),amount1=token1===token?BigInt(amount):BigInt(p.feeAmount);
+  const n=(amount1<<192n)/amount0;let sqrt=n,next=(sqrt+1n)/2n;while(next<sqrt){sqrt=next;next=(sqrt+n/sqrt)/2n;}
+  if(sqrt<=4295128739n||sqrt>=1461446703485210103287273052203988822378723970342n)throw rejected();
+  const minimum0=(amount0*99n+99n)/100n,minimum1=(amount1*99n+99n)/100n;
+  const calls=[manager.encodeFunctionData('createAndInitializePoolIfNecessary',[token0,token1,3000,sqrt]),manager.encodeFunctionData('mint',[[token0,token1,3000,-887220,887220,amount0,amount1,minimum0,minimum1,p.owner,p.expiresAt]])];
+  if(token===c.weth)calls.push(manager.encodeFunctionData('refundETH'));
+  add(name,p.owner,c.positions,manager.encodeFunctionData('multicall',[calls]),token===c.weth?amount:'0',{pool:Object.freeze({token0,token1,amount0:String(amount0),amount1:String(amount1),minimum0:String(minimum0),minimum1:String(minimum1),sqrtPriceX96:String(sqrt)})});
+ }
+ pool('seed-usdc-fee',c.usdc,p.usdcAmount);if(p.includeWethPool)pool('seed-weth-fee',c.weth,p.ethAmount);
+ add('revoke-fee',p.owner,c.fee,erc.encodeFunctionData('approve',[c.positions,0]));add('revoke-usdc',p.owner,c.usdc,erc.encodeFunctionData('approve',[c.positions,0]));
+ return Object.freeze(steps);
+}
+export async function matchSepoliaLiquiditySigned(record,step){
+ try{const {Transaction,keccak256}=await import('ethers'),raw='0x'+record.raw,tx=Transaction.from(raw);
+  return tx.type===2&&tx.hash===record.hash&&keccak256(raw)===record.hash&&tx.chainId===11155111n&&tx.from?.toLowerCase()===step.from&&tx.to?.toLowerCase()===step.to&&tx.data===step.data&&tx.value===BigInt(step.value)&&tx.nonce===step.nonce&&tx.gasLimit===BigInt(step.gasLimit)&&tx.maxFeePerGas===BigInt(step.maxFeePerGas)&&tx.maxPriorityFeePerGas===BigInt(step.maxPriorityFeePerGas)&&tx.accessList.length===0;
+ }catch{return false;}
+}
+/** Dependencies perform real ABI reads; this owner only sequences a fixed plan.
+ * No retained intent (including preparing-without-hash) may prepare/sign again. */
+export async function runSepoliaLiquidityStage({plan:input,stage,store,ports,now=()=>Date.now()}){
+ const plan=captureSepoliaLiquidityPlan(input),steps=await sepoliaLiquidityTransactions(plan),index=steps.findIndex(s=>s.name===stage);if(index<0)throw rejected();
+ const identity=JSON.stringify(plan),binding=createHash('sha256').update(identity).digest('hex');let state=store.read();
+ if(!state.seedLiquidity){if(Object.keys(state).some(k=>k!=='operations')||Object.keys(state.operations??{}).length)throw rejected();await store.write({operations:{},seedLiquidity:{schemaVersion:1,binding,entered:[]}});state=store.read();}
+ const progress=state.seedLiquidity,entered=progress.entered;
+ if(progress.schemaVersion!==1||progress.binding!==binding||!Array.isArray(entered)||entered.length>steps.length||entered.some((s,i)=>s!==steps[i].name)||Object.keys(state.operations??{}).sort().join()!==[...entered].sort().join())throw Error('Original seed stage inventory missing or changed');
+ const reconcile=(step,record)=>reconcileRollingEthereum({record,development:false,scope:'liquidity-seed',reads:{signed:r=>matchSepoliaLiquiditySigned(r,step),receipt:h=>ports.receipt(h),block:n=>ports.block(n),head:tag=>ports.head(tag),effect:(_r,a,r)=>ports.effect(step,a,r)}});
+ for(let i=0;i<index;i++){if(!entered.includes(steps[i].name)||(await reconcile(steps[i],state.operations[steps[i].name])).status!=='succeeded')throw Error('Original preceding seed stage is not finalized');}
+ const step=steps[index],existing=state.operations[stage];
+ if(existing){if(existing.identity!==identity+':'+stage||existing.policy!=='reconcile-only')throw rejected();return reconcile(step,existing);}
+ if(index!==entered.length||now()>=plan.expiresAt*1000)throw rejected();
+ // Validate and simulate the complete exact transaction before making a fresh
+ // irreversible intent; authorization/key loading still occurs only afterward.
+ await ports.preflight(plan,step,steps);
+ await store.write({...state,seedLiquidity:{...progress,entered:[...entered,stage]}});
+ const stageStore={read:()=>({operations:store.read().operations[stage]?{'relay-funding':store.read().operations[stage]}:{}}),write:async next=>store.write({...store.read(),operations:{...store.read().operations,[stage]:next.operations['relay-funding']}})};
+ return onceAztecOperation({store:stageStore,name:'relay-funding',identity:identity+':'+stage,scope:'liquidity-seed',reconcile:r=>reconcile(step,r),execute:async({bindDeployment,submit})=>{
+  await bindDeployment({from:step.from,nonce:step.nonce});const signed=await ports.sign(step);const {keccak256}=await import('ethers');const record={raw:signed.replace(/^0x/,''),hash:keccak256(signed)};
+  if(!await matchSepoliaLiquiditySigned(record,step))throw rejected();await submit(record,()=>ports.broadcast(signed));
+ }});
 }

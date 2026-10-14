@@ -266,3 +266,33 @@ test('actual SDK custom transport authenticates only the loopback operator HTTP 
  await assert.rejects(operatorNodeFetch({endpoint,key,serialize:jsonStringify})(endpoint,rpcBody),/Operator RPC unavailable/);
  assert.equal(handled,1);
 });
+
+test('Sepolia seed fixed plan captures fields and rejects inherited accessors foreign chains and excessive gas',async()=>{
+ const {captureSepoliaLiquidityPlan,sepoliaLiquidityTransactions}=await import('../operations.mjs');
+ const p=seedPlan(),captured=captureSepoliaLiquidityPlan(p);p.codeHashes.fee='0x'+'3'.repeat(64);assert.notEqual(captured.codeHashes.fee,p.codeHashes.fee);
+ let reads=0;for(const bad of [Object.create(seedPlan()),{...seedPlan(),chainId:'31337'},{...seedPlan(),ethereumUrl:'https://name:password@example.org'},{...seedPlan(),unknown:'x'},{...seedPlan(),gasLimits:{...seedPlan().gasLimits,'seed-usdc-fee':'60000001'}},Object.defineProperty(seedPlan(),'owner',{get(){reads++;return 'x';}})])assert.throws(()=>captureSepoliaLiquidityPlan(bad));
+ assert.equal(reads,0);const steps=await sepoliaLiquidityTransactions(seedPlan());assert.equal(steps[0].name,'inventory-usdc');assert.equal(steps[4].name,'seed-weth-fee');assert(steps.every(s=>s.chainId==='11155111'));assert.equal(steps.find(s=>s.name==='seed-usdc-fee').pool.minimum0,'47520');
+});
+function seedPlan(){
+ const owner='0x'+'1'.repeat(40),inventoryOwner='0x'+'2'.repeat(40),hash='0x'+'a'.repeat(64);
+ return {schemaVersion:1,campaign:'sepolia-seed-controlled-20261014',chainId:'11155111',ethereumUrl:'https://example.org/',owner,inventoryOwner,ownerNonce:10,inventoryNonce:20,expiresAt:2000000000,feeAmount:'10000000000000000000',usdcAmount:'48000',ethAmount:'1000000000000',inventoryEth:'0',includeWethPool:true,gasLimits:{'inventory-usdc':'150000','approve-fee':'150000','approve-usdc':'150000','seed-usdc-fee':'40000000','seed-weth-fee':'40000000','revoke-fee':'150000','revoke-usdc':'150000'},maxFeePerGas:'1100000',maxPriorityFeePerGas:'1000000',futureReserveWei:'132000000000000',usdcImplementation:'0xda317c1d3e835dd5f1be459006471acaa1289068',usdcImplementationCodeHash:'0x'+'b'.repeat(64),codeHashes:Object.fromEntries(['factory','positions','fee','usdc','weth'].map(n=>[n,hash]))};
+}
+test('Sepolia seed actual signed transaction binds every fee nonce recipient calldata and value field',async()=>{
+ const {Wallet,keccak256}=await import('ethers'),{sepoliaLiquidityTransactions,matchSepoliaLiquiditySigned}=await import('../operations.mjs');const wallet=new Wallet('0x'+'41'.repeat(32)),p={...seedPlan(),inventoryOwner:wallet.address.toLowerCase()},step=(await sepoliaLiquidityTransactions(p))[0];
+ const tx={type:2,chainId:11155111,nonce:step.nonce,to:step.to,data:step.data,value:BigInt(step.value),gasLimit:BigInt(step.gasLimit),maxFeePerGas:BigInt(step.maxFeePerGas),maxPriorityFeePerGas:BigInt(step.maxPriorityFeePerGas),accessList:[]};
+ const signed=async x=>{const raw=await wallet.signTransaction(x);return {raw:raw.slice(2),hash:keccak256(raw)};};assert(await matchSepoliaLiquiditySigned(await signed(tx),step));
+ for(const change of [{chainId:31337},{nonce:step.nonce+1},{to:p.owner},{data:'0x'},{value:1n},{gasLimit:tx.gasLimit+1n},{maxFeePerGas:tx.maxFeePerGas+1n},{maxPriorityFeePerGas:0n},{accessList:[{address:p.owner,storageKeys:[]}]}])assert.equal(await matchSepoliaLiquiditySigned(await signed({...tx,...change}),step),false);
+});
+test('Sepolia seed intent and exact signed bytes precede sole send; uncertain restart never signs again',async()=>{
+ const {Wallet,keccak256}=await import('ethers'),{runSepoliaLiquidityStage}=await import('../operations.mjs');const wallet=new Wallet('0x'+'42'.repeat(32)),plan={...seedPlan(),inventoryOwner:wallet.address.toLowerCase()};let value={operations:{}},signs=0,sends=0,preflights=0;
+ const store={read:()=>value,write:async next=>{value=structuredClone(next);}};
+ const ports={preflight:async()=>{preflights++;},sign:async s=>{signs++;assert.equal(value.operations[s.name].phase,'preparing');assert.equal(value.seedLiquidity.entered[0],s.name);return wallet.signTransaction({type:2,chainId:11155111,nonce:s.nonce,to:s.to,data:s.data,value:s.value,gasLimit:s.gasLimit,maxFeePerGas:s.maxFeePerGas,maxPriorityFeePerGas:s.maxPriorityFeePerGas});},broadcast:async raw=>{sends++;assert.equal(value.operations['inventory-usdc'].phase,'submission-unknown');assert.equal(value.operations['inventory-usdc'].hash,keccak256(raw));throw Error('unknown');},receipt:async()=>null};
+ const args={plan,stage:'inventory-usdc',store,ports,now:()=>0};assert.equal((await runSepoliaLiquidityStage(args)).status,'unresolved');const original=JSON.stringify(value);assert.equal((await runSepoliaLiquidityStage(args)).status,'unresolved');assert.equal(JSON.stringify(value),original);assert.deepEqual([preflights,signs,sends],[1,1,1]);
+ delete value.operations['inventory-usdc'];await assert.rejects(runSepoliaLiquidityStage(args),/inventory/);assert.equal(sends,1);
+});
+test('Sepolia seed preparing loss expiry and unknown preceding stage never advance or load a key',async()=>{
+ const {runSepoliaLiquidityStage}=await import('../operations.mjs');let value={operations:{}},calls=0;const store={read:()=>value,write:async n=>{value=structuredClone(n);}},ports={preflight:async()=>{calls++;throw Error('simulation failed');}};
+ await assert.rejects(runSepoliaLiquidityStage({plan:seedPlan(),stage:'inventory-usdc',store,ports,now:()=>2000000000000}));assert.equal(calls,0);
+ await assert.rejects(runSepoliaLiquidityStage({plan:seedPlan(),stage:'approve-fee',store,ports,now:()=>0}));assert.equal(calls,0);
+ await assert.rejects(runSepoliaLiquidityStage({plan:seedPlan(),stage:'inventory-usdc',store,ports,now:()=>0}),/simulation/);assert.deepEqual(value.seedLiquidity.entered,[]);assert.equal(calls,1);
+});
