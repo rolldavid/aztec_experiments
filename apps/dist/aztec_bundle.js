@@ -392956,6 +392956,48 @@ Partial Address: ${this.partialAddress.toString()}
     }
     return out;
   }
+  function createRollingPreferenceArchive(node2, anchorHeader, guard) {
+    const anchor2 = BlockHeader.fromBuffer(BlockHeader.prototype.toBuffer.call(anchorHeader)), proofs = /* @__PURE__ */ new Map();
+    return async (number20, hash12, headerFields) => {
+      integer8(number20, anchor2.getBlockNumber(), 1);
+      hex15(hash12);
+      const captured = fields(headerFields, 23, 23);
+      const header = BlockHeader.fromFields(captured.map(Fr.fromString));
+      check9(header.getBlockNumber() === number20 && (await header.hash()).toString() === hash12);
+      check9(header.globalVariables.chainId.equals(anchor2.globalVariables.chainId) && header.globalVariables.version.equals(anchor2.globalVariables.version));
+      await guard();
+      if (number20 === anchor2.getBlockNumber()) {
+        check9((await anchor2.hash()).toString() === hash12);
+        return header;
+      }
+      const key = number20 + ":" + hash12;
+      if (!proofs.has(key)) {
+        check9(proofs.size < 32);
+        proofs.set(key, (async () => {
+          const witness = await node2.getBlockHashMembershipWitness(await anchor2.toBlockParameter(), BlockHash.fromString(hash12));
+          await guard();
+          const index = Object.getOwnPropertyDescriptor(witness ?? {}, "leafIndex")?.value, siblings = Object.getOwnPropertyDescriptor(witness ?? {}, "siblingPath")?.value;
+          check9(typeof index === "bigint" && index === BigInt(number20) && index < BigInt(anchor2.lastArchive.nextAvailableLeafIndex));
+          check9(Array.isArray(siblings) && siblings.length === ARCHIVE_HEIGHT && ARCHIVE_HEIGHT === 30);
+          const path = Array.from({ length: ARCHIVE_HEIGHT }, (_, i) => {
+            const d = Object.getOwnPropertyDescriptor(siblings, String(i));
+            check9(d && "value" in d && d.value instanceof Fr);
+            return Fr.fromBuffer(Fr.prototype.toBuffer.call(d.value));
+          });
+          let value = Fr.fromString(hash12), position2 = index;
+          for (const sibling of path) {
+            value = position2 & 1n ? await computeMerkleHash(sibling, value) : await computeMerkleHash(value, sibling);
+            position2 >>= 1n;
+          }
+          check9(position2 === 0n && value.equals(anchor2.lastArchive.root));
+          await guard();
+        })());
+      }
+      await proofs.get(key);
+      await guard();
+      return header;
+    };
+  }
   function snapshot(input2, options) {
     const p = exact2(input2, ["contractAddress", "scope", "expectedClassId", "expectedArtifactHash", "network", "proofsEnabled", "tier", "expected", "block", "restart"]);
     for (const k of ["contractAddress", "scope", "expectedClassId", "expectedArtifactHash"]) hex15(p[k]);
@@ -393075,6 +393117,7 @@ Partial Address: ${this.partialAddress.toString()}
       return await pxe.operationQueue.runSynced(async (context) => {
         const frame = { ...context, validators: [] };
         const anchor2 = BlockHeader.fromBuffer(BlockHeader.prototype.toBuffer.call(context.anchorBlockHeader));
+        frame.archive = createRollingPreferenceArchive(pxe.node, anchor2, guard);
         const anchorRecord = { blockNumber: anchor2.getBlockNumber(), blockHash: (await anchor2.hash()).toString() };
         let canonicalPending = null;
         const canonicalSnapshot = async () => {
@@ -393121,11 +393164,7 @@ Partial Address: ${this.partialAddress.toString()}
         await guard();
         const authenticate = async (block2, register = (validate2) => frame.validators.push(validate2)) => {
           const checkBlock = async () => {
-            await canonical2();
-            const raw = await pxe.node.getBlockData(block2.blockNumber);
-            check9(raw && raw.blockHash.toString() === block2.blockHash);
-            const h = BlockHeader.fromBuffer(BlockHeader.prototype.toBuffer.call(raw.header));
-            check9((await h.hash()).toString() === block2.blockHash && h.toFields().every((f, i) => f.toString() === block2.headerFields[i]));
+            await frame.archive(block2.blockNumber, block2.blockHash, block2.headerFields);
             await guard();
             return true;
           };
@@ -407294,10 +407333,11 @@ See docs for context: https://docs.aztec.network/errors/14`);
           const anchor2 = BlockHeader.fromBuffer(BlockHeader.prototype.toBuffer.call(anchorBlockHeader));
           const anchorHash = (await anchor2.hash()).toString();
           check12(p.blockNumber <= anchor2.getBlockNumber());
+          const archive = frame?.archive ?? createRollingPreferenceArchive(this.node, anchor2, guard);
           const canonical2 = async () => {
             const info = await this.node.getNodeInfo();
             check12(info.l1ChainId === p.network.chainId && info.rollupVersion === p.network.version && info.l1ContractAddresses.rollupAddress.toString().toLowerCase() === p.network.rollup && info.realProofs === p.proofsEnabled);
-            const coordinates = [[anchor2.getBlockNumber(), anchorHash], [p.blockNumber, p.blockHash]];
+            const coordinates = [[anchor2.getBlockNumber(), anchorHash]];
             const parameter = await anchor2.toBlockParameter();
             const values = await rollingPreferenceReadBatch([
               ...coordinates.map(([number20]) => async () => {
@@ -407315,8 +407355,9 @@ See docs for context: https://docs.aztec.network/errors/14`);
               const [number20, hash12] = coordinates[i], data = values[i], h = data.header;
               check12(data.hash === hash12 && h.getBlockNumber() === number20 && (await h.hash()).toString() === hash12 && h.globalVariables.chainId.toBigInt() === BigInt(p.network.chainId) && h.globalVariables.version.toBigInt() === BigInt(p.network.version));
             }
-            const instance = values[2];
+            const instance = values[1];
             check12(instance.currentContractClassId.equals(classId) && instance.originalContractClassId.equals(classId) && (await computeContractAddressFromInstance(instance)).equals(address6));
+            await archive(p.blockNumber, p.blockHash, p.headerFields);
             await guard();
           };
           await canonical2();
@@ -407382,9 +407423,7 @@ See docs for context: https://docs.aztec.network/errors/14`);
           const bytes3 = effectBytes(receipt2.txEffect);
           const effect = TxEffect.fromBuffer(bytes3);
           check12(receiptFields.transactionFee === effect.transactionFee.toBigInt() && receiptFields.executionResult === (effect.revertCode.isOK() ? "success" : "reverted"));
-          const metadata = await this.node.getBlockData(BlockNumber(p.blockNumber));
-          check12(metadata && metadata.blockHash.toString() === p.blockHash);
-          const header = BlockHeader.fromBuffer(BlockHeader.prototype.toBuffer.call(metadata.header));
+          const header = await archive(p.blockNumber, p.blockHash, p.headerFields);
           check12((await header.hash()).toString() === p.blockHash && header.globalVariables.slotNumber === receiptFields.slotNumber);
           const witness = await this.node.getTxEffectMembershipWitness(txHash);
           check12(witness && witness.blockNumber === p.blockNumber && witness.root.equals(header.txEffectsTreeRoot));
