@@ -9,7 +9,8 @@ import {createGitHubAppBroker,getGitHubBrokerDiagnostic} from '../github-app-bro
 const sha=b=>createHash('sha256').update(b).digest('hex'),git=(type,b)=>createHash('sha1').update(type+' '+Buffer.byteLength(b)+'\0').update(b).digest('hex');
 const keys=generateKeyPairSync('rsa',{modulusLength:2048}),owner='labelled-bok-fixture',ownerId=123,appId=456,installationId=789;
 // Controlled GitHub protocol double: no account, credential discovery or network.
-async function fixture({verifyGit=false}={}){const root=await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(),'bok-app-'))),directory=path.join(root,'state'),artifactRoot=path.join(root,'artifacts');for(const d of [directory,artifactRoot])await fs.mkdir(d,{mode:0o700});const privateKeyFile=path.join(root,'app.pem');await fs.writeFile(privateKeyFile,keys.privateKey.export({type:'pkcs8',format:'pem'}),{mode:0o600});
+async function fixture({verifyGit=false,templateMode=false}={}){const root=await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(),'bok-app-'))),directory=path.join(root,'state'),artifactRoot=path.join(root,'artifacts');for(const d of [directory,artifactRoot])await fs.mkdir(d,{mode:0o700});const privateKeyFile=path.join(root,'app.pem');await fs.writeFile(privateKeyFile,keys.privateKey.export({type:'pkcs8',format:'pem'}),{mode:0o600});
+ const templateBody=Buffer.from('Bok template\n'),templateBlob=git('blob',templateBody),templateTree=git('tree',Buffer.concat([Buffer.from('100644 README.md\0'),Buffer.from(templateBlob,'hex')])),creationTemplate={repositoryId:654,fullName:owner+'/bootstrap',commit:'e'.repeat(40)};
  const calls=[],objects=new Map();let actionsEnabled=true,repo=null,head='1'.repeat(40),lost=null,absent=false,badInstallation=false,leak=false;
  const now=()=>Date.parse('2026-10-13T00:00:00Z');
  const object=(type,bytes)=>{const id=git(type,bytes);if(verifyGit)assert.equal(execFileSync('/usr/bin/git',['hash-object','--stdin','-t',type],{input:bytes,env:{PATH:'/usr/bin:/bin',HOME:root,GIT_CONFIG_NOSYSTEM:'1',GIT_CONFIG_GLOBAL:'/dev/null'},timeout:2000,encoding:'utf8'}).trim(),id);return id;};
@@ -20,8 +21,14 @@ async function fixture({verifyGit=false}={}){const root=await fs.realpath(await 
   if(leak)throw Error('SYNTHETIC_TOKEN_PRIVATE_RAW');
   if(route.startsWith('/app/')){const token=options.headers.Authorization.slice(7),[h,p,s]=token.split('.');assert(verify('RSA-SHA256',Buffer.from(h+'.'+p),keys.publicKey,Buffer.from(s,'base64url')));const claims=JSON.parse(Buffer.from(p,'base64url'));assert.equal(claims.iss,String(appId));assert(claims.exp-claims.iat<=600);
    if(method==='GET')out={id:installationId,app_id:appId,target_type:'User',account:{type:'User',id:badInstallation?999:ownerId,login:owner},suspended_at:null,repository_selection:'selected',permissions:{administration:'write',contents:'write',metadata:'read'}};
-   else{assert.deepEqual(Object.keys(body.permissions),body.repository_ids?['contents']:['administration']);out={token:body.repository_ids?'scoped-content-synthetic':'administration-synthetic',expires_at:'2026-10-13T01:00:00Z',permissions:{...body.permissions,metadata:'read'},...(body.repository_ids?{repositories:body.repository_ids.map(id=>({id}))}:{})};}
-  }else if(route==='/user/repos'){assert.equal(options.headers.Authorization,'Bearer administration-synthetic');assert.equal(body.auto_init,true);assert.equal(body.private,true);repo={id:987,name:body.name,full_name:owner+'/'+body.name,owner:{id:ownerId,login:owner,type:'User'},private:body.private,fork:false,archived:false,description:body.description,default_branch:'main'};out=repo;}
+   else{assert.deepEqual(Object.keys(body.permissions),body.repository_ids?.[0]===654?['administration','contents']:body.permissions.administration?['administration']:['contents']);out={token:body.repository_ids?.[0]===654?'template-synthetic':body.permissions.administration?'administration-synthetic':'scoped-content-synthetic',expires_at:'2026-10-13T01:00:00Z',permissions:{...body.permissions,metadata:'read'},...(body.repository_ids?{repositories:body.repository_ids.map(id=>({id}))}:{})};}
+  }else if(templateMode&&route==='/repos/'+creationTemplate.fullName){out={id:654,full_name:creationTemplate.fullName,owner:{id:ownerId,login:owner,type:'User'},private:true,is_template:true,fork:false,archived:false,default_branch:'main'};}
+  else if(templateMode&&route.startsWith('/repos/'+creationTemplate.fullName+'/')&&!route.endsWith('/generate')){assert.equal(options.headers.Authorization,'Bearer template-synthetic');
+   if(route.endsWith('/actions/permissions'))out={enabled:false};
+   else if(route.endsWith('/git/ref/heads/main'))out={object:{type:'commit',sha:creationTemplate.commit}};
+   else if(route.endsWith('/git/commits/'+creationTemplate.commit))out={sha:creationTemplate.commit,tree:{sha:templateTree}};
+   else if(route.endsWith('/git/trees/'+templateTree))out={sha:templateTree,truncated:false,tree:[{path:'README.md',mode:'100644',type:'blob',sha:templateBlob,size:templateBody.length}]};else throw Error('unknown template read');
+  }else if(route==='/user/repos'||templateMode&&route.endsWith('/generate')){assert.equal(options.headers.Authorization,templateMode?'Bearer template-synthetic':'Bearer administration-synthetic');if(templateMode){assert.equal(route,'/repos/'+creationTemplate.fullName+'/generate');assert.equal(body.owner,owner);assert.equal(body.include_all_branches,false);}else assert.equal(body.auto_init,true);assert.equal(body.private,true);repo={id:987,name:body.name,full_name:owner+'/'+body.name,owner:{id:ownerId,login:owner,type:'User'},private:body.private,fork:false,archived:false,description:body.description,default_branch:'main'};out=repo;}
   else if(route.endsWith('/actions/permissions')){assert.equal(options.headers.Authorization,'Bearer administration-synthetic');if(method==='PUT'){assert.deepEqual(body,{enabled:false});actionsEnabled=false;}out={enabled:actionsEnabled};}
   else if(!route.includes('/git/'))out=repo;
   else{assert.equal(options.headers.Authorization,'Bearer scoped-content-synthetic');
@@ -32,12 +39,12 @@ async function fixture({verifyGit=false}={}){const root=await fs.realpath(await 
    else if(route.endsWith('/commits')){assert.deepEqual(body.author,body.committer);const actor=body.author.name+' <'+body.author.email+'> '+Date.parse(body.author.date)/1000+' +0000',raw='tree '+body.tree+'\nparent '+body.parents[0]+'\nauthor '+actor+'\ncommitter '+actor+'\n\n'+body.message,id=object('commit',raw);out={sha:id,tree:{sha:body.tree},parents:body.parents.map(sha=>({sha})),message:body.message};objects.set(id,out);}
    else throw Error('Unknown fixture route');
   }
-  if(lost&&method===lost.method&&route.endsWith(lost.suffix)){const mode=lost.mode;lost=null;if(mode==='absent'){absent=true;if(route.endsWith('/repos'))repo=null;if(route.endsWith('/actions/permissions'))actionsEnabled=true;if(route.includes('/git/refs/'))head='1'.repeat(40);objects.clear();}throw Error('SYNTHETIC_AMBIGUOUS');}
-  if(absent&&method==='GET'&&route.includes('/git/commits/'))out=null;
+  if(lost&&method===lost.method&&route.endsWith(lost.suffix)){const mode=lost.mode;lost=null;if(mode==='absent'){absent=true;if(route.endsWith('/repos')||route.endsWith('/generate'))repo=null;if(route.endsWith('/actions/permissions'))actionsEnabled=true;if(route.includes('/git/refs/'))head='1'.repeat(40);objects.clear();}throw Error('SYNTHETIC_AMBIGUOUS');}
+  if(absent&&method==='GET'&&route.includes('/git/commits/')&&!route.startsWith('/repos/'+creationTemplate.fullName+'/'))out=null;
   if(method==='PUT'&&route.endsWith('/actions/permissions'))return new Response(null,{status:204});
   return response(out,out===null?404:200);
  };
- const config={enabled:true,directory,artifactRoot,owner,ownerId,appId,installationId,privateKeyFile,fetchImpl,now};let broker=await createGitHubAppBroker(config);
+ const config={enabled:true,directory,artifactRoot,owner,ownerId,appId,installationId,privateKeyFile,fetchImpl,now,...(templateMode?{creationTemplate}:{})};let broker=await createGitHubAppBroker(config);
  return {root,directory,artifactRoot,calls,config,get broker(){return broker;},reopen:async()=>broker=await createGitHubAppBroker(config),lose:(method,suffix,mode='present')=>lost={method,suffix,mode},badInstallation:()=>badInstallation=true,leak:()=>leak=true,setHead:value=>head=value,enableActions:()=>actionsEnabled=true,collide:()=>repo={id:987},close:()=>fs.rm(root,{recursive:true,force:true})};
 }
 async function receipt(f,n=2,readRevision=null,contents={'app.cjs':'module.exports='+n,'asset.png':Buffer.from([0,255,n])}){const revision=String(n).repeat(40),outputDirectory=path.join(f.artifactRoot,'bok-static-'+randomUUID());await fs.mkdir(outputDirectory,{mode:0o700});const files=Object.entries(contents).map(([path,text])=>{const b=Buffer.from(text);return {path,sha256:sha(b),bytes:b.length,data:b.toString('base64')};}),manifest=files.map(({data,...x})=>x),source=JSON.stringify({schema:1,revision,manifest,files});await fs.writeFile(path.join(outputDirectory,'source-snapshot.json'),source,{mode:0o600});await fs.writeFile(path.join(outputDirectory,'cleanup.json'),JSON.stringify({ownedContainerAbsent:true}),{mode:0o600});return {repositoryId:'a'.repeat(64),threadId:'0x'+'b'.repeat(64),invocationId:'0x'+String(n).repeat(64),readRevision,acceptedRevision:revision,validation:{passed:true,testsPassed:true,buildPassed:true,testCount:1,revision,sourceDigest:sha(JSON.stringify(manifest)),sourceManifest:manifest,sourceArchiveSha256:sha(source),outputDirectory}};}
@@ -151,4 +158,22 @@ test('unsafe rejection headers are discarded without parsing or retaining upstre
   const b=await createGitHubAppBroker({...f.config,fetchImpl:async()=>new Response('SYNTHETIC_PRIVATE_BODY',{status:403,headers:{'x-github-request-id':'SYNTHETIC_PRIVATE_TOKEN','x-accepted-github-permissions':'secrets=write','retry-after':'SYNTHETIC_PRIVATE_TOKEN'}})});
   await assert.rejects(b.assertAvailable(),e=>{assert.deepEqual(getGitHubBrokerDiagnostic(e),{kind:'http-rejection',status:403});assert(!String(e.stack).includes('SYNTHETIC'));return true;});
  }finally{await f.close();}
+});
+
+
+test('pinned private template uses one explicit generation route and exact repository token scopes',async()=>{
+ const f=await fixture({templateMode:true,verifyGit:true});try{
+  const r=await receipt(f),one=await f.broker.sync(r);assert(one.mirrored);
+  assert.equal(f.calls.filter(c=>c.method==='POST'&&c.route.endsWith('/generate')).length,1);assert(!f.calls.some(c=>c.route==='/user/repos'));
+  const tokens=f.calls.filter(c=>c.route.endsWith('/access_tokens')).map(c=>c.body);
+  assert.deepEqual(tokens,[{permissions:{administration:'write',contents:'read'},repository_ids:[654]},{permissions:{administration:'write'},repository_ids:[987]},{permissions:{contents:'write'},repository_ids:[987]}]);
+  const generation=f.calls.findIndex(c=>c.route.endsWith('/generate'));assert(f.calls.slice(0,generation).some(c=>c.route.endsWith('/actions/permissions')));
+  assert(f.calls.findIndex(c=>c.method==='PUT'&&c.route.endsWith('/actions/permissions'))<f.calls.findIndex(c=>c.method==='POST'&&c.route.endsWith('/blobs')));
+ }finally{await f.close();}
+});
+for(const absent of [false,true])test('template generation uncertain result '+(absent?'blocks':'reconciles')+' without second write',async()=>{
+ const f=await fixture({templateMode:true});try{const r=await receipt(f);f.lose('POST','/generate',absent?'absent':'present');await assert.rejects(f.broker.sync(r));await f.reopen();if(absent)await assert.rejects(f.broker.sync(r),{code:'GITHUB_BROKER_UNRESOLVED'});else assert((await f.broker.sync(r)).mirrored);assert.equal(f.calls.filter(c=>c.method==='POST'&&c.route.endsWith('/generate')).length,1);assert(!f.calls.some(c=>c.route==='/user/repos'));}finally{await f.close();}
+});
+for(const kind of ['owner','private','template','commit','actions','workflow'])test('template '+kind+' mismatch rejects before repository creation',async()=>{
+ const f=await fixture({templateMode:true});try{const original=f.config.fetchImpl,b=await createGitHubAppBroker({...f.config,fetchImpl:async(url,options)=>{const response=await original(url,options),route=new URL(url).pathname;if(options.method!=='GET'||!route.startsWith('/repos/'+f.config.creationTemplate.fullName))return response;const v=await response.json();if(route==='/repos/'+f.config.creationTemplate.fullName){if(kind==='owner')v.owner.id++;if(kind==='private')v.private=false;if(kind==='template')v.is_template=false;}if(kind==='commit'&&route.endsWith('/git/ref/heads/main'))v.object.sha='f'.repeat(40);if(kind==='actions'&&route.endsWith('/actions/permissions'))v.enabled=true;if(kind==='workflow'&&route.includes('/git/trees/'))v.tree[0].path='.github/workflows/run.yml';return new Response(JSON.stringify(v),{status:response.status});}});await assert.rejects(b.sync(await receipt(f)));assert(!f.calls.some(c=>c.method==='POST'&&!c.route.endsWith('/access_tokens')));}finally{await f.close();}
 });

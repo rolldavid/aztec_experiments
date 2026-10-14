@@ -42,7 +42,7 @@ async function capture(receipt,artifactRoot){
 
 /** One trusted host owns directory. Disabled by default; no ambient gh/env tokens.
  * REST mirror commits are explicitly DISTINCT from local accepted Git commits. */
-async function broker({connectedRepositories=[],enabled=false,directory,artifactRoot,owner,ownerId,appId,installationId,privateKeyFile,fetchImpl=globalThis.fetch,now=Date.now}){
+async function broker({creationTemplate=null,connectedRepositories=[],enabled=false,directory,artifactRoot,owner,ownerId,appId,installationId,privateKeyFile,fetchImpl=globalThis.fetch,now=Date.now}){
  if(enabled!==true){const disabled=async()=>{throw fail('GITHUB_BROKER_DISABLED');};return Object.freeze({assertAvailable:disabled,sync:disabled});}
  assert(typeof owner==='string'&&/^[a-z0-9](?:[a-z0-9-]{0,37}[a-z0-9])?$/.test(owner));for(const n of [ownerId,appId,installationId])assert(integer(n));
  await privateDirectory(directory);await privateDirectory(artifactRoot);assert(typeof privateKeyFile==='string'&&!privateKeyFile.startsWith(artifactRoot+path.sep));await privateDirectory(path.dirname(privateKeyFile));
@@ -54,7 +54,8 @@ async function broker({connectedRepositories=[],enabled=false,directory,artifact
   assert(c.baseBranch!==c.workBranch&&c.workBranch.startsWith('bok/')&&!mappings.has(c.threadId));
   const scope=c.repositoryId+':'+c.workBranch;assert(!branches.has(scope));branches.add(scope);mappings.set(c.threadId,c);
  }
- const config={owner,ownerId,appId,installationId},file=path.join(directory,'github-app-state.json');
+ if(creationTemplate!==null){creationTemplate=structuredClone(creationTemplate);assert(Object.keys(creationTemplate).sort().join(',')==='commit,fullName,repositoryId');assert(integer(creationTemplate.repositoryId)&&new RegExp('^'+owner+'/[A-Za-z0-9_][A-Za-z0-9_.-]{0,99}$').test(creationTemplate.fullName)&&hex(creationTemplate.commit,40));}
+ const config={owner,ownerId,appId,installationId,...(creationTemplate?{creationTemplate}: {})},file=path.join(directory,'github-app-state.json');
  try{await read(file,8*1024*1024,true);}catch(e){if(e.code!=='ENOENT')throw fail();}
  const store=await fileState(file);let state=store.read(),busy=false,poisoned=false;
  if(state.schema===undefined){assert.deepEqual(state,{operations:{}});state={schema:1,config,repositories:{}};await store.write(state);}
@@ -68,8 +69,27 @@ async function broker({connectedRepositories=[],enabled=false,directory,artifact
     if(response.status===404){await response.body?.cancel();return null;}if(!response.ok){const error=diagnosticError(response);await response.body?.cancel();throw error;}if(response.status===204){assert(method==='PUT'&&route.endsWith('/actions/permissions')&&body?.enabled===false);return {disabled:true};}const chunks=[];let n=0;for await(const chunk of response.body){n+=chunk.length;assert(n<=2*1024*1024);chunks.push(chunk);}return JSON.parse(Buffer.concat(chunks).toString('utf8'));
    }finally{clearTimeout(timer);}}
   async function available(){const i=await request('GET','/app/installations/'+installationId,undefined,jwt());assert(i?.id===installationId&&i.app_id===appId&&i.target_type==='User'&&i.account?.type==='User'&&i.account.id===ownerId&&i.account.login===owner&&i.suspended_at===null&&i.repository_selection==='selected');assert(i.permissions?.administration==='write'&&i.permissions?.contents==='write'&&(!mappings.size||i.permissions?.pull_requests==='write'));for(const [name,level] of Object.entries(i.permissions))assert((name==='metadata'&&level==='read')||(['administration','contents',...(mappings.size?['pull_requests']:[])].includes(name)&&level==='write'));return {available:true,owner,ownerId,appId,installationId};}
-  async function token(repositoryId,connected=false){const permissions=connected?{contents:'write',pull_requests:'write'}:repositoryId?{contents:'write'}:{administration:'write'};const body={permissions:repositoryId?permissions:{administration:'write'},...(repositoryId?{repository_ids:[repositoryId]}:{})},r=await request('POST','/app/installations/'+installationId+'/access_tokens',body,jwt());assert(typeof r?.token==='string'&&r.token.length>0&&r.token.length<=16384&&Date.parse(r.expires_at)>now()+120000);assert(r.permissions?.[repositoryId?'contents':'administration']==='write');for(const [name,level] of Object.entries(r.permissions))assert((name==='metadata'&&level==='read')||(Object.hasOwn(permissions,name)&&level===permissions[name]));if(connected)assert(r.permissions?.pull_requests==='write');if(repositoryId)assert(Array.isArray(r.repositories)&&r.repositories.length===1&&r.repositories[0].id===repositoryId);return r.token;}
-  return {request,available,token};
+  async function token(repositoryId,connected=false,purpose='contents'){
+   const permissions=purpose==='template'?{administration:'write',contents:'read'}:purpose==='admin'||!repositoryId?{administration:'write'}:connected?{contents:'write',pull_requests:'write'}:{contents:'write'};
+   const body={permissions,...(repositoryId?{repository_ids:[repositoryId]}:{})},r=await request('POST','/app/installations/'+installationId+'/access_tokens',body,jwt());
+   assert(typeof r?.token==='string'&&r.token.length>0&&r.token.length<=16384&&Date.parse(r.expires_at)>now()+120000);
+   for(const [name,level] of Object.entries(permissions))assert(r.permissions?.[name]===level);
+   for(const [name,level] of Object.entries(r.permissions))assert((name==='metadata'&&level==='read')||(Object.hasOwn(permissions,name)&&level===permissions[name]));
+   if(repositoryId)assert(Array.isArray(r.repositories)&&r.repositories.length===1&&r.repositories[0].id===repositoryId);return r.token;
+  }
+  async function template(){
+   assert(creationTemplate);const c=creationTemplate,credential=await token(c.repositoryId,false,'template'),route='/repos/'+c.fullName,r=await request('GET',route,undefined,credential);
+   assert(r?.id===c.repositoryId&&r.full_name===c.fullName&&r.owner?.id===ownerId&&r.owner.login===owner&&r.owner.type==='User'&&r.private===true&&r.is_template===true&&r.fork===false&&r.archived===false&&typeof r.default_branch==='string'&&/^[A-Za-z0-9_-]{1,100}$/.test(r.default_branch));
+   assert.equal((await request('GET',route+'/actions/permissions',undefined,credential))?.enabled,false);
+   const ref=await request('GET',route+'/git/ref/heads/'+r.default_branch,undefined,credential);assert(ref?.object?.type==='commit'&&ref.object.sha===c.commit);
+   const commit=await request('GET',route+'/git/commits/'+c.commit,undefined,credential);assert(commit?.sha===c.commit&&hex(commit.tree?.sha,40));
+   const tree=await request('GET',route+'/git/trees/'+commit.tree.sha+'?recursive=1',undefined,credential);
+   assert(tree?.sha===commit.tree.sha&&tree.truncated===false&&Array.isArray(tree.tree)&&tree.tree.length===1);const leaf=tree.tree[0];assert(leaf.path==='README.md'&&leaf.type==='blob'&&leaf.mode==='100644'&&integer(leaf.size)&&leaf.size<=4096&&hex(leaf.sha,40));
+   // Verify the pinned tree bytes as well as the sole safe path before generation.
+   assert.equal(treeHash([{path:leaf.path,gitSha:leaf.sha}]),tree.sha);
+   return {credential,route};
+  }
+  return {request,available,token,template};
  }
  // Connected repositories use the same private state/lease and exact-once mutation
  // journal. Neither installation Administration nor the legacy ambient token is
@@ -165,11 +185,13 @@ async function broker({connectedRepositories=[],enabled=false,directory,artifact
    if(entry){assert.deepEqual(entry.binding,b);}else{assert(repo.latest===b.readRevision&&Object.keys(repo.revisions).length<64&&!Object.values(repo.revisions).some(r=>r.binding.invocationId===b.invocationId));assert(!Object.values(repo.revisions).some(r=>!r.complete));entry={binding:b,date:new Date(Math.floor(now()/1000)*1000).toISOString().replace('.000Z','Z'),steps:{},complete:false};repo.revisions[b.acceptedRevision]=entry;await save();}
    async function once(steps,label,method,url,body,credential,project,reconcile){const identity=hash(JSON.stringify([method,url,body]));let record=steps[label];if(record){assert(record.identity===identity);if(record.done)return record.result;const found=await reconcile();if(found===null)throw fail('GITHUB_BROKER_UNRESOLVED');record.result=project(found);record.done=true;await save();return record.result;}
     record={identity,done:false};steps[label]=record;await save();try{record.result=project(await s.request(method,url,body,credential));}catch(e){const d=getGitHubBrokerDiagnostic(e);if(d){record.diagnostic=d;await save();}throw e;}record.done=true;await save();return record.result;}
-   const admin=await s.token();
+   const template=creationTemplate?await s.template():null;let admin=template?.credential??await s.token();
    function repository(r){assert(r&&integer(r.id)&&r.name===name&&r.full_name===owner+'/'+name&&r.owner?.id===ownerId&&r.owner?.login===owner&&r.owner?.type==='User'&&r.private===true&&r.fork===false&&r.archived===false&&r.description===repo.marker&&typeof r.default_branch==='string'&&/^[a-zA-Z0-9_-]{1,100}$/.test(r.default_branch));return {id:r.id,branch:r.default_branch};}
    // An existing name without OUR durable creation intent is never adopted.
    if(!repo.steps.create){assert(await s.request('GET',route,undefined,admin)===null);}
-   const remote=await once(repo.steps,'create','POST','/user/repos',{name,description:repo.marker,private:true,auto_init:true,has_issues:false,has_projects:false,has_wiki:false},admin,repository,()=>s.request('GET',route,undefined,admin));
+   const createRoute=template?template.route+'/generate':'/user/repos',createBody=template?{owner,name,description:repo.marker,private:true,include_all_branches:false}:{name,description:repo.marker,private:true,auto_init:true,has_issues:false,has_projects:false,has_wiki:false};
+   const remote=await once(repo.steps,'create','POST',createRoute,createBody,admin,repository,async()=>s.request('GET',route,undefined,template?await s.token():admin));
+   if(template)admin=await s.token(remote.id,false,'admin');
    assert.deepEqual(repository(await s.request('GET',route,undefined,admin)),remote);
    // Only our dedicated mirror receives this settings mutation. An uncertain
    // response is reconciled by readback, never replayed, before source writes.

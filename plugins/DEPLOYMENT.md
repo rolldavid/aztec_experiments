@@ -406,6 +406,28 @@ stderr stays internal and is never part of model-visible failure logs.
 
 ### Scoped personal-account GitHub App source mirror
 
+For the configured personal installation, set `creationTemplate` explicitly to
+`{repositoryId:1419258557, fullName:"zac-williamson/rolling-chat-bok-bootstrap",
+commit:"b3e8ef46bb26002a02c949438f5d43d05422e9ff"}`. This selects only
+`POST /repos/{template_owner}/{template_repo}/generate`; it never falls back to
+`POST /user/repos`. Before generation, the broker verifies the exact numeric
+repository and User owner, private/nonfork/nonarchived template status, disabled
+Actions, pinned default-branch commit, and a single regular README.md (at most
+4096 bytes) with a verified Git tree hash. Generation copies only the default
+branch into a private repository. No generated code runs during bootstrap.
+
+The generation token selects only the template ID and requests Administration
+write plus Contents read, as required by GitHub's documented template endpoint.
+After creation, a separate Administration-only token selects the new mirror ID
+for identity and Actions checks; source writes use its Contents-only token.
+An uncertain generation response may mint the existing selected-installation
+Administration-only token solely to read back the exact intended name and marker,
+then either reconcile or remain blocked. It never repeats generation.
+Template configuration is journal-bound. Transition from a definitively denied
+legacy creation requires explicit operator reconciliation and a new journal
+directory; preserve the failed journal. Do not reset or change its intent.
+
+
 `createGitHubAppBroker({enabled:false, directory, artifactRoot, owner, ownerId,
 appId, installationId, privateKeyFile})` is a trusted host capability. The
 personal-account adapter targets `zac-williamson` (User1476668) through
