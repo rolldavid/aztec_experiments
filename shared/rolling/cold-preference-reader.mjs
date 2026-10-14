@@ -186,7 +186,13 @@ export function createRollingColdPreferenceReader(input){
     await recheck(observed.anchor);
     // Recheck the authoritative SDK mailbox after encryption/CAS; an intervening
     // scoped restart, rollback or anchor change cannot publish a stale result.
-    let confirmed=await request(null);if(deferredAdvance){const {advance,...prior}=confirmed;check(same(advance,deferredAdvance));await recheck(advance.anchor);confirmed=prior;}check(same(confirmed,observed));await recheck(observed.anchor);
+    let confirmed=await request(null);
+    if(confirmed.advance){
+     const {advance,...prior}=confirmed;check(same(prior,observed));
+     if(deferredAdvance)check(same(advance,deferredAdvance));
+     await recheck(advance.anchor);deferredAdvance=advance;confirmed=prior;
+    }else check(!deferredAdvance);
+    check(same(confirmed,observed));await recheck(observed.anchor);
     const progress=Object.freeze({nextBlock:observed.nextBlock,anchorBlock:observed.anchor.blockNumber,processedRevision:prefix.head.revision,markersChecked:markers?.next??0,markersTotal:completed?.readMarkers.length??null});
     if(deferredAdvance||!completed||markers.next<completed.readMarkers.length)return Object.freeze({status:'recovering',complete:false,progress});
     lastComplete=true;

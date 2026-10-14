@@ -193,6 +193,21 @@ test('lost terminal mailbox drains without publishing completion at a known olde
  const promoted=await f.reader().read();assert.equal(promoted.complete,false);assert.equal(f.state.promotions,1);
  const complete=await readAll(f.reader());assert.equal(complete.anchor.blockNumber,2);assert.equal(complete.preferences.head.revision,'3');assert.deepEqual(complete.preferences.bookmarks,['77','88']);
 });
+for(const terminal of [false,true])test('canonical advance during final CAS confirmation retains '+(terminal?'terminal':'incomplete')+' mailbox without stale publication',async()=>{
+ const f=terminal?extensionFixture():incompleteExtensionFixture(),r=f.reader();await r.read();if(terminal){await r.read();await r.read();}
+ f.state.afterCAS=()=>{f.state.afterCAS=null;f.extend();};
+ const drained=await r.read();assert.equal(drained.complete,false);assert.equal(drained.status,'recovering');assert.equal(drained.preferences,undefined);assert.equal(drained.progress.processedRevision,terminal?'2':'1');assert.equal(f.state.promotions,0);const steps=f.state.steps;
+ const resumed=await f.reader().read();assert.equal(resumed.complete,false);assert.equal(resumed.progress.anchorBlock,2);assert.equal(f.state.promotions,1);assert.equal(f.state.steps,steps,'Promotion does not replay the committed page');
+ const done=await readAll(f.reader());assert.equal(done.anchor.blockNumber,2);assert.equal(done.preferences.head.revision,terminal?'3':'2');
+});
+test('new final-confirmation advance cannot hide a changed prior mailbox',async()=>{
+ const f=incompleteExtensionFixture(),r=f.reader();await r.read();f.state.afterCAS=()=>{f.state.afterCAS=null;f.extend();f.alter(x=>{x.nextLog++;});};
+ await assert.rejects(r.read(),{code:'ROLLING_COLD_PREFERENCES_UNAVAILABLE'});assert.equal(f.state.promotions,0);assert.equal(f.db.size,1);
+});
+test('new final-confirmation advance requires its new canonical anchor',async()=>{
+ const f=incompleteExtensionFixture(),get=f.config.node.getBlockData;f.config.node.getBlockData=async n=>{const value=await get(n);if(n===2){value.blockHash=new Field(999);value.header.hash=async()=>new Field(999);}return value;};
+ const r=f.reader();await r.read();f.state.afterCAS=()=>{f.state.afterCAS=null;f.extend();};await assert.rejects(r.read(),{code:'ROLLING_COLD_PREFERENCES_UNAVAILABLE'});assert.equal(f.state.promotions,0);assert.equal(f.db.size,1);
+});
 test('lost predecessor encrypted cache cannot resume promoted suffix',async()=>{
  const f=extensionFixture(),r=f.reader();await readAll(r);f.extend();f.state.failPromotionReply=true;await assert.rejects(r.read());f.db.clear();const before=f.state.restarts;
  const result=await f.reader().read();assert.equal(result.complete,false);assert.equal(result.progress.processedRevision,'0');assert.equal(result.progress.nextBlock,1);assert.equal(f.state.restarts,before+1);
