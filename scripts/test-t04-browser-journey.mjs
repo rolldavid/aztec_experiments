@@ -778,3 +778,210 @@ test('aggregate relay status waits for the sole original POST response without a
  const observed={};await assert.rejects(observe({response:async()=>null},observed),/preserve submitted/);assert.equal(observed.received,false);
  const failed={};await assert.rejects(poll({...input,completed:true,observation:failed,fetchImpl:async()=>({status:503,ok:false})}),/preserve submitted/);assert.equal(failed.status,503);assert.equal(gets,1);
 });
+
+function retainedReleaseFixture(){
+ const f=retainedBokFixture();const approval={schemaVersion:2,journey:'release',runtimeSha256:f.control.runtimeSha256,content:f.approval.content,contentSha256:'',budget:'100',authorizeFeeCap:'100',releaseFeeCap:'200',withdrawFeeCap:'200',withdrawAmount:'10',refundGasCap:'1000',expiresAt:Date.now()+300000,publicScope:f.approval.publicScope,recoveryFile:'/private/recovery/ready.json',recoverySha256:'a'.repeat(64),recoveryStem:'release-one',releaseTransactionHash:null};
+ f.control.recoveryDirectory='/private/recovery';return {...f,approval};
+}
+test('retained release and withdrawal approvals are separate finite capabilities; neither authorizes post or gas funding',async()=>{
+ const {validateRetainedBokApproval}=await import('./t04-metamask.mjs'),{createHash}=await import('node:crypto'),f=retainedReleaseFixture();f.approval.contentSha256=createHash('sha256').update(f.approval.content).digest('hex');
+ assert.deepEqual(validateRetainedBokApproval(f.approval,f.control),f.approval);
+ const withdrawal={...f.approval,journey:'withdraw',releaseTransactionHash:hash};assert.deepEqual(validateRetainedBokApproval(withdrawal,f.control),withdrawal);
+ for(const change of [a=>a.journey='post',a=>a.recoveryFile='/another/ready.json',a=>a.recoveryStem='../escape',a=>a.refundGasCap='3000000000000001',a=>a.withdrawAmount='101',a=>a.withdrawFeeCap='701',a=>a.releaseTransactionHash=hash,a=>a.expiresAt=0,a=>a.newPayment=true]){const bad=structuredClone(f.approval);change(bad);assert.throws(()=>validateRetainedBokApproval(bad,f.control));}
+ assert.throws(()=>validateRetainedBokApproval({...withdrawal,releaseTransactionHash:null},f.control));
+});
+test('retained recovery inputs bind exact private export bytes and refuse existing outputs before launch',async t=>{
+ const {verifyRetainedBokRecoveryFiles}=await import('./t04-metamask.mjs'),{createHash}=await import('node:crypto'),f=retainedReleaseFixture();const dir=await fs.mkdtemp(path.join(os.tmpdir(),'release-export-'));t.after(()=>fs.rm(dir,{recursive:true,force:true}));
+ const file=path.join(await fs.realpath(dir),'ready.json');await fs.writeFile(file,'encrypted-only',{mode:0o600});f.control.recoveryDirectory=path.dirname(file);f.approval.recoveryFile=file;f.approval.recoverySha256=createHash('sha256').update('encrypted-only').digest('hex');
+ verifyRetainedBokRecoveryFiles(f.approval,f.control);await fs.writeFile(file,'different');assert.throws(()=>verifyRetainedBokRecoveryFiles(f.approval,f.control));await fs.writeFile(file,'encrypted-only');
+ await fs.writeFile(path.join(path.dirname(file),'release-one-authorized.json'),'retained',{mode:0o600});assert.throws(()=>verifyRetainedBokRecoveryFiles(f.approval,f.control));
+});
+test('actual retained release inspector preserves original draft and authorization across fee cancellation and reload',async()=>{
+ const {inspectRetainedBokRecovery}=await import('./t04-metamask.mjs'),{runInNewContext}=await import('node:vm'),{webcrypto}=await import('node:crypto'),f=retainedReleaseFixture();let record=structuredClone(f.record);record.status='confirmed';record.txHash=f.field(20);
+ const original=structuredClone(record),window={walletState:{aztec:{address:{toString:()=>f.field(30)},secretKey:'private',salt:'private'}},__aztec:{createBrowserJournalStorage:()=>({}),createEncryptedJournalSlot:async()=>({read:async()=>({value:record})})}};
+ const inspect=runInNewContext(`(${inspectRetainedBokRecovery})`,{window,crypto:webcrypto,TextEncoder,structuredClone,Date});
+ const auth=await inspect({config:f.config,approval:f.approval,phase:'authorize-confirmed'});assert.equal(auth.matched,true);assert(!JSON.stringify(auth).includes('private'));
+ await inspect({config:f.config,approval:f.approval,phase:'authorize-confirmed',expectedDigest:auth.digest});
+ record={id:f.field(40),action:{type:'cancel-bok-request',requestId:original.bok.requestId},status:'prepared',maximumFee:'150',bokReleaseSource:original};await inspect({config:f.config,approval:f.approval,phase:'release-prepared'});
+ record.status='confirmed';record.txHash=f.field(41);const done=await inspect({config:f.config,approval:f.approval,phase:'release-confirmed'});assert.equal(done.transactionHash,f.field(41));assert.equal(window.__retainedReleasedRequest,original.bok.requestId);
+ for(const change of [r=>r.action.requestId=f.field(99),r=>r.bokReleaseSource.action.content='other',r=>r.bokReleaseSource.txHash=f.field(98),r=>r.maximumFee='201',r=>r.status='unknown',r=>r.txHash=null]){const old=structuredClone(record);change(record);await assert.rejects(inspect({config:f.config,approval:f.approval,phase:'release-confirmed'}));record=old;}
+ await assert.rejects(inspect({config:f.config,approval:f.approval,phase:'release-confirmed',expectedDigest:auth.digest}));
+});
+test('retained balance assertions keep returned credit out of available totals and preserve closed request history',async()=>{
+ const {assertRetainedBokBalanceChange:check}=await import('./t04-metamask.mjs');const before={complete:true,available:'1000',allocated:'5',reserved:'7',charged:'3',refunded:'2',requests:2};
+ const auth={...before,available:'900',allocated:'105',requests:3},released={...before,refunded:'102',requests:3,selectedClosed:true},withdrawn={...released,available:'990'};
+ check(before,auth,{phase:'authorized',budget:'100'});check(before,released,{phase:'released',budget:'100'});check(released,withdrawn,{phase:'withdrawn',withdrawAmount:'10'});
+ for(const bad of [{...released,available:'1100'},{...released,reserved:'0'},{...released,charged:'0'},{...released,requests:2},{...released,selectedClosed:false},{...released,complete:false}])assert.throws(()=>check(before,bad,{phase:'released',budget:'100'}));
+});
+
+test('actual saved PluginPortal refund guard permits one exact journal send and fences replay, funding and changed gas/recipient',async()=>{
+ const {installMetaMaskBokRefundGuard}=await import('./t04-metamask.mjs'),{runInNewContext}=await import('node:vm'),ethers=await import('ethers');
+ const account='0x'+'11'.repeat(20),portal='0x'+'22'.repeat(20),token='0x'+'33'.repeat(20),board='0x'+'44'.repeat(32),nonce='0x'+'55'.repeat(32),abi=new ethers.Interface(['function withdraw(address,uint128,bytes32,uint256,uint256,uint256,bytes32[])']);
+ const data=abi.encodeFunctionData('withdraw',[account,10,nonce,1,2,0,[hash]]).toLowerCase();
+ for(const mutation of [null,'recipient','amount','nonce','calldata','gas','chain','journal','unknown','funding','extra','lost-response']){
+  const saved={version:1,txHash:null,from:account,to:portal,chainId:'31337',nonce:0,value:'0',data,expected:{kind:'bok-withdraw',amount:'10',recipient:account,exitNonce:nonce}};
+  const tx={from:account,to:portal,chainId:'0x7a69',nonce:'0x0',data,value:'0x0',gas:'0xa',maxFeePerGas:'0xa',maxPriorityFeePerGas:'0x1'};
+  const r={status:'confirmed',action:{type:'withdraw-bok',amount:'10',recipient:account},withdrawal:{kind:'bok',amount:'10',depositor:account,nonce,bokScope:{recipient:board,portal,token}}};
+  if(mutation==='recipient')tx.to=account;if(mutation==='amount')r.action.amount='11';if(mutation==='nonce')tx.nonce='0x1';if(mutation==='calldata')tx.data=abi.encodeFunctionData('withdraw',[account,11,nonce,1,2,0,[hash]]);if(mutation==='gas')tx.maxFeePerGas='0x100';if(mutation==='chain')tx.chainId='0x1';if(mutation==='journal')saved.expected.kind='aggregate-funding';if(mutation==='unknown')saved.txHash=hash;if(mutation==='funding')tx.value='0x1';if(mutation==='extra')tx.authorizationList=[];
+  let sends=0;const provider={async request(request){if(request.method==='eth_sendTransaction'){sends++;if(mutation==='lost-response')throw Error('Transport response lost');return hash;}return '0x7a69';}};
+  const window={ethers,__bokRefundObserve:async()=>{},__retainedWithdrawal:r,walletState:{aztec:{address:{toString:()=>board},secretKey:'private',salt:'private'}},__aztec:{createBrowserJournalStorage:()=>({}),createEncryptedJournalSlot:async({scopeText})=>{assert.equal(JSON.parse(scopeText).at(-1),token);return {read:async()=>({value:saved})};}}};
+  runInNewContext(`(${installMetaMaskBokRefundGuard})`,{window,__testMetaMask:provider,Date,structuredClone})({config:{network:{chainId:'31337',rollupAddress:account,rollupVersion:'1'},bok:{contractAddress:board},aggregateFunding:{bokPortal:portal,bokToken:token}},approval:{withdrawAmount:'10',refundGasCap:'1000',expiresAt:Date.now()+10000},account});
+  if(mutation==='lost-response'){await assert.rejects(provider.request({method:'eth_sendTransaction',params:[tx]}),/Transport response lost/);await assert.rejects(provider.request({method:'eth_sendTransaction',params:[tx]}));assert.equal(sends,1);}else if(mutation){await assert.rejects(provider.request({method:'eth_sendTransaction',params:[tx]}));assert.equal(sends,0);}else{
+   assert.equal(await provider.request({method:'eth_sendTransaction',params:[tx]}),hash);assert.equal(sends,1);await assert.rejects(provider.request({method:'eth_sendTransaction',params:[tx]}));assert.equal(sends,1);
+   await provider.request({method:'eth_getTransactionReceipt',params:[hash]});await assert.rejects(provider.request({method:'eth_getTransactionReceipt',params:['0x'+'66'.repeat(32)]}));
+  }
+  await assert.rejects(provider.request({method:'eth_signTypedData_v4',params:[]}));await assert.rejects(provider.request({method:'eth_sendRawTransaction',params:[]}));
+ }
+});
+test('refund guard consumes its sole send authority after invalid admission before any wallet call',async()=>{
+ const {installMetaMaskBokRefundGuard}=await import('./t04-metamask.mjs'),{runInNewContext}=await import('node:vm');let calls=0;
+ const provider={request:async()=>{calls++;}},window={__bokRefundObserve:async()=>{},__retainedWithdrawal:null,walletState:{aztec:{}},__aztec:{}};
+ runInNewContext(`(${installMetaMaskBokRefundGuard})`,{window,__testMetaMask:provider,Date})({config:{network:{}},approval:{expiresAt:Date.now()+1000},account:'x'});
+ await assert.rejects(provider.request({method:'eth_sendTransaction',params:[{}]}));await assert.rejects(provider.request({method:'eth_sendTransaction',params:[{}]}));assert.equal(calls,0);assert.equal(window.__retainedRefundTraffic.attempted,true);
+});
+
+test('existing release driver reloads the new export and cancels review without a second send when re-review fails',async t=>{
+ const {driveRetainedBokRelease}=await import('./t04-metamask.mjs'),f=retainedReleaseFixture(),dir=await fs.mkdtemp(path.join(os.tmpdir(),'release-flow-'));t.after(()=>fs.rm(dir,{recursive:true,force:true}));f.control.recoveryDirectory=dir;f.control.password='test-password';
+ const clicks=[],imports=[],marks=[],report={};let balanceRead=0,releaseReviews=0,reloads=0;
+ const selected=name=>({async click(){clicks.push(name);},async fill(){},async selectOption(){},async waitFor(){},async isVisible(){return true;},async isEnabled(){return true;},async setInputFiles(file){imports.push(file);}});
+ const dialog={getByRole:(_,o)=>selected(o.name),getByLabel:(name)=>selected(name),getByText:text=>selected(text)};
+ const page={getByRole:(role,o)=>role==='dialog'?dialog:selected(o.name),async waitForFunction(){},async reload(){reloads++;},async waitForTimeout(){},async waitForEvent(name){assert.equal(name,'download');return {suggestedFilename:()=> 'rolling-chat-encrypted-recovery.json',saveAs:filename=>fs.writeFile(filename,JSON.stringify({kind:'aztec-billboard-encrypted-wallet',schemaVersion:1,kdf:'PBKDF2-SHA256',iterations:600000,ciphertext:'aabb'}),{flag:'wx',mode:0o600})};},async evaluate(fn,arg){
+  if(fn.name==='inspectRetainedBokRecovery'){
+   if(arg.phase==='release-prepared'&&++releaseReviews===2)throw Error('Changed saved second review');
+   return {matched:true,digest:'same-auth',transactionHash:hash};
+  }
+  if(fn.toString().includes('app.readBokAccounting')){balanceRead++;return {complete:true,available:balanceRead===1?'100':'0',allocated:balanceRead===1?'0':'100',reserved:'0',charged:'0',refunded:'0',requests:balanceRead===1?0:1};}
+ }};
+ await assert.rejects(driveRetainedBokRelease({page,control:f.control,approval:f.approval,mark:x=>marks.push(x),report,deadlineAt:Date.now()+60000}),/Changed saved second review/);
+ assert.equal(reloads,1);assert.deepEqual(imports,[path.join(dir,'release-one-authorized.json')]);assert.equal(clicks.filter(x=>x==='Confirm and send').length,1);assert.equal(clicks.filter(x=>x==='Cancel prepared action').length,1);assert(!clicks.includes('Review saved Bok post'));assert.equal(report.bokRecovery.releaseSends,0);assert.equal(report.bokRecovery.reviewCancelledWithoutSend,true);
+});
+
+test('withdrawal inspection requires the actual saved recipient, portal, amount and charged fee below its separate cap',async()=>{
+ const {inspectRetainedBokRecovery}=await import('./t04-metamask.mjs'),{runInNewContext}=await import('node:vm'),{webcrypto}=await import('node:crypto'),f=retainedReleaseFixture(),account='0x'+'11'.repeat(20),portal='0x'+'22'.repeat(20),token='0x'+'33'.repeat(20);
+ f.config.aggregateFunding={bokPortal:portal,bokToken:token};let record={status:'confirmed',txHash:hash,action:{type:'withdraw-bok',amount:'10',recipient:account},maximumFee:'150',actualNetworkFee:'100',withdrawal:{kind:'bok',amount:'10',depositor:account,bokScope:{recipient:f.config.bok.contractAddress,portal,token}}};
+ const window={walletState:{ethAccount:account,aztec:{address:{toString:()=>f.field(30)},secretKey:'private',salt:'private'}},__aztec:{createBrowserJournalStorage:()=>({}),createEncryptedJournalSlot:async()=>({read:async()=>({value:record})})}};
+ const inspect=runInNewContext(`(${inspectRetainedBokRecovery})`,{window,crypto:webcrypto,TextEncoder,structuredClone,Date});
+ assert.equal((await inspect({config:f.config,approval:f.approval,phase:'withdraw-confirmed'})).actualNetworkFee,'100');
+ for(const change of [r=>r.actualNetworkFee='201',r=>delete r.actualNetworkFee,r=>r.action.recipient=portal,r=>r.withdrawal.amount='11',r=>r.withdrawal.bokScope.token=portal,r=>r.status='unknown']){const old=structuredClone(record);change(record);await assert.rejects(inspect({config:f.config,approval:f.approval,phase:'withdraw-confirmed'}));record=old;}
+});
+
+test('composed paid outer guard admits only the once journal-bound Bok refund and observes teardown denials in Node',async()=>{
+ const {installMetaMaskBokRefundGuard,createRetainedBokRefundAdmission,assertMetaMaskReadinessRequest}=await import('./t04-metamask.mjs'),{runInNewContext}=await import('node:vm'),ethers=await import('ethers');
+ const signer=ethers.Wallet.createRandom(),account=signer.address.toLowerCase(),portal='0x'+'22'.repeat(20),token='0x'+'33'.repeat(20),board='0x'+'44'.repeat(32),exitNonce='0x'+'55'.repeat(32),url='http://127.0.0.1:18545/';
+ const config={network:{chainId:'31337',rollupAddress:portal,rollupVersion:'1'},bok:{contractAddress:board},aggregateFunding:{bokPortal:portal,bokToken:token}},approval={withdrawAmount:'10',refundGasCap:'1000',expiresAt:Date.now()+10000};
+ const abi=new ethers.Interface(['function withdraw(address,uint128,bytes32,uint256,uint256,uint256,bytes32[])']),data=abi.encodeFunctionData('withdraw',[account,10,exitNonce,1,2,0,[hash]]).toLowerCase(),tx={from:account,to:portal,chainId:'0x7a69',nonce:'0x0',data,value:'0x0',gas:'0xa',maxFeePerGas:'0xa',maxPriorityFeePerGas:'0x1',type:'0x2'};
+ const observed={url,method:'POST',body:JSON.stringify({id:1,jsonrpc:'2.0',method:'eth_sendTransaction',params:[tx]})};assert.throws(()=>assertMetaMaskReadinessRequest(observed,url));
+ for(const method of ['eth_sendTransaction','eth_sendRawTransaction']){
+  const admission=createRetainedBokRefundAdmission({config,approval,account}),signed=await signer.signTransaction({to:portal,chainId:31337,nonce:0,data,value:0,gasLimit:10,maxFeePerGas:10,maxPriorityFeePerGas:1,type:2});let sends=0;
+  const rpc={...observed,body:JSON.stringify({id:1,jsonrpc:'2.0',method,params:[method==='eth_sendTransaction'?tx:signed]})};
+  const saved={version:1,txHash:null,from:account,to:portal,chainId:'31337',nonce:0,value:'0',data,expected:{kind:'bok-withdraw',amount:'10',recipient:account,exitNonce}};
+  const r={status:'confirmed',action:{type:'withdraw-bok',amount:'10',recipient:account},withdrawal:{kind:'bok',amount:'10',depositor:account,nonce:exitNonce,bokScope:{recipient:board,portal,token}}};
+  const window={ethers,__bokRefundObserve:event=>admission.observe(event),__retainedWithdrawal:r,walletState:{aztec:{address:{toString:()=>board},secretKey:'private',salt:'private'}},__aztec:{createBrowserJournalStorage:()=>({}),createEncryptedJournalSlot:async()=>({read:async()=>({value:saved})})}};
+  const provider={request:async request=>{assert.equal(request.method,'eth_sendTransaction');admission.assertRequest(rpc,url);sends++;return ethers.keccak256(signed);}};
+  runInNewContext(`(${installMetaMaskBokRefundGuard})`,{window,__testMetaMask:provider,Date,structuredClone})({config,approval,account});
+  await provider.request({method:'eth_sendTransaction',params:[tx]});assert.deepEqual(admission.finish(),{providerSends:1,outerSends:1,denied:0,acknowledged:true});assert.equal(sends,1);
+  // Simulate a late authentic page request during context close; removing the
+  // page-owned counter cannot erase the already observed Node-owned denial.
+  await assert.rejects(provider.request({method:'personal_sign',params:[]}));delete window.__retainedRefundTraffic;assert.throws(()=>admission.finish());assert.equal(admission.snapshot().denied,1);assert.equal(sends,1);
+ }
+ const absent=createRetainedBokRefundAdmission({config,approval,account});assert.throws(()=>absent.assertRequest(observed,url));
+ const admission=createRetainedBokRefundAdmission({config,approval,account});admission.observe({type:'admit',transaction:tx});const wrong={...observed,body:JSON.stringify({method:'eth_sendTransaction',params:[{...tx,value:'0x1'}]})};assert.throws(()=>admission.assertRequest(wrong,url));assert.equal(admission.snapshot().outerSends,0);
+ const replay=createRetainedBokRefundAdmission({config,approval,account});replay.observe({type:'admit',transaction:tx});replay.assertRequest(observed,url);assert.throws(()=>replay.assertRequest(observed,url));assert.equal(replay.snapshot().outerSends,1);
+});
+
+test('current Ready export unlock accepts keys only and refuses stale recovery journals before import',async t=>{
+ const {inspectMetaMaskAggregateReadiness:inspect}=await import('./t04-metamask.mjs'),{runInNewContext}=await import('node:vm');
+ const directory=await fs.mkdtemp(path.join(os.tmpdir(),'t04-ready-export-'));t.after(()=>fs.rm(directory,{recursive:true}));await fs.writeFile(path.join(directory,'initial-recovery.json'),'{}',{mode:0o600});
+ for(const payload of [{claims:[],journals:[]},{claims:[],journals:[{stale:true}]},{claims:[{}],journals:[]},{claims:[]}]){
+  const events=[],controls=Object.fromEntries(['Unlock','Import recovery','Recover funding'].map(name=>[name,{or:()=>({first:()=>({waitFor:async()=>{}})}),isVisible:async()=>true,click:async()=>events.push(name),waitFor:async()=>events.push(name)}]));
+  const dialog={getByRole:(_,{name})=>controls[name],getByLabel:()=>({waitFor:async()=>events.push('runtime-ready'),fill:async()=>{},setInputFiles:async()=>events.push('file')})};
+  const page={getByRole:role=>role==='dialog'?dialog:{click:async()=>{}},evaluate:async(fn,args)=>runInNewContext(`(${fn})`,{window:{BillboardWalletBackup:{decrypt:async()=>payload}}})(args)};
+  const run=inspect({page,control:{recoveryDirectory:directory,password:'synthetic'},mark:()=>{},keysOnly:true});
+  if(payload.claims.length===0&&payload.journals?.length===0){assert.equal(await run,'funding');assert.deepEqual(events,['Unlock','runtime-ready','file','Import recovery','Recover funding']);}
+  else{await assert.rejects(run,/keys-only/);assert.deepEqual(events,['Unlock','runtime-ready']);}
+ }
+});
+
+
+test('Ready export original claim requires exact current network receipt and canonical block',async()=>{
+ const hash='0x'+'1a'.repeat(32);const {verifyRetainedClaimReceipt:verify}=await import('./t04-metamask.mjs'),rollup='0x'+'11'.repeat(20),blockHash='0x'+'22'.repeat(32),control={walletConfig:{config:{network:{chainId:'31337',rollupVersion:'1',rollupAddress:rollup}}}};
+ const fixture=()=>({getNodeInfo:async()=>({l1ChainId:31337,rollupVersion:1}),getL1ContractAddresses:async()=>({rollupAddress:rollup}),getTxReceipt:async tx=>({txHash:tx,status:'proven',executionResult:'success',blockNumber:10,blockHash}),getBlockData:async n=>{assert.equal(n,10);return {blockHash};}});
+ assert.deepEqual(await verify({control,transactionHash:hash,node:fixture()}),{transactionHash:hash,blockNumber:10,blockHash,canonical:true});
+ for(const mutate of [n=>n.getNodeInfo=async()=>({l1ChainId:1,rollupVersion:1}),n=>n.getL1ContractAddresses=async()=>({rollupAddress:'0x'+'33'.repeat(20)}),n=>n.getBlockData=async()=>null,n=>n.getBlockData=async()=>({blockHash:hash}),n=>{const read=n.getTxReceipt;n.getTxReceipt=async tx=>({...await read(tx),status:'pending'});},n=>{const read=n.getTxReceipt;n.getTxReceipt=async tx=>({...await read(tx),executionResult:'app_logic_reverted'});},n=>{const read=n.getTxReceipt;n.getTxReceipt=async tx=>({...await read(tx),txHash:blockHash});}]){const node=fixture();mutate(node);await assert.rejects(verify({control,transactionHash:hash,node}));}
+});
+
+
+test('cold retained account wait uses the original finite owner remainder without extending it',async()=>{
+ const {inspectMetaMaskAggregateReadiness:inspect,retainedBokRemaining}=await import('./t04-metamask.mjs');let now=1000,waited;
+ const remaining=retainedBokRemaining(106000,()=>now),controls=Object.fromEntries(['Unlock','Import recovery','Recover funding'].map(name=>[name,{or:()=>({first:()=>({waitFor:async()=>{}})}),isVisible:async()=>true,click:async()=>{if(name==='Import recovery')now+=15000;},waitFor:async options=>{assert.equal(name,'Recover funding');waited=options.timeout;}}]));
+ const dialog={getByRole:(_,{name})=>controls[name],getByLabel:()=>({fill:async()=>{},setInputFiles:async()=>{}})},page={getByRole:role=>role==='dialog'?dialog:{click:async()=>{}}};
+ await inspect({page,control:{password:'synthetic',recoveryDirectory:'/private/recovery'},mark:()=>{},remaining});assert.equal(waited,90000);now=106000;await assert.rejects(inspect({page,control:{password:'synthetic',recoveryDirectory:'/private/recovery'},mark:()=>{},remaining}),/deadline exhausted/);
+});
+
+
+test('keys-only retained unlock rejects any historical journal file before opening the profile UI',async()=>{
+ const {inspectMetaMaskAggregateReadiness:inspect}=await import('./t04-metamask.mjs');let opened=false;
+ await assert.rejects(inspect({page:{getByRole(){opened=true;throw Error('must not open');}},control:{},mark:()=>{},keysOnly:true,recoveryFile:'/private/old-released.json'}),/historical journal/);assert.equal(opened,false);
+});
+
+test('refund-only approval binds the exact existing withdrawal and preserves prior recovery files',async()=>{
+ const {validateRetainedBokApproval}=await import('./t04-metamask.mjs'),{createHash}=await import('node:crypto'),f=retainedReleaseFixture();
+ const approval={...f.approval,journey:'refund',releaseTransactionHash:hash,withdrawalTransactionHash:'0x'+'12'.repeat(32)};approval.contentSha256=createHash('sha256').update(approval.content).digest('hex');
+ assert.deepEqual(validateRetainedBokApproval(approval,f.control),approval);
+ for(const change of [a=>delete a.withdrawalTransactionHash,a=>a.withdrawalTransactionHash=null,a=>a.journey='withdraw',a=>a.releaseTransactionHash=null]){const bad=structuredClone(approval);change(bad);assert.throws(()=>validateRetainedBokApproval(bad,f.control));}
+});
+test('refund-only reopened workflow waits for existing refund surface, not missing funding navigation',async t=>{
+ const {inspectMetaMaskAggregateReadiness:inspect}=await import('./t04-metamask.mjs'),dir=await fs.mkdtemp(path.join(os.tmpdir(),'refund-unlock-'));t.after(()=>fs.rm(dir,{recursive:true,force:true}));await fs.writeFile(path.join(dir,'initial-recovery.json'),'{}');
+ const waited=[];const element=name=>({or(){return this;},first(){return this;},async waitFor(options){waited.push([name,options?.timeout]);},async isVisible(){return name==='Unlock'||name==='Review Ethereum refund';},async click(){},async fill(){},async setInputFiles(){}}),dialog={getByRole:(role,o)=>element(o?.name??role),getByLabel:n=>element(n)};
+ const result=await inspect({page:{getByRole:(r,o)=>r==='dialog'?dialog:element(o.name),evaluate:async()=>true},control:{password:'synthetic',recoveryDirectory:dir},mark:()=>{},keysOnly:true,refundOnly:true,remaining:()=>321});
+ assert.equal(result,'refund');assert(waited.some(x=>x[0]==='Review Ethereum refund'&&x[1]===321));assert(!waited.some(x=>x[0]==='Recover funding'));
+});
+test('readonly refund guard refuses sends even with an otherwise authorized original account',async()=>{
+ const {installMetaMaskBokRefundGuard}=await import('./t04-metamask.mjs'),{runInNewContext}=await import('node:vm');let sends=0;const events=[],provider={request:async r=>{if(r.method==='eth_chainId')return '0x7a69';sends++;}},window={__bokRefundObserve:async e=>events.push(e)};
+ runInNewContext(`(${installMetaMaskBokRefundGuard})`,{window,__testMetaMask:provider,Date,structuredClone})({config:{},approval:{expiresAt:Date.now()+1000},account:'unused',readOnly:true});
+ assert.equal(await provider.request({method:'eth_chainId'}),'0x7a69');await assert.rejects(provider.request({method:'eth_sendTransaction',params:[{}]}));assert.equal(sends,0);assert.equal(events.length,1);assert.equal(events[0].type,'denied');
+});
+test('actual refund preparation projection never calls confirm and clears quote on success and finite failure',async()=>{
+ const {prepareRetainedBokRefund}=await import('./t04-metamask.mjs'),{runInNewContext}=await import('node:vm');let confirms=0,cancels=0,error=null;
+ const session={application:{readAccountStatus:async()=>{if(error)throw error;}},withdrawal:{prepare:async()=>{if(error)throw error;return {amount:'10',recipient:'account',maximumGasWei:'100',estimatedGasWei:'40'};},confirm:async()=>confirms++,cancel(){cancels++;}}};
+ // Replace only the browser module import with the already-created labelled session.
+ const fn=runInNewContext(`(${prepareRetainedBokRefund.toString().replace("await import('/wallet/runtime.mjs')",'runtimeModule')})`,{runtimeModule:{loadRollingWalletRuntime:async()=>({createSession:async()=>session})}});
+ const good=await fn({maximumGasWei:'100',amount:'10',recipient:'account'});assert.equal(good.passed,true);assert.equal(good.prepare.estimatedGasWei,'40');
+ error=Object.assign(new TypeError('PRIVATE_SENTINEL'),{code:'ROLLING_WITHDRAWAL_RECOVERY_REQUIRED',stack:'TypeError PRIVATE_SENTINEL\n at original (http://localhost/wallet/wallet-session.mjs:73:11)'});
+ const bad=await fn({maximumGasWei:'100',amount:'10',recipient:'account'});assert.equal(bad.accountStatus.code,'ROLLING_WITHDRAWAL_RECOVERY_REQUIRED');assert.equal(bad.prepare.source,'wallet-session.mjs:73:11');assert(!JSON.stringify(bad).includes('PRIVATE_SENTINEL'));assert.equal(cancels,2);assert.equal(confirms,0);
+ error=new Error('BB_JOURNAL_INVALID');const journal=await fn({maximumGasWei:'100',amount:'10',recipient:'account'});assert.equal(journal.accountStatus.code,'BB_JOURNAL_INVALID');error=new Error('BB_JOURNAL_INVALID PRIVATE_SENTINEL');assert.equal((await fn({maximumGasWei:'100',amount:'10',recipient:'account'})).accountStatus.code,'unknown');assert.equal(confirms,0);
+});
+test('readonly refund owner uses120 seconds only in explicitly selected retained aggregate mode',async()=>{
+ const {runInNewContext}=await import('node:vm'),source=await fs.readFile(new URL('./run-bounded-browser-check.mjs',import.meta.url),'utf8'),choose=runInNewContext('('+source.match(/export function browserCheckDeadline\([\s\S]*?\n}/)[0].replace('export ','')+')',{assert});
+ const input={walletExtension:true,aggregate:true,retainedBok:'true',refundReadOnly:'true'};assert.equal(choose(input),120000);assert.equal(choose({...input,refundReadOnly:'false'}),540000);
+ for(const change of [{retainedBok:'false'},{aggregate:false},{networkOnly:'true'},{exportOnly:'true'},{refundReadOnly:'yes'}])assert.throws(()=>choose({...input,...change}));
+});
+
+test('refund readiness stops immediately at a visible initialization failure without retrying account creation',async t=>{
+ const {inspectMetaMaskAggregateReadiness:inspect}=await import('./t04-metamask.mjs'),dir=await fs.mkdtemp(path.join(os.tmpdir(),'refund-failed-init-'));t.after(()=>fs.rm(dir,{recursive:true,force:true}));await fs.writeFile(path.join(dir,'initial-recovery.json'),'{}');
+ const clicked=[];const element=name=>({or(){return this;},first(){return this;},async waitFor(){},async isVisible(){return name==='Unlock'||name==='alert';},async click(){clicked.push(name);},async fill(){},async setInputFiles(){}}),dialog={getByRole:(role,o)=>element(o?.name??role),getByLabel:n=>element(n)};
+ const result=await inspect({page:{getByRole:(role,o)=>role==='dialog'?dialog:element(o?.name??role),evaluate:async()=>true},control:{password:'synthetic',recoveryDirectory:dir},mark:()=>{},keysOnly:true,refundOnly:true,remaining:()=>300});
+ assert.equal(result,'initialization-failed');assert(!clicked.includes('Connect private account'));assert(!clicked.includes('Check account recovery'));
+});
+test('latest full refund export reopens through ordinary import with readonly guard and unchanged accounting',async()=>{
+ const {reopenRetainedBokRefund}=await import('./t04-metamask.mjs');const clicks=[],imports=[],guards=[];let state='fee-ready';
+ const balances={complete:true,available:'90',allocated:'0',reserved:'0',charged:'0',refunded:'100',requests:1};
+ const element=name=>({or(){return this;},first(){return this;},async waitFor(){},async isVisible(){return true;},async isEnabled(){return true;},async click(){clicks.push(name);},async fill(){},async setInputFiles(file){imports.push(file);}}),dialog={getByRole:(role,o)=>element(o?.name??role),getByLabel:n=>element(n),getByText:n=>element(n)};
+ const page={getByRole:(role,o)=>role==='dialog'?dialog:element(o.name),async reload(){},async waitForFunction(){},async evaluate(fn,arg){
+  if(fn.name==='installMetaMaskBokRefundGuard'){guards.push(arg);return;}
+  if(fn.name==='inspectRetainedBokRecovery')return {transactionHash:hash};
+  if(fn.toString().includes('application.readAccountStatus'))return {status:state};
+  if(fn.toString().includes('app.readBokAccounting'))return balances;
+ }};
+ const input={page,control:{password:'synthetic',walletConfig:{config:{}}},approval:{withdrawalTransactionHash:hash},filename:'/private/latest-refunded.json',account:'account',mark:()=>{},remaining:()=>300,expectedBalances:balances};
+ await reopenRetainedBokRefund(input);assert.deepEqual(imports,['/private/latest-refunded.json']);assert.equal(guards.length,1);assert.equal(guards[0].readOnly,true);assert(clicks.includes('Import recovery'));assert(!clicks.some(x=>String(x).startsWith('Confirm')));
+ state='recovering';await assert.rejects(reopenRetainedBokRefund(input));assert(!clicks.some(x=>String(x).startsWith('Confirm')));
+});
+
+test('full backup import paid guard reports denied signatures to the same Node refund owner before the later guard is installed',async()=>{
+ const {bindRetainedRefundObservation,installMetaMaskPaidRecoveryGuard,createRetainedBokRefundAdmission}=await import('./t04-metamask.mjs'),{runInNewContext}=await import('node:vm');const window={},admission=createRetainedBokRefundAdmission({config:{},approval:{},account:'unused'});let calls=0;
+ await bindRetainedRefundObservation({exposeFunction:async(name,fn)=>{window[name]=fn;}},admission);
+ const provider={request:async()=>{calls++;return '0x7a69';}};runInNewContext(`(${installMetaMaskPaidRecoveryGuard})`,{window,__testMetaMask:provider})();// Before full import and before the later refund guard.
+ await assert.rejects(provider.request({method:'eth_signTypedData_v4',params:[]}));assert.equal(calls,0);assert.equal(admission.snapshot().denied,1);assert.throws(()=>admission.finish(),/forbidden refund/);
+ await assert.rejects(provider.request({method:'eth_sendTransaction',params:[]}));assert.equal(admission.snapshot().denied,2);
+});
