@@ -1,7 +1,41 @@
 // Operator lifecycle, injected chain APIs; no provider or board implementation coupling.
 import fs from 'node:fs/promises';
+import {constants as fsConstants} from 'node:fs';
 import {dirname} from 'node:path';
-import {randomBytes} from 'node:crypto';
+import {randomBytes,createHash} from 'node:crypto';
+
+/** Local operator input only. Never pass parser/OS messages or receipt contents
+ * to a public service. The hash binds supplied evidence, not provider attestation. */
+export async function readHostedPrivateFile(file,maximumBytes=8388608){
+ let handle;
+ try{
+  if(typeof file!=='string'||!file.startsWith('/')||!Number.isSafeInteger(maximumBytes)||maximumBytes<1||maximumBytes>8388608)throw Error();
+  handle=await fs.open(file,fsConstants.O_RDONLY|fsConstants.O_NOFOLLOW|fsConstants.O_NONBLOCK);
+  const before=await handle.stat();if(!before.isFile()||before.uid!==process.getuid()||(before.mode&0o777)!==0o600||before.nlink!==1||before.size<1||before.size>maximumBytes)throw Error();
+  const bytes=Buffer.alloc(before.size+1);let count=0;
+  while(count<bytes.length){const read=await handle.read(bytes,count,bytes.length-count,count);if(!read.bytesRead)break;count+=read.bytesRead;}
+  const after=await handle.stat();if(count!==before.size||after.size!==before.size||after.mtimeMs!==before.mtimeMs||after.ctimeMs!==before.ctimeMs)throw Error();
+  return bytes.subarray(0,count);
+ }catch{throw Error('Invalid private hosted recovery file');}
+ finally{await handle?.close();}
+}
+
+export async function readHostedBillingReceipt(file){
+ try{
+  const input=JSON.parse((await readHostedPrivateFile(file,65536)).toString('utf8'));
+  const keys=['schemaVersion','binding','callId','inputDigest','billing','evidenceFile','evidenceSha256'];
+  if(!input||Array.isArray(input)||Object.keys(input).sort().join()!==keys.sort().join()||input.schemaVersion!==1||!Number.isSafeInteger(input.callId)||input.callId<0||input.callId>=64||! /^[0-9a-f]{64}$/.test(input.inputDigest)||! /^[0-9a-f]{64}$/.test(input.evidenceSha256))throw Error();
+  const evidence=await readHostedPrivateFile(input.evidenceFile,1048576);
+  if(createHash('sha256').update(evidence).digest('hex')!==input.evidenceSha256)throw Error();
+  const {evidenceFile,...receipt}=input;return receipt;
+ }catch{throw Error('Invalid original hosted billing receipt');}
+}
+
+export function hostedCommand(args){
+ if(args.length===1&&typeof args[0]==='string'&&!args[0].startsWith('--'))return {kind:'serve',configFile:args[0]};
+ if(args.length===3&&args[0]==='--reconcile-billing'&&args.slice(1).every(x=>typeof x==='string'&&x.startsWith('/')))return {kind:'reconcile-billing',configFile:args[1],receiptFile:args[2]};
+ throw Error('Use CONFIG or --reconcile-billing ABSOLUTE_CONFIG ABSOLUTE_RECEIPT');
+}
 export async function fileState(file) {
  const directory=dirname(file),created=await fs.mkdir(directory,{recursive:true,mode:0o700});
  // Also persist newly created directory entries, up to the first existing parent.

@@ -56,6 +56,18 @@ test('normal per-call accounting, duplicate complete and finish; no prompt/reply
  await h.create().finish();assert.equal(h.counts.finish,1);
  assert.doesNotMatch(JSON.stringify(h.store.read()),/PRIVATE_SENTINEL|UNTRUSTED_REPLY|messages|human|account/);
 });
+test('original billing reconciliation resumes received and settled records without duplicate chain or provider calls',async()=>{
+ const h=fixture();h.controls.execute=()=>{throw Error('lost response');};await assert.rejects(h.create().complete(0,input),/unknown/);
+ h.controls.after=method=>{if(method==='reconcile')h.controls.inspectUnknown=true;};
+ await assert.rejects(h.create().reconcile(0,bill()),/Chain operation unresolved/);assert.equal(h.store.read().privateBok.calls[0].phase,'received');
+ assert.equal(h.counts.reconcile,1);assert.equal(h.counts.execute,1);
+ h.controls.inspectUnknown=false;delete h.controls.after;
+ const result=await h.create().reconcile(0,bill());assert.equal(result.replyAvailable,false);assert.equal(result.billing.charge,'6');
+ assert.equal(h.store.read().privateBok.calls[0].phase,'settled');assert.equal(h.r.refunded,994n);
+ assert.deepEqual(await h.create().reconcile(0,bill()),result);
+ await assert.rejects(h.create().reconcile(0,bill({providerId:'another-response'})),/Original provider billing changed/);
+ await h.create().finish();assert.deepEqual(h.counts,{execute:1,quote:1,reserve:1,settle:0,close_uncertain:1,reconcile:1,finish:0});
+});
 test('multiple explicit calls are bounded and previous input immutable',async()=>{
  const h=fixture(),runner=h.create({limits:{maxCalls:2}});
  await runner.complete(0,input);await runner.complete(1,input);

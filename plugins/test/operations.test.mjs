@@ -1,5 +1,27 @@
 import test from 'node:test';import assert from 'node:assert/strict';
 import {recordedTransaction} from '../operations.mjs';
+test('hosted billing CLI accepts only one local receipt command and leaves service invocation unchanged',async()=>{
+ const {hostedCommand}=await import('../operations.mjs');assert.deepEqual(hostedCommand(['config.json']),{kind:'serve',configFile:'config.json'});
+ assert.deepEqual(hostedCommand(['--reconcile-billing','/private/config.json','/private/receipt.json']),{kind:'reconcile-billing',configFile:'/private/config.json',receiptFile:'/private/receipt.json'});
+ for(const args of [[],['--reconcile-billing'],['--reconcile-billing','config','receipt'],['--reconcile-billing','/config','/receipt','extra'],['--other','/config','/receipt']])assert.throws(()=>hostedCommand(args));
+});
+test('original hosted billing evidence is bounded owner-only regular input with exact hash',async()=>{
+ const fs=await import('node:fs/promises'),os=await import('node:os'),path=await import('node:path'),{createHash}=await import('node:crypto');
+ const {readHostedBillingReceipt,readHostedPrivateFile}=await import('../operations.mjs');const directory=await fs.mkdtemp(path.join(os.tmpdir(),'hosted-billing-'));
+ const receiptFile=path.join(directory,'receipt.json'),evidenceFile=path.join(directory,'evidence.json'),bytes=Buffer.from('ORIGINAL_PRIVATE_PROVIDER_EVIDENCE');
+ const input={schemaVersion:1,binding:{},callId:0,inputDigest:'ab'.repeat(32),billing:{},evidenceFile,evidenceSha256:createHash('sha256').update(bytes).digest('hex')};
+ const write=async value=>fs.writeFile(receiptFile,JSON.stringify(value),{mode:0o600});
+ try{
+  await fs.writeFile(evidenceFile,bytes,{mode:0o600});await write(input);
+  const result=await readHostedBillingReceipt(receiptFile);assert.equal(result.evidenceSha256,input.evidenceSha256);assert.equal(Object.hasOwn(result,'evidenceFile'),false);assert(!JSON.stringify(result).includes('ORIGINAL_PRIVATE'));
+  for(const change of [{evidenceSha256:'cd'.repeat(32)},{callId:64},{inputDigest:'bad'},{extra:true},{schemaVersion:2}]){await write({...input,...change});await assert.rejects(readHostedBillingReceipt(receiptFile),error=>error.message==='Invalid original hosted billing receipt');}
+  await write(input);await fs.chmod(evidenceFile,0o644);await assert.rejects(readHostedBillingReceipt(receiptFile));await fs.chmod(evidenceFile,0o600);
+  const link=path.join(directory,'link');await fs.symlink(evidenceFile,link);await assert.rejects(readHostedPrivateFile(link));
+  await fs.link(evidenceFile,path.join(directory,'hardlink'));await assert.rejects(readHostedPrivateFile(evidenceFile));await fs.unlink(path.join(directory,'hardlink'));
+  await assert.rejects(readHostedPrivateFile(evidenceFile,3));await assert.rejects(readHostedPrivateFile(directory));
+  await fs.writeFile(receiptFile,'PRIVATE_SENTINEL invalid json');await assert.rejects(readHostedBillingReceipt(receiptFile),error=>!String(error).includes('PRIVATE_SENTINEL'));
+ }finally{await fs.rm(directory,{recursive:true,force:true});}
+});
 test('saved signed transaction is reused after interruption before broadcast',async()=>{
  let value={operations:{}},prepares=0,broadcasts=0;
  const args={store:{read:()=>value,write:async x=>{value=x;}},name:'deposit',identity:'scope',prepare:async()=>{prepares++;return {hash:'h',raw:'same'};},broadcast:async r=>{broadcasts++;assert.equal(r.raw,'same');assert.equal(value.operations.deposit.hash,'h');if(broadcasts===1)throw Error('offline');},wait:async()=>({status:1})};

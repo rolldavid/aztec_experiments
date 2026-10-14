@@ -16,7 +16,7 @@ import {loadContractArtifact} from '@aztec-labs/stdlib/abi';
 import {validateDescriptor} from './protocol.mjs';
 import {aztecBoardPort,rollingBoardPort} from './aztec.mjs';
 import {aztecEscrowPort} from './escrow.mjs';
-import {startEscrowService,runPrivateBokRequest} from './escrow-service.mjs';
+import {startEscrowService,runPrivateBokRequest,reconcileHostedBilling} from './escrow-service.mjs';
 import {meteredModel} from './metering.mjs';
 import {veniceMeteredProvider} from './venice-metered.mjs';
 import {createAgent} from './agent.mjs';
@@ -156,6 +156,42 @@ export function hostedRecoveryScanner({directory,scope,pluginId,board,lease}){
  return scan;
 }
 
+/** One local billing reconciliation with the same stopped-service lease and
+ * operator. No provider, repository, container or public listener is opened. */
+export async function runHostedBillingReconciliation({config,receiptFile,env=process.env}){
+ let lease,wallet,result,failed=false,cleanupFailed=false;
+ try{
+  const {rollingOperatorConfig,rollingPxeOptions,operatorNodeFetch,fileState,readHostedBillingReceipt,readHostedPrivateFile}=await import('./operations.mjs');
+  const descriptor=validateDescriptor(config.descriptor,config.descriptor.scope);assert.equal(config.applicationProfile,'rolling');assert.equal(descriptor.applicationProfile,'rolling');
+  const scope=descriptor.scope;
+  rollingOperatorConfig({applicationProfile:'rolling',development:config.development,nodeUrl:config.nodeUrl,ethereumUrl:config.ethereumUrl,chainId:scope.chainId,rollupVersion:scope.rollupVersion,rollupAddress:scope.rollupAddress,boardAddress:scope.boardAddress,operatorAddress:config.operatorAddress});
+  assert(typeof config.stateDirectory==='string'&&path.isAbsolute(config.stateDirectory));assert.equal(await fs.realpath(config.stateDirectory),config.stateDirectory);
+  const directory=await fs.lstat(config.stateDirectory);assert(directory.isDirectory()&&directory.uid===process.getuid()&&(directory.mode&0o777)===0o700);
+  lease=await acquireHostedLease(config.stateDirectory);
+  const receipt=await readHostedBillingReceipt(receiptFile),b=receipt.binding;
+  assert(b&&Object.keys(b).sort().join()==='escrow,network,pluginId,postId,requestId,target');
+  const field=value=>typeof value==='string'&&/^0x[0-9a-f]{64}$/.test(value)&&BigInt(value)>0n;
+  assert(field(b.requestId)&&field(b.target)&&field(b.postId)&&field(config.pluginId));
+  assert.equal(b.network,`eip155-${scope.chainId}:aztec-${scope.rollupVersion}:${scope.rollupAddress}`);assert.equal(b.escrow,scope.receiver);assert.equal(b.pluginId,config.pluginId);
+  const id=createHash('sha256').update(JSON.stringify({scope,requestId:b.requestId,target:b.target})).digest('hex'),file=path.join(config.stateDirectory,id+'.json');
+  const original=JSON.parse((await readHostedPrivateFile(file)).toString('utf8'));assert.deepEqual(original.hostedPrivateBok?.binding,b);
+  const store=await fileState(file);assert.deepEqual(store.read(),original);
+  const key=env.PLUGIN_QUERY_API_KEY;if(!config.development)assert(typeof key==='string','Operator query capability required');
+  const [{jsonStringify},{loadRollingArtifacts},{createPrivateBokEscrow}]=await Promise.all([import('@aztec-labs/foundation/json-rpc'),import('../prover/rolling-artifacts.mjs'),import('./private-bok-escrow.mjs')]);
+  const node=createAztecNodeClient(config.nodeUrl,{fetch:operatorNodeFetch({endpoint:config.nodeUrl,key,serialize:jsonStringify})});
+  const info=await node.getNodeInfo();assert.equal(info.realProofs,!config.development);assert.equal(String(info.l1ChainId),scope.chainId);assert.equal(String(info.rollupVersion),scope.rollupVersion);assert.equal(String(info.l1ContractAddresses.rollupAddress).toLowerCase(),scope.rollupAddress);
+  const actor=await readHostedActor(config),pxe=await rollingPxeOptions(config.development,async()=>({backend:BackendType.NativeUnixSocket,...await prepareNativeRuntime({}),threads:1}));
+  wallet=await EmbeddedWallet.create(node,{ephemeral:true,pxe});
+  const account=await wallet.createSchnorrInitializerlessAccount(actor.secret,actor.salt,actor.signingKey,'public Bok operator');assert.equal(String(account.address),config.operatorAddress);assert(await getFeeJuiceBalance(account.address,node)>0n);
+  const [,bokRaw]=loadRollingArtifacts(),artifact=loadContractArtifact(bokRaw);
+  const escrow=await createPrivateBokEscrow({node,wallet,artifact,address:scope.receiver,operator:String(account.address),board:scope.boardAddress,network:scope,requestId:b.requestId,target:b.target,store,lease,development:config.development,proofMode:config.development?'disabled':'real'});
+  result=await reconcileHostedBilling({receipt,escrow,store,lease,limits:config.limits});
+ }catch{failed=true;}
+ finally{for(const close of [()=>wallet?.stop(),()=>lease?.close()])try{await close();}catch{cleanupFailed=true;}}
+ if(failed||cleanupFailed)throw Error(cleanupFailed?'Hosted billing recovery failed; owned cleanup requires attention':'Hosted billing recovery unresolved; preserve original receipt and journal');
+ return result;
+}
+
 /** Explicit Rolling composition; the legacy account escrow is never selected. */
 export async function runRollingHostedService({config,env=process.env,onError=()=>{}}){
  const [{rollingOperatorConfig,rollingPxeOptions,operatorNodeFetch,fileState},{loadRollingArtifacts},{jsonStringify},
@@ -240,9 +276,16 @@ export async function runRollingHostedService({config,env=process.env,onError=()
 }
 
 if(process.argv[1]&&import.meta.url===pathToFileURL(process.argv[1]).href){
-  let config;try{config=JSON.parse(await fs.readFile(process.argv[2],'utf8'));}catch{throw Error('Invalid service configuration');}
+  const {hostedCommand,readHostedPrivateFile}=await import('./operations.mjs');const command=hostedCommand(process.argv.slice(2));
+  let config;try{config=JSON.parse(command.kind==='reconcile-billing'?(await readHostedPrivateFile(command.configFile,1048576)).toString('utf8'):await fs.readFile(command.configFile,'utf8'));}catch{throw Error('Invalid service configuration');}
+  if(command.kind==='reconcile-billing'){
+   try{console.log(JSON.stringify(await runHostedBillingReconciliation({config,receiptFile:command.receiptFile})));}
+   catch(error){console.error(error.message);process.exitCode=1;}
+   finally{await Barretenberg.destroySingleton();BarretenbergSync.destroySingleton();}
+  }else{
   const service=await runHostedService({config});console.log('Plugin service listening on',service.address);
   let closing=false;async function close(){if(closing)return;closing=true;try{await service.close();}finally{await Barretenberg.destroySingleton();BarretenbergSync.destroySingleton();}}
   const shutdown=()=>close().then(()=>process.exit(0),()=>process.exit(1));
   process.once('SIGINT',shutdown);process.once('SIGTERM',shutdown);
+  }
 }

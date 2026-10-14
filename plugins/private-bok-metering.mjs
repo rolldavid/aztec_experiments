@@ -193,9 +193,13 @@ export function privateBokMetering({provider,escrow,store,identity,limits={}}){
   resume:exclusive(resume),
   reconcile:exclusive(async(id,billing)=>{
    callId(id);const c=callRecord(id);
-   if(!c||!['possibly-sent','fenced'].includes(c.phase))throw Error('No unknown provider call');
+   if(!c||!['possibly-sent','fenced','received','settled'].includes(c.phase))throw Error('No unknown provider call');
    // Trusted operator must obtain this evidence for the ORIGINAL paid call, never make another one.
    const b=billingFor(id,billing);
+   // An interrupted reconciliation may already have saved billing or settled
+   // onchain. Only the exact original record may continue its original intent.
+   if(c.billing&&hash(b)!==hash(measured(c)))throw Error('Original provider billing changed');
+   if(['received','settled'].includes(c.phase))return settle(id);
    await fence(id);await setCall(id,{phase:'received',billing:b});return settle(id);
   }),
   finish:exclusive(async()=>{

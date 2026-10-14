@@ -3,6 +3,38 @@ import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import {privateBokMetering} from './private-bok-metering.mjs';
 import {packText} from './protocol.mjs';
+import {validateVeniceBilling} from './venice-metered.mjs';
+
+/** Trusted local operator capability; not an HTTP action. The service must be
+ * stopped and its original exclusive lease held throughout this one-shot call. */
+export async function reconcileHostedBilling({receipt,escrow,store,lease,limits}){
+ await lease.assertHeld();
+ const original=store.read(),saved=original.hostedPrivateBok,journal=original.privateBok;
+ assert(saved&&['running','accounting-recovery','accounted-without-reply'].includes(saved.phase),'No unresolved hosted billing');
+ assert.deepEqual(receipt.binding,saved.binding,'Original hosted binding changed');
+ const identity={network:saved.binding.network,escrow:saved.binding.escrow,requestId:saved.binding.requestId,target:saved.binding.target};
+ assert.deepEqual(journal?.identity,identity,'Original metering identity changed');
+ assert.equal(receipt.schemaVersion,1);assert(Number.isSafeInteger(receipt.callId)&&receipt.callId>=0&&receipt.callId<64);
+ assert(typeof receipt.inputDigest==='string'&&/^[0-9a-f]{64}$/.test(receipt.inputDigest));assert(typeof receipt.evidenceSha256==='string'&&/^[0-9a-f]{64}$/.test(receipt.evidenceSha256));
+ const call=journal.calls?.[receipt.callId];assert(call&&call.inputDigest===receipt.inputDigest,'Original provider input changed');
+ assert(['possibly-sent','fenced','received','settled'].includes(call.phase),'No unknown provider call');
+ const q=call.quote;assert(q,'Original quote missing');
+ const billing=validateVeniceBilling(receipt.billing,{...q,inputPrice:BigInt(q.inputPrice),outputPrice:BigInt(q.outputPrice),cachePrice:q.cachePrice===null?null:BigInt(q.cachePrice),maximum:BigInt(q.maximum)});
+ if(call.billing)assert.deepEqual(call.billing,billing,'Original provider billing changed');
+ assert(!Object.values(journal.calls).some(other=>other.id!==receipt.callId&&other.billing?.providerId===billing.providerId),'Provider response already accounted');
+ const recovery={callId:receipt.callId,inputDigest:receipt.inputDigest,evidenceSha256:receipt.evidenceSha256,billing};
+ if(saved.billingRecovery)assert.deepEqual(saved.billingRecovery,recovery,'Original billing recovery changed');
+ const checkedStore={read:()=>store.read(),write:async value=>{await lease.assertHeld();await store.write(value);}};
+ const deny=async()=>{throw Error('Provider calls forbidden during billing recovery');};
+ const metering=privateBokMetering({provider:{quote:deny,execute:deny},escrow,store:checkedStore,identity,limits});
+ // Retain the original evidence before any chain action. The metering journal
+ // independently persists exact reconciliation intents before their sole sends.
+ if(!saved.billingRecovery)await checkedStore.write({...original,hostedPrivateBok:{...saved,phase:'accounting-recovery',billingRecovery:recovery}});
+ const result=await metering.reconcile(receipt.callId,billing);assert.equal(result.replyAvailable,false);
+ await lease.assertHeld();await metering.finish();await lease.assertHeld();
+ await checkedStore.write({...store.read(),hostedPrivateBok:{...store.read().hostedPrivateBok,phase:'accounted-without-reply'}});
+ return {status:'accounted-without-reply',replyAvailable:false,billingReceipt:billing.receipt,charge:billing.charge};
+}
 /** On-chain state owns work. The bounded in-memory queue never resumes paid calls. */
 export async function startEscrowService({descriptor,escrow,board,run,host='127.0.0.1',port=8787,onError=console.error,pollMs=2000,concurrency=2,profile='legacy',recoverPending=async()=>[]}){
  if(!['legacy','rolling'].includes(profile))throw Error('Invalid service profile');
@@ -88,6 +120,7 @@ export async function runPrivateBokRequest({request,board,escrow,store,provider,
  }};
  const metering=privateBokMetering({provider:guardedProvider,escrow,store,identity,limits});
  if(saved?.phase==='finished')return {status:'finished',replayed:false};
+ if(saved?.phase==='accounted-without-reply')return {status:'accounted-without-reply',replayed:false};
  if(saved&& !['reply-intent','reply-confirmed'].includes(saved.phase))throw Error('Hosted request unresolved; reconcile original journal without another paid call');
  if(!saved){
   assert(!current.replied&&current.usable,'Invocation no longer usable');

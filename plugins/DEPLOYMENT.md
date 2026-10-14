@@ -540,3 +540,52 @@ For development only, use chain31337 with `development: true`, native node
 separate loopback artifact/board origins. No application cryptographic code is
 changed. A complete independently operated service, real model billing and real
 proof testnet campaign remain acceptance work.
+
+### Original provider billing recovery (local operator only)
+
+A lost provider response is not a zero-cost call. Stop the hosted service and
+verify that its requests, wallet and original lease have closed before using:
+
+```
+node plugins/main.mjs --reconcile-billing /absolute/private/rolling-hosted.json /absolute/private/original-billing.json
+```
+
+Use the same deployment config, operator, state directory and request journal.
+The command refuses an existing lease; it never steals a lock or starts a second
+owner. It opens only the normal node/operator wallet and canonical escrow port.
+It needs operator transaction fees and the production query capability where
+applicable, but no provider credential, GitHub access, Docker runtime or public
+listener. Development remains native proof-disabled; testnet retains real proofs.
+
+The receipt file is a private JSON object with exactly `schemaVersion: 1`,
+`binding`, `callId`, `inputDigest`, `billing`, `evidenceFile` and `evidenceSha256`.
+Copy the original six-field `hostedPrivateBok.binding` from that private journal
+(`network`, `escrow`, `requestId`, `target`, `postId`, `pluginId`), its integer call
+ID and original input digest. Obtain the billing facts for that original provider
+call: `providerId`, `modelId`, `promptTokens`, `completionTokens`, `cachedTokens`,
+`inputPrice`, `outputPrice`, `cachePrice`, `charge`, and the normalized `receipt`
+when recorded. The prices and charge use the existing decimal-string units;
+token counts are integers. The command checks these facts against the original
+frozen quote, cost arithmetic, reservation and receipt digest. It rejects a
+changed saved receipt or evidence digest on continuation.
+
+`evidenceFile` is an absolute path to the original independently obtained provider
+record, with its exact SHA-256 in `evidenceSha256`. Both files must be owned by
+the operator, regular, non-symlink, single-link files with mode0600. Receipt JSON
+is bounded to64KiB; the evidence file to1MiB. Keep this evidence private. These
+checks authenticate local file continuity and arithmetic, **not independent
+provider attestation**. The trusted operator remains responsible for obtaining
+the genuine original record; do not invent usage or substitute zero for an
+unknown charge. Without that record, retain the reservation as unresolved.
+
+The original billing/evidence is saved before reconciliation. Repeating this
+command inspects the original chain operation and never repeats a provider call
+or an already journaled chain mutation. Pending, unavailable, mismatched or
+reorged receipts remain unresolved. Reconciliation charges only validated usage
+and returns the unused reservation through the existing contract; outstanding
+liabilities cannot be treated as free credit. The successful result is explicitly
+`accounted-without-reply`: no answer is synthesized and no new paid call, bot post,
+Git revision or publication is created. Normal service discovery does not turn
+this terminal accounting record into another agent run. Preserve the private
+receipt, request journal and operator config across restart. Local component
+checks do not qualify actual provider billing or testnet settlement.

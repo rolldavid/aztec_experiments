@@ -1,10 +1,10 @@
 // Labelled controlled canonical-chain/provider ports; no external services or real proofs.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {runPrivateBokRequest,startEscrowService} from '../escrow-service.mjs';
+import {runPrivateBokRequest,startEscrowService,reconcileHostedBilling} from '../escrow-service.mjs';
 import {validateVeniceBilling} from '../venice-metered.mjs';
 import {validateDescriptor,API_VERSION} from '../protocol.mjs';
-import {publishAcceptedRevision,hostedRecoveryScanner} from '../main.mjs';
+import {publishAcceptedRevision,hostedRecoveryScanner,runHostedBillingReconciliation,acquireHostedLease} from '../main.mjs';
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
@@ -35,7 +35,7 @@ function fixture(){
  for(const method of ['reserve','settle','close_uncertain','reconcile','finish','publish_reply'])escrow[method]=async(...args)=>{
   const op=args.pop();events.push(method);assert(!ops.has(op.operationId),'No repeated mutator');
   if(method==='reserve'){row.available-=args[2];row.reserved=args[2];}
-  if(method==='settle'||method==='reconcile'){row.charged+=args[2];row.available+=row.reserved-args[2];row.reserved=0n;row.sequence++;row.receipt=args[3];}
+  if(method==='settle'||method==='reconcile'){row.charged+=args[2];if(method==='reconcile'){row.refunded+=row.reserved-args[2];row.state=4;}else row.available+=row.reserved-args[2];row.reserved=0n;row.sequence++;row.receipt=args[3];}
   if(method==='close_uncertain'){row.state=3;row.refunded+=row.available;row.available=0n;}
   if(method==='finish'){row.refunded+=row.available;row.available=0n;row.state=4;}
   if(method==='publish_reply'){assert.equal(saved.hostedPrivateBok.phase,'reply-intent');assert.equal(row.reserved,0n);current.replied=true;}
@@ -60,6 +60,66 @@ test('unknown provider call remains fenced across hosted restart without another
  const x=fixture();x.control.timeout=true;await assert.rejects(x.run(),/unknown/);assert.equal(x.row.state,3);assert.equal(x.row.reserved,110n);
  x.control.timeout=false;await assert.rejects(x.run(),/unresolved/);assert.deepEqual(x.events,['reserve','paid','close_uncertain']);
  assert(!JSON.stringify(x.store.read()).includes('PRIVATE_PROVIDER_ERROR'));
+});
+
+async function unknownBillingFixture(){
+ const x=fixture();x.control.timeout=true;await assert.rejects(x.run(),/unknown/);
+ const saved=x.store.read(),call=saved.privateBok.calls[0];
+ const billing=validateVeniceBilling({providerId:'original-receipt',modelId:'fixture',promptTokens:4,completionTokens:2,cachedTokens:0,inputPrice:'1000000000',outputPrice:'1000000000',cachePrice:null,charge:'6'}, {...call.quote,inputPrice:1000000000n,outputPrice:1000000000n,maximum:110n});
+ const receipt={schemaVersion:1,binding:structuredClone(saved.hostedPrivateBok.binding),callId:0,inputDigest:call.inputDigest,billing,evidenceSha256:'ab'.repeat(32)};
+ const lease={assertHeld:async()=>assert(!x.control.leaseLost)};
+ return {...x,receipt,recover:value=>reconcileHostedBilling({receipt:value??receipt,escrow:x.args.escrow,store:x.store,lease})};
+}
+test('trusted original billing closes accounting without reply or another provider call',async()=>{
+ const x=await unknownBillingFixture();assert.equal(x.row.reserved,110n);assert.equal(x.row.refunded,890n);
+ const result=await x.recover();assert.equal(result.status,'accounted-without-reply');assert.equal(result.replyAvailable,false);assert.equal(result.charge,'6');
+ assert.equal(x.row.refunded,994n);assert.equal(x.row.charged,6n);assert.equal(x.row.reserved,0n);assert.equal(x.row.state,4);
+ assert.deepEqual(x.events,['reserve','paid','close_uncertain','reconcile']);assert.equal(x.current.replied,false);
+ assert.deepEqual(await x.recover(),result);assert.equal((await x.run()).status,'accounted-without-reply');
+ assert.deepEqual(x.events,['reserve','paid','close_uncertain','reconcile']);assert.equal(x.store.read().hostedPrivateBok.phase,'accounted-without-reply');
+});
+test('trusted billing rejects changed scope input cost receipt and original evidence before chain mutation',async()=>{
+ for(const mutate of [r=>r.binding.target=f(99),r=>r.binding.postId=f(99),r=>r.callId=1,r=>r.inputDigest='cc'.repeat(32),r=>r.billing.charge='0',r=>r.billing.receipt=f(99),r=>r.billing.inputPrice='0',r=>r.evidenceSha256='invalid']){
+  const x=await unknownBillingFixture(),r=structuredClone(x.receipt),before=structuredClone(x.store.read());mutate(r);
+  await assert.rejects(x.recover(r));assert.deepEqual(x.store.read(),before);assert.deepEqual(x.events,['reserve','paid','close_uncertain']);assert.equal(x.row.reserved,110n);
+ }
+ const x=await unknownBillingFixture();await x.recover();const changed={...x.receipt,evidenceSha256:'cd'.repeat(32)};
+ await assert.rejects(x.recover(changed),/recovery changed/);assert.deepEqual(x.events,['reserve','paid','close_uncertain','reconcile']);
+});
+test('interrupted billing reconciliation resumes original chain operation and never republishes a reply',async()=>{
+ const x=await unknownBillingFixture(),inspect=x.args.escrow.inspectOperation;let hidden=true;
+ x.args.escrow.inspectOperation=async id=>{const result=await inspect(id);return hidden&&result.method==='reconcile'?{status:'pending'}:result;};
+ await assert.rejects(x.recover(),/Chain operation unresolved/);assert.equal(x.store.read().hostedPrivateBok.phase,'accounting-recovery');
+ assert.equal(x.store.read().privateBok.calls[0].phase,'received');assert.equal(x.current.replied,false);
+ await assert.rejects(x.recover(),/Chain operation unresolved/);assert.deepEqual(x.events,['reserve','paid','close_uncertain','reconcile']);
+ hidden=false;assert.equal((await x.recover()).status,'accounted-without-reply');assert.equal(x.row.refunded,994n);
+ assert.deepEqual(x.events,['reserve','paid','close_uncertain','reconcile']);
+});
+test('billing recovery retains original lease and never treats reply recovery as lost billing',async()=>{
+ const x=await unknownBillingFixture();x.control.leaseLost=true;await assert.rejects(x.recover());assert.deepEqual(x.events,['reserve','paid','close_uncertain']);
+ x.control.leaseLost=false;x.store.read().hostedPrivateBok.phase='reply-confirmed';await assert.rejects(x.recover(),/No unresolved/);assert.deepEqual(x.events,['reserve','paid','close_uncertain']);
+});
+test('one-shot billing owner refuses the active service lease before SDK or evidence access',async()=>{
+ const fs=await import('node:fs/promises'),os=await import('node:os'),path=await import('node:path');const directory=await fs.mkdtemp(path.join(os.tmpdir(),'billing-owner-'));
+ const scope={chainId:'31337',rollupVersion:'1',rollupAddress:'0x'+'1'.repeat(40),boardAddress:f(1),receiver:f(2)};
+ const config={applicationProfile:'rolling',development:true,nodeUrl:'http://127.0.0.1:1/',ethereumUrl:'http://127.0.0.1:2/',operatorAddress:f(3),stateDirectory:directory,pluginId:f(4),descriptor:{applicationProfile:'rolling',protocol:API_VERSION,scope,funding:{protocol:'private-bok-usdc/v1',portalAddress:'0x'+'2'.repeat(40),tokenAddress:'0x'+'3'.repeat(40)}}};
+ const lease=await acquireHostedLease(directory);
+ try{await assert.rejects(runHostedBillingReconciliation({config,receiptFile:'/nonexistent/private-input',env:{}}),/preserve original receipt/);await lease.assertHeld();assert.equal((await fs.readdir(directory)).join(),'hosted.lock');}
+ finally{await lease.close();}
+ try{await assert.rejects(runHostedBillingReconciliation({config,receiptFile:'/nonexistent/private-input',env:{}}),/preserve original receipt/);assert.deepEqual(await fs.readdir(directory),[]);}
+ finally{await fs.rm(directory,{recursive:true,force:true});}
+});
+test('billing recovery persists original receipt in the actual file store across an interrupted owner',async()=>{
+ const fs=await import('node:fs/promises'),os=await import('node:os'),path=await import('node:path'),{fileState}=await import('../operations.mjs');
+ const x=await unknownBillingFixture(),directory=await fs.mkdtemp(path.join(os.tmpdir(),'billing-journal-')),file=path.join(directory,'request.json');const lease=await acquireHostedLease(directory);
+ let hidden=true;const inspect=x.args.escrow.inspectOperation;x.args.escrow.inspectOperation=async id=>{const result=await inspect(id);return hidden&&result.method==='reconcile'?{status:'pending'}:result;};
+ try{
+  const store=await fileState(file);await store.write(x.store.read());
+  const run=async()=>reconcileHostedBilling({receipt:x.receipt,escrow:x.args.escrow,store:await fileState(file),lease});
+  await assert.rejects(run(),/unresolved/);const retained=(await fileState(file)).read();assert.equal(retained.hostedPrivateBok.phase,'accounting-recovery');assert.deepEqual(retained.hostedPrivateBok.billingRecovery.billing,x.receipt.billing);
+  hidden=false;assert.equal((await run()).status,'accounted-without-reply');assert.equal((await fileState(file)).read().hostedPrivateBok.phase,'accounted-without-reply');
+  await run();assert.deepEqual(x.events,['reserve','paid','close_uncertain','reconcile']);assert.equal(x.row.refunded,994n);assert.equal((await fs.stat(file)).mode&0o777,0o600);
+ }finally{await lease.close();await fs.rm(directory,{recursive:true,force:true});}
 });
 test('reply receipt loss permits only inspection then finish, never provider or reply retransmission',async()=>{
  const x=fixture();x.control.unknownReply=true;await assert.rejects(x.run(),/Reply transaction unresolved/);assert.equal(x.store.read().hostedPrivateBok.phase,'reply-intent');
