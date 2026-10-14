@@ -58,7 +58,10 @@ function snapshot(input,options){
  check(typeof p.restart==='boolean'&&(!p.restart||p.expected===null));
  check(typeof p.proofsEnabled==='boolean'&&['proposed','checkpointed','proven','finalized'].includes(p.tier));
  if(p.expected!==null){p.expected=exact(p.expected,['epoch','sequence']);check(typeof p.expected.epoch==='string'&&/^[0-9a-f]{64}$/.test(p.expected.epoch));integer(p.expected.sequence,Number.MAX_SAFE_INTEGER);}
- if(p.block!==null){p.block=exact(p.block,['blockNumber','blockHash','fields','headerFields']);integer(p.block.blockNumber,0xffffffff,1);hex(p.block.blockHash);p.block.fields=fields(p.block.fields,24575,7);p.block.headerFields=fields(p.block.headerFields,23,23);}
+ if(p.block!==null){const block=value=>{const b=exact(value,['blockNumber','blockHash','fields','headerFields']);integer(b.blockNumber,0xffffffff,1);hex(b.blockHash);b.fields=fields(b.fields,24575,7);b.headerFields=fields(b.headerFields,23,23);return b;};
+  if(Array.isArray(p.block)){integer(p.block.length,32,1);const values=p.block;check(Reflect.ownKeys(values).length===values.length+1);p.block=Array.from({length:values.length},(_,i)=>{const d=Object.getOwnPropertyDescriptor(values,String(i));check(d&&'value'in d);return block(d.value);});check(p.block.every((b,i)=>b.fields.length===7&&(i===0||b.blockNumber===p.block[i-1].blockNumber+1)));}
+  else p.block=block(p.block);
+ }
  const {contextGuard}=exact(options,['contextGuard']);check(typeof contextGuard==='function');return {p,guard:contextGuard};
 }
 // One cursor per exact scope. Generation invalidation is O(1); obsolete scoped
@@ -114,9 +117,9 @@ export async function runRollingPreferenceRecovery(pxe,input,options){
    await guard();
    const {meta,state:loaded}=await binding.store.load(key,context.changeSetId);
    await guard();
-   const authenticate=async block=>{
+   const authenticate=async(block,register=validate=>frame.validators.push(validate))=>{
     const checkBlock=async()=>{await canonical();const raw=await pxe.node.getBlockData(block.blockNumber);check(raw&&raw.blockHash.toString()===block.blockHash);const h=BlockHeader.fromBuffer(BlockHeader.prototype.toBuffer.call(raw.header));check((await h.hash()).toString()===block.blockHash&&h.toFields().every((f,i)=>f.toString()===block.headerFields[i]));await guard();return true;};
-    const verified=await authenticateCompactBlock({fields:block.fields,headerFields:block.headerFields,expectedBlockHash:block.blockHash,assertCanonical:checkBlock});frame.validators.push(checkBlock);check(verified.blockNumber===block.blockNumber);return verified;
+    const verified=await authenticateCompactBlock({fields:block.fields,headerFields:block.headerFields,expectedBlockHash:block.blockHash,assertCanonical:checkBlock});register(checkBlock);check(verified.blockNumber===block.blockNumber);return verified;
    };
    const ingest=async(block,first,logCount)=>{
     // A separate operation starts empty. Replaying a former page must freshly
@@ -208,6 +211,15 @@ export async function runRollingPreferenceRecovery(pxe,input,options){
     const values=result.result.map(x=>x.toBigInt());check((values[0]===0n||values[0]===1n)&&values[1]===1n&&values[2]>=0n&&values[2]<(1n<<64n));
     head={initialized:values[0]===1n,schema:1,revision:String(values[2]),digest:String(values[3])};
     check(head.initialized?!!state.candidate&&values[2]>0n&&values[3]>0n:!state.candidate&&values[2]===0n&&values[3]===0n);
+   }else if(Array.isArray(p.block)){
+    // Only fully empty authenticated physical blocks may share one cursor commit.
+    // Nonempty blocks retain the original eight-log page/validator path.
+    check(state.nextLog===0&&state.pending.length===0&&p.block[0].blockNumber===state.nextBlock&&p.block.at(-1).blockNumber<=anchorRecord.blockNumber);
+    const validators=[];
+    for(let offset=0;offset<p.block.length;offset+=4){const blocks=p.block.slice(offset,offset+4),verified=await rollingPreferenceReadBatch(blocks.map(block=>async()=>authenticate(block,validate=>validators.push(validate))));
+     for(let i=0;i<verified.length;i++)check(verified[i].blockNumber===state.nextBlock+i&&verified[i].txCount===0&&verified[i].ciphertexts.length===0);state.nextBlock+=verified.length;
+    }
+    frame.validators.push(async()=>{for(let offset=0;offset<validators.length;offset+=4)await rollingPreferenceReadBatch(validators.slice(offset,offset+4));});
    }else{
     check(p.block&&p.block.blockNumber===state.nextBlock);
     const block=p.block;
@@ -228,7 +240,7 @@ export async function runRollingPreferenceRecovery(pxe,input,options){
  }catch{throw Error('PXE_PREFERENCE_RECOVERY_FAILED');}
 }
 `; }
-export const PREFERENCE_PAGE_RECOVERY_PIN = Object.freeze({generated:'rolling-preference-recovery.mjs',sha256:'b88264df9cde252a1558991b668aee2b349ac8bf118184ab48f560fec8a42c54'});
+export const PREFERENCE_PAGE_RECOVERY_PIN = Object.freeze({generated:'rolling-preference-recovery.mjs',sha256:'437a296acf2d579ddbabb6b1ea5fed33ae165f2020065fb07dbcc69699a2432a'});
 function imports() { return `
 // @ts-ignore Exact reviewed JavaScript module is copied by the pinned installer.
 import { authenticateCompactBlock as rollingPageCompact } from '../rolling-preference-compact.mjs';

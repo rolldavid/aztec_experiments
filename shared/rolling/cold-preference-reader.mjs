@@ -72,6 +72,7 @@ export function createRollingColdPreferenceReader(input){
   check(typeof contextGuard==='function'&&['proposed','checkpointed','proven','finalized'].includes(tier));
   const trusted=sdk.isTrustedPrivateNode.bind(sdk),routed=sdk.isPrivatePXEForNode.bind(sdk),inspect=sdk.inspectTrustedNode.bind(sdk);
   const sync=pxe.sync.bind(pxe),process=pxe.processRollingPreferenceRecovery.bind(pxe),getBlock=node.getBlockData.bind(node),fetchBlock=compact.read.bind(compact);
+  const fetchBlocks=typeof compact.readMany==='function'?compact.readMany.bind(compact):null;
   const poseidon=sdk.poseidon2HashWithSeparator.bind(sdk),Fr=sdk.Fr;
   const account=hex(owner.toString()),board=hex(deployment.board.address.toString()),classId=hex(deployment.board.instance.currentContractClassId.toString());
   check(deployment.board.instance.originalContractClassId.toString()===classId);hex(expectedArtifactHash);
@@ -145,7 +146,16 @@ export function createRollingColdPreferenceReader(input){
     const isNew=!cache||cache.delivery.epoch!==observed.epoch||cache.delivery.database!==observed.database||observed.sequence!==cache.delivery.sequence;
     if(!isNew&&!observed.complete){
      let block=null;
-     if(observed.nextBlock<=observed.anchor.blockNumber){const blockHash=await canonical(observed.nextBlock),wire=await checked(()=>fetchBlock({number:observed.nextBlock,hash:blockHash},{signal}));check(wire.number===observed.nextBlock&&wire.hash===blockHash);block={blockNumber:wire.number,blockHash:wire.hash,fields:wire.fields,headerFields:wire.headerFields};}
+     if(observed.nextBlock<=observed.anchor.blockNumber){
+      const count=fetchBlocks&&observed.nextLog===0?Math.min(32,observed.anchor.blockNumber-observed.nextBlock+1):1,selectors=[];
+      for(let offset=0;offset<count;offset+=4){const group=await Promise.allSettled(Array.from({length:Math.min(4,count-offset)},async(_,i)=>{const number=observed.nextBlock+offset+i;return {number,hash:await canonical(number)};}));const failed=group.find(r=>r.status==='rejected');if(failed)throw failed.reason;selectors.push(...group.map(r=>r.value));}
+      const wires=count>1?await checked(()=>fetchBlocks(selectors,{signal})):[await checked(()=>fetchBlock(selectors[0],{signal}))];check(wires.length===count);
+      const blocks=wires.map((wire,i)=>{check(wire.number===selectors[i].number&&wire.hash===selectors[i].hash);return {blockNumber:wire.number,blockHash:wire.hash,fields:wire.fields,headerFields:wire.headerFields};});
+      // This selects a transport batch only. The SDK independently authenticates
+      // every compact root and canonical header before advancing any cursor.
+      let empty=0;if(observed.nextLog===0)while(empty<blocks.length&&blocks[empty].fields.length===7)empty++;
+      block=empty>1?blocks.slice(0,empty):blocks[0];
+     }
      observed=await request({epoch:observed.epoch,sequence:observed.sequence},block);
      check(observed.database===cache.delivery.database&&observed.epoch===cache.delivery.epoch&&observed.sequence===cache.delivery.sequence+1);markers=null;
     }

@@ -157,3 +157,14 @@ test('new anchor resets marker classification and rechecks canonical marker befo
  // New reader captures the instrumented canonical capability; no existing bound capability is replaced.
  const result=await readAll(f.reader());assert.equal(result.preferences.readMarkers.length,1);assert.equal(result.orphanedReadMarkers.length,0);assert(reads>=3);
 });
+test('bounded empty physical history batches preserve encrypted CAS and reduce 64 cursor commits to two',async()=>{
+ const f=fixture();let current={schemaVersion:1,database:'a'.repeat(64),epoch:'b'.repeat(64),sequence:0,anchor:{blockNumber:64,blockHash:hex(74)},nextBlock:1,nextLog:0,records:[],head:null,complete:false},advances=0,batches=[];
+ f.config.compact.readMany=async selectors=>{batches.push(selectors.length);return Promise.all(selectors.map(p=>f.config.compact.read(p)));};
+ f.config.pxe.processRollingPreferenceRecovery=async p=>{
+  if(p.expected){assert.equal(p.expected.sequence,current.sequence);assert.equal(p.expected.epoch,current.epoch);advances++;
+   if(p.block!==null){assert(Array.isArray(p.block));assert.equal(p.block.length,32);assert.equal(p.block[0].blockNumber,current.nextBlock);current={...current,sequence:current.sequence+1,nextBlock:current.nextBlock+p.block.length};}
+   else current={...current,sequence:current.sequence+1,complete:true,head:{initialized:false,schema:1,revision:'0',digest:'0'}};
+  }return structuredClone(current);
+ };
+ const reader=f.reader();await reader.read();const first=await reader.read();assert.equal(first.progress.nextBlock,33);assert.equal(first.preferences,undefined);const second=await reader.read();assert.equal(second.progress.nextBlock,65);assert.equal(second.preferences,undefined);const complete=await reader.read();assert.equal(complete.complete,true);assert.deepEqual(complete.preferences.bookmarks,[]);assert.equal(complete.progress.processedRevision,'0');assert.equal(advances,3);assert.deepEqual(batches,[32,32]);assert.equal(f.db.size,1);
+});

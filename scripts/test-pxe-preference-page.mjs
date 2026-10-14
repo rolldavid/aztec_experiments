@@ -1044,6 +1044,21 @@ if(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1') {
         const start=await r.page.processRollingPreferenceRecovery(recoveryInput(f),{contextGuard:async()=>{}});assert.equal(start.sequence,0);assert.equal(start.complete,false);
       });
     });
+    await test('actual SDK empty batch authenticates every physical block and advances one durable sequence',async t=>{
+      const f=await acirFixture(t),r=await f.receiver({recovery:true}),start=await r.page.processRollingPreferenceRecovery(recoveryInput(f),{contextGuard:async()=>{}});
+      const blocks=await Promise.all([1,2,3].map(n=>f.compact(n))),base={...recoveryInput(f),expected:{epoch:start.epoch,sequence:start.sequence}};
+      for(const block of [[blocks[0],blocks[2]],[blocks[0],{...blocks[1],blockHash:hex(999)}],[...blocks,await f.compact(4)]])await assert.rejects(r.page.processRollingPreferenceRecovery({...base,block},{contextGuard:async()=>{}}),/PXE_PREFERENCE_RECOVERY_FAILED/);
+      assert.deepEqual(await r.page.processRollingPreferenceRecovery(recoveryInput(f),{contextGuard:async()=>{}}),start);
+      const original=r.page.node.getBlockData;let middleReads=0,abort=false;
+      for(const failure of ['middle reorg before commit','account invalidation']){
+       r.page.node.getBlockData=async(...args)=>{const value=await original(...args);if(args[0]===2){middleReads++;if(failure==='account invalidation')abort=true;if(failure==='middle reorg before commit'&&middleReads>=3){const header=BlockHeader.fromBuffer(value.header.toBuffer());header.globalVariables.timestamp++;return {...value,header,blockHash:await header.hash()};}}return value;};
+       try{await assert.rejects(r.page.processRollingPreferenceRecovery({...base,block:blocks},{contextGuard:async()=>{if(abort)throw Error('labelled aborted account');}}),/PXE_PREFERENCE_RECOVERY_FAILED/);}finally{r.page.node.getBlockData=original;abort=false;middleReads=0;}
+       assert.deepEqual(await r.page.processRollingPreferenceRecovery(recoveryInput(f),{contextGuard:async()=>{}}),start);
+      }
+      const next=await r.page.processRollingPreferenceRecovery({...base,block:blocks},{contextGuard:async()=>{}});assert.equal(next.nextBlock,4);assert.equal(next.sequence,1);assert.deepEqual(next.records,[]);assert.equal(next.complete,false);assert.equal(r.page.acirCompleted??0,0);
+      assert.deepEqual(await r.page.processRollingPreferenceRecovery({...base,block:blocks},{contextGuard:async()=>{}}),next);
+      const withRecord=await recoveryStep(f,r,next),complete=await recoveryStep(f,r,withRecord);assert.equal(withRecord.records.length,1);assert.equal(complete.complete,true);assert.equal(complete.head.revision,'1');assert.equal(f.counters.tagQueries,f.tagsBefore);
+    });
     await test('actual ACIR cursor scans empty history then authentic ciphertexts, replays mailbox, gates terminal head',async t=>{
       const f=await acirFixture(t),r=await f.receiver({recovery:true});
       const start=await r.page.processRollingPreferenceRecovery(recoveryInput(f),{contextGuard:async()=>{}});
