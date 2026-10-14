@@ -186,6 +186,13 @@ for(const mode of ['reply','CAS'])test('lost promotion '+mode+' resumes exact en
  const resumed=await f.reader().read();assert.equal(resumed.complete,false);assert.equal(resumed.progress.processedRevision,'2');assert.equal(f.state.promotions,1);
  const result=await readAll(f.reader());assert.deepEqual(result.preferences.bookmarks,['77','88']);assert.equal(f.state.promotions,1);
 });
+test('lost terminal mailbox drains without publishing completion at a known older anchor',async()=>{
+ const f=extensionFixture(),r=f.reader();await r.read();await r.read();await r.read();f.state.failReply=true;
+ await assert.rejects(r.read(),{code:'ROLLING_COLD_PREFERENCES_UNAVAILABLE'});assert.equal(f.current().complete,true);f.extend();
+ const drained=await f.reader().read();assert.equal(drained.complete,false);assert.equal(drained.status,'recovering');assert.equal(drained.preferences,undefined);assert.equal(drained.progress.processedRevision,'2');assert.equal(f.state.promotions,0);
+ const promoted=await f.reader().read();assert.equal(promoted.complete,false);assert.equal(f.state.promotions,1);
+ const complete=await readAll(f.reader());assert.equal(complete.anchor.blockNumber,2);assert.equal(complete.preferences.head.revision,'3');assert.deepEqual(complete.preferences.bookmarks,['77','88']);
+});
 test('lost predecessor encrypted cache cannot resume promoted suffix',async()=>{
  const f=extensionFixture(),r=f.reader();await readAll(r);f.extend();f.state.failPromotionReply=true;await assert.rejects(r.read());f.db.clear();const before=f.state.restarts;
  const result=await f.reader().read();assert.equal(result.complete,false);assert.equal(result.progress.processedRevision,'0');assert.equal(result.progress.nextBlock,1);assert.equal(f.state.restarts,before+1);

@@ -188,7 +188,7 @@ export function createRollingColdPreferenceReader(input){
     // scoped restart, rollback or anchor change cannot publish a stale result.
     let confirmed=await request(null);if(deferredAdvance){const {advance,...prior}=confirmed;check(same(advance,deferredAdvance));await recheck(advance.anchor);confirmed=prior;}check(same(confirmed,observed));await recheck(observed.anchor);
     const progress=Object.freeze({nextBlock:observed.nextBlock,anchorBlock:observed.anchor.blockNumber,processedRevision:prefix.head.revision,markersChecked:markers?.next??0,markersTotal:completed?.readMarkers.length??null});
-    if(!completed||markers.next<completed.readMarkers.length)return Object.freeze({status:'recovering',complete:false,progress});
+    if(deferredAdvance||!completed||markers.next<completed.readMarkers.length)return Object.freeze({status:'recovering',complete:false,progress});
     lastComplete=true;
     return Object.freeze({status:'complete',complete:true,anchor:Object.freeze({...observed.anchor}),preferences:Object.freeze({...completed,readMarkers:Object.freeze(completed.readMarkers.filter((_,i)=>markers.canonical[i]))}),orphanedReadMarkers:Object.freeze(completed.readMarkers.filter((_,i)=>!markers.canonical[i])),progress});
    }catch{throw failure('ROLLING_COLD_PREFERENCES_UNAVAILABLE');}finally{active=null;}
