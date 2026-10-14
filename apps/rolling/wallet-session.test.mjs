@@ -591,8 +591,8 @@ test('claim progress DOM projection accepts only closed step and error vocabular
 import {createUniformBokAccountingReader} from './wallet-session.mjs';
 test('RC22 Bok accounting fetch uses only fixed same-origin uniform pages',async()=>{
  const calls=[],reader=createUniformBokAccountingReader({origin:'https://board.invalid',fetcher:async(...args)=>{calls.push(args);return new Response(JSON.stringify({complete:true}));}});
- assert.deepEqual(await reader({limit:50,cursor:null}),{complete:true});await reader({limit:50,cursor:'page_2'});
- assert.deepEqual(calls.map(([url])=>url),['https://board.invalid/api/bok-accounting?limit=50','https://board.invalid/api/bok-accounting?limit=50&cursor=page_2']);
+ assert.deepEqual(await reader({limit:50,cursor:null}),{complete:true});await reader({limit:50,cursor:'a'.repeat(32)+':'+hex(12).slice(2)+':'+'b'.repeat(16)});
+ assert.deepEqual(calls.map(([url])=>url),['https://board.invalid/api/bok-accounting?limit=50','https://board.invalid/api/bok-accounting?limit=50&cursor='+encodeURIComponent('a'.repeat(32)+':'+hex(12).slice(2)+':'+'b'.repeat(16))]);
  for(const [,options]of calls){assert.equal(options.method,'GET');assert.equal(options.credentials,'omit');assert.equal(options.redirect,'error');assert.equal(options.body,undefined);}
  for(const cursor of ['https://evil.invalid','x&owner=secret',{},''])await assert.rejects(reader({limit:50,cursor}));await assert.rejects(reader({limit:100,cursor:null}));assert.equal(calls.length,2);
 });

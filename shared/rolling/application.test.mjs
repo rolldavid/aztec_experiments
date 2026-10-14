@@ -1209,7 +1209,7 @@ function bokAccountingFixture(ids=[11n]){
  f.state.responses={owned_requests:[...ids,...Array(8-ids.length).fill(0n)]};
  const descriptor={address:hex(5),classId:hex(90),operatorAddress:hex(6),deployer:hex(3),salt:hex(4),deployment:{blockNumber:1,blockHash:hex(42),txHash:hex(40)}};
  const row=id=>({requestId:hex(id),state:'2',sequence:'1',budget:'100',available:'40',reserved:'20',charged:'30',refunded:'10',position:{blockNumber:'1',blockHash:hex(42),txHash:hex(45),txIndexWithinBlock:'0',logIndexWithinTx:String(id)}});
- f.pages=[{schemaVersion:1,scope:{chainId:'31337',rollupVersion:'1',rollupAddress:f.options.deployment.network.rollup,boardAddress:hex(1),bok:descriptor},bokScope:descriptor,checkpoint:{number:1,hash:hex(42)},revision:'epoch:1:1',complete:true,requests:[row(11),row(12)],nextCursor:'next-page'},{schemaVersion:1,scope:{chainId:'31337',rollupVersion:'1',rollupAddress:f.options.deployment.network.rollup,boardAddress:hex(1),bok:descriptor},bokScope:descriptor,checkpoint:{number:1,hash:hex(42)},revision:'epoch:1:1',complete:true,requests:[row(13)],nextCursor:null}];
+ f.pages=[{schemaVersion:1,scope:{chainId:'31337',rollupVersion:'1',rollupAddress:f.options.deployment.network.rollup,boardAddress:hex(1),bok:descriptor},bokScope:descriptor,checkpoint:{number:1,hash:hex(42)},revision:'epoch:1:1',complete:true,requests:[row(11),row(12)],nextCursor:('a'.repeat(32)+':'+hex(12).slice(2)+':'+'b'.repeat(16))},{schemaVersion:1,scope:{chainId:'31337',rollupVersion:'1',rollupAddress:f.options.deployment.network.rollup,boardAddress:hex(1),bok:descriptor},bokScope:descriptor,checkpoint:{number:1,hash:hex(42)},revision:'epoch:1:1',complete:true,requests:[row(13)],nextCursor:null}];
  f.trace=[];f.options.readBokAccountingPage=async input=>{f.trace.push(structuredClone(input));return f.pages[input.cursor===null?0:1];};
  f.options.funding={resolveBokWithdrawal:async()=>({portal:'0x'+'22'.repeat(20),token:'0x'+'44'.repeat(20),recipient:hex(5)}),verifyWithdrawal:async()=>f.state.refunded===true};f.app=f.restart();return f;
 }
@@ -1217,7 +1217,7 @@ async function finishBokAccounting(f){let page=await f.app.readBokAccounting();w
 test('RC22 Bok accounting downloads identical complete public pages for disjoint private owners',async()=>{
  const a=bokAccountingFixture([11n]),b=bokAccountingFixture([13n]),empty=bokAccountingFixture([]);
  const result=await finishBokAccounting(a),other=await finishBokAccounting(b),none=await finishBokAccounting(empty);
- assert.deepEqual(a.trace,b.trace);assert.deepEqual(a.trace,empty.trace);assert.deepEqual(a.trace,[{limit:50,cursor:null},{limit:50,cursor:'next-page'}]);assert.equal(result.available,'1000');assert.equal(result.totals.refunded,'10');assert.equal(result.requests[0].requestId,hex(11));assert.equal(other.requests[0].requestId,hex(13));assert.deepEqual(none.requests,[]);assert.equal(a.state.sends,0);assert(!a.state.privateReads.some(r=>r.name==='request'));
+ assert.deepEqual(a.trace,b.trace);assert.deepEqual(a.trace,empty.trace);assert.deepEqual(a.trace,[{limit:50,cursor:null},{limit:50,cursor:('a'.repeat(32)+':'+hex(12).slice(2)+':'+'b'.repeat(16))}]);assert.equal(result.available,'1000');assert.equal(result.totals.refunded,'10');assert.equal(result.requests[0].requestId,hex(11));assert.equal(other.requests[0].requestId,hex(13));assert.deepEqual(none.requests,[]);assert.equal(a.state.sends,0);assert(!a.state.privateReads.some(r=>r.name==='request'));
 });
 for(const change of ['missing','revision','checkpoint','conservation','order','scope','pxe','cursor'])test('RC22 Bok accounting rejects incomplete or changed '+change,async()=>{
  const f=bokAccountingFixture([11n]),first=await f.app.readBokAccounting();assert.equal(first.complete,false);assert.equal(f.trace.length,0);
@@ -1253,4 +1253,30 @@ for(const defect of ['zero-tail','duplicate','empty-continuation','deployment','
  if(defect==='negative')f.pages[0].requests[0].available='-1';
  if(defect==='noncanonical-cursor')f.pages[0].nextCursor='';
  await assert.rejects(finishBokAccounting(f));assert.equal(f.state.sends,0);
+});
+
+test('RC22 real persistent-index cursor crosses both wallet accounting boundaries and resumes its producer',async t=>{
+ // Real index, decoder, SQLite and cursor MAC. Finite canonical-node data and
+ // the Bok accounting envelope adaptation are labelled doubles, not an archive.
+ const {createRollingPersistentPublicIndex}=await import('./public-index.mjs'),{createRollingPublicSqliteStore}=await import('./public-sqlite.mjs');
+ const {createUniformBokAccountingReader}=await import('../../apps/rolling/wallet-session.mjs');
+ const {getContractClassFromArtifact}=await import('@aztec-labs/stdlib/contract'),{EventSelector,decodeFunctionSignature}=await import('@aztec-labs/stdlib/abi');
+ const {computeLogTag}=await import('@aztec-labs/stdlib/hash'),{PublicLog}=await import('@aztec-labs/stdlib/logs'),{DomainSeparator}=await import('@aztec-labs/constants');
+ const {mkdtempSync,rmSync}=await import('node:fs'),{tmpdir}=await import('node:os'),{join}=await import('node:path');
+ const directory=mkdtempSync(join(tmpdir(),'bok-cursor-')),scope={chainId:'31337',rollupVersion:'1',rollupAddress:'0x'+'11'.repeat(20),boardAddress:hex(42),classId:(await getContractClassFromArtifact(artifact)).id.toString()};
+ const store=createRollingPublicSqliteStore(directory,{scope});t.after(()=>{try{store.close();}finally{rmSync(directory,{recursive:true,force:true});}});
+ const pack=text=>{const b=Buffer.alloc(32*31);Buffer.from(text).copy(b);return Array.from({length:32},(_,i)=>BigInt('0x'+b.subarray(i*31,i*31+31).toString('hex')));};
+ const digest=text=>poseidon2HashWithSeparator([BigInt(Buffer.byteLength(text)),...pack(text)],0x52435431);
+ const log=async(type,payload)=>{const abi=artifact.outputs.structs.events.find(e=>e.path==='RollingBoard::'+type),selector=await EventSelector.fromSignature(decodeFunctionSignature(type,abi.fields));return new PublicLog(AztecAddress.fromBigIntUnsafe(42n),[await computeLogTag(selector.toField(),DomainSeparator.EVENT_LOG_TAG),...encodeArguments({parameters:abi.fields},abi.fields.map(f=>payload[f.name]))]);};
+ const logs=[await log('MainPolicyPublished',{schema:1,version:1,digest:await digest('Rules'),length:5,rules:pack('Rules')})];
+ for(const id of [11,12])logs.push(await log('PostPublished',{schema:1,id,record:{subboard:0,parent:0,root:id,kind:1,name_id:0,reference:0,content_digest:await digest('Post')},timestamp:1,main_policy_version:1,local_policy_version:0,length:4,message:pack('Post')}));
+ const wrap=value=>({toString:()=>value,equals:other=>other.toString()===value});
+ const effect={txHash:wrap(hex(101)),publicLogs:logs,toBuffer:()=>Buffer.concat(logs.map(log=>log.toBuffer()))},block={hash:wrap(hex(42)),header:{globalVariables:{blockNumber:1,timestamp:1n}},body:{txEffects:[effect]}};
+ const node={getNodeInfo:async()=>({l1ChainId:31337,rollupVersion:1,l1ContractAddresses:{rollupAddress:scope.rollupAddress}}),getContract:async()=>({currentContractClassId:scope.classId,originalContractClassId:scope.classId}),getBlockData:async number=>({blockHash:wrap(number===0?hex(41):hex(42)),header:{globalVariables:{blockNumber:number===0?0:1}}}),getBlock:async()=>block,getTxReceipt:async()=>({txHash:wrap(hex(101)),status:'checkpointed',executionResult:'success',blockNumber:1,blockHash:wrap(hex(42))}),getTxEffect:async()=>({data:effect,l2BlockNumber:1,l2BlockHash:wrap(hex(42))})};
+ const index=await createRollingPersistentPublicIndex({node,artifact,scope,deployment:{blockNumber:1,blockHash:hex(42),txHash:hex(101)},storage:store});
+ for(let steps=0;!index.status().complete;steps++){assert(steps<5);await index.step();}
+ const first=index.query('feed',{limit:1});assert.equal(first.nextCursor.length,114);assert.match(first.nextCursor,/^[0-9a-f]{32}:[0-9a-f]{64}:[0-9a-f]{16}$/);
+ const f=bokAccountingFixture([13n]);f.pages[0].nextCursor=first.nextCursor;const urls=[];
+ f.options.readBokAccountingPage=createUniformBokAccountingReader({origin:'https://board.invalid',fetcher:async url=>{urls.push(url);const params=new URL(url).searchParams,cursor=params.get('cursor');assert.equal(params.get('limit'),'50');assert.deepEqual([...params.keys()],cursor?['limit','cursor']:['limit']);const actual=index.query('feed',{limit:1,...(cursor?{cursor}:{})});assert.equal(actual.nextCursor,cursor?null:first.nextCursor);return new Response(JSON.stringify(f.pages[cursor?1:0]));}});
+ f.app=f.restart();const result=await finishBokAccounting(f);assert.equal(result.complete,true);assert.equal(result.requests[0].requestId,hex(13));assert.equal(urls.length,2);assert.equal(new URL(urls[1]).searchParams.get('cursor'),first.nextCursor);assert.equal(f.state.sends,0);
 });

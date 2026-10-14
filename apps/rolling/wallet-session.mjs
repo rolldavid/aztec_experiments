@@ -42,7 +42,7 @@ export async function verifyRollingBokCapability({sdk,node,config,artifact,deplo
 // Fixed public-only acquisition. No private identity/ID/filter can be supplied.
 export function createUniformBokAccountingReader({fetcher=globalThis.fetch,origin=globalThis.location?.origin}={}){
  return async({limit,cursor})=>{
-  if(limit!==50||!(cursor===null||typeof cursor==='string'&&/^[A-Za-z0-9_-]{1,120}$/.test(cursor)))throw fail('ROLLING_BOK_ACCOUNTING_UNAVAILABLE');
+  if(limit!==50||!(cursor===null||typeof cursor==='string'&&/^[0-9a-f]{32}:[0-9a-f]{64}:[0-9a-f]{16}$/.test(cursor)))throw fail('ROLLING_BOK_ACCOUNTING_UNAVAILABLE');
   const url=new URL('/api/bok-accounting',origin);url.searchParams.set('limit','50');if(cursor!==null)url.searchParams.set('cursor',cursor);
   const response=await fetcher(url.href,{method:'GET',credentials:'omit',redirect:'error',cache:'no-store',referrerPolicy:'no-referrer',signal:AbortSignal.timeout(20000)});
   if(!response.ok)throw fail('ROLLING_BOK_ACCOUNTING_UNAVAILABLE');
