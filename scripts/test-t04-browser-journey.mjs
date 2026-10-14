@@ -331,6 +331,7 @@ test('paid MetaMask recovery binds encrypted scope, exact payment and all claim 
  assert.deepEqual(await inspect(),{paymentMatches:true,claimMatches:true,claimConfirmed:true,claimTxHash:claim.txHash,paymentSaved:true,claimPresent:true,attempted:false,workflowPrepared:false,workflowStatus:'confirmed',feeWithinSavedCap:null,explicitClaimReview:false});
  for(const mutate of [x=>x.intent.data='0x5678',x=>x.intent.nonce=2,x=>x.intent.expected.planHash='different',x=>x.relay={transactionHash:'0x'+'ef'.repeat(32)}]){const f=structuredClone(funding);mutate(f);assert.equal((await inspect(f)).paymentMatches,false);}
  assert.equal((await inspect(null)).paymentMatches,false);
+ const paidUsdc={...intent,from:'relayer',nonce:0,value:'0',expected:{...intent.expected,kind:'aggregate-usdc-funding'}},request={...paidUsdc};delete request.nonce;const prior=input.intent;input.intent=paidUsdc;const relayFunding={intent:null,relay:{submitted:true,request,transactionHash:hash},claim:{intentId:'claim'}};assert.equal((await inspect(relayFunding)).paymentMatches,true);assert.equal((await inspect(relayFunding)).claimMatches,true);assert.equal((await inspect({...relayFunding,relay:{...relayFunding.relay,request:{...request,from:'beneficiary'}}})).paymentMatches,false);input.intent=prior;
  for(const mutate of [x=>x.id='another',x=>x.action.type='claim-bok',...['receipt','feeReceipt','bokReceipt'].map(k=>x=>x.action[k].txHash='0x'+'ef'.repeat(32))]){const c=structuredClone(claim);mutate(c);assert.equal((await inspect(funding,c)).claimMatches,false);}
  assert.equal((await inspect(funding,{...claim,status:'submitted'})).claimConfirmed,false);
  assert.equal((await inspect(funding,null)).claimConfirmed,false);
@@ -378,14 +379,14 @@ test('paid recovery diagnostic failures cannot replace the original wait failure
 
 test('paid recovery permits only the exact non-signing MetaMask account permission',async()=>{
  const {installMetaMaskPaidRecoveryGuard}=await import('./t04-metamask.mjs'),{runInNewContext}=await import('node:vm');
- const forwarded=[],denied=[],provider={async request(request){assert.equal(this,provider);forwarded.push(request);return 'selected';}};
- runInNewContext('('+installMetaMaskPaidRecoveryGuard.toString()+')()',{__testMetaMask:provider,window:{__paidRecoveryDenied:async method=>denied.push(method)}});
+ const states=[],forwarded=[],denied=[],provider={async request(request){assert.equal(this,provider);forwarded.push(request);return 'selected';}};
+ runInNewContext('('+installMetaMaskPaidRecoveryGuard.toString()+')()',{__testMetaMask:provider,window:{__paidRecoveryDenied:async method=>denied.push(method),__paidRecoveryPermission:async state=>states.push(state)}});
  const permission={method:'wallet_requestPermissions',params:[{eth_accounts:{}}]};
  assert.equal(await provider.request(permission),'selected');assert.equal(forwarded[0],permission);
  for(const method of ['eth_accounts','eth_requestAccounts','eth_chainId'])assert.equal(await provider.request({method}),'selected');
  for(const params of [undefined,null,[],[{}],[{eth_accounts:null}],[{eth_accounts:[]}],[{eth_accounts:{caveats:[]}}],[{eth_accounts:{},eth_sendTransaction:{}}],[{eth_accounts:{}},{}]])await assert.rejects(provider.request({method:'wallet_requestPermissions',params}),/forbids/);
  for(const method of ['eth_sendTransaction','eth_signTypedData_v4','personal_sign','wallet_switchEthereumChain','wallet_addEthereumChain','wallet_revokePermissions','private payload with spaces'])await assert.rejects(provider.request({method,params:['never forwarded']}),/forbids/);
- assert.equal(forwarded.length,4);assert.equal(denied.length,16);assert.equal(denied.at(-1),'unknown');
+ assert.deepEqual(states,['entered','resolved']);assert.equal(forwarded.length,4);assert.equal(denied.length,16);assert.equal(denied.at(-1),'unknown');
  assert(denied.every(method=>method==='unknown'||/^[A-Za-z][A-Za-z0-9_]{0,63}$/.test(method)));
 });
 
@@ -767,4 +768,13 @@ test('retained unsigned continuation requires explicit USDC export hash and excl
 test('retained unsigned admission rejects nonzero nonces and incomplete original custody',async()=>{
  const {assertMetaMaskUnsignedAdmission:check}=await import('./t04-metamask.mjs');const binding={unsigned:true,journalPresent:true,originalPreserved:true,completeEncryptedExport:true},input={ethereumNonce:0,consentNonce:0n,binding};check(input);
  for(const change of [{ethereumNonce:1},{consentNonce:1n},{ethereumNonce:undefined},{binding:null},...Object.keys(binding).map(key=>({binding:{...binding,[key]:false}}))])assert.throws(()=>check({...input,...change}));
+});
+
+test('aggregate relay status waits for the sole original POST response without another mutation',async()=>{
+ const {observeMetaMaskRelayResponse:observe,pollMetaMaskRelayStatus:poll}=await import('./t04-metamask.mjs');let release,completed=false,gets=0;const response=new Promise(resolve=>release=resolve),post={received:false,status:null},status={received:false,status:null};
+ const waiting=observe({response:()=>response},post).then(()=>{completed=true;});const input={origin:'http://127.0.0.1:8081',planHash:hash,observation:status,fetchImpl:async(url,options)=>{gets++;assert.equal(url,'http://127.0.0.1:8081/api/funding/usdc/status?planHash='+hash);assert.equal(options.method,undefined);return{ok:true,status:200,json:async()=>({scope:'aggregate-funding',status:'succeeded',canonical:true,planHash:hash,transactionHash:hash})};}};
+ assert.equal(await poll({...input,completed}),null);assert.equal(gets,0);release({status:()=>200});await waiting;assert.equal(post.status,200);assert.equal((await poll({...input,completed})).transactionHash,hash);assert.equal(gets,1);
+ for(const code of [400,503]){const observed={};await assert.rejects(observe({response:async()=>({status:()=>code})},observed),/preserve submitted/);assert.equal(observed.status,code);}
+ const observed={};await assert.rejects(observe({response:async()=>null},observed),/preserve submitted/);assert.equal(observed.received,false);
+ const failed={};await assert.rejects(poll({...input,completed:true,observation:failed,fetchImpl:async()=>({status:503,ok:false})}),/preserve submitted/);assert.equal(failed.status,503);assert.equal(gets,1);
 });

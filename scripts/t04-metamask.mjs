@@ -229,7 +229,7 @@ export async function driveMetaMaskAggregateFunding({context,page,walletPage,con
  const initialBalance=await provider.getBalance(account);if(c.asset==='USDC')assert.equal(initialBalance,0n);else assert(initialBalance>=BigInt(a.maximumPaymentWei)+BigInt(a.gasBudgetWei));
  if(c.asset==='USDC'){const token=new Interface(['function balanceOf(address) view returns(uint256)']);const balance=token.decodeFunctionResult('balanceOf',await provider.call({to:scope.bokToken,data:token.encodeFunctionData('balanceOf',[account])}))[0];assert(balance>=BigInt(a.maximumUsdc));}
  const initialNonce=await provider.getTransactionCount(account,'pending');assert.equal(initialNonce,0,'Fresh disposable user only');
- let unsignedApproved=unsignedContinuation===null;let intent=null,hash=null,relayPosts=0,userSends=0,confirmedSignatures=0;const signatures=[],typed=[],pending=[],errors=[];
+ let relayCompleted=false;let unsignedApproved=unsignedContinuation===null;let intent=null,hash=null,relayPosts=0,userSends=0,confirmedSignatures=0;const signatures=[],typed=[],pending=[],errors=[];
  const permission={entered:false,resolved:false,rejected:false};report.aggregatePermission=permission;
  const connectionMethods=new Set(['wallet_requestPermissions','eth_chainId','wallet_switchEthereumChain','eth_requestAccounts','eth_accounts']);
  const connection={entered:null,resolved:null,rejected:null};report.aggregateConnection=connection;
@@ -284,6 +284,7 @@ export async function driveMetaMaskAggregateFunding({context,page,walletPage,con
    const req=route.request();if(req.method()!=='POST')return await route.continue();
    assert(unsignedApproved);assert.equal(c.asset,'USDC');assert.equal(relayPosts,0);assert.equal(signatures.length,2);const body=JSON.parse(req.postData());exactKeys(body,['data']);
    intent=inspectData(body.data,scope.usdcRelayAddress);relayPosts++;await route.continue();
+   report.relayResponse={received:false,status:null};await observeMetaMaskRelayResponse(req,report.relayResponse);relayCompleted=true;
   }catch(error){remember(error);await route.abort();}})();routeTasks.add(task);try{await task;}finally{routeTasks.delete(task);}
  };
  await page.route(c.origin+'/api/funding/usdc',relayRoute);
@@ -326,7 +327,7 @@ export async function driveMetaMaskAggregateFunding({context,page,walletPage,con
   while(Date.now()<expires){
    if(errors.length)throw errors[0];
    if(pending.length){const next=pending.shift();await walletPage.getByTestId('confirm-footer-button').click();if(next==='signature')confirmedSignatures++;}
-   if(c.asset==='USDC'&&intent&&!hash){const response=await fetch(c.origin+'/api/funding/usdc/status?planHash='+intent.expected.planHash,{redirect:'error',signal:AbortSignal.timeout(3000)});assert(response.ok);const status=await response.json();assert.equal(status.planHash,intent.expected.planHash);if(status.transactionHash){assert.match(status.transactionHash,/^0x[0-9a-f]{64}$/);hash=status.transactionHash;}}
+   if(c.asset==='USDC'&&intent&&!hash){report.relayStatus??={received:false,status:null};const status=await pollMetaMaskRelayStatus({origin:c.origin,planHash:intent.expected.planHash,completed:relayCompleted,observation:report.relayStatus});if(status?.transactionHash)hash=status.transactionHash;}
    if(hash){
     const tx=await provider.getTransaction(hash),receipt=await provider.getTransactionReceipt(hash);
     if(tx&&receipt){if(c.asset==='USDC')intent={...intent,nonce:tx.nonce};const verified=await verifyEthereumIntentReceipt(provider,intent,hash);assert.equal(verified.outcome,'success');
@@ -346,6 +347,23 @@ export async function driveMetaMaskAggregateFunding({context,page,walletPage,con
  }finally{await Promise.allSettled([...routeTasks]);report.aggregateAttempts={userSends,relayPosts,signatures:signatures.length,paymentHashObserved:hash!==null};}
  // The route remains installed until the caller closes the context, so a late
  // duplicate payment cannot escape admission during teardown.
+}
+// The trusted relay serializes submit/status. Observe the sole original POST's
+// response before read-only polling; never turn an in-flight busy response into
+// a reason to repeat the payment.
+export async function observeMetaMaskRelayResponse(request,observation){
+ const response=await request.response();observation.received=response!==null;
+ observation.status=response&&[200,400,409,429,500,503].includes(response.status())?response.status():response?'other':null;
+ assert(response?.status()===200,'Original relay response unavailable; preserve submitted journal');
+}
+export async function pollMetaMaskRelayStatus({origin,planHash,completed,observation,fetchImpl=fetch}){
+ assert.equal(typeof completed,'boolean');if(!completed)return null;
+ assert.match(planHash,/^0x[0-9a-f]{64}$/);
+ const response=await fetchImpl(origin+'/api/funding/usdc/status?planHash='+planHash,{redirect:'error',signal:AbortSignal.timeout(3000)});
+ observation.received=true;observation.status=[200,400,409,429,500,503].includes(response.status)?response.status:'other';
+ assert(response.ok,'Original relay status unavailable; preserve submitted journal');const status=await response.json();
+ assert.equal(status.scope,'aggregate-funding');assert.equal(status.planHash,planHash);assert(['absent','unresolved','succeeded','failed'].includes(status.status));assert.equal(typeof status.canonical,'boolean');
+ if(status.transactionHash)assert.match(status.transactionHash,/^0x[0-9a-f]{64}$/);return status;
 }
 export async function saveEncryptedDownload(download,destination,observation){
  assert.equal(download.suggestedFilename(),'rolling-chat-encrypted-recovery.json');assert(!fs.existsSync(destination));
@@ -482,7 +500,8 @@ export function installMetaMaskPaidRecoveryGuard(){
    await window.__paidRecoveryDenied(typeof method==='string'&&/^[A-Za-z][A-Za-z0-9_]{0,63}$/.test(method)?method:'unknown');
    throw Error('Paid recovery forbids another wallet operation');
   }
-  return original(request);
+  const observe=async state=>{try{if(accountSelection&&typeof window.__paidRecoveryPermission==='function')await window.__paidRecoveryPermission(state);}catch{}};
+  await observe('entered');try{const result=await original(request);await observe('resolved');return result;}catch(error){await observe('rejected');throw error;}
  };
 }
 
@@ -614,7 +633,8 @@ export async function driveMetaMaskPaidRecovery({page,walletPage,control:c,provi
  const intent={from:tx.from.toLowerCase(),to:scope.router,chainId:'31337',nonce:tx.nonce,data:tx.data.toLowerCase(),value:String(tx.value),expected};validateAggregateFundingIntent(intent);
  const effect=await verifyEthereumIntentReceipt(provider,intent,transactionHash);assert.equal(effect.outcome,'success');
  const nonce=await provider.getTransactionCount(account,'pending');assert.equal(nonce,c.asset==='ETH'?1:0);
- const attempts={forbiddenWalletCalls:0,deniedMethods:[]};report.paidRecoveryAttempts=attempts;
+ const attempts={forbiddenWalletCalls:0,deniedMethods:[]};report.paidRecoveryAttempts=attempts;const permission={entered:false,resolved:false,rejected:false};report.paidRecoveryPermission=permission;
+ await page.exposeFunction('__paidRecoveryPermission',state=>{assert(['entered','resolved','rejected'].includes(state));permission[state]=true;});
  await page.exposeFunction('__paidRecoveryDenied',method=>{attempts.forbiddenWalletCalls++;if(attempts.deniedMethods.length<16)attempts.deniedMethods.push(typeof method==='string'&&/^[A-Za-z][A-Za-z0-9_]{0,63}$/.test(method)?method:'unknown');});
  await page.evaluate(installMetaMaskPaidRecoveryGuard);
  const readiness=await inspectMetaMaskAggregateReadiness({page,control:c,mark,allowPrepared:reviewPrepared});
@@ -624,7 +644,7 @@ export async function driveMetaMaskPaidRecovery({page,walletPage,control:c,provi
  const openFunding=async()=>{
   await dialog.getByRole('button',{name:'Recover funding',exact:true}).click();
   mark('aggregate-paid-recovery-connect');await dialog.getByRole('button',{name:'Connect MetaMask',exact:true}).click();
-  await confirmMetaMaskRecoveryAccountSelection(walletPage);
+  report.accountSelection=await confirmMetaMaskRecoveryAccountSelection(walletPage,{page,account,chainId:'31337',permission,observe:state=>{report.accountSelectionState=state;}});
   await dialog.getByText('Funding wallet connected. No payment has been sent.',{exact:true}).waitFor();
   assert.equal((await page.evaluate(()=>walletState.ethAccount)).toLowerCase(),account);
  };
