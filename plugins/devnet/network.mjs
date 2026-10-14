@@ -57,12 +57,13 @@ export function validateDevnetResume(record,{fundingAddresses,ports,toolchainHas
   return record;
 }
 // Native JSON avoids materializing gzip+hex RPC copies of the complete history.
-// This separate 2 GiB representation cap preserves the legacy 128 MiB RPC cap.
+// Retained development histories exceed 2 GiB; the bounded 4 GiB file cap
+// streams in 64 KiB chunks and preserves the legacy 128 MiB RPC cap.
 export async function inspectNativeDevnetSnapshot(filename){
  const fd=await fs.open(filename,constants.O_RDONLY|constants.O_NOFOLLOW);
  try{
   const before=await fd.stat();
-  if(!before.isFile()||before.uid!==process.getuid()||(before.mode&0o777)!==0o600||before.size<2||before.size>2147483648)throw Error('Invalid native development snapshot');
+  if(!before.isFile()||before.uid!==process.getuid()||(before.mode&0o777)!==0o600||before.size<2||before.size>4294967296)throw Error('Invalid native development snapshot');
   const hash=createHash('sha256');for await(const chunk of fd.createReadStream({autoClose:false,highWaterMark:65536}))hash.update(chunk);
   const after=await fd.stat(),named=await fs.lstat(filename);
   if(before.dev!==named.dev||before.ino!==named.ino||before.size!==after.size||before.mtimeMs!==after.mtimeMs||before.ctimeMs!==after.ctimeMs)throw Error('Native development snapshot changed');

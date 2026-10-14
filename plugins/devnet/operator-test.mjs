@@ -318,7 +318,7 @@ if(focused){
    const bytes=Buffer.from('{"block":1}');await fs.writeFile(file,bytes,{mode:0o600});assert.deepEqual(await inspectNativeDevnetSnapshot(file),{sha256:createHash('sha256').update(bytes).digest('hex'),bytes:bytes.length});
    await fs.chmod(file,0o644);await assert.rejects(inspectNativeDevnetSnapshot(file));await fs.chmod(file,0o600);
    const link=path.join(dir,'link');await fs.symlink(file,link);await assert.rejects(inspectNativeDevnetSnapshot(link));
-   await fs.truncate(file,2147483649);await assert.rejects(inspectNativeDevnetSnapshot(file));await fs.truncate(file,1);await assert.rejects(inspectNativeDevnetSnapshot(file));
+   await fs.truncate(file,4294967297);await assert.rejects(inspectNativeDevnetSnapshot(file));await fs.truncate(file,1);await assert.rejects(inspectNativeDevnetSnapshot(file));
    const record={...stopped,snapshotFormat:'native-json-v1',snapshotFile:name,snapshotHead:{number:'0x10',hash:'0x'+'a'.repeat(64),pending:'7',proven:'7'}};
    assert.equal(validateDevnetResume(record,{fundingAddresses,ports,toolchainHash}),record);
    for(const change of [{snapshotFormat:'unknown'},{snapshotFile:'../'+name},{snapshotHead:{...record.snapshotHead,proven:'6'}},{snapshotHead:{...record.snapshotHead,hash:'invalid'}}])assert.throws(()=>validateDevnetResume({...record,...change},{fundingAddresses,ports,toolchainHash}));
