@@ -387254,10 +387254,11 @@ Partial Address: ${this.partialAddress.toString()}
   }
   function policy(options) {
     try {
-      const { expectedNetworkScope: s, proofsEnabled, maxLagSeconds = 120 } = options;
+      const { expectedNetworkScope: s, proofsEnabled, maxLagSeconds = 120, readinessTier = "proposed" } = options;
+      if (!["proposed", "checkpointed", "proven", "finalized"].includes(readinessTier)) throw fail4("CONFIG");
       const chainId = decimal(s.chainId, 64), version12 = decimal(s.version, 32), rollup = hex12(s.rollup, 20);
       if (BigInt(rollup) === 0n || typeof proofsEnabled !== "boolean" || !proofsEnabled && chainId !== "31337" || !Number.isSafeInteger(maxLagSeconds) || maxLagSeconds < 1 || maxLagSeconds > 600) throw fail4("CONFIG");
-      return { chainId, version: version12, rollup, proofsEnabled, maxLagSeconds };
+      return { chainId, version: version12, rollup, proofsEnabled, maxLagSeconds, readinessTier };
     } catch {
       throw fail4("CONFIG");
     }
@@ -387323,34 +387324,39 @@ Partial Address: ${this.partialAddress.toString()}
         ]);
         snapshots.push(snapshotDiagnostic(tips, state, stamp));
         const { proposed, checkpointed, proven, finalized } = tips;
+        const selected = tips[p.readinessTier], historical = p.readinessTier !== "proposed";
         const ordered = [finalized, proven, checkpointed, proposed];
         for (let i = 1; i < ordered.length; i++) if (ordered[i - 1].number > ordered[i].number || ordered[i - 1].number === ordered[i].number && ordered[i - 1].hash !== ordered[i].hash) throw unsynced("TIP_ORDER");
         const { latest, latestHash, final, oldest, synced } = state;
         if (!natural(latest) || !natural(final) || !natural(oldest) || typeof synced !== "boolean") throw fail4("UNAVAILABLE");
         if (!synced) throw unsynced("STATE_NOT_SYNCED");
-        if (oldest > checkpointed.number) throw unsynced("CHECKPOINT_PRUNED");
+        if (oldest > checkpointed.number || oldest > selected.number) throw unsynced("CHECKPOINT_PRUNED");
         if (final > latest) throw unsynced("IMPOSSIBLE_FINALITY");
         if (latest === proposed.number && latestHash !== proposed.hash) throw unsynced("SAME_HEIGHT_HASH");
-        if (latest !== proposed.number || final !== finalized.number) {
+        if ((historical ? latest < selected.number || latest > proposed.number : latest !== proposed.number) || final !== finalized.number) {
           if (snapshot2 === 0) continue;
           throw unsynced("METADATA_MISMATCH");
         }
-        if (checkpointed.number !== proposed.number) await readTogether([() => canonical(node2, checkpointed, unsynced, "checkpointed"), () => canonical(node2, proposed, unsynced, "proposed")]);
+        const world = { number: latest, hash: latestHash };
+        if (historical) await readTogether([() => canonical(node2, selected, unsynced, "selected"), () => canonical(node2, world, unsynced, "world")]);
+        else if (checkpointed.number !== proposed.number) await readTogether([() => canonical(node2, checkpointed, unsynced, "checkpointed"), () => canonical(node2, proposed, unsynced, "proposed")]);
         else await canonical(node2, proposed, unsynced, "proposed");
         const suppliedNow = options.nowSeconds, now = suppliedNow === void 0 ? Math.floor(Date.now() / 1e3) : suppliedNow;
         if (!natural(now)) throw fail4("CONFIG");
         const lag = now - Number(stamp);
         if (lag < 0 || lag > p.maxLagSeconds) throw fail4("STALE");
-        await canonical(node2, proposed, unsynced, "final");
+        if (historical) await readTogether([() => canonical(node2, selected, unsynced, "final-selected"), () => canonical(node2, world, unsynced, "final-world")]);
+        else await canonical(node2, proposed, unsynced, "final");
         return Object.freeze({
           ready: true,
           chainId: p.chainId,
           rollupVersion: p.version,
           rollupAddress: p.rollup,
           proofsEnabled: p.proofsEnabled,
-          latestBlockNumber: proposed.number,
-          latestBlockHash: proposed.hash,
+          latestBlockNumber: latest,
+          latestBlockHash: latestHash,
           checkpointedBlockNumber: checkpointed.number,
+          ...historical ? { readinessTier: p.readinessTier, readinessBlockNumber: selected.number, readinessBlockHash: selected.hash } : {},
           finalizedBlockNumber: finalized.number,
           oldestHistoricBlockNumber: oldest,
           syncedL1Timestamp: String(stamp),
@@ -387416,8 +387422,8 @@ Partial Address: ${this.partialAddress.toString()}
       throw fail4("UNAVAILABLE");
     }
   }
-  async function createTrustedPrivateNode({ url: url7, expectedNetworkScope, proofsEnabled = true, allowLocalDev = false, maxLagSeconds = 120 }) {
-    const p = policy({ expectedNetworkScope, proofsEnabled, maxLagSeconds }), host = endpoint(url7, allowLocalDev);
+  async function createTrustedPrivateNode({ url: url7, expectedNetworkScope, proofsEnabled = true, allowLocalDev = false, maxLagSeconds = 120, readinessTier = "proposed" }) {
+    const p = policy({ expectedNetworkScope, proofsEnabled, maxLagSeconds, readinessTier }), host = endpoint(url7, allowLocalDev);
     const rpc = createSafeJsonRpcClient(host, AztecNodeApiSchema, {
       namespaceMethods: "aztec",
       maxBatchSize: 3,
@@ -387435,7 +387441,7 @@ Partial Address: ${this.partialAddress.toString()}
       };
       return [name, { enumerable: true, get: () => method }];
     }))));
-    await inspectTrustedNode(node2, { expectedNetworkScope, proofsEnabled, maxLagSeconds });
+    await inspectTrustedNode(node2, { expectedNetworkScope, proofsEnabled, maxLagSeconds, readinessTier });
     trusted.add(node2);
     return node2;
   }
