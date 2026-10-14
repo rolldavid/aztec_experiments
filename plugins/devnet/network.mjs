@@ -169,11 +169,12 @@ export async function restoreDevelopmentNativeClock(client, head) {
  if(after.number!==head.number||after.hash!==head.hash||after.timestamp!==head.timestamp)throw Error('Native development checkpoint changed during clock restore');
 }
 // A retained multi-gigabyte native snapshot loads before Anvil opens RPC.
-// A verified5.03GB retained snapshot needs34.16s on the development host;
-// reserve60s for native deserialization. Fresh startup keeps its6s budget.
+// The verified6.34GB retained snapshot loaded in55.571s, while two normal
+// starts exceeded60s under variable host load. Reserve120s for this bounded
+// retained startup only; fresh startup keeps6s and application deadlines do not change.
 // One spawned process, bounded read-only polling; no restart or metadata recovery.
 export async function waitForDevelopmentEthereum({rpcUrl,address,child,spawnFailure=()=>null,retainedNative=false,now=()=>performance.now(),wait=pause,fetchImpl=fetch}) {
- const started=now(),deadline=started+(retainedNative?60000:6000);
+ const started=now(),deadline=started+(retainedNative?120000:6000);
  const check=()=>{const error=spawnFailure();if(error)throw error;if(child.exitCode!==null||child.signalCode!==null)throw Error('Local Ethereum exited during startup');};
  let attempts=0;
  while(now()<deadline){
