@@ -384,7 +384,7 @@ export async function exportMetaMaskUnsignedRecovery({page,control,mark,report})
  await dialog.getByText('Backup and account security',{exact:true}).click();await dialog.getByLabel('New recovery password',{exact:true}).fill(control.password);
  const [download]=await Promise.all([page.waitForEvent('download'),dialog.getByRole('button',{name:'Download encrypted recovery',exact:true}).click()]);
  report.unsignedExport.downloadStarted=true;
- const destination=path.join(control.recoveryDirectory,'unsigned-recovery-export-1.json');
+ const destination=path.join(control.recoveryDirectory,'unsigned-recovery-export-2.json');
  await saveEncryptedDownload(download,destination,report.unsignedExport);
  assert(fs.statSync(destination).size<=34*1024*1024);
  Object.assign(report.unsignedExport,await page.evaluate(inspectMetaMaskUnsignedExport,{...binding,phase:'verify',envelope:JSON.parse(fs.readFileSync(destination,'utf8')),password:control.password}));
