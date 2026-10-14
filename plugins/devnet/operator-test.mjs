@@ -259,4 +259,14 @@ if(focused){
   }finally{await fs.rm(dir,{recursive:true,force:true});}
  });
 
+ test('actual pinned SwapRouter02 and Quoter ABI dependency readback uses inherited factory getter',async()=>{
+  const {Contract,Interface}=await import('ethers');const {readLiquidityArtifacts,verifyDevelopmentV3}=await import('./liquidity.mjs');
+  const artifacts=await readLiquidityArtifacts(),address=n=>'0x'+n.toString(16).padStart(40,'0'),factory=address(1),weth=address(2),calls=[];let wrong=false;
+  function contract(artifact,at){const abi=new Interface(artifact.abi);return new Contract(at,abi,{call:async tx=>{const fn=abi.parseTransaction({data:tx.data});calls.push(fn.name);assert.equal(fn.args.length,0);assert(['factory','WETH9'].includes(fn.name));return abi.encodeFunctionResult(fn.name,[fn.name==='factory'?(wrong?address(9):factory):weth]);}});}
+  const swap=contract(artifacts.SwapRouter02,address(3)),quoter=contract(artifacts.QuoterV2,address(4));
+  assert.equal(swap.factoryV3,undefined,'factoryV3 is only a constructor input, not a callable method');
+  await verifyDevelopmentV3({swap,quoter,factory,weth});assert.deepEqual(calls,['factory','WETH9','factory','WETH9']);
+  wrong=true;await assert.rejects(verifyDevelopmentV3({swap,quoter,factory,weth}),/identity differs/);
+ });
+
 }

@@ -175,6 +175,11 @@ export async function prepareDevelopmentRelay({directory,provider,stage,scope,ci
 /** Real V3 pools and actual exact-output quotes. Seed prices are declared local
  * inventory policy; only the Quoter's canonical reads become funding quotes.
  */
+export async function verifyDevelopmentV3({swap,quoter,factory,weth}) {
+ // SwapRouter02 calls the constructor argument factoryV3; its inherited
+ // PeripheryImmutableState public getter is factory(), as in QuoterV2.
+ if((await swap.factory()).toLowerCase()!==factory||(await swap.WETH9()).toLowerCase()!==weth||(await quoter.factory()).toLowerCase()!==factory||(await quoter.WETH9()).toLowerCase()!==weth)throw Error('V3 dependency identity differs');
+}
 export async function deployDevelopmentLiquidity(args){
  const {provider,signer,artifacts,scope}=args,{deploy,call,stage}=await localContext(args),owner=signer.address.toLowerCase();
  for(const name of ['collateralPortal','feePortal','bokPortal','feeToken','bokToken','feeAssetHandler','privateFpc'])if(!new RegExp('^0x[0-9a-f]{'+(name==='privateFpc'?64:40)+'}$').test(scope[name]??'')||BigInt(scope[name])===0n)throw Error('Current liquidity scope missing');
@@ -183,7 +188,7 @@ export async function deployDevelopmentLiquidity(args){
  const descriptor=await deploy('position-descriptor',artifacts.NonfungibleTokenPositionDescriptor,[wa,encodeBytes32String('ETH')],{NFTDescriptor:(await descriptorLibrary.getAddress()).toLowerCase()});
  const positions=await deploy('positions',artifacts.NonfungiblePositionManager,[fa,wa,await descriptor.getAddress()]),pa=(await positions.getAddress()).toLowerCase();
  const swap=await deploy('swap-router',artifacts.SwapRouter02,[zero,fa,pa,wa]),quoter=await deploy('quoter',artifacts.QuoterV2,[fa,wa]);
- if((await swap.factoryV3()).toLowerCase()!==fa||(await swap.WETH9()).toLowerCase()!==wa||(await quoter.factory()).toLowerCase()!==fa||(await quoter.WETH9()).toLowerCase()!==wa)throw Error('V3 dependency identity differs');
+ await verifyDevelopmentV3({swap,quoter,factory:fa,weth:wa});
  const fee=new Contract(scope.feeToken,abiToken,provider),usdc=new Contract(scope.bokToken,abiToken,provider),handler=new Contract(scope.feeAssetHandler,['function mintAmount() view returns(uint256)','function mint(address)'],provider);
  const minted=await handler.mintAmount();if(minted<1000000n||Number(await fee.decimals())!==18||Number(await usdc.decimals())!==6)throw Error('Development fee inventory prerequisite differs');
  await call('fee-inventory',handler,'mint',[owner],async(_r,a)=>await fee.balanceOf(owner,{blockTag:a.number})-await fee.balanceOf(owner,{blockTag:a.number-1})===minted);
