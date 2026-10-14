@@ -80,7 +80,7 @@ function component(fields,length){
 }
 const moderationTypes=new Set(['moderate-post','moderate-avatar','reject-subboard','set-main-policy']);
 const keys={'moderate-post':['post','reason'],'moderate-avatar':['name','reason'],'reject-subboard':['subboard','reason'],'set-main-policy':['rules'],'claim-deposit':['receipt','feeReceipt','bokReceipt'],'claim-private-fee':['receipt'],'claim-bok':['receipt','feeReceipt'],preference:['expectedRevision','kind','target','enabled'],'read-marker':['expectedRevision','thread','throughBlock'],bio:['name','expectedVersion','content'],avatar:['name','expectedVersion','width','height','data'],name:['first','last'],subboard:['slug','name','description','rules'],like:['post'],unlike:['post'],'withdraw-bok':['amount','recipient'],'cancel-bok-request':['requestId'],'expire-bok-request':['requestId'],withdraw:['deposit'],screen:['deposit'],
-  bok:['deposit','content','name','subboard','budget'],post:['deposit','content','name','subboard'],reply:['deposit','content','name','subboard','parent','root'],
+  bok:['deposit','content','name','subboard','budget','parent','root'],post:['deposit','content','name','subboard'],reply:['deposit','content','name','subboard','parent','root'],
   quote:['deposit','content','name','subboard','reference'],repost:['deposit','content','name','subboard','reference']};
 const methods={'moderate-post':'remove_post','moderate-avatar':'remove_avatar','reject-subboard':'reject_subboard','set-main-policy':'set_main_policy',bok:'authorize_request','claim-deposit':'claim_deposit','claim-private-fee':'claim-private-fee','claim-bok':'claim',preference:'set_preference','read-marker':'mark_thread_read',bio:'set_bio',avatar:'set_avatar',name:'register_name',subboard:'create_subboard',like:'set_like',unlike:'set_like','withdraw-bok':'withdraw','cancel-bok-request':'cancel','expire-bok-request':'expire',withdraw:'withdraw',screen:'screen',post:'post',reply:'post',quote:'post',repost:'post'};
 
@@ -362,6 +362,16 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
     check(Array.isArray(hints)&&hints.length===2&&!(!hints[0]&&hints[1]),'ROLLING_HISTORY_UNAVAILABLE');
     return [deposit,...hints];
   }
+  async function checkBokThread(action,board){
+    if(action.type!=='bok')return;
+    const parent=field(action.parent??'0'),root=field(action.root??'0');
+    check((parent===zero)===(root===zero),'ROLLING_INVALID_ACTION');
+    if(parent===zero)return;
+    const anchor=await balanceAnchor(),value=await utility(board,'get_post',[parent]);
+    check(Array.isArray(value)&&value.length===5&&value[0]===true&&BigInt(value[2])===0n,'ROLLING_PARENT_UNAVAILABLE');
+    check(field(value[1]?.root,true)===root&&field(value[1]?.subboard)===field(action.subboard??'0'),'ROLLING_THREAD_CHANGED');
+    await checkBalanceAnchor(anchor);
+  }
   async function argumentsFor(action,board,nonce){
     const allowed=keys[action?.type];check(allowed&&Object.keys(action).every(k=>k==='type'||allowed.includes(k)));
     switch(action.type){
@@ -385,6 +395,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
       case 'withdraw':return [field(action.deposit,true)];
       case 'screen':return screeningArguments(board,field(action.deposit,true));
       default:{
+        await checkBokThread(action,board);
         const subboard=field(action.subboard??'0'),kind=action.type==='quote'?2:action.type==='repost'?3:1;
         const policy=subboard===zero?await utility(board,'main_policy',[]):await utility(board,'effective_policy',[subboard]);
         check(Array.isArray(policy)&&policy.length===(subboard===zero?2:5),'ROLLING_POLICY_UNAVAILABLE');
@@ -766,6 +777,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
       if(saved.value.action.type==='claim-private-fee')check(saved.value.fundingFee,'ROLLING_FUNDING_MISMATCH');
       if(saved.value.bokReleaseSource)await checkBokRelease(saved.value.bokReleaseSource,saved.value.action.type);
       await checkModeration(saved.value);
+      if(saved.value.bok)await checkBokThread(saved.value.action,await contract());
       if(saved.value.bok?.phase==='authorize'){const available=await bokCredit();check(available>=BigInt(saved.value.bok.budget),'ROLLING_BOK_CREDIT_INSUFFICIENT');}
       if(saved.value.bok?.phase==='post')await waitingBok(saved.value);
       const selected=await interaction(await selectedContract(saved.value),saved.value);progress('estimating');
@@ -776,6 +788,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
       await guard();progress('submitting');
       await session.wallet.sendTx(estimated.payload,{from:session.owner,fee:{gasSettings:estimated.gasSettings},
         transactionJournal:session.journal,journalOperation:operation(id),...(saved.value.bokReleaseSource?{beforeSubmit:()=>checkBokRelease(saved.value.bokReleaseSource,saved.value.action.type)}:{}),...(saved.value.moderation?{beforeSubmit:async()=>{await checkModeration(saved.value);await guard();}}:{}),...(saved.value.bok?{beforeSubmit:async()=>{
+          await checkBokThread(saved.value.action,await contract());
           if(saved.value.bok.phase==='post')await waitingBok(saved.value);else await bokContext();await guard();
         }}:{}),...(replacing?{beforeSubmit:async hash=>{
           await session.journal.assertReplacementPredecessors(operation(id),hash,{requireMissingAnchor:true});

@@ -154,3 +154,10 @@ test('exact measured container absence never accepts unknown errors, collisions 
  for(const change of [{code:0},{code:125},{stdout:id},{stderr:''},{stderr:'daemon unavailable'},{stderr:absent(id).stderr},{stderr:absent(name).stderr+'extra\n'}])assert.equal(isStaticContainerAbsent({...absent(name),...change},name),false);
  assert.equal(isStaticContainerAbsent(absent(name),'arbitrary'),false);
 });
+
+test('exact JSON Docker absence preserves target and rejects appended or foreign diagnostics',()=>{
+ const name='bok-static-11111111-1111-1111-1111-111111111111';
+ const result={code:1,stdout:'',stderr:'Error response from daemon: '+JSON.stringify({message:'No such container: '+name})+'\n'};
+ assert(isStaticContainerAbsent(result,name));
+ for(const change of [{code:0},{stdout:'id'},{stderr:result.stderr+'trailing'},{stderr:result.stderr.replace(name,'bok-static-22222222-2222-2222-2222-222222222222')},{stderr:'Error response from daemon: '+JSON.stringify({message:'No such container: '+name,error:'extra'})+'\n'}])assert.equal(isStaticContainerAbsent({...result,...change},name),false);
+});

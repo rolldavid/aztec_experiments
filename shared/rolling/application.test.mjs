@@ -1397,3 +1397,38 @@ test('Bok interrupted reverted release keeps original identity through another c
  const second=await f.restart().prepareBokRelease(first.intentId,{type:'expire-bok-request'});assert.equal(second.bokRelease.sourceIntentId,f.authorizedId);
  assert.equal((await f.restart().cancelPrepared(second.intentId)).status,'bok-release-reverted');assert.equal(f.state.sends,2);
 });
+
+function bokReplyFixture(){
+ const f=bokFixture();f.state.responses={get_post:[true,{subboard:0n,parent:0n,root:11n,kind:1n,name_id:0n,reference:0n,content_digest:0n},0n,100n,0n]};return f;
+}
+const bokReply=()=>({...bokAction(),parent:'12',root:'11'});
+test('Bok reply preserves canonical thread across authorization, reopen and exact post ABI',async()=>{
+ const f=bokReplyFixture(),auth=await f.app.prepare(bokReply());await f.app.submitPrepared(auth.intentId);
+ const post=await f.restart().prepareBokPost(auth.intentId),args=f.state.calls.at(-1).args;
+ assert.equal(args[2].parent,hex(12));assert.equal(args[2].root_reference,hex(11));assert.deepEqual(post.action,bokReply());
+ await f.restart().submitPrepared(post.intentId);assert.equal(f.state.sends,2);assert.deepEqual(f.state.sent.payload.args,args);
+});
+test('Bok reply rejects malformed pairs, foreign thread, removed or missing parent before authorization',async()=>{
+ for(const changes of [{parent:'12',root:'0'},{parent:'0',root:'11'},{parent:'bad'},{root:'13'},{subboard:'2'}]){
+  const f=bokReplyFixture();await assert.rejects(f.app.prepare({...bokReply(),...changes}));assert.equal(f.state.sends,0);assert.equal(f.values.size,0);
+ }
+ for(const index of [0,2]){const f=bokReplyFixture();f.state.responses.get_post[index]=index===0?false:1n;await assert.rejects(f.app.prepare(bokReply()),{code:'ROLLING_PARENT_UNAVAILABLE'});assert.equal(f.values.size,0);}
+});
+test('Bok reply rechecks parent at authorization send, post review and final send without authorizing twice',async()=>{
+ for(const phase of ['authorization','review','post','late']){
+  const f=bokReplyFixture(),auth=await f.app.prepare(bokReply());
+  if(phase==='authorization'){f.state.responses.get_post[2]=1n;await assert.rejects(f.app.submitPrepared(auth.intentId));assert.equal(f.state.sends,0);continue;}
+  await f.app.submitPrepared(auth.intentId);
+  if(phase==='review'){f.state.responses.get_post[1].root=13n;await assert.rejects(f.restart().prepareBokPost(auth.intentId));assert.equal(f.state.sends,1);continue;}
+  const post=await f.restart().prepareBokPost(auth.intentId);
+  if(phase==='late')f.state.beforeBokSubmit=async()=>{f.state.responses.get_post[2]=1n;};else f.state.responses.get_post[2]=1n;
+  await assert.rejects(f.restart().submitPrepared(post.intentId));assert.equal(f.state.sends,1);
+ }
+});
+test('Bok reply rejects moving or noncanonical PXE parent snapshot',async()=>{
+ for(const changed of ['move','reorg']){const f=bokReplyFixture();let reads=0;
+  if(changed==='move')f.options.accountSession.wallet.pxe.getSyncedBlockHeader=async()=>({globalVariables:{blockNumber:++reads,timestamp:100n},hash:async()=>hex(42)});
+  else f.options.accountSession.node.getBlockData=async n=>({header:{globalVariables:{blockNumber:n}},blockHash:hex(43)});
+  await assert.rejects(f.app.prepare(bokReply()),{code:'ROLLING_CONTEXT_CHANGED'});assert.equal(f.values.size,0);
+ }
+});

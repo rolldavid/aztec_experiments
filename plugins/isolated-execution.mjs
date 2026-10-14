@@ -17,7 +17,10 @@ const finiteError=kind=>Object.assign(Error('Isolated execution '+kind),{code:ki
 
 // Exact observed Docker28 container-inspect absence, never a global inventory scan.
 export function isStaticContainerAbsent(result,target){
- return typeof target==='string'&&(/^[0-9a-f]{64}$/.test(target)||/^bok-static-[0-9a-f-]{36}$/.test(target))&&result?.code===1&&typeof result.stdout==='string'&&result.stdout.trim()===''&&result.stderr==='Error response from daemon: No such container: '+target+'\n';
+ return typeof target==='string'&&(/^[0-9a-f]{64}$/.test(target)||/^bok-static-[0-9a-f-]{36}$/.test(target))&&result?.code===1&&typeof result.stdout==='string'&&result.stdout.trim()===''&&[
+  'Error response from daemon: No such container: '+target+'\n',
+  'Error response from daemon: '+JSON.stringify({message:'No such container: '+target})+'\n',
+ ].includes(result.stderr);
 }
 
 /** Only a trusted host receives this capability. sourceDirectory must be a

@@ -882,3 +882,17 @@ test('Interrupted Bok release failure and unknown send preserve recovery without
  for(const name of ['Confirm and send','Review saved Bok post','Review expiry of this saved request','Review release of this saved request'])assert.equal(await page.getByRole('button',{name,exact:true}).count(),0);
  assert.equal((await counts(page)).sends,0);
 });
+
+test('Bok reply selection retains reader thread context through both saved confirmations',async t=>{
+ const {page}=await browserFixture(t);await page.evaluate(()=>test.bokCredit='1000');await open(page,{type:'reply',parent:'12',root:'11',subboard:'3',content:'Continue this workspace'});await unlock(page);
+ await page.getByLabel('Action',{exact:true}).selectOption('bok');
+ assert.equal(await page.getByLabel('Reply to post ID').inputValue(),'12');assert.equal(await page.getByLabel('Root thread ID').inputValue(),'11');assert.equal(await page.getByLabel('Subboard ID (0 for main board)').inputValue(),'3');
+ assert.equal(await page.getByLabel('Message',{exact:true}).inputValue(),'Continue this workspace');
+ await page.getByLabel('Maximum Bok credits').fill('400');await page.getByLabel('Root thread ID').fill('0');assert(await page.getByRole('button',{name:'Check action and review fee',exact:true}).isDisabled());await page.getByLabel('Root thread ID').fill('11');
+ await page.getByRole('button',{name:'Check action and review fee',exact:true}).click();await page.getByRole('button',{name:'Confirm and send',exact:true}).waitFor();
+ const action=await page.evaluate(()=>JSON.parse(sessionStorage.getItem('labelled-ui-intent')).action);assert.equal(action.parent,'12');assert.equal(action.root,'11');assert.equal(action.subboard,'3');assert.equal(action.type,'bok');
+ await page.getByRole('button',{name:'Confirm and send',exact:true}).click();await page.getByRole('button',{name:'Review saved Bok post',exact:true}).waitFor();
+ await page.reload();await page.waitForFunction(()=>window.ready);await open(page);await page.getByRole('button',{name:'Unlock',exact:true}).click();await page.getByRole('button',{name:'Review saved Bok post',exact:true}).click();await page.getByRole('button',{name:'Confirm and send',exact:true}).waitFor();
+ assert.deepEqual(await page.evaluate(()=>JSON.parse(sessionStorage.getItem('labelled-ui-intent')).action),action);assert.equal((await counts(page)).sends,0);
+ await page.getByRole('button',{name:'Confirm and send',exact:true}).click();await page.getByText('Transaction confirmed on the verified chain.',{exact:true}).waitFor();assert.equal((await counts(page)).sends,1);
+});
