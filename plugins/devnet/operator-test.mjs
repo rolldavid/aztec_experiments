@@ -531,4 +531,24 @@ if(focused){
   finally{release();await service.close();await response;}
  });
 
+ test('native mining failure diagnostic captures only allowlisted own data and survives hostile getters and sinks',async()=>{
+  const {reportDevelopmentMiningFailure}=await import('./network.mjs');const reports=[];
+  const error=Object.assign(Error('PRIVATE_MESSAGE'),{name:'TimeoutError',code:'ETIMEDOUT',cause:{name:'HttpRequestError',code:'ECONNRESET',url:'PRIVATE_URL'}});
+  reportDevelopmentMiningFailure(value=>reports.push(JSON.parse(value)),'warp-l1-clock',error);
+  assert.deepEqual(reports[0].error,{name:'TimeoutError',code:'ETIMEDOUT'});assert.deepEqual(reports[0].cause,{name:'HttpRequestError',code:'ECONNRESET'});assert.equal(reports[0].stage,'warp-l1-clock');assert.equal(reports[0].event,'development-mining-stopped');assert(Number.isSafeInteger(reports[0].at));assert(!JSON.stringify(reports).includes('PRIVATE'));
+  let reads=0;const hostile=Object.create(null);for(const key of ['name','code','cause','message','stack'])Object.defineProperty(hostile,key,{get(){reads++;throw Error('PRIVATE_GETTER');}});
+  reportDevelopmentMiningFailure(value=>reports.push(JSON.parse(value)),'read-l1-head',hostile);assert.equal(reads,0);assert.deepEqual(reports[1].error,{name:null,code:null});assert.deepEqual(reports[1].cause,{name:null,code:null});
+  assert.doesNotThrow(()=>reportDevelopmentMiningFailure(()=>{throw Error('sink failed');},'read-l1-head',error));
+  reportDevelopmentMiningFailure(value=>reports.push(JSON.parse(value)),'PRIVATE_STAGE',{name:'PRIVATE_NAME',code:'PRIVATE_CODE'});assert.equal(reports[2].stage,'unknown');assert.deepEqual(reports[2].error,{name:null,code:null});
+ });
+ test('actual native mining loop retains original read and warp failure and stops without retry even if diagnostic sink throws',async()=>{
+  const {reportDevelopmentMiningFailure}=await import('./network.mjs'),source=await fs.readFile(new URL('./network.mjs',import.meta.url),'utf8');
+  const start=source.indexOf('mining=(async()=>'),end=source.indexOf('    if(!persistent)await sequencer.start();',start),body=source.slice(start,end);
+  const run=new Function('deployment','sequencer','onProgress','reportDevelopmentMiningFailure',`return (async()=>{const persistent=true,settling=false,wallRefreshRequested=false,idleSlotDuration=5,config={ethereumSlotDuration:1};let stopMining=false,miningError,clockTick,mining;const pause=async()=>{throw Error('unexpected retry');},developmentIdleWarpRequired=()=>true,developmentIdleWarpTarget=()=>1;${body}await mining;return {stopMining,miningError};})();`);
+  for(const stage of ['read-l1-head','warp-l1-clock']){const original=Object.assign(Error('original'),{name:'TimeoutError',code:'ETIMEDOUT'});let reads=0,warps=0,events=0;
+   const outcome=await run({l1Client:{getBlock:async()=>{reads++;if(stage==='read-l1-head')throw original;return {timestamp:1n};}}},{warpTo:async()=>{warps++;throw original;}},text=>{events++;assert.equal(JSON.parse(text).stage,stage);throw Error('sink failure');},reportDevelopmentMiningFailure);
+   assert.equal(outcome.miningError,original);assert.equal(outcome.stopMining,true);assert.equal(reads,1);assert.equal(warps,stage==='warp-l1-clock'?1:0);assert.equal(events,1);
+  }
+ });
+
 }

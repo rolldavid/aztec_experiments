@@ -179,6 +179,17 @@ export async function settleNativeDevelopment({node,rollup,resume=true}) {
   if(BigInt(proven)<BigInt(pending)||BigInt(tips.checkpointed.checkpoint.number)!==BigInt(pending)||tips.proposed.number!==tips.checkpointed.block.number||!observations.sameBlockHash)throw Error('Native development checkpoints remain unsettled; recovery required');
  }catch(cause){throw developmentCleanupFailure(stage,cause,observations);}finally{if(resume)sequencer.resume();}
 }
+// Fixed diagnostic only: never read error messages, accessors, URLs or stacks.
+// The original mining error remains the owner's recovery/stop authority.
+export function reportDevelopmentMiningFailure(onProgress,stage,error) {
+ try {
+  const names=new Set(['Error','TimeoutError','AbortError','HttpRequestError','RpcRequestError','SocketClosedError']);
+  const codes=new Set(['ETIMEDOUT','ECONNRESET','ECONNREFUSED','UND_ERR_CONNECT_TIMEOUT','UND_ERR_HEADERS_TIMEOUT','UND_ERR_BODY_TIMEOUT','ABORT_ERR']);
+  const data=(value,key)=>{try{const d=Object.getOwnPropertyDescriptor(value,key);return d&&Object.hasOwn(d,'value')?d.value:undefined;}catch{return undefined;}};
+  const cause=data(error,'cause'),describe=value=>{const name=data(value,'name'),code=data(value,'code');return {name:names.has(name)?name:null,code:codes.has(code)?code:null};};
+  onProgress(JSON.stringify({event:'development-mining-stopped',stage:['read-l1-head','warp-l1-clock'].includes(stage)?stage:'unknown',at:Date.now(),error:describe(error),cause:describe(cause)}));
+ }catch{} // A diagnostic sink must never replace the retained original failure.
+}
 // Reuse the native compact encoder beside the existing development RPC. The
 // owner drains pending native work before stopping the node or checkpointing it.
 export async function startDevelopmentNodeRpc({node,config,port=0,origins=[]}) {
@@ -305,7 +316,7 @@ export async function startDevnet({directory,fundingAddresses,proofs=false,persi
     if(!persistent)await node.validatorClient.registerHandlers();
     sequencer.updateConfig({minTxsPerBlock:1,buildCheckpointIfEmpty:false});
     if(persistent){await sequencer.start();nativeStarted=true;}
-    mining=(async()=>{while(!stopMining){try{if(persistent){if(settling){await pause(100);continue;}clockTick=(async()=>{const latest=await deployment.l1Client.getBlock({blockTag:'latest'});if(settling||stopMining)return;const wallSeconds=Math.floor(Date.now()/1000);if(developmentIdleWarpRequired({wallSeconds,l1Timestamp:Number(latest.timestamp),refresh:wallRefreshRequested}))await sequencer.warpTo(developmentIdleWarpTarget({wallSeconds,slotDuration:idleSlotDuration,ethereumSlotDuration:config.ethereumSlotDuration}));})();await clockTick;}else if(wallMode){const latest=await deployment.l1Client.getBlock({blockTag:'latest'});const wall=Math.floor(Date.now()/1000);if(BigInt(wall)<=latest.timestamp){await pause(100);continue;}await deployment.l1Client.request({method:'evm_mine',params:[wall]});}else await deployment.l1Client.request({method:'evm_mine',params:[]});if(!persistent){const b=await deployment.l1Client.getBlock({blockTag:'latest'});synchronizeC01MinedClock(dateProvider,Number(b.timestamp));}await pause(1000);}catch(error){miningError=error;stopMining=true;}}})();
+    mining=(async()=>{while(!stopMining){let stage='read-l1-head';try{if(persistent){if(settling){await pause(100);continue;}clockTick=(async()=>{const latest=await deployment.l1Client.getBlock({blockTag:'latest'});if(settling||stopMining)return;const wallSeconds=Math.floor(Date.now()/1000);if(developmentIdleWarpRequired({wallSeconds,l1Timestamp:Number(latest.timestamp),refresh:wallRefreshRequested})){stage='warp-l1-clock';await sequencer.warpTo(developmentIdleWarpTarget({wallSeconds,slotDuration:idleSlotDuration,ethereumSlotDuration:config.ethereumSlotDuration}));}})();await clockTick;}else if(wallMode){const latest=await deployment.l1Client.getBlock({blockTag:'latest'});const wall=Math.floor(Date.now()/1000);if(BigInt(wall)<=latest.timestamp){await pause(100);continue;}await deployment.l1Client.request({method:'evm_mine',params:[wall]});}else await deployment.l1Client.request({method:'evm_mine',params:[]});if(!persistent){const b=await deployment.l1Client.getBlock({blockTag:'latest'});synchronizeC01MinedClock(dateProvider,Number(b.timestamp));}await pause(1000);}catch(error){miningError=error;stopMining=true;reportDevelopmentMiningFailure(onProgress,stage,error);}}})();
     if(!persistent)await sequencer.start();
     nodeServer=await startDevelopmentNodeRpc({node,config:nodeConfig,port:persistent?ports.nodePort:0,origins:[`http://localhost:${ports.appPort}`,`http://127.0.0.1:${ports.appPort}`]});
     bootComplete=true;
