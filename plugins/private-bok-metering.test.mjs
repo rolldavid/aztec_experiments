@@ -7,6 +7,7 @@ import {join} from 'node:path';
 import {privateBokMetering} from './private-bok-metering.mjs';
 import {validateVeniceBilling,veniceMeteredProvider} from './venice-metered.mjs';
 import {fileState} from './operations.mjs';
+import {veniceDiagnosticError,getVeniceDiagnostic} from './venice-diagnostics.mjs';
 const f=n=>'0x'+BigInt(n).toString(16).padStart(64,'0');
 const identity={network:'development:1',escrow:f(1),requestId:f(2),target:f(3)};
 const input={messages:[{role:'user',content:'PRIVATE_SENTINEL'}],maxTokens:10};
@@ -298,4 +299,36 @@ test('canonical reservation changed during durable fence write forbids paid call
  const h=fixture(),write=h.store.write;
  h.store.write=async next=>{await write(next);if(next.privateBok.calls[0]?.phase==='possibly-sent'){h.r.refunded=h.r.available;h.r.available=0n;h.r.state=3;}};
  await assert.rejects(h.create().complete(0,input),/changed after fence/);assert.equal(h.counts.execute,0);
+});
+
+
+test('closed provider diagnostic survives durable restart while original call remains fenced',async()=>{
+ const directory=await mkdtemp(join(tmpdir(),'bok-provider-diagnostic-'));try{
+  const path=join(directory,'state.json'),store=await fileState(path),h=fixture({store});
+  const error=veniceDiagnosticError('http-rejection',{httpStatus:400,body:{error:{code:'INVALID_REQUEST',param:'max_completion_tokens',message:'PRIVATE_RESPONSE_SENTINEL'},headers:{authorization:'PRIVATE_KEY_SENTINEL'}}});
+  h.controls.execute=async()=>{throw error;};await assert.rejects(h.create().complete(0,input),/Provider outcome unknown/);
+  const reopened=await fileState(path),call=reopened.read().privateBok.calls[0];assert.equal(call.phase,'fenced');assert.deepEqual(call.providerDiagnostic,getVeniceDiagnostic(error));assert.equal(call.billing,undefined);
+  assert.doesNotMatch(await fs.readFile(path,'utf8'),/PRIVATE_|headers|authorization|stack|message/);
+  await assert.rejects(h.create({store:reopened}).resume(0),/outcome unknown/);await assert.rejects(h.create({store:reopened}).complete(0,input),/outcome unknown/);
+  assert.equal(h.counts.execute,1);assert.equal(h.counts.close_uncertain,1);assert.equal(h.counts.settle,0);assert.equal(h.r.charged,0n);assert.equal(h.r.reserved,110n);assert.equal(h.r.refunded,890n);
+  await h.create({store:reopened}).reconcile(0,bill());assert.equal(h.r.charged,6n);assert.equal(h.counts.execute,1);assert.deepEqual(reopened.read().privateBok.calls[0].providerDiagnostic,getVeniceDiagnostic(error));
+ }finally{await rm(directory,{recursive:true,force:true});}
+});
+
+test('forged and accessor provider diagnostics are never read or journaled',async()=>{
+ let reads=0;const fake={get providerDiagnostic(){reads++;throw Error('PRIVATE_SENTINEL');},get message(){reads++;throw Error('PRIVATE_SENTINEL');},category:'http-rejection',httpStatus:400};
+ for(const error of [fake,new Error('PRIVATE_SENTINEL'),null,undefined,'PRIVATE_SENTINEL']){const h=fixture();h.controls.execute=async()=>{throw error;};await assert.rejects(h.create().complete(0,input),/outcome unknown/);assert.equal(h.store.read().privateBok.calls[0].providerDiagnostic,undefined);assert.equal(h.store.read().privateBok.calls[0].phase,'fenced');await assert.rejects(h.create().resume(0),/outcome unknown/);assert.equal(h.counts.execute,1);assert.doesNotMatch(JSON.stringify(h.store.read()),/PRIVATE_SENTINEL/);}
+ assert.equal(reads,0);
+});
+
+test('diagnostic write failure still fences the original call and never repeats provider execution',async()=>{
+ const h=fixture(),write=h.store.write,failure=Error('synthetic diagnostic persistence failure');let failed=false;
+ h.store.write=async next=>{if(!failed&&next.privateBok?.calls[0]?.providerDiagnostic){failed=true;throw failure;}await write(next);};
+ h.controls.execute=async()=>{throw veniceDiagnosticError('billing-validation',{httpStatus:200,billingStage:'cap'});};
+ await assert.rejects(h.create().complete(0,input),e=>e===failure);assert.equal(h.counts.close_uncertain,1);assert.equal(h.store.read().privateBok.calls[0].phase,'fenced');assert.equal(h.r.reserved,110n);assert.equal(h.r.charged,0n);await assert.rejects(h.create().resume(0),/outcome unknown/);assert.equal(h.counts.execute,1);
+});
+
+test('safe diagnostic remains available when original uncertainty chain operation is unresolved',async()=>{
+ const h=fixture(),error=veniceDiagnosticError('billing-validation',{httpStatus:200,billingStage:'cap'});h.controls.execute=async()=>{throw error;};h.controls.failBefore='close_uncertain';
+ await assert.rejects(h.create().complete(0,input),/operation unresolved/);assert.deepEqual(h.store.read().privateBok.calls[0].providerDiagnostic,getVeniceDiagnostic(error));assert.equal(h.store.read().privateBok.calls[0].phase,'possibly-sent');await assert.rejects(h.create().resume(0),/operation unresolved/);assert.equal(h.counts.close_uncertain,1);assert.equal(h.counts.execute,1);assert.equal(h.counts.settle,0);
 });

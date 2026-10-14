@@ -1,6 +1,7 @@
 import {createHash} from 'node:crypto';
 import {ceilDiv} from './metering.mjs';
 import {validateVeniceBilling} from './venice-metered.mjs';
+import {getVeniceDiagnostic} from './venice-diagnostics.mjs';
 
 const FIELD=21888242871839275222246405745257275088548364400416034343698204186575808495617n;
 const hash=value=>createHash('sha256').update(JSON.stringify(value)).digest('hex');
@@ -195,9 +196,14 @@ export function privateBokMetering({provider,escrow,store,identity,limits={}}){
     const b=billingFor(id,billing);
     if(charge!==BigInt(b.charge)||receipt!==b.receipt)throw Error('Provider result mismatch');
     await setCall(id,{phase:'received',billing:b});
-   }catch{
+   }catch(error){
     if(callRecord(id).phase==='received')throw Error('Response retained; resume accounting');
-    await fence(id);throw Error('Provider outcome unknown; original receipt required');
+    const diagnostic=getVeniceDiagnostic(error);
+    // Only the provider adapter's closed projection is durable. It is diagnostic
+    // evidence, never billing or permission to retry the original paid call.
+    try{if(diagnostic)await setCall(id,{providerDiagnostic:diagnostic});}
+    finally{await fence(id);} // Diagnostic persistence must not skip uncertainty fencing.
+    throw Error('Provider outcome unknown; original receipt required');
    }
    const settled=await settle(id);
    return {...settled,replyAvailable:true,message:result.message};
