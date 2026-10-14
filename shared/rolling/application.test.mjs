@@ -1403,10 +1403,31 @@ function bokReplyFixture(){
 }
 const bokReply=()=>({...bokAction(),parent:'12',root:'11'});
 test('Bok reply preserves canonical thread across authorization, reopen and exact post ABI',async()=>{
- const f=bokReplyFixture(),auth=await f.app.prepare(bokReply());await f.app.submitPrepared(auth.intentId);
+ const f=bokReplyFixture(),auth=await f.app.prepare(bokReply()),authArgs=structuredClone(f.state.calls.at(-1).args);await f.app.submitPrepared(auth.intentId);
  const post=await f.restart().prepareBokPost(auth.intentId),args=f.state.calls.at(-1).args;
  assert.equal(args[2].parent,hex(12));assert.equal(args[2].root_reference,hex(11));assert.deepEqual(post.action,bokReply());
+ // Independently reproduce the contract's complete draft binding with the real
+ // hash. Root-post defaults previously hid missing reply fields in authorization.
+ const d=args[2],preimage=[1n,31337n,1n,1n,5n,BigInt(d.subboard),BigInt(d.parent),BigInt(d.root_reference),BigInt(d.kind),BigInt(d.name_id),BigInt(d.reference),BigInt(args[1]),BigInt(d.length),...d.message.map(BigInt)];
+ const target=String(await poseidon2HashWithSeparator(preimage.map(n=>new Fr(n)),0x52434931));
+ assert.equal(authArgs[1],target);assert.equal(args[6],authArgs[0]);
+ const rootDefaults=[...preimage];rootDefaults[6]=0n;rootDefaults[7]=0n;
+ assert.notEqual(authArgs[1],String(await poseidon2HashWithSeparator(rootDefaults.map(n=>new Fr(n)),0x52434931)));
  await f.restart().submitPrepared(post.intentId);assert.equal(f.state.sends,2);assert.deepEqual(f.state.sent.payload.args,args);
+});
+test('legacy Bok reply target mismatch is refused before post estimation and remains releasable',async()=>{
+ const f=bokReplyFixture();f.options.sdk.TxHash=TxHash;
+ f.options.accountSession.node.getTxReceipt=async tx=>{assert(tx instanceof TxHash);return {status:'checkpointed',executionResult:'success',txHash:hex(77),blockNumber:1,blockHash:hex(42)};};
+ f.options.sdk.poseidon2HashWithSeparator=async(fields,domain)=>{
+  const old=[...fields];if(domain===0x52434931){old[6]=Fr.ZERO;old[7]=Fr.ZERO;}return poseidon2HashWithSeparator(old,domain);
+ };
+ const auth=await f.app.prepare(bokReply());await f.app.submitPrepared(auth.intentId);
+ f.options.sdk.poseidon2HashWithSeparator=poseidon2HashWithSeparator;
+ const estimates=f.state.estimates,original=await f.restart().reconcile(auth.intentId);
+ await assert.rejects(f.restart().prepareBokPost(auth.intentId),{code:'ROLLING_INTENT_CHANGED'});
+ assert.equal(f.state.estimates,estimates);assert.equal(f.state.sends,1);assert.deepEqual(await f.restart().reconcile(auth.intentId),original);
+ const release=await f.restart().prepareBokRelease(auth.intentId,{type:'cancel-bok-request'});
+ assert.equal(release.action.type,'cancel-bok-request');assert.equal(f.state.sends,1);
 });
 test('Bok reply rejects malformed pairs, foreign thread, removed or missing parent before authorization',async()=>{
  for(const changes of [{parent:'12',root:'0'},{parent:'0',root:'11'},{parent:'bad'},{root:'13'},{subboard:'2'}]){

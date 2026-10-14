@@ -372,6 +372,12 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
     check(field(value[1]?.root,true)===root&&field(value[1]?.subboard)===field(action.subboard??'0'),'ROLLING_THREAD_CHANGED');
     await checkBalanceAnchor(anchor);
   }
+  async function bokInvocationTarget(draft,nonce,content){
+    const preimage=invocationPreimage({chainId:BigInt(scope.chainId),rollupVersion:BigInt(scope.version),board:BigInt(fixed.board),plugin:BigInt(bok.address),
+      subboard:BigInt(draft.subboard),parent:BigInt(draft.parent),root:BigInt(draft.root_reference),kind:Number(draft.kind),
+      name:BigInt(draft.name_id),reference:BigInt(draft.reference),nonce:BigInt(nonce),content});
+    return field((await sdk.poseidon2HashWithSeparator(preimage.map(n=>new sdk.Fr(n)),INVOCATION_DOMAIN)).toString(),true);
+  }
   async function argumentsFor(action,board,nonce){
     const allowed=keys[action?.type];check(allowed&&Object.keys(action).every(k=>k==='type'||allowed.includes(k)));
     switch(action.type){
@@ -662,9 +668,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
       if(action.type==='bok'){
         const budget=uint128(action.budget);check(budget>0n);const available=await bokCredit();check(available>=budget,'ROLLING_BOK_CREDIT_INSUFFICIENT');
         const draft=args[2],requestId=field(sdk.Fr.random().toString(),true);
-        const preimage=invocationPreimage({chainId:BigInt(scope.chainId),rollupVersion:BigInt(scope.version),board:BigInt(fixed.board),plugin:BigInt(bok.address),
-          subboard:BigInt(draft.subboard),name:BigInt(draft.name_id),nonce:BigInt(nonce),content:action.content});
-        const target=field((await sdk.poseidon2HashWithSeparator(preimage.map(n=>new sdk.Fr(n)),INVOCATION_DOMAIN)).toString(),true);
+        const target=await bokInvocationTarget(draft,nonce,action.content);
         record.bok={scope:clone(bok),phase:'authorize',requestId,target,budget:String(budget),availableCredit:String(available),postArgs:args};
         record.args=[requestId,target,String(budget)];
       }
@@ -699,6 +703,9 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
       // deposit, nonce and every immutable post field remain the authorized draft.
       check(same(postArgs.slice(0,2),prior.bok.postArgs.slice(0,2))&&
         ['subboard','parent','root_reference','kind','name_id','reference','message','length'].every(key=>same(postArgs[2][key],prior.bok.postArgs[2][key])),'ROLLING_INTENT_CHANGED');
+      // Old confirmed authorizations remain immutable. Refuse an incompatible
+      // target before estimating; the existing explicit release flow can recover it.
+      check(await bokInvocationTarget(postArgs[2],prior.nonce,prior.action.content)===prior.bok.target,'ROLLING_INTENT_CHANGED');
       const record={...prior,id:field(sdk.Fr.random().toString(),true),method:'post_with_bok',args:[...postArgs,bok.pluginId,prior.bok.requestId],
         status:'prepared',txHash:null,encoded:undefined,predecessor:{operation:operation(prior.id),txHash:prior.txHash},
         bok:{...prior.bok,phase:'post',authorizationTxHash:prior.bok.authorizationTxHash??prior.txHash}};
