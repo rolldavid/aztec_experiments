@@ -11,7 +11,13 @@ export function createAgent({model,toolbox,instructions,maxCalls=12,maxTokens=15
     const history=loadHistory?await loadHistory({postId}):null;
     const session=await toolbox.open({id,postId,threadId:history?.threadId});
     const accepted=async result=>{
-      const receipt=await session.accept?.();if(!receipt)return result;
+      const receipt=await session.accept?.();if(session.privateSource){
+        // Connected source and generated artifacts are private. Model text may
+        // quote that source, so only this fixed host result reaches the board.
+        const p=receipt?.publication;if(!p)return {replyText:'Connected repository work did not publish a pull request.'};
+        if(p.connected!==true||typeof p.url!=='string'||!/^https:\/\/github\.com\/[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+\/pull\/[1-9][0-9]*$/.test(p.url))throw Error('Invalid connected repository result');
+        return {replyText:'Repository changes are ready for operator review: '+p.url,revision:{repositoryId:receipt.repositoryId,acceptedRevision:receipt.acceptedRevision}};
+      }if(!receipt)return result;
       const revision={repositoryId:receipt.repositoryId,acceptedRevision:receipt.acceptedRevision};
       if(receipt.publication){
         const {latestUrl:artifactUrl,latestSourceUrl:sourceUrl}=receipt.publication;

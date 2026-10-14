@@ -108,3 +108,15 @@ test('original-message history without canonical guard is unavailable before any
 test('original-message end page is empty and cannot expose latest invoking message',async()=>{
  const f=retrievalFixture();let main=0;f.options.model.complete=async input=>{if(input.modelId==='cheap')return {message:{role:'assistant',content:'Summary'}};if(++main===1)return {message:{role:'assistant',tool_calls:[originalCall({threadId:id(1),offset:2,limit:8})]}};assert.deepEqual(JSON.parse(input.messages.at(-1).content),{contentTrust:'untrusted',threadId:id(1),messages:[],nextOffset:null});return {message:{role:'assistant',content:'End'}};};await f.run();
 });
+
+for(const changed of [true,false])test('connected private source never reaches a public model reply, changed='+changed,async()=>{
+ let closed=0;const toolbox={open:async()=>({privateSource:true,definitions:[],accept:async()=>changed?{repositoryId:'scoped',acceptedRevision:'a'.repeat(40),publication:{connected:true,url:'https://github.com/owner/project/pull/7'}}:null,close:async()=>{closed++;}})};
+ const result=await createAgent({toolbox,instructions:'Help',model:{complete:async()=>({message:{role:'assistant',content:'PRIVATE_SOURCE_DO_NOT_PUBLISH'}})}}).run({id:'a',postId:'b',text:'Edit configured repository'});
+ assert(!JSON.stringify(result).includes('PRIVATE_SOURCE'));assert.equal(closed,1);assert.equal(result.replyText,changed?'Repository changes are ready for operator review: https://github.com/owner/project/pull/7':'Connected repository work did not publish a pull request.');
+});
+test('connected private source refuses a static-publication result or arbitrary link',async()=>{
+ for(const publication of [{latestUrl:'https://apps.example/private'}, {connected:true,url:'https://evil.invalid/secret'}]){
+ const toolbox={open:async()=>({privateSource:true,definitions:[],accept:async()=>({publication}),close:async()=>{}})};
+ await assert.rejects(createAgent({toolbox,instructions:'Help',model:{complete:async()=>({message:{role:'assistant',content:'private'}})}}).run({id:'a',postId:'b',text:'Edit'}),/Invalid connected repository result/);
+ }
+});

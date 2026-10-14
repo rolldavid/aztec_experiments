@@ -39,6 +39,7 @@
     "host": "127.0.0.1",
     "port": 8788
   },
+  "connectedRepositories": [],
   "githubApp": {
     "enabled": false,
     "owner": "zac-williamson",

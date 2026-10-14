@@ -408,3 +408,9 @@ test('hosted request reaches existing reserve paid settle reply and finish throu
  const x=fixture();let queued=0;x.args.escrow=serializeHostedEscrow(Object.freeze(x.args.escrow),async fn=>{queued++;return fn();});
  const result=await x.run();assert.equal(result.status,'finished');assert(queued>0);assert.deepEqual(x.events,['reserve','paid','settle','publish_reply','finish']);
 });
+
+test('operator-connected source and artifacts never enter static publication or default mirror',async()=>{
+ const receipt={connection:{threadId:f(1)},acceptedRevision:'a'.repeat(40)},result={connected:true,url:'https://github.com/owner/existing/pull/1'};
+ const publication={publish:async()=>assert.fail('Private source must not be published')},mirror={sync:async()=>assert.fail('Private source must not be mirrored as a new thread'),syncConnected:async input=>{assert.equal(input,receipt);return result;}};
+ assert.equal(await publishAcceptedRevision({publication,mirror,receipt}),result);await assert.rejects(publishAcceptedRevision({publication,receipt}),/broker unavailable/);
+});

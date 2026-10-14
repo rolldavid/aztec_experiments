@@ -114,6 +114,7 @@ export function hostedIndexNode(node,development){
  * leaves the repository's publication intent pending; restart reconciles it
  * without re-entering a model call. Private mirror URLs never enter replies. */
 export async function publishAcceptedRevision({publication,mirror,receipt}){
+ if(receipt.connection){assert(mirror&&typeof mirror.syncConnected==='function','Connected repository broker unavailable');return mirror.syncConnected(receipt);}
  const result=await publication.publish(receipt);
  if(mirror)await mirror.sync(receipt);
  return result;
@@ -203,6 +204,7 @@ export function serializeHostedEscrow(port,walletOperation){
 
 /** Explicit Rolling composition; the legacy account escrow is never selected. */
 export async function runRollingHostedService({config,env=process.env,onError=()=>{}}){
+ assert(Array.isArray(config.connectedRepositories??[])&&(config.connectedRepositories??[]).length<=32,'Invalid connected repository configuration');
  const [{rollingOperatorConfig,rollingPxeOptions,operatorNodeFetch,fileState},{loadRollingArtifacts},{jsonStringify},
   {getContractClassFromArtifact},{createPrivateBokEscrow},{createRollingPersistentPublicIndex},{createRollingPublicSqliteStore},{ownRollingPersistentPublicIndex}]=await Promise.all([
   import('./operations.mjs'),import('../prover/rolling-artifacts.mjs'),import('@aztec-labs/foundation/json-rpc'),
@@ -260,11 +262,12 @@ export async function runRollingHostedService({config,env=process.env,onError=()
   let mirror;
   if(config.githubApp?.enabled===true){
    const directory=path.join(config.stateDirectory,'github-app');await fs.mkdir(directory,{recursive:true,mode:0o700});
-   mirror=await createGitHubAppBroker({...config.githubApp,directory,artifactRoot:outputRoot});await mirror.assertAvailable();
+   mirror=await createGitHubAppBroker({...config.githubApp,connectedRepositories:config.connectedRepositories??[],directory,artifactRoot:outputRoot});await mirror.assertAvailable();
   }
+  assert(!config.connectedRepositories?.length||mirror,'Connected repositories require dedicated GitHub App');
   artifactsServer=http.createServer((req,res)=>{void publication.handle(req,res);});
   await new Promise((resolve,reject)=>{artifactsServer.once('error',reject);artifactsServer.listen(config.staticPublication.port??8788,config.staticPublication.host??'127.0.0.1',resolve);});
-  const repositories=threadRepositories({directory:workspaceRoot,namespace:JSON.stringify({scope,pluginId:config.pluginId}),lease,startEmpty:true,
+  const repositories=threadRepositories({directory:workspaceRoot,namespace:JSON.stringify({scope,pluginId:config.pluginId}),lease,startEmpty:true,connections:mirror?{connectionFor:mirror.connectionFor,readConnected:threadId=>publicationOperation(()=>mirror.readConnected(threadId))}:undefined,
    validateRevision:input=>generatedExecution(()=>execution.execute(input)),onAccepted:receipt=>publicationOperation(()=>publishAcceptedRevision({publication,mirror,receipt}))});
   const toolbox=githubToolbox({repository,api,repositories});await api('GET','/repos/'+repository);
   const provider=veniceMeteredProvider({client:veniceClient({privateKey:env.VENICE_WALLET_PRIVATE_KEY}),model:env.VENICE_MODEL||undefined,autoTopUp:false});

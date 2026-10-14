@@ -66,3 +66,55 @@ for(const [label,change] of [
 ])test(label+' is rejected before token mint or repository mutation',async()=>{const f=await fixture();try{const original=f.config.fetchImpl;const b=await createGitHubAppBroker({...f.config,fetchImpl:async(url,options)=>{const response=await original(url,options);if(options.method==='GET'&&url.endsWith('/app/installations/'+installationId)){const i=await response.json();change(i);return new Response(JSON.stringify(i));}return response;}});await assert.rejects(b.sync(await receipt(f)));assert.equal(f.calls.length,1);assert.equal(f.calls[0].method,'GET');}finally{await f.close();}});
 
 test('personal creation uses user endpoint and each source token selects only the created repository',async()=>{const f=await fixture();try{assert.deepEqual(await f.broker.assertAvailable(),{available:true,owner,ownerId,appId,installationId});await f.broker.sync(await receipt(f));assert.equal(f.calls.filter(c=>c.route==='/user/repos'&&c.method==='POST').length,1);assert(!f.calls.some(c=>c.route.startsWith('/orgs/')));const tokens=f.calls.filter(c=>c.route.endsWith('/access_tokens'));assert.equal(tokens.length,2);assert.deepEqual(tokens[0].body,{permissions:{administration:'write'}});assert.deepEqual(tokens[1].body,{permissions:{contents:'write'},repository_ids:[987]});}finally{await f.close();}});
+
+// Connected-repository protocol double. Every mutation is local test data;
+// excluded workflow/private-control entries are present in the original tree.
+async function connectedFixture(t){
+ const f=await fixture();t.after(()=>f.close());const c={threadId:'0x'+'b'.repeat(64),repositoryId:987,ownerId,fullName:owner+'/existing',baseBranch:'main',workBranch:'bok/thread-one',baseCommit:'1'.repeat(40)};
+ const calls=[],objects=new Map(),refs=new Map([['main',c.baseCommit]]);let pr=null,lost=null,badOwner=false,broad=false;
+ const putBlob=data=>{const bytes=Buffer.from(data),sha=git('blob',bytes);objects.set(sha,{sha,encoding:'base64',content:bytes.toString('base64'),size:bytes.length});return sha;};
+ function putTree(leaves){const dirs=new Map([['',[]]]);for(const f of leaves){const names=f.path.split('/');for(let i=1;i<names.length;i++){const key=names.slice(0,i).join('/');if(!dirs.has(key))dirs.set(key,[]);}dirs.get(names.slice(0,-1).join('/')).push({name:names.at(-1),mode:f.mode,sha:f.sha});}let sha;for(const [dir,entries]of [...dirs].sort(([a],[b])=>b.length-a.length)){entries.sort((a,b)=>Buffer.compare(Buffer.from(a.name+(a.mode==='40000'?'/':'')),Buffer.from(b.name+(b.mode==='40000'?'/':''))));sha=git('tree',Buffer.concat(entries.map(f=>Buffer.concat([Buffer.from(f.mode+' '+f.name+'\0'),Buffer.from(f.sha,'hex')]))));if(dir){const parts=dir.split('/');dirs.get(parts.slice(0,-1).join('/')).push({name:parts.at(-1),mode:'40000',sha});}}
+  objects.set(sha,{sha,truncated:false,tree:structuredClone(leaves)});return sha;
+ }
+ const leaves=[{path:'app.cjs',mode:'100644',type:'blob',sha:putBlob('original'),size:8},{path:'.github/workflows/check.yml',mode:'100644',type:'blob',sha:putBlob('protected workflow'),size:18},{path:'secret-link',mode:'120000',type:'blob',sha:putBlob('/not/exposed'),size:12}];
+ const baseTree=putTree(leaves);objects.set(c.baseCommit,{sha:c.baseCommit,tree:{sha:baseTree}});
+ const response=(data,status=200)=>new Response(JSON.stringify(data),{status});
+ const fetchImpl=async(url,options)=>{const u=new URL(url),route=u.pathname,method=options.method,body=options.body?JSON.parse(options.body):undefined;calls.push({route,query:u.search,method,body});let out;
+  if(route==='/app/installations/'+installationId)out={id:installationId,app_id:appId,target_type:'User',account:{type:'User',id:ownerId,login:owner},suspended_at:null,repository_selection:'selected',permissions:{administration:'write',contents:'write',pull_requests:'write',metadata:'read'}};
+  else if(route.endsWith('/access_tokens')){assert.deepEqual(body,{permissions:{contents:'write',pull_requests:'write'},repository_ids:[c.repositoryId]});out={token:'connected-scoped',expires_at:'2026-10-13T01:00:00Z',permissions:{...body.permissions,...(broad?{administration:'write'}:{})},repositories:[{id:c.repositoryId}]};}
+  else{assert.equal(options.headers.Authorization,'Bearer connected-scoped');assert(route.startsWith('/repos/'+c.fullName));const suffix=route.slice(('/repos/'+c.fullName).length);
+   if(suffix==='')out={id:c.repositoryId,full_name:c.fullName,owner:{id:badOwner?999:ownerId,login:owner,type:'User'},archived:false,fork:false,private:true};
+   else if(suffix.startsWith('/git/ref/heads/')){const branch=suffix.slice('/git/ref/heads/'.length),sha=refs.get(branch);out=sha?{ref:'refs/heads/'+branch,object:{type:'commit',sha}}:null;}
+   else if(suffix==='/git/refs'||suffix.startsWith('/git/refs/heads/')){const branch=body.ref?.slice('refs/heads/'.length)??suffix.slice('/git/refs/heads/'.length);assert.equal(branch,c.workBranch);if(method==='PATCH')assert.equal(body.force,false);else assert(!refs.has(branch));refs.set(branch,body.sha);out={ref:'refs/heads/'+branch,object:{type:'commit',sha:body.sha}};}
+   else if(suffix==='/pulls'&&method==='POST'){assert.equal(body.base,'main');assert.equal(body.head,c.workBranch);assert.equal(body.draft,true);assert.equal(pr,null);pr={number:1,state:'open',base:{ref:'main',repo:{id:c.repositoryId}},head:{ref:c.workBranch,repo:{id:c.repositoryId},sha:refs.get(c.workBranch)},html_url:'https://github.com/'+c.fullName+'/pull/1'};out=pr;}
+   else if(suffix.startsWith('/pulls')){if(pr)pr.head.sha=refs.get(c.workBranch);out=suffix==='/pulls'?(pr?[pr]:[]):pr;}
+   else if(method==='GET')out=objects.get(suffix.split('/').at(-1))??null;
+   else if(suffix==='/git/blobs'){const sha=putBlob(Buffer.from(body.content,'base64'));out=objects.get(sha);}
+   else if(suffix==='/git/trees'){assert(body.base_tree);const map=new Map(objects.get(body.base_tree).tree.map(f=>[f.path,f]));for(const f of body.tree){assert(!f.path.startsWith('.github/')&&f.path!=='secret-link');if(f.sha===null)map.delete(f.path);else map.set(f.path,{...f,size:objects.get(f.sha).size});}out=objects.get(putTree([...map.values()]));}
+   else if(suffix==='/git/commits'){const actor=body.author.name+' <'+body.author.email+'> '+Date.parse(body.author.date)/1000+' +0000';const sha=git('commit','tree '+body.tree+'\nparent '+body.parents[0]+'\nauthor '+actor+'\ncommitter '+actor+'\n\n'+body.message);out={sha,tree:{sha:body.tree},parents:body.parents.map(sha=>({sha})),message:body.message};objects.set(sha,out);}
+   else assert.fail('Unexpected connected route');
+  }
+  if(lost&&method===lost.method&&route.endsWith(lost.suffix)){const absent=lost.absent;lost=null;if(absent){if(route.endsWith('/pulls'))pr=null;else if(route.endsWith('/git/refs'))refs.delete(c.workBranch);else if(out?.sha)objects.delete(out.sha);}throw Error('labelled lost response');}
+  return response(out,out===null?404:200);
+ };
+ const config={...f.config,fetchImpl,connectedRepositories:[c]};let broker=await createGitHubAppBroker(config);
+ return {...f,c,calls,objects,refs,baseTree,get broker(){return broker;},reopen:async(changes={})=>broker=await createGitHubAppBroker({...config,...changes}),badOwner:()=>badOwner=true,broad:()=>broad=true,lose:(method,suffix,absent=false)=>lost={method,suffix,absent},receipt:async(n=2,previous=null,files)=>({...await receipt(f,n,previous,files),connection:structuredClone(c)})};
+}
+test('connected snapshot uses exact numeric token and excludes protected content; PR patches preserve original base',async t=>{
+ const f=await connectedFixture(t),source=await f.broker.readConnected(f.c.threadId);assert.deepEqual(source.files.map(x=>x.path),['app.cjs']);assert.equal(Buffer.from(source.files[0].data,'base64').toString(),'original');
+ const one=await f.broker.syncConnected(await f.receipt()),two=await f.broker.syncConnected(await f.receipt(3,'2'.repeat(40)));
+ assert(one.connected&&two.connected);assert.equal(f.refs.get('main'),f.c.baseCommit);assert.equal(f.refs.get(f.c.workBranch),two.remoteCommit);
+ const tree=f.objects.get(f.objects.get(two.remoteCommit).tree.sha).tree;
+ for(const name of ['.github/workflows/check.yml','secret-link'])assert.equal(tree.find(x=>x.path===name).sha,f.objects.get(f.baseTree).tree.find(x=>x.path===name).sha);
+ assert(!f.calls.some(x=>x.route==='/user/repos'||x.route.includes('/rules')||x.route.includes('/protection')||x.route.includes('/merge')));
+ assert.equal(f.calls.filter(x=>x.method==='POST'&&x.route.endsWith('/pulls')).length,1);
+ await assert.rejects(f.broker.sync(await f.receipt(4,'3'.repeat(40))));
+});
+for(const point of ['/git/blobs','/git/trees','/git/commits','/git/refs','/pulls'])for(const absent of [false,true])test('connected '+point+' uncertain result '+(absent?'stays blocked':'reconciles')+' without replay',async t=>{
+ const f=await connectedFixture(t),r=await f.receipt();f.lose('POST',point,absent);await assert.rejects(f.broker.syncConnected(r));const original=f.calls.find(x=>x.method==='POST'&&x.route.endsWith(point)),same=x=>x.method==='POST'&&x.route.endsWith(point)&&JSON.stringify(x.body)===JSON.stringify(original.body);const writes=f.calls.filter(same).length;await f.reopen();if(absent)await assert.rejects(f.broker.syncConnected(r),{code:'GITHUB_BROKER_UNRESOLVED'});else assert((await f.broker.syncConnected(r)).connected);assert.equal(f.calls.filter(same).length,writes);
+});
+for(const kind of ['owner','token','base','branch','mapping','protected'])test('connected '+kind+' mismatch cannot publish',async t=>{
+ const f=await connectedFixture(t);let r=await f.receipt();if(kind==='owner')f.badOwner();if(kind==='token')f.broad();if(kind==='base')f.refs.set('main','9'.repeat(40));if(kind==='branch')f.refs.set(f.c.workBranch,'9'.repeat(40));if(kind==='mapping'){await f.broker.readConnected(f.c.threadId);const changed={...f.c,workBranch:'bok/changed'};await f.reopen({connectedRepositories:[changed]});r.connection=changed;}if(kind==='protected')r=await f.receipt(2,null,{'secret-link/nested':'cannot overwrite excluded symlink'});
+ await assert.rejects(f.broker.syncConnected(r));assert(!f.calls.some(x=>x.method==='PATCH'||x.method==='POST'&&!x.route.endsWith('/access_tokens')));
+});
+test('connected mapping rejects duplicate thread/work branch and base writes',async t=>{const f=await connectedFixture(t);for(const mappings of [[f.c,f.c],[{...f.c,workBranch:'main'}],[{...f.c,repositoryId:'987'}],[{...f.c,fullName:'other/project'}]])await assert.rejects(f.reopen({connectedRepositories:mappings}));});

@@ -589,3 +589,71 @@ Git revision or publication is created. Normal service discovery does not turn
 this terminal accounting record into another agent run. Preserve the private
 receipt, request journal and operator config across restart. Local component
 checks do not qualify actual provider billing or testnet settlement.
+
+### Connecting an existing repository to a thread
+
+`connectedRepositories` is an optional array in the trusted hosted configuration;
+its default is empty. A board message, model tool or generated program cannot add
+or edit it. Stop the normal service before configuring a mapping. Select only the
+intended repository in the personal GitHub App installation and authorize this
+thread's participants to work on its source through the configured model provider.
+Do not use the reference-repository setting or `GITHUB_TOKEN` as a substitute.
+
+Each entry has exactly these fields (replace all example identifiers):
+
+```json
+{
+  "threadId": "0x<CANONICAL_THREAD_ID_64_HEX>",
+  "repositoryId": 123,
+  "ownerId": 1476668,
+  "fullName": "zac-williamson/explicitly-authorized-project",
+  "baseBranch": "main",
+  "baseCommit": "<EXACT_40_HEX_BASE_COMMIT>",
+  "workBranch": "bok/explicitly-authorized-thread"
+}
+```
+
+The base and work branches must differ. The work branch must start with `bok/`
+and be absent before its first use; the broker never adopts a pre-existing branch
+or PR. Repository IDs and work branches cannot be shared by conflicting thread
+mappings. The same thread resumes its accepted local source across participants;
+unmapped threads keep the existing empty-workspace behavior. A changed mapping,
+base branch head, remotely changed work branch, closed/merged PR, or ambiguous
+mutation requires operator reconciliation. Do not delete journals to resolve it.
+
+For this optional feature add repository Pull requests write to the existing App
+permissions. The trusted broker requests **only Contents write and Pull requests
+write for the one numeric repository ID** when reading or updating a connected
+repository. Administration is used only by the separate new-mirror capability,
+never by connected repository operations. No workflow permission, merge endpoint,
+base-ref update, protection/rules change, ambient token or credentialed clone is
+used. Existing branch protections, approval policies and CI configuration remain
+in place. The operator must review the repository's existing CI and secret access
+policies before allowing untrusted thread contributions; this feature does not
+change those policies. Draft PRs require the repository's normal review/merge flow.
+
+The original base tree is verified by its Git hash. The local generated workspace
+contains only bounded regular source files; `.github`, secret/control paths,
+symlinks and submodules are excluded. These entries remain unchanged in the remote
+base tree. Each update patches only the supported files; deletions apply only to
+previously included source. Existing executable modes are preserved remotely.
+Supported source is at most 512 files, 100,000 bytes per original file, 8 MiB in
+total and 2,048 original tree entries, with the existing isolated build/test
+requirements. Oversize or unsupported source fails closed rather than silently
+truncating the project. The isolated runtime still has no dependency installation
+or network; repositories requiring them need a separately approved execution
+capability and are not qualified by this feature.
+
+Connected source snapshots and generated artifacts remain in private host storage;
+they are never sent to the public static publisher or new-mirror path. Because a
+model response could quote private source, the board receives only a fixed host
+message and the checked PR link (or a fixed no-PR message), not model-authored text.
+A GitHub link does not grant repository access. Ordinary empty-thread applications
+retain their public static/source publication behavior.
+
+Every external write is journaled before dispatch. On lost acknowledgement the
+broker reads the original exact object/ref/PR and never retransmits an unresolved
+mutation. It does not repeat provider work to recover publication. Successful
+controlled protocol and local Git tests are source/component evidence only: actual
+personal App installation, existing-repository permission checks, live PR behavior
+and representative model-generated project acceptance remain separate gates.

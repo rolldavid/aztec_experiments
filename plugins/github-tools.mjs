@@ -25,6 +25,12 @@ export function githubToolbox({repository,api,allowWrites=false,draftPr=false,ru
         if(baseSha!==workspace.readRevision)throw Error('Accepted repository revision changed');
         return {base:null,baseSha};
       }
+      if(workspace?.connection){
+        const source=await workspace.initialSource();await runCommand('git',['init',work]);
+        for(const file of source){const target=await safe(file.path);await fs.mkdir(path.dirname(target),{recursive:true});await fs.writeFile(target,Buffer.from(file.data,'base64'),{flag:'wx',mode:file.mode==='100755'?0o700:0o600});}
+        await runCommand('git',['add','--all','--','.'],{cwd:work});await runCommand('git',['commit','--allow-empty','-m','Initialize operator-connected source'],{cwd:work});
+        return {base:null,baseSha:(await runCommand('git',['rev-parse','HEAD'],{cwd:work})).stdout.trim()};
+      }
       if(workspace?.startEmpty){
         await runCommand('git',['init',work]);await runCommand('git',['commit','--allow-empty','-m','Initialize isolated Bok thread'],{cwd:work});
         return {base:null,baseSha:(await runCommand('git',['rev-parse','HEAD'],{cwd:work})).stdout.trim()};
@@ -38,7 +44,7 @@ export function githubToolbox({repository,api,allowWrites=false,draftPr=false,ru
     // index so publishing a small edit never treats large artifacts as deleted.
     const ensureFiles=()=>files??=(async()=>{
       const {baseSha}=await ensureCheckout();let commit,tree;
-      if(workspace?.readRevision||workspace?.startEmpty){
+      if(workspace?.readRevision||workspace?.startEmpty||workspace?.connection){
         const listed=await runCommand('git',['ls-tree','-r','-l','-z',baseSha],{cwd:work,maxBuffer:4*1024*1024});
         commit={tree:{sha:baseSha}};tree={sha:baseSha,truncated:false,tree:listed.stdout.split('\0').filter(Boolean).map(row=>{
           const match=/^([0-7]+) (blob|commit) ([0-9a-f]{40}) +([0-9]+|-)\t(.+)$/s.exec(row);
@@ -65,6 +71,7 @@ export function githubToolbox({repository,api,allowWrites=false,draftPr=false,ru
     })();
     const safe=async name=>{
       if(typeof name!=='string'||name.includes('\0')||name.split(/[\\/]/).some(p=>pathKey(p)==='.git'))throw Error('Invalid file path');
+      if(workspace?.connection&&(!/^[A-Za-z0-9._/-]{1,240}$/.test(name)||name.split('/').some(p=>['.github','.aws','.ssh','.npmrc','node_modules','credentials','secrets'].includes(p.toLowerCase())||/^\.(?:env|yarnrc)(?:[.-]|$)/i.test(p))))throw Error('Connected source path rejected');
       const target=path.resolve(work,name);if(!target.startsWith(work+path.sep))throw Error('Path outside repository');
       // Reject symlinks at every existing path component, including parent dirs.
       let current=work;for(const part of path.relative(work,target).split(path.sep)){current=path.join(current,part);try{if((await fs.lstat(current)).isSymbolicLink())throw Error('Symlink access rejected');}catch(e){if(e.code!=='ENOENT')throw e;}}
@@ -78,8 +85,9 @@ export function githubToolbox({repository,api,allowWrites=false,draftPr=false,ru
       definition('create_pr','Publish current edits as a new pull request; never merge',{title:string,body:string}),
     ];
     return {
-      definitions:workspace?[...definitions.filter(x=>x.function.name!=='create_pr'),definition('check_workspace','Run isolated tests and static build for current source; repair failures before finishing',{})]:definitions,
-      summary:reason=>(reason+(prUrl?' PR: '+prUrl:' No PR was published.')).slice(0,900),
+      privateSource:!!workspace?.connection,
+      definitions:workspace?[...definitions.filter(x=>x.function.name!=='create_pr'&&(!workspace.connection||x.function.name!=='read_pr')),definition('check_workspace','Run isolated tests and static build for current source; repair failures before finishing',{})]:definitions,
+      summary:reason=>workspace?.connection?'Connected repository work did not publish a pull request.':(reason+(prUrl?' PR: '+prUrl:' No PR was published.')).slice(0,900),
       async call(name,args){
         if(name==='check_workspace'&&workspace){
           await ensureFiles();let result;try{result=await workspace.check();}catch(error){if(error.code!=='STATIC_FAILED'||!error.result)throw error;result=error.result;}
@@ -89,6 +97,7 @@ export function githubToolbox({repository,api,allowWrites=false,draftPr=false,ru
         if(name==='read_file'){const oversized=await ensureFiles(),file=await safe(args.path);if(oversized.has(pathKey(path.relative(work,file)))||(await fs.stat(file)).size>100000)throw Error('File too large');return {text:await fs.readFile(file,'utf8')};}
         if(name==='write_file'){if(typeof args.content!=='string'||Buffer.byteLength(args.content)>100000)throw Error('File too large');const oversized=await ensureFiles(),file=await safe(args.path);if(oversized.has(pathKey(path.relative(work,file))))throw Error('File too large');await fs.mkdir(path.dirname(file),{recursive:true});await fs.writeFile(file,args.content);return {written:args.path};}
         if(name==='read_pr'){
+          if(workspace?.connection)throw Error('Connected repository PR reads are not exposed');
           if(!Number.isSafeInteger(args.number)||args.number<1)throw Error('Invalid PR');
           const [pr,changes]=await Promise.all([api('GET',`/repos/${repository}/pulls/${args.number}`),api('GET',`/repos/${repository}/pulls/${args.number}/files?per_page=100`)]);
           // GitHub embeds entire repository/user objects in a PR response. Returning

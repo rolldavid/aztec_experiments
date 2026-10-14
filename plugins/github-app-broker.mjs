@@ -13,8 +13,8 @@ const git=(type,b)=>hash(Buffer.concat([Buffer.from(type+' '+b.length+'\0'),b]),
 const safe=p=>typeof p==='string'&&p.length<=240&&p.split('/').every(s=>/^[A-Za-z0-9.][A-Za-z0-9_.-]*$/.test(s)&&!['.','..','.git','.github','.aws','.ssh','.npmrc','node_modules','credentials','secrets'].includes(s.toLowerCase())&&!/^\.(?:env|yarnrc)(?:[.-]|$)/i.test(s));
 async function privateDirectory(p){assert(path.isAbsolute(p)&&await fs.realpath(p)===p);const s=await fs.lstat(p);assert(s.isDirectory()&&(s.mode&0o077)===0);}
 async function read(file,max,privateMode=false){const f=await fs.open(file,constants.O_RDONLY|constants.O_NOFOLLOW);try{const s=await f.stat();assert(s.isFile()&&s.nlink===1&&s.size<=max&&(!privateMode||(s.mode&0o077)===0));const b=Buffer.alloc(max+1);let n=0;while(n<b.length){const r=await f.read(b,n,b.length-n,null);if(!r.bytesRead)break;n+=r.bytesRead;}const end=await f.stat();assert(n===s.size&&n<=max&&end.size===n&&end.mtimeMs===s.mtimeMs);return b.subarray(0,n);}finally{await f.close();}}
-function treeHash(files){const root=new Map();for(const f of files){let dir=root;const parts=f.path.split('/');for(const name of parts.slice(0,-1)){if(!dir.has(name))dir.set(name,new Map());assert(dir.get(name) instanceof Map);dir=dir.get(name);}assert(!dir.has(parts.at(-1)));dir.set(parts.at(-1),f.gitSha);}
- const visit=dir=>git('tree',Buffer.concat([...dir.entries()].sort(([a,av],[b,bv])=>Buffer.compare(Buffer.from(a+(av instanceof Map?'/':'')),Buffer.from(b+(bv instanceof Map?'/':'')))).map(([name,value])=>Buffer.concat([Buffer.from((value instanceof Map?'40000':'100644')+' '+name+'\0'),Buffer.from(value instanceof Map?visit(value):value,'hex')]))));return visit(root);}
+function treeHash(files){const root=new Map();for(const f of files){let dir=root;const parts=f.path.split('/');for(const name of parts.slice(0,-1)){if(!dir.has(name))dir.set(name,new Map());assert(dir.get(name) instanceof Map);dir=dir.get(name);}assert(!dir.has(parts.at(-1)));dir.set(parts.at(-1),{sha:f.gitSha,mode:f.mode??'100644'});}
+ const visit=dir=>git('tree',Buffer.concat([...dir.entries()].sort(([a,av],[b,bv])=>Buffer.compare(Buffer.from(a+(av instanceof Map?'/':'')),Buffer.from(b+(bv instanceof Map?'/':'')))).map(([name,value])=>Buffer.concat([Buffer.from((value instanceof Map?'40000':value.mode)+' '+name+'\0'),Buffer.from(value instanceof Map?visit(value):value.sha,'hex')]))));return visit(root);}
 async function capture(receipt,artifactRoot){
  // Detached public fields; no auth/operator configuration is persisted with source identity.
  const r=structuredClone(receipt),v=r.validation;
@@ -32,11 +32,18 @@ async function capture(receipt,artifactRoot){
 
 /** One trusted host owns directory. Disabled by default; no ambient gh/env tokens.
  * REST mirror commits are explicitly DISTINCT from local accepted Git commits. */
-async function broker({enabled=false,directory,artifactRoot,owner,ownerId,appId,installationId,privateKeyFile,fetchImpl=globalThis.fetch,now=Date.now}){
+async function broker({connectedRepositories=[],enabled=false,directory,artifactRoot,owner,ownerId,appId,installationId,privateKeyFile,fetchImpl=globalThis.fetch,now=Date.now}){
  if(enabled!==true){const disabled=async()=>{throw fail('GITHUB_BROKER_DISABLED');};return Object.freeze({assertAvailable:disabled,sync:disabled});}
  assert(typeof owner==='string'&&/^[a-z0-9](?:[a-z0-9-]{0,37}[a-z0-9])?$/.test(owner));for(const n of [ownerId,appId,installationId])assert(integer(n));
  await privateDirectory(directory);await privateDirectory(artifactRoot);assert(typeof privateKeyFile==='string'&&!privateKeyFile.startsWith(artifactRoot+path.sep));await privateDirectory(path.dirname(privateKeyFile));
  const key=createPrivateKey(await read(privateKeyFile,16384,true));assert(key.asymmetricKeyType==='rsa'&&key.asymmetricKeyDetails.modulusLength>=2048);
+ const mappings=new Map(),branches=new Set();assert(Array.isArray(connectedRepositories)&&connectedRepositories.length<=32);
+ for(const input of connectedRepositories){const c=structuredClone(input);assert(Object.keys(c).sort().join(',')==='baseBranch,baseCommit,fullName,ownerId,repositoryId,threadId,workBranch');
+  assert(/^0x[0-9a-f]{64}$/.test(c.threadId)&&integer(c.repositoryId)&&c.ownerId===ownerId&&typeof c.fullName==='string'&&new RegExp('^'+owner+'/[A-Za-z0-9_][A-Za-z0-9_.-]{0,99}$').test(c.fullName)&&hex(c.baseCommit,40));
+  for(const branch of [c.baseBranch,c.workBranch])assert(typeof branch==='string'&&/^[A-Za-z0-9][A-Za-z0-9_/-]{0,99}$/.test(branch)&&!branch.includes('//')&&!branch.endsWith('/'));
+  assert(c.baseBranch!==c.workBranch&&c.workBranch.startsWith('bok/')&&!mappings.has(c.threadId));
+  const scope=c.repositoryId+':'+c.workBranch;assert(!branches.has(scope));branches.add(scope);mappings.set(c.threadId,c);
+ }
  const config={owner,ownerId,appId,installationId},file=path.join(directory,'github-app-state.json');
  try{await read(file,8*1024*1024,true);}catch(e){if(e.code!=='ENOENT')throw fail();}
  const store=await fileState(file);let state=store.read(),busy=false,poisoned=false;
@@ -50,13 +57,88 @@ async function broker({enabled=false,directory,artifactRoot,owner,ownerId,appId,
    try{const response=await fetchImpl('https://api.github.com'+route,{method,redirect:'error',credentials:'omit',headers:{Accept:'application/vnd.github+json','X-GitHub-Api-Version':'2026-03-10','Content-Type':'application/json',Authorization:'Bearer '+token},...(body===undefined?{}:{body:JSON.stringify(body)}),signal:controller.signal});
     if(response.status===404){await response.body?.cancel();return null;}assert(response.ok);const chunks=[];let n=0;for await(const chunk of response.body){n+=chunk.length;assert(n<=2*1024*1024);chunks.push(chunk);}return JSON.parse(Buffer.concat(chunks).toString('utf8'));
    }finally{clearTimeout(timer);}}
-  async function available(){const i=await request('GET','/app/installations/'+installationId,undefined,jwt());assert(i?.id===installationId&&i.app_id===appId&&i.target_type==='User'&&i.account?.type==='User'&&i.account.id===ownerId&&i.account.login===owner&&i.suspended_at===null&&i.repository_selection==='selected');assert(i.permissions?.administration==='write'&&i.permissions?.contents==='write');for(const [name,level] of Object.entries(i.permissions))assert((name==='metadata'&&level==='read')||(['administration','contents'].includes(name)&&level==='write'));return {available:true,owner,ownerId,appId,installationId};}
-  async function token(repositoryId){const body={permissions:repositoryId?{contents:'write'}:{administration:'write'},...(repositoryId?{repository_ids:[repositoryId]}:{})},r=await request('POST','/app/installations/'+installationId+'/access_tokens',body,jwt());assert(typeof r?.token==='string'&&r.token.length>0&&r.token.length<=16384&&Date.parse(r.expires_at)>now()+120000);assert(r.permissions?.[repositoryId?'contents':'administration']==='write');for(const [name,level] of Object.entries(r.permissions))assert((name==='metadata'&&level==='read')||(name===(repositoryId?'contents':'administration')&&level==='write'));if(repositoryId)assert(Array.isArray(r.repositories)&&r.repositories.length===1&&r.repositories[0].id===repositoryId);return r.token;}
+  async function available(){const i=await request('GET','/app/installations/'+installationId,undefined,jwt());assert(i?.id===installationId&&i.app_id===appId&&i.target_type==='User'&&i.account?.type==='User'&&i.account.id===ownerId&&i.account.login===owner&&i.suspended_at===null&&i.repository_selection==='selected');assert(i.permissions?.administration==='write'&&i.permissions?.contents==='write'&&(!mappings.size||i.permissions?.pull_requests==='write'));for(const [name,level] of Object.entries(i.permissions))assert((name==='metadata'&&level==='read')||(['administration','contents',...(mappings.size?['pull_requests']:[])].includes(name)&&level==='write'));return {available:true,owner,ownerId,appId,installationId};}
+  async function token(repositoryId,connected=false){const permissions=connected?{contents:'write',pull_requests:'write'}:repositoryId?{contents:'write'}:{administration:'write'};const body={permissions:repositoryId?permissions:{administration:'write'},...(repositoryId?{repository_ids:[repositoryId]}:{})},r=await request('POST','/app/installations/'+installationId+'/access_tokens',body,jwt());assert(typeof r?.token==='string'&&r.token.length>0&&r.token.length<=16384&&Date.parse(r.expires_at)>now()+120000);assert(r.permissions?.[repositoryId?'contents':'administration']==='write');for(const [name,level] of Object.entries(r.permissions))assert((name==='metadata'&&level==='read')||(Object.hasOwn(permissions,name)&&level===permissions[name]));if(connected)assert(r.permissions?.pull_requests==='write');if(repositoryId)assert(Array.isArray(r.repositories)&&r.repositories.length===1&&r.repositories[0].id===repositoryId);return r.token;}
   return {request,available,token};
  }
+ // Connected repositories use the same private state/lease and exact-once mutation
+ // journal. Neither installation Administration nor the legacy ambient token is
+ // requested on this path. The immutable base tree preserves excluded entries.
+ function mapping(threadId){const c=mappings.get(threadId);assert(c,'Connected thread unavailable');return c;}
+ async function connectedSession(c){const s=session();await s.available();const credential=await s.token(c.repositoryId,true),route='/repos/'+c.fullName;
+  const remote=await s.request('GET',route,undefined,credential);
+  assert(remote?.id===c.repositoryId&&remote.full_name===c.fullName&&remote.owner?.id===c.ownerId&&remote.owner.login===owner&&remote.owner.type==='User'&&remote.archived===false&&remote.fork===false);
+  const head=async branch=>{const r=await s.request('GET',route+'/git/ref/heads/'+branch,undefined,credential);if(r===null)return null;assert(r.ref==='refs/heads/'+branch&&r.object?.type==='commit'&&hex(r.object.sha,40));return r.object.sha;};
+  assert.equal(await head(c.baseBranch),c.baseCommit,'Connected base changed');return {...s,credential,route,head};
+ }
+ async function connectedBase(c,s){
+  const commit=await s.request('GET',s.route+'/git/commits/'+c.baseCommit,undefined,s.credential);assert(commit?.sha===c.baseCommit&&hex(commit.tree?.sha,40));
+  const tree=await s.request('GET',s.route+'/git/trees/'+commit.tree.sha+'?recursive=1',undefined,s.credential);
+  assert(tree?.sha===commit.tree.sha&&tree.truncated===false&&Array.isArray(tree.tree)&&tree.tree.length<=2048);
+  const names=new Set(),leaves=[];let bytes=0;
+  for(const f of tree.tree){assert(typeof f.path==='string'&&f.path.length<=1024&&!/[\0\r\n]/.test(f.path)&&f.path.split('/').every(p=>p&&p!=='.'&&p!=='..')&&hex(f.sha,40));
+   assert(!names.has(f.path.toLowerCase()));names.add(f.path.toLowerCase());if(f.type==='tree'){assert(f.mode==='040000');continue;}
+   assert((f.type==='blob'&&['100644','100755','120000'].includes(f.mode))||(f.type==='commit'&&f.mode==='160000'));
+   // Unsupported/private-control paths remain in GitHub's base tree, never in
+   // the generated workspace, provider tools, or public publication.
+   const editable=safe(f.path)&&['100644','100755'].includes(f.mode);
+   if(editable){assert(Number.isSafeInteger(f.size)&&f.size>=0&&f.size<=100000);bytes+=f.size;assert(bytes<=8388608);}
+   leaves.push({path:f.path,gitSha:f.sha,mode:f.mode,...(editable?{bytes:f.size}:{}),editable});
+  }
+  assert(leaves.filter(f=>f.editable).length<=512);assert.equal(treeHash(leaves),tree.sha);
+  return {tree:tree.sha,leaves};
+ }
+ async function connectedEntry(c,s){
+  state.connections??={};let e=state.connections[c.threadId];
+  if(e)assert.deepEqual(e.mapping,c);else{const base=await connectedBase(c,s);e={mapping:c,base,latest:null,revisions:{}};state.connections[c.threadId]=e;await save();}
+  return e;
+ }
+ async function onceConnected(s,steps,label,method,route,body,project,reconcile){const identity=hash(JSON.stringify([method,route,body]));let entry=steps[label];
+  if(entry){assert.equal(entry.identity,identity);if(entry.done)return entry.result;const found=await reconcile();if(found===null)throw fail('GITHUB_BROKER_UNRESOLVED');entry.result=project(found);entry.done=true;await save();return entry.result;}
+  steps[label]=entry={identity,done:false};await save();entry.result=project(await s.request(method,route,body,s.credential));entry.done=true;await save();return entry.result;
+ }
  return Object.freeze({
+  connectionFor:threadId=>mappings.has(threadId)?structuredClone(mappings.get(threadId)):null,
+  readConnected:threadId=>owned(async()=>{const c=mapping(threadId),s=await connectedSession(c),entry=await connectedEntry(c,s),files=[];
+   for(const f of entry.base.leaves.filter(f=>f.editable)){const blob=await s.request('GET',s.route+'/git/blobs/'+f.gitSha,undefined,s.credential);assert(blob?.sha===f.gitSha&&blob.encoding==='base64'&&typeof blob.content==='string');const bytes=Buffer.from(blob.content.replace(/\s/g,''),'base64');assert(bytes.length===f.bytes&&git('blob',bytes)===f.gitSha);files.push({path:f.path,data:bytes.toString('base64'),mode:f.mode});}
+   return {mapping:structuredClone(c),files};
+  }),
+  syncConnected:receipt=>owned(async()=>{
+   const captured=await capture(receipt,artifactRoot),b=captured.binding,c=mapping(b.threadId);assert.deepEqual(receipt.connection,c);
+   const s=await connectedSession(c),repo=await connectedEntry(c,s);let entry=repo.revisions[b.acceptedRevision];
+   if(entry)assert.deepEqual(entry.binding,b);else{assert(repo.latest===b.readRevision&&Object.keys(repo.revisions).length<64&&!Object.values(repo.revisions).some(r=>!r.complete||r.binding.invocationId===b.invocationId));entry={binding:b,date:new Date(Math.floor(now()/1000)*1000).toISOString().replace('.000Z','Z'),steps:{},complete:false};repo.revisions[b.acceptedRevision]=entry;await save();}
+   const once=(label,method,route,body,project,reconcile)=>onceConnected(s,entry.steps,label,method,s.route+route,body,project,reconcile);
+   const read=(route)=>s.request('GET',s.route+route,undefined,s.credential);
+   const previous=repo.latest?repo.revisions[repo.latest]:null,parent=previous?.remoteCommit??c.baseCommit;
+   const current=await s.head(c.workBranch);
+   if(entry.complete){assert(repo.latest!==b.acceptedRevision||current===entry.remoteCommit);return structuredClone(entry.result);}
+   assert(current===(previous?.remoteCommit??null)||(entry.steps.ref&&current===entry.remoteCommit),'Connected work branch changed');
+   const omitted=repo.base.leaves.filter(f=>!f.editable),original=new Map(repo.base.leaves.map(f=>[f.path,f]));
+   for(const f of captured.files)assert(!omitted.some(o=>o.path.toLowerCase()===f.path.toLowerCase()||o.path.toLowerCase().startsWith(f.path.toLowerCase()+'/')||f.path.toLowerCase().startsWith(o.path.toLowerCase()+'/')),'Excluded base path changed');
+   const files=captured.files.map(f=>({...f,mode:original.get(f.path)?.mode??'100644'})),leaves=[...omitted,...files];
+   const expectedTree=treeHash(leaves),parentTree=previous?.remoteTree??repo.base.tree;
+   for(const f of files)await once('blob:'+f.path,'POST','/git/blobs',{content:f.data,encoding:'base64'},r=>{assert(r?.sha===f.gitSha);return {sha:r.sha};},()=>read('/git/blobs/'+f.gitSha));
+   const prior=previous?.files??repo.base.leaves.filter(f=>f.editable),names=new Set(files.map(f=>f.path));
+   const changes=[...files.map(f=>({path:f.path,mode:f.mode,type:'blob',sha:f.gitSha})),...prior.filter(f=>!names.has(f.path)).map(f=>({path:f.path,mode:f.mode,type:'blob',sha:null}))];
+   const tree=await once('tree','POST','/git/trees',{base_tree:parentTree,tree:changes},r=>{assert(r?.sha===expectedTree);return {sha:r.sha};},()=>read('/git/trees/'+expectedTree));
+   const message='Accepted source '+b.acceptedRevision+'\n\nSource-Digest: '+b.sourceDigest+'\n',author={name:'Bok',email:'bok-source@users.noreply.github.com',date:entry.date},actor=author.name+' <'+author.email+'> '+Date.parse(entry.date)/1000+' +0000';
+   const expected=git('commit',Buffer.from('tree '+tree.sha+'\nparent '+parent+'\nauthor '+actor+'\ncommitter '+actor+'\n\n'+message));
+   const commit=await once('commit','POST','/git/commits',{message,tree:tree.sha,parents:[parent],author,committer:author},r=>{assert(r?.sha===expected&&r.tree?.sha===tree.sha&&r.parents?.length===1&&r.parents[0].sha===parent&&r.message===message);return {sha:r.sha};},()=>read('/git/commits/'+expected));
+   entry.remoteCommit=commit.sha;entry.remoteTree=tree.sha;entry.files=files.map(({path,mode})=>({path,mode}));await save();
+   assert.equal(await s.head(c.baseBranch),c.baseCommit);const before=await s.head(c.workBranch);assert(before===(previous?.remoteCommit??null)||(entry.steps.ref&&before===commit.sha));
+   const branch='/git/refs'+(previous?'/heads/'+c.workBranch:''),body=previous?{sha:commit.sha,force:false}:{ref:'refs/heads/'+c.workBranch,sha:commit.sha};
+   await once('ref',previous?'PATCH':'POST',branch,body,r=>{assert(r?.ref==='refs/heads/'+c.workBranch&&r.object?.sha===commit.sha&&r.object.type==='commit');return {sha:commit.sha};},async()=>{const r=await read('/git/ref/heads/'+c.workBranch);return r?.object?.sha===commit.sha?r:null;});
+   const prResult=r=>{assert(integer(r?.number)&&r.state==='open'&&r.base?.repo?.id===c.repositoryId&&r.head?.repo?.id===c.repositoryId&&r.base.ref===c.baseBranch&&r.head.ref===c.workBranch&&r.head.sha===commit.sha&&r.html_url==='https://github.com/'+c.fullName+'/pull/'+r.number);return {number:r.number,url:r.html_url};};
+   let pr;if(previous){pr=prResult(await read('/pulls/'+previous.result.number));}else{
+    if(!entry.steps.pr)assert.deepEqual(await read('/pulls?state=all&head='+encodeURIComponent(owner+':'+c.workBranch)+'&base='+encodeURIComponent(c.baseBranch)+'&per_page=100'),[]);
+    pr=await once('pr','POST','/pulls',{title:'Bok accepted revision',body:'Validated thread source '+b.acceptedRevision,head:c.workBranch,base:c.baseBranch,draft:true},prResult,async()=>{const list=await read('/pulls?state=all&head='+encodeURIComponent(owner+':'+c.workBranch)+'&base='+encodeURIComponent(c.baseBranch)+'&per_page=100');assert(Array.isArray(list)&&list.length<=1);return list[0]??null;});
+   }
+   assert.equal(await s.head(c.workBranch),commit.sha);assert.equal(await s.head(c.baseBranch),c.baseCommit);
+   entry.result={connected:true,...pr,repositoryId:b.repositoryId,acceptedRevision:b.acceptedRevision,remoteCommit:commit.sha};entry.complete=true;repo.latest=b.acceptedRevision;await save();return structuredClone(entry.result);
+  }),
   assertAvailable:()=>owned(()=>session().available()),
   sync:receipt=>owned(async()=>{
+   assert(!receipt.connection&&!mappings.has(receipt.threadId),'Connected source cannot use mirror publication');
    const captured=await capture(receipt,artifactRoot),b=captured.binding,id=hash(JSON.stringify([b.repositoryId,b.threadId])),name='bok-'+id,route='/repos/'+owner+'/'+name,s=session();await s.available();
    let repo=state.repositories[id];
    if(!repo){assert(Object.keys(state.repositories).length<128&&b.readRevision===null);repo={repositoryId:b.repositoryId,threadId:b.threadId,marker:'Bok source mirror '+id+' '+randomUUID(),steps:{},revisions:{},latest:null};state.repositories[id]=repo;await save();}

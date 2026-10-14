@@ -125,3 +125,18 @@ test('actual accepted Git and isolated artifact publish matching source over sep
   for(const name of await fs.readdir(output))assert.equal(JSON.parse(await fs.readFile(path.join(output,name,'cleanup.json'))).ownedContainerAbsent,true);
  }finally{await session?.close();await new Promise(resolve=>{server.close(resolve);server.closeAllConnections();});}
 });
+
+test('connected thread keeps exact operator mapping and accepted source across participants; other threads stay empty',async t=>{
+ const {githubToolbox}=await import('../github-tools.mjs'),h=await fixture(t);const connection={threadId:id(1),repositoryId:100,ownerId:10,fullName:'owner/connected',baseBranch:'main',workBranch:'bok/one',baseCommit:'1'.repeat(40)};let reads=0;const publications=[];
+ const connections={connectionFor:thread=>thread===id(1)?structuredClone(connection):null,readConnected:async thread=>{assert.equal(thread,id(1));reads++;return {mapping:structuredClone(connection),files:[{path:'app.cjs',data:Buffer.from('initial private source').toString('base64'),mode:'100644'}]};}};
+ const options={...h.options,startEmpty:true,connections,validateRevision:async({revision})=>({passed:true,revision,sourceDigest:'a'.repeat(64)}),onAccepted:async receipt=>{publications.push(receipt);return {connected:true,url:'https://github.com/owner/connected/pull/1'};}};
+ const box=manager=>githubToolbox({repository:'owner/reference',repositories:manager,api:async()=>assert.fail('No ambient GitHub API or public clone')});
+ let manager=threadRepositories(options),session=await box(manager).open({threadId:id(1),id:id(11),postId:id(20)});
+ assert.equal(session.privateSource,true);assert(!session.definitions.some(d=>['create_pr','read_pr'].includes(d.function.name)));
+ assert.equal((await session.call('read_file',{path:'app.cjs'})).text,'initial private source');await assert.rejects(session.call('write_file',{path:'.github/workflows/ci.yml',content:'unsafe'}));await assert.rejects(session.call('read_pr',{number:1}));
+ await session.call('write_file',{path:'app.cjs',content:'first participant edit'});const first=await session.accept();assert.deepEqual(first.connection,connection);await session.close();
+ manager=threadRepositories(options);session=await box(manager).open({threadId:id(1),id:id(12),postId:id(21)});assert.equal((await session.call('read_file',{path:'app.cjs'})).text,'first participant edit');assert.equal(reads,1);
+ await session.call('write_file',{path:'app.cjs',content:'second participant edit'});const second=await session.accept();assert.equal(second.readRevision,first.acceptedRevision);await session.close();assert.equal(publications.length,2);
+ const other=await box(manager).open({threadId:id(2),id:id(13),postId:id(22)});assert.equal(other.privateSource,false);assert.deepEqual((await other.call('list_files',{prefix:''})).files,[]);assert.equal(reads,1);await other.close();
+ connection.workBranch='bok/rebound';await assert.rejects(box(threadRepositories(options)).open({threadId:id(1),id:id(14),postId:id(23)}));
+});

@@ -17,11 +17,11 @@ export const repositoryGit=(args,options={})=>exec('/usr/bin/git',['-c','core.ho
  * This stores source revisions only; the paid-call journal remains authoritative
  * for provider recovery and must never be replayed because a draft exists.
  */
-export function threadRepositories({directory,namespace,lease,git=repositoryGit,validateRevision,maxBytes=64*1024*1024,maxRevisions=1000,startEmpty=false,onAccepted}){
+export function threadRepositories({directory,namespace,lease,git=repositoryGit,validateRevision,maxBytes=64*1024*1024,maxRevisions=1000,startEmpty=false,onAccepted,connections}){
  assert(path.isAbsolute(directory)&&typeof namespace==='string'&&namespace.length>0&&typeof lease?.assertHeld==='function');
  assert(Number.isSafeInteger(maxBytes)&&maxBytes>=1024&&Number.isSafeInteger(maxRevisions)&&maxRevisions>0);
  assert(validateRevision===undefined||typeof validateRevision==='function');
- assert.equal(typeof startEmpty,'boolean');assert(onAccepted===undefined||typeof onAccepted==='function');
+ assert(connections===undefined||(typeof connections.connectionFor==='function'&&typeof connections.readConnected==='function'));assert.equal(typeof startEmpty,'boolean');assert(onAccepted===undefined||typeof onAccepted==='function');
  const queues=new Map();
  async function size(directory){let total=0;for(const entry of await fs.readdir(directory)){const file=path.join(directory,entry),stat=await fs.lstat(file);assert(!stat.isSymbolicLink(),'Repository symlink rejected');if(stat.isDirectory())total+=await size(file);else{assert(stat.isFile());total+=stat.size;}assert(total<=maxBytes,'Thread storage limit reached');}return total;}
  return Object.freeze({async open({threadId,invocationId,repository}){
@@ -35,7 +35,9 @@ export function threadRepositories({directory,namespace,lease,git=repositoryGit,
    await lease.assertHeld();await fs.mkdir(directory,{recursive:true,mode:0o700});assert.equal(await fs.realpath(directory),directory);assert.equal((await fs.stat(directory)).mode&0o777,0o700);
    const root=path.join(directory,key);await fs.mkdir(root,{mode:0o700,recursive:true});assert.equal(await fs.realpath(root),root);
    const store=await fileState(path.join(root,'revisions.json')),repo=path.join(root,'repository.git');let state=store.read();
-   const identity={namespace,threadId,repository,startEmpty};
+   const connection=connections?.connectionFor(threadId)??null;
+   if(connection)repository=connection.fullName;
+   const identity={namespace,threadId,repository,startEmpty,...(connection?{connection}:{})};
    if(!state.identity){
     await git(['init','--bare',repo]);await store.write({identity,acceptedRevision:null,operations:{}});state=store.read();
    }
@@ -49,7 +51,7 @@ export function threadRepositories({directory,namespace,lease,git=repositoryGit,
     await store.write({...state,acceptedRevision:current,operations:{...state.operations,[id]:{...record,status:'accepted'}}});state=store.read();
    }
    assert.equal(await head(),state.acceptedRevision,'Accepted repository ref changed');
-   const receipt=record=>({repositoryId:key,threadId,invocationId:record.invocationId,readRevision:record.readRevision,acceptedRevision:record.producedRevision,validation:record.validation});
+   const receipt=record=>({repositoryId:key,threadId,invocationId:record.invocationId,readRevision:record.readRevision,acceptedRevision:record.producedRevision,validation:record.validation,...(connection?{connection:structuredClone(connection)}:{})});
    async function publish(record){
     if(!onAccepted||record.publication?.status==='complete')return record.publication?.result;
     await lease.assertHeld();const result=await onAccepted(receipt(record));
@@ -69,12 +71,13 @@ export function threadRepositories({directory,namespace,lease,git=repositoryGit,
     await git(['add','--all','--force','--','.'],{cwd:work});const tree=(await git(['write-tree'],{cwd:work})).stdout.trim();assert(revision(tree));
     if(checked?.tree===tree&&checked.parent===parent&&(!forceCheck||checked.validation))return checked;
     checked=null;const produced=(await git(['commit-tree',tree,'-p',parent,'-m',`Bok thread invocation ${invocationId}`],{cwd:work})).stdout.trim();assert(revision(produced));
-    const unchanged=startEmpty&&tree===(await git(['rev-parse',parent+'^{tree}'],{cwd:work})).stdout.trim();
+    const unchanged=(startEmpty||connection)&&tree===(await git(['rev-parse',parent+'^{tree}'],{cwd:work})).stdout.trim();
     const validation=(!unchanged||forceCheck)&&validateRevision?await validateRevision({sourceDirectory:work,revision:produced}):null;
     if((!unchanged||forceCheck)&&validateRevision){assert(validation?.passed===true&&validation.revision===produced&&/^[0-9a-f]{64}$/.test(validation.sourceDigest),'Isolated revision validation failed');await git(['diff','--quiet',produced,'--'],{cwd:work});}
     checked={tree,parent,produced,validation,unchanged};return checked;
    };
-   return Object.freeze({work,repositoryPath:repo,readRevision,startEmpty,
+   return Object.freeze({work,repositoryPath:repo,readRevision,startEmpty,connection,
+    initialSource:connection?async()=>{const source=await connections.readConnected(threadId);assert.deepEqual(source.mapping,connection);return source.files;}:undefined,
     async check(){assert(!acceptStarted);assert(validateRevision,'Isolated revision validation unavailable');return (await prepare(true)).validation;},
     async accept(){
      assert(!closed);if(accepted)return accepted;assert(!acceptStarted,'Acceptance already attempted; reopen and reconcile');acceptStarted=true;await lease.assertHeld();
