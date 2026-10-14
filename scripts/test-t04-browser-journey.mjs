@@ -594,3 +594,20 @@ test('fatal wallet diagnostics retain only closed fields without intercepting er
  assert.equal(records.length,1);assert.equal(records[0].failure.code,'ERR_WORKER_INIT_FAILED');assert.equal(records[0].failure.location,'test-wallet-extension-browser.mjs:140:12');assert(!JSON.stringify(records).includes('PRIVATE_SENTINEL'));stop();assert.equal(runtime.listenerCount('uncaughtExceptionMonitor'),0);
  const throwing=new EventEmitter();installWalletFatalObservation(throwing,()=>{throw false;},()=>{throw 0;});assert.doesNotThrow(()=>throwing.emit('uncaughtExceptionMonitor',false));
 });
+
+test('fresh automatic three-leg claim waits for Ready and binds original saved consent without another action',async()=>{
+ const {waitMetaMaskAutomaticClaim:wait,inspectMetaMaskPaidRecoverySurface,inspectMetaMaskPaidBinding}=await import('./t04-metamask.mjs');
+ const saved={paymentMatches:true,claimMatches:true,claimConfirmed:true,paymentSaved:true,claimPresent:true,attempted:true,feeWithinSavedCap:true,workflowStatus:'confirmed',claimTxHash:hash};
+ function fixture(change={}){const events=[],report={aggregate:{privateClaimQualified:false}},value={...saved,...change};const page={waitForFunction:async(fn,args,options)=>{assert.equal(fn,inspectMetaMaskPaidRecoverySurface);assert.deepEqual(args,{settledOnly:true,terminalOnly:true});assert.deepEqual(options,{timeout:7000});events.push('observe');return{jsonValue:async()=>({state:'success'}),dispose:async()=>events.push('dispose')};},evaluate:async(fn)=>{assert.equal(fn,inspectMetaMaskPaidBinding);events.push('binding');return value;}};return{events,report,page};}
+ const f=fixture();await wait({...f,binding:{},timeout:7000});assert.equal(f.report.aggregate.privateClaimQualified,true);assert.equal(f.report.aggregate.claimTransactionHash,hash);assert.deepEqual(f.events,['observe','binding','dispose']);
+ for(const key of ['paymentMatches','claimMatches','claimConfirmed','paymentSaved','claimPresent','attempted','feeWithinSavedCap']){const f=fixture({[key]:false});await assert.rejects(wait({...f,binding:{},timeout:7000}));assert.equal(f.report.aggregate.privateClaimQualified,false);}
+ for(const status of ['prepared','unknown','submitted','reverted']){const f=fixture({workflowStatus:status});await assert.rejects(wait({...f,binding:{},timeout:7000}));}
+ for(const state of ['error','review','review-saved','receipt-review','reverted']){const f=fixture();f.page.waitForFunction=async()=>({jsonValue:async()=>({state}),dispose:async()=>{}});await assert.rejects(wait({...f,binding:{},timeout:7000}));assert.equal(f.report.aggregate.privateClaimQualified,false);}
+});
+test('automatic claim surface keeps waiting states pending without interacting with the application',async()=>{
+ const {inspectMetaMaskPaidRecoverySurface}=await import('./t04-metamask.mjs'),{runInNewContext}=await import('node:vm');
+ for(const text of ['Payment confirmed. Waiting for the bridge; no second Ethereum payment will be requested.','Checking the saved private claim. It will not be submitted again.']){
+  const document={querySelector:()=>({getAttribute:()=> 'false',querySelectorAll:s=>s==='.notice'?[{textContent:text,getClientRects:()=>[{}]}]:[]})};
+  assert.equal(runInNewContext('('+inspectMetaMaskPaidRecoverySurface+')(options)',{document,options:{settledOnly:true,terminalOnly:true}}),null);
+ }
+});

@@ -197,7 +197,7 @@ export function assertMetaMaskAggregateTypedData({data,account,scope,allocation,
 
 // Bounded driver of the actual served application. Resources belong to the
 // existing caller. Only public effects enter the report; signatures stay in RAM.
-export async function driveMetaMaskAggregateFunding({context,page,walletPage,control,provider,mark,report,continueUnfunded=false}){
+export async function driveMetaMaskAggregateFunding({context,page,walletPage,control,provider,mark,report,continueUnfunded=false,deadlineAt}){
  const c=control,scope=c.walletConfig.config.aggregateFunding,a=c.allocation,account=Wallet.fromPhrase(c.mnemonic).address.toLowerCase();
  const portal=new Interface(['function depositNonces(address) view returns(uint256)']);
  const consentNonce=portal.decodeFunctionResult('depositNonces',await provider.call({to:scope.collateralPortal,data:portal.encodeFunctionData('depositNonces',[account])}))[0];
@@ -298,7 +298,12 @@ export async function driveMetaMaskAggregateFunding({context,page,walletPage,con
     if(tx&&receipt){if(c.asset==='USDC')intent={...intent,nonce:tx.nonce};const verified=await verifyEthereumIntentReceipt(provider,intent,hash);assert.equal(verified.outcome,'success');
      assert.equal(signatures.length,c.asset==='ETH'?1:2);assert.equal(confirmedSignatures,signatures.length);assert.equal(userSends,c.asset==='ETH'?1:0);assert.equal(relayPosts,c.asset==='ETH'?0:1);
      if(c.asset==='USDC')assert.equal(await provider.getBalance(account),0n);
-     report.aggregate={asset:c.asset,transactionHash:hash,planHash:intent.expected.planHash,userSends,relayPosts,signatures:signatures.length,canonicalEffectsVerified:true,collateral:verified.event.collateral.amount,privateFee:verified.event.privateFee.amount,bok:verified.event.bok.amount,privateClaimQualified:false,postQualified:false};return ()=>{assert.equal(errors.length,0);assert.equal(userSends,c.asset==='ETH'?1:0);assert.equal(relayPosts,c.asset==='ETH'?0:1);assert.equal(signatures.length,c.asset==='ETH'?1:2);};
+     report.aggregate={asset:c.asset,transactionHash:hash,planHash:intent.expected.planHash,userSends,relayPosts,signatures:signatures.length,canonicalEffectsVerified:true,collateral:verified.event.collateral.amount,privateFee:verified.event.privateFee.amount,bok:verified.event.bok.amount,privateClaimQualified:false,postQualified:false};
+     const timeout=Math.min(80000,deadlineAt-Date.now());assert(Number.isSafeInteger(timeout)&&timeout>0,'Original wallet deadline exhausted');
+     mark('aggregate-automatic-private-claim');
+     await waitMetaMaskAutomaticClaim({page,binding:{network:c.walletConfig.config.network,board:c.walletConfig.config.board,router:scope.router,intent,transactionHash:hash},report,timeout});
+     if(c.asset==='USDC'){assert.equal(await provider.getBalance(account),0n);assert.equal(await provider.getTransactionCount(account,'pending'),0);}
+     return ()=>{assert.equal(errors.length,0);assert.equal(userSends,c.asset==='ETH'?1:0);assert.equal(relayPosts,c.asset==='ETH'?0:1);assert.equal(signatures.length,c.asset==='ETH'?1:2);};
     }
    }
    await new Promise(resolve=>setTimeout(resolve,100));
@@ -398,7 +403,7 @@ export async function confirmMetaMaskRecoveryAccountSelection(walletPage){
 
 // Serialized into the page: project only known notices and button states, never
 // account text, amounts, input values or the contents of an unknown error.
-export function inspectMetaMaskPaidRecoverySurface({settledOnly=false}={}){
+export function inspectMetaMaskPaidRecoverySurface({settledOnly=false,terminalOnly=false}={}){
  const dialog=document.querySelector('dialog[open]');if(!dialog)return settledOnly?null:{state:'unavailable',busy:false,notices:[],buttons:{}};
  const visible=node=>node.getClientRects().length>0;
  const vocabulary={
@@ -419,7 +424,27 @@ export function inspectMetaMaskPaidRecoverySurface({settledOnly=false}={}){
  const busy=dialog.getAttribute('aria-busy')==='true',alert=[...dialog.querySelectorAll('[role="alert"]')].some(visible);
  const state=alert?'error':['review-saved','review','reverted','receipt-review','success','claim-confirmed','claim-confirmed-feed-unavailable','waiting-bridge','pending'].find(code=>notices.includes(code))??(buttons.confirm.visible?'review':'unknown');
  if(settledOnly&&(busy||state==='unknown'))return null;
+ if(terminalOnly&&['waiting-bridge','pending','unknown'].includes(state))return null;
  return {state,busy,notices,buttons};
+}
+
+// The application owns automatic bridge/claim progress. This observer never
+// confirms a second review, pauses its loop, or prepares/replays a payment.
+export async function waitMetaMaskAutomaticClaim({page,binding,report,timeout}){
+ assert(Number.isSafeInteger(timeout)&&timeout>0&&timeout<=80000);
+ let handle;report.automaticClaim={};
+ try{
+  handle=await page.waitForFunction(inspectMetaMaskPaidRecoverySurface,{settledOnly:true,terminalOnly:true},{timeout});
+  const surface=await handle.jsonValue();report.automaticClaim.surface=surface;
+  assert.equal(surface.state,'success','Automatic claim requires explicit recovery; do not repeat payment');
+  const saved=await page.evaluate(inspectMetaMaskPaidBinding,binding);report.automaticClaim.saved=saved;
+  for(const key of ['paymentMatches','claimMatches','claimConfirmed','paymentSaved','claimPresent','attempted','feeWithinSavedCap'])assert.equal(saved[key],true,'Original automatic claim binding differs');
+  assert.equal(saved.workflowStatus,'confirmed');assert.match(saved.claimTxHash,/^0x[0-9a-f]{64}$/);
+  Object.assign(report.aggregate,{privateClaimQualified:true,readyFromConfirmedPrivateClaim:true,claimTransactionHash:saved.claimTxHash});
+ }finally{
+  try{await handle?.dispose();}catch{report.automaticClaim.handleCleanupFailed=true;}
+  if(!report.automaticClaim.saved)try{report.automaticClaim.saved=await page.evaluate(inspectMetaMaskPaidBinding,binding);}catch{report.automaticClaim.savedUnavailable=true;}
+ }
 }
 
 export async function observeMetaMaskPaidRecovery({page,dialog,binding,report,timeout=80000}){
