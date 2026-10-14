@@ -623,13 +623,3 @@ test('wallet stage memory observations contain only page classes and cannot repl
  assert.doesNotThrow(()=>recordMetaMaskStage(()=>{throw false;},context,'http://127.0.0.1:8081','aggregate-private-account'));
  assert.doesNotThrow(()=>recordMetaMaskStage(()=>{}, {pages:()=>{throw 0;}},'http://127.0.0.1:8081','aggregate-private-account'));
 });
-
-
-test('idle wallet home cleanup preserves confirmations and other page owners',async()=>{
- const {closeIdleMetaMaskHomes}=await import('./t04-metamask.mjs');
- const closed=[],make=(id,url,visible=['account-menu-icon'])=>({url:()=>url,getByTestId:key=>({isVisible:async()=>visible.includes(key)}),close:async()=>closed.push(id)});
- const selected=make('selected','chrome-extension://owned/sidepanel.html'),idle=make('idle','chrome-extension://owned/home.html#/');
- const pages=[selected,idle,make('confirmation-route','chrome-extension://owned/home.html#confirmation'),make('confirmation-visible','chrome-extension://owned/home.html',['account-menu-icon','confirm-btn']),make('locked','chrome-extension://owned/home.html',[]),make('other-extension','chrome-extension://other/home.html'),make('app','http://127.0.0.1:8081/'),make('other-surface','chrome-extension://owned/notification.html')];
- assert.equal(await closeIdleMetaMaskHomes({pages:()=>pages},selected,'owned'),1);assert.deepEqual(closed,['idle']);
- await assert.rejects(closeIdleMetaMaskHomes({pages:()=>pages},selected,'wrong'));assert.deepEqual(closed,['idle']);
-});

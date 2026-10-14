@@ -50,21 +50,6 @@ export function recordMetaMaskStage(write,context,applicationOrigin,stage){
  // Observer failures must never replace application or wallet behavior.
  try{write({kind:'wallet-stage',stage,pages:metaMaskPageCounts(context,applicationOrigin)});}catch{}
 }
-// Called only after completed setup, before requesting another wallet action.
-export async function closeIdleMetaMaskHomes(context,walletPage,extensionId){
- assert.equal(new URL(walletPage.url()).protocol,'chrome-extension:');
- assert.equal(new URL(walletPage.url()).host,extensionId);
- let closed=0;
- for(const page of context.pages()){
-  if(page===walletPage)continue;
-  const url=new URL(page.url());
-  if(url.protocol!=='chrome-extension:'||url.host!==extensionId||url.pathname!=='/home.html'||!['','#/'].includes(url.hash))continue;
-  if(!await page.getByTestId('account-menu-icon').isVisible())continue;
-  if(await page.getByTestId('parent-selector-confirmation-page').isVisible()||await page.getByTestId('confirm-btn').isVisible()||await page.getByTestId('confirmation-submit-button').isVisible())continue;
-  await page.close();closed++;
- }
- return closed;
-}
 export async function onboardMetaMask(context,mnemonic,password,extensionId,mark,beforeAcceptTerms=async()=>{}){
  for(const page of context.pages())if(page.url().startsWith('chrome-extension://'+extensionId+'/'))await page.close();
  const onboarding=await context.newPage();onboarding.setDefaultTimeout(10000);
