@@ -24,7 +24,7 @@ import {recoverPrivateFeeClaim} from '../shared/private-fee-funding.mjs';
 import {BarretenbergSync} from '@aztec-foundation/bb.js';
 import {derivePrivateFeeAddress,derivePrivateFeeInstance} from '../shared/private-fee-client.mjs';
 import {generateHosting} from '../deploy/hosting-config.mjs';
-import {discoverTestMetaMask,onboardMetaMask,unpackMetaMask,addMetaMaskNetwork,guardBrowserRequest,readMetaMaskAggregateControl,driveMetaMaskAggregateFunding,countMetaMaskAggregateNodeSubmissions,inspectMetaMaskAggregateReadiness,assertMetaMaskReadinessRequest,isMetaMaskStartupFrameRequest,isMetaMaskStartupWorkerRequest,driveMetaMaskPaidRecovery,retainedPreparedClaimFlag,readRetainedBokApproval,driveRetainedBokJourney} from './t04-metamask.mjs';
+import {discoverTestMetaMask,onboardMetaMask,unpackMetaMask,addMetaMaskNetwork,guardBrowserRequest,readMetaMaskAggregateControl,driveMetaMaskAggregateFunding,countMetaMaskAggregateNodeSubmissions,inspectMetaMaskAggregateReadiness,assertMetaMaskReadinessRequest,isMetaMaskStartupFrameRequest,isMetaMaskStartupWorkerRequest,driveMetaMaskPaidRecovery,retainedPreparedClaimFlag,readRetainedBokApproval,driveRetainedBokJourney,readRetainedBokObservation,observeRetainedBokJourney,retainedBokRemaining} from './t04-metamask.mjs';
 import {projectRollingInitialization} from '../apps/rolling/wallet-panel.mjs';
 import {verifyExtensionCollateral} from './t04-extension-collateral.mjs';
 import {ROOT,assertNodeVersion,anvilBinary} from './toolchain.mjs';
@@ -102,9 +102,12 @@ try{
   Object.assign(report,{passed:true,realExtension:true,extensionVersion:phantomPackage.version,browserVersion:context.browser().version(),namedSelection:true,chainId:11155111,accountChangeInvalidated:true,transactionRequests:0,relayRequests:0,methods});
   }
  }else if(mode.startsWith('metamask-aggregate-')){
-  stage='aggregate-launch-inputs';const readinessOnly=process.env.T04_AGGREGATE_READINESS_ONLY==='true',continueUnfunded=process.env.T04_AGGREGATE_CONTINUE_UNFUNDED==='true',paidRecovery=process.env.T04_AGGREGATE_PAID_RECOVERY==='true',retained=readinessOnly||continueUnfunded||paidRecovery,control=readMetaMaskAggregateControl(process.env.T04_AGGREGATE_CONTROL,mode.slice('metamask-aggregate-'.length),{readinessOnly,continueUnfunded,paidRecovery});
+  const observationPath=process.env.T04_RETAINED_BOK_OBSERVE,observationOnly=observationPath!==undefined;
+  if(observationOnly)assert(process.env.T04_RETAINED_BOK!=='true'&&process.env.T04_AGGREGATE_PAID_RECOVERY!=='true'&&process.env.T04_AGGREGATE_REVIEW_PREPARED!=='true'&&process.env.T04_AGGREGATE_CONTINUE_UNFUNDED!=='true'&&process.env.T04_AGGREGATE_READINESS_ONLY!=='true');
+  stage='aggregate-launch-inputs';const readinessOnly=process.env.T04_AGGREGATE_READINESS_ONLY==='true',continueUnfunded=process.env.T04_AGGREGATE_CONTINUE_UNFUNDED==='true',paidRecovery=process.env.T04_AGGREGATE_PAID_RECOVERY==='true',retained=readinessOnly||continueUnfunded||paidRecovery||observationOnly,control=readMetaMaskAggregateControl(process.env.T04_AGGREGATE_CONTROL,mode.slice('metamask-aggregate-'.length),{readinessOnly,continueUnfunded,paidRecovery:paidRecovery||observationOnly});
   const reviewPrepared=retainedPreparedClaimFlag(process.env.T04_AGGREGATE_REVIEW_PREPARED,{paidRecovery,readinessOnly,continueUnfunded});
-  const bokContinuation=process.env.T04_RETAINED_BOK==='true';assert(process.env.T04_RETAINED_BOK===undefined||['true','false'].includes(process.env.T04_RETAINED_BOK));const bokApproval=readRetainedBokApproval(process.env.T04_RETAINED_BOK_APPROVAL,control,{enabled:bokContinuation,paidRecovery});
+  const bokContinuation=process.env.T04_RETAINED_BOK==='true';assert(process.env.T04_RETAINED_BOK===undefined||['true','false'].includes(process.env.T04_RETAINED_BOK));const bokApproval=readRetainedBokApproval(process.env.T04_RETAINED_BOK_APPROVAL,control,{enabled:bokContinuation||observationOnly,paidRecovery:paidRecovery||observationOnly,observation:observationOnly});
+  const originalBok=observationOnly?readRetainedBokObservation(observationPath):null;
   report.scope='Real selected MetaMask aggregate devnet payment and canonical public bridge effects only. Private claims/post/Bok execution and real-proof testnet acceptance remain separate.';
   // Fail before opening a profile if the actual served metadata is not the
   // explicitly supplied source-bound deployment. Nothing is injected into it.
@@ -133,14 +136,14 @@ try{
    }
    if(['http:','https:'].includes(url.protocol)&&!allowed.has(url.origin)){recordBlocked(url,'origin',frame);return route.abort();}
    if(request.method()==='POST'&&url.pathname==='/v1/jobs'){proofRequests++;return route.abort();}
-   try{const observed={url:request.url(),method:request.method(),body:request.postData()},sends=countMetaMaskAggregateNodeSubmissions(observed,control.walletConfig.trustedQuery.url);l2Submissions+=sends;if(readinessOnly)assert.equal(sends,0);if(readinessOnly||paidRecovery)assertMetaMaskReadinessRequest(observed,control.ethereumUrl);}catch{recordBlocked(url,'rpc-or-readiness',frame);return route.abort();}
+   try{const observed={url:request.url(),method:request.method(),body:request.postData()},sends=countMetaMaskAggregateNodeSubmissions(observed,control.walletConfig.trustedQuery.url);l2Submissions+=sends;if(readinessOnly||observationOnly)assert.equal(sends,0);if(readinessOnly||paidRecovery||observationOnly)assertMetaMaskReadinessRequest(observed,control.ethereumUrl);}catch{recordBlocked(url,'rpc-or-readiness',frame);return route.abort();}
    return route.continue();
   });
   const extensionId=new URL(await extensionIdentity).host;
   if(!retained)walletPage=await onboardMetaMask(context,control.mnemonic,control.password,extensionId,value=>{stage=value;});
   if(continueUnfunded||paidRecovery){walletPage=await context.newPage();walletPage.setDefaultTimeout(10000);await walletPage.goto('chrome-extension://'+extensionId+'/home.html');await walletPage.getByTestId('unlock-password').waitFor();await walletPage.getByTestId('unlock-password').fill(control.password);await walletPage.getByTestId('unlock-submit').click();await walletPage.getByTestId('unlock-password').waitFor({state:'hidden'});}
   page=await context.newPage();page.setDefaultTimeout(10000);await page.goto(control.origin);
-  if(readinessOnly){report.scope='Retained disposable account initialization only; no signatures, funding, proof or L2 sends';await inspectMetaMaskAggregateReadiness({page,control,mark:value=>{stage=value;}});report.passed=true;report.readinessOnly=true;}else{
+  if(observationOnly){report.scope='Read-only original confirmed Bok request: public discovery and canonical SDK event/fee/accounting verification only.';await observeRetainedBokJourney({page,control,approval:bokApproval,publicIntent:originalBok,mark:value=>{stage=value;},report,remaining:retainedBokRemaining(Number(process.env.T04_BROWSER_DEADLINE_AT))});assert.equal(l2Submissions,0);assert.equal(proofRequests,0);assert.equal(blocked,0);report.passed=true;report.bokObservationOnly=true;}else if(readinessOnly){report.scope='Retained disposable account initialization only; no signatures, funding, proof or L2 sends';await inspectMetaMaskAggregateReadiness({page,control,mark:value=>{stage=value;}});report.passed=true;report.readinessOnly=true;}else{
   // Discovery and network addition use the authentic extension; no account or
   // native PXE implementation is replaced by this development test.
   await page.getByRole('button',{name:'Your account',exact:true}).click();await page.getByRole('dialog').getByRole('button',{name:'Unlock',exact:true}).click();

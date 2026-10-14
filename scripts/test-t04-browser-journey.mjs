@@ -555,3 +555,31 @@ test('Bok canonical phases consume one original deadline rather than restarting 
  const {retainedBokRemaining}=await import('./t04-metamask.mjs');let now=1000;const remaining=retainedBokRemaining(526000,()=>now);assert.equal(remaining(),525000);now+=120000;assert.equal(remaining(),405000);now+=400000;assert.equal(remaining(),5000);now+=5000;assert.throws(remaining);
  for(const deadline of [NaN,Infinity,1000,526001])assert.throws(()=>retainedBokRemaining(deadline,()=>1000));
 });
+
+for(const phase of ['authorize','post'])test('Bok deadline expiring during '+phase+' inspection prevents its confirmation',async()=>{
+ const {driveRetainedBokConfirmations}=await import('./t04-metamask.mjs');let expired=false,clicks=0;const waits=[];
+ const node=name=>({click:async()=>{if(name==='Confirm and send')clicks++;},waitFor:async options=>{waits.push(options?.timeout);},fill:async()=>{},selectOption:async()=>{}});
+ const dialog={getByRole:(_,{name})=>node(name),getByLabel:node,getByText:node};
+ await assert.rejects(driveRetainedBokConfirmations({dialog,approval:{},report:{retainedBok:{}},mark:()=>{},inspect:async(p,status)=>{if(p===phase&&status==='prepared')expired=true;return{};},remaining:()=>{assert(!expired,'expired');return 1234;}}),/expired/);
+ assert.equal(clicks,phase==='authorize'?0:1);assert(waits.every(x=>x===1234));
+});
+test('installed Playwright async false predicate is a truthy Promise; awaited discovery does not finish early',async()=>{
+ const {runInNewContext}=await import('node:vm'),{waitRetainedBokCompletion,discoverRetainedBokCompletion}=await import('./t04-metamask.mjs');
+ const source=await fs.readFile(new URL('../node_modules/playwright-core/lib/coreBundle.js',import.meta.url),'utf8'),start=source.indexOf('const next = () => {',source.indexOf('async waitForFunctionExpression(')),end=source.indexOf('\n            next();',start);
+ assert(start>0&&end>start);const tick=source.slice(start,end);let fulfill,reject,timers=0;const result=new Promise((a,b)=>{fulfill=a;reject=b;});
+ runInNewContext(tick+'\nnext();',{aborted:false,predicate:async()=>false,fulfill,reject,polling:1000,injected:{utils:{builtins:{setTimeout:()=>timers++}}}});
+ assert.equal(await result,false);assert.equal(timers,0);
+ let reads=0,delays=0;const completed={parent:{id:'1'},reply:{id:'2'},accounting:{state:'4'}},page={evaluate:async fn=>{assert.equal(fn,discoverRetainedBokCompletion);return ++reads<3?false:completed;},waitForTimeout:async ms=>{assert.equal(ms,1000);delays++;}};
+ assert.equal(await waitRetainedBokCompletion({page,input:{},remaining:()=>10000}),completed);assert.equal(reads,3);assert.equal(delays,2);
+ await assert.rejects(waitRetainedBokCompletion({page:{evaluate:async()=>({}),waitForTimeout:async()=>{}},input:{},remaining:()=>10000}));
+ let checks=0;await assert.rejects(waitRetainedBokCompletion({page:{evaluate:async()=>false},input:{},remaining:()=>{if(++checks>1)throw Error('expired');return 1000;}}),/expired/);
+});
+test('read-only Bok observation accepts only exact original public identifiers and cannot authorize expired approval',async t=>{
+ const {readRetainedBokObservation,validateRetainedBokApproval}=await import('./t04-metamask.mjs'),f=retainedBokFixture();
+ const dir=await fs.mkdtemp(path.join(os.tmpdir(),'bok-observe-'));t.after(()=>fs.rm(dir,{recursive:true,force:true}));const file=path.join(dir,'original.json'),original={authorizationTxHash:hash,transactionHash:'0x'+'cd'.repeat(32),requestId:'11',target:'12'};
+ await fs.writeFile(file,JSON.stringify(original),{mode:0o600});assert.deepEqual(readRetainedBokObservation(file),original);
+ await fs.writeFile(file,JSON.stringify({...original,send:true}));assert.throws(()=>readRetainedBokObservation(file));
+ f.approval.contentSha256=(await import('node:crypto')).createHash('sha256').update(f.approval.content).digest('hex');
+ const expired={...f.approval,expiresAt:1};assert.throws(()=>validateRetainedBokApproval(expired,f.control));assert.deepEqual(validateRetainedBokApproval(expired,f.control,Date.now(),{observation:true}),expired);
+ const changed={...expired,budget:String(BigInt(f.control.allocation.bokAmount)+1n)};assert.throws(()=>validateRetainedBokApproval(changed,f.control,Date.now(),{observation:true}));
+});

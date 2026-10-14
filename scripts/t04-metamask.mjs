@@ -556,7 +556,7 @@ export function isMetaMaskStartupWorkerRequest({method,url,workerUrl,startupFram
 
 // Separate explicit operator approval. The original payment control/consent is
 // never widened by opting into two further, individually reviewed L2 actions.
-export function validateRetainedBokApproval(value,control,now=Date.now()){
+export function validateRetainedBokApproval(value,control,now=Date.now(),{observation=false}={}){
  exactKeys(value,['schemaVersion','runtimeSha256','content','contentSha256','budget','authorizeFeeCap','postFeeCap','expiresAt','publicScope']);
  assert.equal(value.schemaVersion,1);assert.equal(value.runtimeSha256,control.runtimeSha256);
  assert(typeof value.content==='string'&&Buffer.byteLength(value.content)>0&&Buffer.byteLength(value.content)<=512&&!value.content.includes('\0'));
@@ -564,18 +564,18 @@ export function validateRetainedBokApproval(value,control,now=Date.now()){
  for(const key of ['budget','authorizeFeeCap','postFeeCap'])positive(value[key]);
  assert(BigInt(value.budget)<=BigInt(control.allocation.bokAmount));
  assert(BigInt(value.authorizeFeeCap)+BigInt(value.postFeeCap)<=BigInt(control.allocation.feeAmount));
- assert(Number.isSafeInteger(value.expiresAt)&&value.expiresAt>now&&value.expiresAt<=now+3600000);
+ assert(Number.isSafeInteger(value.expiresAt)&&value.expiresAt>0&&(observation||value.expiresAt>now&&value.expiresAt<=now+3600000));
  const n=control.walletConfig.config.network,b=control.walletConfig.config.bok,s=value.publicScope;
  assert(s&&s.bok);for(const k of ['chainId','rollupVersion','rollupAddress'])assert.equal(s[k],n[k]);
  assert.equal(s.boardAddress,control.walletConfig.config.board.contractAddress);assert.equal(s.bok.address,b.contractAddress);assert.equal(s.bok.operatorAddress,b.operatorAddress);
  return structuredClone(value);
 }
-export function readRetainedBokApproval(filename,control,{enabled=false,paidRecovery=false}={}){
+export function readRetainedBokApproval(filename,control,{enabled=false,paidRecovery=false,observation=false}={}){
  assert.equal(typeof enabled,'boolean');assert.equal(typeof paidRecovery,'boolean');
  if(!enabled){assert(filename===undefined,'Bok approval requires explicit continuation flag');return null;}
  assert(paidRecovery,'Bok continuation requires original paid recovery');assert(path.isAbsolute(filename??''));
  const stat=fs.lstatSync(filename);assert(stat.isFile()&&!stat.isSymbolicLink()&&stat.uid===process.getuid()&&(stat.mode&0o777)===0o600&&stat.nlink===1&&stat.size<=65536);
- return validateRetainedBokApproval(JSON.parse(fs.readFileSync(filename,'utf8')),control);
+ return validateRetainedBokApproval(JSON.parse(fs.readFileSync(filename,'utf8')),control,Date.now(),{observation});
 }
 
 // Inside the actual page. Never return the decrypted record, private owner,
@@ -633,24 +633,42 @@ export function assertRetainedBokEvents({postEvents,replyEvents,accountingEvents
 export async function driveRetainedBokJourney({page,control,approval,mark,report,deadlineAt}){
  const remaining=retainedBokRemaining(deadlineAt);
  assert.equal(report.paidRecovery?.readyFromConfirmedPrivateClaim,true);approval=validateRetainedBokApproval(approval,control);
+ const dialog=page.getByRole('dialog'),inspect=async(phase,status,options={})=>{const value=await page.evaluate(inspectRetainedBokWorkflow,{config:control.walletConfig.config,approval,phase,status,...options});assertRetainedBokReview(value,options);return value;};
+ report.retainedBok={authorizationConfirmed:false,postConfirmed:false,canonicalReply:false,canonicalTerminalAccounting:false,providerBillingIndependentlyAttested:false};
+ try{
+  const publicIntent=await driveRetainedBokConfirmations({dialog,approval,inspect,mark,report,remaining});
+  await observeRetainedBokJourney({page,control,approval,publicIntent,mark,report,remaining});
+ }finally{await page.evaluate(()=>{delete window.__retainedBokWorkflow;});}
+}
+
+export function readRetainedBokObservation(filename){
+ assert(path.isAbsolute(filename??''));const st=fs.lstatSync(filename);assert(st.isFile()&&!st.isSymbolicLink()&&st.uid===process.getuid()&&(st.mode&0o777)===0o600&&st.nlink===1&&st.size<=4096);
+ const v=JSON.parse(fs.readFileSync(filename,'utf8'));exactKeys(v,['authorizationTxHash','transactionHash','requestId','target']);
+ for(const k of ['authorizationTxHash','transactionHash'])assert.match(v[k],/^0x[0-9a-f]{64}$/);
+ for(const k of ['requestId','target'])positive(v[k]);return v;
+}
+export async function waitRetainedBokCompletion({page,input,remaining}){
+ // Installed Playwright treats an async predicate's Promise as truthy. Await
+ // each bounded public read before deciding whether completion was discovered.
+ for(;;){remaining();const value=await page.evaluate(discoverRetainedBokCompletion,input);remaining();if(value){assert(value.parent&&value.reply&&value.accounting);return value;}await page.waitForTimeout(Math.min(1000,remaining()));}
+}
+export async function observeRetainedBokJourney({page,control,approval,publicIntent,mark,report,remaining}){
+ report.retainedBok??={authorizationConfirmed:false,postConfirmed:false,canonicalReply:false,canonicalTerminalAccounting:false,providerBillingIndependentlyAttested:false};
  const [{createAztecNodeClient},{loadContractArtifact},{loadRollingArtifacts},{createRollingEventDecoder}]=await Promise.all([import('@aztec-labs/aztec.js/node'),import('@aztec-labs/stdlib/abi'),import('../prover/rolling-artifacts.mjs'),import('../shared/rolling/public-events.mjs')]);
  const node=createAztecNodeClient(control.walletConfig.trustedQuery.url),[board,bok]=loadRollingArtifacts();
  const decoder=await createRollingEventDecoder({artifact:loadContractArtifact(board),bokArtifact:loadContractArtifact(bok),scope:approval.publicScope});
- const dialog=page.getByRole('dialog'),inspect=async(phase,status,options={})=>{const value=await page.evaluate(inspectRetainedBokWorkflow,{config:control.walletConfig.config,approval,phase,status,...options});assertRetainedBokReview(value,options);return value;};
- report.retainedBok={authorizationConfirmed:false,postConfirmed:false,canonicalReply:false,canonicalTerminalAccounting:false,providerBillingIndependentlyAttested:false};
- const publicIntent=await driveRetainedBokConfirmations({dialog,approval,inspect,mark,report,remaining});
- const authorizationEvents=await decoder.decodeTransaction(node,publicIntent.authorizationTxHash);const opened=authorizationEvents.filter(e=>e.type==='AccountingChanged'&&e.payload.request_id===publicIntent.requestId);assert.equal(opened.length,1);assert.equal(opened[0].payload.state,'1');assert.equal(opened[0].payload.budget,approval.budget);assert.equal(opened[0].payload.available,approval.budget);assert.equal(opened[0].payload.reserved,'0');
+ const authorizationEvents=await decoder.decodeTransaction(node,publicIntent.authorizationTxHash);const opened=authorizationEvents.filter(e=>e.type==='AccountingChanged'&&e.payload.request_id===publicIntent.requestId);assert.equal(opened.length,1);assert.equal(opened[0].payload.state,'1');assert.equal(opened[0].payload.budget,approval.budget);assert.equal(opened[0].payload.available,approval.budget);assert.equal(opened[0].payload.reserved,'0');report.retainedBok.authorizationConfirmed=true;
  const {TxHash}=await import('@aztec-labs/stdlib/tx');const fees={};for(const [kind,hash,cap] of [['authorization',publicIntent.authorizationTxHash,approval.authorizeFeeCap],['post',publicIntent.transactionHash,approval.postFeeCap]]){const receipt=await node.getTxReceipt(TxHash.fromString(hash));assert.equal(receipt.executionResult,'success');assert.equal(typeof receipt.transactionFee,'bigint');assert(receipt.transactionFee>=0n&&receipt.transactionFee<=BigInt(cap));fees[kind]=String(receipt.transactionFee);}
  const postEvents=await decoder.decodeTransaction(node,publicIntent.transactionHash),invocation=postEvents.filter(e=>e.type==='PluginInvoked'&&e.payload.request_id===publicIntent.requestId);assert.equal(invocation.length,1);const postId=invocation[0].payload.post_id;report.retainedBok.postConfirmed=true;
- mark('retained-bok-reply-accounting');let handle;
- try{handle=await page.waitForFunction(discoverRetainedBokCompletion,{postId,requestId:publicIntent.requestId,scope:approval.publicScope},{timeout:remaining(),polling:1000});const discovered=await handle.jsonValue();
+ mark('retained-bok-reply-accounting');
+ const discovered=await waitRetainedBokCompletion({page,input:{postId,requestId:publicIntent.requestId,scope:approval.publicScope},remaining});
   const replyEvents=await decoder.decodeTransaction(node,discovered.reply.position.txHash),accountingEvents=await decoder.decodeTransaction(node,discovered.accounting.position.txHash);
   // Recheck all event anchors after the final decoded transaction; a moved
   // canonical block invalidates the complete observation.
   for(const event of [...authorizationEvents,...postEvents,...replyEvents,...accountingEvents])assert.equal((await node.getBlockData(Number(event.position.blockNumber))).blockHash.toString(),event.position.blockHash);
   Object.assign(report.retainedBok,assertRetainedBokEvents({postEvents,replyEvents,accountingEvents,publicIntent,approval,pluginId:control.walletConfig.config.bok.pluginId,discovered}),{networkFees:fees,authorizationTransactionHash:publicIntent.authorizationTxHash,postTransactionHash:publicIntent.transactionHash,replyTransactionHash:discovered.reply.position.txHash,accountingTransactionHash:discovered.accounting.position.txHash});
- }finally{await handle?.dispose();await page.evaluate(()=>{delete window.__retainedBokWorkflow;});}
 }
+
 
 export function retainedBokRemaining(deadlineAt,now=Date.now){
  const initial=now();assert(Number.isSafeInteger(deadlineAt)&&deadlineAt>initial&&deadlineAt-initial<=525000,'Invalid original Bok deadline');
@@ -658,8 +676,8 @@ export function retainedBokRemaining(deadlineAt,now=Date.now){
 }
 export async function driveRetainedBokConfirmations({dialog,approval,inspect,mark,report,remaining=()=>80000}){
  mark('retained-bok-authorize-review');await dialog.getByRole('button',{name:'Actions',exact:true}).click();await dialog.getByLabel('Action',{exact:true}).selectOption('bok');await dialog.getByLabel('Message',{exact:true}).fill(approval.content);await dialog.getByLabel('Maximum Bok credits',{exact:true}).fill(approval.budget);
- await dialog.getByRole('button',{name:'Check action and review fee',exact:true}).click();await dialog.getByRole('button',{name:'Confirm and send',exact:true}).waitFor();await inspect('authorize','prepared',{capture:true});
- mark('retained-bok-authorize');await dialog.getByRole('button',{name:'Confirm and send',exact:true}).click();await dialog.getByRole('button',{name:'Review saved Bok post',exact:true}).waitFor({timeout:remaining()});await inspect('authorize','confirmed',{capture:true});report.retainedBok.authorizationConfirmed=true;
- mark('retained-bok-post-review');await dialog.getByRole('button',{name:'Review saved Bok post',exact:true}).click();await dialog.getByRole('button',{name:'Confirm and send',exact:true}).waitFor();await inspect('post','prepared');
- mark('retained-bok-post');await dialog.getByRole('button',{name:'Confirm and send',exact:true}).click();await dialog.getByText('Transaction confirmed on the verified chain.',{exact:true}).waitFor({timeout:remaining()});const {public:publicIntent}=await inspect('post','confirmed',{published:true});return publicIntent;
+ await dialog.getByRole('button',{name:'Check action and review fee',exact:true}).click();await dialog.getByRole('button',{name:'Confirm and send',exact:true}).waitFor({timeout:remaining()});await inspect('authorize','prepared',{capture:true});
+ mark('retained-bok-authorize');remaining();await dialog.getByRole('button',{name:'Confirm and send',exact:true}).click();await dialog.getByRole('button',{name:'Review saved Bok post',exact:true}).waitFor({timeout:remaining()});await inspect('authorize','confirmed',{capture:true});report.retainedBok.authorizationConfirmed=true;
+ mark('retained-bok-post-review');await dialog.getByRole('button',{name:'Review saved Bok post',exact:true}).click();await dialog.getByRole('button',{name:'Confirm and send',exact:true}).waitFor({timeout:remaining()});await inspect('post','prepared');
+ mark('retained-bok-post');remaining();await dialog.getByRole('button',{name:'Confirm and send',exact:true}).click();await dialog.getByText('Transaction confirmed on the verified chain.',{exact:true}).waitFor({timeout:remaining()});const {public:publicIntent}=await inspect('post','confirmed',{published:true});return publicIntent;
 }
