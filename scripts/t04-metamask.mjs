@@ -391,6 +391,46 @@ export async function confirmMetaMaskRecoveryAccountSelection(walletPage){
  await confirm.click();
 }
 
+// Serialized into the page: project only known notices and button states, never
+// account text, amounts, input values or the contents of an unknown error.
+export function inspectMetaMaskPaidRecoverySurface({settledOnly=false}={}){
+ const dialog=document.querySelector('dialog[open]');if(!dialog)return settledOnly?null:{state:'unavailable',busy:false,notices:[],buttons:{}};
+ const visible=node=>node.getClientRects().length>0;
+ const vocabulary={
+  success:'Funding and the private claim are confirmed. Your posting deposit, network fees and Bok credit are ready.',
+  'review-saved':'This saved claim has not been submitted. Review it explicitly before sending; the Ethereum payment will not repeat.',
+  review:'The private claim needs a new review. No additional Ethereum payment will be sent.',
+  reverted:'The private claim reverted. Review recovery; do not repeat the Ethereum payment.',
+  'waiting-bridge':'Payment confirmed. Waiting for the bridge; no second Ethereum payment will be requested.',
+  pending:'Checking the saved private claim. It will not be submitted again.',
+  'receipt-review':'Payment and bridge delivery verified. Review the private claim and maximum fee.'
+ };
+ const notices=[];for(const node of dialog.querySelectorAll('.notice'))if(visible(node))for(const [code,text]of Object.entries(vocabulary))if(node.textContent===text)notices.push(code);
+ const buttons={};for(const [code,text]of Object.entries({pause:'Pause bridge checks',resume:'Resume saved funding',confirm:'Confirm and send',check:'Check existing transaction',reviewAgain:'Review private claim again'})){
+  const node=[...dialog.querySelectorAll('button')].find(node=>visible(node)&&node.textContent===text);buttons[code]={visible:!!node,enabled:!!node&&!node.disabled};
+ }
+ const busy=dialog.getAttribute('aria-busy')==='true',alert=[...dialog.querySelectorAll('[role="alert"]')].some(visible);
+ const state=alert?'error':['review-saved','review','reverted','receipt-review','success','waiting-bridge','pending'].find(code=>notices.includes(code))??(buttons.confirm.visible?'review':'unknown');
+ if(settledOnly&&(busy||state==='unknown'))return null;
+ return {state,busy,notices,buttons};
+}
+
+export async function observeMetaMaskPaidRecovery({page,dialog,binding,report}){
+ let handle,surface;report.paidRecoveryObservation={};
+ try{
+  handle=await page.waitForFunction(inspectMetaMaskPaidRecoverySurface,{settledOnly:true},{timeout:80000});
+  surface=await handle.jsonValue();report.paidRecoveryObservation.surface=surface;
+  // One completed advance is enough to classify a wait. Stop only the existing
+  // automatic read loop; never approve a claim or replay a payment here.
+  if(['waiting-bridge','pending'].includes(surface.state)&&surface.buttons.pause.enabled){await dialog.getByRole('button',{name:'Pause bridge checks',exact:true}).click();report.paidRecoveryObservation.checksPaused=true;}
+  return surface;
+ }finally{
+  try{await handle?.dispose();}catch{report.paidRecoveryObservation.handleCleanupFailed=true;}
+  if(!surface)try{report.paidRecoveryObservation.surface=await page.evaluate(inspectMetaMaskPaidRecoverySurface);}catch{report.paidRecoveryObservation.surfaceUnavailable=true;}
+  try{report.paidRecoveryObservation.saved=await page.evaluate(inspectMetaMaskPaidBinding,binding);}catch{report.paidRecoveryObservation.savedUnavailable=true;}
+ }
+}
+
 export async function driveMetaMaskPaidRecovery({page,walletPage,control:c,provider,transactionHash,mark,report}){
  assert.match(transactionHash,/^0x[0-9a-f]{64}$/);
  const scope=c.walletConfig.config.aggregateFunding,a=c.allocation,account=Wallet.fromPhrase(c.mnemonic).address.toLowerCase();
@@ -417,7 +457,8 @@ export async function driveMetaMaskPaidRecovery({page,walletPage,control:c,provi
  mark('aggregate-paid-private-claim');await dialog.getByRole('button',{name:'Resume saved funding',exact:true}).click();
  // Recovery has the original explicit claim authorization. If it instead needs
  // another review, fail visibly; never infer approval from a missing receipt.
- await dialog.getByText('Funding and the private claim are confirmed. Your posting deposit, network fees and Bok credit are ready.',{exact:true}).waitFor({timeout:80000});
+ const recovery=await observeMetaMaskPaidRecovery({page,dialog,binding,report});
+ assert.equal(recovery.state,'success','Saved funding recovery is not confirmed; inspect the closed diagnostic state');
  await dialog.getByText('Private Bok balance: '+formatUnits(a.bokAmount,6).replace(/\.0$/,'')+' USDC-backed credits.',{exact:true}).waitFor();
  const claimed=await page.evaluate(inspectMetaMaskPaidBinding,binding);assert.equal(claimed.paymentMatches,true);assert.equal(claimed.claimMatches,true);assert.equal(claimed.claimConfirmed,true);
  assert.equal(attempts.forbiddenWalletCalls,0);assert.equal(await provider.getTransactionCount(account,'pending'),nonce);
@@ -437,7 +478,12 @@ export async function inspectMetaMaskPaidBinding({network:n,board,router,intent,
  const claim=await open(JSON.stringify(['ROLLING_WORKFLOW_V1',scope]),'ROLLING_WORKFLOW_V1');
  const claimMatches=paymentMatches&&!!funding?.claim&&claim?.id===funding.claim.intentId&&claim?.action?.type==='claim-deposit'&&['receipt','feeReceipt','bokReceipt'].every(k=>claim.action[k]?.txHash===transactionHash);
  const claimConfirmed=claimMatches&&claim.status==='confirmed'&&/^0x[0-9a-f]{64}$/.test(claim.txHash);
- return {paymentMatches,claimMatches,claimConfirmed,claimTxHash:claimConfirmed?claim.txHash:null};
+ const decimal=value=>typeof value==='string'&&/^(0|[1-9][0-9]{0,76})$/.test(value);
+ const feeWithinSavedCap=claimMatches&&decimal(claim.maximumFee)&&decimal(funding.privateFeeCap)?BigInt(claim.maximumFee)<=BigInt(funding.privateFeeCap):null;
+ return {paymentMatches,claimMatches,claimConfirmed,claimTxHash:claimConfirmed?claim.txHash:null,
+  paymentSaved:!!saved,claimPresent:!!funding?.claim,attempted:funding?.claim?.attempted===true,
+  workflowPrepared:claim?.status==='prepared',workflowStatus:claim==null?'absent':['prepared','submitting','unknown','submitted','confirmed','reverted','cancelled'].includes(claim.status)?claim.status:'other',
+  feeWithinSavedCap,explicitClaimReview:funding?.explicitClaimReview===true};
 }
 
 

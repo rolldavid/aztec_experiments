@@ -328,7 +328,7 @@ test('paid MetaMask recovery binds encrypted scope, exact payment and all claim 
   assert.equal(slots[1].scopeText,JSON.stringify(['ROLLING_WORKFLOW_V1',JSON.stringify(['AZTEC_BB_L2_JOURNAL_V1',owner,'31337','rollup','17','board','portal'])]));
   return JSON.parse(JSON.stringify(result));
  }
- assert.deepEqual(await inspect(),{paymentMatches:true,claimMatches:true,claimConfirmed:true,claimTxHash:claim.txHash});
+ assert.deepEqual(await inspect(),{paymentMatches:true,claimMatches:true,claimConfirmed:true,claimTxHash:claim.txHash,paymentSaved:true,claimPresent:true,attempted:false,workflowPrepared:false,workflowStatus:'confirmed',feeWithinSavedCap:null,explicitClaimReview:false});
  for(const mutate of [x=>x.intent.data='0x5678',x=>x.intent.nonce=2,x=>x.intent.expected.planHash='different',x=>x.relay={transactionHash:'0x'+'ef'.repeat(32)}]){const f=structuredClone(funding);mutate(f);assert.equal((await inspect(f)).paymentMatches,false);}
  assert.equal((await inspect(null)).paymentMatches,false);
  for(const mutate of [x=>x.id='another',x=>x.action.type='claim-bok',...['receipt','feeReceipt','bokReceipt'].map(k=>x=>x.action[k].txHash='0x'+'ef'.repeat(32))]){const c=structuredClone(claim);mutate(c);assert.equal((await inspect(funding,c)).claimMatches,false);}
@@ -336,6 +336,44 @@ test('paid MetaMask recovery binds encrypted scope, exact payment and all claim 
  assert.equal((await inspect(funding,null)).claimConfirmed,false);
  const usdc={relay:{request:structuredClone(intent),transactionHash:hash},claim:funding.claim};delete usdc.relay.request.nonce;
  assert.equal((await inspect(usdc)).claimConfirmed,true);
+ const reviewed={...funding,privateFeeCap:'10',explicitClaimReview:true,claim:{...funding.claim,attempted:true}},prepared={...claim,status:'prepared',maximumFee:'10'};
+ const state=await inspect(reviewed,prepared);assert.equal(state.feeWithinSavedCap,true);assert.equal(state.attempted,true);assert.equal(state.workflowPrepared,true);assert.equal(state.explicitClaimReview,true);
+ assert.equal((await inspect(reviewed,{...prepared,maximumFee:'11'})).feeWithinSavedCap,false);
+ for(const value of [undefined,'private-amount','-1','9'.repeat(78)])assert.equal((await inspect(reviewed,{...prepared,maximumFee:value})).feeWithinSavedCap,null);
+ assert.equal((await inspect(reviewed,{...prepared,id:'unrelated'})).feeWithinSavedCap,null);
+ assert.equal((await inspect(null,null)).paymentSaved,false);assert.equal((await inspect(null,null)).workflowStatus,'absent');
+ assert.equal((await inspect(reviewed,{...prepared,status:'private-status'})).workflowStatus,'other');
+ assert(!JSON.stringify(state).includes('privateFeeCap'));assert(!Object.values(state).includes('10'));
+});
+
+test('paid recovery surface projects only closed visible notices and controls',async()=>{
+ const {inspectMetaMaskPaidRecoverySurface}=await import('./t04-metamask.mjs'),{runInNewContext}=await import('node:vm');
+ const notice={success:'Funding and the private claim are confirmed. Your posting deposit, network fees and Bok credit are ready.','review-saved':'This saved claim has not been submitted. Review it explicitly before sending; the Ethereum payment will not repeat.',review:'The private claim needs a new review. No additional Ethereum payment will be sent.',reverted:'The private claim reverted. Review recovery; do not repeat the Ethereum payment.','waiting-bridge':'Payment confirmed. Waiting for the bridge; no second Ethereum payment will be requested.',pending:'Checking the saved private claim. It will not be submitted again.'};
+ const node=(textContent,shown=true,disabled=false)=>({textContent,disabled,getClientRects:()=>shown?[{}]:[]});
+ function inspect({text='PRIVATE_SENTINEL',busy=false,alert=false,hidden=false,confirm=false,settledOnly=false}={}){
+  const dialog={getAttribute:key=>{assert.equal(key,'aria-busy');return String(busy);},querySelectorAll:selector=>selector==='.notice'?[node(text,!hidden)]:selector==='[role="alert"]'?alert?[node('PRIVATE_SENTINEL')]:[]:[node('Pause bridge checks',true,busy),node('Confirm and send',confirm),node('PRIVATE_SENTINEL')]};
+  return runInNewContext('('+inspectMetaMaskPaidRecoverySurface.toString()+')(input)',{document:{querySelector:selector=>{assert.equal(selector,'dialog[open]');return dialog;}},input:{settledOnly}});
+ }
+ for(const [state,text]of Object.entries(notice)){const result=inspect({text});assert.equal(result.state,state);assert.equal(result.notices[0],state);assert.equal(inspect({text,busy:true,settledOnly:true}),null);assert.equal(inspect({text,hidden:true}).state,'unknown');}
+ assert.equal(inspect({alert:true}).state,'error');assert.equal(inspect({confirm:true}).state,'review');assert.equal(inspect({settledOnly:true}),null);
+ for(const input of [{},{alert:true},{text:notice.success,alert:true}])assert(!JSON.stringify(inspect(input)).includes('PRIVATE_SENTINEL'));
+ assert.equal(inspect({text:notice.success,alert:true}).state,'error');
+});
+
+for(const state of ['success','review','review-saved','reverted','error','waiting-bridge','pending','timeout'])test('paid recovery observes one classified advance without new approval: '+state,async()=>{
+ const {observeMetaMaskPaidRecovery,inspectMetaMaskPaidRecoverySurface,inspectMetaMaskPaidBinding}=await import('./t04-metamask.mjs');
+ const events=[],original=Error('controlled timeout'),binding={},report={},surface={state:state==='timeout'?'unknown':state,buttons:{pause:{enabled:true}}};
+ const page={async waitForFunction(fn,arg,options){assert.equal(fn,inspectMetaMaskPaidRecoverySurface);assert.deepEqual(arg,{settledOnly:true});assert.deepEqual(options,{timeout:80000});events.push('wait');if(state==='timeout')throw original;return{jsonValue:async()=>surface,dispose:async()=>events.push('dispose')};},async evaluate(fn,arg){if(fn===inspectMetaMaskPaidRecoverySurface){events.push('surface');return surface;}assert.equal(fn,inspectMetaMaskPaidBinding);assert.equal(arg,binding);events.push('saved');return{paymentSaved:true,claimPresent:false};}};
+ const dialog={getByRole(role,options){assert.equal(role,'button');assert.deepEqual(options,{name:'Pause bridge checks',exact:true});return{click:async()=>events.push('pause')};}};
+ const result=observeMetaMaskPaidRecovery({page,dialog,binding,report});if(state==='timeout')await assert.rejects(result,error=>error===original);else assert.equal(await result,surface);
+ assert.deepEqual(events,state==='timeout'?['wait','surface','saved']:['waiting-bridge','pending'].includes(state)?['wait','pause','dispose','saved']:['wait','dispose','saved']);
+ assert.equal(report.paidRecoveryObservation.surface,surface);assert.equal(report.paidRecoveryObservation.saved.paymentSaved,true);
+});
+
+test('paid recovery diagnostic failures cannot replace the original wait failure',async()=>{
+ const {observeMetaMaskPaidRecovery}=await import('./t04-metamask.mjs');const original=0,report={};
+ await assert.rejects(observeMetaMaskPaidRecovery({page:{async waitForFunction(){throw original;},async evaluate(){throw Error('PRIVATE_SENTINEL');}},report}),error=>error===original);
+ assert.deepEqual(report.paidRecoveryObservation,{surfaceUnavailable:true,savedUnavailable:true});assert(!JSON.stringify(report).includes('PRIVATE_SENTINEL'));
 });
 
 test('paid recovery permits only the exact non-signing MetaMask account permission',async()=>{
