@@ -57,7 +57,7 @@ def receipt_url(value):
 
 def validate(config, now=None):
     keys = {"createdAt", "budgetStop", "commissioningStop", "runtimeUrl", "runtimeArchiveSha256", "manifestSha256"}
-    if type(config) is not dict or not keys <= set(config) or set(config)-keys-{"receiptPutUrl","queryHost"}: raise Invalid("Invalid bootstrap fields")
+    if type(config) is not dict or not keys <= set(config) or set(config)-keys-{"receiptPutUrl","queryHost","activationDelivery"}: raise Invalid("Invalid bootstrap fields")
     created, stop, commission = (timestamp(config[k]) for k in ("createdAt", "budgetStop", "commissioningStop"))
     now = now or dt.datetime.now(dt.timezone.utc)
     if not now - dt.timedelta(minutes=5) <= created <= now + dt.timedelta(minutes=5): raise Invalid("Stale creation time")
@@ -77,6 +77,7 @@ def validate(config, now=None):
         try: receipt_url(config["receiptPutUrl"])
         except ValueError: raise Invalid("Invalid receipt capability") from None
     if 'queryHost' in config: query_host_record(config['queryHost'])
+    if 'activationDelivery' in config: activation_delivery_record(config['activationDelivery'],config['budgetStop'])
     return dict(config)
 
 # Executed only on the future Linux host, never while generating or testing.
@@ -689,6 +690,9 @@ def attest(check=False):
     if (PINS.get('queryHost') and status=='installed') or any((PRIVATE/('query-host-'+n+'.json')).exists() for n in ('request','intent','result')):
         try: output.update(activation_support('query-observe'))
         except Exception: good=False;output['controlsVerified']=False;output['queryHostPolicy']='unverified'
+    if (PINS.get('activationDelivery') and status=='installed') or any(PRIVATE.glob('activation-delivery-*.json')):
+        try: output.update(activation_support('delivery'))
+        except Exception: good=False;output['activationDelivery']='failed-reconcile-only'
     minute=str(int(dt.datetime.now(dt.timezone.utc).timestamp())//60)
     last=BASE/'last-attestation'
     marker=minute+':'+status+':'+str(good)+':'+str(output.get('qualification',{}).get('stage','pending'))
@@ -751,6 +755,7 @@ def _execute(config, attestation_source):
             if type(egress_before) is not int or type(egress_after) is not int or egress_after<=egress_before: raise ValueError('Egress counter exercise failed')
             write(BASE/'egress-exercise.json',json.dumps({'beforeBytes':egress_before,'afterBytes':egress_after,'deltaBytes':egress_after-egress_before,'exercise':'installation-egress-not-throughput'}))
             if 'queryHost' in config: exclusive_record(PRIVATE/'query-host-request.json',config['queryHost'])
+            if 'activationDelivery' in config: exclusive_record(PRIVATE/'activation-delivery-request.json',config['activationDelivery'])
             STAGE='installed';write(BASE/'stage',STAGE)
             # Only commissioning protection is retired; fixed budget control remains enabled.
             mark('qualification-install');run(['systemctl','disable','--now','rolling-commissioning.timer']);install_qualification();attest();mark('complete');diagnostic(status='passed')
@@ -1138,6 +1143,124 @@ def query_host(h):
             finally:h['run'](['systemctl','start','--no-block','rolling-budget.service'],timeout=5)
             raise
 
+def activation_delivery_digest(value):
+    return hashlib.sha256(json.dumps(value,sort_keys=True,separators=(',',':')).encode()).hexdigest()
+
+def activation_delivery_record(value, budget_stop):
+    if type(value) is not dict or set(value)!={'campaign','getUrl','scopeBindingSha256'}:raise Invalid('Delivery fields')
+    if type(value['campaign']) is not str or not re.fullmatch('[a-zA-Z0-9_-]{1,80}',value['campaign']):raise Invalid('Delivery campaign')
+    if type(value['scopeBindingSha256']) is not str or not re.fullmatch('[a-f0-9]{64}',value['scopeBindingSha256']):raise Invalid('Delivery scope binding')
+    try:
+        u=urllib.parse.urlsplit(receipt_url(value['getUrl']))
+        if u.path!='/receipts/'+value['campaign']+'/activation.json':raise ValueError()
+        q=urllib.parse.parse_qs(u.query,strict_parsing=True)
+        expires=dt.datetime.strptime(q['X-Amz-Date'][0],'%Y%m%dT%H%M%SZ').replace(tzinfo=dt.timezone.utc)+dt.timedelta(seconds=int(q['X-Amz-Expires'][0]))
+        if expires<timestamp(budget_stop):raise ValueError()
+    except Exception:raise Invalid('Delivery capability') from None
+    return dict(value)
+
+def activation_delivery_scope(scope):
+    # Commit before launch to every fixed release/network/actor/address field.
+    return {k:v for k,v in scope.items() if k not in ('checkpointNumber','checkpointHash','deploymentEvidenceSha256')}
+
+def activation_delivery_fetch(url):
+    # SigV4 authorizes only this fixed S3 GET. No cookies, ambient credentials,
+    # redirects, retries, response diagnostics or executable input are admitted.
+    import urllib.request,urllib.error
+    class NoRedirect(urllib.request.HTTPRedirectHandler):
+        def redirect_request(self,*args):raise Invalid('Delivery redirect')
+    previous=signal.getsignal(signal.SIGALRM)
+    def expired(*_):raise TimeoutError('Delivery read deadline')
+    signal.signal(signal.SIGALRM,expired);signal.alarm(8)
+    try:
+        try:response=urllib.request.build_opener(urllib.request.ProxyHandler({}),NoRedirect()).open(url,timeout=8)
+        except urllib.error.HTTPError as error:
+            code=error.code;error.close()
+            if code==404:return None
+            raise Invalid('Delivery HTTP') from None
+        with response:
+            if response.status!=200:raise Invalid('Delivery HTTP')
+            raw=response.read(16385);version=response.headers.get('x-amz-version-id')
+            if len(raw)>16384 or type(version) is not str or not re.fullmatch('[a-zA-Z0-9._-]{1,1024}',version) or version=='null':raise Invalid('Delivery object')
+            return raw,version
+    except Exception:raise Invalid('Delivery unavailable') from None
+    finally:signal.alarm(0);signal.signal(signal.SIGALRM,previous)
+
+def activation_delivery(h):
+    import fcntl,time
+    if os.geteuid()!=0:raise Invalid('Delivery authority')
+    private=h['PRIVATE'];prefix='activation-delivery-'
+    # Existing private-file validation establishes canonical root ownership before
+    # opening the lock. Every attempt/result is exclusive and fsynced.
+    deadline=h['read_bounded_json'](h['BASE']/'deadline.json')
+    request=activation_delivery_record(activation_private(private/(prefix+'request.json')),deadline['budgetStop'])
+    if activation_delivery_digest(request)!=h['PINS'].get('activationDelivery'):raise Invalid('Delivery campaign binding')
+    fd=os.open(private/(prefix+'lock'),os.O_RDWR|os.O_CREAT|os.O_NOFOLLOW,0o600)
+    with os.fdopen(fd,'a') as lock:
+        fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
+        observed=private/(prefix+'observed.json');window=private/(prefix+'window.json')
+        intent=private/'prover-activation-intent.json';result=private/'prover-activation-result.json'
+        if observed.exists():
+            record=activation_private(observed)
+            if set(record)!={'campaign','versionId','objectSha256','scopeSha256'} or record['campaign']!=request['campaign'] or type(record['versionId']) is not str or not re.fullmatch('[a-zA-Z0-9._-]{1,1024}',record['versionId']) or record['versionId']=='null' or any(type(record[k]) is not str or not re.fullmatch('[a-f0-9]{64}',record[k]) for k in ('objectSha256','scopeSha256')):raise Invalid('Delivery retained binding')
+            scope=activation_record(activation_private(private/'prover-activation-scope.json',record['scopeSha256']),h['PINS']['manifest'])
+            if activation_delivery_digest(activation_delivery_scope(scope))!=request['scopeBindingSha256']:raise Invalid('Delivery retained scope')
+            activation_private(private/'prover-deployment-evidence.json',scope['deploymentEvidenceSha256'])
+            if not intent.exists() or not result.exists():raise Invalid('Delivery uncertain activation; reconcile only')
+            return {**prover_activation(h,'observe'),'activationDelivery':'consumed'}
+        if intent.exists() or result.exists():raise Invalid('Delivery missing original receipt')
+        final_path=private/'final-receipt.json'
+        if not final_path.exists():
+            if window.exists():raise Invalid('Delivery qualification disappeared')
+            return {'activationDelivery':'pending-query-qualification'}
+        final=activation_private(final_path);q=h['validated_qualification'](final.get('qualification',{}))
+        if final.get('manifestSha256')!=h['PINS']['manifest'] or final.get('bootstrapSourceSha256')!=h['PINS']['bootstrap'] or q.get('passed') is not True or q.get('stage')!='complete' or not q.get('checks') or not all(q['checks'].values()) or not {'anchors','readiness'}<=set(q):raise Invalid('Delivery qualification')
+        now=int(time.time());stop=int(timestamp(deadline['budgetStop']).timestamp())-900
+        paths=list(private.glob(prefix+'attempt-*.json'))
+        if not window.exists():
+            if paths:raise Invalid('Delivery window disappeared')
+            h['exclusive_record'](window,{'startedAt':now,'stopAt':min(now+1800,stop)})
+        limits=activation_private(window)
+        if set(limits)!={'startedAt','stopAt'} or any(type(v) is not int for v in limits.values()) or limits['stopAt']!=min(limits['startedAt']+1800,stop) or not limits['startedAt']<=now<limits['stopAt']:raise Invalid('Delivery window expired')
+        if len(paths)>120 or len(paths)%2:raise Invalid('Delivery interrupted read; reconcile only')
+        count=len(paths)//2;last=None
+        for number in range(1,count+1):
+            attempt=activation_private(private/(prefix+'attempt-'+str(number)+'.json'))
+            outcome=activation_private(private/(prefix+'attempt-'+str(number)+'-result.json'))
+            if set(attempt)!={'number','startedAt'} or type(attempt['number']) is not int or attempt['number']!=number or type(attempt['startedAt']) is not int or not limits['startedAt']<=attempt['startedAt']<=now or (last is not None and attempt['startedAt']<last+30) or outcome!={'status':'pending'}:raise Invalid('Delivery attempt history')
+            last=attempt['startedAt']
+        if count>=60:raise Invalid('Delivery attempts exhausted')
+        if last is not None and now<last+30:return {'activationDelivery':'pending-object'}
+        h['verify_controls']()
+        h['exclusive_record'](private/(prefix+'attempt-'+str(count+1)+'.json'),{'number':count+1,'startedAt':now})
+        fetched=activation_delivery_fetch(request['getUrl'])
+        if fetched is None:
+            h['exclusive_record'](private/(prefix+'attempt-'+str(count+1)+'-result.json'),{'status':'pending'})
+            return {'activationDelivery':'pending-object'}
+        raw,version=fetched
+        def unique(pairs):
+            obj={}
+            for k,v in pairs:
+                if k in obj:raise Invalid('Delivery duplicate field')
+                obj[k]=v
+            return obj
+        envelope=json.loads(raw,object_pairs_hook=unique)
+        if type(envelope) is not dict or set(envelope)!={'schemaVersion','campaign','scope','evidence'} or type(envelope['schemaVersion']) is not int or envelope['schemaVersion']!=1 or envelope['campaign']!=request['campaign']:raise Invalid('Delivery envelope')
+        scope=activation_record(envelope['scope'],h['PINS']['manifest']);evidence=envelope['evidence']
+        if activation_delivery_digest(activation_delivery_scope(scope))!=request['scopeBindingSha256']:raise Invalid('Delivery scope changed')
+        evidence_raw=json.dumps(evidence,separators=(',',':')).encode()
+        if len(evidence_raw)>16384 or hashlib.sha256(evidence_raw).hexdigest()!=scope['deploymentEvidenceSha256']:raise Invalid('Delivery evidence bytes')
+        h['verify_release'](h['RELEASE']);manifest=json.loads((h['RELEASE']/'prover-release.json').read_text())
+        activation_evidence(evidence,scope,manifest['files'])
+        if time.time()>=limits['stopAt']:raise Invalid('Delivery expired before consumption')
+        scope_sha=hashlib.sha256(json.dumps(scope,separators=(',',':')).encode()).hexdigest()
+        h['exclusive_record'](observed,{'campaign':request['campaign'],'versionId':version,'objectSha256':hashlib.sha256(raw).hexdigest(),'scopeSha256':scope_sha})
+        h['exclusive_record'](private/'prover-activation-scope.json',scope)
+        h['exclusive_record'](private/'prover-deployment-evidence.json',evidence)
+        # The existing activation owns live identity, shutdown, intent-before-start
+        # and all service permissions. The attestor's original100s outer cap stays.
+        return {**prover_activation(h,'activate',scope_sha),'activationDelivery':'consumed'}
+
 def activation_record(value, manifest):
     """Closed public scope; no endpoint, key, worker option or executable input."""
     fields={'schemaVersion','manifestSha256','catalogSha256','deploymentEvidenceSha256','chainId','rollupVersion',
@@ -1419,6 +1542,7 @@ def prover_activation(h, operation, expected=None):
     if operation=='qualification-projection':return qualification_projection(h,*expected)
     if operation=='qualification-anchors':return qualification_anchors(expected)
     if operation=='query-observe':return query_host(h)
+    if operation=='delivery':return activation_delivery(h)
     if os.geteuid()!=0 or operation not in ('activate','observe'):raise Invalid('Activation authority')
     private=h['PRIVATE'];intent_path=private/'prover-activation-intent.json';result_path=private/'prover-activation-result.json'
     if operation=='observe':
@@ -1497,6 +1621,7 @@ def generate(config, now=None):
     runtime=tokenize.untokenize(t._replace(string='') if t.type==tokenize.COMMENT else t for t in tokenize.generate_tokens(io.StringIO(HOST).readline))
     pins = {'image':IMAGE, 'manifest':config['manifestSha256'], 'node':NODE_SHA, 'bb':BB_SHA, 'bbVersion':BB_VERSION, 'catalog':CATALOG_SHA, 'bootstrap':hashlib.sha256(runtime.encode()).hexdigest(),'startup':hashlib.sha256(pathlib.Path(__file__).read_bytes()).hexdigest()}
     if 'queryHost' in config:pins['queryHost']=hashlib.sha256(json.dumps(config['queryHost'],sort_keys=True,separators=(',',':')).encode()).hexdigest()
+    if 'activationDelivery' in config:pins['activationDelivery']=activation_delivery_digest(config['activationDelivery'])
     prefix = 'PINS = '+repr(pins)+'\nNETWORK = '+repr(NETWORK)+'\nQUALIFICATION = '+repr(QUALIFICATION)+'\n'
     dispatch = "\ntry:\n    if sys.argv[1:2]==['--activate-prover']:\n        if len(sys.argv)!=3: raise ValueError('Activation arguments')\n        activation_support('activate',sys.argv[2])\n    elif '--qualify' in sys.argv: qualify()\n    elif '--qualification-stop' in sys.argv:\n        qualify(aborted=True);run(['systemctl','start','rolling-qualification-receipt.service'],timeout=40)\n    elif '--qualification-receipt' in sys.argv: final_receipt()\n    else: attest('--check' in sys.argv)\nexcept Exception as error:\n    shutdown_failure(error)\n"
     # A raw multiline literal avoids doubling runtime backslashes/newlines in

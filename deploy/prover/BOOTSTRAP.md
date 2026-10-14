@@ -914,3 +914,76 @@ routing or proof-job acceptance. Complete package and compressed user-data size
 must be requalified before deployment; source preparation alone is not a payload.
 
 Query-host opt-in is bound into the immutable bootstrap pins. After installation, missing request/intent/result state fails closed rather than disabling observation. Runtime supplementary groups must be unique decimal IDs limited to the query primary group and public runtime group, with the public group present. The final qualification receipt is hash-bound in the once-only query intent. Focused development tests use real owned filesystem modes and explicitly simulated root identities/systemd state; actual Linux commissioning remains required.
+
+## Finite post-commissioning activation delivery
+
+The optional private bootstrap field `activationDelivery` closes the delivery
+step described above. It contains exactly `campaign`, `getUrl` and
+`scopeBindingSha256`. `campaign` is a fresh 1–80 character letters/digits/underscore/
+hyphen identifier. `getUrl` is a SigV4 GET capability for exactly
+`https://anonymous-message-board-testnet-backups-nvdhcyurtoga.s3.eu-west-2.amazonaws.com/receipts/CAMPAIGN/activation.json`.
+It must remain valid through the existing `budgetStop`; it grants no upload,
+listing or host IAM authority. Keep the URL in the private payload and never
+print it. It is an authenticated fixed-object delivery capability, **not** an
+independent offline signature over future deployment evidence. The existing
+trusted AWS operator is the authorized publisher of that one campaign object.
+
+Before launch, compute `scopeBindingSha256` with the source helper
+`activation_delivery_digest(activation_delivery_scope(scope))`. This commits to
+all fixed fields accepted by `activation_record`, including schema, release
+manifest/catalog, chain/rollup, contract addresses, actors and portal. Only
+`checkpointNumber`, `checkpointHash` and `deploymentEvidenceSha256` are omitted
+from this commitment: they are supplied by the eventual actual deployment.
+Deterministic addresses must be prepared through existing deployment APIs; an
+address commitment does not itself establish deployment or readiness.
+
+After genuine testnet deployment and finality, the trusted operator publishes
+one JSON envelope with exactly:
+
+```
+{schemaVersion: 1, campaign: CAMPAIGN, scope: EXISTING_ACTIVATION_SCOPE,
+ evidence: EXISTING_DEPLOYMENT_EVIDENCE}
+```
+
+Use the existing `activation_record` and `activation_evidence` schemas. Compute
+`scope.deploymentEvidenceSha256` over the UTF-8 bytes of
+`json.dumps(evidence, separators=(',', ':'))`, preserving insertion order; the
+consumer writes those same bytes. The whole envelope is at most 16 KiB. Retain its
+bytes/hash and S3 VersionId with the deployment receipt. The trusted existing
+campaign upload helper must persist intent before a single conditional
+`If-None-Match: *` upload. An uncertain upload is reconciled by the original key,
+version and bytes; it is not uploaded again or replaced with another scope.
+This component performs no upload or cloud mutation.
+
+The existing root attestor reads only after its final Linux query receipt passes.
+Its first qualified visit records a fixed window ending at the earlier of 30 minutes
+or `budgetStop` minus 15 minutes. There are at most 60 GET attempts, spaced at least
+30 seconds apart; each read has an 8-second wall deadline and 16 KiB byte cap. A 404 is
+pending only within that window. Redirects, other HTTP errors, missing version
+identity, malformed/duplicate fields, mismatched scope or lost attempt records
+fail closed. Existing attestor cadence, 100-second service timeout, independent
+host/Fleet shutdown and all qualification/control checks remain unchanged.
+Consequently an activation that cannot finish within that existing outer owner
+fails closed; the delivery mechanism never extends the activation budget.
+
+Each attempt and pending result is an exclusive fsynced root-private record.
+Before staging either activation input, the attestor exclusively retains the
+chosen object version, body hash and exact scope-file hash. It then calls the
+existing once-only activation, which independently rechecks live identity,
+canonical anchors, artifact/constructor/Ready/FPC evidence and remaining budget
+before recording activation intent and starting the service. An interrupted
+read, consumption, staging or activation is reconciliation-only. A subsequent
+visit observes a completed activation; it never fetches or activates again.
+Missing request/qualification/consumption records cannot silently opt out of
+monitoring. Failure still stops the owned units and requests the budget shutdown.
+
+The fixed record readers and packaged source interpret this envelope; no URL,
+command, executable, wallet key or administrator credential comes from it.
+`init`, `set_portal` and other operator deployment methods remain excluded from
+the consumer proving profile. Genuine testnet deployment uses the existing
+trusted operator native prover path, whose actual proof/runtime qualification is
+a separate prerequisite. Current testnet deployment, CloudFront query-route
+operation/readback, real Linux delivery/activation, fresh payload measurement
+with actual capability lengths, and real-proof acceptance remain unperformed by
+these controlled tests. Do not launch the proposed $39 campaign before those
+preparation steps and the fresh forecast are ready.

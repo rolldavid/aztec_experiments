@@ -2044,4 +2044,176 @@ class QueryHost(unittest.TestCase):
                 with self.assertRaises(OSError):b.query_host(h)
             self.assertEqual(events,[['systemctl','stop','rolling-query.service'],['systemctl','start','--no-block','rolling-budget.service']])
 
+class ActivationDelivery(unittest.TestCase):
+    def request(self,scope=None):
+        scope=scope or ProverActivation().scope()
+        return {'campaign':'controlled-delivery','scopeBindingSha256':b.activation_delivery_digest(b.activation_delivery_scope(scope)),
+          'getUrl':'https://anonymous-message-board-testnet-backups-nvdhcyurtoga.s3.eu-west-2.amazonaws.com/receipts/controlled-delivery/activation.json?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=ABCDEFGHIJKLMNOP%2F20261011%2Feu-west-2%2Fs3%2Faws4_request&X-Amz-Date=20261011T180000Z&X-Amz-Expires=28800&X-Amz-SignedHeaders=host&X-Amz-Signature='+'a'*64}
+
+    def fixture(self,root):
+        private=root/'private';private.mkdir(mode=0o700);release=root/'release';release.mkdir();events=[]
+        scope=ProverActivation().scope();evidence,files=ProverActivation().evidence(scope)
+        scope['deploymentEvidenceSha256']=hashlib.sha256(json.dumps(evidence,separators=(',',':')).encode()).hexdigest()
+        request=self.request(scope);ns=host()
+        def record(path,value):events.append(('record',path.name));ns['exclusive_record'](path,value)
+        def read(path,expected=None):
+            # Actual local files/modes/bytes; root ownership is labelled simulated.
+            info=path.lstat();self.assertFalse(path.is_symlink());self.assertEqual(info.st_mode&0o777,0o600)
+            raw=path.read_bytes()
+            if expected is not None and hashlib.sha256(raw).hexdigest()!=expected:raise b.Invalid('fixture exact file hash')
+            return json.loads(raw)
+        record(private/'activation-delivery-request.json',request)
+        record(private/'final-receipt.json',{'manifestSha256':'b'*64,'bootstrapSourceSha256':'d'*64,'qualification':{'passed':True,'stage':'complete','checks':{'all':True},'anchors':{},'readiness':{}}})
+        record(root/'deadline.json',{'budgetStop':config()['budgetStop']});record(release/'prover-release.json',{'files':files})
+        h={'PRIVATE':private,'BASE':root,'RELEASE':release,'PINS':{'manifest':'b'*64,'bootstrap':'d'*64,'activationDelivery':b.activation_delivery_digest(request)},
+           'exclusive_record':record,'read_bounded_json':read,'verify_controls':lambda:events.append(('controls',)),
+           'verify_release':lambda r:events.append(('release',)),'validated_qualification':lambda q:q}
+        envelope={'schemaVersion':1,'campaign':request['campaign'],'scope':scope,'evidence':evidence}
+        clock=[int(NOW.timestamp())];raw=lambda:json.dumps(envelope,separators=(',',':')).encode()
+        return h,events,envelope,clock,raw,read
+
+    def test_delivery_closed_campaign_fixed_object_expiry_and_scope_binding(self):
+        request=self.request();self.assertEqual(b.activation_delivery_record(request,config()['budgetStop']),request)
+        for changed in [{**request,'campaign':'wrong'}, {**request,'scopeBindingSha256':'x'}, {**request,'extra':True},
+                        {**request,'getUrl':request['getUrl'].replace('28800','1')}, {**request,'getUrl':request['getUrl'].replace('activation.json','other.json')},
+                        {**request,'getUrl':request['getUrl']+'&versionId=mutable'}, {**request,'getUrl':request['getUrl'].replace('.s3.eu-west-2.amazonaws.com','.invalid')}]:
+            with self.subTest(changed=changed.keys()),self.assertRaises(b.Invalid):b.activation_delivery_record(changed,config()['budgetStop'])
+
+    def test_delivery_waits_for_qualification_and_paces_only_completed_404_reads(self):
+        with tempfile.TemporaryDirectory() as t:
+            h,events,e,clock,raw,read=self.fixture(pathlib.Path(t));private=h['PRIVATE'];final=read(private/'final-receipt.json');(private/'final-receipt.json').unlink()
+            with patch.object(b.os,'geteuid',return_value=0),patch.object(b,'activation_private',side_effect=read),patch('time.time',side_effect=lambda:clock[0]),patch.object(b,'activation_delivery_fetch',return_value=None) as fetch:
+                self.assertEqual(b.activation_delivery(h)['activationDelivery'],'pending-query-qualification');fetch.assert_not_called()
+                h['exclusive_record'](private/'final-receipt.json',final)
+                for delta in (0,0,29,1):clock[0]+=delta;b.activation_delivery(h)
+                self.assertEqual(fetch.call_count,2)
+                (private/'final-receipt.json').unlink()
+                with self.assertRaisesRegex(b.Invalid,'disappeared'):b.activation_delivery(h)
+
+    def test_delivery_consumes_exact_version_and_bytes_before_existing_once_activation(self):
+        with tempfile.TemporaryDirectory() as t:
+            h,events,e,clock,raw,read=self.fixture(pathlib.Path(t));private=h['PRIVATE']
+            def activate(context,operation,expected=None):
+                events.append(('activation',operation));saved=read(private/'activation-delivery-observed.json')
+                self.assertEqual(saved['versionId'],'fixed-version');self.assertEqual(saved['objectSha256'],hashlib.sha256(raw()).hexdigest())
+                self.assertEqual(read(private/'prover-activation-scope.json',saved['scopeSha256']),e['scope'])
+                if operation=='activate':
+                    self.assertEqual(expected,saved['scopeSha256']);h['exclusive_record'](private/'prover-activation-intent.json',{})
+                    h['exclusive_record'](private/'prover-activation-result.json',{})
+                return {'proverPolicy':'active-loopback'}
+            with patch.object(b.os,'geteuid',return_value=0),patch.object(b,'activation_private',side_effect=read),patch('time.time',side_effect=lambda:clock[0]),patch.object(b,'activation_delivery_fetch',side_effect=lambda url:(raw(),'fixed-version')) as fetch,patch.object(b,'prover_activation',side_effect=activate):
+                self.assertEqual(b.activation_delivery(h)['activationDelivery'],'consumed');self.assertEqual(b.activation_delivery(h)['activationDelivery'],'consumed');self.assertEqual(fetch.call_count,1)
+            self.assertLess(events.index(('record','activation-delivery-observed.json')),events.index(('activation','activate')))
+            self.assertEqual(events.count(('activation','activate')),1)
+
+    def test_delivery_rejects_changed_campaign_scope_evidence_duplicate_and_unknown_fields(self):
+        for defect in ('campaign','board','checkpoint','checks','hash','duplicate','extra'):
+            with self.subTest(defect=defect),tempfile.TemporaryDirectory() as t:
+                h,events,e,clock,raw,read=self.fixture(pathlib.Path(t))
+                if defect=='campaign':e['campaign']='other'
+                if defect=='board':e['scope']['board']='0x'+'9'*64
+                if defect=='checkpoint':e['scope']['checkpointNumber']=0
+                if defect=='checks':
+                    e['evidence']['checks']['boardReady']=False
+                    e['scope']['deploymentEvidenceSha256']=hashlib.sha256(json.dumps(e['evidence'],separators=(',',':')).encode()).hexdigest()
+                if defect=='hash':e['scope']['deploymentEvidenceSha256']='0'*64
+                if defect=='extra':e['command']='not allowed'
+                data=raw() if defect!='duplicate' else raw().replace(b'{',b'{"schemaVersion":1,',1)
+                with patch.object(b.os,'geteuid',return_value=0),patch.object(b,'activation_private',side_effect=read),patch('time.time',side_effect=lambda:clock[0]),patch.object(b,'activation_delivery_fetch',return_value=(data,'v1')),patch.object(b,'prover_activation') as activate:
+                    with self.assertRaises((b.Invalid,ValueError)):b.activation_delivery(h)
+                    activate.assert_not_called();self.assertFalse((h['PRIVATE']/'activation-delivery-observed.json').exists())
+
+    def test_delivery_missing_or_interrupted_history_is_not_retried(self):
+        for defect in ('request','window','attempt','result'):
+            with self.subTest(defect=defect),tempfile.TemporaryDirectory() as t:
+                h,events,e,clock,raw,read=self.fixture(pathlib.Path(t));p=h['PRIVATE']
+                with patch.object(b.os,'geteuid',return_value=0),patch.object(b,'activation_private',side_effect=read),patch('time.time',side_effect=lambda:clock[0]),patch.object(b,'activation_delivery_fetch',return_value=None) as fetch:
+                    b.activation_delivery(h);clock[0]+=30
+                    name={'request':'request','window':'window','attempt':'attempt-1','result':'attempt-1-result'}[defect]
+                    (p/('activation-delivery-'+name+'.json')).unlink()
+                    with self.assertRaises((b.Invalid,OSError)):b.activation_delivery(h)
+                    self.assertEqual(fetch.call_count,1)
+
+    def test_delivery_window_and_sixty_attempts_never_extend(self):
+        for count in (0,60):
+            with self.subTest(count=count),tempfile.TemporaryDirectory() as t:
+                h,events,e,clock,raw,read=self.fixture(pathlib.Path(t));p=h['PRIVATE'];start=clock[0]
+                h['exclusive_record'](p/'activation-delivery-window.json',{'startedAt':start,'stopAt':start+1800})
+                for i in range(1,count+1):
+                    h['exclusive_record'](p/('activation-delivery-attempt-'+str(i)+'.json'),{'number':i,'startedAt':start+(i-1)*30})
+                    h['exclusive_record'](p/('activation-delivery-attempt-'+str(i)+'-result.json'),{'status':'pending'})
+                clock[0]+=1771 if count else 1800
+                with patch.object(b.os,'geteuid',return_value=0),patch.object(b,'activation_private',side_effect=read),patch('time.time',side_effect=lambda:clock[0]),patch.object(b,'activation_delivery_fetch') as fetch:
+                    with self.assertRaises(b.Invalid):b.activation_delivery(h)
+                    fetch.assert_not_called()
+
+    def test_delivery_budget_reserve_and_changed_qualification_reject_before_fetch(self):
+        for defect in ('budget','qualification','binding'):
+            with self.subTest(defect=defect),tempfile.TemporaryDirectory() as t:
+                h,events,e,clock,raw,read=self.fixture(pathlib.Path(t))
+                if defect=='budget':clock[0]=int(b.timestamp(config()['budgetStop']).timestamp())-899
+                if defect=='qualification':
+                    final=h['PRIVATE']/'final-receipt.json';value=read(final);value['qualification']['checks']['all']=False
+                    final.write_text(json.dumps(value))
+                if defect=='binding':h['PINS']['activationDelivery']='0'*64
+                with patch.object(b.os,'geteuid',return_value=0),patch.object(b,'activation_private',side_effect=read),patch('time.time',side_effect=lambda:clock[0]),patch.object(b,'activation_delivery_fetch') as fetch:
+                    with self.assertRaises(b.Invalid):b.activation_delivery(h)
+                    fetch.assert_not_called()
+
+    def test_delivery_consumption_crash_never_fetches_or_starts_again(self):
+        with tempfile.TemporaryDirectory() as t:
+            h,events,e,clock,raw,read=self.fixture(pathlib.Path(t))
+            with patch.object(b.os,'geteuid',return_value=0),patch.object(b,'activation_private',side_effect=read),patch('time.time',side_effect=lambda:clock[0]),patch.object(b,'activation_delivery_fetch',side_effect=lambda url:(raw(),'v1')) as fetch,patch.object(b,'prover_activation',side_effect=OSError('controlled before activation intent')) as activate:
+                with self.assertRaises(OSError):b.activation_delivery(h)
+                with self.assertRaisesRegex(b.Invalid,'reconcile only'):b.activation_delivery(h)
+                self.assertEqual(fetch.call_count,1);self.assertEqual(activate.call_count,1)
+
+    def test_delivery_rechecks_time_after_download_before_consumption(self):
+        with tempfile.TemporaryDirectory() as t:
+            h,events,e,clock,raw,read=self.fixture(pathlib.Path(t))
+            def fetch(url):clock[0]+=1800;return raw(),'v1'
+            with patch.object(b.os,'geteuid',return_value=0),patch.object(b,'activation_private',side_effect=read),patch('time.time',side_effect=lambda:clock[0]),patch.object(b,'activation_delivery_fetch',side_effect=fetch),patch.object(b,'prover_activation') as activate:
+                with self.assertRaisesRegex(b.Invalid,'expired'):b.activation_delivery(h)
+                activate.assert_not_called()
+
+    def test_delivery_transport_bounds_version_and_sanitizes_errors(self):
+        import urllib.request,urllib.error
+        from types import SimpleNamespace
+        class Response(io.BytesIO):
+            status=200
+            headers={'x-amz-version-id':'v1'}
+        for data,version in ((b'{}','v1'),(b'x'*16385,'v1'),(b'{}','null'),(b'{}',None)):
+            response=Response(data);response.headers={'x-amz-version-id':version}
+            with patch.object(urllib.request,'build_opener',return_value=SimpleNamespace(open=lambda *a,**k:response)):
+                if len(data)<16385 and version=='v1':self.assertEqual(b.activation_delivery_fetch(self.request()['getUrl']),(b'{}','v1'))
+                else:
+                    with self.assertRaisesRegex(b.Invalid,'^Delivery unavailable$'):b.activation_delivery_fetch(self.request()['getUrl'])
+        for code in (404,302,403):
+            def fail(*a,**k):raise urllib.error.HTTPError('PRIVATE_SENTINEL',code,'PRIVATE_SENTINEL',{},None)
+            with patch.object(urllib.request,'build_opener',return_value=SimpleNamespace(open=fail)):
+                if code==404:self.assertIsNone(b.activation_delivery_fetch(self.request()['getUrl']))
+                else:
+                    with self.assertRaisesRegex(b.Invalid,'^Delivery unavailable$'):b.activation_delivery_fetch(self.request()['getUrl'])
+
+    def test_delivery_payload_binds_opt_in_and_existing_compressed_limit(self):
+        text=fixture_generate({**config(),'queryHost':QueryHost().record(),'activationDelivery':self.request()},NOW)
+        self.assertLessEqual(len(gzip.compress(text.encode(),mtime=0)),16384)
+        import ast
+        program=lzma.decompress(base64.b64decode(text.split("base64.b64decode('")[1].split("')")[0])).decode()
+        source=ast.literal_eval(ast.parse(program).body[0].value);pins=ast.literal_eval(ast.parse(source).body[0].value)
+        self.assertEqual(pins['activationDelivery'],b.activation_delivery_digest(self.request()))
+        subprocess.run(['/bin/sh','-n'],input=text,text=True,check=True)
+
+    def test_delivery_attestor_defers_install_then_missing_bound_request_fails_shutdown(self):
+        for stage in ('node','installed'):
+            with self.subTest(stage=stage),tempfile.TemporaryDirectory() as t:
+                ns=host();base=pathlib.Path(t);private=base/'private';private.mkdir();events=[]
+                (base/'stage').write_text(stage);(base/'deadline.json').write_text(json.dumps({'budgetStop':config()['budgetStop'],'runtimeArchiveSha256':'a'*64,'manifestSha256':'b'*64}))
+                ns['PINS']['activationDelivery']='d'*64
+                def support(operation):events.append(operation);raise b.Invalid('controlled missing request')
+                ns.update(BASE=base,PRIVATE=private,verify_controls=lambda:1,run=lambda args,**kw:events.append(args) or 'masked',activation_support=support,open=lambda *a,**kw:io.StringIO(),write=lambda p,v,*a:pathlib.Path(p).write_text(v))
+                ns['attest']()
+                self.assertEqual('delivery' in events,stage=='installed')
+                self.assertEqual(['systemctl','start','rolling-budget.service'] in events,stage=='installed')
+
 if __name__=='__main__':unittest.main(verbosity=2)
