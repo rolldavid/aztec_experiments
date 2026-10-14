@@ -198,7 +198,7 @@ export async function initializeDevelopmentDeployer(wallet,secret,salt,signingKe
 export function developmentQueryServiceConfig({directory,appPort,nodeUrl,rollupAddress,rollupVersion,board,privateFeeAddress,privateBokAddress}) {
  return {host:'127.0.0.1',port:0,applicationProfile:'rolling',bokEnabled:true,board,privateBokAddress,privateFeeAddress,
   chainId:31337,rollupVersion,proofs:'disabled',origins:[`http://127.0.0.1:${appPort}`,`http://localhost:${appPort}`],threads:1,queueDirectory:directory,
-  queryNode:{url:nodeUrl,rollupAddress,maxLagSeconds:120},compactBlocks:{tier:'checkpointed'}};
+  queryNode:{url:nodeUrl,rollupAddress,maxLagSeconds:120},compactBlocks:{tier:'checkpointed'},compactRequestsPerMinute:1800};
 }
 // Current local profile. Production deployment/transaction implementations are
 // reused; only the disposable chain's explicitly labelled settlement is local.

@@ -504,7 +504,7 @@ if(focused){
   const {developmentQueryServiceConfig}=await import('./bootstrap.mjs');
   const config=developmentQueryServiceConfig({directory:'/private/tmp/development',appPort:8081,nodeUrl:'http://127.0.0.1:18081',rollupAddress:'0x'+'1'.repeat(40),rollupVersion:1,board:'0x'+'2'.repeat(64),privateFeeAddress:'0x'+'3'.repeat(64),privateBokAddress:'0x'+'4'.repeat(64)});
   assert.equal(config.host,'127.0.0.1');assert.equal(config.port,0);assert.equal(config.chainId,31337);assert.equal(config.proofs,'disabled');assert.equal(config.applicationProfile,'rolling');assert.equal(config.bokEnabled,true);
-  assert.deepEqual(config.compactBlocks,{tier:'checkpointed'});assert.deepEqual(config.origins,['http://127.0.0.1:8081','http://localhost:8081']);assert.equal(config.queryNode.url,'http://127.0.0.1:18081');assert.equal(config.queryNode.maxLagSeconds,120);
+  assert.deepEqual(config.compactBlocks,{tier:'checkpointed'});assert.equal(config.compactRequestsPerMinute,1800);assert.deepEqual(config.origins,['http://127.0.0.1:8081','http://localhost:8081']);assert.equal(config.queryNode.url,'http://127.0.0.1:18081');assert.equal(config.queryNode.maxLagSeconds,120);
   const source=await fs.readFile(new URL('./bootstrap.mjs',import.meta.url),'utf8');assert(source.includes("queryService.address.port+'/v1/node'"));assert(source.includes('trustedQuery:{url:queryUrl,allowLocalDev:true}'));
   assert(source.indexOf('await queryService?.close()')<source.indexOf('await net.close()',source.indexOf('await queryService?.close()')));
  });

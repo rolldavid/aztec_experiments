@@ -28,6 +28,13 @@ Use one curated main board for this installation. User-created subboards belong
 to that board; a separately operated main board uses its own hosting and is not
 automatically indexed or promoted by another installation.
 
+Local development admits 1,800 compact reads per minute per IP using the existing
+bounded rate option. The retained 1,222-block acceptance corpus needs over 1,200
+reads, so the production default of 600 would force a third minute before recovery
+could finish. This localhost setting preserves request size, concurrency and time
+limits; the production default remains 600. Cold recovery must still meet the
+predeclared 120-second target.
+
 The retained native development runner also mounts the existing compact-history
 adapter and starts the existing trusted query service on an ephemeral loopback
 port. Browser configuration points to that service's `/v1/node`; cold recovery
