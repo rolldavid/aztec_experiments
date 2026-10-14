@@ -16,7 +16,7 @@ import {loadContractArtifact} from '@aztec-labs/stdlib/abi';
 import {validateDescriptor} from './protocol.mjs';
 import {aztecBoardPort,rollingBoardPort} from './aztec.mjs';
 import {aztecEscrowPort} from './escrow.mjs';
-import {startEscrowService,runPrivateBokRequest,reconcileHostedBilling} from './escrow-service.mjs';
+import {startEscrowService,runPrivateBokRequest,reconcileHostedBilling,isHostedTerminalWithoutReply} from './escrow-service.mjs';
 import {meteredModel} from './metering.mjs';
 import {veniceMeteredProvider} from './venice-metered.mjs';
 import {createAgent} from './agent.mjs';
@@ -205,7 +205,7 @@ export function serializeHostedEscrow(port,walletOperation){
 /** Explicit Rolling composition; the legacy account escrow is never selected. */
 export async function runRollingHostedService({config,env=process.env,onError=()=>{}}){
  assert(Array.isArray(config.connectedRepositories??[])&&(config.connectedRepositories??[]).length<=32,'Invalid connected repository configuration');
- const [{rollingOperatorConfig,rollingPxeOptions,operatorNodeFetch,fileState},{loadRollingArtifacts},{jsonStringify},
+ const [{rollingOperatorConfig,rollingPxeOptions,operatorNodeFetch,fileState,readHostedPrivateFile},{loadRollingArtifacts},{jsonStringify},
   {getContractClassFromArtifact},{createPrivateBokEscrow},{createRollingPersistentPublicIndex},{createRollingPublicSqliteStore},{ownRollingPersistentPublicIndex}]=await Promise.all([
   import('./operations.mjs'),import('../prover/rolling-artifacts.mjs'),import('@aztec-labs/foundation/json-rpc'),
   import('@aztec-labs/stdlib/contract'),import('./private-bok-escrow.mjs'),import('../shared/rolling/public-index.mjs'),
@@ -241,7 +241,20 @@ export async function runRollingHostedService({config,env=process.env,onError=()
   // canonical index snapshots serialize; unrelated model calls may overlap.
   const lane=()=>{let tail=Promise.resolve();return fn=>{const result=tail.then(fn);tail=result.catch(()=>{});return result;};};
   const indexed=lane(),walletOperation=lane(),generatedExecution=lane(),publicationOperation=lane();
-  const rawBoard=await rollingBoardPort({node,index,scope,boardArtifact,pluginId:config.pluginId,development:config.development});
+  const isTerminalWithoutReply=async request=>{
+   await lease.assertHeld();const id=createHash('sha256').update(JSON.stringify({scope,requestId:request.requestId,target:request.target})).digest('hex');
+   const file=path.join(config.stateDirectory,id+'.json');
+   try{await fs.lstat(file);}catch(error){if(error.code==='ENOENT')return false;throw error;}
+   const original=JSON.parse((await readHostedPrivateFile(file)).toString('utf8'));
+   if(original.hostedPrivateBok?.phase!=='accounted-without-reply')return false;
+   assert(original.privateBokEscrow,'Original terminal escrow journal required');
+   const store={read:()=>original,write:async()=>{throw Error('Terminal admission is read only');}};
+   const rawEscrow=await walletOperation(()=>createPrivateBokEscrow({node,wallet,artifact,address:scope.receiver,operator:account.address.toString(),board:scope.boardAddress,network:scope,
+    requestId:request.requestId,target:request.target,store,lease,development:config.development,proofMode:config.development?'disabled':'real'}));
+   const result=await isHostedTerminalWithoutReply({request,escrow:serializeHostedEscrow(rawEscrow,walletOperation),store});
+   await lease.assertHeld();assert.deepEqual(JSON.parse((await readHostedPrivateFile(file)).toString('utf8')),original,'Terminal journal changed during admission');return result;
+  };
+  const rawBoard=await rollingBoardPort({node,index,scope,boardArtifact,pluginId:config.pluginId,development:config.development,isTerminalWithoutReply});
   const board={pending:(...args)=>indexed(()=>rawBoard.pending(...args)),readRequest:(...args)=>indexed(()=>rawBoard.readRequest(...args))};
   const rawConversation=rollingConversation({index,node,scope:indexScope,development:config.development});
   const conversation={load:input=>indexed(async()=>{const history=await rawConversation.load(input);return {...history,assertCurrent:()=>indexed(()=>history.assertCurrent())};})};

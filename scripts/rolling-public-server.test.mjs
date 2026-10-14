@@ -95,15 +95,15 @@ test('board route requires one canonical public id and bounded scoped cursor',as
 // Controlled owner boundaries: the SDK/SQLite integration is exercised below.
 function ownerFixture({sync=async()=>{},close=()=>{},checkpoint={number:'7',hash:'public'}}={}){
  const state={schemaVersion:3,state:'ready',complete:true,scope:{boardAddress:'public'},revision:'epoch:1:2',checkpoint,cursor:{blockNumber:'8',nextTxIndex:'0',block:null},cacheComparison:'complete'};
- const persistent={scope:state.scope,status(){assert.equal(this,persistent);return structuredClone(state);},sync(){assert.equal(this,persistent);return sync();},query(...args){assert.equal(this,persistent);return args;}};
+ const persistent={scope:state.scope,status(){assert.equal(this,persistent);return structuredClone(state);},sync(){assert.equal(this,persistent);return sync();},query(...args){assert.equal(this,persistent);return args;},scanPendingPredecessors(id){assert.equal(this,persistent);assert.equal(id,'7');return true;}};
  const storage={inspect(){assert.equal(this,storage);return {control:null};},close(){assert.equal(this,storage);return close();}};
  return {index:ownRollingPersistentPublicIndex(persistent,storage),state};
 }
 test('persistent facade maps only HTTP schema and checkpoint, preserves revision and bounded query receiver',async()=>{
- const {index}=ownerFixture();assert.deepEqual(index.query('feed',{limit:1}),['feed',{limit:1}]);
+ const {index}=ownerFixture();assert.deepEqual(index.query('feed',{limit:1}),['feed',{limit:1}]);assert.equal(index.scanPendingPredecessors('7'),true);
  const status=index.status();assert.equal(status.schemaVersion,1);assert.equal(status.checkpoint.number,7);assert.equal(status.revision,'epoch:1:2');
  assert.equal(status.authenticatedRanges,undefined);assert.equal((await index.sync()).pages,undefined);assert.equal(index.cacheStatus().trusted,false);
- status.checkpoint.number=9;assert.equal(index.status().checkpoint.number,7);await index.close();assert.throws(()=>index.query('feed'));assert.throws(()=>index.sync());
+ status.checkpoint.number=9;assert.equal(index.status().checkpoint.number,7);await index.close();assert.throws(()=>index.query('feed'));assert.throws(()=>index.sync());assert.throws(()=>index.scanPendingPredecessors('7'));
 });
 test('persistent owner close drains started sync before storage and forbids new work',async()=>{
  let release,closed=0,finished=false;const gate=new Promise(resolve=>release=resolve);

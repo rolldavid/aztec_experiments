@@ -570,3 +570,17 @@ for(const fault of ['original-anchor','current-instance'])for(const verification
   const after=storage.inspect().control;
   assert.equal(BigInt(after.segmentCount)-BigInt(before.segmentCount),verification===3?1n:0n,'post-commit failure keeps the durable segment unavailable; earlier failures commit nothing');
  });
+
+test('persistent predecessor admission requires ready ownership and exact guarded revision',async t=>{
+ const f=await persistentFixture(t),real=createRollingPublicSqliteStore(path.join(f.directory,'admission'),{scope});t.after(()=>real.close());let reads=0,badRevision=false;
+ // Controlled lookup result: real SQLite predecessor semantics are covered in
+ // public-sqlite.test; this verifies the canonical publication boundary itself.
+ const storage={...real,readPendingPredecessors({expectedControl,id}){reads++;assert.equal(id,'10');assert.deepEqual(expectedControl,real.inspect().control);return {rows:[],nextAfter:null,trusted:false,generation:expectedControl.generation,revision:badRevision?'wrong':expectedControl.revision};}};
+ const a=await f.open(storage);assert.throws(()=>a.index.scanPendingPredecessors('10'),{code:'ROLLING_PUBLIC_NOT_READY'});assert.equal(reads,0);
+ await f.drain(a.index);assert.deepEqual(a.index.scanPendingPredecessors('10').rows,[]);assert.equal(reads,1);
+ const original=f.node.getNodeInfo;let release;f.node.getNodeInfo=()=>new Promise(resolve=>{release=()=>original().then(resolve);});const pending=a.index.step();
+ assert.throws(()=>a.index.scanPendingPredecessors('10'),{code:'ROLLING_PUBLIC_NOT_READY'});assert.equal(reads,1);f.node.getNodeInfo=original;await release();await pending;
+ badRevision=true;assert.throws(()=>a.index.scanPendingPredecessors('10'));badRevision=false;
+ const db=new DatabaseSync(real.filename);try{db.exec("UPDATE projection SET value='{}' WHERE kind='posts'");}finally{db.close();}
+ assert.throws(()=>a.index.scanPendingPredecessors('10'),{code:'ROLLING_PUBLIC_STORAGE_CONFLICT'});
+});

@@ -36,11 +36,31 @@ export async function reconcileHostedBilling({receipt,escrow,store,lease,limits}
  await checkedStore.write({...store.read(),hostedPrivateBok:{...store.read().hostedPrivateBok,phase:'accounted-without-reply'}});
  return {status:'accounted-without-reply',replyAvailable:false,billingReceipt:billing.receipt,charge:billing.charge};
 }
+/** A terminal failure may release its thread only after authenticating the
+ * original billing journal against a fresh canonical request. This capability
+ * cannot call the provider, write a journal or submit a chain operation. */
+export async function isHostedTerminalWithoutReply({request,escrow,store}){
+ const original=store.read(),saved=original.hostedPrivateBok,journal=original.privateBok;
+ if(saved?.phase!=='accounted-without-reply')return false;
+ const identity={...escrow.identity,requestId:request.requestId,target:request.target};
+ assert.deepEqual(saved.binding,{...identity,postId:request.postId,pluginId:request.pluginId},'Terminal hosted binding changed');
+ assert.deepEqual(journal?.identity,identity,'Terminal metering identity changed');
+ assert.equal(journal.finished,true,'Terminal accounting not finished');
+ const calls=Object.values(journal.calls);assert(calls.length>0&&calls.every(c=>c.phase==='settled'),'Terminal billing incomplete');
+ const deny=async()=>{throw Error('Terminal admission is read only');};let observation;
+ const readOnlyEscrow={identity:escrow.identity,request:async id=>{assert.equal(observation,undefined);observation=await escrow.request(id);return observation;}};
+ for(const method of ['assertUsable','inspectOperation','reserve','settle','close_uncertain','reconcile','finish'])readOnlyEscrow[method]=deny;
+ const metering=privateBokMetering({provider:{quote:deny,execute:deny},escrow:readOnlyEscrow,store:{read:()=>original,write:deny},identity,limits:journal.limits});
+ const last=calls.at(-1);await metering.validateReconciliation(last.id,last.billing);
+ assert.equal(observation.request.state,4,'Terminal request not canonical finished');
+ assert.equal(BigInt(observation.request.available),0n);assert.equal(BigInt(observation.request.reserved),0n);
+ assert.deepEqual(store.read(),original,'Terminal journal changed during admission');return true;
+}
 /** On-chain state owns work. The bounded in-memory queue never resumes paid calls. */
 export async function startEscrowService({descriptor,escrow,board,run,host='127.0.0.1',port=8787,onError=console.error,pollMs=2000,concurrency=2,profile='legacy',recoverPending=async()=>[]}){
  if(!['legacy','rolling'].includes(profile))throw Error('Invalid service profile');
  if(!Number.isSafeInteger(concurrency)||concurrency<1||concurrency>16)throw Error('Invalid service concurrency');
- let rollingCursor=null,rollingQueue=[],rollingScanEpoch=0;
+ let rollingCursor=null,rollingQueue=[];
  let stopped=false,polling=false,cursor=0,inFlight=Promise.resolve(),pollFailure=null,jobFailure=null,lastSuccess=null;
  const jobs=new Map(),deferred=new Set();
  const failed=(error,source='job')=>{const failure={at:new Date().toISOString(),kind:error.name||'Error'};if(source==='poll')pollFailure=failure;else jobFailure=failure;onError(error);};
@@ -75,12 +95,12 @@ export async function startEscrowService({descriptor,escrow,board,run,host='127.
     // pending scan. This bounds retained rows by active threads plus one page.
     const deferred=new Map();
     for(const request of rollingQueue)if(!jobs.has(request.requestId)&&!deferred.has(request.threadId))deferred.set(request.threadId,request);
-    const epoch=rollingScanEpoch;
     const page=await board.pending(rollingCursor);assert(Array.isArray(page.requests)&&page.requests.length<=64);
     const recovery=await recoverPending();assert(Array.isArray(recovery)&&recovery.length<=16);
-    if(epoch!==rollingScanEpoch)return; // A completed job invalidated this page.
     rollingCursor=page.nextCursor;
     rollingQueue=[...new Map([...deferred.values(),...recovery,...page.requests].map(request=>[request.requestId,request])).values()];
+    for(const request of rollingQueue)assert(typeof request.order==='string'&&/^(0|[1-9][0-9]*)$/.test(request.order),'Canonical invocation order required');
+    rollingQueue.sort((a,b)=>BigInt(a.order)<BigInt(b.order)?-1:BigInt(a.order)>BigInt(b.order)?1:0);
    }
    for(const request of [...rollingQueue]){
     if(stopped||jobs.size>=concurrency)break;
@@ -88,12 +108,16 @@ export async function startEscrowService({descriptor,escrow,board,run,host='127.
     if(jobs.has(request.requestId)){rollingQueue=rollingQueue.filter(row=>row.requestId!==request.requestId);continue;}
     if(busyThread(request))continue;
     rollingQueue=rollingQueue.filter(row=>row.requestId!==request.requestId);
+    // Recheck the indexed canonical predecessor before dispatch, including
+    // replied recovery hints and rows retained across a changing publication.
+    if(!(await board.readRequest(request.postId))?.usable)continue;
+    if(stopped)break;
     const job={post:request.postId,threadId:request.threadId,promise:null};jobs.set(request.requestId,job);
     job.promise=Promise.resolve().then(()=>run(request)).then(()=>{jobFailure=null;lastSuccess=new Date().toISOString();},error=>failed(error)).finally(()=>{
+     // Drain this bounded batch and advance the cyclic cursor even when a
+     // fenced/no-op request remains pending. Canonical predecessor checks, not
+     // a global rewind or an unbounded failed-ID set, preserve thread FIFO.
      jobs.delete(request.requestId);
-     // Deferred rows may have been compacted while a thread was busy. Restart
-     // discovery so its earliest remaining request wins, including across pages.
-     rollingScanEpoch++;rollingQueue=[];rollingCursor=null;
     });
    }
    pollFailure=null;return;

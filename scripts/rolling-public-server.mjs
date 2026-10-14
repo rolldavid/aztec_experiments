@@ -116,6 +116,7 @@ export function ownRollingPersistentPublicIndex(persistent,storage){
       operation.then(()=>pending.delete(operation),()=>pending.delete(operation));return operation;},
     query(view,params){available();return persistent.query(view,params);},
     scanPosts(options){available();return persistent.scanPosts(options);},
+    scanPendingPredecessors(...args){available();return persistent.scanPendingPredecessors(...args);},
     cacheStatus(){available();const control=storage.inspect().control;
       return control===null?{trusted:false,control:null}:{trusted:false,control:{generation:control.generation,revision:control.revision,
         segmentCount:control.segmentCount,eventCount:control.scalars.eventCount,checkpoint:structuredClone(control.checkpoint),cursor:structuredClone(control.cursor)}};

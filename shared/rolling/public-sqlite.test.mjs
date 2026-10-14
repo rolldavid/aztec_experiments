@@ -390,3 +390,36 @@ test('Bok SQLite uniform indexed accounting pages, exact undo and scoped reopen'
  c=reopened.rollbackOne({expectedControl:c});assert.deepEqual(reopened.readPublicPage({expectedControl:c,view:'bok-accounting'}).value.requests,[]);
  const wrong=createRollingPublicSqliteStore(f.directory,{scope});try{assert.throws(()=>wrong.inspect());}finally{wrong.close();}
 });
+
+test('SQLite indexed admission preserves unresolved thread barriers across cursors and reply rollback',async t=>{
+ const f=await queryFixture(t);await f.add([['PluginConfigured',{plugin_id:'7',adapter:'9',enabled:true}],['PluginConfigured',{plugin_id:'8',adapter:'10',enabled:true}]]);
+ const invoke=async(id,root=id,parent='0',plugin='7')=>f.add([await f.postInput(id,{root,parent}),['PluginInvoked',{plugin_id:plugin,post_id:id,request_id:String(BigInt(id)+1000n),target:'12'}]]);
+ await invoke('100');await invoke('101','100','100');await invoke('102','100','101');await invoke('200');await invoke('201','200','200');await invoke('300');await invoke('400');await invoke('105','100','102','8');
+ const admitted=(c,posts)=>posts.filter(p=>!f.store.readPendingPredecessors({expectedControl:c,id:p.id}).rows.length).map(p=>p.id);
+ assert.deepEqual(admitted(f.control,f.read('pending').value.posts),['100','200','300','400','105']);
+ assert.equal(f.store.readPendingPredecessors({expectedControl:f.control,id:'101'}).rows.length,1);assert.equal(f.store.readPendingPredecessors({expectedControl:f.control,id:'100'}).rows.length,0);assert.equal(f.store.readPendingPredecessors({expectedControl:f.control,id:'105'}).rows.length,0);
+ const first=f.read('pending',{limit:1});assert.equal(first.nextAfter,'100');
+ assert.deepEqual(admitted(f.control,f.read('pending',{limit:100},first.nextAfter).value.posts),['200','300','400','105'],'cursor cannot erase an earlier unresolved same-plugin barrier');
+ await f.add([await f.postInput('500',{parent:'100',root:'100',kind:'4'}),['PluginReplyPublished',{plugin_id:'7',request_id:'1100',post_id:'500',parent_id:'100',target:'12'}]]);
+ assert.deepEqual(admitted(f.control,f.read('pending').value.posts),['101','200','300','400','105']);
+ assert.equal(f.store.readPendingPredecessors({expectedControl:f.control,id:'101'}).rows.length,0);assert.equal(f.store.readPendingPredecessors({expectedControl:f.control,id:'102'}).rows.length,1);
+ let c=f.store.rollbackOne({expectedControl:f.control});c=f.store.rollbackOne({expectedControl:c});
+ assert.deepEqual(admitted(c,f.store.readPublicPage({expectedControl:c,view:'pending'}).value.posts),['100','200','300','400','105']);
+ const db=f.own(new DatabaseSync(f.store.filename));const plan=db.prepare('EXPLAIN QUERY PLAN '+ROLLING_PUBLIC_QUERY_SQL.predecessor).all(c.generation,'posts','0'.repeat(63)+'1','7','9','f'.repeat(64),'',1).map(r=>r.detail).join(' ');
+ assert.match(plan,/SEARCH projection USING INDEX projection_pending_thread/);assert.doesNotMatch(plan,/SCAN |TEMP B-TREE/);
+});
+
+test('SQLite predecessor keyset spans more than64 rows without losing a later live barrier',async t=>{
+ const f=await queryFixture(t);await f.add([['PluginConfigured',{plugin_id:'7',adapter:'9',enabled:true}]]);
+ for(let n=100;n<=171;n++)await f.add([await f.postInput(String(n),{root:'100',parent:n===100?'0':String(n-1)}),['PluginInvoked',{plugin_id:'7',post_id:String(n),request_id:String(n+1000),target:'12'}]]);
+ let after=null,ids=[],orders=[];do{
+  const page=f.store.readPendingPredecessors({expectedControl:f.control,id:'171',after,limit:64});
+  assert(page.rows.length<=64);assert(page.rows.every(r=>r.threadId==='100'&&r.pluginId==='7'&&r.adapter==='9'));
+  ids.push(...page.rows.map(r=>r.postId));orders.push(...page.rows.map(r=>r.order));
+  if(page.nextAfter!==null)assert(after===null||BigInt(page.nextAfter)>BigInt(after));after=page.nextAfter;
+ }while(after!==null);
+ assert.deepEqual(ids,Array.from({length:71},(_,i)=>String(100+i)));assert.equal(new Set(orders).size,71);
+ const tail=f.store.readPendingPredecessors({expectedControl:f.control,id:'171',after:orders[69],limit:64});
+ assert.deepEqual(tail.rows.map(r=>r.postId),['170']);assert.equal(tail.nextAfter,null);
+ assert.throws(()=>f.store.readPendingPredecessors({expectedControl:f.control,id:'171',after:'999999'}));
+});

@@ -382,6 +382,15 @@ export async function createRollingPersistentPublicIndex({node,artifact,bokArtif
   // Trusted operator scan only. Public query cursors remain bound to their
   // exact publication. The operator verifies its prior chain anchor before
   // using an after-post key against a newer complete publication.
+  function scanPendingPredecessors(id,{after=null,limit=64}={}){
+    check(ready&&!busy&&!unavailable,'ROLLING_PUBLIC_NOT_READY');check(field(id));check(after===null||field(after));check(Number.isSafeInteger(limit)&&limit>=1&&limit<=64);assertOwned();
+    const result=storage.readPendingPredecessors({expectedControl:control,id,after,limit});
+    check(result.trusted===false&&result.generation===control.generation&&result.revision===control.revision&&Array.isArray(result.rows)&&result.rows.length<=limit);
+    let prior=after===null?-1n:BigInt(after);
+    for(const row of result.rows){check(['postId','threadId','order','requestId','target','pluginId','adapter'].every(k=>field(row[k])));check(BigInt(row.order)>prior);prior=BigInt(row.order);}
+    check(result.nextAfter===null||result.rows.length===limit&&result.nextAfter===result.rows.at(-1).order);
+    assertOwned();return copy({rows:result.rows,nextAfter:result.nextAfter,revision:`${epoch}:${control.generation}:${control.revision}`});
+  }
   function scanPosts({after=null,limit=64,pendingOnly=false}={}){
     check(ready&&!busy&&!unavailable,'ROLLING_PUBLIC_NOT_READY');check(typeof pendingOnly==='boolean');check(after===null||field(after));check(Number.isSafeInteger(limit)&&limit>=1&&limit<=100);
     assertOwned();const page=storage.readPublicPage({expectedControl:control,view:pendingOnly?'pending':'chronological',params:{limit},after,homeSubboards:curated});
@@ -389,5 +398,5 @@ export async function createRollingPersistentPublicIndex({node,artifact,bokArtif
     const result={scope,checkpoint:{number:Number(control.checkpoint.number),hash:control.checkpoint.hash},complete:true,...page.value,nextAfter:page.nextAfter,revision:`${epoch}:${control.generation}:${control.revision}`};
     check(bytes(JSON.stringify(result))<=1048576,'ROLLING_PUBLIC_CAPACITY');assertOwned();return copy(result);
   }
-  return Object.freeze({scope,step,sync:step,status,publication,query,scanPosts});
+  return Object.freeze({scope,step,sync:step,status,publication,query,scanPosts,scanPendingPredecessors});
 }

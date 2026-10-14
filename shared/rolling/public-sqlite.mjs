@@ -33,6 +33,7 @@ const columns="CASE WHEN length(k)<=78 THEN k END AS k,"+['ord','likes','stamp',
 const seek=(index,where,order)=>`SELECT ${columns} FROM projection INDEXED BY ${index} WHERE g=? AND kind=? AND ${where} ORDER BY ${order.replace(/\b(ord|likes|stamp|idnum|slug|k)\b/g,'projection.$1')} LIMIT ?`;
 export const ROLLING_PUBLIC_QUERY_SQL=Object.freeze({
  accounting:seek('projection_accounting','idnum>?','idnum ASC'),
+ predecessor:seek('projection_pending_thread',"kind='posts' AND json_extract(value,'$.invocation') IS NOT NULL AND json_extract(value,'$.invocation.reply') IS NULL AND root=? AND json_extract(value,'$.invocation.pluginId')=? AND json_extract(value,'$.invocation.adapter')=? AND ord<? AND ord>?",'ord ASC'),
  feed:seek('projection_order','ord<?','ord DESC'),
  chronological:seek('projection_order','ord>?','ord ASC'),
  pending:seek('projection_pending',"kind='posts' AND json_extract(value,'$.invocation') IS NOT NULL AND json_extract(value,'$.invocation.reply') IS NULL AND ord>?",'ord ASC'),
@@ -72,6 +73,7 @@ export function createRollingPublicSqliteStore(directory,{scope,...options}={}){
  CREATE INDEX IF NOT EXISTS projection_accounting ON projection(g,kind,idnum,k);
  CREATE INDEX IF NOT EXISTS projection_order ON projection(g,kind,ord,k);
  CREATE INDEX IF NOT EXISTS projection_pending ON projection(g,kind,ord,k) WHERE kind='posts' AND json_extract(value,'$.invocation') IS NOT NULL AND json_extract(value,'$.invocation.reply') IS NULL;
+ CREATE INDEX IF NOT EXISTS projection_pending_thread ON projection(g,kind,root,json_extract(value,'$.invocation.pluginId'),json_extract(value,'$.invocation.adapter'),ord,k) WHERE kind='posts' AND json_extract(value,'$.invocation') IS NOT NULL AND json_extract(value,'$.invocation.reply') IS NULL;
  CREATE INDEX IF NOT EXISTS projection_board ON projection(g,kind,board,ord,k);
  CREATE INDEX IF NOT EXISTS projection_name ON projection(g,kind,name,ord,k);
  CREATE INDEX IF NOT EXISTS projection_root ON projection(g,kind,root,ord,k);
@@ -203,6 +205,24 @@ export function createRollingPublicSqliteStore(directory,{scope,...options}={}){
   requireThat(tables.has(table)&&typeof k==='string'&&k.length<=160);const expected=captureExpected(expectedControl);
   return transaction(false,()=>{const b=budget(limits.maxReadBytes),c=current(expected,b);requireThat(c);return projectionRead(c.generation,table,k,b)??null;});
  }
+ // Bounded, canonical-owner guarded keyset predecessor scan. No terminal
+ // accounting is inferred from this unauthenticated public cache.
+ function readPendingPredecessors({expectedControl,id,after=null,limit=64}){
+  requireThat(uint(id)&&(after===null||uint(after))&&bounded(limit,1,64));const expected=captureExpected(expectedControl);
+  return transaction(false,()=>{
+   const b=budget(limits.maxReadBytes),c=current(expected,b);requireThat(c);
+   const post=projectionRead(c.generation,'posts',id,b);requireThat(post?.invocation);
+   requireThat(after===null||BigInt(after)<BigInt(post.order));
+   const found=prepare(ROLLING_PUBLIC_QUERY_SQL.predecessor).all(c.generation,'posts',key(post.record.root),post.invocation.pluginId,post.invocation.adapter,key(post.order),after===null?'':key(after),limit+1);
+   const rows=found.slice(0,limit).map(row=>{
+    requireThat(uint(row.k)&&bounded(row.bytes,0,limits.maxRowBytes));
+    const value=projectionRead(c.generation,'posts',row.k,b);requireThat(value?.invocation&&value.invocation.reply===null&&value.record.root===post.record.root&&value.invocation.pluginId===post.invocation.pluginId&&value.invocation.adapter===post.invocation.adapter);
+    requireThat(BigInt(value.order)<BigInt(post.order)&&(after===null||BigInt(value.order)>BigInt(after)));
+    return {postId:value.id,threadId:value.record.root,order:value.order,requestId:value.invocation.requestId,target:value.invocation.target,pluginId:value.invocation.pluginId,adapter:value.invocation.adapter};
+   });
+   return {rows,nextAfter:found.length>limit?rows.at(-1).order:null,generation:c.generation,revision:c.revision,trusted:false};
+  });
+ }
  // A single guarded snapshot returns cache data only. The persistent index
  // alone earns canonical publication and authenticates opaque external cursors.
  function readPublicPage({expectedControl,view,params={},after=null,homeSubboards=[]}){
@@ -313,7 +333,7 @@ export function createRollingPublicSqliteStore(directory,{scope,...options}={}){
    return {rows,next:more?last:null,bytes:pageBudget.bytes,revision:c.revision,generation:g,trusted:false};
   });
  }
- return Object.freeze({filename,authenticationEpoch,inspect,startGeneration,commitTransaction,completeBlock,rollbackOne,readProjection,readPublicPage,
+ return Object.freeze({filename,authenticationEpoch,inspect,startGeneration,commitTransaction,completeBlock,rollbackOne,readProjection,readPendingPredecessors,readPublicPage,
   readEventPage:options=>readPage('events',options),readSegmentPage:options=>readPage('segments',options),readBlockPage:options=>readPage('blocks',options),
   close(){requireThat(!active);if(!closed){db.close();closed=true;}}});
 }

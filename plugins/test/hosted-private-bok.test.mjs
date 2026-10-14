@@ -1,7 +1,7 @@
 // Labelled controlled canonical-chain/provider ports; no external services or real proofs.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {runPrivateBokRequest,startEscrowService,reconcileHostedBilling} from '../escrow-service.mjs';
+import {runPrivateBokRequest,startEscrowService,reconcileHostedBilling,isHostedTerminalWithoutReply} from '../escrow-service.mjs';
 import {validateVeniceBilling} from '../venice-metered.mjs';
 import {validateDescriptor,API_VERSION,unpackText} from '../protocol.mjs';
 import {publishAcceptedRevision,hostedRecoveryScanner,runHostedBillingReconciliation,acquireHostedLease,serializeHostedEscrow} from '../main.mjs';
@@ -25,7 +25,7 @@ test('accepted publication with uncertain private mirror retains exact identity 
 });
 const f=n=>'0x'+BigInt(n).toString(16).padStart(64,'0');
 function fixture(){
- const request={postId:f(1),requestId:f(2),target:f(3),pluginId:f(4)};
+ const request={postId:f(1),requestId:f(2),target:f(3),pluginId:f(4),order:'1'};
  const current={...request,text:'@bok hello',usable:true,replied:false,mainVersion:1,localVersion:0};
  const row={state:2,sequence:0,invocation_hash:f(3),budget:1000n,available:1000n,reserved:0n,charged:0n,refunded:0n,receipt:f(0)};
  let saved={operations:{}};const ops=new Map(),events=[],control={};
@@ -235,9 +235,11 @@ test('actual SDK board projection gates canonical plugin, moderation, anchor and
   const node={getNodeInfo:async()=>({l1ChainId:31337,rollupVersion:3409706519,realProofs:state.realProofs,l1ContractAddresses:{rollupAddress:scope.rollupAddress}}),
    getBlock:async tag=>({number:5,hash:tag==='checkpointed'?f(99):state.anchor}),getContract:async()=>({originalContractClassId:classId,currentContractClassId:state.currentClass}),
    getPublicStorageAt:async(anchor,address,slot)=>{assert.deepEqual(anchor,{number:5,hash:f(99)});assert.equal(String(address),scope.boardAddress);return new Fr(storage.get(slot.toBigInt()));}};
-  const index={sync:async()=>{},status:()=>({state:'ready'}),query:()=>({post}),scanPosts:()=>({complete:true,posts:[post],nextAfter:null,checkpoint:{number:5,hash:f(99)}})};
+  const index={scanPendingPredecessors:()=>({rows:[],nextAfter:null,revision:'one'}),sync:async()=>{},status:()=>({state:'ready'}),query:()=>({post}),scanPosts:()=>({complete:true,posts:[post],nextAfter:null,checkpoint:{number:5,hash:f(99)}})};
   const port=await rollingBoardPort({node,index,scope,boardArtifact:artifact,pluginId,development:true});
   assert.equal((await port.pending(null)).requests[0].target,f(3));assert.equal((await port.readRequest(f(1))).usable,true);
+  index.scanPendingPredecessors=id=>{assert.equal(id,'1');return {rows:[{postId:'7',threadId:'1',order:'0',requestId:'7',target:'8',pluginId:'4',adapter:'9'}],nextAfter:null,revision:'one'};};assert.equal((await port.readRequest(f(1))).usable,false);assert.equal((await port.pending(null)).requests.length,0);
+  post.invocation.reply={postId:'2'};assert.equal((await port.readRequest(f(1))).usable,false,'replied recovery still respects an earlier unresolved invocation');index.scanPendingPredecessors=()=>({rows:[],nextAfter:null,revision:'one'});assert.equal((await port.readRequest(f(1))).usable,true);post.invocation.reply=null;
   const originalScan=index.scanPosts;let scans=0;
   index.scanPosts=({after,limit})=>{scans++;assert.equal(limit,64);if(after===null)return {complete:true,posts:[{...post,text:null}],nextAfter:'1',checkpoint:{number:5,hash:f(99)}};assert.equal(after,'1');return {complete:true,posts:[post],nextAfter:null,checkpoint:{number:5,hash:f(99)}};};
   node.getBlockData=async()=>({blockHash:f(99)});
@@ -427,4 +429,55 @@ test('truncated paid completion publishes explicit failure and finishes genuine 
  assert.equal(x.row.charged,6n);assert.equal(x.row.refunded,994n);assert.equal(x.row.reserved,0n);
  const saved=x.store.read();assert.match(unpackText(saved.hostedPrivateBok.args[2],saved.hostedPrivateBok.args[3]),/output limit.*incomplete/);assert.equal(saved.privateBok.calls[0].finishReason,'length');
  await x.run();assert.equal(x.events.filter(event=>event==='paid').length,1);
+});
+
+// Controlled actual billing protocol: terminal admission cannot mutate or call a provider.
+test('terminal no-reply admission authenticates original limits and canonical settlement read-only',async()=>{
+ const x=await unknownBillingFixture();await x.recover();const before=structuredClone(x.store.read()),events=[...x.events];let reads=0;
+ const escrow={identity:x.args.escrow.identity,request:async id=>{reads++;return x.args.escrow.request(id);}};
+ assert.equal(before.privateBok.limits.maxTokens,1500);
+ assert.equal(await isHostedTerminalWithoutReply({request:x.args.request,store:x.store,escrow}),true);
+ assert.equal(reads,1);assert.deepEqual(x.store.read(),before);assert.deepEqual(x.events,events);
+});
+for(const change of ['phase','finished','call','receipt','charge','budget','state','reserved','target','plugin','limits','sequence'])test('terminal no-reply admission refuses changed '+change,async()=>{
+ const x=await unknownBillingFixture();await x.recover();const saved=x.store.read();
+ if(change==='phase')saved.hostedPrivateBok.phase='running';
+ if(change==='finished')saved.privateBok.finished=false;
+ if(change==='call')saved.privateBok.calls[0].phase='fenced';
+ if(change==='receipt')x.row.receipt=f(89);
+ if(change==='charge'){x.row.charged++;x.row.refunded--;}
+ if(change==='budget'){x.row.budget++;x.row.refunded++;}
+ if(change==='state')x.row.state=3;
+ if(change==='reserved'){x.row.reserved=1n;x.row.refunded--;}
+ if(change==='target')saved.hostedPrivateBok.binding.target=f(99);
+ if(change==='plugin')saved.hostedPrivateBok.binding.pluginId=f(99);
+ if(change==='limits')saved.privateBok.limits.maxReservation='1';
+ if(change==='sequence')x.row.sequence++;
+ const events=[...x.events],before=structuredClone(saved),run=()=>isHostedTerminalWithoutReply({request:x.args.request,store:x.store,escrow:x.args.escrow});
+ if(change==='phase')assert.equal(await run(),false);else await assert.rejects(run());
+ assert.deepEqual(x.store.read(),before);assert.deepEqual(x.events,events);
+});
+test('bounded predecessor pages skip authenticated terminal history but stop at unknown barriers',async()=>{
+ const {rollingPredecessorsClear}=await import('../aztec.mjs');
+ const rows=Array.from({length:70},(_,i)=>({postId:String(i+1),threadId:'1',order:String(i),requestId:String(i+1),target:'8',pluginId:'4',adapter:'9'}));
+ const request={postId:f(99),threadId:f(1),order:'100',pluginId:f(4),adapter:f(9)};let revision='one',calls=0,barrier=69;
+ const index={scanPendingPredecessors(id,{after,limit}){assert.equal(id,'99');assert(limit<=64);const remaining=rows.filter(r=>after===null||BigInt(r.order)>BigInt(after));return {rows:remaining.slice(0,limit),nextAfter:remaining.length>limit?remaining[limit-1].order:null,revision};}};
+ const isTerminal=async row=>{calls++;return Number(row.order)!==barrier;};
+ assert.equal(await rollingPredecessorsClear({index,request,isTerminal}),false);assert.equal(calls,70);
+ barrier=-1;calls=0;assert.equal(await rollingPredecessorsClear({index,request,isTerminal}),true);assert.equal(calls,70);
+ await assert.rejects(rollingPredecessorsClear({index,request,isTerminal:async()=>{revision='changed';return true;}}),/publication changed/);
+ revision='one';calls=0;await assert.rejects(rollingPredecessorsClear({index,request,timeoutMs:5,isTerminal:async()=>{calls++;await new Promise(r=>setTimeout(r,15));return true;}}),/unavailable: deadline/);
+ await new Promise(r=>setTimeout(r,20));assert.equal(calls,1,'timed-out read cannot start further predecessor work');
+ rows[0].pluginId='5';await assert.rejects(rollingPredecessorsClear({index,request,isTerminal}));
+});
+
+test('timed-out predecessor read retains sole ownership until it settles',async()=>{
+ const {rollingPredecessorsClear}=await import('../aztec.mjs');let release,calls=0;const admission={};
+ const row={postId:'1',threadId:'1',order:'0',requestId:'1',target:'8',pluginId:'4',adapter:'9'},request={postId:f(99),threadId:f(1),order:'100',pluginId:f(4),adapter:f(9)};
+ const index={scanPendingPredecessors:()=>({rows:[row],nextAfter:null,revision:'one'})};
+ const isTerminal=()=>{calls++;return new Promise(resolve=>{release=resolve;});};
+ await assert.rejects(rollingPredecessorsClear({index,request,isTerminal,admission,timeoutMs:5}),/deadline/);
+ for(let n=0;n<3;n++)await assert.rejects(rollingPredecessorsClear({index,request,isTerminal,admission,timeoutMs:5}),/prior read pending/);
+ assert.equal(calls,1);release(true);await new Promise(r=>setImmediate(r));assert.equal(admission.pending,null);
+ assert.equal(await rollingPredecessorsClear({index,request,isTerminal:async()=>true,admission}),true);
 });
