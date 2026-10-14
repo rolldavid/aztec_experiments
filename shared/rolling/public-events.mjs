@@ -188,7 +188,21 @@ export async function createRollingEventDecoder({artifact,scope,bokArtifact}) {
    const block=await read(()=>node.getBlock(receipt.blockNumber,{includeTransactions:true})),found=await read(()=>node.getTxEffect(txHash));check(block&&found&&Number(block.header.globalVariables.blockNumber)===Number(receipt.blockNumber)&&block.hash.equals(receipt.blockHash)&&found.l2BlockHash.equals(receipt.blockHash)&&Number(found.l2BlockNumber)===Number(receipt.blockNumber)&&found.data.txHash.equals(txHash));
    const matches=block.body.txEffects.map((effect,index)=>({effect,index})).filter(({effect})=>effect.txHash.equals(txHash));check(matches.length===1&&matches[0].effect.toBuffer().equals(found.data.toBuffer()));
    check(found.data.publicLogs.length<=4096&&found.data.publicLogs.reduce((sum,log)=>sum+log.sizeInFields(),0)<=FLAT_PUBLIC_LOGS_PAYLOAD_LENGTH);const events=[];
-   for(const [index,log] of found.data.publicLogs.entries())if(log.contractAddress.toString()===scope.boardAddress||log.contractAddress.toString()===scope.bok?.address){check(Date.now()<deadline);events.push(await decodeLog(log,{blockNumber:String(receipt.blockNumber),blockHash:receipt.blockHash.toString(),txHash:hashValue,txIndexWithinBlock:String(matches[0].index),logIndexWithinTx:String(index)}));}
+   const completions=[];
+   for(const [index,log] of found.data.publicLogs.entries())if(log.contractAddress.toString()===scope.boardAddress||log.contractAddress.toString()===scope.bok?.address){
+    check(Date.now()<deadline);
+    // The pinned PrivateBok refund also emits the standard PartialUintNote
+    // completion transport: [domain-separated commitment, balances slot, value].
+    // Its tag is opaque. Provenance comes from the authenticated class and full
+    // canonical effect, not from treating an unknown tag as an event namespace.
+    // Known event tags always take the strict ABI path, including malformed ones.
+    if(log.contractAddress.toString()===scope.bok?.address&&!definitions.has(log.fields[0]?.toString())){
+     check(log.fields.length===3&&log.fields.every(f=>f instanceof Fr));
+     check(log.fields[1].equals(bokArtifact.storageLayout.balances.slot));
+     const value=log.fields[2].toBigInt();check(value>0n&&value<1n<<128n);completions.push(value);
+    }else events.push(await decodeLog(log,{blockNumber:String(receipt.blockNumber),blockHash:receipt.blockHash.toString(),txHash:hashValue,txIndexWithinBlock:String(matches[0].index),logIndexWithinTx:String(index)}));
+   }
+   for(const value of completions)check(events.some(event=>event.type==='AccountingChanged'&&BigInt(event.payload.refunded)>=value));
    const final=await read(()=>node.getBlockData(receipt.blockNumber)),lastInstance=await read(()=>node.getContract(address));
    check(final?.blockHash.equals(receipt.blockHash)&&lastInstance?.currentContractClassId.toString()===scope.classId&&lastInstance?.originalContractClassId.toString()===scope.classId);
    await verifyBok(node,read);

@@ -195,3 +195,34 @@ test('Bok attestation cache refuses reorg/current drift and never caches failed 
   f.state.badStorage=false;await local.verifyBok(f.node,fn=>fn());assert.equal(f.calls.original,3,'partial failed attestation is never retained');
  }
 });
+
+function refundCompletionFixture(){
+ const node=nodeFixture(),baseContract=node.getContract;
+ const completion=new PublicLog(bokInstance.address,[new Fr(987n),bokArtifact.storageLayout.balances.slot,new Fr(80n)]);
+ const accounting=new PublicLog(bokInstance.address,[accountingTag,...[9n,4n,1n,100n,0n,0n,20n,80n,1n].map(n=>new Fr(n))]);
+ node.getContract=async address=>address.toString()===bokScope.bok.address?bokInstance:baseContract();
+ node.getPublicStorageAt=countedBokNode().node.getPublicStorageAt;
+ return {node,completion,accounting,async install(logs=[completion,accounting]){
+  const effect=(await node.getTxEffect()).data;effect.publicLogs=logs;effect.revertCode={isOK:()=>true};effect.toBuffer=()=>Buffer.concat(logs.map(log=>log.toBuffer()));
+ }};
+}
+test('canonical Bok refund completion transport does not hide the following accounting event',async()=>{
+ const f=refundCompletionFixture();await f.install();const events=await bokDecoder.decodeTransaction(f.node,txHash.toString());
+ assert.equal(events.length,1);assert.equal(events[0].type,'AccountingChanged');assert.equal(events[0].payload.refunded,'80');assert.equal(events[0].position.logIndexWithinTx,'1');
+ await assert.rejects(()=>bokDecoder.decodeLog(f.completion,position),'transport never becomes an independently authenticated application event');
+});
+for(const [name,mutate] of [
+ ['known malformed event tag',f=>{f.completion.fields[0]=accountingTag;}],
+ ['board emitter',f=>{f.completion.contractAddress=board;}],
+ ['wrong balance slot',f=>{f.completion.fields[1]=new Fr(999n);} ],
+ ['zero value',f=>{f.completion.fields[2]=Fr.ZERO;}],
+ ['overflow value',f=>{f.completion.fields[2]=new Fr(1n<<128n);} ],
+ ['extra field',f=>{f.completion.fields.push(Fr.ONE);} ],
+ ['insufficient accounted refund',f=>{f.completion.fields[2]=new Fr(81n);} ],
+ ['invalid accounting',f=>{f.accounting.fields[9]=Fr.ZERO;}],
+])test('canonical Bok completion rejects '+name,async()=>{
+ const f=refundCompletionFixture();mutate(f);await f.install();await assert.rejects(()=>bokDecoder.decodeTransaction(f.node,txHash.toString()));
+});
+test('canonical Bok completion cannot suppress an unknown log without refund accounting',async()=>{
+ const f=refundCompletionFixture();await f.install([f.completion]);await assert.rejects(()=>bokDecoder.decodeTransaction(f.node,txHash.toString()));
+});
