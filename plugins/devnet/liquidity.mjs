@@ -147,6 +147,14 @@ export async function prepareDevelopmentRelay({directory,provider,stage,scope,ci
  const signerFile=path.join(directory,'relay-signer.json'),policyFile=path.join(directory,'relay-policy.json'),stateDirectory=path.join(directory,'relay-state');
  const progress=JSON.parse(await fs.readFile(path.join(directory,'progress.json'),'utf8'));
  async function readPrivate(filename){try{const st=await fs.lstat(filename);if(!st.isFile()||st.isSymbolicLink()||(st.mode&0o077)||st.uid!==process.getuid()||st.size>16384)throw Error('Invalid private relay record');return JSON.parse(await fs.readFile(filename,'utf8'));}catch(e){if(e.code==='ENOENT')return null;throw e;}}
+ // The host writes this marker before opening the funded signer's ledger.
+ // Even a partial first initialization is operator-reconciled, never recreated.
+ const marker=stateDirectory+'.initialized.json';let markerExists=false;try{await fs.lstat(marker);markerExists=true;}catch(e){if(e.code!=='ENOENT')throw e;}
+ if(markerExists){
+  const initialized=await readPrivate(marker);if(initialized?.schemaVersion!==1||!/^0x[0-9a-f]{64}$/.test(initialized.identity??''))throw Error('Invalid original relay initialization');
+  let st;try{st=await fs.lstat(stateDirectory);}catch{throw Error('Original initialized relay state missing');}
+  if(!st.isDirectory()||st.isSymbolicLink()||await fs.realpath(stateDirectory)!==stateDirectory||st.uid!==process.getuid()||(st.mode&0o777)!==0o700||(await readPrivate(path.join(stateDirectory,'funding-budget.json')))?.identity!==initialized.identity)throw Error('Original initialized relay budget missing or invalid');
+ }
  let key=await readPrivate(signerFile),saved=await readPrivate(policyFile);
  if(!key){if(saved||progress.entered.includes('relay-fund')||(await fs.readdir(directory)).includes('relay-state'))throw Error('Original relay signer missing');const wallet=Wallet.createRandom();key={ethereumKey:wallet.privateKey};await (await fileState(signerFile)).write(key);}
  if(Object.keys(key).join()!=='ethereumKey')throw Error('Invalid private relay signer');const relayer=new Wallet(key.ethereumKey).address.toLowerCase();if(!/^0x[0-9a-f]{40}$/.test(fundingSender??'')||relayer===fundingSender)throw Error('Dedicated relay signer required');

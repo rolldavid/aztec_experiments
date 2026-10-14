@@ -198,3 +198,26 @@ funding configuration. Actual user funding and hosted provider credentials remai
 separate requirements. No app user receives deployment keys or mint authority.
 Keep the selected private state directory and wait for clean shutdown
 before reopening it. Wallet recovery remains separately encrypted in the browser.
+
+### Persistent local checkpoint ownership
+
+The persistent Rolling profile uses the installed SDK's native local-network
+AutomineSequencer with `realProofs:false`, `useAutomineSequencer:true` and
+`automineEnableProveEpoch:true`. A fresh local rollup has committee size zero;
+startup checks that actual on-chain setting. Older committee-one campaigns are
+incompatible and remain retained for reconciliation, never reset or silently
+converted. A distinct new local campaign uses a distinct state directory and
+new identities; no transaction from the old campaign is replayed.
+
+The SDK serial queue owns both block production and synthetic local epoch/Outbox
+settlement. Idle clock advancement uses that same queue. Bootstrap Ready handling
+checks the original effect and canonical Outbox witness, and the existing finality
+gate still applies. Clean shutdown pauses new work, drains and settles every
+checkpoint before saving the original-chain snapshot. A failed settlement does
+not produce a clean restart record. This is development-only synthetic settlement,
+not real testnet proof acceptance; the legacy disposable profile is unchanged.
+
+The relay initialization marker lives beside `relay-state`, not inside it. Once
+that marker exists, loss of its original directory or `funding-budget.json` is a
+recovery failure before any relay funding stage. Never delete the marker or
+recreate a ledger to clear an unresolved plan.

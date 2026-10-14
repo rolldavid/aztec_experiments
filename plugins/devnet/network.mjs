@@ -71,6 +71,25 @@ export function developmentAnvilArgs({persistent,port,mnemonic}) {
  // disposable Anvil configuration, never application or testnet finality checks.
  return ['--host','127.0.0.1','--port',String(port),'--chain-id','31337','--mnemonic',mnemonic,'--silent',...(persistent?['--no-request-size-limit','--slots-in-an-epoch','1']:[])];
 }
+// Native local-network flags only. Retained committee-one rollups are never
+// mutated into this mode: they require their original recovery path.
+export function developmentSequencerProfile({persistent,proofs=false}) {
+ if(persistent&&proofs!==false)throw Error('Persistent local development requires native proofs disabled');
+ return {useAutomineSequencer:persistent,automineEnableProveEpoch:persistent,aztecTargetCommitteeSize:persistent?0:1};
+}
+export async function assertDevelopmentCommittee(rollup) {
+ if(await rollup.getTargetCommitteeSize()!==0)throw Error('Retained rollup is incompatible with native local settlement; preserve its records');
+}
+export async function settleNativeDevelopment({node,rollup,resume=true}) {
+ const sequencer=node.getAutomineSequencer();
+ if(!sequencer)throw Error('Native local sequencer unavailable');
+ sequencer.pause();
+ try{
+  await sequencer.syncPoint();await sequencer.prove();await sequencer.syncPoint();
+  const tips=await node.getChainTips(),pending=await rollup.getCheckpointNumber(),proven=await rollup.getProvenCheckpointNumber();
+  if(BigInt(proven)<BigInt(pending)||BigInt(tips.checkpointed.checkpoint.number)!==BigInt(pending)||tips.proposed.number!==tips.checkpointed.block.number||tips.proposed.hash!==tips.checkpointed.block.hash)throw Error('Native development checkpoints remain unsettled; recovery required');
+ }finally{if(resume)sequencer.resume();}
+}
 export async function startDevnet({directory,fundingAddresses,proofs=false,persistent=false,ports:requestedPorts,onProgress=()=>{},onOwned=()=>{}}){
   await fs.mkdir(directory,{recursive:true,mode:0o700});
   const ports=devnetPorts(requestedPorts),statePath=path.join(directory,'network.json'),snapshotPath=path.join(directory,'ethereum-state.json');
@@ -85,12 +104,12 @@ export async function startDevnet({directory,fundingAddresses,proofs=false,persi
   const port=persistent?ports.ethereumPort:await freePort(),rpcUrl='http://127.0.0.1:'+port;
   let state=saved??{schemaVersion:1,toolchainHash,ports,fundingAddresses:fundingAddresses.map(String),privateKey:identity.privateKey,mnemonic:identity.mnemonic.phrase,validatorSecret:String(validatorSecret)};
   if(persistent)await writeDevnetRecord(statePath,{...state,phase:'starting'},{exclusive:!saved});
-  let deployment,bootComplete=false,wallMode=false;
+  let deployment,rollup,nativeStarted=false,bootComplete=false,wallMode=false,settling=false,clockTick;
   const terminateChild=()=>{if(anvil&&anvil.exitCode===null)anvil.kill('SIGTERM');};
   let node,nodeServer,anvil,mining,stopMining=false,miningError,spawnError,anvilClosed,closing;
   function close(){return closing??=(async()=>{
     stopMining=true;const failures=[];
-    for(const cleanup of [()=>mining,()=>nodeServer&&new Promise(resolve=>{nodeServer.close(resolve);nodeServer.closeAllConnections();}),()=>node?.stop(),async()=>{
+    for(const cleanup of [()=>mining,()=>nodeServer&&new Promise(resolve=>{nodeServer.close(resolve);nodeServer.closeAllConnections();}),async()=>{if(nativeStarted)await settleNativeDevelopment({node,rollup,resume:false});},()=>node?.stop(),async()=>{
       await persistDevnetCheckpoint({persistent,bootComplete,miningError,priorFailure:failures.length>0,save:async()=>{
         const snapshot=await deployment.l1Client.request({method:'anvil_dumpState',params:[true]});
         if(typeof snapshot!=='string'||!/^0x[0-9a-f]+$/i.test(snapshot)||snapshot.length>134217728)throw Error('Invalid development snapshot');
@@ -130,18 +149,19 @@ export async function startDevnet({directory,fundingAddresses,proofs=false,persi
     const {genesisArchiveRoot,fundingNeeded,genesis}=await getGenesisValues(fundingAddresses);
     const validator=EthAddress.fromString(identity.address);
     const config={...getConfigEnvVars(),l1RpcUrls:[rpcUrl],l1ChainId:31337,realProofs:proofs,debugForceTxProofVerification:false,
-      useAutomineSequencer:false,automineEnableProveEpoch:false,p2pEnabled:false,
+      ...developmentSequencerProfile({persistent,proofs}),p2pEnabled:false,
       ethereumSlotDuration:1,aztecSlotDuration:5,blockDurationMs:1000,aztecEpochDuration:4,inboxLag:2,
-      aztecProofSubmissionEpochs:64,aztecTargetCommitteeSize:1,slasherEnabled:false,
-      initialValidators:[{attester:validator,withdrawer:validator,bn254SecretKey:new SecretValue(validatorSecret.toBigInt())}]};
+      aztecProofSubmissionEpochs:64,slasherEnabled:false,
+      initialValidators:persistent?[]:[{attester:validator,withdrawer:validator,bn254SecretKey:new SecretValue(validatorSecret.toBigInt())}]};
     onProgress('Deploying local rollup');
     deployment=saved?{l1Client:createExtendedL1Client([rpcUrl],identity.privateKey,foundry),rollupVersion:saved.rollupVersion,
       l1ContractAddresses:Object.fromEntries(Object.entries(saved.addresses).map(([k,v])=>[k,EthAddress.fromString(v)]))}:
       (await deployC01ApplicationProtocol({rpcUrl,privateKey:identity.privateKey,config,genesisArchiveRoot,fundingNeeded})).deployment;
     if(persistent){state={...state,rollupVersion:deployment.rollupVersion,addresses:Object.fromEntries(Object.entries(deployment.l1ContractAddresses).filter(([,v])=>v!==undefined).map(([k,v])=>[k,String(v)]))};await writeDevnetRecord(statePath,{...state,phase:'running'});}
     if(saved){const code=await deployment.l1Client.getBytecode({address:saved.addresses.rollupAddress});if(!code||code==='0x'||Number(await deployment.l1Client.getChainId())!==31337)throw Error('Restored rollup is unavailable');}
-    const rollup=new RollupContract(deployment.l1Client,deployment.l1ContractAddresses.rollupAddress.toString());
-    let active=!!saved;
+    rollup=new RollupContract(deployment.l1Client,deployment.l1ContractAddresses.rollupAddress.toString());
+    if(persistent)await assertDevelopmentCommittee(rollup);
+    let active=persistent||!!saved;
     for(let i=0;i<8&&!active;i++){
       active=(await rollup.getCurrentEpochCommittee())?.some(a=>a.toString().toLowerCase()===identity.address.toLowerCase());if(active)break;
       const block=await deployment.l1Client.getBlock({blockTag:'latest'});
@@ -153,25 +173,30 @@ export async function startDevnet({directory,fundingAddresses,proofs=false,persi
     // A retained local chain may have been stopped for hours. Initialize the
     // same mined clock used below before the archiver checks Ethereum drift.
     synchronizeC01MinedClock(dateProvider,Number((await deployment.l1Client.getBlock({blockTag:'latest'})).timestamp));
-    const nodeConfig={...config,...localApplicationInboxProfile(config),...deployment.l1ContractAddresses,rollupVersion:deployment.rollupVersion,
+    const nodeConfig={...config,...(persistent?{allowUnsafeInboxCatchupCapacity:true}:localApplicationInboxProfile(config)),...deployment.l1ContractAddresses,rollupVersion:deployment.rollupVersion,
       dataDirectory:path.join(directory,'node'),bootstrapNodes:[],txPublicSetupAllowListExtend:[],
       sequencerPublisherPrivateKeys:[new SecretValue(identity.privateKey)],validatorPrivateKeys:new SecretValue([identity.privateKey]),coinbase:validator,
       allowEphemeralSigningProtection:true,enableProverNode:false,proverAgentCount:0,
       bbBinaryPath:bbBinary(),bbWorkingDirectory:path.join(directory,'bb-work'),bbIVCConcurrency:1,bbChonkVerifyConcurrency:1,numConcurrentIVCVerifiers:1};
     onProgress('Starting Aztec '+(proofs?'with proofs':'without proof generation'));
     node=await createAztecNodeService(nodeConfig,{telemetry:await initTelemetryClient({}),blobClient:createBlobClient(),dateProvider},{genesis,dontStartSequencer:true,dontStartProverNode:true});
-    await node.validatorClient.registerHandlers();node.getSequencer().updateConfig({minTxsPerBlock:1,buildCheckpointIfEmpty:false});
-    mining=(async()=>{while(!stopMining){try{if(wallMode){const latest=await deployment.l1Client.getBlock({blockTag:'latest'});const wall=Math.floor(Date.now()/1000);if(BigInt(wall)<=latest.timestamp){await pause(100);continue;}await deployment.l1Client.request({method:'evm_mine',params:[wall]});}else await deployment.l1Client.request({method:'evm_mine',params:[]});const b=await deployment.l1Client.getBlock({blockTag:'latest'});synchronizeC01MinedClock(dateProvider,Number(b.timestamp));await pause(1000);}catch(error){miningError=error;stopMining=true;}}})();
-    await node.getSequencer().start();
+    const sequencer=persistent?node.getAutomineSequencer():node.getSequencer();
+    if(!sequencer)throw Error('Development sequencer mode differs');
+    if(!persistent)await node.validatorClient.registerHandlers();
+    sequencer.updateConfig({minTxsPerBlock:1,buildCheckpointIfEmpty:false});
+    if(persistent){await sequencer.start();nativeStarted=true;}
+    mining=(async()=>{while(!stopMining){try{if(persistent){if(settling){await pause(100);continue;}clockTick=sequencer.warpTo(Math.floor(Date.now()/1000));await clockTick;}else if(wallMode){const latest=await deployment.l1Client.getBlock({blockTag:'latest'});const wall=Math.floor(Date.now()/1000);if(BigInt(wall)<=latest.timestamp){await pause(100);continue;}await deployment.l1Client.request({method:'evm_mine',params:[wall]});}else await deployment.l1Client.request({method:'evm_mine',params:[]});if(!persistent){const b=await deployment.l1Client.getBlock({blockTag:'latest'});synchronizeC01MinedClock(dateProvider,Number(b.timestamp));}await pause(1000);}catch(error){miningError=error;stopMining=true;}}})();
+    if(!persistent)await sequencer.start();
     const rpc=createNamespacedSafeJsonRpcServer({node:[node,AztecNodeApiSchema],aztec:[node,AztecNodeApiSchema]},{maxBatchSize:100,maxBodySizeBytes:10*1024*1024,corsAllowedOrigins:[`http://localhost:${ports.appPort}`,`http://127.0.0.1:${ports.appPort}`]});
     nodeServer=http.createServer(rpc.getApp().callback());await new Promise((resolve,reject)=>{nodeServer.once('error',reject);nodeServer.listen(persistent?ports.nodePort:0,'127.0.0.1',resolve);});
     bootComplete=true;
-    return {node,config:nodeConfig,rpcUrl,nodeUrl:'http://127.0.0.1:'+nodeServer.address().port,identity,deployment,dateProvider,close,async useWallClock(){await deployment.l1Client.request({method:'evm_setAutomine',params:[false]});wallMode=true;const deadline=Date.now()+120000;while(Date.now()<deadline){const b=await deployment.l1Client.getBlock({blockTag:'latest'});if(b.timestamp<=BigInt(Math.floor(Date.now()/1000))&&Math.floor(Date.now()/1000)-Number(b.timestamp)<5)return;await pause(200);}throw Error('Development clock did not reach wall time');},checkHealth(){if(miningError)throw miningError;}};
+    return {node,config:nodeConfig,rpcUrl,nodeUrl:'http://127.0.0.1:'+nodeServer.address().port,identity,deployment,dateProvider,close,async settleCheckpoints(){if(!persistent||settling)throw Error('Native settlement requires exclusive persistent local mode');settling=true;try{await clockTick;await settleNativeDevelopment({node,rollup});}finally{settling=false;}},async useWallClock(){if(!persistent)await deployment.l1Client.request({method:'evm_setAutomine',params:[false]});wallMode=true;const deadline=Date.now()+120000;while(Date.now()<deadline){const b=await deployment.l1Client.getBlock({blockTag:'latest'});if(b.timestamp<=BigInt(Math.floor(Date.now()/1000))&&Math.floor(Date.now()/1000)-Number(b.timestamp)<5)return;await pause(200);}throw Error('Development clock did not reach wall time');},checkHealth(){if(miningError)throw miningError;}};
   }catch(error){try{await close();}catch(cleanup){throw new AggregateError([error,cleanup],'Devnet startup and cleanup failed');}throw error;}
 }
 
 /** End temporary empty-block production before another wallet simulation. */
 export async function drainDevnetCheckpoints(net){
+ if(net.config.useAutomineSequencer){await net.settleCheckpoints();return;}
  const sequencer=net.node.getSequencer();
  await sequencer.pause();
  try{

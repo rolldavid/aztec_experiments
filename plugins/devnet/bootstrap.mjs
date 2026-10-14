@@ -139,6 +139,20 @@ export async function waitDevelopmentFinality({node,txHash,timeoutMs=120000,poll
  }
 }
 
+// Persistent native local mode uses the SDK's one serialized build/settlement
+// owner. The application still consumes the canonical Ready witness normally.
+export async function settleRollingDevelopmentMessage({net,txHash,expectedLeaf}) {
+ await net.settleCheckpoints();
+ const effect=await net.node.getTxEffect(txHash);
+ if(!effect?.data?.l2ToL1Msgs.some(leaf=>leaf.equals(expectedLeaf)))throw Error('Original Ready effect unavailable');
+ const witness=await net.node.getL2ToL1MembershipWitness(txHash,expectedLeaf);
+ if(!witness||witness.root.isZero())throw Error('Original Ready witness unavailable');
+ const {OutboxContract}=await import('@aztec-labs/ethereum/contracts');
+ const outbox=new OutboxContract(net.deployment.l1Client,net.deployment.l1ContractAddresses.outboxAddress.toString());
+ if(String(await outbox.getRootData(witness.epochNumber,witness.numCheckpointsInEpoch)).toLowerCase()!==witness.root.toString().toLowerCase())throw Error('Original Ready Outbox root differs');
+ return witness;
+}
+
 export async function failRollingBootstrap(error,close) {
  const message='Current Rolling development setup incomplete; retain original state and journals';
  try{await close();}catch(cleanup){throw new AggregateError([error,cleanup],message,{cause:error});}
@@ -206,7 +220,7 @@ export async function bootstrapRollingDevnet({directory,ports,onProgress=console
   if(report?.status==='pending-settlement'){
    const hash=TxHash.fromString(report.readyTxHash),effect=await net.node.getTxEffect(hash),leaf=effect?.data?.l2ToL1Msgs.find(x=>!x.isZero());
    if(!leaf)throw Error('Original Ready effect unavailable');
-   await settleC01ApplicationMessage({node:net.node,config:net.config,dateProvider:net.dateProvider,l1Client:net.deployment.l1Client,directory,rollupAddress:info.l1ContractAddresses.rollupAddress,txHash:hash,expectedLeaf:leaf,kind:'ready',applicationProofs:false});
+   await settleRollingDevelopmentMessage({net,txHash:hash,expectedLeaf:leaf});
    await waitDevelopmentFinality({node:net.node,txHash:hash});
    // Original recorded transactions only; the existing engine reconciles them.
    await cli(args);report=await readDevnetRecord(reportPath);
@@ -262,7 +276,7 @@ export async function bootstrapRollingDevnet({directory,ports,onProgress=console
     const {OutboxContract}=await import('@aztec-labs/ethereum/contracts');
     const outbox=new OutboxContract(net.deployment.l1Client,info.l1ContractAddresses.outboxAddress.toString());
     const settled=witness&&!witness.root.isZero()&&String(await outbox.getRootData(witness.epochNumber,witness.numCheckpointsInEpoch)).toLowerCase()===witness.root.toString().toLowerCase();
-    if(!settled)await settleC01ApplicationMessage({node:net.node,config:net.config,dateProvider:net.dateProvider,l1Client:net.deployment.l1Client,directory,rollupAddress:info.l1ContractAddresses.rollupAddress,txHash:hash,expectedLeaf:leaves[0],kind:'ready',applicationProofs:false});
+    if(!settled)await settleRollingDevelopmentMessage({net,txHash:hash,expectedLeaf:leaves[0]});
    },
   });
   const {fundingRelayConfig,...liquidity}=await deployDevelopmentLiquidity({directory:path.join(directory,'exchange-liquidity'),provider:tokenProvider,signer:new Wallet(net.identity.privateKey,tokenProvider),artifacts:liquidityArtifacts,fundingRouterArtifact,circle:token,

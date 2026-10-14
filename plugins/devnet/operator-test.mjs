@@ -225,4 +225,38 @@ if(focused){
   }finally{await fs.rm(dir,{recursive:true,force:true});}
  });
 
+ test('persistent development uses native local settlement and rejects incompatible retained committees',async()=>{
+  const {developmentSequencerProfile,assertDevelopmentCommittee}=await import('./network.mjs');
+  assert.deepEqual(developmentSequencerProfile({persistent:true,proofs:false}),{useAutomineSequencer:true,automineEnableProveEpoch:true,aztecTargetCommitteeSize:0});
+  assert.deepEqual(developmentSequencerProfile({persistent:false,proofs:false}),{useAutomineSequencer:false,automineEnableProveEpoch:false,aztecTargetCommitteeSize:1});
+  assert.throws(()=>developmentSequencerProfile({persistent:true,proofs:true}));
+  await assertDevelopmentCommittee({getTargetCommitteeSize:async()=>0});
+  for(const size of [1,'0',undefined])await assert.rejects(assertDevelopmentCommittee({getTargetCommitteeSize:async()=>size}),/incompatible/);
+  const {RollupContract}=await import('@aztec-labs/ethereum/contracts/rollup');
+  for(const name of ['getTargetCommitteeSize','getCheckpointNumber','getProvenCheckpointNumber'])assert.equal(typeof RollupContract.prototype[name],'function',name+' is the installed SDK API');
+ });
+ test('native checkpoint lifecycle drains, settles and verifies before a clean snapshot (controlled SDK)',async()=>{
+  const {settleNativeDevelopment}=await import('./network.mjs');let calls=[],proven=0;
+  const native={pause:()=>calls.push('pause'),syncPoint:async()=>calls.push('sync'),prove:async()=>{calls.push('prove');proven=4;},resume:()=>calls.push('resume')};
+  const node={getAutomineSequencer:()=>native,getChainTips:async()=>({checkpointed:{checkpoint:{number:4},block:{number:7,hash:'a'}},proposed:{number:7,hash:'a'}})},rollup={getCheckpointNumber:async()=>4,getProvenCheckpointNumber:async()=>proven};
+  await settleNativeDevelopment({node,rollup,resume:false});assert.deepEqual(calls,['pause','sync','prove','sync']);
+  calls=[];await settleNativeDevelopment({node,rollup});assert.equal(calls.at(-1),'resume');
+  native.prove=async()=>{};proven=3;await assert.rejects(settleNativeDevelopment({node,rollup,resume:false}),/unsettled/);
+  proven=4;rollup.getCheckpointNumber=async()=>5;await assert.rejects(settleNativeDevelopment({node,rollup}),/unsettled/);
+  rollup.getCheckpointNumber=async()=>4;node.getChainTips=async()=>({checkpointed:{checkpoint:{number:4},block:{number:7,hash:'a'}},proposed:{number:7,hash:'b'}});await assert.rejects(settleNativeDevelopment({node,rollup}),/unsettled/);
+  native.prove=async()=>{throw Error('controlled native failure');};await assert.rejects(settleNativeDevelopment({node,rollup,resume:false}),/controlled native failure/);
+ });
+ test('initialized relay directory or budget loss refuses before funding or replacement (actual filesystem)',async()=>{
+  const {prepareDevelopmentRelay}=await import('./liquidity.mjs'),dir=await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(),'relay-loss-'))),state=path.join(dir,'relay-state');let stages=0;
+  const args={directory:dir,stage:async()=>stages++};
+  try{
+   await fs.writeFile(path.join(dir,'progress.json'),JSON.stringify({entered:['relay-fund']}));
+   await fs.writeFile(state+'.initialized.json',JSON.stringify({schemaVersion:1,identity:'0x'+'a'.repeat(64)}),{mode:0o600});
+   await assert.rejects(prepareDevelopmentRelay(args),/initialized relay state missing/);await assert.rejects(fs.stat(state),{code:'ENOENT'});
+   await fs.mkdir(state,{mode:0o700});await assert.rejects(prepareDevelopmentRelay(args),/initialized relay budget missing/);
+   assert.equal(stages,0);assert.deepEqual(await fs.readdir(state),[]);
+   await fs.writeFile(state+'.initialized.json','null',{mode:0o600});await assert.rejects(prepareDevelopmentRelay(args),/Invalid original relay initialization/);assert.equal(stages,0);
+  }finally{await fs.rm(dir,{recursive:true,force:true});}
+ });
+
 }
