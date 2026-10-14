@@ -158,7 +158,7 @@ function rollingFixture(t){
   broadcast:async tx=>{f.calls.broadcast++;if(f.broadcastError)throw Error('lost response');const p=f.posts.find(p=>BigInt(p.id)===BigInt(tx.hash)-50n);p.text=null;p.removal={policy:String(BigInt(f.version)+(p.record.subboard==='0'?0n:1n<<32n)),reason:'Spam',penalized:false,position:{blockNumber:'11',blockHash:hex(60),txHash:tx.hash}};}});
  f.evaluate=async()=>{f.calls.evaluate++;return {isViolation:false};};
  f.run=(options={})=>processRollingModerationCycle({store:f.store,signer:f.signer,evaluate:(...args)=>f.evaluate(...args),worker:'rolling-fixture',maxJobs:4,...options});
- f.state=()=>value;f.node=node;f.checkpoint=checkpoint;f.post=post;
+ f.state=()=>value;f.index=index;f.node=node;f.checkpoint=checkpoint;f.post=post;
  t.after(()=>{for(const s of stores)try{s.close();}catch{}fs.rmSync(dir,{recursive:true,force:true});});return f;
 }
 test('Rolling human and Bok posts use identical parent/local union and survive reopen',async t=>{
@@ -227,3 +227,20 @@ for(const field of ['name','to','type','args'])test('Rolling native payload reje
 });
 test('Rolling native payload rejects an extra call before proving',async()=>{const f=nativeRemovalFixture();f.extraCall=true;await assert.rejects(f.run());assert.equal(f.proofs,0);});
 test('Rolling native proven transaction rejects another target before journal or send',async()=>{const f=nativeRemovalFixture();f.wrongProvenTarget=true;await assert.rejects(f.run());assert.equal(f.proofs,1);});
+test('Rolling valid empty repost does not poison ingestion beside an ordinary violation',async t=>{
+ const f=rollingFixture(t);f.posts[0].text='';f.posts[0].record={...f.posts[0].record,kind:'3',reference:'2'};const seen=[];
+ f.evaluate=async text=>{seen.push(text);return text==='message 2'?{isViolation:true,reason:'Spam'}:{isViolation:false};};
+ assert.equal((await f.run()).complete,true);assert.deepEqual(JSON.parse(seen[0]),{kind:'repost',reference:'2',content:''});assert.equal(f.calls.broadcast,1);
+ assert.equal(f.store.list().find(r=>r.job.postId===hex(1)).job.state,'evaluated-ok');assert.equal(f.store.list().find(r=>r.job.postId===hex(2)).job.state,'confirmed-flag');
+});
+for(const record of [{kind:'1',reference:'0'},{kind:'3',reference:'0'},{kind:'2',reference:'2'}])test('Rolling empty message remains invalid for '+JSON.stringify(record),async t=>{
+ const f=rollingFixture(t);f.posts[0].text='';f.posts[0].record={...f.posts[0].record,...record};await assert.rejects(f.run(),/Invalid public job text/);assert.equal(f.store.list().length,0);assert.equal(f.calls.broadcast,0);
+});
+test('Rolling persistent index drains multiple bounded steps before moderation',async t=>{
+ const f=rollingFixture(t);let steps=0;f.index.sync=async()=>{steps++;};f.index.status=()=>({complete:steps>=4});
+ assert.equal((await f.run()).complete,true);assert(steps>=4);assert.equal(f.calls.evaluate,2);
+});
+test('Rolling index catchup remains bounded and does not infer completion',async t=>{
+ const f=rollingFixture(t);let steps=0;f.index.sync=async()=>{steps++;};f.index.status=()=>({complete:false});
+ await assert.rejects(f.run(),/catching up/);assert.equal(steps,512);assert.equal(f.calls.evaluate,0);assert.equal(f.calls.broadcast,0);
+});

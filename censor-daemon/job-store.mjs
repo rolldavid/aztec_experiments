@@ -14,7 +14,7 @@ const terminal=new Set(['evaluated-ok','confirmed-flag','expired','manual-review
 const signing=new Set(['submit-intent','submitted','reconciling']);
 const includedSuccess=record=>record.receipt?.executionResult==='success'&&['checkpointed','proven','finalized'].includes(record.receipt.status);
 const plain=value=>value&&typeof value==='object'&&!Array.isArray(value);
-function text(value,max){if(typeof value!=='string'||!value.isWellFormed()||value.includes('\0')||Buffer.byteLength(value)>max||!value.length)throw fail('Invalid public job text');return value;}
+function text(value,max,allowEmpty=false){if(typeof value!=='string'||!value.isWellFormed()||value.includes('\0')||Buffer.byteLength(value)>max||(!allowEmpty&&!value.length))throw fail('Invalid public job text');return value;}
 function decimal(value,bits){if(typeof value!=='string'||! /^(0|[1-9][0-9]*)$/.test(value)||value.length>78||BigInt(value)>=1n<<BigInt(bits))throw fail('Invalid job integer');return value;}
 function receipt(value,{finalized=true}={}){
  if(!plain(value)||!hex(value.txHash)||!hex(value.blockHash)||!integer(Number(value.blockNumber))||Number(value.blockNumber)<1||
@@ -63,7 +63,7 @@ export function openJobStore({filename,scope,modelVersion,maxAttempts=3,leaseMs=
   const publishedAt=decimal(post.publishedAt,63),deadline=decimal(post.flagDeadline,64),orderIndex=decimal(post.orderIndex,64);
   if(profile==='rolling'){
    if(!hex(post.currentPolicyVersion)||!policies.has(post.currentPolicyVersion)||!plain(post.context))throw fail('Rolling post context unavailable');
-   return {postId:post.postId,policyVersion:post.policyVersion,text:text(post.text,992),publishedAt,flagDeadline:deadline,orderIndex,flagged:post.flagged,context:copy(post.context),currentPolicyVersion:post.currentPolicyVersion};
+   return {postId:post.postId,policyVersion:post.policyVersion,text:text(post.text,992,post.context.record?.kind==='3'&&typeof post.context.record.reference==='string'&&/^[1-9][0-9]{0,76}$/.test(post.context.record.reference)),publishedAt,flagDeadline:deadline,orderIndex,flagged:post.flagged,context:copy(post.context),currentPolicyVersion:post.currentPolicyVersion};
   }
   const policy=policies.get(post.policyVersion);
   if(!policy)throw fail('Historical policy unavailable');

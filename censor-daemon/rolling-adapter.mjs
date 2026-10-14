@@ -38,7 +38,13 @@ export function rollingModerationAdapter({index,node,scope,lease,state,deadline,
  const held=async()=>{assert(!poisoned,'Moderation journal uncertain');await lease.assertHeld();};
  const saved=()=>{const value=state.read().rollingModeration;if(value){assert.equal(value.schemaVersion,1);assert(value.operations&&Object.getPrototypeOf(value.operations)===Object.prototype);assert.deepEqual(value.scope,scope);}return value??{schemaVersion:1,scope,operations:{}};};
  const persist=async(key,value)=>{await held();const prior=saved();try{await state.write({...state.read(),rollingModeration:{...prior,operations:{...prior.operations,[key]:value}}});}catch{poisoned=true;throw Error('Moderation journal persistence uncertain');}};
- const sync=async()=>{await held();await index.sync();assert(index.status().complete,'Canonical index is catching up');};
+ const sync=async()=>{
+  // Same bounded drain as the existing Rolling plugin port: a persistent index
+  // sync advances one transaction/block/publication step, not the entire tip.
+  const until=Date.now()+20000;
+  for(let step=0;step<512&&Date.now()<until;step++){await held();await index.sync();if(index.status().complete)return;}
+  throw Error('Canonical index is catching up');
+ };
  const current=async id=>{
   const query=index.query('post',{id:BigInt(id).toString(),limit:1});
   if(!query.post)return null;

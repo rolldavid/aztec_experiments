@@ -123,7 +123,11 @@ export async function processRollingModerationCycle({store,signer,evaluate,worke
    if(record.job.state==='leased'){
     await ingest([record.job.postId]);record=store.get(key);
     if(record?.lease?.token!==token)continue;
-    const verdict=await evaluate(record.post.text,record.policy.text);store.renew(key,token);
+    // A canonical empty repost has no authored message; retain its explicit
+    // visible link context for rules such as no reposts. The original post is
+    // separately queued; do not invent referenced message text or skip this job.
+    const modelText=record.post.text===''?JSON.stringify({kind:'repost',reference:record.post.context.record.reference,content:''}):record.post.text;
+    const verdict=await evaluate(modelText,record.policy.text);store.renew(key,token);
     await ingest([record.job.postId]);record=store.get(key);
     if(record?.lease?.token!==token)continue;
     if(!verdict.isViolation){store.transition(key,token,{state:'evaluated-ok',decision:verdict});continue;}
