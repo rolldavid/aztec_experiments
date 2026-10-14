@@ -337,3 +337,11 @@ test('paid MetaMask recovery binds encrypted scope, exact payment and all claim 
  const usdc={relay:{request:structuredClone(intent),transactionHash:hash},claim:funding.claim};delete usdc.relay.request.nonce;
  assert.equal((await inspect(usdc)).claimConfirmed,true);
 });
+
+
+test('MetaMask startup cache worker permits only pinned static reads after a verified frame',async()=>{
+ const {isMetaMaskStartupWorkerRequest:check}=await import('./t04-metamask.mjs');
+ const base='https://metamask.github.io/phishing-warning/v5.1.0/',good={method:'GET',url:base+'workbox-e6d70522.js',workerUrl:base+'service-worker.js',startupFrameObserved:true};
+ assert.equal(check(good),true);assert.equal(check({...good,url:base+'bundle.js?__WB_REVISION__='+'a'.repeat(32)}),true);
+ for(const change of [{method:'POST'},{startupFrameObserved:false},{workerUrl:'http://127.0.0.1/service-worker.js'},{url:base+'unknown.js'},{url:base+'bundle.js?private=data'},{url:base+'../bundle.js'},{url:base+'bundle.js#secret'}])assert.equal(check({...good,...change}),false);
+});

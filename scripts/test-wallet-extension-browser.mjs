@@ -24,7 +24,7 @@ import {recoverPrivateFeeClaim} from '../shared/private-fee-funding.mjs';
 import {BarretenbergSync} from '@aztec-foundation/bb.js';
 import {derivePrivateFeeAddress,derivePrivateFeeInstance} from '../shared/private-fee-client.mjs';
 import {generateHosting} from '../deploy/hosting-config.mjs';
-import {discoverTestMetaMask,onboardMetaMask,unpackMetaMask,addMetaMaskNetwork,guardBrowserRequest,readMetaMaskAggregateControl,driveMetaMaskAggregateFunding,countMetaMaskAggregateNodeSubmissions,inspectMetaMaskAggregateReadiness,assertMetaMaskReadinessRequest,isMetaMaskStartupFrameRequest,driveMetaMaskPaidRecovery} from './t04-metamask.mjs';
+import {discoverTestMetaMask,onboardMetaMask,unpackMetaMask,addMetaMaskNetwork,guardBrowserRequest,readMetaMaskAggregateControl,driveMetaMaskAggregateFunding,countMetaMaskAggregateNodeSubmissions,inspectMetaMaskAggregateReadiness,assertMetaMaskReadinessRequest,isMetaMaskStartupFrameRequest,isMetaMaskStartupWorkerRequest,driveMetaMaskPaidRecovery} from './t04-metamask.mjs';
 import {projectRollingInitialization} from '../apps/rolling/wallet-panel.mjs';
 import {verifyExtensionCollateral} from './t04-extension-collateral.mjs';
 import {ROOT,assertNodeVersion,anvilBinary} from './toolchain.mjs';
@@ -125,6 +125,7 @@ try{
   await context.route('**/*',async route=>{
    const request=route.request(),worker=request.serviceWorker(),frame=worker?null:request.frame(),url=new URL(request.url());
    if(worker?worker.url().startsWith('chrome-extension:'):frame.url().startsWith('chrome-extension:'))return route.continue();
+   if(worker&&isMetaMaskStartupWorkerRequest({method:request.method(),url:request.url(),workerUrl:worker.url(),startupFrameObserved:extensionStartupDocuments>0})){extensionStartupDocuments++;return route.continue();}
    if(frame?.parentFrame()?.url().startsWith('chrome-extension:')&&url.href.startsWith('https://metamask.github.io/phishing-warning/v5.1.0/')){
     const element=await frame.frameElement();try{if(isMetaMaskStartupFrameRequest({method:request.method(),url:request.url(),parentUrl:frame.parentFrame().url(),extensionOrigin:await extensionIdentity,frameSource:await element.getAttribute('src'),sandbox:await element.getAttribute('sandbox')})){extensionStartupDocuments++;return route.continue();}}finally{await element.dispose();}
    }
@@ -135,7 +136,7 @@ try{
   });
   const extensionId=new URL(await extensionIdentity).host;
   if(!retained)walletPage=await onboardMetaMask(context,control.mnemonic,control.password,extensionId,value=>{stage=value;});
-  if(continueUnfunded||paidRecovery){walletPage=await context.newPage();walletPage.setDefaultTimeout(10000);await walletPage.goto('chrome-extension://'+extensionId+'/home.html');if(await walletPage.getByTestId('unlock-password').isVisible()){await walletPage.getByTestId('unlock-password').fill(control.password);await walletPage.getByTestId('unlock-submit').click();}}
+  if(continueUnfunded||paidRecovery){walletPage=await context.newPage();walletPage.setDefaultTimeout(10000);await walletPage.goto('chrome-extension://'+extensionId+'/home.html');await walletPage.getByTestId('unlock-password').waitFor();await walletPage.getByTestId('unlock-password').fill(control.password);await walletPage.getByTestId('unlock-submit').click();await walletPage.getByTestId('unlock-password').waitFor({state:'hidden'});}
   page=await context.newPage();page.setDefaultTimeout(10000);await page.goto(control.origin);
   if(readinessOnly){report.scope='Retained disposable account initialization only; no signatures, funding, proof or L2 sends';await inspectMetaMaskAggregateReadiness({page,control,mark:value=>{stage=value;}});report.passed=true;report.readinessOnly=true;}else{
   // Discovery and network addition use the authentic extension; no account or

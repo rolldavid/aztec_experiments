@@ -410,3 +410,16 @@ export async function inspectMetaMaskPaidBinding({network:n,board,router,intent,
  const claimConfirmed=claimMatches&&claim.status==='confirmed'&&/^0x[0-9a-f]{64}$/.test(claim.txHash);
  return {paymentMatches,claimMatches,claimConfirmed,claimTxHash:claimConfirmed?claim.txHash:null};
 }
+
+
+// The pinned warning iframe registers its own cache worker. Its read-only static
+// fetches are separate from both the application and MetaMask background worker.
+export function isMetaMaskStartupWorkerRequest({method,url,workerUrl,startupFrameObserved}){
+ try{
+  const base='https://metamask.github.io/phishing-warning/v5.1.0/',target=new URL(url);
+  if(!startupFrameObserved||method!=='GET'||workerUrl!==base+'service-worker.js'||target.origin!=='https://metamask.github.io'||target.hash||target.username||target.password)return false;
+  const file=target.pathname.slice('/phishing-warning/v5.1.0/'.length);
+  if(target.pathname!=='/phishing-warning/v5.1.0/'+file||!['workbox-e6d70522.js','bundle.js','design-tokens.css','index.css','index.html','lockdown-install.js','lockdown-more.js','lockdown-run.js','metamask-fox.svg','warning-icon.svg'].includes(file))return false;
+  return !target.search||/^\?__WB_REVISION__=[0-9a-f]{32}$/.test(target.search);
+ }catch{return false;}
+}
