@@ -643,7 +643,7 @@ test('aggregate account permission observation preserves pending, resolved and r
 test('aggregate selection accepts the exact completed account without a redundant Connect click',async()=>{
  const {confirmMetaMaskRecoveryAccountSelection,inspectMetaMaskSelectedAccount}=await import('./t04-metamask.mjs');const {runInNewContext}=await import('node:vm');
  const account='0x'+'1'.repeat(40),chainId='31337';let clicks=0,reads=0;
- const page={async evaluate(fn,args){assert.equal(fn,inspectMetaMaskSelectedAccount);reads++;return runInNewContext('('+fn.toString()+')(input)',{input:args,window:{BillboardAccount:{snapshot:()=>({ethereumConnected:reads>1,ethereumAddress:account.toUpperCase(),ethereumWalletName:'MetaMask',invalidated:false})},walletState:{ethChainId:chainId}}});}};
+ const page={async evaluate(fn,args){assert.equal(fn,inspectMetaMaskSelectedAccount);reads++;return runInNewContext('('+fn.toString()+')(input)',{input:args,document:{querySelectorAll:()=>[]},window:{BillboardAccount:{snapshot:()=>({ethereumConnected:reads>1,ethereumAddress:account.toUpperCase(),ethereumWalletName:'MetaMask',invalidated:false})},walletState:{ethChainId:chainId}}});}};
  const result=await confirmMetaMaskRecoveryAccountSelection({getByTestId:()=>({isVisible:async()=>false,click:async()=>clicks++})},{page,account,chainId,permission:{entered:true,resolved:true,rejected:false}});
  assert.equal(result,'already-completed');assert.equal(reads,2);assert.equal(clicks,0);
 });
@@ -663,4 +663,17 @@ test('aggregate selection does not infer completion from a stale account or reje
  const wallet={getByTestId:()=>({isVisible:async()=>++visibility>1,innerText:async()=>'Connect',click:async()=>clicks++})};
  assert.equal(await confirmMetaMaskRecoveryAccountSelection(wallet,{page:{evaluate:async()=>{reads++;}},account:'0x'+'1'.repeat(40),chainId:'31337',permission:{entered:false,resolved:false,rejected:false}}),'prompt-confirmed');assert.equal(reads,0);assert.equal(clicks,1);
  await assert.rejects(confirmMetaMaskRecoveryAccountSelection({getByTestId:()=>({isVisible:async()=>false})},{page:{evaluate:async()=>{reads++;}},account:'0x'+'1'.repeat(40),chainId:'31337',permission:{entered:true,resolved:false,rejected:true}}),/selection rejected/);assert.equal(reads,0);
+});
+
+
+test('aggregate selection stops on fixed application failure without a confirmation click',async()=>{
+ const {confirmMetaMaskRecoveryAccountSelection}=await import('./t04-metamask.mjs');let clicks=0;const seen=[];
+ await assert.rejects(confirmMetaMaskRecoveryAccountSelection({getByTestId:()=>({isVisible:async()=>false,click:async()=>clicks++})},{page:{evaluate:async()=>({connected:false,notice:'operation-failed'})},account:'0x'+'1'.repeat(40),chainId:'31337',permission:{entered:true,resolved:true,rejected:false},observe:state=>seen.push(state)}),/connection failed: operation-failed/);assert.equal(clicks,0);assert.equal(seen.length,1);
+});
+test('aggregate connection failure projection preserves provider errors and excludes private fields',async()=>{
+ const {installMetaMaskAggregateObserver}=await import('./t04-metamask.mjs'),{runInNewContext}=await import('node:vm');
+ for(const code of [4001,4901,'PRIVATE_SENTINEL']){const error={code,message:'PRIVATE_SENTINEL'},records=[];const provider={async request(){throw error;}};
+  runInNewContext('('+installMetaMaskAggregateObserver.toString()+')()',{__testMetaMask:provider,structuredClone,__aggregateWalletBefore:async()=>{},__aggregateWalletConnectionRejected:async record=>records.push(record)});
+  await assert.rejects(provider.request({method:'eth_chainId'}),e=>e===error);assert.equal(records.length,1);assert.equal(records[0].method,'eth_chainId');assert.equal(records[0].code,typeof code==='number'?code:'unknown');assert(!JSON.stringify(records).includes('PRIVATE_SENTINEL'));
+ }
 });

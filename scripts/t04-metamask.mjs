@@ -221,6 +221,8 @@ export async function driveMetaMaskAggregateFunding({context,page,walletPage,con
  const initialNonce=await provider.getTransactionCount(account,'pending');assert.equal(initialNonce,0,'Fresh disposable user only');
  let intent=null,hash=null,relayPosts=0,userSends=0,confirmedSignatures=0;const signatures=[],typed=[],pending=[],errors=[];
  const permission={entered:false,resolved:false,rejected:false};report.aggregatePermission=permission;
+ const connectionMethods=new Set(['wallet_requestPermissions','eth_chainId','wallet_switchEthereumChain','eth_requestAccounts','eth_accounts']);
+ const connection={entered:null,resolved:null,rejected:null};report.aggregateConnection=connection;
  const remember=error=>{errors.push(error);};
  const inspectData=(data,from)=>{
   const method=c.asset==='ETH'?'fund':'fundUsdc',parsed=aggregateInterface.parseTransaction({data});assert.equal(parsed.name,method);
@@ -244,6 +246,7 @@ export async function driveMetaMaskAggregateFunding({context,page,walletPage,con
  };
  await page.exposeFunction('__aggregateWalletBefore',async request=>{
   try{
+   if(connectionMethods.has(request.method))connection.entered=request.method;
    if(request.method==='eth_signTypedData_v4'){
     assert.equal(request.params[0].toLowerCase(),account);assert.equal(typed.length,signatures.length);
     const data=JSON.parse(request.params[1]);typed.push(assertMetaMaskAggregateTypedData({data,account,scope,allocation:a,index:typed.length,asset:c.asset,consentNonce,nowSeconds:Math.floor(Date.now()/1000)}));pending.push('signature');return;
@@ -259,9 +262,10 @@ export async function driveMetaMaskAggregateFunding({context,page,walletPage,con
   }catch(error){remember(error);throw Error('Aggregate wallet request rejected');}
  });
  await page.exposeFunction('__aggregateWalletAfter',({method,result})=>{
-  try{if(method==='wallet_requestPermissions')permission.resolved=true;else if(method==='eth_signTypedData_v4'){const t=typed[signatures.length];assert.equal(verifyTypedData(t.domain,t.types,t.value,result).toLowerCase(),account);signatures.push(result);}else if(method==='eth_sendTransaction'){assert.match(result,/^0x[0-9a-f]{64}$/);hash=result;}}catch(error){remember(error);throw Error('Aggregate wallet result rejected');}
+  try{if(connectionMethods.has(method))connection.resolved=method;if(method==='wallet_requestPermissions')permission.resolved=true;else if(method==='eth_signTypedData_v4'){const t=typed[signatures.length];assert.equal(verifyTypedData(t.domain,t.types,t.value,result).toLowerCase(),account);signatures.push(result);}else if(method==='eth_sendTransaction'){assert.match(result,/^0x[0-9a-f]{64}$/);hash=result;}}catch(error){remember(error);throw Error('Aggregate wallet result rejected');}
  });
  await page.exposeFunction('__aggregateWalletPermissionRejected',()=>{permission.rejected=true;});
+ await page.exposeFunction('__aggregateWalletConnectionRejected',record=>{assert(connectionMethods.has(record.method));assert([4001,4100,4200,4900,4901,-32002,-32603,'unknown'].includes(record.code));connection.rejected=record;});
  await page.evaluate(installMetaMaskAggregateObserver);
  const routeTasks=new Set();
  const relayRoute=async route=>{
@@ -289,7 +293,7 @@ export async function driveMetaMaskAggregateFunding({context,page,walletPage,con
   }
   const dialog=page.getByRole('dialog');await dialog.getByRole('button',{name:'Recover funding',exact:true}).click();
   mark('aggregate-connect-wallet');await dialog.getByRole('button',{name:'Connect MetaMask',exact:true}).click();
-  report.accountSelection=await confirmMetaMaskRecoveryAccountSelection(walletPage,{page,account,chainId:'31337',permission});
+  report.accountSelection=await confirmMetaMaskRecoveryAccountSelection(walletPage,{page,account,chainId:'31337',permission,observe:state=>{report.accountSelectionState=state;}});
   await dialog.getByText('Funding wallet connected. No payment has been sent.',{exact:true}).waitFor();
   assert.equal((await page.evaluate(()=>walletState.ethAccount)).toLowerCase(),account);
   if(c.asset==='USDC')await dialog.getByLabel('Pay with',{exact:true}).selectOption('USDC');
@@ -416,6 +420,11 @@ export function installMetaMaskAggregateObserver(){
   let result;
   try{result=await original(request);}catch(error){
    if(request.method==='wallet_requestPermissions')try{await __aggregateWalletPermissionRejected();}catch{}
+   try{if(['wallet_requestPermissions','eth_chainId','wallet_switchEthereumChain','eth_requestAccounts','eth_accounts'].includes(request.method)){
+    const descriptor=error!==null&&(typeof error==='object'||typeof error==='function')?Object.getOwnPropertyDescriptor(error,'code'):null;
+    const code=descriptor&&Object.hasOwn(descriptor,'value')&&[4001,4100,4200,4900,4901,-32002,-32603].includes(descriptor.value)?descriptor.value:'unknown';
+    await __aggregateWalletConnectionRejected({method:request.method,code});
+   }}catch{}
    throw error;
   }
   await __aggregateWalletAfter({method:request.method,result});return result;
@@ -425,13 +434,15 @@ export function installMetaMaskAggregateObserver(){
 // Serialized read-only projection: no account value leaves the application.
 export function inspectMetaMaskSelectedAccount({account,chainId}){
  const snapshot=window.BillboardAccount.snapshot(),state=window.walletState;
- return {connected:snapshot.ethereumConnected===true,accountMatches:typeof snapshot.ethereumAddress==='string'&&snapshot.ethereumAddress.toLowerCase()===account,
+ const notices=[['operation-failed','This operation could not be completed. Recovery records were preserved. Check the existing transaction before preparing another.'],['connection-unavailable','The private connection is unavailable. Your encrypted recovery is preserved. Reconnect when the service returns.']];
+ const notice=notices.find(([,text])=>[...document.querySelectorAll('dialog[open] p')].some(node=>node.getClientRects().length>0&&node.textContent===text))?.[0]??null;
+ return {notice,busy:snapshot.busy===true,connected:snapshot.ethereumConnected===true,accountMatches:typeof snapshot.ethereumAddress==='string'&&snapshot.ethereumAddress.toLowerCase()===account,
   chainMatches:state?.ethChainId===chainId,walletMatches:snapshot.ethereumWalletName==='MetaMask',invalidated:snapshot.invalidated===true};
 }
 export async function confirmMetaMaskRecoveryAccountSelection(walletPage,completed){
  const confirm=walletPage.getByTestId('confirm-btn');
  if(completed){
-  const {page,account,chainId,permission}=completed;
+  const {page,account,chainId,permission,observe=()=>{}}=completed;
   assert.match(account,/^0x[0-9a-f]{40}$/);assert.equal(chainId,'31337');
   const deadline=Date.now()+10000;
   while(Date.now()<deadline){
@@ -439,6 +450,7 @@ export async function confirmMetaMaskRecoveryAccountSelection(walletPage,complet
    if(permission.rejected)throw Error('MetaMask account selection rejected');
    if(permission.entered&&permission.resolved){
     const state=await page.evaluate(inspectMetaMaskSelectedAccount,{account,chainId});
+    observe(state);if(state.notice)throw Error('MetaMask connection failed: '+state.notice);
     if(state.connected){
      assert(state.accountMatches&&state.chainMatches&&state.walletMatches&&!state.invalidated,'MetaMask selected account or network differs');
      return 'already-completed';
