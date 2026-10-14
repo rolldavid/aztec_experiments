@@ -338,6 +338,34 @@ test('paid MetaMask recovery binds encrypted scope, exact payment and all claim 
  assert.equal((await inspect(usdc)).claimConfirmed,true);
 });
 
+test('paid recovery permits only the exact non-signing MetaMask account permission',async()=>{
+ const {installMetaMaskPaidRecoveryGuard}=await import('./t04-metamask.mjs'),{runInNewContext}=await import('node:vm');
+ const forwarded=[],denied=[],provider={async request(request){assert.equal(this,provider);forwarded.push(request);return 'selected';}};
+ runInNewContext('('+installMetaMaskPaidRecoveryGuard.toString()+')()',{__testMetaMask:provider,window:{__paidRecoveryDenied:async method=>denied.push(method)}});
+ const permission={method:'wallet_requestPermissions',params:[{eth_accounts:{}}]};
+ assert.equal(await provider.request(permission),'selected');assert.equal(forwarded[0],permission);
+ for(const method of ['eth_accounts','eth_requestAccounts','eth_chainId'])assert.equal(await provider.request({method}),'selected');
+ for(const params of [undefined,null,[],[{}],[{eth_accounts:null}],[{eth_accounts:[]}],[{eth_accounts:{caveats:[]}}],[{eth_accounts:{},eth_sendTransaction:{}}],[{eth_accounts:{}},{}]])await assert.rejects(provider.request({method:'wallet_requestPermissions',params}),/forbids/);
+ for(const method of ['eth_sendTransaction','eth_signTypedData_v4','personal_sign','wallet_switchEthereumChain','wallet_addEthereumChain','wallet_revokePermissions','private payload with spaces'])await assert.rejects(provider.request({method,params:['never forwarded']}),/forbids/);
+ assert.equal(forwarded.length,4);assert.equal(denied.length,16);assert.equal(denied.at(-1),'unknown');
+ assert(denied.every(method=>method==='unknown'||/^[A-Za-z][A-Za-z0-9_]{0,63}$/.test(method)));
+});
+
+test('paid recovery account selection retains original provider rejection',async()=>{
+ const {installMetaMaskPaidRecoveryGuard}=await import('./t04-metamask.mjs'),{runInNewContext}=await import('node:vm');const original={code:4001};let denied=0;
+ const provider={async request(){throw original;}};runInNewContext('('+installMetaMaskPaidRecoveryGuard.toString()+')()',{__testMetaMask:provider,window:{__paidRecoveryDenied:async()=>denied++}});
+ await assert.rejects(provider.request({method:'wallet_requestPermissions',params:[{eth_accounts:{}}]}),error=>error===original);assert.equal(denied,0);
+});
+
+for(const outcome of ['delayed-connect','other-confirmation','missing-prompt'])test('paid recovery waits for authentic MetaMask account selection: '+outcome,async()=>{
+ const {confirmMetaMaskRecoveryAccountSelection}=await import('./t04-metamask.mjs');const events=[],original=Error('prompt unavailable');let visible=false;
+ const confirm={async waitFor(){events.push('wait');await new Promise(resolve=>setImmediate(resolve));if(outcome==='missing-prompt')throw original;visible=true;},async innerText(){assert(visible);events.push('label');return outcome==='other-confirmation'?'Sign':' Connect ';},async click(){assert(visible);events.push('click');}};
+ const run=confirmMetaMaskRecoveryAccountSelection({getByTestId(id){assert.equal(id,'confirm-btn');return confirm;}});
+ if(outcome==='missing-prompt'){await assert.rejects(run,error=>error===original);assert.deepEqual(events,['wait']);}
+ else if(outcome==='other-confirmation'){await assert.rejects(run,/Connect/);assert.deepEqual(events,['wait','label']);}
+ else{await run;assert.deepEqual(events,['wait','label','click']);}
+});
+
 
 test('MetaMask startup cache worker permits only pinned static reads after a verified frame',async()=>{
  const {isMetaMaskStartupWorkerRequest:check}=await import('./t04-metamask.mjs');

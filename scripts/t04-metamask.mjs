@@ -367,6 +367,30 @@ export function assertMetaMaskUnfundedContinuation({ethereumNonce,consentNonce,e
 
 // Existing paid identities use only the application's saved-payment recovery.
 // No quote, consent signature, relay submission or Ethereum send is permitted.
+export function installMetaMaskPaidRecoveryGuard(){
+ const original=__testMetaMask.request.bind(__testMetaMask);
+ __testMetaMask.request=async request=>{
+  const method=request?.method;
+  const permission=request?.params;
+  const accountSelection=method==='wallet_requestPermissions'&&Array.isArray(permission)&&permission.length===1&&
+   permission[0]!==null&&typeof permission[0]==='object'&&!Array.isArray(permission[0])&&Object.keys(permission[0]).length===1&&
+   Object.hasOwn(permission[0],'eth_accounts')&&permission[0].eth_accounts!==null&&typeof permission[0].eth_accounts==='object'&&
+   !Array.isArray(permission[0].eth_accounts)&&Object.keys(permission[0].eth_accounts).length===0;
+  if(!['eth_accounts','eth_requestAccounts','eth_chainId'].includes(method)&&!accountSelection){
+   await window.__paidRecoveryDenied(typeof method==='string'&&/^[A-Za-z][A-Za-z0-9_]{0,63}$/.test(method)?method:'unknown');
+   throw Error('Paid recovery forbids another wallet operation');
+  }
+  return original(request);
+ };
+}
+
+export async function confirmMetaMaskRecoveryAccountSelection(walletPage){
+ const confirm=walletPage.getByTestId('confirm-btn');
+ await confirm.waitFor();
+ assert.equal((await confirm.innerText()).trim(),'Connect');
+ await confirm.click();
+}
+
 export async function driveMetaMaskPaidRecovery({page,walletPage,control:c,provider,transactionHash,mark,report}){
  assert.match(transactionHash,/^0x[0-9a-f]{64}$/);
  const scope=c.walletConfig.config.aggregateFunding,a=c.allocation,account=Wallet.fromPhrase(c.mnemonic).address.toLowerCase();
@@ -379,15 +403,15 @@ export async function driveMetaMaskPaidRecovery({page,walletPage,control:c,provi
  const intent={from:tx.from.toLowerCase(),to:scope.router,chainId:'31337',nonce:tx.nonce,data:tx.data.toLowerCase(),value:String(tx.value),expected};validateAggregateFundingIntent(intent);
  const effect=await verifyEthereumIntentReceipt(provider,intent,transactionHash);assert.equal(effect.outcome,'success');
  const nonce=await provider.getTransactionCount(account,'pending');assert.equal(nonce,c.asset==='ETH'?1:0);
- const attempts={forbiddenWalletCalls:0};report.paidRecoveryAttempts=attempts;
- await page.exposeFunction('__paidRecoveryDenied',()=>{attempts.forbiddenWalletCalls++;});
- await page.evaluate(()=>{const original=__testMetaMask.request.bind(__testMetaMask);__testMetaMask.request=async request=>{if(!['eth_accounts','eth_requestAccounts','eth_chainId'].includes(request.method)){await window.__paidRecoveryDenied();throw Error('Paid recovery forbids another wallet operation');}return original(request);};});
+ const attempts={forbiddenWalletCalls:0,deniedMethods:[]};report.paidRecoveryAttempts=attempts;
+ await page.exposeFunction('__paidRecoveryDenied',method=>{attempts.forbiddenWalletCalls++;if(attempts.deniedMethods.length<16)attempts.deniedMethods.push(typeof method==='string'&&/^[A-Za-z][A-Za-z0-9_]{0,63}$/.test(method)?method:'unknown');});
+ await page.evaluate(installMetaMaskPaidRecoveryGuard);
  await inspectMetaMaskAggregateReadiness({page,control:c,mark});
  const binding={network:c.walletConfig.config.network,board:c.walletConfig.config.board,router:scope.router,intent,transactionHash};
  assert.equal((await page.evaluate(inspectMetaMaskPaidBinding,binding)).paymentMatches,true,'Retained payment differs from the canonical payment');
  const dialog=page.getByRole('dialog');await dialog.getByRole('button',{name:'Recover funding',exact:true}).click();
  mark('aggregate-paid-recovery-connect');await dialog.getByRole('button',{name:'Connect MetaMask',exact:true}).click();
- if(await walletPage.getByTestId('confirm-btn').isVisible())await walletPage.getByTestId('confirm-btn').click();
+ await confirmMetaMaskRecoveryAccountSelection(walletPage);
  await dialog.getByText('Funding wallet connected. No payment has been sent.',{exact:true}).waitFor();
  assert.equal((await page.evaluate(()=>walletState.ethAccount)).toLowerCase(),account);
  mark('aggregate-paid-private-claim');await dialog.getByRole('button',{name:'Resume saved funding',exact:true}).click();
