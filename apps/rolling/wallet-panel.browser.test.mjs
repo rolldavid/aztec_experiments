@@ -74,7 +74,7 @@ async function browserFixture(t){
   if(!['/wallet-panel.mjs','/avatar-upload.mjs','/model.mjs','/style.css'].includes(req.url)){res.writeHead(404);res.end();return;}
   res.writeHead(200,{'content-type':req.url.endsWith('.css')?'text/css':'text/javascript'});res.end(await fs.readFile(new URL('.'+req.url,import.meta.url)));
  });await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));t.after(()=>{server.closeAllConnections();return new Promise(resolve=>server.close(resolve));});
- const browser=await chromium.launch({headless:true});t.after(()=>browser.close());const page=await browser.newPage({viewport:{width:390,height:844},acceptDownloads:true});
+ const browser=await chromium.launch({headless:true,...(process.env.T04_CHROMIUM_EXECUTABLE?{executablePath:process.env.T04_CHROMIUM_EXECUTABLE}:{})});t.after(()=>browser.close());const page=await browser.newPage({viewport:{width:390,height:844},acceptDownloads:true});
  const errors=[],requests=[];page.on('pageerror',error=>errors.push(error.message));page.on('request',request=>requests.push(request.url()));
  t.after(()=>assert.deepEqual(errors,[]));await page.goto(`http://127.0.0.1:${server.address().port}/`);await page.waitForFunction(()=>window.ready);
  return {page,requests};
@@ -98,7 +98,7 @@ test('public opening is SDK-free; dialog survives reader changes, traps focus an
 test('private choices, multibyte limit, literal preview and explicit maximum-fee confirmation',async t=>{
  const {page}=await browserFixture(t);await open(page,{type:'reply',parent:'10',root:'1',subboard:'3'});await unlock(page);
  assert.equal(await page.evaluate(()=>test.options.requireEth),false);assert.equal(await page.evaluate(()=>test.options.autoPasskey),false);
- assert.equal(await page.getByLabel('Reply to post ID').inputValue(),'10');assert.equal(await page.getByLabel('Root thread ID').inputValue(),'1');
+ assert.equal(await page.getByRole('link',{name:'View conversation',exact:true}).getAttribute('href'),'#/thread/1/10');assert.equal(await page.getByLabel('Reply to post ID').count(),0);assert.equal(await page.getByLabel('Root thread ID').count(),0);
  assert.equal(await page.getByLabel('Posting identity').inputValue(),'0');await page.getByRole('button',{name:'Load more owned names'}).click();await page.getByLabel('Posting identity').selectOption('8');
  await page.getByLabel('Message',{exact:true}).fill('😀'.repeat(249));assert(await page.getByRole('button',{name:'Check action and review fee'}).isDisabled());
  assert.equal(await page.getByLabel('Message',{exact:true}).inputValue(),'😀'.repeat(249));assert(await page.getByText(/249 characters · 996\/992/).isVisible());
@@ -612,6 +612,7 @@ test('initialization projection ignores accessors and account invalidation clear
 test('Bok composer reviews credit and both fees, restores authorized draft and never auto-publishes',async t=>{
  const {page}=await browserFixture(t);await page.evaluate(()=>test.bokCredit='1000');await open(page);await unlock(page);
  await page.getByLabel('Action',{exact:true}).selectOption('bok');await page.getByText('Available private Bok credit: 1000.',{exact:true}).waitFor();
+ await page.getByText('New conversation',{exact:true}).waitFor();assert.equal(await page.getByRole('link',{name:'Main board',exact:true}).getAttribute('href'),'#/board/0');assert.equal(await page.getByLabel('Reply to post ID').count(),0);
  await page.getByLabel('Message',{exact:true}).fill('Ask Bok with the exact saved draft');await page.getByLabel('Maximum Bok credits',{exact:true}).fill('400');
  await page.getByRole('button',{name:'Check action and review fee',exact:true}).click();await page.getByRole('button',{name:'Confirm and send',exact:true}).waitFor();
  assert.equal((await counts(page)).sends,0);await page.getByText('Bok request budget: 400 credits. This is separate from the network fee.',{exact:true}).waitFor();
@@ -886,13 +887,33 @@ test('Interrupted Bok release failure and unknown send preserve recovery without
 test('Bok reply selection retains reader thread context through both saved confirmations',async t=>{
  const {page}=await browserFixture(t);await page.evaluate(()=>test.bokCredit='1000');await open(page,{type:'reply',parent:'12',root:'11',subboard:'3',content:'Continue this workspace'});await unlock(page);
  await page.getByLabel('Action',{exact:true}).selectOption('bok');
- assert.equal(await page.getByLabel('Reply to post ID').inputValue(),'12');assert.equal(await page.getByLabel('Root thread ID').inputValue(),'11');assert.equal(await page.getByLabel('Subboard ID (0 for main board)').inputValue(),'3');
+ assert.equal(await page.getByRole('link',{name:'View conversation',exact:true}).getAttribute('href'),'#/thread/11/12');for(const name of ['Reply to post ID','Root thread ID','Subboard ID (0 for main board)'])assert.equal(await page.getByLabel(name,{exact:true}).count(),0);
+ await page.getByLabel('Action',{exact:true}).selectOption('reply');await page.getByLabel('Action',{exact:true}).selectOption('bok');
  assert.equal(await page.getByLabel('Message',{exact:true}).inputValue(),'Continue this workspace');
- await page.getByLabel('Maximum Bok credits').fill('400');await page.getByLabel('Root thread ID').fill('0');assert(await page.getByRole('button',{name:'Check action and review fee',exact:true}).isDisabled());await page.getByLabel('Root thread ID').fill('11');
+ await page.getByLabel('Maximum Bok credits').fill('400');
  await page.getByRole('button',{name:'Check action and review fee',exact:true}).click();await page.getByRole('button',{name:'Confirm and send',exact:true}).waitFor();
  const action=await page.evaluate(()=>JSON.parse(sessionStorage.getItem('labelled-ui-intent')).action);assert.equal(action.parent,'12');assert.equal(action.root,'11');assert.equal(action.subboard,'3');assert.equal(action.type,'bok');
  await page.getByRole('button',{name:'Confirm and send',exact:true}).click();await page.getByRole('button',{name:'Review saved Bok post',exact:true}).waitFor();
  await page.reload();await page.waitForFunction(()=>window.ready);await open(page);await page.getByRole('button',{name:'Unlock',exact:true}).click();await page.getByRole('button',{name:'Review saved Bok post',exact:true}).click();await page.getByRole('button',{name:'Confirm and send',exact:true}).waitFor();
  assert.deepEqual(await page.evaluate(()=>JSON.parse(sessionStorage.getItem('labelled-ui-intent')).action),action);assert.equal((await counts(page)).sends,0);
+ assert.equal(await page.getByRole('link',{name:'View conversation',exact:true}).getAttribute('href'),'#/thread/11/12');assert.equal(await page.getByRole('button',{name:'Start new conversation',exact:true}).count(),0);
+ await page.getByRole('button',{name:'Close account panel',exact:true}).click();await open(page,{type:'reply',parent:'99',root:'98',subboard:'97'});await page.getByRole('button',{name:'Confirm and send',exact:true}).waitFor();assert.equal(await page.getByRole('link',{name:'View conversation',exact:true}).getAttribute('href'),'#/thread/11/12');
  await page.getByRole('button',{name:'Confirm and send',exact:true}).click();await page.getByText('Transaction confirmed on the verified chain.',{exact:true}).waitFor();assert.equal((await counts(page)).sends,1);
+});
+
+
+test('Conversation context starts a new Bok thread only by explicit choice and preserves message and board',async t=>{
+ const {page}=await browserFixture(t);await page.evaluate(()=>test.bokCredit='1000');await open(page,{type:'reply',parent:'12',root:'11',subboard:'3',content:'Keep this draft'});await unlock(page);
+ await page.getByLabel('Action',{exact:true}).selectOption('bok');await page.getByLabel('Maximum Bok credits').fill('400');
+ await page.getByRole('button',{name:'Start new conversation',exact:true}).click();await page.getByText('New conversation',{exact:true}).waitFor();
+ assert.equal(await page.getByRole('link',{name:'View board',exact:true}).getAttribute('href'),'#/board/3');assert.equal(await page.getByLabel('Message',{exact:true}).inputValue(),'Keep this draft');assert.equal(await page.getByLabel('Maximum Bok credits').inputValue(),'400');assert.equal((await counts(page)).prepares,0);
+ await page.getByRole('button',{name:'Check action and review fee',exact:true}).click();await page.getByRole('button',{name:'Confirm and send',exact:true}).waitFor();
+ const action=await page.evaluate(()=>JSON.parse(sessionStorage.getItem('labelled-ui-intent')).action);assert.deepEqual({parent:action.parent,root:action.root,subboard:action.subboard},{parent:'0',root:'0',subboard:'3'});assert.equal(action.content,'Keep this draft');assert.equal(action.budget,'400');assert.equal((await counts(page)).sends,0);
+});
+
+test('Conversation context rejects missing or incomplete reply selection without preparing a transaction',async t=>{
+ const {page}=await browserFixture(t);await page.evaluate(()=>test.bokCredit='1000');await open(page,{type:'reply'});await unlock(page);
+ await page.getByText('Choose a post in the reader and select Reply to join its conversation.',{exact:true}).waitFor();await page.getByLabel('Message',{exact:true}).fill('Need a selected post');assert(await page.getByRole('button',{name:'Check action and review fee',exact:true}).isDisabled());
+ await page.getByRole('button',{name:'Choose a post',exact:true}).click();assert.equal(await page.getByRole('dialog').isVisible(),false);
+ await open(page,{type:'reply',parent:'12',root:'0',subboard:'3',content:'Invalid pair'});await page.getByLabel('Action',{exact:true}).waitFor();await page.getByLabel('Action',{exact:true}).selectOption('bok');await page.getByLabel('Maximum Bok credits').fill('400');assert(await page.getByRole('button',{name:'Check action and review fee',exact:true}).isDisabled());assert.equal((await counts(page)).prepares,0);
 });

@@ -310,13 +310,23 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   const gas=el('input',{type:'text',inputmode:'decimal','aria-label':'Maximum refund gas cost in ETH',value:refundGas});gas.addEventListener('input',()=>refundGas=gas.value);
   content.append(label('Maximum Ethereum gas cost (ETH)',gas),button('Review Ethereum refund',()=>void work(async()=>{const epoch=accountEpoch;const value=await session.withdrawal.prepare({maximumGasWei:units(refundGas,18)});checkAccount(epoch);refundQuote=value;}),true),button('Check existing refund',()=>void work(async()=>{const epoch=accountEpoch;const result=await session.withdrawal.recover();checkAccount(epoch);if(result.status==='refunded'){notice='The saved Ethereum refund is confirmed.';intent=null;balances=null;await refresh();}else notice='Refund '+result.status+'. A new refund is never sent automatically.';})));
  }
+ function replyContext(action){return field(action?.parent)&&field(action?.root)&&field(action?.subboard)&&BigInt(action.parent)>0n&&BigInt(action.root)>0n;}
+ function conversationContext(action){
+  const reply=replyContext(action),link=el('a',{href:reply?'#/thread/'+action.root+'/'+action.parent:'#/board/'+action.subboard},reply?'View conversation':BigInt(action.subboard)===0n?'Main board':'View board');
+  link.addEventListener('click',event=>{if(!close())event.preventDefault();});
+  content.append(paragraph(reply?'Replying in this conversation':'New conversation'),link);
+ }
  function showIntent(){
   if(['withdraw','withdraw-bok'].includes(intent.action?.type)&&intent.status==='confirmed'&&session.withdrawal){refundView();return;}
   const replacement=intent.status==='replacement-prepared',prepared=intent.status==='prepared'||replacement;
   content.append(el('h3',{},replacement?'Review replacement before sending':prepared?'Review before sending':'Transaction recovery'));
   content.append(paragraph(intent.action?.type==='claim-deposit'?'Recover posting funds':TYPES[intent.action?.type]??'Existing transaction'));
+  // The saved action owns this context, including after authorization or recovery.
+  const conversational=['reply','bok'].includes(intent.action?.type);
+  if(conversational&&field(intent.action.subboard)&&(replyContext(intent.action)||field(intent.action.parent)&&field(intent.action.root)&&BigInt(intent.action.parent)===0n&&BigInt(intent.action.root)===0n))conversationContext(intent.action);
   // Explicit fields only, and text nodes throughout. No nonce, account or raw error.
   for(const key of ['first','last','slug','name','description','rules','content','subboard','parent','root','reference','post','reason']){
+   if(conversational&&['subboard','parent','root'].includes(key))continue;
    const value=intent.action?.[key];if(typeof value==='string'&&value)content.append(el('p',{class:'post-body'},`${key}: ${key==='name'&&!['subboard','moderate-avatar'].includes(intent.action.type)?ownedLabel(value):value}`));
   }
   const reviewedFee=replacement?intent.replacementReview?.maximumFee:intent.maximumFee,feeReady=typeof reviewedFee==='string'&&/^(0|[1-9][0-9]*)$/.test(reviewedFee);
@@ -473,8 +483,12 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
    if(!deposits.options.length)deposits.append(el('option',{value:''},'No verified collateral found'));
    deposits.value=(status?.depositIds??[]).includes(draft.deposit)?draft.deposit:deposits.options[0].value;draft.deposit=deposits.value;
    deposits.addEventListener('change',()=>{draft.deposit=deposits.value;validate();});content.append(label('Posting collateral',deposits),paragraph('When you review your post, we’ll check your available posting funds and the board’s rules.'));
-   input('subboard','Subboard ID (0 for main board)',{initial:'0'});
-   if(kind==='reply'||kind==='bok'){input('parent','Reply to post ID',{initial:kind==='bok'?'0':''});input('root','Root thread ID',{initial:kind==='bok'?'0':''});if(kind==='bok')content.append(paragraph('Use 0 for both IDs to start a thread, or keep the selected reply and its root thread.'));}
+   if(kind==='reply'||kind==='bok'){
+    if(kind==='bok'&&draft.parent===undefined&&draft.root===undefined)Object.assign(draft,{parent:'0',root:'0'});
+    if(replyContext(draft)||kind==='bok'&&field(draft.subboard)&&draft.parent==='0'&&draft.root==='0')conversationContext(draft);
+    else content.append(paragraph('Choose a post in the reader and select Reply to join its conversation.'),button('Choose a post',()=>close()));
+    if(replyContext(draft)||kind==='reply')content.append(button('Start new conversation',()=>{draft={...draft,type:kind==='reply'?'post':'bok',parent:'0',root:'0'};render();}));
+   }else input('subboard','Subboard ID (0 for main board)',{initial:'0'});
    if(kind==='quote'||kind==='repost')input('reference','Referenced post ID');
    input('content',kind==='repost'?'Optional repost comment':'Message',{area:true,required:kind!=='repost'});
    if(kind==='bok'){
@@ -490,6 +504,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
    if(kind==='bio'||kind==='avatar'){action.name=draft.name;action.expectedVersion=profileSnapshot[kind==='bio'?'bioVersion':'avatarVersion'];}
    else if(fields.has('content'))Object.assign(action,{name:draft.name,deposit:draft.deposit});
    if(kind==='preference')Object.assign(action,{kind:draft.kind,target:draft.kind===5?'0':action.target,enabled:draft.enabled});
+   if(kind==='reply'||kind==='bok')Object.assign(action,{subboard:draft.subboard,parent:draft.parent,root:draft.root});
    const selectedAvatar=avatarDraft;
    void work(async()=>{if(kind==='avatar')Object.assign(action,selectedAvatar?.clear?{width:0,height:0,data:''}:{width:100,height:100,data:await blobData(selectedAvatar.blob)});
     blocked=true;try{if(kind==='preference'||kind==='read-marker'){const epoch=accountEpoch;checkAccount(epoch);const head=await session.application.readPreferenceHead();checkAccount(epoch);if(typeof head?.revision!=='string'||!/^(0|[1-9][0-9]{0,19})$/.test(head.revision))throw connectionFailure;action.expectedRevision=head.revision;}intent=await session.application.prepare(action);}catch(failure){if(kind==='bio'||kind==='avatar')profileSnapshot=null;throw failure;}blocked=false;note('Review the saved action and maximum fee before sending.');});
@@ -505,7 +520,8 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
     valid=valid&&a.remaining>=0&&text.isWellFormed()&&!text.includes('\0')&&(kind==='bio'||!!draft.deposit);
    }
    if(MODERATOR_TYPES.has(kind)){valid=valid&&moderatorStatus?.authorized===true;const key=kind==='set-main-policy'?'rules':'reason',value=fields.get(key).value;valid=valid&&value.isWellFormed()&&!value.includes('\0')&&new TextEncoder().encode(value).length<=(key==='rules'?992:217);if(kind!=='set-main-policy'){const id=fields.get(kind==='moderate-post'?'post':kind==='moderate-avatar'?'name':'subboard').value;valid=valid&&field(id)&&BigInt(id)>0n;}}
-   if(kind==='bok'){const parent=fields.get('parent').value,root=fields.get('root').value;valid=valid&&field(parent)&&field(root)&&((BigInt(parent)===0n)===(BigInt(root)===0n));const v=fields.get('budget').value;valid=valid&&/^[1-9][0-9]{0,38}$/.test(v)&&BigInt(v)<(1n<<128n)&&BigInt(v)<=BigInt(bokStatus?.availableCredit??'0');}
+   if(kind==='reply')valid=valid&&replyContext(draft);
+   if(kind==='bok'){const {parent,root,subboard}=draft;valid=valid&&field(subboard)&&field(parent)&&field(root)&&((BigInt(parent)===0n)===(BigInt(root)===0n));const v=fields.get('budget').value;valid=valid&&/^[1-9][0-9]{0,38}$/.test(v)&&BigInt(v)<(1n<<128n)&&BigInt(v)<=BigInt(bokStatus?.availableCredit??'0');}
    if(kind==='bio'||kind==='avatar')valid=valid&&!!profileSnapshot&&identities.includes(draft.name)&&BigInt(profileSnapshot.name)===BigInt(draft.name)&&(kind!=='avatar'||!!avatarDraft);
    if(kind==='preference')valid=valid&&field(draft.kind===5?'0':fields.get('target').value)&&(draft.kind===2||draft.kind===5||BigInt(fields.get('target').value||'0')!==0n);
    if(kind==='read-marker')valid=valid&&field(fields.get('thread').value)&&BigInt(fields.get('thread').value||'0')!==0n&&/^(0|[1-9][0-9]{0,9})$/.test(fields.get('throughBlock').value)&&BigInt(fields.get('throughBlock').value)<=0xffffffffn;
