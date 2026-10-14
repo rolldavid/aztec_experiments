@@ -9,6 +9,10 @@ const hash=(b,algorithm='sha256')=>createHash(algorithm).update(b).digest('hex')
 const hex=(v,n)=>typeof v==='string'&&new RegExp('^[0-9a-f]{'+n+'}$').test(v);
 const integer=v=>Number.isSafeInteger(v)&&v>0;
 const fail=(code='GITHUB_BROKER_REJECTED')=>Object.assign(Error('GitHub source mirror unavailable'),{code});
+// Explicit operator opt-in; never infer permission authority from an API response.
+const OWNER_APPROVED_20261014_PERMISSIONS=Object.freeze(Object.fromEntries([
+ 'installation_repositories','actions','actions_variables','administration','artifact_metadata','checks','contents','statuses','deployments','discussions','environments','issues','merge_queues','packages','pages','pull_requests','repository_creation','repository_hooks','repository_projects','workflows'
+].map(name=>[name,'write']).concat([['metadata','read']])));
 const diagnostics=new WeakMap();
 export function getGitHubBrokerDiagnostic(error){const d=error&&typeof error==='object'?diagnostics.get(error):undefined;return d?structuredClone(d):null;}
 function diagnosticError(response){
@@ -42,7 +46,7 @@ async function capture(receipt,artifactRoot){
 
 /** One trusted host owns directory. Disabled by default; no ambient gh/env tokens.
  * REST mirror commits are explicitly DISTINCT from local accepted Git commits. */
-async function broker({creationTemplate=null,connectedRepositories=[],enabled=false,directory,artifactRoot,owner,ownerId,appId,installationId,privateKeyFile,fetchImpl=globalThis.fetch,now=Date.now}){
+async function broker({installationPermissionProfile='restricted',creationTemplate=null,connectedRepositories=[],enabled=false,directory,artifactRoot,owner,ownerId,appId,installationId,privateKeyFile,fetchImpl=globalThis.fetch,now=Date.now}){
  if(enabled!==true){const disabled=async()=>{throw fail('GITHUB_BROKER_DISABLED');};return Object.freeze({assertAvailable:disabled,sync:disabled});}
  assert(typeof owner==='string'&&/^[a-z0-9](?:[a-z0-9-]{0,37}[a-z0-9])?$/.test(owner));for(const n of [ownerId,appId,installationId])assert(integer(n));
  await privateDirectory(directory);await privateDirectory(artifactRoot);assert(typeof privateKeyFile==='string'&&!privateKeyFile.startsWith(artifactRoot+path.sep));await privateDirectory(path.dirname(privateKeyFile));
@@ -55,11 +59,16 @@ async function broker({creationTemplate=null,connectedRepositories=[],enabled=fa
   const scope=c.repositoryId+':'+c.workBranch;assert(!branches.has(scope));branches.add(scope);mappings.set(c.threadId,c);
  }
  if(creationTemplate!==null){creationTemplate=structuredClone(creationTemplate);assert(Object.keys(creationTemplate).sort().join(',')==='commit,fullName,repositoryId');assert(integer(creationTemplate.repositoryId)&&new RegExp('^'+owner+'/[A-Za-z0-9_][A-Za-z0-9_.-]{0,99}$').test(creationTemplate.fullName)&&hex(creationTemplate.commit,40));}
+ assert(['restricted','owner-approved-20261014'].includes(installationPermissionProfile));
+ const broadProfile=installationPermissionProfile==='owner-approved-20261014';
  const config={owner,ownerId,appId,installationId,...(creationTemplate?{creationTemplate}: {})},file=path.join(directory,'github-app-state.json');
  try{await read(file,8*1024*1024,true);}catch(e){if(e.code!=='ENOENT')throw fail();}
  const store=await fileState(file);let state=store.read(),busy=false,poisoned=false;
  if(state.schema===undefined){assert.deepEqual(state,{operations:{}});state={schema:1,config,repositories:{}};await store.write(state);}
  assert(state.schema===1);assert.deepEqual(state.config,config);assert(state.repositories&&Object.keys(state.repositories).length<=128);
+ // Preserve legacy config and every operation. This append-only authority record
+ // binds the explicit operator profile without migrating or reopening old intents.
+ if(broadProfile){const binding={profile:installationPermissionProfile,permissions:OWNER_APPROVED_20261014_PERMISSIONS};if(state.installationPermissionProfile)assert.deepEqual(state.installationPermissionProfile,binding);else{state.installationPermissionProfile=binding;await store.write(state);}}
  async function save(){try{assert(Buffer.byteLength(JSON.stringify(state))<=8*1024*1024);await store.write(state);}catch{poisoned=true;throw fail('GITHUB_BROKER_RECORD_FAILED');}}
  async function owned(fn){if(busy||poisoned)throw fail('GITHUB_BROKER_UNAVAILABLE');busy=true;try{return await fn();}catch(e){const safeError=fail(['GITHUB_BROKER_UNRESOLVED','GITHUB_BROKER_RECORD_FAILED'].includes(e?.code)?e.code:undefined),d=getGitHubBrokerDiagnostic(e);if(d)diagnostics.set(safeError,d);throw safeError;}finally{busy=false;}}
  function session(){const deadline=now()+120000;let calls=0;
@@ -68,14 +77,14 @@ async function broker({creationTemplate=null,connectedRepositories=[],enabled=fa
    try{const response=await fetchImpl('https://api.github.com'+route,{method,redirect:'error',credentials:'omit',headers:{Accept:'application/vnd.github+json','X-GitHub-Api-Version':'2026-03-10','Content-Type':'application/json',Authorization:'Bearer '+token},...(body===undefined?{}:{body:JSON.stringify(body)}),signal:controller.signal});
     if(response.status===404){await response.body?.cancel();return null;}if(!response.ok){const error=diagnosticError(response);await response.body?.cancel();throw error;}if(response.status===204){assert(method==='PUT'&&route.endsWith('/actions/permissions')&&body?.enabled===false);return {disabled:true};}const chunks=[];let n=0;for await(const chunk of response.body){n+=chunk.length;assert(n<=2*1024*1024);chunks.push(chunk);}return JSON.parse(Buffer.concat(chunks).toString('utf8'));
    }finally{clearTimeout(timer);}}
-  async function available(){const i=await request('GET','/app/installations/'+installationId,undefined,jwt());assert(i?.id===installationId&&i.app_id===appId&&i.target_type==='User'&&i.account?.type==='User'&&i.account.id===ownerId&&i.account.login===owner&&i.suspended_at===null&&i.repository_selection==='selected');assert(i.permissions?.administration==='write'&&i.permissions?.contents==='write'&&(!mappings.size||i.permissions?.pull_requests==='write'));for(const [name,level] of Object.entries(i.permissions))assert((name==='metadata'&&level==='read')||(['administration','contents',...(mappings.size?['pull_requests']:[])].includes(name)&&level==='write'));return {available:true,owner,ownerId,appId,installationId};}
+  async function available(){const i=await request('GET','/app/installations/'+installationId,undefined,jwt());assert(i?.id===installationId&&i.app_id===appId&&i.target_type==='User'&&i.account?.type==='User'&&i.account.id===ownerId&&i.account.login===owner&&i.suspended_at===null&&i.repository_selection==='selected');if(broadProfile)assert.deepEqual(i.permissions,OWNER_APPROVED_20261014_PERMISSIONS);else{assert(i.permissions?.administration==='write'&&i.permissions?.contents==='write'&&(!mappings.size||i.permissions?.pull_requests==='write'));for(const [name,level] of Object.entries(i.permissions))assert((name==='metadata'&&level==='read')||(['administration','contents',...(mappings.size?['pull_requests']:[])].includes(name)&&level==='write'));}return {available:true,owner,ownerId,appId,installationId};}
   async function token(repositoryId,connected=false,purpose='contents'){
-   const permissions=purpose==='template'?{administration:'write',contents:'read'}:purpose==='admin'||!repositoryId?{administration:'write'}:connected?{contents:'write',pull_requests:'write'}:{contents:'write'};
+   const permissions=purpose==='creation'?{repository_creation:'write',...(creationTemplate?{contents:'read'}:{})}:purpose==='template'?{administration:'write',contents:'read'}:purpose==='admin'||!repositoryId?{administration:'write'}:connected?{contents:'write',pull_requests:'write'}:{contents:'write'};
    const body={permissions,...(repositoryId?{repository_ids:[repositoryId]}:{})},r=await request('POST','/app/installations/'+installationId+'/access_tokens',body,jwt());
    assert(typeof r?.token==='string'&&r.token.length>0&&r.token.length<=16384&&Date.parse(r.expires_at)>now()+120000);
    for(const [name,level] of Object.entries(permissions))assert(r.permissions?.[name]===level);
    for(const [name,level] of Object.entries(r.permissions))assert((name==='metadata'&&level==='read')||(Object.hasOwn(permissions,name)&&level===permissions[name]));
-   if(repositoryId)assert(Array.isArray(r.repositories)&&r.repositories.length===1&&r.repositories[0].id===repositoryId);else if(purpose==='template')assert(r.repository_selection==='selected');return r.token;
+   if(repositoryId)assert(Array.isArray(r.repositories)&&r.repositories.length===1&&r.repositories[0].id===repositoryId);else if(purpose==='template'||purpose==='creation')assert(r.repository_selection==='selected');return r.token;
   }
   async function template(){
    assert(creationTemplate);const c=creationTemplate,credential=await token(c.repositoryId,false,'template'),route='/repos/'+c.fullName,r=await request('GET',route,undefined,credential);
@@ -90,7 +99,7 @@ async function broker({creationTemplate=null,connectedRepositories=[],enabled=fa
    return {credential,route};
   }
   async function creationCredential(){
-   assert(creationTemplate);const credential=await token(undefined,false,'template'),allowed=new Map([[creationTemplate.repositoryId,{fullName:creationTemplate.fullName}]]);
+   assert(creationTemplate);const credential=await token(undefined,false,broadProfile?'creation':'template'),allowed=new Map([[creationTemplate.repositoryId,{fullName:creationTemplate.fullName}]]);
    for(const [id,r] of Object.entries(state.repositories)){const created=r.steps?.create;if(created?.done){assert(integer(created.result?.id));allowed.set(created.result.id,{fullName:owner+'/bok-'+id,marker:r.marker});}}
    const seen=new Set();let total=null;
    for(let page=1;page<=2;page++){
@@ -201,10 +210,10 @@ async function broker({creationTemplate=null,connectedRepositories=[],enabled=fa
    const template=creationTemplate?await s.template():null;let admin=template?.credential??await s.token();
    function repository(r){assert(r&&integer(r.id)&&r.name===name&&r.full_name===owner+'/'+name&&r.owner?.id===ownerId&&r.owner?.login===owner&&r.owner?.type==='User'&&r.private===true&&r.fork===false&&r.archived===false&&r.description===repo.marker&&typeof r.default_branch==='string'&&/^[a-zA-Z0-9_-]{1,100}$/.test(r.default_branch));return {id:r.id,branch:r.default_branch};}
    // An existing name without OUR durable creation intent is never adopted.
-   if(!repo.steps.create){if(template)admin=await s.creationCredential();assert(await s.request('GET',route,undefined,admin)===null);}
+   if(!repo.steps.create){if(template)admin=await s.creationCredential();else if(broadProfile)admin=await s.token(undefined,false,'creation');assert(await s.request('GET',route,undefined,admin)===null);}
    const createRoute=template?template.route+'/generate':'/user/repos',createBody=template?{owner,name,description:repo.marker,private:true,include_all_branches:false}:{name,description:repo.marker,private:true,auto_init:true,has_issues:false,has_projects:false,has_wiki:false};
-   const remote=await once(repo.steps,'create','POST',createRoute,createBody,admin,repository,async()=>s.request('GET',route,undefined,template?await s.token():admin));
-   if(template)admin=await s.token(remote.id,false,'admin');
+   const remote=await once(repo.steps,'create','POST',createRoute,createBody,admin,repository,async()=>s.request('GET',route,undefined,template||broadProfile?await s.token():admin));
+   if(template||broadProfile)admin=await s.token(remote.id,false,'admin');
    assert.deepEqual(repository(await s.request('GET',route,undefined,admin)),remote);
    // Only our dedicated mirror receives this settings mutation. An uncertain
    // response is reconciled by readback, never replayed, before source writes.

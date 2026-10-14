@@ -7,9 +7,10 @@ import {createHash,generateKeyPairSync,randomUUID,verify} from 'node:crypto';
 import {execFileSync} from 'node:child_process';
 import {createGitHubAppBroker,getGitHubBrokerDiagnostic} from '../github-app-broker.mjs';
 const sha=b=>createHash('sha256').update(b).digest('hex'),git=(type,b)=>createHash('sha1').update(type+' '+Buffer.byteLength(b)+'\0').update(b).digest('hex');
+const approvedPermissions=Object.fromEntries(['installation_repositories','actions','actions_variables','administration','artifact_metadata','checks','contents','statuses','deployments','discussions','environments','issues','merge_queues','packages','pages','pull_requests','repository_creation','repository_hooks','repository_projects','workflows'].map(name=>[name,'write']).concat([['metadata','read']]));
 const keys=generateKeyPairSync('rsa',{modulusLength:2048}),owner='labelled-bok-fixture',ownerId=123,appId=456,installationId=789;
 // Controlled GitHub protocol double: no account, credential discovery or network.
-async function fixture({verifyGit=false,templateMode=false}={}){const root=await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(),'bok-app-'))),directory=path.join(root,'state'),artifactRoot=path.join(root,'artifacts');for(const d of [directory,artifactRoot])await fs.mkdir(d,{mode:0o700});const privateKeyFile=path.join(root,'app.pem');await fs.writeFile(privateKeyFile,keys.privateKey.export({type:'pkcs8',format:'pem'}),{mode:0o600});
+async function fixture({verifyGit=false,templateMode=false,broadProfile=false}={}){const root=await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(),'bok-app-'))),directory=path.join(root,'state'),artifactRoot=path.join(root,'artifacts');for(const d of [directory,artifactRoot])await fs.mkdir(d,{mode:0o700});const privateKeyFile=path.join(root,'app.pem');await fs.writeFile(privateKeyFile,keys.privateKey.export({type:'pkcs8',format:'pem'}),{mode:0o600});
  const templateBody=Buffer.from('Bok template\n'),templateBlob=git('blob',templateBody),templateTree=git('tree',Buffer.concat([Buffer.from('100644 README.md\0'),Buffer.from(templateBlob,'hex')])),creationTemplate={repositoryId:654,fullName:owner+'/bootstrap',commit:'e'.repeat(40)};
  const calls=[],objects=new Map();let actionsEnabled=true,repo=null,head='1'.repeat(40),lost=null,absent=false,badInstallation=false,leak=false;
  const now=()=>Date.parse('2026-10-13T00:00:00Z');
@@ -20,8 +21,8 @@ async function fixture({verifyGit=false,templateMode=false}={}){const root=await
   const route=new URL(url).pathname,body=options.body===undefined?undefined:JSON.parse(options.body),method=options.method;calls.push({route,method,body});let out;
   if(leak)throw Error('SYNTHETIC_TOKEN_PRIVATE_RAW');
   if(route.startsWith('/app/')){const token=options.headers.Authorization.slice(7),[h,p,s]=token.split('.');assert(verify('RSA-SHA256',Buffer.from(h+'.'+p),keys.publicKey,Buffer.from(s,'base64url')));const claims=JSON.parse(Buffer.from(p,'base64url'));assert.equal(claims.iss,String(appId));assert(claims.exp-claims.iat<=600);
-   if(method==='GET')out={id:installationId,app_id:appId,target_type:'User',account:{type:'User',id:badInstallation?999:ownerId,login:owner},suspended_at:null,repository_selection:'selected',permissions:{administration:'write',contents:'write',metadata:'read'}};
-   else{assert.deepEqual(Object.keys(body.permissions),body.permissions.contents==='read'?['administration','contents']:body.permissions.administration?['administration']:['contents']);out={token:body.permissions.contents==='read'?'template-synthetic':body.permissions.administration?'administration-synthetic':'scoped-content-synthetic',expires_at:'2026-10-13T01:00:00Z',repository_selection:'selected',permissions:{...body.permissions,metadata:'read'},...(body.repository_ids?{repositories:body.repository_ids.map(id=>({id}))}:{})};}
+   if(method==='GET')out={id:installationId,app_id:appId,target_type:'User',account:{type:'User',id:badInstallation?999:ownerId,login:owner},suspended_at:null,repository_selection:'selected',permissions:broadProfile?structuredClone(approvedPermissions):{administration:'write',contents:'write',metadata:'read'}};
+   else{assert.deepEqual(Object.keys(body.permissions),body.permissions.repository_creation?(body.permissions.contents?['repository_creation','contents']:['repository_creation']):body.permissions.contents==='read'?['administration','contents']:body.permissions.administration?['administration']:['contents']);out={token:body.permissions.repository_creation?'creation-synthetic':body.permissions.contents==='read'?'template-synthetic':body.permissions.administration?'administration-synthetic':'scoped-content-synthetic',expires_at:'2026-10-13T01:00:00Z',repository_selection:'selected',permissions:{...body.permissions,metadata:'read'},...(body.repository_ids?{repositories:body.repository_ids.map(id=>({id}))}:{})};}
   }else if(templateMode&&route==='/installation/repositories'){out={total_count:repo?2:1,repositories:[{id:654,full_name:creationTemplate.fullName,owner:{id:ownerId,login:owner,type:'User'},private:true,fork:false,archived:false},...(repo?[repo]:[])]};
   }else if(templateMode&&route==='/repos/'+creationTemplate.fullName){out={id:654,full_name:creationTemplate.fullName,owner:{id:ownerId,login:owner,type:'User'},private:true,is_template:true,fork:false,archived:false,default_branch:'main'};}
   else if(templateMode&&route.startsWith('/repos/'+creationTemplate.fullName+'/')&&!route.endsWith('/generate')){assert.equal(options.headers.Authorization,'Bearer template-synthetic');
@@ -29,7 +30,7 @@ async function fixture({verifyGit=false,templateMode=false}={}){const root=await
    else if(route.endsWith('/git/ref/heads/main'))out={object:{type:'commit',sha:creationTemplate.commit}};
    else if(route.endsWith('/git/commits/'+creationTemplate.commit))out={sha:creationTemplate.commit,tree:{sha:templateTree}};
    else if(route.endsWith('/git/trees/'+templateTree))out={sha:templateTree,truncated:false,tree:[{path:'README.md',mode:'100644',type:'blob',sha:templateBlob,size:templateBody.length}]};else throw Error('unknown template read');
-  }else if(route==='/user/repos'||templateMode&&route.endsWith('/generate')){assert.equal(options.headers.Authorization,templateMode?'Bearer template-synthetic':'Bearer administration-synthetic');if(templateMode){assert.equal(route,'/repos/'+creationTemplate.fullName+'/generate');assert.equal(body.owner,owner);assert.equal(body.include_all_branches,false);}else assert.equal(body.auto_init,true);assert.equal(body.private,true);repo={id:987,name:body.name,full_name:owner+'/'+body.name,owner:{id:ownerId,login:owner,type:'User'},private:body.private,fork:false,archived:false,description:body.description,default_branch:'main'};out=repo;}
+  }else if(route==='/user/repos'||templateMode&&route.endsWith('/generate')){assert.equal(options.headers.Authorization,broadProfile?'Bearer creation-synthetic':templateMode?'Bearer template-synthetic':'Bearer administration-synthetic');if(templateMode){assert.equal(route,'/repos/'+creationTemplate.fullName+'/generate');assert.equal(body.owner,owner);assert.equal(body.include_all_branches,false);}else assert.equal(body.auto_init,true);assert.equal(body.private,true);repo={id:987,name:body.name,full_name:owner+'/'+body.name,owner:{id:ownerId,login:owner,type:'User'},private:body.private,fork:false,archived:false,description:body.description,default_branch:'main'};out=repo;}
   else if(route.endsWith('/actions/permissions')){assert.equal(options.headers.Authorization,'Bearer administration-synthetic');if(method==='PUT'){assert.deepEqual(body,{enabled:false});actionsEnabled=false;}out={enabled:actionsEnabled};}
   else if(!route.includes('/git/'))out=repo;
   else{assert.equal(options.headers.Authorization,'Bearer scoped-content-synthetic');
@@ -45,7 +46,7 @@ async function fixture({verifyGit=false,templateMode=false}={}){const root=await
   if(method==='PUT'&&route.endsWith('/actions/permissions'))return new Response(null,{status:204});
   return response(out,out===null?404:200);
  };
- const config={enabled:true,directory,artifactRoot,owner,ownerId,appId,installationId,privateKeyFile,fetchImpl,now,...(templateMode?{creationTemplate}:{})};let broker=await createGitHubAppBroker(config);
+ const config={enabled:true,directory,artifactRoot,owner,ownerId,appId,installationId,privateKeyFile,fetchImpl,now,...(broadProfile?{installationPermissionProfile:'owner-approved-20261014'}:{}),...(templateMode?{creationTemplate}:{})};let broker=await createGitHubAppBroker(config);
  return {root,directory,artifactRoot,calls,config,get broker(){return broker;},reopen:async()=>broker=await createGitHubAppBroker(config),lose:(method,suffix,mode='present')=>lost={method,suffix,mode},badInstallation:()=>badInstallation=true,leak:()=>leak=true,setHead:value=>head=value,enableActions:()=>actionsEnabled=true,collide:()=>repo={id:987},close:()=>fs.rm(root,{recursive:true,force:true})};
 }
 async function receipt(f,n=2,readRevision=null,contents={'app.cjs':'module.exports='+n,'asset.png':Buffer.from([0,255,n])}){const revision=String(n).repeat(40),outputDirectory=path.join(f.artifactRoot,'bok-static-'+randomUUID());await fs.mkdir(outputDirectory,{mode:0o700});const files=Object.entries(contents).map(([path,text])=>{const b=Buffer.from(text);return {path,sha256:sha(b),bytes:b.length,data:b.toString('base64')};}),manifest=files.map(({data,...x})=>x),source=JSON.stringify({schema:1,revision,manifest,files});await fs.writeFile(path.join(outputDirectory,'source-snapshot.json'),source,{mode:0o600});await fs.writeFile(path.join(outputDirectory,'cleanup.json'),JSON.stringify({ownedContainerAbsent:true}),{mode:0o600});return {repositoryId:'a'.repeat(64),threadId:'0x'+'b'.repeat(64),invocationId:'0x'+String(n).repeat(64),readRevision,acceptedRevision:revision,validation:{passed:true,testsPassed:true,buildPassed:true,testCount:1,revision,sourceDigest:sha(JSON.stringify(manifest)),sourceManifest:manifest,sourceArchiveSha256:sha(source),outputDirectory}};}
@@ -79,8 +80,8 @@ test('personal creation uses user endpoint and each source token selects only th
 
 // Connected-repository protocol double. Every mutation is local test data;
 // excluded workflow/private-control entries are present in the original tree.
-async function connectedFixture(t){
- const f=await fixture();t.after(()=>f.close());const c={threadId:'0x'+'b'.repeat(64),repositoryId:987,ownerId,fullName:owner+'/existing',baseBranch:'main',workBranch:'bok/thread-one',baseCommit:'1'.repeat(40)};
+async function connectedFixture(t,{broadProfile=false}={}){
+ const f=await fixture({broadProfile});t.after(()=>f.close());const c={threadId:'0x'+'b'.repeat(64),repositoryId:987,ownerId,fullName:owner+'/existing',baseBranch:'main',workBranch:'bok/thread-one',baseCommit:'1'.repeat(40)};
  const calls=[],objects=new Map(),refs=new Map([['main',c.baseCommit]]);let pr=null,lost=null,badOwner=false,broad=false;
  const putBlob=data=>{const bytes=Buffer.from(data),sha=git('blob',bytes);objects.set(sha,{sha,encoding:'base64',content:bytes.toString('base64'),size:bytes.length});return sha;};
  function putTree(leaves){const dirs=new Map([['',[]]]);for(const f of leaves){const names=f.path.split('/');for(let i=1;i<names.length;i++){const key=names.slice(0,i).join('/');if(!dirs.has(key))dirs.set(key,[]);}dirs.get(names.slice(0,-1).join('/')).push({name:names.at(-1),mode:f.mode,sha:f.sha});}let sha;for(const [dir,entries]of [...dirs].sort(([a],[b])=>b.length-a.length)){entries.sort((a,b)=>Buffer.compare(Buffer.from(a.name+(a.mode==='40000'?'/':'')),Buffer.from(b.name+(b.mode==='40000'?'/':''))));sha=git('tree',Buffer.concat(entries.map(f=>Buffer.concat([Buffer.from(f.mode+' '+f.name+'\0'),Buffer.from(f.sha,'hex')]))));if(dir){const parts=dir.split('/');dirs.get(parts.slice(0,-1).join('/')).push({name:parts.at(-1),mode:'40000',sha});}}
@@ -90,7 +91,7 @@ async function connectedFixture(t){
  const baseTree=putTree(leaves);objects.set(c.baseCommit,{sha:c.baseCommit,tree:{sha:baseTree}});
  const response=(data,status=200)=>new Response(JSON.stringify(data),{status});
  const fetchImpl=async(url,options)=>{const u=new URL(url),route=u.pathname,method=options.method,body=options.body?JSON.parse(options.body):undefined;calls.push({route,query:u.search,method,body});let out;
-  if(route==='/app/installations/'+installationId)out={id:installationId,app_id:appId,target_type:'User',account:{type:'User',id:ownerId,login:owner},suspended_at:null,repository_selection:'selected',permissions:{administration:'write',contents:'write',pull_requests:'write',metadata:'read'}};
+  if(route==='/app/installations/'+installationId)out={id:installationId,app_id:appId,target_type:'User',account:{type:'User',id:ownerId,login:owner},suspended_at:null,repository_selection:'selected',permissions:broadProfile?structuredClone(approvedPermissions):{administration:'write',contents:'write',pull_requests:'write',metadata:'read'}};
   else if(route.endsWith('/access_tokens')){assert.deepEqual(body,{permissions:{contents:'write',pull_requests:'write'},repository_ids:[c.repositoryId]});out={token:'connected-scoped',expires_at:'2026-10-13T01:00:00Z',repository_selection:'selected',permissions:{...body.permissions,...(broad?{administration:'write'}:{})},repositories:[{id:c.repositoryId}]};}
   else{assert.equal(options.headers.Authorization,'Bearer connected-scoped');assert(route.startsWith('/repos/'+c.fullName));const suffix=route.slice(('/repos/'+c.fullName).length);
    if(suffix==='')out={id:c.repositoryId,full_name:c.fullName,owner:{id:badOwner?999:ownerId,login:owner,type:'User'},archived:false,fork:false,private:true};
@@ -204,4 +205,63 @@ test('creation validates both selected repository pages before generation',async
   const b=await createGitHubAppBroker({...f.config,fetchImpl:async(url,options)=>{const u=new URL(url);if(u.pathname==='/installation/repositories'){const page=Number(u.searchParams.get('page'));pages.push(page);return new Response(JSON.stringify({total_count:selected.length,repositories:selected.slice((page-1)*100,page*100)}));}return original(url,options);}});
   assert((await b.sync(await receipt(f))).mirrored);assert.deepEqual(pages,[1,2]);
  }finally{await f.close();}
+});
+
+for(const kind of ['exact','missing','extra','wrong-level','implicit','unknown-profile'])test('approved installation profile '+kind+' is explicitly bounded',async()=>{
+ const f=await fixture({broadProfile:true});try{
+  const original=f.config.fetchImpl,config={...f.config,fetchImpl:async(url,options)=>{const response=await original(url,options);if(options.method==='GET'&&url.endsWith('/app/installations/'+installationId)){const v=await response.json();if(kind==='missing')delete v.permissions.workflows;if(kind==='extra')v.permissions.secrets='write';if(kind==='wrong-level')v.permissions.contents='read';return new Response(JSON.stringify(v));}return response;}};
+  if(kind==='implicit')delete config.installationPermissionProfile;if(kind==='unknown-profile')config.installationPermissionProfile='approve-anything';
+  if(kind==='unknown-profile')await assert.rejects(createGitHubAppBroker(config));else{const b=await createGitHubAppBroker(config);if(kind==='exact')assert((await b.assertAvailable()).available);else await assert.rejects(b.assertAvailable());}
+  assert(!f.calls.some(c=>c.method!=='GET'));
+  const state=JSON.parse(await fs.readFile(path.join(f.directory,'github-app-state.json')));assert.deepEqual(state.installationPermissionProfile,{profile:'owner-approved-20261014',permissions:approvedPermissions});assert(!Object.hasOwn(state.config,'installationPermissionProfile'));
+ }finally{await f.close();}
+});
+for(const templateMode of [false,true])test('approved profile minimal '+(templateMode?'template':'personal')+' creation token and scoped mirror updates',async()=>{
+ const f=await fixture({broadProfile:true,templateMode});try{
+  const first=await receipt(f);assert((await f.broker.sync(first)).mirrored);const before=f.calls.length;assert((await f.broker.sync(await receipt(f,3,first.acceptedRevision))).mirrored);
+  const tokens=f.calls.filter(c=>c.route.endsWith('/access_tokens')).map(c=>c.body),creation=tokens.filter(c=>c.permissions.repository_creation);
+  assert.deepEqual(creation,[{permissions:{repository_creation:'write',...(templateMode?{contents:'read'}:{})}}]);
+  assert(!f.calls.slice(before).some(c=>c.route==='/user/repos'||c.route.endsWith('/generate')));
+  for(const t of tokens.filter(c=>c.permissions.contents==='write'))assert.deepEqual(t,{permissions:{contents:'write'},repository_ids:[987]});
+  for(const t of tokens)assert(Object.keys(t.permissions).length<=2);
+  const actions=f.calls.findIndex(c=>c.method==='PUT'),source=f.calls.findIndex(c=>c.method==='POST'&&c.route.endsWith('/blobs'));assert(actions>=0&&source>actions);
+ }finally{await f.close();}
+});
+for(const kind of ['missing','extra','all'])test('creation-purpose returned token '+kind+' fails before mutation',async()=>{
+ const f=await fixture({broadProfile:true,templateMode:true});try{
+  const original=f.config.fetchImpl,b=await createGitHubAppBroker({...f.config,fetchImpl:async(url,options)=>{const response=await original(url,options);if(url.endsWith('/access_tokens')&&JSON.parse(options.body).permissions.repository_creation){const v=await response.json();if(kind==='missing')delete v.permissions.repository_creation;if(kind==='extra')v.permissions.administration='write';if(kind==='all')v.repository_selection='all';return new Response(JSON.stringify(v));}return response;}});
+  await assert.rejects(b.sync(await receipt(f)));assert(!f.calls.some(c=>c.method!=='GET'&&!c.route.endsWith('/access_tokens')));
+ }finally{await f.close();}
+});
+for(const status of [201,422])test('approved creation '+status+' partial unselected repository stays fenced without retry or source write',async()=>{
+ const f=await fixture({broadProfile:true,templateMode:true});try{
+  const original=f.config.fetchImpl;let created=false;const fetchImpl=async(url,options)=>{
+   if(created&&url.endsWith('/access_tokens')&&JSON.parse(options.body).repository_ids?.includes(987))return new Response('{}',{status:422});
+   if(created&&options.method==='GET'&&new URL(url).pathname.startsWith('/repos/'+owner+'/bok-'))return new Response('{}',{status:404});
+   const response=await original(url,options);if(options.method==='POST'&&url.endsWith('/generate')){created=true;const v=await response.json();return new Response(JSON.stringify(v),{status});}return response;
+  };
+  let b=await createGitHubAppBroker({...f.config,fetchImpl});const r=await receipt(f);await assert.rejects(b.sync(r));b=await createGitHubAppBroker({...f.config,fetchImpl});await assert.rejects(b.sync(r));
+  assert.equal(f.calls.filter(c=>c.method==='POST'&&c.route.endsWith('/generate')).length,1);assert(!f.calls.some(c=>c.method==='PUT'||c.method==='PATCH'||c.method==='POST'&&c.route.includes('/git/')));
+  const state=JSON.parse(await fs.readFile(path.join(f.directory,'github-app-state.json'))),creation=Object.values(state.repositories)[0].steps.create;assert.equal(creation.done,status===201);if(status===201)assert.equal(creation.result.id,987);else assert.equal(creation.diagnostic.status,422);
+ }finally{await f.close();}
+});
+test('explicit profile upgrade preserves original mirror intents and permits scoped next revision',async()=>{
+ const f=await fixture();try{
+  const first=await receipt(f);await f.broker.sync(first);const file=path.join(f.directory,'github-app-state.json'),prior=JSON.parse(await fs.readFile(file)),original=f.config.fetchImpl;
+  const b=await createGitHubAppBroker({...f.config,installationPermissionProfile:'owner-approved-20261014',fetchImpl:async(url,options)=>{const response=await original(url,options);if(options.method==='GET'&&url.endsWith('/app/installations/'+installationId)){const v=await response.json();v.permissions=approvedPermissions;return new Response(JSON.stringify(v));}return response;}});
+  const upgraded=JSON.parse(await fs.readFile(file));assert.deepEqual(upgraded.config,prior.config);assert.deepEqual(upgraded.repositories,prior.repositories);
+  assert((await b.sync(await receipt(f,3,first.acceptedRevision))).mirrored);const after=JSON.parse(await fs.readFile(file)),id=Object.keys(prior.repositories)[0];assert.deepEqual(after.repositories[id].steps,prior.repositories[id].steps);assert.deepEqual(after.repositories[id].revisions[first.acceptedRevision],prior.repositories[id].revisions[first.acceptedRevision]);
+  assert.equal(f.calls.filter(c=>c.method==='POST'&&c.route==='/user/repos').length,1);
+ }finally{await f.close();}
+});
+test('approved installation still gives connected source and PR only the mapped repository token',async t=>{
+ const f=await connectedFixture(t,{broadProfile:true});await f.broker.readConnected(f.c.threadId);assert((await f.broker.syncConnected(await f.receipt())).connected);
+ const tokens=f.calls.filter(c=>c.route.endsWith('/access_tokens'));assert(tokens.length>0);for(const c of tokens)assert.deepEqual(c.body,{permissions:{contents:'write',pull_requests:'write'},repository_ids:[f.c.repositoryId]});
+ assert(!f.calls.some(c=>c.route==='/user/repos'||c.route.endsWith('/generate')||c.route.endsWith('/actions/permissions')));
+});
+test('approved creation token does not permit an unrelated selected repository',async()=>{
+ const f=await fixture({broadProfile:true,templateMode:true});try{const original=f.config.fetchImpl,b=await createGitHubAppBroker({...f.config,fetchImpl:async(url,options)=>{const response=await original(url,options);if(new URL(url).pathname==='/installation/repositories'){const v=await response.json();v.repositories.push({...v.repositories[0],id:321,full_name:owner+'/unrelated'});v.total_count++;return new Response(JSON.stringify(v));}return response;}});await assert.rejects(b.sync(await receipt(f)));assert(!f.calls.some(c=>c.method!=='GET'&&!c.route.endsWith('/access_tokens')));}finally{await f.close();}
+});
+test('approved profile cannot overwrite a different recorded permission binding',async()=>{
+ const f=await fixture({broadProfile:true});try{const file=path.join(f.directory,'github-app-state.json'),state=JSON.parse(await fs.readFile(file));state.installationPermissionProfile.permissions.contents='read';await fs.writeFile(file,JSON.stringify(state),{mode:0o600});const before=await fs.readFile(file);await assert.rejects(f.reopen());assert.deepEqual(await fs.readFile(file),before);assert.equal(f.calls.length,0);}finally{await f.close();}
 });
