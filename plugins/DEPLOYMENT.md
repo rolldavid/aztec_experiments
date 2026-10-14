@@ -1,6 +1,8 @@
-> The V5 implementation and deployment history below is superseded for the current
-> live application by the [V6 testnet handover](../deploy/V6-TESTNET.md).
-> Preserve V5 recovery configuration for any older deposits.
+> For current Rolling / PrivateBok installation use the
+> [Rolling operator runbook](../docs/rolling-deployment.md) and the current section below.
+> The [V6 testnet handover](../deploy/V6-TESTNET.md) and legacy sections are historical
+> deployment evidence, not current Rolling defaults. Preserve each older deployment
+> and its recovery configuration while it still holds liabilities.
 
 # Deploying a plugin
 
@@ -57,6 +59,31 @@ request accounting, reply delivery and complete board/application readiness are
 separate checks. Earnings withdrawal commands remain legacy-only in this slice.
 Back up the private0600 journal in its private0700 directory; never publish its
 signed records. No runtime credentials are copied to artifacts or generated code.
+
+## Current private user accounting and exits
+
+Use the application's **Balances and withdrawals** view and the
+[RC22 operator procedure](../docs/rolling-deployment.md#private-balances-and-withdrawals-rc22).
+Public operator earnings are a separate asset; the legacy `withdraw-earnings`
+command below is not the private user's Bok withdrawal command.
+
+The public accounting endpoint accepts only `limit` and its opaque `cursor`.
+It publishes complete canonical request snapshots for one checkpoint/revision;
+wallets consume every page and intersect private `owned_requests` IDs locally.
+Never add an account, owned-ID list or personalized subscription to this route.
+A full eight-ID private ownership page is not exhaustion. The matching deployed
+PrivateBok class must contain the ownership utility; preserving cancelled ownership
+in a new class does not reconstruct notes already removed by an older class.
+Keep old adapter/token/portal bindings and exit records available during rotation.
+
+Free private Bok credit excludes amounts allocated to requests. Reserved work must
+resolve before release; charged and refunded are historical accounting fields.
+Refunded credit is already returned to the free balance and must not be added
+again. The wallet can review release of an unreserved waiting/active request,
+then withdraw free credit using the existing private `withdraw(amount, recipient,
+nonce)` and settled PluginPortal message. Private transaction fees and Ethereum
+refund gas are separate confirmations. Operator registration, HTTP health or a
+public snapshot alone proves none of these user outcomes.
 
 ## Historical legacy operator
 

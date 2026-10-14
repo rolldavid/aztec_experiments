@@ -154,6 +154,84 @@ as an unauthenticated HTTP write. Stop new writes at capacity, retain current
 latest indefinitely, and arrange funded storage/backup retention before launch.
 Do not solve quota exhaustion by silently deleting the required latest revision.
 
+## Private balances and withdrawals (RC22)
+
+Deploy the matching wallet/SDK assets, PrivateBok class and public accounting
+service together. The authenticated public scope includes the exact Bok contract,
+class, operator, deployment identity and canonical anchor. The wallet also verifies
+its own contract instance. Missing or incompatible accounting is unavailable,
+never a zero balance. Keep the existing complete archive as authority; SQLite is
+only a derived cache.
+
+1. In **Balances and withdrawals**, check private balances. Posting collateral is
+   refundable ETH, FEE credit pays later network transactions and has no redemption
+   operation in the current FeeJuice protocol, and Bok credit is USDC-backed.
+   Conversion charges and Ethereum gas are separate costs, not refundable credits.
+   Additional fee/Bok funding uses **Top up fees or Bok** without withdrawing and
+   redepositing posting collateral; its token approval and deposit are separate
+   reviewed actions when approval is needed.
+2. Use **Check all Bok requests**, then **Continue checking Bok requests** until
+   complete. Each click performs bounded work; **Stop checking requests** abandons
+   that scan without changing funds. All public pages must retain one revision and
+   match the canonical PXE anchor. A moving anchor requires a fresh scan, not
+   combining old and new totals. Private ownership pages remain in the wallet;
+   `/api/bok-accounting` receives only `limit` and `cursor`, never owned IDs.
+3. Read free, allocated, reserved, charged and returned credit separately. Returned
+   credit is already in the current free balance. Incomplete accounting does not
+   establish zero reservations. Unreserved waiting/active work can be reviewed for
+   release; reserved or fenced work must resolve under the existing contract rules.
+   The public event does not expose a deadline, so do not infer expiry from it.
+4. For collateral, finish required history screening and maturity, then **Review
+   collateral exit**. A rejected board does not remove the original withdrawal
+   rights or waive those conditions. For Bok, select the receiving Ethereum wallet
+   and **Review Bok credit exit** for an amount of free credit. Review and confirm
+   the private transaction's maximum fee before its single submission.
+5. Keep the encrypted original exit and wait for real Outbox settlement. **Review
+   Ethereum refund** is a separate gas review. Collateral returns only to its
+   original depositor; Bok returns to the recipient fixed in the private exit.
+   The current wallet requires that saved recipient to pay Ethereum gas; it does
+   not provide a gasless refund relay. Never substitute a recipient after an exit.
+6. After interruption, reopen the same account/recovery and use **Check existing
+   refund**. A missing response, unknown transaction, reorg or unavailable witness
+   does not authorize another payment. Exact saved calldata, successful canonical
+   effects and the correct portal event are required; testnet refunds also require
+   finalized inclusion. The workflow stays retained until refund verification.
+
+The matching ownership utility preserves cancelled-request history for its new
+class. It cannot restore ownership notes previously removed by an older class.
+Do not advertise complete restored history for such an old deployment. Rotate only
+with an explicit recovery/old-liability plan; changing the website is insufficient.
+
+## Privacy and acceptance boundary (RC23–RC26)
+
+Uniform public accounting and local intersection avoid sending a human's request
+list to the public server. Do not introduce personalized public balance endpoints,
+account/name-group lookups or operator-visible Home/follow subscriptions. Private
+wallet utilities use the authenticated private node; preserve its existing privacy
+routing. Public request IDs and the authenticated public Bok identity remain public.
+The chosen prover may see witnesses, and network timing, content and other observer
+correlations still need the documented threat analysis. A request trace or component
+test is not cryptographic unlinkability evidence.
+
+The [balance/exit component record](../execution/evidence/G04/rc22-balances-withdrawals/bok-final-review.json)
+and [real-cursor repair record](../execution/evidence/G04/rc22-balances-withdrawals/bok-cursor-repair-review.json)
+cover source-bound local application, encrypted-journal and labelled browser checks.
+Retain those records with the operator handoff; they do not establish live withdrawal.
+Before marking the installation usable, record actual complete accounting with the
+matching deployed class, private exit, settled canonical Ethereum refund, interrupted
+recovery and additional funding. Also retain actual private-account initialization,
+initial funding/claims, post and Bok readiness evidence on the final assets. A
+canonical Ethereum funding payment alone is not successful private setup or Ready.
+
+The named-wallet matrix remains separate: local native-proof-disabled MetaMask
+results do not qualify real-proof testnet or Phantom. Phantom's observed onboarding
+availability failure remains an external-response ambiguity, not a validated payment
+route; do not weaken wallet security or assert support from a mock. Current target
+network/liquidity, the selected personal GitHub App's live permissions, full archive
+recovery, independent fresh-operator restore, expert audit and the required soak
+remain their own evidence gates. Check current records rather than treating a
+transient development startup failure or success as permanent deployment status.
+
 ## Recovery, monitoring and costs
 
 Before paid capacity, reconcile prior/accrued usage and forecast compute, storage,
