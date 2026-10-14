@@ -387752,7 +387752,8 @@ Partial Address: ${this.partialAddress.toString()}
         claim2 = { contract: s.recipient, method: "claim", args: [r.amount, secrets.recipientSalt, secret, r.leafIndex] };
       }
       requireThat((await computeSecretHash(Fr.fromString(secret))).toString() === r.secretHash);
-      const message = new L1ToL2Message(new L1Actor(EthAddress.fromString(s.portal), Number(s.chainId)), new L2Actor(new AztecAddress(Fr.fromString(messageRecipient)), Number(s.version)), Fr.fromString(content), Fr.fromString(r.secretHash), new Fr(BigInt(r.leafIndex)));
+      const messageSender = kind === "private-fee" ? EthAddress.fromField(ProtocolContractAddress.FeeJuice.toField()) : EthAddress.fromString(s.portal);
+      const message = new L1ToL2Message(new L1Actor(messageSender, Number(s.chainId)), new L2Actor(new AztecAddress(Fr.fromString(messageRecipient)), Number(s.version)), Fr.fromString(content), Fr.fromString(r.secretHash), new Fr(BigInt(r.leafIndex)));
       requireThat(message.hash().toString() === r.messageKey);
       const checkL2 = async () => {
         const block2 = await read2(() => nodeReads.getBlockData(a.number));
