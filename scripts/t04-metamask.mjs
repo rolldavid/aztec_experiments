@@ -289,7 +289,7 @@ export async function driveMetaMaskAggregateFunding({context,page,walletPage,con
   }
   const dialog=page.getByRole('dialog');await dialog.getByRole('button',{name:'Recover funding',exact:true}).click();
   mark('aggregate-connect-wallet');await dialog.getByRole('button',{name:'Connect MetaMask',exact:true}).click();
-  await confirmMetaMaskRecoveryAccountSelection(walletPage);
+  report.accountSelection=await confirmMetaMaskRecoveryAccountSelection(walletPage,{page,account,chainId:'31337',permission});
   await dialog.getByText('Funding wallet connected. No payment has been sent.',{exact:true}).waitFor();
   assert.equal((await page.evaluate(()=>walletState.ethAccount)).toLowerCase(),account);
   if(c.asset==='USDC')await dialog.getByLabel('Pay with',{exact:true}).selectOption('USDC');
@@ -422,11 +422,34 @@ export function installMetaMaskAggregateObserver(){
  };
 }
 
-export async function confirmMetaMaskRecoveryAccountSelection(walletPage){
+// Serialized read-only projection: no account value leaves the application.
+export function inspectMetaMaskSelectedAccount({account,chainId}){
+ const snapshot=window.BillboardAccount.snapshot(),state=window.walletState;
+ return {connected:snapshot.ethereumConnected===true,accountMatches:typeof snapshot.ethereumAddress==='string'&&snapshot.ethereumAddress.toLowerCase()===account,
+  chainMatches:state?.ethChainId===chainId,walletMatches:snapshot.ethereumWalletName==='MetaMask',invalidated:snapshot.invalidated===true};
+}
+export async function confirmMetaMaskRecoveryAccountSelection(walletPage,completed){
  const confirm=walletPage.getByTestId('confirm-btn');
- await confirm.waitFor();
+ if(completed){
+  const {page,account,chainId,permission}=completed;
+  assert.match(account,/^0x[0-9a-f]{40}$/);assert.equal(chainId,'31337');
+  const deadline=Date.now()+10000;
+  while(Date.now()<deadline){
+   if(await confirm.isVisible())break;
+   if(permission.rejected)throw Error('MetaMask account selection rejected');
+   if(permission.entered&&permission.resolved){
+    const state=await page.evaluate(inspectMetaMaskSelectedAccount,{account,chainId});
+    if(state.connected){
+     assert(state.accountMatches&&state.chainMatches&&state.walletMatches&&!state.invalidated,'MetaMask selected account or network differs');
+     return 'already-completed';
+    }
+   }
+   await new Promise(resolve=>setTimeout(resolve,100));
+  }
+  assert(Date.now()<deadline,'MetaMask account selection did not complete');
+ }else await confirm.waitFor();
  assert.equal((await confirm.innerText()).trim(),'Connect');
- await confirm.click();
+ await confirm.click();return 'prompt-confirmed';
 }
 
 // Serialized into the page: project only known notices and button states, never

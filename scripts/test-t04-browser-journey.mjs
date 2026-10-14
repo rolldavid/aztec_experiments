@@ -638,3 +638,29 @@ test('aggregate account permission observation preserves pending, resolved and r
   else{await assert.rejects(run,error=>error===original);assert.deepEqual(events,['entered','provider','rejected']);}
  }
 });
+
+
+test('aggregate selection accepts the exact completed account without a redundant Connect click',async()=>{
+ const {confirmMetaMaskRecoveryAccountSelection,inspectMetaMaskSelectedAccount}=await import('./t04-metamask.mjs');const {runInNewContext}=await import('node:vm');
+ const account='0x'+'1'.repeat(40),chainId='31337';let clicks=0,reads=0;
+ const page={async evaluate(fn,args){assert.equal(fn,inspectMetaMaskSelectedAccount);reads++;return runInNewContext('('+fn.toString()+')(input)',{input:args,window:{BillboardAccount:{snapshot:()=>({ethereumConnected:reads>1,ethereumAddress:account.toUpperCase(),ethereumWalletName:'MetaMask',invalidated:false})},walletState:{ethChainId:chainId}}});}};
+ const result=await confirmMetaMaskRecoveryAccountSelection({getByTestId:()=>({isVisible:async()=>false,click:async()=>clicks++})},{page,account,chainId,permission:{entered:true,resolved:true,rejected:false}});
+ assert.equal(result,'already-completed');assert.equal(reads,2);assert.equal(clicks,0);
+});
+for(const field of ['accountMatches','chainMatches','walletMatches','invalidated'])test('aggregate completed selection rejects mismatched '+field,async()=>{
+ const {confirmMetaMaskRecoveryAccountSelection}=await import('./t04-metamask.mjs');let clicks=0;
+ const state={connected:true,accountMatches:true,chainMatches:true,walletMatches:true,invalidated:false};state[field]=field==='invalidated';
+ await assert.rejects(confirmMetaMaskRecoveryAccountSelection({getByTestId:()=>({isVisible:async()=>false,click:async()=>clicks++})},{page:{evaluate:async()=>state},account:'0x'+'1'.repeat(40),chainId:'31337',permission:{entered:true,resolved:true,rejected:false}}),/account or network differs/);assert.equal(clicks,0);
+});
+for(const label of ['Connect','Continue at your own risk'])test('aggregate selection retains exact visible prompt guard: '+label,async()=>{
+ const {confirmMetaMaskRecoveryAccountSelection}=await import('./t04-metamask.mjs');let clicks=0,reads=0;
+ const run=confirmMetaMaskRecoveryAccountSelection({getByTestId:()=>({isVisible:async()=>true,innerText:async()=>label,click:async()=>clicks++})},{page:{evaluate:async()=>{reads++;}},account:'0x'+'1'.repeat(40),chainId:'31337',permission:{entered:true,resolved:true,rejected:false}});
+ if(label==='Connect')assert.equal(await run,'prompt-confirmed');else await assert.rejects(run,/Connect/);
+ assert.equal(reads,0);assert.equal(clicks,label==='Connect'?1:0);
+});
+test('aggregate selection does not infer completion from a stale account or rejected permission',async()=>{
+ const {confirmMetaMaskRecoveryAccountSelection}=await import('./t04-metamask.mjs');let reads=0,visibility=0,clicks=0;
+ const wallet={getByTestId:()=>({isVisible:async()=>++visibility>1,innerText:async()=>'Connect',click:async()=>clicks++})};
+ assert.equal(await confirmMetaMaskRecoveryAccountSelection(wallet,{page:{evaluate:async()=>{reads++;}},account:'0x'+'1'.repeat(40),chainId:'31337',permission:{entered:false,resolved:false,rejected:false}}),'prompt-confirmed');assert.equal(reads,0);assert.equal(clicks,1);
+ await assert.rejects(confirmMetaMaskRecoveryAccountSelection({getByTestId:()=>({isVisible:async()=>false})},{page:{evaluate:async()=>{reads++;}},account:'0x'+'1'.repeat(40),chainId:'31337',permission:{entered:true,resolved:false,rejected:true}}),/selection rejected/);assert.equal(reads,0);
+});
