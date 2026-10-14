@@ -577,7 +577,15 @@ intentionally cannot start a production service unchanged.
 Provide `VENICE_WALLET_PRIVATE_KEY` and production `PLUGIN_QUERY_API_KEY` through
 the trusted service environment, plus `VENICE_MODEL` if overriding the provider
 model. `summaryModelId` (or `VENICE_SUMMARY_MODEL`) must select a cheaper model;
-the metered provider verifies actual prices. Prefund provider credits separately:
+the metered provider verifies actual prices. History summaries retain their
+1,200-token cap and explicitly disable reasoning through Venice's
+`reasoning: {enabled: false}` request flag. Admission requires the live catalog
+to declare a nonreasoning model, or a reasoning model supporting `none` effort;
+unknown/always-reasoning capabilities fail before reservation. The primary model
+keeps its configured output cap and reasoning behavior. Truncated summaries stay
+incomplete after genuine usage is settled; they never retry or start primary
+work. See [Venice reasoning controls](https://docs.venice.ai/guides/features/reasoning-models).
+Prefund provider credits separately:
 Rolling rejects `VENICE_AUTO_TOP_UP=true`. `GITHUB_TOKEN` is optional for authorized
 reference-repository reads and is not the mirror credential. No secret belongs
 in a model prompt, source snapshot or generated subprocess environment.

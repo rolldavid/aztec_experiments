@@ -22,7 +22,7 @@ function conversationFixture(){
 }
 test('paid history summary excludes latest and main receives summary plus exact latest',async()=>{
  const f=conversationFixture();assert.equal((await f.run()).replyText,'Done');assert.equal(f.calls.length,2);assert.equal(f.closed(),1);
- const [summary,main]=f.calls;assert.equal(summary.modelId,'cheap');assert.equal(summary.cheaperThan,'main');assert.equal(summary.maxTokens,100);assert.deepEqual(summary.tools,[]);
+ const [summary,main]=f.calls;assert.equal(summary.modelId,'cheap');assert.equal(summary.cheaperThan,'main');assert.equal(summary.maxTokens,100);assert.equal(summary.reasoningEffort,'none');assert(!Object.hasOwn(main,'reasoningEffort'));assert.deepEqual(summary.tools,[]);
  assert(!JSON.stringify(summary.messages).includes('LATEST_SENTINEL'));assert.match(summary.messages[1].content,/Earlier instructions/);assert.match(summary.messages[1].content,/Unresolved/);
  assert.equal(main.modelId,'main');assert.match(main.messages[1].content,/Prior decisions/);assert.equal(main.messages[2].content,'LATEST_SENTINEL');assert.equal(main.messages[2].role,'user');
 });

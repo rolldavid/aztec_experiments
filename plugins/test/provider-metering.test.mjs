@@ -92,3 +92,21 @@ for(const reason of ['stop','length','tool_calls','content_filter','function_cal
  assert.equal(result.charge,47n);assert.equal(result.billing.charge,'47');assert.equal(result.finishReason,reason==='PRIVATE_SENTINEL'||reason===null?'invalid':reason);assert.equal(h.calls(),1);
  assert.equal(Object.hasOwn(result,'finishReason'),reason!==undefined);
 });
+
+for(const [name,capabilities,accepted] of [
+ ['supported none',{supportsReasoning:true,supportsReasoningEffort:true,reasoningEffortOptions:['none','low','medium','high'],defaultReasoningEffort:'high'},true],
+ ['nonreasoning',{supportsReasoning:false,supportsReasoningEffort:false},true],
+ ['unknown',{},false],['always reasoning',{supportsReasoning:true,supportsReasoningEffort:false},false],
+ ['none unsupported',{supportsReasoning:true,supportsReasoningEffort:true,reasoningEffortOptions:['low','high']},false]
+])test('summary disables reasoning only with declared '+name+' capability',async()=>{
+ let credits=0,inference=0,body;const summary={...spec,capabilities:{supportsFunctionCalling:true,...capabilities},pricing:{input:{usd:.06},output:{usd:.4}}};
+ const client={balance:async()=>{credits++;return {canConsume:true,balanceUsd:10};},json:async(route,options)=>{if(route.endsWith('/models'))return {data:[{id:'kimi-k2-5',model_spec:spec},{id:'summary',model_spec:summary}]};inference++;body=options.body;return valid();}};
+ const request={...input,modelId:'summary',cheaperThan:null,reasoningEffort:'none'},p=veniceMeteredProvider({client});
+ if(!accepted){await assert.rejects(p.quote(request,1000000n),/cannot disable reasoning/);assert.equal(credits,0);assert.equal(inference,0);return;}
+ const q=await p.quote(request,1000000n),result=await p.execute(request,q);assert.equal(credits,1);assert.equal(inference,1);assert.deepEqual(body.reasoning,{enabled:false});assert.equal(body.max_completion_tokens,20);assert(!Object.hasOwn(body,'tools'));assert(!Object.hasOwn(body,'reasoning_effort'));assert.equal(result.billing.completionTokens,10);assert.equal(result.billing.charge,'6');
+});
+for(const kind of ['primary','tools','unknown-effort'])test('summary reasoning policy rejects '+kind+' before credits or inference',async()=>{
+ let credits=0,inference=0;const client={balance:async()=>{credits++;return {canConsume:true,balanceUsd:10};},json:async route=>{if(route.endsWith('/models'))return {data:[{id:'kimi-k2-5',model_spec:spec}]};inference++;}};
+ const request={...input,cheaperThan:'main',reasoningEffort:'none'};if(kind==='primary')delete request.cheaperThan;if(kind==='tools')request.tools=[{type:'function'}];if(kind==='unknown-effort')request.reasoningEffort='high';
+ await assert.rejects(veniceMeteredProvider({client}).quote(request,1000000n),/Invalid summary reasoning policy/);assert.equal(credits,0);assert.equal(inference,0);
+});

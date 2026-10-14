@@ -20,6 +20,13 @@ export function validateVeniceBilling(value,quote){
  if(BigInt(expected)===0n||(receipt!==undefined&&receipt!==expected))throw Error('Provider billing receipt mismatch');
  return {...facts,receipt:expected};
 }
+// Summary policy is part of the caller's immutable, journal-hashed input.
+// This is not a generic provider-parameter passthrough or a retry route.
+function summaryWithoutReasoning(input){
+ if(!Object.hasOwn(input,'reasoningEffort'))return false;
+ if(input.reasoningEffort!=='none'||!Object.hasOwn(input,'cheaperThan')||!Array.isArray(input.tools)||input.tools.length)throw Error('Invalid summary reasoning policy');
+ return true;
+}
 export function veniceMeteredProvider({client,model='kimi-k2-5',autoTopUp=false,maxTopUpUsd=5}){
  let readiness=Promise.resolve();
  const ensureCredits=maximum=>{
@@ -37,6 +44,12 @@ export function veniceMeteredProvider({client,model='kimi-k2-5',autoTopUp=false,
    const modelId=input.modelId??model;
    const catalog=await client.json('/api/v1/models');
    const spec=catalog.data?.find(x=>x.id===modelId)?.model_spec;
+   if(summaryWithoutReasoning(input)){
+    const c=spec?.capabilities;
+    // Explicitly nonreasoning models remain eligible. Unknown capabilities or
+    // always-reasoning models fail before credits/reservation, never fall back.
+    if(c?.supportsReasoning!==false&&!(c?.supportsReasoning===true&&c.supportsReasoningEffort===true&&Array.isArray(c.reasoningEffortOptions)&&c.reasoningEffortOptions.includes('none')))throw Error('Summary model cannot disable reasoning');
+   }
    const quote={...quoteCall(spec,available,input.maxTokens),modelId};
    if(Object.hasOwn(input,'cheaperThan')){
     const primary=input.cheaperThan??model;
@@ -52,7 +65,7 @@ export function veniceMeteredProvider({client,model='kimi-k2-5',autoTopUp=false,
    return quote;
   },
   async execute(input,quote){
-   const result=await client.json('/api/v1/chat/completions',{method:'POST',body:{model:quote.modelId,messages:input.messages,...(input.tools===undefined||(Array.isArray(input.tools)&&input.tools.length===0)?{}:{tools:input.tools}),max_completion_tokens:quote.maxTokens,n:1,stream:false,
+   const result=await client.json('/api/v1/chat/completions',{method:'POST',body:{model:quote.modelId,messages:input.messages,...(input.tools===undefined||(Array.isArray(input.tools)&&input.tools.length===0)?{}:{tools:input.tools}),max_completion_tokens:quote.maxTokens,n:1,stream:false,...(summaryWithoutReasoning(input)?{reasoning:{enabled:false}}:{}),
     venice_parameters:{include_venice_system_prompt:false,enable_web_search:'off',enable_web_scraping:false,enable_x_search:false}}});
    let stage='missing-result/usage';
    try {
