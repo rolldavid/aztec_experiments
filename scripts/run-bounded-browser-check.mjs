@@ -38,7 +38,7 @@ try{
  report.sourceHashes=await fingerprints();
  const exit=await owner.start('ui',process.execPath,['--max-old-space-size='+String(walletExtension?256:publicFeed?128:64),path.join(ROOT,script),...args],{
   cwd:ROOT,env:{...process.env,T04_BROWSER_DEADLINE_AT:String(browserDeadlineAt),NODE_OPTIONS:'',U01_BOUNDED_BROWSER:'true',BILLBOARD_TEST_TMPDIR:directory,TMPDIR:directory,TMP:directory,TEMP:directory},
-  onRecord:record=>report.observations.push(record),
+  onRecord:record=>{if(aggregate&&record.kind==='wallet-stage'){(report.walletStages??=[]).length<64&&report.walletStages.push(record);}else report.observations.push(record);},
  });
  assert.equal(exit.code,0);assert(report.observations.length>0);assert(report.observations.every(record=>record.passed===true));
  assert.deepEqual(await fingerprints(),report.sourceHashes);report.passed=true;

@@ -36,6 +36,20 @@ export function unpackMetaMask(directory){
  const extension=path.join(directory,'extension');execFileSync('/usr/bin/unzip',['-q',archive,'-d',extension]);
  assert.equal(JSON.parse(fs.readFileSync(path.join(extension,'manifest.json'))).version,'13.49.0.0');return extension;
 }
+// Fixed, public page classes only: no URLs, extension IDs, account data or DOM.
+export function metaMaskPageCounts(context,applicationOrigin){
+ const counts={application:0,extensionHome:0,extensionSidepanel:0,extensionOther:0,blank:0,other:0,workers:0};
+ for(const page of context.pages()){
+  const url=new URL(page.url());
+  const key=url.origin===applicationOrigin?'application':url.protocol==='chrome-extension:'?(url.pathname==='/home.html'?'extensionHome':url.pathname==='/sidepanel.html'?'extensionSidepanel':'extensionOther'):url.href==='about:blank'?'blank':'other';
+  counts[key]++;
+ }
+ counts.workers=context.serviceWorkers().length;return counts;
+}
+export function recordMetaMaskStage(write,context,applicationOrigin,stage){
+ // Observer failures must never replace application or wallet behavior.
+ try{write({kind:'wallet-stage',stage,pages:metaMaskPageCounts(context,applicationOrigin)});}catch{}
+}
 export async function onboardMetaMask(context,mnemonic,password,extensionId,mark,beforeAcceptTerms=async()=>{}){
  for(const page of context.pages())if(page.url().startsWith('chrome-extension://'+extensionId+'/'))await page.close();
  const onboarding=await context.newPage();onboarding.setDefaultTimeout(10000);
@@ -272,7 +286,7 @@ export async function driveMetaMaskAggregateFunding({context,page,walletPage,con
    await page.getByRole('button',{name:'Your account',exact:true}).click();const initialDialog=page.getByRole('dialog');
    if(await initialDialog.getByRole('button',{name:'Unlock',exact:true}).isVisible())await initialDialog.getByRole('button',{name:'Unlock',exact:true}).click();await initialDialog.getByLabel('Recovery password',{exact:true}).fill(c.password);
    const [initial]=await Promise.all([page.waitForEvent('download'),initialDialog.getByRole('button',{name:'Create account and download recovery',exact:true}).click()]);
-   await saveEncryptedDownload(initial,path.join(c.recoveryDirectory,'initial-recovery.json'));
+   await saveEncryptedDownload(initial,path.join(c.recoveryDirectory,'initial-recovery.json'));mark('aggregate-initial-recovery-saved');
   }
   const dialog=page.getByRole('dialog');await dialog.getByRole('button',{name:'Recover funding',exact:true}).click();
   mark('aggregate-connect-wallet');await dialog.getByRole('button',{name:'Connect MetaMask',exact:true}).click();

@@ -611,3 +611,15 @@ test('automatic claim surface keeps waiting states pending without interacting w
   assert.equal(runInNewContext('('+inspectMetaMaskPaidRecoverySurface+')(options)',{document,options:{settledOnly:true,terminalOnly:true}}),null);
  }
 });
+
+test('wallet stage memory observations contain only page classes and cannot replace execution failures',async()=>{
+ const {metaMaskPageCounts,recordMetaMaskStage}=await import('./t04-metamask.mjs');
+ const urls=['http://127.0.0.1:8081/private?secret=PRIVATE_SENTINEL','chrome-extension://private-id/home.html#secret','chrome-extension://private-id/sidepanel.html','chrome-extension://private-id/notification.html','about:blank','https://private.invalid/secret'];
+ const context={pages:()=>urls.map(url=>({url:()=>url})),serviceWorkers:()=>[{},{}]};
+ const expected={application:1,extensionHome:1,extensionSidepanel:1,extensionOther:1,blank:1,other:1,workers:2};
+ assert.deepEqual(metaMaskPageCounts(context,'http://127.0.0.1:8081'),expected);
+ const records=[];recordMetaMaskStage(value=>records.push(value),context,'http://127.0.0.1:8081','aggregate-private-account');
+ assert.deepEqual(records,[{kind:'wallet-stage',stage:'aggregate-private-account',pages:expected}]);assert(!JSON.stringify(records).includes('PRIVATE_SENTINEL'));
+ assert.doesNotThrow(()=>recordMetaMaskStage(()=>{throw false;},context,'http://127.0.0.1:8081','aggregate-private-account'));
+ assert.doesNotThrow(()=>recordMetaMaskStage(()=>{}, {pages:()=>{throw 0;}},'http://127.0.0.1:8081','aggregate-private-account'));
+});
