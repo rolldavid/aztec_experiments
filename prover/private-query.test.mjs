@@ -375,3 +375,26 @@ test('historical gateway: genesis header metadata remains canonical despite worl
 test('historical gateway: orphaned genesis response cannot bypass final canonical fence',async t=>{
  const f=await historyFixture(t,{strict:true,change:({method,result,final})=>method==='getBlockData'&&final?{...result,blockHash:historyHash(99)}:result});assert.equal((await f.post(call('aztec_getBlock',[0]))).status,503);
 });
+
+test('historical gateway: fixed public body and header at synced world head above checkpoint share canonical bounds',async t=>{
+ const f=await historyFixture(t,{strict:true});Object.assign(f.ready,{latestBlockNumber:8,latestBlockHash:historyHash(8)});
+ for(const method of ['getBlock','getBlockData'])for(const selector of [8,{number:8,hash:historyHash(8)},{hash:historyHash(8)}]){
+  const response=await f.post(call('aztec_'+method,[selector]));assert.equal(response.status,200);
+  const value=await response.json();assert(!value.error);assert.equal(method==='getBlock'?value.result.hash:value.result.blockHash,historyHash(8));
+ }
+ assert(f.inspected.every(tier=>tier==='checkpointed'));
+});
+test('historical gateway: public body head allowance does not admit future bodies or pruned and above-checkpoint state',async t=>{
+ const f=await historyFixture(t,{strict:true});Object.assign(f.ready,{latestBlockNumber:8,latestBlockHash:historyHash(8)});
+ for(const method of ['getBlock','getBlockData'])assert.equal((await f.post(call('aztec_'+method,[9]))).status,503);
+ for(const height of [0,8])assert.equal((await f.post(call('aztec_getBlockHashMembershipWitness',[height,historyHash(1)]))).status,503);
+ assert(!f.operations.includes('getBlock'));assert(!f.operations.includes('getBlockHashMembershipWitness'));
+});
+test('historical gateway: above-checkpoint public body still rejects orphan resolution and final reorg',async t=>{
+ for(const finalReorg of [false,true]){
+  const f=await historyFixture(t,{strict:true,change:({method,result,operations,final})=>method==='getBlockData'&&result.header.globalVariables.blockNumber===8&&(finalReorg?final:operations.length===2)?{...result,blockHash:historyHash(99)}:result});
+  Object.assign(f.ready,{latestBlockNumber:8,latestBlockHash:historyHash(8)});
+  assert.equal((await f.post(call('aztec_getBlock',[8]))).status,503);
+  assert.equal(f.operations.includes('getBlock'),finalReorg);
+ }
+});

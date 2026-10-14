@@ -236,11 +236,12 @@ export function createPrivateQueryWithInspector({queryNode, chainId, rollupVersi
           for(const call of prepared){
             const kind=historicalKind(call);
             if(kind==='selector'){
-              // Public header metadata authenticates the world's own height;
+              // Public headers and bodies authenticate the world's own height;
               // stateful reads remain bounded by the selected readiness tier.
               // Archiver headers/bodies (including PXE genesis) do not depend
               // on retained world-state snapshots; witness/state reads do.
-              call.anchor=await canonicalRecord(call.args[selectorIndex.get(call.method)],ready,call.method==='getBlockData'?ready.latestBlockNumber:ready.readinessBlockNumber,!['getBlock','getBlockData'].includes(call.method));
+              const publicBlock=['getBlock','getBlockData'].includes(call.method);
+              call.anchor=await canonicalRecord(call.args[selectorIndex.get(call.method)],ready,publicBlock?ready.latestBlockNumber:ready.readinessBlockNumber,!publicBlock);
             }else if(kind==='transaction'){
               const receipt=await node.getTxReceipt(call.args[0],call.method==='getTxReceipt'?call.args[1]:undefined);
               call.receipt=receipt;if(call.method==='getTxReceipt')call.cached={value:receipt};
