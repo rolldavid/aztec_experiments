@@ -432,3 +432,15 @@ The relay initialization marker lives beside `relay-state`, not inside it. Once
 that marker exists, loss of its original directory or `funding-budget.json` is a
 recovery failure before any relay funding stage. Never delete the marker or
 recreate a ledger to clear an unresolved plan.
+
+
+Rolling automated moderation evaluates the authoritative main rules first, with
+no local-rule text in that model request. A main violation is sufficient for
+removal. Only when main rules permit does it evaluate nonempty local rules in a
+second request. Both must permit for the post to remain evaluated OK; either
+request failing or returning an invalid verdict leaves durable unresolved work
+and submits nothing. Local instructions therefore cannot override a parent
+prohibition by contaminating its prompt. This costs up to two sequential model
+calls and requires renewed latency/capacity evidence. The existing runtime
+identity binds the moderation implementation, invalidating earlier decisions
+after this change. Legacy moderation and qualification thresholds are unchanged.

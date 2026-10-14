@@ -178,3 +178,15 @@ or event reorgs reopen the original uncertainty fence. Full production acceptanc
 still requires actual native-wallet/model runs, targeted real-proof testnet
 removal, current prompt evaluation, independent review and the elapsed workload
 trial. Unit fixtures explicitly do not satisfy these gates.
+
+
+Rolling automated moderation evaluates the authoritative main rules first, with
+no local-rule text in that model request. A main violation is sufficient for
+removal. Only when main rules permit does it evaluate nonempty local rules in a
+second request. Both must permit for the post to remain evaluated OK; either
+request failing or returning an invalid verdict leaves durable unresolved work
+and submits nothing. Local instructions therefore cannot override a parent
+prohibition by contaminating its prompt. This costs up to two sequential model
+calls and requires renewed latency/capacity evidence. The existing runtime
+identity binds the moderation implementation, invalidating earlier decisions
+after this change. Legacy moderation and qualification thresholds are unchanged.

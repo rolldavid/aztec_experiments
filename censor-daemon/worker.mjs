@@ -1,3 +1,4 @@
+import {moderateRollingPost} from './moderation.mjs';
 import {safeModerationDiagnostic} from './health.mjs';
 import {scopeKey} from '../shared/protocol-schema.mjs';
 import {reconcileFlag} from './flag-outcome.mjs';
@@ -127,7 +128,7 @@ export async function processRollingModerationCycle({store,signer,evaluate,worke
     // visible link context for rules such as no reposts. The original post is
     // separately queued; do not invent referenced message text or skip this job.
     const modelText=record.post.text===''?JSON.stringify({kind:'repost',reference:record.post.context.record.reference,content:''}):record.post.text;
-    const verdict=await evaluate(modelText,record.policy.text);store.renew(key,token);
+    const verdict=await moderateRollingPost(modelText,record.policy.text,evaluate);store.renew(key,token);
     await ingest([record.job.postId]);record=store.get(key);
     if(record?.lease?.token!==token)continue;
     if(!verdict.isViolation){store.transition(key,token,{state:'evaluated-ok',decision:verdict});continue;}
