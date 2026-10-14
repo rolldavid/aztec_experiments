@@ -393064,12 +393064,16 @@ Partial Address: ${this.partialAddress.toString()}
         integer8(p.block.length, 32, 1);
         const values = p.block;
         check9(Reflect.ownKeys(values).length === values.length + 1);
+        let bytes3 = 0;
         p.block = Array.from({ length: values.length }, (_, i) => {
           const d = Object.getOwnPropertyDescriptor(values, String(i));
           check9(d && "value" in d);
-          return block2(d.value);
+          const b2 = block2(d.value);
+          bytes3 += (b2.fields.length + b2.headerFields.length) * 69 + 2048;
+          check9(bytes3 <= 2 * 1024 * 1024);
+          return b2;
         });
-        check9(p.block.every((b2, i) => b2.fields.length === 7 && (i === 0 || b2.blockNumber === p.block[i - 1].blockNumber + 1)));
+        check9(p.block.every((b2, i) => i === 0 || b2.blockNumber === p.block[i - 1].blockNumber + 1));
       } else p.block = block2(p.block);
     }
     const { contextGuard } = exact2(options, ["contextGuard"]);
@@ -393223,32 +393227,58 @@ Partial Address: ${this.partialAddress.toString()}
           check9(verified2.blockNumber === block2.blockNumber);
           return verified2;
         };
-        const ingest = async (block2, first2, logCount) => {
-          check9(await pxe.noteStore.withChangeSet(context.changeSetId, (s) => s.notes.size === 0 && s.nullifierEmissions.size === 0));
-          check9(await pxe.privateEventStore.withChangeSet(context.changeSetId, (s) => s.size === 0));
-          await binding3.page({ contractAddress: p.contractAddress, scope: p.scope, expectedClassId: p.expectedClassId, expectedArtifactHash: p.expectedArtifactHash, network: p.network, proofsEnabled: p.proofsEnabled, blockNumber: block2.blockNumber, blockHash: block2.blockHash, txHash: first2.txHash, firstLog: first2.logIndex, logCount, compactFields: block2.fields, headerFields: block2.headerFields }, guard, frame);
-          const events = await pxe.privateEventStore.withChangeSet(context.changeSetId, (changeSet) => {
-            check9(changeSet.size <= 8);
-            return Array.from(changeSet.values(), (e) => ({ packedEvent: e.msgContent.map((x) => x.toString()), eventSelector: e.eventSelector.toString(), l2BlockNumber: e.l2BlockNumber, l2BlockHash: e.l2BlockHash.toString(), txHash: e.txHash.toString(), txIndexInBlock: e.txIndexInBlock, eventIndexInTx: e.eventIndexInTx, contract: e.contractAddress.toString(), scoped: e.scopes.has(p.scope) }));
-          });
-          check9(events.length <= 8);
-          for (const e of events) {
-            check9(e.contract === p.contractAddress && e.scoped === true && e.txHash === first2.txHash && e.txIndexInBlock === first2.txIndex && e.l2BlockNumber === block2.blockNumber && e.l2BlockHash === block2.blockHash && e.packedEvent.length === 8);
-            integer8(e.eventIndexInTx, 63);
+        const stageSnapshot = async () => ({
+          events: await pxe.privateEventStore.withChangeSet(context.changeSetId, (stage) => {
+            check9(stage.size <= 8);
+            return [...stage.entries()].map(([key2, value]) => [key2, value.toBuffer().toString("hex")]);
+          }),
+          notes: await pxe.noteStore.withChangeSet(context.changeSetId, (stage) => {
+            check9(stage.notes.size <= 8 && stage.nullifierEmissions.size <= 8);
+            return [...stage.notes.entries()].map(([key2, value]) => [key2, value.toBuffer().toString("hex")]);
+          }),
+          nullifiers: await pxe.noteStore.withChangeSet(context.changeSetId, (stage) => [...stage.nullifierEmissions])
+        });
+        const containsStage = (current, prior) => {
+          for (const kind of ["events", "notes", "nullifiers"]) {
+            const map7 = new Map(current[kind]);
+            for (const [key2, value] of prior[kind]) check9(map7.has(key2) && same(map7.get(key2), value));
           }
+        };
+        let stagedSeal = null;
+        frame.validators.push(async () => {
+          if (stagedSeal) check9(same(await stageSnapshot(), stagedSeal));
+        });
+        const ingest = async (block2, first2, logCount) => {
+          const prior = await stageSnapshot();
+          if (stagedSeal) check9(same(prior, stagedSeal));
+          else check9(prior.events.length === 0 && prior.notes.length === 0 && prior.nullifiers.length === 0);
+          await binding3.page({ contractAddress: p.contractAddress, scope: p.scope, expectedClassId: p.expectedClassId, expectedArtifactHash: p.expectedArtifactHash, network: p.network, proofsEnabled: p.proofsEnabled, blockNumber: block2.blockNumber, blockHash: block2.blockHash, txHash: first2.txHash, firstLog: first2.logIndex, logCount, compactFields: block2.fields, headerFields: block2.headerFields }, guard, frame);
+          const after = await stageSnapshot();
+          containsStage(after, prior);
+          const previousEvents = new Map(prior.events), previousNotes = new Map(prior.notes);
+          const events = await pxe.privateEventStore.withChangeSet(context.changeSetId, (changeSet) => {
+            const selected = [];
+            for (const [key2, e] of changeSet) {
+              const current = e.txHash.toString() === first2.txHash;
+              if (!previousEvents.has(key2) || current) {
+                check9(e.contractAddress.toString() === p.contractAddress && e.scopes.has(p.scope) && current && e.txIndexInBlock === first2.txIndex && e.l2BlockNumber === block2.blockNumber && e.l2BlockHash.toString() === block2.blockHash && e.msgContent.length === 8);
+                integer8(e.eventIndexInTx, 63);
+              }
+              if (current) selected.push({ packedEvent: e.msgContent.map((x) => x.toString()), eventSelector: e.eventSelector.toString(), l2BlockNumber: e.l2BlockNumber, l2BlockHash: e.l2BlockHash.toString(), txHash: e.txHash.toString(), txIndexInBlock: e.txIndexInBlock, eventIndexInTx: e.eventIndexInTx, contract: e.contractAddress.toString(), scoped: e.scopes.has(p.scope) });
+            }
+            return selected;
+          });
           const candidates = await pxe.noteStore.withChangeSet(context.changeSetId, (stage) => {
-            check9(stage.notes.size <= 8);
-            return [...stage.notes.values()].map((n2) => ({ nullifier: n2.noteDao.siloedNullifier.toString(), slot: n2.noteDao.storageSlot.toString(), owner: n2.noteDao.owner.toString(), contract: n2.noteDao.contractAddress.toString(), txHash: n2.noteDao.txHash.toString(), blockNumber: n2.noteDao.l2BlockNumber, blockHash: n2.noteDao.l2BlockHash, txIndex: n2.noteDao.txIndexInBlock }));
+            const selected = [];
+            for (const [key2, n2] of stage.notes) {
+              const d = n2.noteDao, current = d.txHash.toString() === first2.txHash;
+              if (!previousNotes.has(key2) || current) check9(d.owner.toString() === p.scope && d.contractAddress.toString() === p.contractAddress && current && d.l2BlockNumber === block2.blockNumber && d.l2BlockHash === block2.blockHash && d.txIndexInBlock === first2.txIndex);
+              if (current) selected.push({ nullifier: d.siloedNullifier.toString(), slot: d.storageSlot.toString(), owner: d.owner.toString(), contract: d.contractAddress.toString(), txHash: d.txHash.toString(), blockNumber: d.l2BlockNumber, blockHash: d.l2BlockHash, txIndex: d.txIndexInBlock });
+            }
+            return selected;
           });
-          check9(candidates.length <= 8);
-          const eventSnapshot = await pxe.privateEventStore.withChangeSet(context.changeSetId, (stage) => [...stage.entries()].map(([key2, value]) => [key2, value.toBuffer().toString("hex")]));
-          const noteSnapshot = await pxe.noteStore.withChangeSet(context.changeSetId, (stage) => ({ notes: [...stage.notes.entries()].map(([key2, value]) => [key2, value.toBuffer().toString("hex")]), nullifiers: [...stage.nullifierEmissions] }));
-          frame.validators.push(async () => {
-            const currentEvents = await pxe.privateEventStore.withChangeSet(context.changeSetId, (stage) => [...stage.entries()].map(([key2, value]) => [key2, value.toBuffer().toString("hex")]));
-            const currentNotes = await pxe.noteStore.withChangeSet(context.changeSetId, (stage) => ({ notes: [...stage.notes.entries()].map(([key2, value]) => [key2, value.toBuffer().toString("hex")]), nullifiers: [...stage.nullifierEmissions] }));
-            check9(same(currentEvents, eventSnapshot) && same(currentNotes, noteSnapshot));
-          });
-          for (const candidate of candidates) check9(candidate.owner === p.scope && candidate.contract === p.contractAddress && candidate.txHash === first2.txHash && candidate.blockNumber === block2.blockNumber && candidate.blockHash === block2.blockHash && candidate.txIndex === first2.txIndex);
+          frame.validators.push(async () => containsStage(await stageSnapshot(), after));
+          stagedSeal = after;
           return { events, candidates };
         };
         const active = async (c) => {
@@ -393383,48 +393413,62 @@ Partial Address: ${this.partialAddress.toString()}
           check9((values[0] === 0n || values[0] === 1n) && values[1] === 1n && values[2] >= 0n && values[2] < 1n << 64n);
           head = { initialized: values[0] === 1n, schema: 1, revision: String(values[2]), digest: String(values[3]) };
           check9(head.initialized ? !!state.candidate && values[2] > 0n && values[3] > 0n : !state.candidate && values[2] === 0n && values[3] === 0n);
-        } else if (Array.isArray(p.block)) {
-          check9(state.nextLog === 0 && state.pending.length === 0 && p.block[0].blockNumber === state.nextBlock && p.block.at(-1).blockNumber <= anchorRecord.blockNumber);
-          const validators = [];
-          for (let offset = 0; offset < p.block.length; offset += 4) {
-            const blocks = p.block.slice(offset, offset + 4), verified2 = await rollingPreferenceReadBatch(blocks.map((block2) => async () => authenticate(block2, (validate2) => validators.push(validate2))));
-            for (let i = 0; i < verified2.length; i++) check9(verified2[i].blockNumber === state.nextBlock + i && verified2[i].txCount === 0 && verified2[i].ciphertexts.length === 0);
-            state.nextBlock += verified2.length;
-          }
-          frame.validators.push(async () => {
-            for (let offset = 0; offset < validators.length; offset += 4) await rollingPreferenceReadBatch(validators.slice(offset, offset + 4));
-          });
         } else {
-          check9(p.block && p.block.blockNumber === state.nextBlock);
-          const block2 = p.block;
-          const verified2 = await authenticate(block2);
-          check9(verified2.blockNumber === state.nextBlock && state.nextLog <= verified2.ciphertexts.length);
-          if (state.nextLog < verified2.ciphertexts.length) {
-            const first2 = verified2.ciphertexts[state.nextLog], logs = [];
-            for (let i = state.nextLog; i < verified2.ciphertexts.length && logs.length < 8 && verified2.ciphertexts[i].txIndex === first2.txIndex; i++) logs.push(verified2.ciphertexts[i]);
-            const { events, candidates } = await ingest(block2, first2, logs.length);
-            for (const e of events) {
-              const prior = state.pending.find((x) => x.eventIndexInTx === e.eventIndexInTx);
-              if (prior) check9(same(prior, e));
-              else state.pending.push(e);
-              check9(state.pending.length <= 64);
+          const consume = async (block2, verified2, multiple) => {
+            check9(block2.blockNumber === state.nextBlock && verified2.blockNumber === state.nextBlock && state.nextLog <= verified2.ciphertexts.length);
+            let used = 0;
+            while (state.nextLog < verified2.ciphertexts.length) {
+              const first2 = verified2.ciphertexts[state.nextLog], logs = [];
+              for (let i = state.nextLog; i < verified2.ciphertexts.length && logs.length < 8 - used && verified2.ciphertexts[i].txIndex === first2.txIndex; i++) logs.push(verified2.ciphertexts[i]);
+              check9(logs.length > 0);
+              const { events, candidates } = await ingest(block2, first2, logs.length);
+              for (const e of events) {
+                const prior = state.pending.find((x) => x.eventIndexInTx === e.eventIndexInTx);
+                if (prior) check9(same(prior, e));
+                else state.pending.push(e);
+                check9(state.pending.length <= 64);
+              }
+              for (const candidate of candidates) {
+                if (await active(candidate)) {
+                  if (state.candidate) check9(state.candidate.nullifier === candidate.nullifier && state.candidate.slot === candidate.slot);
+                  else state.candidate = { nullifier: candidate.nullifier, slot: candidate.slot, origin: { blockNumber: block2.blockNumber, blockHash: block2.blockHash, txHash: first2.txHash, txIndex: first2.txIndex, firstLog: first2.logIndex, logCount: logs.length } };
+                }
+              }
+              state.nextLog += logs.length;
+              used += logs.length;
+              if (state.nextLog === verified2.ciphertexts.length || verified2.ciphertexts[state.nextLog].txIndex !== first2.txIndex) {
+                records.push(...state.pending.sort((a, b2) => a.eventIndexInTx - b2.eventIndexInTx).map(({ contract, scoped, txIndexInBlock, eventIndexInTx, ...record8 }) => record8));
+                state.pending = [];
+                check9(records.length <= 64);
+              }
+              if (!multiple) break;
             }
-            for (const candidate of candidates) {
-              if (await active(candidate)) {
-                if (state.candidate) check9(state.candidate.nullifier === candidate.nullifier && state.candidate.slot === candidate.slot);
-                else state.candidate = { nullifier: candidate.nullifier, slot: candidate.slot, origin: { blockNumber: block2.blockNumber, blockHash: block2.blockHash, txHash: first2.txHash, txIndex: first2.txIndex, firstLog: first2.logIndex, logCount: logs.length } };
+            if (state.nextLog === verified2.ciphertexts.length) {
+              check9(state.pending.length === 0);
+              state.nextBlock++;
+              state.nextLog = 0;
+            }
+          };
+          if (Array.isArray(p.block)) {
+            check9(state.nextLog === 0 && state.pending.length === 0 && p.block[0].blockNumber === state.nextBlock && p.block.at(-1).blockNumber <= anchorRecord.blockNumber);
+            const validators = [], verified2 = [];
+            let physicalLogs = 0;
+            for (let offset = 0; offset < p.block.length; offset += 4) {
+              const values = await rollingPreferenceReadBatch(p.block.slice(offset, offset + 4).map((block2) => async () => authenticate(block2, (validate2) => validators.push(validate2))));
+              for (const value of values) {
+                check9(value.blockNumber === state.nextBlock + verified2.length);
+                physicalLogs += value.ciphertexts.length;
+                check9(physicalLogs <= 8);
+                verified2.push(value);
               }
             }
-            state.nextLog += logs.length;
-            if (state.nextLog === verified2.ciphertexts.length || verified2.ciphertexts[state.nextLog].txIndex !== first2.txIndex) {
-              records = state.pending.sort((a, b2) => a.eventIndexInTx - b2.eventIndexInTx).map(({ contract, scoped, txIndexInBlock, eventIndexInTx, ...record8 }) => record8);
-              state.pending = [];
-            }
-          }
-          if (state.nextLog === verified2.ciphertexts.length) {
-            check9(state.pending.length === 0);
-            state.nextBlock++;
-            state.nextLog = 0;
+            frame.validators.push(async () => {
+              for (let offset = 0; offset < validators.length; offset += 4) await rollingPreferenceReadBatch(validators.slice(offset, offset + 4));
+            });
+            for (let i = 0; i < verified2.length; i++) await consume(p.block[i], verified2[i], true);
+          } else {
+            check9(p.block);
+            await consume(p.block, await authenticate(p.block), false);
           }
         }
         check9(state.sequence < Number.MAX_SAFE_INTEGER);
