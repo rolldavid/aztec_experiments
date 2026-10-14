@@ -9,6 +9,7 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import {createHash} from 'node:crypto';
+import {execFileSync} from 'node:child_process';
 test('accepted publication with uncertain private mirror retains exact identity and omits operator URL',async()=>{
  const receipt=Object.freeze({acceptedRevision:'a'.repeat(40)}),calls=[],publicResult={latestUrl:'https://apps.example/latest/',latestSourceUrl:'https://apps.example/source.json'};
  const publication={publish:async input=>{assert.equal(input,receipt);calls.push('local');return publicResult;}};
@@ -300,10 +301,10 @@ test('hosted recovery rejects scope and canonical request drift before dispatch'
   }finally{await x.close();}
  }
 });
-test('hosted recovery rejects symlink and malformed journals without private parser output',async()=>{
- for(const invalid of ['symlink','json']){
+test('hosted recovery rejects symlink, FIFO and malformed journals without private parser output',async()=>{
+ for(const invalid of ['symlink','fifo','json']){
   const x=await recoveryFixture();try{
-   if(invalid==='symlink')await fs.symlink('/dev/null',x.file);else await fs.writeFile(x.file,'PRIVATE-STATE-SENTINEL');
+   if(invalid==='symlink')await fs.symlink('/dev/null',x.file);else if(invalid==='fifo')execFileSync('mkfifo',[x.file]);else await fs.writeFile(x.file,'PRIVATE-STATE-SENTINEL');
    await assert.rejects(x.scan(),error=>error.message==='Invalid hosted recovery journal');
   }finally{await x.close();}
  }

@@ -134,9 +134,10 @@ export function hostedRecoveryScanner({directory,scope,pluginId,board,lease}){
   for(let scanned=0;scanned<64&&requests.length<16;scanned++){
    const entry=await entries.read();if(!entry){await entries.close();entries=null;break;}
    if(!/^[0-9a-f]{64}\.json$/.test(entry.name))continue;
+   if(!entry.isFile())throw Error('Invalid hosted recovery journal');
    const file=path.join(directory,entry.name);let handle,saved;
    try{
-    handle=await fs.open(file,fsConstants.O_RDONLY|fsConstants.O_NOFOLLOW);const stat=await handle.stat();
+    handle=await fs.open(file,fsConstants.O_RDONLY|fsConstants.O_NOFOLLOW|fsConstants.O_NONBLOCK);const stat=await handle.stat();
     assert(stat.isFile()&&stat.size<=8388608);
     const bytes=Buffer.alloc(stat.size+1);const {bytesRead}=await handle.read(bytes,0,bytes.length,0);assert.equal(bytesRead,stat.size);
     saved=JSON.parse(bytes.subarray(0,bytesRead).toString('utf8')).hostedPrivateBok;
