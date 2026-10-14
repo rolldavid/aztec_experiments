@@ -275,7 +275,7 @@ test('Sepolia seed fixed plan captures fields and rejects inherited accessors fo
 });
 function seedPlan(){
  const owner='0x'+'1'.repeat(40),inventoryOwner='0x'+'2'.repeat(40),hash='0x'+'a'.repeat(64);
- return {schemaVersion:1,campaign:'sepolia-seed-controlled-20261014',chainId:'11155111',ethereumUrl:'https://example.org/',owner,inventoryOwner,ownerNonce:10,inventoryNonce:20,expiresAt:2000000000,feeAmount:'10000000000000000000',usdcAmount:'48000',ethAmount:'1000000000000',inventoryEth:'0',includeWethPool:true,gasLimits:{'inventory-usdc':'150000','approve-fee':'150000','approve-usdc':'150000','seed-usdc-fee':'40000000','seed-weth-fee':'40000000','revoke-fee':'150000','revoke-usdc':'150000'},maxFeePerGas:'1100000',maxPriorityFeePerGas:'1000000',futureReserveWei:'132000000000000',usdcImplementation:'0xda317c1d3e835dd5f1be459006471acaa1289068',usdcImplementationCodeHash:'0x'+'b'.repeat(64),codeHashes:Object.fromEntries(['factory','positions','fee','usdc','weth'].map(n=>[n,hash]))};
+ return {schemaVersion:1,campaign:'sepolia-seed-controlled-20261014',chainId:'11155111',ethereumUrl:'https://example.org/',owner,inventoryOwner,ownerNonce:10,inventoryNonce:20,expiresAt:2000000000,cleanupExpiresAt:2000086400,feeAmount:'10000000000000000000',usdcAmount:'48000',ethAmount:'1000000000000',inventoryEth:'0',includeUsdcPool:true,includeWethPool:true,gasLimits:{'inventory-usdc':'150000','approve-fee':'150000','approve-usdc':'150000','seed-usdc-fee':'40000000','seed-weth-fee':'40000000','revoke-fee':'150000','revoke-usdc':'150000'},maxFeePerGas:'1100000',maxPriorityFeePerGas:'1000000',futureReserveWei:'132000000000000',usdcImplementation:'0xda317c1d3e835dd5f1be459006471acaa1289068',usdcImplementationCodeHash:'0x'+'b'.repeat(64),codeHashes:Object.fromEntries(['factory','positions','fee','usdc','weth'].map(n=>[n,hash]))};
 }
 test('Sepolia seed actual signed transaction binds every fee nonce recipient calldata and value field',async()=>{
  const {Wallet,keccak256}=await import('ethers'),{sepoliaLiquidityTransactions,matchSepoliaLiquiditySigned}=await import('../operations.mjs');const wallet=new Wallet('0x'+'41'.repeat(32)),p={...seedPlan(),inventoryOwner:wallet.address.toLowerCase()},step=(await sepoliaLiquidityTransactions(p))[0];
@@ -295,4 +295,17 @@ test('Sepolia seed preparing loss expiry and unknown preceding stage never advan
  await assert.rejects(runSepoliaLiquidityStage({plan:seedPlan(),stage:'inventory-usdc',store,ports,now:()=>2000000000000}));assert.equal(calls,0);
  await assert.rejects(runSepoliaLiquidityStage({plan:seedPlan(),stage:'approve-fee',store,ports,now:()=>0}));assert.equal(calls,0);
  await assert.rejects(runSepoliaLiquidityStage({plan:seedPlan(),stage:'inventory-usdc',store,ports,now:()=>0}),/simulation/);assert.deepEqual(value.seedLiquidity.entered,[]);assert.equal(calls,1);
+});
+
+test('Sepolia seed finalized mint after expiry retains bounded exact zero-allowance cleanup authority',async()=>{
+ const {Wallet,keccak256}=await import('ethers'),{captureSepoliaLiquidityPlan,sepoliaLiquidityTransactions,runSepoliaLiquidityStage}=await import('../operations.mjs');
+ for(const mintStatus of [1,0]){
+  const owner=new Wallet('0x'+'51'.repeat(32)),inventory=new Wallet('0x'+'52'.repeat(32)),plan=captureSepoliaLiquidityPlan({...seedPlan(),owner:owner.address.toLowerCase(),inventoryOwner:inventory.address.toLowerCase()}),steps=await sepoliaLiquidityTransactions(plan),identity=JSON.stringify(plan),{createHash}=await import('node:crypto');
+  let value={seedLiquidity:{schemaVersion:1,binding:createHash('sha256').update(identity).digest('hex'),entered:[]},operations:{}};const receipts=new Map();
+  async function sign(s){return (s.from===plan.owner?owner:inventory).signTransaction({type:2,chainId:11155111,nonce:s.nonce,to:s.to,data:s.data,value:s.value,gasLimit:s.gasLimit,maxFeePerGas:s.maxFeePerGas,maxPriorityFeePerGas:s.maxPriorityFeePerGas});}
+  for(const step of steps.slice(0,steps.findIndex(s=>s.name==='revoke-fee'))){const raw=await sign(step),hash=keccak256(raw);value.seedLiquidity.entered.push(step.name);value.operations[step.name]={schemaVersion:1,policy:'reconcile-only',identity:identity+':'+step.name,phase:'submission-unknown',raw:raw.slice(2),hash};receipts.set(hash,{hash,status:step.pool?mintStatus:1,blockNumber:10,blockHash:'0x'+'a'.repeat(64)});}
+  let signed=0,sent=0;const store={read:()=>value,write:async n=>{value=structuredClone(n);}},ports={receipt:async h=>receipts.get(h)??null,block:async()=>({hash:'0x'+'a'.repeat(64)}),head:async tag=>{assert.equal(tag,'finalized');return{number:11};},effect:async()=>true,preflight:async()=>{},sign:async s=>{signed++;return sign(s);},broadcast:async()=>{sent++;}};
+  const args={plan,stage:'revoke-fee',store,ports,now:()=>plan.expiresAt*1000+1};assert.equal((await runSepoliaLiquidityStage(args)).status,'unresolved');assert.deepEqual([signed,sent],[1,1]);
+  assert.equal((await runSepoliaLiquidityStage({...args,now:()=>plan.cleanupExpiresAt*1000+1})).status,'unresolved');assert.deepEqual([signed,sent],[1,1]);
+ }
 });

@@ -20,7 +20,7 @@ import {Tx,TxHash,TxStatus} from '@aztec-labs/stdlib/tx';
 import {JsonRpcProvider,FetchRequest,Wallet,Transaction,Contract as EthereumContract,ContractFactory,getCreateAddress,keccak256,parseUnits,formatUnits,sha256,toUtf8Bytes,Interface} from 'ethers';
 import {API_VERSION,packText,handleField,validateDescriptor} from './protocol.mjs';
 import {provingEnabledForNode} from '../shared/proving-policy.mjs';
-import {fileState,recordedTransaction,outboxArguments,operatorApplicationProfile,rollingOperatorConfig,operatorNodeFetch,onceAztecOperation,reconcileRollingOperation,rollingPxeOptions,bindRollingJournal,readOperatorActor,projectRollingReceipt,rollingLifecycleConfig,rollingOperatorCommandScope,verifyPluginPortalRuntime,reconcileRollingEthereum,operatorEthereumRequest,matchRollingEthereumSigned,requireRollingReadyEffect,readHostedPrivateFile,captureSepoliaLiquidityPlan,sepoliaLiquidityContracts,sepoliaLiquidityTransactions,runSepoliaLiquidityStage} from './operations.mjs';
+import {fileState,recordedTransaction,outboxArguments,operatorApplicationProfile,rollingOperatorConfig,operatorNodeFetch,onceAztecOperation,reconcileRollingOperation,rollingPxeOptions,bindRollingJournal,readOperatorActor,projectRollingReceipt,rollingLifecycleConfig,rollingOperatorCommandScope,verifyPluginPortalRuntime,reconcileRollingEthereum,operatorEthereumRequest,matchRollingEthereumSigned,requireRollingReadyEffect,readHostedPrivateFile,captureSepoliaLiquidityPlan,sepoliaLiquidityContracts,sepoliaLiquidityTransactions,sepoliaLiquidityDeadline,runSepoliaLiquidityStage} from './operations.mjs';
 import {deriveStorageSlotInMap,computeL2ToL1MessageHash} from '@aztec-labs/stdlib/hash';
 import {sha256ToField} from '@aztec-labs/foundation/crypto/sha256';
 import {contractInputs,sha as artifactSha} from '../scripts/artifact-provenance.mjs';
@@ -396,29 +396,29 @@ export async function seedTestnetLiquidity({plan:input,statePath,stage,keyFile})
    receipt:h=>provider.getTransactionReceipt(h),block:n=>provider.getBlock(n),head:tag=>provider.getBlock(tag),
    preflight:async(_p,step,steps)=>{
     const head=await provider.getBlock('latest');await scope(head.number);
-    if(Date.now()>=plan.expiresAt*1000||head.baseFeePerGas+BigInt(plan.maxPriorityFeePerGas)>BigInt(plan.maxFeePerGas)||await provider.getTransactionCount(step.from,'pending')!==step.nonce)throw Error();
+    if(Date.now()>=sepoliaLiquidityDeadline(plan,stage)*1000||head.baseFeePerGas+BigInt(plan.maxPriorityFeePerGas)>BigInt(plan.maxFeePerGas)||await provider.getTransactionCount(step.from,'pending')!==step.nonce)throw Error();
     const remaining=steps.slice(steps.findIndex(s=>s.name===step.name));
     const gas=remaining.reduce((v,s)=>v+BigInt(s.gasLimit)*BigInt(s.maxFeePerGas),0n),seed=remaining.filter(s=>s.pool).reduce((v,s)=>v+BigInt(s.value),0n);
     const ownerBalance=await provider.getBalance(plan.owner,head.number),inventoryBalance=await provider.getBalance(plan.inventoryOwner,head.number);
     if(ownerBalance+inventoryBalance<gas+seed+BigInt(plan.futureReserveWei)||(step.from===plan.owner?ownerBalance:inventoryBalance)<BigInt(step.value)+BigInt(step.gasLimit)*BigInt(step.maxFeePerGas))throw Error();
     if(step.name==='inventory-usdc'&&await token(c.usdc).balanceOf(plan.inventoryOwner,{blockTag:head.number})<BigInt(plan.usdcAmount))throw Error();
-    if(step.name==='approve-fee'&&await token(c.fee).balanceOf(plan.owner,{blockTag:head.number})<BigInt(plan.feeAmount)*(plan.includeWethPool?2n:1n))throw Error();
+    if(step.name==='approve-fee'&&await token(c.fee).balanceOf(plan.owner,{blockTag:head.number})<BigInt(plan.feeAmount)*(BigInt(plan.includeUsdcPool)+BigInt(plan.includeWethPool)))throw Error();
     if(step.pool&&(await factory.getPool(step.pool.token0,step.pool.token1,3000,{blockTag:head.number}))!=='0x0000000000000000000000000000000000000000')throw Error('Pool appeared before original seed; require new reviewed plan');
     const tx=transaction(step);await provider.call({...tx,blockTag:head.number});const estimated=await provider.estimateGas(tx);if(estimated>tx.gasLimit||(await provider.getBlock(head.number))?.hash!==head.hash)throw Error();
    },
    sign:async step=>{
-    if(Date.now()>=plan.expiresAt*1000||await provider.getTransactionCount(step.from,'pending')!==step.nonce)throw Error();
+    if(Date.now()>=sepoliaLiquidityDeadline(plan,stage)*1000||await provider.getTransactionCount(step.from,'pending')!==step.nonce)throw Error();
     const key=JSON.parse((await readHostedPrivateFile(keyFile,16384)).toString('utf8'));
     const signer=typeof key.privateKey==='string'?new Wallet(key.privateKey):typeof key.mnemonic==='string'?Wallet.fromPhrase(key.mnemonic):null;
     if(signer?.address.toLowerCase()!==step.from)throw Error();const {from,...tx}=transaction(step);return signer.signTransaction(tx);
    },
-   broadcast:async raw=>{if(Date.now()>=plan.expiresAt*1000)throw Error();return provider.broadcastTransaction(raw);},
+   broadcast:async raw=>{if(Date.now()>=sepoliaLiquidityDeadline(plan,stage)*1000)throw Error();return provider.broadcastTransaction(raw);},
    effect:async(step,anchor,receipt)=>{
     await scope(anchor.number);const blockTag=anchor.number;
     if(receipt.to?.toLowerCase()!==step.to||receipt.from?.toLowerCase()!==step.from)return false;
     if(step.name==='inventory-eth')return true; // Exact signed value/recipient, successful canonical receipt and plain EOA recipient.
     if(step.name==='inventory-usdc')return receipt.logs.filter(l=>l.address.toLowerCase()===c.usdc).some(l=>{try{const e=tokenInterface.parseLog(l);return e.name==='Transfer'&&e.args.from.toLowerCase()===plan.inventoryOwner&&e.args.to.toLowerCase()===plan.owner&&e.args.value===BigInt(plan.usdcAmount);}catch{return false;}});
-    if(!step.pool){const expected=step.name==='approve-fee'?BigInt(plan.feeAmount)*(plan.includeWethPool?2n:1n):step.name==='approve-usdc'?BigInt(plan.usdcAmount):0n;return await token(step.to).allowance(plan.owner,c.positions,{blockTag})===expected;}
+    if(!step.pool){const expected=step.name==='approve-fee'?BigInt(plan.feeAmount)*(BigInt(plan.includeUsdcPool)+BigInt(plan.includeWethPool)):step.name==='approve-usdc'?BigInt(plan.usdcAmount):0n;return await token(step.to).allowance(plan.owner,c.positions,{blockTag})===expected;}
     const events=receipt.logs.filter(l=>l.address.toLowerCase()===c.positions).flatMap(l=>{try{return [manager.interface.parseLog(l)];}catch{return [];}}),increases=events.filter(e=>e?.name==='IncreaseLiquidity'),nfts=events.filter(e=>e?.name==='Transfer'&&e.args.from==='0x0000000000000000000000000000000000000000'&&e.args.to.toLowerCase()===plan.owner);
     if(increases.length!==1||nfts.length!==1)return false;const e=increases[0].args,p=step.pool;
     if(e.tokenId!==nfts[0].args.tokenId||e.liquidity<=0n||e.amount0<BigInt(p.minimum0)||e.amount0>BigInt(p.amount0)||e.amount1<BigInt(p.minimum1)||e.amount1>BigInt(p.amount1)||(await manager.ownerOf(e.tokenId,{blockTag})).toLowerCase()!==plan.owner)return false;
