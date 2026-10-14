@@ -105,6 +105,7 @@ if(focused){
  test('actual checkpoint boundary surfaces miner failure and incomplete shutdown without saving',async()=>{
   const {persistDevnetCheckpoint}=await import('./network.mjs');let saves=0;const save=async()=>{saves++;};
   for(const change of [{miningError:Error('controlled miner failure')},{bootComplete:false},{priorFailure:true}])await assert.rejects(persistDevnetCheckpoint({persistent:true,bootComplete:true,miningError:null,priorFailure:false,save,...change}),/recovery required/);
+  const original=Error('controlled original mining failure');await assert.rejects(persistDevnetCheckpoint({persistent:true,bootComplete:true,miningError:original,priorFailure:false,save}),e=>e.cause===original);
   assert.equal(saves,0);await persistDevnetCheckpoint({persistent:true,bootComplete:true,miningError:null,priorFailure:false,save});assert.equal(saves,1);
   await assert.rejects(persistDevnetCheckpoint({persistent:true,bootComplete:true,priorFailure:false,save:async()=>{throw Error('controlled disk failure');}}),/disk failure/);
  });
@@ -426,6 +427,24 @@ if(focused){
   const finite=new ServerWorldStateSynchronizer(db,blocks,{worldStateCheckpointHistory:64},{},log);
   try{await assert.rejects(finite.handleChainFinalized(400),e=>e===stopAtPruning);assert.equal(archiveReads,1);}finally{await finite.stop();}
   assert.equal(closed,2);
+ });
+
+ test('actual wall-clock wait fails immediately with the original mining error before or during a read',async()=>{
+  // Execute the exact existing method with controlled closure dependencies;
+  // no node/Anvil startup and no copied wait implementation or real sleep.
+  const source=await fs.readFile(new URL('./network.mjs',import.meta.url),'utf8'),open='async useWallClock(){',end='},checkHealth()';
+  assert.equal(source.split(open).length,2);assert.equal(source.split(end).length,2);
+  const method=source.slice(source.indexOf(open),source.indexOf(end)+1);
+  const create=new Function('miningError','deployment','pause',`const persistent=true;let wallMode=false,wallRefreshRequested=false;return {${method},setError(error){miningError=error;},refresh(){return wallRefreshRequested;}};`);
+  const error=Error('controlled original mining failure');let reads=0,sleeps=0;
+  let owner=create(error,{l1Client:{getBlock:async()=>{reads++;}}},async()=>{sleeps++;});
+  await assert.rejects(owner.useWallClock(),e=>e===error);assert.equal(reads,0);assert.equal(sleeps,0);assert.equal(owner.refresh(),false);
+  owner=create(null,{l1Client:{getBlock:async()=>{reads++;owner.setError(error);return {timestamp:BigInt(Math.floor(Date.now()/1000))};}}},async()=>{sleeps++;});
+  await assert.rejects(owner.useWallClock(),e=>e===error);assert.equal(reads,1);assert.equal(sleeps,0);assert.equal(owner.refresh(),false);
+  owner=create(null,{l1Client:{getBlock:async()=>({timestamp:0n})}},async()=>{sleeps++;owner.setError(error);});
+  await assert.rejects(owner.useWallClock(),e=>e===error);assert.equal(sleeps,1);assert.equal(owner.refresh(),false);
+  owner=create(null,{l1Client:{getBlock:async()=>({timestamp:BigInt(Math.floor(Date.now()/1000))})}},async()=>assert.fail('fresh clock must not sleep'));
+  await owner.useWallClock();assert.equal(owner.refresh(),false);
  });
 
 }
