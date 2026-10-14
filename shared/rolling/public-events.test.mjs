@@ -142,3 +142,27 @@ for(const timeoutMs of [0,-1,20001,NaN,'20'])test(`decoder rejects invalid opera
  const n=nodeFixture();let calls=0;n.getNodeInfo=()=>{calls++;throw Error('must not be called');};
  await assert.rejects(decoder.decodeTransaction(n,txHash.toString(),{timeoutMs}),{code:'ROLLING_PUBLIC_INVALID'});assert.equal(calls,0);
 });
+
+// Actual processed PrivateBok ABI; canonical node is explicitly a finite data double.
+const bokArtifact=loadContractArtifact(JSON.parse(fs.readFileSync(new URL('../../experiments/private-bok/target/private_bok-PrivateBok.json',import.meta.url))));
+const {getContractInstanceFromInstantiationParams}=await import('@aztec-labs/stdlib/contract');
+const bokInstance=await getContractInstanceFromInstantiationParams(bokArtifact,{constructorArtifact:'init',constructorArgs:[board,AztecAddress.fromBigIntUnsafe(43n),31337n,1n],deployer:AztecAddress.fromBigIntUnsafe(44n),salt:new Fr(45n)});
+const bokScope={...scope,bok:{address:bokInstance.address.toString(),classId:bokInstance.originalContractClassId.toString(),operatorAddress:AztecAddress.fromBigIntUnsafe(43n).toString(),deployer:AztecAddress.fromBigIntUnsafe(44n).toString(),salt:new Fr(45n).toString(),deployment:{blockNumber:1,blockHash:hash,txHash:txHash.toString()}}};
+const bokDecoder=await createRollingEventDecoder({artifact,scope:bokScope,bokArtifact});
+const accountingAbi=bokArtifact.outputs.structs.events.find(e=>e.path==='PrivateBok::AccountingChanged');
+const accountingTag=await computeLogTag((await EventSelector.fromSignature(decodeFunctionSignature('AccountingChanged',accountingAbi.fields))).toField(),DomainSeparator.EVENT_LOG_TAG);
+const accountingLog=()=>new PublicLog(bokInstance.address,[accountingTag,...[9n,1n,0n,100n,100n,0n,0n,0n,1n].map(n=>new Fr(n))]);
+test('Bok accounting exact real ABI absolute snapshot and canonical scope',async()=>{
+ const e=await bokDecoder.decodeLog(accountingLog(),position);assert.equal(e.type,'AccountingChanged');assert.equal(e.payload.available,'100');assert.equal(e.payload.trailer,'1');assert.equal(e.scope.bok.address,bokScope.bok.address);
+ for(const [index,value] of [[1,0n],[2,5n],[3,1n<<32n],[4,1n<<128n],[5,99n],[9,0n]]){const l=accountingLog();l.fields[index]=new Fr(value);await assert.rejects(bokDecoder.decodeLog(l,position));}
+ const foreign=accountingLog();foreign.contractAddress=board;await assert.rejects(bokDecoder.decodeLog(foreign,position));
+ await assert.rejects(validateRollingEvent({...e,payload:{...e.payload,owner:'secret'}},bokScope));await assert.rejects(validateRollingEvent({...e,scope},scope));
+});
+test('Bok accounting descriptor binds constructor, salt, class and original canonical storage',async()=>{
+ for(const key of ['address','operatorAddress','deployer','salt','classId'])await assert.rejects(createRollingEventDecoder({artifact,bokArtifact,scope:{...bokScope,bok:{...bokScope.bok,[key]:new Fr(900n).toString()}}}));
+ const values={board:scope.boardAddress,operator:bokScope.bok.operatorAddress,owner:bokScope.bok.deployer,l1_chain:new Fr(31337n).toString(),version:new Fr(1n).toString()};
+ const bySlot=new Map(Object.entries(values).map(([k,v])=>[String(bokArtifact.storageLayout[k].slot),v]));
+ const node={getContract:async()=>bokInstance,getTxReceipt:async()=>({txHash,status:'checkpointed',executionResult:'success',blockNumber:1,blockHash:{toString:()=>hash}}),getTxEffect:async()=>({l2BlockNumber:1,l2BlockHash:{toString:()=>hash},data:{txHash,revertCode:{isOK:()=>true}}}),getPublicStorageAt:async(_a,_b,slot)=>({toString:()=>bySlot.get(String(slot))}),getBlockData:async()=>({blockHash:{toString:()=>hash}})};
+ await bokDecoder.verifyBok(node,fn=>fn());
+ for(const change of [{getPublicStorageAt:async()=>Fr.ZERO},{getBlockData:async()=>({blockHash:Fr.ZERO})},{getTxEffect:async()=>null},{getContract:async()=>({...bokInstance,currentContractClassId:Fr.ZERO})}])await assert.rejects(bokDecoder.verifyBok({...node,...change},fn=>fn()));
+});

@@ -326,3 +326,15 @@ test('SQLite rejects incomplete transaction-linked bot publication without parti
  c=store.commitTransaction({expectedControl:c,block,txIndex:'2',txHash:events[5].position.txHash,events:events.slice(5)});
  assert.equal(store.readProjection({expectedControl:c,table:'posts',k:'20'}).bot.pluginId,'7');
 });
+
+test('Bok accounting reduction stores absolute balances, unchanged sequence and reversible cancelled history',async()=>{
+ const hx=n=>'0x'+BigInt(n).toString(16).padStart(64,'0'),s={...scope,bok:{address:hx(80),classId:hx(81),operatorAddress:hx(82),deployer:hx(83),salt:hx(84),deployment:{blockNumber:1,blockHash:hx(1),txHash:hx(2)}}};
+ const make=(log,patch)=>validateRollingEvent({schemaVersion:1,scope:s,type:'AccountingChanged',position:{blockNumber:'1',blockHash:hx(1),txHash:hx(2),txIndexWithinBlock:'0',logIndexWithinTx:String(log)},payload:{request_id:'9',state:'1',sequence:'0',budget:'100',available:'100',reserved:'0',charged:'0',refunded:'0',trailer:'1',...patch}},s);
+ const maps=Object.fromEntries(['posts','names','boards','policies','plugins','requests','likes','bok'].map(k=>[k,new Map()]));
+ let scalars={version:'0',last:null,scope:null,eventCount:'0',postCount:'0'};
+ const reduce=async events=>{const r=stageRollingPublicReduction(await Promise.all(events),{isValidatedEvent:isRollingEvent,read:(t,k)=>maps[t].get(k),scalars});for(const c of r.changes)maps[c.table].set(c.key,c.value);scalars=r.scalars;return r;};
+ await reduce([make(0,{}),make(1,{state:'2',available:'70',reserved:'30'})]);assert.equal(maps.bok.get('9').reserved,'30');assert.equal(maps.bok.get('9').sequence,'0');
+ const r=await reduce([make(2,{state:'4',sequence:'1',available:'0',charged:'20',refunded:'80'})]);assert.equal(maps.bok.get('9').refunded,'80');assert.equal(maps.requests.size,0);
+ for(const c of r.changes)maps[c.table].set(c.key,c.before);assert.equal(maps.bok.get('9').reserved,'30');
+ await assert.rejects(reduce([make(3,{budget:'101',available:'101'})]));
+});

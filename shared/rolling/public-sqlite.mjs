@@ -32,6 +32,7 @@ const limitsDefault=Object.freeze({maxRowBytes:1024*1024,maxTransactionBytes:32*
 const columns="CASE WHEN length(k)<=78 THEN k END AS k,"+['ord','likes','stamp','idnum'].map(c=>`CASE WHEN length(${c})=64 THEN ${c} END AS ${c}`).join(',')+",CASE WHEN length(slug)<=62 THEN slug END AS slug,length(CAST(value AS BLOB)) AS bytes";
 const seek=(index,where,order)=>`SELECT ${columns} FROM projection INDEXED BY ${index} WHERE g=? AND kind=? AND ${where} ORDER BY ${order.replace(/\b(ord|likes|stamp|idnum|slug|k)\b/g,'projection.$1')} LIMIT ?`;
 export const ROLLING_PUBLIC_QUERY_SQL=Object.freeze({
+ accounting:seek('projection_accounting','idnum>?','idnum ASC'),
  feed:seek('projection_order','ord<?','ord DESC'),
  chronological:seek('projection_order','ord>?','ord ASC'),
  pending:seek('projection_pending',"kind='posts' AND json_extract(value,'$.invocation') IS NOT NULL AND json_extract(value,'$.invocation.reply') IS NULL AND ord>?",'ord ASC'),
@@ -68,6 +69,7 @@ export function createRollingPublicSqliteStore(directory,{scope,...options}={}){
  CREATE TABLE IF NOT EXISTS control(id INTEGER PRIMARY KEY CHECK(id=1),value TEXT NOT NULL);
  CREATE TABLE IF NOT EXISTS projection(g TEXT NOT NULL,kind TEXT NOT NULL,k TEXT NOT NULL,value TEXT NOT NULL,
  ord TEXT,board TEXT,name TEXT,root TEXT,likes TEXT,stamp TEXT,slug TEXT,idnum TEXT,PRIMARY KEY(g,kind,k)) WITHOUT ROWID;
+ CREATE INDEX IF NOT EXISTS projection_accounting ON projection(g,kind,idnum,k);
  CREATE INDEX IF NOT EXISTS projection_order ON projection(g,kind,ord,k);
  CREATE INDEX IF NOT EXISTS projection_pending ON projection(g,kind,ord,k) WHERE kind='posts' AND json_extract(value,'$.invocation') IS NOT NULL AND json_extract(value,'$.invocation.reply') IS NULL;
  CREATE INDEX IF NOT EXISTS projection_board ON projection(g,kind,board,ord,k);
@@ -122,7 +124,7 @@ export function createRollingPublicSqliteStore(directory,{scope,...options}={}){
   const p=kind==='posts'?value:null;
   prepare(`INSERT INTO projection VALUES(?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(g,kind,k) DO UPDATE SET
    value=excluded.value,ord=excluded.ord,board=excluded.board,name=excluded.name,root=excluded.root,likes=excluded.likes,stamp=excluded.stamp,slug=excluded.slug,idnum=excluded.idnum`)
-   .run(g,kind,k,encode(value),p?key(p.order):null,p?key(p.record.subboard):null,p?key(p.record.name_id):null,p?key(p.record.root):null,p?key(p.likes):null,p?key(p.timestamp):null,kind==='boards'?value.slug:null,p?key(p.id):null);
+   .run(g,kind,k,encode(value),p?key(p.order):null,p?key(p.record.subboard):null,p?key(p.record.name_id):null,p?key(p.record.root):null,p?key(p.likes):null,p?key(p.timestamp):null,kind==='boards'?value.slug:null,p?key(p.id):kind==='bok'?key(k):null);
  };
  const writeSegment=(c,next,changes,events,blockCompleted,b)=>{
   const seq=key(next.segmentCount),g=c.generation;
@@ -205,7 +207,7 @@ export function createRollingPublicSqliteStore(directory,{scope,...options}={}){
  // alone earns canonical publication and authenticates opaque external cursors.
  function readPublicPage({expectedControl,view,params={},after=null,homeSubboards=[]}){
   const expected=captureExpected(expectedControl),input=captureExpected(params),curated=['0',...normalizeHomeSubboards(captureExpected(homeSubboards))];
-  const allowed={home:[],feed:[],chronological:[],pending:[],board:['id'],directory:['query'],thread:['root'],profile:['nameId'],post:['id']};
+  const allowed={'bok-accounting':[],home:[],feed:[],chronological:[],pending:[],board:['id'],directory:['query'],thread:['root'],profile:['nameId'],post:['id']};
   requireThat(typeof view==='string'&&Object.hasOwn(allowed,view));requireThat(Object.keys(input).every(k=>k==='limit'||allowed[view].includes(k)));
   const limit=input.limit??50;requireThat(bounded(limit,1,100));
   const field=v=>uint(v)&&BigInt(v)<0x30644e72e131a029b85045b68181585d2833e84879b9709143e1f593f0000001n;
@@ -218,9 +220,10 @@ export function createRollingPublicSqliteStore(directory,{scope,...options}={}){
    const points=new Map();
    const point=(table,id)=>{const k=table+':'+id;if(!points.has(k)){const value=projectionRead(g,table,id,b);points.set(k,value);if(value!==undefined)work.materializedRows++;}return points.get(k);};
    const rows=(name,args,n)=>{requireThat(Object.hasOwn(ROLLING_PUBLIC_QUERY_SQL,name)&&bounded(n,1,257));work.seeks++;
-    const found=prepare(ROLLING_PUBLIC_QUERY_SQL[name]).all(g,name==='directory'?'boards':'posts',...args,n);work.candidateRows+=found.length;
+    const found=prepare(ROLLING_PUBLIC_QUERY_SQL[name]).all(g,name==='directory'?'boards':name==='accounting'?'bok':'posts',...args,n);work.candidateRows+=found.length;
     for(const row of found){requireThat(typeof row.k==='string'&&row.k.length<=160&&field(row.k));if(!bounded(row.bytes,0,limits.maxRowBytes))throw capacity();
      if(name==='directory')requireThat(typeof row.slug==='string'&&/^[a-z0-9-]{1,62}$/.test(row.slug));
+     else if(name==='accounting')requireThat(typeof row.idnum==='string'&&/^[0-9a-f]{64}$/.test(row.idnum));
      else for(const col of ['ord','likes','stamp','idnum'])requireThat(typeof row[col]==='string'&&/^[0-9a-f]{64}$/.test(row[col]));
     }return found;
    };
@@ -245,7 +248,15 @@ export function createRollingPublicSqliteStore(directory,{scope,...options}={}){
    // envelope. Count all materialized row bytes separately, before JSON reads.
    const fits=value=>Buffer.byteLength(JSON.stringify(value))<=1048576-4096;
    let value,nextAfter=null;
-   if(view==='post'){
+   if(view==='bok-accounting'){
+    requireThat(capturedScope.bok,'ROLLING_PUBLIC_ACCOUNTING_UNSUPPORTED');value={requests:[]};
+    for(const row of rows('accounting',[after===null?'':key(after)],limit+1)){
+     if(value.requests.length===limit){nextAfter=value.requests.at(-1).requestId;break;}
+     const request=point('bok',row.k);requireThat(request&&request.requestId===row.k);
+     const candidate={requests:[...value.requests,clone(request)]};
+     if(!fits(candidate)){if(!value.requests.length)throw capacity();nextAfter=value.requests.at(-1).requestId;break;}value=candidate;
+    }
+   }else if(view==='post'){
     const p=point('posts',input.id),page=valueFor(p?[visible(p)]:[]);const {posts,...metadata}=page;value={post:posts[0]??null,...metadata};if(!fits(value))throw capacity();
    }else if(view==='directory'){
     const prior=after===null?null:point('boards',after);requireThat(after===null||prior,'ROLLING_PUBLIC_CURSOR_STALE');

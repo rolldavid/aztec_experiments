@@ -331,7 +331,9 @@ test('SQLite public query checks actual external data_version and stale control 
  const db=f.own(new DatabaseSync(f.store.filename));db.exec("UPDATE projection SET value='{}' WHERE kind='posts'");assert.throws(()=>f.read('feed'),{code:'ROLLING_PUBLIC_STORAGE_CONFLICT'});
 });
 test('SQLite query byte budget rejects oversized cached rows before JSON parsing',async t=>{
- const f=await queryFixture(t);await f.post('10');const db=f.own(new DatabaseSync(f.store.filename));db.prepare("UPDATE projection SET value=? WHERE kind='posts'").run('!'.repeat(1048577));
+ const f=await queryFixture(t);await f.post('10');const db=f.own(new DatabaseSync(f.store.filename));// The existing JSON-expression pending index rejects malformed JSON on write.
+ // A valid oversized object still must hit the byte cap before parsing/projection validation.
+ db.prepare("UPDATE projection SET value=? WHERE kind='posts'").run(JSON.stringify({oversized:'!'.repeat(1048577)}));
  const reopened=f.open();assert.throws(()=>reopened.readPublicPage({expectedControl:f.control,view:'feed'}),{code:'ROLLING_PUBLIC_STORAGE_CAPACITY'});
 });
 for(const bad of [{view:'feed',params:{limit:101}},{view:'directory',params:{query:'a'.repeat(121)}},{view:'feed',params:{account:'secret'}},{view:'home',params:{homeSubboards:['7']}},{view:'post',params:{id:'1'},after:'1'}])
@@ -372,4 +374,19 @@ test('SQLite pending invocation range skips ordinary history and follows authent
  await invoke('100');await f.post('101');await invoke('200');const page=f.read('pending',{limit:1});assert.deepEqual(page.value.posts.map(p=>p.id),['100']);assert(page.work.candidateRows<=2);assert.equal(page.nextAfter,'100');
  await f.add([await f.postInput('300',{parent:'100',root:'100',kind:'4'}),['PluginReplyPublished',{plugin_id:'7',request_id:'1100',post_id:'300',parent_id:'100',target:'12'}]]);
  const next=f.read('pending',{limit:1},page.nextAfter);assert.deepEqual(next.value.posts.map(p=>p.id),['200']);assert.deepEqual(f.read('pending').value.posts.map(p=>p.id),['200']);assert(next.work.candidateRows<=2);
+});
+
+test('Bok SQLite uniform indexed accounting pages, exact undo and scoped reopen',async t=>{
+ const s={...scope,bok:{address:hash(80),classId:hash(81),operatorAddress:hash(82),deployer:hash(83),salt:hash(84),deployment:{blockNumber:1,blockHash:hash(1),txHash:hash(10000)}}};
+ const f=fixture(t,{scope:s}),store=f.store;let c=start(store);
+ const event=(id,log,patch={})=>validateRollingEvent({schemaVersion:1,scope:s,type:'AccountingChanged',position:{blockNumber:'1',blockHash:hash(1),txHash:hash(10000),txIndexWithinBlock:'0',logIndexWithinTx:String(log)},payload:{request_id:String(id),state:'1',sequence:'0',budget:'100',available:'100',reserved:'0',charged:'0',refunded:'0',trailer:'1',...patch}},s);
+ const events=[];for(let n=1;n<=105;n++)events.push(await event(n,n-1));events.push(await event(1,105,{state:'3',available:'0',reserved:'30',refunded:'70'}));
+ c=store.commitTransaction({expectedControl:c,block:block(1),txIndex:'0',txHash:hash(10000),events});
+ let after=null,ids=[];do{const p=store.readPublicPage({expectedControl:c,view:'bok-accounting',params:{limit:17},after});assert(p.work.candidateRows<=18);ids.push(...p.value.requests.map(r=>r.requestId));after=p.nextAfter;}while(after);
+ assert.deepEqual(ids,Array.from({length:105},(_,i)=>String(i+1)));assert.equal(store.readProjection({expectedControl:c,table:'bok',k:'1'}).reserved,'30');
+ assert.throws(()=>store.readPublicPage({expectedControl:c,view:'bok-accounting',params:{requestId:'1'}}));
+ const db=f.own(new DatabaseSync(store.filename));const plan=db.prepare('EXPLAIN QUERY PLAN '+ROLLING_PUBLIC_QUERY_SQL.accounting).all(c.generation,'bok','',5);assert(plan.some(r=>r.detail.includes('projection_accounting')));assert(!plan.some(r=>/TEMP B-TREE/.test(r.detail)));
+ const reopened=f.open();assert.equal(reopened.inspect().trusted,false);assert.equal(reopened.readPublicPage({expectedControl:c,view:'bok-accounting',params:{limit:1}}).value.requests[0].refunded,'70');
+ c=reopened.rollbackOne({expectedControl:c});assert.deepEqual(reopened.readPublicPage({expectedControl:c,view:'bok-accounting'}).value.requests,[]);
+ const wrong=createRollingPublicSqliteStore(f.directory,{scope});try{assert.throws(()=>wrong.inspect());}finally{wrong.close();}
 });

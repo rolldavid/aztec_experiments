@@ -499,3 +499,40 @@ test('small decoded late-post history reauthenticates on reopen and removes fork
  b.storage.close();const c=await f.open();assert.throws(()=>c.index.query('feed'),{code:'ROLLING_PUBLIC_NOT_READY'});await f.drain(c.index);
  assert.deepEqual(read(c.index),['206','105','104','10']);assert.equal(c.index.query('post',{id:'206'}).post.text,'Replacement');
 });
+
+async function bokIndexFixture(t){
+ const f=await persistentFixture(t),{getContractInstanceFromInstantiationParams}=await import('@aztec-labs/stdlib/contract');
+ const bokArtifact=loadContractArtifact(JSON.parse(fs.readFileSync(new URL('../../experiments/private-bok/target/private_bok-PrivateBok.json',import.meta.url))));
+ const operatorAddress=AztecAddress.fromBigIntUnsafe(71n),deployer=AztecAddress.fromBigIntUnsafe(72n),salt=new Fr(73n);
+ const instance=await getContractInstanceFromInstantiationParams(bokArtifact,{constructorArtifact:'init',constructorArgs:[address,operatorAddress,31337n,1n],deployer,salt});
+ const bok={address:instance.address.toString(),classId:instance.originalContractClassId.toString(),operatorAddress:operatorAddress.toString(),deployer:deployer.toString(),salt:salt.toString(),deployment:{blockNumber:2,blockHash:hex(1002),txHash:hex(102)}};
+ const capturedScope={...scope,bok},original=f.node.getContract;f.node.getContract=async target=>target.equals(instance.address)?instance:original(target);
+ const values={board:scope.boardAddress,operator:bok.operatorAddress,owner:bok.deployer,l1_chain:new Fr(31337n).toString(),version:new Fr(1n).toString()},bySlot=new Map(Object.entries(values).map(([k,v])=>[String(bokArtifact.storageLayout[k].slot),v]));
+ f.node.getPublicStorageAt=async(anchor,target,slot)=>{assert.deepEqual(anchor,{number:2,hash:hex(1002)});assert(target.equals(instance.address));return Fr.fromString(bySlot.get(String(slot)));};
+ const getEffect=f.node.getTxEffect;f.node.getTxEffect=async tx=>{const e=await getEffect(tx);e.data.revertCode={isOK:()=>true};return e;};
+ const abi=bokArtifact.outputs.structs.events.find(e=>e.path==='PrivateBok::AccountingChanged'),tag=await computeLogTag((await EventSelector.fromSignature(decodeFunctionSignature('AccountingChanged',abi.fields))).toField(),DomainSeparator.EVENT_LOG_TAG);
+ const accounting=(id,patch={})=>{const p={request_id:BigInt(id),state:1,sequence:0,budget:100,available:100,reserved:0,charged:0,refunded:0,trailer:1,...patch};return new PublicLog(instance.address,[tag,...encodeArguments({parameters:abi.fields},abi.fields.map(k=>p[k.name]))]);};
+ const resources=[];t.after(()=>resources.forEach(s=>s.close()));const directory=path.join(f.directory,'bok');
+ const open=async()=>{const storage=createRollingPublicSqliteStore(directory,{scope:capturedScope});resources.push(storage);return {storage,index:await createRollingPersistentPublicIndex({node:f.node,artifact,bokArtifact,scope:capturedScope,deployment:f.options.deployment,storage})};};
+ return {...f,open,accounting,capturedScope,bokArtifact,directory};
+}
+test('Bok full-block acquisition covers unrelated/empty blocks, absolute snapshots, uniform pages and canonical reopen',async t=>{
+ const f=await bokIndexFixture(t);f.put(3,[f.accounting(7),f.accounting(8),f.accounting(7,{state:2,available:60,reserved:40})]);
+ f.put(4,[]);f.blocks.get(4).body.txEffects=[];f.put(5,[f.accounting(9),f.accounting(7,{state:4,sequence:1,available:0,charged:25,refunded:75})]);f.setHead(5);
+ const a=await f.open();await f.drain(a.index);const first=a.index.query('bok-accounting',{limit:2});assert.equal(first.requests[0].charged,'25');assert.equal(first.requests[0].refunded,'75');assert(first.nextCursor);assert.equal(first.bokScope.address,f.capturedScope.bok.address);
+ assert.deepEqual(first.requests.map(r=>r.requestId),['7','8']);const second=a.index.query('bok-accounting',{limit:2,cursor:first.nextCursor});assert.deepEqual(second.requests.map(r=>r.requestId),['9']);assert.equal(second.nextCursor,null);assert.equal(second.revision,first.revision);
+ const count=f.calls.length;assert.deepEqual(a.index.query('bok-accounting',{limit:2}),first);assert.equal(f.calls.length,count);
+ for(const key of ['owner','requestId','ids','address'])assert.throws(()=>a.index.query('bok-accounting',{[key]:'private'}));
+ a.storage.close();f.calls.length=0;const b=await f.open();assert.throws(()=>b.index.query('bok-accounting'),{code:'ROLLING_PUBLIC_NOT_READY'});await f.drain(b.index);
+ for(let n=1;n<=5;n++)assert(f.calls.some(([,number])=>number===n));assert.deepEqual(b.index.query('bok-accounting',{limit:2}).requests,first.requests);
+ assert.throws(()=>b.index.query('bok-accounting',{limit:2,cursor:first.nextCursor}),{code:'ROLLING_PUBLIC_CURSOR_STALE'});
+ const before=b.index.query('bok-accounting',{limit:2}).nextCursor;f.put(5,[f.accounting(7,{state:3,available:0,reserved:40,refunded:60})],50);await b.index.step();assert.throws(()=>b.index.query('bok-accounting'));await f.drain(b.index);
+ const fork=b.index.query('bok-accounting');assert.deepEqual(fork.requests.map(r=>r.requestId),['7','8']);assert.equal(fork.requests[0].reserved,'40');assert.throws(()=>b.index.query('bok-accounting',{limit:2,cursor:before}),{code:'ROLLING_PUBLIC_CURSOR_STALE'});
+ b.storage.close();const c=await f.open();await f.drain(c.index);assert.deepEqual(c.index.query('bok-accounting').requests,fork.requests);
+});
+test('Bok accounting missing descriptor is unsupported; mismatched cache and absent canonical data fail closed',async t=>{
+ const plain=await persistentFixture(t),a=await plain.open();await plain.drain(a.index);assert.throws(()=>a.index.query('bok-accounting'),{code:'ROLLING_PUBLIC_ACCOUNTING_UNSUPPORTED'});
+ const f=await bokIndexFixture(t);f.put(3,[f.accounting(7)]);const b=await f.open();await f.drain(b.index);b.storage.close();
+ const wrong=createRollingPublicSqliteStore(f.directory,{scope});try{assert.throws(()=>wrong.inspect());}finally{wrong.close();}
+ const c=await f.open();f.node.getPublicStorageAt=async()=>Fr.ZERO;await assert.rejects(c.index.step());assert.equal(c.index.status().complete,false);
+});

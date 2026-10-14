@@ -29,7 +29,7 @@ const field=v=>typeof v==='string'&&/^(0|[1-9][0-9]{0,76})$/.test(v);
 export async function createRollingPublicIndex({node,artifact,scope,deployment,storage,homeSubboards,rangeSize=10,pagesPerSync=2,
   maxEvents=50000,maxRanges=20000,maxRollbackChecks=128,timeoutMs=20000,maxRecordBytes=1048576,maxSnapshotBytes=67108864}){
   homeSubboards=normalizeHomeSubboards(homeSubboards);
-  scope=validateRollingScope(scope);deployment=copy(deployment);exact(deployment,['blockNumber','blockHash','txHash']);
+  scope=validateRollingScope(scope);check(!scope.bok);deployment=copy(deployment);exact(deployment,['blockNumber','blockHash','txHash']);
   check(natural(deployment.blockNumber)&&deployment.blockNumber>0&&hash(deployment.blockHash)&&hash(deployment.txHash));
   for(const [v,min,max] of [[rangeSize,1,100],[pagesPerSync,1,20],[maxEvents,1,50000],[maxRanges,1,20000],
     [maxRollbackChecks,1,128],[timeoutMs,1,20000],[maxRecordBytes,1024,1048576],[maxSnapshotBytes,1024,67108864]])check(natural(v)&&v>=min&&v<=max);
@@ -191,14 +191,15 @@ export async function createRollingPublicIndex({node,artifact,scope,deployment,s
  * SQL queries use one guarded snapshot only after complete canonical publication.
  * publication() is a revision binding, not standalone authority for cached rows.
  */
-export async function createRollingPersistentPublicIndex({node,artifact,scope,deployment,storage,timeoutMs=20000,homeSubboards}){
+export async function createRollingPersistentPublicIndex({node,artifact,bokArtifact,scope,deployment,storage,timeoutMs=20000,homeSubboards}){
   scope=validateRollingScope(scope);
   const curated=normalizeHomeSubboards(homeSubboards),cursorSecret=randomBytes(32);
   const own=(v,keys)=>{exact(v,keys);for(const k of keys)check(Object.hasOwn(Object.getOwnPropertyDescriptor(v,k),'value'));return copy(v);};
   deployment=own(deployment,['blockNumber','blockHash','txHash']);
   check(natural(deployment.blockNumber)&&deployment.blockNumber>0&&hash(deployment.blockHash)&&hash(deployment.txHash));
   check(Number.isSafeInteger(timeoutMs)&&timeoutMs>0&&timeoutMs<=20000);
-  const decoder=await createRollingEventDecoder({artifact,scope}),epoch=randomUUID();
+  if(scope.bok)check(scope.bok.deployment.blockNumber>=deployment.blockNumber);
+  const decoder=await createRollingEventDecoder({artifact,scope,bokArtifact}),epoch=randomUUID();
   const maxTransactions=Math.floor((BLOBS_PER_CHECKPOINT*FIELDS_PER_BLOB-NUM_BLOCK_END_BLOB_FIELDS-NUM_CHECKPOINT_END_MARKER_FIELDS)/MIN_TX_BLOB_FIELDS);
   const address=AztecAddress.fromBigIntUnsafe(BigInt(scope.boardAddress)),same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
   const cache=v=>check(v,'ROLLING_PUBLIC_CACHE_MISMATCH');
@@ -216,12 +217,13 @@ export async function createRollingPersistentPublicIndex({node,artifact,scope,de
   function publication(){check(ready&&!busy&&!unavailable,'ROLLING_PUBLIC_NOT_READY');assertOwned();return state();}
   function query(view,params={}){
     check(ready&&!busy&&!unavailable,'ROLLING_PUBLIC_NOT_READY');
-    const allowed={home:[],feed:[],board:['id'],directory:['query'],thread:['root'],profile:['nameId'],post:['id']};
+    const allowed={'bok-accounting':[],home:[],feed:[],board:['id'],directory:['query'],thread:['root'],profile:['nameId'],post:['id']};
     check(typeof view==='string'&&Object.hasOwn(allowed,view)&&params&&Object.getPrototypeOf(params)===Object.prototype);
     const input={};for(const [k,d] of Object.entries(Object.getOwnPropertyDescriptors(params))){
       check((k==='cursor'||k==='limit'||allowed[view].includes(k))&&Object.hasOwn(d,'value'));
       check(d.value===null||typeof d.value==='string'&&d.value.length<=120||typeof d.value==='number'&&Number.isSafeInteger(d.value));input[k]=d.value;
     }
+    if(view==='bok-accounting')check(scope.bok,'ROLLING_PUBLIC_ACCOUNTING_UNSUPPORTED');
     const cursor=input.cursor??null;delete input.cursor;input.limit??=50;
     check(Number.isSafeInteger(input.limit)&&input.limit>=1&&input.limit<=100);
     if(view==='directory'){input.query??='';check(typeof input.query==='string'&&input.query.length<=120&&!input.query.includes('\0'));input.query=input.query.trim().toLowerCase();}
@@ -239,7 +241,7 @@ export async function createRollingPersistentPublicIndex({node,artifact,scope,de
       assertOwned();const page=storage.readPublicPage({expectedControl:control,view,params:input,after,homeSubboards:curated});
       check(page.trusted===false&&page.generation===control.generation&&page.revision===control.revision);
       const nextCursor=page.nextAfter===null?null:(()=>{const last=key(page.nextAfter);return `${tokenEpoch}:${last}:${mac(last)}`;})();
-      const envelope={schemaVersion:1,scope,checkpoint:{number:Number(control.checkpoint.number),hash:control.checkpoint.hash},complete:true,...page.value,
+      const envelope={schemaVersion:1,scope,...(view==='bok-accounting'?{bokScope:scope.bok}:{}),checkpoint:{number:Number(control.checkpoint.number),hash:control.checkpoint.hash},complete:true,...page.value,
         ...(view==='post'?{}:{nextCursor}),revision:`${epoch}:${control.generation}:${control.revision}`};
       check(bytes(JSON.stringify(envelope))<=1048576,'ROLLING_PUBLIC_CAPACITY');assertOwned();return copy(envelope);
     }catch(error){const code=error&&Object.getOwnPropertyDescriptor(error,'code')?.value;
@@ -289,11 +291,12 @@ export async function createRollingPersistentPublicIndex({node,artifact,scope,de
     async function identity(){const info=await read(()=>node.getNodeInfo());
       check(String(info.l1ChainId)===scope.chainId&&String(info.rollupVersion)===scope.rollupVersion&&textHash(info.l1ContractAddresses?.rollupAddress)===scope.rollupAddress);
       const instance=await read(()=>node.getContract(address));check(textHash(instance?.currentContractClassId)===scope.classId&&textHash(instance?.originalContractClassId)===scope.classId);
+      await decoder.verifyBok(node,read);
     }
     async function anchor(n){const b=await read(()=>node.getBlockData(n));check(b,'ROLLING_PUBLIC_UNAVAILABLE');
       const number=String(b.header?.globalVariables?.blockNumber),h=textHash(b.blockHash);check(uint(number,53)&&hash(h));if(n!=='checkpointed')check(number===String(n));return {number,hash:h};}
     try{
-      await identity();const target=await anchor('checkpointed');check(BigInt(target.number)>=BigInt(deployment.blockNumber));
+      await identity();const target=await anchor('checkpointed');check(BigInt(target.number)>=BigInt(scope.bok?.deployment.blockNumber??deployment.blockNumber));
       const deployed=await anchor(deployment.blockNumber);check(deployed.hash===deployment.blockHash);
       const base=await anchor(deployment.blockNumber-1);
       if(origin)check(same(origin,base));else origin=base;
@@ -331,8 +334,9 @@ export async function createRollingPersistentPublicIndex({node,artifact,scope,de
       check(raw.body.txEffects.length<=maxTransactions);const seen=new Set();
       const effects=raw.body.txEffects.map(tx=>{const h=textHash(tx.txHash);check(hash(h)&&!seen.has(h));seen.add(h);
         check(Array.isArray(tx.publicLogs)&&tx.publicLogs.length<=FLAT_PUBLIC_LOGS_PAYLOAD_LENGTH);
-        let fields=0,hasBoard=false;for(const log of tx.publicLogs){const size=log.sizeInFields();check(Number.isSafeInteger(size)&&size>0);fields+=size;check(fields<=FLAT_PUBLIC_LOGS_PAYLOAD_LENGTH);if(textHash(log.contractAddress)===scope.boardAddress)hasBoard=true;}
+        let fields=0,hasBoard=false;for(const log of tx.publicLogs){const size=log.sizeInFields();check(Number.isSafeInteger(size)&&size>0);fields+=size;check(fields<=FLAT_PUBLIC_LOGS_PAYLOAD_LENGTH);if(textHash(log.contractAddress)===scope.boardAddress||textHash(log.contractAddress)===scope.bok?.address)hasBoard=true;}
         return {hash:h,hasBoard};});
+      if(number===scope.bok?.deployment.blockNumber)check(effects.some(tx=>tx.hash===scope.bok.deployment.txHash));
       const block={number:String(number),hash:textHash(raw.hash),parentHash:control.checkpoint.hash,transactionCount:String(effects.length)};
       check((await anchor(number)).hash===block.hash);
       if(control.cursor.block)check(same(control.cursor.block,block));

@@ -236,3 +236,11 @@ test('funding close joins disconnected owned requests before closing its signer 
  const controller=new AbortController(),request=fetch(server.url+'/api/funding/usdc',{method:'POST',headers:{'content-type':'application/json'},body:'{}',signal:controller.signal}).catch(()=>{});
  await ready;controller.abort();const closing=server.close();await new Promise(r=>setTimeout(r,10));assert.equal(closed,false);release();await request;await closing;assert.equal(closed,true);
 });
+
+test('Bok HTTP acquisition is uniform limit/cursor only and distinguishes unsupported configuration',async t=>{
+ const f=await fixture(t);let pageCalls=0;f.index.query=(view,params)=>{pageCalls++;assert.equal(view,'bok-accounting');return {schemaVersion:1,requests:[],complete:true,revision:'fixed',nextCursor:null};};
+ const a=await (await f.get('/api/bok-accounting?limit=2')).json(),b=await (await f.get('/api/bok-accounting?limit=2')).json();assert.deepEqual(a,b);assert.equal(pageCalls,2);
+ for(const route of ['?owner=private','?requestId=9','?ids=1,2','?account=private','?cursor=aa&cursor=bb','?limit=101'])assert.equal((await f.get('/api/bok-accounting'+route)).status,400);
+ assert.equal(pageCalls,2);
+ f.index.query=()=>{throw Object.assign(Error('private upstream'),{code:'ROLLING_PUBLIC_ACCOUNTING_UNSUPPORTED'});};const response=await f.get('/api/bok-accounting');assert.equal(response.status,501);assert.deepEqual(await response.json(),{schemaVersion:1,error:'accounting-unsupported'});
+});

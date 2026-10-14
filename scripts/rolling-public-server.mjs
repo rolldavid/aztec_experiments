@@ -1,7 +1,7 @@
 import http from 'node:http';
 import {normalizeHomeSubboards} from '../shared/rolling/public-projection.mjs';
 import {pathToFileURL} from 'node:url';
-const routes={status:[],home:['limit','cursor'],feed:['limit','cursor'],board:['id','limit','cursor'],directory:['query','limit','cursor'],thread:['root','limit','cursor'],profile:['nameId','limit','cursor'],post:['id']};
+const routes={'bok-accounting':['limit','cursor'],status:[],home:['limit','cursor'],feed:['limit','cursor'],board:['id','limit','cursor'],directory:['query','limit','cursor'],thread:['root','limit','cursor'],profile:['nameId','limit','cursor'],post:['id']};
 const field=v=>typeof v==='string'&&/^(0|[1-9][0-9]{0,76})$/.test(v);
 const headers={'Content-Type':'application/json; charset=utf-8','X-Content-Type-Options':'nosniff','Cache-Control':'no-store',
   'Content-Security-Policy':"default-src 'none'; frame-ancestors 'none'; base-uri 'none'",'Referrer-Policy':'no-referrer'};
@@ -60,7 +60,7 @@ export async function startRollingPublicServer({index,host='127.0.0.1',port=0,st
       await active;
       if(index.status().state!=='ready')return reply(503,{schemaVersion:1,error:'not-ready'});
       try{return reply(200,index.query(view,params));}
-      catch(error){const stale=error?.code==='ROLLING_PUBLIC_CURSOR_STALE',missing=error?.code==='ROLLING_PUBLIC_NOT_FOUND';return reply(stale?409:missing?404:400,{schemaVersion:1,error:stale?'cursor-stale':missing?'not-found':'invalid-request'});}
+      catch(error){const unsupported=error?.code==='ROLLING_PUBLIC_ACCOUNTING_UNSUPPORTED',stale=error?.code==='ROLLING_PUBLIC_CURSOR_STALE',missing=error?.code==='ROLLING_PUBLIC_NOT_FOUND';return reply(unsupported?501:stale?409:missing?404:400,{schemaVersion:1,error:unsupported?'accounting-unsupported':stale?'cursor-stale':missing?'not-found':'invalid-request'});}
     }catch(error){
       // Sanitized HTTP does not erase the original pending operation's failure.
       try{if(!res.destroyed)reply(503,{schemaVersion:1,error:'unavailable'});}catch(cleanup){throw new AggregateError([error,cleanup],'Public request and response failed');}throw error;
@@ -123,11 +123,13 @@ export function ownRollingPersistentPublicIndex(persistent,storage){
  */
 export async function createRollingPublicIndexFromConfig(config){
     const keys=['nodeUrl','artifactPath','scope','deployment','cacheDirectory','port'];
-    if(!config||typeof config!=='object'||Array.isArray(config)||Object.keys(config).filter(key=>key!=='homeSubboards').sort().join()!==keys.sort().join()||
+    if(!config||typeof config!=='object'||Array.isArray(config)||Object.keys(config).filter(key=>!['homeSubboards','bokArtifactPath'].includes(key)).sort().join()!==keys.sort().join()||
       !Number.isInteger(config.port)||config.port<0||config.port>65535)throw Error('Invalid public index configuration');
+    if(Boolean(config.scope?.bok)!==Object.hasOwn(config,'bokArtifactPath'))throw Error('Invalid public index configuration');
     let homeSubboards;try{homeSubboards=normalizeHomeSubboards(config.homeSubboards);}catch{throw Error('Invalid public index configuration');}
     const url=new URL(config.nodeUrl);if(url.username||url.password||url.hash||url.search||!(url.protocol==='https:'||url.protocol==='http:'&&['127.0.0.1','localhost','[::1]'].includes(url.hostname)))throw Error('Invalid public index configuration');
     const captured={scope:structuredClone(config.scope),deployment:structuredClone(config.deployment),cacheDirectory:config.cacheDirectory,port:config.port,
+      bokArtifactPath:config.bokArtifactPath instanceof URL?new URL(config.bokArtifactPath.href):config.bokArtifactPath,
       artifactPath:config.artifactPath instanceof URL?new URL(config.artifactPath.href):config.artifactPath};
     const [{readFile},{createRollingPersistentPublicIndex},{createRollingPublicSqliteStore},{loadContractArtifact},{createAztecNodeClient},{jsonStringify}]=await Promise.all([
       import('node:fs/promises'),import('../shared/rolling/public-index.mjs'),import('../shared/rolling/public-sqlite.mjs'),import('@aztec-labs/stdlib/abi'),
@@ -139,9 +141,10 @@ export async function createRollingPublicIndexFromConfig(config){
       return {response:JSON.parse(Buffer.concat(chunks).toString('utf8')),headers:response.headers};
     }});
     const artifact=loadContractArtifact(JSON.parse(await readFile(captured.artifactPath,'utf8')));
+    const bokArtifact=captured.bokArtifactPath===undefined?undefined:loadContractArtifact(JSON.parse(await readFile(captured.bokArtifactPath,'utf8')));
     const storage=createRollingPublicSqliteStore(captured.cacheDirectory,{scope:captured.scope});
     try{
-      const persistent=await createRollingPersistentPublicIndex({node,artifact,scope:captured.scope,deployment:captured.deployment,homeSubboards,storage});
+      const persistent=await createRollingPersistentPublicIndex({node,artifact,bokArtifact,scope:captured.scope,deployment:captured.deployment,homeSubboards,storage});
       return {index:ownRollingPersistentPublicIndex(persistent,storage),port:captured.port};
     }catch(error){try{storage.close();}catch(cleanup){throw new AggregateError([error,cleanup],'Public index construction and cleanup failed');}throw error;}
 

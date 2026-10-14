@@ -20,7 +20,7 @@ const emptyProfile=()=>({bio:{version:'0',digest:'0',length:'0',text:''},avatar:
 // Shared semantic reducer. The port is synchronous point access only; adapters
 // own atomicity/CAS. A bounded overlay records the first before-image even when
 // an event range changes the same key repeatedly. No history enumeration here.
-export const ROLLING_PROJECTION_TABLES=Object.freeze(['posts','names','boards','policies','plugins','requests','likes']);
+export const ROLLING_PROJECTION_TABLES=Object.freeze(['posts','names','boards','policies','plugins','requests','likes','bok']);
 export function stageRollingPublicReduction(events,{isValidatedEvent,read,scalars}={}){
  check(Array.isArray(events)&&events.length<=10000&&typeof isValidatedEvent==='function'&&typeof read==='function');
  const point=(table,key)=>{const value=read(table,key);check(value===undefined||typeof value==='boolean'||value&&Object.getPrototypeOf(value)===Object.prototype);return value;};
@@ -40,7 +40,11 @@ export function stageRollingPublicReduction(events,{isValidatedEvent,read,scalar
    check(!next.scope||next.scope===scope);next.scope=scope;
    check(!next.last||compare(pos(next.last),coordinate)<0);if(next.last?.position.blockNumber===e.position.blockNumber){check(next.last.position.blockHash===e.position.blockHash);if(next.last.position.txIndexWithinBlock===e.position.txIndexWithinBlock)check(next.last.position.txHash===e.position.txHash);}
    next.last=e;
-   if(e.type==='MainPolicyPublished'){check(BigInt(p.version)===BigInt(next.version)+1n);next.policies.set(p.version,{...p,text:text(p,'rules','length')});next.version=p.version;}
+   if(e.type==='AccountingChanged'){
+    const old=next.bok.get(p.request_id);
+    check(old?old.budget===p.budget:p.state==='1'&&p.sequence==='0'&&p.available===p.budget&&p.reserved==='0'&&p.charged==='0'&&p.refunded==='0');
+    next.bok.set(p.request_id,{requestId:p.request_id,state:p.state,sequence:p.sequence,budget:p.budget,available:p.available,reserved:p.reserved,charged:p.charged,refunded:p.refunded,position:copy(e.position)});
+   } else if(e.type==='MainPolicyPublished'){check(BigInt(p.version)===BigInt(next.version)+1n);next.policies.set(p.version,{...p,text:text(p,'rules','length')});next.version=p.version;}
    else if(e.type==='NameRegistered'){check(!next.names.has(p.name_id));next.names.set(p.name_id,{id:p.name_id,first:text(p,'first','first_length'),last:text(p,'last','last_length'),profile:emptyProfile()});}
    else if(e.type==='BioPublished'||e.type==='AvatarPublished'){
     const name=next.names.get(p.name_id);check(name);const part=e.type==='BioPublished'?'bio':'avatar';
@@ -95,7 +99,7 @@ export function stageRollingPublicReduction(events,{isValidatedEvent,read,scalar
 export function createRollingProjection({isValidatedEvent,maxEvents=50000,homeSubboards}={}) {
  check(typeof isValidatedEvent==='function'&&Number.isSafeInteger(maxEvents)&&maxEvents>0&&maxEvents<=1000000);
  const curated=new Set(['0',...normalizeHomeSubboards(homeSubboards)]);
- let state={posts:new Map(),names:new Map(),boards:new Map(),policies:new Map(),plugins:new Map(),requests:new Map(),likes:new Map(),order:[],version:'0',last:null,scope:null,eventCount:0},revision=0,tip=Symbol('initial');
+ let state={posts:new Map(),names:new Map(),boards:new Map(),policies:new Map(),plugins:new Map(),requests:new Map(),likes:new Map(),bok:new Map(),order:[],version:'0',last:null,scope:null,eventCount:0},revision=0,tip=Symbol('initial');
  function stage(events){
   check(Array.isArray(events)&&events.length<=10000&&state.eventCount+events.length<=maxEvents);
   const expectedRevision=revision,baseTip=tip,ownTip=Symbol('range'),oldLength=state.order.length,appended=[];
