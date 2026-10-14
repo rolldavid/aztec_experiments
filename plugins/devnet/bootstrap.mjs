@@ -186,6 +186,13 @@ export async function developmentAccountingReaderConfig({readerConfig,operatorCo
  }catch{throw Error('Original Bok accounting deployment identity unavailable');}
 }
 
+// Explicitly synchronize fresh autoSync:false PXEs before constructor simulation.
+// The caller retains ownership of the wallet for cleanup if either step fails.
+export async function initializeDevelopmentDeployer(wallet,secret,salt,signingKey) {
+ await wallet.pxe.sync();
+ return wallet.createSchnorrInitializerlessAccount(secret,salt,signingKey,'local public deployer');
+}
+
 // Current local profile. Production deployment/transaction implementations are
 // reused; only the disposable chain's explicitly labelled settlement is local.
 export async function bootstrapRollingDevnet({directory,ports,onProgress=console.log,onOwned=()=>{}}) {
@@ -268,11 +275,11 @@ export async function bootstrapRollingDevnet({directory,ports,onProgress=console
   const published=await onceAztecOperation({store,name:'deploy-escrow',identity,reconcile,execute:async({submit})=>{
    const recorded=new Proxy(net.node,{get(target,key){if(key==='sendTx')return tx=>submit({hash:String(tx.getTxHash()),raw:tx.toBuffer().toString('hex')},()=>target.sendTx(tx));const value=target[key];return typeof value==='function'?value.bind(target):value;}});
    wallet=await EmbeddedWallet.create(recorded,{ephemeral:true,pxe:{proverEnabled:false,autoSync:false,syncChainTip:'checkpointed'}});
-   await wallet.createSchnorrInitializerlessAccount(secret,salt,signingKey,'local public deployer');
+   await initializeDevelopmentDeployer(wallet,secret,salt,signingKey);
    await createPrivateFeeDeployment(wallet,feeRaw).send({from:address,wait:{timeout:120,waitForStatus:TxStatus.CHECKPOINTED}});
   }});
   if(published.status!=='succeeded')throw Error('Private fee publication incomplete');
-  if(!wallet){wallet=await EmbeddedWallet.create(net.node,{ephemeral:true,pxe:{proverEnabled:false,autoSync:false,syncChainTip:'checkpointed'}});await wallet.createSchnorrInitializerlessAccount(secret,salt,signingKey,'local public deployer');}
+  if(!wallet){wallet=await EmbeddedWallet.create(net.node,{ephemeral:true,pxe:{proverEnabled:false,autoSync:false,syncChainTip:'checkpointed'}});await initializeDevelopmentDeployer(wallet,secret,salt,signingKey);}
   const feeOptions=await wallet.completeFeeOptions({from:address,feePayer:feeInstance.address});
   const gas=Object.fromEntries(Object.entries({gasLimits:['daGas','l2Gas'],teardownGasLimits:['daGas','l2Gas'],maxFeesPerGas:['feePerDaGas','feePerL2Gas'],maxPriorityFeesPerGas:['feePerDaGas','feePerL2Gas']}).map(([group,keys])=>[group,Object.fromEntries(keys.map(key=>[key,String(feeOptions.gasSettings[group][key])]))]));
   const operatorConfig={applicationProfile:'rolling',nodeUrl:new URL(net.nodeUrl).href,ethereumUrl:new URL(net.rpcUrl).href,chainId:'31337',rollupVersion:String(info.rollupVersion),rollupAddress:String(info.l1ContractAddresses.rollupAddress).toLowerCase(),boardAddress:report.l2Addr,operatorAddress:actor.address,development:true,operatorFile:actorPath};

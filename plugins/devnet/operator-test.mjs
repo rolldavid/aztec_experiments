@@ -363,4 +363,18 @@ if(focused){
   assert.throws(()=>validateRollingWalletConfig(wallet,{...out.scope,boardAddress:Fr.ONE.toString()}));
  });
 
+ test('development deployer awaits fresh PXE sync before initializerless constructor simulation',async()=>{
+  const {initializeDevelopmentDeployer}=await import('./bootstrap.mjs');const calls=[];let release;
+  const gate=new Promise(resolve=>{release=resolve;}),secret={},salt={},signingKey={},account={};
+  const wallet={pxe:{async sync(){calls.push('sync-start');await gate;calls.push('sync-complete');}},async createSchnorrInitializerlessAccount(...args){assert.deepEqual(args,[secret,salt,signingKey,'local public deployer']);calls.push('constructor');return account;}};
+  const pending=initializeDevelopmentDeployer(wallet,secret,salt,signingKey);await Promise.resolve();assert.deepEqual(calls,['sync-start']);
+  release();assert.equal(await pending,account);assert.deepEqual(calls,['sync-start','sync-complete','constructor']);
+ });
+ test('development deployer failed synchronization cannot create account or swallow cleanup-owned error',async()=>{
+  const {initializeDevelopmentDeployer}=await import('./bootstrap.mjs');const failure=Error('controlled sync failure');let constructors=0;
+  await assert.rejects(initializeDevelopmentDeployer({pxe:{async sync(){throw failure;}},async createSchnorrInitializerlessAccount(){constructors++;}}),e=>e===failure);assert.equal(constructors,0);
+  const constructorFailure=Error('controlled constructor failure');let syncs=0;
+  await assert.rejects(initializeDevelopmentDeployer({pxe:{async sync(){syncs++;}},async createSchnorrInitializerlessAccount(){throw constructorFailure;}}),e=>e===constructorFailure);assert.equal(syncs,1);
+ });
+
 }
