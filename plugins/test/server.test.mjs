@@ -53,3 +53,36 @@ test('Rolling threads overlap while same-thread requests remain ordered and shut
  try{await until(()=>started.length===2);assert.deepEqual(started,['a1','b1']);release.get('a1')();await until(()=>started.length===3);assert.deepEqual(started,['a1','b1','a2']);}
  finally{for(const resolve of release.values())resolve();await server.close();}
 });
+
+test('Rolling deferred thread does not prevent discovering a later independent thread',async()=>{
+ const a1={requestId:'a1',postId:'1',threadId:'a'},a2={requestId:'a2',postId:'2',threadId:'a'},b={requestId:'b1',postId:'3',threadId:'b'};
+ const started=[],done=new Set(),release=new Map();let calls=0;
+ const server=await startEscrowService({profile:'rolling',descriptor:{},port:0,pollMs:5,concurrency:2,onError:e=>assert.fail(e),board:{pending:async()=>({requests:(++calls===1?[a1,a2]:[a1,a2,b]).filter(r=>!done.has(r.requestId)),nextCursor:null})},run:async r=>{started.push(r.requestId);await new Promise(resolve=>release.set(r.requestId,resolve));done.add(r.requestId);}});
+ try{await until(()=>started.includes('b1'));assert.deepEqual(started,['a1','b1']);release.get('a1')();await until(()=>started.includes('a2'));assert.deepEqual(started,['a1','b1','a2']);}
+ finally{for(const resolve of release.values())resolve();await server.close();}
+});
+
+test('Rolling scans past active duplicates and retains same-thread order across pages',async()=>{
+ const row=(id,threadId)=>({requestId:id,postId:id,threadId});
+ const a1=row('a1','a'),a2=row('a2','a'),a3=row('a3','a'),b=row('b1','b');
+ const started=[],done=new Set(),release=new Map();let scans=0;
+ const server=await startEscrowService({profile:'rolling',descriptor:{},port:0,pollMs:5,concurrency:2,onError:e=>assert.fail(e),board:{pending:async cursor=>{scans++;return {requests:(cursor===null?[a1,a2]:[a3,b]).filter(r=>!done.has(r.requestId)),nextCursor:cursor===null?'next':null};}},recoverPending:async()=>done.has('a1')?[]:[a1],run:async r=>{started.push(r.requestId);await new Promise(resolve=>release.set(r.requestId,resolve));done.add(r.requestId);}});
+ try{await until(()=>started.includes('b1'));assert(scans>=2);assert.deepEqual(started,['a1','b1']);release.get('a1')();await until(()=>started.includes('a2'));assert.deepEqual(started,['a1','b1','a2']);release.get('a2')();await until(()=>started.includes('a3'));assert.deepEqual(started,['a1','b1','a2','a3']);}
+ finally{for(const resolve of release.values())resolve();await server.close();}
+});
+
+test('Rolling completion restarts canonical discovery before a compacted later thread row',async()=>{
+ const a=Array.from({length:4},(_,i)=>({requestId:'a'+(i+1),postId:String(i),threadId:'a'})),b={requestId:'b',postId:'b',threadId:'b'};
+ const started=[],done=new Set(),release=new Map();let scans=0;
+ const server=await startEscrowService({profile:'rolling',descriptor:{},port:0,pollMs:5,concurrency:2,onError:e=>assert.fail(e),board:{pending:async cursor=>{scans++;return {requests:(cursor===null?a.slice(0,3):[a[3],b]).filter(r=>!done.has(r.requestId)),nextCursor:cursor===null?'next':null};}},run:async r=>{started.push(r.requestId);await new Promise(resolve=>release.set(r.requestId,resolve));done.add(r.requestId);}});
+ try{await until(()=>started.includes('b'));assert(scans>=2);assert.deepEqual(started,['a1','b']);for(const [previous,next] of [['a1','a2'],['a2','a3'],['a3','a4']]){release.get(previous)();await until(()=>started.includes(next));assert.equal(started.at(-1),next);}assert.deepEqual(started,['a1','b','a2','a3','a4']);}
+ finally{for(const resolve of release.values())resolve();await server.close();}
+});
+
+test('Rolling completion during a pending read discards the stale page and cursor',async()=>{
+ const a1={requestId:'a1',postId:'1',threadId:'a'},a2={requestId:'a2',postId:'2',threadId:'a'},a3={requestId:'a3',postId:'3',threadId:'a'};
+ const started=[],done=new Set(),release=new Map(),cursors=[];let unblock,reading=false;
+ const server=await startEscrowService({profile:'rolling',descriptor:{},port:0,pollMs:5,concurrency:2,onError:e=>assert.fail(e),board:{pending:async cursor=>{cursors.push(cursor);if(cursors.length===2){reading=true;await new Promise(resolve=>{unblock=resolve;});return{requests:[a3],nextCursor:'stale'};}return{requests:[a1,a2,a3].filter(r=>!done.has(r.requestId)),nextCursor:'later'};}},run:async r=>{started.push(r.requestId);await new Promise(resolve=>release.set(r.requestId,resolve));done.add(r.requestId);}});
+ try{await until(()=>reading);release.get('a1')();await until(()=>done.has('a1'));unblock();await until(()=>started.includes('a2'));assert.deepEqual(started,['a1','a2']);assert.equal(cursors[2],null);assert(!cursors.includes('stale'));}
+ finally{unblock?.();for(const resolve of release.values())resolve();await server.close();}
+});

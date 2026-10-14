@@ -40,7 +40,7 @@ export async function reconcileHostedBilling({receipt,escrow,store,lease,limits}
 export async function startEscrowService({descriptor,escrow,board,run,host='127.0.0.1',port=8787,onError=console.error,pollMs=2000,concurrency=2,profile='legacy',recoverPending=async()=>[]}){
  if(!['legacy','rolling'].includes(profile))throw Error('Invalid service profile');
  if(!Number.isSafeInteger(concurrency)||concurrency<1||concurrency>16)throw Error('Invalid service concurrency');
- let rollingCursor=null,rollingQueue=[];
+ let rollingCursor=null,rollingQueue=[],rollingScanEpoch=0;
  let stopped=false,polling=false,cursor=0,inFlight=Promise.resolve(),pollFailure=null,jobFailure=null,lastSuccess=null;
  const jobs=new Map(),deferred=new Set();
  const failed=(error,source='job')=>{const failure={at:new Date().toISOString(),kind:error.name||'Error'};if(source==='poll')pollFailure=failure;else jobFailure=failure;onError(error);};
@@ -68,15 +68,33 @@ export async function startEscrowService({descriptor,escrow,board,run,host='127.
  async function poll(){if(stopped||polling)return;polling=true;try{
   if(profile==='rolling'){
    if(jobs.size>=concurrency)return;
-   if(!rollingQueue.length){const page=await board.pending(rollingCursor);rollingCursor=page.nextCursor;assert(Array.isArray(page.requests)&&page.requests.length<=64);const recovery=await recoverPending();assert(Array.isArray(recovery)&&recovery.length<=16);
-    rollingQueue=[...new Map([...recovery,...page.requests].map(request=>[request.requestId,request])).values()];}
+   const busyThread=request=>[...jobs.values()].some(job=>job.threadId===request.threadId);
+   if(!rollingQueue.length||rollingQueue.every(request=>jobs.has(request.requestId)||busyThread(request))){
+    // A blocked thread must not hide new independent work. Keep its earliest
+    // waiting request; later rows remain discoverable in the cyclic canonical
+    // pending scan. This bounds retained rows by active threads plus one page.
+    const deferred=new Map();
+    for(const request of rollingQueue)if(!jobs.has(request.requestId)&&!deferred.has(request.threadId))deferred.set(request.threadId,request);
+    const epoch=rollingScanEpoch;
+    const page=await board.pending(rollingCursor);assert(Array.isArray(page.requests)&&page.requests.length<=64);
+    const recovery=await recoverPending();assert(Array.isArray(recovery)&&recovery.length<=16);
+    if(epoch!==rollingScanEpoch)return; // A completed job invalidated this page.
+    rollingCursor=page.nextCursor;
+    rollingQueue=[...new Map([...deferred.values(),...recovery,...page.requests].map(request=>[request.requestId,request])).values()];
+   }
    for(const request of [...rollingQueue]){
     if(stopped||jobs.size>=concurrency)break;
     assert(typeof request.threadId==='string','Canonical thread identity required');
-    if(jobs.has(request.requestId)||[...jobs.values()].some(job=>job.threadId===request.threadId))continue;
+    if(jobs.has(request.requestId)){rollingQueue=rollingQueue.filter(row=>row.requestId!==request.requestId);continue;}
+    if(busyThread(request))continue;
     rollingQueue=rollingQueue.filter(row=>row.requestId!==request.requestId);
     const job={post:request.postId,threadId:request.threadId,promise:null};jobs.set(request.requestId,job);
-    job.promise=Promise.resolve().then(()=>run(request)).then(()=>{jobFailure=null;lastSuccess=new Date().toISOString();},error=>failed(error)).finally(()=>jobs.delete(request.requestId));
+    job.promise=Promise.resolve().then(()=>run(request)).then(()=>{jobFailure=null;lastSuccess=new Date().toISOString();},error=>failed(error)).finally(()=>{
+     jobs.delete(request.requestId);
+     // Deferred rows may have been compacted while a thread was busy. Restart
+     // discovery so its earliest remaining request wins, including across pages.
+     rollingScanEpoch++;rollingQueue=[];rollingCursor=null;
+    });
    }
    pollFailure=null;return;
   }
