@@ -387269,7 +387269,7 @@ Partial Address: ${this.partialAddress.toString()}
       const chainId = info?.l1ChainId, version12 = info?.rollupVersion, realProofs = info?.realProofs, rollup = info?.l1ContractAddresses?.rollupAddress;
       if (!natural(chainId) || !natural(version12) || typeof realProofs !== "boolean") throw fail4("UNAVAILABLE");
       if (String(chainId) !== p.chainId || String(version12) !== p.version || hex12(rollup, 20) !== p.rollup || realProofs !== p.proofsEnabled) throw fail4("IDENTITY");
-      const [tips, state] = await readTogether([
+      const [tips, state, stamp] = await readTogether([
         async () => {
           const value = await node2.getChainTips();
           return {
@@ -387288,6 +387288,13 @@ Partial Address: ${this.partialAddress.toString()}
             oldest: value?.oldestHistoricBlockNumber,
             synced: value?.treesAreSynched
           };
+        },
+        // Timestamp is independent public metadata. Snapshot it with the tips,
+        // then retain both canonical checks after this entire group settles.
+        async () => {
+          const value = await node2.getSyncedL1Timestamp();
+          if (typeof value !== "bigint" || value < 0n || value > BigInt(Number.MAX_SAFE_INTEGER)) throw fail4("UNAVAILABLE");
+          return value;
         }
       ]);
       const { proposed, checkpointed, proven, finalized } = tips;
@@ -387298,10 +387305,8 @@ Partial Address: ${this.partialAddress.toString()}
       if (!synced || latest !== proposed.number || hex12(latestHash, 32) !== proposed.hash || final !== finalized.number || oldest > checkpointed.number) throw fail4("UNSYNCED");
       if (checkpointed.number !== proposed.number) await readTogether([() => canonical(node2, checkpointed), () => canonical(node2, proposed)]);
       else await canonical(node2, proposed);
-      const stamp = await node2.getSyncedL1Timestamp();
       const suppliedNow = options.nowSeconds, now = suppliedNow === void 0 ? Math.floor(Date.now() / 1e3) : suppliedNow;
       if (!natural(now)) throw fail4("CONFIG");
-      if (typeof stamp !== "bigint" || stamp < 0n || stamp > BigInt(Number.MAX_SAFE_INTEGER)) throw fail4("UNAVAILABLE");
       const lag = now - Number(stamp);
       if (lag < 0 || lag > p.maxLagSeconds) throw fail4("STALE");
       await canonical(node2, proposed);

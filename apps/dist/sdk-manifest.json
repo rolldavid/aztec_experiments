@@ -2058,12 +2058,12 @@
     "shared/sdk-entry.mjs": "0097d34805d4b6408866bfbda28a84dab5573153f4a79c0ace95f17fc41e0248",
     "shared/sdk-store.mjs": "474807edf283d8166f93442ccfe4485ccaa7c056fefa5d4e9b2a4669554a5bfa",
     "shared/transaction-outcomes.mjs": "13c01eee9ad9cb263b4d166c0c68f4308577714574c46e8f675b0fba65f0dcb2",
-    "shared/trusted-private-node.mjs": "50fa3642a777cb2eca66e595d72a6e639781cc7d0fc2deb4d1903c0a2a0d81d5",
+    "shared/trusted-private-node.mjs": "734acd3b67bd2ed08f6417b68efb5ec2a8703f5bb248f2c55281d1bfbd3c8a2f",
     "toolchain.json": "8a5ade97648d006124ee1a7f2e40c55375be90d116f3c4c90e2e56456f89d8a8"
   },
   "outputs": {
     "acvm_js_bg.wasm": "117fd939c3762470aec0920178b90b76293e1d92e75650e756483352c5ddcb1a",
-    "aztec_bundle.js": "ebbece874e7e0ceeeee67a628977cdf2f293671c380b07dadd14519b7ed975bd",
+    "aztec_bundle.js": "bb9586d8ce4f0db9b585a81ecf6b11870efde54bb292c9e3f62f3ba2c69205b0",
     "bb-main.worker.js": "a20e91000929692e4dda7c9b99d273fa3a565d433a1918239aaebd88ca104174",
     "bb-thread.worker.js": "80d2a3036eb1a04094200890d660fb503f7cc3103bdcb003b3ccea2fdfecc663",
     "noirc_abi_wasm_bg.wasm": "51dbfae8ef59b40e88f093fcc59df503a937649dd17ff4e5ecc1eeb4e95594d9",
