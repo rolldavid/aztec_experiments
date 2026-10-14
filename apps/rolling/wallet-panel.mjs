@@ -30,6 +30,9 @@ const button=(label,handler,primary=false)=>{const node=el('button',{type:'butto
 const paragraph=text=>el('p',{},text);
 const label=(text,control)=>el('label',{class:'form-field'},text,control);
 const message='This operation could not be completed. Recovery records were preserved. Check the existing transaction before preparing another.';
+const plaintextRecoveryWarning='This imported file contains an unencrypted key. Create an encrypted recovery file and protect the original.';
+const recoveryLimits='Keep your recovery file and its password safe. A lost password cannot be reset. Losing your private account key can make funds and saved choices unrecoverable.';
+const backupFreshness='Download a fresh backup after funding or transaction recovery changes. If a deposit uses a new random claim secret, a backup made before that deposit cannot restore that secret.';
 
 /** loadRuntime returns the trusted account facade/getAccount/createSession binding.
  * getAccount values are used only as an unlocked boolean, never rendered or logged.
@@ -47,7 +50,7 @@ const message='This operation could not be completed. Recovery records were pres
 export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPrivateChange=()=>{}}){
  if(typeof loadRuntime!=='function'||typeof onPublicEffect!=='function'||typeof onPrivateChange!=='function')throw Error('Wallet panel configuration unavailable.');
  const connectionFailure=Object.freeze({}),avatarFailure=Object.freeze({});
- let initializationAttempt=0;
+ let initializationAttempt=0,plaintextRecovery=false;
  let runtime,session,busy=false,blocked=false,invalidated=false,reloadRequired=false,returnFocus;
  let balances=null,bokAccounting=null,bokExitAmount='',refundQuote=null,refundGas='0.003';
  let topupKind='private-fee',topupQuote=null,topupInputs={amount:'',gas:'0.003'};
@@ -159,7 +162,9 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
    if(!loaded?.account||typeof loaded.getAccount!=='function'||typeof loaded.createSession!=='function')throw Error('Invalid runtime');
    runtime=loaded;
    runtime.account.configure({requireEth:false,autoPasskey:false,canEndSession:()=>!session?.busy,
-    onMessage:()=>{},onSetupError:()=>{error=message;},onChange:value=>{
+    // Custody's fixed import warning is safe product copy. Never forward
+    // arbitrary account, SDK or exception messages into the private panel.
+    onMessage:(value,type)=>{if(type==='warn'&&value===plaintextRecoveryWarning)plaintextRecovery=true;},onSetupError:()=>{error=message;},onChange:value=>{
      if(value?.invalidated===true||accountIdentity&&runtime.getAccount()!==accountIdentity){invalidated=true;recoveryAbort?.abort();clearPrivateView();note('The account changed. Preserve recovery and reload before continuing.');render();}
     }});
   }
@@ -184,12 +189,12 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
    const selected=file.files[0],value=password.value;password.value='';file.value='';
    void work(async()=>{await runtime.account.importRecovery(selected,value);notice='Recovery imported. Checking retained transactions…';await connect();});
   });
-  content.append(paragraph('Create a private account or restore an existing one. Creating an account does not fund it.'),label('Recovery password (at least 12 characters for a new backup)',password),create,label('Encrypted recovery file',file),restore);
+  content.append(paragraph('Create a private account or restore an existing one. Creating an account does not fund it.'),paragraph(recoveryLimits),label('Recovery password (at least 12 characters for a new backup)',password),create,label('Encrypted backup or unencrypted account file',file),paragraph('An unencrypted account file contains a private key. Import only on a trusted device, then download an encrypted backup.'),restore);
  }
  function recovery(){
   const section=el('details',{},el('summary',{},'Backup and account security'));
   const password=passwordField('New recovery password');
-  section.append(paragraph('The encrypted download includes your private account and retained transaction recovery records. It never downloads a plaintext signing key.'),label('New recovery password',password),button('Download encrypted recovery',()=>{
+  section.append(paragraph('The encrypted download includes your private account and retained transaction recovery records. It never downloads a plaintext signing key.'),paragraph(recoveryLimits),paragraph(backupFreshness),label('New recovery password',password),button('Download encrypted recovery',()=>{
    if(!password.reportValidity())return;const value=password.value;password.value='';
    void work(async()=>{download(await runtime.account.exportRecovery(value));notice='Encrypted recovery downloaded.';});
   }),button('Lock account',()=>void work(async()=>{
@@ -654,6 +659,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   releasePreviews();content.replaceChildren();
   if(error)content.append(el('p',{role:'alert',class:'notice error'},error));
   if(notice)content.append(el('p',{class:'notice'},notice));
+  if(plaintextRecovery)content.append(el('p',{role:'status',class:'notice'},plaintextRecoveryWarning));
   if(invalidated||reloadRequired){content.append(paragraph('This account session has ended. Existing recovery records remain encrypted on this device.'),button('Reload to unlock',()=>location.reload()));}
   else if(!runtime)content.append(paragraph('Browsing needs no wallet. Unlock only when you want to manage your account or publish.'),button('Unlock',()=>void unlock(),true));
   else if(!unlocked())custody();

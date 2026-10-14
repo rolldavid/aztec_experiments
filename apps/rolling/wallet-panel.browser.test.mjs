@@ -56,7 +56,7 @@ const runtime={selectPrivateViews,
  fundingWallets:()=>state.walletChoices??[],fundingWalletStatus:()=>state.fundingWallet??{connected:false},
  async connectFundingWallet(id){state.walletConnects=(state.walletConnects??0)+1;state.walletSelected=id;await boundary('funding-wallet');state.fundingWallet={connected:true,name:'MetaMask',address:'0x'+'1'.repeat(40)};},
  getAccount:()=>state.unlocked?state.rawAccount:null,
- account:{configure:options=>{state.options=options;},async create(){state.creates++;await boundary('create');state.unlocked=true;return envelope;},async importRecovery(){state.imports++;await boundary('import');state.unlocked=true;},async exportRecovery(){state.exports++;await boundary('export');return envelope;},async endSession(){state.ended++;state.unlocked=false;return {reload:true};}},
+ account:{configure:options=>{state.options=options;},async create(){state.creates++;await boundary('create');state.unlocked=true;return envelope;},async importRecovery(){state.imports++;await boundary('import');state.unlocked=true;if(state.importWarning)state.options.onMessage(state.importWarning,'warn');},async exportRecovery(){state.exports++;await boundary('export');return envelope;},async endSession(){state.ended++;state.unlocked=false;return {reload:true};}},
  async createSession({onProgress}){state.sessions++;state.sessionProgress=onProgress;for(const record of state.initializationRecords??[])onProgress(record);await boundary('session');return {application,withdrawal:{async prepare(input){state.refundReviews=(state.refundReviews??0)+1;state.refundInput=input;await boundary('refund-review');return {amount:'100000000000000000',maximumGasWei:input.maximumGasWei,walletName:'MetaMask'};},async confirm(){state.refundSends=(state.refundSends??0)+1;await boundary('refund-send');state.refunded=true;return {status:'refunded',amount:read().withdrawal.amount};},async cancel(){state.refundCancelled=true;},async recover(){state.refundChecks=(state.refundChecks??0)+1;await boundary('refund-check');if(state.refundFound)state.refunded=true;return {status:state.refundFound?'refunded':'unknown'};}},topup:state.topupEnabled?topup:null,funding:state.aggregateEnabled?funding:null,busy:false,async close(){state.closes++;await boundary('close');}};}
 };
 window.panel=mountRollingWalletPanel({loadRuntime:async()=>{state.loads++;await boundary('load');return runtime;},onPublicEffect:()=>{state.effects++;},onPrivateChange:()=>{state.privateChanges++;}});
@@ -137,6 +137,28 @@ test('explicit create, encrypted backup download, no automatic account creation 
  const download=await downloading;assert.equal(download.suggestedFilename(),'rolling-chat-encrypted-recovery.json');const downloaded=JSON.parse(await fs.readFile(await download.path(),'utf8'));assert.equal(downloaded.kind,'aztec-billboard-encrypted-wallet');assert.equal(Object.hasOwn(downloaded,'secretKey'),false);
  await page.getByRole('button',{name:'Check action and review fee'}).waitFor();await page.getByText('Backup and account security',{exact:true}).click();await page.evaluate(()=>test.failure='close');await page.getByRole('button',{name:'Lock account',exact:true}).click();await page.getByRole('alert').waitFor();assert.equal(await page.evaluate(()=>test.ended),0);
  await page.getByText('Backup and account security',{exact:true}).click();await page.getByLabel('New recovery password',{exact:true}).fill('a new test-only password');const exporting=page.waitForEvent('download');await page.getByRole('button',{name:'Download encrypted recovery'}).click();await exporting;assert.equal(await page.evaluate(()=>test.exports),1);
+});
+
+test('plaintext recovery warning survives import and unavailable connection without leaking other custody messages',async t=>{
+ const warning='This imported file contains an unencrypted key. Create an encrypted recovery file and protect the original.';
+ assert((await fs.readFile(new URL('../../shared/account.js',import.meta.url),'utf8')).includes("_wlog('"+warning+"','warn')"),'Use the existing actual custody warning');
+ const {page}=await browserFixture(t);await page.evaluate(warning=>{test.unlocked=false;test.importWarning=warning;test.failure='session';},warning);
+ await open(page);await page.getByRole('button',{name:'Unlock',exact:true}).click();await page.getByRole('button',{name:'Import recovery',exact:true}).waitFor();
+ await page.getByText('Encrypted backup or unencrypted account file',{exact:true}).waitFor();await page.getByText(/A lost password cannot be reset/).waitFor();
+ await page.getByLabel('Recovery file',{exact:true}).setInputFiles({name:'disposable-account.json',mimeType:'application/json',buffer:Buffer.from('{}')});await page.getByRole('button',{name:'Import recovery',exact:true}).click();
+ await page.getByRole('button',{name:'Connect private account',exact:true}).waitFor();await page.getByText(warning,{exact:true}).waitFor();
+ await page.evaluate(()=>test.options.onMessage('PRIVATE_SENTINEL unknown custody warning','warn'));assert.equal((await page.locator('body').innerText()).includes('PRIVATE_SENTINEL'),false);
+ await page.getByText('Backup and account security',{exact:true}).click();await page.getByText(/If a deposit uses a new random claim secret/).waitFor();
+ assert.equal(await page.evaluate(()=>test.imports),1);assert.equal((await counts(page)).sends,0);
+ await page.getByRole('button',{name:'Close account panel',exact:true}).click();await open(page);await page.getByText(warning,{exact:true}).waitFor();
+});
+
+test('encrypted recovery import retains backup guidance without a false plaintext warning',async t=>{
+ const {page}=await browserFixture(t);await page.evaluate(()=>test.unlocked=false);await open(page);await page.getByRole('button',{name:'Unlock',exact:true}).click();await page.getByRole('button',{name:'Import recovery',exact:true}).waitFor();
+ await page.getByLabel('Recovery file',{exact:true}).setInputFiles({name:'disposable-encrypted-recovery.json',mimeType:'application/json',buffer:Buffer.from('{}')});await page.getByRole('button',{name:'Import recovery',exact:true}).click();await page.getByRole('button',{name:'Check action and review fee'}).waitFor();
+ assert.equal(await page.getByText('This imported file contains an unencrypted key.',{exact:false}).count(),0);
+ await page.getByText('Backup and account security',{exact:true}).click();await page.getByText(/A lost password cannot be reset/).waitFor();await page.getByText(/Download a fresh backup after funding or transaction recovery changes/).waitFor();
+ assert.equal(await page.evaluate(()=>test.imports),1);assert.equal((await counts(page)).sends,0);
 });
 
 test('funding remains honest and unavailable connection has no action buttons or automatic retry',async t=>{
