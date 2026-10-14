@@ -6,13 +6,16 @@ import {prepareAvatarUpload} from './avatar-upload.mjs';
 const initializationSteps=new Set(['account-lock','trusted-node','deployment','account-derive','store-open','pxe-create','account-register','contracts-register','initial-sync','journal-open','wallet-bind','account-manager','application-bind']);
 const deploymentSteps=new Set(['config','node-readiness','artifact-layout','board-class','checkpoint','board-instance','public-config','config-commitment','fee-instance','l1-context','portal-code-and-immutables','canonical-recheck','final-readiness-and-context']);
 const initializationCodes=new Set(['unknown','BB_TRUSTED_NODE_CONFIG','BB_TRUSTED_NODE_IDENTITY','BB_TRUSTED_NODE_UNAVAILABLE','BB_TRUSTED_NODE_UNSYNCED','BB_TRUSTED_NODE_STALE','BB_BROWSER_PROVER_CONFIGURATION','ROLLING_SESSION_CONFIG','ROLLING_OTHER_TAB','ROLLING_CONTEXT_CHANGED','ROLLING_ACCOUNT_MISMATCH','ROLLING_PRIVATE_ROUTE','ROLLING_DEPLOYMENT_INVALID']);
+const refreshSteps=new Set(['account-status','owned-names','moderator-status','bok-status'].flatMap(method=>['lock','context','pxe-sync','account-initialize','method'].map(phase=>method+'/'+phase)));
+const refreshCodes=new Set(['ROLLING_BUSY','ROLLING_LOCKED','ROLLING_INVALID_RESPONSE','ROLLING_ABI_MISMATCH','ROLLING_RECOVERY_REQUIRED','PRIVATE_FEE_PREPARATION_FAILED','PRIVATE_FEE_PROVIDER_REQUIRED','PRIVATE_FEE_CONFIGURATION_REQUIRED','PRIVATE_FEE_OWNER_IS_PAYER','PRIVATE_FEE_CHAIN_MISMATCH','PRIVATE_FEE_CAP_TOO_LOW','PRIVATE_FEE_NONCANONICAL_ADDRESS','PRIVATE_FEE_NOT_PUBLISHED','PRIVATE_FEE_CLASS_MISMATCH','PRIVATE_FEE_ARTIFACT_INVALID','PRIVATE_FEE_INVALID_VALUE','PRIVATE_FEE_INVALID_ADDRESS','PRIVATE_FEE_INVALID_GAS','PRIVATE_FEE_BALANCE_INSUFFICIENT']);
 export function projectRollingInitialization(value){
  try{
   if(!value||Object.getPrototypeOf(value)!==Object.prototype||Reflect.ownKeys(value).length!==5)return null;
   const out={};for(const key of ['stage','step','deploymentStep','state','code']){const d=Object.getOwnPropertyDescriptor(value,key);if(!d||!Object.hasOwn(d,'value'))return null;out[key]=d.value;}
-  if(out.stage!=='session-initialization'||!initializationSteps.has(out.step)||!['started','complete','failed'].includes(out.state))return null;
-  if(out.deploymentStep!==null&&(out.step!=='deployment'||!deploymentSteps.has(out.deploymentStep)))return null;
-  if(out.state==='failed'?!initializationCodes.has(out.code):out.code!==null)return null;
+  const refresh=out.stage==='private-refresh';
+  if(!(refresh?refreshSteps.has(out.step):out.stage==='session-initialization'&&initializationSteps.has(out.step))||!['started','complete','failed'].includes(out.state))return null;
+  if(out.deploymentStep!==null&&(refresh||out.step!=='deployment'||!deploymentSteps.has(out.deploymentStep)))return null;
+  if(out.state==='failed'?!(initializationCodes.has(out.code)||refresh&&refreshCodes.has(out.code)):out.code!==null)return null;
   return Object.freeze(out);
  }catch{return null;}
 }
@@ -137,8 +140,8 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   try{
   if(!accountIdentity)accountIdentity=runtime.getAccount();
   if(!session){blocked=true;session=await runtime.createSession({onProgress:progress=>{
-   if(attempt!==initializationAttempt||epoch!==accountEpoch||invalidated||reloadRequired||!unlocked())return;
    const diagnostic=projectRollingInitialization(progress);
+   if(epoch!==accountEpoch||invalidated||reloadRequired||!unlocked()||(diagnostic?.stage==='private-refresh'?!session:attempt!==initializationAttempt))return;
    if(diagnostic)dialog.setAttribute('data-rolling-initialization',JSON.stringify(diagnostic));
    const stages={estimating:'Checking the action and its maximum fee…',submitting:'Proving and submitting. Keep this page open; do not send again.'};
    let stage;try{const own=Object.getOwnPropertyDescriptor(progress??{},'stage');if(own&&Object.hasOwn(own,'value')&&typeof own.value==='string')stage=own.value;}catch{}

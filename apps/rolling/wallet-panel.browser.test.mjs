@@ -17,7 +17,7 @@ const envelope={schemaVersion:1,kind:'aztec-billboard-encrypted-wallet',kdf:'PBK
 const read=()=>JSON.parse(sessionStorage.getItem('labelled-ui-intent')||'null');
 const write=value=>sessionStorage.setItem('labelled-ui-intent',JSON.stringify(value));
 const error=()=>{throw Object.defineProperty(Error('PRIVATE_SENTINEL'), 'code',{get(){throw Error('GETTER_SENTINEL');}});};
-async function boundary(name){if(state.hold===name)await new Promise(resolve=>state.release=resolve);if(state.failure===name)error();}
+async function boundary(name){for(const row of state.refreshRecords?.[name]??[])state.sessionProgress(row);if(state.hold===name)await new Promise(resolve=>state.release=resolve);if(state.failure===name)error();}
 const application={
  async readBalances({cursor}){state.balanceReads=(state.balanceReads??0)+1;state.balanceCursor=cursor;await boundary('balances');return state.balances;},
  async readModeratorStatus(){await boundary('moderator');return {authorized:state.moderator===true};},
@@ -795,4 +795,17 @@ test('RC22 panel requires separate explicit exit and refund fee reviews and canc
 test('RC22 reopened exit recovers an existing refund read-only and never duplicates the exit',async t=>{
  const {page}=await browserFixture(t);await openBalances(page);await page.getByRole('button',{name:'Review collateral exit',exact:true}).click();await page.getByRole('button',{name:'Confirm and send',exact:true}).click();await page.getByRole('button',{name:'Review Ethereum refund',exact:true}).waitFor();
  await page.reload();await page.waitForFunction(()=>window.ready);await open(page);await page.getByRole('button',{name:'Unlock',exact:true}).click();await page.getByRole('button',{name:'Check existing refund',exact:true}).waitFor();await page.evaluate(()=>test.refundFound=true);await page.getByRole('button',{name:'Check existing refund',exact:true}).click();await page.getByText('The saved Ethereum refund is confirmed.',{exact:true}).waitFor();assert.equal(await page.evaluate(()=>test.sends),0);assert.equal(await page.evaluate(()=>test.refundSends??0),0);assert.equal(await page.evaluate(()=>test.refundChecks),1);
+});
+
+
+test('refresh diagnostic survives connect sanitizer and retry then clears on account invalidation',async t=>{
+ const {page}=await browserFixture(t);await page.evaluate(()=>{test.failure='status';test.refreshRecords={status:[{stage:'private-refresh',step:'account-status/account-initialize',deploymentStep:null,state:'failed',code:'unknown'}]};});
+ await open(page);await page.getByRole('button',{name:'Unlock',exact:true}).click();await page.getByRole('alert').waitFor();
+ const dialog=page.getByRole('dialog');assert.equal(JSON.parse(await dialog.getAttribute('data-rolling-initialization')).step,'account-status/account-initialize');assert.equal(await page.getByRole('button',{name:'Check account recovery',exact:true}).isVisible(),true);
+ assert(!await dialog.innerText().then(s=>s.includes('PRIVATE_SENTINEL')||s.includes('account-initialize')));
+ await page.evaluate(()=>{test.failure='owned';test.refreshRecords={status:[{stage:'private-refresh',step:'account-status/method',deploymentStep:null,state:'complete',code:null}],owned:[{stage:'private-refresh',step:'owned-names/method',deploymentStep:null,state:'failed',code:'ROLLING_ABI_MISMATCH'}]};});
+ await page.getByRole('button',{name:'Check account recovery',exact:true}).click();await page.waitForFunction(()=>test.owned===1&&document.querySelector('dialog').getAttribute('aria-busy')==='false');
+ assert.deepEqual(JSON.parse(await dialog.getAttribute('data-rolling-initialization')),{stage:'private-refresh',step:'owned-names/method',deploymentStep:null,state:'failed',code:'ROLLING_ABI_MISMATCH'});
+ await page.evaluate(()=>{test.failure=null;test.refreshRecords={owned:[{stage:'private-refresh',step:'owned-names/method',deploymentStep:null,state:'complete',code:null}]};});await page.getByRole('button',{name:'Check account recovery',exact:true}).click();await page.getByRole('button',{name:'Recover funding',exact:true}).waitFor();assert.equal(JSON.parse(await dialog.getAttribute('data-rolling-initialization')).state,'complete');
+ await page.evaluate(()=>{test.rawAccount={address:'OTHER_PRIVATE_SENTINEL'};test.options.onChange({invalidated:true});test.sessionProgress({stage:'private-refresh',step:'account-status/method',deploymentStep:null,state:'failed',code:'unknown'});});assert.equal(await dialog.getAttribute('data-rolling-initialization'),null);assert.equal((await counts(page)).sends,0);
 });

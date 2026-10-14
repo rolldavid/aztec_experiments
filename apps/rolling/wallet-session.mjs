@@ -10,6 +10,9 @@ import {createRollingApplication} from '../../shared/rolling/application.mjs';
 import {verifyRollingDeployment,observeRollingSetup,rollingSetupErrorCode} from '../../shared/rolling/deployment.mjs';
 const fail=code=>Object.assign(Error('The private account is unavailable. Preserve recovery records.'),{code});
 export const ROLLING_SESSION_STAGES=Object.freeze(['account-lock','trusted-node','deployment','account-derive','store-open','pxe-create','account-register','contracts-register','initial-sync','journal-open','wallet-bind','account-manager','application-bind']);
+const refreshMethods=Object.freeze({readAccountStatus:'account-status',ownedIdentities:'owned-names',readModeratorStatus:'moderator-status',readBokStatus:'bok-status'});
+const refreshCodes=new Set(['ROLLING_BUSY','ROLLING_LOCKED','ROLLING_INVALID_RESPONSE','ROLLING_ABI_MISMATCH','ROLLING_RECOVERY_REQUIRED','PRIVATE_FEE_PREPARATION_FAILED','PRIVATE_FEE_PROVIDER_REQUIRED','PRIVATE_FEE_CONFIGURATION_REQUIRED','PRIVATE_FEE_OWNER_IS_PAYER','PRIVATE_FEE_CHAIN_MISMATCH','PRIVATE_FEE_CAP_TOO_LOW','PRIVATE_FEE_NONCANONICAL_ADDRESS','PRIVATE_FEE_NOT_PUBLISHED','PRIVATE_FEE_CLASS_MISMATCH','PRIVATE_FEE_ARTIFACT_INVALID','PRIVATE_FEE_INVALID_VALUE','PRIVATE_FEE_INVALID_ADDRESS','PRIVATE_FEE_INVALID_GAS','PRIVATE_FEE_BALANCE_INSUFFICIENT']);
+function refreshErrorCode(error){try{const d=error!=null?Object.getOwnPropertyDescriptor(error,'code'):null;return d&&Object.hasOwn(d,'value')&&refreshCodes.has(d.value)?d.value:rollingSetupErrorCode(error);}catch{return 'unknown';}}
 const silent=()=>{};
 const logger=Object.freeze({trace:silent,debug:silent,verbose:silent,info:silent,warn:silent,error:silent,fatal:silent,
  level:'silent',module:'rolling-wallet',isLevelEnabled:()=>false,createChild:()=>logger,getBindings:()=>({})});
@@ -272,8 +275,20 @@ export async function createRollingWalletSession({sdk,routing,ethers,config,boar
   await guard();
   if(!sdk.isTrustedPrivateNode(privateNode)||!sdk.isPrivatePXEForNode(pxe,privateNode)||privateWallet.aztecNode!==privateNode||privateWallet.pxe!==pxe||!routing.isPrivateWalletForNode(privateWallet,privateNode))throw fail('ROLLING_PRIVATE_ROUTE');
  }
- const synchronized=createSynchronizedRollingApplication({application:app,synchronize:async()=>{await pxe.sync();await initializeAccount();},contextGuard:guardRoute});
- const application=Object.freeze({...Object.fromEntries(Object.entries(synchronized).map(([name,call])=>[name,(...args)=>locked(async()=>{const result=name==='submitPrepared'&&topups?await submitWithStandaloneTopupCheckpoint({application:synchronized,topups,intentId:args[0]}):await call(...args);if(name==='reconcile'&&result?.status==='confirmed'){const kind=result.action?.type==='claim-bok'?'bok':result.action?.type==='claim-private-fee'?'private-fee':null;if(kind&&topups?.[kind])await topups[kind].recordConfirmedClaim(result);}return result;})])),
+ let refreshPhase=null;
+ const synchronized=createSynchronizedRollingApplication({application:app,synchronize:async()=>{refreshPhase?.('pxe-sync');await pxe.sync();refreshPhase?.('account-initialize');await initializeAccount();},contextGuard:async()=>{refreshPhase?.('context');await guardRoute();refreshPhase?.('context-complete');}});
+ async function observedRead(name,call,args){
+  const method=refreshMethods[name];if(!method)return locked(()=>call(...args));
+  let step=method+'/lock',contextChecks=0;
+  const emit=(state,error)=>observeRollingSetup(onProgress,{stage:'private-refresh',step,deploymentStep:null,state,code:state==='failed'?refreshErrorCode(error):null});
+  emit('started');
+  try{const result=await locked(async()=>{
+   refreshPhase=phase=>{if(phase==='context-complete'){if(contextChecks<2)return;phase='method';}if(phase==='context')contextChecks++;emit('complete');step=method+'/'+phase;emit('started');};
+   try{return await call(...args);}finally{refreshPhase=null;}
+  });emit('complete');return result;}catch(error){emit('failed',error);throw error;}
+ }
+
+ const application=Object.freeze({...Object.fromEntries(Object.entries(synchronized).map(([name,call])=>[name,(...args)=>refreshMethods[name]?observedRead(name,call,args):locked(async()=>{const result=name==='submitPrepared'&&topups?await submitWithStandaloneTopupCheckpoint({application:synchronized,topups,intentId:args[0]}):await call(...args);if(name==='reconcile'&&result?.status==='confirmed'){const kind=result.action?.type==='claim-bok'?'bok':result.action?.type==='claim-private-fee'?'private-fee':null;if(kind&&topups?.[kind])await topups[kind].recordConfirmedClaim(result);}return result;})])),
   readPreferences:options=>locked(()=>readPreferences(options)),
   readColdPreferences:options=>locked(()=>readColdPreferences(options))});
  const privateFeeCap=((BigInt(selected.privateFee.gasSettings.gasLimits.daGas)+BigInt(selected.privateFee.gasSettings.teardownGasLimits.daGas))*BigInt(selected.privateFee.gasSettings.maxFeesPerGas.feePerDaGas)+(BigInt(selected.privateFee.gasSettings.gasLimits.l2Gas)+BigInt(selected.privateFee.gasSettings.teardownGasLimits.l2Gas))*BigInt(selected.privateFee.gasSettings.maxFeesPerGas.feePerL2Gas)).toString();

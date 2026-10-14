@@ -542,3 +542,36 @@ test('RC22 testnet refund waits for finalized Ethereum inclusion and resumes wit
  await assert.rejects(f.restart().verify(f.record),{code:'ROLLING_WITHDRAWAL_RECOVERY_REQUIRED'});
  f.state.finalized=f.state.head;assert.equal((await f.restart().recover()).status,'refunded');assert.equal(f.state.sends,1);
 });
+
+for(const phase of ['lock','context','pxe-sync','account-initialize','method'])test('refresh diagnostic preserves exact failure at '+phase,async()=>{
+ const f=await sessionFixture(),rows=[],original=Object.assign(Error('PRIVATE_REFRESH_SENTINEL'),{code:'PRIVATE_FEE_CAP_TOO_LOW'});
+ f.input.onProgress=row=>{rows.push(row);};const session=await createRollingWalletSession(f.input);rows.length=0;
+ if(phase==='lock')f.input.locks.request=async()=>{throw original;};
+ if(phase==='context')f.input.sdk.isPrivatePXEForNode=()=>{throw original;};
+ if(phase==='pxe-sync')f.pxe.sync=async()=>{throw original;};
+ if(phase==='account-initialize')f.input.sdk.ContractFunctionInteraction=class{async simulate(){throw original;}};
+ if(phase==='method')f.input.sdk.preparePrivateFeePayment=async()=>{throw original;};
+ // The production application captures SDK capabilities at construction.
+ if(phase==='method'){
+  await session.close();const again=await createRollingWalletSession(f.input);rows.length=0;
+  await assert.rejects(again.application.readAccountStatus(),e=>e===original);await again.close();
+ }else{await assert.rejects(session.application.readAccountStatus(),e=>e===original);if(phase==='lock')f.input.locks.request=async(_n,_o,fn)=>{f.state.active=true;try{return await fn({});}finally{f.state.active=false;}};await session.close();}
+ const failed=rows.filter(r=>r.stage==='private-refresh'&&r.state==='failed');assert.equal(failed.length,1);assert.equal(failed[0].step,'account-status/'+phase);assert.equal(failed[0].code,'PRIVATE_FEE_CAP_TOO_LOW');assert(rows.every(r=>projectRollingInitialization(r)));assert(!JSON.stringify(rows).includes('PRIVATE_REFRESH_SENTINEL'));assert.equal(f.state.sends,0);assert.equal(f.state.active,false);
+});
+for(const [method,label]of [['readAccountStatus','account-status'],['ownedIdentities','owned-names'],['readModeratorStatus','moderator-status'],['readBokStatus','bok-status']])test('refresh diagnostic scopes actual method '+method,async()=>{
+ const f=await sessionFixture(),rows=[];f.input.onProgress=r=>rows.push(r);const session=await createRollingWalletSession(f.input);f.pxe.sync=async()=>{throw false;};rows.length=0;
+ let caught=true;try{await session.application[method]();}catch(error){caught=error;}assert.equal(caught,false);
+ assert.deepEqual(rows.at(-1),{stage:'private-refresh',step:label+'/pxe-sync',deploymentStep:null,state:'failed',code:'unknown'});await session.close();
+});
+test('refresh diagnostic observer failure cannot mask zero balance or inspect private exception getters',async()=>{
+ const f=await sessionFixture(),rows=[];f.input.sdk.preparePrivateFeePayment=async()=>{throw Object.assign(Error('PRIVATE_SENTINEL'),{code:'PRIVATE_FEE_BALANCE_INSUFFICIENT'});};
+ f.input.onProgress=row=>{rows.push(row);if(row.state==='started')throw Error('OBSERVER');return Promise.reject(Error('OBSERVER'));};
+ const session=await createRollingWalletSession(f.input);assert.deepEqual(await session.application.readAccountStatus(),{status:'fee-needed'});assert.equal(rows.at(-1).state,'complete');assert.equal(rows.filter(r=>r.stage==='private-refresh'&&r.step==='account-status/method'&&r.state==='started').length,1);
+ let accessed=0;const original=Object.defineProperty({},'code',{get(){accessed++;throw Error('PRIVATE_SENTINEL');}});f.pxe.sync=async()=>{throw original;};
+ await assert.rejects(session.application.readAccountStatus(),e=>e===original);assert.equal(accessed,0);assert.equal(rows.at(-1).code,'unknown');assert(!JSON.stringify(rows).includes('PRIVATE_SENTINEL'));await session.close();
+});
+test('refresh diagnostic projection rejects unknown steps, private codes and accessor values',()=>{
+ const row={stage:'private-refresh',step:'account-status/method',deploymentStep:null,state:'failed',code:'PRIVATE_FEE_PREPARATION_FAILED'};
+ assert.deepEqual(projectRollingInitialization(row),row);assert.equal(projectRollingInitialization({...row,step:'PRIVATE_ADDRESS'}),null);assert.equal(projectRollingInitialization({...row,code:'PRIVATE_SENTINEL'}),null);assert.equal(projectRollingInitialization({...row,deploymentStep:'config'}),null);
+ let read=false;const hostile={...row};Object.defineProperty(hostile,'code',{get(){read=true;throw Error('private');}});assert.equal(projectRollingInitialization(hostile),null);assert.equal(read,false);
+});
