@@ -9,6 +9,16 @@ const hash=(b,algorithm='sha256')=>createHash(algorithm).update(b).digest('hex')
 const hex=(v,n)=>typeof v==='string'&&new RegExp('^[0-9a-f]{'+n+'}$').test(v);
 const integer=v=>Number.isSafeInteger(v)&&v>0;
 const fail=(code='GITHUB_BROKER_REJECTED')=>Object.assign(Error('GitHub source mirror unavailable'),{code});
+const diagnostics=new WeakMap();
+export function getGitHubBrokerDiagnostic(error){const d=error&&typeof error==='object'?diagnostics.get(error):undefined;return d?structuredClone(d):null;}
+function diagnosticError(response){
+ const d={kind:'http-rejection',status:response.status},id=response.headers.get('x-github-request-id');
+ if(typeof id==='string'&&/^[A-Fa-f0-9:]{1,100}$/.test(id))d.requestId=id;
+ const permissions=response.headers.get('x-accepted-github-permissions');
+ if(typeof permissions==='string'&&permissions.length<=256&&/^(?:administration|contents|metadata|repository_creation|pull_requests)=(?:read|write)(?:[,;] ?(?:administration|contents|metadata|repository_creation|pull_requests)=(?:read|write))*$/.test(permissions))d.acceptedPermissions=permissions;
+ const retry=response.headers.get('retry-after');if(typeof retry==='string'&&/^[0-9]{1,6}$/.test(retry))d.retryAfterSeconds=Number(retry);
+ const e=fail();diagnostics.set(e,d);return e;
+}
 const git=(type,b)=>hash(Buffer.concat([Buffer.from(type+' '+b.length+'\0'),b]),'sha1');
 const safe=p=>typeof p==='string'&&p.length<=240&&p.split('/').every(s=>/^[A-Za-z0-9.][A-Za-z0-9_.-]*$/.test(s)&&!['.','..','.git','.github','.aws','.ssh','.npmrc','node_modules','credentials','secrets'].includes(s.toLowerCase())&&!/^\.(?:env|yarnrc)(?:[.-]|$)/i.test(s));
 async function privateDirectory(p){assert(path.isAbsolute(p)&&await fs.realpath(p)===p);const s=await fs.lstat(p);assert(s.isDirectory()&&(s.mode&0o077)===0);}
@@ -50,12 +60,12 @@ async function broker({connectedRepositories=[],enabled=false,directory,artifact
  if(state.schema===undefined){assert.deepEqual(state,{operations:{}});state={schema:1,config,repositories:{}};await store.write(state);}
  assert(state.schema===1);assert.deepEqual(state.config,config);assert(state.repositories&&Object.keys(state.repositories).length<=128);
  async function save(){try{assert(Buffer.byteLength(JSON.stringify(state))<=8*1024*1024);await store.write(state);}catch{poisoned=true;throw fail('GITHUB_BROKER_RECORD_FAILED');}}
- async function owned(fn){if(busy||poisoned)throw fail('GITHUB_BROKER_UNAVAILABLE');busy=true;try{return await fn();}catch(e){throw fail(['GITHUB_BROKER_UNRESOLVED','GITHUB_BROKER_RECORD_FAILED'].includes(e?.code)?e.code:undefined);}finally{busy=false;}}
+ async function owned(fn){if(busy||poisoned)throw fail('GITHUB_BROKER_UNAVAILABLE');busy=true;try{return await fn();}catch(e){const safeError=fail(['GITHUB_BROKER_UNRESOLVED','GITHUB_BROKER_RECORD_FAILED'].includes(e?.code)?e.code:undefined),d=getGitHubBrokerDiagnostic(e);if(d)diagnostics.set(safeError,d);throw safeError;}finally{busy=false;}}
  function session(){const deadline=now()+120000;let calls=0;
   const jwt=()=>{const t=Math.floor(now()/1000),head=Buffer.from(JSON.stringify({alg:'RS256',typ:'JWT'})).toString('base64url'),body=Buffer.from(JSON.stringify({iat:t-60,exp:t+540,iss:String(appId)})).toString('base64url'),input=head+'.'+body;return input+'.'+sign('RSA-SHA256',Buffer.from(input),key).toString('base64url');};
   async function request(method,route,body,token){assert(++calls<=540&&now()<deadline&&route.startsWith('/')&&!/[\r\n#]/.test(route));const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),Math.min(8000,deadline-now()));
    try{const response=await fetchImpl('https://api.github.com'+route,{method,redirect:'error',credentials:'omit',headers:{Accept:'application/vnd.github+json','X-GitHub-Api-Version':'2026-03-10','Content-Type':'application/json',Authorization:'Bearer '+token},...(body===undefined?{}:{body:JSON.stringify(body)}),signal:controller.signal});
-    if(response.status===404){await response.body?.cancel();return null;}assert(response.ok);if(response.status===204){assert(method==='PUT'&&route.endsWith('/actions/permissions')&&body?.enabled===false);return {disabled:true};}const chunks=[];let n=0;for await(const chunk of response.body){n+=chunk.length;assert(n<=2*1024*1024);chunks.push(chunk);}return JSON.parse(Buffer.concat(chunks).toString('utf8'));
+    if(response.status===404){await response.body?.cancel();return null;}if(!response.ok){const error=diagnosticError(response);await response.body?.cancel();throw error;}if(response.status===204){assert(method==='PUT'&&route.endsWith('/actions/permissions')&&body?.enabled===false);return {disabled:true};}const chunks=[];let n=0;for await(const chunk of response.body){n+=chunk.length;assert(n<=2*1024*1024);chunks.push(chunk);}return JSON.parse(Buffer.concat(chunks).toString('utf8'));
    }finally{clearTimeout(timer);}}
   async function available(){const i=await request('GET','/app/installations/'+installationId,undefined,jwt());assert(i?.id===installationId&&i.app_id===appId&&i.target_type==='User'&&i.account?.type==='User'&&i.account.id===ownerId&&i.account.login===owner&&i.suspended_at===null&&i.repository_selection==='selected');assert(i.permissions?.administration==='write'&&i.permissions?.contents==='write'&&(!mappings.size||i.permissions?.pull_requests==='write'));for(const [name,level] of Object.entries(i.permissions))assert((name==='metadata'&&level==='read')||(['administration','contents',...(mappings.size?['pull_requests']:[])].includes(name)&&level==='write'));return {available:true,owner,ownerId,appId,installationId};}
   async function token(repositoryId,connected=false){const permissions=connected?{contents:'write',pull_requests:'write'}:repositoryId?{contents:'write'}:{administration:'write'};const body={permissions:repositoryId?permissions:{administration:'write'},...(repositoryId?{repository_ids:[repositoryId]}:{})},r=await request('POST','/app/installations/'+installationId+'/access_tokens',body,jwt());assert(typeof r?.token==='string'&&r.token.length>0&&r.token.length<=16384&&Date.parse(r.expires_at)>now()+120000);assert(r.permissions?.[repositoryId?'contents':'administration']==='write');for(const [name,level] of Object.entries(r.permissions))assert((name==='metadata'&&level==='read')||(Object.hasOwn(permissions,name)&&level===permissions[name]));if(connected)assert(r.permissions?.pull_requests==='write');if(repositoryId)assert(Array.isArray(r.repositories)&&r.repositories.length===1&&r.repositories[0].id===repositoryId);return r.token;}
@@ -95,7 +105,7 @@ async function broker({connectedRepositories=[],enabled=false,directory,artifact
  }
  async function onceConnected(s,steps,label,method,route,body,project,reconcile){const identity=hash(JSON.stringify([method,route,body]));let entry=steps[label];
   if(entry){assert.equal(entry.identity,identity);if(entry.done)return entry.result;const found=await reconcile();if(found===null)throw fail('GITHUB_BROKER_UNRESOLVED');entry.result=project(found);entry.done=true;await save();return entry.result;}
-  steps[label]=entry={identity,done:false};await save();entry.result=project(await s.request(method,route,body,s.credential));entry.done=true;await save();return entry.result;
+  steps[label]=entry={identity,done:false};await save();try{entry.result=project(await s.request(method,route,body,s.credential));}catch(e){const d=getGitHubBrokerDiagnostic(e);if(d){entry.diagnostic=d;await save();}throw e;}entry.done=true;await save();return entry.result;
  }
  return Object.freeze({
   connectionFor:threadId=>mappings.has(threadId)?structuredClone(mappings.get(threadId)):null,
@@ -154,7 +164,7 @@ async function broker({connectedRepositories=[],enabled=false,directory,artifact
    let entry=repo.revisions[b.acceptedRevision];
    if(entry){assert.deepEqual(entry.binding,b);}else{assert(repo.latest===b.readRevision&&Object.keys(repo.revisions).length<64&&!Object.values(repo.revisions).some(r=>r.binding.invocationId===b.invocationId));assert(!Object.values(repo.revisions).some(r=>!r.complete));entry={binding:b,date:new Date(Math.floor(now()/1000)*1000).toISOString().replace('.000Z','Z'),steps:{},complete:false};repo.revisions[b.acceptedRevision]=entry;await save();}
    async function once(steps,label,method,url,body,credential,project,reconcile){const identity=hash(JSON.stringify([method,url,body]));let record=steps[label];if(record){assert(record.identity===identity);if(record.done)return record.result;const found=await reconcile();if(found===null)throw fail('GITHUB_BROKER_UNRESOLVED');record.result=project(found);record.done=true;await save();return record.result;}
-    record={identity,done:false};steps[label]=record;await save();const response=await s.request(method,url,body,credential);record.result=project(response);record.done=true;await save();return record.result;}
+    record={identity,done:false};steps[label]=record;await save();try{record.result=project(await s.request(method,url,body,credential));}catch(e){const d=getGitHubBrokerDiagnostic(e);if(d){record.diagnostic=d;await save();}throw e;}record.done=true;await save();return record.result;}
    const admin=await s.token();
    function repository(r){assert(r&&integer(r.id)&&r.name===name&&r.full_name===owner+'/'+name&&r.owner?.id===ownerId&&r.owner?.login===owner&&r.owner?.type==='User'&&r.private===true&&r.fork===false&&r.archived===false&&r.description===repo.marker&&typeof r.default_branch==='string'&&/^[a-zA-Z0-9_-]{1,100}$/.test(r.default_branch));return {id:r.id,branch:r.default_branch};}
    // An existing name without OUR durable creation intent is never adopted.

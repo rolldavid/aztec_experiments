@@ -5,7 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import {createHash,generateKeyPairSync,randomUUID,verify} from 'node:crypto';
 import {execFileSync} from 'node:child_process';
-import {createGitHubAppBroker} from '../github-app-broker.mjs';
+import {createGitHubAppBroker,getGitHubBrokerDiagnostic} from '../github-app-broker.mjs';
 const sha=b=>createHash('sha256').update(b).digest('hex'),git=(type,b)=>createHash('sha1').update(type+' '+Buffer.byteLength(b)+'\0').update(b).digest('hex');
 const keys=generateKeyPairSync('rsa',{modulusLength:2048}),owner='labelled-bok-fixture',ownerId=123,appId=456,installationId=789;
 // Controlled GitHub protocol double: no account, credential discovery or network.
@@ -129,3 +129,26 @@ for(const kind of ['closed','ready','historical collision','wrong base','wrong h
 });
 
 test('owned mirror disables Actions before contents and rejects later re-enabling without settings replay',async()=>{const f=await fixture();try{const r=await receipt(f);await f.broker.sync(r);const disabled=f.calls.findIndex(c=>c.method==='PUT'&&c.route.endsWith('/actions/permissions')),written=f.calls.findIndex(c=>c.method==='POST'&&c.route.endsWith('/blobs'));assert(disabled>=0&&disabled<written);assert.deepEqual(f.calls[disabled].body,{enabled:false});f.enableActions();const before=f.calls.filter(c=>c.method!=='GET'&&!c.route.endsWith('/access_tokens')).length;await assert.rejects(f.broker.sync(await receipt(f,3,r.acceptedRevision)));assert.equal(f.calls.filter(c=>c.method!=='GET'&&!c.route.endsWith('/access_tokens')).length,before);}finally{await f.close();}});
+
+
+test('HTTP rejection records only closed diagnostics and never retries a rejected creation',async()=>{
+ const f=await fixture();try{
+  const original=f.config.fetchImpl;let writes=0;
+  const b=await createGitHubAppBroker({...f.config,fetchImpl:async(url,options)=>{
+   if(options.method==='POST'&&url.endsWith('/user/repos')){writes++;return new Response(JSON.stringify({message:'SYNTHETIC_PRIVATE_TOKEN raw upstream detail'}),{status:403,headers:{'x-github-request-id':'AB12:CD34:1234','x-accepted-github-permissions':'administration=write;repository_creation=write','retry-after':'60'}});}
+   return original(url,options);
+  }});
+  const r=await receipt(f);let failure;await assert.rejects(b.sync(r),e=>{failure=e;return e.code==='GITHUB_BROKER_REJECTED';});
+  const expected={kind:'http-rejection',status:403,requestId:'AB12:CD34:1234',acceptedPermissions:'administration=write;repository_creation=write',retryAfterSeconds:60};
+  assert.deepEqual(getGitHubBrokerDiagnostic(failure),expected);const copy=getGitHubBrokerDiagnostic(failure);copy.status=200;assert.deepEqual(getGitHubBrokerDiagnostic(failure),expected);
+  const bytes=await fs.readFile(path.join(f.directory,'github-app-state.json'),'utf8'),state=JSON.parse(bytes),entry=Object.values(state.repositories)[0];assert.deepEqual(entry.steps.create.diagnostic,expected);assert.equal(entry.steps.create.done,false);assert(!bytes.includes('SYNTHETIC')&&!String(failure.stack).includes('SYNTHETIC'));assert.equal(failure.cause,undefined);
+  await assert.rejects(b.sync(r),{code:'GITHUB_BROKER_UNRESOLVED'});assert.equal(writes,1);
+  assert.equal(getGitHubBrokerDiagnostic({status:403}),null);
+ }finally{await f.close();}
+});
+test('unsafe rejection headers are discarded without parsing or retaining upstream body',async()=>{
+ const f=await fixture();try{
+  const b=await createGitHubAppBroker({...f.config,fetchImpl:async()=>new Response('SYNTHETIC_PRIVATE_BODY',{status:403,headers:{'x-github-request-id':'SYNTHETIC_PRIVATE_TOKEN','x-accepted-github-permissions':'secrets=write','retry-after':'SYNTHETIC_PRIVATE_TOKEN'}})});
+  await assert.rejects(b.assertAvailable(),e=>{assert.deepEqual(getGitHubBrokerDiagnostic(e),{kind:'http-rejection',status:403});assert(!String(e.stack).includes('SYNTHETIC'));return true;});
+ }finally{await f.close();}
+});

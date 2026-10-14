@@ -427,6 +427,23 @@ publication. Connected repositories retain their existing settings. Source
 capture additionally rejects `.github` paths.
 The concrete installation and actual personal-account creation permission are
 external setup gates, not facts established by controlled tests.
+A live 14 October 2026 check verified App5317701 / installation171412624 on
+User1476668 with selected repository access, then received HTTP403 from
+`POST /user/repos` using its Administration-only installation token. The owner
+credential independently returned404 for the intended mirror. This does not
+qualify creation or mirroring, and availability alone is not that evidence.
+The original durable creation intent remains incomplete; do not delete it or
+repeat the creation request. Diagnose the platform response before an operator
+chooses a recovery action. Current GitHub documentation lists Administration
+write or Repository creation write as alternatives; no permission expansion is
+inferred from a403.
+
+`getGitHubBrokerDiagnostic(error)` returns a detached, closed projection for an
+actual HTTP rejection: numeric status, a validated GitHub request ID, recognized
+permission tokens, and numeric Retry-After when present. The broker cancels the
+upstream error body without retaining it. Failed mutation intents store the same
+projection before returning the generic error. This is diagnostic evidence only:
+403, Retry-After, and missing responses never enable automatic write replay.
 The token used for creation requests Administration write. This permission is
 broader than repository creation; it is not a create-only capability. It stays in
 the trusted broker. Subsequent content access requests Contents only and the
