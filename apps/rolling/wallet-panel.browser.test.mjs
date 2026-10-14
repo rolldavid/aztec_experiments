@@ -36,7 +36,7 @@ const application={
  async cancelPrepared(){state.cancels++;write({...read(),status:'cancelled'});return read();},
  async reconcile(){state.reconciles++;await boundary('reconcile');const intent=read();if(state.resolveOutcome){intent.status=state.resolveOutcome;write(intent);}return intent;}
 };
-const funding={get usdcAvailable(){return state.usdcEnabled===true;},defaultPrivateFeeCap:'1000',advanceClaim:()=>advanceAggregateClaim({application,funding}),
+const funding={get usdcAvailable(){return state.usdcEnabled===true;},defaultPrivateFeeCap:'1000',advanceClaim:()=>advanceAggregateClaim({application,funding,onProgress:row=>state.sessionProgress(row)}),
  async prepare(input){state.fundingPrepares=(state.fundingPrepares??0)+1;state.fundingAllocation=input;await boundary('funding-quote');if(input.asset==='USDC')return {kind:'rolling-aggregate-usdc-v1',walletName:'MetaMask',privateFeeCap:input.privateFeeCap,slippageBps:input.slippageBps,relayGasBudgetWei:'1000000000000000',breakdown:{collateral:{amount:input.collateralWei,maxUsdc:'5000000'},fee:{amount:input.feeAmount,maxUsdc:'1000000'},bokAmount:input.bokAmount,relayFeeUsdc:'100000',maximumUsdc:'9350000'}};return {walletName:'MetaMask',privateFeeCap:input.privateFeeCap,slippageBps:input.slippageBps,breakdown:{collateralWei:input.collateralWei,fee:{amount:input.feeAmount,maxEth:'1000'},bok:{amount:input.bokAmount,maxEth:'2000'},gasBudgetWei:input.gasBudgetWei,maximumTotalWei:(BigInt(input.collateralWei)+3000n+BigInt(input.gasBudgetWei)).toString()}};},
  async confirm(){state.fundingPayments=(state.fundingPayments??0)+1;await boundary('funding-payment');state.paymentSaved=true;return this.recover();},
  async inspect(){return {paymentSaved:state.paymentSaved,privateFeeCap:state.fundingCap??'1000',claim:state.fundingClaim??null,explicitClaimReview:state.explicitClaimReview===true};},
@@ -44,7 +44,7 @@ const funding={get usdcAvailable(){return state.usdcEnabled===true;},defaultPriv
  async reviewRevertedClaim(){if(!['reverted','cancelled'].includes(read()?.status))error();state.fundingClaim=null;state.explicitClaimReview=true;},
  async recover(){state.fundingRecovers=(state.fundingRecovers??0)+1;return {receipt:{txHash:'0x'+'1'.repeat(64)},feeReceipt:{txHash:'0x'+'1'.repeat(64)},bokReceipt:{txHash:'0x'+'1'.repeat(64)}};}
 };
-const topup=Object.fromEntries(['private-fee','bok'].map(kind=>{const local={};const cap={defaultPrivateFeeCap:'1000',advanceClaim:()=>advanceAggregateClaim({application,funding:cap}),
+const topup=Object.fromEntries(['private-fee','bok'].map(kind=>{const local={};const cap={defaultPrivateFeeCap:'1000',advanceClaim:()=>advanceAggregateClaim({application,funding:cap,onProgress:row=>state.sessionProgress(row)}),
  async prepare(input){state.topupReview={kind,...input};await boundary('topup-review');local.phase=local.approved?'deposit':'approval';return {kind,phase:local.phase,...input,walletName:'MetaMask'};},
  async confirm(){state.topupPayments=(state.topupPayments??0)+1;await boundary('topup-payment');if(local.phase==='approval'){local.approved=true;return {approved:true};}local.paid=true;return cap.recover();},
  async inspect(){return {paymentSaved:local.paid,claim:local.claim??null,privateFeeCap:'1000',claimAction:kind==='bok'?'claim-bok':'claim-private-fee'};},
@@ -65,6 +65,8 @@ async function browserFixture(t){
   if(req.url==='/'){res.writeHead(200,{'content-type':'text/html','Content-Security-Policy':"default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'none'; img-src blob:; base-uri 'none'; form-action 'none'"});res.end('<!doctype html><meta name="viewport" content="width=device-width"><link rel="stylesheet" href="/style.css"><button id="open">Open account</button><div id="reader">Public reader</div><script type="module" src="/fixture.mjs"></script>');return;}
   if(req.url==='/fixture.mjs'){res.writeHead(200,{'content-type':'text/javascript'});res.end(fixture);return;}
   if(req.url==='/aggregate-wallet.mjs'){res.writeHead(200,{'content-type':'text/javascript'});res.end(await fs.readFile(new URL('../../shared/rolling/aggregate-wallet.mjs',import.meta.url)));return;}
+  const diagnosticModules={'/deployment.mjs':'../../shared/rolling/deployment.mjs','/protocol-commitments.mjs':'../../shared/protocol-commitments.mjs','/protocol-schema.mjs':'../../shared/protocol-schema.mjs'};
+  if(Object.hasOwn(diagnosticModules,req.url)){res.writeHead(200,{'content-type':'text/javascript'});res.end(await fs.readFile(new URL(diagnosticModules[req.url],import.meta.url)));return;}
   if(req.url==='/invocation.mjs'){res.writeHead(200,{'content-type':'text/javascript'});res.end(await fs.readFile(new URL('../../shared/rolling/invocation.mjs',import.meta.url)));return;}
   if(req.url==='/private-views.mjs'){res.writeHead(200,{'content-type':'text/javascript'});res.end(await fs.readFile(new URL('../../shared/rolling/private-views.mjs',import.meta.url)));return;}
   if(!['/wallet-panel.mjs','/avatar-upload.mjs','/model.mjs','/style.css'].includes(req.url)){res.writeHead(404);res.end();return;}
@@ -808,4 +810,12 @@ test('refresh diagnostic survives connect sanitizer and retry then clears on acc
  assert.deepEqual(JSON.parse(await dialog.getAttribute('data-rolling-initialization')),{stage:'private-refresh',step:'owned-names/method',deploymentStep:null,state:'failed',code:'ROLLING_ABI_MISMATCH'});
  await page.evaluate(()=>{test.failure=null;test.refreshRecords={owned:[{stage:'private-refresh',step:'owned-names/method',deploymentStep:null,state:'complete',code:null}]};});await page.getByRole('button',{name:'Check account recovery',exact:true}).click();await page.getByRole('button',{name:'Recover funding',exact:true}).waitFor();assert.equal(JSON.parse(await dialog.getAttribute('data-rolling-initialization')).state,'complete');
  await page.evaluate(()=>{test.rawAccount={address:'OTHER_PRIVATE_SENTINEL'};test.options.onChange({invalidated:true});test.sessionProgress({stage:'private-refresh',step:'account-status/method',deploymentStep:null,state:'failed',code:'unknown'});});assert.equal(await dialog.getAttribute('data-rolling-initialization'),null);assert.equal((await counts(page)).sends,0);
+});
+
+test('claim progress exposes only fixed preparation failure in DOM and clears it after account invalidation',async t=>{
+ const {page}=await browserFixture(t);await page.evaluate(()=>{test.aggregateEnabled=true;test.paymentSaved=true;});await open(page);await unlock(page);await page.getByRole('button',{name:'Recover funding',exact:true}).click();
+ await page.evaluate(()=>test.failure='prepare');await page.getByRole('button',{name:'Resume saved funding',exact:true}).click();await page.getByRole('alert').waitFor();
+ const dialog=page.getByRole('dialog');assert.deepEqual(JSON.parse(await dialog.getAttribute('data-rolling-initialization')),{stage:'funding-claim',step:'prepare',deploymentStep:null,state:'failed',code:'unknown'});
+ assert(!await dialog.innerText().then(s=>s.includes('PRIVATE_SENTINEL')||s.includes('GETTER_SENTINEL')||s.includes('funding-claim')));assert.equal(await page.evaluate(()=>test.fundingPayments??0),0);assert.equal((await counts(page)).sends,0);
+ await page.evaluate(()=>{test.rawAccount={address:'OTHER_PRIVATE_SENTINEL'};test.options.onChange({invalidated:true});test.sessionProgress({stage:'funding-claim',step:'submit',deploymentStep:null,state:'failed',code:'unknown'});});assert.equal(await dialog.getAttribute('data-rolling-initialization'),null);
 });

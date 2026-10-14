@@ -1,3 +1,4 @@
+import {observeRollingSetup,rollingSetupErrorCode} from './deployment.mjs';
 // Thin composition of the existing quote, custody and Ethereum journal APIs.
 // Only the owning private session calls this capability, under its account lock.
 const fail=code=>Object.assign(Error('Funding is unavailable. Preserve saved recovery records.'),{code:'ROLLING_FUNDING_'+code});
@@ -255,42 +256,49 @@ export async function createAggregateWallet({sdk,ethers,scope,network,board,bok,
  });
 }
 
+const claimProgressCodes=new Set(['ROLLING_FUNDING_INVALID','ROLLING_FUNDING_PENDING','ROLLING_FUNDING_NOT_READY','ROLLING_FUNDING_RECOVERY_REQUIRED','ROLLING_FUNDING_MISMATCH','ROLLING_FUNDING_UNKNOWN','ROLLING_FUNDING_REORG','ROLLING_BUSY','ROLLING_LOCKED','ROLLING_INVALID_ACTION','ROLLING_INVALID_RESPONSE','ROLLING_ABI_MISMATCH','ROLLING_RECOVERY_REQUIRED','ROLLING_FEE_CHANGED','PRIVATE_FEE_PREPARATION_FAILED','PRIVATE_FEE_PROVIDER_REQUIRED','PRIVATE_FEE_CONFIGURATION_REQUIRED','PRIVATE_FEE_OWNER_IS_PAYER','PRIVATE_FEE_CHAIN_MISMATCH','PRIVATE_FEE_CAP_TOO_LOW','PRIVATE_FEE_NONCANONICAL_ADDRESS','PRIVATE_FEE_NOT_PUBLISHED','PRIVATE_FEE_CLASS_MISMATCH','PRIVATE_FEE_ARTIFACT_INVALID','PRIVATE_FEE_INVALID_VALUE','PRIVATE_FEE_INVALID_ADDRESS','PRIVATE_FEE_INVALID_GAS','PRIVATE_FEE_BALANCE_INSUFFICIENT']);
+function claimProgressCode(error){try{const d=error!=null?Object.getOwnPropertyDescriptor(error,'code'):null;return d&&Object.hasOwn(d,'value')&&claimProgressCodes.has(d.value)?d.value:rollingSetupErrorCode(error);}catch{return 'unknown';}}
+
 /** One owned bridge/claim step. Existing application and journals remain the
  * authority. Callers schedule only read/reconcile progress after this settles. */
-export async function advanceAggregateClaim({application,funding,contextGuard=async()=>{}}){
- const read=async fn=>{await contextGuard();const value=await fn();await contextGuard();return value;};
- const saved=await read(()=>funding.inspect());check(saved?.paymentSaved,'RECOVERY_REQUIRED');const claimAction=saved.claimAction??'claim-deposit';check(['claim-deposit','claim-private-fee','claim-bok'].includes(claimAction));
+export async function advanceAggregateClaim({application,funding,contextGuard=async()=>{},onProgress=()=>{}}){
+ let step='inspect',observedFailure=false;
+ const emit=(state,error)=>observeRollingSetup(onProgress,{stage:'funding-claim',step,deploymentStep:null,state,code:state==='failed'?claimProgressCode(error):null});
+ const read=async(name,fn)=>{step=name;observedFailure=false;emit('started');try{await contextGuard();const value=await fn();await contextGuard();emit('complete');return value;}catch(error){observedFailure=true;emit('failed',error);throw error;}};
+ try{
+ const saved=await read('inspect',()=>funding.inspect());check(saved?.paymentSaved,'RECOVERY_REQUIRED');const claimAction=saved.claimAction??'claim-deposit';check(['claim-deposit','claim-private-fee','claim-bok'].includes(claimAction));
  let next;
  if(saved.claim?.attempted){
-  next=await read(()=>application.reconcile(saved.claim.intentId));
+  next=await read('reconcile',()=>application.reconcile(saved.claim.intentId));
   if(next.status==='prepared')return {state:'review-saved',intent:next};
  }else{
-  let receipts;try{receipts=await read(()=>funding.recover());}catch(error){const d=error==null?null:Object.getOwnPropertyDescriptor(error,'code');if(d&&'value' in d&&d.value==='ROLLING_FUNDING_PENDING')return {state:'waiting'};throw error;}
+  let receipts;try{receipts=await read('recover',()=>funding.recover());}catch(error){const d=error==null?null:Object.getOwnPropertyDescriptor(error,'code');if(d&&'value' in d&&d.value==='ROLLING_FUNDING_PENDING')return {state:'waiting'};throw error;}
   if(receipts.approved===true)return {state:'review-payment'};
-  if(saved.claim)next=await read(()=>application.reconcile(saved.claim.intentId));
+  if(saved.claim)next=await read('reconcile',()=>application.reconcile(saved.claim.intentId));
   else{
    try{
-    const current=await read(()=>application.readAccountStatus());
+    const current=await read('account-status',()=>application.readAccountStatus());
     if(current.status==='recovering'){
      const action=current.intent?.action;
      const same=(a,b)=>a&&b&&Object.keys(a).sort().join()===Object.keys(b).sort().join()&&Object.keys(b).every(key=>a[key]===b[key]);
      check(action?.type===claimAction&&(claimAction==='claim-deposit'?['receipt','feeReceipt','bokReceipt']:['receipt']).every(key=>same(action[key],receipts[key])),'RECOVERY_REQUIRED');
      next=current.intent;
-    }else next=await read(()=>application.prepare({type:claimAction,...receipts}));
+    }else next=await read('prepare',()=>application.prepare({type:claimAction,...receipts}));
    }catch(error){const d=error==null?null:Object.getOwnPropertyDescriptor(error,'code');if(d&&'value' in d&&d.value==='ROLLING_FUNDING_NOT_READY')return {state:'waiting'};throw error;}
-   await read(()=>funding.checkpointClaim({intentId:next.intentId,attempted:next.status!=='prepared'}));
+   await read('checkpoint',()=>funding.checkpointClaim({intentId:next.intentId,attempted:next.status!=='prepared'}));
   }
   if(next.status!=='prepared'){
-   await read(()=>funding.checkpointClaim({intentId:next.intentId,attempted:true}));
-   if(next.status==='confirmed'&&funding.recordConfirmedClaim)await read(()=>funding.recordConfirmedClaim(next));
+   await read('checkpoint',()=>funding.checkpointClaim({intentId:next.intentId,attempted:true}));
+   if(next.status==='confirmed'&&funding.recordConfirmedClaim)await read('checkpoint',()=>funding.recordConfirmedClaim(next));
    return {state:next.status==='confirmed'?'complete':next.status==='reverted'?'reverted':next.status==='cancelled'?'cancelled':'pending',intent:next};
   }
   if(saved.explicitClaimReview||typeof next.maximumFee!=='string'||BigInt(next.maximumFee)>BigInt(saved.privateFeeCap))return {state:'review',intent:next};
-  await read(()=>funding.checkpointClaim({intentId:next.intentId,attempted:true}));
-  next=await read(()=>application.submitPrepared(next.intentId));
+  await read('checkpoint',()=>funding.checkpointClaim({intentId:next.intentId,attempted:true}));
+  next=await read('submit',()=>application.submitPrepared(next.intentId));
  }
- if(next.status==='confirmed'&&funding.recordConfirmedClaim)await read(()=>funding.recordConfirmedClaim(next));
+ if(next.status==='confirmed'&&funding.recordConfirmedClaim)await read('checkpoint',()=>funding.recordConfirmedClaim(next));
  return {state:next.status==='confirmed'?'complete':next.status==='reverted'?'reverted':next.status==='cancelled'?'cancelled':'pending',intent:next};
+ }catch(error){if(!observedFailure)emit('failed',error);throw error;}
 }
 
 /** Direct token top-ups compose the original Ethereum journal and private claim

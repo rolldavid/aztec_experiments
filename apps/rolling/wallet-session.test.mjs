@@ -575,3 +575,15 @@ test('refresh diagnostic projection rejects unknown steps, private codes and acc
  assert.deepEqual(projectRollingInitialization(row),row);assert.equal(projectRollingInitialization({...row,step:'PRIVATE_ADDRESS'}),null);assert.equal(projectRollingInitialization({...row,code:'PRIVATE_SENTINEL'}),null);assert.equal(projectRollingInitialization({...row,deploymentStep:'config'}),null);
  let read=false;const hostile={...row};Object.defineProperty(hostile,'code',{get(){read=true;throw Error('private');}});assert.equal(projectRollingInitialization(hostile),null);assert.equal(read,false);
 });
+
+test('claim progress session forwards existing funding callback under the account lock without payment or send',async()=>{
+ const f=await aggregateSessionFixture(),rows=[];f.input.onProgress=row=>rows.push(row);const session=await createRollingWalletSession(f.input);rows.length=0;
+ await assert.rejects(session.funding.advanceClaim(),{code:'ROLLING_FUNDING_RECOVERY_REQUIRED'});
+ assert.deepEqual(rows.at(-1),{stage:'funding-claim',step:'inspect',deploymentStep:null,state:'failed',code:'ROLLING_FUNDING_RECOVERY_REQUIRED'});assert(rows.every(r=>projectRollingInitialization(r)));assert.equal(f.state.sends,0);assert.equal(f.captures(),0);assert.equal(f.state.active,false);await session.close();
+});
+test('claim progress DOM projection accepts only closed step and error vocabulary with five own data fields',()=>{
+ const row={stage:'funding-claim',step:'prepare',deploymentStep:null,state:'failed',code:'ROLLING_FUNDING_UNKNOWN'};assert.deepEqual(projectRollingInitialization(row),row);
+ for(const patch of [{step:'PRIVATE_SENTINEL'},{code:'PRIVATE_SENTINEL'},{deploymentStep:'config'},{state:'private'},{extra:'PRIVATE_SENTINEL'}])assert.equal(projectRollingInitialization({...row,...patch}),null);
+ const hostile={...row};Object.defineProperty(hostile,'code',{get(){throw Error('PRIVATE_SENTINEL');}});assert.equal(projectRollingInitialization(hostile),null);
+ assert.equal(projectRollingInitialization({...row,state:'started',code:null}).code,null);
+});

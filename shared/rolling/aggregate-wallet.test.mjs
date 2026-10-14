@@ -370,3 +370,26 @@ test('direct top-up manual checkpoint rejects substituted receipt and leaves unr
  await assert.rejects(submitWithStandaloneTopupCheckpoint({application:app(h(901)),topups:{bok:funding},intentId:h(901)}),{code:'ROLLING_FUNDING_MISMATCH'});assert.equal(sends,0);assert.equal((await funding.inspect()).claim.attempted,false);
  await submitWithStandaloneTopupCheckpoint({application:app(h(902)),topups:{bok:funding},intentId:h(902)});assert.equal(sends,1);assert.equal((await funding.inspect()).claim.attempted,false);
 });
+
+function claimProgressFixture(failureStep,original){
+ const rows=[],calls=[],run=(name,value)=>async()=>{calls.push(name);if(name===failureStep)throw original;return value;};
+ const saved={paymentSaved:true,privateFeeCap:'10',claim:failureStep==='reconcile'?{intentId:'PRIVATE_ID',attempted:true}:null};
+ const prepared={intentId:'PRIVATE_ID',status:'prepared',maximumFee:'10'},confirmed={...prepared,status:'confirmed'};
+ return {rows,calls,input:{onProgress:row=>rows.push(row),funding:{inspect:run('inspect',saved),recover:run('recover',{receipt:{private:'SECRET_RECEIPT'}}),checkpointClaim:run('checkpoint'),recordConfirmedClaim:run('record')},application:{readAccountStatus:run('account-status',{status:'fee-ready'}),prepare:run('prepare',prepared),submitPrepared:run('submit',confirmed),reconcile:run('reconcile',confirmed)}}};
+}
+for(const step of ['inspect','recover','account-status','prepare','checkpoint','submit','reconcile'])test('claim progress reports exact failing '+step+' without exposing original exception or values',async()=>{
+ const original=Object.assign(Error('PRIVATE_SENTINEL'),{code:'ROLLING_FUNDING_MISMATCH'}),f=claimProgressFixture(step,original);
+ await assert.rejects(advanceAggregateClaim(f.input),e=>e===original);assert.deepEqual(f.rows.at(-1),{stage:'funding-claim',step,deploymentStep:null,state:'failed',code:'ROLLING_FUNDING_MISMATCH'});
+ assert.equal(f.rows.filter(r=>r.state==='failed').length,1);assert(f.rows.every(Object.isFrozen));assert(!JSON.stringify(f.rows).match(/PRIVATE|SECRET/));assert(!f.calls.includes('submit')||step==='submit');
+});
+test('claim progress preserves successful order and diagnostics cannot change submission',async()=>{
+ const f=claimProgressFixture();f.input.onProgress=row=>{f.rows.push(row);if(row.state==='started')throw Error('OBSERVER');return Promise.reject(Error('OBSERVER'));};
+ assert.equal((await advanceAggregateClaim(f.input)).state,'complete');assert.deepEqual(f.calls,['inspect','recover','account-status','prepare','checkpoint','checkpoint','submit','record']);
+ assert.deepEqual(f.rows.filter(r=>r.state==='started').map(r=>r.step),['inspect','recover','account-status','prepare','checkpoint','checkpoint','submit','checkpoint']);assert(f.rows.every(r=>r.code===null));
+});
+for(const original of [undefined,null,false,0,'PRIVATE_SENTINEL',Object.assign(Error('PRIVATE_SENTINEL'),{code:'PRIVATE_SENTINEL'}),Object.defineProperty({},'code',{get(){throw Error('GETTER_SENTINEL');}})])test('claim progress retains original unusual failure '+String(typeof original),async()=>{
+ const f=claimProgressFixture('prepare',original);let caught=false;try{await advanceAggregateClaim(f.input);}catch(e){caught=true;assert.equal(e,original);}assert(caught);assert.equal(f.rows.at(-1).code,'unknown');assert.equal(f.rows.filter(r=>r.state==='failed').length,1);assert(!JSON.stringify(f.rows).includes('SENTINEL'));
+});
+test('claim progress retains waiting semantics for bridge and claim availability failures',async()=>{
+ for(const [step,code]of [['recover','ROLLING_FUNDING_PENDING'],['prepare','ROLLING_FUNDING_NOT_READY']]){const f=claimProgressFixture(step,Object.assign(Error('private'),{code}));assert.deepEqual(await advanceAggregateClaim(f.input),{state:'waiting'});assert.equal(f.rows.at(-1).code,code);assert(!f.calls.includes('submit'));}
+});
