@@ -156,8 +156,8 @@ export function validateMetaMaskAggregateControl(value,asset){
  assert(Number.isSafeInteger(value.allocation.slippageBps)&&value.allocation.slippageBps>=0&&value.allocation.slippageBps<=500);
  return structuredClone(value);
 }
-export function readMetaMaskAggregateControl(filename,asset,{readinessOnly=false,continueUnfunded=false}={}){
- assert(!(readinessOnly&&continueUnfunded));const retained=readinessOnly||continueUnfunded;
+export function readMetaMaskAggregateControl(filename,asset,{readinessOnly=false,continueUnfunded=false,paidRecovery=false}={}){
+ assert([readinessOnly,continueUnfunded,paidRecovery].filter(Boolean).length<=1);const retained=readinessOnly||continueUnfunded||paidRecovery;
  assert(path.isAbsolute(filename??''),'Required private launch control is absent');
  const stat=fs.lstatSync(filename);assert(stat.isFile()&&!stat.isSymbolicLink()&&stat.uid===process.getuid()&&(stat.mode&0o777)===0o600&&stat.size<=65536);
  const c=validateMetaMaskAggregateControl(JSON.parse(fs.readFileSync(filename,'utf8')),asset),dir=fs.lstatSync(c.recoveryDirectory);
@@ -166,6 +166,7 @@ export function readMetaMaskAggregateControl(filename,asset,{readinessOnly=false
  for(const name of ['profile','extension']){const location=path.join(c.recoveryDirectory,name);if(retained){const entry=fs.lstatSync(location);assert(entry.isDirectory()&&!entry.isSymbolicLink()&&entry.uid===process.getuid());}else assert(!fs.existsSync(location),'Use a new disposable profile; never replay an existing funding run');}
  if(retained){const backup=fs.lstatSync(path.join(c.recoveryDirectory,'initial-recovery.json'));assert(backup.isFile()&&!backup.isSymbolicLink()&&backup.uid===process.getuid()&&(backup.mode&0o777)===0o600);}
  if(continueUnfunded)assert(!fs.existsSync(path.join(c.recoveryDirectory,'prepared-recovery.json')),'Prepared funding must use journal recovery, never this continuation');
+ if(paidRecovery){const backup=fs.lstatSync(path.join(c.recoveryDirectory,'prepared-recovery.json'));assert(backup.isFile()&&!backup.isSymbolicLink()&&backup.uid===process.getuid()&&(backup.mode&0o777)===0o600);}
  return c;
 }
 export function assertMetaMaskAggregateTypedData({data,account,scope,allocation,index,asset,consentNonce,nowSeconds}){
@@ -343,11 +344,13 @@ export function assertMetaMaskReadinessRequest({url,method,body},ethereumUrl){
 }
 
 // Only the pinned extension's own startup cache iframe may fetch its exact
-// warning document. Application frames and real warning navigation do not match.
+// warning document and its static assets. Application frames and real warning
+// navigation do not match. No other origin, version, or query is admitted.
 export function isMetaMaskStartupFrameRequest({method,url,parentUrl,extensionOrigin,frameSource,sandbox}){
  try{
   const expected='https://metamask.github.io/phishing-warning/v5.1.0/';
-  return method==='GET'&&url===expected&&/^chrome-extension:\/\/[a-p]{32}$/.test(extensionOrigin)&&new URL(parentUrl).protocol==='chrome-extension:'&&('chrome-extension://'+new URL(parentUrl).host)===extensionOrigin&&frameSource===expected+'#extensionStartup'&&sandbox==='allow-scripts allow-same-origin';
+  const target=new URL(url);
+  return method==='GET'&&target.href.startsWith(expected)&&!target.search&&!target.hash&&!target.username&&!target.password&&/^chrome-extension:\/\/[a-p]{32}$/.test(extensionOrigin)&&new URL(parentUrl).protocol==='chrome-extension:'&&('chrome-extension://'+new URL(parentUrl).host)===extensionOrigin&&frameSource===expected+'#extensionStartup'&&sandbox==='allow-scripts allow-same-origin';
  }catch{return false;}
 }
 
@@ -355,4 +358,33 @@ export function assertMetaMaskUnfundedContinuation({ethereumNonce,consentNonce,e
  assert.equal(ethereumNonce,0,'An existing Ethereum transaction requires journal recovery');
  assert.equal(consentNonce,0n,'An existing consent requires journal recovery');
  assert.equal(emptyRecovery,true,'Retained intent requires original journal recovery');
+}
+
+// Existing paid identities use only the application's saved-payment recovery.
+// No quote, consent signature, relay submission or Ethereum send is permitted.
+export async function driveMetaMaskPaidRecovery({page,walletPage,control:c,provider,transactionHash,mark,report}){
+ assert.match(transactionHash,/^0x[0-9a-f]{64}$/);
+ const scope=c.walletConfig.config.aggregateFunding,a=c.allocation,account=Wallet.fromPhrase(c.mnemonic).address.toLowerCase();
+ const tx=await provider.getTransaction(transactionHash);assert(tx);assert.equal(tx.to.toLowerCase(),scope.router);
+ assert.equal(tx.from.toLowerCase(),c.asset==='ETH'?account:scope.usdcRelayAddress);
+ const method=c.asset==='ETH'?'fund':'fundUsdc',parsed=aggregateInterface.parseTransaction({data:tx.data});assert.equal(parsed.name,method);
+ const plan=parsed.args[0],planHash=keccak256(AbiCoder.defaultAbiCoder().encode([aggregateInterface.getFunction(method).inputs[0]],[plan]));
+ assert.equal(plan.beneficiary.toLowerCase(),account);assert.equal(String(c.asset==='ETH'?plan.collateral:plan.collateral.amount),a.collateralWei);assert.equal(String(plan.fee.amount),a.feeAmount);assert.equal(String(c.asset==='ETH'?plan.bok.amount:plan.bokAmount),a.bokAmount);
+ const expected={kind:c.asset==='ETH'?'aggregate-funding':'aggregate-usdc-funding',routerCodeHash:scope.routerCodeHash,collateralPortal:scope.collateralPortal,feePortal:scope.feePortal,bokPortal:scope.bokPortal,privateFpc:scope.privateFpc,planHash};
+ const intent={from:tx.from.toLowerCase(),to:scope.router,chainId:'31337',nonce:tx.nonce,data:tx.data.toLowerCase(),value:String(tx.value),expected};validateAggregateFundingIntent(intent);
+ const effect=await verifyEthereumIntentReceipt(provider,intent,transactionHash);assert.equal(effect.outcome,'success');
+ const nonce=await provider.getTransactionCount(account,'pending');assert.equal(nonce,c.asset==='ETH'?1:0);
+ await page.evaluate(()=>{const original=__testMetaMask.request.bind(__testMetaMask);window.__paidRecoveryWalletWrites=0;__testMetaMask.request=async request=>{if(!['eth_accounts','eth_requestAccounts','eth_chainId'].includes(request.method)){window.__paidRecoveryWalletWrites++;throw Error('Paid recovery forbids another wallet operation');}return original(request);};});
+ await inspectMetaMaskAggregateReadiness({page,control:c,mark});const dialog=page.getByRole('dialog');await dialog.getByRole('button',{name:'Recover funding',exact:true}).click();
+ mark('aggregate-paid-recovery-connect');await dialog.getByRole('button',{name:'Connect MetaMask',exact:true}).click();
+ if(await walletPage.getByTestId('confirm-btn').isVisible())await walletPage.getByTestId('confirm-btn').click();
+ await dialog.getByText('Funding wallet connected. No payment has been sent.',{exact:true}).waitFor();
+ assert.equal((await page.evaluate(()=>walletState.ethAccount)).toLowerCase(),account);
+ mark('aggregate-paid-private-claim');await dialog.getByRole('button',{name:'Resume saved funding',exact:true}).click();
+ // Recovery has the original explicit claim authorization. If it instead needs
+ // another review, fail visibly; never infer approval from a missing receipt.
+ await dialog.getByText('Funding and the private claim are confirmed. Your posting deposit, network fees and Bok credit are ready.',{exact:true}).waitFor({timeout:80000});
+ await dialog.getByText('Private Bok balance: '+formatUnits(a.bokAmount,6).replace(/\.0$/,'')+' USDC-backed credits.',{exact:true}).waitFor();
+ assert.equal(await page.evaluate(()=>window.__paidRecoveryWalletWrites),0);assert.equal(await provider.getTransactionCount(account,'pending'),nonce);
+ report.paidRecovery={asset:c.asset,transactionHash,planHash,originalCanonicalEffectsVerified:true,readyFromConfirmedPrivateClaim:true,userSends:0,relayPosts:0,signatures:0,postQualified:false};
 }

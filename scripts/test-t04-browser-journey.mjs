@@ -252,7 +252,7 @@ test('MetaMask aggregate launch rejects absent, nonlocal or unpinned deployment 
  assert.throws(()=>readMetaMaskAggregateControl(file,'USDC',{readinessOnly:true}));await fs.writeFile(path.join(directory,'initial-recovery.json'),'{}',{mode:0o600});
  assert.deepEqual(readMetaMaskAggregateControl(file,'USDC',{readinessOnly:true}),c);assert.deepEqual(readMetaMaskAggregateControl(file,'USDC',{continueUnfunded:true}),c);
  assert.throws(()=>readMetaMaskAggregateControl(file,'USDC',{readinessOnly:true,continueUnfunded:true}));
- await fs.writeFile(path.join(directory,'prepared-recovery.json'),'{}',{mode:0o600});assert.throws(()=>readMetaMaskAggregateControl(file,'USDC',{continueUnfunded:true}));await fs.unlink(path.join(directory,'prepared-recovery.json'));assert.throws(()=>readMetaMaskAggregateControl(file,'USDC'));
+ assert.throws(()=>readMetaMaskAggregateControl(file,'USDC',{paidRecovery:true}));await fs.writeFile(path.join(directory,'prepared-recovery.json'),'{}',{mode:0o600});assert.deepEqual(readMetaMaskAggregateControl(file,'USDC',{paidRecovery:true}),c);assert.throws(()=>readMetaMaskAggregateControl(file,'USDC',{paidRecovery:true,continueUnfunded:true}));assert.throws(()=>readMetaMaskAggregateControl(file,'USDC',{paidRecovery:true,readinessOnly:true}));assert.throws(()=>readMetaMaskAggregateControl(file,'USDC',{continueUnfunded:true}));await fs.unlink(path.join(directory,'prepared-recovery.json'));assert.throws(()=>readMetaMaskAggregateControl(file,'USDC'));
  await fs.chmod(path.join(directory,'initial-recovery.json'),0o644);assert.throws(()=>readMetaMaskAggregateControl(file,'USDC',{readinessOnly:true}));
 });
 
@@ -302,7 +302,8 @@ test('MetaMask startup exception requires the pinned extension parent and exact 
  const {isMetaMaskStartupFrameRequest:check}=await import('./t04-metamask.mjs');
  const extensionOrigin='chrome-extension://'+'a'.repeat(32),url='https://metamask.github.io/phishing-warning/v5.1.0/';
  const input={method:'GET',url,parentUrl:extensionOrigin+'/home.html',extensionOrigin,frameSource:url+'#extensionStartup',sandbox:'allow-scripts allow-same-origin'};assert.equal(check(input),true);
- for(const change of [{method:'POST'},{url:url+'script.js'},{url:url+'?account=x'},{parentUrl:'http://127.0.0.1:8080/'},{parentUrl:'chrome-extension://'+'b'.repeat(32)+'/home.html'},{frameSource:url+'#hostname=127.0.0.1'},{frameSource:url},{sandbox:'allow-scripts allow-same-origin allow-top-navigation'},{extensionOrigin:'chrome-extension://invalid'},{parentUrl:null}])assert.equal(check({...input,...change}),false);
+ for(const name of ['lockdown-install.js','lockdown-run.js','lockdown-more.js','bundle.js','design-tokens.css','index.css','warning-icon.svg'])assert.equal(check({...input,url:url+name}),true);
+ for(const change of [{method:'POST'},{url:url+'?account=x'},{url:url+'../v5.2.0/script.js'},{url:'https://example.com/script.js'},{url:url+'script.js?account=x'},{parentUrl:'http://127.0.0.1:8080/'},{parentUrl:'chrome-extension://'+'b'.repeat(32)+'/home.html'},{frameSource:url+'#hostname=127.0.0.1'},{frameSource:url},{sandbox:'allow-scripts allow-same-origin allow-top-navigation'},{extensionOrigin:'chrome-extension://invalid'},{parentUrl:null}])assert.equal(check({...input,...change}),false);
 });
 
 test('MetaMask unfunded continuation rejects any saved journal or prior Ethereum/consent nonce',async()=>{
