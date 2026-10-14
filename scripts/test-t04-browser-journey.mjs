@@ -423,3 +423,72 @@ for(const mode of ['delayed-unlock','already-loaded','load-failure'])test('retai
  if(mode==='load-failure'){await assert.rejects(run,error=>error===original);assert.deepEqual(events,['open','wait-surface']);}
  else{await run;assert.deepEqual(events,['open','wait-surface',...(mode==='delayed-unlock'?['unlock']:[]),'password','file','import','ready']);}
 });
+
+function retainedBokFixture(){
+ const field=n=>'0x'+BigInt(n).toString(16).padStart(64,'0'),config={network:{chainId:'31337',rollupVersion:'1',rollupAddress:'rollup'},board:{contractAddress:field(1),portalAddress:'portal'},bok:{contractAddress:field(2),operatorAddress:field(3),pluginId:field(4)}};
+ const control={runtimeSha256:'a'.repeat(64),walletConfig:{config},allocation:{bokAmount:'100',feeAmount:'1000'}};
+ const approval={schemaVersion:1,runtimeSha256:control.runtimeSha256,content:'test request',contentSha256:'',budget:'100',authorizeFeeCap:'100',postFeeCap:'200',expiresAt:Date.now()+300000,publicScope:{...config.network,boardAddress:config.board.contractAddress,bok:{address:config.bok.contractAddress,operatorAddress:config.bok.operatorAddress}}};
+ const record={id:field(10),nonce:'private-nonce',action:{type:'bok',content:approval.content,subboard:'0',name:'0',budget:'100',deposit:'private-deposit'},maximumFee:'90',status:'prepared',bok:{phase:'authorize',scope:{address:config.bok.contractAddress,pluginId:config.bok.pluginId},requestId:field(11),target:field(12),budget:'100'}};
+ return {field,config,control,approval,record};
+}
+test('retained Bok opt-in defaults to no action and bounds exact approval before launch',async()=>{
+ const {validateRetainedBokApproval,readRetainedBokApproval}=await import('./t04-metamask.mjs'),{createHash}=await import('node:crypto'),f=retainedBokFixture();f.approval.contentSha256=createHash('sha256').update(f.approval.content).digest('hex');
+ assert.equal(readRetainedBokApproval(undefined,f.control),null);assert.throws(()=>readRetainedBokApproval('/private/a',f.control));assert.throws(()=>readRetainedBokApproval('/private/a',f.control,{enabled:true}));assert.deepEqual(validateRetainedBokApproval(f.approval,f.control),f.approval);
+ for(const change of [a=>a.content+='changed',a=>a.budget='101',a=>a.authorizeFeeCap='900',a=>a.runtimeSha256='b'.repeat(64),a=>a.expiresAt=Date.now()-1,a=>a.expiresAt=Date.now()+3600001,a=>a.publicScope.bok.address=f.field(99),a=>a.extra=true]){const a=structuredClone(f.approval);change(a);assert.throws(()=>validateRetainedBokApproval(a,f.control));}
+});
+test('retained Bok approval file requires private regular owned input',async t=>{
+ const {readRetainedBokApproval}=await import('./t04-metamask.mjs'),{createHash}=await import('node:crypto'),f=retainedBokFixture(),dir=await fs.mkdtemp(path.join(os.tmpdir(),'bok-approval-')),file=path.join(dir,'approval.json');t.after(()=>fs.rm(dir,{recursive:true,force:true}));
+ f.approval.contentSha256=createHash('sha256').update(f.approval.content).digest('hex');await fs.writeFile(file,JSON.stringify(f.approval),{mode:0o600});assert.deepEqual(readRetainedBokApproval(file,f.control,{enabled:true,paidRecovery:true}),f.approval);
+ await fs.chmod(file,0o644);assert.throws(()=>readRetainedBokApproval(file,f.control,{enabled:true,paidRecovery:true}));await fs.chmod(file,0o600);await fs.symlink(file,path.join(dir,'link'));assert.throws(()=>readRetainedBokApproval(path.join(dir,'link'),f.control,{enabled:true,paidRecovery:true}));
+});
+test('retained Bok saved workflow keeps private identifiers in page until confirmed public post',async()=>{
+ const {inspectRetainedBokWorkflow,assertRetainedBokReview}=await import('./t04-metamask.mjs'),{runInNewContext}=await import('node:vm'),f=retainedBokFixture();let record=f.record;
+ const window={walletState:{aztec:{address:{toString:()=> 'private-owner'},secretKey:'private-secret',salt:'private-salt'}},__aztec:{createBrowserJournalStorage:()=>({}),createEncryptedJournalSlot:async()=>({read:async()=>({value:record})})}};
+ const run=async(input)=>JSON.parse(JSON.stringify(await runInNewContext(`(${inspectRetainedBokWorkflow})`,{window})( {config:f.config,approval:f.approval,...input})));
+ const prepared=await run({phase:'authorize',status:'prepared',capture:true});assertRetainedBokReview(prepared);assert(!JSON.stringify(prepared).includes('private'));assert.equal(prepared.public,undefined);
+ record.status='confirmed';record.txHash=f.field(20);assertRetainedBokReview(await run({phase:'authorize',status:'confirmed',capture:true}));
+ record={...record,status:'prepared',txHash:null,bok:{...record.bok,phase:'post',authorizationTxHash:f.field(20)}};assertRetainedBokReview(await run({phase:'post',status:'prepared'}));assert.equal((await run({phase:'post',status:'prepared',published:true})).public,undefined);
+ record.status='confirmed';record.txHash=f.field(21);const published=await run({phase:'post',status:'confirmed',published:true});assertRetainedBokReview(published,{published:true});assert.deepEqual(published.public,{transactionHash:f.field(21),authorizationTxHash:f.field(20),requestId:'11',target:'12'});
+ for(const change of [r=>r.action.content+='changed',r=>r.maximumFee='201',r=>r.nonce='different',r=>r.bok.requestId=f.field(99),r=>r.bok.authorizationTxHash=f.field(99),r=>r.status='unknown']){const before=structuredClone(record);change(record);const result=await run({phase:'post',status:'confirmed',published:true});assert.throws(()=>assertRetainedBokReview(result,{published:true}));record=before;}
+});
+
+test('retained Bok UI confirms only two exact saved reviews and stops before any invalid confirmation',async()=>{
+ const {driveRetainedBokConfirmations}=await import('./t04-metamask.mjs');
+ for(const failure of [null,'authorize-prepared','authorize-confirmed','post-prepared']){
+  const events=[],original={failure},approval={content:'PRIVATE_LOCAL_PROMPT',budget:'100'},report={retainedBok:{}};
+  const node=name=>({async click(){events.push('click:'+name);},async waitFor(){events.push('wait:'+name);},async fill(){events.push('fill:'+name);},async selectOption(value){assert.equal(value,'bok');events.push('select');}});
+  const dialog={getByRole:(_,o)=>node(o.name),getByLabel:name=>node(name),getByText:text=>node(text)};
+  const inspect=async(phase,status)=>{events.push('inspect:'+phase+'-'+status);if(failure===phase+'-'+status)throw original;return {public:{transactionHash:hash}};};
+  const run=driveRetainedBokConfirmations({dialog,approval,inspect,mark:()=>{},report});
+  if(failure)await assert.rejects(run,e=>e===original);else assert.deepEqual(await run,{transactionHash:hash});
+  assert.equal(events.filter(x=>x==='click:Confirm and send').length,failure==='authorize-prepared'?0:failure?1:2);
+  for(const [i,event]of events.entries())if(event==='click:Confirm and send')assert.equal(events[i-1],i===events.indexOf(event)?'inspect:authorize-prepared':'inspect:post-prepared');
+  assert(!JSON.stringify(report).includes(approval.content));
+ }
+});
+
+test('retained Bok public discovery uses only public post IDs and uniform bounded accounting pages',async()=>{
+ const {discoverRetainedBokCompletion}=await import('./t04-metamask.mjs'),{runInNewContext}=await import('node:vm'),scope={public:true},cursor='a'.repeat(32)+':'+'b'.repeat(64)+':'+'c'.repeat(16),paths=[];
+ const parent={id:'10',invocation:{reply:'20'}},reply={id:'20',bot:{}},accounting={requestId:'30',state:'4'};
+ const pages=[{post:parent},{post:reply},{revision:'fixed',checkpoint:{number:1,hash},requests:[],nextCursor:cursor},{revision:'fixed',checkpoint:{number:1,hash},requests:[accounting],nextCursor:null}];
+ const fetch=async path=>{paths.push(path);const body=pages.shift();return{ok:true,status:200,text:async()=>JSON.stringify({complete:true,scope,...body})};};
+ const actual=await runInNewContext(`(${discoverRetainedBokCompletion})`,{fetch,AbortSignal,encodeURIComponent})({postId:'10',requestId:'30',scope});
+ assert.deepEqual(JSON.parse(JSON.stringify(actual)),{parent,reply,accounting,checkpoint:{number:1,hash}});assert.deepEqual(paths,['/api/post?id=10','/api/post?id=20','/api/bok-accounting?limit=100','/api/bok-accounting?limit=100&cursor='+encodeURIComponent(cursor)]);assert(!paths.some(x=>x.includes('30')));
+});
+
+test('retained Bok canonical event checks reject wrong reply linkage and unfinished or dishonest accounting',async()=>{
+ const {assertRetainedBokEvents}=await import('./t04-metamask.mjs'),p={requestId:'30',target:'40'},position={txHash:hash},post={id:'10',record:{root:'10',parent:'0'}},reply={id:'20',record:{root:'10',parent:'10',kind:'4'}},accounting={request_id:'30',state:'4',sequence:'1',budget:'100',available:'0',reserved:'0',charged:'6',refunded:'94'};
+ const base={publicIntent:p,pluginId:'5',approval:{budget:'100'},postEvents:[{type:'PluginInvoked',payload:{request_id:'30',target:'40',plugin_id:'5',post_id:'10'}},{type:'PostPublished',payload:post}],replyEvents:[{type:'PluginReplyPublished',payload:{request_id:'30',target:'40',plugin_id:'5',parent_id:'10',post_id:'20'},position},{type:'PostPublished',payload:reply,position}],accountingEvents:[{type:'AccountingChanged',payload:accounting}],discovered:{parent:{id:'10'},reply:{id:'20',position},accounting:{...accounting}}};
+ assert.deepEqual(assertRetainedBokEvents(base),{canonicalReply:true,canonicalTerminalAccounting:true,charged:'6',refunded:'94'});
+ for(const change of [b=>b.replyEvents[0].payload.target='41',b=>b.replyEvents[1].payload.record.kind='0',b=>b.accountingEvents[0].payload.state='3',b=>b.accountingEvents[0].payload.reserved='1',b=>b.accountingEvents[0].payload.refunded='100',b=>b.accountingEvents[0].payload.charged='0',b=>b.discovered.accounting.charged='7',b=>b.replyEvents.push(b.replyEvents[0])]){const bad=structuredClone(base);change(bad);assert.throws(()=>assertRetainedBokEvents(bad));}
+});
+
+test('retained Bok discovery fails closed on mixed snapshots, duplicate matches and pagination exhaustion',async()=>{
+ const {discoverRetainedBokCompletion}=await import('./t04-metamask.mjs'),{runInNewContext}=await import('node:vm'),scope={public:true},cursor='a'.repeat(32)+':'+'b'.repeat(64)+':'+'c'.repeat(16);
+ for(const mode of ['mixed','duplicate','exhausted','wrong-scope']){
+  let calls=0;const paths=[];
+  const fetch=async path=>{paths.push(path);let value;if(calls++===0)value={post:{invocation:{reply:'20'}}};else if(calls===2)value={post:{bot:{}}};else value={revision:mode==='mixed'&&calls>3?'changed':'one',checkpoint:{number:1,hash},requests:mode==='duplicate'?[{requestId:'30',state:'4'},{requestId:'30',state:'4'}]:[],nextCursor:cursor.slice(0,-2)+(calls%256).toString(16).padStart(2,'0')};return{ok:true,status:200,text:async()=>JSON.stringify({complete:true,scope:mode==='wrong-scope'?{}:scope,...value})};};
+  const run=runInNewContext(`(${discoverRetainedBokCompletion})`,{fetch,AbortSignal,encodeURIComponent})({postId:'10',requestId:'30',scope});
+  if(mode==='mixed')assert.equal(await run,false);else await assert.rejects(run,/BOK_PUBLIC_/);assert(paths.length<=10);
+ }
+});

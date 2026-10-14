@@ -498,3 +498,108 @@ export function isMetaMaskStartupWorkerRequest({method,url,workerUrl,startupFram
   return !target.search||/^\?__WB_REVISION__=[0-9a-f]{32}$/.test(target.search);
  }catch{return false;}
 }
+
+// Separate explicit operator approval. The original payment control/consent is
+// never widened by opting into two further, individually reviewed L2 actions.
+export function validateRetainedBokApproval(value,control,now=Date.now()){
+ exactKeys(value,['schemaVersion','runtimeSha256','content','contentSha256','budget','authorizeFeeCap','postFeeCap','expiresAt','publicScope']);
+ assert.equal(value.schemaVersion,1);assert.equal(value.runtimeSha256,control.runtimeSha256);
+ assert(typeof value.content==='string'&&Buffer.byteLength(value.content)>0&&Buffer.byteLength(value.content)<=512&&!value.content.includes('\0'));
+ assert.equal(createHash('sha256').update(value.content).digest('hex'),value.contentSha256);
+ for(const key of ['budget','authorizeFeeCap','postFeeCap'])positive(value[key]);
+ assert(BigInt(value.budget)<=BigInt(control.allocation.bokAmount));
+ assert(BigInt(value.authorizeFeeCap)+BigInt(value.postFeeCap)<=BigInt(control.allocation.feeAmount));
+ assert(Number.isSafeInteger(value.expiresAt)&&value.expiresAt>now&&value.expiresAt<=now+3600000);
+ const n=control.walletConfig.config.network,b=control.walletConfig.config.bok,s=value.publicScope;
+ assert(s&&s.bok);for(const k of ['chainId','rollupVersion','rollupAddress'])assert.equal(s[k],n[k]);
+ assert.equal(s.boardAddress,control.walletConfig.config.board.contractAddress);assert.equal(s.bok.address,b.contractAddress);assert.equal(s.bok.operatorAddress,b.operatorAddress);
+ return structuredClone(value);
+}
+export function readRetainedBokApproval(filename,control,{enabled=false,paidRecovery=false}={}){
+ assert.equal(typeof enabled,'boolean');assert.equal(typeof paidRecovery,'boolean');
+ if(!enabled){assert(filename===undefined,'Bok approval requires explicit continuation flag');return null;}
+ assert(paidRecovery,'Bok continuation requires original paid recovery');assert(path.isAbsolute(filename??''));
+ const stat=fs.lstatSync(filename);assert(stat.isFile()&&!stat.isSymbolicLink()&&stat.uid===process.getuid()&&(stat.mode&0o777)===0o600&&stat.nlink===1&&stat.size<=65536);
+ return validateRetainedBokApproval(JSON.parse(fs.readFileSync(filename,'utf8')),control);
+}
+
+// Inside the actual page. Never return the decrypted record, private owner,
+// request identifier before publication, message, nonce or deposit identifier.
+export async function inspectRetainedBokWorkflow({config,approval,phase,status,capture=false,published=false}){
+ const sdk=window.__aztec,w=window.walletState.aztec,n=config.network,b=config.board;
+ const scope=JSON.stringify(['AZTEC_BB_L2_JOURNAL_V1',w.address.toString(),n.chainId,n.rollupAddress,n.rollupVersion,b.contractAddress,b.portalAddress]);
+ const slot=await sdk.createEncryptedJournalSlot({storage:sdk.createBrowserJournalStorage(),walletSecret:w.secretKey,walletSalt:w.salt,scopeText:JSON.stringify(['ROLLING_WORKFLOW_V1',scope]),keyDomain:'ROLLING_WORKFLOW_V1'});
+ const r=(await slot.read()).value,old=window.__retainedBokWorkflow;
+ const decimal=v=>typeof v==='string'&&/^(0|[1-9][0-9]{0,76})$/.test(v),hash=v=>typeof v==='string'&&/^0x[0-9a-f]{64}$/.test(v);
+ const correct=!!r&&r.action?.type==='bok'&&r.action.content===approval.content&&r.action.subboard==='0'&&r.action.name==='0'&&r.action.budget===approval.budget&&r.bok?.phase===phase&&r.status===status&&r.bok.budget===approval.budget&&r.bok.scope?.address===config.bok.contractAddress&&r.bok.scope?.pluginId===config.bok.pluginId&&Date.now()<approval.expiresAt;
+ const feeWithinCap=correct&&decimal(r.maximumFee)&&BigInt(r.maximumFee)<=BigInt(phase==='authorize'?approval.authorizeFeeCap:approval.postFeeCap);
+ const sameDraft=!old||r&&r.nonce===old.nonce&&r.bok?.requestId===old.requestId&&r.bok?.target===old.target&&JSON.stringify(r.action)===old.action&&r.bok.budget===old.budget;
+ const originalAuthorization=phase==='authorize'||!!old&&r?.bok?.authorizationTxHash===old.authorizationTxHash&&hash(old.authorizationTxHash);
+ if(capture&&correct&&feeWithinCap&&sameDraft){window.__retainedBokWorkflow={nonce:r.nonce,requestId:r.bok.requestId,target:r.bok.target,action:JSON.stringify(r.action),budget:r.bok.budget,authorizationTxHash:phase==='authorize'&&status==='confirmed'?r.txHash:old?.authorizationTxHash};}
+ const result={correct,feeWithinCap,sameDraft,originalAuthorization:!!originalAuthorization};
+ if(published&&phase==='post'&&status==='confirmed'&&correct&&feeWithinCap&&sameDraft&&originalAuthorization&&hash(r.txHash))result.public={transactionHash:r.txHash,authorizationTxHash:r.bok.authorizationTxHash,requestId:BigInt(r.bok.requestId).toString(),target:BigInt(r.bok.target).toString()};
+ return result;
+}
+export function assertRetainedBokReview(value,{published=false}={}){
+ assert.deepEqual([value.correct,value.feeWithinCap,value.sameDraft,value.originalAuthorization],[true,true,true,true],'Saved Bok approval or fee changed');
+ if(published){assert(value.public);for(const k of ['transactionHash','authorizationTxHash'])assert.match(value.public[k],/^0x[0-9a-f]{64}$/);for(const k of ['requestId','target'])positive(value.public[k]);}
+}
+
+// Public untrusted cache discovery only. The caller authenticates returned
+// transaction hashes through the existing SDK decoder, never trusts page labels.
+export async function discoverRetainedBokCompletion({postId,requestId,scope}){
+ const read=async path=>{const response=await fetch(path,{credentials:'omit',redirect:'error',signal:AbortSignal.timeout(4000)});if(response.status===503||response.status===404)return null;if(!response.ok)throw Error('BOK_PUBLIC_UNAVAILABLE');const text=await response.text();if(text.length>1048576)throw Error('BOK_PUBLIC_LIMIT');const value=JSON.parse(text);if(value.complete!==true||JSON.stringify(value.scope)!==JSON.stringify(scope))throw Error('BOK_PUBLIC_SCOPE');return value;};
+ const parent=await read('/api/post?id='+postId);if(!parent?.post?.invocation?.reply)return false;
+ const reply=await read('/api/post?id='+parent.post.invocation.reply);if(!reply?.post?.bot)return false;
+ let cursor=null,revision=null,checkpoint=null,accounting=null;const seen=new Set();
+ for(let count=0;count<8;count++){
+  const page=await read('/api/bok-accounting?limit=100'+(cursor?'&cursor='+encodeURIComponent(cursor):''));if(!page)return false;
+  if(revision===null){revision=page.revision;checkpoint=JSON.stringify(page.checkpoint);}else if(page.revision!==revision||JSON.stringify(page.checkpoint)!==checkpoint)return false;
+  if(!Array.isArray(page.requests)||page.requests.length>100)throw Error('BOK_PUBLIC_SHAPE');
+  for(const row of page.requests)if(row.requestId===requestId){if(accounting)throw Error('BOK_PUBLIC_DUPLICATE');accounting=row;}
+  if(page.nextCursor===null){if(!accounting||accounting.state!=='4')return false;return {parent:parent.post,reply:reply.post,accounting,checkpoint:page.checkpoint};}
+  if(typeof page.nextCursor!=='string'||! /^[0-9a-f]{32}:[0-9a-f]{64}:[0-9a-f]{16}$/.test(page.nextCursor)||seen.has(page.nextCursor))throw Error('BOK_PUBLIC_CURSOR');seen.add(page.nextCursor);cursor=page.nextCursor;
+ }
+ throw Error('BOK_PUBLIC_INCOMPLETE');
+}
+export function assertRetainedBokEvents({postEvents,replyEvents,accountingEvents,publicIntent,approval,pluginId,discovered}){
+ const one=(events,type,test)=>{const rows=events.filter(e=>e.type===type&&test(e.payload));assert.equal(rows.length,1);return rows[0];};
+ const invocation=one(postEvents,'PluginInvoked',p=>p.request_id===publicIntent.requestId&&p.target===publicIntent.target&&p.plugin_id===BigInt(pluginId).toString());
+ const post=one(postEvents,'PostPublished',p=>p.id===invocation.payload.post_id);assert.equal(post.payload.record.root,post.payload.id);assert.equal(post.payload.record.parent,'0');
+ const linked=one(replyEvents,'PluginReplyPublished',p=>p.request_id===publicIntent.requestId&&p.target===publicIntent.target&&p.parent_id===post.payload.id&&p.plugin_id===BigInt(pluginId).toString());
+ const reply=one(replyEvents,'PostPublished',p=>p.id===linked.payload.post_id);assert.equal(reply.payload.record.kind,'4');assert.equal(reply.payload.record.parent,post.payload.id);assert.equal(reply.payload.record.root,post.payload.id);assert.equal(reply.position.txHash,linked.position.txHash);
+ assert.equal(discovered.parent.id,post.payload.id);assert.equal(discovered.reply.id,reply.payload.id);assert.equal(discovered.reply.position.txHash,reply.position.txHash);
+ const accounting=one(accountingEvents,'AccountingChanged',p=>p.request_id===publicIntent.requestId&&p.state==='4').payload;
+ assert.equal(accounting.budget,approval.budget);assert.equal(accounting.available,'0');assert.equal(accounting.reserved,'0');assert(BigInt(accounting.charged)>0n);assert.equal(BigInt(accounting.charged)+BigInt(accounting.refunded),BigInt(approval.budget));
+ for(const k of ['state','sequence','budget','available','reserved','charged','refunded'])assert.equal(discovered.accounting[k],accounting[k]);
+ return {canonicalReply:true,canonicalTerminalAccounting:true,charged:accounting.charged,refunded:accounting.refunded};
+}
+
+export async function driveRetainedBokJourney({page,control,approval,mark,report}){
+ assert.equal(report.paidRecovery?.readyFromConfirmedPrivateClaim,true);approval=validateRetainedBokApproval(approval,control);
+ const [{createAztecNodeClient},{loadContractArtifact},{loadRollingArtifacts},{createRollingEventDecoder}]=await Promise.all([import('@aztec-labs/aztec.js/node'),import('@aztec-labs/stdlib/abi'),import('../prover/rolling-artifacts.mjs'),import('../shared/rolling/public-events.mjs')]);
+ const node=createAztecNodeClient(control.walletConfig.trustedQuery.url),[board,bok]=loadRollingArtifacts();
+ const decoder=await createRollingEventDecoder({artifact:loadContractArtifact(board),bokArtifact:loadContractArtifact(bok),scope:approval.publicScope});
+ const dialog=page.getByRole('dialog'),inspect=async(phase,status,options={})=>{const value=await page.evaluate(inspectRetainedBokWorkflow,{config:control.walletConfig.config,approval,phase,status,...options});assertRetainedBokReview(value,options);return value;};
+ report.retainedBok={authorizationConfirmed:false,postConfirmed:false,canonicalReply:false,canonicalTerminalAccounting:false,providerBillingIndependentlyAttested:false};
+ const publicIntent=await driveRetainedBokConfirmations({dialog,approval,inspect,mark,report});
+ const authorizationEvents=await decoder.decodeTransaction(node,publicIntent.authorizationTxHash);const opened=authorizationEvents.filter(e=>e.type==='AccountingChanged'&&e.payload.request_id===publicIntent.requestId);assert.equal(opened.length,1);assert.equal(opened[0].payload.state,'1');assert.equal(opened[0].payload.budget,approval.budget);assert.equal(opened[0].payload.available,approval.budget);assert.equal(opened[0].payload.reserved,'0');
+ const {TxHash}=await import('@aztec-labs/stdlib/tx');const fees={};for(const [kind,hash,cap] of [['authorization',publicIntent.authorizationTxHash,approval.authorizeFeeCap],['post',publicIntent.transactionHash,approval.postFeeCap]]){const receipt=await node.getTxReceipt(TxHash.fromString(hash));assert.equal(receipt.executionResult,'success');assert.equal(typeof receipt.transactionFee,'bigint');assert(receipt.transactionFee>=0n&&receipt.transactionFee<=BigInt(cap));fees[kind]=String(receipt.transactionFee);}
+ const postEvents=await decoder.decodeTransaction(node,publicIntent.transactionHash),invocation=postEvents.filter(e=>e.type==='PluginInvoked'&&e.payload.request_id===publicIntent.requestId);assert.equal(invocation.length,1);const postId=invocation[0].payload.post_id;report.retainedBok.postConfirmed=true;
+ mark('retained-bok-reply-accounting');let handle;
+ try{handle=await page.waitForFunction(discoverRetainedBokCompletion,{postId,requestId:publicIntent.requestId,scope:approval.publicScope},{timeout:80000,polling:1000});const discovered=await handle.jsonValue();
+  const replyEvents=await decoder.decodeTransaction(node,discovered.reply.position.txHash),accountingEvents=await decoder.decodeTransaction(node,discovered.accounting.position.txHash);
+  // Recheck all event anchors after the final decoded transaction; a moved
+  // canonical block invalidates the complete observation.
+  for(const event of [...authorizationEvents,...postEvents,...replyEvents,...accountingEvents])assert.equal((await node.getBlockData(Number(event.position.blockNumber))).blockHash.toString(),event.position.blockHash);
+  Object.assign(report.retainedBok,assertRetainedBokEvents({postEvents,replyEvents,accountingEvents,publicIntent,approval,pluginId:control.walletConfig.config.bok.pluginId,discovered}),{networkFees:fees,authorizationTransactionHash:publicIntent.authorizationTxHash,postTransactionHash:publicIntent.transactionHash,replyTransactionHash:discovered.reply.position.txHash,accountingTransactionHash:discovered.accounting.position.txHash});
+ }finally{await handle?.dispose();await page.evaluate(()=>{delete window.__retainedBokWorkflow;});}
+}
+
+export async function driveRetainedBokConfirmations({dialog,approval,inspect,mark,report}){
+ mark('retained-bok-authorize-review');await dialog.getByRole('button',{name:'Actions',exact:true}).click();await dialog.getByLabel('Action',{exact:true}).selectOption('bok');await dialog.getByLabel('Message',{exact:true}).fill(approval.content);await dialog.getByLabel('Maximum Bok credits',{exact:true}).fill(approval.budget);
+ await dialog.getByRole('button',{name:'Check action and review fee',exact:true}).click();await dialog.getByRole('button',{name:'Confirm and send',exact:true}).waitFor();await inspect('authorize','prepared',{capture:true});
+ mark('retained-bok-authorize');await dialog.getByRole('button',{name:'Confirm and send',exact:true}).click();await dialog.getByRole('button',{name:'Review saved Bok post',exact:true}).waitFor({timeout:80000});await inspect('authorize','confirmed',{capture:true});report.retainedBok.authorizationConfirmed=true;
+ mark('retained-bok-post-review');await dialog.getByRole('button',{name:'Review saved Bok post',exact:true}).click();await dialog.getByRole('button',{name:'Confirm and send',exact:true}).waitFor();await inspect('post','prepared');
+ mark('retained-bok-post');await dialog.getByRole('button',{name:'Confirm and send',exact:true}).click();await dialog.getByText('Transaction confirmed on the verified chain.',{exact:true}).waitFor({timeout:80000});const {public:publicIntent}=await inspect('post','confirmed',{published:true});return publicIntent;
+}
