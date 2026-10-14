@@ -22,7 +22,7 @@ pub contract PrivateBok {
     use aztec::{
         macros::{events::event, functions::{external, initializer, internal, only_self, view}, notes::note, storage::storage},
         messages::delivery::MessageDelivery,
-        note::{note_getter_options::NoteGetterOptions, note_interface::NoteProperties},
+        note::{note_getter_options::NoteGetterOptions, note_viewer_options::NoteViewerOptions, note_interface::NoteProperties},
         protocol::{address::{AztecAddress, EthAddress}, hash::{sha256_to_field, poseidon2_hash_with_separator},
             traits::{Deserialize, FromField, Packable, Serialize, ToField}},
         state_vars::{Map, Owned, PrivateSet, PublicImmutable, PublicMutable, StateVariable},
@@ -256,6 +256,9 @@ pub contract PrivateBok {
         assert(notes.len() == 1, "No owned request control");
         let note = notes.get_unchecked(0);
         assert((note.schema == 1) & (note.request_id == request_id), "Invalid control note");
+        // Keep wallet-local history recoverable after cancellation. The public
+        // state transition still rejects a second cancellation atomically.
+        self.storage.controls.at(self.msg_sender()).insert(note).deliver(MessageDelivery::onchain_constrained());
         self.enqueue_self._cancel(request_id);
     }
 
@@ -291,6 +294,23 @@ pub contract PrivateBok {
 
     #[external("utility")]
     unconstrained fn balance_of(account: AztecAddress) -> u128 { self.storage.balances.at(account).balance_of() }
+    /// Wallet-local ownership discovery only, never a public account-group API.
+    /// A full page does not establish exhaustion; callers must bind pagination
+    /// to one synced canonical anchor and request the following page.
+    #[external("utility")]
+    unconstrained fn owned_requests(owner: AztecAddress, page_offset: u32) -> pub [Field; 8] {
+        let options = NoteViewerOptions::<RequestControlNote, 2>::new().set_limit(8).set_offset(page_offset);
+        let notes = self.storage.controls.at(owner).view_notes(options);
+        let mut result = [0; 8];
+        for i in 0..8 {
+            if i < notes.len() {
+                let note = notes.get_unchecked(i);
+                assert((note.schema == 1) & (note.request_id != 0), "Invalid control note");
+                result[i] = note.request_id;
+            }
+        }
+        result
+    }
     #[external("public")] #[view]
     fn request(request_id: Field) -> pub Request { self.storage.requests.at(request_id).read() }
     #[external("public")] #[view]

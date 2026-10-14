@@ -509,3 +509,77 @@ unconstrained fn waiting_authorization_cannot_publish_reply() {
     env.call_private(user, PrivateBok::at(a).authorize_request(10, 42, 600));
     env.call_public(op, PrivateBok::at(a).publish_reply(10, 77, [0; 32], 0, 1, 0));
 }
+
+
+#[test]
+unconstrained fn owned_requests_empty_and_owner_scoped() {
+    let (mut env, a, user, _, _) = funded(); let other = env.create_light_account();
+    assert_eq(env.execute_utility(PrivateBok::at(a).owned_requests(user, 0)), [0; 8]);
+    fund(env, a, other, 100, 102, 202);
+    env.call_private(user, PrivateBok::at(a).authorize_request(10, 42, 100));
+    env.call_private(other, PrivateBok::at(a).authorize_request(20, 43, 100));
+    assert_eq(env.execute_utility(PrivateBok::at(a).owned_requests(user, 0)), [10, 0, 0, 0, 0, 0, 0, 0]);
+    assert_eq(env.execute_utility(PrivateBok::at(a).owned_requests(other, 0)), [20, 0, 0, 0, 0, 0, 0, 0]);
+}
+
+#[test]
+unconstrained fn owned_requests_pages_cover_eight_nine_and_seventeen_without_duplicates() {
+    let (env, a, user, _, _) = funded();
+    for i in 0..17 {
+        env.call_private(user, PrivateBok::at(a).authorize_request((i + 1) as Field, (i + 100) as Field, 1));
+        if i == 7 { assert_eq(env.execute_utility(PrivateBok::at(a).owned_requests(user, 8)), [0; 8]); }
+        if i == 8 {
+            let ninth = env.execute_utility(PrivateBok::at(a).owned_requests(user, 8));
+            assert(ninth[0] != 0); for j in 1..8 { assert_eq(ninth[j], 0); }
+        }
+    }
+    let first = env.execute_utility(PrivateBok::at(a).owned_requests(user, 0));
+    let second = env.execute_utility(PrivateBok::at(a).owned_requests(user, 8));
+    let third = env.execute_utility(PrivateBok::at(a).owned_requests(user, 16));
+    let mut seen = [false; 17];
+    for i in 0..8 {
+        let id = first[i]; assert((id as u32 > 0) & (id as u32 <= 17));
+        let index = id as u32 - 1; assert(!seen[index]); seen[index] = true;
+        let id = second[i]; assert((id as u32 > 0) & (id as u32 <= 17));
+        let index = id as u32 - 1; assert(!seen[index]); seen[index] = true;
+    }
+    assert((third[0] as u32 > 0) & (third[0] as u32 <= 17));
+    let index = third[0] as u32 - 1; assert(!seen[index]); seen[index] = true;
+    for i in 1..8 { assert_eq(third[i], 0); }
+    for i in 0..17 { assert(seen[i]); }
+    assert_eq(env.execute_utility(PrivateBok::at(a).owned_requests(user, 17)), [0; 8]);
+}
+
+#[test]
+unconstrained fn owned_requests_preserve_cancelled_history_and_exact_refund() {
+    let (env, a, user, _, _) = funded();
+    env.call_private(user, PrivateBok::at(a).authorize_request(10, 42, 600));
+    env.call_private(user, PrivateBok::at(a).cancel(10));
+    assert_eq(env.execute_utility(PrivateBok::at(a).owned_requests(user, 0)), [10, 0, 0, 0, 0, 0, 0, 0]);
+    assert_eq(env.execute_utility(PrivateBok::at(a).balance_of(user)), 1000);
+    let r = env.view_public(PrivateBok::at(a).request(10));
+    assert_eq(r.refunded, 600); assert_eq(r.state, 4); assert_eq(r.reserved, 0);
+    assert_eq(env.execute_utility(PrivateBok::at(a).owned_requests(user, 1)), [0; 8]);
+}
+
+#[test(should_fail_with="Request not cancellable")]
+unconstrained fn owned_requests_retained_control_cannot_cancel_twice() {
+    let (env, a, user, _, _) = funded();
+    env.call_private(user, PrivateBok::at(a).authorize_request(10, 42, 600));
+    env.call_private(user, PrivateBok::at(a).cancel(10));
+    assert_eq(env.execute_utility(PrivateBok::at(a).balance_of(user)), 1000);
+    env.call_private(user, PrivateBok::at(a).cancel(10));
+}
+
+#[test]
+unconstrained fn owned_requests_track_reservation_charge_and_release_without_public_owner() {
+    let (env, a, user, op, _) = active();
+    env.call_public(op, PrivateBok::at(a).reserve(10, 0, 400));
+    assert_eq(env.execute_utility(PrivateBok::at(a).owned_requests(user, 0)), [10, 0, 0, 0, 0, 0, 0, 0]);
+    env.call_public(op, PrivateBok::at(a).settle(10, 0, 120, 301));
+    env.call_public(op, PrivateBok::at(a).finish(10));
+    assert_eq(env.execute_utility(PrivateBok::at(a).owned_requests(user, 0)), [10, 0, 0, 0, 0, 0, 0, 0]);
+    let r = env.view_public(PrivateBok::at(a).request(10));
+    assert_eq(r.charged, 120); assert_eq(r.refunded, 480); assert_eq(r.reserved, 0);
+    assert_eq(env.execute_utility(PrivateBok::at(a).balance_of(user)), 880);
+}
