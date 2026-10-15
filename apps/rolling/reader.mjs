@@ -146,7 +146,7 @@ async function render(){
  else if(parts[0]!=='home'){shell('Page not found');return;}
  shell(title,{boardId:api==='board'?parameters.id:null});
  if(privateView){
-  main.querySelector('.intro').textContent='Only you can see this view. Your saved choices stay on your device while you browse.';
+  main.querySelector('.intro').textContent='This view is filtered on your device. Your saved choices are encrypted for recovery. The configured trusted prover and its query service can see private data used to recover or prove your activity.';
   main.append(button('Manage private views',()=>openWallet({view:'preferences'})));
   if(privatePanel?.privateStatus?.()!=='complete'){main.append(el('div',{class:'empty'},el('h2',{},'Unlock and recover your private views'),el('p',{},'Recover your saved choices to see this view. Your follows and bookmarks stay private.'),button('Open private recovery',()=>openWallet({view:'preferences'}))));return;}
  }

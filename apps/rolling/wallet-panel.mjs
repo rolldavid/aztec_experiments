@@ -67,7 +67,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
  const title=el('h2',{id:'rolling-wallet-title'},'Your private account');
  const closeButton=button('Close account panel',()=>close());
  const content=el('div'),live=el('p',{role:'status','aria-live':'polite',class:'quiet'});
- dialog.append(el('div',{class:'dialog-top'},title,closeButton),el('p',{id:'rolling-wallet-description',class:'quiet'},'Your balances and list of owned names stay in this panel. Published names and posts are public. Your saved choices stay private.'),live,content);
+ dialog.append(el('div',{class:'dialog-top'},title,closeButton),el('p',{id:'rolling-wallet-description',class:'quiet'},'Published names and posts are public. Your saved choices are encrypted for recovery, and private views are filtered on your device. The configured trusted prover and its query service can see private data used to recover or prove your activity.'),live,content);
  document.body.append(dialog);
  function releasePreviews(){renderEpoch++;for(const url of previewURLs)URL.revokeObjectURL(url);previewURLs.clear();}
  function clearProfileDraft(){profileSnapshot=null;avatarDraft=null;}
