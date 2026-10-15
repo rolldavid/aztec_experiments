@@ -283,7 +283,7 @@ export function createPrivateQueryWithInspector({queryNode, chainId, rollupVersi
     finally {active--;}
   };
   let compactActive=false;
-  const handleCompact=compact?async(req,res,reserveAdditional)=>{
+  const handleCompact=compact?async(req,res,admission)=>{
     const reply=(status,value)=>{if(!res.destroyed&&!res.writableEnded){res.writeHead(status,{'Content-Type':'application/json','Cache-Control':'no-store','X-Content-Type-Options':'nosniff',...(status===413?{'Connection':'close'}:{})});res.end(JSON.stringify(value));}};
     const rejected=status=>reply(status,{error:'Compact block unavailable'});
     // Never drain an attacker-controlled unfinished body. Flush the small fixed
@@ -320,12 +320,27 @@ export function createPrivateQueryWithInspector({queryNode, chainId, rollupVersi
         bytes+=chunk.length;if(bytes>COMPACT_TRANSPORT_LIMITS.requestBytes){status=413;throw unavailable();}chunks.push(chunk);
       }
       alive();const selector=validateCompactRequest(JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(Buffer.concat(chunks))),compact.tier);
-      if(selector.mode==='page'){status=429;if(typeof reserveAdditional!=='function'||!reserveAdditional(selector.count-1))throw unavailable();}
+      if(selector.mode==='page'){status=429;if(typeof admission?.reserveAdditional!=='function'||!admission.reserveAdditional(selector.count-1))throw unavailable();}
       status=503;await inspect(compact.tier);alive();
       const response=await compactFetch(new URL(COMPACT_NATIVE_ROUTE,config.url),{method:'POST',headers:{'content-type':'application/json'},
         body:JSON.stringify(selector),redirect:'error',credentials:'omit',referrerPolicy:'no-referrer',signal:controller.signal});
       const value=await readCompactResponse(response,selector);alive();await inspect(compact.tier);alive();
-      reply(200,value);
+      // Keep the existing deadline and single-flight ownership until the
+      // bounded response finishes. A disconnected/stalled client earns no
+      // refund, even when native work already returned a valid short prefix.
+      const body=JSON.stringify(value);
+      await new Promise((resolve,reject)=>{
+        const clean=()=>{res.off('finish',finished);res.off('close',failed);res.off('error',failed);controller.signal.removeEventListener('abort',failed);};
+        const failed=()=>{clean();reject(unavailable());};
+        const finished=()=>{clean();resolve();};
+        res.once('finish',finished);res.once('close',failed);res.once('error',failed);controller.signal.addEventListener('abort',failed,{once:true});
+        try{alive();res.writeHead(200,{'Content-Type':'application/json','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});res.end(body);}catch{failed();}
+      });
+      if(selector.mode==='page'&&!controller.signal.aborted&&!req.aborted){
+        // Native serial prefix selection may inspect one omitted next body at
+        // the byte boundary. Charge that lookahead even at a private-log stop.
+        admission.settleUsed(Math.min(selector.count,value.blocks.length+1));
+      }
     }catch{if(status===413)await rejectAndClose();else rejected(status);}
     finally{clearTimeout(timer);req.off('aborted',abort);res.off('close',close);active--;compactActive=false;}
   }:undefined;

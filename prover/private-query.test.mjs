@@ -398,3 +398,25 @@ test('historical gateway: above-checkpoint public body still rejects orphan reso
   assert.equal(f.operations.includes('getBlock'),finalReorg);
  }
 });
+
+for(const ending of ['finish','close','error','abort','deadline'])test(`compact page settlement waits for ${ending} with original deadline and ownership`,async t=>{
+ const page={schemaVersion:1,mode:'page',from:1,count:32,anchor:{number:32,hash:compactHash},tier:'checkpointed'};
+ const value={schemaVersion:1,mode:'page',anchor:page.anchor,blocks:[{...compactBody(),number:1}]};
+ const f=await compactFixture(t,{reply:(_req,res)=>{res.setHeader('content-type','application/json');res.end(JSON.stringify(value));},compactBlocks:{tier:'checkpointed',origins:[]}});
+ const control=compactSocketControl({finish:false});control.req.iterator=async function*(){yield Buffer.from(JSON.stringify(page));};
+ const reservations=[],settlements=[];
+ const token={reserveAdditional:n=>{reservations.push(n);return true;},settleUsed:n=>{settlements.push(n);return true;}};
+ t.mock.timers.enable({apis:['setTimeout']});
+ let done=false;const pending=f.query.handleCompact(control.req,control.res,token).then(()=>done=true);
+ await control.end;assert.equal(control.res.status,200);assert.deepEqual(reservations,[31]);assert.deepEqual(settlements,[]);assert.equal(done,false);
+ const other=compactSocketControl();await f.query.handleCompact(other.req,other.res,token);assert.equal(other.res.status,429);
+ if(ending==='finish'){control.res.writableFinished=true;control.res.emit('finish');}
+ else if(ending==='close'){control.res.destroyed=true;control.res.emit('close');}
+ else if(ending==='error')control.res.emit('error',Error('socket failure'));
+ else if(ending==='abort')control.req.destroy();
+ else t.mock.timers.tick(QUERY_LIMITS.timeoutMs);
+ await pending;assert.deepEqual(settlements,ending==='finish'?[2]:[]);
+ assert.equal(control.res.listenerCount('finish'),0);assert.equal(control.res.listenerCount('close'),0);assert.equal(control.res.listenerCount('error'),0);assert.equal(control.req.listenerCount('aborted'),0);
+ if(ending==='deadline'){assert.equal(control.req.destroyCalls,1);assert.equal(control.socket.destroyCalls,1);}
+ t.mock.timers.reset();
+});
