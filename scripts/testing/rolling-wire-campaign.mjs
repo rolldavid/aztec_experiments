@@ -3,8 +3,49 @@
 import assert from 'node:assert/strict';
 import {subscribe,unsubscribe} from 'node:diagnostics_channel';
 import {createRollingWireTrace} from './rolling-wire-trace.mjs';
+import {createRollingPublicReaderObservation} from './rolling-preference-browser.mjs';
 const labels=['trusted-query','trusted-proof','trusted-upstream','ordinary-node','public-reader'];
 const channel='http.server.request.start';
+
+// Separate scoped observation: no global fetch replacement, new listener, or
+// lifecycle ownership. Install in the existing public-reader process. The
+// caller owns an isolated observation window and the matching browser capture.
+export function installRollingPublicReaderReceiver(options){
+ const observation=createRollingPublicReaderObservation(options),url=new URL(options.origin);
+ const port=Number(url.port),publicOrigin=url.origin;assert(port>0);let closed=false;
+ function receive({request,socket}){
+  try{
+   if(socket.localPort!==port)return;
+   const raw=request.rawHeaders;if(!Array.isArray(raw)||raw.length%2||raw.length>128)throw Error();
+   const headers=[];for(let i=0;i<raw.length;i+=2)headers.push({name:raw[i],value:raw[i+1]});
+   // Node's origin-form target is prefixed without normalizing away its raw
+   // encoding. Absolute-form targets are checked by the same origin guard.
+   const target=request.url;
+   if(typeof target!=='string')throw Error();
+   const full=target.startsWith('/')?publicOrigin+target:target;
+   const body=request.headers['transfer-encoding']!==undefined||request.headers['content-length']!==undefined&&request.headers['content-length']!=='0'?'present':null;
+   observation.observe({url:full,method:request.method,headers,body});
+  }catch{observation.error();}
+ }
+ subscribe(channel,receive);
+ return Object.freeze({snapshot:observation.snapshot,close(){if(closed)return;closed=true;unsubscribe(channel,receive);}});
+}
+
+export function assertRollingPublicReaderObservation(browser,receiver){
+ for(const capture of [browser,receiver]){
+  for(const k of ['requests','feedRequests','pending','invalid','overflow','privateMatches','observerErrors'])assert(Number.isSafeInteger(capture?.[k])&&capture[k]>=0,'Missing public-reader observation count');
+  for(const k of ['pending','invalid','overflow','privateMatches','observerErrors'])assert.equal(capture[k],0,k);
+  assert(capture.requests>0&&capture.feedRequests>0,'Missing public-feed positive control');
+  assert.match(capture.binding,/^[a-f0-9]{64}$/);assert(Array.isArray(capture.rows));
+  assert.equal(capture.rows.reduce((n,row)=>{assert(Number.isSafeInteger(row.count)&&row.count>0);assert.deepEqual(row.issues,[]);assert.equal(row.method,'GET');assert.notEqual(row.route,'unknown');return n+row.count;},0),capture.requests,'Incomplete public-reader rows');
+  assert.equal(capture.rows.filter(row=>row.route==='feed').reduce((n,row)=>n+row.count,0),capture.feedRequests,'Incomplete feed count');
+ }
+ assert.equal(browser.binding,receiver.binding,'Observation scope/key differs');
+ assert.equal(browser.requests,receiver.requests,'Public-reader ingress count differs');
+ const sorted=capture=>capture.rows.map(row=>JSON.stringify(row)).sort();
+ assert.deepEqual(sorted(browser),sorted(receiver),'Public-reader URL/query/header ingress differs');
+ return {passed:true,requests:browser.requests,feedRequests:browser.feedRequests,scope:'Matching public-reader request window only; no native receiver, response or cryptographic unlinkability qualification'};
+}
 export function installRollingWireCampaign({roles}){
  // The measured four-name campaign issued 14,341 requests. Keep a bounded
  // 30,000-request inventory; overflow remains an acceptance failure.

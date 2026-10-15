@@ -3,10 +3,75 @@
 // immutable encrypted handoff and >=150s remaining outer budget. Expected public
 // content is assertion-only: never injected into application or persisted here.
 import assert from 'node:assert/strict';
+import {createHmac} from 'node:crypto';
 import {projectRollingInitialization} from '../../apps/rolling/wallet-panel.mjs';
 import {COMPACT_GATEWAY_ROUTE,COMPACT_TRANSPORT_LIMITS,validateCompactRequest} from '../../shared/rolling/compact-client.mjs';
 import {validateRollingBrowserBackup,waitForRollingComposerState} from './rolling-composer-browser.mjs';
 const invalid=()=>Error('Invalid private preference browser control.');
+
+// TEST ONLY: one public-reader request window. The browser supplies actual
+// headersArray(); the existing Node ingress observer supplies rawHeaders. A
+// shared private random key permits exact comparison without publishing URLs,
+// cursor values, header values, account identifiers, or unknown parameter names.
+// This observes requests, not responses, other processes, or unlinkability.
+export function createRollingPublicReaderObservation({origin:publicOrigin,key,privateValues=[]}){
+ const base=origin(publicOrigin);
+ if(typeof key!=='string'||! /^[a-f0-9]{64}$/.test(key)||!Array.isArray(privateValues)||privateValues.length<1||privateValues.length>64||privateValues.some(v=>typeof v!=='string'||!v.length||v.length>4096))throw invalid();
+ const secret=Buffer.from(key,'hex'),known=[...privateValues],rows=new Map(),pending=new Set();
+ const count={requests:0,feedRequests:0,invalid:0,overflow:0,privateMatches:0,observerErrors:0};
+ const routes={status:[],feed:['limit','cursor'],home:['limit','cursor'],board:['id','limit','cursor'],directory:['query','limit','cursor'],thread:['root','limit','cursor'],profile:['nameId','limit','cursor'],post:['id']};
+ const headers=new Set(['accept','accept-encoding','accept-language','cache-control','connection','content-length','dnt','host','origin','pragma','priority','referer','sec-ch-ua','sec-ch-ua-mobile','sec-ch-ua-platform','sec-fetch-dest','sec-fetch-mode','sec-fetch-site','sec-fetch-user','upgrade-insecure-requests','user-agent']);
+ const digest=(domain,text)=>createHmac('sha256',secret).update(domain+'\0').update(text).digest('hex');
+ const numeric=v=>/^(?:0x[0-9a-fA-F]{1,64}|[0-9]{1,78})$/.test(v)?BigInt(v).toString():null;
+ const matches=v=>known.some(k=>v.includes(k)||(numeric(v)!==null&&numeric(k)!==null&&numeric(v)===numeric(k)));
+ function observe(input){
+  count.requests++;if(count.requests>10000){count.overflow++;return false;}
+  const issues=new Set();
+  const inspect=(text,domain)=>{if(matches(text)){count.privateMatches++;issues.add('private-value');}return {bytes:Buffer.byteLength(text),token:digest(domain,text)};};
+  try{
+   exact(input,['url','method','headers','body']);const url=value(input,'url'),method=value(input,'method'),supplied=value(input,'headers'),body=value(input,'body');
+   if(typeof url!=='string'||url.length>8192||typeof method!=='string'||method.length>32||!Array.isArray(supplied)||supplied.length>64)throw invalid();
+   const u=new URL(url),row={url:inspect(url,'url'),method:method==='GET'?'GET':'unknown',route:'unknown',path:inspect(u.pathname,'path'),query:[],headers:[],issues:[]};
+   if(u.origin!==base||u.username||u.password||u.hash)issues.add('url-authority');
+   if(method!=='GET')issues.add('method');if(body!==null&&body!=='')issues.add('body');
+   const route=u.pathname.startsWith('/api/')?u.pathname.slice(5):null;
+   if(route!==null&&Object.hasOwn(routes,route))row.route=route;
+   else if(/^\/(?:$|config\.json$|[A-Za-z0-9_-]+\.(?:mjs|js|css|html|ico)$|(?:wallet|crs)\/[A-Za-z0-9_./-]+$)/.test(u.pathname)&&!u.pathname.includes('..'))row.route='asset';
+   else issues.add('path');
+   const entries=[...u.searchParams];if(entries.length>32)throw invalid();
+   // URLSearchParams normalizes malformed percent encodings; do not silently
+   // accept a lossy parse. The original complete URL token retains encoding.
+   for(const part of u.search.slice(1).split('&'))decodeURIComponent(part.replaceAll('+',' '));
+   const seen=new Set();for(const [k,v]of entries){
+    const allowed=route!==null&&Object.hasOwn(routes,route)&&routes[route].includes(k);
+    row.query.push({key:allowed?k:'unknown',keyShape:inspect(k,'query-key'),value:inspect(v,'query-value')});
+    if(!allowed)issues.add('query-key');if(seen.has(k))issues.add('duplicate-query-key');seen.add(k);
+    if(k==='limit'&&v!=='30'||k==='cursor'&&(!v.length||v.length>4096)||['id','root','nameId'].includes(k)&&! /^(?:0|[1-9][0-9]{0,77})$/.test(v)||k==='query'&&v.length>120)issues.add('query-value');
+   }
+   if(['feed','home','board','thread','profile','directory'].includes(route)&&u.searchParams.get('limit')!=='30')issues.add('query-value');
+   if(['board','post'].includes(route)&&!seen.has('id')||route==='thread'&&!seen.has('root')||route==='profile'&&!seen.has('nameId'))issues.add('query-value');
+   let bytes=0;const headerNames=new Set();for(const h of supplied){
+    exact(h,['name','value']);const name=value(h,'name'),text=value(h,'value');if(typeof name!=='string'||typeof text!=='string'||name.length>128||text.length>8192||(bytes+=Buffer.byteLength(name)+Buffer.byteLength(text))>32768)throw invalid();
+    const lower=name.toLowerCase(),allowed=headers.has(lower);row.headers.push({name:allowed?lower:'unknown',nameShape:inspect(lower,'header-name'),value:inspect(text,'header-value')});
+    if(!allowed)issues.add('header');if(headerNames.has(lower))issues.add('duplicate-header');headerNames.add(lower);
+    if(lower==='host'&&text!==u.host)issues.add('host');
+   }
+   // Header order/case is transport-specific; preserve every pair and duplicate
+   // while canonicalizing only order. Query pair order remains exact.
+   row.headers.sort((a,b)=>JSON.stringify(a).localeCompare(JSON.stringify(b)));
+   row.issues=[...issues].sort();if(issues.size)count.invalid++;
+   if(route==='feed')count.feedRequests++;
+   const id=JSON.stringify(row);if(!rows.has(id)&&rows.size>=5000){count.overflow++;return false;}rows.set(id,(rows.get(id)??0)+1);
+   return issues.size===0;
+  }catch{count.invalid++;return false;}
+ }
+ return Object.freeze({observe,
+  track(task){pending.add(task);task.then(()=>pending.delete(task),()=>{count.observerErrors++;pending.delete(task);});return task;},
+  async drain(){while(pending.size)await Promise.allSettled([...pending]);},
+  error(){count.observerErrors++;},
+  snapshot(){return {...count,pending:pending.size,binding:digest('binding',JSON.stringify({base,known})),rows:[...rows].map(([r,n])=>({...JSON.parse(r),count:n})),scope:'Public-reader request URL/query/header projection only; values are keyed tokens, not privacy proof'};},
+ });
+}
 const fail=()=>{throw Error('Preference browser check failed.');};
 // Reviewed read/simulation inventory retained on pinned rc3. The new unused
 // getBlockHashMembershipWitnessAtArchive method stays denied until a caller is reviewed.

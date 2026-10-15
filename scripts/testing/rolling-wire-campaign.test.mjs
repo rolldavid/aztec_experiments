@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import http from 'node:http';
 import {once} from 'node:events';
 import {installRollingWireCampaign,assertRollingWireCampaign} from './rolling-wire-campaign.mjs';
+import {installRollingPublicReaderReceiver,assertRollingPublicReaderObservation} from './rolling-wire-campaign.mjs';
+import {createRollingPublicReaderObservation} from './rolling-preference-browser.mjs';
 const roles={a:'0x'+'11'.repeat(32),b:'0x'+'22'.repeat(32)};
 test('labelled loopback fixture: actual Node diagnostic ingress matches unchanged global fetch and restoration',async()=>{
  const server=http.createServer((req,res)=>{req.resume();req.on('end',()=>{res.writeHead(200,{'content-type':'application/json'});res.end('{}');});});
@@ -105,4 +107,29 @@ test('disabled social-wire accounting retains every other positive transport and
 test('real and default wire accounting still require positive proof traffic; invalid modes fail',()=>{
  for(const options of [undefined,{proofsEnabled:true}]){assert.equal(assertRollingWireCampaign(observation(),options).passed,true);assert.throws(()=>assertRollingWireCampaign(disabledObservation(),options),/No positive observation for trusted-proof/);}
  for(const mode of [null,0,1,'disabled','real',{},[]])assert.throws(()=>assertRollingWireCampaign(observation(),{proofsEnabled:mode}));
+});
+
+test('scoped actual public-reader HTTP ingress matches complete safe request shapes without replacing fetch',async()=>{
+ const server=http.createServer((req,res)=>{res.end('{}');});server.listen(0,'127.0.0.1');await once(server,'listening');const original=globalThis.fetch;
+ const base='http://127.0.0.1:'+server.address().port,options={origin:base,key:'ef'.repeat(32),privateValues:[roles.a]},receiver=installRollingPublicReaderReceiver(options),sender=createRollingPublicReaderObservation(options);
+ options.origin='http://127.0.0.1:1'; // Receiver configuration was captured.
+ async function send(target){const headers={Accept:'application/json',Host:new URL(base).host,Connection:'close'},url=base+target;
+  sender.observe({url,method:'GET',headers:Object.entries(headers).map(([name,value])=>({name,value})),body:null});
+  await new Promise((resolve,reject)=>{const r=http.get(url,{headers},response=>{response.resume();response.on('end',resolve);});r.on('error',reject);});
+ }
+ try{
+  await send('/api/feed?limit=30&cursor=opaque-page');await send('/api/post?id=123');await send('/wallet/runtime.mjs');
+  assert.equal(globalThis.fetch,original);const a=sender.snapshot(),b=receiver.snapshot();assert.equal(assertRollingPublicReaderObservation(a,b).requests,3);assert.equal(b.feedRequests,1);assert(!JSON.stringify(b).includes('opaque-page'));assert(!JSON.stringify(b).includes(roles.a));
+  for(const mutate of [v=>v.requests++,v=>v.feedRequests++,v=>v.pending=1,v=>v.invalid=1,v=>v.overflow=1,v=>v.privateMatches=1,v=>v.observerErrors=1,v=>delete v.invalid,v=>v.rows.pop(),v=>v.rows[0].query.pop(),v=>v.rows[0].headers.pop(),v=>v.binding='00'.repeat(32)]){const changed=structuredClone(b);mutate(changed);assert.throws(()=>assertRollingPublicReaderObservation(a,changed));}
+  // Every unknown key remains represented and invalidates even matching traces.
+  await send('/api/feed?limit=30&PRIVATE_SENTINEL=x');assert.equal(receiver.snapshot().invalid,1);assert.throws(()=>assertRollingPublicReaderObservation(sender.snapshot(),receiver.snapshot()));assert(!JSON.stringify(receiver.snapshot()).includes('PRIVATE_SENTINEL'));
+  receiver.close();receiver.close();const stopped=receiver.snapshot();await send('/api/feed?limit=30');assert.deepEqual(receiver.snapshot(),stopped);
+ }finally{receiver.close();server.closeAllConnections();await new Promise(r=>server.close(r));}
+});
+
+test('scoped public-reader acceptance requires positive feed and complete known-role-free rows',()=>{
+ const options={origin:'http://127.0.0.1:12345',key:'ac'.repeat(32),privateValues:[roles.a]};
+ const o=createRollingPublicReaderObservation(options);assert(o.observe({url:options.origin+'/api/status',method:'GET',headers:[],body:null}));assert.throws(()=>assertRollingPublicReaderObservation(o.snapshot(),o.snapshot()),/positive control/);
+ assert.equal(o.observe({url:options.origin+'/api/feed?limit=30&cursor='+BigInt(roles.a),method:'GET',headers:[],body:null}),false);assert(o.snapshot().privateMatches>0);assert.throws(()=>assertRollingPublicReaderObservation(o.snapshot(),o.snapshot()));
+ const r=createRollingPublicReaderObservation(options);assert(r.observe({url:options.origin+'/api/feed?limit=30',method:'GET',headers:[],body:null}));const s=r.snapshot();s.rows[0].issues=['query-key'];assert.throws(()=>assertRollingPublicReaderObservation(s,s));
 });

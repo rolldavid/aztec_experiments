@@ -129,6 +129,7 @@ for(const methods of [['aztec_getPublicLogsByTags'],['aztec_getPrivateLogsByTags
 // Fixed diagnostics only: these controls do not connect a wallet or browser.
 import {decodeRollingInitializationObservation,captureRollingInitializationObservation} from './rolling-preference-browser.mjs';
 import {projectRollingInitialization} from '../../apps/rolling/wallet-panel.mjs';
+import {createRollingPublicReaderObservation} from './rolling-preference-browser.mjs';
 const setupObservation=()=>({stage:'session-initialization',step:'deployment',deploymentStep:'board-instance',state:'failed',code:'ROLLING_DEPLOYMENT_INVALID'});
 test('initialization observation preserves only fixed detached own-data fields',()=>{
  const input=setupObservation(),out=projectRollingInitialization(input);assert.deepEqual(out,input);assert(Object.isFrozen(out));input.code='PRIVATE_SENTINEL';assert.equal(out.code,'ROLLING_DEPLOYMENT_INVALID');
@@ -150,4 +151,44 @@ test('initialization capture uses a bounded attribute read and sanitizes missing
 test('witnessed256 public range passes existing closed traffic observer and257 fails',()=>{
  const t=createRollingPreferenceTraffic(origins),p={...compactPage(),witnesses:true,count:256,anchor:{number:300,hash:compactSelector().hash}};
  assert(t.inspect(compactRequest(p)));assert.equal(t.snapshot().compactRequests,1);assert.equal(t.inspect(compactRequest({...p,count:257})),false);assert.equal(t.snapshot().inspectionErrors,1);
+});
+
+const publicOptions={origin:origins.origin,key:'ab'.repeat(32),privateValues:['PRIVATE_SENTINEL','0x'+'12'.repeat(32)]};
+const publicRequest=()=>({url:origins.origin+'/api/feed?limit=30&cursor=opaque-page',method:'GET',headers:[{name:'Accept',value:'application/json'},{name:'Host',value:'127.0.0.1:11001'}],body:null});
+test('public-reader complete query shape retains encoding, order and values as private keyed tokens',()=>{
+ const o=createRollingPublicReaderObservation(publicOptions),a=publicRequest();assert(o.observe(a));
+ assert(o.observe({...a,url:a.url.replace('opaque-page','different-page')}));
+ assert(o.observe({...a,url:origins.origin+'/api/feed?cursor=opaque-page&limit=30'}));
+ assert(o.observe({...a,url:a.url.replace('limit','%6cimit')}));
+ const s=o.snapshot();assert.equal(s.requests,4);assert.equal(s.rows.length,4);assert.deepEqual(s.rows[0].query.map(v=>v.key),['limit','cursor']);assert.deepEqual(s.rows[2].query.map(v=>v.key),['cursor','limit']);
+ assert.notEqual(s.rows[0].url.token,s.rows[3].url.token);assert.equal(s.rows[0].query[0].keyShape.token,s.rows[3].query[0].keyShape.token);
+ for(const secret of [publicOptions.key,'opaque-page','different-page',origins.origin])assert(!JSON.stringify(s).includes(secret));
+ s.rows[0].query=[];assert.equal(o.snapshot().rows[0].query.length,2);
+ assert.notEqual(s.binding,createRollingPublicReaderObservation({...publicOptions,key:'cd'.repeat(32)}).snapshot().binding);
+});
+const publicDefects={
+ unknownKey:r=>r.url+='&PRIVATE_SENTINEL=x',duplicate:r=>r.url+='&limit=30',encodedDuplicate:r=>r.url+='&%6cimit=30',
+ unknownPath:r=>r.url=origins.origin+'/PRIVATE_SENTINEL',outside:r=>r.url='https://PRIVATE_SENTINEL.invalid/api/feed?limit=30',
+ userinfo:r=>r.url=r.url.replace('http://','http://PRIVATE_SENTINEL@'),fragment:r=>r.url+='#PRIVATE_SENTINEL',
+ malformedEncoding:r=>r.url+='&cursor=%ZZ',wrongLimit:r=>r.url=r.url.replace('30','31'),missingLimit:r=>r.url=origins.origin+'/api/feed',
+ extraStaticQuery:r=>r.url=origins.origin+'/wallet/runtime.mjs?PRIVATE_SENTINEL=x',
+ secretCursor:r=>r.url=r.url.replace('opaque-page','PRIVATE_SENTINEL'),numericAccount:r=>r.url=r.url.replace('opaque-page',BigInt(publicOptions.privateValues[1]).toString()),
+ cookie:r=>r.headers.push({name:'Cookie',value:'PRIVATE_SENTINEL'}),authorization:r=>r.headers.push({name:'Authorization',value:'PRIVATE_SENTINEL'}),
+ unknownHeader:r=>r.headers.push({name:'PRIVATE_SENTINEL',value:'opaque'}),headerSecret:r=>r.headers.push({name:'Referer',value:'http://public.invalid/PRIVATE_SENTINEL'}),
+ duplicateHeader:r=>r.headers.push({name:'accept',value:'application/json'}),host:r=>r.headers[1].value='elsewhere.invalid',
+ body:r=>r.body='PRIVATE_SENTINEL',method:r=>r.method='PRIVATE_SENTINEL',oversized:r=>r.url+='x'.repeat(8193),
+ tooManyPairs:r=>r.url+='&x=y'.repeat(33),tooManyHeaders:r=>r.headers=Array.from({length:65},()=>({name:'Accept',value:'application/json'})),
+ headerBytes:r=>r.headers=[{name:'Accept',value:'x'.repeat(8193)}],missingHeaders:r=>delete r.headers,
+};
+for(const [name,change]of Object.entries(publicDefects))test('complete public-reader projection refuses '+name+' without disclosing values',()=>{
+ const o=createRollingPublicReaderObservation(publicOptions),r=publicRequest();change(r);assert.equal(o.observe(r),false);const s=o.snapshot();assert.equal(s.requests,1);assert.equal(s.invalid,1);assert(!JSON.stringify(s).includes('PRIVATE_SENTINEL'));assert(!JSON.stringify(s).includes(publicOptions.privateValues[1]));
+ if(name==='unknownKey'){assert.equal(s.rows[0].query.length,3);assert.equal(s.rows[0].query[2].key,'unknown');assert(s.rows[0].issues.includes('query-key'));}
+});
+test('public-reader observation refuses accessors and keeps early rejected work after drain',async()=>{
+ const o=createRollingPublicReaderObservation(publicOptions),r=publicRequest();let reads=0;Object.defineProperty(r,'url',{enumerable:true,get(){reads++;throw Error('PRIVATE_SENTINEL');}});assert.equal(o.observe(r),false);assert.equal(reads,0);
+ const rejected=Promise.reject(Error('PRIVATE_SENTINEL'));o.track(rejected);await assert.rejects(rejected);await Promise.resolve();assert.equal(o.snapshot().pending,0);await o.drain();assert.equal(o.snapshot().observerErrors,1);
+ let release;const held=new Promise(resolve=>{release=resolve;});o.track(held);assert.equal(o.snapshot().pending,1);let drained=false;const drain=o.drain().then(()=>{drained=true;});await Promise.resolve();assert.equal(drained,false);release();await drain;assert.equal(o.snapshot().pending,0);assert(!JSON.stringify(o.snapshot()).includes('PRIVATE_SENTINEL'));
+});
+test('public-reader bounded observation marks overflow instead of qualifying omitted requests',()=>{
+ const o=createRollingPublicReaderObservation(publicOptions),r=publicRequest();for(let i=0;i<10000;i++)assert(o.observe(r));assert.equal(o.observe(r),false);assert.equal(o.snapshot().requests,10001);assert.equal(o.snapshot().overflow,1);assert.equal(o.snapshot().rows[0].count,10000);
 });
