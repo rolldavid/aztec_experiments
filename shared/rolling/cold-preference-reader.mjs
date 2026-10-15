@@ -105,17 +105,20 @@ export function createRollingColdPreferenceReader(input){
      let block=null;
      if(observed.nextBlock<=observed.anchor.blockNumber){
       const count=fetchBlocks&&observed.nextLog===0?Math.min(32,observed.anchor.blockNumber-observed.nextBlock+1):1,blocks=[];let remainingLogs=8;
-      // Bound lookahead to four public heights and eight declared logs total.
+      // Bound lookahead to four public heights. Batch empty ciphertext history,
+      // stopping at the first private-log block: each transaction utility has
+      // independent receipt/effect and final-commit validation. Greedily adding
+      // several such blocks can exhaust the unchanged per-read deadline.
       // This is transport selection only; the SDK independently authenticates
       // every body and enforces the actual eight-log bound before staging.
       for(let offset=0;offset<count;offset+=4){
        const width=Math.min(4,count-offset),group=await Promise.allSettled(Array.from({length:width},async(_,i)=>{const number=observed.nextBlock+offset+i;return {number,hash:await canonical(number)};}));const failed=group.find(r=>r.status==='rejected');if(failed)throw failed.reason;const selectors=group.map(r=>r.value);
-       const wires=width>1?await checked(()=>fetchBlocks(selectors,{signal,privateLogBudget:remainingLogs})):[await checked(()=>fetchBlock(selectors[0],{signal}))];check(wires.length>0&&wires.length<=width);
+       const wires=width>1?await checked(()=>fetchBlocks(selectors,{signal,emptyPrefix:true})):[await checked(()=>fetchBlock(selectors[0],{signal}))];check(wires.length>0&&wires.length<=width);
        let stop=false;
        for(let i=0;i<wires.length;i++){const wire=wires[i];check(wire.number===selectors[i].number&&wire.hash===selectors[i].hash);const logs=compactPrivateLogCountHint(wire.fields);
         if(logs===null||logs>remainingLogs){if(blocks.length===0)blocks.push({blockNumber:wire.number,blockHash:wire.hash,fields:wire.fields,headerFields:wire.headerFields});check(i===wires.length-1);stop=true;break;}
         blocks.push({blockNumber:wire.number,blockHash:wire.hash,fields:wire.fields,headerFields:wire.headerFields});remainingLogs-=logs;
-        if(remainingLogs===0){check(i===wires.length-1);stop=true;break;}
+        if(logs>0){check(i===wires.length-1);stop=true;break;}
        }
        check(wires.length===width||stop);if(stop)break;
       }
