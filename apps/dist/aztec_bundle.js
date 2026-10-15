@@ -392995,7 +392995,7 @@ Partial Address: ${this.partialAddress.toString()}
     }
     return out;
   }
-  function createRollingPreferenceArchive(node2, anchorHeader, guard) {
+  function createRollingPreferenceArchive(node2, anchorHeader, guard, supplied = /* @__PURE__ */ new Map()) {
     const anchor2 = BlockHeader.fromBuffer(BlockHeader.prototype.toBuffer.call(anchorHeader)), proofs = /* @__PURE__ */ new Map();
     return async (number20, hash12, headerFields) => {
       integer8(number20, anchor2.getBlockNumber(), 1);
@@ -393007,13 +393007,19 @@ Partial Address: ${this.partialAddress.toString()}
       await guard();
       if (number20 === anchor2.getBlockNumber()) {
         check9((await anchor2.hash()).toString() === hash12);
+        if (supplied.has(number20)) check9(supplied.get(number20) === null);
         return header;
       }
       const key = number20 + ":" + hash12;
       if (!proofs.has(key)) {
-        check9(proofs.size < 32);
+        check9(proofs.size < 256);
         proofs.set(key, (async () => {
-          const witness = await node2.getBlockHashMembershipWitness(await anchor2.toBlockParameter(), BlockHash.fromString(hash12));
+          let witness;
+          if (supplied.has(number20)) {
+            const value2 = supplied.get(number20);
+            check9(value2 !== null && value2.anchorNumber === anchor2.getBlockNumber() && value2.anchorHash === (await anchor2.hash()).toString());
+            witness = { leafIndex: BigInt(value2.leafIndex), siblingPath: value2.siblingPath.map(Fr.fromString) };
+          } else witness = await node2.getBlockHashMembershipWitness(await anchor2.toBlockParameter(), BlockHash.fromString(hash12));
           await guard();
           const index = Object.getOwnPropertyDescriptor(witness ?? {}, "leafIndex")?.value, siblings = Object.getOwnPropertyDescriptor(witness ?? {}, "siblingPath")?.value;
           check9(typeof index === "bigint" && index === BigInt(number20) && index < BigInt(anchor2.lastArchive.nextAvailableLeafIndex));
@@ -393072,7 +393078,15 @@ Partial Address: ${this.partialAddress.toString()}
     }
     if (p.block !== null) {
       const block2 = (value) => {
-        const b2 = exact2(value, ["blockNumber", "blockHash", "fields", "headerFields"]);
+        const b2 = exact2(value, ["blockNumber", "blockHash", "fields", "headerFields", ...Object.hasOwn(value, "archiveWitness") ? ["archiveWitness"] : []]);
+        if (Object.hasOwn(b2, "archiveWitness") && b2.archiveWitness !== null) {
+          const w = exact2(b2.archiveWitness, ["anchorNumber", "anchorHash", "leafIndex", "siblingPath"]);
+          integer8(w.anchorNumber, 4294967295, 1);
+          hex15(w.anchorHash);
+          check9(typeof w.leafIndex === "string" && /^[1-9][0-9]{0,9}$/.test(w.leafIndex) && w.leafIndex === String(b2.blockNumber));
+          w.siblingPath = fields(w.siblingPath, 30, 30);
+          b2.archiveWitness = w;
+        }
         integer8(b2.blockNumber, 4294967295, 1);
         hex15(b2.blockHash);
         b2.fields = fields(b2.fields, 24575, 7);
@@ -393080,19 +393094,31 @@ Partial Address: ${this.partialAddress.toString()}
         return b2;
       };
       if (Array.isArray(p.block)) {
-        integer8(p.block.length, 32, 1);
+        integer8(p.block.length, 256, 1);
         const values = p.block;
         check9(Reflect.ownKeys(values).length === values.length + 1);
         let bytes3 = 0;
         p.block = Array.from({ length: values.length }, (_, i) => {
           const d = Object.getOwnPropertyDescriptor(values, String(i));
           check9(d && "value" in d);
-          const b2 = block2(d.value);
-          bytes3 += (b2.fields.length + b2.headerFields.length) * 69 + 2048;
+          const raw = d.value;
+          check9(raw && Object.getPrototypeOf(raw) === Object.prototype);
+          const count = (object8, key, max, min2) => {
+            const item = Object.getOwnPropertyDescriptor(object8, key);
+            check9(item && "value" in item && Array.isArray(item.value));
+            const length = Object.getOwnPropertyDescriptor(item.value, "length")?.value;
+            integer8(length, max, min2);
+            return length;
+          };
+          const proof = Object.getOwnPropertyDescriptor(raw, "archiveWitness");
+          check9(!proof || "value" in proof);
+          const proofFields = proof && proof.value !== null ? count(proof.value, "siblingPath", 30, 30) : 0;
+          bytes3 += (count(raw, "fields", 24575, 7) + count(raw, "headerFields", 23, 23) + proofFields) * 69 + 2048;
           check9(bytes3 <= 2 * 1024 * 1024);
-          return b2;
+          return block2(raw);
         });
         check9(p.block.every((b2, i) => i === 0 || b2.blockNumber === p.block[i - 1].blockNumber + 1));
+        if (p.block.length > 32) check9(p.block.every((b2) => Object.hasOwn(b2, "archiveWitness")));
       } else p.block = block2(p.block);
     }
     const { contextGuard } = exact2(options, ["contextGuard"]);
@@ -393190,9 +393216,11 @@ Partial Address: ${this.partialAddress.toString()}
       return await pxe.operationQueue.runSynced(async (context) => {
         const frame = { ...context, validators: [] };
         const anchor2 = BlockHeader.fromBuffer(BlockHeader.prototype.toBuffer.call(context.anchorBlockHeader));
-        frame.archive = createRollingPreferenceArchive(pxe.node, anchor2, guard);
+        const supplied = /* @__PURE__ */ new Map();
+        for (const block2 of p.block === null ? [] : Array.isArray(p.block) ? p.block : [p.block]) if (Object.hasOwn(block2, "archiveWitness")) supplied.set(block2.blockNumber, block2.archiveWitness);
+        frame.archive = createRollingPreferenceArchive(pxe.node, anchor2, guard, supplied);
         const anchorRecord = { blockNumber: anchor2.getBlockNumber(), blockHash: (await anchor2.hash()).toString() };
-        let canonicalPending = null;
+        let canonicalPending = null, historicalInstance = null;
         const canonicalSnapshot = async () => {
           const parameter = await anchor2.toBlockParameter();
           const [info, observed, instance] = await rollingPreferenceReadBatch([
@@ -393206,6 +393234,7 @@ Partial Address: ${this.partialAddress.toString()}
               return { hash: raw.blockHash.toString(), header: BlockHeader.fromBuffer(BlockHeader.prototype.toBuffer.call(raw.header)) };
             },
             async () => {
+              if (historicalInstance) return SerializableContractInstance.fromBuffer(historicalInstance);
               const raw = await pxe.node.getContract(address6, parameter);
               check9(raw);
               return SerializableContractInstance.fromBuffer(new SerializableContractInstance(raw).toBuffer());
@@ -393216,6 +393245,7 @@ Partial Address: ${this.partialAddress.toString()}
           const h = observed.header;
           check9((await h.hash()).toString() === anchorRecord.blockHash && h.getBlockNumber() === anchorRecord.blockNumber && h.globalVariables.chainId.toBigInt() === BigInt(p.network.chainId) && h.globalVariables.version.toBigInt() === BigInt(p.network.version));
           check9(instance.currentContractClassId.toString() === p.expectedClassId && instance.originalContractClassId.toString() === p.expectedClassId && (await computeContractAddressFromInstance(instance)).equals(address6));
+          historicalInstance = new SerializableContractInstance(instance).toBuffer();
           await guard();
         };
         const canonical2 = () => {
@@ -393229,6 +393259,17 @@ Partial Address: ${this.partialAddress.toString()}
         const artifact = await pxe.contractStore.getContractArtifact(Fr.fromString(p.expectedClassId));
         check9(artifact && artifact.name === "RollingBoard");
         await binding3.verifyArtifact(artifact, p.expectedArtifactHash, p.expectedClassId);
+        frame.historical = async (input3, changeSetId, header) => {
+          check9(changeSetId === context.changeSetId && input3.contractAddress === p.contractAddress && input3.scope === p.scope && input3.expectedClassId === p.expectedClassId && input3.expectedArtifactHash === p.expectedArtifactHash && same(input3.network, p.network) && input3.proofsEnabled === p.proofsEnabled);
+          check9(BlockHeader.prototype.toBuffer.call(header).equals(BlockHeader.prototype.toBuffer.call(anchor2)));
+          await guard();
+          const raw = await pxe.node.getBlockData(anchorRecord.blockNumber);
+          check9(raw);
+          const h = BlockHeader.fromBuffer(BlockHeader.prototype.toBuffer.call(raw.header));
+          check9(raw.blockHash.toString() === anchorRecord.blockHash && h.getBlockNumber() === anchorRecord.blockNumber && (await h.hash()).toString() === anchorRecord.blockHash);
+          await guard();
+        };
+        frame.verifyArtifact = (value) => binding3.verifyArtifact(value, p.expectedArtifactHash, p.expectedClassId);
         beforeCommit = async () => {
           for (const validate2 of frame.validators) await validate2();
           await canonical2();
@@ -393490,6 +393531,7 @@ Partial Address: ${this.partialAddress.toString()}
             frame.validators.push(async () => {
               for (let offset = 0; offset < validators.length; offset += 4) await rollingPreferenceReadBatch(validators.slice(offset, offset + 4));
             });
+            if (p.block.length > 32) check9(verified2.slice(0, -1).every((value) => value.ciphertexts.length === 0));
             for (let i = 0; i < verified2.length; i++) await consume(p.block[i], verified2[i], true);
           } else {
             check9(p.block);
@@ -407531,6 +407573,12 @@ See docs for context: https://docs.aztec.network/errors/14`);
           check12(p.blockNumber <= anchor2.getBlockNumber());
           const archive = frame?.archive ?? createRollingPreferenceArchive(this.node, anchor2, guard);
           const canonical2 = async () => {
+            if (frame) {
+              await frame.historical(p, changeSetId, anchor2);
+              await archive(p.blockNumber, p.blockHash, p.headerFields);
+              await guard();
+              return;
+            }
             const info = await this.node.getNodeInfo();
             check12(info.l1ChainId === p.network.chainId && info.rollupVersion === p.network.version && info.l1ContractAddresses.rollupAddress.toString().toLowerCase() === p.network.rollup && info.realProofs === p.proofsEnabled);
             const coordinates = [[anchor2.getBlockNumber(), anchorHash]];
@@ -407559,10 +407607,13 @@ See docs for context: https://docs.aztec.network/errors/14`);
           await canonical2();
           const artifact = await this.contractStore.getContractArtifact(classId);
           check12(artifact && artifact.name === "RollingBoard");
-          const artifactHash = await computeArtifactHash(artifact);
-          check12(artifactHash.toString() === p.expectedArtifactHash);
-          const computedClass = await getContractClassFromArtifact({ ...artifact, artifactHash });
-          check12(computedClass.id.equals(classId));
+          if (frame) await frame.verifyArtifact(artifact);
+          else {
+            const artifactHash = await computeArtifactHash(artifact);
+            check12(artifactHash.toString() === p.expectedArtifactHash);
+            const computedClass = await getContractClassFromArtifact({ ...artifact, artifactHash });
+            check12(computedClass.id.equals(classId));
+          }
           const call2 = await this.contractStore.getFunctionCall(
             "recover_preference_page",
             [scope, txHash.hash, p.blockNumber, Fr.fromString(p.blockHash), p.firstLog, p.logCount],
