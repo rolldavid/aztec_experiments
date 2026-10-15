@@ -264,7 +264,7 @@ async function rollingOperatorCommand({command,config:input,statePath,actor,ethe
      populated=await signer.populateTransaction(prepared.transaction);metadata={...metadata,nonce:populated.nonce};
      if(populated.chainId!==BigInt(config.chainId)||BigInt(populated.value??0)!==0n||BigInt(populated.gasLimit)*BigInt(populated.maxFeePerGas??populated.gasPrice)>await provider.getBalance(signer.address))throw Error('Fund L1 transaction fees first');
     }
-    return onceAztecOperation({store,name,identity:lifecycleIdentity,journalIdentity:identity,scope,reconcile:r=>ethereumReconcile(r,name),execute:async({submit,bindDeployment})=>{
+    return onceAztecOperation({store,observeBroadcast:true,name,identity:lifecycleIdentity,journalIdentity:identity,scope,reconcile:r=>ethereumReconcile(r,name),execute:async({submit,bindDeployment})=>{
      await bindDeployment(metadata);const raw=await signer.signTransaction(populated),hash=keccak256(raw);
      await checkNetwork();if(name==='activate'){await verifyCurrentPortal(false);await checkReady();}
      await submit({hash,raw:raw.slice(2)},()=>provider.broadcastTransaction(raw));
@@ -305,7 +305,7 @@ async function rollingOperatorCommand({command,config:input,statePath,actor,ethe
     return checked;
    };
    if(!lifecycleRecord(command))await preflightL2();
-   const result=await onceAztecOperation({store,name:command,identity:lifecycleIdentity,journalIdentity:identity,scope,reconcile:async record=>{
+   const result=await onceAztecOperation({store,observeBroadcast:true,name:command,identity:lifecycleIdentity,journalIdentity:identity,scope,reconcile:async record=>{
     const r=await reconcile(record,false);if(r.status==='succeeded'){
      try{await checkBok({portal:portalAddress(),registered:command==='register'});if(command==='bind')await checkReady();else await verifyCurrentPortal(true);}catch{return {status:'unresolved',scope,canonical:false};}
     }return {...r,scope,hostedServiceReady:false};
@@ -326,7 +326,7 @@ async function rollingOperatorCommand({command,config:input,statePath,actor,ethe
    }});
    return {...result,scope,portalReady:command==='register'&&result.status==='succeeded',registrationReady:command==='register'&&result.status==='succeeded',hostedServiceReady:false};
   }
-  const result=await onceAztecOperation({store,name:command,identity, reconcile,execute:async({submit,bindDeployment})=>{
+  const result=await onceAztecOperation({store,observeBroadcast:true,name:command,identity, reconcile,execute:async({submit,bindDeployment})=>{
    // This branch cannot be reached for any retained operation, even without a hash.
    await checkNetwork();
    const board=await node.getContract(AztecAddress.fromStringUnsafe(config.boardAddress),'latest');

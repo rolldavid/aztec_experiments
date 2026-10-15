@@ -47,6 +47,29 @@ for(const name of ['deploy-portal','bind','activate','register'])test(`${name}: 
   await assert.rejects(onceAztecOperation({store,name,identity:'changed',execute:()=>assert.fail(),reconcile:()=>assert.fail()}));
  }
 });
+test('Rolling operator enables persisted broadcast outcomes at every once-only lifecycle boundary',async()=>{
+ const source=await fs.readFile(new URL('../operator.mjs',import.meta.url),'utf8');
+ const boundaries=[...source.matchAll(/onceAztecOperation\(\{([^\n]+)/g)];
+ assert.equal(boundaries.length,3,'constructor, L1 lifecycle and L2 lifecycle boundaries');
+ for(const [,options] of boundaries)assert.match(options,/\bobserveBroadcast:true\b/);
+});
+for(const name of ['deploy-escrow','deploy-portal','activate','bind','register'])test(`${name}: safe broadcast outcome persists without authorizing another send`,async()=>{
+ for(const outcome of ['returned','rejected','hostile']){
+  const store=memory(),signed={hash:f(8),raw:'abcd'};let sends=0,prepares=0,reads=0,getters=0;
+  const args={store,name,identity:'scope',observeBroadcast:true,execute:async({submit})=>{
+   prepares++;await submit(signed,async()=>{
+    sends++;assert.deepEqual(store.read().operations[name].broadcastAttempt,{state:'prepared'});
+    if(outcome==='rejected')throw {code:'SERVER_ERROR',httpStatus:503,info:{error:{code:-32603}},message:'PRIVATE_UPSTREAM',request:{secret:'PRIVATE_UPSTREAM'}};
+    if(outcome==='hostile')throw Object.defineProperties({message:'PRIVATE_UPSTREAM'},{code:{get(){getters++;throw Error('getter');}},info:{get(){getters++;throw Error('getter');}}});
+    return undefined;
+   });
+  },reconcile:async()=>{reads++;return {status:'unresolved',canonical:false};}};
+  assert.equal((await onceAztecOperation(args)).status,'unresolved');
+  const record=store.read().operations[name];assert.deepEqual(record.broadcastAttempt,outcome==='returned'?{state:'returned'}:{state:'rejected',httpStatus:outcome==='rejected'?503:null,rpcCode:outcome==='rejected'?-32603:null,ethersCode:outcome==='rejected'?'SERVER_ERROR':'unknown'});
+  assert.equal(record.policy,'reconcile-only');assert.equal(record.phase,'submission-unknown');assert.equal(record.hash,signed.hash);assert.equal(record.raw,signed.raw);assert.equal(getters,0);assert(!JSON.stringify(record).includes('PRIVATE_UPSTREAM'));
+  const retained=JSON.stringify(store.read()),beforeReads=reads;await onceAztecOperation(args);assert.equal(reads,beforeReads+1);assert.equal(JSON.stringify(store.read()),retained);assert.equal(prepares,1);assert.equal(sends,1);
+ }
+});
 function ethereumFixture(){
  const receipt={hash:f(8),status:1,blockNumber:9,blockHash:f(9)};let effects=0;
  return {record:{phase:'submission-unknown',hash:f(8),raw:'abcd'},development:false,receipt,effects:()=>effects,
