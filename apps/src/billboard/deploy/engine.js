@@ -270,8 +270,15 @@
     const slots=[portalSlot,...Array.from({length:10},(_,i)=>base+BigInt(i)),slot('moderator'),slot('main_version'),slot('main_rules')];
     const values=(await read(()=>Promise.all(slots.map(s=>node.getPublicStorageAt(reference,address,new a.Fr(s)))))).map(num);
     const b=manifest.board,n=manifest.network;
-    const expected=[n.chainId,n.rollup,n.rollupVersion,b.minDeposit,b.maxDeposit,b.baseCooldown,b.kMultiplier,b.censorWindow,b.maxSaveUp,manifest.actors.aztecDeployer,manifest.actors.aztecDeployer,'1',policyDigest].map(BigInt);
-    if(values.length!==14||values[0]<0n||values[0]>=1n<<160n||values.slice(1).some((v,i)=>v!==expected[i]))fail();
+    const expected=[n.chainId,n.rollup,n.rollupVersion,b.minDeposit,b.maxDeposit,b.baseCooldown,b.kMultiplier,b.censorWindow,b.maxSaveUp,manifest.actors.aztecDeployer,manifest.actors.aztecDeployer].map(BigInt);
+    if(values.length!==14||values[0]<0n||values[0]>=1n<<160n||values.slice(1,12).some((v,i)=>v!==expected[i]))fail();
+    // The predicted address already binds the original initializer, including
+    // its policy. Before binding, require that initial policy. A bound board's
+    // moderator may advance it through set_main_policy; normal restart must not
+    // reinterpret this authorized mutable state as a different deployment.
+    const policyVersion=values[12],rules=values[13];
+    if(policyVersion<1n||policyVersion>=1n<<32n||rules<0n||rules>=21888242871839275222246405745257275088548364400416034343698204186575808495617n||
+      (values[0]===0n&&policyVersion!==1n)||(policyVersion===1n&&rules!==BigInt(policyDigest)))fail();
     const again=await read(()=>node.getBlockData(height));
     if(again?.blockHash?.toString()!==hash||Number(again?.header?.globalVariables?.blockNumber)!==height)fail();
     return {portal:'0x'+values[0].toString(16).padStart(40,'0'),checkpoint:{height,hash}};

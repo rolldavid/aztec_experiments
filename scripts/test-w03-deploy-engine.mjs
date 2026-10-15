@@ -198,6 +198,27 @@ for(const kind of ['deployer','address','canonical-hash','checkpoint-height'])te
  await assert.rejects(f.run(),/Rolling deployment state differs/);assert.equal(f.bindings,0);
 });
 
+test('Rolling bound deployment resumes after an authorized main policy update without another transaction',async()=>{
+ const f=fixture({rolling:true});const first=await f.run(),before=f.node.getPublicStorageAt;
+ const version=BigInt(rollingArtifact.storageLayout.main_version.slot),rules=BigInt(rollingArtifact.storageLayout.main_rules.slot);
+ f.node.getPublicStorageAt=async(reference,board,slot)=>{
+  const n=BigInt(slot.toString());return n===version?new Fr(2):n===rules?new Fr(99):before(reference,board,slot);
+ };
+ f.node.sendTx=async()=>assert.fail('A policy update cannot authorize another deployment or binding');
+ const resumed=await f.run();assert.equal(resumed.readyTxHash,first.readyTxHash);assert.equal(f.deploys,0);assert.equal(f.bindings,1);
+});
+for(const value of [0n,1n<<32n])test('Rolling bound deployment rejects invalid main policy version '+value,async()=>{
+ const f=fixture({rolling:true});await f.run();const before=f.node.getPublicStorageAt,target=BigInt(rollingArtifact.storageLayout.main_version.slot);
+ f.node.getPublicStorageAt=async(reference,board,slot)=>BigInt(slot.toString())===target?new Fr(value):before(reference,board,slot);
+ f.node.sendTx=async()=>assert.fail('Invalid state cannot send');
+ await assert.rejects(f.run(),/Rolling deployment state differs/);assert.equal(f.bindings,1);
+});
+test('Rolling bound initial policy still must match the deployment manifest',async()=>{
+ const f=fixture({rolling:true});await f.run();const before=f.node.getPublicStorageAt,target=BigInt(rollingArtifact.storageLayout.main_rules.slot);
+ f.node.getPublicStorageAt=async(reference,board,slot)=>BigInt(slot.toString())===target?new Fr(99):before(reference,board,slot);
+ await assert.rejects(f.run(),/Rolling deployment state differs/);assert.equal(f.bindings,1);
+});
+
 test('Rolling raw NodeInfo without alias uses nativefalse PXE and never prepares CRS',async()=>{const f=fixture({rolling:true});let created=0;f.env.initCRS=async()=>assert.fail('Disabled development must not prepare CRS');const original=f.env.aztec.createPXE;f.env.aztec.createPXE=async(node,config,...rest)=>{created++;assert.equal(config.proverEnabled,false);return original(node,config,...rest);};await f.run();assert.equal(created,1);});
 test('Rolling local native real proofs fail before PXE or deployment',async()=>{const f=fixture({rolling:true});f.node.getNodeInfo=async()=>({realProofs:true,l1ChainId:31337,rollupVersion:5});f.env.aztec.createPXE=async()=>assert.fail('No PXE');await assert.rejects(f.run(),{code:'BB_DEPLOYMENT_MANIFEST'});assert.equal(f.deploymentCalls.length,0);});
 test('Rolling restart never resends dropped valid original deployment',async()=>{const f=fixture({rolling:true,existing:false,lostDeploy:true});await assert.rejects(f.run(),/synthetic lost/);f.clearLoss();for(const [hash,r]of f.receipts)f.receipts.set(hash,{...r,status:'dropped'});let sends=0;f.node.sendTx=async()=>{sends++;assert.fail('Reconciliation cannot send');};await assert.rejects(f.run(),{code:'BB_RECOVERY_REQUIRED'});assert.equal(sends,0);assert.equal(f.deploys,1);assert.equal(f.bindings,0);});
