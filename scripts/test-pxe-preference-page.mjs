@@ -288,6 +288,8 @@ await writeFile(receipt,JSON.stringify({cleaned,exists}));
 // labelled fake-indexeddb. This is not native Chromium storage qualification.
 // Transactions/inclusion are synthetic; processed ACIR is a separate opt-in.
 const coldHttpDiagnostic=process.env.ROLLING_COLD_HTTP_DIAGNOSTIC==='1';
+const coldHttpPhaseDiagnostic=process.env.ROLLING_COLD_HTTP_PHASE_DIAGNOSTIC==='1';
+if(coldHttpPhaseDiagnostic)assert(coldHttpDiagnostic,'HTTP phase diagnostic requires existing HTTP composition');
 const coldRoundtripDiagnostic=process.env.ROLLING_COLD_ROUNDTRIP_DIAGNOSTIC==='1';
 if(coldRoundtripDiagnostic)assert(!coldHttpDiagnostic&&process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1'&&process.env.ROLLING_PREFERENCE_PAGE_ACIR==='1','Roundtrip diagnostic requires existing SDK/ACIR opt-ins and excludes HTTP mode');
 if(coldHttpDiagnostic)assert(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1'&&process.env.ROLLING_PREFERENCE_PAGE_ACIR==='1','HTTP diagnostic requires both actual SDK/ACIR opt-ins');
@@ -808,7 +810,8 @@ if(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1') {
       return {receiver,sender,input,header,initialHeader,board,instance,contractClass,counters,tagsBefore,node,block,
         async publicBlock(parameter){
           if(typeof parameter==='number')return historyBlock(parameter);
-          assert(parameter&&Object.keys(parameter).length===1&&parameter.hash instanceof BlockHash);
+          assert(parameter&&Object.keys(parameter).every(key=>key==='number'||key==='hash')&&parameter.hash instanceof BlockHash);
+          if(parameter.number!==undefined){assert(Number.isSafeInteger(parameter.number)&&parameter.number>=1&&parameter.number<=header.getBlockNumber());const value=await historyBlock(parameter.number);assert((await value.header.hash()).equals(parameter.hash),'Synthetic anchored selector hash differs');return value;}
           for(let n=1;n<=header.getBlockNumber();n++){const value=await historyBlock(n);if((await value.header.hash()).equals(parameter.hash))return value;}
           throw Error('Unknown finite fixture block');
         },
@@ -914,6 +917,9 @@ if(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1') {
           forwarded:{},gateway:{requests:0,errors:0},tags:{private:0,public:0},cleanup:{listenersClosed:false,pendingSettled:false,databasesDeleted:false}};
         const save=()=>writeFile(output,JSON.stringify({...report,elapsedMs:Math.round(performance.now()-started)},null,2)+'\n');
         const pending=new Set(),servers=[];let lastMailbox,receiver,closed=false;
+        const originalFetch=globalThis.fetch;let measured=false,delayMs=0,phase='reader',phaseSpans=[],wireSpans=[],phaseOrigin;
+        const timed=async(label,fn)=>{const previous=phase,start=performance.now();phase=label;try{return await fn();}finally{if(measured)phaseSpans.push({phase:label,start,end:performance.now()});phase=previous;}};
+        if(coldHttpPhaseDiagnostic)globalThis.fetch=async(input,init)=>{const url=new URL(typeof input==='string'||input instanceof URL?input:input.url);if(!measured||url.origin!==phaseOrigin)return originalFetch(input,init);const start=performance.now(),kind=url.pathname==='/v1/compact-block'?'compact':phase;let methods=[];try{const v=JSON.parse(init?.body);methods=(Array.isArray(v)?v:[v]).map(row=>typeof row.method==='string'?row.method:'compact');}catch{};try{if(delayMs)await new Promise(resolve=>setTimeout(resolve,delayMs));return await originalFetch(input,init);}finally{wireSpans.push({phase:kind,methods,start,end:performance.now()});}};
         const own=work=>{pending.add(work);void work.then(()=>pending.delete(work),()=>pending.delete(work));return work;};
         const listen=async server=>{servers.push(server);await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(0,'127.0.0.1',resolve);});return 'http://127.0.0.1:'+server.address().port;};
         const close=async()=>{if(closed)return;closed=true;for(const server of [...servers].reverse()){
@@ -921,13 +927,16 @@ if(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1') {
         }await Promise.allSettled([...pending]);report.cleanup.listenersClosed=servers.every(x=>!x.listening);report.cleanup.pendingSettled=pending.size===0;};
         try{
           const f=await acirFixture(t),network={chainId:'31337',version:'1',rollup:f.input.network.rollup};
-          const anchorHash=(await f.header.hash()).toString(),blockId={number:4,hash:anchorHash},tip={block:blockId,checkpoint:{number:1,hash:hex(1)}};
+          if(coldHttpPhaseDiagnostic)for(let i=0;i<65;i++)await f.appendEmpty();
+          const anchorNumber=coldHttpPhaseDiagnostic?69:4,anchorHeader=(await f.publicBlock(anchorNumber)).header;
+          const anchorHash=(await anchorHeader.hash()).toString(),blockId={number:anchorNumber,hash:anchorHash},tip={block:blockId,checkpoint:{number:1,hash:hex(1)}};
+          assert.equal((await f.publicBlock(await anchorHeader.toBlockParameter())).header.getBlockNumber(),anchorNumber);await assert.rejects(f.publicBlock({number:anchorNumber-1,hash:await anchorHeader.hash()}),/Synthetic anchored selector hash differs/);
           const raw={
             getNodeInfo:async()=>({nodeVersion:'6.0.0-rc.3',l1ChainId:31337,rollupVersion:1,realProofs:false,
               l1ContractAddresses:Object.fromEntries(L1ContractsNames.map(key=>[key,EthAddress.fromString(network.rollup)])),
               protocolContractAddresses:Object.fromEntries(ProtocolContractsNames.map(key=>[key,AztecAddress.fromFieldUnsafe(new Fr(1))])),txsLimits:{gas:{daGas:1,l2Gas:1}}}),
             getChainTips:async()=>({proposed:blockId,checkpointed:tip,proven:tip,finalized:tip}),
-            getWorldStateSyncStatus:async()=>({finalizedBlockNumber:4,latestBlockNumber:4,latestBlockHash:anchorHash,oldestHistoricBlockNumber:1,treesAreSynched:true}),
+            getWorldStateSyncStatus:async()=>({finalizedBlockNumber:anchorNumber,latestBlockNumber:anchorNumber,latestBlockHash:anchorHash,oldestHistoricBlockNumber:1,treesAreSynched:true}),
             getSyncedL1Timestamp:async()=>BigInt(Math.floor(Date.now()/1000)),
             getBlockData:async selector=>{const b=await f.publicBlock(selector);return {header:b.header,archive:b.archive,blockHash:await b.header.hash(),checkpointNumber:b.checkpointNumber,indexWithinCheckpoint:b.indexWithinCheckpoint};},
             getBlock:async selector=>{const b=await f.publicBlock(selector);return {header:b.header,archive:b.archive,hash:await b.header.hash(),number:b.header.getBlockNumber(),checkpointNumber:b.checkpointNumber,indexWithinCheckpoint:b.indexWithinCheckpoint,body:b.body};},
@@ -955,21 +964,36 @@ if(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1') {
           const query=await createPrivateQuery({queryNode:{url:upstreamUrl,rollupAddress:network.rollup},chainId:'31337',rollupVersion:'1',proofsEnabled:false,compactBlocks:{tier:'checkpointed',origins:[]}});
           const gateway=createProverServer({privateQuery:query,queue:{stats:()=>({submitted:0})},proofsEnabled:false,origins:[]});
           gateway.prependListener('request',(_req,res)=>{report.gateway.requests++;res.once('finish',()=>{if(res.statusCode>=400)report.gateway.errors++;});});
-          const origin=await listen(gateway);report.stage='trusted-node';await save();
+          const origin=await listen(gateway);phaseOrigin=origin;report.stage='trusted-node';await save();
           const node=await trusted.createTrustedPrivateNode({url:origin+'/v1/node',expectedNetworkScope:network,proofsEnabled:false,allowLocalDev:true});
           receiver=await f.receiver({recovery:true,transportNode:node});const pxe=receiver.page;
           const method=pxe.processRollingPreferenceRecovery;
           pxe.processRollingPreferenceRecovery=function(...args){report.sdk.calls++;report.sdk.pending++;report.sdk[args[0].expected===null?'status':'advance']++;
-            const work=Reflect.apply(method,this,args);work.then(value=>{lastMailbox={sequence:value.sequence,nextBlock:value.nextBlock,nextLog:value.nextLog,complete:value.complete};report.sdk.pending--;},()=>{report.sdk.errors++;report.sdk.pending--;});return work;};
+            const work=timed(args[0].expected===null?'sdk-status':'sdk-advance',()=>Reflect.apply(method,this,args));work.then(value=>{lastMailbox={sequence:value.sequence,nextBlock:value.nextBlock,nextLog:value.nextLog,complete:value.complete};report.sdk.pending--;},()=>{report.sdk.errors++;report.sdk.pending--;});return work;};
           // Exact identity predicate is a labelled adapter for the existing
           // generated-method receiver. It cannot brand arbitrary caller input.
-          pxe.sync=async()=>{report.sdk.initialSyncChecks++;assert.equal((await node.getBlockData(4)).blockHash.toString(),anchorHash);};
-          const sdk={Fr,EventSelector,decodeFunctionSignature,poseidon2HashWithSeparator,inspectTrustedNode:trusted.inspectTrustedNode,isTrustedPrivateNode:trusted.isTrustedPrivateNode,isPrivatePXEForNode:(p,n)=>p===pxe&&n===node};
+          pxe.sync=async()=>{report.sdk.initialSyncChecks++;assert.equal((await node.getBlockData(anchorNumber)).blockHash.toString(),anchorHash);};
+          const sdk={Fr,EventSelector,decodeFunctionSignature,poseidon2HashWithSeparator,inspectTrustedNode:(...args)=>timed('readiness',()=>trusted.inspectTrustedNode(...args)),isTrustedPrivateNode:trusted.isTrustedPrivateNode,isPrivatePXEForNode:(p,n)=>p===pxe&&n===node};
           const values=new Map(),privateStore={read:async key=>values.get(key)??null,compareAndSwap:async(key,old,next)=>{assert.equal(values.get(key)??null,old);values.set(key,next);}};
           const contextGuard=async()=>assert(!closed);
           const reader=createRollingColdPreferenceReader({sdk,pxe,node,owner:receiver.complete.address,
             deployment:{board:{address:f.board,instance:f.instance,artifact},network,proofsEnabled:false},expectedArtifactHash:f.input.expectedArtifactHash,tier:'checkpointed',
             compact:createRollingCompactClient({url:origin,tier:'checkpointed',contextGuard,allowLocalDev:true}),contextGuard,privateStore,walletSecret:hex(901),walletSalt:'902'});
+          if(coldHttpPhaseDiagnostic){
+            report.phaseMeasurements=[];let value;
+            for(let i=0;i<4;i++){value=await reader.read({deadlineAt:Date.now()+10000});if(value.progress.nextBlock===5)break;}
+            assert.equal(value.progress.nextBlock,5);assert.equal(value.complete,false);
+            for(const latency of [0,130]){
+              delayMs=latency;phaseSpans=[];wireSpans=[];measured=true;const began=performance.now(),before=value.progress.nextBlock;
+              try{value=await reader.read({deadlineAt:Date.now()+10000});}finally{measured=false;}
+              const end=performance.now();assert.equal(value.progress.nextBlock,before+32);assert.equal(value.complete,false);
+              const phases=phaseSpans.map(x=>({phase:x.phase,startMs:x.start-began,endMs:x.end-began})),wires=wireSpans.map(x=>({phase:x.phase,methods:x.methods,startMs:x.start-began,endMs:x.end-began}));
+              const byPhase={};for(const x of wires){const row=byPhase[x.phase]??={requests:0,methods:{}};row.requests++;for(const method of x.methods)row.methods[method]=(row.methods[method]??0)+1;}
+              report.phaseMeasurements.push({injectedHttpDelayMs:latency,elapsedMs:end-began,nextBlock:value.progress.nextBlock,byPhase,phases,wires});
+            }
+            assert.deepEqual(report.tags,{private:0,public:0});assert.equal(report.native.errors,0);assert.equal(report.gateway.errors,0);assert.equal(report.sdk.errors,0);
+            report.stage='complete-phase-diagnostic';await close();assert(report.cleanup.listenersClosed&&report.cleanup.pendingSettled);assert.equal(report.native.pending,0);assert.equal(report.sdk.pending,0);report.readPassed=true;return;
+          }
           report.stage='read';const deadlineAt=Date.now()+45000;let value,previous;
           for(let i=0;i<12;i++){
             const stepStart=performance.now();try{value=await reader.read({deadlineAt});}
@@ -996,7 +1020,7 @@ if(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1') {
           // Registered after the fixture's own queue/store deletion hooks, so a
           // successful read cannot masquerade as completed cleanup.
           t.after(async()=>{try{await close();report.cleanup.databasesDeleted=(await factory.databases()).length===0;assert(report.cleanup.databasesDeleted);report.passed=report.readPassed&&report.cleanup.listenersClosed&&report.cleanup.pendingSettled;}finally{await save();}});
-          await close();await save();
+          try{await close();}finally{globalThis.fetch=originalFetch;await save();}
         }
       });
       return; // Explicit diagnostic mode; original default suite is unchanged.
