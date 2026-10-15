@@ -389,9 +389,13 @@ export async function openExactCancellationDispatchStore(statePath,hash){
  const exclusive=async(target,record)=>{const f=await fs.open(target,'wx',0o600);try{await f.writeFile(JSON.stringify(record)+'\n');await f.sync();}finally{await f.close();}const d=await fs.open(directory,'r');try{await d.sync();}finally{await d.close();}};
  return {read:()=>value,enter:async record=>{await exclusive(file,record);value=structuredClone(record);},observe:record=>exclusive(observed,record)};
 }
+// This one-off authorization belongs to this original private campaign. A copy
+// must not create another dispatch slot, even with identical signed bytes.
+const authorizedExactCancellationStatePath='/Users/zac/Documents/ChatGPT/Anonymous Message Board/aztec_experiments/.build/sepolia-liquidity-20261014/state.json';
 /** The only public dispatch entrypoint binds the original project's exact target
  * and six immutable source files. It has no key or signing argument. */
 export async function recoverExactSepoliaCancellation({planPath,statePath,intentPath}){
+ if(statePath!==authorizedExactCancellationStatePath)throw Error('Original exact cancellation state path required');
  const directory=path.dirname(path.resolve(statePath));
  if(path.resolve(statePath)!==path.join(directory,'state.json')||path.resolve(planPath)!==path.join(directory,'plan.json'))throw Error('Original exact cancellation paths required');
  const readSources=async()=>{const bytes={},hashes={};for(const name of exactCancellationFiles){bytes[name]=await readHostedPrivateFile(path.join(directory,name));hashes[name]=sha256(bytes[name]).slice(2);}return {bytes,hashes};};
@@ -404,6 +408,7 @@ export async function recoverExactSepoliaCancellation({planPath,statePath,intent
 }
 /** Trusted local CLI only; no provider, model or generated-code capability. */
 export async function seedTestnetLiquidity({plan:input,statePath,stage,keyFile,recovery}){
+ if(recovery?.kind==='exact-dispatch'&&statePath!==authorizedExactCancellationStatePath)throw Error('Original exact cancellation state path required');
  const originalPlan=captureSepoliaLiquidityPlan(input),c=sepoliaLiquidityContracts;
  if(recovery){const keys=recovery.kind==='cancel'?['kind','resolution']:recovery.kind==='successor'?['kind','resolution','successor']:recovery.kind==='continue'?['kind','remainingPlan','resolution',...(Object.hasOwn(recovery,'successor')?['successor']:[])]:recovery.kind==='exact-dispatch'?['kind','resolution','successor','dispatchIntent','sourceHashes','assertSourceFiles']:[];if(!keys.length||Object.keys(recovery).sort().join()!==keys.sort().join())throw Error('Invalid seed recovery');}
  const resolution=recovery?captureSepoliaSeedResolution(recovery.resolution,originalPlan):null;

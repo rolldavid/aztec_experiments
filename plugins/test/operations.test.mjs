@@ -602,3 +602,13 @@ test('Exact cancellation durable exclusive slot survives reopen and rejects dupl
   await fs.unlink(file);await assert.rejects(openExactCancellationDispatchStore(statePath,hash),/entry missing/);
  }finally{await fs.rm(directory,{recursive:true,force:true});}
 });
+
+test('Exact cancellation copied campaign cannot relocate the permanent dispatch slot through either operator entrypoint',async()=>{
+ const {recoverExactSepoliaCancellation,seedTestnetLiquidity}=await import('../operator.mjs');
+ // Intentionally absent files and invalid plan: path rejection must precede
+ // source reads, plan parsing, the owner lock, provider or signing key loading.
+ for(const statePath of ['/private/tmp/copied-campaign/state.json','state.json','/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-design/.build/sepolia-liquidity-20261014/state.json']){
+  await assert.rejects(recoverExactSepoliaCancellation({planPath:'/absent/plan.json',statePath,intentPath:'/absent/intent.json'}),/^Error: Original exact cancellation state path required$/);
+  await assert.rejects(seedTestnetLiquidity({plan:null,statePath,stage:'approve-usdc',keyFile:'/absent/key.json',recovery:{kind:'exact-dispatch'}}),/^Error: Original exact cancellation state path required$/);
+ }
+});
