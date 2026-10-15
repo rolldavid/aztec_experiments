@@ -42,6 +42,11 @@ for(const backend of ['file','indexeddb']) {
   const dir=fs.mkdtempSync(path.join(os.tmpdir(),'bb-eth-journal-'));
   try{const storage=backend==='file'?createFileJournalStorage(dir):createBrowserJournalStorage(new IDBFactory());await fn(fixture(storage,kind),{storage,dir});}finally{fs.rmSync(dir,{recursive:true,force:true});}
  }
+ test(`${backend}: saved request inspection authenticates and returns detached immutable review data without sending`,()=>use(async f=>{
+  const j=await f.newSession();assert.equal(await j.inspectRequest(),null);f.mode('reject');await assert.rejects(j.send(f.intent));
+  const saved=await j.inspectRequest();assert.equal(saved.nonce,4);assert.equal(saved.data,f.intent.data);assert.equal(saved.txHash,null);
+  saved.data='0x00';saved.expected.amount='999';const again=await (await f.newSession()).inspectRequest();assert.equal(again.data,f.intent.data);assert.equal(again.expected.amount,'100');assert.equal(f.requests.length,1);
+ },'withdraw'));
  test(`${backend}: Bok withdrawal exact receipt survives lost response and reopen without resend`,()=>use(async f=>{
   f.mode('lost');await assert.rejects((await f.newSession()).send(f.intent),{code:'BB_ETH_SUBMISSION_UNKNOWN'});
   const result=await (await f.newSession({signer:null})).recover({retry:false});assert.equal(result.outcome,'success');assert.equal(result.event.recipient.toLowerCase(),f.intent.expected.recipient);assert.equal(f.requests.length,1);

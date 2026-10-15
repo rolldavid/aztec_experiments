@@ -98,6 +98,14 @@ export function createCollateralWithdrawal({sdk,ethers,provider,node,application
   await finalized(result);
   return result;
  }
+ // Reconciliation may advance only its search cursor or discover the hash.
+ // These fields identify the original immutable request reviewed by the user.
+ const requestIdentity=r=>{check(r);return JSON.stringify([r.version,r.from,r.to,r.chainId,r.nonce,r.data,r.value,r.expected,r.startBlock,r.startHash]);};
+ function checkSaved(saved,r,data){
+  check(saved&&saved.from===r.withdrawal.depositor&&saved.to===exitScope(r).portal&&saved.chainId===fixed.chainId&&saved.value==='0'&&saved.data===data);
+  check(saved.expected.kind===(isBok(r)?'bok-withdraw':'withdraw')&&saved.expected.amount===r.withdrawal.amount);
+  if(isBok(r))check(saved.expected.recipient===r.withdrawal.depositor&&saved.expected.exitNonce===r.withdrawal.nonce);
+ }
  const capability={
   async verify(record){const r=await original(record),result=await verified(r);return result?.outcome==='success';},
   async recover(){const r=await original(),result=await verified(r,true);check(result);return {status:result.outcome==='success'?'refunded':result.outcome,txHash:result.txHash,amount:r.withdrawal.amount,gasCostWei:cost(result)};},
@@ -114,18 +122,35 @@ export function createCollateralWithdrawal({sdk,ethers,provider,node,application
    check(typeof gas==='bigint'&&gas>0n&&typeof price==='bigint'&&price>0n&&gas*2n*price<=BigInt(maximumGasWei));
    quote={r,wallet,data,maximumGasWei,previous};return Object.freeze({amount:r.withdrawal.amount,recipient:r.withdrawal.depositor,maximumGasWei,estimatedGasWei:String(gas*2n*price),walletName:wallet.name});
   },
+  async prepareSaved({maximumGasWei}={}){
+   quote=null;check(typeof maximumGasWei==='string'&&/^[1-9][0-9]{0,25}$/.test(maximumGasWei));
+   const r=await original(),wallet=await captureWallet();await read(wallet.guard);check(wallet.address.toLowerCase()===r.withdrawal.depositor&&String(wallet.chainId)===fixed.chainId);
+   const j=await journal(r),saved=await read(()=>j.inspectRequest()),data=await membership(r);checkSaved(saved,r,data);
+   try{const found=await read(()=>j.recover({retry:false}));checkSaved(found.request,r,data);check(requestIdentity(found.request)===requestIdentity(saved)&&found.outcome==='success');await finalized(found);return {status:'refunded',txHash:found.txHash,amount:r.withdrawal.amount,gasCostWei:cost(found)};}
+   catch(error){if(error?.code!=='BB_ETH_RECOVERY_REQUIRED')throw error;}
+   check(requestIdentity(await read(()=>j.inspectRequest()))===requestIdentity(saved));
+   const request={from:saved.from,to:saved.to,data:saved.data,value:0n};
+   await read(()=>provider.call(request));const gas=await read(()=>provider.estimateGas(request)),fees=await read(()=>provider.getFeeData()),price=fees.maxFeePerGas??fees.gasPrice;
+   check(typeof gas==='bigint'&&gas>0n&&typeof price==='bigint'&&price>0n&&gas*2n*price<=BigInt(maximumGasWei));
+   quote={r,wallet,data,maximumGasWei,saved};return Object.freeze({savedRequest:true,nonce:saved.nonce,amount:r.withdrawal.amount,recipient:saved.from,maximumGasWei,estimatedGasWei:String(gas*2n*price),walletName:wallet.name});
+  },
   cancel(){quote=null;},
   async confirm(){
    const q=quote;quote=null;check(q);const r=await original();check(r.intentId===q.r.intentId&&r.txHash===q.r.txHash&&JSON.stringify(r.withdrawal)===JSON.stringify(q.r.withdrawal));
    await read(q.wallet.guard);check(await membership(r)===q.data);
+   let j;
    const signer={getAddress:()=>q.wallet.signer.getAddress(),sendTransaction:async request=>{
+    if(q.saved)check(request.from===q.saved.from&&request.to===q.saved.to&&request.data===q.saved.data&&String(request.value)===q.saved.value&&String(request.chainId)===q.saved.chainId&&request.nonce===q.saved.nonce);
     await read(q.wallet.guard);check(await membership(r)===q.data);await read(()=>provider.call(request));
     const gas=await read(()=>provider.estimateGas(request)),fees=await read(()=>provider.getFeeData()),price=fees.maxFeePerGas??fees.gasPrice;
     check(typeof gas==='bigint'&&gas>0n&&typeof price==='bigint'&&price>0n&&gas*2n*price<=BigInt(q.maximumGasWei));await read(q.wallet.guard);check(await membership(r)===q.data);
+    if(q.saved)check(requestIdentity(await read(()=>j.inspectRequest()))===requestIdentity(q.saved));
     return q.wallet.signer.sendTransaction({...request,gasLimit:gas*2n,...(fees.maxFeePerGas!=null?{maxFeePerGas:price,maxPriorityFeePerGas:fees.maxPriorityFeePerGas??0n}:{gasPrice:price})});
    }};
-   const j=await journal(r,{signer,acknowledgeTx:q.previous,contextGuard:async()=>{await contextGuard();await q.wallet.guard();}});
-   const result=await read(()=>j.send({data:q.data,value:'0',expected:{kind:isBok(r)?'bok-withdraw':'withdraw',amount:r.withdrawal.amount,...(isBok(r)?{recipient:r.withdrawal.depositor,exitNonce:r.withdrawal.nonce}:{})}}));
+   j=await journal(r,{signer,acknowledgeTx:q.previous,contextGuard:async()=>{await contextGuard();await q.wallet.guard();}});
+   if(q.saved)check(requestIdentity(await read(()=>j.inspectRequest()))===requestIdentity(q.saved));
+   const result=await read(()=>q.saved?j.recover({retry:true}):j.send({data:q.data,value:'0',expected:{kind:isBok(r)?'bok-withdraw':'withdraw',amount:r.withdrawal.amount,...(isBok(r)?{recipient:r.withdrawal.depositor,exitNonce:r.withdrawal.nonce}:{})}}));
+   if(q.saved){checkSaved(result.request,r,q.data);check(requestIdentity(result.request)===requestIdentity(q.saved));}
    check(result.outcome==='success');await finalized(result);return {status:'refunded',txHash:result.txHash,amount:r.withdrawal.amount,gasCostWei:cost(result)};
   }
  };
@@ -312,7 +337,7 @@ export async function createRollingWalletSession({sdk,routing,ethers,config,boar
   readColdPreferences:options=>locked(()=>readColdPreferences(options))});
  const privateFeeCap=((BigInt(selected.privateFee.gasSettings.gasLimits.daGas)+BigInt(selected.privateFee.gasSettings.teardownGasLimits.daGas))*BigInt(selected.privateFee.gasSettings.maxFeesPerGas.feePerDaGas)+(BigInt(selected.privateFee.gasSettings.gasLimits.l2Gas)+BigInt(selected.privateFee.gasSettings.teardownGasLimits.l2Gas))*BigInt(selected.privateFee.gasSettings.maxFeesPerGas.feePerL2Gas)).toString();
  const topup=topups?Object.freeze(Object.fromEntries(Object.entries(topups).map(([kind,cap])=>[kind,Object.freeze({defaultPrivateFeeCap:privateFeeCap,advanceClaim:()=>locked(()=>advanceAggregateClaim({application:synchronized,funding:cap,contextGuard:guardRoute,onProgress})),...Object.fromEntries(['prepare','confirm','recover','inspect','checkpointClaim','reviewRevertedClaim'].map(name=>[name,(...args)=>locked(()=>cap[name](...args))]))})]))):null;
- return Object.freeze({application,withdrawal:Object.freeze(Object.fromEntries(['prepare','confirm','recover','cancel'].map(name=>[name,(...args)=>locked(()=>withdrawal[name](...args))]))),topup,funding:aggregate?Object.freeze({usdcAvailable:selected.aggregateFunding.usdcRelayAddress!==undefined,advanceClaim:()=>locked(()=>advanceAggregateClaim({application:synchronized,funding:aggregate,contextGuard:guardRoute,onProgress})),defaultPrivateFeeCap:((BigInt(selected.privateFee.gasSettings.gasLimits.daGas)+BigInt(selected.privateFee.gasSettings.teardownGasLimits.daGas))*BigInt(selected.privateFee.gasSettings.maxFeesPerGas.feePerDaGas)+(BigInt(selected.privateFee.gasSettings.gasLimits.l2Gas)+BigInt(selected.privateFee.gasSettings.teardownGasLimits.l2Gas))*BigInt(selected.privateFee.gasSettings.maxFeesPerGas.feePerL2Gas)).toString(),...Object.fromEntries(['prepare','confirm','recover','inspect','checkpointClaim','reviewRevertedClaim'].map(name=>[name,(...args)=>locked(()=>aggregate[name](...args))]))}):null,get busy(){return busy;},close(){
+ return Object.freeze({application,withdrawal:Object.freeze(Object.fromEntries(['prepare','prepareSaved','confirm','recover','cancel'].map(name=>[name,(...args)=>locked(()=>withdrawal[name](...args))]))),topup,funding:aggregate?Object.freeze({usdcAvailable:selected.aggregateFunding.usdcRelayAddress!==undefined,advanceClaim:()=>locked(()=>advanceAggregateClaim({application:synchronized,funding:aggregate,contextGuard:guardRoute,onProgress})),defaultPrivateFeeCap:((BigInt(selected.privateFee.gasSettings.gasLimits.daGas)+BigInt(selected.privateFee.gasSettings.teardownGasLimits.daGas))*BigInt(selected.privateFee.gasSettings.maxFeesPerGas.feePerDaGas)+(BigInt(selected.privateFee.gasSettings.gasLimits.l2Gas)+BigInt(selected.privateFee.gasSettings.teardownGasLimits.l2Gas))*BigInt(selected.privateFee.gasSettings.maxFeesPerGas.feePerL2Gas)).toString(),...Object.fromEntries(['prepare','confirm','recover','inspect','checkpointClaim','reviewRevertedClaim'].map(name=>[name,(...args)=>locked(()=>aggregate[name](...args))]))}):null,get busy(){return busy;},close(){
   if(closing)return closing;
   if(busy)return Promise.reject(fail('ROLLING_BUSY'));
   if(closed&&!pxe&&!store)return Promise.resolve();

@@ -510,7 +510,7 @@ async function withdrawalFixture({chainId='31337',bok=false}={}){
  const leaf=computeL2ToL1MessageHash({l2Sender:new AztecAddress(new Fr(BigInt(scope.board))),l1Recipient:EthAddress.fromString(scope.portal),content,chainId:new Fr(BigInt(chainId)),rollupVersion:new Fr(1)});
  const state={sends:0,calls:0,guard:true,connected:eth(33),price:2n,settled:true,unknown:false,head:10,tx:null,receipt:null,fork:false};const values=new Map();
  const storage={read:async key=>values.get(key)??null,compareAndSwap:async(key,previous,next)=>{assert.equal(values.get(key)??null,previous);if(next===null)values.delete(key);else values.set(key,next);}};
- const provider={getNetwork:async()=>({chainId:BigInt(chainId)}),getBlockNumber:async()=>state.head,getBlock:async n=>n==='finalized'?{number:state.finalized??state.head,hash:hex(state.finalized??state.head)}:({number:n==='latest'?state.head:n,hash:state.fork?hex(999):hex(n==='latest'?state.head:n),parentHash:hex(Number(n==='latest'?state.head:n)-1),prefetchedTransactions:state.tx?[state.tx]:[]}),getTransactionCount:async()=>state.tx?1:0,getTransaction:async h=>state.tx?.hash===h?state.tx:null,getTransactionReceipt:async h=>state.receipt?.hash===h?state.receipt:null,waitForTransaction:async()=>state.receipt,estimateGas:async()=>100n,getFeeData:async()=>({gasPrice:state.price}),call:async()=>{state.calls++;if(!state.settled)throw Error('Outbox not settled');return '0x';}};
+ const provider={getNetwork:async()=>({chainId:BigInt(state.chainId??chainId)}),getBlockNumber:async()=>state.head,getBlock:async n=>n==='finalized'?{number:state.finalized??state.head,hash:hex(state.finalized??state.head)}:({number:n==='latest'?state.head:n,hash:state.fork?hex(999):hex(n==='latest'?state.head:n),parentHash:hex(Number(n==='latest'?state.head:n)-1),prefetchedTransactions:state.tx?[state.tx]:[]}),getTransactionCount:async(_address,tag)=>tag==='pending'&&state.pendingNonce!==undefined?state.pendingNonce:state.tx?1:0,getTransaction:async h=>state.tx?.hash===h?state.tx:null,getTransactionReceipt:async h=>state.receipt?.hash===h?state.receipt:null,waitForTransaction:async()=>state.receipt,estimateGas:async()=>100n,getFeeData:async()=>{state.onFees?.();return {gasPrice:state.price};},call:async()=>{state.calls++;if(!state.settled)throw Error('Outbox not settled');return '0x';}};
  const node={getTxReceipt:async()=>({txHash:record.txHash,status:'checkpointed',executionResult:'success',blockNumber:1,blockHash:hex(42)}),getTxEffect:async()=>({l2BlockNumber:1,l2BlockHash:hex(42),data:{l2ToL1Msgs:[leaf]}}),getBlockData:async()=>({header:{globalVariables:{blockNumber:1}},blockHash:state.l2Fork?hex(99):hex(42)}),getL2ToL1MembershipWitness:async()=>({epochNumber:1,numCheckpointsInEpoch:1,leafIndex:0n,siblingPath:{toBufferArray:()=>[]}})};
  const abi=new Interface([bok?'event Withdrawn(address indexed recipient,uint128 amount,bytes32 nonce)':'event Withdrawn(address indexed depositor,uint128 amount)']);
  const signer={getAddress:async()=>state.connected,sendTransaction:async request=>{state.sends++;state.head++;state.tx={...request,hash:hex(88)};state.receipt={hash:hex(88),from:eth(33),to:scope.portal,status:1,gasUsed:100n,gasPrice:2n,blockNumber:state.head,blockHash:hex(state.head),logs:[{address:scope.portal,...abi.encodeEventLog(abi.getEvent('Withdrawn'),[eth(33),100n,...(bok?[hex(55)]:[])])}]};if(state.unknown)throw Error('lost response');return state.tx;}};
@@ -743,4 +743,51 @@ test('positive pre-proof lifecycle capability stays inside the account lease unt
 test('positive pre-proof capability creation failure closes initialization without exposing an application',async()=>{
  const f=await sessionFixture();f.input.routing.createPreproofRecovery=()=>{throw Error('invalid built-in capability');};
  await assert.rejects(createRollingWalletSession(f.input),/invalid built-in capability/);assert.equal(f.state.sends,0);assert.equal(f.state.active,false);assert.equal(f.state.stops,1);
+});
+
+for(const bok of [false,true])test(`saved ${bok?'Bok':'collateral'} refund has an explicit exact-request review and continuation`,async()=>{
+ const f=await withdrawalFixture({bok}),wallet=await f.opts.captureWallet(),send=wallet.signer.sendTransaction;let reject=true;
+ wallet.signer.sendTransaction=async request=>{if(reject)throw Error('wallet transport unavailable');return send(request);};
+ await f.cap.prepare({maximumGasWei:'1000'});await assert.rejects(f.cap.confirm(),{code:'BB_ETH_SUBMISSION_UNKNOWN'});assert.equal(f.state.sends,0);
+ const cap=f.restart();await assert.rejects(cap.prepare({maximumGasWei:'1000'}));
+ const review=await cap.prepareSaved({maximumGasWei:'1000'});assert.equal(review.savedRequest,true);assert.equal(review.nonce,0);assert.equal(f.state.sends,0);
+ reject=false;const result=await cap.confirm();assert.equal(result.status,'refunded');assert.equal(f.state.sends,1);assert.equal(f.state.tx.nonce,0);
+ assert.equal((await f.restart().recover()).status,'refunded');assert.equal(f.state.sends,1);
+});
+
+async function unsentRefund(bok=false){
+ const f=await withdrawalFixture({bok}),wallet=await f.opts.captureWallet(),send=wallet.signer.sendTransaction;
+ wallet.signer.sendTransaction=async()=>{throw Error('wallet transport unavailable');};await f.cap.prepare({maximumGasWei:'1000'});await assert.rejects(f.cap.confirm(),{code:'BB_ETH_SUBMISSION_UNKNOWN'});wallet.signer.sendTransaction=send;
+ const scope={...f.opts.scope,depositor:f.record.withdrawal.depositor,...(bok?{token:f.record.withdrawal.bokScope.token}:{})};
+ f.journal=()=>createEthereumJournal({...f.opts,scope,signer:wallet.signer});f.wallet=wallet;return f;
+}
+for(const bok of [false,true])for(const phase of ['review','confirm'])test(`saved ${bok?'Bok':'collateral'} refund canonical winner before ${phase} never sends again`,async()=>{
+ const f=await unsentRefund(bok),cap=f.restart();if(phase==='confirm')await cap.prepareSaved({maximumGasWei:'1000'});
+ const saved=await(await f.journal()).inspectRequest();await f.wallet.signer.sendTransaction({...saved,value:0n,chainId:BigInt(saved.chainId)});
+ const result=await(phase==='review'?cap.prepareSaved({maximumGasWei:'1000'}):cap.confirm());assert.equal(result.status,'refunded');assert.equal(f.state.sends,1);
+});
+for(const bok of [false,true])for(const change of ['wallet','chain','membership','gas','settlement','context','cancel','amount','recipient','exit-nonce'])test(`saved ${bok?'Bok':'collateral'} refund refuses ${change} after review`,async()=>{
+ const f=await unsentRefund(bok),cap=f.restart();await cap.prepareSaved({maximumGasWei:'1000'});
+ if(change==='wallet')f.state.connected=eth(44);if(change==='chain')f.state.chainId='1';if(change==='membership')f.opts.node.getL2ToL1MembershipWitness=async()=>({epochNumber:2,numCheckpointsInEpoch:1,leafIndex:0n,siblingPath:{toBufferArray:()=>[]}});if(change==='gas')f.state.price=100n;if(change==='settlement')f.state.settled=false;if(change==='context')f.state.guard=false;if(change==='cancel')cap.cancel();if(change==='amount')f.record.withdrawal.amount='101';if(change==='recipient')f.record.withdrawal.depositor=eth(44);if(change==='exit-nonce'){if(bok)f.record.withdrawal.nonce=hex(99);else f.record.txHash=hex(99);}
+ await assert.rejects(cap.confirm());assert.equal(f.state.sends,0);
+});
+for(const timing of ['before-confirm','inside-signer'])test(`saved refund rejects authenticated journal replacement ${timing}`,async()=>{
+ const f=await unsentRefund(),cap=f.restart();await cap.prepareSaved({maximumGasWei:'1000'});
+ const saved=await(await f.journal()).inspectRequest(),alternate=new Map(),storage={read:async k=>alternate.get(k)??null,compareAndSwap:async(k,old,next)=>{assert.equal(alternate.get(k)??null,old);alternate.set(k,next);}};
+ const other=await createEthereumJournal({...f.opts,storage,scope:{...f.opts.scope,depositor:f.record.withdrawal.depositor},provider:{...f.opts.provider,getTransactionCount:async()=>1},signer:{getAddress:async()=>f.record.withdrawal.depositor,sendTransaction:async()=>{throw Error('not sent');}}});
+ await assert.rejects(other.send({data:saved.data,value:saved.value,expected:saved.expected}));
+ const replace=()=>{f.values.clear();for(const [k,v]of alternate)f.values.set(k,v);};
+ if(timing==='before-confirm')replace();else f.state.onFees=replace;
+ await assert.rejects(cap.confirm());assert.equal(f.state.sends,0);
+});
+for(const mode of ['hidden-pending','interrupted-retry'])test(`saved refund ${mode} retains original nonce and uncertainty`,async()=>{
+ const f=await unsentRefund(),cap=f.restart();const before=await(await f.journal()).inspectRequest();await cap.prepareSaved({maximumGasWei:'1000'});
+ if(mode==='hidden-pending')f.state.pendingNonce=1;
+ const send=f.wallet.signer.sendTransaction;let observed;
+ f.wallet.signer.sendTransaction=async request=>{observed=request;if(mode==='interrupted-retry')throw Error('wallet transport interrupted');return send(request);};
+ // An RPC-hidden pending original is deliberately not treated as absent: the
+ // user's reviewed continuation always keeps the original nonce and calldata.
+ if(mode==='interrupted-retry'){await assert.rejects(cap.confirm(),{code:'BB_ETH_SUBMISSION_UNKNOWN'});const after=await(await f.journal()).inspectRequest();assert.equal(after.nonce,before.nonce);assert.equal(after.data,before.data);assert.equal(after.txHash,null);await assert.rejects(f.restart().prepare({maximumGasWei:'1000'}));}
+ else assert.equal((await cap.confirm()).status,'refunded');
+ assert.equal(observed.nonce,before.nonce);assert.equal(observed.data,before.data);assert.equal(observed.to,before.to);assert.equal(observed.value,0n);
 });
