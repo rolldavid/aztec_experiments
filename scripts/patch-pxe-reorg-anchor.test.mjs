@@ -159,9 +159,9 @@ test('tips acknowledgement starts only after rollback and canonical anchor commi
   }await original(event);};
   await f.sync.sync();assert.equal(checked,true);
 });
-test('source changes during selected lookup fail closed before rollback',async t=>{
+test('canonical source contradiction during selected lookup fails closed before rollback',async t=>{
   const f=await fixture(t);await f.seed();const before=await f.snapshot();f.state.tip=12;
-  f.state.onRead=async q=>{if(q===12)f.state.tip=13;};
+  f.state.onRead=async q=>{if(q===12)f.state.tip=11;};
   await assert.rejects(f.sync.sync(),/^Error: PXE_REORG_ANCHOR_/);assert.deepEqual(await f.snapshot(),before);
 });
 test('finalized tier remains below proposed reorg; no illegal rollback of finalized state',async t=>{
@@ -172,7 +172,12 @@ test('SDK build/check and explicit bootstrap require exact patched source+dest h
   const build=await readFile(join(repo,'scripts/build-sdk.mjs'),'utf8'),check=await readFile(join(repo,'scripts/check-sdk.mjs'),'utf8');
   assert(build.indexOf('inspectPxeReorgAnchor(fileURL')<build.indexOf('const portalMetadata=buildPortalRuntime()'));
   assert.match(build,/PXE_REORG_ANCHOR_PINS\.map/);assert.match(check,/manifest\.inputs\['node_modules\/@aztec-labs\/pxe\/'\+pin\.path\]!==pin\.after/);
-  assert.match(JSON.parse(await readFile(join(repo,'package.json'),'utf8')).scripts['bootstrap:dependencies'],/patch-pxe-reorg-anchor\.mjs --apply node_modules\/@aztec-labs\/pxe$/);
+  const commands=JSON.parse(await readFile(join(repo,'package.json'),'utf8')).scripts['bootstrap:dependencies'].split(' && ');
+  const reorg='node scripts/patch-pxe-reorg-anchor.mjs --apply node_modules/@aztec-labs/pxe';
+  assert.equal(commands.filter(command=>command===reorg).length,1);
+  assert(commands.indexOf(reorg)>commands.indexOf('node scripts/patch-private-event-query.mjs --apply node_modules/@aztec-labs/pxe'));
+  assert(commands.indexOf(reorg)<commands.indexOf('node scripts/patch-pxe-preference-page.mjs --apply-installed node_modules/@aztec-labs/pxe'));
+  assert.match(build,/pxeReorgAnchor.state!=='patched'/);
 });
 
 test('concurrent sync and stop drain the same queued work; no detached mutation',async t=>{
@@ -189,4 +194,109 @@ test('contradictory same-height finalized source cannot replace anchor without p
   await assert.rejects(f.sync.sync(),/^Error: PXE_REORG_ANCHOR_/);
   assert.equal((await f.anchor.getBlockHeader()).toBuffer().toString('hex'),before.header);
   assert.deepEqual(f.state.prunes,[]);
+});
+
+for(const tier of ['proposed','checkpointed','proven','finalized'])for(const timing of ['during-header','after-stream'])test('canonical forward '+tier+' advance '+timing+' acknowledges its exact captured pass',async t=>{
+ const f=await fixture(t,{tier});await f.advance(10);f.state.tip=12;
+ if(timing==='during-header'){let changed=false;f.state.onRead=async q=>{if(q===12&&!changed){changed=true;f.state.tip=13;}};}
+ else{const sync=f.sync.blockStream.sync.bind(f.sync.blockStream);f.sync.blockStream.sync=async()=>{await sync();f.state.tip=13;};}
+ await f.sync.sync();assert.deepEqual(f.state.prunes,[]);assert.equal(await f.balance(),0n);
+ assert.equal((await f.anchor.getBlockHeader()).getBlockNumber(),12);assert.equal(f.sync.syncTips,undefined,'Snapshot ownership ends with this sync');
+ const tips=await f.tips.getL2Tips();assert.equal(tier==='proposed'?tips.proposed.number:tips[tier].block.number,12);
+ f.state.onRead=undefined;await f.sync.sync();assert.equal((await f.anchor.getBlockHeader()).getBlockNumber(),13);
+});
+
+for(const change of ['same-height-fork','advanced-orphan','tier-retreat'])test('captured snapshot rejects '+change+' after stream acknowledgement',async t=>{
+  const f=await fixture(t);await f.advance(10);f.state.tip=12;
+  const sync=f.sync.blockStream.sync.bind(f.sync.blockStream);
+  f.sync.blockStream.sync=async()=>{await sync();
+    if(change==='tier-retreat')f.state.selected=11;
+    else {f.chain[12]=await block(12,99);if(change==='advanced-orphan')f.state.tip=13;}
+  };
+  await assert.rejects(f.sync.sync(),/^Error: PXE_REORG_ANCHOR_/);
+  assert.equal(f.sync.syncTips,undefined);assert.deepEqual(f.state.prunes,[]);
+});
+for(const source of ['tips','block'])test('swallowed '+source+' source failure cannot report successful sync',async t=>{
+  const f=await fixture(t);await f.advance(10);const before=await f.snapshot();
+  if(source==='tips')f.node.getChainTips=async()=>{throw Error('PRIVATE_SENTINEL');};
+  else {f.state.tip=12;f.state.onRead=async()=>{throw Error('PRIVATE_SENTINEL');};}
+  await assert.rejects(f.sync.sync(),/^Error: PXE_REORG_ANCHOR_EVENT_FAILED$/);
+  assert.deepEqual(await f.snapshot(),before);assert.equal(f.sync.syncTips,undefined);
+});
+for(const tier of ['proposed','checkpointed','proven','finalized'])test('missing '+tier+' acknowledgement rejects an otherwise completed stream',async t=>{
+  const f=await fixture(t,{tier:'finalized'});await f.advance(10);f.state.tip=12;
+  const handle=f.tips.handleBlockStreamEvent.bind(f.tips);
+  f.tips.handleBlockStreamEvent=async event=>{if(event.type!=='chain-'+tier)await handle(event);};
+  await assert.rejects(f.sync.sync(),/^Error: PXE_REORG_ANCHOR_INCOMPLETE$/);
+  assert.equal(f.sync.syncTips,undefined);
+});
+
+test('selected tier retreat during final canonical header check remains a veto',async t=>{
+  const f=await fixture(t);await f.advance(10);f.state.tip=12;
+  const sync=f.sync.blockStream.sync.bind(f.sync.blockStream);
+  f.sync.blockStream.sync=async()=>{await sync();f.state.tip=13;
+    f.state.onRead=async query=>{if(query===12)f.state.selected=11;};
+  };
+  await assert.rejects(f.sync.sync(),/^Error: PXE_REORG_ANCHOR_CHANGED$/);
+  assert.equal(f.sync.syncTips,undefined);
+});
+
+test('exact previous patched pair upgrades to identical pinned output; mixed or modified predecessors refuse',async()=>{
+  const root=await copyPackage('previous');
+  for(const pin of PINS){
+    const previous=await readFile(join(repo,'scripts/testing/fixtures/pxe-reorg-anchor','previous-'+pin.path.split('/').at(-1)),'utf8');
+    assert.equal(sha(previous),pin.previous);
+    const next=transformPxeReorgAnchor(previous,pin.path);
+    assert.equal(sha(next),pin.after);
+    assert.equal(next,await readFile(join(patchedRoot,pin.path),'utf8'));
+    assert.throws(()=>transformPxeReorgAnchor(previous+'\n',pin.path),/PATCH_SOURCE/);
+    await writeFile(join(root,pin.path),previous);
+  }
+  assert.equal((await inspectPxeReorgAnchor(root)).state,'previous');
+  const before=await readFile(join(root,PINS[0].path));
+  await writeFile(join(root,PINS[1].path),await readFile(join(originalRoot,PINS[1].path)));
+  await assert.rejects(patchPxeReorgAnchor(root),/PATCH_STATE/);
+  assert.deepEqual(await readFile(join(root,PINS[0].path)),before);
+  await writeFile(join(root,PINS[1].path),await readFile(join(repo,'scripts/testing/fixtures/pxe-reorg-anchor','previous-block_synchronizer.js')));
+  assert.equal((await patchPxeReorgAnchor(root)).state,'patched');
+  assert.deepEqual(await inspectPxeReorgAnchor(root),await inspectPxeReorgAnchor(patchedRoot));
+});
+
+test('final advancing header cannot hide captured anchor reorg',async t=>{
+  const f=await fixture(t);await f.advance(10);f.state.tip=12;
+  const sync=f.sync.blockStream.sync.bind(f.sync.blockStream);
+  f.sync.blockStream.sync=async()=>{await sync();f.state.tip=13;const get=f.node.getChainTips;let calls=0;
+    f.node.getChainTips=async()=>{if(++calls===2){f.chain[12]=await block(12,99);f.state.tip=14;}return get();};};
+  await assert.rejects(f.sync.sync(),/^Error: PXE_REORG_ANCHOR_/);
+});
+test('discarded source prefetch remains owned until rejection drains',async t=>{
+  const f=await fixture(t);await f.seed();f.state.tip=12;
+  let release;const blocked=new Promise(r=>release=r);let held=false;
+  const get=f.node.getChainTips;let tipReads=0;
+  f.node.getChainTips=async()=>{if(++tipReads===2)f.state.tip=13;return get();};
+  f.state.onRead=async q=>{if(!held&&q?.hash?.toString()===f.chain[12].hash.toString()){held=true;await blocked;throw Error('PRIVATE_SENTINEL');}};
+  let settled=false,failure;const run=f.sync.sync().then(()=>{settled=true;},error=>{settled=true;failure=error;});
+  await new Promise(r=>setTimeout(r,30));const beforeRelease=settled;release();await run;
+  assert.equal(held,true);assert.equal(beforeRelease,false,'sync must drain all source reads before releasing ownership');
+  assert.match(String(failure),/^Error: PXE_REORG_ANCHOR_EVENT_FAILED$/);
+  assert.equal(f.sync.syncTips,undefined);assert.equal(f.sync.syncPass,undefined);
+  f.state.onRead=undefined;f.node.getChainTips=get;await f.sync.sync();
+  assert.equal((await f.anchor.getBlockHeader()).getBlockNumber(),13,'Explicit next sync is not poisoned by a prior pass');
+});
+
+test('stop drains a discarded successful prefetch before releasing sync ownership',async t=>{
+  const f=await fixture(t);await f.seed();f.state.tip=12;
+  let release,reached;const blocked=new Promise(r=>release=r),streamFinished=new Promise(r=>reached=r);let held=false;
+  const get=f.node.getChainTips;let reads=0;
+  f.node.getChainTips=async()=>{if(++reads===2)f.state.tip=13;return get();};
+  f.state.onRead=async query=>{if(!held&&query?.hash?.toString()===f.chain[12].hash.toString()){held=true;await blocked;}};
+  const streamSync=f.sync.blockStream.sync.bind(f.sync.blockStream);
+  f.sync.blockStream.sync=async()=>{await streamSync();reached();};
+  let synced=false,stopped=false;const run=f.sync.sync().then(()=>{synced=true;});
+  await streamFinished;const stop=f.sync.stop().then(()=>{stopped=true;});
+  await new Promise(r=>setImmediate(r));
+  assert.equal(held,true);assert.equal(synced,false);assert.equal(stopped,false);assert.equal(f.sync.syncPass.pending.size,1);
+  release();await Promise.all([run,stop]);assert.equal(synced,true);assert.equal(stopped,true);
+  assert.equal(f.sync.syncTips,undefined);assert.equal(f.sync.syncPass,undefined);
+  assert.equal((await f.anchor.getBlockHeader()).getBlockNumber(),13);
 });
