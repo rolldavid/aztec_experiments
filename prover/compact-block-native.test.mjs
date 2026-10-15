@@ -337,3 +337,14 @@ test('anchored page HTTP: total2MiB budget returns a contiguous prefix before fl
  f.blocks[31].body.toTxBlobData=()=>{throw Error('Next body must not flatten');};
  await server(f,async({send})=>{const r=await send();assert.equal(r.status,200);const bytes=await r.text();assert(Buffer.byteLength(bytes)<=limits.responseBytes);const v=JSON.parse(bytes);assert.equal(v.blocks.length,31);assert.deepEqual(v.blocks.map(b=>b.number),Array.from({length:31},(_,i)=>i+1));assert.equal(f.state.bodyNumbers.length,32);});
 });
+
+test('witnessed page256: serial native work and detached proofs fit unchanged2MiB/10s',async()=>{
+ const f=await pageFixture(257);f.request.count=256;f.request.witnesses=true;let pending=0,peak=0,witnesses=0;
+ f.node.getBlockHashMembershipWitness=async(anchor,hash)=>{assert.equal(anchor.number,257);assert.equal(anchor.hash.toString(),f.request.anchor.hash);pending++;peak=Math.max(peak,pending);const b=f.blocks.find(b=>b.hash.toString()===hash.toString());await Promise.resolve();pending--;witnesses++;return {leafIndex:BigInt(b.number),siblingPath:Array(30).fill(Fr.ZERO)};};
+ const began=performance.now();await server(f,async({send})=>{const r=await send();assert.equal(r.status,200);const bytes=await r.text();assert(Buffer.byteLength(bytes)<=limits.responseBytes);const v=JSON.parse(bytes);assert.equal(v.witnesses,true);assert.equal(v.blocks.length,256);assert.equal(v.blocks[255].archiveWitness.leafIndex,'256');assert.equal(peak,1);assert.equal(witnesses,256);assert.equal(f.state.calls,2);});assert(performance.now()-began<limits.timeoutMs);
+});
+for(const mode of ['missing','wrongIndex','short','reorg','unsynced'])test('witnessed page rejects '+mode+' and publishes no partial prefix',async()=>{
+ const f=await pageFixture(3);f.request.witnesses=true;
+ if(mode!=='missing')f.node.getBlockHashMembershipWitness=async(_anchor,hash)=>{const b=f.blocks.find(b=>b.hash.toString()===hash.toString());if(mode==='reorg')f.state.orphan=3;if(mode==='unsynced')f.state.stale=true;return {leafIndex:BigInt(mode==='wrongIndex'?99:b.number),siblingPath:Array(mode==='short'?29:30).fill(Fr.ZERO)};};
+ await server(f,async({send})=>{await denied(await send(),503);});
+});

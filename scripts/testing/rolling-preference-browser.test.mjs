@@ -146,3 +146,8 @@ test('initialization capture uses a bounded attribute read and sanitizes missing
  let reads=0;for(const limit of [0,1001,NaN,'1']){assert.deepEqual(await captureRollingInitializationObservation({getAttribute(){reads++;}},limit),{status:'unavailable',value:null});}assert.equal(reads,0);
  for(const input of ['', 'PRIVATE_SENTINEL','x'.repeat(513),{},'null','[]'])assert.deepEqual(decodeRollingInitializationObservation(input),{status:'invalid',value:null});
 });
+
+test('witnessed256 public range passes existing closed traffic observer and257 fails',()=>{
+ const t=createRollingPreferenceTraffic(origins),p={...compactPage(),witnesses:true,count:256,anchor:{number:300,hash:compactSelector().hash}};
+ assert(t.inspect(compactRequest(p)));assert.equal(t.snapshot().compactRequests,1);assert.equal(t.inspect(compactRequest({...p,count:257})),false);assert.equal(t.snapshot().inspectionErrors,1);
+});

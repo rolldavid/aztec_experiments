@@ -385,3 +385,11 @@ test('anchored page: pending page retains operation ownership until abort drains
  const f=anchoredFixture(),page=f.config.compact.readPage;let enter,release;const entered=new Promise(r=>{enter=r;}),held=new Promise(r=>{release=r;});f.config.compact.readPage=async p=>{enter();await held;return page(p);};
  const r=f.reader();await r.read();const before=[...f.db],c=new AbortController(),run=r.read({signal:c.signal});await entered;c.abort();await assert.rejects(r.read(),{code:'ROLLING_COLD_PREFERENCES_BUSY'});release();await assert.rejects(run,{code:'ROLLING_COLD_PREFERENCES_UNAVAILABLE'});assert.deepEqual([...f.db],before);
 });
+
+test('witnessed adaptive public prefix enlarges after acknowledged SDK progress and shrinks after log page',async()=>{
+ const f=fixture(),counts=[];let current={schemaVersion:1,database:'a'.repeat(64),epoch:'b'.repeat(64),sequence:0,anchor:{blockNumber:600,blockHash:hex(610)},nextBlock:1,nextLog:0,records:[],head:null,complete:false},reject=true,dense=false;
+ f.config.compact.readWitnessPage=async p=>{counts.push(p.count);const size=dense?1:p.count;return Array.from({length:size},(_,i)=>({number:p.from+i,hash:hex(p.from+i+10),headerFields:Array(23).fill(hex(0)),fields:dense?[hex((2624615704n<<184n)|(1n<<104n)|(1n<<88n)|4n),hex(1),hex(0),hex(2),hex((3951939007n<<112n)|1n),...Array(6).fill(hex(0))]:Array(7).fill(hex(0)),archiveWitness:{leafIndex:String(p.from+i),siblingPath:Array(30).fill(hex(0))}}));};
+ f.config.pxe.processRollingPreferenceRecovery=async p=>{if(p.expected){if(reject)throw Error('Labelled SDK authentication failure');const blocks=Array.isArray(p.block)?p.block:[p.block];for(const b of blocks){assert.equal(b.archiveWitness.anchorNumber,600);assert.equal(b.archiveWitness.anchorHash,hex(610));}current={...current,sequence:current.sequence+1,nextBlock:current.nextBlock+blocks.length};}return structuredClone(current);};
+ const r=f.reader();await r.read();await assert.rejects(r.read());reject=false;
+ await r.read();await r.read();dense=true;await r.read();dense=false;await r.read();assert.deepEqual(counts,[32,32,256,256,8]);
+});

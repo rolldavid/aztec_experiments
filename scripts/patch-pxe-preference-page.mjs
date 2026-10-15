@@ -11,8 +11,8 @@ import { fileURLToPath } from 'node:url';
 // Cursor/root/validator source is opt-in; whole cold recovery remains unqualified.
 const sha = value => createHash('sha256').update(value).digest('hex');
 export const PREFERENCE_PAGE_PINS = Object.freeze([
-  Object.freeze({path:'src/pxe.ts', before:'514cf7905733732522db9f301437d9ec5a1fd3b4a5ee3939980f76ffb4396ebd', after:'7247725291539583344c11d3d865f3cceb8cc0ea6e0f87e3e0c1c35024b36fd7'}),
-  Object.freeze({path:'dest/pxe.js', before:'94d98c0a13a0d6a2724ecf03f790461e13328b8aebac3d243f373e982d76a360', after:'9ee9438a134ad3b4deaddf49ca1e6f8d9097e1a4bacc534f9ad845417d5be9a2'}),
+  Object.freeze({path:'src/pxe.ts', before:'514cf7905733732522db9f301437d9ec5a1fd3b4a5ee3939980f76ffb4396ebd', after:'cf61d2140a6505cf0ad24f8160aedc875c1ac7204663b25a018bd03da30c71bc'}),
+  Object.freeze({path:'dest/pxe.js', before:'94d98c0a13a0d6a2724ecf03f790461e13328b8aebac3d243f373e982d76a360', after:'0798708eb9f6f215ae1348697140fbebc65872ea5d6396dc1ea1f5636ca5603e'}),
   // rc3 adds queue-pressure timing and warnings; the transform preserves them.
   Object.freeze({path:'src/operation_queue.ts', before:'a78c45878393d8713fdce1de1cda326ec3af6772b092215c8096044d3ab61246', after:'d46768a384214ea5786a60e83b3c417fd788547904cf65f1a0c756616b91d5db'}),
   Object.freeze({path:'dest/operation_queue.js', before:'f8856a4145c38e831d077bc33c5e67f778ea1ad367b3ff93c486175d4c9019b6', after:'a2373a39553acc1ffc6f4cf9be0cc6eb07cefdb033881492601dd92abd15e360'}),
@@ -57,7 +57,7 @@ function fields(x,max,min=0){check(Array.isArray(x));const len=Object.getOwnProp
 // Immutable historical membership is authenticated once per bounded queue frame.
 // This does NOT establish current canonicality: callers retain fresh anchor,
 // network and contract checks at entry and both original commit boundaries.
-export function createRollingPreferenceArchive(node,anchorHeader,guard){
+export function createRollingPreferenceArchive(node,anchorHeader,guard,supplied=new Map()){
  const anchor=BlockHeader.fromBuffer(BlockHeader.prototype.toBuffer.call(anchorHeader)),proofs=new Map();
  return async(number,hash,headerFields)=>{
   integer(number,anchor.getBlockNumber(),1);hex(hash);const captured=fields(headerFields,23,23);
@@ -65,12 +65,14 @@ export function createRollingPreferenceArchive(node,anchorHeader,guard){
   check(header.getBlockNumber()===number&&(await header.hash()).toString()===hash);
   check(header.globalVariables.chainId.equals(anchor.globalVariables.chainId)&&header.globalVariables.version.equals(anchor.globalVariables.version));
   await guard();
-  if(number===anchor.getBlockNumber()){check((await anchor.hash()).toString()===hash);return header;}
+  if(number===anchor.getBlockNumber()){check((await anchor.hash()).toString()===hash);if(supplied.has(number))check(supplied.get(number)===null);return header;}
   const key=number+':'+hash;
   if(!proofs.has(key)){
-   check(proofs.size<32);
+   check(proofs.size<256);
    proofs.set(key,(async()=>{
-    const witness=await node.getBlockHashMembershipWitness(await anchor.toBlockParameter(),BlockHash.fromString(hash));
+    let witness;
+    if(supplied.has(number)){const value=supplied.get(number);check(value!==null&&value.anchorNumber===anchor.getBlockNumber()&&value.anchorHash===(await anchor.hash()).toString());witness={leafIndex:BigInt(value.leafIndex),siblingPath:value.siblingPath.map(Fr.fromString)};}
+    else witness=await node.getBlockHashMembershipWitness(await anchor.toBlockParameter(),BlockHash.fromString(hash));
     await guard();
     const index=Object.getOwnPropertyDescriptor(witness??{},'leafIndex')?.value,siblings=Object.getOwnPropertyDescriptor(witness??{},'siblingPath')?.value;
     check(typeof index==='bigint'&&index===BigInt(number)&&index<BigInt(anchor.lastArchive.nextAvailableLeafIndex));
@@ -112,8 +114,13 @@ function snapshot(input,options){
  check(typeof p.restart==='boolean'&&(!p.restart||p.expected===null));
  check(typeof p.proofsEnabled==='boolean'&&['proposed','checkpointed','proven','finalized'].includes(p.tier));
  if(p.expected!==null){p.expected=exact(p.expected,['epoch','sequence']);check(typeof p.expected.epoch==='string'&&/^[0-9a-f]{64}$/.test(p.expected.epoch));integer(p.expected.sequence,Number.MAX_SAFE_INTEGER);}
- if(p.block!==null){const block=value=>{const b=exact(value,['blockNumber','blockHash','fields','headerFields']);integer(b.blockNumber,0xffffffff,1);hex(b.blockHash);b.fields=fields(b.fields,24575,7);b.headerFields=fields(b.headerFields,23,23);return b;};
-  if(Array.isArray(p.block)){integer(p.block.length,32,1);const values=p.block;check(Reflect.ownKeys(values).length===values.length+1);let bytes=0;p.block=Array.from({length:values.length},(_,i)=>{const d=Object.getOwnPropertyDescriptor(values,String(i));check(d&&'value'in d);const b=block(d.value);bytes+=(b.fields.length+b.headerFields.length)*69+2048;check(bytes<=2*1024*1024);return b;});check(p.block.every((b,i)=>i===0||b.blockNumber===p.block[i-1].blockNumber+1));}
+ if(p.block!==null){const block=value=>{const b=exact(value,['blockNumber','blockHash','fields','headerFields',...(Object.hasOwn(value,'archiveWitness')?['archiveWitness']:[])]);
+   if(Object.hasOwn(b,'archiveWitness')&&b.archiveWitness!==null){const w=exact(b.archiveWitness,['anchorNumber','anchorHash','leafIndex','siblingPath']);integer(w.anchorNumber,0xffffffff,1);hex(w.anchorHash);check(typeof w.leafIndex==='string'&&/^[1-9][0-9]{0,9}$/.test(w.leafIndex)&&w.leafIndex===String(b.blockNumber));w.siblingPath=fields(w.siblingPath,30,30);b.archiveWitness=w;}integer(b.blockNumber,0xffffffff,1);hex(b.blockHash);b.fields=fields(b.fields,24575,7);b.headerFields=fields(b.headerFields,23,23);return b;};
+  if(Array.isArray(p.block)){integer(p.block.length,256,1);const values=p.block;check(Reflect.ownKeys(values).length===values.length+1);let bytes=0;p.block=Array.from({length:values.length},(_,i)=>{const d=Object.getOwnPropertyDescriptor(values,String(i));check(d&&'value'in d);const raw=d.value;check(raw&&Object.getPrototypeOf(raw)===Object.prototype);
+    const count=(object,key,max,min)=>{const item=Object.getOwnPropertyDescriptor(object,key);check(item&&'value'in item&&Array.isArray(item.value));const length=Object.getOwnPropertyDescriptor(item.value,'length')?.value;integer(length,max,min);return length;};
+    const proof=Object.getOwnPropertyDescriptor(raw,'archiveWitness');check(!proof||'value'in proof);
+    const proofFields=proof&&proof.value!==null?count(proof.value,'siblingPath',30,30):0;
+    bytes+=(count(raw,'fields',24575,7)+count(raw,'headerFields',23,23)+proofFields)*69+2048;check(bytes<=2*1024*1024);return block(raw);});check(p.block.every((b,i)=>i===0||b.blockNumber===p.block[i-1].blockNumber+1));if(p.block.length>32)check(p.block.every(b=>Object.hasOwn(b,'archiveWitness')));}
   else p.block=block(p.block);
  }
  const {contextGuard}=exact(options,['contextGuard']);check(typeof contextGuard==='function');return {p,guard:contextGuard};
@@ -157,9 +164,10 @@ export async function runRollingPreferenceRecovery(pxe,input,options){
   return await pxe.operationQueue.runSynced(async context=>{
    const frame={...context,validators:[]};
    const anchor=BlockHeader.fromBuffer(BlockHeader.prototype.toBuffer.call(context.anchorBlockHeader));
-   frame.archive=createRollingPreferenceArchive(pxe.node,anchor,guard);
+   const supplied=new Map();for(const block of p.block===null?[]:Array.isArray(p.block)?p.block:[p.block])if(Object.hasOwn(block,'archiveWitness'))supplied.set(block.blockNumber,block.archiveWitness);
+   frame.archive=createRollingPreferenceArchive(pxe.node,anchor,guard,supplied);
    const anchorRecord={blockNumber:anchor.getBlockNumber(),blockHash:(await anchor.hash()).toString()};
-   let canonicalPending=null;
+   let canonicalPending=null,historicalInstance=null;
    const canonicalSnapshot=async()=>{
     const parameter=await anchor.toBlockParameter();
     // Independent fixed public reads share one bounded RPC batch. Every result
@@ -167,16 +175,17 @@ export async function runRollingPreferenceRecovery(pxe,input,options){
     const [info,observed,instance]=await rollingPreferenceReadBatch([
      async()=>{const value=await pxe.node.getNodeInfo();return {chainId:value.l1ChainId,version:value.rollupVersion,rollup:value.l1ContractAddresses.rollupAddress.toString().toLowerCase(),proofs:value.realProofs};},
      async()=>{const raw=await pxe.node.getBlockData(anchorRecord.blockNumber);check(raw);return {hash:raw.blockHash.toString(),header:BlockHeader.fromBuffer(BlockHeader.prototype.toBuffer.call(raw.header))};},
-     async()=>{const raw=await pxe.node.getContract(address,parameter);check(raw);return SerializableContractInstance.fromBuffer(new SerializableContractInstance(raw).toBuffer());},
+     async()=>{if(historicalInstance)return SerializableContractInstance.fromBuffer(historicalInstance);const raw=await pxe.node.getContract(address,parameter);check(raw);return SerializableContractInstance.fromBuffer(new SerializableContractInstance(raw).toBuffer());},
     ]);
     check(info.chainId===p.network.chainId&&info.version===p.network.version&&info.rollup===p.network.rollup&&info.proofs===p.proofsEnabled);
     check(observed.hash===anchorRecord.blockHash);
     const h=observed.header;check((await h.hash()).toString()===anchorRecord.blockHash&&h.getBlockNumber()===anchorRecord.blockNumber&&h.globalVariables.chainId.toBigInt()===BigInt(p.network.chainId)&&h.globalVariables.version.toBigInt()===BigInt(p.network.version));check(instance.currentContractClassId.toString()===p.expectedClassId&&instance.originalContractClassId.toString()===p.expectedClassId&&(await computeContractAddressFromInstance(instance)).equals(address));
-    await guard();
+    historicalInstance=new SerializableContractInstance(instance).toBuffer();await guard();
    };
    // Concurrent empty-block validators share only the identical in-flight scope
    // read. Never retain a settled result: each later authentication/commit
-   // boundary obtains fresh network, anchor and contract authority.
+   // boundary obtains fresh network and anchor authority; the validated contract
+   // instance belongs only to this immutable anchor and this queue frame.
    const canonical=()=>{
     if(canonicalPending)return canonicalPending;
     canonicalPending=canonicalSnapshot().finally(()=>{canonicalPending=null;});
@@ -185,6 +194,15 @@ export async function runRollingPreferenceRecovery(pxe,input,options){
    await canonical();
    const artifact=await pxe.contractStore.getContractArtifact(Fr.fromString(p.expectedClassId));check(artifact&&artifact.name==='RollingBoard');
    await binding.verifyArtifact(artifact,p.expectedArtifactHash,p.expectedClassId);
+   // Private closure belongs only to this exact queue frame and pinned history.
+   // Network/proof identity stays fresh at entry and BOTH commit boundaries.
+   frame.historical=async(input,changeSetId,header)=>{
+    check(changeSetId===context.changeSetId&&input.contractAddress===p.contractAddress&&input.scope===p.scope&&input.expectedClassId===p.expectedClassId&&input.expectedArtifactHash===p.expectedArtifactHash&&same(input.network,p.network)&&input.proofsEnabled===p.proofsEnabled);
+    check(BlockHeader.prototype.toBuffer.call(header).equals(BlockHeader.prototype.toBuffer.call(anchor)));
+    await guard();const raw=await pxe.node.getBlockData(anchorRecord.blockNumber);check(raw);const h=BlockHeader.fromBuffer(BlockHeader.prototype.toBuffer.call(raw.header));
+    check(raw.blockHash.toString()===anchorRecord.blockHash&&h.getBlockNumber()===anchorRecord.blockNumber&&(await h.hash()).toString()===anchorRecord.blockHash);await guard();
+   };
+   frame.verifyArtifact=value=>binding.verifyArtifact(value,p.expectedArtifactHash,p.expectedClassId);
    beforeCommit=async()=>{for(const validate of frame.validators)await validate();await canonical();await guard();};
    await guard();
    const {meta,state:loaded}=await binding.store.load(key,context.changeSetId);
@@ -329,6 +347,7 @@ export async function runRollingPreferenceRecovery(pxe,input,options){
       for(const value of values){check(value.blockNumber===state.nextBlock+verified.length);physicalLogs+=value.ciphertexts.length;check(physicalLogs<=8);verified.push(value);}
      }
      frame.validators.push(async()=>{for(let offset=0;offset<validators.length;offset+=4)await rollingPreferenceReadBatch(validators.slice(offset,offset+4));});
+     if(p.block.length>32)check(verified.slice(0,-1).every(value=>value.ciphertexts.length===0));
      for(let i=0;i<verified.length;i++)await consume(p.block[i],verified[i],true);
     }else{check(p.block);await consume(p.block,await authenticate(p.block),false);}
    }
@@ -338,7 +357,7 @@ export async function runRollingPreferenceRecovery(pxe,input,options){
  }catch{throw Error('PXE_PREFERENCE_RECOVERY_FAILED');}
 }
 `; }
-export const PREFERENCE_PAGE_RECOVERY_PIN = Object.freeze({generated:'rolling-preference-recovery.mjs',sha256:'12143bb09f9a17918b5514a4ff6b0118492f51a5fbe3b1b5d71f4e3d86788c5a'});
+export const PREFERENCE_PAGE_RECOVERY_PIN = Object.freeze({generated:'rolling-preference-recovery.mjs',sha256:'0e9354f6b97e00bf2668ec874206abccc6a5596d2ad9c57d4f7e8de390b8f2df'});
 function imports() { return `
 // @ts-ignore Exact reviewed JavaScript module is copied by the pinned installer.
 import { authenticateCompactBlock as rollingPageCompact } from '../rolling-preference-compact.mjs';
@@ -442,6 +461,7 @@ function method(ts) {
         check(p.blockNumber <= anchor.getBlockNumber());
         const archive = frame?.archive ?? createRollingPreferenceArchive(this.node,anchor,guard);
         const canonical = async () => {
+          if(frame){await frame.historical(p,changeSetId,anchor);await archive(p.blockNumber,p.blockHash,p.headerFields);await guard();return;}
           const info = await this.node.getNodeInfo();
           check(info.l1ChainId === p.network.chainId && info.rollupVersion === p.network.version &&
             info.l1ContractAddresses.rollupAddress.toString().toLowerCase() === p.network.rollup && info.realProofs === p.proofsEnabled);
@@ -480,10 +500,12 @@ function method(ts) {
         const artifact = await this.contractStore.getContractArtifact(classId);
         check(artifact && artifact.name === 'RollingBoard');
         // Compute, do not trust a cached artifactHash property supplied by data.
+        if(frame)await frame.verifyArtifact(artifact);else{
         const artifactHash = await rollingPageArtifactHash(artifact${t('!')});
         check(artifactHash.toString() === p.expectedArtifactHash);
         const computedClass = await rollingPageClass({...artifact${t('!')}, artifactHash});
         check(computedClass.id.equals(classId));
+        }
         const call = await this.contractStore.getFunctionCall('recover_preference_page',
           [scope, txHash.hash, p.blockNumber, RollingPageFr.fromString(p.blockHash), p.firstLog, p.logCount], address, classId);
         check(call.type === FunctionType.UTILITY);

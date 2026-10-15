@@ -100,6 +100,7 @@ export function createCompactBlockNativeAdapter(options) {
     methods=Object.fromEntries(['getNodeInfo','getChainTips','getWorldStateSyncStatus','getSyncedL1Timestamp','getBlockData','getBlock'].map(name=>{
       const method=node[name];check(typeof method==='function');return [name,method];
     }));
+    const witness=node.getBlockHashMembershipWitness;if(typeof witness==='function')methods.getBlockHashMembershipWitness=witness;
   } catch {throw Error('Invalid compact block native configuration');}
   let active=false;
   // Internal, detached operator observation. Categories contain no selector or
@@ -151,25 +152,25 @@ export function createCompactBlockNativeAdapter(options) {
       for await(const chunk of req.iterator({destroyOnReturn:false})){bytes+=chunk.length;if(bytes>COMPACT_BLOCK_NATIVE_LIMITS.requestBytes){status=413;throw Error();}chunks.push(chunk);}
       alive();const request=validateCompactRequest(JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(Buffer.concat(chunks))),config.tier);
       status=503;
-      const canonical=async (selected,boundary)=>{
-        stage=boundary+'-readiness';alive();await inspectTrustedNode(api,{...config,readinessTier:config.tier});alive();
+      const canonical=async (selected,boundary,full=true)=>{
+        stage=boundary+'-readiness';alive();
+        if(full){await inspectTrustedNode(api,{...config,readinessTier:config.tier});alive();
+         const tips=await api.getChainTips();alive();const tip=config.tier==='proposed'?tips.proposed:tips[config.tier]?.block;
+         check(tip&&Number.isSafeInteger(tip.number)&&selected.number<=tip.number);}
         stage=boundary+'-canonical';
-        const tips=await api.getChainTips();alive();
-        const tip=config.tier==='proposed'?tips.proposed:tips[config.tier]?.block;
-        check(tip&&Number.isSafeInteger(tip.number)&&selected.number<=tip.number);
         const metadata=await api.getBlockData(BlockNumber(selected.number));alive();
         check(metadata&&metadata.blockHash instanceof BlockHash);
         const hash=metadata.blockHash.toString();check(selected.hash===undefined||selected.hash===hash);
         await matchingHeader(metadata.header,hash,selected.number,config.expectedNetworkScope);alive();
         return Object.freeze({...selected,hash});
       };
-      const readBlock=async(selected,remainingBytes)=>{
-        const request=await canonical(selected,'before');alive();
+      const readBlock=async(selected,remainingBytes,pageAnchor=null)=>{
+        const request=await canonical(selected,'before',!pageAnchor);alive();
         stage='body';const response=await api.getBlock({hash:BlockHash.fromString(request.hash)},
           {includeTransactions:true,includeL1PublishInfo:false,includeAttestations:false});alive();
         check(response&&response.hash instanceof BlockHash&&response.hash.toString()===request.hash&&response.number===request.number);
         stage='encode';const body=own(response,'body'),fieldCount=preflight(body);
-        const estimatedBytes=(fieldCount+BLOCK_HEADER_LENGTH)*69+512;
+        const estimatedBytes=(fieldCount+BLOCK_HEADER_LENGTH)*69+512+(pageAnchor?30*69+128:0);
         // Stop a page BEFORE flattening/allocating another encoded block. A short
         // prefix is useful only after the SDK authenticates it; no block is skipped.
         if(estimatedBytes>remainingBytes)return null;
@@ -188,7 +189,15 @@ export function createCompactBlockNativeAdapter(options) {
         check((fieldCount+BLOCK_HEADER_LENGTH)*69+512<=COMPACT_BLOCK_NATIVE_LIMITS.responseBytes);
         const toText=value=>{check(value instanceof Fr);return hex(Fr.prototype.toString.call(value),32);};
         const result={schemaVersion:1,number:request.number,hash:request.hash,headerFields:rawHeader.map(toText),fields:compact.map(toText)};
-        await canonical(request,'after');alive();
+        if(pageAnchor){
+         stage='archive-witness';
+         if(request.number===pageAnchor.number)result.archiveWitness=null;
+         else{check(typeof api.getBlockHashMembershipWitness==='function');const witness=await api.getBlockHashMembershipWitness({number:BlockNumber(pageAnchor.number),hash:BlockHash.fromString(pageAnchor.hash)},BlockHash.fromString(request.hash));alive();
+          const index=own(witness,'leafIndex'),path=array(own(witness,'siblingPath'),30,30);check(typeof index==='bigint'&&index===BigInt(request.number));
+          const siblings=[];each(path,value=>siblings.push(toText(value)));result.archiveWitness={leafIndex:String(index),siblingPath:siblings};
+         }
+        }
+        await canonical(request,'after',!pageAnchor);alive();
         return {result,estimatedBytes};
       };
       let value;
@@ -196,13 +205,13 @@ export function createCompactBlockNativeAdapter(options) {
         await canonical(request.anchor,'page-before');alive();
         const blocks=[];let remainingBytes=COMPACT_BLOCK_NATIVE_LIMITS.responseBytes-512;
         for(let offset=0;offset<request.count;offset++){
-          const next=await readBlock({number:request.from+offset},remainingBytes);alive();
+          const next=await readBlock({number:request.from+offset},remainingBytes,request.witnesses?request.anchor:null);alive();
           if(!next)break;
           remainingBytes-=next.estimatedBytes;blocks.push(next.result);
           if(compactPrivateLogCountHint(next.result.fields)!==0)break;
         }
         check(blocks.length>0);await canonical(request.anchor,'page-after');alive();
-        value={schemaVersion:1,mode:'page',anchor:request.anchor,blocks};
+        value={schemaVersion:1,mode:'page',anchor:request.anchor,blocks,...(request.witnesses?{witnesses:true}:{})};
       }else{
         const result=await readBlock(request,COMPACT_BLOCK_NATIVE_LIMITS.responseBytes);check(result);value=result.result;
       }

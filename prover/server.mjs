@@ -43,7 +43,7 @@ export function createProverServer({serviceMode='prover',queue,board,chainId,rol
    // Keep the original admission bucket across a minute-boundary/body await.
    let reserved=false;
    return additional=>{
-    if(reserved||!Number.isSafeInteger(additional)||additional<0||additional>31)return false;
+    if(reserved||!Number.isSafeInteger(additional)||additional<0||additional>255)return false;
     reserved=true;if(rate.compactCount+additional>limit)return false;
     rate.compactCount+=additional;return true;
    };

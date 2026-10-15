@@ -87,3 +87,18 @@ test('anchored page gateway: abort and server close drain a held inspector befor
  await entered;c.abort();await run;assert.equal((await f.post({},page())).status,429);
  let closed=false;const closing=f.server.closeAndDrain().then(()=>{closed=true;});await new Promise(r=>setImmediate(r));assert.equal(closed,false);release();await closing;assert.equal(f.upstreamRequests.length,0);
 });
+
+test('witnessed256 gateway preserves payload and charges full physical reservation even for short prefix',async t=>{
+ const request={...page(),witnesses:true,count:256,anchor:{number:300,hash}};
+ const f=await fixture(t,{compactRequestsPerMinute:256,upstreamReply:p=>({...pageReply({...p,count:1}),witnesses:true,blocks:pageReply({...p,count:1}).blocks.map(b=>({...b,archiveWitness:{leafIndex:String(b.number),siblingPath:Array(30).fill(hash)}}))})});
+ const response=await f.post({},request);assert.equal(response.status,200);const value=await response.json();assert.equal(value.witnesses,true);assert.equal(value.blocks.length,1);assert.equal(value.blocks[0].archiveWitness.siblingPath.length,30);assert.deepEqual(f.upstreamRequests[0].body,request);assert.equal((await f.post()).status,429);
+});
+test('witnessed256 allowance cannot bypass the configured physical quota',async t=>{
+ const f=await fixture(t,{compactRequestsPerMinute:255,upstreamReply:pageReply});assert.equal((await f.post({},{...page(),witnesses:true,count:256,anchor:{number:300,hash}})).status,429);assert.equal(f.inspections(),0);assert.equal(f.upstreamRequests.length,0);
+});
+
+test('witnessed256 default600 bucket admits two ranges and refuses third before upstream',async t=>{
+ const request={...page(),witnesses:true,count:256,anchor:{number:300,hash}};
+ const f=await fixture(t,{upstreamReply:p=>({...pageReply({...p,count:1}),witnesses:true,blocks:pageReply({...p,count:1}).blocks.map(b=>({...b,archiveWitness:{leafIndex:String(b.number),siblingPath:Array(30).fill(hash)}}))})});
+ for(let i=0;i<2;i++)assert.equal((await f.post({},request)).status,200);assert.equal((await f.post({},request)).status,429);assert.equal(f.upstreamRequests.length,2);
+});

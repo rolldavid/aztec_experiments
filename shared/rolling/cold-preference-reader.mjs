@@ -54,7 +54,8 @@ function delivery(input){
  * scope, epoch and canonical anchor. Loss of the reply replays its mailbox, not
  * the utility. Loss of the cache or a new database restarts enumeration.
  * Snapshot/CAS memory is O(current choices); no total preference cap is invented.
- * One step processes <=8 physical logs across <=32 bounded blocks / <=64 emitted rows.
+ * One step processes <=8 physical logs / <=64 emitted rows. Legacy pages
+ * bound32 blocks; explicit witnessed empty-prefix pages bound256 physical blocks.
  * Whole-block root authentication has protocol-bounded but unqualified worst-
  * case CPU. Deep reorg rollback and original SDK initial sync remain separately
  * measured concerns. No generic contract sync or global complete flag is used.
@@ -76,6 +77,8 @@ export function createRollingColdPreferenceReader(input){
   const trusted=sdk.isTrustedPrivateNode.bind(sdk),routed=sdk.isPrivatePXEForNode.bind(sdk),inspect=sdk.inspectTrustedNode.bind(sdk);
   const sync=pxe.sync.bind(pxe),process=pxe.processRollingPreferenceRecovery.bind(pxe),getBlock=node.getBlockData.bind(node),fetchBlock=compact.read.bind(compact);
   const fetchBlocks=typeof compact.readMany==='function'?compact.readMany.bind(compact):null;
+  const fetchWitnessPage=typeof compact.readWitnessPage==='function'?compact.readWitnessPage.bind(compact):null;
+  let pageSpan=32;
   const fetchAnchoredPage=typeof compact.readPage==='function'?compact.readPage.bind(compact):null;
   const poseidon=sdk.poseidon2HashWithSeparator.bind(sdk),Fr=sdk.Fr;
   const account=hex(owner.toString()),board=hex(deployment.board.address.toString()),classId=hex(deployment.board.instance.currentContractClassId.toString());
@@ -101,24 +104,34 @@ export function createRollingColdPreferenceReader(input){
   // without replacing any of those canonical checks.
   async function readiness(){await checked(()=>inspect(node,{expectedNetworkScope:network,proofsEnabled,readinessTier:tier}));}
   async function recheck(anchor){check(await canonical(anchor.blockNumber)===anchor.blockHash);await guard();}
-  const request=async(expected,block=null,restart=false,optimistic=false)=>delivery(await checked(()=>process({...config,expected,block,restart,...(optimistic?{optimistic:true}:{})},{contextGuard:guard})));
+  const request=async(expected,block=null,restart=false,optimistic=false)=>{
+   const value=delivery(await checked(()=>process({...config,expected,block,restart,...(optimistic?{optimistic:true}:{})},{contextGuard:guard})));
+   if(fetchWitnessPage&&block){const blocks=Array.isArray(block)?block:[block];
+    // Hints select bounded public work only AFTER the SDK consumed this prefix.
+    // A failed validation or an unconsumed promotion cannot enlarge the request.
+    if(value.nextBlock>blocks.at(-1).blockNumber)pageSpan=blocks.every(b=>compactPrivateLogCountHint(b.fields)===0)?256:8;
+   }
+   return value;
+  };
   async function fetchPage(observed,signal){
      let block=null;
      if(observed.nextBlock<=observed.anchor.blockNumber){
-      if(fetchAnchoredPage&&observed.nextLog===0){
+      if((fetchWitnessPage||fetchAnchoredPage)&&observed.nextLog===0){
        // The captured page capability is used once, with no scalar retry. The
-       // unchanged SDK authenticates every header/body and archive proof under
+       // SDK authenticates every header/body and supplied archive proof under
        // this pinned anchor before staging; final canonical fences still run.
-       const count=Math.min(32,observed.anchor.blockNumber-observed.nextBlock+1);
-       const wires=await checked(()=>fetchAnchoredPage({from:observed.nextBlock,count,anchor:{number:observed.anchor.blockNumber,hash:observed.anchor.blockHash}},{signal}));
+       const count=Math.min(fetchWitnessPage?pageSpan:32,observed.anchor.blockNumber-observed.nextBlock+1);
+       const wires=await checked(()=>(fetchWitnessPage||fetchAnchoredPage)({from:observed.nextBlock,count,anchor:{number:observed.anchor.blockNumber,hash:observed.anchor.blockHash}},{signal}));
        check(Array.isArray(wires)&&wires.length>0&&wires.length<=count);
        const blocks=[];
        for(let i=0;i<wires.length;i++){
         const wire=wires[i];check(wire.number===observed.nextBlock+i);hex(wire.hash);
+        const proof=fetchWitnessPage?{archiveWitness:wire.archiveWitness===null?null:{...wire.archiveWitness,anchorNumber:observed.anchor.blockNumber,anchorHash:observed.anchor.blockHash}}:{};
+        if(fetchWitnessPage)check(Object.hasOwn(wire,'archiveWitness'));
         const logs=compactPrivateLogCountHint(wire.fields);
         if(i<wires.length-1)check(logs===0);
-        if(logs===null||logs>8){if(blocks.length===0)blocks.push({blockNumber:wire.number,blockHash:wire.hash,fields:wire.fields,headerFields:wire.headerFields});break;}
-        blocks.push({blockNumber:wire.number,blockHash:wire.hash,fields:wire.fields,headerFields:wire.headerFields});
+        if(logs===null||logs>8){if(blocks.length===0)blocks.push({blockNumber:wire.number,blockHash:wire.hash,fields:wire.fields,headerFields:wire.headerFields,...proof});break;}
+        blocks.push({blockNumber:wire.number,blockHash:wire.hash,fields:wire.fields,headerFields:wire.headerFields,...proof});
        }
        check(blocks.length>0);return blocks.length===1?blocks[0]:blocks;
       }

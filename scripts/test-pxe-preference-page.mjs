@@ -287,6 +287,8 @@ await writeFile(receipt,JSON.stringify({cleaned,exists}));
 // PrivateEventStore and the actual application IndexedDB adapter on explicitly
 // labelled fake-indexeddb. This is not native Chromium storage qualification.
 // Transactions/inclusion are synthetic; processed ACIR is a separate opt-in.
+const reorgOnly=process.env.ROLLING_PREFERENCE_REORG_ONLY==='1';
+if(reorgOnly)assert(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1'&&process.env.ROLLING_PREFERENCE_PAGE_ACIR==='1');
 const coldHttpDiagnostic=process.env.ROLLING_COLD_HTTP_DIAGNOSTIC==='1';
 const coldHttpPhaseDiagnostic=process.env.ROLLING_COLD_HTTP_PHASE_DIAGNOSTIC==='1';
 if(coldHttpPhaseDiagnostic)assert(coldHttpDiagnostic,'HTTP phase diagnostic requires existing HTTP composition');
@@ -297,7 +299,7 @@ if(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1') {
  await test('owned isolated SDK and ACIR suite',async suite=>{
   const {pathToFileURL}=await import('node:url');
   const after=fn=>suite.after(fn);
-  const test=(name,fn)=>suite.test(name,{skip:coldHttpDiagnostic&&!name.startsWith('cold HTTP progress')?'HTTP diagnostic only; original case unrun':coldRoundtripDiagnostic&&!name.startsWith('cold roundtrip budget')?'Roundtrip diagnostic only; original case unrun':false},fn);
+  const test=(name,fn)=>suite.test(name,{skip:reorgOnly&&!name.startsWith('real processed ACIR:')?'Focused real synchronizer case only':coldHttpDiagnostic&&!name.startsWith('cold HTTP progress')?'HTTP diagnostic only; original case unrun':coldRoundtripDiagnostic&&!name.startsWith('cold roundtrip budget')?'Roundtrip diagnostic only; original case unrun':false},fn);
   // Bind the reviewed b440 atomicity repair before importing the adapter. No
   // shared dependency is patched by this test. Historical v1 failures remain
   // unresolved evidence; selecting the application's store does not fix v1.
@@ -927,11 +929,12 @@ if(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1') {
         }await Promise.allSettled([...pending]);report.cleanup.listenersClosed=servers.every(x=>!x.listening);report.cleanup.pendingSettled=pending.size===0;};
         try{
           const f=await acirFixture(t),network={chainId:'31337',version:'1',rollup:f.input.network.rollup};
-          if(coldHttpPhaseDiagnostic)for(let i=0;i<65;i++)await f.appendEmpty();
-          const anchorNumber=coldHttpPhaseDiagnostic?69:4,anchorHeader=(await f.publicBlock(anchorNumber)).header;
+          if(coldHttpPhaseDiagnostic)for(let i=0;i<521;i++)await f.appendEmpty();
+          const anchorNumber=coldHttpPhaseDiagnostic?525:4,anchorHeader=(await f.publicBlock(anchorNumber)).header;
           const anchorHash=(await anchorHeader.hash()).toString(),blockId={number:anchorNumber,hash:anchorHash},tip={block:blockId,checkpoint:{number:1,hash:hex(1)}};
           assert.equal((await f.publicBlock(await anchorHeader.toBlockParameter())).header.getBlockNumber(),anchorNumber);await assert.rejects(f.publicBlock({number:anchorNumber-1,hash:await anchorHeader.hash()}),/Synthetic anchored selector hash differs/);
           const raw={
+            getBlockHashMembershipWitness:f.node.getBlockHashMembershipWitness.bind(f.node),
             getNodeInfo:async()=>({nodeVersion:'6.0.0-rc.3',l1ChainId:31337,rollupVersion:1,realProofs:false,
               l1ContractAddresses:Object.fromEntries(L1ContractsNames.map(key=>[key,EthAddress.fromString(network.rollup)])),
               protocolContractAddresses:Object.fromEntries(ProtocolContractsNames.map(key=>[key,AztecAddress.fromFieldUnsafe(new Fr(1))])),txsLimits:{gas:{daGas:1,l2Gas:1}}}),
@@ -980,16 +983,19 @@ if(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1') {
             deployment:{board:{address:f.board,instance:f.instance,artifact},network,proofsEnabled:false},expectedArtifactHash:f.input.expectedArtifactHash,tier:'checkpointed',
             compact:createRollingCompactClient({url:origin,tier:'checkpointed',contextGuard,allowLocalDev:true}),contextGuard,privateStore,walletSecret:hex(901),walletSalt:'902'});
           if(coldHttpPhaseDiagnostic){
-            report.phaseMeasurements=[];let value;
-            for(let i=0;i<4;i++){value=await reader.read({deadlineAt:Date.now()+10000});if(value.progress.nextBlock===5)break;}
+            report.phaseMeasurements=[];report.densePrefix=[];let value;
+            // The genuine processed-ACIR prefix is measured with the same130ms
+            // public-hop delay; setup/initial sync remains explicitly labelled.
+            delayMs=130;measured=true;
+            try{for(let i=0;i<4;i++){phaseSpans=[];wireSpans=[];const began=performance.now();value=await reader.read({deadlineAt:Date.now()+10000});report.densePrefix.push({elapsedMs:performance.now()-began,nextBlock:value.progress.nextBlock,requests:wireSpans.length,phases:phaseSpans.map(x=>({phase:x.phase,elapsedMs:x.end-x.start}))});if(value.progress.nextBlock===5)break;}}finally{measured=false;}
             assert.equal(value.progress.nextBlock,5);assert.equal(value.complete,false);
-            for(const latency of [0,130]){
+            for(const [latency,width]of [[0,8],[0,256],[130,256]]){
               delayMs=latency;phaseSpans=[];wireSpans=[];measured=true;const began=performance.now(),before=value.progress.nextBlock;
               try{value=await reader.read({deadlineAt:Date.now()+10000});}finally{measured=false;}
-              const end=performance.now();assert.equal(value.progress.nextBlock,before+32);assert.equal(value.complete,false);
+              const end=performance.now();assert.equal(value.progress.nextBlock,before+width);assert.equal(value.complete,false);
               const phases=phaseSpans.map(x=>({phase:x.phase,startMs:x.start-began,endMs:x.end-began})),wires=wireSpans.map(x=>({phase:x.phase,methods:x.methods,startMs:x.start-began,endMs:x.end-began}));
               const byPhase={};for(const x of wires){const row=byPhase[x.phase]??={requests:0,methods:{}};row.requests++;for(const method of x.methods)row.methods[method]=(row.methods[method]??0)+1;}
-              report.phaseMeasurements.push({injectedHttpDelayMs:latency,elapsedMs:end-began,nextBlock:value.progress.nextBlock,byPhase,phases,wires});
+              report.phaseMeasurements.push({physicalBlocks:width,injectedHttpDelayMs:latency,elapsedMs:end-began,nextBlock:value.progress.nextBlock,byPhase,phases,wires});
             }
             assert.deepEqual(report.tags,{private:0,public:0});assert.equal(report.native.errors,0);assert.equal(report.gateway.errors,0);assert.equal(report.sdk.errors,0);
             report.stage='complete-phase-diagnostic';await close();assert(report.cleanup.listenersClosed&&report.cleanup.pendingSettled);assert.equal(report.native.pending,0);assert.equal(report.sdk.pending,0);report.readPassed=true;return;
@@ -1114,22 +1120,39 @@ if(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1') {
     });
     await test('actual ACIR mixed page settlement and prefix tampering discard every staged revision',async t=>{
       const f=await acirFixture(t);await f.extendRevision();const blocks=await Promise.all([1,2,3,4,5].map(n=>f.compact(n)));
-      for(const fault of ['prior-note','prior-event','extra-entry','nullifier','account','canonical','receipt'])await t.test(fault,async()=>{
-       let enabled=false,locked=false,capturedNotes,capturedEvents,r;const originalReceipt=f.node.getTxReceipt;let receiptChanged=false;
+      for(const fault of ['prior-note','prior-event','extra-entry','nullifier','account','canonical','receipt','settle-network','settle-proof','settle-anchor'])await t.test(fault,async()=>{
+       let enabled=false,locked=false,capturedNotes,capturedEvents,r;const originalReceipt=f.node.getTxReceipt,originalInfo=f.node.getNodeInfo;let receiptChanged=false,identityChanged=false;
        const contributor={settle:async id=>{if(!enabled||r.page.acirCompleted!==2)return;
         if(fault==='extra-entry')await r.page.privateEventStore.withChangeSet(id,stage=>stage.set('unexplained-extra',stage.values().next().value));
         if(fault==='nullifier')await r.page.noteStore.withChangeSet(id,stage=>{assert(stage.nullifierEmissions.size>0);const key=stage.nullifierEmissions.keys().next().value;stage.nullifierEmissions.set(key,999);});
-        if(fault==='receipt')receiptChanged=true;
+        if(fault==='receipt')receiptChanged=true;if(fault==='settle-anchor')f.invalidate();if(fault==='settle-network'||fault==='settle-proof')identityChanged=true;
        }};
        r=await f.receiver({recovery:true,contributor});const start=await r.page.processRollingPreferenceRecovery(recoveryInput(f),{contextGuard:async()=>{}});
        const noteWith=r.page.noteStore.withChangeSet.bind(r.page.noteStore),eventWith=r.page.privateEventStore.withChangeSet.bind(r.page.privateEventStore);
        r.page.noteStore.withChangeSet=(id,fn)=>noteWith(id,stage=>{capturedNotes=stage;return fn(stage);});r.page.privateEventStore.withChangeSet=(id,fn)=>eventWith(id,stage=>{capturedEvents=stage;return fn(stage);});
        r.page.afterUtility=()=>{if(r.page.acirCompleted!==2)return;if(fault==='prior-note')capturedNotes.notes.values().next().value.scopes.add('unexpected-scope');if(fault==='prior-event')capturedEvents.delete(capturedEvents.keys().next().value);if(fault==='account')locked=true;if(fault==='canonical')f.invalidate();};
-       f.node.getTxReceipt=async(...args)=>{const value=await originalReceipt(...args);if(receiptChanged)value.transactionFee+=1n;return value;};enabled=true;
+       f.node.getTxReceipt=async(...args)=>{const value=await originalReceipt(...args);if(receiptChanged)value.transactionFee+=1n;return value;};f.node.getNodeInfo=async()=>{const value=await originalInfo();return identityChanged?{...value,...(fault==='settle-proof'?{realProofs:true}:{rollupVersion:999})}:value;};enabled=true;
        try{await assert.rejects(r.page.processRollingPreferenceRecovery({...recoveryInput(f),expected:{epoch:start.epoch,sequence:start.sequence},block:blocks},{contextGuard:async()=>{if(locked)throw Error('labelled account change');}}),/PXE_PREFERENCE_RECOVERY_FAILED/);}
-       finally{enabled=false;locked=false;receiptChanged=false;f.restore();f.node.getTxReceipt=originalReceipt;r.page.afterUtility=null;r.page.noteStore.withChangeSet=noteWith;r.page.privateEventStore.withChangeSet=eventWith;}
+       finally{enabled=false;locked=false;receiptChanged=false;f.restore();f.node.getTxReceipt=originalReceipt;f.node.getNodeInfo=originalInfo;r.page.afterUtility=null;r.page.noteStore.withChangeSet=noteWith;r.page.privateEventStore.withChangeSet=eventWith;}
        assert.equal(r.page.acirCompleted,2);assert.deepEqual(await r.page.processRollingPreferenceRecovery(recoveryInput(f),{contextGuard:async()=>{}}),start);const values=await r.read();assert.equal(values.events.length,0);assert.equal(values.notes.length,0);
       });
+    });
+
+    await test('cold roundtrip budget witnessed256 actual archive authentication and no RPC fallback',async t=>{
+      const f=await acirFixture(t);for(let i=0;i<257;i++)await f.appendEmpty();
+      const anchorHeader=(await f.publicBlock(261)).header,anchorHash=(await anchorHeader.hash()).toString();
+      const prefix=await Promise.all([1,2,3,4].map(n=>f.compact(n))),blocks=[];
+      for(let n=5;n<=260;n++){const b=await f.compact(n),w=await f.node.getBlockHashMembershipWitness(await anchorHeader.toBlockParameter(),BlockHash.fromString(b.blockHash));blocks.push({...b,archiveWitness:{anchorNumber:261,anchorHash,leafIndex:String(w.leafIndex),siblingPath:w.siblingPath.map(x=>x.toString())}});}
+      const r=await f.receiver({recovery:true}),initial=await r.page.processRollingPreferenceRecovery(recoveryInput(f),{contextGuard:async()=>{}});
+      const start=await r.page.processRollingPreferenceRecovery({...recoveryInput(f),expected:{epoch:initial.epoch,sequence:initial.sequence},block:prefix},{contextGuard:async()=>{}}),base={...recoveryInput(f),expected:{epoch:start.epoch,sequence:start.sequence}},original=r.page.node.getBlockHashMembershipWitness;let fallbacks=0;
+      r.page.node.getBlockHashMembershipWitness=async()=>{fallbacks++;throw Error('Unexpected supplied-proof fallback');};
+      try{
+       for(const change of [b=>delete b[10].archiveWitness,b=>b[10].archiveWitness.siblingPath.pop(),b=>b[10].archiveWitness.siblingPath[0]=Fr.ZERO.toString(),b=>b[10].archiveWitness.leafIndex='99',b=>b[10].archiveWitness.anchorHash=hex(999),b=>b[10].archiveWitness.anchorNumber=260,b=>b[10].archiveWitness=b[11].archiveWitness,b=>b[10].headerFields[0]=hex(999)]){
+        const bad=structuredClone(blocks);change(bad);await assert.rejects(r.page.processRollingPreferenceRecovery({...base,block:bad},{contextGuard:async()=>{}}),/PXE_PREFERENCE_RECOVERY_FAILED/);assert.deepEqual(await r.page.processRollingPreferenceRecovery(recoveryInput(f),{contextGuard:async()=>{}}),start);
+       }
+       const began=performance.now(),next=await r.page.processRollingPreferenceRecovery({...base,block:blocks},{contextGuard:async()=>{}});assert.equal(next.nextBlock,261);assert.equal(next.sequence,start.sequence+1);assert.equal(fallbacks,0);assert(performance.now()-began<10000);assert.equal(r.page.acirCompleted,1);
+       assert.deepEqual(await r.page.processRollingPreferenceRecovery({...base,block:blocks},{contextGuard:async()=>{}}),next);
+      }finally{r.page.node.getBlockHashMembershipWitness=original;}
     });
     await test('actual SDK mixed batch enforces eight logs and aggregate bytes before private staging',async t=>{
       const f=await acirFixture(t);await f.denseForeignPrefix();const r=await f.receiver({recovery:true}),start=await r.page.processRollingPreferenceRecovery(recoveryInput(f),{contextGuard:async()=>{}}),blocks=await Promise.all([1,2,3,4].map(n=>f.compact(n))),base={...recoveryInput(f),expected:{epoch:start.epoch,sequence:start.sequence}};
@@ -1176,7 +1199,7 @@ if(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1') {
         };
         let next;try{next=await r.page.processRollingPreferenceRecovery({...recoveryInput(f),expected:{epoch:start.epoch,sequence:start.sequence},block:blocks},{contextGuard:async()=>{}});}finally{for(const [method,original]of originals)r.page.node[method]=original;}
         const durationMs=performance.now()-begun;assert.equal(pending.size,0);assert.equal(next.nextBlock,37);assert.equal(next.sequence,start.sequence+1);assert.equal(next.complete,false);assert.deepEqual(next.records,[]);assert.deepEqual(await r.read(),before);assert.equal(r.page.acirCompleted??0,callsBefore);
-        const counts=Object.fromEntries(methods.map(method=>[method,spans.filter(x=>x.method===method).length]));assert.equal(counts.getBlockHashMembershipWitness,32);assert.equal(counts.getNodeInfo,3);assert.equal(counts.getContract,3);assert.equal(counts.getBlockData,3);
+        const counts=Object.fromEntries(methods.map(method=>[method,spans.filter(x=>x.method===method).length]));assert.equal(counts.getBlockHashMembershipWitness,32);assert.equal(counts.getNodeInfo,3);assert.equal(counts.getContract,1);assert.equal(counts.getBlockData,3);
         const witness=spans.filter(x=>x.method==='getBlockHashMembershipWitness'),fixed=spans.filter(x=>x.method!=='getBlockHashMembershipWitness');
         report.frames.push({label,witnessDelayMs,fixedDelayMs,durationMs,counts,maximumPending,allPortUnionMs:union(spans.map(x=>[x.startMs,x.endMs])),witnessPortUnionMs:union(witness.map(x=>[x.startMs,x.endMs])),fixedPortUnionMs:union(fixed.map(x=>[x.startMs,x.endMs])),outsidePortIntervalsMs:durationMs-union(spans.map(x=>[x.startMs,x.endMs])),spans});
         const witnessesAfter=f.counters.archiveProofs;assert.deepEqual(await r.page.processRollingPreferenceRecovery({...recoveryInput(f),expected:{epoch:start.epoch,sequence:start.sequence},block:blocks},{contextGuard:async()=>{}}),next);assert.equal(f.counters.archiveProofs,witnessesAfter,'Durable replay must not reauthenticate consumed bodies');
@@ -1432,26 +1455,27 @@ if(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1') {
       await assert.rejects(recoveryStep(f,r,current),/PXE_PREFERENCE_RECOVERY_FAILED/);
     });
     await test('real processed ACIR: emitted encrypted preference head/event, scoped keys, validators and atomic discard',async t=>{
+      const child=(name,fn)=>t.test(name,{skip:reorgOnly&&!name.startsWith('actual BlockSynchronizer')?'Focused real synchronizer case only':false},fn);
       const f=await acirFixture(t);
-      await t.test('absent owner key rejects even though the complete public address is registered',async()=>{
+      await child('absent owner key rejects even though the complete public address is registered',async()=>{
         const r=await f.receiver({withKeys:false,completeAddress:f.sender.complete});
         await assert.rejects(r.page.processRollingPreferencePage(f.input,{contextGuard:async()=>{}}),/PXE_PREFERENCE_PAGE_FAILED/);
         const state=await r.read();assert.equal(state.events.length,0);assert.equal(state.notes.length,0);assert.equal(r.syncService.syncedContracts.size,0);
       });
-      await t.test('absent head and absent key cannot turn recovery into a successful empty result',async()=>{
+      await child('absent head and absent key cannot turn recovery into a successful empty result',async()=>{
         const foreign=await CompleteAddress.fromSecretKeyAndPartialAddress(Fr.random(),new Fr(554));
         const r=await f.receiver({withKeys:false,completeAddress:foreign});
         await assert.rejects(r.page.processRollingPreferencePage({...f.input,scope:foreign.address.toString()},{contextGuard:async()=>{}}),/PXE_PREFERENCE_PAGE_FAILED/);
         assert.equal(r.page.acirCompleted,undefined);
         const state=await r.read();assert.equal(state.events.length,0);assert.equal(state.notes.length,0);assert.equal(r.syncService.syncedContracts.size,0);
       });
-      await t.test('original utility denies owner key outside actual execution scope',async()=>{
+      await child('original utility denies owner key outside actual execution scope',async()=>{
         const r=await f.receiver();
         const call=await r.stores.contractStore.getFunctionCall('recover_preference_page',[r.complete.address,TxHash.fromString(f.input.txHash).hash,4,Fr.fromString(f.input.blockHash),0,f.input.logCount],f.board,f.contractClass.id);
         await assert.rejects(r.queue.runSynced(({changeSetId})=>r.functionSimulator.runUtility(call,[],f.header,[],changeSetId)),/Key validation request denied: no scoped account/);
         const state=await r.read();assert.equal(state.events.length,0);assert.equal(state.notes.length,0);assert.equal(r.syncService.syncedContracts.size,0);
       });
-      await t.test('late account failure drains and discards real decrypted staged records',async()=>{
+      await child('late account failure drains and discards real decrypted staged records',async()=>{
         const r=await f.receiver();let locked=false,postUtilityGuards=0;r.page.afterUtility=()=>{locked=true;};
         await assert.rejects(r.page.processRollingPreferencePage(f.input,{contextGuard:async()=>{
           if(locked){postUtilityGuards++;assert.equal(r.page.acirCompleted,1);assert.equal(r.page.stagedNoteCount,1);throw Error('SYNTHETIC_ACCOUNT_LOCK');}
@@ -1459,7 +1483,7 @@ if(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1') {
         assert.equal(postUtilityGuards,1);assert.equal(r.page.acirCompleted,1);assert.equal(r.page.stagedNoteCount,1);
         const state=await r.read();assert.equal(state.events.length,0);assert.equal(state.notes.length,0);assert.equal(r.syncService.syncedContracts.size,0);
       });
-      await t.test('canonical change after actual decryption discards both staged stores',async()=>{
+      await child('canonical change after actual decryption discards both staged stores',async()=>{
         const r=await f.receiver();r.page.afterUtility=f.invalidate;
         try {
           await assert.rejects(r.page.processRollingPreferencePage(f.input,{contextGuard:async()=>{}}),/PXE_PREFERENCE_PAGE_FAILED/);
@@ -1467,7 +1491,7 @@ if(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1') {
         } finally {f.restore();}
         const state=await r.read();assert.equal(state.events.length,0);assert.equal(state.notes.length,0);assert.equal(r.syncService.syncedContracts.size,0);
       });
-      await t.test('original lifecycle contributor veto after final guard discards decrypted staged records',async()=>{
+      await child('original lifecycle contributor veto after final guard discards decrypted staged records',async()=>{
         let fail=true,settled=0,r;
         const contributor={settle:async()=>{if(fail){settled++;assert.equal(r.page.acirCompleted,1);assert.equal(r.page.stagedNoteCount,1);throw Error('SYNTHETIC_CONTRIBUTOR_FAILURE');}}};
         r=await f.receiver({contributor});let guards=0;
@@ -1475,7 +1499,7 @@ if(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1') {
         assert.equal(guards,13,'Original eight guards plus five archive validation guards before settlement');assert.equal(settled,2);fail=false;
         const state=await r.read();assert.equal(state.events.length,0);assert.equal(state.notes.length,0);assert.equal(r.syncService.syncedContracts.size,0);
       });
-      for(const race of ['canonical','account'])await t.test(`successful settlement ${race} race: pristine commits, patched discards actual ACIR rows`,async()=>{
+      for(const race of ['canonical','account'])await child(`successful settlement ${race} race: pristine commits, patched discards actual ACIR rows`,async()=>{
         for(const pristine of [true,false]){
           let enabled=true,locked=false,settled=0;
           const contributor={onOperationEnd(){},settle:async()=>{if(enabled){settled++;if(race==='canonical')f.invalidate();else locked=true;}}};
@@ -1490,7 +1514,7 @@ if(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1') {
           const state=await r.read();assert.equal(state.events.length,pristine?1:0);assert.equal(state.notes.length,pristine?1:0);
         }
       });
-      await t.test('receipt mutation during successful settlement is rejected by original-node revalidation',async()=>{
+      await child('receipt mutation during successful settlement is rejected by original-node revalidation',async()=>{
         let enabled=true,changed=false;
         const original=f.node.getTxReceipt;
         f.node.getTxReceipt=async(...args)=>{const receipt=await original(...args);if(changed)receipt.transactionFee+=1n;return receipt;};
@@ -1500,7 +1524,7 @@ if(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1') {
         finally{enabled=false;changed=false;f.node.getTxReceipt=original;}
         const state=await r.read();assert.equal(state.events.length,0);assert.equal(state.notes.length,0);
       });
-      await t.test('held successful contributor prevents commit and next operation until fresh context veto and complete drain',async()=>{
+      await child('held successful contributor prevents commit and next operation until fresh context veto and complete drain',async()=>{
         let enter,release,enabled=true,settled=0,secondEntered=false;
         const entered=new Promise(r=>enter=r),gate=new Promise(r=>release=r);
         const contributor={onOperationEnd(_id,outcome){if(outcome==='discarded'){enabled=false;f.restore();}},settle:async()=>{if(enabled){settled++;enter();await gate;}}};
@@ -1514,7 +1538,7 @@ if(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1') {
         assert.equal(settled,2);assert.equal(secondEntered,true);
         const state=await r.read();assert.equal(state.events.length,0);assert.equal(state.notes.length,0);
       });
-      await t.test('failure in a later staged store rolls back actual note and event database writes',async()=>{
+      await child('failure in a later staged store rolls back actual note and event database writes',async()=>{
         let fail=true,commits=0;
         const extraStore={storeName:'labelled-late-failure',beginChangeSet(){},discardChangeSet(){},async commitChangeSet(){commits++;if(fail)throw Error('SYNTHETIC_LATE_STORE');}};
         const r=await f.receiver({extraStore});
@@ -1522,30 +1546,43 @@ if(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1') {
         assert.equal(r.page.acirCompleted,1);assert.equal(commits,1);fail=false;
         const state=await r.read();assert.equal(state.events.length,0);assert.equal(state.notes.length,0);
       });
-      await t.test('actual BlockSynchronizer prunes committed ACIR head and event with indexes on canonical reorg',async()=>{
-        const r=await f.receiver();await r.page.processRollingPreferencePage(f.input,{contextGuard:async()=>{}});
-        let state=await r.read();assert.equal(state.notes.length,1);assert.equal(state.events.length,1);
-        await r.stores.anchorBlockStore.setHeader(f.header);
+      await child('actual BlockSynchronizer prunes committed ACIR head and event with indexes on canonical reorg',async()=>{
+        const r=await f.receiver();let state;
         const canonical=BlockHeader.fromBuffer(f.header.toBuffer());canonical.globalVariables.blockNumber=3;canonical.txEffectsTreeRoot=Fr.ZERO;
         const hash=(await canonical.hash()).toString(),id={number:3,hash};
-        const checkpoint={block:id,checkpoint:{number:1,hash}};
-        const tips={proposed:id,checkpointed:checkpoint,proven:checkpoint,finalized:checkpoint};let cacheWipes=0;
-        const node={getChainTips:async()=>tips,getBlock:async parameter=>{
-          assert(parameter===3||parameter.hash instanceof BlockHash);return {header:canonical,hash:BlockHash.fromString(hash)};
-        },wipeCache(){cacheWipes++;}};
+        const genesis=BlockHeader.empty(),genesisHash=await genesis.hash();
+        const {L2TipsKVStore}=await import('@aztec-labs/kv-store/stores');
+        const reorgTips=new L2TipsKVStore(r.db,'actual-reorg-fixture',genesisHash);
+        let tip=3,cacheWipes=0;
+        const liveId=()=>tip===3?id:{number:4,hash:f.input.blockHash};
+        const node={getChainTips:async()=>{const selected=liveId(),checkpoint={block:selected,checkpoint:{number:tip===4?2:1,hash:selected.hash}},finalized={block:id,checkpoint:{number:1,hash:id.hash}};return {proposed:selected,checkpointed:checkpoint,proven:checkpoint,finalized};},getBlock:async parameter=>{
+          const number=typeof parameter==='number'?parameter:parameter?.number;
+          const requested=parameter?.hash?.toString();
+          if(number===0||requested===genesisHash.toString())return {header:genesis,hash:genesisHash};
+          if(number===3||requested===hash)return {header:canonical,hash:BlockHash.fromString(hash)};
+          if(tip===4&&(number===4||requested===f.input.blockHash))return {header:f.header,hash:BlockHash.fromString(f.input.blockHash)};
+          return undefined;
+        },getBlocks(){throw Error('Unexpected reorg fixture payload request');},wipeCache(){cacheWipes++;}};
+        node.getBlockData=async q=>{const b=await node.getBlock(q);return b?{header:b.header,blockHash:b.hash}:undefined;};
         const synchronizer=new BlockSynchronizer(node,r.db,r.stores.anchorBlockStore,r.stagedStores,
-          r.stores.l2TipsStore,r.syncService,{syncChainTip:'proposed'});
+          reorgTips,r.syncService,{syncChainTip:'proposed'});
+        const events=[],handle=synchronizer.handleBlockStreamEvent.bind(synchronizer);
+        synchronizer.handleBlockStreamEvent=async event=>{events.push(event.type);return handle(event);};
         try{
-          await synchronizer.handleBlockStreamEvent({type:'chain-pruned',block:id,checkpointed:checkpoint,proven:checkpoint});
+          await synchronizer.sync();tip=4;await synchronizer.sync();
+          await r.page.processRollingPreferencePage(f.input,{contextGuard:async()=>{}});state=await r.read();assert.equal(state.notes.length,1);assert.equal(state.events.length,1);
+          const wipesBefore=cacheWipes;events.length=0;tip=3;await synchronizer.sync();
           state=await r.read();assert.equal(state.notes.length,0);assert.equal(state.events.length,0);
-          assert.equal((await r.stores.anchorBlockStore.getBlockHeader()).getBlockNumber(),3);assert.equal(cacheWipes,1);
+          assert.equal((await r.stores.anchorBlockStore.getBlockHeader()).getBlockNumber(),3);
+          assert.deepEqual(events.filter(type=>type==='chain-pruned'||type==='chain-proposed'),['chain-pruned','chain-proposed']);
+          assert.equal(cacheWipes,wipesBefore+2,'Normal prune and proposed acknowledgements each clear node cache');
           assert.equal(r.syncService.syncedContracts.size,0);
           for(const name of ['note_nullifiers_by_block','note_nullifiers_by_contract','events_by_block_number','events_by_contract_selector']){
             const rows=[];for await(const entry of r.db.openMultiMap(name).entriesAsync())rows.push(entry);assert.deepEqual(rows,[]);
           }
         }finally{await synchronizer.stop();}
       });
-      await t.test('canonical encrypted head and event commit without contract-sync completion',async()=>{
+      await child('canonical encrypted head and event commit without contract-sync completion',async()=>{
         let settled=false,postSettleGuards=0;const contributor={onOperationEnd(){},settle:async()=>{settled=true;}};
         const r=await f.receiver({contributor});assert.deepEqual(await r.page.processRollingPreferencePage(f.input,{contextGuard:async()=>{if(settled)postSettleGuards++;}}),{schemaVersion:1,processed:f.input.logCount,admitted:2});
         assert.equal(postSettleGuards,3,'Post-settle archive, canonical and final account guards');

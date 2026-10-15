@@ -139,3 +139,15 @@ test('anchored page: full decoded body bound applies before parsing and drains c
  const held=gate();let cancelled=false,calls=0;const client=fixture(t,async()=>{calls++;return new Response(new ReadableStream({start(c){c.enqueue(new Uint8Array(COMPACT_TRANSPORT_LIMITS.responseBytes+1));},async cancel(){cancelled=true;await held.promise;}}),{headers:{'content-type':'application/json'}});});
  let settled=false;const run=client.readPage(pageArgs()).finally(()=>{settled=true;});await new Promise(r=>setImmediate(r));assert(cancelled);assert.equal(settled,false);await assert.rejects(client.readPage(pageArgs()));held.release();await assert.rejects(run);assert.equal(calls,1);
 });
+
+test('witnessed page explicit capability bounds256 and preserves exact detached proof without fallback',async t=>{
+ let calls=0;const client=fixture(t,async(_url,o)=>{calls++;const p=JSON.parse(o.body);assert.equal(p.witnesses,true);assert.equal(p.count,256);
+  return response({schemaVersion:1,mode:'page',witnesses:true,anchor:p.anchor,blocks:Array.from({length:256},(_,i)=>({...body(),number:i+1,archiveWitness:{leafIndex:String(i+1),siblingPath:Array(30).fill(hash)}}))});});
+ const value=await client.readWitnessPage({from:1,count:256,anchor:{number:257,hash}});assert.equal(value.length,256);assert(Object.isFrozen(value[0].archiveWitness.siblingPath));
+ for(const count of [0,257])await assert.rejects(client.readWitnessPage({from:1,count,anchor:{number:300,hash}}));assert.equal(calls,1);
+ await assert.rejects(client.readPage({from:1,count:256,anchor:{number:257,hash}}));assert.equal(calls,1);
+});
+for(const [kind,change]of Object.entries({missing:b=>delete b.archiveWitness,index:b=>b.archiveWitness.leafIndex='6',short:b=>b.archiveWitness.siblingPath.pop(),extra:b=>b.archiveWitness.owner=hash,accessor:b=>Object.defineProperty(b.archiveWitness,'leafIndex',{get(){throw Error('PRIVATE');}})}))test('witnessed page rejects '+kind+' proof before SDK and never retries',async t=>{
+ let calls=0;const client=fixture(t,async(_url,o)=>{calls++;const p=JSON.parse(o.body),b={...body(),archiveWitness:{leafIndex:'7',siblingPath:Array(30).fill(hash)}};change(b);return response({schemaVersion:1,mode:'page',witnesses:true,anchor:p.anchor,blocks:[b]});});
+ await assert.rejects(client.readWitnessPage({from:7,count:1,anchor:{number:8,hash}}));assert.equal(calls,1);
+});
