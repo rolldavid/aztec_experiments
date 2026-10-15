@@ -1,10 +1,13 @@
 // Development-only wallet/node doubles. Real Rolling application, processed ABI,
 // encrypted descriptors, IndexedDB CAS adapter and backup/restore are composed.
-import test from 'node:test';
+import test, {after} from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {IDBFactory} from 'fake-indexeddb';
 import {Fr} from '@aztec-labs/foundation/curves/bn254';
+import {poseidon2HashWithSeparator} from '@aztec-labs/foundation/crypto/poseidon';
+import {deriveStorageSlotInMap} from '@aztec-labs/stdlib/hash';
+import {BarretenbergSync} from '@aztec-foundation/bb.js';
 import {AztecAddress} from '@aztec-labs/stdlib/aztec-address';
 import {encodeArguments,loadContractArtifact,decodeFunctionSignature} from '@aztec-labs/stdlib/abi';
 import {createRollingColdPreferenceReader} from './rolling/cold-preference-reader.mjs';
@@ -16,13 +19,20 @@ import {l2JournalScopeText} from './l2-journal.mjs';
 const hex=n=>'0x'+BigInt(n).toString(16).padStart(64,'0');
 const artifact=loadContractArtifact(JSON.parse(fs.readFileSync(process.env.ROLLING_TEST_ARTIFACT??new URL('../billboard/target/rolling_contract-RollingBoard.json',import.meta.url))));
 const storage=()=>createBrowserJournalStorage(new IDBFactory());
+after(async()=>{await BarretenbergSync.destroySingleton();});
 function fixture(){
- const state={sends:0},node={},owner=new AztecAddress(new Fr(3n));
+ const state={sends:0},node={
+  getBlockData:async height=>({header:{globalVariables:{blockNumber:height==='checkpointed'?1:height}},blockHash:hex(42)}),
+  getPublicStorageAt:async(reference,address,slot)=>{
+   assert.deepEqual(reference,{hash:hex(42)});assert.equal(address.toString(),hex(1));assert(slot instanceof Fr);
+   return Fr.ZERO;
+  },
+ },owner=new AztecAddress(new Fr(3n));
  const credentials={walletSecret:hex(8),walletSalt:'0'};
  const journal={assertCanStart:async()=>null,inspectOutcome:async()=>null,inspect:async()=>null};
  const wallet={aztecNode:node,pxe:{},getAccounts:async()=>[owner],getChainInfo:async()=>({chainId:31337,version:1}),
   sendTx:async()=>{state.sends++;throw Error('Unknown send outcome');}};
- const sdk={Fr,AztecAddress,encodeArguments,Contract:{at:()=>({methods:{register_name:(...args)=>({args})}})},
+ const sdk={Fr,AztecAddress,encodeArguments,poseidon2HashWithSeparator,deriveStorageSlotInMap,Contract:{at:()=>({methods:{register_name:(...args)=>({args})}})},
   isTrustedPrivateNode:n=>n===node,isPrivateWalletForNode:(w,n)=>w===wallet&&n===node,isPrivatePXEForNode:(p,n)=>p===wallet.pxe&&n===node,
   inspectTrustedNode:async()=>{},preparePrivateFeePayment:async()=>({availableCredit:100n}),
   estimatePrivateFeeTransaction:async()=>({maximumFee:10n,payload:{},gasSettings:{}})};
