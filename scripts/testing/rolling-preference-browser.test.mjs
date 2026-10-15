@@ -97,6 +97,15 @@ test('real production compact client emits the exact accepted selector; unavaila
  try{const c=createRollingCompactClient({url:origins.trustedOrigin,tier:'checkpointed',allowLocalDev:true,contextGuard:async()=>{}});await assert.rejects(c.read({number:7,hash:compactSelector().hash}),{code:'BB_COMPACT_BLOCK_UNAVAILABLE'});}finally{globalThis.fetch=previous;}
  assert.deepEqual(requests,[{allowed:true,redirect:'error',credentials:'omit'}]);assert.equal(t.snapshot().compactRequests,1);
 });
+const compactPage=()=>({schemaVersion:1,mode:'page',from:7,count:32,anchor:{number:38,hash:compactSelector().hash},tier:'checkpointed'});
+test('real production compact page request passes the closed observer; transport failure remains failure',async()=>{
+ const {createRollingCompactClient}=await import('../../shared/rolling/compact-client.mjs');const previous=globalThis.fetch,t=createRollingPreferenceTraffic(origins),requests=[];
+ globalThis.fetch=async(url,init)=>{requests.push({allowed:t.inspect(req(url,init.method,init.body)),body:JSON.parse(init.body),redirect:init.redirect,credentials:init.credentials});return new Response('',{status:503});};
+ try{const c=createRollingCompactClient({url:origins.trustedOrigin,tier:'checkpointed',allowLocalDev:true,contextGuard:async()=>{}}),p=compactPage();await assert.rejects(c.readPage({from:p.from,count:p.count,anchor:p.anchor}),{code:'BB_COMPACT_BLOCK_UNAVAILABLE'});}finally{globalThis.fetch=previous;}
+ assert.deepEqual(requests,[{allowed:true,body:compactPage(),redirect:'error',credentials:'omit'}]);assert.equal(t.snapshot().compactRequests,1);assert.equal(t.snapshot().inspectionErrors,0);assert(!JSON.stringify(t.snapshot()).includes(compactSelector().hash));
+});
+const pageMutations={extra:p=>p.owner='PRIVATE_SENTINEL',mode:p=>p.mode='other',missing:p=>delete p.anchor,zero:p=>p.from=0,oversized:p=>p.count=33,empty:p=>p.count=0,fraction:p=>p.count=1.5,range:p=>p.anchor.number=37,tier:p=>p.tier='proposed',anchorExtra:p=>p.anchor.owner='PRIVATE_SENTINEL',anchorHash:p=>p.anchor.hash='0x1'};
+for(const [name,change]of Object.entries(pageMutations))test('compact page observer rejects '+name,()=>{const p=compactPage();change(p);const t=createRollingPreferenceTraffic(origins);assert.equal(t.inspect(compactRequest(p)),false);assert.equal(t.snapshot().compactRequests,0);assert.equal(t.snapshot().inspectionErrors,1);assert(!JSON.stringify(t.snapshot()).includes('PRIVATE_SENTINEL'));});
 test('cold recovery requires compact evidence and excludes tag discovery only within its window',()=>{
  const t=createRollingPreferenceTraffic(origins);assert(t.inspect(req(origins.trustedOrigin+'/v1/node','POST',rpc('aztec_getPrivateLogsByTags',['PRIVATE_SENTINEL']))));const before=t.snapshot();assert(t.inspect(compactRequest()));
  assert.deepEqual(checkRollingColdRecoveryWindow(before,t.snapshot(),{requireCompact:true}),{windows:1,compactRequests:1,tagDiscoveryRequests:0});

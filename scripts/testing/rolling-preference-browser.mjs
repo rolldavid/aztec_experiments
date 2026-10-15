@@ -4,7 +4,7 @@
 // content is assertion-only: never injected into application or persisted here.
 import assert from 'node:assert/strict';
 import {projectRollingInitialization} from '../../apps/rolling/wallet-panel.mjs';
-import {COMPACT_GATEWAY_ROUTE,COMPACT_TRANSPORT_LIMITS,validateCompactSelector} from '../../shared/rolling/compact-client.mjs';
+import {COMPACT_GATEWAY_ROUTE,COMPACT_TRANSPORT_LIMITS,validateCompactRequest} from '../../shared/rolling/compact-client.mjs';
 import {validateRollingBrowserBackup,waitForRollingComposerState} from './rolling-composer-browser.mjs';
 const invalid=()=>Error('Invalid private preference browser control.');
 const fail=()=>{throw Error('Preference browser check failed.');};
@@ -71,7 +71,7 @@ export function createRollingPreferenceTraffic({origin:publicOrigin,trustedOrigi
    if(u.origin===trustedOrigin&&u.pathname===COMPACT_GATEWAY_ROUTE){
     if(method==='OPTIONS'){if(body!==null&&body!=='')throw invalid();counts.compactPreflights++;return true;}
     if(method!=='POST'||typeof body!=='string'||Buffer.byteLength(body)>COMPACT_TRANSPORT_LIMITS.requestBytes)throw invalid();
-    validateCompactSelector(JSON.parse(body),'checkpointed');counts.compactRequests++;return true;
+    validateCompactRequest(JSON.parse(body),'checkpointed');counts.compactRequests++;return true;
    }
    if(u.origin===trustedOrigin&&u.pathname==='/healthz'&&method==='GET')return true;
    if(u.origin===trustedOrigin&&u.pathname==='/v1/jobs'&&method==='POST'){counts.proofSubmits++;return false;}
