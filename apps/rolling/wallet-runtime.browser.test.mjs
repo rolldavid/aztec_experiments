@@ -221,3 +221,54 @@ test('funding relay caps response bytes and rejects a late account change before
   let calls=0;globalThis.fetch=async()=>new Response('{}',{status:200});await assert.rejects(createRollingFundingRelay({contextGuard:async()=>{if(++calls>1)throw Error('account changed');}}).terms());
  }finally{globalThis.fetch=old;}
 });
+
+// Deadline composition against the real loader, with explicit DOM/transport
+// doubles and virtual time. These do not qualify remote browser delivery.
+async function assetDeadlineFixture(t,{holdArtifact=false}={}){
+ t.mock.timers.enable({apis:['setTimeout']});
+ for(const [name,value] of Object.entries({isSecureContext:true,crossOriginIsolated:true,navigator:{locks:{request(){}}}})){
+  const before=Object.getOwnPropertyDescriptor(globalThis,name);Object.defineProperty(globalThis,name,{configurable:true,value});
+  t.after(()=>before?Object.defineProperty(globalThis,name,before):delete globalThis[name]);
+ }
+ const bytes=Buffer.from('{}'),hash=createHash('sha256').update(bytes).digest('hex');
+ const asset=url=>({url,bytes:bytes.length,sha256:hash});
+ const scripts=['ethers.js','aztec_bundle.js','crs-client.js','wallet-providers.js','passkey-wallet.js','wallet-backup.js','claim-secret-store.js','account.js','engine.js'].map(name=>asset('/wallet/'+name));
+ const metadata={schemaVersion:1,config:{network:{chainId:'31337'}},trustedQuery:{},remoteProver:null,proofsEnabled:false,scripts,
+  artifacts:{board:asset('/wallet/board.json'),privateFee:asset('/wallet/private-fee.json')},crs:asset('/crs/manifest.json')};
+ const requests=[],timeouts=[],elements=[];let cancelled=0,ready;const reached=new Promise(resolve=>ready=resolve);
+ const savedDocument=Object.getOwnPropertyDescriptor(globalThis,'document');
+ Object.defineProperty(globalThis,'document',{configurable:true,value:{createElement:()=>({remove(){this.removed=true;}}),head:{append(element){elements.push(element);ready();}}}});
+ t.after(()=>savedDocument?Object.defineProperty(globalThis,'document',savedDocument):delete globalThis.document);
+ const oldCrs=Object.getOwnPropertyDescriptor(globalThis,'BILLBOARD_CRS_MANIFEST'),oldConfig=Object.getOwnPropertyDescriptor(globalThis,'_getPublicConfig');
+ t.after(()=>{for(const [key,before] of [['BILLBOARD_CRS_MANIFEST',oldCrs],['_getPublicConfig',oldConfig]])before?Object.defineProperty(globalThis,key,before):delete globalThis[key];});
+ t.mock.method(AbortSignal,'timeout',ms=>{timeouts.push(ms);const controller=new AbortController();setTimeout(()=>controller.abort(),ms);return controller.signal;});
+ t.mock.method(globalThis,'fetch',async(url,options)=>{
+  requests.push(url);
+  if(url==='/wallet/runtime.json')return new Response(JSON.stringify(metadata));
+  if(holdArtifact)return {ok:true,body:{getReader:()=>({read:()=>new Promise((resolve,reject)=>{ready();options.signal.addEventListener('abort',()=>reject(Error('controlled asset deadline')),{once:true});}),cancel:async()=>{cancelled++;}})}};
+  return new Response(bytes);
+ });
+ const {loadRollingWalletRuntime}=await import('./wallet-runtime.mjs?deadline='+encodeURIComponent(t.name));
+ const promise=loadRollingWalletRuntime();let settled=false;
+ const result=promise.then(()=>{settled=true;return 'unexpected-success';},error=>{settled=true;return error.code;});
+ const flush=()=>new Promise(resolve=>setImmediate(resolve));await Promise.race([reached,result.then(code=>{throw Error(code);})]);await flush();
+ return {promise,result,loadRollingWalletRuntime,requests,timeouts,elements,flush,get settled(){return settled;},get cancelled(){return cancelled;}};
+}
+test('public asset loader permits slow scripts within 60s and fences timeout without replay',async t=>{
+ const f=await assetDeadlineFixture(t);
+ assert.deepEqual(f.timeouts,[30000,60000,60000,60000]);assert.equal(f.elements.length,1);
+ assert.equal(f.elements[0].integrity,'sha256-'+createHash('sha256').update('{}').digest('base64'));
+ assert.equal(f.elements[0].crossOrigin,'anonymous');assert.equal(f.elements[0].referrerPolicy,'no-referrer');
+ t.mock.timers.tick(45000);await f.flush();assert.equal(f.settled,false);assert.equal(f.elements[0].removed,undefined);
+ f.elements[0].onload();await f.flush();assert.equal(f.elements.length,2);
+ t.mock.timers.tick(59999);await f.flush();assert.equal(f.settled,false);
+ t.mock.timers.tick(1);assert.equal(await f.result,'ROLLING_RUNTIME_UNAVAILABLE');assert.equal(f.elements[1].removed,true);
+ const before=[f.requests.length,f.elements.length];assert.equal(f.loadRollingWalletRuntime(),f.promise);
+ await assert.rejects(f.loadRollingWalletRuntime(),{code:'ROLLING_RUNTIME_UNAVAILABLE'});assert.deepEqual([f.requests.length,f.elements.length],before);
+});
+test('public artifact loader aborts and cancels a stalled body at 60s without script or replay',async t=>{
+ const f=await assetDeadlineFixture(t,{holdArtifact:true});assert.deepEqual(f.timeouts,[30000,60000]);
+ t.mock.timers.tick(59999);await f.flush();assert.equal(f.settled,false);
+ t.mock.timers.tick(1);assert.equal(await f.result,'ROLLING_RUNTIME_UNAVAILABLE');assert.equal(f.cancelled,1);assert.equal(f.elements.length,0);
+ assert.equal(f.loadRollingWalletRuntime(),f.promise);assert.deepEqual(f.requests,['/wallet/runtime.json','/crs/manifest.json']);
+});

@@ -46,7 +46,7 @@ async function sendAsset(res,status,headers,body){
  await new Promise((resolve,reject)=>{
   const done=()=>{clearTimeout(timer);res.off('finish',done);res.off('close',done);res.off('error',failed);resolve();};
   const failed=error=>{clearTimeout(timer);res.off('finish',done);res.off('close',done);res.off('error',failed);reject(error);};
-  const timer=setTimeout(()=>res.destroy(),30000);timer.unref?.();
+  const timer=setTimeout(()=>res.destroy(),60000);timer.unref?.();
   res.once('finish',done);res.once('close',done);res.once('error',failed);
   try{res.writeHead(status,headers);res.end(body);}catch(error){failed(error);}
  });

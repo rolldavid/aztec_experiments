@@ -82,7 +82,7 @@ class HeldAssetResponse extends EventEmitter {
  destroy(){this.destroyed=true;this.emit('close');}
  finish(){this.emit('finish');}
 }
-test('wallet response byte ownership and 30s deadline cannot pin read/compression admission',async t=>{
+test('wallet response byte ownership and 60s deadline cannot pin read/compression admission',async t=>{
  t.mock.timers.enable({apis:['setTimeout']});
  const big=Buffer.alloc(64*1024*1024),small=Buffer.from('worker');let reads=0;
  const handler=createRollingReaderAssetHandler({connectOrigins:[],read:async p=>{reads++;return {body:p==='/wallet/large.wasm'?big:small,type:'application/wasm'};}});
@@ -91,7 +91,8 @@ test('wallet response byte ownership and 30s deadline cannot pin read/compressio
  const refused=new HeldAssetResponse();await handler(request('/wallet/worker.js'),refused);assert.equal(refused.status,503);assert.equal(reads,3);
  // Neither large outgoing response owns the read/compressor. Advancing exactly
  // its fixed deadline closes both, drains the handlers and releases all bytes.
- t.mock.timers.tick(30000);await Promise.all([one,two]);assert.equal(first.destroyed,true);assert.equal(second.destroyed,true);
+ t.mock.timers.tick(59999);assert.equal(first.destroyed,false);assert.equal(second.destroyed,false);
+ t.mock.timers.tick(1);await Promise.all([one,two]);assert.equal(first.destroyed,true);assert.equal(second.destroyed,true);
  const next=new HeldAssetResponse();const nextResult=handler(request('/wallet/worker.js'),next);await next.started;assert.equal(next.status,200);next.finish();await nextResult;
 });
 test('slow identity reader does not block unrelated worker delivery and 31-worker burst succeeds',async t=>{

@@ -2,10 +2,13 @@ import {selectPrivateViews} from '../../shared/rolling/private-views.mjs';
 // This module is imported only after an explicit Unlock action. Public reading
 // never imports the SDK, opens private storage or makes personalized node calls.
 import {createRollingWalletSession} from './wallet-session.mjs';
+// Public asset delivery may take longer than the small configuration response.
+// This per-asset bound does not extend any recovery/action acceptance budget.
+const ASSET_LOAD_MS=60000,METADATA_LOAD_MS=30000;
 const failed=()=>Object.assign(Error('Private account setup is unavailable. Reload before trying again.'),{code:'ROLLING_RUNTIME_UNAVAILABLE'});
 const digest=async bytes=>Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes)),x=>x.toString(16).padStart(2,'0')).join('');
 async function boundedJSON(url,limit,expected,request={}){
- const response=await fetch(url,{...request,credentials:'omit',redirect:'error',cache:'no-store',referrerPolicy:'no-referrer',signal:AbortSignal.timeout(30000)});
+ const response=await fetch(url,{...request,credentials:'omit',redirect:'error',cache:'no-store',referrerPolicy:'no-referrer',signal:AbortSignal.timeout(expected?ASSET_LOAD_MS:METADATA_LOAD_MS)});
  if(!response.ok||!response.body)throw failed();
  const reader=response.body.getReader(),chunks=[];let size=0;
  try{for(;;){const {done,value}=await reader.read();if(done)break;size+=value.length;if(size>limit)throw failed();chunks.push(value);}}
@@ -25,7 +28,7 @@ function script(asset){
   const element=document.createElement('script');element.src=asset.url;
   element.integrity='sha256-'+btoa(String.fromCharCode(...asset.sha256.match(/../g).map(x=>parseInt(x,16))));
   element.crossOrigin='anonymous';element.referrerPolicy='no-referrer';
-  const timer=setTimeout(()=>{element.remove();reject(failed());},30000);
+  const timer=setTimeout(()=>{element.remove();reject(failed());},ASSET_LOAD_MS);
   element.onload=()=>{clearTimeout(timer);resolve();};element.onerror=()=>{clearTimeout(timer);element.remove();reject(failed());};document.head.append(element);
  });
 }
