@@ -529,6 +529,59 @@ test('RC22 lost refund response recovers read-only across reopen without another
  await assert.rejects(f.cap.confirm(),{code:'BB_ETH_SUBMISSION_UNKNOWN'});assert.equal(f.state.sends,1);
  assert.equal((await f.restart().recover()).status,'refunded');assert.equal(f.state.sends,1);
 });
+// W03 current Rolling consumer coverage. Ethereum/Aztec responses are doubles;
+// the withdrawal capability and authenticated encrypted journal are production code.
+// Unlike the short fixture, this history includes the transaction only at its
+// canonical mined height. No caller supplies the lost Ethereum transaction hash.
+for(const bok of [false,true])for(const mode of ['lost-response','interrupted','reorg'])test(`W03 ${bok?'Bok':'collateral'} refund recovers ${mode} beyond 500 blocks without a second send (doubles)`,async()=>{
+ const f=await withdrawalFixture({bok}),reads=[],originalBlock=f.opts.provider.getBlock,capture=f.opts.captureWallet;
+ let failAt=null,reorgAt=null;
+ const blockHash=n=>hex(reorgAt!==null&&n>=reorgAt?10000+n:n);
+ f.opts.provider.getBlock=async(n,full=false)=>{
+  const number=n==='latest'?f.state.head:n;
+  if(full){reads.push(number);if(number===failAt)throw Error('interrupted history read');}
+  const block=await originalBlock(n);
+  return {...block,hash:blockHash(block.number),parentHash:blockHash(block.number-1),
+   prefetchedTransactions:f.state.tx&&f.state.receipt.blockNumber===block.number?[f.state.tx]:[]};
+ };
+ f.opts.captureWallet=async()=>{
+  const wallet=await capture();return {...wallet,signer:{...wallet.signer,sendTransaction:async request=>{
+   // The request is saved at block 10, then mined at 711 before its response is lost.
+   f.state.head=710;return wallet.signer.sendTransaction(request);
+  }}};
+ };
+ const names=['account','chainId','rollup','version','board','portal','depositor',...(bok?['token']:[])];
+ const scope={...f.opts.scope,depositor:f.record.withdrawal.depositor,...(bok?{token:f.record.withdrawal.bokScope.token}:{})};
+ const journal=await createEncryptedJournalSlot({storage:f.opts.storage,walletSecret:f.opts.walletSecret,walletSalt:f.opts.walletSalt,
+  scopeText:JSON.stringify(['AZTEC_BB_ETH_JOURNAL_V1',...names.map(name=>scope[name])]),keyDomain:'AZTEC_BB_ETH_JOURNAL_KEY_V1'});
+ const originalWorkflow=structuredClone(f.record),cap=f.restart();
+ await cap.prepare({maximumGasWei:'1000'});f.state.unknown=true;
+ await assert.rejects(cap.confirm(),{code:'BB_ETH_SUBMISSION_UNKNOWN'});
+ const saved=(await journal.read()).value;
+ assert.equal(saved.startBlock,10);assert.equal(saved.nextBlock,11);assert.equal(saved.txHash,null);assert.equal(f.state.sends,1);
+ f.state.head=1110;
+ if(mode!=='lost-response'){
+  failAt=541;await assert.rejects(f.restart().recover(),{code:'BB_ETH_RECOVERY_REQUIRED'});
+  assert.equal(reads[0],11);assert.equal(reads.at(-1),541);
+  const interrupted=(await journal.read()).value;
+  assert.equal(interrupted.nextBlock,541);assert.equal(interrupted.cursorHash,hex(540));assert.equal(interrupted.txHash,null);
+  assert.equal(f.state.sends,1);reads.length=0;failAt=null;
+  if(mode==='reorg'){
+   // The already-sent transaction is included earlier in the replacement fork.
+   // The old checkpoint must not skip that inclusion or trigger a new payment.
+   reorgAt=501;f.state.receipt.blockNumber=520;f.state.receipt.blockHash=blockHash(520);
+  }
+ }
+ const result=await f.restart().recover();
+ assert.deepEqual(result,{status:'refunded',txHash:hex(88),amount:'100',gasCostWei:'200'});
+ assert.equal(reads[0],mode==='reorg'?1:mode==='interrupted'?541:11);
+ assert.equal(reads.at(-1),mode==='reorg'?520:711);
+ assert.deepEqual(reads,Array.from({length:reads.at(-1)-reads[0]+1},(_,i)=>reads[0]+i));
+ assert.equal((await journal.read()).value.txHash,hex(88));assert.equal(f.state.sends,1);
+ assert.deepEqual(f.record,originalWorkflow);assert.equal(await f.restart().verify(f.record),true);
+ await assert.rejects(f.restart().prepare({maximumGasWei:'1000'}),{code:'ROLLING_WITHDRAWAL_RECOVERY_REQUIRED'});
+ assert.equal(f.state.sends,1);
+});
 for(const change of ['wallet','chain-anchor','gas','settlement','cancel'])test(`RC22 refund ${change} change never reaches a send`,async()=>{
  const f=await withdrawalFixture();await f.cap.prepare({maximumGasWei:'1000'});
  if(change==='wallet')f.state.connected=eth(44);if(change==='chain-anchor')f.state.l2Fork=true;if(change==='gas')f.state.price=100n;if(change==='settlement')f.state.settled=false;if(change==='cancel')f.cap.cancel();
