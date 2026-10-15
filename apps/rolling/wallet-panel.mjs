@@ -34,6 +34,10 @@ function nameFailure(failure){
   return code.value==='ROLLING_NAME_TAKEN'?'This name is already registered. Choose another first and last name.':code.value==='ROLLING_NAME_AVAILABILITY_UNAVAILABLE'?'Name availability could not be checked. Your draft is preserved; try again when the private connection is available.':null;
  }catch{return null;}
 }
+function aggregateFundingFailure(failure){
+ try{const code=Object.getOwnPropertyDescriptor(failure,'code');if(code&&Object.hasOwn(code,'value')&&code.value==='ROLLING_FUNDING_GAS_CHANGED')return 'Ethereum gas costs exceed your approved maximum. Change Maximum Ethereum gas cost (ETH) if you want to approve more, then get a fresh quote and confirm again. Your recovery records are preserved.';}catch{}
+ return nameFailure(failure);
+}
 const message='This operation could not be completed. Recovery records were preserved. Check the existing transaction before preparing another.';
 const plaintextRecoveryWarning='This imported file contains an unencrypted key. Create an encrypted recovery file and protect the original.';
 const recoveryLimits='Keep your recovery file and its password safe. A lost password cannot be reset. Losing your private account key can make funds and saved choices unrecoverable.';
@@ -126,9 +130,9 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
  }
  function controlsBusy(value){dialog.setAttribute('aria-busy',String(value));for(const node of dialog.querySelectorAll('button,input,select,textarea'))node.disabled=node.dataset.recoveryStop==='true'?!recoveryAbort:value||node.dataset.unavailable==='true';}
  function note(text){live.textContent=text;}
- async function work(fn){
+ async function work(fn,failureMessage=nameFailure){
   if(busy)return;const operationFocus=document.activeElement;busy=true;error='';controlsBusy(true);
-  try{await fn();}catch(failure){stopFunding();recoveryInspection=null;clearPreferences();note('');error=failure===connectionFailure?'The private connection is unavailable. Your encrypted recovery is preserved. Reconnect when the service returns.':failure===avatarFailure?'This image could not be prepared. Choose a still PNG, JPEG or WebP under 8 MiB. It must fit 8192 encoded bytes after cropping and compression. No transaction was prepared.':nameFailure(failure)??message;}finally{if(invalidated||reloadRequired)clearPrivateView();busy=false;render(document.activeElement===document.body?operationFocus:document.activeElement);}
+  try{await fn();}catch(failure){stopFunding();recoveryInspection=null;clearPreferences();note('');error=failure===connectionFailure?'The private connection is unavailable. Your encrypted recovery is preserved. Reconnect when the service returns.':failure===avatarFailure?'This image could not be prepared. Choose a still PNG, JPEG or WebP under 8 MiB. It must fit 8192 encoded bytes after cropping and compression. No transaction was prepared.':failureMessage(failure)??message;}finally{if(invalidated||reloadRequired)clearPrivateView();busy=false;render(document.activeElement===document.body?operationFocus:document.activeElement);}
  }
  function unlocked(){if(invalidated||reloadRequired)return false;const current=runtime?runtime.getAccount():null;if(accountIdentity&&current!==accountIdentity){invalidated=true;clearPrivateView();note('The account changed. Reload before continuing.');return false;}return !!current;}
  async function refresh(){
@@ -631,7 +635,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
    content.append(button('Confirm funding and private claim',()=>void work(async()=>{
     const epoch=accountEpoch;checkAccount(epoch);fundingQuote=null;const payment=await session.funding.confirm();checkAccount(epoch);
     fundingAutomatic=true;notice=payment?.pending?'Payment submitted. Checking relay and bridge delivery…':'Payment confirmed. Checking bridge delivery…';await advanceFunding();
-   }),true),button('Change allocation',()=>{fundingQuote=null;render();}));
+   },aggregateFundingFailure),true),button('Change allocation',()=>{fundingQuote=null;render();}));
   }else if(!fundingAutomatic){
    if(session.funding.usdcAvailable){const asset=el('select',{'aria-label':'Pay with'});for(const [value,text]of [['ETH','ETH'],['USDC','USDC — no ETH needed']])asset.append(el('option',{value},text));asset.value=fundingInputs.asset;asset.addEventListener('change',()=>{fundingInputs.asset=asset.value;render();});content.append(label('Pay with',asset));}
    const fields={};for(const [key,name]of [['collateral','Posting deposit (ETH)'],['fee','Network fee credit (fee tokens)'],['bok','Bok credit (USDC)'],['gas','Maximum Ethereum gas cost (ETH)'],['slippage','Slippage limit (%)']]){
