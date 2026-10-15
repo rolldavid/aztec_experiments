@@ -300,3 +300,31 @@ test('mixed transport prefix shares one SDK request only within the unchanged ei
  f.config.pxe.processRollingPreferenceRecovery=async p=>{if(p.expected){submitted=p.block;assert(Array.isArray(submitted)&&submitted.length===8);current={...current,sequence:1,nextBlock:9};}return structuredClone(current);};
  const reader=f.reader();await reader.read();const result=await reader.read();assert.equal(result.progress.nextBlock,9);assert.equal(result.complete,false);assert.deepEqual(calls,[1,2,3,4,5,6,7,8]);
 });
+
+test('bounded read checkpoints useful progress with labelled remote metadata latency inside unchanged ten seconds',async t=>{
+ const f=fixture(),inspect=f.config.sdk.inspectTrustedNode,get=f.config.node.getBlockData,process=f.config.pxe.processRollingPreferenceRecovery,fetch=f.config.compact.read;
+ let clock=1000,metered=false,inspections=0; t.mock.method(Date,'now',()=>clock);
+ f.config.sdk.inspectTrustedNode=async(...args)=>{if(metered){clock+=2400;inspections++;}return inspect(...args);};
+ f.config.node.getBlockData=async(...args)=>{if(metered)clock+=180;return get(...args);};
+ f.config.pxe.processRollingPreferenceRecovery=async(...args)=>{if(metered)clock+=200;return process(...args);};
+ f.config.compact.read=async(...args)=>{if(metered)clock+=200;return fetch(...args);};
+ const r=f.reader();await r.read();metered=true;const before=clock;
+ const result=await r.read();assert.equal(result.progress.processedRevision,'1');assert.equal(result.complete,false);assert.equal(f.state.steps,1);
+ assert(clock-before<10000,'Normal authenticated progress must fit the unchanged default deadline');assert.equal(inspections,2,'Full readiness is checked at entry and final publication; anchor checks remain separate');
+ assert.equal((await readAll(r)).preferences.head.revision,'2');
+});
+test('entry readiness rejection performs no SDK page or encrypted write',async()=>{
+ const f=fixture(),inspect=f.config.sdk.inspectTrustedNode;let reject=false;
+ f.config.sdk.inspectTrustedNode=async(...args)=>{if(reject)throw Error('labelled readiness rejection');return inspect(...args);};
+ const r=f.reader();await r.read();reject=true;const steps=f.state.steps,records=[...f.db];
+ await assert.rejects(r.read(),{code:'ROLLING_COLD_PREFERENCES_UNAVAILABLE'});assert.equal(f.state.steps,steps);assert.deepEqual([...f.db],records);
+});
+for(const terminal of [false,true])for(const code of ['BB_TRUSTED_NODE_IDENTITY','BB_BROWSER_PROVER_CONFIGURATION','BB_TRUSTED_NODE_STALE','BB_TRUSTED_NODE_UNSYNCED'])test('final '+code+' veto after durable '+(terminal?'complete':'recovering')+' mailbox publishes no result',async()=>{
+ const f=fixture(),inspect=f.config.sdk.inspectTrustedNode;let checks=0,reject=false;
+ f.config.sdk.inspectTrustedNode=async(...args)=>{checks++;if(reject&&checks===2){assert.equal(f.current().complete,terminal);assert.notDeepEqual([...f.db],records,'Final readiness follows the encrypted CAS');assert.equal(f.state.requests.at(-1).expected,null,'Final readiness follows the SDK mailbox check');throw Object.assign(Error('labelled late readiness rejection'),{code});}return inspect(...args);};
+ const r=f.reader();await r.read();if(terminal){await r.read();await r.read();}const records=[...f.db],steps=f.state.steps;checks=0;reject=true;
+ await assert.rejects(r.read(),{code:'ROLLING_COLD_PREFERENCES_UNAVAILABLE'});assert.equal(checks,2);assert.equal(f.state.steps,steps+1);
+ // Durable progress remains recoverable; failure does not fabricate success or
+ // discard an SDK page already committed before the final readiness changed.
+ checks=0;reject=false;assert.equal((await readAll(r)).preferences.head.revision,'2');
+});
