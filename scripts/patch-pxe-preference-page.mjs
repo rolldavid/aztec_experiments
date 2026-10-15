@@ -203,7 +203,15 @@ export async function runRollingPreferenceRecovery(pxe,input,options){
     check(raw.blockHash.toString()===anchorRecord.blockHash&&h.getBlockNumber()===anchorRecord.blockNumber&&(await h.hash()).toString()===anchorRecord.blockHash);await guard();
    };
    frame.verifyArtifact=value=>binding.verifyArtifact(value,p.expectedArtifactHash,p.expectedClassId);
-   beforeCommit=async()=>{for(const validate of frame.validators)await validate();await canonical();await guard();};
+   beforeCommit=async()=>{
+    // All validators are registered after staging, then captured for this exact
+    // boundary. Independent read-only checks may overlap; failure drains every
+    // started sibling before the final fresh authority fence or rejection.
+    const validators=frame.validators.slice();
+    for(let offset=0;offset<validators.length;offset+=4)await rollingPreferenceReadBatch(validators.slice(offset,offset+4));
+    if(stagedSeal)check(same(await stageSnapshot(),stagedSeal));
+    await canonical();await guard();
+   };
    await guard();
    const {meta,state:loaded}=await binding.store.load(key,context.changeSetId);
    await guard();
@@ -218,7 +226,7 @@ export async function runRollingPreferenceRecovery(pxe,input,options){
    });
    const containsStage=(current,prior)=>{for(const kind of ['events','notes','nullifiers']){const map=new Map(current[kind]);for(const [key,value] of prior[kind])check(map.has(key)&&same(map.get(key),value));}};
    let stagedSeal=null;
-   frame.validators.push(async()=>{if(stagedSeal)check(same(await stageSnapshot(),stagedSeal));});
+   // The final exact stage seal is captured with the validators at each boundary.
    const ingest=async(block,first,logCount)=>{
     // One bounded frame may ingest several transactions. Prior validated staged
     // entries remain byte-identical; no stage is cleared or treated as proof.
@@ -346,8 +354,10 @@ export async function runRollingPreferenceRecovery(pxe,input,options){
      for(let offset=0;offset<p.block.length;offset+=4){const values=await rollingPreferenceReadBatch(p.block.slice(offset,offset+4).map(block=>async()=>authenticate(block,validate=>validators.push(validate))));
       for(const value of values){check(value.blockNumber===state.nextBlock+verified.length);physicalLogs+=value.ciphertexts.length;check(physicalLogs<=8);verified.push(value);}
      }
-     frame.validators.push(async()=>{for(let offset=0;offset<validators.length;offset+=4)await rollingPreferenceReadBatch(validators.slice(offset,offset+4));});
-     if(p.block.length>32)check(verified.slice(0,-1).every(value=>value.ciphertexts.length===0));
+     frame.validators.push(...validators);
+     // Larger explicitly witnessed pages use the same authenticated eight-log
+     // total above. Every block, including empties between logs, is authenticated
+     // before staging and retained in both original commit-boundary validators.
      for(let i=0;i<verified.length;i++)await consume(p.block[i],verified[i],true);
     }else{check(p.block);await consume(p.block,await authenticate(p.block),false);}
    }
@@ -357,7 +367,7 @@ export async function runRollingPreferenceRecovery(pxe,input,options){
  }catch{throw Error('PXE_PREFERENCE_RECOVERY_FAILED');}
 }
 `; }
-export const PREFERENCE_PAGE_RECOVERY_PIN = Object.freeze({generated:'rolling-preference-recovery.mjs',sha256:'0e9354f6b97e00bf2668ec874206abccc6a5596d2ad9c57d4f7e8de390b8f2df'});
+export const PREFERENCE_PAGE_RECOVERY_PIN = Object.freeze({generated:'rolling-preference-recovery.mjs',sha256:'c2c46e0a1153ebd74466eb981f4eeb011d9875a4b348fd38467bb5586b51cc36'});
 function imports() { return `
 // @ts-ignore Exact reviewed JavaScript module is copied by the pinned installer.
 import { authenticateCompactBlock as rollingPageCompact } from '../rolling-preference-compact.mjs';

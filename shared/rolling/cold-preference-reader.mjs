@@ -55,7 +55,7 @@ function delivery(input){
  * the utility. Loss of the cache or a new database restarts enumeration.
  * Snapshot/CAS memory is O(current choices); no total preference cap is invented.
  * One step processes <=8 physical logs / <=64 emitted rows. Legacy pages
- * bound32 blocks; explicit witnessed empty-prefix pages bound256 physical blocks.
+ * bound32 blocks; explicit witnessed mixed pages bound256 physical blocks.
  * Whole-block root authentication has protocol-bounded but unqualified worst-
  * case CPU. Deep reorg rollback and original SDK initial sync remain separately
  * measured concerns. No generic contract sync or global complete flag is used.
@@ -109,7 +109,7 @@ export function createRollingColdPreferenceReader(input){
    if(fetchWitnessPage&&block){const blocks=Array.isArray(block)?block:[block];
     // Hints select bounded public work only AFTER the SDK consumed this prefix.
     // A failed validation or an unconsumed promotion cannot enlarge the request.
-    if(value.nextBlock>blocks.at(-1).blockNumber)pageSpan=blocks.every(b=>compactPrivateLogCountHint(b.fields)===0)?256:8;
+    if(value.nextBlock>blocks.at(-1).blockNumber)pageSpan=256;
    }
    return value;
   };
@@ -123,13 +123,16 @@ export function createRollingColdPreferenceReader(input){
        const count=Math.min(fetchWitnessPage?pageSpan:32,observed.anchor.blockNumber-observed.nextBlock+1);
        const wires=await checked(()=>(fetchWitnessPage||fetchAnchoredPage)({from:observed.nextBlock,count,anchor:{number:observed.anchor.blockNumber,hash:observed.anchor.blockHash}},{signal}));
        check(Array.isArray(wires)&&wires.length>0&&wires.length<=count);
-       const blocks=[];
+       const blocks=[];let remainingLogs=8;
        for(let i=0;i<wires.length;i++){
         const wire=wires[i];check(wire.number===observed.nextBlock+i);hex(wire.hash);
         const proof=fetchWitnessPage?{archiveWitness:wire.archiveWitness===null?null:{...wire.archiveWitness,anchorNumber:observed.anchor.blockNumber,anchorHash:observed.anchor.blockHash}}:{};
         if(fetchWitnessPage)check(Object.hasOwn(wire,'archiveWitness'));
         const logs=compactPrivateLogCountHint(wire.fields);
-        if(i<wires.length-1)check(logs===0);
+        if(fetchWitnessPage){
+         if(logs===null||logs>remainingLogs)check(i===0&&wires.length===1);
+         else remainingLogs-=logs;
+        }else if(i<wires.length-1)check(logs===0);
         if(logs===null||logs>8){if(blocks.length===0)blocks.push({blockNumber:wire.number,blockHash:wire.hash,fields:wire.fields,headerFields:wire.headerFields,...proof});break;}
         blocks.push({blockNumber:wire.number,blockHash:wire.hash,fields:wire.fields,headerFields:wire.headerFields,...proof});
        }
@@ -160,7 +163,9 @@ export function createRollingColdPreferenceReader(input){
   function cacheRecord(value){const c=exact(value,['schemaVersion','scope','delivery','prefix','markers']);check(c.schemaVersion===1&&same(c.scope,fullScope));c.delivery=delivery(c.delivery);check(!c.delivery.advance);if(c.markers!==null){c.markers=exact(c.markers,['next','canonical']);number(c.markers.next,Number.MAX_SAFE_INTEGER);c.markers.canonical=list(c.markers.canonical,c.markers.next);check(c.markers.canonical.length===c.markers.next&&c.markers.canonical.every(x=>typeof x==='boolean'));}return c;}
   async function foldBatch(prefix,records,anchor){
    const decoded=records.map(row=>decoder.decode({...row,packedEvent:row.packedEvent.map(x=>Fr.fromString(x)),eventSelector:{toString:()=>row.eventSelector},l2BlockHash:{toString:()=>row.l2BlockHash},txHash:{toString:()=>row.txHash}},{fromBlock:1,toBlock:anchor.blockNumber+1}));
-   const blocks=new Map();for(const row of decoded){if(!blocks.has(row.blockNumber))blocks.set(row.blockNumber,await canonical(row.blockNumber));check(blocks.get(row.blockNumber)===row.blockHash);}
+   const blocks=new Map(),heights=[...new Set(decoded.map(row=>row.blockNumber))];
+   for(let offset=0;offset<heights.length;offset+=4){const selected=heights.slice(offset,offset+4),results=await Promise.allSettled(selected.map(height=>canonical(height)));const failed=results.find(result=>result.status==='rejected');if(failed)throw failed.reason;for(let i=0;i<selected.length;i++)blocks.set(selected[i],results[i].value);}
+   for(const row of decoded)check(blocks.get(row.blockNumber)===row.blockHash);
    let target=prefix?.head??emptyHead;
    if(decoded.length){const e=decoded.at(-1).event;const digest=await hash([BigInt(scope.chainId),BigInt(scope.version),BigInt(scope.board),1n,BigInt(e.revision),BigInt(e.kind),BigInt(e.target),e.value?1n:0n,BigInt(e.read_block),BigInt(e.read_hash),BigInt(e.previous_digest)],PREFERENCE_DOMAIN);target={initialized:true,schema:1,revision:e.revision,digest:String(digest)};}
    const fold=prefix?await checked(()=>resumePreferenceFold({scope,head:target,hash,prefix,verifyAuthenticatedPrefix:async candidate=>same(candidate,prefix)})):createPreferenceFold({scope,head:target,hash});
@@ -246,10 +251,12 @@ export function createRollingColdPreferenceReader(input){
     }
     await recheck(observed.anchor);
     await checked(()=>slot.write(saved,{schemaVersion:1,scope:fullScope,delivery:observed,prefix,markers}));
-    await recheck(observed.anchor);
-    // Recheck the authoritative SDK mailbox after encryption/CAS; an intervening
-    // scoped restart, rollback or anchor change cannot publish a stale result.
-    let confirmed=await request(null);
+    // Both post-CAS observations must settle before publication. Full readiness
+    // remains AFTER the mailbox, and the final canonical fence remains last.
+    // A failed peer never releases this operation while the other is pending.
+    const observations=await Promise.allSettled([recheck(observed.anchor),request(null)]);
+    const rejected=observations.find(result=>result.status==='rejected');if(rejected)throw rejected.reason;
+    let confirmed=observations[1].value;
     if(confirmed.advance){
      const {advance,...prior}=confirmed;check(same(prior,observed));
      if(deferredAdvance)check(same(advance,deferredAdvance));

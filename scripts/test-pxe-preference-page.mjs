@@ -859,6 +859,25 @@ if(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1') {
           header.lastArchive=new AppendOnlyTreeSnapshot((await archiveAt(header.getBlockNumber())).root,header.getBlockNumber());
           const body=new Body([]);header.txEffectsTreeRoot=await body.computeTxEffectsTreeRoot();block=new L2Block(AppendOnlyTreeSnapshot.empty(),header,body,1,0);
         },
+        // Actual encrypted foreign envelopes, composed into distinct synthetic
+        // canonical transactions. This exercises eight separate utility calls;
+        // it does not claim real chain inclusion or eight owned preference heads.
+        async appendEightForeignTransactions(){
+          const writer=await receiver({foreignKeys:true});
+          const call=await writer.stores.contractStore.getFunctionCall('set_preference',[0n,1,new Fr(88),true],board,contractClass.id);
+          const hashed=await HashedValues.fromArgs(call.args),request=new TxExecutionRequest(board,call.selector,hashed.hash,TxContext.empty(31337,1),[hashed],[],[],Fr.random());
+          const result=await writer.queue.runSynced(async({changeSetId})=>{
+            const execution=await writer.functionSimulator.run(request,{msgSender:writer.complete.address,anchorBlockHeader:header,scopes:[writer.complete.address],senderForTags:writer.complete.address,changeSetId});
+            return generateSimulatedProvingResult(execution,async()=> 'synthetic.foreign.preference',node);
+          });
+          const foreign=result.publicInputs.forRollup.end.privateLogs.filter(x=>!x.isEmpty());assert(foreign.length>0);
+          for(let i=0;i<8;i++){
+            emptyHistory.set(header.getBlockNumber(),block);header=BlockHeader.fromBuffer(header.toBuffer());header.globalVariables.blockNumber++;
+            header.lastArchive=new AppendOnlyTreeSnapshot((await archiveAt(header.getBlockNumber())).root,header.getBlockNumber());
+            const tx=new TxEffect(RevertCode.OK,TxHash.fromBigInt(BigInt(900+i)),Fr.ZERO,[],[new Fr(1900+i)],[],[],[foreign[i%foreign.length]],[],[]),body=new Body([tx]);
+            header.txEffectsTreeRoot=await body.computeTxEffectsTreeRoot();block=new L2Block(AppendOnlyTreeSnapshot.empty(),header,body,1,0);mined.set(tx.txHash.toString(),{effect:tx,block});
+          }
+        },
         // Real ACIR revision 1 -> 2 over the previously validated head. Chain
         // receipts/tree membership remain labelled synthetic, never real proof.
         async extendRevision(){
@@ -914,7 +933,7 @@ if(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1') {
         const directory=join(root,'execution/evidence/G07/cold-http-progress');await mkdir(directory,{recursive:true});
         const output=join(directory,'actual-'+Date.now()+'.json');
         const started=performance.now(),report={schemaVersion:1,passed:false,stage:'fixture',
-          scope:'Actual baseline reader, generated SDK method, ACIR, crypto, atomic Node fake-indexeddb and HTTP transports; synthetic finite chain, proofs disabled, labelled receiver identity and initial-sync seam',readPassed:false,
+          scope:'Actual reader, generated SDK method, ACIR, crypto, atomic Node fake-indexeddb and HTTP transports; synthetic finite chain, proofs disabled, labelled receiver identity and initial-sync seam',readPassed:false,
           steps:[],sdk:{calls:0,status:0,advance:0,errors:0,pending:0,initialSyncChecks:0},native:{requests:0,accepted:0,errors:0,pending:0},
           forwarded:{},gateway:{requests:0,errors:0},tags:{private:0,public:0},cleanup:{listenersClosed:false,pendingSettled:false,databasesDeleted:false}};
         const save=()=>writeFile(output,JSON.stringify({...report,elapsedMs:Math.round(performance.now()-started)},null,2)+'\n');
@@ -929,7 +948,11 @@ if(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1') {
         }await Promise.allSettled([...pending]);report.cleanup.listenersClosed=servers.every(x=>!x.listening);report.cleanup.pendingSettled=pending.size===0;};
         try{
           const f=await acirFixture(t),network={chainId:'31337',version:'1',rollup:f.input.network.rollup};
-          if(coldHttpPhaseDiagnostic)for(let i=0;i<521;i++)await f.appendEmpty();
+          if(coldHttpPhaseDiagnostic){
+            await f.extendRevision();report.workload={ownRevisions:2,blocks:await Promise.all([4,5].map(async number=>{const block=await f.publicBlock(number);return {number,transactions:block.body.txEffects.length,privateLogs:block.body.txEffects.reduce((sum,tx)=>sum+tx.privateLogs.length,0)};})),injectedGatewayDelayMs:130};
+            report.sourceHashes=Object.fromEntries(await Promise.all(['prover/compact-block-native.mjs','shared/rolling/compact-client.mjs','shared/rolling/cold-preference-reader.mjs','scripts/patch-pxe-preference-page.mjs'].map(async path=>[path,sha(await readFile(join(root,path)))])));
+            for(let i=0;i<520;i++)await f.appendEmpty();
+          }
           const anchorNumber=coldHttpPhaseDiagnostic?525:4,anchorHeader=(await f.publicBlock(anchorNumber)).header;
           const anchorHash=(await anchorHeader.hash()).toString(),blockId={number:anchorNumber,hash:anchorHash},tip={block:blockId,checkpoint:{number:1,hash:hex(1)}};
           assert.equal((await f.publicBlock(await anchorHeader.toBlockParameter())).header.getBlockNumber(),anchorNumber);await assert.rejects(f.publicBlock({number:anchorNumber-1,hash:await anchorHeader.hash()}),/Synthetic anchored selector hash differs/);
@@ -987,12 +1010,14 @@ if(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1') {
             // The genuine processed-ACIR prefix is measured with the same130ms
             // public-hop delay; setup/initial sync remains explicitly labelled.
             delayMs=130;measured=true;
-            try{for(let i=0;i<4;i++){phaseSpans=[];wireSpans=[];const began=performance.now();value=await reader.read({deadlineAt:Date.now()+10000});report.densePrefix.push({elapsedMs:performance.now()-began,nextBlock:value.progress.nextBlock,requests:wireSpans.length,phases:phaseSpans.map(x=>({phase:x.phase,elapsedMs:x.end-x.start}))});if(value.progress.nextBlock===5)break;}}finally{measured=false;}
-            assert.equal(value.progress.nextBlock,5);assert.equal(value.complete,false);
-            for(const [latency,width]of [[0,8],[0,256],[130,256]]){
+            try{for(let i=0;i<4;i++){phaseSpans=[];wireSpans=[];const began=performance.now();let completed=false;try{value=await reader.read({deadlineAt:Date.now()+10000});completed=true;}finally{report.densePrefix.push({completed,elapsedMs:performance.now()-began,nextBlock:value?.progress.nextBlock??null,requests:wireSpans.length,wires:wireSpans.map(x=>({phase:x.phase,methods:x.methods,elapsedMs:x.end-x.start})),phases:phaseSpans.map(x=>({phase:x.phase,elapsedMs:x.end-x.start}))});}if(value.progress.nextBlock>=6)break;}}finally{measured=false;}
+            assert(value.progress.nextBlock>=6);assert.equal(value.complete,false);
+            const denseState=await receiver.read();assert.equal(denseState.events.length,2);assert.equal(denseState.notes.length,1);assert.equal(denseState.notes[0].note.items[1].toBigInt(),2n);
+            for(const latency of [0,0,130]){
+              if(value.progress.nextBlock>anchorNumber)break;
               delayMs=latency;phaseSpans=[];wireSpans=[];measured=true;const began=performance.now(),before=value.progress.nextBlock;
               try{value=await reader.read({deadlineAt:Date.now()+10000});}finally{measured=false;}
-              const end=performance.now();assert.equal(value.progress.nextBlock,before+width);assert.equal(value.complete,false);
+              const end=performance.now(),width=value.progress.nextBlock-before;assert(width>0&&width<=256);assert.equal(value.complete,false);
               const phases=phaseSpans.map(x=>({phase:x.phase,startMs:x.start-began,endMs:x.end-began})),wires=wireSpans.map(x=>({phase:x.phase,methods:x.methods,startMs:x.start-began,endMs:x.end-began}));
               const byPhase={};for(const x of wires){const row=byPhase[x.phase]??={requests:0,methods:{}};row.requests++;for(const method of x.methods)row.methods[method]=(row.methods[method]??0)+1;}
               report.phaseMeasurements.push({physicalBlocks:width,injectedHttpDelayMs:latency,elapsedMs:end-began,nextBlock:value.progress.nextBlock,byPhase,phases,wires});
@@ -1021,7 +1046,7 @@ if(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1') {
           // never permission to drop a fence or rerun unchanged until it passes.
           assert(report.optimization.requestsMet);assert(report.optimization.timeTargetMet);
           report.stage='complete';await close();assert(report.cleanup.listenersClosed&&report.cleanup.pendingSettled);assert.equal(report.native.pending,0);assert.equal(report.sdk.pending,0);report.readPassed=true;
-        }catch{report.stage='failed-'+report.stage;throw Error('Cold HTTP progress diagnostic failed; inspect sanitized phase receipt');}
+        }catch(error){report.failure={name:error?.name==='AssertionError'?'AssertionError':'Error',code:typeof error?.code==='string'&&/^[A-Z_0-9]+$/.test(error.code)?error.code:null};report.stage='failed-'+report.stage;throw Error('Cold HTTP progress diagnostic failed; inspect sanitized phase receipt');}
         finally{
           // Registered after the fixture's own queue/store deletion hooks, so a
           // successful read cannot masquerade as completed cleanup.
@@ -1160,6 +1185,36 @@ if(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1') {
       const before=f.counters.archiveProofs,oversize=Array.from({length:32},(_,i)=>({...blocks[0],blockNumber:i+1,fields:Array(1000).fill(Fr.ZERO.toString())}));
       await assert.rejects(r.page.processRollingPreferenceRecovery({...base,block:oversize},{contextGuard:async()=>{}}),/PXE_PREFERENCE_RECOVERY_FAILED/);assert.equal(f.counters.archiveProofs,before);assert.equal(r.page.acirCompleted??0,0);
       let scalar=start;for(let i=0;i<12&&!scalar.complete;i++)scalar=await recoveryStep(f,r,scalar);assert.equal(scalar.complete,true);assert.equal(scalar.head.revision,'1');
+    });
+    await test('mixed commit validators drain held receipt peer after another receipt fails',async t=>{
+      const f=await acirFixture(t);await f.extendRevision();const gate=batchGate(),entered=batchGate(),failed=batchGate();let validating=false,finished=false,following=false,r;
+      const contributor={settle:async()=>{if(r.page.acirCompleted===2)validating=true;}};
+      r=await f.receiver({recovery:true,contributor});const start=await r.page.processRollingPreferenceRecovery(recoveryInput(f),{contextGuard:async()=>{}}),blocks=await Promise.all([1,2,3,4,5].map(n=>f.compact(n)));
+      const original=f.node.getTxReceipt;f.node.getTxReceipt=async(hash,...args)=>{if(validating){if(hash.toString()===f.input.txHash){entered.resolve();await gate.promise;}else{failed.resolve();throw Error('LABELLED_RECEIPT_VETO');}}return original(hash,...args);};
+      const work=r.page.processRollingPreferenceRecovery({...recoveryInput(f),expected:{epoch:start.epoch,sequence:start.sequence},block:blocks},{contextGuard:async()=>{}}).then(()=>({success:true}),error=>({error})).finally(()=>{finished=true;});let timer;
+      try{
+       await Promise.race([entered.promise,new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('Held commit validator did not start')),10000);})]);clearTimeout(timer);await Promise.race([failed.promise,new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('Independent receipt peer did not start')),1000);})]);
+       assert.equal(finished,false);const later=r.queue.runSynced(()=>{following=true;});await new Promise(resolve=>setImmediate(resolve));assert.equal(following,false);
+       gate.resolve();const result=await work;assert.match(result.error?.message,/PXE_PREFERENCE_RECOVERY_FAILED/);await later;assert.equal(following,true);
+      }finally{clearTimeout(timer);gate.resolve();await work;validating=false;f.node.getTxReceipt=original;}
+      const stored=await r.read();assert.equal(stored.events.length,0);assert.equal(stored.notes.length,0);assert.deepEqual(await r.page.processRollingPreferenceRecovery(recoveryInput(f),{contextGuard:async()=>{}}),start);
+    });
+    await test('actual SDK witnessed256 mixed eight-transaction prefix is atomic and under10s',async t=>{
+      const f=await acirFixture(t),r=await f.receiver({recovery:true});
+      await f.appendEightForeignTransactions();for(let i=0;i<249;i++)await f.appendEmpty();
+      const anchor=(await f.publicBlock(261)).header,anchorHash=(await anchor.hash()).toString(),blocks=[];
+      for(let n=5;n<=260;n++){const b=await f.compact(n),w=await f.node.getBlockHashMembershipWitness(await anchor.toBlockParameter(),BlockHash.fromString(b.blockHash));blocks.push({...b,archiveWitness:{anchorNumber:261,anchorHash,leafIndex:String(w.leafIndex),siblingPath:w.siblingPath.map(x=>x.toString())}});}
+      const start=await r.page.processRollingPreferenceRecovery(recoveryInput(f),{contextGuard:async()=>{}});
+      const prefix=await r.page.processRollingPreferenceRecovery({...recoveryInput(f),expected:{epoch:start.epoch,sequence:start.sequence},block:await Promise.all([1,2,3,4].map(n=>f.compact(n)))},{contextGuard:async()=>{}});
+      const base={...recoveryInput(f),expected:{epoch:prefix.epoch,sequence:prefix.sequence}},prior=await r.read(),calls=r.page.acirCompleted,tags=f.counters.tagQueries;
+      for(const mutate of [b=>b[4].fields[0]=Fr.ZERO.toString(),b=>b[4].archiveWitness.siblingPath[0]=Fr.ZERO.toString(),b=>b[4].blockNumber++,b=>b[4]=b[5]]){
+        const bad=structuredClone(blocks);mutate(bad);await assert.rejects(r.page.processRollingPreferenceRecovery({...base,block:bad},{contextGuard:async()=>{}}),/PXE_PREFERENCE_RECOVERY_FAILED/);
+        assert.equal(r.page.acirCompleted,calls);assert.deepEqual(await r.read(),prior);
+      }
+      const began=performance.now(),value=await r.page.processRollingPreferenceRecovery({...base,block:blocks},{contextGuard:async()=>{}}),elapsedMs=performance.now()-began;
+      assert(elapsedMs<10000);assert.equal(value.nextBlock,261);assert.equal(value.nextLog,0);assert.equal(value.sequence,prefix.sequence+1);assert.deepEqual(value.records,[]);assert.equal(r.page.acirCompleted-calls,8);assert.equal(f.counters.tagQueries,tags);assert.deepEqual(await r.read(),prior);
+      assert.deepEqual(await r.page.processRollingPreferenceRecovery({...base,block:blocks},{contextGuard:async()=>{}}),value);assert.equal(r.page.acirCompleted-calls,8);
+      console.log(JSON.stringify({kind:'witnessed-mixed-eight-transactions',physicalBlocks:256,physicalLogs:8,utilityCalls:8,elapsedMs,deadlineMs:10000}));
     });
     await test('actual SDK zero-ciphertext transaction batch matches scalar authenticated recovery',async t=>{
       const f=await acirFixture(t,{zeroCiphertextHistory:true}),r=await f.receiver({recovery:true}),scalar=await f.receiver({recovery:true});

@@ -70,7 +70,7 @@ export function validateCompactPageResponse(value,request){
  check(request.witnesses?p.witnesses===true:p.witnesses===undefined);
  check(p.schemaVersion===1&&p.mode==='page'&&a.number===request.anchor.number&&a.hash===request.anchor.hash);
  check(Array.isArray(p.blocks)&&p.blocks.length>0&&p.blocks.length<=request.count&&Reflect.ownKeys(p.blocks).length===p.blocks.length+1);
- const blocks=[];
+ const blocks=[];let remainingLogs=8;
  for(let i=0;i<p.blocks.length;i++){
   const d=Object.getOwnPropertyDescriptor(p.blocks,String(i));check(d&&Object.hasOwn(d,'value'));
   const hash=Object.getOwnPropertyDescriptor(d.value??{},'hash')?.value;field(hash);
@@ -80,9 +80,13 @@ export function validateCompactPageResponse(value,request){
   }
   const raw=validateCompactResponse(input,{number:request.from+i,hash}),block=request.witnesses?Object.freeze({...raw,archiveWitness}):raw;
   if(block.number===a.number)check(block.hash===a.hash);
-  // The native page ends at the first log-bearing/unknown-large block. This
-  // remains a scheduling hint; it never proves emptiness or permits a commit.
-  if(i<p.blocks.length-1)check(compactPrivateLogCountHint(block.fields)===0);
+  // Only witnessed pages admit mixed blocks. Counts are transport hints, never
+  // private authentication: the SDK independently enforces the physical total.
+  const logs=compactPrivateLogCountHint(block.fields);
+  if(request.witnesses){
+   if(logs===null||logs>remainingLogs)check(i===0&&p.blocks.length===1);
+   else remainingLogs-=logs;
+  }else if(i<p.blocks.length-1)check(logs===0);
   blocks.push(block);
  }
  return Object.freeze({schemaVersion:1,mode:'page',anchor:Object.freeze(a),blocks:Object.freeze(blocks),...(request.witnesses?{witnesses:true}:{})});
