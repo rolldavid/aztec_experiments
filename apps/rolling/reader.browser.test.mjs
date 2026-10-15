@@ -141,7 +141,7 @@ test('real panel opening from removed Unlike stays lazy and sanitizes an unavail
 // Controlled intersection callbacks and synthetic public pages; fetch and DOM
 // are real. No wallet, proof or chain acceptance is inferred from these checks.
 async function pagingFixture(t,{observer='controlled',directory=false}={}){
- const state={calls:[],pending:[],hold:false,mode:'normal',active:0,peak:0};
+ const state={calls:[],pending:[],hold:false,mode:'normal',active:0,peak:0,prepend:false};
  const files=new Set(['live.html','reader.mjs','reader-client.mjs','profile-view.mjs','model.mjs','navigation.mjs','style.css']);
  const post=id=>({id:String(id),record:{root:String(id),parent:'0',reference:'0',kind:'1',subboard:'0',name_id:'0'},text:'Public item '+id+'\n'+('Visible public text.\n'.repeat(20)),timestamp:'1',likes:'0'});
  const server=http.createServer(async(req,res)=>{
@@ -152,6 +152,7 @@ async function pagingFixture(t,{observer='controlled',directory=false}={}){
    const respond=()=>{
     const kind=url.pathname.slice(5),base={schemaVersion:1,scope:{boardAddress:'public'},complete:true,checkpoint:{number:3,hash:'public'},revision:'epoch:1',names:{},boards:{},nextCursor:null};
     let body=kind==='directory'?{...base,boards:[]}:{...base,posts:[post(cursor==='next-3'?3:cursor?2:1)],nextCursor:cursor==='next-3'?null:cursor?'next-3':'next-2'};
+    if(kind==='home'&&state.prepend){body={...base,revision:'epoch:2',posts:[post(cursor==='next-4'?3:cursor==='next-3'?2:cursor?1:4)],nextCursor:cursor==='next-4'?null:cursor==='next-3'?'next-4':cursor?'next-3':'next-2'};}
     if(kind==='directory'&&directory){body={...base,boards:cursor==='next-3'&&state.mode!=='no-match'?[{id:'20',slug:'needle',name:'Needle result',description:'Sparse match',mainRules:'Rules',rules:'',rejected:false}]:[],nextCursor:cursor==='next-3'?null:cursor?'next-3':'next-2'};}
     if(cursor&&state.mode==='revision')body.revision='epoch:2';
     if(cursor&&state.mode==='duplicate')body.posts=[post(1)];
@@ -446,4 +447,43 @@ test('moderator context actions respect rejected and already removed public stat
  await page.evaluate(()=>location.hash='/board/20');await page.getByRole('heading',{name:'Workshop',level:1}).waitFor();
  assert.equal(await page.getByRole('button',{name:'Reject this subboard',exact:true}).count(),0);assert.equal(await page.getByRole('button',{name:'Remove this post',exact:true}).count(),0);
  await page.evaluate(()=>location.hash='/directory');await page.getByRole('heading',{name:'Workshop'}).waitFor();assert.equal(await page.getByRole('button',{name:'Reject this subboard',exact:true}).count(),0);
+});
+
+// Source regression: return to the same visible post after the public head grows.
+test('return navigation anchors the visible post when newer posts shift pagination',async t=>{
+ const {page,state}=await pagingFixture(t,{observer:'none'});
+ await page.getByRole('button',{name:'Load more',exact:true}).click();await page.locator('#post-2').waitFor();
+ await page.locator('#post-2').evaluate(n=>window.scrollTo(0,scrollY+n.getBoundingClientRect().top+30));
+ const top=await page.locator('#post-2').evaluate(n=>n.getBoundingClientRect().top);
+ await page.locator('#post-2').getByRole('link',{name:'View conversation',exact:true}).evaluate(n=>{n.focus({preventScroll:true});n.click();});await page.getByRole('heading',{name:'Conversation',exact:true}).waitFor();
+ state.prepend=true;await page.goBack();await page.locator('#post-2').waitFor();
+ assert(Math.abs(await page.locator('#post-2').evaluate(n=>n.getBoundingClientRect().top)-top)<3,'same post must retain its viewport offset after a new first page');
+ assert.equal(await page.locator('#post-4').count(),1);assert.equal(state.peak,1);
+});
+test('keyboard paging hands focus to new content without stealing later user focus',async t=>{
+ const {page,state,release}=await pagingFixture(t,{observer:'none'});
+ const more=page.getByRole('button',{name:'Load more',exact:true});await more.focus();await page.keyboard.press('Enter');await page.locator('#post-2').waitFor();
+ assert.equal(await page.evaluate(()=>document.activeElement.id),'post-2');
+ state.hold=true;await more.focus();await page.keyboard.press('Enter');await until(()=>state.pending.length===1);
+ await page.locator('.search-link').focus();await release();await page.locator('#post-3').waitFor();
+ assert.equal(await page.evaluate(()=>document.activeElement.className),'search-link');
+});
+test('keyboard paging keeps a meaningful focus when its final button disappears',async t=>{
+ const {page}=await pagingFixture(t,{observer:'none'});const more=page.getByRole('button',{name:'Load more',exact:true});
+ await more.click();await page.locator('#post-2').waitFor();await more.focus();await page.keyboard.press('Enter');await page.locator('#post-3').waitFor();
+ assert.equal(await more.count(),0);assert.equal(await page.evaluate(()=>document.activeElement.id),'post-3');
+});
+
+test('automatic paging preserves existing keyboard focus and paging errors have a focus target',async t=>{
+ const {page,state,fire}=await pagingFixture(t);await page.locator('.search-link').focus();await fire();await page.locator('#post-2').waitFor();
+ assert.equal(await page.evaluate(()=>document.activeElement.className),'search-link');
+ state.mode='reorg';await page.getByRole('button',{name:'Load more',exact:true}).focus();await page.keyboard.press('Enter');await page.getByRole('alert').waitFor();
+ assert.equal(await page.evaluate(()=>document.activeElement.getAttribute('role')),'alert');
+});
+test('keyboard sparse directory paging retains its button then focuses the exhausted status',async t=>{
+ const {page,state}=await pagingFixture(t,{observer:'none',directory:true});state.mode='no-match';
+ const more=page.getByRole('button',{name:'Load more',exact:true});await more.focus();await page.keyboard.press('Enter');await until(()=>state.calls.length===2);
+ await page.waitForFunction(()=>document.activeElement.textContent==='Load more'&&!document.activeElement.disabled);
+ await page.keyboard.press('Enter');await page.getByText('No more subboards.',{exact:true}).waitFor();
+ assert.equal(await page.evaluate(()=>document.activeElement.textContent),'No more subboards.');
 });

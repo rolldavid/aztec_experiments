@@ -127,8 +127,8 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
  function controlsBusy(value){dialog.setAttribute('aria-busy',String(value));for(const node of dialog.querySelectorAll('button,input,select,textarea'))node.disabled=node.dataset.recoveryStop==='true'?!recoveryAbort:value||node.dataset.unavailable==='true';}
  function note(text){live.textContent=text;}
  async function work(fn){
-  if(busy)return;busy=true;error='';controlsBusy(true);
-  try{await fn();}catch(failure){stopFunding();recoveryInspection=null;clearPreferences();note('');error=failure===connectionFailure?'The private connection is unavailable. Your encrypted recovery is preserved. Reconnect when the service returns.':failure===avatarFailure?'This image could not be prepared. Choose a still PNG, JPEG or WebP under 8 MiB. It must fit 8192 encoded bytes after cropping and compression. No transaction was prepared.':nameFailure(failure)??message;}finally{if(invalidated||reloadRequired)clearPrivateView();busy=false;render();}
+  if(busy)return;const operationFocus=document.activeElement;busy=true;error='';controlsBusy(true);
+  try{await fn();}catch(failure){stopFunding();recoveryInspection=null;clearPreferences();note('');error=failure===connectionFailure?'The private connection is unavailable. Your encrypted recovery is preserved. Reconnect when the service returns.':failure===avatarFailure?'This image could not be prepared. Choose a still PNG, JPEG or WebP under 8 MiB. It must fit 8192 encoded bytes after cropping and compression. No transaction was prepared.':nameFailure(failure)??message;}finally{if(invalidated||reloadRequired)clearPrivateView();busy=false;render(document.activeElement===document.body?operationFocus:document.activeElement);}
  }
  function unlocked(){if(invalidated||reloadRequired)return false;const current=runtime?runtime.getAccount():null;if(accountIdentity&&current!==accountIdentity){invalidated=true;clearPrivateView();note('The account changed. Reload before continuing.');return false;}return !!current;}
  async function refresh(){
@@ -659,9 +659,14 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   file.addEventListener('change',()=>{const ready=!!file.files?.[0]&&file.files[0].size<=16384;review.dataset.unavailable=String(!ready);review.disabled=busy||!ready;});
   content.append(label('Saved funding receipt',file),review);
  }
- function render(){
+ function render(previousFocus=document.activeElement){
   if(!['funding','topup'].includes(view)||invalidated||reloadRequired)stopFunding();
-  const hadFocus=dialog.contains(document.activeElement);
+  const hadFocus=dialog.contains(previousFocus);
+  // Use labels, never private values, to retain the same control after a form
+  // change. Recreated controls have different DOM identities.
+  const focusKey=node=>node.tagName+':'+(node.getAttribute('aria-label')??(node.labels?.[0]?[...node.labels[0].childNodes].filter(n=>n.nodeType===Node.TEXT_NODE).map(n=>n.textContent).join(''):['BUTTON','SUMMARY'].includes(node.tagName)?node.textContent:node.getAttribute('href')??''));
+  const controls=()=>[...content.querySelectorAll('button,input,select,textarea,summary,a[href]')];
+  const key=hadFocus?focusKey(previousFocus):null,index=key?controls().filter(n=>focusKey(n)===key).indexOf(previousFocus):-1;
   releasePreviews();content.replaceChildren();
   if(error)content.append(el('p',{role:'alert',class:'notice error'},error));
   if(notice)content.append(el('p',{class:'notice'},notice));
@@ -693,7 +698,15 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
    recovery();
   }
   controlsBusy(busy);
-  if(dialog.open&&!busy&&(hadFocus||document.activeElement===document.body))closeButton.focus();
+  if(dialog.open&&!busy&&(hadFocus||document.activeElement===document.body)){
+   if(previousFocus.isConnected&&dialog.contains(previousFocus))previousFocus.focus({preventScroll:true});
+   else{
+    const same=index>=0?controls().filter(n=>focusKey(n)===key)[index]:null;
+    const target=same&&!same.disabled?same:content.querySelector('h3')??closeButton;
+    if(target.tagName==='H3')target.tabIndex=-1;
+    target.focus({preventScroll:true});
+   }
+  }
  }
  function close(){if(busy||session?.busy){note('An account operation is in progress. Wait before closing.');return false;}stopFunding();recoveryInspection=null;releasePreviews();if(dialog.open)dialog.close();return true;}
  dialog.addEventListener('cancel',event=>{event.preventDefault();close();});

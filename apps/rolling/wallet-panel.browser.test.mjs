@@ -951,3 +951,17 @@ test('Conversation context rejects missing or incomplete reply selection without
  await page.getByRole('button',{name:'Choose a post',exact:true}).click();assert.equal(await page.getByRole('dialog').isVisible(),false);
  await open(page,{type:'reply',parent:'12',root:'0',subboard:'3',content:'Invalid pair'});await page.getByLabel('Action',{exact:true}).waitFor();await page.getByLabel('Action',{exact:true}).selectOption('bok');await page.getByLabel('Maximum Bok credits').fill('400');assert(await page.getByRole('button',{name:'Check action and review fee',exact:true}).isDisabled());assert.equal((await counts(page)).prepares,0);
 });
+
+test('dialog selections and view changes retain a meaningful keyboard position',async t=>{
+ const {page}=await browserFixture(t);await open(page);await unlock(page);
+ const action=page.getByLabel('Action',{exact:true});await action.focus();await action.selectOption('preference');
+ assert.equal(await page.evaluate(()=>document.activeElement.getAttribute('aria-label')),'Action');
+ const preference=page.getByLabel('Preference',{exact:true});await preference.focus();await preference.selectOption('3');
+ assert.equal(await page.evaluate(()=>document.activeElement.getAttribute('aria-label')),'Preference');
+ await action.focus();await action.selectOption('bio');const profile=page.getByLabel('Profile name',{exact:true});await profile.focus();await profile.selectOption('7');
+ await page.getByText('Current profile version checked. A newer edit will require a fresh check.',{exact:true}).waitFor();
+ assert.equal(await page.evaluate(()=>document.activeElement.getAttribute('aria-label')),'Profile name');
+ const names=page.getByRole('button',{name:'Your names',exact:true});await names.click();
+ assert.equal(await page.evaluate(()=>document.activeElement.textContent),'Your names');
+ assert.equal((await counts(page)).sends,0);
+});

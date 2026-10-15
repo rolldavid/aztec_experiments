@@ -1,7 +1,7 @@
 import {createPublicReader} from './reader-client.mjs';
 import {createPublicAvatar,createPublicProfile} from './profile-view.mjs';
 import {safeURL} from './model.mjs';
-import {focusRoute,skipToContent} from './navigation.mjs';
+import {captureRoutePosition,focusRoute,skipToContent} from './navigation.mjs';
 
 const read=createPublicReader(),app=document.querySelector('#app'),positions=new Map();
 let controller,sequence=0,route=location.hash.slice(1)||'/home',main,loadedPages=1;
@@ -180,7 +180,7 @@ async function render(){
   }
   const nodes=visible.map(item=>api==='directory'?boardCard(item):postCard(item,response));
   if(nodes.length)container.querySelector('.empty')?.remove();lastPosition=nextPosition;lastPositionHash=nextPositionHash;
-  container.append(...nodes);for(const id of ids)seenIds.add(id);if(next)seenCursors.add(next);
+  container.append(...nodes);for(const id of ids)seenIds.add(id);if(next)seenCursors.add(next);return nodes;
  }
 
  try{
@@ -188,7 +188,7 @@ async function render(){
   if(expectedRoot&&(!data.post||data.post.record?.root!==expectedRoot))throw Error('Linked post does not belong to this conversation');
   append(data);
   let cursor=data.nextCursor;
-  while(api!=='directory'&&cursor&&loadedPages<(saved?.pages??1)){
+  while(api!=='directory'&&cursor&&(loadedPages<(saved?.pages??1)||saved?.anchor&&!seenIds.has(saved.anchor.id.slice(5)))){
    const page=await read(api,{...parameters,cursor},restoreSignal);if(current!==sequence)return;append(page);cursor=page.nextCursor;loadedPages++;
   }
   loading.remove();
@@ -204,20 +204,25 @@ async function render(){
   let observer,inFlight=false,stopped=false;
   const stop=()=>{stopped=true;observer?.disconnect();};
   signal.addEventListener('abort',stop,{once:true});
-  const more=button('Load more',()=>void loadMore());
-  async function loadMore(){
+  const more=button('Load more',()=>void loadMore(true));
+  async function loadMore(explicit=false){
    if(inFlight||stopped||signal.aborted||current!==sequence||!cursor)return;
+   const ownedFocus=explicit&&document.activeElement===more;
+   const focusResult=node=>{if(ownedFocus&&(document.activeElement===document.body||document.activeElement===more)){node.tabIndex=-1;node.focus({preventScroll:true});}};
    inFlight=true;more.disabled=true;more.setAttribute('aria-busy','true');observer?.unobserve(more);
    try{
     const page=await read(api,{...parameters,cursor},signal);
     if(signal.aborted||current!==sequence||stopped)return;
-    append(page);cursor=page.nextCursor;loadedPages++;
+    const added=append(page);cursor=page.nextCursor;loadedPages++;
     if(api==='directory'&&container.querySelector('.empty'))container.querySelector('.empty p').textContent=cursor?'No matches in this page. Continue searching.':'No subboards match this search.';
     if(!cursor){stop();more.remove();}else more.disabled=false;
+    if(added.length)focusResult(added[0]);
+    else if(cursor){if(ownedFocus&&document.activeElement===document.body)more.focus({preventScroll:true});}
+    else{const end=el('p',{role:'status'},api==='directory'?'No more subboards.':'No more conversations.');main.append(end);focusResult(end);}
     announce(api==='directory'?'Next search page checked.':'More conversations loaded.');
    }catch(error){
     if(signal.aborted||current!==sequence||stopped)return;
-    stop();more.remove();main.append(el('p',{role:'alert'},'The conversation changed or could not load. ',button('Refresh',()=>render())));
+    stop();more.remove();const failed=el('p',{role:'alert'},'The conversation changed or could not load. ',button('Refresh',()=>render()));main.append(failed);focusResult(failed);
    }finally{
     inFlight=false;more.removeAttribute('aria-busy');
     if(!stopped&&!signal.aborted&&current===sequence&&cursor)observer?.observe(more);
@@ -238,6 +243,6 @@ async function render(){
 addEventListener('pagehide',()=>{sequence++;controller?.abort();});
 addEventListener('pageshow',event=>{if(event.persisted)render();});
 document.querySelector('.skip').addEventListener('click',skipToContent);
-addEventListener('hashchange',()=>{positions.set(route,{y:scrollY,pages:loadedPages,focus:document.activeElement?.getAttribute('href')});if(positions.size>40)positions.delete(positions.keys().next().value);route=location.hash.slice(1)||'/home';render();});
+addEventListener('hashchange',()=>{positions.set(route,captureRoutePosition(loadedPages));if(positions.size>40)positions.delete(positions.keys().next().value);route=location.hash.slice(1)||'/home';render();});
 narrow.addEventListener('change',()=>{const rail=document.querySelector('.rail'),workspace=document.querySelector('.workspace');if(rail){rail.classList.remove('open');rail.inert=narrow.matches;workspace.inert=false;document.querySelector('.menu-toggle')?.setAttribute('aria-expanded','false');}});
 render();
