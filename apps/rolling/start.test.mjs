@@ -1,7 +1,7 @@
 // Real HTTP composition with explicitly synthetic public-index data.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {startRollingReader} from './start.mjs';
+import {startRollingReader,createRollingReaderAssetHandler} from './start.mjs';
 test('reader serves only browser assets and bounded public API from one origin',async t=>{
  let ready=true;
  const index={sync:async()=>{},status:()=>({schemaVersion:1,state:ready?'ready':'unavailable'}),
@@ -67,8 +67,39 @@ test('wallet compressed representations revalidate changing source bytes and do 
 test('wallet admission bounds concurrent reads and queued compression work, rejecting overload without reading',async t=>{
  let release;const barrier=new Promise(resolve=>release=resolve);let reads=0,active=0,peak=0;
  const server=await startRollingReader({index:readyIndex(),wallet:{connectOrigins:[],read:async()=>{reads++;active++;peak=Math.max(peak,active);await barrier;active--;return {body:Buffer.alloc(1024*1024,65),type:'application/wasm'};}}});t.after(()=>server.close());
- const requests=Array.from({length:10},()=>wire(server.url+'/wallet/bb.wasm',{encoding:'gzip'}));
+ const requests=Array.from({length:34},()=>wire(server.url+'/wallet/bb.wasm',{encoding:'gzip'}));
  const first=await Promise.race(requests);assert.equal(first.status,503);assert.equal(first.headers['retry-after'],'1');assert.equal(reads,1);assert.equal(peak,1);release();
- const results=await Promise.all(requests);assert.equal(results.filter(r=>r.status===503).length,1);assert.equal(results.filter(r=>r.status===200).length,9);assert.equal(reads,9);assert.equal(peak,1);
+ const results=await Promise.all(requests);assert.equal(results.filter(r=>r.status===503).length,1);assert.equal(results.filter(r=>r.status===200).length,33);assert.equal(reads,33);assert.equal(peak,1);
  for(const r of results.filter(r=>r.status===200))assert.equal(gunzipSync(r.body).length,1024*1024);
+});
+
+import {EventEmitter} from 'node:events';
+class HeldAssetResponse extends EventEmitter {
+ constructor(){super();this.headers={};this.destroyed=false;this.started=new Promise(resolve=>this.onStart=resolve);}
+ setHeader(k,v){this.headers[k]=v;}
+ writeHead(status,headers){this.status=status;Object.assign(this.headers,headers);}
+ end(body){this.bytes=body?.length??0;this.onStart();}
+ destroy(){this.destroyed=true;this.emit('close');}
+ finish(){this.emit('finish');}
+}
+test('wallet response byte ownership and 30s deadline cannot pin read/compression admission',async t=>{
+ t.mock.timers.enable({apis:['setTimeout']});
+ const big=Buffer.alloc(64*1024*1024),small=Buffer.from('worker');let reads=0;
+ const handler=createRollingReaderAssetHandler({connectOrigins:[],read:async p=>{reads++;return {body:p==='/wallet/large.wasm'?big:small,type:'application/wasm'};}});
+ const request=url=>({url,method:'GET',headers:{'accept-encoding':'identity'}});
+ const first=new HeldAssetResponse(),second=new HeldAssetResponse();const one=handler(request('/wallet/large.wasm'),first);await first.started;const two=handler(request('/wallet/large.wasm'),second);await second.started;
+ const refused=new HeldAssetResponse();await handler(request('/wallet/worker.js'),refused);assert.equal(refused.status,503);assert.equal(reads,3);
+ // Neither large outgoing response owns the read/compressor. Advancing exactly
+ // its fixed deadline closes both, drains the handlers and releases all bytes.
+ t.mock.timers.tick(30000);await Promise.all([one,two]);assert.equal(first.destroyed,true);assert.equal(second.destroyed,true);
+ const next=new HeldAssetResponse();const nextResult=handler(request('/wallet/worker.js'),next);await next.started;assert.equal(next.status,200);next.finish();await nextResult;
+});
+test('slow identity reader does not block unrelated worker delivery and 31-worker burst succeeds',async t=>{
+ const large=Buffer.alloc(16*1024*1024),worker=Buffer.from('self.onmessage = () => {};');let reads=0;
+ const server=await startRollingReader({index:readyIndex(),wallet:{connectOrigins:[],read:async p=>{reads++;return {body:p==='/wallet/large.wasm'?large:worker,type:'text/javascript'};}}});t.after(()=>server.close());
+ let slowResponse;const slow=http.get(server.url+'/wallet/large.wasm',response=>{slowResponse=response;response.pause();});slow.on('error',()=>{});t.after(()=>slow.destroy());
+ await new Promise(resolve=>slow.once('response',resolve));
+ const workers=await Promise.all(Array.from({length:31},()=>wire(server.url+'/wallet/bb-thread.worker.js',{encoding:'gzip'})));
+ assert.equal(workers.length,31);assert.equal(reads,32);for(const r of workers){assert.equal(r.status,200);assert.deepEqual(gunzipSync(r.body),worker);}
+ assert.equal(slowResponse.complete,false,'slow original remains unread while worker fanout completes');slow.destroy();
 });
