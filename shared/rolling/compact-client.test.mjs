@@ -119,6 +119,20 @@ test('anchored page: one bounded public request returns a contiguous empty histo
 });
 const pageArgs=()=>({from:1,count:3,anchor:{number:7,hash}});
 const pageBody=()=>({schemaVersion:1,mode:'page',anchor:pageArgs().anchor,blocks:[1,2,3].map(number=>({...body(),number}))});
+const mixedHint=logs=>{const fields=noPrivateLogWire();fields[0]=markerHex(BigInt(fields[0])|(BigInt(logs)<<104n)|(BigInt(logs)<<88n));return fields;};
+const witnessedBody=counts=>({schemaVersion:1,mode:'page',witnesses:true,anchor:{number:40,hash},blocks:counts.map((logs,i)=>({...body(),number:i+1,fields:logs===null?Array(1000).fill(markerHex(0n)):logs?mixedHint(logs):body().fields,archiveWitness:{leafIndex:String(i+1),siblingPath:Array(30).fill(markerHex(0n))}}))});
+test('witnessed transport accepts mixed eight-log prefix and trailing empty blocks',async t=>{
+ const counts=Array(37).fill(0);for(const i of [1,9,17,25])counts[i]=2;let calls=0;
+ const client=fixture(t,async()=>{calls++;return response(witnessedBody(counts));});
+ assert.equal((await client.readWitnessPage({from:1,count:40,anchor:{number:40,hash}})).length,37);assert.equal(calls,1);
+});
+for(const counts of [[5,4],[1,null],[0,9],[9,0],[null,0]])test('witnessed transport refuses inadmissible mixed hint '+JSON.stringify(counts),async t=>{
+ let calls=0;const client=fixture(t,async()=>{calls++;return response(witnessedBody(counts));});
+ await assert.rejects(client.readWitnessPage({from:1,count:40,anchor:{number:40,hash}}),{code:'BB_COMPACT_BLOCK_UNAVAILABLE'});assert.equal(calls,1);
+});
+for(const count of [null,9])test('witnessed transport preserves first scalar-only block '+count,async t=>{
+ const client=fixture(t,async()=>response(witnessedBody([count])));assert.equal((await client.readWitnessPage({from:1,count:40,anchor:{number:40,hash}})).length,1);
+});
 test('anchored page: closed selector bounds fail before any request and capture the anchor',async t=>{
  let calls=0;const held=gate();let entered=0;const client=fixture(t,async(_url,o)=>{calls++;assert.equal(JSON.parse(o.body).anchor.hash,hash);return response(pageBody());},async()=>{if(++entered===1)await held.promise;});
  for(const value of [{...pageArgs(),count:0},{...pageArgs(),count:33},{...pageArgs(),from:0},{...pageArgs(),from:6},{...pageArgs(),count:1.5},{...pageArgs(),account:hash},{...pageArgs(),anchor:{number:7,hash,owner:hash}},{...pageArgs(),anchor:{get number(){throw Error('PRIVATE');},hash}}])await assert.rejects(client.readPage(value),{code:'BB_COMPACT_BLOCK_UNAVAILABLE'});

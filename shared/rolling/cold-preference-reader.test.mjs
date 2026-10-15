@@ -118,6 +118,14 @@ test('pending SDK operation keeps busy after abort until actual await settles',a
  const original=f.config.pxe.processRollingPreferenceRecovery;f.config.pxe.processRollingPreferenceRecovery=async(...args)=>{entered();return original(...args);};const reader=f.reader();const abort=new AbortController(),pending=reader.read({signal:abort.signal});await reached;abort.abort();
  await assert.rejects(reader.read(),{code:'ROLLING_COLD_PREFERENCES_BUSY'});release();await assert.rejects(pending,{code:'ROLLING_COLD_PREFERENCES_UNAVAILABLE'});assert.equal(f.db.size,0);
 });
+for(const fault of ['canonical','mailbox'])test('post-CAS '+fault+' failure drains its held peer before releasing reader',async()=>{
+ const f=fixture();let armed=false,release,entered;const held=new Promise(r=>{release=r;}),started=new Promise(r=>{entered=r;});
+ const block=f.config.node.getBlockData,process=f.config.pxe.processRollingPreferenceRecovery;
+ f.config.node.getBlockData=async n=>{if(armed){if(fault==='canonical')throw Error('labelled canonical failure');entered();await held;}return block(n);};
+ f.config.pxe.processRollingPreferenceRecovery=async p=>{if(armed&&p.expected===null){if(fault==='mailbox')throw Error('labelled mailbox failure');entered();await held;}return process(p);};
+ const r=f.reader();await r.read();f.state.afterCAS=()=>{armed=true;};let finished=false;const work=r.read().then(()=>({success:true}),error=>({error})).finally(()=>{finished=true;});
+ try{await started;await new Promise(resolve=>setImmediate(resolve));assert.equal(finished,false);await assert.rejects(r.read(),{code:'ROLLING_COLD_PREFERENCES_BUSY'});release();assert.equal((await work).error?.code,'ROLLING_COLD_PREFERENCES_UNAVAILABLE');assert.equal(f.state.steps,1);assert.equal(f.db.size,1);}finally{release();await work;}
+});
 test('account invalidation suppresses publication and performs no page after validation fails',async()=>{
  const f=fixture(),r=f.reader();await r.read();f.state.valid=false;await assert.rejects(r.read(),{code:'ROLLING_COLD_PREFERENCES_UNAVAILABLE'});assert.equal(f.state.steps,0);
 });
@@ -386,10 +394,18 @@ test('anchored page: pending page retains operation ownership until abort drains
  const r=f.reader();await r.read();const before=[...f.db],c=new AbortController(),run=r.read({signal:c.signal});await entered;c.abort();await assert.rejects(r.read(),{code:'ROLLING_COLD_PREFERENCES_BUSY'});release();await assert.rejects(run,{code:'ROLLING_COLD_PREFERENCES_UNAVAILABLE'});assert.deepEqual([...f.db],before);
 });
 
-test('witnessed adaptive public prefix enlarges after acknowledged SDK progress and shrinks after log page',async()=>{
+test('witnessed public prefix enlarges only after acknowledged SDK progress including log pages',async()=>{
  const f=fixture(),counts=[];let current={schemaVersion:1,database:'a'.repeat(64),epoch:'b'.repeat(64),sequence:0,anchor:{blockNumber:600,blockHash:hex(610)},nextBlock:1,nextLog:0,records:[],head:null,complete:false},reject=true,dense=false;
  f.config.compact.readWitnessPage=async p=>{counts.push(p.count);const size=dense?1:p.count;return Array.from({length:size},(_,i)=>({number:p.from+i,hash:hex(p.from+i+10),headerFields:Array(23).fill(hex(0)),fields:dense?[hex((2624615704n<<184n)|(1n<<104n)|(1n<<88n)|4n),hex(1),hex(0),hex(2),hex((3951939007n<<112n)|1n),...Array(6).fill(hex(0))]:Array(7).fill(hex(0)),archiveWitness:{leafIndex:String(p.from+i),siblingPath:Array(30).fill(hex(0))}}));};
  f.config.pxe.processRollingPreferenceRecovery=async p=>{if(p.expected){if(reject)throw Error('Labelled SDK authentication failure');const blocks=Array.isArray(p.block)?p.block:[p.block];for(const b of blocks){assert.equal(b.archiveWitness.anchorNumber,600);assert.equal(b.archiveWitness.anchorHash,hex(610));}current={...current,sequence:current.sequence+1,nextBlock:current.nextBlock+blocks.length};}return structuredClone(current);};
  const r=f.reader();await r.read();await assert.rejects(r.read());reject=false;
- await r.read();await r.read();dense=true;await r.read();dense=false;await r.read();assert.deepEqual(counts,[32,32,256,256,8]);
+ await r.read();await r.read();dense=true;await r.read();dense=false;await r.read();assert.deepEqual(counts,[32,32,256,256,256]);
+});
+
+for(const invalid of [false,true])test('witnessed reader checks cumulative mixed logs before SDK admission '+invalid,async()=>{
+ const f=anchoredFixture();let calls=0;
+ f.config.compact.readWitnessPage=async p=>Array.from({length:p.count},(_,i)=>({number:p.from+i,hash:hex(p.from+i+10),headerFields:Array(23).fill(hex(0)),fields:[1,9,17,25].includes(i)?[hex((2624615704n<<184n)|(BigInt(invalid&&i===25?3:2)<<104n)|(BigInt(invalid&&i===25?3:2)<<88n)|4n),hex(1),hex(0),hex(2),hex((3951939007n<<112n)|1n),...Array(6).fill(hex(0))]:Array(7).fill(hex(0)),archiveWitness:{leafIndex:String(p.from+i),siblingPath:Array(30).fill(hex(0))}}));
+ const process=f.config.pxe.processRollingPreferenceRecovery;f.config.pxe.processRollingPreferenceRecovery=async p=>{if(p.block)calls++;return process(p);};
+ const r=f.reader();await r.read();
+ if(invalid){await assert.rejects(r.read());assert.equal(calls,0);}else{assert.equal((await r.read()).progress.nextBlock,33);assert.equal(calls,1);}
 });

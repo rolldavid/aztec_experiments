@@ -204,12 +204,21 @@ export function createCompactBlockNativeAdapter(options) {
       let value;
       if(request.mode==='page'){
         await canonical(request.anchor,'page-before');alive();
-        const blocks=[];let remainingBytes=COMPACT_BLOCK_NATIVE_LIMITS.responseBytes-512;
+        const blocks=[];let remainingBytes=COMPACT_BLOCK_NATIVE_LIMITS.responseBytes-512,remainingLogs=8;
         for(let offset=0;offset<request.count;offset++){
           const next=await readBlock({number:request.from+offset},remainingBytes,request.witnesses?request.anchor:null);alive();
           if(!next)break;
+          const logs=compactPrivateLogCountHint(next.result.fields);
+          if(request.witnesses&&(logs===null||logs>remainingLogs)){
+            // Unknown/large first blocks retain the original scalar path. A
+            // later one is the sole lookahead: never skip it or admit it into
+            // the bounded mixed prefix. SDK verification remains authoritative.
+            if(blocks.length===0)blocks.push(next.result);
+            break;
+          }
           remainingBytes-=next.estimatedBytes;blocks.push(next.result);
-          if(compactPrivateLogCountHint(next.result.fields)!==0)break;
+          if(request.witnesses)remainingLogs-=logs;
+          else if(logs!==0)break;
         }
         check(blocks.length>0);await canonical(request.anchor,'page-after');alive();
         value={schemaVersion:1,mode:'page',anchor:request.anchor,blocks,...(request.witnesses?{witnesses:true}:{})};

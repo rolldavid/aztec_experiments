@@ -359,3 +359,24 @@ test('witnessed page byte selection fits exact SDK pre-copy aggregate budget',as
   assert.equal(f.state.bodyNumbers.length,v.blocks.length+1,'Native probes only the next body before stopping');
  });
 });
+
+test('witnessed mixed prefix admits eight logs across blocks and trailing empties before ninth',async()=>{
+ const f=await pageFixture(40,n=>[2,10,18,26].includes(n)?[effect(n),effect(n+100)]:n===38?[effect(n)]:[]);f.request.witnesses=true;
+ f.node.getBlockHashMembershipWitness=async(_anchor,hash)=>({leafIndex:BigInt(f.blocks.find(b=>b.hash.toString()===hash.toString()).number),siblingPath:Array(30).fill(Fr.ZERO)});
+ await server(f,async({send})=>{const r=await send();assert.equal(r.status,200);const v=await r.json();assert.equal(v.blocks.length,37);assert.deepEqual(f.state.bodyNumbers,Array.from({length:38},(_,i)=>i+1));
+  let logs=0;for(const b of v.blocks)logs+=(await authenticateCompactBlock({...b,expectedBlockHash:b.hash,assertCanonical:()=>true})).ciphertexts.length;assert.equal(logs,8);
+ });
+});
+
+for(const kind of ['unknown','nine'])for(const at of [1,3])test('witnessed '+kind+' block at '+at+' preserves scalar or preceding prefix',async()=>{
+ const f=await pageFixture(5,n=>n===at?(kind==='unknown'?[publicOnlyEffect(1000)]:Array.from({length:9},(_,i)=>effect(i+1))):[]);f.request.witnesses=true;
+ f.node.getBlockHashMembershipWitness=async(_anchor,hash)=>({leafIndex:BigInt(f.blocks.find(b=>b.hash.toString()===hash.toString()).number),siblingPath:Array(30).fill(Fr.ZERO)});
+ await server(f,async({send})=>{const r=await send();assert.equal(r.status,200);const v=await r.json();assert.equal(v.blocks.length,at===1?1:at-1);assert.equal(f.state.bodyNumbers.length,at);});
+});
+test('witnessed mixed page includes direct anchor and never turns a later body failure into a prefix',async()=>{
+ const f=await pageFixture(3,n=>[effect(n)]);f.request.witnesses=true;
+ f.node.getBlockHashMembershipWitness=async(_anchor,hash)=>({leafIndex:BigInt(f.blocks.find(b=>b.hash.toString()===hash.toString()).number),siblingPath:Array(30).fill(Fr.ZERO)});
+ await server(f,async({send})=>{const r=await send();assert.equal(r.status,200);const v=await r.json();assert.equal(v.blocks.length,3);assert.equal(v.blocks[2].archiveWitness,null);
+  f.state.onBody=async b=>{if(b.number===2)throw Error('PRIVATE');};await denied(await send(),503);
+ });
+});
