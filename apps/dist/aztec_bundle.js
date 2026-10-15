@@ -444388,11 +444388,24 @@ ${context.join("\n")}`;
   function createBrowserJournalStorage(indexedDB2 = globalThis.indexedDB) {
     async function open2() {
       return new Promise((resolve, reject) => {
-        const req = indexedDB2.open("aztec-billboard-transaction-journal-v1", 1);
-        req.onupgradeneeded = () => req.result.createObjectStore("records");
-        req.onsuccess = () => resolve(req.result);
-        req.onerror = () => reject(new Error("Cannot open transaction journal"));
-        req.onblocked = () => reject(new Error("Transaction journal upgrade blocked"));
+        let rejected = false;
+        const req = indexedDB2.open("aztec-billboard-transaction-journal-v1", 2);
+        req.onupgradeneeded = () => {
+          if (!req.result.objectStoreNames.contains("records")) req.result.createObjectStore("records");
+          if (!req.result.objectStoreNames.contains("recovery-metadata")) req.result.createObjectStore("recovery-metadata");
+        };
+        req.onsuccess = () => {
+          if (rejected) req.result.close();
+          else resolve(req.result);
+        };
+        req.onerror = () => {
+          rejected = true;
+          reject(new Error("Cannot open transaction journal"));
+        };
+        req.onblocked = () => {
+          rejected = true;
+          reject(new Error("Transaction journal upgrade blocked"));
+        };
       });
     }
     async function access(key, write, previous, next) {
@@ -444432,7 +444445,43 @@ ${context.join("\n")}`;
         db.close();
       }
     }
-    return { keys, read: (key) => access(key, false), compareAndSwap: (key, previous, next) => access(key, true, previous, next) };
+    async function recoveryEpoch(mode = "read") {
+      const db = await open2();
+      try {
+        return await new Promise((resolve, reject) => {
+          const write = mode !== "read", tx = db.transaction("recovery-metadata", write ? "readwrite" : "readonly", write ? { durability: "strict" } : void 0), store = tx.objectStore("recovery-metadata");
+          let value = null;
+          const req = store.get("epoch");
+          req.onsuccess = () => {
+            try {
+              value = req.result ?? null;
+              if (value !== null && (typeof value !== "string" || !/^[0-9a-f]{64}$/.test(value))) {
+                tx.abort();
+                return;
+              }
+              if (mode === "rotate" || mode === "ensure" && value === null) {
+                value = Array.from(globalThis.crypto.getRandomValues(new Uint8Array(32)), (b2) => b2.toString(16).padStart(2, "0")).join("");
+                store.put(value, "epoch");
+              }
+            } catch {
+              tx.abort();
+            }
+          };
+          tx.oncomplete = () => resolve(value);
+          tx.onabort = tx.onerror = () => reject(new Error("Recovery provenance update failed"));
+        });
+      } finally {
+        db.close();
+      }
+    }
+    return {
+      keys,
+      read: (key) => access(key, false),
+      compareAndSwap: (key, previous, next) => access(key, true, previous, next),
+      readRecoveryEpoch: () => recoveryEpoch(),
+      ensureRecoveryEpoch: () => recoveryEpoch("ensure"),
+      rotateRecoveryEpoch: () => recoveryEpoch("rotate")
+    };
   }
 
   // shared/aztec-node-client.mjs
@@ -475357,6 +475406,7 @@ mod tests {
         for (const record8 of records) {
           const incoming = await authenticate(record8);
           total += record8.encoded.length;
+          if (incoming.descriptor.keyDomain === "ROLLING_WORKFLOW_V1" && (incoming.value?.preproof || incoming.value?.preproofReview) && typeof storage.rotateRecoveryEpoch !== "function") throw fail9();
           if (total > LIMIT || seen.has(record8.key)) throw fail9();
           seen.add(record8.key);
           const current = await storage.read(record8.key);
@@ -475368,6 +475418,7 @@ mod tests {
             retained.set(record8.key, current);
           }
         }
+        if (records.length && typeof storage.rotateRecoveryEpoch === "function") await storage.rotateRecoveryEpoch();
         for (const record8 of records) {
           const current = await storage.read(record8.key);
           if (retained.has(record8.key)) {

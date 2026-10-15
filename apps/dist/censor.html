@@ -45969,11 +45969,25 @@ const FEE_JUICE_SIGN_MSG = 'Aztec fee-juice deposit claim secret v1\n\n' +
   // Aztec Wallet (gas estimation + prove/submit split, with retry)
   // ============================================================
   const privateWalletRoutes = new WeakMap();
+  const preproofToken = Symbol('built-in-preproof'), preproofLifecycles = new WeakMap();
   function isPrivateWalletForNode(wallet, node) {
     const route = privateWalletRoutes.get(wallet);
     return Boolean(route && route.node === node && route.rawNode === node &&
       wallet.aztecNode === node && wallet.pxe === route.pxe &&
       route.sdk.isPrivatePXEForNode?.(route.pxe, node));
+  }
+  function createPreproofRecovery(wallet,node,journal) {
+    const route=privateWalletRoutes.get(wallet);
+    const check=()=>{if(!journal||typeof journal.assertCanStart!=='function'||typeof journal.prepare!=='function'||!route||!isPrivateWalletForNode(wallet,node)||wallet.sendTx!==route.sendTx||route.journal!==journal||wallet._transactionJournal!==journal)throw Object.assign(new Error('Built-in recovery capability changed.'),{code:'BB_JOURNAL_INVALID'});};
+    check();
+    return Object.freeze({
+      checkpoint:async()=>{check();const saved=await journal.assertCanStart();check();return {encoded:saved.encoded};},
+      send:async(payload,options,lifecycle)=>{
+        check();if(options.transactionJournal!==journal||typeof lifecycle?.guard!=='function'||typeof lifecycle?.signed!=='function')throw Object.assign(new Error('Invalid pre-proof lifecycle.'),{code:'BB_JOURNAL_INVALID'});
+        const token={},bound=Object.freeze({guard:lifecycle.guard,signed:lifecycle.signed,check,journal});preproofLifecycles.set(token,bound);
+        try{return await route.sendTx.call(wallet,payload,{...options,[preproofToken]:token});}finally{preproofLifecycles.delete(token);}
+      }
+    });
   }
   function createAztecWallet(a, pxe, aztecNode, rawNode, log, secretKey, opts = {}) {
     class AztecWallet extends a.BaseWallet {
@@ -45997,6 +46011,9 @@ const FEE_JUICE_SIGN_MSG = 'Aztec fee-juice deposit claim secret v1\n\n' +
         const log = this._log;
         this._progress('preparing');
         const journal = opts.transactionJournal ?? this._transactionJournal;
+        const lifecycle=opts[preproofToken]?preproofLifecycles.get(opts[preproofToken]):null;
+        if(opts[preproofToken]&&!lifecycle)throw Object.assign(new Error('Invalid pre-proof lifecycle.'),{code:'BB_JOURNAL_INVALID'});
+        if(lifecycle){lifecycle.check();if(lifecycle.journal!==journal)throw Object.assign(new Error('Invalid pre-proof journal.'),{code:'BB_JOURNAL_INVALID'});await lifecycle.guard('pre-proof');}
         if (opts.journalOperation && !journal) throw Object.assign(new Error('Durable transaction journal is required.'), {code:'BB_JOURNAL_INVALID'});
         if (opts.journalOperation && journal) journal.setOperation(opts.journalOperation);
         const previousJournal = journal ? await journal.assertCanStart() : null;
@@ -46072,11 +46089,15 @@ const FEE_JUICE_SIGN_MSG = 'Aztec fee-juice deposit claim secret v1\n\n' +
         if (this._contextGuard) await this._contextGuard();
         const applicationNullifier = !opts.journalOperation && this._applicationNullifierBoard
           ? (await a.extractApplicationNullifier(provenTx, tx, this._applicationNullifierBoard, this._applicationNoteNullifier)).toString() : undefined;
+        // A suspended proof cannot cross a revoked attempt's durable boundary.
+        if(lifecycle){lifecycle.check();await lifecycle.guard('pre-proof');}
         if (journal) await journal.prepare(tx, previousJournal, {applicationNullifier});
+        if(lifecycle){lifecycle.check();await lifecycle.signed(txHash.toString());}
         if (this._contextGuard) await this._contextGuard();
         if (opts.beforeSubmit) await opts.beforeSubmit(txHash.toString());
         if (this._contextGuard) await this._contextGuard();
         this._progress('submitting');
+        if(lifecycle){lifecycle.check();await lifecycle.guard('signed');}
         await a.submitOnceWithReconciliation(rawNode,tx);
         this._progress('confirming');
         const waitOpts=typeof opts.wait==='object'?opts.wait:{};
@@ -46092,7 +46113,7 @@ const FEE_JUICE_SIGN_MSG = 'Aztec fee-juice deposit claim secret v1\n\n' +
     }
 
     const wallet = new AztecWallet(pxe, aztecNode);
-    privateWalletRoutes.set(wallet, {sdk:a, pxe, node:aztecNode, rawNode});
+    privateWalletRoutes.set(wallet, {sdk:a, pxe, node:aztecNode, rawNode,sendTx:wallet.sendTx,journal:opts.transactionJournal});
     wallet._progress = opts.progress || (()=>{});
     wallet._preProveHook = opts.preProveHook || null;
     wallet._contextGuard = opts.contextGuard || null;
@@ -46365,7 +46386,7 @@ const FEE_JUICE_SIGN_MSG = 'Aztec fee-juice deposit claim secret v1\n\n' +
     const node=await a.createTrustedPrivateNode(options);
     if(!a.isTrustedPrivateNode(node))throw invalid();return node;
   }
-  g.BillboardPrivateFeeRouting = Object.freeze({ requirePrivateFeeConfiguration, createPrivateFeeSender, createAztecWallet, isPrivateWalletForNode, connectTrustedPrivateNode });
+  g.BillboardPrivateFeeRouting = Object.freeze({ requirePrivateFeeConfiguration, createPrivateFeeSender, createAztecWallet, isPrivateWalletForNode, createPreproofRecovery, connectTrustedPrivateNode });
 
   // Read-only readiness check at a refreshed current PXE anchor. Proving may refresh it again.
   // Missing messages never allocate fees, prove, submit, or repeat an L1 deposit.
