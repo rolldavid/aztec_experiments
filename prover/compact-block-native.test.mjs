@@ -348,3 +348,14 @@ for(const mode of ['missing','wrongIndex','short','reorg','unsynced'])test('witn
  if(mode!=='missing')f.node.getBlockHashMembershipWitness=async(_anchor,hash)=>{const b=f.blocks.find(b=>b.hash.toString()===hash.toString());if(mode==='reorg')f.state.orphan=3;if(mode==='unsynced')f.state.stale=true;return {leafIndex:BigInt(mode==='wrongIndex'?99:b.number),siblingPath:Array(mode==='short'?29:30).fill(Fr.ZERO)};};
  await server(f,async({send})=>{await denied(await send(),503);});
 });
+
+// The native prefix must fit the SDK snapshot budget, not only JSON wire bytes.
+test('witnessed page byte selection fits exact SDK pre-copy aggregate budget',async()=>{
+ const f=await pageFixture(257,()=>[publicOnlyEffect(100)]);f.request.count=256;f.request.witnesses=true;
+ f.node.getBlockHashMembershipWitness=async(_anchor,hash)=>({leafIndex:BigInt(f.blocks.find(b=>b.hash.toString()===hash.toString()).number),siblingPath:Array(30).fill(Fr.ZERO)});
+ await server(f,async({send})=>{const r=await send();assert.equal(r.status,200);const v=await r.json();assert(v.blocks.length>32&&v.blocks.length<256);
+  const sdkBytes=v.blocks.reduce((sum,b)=>sum+(b.fields.length+b.headerFields.length+(b.archiveWitness?.siblingPath.length??0))*69+2048,0);
+  assert(sdkBytes<=limits.responseBytes,'Every returned prefix must fit the unchanged SDK pre-copy budget');
+  assert.equal(f.state.bodyNumbers.length,v.blocks.length+1,'Native probes only the next body before stopping');
+ });
+});

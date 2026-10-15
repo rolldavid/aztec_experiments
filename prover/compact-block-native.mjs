@@ -170,7 +170,8 @@ export function createCompactBlockNativeAdapter(options) {
           {includeTransactions:true,includeL1PublishInfo:false,includeAttestations:false});alive();
         check(response&&response.hash instanceof BlockHash&&response.hash.toString()===request.hash&&response.number===request.number);
         stage='encode';const body=own(response,'body'),fieldCount=preflight(body);
-        const estimatedBytes=(fieldCount+BLOCK_HEADER_LENGTH)*69+512+(pageAnchor?30*69+128:0);
+        // Witnessed prefixes must fit the SDK pre-copy accounting as well as wire bytes.
+        const estimatedBytes=(fieldCount+BLOCK_HEADER_LENGTH+(pageAnchor?30:0))*69+(pageAnchor?2048:512);
         // Stop a page BEFORE flattening/allocating another encoded block. A short
         // prefix is useful only after the SDK authenticates it; no block is skipped.
         if(estimatedBytes>remainingBytes)return null;
