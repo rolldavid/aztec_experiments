@@ -393601,7 +393601,7 @@ Partial Address: ${this.partialAddress.toString()}
       this.eventQueue.start();
     }
     createBlockStream() {
-      return new L2BlockStream(blockStreamSourceFromAztecNode(this.node), this.l2TipsStore, this, createLogger("pxe:block_stream", this.log.getBindings()), {
+      return new L2BlockStream(this.snapshotBlockStreamSource(), this.l2TipsStore, this, createLogger("pxe:block_stream", this.log.getBindings()), {
         // PXE only tracks chain tips (it anchors on tip events and never replays payloads), so the stream runs
         // in tips-only mode: no block downloads, just the tip events that move the anchor and detect reorgs.
         tipsOnly: true
@@ -393619,8 +393619,38 @@ Partial Address: ${this.partialAddress.toString()}
       });
     }
     anchorEventFailed = false;
+    syncTips = void 0;
+    syncPass = void 0;
+    observeSource(read2) {
+      const pass = this.syncPass;
+      if (!pass) throw new Error("PXE_REORG_ANCHOR_SOURCE_FAILED");
+      const promise7 = Promise.resolve().then(read2).catch(() => {
+        pass.failed = true;
+        throw new Error("PXE_REORG_ANCHOR_SOURCE_FAILED");
+      });
+      pass.pending.add(promise7);
+      promise7.then(() => pass.pending.delete(promise7), () => pass.pending.delete(promise7));
+      return promise7;
+    }
+    async drainSourceReads(pass) {
+      while (pass.pending.size) await Promise.allSettled([...pass.pending]);
+    }
+    snapshotBlockStreamSource() {
+      const source = blockStreamSourceFromAztecNode(this.node);
+      const tips = source.getL2Tips.bind(source);
+      source.getL2Tips = () => this.observeSource(async () => {
+        this.syncTips = structuredClone(await tips());
+        return structuredClone(this.syncTips);
+      });
+      const block2 = source.getBlockData.bind(source);
+      source.getBlockData = (query) => this.observeSource(() => block2(query));
+      const blocks = source.getBlocks.bind(source);
+      source.getBlocks = (query) => this.observeSource(() => blocks(query));
+      return source;
+    }
     async selectedAnchor() {
-      const tips = await this.node.getChainTips();
+      const tips = this.syncTips;
+      if (!tips) throw new Error("PXE_REORG_ANCHOR_INCOMPLETE");
       const tier = this.config.syncChainTip ?? "proposed";
       return tier === "proposed" ? tips.proposed : tips[tier].block;
     }
@@ -393637,9 +393667,32 @@ Partial Address: ${this.partialAddress.toString()}
     }
     async checkedSelectedAnchor() {
       const block2 = await this.selectedAnchor();
-      const header = await this.checkedHeader(block2);
-      if (!this.sameAnchor(block2, await this.selectedAnchor())) throw new Error("PXE_REORG_ANCHOR_CHANGED");
-      return { block: block2, header };
+      const tips = await this.node.getChainTips();
+      const tier = this.config.syncChainTip ?? "proposed";
+      const live = tier === "proposed" ? tips.proposed : tips[tier].block;
+      if (live.number < block2.number || live.number === block2.number && !this.sameAnchor(live, block2)) {
+        throw new Error("PXE_REORG_ANCHOR_CHANGED");
+      }
+      if (!this.sameAnchor(live, block2)) await this.checkedHeader(live);
+      await this.checkedHeader(block2);
+      const afterTips = await this.node.getChainTips();
+      const after = tier === "proposed" ? afterTips.proposed : afterTips[tier].block;
+      if (after.number < block2.number || after.number === block2.number && !this.sameAnchor(after, block2)) {
+        throw new Error("PXE_REORG_ANCHOR_CHANGED");
+      }
+      if (!this.sameAnchor(after, live)) await this.checkedHeader(after);
+      return { block: block2, header: await this.checkedHeader(block2) };
+    }
+    async checkAcknowledgedSnapshot() {
+      const expected = this.syncTips;
+      if (!expected) throw new Error("PXE_REORG_ANCHOR_INCOMPLETE");
+      const actual = await this.l2TipsStore.getL2Tips();
+      if (!this.sameAnchor(actual.proposed, expected.proposed)) throw new Error("PXE_REORG_ANCHOR_INCOMPLETE");
+      for (const tier of ["checkpointed", "proven", "finalized"]) {
+        if (!this.sameAnchor(actual[tier].block, expected[tier].block)) {
+          throw new Error("PXE_REORG_ANCHOR_INCOMPLETE");
+        }
+      }
     }
     async doHandleBlockStreamEvent(event) {
       if (event.type === "chain-pruned") {
@@ -393648,8 +393701,8 @@ Partial Address: ${this.partialAddress.toString()}
           await this.checkedHeader(event.block);
           const target = await this.checkedSelectedAnchor();
           if (target.block.number < event.block.number) throw new Error("PXE_REORG_ANCHOR_CHANGED");
-          const tips = await this.node.getChainTips();
-          if (!this.sameAnchor(tips.checkpointed.block, event.checkpointed.block) || !this.sameAnchor(tips.proven.block, event.proven.block) || !this.sameAnchor(target.block, await this.selectedAnchor())) {
+          const tips = this.syncTips;
+          if (!tips || !this.sameAnchor(tips.checkpointed.block, event.checkpointed.block) || !this.sameAnchor(tips.proven.block, event.proven.block) || !this.sameAnchor(target.block, (await this.checkedSelectedAnchor()).block)) {
             throw new Error("PXE_REORG_ANCHOR_CHANGED");
           }
           await this.store.transactionAsync(async () => {
@@ -393670,7 +393723,7 @@ Partial Address: ${this.partialAddress.toString()}
           if (!this.sameAnchor(currentId, target.block)) {
             if (currentId.number >= target.block.number) throw new Error("PXE_REORG_ANCHOR_CHANGED");
             await this.checkedHeader(currentId);
-            if (!this.sameAnchor(target.block, await this.selectedAnchor())) throw new Error("PXE_REORG_ANCHOR_CHANGED");
+            if (!this.sameAnchor(target.block, (await this.checkedSelectedAnchor()).block)) throw new Error("PXE_REORG_ANCHOR_CHANGED");
           }
           await this.store.transactionAsync(async () => {
             await this.updateAnchorBlockHeader(target.header);
@@ -393729,12 +393782,23 @@ Partial Address: ${this.partialAddress.toString()}
         await this.anchorBlockStore.setHeader((await this.node.getBlockData(BlockNumber.ZERO)).header);
       }
       this.anchorEventFailed = false;
-      await this.blockStream.sync();
-      if (this.anchorEventFailed) throw new Error("PXE_REORG_ANCHOR_EVENT_FAILED");
-      const selected = await this.checkedSelectedAnchor();
-      const anchor2 = await this.anchorBlockStore.getBlockHeader();
-      if (anchor2.getBlockNumber() !== selected.block.number || (await anchor2.hash()).toString() !== selected.block.hash) {
-        throw new Error("PXE_REORG_ANCHOR_INCOMPLETE");
+      this.syncTips = void 0;
+      const pass = { failed: false, pending: /* @__PURE__ */ new Set() };
+      this.syncPass = pass;
+      try {
+        await this.blockStream.sync();
+        await this.drainSourceReads(pass);
+        if (this.anchorEventFailed || pass.failed) throw new Error("PXE_REORG_ANCHOR_EVENT_FAILED");
+        const selected = await this.checkedSelectedAnchor();
+        const anchor2 = await this.anchorBlockStore.getBlockHeader();
+        if (anchor2.getBlockNumber() !== selected.block.number || (await anchor2.hash()).toString() !== selected.block.hash) {
+          throw new Error("PXE_REORG_ANCHOR_INCOMPLETE");
+        }
+        await this.checkAcknowledgedSnapshot();
+      } finally {
+        await this.drainSourceReads(pass);
+        this.syncTips = void 0;
+        this.syncPass = void 0;
       }
     }
   };
