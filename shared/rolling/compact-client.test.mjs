@@ -111,3 +111,31 @@ test('mixed transport hint and exact budget stop before a ninth declared log',as
  const result=await client.readMany(Array.from({length:32},(_,i)=>({number:i+1,hash})),{privateLogBudget:8});assert.equal(result.length,8);assert.deepEqual(calls,[1,2,3,4,5,6,7,8]);
  const before=calls.length;for(const options of [{privateLogBudget:9},{privateLogBudget:-1},{privateLogBudget:1.5},{privateLogBudget:8,emptyPrefix:true},{get privateLogBudget(){throw Error('PRIVATE');}}])await assert.rejects(client.readMany([{number:1,hash}],options));assert.equal(calls.length,before);
 });
+
+test('anchored page: one bounded public request returns a contiguous empty history prefix',async t=>{
+ const input={from:1,count:32,anchor:{number:40,hash}};let calls=0,guards=0;
+ const client=fixture(t,async(url,options)=>{calls++;assert.deepEqual(JSON.parse(options.body),{schemaVersion:1,mode:'page',...input,tier:'checkpointed'});assert.equal(Buffer.byteLength(options.body)<1024,true);return response({schemaVersion:1,mode:'page',anchor:input.anchor,blocks:Array.from({length:32},(_,i)=>({...body(),number:i+1}))});},async()=>{guards++;});
+ const result=await client.readPage(input);assert.equal(result.length,32);assert.equal(calls,1);assert.equal(guards,2);assert(Object.isFrozen(result));
+});
+const pageArgs=()=>({from:1,count:3,anchor:{number:7,hash}});
+const pageBody=()=>({schemaVersion:1,mode:'page',anchor:pageArgs().anchor,blocks:[1,2,3].map(number=>({...body(),number}))});
+test('anchored page: closed selector bounds fail before any request and capture the anchor',async t=>{
+ let calls=0;const held=gate();let entered=0;const client=fixture(t,async(_url,o)=>{calls++;assert.equal(JSON.parse(o.body).anchor.hash,hash);return response(pageBody());},async()=>{if(++entered===1)await held.promise;});
+ for(const value of [{...pageArgs(),count:0},{...pageArgs(),count:33},{...pageArgs(),from:0},{...pageArgs(),from:6},{...pageArgs(),count:1.5},{...pageArgs(),account:hash},{...pageArgs(),anchor:{number:7,hash,owner:hash}},{...pageArgs(),anchor:{get number(){throw Error('PRIVATE');},hash}}])await assert.rejects(client.readPage(value),{code:'BB_COMPACT_BLOCK_UNAVAILABLE'});
+ assert.equal(calls,0);const input=pageArgs(),run=client.readPage(input);input.anchor.hash='0x'+'02'.repeat(32);held.release();assert.equal((await run).length,3);assert.equal(calls,1);
+});
+for(const [name,mutate] of Object.entries({empty:v=>v.blocks=[],hole:v=>v.blocks[1].number=4,duplicate:v=>v.blocks[1].number=1,extra:v=>v.blocks.push({...body(),number:4}),anchor:v=>v.anchor.number=8,mode:v=>v.mode='other',field:v=>v.blocks[1].fields[0]='0x'+'ff'.repeat(32),earlyLogs:v=>v.blocks[0].fields=noPrivateLogWire().map((x,i)=>i===0?markerHex(BigInt(x)|(1n<<104n)):x),extraPrivate:v=>v.account=hash}))test('anchored page: rejects '+name+' response without retry',async t=>{
+ let calls=0;const client=fixture(t,async()=>{calls++;const v=pageBody();mutate(v);return response(v);});await assert.rejects(client.readPage(pageArgs()),{code:'BB_COMPACT_BLOCK_UNAVAILABLE'});assert.equal(calls,1);
+});
+test('anchored page: a short bounded prefix and terminal dense block remain untrusted input',async t=>{
+ const v=pageBody();v.blocks.length=2;v.blocks[1].fields=noPrivateLogWire();v.blocks[1].fields[0]=markerHex(BigInt(v.blocks[1].fields[0])|(1n<<104n));
+ const client=fixture(t,async()=>response(v));assert.equal((await client.readPage(pageArgs())).length,2);
+});
+test('anchored page: abort drains ignoring fetch, prevents result and keeps all methods singleflight',async t=>{
+ const held=gate(),entered=gate();let calls=0;const client=fixture(t,async()=>{calls++;entered.release();await held.promise;return response(pageBody());});
+ const control=new AbortController(),run=client.readPage(pageArgs(),{signal:control.signal});await entered.promise;control.abort();await assert.rejects(client.read(args()));await assert.rejects(client.readPage(pageArgs()));assert.equal(calls,1);held.release();await assert.rejects(run,{code:'BB_COMPACT_BLOCK_UNAVAILABLE'});assert.equal(calls,1);
+});
+test('anchored page: full decoded body bound applies before parsing and drains cancellation',async t=>{
+ const held=gate();let cancelled=false,calls=0;const client=fixture(t,async()=>{calls++;return new Response(new ReadableStream({start(c){c.enqueue(new Uint8Array(COMPACT_TRANSPORT_LIMITS.responseBytes+1));},async cancel(){cancelled=true;await held.promise;}}),{headers:{'content-type':'application/json'}});});
+ let settled=false;const run=client.readPage(pageArgs()).finally(()=>{settled=true;});await new Promise(r=>setImmediate(r));assert(cancelled);assert.equal(settled,false);await assert.rejects(client.readPage(pageArgs()));held.release();await assert.rejects(run);assert.equal(calls,1);
+});

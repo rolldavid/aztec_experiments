@@ -89,7 +89,7 @@ test('source-only deployment layout resolves runtime helper to the same actual i
  try{
   // Labelled filesystem model of the image: one SDK root, source-only mounts.
   fs.symlinkSync(fs.realpathSync('node_modules'),path.join(image,'node_modules'),'dir');
-  for(const relative of ['prover/compact-node-registration.mjs','prover/compact-node-transform.mjs','prover/compact-block-native.mjs','shared/trusted-private-node.mjs']){
+  for(const relative of ['prover/compact-node-registration.mjs','prover/compact-node-transform.mjs','prover/compact-block-native.mjs','shared/trusted-private-node.mjs','shared/rolling/compact-client.mjs']){
    const target=path.join(image,'rolling',relative);fs.mkdirSync(path.dirname(target),{recursive:true});fs.copyFileSync(relative,target);
   }
   const probe="export const sdkUrl=import.meta.resolve('@aztec-labs/foundation/eth-address');";

@@ -10,6 +10,7 @@ import {BlockNumber} from '@aztec-labs/foundation/branded-types';
 import {BlockHash,Body,L2Block} from '@aztec-labs/stdlib/block';
 import {BlockHeader,TxEffect} from '@aztec-labs/stdlib/tx';
 import {inspectTrustedNode,getTrustedNodeFailureDiagnostic} from '../shared/trusted-private-node.mjs';
+import {validateCompactRequest,compactPrivateLogCountHint} from '../shared/rolling/compact-client.mjs';
 
 export const COMPACT_BLOCK_NATIVE_ROUTE='/rolling/compact-block-v1';
 const fieldCapacity=BLOBS_PER_CHECKPOINT*FIELDS_PER_BLOB-NUM_CHECKPOINT_END_MARKER_FIELDS;
@@ -69,13 +70,6 @@ function captureConfig(options) {
   check(!lagDescriptor||Object.hasOwn(lagDescriptor,'value'));
   const maxLagSeconds=natural(lagDescriptor?lagDescriptor.value:120,600,1);
   return Object.freeze({expectedNetworkScope:Object.freeze({chainId,version,rollup}),proofsEnabled,tier,maxLagSeconds});
-}
-function selector(value,tier) {
-  check(value&&typeof value==='object'&&!Array.isArray(value));
-  check(Object.keys(value).length===4&&Object.keys(value).every(k=>['schemaVersion','number','hash','tier'].includes(k)));
-  check(own(value,'schemaVersion')===1&&own(value,'tier')===tier);
-  const number=natural(own(value,'number'),0xffffffff,1),hash=hex(own(value,'hash'),32);check(BigInt(hash)<Fr.MODULUS);
-  return Object.freeze({schemaVersion:1,number,hash,tier});
 }
 async function matchingHeader(header,hash,number,scope) {
   check(header instanceof BlockHeader);
@@ -155,40 +149,64 @@ export function createCompactBlockNativeAdapter(options) {
       status=413;if(declared!==undefined&&(typeof declared!=='string'||!/^(0|[1-9][0-9]{0,9})$/.test(declared)||Number(declared)>COMPACT_BLOCK_NATIVE_LIMITS.requestBytes))throw Error();
       status=400;const chunks=[];let bytes=0;
       for await(const chunk of req.iterator({destroyOnReturn:false})){bytes+=chunk.length;if(bytes>COMPACT_BLOCK_NATIVE_LIMITS.requestBytes){status=413;throw Error();}chunks.push(chunk);}
-      alive();const request=selector(JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(Buffer.concat(chunks))),config.tier);
+      alive();const request=validateCompactRequest(JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(Buffer.concat(chunks))),config.tier);
       status=503;
-      const canonical=async boundary=>{
+      const canonical=async (selected,boundary)=>{
         stage=boundary+'-readiness';alive();await inspectTrustedNode(api,{...config,readinessTier:config.tier});alive();
         stage=boundary+'-canonical';
         const tips=await api.getChainTips();alive();
         const tip=config.tier==='proposed'?tips.proposed:tips[config.tier]?.block;
-        check(tip&&Number.isSafeInteger(tip.number)&&request.number<=tip.number);
-        const metadata=await api.getBlockData(BlockNumber(request.number));alive();
-        check(metadata&&metadata.blockHash instanceof BlockHash&&metadata.blockHash.toString()===request.hash);
-        await matchingHeader(metadata.header,request.hash,request.number,config.expectedNetworkScope);alive();
+        check(tip&&Number.isSafeInteger(tip.number)&&selected.number<=tip.number);
+        const metadata=await api.getBlockData(BlockNumber(selected.number));alive();
+        check(metadata&&metadata.blockHash instanceof BlockHash);
+        const hash=metadata.blockHash.toString();check(selected.hash===undefined||selected.hash===hash);
+        await matchingHeader(metadata.header,hash,selected.number,config.expectedNetworkScope);alive();
+        return Object.freeze({...selected,hash});
       };
-      await canonical('before');alive();
-      stage='body';const response=await api.getBlock({hash:BlockHash.fromString(request.hash)},
-        {includeTransactions:true,includeL1PublishInfo:false,includeAttestations:false});alive();
-      check(response&&response.hash instanceof BlockHash&&response.hash.toString()===request.hash&&response.number===request.number);
-      stage='encode';const body=own(response,'body'),fieldCount=preflight(body);
-      // Count and exact protocol field budgets are known before flattening,
-      // Fr string conversion or JSON construction. Header hashing is fixed-size.
-      const header=await matchingHeader(own(response,'header'),request.hash,request.number,config.expectedNetworkScope);alive();
-      // A native await may expose mutations: repeat the cheap preflight directly
-      // before synchronous encoding. Never assume a mutable body was snapshotted.
-      check(preflight(body)===fieldCount);
-      const nativeBlock=new L2Block(response.archive,header,body,response.checkpointNumber,response.indexWithinCheckpoint);
-      const compact=nativeBlock.toBlobFields();check(compact.length===fieldCount);
-      const rawHeader=header.toFields();check(rawHeader.length===BLOCK_HEADER_LENGTH);
-      // 69 includes quotes/comma for every fixed-width field, 512 bounds all
-      // fixed keys and public scalar metadata. The exact encoded string is also
-      // checked later; this prior arithmetic is what bounds its allocation.
-      check((fieldCount+BLOCK_HEADER_LENGTH)*69+512<=COMPACT_BLOCK_NATIVE_LIMITS.responseBytes);
-      const toText=value=>{check(value instanceof Fr);return hex(Fr.prototype.toString.call(value),32);};
-      const result={schemaVersion:1,number:request.number,hash:request.hash,headerFields:rawHeader.map(toText),fields:compact.map(toText)};
-      await canonical('after');alive();
-      stage='response';const encoded=JSON.stringify(result);check(Buffer.byteLength(encoded)<=COMPACT_BLOCK_NATIVE_LIMITS.responseBytes);
+      const readBlock=async(selected,remainingBytes)=>{
+        const request=await canonical(selected,'before');alive();
+        stage='body';const response=await api.getBlock({hash:BlockHash.fromString(request.hash)},
+          {includeTransactions:true,includeL1PublishInfo:false,includeAttestations:false});alive();
+        check(response&&response.hash instanceof BlockHash&&response.hash.toString()===request.hash&&response.number===request.number);
+        stage='encode';const body=own(response,'body'),fieldCount=preflight(body);
+        const estimatedBytes=(fieldCount+BLOCK_HEADER_LENGTH)*69+512;
+        // Stop a page BEFORE flattening/allocating another encoded block. A short
+        // prefix is useful only after the SDK authenticates it; no block is skipped.
+        if(estimatedBytes>remainingBytes)return null;
+        // Count and exact protocol field budgets are known before flattening,
+        // Fr string conversion or JSON construction. Header hashing is fixed-size.
+        const header=await matchingHeader(own(response,'header'),request.hash,request.number,config.expectedNetworkScope);alive();
+        // A native await may expose mutations: repeat the cheap preflight directly
+        // before synchronous encoding. Never assume a mutable body was snapshotted.
+        check(preflight(body)===fieldCount);
+        const nativeBlock=new L2Block(response.archive,header,body,response.checkpointNumber,response.indexWithinCheckpoint);
+        const compact=nativeBlock.toBlobFields();check(compact.length===fieldCount);
+        const rawHeader=header.toFields();check(rawHeader.length===BLOCK_HEADER_LENGTH);
+        // 69 includes quotes/comma for every fixed-width field, 512 bounds all
+        // fixed keys and public scalar metadata. The exact encoded string is also
+        // checked later; this prior arithmetic is what bounds its allocation.
+        check((fieldCount+BLOCK_HEADER_LENGTH)*69+512<=COMPACT_BLOCK_NATIVE_LIMITS.responseBytes);
+        const toText=value=>{check(value instanceof Fr);return hex(Fr.prototype.toString.call(value),32);};
+        const result={schemaVersion:1,number:request.number,hash:request.hash,headerFields:rawHeader.map(toText),fields:compact.map(toText)};
+        await canonical(request,'after');alive();
+        return {result,estimatedBytes};
+      };
+      let value;
+      if(request.mode==='page'){
+        await canonical(request.anchor,'page-before');alive();
+        const blocks=[];let remainingBytes=COMPACT_BLOCK_NATIVE_LIMITS.responseBytes-512;
+        for(let offset=0;offset<request.count;offset++){
+          const next=await readBlock({number:request.from+offset},remainingBytes);alive();
+          if(!next)break;
+          remainingBytes-=next.estimatedBytes;blocks.push(next.result);
+          if(compactPrivateLogCountHint(next.result.fields)!==0)break;
+        }
+        check(blocks.length>0);await canonical(request.anchor,'page-after');alive();
+        value={schemaVersion:1,mode:'page',anchor:request.anchor,blocks};
+      }else{
+        const result=await readBlock(request,COMPACT_BLOCK_NATIVE_LIMITS.responseBytes);check(result);value=result.result;
+      }
+      stage='response';const encoded=JSON.stringify(value);check(Buffer.byteLength(encoded)<=COMPACT_BLOCK_NATIVE_LIMITS.responseBytes);
       respond(res,200,encoded);
     } catch(error) {reportFailure(stage,status,error);if(status===413)await rejectAndClose();else if(!aborted)reject(res,status);}
     finally {clearTimeout(timer);req.off('aborted',onAbort);res.off('close',onClose);active=false;}

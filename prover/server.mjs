@@ -36,12 +36,22 @@ export function createProverServer({serviceMode='prover',queue,board,chainId,rol
    const rate=clients.get(client)??{start:now,count:0,compactCount:0};
    const counter=compact?'compactCount':'count',limit=compact?compactRequestsPerMinute:requestsPerMinute;
    if(rate[counter]>=limit||clients.size>=10000||uploads>=8){reply(429,{error:'Rate limited'});return;}
-   rate[counter]++;clients.set(client,rate);return client;
+   rate[counter]++;clients.set(client,rate);
+   if(!compact)return client;
+   // One request unit is charged even for malformed input. Page parsing can
+   // reserve its remaining physical-block bound once, before any upstream read.
+   // Keep the original admission bucket across a minute-boundary/body await.
+   let reserved=false;
+   return additional=>{
+    if(reserved||!Number.isSafeInteger(additional)||additional<0||additional>31)return false;
+    reserved=true;if(rate.compactCount+additional>limit)return false;
+    rate.compactCount+=additional;return true;
+   };
   };
   try{
    if(req.method==='GET'&&req.url==='/healthz'){reply(200,queryOnly?{ready:true,serviceMode:'query-only',proofs:'not-offered',nodeProofs:'real',queue:null,query:await privateQuery.health()}:{ready:true,proofs:proofsEnabled?'real':'disabled',queue:queue.stats(),query:privateQuery?await privateQuery.health():{enabled:false,ready:false}});return;}
    if(req.method==='POST'&&req.url==='/v1/node'&&privateQuery){await privateQuery.handle(req,res);return;}
-   if(req.url===COMPACT_GATEWAY_ROUTE&&privateQuery?.handleCompact){if(admit(true)===undefined)return;await privateQuery.handleCompact(req,res);return;}
+   if(req.url===COMPACT_GATEWAY_ROUTE&&privateQuery?.handleCompact){const reserve=admit(true);if(reserve===undefined)return;await privateQuery.handleCompact(req,res,reserve);return;}
    // No request body decoding, queue lookup or proof admission in this mode.
    if(queryOnly&&(req.url==='/v1/jobs'||req.url.startsWith('/v1/jobs/'))){
     res.setHeader('Connection','close');res.once('finish',()=>req.socket.destroy());reply(404,{error:'Proof service not offered'});return;

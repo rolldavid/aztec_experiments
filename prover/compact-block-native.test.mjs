@@ -288,3 +288,52 @@ for(const tier of ['checkpointed','proposed'])test('historical native compact re
  f.node.getChainTips=async()=>({...await tips(),proposed:{number:8,hash:BlockHash.fromString(new Fr(8).toString())}});
  await server(f,async({send})=>{const response=await send();assert.equal(response.status,tier==='checkpointed'?200:503);assert.equal(f.state.reads,tier==='checkpointed'?1:0);});
 });
+
+async function pageFixture(count=32,effectsAt=()=>[]) {
+ const f=await fixture([]),blocks=[];
+ for(let n=1;n<=count;n++){
+  const body=new Body(effectsAt(n)),header=BlockHeader.empty({globalVariables:GlobalVariables.empty({chainId:new Fr(31337),version:new Fr(1),blockNumber:BlockNumber(n),timestamp:100n}),txEffectsTreeRoot:await body.computeTxEffectsTreeRoot()}),hash=await header.hash();
+  const b=new L2Block(AppendOnlyTreeSnapshot.empty(),header,body,CheckpointNumber(1),IndexWithinCheckpoint(0));blocks.push({hash,number:n,header,body,archive:b.archive,checkpointNumber:b.checkpointNumber,indexWithinCheckpoint:b.indexWithinCheckpoint});
+ }
+ const head=blocks.at(-1),tip={number:count,hash:head.hash};f.state.bodyNumbers=[];
+ f.node.getChainTips=async()=>({proposed:tip,checkpointed:{block:tip},proven:{block:tip},finalized:{block:tip}});
+ f.node.getWorldStateSyncStatus=async()=>({latestBlockNumber:count,latestBlockHash:head.hash,finalizedBlockNumber:count,oldestHistoricBlockNumber:0,treesAreSynched:true});
+ f.node.getBlockData=async n=>{await f.state.onMetadata?.(Number(n));const b=blocks[Number(n)-1];return b&&{blockHash:f.state.orphan===Number(n)?BlockHash.fromString(new Fr(999).toString()):b.hash,header:b.header};};
+ f.node.getBlock=async p=>{const b=blocks.find(b=>b.hash.toString()===p.hash.toString());assert(b);f.state.bodyNumbers.push(b.number);await f.state.onBody?.(b);return b;};
+ f.blocks=blocks;f.request={schemaVersion:1,mode:'page',from:1,count,anchor:{number:count,hash:head.hash.toString()},tier:'checkpointed'};
+ return f;
+}
+test('anchored page HTTP: one32-block request preserves actual SDK bodies and stops at count',async()=>{
+ const f=await pageFixture();await server(f,async({send})=>{const r=await send();assert.equal(r.status,200);const bytes=await r.text();assert(Buffer.byteLength(bytes)<limits.responseBytes);const v=JSON.parse(bytes);assert.equal(v.blocks.length,32);assert.deepEqual(v.anchor,f.request.anchor);assert.deepEqual(f.state.bodyNumbers,Array.from({length:32},(_,i)=>i+1));for(const b of v.blocks)assert.equal((await authenticateCompactBlock({...b,expectedBlockHash:b.hash,assertCanonical:()=>true})).txCount,0);});
+});
+for(const dense of [1,3,32])test('anchored page HTTP: stop at first actual private-log block '+dense,async()=>{
+ const f=await pageFixture(32,n=>n===dense?[effect(n)]:[]);await server(f,async({send})=>{const r=await send();assert.equal(r.status,200);const v=await r.json();assert.equal(v.blocks.length,dense);assert.equal(f.state.bodyNumbers.length,dense);assert.equal((await authenticateCompactBlock({...v.blocks.at(-1),expectedBlockHash:v.blocks.at(-1).hash,assertCanonical:()=>true})).ciphertexts.length,1);});
+});
+for(const [name,mutate] of Object.entries({zero:r=>r.count=0,tooMany:r=>r.count=33,aboveAnchor:r=>r.from=2,extra:r=>r.owner='PRIVATE',tier:r=>r.tier='proven',anchorExtra:r=>r.anchor.owner='PRIVATE'}))test('anchored page HTTP: rejects '+name+' before native work',async()=>{
+ const f=await pageFixture();mutate(f.request);await server(f,async({send})=>{await denied(await send(),400);assert.equal(f.state.calls,0);assert.deepEqual(f.state.bodyNumbers,[]);});
+});
+for(const target of [1,2,3])test('anchored page HTTP: a canonical member change '+target+' discards the whole prefix',async()=>{
+ const f=await pageFixture(3);f.state.onBody=async b=>{if(b.number===target)f.state.orphan=target;};await server(f,async({send})=>{await denied(await send(),503);assert.equal(f.state.bodyNumbers.at(-1),target);});
+});
+test('anchored page HTTP: pinned anchor is revalidated after the last body, no prefix on final failure',async()=>{
+ const f=await pageFixture(4);f.request.count=3;f.state.onBody=async b=>{if(b.number===3)f.state.orphan=4;};await server(f,async({send})=>{await denied(await send(),503);assert.equal(f.state.bodyNumbers.at(-1),3);});
+});
+test('anchored page HTTP: partial upstream failure never becomes a successful short prefix',async()=>{
+ const f=await pageFixture(3);f.state.onBody=async b=>{if(b.number===2)throw Error('PRIVATE');};await server(f,async({send})=>{await denied(await send(),503);assert.deepEqual(f.state.bodyNumbers,[1,2]);});
+});
+test('anchored page HTTP: abort holds the original native page and never reads its next member',async()=>{
+ const f=await pageFixture(3),entered=deferred(),release=deferred();f.state.onBody=async b=>{if(b.number===1){entered.resolve();await release.promise;}};
+ await server(f,async({send,settle})=>{const c=new AbortController(),run=send(f.request,{signal:c.signal}).catch(e=>e);await entered.promise;c.abort();await run;await denied(await send(),429);release.resolve();await settle();assert.deepEqual(f.state.bodyNumbers,[1]);});
+});
+
+function publicOnlyEffect(size,id=1){const e=effect(id);e.privateLogs=[];e.publicLogs=[new PublicLog(AztecAddress.fromFieldUnsafe(new Fr(26)),Array.from({length:size},(_,i)=>new Fr(i+1)))];return e;}
+test('anchored page HTTP: unknown-large first body is returned alone for original SDK scalar handling',async()=>{
+ const f=await pageFixture(2,n=>n===1?[publicOnlyEffect(1000)]:[]);await server(f,async({send})=>{const r=await send();assert.equal(r.status,200);const v=await r.json();assert.equal(v.blocks.length,1);assert.deepEqual(f.state.bodyNumbers,[1]);assert.equal((await authenticateCompactBlock({...v.blocks[0],expectedBlockHash:v.blocks[0].hash,assertCanonical:()=>true})).ciphertexts.length,0);});
+});
+test('anchored page HTTP: total2MiB budget returns a contiguous prefix before flattening oversized next member',async()=>{
+ const f=await pageFixture(32,n=>n===32?Array.from({length:4},(_,i)=>publicOnlyEffect(1000,i+1)):[publicOnlyEffect(850)]);
+ // Header/root construction has already happened; this exact next native body
+ // must be preflighted but not flattened when the page has insufficient space.
+ f.blocks[31].body.toTxBlobData=()=>{throw Error('Next body must not flatten');};
+ await server(f,async({send})=>{const r=await send();assert.equal(r.status,200);const bytes=await r.text();assert(Buffer.byteLength(bytes)<=limits.responseBytes);const v=JSON.parse(bytes);assert.equal(v.blocks.length,31);assert.deepEqual(v.blocks.map(b=>b.number),Array.from({length:31},(_,i)=>i+1));assert.equal(f.state.bodyNumbers.length,32);});
+});

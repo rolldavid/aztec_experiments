@@ -9,17 +9,17 @@ import {createPrivateQueryWithInspector} from './private-query.mjs';
 import {createProverServer} from './server.mjs';
 const rollup='0x'+'12'.repeat(20),hash='0x'+'01'.repeat(32),selector={schemaVersion:1,number:1,hash,tier:'checkpointed'};
 async function listen(s){s.listen(0,'127.0.0.1');await once(s,'listening');return 'http://127.0.0.1:'+s.address().port;}
-async function close(s){s.closeAllConnections();await new Promise((resolve,reject)=>s.close(e=>e?reject(e):resolve()));}
-async function fixture(t,{enabled=true,...serverOptions}={}){
+async function close(s){if(s.closeAndDrain)return s.closeAndDrain();s.closeAllConnections();await new Promise((resolve,reject)=>s.close(e=>e?reject(e):resolve()));}
+async function fixture(t,{enabled=true,upstreamReply,inspect,...serverOptions}={}){
  const upstreamRequests=[];const upstream=http.createServer(async(req,res)=>{
   let body='';for await(const chunk of req)body+=chunk;upstreamRequests.push({url:req.url,body:JSON.parse(body)});
-  res.setHeader('content-type','application/json');res.end(JSON.stringify({schemaVersion:1,number:1,hash,headerFields:Array(23).fill('0x'+'00'.repeat(32)),fields:Array(7).fill('0x'+'00'.repeat(32))}));
+  res.setHeader('content-type','application/json');res.end(JSON.stringify(upstreamReply?await upstreamReply(JSON.parse(body)):{schemaVersion:1,number:1,hash,headerFields:Array(23).fill('0x'+'00'.repeat(32)),fields:Array(7).fill('0x'+'00'.repeat(32))}));
  });const upstreamUrl=await listen(upstream);t.after(()=>close(upstream));
  const config={queryNode:{url:upstreamUrl,rollupAddress:rollup},chainId:'31337',rollupVersion:'1',proofsEnabled:false,origins:['https://app.example'],...(enabled?{compactBlocks:{tier:'checkpointed'}}:{})};
- let inspections=0;const privateQuery=createPrivateQueryWithInspector({...config,compactBlocks:compactBlockOptions(config)},async()=>{inspections++;});
+ let inspections=0;const privateQuery=createPrivateQueryWithInspector({...config,compactBlocks:compactBlockOptions(config)},async()=>{inspections++;await inspect?.(inspections);});
  const server=createProverServer({...config,...serverOptions,privateQuery,queue:{stats:()=>({submitted:0})}});
  const url=await listen(server);t.after(()=>close(server));
- return {url,server,upstreamRequests,inspections:()=>inspections,post:(headers={})=>fetch(url+'/v1/compact-block',{method:'POST',headers:{'content-type':'application/json',...headers},body:JSON.stringify(selector)})};
+ return {url,server,upstreamRequests,inspections:()=>inspections,post:(headers={},value=selector)=>fetch(url+'/v1/compact-block',{method:'POST',headers:{'content-type':'application/json',...headers},body:JSON.stringify(value)})};
 }
 test('service derives compact origins from existing server policy and requires explicit query node',()=>{
  const config={queryNode:{},origins:['https://app.example'],compactBlocks:{tier:'checkpointed'}};
@@ -58,4 +58,32 @@ test('default compact allowance permits more than six reads without spending pro
  const job=await fetch(f.url+'/v1/jobs',{method:'POST',headers:{'content-type':'application/octet-stream'},body:new Uint8Array()});assert.equal(job.status,400);
  assert.equal((await f.post()).status,200);
  for(const compactRequestsPerMinute of [0,-1,1.5,6001,Infinity,'600'])assert.throws(()=>createProverServer({compactRequestsPerMinute}),/Invalid compact read rate/);
+});
+
+const page=()=>({schemaVersion:1,mode:'page',from:1,count:32,anchor:{number:32,hash},tier:'checkpointed'});
+const pageReply=p=>({schemaVersion:1,mode:'page',anchor:p.anchor,blocks:Array.from({length:p.count},(_,i)=>({schemaVersion:1,number:p.from+i,hash,headerFields:Array(23).fill('0x'+'00'.repeat(32)),fields:Array(7).fill('0x'+'00'.repeat(32))}))});
+test('anchored page gateway: one fixed upstream request, original readiness and physical quota',async t=>{
+ const f=await fixture(t,{compactRequestsPerMinute:32,upstreamReply:pageReply});const r=await f.post({origin:'https://app.example'},page());assert.equal(r.status,200);assert.equal((await r.json()).blocks.length,32);assert.equal(f.inspections(),2);assert.deepEqual(f.upstreamRequests,[{url:'/rolling/compact-block-v1',body:page()}]);assert.equal((await f.post()).status,429);
+});
+test('anchored page gateway: inadequate physical allowance refuses before inspection or upstream work',async t=>{
+ const f=await fixture(t,{compactRequestsPerMinute:31,upstreamReply:pageReply});assert.equal((await f.post({},page())).status,429);assert.equal(f.inspections(),0);assert.equal(f.upstreamRequests.length,0);
+});
+test('anchored page gateway: short prefix still spends the full requested physical allowance',async t=>{
+ const f=await fixture(t,{compactRequestsPerMinute:32,upstreamReply:p=>({...pageReply(p),blocks:pageReply(p).blocks.slice(0,1)})});const r=await f.post({},page());assert.equal(r.status,200);assert.equal((await r.json()).blocks.length,1);assert.equal((await f.post()).status,429);
+});
+test('anchored page gateway: malformed mode costs a request and never enters inspector',async t=>{
+ const f=await fixture(t,{compactRequestsPerMinute:1,upstreamReply:pageReply});assert.equal((await f.post({},{...page(),owner:'PRIVATE'})).status,400);assert.equal((await f.post({},page())).status,429);assert.equal(f.inspections(),0);assert.equal(f.upstreamRequests.length,0);
+});
+for(const [name,change] of Object.entries({empty:v=>v.blocks=[],gap:v=>v.blocks[1].number=99,anchor:v=>v.anchor={number:31,hash},extra:v=>v.owner='PRIVATE',large:v=>v.padding='x'.repeat(2097153)}))test('anchored page gateway: '+name+' upstream rejected without retry',async t=>{
+ const f=await fixture(t,{upstreamReply:p=>{const v=pageReply(p);change(v);return v;}});const r=await f.post({},page());assert.equal(r.status,503);assert.deepEqual(await r.json(),{error:'Compact block unavailable'});assert.equal(f.upstreamRequests.length,1);
+});
+test('anchored page gateway: final readiness rejection discards otherwise valid page',async t=>{
+ const f=await fixture(t,{upstreamReply:pageReply,inspect:n=>{if(n===2)throw Error('PRIVATE');}});const r=await f.post({},page());assert.equal(r.status,503);assert.equal(f.upstreamRequests.length,1);assert.equal(f.inspections(),2);
+});
+test('anchored page gateway: abort and server close drain a held inspector before releasing admission',async t=>{
+ let enter,release;const entered=new Promise(r=>{enter=r;}),held=new Promise(r=>{release=r;});
+ const f=await fixture(t,{upstreamReply:pageReply,inspect:async n=>{if(n===1){enter();await held;}}});
+ const c=new AbortController(),run=fetch(f.url+'/v1/compact-block',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(page()),signal:c.signal}).catch(e=>e);
+ await entered;c.abort();await run;assert.equal((await f.post({},page())).status,429);
+ let closed=false;const closing=f.server.closeAndDrain().then(()=>{closed=true;});await new Promise(r=>setImmediate(r));assert.equal(closed,false);release();await closing;assert.equal(f.upstreamRequests.length,0);
 });

@@ -76,6 +76,7 @@ export function createRollingColdPreferenceReader(input){
   const trusted=sdk.isTrustedPrivateNode.bind(sdk),routed=sdk.isPrivatePXEForNode.bind(sdk),inspect=sdk.inspectTrustedNode.bind(sdk);
   const sync=pxe.sync.bind(pxe),process=pxe.processRollingPreferenceRecovery.bind(pxe),getBlock=node.getBlockData.bind(node),fetchBlock=compact.read.bind(compact);
   const fetchBlocks=typeof compact.readMany==='function'?compact.readMany.bind(compact):null;
+  const fetchAnchoredPage=typeof compact.readPage==='function'?compact.readPage.bind(compact):null;
   const poseidon=sdk.poseidon2HashWithSeparator.bind(sdk),Fr=sdk.Fr;
   const account=hex(owner.toString()),board=hex(deployment.board.address.toString()),classId=hex(deployment.board.instance.currentContractClassId.toString());
   check(deployment.board.instance.originalContractClassId.toString()===classId);hex(expectedArtifactHash);
@@ -104,6 +105,23 @@ export function createRollingColdPreferenceReader(input){
   async function fetchPage(observed,signal){
      let block=null;
      if(observed.nextBlock<=observed.anchor.blockNumber){
+      if(fetchAnchoredPage&&observed.nextLog===0){
+       // The captured page capability is used once, with no scalar retry. The
+       // unchanged SDK authenticates every header/body and archive proof under
+       // this pinned anchor before staging; final canonical fences still run.
+       const count=Math.min(32,observed.anchor.blockNumber-observed.nextBlock+1);
+       const wires=await checked(()=>fetchAnchoredPage({from:observed.nextBlock,count,anchor:{number:observed.anchor.blockNumber,hash:observed.anchor.blockHash}},{signal}));
+       check(Array.isArray(wires)&&wires.length>0&&wires.length<=count);
+       const blocks=[];
+       for(let i=0;i<wires.length;i++){
+        const wire=wires[i];check(wire.number===observed.nextBlock+i);hex(wire.hash);
+        const logs=compactPrivateLogCountHint(wire.fields);
+        if(i<wires.length-1)check(logs===0);
+        if(logs===null||logs>8){if(blocks.length===0)blocks.push({blockNumber:wire.number,blockHash:wire.hash,fields:wire.fields,headerFields:wire.headerFields});break;}
+        blocks.push({blockNumber:wire.number,blockHash:wire.hash,fields:wire.fields,headerFields:wire.headerFields});
+       }
+       check(blocks.length>0);return blocks.length===1?blocks[0]:blocks;
+      }
       const count=fetchBlocks&&observed.nextLog===0?Math.min(32,observed.anchor.blockNumber-observed.nextBlock+1):1,blocks=[];let remainingLogs=8;
       // Bound lookahead to four public heights. Batch empty ciphertext history,
       // stopping at the first private-log block: each transaction utility has

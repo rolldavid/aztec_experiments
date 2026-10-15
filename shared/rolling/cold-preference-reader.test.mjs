@@ -348,3 +348,40 @@ test('mixed transaction latency checkpoints a bounded prefix within the unchange
  assert.equal(result.progress.nextBlock,2,'A mixed block is authenticated and committed without greedily ingesting further transaction utilities');
  assert.equal(submitted.length,1);assert(clock-start<10000);assert.equal(f.db.size,1);
 });
+
+test('anchored page: pinned SDK archive authentication replaces per-height discovery, not final canonical fences',async()=>{
+ const f=anchoredFixture(),r=f.reader();await r.read();const result=await r.read();assert.equal(result.progress.nextBlock,33);assert.deepEqual(f.pages,[{from:1,count:32,anchor:{number:64,hash:hex(74)}}]);assert(f.reads.length>0);assert(f.reads.every(n=>n===64),'Only pinned-anchor canonical reads; SDK remains authentication authority');
+});
+
+function anchoredFixture(){
+ const f=fixture(),reads=[],pages=[];let current={schemaVersion:1,database:'a'.repeat(64),epoch:'b'.repeat(64),sequence:0,anchor:{blockNumber:64,blockHash:hex(74)},nextBlock:1,nextLog:0,records:[],head:null,complete:false};
+ const get=f.config.node.getBlockData;f.config.node.getBlockData=async n=>{reads.push(n);return get(n);};
+ f.config.compact.readPage=async p=>{pages.push(p);return Array.from({length:p.count},(_,i)=>({schemaVersion:1,number:p.from+i,hash:hex(p.from+i+10),headerFields:Array(23).fill(hex(0)),fields:Array(7).fill(hex(0))}));};
+ f.config.compact.read=async()=>{throw Error('No scalar retry');};
+ f.config.pxe.processRollingPreferenceRecovery=async p=>{if(p.expected){const blocks=Array.isArray(p.block)?p.block:[p.block];assert.equal(blocks[0].blockNumber,current.nextBlock);current={...current,sequence:current.sequence+1,nextBlock:current.nextBlock+blocks.length};}return structuredClone(current);};
+ return Object.assign(f,{reads,pages,delivery:()=>current});
+}
+test('anchored page: remote latency commits32 blocks within unchanged10s without per-block discovery',async t=>{
+ const f=anchoredFixture();let clock=1000,metered=false;const get=f.config.node.getBlockData,page=f.config.compact.readPage,inspect=f.config.sdk.inspectTrustedNode,process=f.config.pxe.processRollingPreferenceRecovery;
+ t.mock.method(Date,'now',()=>clock);
+ f.config.node.getBlockData=async n=>{if(metered)clock+=130;return get(n);};
+ f.config.compact.readPage=async p=>{if(metered)clock+=130;return page(p);};
+ f.config.sdk.inspectTrustedNode=async(...args)=>{if(metered)clock+=400;return inspect(...args);};
+ f.config.pxe.processRollingPreferenceRecovery=async p=>{if(metered&&p.expected)clock+=8*130;return process(p);}; // Existing four-wide SDK witness waves; labelled latency, not live SDK timing.
+ const r=f.reader();await r.read();metered=true;const start=clock;const result=await r.read();assert.equal(result.progress.nextBlock,33);assert(clock-start<10000);assert.equal(f.pages.length,1);assert(f.reads.every(n=>n===64));
+});
+for(const mode of ['fetch','sdk','final-canonical','final-readiness'])test('anchored page: '+mode+' failure publishes nothing and never falls back',async()=>{
+ const f=anchoredFixture(),page=f.config.compact.readPage,process=f.config.pxe.processRollingPreferenceRecovery,inspect=f.config.sdk.inspectTrustedNode;let readyCalls=0,armed=false;
+ f.config.compact.readPage=async p=>{const blocks=await page(p);if(mode==='fetch')throw Error('PRIVATE');return blocks;};
+ f.config.pxe.processRollingPreferenceRecovery=async p=>{if(mode==='sdk'&&p.expected)throw Error('SDK rejected untrusted archive/body');return process(p);};
+ f.config.sdk.inspectTrustedNode=async(...args)=>{readyCalls++;if(armed&&mode==='final-readiness'&&readyCalls===2)throw Error('late readiness');return inspect(...args);};
+ const r=f.reader();await r.read();readyCalls=0;armed=true;if(mode==='final-canonical')f.state.afterCAS=()=>{f.state.canonical=false;};const before=[...f.db];await assert.rejects(r.read(),{code:'ROLLING_COLD_PREFERENCES_UNAVAILABLE'});assert.equal(f.pages.length,1);
+ if(mode==='fetch'||mode==='sdk')assert.deepEqual([...f.db],before);else assert.notDeepEqual([...f.db],before,'Authenticated durable cursor remains preserved after publication veto');
+});
+test('anchored page: truncated byte-bound prefix commits only returned contiguous blocks',async()=>{
+ const f=anchoredFixture(),page=f.config.compact.readPage;f.config.compact.readPage=async p=>(await page(p)).slice(0,17);const r=f.reader();await r.read();const result=await r.read();assert.equal(result.progress.nextBlock,18);assert.equal(f.pages.length,1);
+});
+test('anchored page: pending page retains operation ownership until abort drains',async()=>{
+ const f=anchoredFixture(),page=f.config.compact.readPage;let enter,release;const entered=new Promise(r=>{enter=r;}),held=new Promise(r=>{release=r;});f.config.compact.readPage=async p=>{enter();await held;return page(p);};
+ const r=f.reader();await r.read();const before=[...f.db],c=new AbortController(),run=r.read({signal:c.signal});await entered;c.abort();await assert.rejects(r.read(),{code:'ROLLING_COLD_PREFERENCES_BUSY'});release();await assert.rejects(run,{code:'ROLLING_COLD_PREFERENCES_UNAVAILABLE'});assert.deepEqual([...f.db],before);
+});

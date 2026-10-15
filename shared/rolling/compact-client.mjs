@@ -20,6 +20,18 @@ export function validateCompactSelector(value,tier){
  check(Number.isSafeInteger(p.number)&&p.number>=1&&p.number<=0xffffffff);field(p.hash);
  return Object.freeze(p);
 }
+// Page mode is a bounded public range, never an account/filter query. Hashes
+// returned by transport remain untrusted until SDK archive/body authentication.
+export function validateCompactPage(value,tier){
+ const p=exact(value,['schemaVersion','mode','from','count','anchor','tier']);
+ check(p.schemaVersion===1&&p.mode==='page'&&p.tier===validateCompactTier(tier));
+ const a=exact(p.anchor,['number','hash']);validateCompactSelector({schemaVersion:1,...a,tier},tier);
+ check(Number.isSafeInteger(p.from)&&p.from>=1&&Number.isSafeInteger(p.count)&&p.count>=1&&p.count<=32&&p.from+p.count-1<=a.number);
+ return Object.freeze({...p,anchor:Object.freeze(a)});
+}
+export function validateCompactRequest(value,tier){
+ return Object.getOwnPropertyDescriptor(value??{},'mode')?.value==='page'?validateCompactPage(value,tier):validateCompactSelector(value,tier);
+}
 function fields(value,max,min){
  check(Array.isArray(value));const length=Object.getOwnPropertyDescriptor(value,'length')?.value;
  check(Number.isSafeInteger(length)&&length>=min&&length<=max);
@@ -53,6 +65,23 @@ export function validateCompactResponse(value,selector){
  return Object.freeze({schemaVersion:1,number:p.number,hash:p.hash,
   headerFields:fields(p.headerFields,23,23),fields:fields(p.fields,24575,7)});
 }
+export function validateCompactPageResponse(value,request){
+ const p=exact(value,['schemaVersion','mode','anchor','blocks']),a=exact(p.anchor,['number','hash']);
+ check(p.schemaVersion===1&&p.mode==='page'&&a.number===request.anchor.number&&a.hash===request.anchor.hash);
+ check(Array.isArray(p.blocks)&&p.blocks.length>0&&p.blocks.length<=request.count&&Reflect.ownKeys(p.blocks).length===p.blocks.length+1);
+ const blocks=[];
+ for(let i=0;i<p.blocks.length;i++){
+  const d=Object.getOwnPropertyDescriptor(p.blocks,String(i));check(d&&Object.hasOwn(d,'value'));
+  const hash=Object.getOwnPropertyDescriptor(d.value??{},'hash')?.value;field(hash);
+  const block=validateCompactResponse(d.value,{number:request.from+i,hash});
+  if(block.number===a.number)check(block.hash===a.hash);
+  // The native page ends at the first log-bearing/unknown-large block. This
+  // remains a scheduling hint; it never proves emptiness or permits a commit.
+  if(i<p.blocks.length-1)check(compactPrivateLogCountHint(block.fields)===0);
+  blocks.push(block);
+ }
+ return Object.freeze({schemaVersion:1,mode:'page',anchor:Object.freeze(a),blocks:Object.freeze(blocks)});
+}
 // Fetch supplies decoded chunks, including when content-encoding was compressed.
 // Stop before JSON.parse; never use response.json()/text() on an unbounded body.
 export async function readCompactResponse(response,selector){
@@ -62,7 +91,8 @@ export async function readCompactResponse(response,selector){
   reader=response.body.getReader();const chunks=[];let size=0;
   for(;;){const part=await reader.read();if(part.done)break;check(part.value instanceof Uint8Array);size+=part.value.byteLength;check(size<=COMPACT_TRANSPORT_LIMITS.responseBytes);chunks.push(part.value);}
   const bytes=new Uint8Array(size);let offset=0;for(const chunk of chunks){bytes.set(chunk,offset);offset+=chunk.byteLength;}
-  return validateCompactResponse(JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(bytes)),selector);
+  const value=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(bytes));
+  return selector.mode==='page'?validateCompactPageResponse(value,selector):validateCompactResponse(value,selector);
  }catch{if(reader){try{await reader.cancel();}catch{}}else{try{await response.body?.cancel();}catch{}}throw fail();}
  finally{reader?.releaseLock();}
 }
@@ -81,9 +111,9 @@ export function createRollingCompactClient(input){
   endpoint=new URL(COMPACT_GATEWAY_ROUTE,url).href;tier=validateCompactTier(p.tier);guard=p.contextGuard;fetcher=globalThis.fetch.bind(globalThis);
  }catch{throw fail();}
  let active=false;
- async function read(input,options={}){
+ async function read(input,options={},page=false){
   let selector,signal;
-  try{const p=exact(input,['number','hash']);selector=validateCompactSelector({schemaVersion:1,...p,tier},tier);
+  try{const p=exact(input,page?['from','count','anchor']:['number','hash']);selector=page?validateCompactPage({schemaVersion:1,mode:'page',...p,tier},tier):validateCompactSelector({schemaVersion:1,...p,tier},tier);
    const o=exact(options,[],['signal']);signal=o.signal;check(signal===undefined||signal instanceof AbortSignal);
   }catch{throw fail();}
   // Timer signals cancellation, never races the underlying fetch/guard promise.
@@ -100,6 +130,8 @@ export function createRollingCompactClient(input){
  }
  return Object.freeze({async read(input,options={}){
   if(active)throw fail();active=true;try{return await read(input,options);}finally{active=false;}
+ },async readPage(input,options={}){
+  if(active)throw fail();active=true;try{return (await read(input,options,true)).blocks;}finally{active=false;}
  },async readMany(inputs,options={}){
   if(active)throw fail();let captured,settings,emptyPrefix,logBudget;
   try{const o=exact(options,[],['signal','emptyPrefix','privateLogBudget']);check(o.emptyPrefix===undefined||typeof o.emptyPrefix==='boolean');check(o.privateLogBudget===undefined||(Number.isSafeInteger(o.privateLogBudget)&&o.privateLogBudget>=0&&o.privateLogBudget<=8&&o.emptyPrefix===undefined));emptyPrefix=o.emptyPrefix===true;logBudget=emptyPrefix?0:o.privateLogBudget;settings={signal:o.signal};check(settings.signal===undefined||settings.signal instanceof AbortSignal);check(Array.isArray(inputs)&&inputs.length>0&&inputs.length<=32);check(Reflect.ownKeys(inputs).length===inputs.length+1);captured=Array.from({length:inputs.length},(_,i)=>{const d=Object.getOwnPropertyDescriptor(inputs,String(i));check(d&&Object.hasOwn(d,'value'));const p=exact(d.value,['number','hash']);validateCompactSelector({schemaVersion:1,...p,tier},tier);return Object.freeze(p);});check(captured.every((p,i)=>i===0||p.number===captured[i-1].number+1));}catch{throw fail();}

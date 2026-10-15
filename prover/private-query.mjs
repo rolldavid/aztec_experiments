@@ -5,7 +5,7 @@ import {jsonStringify} from '@aztec-labs/foundation/json-rpc';
 import {getSchemaParameters, getSchemaReturnType, parseWithOptionals, schemaHasMethod} from '@aztec-labs/foundation/schemas';
 import {AztecNodeApiSchema} from '@aztec-labs/stdlib/interfaces/client';
 import {getVersioningResponseHandler} from '@aztec-labs/stdlib/versioning';
-import {COMPACT_GATEWAY_ROUTE,COMPACT_NATIVE_ROUTE,COMPACT_TRANSPORT_LIMITS,validateCompactTier,validateCompactSelector,readCompactResponse} from '../shared/rolling/compact-client.mjs';
+import {COMPACT_GATEWAY_ROUTE,COMPACT_NATIVE_ROUTE,COMPACT_TRANSPORT_LIMITS,validateCompactTier,validateCompactRequest,readCompactResponse} from '../shared/rolling/compact-client.mjs';
 
 export const QUERY_LIMITS = Object.freeze({bodyBytes: 8 * 1024 ** 2, responseBytes: 32 * 1024 ** 2, batch: 8, concurrent: 8, timeoutMs: 10000});
 // Fixed rc3 deployment/PXE surface. Schema additions are not automatically
@@ -283,7 +283,7 @@ export function createPrivateQueryWithInspector({queryNode, chainId, rollupVersi
     finally {active--;}
   };
   let compactActive=false;
-  const handleCompact=compact?async(req,res)=>{
+  const handleCompact=compact?async(req,res,reserveAdditional)=>{
     const reply=(status,value)=>{if(!res.destroyed&&!res.writableEnded){res.writeHead(status,{'Content-Type':'application/json','Cache-Control':'no-store','X-Content-Type-Options':'nosniff',...(status===413?{'Connection':'close'}:{})});res.end(JSON.stringify(value));}};
     const rejected=status=>reply(status,{error:'Compact block unavailable'});
     // Never drain an attacker-controlled unfinished body. Flush the small fixed
@@ -319,7 +319,8 @@ export function createPrivateQueryWithInspector({queryNode, chainId, rollupVersi
       for await(const chunk of req.iterator({destroyOnReturn:false})){
         bytes+=chunk.length;if(bytes>COMPACT_TRANSPORT_LIMITS.requestBytes){status=413;throw unavailable();}chunks.push(chunk);
       }
-      alive();const selector=validateCompactSelector(JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(Buffer.concat(chunks))),compact.tier);
+      alive();const selector=validateCompactRequest(JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(Buffer.concat(chunks))),compact.tier);
+      if(selector.mode==='page'){status=429;if(typeof reserveAdditional!=='function'||!reserveAdditional(selector.count-1))throw unavailable();}
       status=503;await inspect(compact.tier);alive();
       const response=await compactFetch(new URL(COMPACT_NATIVE_ROUTE,config.url),{method:'POST',headers:{'content-type':'application/json'},
         body:JSON.stringify(selector),redirect:'error',credentials:'omit',referrerPolicy:'no-referrer',signal:controller.signal});
