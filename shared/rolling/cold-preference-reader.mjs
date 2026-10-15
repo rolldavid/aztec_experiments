@@ -93,7 +93,13 @@ export function createRollingColdPreferenceReader(input){
   async function checked(fn){await guard();const value=await fn();await guard();return value;}
   const hash=async(fields,domain)=>(await checked(()=>poseidon(fields,domain))).toBigInt();
   async function canonical(height){number(height);const data=await checked(()=>getBlock(height));check(data&&Number(data.header?.globalVariables?.blockNumber)===height);const observed=hex(data.blockHash.toString());check((await checked(()=>data.header.hash())).toString()===observed);return observed;}
-  async function recheck(anchor){await checked(()=>inspect(node,{expectedNetworkScope:network,proofsEnabled,readinessTier:tier}));check(await canonical(anchor.blockNumber)===anchor.blockHash);await guard();}
+  // Readiness is a complete metadata snapshot at the operation's entry and
+  // publication boundaries. Intermediate fences still authenticate the exact
+  // pinned block hash and current account/node capability. Repeating the full
+  // snapshot at every encrypted-cache/mailbox fence adds remote round trips
+  // without replacing any of those canonical checks.
+  async function readiness(){await checked(()=>inspect(node,{expectedNetworkScope:network,proofsEnabled,readinessTier:tier}));}
+  async function recheck(anchor){check(await canonical(anchor.blockNumber)===anchor.blockHash);await guard();}
   const request=async(expected,block=null,restart=false,optimistic=false)=>delivery(await checked(()=>process({...config,expected,block,restart,...(optimistic?{optimistic:true}:{})},{contextGuard:guard})));
   async function fetchPage(observed,signal){
      let block=null;
@@ -131,7 +137,7 @@ export function createRollingColdPreferenceReader(input){
    const keys=Reflect.ownKeys(options);check(keys.every(k=>k==='signal'||k==='deadlineAt'));const settings=exact(options,keys);
    const signal=settings.signal,deadlineAt=settings.deadlineAt??Date.now()+10000;check(signal===undefined||signal instanceof AbortSignal);check(Number.isSafeInteger(deadlineAt));active={signal,deadlineAt};
    try{
-    await guard();await checked(()=>inspect(node,{expectedNetworkScope:network,proofsEnabled,readinessTier:tier}));
+    await guard();await readiness();
     if(!slot)slot=await checked(()=>createEncryptedJournalSlot({storage:{read:key=>checked(()=>readStore(key)),compareAndSwap:(...args)=>checked(()=>casStore(...args))},walletSecret,walletSalt,scopeText:JSON.stringify([DOMAIN,...fullScope]),keyDomain:DOMAIN}));
     if(!decoder)decoder=await checked(()=>createPreferenceEventDecoder({sdk:decoderSdk,artifact}));
     const saved=await checked(()=>slot.read()),cache=saved.value===null?null:cacheRecord(saved.value);
@@ -215,7 +221,7 @@ export function createRollingColdPreferenceReader(input){
      if(deferredAdvance)check(same(advance,deferredAdvance));
      await recheck(advance.anchor);deferredAdvance=advance;confirmed=prior;
     }else check(!deferredAdvance);
-    check(same(confirmed,observed));await recheck(observed.anchor);
+    check(same(confirmed,observed));await readiness();await recheck(observed.anchor);
     const progress=Object.freeze({nextBlock:observed.nextBlock,anchorBlock:observed.anchor.blockNumber,processedRevision:prefix.head.revision,markersChecked:markers?.next??0,markersTotal:completed?.readMarkers.length??null});
     if(deferredAdvance||!completed||markers.next<completed.readMarkers.length)return Object.freeze({status:'recovering',complete:false,progress});
     lastComplete=true;
