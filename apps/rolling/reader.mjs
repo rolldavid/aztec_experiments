@@ -72,6 +72,9 @@ function postCard(post,data){
  if(field(r.parent)&&r.parent!=='0')article.append(el('p',{class:'reply-line'},'In reply to ',link('an earlier post','/thread/'+r.root+'/'+r.parent)));
  if(field(r.reference)&&r.reference!=='0')article.append(el('p',{class:'reply-line'},r.kind==='3'?'Reposted from ':'Quoted from ',link('the original post','/post/'+r.reference)));
  const unlike=()=>button('Unlike',()=>openWallet({type:'unlike',post:post.id}));
+ // Moderation removes content, not the ability to manage private notifications.
+ const threadControls=()=>[preferenceButton('Subscribe to thread',4,r.root),
+  typeof post.position?.blockNumber==='string'&&/^(0|[1-9][0-9]{0,9})$/.test(post.position.blockNumber)&&BigInt(post.position.blockNumber)<=0xffffffffn?button('Mark thread read',()=>openWallet({type:'read-marker',thread:r.root,throughBlock:String(post.position.blockNumber)})):null];
  if(post.text===null||post.removal||board?.rejected===true){
   article.append(el('p',{class:'removed'},'This post is unavailable under the board’s moderation policy.'));
   // A rejected subboard also redacts posts without an individual removal event.
@@ -83,13 +86,12 @@ function postCard(post,data){
    if(text(board.rejection?.reason))article.append(el('p',{class:'removed'},'Subboard rejection reason: '+text(board.rejection.reason)));
    if(policyVersion(board.rejection?.mainVersion))article.append(el('p',{class:'quiet'},'Subboard rejected under parent policy v'+board.rejection.mainVersion));
   }
-  article.append(el('div',{class:'post-actions'},link('View thread','/thread/'+r.root),unlike(),preferenceButton('Bookmark',1,post.id)));return article;
+  article.append(el('div',{class:'post-actions'},link('View thread','/thread/'+r.root),unlike(),preferenceButton('Bookmark',1,post.id),threadControls()));return article;
  }
  article.append(richText(post.text),el('div',{class:'post-actions'},link('View conversation','/thread/'+r.root,{class:'post-link'}),el('span',{class:'action'},`${text(post.likes)} ${post.likes==='1'?'like':'likes'}`),
   button('Reply',()=>openWallet({type:'reply',parent:post.id,root:r.root,subboard:r.subboard})),
   button('Like',()=>openWallet({type:'like',post:post.id})),unlike(),button('Quote',()=>openWallet({type:'quote',reference:post.id,subboard:r.subboard})),
-  button('Repost',()=>openWallet({type:'repost',reference:post.id,subboard:r.subboard})),preferenceButton('Bookmark',1,post.id),preferenceButton('Subscribe to thread',4,r.root),
-  typeof post.position?.blockNumber==='string'&&/^(0|[1-9][0-9]{0,9})$/.test(post.position.blockNumber)&&BigInt(post.position.blockNumber)<=0xffffffffn?button('Mark thread read',()=>openWallet({type:'read-marker',thread:r.root,throughBlock:String(post.position.blockNumber)})):null));
+  button('Repost',()=>openWallet({type:'repost',reference:post.id,subboard:r.subboard})),preferenceButton('Bookmark',1,post.id),threadControls()));
  article.append(moderatorButton('Remove this post',{type:'moderate-post',post:post.id}));
  return article;
 }

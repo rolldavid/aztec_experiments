@@ -104,7 +104,7 @@ test('labelled social records: removed navigation, literal reasons and distinct 
  assert.equal(await page.locator('article img, article script, article a[href^="javascript:"]').count(),0);
  assert(!(await page.locator('body').innerText()).includes('REMOVED_TEXT_SENTINEL'));assert(!(await page.locator('body').innerText()).includes('REJECTED_BOARD_TEXT_SENTINEL'));assert(!(await page.locator('body').innerText()).includes('VERSION_SENTINEL'));
  for(const id of ['11','12','13']){
-  const post=page.locator('#post-'+id);assert.deepEqual(await post.getByRole('button').allTextContents(),['Unlike','Bookmark']);assert.equal(await post.locator('.post-body').count(),0);
+  const post=page.locator('#post-'+id);assert.deepEqual(await post.getByRole('button').allTextContents(),['Unlike','Bookmark','Subscribe to thread']);assert.equal(await post.getByRole('button',{name:'Mark thread read',exact:true}).count(),0,'No read marker without a bounded canonical position');assert.equal(await post.locator('.post-body').count(),0);
  }
  assert.deepEqual(await page.locator('#post-10').getByRole('button').allTextContents(),['Reply','Like','Unlike','Quote','Repost','Bookmark','Subscribe to thread']);
  assert(!requests.some(value=>value.includes('wallet')||value.includes('aztec')));
@@ -272,7 +272,7 @@ test('main and subboard routes use exact board API, contextual composer, directo
 test('rejected board remains discoverable and navigable without new posting controls',async t=>{
  const {page}=await boardFixture(t,{rejected:true});await page.evaluate(()=>location.hash='/board/20');await page.getByRole('heading',{name:'Workshop',level:1}).waitFor();
  assert(await page.getByText('Rejection reason: <script>rejected()</script>',{exact:true}).isVisible());assert.equal(await page.locator('main script').count(),0);assert(await page.getByRole('button',{name:'Write a post',exact:true}).isDisabled());
- const card=page.locator('#post-21');assert.deepEqual(await card.getByRole('button').allTextContents(),['Unlike','Bookmark']);assert.equal(await card.locator(':scope > .post-body').count(),0);assert(!(await card.innerText()).includes('Board post 21'));assert.equal(await card.getByRole('link',{name:'View thread',exact:true}).getAttribute('href'),'#/thread/21');
+ const card=page.locator('#post-21');assert.deepEqual(await card.getByRole('button').allTextContents(),['Unlike','Bookmark','Subscribe to thread']);assert.equal(await card.locator(':scope > .post-body').count(),0);assert(!(await card.innerText()).includes('Board post 21'));assert.equal(await card.getByRole('link',{name:'View thread',exact:true}).getAttribute('href'),'#/thread/21');
  await page.getByText('Parent rules at rejection · v2',{exact:true}).click();assert(await page.getByText('Current parent rules',{exact:true}).last().isVisible());
  await card.getByRole('button',{name:'Unlike',exact:true}).click();await page.waitForFunction(()=>window.boardActions?.length===1);assert.deepEqual(await page.evaluate(()=>boardActions[0]),{type:'unlike',post:'21'});
 });
@@ -289,7 +289,7 @@ test('unknown or malformed board route has no generic-feed fallback',async t=>{
 
 // Labelled private-session/public-HTTP doubles, real panel/reader/pure filter.
 // No proof, paid action or encrypted-chain recovery is represented by this fixture.
-async function privateViewFixture(t,{mutation=null}={}){
+async function privateViewFixture(t,{mutation=null,tombstone=null}={}){
  const files=new Set(['live.html','reader.mjs','reader-client.mjs','profile-view.mjs','model.mjs','navigation.mjs','style.css','avatar-upload.mjs','wallet-panel.mjs']);
  const scope={chainId:'31337',rollupVersion:'1',boardAddress:'0x'+'1'.padStart(64,'0')},hash='0x'+'a'.repeat(64);
  const make=(id,block)=>({id,record:{root:'10',parent:id==='10'?'0':'10',reference:'0',kind:'1',subboard:'0',name_id:'0'},text:'Public content '+id,timestamp:'1',likes:'0',position:{blockNumber:String(block),txIndexWithinBlock:'0',logIndexWithinTx:'0',blockHash:hash}});
@@ -300,6 +300,11 @@ async function privateViewFixture(t,{mutation=null}={}){
    const next=url.searchParams.has('cursor');if(url.pathname==='/api/feed')feed.push(url.pathname+url.search);
    const posts=next?[make(mutation==='duplicate'?'10':'11',mutation==='order'?4:2)]:[make('10',3)];
    const data={schemaVersion:1,scope,complete:true,checkpoint:{number:4,hash},revision:mutation==='snapshot'&&next?'changed':'one',names:{},boards:{},posts,nextCursor:next?null:'page2'};
+   if(tombstone&&next){
+    posts[0].text='REDACTED_NOTIFICATION_SENTINEL';
+    if(tombstone==='removed')posts[0].removal={reason:'Removed reply',policy:'1'};
+    else{posts[0].record.subboard='20';data.boards['20']={id:'20',name:'Rejected board',rejected:true,rejection:{reason:'Rejected rules',mainVersion:'1'}};}
+   }
    if(url.pathname==='/api/board')Object.assign(data,{boardId:'0',board:null,mainPolicy:{version:'1',text:''},policies:[]});
    if(state.hold&&url.pathname==='/api/feed')await new Promise(resolve=>state.pending.push(resolve));
    res.writeHead(200,{'content-type':'application/json'});res.end(JSON.stringify(data));return;
@@ -346,6 +351,24 @@ test('Following and Notifications use only ordinary feed parameters and explicit
  const {page,feed}=await privateViewFixture(t);await recoverPrivateView(page);await page.getByRole('link',{name:'Following',exact:true}).click();await page.getByRole('button',{name:'Load more',exact:true}).click();await page.getByText('Checked against chain block 4',{exact:true}).waitFor();assert.equal(await page.getByRole('article').count(),0);
  await page.getByRole('link',{name:'Notifications',exact:true}).click();await page.getByRole('button',{name:'Load more',exact:true}).click();await page.locator('#post-11').waitFor();assert.equal(await page.locator('#post-10').count(),0);assert(feed.every(url=>/^\/api\/feed\?limit=30(?:&cursor=page2)?$/.test(url)));
  await page.locator('#post-11').getByRole('button',{name:'Mark thread read',exact:true}).click();await page.getByRole('button',{name:'Check action and review fee'}).click();await page.getByRole('button',{name:'Confirm and send'}).waitFor();assert.deepEqual(await page.evaluate(()=>privateTest.prepare),[{type:'read-marker',thread:'10',throughBlock:'2',expectedRevision:'2'}]);
+});
+
+// Removed content remains an unread notification until the ordinary private action
+// is reviewed. These are renderer/panel checks with labelled session doubles.
+for(const tombstone of ['removed','rejected'])for(const action of ['read','unsubscribe'])test(`tombstone notifications: ${tombstone} reply supports ${action} without revealing content`,async t=>{
+ const {page,feed,requests}=await privateViewFixture(t,{tombstone});page.setDefaultTimeout(3000);
+ await recoverPrivateView(page);await page.getByRole('link',{name:'Notifications',exact:true}).click();await page.getByRole('button',{name:'Load more',exact:true}).click();
+ const card=page.locator('#post-11');await card.waitFor();
+ assert(!(await page.locator('body').innerText()).includes('REDACTED_NOTIFICATION_SENTINEL'));
+ assert.equal(await card.locator('.post-body').count(),0);
+ for(const name of ['Reply','Like','Quote','Repost','Remove this post'])assert.equal(await card.getByRole('button',{name,exact:true}).count(),0);
+ assert.equal(await card.getByRole('link',{name:'View thread',exact:true}).getAttribute('href'),'#/thread/10');
+ await card.getByRole('button',{name:action==='read'?'Mark thread read':'Unsubscribe from thread',exact:true}).focus();await page.keyboard.press('Enter');
+ await page.getByRole('button',{name:'Check action and review fee',exact:true}).click();await page.getByRole('button',{name:'Confirm and send',exact:true}).waitFor();
+ const expected=action==='read'?{type:'read-marker',thread:'10',throughBlock:'2',expectedRevision:'2'}:{type:'preference',kind:4,target:'10',enabled:false,expectedRevision:'2'};
+ assert.deepEqual(await page.evaluate(()=>privateTest.prepare),[expected]);
+ assert(feed.every(url=>/^\/api\/feed\?limit=30(?:&cursor=page2)?$/.test(url)));
+ assert(!requests.some(url=>/owner=|subscriptions=|bookmarks=|nameId=/.test(url)));
 });
 
 // Real production DOM; labelled public records. This guards the genuine driver
