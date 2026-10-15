@@ -522,6 +522,58 @@ export async function runSepoliaLiquiditySuccessor(args){
  }});
  return (await inspectSeedSuccessor(args)).result;
 }
+// Explicit recovery of retained cancellation bytes. This neither signs nor bumps
+// fees; the local operator additionally binds the single authorized campaign.
+export const exactCancellationFiles=Object.freeze(['plan.json','state.json','nonce15-resolution.json','state.json.cancel-approve-usdc.json','nonce15-successor.json','state.json.successor-cancel-approve-usdc.json']);
+export function captureSepoliaExactDispatch(input){
+ const d=seedObject(input,['schemaVersion','transactionHash','rawSha256','identitySha256','sourceHashes','expiresAt']);
+ if(d.schemaVersion!==1||typeof d.transactionHash!=='string'||!/^0x[0-9a-f]{64}$/.test(d.transactionHash)||!Number.isSafeInteger(d.expiresAt)||d.expiresAt<1)throw rejected();
+ for(const name of ['rawSha256','identitySha256'])if(typeof d[name]!=='string'||!/^[0-9a-f]{64}$/.test(d[name]))throw rejected();
+ const hashes=seedObject(d.sourceHashes,exactCancellationFiles);for(const h of Object.values(hashes))if(typeof h!=='string'||!/^[0-9a-f]{64}$/.test(h))throw rejected();
+ return Object.freeze({...d,sourceHashes:Object.freeze(hashes)});
+}
+export function requireAuthorizedExactCancellation({from,nonce,hash}){
+ if(from!=='0x0443527ca2fd922e62cda88a087757116c71dc21'||nonce!==15||hash!=='0xc0b5bc809bce870e3b4a4eaa506e26e1958c51ce63918c95bb324f0664ef2a62')throw rejected();
+}
+export async function runSepoliaExactCancellation({dispatchIntent:input,recoveryStore,sourceHashes,assertSourceFiles,...args}){
+ const intent=captureSepoliaExactDispatch(input),{ports,now=()=>Date.now()}=args;
+ for(const name of exactCancellationFiles)if(sourceHashes[name]!==intent.sourceHashes[name])throw rejected();
+ const inspect=()=>inspectSeedSuccessor(args),checked=await inspect(),{retained,step}=checked;
+ if(retained?.phase!=='submission-unknown'||retained.hash!==intent.transactionHash||
+  createHash('sha256').update(Buffer.from(retained.raw,'hex')).digest('hex')!==intent.rawSha256||
+  createHash('sha256').update(retained.identity).digest('hex')!==intent.identitySha256||
+  !await matchSepoliaLiquiditySigned(retained,step)||step.to!==step.from||step.value!=='0'||step.data!=='0x'||step.gasLimit!=='21000'||BigInt(step.maxFeePerGas)>5000000000n)throw rejected();
+ const identity=JSON.stringify(['SEPOLIA_EXACT_CANCELLATION_DISPATCH_V1',intent,step.from,step.nonce]),existing=recoveryStore.read();
+ if(existing!==null){if(existing?.schemaVersion!==1||existing.identity!==identity||existing.phase!=='entered')throw rejected();return checked.result;}
+ if(checked.result.canonical)return checked.result;
+ const deadline=()=>{const t=now();if(t>=intent.expiresAt*1000||intent.expiresAt*1000-t>86400000)throw rejected();};
+ const hashes=[checked.resolution.originalTransactionHash,checked.successor.cancellationTransactionHash,retained.hash];
+ deadline();await assertSourceFiles();await ports.assertAbsent(hashes);await ports.preflightCancellation(checked.plan,step,intent);deadline();
+ // enter is an exclusive, fsynced creation. A partial/failed write is not retry
+ // authority. Any retained entry, including one before dispatch, is read-only.
+ await recoveryStore.enter({schemaVersion:1,identity,phase:'entered'});
+ await assertSourceFiles();await ports.preflightCancellation(checked.plan,step,intent);
+ const final=await inspect();if(final.result.canonical)return final.result;
+ await ports.assertAbsent(hashes);await assertSourceFiles();deadline();
+ let observation;
+ try{const acknowledged=await ports.broadcastExact('0x'+retained.raw,retained.hash);if(acknowledged!==retained.hash)throw Object.assign(Error('Exact cancellation acknowledgement differs'),{code:'BAD_DATA'});observation={state:'returned'};}
+ catch(error){observation=seedBroadcastFailure(error);}
+ await recoveryStore.observe(observation);
+ return {...(await inspect()).result,dispatchAttempt:observation};
+}
+/** One raw RPC only: unlike broadcastTransaction this does not race auxiliary
+ * block/network reads with the send. The exact JSON-RPC acknowledgement is bound. */
+export async function broadcastExactSepoliaCancellation(FetchRequest,endpoint,raw,expectedHash){
+ const {keccak256}=await import('ethers');
+ if(typeof raw!=='string'||!/^0x(?:[0-9a-f]{2}){1,4096}$/.test(raw)||keccak256(raw)!==expectedHash)throw rejected();
+ const request=operatorEthereumRequest(FetchRequest,endpoint);request.method='POST';request.setHeader('content-type','application/json');
+ request.body=JSON.stringify({jsonrpc:'2.0',id:1,method:'eth_sendRawTransaction',params:[raw]});
+ const response=await request.send(),body=response.bodyJson;
+ if(!body||body.jsonrpc!=='2.0'||body.id!==1||Object.hasOwn(body,'error')||body.result!==expectedHash){
+  const code=body?.error?.code;throw Object.assign(Error('Exact cancellation acknowledgement unavailable'),{code:'BAD_DATA',...(Number.isInteger(code)?{info:{error:{code}}}:{})});
+ }
+ return body.result;
+}
 export async function resolveSepoliaSeedNonce(args){
  return (args.successor===undefined?await inspectSeedResolution(args):await inspectSeedSuccessor({...args,cancellationStore:args.store,store:args.successorStore})).result;
 }

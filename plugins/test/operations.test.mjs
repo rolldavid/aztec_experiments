@@ -505,3 +505,100 @@ test('Seed successor failed receipts reorg nonfinal wrong effect and conflicting
   if(failure==='failed'){const result=await f.ops.runSepoliaLiquiditySuccessor(f.args);assert.equal(result.status,'failed');assert.equal(result.winner,'successor');assert.equal(result.canonical,true);}
  }
 });
+
+// Exact-dispatch unit cases use synthetic signatures and chain doubles only.
+// The production owner separately restricts the public entrypoint to the single
+// retained project sender/nonce/hash; no real signed transaction is a fixture.
+async function exactDispatchFixture(){
+ const f=await seedSuccessorFixture();await f.ops.runSepoliaLiquiditySuccessor(f.args);
+ const {createHash}=await import('node:crypto'),digest=v=>createHash('sha256').update(v).digest('hex'),r=f.successorState.operations['relay-funding'];
+ const objects=[f.args.plan,f.original,f.args.resolution,f.originalFixture.saved,f.args.successor,f.successorState];
+ const sourceHashes=Object.fromEntries(f.ops.exactCancellationFiles.map((name,i)=>[name,digest(JSON.stringify(objects[i]))]));
+ const dispatchIntent={schemaVersion:1,transactionHash:r.hash,rawSha256:digest(Buffer.from(r.raw,'hex')),identitySha256:digest(r.identity),sourceHashes,expiresAt:f.args.successor.expiresAt+60};
+ let entry=null,observation=null,checks=0,preflights=0;const rawCalls=[],absence=[];
+ const recoveryStore={read:()=>entry,enter:async value=>{assert.equal(entry,null);entry=structuredClone(value);},observe:async value=>{observation=structuredClone(value);}};
+ const ports={...f.args.ports,sign:()=>assert.fail('Exact recovery cannot sign'),preflightCancellation:async()=>{preflights++;},assertAbsent:async hashes=>{absence.push([...hashes]);for(const h of hashes)assert.equal(f.receipts.has(h),false);},broadcastExact:async(raw,hash)=>{assert.equal(entry.phase,'entered');rawCalls.push(raw);return hash;}};
+ const args={...f.args,dispatchIntent,sourceHashes,recoveryStore,ports,assertSourceFiles:async()=>{checks++;}};
+ return {...f,args,rawCalls,absence,originals:JSON.stringify(objects),objects,get entry(){return entry;},get observation(){return observation;},get checks(){return checks;},get exactPreflights(){return preflights;}};
+}
+test('Exact cancellation reuses original bytes once with durable entry and three-winner checks, never signing',async()=>{
+ const f=await exactDispatchFixture(),r=f.successorState.operations['relay-funding'];
+ assert.equal((await f.ops.runSepoliaExactCancellation(f.args)).status,'unresolved');
+ assert.deepEqual(f.rawCalls,['0x'+r.raw]);assert.deepEqual(f.observation,{state:'returned'});
+ assert.equal(f.exactPreflights,2);assert.equal(f.checks,3);assert.equal(f.absence.length,2);
+ assert.deepEqual(f.absence[0],[f.args.resolution.originalTransactionHash,f.first.hash,r.hash]);assert.deepEqual(f.absence[1],f.absence[0]);
+ await f.ops.runSepoliaExactCancellation({...f.args,now:()=>Number.MAX_SAFE_INTEGER});assert.equal(f.rawCalls.length,1);
+ await assert.rejects(f.ops.runSepoliaExactCancellation({...f.args,dispatchIntent:{...f.args.dispatchIntent,expiresAt:f.args.dispatchIntent.expiresAt+1}}));assert.equal(f.rawCalls.length,1);
+ f.confirm(r.hash);assert.equal((await f.ops.runSepoliaExactCancellation(f.args)).winner,'successor');assert.equal(f.rawCalls.length,1);
+ assert.equal(f.signedSteps.length,2);assert.equal(JSON.stringify(f.objects),f.originals);
+});
+test('Exact cancellation finalized original first or successor winner needs no dispatch including races',async()=>{
+ for(const winner of ['original','cancellation','successor'])for(const race of [false,true]){
+  const f=await exactDispatchFixture(),hash={original:f.args.resolution.originalTransactionHash,cancellation:f.first.hash,successor:f.successorState.operations['relay-funding'].hash}[winner];
+  if(race){const preflight=f.args.ports.preflightCancellation;f.args.ports.preflightCancellation=async()=>{await preflight();if(f.exactPreflights===2)f.confirm(hash);};}else f.confirm(hash);
+  const result=await f.ops.runSepoliaExactCancellation(f.args);assert.equal(result.winner,winner);assert.equal(result.canonical,true);assert.equal(f.rawCalls.length,0);assert.equal(f.signedSteps.length,2);
+  assert.equal(JSON.stringify(f.objects),f.originals);
+ }
+});
+test('Exact cancellation rejects changed bytes identity six-file bindings and invalid dispatch windows before entry',async()=>{
+ for(const change of ['raw','hash','identity','file','file-race','expired','future','preflight','pending']){
+  const f=await exactDispatchFixture();
+  if(change==='raw')f.args.dispatchIntent.rawSha256='a'.repeat(64);
+  if(change==='hash')f.args.dispatchIntent.transactionHash=field(9);
+  if(change==='identity')f.args.dispatchIntent.identitySha256='a'.repeat(64);
+  if(change==='file')f.args.sourceHashes={...f.args.sourceHashes,'state.json':'a'.repeat(64)};
+  if(change==='file-race')f.args.assertSourceFiles=async()=>{throw Error('Original file changed');};
+  if(change==='expired')f.args.now=()=>f.args.dispatchIntent.expiresAt*1000;
+  if(change==='future')f.args.now=()=>f.args.dispatchIntent.expiresAt*1000-86400001;
+  if(change==='preflight')f.args.ports.preflightCancellation=async()=>{throw Error('Nonce/fee/EOA/simulation inadmissible');};
+  if(change==='pending')f.args.ports.assertAbsent=async()=>{throw Error('Candidate pending');};
+  await assert.rejects(f.ops.runSepoliaExactCancellation(f.args));assert.equal(f.entry,null);assert.equal(f.rawCalls.length,0);assert.equal(f.signedSteps.length,2);
+ }
+});
+test('Exact cancellation every entered failure remains reconcile-only on reopen with no repeated dispatch',async()=>{
+ for(const failure of ['fsync','late-preflight','late-absence','late-file','expired','rejected','timeout','ack','observation']){
+  const f=await exactDispatchFixture(),enter=f.args.recoveryStore.enter,observe=f.args.recoveryStore.observe,preflight=f.args.ports.preflightCancellation;
+  if(failure==='fsync')f.args.recoveryStore.enter=async value=>{await enter(value);throw Error('fsync acknowledgement uncertain');};
+  if(failure==='late-preflight')f.args.ports.preflightCancellation=async()=>{await preflight();if(f.exactPreflights===2)throw Error();};
+  if(failure==='late-absence'){let n=0;f.args.ports.assertAbsent=async()=>{if(++n===2)throw Error();};}
+  if(failure==='late-file'){let n=0;f.args.assertSourceFiles=async()=>{if(++n===3)throw Error();};}
+  if(failure==='expired')f.args.now=()=>f.entry?f.args.dispatchIntent.expiresAt*1000:f.args.plan.expiresAt*1000;
+  if(['rejected','timeout','ack'].includes(failure))f.args.ports.broadcastExact=async(raw)=>{f.rawCalls.push(raw);if(failure==='ack')return field(99);throw failure==='timeout'?{code:'TIMEOUT'}:{httpStatus:429,message:'PRIVATE_RAW_SENTINEL'};};
+  if(failure==='observation')f.args.recoveryStore.observe=async value=>{await observe(value);throw Error('Observation fsync');};
+  let result;try{result=await f.ops.runSepoliaExactCancellation(f.args);}catch{}
+  assert.equal(f.entry.phase,'entered');const sends=f.rawCalls.length;
+  await f.ops.runSepoliaExactCancellation({...f.args,now:()=>Number.MAX_SAFE_INTEGER});assert.equal(f.rawCalls.length,sends);assert.equal(f.signedSteps.length,2);assert.equal(JSON.stringify(f.objects),f.originals);
+  if(['rejected','timeout','ack'].includes(failure)){assert.equal(result.dispatchAttempt.state,'rejected');assert(!JSON.stringify(result).includes('PRIVATE_RAW_SENTINEL'));assert.equal(sends,1);}else assert.equal(sends,failure==='observation'?1:0);
+ }
+});
+test('Exact cancellation fixed production target and closed intent schema reject alternate authority',async()=>{
+ const {requireAuthorizedExactCancellation,captureSepoliaExactDispatch}=await import('../operations.mjs');
+ const good={from:'0x0443527ca2fd922e62cda88a087757116c71dc21',nonce:15,hash:'0xc0b5bc809bce870e3b4a4eaa506e26e1958c51ce63918c95bb324f0664ef2a62'};
+ requireAuthorizedExactCancellation(good);for(const patch of [{from:'0x'+'1'.repeat(40)},{nonce:16},{hash:field(9)}])assert.throws(()=>requireAuthorizedExactCancellation({...good,...patch}));
+ const f=await exactDispatchFixture();for(const patch of [{extra:true},{sourceHashes:{}},{expiresAt:NaN},{transactionHash:null},{rawSha256:'x'}])assert.throws(()=>captureSepoliaExactDispatch({...f.args.dispatchIntent,...patch}));
+});
+test('Exact cancellation raw transport sends one bounded request and validates exact RPC acknowledgement',async()=>{
+ const f=await exactDispatchFixture(),{broadcastExactSepoliaCancellation}=f.ops,raw='0x'+f.successorState.operations['relay-funding'].raw,hash=f.args.dispatchIntent.transactionHash;
+ for(const mode of ['ok','wrong-id','wrong-hash','error','http429','redirect']){
+  let calls=0;class Request{
+   constructor(url){this.url=url;this.getUrlFunc=async()=>{calls++;return {statusCode:mode==='http429'?429:200,body:new Uint8Array()};};}
+   setThrottleParams(p){assert.equal(p.maxAttempts,1);}setHeader(k,v){assert.equal(k,'content-type');assert.equal(v,'application/json');}
+   async send(){assert.equal(this.timeout,10000);assert.equal(this.retryFunc(),false);assert.deepEqual(JSON.parse(this.body),{jsonrpc:'2.0',id:1,method:'eth_sendRawTransaction',params:[raw]});assert.equal(this.method,'POST');await this.getUrlFunc(mode==='redirect'?{url:'https://other.invalid'}:this);return{bodyJson:{jsonrpc:'2.0',id:mode==='wrong-id'?2:1,result:mode==='wrong-hash'?field(9):hash,...(mode==='error'?{error:{code:-32000,message:'PRIVATE_RAW_SENTINEL'}}:{})}};}
+  }
+  if(mode==='ok')assert.equal(await broadcastExactSepoliaCancellation(Request,'https://example.invalid',raw,hash),hash);
+  else await assert.rejects(broadcastExactSepoliaCancellation(Request,'https://example.invalid',raw,hash));
+  assert.equal(calls,mode==='redirect'?0:1);
+ }
+});
+test('Exact cancellation durable exclusive slot survives reopen and rejects duplicate writers or missing entry',async()=>{
+ const fs=await import('node:fs/promises'),os=await import('node:os'),path=await import('node:path'),{openExactCancellationDispatchStore}=await import('../operator.mjs');
+ const directory=await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(),'exact-cancel-')));await fs.chmod(directory,0o700);
+ const statePath=path.join(directory,'state.json'),hash=field(7),entry={schemaVersion:1,phase:'entered',identity:'synthetic'};
+ try{
+  const a=await openExactCancellationDispatchStore(statePath,hash),b=await openExactCancellationDispatchStore(statePath,hash);
+  const results=await Promise.allSettled([a.enter(entry),b.enter(entry)]);assert.equal(results.filter(r=>r.status==='fulfilled').length,1);
+  const reopened=await openExactCancellationDispatchStore(statePath,hash);assert.deepEqual(reopened.read(),entry);await reopened.observe({state:'returned'});await assert.rejects(reopened.observe({state:'returned'}));
+  const file=statePath+'.exact-cancel-'+hash.slice(2)+'.entered.json';assert.equal((await fs.stat(file)).mode&0o777,0o600);
+  await fs.unlink(file);await assert.rejects(openExactCancellationDispatchStore(statePath,hash),/entry missing/);
+ }finally{await fs.rm(directory,{recursive:true,force:true});}
+});
