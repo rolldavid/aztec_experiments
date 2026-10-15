@@ -871,6 +871,19 @@ test('refresh diagnostic survives connect sanitizer and retry then clears on acc
  await page.evaluate(()=>{test.rawAccount={address:'OTHER_PRIVATE_SENTINEL'};test.options.onChange({invalidated:true});test.sessionProgress({stage:'private-refresh',step:'account-status/method',deploymentStep:null,state:'failed',code:'unknown'});});assert.equal(await dialog.getAttribute('data-rolling-initialization'),null);assert.equal((await counts(page)).sends,0);
 });
 
+test('claim progress distinguishes saved records, preparation and confirmation without claiming submission success',async t=>{
+ const {page}=await browserFixture(t);await open(page);await unlock(page);
+ const messages={inspect:'Checking saved funding records…',recover:'Verifying your original payment and bridge delivery…','account-status':'Checking the account before claiming funds…',prepare:'Preparing the private claim and checking its fee…',checkpoint:'Saving private claim recovery records…',submit:'Processing the private claim. Keep this page open; do not send again.',reconcile:'Checking confirmation of the saved private claim…'};
+ for(const [step,message]of Object.entries(messages))for(const state of ['started','complete']){
+  await page.evaluate(({step,state})=>test.sessionProgress({stage:'funding-claim',step,deploymentStep:null,state,code:null}),{step,state});
+  await page.getByText(message,{exact:true}).waitFor({timeout:1000});
+  assert.equal(await page.getByText('Checking the private account…',{exact:true}).count(),0);
+ }
+ await page.evaluate(()=>test.sessionProgress({stage:'funding-claim',step:'submit',deploymentStep:null,state:'failed',code:'unknown'}));
+ await page.getByText('This funding step could not be completed. Your recovery records are preserved.',{exact:true}).waitFor({timeout:1000});
+ assert.deepEqual(await page.evaluate(()=>[test.prepares,test.sends,test.reconciles,test.fundingPayments??0]),[0,0,0,0]);
+});
+
 test('claim progress exposes only fixed preparation failure in DOM and clears it after account invalidation',async t=>{
  const {page}=await browserFixture(t);await page.evaluate(()=>{test.aggregateEnabled=true;test.paymentSaved=true;});await open(page);await unlock(page);await page.getByRole('button',{name:'Recover funding',exact:true}).click();
  await page.evaluate(()=>test.failure='prepare');await page.getByRole('button',{name:'Resume saved funding',exact:true}).click();await page.getByRole('alert').waitFor();
