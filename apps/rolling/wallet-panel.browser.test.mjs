@@ -419,24 +419,24 @@ test('preference lock driver waits for delayed reopen refresh before expanding s
 });
 
 // Recovery decisions are labelled presentation doubles, never genuine chain evidence.
-async function seedReplacement(page,{marker=false,status='replacement-available',prepared=false,fullValues=false}={}){
- await page.evaluate(({marker,status,prepared,fullValues})=>{
+async function seedReplacement(page,{marker=false,status='replacement-available',prepared=false,fullValues=false,action:requestedAction}={}){
+ await page.evaluate(({marker,status,prepared,fullValues,requestedAction})=>{
   const hash=n=>'0x'+(fullValues?'1234567890abcdef'.repeat(4):n.toString(16).padStart(64,'0'));
   const head={initialized:true,schema:1,revision:'1',digest:fullValues?'1234567890'.repeat(7)+'123456':'11'};
-  const action=marker?{type:'read-marker',expectedRevision:'1',thread:'42',throughBlock:'10'}:{type:'preference',expectedRevision:'1',kind:1,target:'42',enabled:true};
+  const action=requestedAction??(marker?{type:'read-marker',expectedRevision:'1',thread:'42',throughBlock:'10'}:{type:'preference',expectedRevision:'1',kind:1,target:'42',enabled:true});
   test.recoverySnapshot={status,currentTxHash:hash(77),attempts:[{txHash:hash(77),status:'invalid',stateReasons:['Block header not found']}],head,originalPreferenceHead:head,
    marker:marker?{throughBlock:'10',blockHash:hash(44)}:null,originalMarker:marker?{throughBlock:'10',blockHash:hash(43)}:null,
    inclusionHistory:[{txHash:hash(77),inclusions:[{blockNumber:12,blockHash:hash(42),executionResult:'success',transactionFee:'7'}]}]};
   const intent={intentId:'42',status:prepared?'replacement-prepared':'unknown',action,nonce:hash(100),maximumFee:'123',...(prepared?{replacementReview:{sourceTxHash:hash(77),head,marker:marker?test.recoverySnapshot.marker:null,maximumFee:'456'}}:{})};
   sessionStorage.setItem('labelled-ui-intent',JSON.stringify(intent));
- },{marker,status,prepared,fullValues});
+ },{marker,status,prepared,fullValues,requestedAction});
  await open(page);await page.getByRole('button',{name:'Unlock',exact:true}).click();await page.getByRole('button',{name:'Check recovery options',exact:true}).waitFor();
 }
 test('replacement inspection and review never send; confirmation shows distinct ceiling and historical fees',async t=>{
  const {page}=await browserFixture(t);await seedReplacement(page);assert.equal(await page.evaluate(()=>test.recoveryChecks),0);
  await page.getByRole('button',{name:'Check recovery options',exact:true}).click();await page.getByRole('button',{name:'Review replacement',exact:true}).waitFor();
  assert.equal(await page.evaluate(()=>test.replacementPrepares),0);assert.equal((await counts(page)).sends,0);
- await page.getByText('Original setting and transaction history',{exact:true}).click();assert(await page.getByText(/7 fee-juice units; result success\. Historical record only/).isVisible());assert(await page.getByText('Original saved-settings revision: 1',{exact:true}).isVisible());
+ await page.getByText('Original action and transaction history',{exact:true}).click();assert(await page.getByText(/7 fee-juice units; result success\. Historical record only/).isVisible());assert(await page.getByText('Original saved-settings revision: 1',{exact:true}).isVisible());
  await page.getByRole('button',{name:'Review replacement',exact:true}).click();await page.getByRole('button',{name:'Confirm replacement and send',exact:true}).waitFor();
  assert(await page.getByText(/New maximum network fee: 456 fee-juice units/).isVisible());assert(await page.getByText(/Original maximum fee: 123 fee-juice units/).isVisible());
  assert.deepEqual(await page.evaluate(()=>test.replacementInput),{expectedTxHash:'0x'+(77).toString(16).padStart(64,'0'),expectedHead:{initialized:true,schema:1,revision:'1',digest:'11'}});
@@ -467,7 +467,7 @@ test('failed replacement preparation discards eligibility but preserves saved ac
 });
 test('account invalidation during recovery inspection clears private history and never restores late eligibility',async t=>{
  const {page}=await browserFixture(t);await seedReplacement(page);await page.evaluate(()=>test.hold='recovery-options');await page.getByRole('button',{name:'Check recovery options'}).click();await page.waitForFunction(()=>test.release);
- await page.evaluate(()=>test.options.onChange({invalidated:true}));assert.equal(await page.getByText('Original setting and transaction history',{exact:true}).count(),0);assert.equal(await page.getByRole('dialog').getAttribute('aria-busy'),'true');
+ await page.evaluate(()=>test.options.onChange({invalidated:true}));assert.equal(await page.getByText('Original action and transaction history',{exact:true}).count(),0);assert.equal(await page.getByRole('dialog').getAttribute('aria-busy'),'true');
  await page.evaluate(()=>test.release());await page.getByRole('button',{name:'Reload to unlock'}).waitFor();assert.equal(await page.getByRole('button',{name:'Review replacement',exact:true}).count(),0);assert.equal(await page.evaluate(()=>test.replacementPrepares+test.sends),0);
 });
 
@@ -481,7 +481,7 @@ for(const width of [390,1280])for(const phase of ['history','prepared-marker'])t
  const hash='0x'+'1234567890abcdef'.repeat(4),digest='1234567890'.repeat(7)+'123456';
  if(phase==='history'){
   await page.getByRole('button',{name:'Check recovery options',exact:true}).click();
-  await page.getByText('Original setting and transaction history',{exact:true}).click();
+  await page.getByText('Original action and transaction history',{exact:true}).click();
   assert.equal(await page.getByText('Original saved-settings fingerprint: '+digest,{exact:true}).textContent(),'Original saved-settings fingerprint: '+digest);
   assert.equal(await page.getByText('Earlier transaction: '+hash,{exact:true}).textContent(),'Earlier transaction: '+hash);
   await page.getByText('Earlier transaction: '+hash,{exact:true}).scrollIntoViewIfNeeded();
@@ -525,8 +525,8 @@ test('settled connection message cleanup preserves custody guidance and failed c
 
 // Labelled saved-transaction presentation doubles. Actual bytes, journal guards
 // and no-reproof behavior are tested separately in the application/journal suites.
-async function seedSavedResume(page,{replacement=false,marker=false,status='resumable'}={}){
- await seedReplacement(page,{marker,status:'unknown'});
+async function seedSavedResume(page,{replacement=false,marker=false,status='resumable',action}={}){
+ await seedReplacement(page,{marker,status:'unknown',action});
  await page.evaluate(({replacement,marker,status})=>{
   const hash='0x'+'1234567890abcdef'.repeat(4),old='0x'+'22'.repeat(32),saved=JSON.parse(sessionStorage.getItem('labelled-ui-intent'));
   test.recoverySnapshot.currentTxHash=hash;
@@ -558,7 +558,7 @@ for(const status of ['pending','canonical','unknown','empty','context-changed'])
  const {page}=await browserFixture(t);await seedSavedResume(page,{status});await page.getByRole('button',{name:'Check recovery options',exact:true}).click();
  await page.getByText('Recovery options checked. No transaction was sent.',{exact:true}).waitFor();
  assert.equal(await page.getByRole('button',{name:'Confirm saved transaction and send',exact:true}).count(),0);assert.equal(await page.evaluate(()=>test.resumes+test.prepares+test.replacementPrepares+test.submitCalls),0);
- if(status==='context-changed')assert(await page.getByText(/no longer matches your settings or read position/).isVisible());
+ if(status==='context-changed')assert(await page.getByText(/no longer matches its required context/).isVisible());
 });
 for(const mutation of ['hash','fee','fee-source','source-candidate','marker','missing','contradictory'])test(`saved transaction ${mutation} metadata cannot grant confirmation`,async t=>{
  const {page}=await browserFixture(t);await seedSavedResume(page,{replacement:true,marker:true});
@@ -964,4 +964,24 @@ test('dialog selections and view changes retain a meaningful keyboard position',
  const names=page.getByRole('button',{name:'Your names',exact:true});await names.click();
  assert.equal(await page.evaluate(()=>document.activeElement.textContent),'Your names');
  assert.equal((await counts(page)).sends,0);
+});
+
+for(const replacement of [false,true])test(`ordinary saved post ${replacement?'replacement review':'exact-byte recovery'} is explicit and preserves its draft`,async t=>{
+ const {page}=await browserFixture(t),action={type:'post',deposit:'9',content:'Retained original draft',name:'0',subboard:'0'};
+ if(replacement)await seedReplacement(page,{action});else await seedSavedResume(page,{action});
+ assert.equal(await page.evaluate(()=>test.sends+test.replacementPrepares+test.resumes),0);
+ await page.getByRole('button',{name:'Check recovery options',exact:true}).click();
+ if(replacement){await page.getByRole('button',{name:'Review replacement',exact:true}).click();await page.getByRole('button',{name:'Confirm replacement and send',exact:true}).waitFor();
+  assert.deepEqual(await page.evaluate(()=>test.replacementInput),{expectedTxHash:'0x'+(77).toString(16).padStart(64,'0')});assert(await page.getByText(/New maximum network fee: 456/).isVisible());
+  assert.equal(await page.evaluate(()=>test.sends),0);await page.getByRole('button',{name:'Confirm replacement and send',exact:true}).click();
+ }else{await page.getByRole('button',{name:'Confirm saved transaction and send',exact:true}).waitFor();assert(await page.getByText(/Previously approved maximum fee: 123/).isVisible());
+  assert.equal(await page.evaluate(()=>test.sends),0);await page.getByRole('button',{name:'Confirm saved transaction and send',exact:true}).click();}
+ await page.getByText('Transaction confirmed on the verified chain.',{exact:true}).waitFor();
+ assert.equal(await page.evaluate(()=>test.sends),1);assert.equal(await page.evaluate(()=>JSON.parse(sessionStorage.getItem('labelled-ui-intent')).action.content),action.content);
+});
+
+test('saved avatar recovery cannot bypass the exact preview requirement',async t=>{
+ const {page}=await browserFixture(t);await seedSavedResume(page,{action:{type:'avatar',name:'7',expectedVersion:'4',width:100,height:100,data:Buffer.from('<svg onload="bad()"/>').toString('base64')}});
+ await page.getByRole('button',{name:'Check recovery options',exact:true}).click();await page.getByText(/saved avatar cannot be previewed safely/).waitFor();
+ assert(await page.getByRole('button',{name:'Confirm saved transaction and send',exact:true}).isDisabled());assert.equal((await counts(page)).sends,0);
 });

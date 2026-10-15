@@ -123,7 +123,7 @@ const methods={'moderate-post':'remove_post','moderate-avatar':'remove_avatar','
  * submit delegates the sole prove/journal/send lifecycle to wallet.sendTx. Once its
  * durable fence exists, automatic behavior is limited to read-only reconcile, including after a crash
  * before transaction bytes were saved. Missing receipt is never absence. No automatic
- * replacement. Explicit preference-only resumeSaved may resend the identical saved bytes
+ * replacement. Explicit resumeSaved may resend the identical saved bytes
  * after fresh context validation, without estimation or proving; cancelPrepared permits only the pre-send prepared state. Recovery UI must preserve both encrypted journals.
  * claim-deposit accepts public receipt metadata only. The existing receipt verifier
  * derives the private claim from wallet custody and checks delivery at the current
@@ -318,7 +318,9 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
     return {maximumFee,feeSource:review?'replacement':'original',marker:clone(review?review.marker:record.originalMarker??null)};
   }
   function savedContextMatches(record,consent,head,marker){
-    return !!consent&&!!record.originalPreferenceHead&&same(head,record.originalPreferenceHead)&&
+    if(!consent)return false;
+    if(!preferenceAction(record))return head===null&&marker===null&&(!record.replacementReview||record.replacementReview.head===null&&record.replacementReview.marker===null);
+    return !!record.originalPreferenceHead&&same(head,record.originalPreferenceHead)&&
       head.revision===record.action.expectedRevision&&same(marker,consent.marker)&&
       (!record.replacementReview||same(head,record.replacementReview.head));
   }
@@ -334,28 +336,70 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
   async function checkSavedResumeContext(saved,txHash){
     const record=saved.value,consent=savedConsent(record,txHash);
     await guard();await session.wallet.pxe.sync();await guard();
-    const head=await preferenceHead(),marker=await markerContext(record);
+    const head=preferenceAction(record)?await preferenceHead():null,marker=await markerContext(record);
+    if(!preferenceAction(record))await checkActionRecoveryContext(record);
     check(savedContextMatches(record,consent,head,marker),'ROLLING_RECOVERY_CONTEXT_CHANGED');
     check((await savedIntent(record.id)).encoded===saved.encoded,'ROLLING_RECOVERY_REQUIRED');await guard();
   }
   async function recoverySnapshot(saved){
-    const record=saved.value;check(preferenceAction(record),'ROLLING_RECOVERY_UNSUPPORTED');
+    const record=saved.value;
     const inspected=await session.journal.inspectReplacement(operation(record.id),{requireMissingAnchor:true});
-    const head=await preferenceHead(),marker=await markerContext(record);await guard();
+    const head=preferenceAction(record)?await preferenceHead():null,marker=await markerContext(record);await guard();
     const exactResume=await exactResumeSnapshot(record,inspected.txHash,head,marker);
     check((await savedIntent(record.id)).encoded===saved.encoded,'ROLLING_RECOVERY_REQUIRED');await guard();
     let status=inspected.status==='available'?'replacement-available':inspected.status;
-    if(status==='replacement-available'&&(!record.originalPreferenceHead||!same(head,record.originalPreferenceHead)||head.revision!==record.action.expectedRevision))status='context-changed';
-    if(status==='replacement-available'&&['confirmed','reverted'].includes(record.status)&&!record.inclusionHistory?.some(row=>row.txHash===record.txHash))status='history-unavailable';
+    if(status==='replacement-available'&&preferenceAction(record)&&(!record.originalPreferenceHead||!same(head,record.originalPreferenceHead)||head.revision!==record.action.expectedRevision))status='context-changed';
+    if(status==='replacement-available'&&preferenceAction(record)&&['confirmed','reverted'].includes(record.status)&&!record.inclusionHistory?.some(row=>row.txHash===record.txHash))status='history-unavailable';
+    if(!preferenceAction(record)&&(status==='replacement-available'||exactResume.status==='resumable')){await session.wallet.pxe.sync();await checkActionRecoveryContext(record);check((await savedIntent(record.id)).encoded===saved.encoded,'ROLLING_RECOVERY_REQUIRED');await guard();}
     return {intent:summary(record),status,attempts:clone(inspected.attempts),requireMissingAnchor:inspected.requireMissingAnchor,
       head,originalPreferenceHead:clone(record.originalPreferenceHead??null),marker,originalMarker:clone(record.originalMarker??null),inclusionHistory:clone(record.inclusionHistory??[]),currentTxHash:inspected.txHash,exactResume};
   }
   async function checkReplacementReview(record,{synchronize=false}={}){
-    const review=record.replacementReview;check(review&&preferenceAction(record),'ROLLING_RECOVERY_REQUIRED');
+    const review=record.replacementReview;check(review,'ROLLING_RECOVERY_REQUIRED');
     if(synchronize){await guard();await session.wallet.pxe.sync();await guard();}
+    if(!preferenceAction(record)){check(review.head===null&&review.marker===null,'ROLLING_RECOVERY_CONTEXT_CHANGED');await checkActionRecoveryContext(record);return;}
     const head=await preferenceHead(),marker=await markerContext(record);
     check(record.originalPreferenceHead&&same(head,record.originalPreferenceHead)&&head.revision===record.action.expectedRevision&&same(head,review.head)&&same(marker,review.marker),'ROLLING_RECOVERY_CONTEXT_CHANGED');
     await guard();
+  }
+  // Reuse the original submission checks at recovery boundaries; none of these
+  // checks grants permission to resend without the exact authenticated journal.
+  async function checkActionSubmission(record){
+      if(record.withdrawal?.kind==='bok'){check(same(await resolveBokWithdrawal(),record.withdrawal.bokScope),'ROLLING_CONTEXT_CHANGED');const anchor=await balanceAnchor(),available=chainValue(await utility(await bokContract(),'balance_of',[session.owner],deployment.bok.artifact));check(available>=uint128(record.withdrawal.amount),'ROLLING_BOK_CREDIT_INSUFFICIENT');await checkBalanceAnchor(anchor);}
+      else if(record.withdrawal){const anchor=await balanceAnchor(),current=await collateralInfo(record.action.deposit,await contract(),BigInt(anchor.timestamp));check(current.eligible&&same(current,record.withdrawal),'ROLLING_WITHDRAWAL_NOT_READY');await checkBalanceAnchor(anchor);}
+      if(record.action.type==='claim-deposit')check(same(await collateralClaim(record.action),record.args),'ROLLING_FUNDING_MISMATCH');
+      if(record.fundingBok)check(same(await (record.action.type==='claim-bok'?privateBokClaim(record.action.receipt):bokFundingClaim(record.action)),record.fundingBok),'ROLLING_FUNDING_MISMATCH');
+      if(record.action.type==='claim-private-fee')check(record.fundingFee,'ROLLING_FUNDING_MISMATCH');
+      if(record.bokReleaseSource)await checkBokRelease(record.bokReleaseSource,record.action.type);
+      await checkModeration(record);
+      if(record.bok)await checkBokThread(record.action,await contract());
+      if(record.bok?.phase==='authorize'){const available=await bokCredit();check(available>=BigInt(record.bok.budget),'ROLLING_BOK_CREDIT_INSUFFICIENT');}
+      if(record.bok?.phase==='post')await waitingBok(record);
+  }
+  async function checkActionRecoveryContext(record){
+    await guard();checkBokRecord(record);await checkActionSubmission(record);
+    // A fresh proof may renew its anchor and fees, never the saved action's
+    // screening hints, policy versions, profile version or funded Bok target.
+    if(['post','reply','quote','repost','screen'].includes(record.action.type)){
+      check(same(plain(await argumentsFor(record.action,await contract(),record.nonce)),record.args),'ROLLING_RECOVERY_CONTEXT_CHANGED');
+    }
+    if(record.bok){
+      await bokContext();const postArgs=plain(await argumentsFor(record.action,await contract(),record.nonce));
+      check(same(postArgs,record.bok.phase==='post'?record.args.slice(0,5):record.bok.postArgs),'ROLLING_RECOVERY_CONTEXT_CHANGED');
+      check(await bokInvocationTarget(postArgs[2],record.nonce,record.action.content)===record.bok.target,'ROLLING_INTENT_CHANGED');
+    }
+    if(record.action.type==='name')await nameAvailability(record.action);
+    if(['bio','avatar'].includes(record.action.type)){
+      const profile=await utility(await contract(),'profile_state',[field(record.action.name,true)]);
+      check(String(BigInt(profile[record.action.type==='bio'?'bio_version':'avatar_version']))===record.action.expectedVersion,'ROLLING_RECOVERY_CONTEXT_CHANGED');
+    }
+    const receipt=record.action.type==='claim-private-fee'?record.action.receipt:record.action.feeReceipt;
+    if(receipt!==undefined){
+      const claim=await fundingClaim('private-fee',receipt);
+      check(claim.contract===fixed.fee&&claim.kind==='private-fee-bridge','ROLLING_FUNDING_MISMATCH');
+      if(record.action.type==='claim-private-fee')check(same(plain(claim.bridgeClaim),record.fundingFee),'ROLLING_FUNDING_MISMATCH');
+    }
+    await interaction(await selectedContract(record),record);await guard();
   }
   async function screeningArguments(board,deposit){
     const hints=await utility(board,'get_screen_hints',[session.owner,deposit]);
@@ -734,7 +778,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
         prepared:await payment(),from:session.owner,guard});record.maximumFee=estimate.maximumFee.toString();
       await waitingBok(record);await guard();await (await slot()).write(saved,record);return summary(record);
     });},
-    // Explicit preference-only recovery. Inspection never acknowledges or writes.
+    // Explicit saved-action recovery. Inspection never acknowledges or writes.
     // Original revision/action/nonce remain immutable; a changed head is unresolved,
     // not silently rebased. Exact-byte recovery is separately user-confirmed and
     // never re-estimates or re-proves. Caller retains its wallet lease throughout.
@@ -744,7 +788,6 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
       check(typeof expectedTxHash==='string'&&/^0x[0-9a-f]{64}$/.test(expectedTxHash));
       return exclusive(async()=>{
         await guard();const saved=await savedIntent(id),record=saved.value;
-        check(preferenceAction(record),'ROLLING_RECOVERY_UNSUPPORTED');
         check(!['prepared','cancelled','replacement-prepared'].includes(record.status),'ROLLING_RECOVERY_REQUIRED');
         const current=await session.journal.inspect();
         check(current?.operation===operation(id)&&current.txHash===expectedTxHash,'ROLLING_RECOVERY_REQUIRED');
@@ -764,23 +807,24 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
     },
     async prepareReplacement(id,input){
       // Capture only own data primitives before any asynchronous guard or RPC.
-      let reviewInput,expectedHead;try{
-        reviewInput=exactData(input,Object.hasOwn(input??{},'expectedMarkerHash')?['expectedTxHash','expectedHead','expectedMarkerHash']:['expectedTxHash','expectedHead']);
-        expectedHead=exactData(reviewInput.expectedHead,['initialized','schema','revision','digest']);
+      let reviewInput,expectedHead=null;try{
+        const hasHead=Object.hasOwn(input??{},'expectedHead');
+        reviewInput=exactData(input,hasHead?(Object.hasOwn(input??{},'expectedMarkerHash')?['expectedTxHash','expectedHead','expectedMarkerHash']:['expectedTxHash','expectedHead']):['expectedTxHash']);
+        if(hasHead)expectedHead=exactData(reviewInput.expectedHead,['initialized','schema','revision','digest']);
       }catch{throw fail('ROLLING_INVALID_ACTION');}
       check(typeof reviewInput.expectedTxHash==='string'&&/^0x[0-9a-f]{64}$/.test(reviewInput.expectedTxHash));
-      check(typeof expectedHead.initialized==='boolean'&&expectedHead.schema===1);preferenceRevision(expectedHead.revision);
-      check(typeof expectedHead.digest==='string'&&/^(0|[1-9][0-9]*)$/.test(expectedHead.digest)&&BigInt(expectedHead.digest)<FIELD_MODULUS);
+      if(expectedHead){check(typeof expectedHead.initialized==='boolean'&&expectedHead.schema===1);preferenceRevision(expectedHead.revision);
+        check(typeof expectedHead.digest==='string'&&/^(0|[1-9][0-9]*)$/.test(expectedHead.digest)&&BigInt(expectedHead.digest)<FIELD_MODULUS);}
       if(Object.hasOwn(reviewInput,'expectedMarkerHash'))check(typeof reviewInput.expectedMarkerHash==='string'&&/^0x[0-9a-f]{64}$/.test(reviewInput.expectedMarkerHash));
       return exclusive(async()=>{await guard();const saved=await savedIntent(id),record=saved.value;
         check(!['prepared','cancelled'].includes(record.status),'ROLLING_RECOVERY_REQUIRED');
         const snapshot=await recoverySnapshot(saved);
         check(snapshot.status==='replacement-available'&&snapshot.currentTxHash===reviewInput.expectedTxHash,'ROLLING_RECOVERY_REQUIRED');
-        check(same(snapshot.head,expectedHead),'ROLLING_RECOVERY_CONTEXT_CHANGED');
+        check(preferenceAction(record)===(expectedHead!==null)&&same(snapshot.head,expectedHead),'ROLLING_RECOVERY_CONTEXT_CHANGED');
         check(record.action.type==='read-marker'?Object.hasOwn(reviewInput,'expectedMarkerHash')&&snapshot.marker.blockHash===reviewInput.expectedMarkerHash:!Object.hasOwn(reviewInput,'expectedMarkerHash'),'ROLLING_RECOVERY_CONTEXT_CHANGED');
         await session.journal.allowReplacement(operation(id),{requireMissingAnchor:true});await session.journal.assertCanStart();
-        const selected=await interaction(await contract(),record);
-        const estimated=await sdk.estimatePrivateFeeTransaction({wallet:session.wallet,node:session.node,interaction:selected.call,prepared:await payment(),from:session.owner,guard});
+        const selected=await interaction(await selectedContract(record),record);
+        const estimated=await sdk.estimatePrivateFeeTransaction({wallet:session.wallet,node:session.node,interaction:selected.call,prepared:await payment(record.action,record),from:session.owner,guard});
         const replacementReview={sourceTxHash:snapshot.currentTxHash,head:snapshot.head,marker:snapshot.marker,maximumFee:estimated.maximumFee.toString()};
         const next={...record,status:'replacement-prepared',replacementReview};
         await checkReplacementReview(next);await session.journal.inspectReplacement(operation(id),{requireMissingAnchor:true}).then(view=>check(view.status==='available'&&view.txHash===replacementReview.sourceTxHash,'ROLLING_RECOVERY_REQUIRED'));
@@ -788,8 +832,6 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
       });
     },
     async submitPrepared(id){return exclusive(async()=>{await guard();const saved=await savedIntent(id),replacing=saved.value.status==='replacement-prepared';check(replacing||saved.value.status==='prepared','ROLLING_RECOVERY_REQUIRED');
-      if(saved.value.withdrawal?.kind==='bok'){check(same(await resolveBokWithdrawal(),saved.value.withdrawal.bokScope),'ROLLING_CONTEXT_CHANGED');const anchor=await balanceAnchor(),available=chainValue(await utility(await bokContract(),'balance_of',[session.owner],deployment.bok.artifact));check(available>=uint128(saved.value.withdrawal.amount),'ROLLING_BOK_CREDIT_INSUFFICIENT');await checkBalanceAnchor(anchor);}
-      else if(saved.value.withdrawal){const anchor=await balanceAnchor(),current=await collateralInfo(saved.value.action.deposit,await contract(),BigInt(anchor.timestamp));check(current.eligible&&same(current,saved.value.withdrawal),'ROLLING_WITHDRAWAL_NOT_READY');await checkBalanceAnchor(anchor);}
       if(replacing){
         await checkReplacementReview(saved.value);
         const inspected=await session.journal.inspectReplacement(operation(id),{requireMissingAnchor:true});
@@ -799,14 +841,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
         const found=await session.journal.inspectOutcome();acknowledge(found,saved.value.predecessor);
       }
       await session.journal.assertCanStart(); // Before private simulation, not merely before send.
-      if(saved.value.action.type==='claim-deposit')check(same(await collateralClaim(saved.value.action),saved.value.args),'ROLLING_FUNDING_MISMATCH');
-      if(saved.value.fundingBok)check(same(await (saved.value.action.type==='claim-bok'?privateBokClaim(saved.value.action.receipt):bokFundingClaim(saved.value.action)),saved.value.fundingBok),'ROLLING_FUNDING_MISMATCH');
-      if(saved.value.action.type==='claim-private-fee')check(saved.value.fundingFee,'ROLLING_FUNDING_MISMATCH');
-      if(saved.value.bokReleaseSource)await checkBokRelease(saved.value.bokReleaseSource,saved.value.action.type);
-      await checkModeration(saved.value);
-      if(saved.value.bok)await checkBokThread(saved.value.action,await contract());
-      if(saved.value.bok?.phase==='authorize'){const available=await bokCredit();check(available>=BigInt(saved.value.bok.budget),'ROLLING_BOK_CREDIT_INSUFFICIENT');}
-      if(saved.value.bok?.phase==='post')await waitingBok(saved.value);
+      await checkActionSubmission(saved.value);
       const selected=await interaction(await selectedContract(saved.value),saved.value);progress('estimating');
       const estimated=await sdk.estimatePrivateFeeTransaction({wallet:session.wallet,node:session.node,interaction:selected.call,prepared:await payment(saved.value.action,saved.value),from:session.owner,guard});
       const maximumFee=replacing?saved.value.replacementReview.maximumFee:saved.value.maximumFee;

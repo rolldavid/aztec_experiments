@@ -212,7 +212,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
  function savedResumeReview(snapshot){
   const saved=snapshot.exactResume,record=snapshot.intent,hash=value=>typeof value==='string'&&/^0x[0-9a-f]{64}$/.test(value);
   if(saved?.status!=='resumable'||snapshot.status!=='unknown'||!hash(saved.txHash)||saved.txHash!==snapshot.currentTxHash||
-   !['preference','read-marker'].includes(record.action?.type)||['prepared','cancelled','replacement-prepared'].includes(record.status))return null;
+   !record.action?.type||['prepared','cancelled','replacement-prepared'].includes(record.status))return null;
   if(typeof saved.maximumFee!=='string'||!/^(0|[1-9][0-9]{0,76})$/.test(saved.maximumFee))return null;
   const review=record.replacementReview;
   if(saved.feeSource==='original'){if(review||saved.maximumFee!==record.maximumFee)return null;}
@@ -226,21 +226,22 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   }else if(saved.marker!==null||expectedMarker!=null)return null;
   return {txHash:saved.txHash,maximumFee:saved.maximumFee,feeSource:saved.feeSource,marker:saved.marker?{...saved.marker}:null};
  }
- function showSavedResume(snapshot,review){
+ function showSavedResume(snapshot,review,ready){
   content.append(el('h3',{},'Review the saved transaction'),paragraph('This sends the exact transaction already saved on this device. It does not create a new transaction or request a new fee quote.'),
    el('p',{class:'recovery-values'},'Saved transaction: '+review.txHash),
    el('p',{class:'recovery-values'},`${review.feeSource==='replacement'?'Previously reviewed replacement':'Previously approved'} maximum fee: ${review.maximumFee} fee-juice units. This is the saved ceiling, not an additional fee or a record of a charge.`));
   if(review.marker)content.append(el('p',{class:'recovery-values'},`Saved read position: block ${review.marker.throughBlock}; block fingerprint ${review.marker.blockHash}.`));
-  content.append(button('Confirm saved transaction and send',()=>void work(async()=>{
+  const confirm=button('Confirm saved transaction and send',()=>void work(async()=>{
+   if(!ready())throw connectionFailure;
    const epoch=accountEpoch,id=intent.intentId;checkAccount(epoch);
    if(recoveryInspection!==snapshot||snapshot.intent.intentId!==id)throw connectionFailure;
    const expectedTxHash=review.txHash;recoveryInspection=null;notice='';intent={...intent,status:'unknown'};blocked=true;
    note('Sending the saved transaction. Keep this page open; do not send again.');
    try{const result=await session.application.resumeSaved(id,{expectedTxHash});checkAccount(epoch);await receive(result);}
    catch{throw Error('Saved transaction outcome unknown');}
-  }),true));
+  }),true);confirm.dataset.unavailable=String(!ready());confirm.disabled=busy||!ready();content.append(confirm);return confirm;
  }
- function showRecoveryOptions(){
+ function showRecoveryOptions(ready=()=>true){
   content.append(button('Check recovery options',()=>void work(async()=>{
    const epoch=accountEpoch,id=intent.intentId;checkAccount(epoch);recoveryInspection=null;clearPreferences();
    const result=await session.application.inspectRecovery(id);checkAccount(epoch);
@@ -249,12 +250,12 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   })));
   const snapshot=recoveryInspection;if(!snapshot||snapshot.intent.intentId!==intent.intentId)return;
   const statuses={pending:'This update is still pending. Keep your recovery file and check again.',unknown:'This update is still unresolved. Keep your recovery file and check again. Do not send another copy.',canonical:'An attempt is included in the verified chain. Check the existing transaction to reconcile it; do not send a replacement.',empty:'No signed transaction was found. Keep the saved action and recovery file; a replacement is not available.',
-   'context-changed':'Your saved settings changed. This update cannot be repeated safely.', 'history-unavailable':'Earlier transaction details are unavailable. Keep your recovery file; a replacement cannot be reviewed safely.', 'limit-reached':'This update has reached its replacement limit. Keep your recovery file; no further replacement can be sent.',
+   'context-changed':'The saved action no longer matches its required context. It cannot be repeated safely.', 'history-unavailable':'Earlier transaction details are unavailable. Keep your recovery file; a replacement cannot be reviewed safely.', 'limit-reached':'This update has reached its replacement limit. Keep your recovery file; no further replacement can be sent.',
    'replacement-available':'The earlier attempts can no longer be included. Review this saved update and a new maximum fee before sending a replacement.'};
   const savedReview=savedResumeReview(snapshot);
   const displayStatus=snapshot.status==='unknown'&&['pending','canonical','empty'].includes(snapshot.exactResume?.status)?snapshot.exactResume.status:snapshot.status;
-  content.append(paragraph(savedReview?'The saved transaction can be sent without preparing another. Review its saved fee ceiling before confirming.':snapshot.exactResume?.status==='context-changed'?'The saved transaction no longer matches your settings or read position. Keep your recovery file; it cannot be sent safely.':statuses[displayStatus]??statuses.unknown));
-  const details=el('details',{class:'recovery-values'},el('summary',{},'Original setting and transaction history'));
+  content.append(paragraph(savedReview?'The saved transaction can be sent without preparing another. Review its saved fee ceiling before confirming.':snapshot.exactResume?.status==='context-changed'?'The saved transaction no longer matches its required context. Keep your recovery file; it cannot be sent safely.':statuses[displayStatus]??statuses.unknown));
+  const details=el('details',{class:'recovery-values'},el('summary',{},'Original action and transaction history'));
   if(snapshot.originalPreferenceHead){const head=snapshot.originalPreferenceHead;details.append(paragraph('Original saved-settings revision: '+head.revision),paragraph('Original saved-settings fingerprint: '+head.digest));}
   for(const attempt of snapshot.inclusionHistory??[]){
    details.append(paragraph('Earlier transaction: '+attempt.txHash));
@@ -262,7 +263,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   }
   if(!(snapshot.inclusionHistory??[]).length)details.append(paragraph('No earlier inclusion or fee record is available.'));
   content.append(details);
-  if(savedReview){showSavedResume(snapshot,savedReview);return;}
+  if(savedReview)return showSavedResume(snapshot,savedReview,ready);
   if(snapshot.status!=='replacement-available')return;
   const marker=intent.action.type==='read-marker',changed=marker&&snapshot.originalMarker?.blockHash!==snapshot.marker?.blockHash;
   let consent;
@@ -274,7 +275,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   const review=button('Review replacement',()=>void work(async()=>{
    if(changed&&!consent?.checked)throw connectionFailure;
    const epoch=accountEpoch,id=intent.intentId;checkAccount(epoch);
-   const input={expectedTxHash:snapshot.currentTxHash,expectedHead:{...snapshot.head},...(marker?{expectedMarkerHash:snapshot.marker.blockHash}:{})};
+   const input={expectedTxHash:snapshot.currentTxHash,...(['preference','read-marker'].includes(intent.action.type)?{expectedHead:{...snapshot.head}}:{}),...(marker?{expectedMarkerHash:snapshot.marker.blockHash}:{})};
    recoveryInspection=null;const result=await session.application.prepareReplacement(id,input);checkAccount(epoch);
    recoveryInspection=null;intent=result;blocked=false;notice='Replacement prepared for review. Nothing has been sent. Check the new maximum fee before confirming.';
   }),true);
@@ -392,7 +393,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   }else{
    content.append(paragraph('No automatic resend is allowed. A missing receipt does not mean the transaction failed.'),button('Check existing transaction',()=>void work(async()=>{await receive(await session.application.reconcile(intent.intentId));})));
   }
-  if(privateAction&&intent.status!=='prepared')showRecoveryOptions();
+  if(intent.status!=='prepared')confirm=showRecoveryOptions(()=>avatarReady&&feeReady)??confirm;
   if(intent.action?.type==='avatar'&&intent.action.data!==''){
    const epoch=renderEpoch,action=intent.action;avatarArea.append(paragraph('Checking the exact saved avatar preview…'));
    void (async()=>{try{const blob=savedAvatarBlob(action),checked=await prepareAvatarUpload(blob);

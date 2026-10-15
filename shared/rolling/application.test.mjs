@@ -677,14 +677,14 @@ test('preference and read-marker initial simulation errors propagate without int
 
 // Actual SDK signed-transaction serialization + encrypted CAS records; the proof,
 // receipts, fork and private utility head below are labelled chain doubles.
-async function replacementFixture({marker=false,initialCrash=false}={}){
- const f=fixture(),node=f.options.accountSession.node,receipts=new Map(),validations=new Map(),transactions=[];
+async function replacementFixture({marker=false,initialCrash=false,action:requestedAction,base}={}){
+ const f=base??fixture(),node=f.options.accountSession.node,receipts=new Map(),validations=new Map(),transactions=[];
  const initial=marker?{initialized:true,schema:1,revision:'1',digest:'11'}:{initialized:false,schema:1,revision:'0',digest:'0'};
  f.state.preferenceHead=preferenceHead(initial.initialized,1,initial.revision,initial.digest);
  node.getTxReceipt=async hash=>receipts.get(String(hash))??{txHash:hash,status:'dropped'};
  node.isValidTx=async tx=>validations.get(String(tx.getTxHash()))??{result:'invalid',reason:['Block header not found']};
  node.getBlock=async()=>({hash:hex(42)});let markerHash=hex(43);
- node.getBlockData=async height=>({header:{globalVariables:{blockNumber:height}},blockHash:markerHash});
+ node.getBlockData=async height=>({header:{globalVariables:{blockNumber:height==='checkpointed'?1:height}},blockHash:height===10?markerHash:hex(42)});
  f.options.accountSession.wallet.pxe.sync=async()=>{f.state.syncs=(f.state.syncs??0)+1;};
  const scope={account:hex(3),chainId:'31337',version:'1',rollup:'0x'+'11'.repeat(20),board:hex(1),portal:'0x'+'22'.repeat(20)};
  const newJournal=()=>createL2Journal({storage:f.options.privateStore,walletSecret:hex(8),walletSalt:'0',scope,Tx,node,waitOptions:{timeoutMs:1000,readTimeoutMs:1000,intervalMs:1},contextGuard:f.options.contextGuard});
@@ -705,14 +705,14 @@ async function replacementFixture({marker=false,initialCrash=false}={}){
   const receipt={txHash:tx.getTxHash(),status:'checkpointed',blockNumber:1,blockHash:hex(42),executionResult:'success',transactionFee:3n};
   receipts.set(String(tx.getTxHash()),receipt);f.state.preferenceHead=preferenceHead(true,1,BigInt(initial.revision)+1n,99);
  };
- f.app=f.restart();const action=marker?{type:'read-marker',expectedRevision:'1',thread:'42',throughBlock:'10'}:{type:'preference',expectedRevision:'0',kind:1,target:'42',enabled:true};
+ f.app=f.restart();const action=requestedAction??(marker?{type:'read-marker',expectedRevision:'1',thread:'42',throughBlock:'10'}:{type:'preference',expectedRevision:'0',kind:1,target:'42',enabled:true});
  const prepared=await f.app.prepare(action);let confirmed;
  if(initialCrash){f.state.crashAfterPrepare=true;f.state.beforeSubmit=async tx=>validations.set(String(tx.getTxHash()),{result:'valid'});await assert.rejects(f.app.submitPrepared(prepared.intentId),/Labelled crash/);}
  else confirmed=await f.app.submitPrepared(prepared.intentId);
  const originalHash=String(transactions[0].getTxHash());
  function fork(){receipts.delete(originalHash);f.state.preferenceHead=preferenceHead(initial.initialized,1,initial.revision,initial.digest);markerHash=hex(44);}
  async function reopen(){f.options.accountSession.journal=await newJournal();f.app=f.restart();return f.app;}
- const review=()=>({expectedTxHash:originalHash,expectedHead:{...initial},...(marker?{expectedMarkerHash:markerHash}:{})});
+ const review=()=>({expectedTxHash:originalHash,...(['preference','read-marker'].includes(action.type)?{expectedHead:{...initial}}:{}),...(marker?{expectedMarkerHash:markerHash}:{})});
  return {...f,prepared,confirmed,initial,originalHash,receipts,validations,transactions,fork,reopen,review};
 }
 test('replacement inspection is read-only across a fork and retains original canonical fee facts',async()=>{
@@ -893,9 +893,9 @@ test('unknown saved-byte send keeps bytes and intent; read reconciliation never 
  await f.reopen();assert.equal((await f.app.reconcile(f.prepared.intentId)).status,'unknown');assert.equal((await f.app.inspectRecovery(f.prepared.intentId)).exactResume.status,'pending');
  await assert.rejects(f.app.resumeSaved(f.prepared.intentId,{expectedTxHash:f.hash}));assert.equal(f.state.sends,1);
 });
-test('saved-byte recovery is unavailable to unrelated action types',async()=>{
+test('saved-byte recovery never sends an ordinary action without signed bytes',async()=>{
  const f=fixture(),p=await f.app.prepare({type:'like',post:'5'});
- await assert.rejects(f.app.resumeSaved(p.intentId,{expectedTxHash:hex(77)}),{code:'ROLLING_RECOVERY_UNSUPPORTED'});assert.equal(f.state.sends,0);
+ await assert.rejects(f.app.resumeSaved(p.intentId,{expectedTxHash:hex(77)}),{code:'ROLLING_RECOVERY_REQUIRED'});assert.equal(f.state.sends,0);
 });
 
 for(const predecessor of ['pending','unknown','canonical'])test(`saved replacement cannot bypass ${predecessor} predecessor through app recovery`,async()=>{
@@ -1472,4 +1472,83 @@ test('Bok reply rejects moving or noncanonical PXE parent snapshot',async()=>{
   else f.options.accountSession.node.getBlockData=async n=>({header:{globalVariables:{blockNumber:n}},blockHash:hex(43)});
   await assert.rejects(f.app.prepare(bokReply()),{code:'ROLLING_CONTEXT_CHANGED'});assert.equal(f.values.size,0);
  }
+});
+
+// W03 ordinary-action recovery uses the same real Tx/AEAD journal fixture above.
+// Chain, proof and funding authorities remain explicitly labelled doubles.
+for(const kind of ['post','claim-deposit','withdraw'])for(const replacing of [false,true])test(`ordinary ${kind} ${replacing?'missing-anchor replacement':'saved bytes'} survives restart with immutable consent`,async()=>{
+ const base=kind==='claim-deposit'?fundingFixture():fixture();
+ const action=kind==='post'?{type:kind,deposit:'9',content:'Saved original post'}:kind==='withdraw'?{type:kind,deposit:'9'}:{type:kind,receipt:base.receipt};
+ const f=await replacementFixture({base,action,initialCrash:!replacing});
+ if(replacing){f.fork();await f.reopen();f.state.fee=12n;const inspected=await f.app.inspectRecovery(f.prepared.intentId);assert.equal(inspected.status,'replacement-available');
+  const reviewed=await f.app.prepareReplacement(f.prepared.intentId,f.review());assert.equal(reviewed.replacementReview.maximumFee,'12');assert.deepEqual(reviewed.action,action);assert.equal(reviewed.nonce,f.prepared.nonce);
+  f.state.crashAfterPrepare=true;f.state.beforeSubmit=async tx=>f.validations.set(String(tx.getTxHash()),{result:'valid'});await assert.rejects(f.app.submitPrepared(f.prepared.intentId),/Labelled crash/);
+ }
+ await f.reopen();const id=f.prepared.intentId,hash=String(f.transactions.at(-1).getTxHash()),before=[...f.values],sends=f.state.sends,estimates=f.state.estimates,proofs=f.transactions.length;
+ const inspection=await f.app.inspectRecovery(id);assert.equal(inspection.exactResume.status,'resumable');assert.equal(inspection.exactResume.maximumFee,replacing?'12':'10');assert.deepEqual([...f.values],before);
+ const result=await f.app.resumeSaved(id,{expectedTxHash:hash});assert.equal(result.status,'confirmed');assert.equal(result.txHash,hash);assert.deepEqual(result.action,action);assert.equal(result.nonce,f.prepared.nonce);
+ assert.equal(f.state.estimates,estimates);assert.equal(f.transactions.length,proofs);assert.equal(f.state.sends,sends+1);assert.deepEqual(f.state.resumedBytes,[Buffer.from(f.transactions.at(-1).toBuffer()).toString('hex')]);
+ await f.app.resumeSaved(id,{expectedTxHash:hash});assert.equal(f.state.sends,sends+1);
+});
+
+for(const mutation of ['pending','unknown','nullifier-invalid','fee','wrong-hash','policy','account','ciphertext'])test(`ordinary recovery fences ${mutation} without a new financial action`,async()=>{
+ const f=await replacementFixture({action:{type:'post',deposit:'9',content:'Immutable'},initialCrash:true});await f.reopen();const hash=f.originalHash,before=[...f.values],estimates=f.state.estimates;
+ if(mutation==='pending')f.receipts.set(hash,{txHash:hash,status:'pending'});
+ if(mutation==='unknown')f.options.accountSession.node.getTxReceipt=async()=>{throw Error('Labelled RPC uncertainty');};
+ if(mutation==='nullifier-invalid')f.validations.set(hash,{result:'invalid',reason:['Existing nullifier']});
+ if(mutation==='policy')f.state.policy=2;
+ if(mutation==='account')f.state.guard=false;
+ if(mutation==='ciphertext')for(const [key,value]of f.values)f.values.set(key,value+'x');
+ if(mutation==='fee'){f.validations.set(hash,{result:'invalid',reason:['Block header not found']});await f.app.prepareReplacement(f.prepared.intentId,{expectedTxHash:hash});f.state.fee=11n;await assert.rejects(f.app.submitPrepared(f.prepared.intentId),{code:'ROLLING_FEE_CHANGED'});}
+ else await assert.rejects(f.app.resumeSaved(f.prepared.intentId,{expectedTxHash:mutation==='wrong-hash'?hex(999):hash}));
+ assert.equal(f.state.sends,0);assert.equal(f.transactions.length,1);if(!['fee','ciphertext'].includes(mutation))assert.deepEqual([...f.values],before);if(mutation!=='fee')assert.equal(f.state.estimates,estimates);
+});
+for(const kind of ['post','claim-deposit','withdraw','moderate-post','bok','bio'])for(const phase of ['inspection','final-send'])test(`ordinary ${kind} changed context at ${phase} vetoes saved-byte recovery`,async()=>{
+ const base=kind==='claim-deposit'?fundingFixture():kind==='moderate-post'?moderatorFixture():kind==='bok'?bokFixture():fixture();
+ const action=kind==='post'?{type:kind,deposit:'9',content:'Immutable'}:kind==='claim-deposit'?{type:kind,receipt:base.receipt}:kind==='withdraw'?{type:kind,deposit:'9'}:kind==='moderate-post'?moderatorActions[0]:kind==='bok'?bokAction():{type:kind,name:'7',expectedVersion:'0',content:'Saved bio'};
+ const f=await replacementFixture({base,action,initialCrash:true});await f.reopen();const hash=f.originalHash;
+ const mutate=()=>{
+  if(kind==='post')f.state.policy=2;
+  if(kind==='claim-deposit')f.state.claimError=true;
+  if(kind==='withdraw')f.state.responses={get_deposit_info:[1n,9n,100n,BigInt('0x'+'33'.repeat(20)),0n,1n,0n,0n,1n,50n]};
+  if(kind==='moderate-post')f.state.moderator=99n;
+  if(kind==='bok')f.state.bokEnabled=false;
+  if(kind==='bio')f.state.responses={profile_state:decodeFromAbi(getFunctionReturnType([...artifact.functions,...artifact.nonDispatchPublicFunctions].find(fn=>fn.name==='profile_state')),[1n,0n,0n,0n,0n,0n,0n,0n].map(n=>new Fr(n)))};
+ };
+ if(phase==='inspection'){mutate();await assert.rejects(f.app.inspectRecovery(f.prepared.intentId));}
+ else{assert.equal((await f.app.inspectRecovery(f.prepared.intentId)).exactResume.status,'resumable');let calls=0;f.options.accountSession.wallet.pxe.sync=async()=>{if(++calls===2)mutate();};await assert.rejects(f.app.resumeSaved(f.prepared.intentId,{expectedTxHash:hash}));assert.equal(calls,2);}
+ assert.equal(f.state.sends,0);assert.equal(f.transactions.length,1);
+});
+
+for(const kind of ['claim-private-fee','claim-bok'])test(`ordinary ${kind} recovery preserves the existing funded receipt`,async()=>{
+ const base=topUpFixture(kind==='claim-bok'?'bok':'private-fee'),f=await replacementFixture({base,action:base.action,initialCrash:true});await f.reopen();
+ const snapshot=await f.app.inspectRecovery(f.prepared.intentId);assert.equal(snapshot.exactResume.status,'resumable');const estimates=f.state.estimates;
+ f.state.changedClaim=true;await assert.rejects(f.app.resumeSaved(f.prepared.intentId,{expectedTxHash:f.originalHash}),{code:'ROLLING_FUNDING_MISMATCH'});assert.equal(f.state.sends,0);
+ f.state.changedClaim=false;assert.equal((await f.app.resumeSaved(f.prepared.intentId,{expectedTxHash:f.originalHash})).status,'confirmed');assert.equal(f.state.sends,1);assert.equal(f.state.estimates,estimates);assert.equal(f.transactions.length,1);
+});
+for(const kind of ['post','claim-deposit','withdraw','moderate-post','bok'])test(`ordinary ${kind} replacement rechecks context after the new proof is journalled`,async()=>{
+ const base=kind==='claim-deposit'?fundingFixture():kind==='moderate-post'?moderatorFixture():kind==='bok'?bokFixture():fixture();
+ const action=kind==='post'?{type:kind,deposit:'9',content:'Immutable'}:kind==='claim-deposit'?{type:kind,receipt:base.receipt}:kind==='withdraw'?{type:kind,deposit:'9'}:kind==='moderate-post'?moderatorActions[0]:bokAction();
+ const f=await replacementFixture({base,action,initialCrash:true});f.validations.set(f.originalHash,{result:'invalid',reason:['Block header not found']});await f.reopen();
+ await f.app.prepareReplacement(f.prepared.intentId,{expectedTxHash:f.originalHash});f.state.crashAfterPrepare=false;f.state.beforeSubmit=async()=>{
+  if(kind==='post')f.state.policy=2;
+  if(kind==='claim-deposit')f.state.claimError=true;
+  if(kind==='withdraw')f.state.responses={get_deposit_info:[1n,9n,100n,BigInt('0x'+'33'.repeat(20)),0n,1n,0n,0n,1n,50n]};
+  if(kind==='moderate-post')f.state.moderator=99n;
+  if(kind==='bok')f.state.bokEnabled=false;
+ };
+ await assert.rejects(f.app.submitPrepared(f.prepared.intentId));assert.equal(f.state.sends,0);assert.equal(f.transactions.length,2);assert.equal((await f.options.accountSession.journal.inspect()).txHash,String(f.transactions[1].getTxHash()));
+});
+test('ordinary unknown fence with an empty authenticated Tx journal remains unresolved',async()=>{
+ const f=fixture(),node=f.options.accountSession.node;
+ const scope={account:hex(3),chainId:'31337',version:'1',rollup:'0x'+'11'.repeat(20),board:hex(1),portal:'0x'+'22'.repeat(20)};
+ f.options.accountSession.journal=await createL2Journal({storage:f.options.privateStore,walletSecret:hex(8),walletSalt:'0',scope,Tx,node,contextGuard:f.options.contextGuard});
+ f.options.accountSession.wallet.sendTx=async()=>{throw Error('Labelled interrupted wallet before transaction persistence');};
+ const app=f.restart(),prepared=await app.prepare({type:'like',post:'5'});await assert.rejects(app.submitPrepared(prepared.intentId),/interrupted wallet/);
+ assert.equal(await f.options.accountSession.journal.inspect(),null);assert.equal((await app.reconcile(prepared.intentId)).status,'unknown');
+ const before=[...f.values],view=await app.inspectRecovery(prepared.intentId);assert.equal(view.status,'empty');assert.equal(view.exactResume.status,'empty');
+ await assert.rejects(app.resumeSaved(prepared.intentId,{expectedTxHash:hex(77)}),{code:'ROLLING_RECOVERY_REQUIRED'});
+ await assert.rejects(app.prepareReplacement(prepared.intentId,{expectedTxHash:hex(77)}),{code:'ROLLING_RECOVERY_REQUIRED'});
+ await assert.rejects(app.submitPrepared(prepared.intentId),{code:'ROLLING_RECOVERY_REQUIRED'});
+ assert.deepEqual([...f.values],before);assert.equal(f.state.sends,0);
 });
