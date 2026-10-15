@@ -55,9 +55,17 @@ def receipt_url(value):
     except Exception: raise ValueError('Invalid receipt capability') from None
     return value
 
+def host_resources(value):
+    # Only the existing deployment and explicitly bounded development sizes/rates.
+    if type(value) is not dict or set(value)!={'dataVolumeGiB','egressMbps'}:
+        raise ValueError('Invalid host resources')
+    if type(value['dataVolumeGiB']) is not int or value['dataVolumeGiB'] not in (128,1024) or type(value['egressMbps']) is not int or value['egressMbps'] not in (10,50):
+        raise ValueError('Invalid host resources')
+    return dict(value)
+
 def validate(config, now=None):
     keys = {"createdAt", "budgetStop", "commissioningStop", "runtimeUrl", "runtimeArchiveSha256", "manifestSha256"}
-    if type(config) is not dict or not keys <= set(config) or set(config)-keys-{"receiptPutUrl","queryHost","activationDelivery"}: raise Invalid("Invalid bootstrap fields")
+    if type(config) is not dict or not keys <= set(config) or set(config)-keys-{"receiptPutUrl","queryHost","activationDelivery","hostResources"}: raise Invalid("Invalid bootstrap fields")
     created, stop, commission = (timestamp(config[k]) for k in ("createdAt", "budgetStop", "commissioningStop"))
     now = now or dt.datetime.now(dt.timezone.utc)
     if not now - dt.timedelta(minutes=5) <= created <= now + dt.timedelta(minutes=5): raise Invalid("Stale creation time")
@@ -76,6 +84,9 @@ def validate(config, now=None):
     if "receiptPutUrl" in config:
         try: receipt_url(config["receiptPutUrl"])
         except ValueError: raise Invalid("Invalid receipt capability") from None
+    if 'hostResources' in config:
+        try: host_resources(config['hostResources'])
+        except ValueError: raise Invalid('Invalid host resources') from None
     if 'queryHost' in config: query_host_record(config['queryHost'])
     if 'activationDelivery' in config: activation_delivery_record(config['activationDelivery'],config['budgetStop'])
     return dict(config)
@@ -197,8 +208,17 @@ def digest(path):
         for chunk in iter(lambda:f.read(1024*1024), b''): h.update(chunk)
     return h.hexdigest()
 
+def host_resources(value):
+    # Only the existing deployment and explicitly bounded development sizes/rates.
+    if type(value) is not dict or set(value)!={'dataVolumeGiB','egressMbps'}:
+        raise ValueError('Invalid host resources')
+    if type(value['dataVolumeGiB']) is not int or value['dataVolumeGiB'] not in (128,1024) or type(value['egressMbps']) is not int or value['egressMbps'] not in (10,50):
+        raise ValueError('Invalid host resources')
+    return dict(value)
+
 def immutable_deadline(config):
     public = {k:config[k] for k in ('createdAt','budgetStop','commissioningStop','runtimeArchiveSha256','manifestSha256')}
+    public['hostResources']=host_resources(config.get('hostResources',{'dataVolumeGiB':1024,'egressMbps':50}))
     record = BASE / 'deadline.json'
     if record.exists():
         if json.loads(record.read_text()) != public: raise ValueError('Deadline changed')
@@ -208,6 +228,8 @@ def immutable_deadline(config):
 
 def install_controls(config):
     mark('deadline');immutable_deadline(config)
+    resources=host_resources(config.get('hostResources',{'dataVolumeGiB':1024,'egressMbps':50}))
+    ceiling=resources['egressMbps'];share=ceiling//2
     mark('timer-files')
     for name, stop in [('budget',config['budgetStop']),('commissioning',config['commissioningStop'])]:
         write('/etc/systemd/system/rolling-'+name+'.service', '[Unit]\nDescription=Rolling bounded shutdown\n[Service]\nType=oneshot\nExecStart=/usr/sbin/poweroff\n', 0o644)
@@ -235,9 +257,9 @@ def install_controls(config):
     mark('shaper-files');write(BASE/'interface', dev)
     shaper = '#!/bin/sh\nset -eu\nDEV='+dev+'\n'
     shaper += 'tc qdisc replace dev "$DEV" root handle 1: htb default 10\n'
-    shaper += 'tc class replace dev "$DEV" parent 1: classid 1:1 htb rate 50mbit ceil 50mbit burst 1mb cburst 1mb\n'
-    shaper += 'tc class replace dev "$DEV" parent 1:1 classid 1:10 htb rate 25mbit ceil 50mbit\n'
-    shaper += 'tc class replace dev "$DEV" parent 1:1 classid 1:20 htb rate 25mbit ceil 50mbit\n'
+    shaper += 'tc class replace dev "$DEV" parent 1: classid 1:1 htb rate '+str(ceiling)+'mbit ceil '+str(ceiling)+'mbit burst 1mb cburst 1mb\n'
+    shaper += 'tc class replace dev "$DEV" parent 1:1 classid 1:10 htb rate '+str(share)+'mbit ceil '+str(ceiling)+'mbit\n'
+    shaper += 'tc class replace dev "$DEV" parent 1:1 classid 1:20 htb rate '+str(share)+'mbit ceil '+str(ceiling)+'mbit\n'
     # The installed prover is disabled. Future enablement must classify its UID as mark20.
     shaper += 'tc filter replace dev "$DEV" parent 1: protocol all prio 1 handle 20 fw classid 1:20\n'
     write('/usr/local/sbin/rolling-egress', shaper, 0o700)
@@ -245,19 +267,20 @@ def install_controls(config):
     mark('shaper-start');run(['systemctl','daemon-reload']);run(['systemctl','enable','--now','rolling-egress.service'])
     verify_controls()
 
-def class_bytes(text):
+def class_bytes(text, egress_mbps=50):
     # Noble iproute2 6.1.0 has no class JSON support. These are its C-locale
     # tc_class.c/q_htb.c/tc_util.c outputs, not the newer upstream JSON schema.
+    if type(egress_mbps) is not int or egress_mbps not in (10,50): raise ValueError('Invalid egress ceiling')
     if type(text) is not str or len(text) > 16384: raise ValueError('Invalid class output')
     records = {}
     current = None
     for line in text.splitlines():
         if not line.strip(): continue
         if line.startswith('class '):
-            header = re.fullmatch(r'class htb (1:(?:1|10|20)) (root|parent 1:1) (?:leaf [0-9a-f]+: )?(?:prio 0 )?rate (25|50)Mbit ceil 50Mbit burst [0-9]+(?:[KM])?b cburst [0-9]+(?:[KM])?b *', line)
+            header = re.fullmatch(r'class htb (1:(?:1|10|20)) (root|parent 1:1) (?:leaf [0-9a-f]+: )?(?:prio 0 )?rate ([0-9]{1,3})Mbit ceil ([0-9]{1,3})Mbit burst [0-9]+(?:[KM])?b cburst [0-9]+(?:[KM])?b *', line)
             if not header: raise ValueError('Unexpected class topology or ceiling')
-            handle, parent, rate = header.groups()
-            if handle in records or parent != ('root' if handle == '1:1' else 'parent 1:1') or rate != ('50' if handle == '1:1' else '25'):
+            handle, parent, rate, ceiling = header.groups()
+            if handle in records or parent != ('root' if handle == '1:1' else 'parent 1:1') or rate != str(egress_mbps if handle == '1:1' else egress_mbps//2) or ceiling != str(egress_mbps):
                 raise ValueError('Unexpected class topology or ceiling')
             records[handle] = None; current = handle
         elif line.lstrip().startswith('Sent '):
@@ -272,6 +295,7 @@ def class_bytes(text):
 def verify_controls():
     mark('verify-budget');run(['systemctl','is-active','--quiet','rolling-budget.timer'])
     config = json.loads((BASE/'deadline.json').read_text())
+    resources=host_resources(config['hostResources'])
     if dt.datetime.now(dt.timezone.utc) >= dt.datetime.fromisoformat(config['budgetStop'].replace('Z','+00:00')): raise ValueError('Expired')
     dev = (BASE/'interface').read_text()
     mark('tc-version');tc=run(['tc','-V'],capture=True)
@@ -285,7 +309,7 @@ def verify_controls():
     mark('tc-classes');classes=run(['tc','-s','class','show','dev',dev],capture=True)
     mark('tc-class-parse')
     if DIAGNOSTICS_ACTIVE:diagnostic(status='observed',facts={'classFormat':'class-text' if classes.startswith('class ') else 'json' if classes.startswith('[') else 'empty' if not classes else 'other'})
-    byte_count=class_bytes(classes)
+    byte_count=class_bytes(classes,resources['egressMbps'])
     mark('tc-qdisc');qdisc_raw=run(['tc','-j','qdisc','show','dev',dev],capture=True)
     mark('tc-qdisc-parse');qdisc=json.loads(qdisc_raw)
     roots = [q for q in qdisc if q.get('root') is True]
@@ -338,9 +362,11 @@ def verify_release(target):
 
 def prepare_data():
     # A fresh dedicated secondary EBS disk only; never guess among existing data disks.
+    resources=host_resources(json.loads((BASE/'deadline.json').read_text())['hostResources'])
+    expected_bytes=resources['dataVolumeGiB']*1024**3
     disks=json.loads(run(['lsblk','-b','-J','-o','PATH,TYPE,SIZE,FSTYPE,MOUNTPOINTS,UUID'],capture=True))['blockdevices']
-    candidates=[d for d in disks if d['type']=='disk' and int(d['size'])==1024**4]
-    if len(candidates)!=1: raise ValueError('Expected dedicated 1024GiB disk')
+    candidates=[d for d in disks if d['type']=='disk' and int(d['size'])==expected_bytes]
+    if len(candidates)!=1: raise ValueError('Expected dedicated configured-size disk')
     d=candidates[0];device=d['path'];mount='/var/lib/rolling-node'
     if d.get('children'): raise ValueError('Partitioned data disk rejected')
     mounts=[x for x in d.get('mountpoints',[]) if x]
@@ -1644,7 +1670,7 @@ def generate(config, now=None):
 # This closed diagnostic does not qualify normal deployment or run node/proof work.
 NATIVE_BYTES = 44698432
 NATIVE_REUSE = ('receipt_url','diagnostic','emit_diagnostic','mark','version_facts','run','write','digest',
-                'immutable_deadline','install_controls','class_bytes','verify_controls','exclusive_record',
+                'host_resources','immutable_deadline','install_controls','class_bytes','verify_controls','exclusive_record',
                 'read_bounded_json','upload_receipt')
 NATIVE_GLOBALS = ('BASE','PRIVATE','STAGE','DIAGNOSTICS_ACTIVE','STEP','STEPS')
 

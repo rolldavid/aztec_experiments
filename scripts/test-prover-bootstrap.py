@@ -272,7 +272,7 @@ class htb 1:20 parent 1:1 prio 0 rate 25Mbit ceil 50Mbit burst 4725b cburst 7850
             with self.subTest(sample=sample[:90]),self.assertRaises(ValueError):ns['class_bytes'](sample)
         with tempfile.TemporaryDirectory() as t:
             ns['BASE']=pathlib.Path(t);(pathlib.Path(t)/'interface').write_text('ens5')
-            (pathlib.Path(t)/'deadline.json').write_text(json.dumps({'budgetStop':'2099-01-01T00:00:00Z'}))
+            (pathlib.Path(t)/'deadline.json').write_text(json.dumps({'budgetStop':'2099-01-01T00:00:00Z','hostResources':{'dataVolumeGiB':1024,'egressMbps':50}}))
             values={'class':fixture,'version':'tc utility, iproute2-6.1.0, libbpf 1.3.0','package':'6.1.0-1ubuntu6.4',
                     'qdisc':[{'kind':'htb','handle':'1:','root':True,'refcnt':2,
                               'options':{'r2q':10,'default':'0x10','direct_packets_stat':0,'direct_qlen':1000}}]}
@@ -545,7 +545,7 @@ for(const key of ['origins','queryNode']){
         ns['run']=command
         with tempfile.TemporaryDirectory() as t:
             ns['BASE']=pathlib.Path(t)
-            (ns['BASE']/'deadline.json').write_text(json.dumps({'budgetStop':'2099-01-01T00:00:00Z'}))
+            (ns['BASE']/'deadline.json').write_text(json.dumps({'budgetStop':'2099-01-01T00:00:00Z','hostResources':{'dataVolumeGiB':1024,'egressMbps':50}}))
             (ns['BASE']/'interface').write_text('ens5')
             self.assertEqual(ns['verify_controls'](),123);self.assertEqual(reads,['class','qdisc'])
             families.remove('AF_NETLINK')
@@ -1727,7 +1727,7 @@ class ProverActivation(unittest.TestCase):
             return ready_fixture()
         h={'PRIVATE':private,'BASE':root,'RELEASE':release,'PINS':{'manifest':'b'*64,'bootstrap':'d'*64},'run':run,'exclusive_record':record,
            'verify_release':lambda r:events.append(('verify-release',)),'verify_controls':lambda:events.append(('controls',)),
-           'validated_qualification':lambda r:r,'read_bounded_json':lambda p:{'budgetStop':'2099-01-01T00:00:00Z'},
+           'validated_qualification':lambda r:r,'read_bounded_json':lambda p:{'budgetStop':'2099-01-01T00:00:00Z','hostResources':{'dataVolumeGiB':1024,'egressMbps':50}},
            'digest':lambda p:b.PROVER_UNIT_SHA if str(p).endswith('.service') else 'c'*64,'write':lambda *a:events.append(('write-unit',))}
         patches=[patch.object(b.os,'geteuid',return_value=0),patch.object(b,'activation_private',side_effect=read),
                  patch.object(b,'activation_proxy_masked',side_effect=lambda h:events.append(('proxy-masked',))),
@@ -2216,5 +2216,129 @@ class ActivationDelivery(unittest.TestCase):
                 ns['attest']()
                 self.assertEqual('delivery' in events,stage=='installed')
                 self.assertEqual(['systemctl','start','rolling-budget.service'] in events,stage=='installed')
+
+class BoundedHostResources(unittest.TestCase):
+    def test_explicit_development_resources_are_validated_and_immutable(self):
+        resources={'dataVolumeGiB':128,'egressMbps':10}
+        c={**config(),'hostResources':resources}
+        self.assertEqual(b.validate(c,NOW),c)
+        generated=fixture_generate(c,NOW)
+        self.assertLess(len(gzip.compress(generated.encode(),mtime=0)),16384)
+        subprocess.run(['/bin/sh','-n'],input=generated,text=True,check=True)
+        ns=host()
+        with tempfile.TemporaryDirectory() as t:
+            ns['BASE']=pathlib.Path(t);c['budgetStop']='2099-01-01T00:00:00Z'
+            ns['immutable_deadline'](c)
+            record=json.loads((ns['BASE']/'deadline.json').read_text())
+            self.assertEqual(record['hostResources'],resources)
+            ns['immutable_deadline'](c)
+            with self.assertRaises(ValueError):ns['immutable_deadline']({**c,'hostResources':{'dataVolumeGiB':1024,'egressMbps':50}})
+
+    def test_resources_closed_values_and_generation_host_parity(self):
+        import ast
+        outer=next(n for n in ast.parse(pathlib.Path(b.__file__).read_text()).body if isinstance(n,ast.FunctionDef) and n.name=='host_resources')
+        inner=next(n for n in ast.parse(b.HOST).body if isinstance(n,ast.FunctionDef) and n.name=='host_resources')
+        self.assertEqual(ast.dump(outer,include_attributes=False),ast.dump(inner,include_attributes=False))
+        ns=host();good={'dataVolumeGiB':128,'egressMbps':10}
+        invalid=[None,[],{},True,{**good,'unknown':1}]
+        for key,values in [('dataVolumeGiB',[True,'128',128.0,0,127,256,1025]),('egressMbps',[True,'10',10.0,0,5,25,51])]:
+            invalid.extend({**good,key:value} for value in values)
+        for value in invalid:
+            with self.subTest(value=value):
+                with self.assertRaises(b.Invalid):b.validate({**config(),'hostResources':value},NOW)
+                with self.assertRaises(ValueError):ns['host_resources'](value)
+        for size in (128,1024):
+            for rate in (10,50):
+                value={'dataVolumeGiB':size,'egressMbps':rate}
+                self.assertEqual(b.validate({**config(),'hostResources':value},NOW)['hostResources'],value)
+                self.assertEqual(ns['host_resources'](value),value)
+        closure={}
+        exec(b.native_control_source(),closure)
+        self.assertEqual(closure['host_resources'](good),good)
+
+    def test_default_and_explicit_shaper_install_and_independent_verification(self):
+        for explicit in (False,True):
+            with self.subTest(explicit=explicit),tempfile.TemporaryDirectory() as t:
+                ns=host();ns['BASE']=pathlib.Path(t);written={};events=[]
+                resources={'dataVolumeGiB':128,'egressMbps':10} if explicit else {'dataVolumeGiB':1024,'egressMbps':50}
+                c={**config(),'budgetStop':'2099-01-01T00:00:00Z',**({'hostResources':resources} if explicit else {})}
+                ceiling=resources['egressMbps']
+                classes='\n'.join('class htb '+h+' '+parent+' rate '+str(rate)+'Mbit ceil '+str(ceiling)+'Mbit burst 1Mb cburst 1Mb\n Sent 123 bytes 1 pkt (dropped 0, overlimits 0 requeues 0)' for h,parent,rate in [('1:1','root',ceiling),('1:10','parent 1:1',ceiling//2),('1:20','parent 1:1',ceiling//2)])
+                values={'classes':classes}
+                original_write=ns['write']
+                def write(path,text,*args):
+                    if str(path).startswith(str(ns['BASE'])):original_write(path,text,*args)
+                    else:written[str(path)]=text
+                def run(args,**kw):
+                    events.append(args)
+                    if args[:4]==['ip','-j','route','show']:return '[{"dev":"ens5"}]'
+                    if args==['tc','-V']:return 'tc utility, iproute2-6.1.0, libbpf 1.3.0'
+                    if args[0]=='dpkg-query':return '6.1.0-1ubuntu6.4'
+                    if 'class' in args:return values['classes']
+                    if 'qdisc' in args:return json.dumps([{'kind':'htb','handle':'1:','root':True,'options':{'default':'0x10'}}])
+                ns.update(write=write,run=run)
+                ns['install_controls'](c)
+                shaper=written['/usr/local/sbin/rolling-egress']
+                self.assertIn('rate '+str(ceiling)+'mbit ceil '+str(ceiling)+'mbit',shaper)
+                self.assertEqual(shaper.count('rate '+str(ceiling//2)+'mbit ceil '+str(ceiling)+'mbit'),2)
+                self.assertEqual(json.loads((ns['BASE']/'deadline.json').read_text())['hostResources'],resources)
+                self.assertEqual(ns['verify_controls'](),123)
+                for bad in [classes.replace('ceil '+str(ceiling)+'Mbit','ceil 100Mbit',1),classes.replace('rate '+str(ceiling)+'Mbit','rate 1Mbit',1),classes.replace('rate '+str(ceiling//2)+'Mbit','rate 1Mbit',1),classes+ '\n'+classes]:
+                    values['classes']=bad
+                    with self.assertRaises(ValueError):ns['verify_controls']()
+                values['classes']=classes
+                record=json.loads((ns['BASE']/'deadline.json').read_text())
+                for bad in [None,{}, {'dataVolumeGiB':128,'egressMbps':True}]:
+                    (ns['BASE']/'deadline.json').write_text(json.dumps({**record,'hostResources':bad}))
+                    with self.assertRaises(ValueError):ns['verify_controls']()
+                record.pop('hostResources');(ns['BASE']/'deadline.json').write_text(json.dumps(record))
+                with self.assertRaises(KeyError):ns['verify_controls']()
+                # Default input cannot silently reinstall over a smaller bound.
+                if explicit:
+                    (ns['BASE']/'deadline.json').write_text(json.dumps({**record,'hostResources':resources}))
+                    with self.assertRaises(ValueError):ns['immutable_deadline']({**config(),'budgetStop':'2099-01-01T00:00:00Z'})
+
+    def test_configured_data_disk_preserves_identity_mount_and_uniqueness_guards(self):
+        from types import SimpleNamespace
+        for size in (128,1024):
+            with self.subTest(size=size),tempfile.TemporaryDirectory() as t:
+                ns=host();base=pathlib.Path(t);ns['BASE']=base/'control';ns['BASE'].mkdir()
+                resources={'dataVolumeGiB':size,'egressMbps':10 if size==128 else 50}
+                (ns['BASE']/'deadline.json').write_text(json.dumps({'hostResources':resources}))
+                actual_path=pathlib.Path
+                def mapped(value):
+                    if actual_path(value).is_relative_to(actual_path(t)):return actual_path(value)
+                    self.assertIn(str(value),['/var/lib/rolling-node','/var/lib/rolling-node/data','/etc/fstab'])
+                    return actual_path(t)/str(value).lstrip('/')
+                ns['pathlib']=SimpleNamespace(Path=mapped)
+                fstab=base/'etc/fstab';fstab.parent.mkdir();fstab.write_text('# prior\n')
+                # Existing write already receives mapped volume path, but fstab is a literal.
+                original_write=ns['write']
+                def write(path,text,*args):
+                    original_write(mapped(path) if str(path)=='/etc/fstab' else path,text,*args)
+                ns['write']=write
+                disk={'path':'/dev/nvme1n1','type':'disk','size':size*1024**3,'fstype':None,'mountpoints':[],'uuid':None}
+                disks=[disk];commands=[]
+                def run(args,**kw):
+                    commands.append(args)
+                    if args[0]=='lsblk':return json.dumps({'blockdevices':disks})
+                    if args[0]=='blkid':return 'uuid-123'
+                ns['run']=run
+                ns['prepare_data']()
+                self.assertIn(['mkfs.ext4','-q','/dev/nvme1n1'],commands)
+                self.assertIn(['mount','/var/lib/rolling-node'],commands)
+                self.assertIn('UUID=uuid-123 /var/lib/rolling-node ext4 defaults,nosuid,nodev',fstab.read_text())
+                disk.update(fstype='ext4',uuid='uuid-123',mountpoints=['/var/lib/rolling-node'])
+                commands.clear();ns['prepare_data']()
+                self.assertEqual(len(commands),1) # lsblk only, no reformat/remount
+                good=dict(disk)
+                bad_sets=[[good,dict(good,path='/dev/nvme2n1')],[dict(good,size=(1024 if size==128 else 128)*1024**3)],
+                          [dict(good,children=[{}])],[dict(good,mountpoints=['/elsewhere'])],[dict(good,uuid='wrong')],[dict(good,fstype='xfs')]]
+                for bad in bad_sets:
+                    disks=bad;commands.clear()
+                    with self.assertRaises(ValueError):ns['prepare_data']()
+                    self.assertEqual([c for c in commands if c[0] in ('mkfs.ext4','mount')],[])
+                disks=[good];(ns['BASE']/'volume.json').unlink()
+                with self.assertRaisesRegex(ValueError,'Existing filesystem'):ns['prepare_data']()
 
 if __name__=='__main__':unittest.main(verbosity=2)
