@@ -6,17 +6,44 @@ import { fileURLToPath } from 'node:url';
 // Explicit stopped-consumer dependency bootstrap only. No runtime mutation,
 // retry, alternate node, retained orphan notes, or synthetic balance recovery.
 export const PXE_REORG_ANCHOR_PINS = Object.freeze([
-  Object.freeze({ path: 'src/block_synchronizer/block_synchronizer.ts', before: '82e7349e9e56c4d0943f81a4c11cd5fed39f04b41044d5583f5fdfdedbe21b72', after: '5a3680b79b182d9c7d291f8329abb3809489c6293ab7f9bb32ebe80d0e9bff20' }),
-  Object.freeze({ path: 'dest/block_synchronizer/block_synchronizer.js', before: 'bf55d5e76660f5b59fca66380575a8ad15005e263dd6a6c8f9a8f79b4936a69a', after: '9e5fc3fc5ee5578d582aac089a4c99f335f66fb01a041ecd79e0837ed68aae78' }),
+  Object.freeze({ path: 'src/block_synchronizer/block_synchronizer.ts', before: '82e7349e9e56c4d0943f81a4c11cd5fed39f04b41044d5583f5fdfdedbe21b72', previous: '5a3680b79b182d9c7d291f8329abb3809489c6293ab7f9bb32ebe80d0e9bff20', after: 'a66f87c6317a814b69b5791872c4571edce0fa6d01ecca3e91b7a9153d2de631' }),
+  Object.freeze({ path: 'dest/block_synchronizer/block_synchronizer.js', before: 'bf55d5e76660f5b59fca66380575a8ad15005e263dd6a6c8f9a8f79b4936a69a', previous: '9e5fc3fc5ee5578d582aac089a4c99f335f66fb01a041ecd79e0837ed68aae78', after: '2c12cbba0c1b4d1b0ede186df1056f5da41a17bdb2fbeb7e4c5b03a1a754388b' }),
 ]);
 const sha = value => createHash('sha256').update(value).digest('hex');
 function methods(ts) {
   const t = value => ts ? value : '';
   return `
   ${t('private ')}anchorEventFailed = false;
+  ${t('private ')}syncTips${t(": Awaited<ReturnType<CachingAztecNode['getChainTips']>> | undefined")} = undefined;
+
+  ${t('private ')}snapshotBlockStreamSource() {
+    const source = blockStreamSourceFromAztecNode(this.node);
+    const tips = source.getL2Tips.bind(source);
+    source.getL2Tips = async () => {
+      try {
+        // The stream owns one atomic source plan, and may replace it only at
+        // its existing post-prune reread. Never substitute a later live tip in
+        // the middle of acknowledging events from that plan.
+        this.syncTips = structuredClone(await tips());
+        return structuredClone(this.syncTips);
+      } catch { this.anchorEventFailed = true; throw new Error('PXE_REORG_ANCHOR_SOURCE_FAILED'); }
+    };
+    const block = source.getBlockData.bind(source);
+    source.getBlockData = async query => {
+      try { return await block(query); }
+      catch { this.anchorEventFailed = true; throw new Error('PXE_REORG_ANCHOR_SOURCE_FAILED'); }
+    };
+    const blocks = source.getBlocks.bind(source);
+    source.getBlocks = async query => {
+      try { return await blocks(query); }
+      catch { this.anchorEventFailed = true; throw new Error('PXE_REORG_ANCHOR_SOURCE_FAILED'); }
+    };
+    return source;
+  }
 
   ${t('private ')}async selectedAnchor() {
-    const tips = await this.node.getChainTips();
+    const tips = this.syncTips;
+    if (!tips) throw new Error('PXE_REORG_ANCHOR_INCOMPLETE');
     const tier = this.config.syncChainTip ?? 'proposed';
     return tier === 'proposed' ? tips.proposed : tips[tier].block;
   }
@@ -42,9 +69,37 @@ function methods(ts) {
 
   ${t('private ')}async checkedSelectedAnchor() {
     const block = await this.selectedAnchor();
+    const tips = await this.node.getChainTips();
+    const tier = this.config.syncChainTip ?? 'proposed';
+    const live = tier === 'proposed' ? tips.proposed : tips[tier].block;
+    if (live.number < block.number ||
+        (live.number === block.number && !this.sameAnchor(live, block))) {
+      throw new Error('PXE_REORG_ANCHOR_CHANGED');
+    }
+    // An advancing tier is allowed only while BOTH its current header and the
+    // captured pass's exact header are canonical. No orphan cache is authority.
+    if (!this.sameAnchor(live, block)) await this.checkedHeader(live);
     const header = await this.checkedHeader(block);
-    if (!this.sameAnchor(block, await this.selectedAnchor())) throw new Error('PXE_REORG_ANCHOR_CHANGED');
+    const afterTips = await this.node.getChainTips();
+    const after = tier === 'proposed' ? afterTips.proposed : afterTips[tier].block;
+    if (after.number < block.number ||
+        (after.number === block.number && !this.sameAnchor(after, block))) {
+      throw new Error('PXE_REORG_ANCHOR_CHANGED');
+    }
+    if (!this.sameAnchor(after, live)) await this.checkedHeader(after);
     return { block, header };
+  }
+
+  ${t('private ')}async checkAcknowledgedSnapshot() {
+    const expected = this.syncTips;
+    if (!expected) throw new Error('PXE_REORG_ANCHOR_INCOMPLETE');
+    const actual = await this.l2TipsStore.getL2Tips();
+    if (!this.sameAnchor(actual.proposed, expected.proposed)) throw new Error('PXE_REORG_ANCHOR_INCOMPLETE');
+    for (const tier of ['checkpointed', 'proven', 'finalized']${t(' as const')}) {
+      if (!this.sameAnchor(actual[tier].block, expected[tier].block)) {
+        throw new Error('PXE_REORG_ANCHOR_INCOMPLETE');
+      }
+    }
   }
 
   ${t('private ')}async doHandleBlockStreamEvent(event${t(': L2BlockStreamEvent')})${t(': Promise<void>')} {
@@ -58,10 +113,10 @@ function methods(ts) {
         const target = await this.checkedSelectedAnchor();
         if (target.block.number < event.block.number) throw new Error('PXE_REORG_ANCHOR_CHANGED');
         // Check the prune event's source snapshot as well as our configured tier.
-        const tips = await this.node.getChainTips();
-        if (!this.sameAnchor(tips.checkpointed.block, event.checkpointed.block) ||
+        const tips = this.syncTips;
+        if (!tips || !this.sameAnchor(tips.checkpointed.block, event.checkpointed.block) ||
             !this.sameAnchor(tips.proven.block, event.proven.block) ||
-            !this.sameAnchor(target.block, await this.selectedAnchor())) {
+            !this.sameAnchor(target.block, (await this.checkedSelectedAnchor()).block)) {
           throw new Error('PXE_REORG_ANCHOR_CHANGED');
         }
         await this.store.transactionAsync(async () => {
@@ -91,7 +146,7 @@ function methods(ts) {
           // contradictions at the stream's finalized walk-back floor.
           if (currentId.number >= target.block.number) throw new Error('PXE_REORG_ANCHOR_CHANGED');
           await this.checkedHeader(currentId);
-          if (!this.sameAnchor(target.block, await this.selectedAnchor())) throw new Error('PXE_REORG_ANCHOR_CHANGED');
+          if (!this.sameAnchor(target.block, (await this.checkedSelectedAnchor()).block)) throw new Error('PXE_REORG_ANCHOR_CHANGED');
         }
         await this.store.transactionAsync(async () => {
           await this.updateAnchorBlockHeader(target.header);
@@ -108,20 +163,24 @@ function methods(ts) {
 
 `;
 }
-function transformed(source, ts) {
-  const begin = source.indexOf(ts ? '  private async doHandleBlockStreamEvent(' : '    async doHandleBlockStreamEvent(');
+function transformed(source, ts, previous = false) {
+  const begin = previous ? source.indexOf(ts ? '\n  private anchorEventFailed = false;' : '\n  anchorEventFailed = false;') : source.indexOf(ts ? '  private async doHandleBlockStreamEvent(' : '    async doHandleBlockStreamEvent(');
   const end = source.indexOf('/** Updates the anchor block header', begin);
   if (begin < 0 || end < 0) throw new Error('PXE_REORG_PATCH_LAYOUT');
   let result = source.slice(0, begin) + methods(ts) + '  ' + source.slice(end);
   const handler = ts ? 'return this.eventQueue.put(() => this.doHandleBlockStreamEvent(event));' : 'return this.eventQueue.put(()=>this.doHandleBlockStreamEvent(event));';
-  if (result.split(handler).length !== 2) throw new Error('PXE_REORG_PATCH_LAYOUT');
-  result = result.replace(handler, `return this.eventQueue.put(async () => {
+  if (!previous && result.split(handler).length !== 2) throw new Error('PXE_REORG_PATCH_LAYOUT');
+  if (!previous) result = result.replace(handler, `return this.eventQueue.put(async () => {
       try { await this.doHandleBlockStreamEvent(event); }
       catch { this.anchorEventFailed = true; throw new Error('PXE_REORG_ANCHOR_EVENT_FAILED'); }
     });`);
-  const sync = 'await this.blockStream.sync();';
-  if (result.split(sync).length !== 2) throw new Error('PXE_REORG_PATCH_LAYOUT');
-  result = result.replace(sync, `this.anchorEventFailed = false;
+  const sourceCall = 'blockStreamSourceFromAztecNode(this.node)';
+  // The inserted helper also contains this call; replace only the original
+  // createBlockStream occurrence before the methods region.
+  const sourceAt = result.indexOf(sourceCall);
+  if (sourceAt < 0 || sourceAt >= begin) throw new Error('PXE_REORG_PATCH_LAYOUT');
+  result = result.slice(0, sourceAt) + 'this.snapshotBlockStreamSource()' + result.slice(sourceAt + sourceCall.length);
+  const sync = previous ? `this.anchorEventFailed = false;
     await this.blockStream.sync();
     // L2BlockStream catches handler/source errors and AbortError internally.
     // Never report successful PXE sync merely because that promise resolved.
@@ -131,13 +190,29 @@ function transformed(source, ts) {
     if (anchor.getBlockNumber() !== selected.block.number ||
         (await anchor.hash()).toString() !== selected.block.hash) {
       throw new Error('PXE_REORG_ANCHOR_INCOMPLETE');
-    }`);
+    }` : 'await this.blockStream.sync();';
+  if (result.split(sync).length !== 2) throw new Error('PXE_REORG_PATCH_LAYOUT');
+  result = result.replace(sync, `this.anchorEventFailed = false;
+    this.syncTips = undefined;
+    try {
+      await this.blockStream.sync();
+      // The stream swallows source/handler errors; a captured plan and exact
+      // acknowledgement are required even when its promise resolves.
+      if (this.anchorEventFailed) throw new Error('PXE_REORG_ANCHOR_EVENT_FAILED');
+      const selected = await this.checkedSelectedAnchor();
+      const anchor = await this.anchorBlockStore.getBlockHeader();
+      if (anchor.getBlockNumber() !== selected.block.number ||
+          (await anchor.hash()).toString() !== selected.block.hash) {
+        throw new Error('PXE_REORG_ANCHOR_INCOMPLETE');
+      }
+      await this.checkAcknowledgedSnapshot();
+    } finally { this.syncTips = undefined; }`);
   return result;
 }
 export function transformPxeReorgAnchor(source, path) {
   const pin = PXE_REORG_ANCHOR_PINS.find(pin => pin.path === path);
-  if (!pin || typeof source !== 'string' || sha(source) !== pin.before) throw new Error('PXE_REORG_PATCH_SOURCE');
-  const output = transformed(source, path.endsWith('.ts'));
+  if (!pin || typeof source !== 'string' || ![pin.before,pin.previous].includes(sha(source))) throw new Error('PXE_REORG_PATCH_SOURCE');
+  const output = transformed(source, path.endsWith('.ts'),sha(source)===pin.previous);
   if (sha(output) !== pin.after) throw new Error('PXE_REORG_PATCH_OUTPUT');
   return output;
 }
@@ -155,7 +230,7 @@ async function checkedPaths(packageRoot) {
 }
 export async function inspectPxeReorgAnchor(packageRoot) {
   const paths = await checkedPaths(packageRoot);
-  const states = paths.map(({ pin, source }) => sha(source) === pin.before ? 'original' : sha(source) === pin.after ? 'patched' : 'unknown');
+  const states = paths.map(({ pin, source }) => sha(source) === pin.before ? 'original' : sha(source) === pin.after ? 'patched' : sha(source) === pin.previous ? 'previous' : 'unknown');
   if (states.includes('unknown') || states[0] !== states[1]) throw new Error('PXE_REORG_PATCH_STATE');
   return Object.freeze({ state: states[0], files: Object.freeze(paths.map(({ pin, source }) => Object.freeze({ path: pin.path, sha256: sha(source) }))) });
 }
