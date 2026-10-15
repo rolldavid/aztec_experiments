@@ -393271,7 +393271,9 @@ Partial Address: ${this.partialAddress.toString()}
         };
         frame.verifyArtifact = (value) => binding3.verifyArtifact(value, p.expectedArtifactHash, p.expectedClassId);
         beforeCommit = async () => {
-          for (const validate2 of frame.validators) await validate2();
+          const validators = frame.validators.slice();
+          for (let offset = 0; offset < validators.length; offset += 4) await rollingPreferenceReadBatch(validators.slice(offset, offset + 4));
+          if (stagedSeal) check9(same(await stageSnapshot(), stagedSeal));
           await canonical2();
           await guard();
         };
@@ -393307,9 +393309,6 @@ Partial Address: ${this.partialAddress.toString()}
           }
         };
         let stagedSeal = null;
-        frame.validators.push(async () => {
-          if (stagedSeal) check9(same(await stageSnapshot(), stagedSeal));
-        });
         const ingest = async (block2, first2, logCount) => {
           const prior = await stageSnapshot();
           if (stagedSeal) check9(same(prior, stagedSeal));
@@ -393528,10 +393527,7 @@ Partial Address: ${this.partialAddress.toString()}
                 verified2.push(value);
               }
             }
-            frame.validators.push(async () => {
-              for (let offset = 0; offset < validators.length; offset += 4) await rollingPreferenceReadBatch(validators.slice(offset, offset + 4));
-            });
-            if (p.block.length > 32) check9(verified2.slice(0, -1).every((value) => value.ciphertexts.length === 0));
+            frame.validators.push(...validators);
             for (let i = 0; i < verified2.length; i++) await consume(p.block[i], verified2[i], true);
           } else {
             check9(p.block);

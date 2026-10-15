@@ -797,8 +797,8 @@ STARTUP_SOURCES = {
     'deploy/prover/startup-stages.mjs': STARTUP_HELPER_SHA,
     'prover/compact-node-transform.mjs': 'd7e7e95a1061342e7aaa301e826fbf4bd21cfb9ea2de605e2a2aa17452160545',
     'prover/compact-node-registration.mjs': '07316d9a6629dff67fbb8d033360a45b9a1492febdd18520e6ffe6c1023c546c',
-    'prover/compact-block-native.mjs': '5040454029af8c78bac67dc9961e80bf4918ce2ee000277000a4fdd32fb64f07',
-    'shared/trusted-private-node.mjs': '50fa3642a777cb2eca66e595d72a6e639781cc7d0fc2deb4d1903c0a2a0d81d5',
+    'prover/compact-block-native.mjs': '6fc4e562fea1a2d544d742b8e58a8941724cbd6b7d7e67d4231e02a586707888',
+    'shared/trusted-private-node.mjs': '4396e9b5c7e0cacef5c9fb53d59e433b76acedef7d57be577ba494d20e1e863a',
 }
 STARTUP_ADAPTER = 'publicnode-config-v1'
 DIAGNOSTIC_PHASES = ('registry-guard', 'rollup-compatibility', 'l1-config', 'genesis-compare', 'telemetry', 'factory', 'factory-bb', 'factory-kzg', 'factory-keystore', 'factory-addresses', 'factory-l1-constants', 'factory-blob', 'factory-snapshot', 'factory-epoch-cache', 'factory-world-state', 'factory-avm', 'factory-archiver', 'factory-world-state-sync', 'factory-verifiers', 'factory-fee-provider', 'factory-p2p', 'factory-start', 'public-rpc-bind', 'admin-auth', 'admin-rpc-bind', 'archiver-store', 'archiver-protocol-register', 'archiver-constants', 'archiver-start-header', 'archiver-start', 'archiver-blob-test', 'archiver-clock-test', 'archiver-trace-test', 'archiver-history-test', 'archiver-initial-sync')
