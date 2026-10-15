@@ -88,7 +88,7 @@ export function createRollingReaderAssetHandler(wallet){
    responseBytes+=outgoing;
    const response=sendAsset(res,200,{...selectedHeaders,'Content-Type':asset.type,'Vary':'Accept-Encoding','Content-Length':String(body.length),...(encoding==='gzip'?{'Content-Encoding':'gzip'}:{})},req.method==='HEAD'?undefined:body).finally(()=>{responseBytes-=outgoing;});
    // The read/compressor has finished. Response bytes remain owned until the
-   // socket finishes/closes or the unchanged 30s loader delivery bound expires.
+   // socket finishes/closes or the bounded 60s asset delivery deadline expires.
    release();released=true;await response;return;
   }finally{if(!released)release();}
  }
