@@ -261,3 +261,42 @@ test('exact previous patched pair upgrades to identical pinned output; mixed or 
   assert.equal((await patchPxeReorgAnchor(root)).state,'patched');
   assert.deepEqual(await inspectPxeReorgAnchor(root),await inspectPxeReorgAnchor(patchedRoot));
 });
+
+test('final advancing header cannot hide captured anchor reorg',async t=>{
+  const f=await fixture(t);await f.advance(10);f.state.tip=12;
+  const sync=f.sync.blockStream.sync.bind(f.sync.blockStream);
+  f.sync.blockStream.sync=async()=>{await sync();f.state.tip=13;const get=f.node.getChainTips;let calls=0;
+    f.node.getChainTips=async()=>{if(++calls===2){f.chain[12]=await block(12,99);f.state.tip=14;}return get();};};
+  await assert.rejects(f.sync.sync(),/^Error: PXE_REORG_ANCHOR_/);
+});
+test('discarded source prefetch remains owned until rejection drains',async t=>{
+  const f=await fixture(t);await f.seed();f.state.tip=12;
+  let release;const blocked=new Promise(r=>release=r);let held=false;
+  const get=f.node.getChainTips;let tipReads=0;
+  f.node.getChainTips=async()=>{if(++tipReads===2)f.state.tip=13;return get();};
+  f.state.onRead=async q=>{if(!held&&q?.hash?.toString()===f.chain[12].hash.toString()){held=true;await blocked;throw Error('PRIVATE_SENTINEL');}};
+  let settled=false,failure;const run=f.sync.sync().then(()=>{settled=true;},error=>{settled=true;failure=error;});
+  await new Promise(r=>setTimeout(r,30));const beforeRelease=settled;release();await run;
+  assert.equal(held,true);assert.equal(beforeRelease,false,'sync must drain all source reads before releasing ownership');
+  assert.match(String(failure),/^Error: PXE_REORG_ANCHOR_EVENT_FAILED$/);
+  assert.equal(f.sync.syncTips,undefined);assert.equal(f.sync.syncPass,undefined);
+  f.state.onRead=undefined;f.node.getChainTips=get;await f.sync.sync();
+  assert.equal((await f.anchor.getBlockHeader()).getBlockNumber(),13,'Explicit next sync is not poisoned by a prior pass');
+});
+
+test('stop drains a discarded successful prefetch before releasing sync ownership',async t=>{
+  const f=await fixture(t);await f.seed();f.state.tip=12;
+  let release,reached;const blocked=new Promise(r=>release=r),streamFinished=new Promise(r=>reached=r);let held=false;
+  const get=f.node.getChainTips;let reads=0;
+  f.node.getChainTips=async()=>{if(++reads===2)f.state.tip=13;return get();};
+  f.state.onRead=async query=>{if(!held&&query?.hash?.toString()===f.chain[12].hash.toString()){held=true;await blocked;}};
+  const streamSync=f.sync.blockStream.sync.bind(f.sync.blockStream);
+  f.sync.blockStream.sync=async()=>{await streamSync();reached();};
+  let synced=false,stopped=false;const run=f.sync.sync().then(()=>{synced=true;});
+  await streamFinished;const stop=f.sync.stop().then(()=>{stopped=true;});
+  await new Promise(r=>setImmediate(r));
+  assert.equal(held,true);assert.equal(synced,false);assert.equal(stopped,false);assert.equal(f.sync.syncPass.pending.size,1);
+  release();await Promise.all([run,stop]);assert.equal(synced,true);assert.equal(stopped,true);
+  assert.equal(f.sync.syncTips,undefined);assert.equal(f.sync.syncPass,undefined);
+  assert.equal((await f.anchor.getBlockHeader()).getBlockNumber(),13);
+});
