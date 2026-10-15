@@ -331,6 +331,15 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
       head.revision===record.action.expectedRevision&&same(marker,consent.marker)&&
       (!record.replacementReview||same(head,record.replacementReview.head));
   }
+  async function checkPreproofPreferenceContext(record,{synchronize=false}={}){
+    if(!preferenceAction(record))return;
+    if(synchronize){await guard();await session.wallet.pxe.sync();await guard();}
+    const head=await preferenceHead(),marker=await markerContext(record);
+    // A new proof may renew fees and its anchor, never the saved revision or
+    // the canonical block acknowledged by a read marker.
+    check(savedContextMatches(record,{marker:record.originalMarker??null},head,marker),'ROLLING_RECOVERY_CONTEXT_CHANGED');
+    await guard();
+  }
   async function exactResumeSnapshot(record,txHash,head,marker){
     if(!txHash)return {status:'empty',txHash:null,maximumFee:null,feeSource:null,marker:null};
     const inspected=await session.journal.inspectSavedRecovery(operation(record.id),txHash),consent=savedConsent(record,txHash);
@@ -800,6 +809,9 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
       const record={...prior,id:field(sdk.Fr.random().toString(),true),method:'post_with_bok',args:[...postArgs,bok.pluginId,prior.bok.requestId],
         status:'prepared',txHash:null,encoded:undefined,predecessor:{operation:operation(prior.id),txHash:prior.txHash},
         bok:{...prior.bok,phase:'post',authorizationTxHash:prior.bok.authorizationTxHash??prior.txHash}};
+      // This is a new intent with the confirmed authorization as predecessor.
+      // Its proof attempt must not inherit authority bound to the previous ID.
+      delete record.preproof;delete record.preproofReview;
       const selected=await interaction(await contract(),record);record.encoded=selected.encoded;
       progress('estimating');const estimate=await sdk.estimatePrivateFeeTransaction({wallet:session.wallet,node:session.node,interaction:selected.call,
         prepared:await payment(),from:session.owner,guard});record.maximumFee=estimate.maximumFee.toString();
@@ -834,10 +846,11 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
     },
     async prepareInterrupted(id){return exclusive(async()=>{
       await guard();const saved=await savedIntent(id);check(await preproofAvailable(saved),'ROLLING_RECOVERY_REQUIRED');
-      const record=saved.value;await session.wallet.pxe.sync();await checkActionSubmission(record);await checkActionRecoveryContext(record);
+      const record=saved.value;await session.wallet.pxe.sync();await checkActionSubmission(record);await checkActionRecoveryContext(record);await checkPreproofPreferenceContext(record);
       const selected=await interaction(await selectedContract(record),record);progress('estimating');
       const estimated=await sdk.estimatePrivateFeeTransaction({wallet:session.wallet,node:session.node,interaction:selected.call,
         prepared:await payment(record.action,record),from:session.owner,guard});
+      await checkPreproofPreferenceContext(record,{synchronize:true});
       check(await preproofAvailable(saved),'ROLLING_RECOVERY_REQUIRED');await guard();
       // Exact CAS revokes the old attempt. A late proof must fail its lifecycle
       // guard before journal.prepare, and again before any broadcast.
@@ -889,6 +902,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
       if(saved.value.preproofReview&&!replacing){
         check(localPreproof&&await privateStore.readRecoveryEpoch()===saved.value.preproofReview.epoch&&
           await journalCommitment()===saved.value.preproofReview.predecessor,'ROLLING_RECOVERY_REQUIRED');
+        await checkPreproofPreferenceContext(saved.value,{synchronize:true});
       }
       if(localPreproof&&!replacing){
         const epoch=await privateStore.ensureRecoveryEpoch();check(typeof epoch==='string'&&/^[0-9a-f]{64}$/.test(epoch),'ROLLING_RECOVERY_REQUIRED');
@@ -914,6 +928,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
             current.value.status===(phase==='signed'?'submitting':'pre-proof'),'ROLLING_RECOVERY_REQUIRED');
           if(phase==='pre-proof')check(await journalCommitment()===attempt.predecessor,'ROLLING_RECOVERY_REQUIRED');
           else {const tx=await session.journal.inspect();check(tx?.operation===operation(id)&&tx.txHash===current.value.txHash,'ROLLING_RECOVERY_REQUIRED');}
+          await checkPreproofPreferenceContext(current.value,{synchronize:true});
           await guard();check(await privateStore.readRecoveryEpoch()===attempt.epoch&&(await savedIntent(id)).encoded===active.encoded,'ROLLING_RECOVERY_REQUIRED');
         };
         await localPreproof.send(estimated.payload,options,{guard:verify,signed:async txHash=>{

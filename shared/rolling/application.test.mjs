@@ -308,8 +308,8 @@ class JournalTx {
   toBuffer(){return Buffer.from(this.hash);}
   static fromBuffer(buffer){return new JournalTx(buffer.toString());}
 }
-async function realJournalFixture(){
-  const f=fixture(),receipts=new Map();let sequence=700;
+async function realJournalFixture(base){
+  const f=base??fixture(),receipts=new Map();let sequence=700;
   const node=f.options.accountSession.node;
   node.getTxReceipt=async hash=>receipts.get(hash.toString());
   node.getBlock=async()=>({hash:{toString:()=>hex(42)}});
@@ -1557,19 +1557,19 @@ test('ordinary unknown fence with an empty authenticated Tx journal remains unre
 // New protocol only: actual encrypted workflow/L2 CAS; proof/network remain
 // labelled doubles. The engine's mandatory checkpoint ordering is tested in
 // test-receipt-baseline, not inferred from this application-port double.
-async function preproofFixture(){
- const f=await realJournalFixture();let epoch='a'.repeat(64),serial=900;
+async function preproofFixture(base){
+ const f=await realJournalFixture(base);let epoch='a'.repeat(64),serial=900;
  Object.assign(f.options.privateStore,{readRecoveryEpoch:async()=>epoch,ensureRecoveryEpoch:async()=>epoch??='b'.repeat(64),rotateRecoveryEpoch:async()=>epoch='c'.repeat(64)});
  f.options.accountSession.wallet.pxe.sync=async()=>{};
  const cap={checkpoint:async()=>{const p=await f.options.accountSession.journal.assertCanStart();return {encoded:p.encoded};},send:async(payload,opts,lifecycle)=>{
   f.state.proofs=(f.state.proofs??0)+1;const journal=f.options.accountSession.journal;journal.setOperation(opts.journalOperation);const prior=await journal.assertCanStart();
   await lifecycle.guard('pre-proof');if(f.state.interrupt==='proof')throw Error('proof interrupted');
-  if(f.state.pauseProof)await f.state.pauseProof;await lifecycle.guard('pre-proof');
+  if(f.state.pauseProof)await f.state.pauseProof;if(f.state.beforeJournal)await f.state.beforeJournal();await lifecycle.guard('pre-proof');
   const tx=new JournalTx(hex(serial++));await journal.prepare(tx,prior);f.state.signedHash=tx.hash;
   if(f.state.interrupt==='journal')throw Error('journal interruption');
   await lifecycle.signed(tx.hash);if(f.state.interrupt==='signed')throw Error('signed interruption');
   if(f.state.beforeBroadcast)await f.state.beforeBroadcast();await lifecycle.guard('signed');
-  f.state.sends++;const receipt={txHash:tx.getTxHash(),status:'checkpointed',executionResult:'success',blockNumber:1,blockHash:{toString:()=>hex(42)}};
+  f.state.sends++;if(f.state.afterBroadcast)await f.state.afterBroadcast(payload);const receipt={txHash:tx.getTxHash(),status:'checkpointed',executionResult:'success',blockNumber:1,blockHash:{toString:()=>hex(42)},transactionFee:2n};
   f.receipts.set(tx.hash,receipt);journal.confirmed(receipt);return {receipt};
  }};
  f.options.accountSession.preproofRecovery=Object.freeze(cap);f.app=f.restart();
@@ -1632,4 +1632,41 @@ test('signed replacement remains authoritative after an earlier positive pre-pro
  await slot.write(prior,{...prior.value,preproofReview:{version:1,epoch:'a'.repeat(64),attempt:hex(100),predecessor:'b'.repeat(64)}});
  const review=await f.app.prepareReplacement(f.prepared.intentId,{expectedTxHash:f.originalHash});assert.equal(review.status,'replacement-prepared');
  f.state.crashAfterPrepare=false;assert.equal((await f.app.submitPrepared(f.prepared.intentId)).status,'confirmed');assert.equal(f.transactions.length,2);assert.equal(f.state.sends,1);
+});
+
+for(const context of ['marker','head'])for(const boundary of ['renewal','fee-estimate','submission','journal','broadcast'])test(`positive pre-proof preserves ${context} context at ${boundary}`,async()=>{
+ const f=await preproofFixture(),action={type:'read-marker',expectedRevision:'0',thread:'42',throughBlock:'10'};
+ const p=await f.app.prepare(action);f.state.interrupt='proof';await assert.rejects(f.app.submitPrepared(p.intentId),/proof interrupted/);
+ const mutate=()=>{if(context==='head')f.state.preferenceHead=preferenceHead(true,1,1,11);else f.options.accountSession.node.getBlockData=async height=>({header:{globalVariables:{blockNumber:height==='checkpointed'?1:height}},blockHash:hex(43)});};
+ if(boundary==='renewal')mutate();
+ if(boundary==='fee-estimate'){const estimate=f.options.sdk.estimatePrivateFeeTransaction;f.options.sdk.estimatePrivateFeeTransaction=async input=>{const result=await estimate(input);mutate();return result;};}
+ if(['renewal','fee-estimate'].includes(boundary)){
+  const before=[...f.values];await assert.rejects(f.app.prepareInterrupted(p.intentId),{code:'ROLLING_RECOVERY_CONTEXT_CHANGED'});assert.deepEqual([...f.values],before);
+ }else{
+  await f.app.prepareInterrupted(p.intentId);f.state.interrupt=null;
+  if(boundary==='submission')mutate();if(boundary==='journal')f.state.beforeJournal=mutate;if(boundary==='broadcast')f.state.beforeBroadcast=mutate;
+  await assert.rejects(f.app.submitPrepared(p.intentId),{code:'ROLLING_RECOVERY_CONTEXT_CHANGED'});
+ }
+ assert.equal(f.state.sends,0);
+ const signed=await f.options.accountSession.journal.inspect();
+ if(boundary==='broadcast')assert.equal(signed.txHash,f.state.signedHash,'late veto keeps exact signed candidate');else assert.equal(signed,null,'meaning changes before preparation cannot create signed bytes');
+});
+test('positive pre-proof renewed Bok authorization advances to a distinct post attempt',async()=>{
+ const f=await preproofFixture(bokFixture());
+ f.state.afterBroadcast=async payload=>{if(payload.name==='authorize_request'){
+  const [id,target,budget]=payload.args;f.state.bokRequestId=id;f.state.bokCredit=1000n-BigInt(budget);
+  const abi=bokArtifact.nonDispatchPublicFunctions.find(fn=>fn.name==='request');
+  f.state.bokRequest=decodeFromAbi(getFunctionReturnType(abi),[1n,BigInt(target),0n,9999999999n,BigInt(budget),BigInt(budget),0n,0n,0n,0n,0n,0n,0n,0n].map(n=>new Fr(n)));
+ }};
+ const authorization=await f.app.prepare(bokAction());f.state.interrupt='proof';await assert.rejects(f.app.submitPrepared(authorization.intentId),/proof interrupted/);
+ const renewed=await f.app.prepareInterrupted(authorization.intentId);assert.deepEqual(renewed.action,authorization.action);f.state.interrupt=null;
+ assert.equal((await f.app.submitPrepared(authorization.intentId)).status,'authorized');
+ const post=await f.restart().prepareBokPost(authorization.intentId);assert.notEqual(post.intentId,authorization.intentId);assert.equal(post.bok.authorizationTxHash,f.state.signedHash);assert.equal(post.bok.requestId,authorization.bok.requestId);assert.deepEqual(post.action,authorization.action);
+ assert.equal((await f.restart().submitPrepared(post.intentId)).status,'confirmed');assert.equal(f.state.sends,2);
+});
+
+for(const action of [{type:'preference',expectedRevision:'0',kind:1,target:'42',enabled:true},{type:'read-marker',expectedRevision:'0',thread:'42',throughBlock:'10'}])test(`positive pre-proof unchanged ${action.type} context renews and sends once`,async()=>{
+ const f=await preproofFixture(),p=await f.app.prepare(action);f.state.interrupt='proof';await assert.rejects(f.app.submitPrepared(p.intentId),/proof interrupted/);
+ const renewed=await f.restart().prepareInterrupted(p.intentId);assert.deepEqual(renewed.action,action);assert.equal(renewed.nonce,p.nonce);f.state.interrupt=null;
+ const result=await f.restart().submitPrepared(p.intentId);assert.equal(result.status,'confirmed');assert.equal(f.state.sends,1);assert.equal(f.state.proofs,2);
 });
