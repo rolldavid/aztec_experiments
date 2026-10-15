@@ -27,6 +27,7 @@ const application={
  async prepareBokRelease(id,input){await boundary('bok-release');const prior=read();if(prior.intentId!==id||!['authorized','bok-post-reverted','bok-release-reverted'].includes(prior.status))error();state.releaseInput={id,...input};const next={intentId:'44',action:{type:input.type,requestId:'0x'+'1'.repeat(64)},status:'prepared',maximumFee:'234',bokRelease:{sourceIntentId:id},releasePrior:prior};write(next);return next;},
  async resumeSaved(id,input){state.resumes++;state.resumeInput={id,...input};state.sends++;await boundary('saved-resume');const next={...read(),txHash:input.expectedTxHash,status:state.resumeOutcome??'confirmed'};write(next);return next;},
  async inspectRecovery(id){state.recoveryChecks++;await boundary('recovery-options');return {...state.recoverySnapshot,intent:read()};},
+ async prepareInterrupted(id){state.interruptedReviews=(state.interruptedReviews??0)+1;await boundary('interrupted-review');if(read().intentId!==id)error();const next={...read(),status:'prepared',maximumFee:'456'};write(next);return next;},
  async prepareReplacement(id,input){state.replacementPrepares++;state.replacementInput=input;await boundary('replacement-prepare');const current=read();const next={...current,status:'replacement-prepared',replacementReview:{sourceTxHash:input.expectedTxHash,head:input.expectedHead,marker:current.action.type==='read-marker'?state.recoverySnapshot.marker:null,maximumFee:'456'}};write(next);return next;},
  async readAccountStatus(){state.statusReads++;await boundary('status');const intent=read();return intent&&(!['confirmed','reverted','cancelled'].includes(intent.status)||['withdraw','withdraw-bok'].includes(intent.action.type)&&intent.status==='confirmed'&&!state.refunded)?{status:'recovering',intent}:{status:state.fee,privateFeeCredit:'1000',depositIds:state.fee==='fee-ready'?['9']:[]};},
  async ownedIdentities({cursor}){state.owned++;const page=state.namesPages?.[cursor]??(cursor===0?{identities:['7'],records:[{id:'7',first:'River',last:'Lane'}],nextCursor:8}:{identities:['8'],records:[{id:'8',first:'Ellis',last:'Moss'}],nextCursor:null});await boundary('owned');return page;},
@@ -984,4 +985,21 @@ test('saved avatar recovery cannot bypass the exact preview requirement',async t
  const {page}=await browserFixture(t);await seedSavedResume(page,{action:{type:'avatar',name:'7',expectedVersion:'4',width:100,height:100,data:Buffer.from('<svg onload="bad()"/>').toString('base64')}});
  await page.getByRole('button',{name:'Check recovery options',exact:true}).click();await page.getByText(/saved avatar cannot be previewed safely/).waitFor();
  assert(await page.getByRole('button',{name:'Confirm saved transaction and send',exact:true}).isDisabled());assert.equal((await counts(page)).sends,0);
+});
+
+test('positive pre-proof review is explicit, preserves draft, and requires renewed fee confirmation',async t=>{
+ const {page}=await browserFixture(t),action={type:'post',deposit:'9',content:'Retained interrupted draft',name:'0',subboard:'0'};
+ await seedSavedResume(page,{action});await page.evaluate(()=>{test.recoverySnapshot={status:'pre-proof-review',attempts:[],exactResume:{status:'empty'},inclusionHistory:[]};});
+ await page.getByRole('button',{name:'Check recovery options',exact:true}).click();await page.getByRole('button',{name:'Review interrupted action',exact:true}).waitFor();
+ assert.equal(await page.evaluate(()=>test.sends),0);assert.equal(await page.getByRole('button',{name:'Confirm saved transaction and send',exact:true}).count(),0);
+ await page.getByRole('button',{name:'Review interrupted action',exact:true}).click();await page.getByRole('button',{name:'Confirm and send',exact:true}).waitFor();
+ assert(await page.getByText(/Maximum network fee: 456/).isVisible());assert.equal(await page.evaluate(()=>test.sends),0);assert.equal(await page.evaluate(()=>test.interruptedReviews),1);
+ assert.equal(await page.evaluate(()=>JSON.parse(sessionStorage.getItem('labelled-ui-intent')).action.content),action.content);
+ await page.getByRole('button',{name:'Confirm and send',exact:true}).click();await page.getByText('Transaction confirmed on the verified chain.',{exact:true}).waitFor();assert.equal(await page.evaluate(()=>test.sends),1);
+});
+test('positive pre-proof failed renewed review never exposes a send or resets unknown recovery',async t=>{
+ const {page}=await browserFixture(t);await seedSavedResume(page,{action:{type:'post',deposit:'9',content:'Keep me',name:'0',subboard:'0'}});
+ await page.evaluate(()=>{test.recoverySnapshot={status:'pre-proof-review',attempts:[],exactResume:{status:'empty'}};test.failure='interrupted-review';});
+ await page.getByRole('button',{name:'Check recovery options',exact:true}).click();await page.getByRole('button',{name:'Review interrupted action',exact:true}).click();await page.getByRole('alert').waitFor();
+ assert.equal(await page.getByRole('button',{name:'Confirm and send',exact:true}).count(),0);assert.equal(await page.evaluate(()=>test.sends),0);assert.equal(await page.evaluate(()=>JSON.parse(sessionStorage.getItem('labelled-ui-intent')).status),'unknown');
 });

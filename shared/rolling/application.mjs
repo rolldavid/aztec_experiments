@@ -122,7 +122,10 @@ const methods={'moderate-post':'remove_post','moderate-avatar':'remove_avatar','
  * A prepared post includes authenticated-wallet screening hints and live policy versions.
  * submit delegates the sole prove/journal/send lifecycle to wallet.sendTx. Once its
  * durable fence exists, automatic behavior is limited to read-only reconcile, including after a crash
- * before transaction bytes were saved. Missing receipt is never absence. No automatic
+ * before transaction bytes were saved. New built-in pre-proof attempts alone may
+ * explicitly renew review with unchanged local restore-invalidated provenance and
+ * exact predecessor journal. Historical/no-provenance fences remain unknown.
+ * Missing receipt is never absence. No automatic
  * replacement. Explicit resumeSaved may resend the identical saved bytes
  * after fresh context validation, without estimation or proving; cancelPrepared permits only the pre-send prepared state. Recovery UI must preserve both encrypted journals.
  * claim-deposit accepts public receipt metadata only. The existing receipt verifier
@@ -152,6 +155,10 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
   const readAccountingPage=typeof readBokAccountingPage==='function'?readBokAccountingPage:null;
   let busy=false,slotPromise,balanceContinuation=null,accountingScan=null,completedAccounting=null;
   const session=accountSession;
+  const preproof=session?.preproofRecovery;
+  const localPreproof=preproof&&typeof preproof.checkpoint==='function'&&typeof preproof.send==='function'&&
+    typeof privateStore?.readRecoveryEpoch==='function'&&typeof privateStore?.ensureRecoveryEpoch==='function'&&typeof privateStore?.rotateRecoveryEpoch==='function'
+    ?Object.freeze({checkpoint:preproof.checkpoint,send:preproof.send}):null;
   const owner=session?.owner?.toString();
   const fundingProvider=funding?.provider,claimStore=funding?.claimStore;
   const resolveBokWithdrawal=typeof funding?.resolveBokWithdrawal==='function'?funding.resolveBokWithdrawal.bind(funding):null;
@@ -341,8 +348,28 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
     check(savedContextMatches(record,consent,head,marker),'ROLLING_RECOVERY_CONTEXT_CHANGED');
     check((await savedIntent(record.id)).encoded===saved.encoded,'ROLLING_RECOVERY_REQUIRED');await guard();
   }
+  async function journalCommitment(){
+    const prior=await localPreproof.checkpoint();
+    check(prior&&Object.hasOwn(prior,'encoded')&&(prior.encoded===null||typeof prior.encoded==='string'),'ROLLING_RECOVERY_REQUIRED');
+    const bytes=new TextEncoder().encode(JSON.stringify(prior.encoded));
+    return Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes)),b=>b.toString(16).padStart(2,'0')).join('');
+  }
+  async function preproofAvailable(saved){
+    const record=saved.value,p=record.preproof;
+    if(!localPreproof||record.status!=='pre-proof'||!p||p.version!==1||
+      !/^[0-9a-f]{64}$/.test(p.epoch)||!/^0x[0-9a-f]{64}$/.test(p.attempt)||!/^[0-9a-f]{64}$/.test(p.predecessor))return false;
+    // Signed bytes always win, even when publication of the signed fence failed.
+    const tx=await session.journal.inspect();if(tx?.operation===operation(record.id)&&tx.txHash!==record.predecessor?.txHash)return false;
+    if(await privateStore.readRecoveryEpoch()!==p.epoch)return false;
+    if(record.predecessor)acknowledge(await session.journal.inspectOutcome(),record.predecessor);
+    if(await journalCommitment()!==p.predecessor)return false;
+    await guard();check((await savedIntent(record.id)).encoded===saved.encoded,'ROLLING_RECOVERY_REQUIRED');
+    return await privateStore.readRecoveryEpoch()===p.epoch;
+  }
   async function recoverySnapshot(saved){
     const record=saved.value;
+    if(await preproofAvailable(saved))return {intent:summary(record),status:'pre-proof-review',attempts:[],requireMissingAnchor:true,
+      head:null,marker:null,originalPreferenceHead:clone(record.originalPreferenceHead??null),originalMarker:clone(record.originalMarker??null),inclusionHistory:clone(record.inclusionHistory??[]),currentTxHash:null,exactResume:{status:'empty',txHash:null}};
     const inspected=await session.journal.inspectReplacement(operation(record.id),{requireMissingAnchor:true});
     const head=preferenceAction(record)?await preferenceHead():null,marker=await markerContext(record);await guard();
     const exactResume=await exactResumeSnapshot(record,inspected.txHash,head,marker);
@@ -778,7 +805,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
         prepared:await payment(),from:session.owner,guard});record.maximumFee=estimate.maximumFee.toString();
       await waitingBok(record);await guard();await (await slot()).write(saved,record);return summary(record);
     });},
-    // Explicit saved-action recovery. Inspection never acknowledges or writes.
+    // Explicit saved-action recovery. Inspection never writes financial records;
     // Original revision/action/nonce remain immutable; a changed head is unresolved,
     // not silently rebased. Exact-byte recovery is separately user-confirmed and
     // never re-estimates or re-proves. Caller retains its wallet lease throughout.
@@ -805,6 +832,18 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
         return outcome(saved);
       });
     },
+    async prepareInterrupted(id){return exclusive(async()=>{
+      await guard();const saved=await savedIntent(id);check(await preproofAvailable(saved),'ROLLING_RECOVERY_REQUIRED');
+      const record=saved.value;await session.wallet.pxe.sync();await checkActionSubmission(record);await checkActionRecoveryContext(record);
+      const selected=await interaction(await selectedContract(record),record);progress('estimating');
+      const estimated=await sdk.estimatePrivateFeeTransaction({wallet:session.wallet,node:session.node,interaction:selected.call,
+        prepared:await payment(record.action,record),from:session.owner,guard});
+      check(await preproofAvailable(saved),'ROLLING_RECOVERY_REQUIRED');await guard();
+      // Exact CAS revokes the old attempt. A late proof must fail its lifecycle
+      // guard before journal.prepare, and again before any broadcast.
+      const next={...record,status:'prepared',maximumFee:estimated.maximumFee.toString(),preproofReview:record.preproof};delete next.preproof;
+      await (await slot()).write(saved,next);return summary(next);
+    });},
     async prepareReplacement(id,input){
       // Capture only own data primitives before any asynchronous guard or RPC.
       let reviewInput,expectedHead=null;try{
@@ -846,9 +885,19 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
       const estimated=await sdk.estimatePrivateFeeTransaction({wallet:session.wallet,node:session.node,interaction:selected.call,prepared:await payment(saved.value.action,saved.value),from:session.owner,guard});
       const maximumFee=replacing?saved.value.replacementReview.maximumFee:saved.value.maximumFee;
       check(estimated.maximumFee<=BigInt(maximumFee),'ROLLING_FEE_CHANGED');await guard();
-      await (await slot()).write(saved,{...saved.value,status:'submitting'}); // Durable no-replay fence before wallet lifecycle.
-      await guard();progress('submitting');
-      await session.wallet.sendTx(estimated.payload,{from:session.owner,fee:{gasSettings:estimated.gasSettings},
+      let attempt=null,active;
+      if(saved.value.preproofReview&&!replacing){
+        check(localPreproof&&await privateStore.readRecoveryEpoch()===saved.value.preproofReview.epoch&&
+          await journalCommitment()===saved.value.preproofReview.predecessor,'ROLLING_RECOVERY_REQUIRED');
+      }
+      if(localPreproof&&!replacing){
+        const epoch=await privateStore.ensureRecoveryEpoch();check(typeof epoch==='string'&&/^[0-9a-f]{64}$/.test(epoch),'ROLLING_RECOVERY_REQUIRED');
+        attempt={version:1,epoch,attempt:field(sdk.Fr.random().toString(),true),predecessor:await journalCommitment()};
+        await guard();check(await privateStore.readRecoveryEpoch()===epoch,'ROLLING_RECOVERY_REQUIRED');
+      }
+      await (await slot()).write(saved,{...saved.value,status:attempt?'pre-proof':'submitting',...(attempt?{preproof:attempt}:{})});
+      active=await savedIntent(id);await guard();progress('submitting');
+      const options={from:session.owner,fee:{gasSettings:estimated.gasSettings},
         transactionJournal:session.journal,journalOperation:operation(id),...(saved.value.bokReleaseSource?{beforeSubmit:()=>checkBokRelease(saved.value.bokReleaseSource,saved.value.action.type)}:{}),...(saved.value.moderation?{beforeSubmit:async()=>{await checkModeration(saved.value);await guard();}}:{}),...(saved.value.bok?{beforeSubmit:async()=>{
           await checkBokThread(saved.value.action,await contract());
           if(saved.value.bok.phase==='post')await waitingBok(saved.value);else await bokContext();await guard();
@@ -857,7 +906,22 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
           // Predecessor validation itself awaits the node. Refresh the signed
           // action's context afterwards, not before that asynchronous window.
           await checkReplacementReview(saved.value,{synchronize:true});await guard();
-        }}:{})});
+        }}:{})};
+      if(attempt){
+        const verify=async phase=>{
+          await guard();check(await privateStore.readRecoveryEpoch()===attempt.epoch,'ROLLING_RECOVERY_REQUIRED');
+          const current=await savedIntent(id);check(current.encoded===active.encoded&&same(current.value.preproof,attempt)&&
+            current.value.status===(phase==='signed'?'submitting':'pre-proof'),'ROLLING_RECOVERY_REQUIRED');
+          if(phase==='pre-proof')check(await journalCommitment()===attempt.predecessor,'ROLLING_RECOVERY_REQUIRED');
+          else {const tx=await session.journal.inspect();check(tx?.operation===operation(id)&&tx.txHash===current.value.txHash,'ROLLING_RECOVERY_REQUIRED');}
+          await guard();check(await privateStore.readRecoveryEpoch()===attempt.epoch&&(await savedIntent(id)).encoded===active.encoded,'ROLLING_RECOVERY_REQUIRED');
+        };
+        await localPreproof.send(estimated.payload,options,{guard:verify,signed:async txHash=>{
+          await guard();check(await privateStore.readRecoveryEpoch()===attempt.epoch&&(await savedIntent(id)).encoded===active.encoded,'ROLLING_RECOVERY_REQUIRED');
+          const tx=await session.journal.inspect();check(tx?.operation===operation(id)&&tx.txHash===txHash,'ROLLING_RECOVERY_REQUIRED');
+          await (await slot()).write(active,{...active.value,status:'submitting',txHash});active=await savedIntent(id);
+        }});
+      }else await session.wallet.sendTx(estimated.payload,options);
       return outcome(await savedIntent(id));
     });},
     async cancelPrepared(id){return exclusive(async()=>{await guard();const saved=await savedIntent(id);

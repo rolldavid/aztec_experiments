@@ -314,3 +314,54 @@ test('retaining a local derived cache still authenticates it and rejects mutatio
  const invalid=await createJournalBackup({...f.credentials,storage:{read:async()=>JSON.stringify(corrupted)}});
  await assert.rejects(invalid.restoreRecords([record]),{code:'BB_JOURNAL_INVALID'});
 });
+
+test('local pre-proof provenance is durable, non-exported, and never initialized by read',async()=>{
+ const idb=new IDBFactory(),a=createBrowserJournalStorage(idb),b=createBrowserJournalStorage(idb);
+ assert.equal(await a.readRecoveryEpoch(),null);
+ const [first,second]=await Promise.all([a.ensureRecoveryEpoch(),b.ensureRecoveryEpoch()]);assert.match(first,/^[0-9a-f]{64}$/);assert.equal(second,first);
+ assert.equal(await b.readRecoveryEpoch(),first);assert.deepEqual(await a.keys(),[]);
+ const f=fixture();assert.deepEqual(await(await f.backup(a)).exportRecords(),[]);
+ const changed=await b.rotateRecoveryEpoch();assert.notEqual(changed,first);assert.equal(await a.readRecoveryEpoch(),changed);
+});
+test('financial restore rotates local provenance before all writes, including idempotent and partial restore',async()=>{
+ const f=fixture(),source=storage(),target=storage();await f.app(source).prepare({type:'name',first:'River',last:'Stone'});
+ const records=await(await f.backup(source)).exportRecords(),original=await target.ensureRecoveryEpoch(),write=target.compareAndSwap;
+ target.compareAndSwap=async(...args)=>{assert.notEqual(await target.readRecoveryEpoch(),original);throw Error('interrupted restore');};
+ await assert.rejects((await f.backup(target)).restoreRecords(records),{code:'BB_JOURNAL_INVALID'});
+ const partialEpoch=await target.readRecoveryEpoch();assert.notEqual(partialEpoch,original);assert.deepEqual(await target.keys(),[]);
+ target.compareAndSwap=write;await(await f.backup(target)).restoreRecords(records);const restoredEpoch=await target.readRecoveryEpoch();assert.notEqual(restoredEpoch,partialEpoch);
+ await(await f.backup(target)).restoreRecords(records);assert.notEqual(await target.readRecoveryEpoch(),restoredEpoch);
+ const emptyEpoch=await target.readRecoveryEpoch();await(await f.backup(target)).restoreRecords([]);assert.equal(await target.readRecoveryEpoch(),emptyEpoch);
+ assert.deepEqual(await(await f.backup(target)).exportRecords(),records);
+});
+test('failed provenance rotation prevents any restored financial write',async()=>{
+ const f=fixture(),source=storage(),target=storage();await f.app(source).prepare({type:'name',first:'River',last:'Stone'});
+ const records=await(await f.backup(source)).exportRecords();target.rotateRecoveryEpoch=async()=>{throw Error('metadata unavailable');};
+ await assert.rejects((await f.backup(target)).restoreRecords(records),/metadata unavailable/);assert.deepEqual(await target.keys(),[]);
+});
+
+test('metadata upgrade preserves v1 records and blocked open closes its eventual connection',async()=>{
+ const idb=new IDBFactory(),request=idb.open('aztec-billboard-transaction-journal-v1',1);
+ request.onupgradeneeded=()=>request.result.createObjectStore('records');
+ const old=await new Promise((resolve,reject)=>{request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error);});
+ const key='a'.repeat(64);await new Promise((resolve,reject)=>{const tx=old.transaction('records','readwrite');tx.objectStore('records').put('retained ciphertext',key);tx.oncomplete=resolve;tx.onerror=reject;});
+ let upgrade;const adapter=createBrowserJournalStorage({open(...args){return upgrade=idb.open(...args);}});
+ await assert.rejects(adapter.keys(),/upgrade blocked/);const opened=new Promise(resolve=>upgrade.addEventListener('success',resolve));old.close();await opened;
+ try{assert.throws(()=>upgrade.result.transaction('records'),{name:'InvalidStateError'});}finally{upgrade.result.close();}
+ assert.deepEqual(await adapter.keys(),[key]);assert.equal(await adapter.read(key),'retained ciphertext');assert.equal(await adapter.readRecoveryEpoch(),null);
+});
+
+test('malformed recovery metadata fails closed and cannot be initialized into a new authority',async()=>{
+ const idb=new IDBFactory(),store=createBrowserJournalStorage(idb);await store.ensureRecoveryEpoch();
+ const request=idb.open('aztec-billboard-transaction-journal-v1',2),db=await new Promise((resolve,reject)=>{request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error);});
+ try{await new Promise((resolve,reject)=>{const tx=db.transaction('recovery-metadata','readwrite');tx.objectStore('recovery-metadata').put('malformed','epoch');tx.oncomplete=resolve;tx.onerror=reject;});}finally{db.close();}
+ await assert.rejects(store.readRecoveryEpoch(),/provenance update failed/);await assert.rejects(store.ensureRecoveryEpoch(),/provenance update failed/);assert.deepEqual(await store.keys(),[]);
+});
+test('portable pre-proof ciphertext cannot restore its local authority or bypass required rotation',async()=>{
+ const f=fixture(),source=storage(),target=storage(),epoch=await source.ensureRecoveryEpoch();
+ const slot=await createEncryptedJournalSlot({...f.credentials,storage:source,scopeText:JSON.stringify(['ROLLING_WORKFLOW_V1',l2JournalScopeText(f.scope)]),keyDomain:'ROLLING_WORKFLOW_V1'});
+ await slot.write(await slot.read(),{status:'pre-proof',preproof:{version:1,epoch,attempt:hex(77),predecessor:'b'.repeat(64)}});
+ const records=await(await f.backup(source)).exportRecords();
+ const unsupported={keys:target.keys,read:target.read,compareAndSwap:target.compareAndSwap};await assert.rejects((await f.backup(unsupported)).restoreRecords(records),{code:'BB_JOURNAL_INVALID'});assert.deepEqual(await target.keys(),[]);
+ await(await f.backup(target)).restoreRecords(records);assert.notEqual(await target.readRecoveryEpoch(),epoch);assert.deepEqual(await(await f.backup(target)).exportRecords(),records);
+});

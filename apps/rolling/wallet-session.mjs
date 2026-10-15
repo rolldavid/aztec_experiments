@@ -260,7 +260,8 @@ export async function createRollingWalletSession({sdk,routing,ethers,config,boar
     funding.loadAggregate=async hash=>{const found=aggregateLookup?await aggregateLookup(hash):null;return found??(topups.bok?await topups.bok.loadAggregate(hash):null);};
    }
    await guard();app=createRollingApplication({sdk:{...sdk,isPrivateWalletForNode:routing.isPrivateWalletForNode},deployment,contextGuard:guard,privateStore,funding,onProgress,readBokAccountingPage:createUniformBokAccountingReader(),
-    accountSession:{owner:instance.address,wallet,node,journal,walletSecret:captured.secretKey,walletSalt:captured.salt}});
+    accountSession:{owner:instance.address,wallet,node,journal,walletSecret:captured.secretKey,walletSalt:captured.salt,
+     ...(typeof routing.createPreproofRecovery==='function'?{preproofRecovery:routing.createPreproofRecovery(wallet,node,journal)}:{})}});
    // The reader owns synchronization, but the session owns this same account
    // lock and PXE lifetime. Its head capability is the raw guarded application
    // method, never the lock-taking public facade (which would nest the lock).

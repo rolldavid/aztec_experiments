@@ -1,6 +1,6 @@
 // The caller owns the account lock, PXE lifetime and trusted-route guard.
 // autoSync:false requires synchronization before every private application operation.
-const methods=['readBokAccounting','readBalances','readWithdrawal','readModeratorStatus','readBokStatus','prepareBokPost','prepareBokRelease','readAccountStatus','readPreferenceHead','readProfile','ownedIdentities','prepare','submitPrepared','cancelPrepared','reconcile','inspectRecovery','prepareReplacement','resumeSaved'];
+const methods=['readBokAccounting','readBalances','readWithdrawal','readModeratorStatus','readBokStatus','prepareBokPost','prepareBokRelease','readAccountStatus','readPreferenceHead','readProfile','ownedIdentities','prepare','submitPrepared','cancelPrepared','reconcile','inspectRecovery','prepareReplacement','prepareInterrupted','resumeSaved'];
 // This financial confirmation must bind the caller's selection before the
 // synchronization await, not retain a mutable object until the raw app runs.
 function savedResumeArguments(args){

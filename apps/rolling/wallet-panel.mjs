@@ -249,7 +249,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
    recoveryInspection=result;notice='Recovery options checked. No transaction was sent.';
   })));
   const snapshot=recoveryInspection;if(!snapshot||snapshot.intent.intentId!==intent.intentId)return;
-  const statuses={pending:'This update is still pending. Keep your recovery file and check again.',unknown:'This update is still unresolved. Keep your recovery file and check again. Do not send another copy.',canonical:'An attempt is included in the verified chain. Check the existing transaction to reconcile it; do not send a replacement.',empty:'No signed transaction was found. Keep the saved action and recovery file; a replacement is not available.',
+  const statuses={'pre-proof-review':'The interrupted preparation can be reviewed on this device.',pending:'This update is still pending. Keep your recovery file and check again.',unknown:'This update is still unresolved. Keep your recovery file and check again. Do not send another copy.',canonical:'An attempt is included in the verified chain. Check the existing transaction to reconcile it; do not send a replacement.',empty:'No signed transaction was found. Keep the saved action and recovery file; a replacement is not available.',
    'context-changed':'The saved action no longer matches its required context. It cannot be repeated safely.', 'history-unavailable':'Earlier transaction details are unavailable. Keep your recovery file; a replacement cannot be reviewed safely.', 'limit-reached':'This update has reached its replacement limit. Keep your recovery file; no further replacement can be sent.',
    'replacement-available':'The earlier attempts can no longer be included. Review this saved update and a new maximum fee before sending a replacement.'};
   const savedReview=savedResumeReview(snapshot);
@@ -264,6 +264,14 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   if(!(snapshot.inclusionHistory??[]).length)details.append(paragraph('No earlier inclusion or fee record is available.'));
   content.append(details);
   if(savedReview)return showSavedResume(snapshot,savedReview,ready);
+  if(snapshot.status==='pre-proof-review'){
+   content.append(paragraph('This device retained an interrupted attempt before any signed transaction was saved. Review the saved action and a renewed maximum fee before confirming.'));
+   const review=button('Review interrupted action',()=>void work(async()=>{
+    const epoch=accountEpoch,id=intent.intentId;checkAccount(epoch);if(recoveryInspection!==snapshot)throw connectionFailure;
+    recoveryInspection=null;const result=await session.application.prepareInterrupted(id);checkAccount(epoch);
+    intent=result;blocked=false;notice='Interrupted action prepared for review. Nothing has been sent. Check the renewed maximum fee before confirming.';
+   }),true);review.dataset.unavailable=String(!ready());review.disabled=busy||!ready();content.append(review);return review;
+  }
   if(snapshot.status!=='replacement-available')return;
   const marker=intent.action.type==='read-marker',changed=marker&&snapshot.originalMarker?.blockHash!==snapshot.marker?.blockHash;
   let consent;

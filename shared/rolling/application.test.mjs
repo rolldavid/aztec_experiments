@@ -11,7 +11,8 @@ import {Fr} from '@aztec-labs/foundation/curves/bn254';
 import {deriveStorageSlotInMap} from '@aztec-labs/stdlib/hash';
 import {AztecAddress} from '@aztec-labs/stdlib/aztec-address';
 import {encodeArguments,loadContractArtifact,decodeFromAbi,getFunctionReturnType} from '@aztec-labs/stdlib/abi';
-import {createL2Journal} from '../l2-journal.mjs';
+import {createL2Journal,l2JournalScopeText} from '../l2-journal.mjs';
+import {createEncryptedJournalSlot} from '../journal-record.mjs';
 import {Tx,TxHash,mergeExecutionPayloads} from '@aztec-labs/stdlib/tx';
 import {BatchCall} from '@aztec-labs/aztec.js/contracts';
 import {PrivateMintAndPayFeePaymentMethod} from '../private-fee-payment.mjs';
@@ -1551,4 +1552,84 @@ test('ordinary unknown fence with an empty authenticated Tx journal remains unre
  await assert.rejects(app.prepareReplacement(prepared.intentId,{expectedTxHash:hex(77)}),{code:'ROLLING_RECOVERY_REQUIRED'});
  await assert.rejects(app.submitPrepared(prepared.intentId),{code:'ROLLING_RECOVERY_REQUIRED'});
  assert.deepEqual([...f.values],before);assert.equal(f.state.sends,0);
+});
+
+// New protocol only: actual encrypted workflow/L2 CAS; proof/network remain
+// labelled doubles. The engine's mandatory checkpoint ordering is tested in
+// test-receipt-baseline, not inferred from this application-port double.
+async function preproofFixture(){
+ const f=await realJournalFixture();let epoch='a'.repeat(64),serial=900;
+ Object.assign(f.options.privateStore,{readRecoveryEpoch:async()=>epoch,ensureRecoveryEpoch:async()=>epoch??='b'.repeat(64),rotateRecoveryEpoch:async()=>epoch='c'.repeat(64)});
+ f.options.accountSession.wallet.pxe.sync=async()=>{};
+ const cap={checkpoint:async()=>{const p=await f.options.accountSession.journal.assertCanStart();return {encoded:p.encoded};},send:async(payload,opts,lifecycle)=>{
+  f.state.proofs=(f.state.proofs??0)+1;const journal=f.options.accountSession.journal;journal.setOperation(opts.journalOperation);const prior=await journal.assertCanStart();
+  await lifecycle.guard('pre-proof');if(f.state.interrupt==='proof')throw Error('proof interrupted');
+  if(f.state.pauseProof)await f.state.pauseProof;await lifecycle.guard('pre-proof');
+  const tx=new JournalTx(hex(serial++));await journal.prepare(tx,prior);f.state.signedHash=tx.hash;
+  if(f.state.interrupt==='journal')throw Error('journal interruption');
+  await lifecycle.signed(tx.hash);if(f.state.interrupt==='signed')throw Error('signed interruption');
+  if(f.state.beforeBroadcast)await f.state.beforeBroadcast();await lifecycle.guard('signed');
+  f.state.sends++;const receipt={txHash:tx.getTxHash(),status:'checkpointed',executionResult:'success',blockNumber:1,blockHash:{toString:()=>hex(42)}};
+  f.receipts.set(tx.hash,receipt);journal.confirmed(receipt);return {receipt};
+ }};
+ f.options.accountSession.preproofRecovery=Object.freeze(cap);f.app=f.restart();
+ return {...f,setEpoch:value=>epoch=value};
+}
+test('positive pre-proof crash reload renews fees explicitly and preserves exact action before one send',async()=>{
+ const f=await preproofFixture(),prepared=await f.app.prepare({type:'like',post:'5'});f.state.interrupt='proof';
+ await assert.rejects(f.app.submitPrepared(prepared.intentId),/proof interrupted/);assert.equal(f.state.sends,0);assert.equal(await f.options.accountSession.journal.inspect(),null);
+ const resumed=await f.restartJournal(),view=await resumed.inspectRecovery(prepared.intentId);assert.equal(view.status,'pre-proof-review');
+ f.state.fee=22n;const review=await resumed.prepareInterrupted(prepared.intentId);assert.equal(review.maximumFee,'22');assert.deepEqual(review.action,prepared.action);assert.equal(review.nonce,prepared.nonce);assert.equal(review.status,'prepared');assert.equal(f.state.sends,0);
+ f.state.interrupt=null;const result=await resumed.submitPrepared(prepared.intentId);assert.equal(result.status,'confirmed');assert.equal(f.state.sends,1);assert.equal(f.state.proofs,2);
+});
+for(const loss of ['missing','restored','unsupported'])test(`positive pre-proof ${loss} provenance never authorizes renewed preparation`,async()=>{
+ const f=await preproofFixture(),p=await f.app.prepare({type:'like',post:'5'});f.state.interrupt='proof';await assert.rejects(f.app.submitPrepared(p.intentId));
+ if(loss==='missing')f.setEpoch(null);if(loss==='restored')await f.options.privateStore.rotateRecoveryEpoch();if(loss==='unsupported')delete f.options.accountSession.preproofRecovery;
+ const app=f.restart();assert.notEqual((await app.inspectRecovery(p.intentId)).status,'pre-proof-review');
+ const before=[...f.values];await assert.rejects(app.prepareInterrupted(p.intentId),{code:'ROLLING_RECOVERY_REQUIRED'});assert.deepEqual([...f.values],before);assert.equal(f.state.sends,0);
+ if(loss==='missing')assert.equal(await f.options.privateStore.readRecoveryEpoch(),null,'inspection must not initialize authority');
+});
+for(const phase of ['journal','signed'])test(`positive pre-proof signed bytes win after ${phase} interruption`,async()=>{
+ const f=await preproofFixture(),p=await f.app.prepare({type:'like',post:'5'});f.state.interrupt=phase;await assert.rejects(f.app.submitPrepared(p.intentId));
+ assert.equal((await f.options.accountSession.journal.inspect()).txHash,f.state.signedHash);const before=[...f.values];
+ await assert.rejects(f.restart().prepareInterrupted(p.intentId),{code:'ROLLING_RECOVERY_REQUIRED'});assert.deepEqual([...f.values],before);assert.equal(f.state.sends,0);assert.equal(f.state.proofs,1);
+});
+test('positive pre-proof predecessor stays exact and canonically acknowledged after reload',async()=>{
+ const f=await preproofFixture(),first=await f.app.prepare({type:'like',post:'5'});await f.app.submitPrepared(first.intentId);
+ const p=await f.app.prepare({type:'unlike',post:'5'});f.state.interrupt='proof';await assert.rejects(f.app.submitPrepared(p.intentId));
+ const resumed=await f.restartJournal();assert.equal((await resumed.inspectRecovery(p.intentId)).status,'pre-proof-review');
+ f.receipts.clear();await assert.rejects(resumed.prepareInterrupted(p.intentId),{code:'BB_SUBMISSION_UNKNOWN'});assert.equal(f.state.sends,1);
+});
+test('positive pre-proof late proof is vetoed after exact workflow revocation, before signed journal',async()=>{
+ const f=await preproofFixture(),p=await f.app.prepare({type:'like',post:'5'});let release,entered;
+ const started=new Promise(r=>entered=r);f.state.pauseProof=new Promise(r=>release=r);
+ const original=f.options.accountSession.preproofRecovery;
+ // The engine test separately validates the immutable capability; this double
+ // exposes the suspended lifecycle to test a second application's exact CAS.
+ f.options.accountSession.preproofRecovery={...original,send:async(...args)=>{const lifecycle=args[2],guard=lifecycle.guard;args[2]={...lifecycle,guard:async phase=>{await guard(phase);if(phase==='pre-proof')entered();}};return original.send(...args);}};
+ const pending=f.restart().submitPrepared(p.intentId);await started;
+ const next=await f.restart().prepareInterrupted(p.intentId);assert.equal(next.status,'prepared');release();await assert.rejects(pending,{code:'ROLLING_RECOVERY_REQUIRED'});
+ assert.equal(await f.options.accountSession.journal.inspect(),null);assert.equal(f.state.sends,0);
+});
+test('positive pre-proof restoration/account revocation before broadcast preserves signed bytes and prevents send',async()=>{
+ for(const change of ['epoch','account']){
+  const f=await preproofFixture(),p=await f.app.prepare({type:'like',post:'5'});
+  f.state.beforeBroadcast=async()=>{if(change==='epoch')await f.options.privateStore.rotateRecoveryEpoch();else f.state.guard=false;};
+  await assert.rejects(f.app.submitPrepared(p.intentId));assert.equal(f.state.sends,0);assert.equal((await f.options.accountSession.journal.inspect()).txHash,f.state.signedHash);
+ }
+});
+
+test('positive pre-proof renewed review cannot be submitted after financial restore invalidates provenance',async()=>{
+ const f=await preproofFixture(),p=await f.app.prepare({type:'like',post:'5'});f.state.interrupt='proof';await assert.rejects(f.app.submitPrepared(p.intentId));
+ await f.app.prepareInterrupted(p.intentId);await f.options.privateStore.rotateRecoveryEpoch();f.state.interrupt=null;
+ await assert.rejects(f.restart().submitPrepared(p.intentId),{code:'ROLLING_RECOVERY_REQUIRED'});assert.equal(f.state.sends,0);assert.equal(f.state.proofs,1);
+});
+
+test('signed replacement remains authoritative after an earlier positive pre-proof renewed review',async()=>{
+ const f=await replacementFixture({initialCrash:true,action:{type:'like',post:'5'}});f.validations.set(f.originalHash,{result:'invalid',reason:['Block header not found']});await f.reopen();
+ const scope={account:hex(3),chainId:'31337',version:'1',rollup:'0x'+'11'.repeat(20),board:hex(1),portal:'0x'+'22'.repeat(20)};
+ const slot=await createEncryptedJournalSlot({storage:f.options.privateStore,walletSecret:hex(8),walletSalt:'0',scopeText:JSON.stringify(['ROLLING_WORKFLOW_V1',l2JournalScopeText(scope)]),keyDomain:'ROLLING_WORKFLOW_V1'}),prior=await slot.read();
+ await slot.write(prior,{...prior.value,preproofReview:{version:1,epoch:'a'.repeat(64),attempt:hex(100),predecessor:'b'.repeat(64)}});
+ const review=await f.app.prepareReplacement(f.prepared.intentId,{expectedTxHash:f.originalHash});assert.equal(review.status,'replacement-prepared');
+ f.state.crashAfterPrepare=false;assert.equal((await f.app.submitPrepared(f.prepared.intentId)).status,'confirmed');assert.equal(f.transactions.length,2);assert.equal(f.state.sends,1);
 });

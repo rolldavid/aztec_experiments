@@ -103,6 +103,7 @@ export async function createJournalBackup({storage,walletSecret,walletSalt}) {
    const seen=new Set(),retained=new Map();let total=0;
    for(const record of records) {
     const incoming=await authenticate(record);total+=record.encoded.length;
+    if(incoming.descriptor.keyDomain==='ROLLING_WORKFLOW_V1'&&(incoming.value?.preproof||incoming.value?.preproofReview)&&typeof storage.rotateRecoveryEpoch!=='function')throw fail();
     if(total>LIMIT||seen.has(record.key))throw fail();seen.add(record.key);
     const current=await storage.read(record.key);
     if(current!==null&&current!==record.encoded){
@@ -117,6 +118,11 @@ export async function createJournalBackup({storage,walletSecret,walletSalt}) {
      retained.set(record.key,current);
     }
    }
+   // A restored pre-proof record is portable ciphertext, never local evidence
+   // of a not-yet-broadcast attempt. Invalidate before the FIRST restored write,
+   // including idempotent/partial restoration. Normal import holds the same
+   // account Web Lock as the complete proof/send lifecycle.
+   if(records.length&&typeof storage.rotateRecoveryEpoch==='function')await storage.rotateRecoveryEpoch();
    // Each atomic write is idempotent; partial restoration can be resumed. Never
    // replace an existing intent, even when an older backup decrypts correctly.
    for(const record of records) {

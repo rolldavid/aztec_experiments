@@ -668,3 +668,26 @@ for(const bok of [false,true])test(`actual custody runtime prepares original ${b
  assert.equal(quote.recipient,captured.address);assert.equal(quote.estimatedGasWei,'400');assert.equal(f.state.sends,0);
  chain='0x1';await assert.rejects(cap.confirm(),{code:'ROLLING_RUNTIME_UNAVAILABLE'});assert.equal(f.state.sends,0);
 });
+
+test('positive pre-proof lifecycle capability stays inside the account lease until original proof settles',async()=>{
+ const f=await sessionFixture();let release,entered,created=0;
+ const started=new Promise(resolve=>entered=resolve),proof=new Promise(resolve=>release=resolve);
+ f.input.routing.createPreproofRecovery=(wallet,node,journal)=>{
+  created++;assert(f.state.active);assert.equal(wallet,f.wallet);assert.equal(node,f.node);
+  return Object.freeze({checkpoint:async()=>{assert(f.state.active);const saved=await journal.assertCanStart();return {encoded:saved.encoded};},send:async(_payload,_options,lifecycle)=>{
+   assert(f.state.active);await lifecycle.guard('pre-proof');entered();await proof;assert(f.state.active);await lifecycle.guard('pre-proof');throw Error('controlled proof interruption');
+  }});
+ };
+ const session=await createRollingWalletSession(f.input);assert.equal(created,1);
+ const prepared=await session.application.prepare({type:'name',first:'Fresh',last:'Willow'});
+ const pending=session.application.submitPrepared(prepared.intentId);await started;
+ assert.equal(session.busy,true);assert.equal(f.state.active,true);await assert.rejects(session.close(),{code:'ROLLING_BUSY'});
+ await assert.rejects(session.application.prepareInterrupted(prepared.intentId),{code:'ROLLING_BUSY'});
+ release();await assert.rejects(pending,/controlled proof interruption/);assert.equal(session.busy,false);assert.equal(f.state.active,false);
+ assert.equal((await session.application.inspectRecovery(prepared.intentId)).status,'pre-proof-review');
+ const review=await session.application.prepareInterrupted(prepared.intentId);assert.equal(review.status,'prepared');assert.equal(f.state.sends,0);await session.close();
+});
+test('positive pre-proof capability creation failure closes initialization without exposing an application',async()=>{
+ const f=await sessionFixture();f.input.routing.createPreproofRecovery=()=>{throw Error('invalid built-in capability');};
+ await assert.rejects(createRollingWalletSession(f.input),/invalid built-in capability/);assert.equal(f.state.sends,0);assert.equal(f.state.active,false);assert.equal(f.state.stops,1);
+});
