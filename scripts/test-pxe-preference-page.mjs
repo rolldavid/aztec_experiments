@@ -288,12 +288,14 @@ await writeFile(receipt,JSON.stringify({cleaned,exists}));
 // labelled fake-indexeddb. This is not native Chromium storage qualification.
 // Transactions/inclusion are synthetic; processed ACIR is a separate opt-in.
 const coldHttpDiagnostic=process.env.ROLLING_COLD_HTTP_DIAGNOSTIC==='1';
+const coldRoundtripDiagnostic=process.env.ROLLING_COLD_ROUNDTRIP_DIAGNOSTIC==='1';
+if(coldRoundtripDiagnostic)assert(!coldHttpDiagnostic&&process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1'&&process.env.ROLLING_PREFERENCE_PAGE_ACIR==='1','Roundtrip diagnostic requires existing SDK/ACIR opt-ins and excludes HTTP mode');
 if(coldHttpDiagnostic)assert(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1'&&process.env.ROLLING_PREFERENCE_PAGE_ACIR==='1','HTTP diagnostic requires both actual SDK/ACIR opt-ins');
 if(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1') {
  await test('owned isolated SDK and ACIR suite',async suite=>{
   const {pathToFileURL}=await import('node:url');
   const after=fn=>suite.after(fn);
-  const test=(name,fn)=>suite.test(name,{skip:coldHttpDiagnostic&&!name.startsWith('cold HTTP progress')?'HTTP diagnostic only; original case unrun':false},fn);
+  const test=(name,fn)=>suite.test(name,{skip:coldHttpDiagnostic&&!name.startsWith('cold HTTP progress')?'HTTP diagnostic only; original case unrun':coldRoundtripDiagnostic&&!name.startsWith('cold roundtrip budget')?'Roundtrip diagnostic only; original case unrun':false},fn);
   // Bind the reviewed b440 atomicity repair before importing the adapter. No
   // shared dependency is patched by this test. Historical v1 failures remain
   // unresolved evidence; selecting the application's store does not fix v1.
@@ -1127,6 +1129,35 @@ if(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1') {
       assert.equal(batch.nextBlock,one.nextBlock);assert.equal(batch.nextLog,one.nextLog);assert.deepEqual(batch.records,one.records);assert.equal(batch.sequence,1);assert.equal(one.sequence,3);assert.equal(r.page.acirCompleted??0,0);assert.deepEqual(await r.read(),await scalar.read());
       assert.deepEqual(await r.page.processRollingPreferenceRecovery({...base,block:blocks},{contextGuard:async()=>{}}),batch,'Lost response replays exact durable mailbox');
       const withRecord=await recoveryStep(f,r,batch),complete=await recoveryStep(f,r,withRecord);assert.equal(withRecord.records.length,1);assert.equal(complete.head.revision,'1');assert.equal(complete.complete,true);assert.equal(f.counters.tagQueries,f.tagsBefore);
+    });
+    // Numeric diagnostic of the existing actual SDK frame; finite chain and
+    // injected RPC delays are labelled. No browser/whole-cold qualification.
+    if(coldRoundtripDiagnostic)await test('cold roundtrip budget for actual authenticated32-block empty frame',async t=>{
+      const setupAt=performance.now(),f=await acirFixture(t);
+      for(let i=0;i<33;i++)await f.appendEmpty(); // genuine prefix4, empty5..36, anchor37
+      const prefix=await Promise.all([1,2,3,4].map(n=>f.compact(n)));
+      const blocks=await Promise.all(Array.from({length:32},(_,i)=>f.compact(i+5)));
+      const report={kind:'actual-sdk-roundtrip-budget',scope:'Actual SDK, Poseidon/archive/body verification, processed ACIR prefix and application atomic fake-indexeddb; synthetic chain and controlled RPC delays. Not browser or120s acceptance.',setupMs:performance.now()-setupAt,frames:[]};
+      const union=intervals=>{let total=0,end=-Infinity;for(const [a,b]of [...intervals].sort((a,b)=>a[0]-b[0])){total+=Math.max(0,b-Math.max(a,end));end=Math.max(end,b);}return total;};
+      for(const [label,witnessDelayMs,fixedDelayMs]of [['immediate',0,0],['witness130',130,0],['fixed130',0,130],['both130',130,130]]){
+        const r=await f.receiver({recovery:true}),initial=await r.page.processRollingPreferenceRecovery(recoveryInput(f),{contextGuard:async()=>{}});
+        const start=await r.page.processRollingPreferenceRecovery({...recoveryInput(f),expected:{epoch:initial.epoch,sequence:initial.sequence},block:prefix},{contextGuard:async()=>{}});
+        assert.equal(start.nextBlock,5);assert.equal(start.records.length,1);
+        const before=await r.read(),callsBefore=r.page.acirCompleted??0,methods=['getBlockHashMembershipWitness','getBlockData','getNodeInfo','getContract'],originals=new Map(methods.map(k=>[k,r.page.node[k]])),spans=[],pending=new Set();let maximumPending=0;
+        const begun=performance.now();
+        for(const method of methods)r.page.node[method]=async function(...args){
+          const entry={method,startMs:performance.now()-begun},delay=method==='getBlockHashMembershipWitness'?witnessDelayMs:fixedDelayMs;spans.push(entry);
+          const token={};pending.add(token);maximumPending=Math.max(maximumPending,pending.size);
+          try{if(delay)await new Promise(resolve=>setTimeout(resolve,delay));return await Reflect.apply(originals.get(method),this,args);}finally{entry.endMs=performance.now()-begun;pending.delete(token);}
+        };
+        let next;try{next=await r.page.processRollingPreferenceRecovery({...recoveryInput(f),expected:{epoch:start.epoch,sequence:start.sequence},block:blocks},{contextGuard:async()=>{}});}finally{for(const [method,original]of originals)r.page.node[method]=original;}
+        const durationMs=performance.now()-begun;assert.equal(pending.size,0);assert.equal(next.nextBlock,37);assert.equal(next.sequence,start.sequence+1);assert.equal(next.complete,false);assert.deepEqual(next.records,[]);assert.deepEqual(await r.read(),before);assert.equal(r.page.acirCompleted??0,callsBefore);
+        const counts=Object.fromEntries(methods.map(method=>[method,spans.filter(x=>x.method===method).length]));assert.equal(counts.getBlockHashMembershipWitness,32);assert.equal(counts.getNodeInfo,3);assert.equal(counts.getContract,3);assert.equal(counts.getBlockData,3);
+        const witness=spans.filter(x=>x.method==='getBlockHashMembershipWitness'),fixed=spans.filter(x=>x.method!=='getBlockHashMembershipWitness');
+        report.frames.push({label,witnessDelayMs,fixedDelayMs,durationMs,counts,maximumPending,allPortUnionMs:union(spans.map(x=>[x.startMs,x.endMs])),witnessPortUnionMs:union(witness.map(x=>[x.startMs,x.endMs])),fixedPortUnionMs:union(fixed.map(x=>[x.startMs,x.endMs])),outsidePortIntervalsMs:durationMs-union(spans.map(x=>[x.startMs,x.endMs])),spans});
+        const witnessesAfter=f.counters.archiveProofs;assert.deepEqual(await r.page.processRollingPreferenceRecovery({...recoveryInput(f),expected:{epoch:start.epoch,sequence:start.sequence},block:blocks},{contextGuard:async()=>{}}),next);assert.equal(f.counters.archiveProofs,witnessesAfter,'Durable replay must not reauthenticate consumed bodies');
+      }
+      console.log(JSON.stringify(report));
     });
     await test('actual SDK empty batch authenticates every physical block and advances one durable sequence',async t=>{
       const f=await acirFixture(t),r=await f.receiver({recovery:true}),start=await r.page.processRollingPreferenceRecovery(recoveryInput(f),{contextGuard:async()=>{}});
