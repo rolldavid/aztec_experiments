@@ -181,6 +181,20 @@ test('funding metadata cannot supply a private secret or silently create a payme
  const f=fundingFixture();await assert.rejects(f.app.prepare({type:'claim-deposit',receipt:{...f.receipt,secret:hex(55)}}));assert.equal(f.state.claimReads.length,0);assert.equal(f.state.sends,0);
  const plain=fixture();await assert.rejects(plain.app.prepare({type:'claim-deposit',receipt:f.receipt}),{code:'ROLLING_FUNDING_UNAVAILABLE'});
 });
+test('invalid name drafts remain correctable before availability, fees or journal writes',async()=>{
+ const f=fixture();
+ for(const [first,last] of [['Bok','Lane'],['A'.repeat(33),'Lane'],['René','Lane'],['River','123'],[' ','Lane']]){
+  await assert.rejects(f.app.prepare({type:'name',first,last}),{code:'ROLLING_NAME_INVALID'});
+  assert.equal(f.state.estimates,0);assert.equal(f.state.sends,0);assert.equal(f.values.size,0);assert.equal(f.state.nameReads?.length??0,0);
+ }
+ const prepared=await f.app.prepare({type:'name',first:'River',last:'Lane'});
+ assert.equal(prepared.status,'prepared');assert.equal(f.state.sends,0);assert.equal(f.state.estimates,1);
+ // An existing intent remains authoritative; another invalid draft cannot make
+ // a pending action look like a harmless form error or discard its journal.
+ const saved=[...f.values.values()];
+ await assert.rejects(f.app.prepare({type:'name',first:'Bok',last:'Lane'}),{code:'ROLLING_RECOVERY_REQUIRED'});
+ assert.deepEqual([...f.values.values()],saved);assert.equal(f.state.estimates,1);
+});
 test('name availability uses normalized canonical ID and rejects a collision before fees or journal writes',async()=>{
  const f=fixture();f.state.nameRegistered=1n;
  await assert.rejects(f.app.prepare({type:'name',first:'  JoHN ',last:' DOE '}),{code:'ROLLING_NAME_TAKEN'});

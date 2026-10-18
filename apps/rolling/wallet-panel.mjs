@@ -32,7 +32,7 @@ const paragraph=text=>el('p',{},text);
 const label=(text,control)=>el('label',{class:'form-field'},text,control);
 function nameFailure(failure){
  try{const code=Object.getOwnPropertyDescriptor(failure,'code');if(!code||!Object.hasOwn(code,'value'))return null;
-  return code.value==='ROLLING_NAME_TAKEN'?'This name is already registered. Choose another first and last name.':code.value==='ROLLING_NAME_AVAILABILITY_UNAVAILABLE'?'Name availability could not be checked. Your draft is preserved; try again when the private connection is available.':null;
+  return code.value==='ROLLING_NAME_INVALID'?'Enter a valid first and last name. Use 1–32 ASCII letters, spaces, apostrophes or hyphens in each part; start and end with a letter. Bok is reserved.':code.value==='ROLLING_NAME_TAKEN'?'This name is already registered. Choose another first and last name.':code.value==='ROLLING_NAME_AVAILABILITY_UNAVAILABLE'?'Name availability could not be checked. Your draft is preserved; try again when the private connection is available.':null;
  }catch{return null;}
 }
 function aggregateFundingFailure(failure){

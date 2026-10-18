@@ -487,7 +487,12 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
       case 'read-marker':return [preferenceRevision(action.expectedRevision),field(action.thread,true),version(action.throughBlock)];
       case 'bio':return [field(action.name,true),version(action.expectedVersion),...text(action.content,32,false)];
       case 'avatar':return avatar(action);
-      case 'name':return nameRegistration(action.first,action.last).arguments;
+      case 'name':{
+        // This is input validation before fee estimation or a new journal write.
+        // Keep it distinct from an unknown preparation/submission outcome.
+        try{return nameRegistration(action.first,action.last).arguments;}
+        catch(error){if(error instanceof TypeError||error instanceof RangeError)throw fail('ROLLING_NAME_INVALID');throw error;}
+      }
       case 'subboard':{
         check(typeof action.slug==='string'&&/^[a-z0-9](?:[a-z0-9]|-(?!-)){1,38}[a-z0-9]$/.test(action.slug));
         return [[...new TextEncoder().encode(action.slug),...Array(40-action.slug.length).fill(0)],action.slug.length,
