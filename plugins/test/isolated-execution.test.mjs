@@ -148,6 +148,43 @@ test('actual failed cleanup record poisons capability and blocks reopen until re
  }finally{t.mock.restoreAll();await f.close();}
 });
 
+// Labelled local CLI double exercises actual process/error/cleanup boundaries;
+// it neither starts Docker nor executes generated source.
+for(const mode of ['absent','owned','unavailable','foreign'])test('failed create preserves cause and reconciles '+mode+' container',async()=>{
+ const f=await fixture();try{
+  const script=path.join(f.root,'docker.cjs'),docker=path.join(f.root,'docker'),marker=path.join(f.root,'create.json'),removed=path.join(f.root,'removed');
+  await fs.writeFile(script,`const fs=require('node:fs'),a=require('node:assert/strict');
+const args=process.argv.slice(2),mode=${JSON.stringify(mode)},marker=${JSON.stringify(marker)},removed=${JSON.stringify(removed)};
+const image='sha256:44479404b67dde931cf8f202a3ce34703876e709ce124924251da8435d5d8651',id='b'.repeat(64);
+a.equal(args.shift(),'--host');args.shift();
+const absent=target=>{process.stderr.write('Error response from daemon: No such container: '+target+'\\n');process.exitCode=1;};
+if(args[0]==='image')console.log(JSON.stringify({id:image,os:'linux',architecture:'amd64'}));
+else if(args[0]==='create'){a(!fs.existsSync(marker),'Create must not replay');fs.writeFileSync(marker,JSON.stringify({name:args[args.indexOf('--name')+1]}));process.stderr.write('SYNTHETIC_PRIVATE_DAEMON_DETAIL');process.exitCode=125;}
+else if(args[0]==='container'&&args[1]==='inspect'){
+ const target=args[2];if(!fs.existsSync(marker)||fs.existsSync(removed)||mode==='absent')absent(target);
+ else if(mode==='unavailable'){process.stderr.write('SYNTHETIC_PRIVATE_DAEMON_UNAVAILABLE');process.exitCode=1;}
+ else{const {name}=JSON.parse(fs.readFileSync(marker));console.log(JSON.stringify({Id:id,Name:'/'+name,Image:image,Config:{Labels:{'bok.static.owner':mode==='owned'?name:'another-owner'}}}));}
+}else if(args[0]==='rm'){a.equal(mode,'owned');a.equal(args[2],id);fs.writeFileSync(removed,'removed');console.log(id);}
+else throw Error('Unexpected CLI operation');
+`);
+  const quote=value=>"'"+value.replaceAll("'","'\\''")+"'";
+  await fs.writeFile(docker,'#!/bin/sh\nexec '+quote(process.execPath)+' '+quote(script)+' "$@"\n',{mode:0o700});
+  const runner=createIsolatedExecution({workspaceRoot:f.root,outputRoot:f.output,docker});
+  const clean=['absent','owned'].includes(mode);let observed;
+  await assert.rejects(runner.execute({sourceDirectory:f.source,revision}),error=>{
+   observed=error;assert.equal(error.code,clean?'STATIC_FAILED':'STATIC_CLEANUP_REQUIRED');
+   assert.deepEqual(error.result.failure,{phase:'setup',operation:'create',exitCode:125,kind:'command-failed'});
+   assert(!JSON.stringify(error.result).includes('SYNTHETIC_PRIVATE'));assert(!JSON.stringify(error.result).includes(f.root));return true;
+  });
+  const [dir]=await fs.readdir(f.output),record=JSON.parse(await fs.readFile(path.join(f.output,dir,'failure.json')));
+  assert.deepEqual(record.failure,observed.result.failure);assert.deepEqual(record.cleanupFailure,observed.result.cleanupFailure);
+  assert.deepEqual(JSON.parse(await fs.readFile(path.join(f.output,dir,'cleanup.json'))),{ownedContainerAbsent:clean});
+  assert.equal(await fs.access(removed).then(()=>true,()=>false),mode==='owned');
+  if(clean)assert.equal((await runner.assertAvailable()).available,true);
+  else{await assert.rejects(runner.assertAvailable(),{code:'STATIC_UNAVAILABLE'});await assert.rejects(createIsolatedExecution({workspaceRoot:f.root,outputRoot:f.output,docker}).assertAvailable(),{code:'STATIC_UNAVAILABLE'});}
+ }finally{await f.close();}
+});
+
 test('exact measured container absence never accepts unknown errors, collisions or another target',()=>{
  const name='bok-static-11111111-1111-1111-1111-111111111111',id='a'.repeat(64),absent=target=>({code:1,stdout:'\n',stderr:'Error response from daemon: No such container: '+target+'\n'});
  assert(isStaticContainerAbsent(absent(name),name));assert(isStaticContainerAbsent(absent(id),id));

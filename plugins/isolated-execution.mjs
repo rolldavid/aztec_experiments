@@ -154,7 +154,10 @@ export function createIsolatedExecution({workspaceRoot,outputRoot,docker='/usr/l
  return Object.freeze({async assertAvailable(){try{return await available(invoke);}catch{throw finiteError('STATIC_UNAVAILABLE');}},async execute({sourceDirectory,revision}){
   if(poisoned)throw finiteError('STATIC_UNAVAILABLE');assert(!active,'One isolated execution at a time');active=true;
   const name='bok-static-'+randomUUID(),end=Date.now()+workMs+15000;let cid,created=false,output,closed=false,cleaning=false;const failureResult={passed:false,revision:typeof revision==='string'&&/^[0-9a-f]{40}$/.test(revision)?revision:null,phase:'input',log:''};
-  const command=(args,options={})=>invoke(args,{...options,deadline:end-(cleaning?0:8000)});
+  let operation=null,exitCode=null;
+  const command=async(args,options={})=>{operation=args[0]==='container'?'container-inspect':args[0];exitCode=null;const result=await invoke(args,{...options,deadline:end-(cleaning?0:8000)});exitCode=result.code;return result;};
+  // Keep finite host diagnostics, never arbitrary daemon/source output or paths.
+  const diagnosis=(cause,phase=failureResult.phase)=>({phase,operation,exitCode,kind:['timeout','output-limit','transport'].includes(cause?.code)?cause.code:exitCode!==null&&exitCode!==0?'command-failed':'validation'});
   const inspect=async target=>{const r=await command(['inspect',target,'--format','{{json .}}'],{max:65536});assert.equal(r.code,0);return JSON.parse(r.stdout);};
   try{
    assert(typeof revision==='string'&&/^[0-9a-f]{40}$/.test(revision));
@@ -203,19 +206,27 @@ export function createIsolatedExecution({workspaceRoot,outputRoot,docker='/usr/l
     limits:{...STATIC_LIMITS,workMs,totalMs:workMs+15000},publication:'untrusted static output; separate origin required; no publication performed'};
    await fs.writeFile(path.join(output,'result.json'),JSON.stringify(receipt,null,2)+'\n',{flag:'wx',mode:0o600});
    return receipt;
-  }catch(cause){if(['timeout','output-limit','transport'].includes(cause?.code))failureResult.transport=cause.code;const error=finiteError(failureResult.phase==='availability'?'STATIC_UNAVAILABLE':'STATIC_FAILED');error.result=Object.freeze({...failureResult});throw error;
+  }catch(cause){failureResult.failure=diagnosis(cause);if(['timeout','output-limit','transport'].includes(cause?.code))failureResult.transport=cause.code;const error=finiteError(failureResult.phase==='availability'?'STATIC_UNAVAILABLE':'STATIC_FAILED');error.result=Object.freeze({...failureResult});throw error;
   }finally{
    cleaning=true;
    try{
     if(created){
      // Reconcile an ambiguous create by its unique name+ownership label. Never
      // start again; only remove the positively owned immutable container ID.
-     if(!cid){const c=await inspect(name);assert.equal(c.Name,'/'+name);assert.equal(c.Config.Labels['bok.static.owner'],name);assert.equal(c.Image,STATIC_IMAGE);assert(/^[0-9a-f]{64}$/.test(c.Id));cid=c.Id;}
-     const r=await command(['rm','-f',cid]);assert.equal(r.code,0);
-     const absent=await command(['container','inspect',cid,'--format','{{.Id}}']);assert(isStaticContainerAbsent(absent,cid));closed=true;
+     if(!cid){
+      const observed=await command(['container','inspect',name,'--format','{{json .}}'],{max:65536});
+      if(isStaticContainerAbsent(observed,name))closed=true;
+      else{assert.equal(observed.code,0);const c=JSON.parse(observed.stdout);assert.equal(c.Name,'/'+name);assert.equal(c.Config.Labels['bok.static.owner'],name);assert.equal(c.Image,STATIC_IMAGE);assert(/^[0-9a-f]{64}$/.test(c.Id));cid=c.Id;}
+     }
+     if(cid){const r=await command(['rm','-f',cid]);assert.equal(r.code,0);
+      const absent=await command(['container','inspect',cid,'--format','{{.Id}}']);assert(isStaticContainerAbsent(absent,cid));closed=true;}
+
     }else closed=true;
-   }catch{poisoned=true;const error=finiteError('STATIC_CLEANUP_REQUIRED');error.result=Object.freeze({...failureResult,phase:'cleanup'});throw error;
-   }finally{active=false;if(output)try{await fs.writeFile(path.join(output,'cleanup.json'),JSON.stringify({ownedContainerAbsent:closed}),{flag:'wx',mode:0o600});}catch{poisoned=true;const error=finiteError('STATIC_RECORD_FAILED');error.result=Object.freeze({...failureResult,phase:'record'});throw error;}}
+   }catch(cause){failureResult.cleanupFailure=diagnosis(cause,'cleanup');poisoned=true;const error=finiteError('STATIC_CLEANUP_REQUIRED');error.result=Object.freeze({...failureResult,phase:'cleanup'});throw error;
+   }finally{active=false;if(output)try{
+    if(failureResult.failure||failureResult.cleanupFailure)await fs.writeFile(path.join(output,'failure.json'),JSON.stringify({revision:failureResult.revision,sourceDigest:failureResult.sourceDigest,failure:failureResult.failure,cleanupFailure:failureResult.cleanupFailure}),{flag:'wx',mode:0o600});
+    await fs.writeFile(path.join(output,'cleanup.json'),JSON.stringify({ownedContainerAbsent:closed}),{flag:'wx',mode:0o600});
+   }catch{poisoned=true;const error=finiteError('STATIC_RECORD_FAILED');error.result=Object.freeze({...failureResult,phase:'record'});throw error;}}
   }
  }});
 }
