@@ -612,3 +612,101 @@ test('Exact cancellation copied campaign cannot relocate the permanent dispatch 
   await assert.rejects(seedTestnetLiquidity({plan:null,statePath,stage:'approve-usdc',keyFile:'/absent/key.json',recovery:{kind:'exact-dispatch'}}),/^Error: Original exact cancellation state path required$/);
  }
 });
+
+async function nonceLineageFixture(){
+ const f=await seedSuccessorFixture();await f.ops.runSepoliaLiquiditySuccessor(f.args);
+ const {createHash}=await import('node:crypto'),digest=v=>createHash('sha256').update(v).digest('hex');
+ let saved={operations:{}};const lineageStore={read:()=>saved,write:async next=>{saved=structuredClone(next);}};
+ const sourceHashes=Object.fromEntries(f.ops.exactCancellationFiles.map(name=>[name,digest(name)])),dispatchEntrySha256=digest('consumed exact dispatch');
+ const reference=r=>({hash:r.hash,identitySha256:digest(r.identity)});
+ const previous=[f.original.operations['approve-usdc'],f.first,f.successorState.operations['relay-funding']].map(reference);
+ const intent={schemaVersion:1,originalPlanSha256:f.args.resolution.originalPlanSha256,sourceHashes,dispatchEntrySha256,previous,ethereumUrl:'https://ethereum-sepolia-rpc.publicnode.com',expiresAt:f.args.successor.expiresAt+600,maxFeePerGas:'5000000',maxPriorityFeePerGas:'3000000'};
+ const ports={...f.args.ports,assertAbsent:async hashes=>{for(const h of hashes)assert.equal(f.receipts.has(h),false);},broadcastExact:async(raw,hash)=>{assert.equal(saved.operations[saved.nonceLineage.intents.length-1].hash,hash);f.broadcasts.push(raw);return hash;}};
+ const args={...f.args,successorStore:f.args.store,lineageStore,sourceHashes,dispatchEntrySha256,intent,ports,assertSourceFiles:async()=>{}};
+ return {...f,args,reference,get ledger(){return saved;},continuation:()=>({...f.continuation(),lineageStore,sourceHashes,dispatchEntrySha256,ports})};
+}
+test('Nonce lineage records bounded explicit fresh cancellations, all predecessors and exactly one dispatch per intent',async()=>{
+ const f=await nonceLineageFixture(),originals=JSON.stringify([f.original,f.first,f.successorState]);
+ assert.equal((await f.ops.runSepoliaNonceCancellation(f.args)).canonical,false);
+ assert.equal(f.signedSteps.length,3);assert.equal(f.broadcasts.length,3);
+ const record=f.ledger.operations[0],snapshot=JSON.stringify(f.ledger);
+ assert.deepEqual(record.deployment.previous,f.args.intent.previous);assert.equal(record.broadcastAttempt.state,'returned');
+ await f.ops.runSepoliaNonceCancellation({...f.args,now:()=>Number.MAX_SAFE_INTEGER});assert.equal(JSON.stringify(f.ledger),snapshot);assert.equal(f.broadcasts.length,3);
+ const next={...f.args.intent,previous:[...f.args.intent.previous,f.reference(record)],maxFeePerGas:'7000000',maxPriorityFeePerGas:'4000000'};
+ await f.ops.runSepoliaNonceCancellation({...f.args,intent:next});assert.equal(f.signedSteps.length,4);assert.equal(f.ledger.nonceLineage.intents.length,2);assert.equal(f.broadcasts.length,4);
+ assert.equal(JSON.stringify([f.original,f.first,f.successorState]),originals);
+});
+test('Nonce lineage rejects omitted, duplicated, mutated source or fee authority before signing',async()=>{
+ for(const change of ['omitted','duplicate','identity','source','dispatch','plan','low-fee','low-tip','url','extra','expired','future']){
+  const f=await nonceLineageFixture(),intent=structuredClone(f.args.intent);
+  if(change==='omitted')intent.previous.pop();if(change==='duplicate')intent.previous[1]=intent.previous[0];if(change==='identity')intent.previous[0].identitySha256='a'.repeat(64);
+  if(change==='source')intent.sourceHashes['plan.json']='a'.repeat(64);if(change==='dispatch')intent.dispatchEntrySha256='a'.repeat(64);if(change==='plan')intent.originalPlanSha256='a'.repeat(64);
+  if(change==='low-fee')intent.maxFeePerGas='3000000';if(change==='low-tip')intent.maxPriorityFeePerGas='2000000';if(change==='url')intent.ethereumUrl='http://example.invalid';if(change==='extra')intent.to='0x'+'a'.repeat(40);
+  if(change==='expired')intent.expiresAt=1;if(change==='future')intent.expiresAt+=86400;
+  await assert.rejects(f.ops.runSepoliaNonceCancellation({...f.args,intent}),change);assert.equal(f.signedSteps.length,2,change);assert.equal(f.broadcasts.length,2,change);assert.deepEqual(f.ledger,{operations:{}});
+ }
+});
+test('Nonce lineage reconciles every original and fresh winner, preserving continuation prefix',async()=>{
+ for(const winner of ['original','cancellation','successor','lineage']){
+  const f=await nonceLineageFixture();await f.ops.runSepoliaNonceCancellation(f.args);
+  const hash={original:f.args.resolution.originalTransactionHash,cancellation:f.first.hash,successor:f.successorState.operations['relay-funding'].hash,lineage:f.ledger.operations[0].hash}[winner];f.confirm(hash);
+  const result=await f.ops.runSepoliaNonceCancellation(f.args);assert.equal(result.winner,winner);assert.equal(result.transactionHash,hash);assert.equal(result.status,'succeeded');assert.equal(f.broadcasts.length,3);
+  assert.equal((await f.ops.resolveSepoliaSeedNonce({...f.args,store:f.args.cancellationStore})).winner,winner);
+  const continuation=f.continuation(),stage=winner==='original'?'seed-usdc-fee':'approve-usdc';await f.ops.runSepoliaLiquidityContinuation({...continuation,stage});assert.equal(f.signedSteps[3].name,stage);assert.equal(f.signedSteps[3].nonce,continuation.remainingPlan.ownerNonce);
+ }
+});
+test('Nonce lineage detects winners before signing and after signature before dispatch',async()=>{
+ for(const late of [false,true]){
+  const f=await nonceLineageFixture();let calls=0;
+  f.args.ports.preflightCancellation=async()=>{if(++calls===(late?2:1))f.confirm(f.args.resolution.originalTransactionHash);};
+  const result=await f.ops.runSepoliaNonceCancellation(f.args);assert.equal(result.winner,'original');assert.equal(f.signedSteps.length,late?3:2);assert.equal(f.broadcasts.length,2);
+  await f.ops.runSepoliaNonceCancellation(f.args);assert.equal(f.broadcasts.length,2);
+ }
+});
+test('Nonce lineage uncertain signing, storage and single raw transport failures never replay',async()=>{
+ for(const failure of ['preparing-write','signed-write','sign','429','timeout','sources-after-sign']){
+  const f=await nonceLineageFixture();let attempts=0;
+  if(failure==='sign')f.args.ports.sign=async()=>{attempts++;throw Error();};
+  if(failure==='429'||failure==='timeout')f.args.ports.broadcastExact=async()=>{attempts++;throw Object.assign(Error(),failure==='429'?{httpStatus:429}:{code:'TIMEOUT'});};
+  if(failure.includes('write')){const write=f.args.lineageStore.write;f.args.lineageStore.write=async next=>{await write(next);if(failure==='preparing-write'||next.operations[0]?.phase==='submission-unknown')throw Error('uncertain durable write');};}
+  if(failure==='sources-after-sign')f.args.assertSourceFiles=async()=>{if(f.signedSteps.length>2)throw Error('source changed');};
+  try{await f.ops.runSepoliaNonceCancellation(f.args);}catch{}
+  const snapshot=JSON.stringify(f.ledger),signed=f.signedSteps.length,sent=f.broadcasts.length;
+  f.args.assertSourceFiles=async()=>{};
+  await f.ops.runSepoliaNonceCancellation({...f.args,now:()=>Number.MAX_SAFE_INTEGER});assert.equal(JSON.stringify(f.ledger),snapshot);assert.equal(f.signedSteps.length,signed);assert.equal(f.broadcasts.length,sent);assert(attempts<=1);
+  if(failure==='429')assert.equal(f.ledger.operations[0].broadcastAttempt.httpStatus,429);
+ }
+});
+test('Nonce lineage incomplete prior intent, changed prior raw, conflicting and noncanonical receipts remain fenced',async()=>{
+ for(const failure of ['preparing','changed-raw','conflict','failed','reorg','nonfinal','effect']){
+  const f=await nonceLineageFixture();if(failure==='preparing')f.args.ports.sign=async()=>{throw Error();};
+  await f.ops.runSepoliaNonceCancellation(f.args);const record=f.ledger.operations[0];
+  if(failure==='preparing'){
+   const next={...f.args.intent,maxFeePerGas:'6000000',maxPriorityFeePerGas:'4000000'};await assert.rejects(f.ops.runSepoliaNonceCancellation({...f.args,intent:next}));continue;
+  }
+  f.confirm(record.hash,failure==='failed'?0:1,12);f.setFinalized(failure==='nonfinal'?11:12);
+  if(failure==='changed-raw')record.raw=f.first.raw;if(failure==='conflict')f.confirm(f.first.hash);if(failure==='reorg')f.setCanonical('0x'+'b'.repeat(64),12);if(failure==='effect')f.setEffect(false);
+  await assert.rejects(f.ops.runSepoliaLiquidityContinuation({...f.continuation(),stage:'approve-usdc'}),failure);assert.equal(f.signedSteps.length,3);
+ }
+});
+test('Sepolia contract scope reads are shared only at the same canonical anchor; failed checks never stay cached',async()=>{
+ const {createSepoliaScopeCheck}=await import('../operations.mjs');let calls=0,fail=false;const scope=createSepoliaScopeCheck(async()=>{calls++;if(fail)throw Error();});
+ const a={number:12,hash:'0x'+'a'.repeat(64)},b={...a,hash:'0x'+'b'.repeat(64)};
+ await Promise.all([scope(a),scope(a)]);await scope(a);assert.equal(calls,1);await scope(b);assert.equal(calls,2);
+ fail=true;await assert.rejects(scope({...a,number:13}));fail=false;await scope({...a,number:13});assert.equal(calls,4);
+});
+test('Nonce lineage private source capture binds six unchanged files and the consumed dispatch entry',async()=>{
+ const f=await nonceLineageFixture(),fs=await import('node:fs/promises'),os=await import('node:os'),path=await import('node:path'),{readSepoliaNonceSources}=await import('../operator.mjs'),{createHash}=await import('node:crypto');
+ const directory=await fs.mkdtemp(path.join(os.tmpdir(),'nonce-lineage-sources-'));await fs.chmod(directory,0o700);const statePath=path.join(directory,'state.json');
+ const values=[f.args.plan,f.original,f.args.resolution,f.originalFixture.saved,f.args.successor,f.successorState],bytes=[];
+ try{
+  for(let i=0;i<values.length;i++){bytes.push(JSON.stringify(values[i]));await fs.writeFile(path.join(directory,f.ops.exactCancellationFiles[i]),bytes[i],{mode:0o600});}
+  const dispatch=statePath+'.exact-cancel-'+f.successorState.operations['relay-funding'].hash.slice(2)+'.entered.json',entry=JSON.stringify({schemaVersion:1,phase:'entered',identity:'consumed-fixture-dispatch'});await fs.writeFile(dispatch,entry,{mode:0o600});
+  const args={statePath,plan:f.args.plan,resolution:f.args.resolution,successor:f.args.successor},captured=await readSepoliaNonceSources(args);
+  assert.equal(captured.dispatchEntrySha256,createHash('sha256').update(entry).digest('hex'));
+  for(let i=0;i<values.length;i++)assert.equal(captured.sourceHashes[f.ops.exactCancellationFiles[i]],createHash('sha256').update(bytes[i]).digest('hex'));
+  for(const name of f.ops.exactCancellationFiles){const file=path.join(directory,name),original=await fs.readFile(file);await fs.unlink(file);await assert.rejects(readSepoliaNonceSources(args));await fs.writeFile(file,original,{mode:0o600});}
+  await fs.unlink(dispatch);await assert.rejects(readSepoliaNonceSources(args));await fs.writeFile(dispatch,entry,{mode:0o600});
+  await fs.writeFile(path.join(directory,'plan.json'),JSON.stringify({...f.args.plan,ownerNonce:f.args.plan.ownerNonce+1}),{mode:0o600});await assert.rejects(readSepoliaNonceSources(args));
+ }finally{await fs.rm(directory,{recursive:true});}
+});
