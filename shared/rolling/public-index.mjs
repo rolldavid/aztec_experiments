@@ -208,7 +208,7 @@ export async function createRollingPersistentPublicIndex({node,artifact,bokArtif
   const eventKey=e=>key(e.position.blockNumber)+key(e.position.txIndexWithinBlock)+key(e.position.logIndexWithinTx);
   const semantic=c=>{const {generation,revision,...rest}=c;return rest;};
   let control=null,previous=null,oldSequence=0n,loaded=false,busy=false,ready=false,unavailable=false,origin=null;
-  let oldPages=null,comparisonDone=false,orphanedCache=false,failed=false;
+  let oldPages=null,comparisonDone=false,orphanedCache=false,failed=false,currentBlock=null;
   const state=()=>({schemaVersion:3,state:unavailable?'unavailable':ready?'ready':loaded?'syncing':'authenticating',
     scope,complete:ready,authenticationEpoch:epoch,revision:control?`${epoch}:${control.generation}:${control.revision}`:null,
     checkpoint:copy(control?.checkpoint??null),cursor:copy(control?.cursor??null),cacheComparison:comparisonDone?(orphanedCache?'canonical-prefix':'complete'):'pending'});
@@ -293,8 +293,13 @@ export async function createRollingPersistentPublicIndex({node,artifact,bokArtif
       const instance=await read(()=>node.getContract(address));check(textHash(instance?.currentContractClassId)===scope.classId&&textHash(instance?.originalContractClassId)===scope.classId);
       await decoder.verifyBok(node,read);
     }
-    async function anchor(n){const b=await read(()=>node.getBlockData(n));check(b,'ROLLING_PUBLIC_UNAVAILABLE');
-      const number=String(b.header?.globalVariables?.blockNumber),h=textHash(b.blockHash);check(uint(number,53)&&hash(h));if(n!=='checkpointed')check(number===String(n));return {number,hash:h};}
+    // Share identical canonical reads only within one verification phase.
+    // Every pre/post-commit boundary starts fresh, including unchanged heads.
+    const anchors=new Map();
+    async function anchor(n){const key=String(n);if(anchors.has(key))return anchors.get(key);
+      const b=await read(()=>node.getBlockData(n));check(b,'ROLLING_PUBLIC_UNAVAILABLE');
+      const number=String(b.header?.globalVariables?.blockNumber),h=textHash(b.blockHash);check(uint(number,53)&&hash(h));if(n!=='checkpointed')check(number===String(n));
+      const value={number,hash:h};anchors.set(key,value);anchors.set(number,value);return value;}
     try{
       await identity();const target=await anchor('checkpointed');check(BigInt(target.number)>=BigInt(scope.bok?.deployment.blockNumber??deployment.blockNumber));
       const deployed=await anchor(deployment.blockNumber);check(deployed.hash===deployment.blockHash);
@@ -307,7 +312,7 @@ export async function createRollingPersistentPublicIndex({node,artifact,bokArtif
         else comparisonDone=true;
       }
       assertOwned();
-      const recheck=async extra=>{await identity();check(same(await anchor(deployment.blockNumber),deployed));check(same(await anchor(Number(base.number)),base));
+      const recheck=async extra=>{anchors.clear();await identity();check(same(await anchor(deployment.blockNumber),deployed));check(same(await anchor(Number(base.number)),base));
         check(same(await anchor(Number(target.number)),target));
         if(extra)check((await anchor(Number(extra.number))).hash===extra.hash);
         assertOwned();check(Date.now()<deadline,'ROLLING_PUBLIC_TIMEOUT');};
@@ -316,6 +321,7 @@ export async function createRollingPersistentPublicIndex({node,artifact,bokArtif
       const retained=control.cursor.block??control.checkpoint;
       const current=BigInt(retained.number)>BigInt(target.number)?null:await anchor(Number(retained.number));
       if(!current||current.hash!==retained.hash){
+        currentBlock=null;
         check(control.segmentCount!=='0');await recheck();control=storage.rollbackOne({expectedControl:control});
         previous=null;comparisonDone=true;orphanedCache=true;
         await recheck();return state();
@@ -329,8 +335,12 @@ export async function createRollingPersistentPublicIndex({node,artifact,bokArtif
         }
         await recheck(control.checkpoint);ready=true;return state();
       }
-      const number=Number(control.cursor.blockNumber),raw=await read(()=>node.getBlock(number,{includeTransactions:true}));
+      const number=Number(control.cursor.blockNumber),canonical=await anchor(number);
+      // The current block body is immutable under its canonical hash. Reuse it
+      // across bounded transaction steps only after a fresh anchor observation.
+      const raw=currentBlock?.number===number&&currentBlock.hash===canonical.hash?currentBlock.raw:await read(()=>node.getBlock(number,{includeTransactions:true}));
       check(raw&&Number(raw.header?.globalVariables?.blockNumber)===number&&hash(textHash(raw.hash))&&Array.isArray(raw.body?.txEffects));
+      check(canonical.hash===textHash(raw.hash));currentBlock={number,hash:canonical.hash,raw};
       check(raw.body.txEffects.length<=maxTransactions);const seen=new Set();
       const effects=raw.body.txEffects.map(tx=>{const h=textHash(tx.txHash);check(hash(h)&&!seen.has(h));seen.add(h);
         check(Array.isArray(tx.publicLogs)&&tx.publicLogs.length<=FLAT_PUBLIC_LOGS_PAYLOAD_LENGTH);
@@ -372,10 +382,19 @@ export async function createRollingPersistentPublicIndex({node,artifact,bokArtif
       control=index===effects.length?storage.completeBlock({expectedControl:control,block}):storage.commitTransaction({expectedControl:control,block,txIndex:String(index),txHash,events});
       if(previous&&!comparisonDone&&oldSequence===BigInt(previous.segmentCount))finishComparison();
       await recheck(block);
+      // Completing the last transaction's block needs no separate scheduling
+      // turn or refetch. Keep both original durable segments and CAS checks;
+      // the transaction's post-check also guards the completion's admission.
+      if(index<effects.length&&index+1===effects.length){
+        compareBefore([],block,true);control=storage.completeBlock({expectedControl:control,block});
+        if(previous&&!comparisonDone&&oldSequence===BigInt(previous.segmentCount))finishComparison();
+        await recheck(block);
+      }
+      if(control.cursor.block===null)currentBlock=null;
       // A final publication recheck happens on a separate bounded step. It
       // includes a fresh target; a tip advance cannot yield a partial ready view.
       return state();
-    }catch(e){unavailable=true;ready=false;failed=true;const code=e&&Object.getOwnPropertyDescriptor(e,'code')?.value;
+    }catch(e){currentBlock=null;unavailable=true;ready=false;failed=true;const code=e&&Object.getOwnPropertyDescriptor(e,'code')?.value;
       throw fail(['ROLLING_PUBLIC_INVALID','ROLLING_PUBLIC_UNAVAILABLE','ROLLING_PUBLIC_TIMEOUT','ROLLING_PUBLIC_CACHE_MISMATCH','PUBLIC_FEED_CONFLICT','ROLLING_PUBLIC_STORAGE_CONFLICT','ROLLING_PUBLIC_STORAGE_CAPACITY'].includes(code)?code:'ROLLING_PUBLIC_UNAVAILABLE');}
     finally{busy=false;}
   }

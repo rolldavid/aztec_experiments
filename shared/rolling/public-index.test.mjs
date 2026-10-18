@@ -321,12 +321,12 @@ async function persistentFixture(t){
  const mutate=fn=>{const db=new DatabaseSync(path.join(directory,'rolling-public-v3.sqlite'));try{fn(db);}finally{db.close();}};
  return {...f,open,drain,projection,mutate};
 }
-test('persistent ingestion owns one transaction or completion per step with original decoding',async t=>{
+test('persistent ingestion completes the last transaction block without refetching or merging durable segments',async t=>{
  const f=await persistentFixture(t),{storage:s,index}=await f.open();assert.throws(()=>index.publication());
  let count=0;while(!index.status().complete){const before=s.inspect().control;await index.step();const after=s.inspect().control;
-  if(before)assert.ok(BigInt(after.segmentCount)-BigInt(before.segmentCount)<=1n);count++;}
- assert.equal(f.calls.length,6,'one full block read per transaction/completion step; decoder reuses it');
- assert.equal(count,7);assert.equal(f.projection(s,'posts','10').text,'Hello');assert.equal(s.inspect().control.segmentCount,'6');
+  if(before){const added=BigInt(after.segmentCount)-BigInt(before.segmentCount);assert.ok(added<=2n);if(added===2n)assert.equal(after.cursor.block,null);}count++;}
+ assert.equal(f.calls.length,3,'one authenticated full block read per block; completion reuses it');
+ assert.equal(count,4);assert.equal(f.projection(s,'posts','10').text,'Hello');assert.equal(s.inspect().control.segmentCount,'6');
  assert.equal(index.publication().checkpoint.number,'3');assert.equal(f.calls.every(([, ,opts])=>opts.includeTransactions===true),true);
 });
 test('persistent cold restart rebuilds all canonical events and never trusts a projection row',async t=>{
@@ -351,7 +351,8 @@ for(const defect of ['omit-event','alter-event','extra-event','omit-segment','ex
   });const b=await f.open();await assert.rejects(f.drain(b.index),{code:'ROLLING_PUBLIC_CACHE_MISMATCH'});assert.throws(()=>b.index.publication());
  });
 test('persistent interrupted transaction and lost commit reply reopen without duplication',async t=>{
- const f=await persistentFixture(t),a=await f.open();await a.index.step();assert.equal(a.storage.inspect().control.cursor.nextTxIndex,'1');a.storage.close();
+ const f=await persistentFixture(t);f.blocks.get(1).body.txEffects.push({txHash:TxHash.fromString(hex(777)),publicLogs:[],toBuffer:()=>Buffer.alloc(0)});
+ const a=await f.open();await a.index.step();assert.equal(a.storage.inspect().control.cursor.nextTxIndex,'1');a.storage.close();
  const b=await f.open();await f.drain(b.index);assert.equal(b.storage.inspect().control.scalars.eventCount,'4');
  f.put(4,[await f.post(20,4)]);f.setHead(4);
  const real=b.storage.commitTransaction,broken={...b.storage,commitTransaction(args){real(args);throw Error('labelled lost reply');}};
@@ -362,7 +363,16 @@ test('persistent empty and unrelated physical transactions have exact coverage o
  const f=await persistentFixture(t);f.put(4,[]);f.blocks.get(4).body.txEffects=[];
  f.put(5,[]);const second={txHash:TxHash.fromString(hex(777)),publicLogs:[],toBuffer:()=>Buffer.alloc(0)};f.blocks.get(5).body.txEffects.push(second);f.setHead(5);
  const a=await f.open();await f.drain(a.index);assert.equal(a.storage.inspect().control.segmentCount,'10');assert.equal(a.storage.inspect().control.scalars.eventCount,'4');
+ assert.equal(f.calls.filter(([,number])=>number===5).length,1,'multiple transaction steps reuse the canonically anchored body');
  a.storage.close();const b=await f.open();await f.drain(b.index);assert.equal(b.index.status().cacheComparison,'complete');assert.equal(b.index.publication().checkpoint.number,'5');
+});
+test('persistent cached partial block is discarded on canonical fork',async t=>{
+ const f=await persistentFixture(t),a=await f.open();await f.drain(a.index);
+ f.put(4,[await f.post(20,4,'Old fork')]);f.blocks.get(4).body.txEffects.push({txHash:TxHash.fromString(hex(777)),publicLogs:[],toBuffer:()=>Buffer.alloc(0)});f.setHead(4);
+ await a.index.step();assert.equal(a.storage.inspect().control.cursor.nextTxIndex,'1');assert.throws(()=>a.index.publication());
+ f.put(4,[await f.post(30,4,'Replacement')],50);await f.drain(a.index);
+ assert.equal(f.projection(a.storage,'posts','20'),null);assert.equal(f.projection(a.storage,'posts','30').text,'Replacement');
+ assert.equal(f.calls.filter(([,number])=>number===4).length,2,'replacement requires a new body despite retained block number');
 });
 test('persistent hot rollback spans more than128 segments without full reset or lost prefix',async t=>{
  const f=await persistentFixture(t);for(let n=4;n<=70;n++)f.put(n,[]);f.setHead(70);
@@ -384,7 +394,7 @@ for(const defect of ['missing-history','wrong-network','wrong-class','wrong-depl
   if(defect==='wrong-class')f.node.getContract=async()=>null;
   if(defect==='wrong-deployment')f.put(1,[],600);
   if(defect==='competing-CAS'){const c=a.storage.inspect().control;a.storage.startGeneration({expectedControl:c,origin:{number:'0',hash:hex(1000)}});}
-  if(defect==='final-reorg'){const original=f.node.getBlockData;let n=0;f.node.getBlockData=async number=>{const result=await original(number);if(number===3&&++n===2)return {...result,blockHash:wrap(hex(888))};return result;};}
+  if(defect==='final-reorg'){const original=f.node.getBlockData;let admitted=false;f.node.getBlockData=async number=>{const result=await original(number);if(number==='checkpointed')admitted=true;else if(number===3&&admitted)return {...result,blockHash:wrap(hex(888))};return result;};}
   await assert.rejects(a.index.step());assert.equal(a.index.status().complete,false);assert.throws(()=>a.index.publication());
  });
 test('persistent deadline retains exclusive lease until the actual SDK promise settles',async t=>{
@@ -558,11 +568,11 @@ test('Bok accounting missing descriptor is unsupported; mismatched cache and abs
  const c=await f.open();f.node.getPublicStorageAt=async()=>Fr.ZERO;await assert.rejects(c.index.step());assert.equal(c.index.status().complete,false);
 });
 
-for(const fault of ['original-anchor','current-instance'])for(const verification of [1,2,3])
+for(const fault of ['original-anchor','current-instance'])for(const verification of [1,2,3,4])
  test(`Bok memo ${fault} failure at verification ${verification} prevents publication`,async t=>{
   const f=await bokIndexFixture(t);f.put(3,[f.accounting(7)]);const {storage,index}=await f.open();await f.drain(index);
   assert.equal(index.query('bok-accounting').requests.length,1);
-  f.put(4,[]);f.blocks.get(4).body.txEffects=[];f.setHead(4);
+  f.put(4,[]);if(verification!==4)f.blocks.get(4).body.txEffects=[];f.setHead(4);
   const before=storage.inspect().control,getContract=f.node.getContract,getBlockData=f.node.getBlockData;let currentReads=0;
   f.node.getContract=async(target,anchor)=>{
    const value=await getContract(target,anchor);
@@ -577,7 +587,7 @@ for(const fault of ['original-anchor','current-instance'])for(const verification
   assert.equal(index.status().complete,false);assert.throws(()=>index.query('bok-accounting'),{code:'ROLLING_PUBLIC_NOT_READY'});
   assert.throws(()=>index.publication());await assert.rejects(index.step(),{code:'ROLLING_PUBLIC_REOPEN_REQUIRED'});
   const after=storage.inspect().control;
-  assert.equal(BigInt(after.segmentCount)-BigInt(before.segmentCount),verification===3?1n:0n,'post-commit failure keeps the durable segment unavailable; earlier failures commit nothing');
+  assert.equal(BigInt(after.segmentCount)-BigInt(before.segmentCount),verification===4?2n:verification===3?1n:0n,'post-commit failure keeps durable segments unavailable; earlier failures commit nothing');
  });
 
 test('persistent predecessor admission requires ready ownership and exact guarded revision',async t=>{
