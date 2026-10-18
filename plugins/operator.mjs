@@ -469,7 +469,7 @@ export async function seedTestnetLiquidity({plan:input,statePath,stage,keyFile,r
    lineageStore=await openSepoliaSeedJournal(lineagePath,lineageBinding,originalPlan.campaign,{existingOnly:recovery.kind!=='lineage'});
   }
   const latestIntent=lineageStore?.read().nonceLineage?.intents.at(-1);
-  const ethereumUrl=intent?.ethereumUrl??(latestIntent?captureSepoliaNonceIntent(latestIntent).ethereumUrl:plan.ethereumUrl);
+  const ethereumUrl=recovery?.kind==='continue'?plan.ethereumUrl:intent?.ethereumUrl??(latestIntent?captureSepoliaNonceIntent(latestIntent).ethereumUrl:plan.ethereumUrl);
   provider=new JsonRpcProvider(operatorEthereumRequest(FetchRequest,ethereumUrl),undefined,{batchMaxCount:1,cacheTimeout:-1,staticNetwork:true});
   const tokenAbi=['function balanceOf(address) view returns(uint256)','function allowance(address,address) view returns(uint256)','event Transfer(address indexed from,address indexed to,uint256 value)'];
   const tokenInterface=new Interface(tokenAbi),factory=new EthereumContract(c.factory,['function getPool(address,address,uint24) view returns(address)','function feeAmountTickSpacing(uint24) view returns(int24)'],provider);

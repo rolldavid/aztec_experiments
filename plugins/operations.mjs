@@ -674,7 +674,9 @@ export async function resolveSepoliaSeedNonce(args){
 }
 export function captureSepoliaSeedContinuationPlan(nextInput,originalInput){
  const plan=captureSepoliaLiquidityPlan(nextInput),original=captureSepoliaLiquidityPlan(originalInput);
- const mutable=new Set(['campaign','ownerNonce','expiresAt','cleanupExpiresAt','gasLimits','maxFeePerGas','maxPriorityFeePerGas']);
+ // A fresh explicit continuation may select a history-capable HTTPS provider.
+ // This changes transport only; original signed plans and economic scope stay bound.
+ const mutable=new Set(['campaign','ethereumUrl','ownerNonce','expiresAt','cleanupExpiresAt','gasLimits','maxFeePerGas','maxPriorityFeePerGas']);
  for(const key of Object.keys(original))if(!mutable.has(key)&&JSON.stringify(plan[key])!==JSON.stringify(original[key]))throw rejected();
  if(plan.campaign===original.campaign||!Number.isSafeInteger(original.ownerNonce+2)||plan.ownerNonce!==original.ownerNonce+2||plan.expiresAt<=original.expiresAt)throw rejected();
  return plan;

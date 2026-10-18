@@ -752,3 +752,13 @@ test('Nonce-only canonical original or cancellation winners stop signing without
   await assert.rejects(f.ops.runSepoliaLiquidityContinuation({...f.continuation(),stage:winner==='original'?'seed-usdc-fee':'approve-usdc'}));
  }
 });
+test('Explicit continuation HTTPS endpoint can restore required history without changing original lineage or economic checks',async()=>{
+ const f=await nonceLineageFixture();await f.ops.runSepoliaNonceCancellation(f.args);f.confirm(f.ledger.operations[0].hash);
+ const original=JSON.stringify([f.args.plan,f.args.successor,f.ledger]),next=f.continuation(),inventory=f.original.operations['inventory-usdc'].hash,receipt=f.receipts.get(inventory);
+ const input={...next.remainingPlan,ethereumUrl:'https://sepolia.gateway.tenderly.co'},captured=f.ops.captureSepoliaSeedContinuationPlan(input,f.args.plan);assert.equal(captured.ethereumUrl,input.ethereumUrl);
+ for(const ethereumUrl of ['http://example.org','https://user:password@example.org','https://example.org/?key=secret','https://example.org/#fragment'])assert.throws(()=>f.ops.captureSepoliaSeedContinuationPlan({...input,ethereumUrl},f.args.plan));
+ f.receipts.delete(inventory);await assert.rejects(f.ops.runSepoliaLiquidityContinuation({...next,remainingPlan:captured,stage:'approve-usdc'}),/Original finalized seed prefix unavailable/);assert.equal(f.signedSteps.length,3);
+ f.receipts.set(inventory,receipt);await f.ops.runSepoliaLiquidityContinuation({...next,remainingPlan:captured,stage:'approve-usdc'});assert.equal(f.signedSteps.length,4);assert.equal(f.signedSteps[3].nonce,captured.ownerNonce);
+ assert.equal(JSON.stringify([f.args.plan,f.args.successor,f.ledger]),original);
+ await assert.rejects(f.ops.runSepoliaLiquidityContinuation({...next,remainingPlan:{...captured,usdcAmount:'1'},stage:'approve-usdc'}));assert.equal(f.signedSteps.length,4);
+});
