@@ -92,7 +92,7 @@ async function socialFixture(t,{wallet='recorder',policies=[]}={}){
 }
 
 test('labelled social records: removed navigation, literal reasons and distinct authored/removal/current policy provenance',async t=>{
- const {page,requests,reason}=await socialFixture(t);
+ const {page,requests,reason}=await socialFixture(t);page.setDefaultTimeout(5000);
  const card=page.locator('#post-11');
  assert.equal(await card.getByRole('link',{name:'an earlier post',exact:true}).getAttribute('href'),'#/thread/10/10');
  assert.equal(await card.getByRole('link',{name:'the original post',exact:true}).getAttribute('href'),'#/post/9');
@@ -106,22 +106,32 @@ test('labelled social records: removed navigation, literal reasons and distinct 
  assert.equal(await page.locator('article img, article script, article a[href^="javascript:"]').count(),0);
  assert(!(await page.locator('body').innerText()).includes('REMOVED_TEXT_SENTINEL'));assert(!(await page.locator('body').innerText()).includes('REJECTED_BOARD_TEXT_SENTINEL'));assert(!(await page.locator('body').innerText()).includes('VERSION_SENTINEL'));
  for(const id of ['11','12','13']){
-  const post=page.locator('#post-'+id);assert.deepEqual(await post.getByRole('button').allTextContents(),['Unlike','Bookmark','Subscribe to thread']);assert.equal(await post.getByRole('button',{name:'Mark thread read',exact:true}).count(),0,'No read marker without a bounded canonical position');assert.equal(await post.locator('.post-body').count(),0);
+  const post=page.locator('#post-'+id);assert.deepEqual(await post.getByRole('button').allTextContents(),['Bookmark']);assert.equal(await post.getByRole('button',{name:'Mark thread read',exact:true}).count(),0,'No read marker without a bounded canonical position');assert.equal(await post.locator('.post-body').count(),0);
  }
- assert.deepEqual(await page.locator('#post-10').getByRole('button').allTextContents(),['Reply','Like','Unlike','Quote','Repost','Bookmark','Subscribe to thread']);
+ assert.deepEqual(await page.locator('#post-10').getByRole('button').allTextContents(),['Reply','Like','Bookmark']);
+ await page.setViewportSize({width:390,height:844});
+ const live=page.locator('#post-10');assert.equal(await live.locator('.post-more').getAttribute('open'),null);
+ await live.locator('.post-more summary').click();
+ assert.deepEqual(await live.getByRole('button').allTextContents(),['Reply','Like','Bookmark','Unlike','Quote','Repost','Subscribe to thread']);
+ assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
  assert(!requests.some(value=>value.includes('wallet')||value.includes('aztec')));
+ for(const name of ['Reply','Like','Bookmark','Quote','Repost','Subscribe to thread'])await live.getByRole('button',{name,exact:true}).click();
+ await page.waitForFunction(()=>window.recordedActions?.length===6);
+ assert.deepEqual(await page.evaluate(()=>window.recordedActions),[{type:'reply',parent:'10',root:'10',subboard:'0'},{type:'like',post:'10'},{type:'preference',kind:1,target:'10',enabled:true},{type:'quote',reference:'10',subboard:'0'},{type:'repost',reference:'10',subboard:'0'},{type:'preference',kind:4,target:'10',enabled:true}]);
+ await page.evaluate(()=>window.recordedActions=[]);
  await page.locator('#post-10').getByRole('button',{name:'Unlike',exact:true}).click();
- await card.getByRole('button',{name:'Unlike',exact:true}).click();
+ await card.locator('.post-more summary').click();await card.getByRole('button',{name:'Unlike',exact:true}).click();
  await page.waitForFunction(()=>window.recordedActions?.length===2);
  assert.deepEqual(await page.evaluate(()=>window.recordedActions),[{type:'unlike',post:'10'},{type:'unlike',post:'11'}]);
  assert(requests.every(value=>!value.includes('/wallet/')&&!value.includes('owned')&&!value.includes('liked')));
+ await page.setViewportSize({width:1280,height:900});
  await page.getByRole('link',{name:'Explore subboards',exact:true}).first().click();await page.getByText('Effective rules',{exact:true}).click();
  assert(await page.getByText('Current parent policy v8',{exact:true}).isVisible());assert(await page.getByText('Subboard rejected under parent policy v6',{exact:true}).isVisible());
 });
 
 test('labelled social renderer: unavailable account module announces failure without exposing or sending data',async t=>{
  const {page,requests}=await socialFixture(t,{wallet:'missing'});
- await page.locator('#post-11').getByRole('button',{name:'Unlike',exact:true}).click();
+ await page.locator('#post-11 .post-more summary').click();await page.locator('#post-11').getByRole('button',{name:'Unlike',exact:true}).click();
  await page.getByText('Account tools could not load. Reload the page before trying again.',{exact:true}).waitFor();
  assert.equal(await page.locator('#post-11 .post-body').count(),0);
  assert(!requests.some(value=>value.startsWith('/wallet/')));
@@ -129,7 +139,7 @@ test('labelled social renderer: unavailable account module announces failure wit
 
 test('real panel opening from removed Unlike stays lazy and sanitizes an unavailable runtime',async t=>{
  const {page,requests}=await socialFixture(t,{wallet:'real'});
- await page.locator('#post-11').getByRole('button',{name:'Unlike',exact:true}).click();
+ await page.locator('#post-11 .post-more summary').click();await page.locator('#post-11').getByRole('button',{name:'Unlike',exact:true}).click();
  await page.getByRole('button',{name:'Unlock',exact:true}).waitFor();
  assert(!requests.some(value=>value.startsWith('/wallet/')));
  await page.getByRole('button',{name:'Unlock',exact:true}).click();
@@ -274,9 +284,9 @@ test('main and subboard routes use exact board API, contextual composer, directo
 test('rejected board remains discoverable and navigable without new posting controls',async t=>{
  const {page}=await boardFixture(t,{rejected:true});await page.evaluate(()=>location.hash='/board/20');await page.getByRole('heading',{name:'Workshop',level:1}).waitFor();
  assert(await page.getByText('Rejection reason: <script>rejected()</script>',{exact:true}).isVisible());assert.equal(await page.locator('main script').count(),0);assert(await page.getByRole('button',{name:'Write a post',exact:true}).isDisabled());
- const card=page.locator('#post-21');assert.deepEqual(await card.getByRole('button').allTextContents(),['Unlike','Bookmark','Subscribe to thread']);assert.equal(await card.locator(':scope > .post-body').count(),0);assert(!(await card.innerText()).includes('Board post 21'));assert.equal(await card.getByRole('link',{name:'View thread',exact:true}).getAttribute('href'),'#/thread/21');
+ const card=page.locator('#post-21');assert.deepEqual(await card.getByRole('button').allTextContents(),['Bookmark']);assert.equal(await card.locator(':scope > .post-body').count(),0);assert(!(await card.innerText()).includes('Board post 21'));assert.equal(await card.getByRole('link',{name:'View thread',exact:true}).getAttribute('href'),'#/thread/21');
  await page.getByText('Parent rules at rejection · v2',{exact:true}).click();assert(await page.getByText('Current parent rules',{exact:true}).last().isVisible());
- await card.getByRole('button',{name:'Unlike',exact:true}).click();await page.waitForFunction(()=>window.boardActions?.length===1);assert.deepEqual(await page.evaluate(()=>boardActions[0]),{type:'unlike',post:'21'});
+ await card.locator('.post-more summary').click();await card.getByRole('button',{name:'Unlike',exact:true}).click();await page.waitForFunction(()=>window.boardActions?.length===1);assert.deepEqual(await page.evaluate(()=>boardActions[0]),{type:'unlike',post:'21'});
 });
 
 for(const mode of ['wrong-board','foreign-post','unavailable'])test('board route fails closed for '+mode+' before exposing contextual posting',async t=>{
@@ -362,7 +372,7 @@ test('a delayed ordinary page cannot restore private content after account inval
 test('Following and Notifications use only ordinary feed parameters and explicit subscription filtering',async t=>{
  const {page,feed}=await privateViewFixture(t);await recoverPrivateView(page);await page.getByRole('link',{name:'Following',exact:true}).click();await page.getByRole('button',{name:'Load more',exact:true}).click();await page.getByText('Checked against chain block 4',{exact:true}).waitFor();assert.equal(await page.getByRole('article').count(),0);
  await page.getByRole('link',{name:'Notifications',exact:true}).click();await page.getByRole('button',{name:'Load more',exact:true}).click();await page.locator('#post-11').waitFor();assert.equal(await page.locator('#post-10').count(),0);assert(feed.every(url=>/^\/api\/feed\?limit=30(?:&cursor=page2)?$/.test(url)));
- await page.locator('#post-11').getByRole('button',{name:'Mark thread read',exact:true}).click();await page.getByRole('button',{name:'Check action and review fee'}).click();await page.getByRole('button',{name:'Confirm and send'}).waitFor();assert.deepEqual(await page.evaluate(()=>privateTest.prepare),[{type:'read-marker',thread:'10',throughBlock:'2',expectedRevision:'2'}]);
+ await page.locator('#post-11 .post-more summary').click();await page.locator('#post-11').getByRole('button',{name:'Mark thread read',exact:true}).click();await page.getByRole('button',{name:'Check action and review fee'}).click();await page.getByRole('button',{name:'Confirm and send'}).waitFor();assert.deepEqual(await page.evaluate(()=>privateTest.prepare),[{type:'read-marker',thread:'10',throughBlock:'2',expectedRevision:'2'}]);
 });
 
 // Removed content remains an unread notification until the ordinary private action
@@ -375,7 +385,7 @@ for(const tombstone of ['removed','rejected'])for(const action of ['read','unsub
  assert.equal(await card.locator('.post-body').count(),0);
  for(const name of ['Reply','Like','Quote','Repost','Remove this post'])assert.equal(await card.getByRole('button',{name,exact:true}).count(),0);
  assert.equal(await card.getByRole('link',{name:'View thread',exact:true}).getAttribute('href'),'#/thread/10');
- await card.getByRole('button',{name:action==='read'?'Mark thread read':'Unsubscribe from thread',exact:true}).focus();await page.keyboard.press('Enter');
+ await card.locator('.post-more summary').click();await card.getByRole('button',{name:action==='read'?'Mark thread read':'Unsubscribe from thread',exact:true}).focus();await page.keyboard.press('Enter');
  await page.getByRole('button',{name:'Check action and review fee',exact:true}).click();await page.getByRole('button',{name:'Confirm and send',exact:true}).waitFor();
  const expected=action==='read'?{type:'read-marker',thread:'10',throughBlock:'2',expectedRevision:'2'}:{type:'preference',kind:4,target:'10',enabled:false,expectedRevision:'2'};
  assert.deepEqual(await page.evaluate(()=>privateTest.prepare),[expected]);

@@ -15,3 +15,6 @@ main h1,main h2,main h3,.post>p,.post-top>div{overflow-wrap:anywhere;min-width:0
 .directory-search input{flex:1;min-width:0;min-height:44px;padding:10px 12px;border:1px solid #bfc9d6;border-radius:7px;background:white;color:var(--ink)}
 .context .button{margin:0 6px 8px 0}
 @media(max-width:700px){.menu-toggle,.mobile-close{min-width:44px;min-height:44px}}
+
+/* Keep everyday post actions visible; secondary controls expand in the feed. */
+.post-more summary{cursor:pointer;white-space:nowrap}.post-more[open]{flex-basis:100%}.post-more[open] summary{width:max-content}.post-secondary-actions{display:flex;flex-wrap:wrap;gap:5px;padding:8px 0;border-top:1px solid var(--line);margin-top:4px}.post-actions>.button,.post-secondary-actions>.button{font-size:12px;padding:6px 9px;min-height:36px}
