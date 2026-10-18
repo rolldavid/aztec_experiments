@@ -1177,6 +1177,14 @@ raise SystemExit(code)
             for rel,raw in captured.items():
                 p=root/rel;p.parent.mkdir(parents=True,exist_ok=True);p.write_bytes(raw)
             self.assertEqual(b.startup_sources(root),captured)
+            # Exercise the actual relative import closure with the installed SDK.
+            # A list/hash check alone missed compact-client in the native mount.
+            (root/'node_modules').symlink_to(ROOT/'node_modules',target_is_directory=True)
+            import os
+            subprocess.run([os.environ.get('PROVER_VALIDATION_NODE','node'),'--input-type=module',
+                            '--eval','await import(process.argv[1])',
+                            (root/'prover/compact-node-registration.mjs').as_uri()],
+                           check=True,capture_output=True,text=True,timeout=10)
             rel='prover/compact-block-native.mjs';p=root/rel
             for failure in ('changed','missing','symlink','oversized'):
                 if p.exists() or p.is_symlink():p.unlink()

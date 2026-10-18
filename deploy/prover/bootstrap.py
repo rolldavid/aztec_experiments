@@ -864,6 +864,7 @@ STARTUP_SOURCES = {
     'prover/compact-node-registration.mjs': '07316d9a6629dff67fbb8d033360a45b9a1492febdd18520e6ffe6c1023c546c',
     'prover/compact-block-native.mjs': '6fc4e562fea1a2d544d742b8e58a8941724cbd6b7d7e67d4231e02a586707888',
     'shared/trusted-private-node.mjs': 'dca64303273cac0a8aa70eb8867d2ade5c60d4dbe9085ab6d49b7025956d955b',
+    'shared/rolling/compact-client.mjs': '3be616f60d7267ccf71f537ddd117ac78ea4e85a29bfd37c487e06b8c257060e',
 }
 STARTUP_ADAPTER = 'publicnode-config-v1'
 DIAGNOSTIC_PHASES = ('registry-guard', 'rollup-compatibility', 'l1-config', 'genesis-compare', 'telemetry', 'factory', 'factory-bb', 'factory-kzg', 'factory-keystore', 'factory-addresses', 'factory-l1-constants', 'factory-blob', 'factory-snapshot', 'factory-epoch-cache', 'factory-world-state', 'factory-avm', 'factory-archiver', 'factory-world-state-sync', 'factory-verifiers', 'factory-fee-provider', 'factory-p2p', 'factory-start', 'public-rpc-bind', 'admin-auth', 'admin-rpc-bind', 'archiver-store', 'archiver-protocol-register', 'archiver-constants', 'archiver-start-header', 'archiver-start', 'archiver-blob-test', 'archiver-clock-test', 'archiver-trace-test', 'archiver-history-test', 'archiver-initial-sync')
