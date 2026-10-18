@@ -73,3 +73,5 @@ export {deriveBoardDepositSecret,recoverBoardDepositSecret} from './deposit-cust
 
 export {estimatePrivateFeeTransaction,sendPrivateFeeTransaction} from './private-fee-estimation.mjs';
 export {provingEnabledForNode} from './proving-policy.mjs';
+
+export {waitForL1ToL2MessageReady} from '@aztec-labs/aztec.js/messaging';

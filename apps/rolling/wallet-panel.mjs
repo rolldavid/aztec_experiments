@@ -66,7 +66,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
  let topupKind='private-fee',topupQuote=null,topupInputs={amount:'',gas:'0.003'};
  let moderatorStatus=null,bokStatus=null,status=null,intent=null,identities=[],identityRecords=[],cursor=0,error='',notice='',draft={type:'post',subboard:'0',content:''};
  let preferences=null,preferenceProgress=null,accountIdentity=null,recoveryAbort=null,recoveryInspection=null;
- let fundingQuote=null,fundingAutomatic=false,fundingTimer=null,fundingInputs={asset:'ETH',collateral:'',fee:'',bok:'',gas:'',slippage:'1'};
+ let fundingQuote=null,fundingAutomatic=false,fundingActiveCapability=null,fundingInputs={asset:'ETH',collateral:'',fee:'',bok:'',gas:'',slippage:'1'};
  let profileSnapshot=null,avatarDraft=null,renderEpoch=0,accountEpoch=0,view='action';const previewURLs=new Set();
  const dialog=el('dialog',{'aria-labelledby':'rolling-wallet-title','aria-describedby':'rolling-wallet-description'});
  const title=el('h2',{id:'rolling-wallet-title'},'Your private account');
@@ -135,7 +135,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   const raw=atob(data);if(btoa(raw)!==data||raw.length>8192||!raw.length||action.width!==100||action.height!==100)throw Error('Invalid avatar');
   const bytes=Uint8Array.from(raw,c=>c.charCodeAt(0));const type=bytes[0]===137?'image/png':bytes[0]===255?'image/jpeg':bytes[0]===82?'image/webp':null;if(!type)throw Error('Invalid avatar');return new Blob([bytes],{type});
  }
- function controlsBusy(value){dialog.setAttribute('aria-busy',String(value));for(const node of dialog.querySelectorAll('button,input,select,textarea'))node.disabled=node.dataset.recoveryStop==='true'?!recoveryAbort:node.dataset.accountingStop==='true'?!accountingCheck:value||node.dataset.unavailable==='true';}
+ function controlsBusy(value){dialog.setAttribute('aria-busy',String(value));for(const node of dialog.querySelectorAll('button,input,select,textarea'))node.disabled=node.dataset.recoveryStop==='true'?!recoveryAbort:node.dataset.accountingStop==='true'?!accountingCheck:node.dataset.fundingStop==='true'?!fundingAutomatic:value||node.dataset.unavailable==='true';}
  function note(text){live.textContent=text;}
  function clearOperationFeedback(){error='';notice='';note('');for(const node of content.querySelectorAll('[data-operation-feedback]'))node.remove();}
  function selectView(next){clearOperationFeedback();view=next;render();}
@@ -613,20 +613,17 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   }
   content.append(button('Refresh wallet list',()=>render()));
  }
- function stopFunding(){fundingAutomatic=false;clearTimeout(fundingTimer);fundingTimer=null;}
+ function stopFunding(){fundingAutomatic=false;fundingActiveCapability?.pauseClaim();}
+ function fundingControl(label,handler){const control=button(label,handler);if(fundingAutomatic)control.dataset.fundingStop='true';return control;}
  function units(value,decimals){
   if(typeof value!=='string'||!new RegExp('^(0|[1-9][0-9]{0,30})(?:\\.[0-9]{1,'+decimals+'})?$').test(value))throw connectionFailure;
   const [whole,fraction='']=value.split('.');const result=BigInt(whole)*10n**BigInt(decimals)+BigInt(fraction.padEnd(decimals,'0'));if(result<=0n)throw connectionFailure;return result.toString();
  }
  function decimal(value,decimals){const text=BigInt(value).toString().padStart(decimals+1,'0'),fraction=text.slice(-decimals).replace(/0+$/,'');return text.slice(0,-decimals)+(fraction?'.'+fraction:'');}
- function scheduleFunding(){
-  clearTimeout(fundingTimer);fundingTimer=null;
-  if(!fundingAutomatic||!['funding','topup'].includes(view)||!dialog.open||!unlocked())return;
-  fundingTimer=setTimeout(()=>{fundingTimer=null;if(fundingAutomatic&&['funding','topup'].includes(view)&&dialog.open){if(busy)scheduleFunding();else void work(advanceFunding);}},5000);
- }
  async function advanceFunding(){
   const epoch=accountEpoch;checkAccount(epoch);
-  const result=await fundingCapability().advanceClaim();checkAccount(epoch);
+  const capability=fundingActiveCapability=fundingCapability();render();
+  let result;try{result=await capability.advanceClaim();}finally{if(fundingActiveCapability===capability)fundingActiveCapability=null;}checkAccount(epoch);
   if(result.state==='complete'){
    stopFunding();await refresh();checkAccount(epoch);
    if(view==='topup')notice='Top-up and private claim confirmed. Your posting collateral is unchanged.';
@@ -640,7 +637,10 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   else if(['review','review-saved','reverted','cancelled'].includes(result.state)){
    stopFunding();intent=result.intent;
    notice=result.state==='review-saved'?'This saved claim has not been submitted. Review it explicitly before sending; the Ethereum payment will not repeat.':result.state==='reverted'?'The private claim reverted. Review recovery; do not repeat the Ethereum payment.':'The private claim needs a new review. No additional Ethereum payment will be sent.';
-  }else{notice=result.state==='waiting'?'Payment confirmed. Waiting for the bridge; no second Ethereum payment will be requested.':'Checking the saved private claim. It will not be submitted again.';scheduleFunding();}
+  }else{
+   stopFunding();
+   notice=result.state==='paused'?'Funding checks paused. Your saved payment and claim records are preserved.':result.state==='waiting'?(result.phase==='payment'?'The saved payment is not yet confirmed. Resume recovery to check its original transaction; no payment will be repeated.':'The bridge is not yet ready. Resume saved funding to check delivery; no payment will be repeated.'):'The saved private claim remains unresolved. Resume to check its original transaction; it will not be submitted again.';
+  }
  }
  function fundingCapability(){
   const type=intent?.action?.type;if(type==='claim-private-fee')return session?.topup?.['private-fee'];if(type==='claim-bok')return session?.topup?.bok;
@@ -657,7 +657,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
    for(const [key,name]of [['amount',topupKind==='bok'?'USDC top-up amount':'Fee token top-up amount'],['gas','Top-up Ethereum gas maximum (ETH)']]){const input=el('input',{type:'text',inputmode:'decimal','aria-label':name});input.value=topupInputs[key];input.addEventListener('input',()=>topupInputs[key]=input.value);content.append(label(name,input));}
    content.append(button('Review top-up',()=>void work(async()=>{const epoch=accountEpoch;checkAccount(epoch);topupQuote=await cap.prepare({amount:units(topupInputs.amount,topupKind==='bok'?6:18),gasBudgetWei:units(topupInputs.gas,18),privateFeeCap:cap.defaultPrivateFeeCap});checkAccount(epoch);}),true));
   }
-  content.append(button(fundingAutomatic?'Pause top-up checks':'Resume saved top-up',()=>{if(fundingAutomatic){stopFunding();notice='Top-up checks paused. Saved payment and custody are preserved.';render();}else void work(async()=>{fundingAutomatic=true;try{await advanceFunding();}catch(error){stopFunding();throw error;}});}));
+  content.append(fundingControl(fundingAutomatic?'Pause top-up checks':'Resume saved top-up',()=>{if(fundingAutomatic){stopFunding();notice=busy?'Pause requested. Waiting for the current funding operation to settle.':'Top-up checks paused. Saved payment and custody are preserved.';render();}else void work(async()=>{fundingAutomatic=true;try{await advanceFunding();}catch(error){stopFunding();throw error;}});}));
  }
  function aggregateFundingView(){
   if(!session.funding){content.append(paragraph('New funding is unavailable until this deployment has verified exchange and bridge settings. Saved payments can still be recovered.'));return;}
@@ -697,8 +697,8 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
      ...(values.asset==='USDC'?{collateralPoolFee:3000}:{gasBudgetWei:units(values.gas,18),bokPoolFee:3000}),feePoolFee:3000,slippageBps,privateFeeCap:session.funding.defaultPrivateFeeCap});checkAccount(epoch);
    }),true));
   }
-  content.append(button(fundingAutomatic?'Pause bridge checks':'Resume saved funding',()=>{
-   if(fundingAutomatic){stopFunding();notice='Automatic checks paused. Your encrypted payment and claim records are preserved.';render();}
+  content.append(fundingControl(fundingAutomatic?'Pause bridge checks':'Resume saved funding',()=>{
+   if(fundingAutomatic){stopFunding();notice=busy?'Pause requested. Waiting for the current funding operation to settle.':'Funding checks paused. Your encrypted payment and claim records are preserved.';render();}
    else void work(async()=>{fundingAutomatic=true;try{await advanceFunding();}catch(error){stopFunding();throw error;}});
   }));
  }
@@ -758,7 +758,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
    recovery();
   }
   controlsBusy(busy);
-  if(dialog.open&&(!busy||previousFocus?.dataset.recoveryStop==='true'||previousFocus?.dataset.accountingStop==='true')&&(hadFocus||document.activeElement===document.body)){
+  if(dialog.open&&(!busy||previousFocus?.dataset.recoveryStop==='true'||previousFocus?.dataset.accountingStop==='true'||previousFocus?.dataset.fundingStop==='true')&&(hadFocus||document.activeElement===document.body)){
    if(previousFocus.isConnected&&dialog.contains(previousFocus))previousFocus.focus({preventScroll:true});
    else{
     const same=index>=0?controls().filter(n=>focusKey(n)===key)[index]:null;

@@ -16,6 +16,50 @@ function refreshErrorCode(error){try{const d=error!=null?Object.getOwnPropertyDe
 const silent=()=>{};
 const logger=Object.freeze({trace:silent,debug:silent,verbose:silent,info:silent,warn:silent,error:silent,fatal:silent,
  level:'silent',module:'rolling-wallet',isLevelEnabled:()=>false,createChild:()=>logger,getBindings:()=>({})});
+// The provider owns finality observation. This promise retains its listener and
+// any initial read until cleanup; a deadline reports failure, never progress.
+export async function waitForFundingFinality(provider,blockNumber,timeoutMs=120000){
+ let complete,reject,timer;
+ const observed=new Promise((yes,no)=>{complete=yes;reject=no;});observed.catch(()=>{});
+ const listener=number=>{if(number>=blockNumber)complete();};
+ try{
+  await provider.on('finalized',listener);
+  timer=setTimeout(()=>reject(fail('ROLLING_FUNDING_FINALITY_TIMEOUT')),timeoutMs);
+  const finalized=await provider.getBlock('finalized');
+  if(!Number.isSafeInteger(finalized?.number))throw fail('ROLLING_FUNDING_INVALID');
+  listener(finalized.number);await observed;
+ }finally{clearTimeout(timer);await provider.off('finalized',listener);}
+}
+
+export function createFundingContinuation({application,funding,sdk,node,getProvider,contextGuard,locked,onProgress}){
+ let active=null;
+ return Object.freeze({
+  pauseClaim(){if(active)active.paused=true;},
+  async advanceClaim(){
+   if(active)throw fail('ROLLING_BUSY');
+   const run=active={paused:false};
+   const fence=async()=>{await contextGuard();if(run.paused)throw fail('ROLLING_FUNDING_PAUSED');};
+   try{return await locked(()=>advanceAggregateClaim({application,funding,contextGuard,onProgress,paused:()=>run.paused,waits:{
+    async bridge(receipts,reason){
+     const legs=['receipt','feeReceipt','bokReceipt'].filter(key=>receipts[key]).map(key=>receipts[key]);
+     await fence();
+     if(reason==='l1-finality'){
+      await waitForFundingFinality(await getProvider(),Math.max(...legs.map(receipt=>receipt.blockNumber)));
+      await fence();
+     }
+     for(const receipt of legs){
+      await fence();
+      await sdk.waitForL1ToL2MessageReady(node,sdk.Fr.fromString(receipt.messageKey),{timeoutSeconds:120,chainTip:'checkpointed'});
+      await fence();
+     }
+     // application.prepare synchronizes PXE before reading its message witness.
+    },
+    async claim(hash){await fence();await sdk.waitForTx(node,sdk.TxHash.fromString(hash),{timeout:120,waitForStatus:'checkpointed',dontThrowOnRevert:true,ignoreDroppedReceiptsFor:0});await fence();},
+   }}));}finally{active=null;}
+  },
+ });
+}
+
 // Optional Bok capability is authenticated from the pinned local artifact and
 // canonical public storage before registration or any personalized operation.
 export async function verifyRollingBokCapability({sdk,node,config,artifact,deployment,contextGuard}){
@@ -336,8 +380,9 @@ export async function createRollingWalletSession({sdk,routing,ethers,config,boar
   readPreferences:options=>locked(()=>readPreferences(options)),
   readColdPreferences:options=>locked(()=>readColdPreferences(options))});
  const privateFeeCap=((BigInt(selected.privateFee.gasSettings.gasLimits.daGas)+BigInt(selected.privateFee.gasSettings.teardownGasLimits.daGas))*BigInt(selected.privateFee.gasSettings.maxFeesPerGas.feePerDaGas)+(BigInt(selected.privateFee.gasSettings.gasLimits.l2Gas)+BigInt(selected.privateFee.gasSettings.teardownGasLimits.l2Gas))*BigInt(selected.privateFee.gasSettings.maxFeesPerGas.feePerL2Gas)).toString();
- const topup=topups?Object.freeze(Object.fromEntries(Object.entries(topups).map(([kind,cap])=>[kind,Object.freeze({defaultPrivateFeeCap:privateFeeCap,advanceClaim:()=>locked(()=>advanceAggregateClaim({application:synchronized,funding:cap,contextGuard:guardRoute,onProgress})),...Object.fromEntries(['prepare','confirm','recover','inspect','checkpointClaim','reviewRevertedClaim'].map(name=>[name,(...args)=>locked(()=>cap[name](...args))]))})]))):null;
- return Object.freeze({application,withdrawal:Object.freeze(Object.fromEntries(['prepare','prepareSaved','confirm','recover','cancel'].map(name=>[name,(...args)=>locked(()=>withdrawal[name](...args))]))),topup,funding:aggregate?Object.freeze({usdcAvailable:selected.aggregateFunding.usdcRelayAddress!==undefined,advanceClaim:()=>locked(()=>advanceAggregateClaim({application:synchronized,funding:aggregate,contextGuard:guardRoute,onProgress})),defaultPrivateFeeCap:((BigInt(selected.privateFee.gasSettings.gasLimits.daGas)+BigInt(selected.privateFee.gasSettings.teardownGasLimits.daGas))*BigInt(selected.privateFee.gasSettings.maxFeesPerGas.feePerDaGas)+(BigInt(selected.privateFee.gasSettings.gasLimits.l2Gas)+BigInt(selected.privateFee.gasSettings.teardownGasLimits.l2Gas))*BigInt(selected.privateFee.gasSettings.maxFeesPerGas.feePerL2Gas)).toString(),...Object.fromEntries(['prepare','confirm','recover','inspect','checkpointClaim','reviewRevertedClaim'].map(name=>[name,(...args)=>locked(()=>aggregate[name](...args))]))}):null,get busy(){return busy;},close(){
+ const continuation=funding=>createFundingContinuation({application:synchronized,funding,sdk,node:privateNode,getProvider:async()=>{await guardRoute();return fundingProvider??=new ethers.JsonRpcProvider(selected.network.ethRpcUrl);},contextGuard:guardRoute,locked,onProgress});
+ const topup=topups?Object.freeze(Object.fromEntries(Object.entries(topups).map(([kind,cap])=>[kind,Object.freeze({defaultPrivateFeeCap:privateFeeCap,...continuation(cap),...Object.fromEntries(['prepare','confirm','recover','inspect','checkpointClaim','reviewRevertedClaim'].map(name=>[name,(...args)=>locked(()=>cap[name](...args))]))})]))):null;
+ return Object.freeze({application,withdrawal:Object.freeze(Object.fromEntries(['prepare','prepareSaved','confirm','recover','cancel'].map(name=>[name,(...args)=>locked(()=>withdrawal[name](...args))]))),topup,funding:aggregate?Object.freeze({usdcAvailable:selected.aggregateFunding.usdcRelayAddress!==undefined,...continuation(aggregate),defaultPrivateFeeCap:((BigInt(selected.privateFee.gasSettings.gasLimits.daGas)+BigInt(selected.privateFee.gasSettings.teardownGasLimits.daGas))*BigInt(selected.privateFee.gasSettings.maxFeesPerGas.feePerDaGas)+(BigInt(selected.privateFee.gasSettings.gasLimits.l2Gas)+BigInt(selected.privateFee.gasSettings.teardownGasLimits.l2Gas))*BigInt(selected.privateFee.gasSettings.maxFeesPerGas.feePerL2Gas)).toString(),...Object.fromEntries(['prepare','confirm','recover','inspect','checkpointClaim','reviewRevertedClaim'].map(name=>[name,(...args)=>locked(()=>aggregate[name](...args))]))}):null,get busy(){return busy;},close(){
   if(closing)return closing;
   if(busy)return Promise.reject(fail('ROLLING_BUSY'));
   if(closed&&!pxe&&!store)return Promise.resolve();

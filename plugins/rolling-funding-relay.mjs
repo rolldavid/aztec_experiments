@@ -89,7 +89,7 @@ export async function createRollingFundingRelay({config,directory,provider,signe
     await lease.assertHeld();await submit(record,()=>provider.broadcastTransaction(raw));
    }});return {...result,planHash};
   }),
-  status:hash=>owned(async()=>{check(hex(hash));const store=await readStore(hash);if(!store)return {status:ledger.read().activePlan===hash?'unresolved':'absent',scope:'aggregate-funding',canonical:false,planHash:hash};const record=store.read().operations?.['relay-funding'];check(record?.identity===hash);return reconcile(record);}),
+  status:async hash=>{check(hex(hash));if(busy){try{await active;}catch{/* saved original operation owns status recovery */}}return owned(async()=>{check(hex(hash));const store=await readStore(hash);if(!store)return {status:ledger.read().activePlan===hash?'unresolved':'absent',scope:'aggregate-funding',canonical:false,planHash:hash};const record=store.read().operations?.['relay-funding'];check(record?.identity===hash);return reconcile(record);});},
   async close(){closed=true;try{await active;}catch{/* retained state owns recovery */}finally{await lease.close();}},
  });
 }

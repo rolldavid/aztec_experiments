@@ -500,7 +500,7 @@ import {createCollateralWithdrawal} from './wallet-session.mjs';
 import {createEthereumJournal} from '../../shared/ethereum-journal.mjs';
 import {computeL2ToL1MessageHash} from '@aztec-labs/stdlib/hash';
 import {EthAddress} from '@aztec-labs/foundation/eth-address';
-import {TxHash} from '@aztec-labs/stdlib/tx';
+import {TxHash,MinedTxReceipt} from '@aztec-labs/stdlib/tx';
 import {hexlify,AbiCoder,getBytes,encodeBytes32String} from 'ethers';
 import {encodeEscrowCommitment} from '../../shared/protocol-commitments.mjs';
 async function withdrawalFixture({chainId='31337',bok=false}={}){
@@ -790,4 +790,55 @@ for(const mode of ['hidden-pending','interrupted-retry'])test(`saved refund ${mo
  if(mode==='interrupted-retry'){await assert.rejects(cap.confirm(),{code:'BB_ETH_SUBMISSION_UNKNOWN'});const after=await(await f.journal()).inspectRequest();assert.equal(after.nonce,before.nonce);assert.equal(after.data,before.data);assert.equal(after.txHash,null);await assert.rejects(f.restart().prepare({maximumGasWei:'1000'}));}
  else assert.equal((await cap.confirm()).status,'refunded');
  assert.equal(observed.nonce,before.nonce);assert.equal(observed.data,before.data);assert.equal(observed.to,before.to);assert.equal(observed.value,0n);
+});
+
+import {createFundingContinuation,waitForFundingFinality} from './wallet-session.mjs';
+import {waitForL1ToL2MessageReady} from '@aztec-labs/aztec.js/messaging';
+import {waitForTx} from '@aztec-labs/aztec.js/node';
+function continuationFixture(){
+ const calls=[],receipts={receipt:{messageKey:hex(71),blockNumber:7},feeReceipt:{messageKey:hex(72),blockNumber:7},bokReceipt:{messageKey:hex(73),blockNumber:7}};
+ const prepared={intentId:hex(81),maximumFee:'10',status:'prepared'};let ready=false,busy=false,valid=true;
+ const funding={inspect:async()=>({paymentSaved:true,privateFeeCap:'10',claim:null}),recover:async options=>{assert.equal(options.wait,true);return receipts;},checkpointClaim:async value=>calls.push(['checkpoint',value.attempted])};
+ const application={readAccountStatus:async()=>({status:'fee-needed'}),prepare:async()=>{calls.push(['prepare']);if(!ready)throw Object.assign(Error('not ready'),{code:'ROLLING_FUNDING_NOT_READY',reason:'l2-delivery'});return prepared;},submitPrepared:async()=>{calls.push(['submit']);return {...prepared,status:'confirmed'};}};
+ const node={getL1ToL2MessageIndex:async key=>{calls.push(['message',key.toString()]);return 1n;},getBlockData:async tip=>{assert.equal(tip,'checkpointed');ready=true;return {header:{state:{l1ToL2MessageTree:{nextAvailableLeafIndex:2}}}};}};
+ const input={application,funding,node,sdk:{Fr,TxHash,waitForL1ToL2MessageReady,waitForTx},getProvider:async()=>{throw Error('not a finality wait');},contextGuard:async()=>{if(!valid)throw Error('account changed');},locked:async fn=>{assert.equal(busy,false);busy=true;try{return await fn();}finally{busy=false;}}};
+ return {input,calls,receipts,prepared,get busy(){return busy;},invalidate(){valid=false;}};
+}
+test('funding continuation uses installed SDK readiness for every exact saved key at checkpointed tip',async()=>{
+ const f=continuationFixture(),cap=createFundingContinuation(f.input);
+ assert.equal((await cap.advanceClaim()).state,'complete');assert.equal(f.busy,false);
+ assert.deepEqual(f.calls.filter(c=>c[0]==='message').map(c=>c[1]),Object.values(f.receipts).map(r=>r.messageKey));
+ assert.deepEqual(f.calls.map(c=>c[0]),['prepare','message','message','message','prepare','checkpoint','checkpoint','submit']);
+});
+for(const action of ['pause','invalidate'])test('funding '+action+' drains the current SDK wait and fences the next message and submission',async()=>{
+ const f=continuationFixture();let entered,release;const seen=new Promise(r=>entered=r),gate=new Promise(r=>release=r);
+ const original=f.input.node.getL1ToL2MessageIndex;f.input.node.getL1ToL2MessageIndex=async key=>{entered();await gate;return original(key);};
+ const cap=createFundingContinuation(f.input),running=cap.advanceClaim();await seen;
+ if(action==='pause')cap.pauseClaim();else f.invalidate();
+ assert.equal(f.busy,true);await assert.rejects(cap.advanceClaim(),{code:'ROLLING_BUSY'});assert(!f.calls.some(c=>c[0]==='submit'));
+ release();if(action==='pause')assert.deepEqual(await running,{state:'paused'});else await assert.rejects(running,/account changed/);
+ assert.equal(f.busy,false);assert.equal(f.calls.filter(c=>c[0]==='message').length,1);assert(!f.calls.some(c=>c[0]==='submit'));
+});
+test('attempted funding claim waits for its exact hash with installed SDK and reconciles a revert without submitting',async()=>{
+ const f=continuationFixture(),txHash=TxHash.fromString(hex(85));let reconciles=0;
+ f.input.funding.inspect=async()=>({paymentSaved:true,privateFeeCap:'10',claim:{intentId:f.prepared.intentId,attempted:true}});
+ f.input.application.reconcile=async()=>({...f.prepared,txHash:txHash.toString(),status:++reconciles===1?'unknown':'reverted'});
+ f.input.node.getTxReceipt=async hash=>{assert(hash.equals(txHash));return MinedTxReceipt.from({txHash,status:'checkpointed',executionResult:'reverted',transactionFee:1n,blockHash:BlockHash.fromString(hex(86)),blockNumber:8,slotNumber:8,epochNumber:0,txIndexInBlock:0});};
+ const cap=createFundingContinuation(f.input);assert.equal((await cap.advanceClaim()).state,'reverted');assert.equal(reconciles,2);assert(!f.calls.some(c=>c[0]==='submit'));
+});
+test('funding finality registers before its current-state read and removes the listener on completion or failed read',async()=>{
+ for(const immediate of [true,false]){
+  let listener;const calls=[];
+  const provider={on:async(tag,fn)=>{assert.equal(tag,'finalized');calls.push('on');listener=fn;},off:async(tag,fn)=>{assert.equal(tag,'finalized');assert.equal(fn,listener);calls.push('off');},getBlock:async tag=>{assert.equal(tag,'finalized');calls.push('read');if(!immediate)listener(7);return {number:immediate?7:6};}};
+  await waitForFundingFinality(provider,7);assert.deepEqual(calls,['on','read','off']);
+  provider.getBlock=async()=>{throw Error('read failed');};await assert.rejects(waitForFundingFinality(provider,7),/read failed/);assert.equal(calls.at(-1),'off');
+ }
+});
+
+test('funding continuation recovers a lost private submit response by exact hash without resubmitting',async()=>{
+ const f=continuationFixture(),txHash=TxHash.fromString(hex(87));let sends=0,reconciles=0;
+ f.input.application.submitPrepared=async()=>{sends++;throw Error('lost private response');};
+ f.input.application.reconcile=async()=>({...f.prepared,txHash:txHash.toString(),status:++reconciles===1?'unknown':'confirmed'});
+ f.input.node.getTxReceipt=async hash=>{assert(hash.equals(txHash));return MinedTxReceipt.from({txHash,status:'checkpointed',executionResult:'success',transactionFee:1n,blockHash:BlockHash.fromString(hex(86)),blockNumber:8,slotNumber:8,epochNumber:0,txIndexInBlock:0});};
+ assert.equal((await createFundingContinuation(f.input).advanceClaim()).state,'complete');assert.equal(sends,1);assert.equal(reconciles,2);
 });

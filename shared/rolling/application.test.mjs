@@ -1684,3 +1684,11 @@ for(const action of [{type:'preference',expectedRevision:'0',kind:1,target:'42',
  const renewed=await f.restart().prepareInterrupted(p.intentId);assert.deepEqual(renewed.action,action);assert.equal(renewed.nonce,p.nonce);f.state.interrupt=null;
  const result=await f.restart().submitPrepared(p.intentId);assert.equal(result.status,'confirmed');assert.equal(f.state.sends,1);assert.equal(f.state.proofs,2);
 });
+
+test('funding prepare preserves the state needed by the session waiter without saving a claim',async()=>{
+ for(const reason of ['l1-finality','l2-delivery']){
+  const f=fundingFixture();f.options.sdk.prepareFundingClaim=async()=>({status:'waiting',reason});
+  await assert.rejects(f.restart().prepare({type:'claim-deposit',receipt:f.receipt}),{code:'ROLLING_FUNDING_NOT_READY',reason});
+  assert.equal(f.state.sends,0);assert.equal(f.values.size,0);
+ }
+});

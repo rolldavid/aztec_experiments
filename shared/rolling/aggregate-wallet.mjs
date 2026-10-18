@@ -3,6 +3,7 @@ import {observeRollingSetup,rollingSetupErrorCode} from './deployment.mjs';
 // Only the owning private session calls this capability, under its account lock.
 const fail=code=>Object.assign(Error('Funding is unavailable. Preserve saved recovery records.'),{code:'ROLLING_FUNDING_'+code});
 const check=(value,code='INVALID')=>{if(!value)throw fail(code);};
+const errorValue=(error,key)=>{try{const d=error!=null?Object.getOwnPropertyDescriptor(error,key):null;return d&&'value'in d?d.value:undefined;}catch{return undefined;}};
 const clone=value=>structuredClone(value);
 const freeze=value=>{if(value&&typeof value==='object'){Object.values(value).forEach(freeze);Object.freeze(value);}return value;};
 export const AGGREGATE_SCOPE_KEYS=Object.freeze(['chainId','router','routerCodeHash','collateralPortal','feePortal','bokPortal','weth','swapRouter','feeToken','bokToken','privateFpc','quoter','quoterCodeHash']);
@@ -116,17 +117,30 @@ export async function createAggregateWallet({sdk,ethers,scope,network,board,bok,
   // This checkpoint is deliberately before the sole POST. Even a crash before
   // the request reaches the relay is status-only recovery, never an auto-retry.
   await read(()=>slot.write(saved,{...saved.value,relay:{planHash:tx.planHash,submitted:true,request}}));
-  await read(wallet.guard);await read(()=>relay.submit(request.data));
+  await read(wallet.guard);
+  let state;try{state=await read(()=>relay.submit(request.data));}catch{state=await read(()=>relay.status(tx.planHash));}
+  await rememberRelayState(await stored(),state);
   return {pending:true};
  }
+ async function rememberRelayState(saved,state){
+  const value=saved.value;
+  check(state&&state.scope==='aggregate-funding'&&state.planHash===value.relay.planHash&&['absent','unresolved','succeeded','failed'].includes(state.status)&&typeof state.canonical==='boolean','RELAY_SCOPE');
+  const hash=state.transactionHash;
+  if(hash===undefined)return saved;
+  check(typeof hash==='string'&&/^0x[0-9a-f]{64}$/.test(hash)&&state.status!=='absent','RELAY_SCOPE');
+  check(value.relay.transactionHash===undefined||value.relay.transactionHash===hash,'MISMATCH');
+  // A relay hash is only a lookup hint. Receipt recovery still verifies the
+  // exact signed request, event effects and canonical Ethereum block.
+  return value.relay.transactionHash===hash?saved:read(()=>slot.write(saved,{...value,relay:{...value.relay,transactionHash:hash}}));
+ }
  async function reconcileUsdc(saved,requiredHash,lookupHash,allowReverted=false){
-  const value=saved.value;check(value.relay?.submitted&&value.relay.request,'RECOVERY_REQUIRED');
+  let value=saved.value;check(value.relay?.submitted&&value.relay.request,'RECOVERY_REQUIRED');
   const request=value.relay.request;sdk.validateAggregateFundingIntent(request);
   let hash=lookupHash??value.relay.transactionHash;
   if(hash===undefined){
    const state=await read(()=>relay.status(value.relay.planHash));
-   check(state&&state.scope==='aggregate-funding'&&state.planHash===value.relay.planHash&&['absent','unresolved','succeeded','failed'].includes(state.status)&&typeof state.canonical==='boolean','RELAY_SCOPE');
-   hash=state.transactionHash;
+   saved=await rememberRelayState(saved,state);
+   value=saved.value;hash=value.relay.transactionHash;
   }
   check(typeof hash==='string'&&/^0x[0-9a-f]{64}$/.test(hash),'PENDING');
   if(requiredHash!==undefined)check(requiredHash===hash,'MISMATCH');
@@ -225,7 +239,17 @@ export async function createAggregateWallet({sdk,ethers,scope,network,board,bok,
    if(saved.value.claim)check(saved.value.claim.intentId===value.intentId&&(!saved.value.claim.attempted||value.attempted),'RECOVERY_REQUIRED');
    await read(()=>slot.write(saved,{...saved.value,claim:clone(value)}));
   },
-  async recover(){const {result}=await reconcile();return receipts(result);},
+  async recover({wait=false}={}){
+   let recovered;
+   try{recovered=await reconcile();}catch(error){
+    if(!wait||!['ROLLING_FUNDING_PENDING','BB_ETH_RECOVERY_REQUIRED'].includes(errorValue(error,'code')))throw error;
+    const saved=await stored();let hash=saved.value?.relay?.transactionHash;
+    if(saved.value?.kind!=='usdc')hash=(await read(async()=>(await journal(saved.value.depositor)).inspectRequest()))?.txHash;
+    if(!hash)throw error;
+    await read(()=>provider.waitForTransaction(hash,1,120000));recovered=await reconcile();
+   }
+   return receipts(recovered.result);
+  },
   async loadAggregate(txHash){
    check(typeof txHash==='string'&&/^0x[0-9a-f]{64}$/.test(txHash));
    const saved=await stored();let value=saved.value,result;
@@ -259,12 +283,13 @@ export async function createAggregateWallet({sdk,ethers,scope,network,board,bok,
 const claimProgressCodes=new Set(['ROLLING_FUNDING_INVALID','ROLLING_FUNDING_PENDING','ROLLING_FUNDING_NOT_READY','ROLLING_FUNDING_RECOVERY_REQUIRED','ROLLING_FUNDING_MISMATCH','ROLLING_FUNDING_UNKNOWN','ROLLING_FUNDING_REORG','ROLLING_BUSY','ROLLING_LOCKED','ROLLING_INVALID_ACTION','ROLLING_INVALID_RESPONSE','ROLLING_ABI_MISMATCH','ROLLING_RECOVERY_REQUIRED','ROLLING_FEE_CHANGED','PRIVATE_FEE_PREPARATION_FAILED','PRIVATE_FEE_PROVIDER_REQUIRED','PRIVATE_FEE_CONFIGURATION_REQUIRED','PRIVATE_FEE_OWNER_IS_PAYER','PRIVATE_FEE_CHAIN_MISMATCH','PRIVATE_FEE_CAP_TOO_LOW','PRIVATE_FEE_NONCANONICAL_ADDRESS','PRIVATE_FEE_NOT_PUBLISHED','PRIVATE_FEE_CLASS_MISMATCH','PRIVATE_FEE_ARTIFACT_INVALID','PRIVATE_FEE_INVALID_VALUE','PRIVATE_FEE_INVALID_ADDRESS','PRIVATE_FEE_INVALID_GAS','PRIVATE_FEE_BALANCE_INSUFFICIENT']);
 function claimProgressCode(error){try{const d=error!=null?Object.getOwnPropertyDescriptor(error,'code'):null;return d&&Object.hasOwn(d,'value')&&claimProgressCodes.has(d.value)?d.value:rollingSetupErrorCode(error);}catch{return 'unknown';}}
 
-/** One owned bridge/claim step. Existing application and journals remain the
- * authority. Callers schedule only read/reconcile progress after this settles. */
-export async function advanceAggregateClaim({application,funding,contextGuard=async()=>{},onProgress=()=>{}}){
+/** Owned funding continuation. Journals remain authoritative; optional session
+ * waiters observe exact saved identities and never authorize a second send. */
+export async function advanceAggregateClaim({application,funding,contextGuard=async()=>{},onProgress=()=>{},waits,paused=()=>false}){
+ const pause=()=>{if(paused())throw fail('PAUSED');};
  let step='inspect',observedFailure=false;
  const emit=(state,error)=>observeRollingSetup(onProgress,{stage:'funding-claim',step,deploymentStep:null,state,code:state==='failed'?claimProgressCode(error):null});
- const read=async(name,fn)=>{step=name;observedFailure=false;emit('started');try{await contextGuard();const value=await fn();await contextGuard();emit('complete');return value;}catch(error){observedFailure=true;emit('failed',error);throw error;}};
+ const read=async(name,fn)=>{step=name;observedFailure=false;emit('started');try{await contextGuard();pause();const value=await fn();await contextGuard();pause();emit('complete');return value;}catch(error){observedFailure=true;emit('failed',error);throw error;}};
  try{
  const saved=await read('inspect',()=>funding.inspect());check(saved?.paymentSaved,'RECOVERY_REQUIRED');const claimAction=saved.claimAction??'claim-deposit';check(['claim-deposit','claim-private-fee','claim-bok'].includes(claimAction));
  let next;
@@ -272,7 +297,7 @@ export async function advanceAggregateClaim({application,funding,contextGuard=as
   next=await read('reconcile',()=>application.reconcile(saved.claim.intentId));
   if(next.status==='prepared')return {state:'review-saved',intent:next};
  }else{
-  let receipts;try{receipts=await read('recover',()=>funding.recover());}catch(error){const d=error==null?null:Object.getOwnPropertyDescriptor(error,'code');if(d&&'value' in d&&d.value==='ROLLING_FUNDING_PENDING')return {state:'waiting'};throw error;}
+  let receipts;try{receipts=await read('recover',()=>funding.recover({wait:!!waits}));}catch(error){const d=error==null?null:Object.getOwnPropertyDescriptor(error,'code');if(d&&'value' in d&&['ROLLING_FUNDING_PENDING','BB_ETH_RECOVERY_REQUIRED'].includes(d.value))return {state:'waiting',phase:'payment'};throw error;}
   if(receipts.approved===true)return {state:'review-payment'};
   if(saved.claim)next=await read('reconcile',()=>application.reconcile(saved.claim.intentId));
   else{
@@ -283,22 +308,39 @@ export async function advanceAggregateClaim({application,funding,contextGuard=as
      const same=(a,b)=>a&&b&&Object.keys(a).sort().join()===Object.keys(b).sort().join()&&Object.keys(b).every(key=>a[key]===b[key]);
      check(action?.type===claimAction&&(claimAction==='claim-deposit'?['receipt','feeReceipt','bokReceipt']:['receipt']).every(key=>same(action[key],receipts[key])),'RECOVERY_REQUIRED');
      next=current.intent;
-    }else next=await read('prepare',()=>application.prepare({type:claimAction,...receipts}));
-   }catch(error){const d=error==null?null:Object.getOwnPropertyDescriptor(error,'code');if(d&&'value' in d&&d.value==='ROLLING_FUNDING_NOT_READY')return {state:'waiting'};throw error;}
+    }else{
+     try{next=await read('prepare',()=>application.prepare({type:claimAction,...receipts}));}
+     catch(error){
+      if(errorValue(error,'code')!=='ROLLING_FUNDING_NOT_READY'||!waits||!['l1-finality','l2-delivery'].includes(errorValue(error,'reason')))throw error;
+      await read('prepare',()=>waits.bridge(receipts,errorValue(error,'reason')));
+      next=await read('prepare',()=>application.prepare({type:claimAction,...receipts}));
+     }
+    }
+   }catch(error){const d=error==null?null:Object.getOwnPropertyDescriptor(error,'code');if(d&&'value' in d&&d.value==='ROLLING_FUNDING_NOT_READY')return {state:'waiting',phase:'bridge'};throw error;}
    await read('checkpoint',()=>funding.checkpointClaim({intentId:next.intentId,attempted:next.status!=='prepared'}));
   }
-  if(next.status!=='prepared'){
+  if(next.status!=='prepared')await read('checkpoint',()=>funding.checkpointClaim({intentId:next.intentId,attempted:true}));
+  else{
+   if(saved.explicitClaimReview||typeof next.maximumFee!=='string'||BigInt(next.maximumFee)>BigInt(saved.privateFeeCap))return {state:'review',intent:next};
    await read('checkpoint',()=>funding.checkpointClaim({intentId:next.intentId,attempted:true}));
-   if(next.status==='confirmed'&&funding.recordConfirmedClaim)await read('checkpoint',()=>funding.recordConfirmedClaim(next));
-   return {state:next.status==='confirmed'?'complete':next.status==='reverted'?'reverted':next.status==='cancelled'?'cancelled':'pending',intent:next};
+   try{next=await read('submit',()=>application.submitPrepared(next.intentId));}
+   catch(error){
+    if(!waits||errorValue(error,'code')==='ROLLING_FUNDING_PAUSED')throw error;
+    const recovered=await read('reconcile',()=>application.reconcile(next.intentId));
+    // Only an authoritative saved hash can continue a failed submission. A
+    // failure before signing remains a failure, never permission to send again.
+    if(!recovered.txHash)throw error;
+    next=recovered;
+   }
   }
-  if(saved.explicitClaimReview||typeof next.maximumFee!=='string'||BigInt(next.maximumFee)>BigInt(saved.privateFeeCap))return {state:'review',intent:next};
-  await read('checkpoint',()=>funding.checkpointClaim({intentId:next.intentId,attempted:true}));
-  next=await read('submit',()=>application.submitPrepared(next.intentId));
+ }
+ if(!['confirmed','reverted','cancelled'].includes(next.status)&&next.txHash&&waits){
+  await read('reconcile',()=>waits.claim(next.txHash));
+  next=await read('reconcile',()=>application.reconcile(next.intentId));
  }
  if(next.status==='confirmed'&&funding.recordConfirmedClaim)await read('checkpoint',()=>funding.recordConfirmedClaim(next));
  return {state:next.status==='confirmed'?'complete':next.status==='reverted'?'reverted':next.status==='cancelled'?'cancelled':'pending',intent:next};
- }catch(error){if(!observedFailure)emit('failed',error);throw error;}
+ }catch(error){if(errorValue(error,'code')==='ROLLING_FUNDING_PAUSED')return {state:'paused'};if(!observedFailure)emit('failed',error);throw error;}
 }
 
 /** Direct token top-ups compose the original Ethereum journal and private claim
@@ -318,8 +360,13 @@ export async function createStandaloneTopupWallet({sdk,ethers,kind,network,board
  async function slot(hash){const scope=await context(),frame=['ROLLING_TOPUP_FUNDING_V1',n.chainId,n.version,n.rollup,board,owner,kind,scope.portal,scope.token,scope.recipient];if(hash!==undefined){check(/^0x[0-9a-f]{64}$/.test(hash));frame.push(hash);}frame.push(1);return sdk.createEncryptedJournalSlot({storage,walletSecret,walletSalt,scopeText:JSON.stringify(frame),keyDomain:'ROLLING_TOPUP_FUNDING_V1'});}
  async function stored(){const store=await slot(),saved=await read(()=>store.read());if(saved.value)check(saved.value.kind===kind&&saved.value.schemaVersion===1,'MISMATCH');return {store,saved};}
  function journalOptions(value){return {storage,walletSecret,walletSalt,scope:{account:owner,...n,board:captured.recipient,portal:captured.portal,token:captured.token,depositor:value.depositor},provider,contextGuard};}
- async function verified(value){
-  check(value?.intent,'RECOVERY_REQUIRED');const j=await sdk.createEthereumJournal(journalOptions(value)),result=await read(()=>j.recover({retry:false}));
+ async function verified(value,wait=false){
+  check(value?.intent,'RECOVERY_REQUIRED');const j=await sdk.createEthereumJournal(journalOptions(value));let result;
+  try{result=await read(()=>j.recover({retry:false}));}catch(error){
+   if(!wait||errorValue(error,'code')!=='BB_ETH_RECOVERY_REQUIRED')throw error;
+   const hash=(await read(()=>j.inspectRequest()))?.txHash;if(!hash)throw error;
+   await read(()=>provider.waitForTransaction(hash,1,120000));result=await read(()=>j.recover({retry:false}));
+  }
   for(const key of ['from','to','chainId','nonce','data','value'])check(result.request[key]===value.intent[key],'MISMATCH');
   check(JSON.stringify(result.request.expected)===JSON.stringify(value.intent.expected),'MISMATCH');
   check(['success','reverted'].includes(result.outcome),'RECOVERY_REQUIRED');
@@ -381,7 +428,7 @@ export async function createStandaloneTopupWallet({sdk,ethers,kind,network,board
    return cap.recover();
   },
   async inspect(){const {saved}=await stored();return saved.value?freeze({paymentSaved:!!saved.value.intent,privateFeeCap:saved.value.privateFeeCap,claim:clone(saved.value.claim),claimAction:kind==='bok'?'claim-bok':'claim-private-fee',explicitClaimReview:saved.value.explicitClaimReview===true,phase:saved.value.phase}):null;},
-  async recover(){const {saved}=await stored(),result=await verified(saved.value);check(result.outcome==='success','REVERTED');if(saved.value.phase==='approval')return {approved:true};const e=result.event;
+  async recover({wait=false}={}){const {saved}=await stored(),result=await verified(saved.value,wait);check(result.outcome==='success','REVERTED');if(saved.value.phase==='approval')return {approved:true};const e=result.event;
    return {receipt:{txHash:result.txHash,blockHash:result.receipt.blockHash.toLowerCase(),blockNumber:result.receipt.blockNumber,sender:result.request.from,nonce:String(result.request.nonce),amount:result.request.expected.amount,secretHash:result.request.expected.secretHash,messageKey:e.key,leafIndex:String(e.index)}};
   },
   async checkpointClaim(value){check(value&&Object.keys(value).sort().join()==='attempted,intentId'&&/^0x[0-9a-f]{64}$/.test(value.intentId)&&typeof value.attempted==='boolean');const {store,saved}=await stored();check(saved.value?.phase==='deposit'&&saved.value.intent,'RECOVERY_REQUIRED');if(saved.value.claim)check(saved.value.claim.intentId===value.intentId&&(!saved.value.claim.attempted||value.attempted),'RECOVERY_REQUIRED');await read(()=>store.write(saved,{...saved.value,claim:clone(value)}));},

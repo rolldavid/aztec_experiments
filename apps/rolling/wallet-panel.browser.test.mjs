@@ -39,7 +39,7 @@ const application={
  async cancelPrepared(){state.cancels++;write(read().releasePrior??{...read(),status:'cancelled'});return read();},
  async reconcile(){state.reconciles++;await boundary('reconcile');const intent=read();if(state.resolveOutcome){intent.status=state.resolveOutcome;write(intent);}return intent;}
 };
-const funding={get usdcAvailable(){return state.usdcEnabled===true;},defaultPrivateFeeCap:'1000',advanceClaim:()=>advanceAggregateClaim({application,funding,onProgress:row=>state.sessionProgress(row)}),
+const funding={get usdcAvailable(){return state.usdcEnabled===true;},defaultPrivateFeeCap:'1000',pauseClaim:()=>{state.fundingPaused=true;},advanceClaim:()=>{state.fundingPaused=false;return advanceAggregateClaim({application,funding,onProgress:row=>state.sessionProgress(row),paused:()=>state.fundingPaused});},
  async prepare(input){state.fundingPrepares=(state.fundingPrepares??0)+1;state.fundingAllocation=input;await boundary('funding-quote');if(input.asset==='USDC')return {kind:'rolling-aggregate-usdc-v1',walletName:'MetaMask',privateFeeCap:input.privateFeeCap,slippageBps:input.slippageBps,relayGasBudgetWei:'1000000000000000',breakdown:{collateral:{amount:input.collateralWei,maxUsdc:'5000000'},fee:{amount:input.feeAmount,maxUsdc:'1000000'},bokAmount:input.bokAmount,relayFeeUsdc:'100000',maximumUsdc:'9350000'}};return {walletName:'MetaMask',privateFeeCap:input.privateFeeCap,slippageBps:input.slippageBps,breakdown:{collateralWei:input.collateralWei,fee:{amount:input.feeAmount,maxEth:'1000'},bok:{amount:input.bokAmount,maxEth:'2000'},gasBudgetWei:input.gasBudgetWei,maximumTotalWei:(BigInt(input.collateralWei)+3000n+BigInt(input.gasBudgetWei)).toString()}};},
  async confirm(){state.fundingConfirms=(state.fundingConfirms??0)+1;if(state.fundingGasChanged)throw Object.assign(Error('PRIVATE_SENTINEL'),{code:'ROLLING_FUNDING_GAS_CHANGED'});state.fundingPayments=(state.fundingPayments??0)+1;await boundary('funding-payment');state.paymentSaved=true;return this.recover();},
  async inspect(){return {paymentSaved:state.paymentSaved,privateFeeCap:state.fundingCap??'1000',claim:state.fundingClaim??null,explicitClaimReview:state.explicitClaimReview===true};},
@@ -47,7 +47,7 @@ const funding={get usdcAvailable(){return state.usdcEnabled===true;},defaultPriv
  async reviewRevertedClaim(){if(!['reverted','cancelled'].includes(read()?.status))error();state.fundingClaim=null;state.explicitClaimReview=true;},
  async recover(){state.fundingRecovers=(state.fundingRecovers??0)+1;return {receipt:{txHash:'0x'+'1'.repeat(64)},feeReceipt:{txHash:'0x'+'1'.repeat(64)},bokReceipt:{txHash:'0x'+'1'.repeat(64)}};}
 };
-const topup=Object.fromEntries(['private-fee','bok'].map(kind=>{const local={};const cap={defaultPrivateFeeCap:'1000',advanceClaim:()=>advanceAggregateClaim({application,funding:cap,onProgress:row=>state.sessionProgress(row)}),
+const topup=Object.fromEntries(['private-fee','bok'].map(kind=>{const local={};const cap={defaultPrivateFeeCap:'1000',pauseClaim:()=>{local.paused=true;},advanceClaim:()=>{local.paused=false;return advanceAggregateClaim({application,funding:cap,onProgress:row=>state.sessionProgress(row),paused:()=>local.paused});},
  async prepare(input){state.topupReview={kind,...input};await boundary('topup-review');local.phase=local.approved?'deposit':'approval';return {kind,phase:local.phase,...input,walletName:'MetaMask'};},
  async confirm(){state.topupPayments=(state.topupPayments??0)+1;await boundary('topup-payment');if(local.phase==='approval'){local.approved=true;return {approved:true};}local.paid=true;return cap.recover();},
  async inspect(){return {paymentSaved:local.paid,claim:local.claim??null,privateFeeCap:'1000',claimAction:kind==='bok'?'claim-bok':'claim-private-fee'};},
@@ -874,8 +874,8 @@ test('aggregate funding UI pauses a larger private claim fee without another Eth
 });
 test('aggregate funding UI reconciles an unknown claim without repeat payment or submission',async t=>{
  const {page}=await browserFixture(t);await page.evaluate(()=>{test.aggregateEnabled=true;test.submitOutcome='unknown';});await open(page);await unlock(page);await aggregateQuote(page);
- await page.getByRole('button',{name:'Confirm funding and private claim',exact:true}).click();await page.getByText('Checking the saved private claim.',{exact:false}).waitFor();
- await page.getByRole('button',{name:'Pause bridge checks',exact:true}).click();await page.getByRole('button',{name:'Resume saved funding',exact:true}).click();
+ await page.getByRole('button',{name:'Confirm funding and private claim',exact:true}).click();await page.getByText('The saved private claim remains unresolved.',{exact:false}).waitFor();
+ await page.getByRole('button',{name:'Resume saved funding',exact:true}).click();
  await page.waitForFunction(()=>test.reconciles===1);assert.equal(await page.evaluate(()=>test.fundingPayments),1);assert.equal((await counts(page)).sends,1);
  await page.getByRole('button',{name:'Close account panel'}).click();
 });
@@ -1179,4 +1179,15 @@ for(const mode of ['failure','account-change'])test(`saved refund review ${mode}
  if(mode==='account-change'){await page.waitForFunction(()=>typeof test.release==='function');await page.evaluate(()=>{test.options.onChange({invalidated:true});test.release();});await page.waitForFunction(()=>document.querySelector('dialog')?.getAttribute('aria-busy')!=='true');}
  else await page.getByText('This operation could not be completed. Recovery records were preserved. Check the existing transaction before preparing another.',{exact:true}).waitFor();
  assert.equal(await page.getByRole('button',{name:'Confirm saved Ethereum refund',exact:true}).count(),0);assert.equal(await page.evaluate(()=>test.refundSends??0),0);assert(!await page.locator('body').innerText().then(text=>text.includes('PRIVATE_SENTINEL')||text.includes('GETTER_SENTINEL')));
+});
+
+test('funding pause fences the next stage while a held operation retains the busy panel',async t=>{
+ const {page}=await browserFixture(t);await page.evaluate(()=>{test.aggregateEnabled=true;test.hold='prepare';});await open(page);await unlock(page);await aggregateQuote(page);
+ await page.getByRole('button',{name:'Confirm funding and private claim',exact:true}).click();await page.waitForFunction(()=>!!test.release);
+ const pause=page.getByRole('button',{name:'Pause bridge checks',exact:true});assert.equal(await pause.isEnabled(),true);await pause.click();
+ assert.match(await page.getByRole('dialog').innerText(),/Pause requested/);assert.equal(await page.getByRole('button',{name:'Resume saved funding',exact:true}).isDisabled(),true);
+ assert.equal((await counts(page)).sends,0);await page.evaluate(()=>{test.hold=null;test.release();});
+ await page.getByText('Funding checks paused.',{exact:false}).waitFor();assert.equal((await counts(page)).sends,0);
+ await page.getByRole('button',{name:'Resume saved funding',exact:true}).click();await page.getByText('Funding and the private claim are confirmed.',{exact:false}).waitFor();
+ assert.equal((await counts(page)).sends,1);assert.equal(await page.evaluate(()=>test.fundingPayments),1);
 });

@@ -135,3 +135,14 @@ test('relay initialization crash and changed policy cannot grant a fresh budget'
  await assert.rejects(prepareFundingRelayState({stateDirectory,policy:{...f.config,totalGasBudgetWei:'3000'}}));
  assert.deepEqual(await fs.readFile(marker),before);assert.deepEqual(await fs.readdir(stateDirectory),[]);
 });
+
+test('status awaits the owned in-flight original submission without allocating another send',async t=>{
+ const f=await fixture(t),original=f.provider.broadcastTransaction;let enter,release;
+ const entered=new Promise(r=>enter=r),gate=new Promise(r=>release=r);
+ f.provider.broadcastTransaction=async raw=>{enter();await gate;return original(raw);};
+ const submitted=f.relay.submit(f.input);await entered;
+ const {AbiCoder}=await import('ethers');const planHash=keccak256(AbiCoder.defaultAbiCoder().encode([abi.getFunction('fundUsdc').inputs[0]],[f.plan]));
+ let settled=false;const observed=f.relay.status(planHash).then(value=>{settled=true;return value;});
+ await Promise.resolve();assert.equal(settled,false);release();
+ const [sent,status]=await Promise.all([submitted,observed]);assert.equal(status.transactionHash,sent.transactionHash);assert.equal(status.canonical,true);assert.equal(f.state.sends,1);assert.equal(f.state.signs,1);
+});

@@ -191,7 +191,7 @@ function usdcWalletFixture(){
    log(s.collateralPortal,portal,'Deposited',[p.beneficiary,p.collateral.amount,p.collateralSecretHash,h(30),1]),
    log(s.feePortal,fee,'DepositToAztecPublic',[s.privateFpc,p.fee.amount,p.feeSecretHash,h(31),2]),
    log(s.bokPortal,bok,'Deposited',[p.bokCommitment,p.bokAmount,h(32),3])
-  ]};return {status:'unresolved'};
+  ]};return {status:'unresolved',scope:'aggregate-funding',canonical:false,planHash:hash,transactionHash:h(200)};
  },status:async planHash=>{f.state.statusReads++;return {status:f.state.usdcTx&&!f.state.withhold?'succeeded':'absent',scope:'aggregate-funding',canonical:!!f.state.usdcTx,planHash,...(f.state.usdcTx&&!f.state.withhold?{transactionHash:h(200)}:{})};}};
  f.wallet.signer.sendTransaction=async()=>{throw Error('USDC user must never send an Ethereum transaction');};
  f.allocation={asset:'USDC',collateralWei:'100',feeAmount:'200',bokAmount:'300',collateralPoolFee:500,feePoolFee:3000,slippageBps:100,privateFeeCap:'1000'};
@@ -205,7 +205,7 @@ test('USDC uses two real signatures, retained random custody and one relay post 
  const original=await f.options.sdk.computeSecretHash(Fr.fromString([...f.claims.values()][0].record.secret));assert.equal(original.toString(),r.receipt.secretHash);
 });
 test('USDC lost relay acknowledgement and absent status never authorize a second POST after reopen',async()=>{
- const f=usdcWalletFixture(),app=await f.open();await app.prepare(f.allocation);f.state.lost=true;await assert.rejects(app.confirm());
+ const f=usdcWalletFixture(),app=await f.open();await app.prepare(f.allocation);f.state.lost=true;assert.deepEqual(await app.confirm(),{pending:true});
  const reopened=await f.open();await assert.rejects(reopened.recover(),{code:'ROLLING_FUNDING_PENDING'});await assert.rejects(reopened.prepare(f.allocation),{code:'ROLLING_FUNDING_PENDING'});await assert.rejects(reopened.confirm(),{code:'ROLLING_FUNDING_QUOTE_REQUIRED'});assert.equal(f.state.posts,1);assert.equal(f.state.sends,0);
  assert.equal((await advanceAggregateClaim({application:{},funding:reopened})).state,'waiting');assert.equal(f.state.posts,1);
 });
@@ -391,5 +391,26 @@ for(const original of [undefined,null,false,0,'PRIVATE_SENTINEL',Object.assign(E
  const f=claimProgressFixture('prepare',original);let caught=false;try{await advanceAggregateClaim(f.input);}catch(e){caught=true;assert.equal(e,original);}assert(caught);assert.equal(f.rows.at(-1).code,'unknown');assert.equal(f.rows.filter(r=>r.state==='failed').length,1);assert(!JSON.stringify(f.rows).includes('SENTINEL'));
 });
 test('claim progress retains waiting semantics for bridge and claim availability failures',async()=>{
- for(const [step,code]of [['recover','ROLLING_FUNDING_PENDING'],['prepare','ROLLING_FUNDING_NOT_READY']]){const f=claimProgressFixture(step,Object.assign(Error('private'),{code}));assert.deepEqual(await advanceAggregateClaim(f.input),{state:'waiting'});assert.equal(f.rows.at(-1).code,code);assert(!f.calls.includes('submit'));}
+ for(const [step,code]of [['recover','ROLLING_FUNDING_PENDING'],['prepare','ROLLING_FUNDING_NOT_READY']]){const f=claimProgressFixture(step,Object.assign(Error('private'),{code}));assert.deepEqual(await advanceAggregateClaim(f.input),{state:'waiting',phase:step==='recover'?'payment':'bridge'});assert.equal(f.rows.at(-1).code,code);assert(!f.calls.includes('submit'));}
+});
+
+test('USDC lost submit response recovers the original relay hash and pending receipt without another POST',async()=>{
+ const f=usdcWalletFixture(),original=f.options.relay.submit;let landed=false,waits=0;
+ f.options.relay.submit=async data=>{await original(data);throw Error('lost HTTP response');};
+ f.options.provider.getTransactionReceipt=async()=>landed?f.state.usdcReceipt:null;
+ f.options.provider.waitForTransaction=async(hash,confirmations,timeout)=>{assert.equal(hash,h(200));assert.equal(confirmations,1);assert.equal(timeout,120000);waits++;landed=true;return f.state.usdcReceipt;};
+ const app=await f.open();await app.prepare(f.allocation);await app.confirm();
+ f.options.relay.status=async()=>{throw Error('hash already retained');};
+ assert.equal((await app.recover({wait:true})).receipt.txHash,h(200));assert.equal(waits,1);assert.equal(f.state.posts,1);
+});
+test('USDC malformed or changed submit hash never becomes verified funding',async()=>{
+ const f=usdcWalletFixture(),original=f.options.relay.submit;
+ f.options.relay.submit=async data=>({...await original(data),planHash:h(999)});
+ const app=await f.open();await app.prepare(f.allocation);await assert.rejects(app.confirm(),{code:'ROLLING_FUNDING_RELAY_SCOPE'});
+ assert.equal(f.state.posts,1);assert.equal((await app.recover()).receipt.txHash,h(200));assert.equal(f.state.posts,1);
+});
+test('known original ETH hash waits for receipt then rechecks canonical effects without rebroadcast',async()=>{
+ const f=fixture(),app=await f.open();await app.prepare(f.allocation);await app.confirm();f.state.landed=false;let waits=0;
+ f.options.provider.waitForTransaction=async hash=>{assert.equal(hash,h(20));waits++;f.state.landed=true;return {};};
+ assert.equal((await app.recover({wait:true})).receipt.txHash,h(20));assert.equal(waits,1);assert.equal(f.state.sends,1);
 });
