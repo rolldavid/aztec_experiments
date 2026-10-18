@@ -5,6 +5,8 @@ import {createHmac, randomBytes, createHash} from 'node:crypto';
 import assert from 'node:assert/strict';
 import {Tx,TxEffect} from '@aztec-labs/stdlib/tx';
 import {classifyT03PublicFootprint,T03_PUBLIC_ROLES} from '../t03-public-footprint.mjs';
+import {createSafeJsonRpcClient} from '@aztec-labs/foundation/json-rpc/client';
+import {jsonStringify} from '@aztec-labs/foundation/json-rpc';
 import {AztecNodeApiSchema} from '@aztec-labs/stdlib/interfaces/client';
 
 export const WIRE_LABELS=Object.freeze(['trusted-query','trusted-proof','trusted-upstream','ordinary-node','public-reader','public-l1']);
@@ -20,6 +22,8 @@ const l1Methods=new Set(['anvil_getAutomine','evm_setAutomine','evm_mine','eth_c
 // Fixed method labels extracted from installed viem public actions; never retain
 // arbitrary unknown method text. This is diagnostic vocabulary, not acceptance.
 const diagnosticMethods=new Set(['eth_blobBaseFee', 'eth_blockNumber', 'eth_call', 'eth_chainId', 'eth_createAccessList', 'eth_estimateGas', 'eth_feeHistory', 'eth_gasPrice', 'eth_getBalance', 'eth_getBlockByHash', 'eth_getBlockByNumber', 'eth_getBlockTransactionCountByHash', 'eth_getBlockTransactionCountByNumber', 'eth_getCode', 'eth_getFilterChanges', 'eth_getFilterLogs', 'eth_getLogs', 'eth_getProof', 'eth_getStorageAt', 'eth_getTransactionByBlockHashAndIndex', 'eth_getTransactionByBlockNumberAndIndex', 'eth_getTransactionByHash', 'eth_getTransactionCount', 'eth_getTransactionReceipt', 'eth_maxPriorityFeePerGas', 'eth_newBlockFilter', 'eth_newFilter', 'eth_newPendingTransactionFilter', 'eth_simulateV1', 'eth_uninstallFilter']);
+// Exact method literals from installed viem public/wallet actions; metadata only.
+const captureClientMethods=new Set(["eth_accounts", "eth_blobBaseFee", "eth_blockNumber", "eth_call", "eth_chainId", "eth_createAccessList", "eth_estimateGas", "eth_feeHistory", "eth_gasPrice", "eth_getBalance", "eth_getBlockByHash", "eth_getBlockByNumber", "eth_getBlockTransactionCountByHash", "eth_getBlockTransactionCountByNumber", "eth_getCode", "eth_getFilterChanges", "eth_getFilterLogs", "eth_getLogs", "eth_getProof", "eth_getStorageAt", "eth_getTransactionByBlockHashAndIndex", "eth_getTransactionByBlockNumberAndIndex", "eth_getTransactionByHash", "eth_getTransactionCount", "eth_getTransactionReceipt", "eth_maxPriorityFeePerGas", "eth_newBlockFilter", "eth_newFilter", "eth_newPendingTransactionFilter", "eth_requestAccounts", "eth_sendRawTransaction", "eth_sendRawTransactionSync", "eth_signTransaction", "eth_signTypedData_v4", "eth_simulateV1", "eth_uninstallFilter", "personal_sign", "wallet_addEthereumChain", "wallet_getCallsStatus", "wallet_getCapabilities", "wallet_getPermissions", "wallet_requestPermissions", "wallet_sendCalls", "wallet_sendTransaction", "wallet_showCallsStatus", "wallet_switchEthereumChain", "wallet_watchAsset"]);
 const omittedL1Params=new Set(['eth_chainId','eth_blockNumber','eth_gasPrice','eth_blobBaseFee','eth_maxPriorityFeePerGas','eth_accounts','eth_requestAccounts']);
 const txMethods=new Set(['node_sendTx','aztec_sendTx','node_simulatePublicCalls','aztec_simulatePublicCalls','node_isValidTx','aztec_isValidTx']);
 const object=v=>v!==null&&typeof v==='object'&&!Array.isArray(v);
@@ -228,7 +232,7 @@ export function createRollingPublicTxCapture({queryUrl,l1Url}) {
  assert.equal(endpoints.size,2);
  for(const value of endpoints.keys()){const u=new URL(value);assert(['http:','https:'].includes(u.protocol)&&!u.username&&!u.password&&!u.hash);}
  const methods={},transactions=new Map();let requests=0,completed=0,failed=0,errors=0,truncated=0,unrecognized=0,storedBytes=0;
- const known=new Set([...nodeMethods,...l1Methods,...diagnosticMethods]);
+ const known=new Set([...nodeMethods,...l1Methods,...diagnosticMethods,...captureClientMethods]);
  const digest=bytes=>createHash('sha256').update(bytes).digest('hex');
  return Object.freeze({
   async observe({url,method,body}) {
@@ -286,4 +290,19 @@ export function validateRollingPublicRoles(value){
  assert(object(value)&&Object.keys(value).length<=T03_PUBLIC_ROLES.length);
  for(const [role,address]of Object.entries(value))assert(T03_PUBLIC_ROLES.includes(role)&&typeof address==='string'&&/^0x(?:[a-fA-F0-9]{40}|[a-fA-F0-9]{64})$/.test(address)&&BigInt(address)>0n);
  return {...value};
+}
+
+// Same no-retry, bounded-body SDK transport as the public reader. The caller's
+// existing deadline owns the whole run; this read never starts after it expires.
+export function createRollingCaptureNode({url,remaining,fetchImpl=fetch}){
+ const discard=()=>{},silent={debug:discard,info:discard,warn:discard,error:discard,trace:discard,verbose:discard,fatal:discard};
+ return createSafeJsonRpcClient(url,AztecNodeApiSchema,{namespaceMethods:'aztec',maxBatchSize:3,log:silent,fetch:async(host,body)=>{
+  try{
+   const timeout=Math.min(5000,remaining());assert(Number.isSafeInteger(timeout)&&timeout>0);
+   const response=await fetchImpl(host,{method:'POST',headers:{'content-type':'application/json'},body:jsonStringify(body),credentials:'omit',redirect:'error',signal:AbortSignal.timeout(timeout)});
+   assert(response.ok&&response.body);let size=0;const chunks=[];
+   for await(const chunk of response.body){size+=chunk.length;assert(size<=8*1024*1024);chunks.push(chunk);}
+   return {response:JSON.parse(Buffer.concat(chunks).toString('utf8')),headers:response.headers};
+  }catch{throw Error('Public capture read unavailable');}
+ }});
 }

@@ -432,3 +432,33 @@ test('public Tx capture excludes other endpoints, proof jobs, controls and arbit
  const seen=capture.snapshot();assert.equal(seen.requests,3);assert.equal(seen.unrecognized,1);assert.equal(seen.failed,1);assert.equal(seen.errors,1);assert.equal(seen.transactions.length,0);assert.equal(seen.methods['l1:eth_getProof'],1);assert(!JSON.stringify(seen).includes('PRIVATE_SENTINEL'));
  for(const roles of [{mnemonic:'PRIVATE_SENTINEL'},{author:'PRIVATE_SENTINEL'},{author:'0x'+'00'.repeat(32)}])assert.throws(()=>validateRollingPublicRoles(roles));
 });
+
+test('public capture retains installed wallet RPC names but never arbitrary method or argument text',async()=>{
+ const {createRollingPublicTxCapture}=await import('./rolling-wire-trace.mjs');
+ const capture=createRollingPublicTxCapture({queryUrl:origin+'/v1/node',l1Url:origin+'/l1'});
+ for(const method of ['eth_sendRawTransactionSync','wallet_getCapabilities','wallet_sendCalls','personal_sign']){
+  await capture.observe({url:origin+'/l1',method:'POST',body:rpc(method,['PRIVATE_SENTINEL'])});capture.complete(200);
+  assert.equal(capture.snapshot().methods['l1:'+method],1);
+ }
+ assert.equal(capture.snapshot().unrecognized,0);assert(!JSON.stringify(capture.snapshot()).includes('PRIVATE_SENTINEL'));
+});
+test('public capture SDK reads use one bounded silent request and respect the owner deadline',async()=>{
+ const {createRollingCaptureNode}=await import('./rolling-wire-trace.mjs');let requests=0,expired=false;
+ const node=createRollingCaptureNode({url:origin,remaining(){if(expired)throw Error('deadline');return 1000;},fetchImpl:async(url,options)=>{
+  requests++;assert.equal(options.redirect,'error');assert.equal(options.credentials,'omit');assert(options.signal instanceof AbortSignal);
+  return new Response('PRIVATE_SENTINEL',{status:503});
+ }});
+ await assert.rejects(node.getBlockNumber(),error=>!error.message.includes('PRIVATE_SENTINEL'));assert.equal(requests,1);
+ expired=true;await assert.rejects(node.getBlockNumber());assert.equal(requests,1);
+});
+test('public capture evidence failure cannot skip existing owned cleanup',async()=>{
+ const {readFile}=await import('node:fs/promises'),vm=await import('node:vm');
+ const source=await readFile(new URL('../test-wallet-extension-browser.mjs',import.meta.url),'utf8'),cleanup=source.slice(source.lastIndexOf('\nfinally{'));
+ const calls=[],report={passed:true};
+ await vm.runInNewContext('(async()=>{try{}'+cleanup+'})()',{
+  report,context:{async close(){calls.push('context');}},async finalizePublicCapture(){throw Error('PRIVATE_SENTINEL');},httpServer:null,
+  BarretenbergSync:{async destroySingleton(){calls.push('bb');}},provider:{destroy(){calls.push('provider');}},children:[],
+  fs:{async rm(){calls.push('directory');}},directory:'fixture',finalizeAggregate(){calls.push('aggregate');},console:{log(){calls.push('report');}},
+ });
+ assert.deepEqual(calls,['context','bb','provider','directory','aggregate','report']);assert.equal(report.cleanupComplete,true);assert.equal(report.publicObservationFailure,true);assert.equal(report.passed,false);assert(!JSON.stringify(report).includes('PRIVATE_SENTINEL'));
+});

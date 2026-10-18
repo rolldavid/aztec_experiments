@@ -26,7 +26,7 @@ import {BarretenbergSync} from '@aztec-foundation/bb.js';
 import {derivePrivateFeeAddress,derivePrivateFeeInstance} from '../shared/private-fee-client.mjs';
 import {generateHosting} from '../deploy/hosting-config.mjs';
 import {discoverTestMetaMask,onboardMetaMask,unpackMetaMask,addMetaMaskNetwork,configureMetaMaskLocalNetwork,configureMetaMaskTestnetNetwork,guardBrowserRequest,readMetaMaskAggregateControl,driveMetaMaskAggregateFunding,countMetaMaskAggregateNodeSubmissions,inspectMetaMaskAggregateReadiness,assertMetaMaskReadinessRequest,isMetaMaskStartupFrameRequest,isMetaMaskStartupWorkerRequest,driveMetaMaskPaidRecovery,retainedPreparedClaimFlag,readRetainedBokApproval,driveRetainedBokJourney,readRetainedBokObservation,observeRetainedBokJourney,retainedBokRemaining,installWalletFatalObservation,recordMetaMaskStage,exportMetaMaskUnsignedRecovery,walletChromiumLaunch,readMetaMaskUnsignedContinuation,verifyRetainedBokRecoveryFiles,driveRetainedBokRelease,driveRetainedBokWithdrawal,createRetainedBokRefundAdmission,exportMetaMaskReadyRecovery,verifyRetainedClaimReceipt,readRetainedReadyExport,driveMetaMaskReadyContinuation} from './t04-metamask.mjs';
-import {createRollingPublicTxCapture,validateRollingPublicRoles} from './testing/rolling-wire-trace.mjs';
+import {createRollingPublicTxCapture,validateRollingPublicRoles,createRollingCaptureNode} from './testing/rolling-wire-trace.mjs';
 import {projectRollingInitialization} from '../apps/rolling/wallet-panel.mjs';
 import {verifyExtensionCollateral} from './t04-extension-collateral.mjs';
 import {ROOT,assertNodeVersion,anvilBinary} from './toolchain.mjs';
@@ -129,8 +129,10 @@ try{
   const metadataResponse=await fetch(control.origin+'/wallet/runtime.json',{redirect:'error',signal:AbortSignal.timeout(5000)});assert(metadataResponse.ok);
   const metadataBytes=Buffer.from(await metadataResponse.arrayBuffer());assert(metadataBytes.length<=65536);assert.equal(createHash('sha256').update(metadataBytes).digest('hex'),control.runtimeSha256);
   const metadata=JSON.parse(metadataBytes);for(const key of ['config','trustedQuery','remoteProver','proofsEnabled'])assert.deepEqual(metadata[key],control.walletConfig[key]);
+  let captureNode;
   if(testnet){
-   const {createAztecNodeClient}=await import('@aztec-labs/aztec.js/node'),node=createAztecNodeClient(control.walletConfig.trustedQuery.url),info=await node.getNodeInfo(),network=control.walletConfig.config.network;
+   captureNode=createRollingCaptureNode({url:control.walletConfig.trustedQuery.url,remaining:retainedBokRemaining(Number(process.env.T04_BROWSER_DEADLINE_AT),Date.now,3600000)});
+   const info=await captureNode.getNodeInfo(),network=control.walletConfig.config.network;
    assert.equal(info.realProofs,true);assert.equal(String(info.l1ChainId),'11155111');assert.equal(String(info.rollupVersion),network.rollupVersion);assert.equal(String(info.l1ContractAddresses.rollupAddress).toLowerCase(),network.rollupAddress);
    const health=await fetch(control.walletConfig.remoteProver.url.replace(/\/$/,'')+'/healthz',{redirect:'error',signal:AbortSignal.timeout(10000)});assert(health.ok);const status=await health.json();assert.equal(status.ready,true);assert.equal(status.proofs,'real');
    report.scope='Current Sepolia/Aztec testnet aggregate funding and genuine private claim with native proofs enabled.';
@@ -174,8 +176,8 @@ try{
     try{
      const hash=report.aggregate?.claimTransactionHash??report.paidRecovery?.claimTransactionHash;
      if(hash){
-      const {createAztecNodeClient}=await import('@aztec-labs/aztec.js/node'),{TxHash}=await import('@aztec-labs/stdlib/tx');
-      const node=createAztecNodeClient(control.walletConfig.trustedQuery.url),txHash=TxHash.fromString(hash);
+      const {TxHash}=await import('@aztec-labs/stdlib/tx');
+      const node=captureNode,txHash=TxHash.fromString(hash);
       const [receipt,effect]=await Promise.all([node.getTxReceipt(txHash),node.getTxEffect(txHash)]);
       const block=await node.getBlockData(receipt.blockNumber);
       assert.equal((await node.getBlockData(receipt.blockNumber))?.blockHash?.toString(),receipt.blockHash.toString());
@@ -377,7 +379,9 @@ try{
 }
 finally{
  try {
- await context?.close();await finalizePublicCapture?.();if(httpServer)await new Promise((resolve,reject)=>httpServer.close(error=>error?reject(error):resolve()));await BarretenbergSync.destroySingleton();provider?.destroy();
+ await context?.close();
+ try{await finalizePublicCapture?.();}catch{report.publicObservationFailure=true;report.passed=false;}
+ if(httpServer)await new Promise((resolve,reject)=>httpServer.close(error=>error?reject(error):resolve()));await BarretenbergSync.destroySingleton();provider?.destroy();
  for(const child of children){if(child.exitCode===null&&child.signalCode===null){const closed=once(child,'close');child.kill('SIGTERM');const timer=setTimeout(()=>child.kill('SIGKILL'),1500);await closed;clearTimeout(timer);}}
  await fs.rm(directory,{recursive:true});report.cleanupComplete=true;
  try{finalizeAggregate?.();}catch(error){report.passed=false;throw error;}
