@@ -1,6 +1,6 @@
 import {createPublicReader} from './reader-client.mjs';
 import {createPublicAvatar,createPublicProfile} from './profile-view.mjs';
-import {safeURL} from './model.mjs';
+import {createMessageContent as richText} from './model.mjs';
 import {captureRoutePosition,focusRoute,skipToContent} from './navigation.mjs';
 
 const read=createPublicReader(),app=document.querySelector('#app'),positions=new Map();
@@ -33,13 +33,6 @@ const button=(label,action,attrs={})=>el('button',{type:'button',class:'button',
 const text=value=>typeof value==='string'?value:'';
 const field=value=>typeof value==='string'&&/^(0|[1-9][0-9]{0,76})$/.test(value);
 const announce=message=>{document.querySelector('#announcement').textContent=message;};
-function richText(value){
- const node=el('div',{class:'post-body'}),source=text(value),pattern=/\[([^\]]+)\]\(([^\s)]+)\)|(https?:\/\/[^\s]+)/g;let end=0;
- for(const match of source.matchAll(pattern)){
-  node.append(document.createTextNode(source.slice(end,match.index)));const url=safeURL(match[2]||match[3]);
-  node.append(url?el('a',{href:url,target:'_blank',rel:'noopener noreferrer'},match[1]||match[3]):document.createTextNode(match[0]));end=match.index+match[0].length;
- }node.append(document.createTextNode(source.slice(end)));return node;
-}
 // Policy fields are authenticated by the public index. Display their distinct
 // provenance; never substitute today's rules for the versions used by a post.
 const policyVersion=value=>typeof value==='string'&&/^(0|[1-9][0-9]{0,9})$/.test(value)&&BigInt(value)<=0xffffffffn;

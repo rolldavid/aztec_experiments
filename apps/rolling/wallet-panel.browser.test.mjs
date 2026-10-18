@@ -96,17 +96,21 @@ test('public opening is SDK-free; dialog survives reader changes, traps focus an
  assert(requests.every(url=>!url.includes('aztec')&&!url.includes('/api/')));
 });
 
-test('private choices, multibyte limit, literal preview and explicit maximum-fee confirmation',async t=>{
+test('private choices, multibyte limit, safe link preview and explicit maximum-fee confirmation',async t=>{
  const {page}=await browserFixture(t);await open(page,{type:'reply',parent:'10',root:'1',subboard:'3'});await unlock(page);
  assert.equal(await page.evaluate(()=>test.options.requireEth),false);assert.equal(await page.evaluate(()=>test.options.autoPasskey),false);
  assert.equal(await page.getByRole('link',{name:'View conversation',exact:true}).getAttribute('href'),'#/thread/1/10');assert.equal(await page.getByLabel('Reply to post ID').count(),0);assert.equal(await page.getByLabel('Root thread ID').count(),0);
  assert.equal(await page.getByLabel('Posting identity').inputValue(),'0');await page.getByRole('button',{name:'Load more owned names'}).click();await page.getByLabel('Posting identity').selectOption('8');
  await page.getByLabel('Message',{exact:true}).fill('😀'.repeat(249));assert(await page.getByRole('button',{name:'Check action and review fee'}).isDisabled());
  assert.equal(await page.getByLabel('Message',{exact:true}).inputValue(),'😀'.repeat(249));assert(await page.getByText(/249 characters · 996\/992/).isVisible());
- await page.getByLabel('Message',{exact:true}).fill('<img src=x onerror=alert(1)>');await page.getByText('Preview message',{exact:true}).click();assert.equal(await page.locator('.preview-body img').count(),0);
+ const message='[Docs](https://example.com/docs?x=1&y=2)\nhttp://example.org/path [Unsafe](javascript:alert) [Data](data:text/html,hello) <img src=x onerror=alert(1)> 😀';
+ await page.getByLabel('Message',{exact:true}).fill(message);await page.getByText('Preview message',{exact:true}).click();const preview=page.locator('.preview-body');
+ assert.equal(await preview.locator('img,script').count(),0);assert.equal(await preview.textContent(),'Docs\nhttp://example.org/path [Unsafe](javascript:alert) [Data](data:text/html,hello) <img src=x onerror=alert(1)> 😀');
+ assert.deepEqual(await preview.locator('a').evaluateAll(nodes=>nodes.map(n=>({text:n.textContent,href:n.href,target:n.target,rel:n.rel}))),[{text:'Docs',href:'https://example.com/docs?x=1&y=2',target:'_blank',rel:'noopener noreferrer'},{text:'http://example.org/path',href:'http://example.org/path',target:'_blank',rel:'noopener noreferrer'}]);
+ assert.equal(await page.getByLabel('Message',{exact:true}).inputValue(),message);
  await page.getByRole('button',{name:'Check action and review fee'}).click();await page.getByRole('button',{name:'Confirm and send'}).waitFor();
  assert(await page.getByText(/Maximum network fee: 123 fee-juice units/).isVisible());assert.equal((await counts(page)).sends,0);
- assert.deepEqual(await page.evaluate(()=>JSON.parse(sessionStorage.getItem('labelled-ui-intent')).action),{type:'reply',subboard:'3',parent:'10',root:'1',content:'<img src=x onerror=alert(1)>',name:'8',deposit:'9'});
+ assert.deepEqual(await page.evaluate(()=>JSON.parse(sessionStorage.getItem('labelled-ui-intent')).action),{type:'reply',subboard:'3',parent:'10',root:'1',content:message,name:'8',deposit:'9'});
  await page.getByRole('button',{name:'Confirm and send'}).click();await page.getByText('Transaction confirmed on the verified chain.',{exact:true}).waitFor();assert.equal((await counts(page)).sends,1);assert.equal((await counts(page)).effects,1);
  assert.equal(await page.locator('body').innerText().then(text=>text.includes('PRIVATE_SENTINEL')||text.includes('HUMAN_IDENTITY_SENTINEL')),false);
 });

@@ -12,7 +12,7 @@ const launchBrowser=()=>chromium.launch({headless:true,...(process.env.T04_CHROM
 test('public reader: navigation, unsafe content, failure recovery and narrow keyboard menu',async t=>{
  const files=new Set(['live.html','reader.mjs','reader-client.mjs','profile-view.mjs','model.mjs','navigation.mjs','style.css']);let unavailable=false,longLabels=false;
  const scope={boardAddress:'0x'+'1'.repeat(64)},identity={id:'7',first:'River',last:'Lane'};
- const post={id:'10',record:{root:'10',parent:'0',reference:'0',kind:'1',subboard:'0',name_id:'7'},text:'A real interface, tested with synthetic public data. [Unsafe](javascript:alert(1)) <script>private()</script>',timestamp:'1791734400',likes:'2',bot:null};
+ const post={id:'10',record:{root:'10',parent:'0',reference:'0',kind:'1',subboard:'0',name_id:'7'},text:'[Docs](https://example.com/docs?x=1&y=2)\nhttp://example.org/path [Unsafe](javascript:alert) [Data](data:text/html,hello) <img src=x onerror=alert(1)> 😀',timestamp:'1791734400',likes:'2',bot:null};
  const later={...post,id:'20',record:{...post.record,parent:'10'},text:'The linked reply is outside the first page.'};
  const server=http.createServer(async(req,res)=>{
   const url=new URL(req.url,'http://localhost');
@@ -28,7 +28,9 @@ test('public reader: navigation, unsafe content, failure recovery and narrow key
  page.setDefaultTimeout(5000);page.on('pageerror',error=>errors.push(error.message));page.on('request',request=>requests.push(request.url()));
  await page.addInitScript(()=>{window.IntersectionObserver=undefined;}); // Exercise the accessible manual fallback.
  await page.goto(`http://127.0.0.1:${server.address().port}/`);await page.getByRole('article').waitFor();
- assert.equal(await page.locator('article script').count(),0);assert.equal(await page.locator('a[href^="javascript:"]').count(),0);
+ assert.equal(await page.locator('article script,article img').count(),0);assert.equal(await page.locator('a[href^="javascript:"]').count(),0);
+ const message=page.locator('#post-10 > .post-body');assert.equal(await message.textContent(),'Docs\nhttp://example.org/path [Unsafe](javascript:alert) [Data](data:text/html,hello) <img src=x onerror=alert(1)> 😀');
+ assert.deepEqual(await message.locator('a').evaluateAll(nodes=>nodes.map(n=>({text:n.textContent,href:n.href,target:n.target,rel:n.rel}))),[{text:'Docs',href:'https://example.com/docs?x=1&y=2',target:'_blank',rel:'noopener noreferrer'},{text:'http://example.org/path',href:'http://example.org/path',target:'_blank',rel:'noopener noreferrer'}]);
  await page.setViewportSize({width:1440,height:500});await page.getByRole('button',{name:'Load more',exact:true}).click();await page.locator('#post-20').waitFor();
  await page.locator('#post-20').scrollIntoViewIfNeeded();const savedY=await page.evaluate(()=>scrollY);
  await page.locator('#post-20').getByRole('link',{name:'River Lane',exact:true}).click();await page.getByRole('heading',{name:'River Lane',exact:true}).waitFor();

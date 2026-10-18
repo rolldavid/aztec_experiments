@@ -1,5 +1,5 @@
 // Presentation only. No SDK import or account access before explicit Unlock.
-import {allowance} from './model.mjs';
+import {allowance,createMessageContent} from './model.mjs';
 import {prepareAvatarUpload} from './avatar-upload.mjs';
 // Presentation-only diagnostic projection. Keep this vocabulary closed even if
 // a runtime or DOM value is malformed; never render or report exception text.
@@ -554,7 +554,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
    let valid=[...fields.values()].every(node=>!node.required||node.value.length>0);
    for(const id of IDS)if(fields.has(id))valid=valid&&field(fields.get(id).value);
    if(fields.has('content')){
-    const text=fields.get('content').value,a=allowance(text);preview.textContent=text;
+    const text=fields.get('content').value,a=allowance(text);preview.replaceChildren(createMessageContent(text));
     counter.textContent=`${a.characters} characters · ${a.bytes}/992 UTF-8 bytes · ${Math.max(0,a.remaining)} bytes remaining${a.remaining<0?` · ${-a.remaining} bytes over the limit`:''}`;
     counter.className=`counter${a.remaining<0?' invalid':''}`;
     valid=valid&&a.remaining>=0&&text.isWellFormed()&&!text.includes('\0')&&(kind==='bio'||!!draft.deposit);
