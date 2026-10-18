@@ -6,7 +6,7 @@ import {execFileSync} from 'node:child_process';
 import {Barretenberg,BarretenbergSync} from '@aztec-foundation/bb.js';
 import {bootstrapPluginDevnet} from './bootstrap.mjs';
 import {prepareBrowserAuthor} from './browser-fixture.mjs';
-import {startBoardWeb,retainPreviewCheckpoint} from './web.mjs';
+import {startBoardWeb} from './web.mjs';
 import {startU01BrowserRpc} from '../../scripts/u01-browser-rpc.mjs';
 import {runHostedService} from '../main.mjs';
 import {veniceClient} from '../venice.mjs';
@@ -33,14 +33,14 @@ try{
  rpc=await startU01BrowserRpc({node:fixture.net.node,anvilUrl:fixture.net.rpcUrl,ethereumAccount:fixture.signer.address,origin,token,observer:{begin(channel,method){return success=>{if(!success&&rpcFailures.length<16)rpcFailures.push({channel,method});};}}});
  web=await startBoardWeb({fixture,port,privateFee:author.privateFee,browserRpc:{...rpc,token},connectOrigins:['http://127.0.0.1:'+servicePort]});
  service=process.argv.includes('--interruption')?await (await import('./interruption.mjs')).startInterruptionService({fixture}):await runHostedService({config:fixture.serviceConfig,env:{...process.env,PLUGIN_GITHUB_WRITES:process.argv.includes('--github-writes')?'true':'false',PLUGIN_GITHUB_DRAFT:'true'},onError:error=>console.error('BOT_ERROR',error.message)});
- await retainPreviewCheckpoint(fixture.serviceConfig);
+ await fixture.net.node.prove();
  await fs.writeFile(path.join(directory,'browser-control.json'),JSON.stringify({origin,backupPath:author.backupPath,backupPassword:author.password,ethereumAccount:fixture.signer.address,ethereumMnemonic:fixture.signer.mnemonic.phrase,ethereumUrl:fixture.net.rpcUrl,publicConfig:fixture.descriptor}),{mode:0o600});
  mark('fixture-memory '+JSON.stringify(process.memoryUsage()));
  console.log('BROWSER_READY',origin+'/user.html',directory);
  if(automated){
   const {runWalletHarness}=await import('./wallet-harness.mjs');
   await runWalletHarness({fixture,author,directory,origin,onProgress:mark,signal:abort.signal,scenario:process.argv.includes('--interruption')?'interruption':process.argv.includes('--github-writes')?'write':'read',onInterruption:post=>service.restartAndExpire(post)});
-  await retainPreviewCheckpoint(fixture.serviceConfig);
+  await fixture.net.node.prove();
  }else await stopped;
 }catch(error){runError=error;}finally{
  const failures=[];

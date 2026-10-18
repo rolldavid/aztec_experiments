@@ -3,20 +3,7 @@ import fs from 'node:fs/promises';
 import {createReadStream} from 'node:fs';
 import {pipeline} from 'node:stream/promises';
 import path from 'node:path';
-import {EthCheatCodes,RollupCheatCodes} from '@aztec-labs/ethereum/test';
-import {EthAddress} from '@aztec-labs/foundation/eth-address';
 import {contentSecurityPolicy} from '../../deploy/hosting-config.mjs';
-
-/** Official local test settlement prevents proof-disabled preview posts expiring. */
-export async function retainPreviewCheckpoint({ethereumUrl,descriptor}){
- if(descriptor.scope.chainId!=='31337'||!['127.0.0.1','localhost'].includes(new URL(ethereumUrl).hostname))throw Error('Preview settlement requires the local devnet');
- const eth=new EthCheatCodes([ethereumUrl]);
- const rollup=new RollupCheatCodes(eth,{rollupAddress:EthAddress.fromString(descriptor.scope.rollupAddress)});
- await rollup.markAsProven();
- const {pending,proven}=await rollup.getTips();
- if(proven<pending)throw Error('Preview checkpoint was not retained');
- return Number(proven);
-}
 
 /** Serve the existing reader against the live local chains; no synthetic posts. */
 export async function startBoardWeb({fixture,port=8788,privateFee=null,browserRpc,connectOrigins=[],publicConfig}){
