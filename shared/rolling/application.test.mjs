@@ -9,11 +9,12 @@ import {after} from 'node:test';
 import {nameRegistration,NAME_DOMAIN} from './name-policy.mjs';
 import {Fr} from '@aztec-labs/foundation/curves/bn254';
 import {deriveStorageSlotInMap} from '@aztec-labs/stdlib/hash';
+import {BlockHash} from '@aztec-labs/stdlib/block';
 import {AztecAddress} from '@aztec-labs/stdlib/aztec-address';
 import {encodeArguments,loadContractArtifact,decodeFromAbi,getFunctionReturnType} from '@aztec-labs/stdlib/abi';
 import {createL2Journal,l2JournalScopeText} from '../l2-journal.mjs';
 import {createEncryptedJournalSlot} from '../journal-record.mjs';
-import {Tx,TxHash,mergeExecutionPayloads} from '@aztec-labs/stdlib/tx';
+import {Tx,TxHash,MinedTxReceipt,PendingTxReceipt,DroppedTxReceipt,mergeExecutionPayloads} from '@aztec-labs/stdlib/tx';
 import {BatchCall} from '@aztec-labs/aztec.js/contracts';
 import {PrivateMintAndPayFeePaymentMethod} from '../private-fee-payment.mjs';
 import {derivePrivateFeeBridgeSecret} from '../private-fee-client.mjs';
@@ -318,7 +319,7 @@ test('wrong wallet node fails before any personalized wallet/utility call',async
 
 class JournalTx {
   constructor(hash){this.hash=hash;}
-  getTxHash(){return {toString:()=>this.hash};}
+  getTxHash(){return TxHash.fromString(this.hash);}
   toBuffer(){return Buffer.from(this.hash);}
   static fromBuffer(buffer){return new JournalTx(buffer.toString());}
 }
@@ -333,7 +334,7 @@ async function realJournalFixture(base){
   async function install(operation,status='checkpointed',result='success'){
     const journal=f.options.accountSession.journal,previous=await journal.assertCanStart();
     const tx=new JournalTx(hex(sequence++));journal.setOperation(operation);await journal.prepare(tx,previous);
-    const receipt={txHash:tx.getTxHash(),status,executionResult:result,blockNumber:1,blockHash:{toString:()=>hex(42)}};
+    const receipt=status==='pending'?new PendingTxReceipt(tx.getTxHash()):MinedTxReceipt.from({txHash:tx.getTxHash(),status,executionResult:result,transactionFee:0n,blockNumber:1,blockHash:BlockHash.fromString(hex(42)),slotNumber:1,txIndexInBlock:0,epochNumber:0});
     receipts.set(tx.hash,receipt);return receipt;
   }
   f.options.accountSession.wallet.sendTx=async(_,opts)=>{
@@ -692,11 +693,12 @@ test('preference and read-marker initial simulation errors propagate without int
 
 // Actual SDK signed-transaction serialization + encrypted CAS records; the proof,
 // receipts, fork and private utility head below are labelled chain doubles.
+// SDK receipt variants retain the methods consumed by the installed waitForTx.
 async function replacementFixture({marker=false,initialCrash=false,action:requestedAction,base}={}){
  const f=base??fixture(),node=f.options.accountSession.node,receipts=new Map(),validations=new Map(),transactions=[];
  const initial=marker?{initialized:true,schema:1,revision:'1',digest:'11'}:{initialized:false,schema:1,revision:'0',digest:'0'};
  f.state.preferenceHead=preferenceHead(initial.initialized,1,initial.revision,initial.digest);
- node.getTxReceipt=async hash=>receipts.get(String(hash))??{txHash:hash,status:'dropped'};
+ node.getTxReceipt=async hash=>receipts.get(String(hash))??new DroppedTxReceipt(TxHash.fromString(String(hash)));
  node.isValidTx=async tx=>validations.get(String(tx.getTxHash()))??{result:'invalid',reason:['Block header not found']};
  node.getBlock=async()=>({hash:hex(42)});let markerHash=hex(43);
  node.getBlockData=async height=>({header:{globalVariables:{blockNumber:height==='checkpointed'?1:height}},blockHash:height===10?markerHash:hex(42)});
@@ -710,14 +712,14 @@ async function replacementFixture({marker=false,initialCrash=false,action:reques
   if(f.state.beforeSubmit)await f.state.beforeSubmit(tx);
   if(f.state.crashAfterPrepare)throw Error('Labelled crash after journal prepare');
   if(opts.beforeSubmit)await opts.beforeSubmit(String(tx.getTxHash()));
-  f.state.sends++;const receipt={txHash:tx.getTxHash(),status:'checkpointed',blockNumber:1,blockHash:hex(42),executionResult:'success',transactionFee:3n};
+  f.state.sends++;const receipt=MinedTxReceipt.from({txHash:tx.getTxHash(),status:'checkpointed',blockNumber:1,blockHash:BlockHash.fromString(hex(42)),executionResult:'success',transactionFee:3n,slotNumber:1,txIndexInBlock:0,epochNumber:0});
   receipts.set(String(tx.getTxHash()),receipt);journal.confirmed(receipt);
   f.state.preferenceHead=preferenceHead(true,1,BigInt(initial.revision)+1n,99);
   return {receipt};
  };
  node.sendTx=async tx=>{
   f.state.sends++;(f.state.resumedBytes??=[]).push(Buffer.from(tx.toBuffer()).toString('hex'));
-  const receipt={txHash:tx.getTxHash(),status:'checkpointed',blockNumber:1,blockHash:hex(42),executionResult:'success',transactionFee:3n};
+  const receipt=MinedTxReceipt.from({txHash:tx.getTxHash(),status:'checkpointed',blockNumber:1,blockHash:BlockHash.fromString(hex(42)),executionResult:'success',transactionFee:3n,slotNumber:1,txIndexInBlock:0,epochNumber:0});
   receipts.set(String(tx.getTxHash()),receipt);f.state.preferenceHead=preferenceHead(true,1,BigInt(initial.revision)+1n,99);
  };
  f.app=f.restart();const action=requestedAction??(marker?{type:'read-marker',expectedRevision:'1',thread:'42',throughBlock:'10'}:{type:'preference',expectedRevision:'0',kind:1,target:'42',enabled:true});
@@ -753,9 +755,9 @@ test('marker replacement requires explicit same-height new canonical hash and re
 });
 for(const reason of ['pending','unknown','canonical','head-advanced','wrong-head','wrong-hash'])test(`replacement fences ${reason} without a new proof or send`,async()=>{
  const f=await replacementFixture();f.fork();await f.reopen();const input=f.review();
- if(reason==='pending')f.receipts.set(f.originalHash,{txHash:f.originalHash,status:'pending'});
+ if(reason==='pending')f.receipts.set(f.originalHash,new PendingTxReceipt(TxHash.fromString(f.originalHash)));
  if(reason==='unknown')f.validations.set(f.originalHash,{result:'invalid',reason:['Existing nullifier']});
- if(reason==='canonical')f.receipts.set(f.originalHash,{txHash:f.originalHash,status:'checkpointed',blockNumber:1,blockHash:hex(42),executionResult:'success',transactionFee:3n});
+ if(reason==='canonical')f.receipts.set(f.originalHash,MinedTxReceipt.from({txHash:TxHash.fromString(f.originalHash),status:'checkpointed',blockNumber:1,blockHash:BlockHash.fromString(hex(42)),executionResult:'success',transactionFee:3n,slotNumber:1,txIndexInBlock:0,epochNumber:0}));
  if(reason==='head-advanced')f.state.preferenceHead=preferenceHead(true,1,1,99);
  if(reason==='wrong-head')input.expectedHead={initialized:false,schema:1,revision:'0',digest:'1'};
  if(reason==='wrong-hash')input.expectedTxHash=hex(123);
@@ -768,7 +770,7 @@ test('replacement fee growth needs renewed explicit review, not silent higher sp
 });
 for(const failure of ['head','marker','predecessor','account'])test(`replacement beforeSubmit rechecks ${failure} after proving and keeps signed evidence`,async()=>{
  const f=await replacementFixture({marker:failure==='marker'});f.fork();await f.reopen();await f.app.prepareReplacement(f.prepared.intentId,f.review());
- f.state.beforeSubmit=async()=>{if(failure==='head')f.state.preferenceHead=preferenceHead(true,1,7,77);if(failure==='marker')f.options.accountSession.node.getBlockData=async height=>({header:{globalVariables:{blockNumber:height}},blockHash:hex(45)});if(failure==='predecessor')f.receipts.set(f.originalHash,{txHash:f.originalHash,status:'pending'});if(failure==='account')f.state.guard=false;};
+ f.state.beforeSubmit=async()=>{if(failure==='head')f.state.preferenceHead=preferenceHead(true,1,7,77);if(failure==='marker')f.options.accountSession.node.getBlockData=async height=>({header:{globalVariables:{blockNumber:height}},blockHash:hex(45)});if(failure==='predecessor')f.receipts.set(f.originalHash,new PendingTxReceipt(TxHash.fromString(f.originalHash)));if(failure==='account')f.state.guard=false;};
  await assert.rejects(f.app.submitPrepared(f.prepared.intentId));assert.equal(f.state.sends,1);assert.equal(f.transactions.length,2);
 });
 test('crash after replacement journal prepare stays unknown and cannot automatically reprove or resend',async()=>{
@@ -806,7 +808,7 @@ test('account invalidation during recovery head lookup prevents disclosure and r
 test('replacement inspection attributes a canonical predecessor without naming current candidate winner',async()=>{
  const f=await replacementFixture();f.fork();await f.reopen();await f.app.prepareReplacement(f.prepared.intentId,f.review());f.state.crashAfterPrepare=true;
  await assert.rejects(f.app.submitPrepared(f.prepared.intentId));const latest=String(f.transactions[1].getTxHash());
- f.receipts.set(f.originalHash,{txHash:f.originalHash,status:'checkpointed',blockNumber:1,blockHash:hex(42),executionResult:'success',transactionFee:3n});
+ f.receipts.set(f.originalHash,MinedTxReceipt.from({txHash:TxHash.fromString(f.originalHash),status:'checkpointed',blockNumber:1,blockHash:BlockHash.fromString(hex(42)),executionResult:'success',transactionFee:3n,slotNumber:1,txIndexInBlock:0,epochNumber:0}));
  const report=await f.app.inspectRecovery(f.prepared.intentId);assert.equal(report.status,'canonical');assert.equal(report.currentTxHash,latest);assert.equal(report.attempts.find(row=>row.txHash===f.originalHash).status,'canonical');assert.notEqual(report.attempts.find(row=>row.txHash===latest).status,'canonical');
  await assert.rejects(f.app.prepareReplacement(f.prepared.intentId,{...f.review(),expectedTxHash:latest}));assert.equal(f.state.sends,1);
 });
@@ -865,7 +867,7 @@ for(const marker of [false,true])for(const replacement of [false,true])test(`sav
 });
 for(const state of ['pending','unknown','invalid','head','marker','wrong-hash'])test(`saved-byte recovery fences ${state} without new fees or transport`,async()=>{
  const f=await savedResumeFixture({marker:true}),before=[...f.values],sends=f.state.sends,estimates=f.state.estimates;
- if(state==='pending')f.receipts.set(f.hash,{txHash:f.hash,status:'pending'});
+ if(state==='pending')f.receipts.set(f.hash,new PendingTxReceipt(TxHash.fromString(f.hash)));
  if(state==='unknown')f.options.accountSession.node.getTxReceipt=async()=>{throw Error('Labelled unavailable');};
  if(state==='invalid')f.validations.set(f.hash,{result:'invalid',reason:['Existing nullifier']});
  if(state==='head')f.state.preferenceHead=preferenceHead(true,1,1,12);
@@ -903,7 +905,7 @@ test('saved-byte recovery owns the busy interval and cannot be concurrently conf
  release();await pending;assert.equal(f.state.sends,1);
 });
 test('unknown saved-byte send keeps bytes and intent; read reconciliation never rebroadcasts',async()=>{
- const f=await savedResumeFixture(),before=[...f.values];f.options.accountSession.node.sendTx=async tx=>{f.state.sends++;f.receipts.set(f.hash,{txHash:tx.getTxHash(),status:'pending'});throw Error('Labelled lost acknowledgement');};
+ const f=await savedResumeFixture(),before=[...f.values];f.options.accountSession.node.sendTx=async tx=>{f.state.sends++;f.receipts.set(f.hash,new PendingTxReceipt(tx.getTxHash()));throw Error('Labelled lost acknowledgement');};
  await assert.rejects(f.app.resumeSaved(f.prepared.intentId,{expectedTxHash:f.hash}));assert.equal(f.state.sends,1);assert.deepEqual([...f.values],before);
  await f.reopen();assert.equal((await f.app.reconcile(f.prepared.intentId)).status,'unknown');assert.equal((await f.app.inspectRecovery(f.prepared.intentId)).exactResume.status,'pending');
  await assert.rejects(f.app.resumeSaved(f.prepared.intentId,{expectedTxHash:f.hash}));assert.equal(f.state.sends,1);
@@ -915,9 +917,9 @@ test('saved-byte recovery never sends an ordinary action without signed bytes',a
 
 for(const predecessor of ['pending','unknown','canonical'])test(`saved replacement cannot bypass ${predecessor} predecessor through app recovery`,async()=>{
  const f=await savedResumeFixture({replacement:true}),sends=f.state.sends,estimates=f.state.estimates,before=[...f.values];
- if(predecessor==='pending')f.receipts.set(f.originalHash,{txHash:f.originalHash,status:'pending'});
+ if(predecessor==='pending')f.receipts.set(f.originalHash,new PendingTxReceipt(TxHash.fromString(f.originalHash)));
  if(predecessor==='unknown')f.validations.set(f.originalHash,{result:'invalid',reason:['Existing nullifier']});
- if(predecessor==='canonical')f.receipts.set(f.originalHash,{txHash:f.originalHash,status:'checkpointed',blockNumber:1,blockHash:hex(42),executionResult:'success',transactionFee:3n});
+ if(predecessor==='canonical')f.receipts.set(f.originalHash,MinedTxReceipt.from({txHash:TxHash.fromString(f.originalHash),status:'checkpointed',blockNumber:1,blockHash:BlockHash.fromString(hex(42)),executionResult:'success',transactionFee:3n,slotNumber:1,txIndexInBlock:0,epochNumber:0}));
  assert.equal((await f.app.inspectRecovery(f.prepared.intentId)).exactResume.status,'unknown');
  await assert.rejects(f.app.resumeSaved(f.prepared.intentId,{expectedTxHash:f.hash}));
  assert.equal(f.state.sends,sends);assert.equal(f.state.estimates,estimates);assert.deepEqual([...f.values],before);
@@ -1508,7 +1510,7 @@ for(const kind of ['post','claim-deposit','withdraw'])for(const replacing of [fa
 
 for(const mutation of ['pending','unknown','nullifier-invalid','fee','wrong-hash','policy','account','ciphertext'])test(`ordinary recovery fences ${mutation} without a new financial action`,async()=>{
  const f=await replacementFixture({action:{type:'post',deposit:'9',content:'Immutable'},initialCrash:true});await f.reopen();const hash=f.originalHash,before=[...f.values],estimates=f.state.estimates;
- if(mutation==='pending')f.receipts.set(hash,{txHash:hash,status:'pending'});
+ if(mutation==='pending')f.receipts.set(hash,new PendingTxReceipt(TxHash.fromString(hash)));
  if(mutation==='unknown')f.options.accountSession.node.getTxReceipt=async()=>{throw Error('Labelled RPC uncertainty');};
  if(mutation==='nullifier-invalid')f.validations.set(hash,{result:'invalid',reason:['Existing nullifier']});
  if(mutation==='policy')f.state.policy=2;
@@ -1583,7 +1585,7 @@ async function preproofFixture(base){
   if(f.state.interrupt==='journal')throw Error('journal interruption');
   await lifecycle.signed(tx.hash);if(f.state.interrupt==='signed')throw Error('signed interruption');
   if(f.state.beforeBroadcast)await f.state.beforeBroadcast();await lifecycle.guard('signed');
-  f.state.sends++;if(f.state.afterBroadcast)await f.state.afterBroadcast(payload);const receipt={txHash:tx.getTxHash(),status:'checkpointed',executionResult:'success',blockNumber:1,blockHash:{toString:()=>hex(42)},transactionFee:2n};
+  f.state.sends++;if(f.state.afterBroadcast)await f.state.afterBroadcast(payload);const receipt=MinedTxReceipt.from({txHash:tx.getTxHash(),status:'checkpointed',executionResult:'success',blockNumber:1,blockHash:BlockHash.fromString(hex(42)),transactionFee:2n,slotNumber:1,txIndexInBlock:0,epochNumber:0});
   f.receipts.set(tx.hash,receipt);journal.confirmed(receipt);return {receipt};
  }};
  f.options.accountSession.preproofRecovery=Object.freeze(cap);f.app=f.restart();
