@@ -1,3 +1,15 @@
+## Owner correction — 18 October 2026: development loop
+
+Apply `/Users/zac/.codex/skills/aztec-app-development/SKILL.md` to remaining work.
+Use native devnet/PXE disabled-proof flags; native state/receipt controls, no custom
+mining clocks, sleeps or time-based progress. Small changes get focused existing
+unit/boundary tests immediately. Batch application/test repairs for review and the
+normal integration gate. No migration obligation for disposable local chains;
+preserve old state separately when moving to a fresh fixture. Keep only concise
+change-boundary decisions and necessary acceptance evidence. Do not resume the
+queued old-chain observer/refund journey merely because it was the previous task.
+Real-proof testnet and final product/release requirements remain unchanged.
+
 # Draft 3 clarifications
 
 ## 11 October 2026 — authenticated bot identity is public
@@ -23,8 +35,40 @@ scenario; no partial component result closes a whole requirement. This repairs
 execution ordering without waiving preferences, privacy, publication or any other
 product behavior. No task was marked complete as part of this correction.
 
+## 13 October 2026 — development proof flags
+
+Owner directs all development and debugging to devnet with native proof flags disabled at both the node/devnet (`realProofs: false`) and PXE (`proverEnabled: false`). The existing development runner defaults to `BOARD_TEST_PROOFS=disabled`. This is configuration only: application code, verification logic and cryptographic implementation must not be changed to bypass proofs. Real proofs are reserved for testnet acceptance. Historical evidence remains historical, and real-proof acceptance requirements, independent review, soak and network release gates remain mandatory. Development results never substitute for testnet proof acceptance.
+
+## 13 October 2026 — development uses native proof configuration
+
+Owner instruction: development and debugging use devnet with the native node `realProofs: false` and PXE `proverEnabled: false` flags. The development runner defaults to that configuration. This does not authorize modifying application cryptography, replacing proof dependencies with stubs, or weakening acceptance assertions. Real proofs remain mandatory for testnet acceptance. Historical real-proof evidence remains preserved. A setup or harness failure must be diagnosed with the smallest existing focused check before another expensive run; no separate tooling project.
+
+## 13 October 2026 — owner-directed development loop
+
+Implementers own components through implementation and debugging and may run focused local tests immediately without pre-run review. Batch each coherent application change with its test and fixture repairs for independent review before integration. Do not create separate preparation, source-review, execution-review or integration cycles for individual assertion repairs. Run the integration gate normally; rerun its negative self-tests only when the gate changes. Reuse existing development environments where isolation permits; fresh deployments and funding are for checks that require them. Continue with native devnet/PXE proofs disabled for development; targeted real-proof testnet acceptance and all final requirements remain. No new harness or process-improvement project. Passing the existing native flag from validated development configuration into PXE is configuration plumbing; no proof bypass, cryptographic modification or production verification weakening is authorized.
+
+## 13 October 2026 — personal GitHub account for Bok
+
+Owner explicitly selected the personal `zac-williamson` account instead of a dedicated organization. Public GitHub identity readback is user ID1476668. This supersedes Draft3 RC32's organization requirement only; the dedicated GitHub App, trusted broker, generated-code isolation, scoped per-thread repository writes and preservation of unrelated repositories/access remain required. Private thread repositories are a reversible engineering default; the public current source download remains on the artifact service. Do not broaden the App to every personal repository to simplify provisioning. The personal-account broker adapter is integrated at989d53f with selected-repository restrictions. Actual App installation acceptance awaits GitHub browser sign-in and setup.
+
+
+## 14 October 2026 — disk footprint and GitHub setup approval
+
+Owner directed removal of at least40GB project data after deleting Anvil temporary state, then continuing implementation. Cleanup removed46.6GB of project allocation; exact manifest/results are execution/evidence/G02/disk-cleanup-20261014.json. Keep bounded checkpoints/cache, preserve results and private journals, and never infer live chain continuity from historical results. A latest stopped native snapshot survived and requires validation before reuse.
+
+Owner action-time approval received to create/install Rolling Chat Bok on zac-williamson, with Contents read/write, Administration read/write, Metadata read, restricted to dedicated Bok repositories; private key remains operator-only on this Mac. No unrelated repository or all-repositories selection is authorized. App5317701 installed as171412624 with selected-only bootstrap repository1419258557; live availability verified. First unused key4862919 revoked after explicit owner approval; active4862939 retained. Owner additionally authorizes application GitHub configuration changes; unrelated repositories and product permission boundaries remain preserved.
+
+## 14 October 2026 — broad application GitHub authorization
+
+Owner explicitly authorizes future application-scoped GitHub configuration changes without routine per-change approval and requests broad bot permissions. Applied20 read/write repository permissions plus metadata read to Rolling Chat Bok installation171412624, retaining dedicated selected repositories. This supersedes the earlier three-permission setup default. Trusted broker and generated-code isolation, unrelated repositories, private visibility, no developer credentials in generated code, and release gates remain. Permission breadth is not proof of a supported personal-account provisioning API.
+
 ## 18 October 2026 — feature delivery first; final acceptance at the end
 
 The owner retains the full requirement: “Delete the core database and rebuild from chain records and retained archive data. Restore private bookmarks, follows and preferences with user keys. Repeat across a simulated reorg.” Implement any remaining support and run this scenario only after all other application functionality is implemented. It is not removed and is not a routine per-change check.
 
 Core/Bok recovery runbooks and repository/artifact backups remain final handover work. Backup/restore, outage/restart, clean independent deployment, full privacy traces, large-workload qualification, complete wallet/funding interruption matrix and real-proof testnet journeys belong to the final application acceptance stage. Preserve historical results. Re-run only an affected failed check after a relevant repair; do not repeat these exercises for unrelated edits. Development uses focused checks and one independent review of each coherent change before the normal integration gate.
+
+
+## Owner delivery deadline — 18 October 2026
+
+The owner explicitly removes the fixed14-day/336-hour soak. Complete implementation and acceptance within72hours of2026-10-18T15:25:57Z (deadline2026-10-21T15:25:57Z). T06 now requires bounded representative reliability and failure/recovery exercises on the final candidate, with real observed outcomes and incident accounting, without a minimum elapsed waiting period. Acceptance is assigned implementation work and must continue autonomously; its outstanding status is not a stopping condition. Preserve source-bound evidence, real-proof testnet acceptance, independent specialist review and network clearance; record any specific external prerequisite honestly. This amendment supersedes older duration instructions, including in the attached PDF, while retaining historical evidence. It does not change contract penalty/cooldown durations.

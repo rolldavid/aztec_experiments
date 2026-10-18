@@ -78,7 +78,7 @@ protocol-proving deadlines. This is the user-directed testing architecture.
 
 `R04` is the terminal production-readiness gate. It cannot be completed until all
 of its ancestors and requirements have evidence, including independent review,
-14 days of representative soak testing, and current target-network clearance.
+bounded representative reliability and failure exercises, and current target-network clearance.
 Never silently drop or waive these gates. If outside help is unavailable, deliver
 the engineering candidate, report remaining requirements, and keep the overall
 objective incomplete.
@@ -129,3 +129,8 @@ run at their actual boundary. Continue feature delivery after the focused check.
 Measure progress by functional application features. Implement and connect the full application before final qualification. The database deletion/archive rebuild/private-preference key restoration/simulated-reorg requirement remains intact, but is implemented/completed and exercised at the end, after all other application functionality. Core/Bok backup runbooks and backup checks also belong at final handover.
 
 Do not routinely run backup/restore, outage/restart, clean independent deployment, full privacy tracing, large-workload qualification, complete wallet/funding interruption matrices or real-proof testnet journeys during feature edits. Use focused component checks and independent review of coherent changes before normal integration. After final qualification finds a defect, repeat only the affected check after repair. Gate negative self-tests run only when the gate changes. If repeated setup failures obstruct progress, correct the responsible architecture rather than extending retries or adding a new harness.
+
+
+## Owner delivery deadline — 18 October 2026
+
+The owner explicitly removes the fixed14-day/336-hour soak. Complete implementation and acceptance within72hours of2026-10-18T15:25:57Z (deadline2026-10-21T15:25:57Z). T06 now requires bounded representative reliability and failure/recovery exercises on the final candidate, with real observed outcomes and incident accounting, without a minimum elapsed waiting period. Acceptance is assigned implementation work and must continue autonomously; its outstanding status is not a stopping condition. Preserve source-bound evidence, real-proof testnet acceptance, independent specialist review and network clearance; record any specific external prerequisite honestly. This amendment supersedes older duration instructions, including in the attached PDF, while retaining historical evidence. It does not change contract penalty/cooldown durations.
