@@ -10,6 +10,16 @@ const failures = new WeakSet();
 // Internal observation only. Forged errors, getters and raw upstream failures
 // never acquire diagnostics; HTTP callers still receive the original code.
 const diagnostics = new WeakMap();
+// Headers belong only to this readiness result, never to a node-wide cache.
+// The caller may reuse its final canonical reads during the same request; a
+// later inspection always performs fresh reads and gets a different snapshot.
+const canonicalBlocks = new WeakMap();
+export function getTrustedNodeCanonicalBlock(snapshot, number, hash) {
+  if(number === undefined && hash === undefined)return undefined;
+  return canonicalBlocks.get(snapshot)?.find(record =>
+    (number === undefined || record.number === number) &&
+    (hash === undefined || record.hash === hash))?.data;
+}
 export function getTrustedNodeFailureDiagnostic(error) { return diagnostics.get(error) ?? null; }
 function snapshotDiagnostic(tips,state,stamp) {
   const tip=value=>Object.freeze({number:value.number,hash:value.hash});
@@ -68,6 +78,15 @@ async function canonical(node, expected, unsynced, stage) {
   if(!data || number!==expected.number)throw unsynced('CANONICAL_ANCHOR',detail(null));
   const hash=hex(data.blockHash,32);
   if(hash!==expected.hash)throw unsynced('CANONICAL_ANCHOR',detail(hash));
+  return {...expected,data};
+}
+async function canonicalPhase(node, anchors, unsynced) {
+  const unique=new Map();
+  for(const [expected,stage] of anchors){
+    const key=expected.number+':'+expected.hash;
+    if(!unique.has(key))unique.set(key,()=>canonical(node,expected,unsynced,stage));
+  }
+  return readTogether([...unique.values()]);
 }
 
 /** Public readiness queries only; no account, tag, nullifier or transaction inputs.
@@ -121,9 +140,8 @@ export async function inspectTrustedNode(node, options) {
       throw unsynced('METADATA_MISMATCH');
     }
     const world={number:latest,hash:latestHash};
-    if(historical)await readTogether([()=>canonical(node,selected,unsynced,'selected'),()=>canonical(node,world,unsynced,'world')]);
-    else if(checkpointed.number!==proposed.number)await readTogether([()=>canonical(node,checkpointed,unsynced,'checkpointed'),()=>canonical(node,proposed,unsynced,'proposed')]);
-    else await canonical(node,proposed,unsynced,'proposed');
+    await canonicalPhase(node,historical?[[selected,'selected'],[world,'world']]:
+      checkpointed.number===proposed.number?[[proposed,'proposed']]:[[checkpointed,'checkpointed'],[proposed,'proposed']],unsynced);
     const suppliedNow=options.nowSeconds,now=suppliedNow===undefined ? Math.floor(Date.now()/1000) : suppliedNow;
     if(!natural(now))throw fail('CONFIG');
     const lag=now-Number(stamp);
@@ -134,13 +152,13 @@ export async function inspectTrustedNode(node, options) {
     if(p.proofsEnabled && (lag<0 || lag>p.maxLagSeconds))throw fail('STALE');
     // Recheck the selected canonical anchor after synchronization reads. A reorg
     // invalidates this readiness snapshot; never manufacture missing state.
-    if(historical)await readTogether([()=>canonical(node,selected,unsynced,'final-selected'),()=>canonical(node,world,unsynced,'final-world')]);
-    else await canonical(node,proposed,unsynced,'final');
-    return Object.freeze({ready:true,chainId:p.chainId,rollupVersion:p.version,rollupAddress:p.rollup,proofsEnabled:p.proofsEnabled,
+    const finalBlocks=await canonicalPhase(node,historical?[[selected,'final-selected'],[world,'final-world']]:[[proposed,'final']],unsynced);
+    const result=Object.freeze({ready:true,chainId:p.chainId,rollupVersion:p.version,rollupAddress:p.rollup,proofsEnabled:p.proofsEnabled,
       latestBlockNumber:latest,latestBlockHash:latestHash,checkpointedBlockNumber:checkpointed.number,
       ...(historical?{readinessTier:p.readinessTier,readinessBlockNumber:selected.number,readinessBlockHash:selected.hash}:{}),
       finalizedBlockNumber:finalized.number,oldestHistoricBlockNumber:oldest,
       syncedL1Timestamp:String(stamp),checkedAtSeconds:now,lagSeconds:lag});
+    canonicalBlocks.set(result,finalBlocks);return result;
     }
   } catch(error) { throw failures.has(error) ? error : fail('UNAVAILABLE'); }
 }

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {inspectTrustedNode,createTrustedPrivateNode,isTrustedPrivateNode,getTrustedNodeFailureDiagnostic} from './trusted-private-node.mjs';
+import {inspectTrustedNode,createTrustedPrivateNode,isTrustedPrivateNode,getTrustedNodeFailureDiagnostic,getTrustedNodeCanonicalBlock} from './trusted-private-node.mjs';
 import {BlockHeader} from '@aztec-labs/stdlib/tx';
 import {AppendOnlyTreeSnapshot} from '@aztec-labs/stdlib/trees';
 import {L1ContractsNames} from '@aztec-labs/ethereum/l1-contract-addresses';
@@ -289,7 +289,9 @@ function historicalFixture(){const f=fixture();f.tips.proposed={number:1471,hash
 test('explicit checkpoint readiness authenticates measured1471/1470 historical state and reports honest heads',async()=>{
  const f=historicalFixture(),r=await inspectTrustedNode(f.node,{...options,readinessTier:'checkpointed'});
  assert.equal(r.latestBlockNumber,1470);assert.equal(r.latestBlockHash,h(1470));assert.equal(r.readinessBlockNumber,1470);assert.equal(r.readinessBlockHash,h(1470));assert.equal(r.readinessTier,'checkpointed');
- assert.equal(f.calls.filter(x=>x[0]==='getNodeInfo').length,1);assert.equal(f.calls.filter(x=>x[0]==='getBlockData').length,4);
+ assert.equal(f.calls.filter(x=>x[0]==='getNodeInfo').length,1);assert.equal(f.calls.filter(x=>x[0]==='getBlockData').length,2);
+ assert.equal(getTrustedNodeCanonicalBlock(r,1470,h(1470)).blockHash,h(1470));
+ assert.equal(getTrustedNodeCanonicalBlock(r,1470,h(999)),undefined);assert.equal(getTrustedNodeCanonicalBlock({...r},1470,h(1470)),undefined);
  await rejects(()=>inspectTrustedNode(historicalFixture().node,options),'UNSYNCED');
 });
 for(const [label,change]of[
@@ -303,6 +305,7 @@ for(const [label,change]of[
 ])test('explicit historical readiness rejects '+label,async()=>{const f=historicalFixture();change(f);await rejects(()=>inspectTrustedNode(f.node,{...options,readinessTier:'checkpointed'}),label==='stale'?'STALE':'UNSYNCED');});
 for(const stage of ['selected','world','final-selected','final-world'])test('explicit historical readiness preserves '+stage+' canonical fence',async()=>{
  const f=historicalFixture(),names=['selected','world','final-selected','final-world'];let reads=0;
+ Object.assign(f.state,{latestBlockNumber:1471,latestBlockHash:h(1471)});
  f.node.getBlockData=async n=>({header:{globalVariables:{blockNumber:n}},blockHash:h(names[reads++]===stage?999:n)});
  let failure;try{await inspectTrustedNode(f.node,{...options,readinessTier:'checkpointed'});}catch(e){failure=e;}
  assert.equal(getTrustedNodeFailureDiagnostic(failure).canonical.stage,stage);

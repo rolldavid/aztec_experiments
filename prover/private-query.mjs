@@ -1,5 +1,5 @@
 import {BlockHash} from '@aztec-labs/stdlib/block';
-import {getTrustedNodeFailureDiagnostic} from '../shared/trusted-private-node.mjs';
+import {getTrustedNodeFailureDiagnostic,getTrustedNodeCanonicalBlock} from '../shared/trusted-private-node.mjs';
 import {createSafeJsonRpcClient} from '@aztec-labs/foundation/json-rpc/client';
 import {jsonStringify} from '@aztec-labs/foundation/json-rpc';
 import {getSchemaParameters, getSchemaReturnType, parseWithOptionals, schemaHasMethod} from '@aztec-labs/foundation/schemas';
@@ -176,20 +176,29 @@ export function createPrivateQueryWithInspector({queryNode, chainId, rollupVersi
       (value.number===undefined||Number.isSafeInteger(value.number)&&value.number>=0)&&(value.hash===undefined||value.hash instanceof BlockHash));
   const historicalKind=call=>metadataReads.has(call.method)?'metadata':txReads.has(call.method)?'transaction':
     selectorIndex.has(call.method)&&fixedSelector(call.args[selectorIndex.get(call.method)])?'selector':null;
-  const canonicalRecord=async(selector,ready,limit=ready.readinessBlockNumber,stateful=true)=>{
-    const data=await node.getBlockData(selector),number=data?.header?.globalVariables?.blockNumber,hash=data?.blockHash;
-    if(!Number.isSafeInteger(number)||number<(stateful?ready.oldestHistoricBlockNumber:0)||number>limit||!(hash instanceof BlockHash))throw unavailable();
+  const canonicalRecord=async(selector,ready,records,limit=ready.readinessBlockNumber,stateful=true)=>{
     const requestedNumber=typeof selector==='number'?selector:selector?.number;
-    const requestedHash=selector instanceof BlockHash?selector:selector?.hash;
-    if(requestedNumber!==undefined&&requestedNumber!==number||requestedHash!==undefined&&requestedHash.toString()!==hash.toString())throw unavailable();
-    // Resolve hash selectors back through the canonical height too. A block-by-
-    // hash result alone may name an orphan retained by an archive.
-    const current=await node.getBlockData(number);
-    if(current?.header?.globalVariables?.blockNumber!==number||current?.blockHash?.toString()!==hash.toString())throw unavailable();
-    return {number,hash:hash.toString(),root:data.header.txEffectsTreeRoot?.toString()};
+    const requestedHash=(selector instanceof BlockHash?selector:selector?.hash)?.toString();
+    const previous=records.find(record=>(requestedNumber===undefined||record.number===requestedNumber)&&
+      (requestedHash===undefined||record.hash===requestedHash));
+    const known=previous?.data??getTrustedNodeCanonicalBlock(ready,requestedNumber,requestedHash);
+    const data=known??await node.getBlockData(requestedNumber??selector),number=data?.header?.globalVariables?.blockNumber,hash=data?.blockHash;
+    if(!Number.isSafeInteger(number)||number<(stateful?ready.oldestHistoricBlockNumber:0)||number>limit||!(hash instanceof BlockHash))throw unavailable();
+    if(requestedNumber!==undefined&&requestedNumber!==number||requestedHash!==undefined&&requestedHash!==hash.toString())throw unavailable();
+    // A by-height read is already canonical. Hash selectors can name archived
+    // orphans, so authenticate them by height unless this phase already did so.
+    if(!known&&requestedNumber===undefined){
+      const current=getTrustedNodeCanonicalBlock(ready,number,hash.toString())??await node.getBlockData(number);
+      if(current?.header?.globalVariables?.blockNumber!==number||current?.blockHash?.toString()!==hash.toString())throw unavailable();
+    }
+    return {number,hash:hash.toString(),root:data.header.txEffectsTreeRoot?.toString(),data};
   };
-  const recheckRecords=async records=>{
-    const results=await Promise.allSettled(records.map(async record=>{const data=await node.getBlockData(record.number);
+  const recheckRecords=async(records,ready)=>{
+    const unique=new Map(records.map(record=>[record.number+':'+record.hash,record]));
+    const results=await Promise.allSettled([...unique.values()].map(async record=>{
+      // Only the NEW inspector result may satisfy a final fence. Never consult
+      // the headers retained for request dispatch after its operations complete.
+      const data=getTrustedNodeCanonicalBlock(ready,record.number,record.hash)??await node.getBlockData(record.number);
       if(data?.header?.globalVariables?.blockNumber!==record.number||data?.blockHash?.toString()!==record.hash)throw unavailable();}));
     if(results.some(result=>result.status==='rejected'))throw unavailable();
   };
@@ -241,7 +250,8 @@ export function createPrivateQueryWithInspector({queryNode, chainId, rollupVersi
               // Archiver headers/bodies (including PXE genesis) do not depend
               // on retained world-state snapshots; witness/state reads do.
               const publicBlock=['getBlock','getBlockData'].includes(call.method);
-              call.anchor=await canonicalRecord(call.args[selectorIndex.get(call.method)],ready,publicBlock?ready.latestBlockNumber:ready.readinessBlockNumber,!publicBlock);
+              call.anchor=await canonicalRecord(call.args[selectorIndex.get(call.method)],ready,records,publicBlock?ready.latestBlockNumber:ready.readinessBlockNumber,!publicBlock);
+              if(call.method==='getBlockData')call.cached={value:call.anchor.data};
             }else if(kind==='transaction'){
               const receipt=await node.getTxReceipt(call.args[0],call.method==='getTxReceipt'?call.args[1]:undefined);
               call.receipt=receipt;if(call.method==='getTxReceipt')call.cached={value:receipt};
@@ -249,15 +259,15 @@ export function createPrivateQueryWithInspector({queryNode, chainId, rollupVersi
               if(!receipt?.isMined()||receipt.blockNumber>ready.readinessBlockNumber){strict=true;continue;}
               // Receipts and tx-effect membership are archiver reads in the native SDK;
               // unlike state witnesses, they survive world-state snapshot pruning.
-              call.anchor=await canonicalRecord({number:receipt.blockNumber,hash:receipt.blockHash},ready,ready.readinessBlockNumber,false);
+              call.anchor=await canonicalRecord({number:receipt.blockNumber,hash:receipt.blockHash},ready,records,ready.readinessBlockNumber,false);
             }
             if(call.anchor)records.push(call.anchor);
           }
           // Unknown/pending tx status still needs ordinary proposed readiness.
           // This is a stronger policy before publication, not a retry or a
           // replacement for an unavailable historical result.
-          if(strict){const strictReady=await inspect();historical=false;
-            for(const call of prepared)if(call.receipt?.isMined()&&!call.anchor){call.anchor=await canonicalRecord({number:call.receipt.blockNumber,hash:call.receipt.blockHash},strictReady,strictReady.latestBlockNumber,false);records.push(call.anchor);}
+          if(strict){const strictReady=await inspect(),strictRecords=[];historical=false;
+            for(const call of prepared)if(call.receipt?.isMined()&&!call.anchor){call.anchor=await canonicalRecord({number:call.receipt.blockNumber,hash:call.receipt.blockHash},strictReady,strictRecords,strictReady.latestBlockNumber,false);strictRecords.push(call.anchor);records.push(call.anchor);}
           }
           else records.push({number:ready.readinessBlockNumber,hash:ready.readinessBlockHash},{number:ready.latestBlockNumber,hash:ready.latestBlockHash});
         }
@@ -277,7 +287,7 @@ export function createPrivateQueryWithInspector({queryNode, chainId, rollupVersi
         }
         catch {return errorResponse(id);}
       }));
-      if(historical||records.length){try{await inspect(historical?compact.tier:undefined);await recheckRecords(records);}catch{reply(503,errorResponse(null));return;}}
+      if(historical||records.length){try{const finalReady=await inspect(historical?compact.tier:undefined);await recheckRecords(records,finalReady);}catch{reply(503,errorResponse(null));return;}}
       const encoded = jsonStringify(batch ? results : results[0]);
       if (Buffer.byteLength(encoded) > QUERY_LIMITS.responseBytes) {reply(502, errorResponse(null)); return;}
       res.writeHead(200, {'Content-Type': 'application/json', 'Cache-Control': 'no-store'}); res.end(encoded);

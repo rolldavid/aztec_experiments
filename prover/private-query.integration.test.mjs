@@ -28,7 +28,7 @@ const listen = async server => {
 };
 const stop = server => {server.closeAllConnections();return new Promise(resolve=>server.close(resolve));};
 
-async function composition(t,{queryOnly=false,operatorKey}={}) {
+async function composition(t,{queryOnly=false,operatorKey,compactBlocks}={}) {
   const id = n => ({number:n,hash:hex(n)}), tip = n => ({block:id(n),checkpoint:{number:n,hash:hex(n)}});
   // Same schema-valid NodeInfo/BlockData shape as shared trusted-node unit tests,
   // transported through real HTTP and both real production adapters here.
@@ -83,7 +83,7 @@ async function composition(t,{queryOnly=false,operatorKey}={}) {
     service=await startProverService({serviceMode:'query-only',...(operatorKey?{operatorAuthSha256:(await import('node:crypto')).createHash('sha256').update(operatorKey).digest('hex')}:{}),queryNode:{url:upstreamUrl,rollupAddress:rollup,maxLagSeconds:120},chainId:scope.chainId,rollupVersion:scope.version,proofs:'real',host:'127.0.0.1',port:0,origins:[]});
     url='http://127.0.0.1:'+service.address.port;t.after(()=>service.close());
   }else{
-    const privateQuery=await createPrivateQuery({queryNode:{url:upstreamUrl,rollupAddress:rollup,maxLagSeconds:120},chainId:scope.chainId,rollupVersion:scope.version,proofsEnabled:true});
+    const privateQuery=await createPrivateQuery({compactBlocks,queryNode:{url:upstreamUrl,rollupAddress:rollup,maxLagSeconds:120},chainId:scope.chainId,rollupVersion:scope.version,proofsEnabled:true});
     const server=createProverServer({privateQuery,queue:{stats:()=>({submitted:0})},proofsEnabled:true,origins:[]});
     server.prependListener('request',()=>{frontRequests++;});
     url=await listen(server);t.after(()=>stop(server));
@@ -98,7 +98,25 @@ async function composition(t,{queryOnly=false,operatorKey}={}) {
 
 const unavailable = error => error.code==='BB_TRUSTED_NODE_UNAVAILABLE'
   && !Object.hasOwn(error,'cause') && !String(error.stack).includes('SYNTHETIC_PRIVATE_SENTINEL');
-const publicGate = ['getNodeInfo','getChainTips','getWorldStateSyncStatus','getBlockData','getBlockData','getSyncedL1Timestamp','getBlockData'];
+const publicGate = ['getNodeInfo','getChainTips','getWorldStateSyncStatus','getSyncedL1Timestamp','getBlockData','getBlockData','getBlockData'];
+
+test('historical HTTP composition: identical anchors and headers share work only within each request phase',async t=>{
+  const f=await composition(t,{compactBlocks:{tier:'checkpointed',origins:[]}});
+  f.tips.checkpointed.block={...f.tips.proposed};
+  const call={jsonrpc:'2.0',id:1,method:'aztec_getBlockData',params:[8]};
+  const post=body=>fetch(f.url+'/v1/node',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)});
+  // A single header and repeated batch consumers require the same logical work.
+  // Repeat the request too: no resolved header survives into the next request.
+  for(const body of [call,[call,{...call,id:2}],call]){
+    f.reset();const response=await post(body);assert.equal(response.status,200);
+    const result=await response.json();for(const row of Array.isArray(result)?result:[result])assert.equal(row.result.blockHash,hex(8));
+    assert.equal(f.frontRequests,1);assert.equal(f.calls.length,12);
+    assert.equal(f.calls.filter(name=>name==='getBlockData').length,4);
+    for(const name of ['getNodeInfo','getChainTips','getWorldStateSyncStatus','getSyncedL1Timestamp'])assert.equal(f.calls.filter(method=>method===name).length,2);
+  }
+  f.reset();f.state.treesAreSynched=false;
+  assert.equal((await post(call)).status,503);assert(!f.calls.includes('getBlockData'));
+});
 
 test('development HTTP composition: real inspector, official schemas and genuine optional absence',async t=>{
   const f=await composition(t),original=globalThis.fetch,batches=[];let node;
@@ -113,9 +131,8 @@ test('development HTTP composition: real inspector, official schemas and genuine
   assert(!f.calls.includes('getContract')); // Bootstrap readiness uses public calls only.
   const expected=[
     [['aztec_getNodeInfo',[]]],
-    [['aztec_getChainTips',[]],['aztec_getWorldStateSyncStatus',[]]],
+    [['aztec_getChainTips',[]],['aztec_getWorldStateSyncStatus',[]],['aztec_getSyncedL1Timestamp',[]]],
     [['aztec_getBlockData',[7]],['aztec_getBlockData',[8]]],
-    [['aztec_getSyncedL1Timestamp',[]]],
     [['aztec_getBlockData',[8]]],
   ];
   assert.deepEqual(batches.map(batch=>batch.map(({method,params})=>[method,params])),expected);
@@ -124,7 +141,7 @@ test('development HTTP composition: real inspector, official schemas and genuine
   assert.equal(f.frontRequests,expected.length);
   // Every frontend batch still performs all seven server readiness reads.
   assert.deepEqual(f.calls,expected.flatMap(batch=>[...publicGate,...batch.map(([method])=>method.slice(6))]));
-  assert.equal(f.calls.length,42);
+  assert.equal(f.calls.length,35);
   f.reset();assert.equal(await node.getContract(address,8),undefined);
   assert.deepEqual(f.calls,[...publicGate,'getContract']);assert.equal(f.frontRequests,1);
   const health=await(await fetch(f.url+'/healthz')).json();assert.equal(health.proofs,'real');assert.deepEqual(health.query,{enabled:true,ready:true});
@@ -135,8 +152,8 @@ for(const [label,mutate,expected] of [
   ['rollup identity',f=>{f.info.l1ContractAddresses.rollupAddress='0x'+'34'.repeat(20);},['getNodeInfo']],
   ['rollup version',f=>{f.info.rollupVersion=2;},['getNodeInfo']],
   ['proof mode',f=>{f.info.realProofs=false;},['getNodeInfo']],
-  ['world synchronization',f=>{f.state.treesAreSynched=false;},publicGate.slice(0,3)],
-  ['world fork',f=>{f.state.latestBlockHash=hex(99);},publicGate.slice(0,3)],
+  ['world synchronization',f=>{f.state.treesAreSynched=false;},publicGate.slice(0,4)],
+  ['world fork',f=>{f.state.latestBlockHash=hex(99);},publicGate.slice(0,4)],
   ['L1 lag',f=>{f.setLag(121);},publicGate.slice(0,6)],
   ['unavailable upstream',f=>{f.setFailure(true);},['HTTP-failure']],
 ])test('development HTTP composition: changed '+label+' blocks personalized forward without retry/fallback',async t=>{
@@ -183,7 +200,7 @@ test('development query-only service: actual client/inspector, no deployment or 
 for(const [label,mutate,expected] of [
  ['identity',f=>{f.info.rollupVersion=2;},['getNodeInfo']],
  ['proof policy',f=>{f.info.realProofs=false;},['getNodeInfo']],
- ['sync',f=>{f.state.treesAreSynched=false;},publicGate.slice(0,3)],
+ ['sync',f=>{f.state.treesAreSynched=false;},publicGate.slice(0,4)],
  ['stale',f=>{f.setLag(121);},publicGate.slice(0,6)],
 ])test('development query-only service: '+label+' refuses private forward',async t=>{
  const f=await composition(t,{queryOnly:true}),node=await f.create();f.reset();mutate(f);
