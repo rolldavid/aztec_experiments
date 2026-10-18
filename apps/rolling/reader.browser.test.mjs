@@ -328,6 +328,16 @@ export async function loadRollingWalletRuntime(){return {selectPrivateViews,getA
 async function recoverPrivateView(page){await page.getByRole('button',{name:'Open private recovery'}).click();await page.getByRole('button',{name:'Unlock',exact:true}).click();await page.getByRole('button',{name:'Recover private views',exact:true}).click();await page.getByText('Your saved choices are ready.').waitFor();await page.getByRole('button',{name:'Close account panel'}).click();}
 test('private routes stay SDK-free when locked; filter whole ordinary pages and continue an empty filtered cursor',async t=>{
  const {page,requests,feed}=await privateViewFixture(t);assert.equal(feed.length,0);assert(!requests.some(p=>p.includes('wallet')));assert(await page.getByText('Recover your saved choices to see this view. Your follows and bookmarks stay private.',{exact:true}).isVisible());
+ assert.equal(await page.evaluate(()=>document.activeElement.tagName),'BODY'); // Preserve the initial skip-link tab order.
+ for(const title of ['Following','Notifications','Bookmarks']){
+  await page.getByRole('link',{name:title,exact:true}).click();await page.getByRole('heading',{name:title,exact:true}).waitFor();
+  assert.equal(await page.locator('#announcement').getAttribute('role'),'status');
+  assert.equal(await page.locator('#announcement').getAttribute('aria-live'),'polite');
+  assert.equal(await page.locator('#announcement').textContent(),title+': unlock and recover your private views to see this feed.');
+  assert.notEqual(await page.evaluate(()=>document.activeElement.tagName),'BODY');
+  if(title!=='Bookmarks')assert.equal(await page.evaluate(()=>document.activeElement.tagName),'H1');
+ }
+ assert.equal(feed.length,0);assert(!requests.some(p=>p.includes('wallet')));
  if(process.env.ROLLING_PREFERENCES_LOCKED_SCREENSHOT)await page.screenshot({path:process.env.ROLLING_PREFERENCES_LOCKED_SCREENSHOT,fullPage:true});
  await recoverPrivateView(page);assert.equal(await page.evaluate(()=>privateTest.reads),1);await page.getByRole('button',{name:'Load more',exact:true}).waitFor();assert.equal(await page.getByRole('article').count(),0);
  await page.getByRole('button',{name:'Load more',exact:true}).focus();await page.keyboard.press('Enter');await page.locator('#post-11').waitFor();assert.equal(await page.getByRole('article').count(),1);assert.equal(await page.getByRole('heading',{name:'A little quiet here'}).count(),0);
