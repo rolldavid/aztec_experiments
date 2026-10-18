@@ -60,6 +60,16 @@ const runtime={selectPrivateViews,
  account:{configure:options=>{state.options=options;},async create(){state.creates++;await boundary('create');state.unlocked=true;return envelope;},async importRecovery(){state.imports++;await boundary('import');state.unlocked=true;if(state.importWarning)state.options.onMessage(state.importWarning,'warn');},async exportRecovery(){state.exports++;await boundary('export');return envelope;},async endSession(){state.ended++;state.unlocked=false;return {reload:true};}},
  async createSession({onProgress}){state.sessions++;state.sessionProgress=onProgress;for(const record of state.initializationRecords??[])onProgress(record);await boundary('session');return {application,withdrawal:{async prepareSaved(input){state.savedRefundReviews=(state.savedRefundReviews??0)+1;state.refundInput=input;await boundary('saved-refund-review');if(state.refundFound){state.refunded=true;return {status:'refunded'};}return {savedRequest:true,nonce:7,amount:read().withdrawal.amount,maximumGasWei:input.maximumGasWei,walletName:'MetaMask'};},async prepare(input){state.refundReviews=(state.refundReviews??0)+1;state.refundInput=input;await boundary('refund-review');return {amount:'100000000000000000',maximumGasWei:input.maximumGasWei,walletName:'MetaMask'};},async confirm(){state.refundSends=(state.refundSends??0)+1;await boundary('refund-send');state.refunded=true;return {status:'refunded',amount:read().withdrawal.amount};},async cancel(){state.refundCancelled=true;},async recover(){state.refundChecks=(state.refundChecks??0)+1;await boundary('refund-check');if(state.refundFound)state.refunded=true;return {status:state.refundFound?'refunded':'unknown'};}},topup:state.topupEnabled?topup:null,funding:state.aggregateEnabled?funding:null,busy:false,async close(){state.closes++;await boundary('close');}};}
 };
+const originalFetch=globalThis.fetch.bind(globalThis);state.ruleReads=[];state.ruleReleases={};
+globalThis.fetch=async(url,options)=>{
+ if(!String(url).startsWith('/api/board?'))return originalFetch(url,options);
+ const query=new URL(url,location.origin).searchParams,id=query.get('id');state.ruleReads.push({id,limit:query.get('limit')});
+ const override=structuredClone(state.rules?.[id]??{}),parent=override.parent??'Respect other people.',version=override.version??'2';
+ const body={schemaVersion:1,complete:true,scope:{chainId:'31337',rollupVersion:'1',boardAddress:'0x'+'1'.repeat(64)},boardId:override.boardId??id,
+  mainPolicy:{version,text:parent},board:id==='0'?null:{id,name:'Workshop',mainVersion:version,mainRules:parent,rules:override.local??'Share useful ideas.',rejected:override.rejected??false,rejection:override.rejected?{reason:'Outside the parent rules.'}:null}};
+ if(state.holdRules===id)await new Promise(resolve=>state.ruleReleases[id]=resolve);
+ return new Response(JSON.stringify(body),{status:override.unavailable?503:200,headers:{'Content-Type':'application/json'}});
+};
 window.panel=mountRollingWalletPanel({loadRuntime:async()=>{state.loads++;await boundary('load');return runtime;},onPublicEffect:()=>{state.effects++;},onPrivateChange:()=>{state.privateChanges++;}});
 document.getElementById('open').onclick=()=>window.panel.open(window.defaults);
 window.ready=true;`;
@@ -72,7 +82,7 @@ async function browserFixture(t){
   if(Object.hasOwn(diagnosticModules,req.url)){res.writeHead(200,{'content-type':'text/javascript'});res.end(await fs.readFile(new URL(diagnosticModules[req.url],import.meta.url)));return;}
   if(req.url==='/invocation.mjs'){res.writeHead(200,{'content-type':'text/javascript'});res.end(await fs.readFile(new URL('../../shared/rolling/invocation.mjs',import.meta.url)));return;}
   if(req.url==='/private-views.mjs'){res.writeHead(200,{'content-type':'text/javascript'});res.end(await fs.readFile(new URL('../../shared/rolling/private-views.mjs',import.meta.url)));return;}
-  if(!['/wallet-panel.mjs','/avatar-upload.mjs','/model.mjs','/style.css'].includes(req.url)){res.writeHead(404);res.end();return;}
+  if(!['/wallet-panel.mjs','/reader-client.mjs','/avatar-upload.mjs','/model.mjs','/style.css'].includes(req.url)){res.writeHead(404);res.end();return;}
   res.writeHead(200,{'content-type':req.url.endsWith('.css')?'text/css':'text/javascript'});res.end(await fs.readFile(new URL('.'+req.url,import.meta.url)));
  });await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));t.after(()=>{server.closeAllConnections();return new Promise(resolve=>server.close(resolve));});
  const browser=await chromium.launch({headless:true,...(process.env.T04_CHROMIUM_EXECUTABLE?{executablePath:process.env.T04_CHROMIUM_EXECUTABLE}:{})});t.after(()=>browser.close());const page=await browser.newPage({viewport:{width:390,height:844},acceptDownloads:true});
@@ -1190,4 +1200,60 @@ test('funding pause fences the next stage while a held operation retains the bus
  await page.getByText('Funding checks paused.',{exact:false}).waitFor();assert.equal((await counts(page)).sends,0);
  await page.getByRole('button',{name:'Resume saved funding',exact:true}).click();await page.getByText('Funding and the private claim are confirmed.',{exact:false}).waitFor();
  assert.equal((await counts(page)).sends,1);assert.equal(await page.evaluate(()=>test.fundingPayments),1);
+});
+
+for(const type of ['post','reply','quote','repost','bok'])test('Effective rules are shown for '+type+' and refreshed before publication',async t=>{
+ const {page}=await browserFixture(t);await page.evaluate(()=>{test.bokCredit='1000000';test.rules={'3':{parent:'<img src=x onerror=alert(1)> Parent policy',local:'[Local](javascript:alert(1))'}};});
+ await open(page,{type,subboard:'3',parent:'12',root:'11',reference:'10',content:'A useful message'});await unlock(page);
+ const rules=page.getByRole('region',{name:'Current effective rules'});
+ await rules.getByText('Current parent rules · v2',{exact:true}).waitFor();
+ assert.equal(await rules.locator('img,script,a').count(),0);assert.match(await rules.textContent(),/Immutable local rules · v1/);
+ assert.match(await rules.textContent(),/Parent policy/);assert.match(await rules.textContent(),/javascript:alert/);
+ assert.deepEqual(await page.evaluate(()=>test.ruleReads),[{id:'3',limit:'1'}]);
+ await page.getByRole('button',{name:'Check action and review fee',exact:true}).click();
+ await page.getByRole('button',{name:'Confirm and send',exact:true}).waitFor();
+ assert.equal(await page.evaluate(()=>test.ruleReads.length),2);
+ await page.evaluate(()=>test.rules['3'].version='3');
+ await page.getByRole('button',{name:'Confirm and send',exact:true}).click();
+ await rules.getByText('Current parent rules · v3',{exact:true}).waitFor();
+ assert.equal((await counts(page)).sends,0);
+ await page.getByRole('button',{name:'Confirm and send',exact:true}).click();
+ await page.waitForFunction(()=>test.sends===1);
+});
+
+test('Effective rules follow destination changes without reads per keystroke or stale response overwrite',async t=>{
+ const {page}=await browserFixture(t);await open(page);await unlock(page);
+ const rules=page.getByRole('region',{name:'Current effective rules'}),destination=page.getByLabel('Subboard ID (0 for main board)',{exact:true}),review=page.getByRole('button',{name:'Check action and review fee',exact:true});
+ await rules.getByText('Main board',{exact:true}).waitFor();await page.getByLabel('Message',{exact:true}).fill('Message kept');
+ await page.evaluate(()=>test.holdRules='3');await destination.fill('3');
+ assert.equal(await page.evaluate(()=>test.ruleReads.length),1);assert(await review.isDisabled());
+ await destination.dispatchEvent('change');await page.waitForFunction(()=>test.ruleReleases['3']);
+ await destination.fill('4');await destination.dispatchEvent('change');await rules.getByText('Subboard 4',{exact:true}).waitFor();
+ await page.evaluate(()=>test.ruleReleases['3']());await page.evaluate(()=>Promise.resolve());
+ assert.match(await rules.textContent(),/Subboard 4/);assert(!await review.isDisabled());
+ assert.equal(await page.getByLabel('Message',{exact:true}).inputValue(),'Message kept');
+ assert.deepEqual(await page.evaluate(()=>test.ruleReads.map(x=>x.id)),['0','3','4']);
+});
+
+for(const failure of ['unavailable','rejected','mismatch'])test('Effective rules block '+failure+' destination and allow explicit recovery',async t=>{
+ const {page}=await browserFixture(t);await page.evaluate(failure=>{test.rules={'3':failure==='mismatch'?{boardId:'4'}:{[failure]:true}};},failure);
+ await open(page,{type:'post',subboard:'3',content:'Preserved draft'});await unlock(page);
+ const rules=page.getByRole('region',{name:'Current effective rules'}),review=page.getByRole('button',{name:'Check action and review fee',exact:true});
+ await rules.getByText(failure==='rejected'?/This subboard is rejected/:/Current board rules are unavailable/).waitFor();
+ assert(await review.isDisabled());assert.equal((await counts(page)).prepares,0);
+ await page.evaluate(()=>test.rules={});await rules.getByRole('button',{name:'Refresh board rules'}).click();
+ await rules.getByText('Current parent rules · v2',{exact:true}).waitFor();assert(!await review.isDisabled());
+});
+
+test('Effective rules are shared in flight and recovered publication cannot send on an unavailable refresh',async t=>{
+ const {page}=await browserFixture(t);await page.evaluate(()=>test.holdRules='3');await open(page,{type:'post',subboard:'3',content:'Saved publication'});await unlock(page);
+ await page.waitForFunction(()=>test.ruleReleases['3']);await page.getByRole('button',{name:'Load more owned names',exact:true}).click();
+ assert.equal(await page.evaluate(()=>test.ruleReads.length),1);
+ await page.evaluate(()=>{test.holdRules=null;test.ruleReleases['3']();});
+ await page.getByRole('button',{name:'Check action and review fee',exact:true}).click();await page.getByRole('button',{name:'Confirm and send',exact:true}).waitFor();
+ await page.reload();await page.waitForFunction(()=>window.ready);await open(page);await page.getByRole('button',{name:'Unlock',exact:true}).click();
+ const rules=page.getByRole('region',{name:'Current effective rules'});await rules.getByText('Subboard 3',{exact:true}).waitFor();
+ await page.evaluate(()=>test.rules={'3':{unavailable:true}});await page.getByRole('button',{name:'Confirm and send',exact:true}).click();
+ await rules.getByText(/Current board rules are unavailable/).waitFor();assert.equal((await counts(page)).sends,0);
+ assert(await page.getByRole('button',{name:'Confirm and send',exact:true}).isDisabled());
 });

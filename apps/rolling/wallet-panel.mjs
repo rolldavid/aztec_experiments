@@ -1,5 +1,6 @@
 // Presentation only. No SDK import or account access before explicit Unlock.
 import {allowance,createMessageContent} from './model.mjs';
+import {createPublicReader} from './reader-client.mjs';
 import {prepareAvatarUpload} from './avatar-upload.mjs';
 // Presentation-only diagnostic projection. Keep this vocabulary closed even if
 // a runtime or DOM value is malformed; never render or report exception text.
@@ -59,7 +60,9 @@ const backupFreshness='Download a fresh backup after funding or transaction reco
  */
 export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPrivateChange=()=>{}}){
  if(typeof loadRuntime!=='function'||typeof onPublicEffect!=='function'||typeof onPrivateChange!=='function')throw Error('Wallet panel configuration unavailable.');
- const connectionFailure=Object.freeze({}),avatarFailure=Object.freeze({});
+ const connectionFailure=Object.freeze({}),avatarFailure=Object.freeze({}),rulesFailure=Object.freeze({});
+ const readPublic=createPublicReader(),rulesInFlight=new Map();
+ let postingRules=null,rulesScope=null,updateRules=()=>{};
  let initializationAttempt=0,plaintextRecovery=false;
  let runtime,session,busy=false,blocked=false,invalidated=false,reloadRequired=false,returnFocus;
  let balances=null,bokAccounting=null,accountingCheck=null,bokExitAmount='',refundQuote=null,refundGas='0.003';
@@ -74,7 +77,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
  const content=el('div'),live=el('p',{role:'status','aria-live':'polite',class:'quiet'});
  dialog.append(el('div',{class:'dialog-top'},title,closeButton),el('p',{id:'rolling-wallet-description',class:'quiet'},'Published names and posts are public. Your saved choices are encrypted for recovery, and private views are filtered on your device. The configured trusted prover and its query service can see private data used to recover or prove your activity.'),live,content);
  document.body.append(dialog);
- function releasePreviews(){renderEpoch++;for(const url of previewURLs)URL.revokeObjectURL(url);previewURLs.clear();}
+ function releasePreviews(){renderEpoch++;updateRules=()=>{};for(const url of previewURLs)URL.revokeObjectURL(url);previewURLs.clear();}
  function clearProfileDraft(){profileSnapshot=null;avatarDraft=null;}
  function clearPreferences(){preferences=null;preferenceProgress=null;onPrivateChange();}
  function clearPrivateView(){stopFunding();balances=null;bokAccounting=null;bokExitAmount='';refundQuote=null;refundGas='0.003';topupQuote=null;topupInputs={amount:'',gas:'0.003'};fundingQuote=null;fundingInputs={asset:'ETH',collateral:'',fee:'',bok:'',gas:'',slippage:'1'};initializationAttempt++;dialog.removeAttribute('data-rolling-initialization');recoveryInspection=null;accountEpoch++;accountIdentity=null;content.replaceChildren();moderatorStatus=null;clearPreferences();status=null;bokStatus=null;intent=null;identities=[];identityRecords=[];cursor=0;view='action';draft={type:'post',subboard:'0',content:''};releasePreviews();clearProfileDraft();}
@@ -141,7 +144,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
  function selectView(next){clearOperationFeedback();view=next;render();}
  async function work(fn,failureMessage=nameFailure){
   if(busy)return;const operationFocus=document.activeElement;busy=true;clearOperationFeedback();controlsBusy(true);
-  try{await fn();}catch(failure){stopFunding();recoveryInspection=null;clearPreferences();note('');error=failure===connectionFailure?'The private connection is unavailable. Your encrypted recovery is preserved. Reconnect when the service returns.':failure===avatarFailure?'This image could not be prepared. Choose a still PNG, JPEG or WebP under 8 MiB. It must fit 8192 encoded bytes after cropping and compression. No transaction was prepared.':failureMessage(failure)??message;}finally{
+  try{await fn();}catch(failure){stopFunding();recoveryInspection=null;clearPreferences();note('');error=failure===rulesFailure?'Current board rules are unavailable, changed, or reject new posts. Review the rules below before continuing. Nothing was sent.':failure===connectionFailure?'The private connection is unavailable. Your encrypted recovery is preserved. Reconnect when the service returns.':failure===avatarFailure?'This image could not be prepared. Choose a still PNG, JPEG or WebP under 8 MiB. It must fit 8192 encoded bytes after cropping and compression. No transaction was prepared.':failureMessage(failure)??message;}finally{
    if(invalidated||reloadRequired)clearPrivateView();busy=false;render(document.activeElement===document.body?operationFocus:document.activeElement);
    // Failed actions must expose their feedback even when the form was scrolled.
    if(error&&dialog.open){const alert=content.querySelector('[role=alert]');alert.focus({preventScroll:true});alert.scrollIntoView({block:'nearest'});}
@@ -250,6 +253,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   if(review.marker)content.append(el('p',{class:'recovery-values'},`Saved read position: block ${review.marker.throughBlock}; block fingerprint ${review.marker.blockHash}.`));
   const confirm=button('Confirm saved transaction and send',()=>void work(async()=>{
    if(!ready())throw connectionFailure;
+   await checkPostingRules(intent.action,{confirm:true});
    const epoch=accountEpoch,id=intent.intentId;checkAccount(epoch);
    if(recoveryInspection!==snapshot||snapshot.intent.intentId!==id)throw connectionFailure;
    const expectedTxHash=review.txHash;recoveryInspection=null;notice='';intent={...intent,status:'unknown'};blocked=true;
@@ -361,6 +365,56 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   const gas=el('input',{type:'text',inputmode:'decimal','aria-label':'Maximum refund gas cost in ETH',value:refundGas});gas.addEventListener('input',()=>refundGas=gas.value);
   content.append(label('Maximum Ethereum gas cost (ETH)',gas),button('Review Ethereum refund',()=>void work(async()=>{const epoch=accountEpoch;const value=await session.withdrawal.prepare({maximumGasWei:units(refundGas,18)});checkAccount(epoch);refundQuote=value;}),true),button('Review saved Ethereum refund',()=>void work(async()=>{const epoch=accountEpoch;const value=await session.withdrawal.prepareSaved({maximumGasWei:units(refundGas,18)});checkAccount(epoch);if(value.status==='refunded'){notice='The saved Ethereum refund is confirmed.';intent=null;balances=null;await refresh();}else refundQuote=value;}),true),button('Check existing refund',()=>void work(async()=>{const epoch=accountEpoch;const result=await session.withdrawal.recover();checkAccount(epoch);if(result.status==='refunded'){notice='The saved Ethereum refund is confirmed.';intent=null;balances=null;await refresh();}else notice='Refund '+result.status+'. A new refund is never sent automatically.';})));
  }
+ const postingTypes=new Set(['post','reply','quote','repost','bok']);
+ const rulesId=action=>postingTypes.has(action?.type)&&field(action.subboard)?BigInt(action.subboard).toString():null;
+ function rulesReady(action){return !postingTypes.has(action?.type)||postingRules?.id===rulesId(action)&&postingRules.status==='ready'&&!postingRules.value.rejected;}
+ function validateRules(data,id){
+  const version=v=>typeof v==='string'&&/^(0|[1-9][0-9]{0,9})$/.test(v)&&BigInt(v)<=0xffffffffn;
+  const safeText=v=>typeof v==='string'&&v.isWellFormed()&&!v.includes('\0')&&new TextEncoder().encode(v).length<=992;
+  const scope=data.scope;
+  if(!scope||!field(scope.chainId)||!field(scope.rollupVersion)||!/^0x[0-9a-f]{64}$/.test(scope.boardAddress)||data.boardId!==id||!version(data.mainPolicy?.version)||!safeText(data.mainPolicy.text))throw rulesFailure;
+  const scopeKey=JSON.stringify([scope.chainId,scope.rollupVersion,scope.boardAddress]);
+  if(rulesScope!==null&&rulesScope!==scopeKey)throw rulesFailure;
+  const board=data.board;
+  if(id==='0'?board!==null:!board||board.id!==id||board.mainVersion!==data.mainPolicy.version||board.mainRules!==data.mainPolicy.text||!safeText(board.rules)||typeof board.rejected!=='boolean'||board.rejected&&!safeText(board.rejection?.reason))throw rulesFailure;
+  rulesScope=scopeKey;
+  // Local rules are immutable: the contract's SubboardCreated version is always 1.
+  return {parentVersion:data.mainPolicy.version,parent:data.mainPolicy.text,localVersion:id==='0'?'0':'1',local:board?.rules??'',rejected:board?.rejected===true,reason:board?.rejection?.reason??''};
+ }
+ function loadRules(id,fresh=false){
+  if(id===null){postingRules=null;updateRules();return Promise.resolve();}
+  if(!fresh&&postingRules?.id===id&&postingRules.status!=='loading')return Promise.resolve(postingRules.value);
+  let request=rulesInFlight.get(id);
+  if(!request){request=readPublic('board',{id,limit:1}).then(data=>validateRules(data,id));rulesInFlight.set(id,request);void request.finally(()=>{if(rulesInFlight.get(id)===request)rulesInFlight.delete(id);}).catch(()=>{});}
+  const state=postingRules?.id===id&&postingRules.status==='loading'?postingRules:{id,status:'loading'};postingRules=state;updateRules();
+  return request.then(value=>{if(postingRules===state){state.status='ready';state.value=value;updateRules();}return value;},()=>{if(postingRules===state){state.status='unavailable';delete state.value;updateRules();}throw rulesFailure;});
+ }
+ function rulesView(action,changed=()=>{}){
+  if(!postingTypes.has(action?.type))return;
+  const epoch=renderEpoch,section=el('section',{'aria-label':'Current effective rules'});content.append(section);
+  updateRules=()=>{
+   if(epoch!==renderEpoch)return;
+   const id=rulesId(action),state=postingRules?.id===id?postingRules:null;
+   section.replaceChildren(el('h3',{},'Current effective rules'));
+   if(id===null)section.append(paragraph('Enter a valid destination board to see its rules.'));
+   else if(!state||state.status==='loading')section.append(el('p',{role:'status'},'Loading current board rules…'));
+   else if(state.status==='unavailable')section.append(el('p',{role:'status'},'Current board rules are unavailable. Posting is disabled.'));
+   else{
+    const rules=state.value;section.append(paragraph(id==='0'?'Main board':'Subboard '+id),el('h4',{},'Current parent rules · v'+rules.parentVersion),el('p',{class:'post-body'},rules.parent||'No parent rules.'));
+    if(id!=='0')section.append(el('h4',{},'Immutable local rules · v'+rules.localVersion),el('p',{class:'post-body'},rules.local||'No additional local rules.'),paragraph('Both parent and local rules apply.'));
+    if(rules.rejected)section.append(el('p',{role:'status'},'This subboard is rejected. New posts are disabled. '+rules.reason));
+   }
+   const retry=button('Refresh board rules',()=>{void loadRules(rulesId(action),true).catch(()=>{});});retry.disabled=busy||state?.status==='loading';section.append(retry);changed();
+  };
+  updateRules();void loadRules(rulesId(action)).catch(()=>{});
+ }
+ async function checkPostingRules(action,{confirm=false}={}){
+  if(!postingTypes.has(action?.type))return;
+  const epoch=accountEpoch,id=rulesId(action),previous=postingRules?.id===id?postingRules.value:null;
+  if(id===null)throw rulesFailure;
+  const current=await loadRules(id,true);checkAccount(epoch);
+  if(postingRules?.id!==id||!rulesReady(action)||confirm&&JSON.stringify(previous)!==JSON.stringify(current))throw rulesFailure;
+ }
  function replyContext(action){return field(action?.parent)&&field(action?.root)&&field(action?.subboard)&&BigInt(action.parent)>0n&&BigInt(action.root)>0n;}
  function conversationContext(action){
   const reply=replyContext(action),link=el('a',{href:reply?'#/thread/'+action.root+'/'+action.parent:'#/board/'+action.subboard},reply?'View conversation':BigInt(action.subboard)===0n?'Main board':'View board');
@@ -409,12 +463,13 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
    if(intent.status==='bok-post-reverted')content.append(paragraph('The post reverted. Its paid network fee is not refunded.'));
    content.append(paragraph('Your funded request and original draft remain saved. Continuing the post, releasing unused credit, or requesting expiry each needs a separate fee review. Expiry requires the contract deadline; unresolved reservations remain fenced.'));
    if(intent.status!=='bok-release-reverted')content.append(button('Review saved Bok post',()=>void work(async()=>{
-    const epoch=accountEpoch,id=intent.intentId;checkAccount(epoch);blocked=true;
+    const epoch=accountEpoch,id=intent.intentId;checkAccount(epoch);await checkPostingRules(intent.action);blocked=true;
     const result=await session.application.prepareBokPost(id);checkAccount(epoch);intent=result;blocked=false;note('');notice='Review the saved post and its separate network fee before sending.';
    }),true));
    for(const [type,label]of [['cancel-bok-request','Review release of this saved request'],['expire-bok-request','Review expiry of this saved request']])content.append(button(label,()=>void work(async()=>{
     const epoch=accountEpoch,id=intent.intentId;checkAccount(epoch);const result=await session.application.prepareBokRelease(id,{type});checkAccount(epoch);intent=result;blocked=false;note('');notice='Review the private transaction fee. No release or expiry has been sent.';
    })));
+   rulesView(intent.action);
    return;
   }
   let confirm;
@@ -423,7 +478,8 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   if(privateAction){content.append(paragraph(intent.action.type==='read-marker'?'Mark this thread read through block '+intent.action.throughBlock:preferenceDescription(intent.action)));}
   if(prepared){
    confirm=button(replacement?'Confirm replacement and send':'Confirm and send',()=>void work(async()=>{
-    if(!avatarReady||!feeReady)throw Error('Review unavailable');
+    if(!avatarReady||!feeReady||!rulesReady(intent.action))throw Error('Review unavailable');
+    await checkPostingRules(intent.action,{confirm:true});
     const epoch=accountEpoch;checkAccount(epoch);recoveryInspection=null;
     const id=intent.intentId;intent={...intent,status:'unknown'};blocked=true;
     try{const result=await session.application.submitPrepared(id);checkAccount(epoch);await receive(result);}catch{note('Submission outcome is unknown. Check this transaction; do not submit again.');throw Error('Unknown outcome');}
@@ -433,7 +489,8 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   }else{
    content.append(paragraph('No automatic resend is allowed. A missing receipt does not mean the transaction failed.'),button('Check existing transaction',()=>void work(async()=>{await receive(await session.application.reconcile(intent.intentId));})));
   }
-  if(intent.status!=='prepared')confirm=showRecoveryOptions(()=>avatarReady&&feeReady)??confirm;
+  if(intent.status!=='prepared')confirm=showRecoveryOptions(()=>avatarReady&&feeReady&&rulesReady(intent.action))??confirm;
+  rulesView(intent.action,()=>{if(confirm){confirm.dataset.unavailable=String(!avatarReady||!feeReady||!rulesReady(intent.action));confirm.disabled=busy||confirm.dataset.unavailable==='true';}});
   if(intent.action?.type==='avatar'&&intent.action.data!==''){
    const epoch=renderEpoch,action=intent.action;avatarArea.append(paragraph('Checking the exact saved avatar preview…'));
    void (async()=>{try{const blob=savedAvatarBlob(action),checked=await prepareAvatarUpload(blob);
@@ -489,7 +546,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   const fields=new Map();
   function input(name,text,{area=false,initial='',required=true}={}){
    const node=el(area?'textarea':'input',area?{rows:'5'}:{type:'text'});node.value=draft[name]??initial;if(required)node.required=true;
-   node.addEventListener('input',()=>{draft[name]=node.value;validate();});fields.set(name,node);content.append(label(text,node));return node;
+   node.addEventListener('input',()=>{draft[name]=node.value;if(name==='subboard')updateRules();validate();});fields.set(name,node);content.append(label(text,node));return node;
   }
   const kind=draft.type;
   if(MODERATOR_TYPES.has(kind)){
@@ -569,12 +626,12 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
    if(kind==='reply'||kind==='bok')Object.assign(action,{subboard:draft.subboard,parent:draft.parent,root:draft.root});
    if(kind==='bok')action.budget=units(action.budget,6);
    const selectedAvatar=avatarDraft;
-   void work(async()=>{if(kind==='avatar')Object.assign(action,selectedAvatar?.clear?{width:0,height:0,data:''}:{width:100,height:100,data:await blobData(selectedAvatar.blob)});
+   void work(async()=>{await checkPostingRules(action);if(kind==='avatar')Object.assign(action,selectedAvatar?.clear?{width:0,height:0,data:''}:{width:100,height:100,data:await blobData(selectedAvatar.blob)});
     blocked=true;try{if(kind==='preference'||kind==='read-marker'){const epoch=accountEpoch;checkAccount(epoch);const head=await session.application.readPreferenceHead();checkAccount(epoch);if(typeof head?.revision!=='string'||!/^(0|[1-9][0-9]{0,19})$/.test(head.revision))throw connectionFailure;action.expectedRevision=head.revision;}intent=await session.application.prepare(action);}catch(failure){if(kind==='bio'||kind==='avatar')profileSnapshot=null;if(kind==='name'&&nameFailure(failure))blocked=false;throw failure;}blocked=false;note('Review the saved action and maximum fee before sending.');});
   },true);
   content.append(review);
   function validate(){
-   let valid=[...fields.values()].every(node=>!node.required||node.value.length>0);
+   let valid=rulesReady(draft)&&[...fields.values()].every(node=>!node.required||node.value.length>0);
    for(const id of IDS)if(fields.has(id))valid=valid&&field(fields.get(id).value);
    if(fields.has('content')){
     const text=fields.get('content').value,a=allowance(text);preview.replaceChildren(createMessageContent(text));
@@ -591,6 +648,8 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
    if(kind==='subboard')valid=valid&&/^[a-z0-9](?:[a-z0-9]|-(?!-)){1,38}[a-z0-9]$/.test(fields.get('slug').value);
    review.dataset.unavailable=String(!valid);review.disabled=busy||!valid;return valid;
   }
+  rulesView(draft,validate);
+  fields.get('subboard')?.addEventListener('change',()=>{void loadRules(rulesId(draft),true).catch(()=>{});});
   validate();
  }
  function fundingWalletView(){
