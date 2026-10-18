@@ -236,7 +236,7 @@ export function createPrivateQueryWithInspector({queryNode, chainId, rollupVersi
           call.args = await parseWithOptionals(call.params, getSchemaParameters(AztecNodeApiSchema[call.method]));
         }
       } catch {reply(400, errorResponse(null, -32602)); return;}
-      let historical=false,ready,records=[];
+      let historical=false,ready,absenceTip,records=[];
       try {
         historical=!!compact&&compact.tier!=='proposed'&&prepared.every(call=>historicalKind(call));
         ready=await inspect(historical?compact.tier:undefined);
@@ -250,6 +250,16 @@ export function createPrivateQueryWithInspector({queryNode, chainId, rollupVersi
               // Archiver headers/bodies (including PXE genesis) do not depend
               // on retained world-state snapshots; witness/state reads do.
               const publicBlock=['getBlock','getBlockData'].includes(call.method);
+              const selector=call.args[selectorIndex.get(call.method)],number=typeof selector==='number'?selector:selector?.number;
+              if(publicBlock&&Number.isSafeInteger(number)&&number>ready.latestBlockNumber&&!(selector instanceof BlockHash)&&!selector?.hash){
+                // The SDK walks removed heights to detect a reorg. Only a real
+                // optional absence ABOVE a fully synced proposed tip may pass;
+                // unknown hashes and missing in-range/state data stay closed.
+                const current=absenceTip??await inspect();
+                const tip=absenceTip??{number:current.latestBlockNumber,hash:current.latestBlockHash};
+                if(!Number.isSafeInteger(tip.number)||number<=tip.number||await node[call.method](...call.args)!==undefined)throw unavailable();
+                absenceTip=tip;call.cached={value:undefined};continue;
+              }
               call.anchor=await canonicalRecord(call.args[selectorIndex.get(call.method)],ready,records,publicBlock?ready.latestBlockNumber:ready.readinessBlockNumber,!publicBlock);
               if(call.method==='getBlockData')call.cached={value:call.anchor.data};
             }else if(kind==='transaction'){
@@ -287,7 +297,12 @@ export function createPrivateQueryWithInspector({queryNode, chainId, rollupVersi
         }
         catch {return errorResponse(id);}
       }));
-      if(historical||records.length){try{const finalReady=await inspect(historical?compact.tier:undefined);await recheckRecords(records,finalReady);}catch{reply(503,errorResponse(null));return;}}
+      if(historical||records.length||absenceTip){try{
+        const finalReady=await inspect(historical?compact.tier:undefined);await recheckRecords(records,finalReady);
+        if(absenceTip){const current=await inspect();
+          if(current.latestBlockNumber!==absenceTip.number||current.latestBlockHash!==absenceTip.hash)throw unavailable();
+        }
+      }catch{reply(503,errorResponse(null));return;}}
       const encoded = jsonStringify(batch ? results : results[0]);
       if (Buffer.byteLength(encoded) > QUERY_LIMITS.responseBytes) {reply(502, errorResponse(null)); return;}
       res.writeHead(200, {'Content-Type': 'application/json', 'Cache-Control': 'no-store'}); res.end(encoded);

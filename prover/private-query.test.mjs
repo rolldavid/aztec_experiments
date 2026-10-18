@@ -443,3 +443,56 @@ for(const ending of ['finish','close','error','abort','deadline'])test(`compact 
  if(ending==='deadline'){assert.equal(control.req.destroyCalls,1);assert.equal(control.socket.destroyCalls,1);}
  t.mock.timers.reset();
 });
+
+// Real installed SDK stream + RPC serialization + production gateway. Only the
+// chain/inspector are fixtures; this reproduces the native fork's 5 -> 3 tip.
+test('historical gateway: real SDK block stream can prune an absent suffix above the canonical tip',async t=>{
+ const {BlockHash,L2BlockStream,L2TipsMemoryStore}=await import('@aztec-labs/stdlib/block');
+ const {createAztecNodeClient}=await import('../shared/aztec-node-client.mjs');
+ const {blockStreamSourceFromAztecNode}=await import('../node_modules/@aztec-labs/pxe/dest/block_synchronizer/block_stream_source.js');
+ const blocks=[];for(let n=0;n<=5;n++){
+  const header=BlockHeader.empty({globalVariables:GlobalVariables.empty({blockNumber:n})});
+  blocks.push({header,archive:AppendOnlyTreeSnapshot.empty(),hash:await header.hash(),number:n,checkpointNumber:n,indexWithinCheckpoint:0});
+ }
+ let tip=5;const id=n=>({number:n,hash:blocks[n].hash.toString()}),checkpoint=n=>({block:id(n),checkpoint:{number:n,hash:historyHash(n)}});
+ const tips=()=>({proposed:id(tip),checkpointed:checkpoint(tip),proven:checkpoint(0),finalized:checkpoint(0)}),reads=[];
+ const f=await fixture(t,{compactBlocks:{tier:'checkpointed',origins:[]},inspect:async()=>({ready:true,latestBlockNumber:tip,latestBlockHash:id(tip).hash,readinessTier:'checkpointed',readinessBlockNumber:tip,readinessBlockHash:id(tip).hash,oldestHistoricBlockNumber:1}),upstreamReply:async(_req,res,rows)=>{
+  const values=rows.map(row=>{const method=row.method.split('_').slice(1).join('_');let result;
+   if(method==='getChainTips')result=tips();
+   else if(['getBlock','getBlockData'].includes(method)){
+    const q=row.params[0],n=typeof q==='number'?q:q.number??blocks.findIndex(b=>b.hash.toString()===q.hash);reads.push({method,number:n});
+    const block=n>=0&&n<=tip?blocks[n]:undefined;
+    result=method==='getBlockData'&&block?{...block,blockHash:block.hash}:block;
+   }else throw Error('Unexpected stream RPC');
+   return {jsonrpc:'2.0',id:row.id,result:result??null};});res.setHeader('content-type','application/json');res.end(jsonStringify(values));
+ }});
+ const node=createAztecNodeClient(f.url+'/v1/node',{maxBatchSize:1}),store=new L2TipsMemoryStore(BlockHash.fromString(id(0).hash)),events=[];
+ const stream=new L2BlockStream(blockStreamSourceFromAztecNode(node),store,{handleBlockStreamEvent:async e=>{events.push(e);await store.handleBlockStreamEvent(e);}},undefined,{tipsOnly:true});t.after(()=>stream.stop());
+ await stream.sync();assert.equal((await store.getL2Tips()).proposed.number,5);
+ // Record the retained anchor as the real actor did before the suffix arrived.
+ await store.recordBlockHashes([id(3)]);events.length=0;tip=3;await stream.sync();
+ assert.equal((await store.getL2Tips()).proposed.number,3);
+ assert.equal((await store.getL2Tips()).checkpointed.block.number,3);
+ assert(events.some(e=>e.type==='chain-pruned'&&e.block.number===3));assert(reads.some(r=>r.number===5));
+});
+
+for(const method of ['getBlock','getBlockData'])test('historical gateway: '+method+' preserves genuine above-tip absence with fresh proposed fences',async t=>{
+ const f=await historyFixture(t,{change:({method:called,result,row})=>['getBlock','getBlockData'].includes(called)&&row.params[0]===8?undefined:result});
+ const response=await f.post(call('aztec_'+method,[8]));assert.equal(response.status,200);assert.deepEqual(await response.json(),{jsonrpc:'2.0',id:1,result:null});
+ assert.deepEqual(f.inspected,['checkpointed','proposed','checkpointed','proposed']);assert(f.operations.includes(method));
+});
+for(const selector of [6,{hash:historyHash(99)},{number:8,hash:historyHash(8)}])test('historical gateway: missing in-range or hash-selected block remains unavailable '+JSON.stringify(selector),async t=>{
+ const f=await historyFixture(t,{change:({method})=>method==='getBlockData'?undefined:7});
+ assert.equal((await f.post(call('aztec_getBlock',[selector]))).status,503);
+});
+for(const change of ['advance','regress','same-height-fork','unavailable'])test('historical gateway: above-tip absence rejects final proposed '+change,async t=>{
+ let f;f=await historyFixture(t,{change:({method,result,row})=>method==='getBlock'&&row.params[0]===8?undefined:result,
+  inspectChange:(_opts,inspected)=>{if(inspected.length===4){if(change==='unavailable')throw Error('unavailable');if(change==='same-height-fork')f.ready.latestBlockHash=historyHash(99);else f.ready.latestBlockNumber=change==='advance'?8:6;}}});
+ assert.equal((await f.post(call('aztec_getBlock',[8]))).status,503);
+});
+test('historical gateway: mixed pending receipt cannot bypass the absence final fence',async t=>{
+ let f;f=await historyFixture(t,{change:({method,result,row})=>method==='getBlock'&&row.params[0]===8?undefined:method==='getTxReceipt'?{txHash:historyHash(100),status:'pending'}:result,
+  inspectChange:(_opts,inspected)=>{if(inspected.length===4)Object.assign(f.ready,{latestBlockNumber:8,latestBlockHash:historyHash(8)});}});
+ const response=await f.post([call('aztec_getBlock',[8]),{...call('aztec_getTxReceipt',[historyHash(100)]),id:2}]);
+ assert.equal(response.status,503);assert(f.inspected.length>=4);
+});
