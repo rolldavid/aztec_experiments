@@ -621,7 +621,11 @@ async function nonceLineageFixture(){
  const reference=r=>({hash:r.hash,identitySha256:digest(r.identity)});
  const previous=[f.original.operations['approve-usdc'],f.first,f.successorState.operations['relay-funding']].map(reference);
  const intent={schemaVersion:1,originalPlanSha256:f.args.resolution.originalPlanSha256,sourceHashes,dispatchEntrySha256,previous,ethereumUrl:'https://ethereum-sepolia-rpc.publicnode.com',expiresAt:f.args.successor.expiresAt+600,maxFeePerGas:'5000000',maxPriorityFeePerGas:'3000000'};
- const ports={...f.args.ports,assertAbsent:async hashes=>{for(const h of hashes)assert.equal(f.receipts.has(h),false);},broadcastExact:async(raw,hash)=>{assert.equal(saved.operations[saved.nonceLineage.intents.length-1].hash,hash);f.broadcasts.push(raw);return hash;}};
+ const ports={...f.args.ports,receipt:async hash=>{
+  const receipt=await f.args.ports.receipt(hash);if(!receipt)return receipt;
+  const record=[f.original.operations['approve-usdc'],f.first,f.successorState.operations['relay-funding'],...Object.values(saved.operations)].find(r=>r.hash===hash);
+  if(!record)return receipt;const {Transaction}=await import('ethers'),tx=Transaction.from('0x'+record.raw);return {...receipt,from:tx.from,to:tx.to};
+ },assertAbsent:async hashes=>{for(const h of hashes)assert.equal(f.receipts.has(h),false);},broadcastExact:async(raw,hash)=>{assert.equal(saved.operations[saved.nonceLineage.intents.length-1].hash,hash);f.broadcasts.push(raw);return hash;}};
  const args={...f.args,successorStore:f.args.store,lineageStore,sourceHashes,dispatchEntrySha256,intent,ports,assertSourceFiles:async()=>{}};
  return {...f,args,reference,get ledger(){return saved;},continuation:()=>({...f.continuation(),lineageStore,sourceHashes,dispatchEntrySha256,ports})};
 }
@@ -729,4 +733,22 @@ test('Sepolia trusted programmatic failure retains original cause while its publ
  await assert.rejects(seedTestnetLiquidity({plan:f.args.plan,statePath:'/unavailable-rolling-cause-fixture/state.json',stage:'approve-usdc',keyFile:'/not-opened'}),error=>{
   assert.equal(error.message,'Sepolia seed unavailable; preserve original plan and journals, reconcile before another operation');assert.equal(error.cause?.code,'ENOENT');assert(!error.message.includes('unavailable-rolling-cause-fixture'));return true;
  });
+});
+test('Nonce-only cancellation needs no unrelated inventory receipt or token effect but continuation still does',async()=>{
+ const f=await nonceLineageFixture(),inventory=f.original.operations['inventory-usdc'].hash;f.receipts.delete(inventory);let effects=0;
+ f.args.ports.effect=async()=>{effects++;throw Error('historical token state unavailable');};f.args.ports.cancellationEffect=async()=>{effects++;throw Error('historical token state unavailable');};
+ const result=await f.ops.runSepoliaNonceCancellation(f.args);assert.equal(result.canonical,false);assert.equal(result.scope,'nonce-resolution');assert.equal(result.fundingEffectsVerified,false);assert.equal(f.signedSteps.length,3);assert.equal(f.broadcasts.length,3);assert.equal(effects,0);
+ f.confirm(f.ledger.operations[0].hash);const resolved=await f.ops.runSepoliaNonceCancellation(f.args);assert.equal(resolved.winner,'lineage');assert.equal(resolved.status,'succeeded');assert.equal(resolved.fundingEffectsVerified,false);assert.equal(effects,0);
+ await assert.rejects(f.ops.runSepoliaLiquidityContinuation({...f.continuation(),stage:'approve-usdc',nonceOnly:true}));
+ await assert.rejects(f.ops.resolveSepoliaSeedNonce({...f.args,store:f.args.cancellationStore,nonceOnly:true}));
+ f.confirm(inventory);await assert.rejects(f.ops.runSepoliaLiquidityContinuation({...f.continuation(),stage:'approve-usdc'}));assert(effects>0);assert.equal(f.signedSteps.length,3);
+});
+test('Nonce-only canonical original or cancellation winners stop signing without certifying funding effects',async()=>{
+ for(const winner of ['original','cancellation','successor'])for(const status of [0,1]){
+  const f=await nonceLineageFixture();f.receipts.delete(f.original.operations['inventory-usdc'].hash);
+  const hash={original:f.args.resolution.originalTransactionHash,cancellation:f.first.hash,successor:f.successorState.operations['relay-funding'].hash}[winner];f.confirm(hash,status);
+  f.args.ports.effect=async()=>assert.fail('No economic effect RPC for cancellation');f.args.ports.cancellationEffect=f.args.ports.effect;
+  const result=await f.ops.runSepoliaNonceCancellation(f.args);assert.equal(result.winner,winner);assert.equal(result.canonical,true);assert.equal(result.status,status?'succeeded':'failed');assert.equal(result.scope,'nonce-resolution');assert.equal(result.fundingEffectsVerified,false);assert.equal(f.signedSteps.length,2);assert.equal(f.broadcasts.length,2);assert.deepEqual(f.ledger,{operations:{}});
+  await assert.rejects(f.ops.runSepoliaLiquidityContinuation({...f.continuation(),stage:winner==='original'?'seed-usdc-fee':'approve-usdc'}));
+ }
 });

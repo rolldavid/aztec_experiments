@@ -502,7 +502,11 @@ export async function seedTestnetLiquidity({plan:input,statePath,stage,keyFile,r
     const tx=transaction(step);await provider.call({...tx,blockTag:head.number});const estimated=await provider.estimateGas(tx);if(estimated>tx.gasLimit||(await provider.getBlock(head.number))?.hash!==head.hash)throw Error();
    },
    preflightCancellation:async(_plan,step)=>{
-    const head=await provider.getBlock('latest');await scope(head);
+    const head=await provider.getBlock('latest');
+    // A zero-value self-cancel has no token or factory dependency. Liquidity
+    // continuation keeps the complete historical/current economic scope.
+    if(intent){if(await provider.getCode(step.from,head.number)!=='0x')throw Error();}
+    else await scope(head);
     if(Date.now()>=deadline()*1000||head.baseFeePerGas===null||head.baseFeePerGas+BigInt(step.maxPriorityFeePerGas)>BigInt(step.maxFeePerGas)||await provider.getTransactionCount(step.from,head.number)!==step.nonce||await provider.getTransactionCount(step.from,'pending')!==step.nonce)throw Error();
     if(await provider.getBalance(step.from,head.number)<BigInt(step.gasLimit)*BigInt(step.maxFeePerGas)+BigInt(plan.futureReserveWei))throw Error();
     const tx=transaction(step);await provider.call({...tx,blockTag:head.number});if(await provider.estimateGas(tx)>21000n||(await provider.getBlock(head.number))?.hash!==head.hash)throw Error();
