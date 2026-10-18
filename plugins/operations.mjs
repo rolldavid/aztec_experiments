@@ -624,7 +624,10 @@ async function inspectSeedLineage(args){
  }
  function validate(intent){
   if(intent.originalPlanSha256!==base.resolution.originalPlanSha256||JSON.stringify(intent.sourceHashes)!==JSON.stringify(sourceHashes)||intent.dispatchEntrySha256!==dispatchEntrySha256||JSON.stringify(intent.previous)!==JSON.stringify(references))throw rejected();
-  if(BigInt(intent.maxFeePerGas)<=BigInt(step.maxFeePerGas)||BigInt(intent.maxPriorityFeePerGas)<=BigInt(step.maxPriorityFeePerGas))throw rejected();
+  // Every prior candidate is validated in increasing order. Bump both fields
+  // from the preceding maximum, including integer ceiling at the wei boundary.
+  const minimum=value=>(BigInt(value)*120n+99n)/100n;
+  if(BigInt(intent.maxFeePerGas)<minimum(step.maxFeePerGas)||BigInt(intent.maxPriorityFeePerGas)<minimum(step.maxPriorityFeePerGas))throw rejected();
  }
  return {...base,result,references,entries,validate,step};
 }

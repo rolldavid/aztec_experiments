@@ -710,3 +710,17 @@ test('Nonce lineage private source capture binds six unchanged files and the con
   await fs.writeFile(path.join(directory,'plan.json'),JSON.stringify({...f.args.plan,ownerNonce:f.args.plan.ownerNonce+1}),{mode:0o600});await assert.rejects(readSepoliaNonceSources(args));
  }finally{await fs.rm(directory,{recursive:true});}
 });
+test('Nonce lineage requires both fee fields at the exact ceiling20percent boundary of every predecessor',async()=>{
+ for(const below of ['maxFeePerGas','maxPriorityFeePerGas',null]){
+  const f=await nonceLineageFixture(),intent={...f.args.intent,maxFeePerGas:'3600000',maxPriorityFeePerGas:'2400000'};
+  if(below){intent[below]=String(BigInt(intent[below])-1n);await assert.rejects(f.ops.runSepoliaNonceCancellation({...f.args,intent}));assert.equal(f.signedSteps.length,2);assert.equal(f.broadcasts.length,2);}
+  else{await f.ops.runSepoliaNonceCancellation({...f.args,intent});assert.equal(f.signedSteps.length,3);assert.equal(f.broadcasts.length,3);}
+ }
+ const f=await nonceLineageFixture(),first={...f.args.intent,maxFeePerGas:'3600001',maxPriorityFeePerGas:'2400001'};
+ await f.ops.runSepoliaNonceCancellation({...f.args,intent:first});
+ const next={...first,previous:[...first.previous,f.reference(f.ledger.operations[0])],maxFeePerGas:'4320002',maxPriorityFeePerGas:'2880002'};
+ for(const field of ['maxFeePerGas','maxPriorityFeePerGas']){
+  await assert.rejects(f.ops.runSepoliaNonceCancellation({...f.args,intent:{...next,[field]:String(BigInt(next[field])-1n)}}));assert.equal(f.signedSteps.length,3);assert.equal(f.broadcasts.length,3);
+ }
+ await f.ops.runSepoliaNonceCancellation({...f.args,intent:next});assert.equal(f.signedSteps.length,4);assert.equal(f.broadcasts.length,4);
+});
