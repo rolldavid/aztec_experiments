@@ -220,11 +220,19 @@ test('actual SDK PrivateBok four-argument constructor derives identity without w
  const adapter=installRollingNativeArtifacts(),oldFetch=globalThis.fetch;let network=0,walletReads=0,bb;
  globalThis.fetch=async()=>{network++;throw Error('CONSTRUCTOR_NETWORK_FORBIDDEN');};
  try{
-  const [{loadRollingArtifacts},{loadContractArtifact,getInitializer},{getContractClassFromArtifact,getContractInstanceFromInstantiationParams,computeContractAddressFromInstance},{Contract},{AztecAddress},{Fr},backend]=await Promise.all([
-   import('../../prover/rolling-artifacts.mjs'),import('@aztec-labs/stdlib/abi'),import('@aztec-labs/stdlib/contract'),import('@aztec-labs/aztec.js/contracts'),import('@aztec-labs/stdlib/aztec-address'),import('@aztec-labs/foundation/curves/bn254'),import('@aztec-foundation/bb.js'),
+  // Constructor behavior uses this checkout's normal PrivateBok build, not the
+  // separately approved release bundle (which also pins unrelated RollingBoard bytes).
+  const [{verifyPrivateBokBuild},{ARTIFACT,sha},{readFile}]=await Promise.all([
+   import('../../scripts/testing/private-bok-build-preflight.mjs'),import('../../experiments/private-bok/build.mjs'),import('node:fs/promises'),
+  ]);
+  const build=await verifyPrivateBokBuild(),bytes=await readFile(ARTIFACT);
+  assert.equal(sha(bytes),build.artifactSha256,'Constructor artifact changed after build verification');
+  const raw=JSON.parse(bytes);
+  const [{loadContractArtifact,getInitializer},{getContractClassFromArtifact,getContractInstanceFromInstantiationParams,computeContractAddressFromInstance},{Contract},{AztecAddress},{Fr},backend]=await Promise.all([
+   import('@aztec-labs/stdlib/abi'),import('@aztec-labs/stdlib/contract'),import('@aztec-labs/aztec.js/contracts'),import('@aztec-labs/stdlib/aztec-address'),import('@aztec-labs/foundation/curves/bn254'),import('@aztec-foundation/bb.js'),
   ]);
   bb=backend;await bb.Barretenberg.initSingleton({backend:bb.BackendType.Wasm,skipSrsInit:true,threads:1});
-  const [,raw]=loadRollingArtifacts(),artifact=loadContractArtifact(raw),initializer=getInitializer(artifact,'init');
+  const artifact=loadContractArtifact(raw),initializer=getInitializer(artifact,'init');
   assert.equal(artifact.name,'PrivateBok');assert.deepEqual(initializer.parameters.map(p=>p.name),['board','operator','l1_chain','version']);
   const args=[AztecAddress.fromStringUnsafe(field(1)),AztecAddress.fromStringUnsafe(field(2)),31337n,3409706519n],deployer=AztecAddress.fromStringUnsafe(field(4)),salt=new Fr(6);
   const wallet=new Proxy({},{get(){walletReads++;throw Error('CONSTRUCTOR_WALLET_FORBIDDEN');}});
