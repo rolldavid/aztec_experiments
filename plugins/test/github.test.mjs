@@ -125,6 +125,6 @@ for (const published of [false,true]) test('app workspace step-limit summary kee
  const toolbox={open:async args=>{const session=await base.open(args);return {...session,accept:async()=>published?{repositoryId:'a'.repeat(64),acceptedRevision:'b'.repeat(40),publication:{latestUrl:'https://artifacts.example/t/one/',latestSourceUrl:'https://artifacts.example/t/one/source.json'}}:null};}};
  const agent=createAgent({toolbox,instructions:'Build an app',maxCalls:1,model:{complete:async()=>({message:{role:'assistant',content:null,tool_calls:[{id:'controlled',type:'function',function:{name:'unknown_controlled_tool',arguments:'{}'}}]}})}});
  const result=await agent.run({id:'controlled',postId:'0x1',text:'Create a counter'});
- assert.equal(result.replyText,published?'Execution step limit reached.\nApp: https://artifacts.example/t/one/\nSource: https://artifacts.example/t/one/source.json':'Execution step limit reached.');
+ assert.equal(result.replyText,published?'Application published.\nApp: https://artifacts.example/t/one/\nSource: https://artifacts.example/t/one/source.json':'Execution step limit reached.');
  assert.equal(closed,1);
 });

@@ -44,8 +44,11 @@ export function createAgent({model,toolbox,instructions,maxCalls=12,maxTokens=15
       if(receipt.publication){
         const {latestUrl:artifactUrl,latestSourceUrl:sourceUrl}=receipt.publication;
         for(const value of [artifactUrl,sourceUrl])if(typeof value!=='string'||value.length>320||!/^https?:\/\//.test(value)||/[\s\x00-\x1f]/.test(value))throw Error('Invalid publication link');
-        const links=`\nApp: ${artifactUrl}\nSource: ${sourceUrl}`,budget=MESSAGE_BYTES-Buffer.byteLength(links);if(budget<0)throw Error('Publication links exceed reply limit');
-        return {...result,replyText:bounded(result.replyText,budget)+links,revision};
+        // Only the host receipt establishes publication. Model prose may invent
+        // deployment locations or claim features that the receipt does not prove.
+        const replyText=`Application published.\nApp: ${artifactUrl}\nSource: ${sourceUrl}`;
+        if(Buffer.byteLength(replyText)>MESSAGE_BYTES)throw Error('Publication links exceed reply limit');
+        return {replyText,revision};
       }
       return {...result,revision};
     };

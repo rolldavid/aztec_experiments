@@ -176,3 +176,15 @@ for(const argumentsValue of ['null','[]','true','1','"text"'])test('non-object s
  await assert.rejects(createAgent({model,toolbox,instructions:'Help'}).run({id:'request',postId:'post',text:'Build'}),error=>error.code==='MODEL_TOOL_RESPONSE_INVALID');
  assert.deepEqual({calls,tools,accepted,closed},{calls:1,tools:0,accepted:0,closed:1});
 });
+
+test('verified publication replaces fabricated model locations and completion claims',async()=>{
+ const publication={latestUrl:'https://apps.example/t/verified/latest/',latestSourceUrl:'https://apps.example/t/verified/source.json'};
+ const toolbox={open:async()=>({definitions:[],accept:async()=>({repositoryId:'repo',acceptedRevision:'a'.repeat(40),publication}),close:async()=>{}})};
+ const model={complete:async()=>({message:{role:'assistant',content:'I deployed your app to https://content.freighter.decoded.net and its Git repository to https://git.freighter.decoded.net. Every feature is guaranteed working.'}})};
+ const result=await createAgent({toolbox,model,instructions:'Build'}).run({id:'a',postId:'b',text:'Build'});
+ assert.deepEqual(result,{replyText:'Application published.\nApp: '+publication.latestUrl+'\nSource: '+publication.latestSourceUrl,revision:{repositoryId:'repo',acceptedRevision:'a'.repeat(40)}});
+});
+for(const publication of [{latestUrl:'javascript:alert(1)',latestSourceUrl:'https://apps.example/source.json'},{latestUrl:'https://apps.example/app/',latestSourceUrl:'https://apps.example/\nsource'},{latestUrl:'https://apps.example/'+ '🌎'.repeat(140),latestSourceUrl:'https://apps.example/'+ '🌎'.repeat(140)}])test('verified publication retains link and UTF-8 byte guards '+Object.values(publication).map(x=>x.length).join('/'),async()=>{
+ const toolbox={open:async()=>({definitions:[],accept:async()=>({repositoryId:'repo',acceptedRevision:'a'.repeat(40),publication}),close:async()=>{}})};
+ await assert.rejects(createAgent({toolbox,instructions:'Build',model:{complete:async()=>({message:{role:'assistant',content:'Done'}})}}).run({id:'a',postId:'b',text:'Build'}),/Invalid publication link|Publication links exceed reply limit/);
+});
