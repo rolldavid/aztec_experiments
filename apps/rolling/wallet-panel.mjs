@@ -52,7 +52,7 @@ const backupFreshness='Download a fresh backup after funding or transaction reco
  * Profile edits capture readProfile versions only on explicit selection/check.
  * Complete authenticated preferences live only in this closure. Page filtering
  * checks the current account on every call; no preference arrays are exported.
- * Recovery takes one explicit bounded step. Abort never releases the busy/SDK
+ * One explicit recovery continues bounded reads until complete. Abort never releases the busy/SDK
  * account lock before the original operation settles.
  * Uploaded bytes come from immutable previewBlob; recovery validates the saved
  * raster but displays its ORIGINAL Blob, never the validator's re-encoded bytes.
@@ -84,21 +84,27 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
  async function recoverPreferences(){
   const epoch=accountEpoch;checkAccount(epoch);clearPreferences();
   const abort=recoveryAbort=new AbortController();controlsBusy(true);
-  let result;try{result=await session.application.readColdPreferences({signal:abort.signal});}finally{recoveryAbort=null;}checkAccount(epoch);if(abort.signal.aborted)throw connectionFailure;
-  if(result?.status==='complete'&&result.complete===true&&typeof runtime.selectPrivateViews==='function'){preferences=result.preferences;preferenceProgress=null;notice='Your follows, bookmarks and notification settings have been recovered.';}
-  else if(result?.status==='recovering'&&result.complete===false){preferenceProgress=result.progress;notice='Your saved choices are still being recovered. Continue when ready; the feed will appear after recovery finishes.';}
-  else throw connectionFailure;
-  note('');onPrivateChange();
+  try{for(;;){
+   const result=await session.application.readColdPreferences({signal:abort.signal});
+   checkAccount(epoch);if(abort.signal.aborted)throw connectionFailure;
+   if(result?.status==='complete'&&result.complete===true&&typeof runtime.selectPrivateViews==='function'){
+    preferences=result.preferences;preferenceProgress=null;notice='Your follows, bookmarks and notification settings have been recovered.';note('');onPrivateChange();return;
+   }
+   if(result?.status!=='recovering'||result.complete!==false)throw connectionFailure;
+   // The reader retains its validated cursor, including log positions that are
+   // not in the display summary. Equal displayed progress still needs the next read.
+   preferenceProgress=result.progress;notice='';note('Recovering your saved choices. Private feeds remain hidden until recovery finishes.');render();
+  }}finally{recoveryAbort=null;}
  }
  function preferencesView(){
   content.append(el('h3',{},'Private views'),paragraph('Your saved choices filter this feed on your device. Recovering them does not send a transaction. Changing a setting needs fee confirmation.'));
   if(preferences){content.append(paragraph('Your saved choices are ready.'),button(preferences.replyNotifications?'Disable reply notifications':'Enable reply notifications',()=>choosePreference({type:'preference',kind:5,target:'0',enabled:!preferences.replyNotifications})));}
   else if(preferenceProgress){const p=preferenceProgress,labels={nextBlock:'Next history block to check',scannedThrough:'History checked through block',anchorBlock:'History available through block',processedRevision:'Saved changes recovered',targetRevision:'Saved changes to recover',markersChecked:'Read positions checked',markersTotal:'Read positions to check'};for(const [key,label]of Object.entries(labels))if(/^[0-9]+$/.test(String(p?.[key]??'')))content.append(paragraph(label+': '+p[key]));}
   const stop=button('Stop private recovery',()=>{recoveryAbort?.abort();clearPreferences();note('Recovery stop requested. Waiting for the private operation to settle.');});stop.dataset.recoveryStop='true';content.append(stop);
-  content.append(button(preferences?'Refresh private views':preferenceProgress?'Continue private recovery':'Recover private views',()=>void work(recoverPreferences),true));
+  content.append(button(preferences?'Refresh private views':recoveryAbort?'Recovering private views':'Recover private views',()=>void work(recoverPreferences),true));
  }
  function choosePreference(value){if(busy||intent)return;clearOperationFeedback();view='action';draft={...value};render();}
- function ownedLabel(id){const record=identityRecords.find(r=>r.id===id);return record?`${record.first} ${record.last}`:'Selected owned name';}
+ function ownedLabel(id){if(field(id)&&BigInt(id)===0n)return 'Anonymous';const record=identityRecords.find(r=>r.id===id);return record?`${record.first} ${record.last}`:'Selected owned name';}
  function acceptNames(page,append=false){
   if(!Array.isArray(page.identities)||!Array.isArray(page.records)||page.identities.length!==page.records.length)throw Error('Private name records unavailable');
   const records=page.records.map((r,i)=>{if(r.id!==page.identities[i]||!field(r.id)||typeof r.first!=='string'||typeof r.last!=='string'||r.first.length>32||r.last.length>32)throw Error('Invalid private name record');return {id:r.id,first:r.first,last:r.last};});
@@ -718,7 +724,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
    recovery();
   }
   controlsBusy(busy);
-  if(dialog.open&&!busy&&(hadFocus||document.activeElement===document.body)){
+  if(dialog.open&&(!busy||previousFocus?.dataset.recoveryStop==='true')&&(hadFocus||document.activeElement===document.body)){
    if(previousFocus.isConnected&&dialog.contains(previousFocus))previousFocus.focus({preventScroll:true});
    else{
     const same=index>=0?controls().filter(n=>focusKey(n)===key)[index]:null;
@@ -742,7 +748,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
  render();
  return Object.freeze({open(defaults={}){
   if(busy)return;
-  if(!intent){view=defaults.view==='preferences'?'preferences':'action';clearProfileDraft();const next={type:Object.hasOwn(TYPES,defaults.type)?defaults.type:'post',subboard:'0',content:''};
+  if(!intent){clearOperationFeedback();view=defaults.view==='preferences'?'preferences':'action';clearProfileDraft();const next={type:Object.hasOwn(TYPES,defaults.type)?defaults.type:'post',subboard:'0',content:''};
    for(const key of IDS)if(field(defaults[key]))next[key]=defaults[key];
    if(next.type==='moderate-avatar'&&field(defaults.name))next.name=defaults.name;
    if(next.type==='preference'&&Number.isInteger(defaults.kind)&&defaults.kind>=1&&defaults.kind<=5&&field(defaults.target)&&typeof defaults.enabled==='boolean')Object.assign(next,{kind:defaults.kind,target:defaults.target,enabled:defaults.enabled});

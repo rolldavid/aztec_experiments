@@ -32,7 +32,7 @@ const application={
  async readAccountStatus(){state.statusReads++;await boundary('status');const intent=read();return intent&&(!['confirmed','reverted','cancelled'].includes(intent.status)||['withdraw','withdraw-bok'].includes(intent.action.type)&&intent.status==='confirmed'&&!state.refunded)?{status:'recovering',intent}:{status:state.fee,privateFeeCredit:'1000',depositIds:state.fee==='fee-ready'?['9']:[]};},
  async ownedIdentities({cursor}){state.owned++;const page=state.namesPages?.[cursor]??(cursor===0?{identities:['7'],records:[{id:'7',first:'River',last:'Lane'}],nextCursor:8}:{identities:['8'],records:[{id:'8',first:'Ellis',last:'Moss'}],nextCursor:null});await boundary('owned');return page;},
  async readPreferenceHead(){state.headReads++;await boundary('head');return {schema:1,initialized:true,revision:state.revision,digest:'42'};},
- async readColdPreferences(){state.preferenceReads++;await boundary('preferences');return state.partial?{status:'recovering',complete:false,progress:{nextBlock:33,anchorBlock:80,processedRevision:'2',markersChecked:0,markersTotal:null}}:{status:'complete',complete:true,preferences:state.preferences};},
+ async readColdPreferences(){state.preferenceReads++;if(state.preferenceResults?.length)return state.preferenceResults.shift();await boundary('preferences');return {status:'complete',complete:true,preferences:state.preferences};},
  async readProfile({name}){state.profileCalls++;await boundary('profile');return {name:'0x'+BigInt(name).toString(16).padStart(64,'0'),bioVersion:state.bioVersion,avatarVersion:state.avatarVersion};},
  async prepare(action){state.prepares++;if(action.type==='name'&&state.nameFailure)throw Object.assign(Error('PRIVATE_SENTINEL'),{code:state.nameFailure});if(['bio','avatar'].includes(action.type)&&action.expectedVersion!==state[action.type+'Version'])error();write({intentId:'42',action,maximumFee:'123',status:'prepared',...(action.type==='name'?{nameAvailability:{id:'55',anchor:{blockNumber:1,blockHash:'0x'+'1'.repeat(64),timestamp:'1'}}}:{}),...(['moderate-post','moderate-avatar','reject-subboard','set-main-policy'].includes(action.type)?{moderation:{mainVersion:3,...(action.type==='moderate-avatar'?{avatarVersion:2}:{})}}:{}),...(action.type==='withdraw'?{withdrawal:{amount:'100000000000000000',eligible:true,depositor:'0x'+'3'.repeat(40)}}:{}),...(action.type==='withdraw-bok'?{withdrawal:{kind:'bok',amount:action.amount,eligible:true,depositor:action.recipient}}:{}),...(action.type==='bok'?{bok:{phase:'authorize',budget:action.budget,availableCredit:state.bokCredit}}:{})});await boundary('prepare');return read();},
  async submitPrepared(id){state.submitCalls++;state.sends++;write({...read(),status:'submitting'});await boundary('submit');const intent={...read(),status:state.submitOutcome??(read().bok?.phase==='authorize'?'authorized':'confirmed')};write(intent);return intent;},
@@ -355,18 +355,29 @@ for(const invalidPage of ['duplicate','cursor'])test('invalid private names '+in
 
 // Labelled presentation doubles: production replay, wallet proofs and storage are
 // independently qualified; these tests assert explicit UI boundaries only.
-test('private recovery is explicit, one bounded step, and never exposes partial preferences',async t=>{
+test('one explicit recovery continues sequential bounded reads, including equal progress, without exposing partial preferences',async t=>{
  const {page}=await browserFixture(t);await open(page,{view:'preferences'});assert.equal(await page.evaluate(()=>panel.privateStatus()),'locked');
  await page.getByRole('button',{name:'Unlock',exact:true}).click();await page.getByRole('button',{name:'Recover private views',exact:true}).waitFor();
- assert.equal(await page.evaluate(()=>test.statusReads),0);assert.equal(await page.evaluate(()=>test.owned),0);assert(await page.getByText('Recover saved choices without checking funds or preparing a transaction.',{exact:true}).isVisible());assert.equal(await page.getByText('Your posting balance is available.',{exact:false}).count(),0);assert.equal(await page.evaluate(()=>test.preferenceReads),0);await page.evaluate(()=>test.partial=true);
- await page.getByRole('button',{name:'Recover private views',exact:true}).click();await page.getByRole('button',{name:'Continue private recovery',exact:true}).waitFor();
- assert.equal(await page.evaluate(()=>panel.privateStatus()),'recovering');assert.equal(await page.evaluate(()=>panel.preferenceEnabled(1,'10')),null);assert.equal(await page.evaluate(()=>test.preferenceReads),1);assert(await page.getByText('Next history block to check: 33',{exact:true}).isVisible());
- await page.evaluate(()=>test.partial=false);await page.getByRole('button',{name:'Continue private recovery',exact:true}).click();await page.getByText('Your saved choices are ready.').waitFor();
+ assert.equal(await page.evaluate(()=>test.statusReads),0);assert.equal(await page.evaluate(()=>test.owned),0);assert(await page.getByText('Recover saved choices without checking funds or preparing a transaction.',{exact:true}).isVisible());assert.equal(await page.getByText('Your posting balance is available.',{exact:false}).count(),0);assert.equal(await page.evaluate(()=>test.preferenceReads),0);await page.evaluate(()=>{test.partialResult={status:'recovering',complete:false,progress:{nextBlock:33,anchorBlock:80,processedRevision:'2',markersChecked:0,markersTotal:null}};test.preferenceResults=[test.partialResult,new Promise(resolve=>test.releasePartial=resolve)];test.hold='preferences';});
+ await page.getByRole('button',{name:'Recover private views',exact:true}).click();await page.waitForFunction(()=>test.preferenceReads===2);
+ assert.equal(await page.evaluate(()=>test.release),null,'A second bounded read must settle before another starts');await page.getByRole('button',{name:'Stop private recovery'}).focus();
+ await page.evaluate(()=>test.releasePartial(test.partialResult));await page.waitForFunction(()=>typeof test.release==='function');assert.equal(await page.evaluate(()=>document.activeElement.textContent),'Stop private recovery');
+ assert.equal(await page.evaluate(()=>panel.privateStatus()),'recovering');assert.equal(await page.evaluate(()=>panel.preferenceEnabled(1,'10')),null);assert.equal(await page.evaluate(()=>test.preferenceReads),3);assert.equal(await page.getByRole('dialog').getAttribute('aria-busy'),'true');assert(await page.getByRole('button',{name:'Recovering private views',exact:true}).isDisabled());assert(await page.getByRole('button',{name:'Stop private recovery'}).isEnabled());assert(await page.getByText('Next history block to check: 33',{exact:true}).isVisible());
+ await page.evaluate(()=>{test.hold=null;test.release();});await page.getByText('Your saved choices are ready.').waitFor();
  assert.equal(await page.evaluate(()=>panel.preferenceEnabled(1,'10')),true);assert.equal(await page.evaluate(()=>test.sends),0);
  assert(await page.getByText('Your follows, bookmarks and notification settings have been recovered.',{exact:true}).isVisible());assert.equal(await page.getByText(/fee-juice units|deposit IDs|action check/).count(),0);
  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);assert.equal(await page.getByText('Loading private account tools…',{exact:true}).count(),0);if(process.env.ROLLING_PREFERENCES_COMPLETE_SCREENSHOT){await page.getByRole('button',{name:'Disable reply notifications'}).scrollIntoViewIfNeeded();await page.screenshot({path:process.env.ROLLING_PREFERENCES_COMPLETE_SCREENSHOT,fullPage:true});}
  await page.getByRole('button',{name:'Close account panel'}).click();await page.evaluate(()=>{test.rawAccount={};});assert.equal(await page.evaluate(()=>panel.privateStatus()),'locked');assert.equal(await page.evaluate(()=>panel.preferenceEnabled(1,'10')),null);
 });
+
+test('anonymous reply review identifies Anonymous and opening private views clears the previous confirmation',async t=>{
+ const {page}=await browserFixture(t);await open(page,{type:'reply',parent:'10',root:'1',subboard:'3'});await unlock(page);await prepare(page);
+ assert(await page.getByText('name: Anonymous',{exact:true}).isVisible());assert.equal((await counts(page)).sends,0);
+ await page.getByRole('button',{name:'Confirm and send',exact:true}).click();await page.getByText('Transaction confirmed on the verified chain.',{exact:true}).waitFor();
+ await page.getByRole('button',{name:'Close account panel',exact:true}).click();await open(page,{view:'preferences'});
+ await page.getByRole('button',{name:'Recover private views',exact:true}).waitFor();assert.equal(await page.getByText('Transaction confirmed on the verified chain.',{exact:true}).count(),0);assert.equal(await page.evaluate(()=>test.preferenceReads),0);
+});
+
 test('every preference and read marker captures a fresh head and requires maximum-fee confirmation',async t=>{
  const {page}=await browserFixture(t);await open(page);await unlock(page);
  for(const [i,action]of [{type:'preference',kind:1,target:'10',enabled:true},{type:'preference',kind:2,target:'0',enabled:false},{type:'preference',kind:3,target:'7',enabled:true},{type:'preference',kind:4,target:'10',enabled:false},{type:'preference',kind:5,target:'0',enabled:false},{type:'read-marker',thread:'10',throughBlock:'12'}].entries()){
@@ -380,9 +391,9 @@ test('every preference and read marker captures a fresh head and requires maximu
 });
 test('account invalidation during preference recovery clears capability, keeps busy until settled and never publishes old result',async t=>{
  const {page}=await browserFixture(t);await open(page,{view:'preferences'});await page.getByRole('button',{name:'Unlock',exact:true}).click();await page.getByRole('button',{name:'Recover private views'}).waitFor();
- await page.evaluate(()=>test.hold='preferences');await page.getByRole('button',{name:'Recover private views'}).click();await page.waitForFunction(()=>test.release);
+ await page.evaluate(()=>{test.preferenceResults=[{status:'recovering',complete:false,progress:{nextBlock:1}}];test.hold='preferences';});await page.getByRole('button',{name:'Recover private views'}).click();await page.waitForFunction(()=>test.release);
  await page.evaluate(()=>test.options.onChange({invalidated:true}));assert.equal(await page.evaluate(()=>panel.privateStatus()),'locked');assert.equal(await page.getByRole('dialog').getAttribute('aria-busy'),'true');
- await page.keyboard.press('Escape');assert(await page.getByRole('dialog').isVisible());await page.evaluate(()=>test.release());await page.getByRole('button',{name:'Reload to unlock'}).waitFor();assert.equal(await page.evaluate(()=>panel.preferenceEnabled(1,'10')),null);
+ await page.keyboard.press('Escape');assert(await page.getByRole('dialog').isVisible());await page.evaluate(()=>test.release());await page.getByRole('button',{name:'Reload to unlock'}).waitFor();assert.equal(await page.evaluate(()=>panel.preferenceEnabled(1,'10')),null);assert.equal(await page.evaluate(()=>test.preferenceReads),2);assert.equal(await page.evaluate(()=>test.sends),0);
 });
 test('preference head failure does not prepare and recovery failure never implies an empty successful view',async t=>{
  const {page}=await browserFixture(t);await open(page,{type:'preference',kind:1,target:'10',enabled:false});await unlock(page);await page.evaluate(()=>test.failure='head');
@@ -395,9 +406,9 @@ test('locking clears recovered private capability before asynchronous session cl
 });
 test('explicit recovery abort waits for the original private call and does not publish its late complete result',async t=>{
  const {page}=await browserFixture(t);await open(page,{view:'preferences'});await page.getByRole('button',{name:'Unlock',exact:true}).click();await page.getByRole('button',{name:'Recover private views'}).waitFor();
- await page.evaluate(()=>test.hold='preferences');await page.getByRole('button',{name:'Recover private views'}).click();await page.waitForFunction(()=>test.release);await page.getByRole('button',{name:'Stop private recovery'}).click();
+ await page.evaluate(()=>{test.preferenceResults=[{status:'recovering',complete:false,progress:{nextBlock:1}}];test.hold='preferences';});await page.getByRole('button',{name:'Recover private views'}).click();await page.waitForFunction(()=>test.release);await page.getByRole('button',{name:'Stop private recovery'}).click();
  assert.equal(await page.getByRole('dialog').getAttribute('aria-busy'),'true');await page.keyboard.press('Escape');assert(await page.getByRole('dialog').isVisible());assert.equal(await page.evaluate(()=>panel.privateStatus()),'recovering');
- await page.evaluate(()=>test.release());await page.getByRole('alert').waitFor();assert.equal(await page.evaluate(()=>panel.privateStatus()),'recovering');assert.equal(await page.evaluate(()=>test.preferenceReads),1);assert.equal(await page.evaluate(()=>test.sends),0);
+ await page.evaluate(()=>test.release());await page.getByRole('alert').waitFor();assert.equal(await page.evaluate(()=>panel.privateStatus()),'recovering');assert.equal(await page.evaluate(()=>test.preferenceReads),2);assert.equal(await page.evaluate(()=>test.sends),0);
 });
 
 // Actual production DOM and driver; account/RPC behavior remains a labelled UI double.

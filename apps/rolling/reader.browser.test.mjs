@@ -313,7 +313,7 @@ async function privateViewFixture(t,{mutation=null,tombstone=null}={}){
    res.writeHead(200,{'content-type':'text/javascript'});res.end(`import {selectPrivateViews} from '/private-views.mjs';
 const raw={},prefs={scope:{chainId:'31337',version:'1',board:'1'},head:{schema:1,initialized:true,revision:'2',digest:'42'},bookmarks:['11'],followedBoards:[],followedNames:[],subscriptions:['10'],replyNotifications:true,readMarkers:[]};
 window.privateTest={reads:0,partial:false,options:null,prepare:[],head:0};
-export async function loadRollingWalletRuntime(){return {selectPrivateViews,getAccount:()=>raw,account:{configure:o=>privateTest.options=o},createSession:async()=>({busy:false,close:async()=>{},application:{readAccountStatus:async()=>({status:'collateral-pending',privateFeeCredit:'2',depositIds:[]}),ownedIdentities:async()=>({identities:[],records:[],nextCursor:null}),readPreferences:async()=>{throw Error('Ordinary preference fixture API forbidden');},readColdPreferences:async({signal})=>{if(!(signal instanceof AbortSignal)||signal.aborted)throw Error('Cold fixture requires active signal');privateTest.reads++;return privateTest.partial?{status:'recovering',complete:false,progress:{scannedThrough:32,anchorBlock:100}}:{status:'complete',complete:true,preferences:prefs};},readPreferenceHead:async()=>{privateTest.head++;return prefs.head;},prepare:async action=>{privateTest.prepare.push(action);return {intentId:'one',status:'prepared',action,maximumFee:'3'};}}})};}`);return;
+export async function loadRollingWalletRuntime(){return {selectPrivateViews,getAccount:()=>raw,account:{configure:o=>privateTest.options=o},createSession:async()=>({busy:false,close:async()=>{},application:{readAccountStatus:async()=>({status:'collateral-pending',privateFeeCredit:'2',depositIds:[]}),ownedIdentities:async()=>({identities:[],records:[],nextCursor:null}),readPreferences:async()=>{throw Error('Ordinary preference fixture API forbidden');},readColdPreferences:async({signal})=>{if(!(signal instanceof AbortSignal)||signal.aborted)throw Error('Cold fixture requires active signal');privateTest.reads++;if(privateTest.partial){privateTest.partial=false;privateTest.holdRecovery=true;return {status:'recovering',complete:false,progress:{scannedThrough:32,anchorBlock:100}};}if(privateTest.holdRecovery)await new Promise(resolve=>privateTest.resumeRecovery=()=>{privateTest.holdRecovery=false;privateTest.resumeRecovery=null;resolve();});return {status:'complete',complete:true,preferences:prefs};},readPreferenceHead:async()=>{privateTest.head++;return prefs.head;},prepare:async action=>{privateTest.prepare.push(action);return {intentId:'one',status:'prepared',action,maximumFee:'3'};}}})};}`);return;
   }
   if(url.pathname==='/invocation.mjs'){res.writeHead(200,{'content-type':'text/javascript'});res.end(await fs.readFile(new URL('../../shared/rolling/invocation.mjs',import.meta.url)));return;}
   if(url.pathname==='/private-views.mjs'){res.writeHead(200,{'content-type':'text/javascript'});res.end(await fs.readFile(new URL('../../shared/rolling/private-views.mjs',import.meta.url)));return;}
@@ -336,8 +336,8 @@ for(const mutation of ['duplicate','order','snapshot'])test('private page valida
  const {page}=await privateViewFixture(t,{mutation});await recoverPrivateView(page);await page.getByRole('button',{name:'Load more',exact:true}).click();await page.getByRole('alert').waitFor();assert.equal(await page.getByRole('article').count(),0);assert.equal(await page.getByRole('button',{name:'Load more',exact:true}).count(),0);
 });
 test('account invalidation synchronously removes private DOM and partial recovery never requests public pages',async t=>{
- const {page,feed}=await privateViewFixture(t);await page.getByRole('button',{name:'Open private recovery'}).click();await page.getByRole('button',{name:'Unlock',exact:true}).click();await page.getByRole('button',{name:'Recover private views',exact:true}).waitFor();await page.evaluate(()=>privateTest.partial=true);await page.getByRole('button',{name:'Recover private views'}).click();await page.getByRole('button',{name:'Continue private recovery'}).waitFor();assert.equal(feed.length,0);
- await page.evaluate(()=>privateTest.partial=false);await page.getByRole('button',{name:'Continue private recovery'}).click();await page.getByRole('button',{name:'Close account panel'}).click();await page.getByRole('button',{name:'Load more',exact:true}).click();await page.locator('#post-11').waitFor();
+ const {page,feed}=await privateViewFixture(t);await page.getByRole('button',{name:'Open private recovery'}).click();await page.getByRole('button',{name:'Unlock',exact:true}).click();await page.getByRole('button',{name:'Recover private views',exact:true}).waitFor();await page.evaluate(()=>privateTest.partial=true);await page.getByRole('button',{name:'Recover private views'}).click();await page.waitForFunction(()=>typeof privateTest.resumeRecovery==='function');assert.equal(feed.length,0);
+ await page.evaluate(()=>privateTest.resumeRecovery());await page.getByText('Your saved choices are ready.').waitFor();await page.getByRole('button',{name:'Close account panel'}).click();await page.getByRole('button',{name:'Load more',exact:true}).click();await page.locator('#post-11').waitFor();
  assert.equal(await page.evaluate(()=>{privateTest.options.onChange({invalidated:true});return document.querySelectorAll('article').length;}),0);await page.getByRole('heading',{name:'Unlock and recover your private views'}).waitFor();
 });
 
@@ -426,22 +426,22 @@ test('notification partial recovery preserves public roots but never exposes an 
  const d=page.getByRole('dialog',{name:'Your private account',exact:true});
  await d.getByRole('button',{name:'Private views',exact:true}).click();
  await page.evaluate(()=>privateTest.partial=true);await d.getByRole('button',{name:'Recover private views',exact:true}).click();
- await d.getByRole('button',{name:'Continue private recovery',exact:true}).waitFor();
+ await page.waitForFunction(()=>typeof privateTest.resumeRecovery==='function');
  assert.equal(await page.locator('#content article.post').count(),1);
  assert.equal(await d.getByText('Your saved choices are ready.',{exact:true}).count(),0);
  await checkRecovery(page,{publicBoard:true});await assert.rejects(checkRecovery(page),/Notification browser check failed/);
- await page.evaluate(()=>privateTest.partial=false);await d.getByRole('button',{name:'Continue private recovery',exact:true}).click();
+ await page.evaluate(()=>privateTest.resumeRecovery());
  await d.getByText('Your saved choices are ready.',{exact:true}).waitFor();await d.getByRole('button',{name:'Close account panel',exact:true}).click();
  assert.equal(await page.locator('#post-10').getByRole('button',{name:'Unsubscribe from thread',exact:true}).count(),1);
  await page.getByRole('link',{name:'Notifications',exact:true}).click();await page.getByRole('button',{name:'Manage private views',exact:true}).waitFor();
  await page.getByRole('button',{name:'Manage private views',exact:true}).click();await page.evaluate(()=>privateTest.partial=true);
- await d.getByRole('button',{name:'Refresh private views',exact:true}).click();await d.getByRole('button',{name:'Continue private recovery',exact:true}).waitFor();
+ await d.getByRole('button',{name:'Refresh private views',exact:true}).click();await page.waitForFunction(()=>typeof privateTest.resumeRecovery==='function');
  await checkRecovery(page);assert.equal(await page.locator('#content article.post').count(),0);
  await assert.rejects(checkRecovery(page,{publicBoard:true}),/Notification browser check failed/);
  await page.locator('#content').evaluate(node=>node.insertAdjacentHTML('beforeend','<article class="post">Synthetic forbidden private row</article>'));
  await assert.rejects(checkRecovery(page),/Notification browser check failed/);
  await page.locator('#content article.post').evaluate(node=>node.remove());
- await page.evaluate(()=>privateTest.partial=false);await d.getByRole('button',{name:'Continue private recovery',exact:true}).click();await d.getByText('Your saved choices are ready.',{exact:true}).waitFor();
+ await page.evaluate(()=>privateTest.resumeRecovery());await d.getByText('Your saved choices are ready.',{exact:true}).waitFor();
  assert.equal(await page.evaluate(()=>privateTest.prepare.length),0);
 });
 
