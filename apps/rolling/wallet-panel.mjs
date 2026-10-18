@@ -62,7 +62,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
  const connectionFailure=Object.freeze({}),avatarFailure=Object.freeze({});
  let initializationAttempt=0,plaintextRecovery=false;
  let runtime,session,busy=false,blocked=false,invalidated=false,reloadRequired=false,returnFocus;
- let balances=null,bokAccounting=null,bokExitAmount='',refundQuote=null,refundGas='0.003';
+ let balances=null,bokAccounting=null,accountingCheck=null,bokExitAmount='',refundQuote=null,refundGas='0.003';
  let topupKind='private-fee',topupQuote=null,topupInputs={amount:'',gas:'0.003'};
  let moderatorStatus=null,bokStatus=null,status=null,intent=null,identities=[],identityRecords=[],cursor=0,error='',notice='',draft={type:'post',subboard:'0',content:''};
  let preferences=null,preferenceProgress=null,accountIdentity=null,recoveryAbort=null,recoveryInspection=null;
@@ -135,7 +135,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   const raw=atob(data);if(btoa(raw)!==data||raw.length>8192||!raw.length||action.width!==100||action.height!==100)throw Error('Invalid avatar');
   const bytes=Uint8Array.from(raw,c=>c.charCodeAt(0));const type=bytes[0]===137?'image/png':bytes[0]===255?'image/jpeg':bytes[0]===82?'image/webp':null;if(!type)throw Error('Invalid avatar');return new Blob([bytes],{type});
  }
- function controlsBusy(value){dialog.setAttribute('aria-busy',String(value));for(const node of dialog.querySelectorAll('button,input,select,textarea'))node.disabled=node.dataset.recoveryStop==='true'?!recoveryAbort:value||node.dataset.unavailable==='true';}
+ function controlsBusy(value){dialog.setAttribute('aria-busy',String(value));for(const node of dialog.querySelectorAll('button,input,select,textarea'))node.disabled=node.dataset.recoveryStop==='true'?!recoveryAbort:node.dataset.accountingStop==='true'?!accountingCheck:value||node.dataset.unavailable==='true';}
  function note(text){live.textContent=text;}
  function clearOperationFeedback(){error='';notice='';note('');for(const node of content.querySelectorAll('[data-operation-feedback]'))node.remove();}
  function selectView(next){clearOperationFeedback();view=next;render();}
@@ -306,6 +306,20 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   }),true);
   review.dataset.unavailable=String(changed);if(consent)consent.addEventListener('change',()=>{review.dataset.unavailable=String(!consent.checked);review.disabled=busy||!consent.checked;});content.append(review);
  }
+ async function checkBokAccounting(){
+  const epoch=accountEpoch;checkAccount(epoch);bokAccounting=null;
+  // The application's bounded accounting API has no abort argument. Stop fences
+  // its result and the next read; the current call must settle before releasing busy.
+  const scan=accountingCheck={stopped:false};let cursor=0;
+  note('Checking all owned Bok requests. No partial total is presented.');render();
+  try{for(;;){
+   const value=await session.application.readBokAccounting({cursor});checkAccount(epoch);
+   if(scan.stopped){note('Request accounting stopped. No partial totals were used.');return;}
+   if(value?.complete===true){bokAccounting=value;balances={...balances,bok:{...balances.bok,available:value.available}};note('All owned Bok requests have been checked.');return;}
+   if(value?.complete!==false||!['owned-requests','public-accounting'].includes(value.phase)||typeof value.nextCursor!=='string'||!value.nextCursor.length||value.nextCursor===cursor)throw connectionFailure;
+   bokAccounting=value;cursor=value.nextCursor;render();
+  }}catch(failure){bokAccounting=null;throw failure;}finally{accountingCheck=null;}
+ }
  function balancesView(){
   content.append(el('h3',{},'Balances and withdrawals'),paragraph('Posting collateral is refundable ETH. Network fee tokens pay transaction fees and cannot be redeemed by the current protocol. Bok credits are USDC-backed and separate from both.'));
   if(!balances){content.append(button('Check private balances',()=>void work(async()=>{const epoch=accountEpoch;const value=await session.application.readBalances({cursor:0});checkAccount(epoch);balances=value;}),true));return;}
@@ -322,8 +336,9 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
     }
    }else content.append(paragraph('Complete request accounting is not yet available; unlisted reservations are not zero.'));
    if(typeof session.application.readBokAccounting==='function'){
-    content.append(button(bokAccounting&&!bokAccounting.complete?'Continue checking Bok requests':'Check all Bok requests',()=>void work(async()=>{const epoch=accountEpoch,value=await session.application.readBokAccounting({cursor:bokAccounting&&!bokAccounting.complete?bokAccounting.nextCursor:0});checkAccount(epoch);bokAccounting=value;if(value.complete)balances={...balances,bok:{...balances.bok,available:value.available}};})));
-    if(bokAccounting&&!bokAccounting.complete)content.append(paragraph('Checking '+(bokAccounting.phase==='owned-requests'?'private ownership pages':'uniform public accounting pages')+'. No partial total is presented.'),button('Stop checking requests',()=>{bokAccounting=null;render();}));
+    content.append(button(accountingCheck?'Checking all Bok requests':'Check all Bok requests',()=>void work(checkBokAccounting)));
+    if(bokAccounting&&!bokAccounting.complete)content.append(paragraph('Checking '+(bokAccounting.phase==='owned-requests'?'private ownership pages':'uniform public accounting pages')+'. No partial total is presented.'));
+    if(accountingCheck){const stop=button('Stop checking requests',()=>{accountingCheck.stopped=true;bokAccounting=null;note('Accounting stop requested. Waiting for the current private operation to settle.');});stop.dataset.accountingStop='true';content.append(stop);}
    }
    fundingWalletView();const amount=el('input',{type:'text',inputmode:'decimal','aria-label':'Bok credit to withdraw in USDC',value:bokExitAmount});amount.addEventListener('input',()=>bokExitAmount=amount.value);
    content.append(label('Bok credit to withdraw (USDC)',amount),paragraph('Only unallocated private credit can exit. First confirm the private transaction fee; after settlement, separately review Ethereum gas. The receiving wallet must pay that gas.'),button('Review Bok credit exit',()=>void work(async()=>{const selected=runtime.fundingWalletStatus?.();if(!selected?.connected||typeof selected.address!=='string')throw connectionFailure;intent=await session.application.prepare({type:'withdraw-bok',amount:units(bokExitAmount,6),recipient:selected.address.toLowerCase()});refundQuote=null;}),true));
@@ -727,7 +742,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
    recovery();
   }
   controlsBusy(busy);
-  if(dialog.open&&(!busy||previousFocus?.dataset.recoveryStop==='true')&&(hadFocus||document.activeElement===document.body)){
+  if(dialog.open&&(!busy||previousFocus?.dataset.recoveryStop==='true'||previousFocus?.dataset.accountingStop==='true')&&(hadFocus||document.activeElement===document.body)){
    if(previousFocus.isConnected&&dialog.contains(previousFocus))previousFocus.focus({preventScroll:true});
    else{
     const same=index>=0?controls().filter(n=>focusKey(n)===key)[index]:null;
