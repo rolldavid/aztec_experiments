@@ -6,7 +6,7 @@ import path from 'node:path';
 import {execFileSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 import {randomBytes,createHash} from 'node:crypto';
-import {Tx,TxHash} from '@aztec-labs/stdlib/tx';
+import {Tx,TxHash,PendingTxReceipt,DroppedTxReceipt,MinedTxReceipt} from '@aztec-labs/stdlib/tx';
 import {IDBFactory} from 'fake-indexeddb';
 import {createL2Journal,l2JournalScopeText} from '../shared/l2-journal.mjs';
 import {createBrowserJournalStorage} from '../shared/journal-indexeddb.mjs';
@@ -16,7 +16,7 @@ const address=()=> '0x'+randomBytes(20).toString('hex');
 function fixture(storage) {
  const tx=Tx.random({randomProof:true});let status='dropped',executionResult='success',canonical=true;const sent=[];
  const scope={account:field(),chainId:'31337',rollup:address(),version:'5',board:field(),portal:address()};
- const node={sendTx:async value=>{sent.push(Buffer.from(value.toBuffer()));status='checkpointed';},getTxReceipt:async()=>({txHash:tx.getTxHash(),status,executionResult,blockHash:'canonical',blockNumber:3}),isValidTx:async()=>({result:'valid'}),getBlock:async()=>({hash:canonical?'canonical':'reorg'})};
+ const node={sendTx:async value=>{sent.push(Buffer.from(value.toBuffer()));status='checkpointed';},getTxReceipt:async()=>status==='dropped'?new DroppedTxReceipt(tx.getTxHash()):status==='pending'?new PendingTxReceipt(tx.getTxHash()):new MinedTxReceipt(tx.getTxHash(),status,executionResult,0n,'canonical',3,1,0,1),isValidTx:async()=>({result:'valid'}),getBlock:async()=>({hash:canonical?'canonical':'reorg'})};
  const opts={storage,walletSecret:field(),walletSalt:field(),scope,Tx,node,waitOptions:{timeoutMs:30,intervalMs:1}};
  return{tx,opts,sent,node,newSession:extra=>createL2Journal({...opts,...extra}),setStatus:value=>status=value,setExecution:value=>executionResult=value,reorg:()=>canonical=false};
 }

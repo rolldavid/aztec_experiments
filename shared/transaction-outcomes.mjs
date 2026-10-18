@@ -1,3 +1,4 @@
+import {waitForTx} from '@aztec-labs/aztec.js/node';
 // Explicit submission/receipt outcomes. Diagnostic bodies never escape this boundary.
 export const transactionError=(code,message)=>Object.assign(new Error(message),{code});
 const accepted=new Set(['checkpointed','proven','finalized']);
@@ -40,10 +41,10 @@ export async function submitOnceWithReconciliation(node,tx) {
     throw transactionError('BB_SUBMISSION_UNKNOWN','Submission outcome is unknown. Reconcile this transaction before retrying.');
   }
 }
-export async function classifyDroppedTransaction(node,tx,receipt) {
+export async function classifyDroppedTransaction(node,tx,receipt,{readTimeoutMs=20000}={}) {
   if(receipt?.status!=='dropped' || hash(receipt.txHash)!==hash(tx.getTxHash())) throw transactionError('BB_SUBMISSION_UNKNOWN','Transaction identity is unavailable.');
   let validation,refreshed;
-  try {validation=await boundedTransactionRead(()=>node.isValidTx(tx));refreshed=await boundedTransactionRead(()=>node.getTxReceipt(tx.getTxHash()));}
+  try {validation=await boundedTransactionRead(()=>node.isValidTx(tx),readTimeoutMs);refreshed=await boundedTransactionRead(()=>node.getTxReceipt(tx.getTxHash()),readTimeoutMs);}
   catch {throw transactionError('BB_SUBMISSION_UNKNOWN','Dropped transaction could not be reconciled.');}
   if(hash(refreshed?.txHash)!==hash(tx.getTxHash())) throw transactionError('BB_SUBMISSION_UNKNOWN','Transaction identity changed.');
   if(pending.has(refreshed.status)||accepted.has(refreshed.status)) return refreshed;
@@ -53,26 +54,32 @@ export async function classifyDroppedTransaction(node,tx,receipt) {
   }
   throw transactionError('BB_SUBMISSION_UNKNOWN','Drop reason is unconfirmed. Reconcile before retrying.');
 }
-export async function waitForCanonicalReceipt(node,tx,{timeoutMs=540000,intervalMs=5000,now=Date.now,sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms)),onPoll=()=>{},readTimeoutMs=20000}={}) {
-  const txHash=tx.getTxHash(),deadline=now()+timeoutMs;
-  while(now()<deadline) {
-    let receipt;
-    try {receipt=await boundedTransactionRead(()=>node.getTxReceipt(txHash),Math.min(readTimeoutMs,deadline-now()));}catch (error) {if(error?.code==='BB_SUBMISSION_UNKNOWN')throw error;/* Transport/schema failure is unknown, never success. */}
-    if(receipt) {
-      if(hash(receipt.txHash)!==hash(txHash)) throw transactionError('BB_SUBMISSION_UNKNOWN','Receipt identity does not match.');
-      if(receipt.status==='dropped')receipt=await classifyDroppedTransaction(node,tx,receipt);
-      if(accepted.has(receipt.status)) {
-        if(!Number.isSafeInteger(receipt.blockNumber) || receipt.blockNumber<1 || !receipt.blockHash) throw transactionError('BB_SUBMISSION_UNKNOWN','Receipt block identity is unavailable.');
-        let block;try {block=await boundedTransactionRead(()=>node.getBlock(receipt.blockNumber),Math.min(readTimeoutMs,deadline-now()));}catch (error) {if(error?.code==='BB_SUBMISSION_UNKNOWN')throw error;}
-        if(!block || hash(block.hash)!==hash(receipt.blockHash)) throw transactionError('BB_SUBMISSION_UNKNOWN','Receipt block is not confirmed canonical.');
-        if(!['success','reverted'].includes(receipt.executionResult))throw transactionError('BB_SUBMISSION_UNKNOWN','Receipt execution result is unavailable.');
-        return receipt;
+export async function waitForCanonicalReceipt(node,tx,{timeoutMs=540000,intervalMs,onPoll=()=>{},readTimeoutMs=20000}={}) {
+  if(!Number.isFinite(timeoutMs)||timeoutMs<=0||(intervalMs!==undefined&&(!Number.isFinite(intervalMs)||intervalMs<=0)))throw transactionError('BB_SUBMISSION_UNKNOWN','Transaction wait configuration is invalid.');
+  const txHash=tx.getTxHash(),readLimit=Math.min(readTimeoutMs,timeoutMs);let stateConflict;
+  try {
+    // The SDK owns waiting. This boundary only validates each actual receipt and
+    // reconciles drops; no elapsed time can authorize a replacement or resend.
+    const receipt=await waitForTx({getTxReceipt:async()=>{
+      let observed=await boundedTransactionRead(()=>node.getTxReceipt(txHash),readLimit);
+      if(hash(observed?.txHash)!==hash(txHash))throw transactionError('BB_SUBMISSION_UNKNOWN','Receipt identity does not match.');
+      if(observed.status==='dropped'){
+        try{observed=await classifyDroppedTransaction(node,tx,observed,{readTimeoutMs:readLimit});}
+        catch(error){if(error?.code==='BB_STATE_CONFLICT')stateConflict=error;throw error;}
       }
-      if(!pending.has(receipt.status))throw transactionError('BB_SUBMISSION_UNKNOWN','Receipt status is unrecognized.');
-    }
-    onPoll();await sleep(Math.min(intervalMs,Math.max(0,deadline-now())));
+      if(!pending.has(observed.status)&&!accepted.has(observed.status))throw transactionError('BB_SUBMISSION_UNKNOWN','Receipt status is unrecognized.');
+      if(pending.has(observed.status))onPoll();
+      return observed;
+    }},txHash,{timeout:timeoutMs/1000,...(intervalMs===undefined?{}:{interval:Math.min(intervalMs,timeoutMs)/1000}),ignoreDroppedReceiptsFor:0,dontThrowOnRevert:true});
+    if(!Number.isSafeInteger(receipt.blockNumber)||receipt.blockNumber<1||!receipt.blockHash)throw transactionError('BB_SUBMISSION_UNKNOWN','Receipt block identity is unavailable.');
+    const block=await boundedTransactionRead(()=>node.getBlock(receipt.blockNumber),readLimit);
+    if(!block||hash(block.hash)!==hash(receipt.blockHash))throw transactionError('BB_SUBMISSION_UNKNOWN','Receipt block is not confirmed canonical.');
+    if(!['success','reverted'].includes(receipt.executionResult))throw transactionError('BB_SUBMISSION_UNKNOWN','Receipt execution result is unavailable.');
+    return receipt;
+  }catch(error){
+    if(stateConflict&&error===stateConflict)throw error;
+    throw transactionError('BB_SUBMISSION_UNKNOWN','Confirmation is unavailable. Keep the transaction identifier and reconcile before retrying.');
   }
-  throw transactionError('BB_SUBMISSION_UNKNOWN','Confirmation timed out. Keep the transaction identifier and reconcile before retrying.');
 }
 
 export async function waitForSuccessfulReceipt(node,tx,options={}) {

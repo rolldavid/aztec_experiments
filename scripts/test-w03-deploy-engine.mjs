@@ -9,6 +9,8 @@ import * as ethers from 'ethers';
 import {loadContractArtifact,encodeArguments,getInitializer} from '@aztec-labs/stdlib/abi';
 import {poseidon2HashWithSeparator} from '@aztec-labs/foundation/crypto/poseidon';
 import {Fr} from '@aztec-labs/foundation/curves/bn254';
+import {TxHash,PendingTxReceipt,DroppedTxReceipt,MinedTxReceipt} from '@aztec-labs/stdlib/tx';
+import {BlockHash} from '@aztec-labs/stdlib/block';
 import {AztecAddress} from '@aztec-labs/stdlib/aztec-address';
 import {EthAddress} from '@aztec-labs/foundation/eth-address';
 import {IDBFactory} from 'fake-indexeddb';
@@ -26,7 +28,7 @@ const field=n=>'0x'+BigInt(n).toString(16).padStart(64,'0');
 class FixtureTx {
  constructor(kind,proof=0){this.kind=kind;this.proof=proof;}
  toBuffer(){return Buffer.from(JSON.stringify([this.kind,this.proof]));}
- getTxHash(){return ethers.sha256(this.toBuffer());}
+ getTxHash(){return field(BigInt(ethers.sha256(this.toBuffer()))>>8n);}
  static fromBuffer(bytes){return new FixtureTx(...JSON.parse(bytes.toString()));}
 }
 const rollingRaw=JSON.parse(await readFile(new URL('../billboard/target/rolling_contract-RollingBoard.json',import.meta.url),'utf8'));
@@ -45,7 +47,7 @@ function fixture({rolling=false,lostBinding=false,lostDeploy=false,existing=true
  const configHash=wordHash('AZTEC_BB_CONFIG_V1',[1n,31337n,BigInt(rollup),2n,5n,1n,100n,10n,64n,10n,16n]);
  const node={getNodeInfo:async()=>({realProofs:false,l1ChainId:31337,rollupVersion:5}),getL1ContractAddresses:async()=>({rollupAddress:rollup,inboxAddress:inbox,outboxAddress:outbox}),
   getBlockNumber:async()=>1,getPublicStorageAt:async()=>new Fr(0),getContract:async()=>existing?(rolling?boardInstance:instance):undefined,
-  getTxReceipt:async hash=>receipts.get(String(hash)),getBlock:async()=>({hash:blockHash}),getChainTips:async()=>({finalized:{block:{number:finalized}}}),
+  getTxReceipt:async hash=>{const value=receipts.get(String(hash));if(!value)return value;const txHash=TxHash.fromString(String(value.txHash));return value.status==='pending'?new PendingTxReceipt(txHash):value.status==='dropped'?new DroppedTxReceipt(txHash):new MinedTxReceipt(txHash,value.status,value.executionResult,0n,BlockHash.fromString(value.blockHash),value.blockNumber,1,0,1);},getBlock:async()=>({hash:blockHash}),getChainTips:async()=>({finalized:{block:{number:finalized}}}),
   sendTx:async tx=>{if(tx.kind==='deploy'){existing=true;}else {bound=tx.kind.slice(5);}
    receipts.set(tx.getTxHash(),{txHash:tx.getTxHash(),status:'checkpointed',executionResult:'success',blockNumber:1,blockHash});},
   isValidTx:async tx=>invalids.has(tx.getTxHash())?{result:'invalid',reason:['Block header not found']}:{result:'valid'}};

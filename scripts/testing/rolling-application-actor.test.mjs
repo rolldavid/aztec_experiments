@@ -11,11 +11,12 @@ import {AztecAddress} from '@aztec-labs/stdlib/aztec-address';
 import {loadContractArtifact,encodeArguments,EventSelector,decodeFunctionSignature} from '@aztec-labs/stdlib/abi';
 import {BlockHash} from '@aztec-labs/stdlib/block';
 import {poseidon2HashWithSeparator} from '@aztec-labs/foundation/crypto/poseidon';
+import {deriveStorageSlotInMap} from '@aztec-labs/stdlib/hash';
 import {BarretenbergSync} from '@aztec-foundation/bb.js';
 import {createPreferenceEventDecoder} from '../../shared/rolling/preference-events.mjs';
 after(()=>BarretenbergSync.destroySingleton());
 import {computeArtifactHash} from '@aztec-labs/stdlib/contract';
-import {Tx,TxHash} from '@aztec-labs/stdlib/tx';
+import {Tx,TxHash,PendingTxReceipt,MinedTxReceipt} from '@aztec-labs/stdlib/tx';
 import {PrivateKernelTailCircuitPublicInputs} from '@aztec-labs/stdlib/kernel';
 import {ChonkProof} from '@aztec-labs/stdlib/proofs';
 import {Gas,GasFees,GasSettings} from '@aztec-labs/stdlib/gas';
@@ -160,6 +161,9 @@ test('unbounded actor retains default journal wait configuration and all exact a
 // journal. Only account/PXE proving and node pending responses are labelled doubles.
 async function confirmationFixture(t){
  const f=await fixture(t),events=[];
+ Object.assign(f.input.sdk,{poseidon2HashWithSeparator,deriveStorageSlotInMap});
+ f.input.node.getBlockData=async()=>({blockHash:hex(3),header:{globalVariables:{blockNumber:1}}});
+ f.input.node.getPublicStorageAt=async()=>Fr.ZERO;
  const engine=vm.createContext({URL,Date,performance,Buffer,TextEncoder,TextDecoder,Uint8Array,setTimeout,clearTimeout});
  vm.runInContext(await fs.readFile(new URL('../../shared/moderation-policy.js',import.meta.url),'utf8'),engine);
  vm.runInContext(await fs.readFile(new URL('../../apps/src/billboard/user/engine.js',import.meta.url),'utf8'),engine);
@@ -176,7 +180,7 @@ async function confirmationFixture(t){
  const tx=new Tx(TxHash.fromBigInt(9n),PrivateKernelTailCircuitPublicInputs.empty(),ChonkProof.empty(),[],[]);
  f.pxe.proveTx=async()=>{events.push('proof');if(f.state.proofWait)await f.state.proofWait;return {toTx:async()=>tx};};
  f.input.node.sendTx=async()=>{events.push('send');f.state.transportSends++;};
- f.input.node.getTxReceipt=async()=>{events.push('receipt');f.state.onReceipt?.();if(f.state.readWait)await f.state.readWait;return {txHash:tx.getTxHash(),status:'pending'};};
+ f.input.node.getTxReceipt=async()=>{events.push('receipt');f.state.onReceipt?.();if(f.state.readWait)await f.state.readWait;return new PendingTxReceipt(tx.getTxHash());};
  f.input.node.getBlock=async()=>assert.fail('Pending receipt must not read a block');
  Object.assign(f.input.sdk,outcomes,{BaseWallet,GasSettings});
  f.input.sdk.waitForSuccessfulReceipt=async(...args)=>{try{return await outcomes.waitForSuccessfulReceipt(...args);}finally{events.push('confirmation-settled');}};
@@ -489,7 +493,7 @@ test('root adapter drains an own-data thenable without invoking accessor results
 test('actual engine and AEAD journal invoke root gate after saved bytes and before one ordinary submission',async t=>{
  const f=await confirmationFixture(t);let prepared,entered=false;
  const hook={journalPrepared(value){prepared=value;},async beforeSubmit(value){assert.equal(value.txHash,prepared.txHash);entered=true;assert(!f.events.includes('send'));}};
- f.input.node.getTxReceipt=async()=>({txHash:f.tx.getTxHash(),status:'checkpointed',executionResult:'success',blockNumber:1,blockHash:hex(3),transactionFee:1n});
+ f.input.node.getTxReceipt=async()=>new MinedTxReceipt(f.tx.getTxHash(),'checkpointed','success',1n,BlockHash.fromString(hex(3)),1,1,0,1);
  f.input.node.getBlock=async()=>({hash:hex(3)});
  const actor=await createRollingApplicationActor({...f.input,rootSubmissionGate:{select:()=>hook}});
  try{

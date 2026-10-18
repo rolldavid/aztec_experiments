@@ -3,8 +3,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {randomBytes} from 'node:crypto';
-import {Tx} from '@aztec-labs/stdlib/tx';
+import {Tx,PendingTxReceipt,DroppedTxReceipt,MinedTxReceipt} from '@aztec-labs/stdlib/tx';
 import {Fr} from '@aztec-labs/foundation/curves/bn254';
+import {BlockHash} from '@aztec-labs/stdlib/block';
 import {IDBFactory} from 'fake-indexeddb';
 import {createL2Journal} from '../shared/l2-journal.mjs';
 import {createBrowserJournalStorage} from '../shared/journal-indexeddb.mjs';
@@ -14,7 +15,7 @@ const field=()=> '0x'+randomBytes(31).toString('hex').padStart(64,'0');
 const addr=()=> '0x'+randomBytes(20).toString('hex');
 async function fixture() {
  const storage=createBrowserJournalStorage(new IDBFactory()),states=new Map(),sent=[];
- const node={getTxReceipt:async hash=>({txHash:hash,status:states.get(String(hash))?.status??'dropped',executionResult:'success',blockNumber:1,blockHash:'canonical'}),
+ const node={getTxReceipt:async hash=>{const status=states.get(String(hash))?.status??'dropped';return status==='dropped'?new DroppedTxReceipt(hash):status==='pending'?new PendingTxReceipt(hash):new MinedTxReceipt(hash,status,'success',0n,'canonical',1,1,0,1);},
   isValidTx:async tx=>states.get(tx.getTxHash().toString())?.validation??({result:'invalid',reason:['Block header not found']}),
   getBlock:async()=>({hash:'canonical'}),sendTx:async tx=>{sent.push(tx.getTxHash().toString());}};
  const options={storage,walletSecret:field(),walletSalt:field(),scope:{account:field(),chainId:'31337',rollup:addr(),version:'5',board:field(),portal:addr()},Tx,node,waitOptions:{timeoutMs:20,intervalMs:1,readTimeoutMs:10}};
@@ -318,3 +319,31 @@ for(const method of ['recover','reconcilePrevious']){
   }}),{code:'BB_JOURNAL_INVALID'});assert.deepEqual(f.sent,[]);
  });
 }
+
+// Actual SDK receipt variants exercise its waiter; the node is a labelled local
+// boundary double. No transaction is sent and no proving/network is involved.
+for(const status of ['checkpointed','proven','finalized'])for(const execution of ['success','reverted'])test(`SDK receipt waiter accepts existing canonical ${status}/${execution} immediately`,async()=>{
+ const tx=Tx.random(),blockHash=BlockHash.random(),receipt=new MinedTxReceipt(tx.getTxHash(),status,execution,0n,blockHash,1,1,0,1);let reads=0,blocks=0;
+ const node={getTxReceipt:async()=>{reads++;return receipt;},getBlock:async number=>{blocks++;assert.equal(number,1);return {hash:blockHash};},sendTx:()=>assert.fail('Read-only wait must not submit')};
+ const result=await waitForCanonicalReceipt(node,tx,{now:()=>assert.fail('Application clock must not drive waiting'),sleep:()=>assert.fail('Application sleep must not drive waiting')});
+ assert.equal(result,receipt);assert.equal(reads,1);assert.equal(blocks,1);
+});
+test('SDK receipt waiter returns only after actual receipt state resolves',async()=>{
+ const tx=Tx.random(),blockHash=BlockHash.random(),receipt=new MinedTxReceipt(tx.getTxHash(),'checkpointed','success',0n,blockHash,1,1,0,1);let release,entered;
+ const waiting=new Promise(resolve=>entered=resolve),state=new Promise(resolve=>release=resolve);let completed=false;
+ const result=waitForCanonicalReceipt({getTxReceipt:()=>{entered();return state;},getBlock:async()=>({hash:blockHash})},tx).then(value=>{completed=true;return value;});
+ await waiting;assert.equal(completed,false);release(receipt);assert.equal(await result,receipt);
+});
+for(const defect of ['foreign-receipt','noncanonical','rpc','malformed-status','malformed-execution'])test(`SDK receipt waiter retains unknown ${defect} without sending`,async()=>{
+ const tx=Tx.random(),blockHash=BlockHash.random(),receipt=new MinedTxReceipt(defect==='foreign-receipt'?Tx.random().getTxHash():tx.getTxHash(),defect==='malformed-status'?'other':'checkpointed',defect==='malformed-execution'?'other':'success',0n,blockHash,1,1,0,1);let sends=0;
+ const node={getTxReceipt:async()=>{if(defect==='rpc')throw Object.defineProperty({},'code',{get(){throw Error('PRIVATE_SENTINEL');}});return receipt;},getBlock:async()=>({hash:defect==='noncanonical'?BlockHash.random():blockHash}),sendTx:()=>{sends++;}};
+ await assert.rejects(waitForCanonicalReceipt(node,tx),error=>error.code==='BB_SUBMISSION_UNKNOWN'&&!error.message.includes('PRIVATE_SENTINEL'));assert.equal(sends,0);
+});
+test('SDK receipt waiter preserves dropped ambiguity and canonical re-inclusion',async()=>{
+ const tx=Tx.random(),blockHash=BlockHash.random(),dropped=new DroppedTxReceipt(tx.getTxHash()),mined=new MinedTxReceipt(tx.getTxHash(),'checkpointed','success',0n,blockHash,1,1,0,1);
+ for(const kind of ['uncertain','conflict','reincluded']){
+  let reads=0,sends=0;const node={getTxReceipt:async()=>++reads===1?dropped:kind==='reincluded'?mined:dropped,isValidTx:async()=>kind==='conflict'?{result:'invalid',reason:['Block header not found']}:{result:'valid'},getBlock:async()=>({hash:blockHash}),sendTx:()=>{sends++;}};
+  if(kind==='reincluded')assert.equal(await waitForCanonicalReceipt(node,tx),mined);else await assert.rejects(waitForCanonicalReceipt(node,tx),{code:kind==='conflict'?'BB_STATE_CONFLICT':'BB_SUBMISSION_UNKNOWN'});
+  assert.equal(reads,2);assert.equal(sends,0);
+ }
+});

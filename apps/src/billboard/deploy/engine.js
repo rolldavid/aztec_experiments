@@ -212,8 +212,7 @@
         this._progress('confirming');
         const waitOpts=typeof opts.wait==='object'?opts.wait:{};
         const receipt=await a.waitForSuccessfulReceipt(rawNode,tx,{
-          timeoutMs:(waitOpts.timeout ?? 540)*1000,intervalMs:(waitOpts.interval ?? 5)*1000,
-          now:()=>Date.now(),sleep:ms=>new Promise(resolve=>setTimeout(resolve,ms)),
+          timeoutMs:(waitOpts.timeout ?? 540)*1000,...(waitOpts.interval===undefined?{}:{intervalMs:waitOpts.interval*1000}),
         });
         if (this._transactionJournal) this._transactionJournal.confirmed(receipt);
         log('  Tx confirmed! Block: ' + receipt.blockNumber + ', Status: ' + receipt.status, 'success');
