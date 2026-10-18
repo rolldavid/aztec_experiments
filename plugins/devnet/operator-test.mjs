@@ -78,6 +78,49 @@ finally{try{await fixture?.close();await Barretenberg.destroySingleton();Barrete
 if(focused){
  const {test}=await import('node:test');const os=await import('node:os');const {createServer}=await import('node:net');
  const {developmentOptions}=await import('./start.mjs');const {devnetPorts,readDevnetRecord,writeDevnetRecord,assertDevnetPortsFree}=await import('./network.mjs');
+ // Controlled inventory loader; actual reader asset handler and reload lifecycle.
+ const {createDevelopmentWalletAssets}=await import('./start.mjs');
+ const {EventEmitter}=await import('node:events');
+ async function walletAssetResponse(owner){
+  const res=new EventEmitter();res.destroyed=false;res.setHeader=()=>{};
+  res.writeHead=status=>{res.status=status;};res.end=body=>{res.body=body?.toString();res.emit('finish');};
+  await owner.staticHandler({method:'GET',url:'/wallet/runtime.json',headers:{}},res);return res;
+ }
+ const walletInventory=body=>({connectOrigins:[],read:async()=>({body:Buffer.from(body),type:'application/json'})});
+ test('development wallet reload atomically swaps verified inventories and shares an in-flight reload',async()=>{
+  let version='old',loads=0,leases=0,release,entered;
+  const started=new Promise(resolve=>entered=resolve),held=new Promise(resolve=>release=resolve);
+  const owner=createDevelopmentWalletAssets({assertHeld:async()=>{leases++;},load:async()=>{loads++;const wallet=walletInventory(version);if(loads===2){entered();await held;}return wallet;}});
+  try{await owner.reload();assert.equal((await walletAssetResponse(owner)).body,'old');version='new';
+   const first=owner.reload(),second=owner.reload();assert.equal(first,second);await started;
+   assert.equal((await walletAssetResponse(owner)).body,'old');release();await first;
+   assert.equal((await walletAssetResponse(owner)).body,'new');assert.equal(loads,2);assert.equal(leases,4);
+  }finally{release();await owner.close();}
+ });
+ test('development wallet reload failure retains the handler without bypassing its asset-read validation',async()=>{
+  const failure=Error('Controlled invalid inventory'),changed=Error('Controlled asset digest mismatch');let invalid=false,changedBytes=false;
+  const owner=createDevelopmentWalletAssets({assertHeld:async()=>{},load:async()=>{if(invalid)throw failure;return {connectOrigins:[],read:async()=>{if(changedBytes)throw changed;return {body:Buffer.from('verified'),type:'application/json'};}};}});
+  try{await owner.reload();invalid=true;await assert.rejects(owner.reload(),e=>e===failure);
+   assert.equal((await walletAssetResponse(owner)).body,'verified');changedBytes=true;
+   await assert.rejects(walletAssetResponse(owner),e=>e===changed);
+   changedBytes=false;invalid=false;await owner.reload();assert.equal((await walletAssetResponse(owner)).body,'verified');
+  }finally{await owner.close();}
+ });
+ test('development wallet shutdown drains verification and prevents late admission or another reload',async()=>{
+  let release,entered,loads=0;const started=new Promise(resolve=>entered=resolve),held=new Promise(resolve=>release=resolve);
+  const owner=createDevelopmentWalletAssets({assertHeld:async()=>{},load:async()=>{loads++;entered();await held;return walletInventory('late');}});
+  const loading=owner.reload();await started;const rejected=assert.rejects(loading,/cancelled by shutdown/);
+  let stopped=false;const closing=owner.close().then(()=>{stopped=true;});await Promise.resolve();assert.equal(stopped,false);
+  await assert.rejects(owner.reload(),/closing/);release();await rejected;await closing;await owner.close();
+  assert.equal(loads,1);await assert.rejects(walletAssetResponse(owner),/unavailable/);
+ });
+ test('development wallet reload rechecks lease ownership before admitting a new inventory',async()=>{
+  let lost=false,version='old',replaceOwner=false;const failure=Error('Controlled owner changed');
+  const owner=createDevelopmentWalletAssets({assertHeld:async()=>{if(lost)throw failure;},load:async()=>{if(replaceOwner)lost=true;return walletInventory(version);}});
+  try{await owner.reload();version='new';replaceOwner=true;await assert.rejects(owner.reload(),e=>e===failure);assert.equal((await walletAssetResponse(owner)).body,'old');}
+  finally{await owner.close();}
+ });
+
  test('current development defaults are Rolling, loopback ports and no provider prerequisite',()=>{const p=developmentOptions([],{VENICE_WALLET_PRIVATE_KEY:undefined});assert.equal(p.profile,'rolling');assert.deepEqual(p.ports,{ethereumPort:18545,nodePort:18080,appPort:8080});assert.equal(p.hostedConfig,undefined);});
  test('development flags reject real proofs, duplicate ports and unknown arguments before startup',()=>{assert.throws(()=>developmentOptions([],{PLUGIN_PROOFS:'true'}));assert.throws(()=>developmentOptions(['--app-port','18080']));assert.throws(()=>developmentOptions(['--app-port','8080','--app-port','8081']));assert.throws(()=>developmentOptions(['--network','testnet']));assert.throws(()=>developmentOptions(['--app-port','0']));});
  test('selected state and separate loopback ports are explicit',()=>{const p=developmentOptions(['--directory','/tmp/owned-local-devnet','--app-port','18081','--node-port','18082','--ethereum-port','18546']);assert.equal(p.directory,'/tmp/owned-local-devnet');assert.equal(p.ports.appPort,18081);});

@@ -2,6 +2,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import {randomUUID} from 'node:crypto';
 import {pathToFileURL} from 'node:url';
+import {createRollingReaderAssetHandler} from '../../apps/rolling/start.mjs';
 import {devnetPorts,readDevnetRecord,writeDevnetRecord,developmentCleanupFailure,developmentShutdownSummary,startDevelopmentBridgeProgress} from './network.mjs';
 
 export function developmentOptions(args=[],env={}) {
@@ -40,14 +41,34 @@ export async function openDevelopmentFundingRelay({fixture,directory,open=async 
  return {...relay,close:()=>closing??=relay.close()};
 }
 
+// Swap only a complete admitted inventory. The existing handler keeps checking
+// each asset's bytes against that inventory, including after a failed reload.
+export function createDevelopmentWalletAssets({load,assertHeld}) {
+ let handler,loading,closing;
+ function reload(){
+  if(closing)return Promise.reject(Error('Development wallet assets are closing'));
+  return loading??=(async()=>{
+   await assertHeld();const wallet=await load();await assertHeld();
+   if(closing)throw Error('Development wallet asset reload cancelled by shutdown');
+   handler=createRollingReaderAssetHandler(wallet);
+  })().finally(()=>{loading=undefined;});
+ }
+ return {reload,staticHandler(req,res){
+  if(!handler||closing)throw Error('Development wallet assets are unavailable');
+  return handler(req,res);
+ },close(){return closing??=(async()=>{await loading?.catch(()=>{});})();}};
+}
+
 export async function startDevelopment(options) {
  const {Barretenberg,BarretenbergSync}=await import('@aztec-foundation/bb.js');
  const {bootstrapPluginDevnet,bootstrapRollingDevnet}=await import('./bootstrap.mjs');
  const {directory}=options,lease=await acquireDevelopmentLease(directory);
- let fixture,server,service,fundingRelay,bridgeProgress,closing;
+ let fixture,server,service,fundingRelay,bridgeProgress,walletAssets,closing;
  const shutdown=()=>close().then(()=>process.exit(0),error=>{console.error(JSON.stringify(developmentShutdownSummary(error)));process.exit(1);});
+ const reloadWalletAssets=()=>closing||!walletAssets?Promise.reject(Error('Development wallet asset reload is unavailable')):walletAssets.reload();
+ const reloadSignal=()=>{void reloadWalletAssets().then(()=>console.log('Development wallet assets reloaded. Reload the browser page to use the new runtime.'),()=>console.error('Development wallet asset reload failed. The previous inventory is retained; verify the wallet build and retry.'));};
  if(options.handleSignals){process.once('SIGINT',shutdown);process.once('SIGTERM',shutdown);}
- function close(){return closing??=(async()=>{process.removeListener('SIGINT',shutdown);process.removeListener('SIGTERM',shutdown);const errors=[];for(const [stage,stop] of [['service',()=>service?.close()],['server',()=>server?.close()],['relay',()=>fundingRelay?.close()],['bridge-progress',()=>bridgeProgress?.close()],['fixture',()=>fixture?.close()],['barretenberg',()=>Barretenberg.destroySingleton()],['barretenberg-sync',()=>BarretenbergSync.destroySingleton()]])try{await stop();}catch(error){errors.push(developmentCleanupFailure(stage,error));}
+ function close(){return closing??=(async()=>{process.removeListener('SIGINT',shutdown);process.removeListener('SIGTERM',shutdown);process.removeListener('SIGHUP',reloadSignal);await walletAssets?.close();const errors=[];for(const [stage,stop] of [['service',()=>service?.close()],['server',()=>server?.close()],['relay',()=>fundingRelay?.close()],['bridge-progress',()=>bridgeProgress?.close()],['fixture',()=>fixture?.close()],['barretenberg',()=>Barretenberg.destroySingleton()],['barretenberg-sync',()=>BarretenbergSync.destroySingleton()]])try{await stop();}catch(error){errors.push(developmentCleanupFailure(stage,error));}
   if(!errors.length)try{await lease.close();}catch(error){errors.push(developmentCleanupFailure('lease',error));}if(errors.length){const error=new AggregateError(errors,'Development cleanup requires reconciliation');try{await writeDevnetRecord(path.join(directory,'shutdown-failure.json'),developmentShutdownSummary(error));}catch(recordError){throw new AggregateError([error,recordError],'Development cleanup diagnostic could not be retained',{cause:error});}throw error;}
  })();}
  try{
@@ -56,19 +77,22 @@ export async function startDevelopment(options) {
   }else{
    fixture=await bootstrapRollingDevnet({directory,ports:options.ports,onOwned:owner=>{fixture=owner;}});
    const {loadRollingWalletAssets}=await import('../../scripts/rolling-wallet-assets.mjs');
-   const {createRollingPublicIndexFromConfig}=await import('../../scripts/rolling-public-server.mjs');
-   const {startRollingReader}=await import('../../apps/rolling/start.mjs');
+   const {createRollingPublicIndexFromConfig,startRollingPublicServer}=await import('../../scripts/rolling-public-server.mjs');
    bridgeProgress=await startDevelopmentBridgeProgress({node:fixture.net.node,client:fixture.net.deployment.l1Client,inboxAddress:fixture.net.config.inboxAddress,
     onFailure:()=>console.error('Development bridge progress failed. Funding cannot finish; stop and inspect this development session.')});
-   const wallet=await loadRollingWalletAssets(fixture.walletConfig,fixture.readerConfig.scope);
+   walletAssets=createDevelopmentWalletAssets({load:()=>loadRollingWalletAssets(fixture.walletConfig,fixture.readerConfig.scope),assertHeld:()=>lease.assertHeld()});
+   await walletAssets.reload();
    fundingRelay=await openDevelopmentFundingRelay({fixture,directory});
    const index=await createRollingPublicIndexFromConfig(fixture.readerConfig);
-   try{server=await startRollingReader({...index,wallet,fundingRelay});}catch(error){await index.index.close();throw error;}
+   try{server=await startRollingPublicServer({...index,fundingRelay,staticHandler:walletAssets.staticHandler});}catch(error){await index.index.close();throw error;}
   }
   if(options.hostedConfig){const config=await readDevnetRecord(options.hostedConfig);if(!config||config.development!==true)throw Error('Explicit local hosted configuration required');const {runHostedService}=await import('../main.mjs');service=await runHostedService({config});}
   await lease.assertHeld();
   if(fundingRelay)fixture.readiness={...fixture.readiness,usdcRelay:'configured',aggregateFunding:'eth-usdc-configured'};
-  return {url:server?.url,profile:options.profile,close,readiness:fixture.readiness??'legacy-development-only'};
+  // After a normal SDK/wallet build, call reloadWalletAssets() or send SIGHUP
+  // to this runner, then reload the browser. Node, chain and account data stay live.
+  if(options.handleSignals)process.on('SIGHUP',reloadSignal);
+  return {url:server?.url,profile:options.profile,close,reloadWalletAssets,readiness:fixture.readiness??'legacy-development-only'};
  }catch(cause){try{await close();}catch(cleanup){throw new AggregateError([cause,cleanup],'Development startup and cleanup failed',{cause});}throw Error('Development startup failed; preserve state and reconcile its saved operations',{cause});}
 }
 if(process.argv[1]&&import.meta.url===pathToFileURL(process.argv[1]).href){
