@@ -1,5 +1,6 @@
 // Synthetic storage/query workload. Authentication is qualified separately by Noir and real transactions.
 import assert from 'node:assert/strict';
+import pxePackage from '../node_modules/@aztec-labs/pxe/package.json' with {type:'json'};
 import {Fr} from '@aztec-labs/foundation/curves/bn254';
 import {AztecAddress} from '@aztec-labs/stdlib/aztec-address';
 import {Note,NoteDao,NoteStatus,Comparator} from '@aztec-labs/stdlib/note';
@@ -37,15 +38,21 @@ async function open() {
   noteStore = new NoteStore(store);
 }
 async function add(notes, scope = owner) {
-  await noteStore.addNotes(notes, scope, 'seed');
-  await store.transactionAsync(() => noteStore.commit('seed'));
+  noteStore.beginChangeSet('seed');
+  try {
+    await noteStore.addNotes(notes, scope, 'seed');
+    await store.transactionAsync(() => noteStore.commitChangeSet('seed'));
+  } finally { noteStore.discardChangeSet('seed'); }
 }
 async function query(deposit, previous, offset = 0) {
   // This is the same NoteService -> pickNotes path used by the utility oracle.
   // Node/header must not be touched: this query reads already synced PXE notes.
   const inaccessible = new Proxy({}, { get() { throw new Error('Unexpected network access'); } });
   const service = new NoteService(noteStore, inaccessible, inaccessible, 'read');
-  const notes = await service.getNotes(board, owner, slot, NoteStatus.ACTIVE, [owner]);
+  noteStore.beginChangeSet('read');
+  let notes;
+  try { notes = await service.getNotes(board, owner, slot, NoteStatus.ACTIVE, [owner]); }
+  finally { noteStore.discardChangeSet('read'); }
   return pickNotes(notes, { selects: [
     { selector: { index: 1, offset: 0, length: 32 }, value: deposit, comparator: Comparator.EQ },
     { selector: { index: 5, offset: 0, length: 32 }, value: previous, comparator: Comparator.EQ },
@@ -53,6 +60,7 @@ async function query(deposit, previous, offset = 0) {
 }
 try {
   await open();
+  const emptyStorage = await store.estimateSize();
   // Requested successors have creation heights beyond the old 1,000-note cap.
   const history = Array.from({ length: 1100 }, (_, i) => makeNote(chain, new Fr(20000 + i)));
   const child = makeNote(chain, target);
@@ -63,7 +71,10 @@ try {
   await add([makeNote(chain, target, { owner: otherOwner })], otherOwner);
   await add([makeNote(chain, target, { slot: new Fr(999) })]);
   await add([makeNote(chain, target, { board: AztecAddress.fromFieldUnsafe(new Fr(999)) })]);
-  const stored = await noteStore.getNotes({ contractAddress: board, owner, storageSlot: slot, scopes: [owner] }, 'read');
+  noteStore.beginChangeSet('read');
+  let stored;
+  try { stored = await noteStore.getNotes({ contractAddress: board, owner, storageSlot: slot, scopes: [owner] }, 'read'); }
+  finally { noteStore.discardChangeSet('read'); }
   assert.equal(stored.length, 1103);
   assert(!pickNotes(stored, { limit: 1000 }).some(n => n.siloedNullifier.equals(child.siloedNullifier)),
     'fixture must reproduce a requested successor beyond the old cap');
@@ -73,6 +84,7 @@ try {
     assert(found[0].siloedNullifier.equals(expected.siloedNullifier));
   }
   assert.equal((await query(chain, new Fr(999999))).length, 0);
+  const seededStorage = await store.estimateSize();
   await store.close();
   store = undefined;
   await open();
@@ -89,7 +101,7 @@ try {
   await add([makeNote(chain, target)]);
   assert.equal((await query(chain, target)).length, 2);
   return { passed:true, status: 'passed', fixture: 'synthetic persisted NoteDao history; no proofs',
-    pxeVersion: '6.0.0-rc.1', historyNotes: 1100, checks: ['beyond old cap', 'two successors', 'deposit isolation',
+    pxeVersion: pxePackage.version, storage: {empty: emptyStorage, seeded: seededStorage, final: await store.estimateSize()}, historyNotes: 1100, checks: ['beyond old cap', 'two successors', 'deposit isolation',
       'owner/slot/contract isolation', 'missing match', 'reverse insertion', 'persistent reopen',
       'scope deduplication', 'duplicate detection', 'pagination after selectors', 'bounded duplicates'],
     elapsedMs: Math.round(performance.now() - started) };
