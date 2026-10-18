@@ -664,8 +664,9 @@ def readiness_program(options, deadline, observation_path):
         '}\n'
     ).replace('INSPECTOR',json.dumps((RELEASE/'shared/trusted-private-node.mjs').as_uri())).replace('OPTIONS',json.dumps(options)).replace('DEADLINE',str(int(deadline*1000))).replace('OBSERVATION',json.dumps(str(observation_path)))
 
-def qualify(aborted=False):
-    directory=BASE/'qualification';directory.mkdir(mode=0o700,exist_ok=True)
+def qualify(aborted=False, candidate=False):
+    if type(candidate) is not bool: raise ValueError('Qualification target')
+    directory=BASE/('qualification-candidate-'+PINS['manifest'] if candidate else 'qualification');directory.mkdir(mode=0o700,exist_ok=True)
     result_path=directory/'result.json';intent=directory/'intent.json'
     with open(directory/'lock','a') as lock:
         fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
