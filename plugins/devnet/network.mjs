@@ -148,7 +148,7 @@ export async function startDevelopmentBridgeProgress({node,client,inboxAddress,o
  if(info.l1ChainId!==31337||info.realProofs!==false||String(info.l1ContractAddresses.inboxAddress).toLowerCase()!==String(inboxAddress).toLowerCase())throw Error('Bridge progress requires the native development Inbox');
  // Include the captured block: a deposit between this read and subscription
  // registration must still be observed. Already consumed messages do no work.
- const fromBlock=await client.getBlockNumber({cacheTime:0});
+ let cursor=await client.getBlockNumber({cacheTime:0});
  let stopped=false,hasFailure=false,unwatch,closing,failure,pending=Promise.resolve();
  const unsubscribe=()=>{const stop=unwatch;unwatch=undefined;stop?.();};
  const failed=error=>{
@@ -156,14 +156,21 @@ export async function startDevelopmentBridgeProgress({node,client,inboxAddress,o
   try{unsubscribe();}catch(cleanup){failure=new AggregateError([error,cleanup],'Development bridge subscription cleanup failed');}
   try{onFailure(error);}catch{/* Reporting cannot replace the original failure. */}
  };
- unwatch=client.watchContractEvent({address:String(inboxAddress),abi:InboxAbi,eventName:'MessageSent',strict:true,fromBlock,
-  onLogs:logs=>{
+ // watchBlockNumber stops its local poll synchronously. Contract-event filters
+ // require asynchronous RPC cleanup that this viem version does not expose.
+ unwatch=client.watchBlockNumber({poll:true,emitOnBegin:true,
+  onBlockNumber:head=>{
    if(stopped)return;
-   pending=pending.then(async()=>{for(const log of logs){
-    if(stopped)return;
-    if(log.removed)continue;
-    await ensureDevelopmentMessageReady(node,Fr.fromString(log.args.hash));
-   }}).catch(failed);
+   pending=pending.then(async()=>{
+    if(stopped||head<cursor)return;
+    const logs=await client.getContractEvents({address:String(inboxAddress),abi:InboxAbi,eventName:'MessageSent',strict:true,fromBlock:cursor,toBlock:head});
+    for(const log of logs){
+     if(stopped)return;
+     if(log.removed)continue;
+     await ensureDevelopmentMessageReady(node,Fr.fromString(log.args.hash));
+    }
+    cursor=head+1n;
+   }).catch(failed);
   },onError:failed});
  if(stopped)unsubscribe();
  return {close:()=>closing??=(async()=>{stopped=true;try{unsubscribe();}catch(error){failed(error);}await pending;if(hasFailure)throw failure;})()};

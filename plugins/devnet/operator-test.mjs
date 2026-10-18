@@ -343,36 +343,41 @@ if(focused){
   const {startDevelopmentBridgeProgress}=await import('./network.mjs');
   const {InboxAbi}=await import('@aztec-foundation/l1-artifacts/InboxAbi');
   const {Interface}=await import('ethers');const {decodeEventLog}=await import('viem');
-  const address='0x'+'1'.repeat(40),state={blocks:0,unsubscribes:0,failures:[],options:null};
+  const address='0x'+'1'.repeat(40),state={blocks:0,unsubscribes:0,failures:[],options:null,queries:[],logs:[]};
   const node={getNodeInfo:async()=>({l1ChainId:31337,realProofs:false,l1ContractAddresses:{inboxAddress:address}}),
    getL1ToL2MessageIndex:async()=>2n,getBlockData:async tip=>{assert.equal(tip,'checkpointed');return {header:{state:{l1ToL2MessageTree:{nextAvailableLeafIndex:state.blocks?3:0}}}};},
    mineBlock:async()=>{state.blocks++;}};
-  const client={getBlockNumber:async options=>{assert.deepEqual(options,{cacheTime:0});return 12n;},watchContractEvent:options=>{state.options=options;return ()=>{state.unsubscribes++;};}};
+  const client={getBlockNumber:async options=>{assert.deepEqual(options,{cacheTime:0});return 12n;},watchBlockNumber:options=>{state.options=options;return ()=>{state.unsubscribes++;};},getContractEvents:async options=>{state.queries.push(options);return state.logs;}};
   const start=()=>startDevelopmentBridgeProgress({node,client,inboxAddress:address,onFailure:error=>state.failures.push(error)});
   const abi=new Interface(InboxAbi),encoded=abi.encodeEventLog(abi.getEvent('MessageSent'),[Fr.ONE.toString(),Fr.ONE.toString(),0n,[[address,31337n],[Fr.ONE.toString(),1n],Fr.ONE.toString(),Fr.ONE.toString(),2n]]);
   const log={...decodeEventLog({abi:InboxAbi,...encoded,strict:true}),address,removed:false};
-  return {node,client,state,start,log};
+  state.logs=[log];return {node,client,state,start,log,encoded,address,InboxAbi};
  }
  test('development Inbox subscription drives browser funding only when its message needs a native block',async()=>{
   const f=await bridgeProgressFixture(),progress=await f.start();let resolved,reads=0;const ready=new Promise(resolve=>resolved=resolve),original=f.node.getBlockData;
   f.node.getBlockData=async tip=>{const value=await original(tip);if(++reads===3)resolved();return value;};
-  assert.equal(f.state.options.eventName,'MessageSent');assert.equal(f.state.options.strict,true);assert.equal(f.state.options.fromBlock,12n);
-  assert.equal(f.state.blocks,0);f.state.options.onLogs([f.log,f.log]);await ready;
-  await progress.close();assert.equal(f.state.blocks,1);assert.equal(f.state.unsubscribes,1);assert.deepEqual(f.state.failures,[]);
+  assert.equal(f.state.options.poll,true);assert.equal(f.state.options.emitOnBegin,true);
+  assert.equal(f.state.blocks,0);f.state.logs=[f.log,f.log];f.state.options.onBlockNumber(14n);await ready;
+  assert.equal(f.state.queries[0].eventName,'MessageSent');assert.equal(f.state.queries[0].strict,true);assert.equal(f.state.queries[0].fromBlock,12n);assert.equal(f.state.queries[0].toBlock,14n);
+  let queried;const nextRead=new Promise(resolve=>queried=resolve);f.client.getContractEvents=async options=>{f.state.queries.push(options);queried();return [];};
+  f.state.options.onBlockNumber(14n);f.state.options.onBlockNumber(16n);await nextRead;
+  await progress.close();assert.equal(f.state.queries.length,2);assert.equal(f.state.queries[1].fromBlock,15n);assert.equal(f.state.queries[1].toBlock,16n);
+  assert.equal(f.state.blocks,1);assert.equal(f.state.unsubscribes,1);assert.deepEqual(f.state.failures,[]);
  });
  test('development bridge owner drains active mining and stops queued or late events before node shutdown',async()=>{
   const f=await bridgeProgressFixture();let entered,release;const active=new Promise(resolve=>entered=resolve),held=new Promise(resolve=>release=resolve);
   f.node.mineBlock=async()=>{entered();await held;f.state.blocks++;};const progress=await f.start();
-  f.state.options.onLogs([f.log]);await active;f.state.options.onLogs([f.log]);
+  f.state.options.onBlockNumber(12n);await active;f.state.options.onBlockNumber(12n);
   let closed=false;const closing=progress.close().then(()=>closed=true);assert.equal(f.state.unsubscribes,1);assert.equal(closed,false);
-  f.state.options.onLogs([f.log]);release();await closing;await progress.close();assert.equal(f.state.blocks,1);assert.equal(f.state.unsubscribes,1);
+  f.state.options.onBlockNumber(12n);release();await closing;await progress.close();assert.equal(f.state.blocks,1);assert.equal(f.state.unsubscribes,1);
  });
  test('development bridge reports original mining/subscription failures and never retries a failed event',async()=>{
-  for(const kind of ['mining','subscription']){
+  for(const kind of ['mining','events','subscription']){
    const f=await bridgeProgressFixture(),failure=Error('controlled '+kind);let reported;const observed=new Promise(resolve=>reported=resolve);
    f.state.failures.push=error=>{assert.equal(error,failure);reported();};f.node.mineBlock=async()=>{f.state.blocks++;throw failure;};
-   const progress=await f.start();if(kind==='mining')f.state.options.onLogs([f.log]);else f.state.options.onError(failure);
-   await observed;f.state.options.onLogs([f.log]);await assert.rejects(progress.close(),error=>error===failure);
+   if(kind==='events')f.client.getContractEvents=async()=>{throw failure;};
+   const progress=await f.start();if(kind==='subscription')f.state.options.onError(failure);else f.state.options.onBlockNumber(12n);
+   await observed;f.state.options.onBlockNumber(12n);await assert.rejects(progress.close(),error=>error===failure);
    assert.equal(f.state.blocks,kind==='mining'?1:0);assert.equal(f.state.unsubscribes,1);
   }
  });
@@ -383,8 +388,29 @@ if(focused){
   }
   f.node.getNodeInfo=original;f.state.blocks=1;let checked;const ready=new Promise(resolve=>checked=resolve),read=f.node.getBlockData;
   f.node.getBlockData=async tip=>{const value=await read(tip);checked();return value;};
-  const progress=await f.start();f.state.options.onLogs([{...f.log,args:{hash:'removed log is never decoded'},removed:true},f.log]);await ready;
+  const progress=await f.start();f.state.logs=[{...f.log,args:{hash:'removed log is never decoded'},removed:true},f.log];f.state.options.onBlockNumber(12n);await ready;
   await progress.close();assert.equal(f.state.blocks,1);assert.deepEqual(f.state.failures,[]);
+ });
+
+ test('development bridge actual viem observer stops locally and drains event reads without server filter cleanup',async t=>{
+  t.mock.timers.enable({apis:['setTimeout']});
+  const {createPublicClient,custom}=await import('viem'),{startDevelopmentBridgeProgress}=await import('./network.mjs');
+  const f=await bridgeProgressFixture(),calls=[];let entered,release;
+  const reading=new Promise(resolve=>entered=resolve),held=new Promise(resolve=>release=resolve);
+  const client=createPublicClient({pollingInterval:1,transport:custom({request:async({method,params})=>{
+   calls.push(method);
+   if(method==='eth_blockNumber')return '0xc';
+   if(method==='eth_getLogs'){
+    assert.equal(params[0].fromBlock,'0xc');assert.equal(params[0].toBlock,'0xc');entered();await held;
+    return [{...f.encoded,address:f.address,blockHash:'0x'+'2'.repeat(64),blockNumber:'0xc',transactionHash:'0x'+'3'.repeat(64),transactionIndex:'0x0',logIndex:'0x0',removed:false}];
+   }
+   throw Error('Unexpected filter RPC '+method);
+  }},{retryCount:0})});
+  const progress=await startDevelopmentBridgeProgress({node:f.node,client,inboxAddress:f.address});await reading;
+  let closed=false;const closing=progress.close().then(()=>closed=true);assert.equal(closed,false,'Owned event read must drain before network shutdown');
+  release();await closing;assert.equal(f.state.blocks,0,'Closing prevents an outstanding event read from starting mining');
+  const atClose=[...calls];t.mock.timers.tick(10000);await Promise.resolve();await Promise.resolve();
+  assert.deepEqual(calls,atClose);assert.deepEqual(calls,['eth_blockNumber','eth_blockNumber','eth_getLogs']);await progress.close();
  });
 
  test('development query gateway pins existing disabled service and canonical compact tier',async()=>{
