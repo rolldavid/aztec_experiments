@@ -54,7 +54,7 @@ def linux_dependencies(root, dependency_root, node):
  script="""import {createRequire} from 'node:module';
 if(process.platform!=='linux'||process.arch!=='x64'||!process.report.getReport().header.glibcVersionRuntime)throw Error('Linux x64 glibc required');
 const require=createRequire(process.cwd()+'/package.json');
-for(const name of ['lmdb','@crate-crypto/node-eth-kzg','@napi-rs/snappy','msgpackr-extract'])require(name);
+for(const name of ['lmdb','@crate-crypto/node-eth-kzg','snappy','msgpackr-extract'])require(name);
 process.stdout.write(JSON.stringify({node:process.version,platform:process.platform,arch:process.arch}));"""
  result=json.loads(subprocess.check_output([node,'--input-type=module','--eval',script],cwd=dependency_root,text=True))
  if result!={'node':'v'+json.loads((root/'toolchain.json').read_text())['node'],'platform':'linux','arch':'x64'}:raise ValueError('Pinned Linux validation runtime required')
