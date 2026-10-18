@@ -339,6 +339,24 @@ test('historical gateway: typed mined receipt and effect witness resolve canonic
  const f=await historyFixture(t,{strict:true});for(const method of ['getTxReceipt','getTxEffectMembershipWitness']){const response=await f.post(call('aztec_'+method,[historyHash(100)]));assert.equal(response.status,200);assert.equal((await response.json()).result.blockNumber,6);}
  assert.equal(f.operations.filter(x=>x==='getTxReceipt').length,2);assert(f.inspected.every(x=>x==='checkpointed'));
 });
+test('historical gateway: archived receipts and effect witnesses survive world-state pruning',async t=>{
+ const f=await historyFixture(t,{strict:true});f.ready.oldestHistoricBlockNumber=7;
+ for(const method of ['getTxReceipt','getTxEffectMembershipWitness']){
+  const response=await f.post(call('aztec_'+method,[historyHash(100)]));
+  assert.equal(response.status,200);assert.equal((await response.json()).result.blockNumber,6);
+ }
+ assert.equal((await f.post(call('aztec_getBlockHashMembershipWitness',[6,historyHash(1)]))).status,503,'State witnesses still require retained snapshots');
+ assert(f.inspected.every(x=>x==='checkpointed'));
+});
+for(const [label,method,change]of[
+ ['receipt identity','getTxReceipt',({method,result})=>method==='getTxReceipt'?{...result,txHash:historyHash(101)}:result],
+ ['effect root','getTxEffectMembershipWitness',({method,result})=>method==='getTxEffectMembershipWitness'?{...result,root:new Fr(999)}:result],
+ ['final canonical anchor','getTxReceipt',({method,result,final})=>method==='getBlockData'&&final?{...result,blockHash:historyHash(99)}:result],
+])test('historical gateway: pruned archive read still rejects changed '+label,async t=>{
+ const f=await historyFixture(t,{strict:true,change});f.ready.oldestHistoricBlockNumber=7;
+ const response=await f.post(call('aztec_'+method,[historyHash(100)])),value=await response.json();
+ assert(value.error);assert(!Object.hasOwn(value,'result'));
+});
 test('historical gateway: pending receipt needs stronger proposed policy and is never fabricated missing',async t=>{
  const f=await historyFixture(t,{change:({method,result})=>method==='getTxReceipt'?{txHash:historyHash(100),status:'pending'}:result});const response=await f.post(call('aztec_getTxReceipt',[historyHash(100)]));assert.equal(response.status,200);assert.equal((await response.json()).result.status,'pending');assert.deepEqual(f.inspected,['checkpointed','proposed']);assert.equal(f.operations.filter(x=>x==='getTxReceipt').length,1);
 });

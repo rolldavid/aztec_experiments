@@ -247,7 +247,9 @@ export function createPrivateQueryWithInspector({queryNode, chainId, rollupVersi
               call.receipt=receipt;if(call.method==='getTxReceipt')call.cached={value:receipt};
               if(receipt&&!receipt.txHash.equals(call.args[0]))throw unavailable();
               if(!receipt?.isMined()||receipt.blockNumber>ready.readinessBlockNumber){strict=true;continue;}
-              call.anchor=await canonicalRecord({number:receipt.blockNumber,hash:receipt.blockHash},ready);
+              // Receipts and tx-effect membership are archiver reads in the native SDK;
+              // unlike state witnesses, they survive world-state snapshot pruning.
+              call.anchor=await canonicalRecord({number:receipt.blockNumber,hash:receipt.blockHash},ready,ready.readinessBlockNumber,false);
             }
             if(call.anchor)records.push(call.anchor);
           }
@@ -255,7 +257,7 @@ export function createPrivateQueryWithInspector({queryNode, chainId, rollupVersi
           // This is a stronger policy before publication, not a retry or a
           // replacement for an unavailable historical result.
           if(strict){const strictReady=await inspect();historical=false;
-            for(const call of prepared)if(call.receipt?.isMined()&&!call.anchor){call.anchor=await canonicalRecord({number:call.receipt.blockNumber,hash:call.receipt.blockHash},strictReady,strictReady.latestBlockNumber);records.push(call.anchor);}
+            for(const call of prepared)if(call.receipt?.isMined()&&!call.anchor){call.anchor=await canonicalRecord({number:call.receipt.blockNumber,hash:call.receipt.blockHash},strictReady,strictReady.latestBlockNumber,false);records.push(call.anchor);}
           }
           else records.push({number:ready.readinessBlockNumber,hash:ready.readinessBlockHash},{number:ready.latestBlockNumber,hash:ready.latestBlockHash});
         }
