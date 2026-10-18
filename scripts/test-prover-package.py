@@ -104,7 +104,7 @@ class PackagedQueryImports(unittest.TestCase):
     """Actual copied adapter + inspector, deliberately fake SDK; no service/prover.
 
     A disabled-query import alone missed the production defect. Exercise the
-    enabled dynamic import outside every repository ancestor and remove its file
+    enabled query import outside every repository ancestor and remove its dependency
     as a negative control. This is not Linux dependency/runtime acceptance.
     """
     def setUp(self):
@@ -129,10 +129,11 @@ export const createSafeJsonRpcClient=()=>node;
 export const jsonStringify=JSON.stringify;
 export const getSchemaParameters=()=>{},getSchemaReturnType=()=>{},parseWithOptionals=()=>{},schemaHasMethod=()=>false;
 export const AztecNodeApiSchema={};
+export const BlockHash={fromString:value=>({toString:()=>value})};
 export const getVersioningResponseHandler=()=>()=>{};
 """
         for name, exports in [('@aztec-labs/foundation', ['json-rpc/client', 'json-rpc', 'schemas']),
-                              ('@aztec-labs/stdlib', ['interfaces/client', 'versioning'])]:
+                              ('@aztec-labs/stdlib', ['interfaces/client', 'versioning', 'block'])]:
             target = self.release / 'node_modules' / name
             target.mkdir(parents=True)
             (target / 'package.json').write_text(json.dumps({'name':name,'type':'module','exports':{'./'+key:'./fixture.mjs' for key in exports}}))
@@ -177,12 +178,17 @@ globalThis.fixtureProofs=false;assert.equal((await query.health()).ready,false);
 const disabled=await createPrivateQuery({...options,proofsEnabled:false});assert.equal((await disabled.health()).ready,true);
 """)
 
-    def test_missing_dynamic_dependency_fails_enabled_query_without_ancestor_fallback(self):
+    def test_missing_dependency_fails_static_import_without_ancestor_fallback(self):
         (self.release/'shared/trusted-private-node.mjs').unlink()
-        self.run_isolated("""
-assert.equal(await createPrivateQuery({}),undefined);
-await assert.rejects(createPrivateQuery({queryNode:{url:'http://127.0.0.1:9000/',rollupAddress:'0x'+'11'.repeat(20)},chainId:'31337',rollupVersion:'1',proofsEnabled:true}),e=>e.code==='ERR_MODULE_NOT_FOUND'&&e.url.endsWith('/shared/trusted-private-node.mjs'));
-""")
+        # The production adapter now imports inspector helpers statically. Even
+        # disabled-query consumers must fail import when that closure is absent.
+        script="""
+import assert from 'node:assert/strict';
+globalThis.fetch=()=>{throw Error('Network forbidden in packaging unit test');};
+await assert.rejects(import('./prover/private-query.mjs'),e=>e.code==='ERR_MODULE_NOT_FOUND'&&e.url.endsWith('/shared/trusted-private-node.mjs'));
+"""
+        subprocess.run([self.node,'--input-type=module','--eval',script],cwd=self.release,
+                       env={'PATH':os.defpath,'NODE_PATH':'','NODE_OPTIONS':''},capture_output=True,text=True,check=True)
 
 if __name__ == '__main__':
     unittest.main()
