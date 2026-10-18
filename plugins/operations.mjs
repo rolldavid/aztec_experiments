@@ -729,3 +729,32 @@ export async function runSepoliaExactApproval({plan:input,record,transport:trans
  let observation;try{if(await ports.broadcastExact('0x'+record.raw,record.hash)!==record.hash)throw Object.assign(Error('Exact approval acknowledgement differs'),{code:'BAD_DATA'});observation={state:'returned'};}catch(error){observation=seedBroadcastFailure(error);}
  await recoveryStore.observe(observation);return {...await reconcile(),dispatchAttempt:observation};
 }
+
+// A forward authority starts after the already signed approval. It never edits
+// the expired plan, imports an entered pool stage, or reopens an approval.
+export function captureSepoliaSeedForward(input,remainingInput){
+ const f=seedObject(input,['schemaVersion','previousSourcesSha256','plan','transport']),previous=captureSepoliaLiquidityPlan(remainingInput),plan=captureSepoliaLiquidityPlan(f.plan);
+ if(f.schemaVersion!==1||typeof f.previousSourcesSha256!=='string'||!/^[0-9a-f]{64}$/.test(f.previousSourcesSha256)||!previous.includeUsdcPool)throw rejected();
+ const mutable=new Set(['campaign','ownerNonce','expiresAt','cleanupExpiresAt','gasLimits','maxFeePerGas','maxPriorityFeePerGas']);
+ for(const k of Object.keys(previous))if(!mutable.has(k)&&JSON.stringify(plan[k])!==JSON.stringify(previous[k]))throw rejected();
+ if(plan.campaign===previous.campaign||!Number.isSafeInteger(previous.ownerNonce+1)||plan.ownerNonce!==previous.ownerNonce+1||plan.expiresAt<=previous.expiresAt)throw rejected();
+ return Object.freeze({...f,plan,transport:captureSepoliaSeedTransport(f.transport,plan)});
+}
+export async function runSepoliaLiquidityForward({remainingStore,forward:input,previousSourcesSha256,assertSourceFiles,openStore,stage,...args}){
+ const previous=captureSepoliaSeedContinuationPlan(args.remainingPlan,args.plan),forward=captureSepoliaSeedForward(input,previous),plan=forward.plan,now=args.now??(()=>Date.now());
+ if(forward.previousSourcesSha256!==previousSourcesSha256)throw Error('Original remaining sources changed');
+ const saved=remainingStore.read();
+ if(JSON.stringify(saved.seedLiquidity?.entered)!==JSON.stringify(['approve-usdc'])||Object.keys(saved.operations??{}).join()!=='approve-usdc')throw Error('Forward seed requires only the original approval entry');
+ const steps=Object.freeze((await sepoliaLiquidityTransactions(plan)).filter(s=>!['inventory-usdc','inventory-eth','approve-fee','approve-usdc'].includes(s.name)).map((s,i)=>Object.freeze({...s,nonce:plan.ownerNonce+i})));
+ if(!steps.some(s=>s.name===stage))throw Error('Completed inventory and approval stages cannot repeat');
+ await assertSourceFiles();
+ const approved=await runSepoliaLiquidityContinuation({...args,remainingPlan:previous,stage:'approve-usdc',store:remainingStore,now});
+ if(approved.status!=='succeeded'||approved.canonical!==true)throw Error('Finalized retained approval required for forward seed');
+ // Open only after the exact predecessor is authenticated. The exclusive
+ // initialized marker binds one forward authority; copies cannot change it.
+ const store=await openStore(),initial=!store.read().seedLiquidity;
+ if(initial&&(now()>=plan.expiresAt*1000||plan.expiresAt*1000-now()>86400000))throw Error('Forward seed signing window unavailable');
+ const identity=JSON.stringify(['SEPOLIA_SEED_FORWARD_V1',args.plan,args.resolution,previous,forward,approved.transactionHash]);
+ const ports={...args.ports,preflight:async(p,step,all)=>{await assertSourceFiles();if(step===steps[0])await args.ports.preflightContinuation(p,'original');return args.ports.preflight(p,step,all);},sign:async step=>{await assertSourceFiles();return args.ports.sign(step);}};
+ return runSepoliaSeedSteps({plan,steps,identity,stage,store,ports,now});
+}

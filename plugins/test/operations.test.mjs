@@ -820,3 +820,61 @@ test('Explicit remaining transport binds HTTPS authorities durably without editi
 });
 
 test('Exact approval copied campaign cannot relocate its one-use admission',async()=>{const {seedTestnetLiquidity}=await import('../operator.mjs');await assert.rejects(seedTestnetLiquidity({plan:null,statePath:'/private/tmp/copied/state.json',stage:'approve-usdc',recovery:{kind:'continue',approvalDispatch:{}}}),/Original approval state path required/);});
+
+async function forwardSeedFixture(){
+ const f=await seedResolutionFixture();await f.ops.runSepoliaLiquidityCancellation(f.args);f.confirm(f.saved.operations['relay-funding'].hash);
+ const next=f.continuation();await f.ops.runSepoliaLiquidityContinuation({...next,stage:'approve-usdc'});const approved=f.remaining.operations['approve-usdc'];f.confirm(approved.hash);
+ const {createHash}=await import('node:crypto'),digest=v=>createHash('sha256').update(v).digest('hex'),previous=f.ops.captureSepoliaLiquidityPlan(next.remainingPlan),plan=f.ops.captureSepoliaLiquidityPlan({...previous,campaign:'sepolia-seed-forward-controlled',ownerNonce:previous.ownerNonce+1,expiresAt:previous.expiresAt+6*3600,cleanupExpiresAt:previous.expiresAt+30*3600});
+ const previousSourcesSha256=digest(JSON.stringify([f.original,f.saved,f.remaining])),forward={schemaVersion:1,previousSourcesSha256,plan,transport:{schemaVersion:1,remainingPlanSha256:digest(JSON.stringify(plan)),readUrl:plan.ethereumUrl,broadcastUrl:'https://broadcast.example'}};
+ let state={operations:{}},opened=0,checks=0;const store={read:()=>state,write:async value=>{state=structuredClone(value);}};
+ const args={...next,remainingStore:next.store,forward,previousSourcesSha256,assertSourceFiles:async()=>{checks++;},openStore:async()=>{opened++;return store;},now:()=>previous.expiresAt*1000+1};
+ return {...f,args,approved,old:[f.original,f.saved,f.remaining],get forwardState(){return state;},get opened(){return opened;},get sourceChecks(){return checks;}};
+}
+test('Forward seed authenticates finalized retained approval then signs only pool and cleanup at fresh nonces',async()=>{
+ const f=await forwardSeedFixture(),prior=JSON.stringify(f.old),before=f.signedSteps.length,names=['seed-usdc-fee',...(f.args.forward.plan.includeWethPool?['seed-weth-fee']:[]),'revoke-fee','revoke-usdc'];
+ for(const stage of names){await f.ops.runSepoliaLiquidityForward({...f.args,stage});f.confirm(f.forwardState.operations[stage].hash);}
+ assert.deepEqual(f.forwardState.seedLiquidity.entered,names);assert.deepEqual(f.signedSteps.slice(before).map(s=>s.name),names);assert.deepEqual(f.signedSteps.slice(before).map(s=>s.nonce),names.map((_,i)=>f.args.forward.plan.ownerNonce+i));assert.equal(JSON.stringify(f.old),prior);
+ const n=f.broadcasts.length;await f.ops.runSepoliaLiquidityForward({...f.args,stage:'revoke-usdc',now:()=>Number.MAX_SAFE_INTEGER});assert.equal(f.broadcasts.length,n);
+});
+test('Forward seed rejects missing unfinalized reorged or failed approval and entered prior pool before opening new state',async()=>{
+ for(const change of ['missing','unfinalized','reorg','failed','priorPool','missingPrefix']){
+  const f=await forwardSeedFixture(),before=f.signedSteps.length;
+  if(change==='missing')f.receipts.delete(f.approved.hash);
+  if(change==='unfinalized')f.setFinalized(9);
+  if(change==='reorg')f.setCanonical('0x'+'b'.repeat(64));
+  if(change==='failed')f.confirm(f.approved.hash,0);
+  if(change==='priorPool'){f.remaining.seedLiquidity.entered.push('seed-usdc-fee');f.remaining.operations['seed-usdc-fee']={phase:'preparing'};}
+  if(change==='missingPrefix')f.receipts.delete(f.original.operations['inventory-usdc'].hash);
+  await assert.rejects(f.ops.runSepoliaLiquidityForward({...f.args,stage:'seed-usdc-fee'}));assert.equal(f.opened,0);assert.equal(f.signedSteps.length,before);
+ }
+});
+test('Forward seed binds previous sources economic scope explicit transport and bounded new deadline',async()=>{
+ for(const change of ['amount','owner','nonce','sameCampaign','oldDeadline','source','transport','tooLong','expired','skip']){
+  const f=await forwardSeedFixture(),before=f.signedSteps.length,forward=f.args.forward;
+  if(change==='amount')forward.plan={...forward.plan,usdcAmount:'1'};
+  if(change==='owner')forward.plan={...forward.plan,owner:'0x'+'9'.repeat(40)};
+  if(change==='nonce')forward.plan={...forward.plan,ownerNonce:forward.plan.ownerNonce+1};
+  if(change==='sameCampaign')forward.plan={...forward.plan,campaign:f.args.remainingPlan.campaign};
+  if(change==='oldDeadline')forward.plan={...forward.plan,expiresAt:f.args.remainingPlan.expiresAt};
+  if(change==='source')f.args.previousSourcesSha256='b'.repeat(64);
+  if(change==='transport')forward.transport={...forward.transport,readUrl:'https://different.example'};
+  if(change==='tooLong')f.args.now=()=>forward.plan.expiresAt*1000-86400001;
+  if(change==='expired')f.args.now=()=>forward.plan.expiresAt*1000;
+  await assert.rejects(f.ops.runSepoliaLiquidityForward({...f.args,stage:change==='skip'?'revoke-fee':'seed-usdc-fee'}));assert.equal(f.signedSteps.length,before);
+ }
+});
+test('Forward seed refuses inventory and approvals and never resends uncertain forward stage',async()=>{
+ const f=await forwardSeedFixture(),before=f.signedSteps.length;
+ for(const stage of ['inventory-usdc','inventory-eth','approve-fee','approve-usdc'])await assert.rejects(f.ops.runSepoliaLiquidityForward({...f.args,stage}));assert.equal(f.opened,0);
+ f.args.ports={...f.args.ports,broadcast:async raw=>{f.broadcasts.push(raw);throw Object.assign(Error('unknown send'),{code:'TIMEOUT'});}};
+ await f.ops.runSepoliaLiquidityForward({...f.args,stage:'seed-usdc-fee'});const record=JSON.stringify(f.forwardState),sent=f.broadcasts.length;
+ await f.ops.runSepoliaLiquidityForward({...f.args,stage:'seed-usdc-fee',now:()=>Number.MAX_SAFE_INTEGER});assert.equal(f.signedSteps.length,before+1);assert.equal(f.broadcasts.length,sent);assert.equal(JSON.stringify(f.forwardState),record);
+});
+test('Forward seed rechecks current approval allowances and immutable sources before signing',async()=>{
+ for(const change of ['allowance','sources']){const f=await forwardSeedFixture(),before=f.signedSteps.length;
+  if(change==='allowance')f.args.ports={...f.args.ports,preflightContinuation:async()=>{throw Error('allowance changed');}};
+  if(change==='sources'){let checks=0;f.args.assertSourceFiles=async()=>{if(++checks===3)throw Error('sources changed before signature');};}
+  const result=await f.ops.runSepoliaLiquidityForward({...f.args,stage:'seed-usdc-fee'}).catch(()=>null);assert.equal(f.signedSteps.length,before);assert.notEqual(result?.status,'succeeded');
+ }
+});
+test('Forward seed copied campaign cannot create a second forward journal',async()=>{const {seedTestnetLiquidity}=await import('../operator.mjs');await assert.rejects(seedTestnetLiquidity({plan:null,statePath:'/private/tmp/copied/state.json',stage:'seed-usdc-fee',recovery:{kind:'forward'}}),/Original approval state path required/);});
