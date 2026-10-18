@@ -180,14 +180,29 @@ Use a dedicated GitHub App installed on the owner's personal `zac-williamson`
 account (User ID1476668), as directed by the owner on 13 October 2026. Select only
 Bok-owned repositories; the broker rejects an installation covering all personal
 repositories. App registration and installation remain service prerequisites.
-Repository creation uses an installation token with `administration:write` and
-`POST /user/repos`; GitHub automatically grants the App access to repositories it
-creates. This permission is broader than creation: the selected-repository
-boundary protects unrelated repositories. Source writes use a separate token
-restricted to the exact new repository ID with `contents:write`. Do not use an
-unrelated repository as a setup seed. Keep the private App key in operator-only
-configuration, never in source, model prompts or generated-code processes.
-See the current broker instructions in [plugin deployment](../plugins/DEPLOYMENT.md).
+The current working route uses a preprovisioned private repository pool; it does
+not depend on App-token repository creation or automatic installation access.
+Using the trusted operator's existing GitHub access, create a new dedicated
+private repository, disable Actions, and initialize the exact marker and sole
+README root commit described in
+[the pool setup](../plugins/DEPLOYMENT.md#preprovisioned-private-thread-repository-pool).
+Explicitly add that repository to the App installation's selected repositories
+and save the selection. A created repository alone is not admitted capacity.
+
+Capture its numeric repository/owner IDs, full name, marker, default branch and
+genesis commit/tree hashes in `githubApp.repositoryPool`. Append new entries;
+never remove, reorder or reuse admitted or allocated slots. Preserve the existing
+broker journal and restart the host under its normal ownership lease. Startup
+checks actual App-scoped access, private identity, disabled Actions and pinned
+genesis before durably admitting a new slot. Thread allocation is recorded before
+any model call; an exhausted pool rejects new requests before paid work. Replenish
+capacity without clearing old allocations or replaying uncertain requests.
+
+Runtime source writes use tokens restricted to the exact repository ID. The
+operator's provisioning credentials never enter the broker, model or generated
+code. Keep the private App key in operator-only configuration outside source and
+web roots. Preserve the configured owner-approved App permission profile and
+selected-repository boundary; unrelated repositories are never setup seeds.
 
 Artifact latest links and source downloads identify the same current revision.
 Only latest is public; internal history remains in backups. The trusted host
@@ -336,7 +351,12 @@ separate origin. Test actual funding, posting/Bok, moderation, withdrawal, recei
 loss, restart, cache rebuild and Bok outage. Record source revision, environment,
 commands, exact accounting and evidence. Agent review, mock ports, proof-disabled
 development and old testnet results do not satisfy independent expert audit,
-current network clearance or the full14-day qualification period.
+current network clearance or final reliability qualification. The owner's
+18 October amendment replaces the fixed 14-day soak with bounded representative
+reliability and failure/recovery exercises on the final candidate, within the
+72-hour delivery window ending `2026-10-21T15:25:57Z`. Record observed outcomes;
+elapsed time alone is not acceptance. See
+[the owner amendment](../execution/specification-clarifications.md).
 
 ## Native local Rolling development
 
