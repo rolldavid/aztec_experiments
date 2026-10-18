@@ -477,7 +477,15 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
  function form(){
   if(MODERATOR_TYPES.has(draft.type)&&moderatorStatus?.authorized!==true)draft={type:'post',subboard:'0',content:''};
   const type=el('select',{'aria-label':'Action'});for(const [value,text]of Object.entries(TYPES)){if(['withdraw','withdraw-bok','cancel-bok-request','expire-bok-request','screen'].includes(value)||value==='bok'&&bokStatus?.available!==true||MODERATOR_TYPES.has(value)&&moderatorStatus?.authorized!==true)continue;const option=el('option',{value},text);option.selected=draft.type===value;type.append(option);}
-  type.addEventListener('change',()=>{clearOperationFeedback();clearProfileDraft();const continuation=['reply','bok'].includes(draft.type)&&['reply','bok'].includes(type.value);draft=continuation?{...draft,type:type.value}:{type:type.value,subboard:'0',content:''};render();});content.append(label('Action',type));
+  type.addEventListener('change',()=>{
+   clearOperationFeedback();clearProfileDraft();
+   const continuation=['reply','bok'].includes(draft.type)&&['reply','bok'].includes(type.value);
+   const newThread=['post','bok'].includes(draft.type)&&['post','bok'].includes(type.value);
+   // Adding or removing Bok keeps the new post's destination and entered draft.
+   // Explicitly selecting Post starts a new thread, never carries reply ancestry.
+   draft=continuation?{...draft,type:type.value}:newThread?{...draft,type:type.value,parent:'0',root:'0'}:{type:type.value,subboard:'0',content:''};
+   render();
+  });content.append(label('Action',type));
   const fields=new Map();
   function input(name,text,{area=false,initial='',required=true}={}){
    const node=el(area?'textarea':'input',area?{rows:'5'}:{type:'text'});node.value=draft[name]??initial;if(required)node.required=true;

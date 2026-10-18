@@ -29,7 +29,7 @@ const application={
  async inspectRecovery(id){state.recoveryChecks++;await boundary('recovery-options');return {...state.recoverySnapshot,intent:read()};},
  async prepareInterrupted(id){state.interruptedReviews=(state.interruptedReviews??0)+1;await boundary('interrupted-review');if(read().intentId!==id)error();const next={...read(),status:'prepared',maximumFee:'456'};write(next);return next;},
  async prepareReplacement(id,input){state.replacementPrepares++;state.replacementInput=input;await boundary('replacement-prepare');const current=read();const next={...current,status:'replacement-prepared',replacementReview:{sourceTxHash:input.expectedTxHash,head:input.expectedHead,marker:current.action.type==='read-marker'?state.recoverySnapshot.marker:null,maximumFee:'456'}};write(next);return next;},
- async readAccountStatus(){state.statusReads++;await boundary('status');const intent=read();return intent&&(!['confirmed','reverted','cancelled'].includes(intent.status)||['withdraw','withdraw-bok'].includes(intent.action.type)&&intent.status==='confirmed'&&!state.refunded)?{status:'recovering',intent}:{status:state.fee,privateFeeCredit:'1000',depositIds:state.fee==='fee-ready'?['9']:[]};},
+ async readAccountStatus(){state.statusReads++;await boundary('status');const intent=read();return intent&&(!['confirmed','reverted','cancelled'].includes(intent.status)||['withdraw','withdraw-bok'].includes(intent.action.type)&&intent.status==='confirmed'&&!state.refunded)?{status:'recovering',intent}:{status:state.fee,privateFeeCredit:'1000',depositIds:state.fee==='fee-ready'?(state.depositIds??['9']):[]};},
  async ownedIdentities({cursor}){state.owned++;const page=state.namesPages?.[cursor]??(cursor===0?{identities:['7'],records:[{id:'7',first:'River',last:'Lane'}],nextCursor:8}:{identities:['8'],records:[{id:'8',first:'Ellis',last:'Moss'}],nextCursor:null});await boundary('owned');return page;},
  async readPreferenceHead(){state.headReads++;await boundary('head');return {schema:1,initialized:true,revision:state.revision,digest:'42'};},
  async readColdPreferences(){state.preferenceReads++;if(state.preferenceResults?.length)return state.preferenceResults.shift();await boundary('preferences');return {status:'complete',complete:true,preferences:state.preferences};},
@@ -1054,6 +1054,29 @@ test('Interrupted Bok release failure and unknown send preserve recovery without
  await page.evaluate(()=>{test.failure=null;test.submitOutcome='unknown';});await page.getByRole('button',{name:'Review expiry of this saved request',exact:true}).click();await page.getByRole('button',{name:'Confirm and send',exact:true}).click();await page.getByRole('button',{name:'Check existing transaction',exact:true}).waitFor();
  assert.equal((await counts(page)).sends,1);await page.reload();await page.waitForFunction(()=>window.ready);await open(page);await page.getByRole('button',{name:'Unlock',exact:true}).click();await page.getByRole('button',{name:'Check existing transaction',exact:true}).waitFor();
  for(const name of ['Confirm and send','Review saved Bok post','Review expiry of this saved request','Review release of this saved request'])assert.equal(await page.getByRole('button',{name,exact:true}).count(),0);
+ assert.equal((await counts(page)).sends,0);
+});
+
+for(const finalType of ['bok','post'])test('New conversation Post and Bok switching retains the subboard and entered draft for '+finalType,async t=>{
+ const {page}=await browserFixture(t);await page.evaluate(()=>{test.bokCredit='1000';test.depositIds=['9','19'];});
+ await open(page,{type:'post',subboard:'3'});await unlock(page);
+ await page.getByLabel('Message',{exact:true}).fill('Build a small tool for this subboard');
+ await page.getByLabel('Posting identity',{exact:true}).selectOption('7');
+ await page.getByLabel('Posting collateral',{exact:true}).selectOption('19');
+ const actionSelect=page.getByLabel('Action',{exact:true});await actionSelect.selectOption('bok');
+ await page.getByText('New conversation',{exact:true}).waitFor();
+ assert.equal(await page.getByRole('link',{name:/^(View board|Main board)$/}).getAttribute('href'),'#/board/3');
+ await page.getByLabel('Maximum Bok cost (USDC)').fill('0.0004');
+ await actionSelect.selectOption('post');
+ assert.equal(await page.getByLabel('Subboard ID (0 for main board)',{exact:true}).inputValue(),'3');
+ if(finalType==='bok')await actionSelect.selectOption('bok');
+ assert.equal(await page.getByLabel('Message',{exact:true}).inputValue(),'Build a small tool for this subboard');
+ assert.equal(await page.getByLabel('Posting identity',{exact:true}).inputValue(),'7');
+ assert.equal(await page.getByLabel('Posting collateral',{exact:true}).inputValue(),'19');
+ assert.equal((await counts(page)).prepares,0);assert.equal((await counts(page)).sends,0);
+ await page.getByRole('button',{name:'Check action and review fee',exact:true}).click();await page.getByRole('button',{name:'Confirm and send',exact:true}).waitFor();
+ const action=await page.evaluate(()=>JSON.parse(sessionStorage.getItem('labelled-ui-intent')).action);
+ assert.deepEqual(action,{type:finalType,subboard:'3',content:'Build a small tool for this subboard',name:'7',deposit:'19',...(finalType==='bok'?{parent:'0',root:'0',budget:'400'}:{})});
  assert.equal((await counts(page)).sends,0);
 });
 
