@@ -1,4 +1,3 @@
-import {waitForTx} from '@aztec-labs/aztec.js/node';
 // Explicit submission/receipt outcomes. Diagnostic bodies never escape this boundary.
 export const transactionError=(code,message)=>Object.assign(new Error(message),{code});
 const accepted=new Set(['checkpointed','proven','finalized']);
@@ -60,6 +59,8 @@ export async function waitForCanonicalReceipt(node,tx,{timeoutMs=540000,interval
   try {
     // The SDK owns waiting. This boundary only validates each actual receipt and
     // reconciles drops; no elapsed time can authorize a replacement or resend.
+    // Read-only clients use this module too; only private SDK consumers need the waiter.
+    const {waitForTx}=await import('@aztec-labs/aztec.js/node');
     const receipt=await waitForTx({getTxReceipt:async()=>{
       let observed=await boundedTransactionRead(()=>node.getTxReceipt(txHash),readLimit);
       if(hash(observed?.txHash)!==hash(txHash))throw transactionError('BB_SUBMISSION_UNKNOWN','Receipt identity does not match.');

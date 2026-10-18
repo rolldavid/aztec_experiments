@@ -100,7 +100,7 @@ export async function buildRollingWalletAssets(){
  await fs.mkdir(path.join(ROOT,out),{recursive:true});
  // invocation.mjs supplies only a scalar constant here. Its unused hashing
  // helper must tree-shake away; do not resolve another copy of the Aztec SDK.
- const built=await build({absWorkingDir:ROOT,entryPoints:['apps/rolling/wallet-runtime.mjs'],outfile:out+'/runtime.mjs',bundle:true,format:'esm',platform:'browser',target:'es2022',metafile:true,logLevel:'silent',external:['@aztec-labs/foundation/crypto/poseidon']});
+ const built=await build({absWorkingDir:ROOT,entryPoints:['apps/rolling/wallet-runtime.mjs'],outfile:out+'/runtime.mjs',bundle:true,format:'esm',platform:'browser',target:'es2022',metafile:true,logLevel:'silent',external:['@aztec-labs/foundation/crypto/poseidon','@aztec-labs/aztec.js/node']});
  if(Object.values(built.metafile.outputs).some(output=>output.imports.length))throw invalid();
  if(Object.keys(built.metafile.inputs).some(name=>name.includes('node_modules')))throw invalid();
  const inputs={...current,...bokInputs()};

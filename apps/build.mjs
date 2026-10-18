@@ -47,7 +47,9 @@ const SRC = path.join(__dirname, 'src');
 const DIST = path.join(__dirname, 'dist');
 const SDK = path.join(__dirname, '..', '.build', 'sdk');
 fs.mkdirSync(DIST,{recursive:true});
-await bundlePluginClient({entryPoints:[path.join(ROOT,'plugins/client.mjs')],outfile:path.join(DIST,'plugins.js'),bundle:true,format:'iife',globalName:'BillboardPlugins',minify:true,platform:'browser',target:'es2022'});
+// The native waiter belongs to the private SDK; read-only plugin use must tree-shake it.
+const pluginClient=await bundlePluginClient({entryPoints:[path.join(ROOT,'plugins/client.mjs')],outfile:path.join(DIST,'plugins.js'),bundle:true,format:'iife',globalName:'BillboardPlugins',minify:true,platform:'browser',target:'es2022',external:['@aztec-labs/aztec.js/node'],metafile:true});
+if(Object.values(pluginClient.metafile.outputs).some(output=>output.imports.length))throw Error('Unresolved dependency reached plugin client bundle.');
 const sdkManifestPath = path.join(SDK, 'sdk-manifest.json');
 if (!fs.existsSync(sdkManifestPath)) throw new Error('Build the pinned SDK first: npm run build:sdk');
 
