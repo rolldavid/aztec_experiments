@@ -358,6 +358,35 @@ class htb 1:20 parent 1:1 prio 0 rate 25Mbit ceil 50Mbit burst 4725b cburst 7850
             self.assertNotIn('download',events)
             self.assertIn(['systemctl','start','rolling-budget.service'],events)
 
+    def test_monitor_failure_isolates_before_shutdown_and_bounds_watchdog(self):
+        import ast
+        ns=host();events=[];written={}
+        with tempfile.TemporaryDirectory() as t:
+            ns['BASE']=pathlib.Path(t);(ns['BASE']/'interface').write_text('ens5')
+            ns['run']=lambda args,**kw:events.append((args,kw))
+            ns['write']=lambda path,value,*args:written.update({str(path):value})
+            ns['install_attestation']('pinned source')
+            unit=written['/etc/systemd/system/rolling-attest.service']
+            for expected in ('TimeoutStartSec=100','TimeoutStopSec=5','KillMode=control-group','ExecStopPost=/usr/bin/python3 /usr/local/lib/rolling-attest.py --monitor-stop'):
+                self.assertIn(expected,unit)
+            timer=written['/etc/systemd/system/rolling-attest.timer']
+            for expected in ('OnUnitInactiveSec=5s','AccuracySec=1s','RandomizedDelaySec=0'):
+                self.assertIn(expected,timer)
+            generated=fixture_generate(config(),NOW)
+            encoded=generated.split("base64.b64decode('")[1].split("')")[0]
+            program=ast.parse(lzma.decompress(base64.b64decode(encoded)).decode())
+            dispatch=program.body[2].value.right.value
+            for result in ('success','timeout','exit-code','signal'):
+                events.clear()
+                with patch.object(ns['sys'],'argv',['rolling-attest.py','--monitor-stop']),patch.dict(os.environ,{'SERVICE_RESULT':result}):exec(dispatch,ns)
+                self.assertEqual(events,[] if result=='success' else [(['/usr/sbin/ip','link','set','dev','ens5','down'],{'timeout':2})])
+            events.clear()
+            with self.assertRaises(SystemExit):ns['shutdown_failure'](ValueError('control loss'))
+            self.assertEqual(events[0],(['/usr/sbin/ip','link','set','dev','ens5','down'],{'timeout':2}))
+            self.assertEqual(events[1][0],['systemctl','start','rolling-budget.service'])
+            (ns['BASE']/'interface').write_text('ens5; invalid')
+            with self.assertRaises(ValueError):ns['isolate_network']()
+
     def qualification_environment(self,directory):
         ns=host();ns['BASE']=pathlib.Path(directory);ns['RELEASE']=pathlib.Path(directory)/'release'
         (ns['RELEASE']/'prover').mkdir(parents=True);(ns['RELEASE']/'prover/qualify-runtime.mjs').write_text('// labelled test fake')
@@ -1560,6 +1589,82 @@ class ProverActivation(unittest.TestCase):
                 **{k:'0x'+str(i)*64 for i,k in enumerate(('board','privateFeeAddress','privateBokAddress','boardDeployer','bokOwner','bokOperator'),1)},
                 'portalAddress':'0x'+'7'*40,'checkpointNumber':101,'checkpointHash':'0x'+'8'*64}
 
+    def test_proxy_scope_templates_and_actual_pinned_archive(self):
+        record={'privateAddress':'172.31.6.145','originSecurityGroupId':'sg-0123456789abcdef0','viewerOrigin':'https://d30njln0kead8n.cloudfront.net'}
+        self.assertEqual(b.proxy_host_record(record),record)
+        self.assertEqual(b.activation_config(self.scope(),record)['origins'],[record['viewerOrigin']])
+        for change in ({'privateAddress':'8.8.8.8'},{'viewerOrigin':'https://example.net'},{'viewerOrigin':'https://d30njln0kead8n.cloudfront.net/path'},{'extra':True}):
+            with self.subTest(change=change),self.assertRaises(b.Invalid):b.proxy_host_record({**record,**change})
+        spec=importlib.util.spec_from_file_location('proxy_package',ROOT/'deploy/prover/package.py')
+        package=importlib.util.module_from_spec(spec);spec.loader.exec_module(package)
+        # The current Mac dependency tree must fail before it can become a Linux release.
+        if sys.platform=='darwin':
+            with self.assertRaisesRegex(ValueError,'Missing locked Linux native package'):
+                package.linux_dependencies(ROOT,ROOT,os.environ.get('PROVER_VALIDATION_NODE','node'))
+        with tempfile.TemporaryDirectory() as t:
+            root=pathlib.Path(t);bad=root/'bad.tar.gz';bad.write_bytes(b'not the official artifact')
+            with self.assertRaises(ValueError):package.copy_caddy(bad,root)
+            self.assertFalse((root/'caddy').exists())
+            archive=os.environ.get('PROVER_VALIDATION_CADDY_ARCHIVE')
+            if archive:
+                package.copy_caddy(archive,root)
+                self.assertEqual(hashlib.sha256((root/'caddy/caddy').read_bytes()).hexdigest(),b.CADDY_BINARY_SHA)
+                for rel in b.PROXY_SOURCE_HASHES:
+                    dst=root/rel;dst.parent.mkdir(parents=True,exist_ok=True);shutil.copyfile(ROOT/rel,dst)
+                h={'RELEASE':root,'digest':lambda p:hashlib.sha256(pathlib.Path(p).read_bytes()).hexdigest()}
+                config,unit=b.proxy_files(h,record)
+                self.assertIn('bind 172.31.6.145',config);self.assertIn('handle_path /prover/*',config)
+                self.assertIn('trusted_proxies_strict',config);self.assertIn('Type=notify',unit)
+                self.assertIn(str(root/'caddy/caddy'),unit)
+                (root/'deploy/prover/Caddyfile').write_text('changed')
+                with self.assertRaises(b.Invalid):b.proxy_files(h,record)
+
+    def test_proxy_observer_requires_bound_state_and_expires_incomplete_transition(self):
+        import time
+        r={'privateAddress':'172.31.6.145','originSecurityGroupId':'sg-0123456789abcdef0','viewerOrigin':'https://d30njln0kead8n.cloudfront.net'}
+        with tempfile.TemporaryDirectory() as t:
+            private=pathlib.Path(t);h={'PRIVATE':private,'PINS':{'manifest':'b'*64,'proxyHost':b.activation_delivery_digest(r)}}
+            (private/'proxy-host-request.json').write_text(json.dumps(r))
+            (private/'prover-activation-intent.json').write_text(json.dumps({'startedAt':int(time.time())}))
+            with patch.object(b,'activation_private',side_effect=lambda p:json.loads(p.read_text())),patch.object(b,'activation_proxy_masked'):
+                self.assertEqual(b.proxy_host_observe(h),{'proxyPolicy':'pending-loopback-activation'})
+                (private/'prover-activation-intent.json').write_text(json.dumps({'startedAt':int(time.time())-301}))
+                with self.assertRaises(b.Invalid):b.proxy_host_observe(h)
+                intent={'manifestSha256':'b'*64,'requestSha256':h['PINS']['proxyHost'],'startedAt':int(time.time()),'attempts':1}
+                (private/'proxy-host-intent.json').write_text(json.dumps(intent))
+                self.assertEqual(b.proxy_host_observe(h),{'proxyPolicy':'activation-in-progress'})
+                (private/'proxy-host-intent.json').write_text(json.dumps({**intent,'startedAt':int(time.time())-61}))
+                with self.assertRaises(b.Invalid):b.proxy_host_observe(h)
+                h['PINS'].pop('proxyHost')
+                with self.assertRaises(b.Invalid):b.proxy_host_observe(h)
+
+    def test_proxy_transition_one_intent_before_start_and_no_replay(self):
+        from contextlib import ExitStack
+        record={'privateAddress':'172.31.6.145','originSecurityGroupId':'sg-0123456789abcdef0','viewerOrigin':'https://d30njln0kead8n.cloudfront.net'}
+        for fail in (False,True):
+            with self.subTest(fail=fail),tempfile.TemporaryDirectory() as t,ExitStack() as stack:
+                private=pathlib.Path(t);events=[]
+                def write_record(path,value):
+                    events.append(('record',path.name));path.write_text(json.dumps(value))
+                def run(args,**kw):
+                    events.append(tuple(args))
+                    if args[:3]==['ip','-j','-4']:return json.dumps([{'addr_info':[{'family':'inet','local':record['privateAddress']}]}])
+                    if fail and args==['systemctl','start','board-prover-proxy.service']:raise OSError('labelled ambiguous start')
+                h={'PRIVATE':private,'RELEASE':ROOT,'PINS':{'manifest':'b'*64,'proxyHost':b.activation_delivery_digest(record)},
+                   'run':run,'exclusive_record':write_record,'write':lambda *a:None,'verify_release':lambda *a:None,'verify_controls':lambda:None}
+                stack.enter_context(patch.object(b,'proxy_host_request',return_value=record))
+                stack.enter_context(patch.object(b,'activation_proxy_masked'))
+                stack.enter_context(patch.object(b,'proxy_files',return_value=('config','unit')))
+                stack.enter_context(patch.object(b,'proxy_host_observe',return_value={'proxyPolicy':'active-private'}))
+                if fail:
+                    with self.assertRaises(OSError):b.proxy_host_activate(h)
+                else:b.proxy_host_activate(h)
+                self.assertLess(events.index(('record','proxy-host-intent.json')),events.index(('systemctl','unmask','board-prover-proxy.service')))
+                self.assertEqual((private/'proxy-host-result.json').exists(),not fail)
+                before=list(events)
+                with self.assertRaisesRegex(b.Invalid,'already attempted'):b.proxy_host_activate(h)
+                self.assertEqual(events,before)
+
     def evidence(self,s):
         paths=('billboard/target/rolling_contract-RollingBoard.json','experiments/private-bok/target/private_bok-PrivateBok.json',
                'apps/src/billboard/private_fee_artifact.json','shared/portal-runtime.json')
@@ -1607,7 +1712,7 @@ class ProverActivation(unittest.TestCase):
                  patch.object(pathlib.Path,'lstat',lstat),patch.object(b,'pathlib',SimpleNamespace(Path=path)),
                  patch.object(b.os,'chown',side_effect=lambda path,uid,gid,**kw:events.append(('chown',path,uid,gid,kw))),
                  patch.object(b.os,'chmod',side_effect=lambda path,mode,**kw:events.append(('chmod',path,mode,kw)))]
-        return {'RELEASE':release,'run':run,'exclusive_record':record},events,patches,links
+        return {'RELEASE':release,'PINS':{},'run':run,'exclusive_record':record},events,patches,links
 
     def test_actual_paths_preserves_official_node_file_links_and_hardens_targets_without_following(self):
         from contextlib import ExitStack

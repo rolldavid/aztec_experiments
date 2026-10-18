@@ -65,7 +65,7 @@ def host_resources(value):
 
 def validate(config, now=None):
     keys = {"createdAt", "budgetStop", "commissioningStop", "runtimeUrl", "runtimeArchiveSha256", "manifestSha256"}
-    if type(config) is not dict or not keys <= set(config) or set(config)-keys-{"receiptPutUrl","queryHost","activationDelivery","hostResources"}: raise Invalid("Invalid bootstrap fields")
+    if type(config) is not dict or not keys <= set(config) or set(config)-keys-{"receiptPutUrl","queryHost","activationDelivery","hostResources","proxyHost"}: raise Invalid("Invalid bootstrap fields")
     created, stop, commission = (timestamp(config[k]) for k in ("createdAt", "budgetStop", "commissioningStop"))
     now = now or dt.datetime.now(dt.timezone.utc)
     if not now - dt.timedelta(minutes=5) <= created <= now + dt.timedelta(minutes=5): raise Invalid("Stale creation time")
@@ -88,6 +88,7 @@ def validate(config, now=None):
         try: host_resources(config['hostResources'])
         except ValueError: raise Invalid('Invalid host resources') from None
     if 'queryHost' in config: query_host_record(config['queryHost'])
+    if 'proxyHost' in config: proxy_host_record(config['proxyHost'])
     if 'activationDelivery' in config: activation_delivery_record(config['activationDelivery'],config['budgetStop'])
     return dict(config)
 
@@ -175,7 +176,18 @@ def version_facts(text, package=False):
     if m[2]:result['libbpfVersion']=[int(x) for x in m[2].split('.')]
     return result
 
+def isolate_network():
+    # Losing host controls is terminal. Cut all host/container traffic before
+    # graceful poweroff; the independent fleet deadline remains authoritative.
+    path=BASE/'interface'
+    if not path.exists(): return # Installation may fail before an interface exists.
+    dev=path.read_text()
+    if not re.fullmatch(r'[A-Za-z0-9_.-]{1,15}',dev): raise ValueError('Invalid interface')
+    run(['/usr/sbin/ip','link','set','dev',dev,'down'],timeout=2)
+
 def shutdown_failure(error):
+    try:isolate_network()
+    except Exception:pass
     diagnostic(error)
     try:write(BASE/'stage','failed')
     except Exception:pass
@@ -293,24 +305,24 @@ def class_bytes(text, egress_mbps=50):
     return records['1:1']
 
 def verify_controls():
-    mark('verify-budget');run(['systemctl','is-active','--quiet','rolling-budget.timer'])
+    mark('verify-budget');run(['systemctl','is-active','--quiet','rolling-budget.timer'],timeout=2)
     config = json.loads((BASE/'deadline.json').read_text())
     resources=host_resources(config['hostResources'])
     if dt.datetime.now(dt.timezone.utc) >= dt.datetime.fromisoformat(config['budgetStop'].replace('Z','+00:00')): raise ValueError('Expired')
     dev = (BASE/'interface').read_text()
-    mark('tc-version');tc=run(['tc','-V'],capture=True)
+    mark('tc-version');tc=run(['tc','-V'],capture=True,timeout=2)
     accepted=bool(re.fullmatch(r'tc utility, iproute2-6\.1\.0(?:, libbpf [0-9]+\.[0-9]+\.[0-9]+)?',tc))
     if DIAGNOSTICS_ACTIVE or not accepted:diagnostic(status='observed',facts={**version_facts(tc),'tcAccepted':accepted})
     if not accepted:raise ValueError('Unreviewed tc version')
-    mark('tc-package');package=run(['dpkg-query','-W','-f=${Version}','iproute2'],capture=True)
+    mark('tc-package');package=run(['dpkg-query','-W','-f=${Version}','iproute2'],capture=True,timeout=2)
     accepted=package in ('6.1.0-1ubuntu6','6.1.0-1ubuntu6.4')
     if DIAGNOSTICS_ACTIVE or not accepted:diagnostic(status='observed',facts={**version_facts(package,True),'packageAccepted':accepted})
     if not accepted:raise ValueError('Unreviewed iproute2 package')
-    mark('tc-classes');classes=run(['tc','-s','class','show','dev',dev],capture=True)
+    mark('tc-classes');classes=run(['tc','-s','class','show','dev',dev],capture=True,timeout=2)
     mark('tc-class-parse')
     if DIAGNOSTICS_ACTIVE:diagnostic(status='observed',facts={'classFormat':'class-text' if classes.startswith('class ') else 'json' if classes.startswith('[') else 'empty' if not classes else 'other'})
     byte_count=class_bytes(classes,resources['egressMbps'])
-    mark('tc-qdisc');qdisc_raw=run(['tc','-j','qdisc','show','dev',dev],capture=True)
+    mark('tc-qdisc');qdisc_raw=run(['tc','-j','qdisc','show','dev',dev],capture=True,timeout=2)
     mark('tc-qdisc-parse');qdisc=json.loads(qdisc_raw)
     roots = [q for q in qdisc if q.get('root') is True]
     if len(roots)!=1 or roots[0].get('kind')!='htb' or roots[0].get('handle')!='1:' or roots[0].get('options',{}).get('default')!='0x10':
@@ -772,9 +784,16 @@ def attest(check=False):
             with open('/dev/console','w') as f: f.write('ROLLING_BOOTSTRAP '+json.dumps(output,separators=(',',':'))+'\n')
             write(last,marker)
     finally:
+        # A successful slow attestation must not leave an old control observation
+        # valid until the next run. Recheck at completion before allowing success.
+        if good:
+            try:verify_controls()
+            except Exception:good=False
         if not good:
-            try: run(['systemctl','stop','rolling-query.service','rolling-node.service','board-prover.service','board-prover-proxy.service'])
-            finally: run(['systemctl','start','rolling-budget.service'])
+            try:isolate_network()
+            finally:
+                try: run(['systemctl','stop','rolling-query.service','rolling-node.service','board-prover.service','board-prover-proxy.service'])
+                finally: run(['systemctl','start','rolling-budget.service'])
 
 def activation_support(operation, expected=None):
     # Only the immutable packaged source may interpret root-owned activation data.
@@ -786,8 +805,8 @@ def activation_support(operation, expected=None):
 
 def install_attestation(source):
     write('/usr/local/lib/rolling-attest.py',source,0o700)
-    write('/etc/systemd/system/rolling-attest.service','[Unit]\nDescription=Bounded public bootstrap attestation\nOnFailure=rolling-budget.service\n[Service]\nType=oneshot\nTimeoutStartSec=100\nExecStart=/usr/bin/python3 /usr/local/lib/rolling-attest.py\nStandardOutput=null\nStandardError=null\n',0o644)
-    write('/etc/systemd/system/rolling-attest.timer','[Unit]\nDescription=Bootstrap controls monitor\n[Timer]\nOnBootSec=5s\nOnUnitActiveSec=5s\n[Install]\nWantedBy=timers.target\n',0o644)
+    write('/etc/systemd/system/rolling-attest.service','[Unit]\nDescription=Bounded public bootstrap attestation\nOnFailure=rolling-budget.service\n[Service]\nType=oneshot\nTimeoutStartSec=100\nTimeoutStopSec=5\nKillMode=control-group\nExecStart=/usr/bin/python3 /usr/local/lib/rolling-attest.py\nExecStopPost=/usr/bin/python3 /usr/local/lib/rolling-attest.py --monitor-stop\nStandardOutput=null\nStandardError=null\n',0o644)
+    write('/etc/systemd/system/rolling-attest.timer','[Unit]\nDescription=Bootstrap controls monitor\n[Timer]\nOnBootSec=5s\nOnUnitInactiveSec=5s\nAccuracySec=1s\nRandomizedDelaySec=0\n[Install]\nWantedBy=timers.target\n',0o644)
     run(['systemctl','daemon-reload']);run(['systemctl','enable','--now','rolling-attest.timer'])
 
 def execute(config, attestation_source):
@@ -826,6 +845,7 @@ def _execute(config, attestation_source):
             if type(egress_before) is not int or type(egress_after) is not int or egress_after<=egress_before: raise ValueError('Egress counter exercise failed')
             write(BASE/'egress-exercise.json',json.dumps({'beforeBytes':egress_before,'afterBytes':egress_after,'deltaBytes':egress_after-egress_before,'exercise':'installation-egress-not-throughput'}))
             if 'queryHost' in config: exclusive_record(PRIVATE/'query-host-request.json',config['queryHost'])
+            if 'proxyHost' in config: exclusive_record(PRIVATE/'proxy-host-request.json',config['proxyHost'])
             if 'activationDelivery' in config: exclusive_record(PRIVATE/'activation-delivery-request.json',config['activationDelivery'])
             STAGE='installed';write(BASE/'stage',STAGE)
             # Only commissioning protection is retired; fixed budget control remains enabled.
@@ -843,7 +863,7 @@ STARTUP_SOURCES = {
     'prover/compact-node-transform.mjs': 'd7e7e95a1061342e7aaa301e826fbf4bd21cfb9ea2de605e2a2aa17452160545',
     'prover/compact-node-registration.mjs': '07316d9a6629dff67fbb8d033360a45b9a1492febdd18520e6ffe6c1023c546c',
     'prover/compact-block-native.mjs': '6fc4e562fea1a2d544d742b8e58a8941724cbd6b7d7e67d4231e02a586707888',
-    'shared/trusted-private-node.mjs': '4396e9b5c7e0cacef5c9fb53d59e433b76acedef7d57be577ba494d20e1e863a',
+    'shared/trusted-private-node.mjs': 'dca64303273cac0a8aa70eb8867d2ade5c60d4dbe9085ab6d49b7025956d955b',
 }
 STARTUP_ADAPTER = 'publicnode-config-v1'
 DIAGNOSTIC_PHASES = ('registry-guard', 'rollup-compatibility', 'l1-config', 'genesis-compare', 'telemetry', 'factory', 'factory-bb', 'factory-kzg', 'factory-keystore', 'factory-addresses', 'factory-l1-constants', 'factory-blob', 'factory-snapshot', 'factory-epoch-cache', 'factory-world-state', 'factory-avm', 'factory-archiver', 'factory-world-state-sync', 'factory-verifiers', 'factory-fee-provider', 'factory-p2p', 'factory-start', 'public-rpc-bind', 'admin-auth', 'admin-rpc-bind', 'archiver-store', 'archiver-protocol-register', 'archiver-constants', 'archiver-start-header', 'archiver-start', 'archiver-blob-test', 'archiver-clock-test', 'archiver-trace-test', 'archiver-history-test', 'archiver-initial-sync')
@@ -1056,7 +1076,8 @@ def node_wrapper(args,base):
 
 PROVER_UNIT_SHA = '340d19baa4b764e5198fafb261f74001ffefa4c2d9dde111ef0ba07ca7e61cef'
 ACTIVATION_PUBLIC_FILES = ('shared/portal-runtime.mjs','shared/portal-runtime.json',
-                           'shared/protocol-commitments.mjs','shared/protocol-schema.mjs')
+                           'shared/protocol-commitments.mjs','shared/protocol-schema.mjs',
+                           'deploy/prover/Caddyfile','deploy/prover/board-prover-proxy.service')
 
 
 # Optional operator data plane. All executable content comes from this packaged
@@ -1454,8 +1475,8 @@ def activation_private(path, expected=None):
         return json.loads(data)
     finally:os.close(fd)
 
-def activation_config(scope):
-    return {'serviceMode':'prover','applicationProfile':'rolling','proofs':'real','host':'127.0.0.1','port':8081,'origins':[],
+def activation_config(scope, proxy=None):
+    return {'serviceMode':'prover','applicationProfile':'rolling','proofs':'real','host':'127.0.0.1','port':8081,'origins':[] if proxy is None else [proxy['viewerOrigin']],
             'chainId':scope['chainId'],'rollupVersion':scope['rollupVersion'],
             **{k:scope[k] for k in ('board','privateFeeAddress','privateBokAddress')},
             'pluginAddresses':[scope['privateBokAddress']],'threads':1,'queueDirectory':'/run/board-prover',
@@ -1507,12 +1528,12 @@ def activation_identity(h, scope):
     if not 0<=now-ready['checkedAtSeconds']<=10:raise Invalid('Stale activation readiness')
     return ready
 
-def activation_health():
+def activation_health(url='http://127.0.0.1:8081/healthz'):
     import urllib.request
     class NoRedirect(urllib.request.HTTPRedirectHandler):
         def redirect_request(self,*args,**kwargs):raise Invalid('Health redirect')
     opener=urllib.request.build_opener(urllib.request.ProxyHandler({}),NoRedirect())
-    with opener.open('http://127.0.0.1:8081/healthz',timeout=5) as response:
+    with opener.open(url,timeout=5) as response:
         data=response.read(16385)
         if response.status!=200 or len(data)>16384:raise Invalid('Prover health')
     health=json.loads(data)
@@ -1548,9 +1569,92 @@ def activation_paths(h, scope):
     query_public_harden(entries,public_gid)
     configdir=pathlib.Path('/etc/board-prover');configdir.mkdir(mode=0o750)
     os.chown(configdir,0,group.gr_gid);os.chmod(configdir,0o750)
-    config=configdir/'config.json';h['exclusive_record'](config,activation_config(scope));os.chown(config,0,group.gr_gid);os.chmod(config,0o640)
+    config=configdir/'config.json';h['exclusive_record'](config,activation_config(scope,proxy_host_request(h) if h['PINS'].get('proxyHost') else None));os.chown(config,0,group.gr_gid);os.chmod(config,0o640)
     os.symlink(release,release.parent.parent/'current')
     return user.pw_uid,group.gr_gid
+
+CADDY_VERSION = '2.11.7'
+CADDY_ARCHIVE_SHA = '727b91701a392de6ebc5027509f548bf39979e5216340d0faed8fa5e69c84f8b'
+CADDY_BINARY_SHA = '678ade3bfc088749c81a681adc603333ee0bb023b6a6cfe3c0f58bef8ff854e9'
+PROXY_SOURCE_HASHES = {'deploy/prover/Caddyfile':'a0168a60bad7b114c49e9e98b395ccdde931c8b9f64533d89eeba4fe0e49b6c1',
+                       'deploy/prover/board-prover-proxy.service':'4f3c7ff79a720f9ec0fc4ef77da3d72eee7ae3fa8ef7e4231bb9845b01affd5a'}
+
+def proxy_host_record(value):
+    if type(value) is not dict or set(value)!={'privateAddress','originSecurityGroupId','viewerOrigin'}:raise Invalid('Proxy host fields')
+    query_host_record({k:v for k,v in value.items() if k!='viewerOrigin'}|{'operatorAuthSha256':'0'*64})
+    if type(value['viewerOrigin']) is not str or not re.fullmatch(r'https://[a-z0-9-]{1,63}\.cloudfront\.net',value['viewerOrigin']):raise Invalid('Proxy viewer origin')
+    return dict(value)
+
+def proxy_host_request(h):
+    r=proxy_host_record(activation_private(h['PRIVATE']/'proxy-host-request.json'))
+    if activation_delivery_digest(r)!=h['PINS'].get('proxyHost'):raise Invalid('Proxy campaign binding')
+    return r
+
+def proxy_files(h,r):
+    release=h['RELEASE']
+    for rel,digest in {**PROXY_SOURCE_HASHES,'caddy/caddy':CADDY_BINARY_SHA}.items():
+        path=release/rel
+        if path.is_symlink() or not path.is_file() or h['digest'](path)!=digest:raise Invalid('Proxy source changed')
+    config=(release/'deploy/prover/Caddyfile').read_text().replace(':8080 {',':8080 {\n bind '+r['privateAddress'])
+    unit=(release/'deploy/prover/board-prover-proxy.service').read_text().replace('[Service]','[Service]\nType=notify\nTimeoutStartSec=15\nTimeoutStopSec=5\nKillMode=control-group').replace('/usr/local/bin/caddy',str(release/'caddy/caddy'))
+    return config,unit
+
+def proxy_host_observe(h):
+    import time
+    if not h['PINS'].get('proxyHost'):
+        if any(h['PRIVATE'].glob('proxy-host-*.json')):raise Invalid('Unbound proxy state')
+        activation_proxy_masked(h);return {'proxyPolicy':'masked'}
+    r=proxy_host_request(h);private=h['PRIVATE'];intent=private/'proxy-host-intent.json';result=private/'proxy-host-result.json'
+    if not intent.exists():
+        if result.exists():raise Invalid('Proxy result without intent')
+        started=activation_private(private/'prover-activation-intent.json').get('startedAt')
+        if type(started) is not int or not 0<=time.time()-started<=300:raise Invalid('Proxy not activated')
+        activation_proxy_masked(h);return {'proxyPolicy':'pending-loopback-activation'}
+    i=activation_private(intent)
+    if set(i)!={'manifestSha256','requestSha256','startedAt','attempts'} or i['manifestSha256']!=h['PINS']['manifest'] or i['requestSha256']!=h['PINS']['proxyHost'] or type(i['attempts']) is not int or i['attempts']!=1 or type(i['startedAt']) is not int:raise Invalid('Proxy intent')
+    if not result.exists():
+        if not 0<=time.time()-i['startedAt']<=60:raise Invalid('Proxy interrupted')
+        return {'proxyPolicy':'activation-in-progress'}
+    if activation_private(result)!={'manifestSha256':h['PINS']['manifest'],'requestSha256':h['PINS']['proxyHost'],'status':'active-private'}:raise Invalid('Proxy result')
+    config,unit=proxy_files(h,r)
+    for path,expected in ((pathlib.Path('/etc/board-prover/Caddyfile'),config),(pathlib.Path('/etc/systemd/system/board-prover-proxy.service'),unit)):
+        info=path.lstat()
+        if not stat.S_ISREG(info.st_mode) or info.st_uid!=0 or stat.S_IMODE(info.st_mode)!=0o644 or path.read_text()!=expected:raise Invalid('Proxy installed source')
+    raw=h['run'](['systemctl','show','board-prover-proxy.service','--property=User,Group,Restart,ActiveState,MainPID,DropInPaths,MemoryMax,Type,TimeoutStartUSec,TimeoutStopUSec'],capture=True,timeout=5)
+    rows=[line.partition('=') for line in raw.splitlines()];values={k:v for k,_,v in rows}
+    expected={'User':'board-prover','Group':'board-prover','Restart':'no','ActiveState':'active','DropInPaths':'','MemoryMax':str(128*1024**2),'Type':'notify','TimeoutStartUSec':'15s','TimeoutStopUSec':'5s'}
+    if len(rows)!=len(values) or set(values)!=set(expected)|{'MainPID'} or any(values[k]!=v for k,v in expected.items()) or not re.fullmatch('[1-9][0-9]{0,9}',values['MainPID']):raise Invalid('Proxy service state')
+    executable=pathlib.Path('/proc')/values['MainPID']/'exe'
+    if executable.resolve()!=h['RELEASE']/'caddy/caddy':raise Invalid('Proxy process executable')
+    owner=activation_private(private/'prover-activation-result.json')
+    with open(executable.parent/'status','rb') as f:status=f.read(16385)
+    if len(status)>16384:raise Invalid('Proxy process status')
+    for key,number in ((b'Uid:',owner['uid']),(b'Gid:',owner['gid'])):
+        if [line.split()[1:] for line in status.splitlines() if line.startswith(key)]!=[[str(number).encode()]*4]:raise Invalid('Proxy process identity')
+    activation_health('http://'+r['privateAddress']+':8080/prover/healthz')
+    return {'proxyPolicy':'active-private','proxyViewerOrigin':r['viewerOrigin']}
+
+def proxy_host_activate(h):
+    import time
+    if not h['PINS'].get('proxyHost'):return
+    r=proxy_host_request(h);private=h['PRIVATE'];intent=private/'proxy-host-intent.json';result=private/'proxy-host-result.json'
+    if intent.exists() or result.exists():raise Invalid('Proxy already attempted; reconcile only')
+    # Existing prover activation owns the exclusive lock and has already verified
+    # immutable deployment/query qualification, live scope and service health.
+    activation_proxy_masked(h);h['verify_release'](h['RELEASE']);h['verify_controls']()
+    addresses=json.loads(h['run'](['ip','-j','-4','address','show'],capture=True,timeout=5))
+    if r['privateAddress'] not in [a.get('local') for row in addresses for a in row.get('addr_info',[]) if a.get('family')=='inet']:raise Invalid('Proxy address not local')
+    config,unit=proxy_files(h,r);path=pathlib.Path('/etc/board-prover/Caddyfile')
+    if os.path.lexists(path):raise Invalid('Existing proxy configuration')
+    h['exclusive_record'](intent,{'manifestSha256':h['PINS']['manifest'],'requestSha256':h['PINS']['proxyHost'],'startedAt':int(time.time()),'attempts':1})
+    h['write'](path,config,0o644)
+    h['run']([str(h['RELEASE']/'caddy/caddy'),'validate','--config',str(path),'--adapter','caddyfile'],timeout=5)
+    h['run'](['systemctl','unmask','board-prover-proxy.service'],timeout=5)
+    h['write']('/etc/systemd/system/board-prover-proxy.service',unit,0o644)
+    h['run'](['systemctl','daemon-reload'],timeout=5)
+    h['run'](['systemctl','start','board-prover-proxy.service'],timeout=20)
+    h['exclusive_record'](result,{'manifestSha256':h['PINS']['manifest'],'requestSha256':h['PINS']['proxyHost'],'status':'active-private'})
+    proxy_host_observe(h)
 
 def activation_proxy_masked(h):
     if h['run'](['systemctl','show','board-prover-proxy.service','--property=LoadState','--value'],capture=True,timeout=5)!='masked':raise Invalid('Proxy must remain masked')
@@ -1630,9 +1734,9 @@ def prover_activation(h, operation, expected=None):
         keys={'schemaVersion','status','manifestSha256','uid','gid','configSha256','traffic','applicationProofQualified','bokScope'}
         traffic={'ipv4UidMark':True,'ipv6UidMark':True,'fwmarkClass20':True,'aggregate50Mbps':True}
         if type(result) is not dict or set(result)!=keys or type(result['schemaVersion']) is not int or result['schemaVersion']!=1 or result['status']!='active-loopback' or result['manifestSha256']!=h['PINS']['manifest'] or any(type(result[k]) is not int or not 0<result[k]<2**31 for k in ('uid','gid')) or type(result['configSha256']) is not str or not re.fullmatch('[a-f0-9]{64}',result['configSha256']) or type(result['traffic']) is not dict or set(result['traffic'])!=set(traffic) or any(v is not True for v in result['traffic'].values()) or result['applicationProofQualified'] is not False or result['bokScope']!='constructor-allowlist-only':raise Invalid('Activation result')
-        activation_proxy_masked(h);activation_traffic(h,result['uid'])
+        proxy=proxy_host_observe(h);activation_traffic(h,result['uid'])
         activation_service(h,result['uid'],result['gid'],result['configSha256']);activation_health()
-        return {'proverPolicy':'active-loopback','proverActivated':True,'applicationScopeSha256':intent['scopeSha256'],
+        return {'proverPolicy':'active-loopback','proverActivated':True,**proxy,'applicationScopeSha256':intent['scopeSha256'],
                 'bokScope':'constructor-allowlist-only','applicationProofQualified':False}
     if type(expected) is not str or not re.fullmatch('[a-f0-9]{64}',expected):raise Invalid('Activation digest')
     with open(private/'prover-activation-lock','a') as lock:
@@ -1681,9 +1785,10 @@ def prover_activation(h, operation, expected=None):
             result={'schemaVersion':1,'status':'active-loopback','manifestSha256':h['PINS']['manifest'],'uid':uid,'gid':gid,
                     'configSha256':config_sha,'traffic':traffic,'applicationProofQualified':False,'bokScope':'constructor-allowlist-only'}
             h['exclusive_record'](result_path,result)
+            proxy_host_activate(h)
             return result
         except BaseException:
-            try:h['run'](['systemctl','stop','board-prover.service'],timeout=35)
+            try:h['run'](['systemctl','stop','board-prover-proxy.service','board-prover.service'],timeout=35)
             finally:h['run'](['systemctl','start','--no-block','rolling-budget.service'],timeout=5)
             raise
         finally:signal.alarm(0);signal.signal(signal.SIGALRM,previous)
@@ -1695,10 +1800,11 @@ def generate(config, now=None):
     # Tokenization preserves every string, executable token and line boundary.
     runtime=tokenize.untokenize(t._replace(string='') if t.type==tokenize.COMMENT else t for t in tokenize.generate_tokens(io.StringIO(HOST).readline))
     pins = {'image':IMAGE, 'manifest':config['manifestSha256'], 'node':NODE_SHA, 'bb':BB_SHA, 'bbVersion':BB_VERSION, 'catalog':CATALOG_SHA, 'bootstrap':hashlib.sha256(runtime.encode()).hexdigest(),'startup':hashlib.sha256(pathlib.Path(__file__).read_bytes()).hexdigest()}
+    if 'proxyHost' in config:pins['proxyHost']=activation_delivery_digest(config['proxyHost'])
     if 'queryHost' in config:pins['queryHost']=hashlib.sha256(json.dumps(config['queryHost'],sort_keys=True,separators=(',',':')).encode()).hexdigest()
     if 'activationDelivery' in config:pins['activationDelivery']=activation_delivery_digest(config['activationDelivery'])
     prefix = 'PINS = '+repr(pins)+'\nNETWORK = '+repr(NETWORK)+'\nQUALIFICATION = '+repr(QUALIFICATION)+'\n'
-    dispatch = "\ntry:\n    if sys.argv[1:2]==['--activate-prover']:\n        if len(sys.argv)!=3: raise ValueError('Activation arguments')\n        activation_support('activate',sys.argv[2])\n    elif '--qualify' in sys.argv: qualify()\n    elif '--qualification-stop' in sys.argv:\n        qualify(aborted=True);run(['systemctl','start','rolling-qualification-receipt.service'],timeout=40)\n    elif '--qualification-receipt' in sys.argv: final_receipt()\n    else: attest('--check' in sys.argv)\nexcept Exception as error:\n    shutdown_failure(error)\n"
+    dispatch = "\ntry:\n    if sys.argv[1:2]==['--activate-prover']:\n        if len(sys.argv)!=3: raise ValueError('Activation arguments')\n        activation_support('activate',sys.argv[2])\n    elif '--monitor-stop' in sys.argv:\n        if os.environ.get('SERVICE_RESULT')!='success': isolate_network()\n    elif '--qualify' in sys.argv: qualify()\n    elif '--qualification-stop' in sys.argv:\n        qualify(aborted=True);run(['systemctl','start','rolling-qualification-receipt.service'],timeout=40)\n    elif '--qualification-receipt' in sys.argv: final_receipt()\n    else: attest('--check' in sys.argv)\nexcept Exception as error:\n    shutdown_failure(error)\n"
     # A raw multiline literal avoids doubling runtime backslashes/newlines in
     # the compressed envelope. Verify its decoded value before emitting bytes;
     # runtime code, attestation content and their hashes remain unchanged.

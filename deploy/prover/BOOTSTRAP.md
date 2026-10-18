@@ -2,7 +2,7 @@
 
 This generator prepares one private EC2 user-data payload. It makes no cloud
 calls and starts nothing on the development computer. It installs the reviewed
-Linux runtime and a testnet fullnode; **the prover and its proxy remain masked**.
+Linux runtime and a testnet fullnode; **the prover and proxy remain masked until their explicitly bound activation transitions**.
 It supplies no Rolling contract addresses. It automatically attempts the reviewed
 Linux query qualification in explicit `serviceMode: "query-only"` against the
 configured current network. No board address, proof queue or proof worker is
@@ -1000,3 +1000,91 @@ operation/readback, real Linux delivery/activation, fresh payload measurement
 with actual capability lengths, and real-proof acceptance remain unperformed by
 these controlled tests. Do not launch the proposed $39 campaign before those
 preparation steps and the fresh forecast are ready.
+
+## Failure isolation and optional private browser proxy
+
+The controls monitor now uses a five-second inactive interval, one-second timer
+accuracy, a 100-second start deadline and five-second stop phases. Local control
+commands are bounded to two seconds. A successful attestation rechecks controls
+at completion; detected failure lowers the recorded physical interface before
+requesting service shutdown. A failure-only `ExecStopPost` also lowers it when the
+monitor times out or exits abnormally. Successful monitor runs leave networking
+untouched. Isolation deliberately removes SSM/network access; the independent
+Fleet expiry remains in force. It does not wait for graceful EC2 termination.
+
+The planning bound is 120 seconds: at most two seconds after the final class
+observation, six seconds to the next monitor activation, 100 seconds of runtime,
+five seconds to kill the failed process group, five seconds for the stop hook,
+and two seconds allowance. This is conditional on actual Linux scheduling and
+successful interface-down execution. Before admitting this forecast, use the
+existing isolated Linux control procedure to exercise both detected shaper loss
+and a hung monitor, retain interface/traffic evidence, and verify quiescence
+within 120 seconds. Unit fixtures are not that evidence. Reserve 200 GB for this
+failure window at the instance's 12.5 Gbps ceiling; no AWS termination latency is
+assumed. Keep all existing compute/storage/cleanup buffers separately.
+
+By default the proxy remains masked. The optional immutable `proxyHost` contains
+exactly `privateAddress` (assigned RFC1918 IPv4), `originSecurityGroupId` (the
+verified CloudFront service-managed group), and `viewerOrigin` (the intended
+HTTPS `*.cloudfront.net` origin). These are public bindings, not credentials.
+The security-group field does not claim Linux has verified AWS policy: the lead
+must retain actual AWS ingress/origin readback before attaching the public route.
+
+Supply `--caddy-archive` to the existing package builder with the official
+`caddy_2.11.7_linux_amd64.tar.gz`. Its 18,113,754 bytes must hash to
+`727b91701a392de6ebc5027509f548bf39979e5216340d0faed8fa5e69c84f8b`;
+the sole admitted regular `caddy` member must hash to
+`678ade3bfc088749c81a681adc603333ee0bb023b6a6cfe3c0f58bef8ff854e9`.
+Packaging does not execute it or copy host/private files. The release inventory
+includes this binary and the existing pinned Caddyfile/proxy unit. No host
+package installation, download or repository configuration is added.
+
+After the existing once-only deployment/query-qualified prover activation succeeds,
+the same activation lock makes one durable proxy intent. The fixed Caddyfile is
+bound to the assigned private address on port8080; only `/prover/*` reaches the
+existing loopback service. The service admits the single bound browser origin.
+Caddy validates configuration before unmasking and uses its native systemd notify
+readiness with a 15-second start deadline. Any ambiguous start is terminal; there
+is no retry or new activation scheduler. Failure stops both services and requests
+host shutdown. The ongoing attestor verifies bound records, exact installed
+configuration/unit/binary, process identity and a real health request through the
+private proxy. An incomplete transition expires; removing its binding or state
+fails closed. `proxyPolicy` distinguishes pending, in-progress and active-private
+from masked. Neither active service nor proxy claims application-proof acceptance.
+
+For CloudFront, create a new VPC origin for the current instance ARN, HTTP port8080
+and its private DNS. Restrict that instance port to the service-managed origin
+security group. Keep node8082/admin8882 and prover8081 loopback-only; do not expose
+origin8080 publicly. After status Deployed, use existing `withProverOrigin` against
+a fresh distribution config and ETag, then update with that ETag. Preserve the
+S3 origin and unrelated behaviors. The old origin targeting a terminated instance
+is not reusable as a live backend. Optional operator `/v1/node` uses the separate
+port8083 origin and `withQueryOperatorOrigin`; its authentication is not the
+browser's proof route. Publish matching application/config/CSP only with the
+current board scope and healthy private proxy, and retain actual HTTPS results.
+
+### Linux dependency preparation
+
+The release builder now requires `--dependencies-root` to identify an actual
+Linux x64/glibc installation with byte-identical project package.json and lock.
+Use the existing isolated Linux Docker environment and pinned Node24.21.0 to run
+`npm ci --include=optional` from those public inputs, retaining the project's
+existing reviewed bootstrap patches and overrides. Do not mount credential
+providers, wallets or private configuration. No automatic install, platform
+fallback or opportunistic missing-module overlay occurs in the packager.
+
+The packager requires locked Linux WSDB, AVM, KZG, LMDB, msgpackr-extract and
+Snappy packages. Its validation Node must actually execute as Linux x64/glibc;
+LMDB/KZG/Snappy/msgpackr native imports must succeed there before output allocation.
+Run packaging in that Linux environment, using current source/artifacts as the
+source root and the isolated installation as `--dependencies-root`; the current
+Mac tree is deliberately rejected. The native full node remains the separate
+pinned official image. This check imports addons without starting a database,
+node, proof, service or transaction; real proof acceptance remains separate.
+
+The first query qualifier is already board-independent: query-only service,
+Sepolia11155111, rc3 rollup3409706519 and the pinned current rollup address, with
+no legacy board field. It verifies the Rolling artifact/catalog inventory
+locally but never demands a deployed rc1/V6 board. After actual node/query
+qualification, use the authenticated operator route to deploy fresh Rolling
+contracts. Only their current validated scope authorizes prover/proxy activation.

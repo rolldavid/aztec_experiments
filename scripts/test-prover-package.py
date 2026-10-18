@@ -7,6 +7,7 @@ import shutil
 import subprocess
 import tempfile
 import unittest
+from unittest.mock import patch
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 spec = importlib.util.spec_from_file_location('prover_package', ROOT / 'deploy/prover/package.py')
@@ -47,6 +48,24 @@ class PackagePreflight(unittest.TestCase):
         self.assertEqual(package.release_preflight(self.root),{'version':b.BB_VERSION,'sha256':b.BB_SHA})
         (self.root/'prover/compact-node-registration.mjs').write_text('PRIVATE_SENTINEL')
         with self.assertRaisesRegex(ValueError,'Invalid helper source hash'):package.release_preflight(self.root)
+
+    def test_linux_dependencies_require_exact_lock_native_packages_and_platform(self):
+        for name in ('package.json','package-lock.json'):
+            shutil.copyfile(ROOT/name,self.root/name)
+        with self.assertRaisesRegex(ValueError,'Missing locked Linux native package'):
+            package.linux_dependencies(ROOT,self.root,self.node)
+        lock=json.loads((ROOT/'package-lock.json').read_text())['packages']
+        for name in package.LINUX_NATIVE_PACKAGES:
+            path=self.root/'node_modules'/name/'package.json';path.parent.mkdir(parents=True)
+            path.write_text(json.dumps({'version':lock['node_modules/'+name]['version']}))
+        # Explicit process doubles exercise packaging admission, not Linux execution.
+        for platform,arch in (('darwin','arm64'),('linux','arm64')):
+            with patch.object(package.subprocess,'check_output',return_value=json.dumps({'node':'v24.21.0','platform':platform,'arch':arch})):
+                with self.assertRaisesRegex(ValueError,'Pinned Linux validation runtime'):
+                    package.linux_dependencies(ROOT,self.root,self.node)
+        (self.root/'package-lock.json').write_text('{}')
+        with self.assertRaisesRegex(ValueError,'input mismatch'):
+            package.linux_dependencies(ROOT,self.root,self.node)
 
     def test_pending_artifacts_cannot_enter_package(self):
         with self.assertRaises(subprocess.CalledProcessError):
@@ -125,7 +144,7 @@ export const getVersioningResponseHandler=()=>()=>{};
         self.assertEqual(copied.read_bytes(),source.read_bytes())
         inventory={str(p.relative_to(self.release)):hashlib.sha256(p.read_bytes()).hexdigest() for p in self.release.rglob('*') if p.is_file()}
         self.assertEqual(inventory['deploy/prover/bootstrap.py'],hashlib.sha256(source.read_bytes()).hexdigest())
-        self.assertEqual(sorted(str(p.relative_to(self.release)) for p in (self.release/'deploy').rglob('*') if p.is_file()),['deploy/prover/board-prover.service','deploy/prover/bootstrap.py','deploy/prover/startup-stages.mjs'])
+        self.assertEqual(sorted(str(p.relative_to(self.release)) for p in (self.release/'deploy').rglob('*') if p.is_file()),['deploy/prover/Caddyfile','deploy/prover/board-prover-proxy.service','deploy/prover/board-prover.service','deploy/prover/bootstrap.py','deploy/prover/startup-stages.mjs'])
         self.assertNotIn('CONFIG = {',copied.read_text())
         stage=ROOT/'deploy/prover/startup-stages.mjs'
         self.assertEqual((self.release/'deploy/prover/startup-stages.mjs').read_bytes(),stage.read_bytes())
