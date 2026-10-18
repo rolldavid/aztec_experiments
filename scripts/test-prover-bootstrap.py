@@ -2241,6 +2241,29 @@ class QueryHost(unittest.TestCase):
                 for _ in range(2):self.assertEqual(b.query_host(h),{'queryHostPolicy':'qualification-failed','queryProofJobsEnabled':False})
             self.assertEqual(events,[]);self.assertFalse((private/'query-host-intent.json').exists())
 
+    def test_failed_acceptance_preserved_with_valid_private_operator_admission(self):
+        with tempfile.TemporaryDirectory() as t,self.lifecycle_fixture(pathlib.Path(t).resolve()) as (h,events,state,root):
+            receipt=h['PRIVATE']/'final-receipt.json';final=json.loads(receipt.read_text())
+            final['qualification']={'passed':False,'stage':'qualification-failed','readiness':{},
+                'checks':dict.fromkeys(('nativeAndRollingCatalog','healthy','scope','release','noProofJobs','noProofLifecycle'),True)}
+            receipt.write_text(json.dumps(final));original=receipt.read_bytes()
+            self.assertEqual(b.query_host(h),{'queryHostPolicy':'active-private-authenticated','queryProofJobsEnabled':False})
+            self.assertEqual(receipt.read_bytes(),original)
+            self.assertEqual(events.count(('fresh-readiness',)),1)
+            # Runtime readiness belongs to the service's existing request gate,
+            # not the host's structural/control monitor.
+            with patch.object(b,'query_host_fresh',side_effect=AssertionError('Must not audit live availability')):
+                self.assertEqual(b.query_host_readback(h)['uid'],999)
+            self.assertNotIn(('systemctl','start','--no-block','rolling-budget.service'),events)
+
+    def test_unready_private_query_admission_preserves_host_and_allocates_nothing(self):
+        with tempfile.TemporaryDirectory() as t,self.lifecycle_fixture(pathlib.Path(t).resolve()) as (h,events,state,root):
+            with patch.object(b,'query_host_fresh',side_effect=b.Invalid('Query freshness')):
+                self.assertEqual(b.query_host(h),{'queryHostPolicy':'pending-node-readiness','queryProofJobsEnabled':False})
+            self.assertFalse((h['PRIVATE']/'query-host-intent.json').exists())
+            self.assertFalse(state['created'])
+            self.assertNotIn(('systemctl','start','--no-block','rolling-budget.service'),events)
+
     def test_query_failure_stops_owned_unit_and_shutdown_even_without_result_write(self):
         with tempfile.TemporaryDirectory() as t:
             private=pathlib.Path(t);(private/'final-receipt.json').write_text('{}');events=[]

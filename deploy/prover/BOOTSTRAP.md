@@ -1104,3 +1104,15 @@ no legacy board field. It verifies the Rolling artifact/catalog inventory
 locally but never demands a deployed rc1/V6 board. After actual node/query
 qualification, use the authenticated operator route to deploy fresh Rolling
 contracts. Only their current validated scope authorizes prover/proxy activation.
+
+### Private operator admission and acceptance
+
+The authenticated private operator listener may start after verified native/catalog
+and healthy-node evidence, an intact release and controls, and a fresh live node
+inspection. A failed final qualification receipt remains failed and immutable;
+operator availability does not imply acceptance. Full qualification remains required
+for prover and delivery activation. Authentication, private ingress, method limits,
+process isolation and per-request identity/synchronization/freshness checks remain.
+Ordinary node unavailability before admission leaves the listener unallocated;
+a later sync transition is rejected by the request boundary without destroying
+the synchronized host through the structural control monitor.

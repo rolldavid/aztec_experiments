@@ -1189,7 +1189,8 @@ def query_host_readback(h):
     for p,i in query_public_plan(h['RELEASE']):
         if i.st_gid!=r['publicGid'] or (not stat.S_ISLNK(i.st_mode) and stat.S_IMODE(i.st_mode)!=(0o550 if stat.S_ISDIR(i.st_mode) or i.st_mode&0o111 else 0o440)):raise Invalid('Query public permissions')
     query_listener_denials(record['privateAddress'])
-    query_host_fresh(h)
+    # Availability is checked on every authenticated request by the service.
+    # A normal sync transition must not terminate the host via this control audit.
     return r
 
 def query_host(h):
@@ -1207,14 +1208,22 @@ def query_host(h):
             if not (private/'final-receipt.json').exists():return {'queryHostPolicy':'pending-qualification','queryProofJobsEnabled':False}
             final=activation_private(private/'final-receipt.json');q=h['validated_qualification'](final.get('qualification',{}))
             if final.get('manifestSha256')!=h['PINS']['manifest'] or final.get('bootstrapSourceSha256')!=h['PINS']['bootstrap']:raise Invalid('Query qualification binding')
-            if q['passed'] is False:return {'queryHostPolicy':'qualification-failed','queryProofJobsEnabled':False}
-            if q.get('stage')!='complete' or not q.get('checks') or not all(q['checks'].values()) or not {'anchors','readiness'}<=set(q):raise Invalid('Query qualification')
+            if q['passed'] is False:
+                # Trusted operator access is independent of final acceptance.
+                # Keep the failed receipt and full prover/delivery gates intact.
+                required=('nativeAndRollingCatalog','healthy','scope','release','noProofJobs','noProofLifecycle')
+                if not all(q.get('checks',{}).get(k) is True for k in required) or 'readiness' not in q:
+                    return {'queryHostPolicy':'qualification-failed','queryProofJobsEnabled':False}
+            elif q.get('stage')!='complete' or not q.get('checks') or not all(q['checks'].values()) or not {'anchors','readiness'}<=set(q):raise Invalid('Query qualification')
             if timestamp(h['read_bounded_json'](h['BASE']/'deadline.json')['budgetStop']).timestamp()-time.time()<900:raise Invalid('Query budget reserve')
             h['verify_release'](h['RELEASE']);h['verify_controls']();activation_proxy_masked(h)
             if h['run'](['systemctl','show','board-prover.service','--property=LoadState','--value'],capture=True,timeout=5)!='masked':raise Invalid('Proof service must be masked')
             addresses=json.loads(h['run'](['ip','-j','-4','address','show'],capture=True,timeout=5))
             if record['privateAddress'] not in [a.get('local') for row in addresses for a in row.get('addr_info',[]) if a.get('family')=='inet']:raise Invalid('Query address not local')
-            query_host_fresh(h)
+            try:query_host_fresh(h)
+            except Exception:
+                # No identity, listener, or process has been allocated yet.
+                return {'queryHostPolicy':'pending-node-readiness','queryProofJobsEnabled':False}
             entries=query_public_plan(h['RELEASE']);unit=query_host_unit(h['RELEASE']);configdir=pathlib.Path('/etc/rolling-query')
             if os.path.lexists(configdir) or os.path.lexists('/etc/systemd/system/rolling-query.service'):raise Invalid('Existing query paths')
             for name,lookup in [('rolling-query',pwd.getpwnam),('rolling-query',grp.getgrnam),('rolling-runtime',grp.getgrnam)]:
