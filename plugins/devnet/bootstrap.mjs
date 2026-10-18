@@ -13,7 +13,6 @@ import {computeSecretHash} from '@aztec-labs/stdlib/hash';
 import {poseidon2HashWithSeparator} from '@aztec-labs/foundation/crypto/poseidon';
 import {sha256ToField} from '@aztec-labs/foundation/crypto/sha256';
 import {encodeEscrowCommitment} from '../../shared/protocol-commitments.mjs';
-import {waitForTx} from '@aztec-labs/aztec.js/node';
 import {retryUntil} from '@aztec-labs/foundation/retry';
 import {TEST_FEE_PADDING} from '@aztec-labs/aztec/testing';
 import {startDevnet,ensureDevelopmentMessageReady} from './network.mjs';
@@ -109,12 +108,22 @@ export async function activateDevelopmentBok({run,settle,expected,waitMs=120000,
  return {status,walletBok:{contractAddress:status.escrow,operatorAddress:expected.operatorAddress,pluginId:status.pluginId}};
 }
 
-// The SDK receipt waiter observes the finality established by native settlement.
-export async function waitDevelopmentFinality({node,txHash,timeoutMs=120000,pollMs=1000}) {
- if(!Number.isSafeInteger(timeoutMs)||timeoutMs<1||timeoutMs>120000||!Number.isSafeInteger(pollMs)||pollMs<0||pollMs>1000)throw Error('Invalid development finality deadline');
- const receipt=await waitForTx(node,txHash,{waitForStatus:TxStatus.FINALIZED,timeout:timeoutMs/1000,interval:pollMs/1000,ignoreDroppedReceiptsFor:0});
- if(String(receipt.txHash)!==String(txHash)||!Number.isSafeInteger(receipt.blockNumber)||receipt.blockNumber<1||String((await node.getBlock(receipt.blockNumber))?.hash)!==String(receipt.blockHash))throw Error('Original Ready anchor changed');
- return {number:receipt.blockNumber,hash:String(receipt.blockHash)};
+// Native settlement establishes PROVEN, while L1 finality needs further blocks.
+// Advance only missing receipt state through the SDK's serialized native controls.
+export async function waitDevelopmentFinality({node,txHash,timeoutMs=120000}) {
+ if(!Number.isSafeInteger(timeoutMs)||timeoutMs<1||timeoutMs>120000)throw Error('Invalid development finality deadline');
+ const deadline=Date.now()+timeoutMs;let anchor;
+ for(;;){
+  const receipt=await node.getTxReceipt(txHash);
+  if(!receipt.isMined()||!receipt.hasExecutionSucceeded()||![TxStatus.CHECKPOINTED,TxStatus.PROVEN,TxStatus.FINALIZED].includes(receipt.status))throw Error('Original Ready receipt is not successful and checkpointed');
+  if(String(receipt.txHash)!==String(txHash)||!Number.isSafeInteger(receipt.blockNumber)||receipt.blockNumber<1||String((await node.getBlock(receipt.blockNumber))?.hash)!==String(receipt.blockHash)||
+   (anchor&&(anchor.number!==receipt.blockNumber||anchor.hash!==String(receipt.blockHash))))throw Error('Original Ready anchor changed');
+  anchor={number:receipt.blockNumber,hash:String(receipt.blockHash)};
+  if(receipt.status===TxStatus.FINALIZED)return anchor;
+  if(Date.now()>=deadline)throw Error('Original Ready transaction did not finalize');
+  if(receipt.status===TxStatus.CHECKPOINTED)await node.prove();
+  else await node.mineBlock();
+ }
 }
 
 // Native local mode uses the SDK's one serialized build/settlement

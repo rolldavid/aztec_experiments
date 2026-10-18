@@ -316,14 +316,25 @@ if(focused){
   await ensureDevelopmentMessageReady(node,Fr.ONE);assert.equal(blocks,2,'Already consumable state causes no block');
   const failure=Error('controlled native build');node.getL1ToL2MessageIndex=async()=>undefined;node.mineBlock=async()=>{throw failure;};await assert.rejects(ensureDevelopmentMessageReady(node,Fr.ONE),e=>e===failure);
  });
- test('finality uses real SDK receipts and rejects dropped reverted or changed anchors',async()=>{
-  const {MinedTxReceipt,DroppedTxReceipt}=await import('@aztec-labs/stdlib/tx');const {BlockHash}=await import('@aztec-labs/stdlib/block');
+ test('finality advances native state only for successful original receipts',async()=>{
+  const {MinedTxReceipt,DroppedTxReceipt,PendingTxReceipt}=await import('@aztec-labs/stdlib/tx');const {BlockHash}=await import('@aztec-labs/stdlib/block');
   const hash=TxHash.fromString('0x'+'1'.repeat(64)),blockHash=BlockHash.fromString('0x'+'2'.repeat(64));
   const receipt=(status='finalized',result='success')=>new MinedTxReceipt(hash,status,result,1n,blockHash,3,1,0,0,undefined);
-  let reads=0;const node={getTxReceipt:async()=>receipt(++reads<2?'proven':'finalized'),getBlock:async()=>({hash:blockHash})};
-  assert.deepEqual(await waitDevelopmentFinality({node,txHash:hash,pollMs:0}),{number:3,hash:String(blockHash)});assert.equal(reads,2);
-  for(const bad of [new DroppedTxReceipt(hash),receipt('finalized','reverted')]){node.getTxReceipt=async()=>bad;await assert.rejects(waitDevelopmentFinality({node,txHash:hash,pollMs:0}));}
-  node.getTxReceipt=async()=>receipt();node.getBlock=async()=>({hash:BlockHash.ZERO});await assert.rejects(waitDevelopmentFinality({node,txHash:hash}),/anchor changed/);
+  let proven=false,blocks=0;const calls=[];
+  const node={getTxReceipt:async()=>receipt(!proven?'checkpointed':blocks<2?'proven':'finalized'),getBlock:async()=>({hash:blockHash}),
+   prove:async()=>{calls.push('prove');proven=true;},mineBlock:async()=>{calls.push('mine');blocks++;}};
+  assert.deepEqual(await waitDevelopmentFinality({node,txHash:hash,timeoutMs:100}),{number:3,hash:String(blockHash)});
+  assert.deepEqual(calls,['prove','mine','mine']);calls.length=0;
+  await waitDevelopmentFinality({node,txHash:hash});assert.deepEqual(calls,[],'Already finalized result needs no native progress');
+  for(const bad of [new DroppedTxReceipt(hash),new PendingTxReceipt(hash),receipt('proposed'),receipt('checkpointed','reverted'),receipt('proven','reverted'),receipt('finalized','reverted')]){
+   node.getTxReceipt=async()=>bad;await assert.rejects(waitDevelopmentFinality({node,txHash:hash,timeoutMs:100}));assert.deepEqual(calls,[],'Failed or unconfirmed transaction must not drive blocks');
+  }
+  node.getTxReceipt=async()=>receipt('proven');node.getBlock=async()=>({hash:BlockHash.ZERO});await assert.rejects(waitDevelopmentFinality({node,txHash:hash}),/anchor changed/);assert.deepEqual(calls,[]);
+  let changed=false;node.getTxReceipt=async()=>changed?new MinedTxReceipt(hash,'proven','success',1n,BlockHash.ZERO,4,1,0,0,undefined):receipt('proven');
+  node.getBlock=async()=>({hash:changed?BlockHash.ZERO:blockHash});node.mineBlock=async()=>{calls.push('mine');changed=true;};
+  await assert.rejects(waitDevelopmentFinality({node,txHash:hash}),/anchor changed/);assert.deepEqual(calls,['mine'],'Re-inclusion cannot replace the original anchor');
+  node.getTxReceipt=async()=>receipt('proven');node.getBlock=async()=>({hash:blockHash});const failure=Error('controlled native mining failure');node.mineBlock=async()=>{throw failure;};
+  await assert.rejects(waitDevelopmentFinality({node,txHash:hash}),e=>e===failure);
  });
 
  test('development query gateway pins existing disabled service and canonical compact tier',async()=>{
