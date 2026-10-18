@@ -139,6 +139,27 @@ export async function recoverAcceptedHostedRevision({repositories,repository,req
  return {replyText,recoveredRevision:{repositoryId:receipt.repositoryId,acceptedRevision:receipt.acceptedRevision,sourceDigest:receipt.validation.sourceDigest}};
 }
 
+/** Cheap dispatch hint under the service lease. Re-read durable ownership on
+ * each visit; this never authorizes a paid call or replaces canonical recovery. */
+export async function hostedRequestDispatchable({request,directory,scope,pluginId,lease,repositories,repository}){
+ await lease.assertHeld();
+ const id=createHash('sha256').update(JSON.stringify({scope,requestId:request.requestId,target:request.target})).digest('hex');
+ const file=path.join(directory,id+'.json');
+ try{await fs.lstat(file);}catch(error){if(error.code==='ENOENT')return true;throw error;}
+ const {readHostedPrivateFile}=await import('./operations.mjs');
+ const original=JSON.parse((await readHostedPrivateFile(file)).toString('utf8')),saved=original.hostedPrivateBok;
+ if(!saved)return true;
+ const identity={network:`eip155-${scope.chainId}:aztec-${scope.rollupVersion}:${scope.rollupAddress}`,escrow:scope.receiver,requestId:request.requestId,target:request.target};
+ assert.deepEqual(saved.binding,{...identity,postId:request.postId,pluginId});assert.equal(request.pluginId,pluginId);
+ assert(['running','reply-intent','reply-confirmed','finished','accounting-recovery','accounted-without-reply'].includes(saved.phase),'Unknown hosted phase');
+ if(['reply-intent','reply-confirmed'].includes(saved.phase))return true;
+ if(saved.phase!=='running')return false;
+ const journal=original.privateBok,calls=Object.values(journal?.calls??{});
+ if(!journal||journal.finished||!calls.length||calls.some(call=>call.phase!=='settled'))return false;
+ assert.deepEqual(journal.identity,identity,'Original metering identity changed');
+ return repositories.hasAcceptedRecovery({threadId:request.threadId,invocationId:request.requestId,repository});
+}
+
 /** Discover interrupted reply/finish work from the existing private journals.
  * The public pending feed deliberately excludes replied posts. This bounded
  * directory cursor is only a hint: original scope and fresh chain state bind
@@ -321,7 +342,8 @@ export async function runRollingHostedService({config,env=process.env,onError=()
   const provider=veniceMeteredProvider({client:veniceClient({privateKey:env.VENICE_WALLET_PRIVATE_KEY}),model:env.VENICE_MODEL||undefined,autoTopUp:false});
   recoverPending=hostedRecoveryScanner({directory:config.stateDirectory,scope,pluginId:config.pluginId,board,lease});
   server=await startEscrowService({descriptor,profile:'rolling',concurrency:2,board,recoverPending,host:config.host??'127.0.0.1',port:config.port??8787,
-   onError:()=>onError(Error('Rolling hosted request requires reconciliation')),run:async request=>{
+   onError:()=>onError(Error('Rolling hosted request requires reconciliation')),
+   canDispatch:request=>hostedRequestDispatchable({request,directory:config.stateDirectory,scope,pluginId:config.pluginId,lease,repositories,repository}),run:async request=>{
     await lease.assertHeld();const id=createHash('sha256').update(JSON.stringify({scope,requestId:request.requestId,target:request.target})).digest('hex');
     const store=await fileState(path.join(config.stateDirectory,id+'.json'));
     const rawEscrow=await walletOperation(()=>createPrivateBokEscrow({node,wallet,artifact,address:scope.receiver,operator:account.address.toString(),board:scope.boardAddress,network:scope,

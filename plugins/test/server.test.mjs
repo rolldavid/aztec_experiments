@@ -145,3 +145,18 @@ test('Rolling shutdown during canonical admission cannot launch a new job',async
  const server=await startEscrowService({profile:'rolling',descriptor:{},port:0,pollMs:5,onError:e=>assert.fail(e),board:{pending:async()=>({requests:[row],nextCursor:null}),readRequest:async()=>{reading=true;await new Promise(resolve=>{admit=resolve;});return {predecessorsClear:true};}},run:async()=>{runs++;}});
  await until(()=>reading);const closed=server.close();admit();await closed;assert.equal(runs,0);
 });
+
+test('Rolling durable dispatch skips unchanged failed work without success and keeps unrelated threads live',{timeout:3000},async()=>{
+ const first={requestId:'one',postId:'one',threadId:'a',order:'1'},later={requestId:'later',postId:'later',threadId:'a',order:'2'},other={requestId:'other',postId:'other',threadId:'b',order:'3'};
+ let fenced=false,failedOnce=false,skips=0,rows=[first],releaseSkip,releaseOther,releaseRecovered,runs=[],errors=[];
+ const skipped=new Promise(r=>releaseSkip=r),otherDone=new Promise(r=>releaseOther=r),recovered=new Promise(r=>releaseRecovered=r);
+ const server=await startEscrowService({descriptor:{},profile:'rolling',port:0,pollMs:5,
+  board:{pending:async()=>({requests:rows,nextCursor:null}),readRequest:async id=>({predecessorsClear:id!=='later'})},
+  canDispatch:async request=>{if(request===first&&fenced){if(++skips===3)releaseSkip();return false;}return true;},
+  onError:error=>errors.push(error),run:async request=>{runs.push(request.requestId);if(request===first&&!failedOnce){failedOnce=true;fenced=true;throw Error('original failure');}if(request===other){rows=[first];releaseOther();}else if(request===first){rows=[];releaseRecovered();}}});
+ try{
+  await skipped;let health=await(await fetch('http://127.0.0.1:'+server.address.port+'/health')).json();assert.equal(health.status,'degraded');assert.equal(health.lastSuccess,null);assert.equal(errors.length,1);assert.deepEqual(runs,['one']);
+  rows=[first,later,other];await otherDone;assert.deepEqual(runs,['one','other']);
+  fenced=false;await recovered;assert.deepEqual(runs,['one','other','one']);assert(!runs.includes('later'));
+ }finally{await server.close();}
+});

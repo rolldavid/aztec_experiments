@@ -4,7 +4,7 @@ import path from 'node:path';
 import {createHash} from 'node:crypto';
 import {execFile} from 'node:child_process';
 import {promisify} from 'node:util';
-import {fileState} from './operations.mjs';
+import {fileState,readHostedPrivateFile} from './operations.mjs';
 const exec=promisify(execFile),sha=value=>createHash('sha256').update(value).digest('hex');
 const revision=value=>typeof value==='string'&&/^[0-9a-f]{40}$/.test(value);
 /** Trusted fixed Git operations only. Never use this port to execute generated
@@ -120,5 +120,22 @@ export function threadRepositories({directory,namespace,lease,git=repositoryGit,
    });
   }catch(error){release();throw error;}
  }
- return Object.freeze({open:input=>open(input),recoverAccepted:input=>open(input,true)});
+ /** Only a local recovery candidate hint. The normal recovery still validates
+  * exact Git refs, billing, artifacts and publication before any reply. */
+ async function hasAcceptedRecovery({threadId,invocationId,repository}){
+  await lease.assertHeld();assert(/^0x[0-9a-f]{64}$/.test(threadId)&&/^0x[0-9a-f]{64}$/.test(invocationId));assert(/^[\w.-]+\/[\w.-]+$/.test(repository));
+  const root=path.join(directory,sha(namespace+'\0'+threadId)),file=path.join(root,'revisions.json');
+  try{await fs.lstat(file);}catch(error){if(error.code==='ENOENT')return false;throw error;}
+  assert.equal(await fs.realpath(root),root,'Repository path changed');
+  const state=JSON.parse((await readHostedPrivateFile(file)).toString('utf8')),connection=connections?.connectionFor(threadId)??null;
+  assert.deepEqual(state.identity,{namespace,threadId,repository:connection?.fullName??repository,startEmpty,...(connection?{connection}:{})});
+  const record=state.operations?.[invocationId];
+  if(!record)return false;
+  assert(record.threadId===threadId&&record.invocationId===invocationId,'Accepted invocation identity changed');
+  if(!['prepared','accepted'].includes(record.status)||!revision(record.producedRevision))return false;
+  if(record.status==='accepted'&&record.producedRevision!==state.acceptedRevision)return false;
+  const v=record.validation;
+  return v?.passed===true&&v.revision===record.producedRevision&&v.testsPassed===true&&v.buildPassed===true&&['sourceDigest','sourceArchiveSha256','artifactArchiveSha256'].every(name=>/^[0-9a-f]{64}$/.test(v[name]));
+ }
+ return Object.freeze({open:input=>open(input),recoverAccepted:input=>open(input,true),hasAcceptedRecovery});
 }

@@ -59,8 +59,9 @@ export async function isHostedTerminalWithoutReply({request,escrow,store,anchor}
  assert.deepEqual(store.read(),original,'Terminal journal changed during admission');return true;
 }
 /** On-chain state owns work. The bounded in-memory queue never resumes paid calls. */
-export async function startEscrowService({descriptor,escrow,board,run,host='127.0.0.1',port=8787,onError=console.error,pollMs=2000,concurrency=2,profile='legacy',recoverPending=async()=>[]}){
+export async function startEscrowService({descriptor,escrow,board,run,host='127.0.0.1',port=8787,onError=console.error,pollMs=2000,concurrency=2,profile='legacy',recoverPending=async()=>[],canDispatch=async()=>true}){
  if(!['legacy','rolling'].includes(profile))throw Error('Invalid service profile');
+ if(typeof canDispatch!=='function')throw Error('Invalid dispatch capability');
  if(!Number.isSafeInteger(concurrency)||concurrency<1||concurrency>16)throw Error('Invalid service concurrency');
  let rollingCursor=null,rollingQueue=[];
  let stopped=false,polling=false,cursor=0,inFlight=Promise.resolve(),pollFailure=null,jobFailure=null,lastSuccess=null;
@@ -110,6 +111,9 @@ export async function startEscrowService({descriptor,escrow,board,run,host='127.
     if(jobs.has(request.requestId)){rollingQueue=rollingQueue.filter(row=>row.requestId!==request.requestId);continue;}
     if(busyThread(request))continue;
     rollingQueue=rollingQueue.filter(row=>row.requestId!==request.requestId);
+    // The trusted durable-state hint skips fenced work before expensive setup.
+    // A skip is neither a successful job nor a reason to clear its failure.
+    const eligible=await canDispatch(request);assert.equal(typeof eligible,'boolean');if(!eligible)continue;
     // Recheck the indexed canonical predecessor before dispatch, including
     // replied recovery hints and rows retained across a changing publication.
     if((await board.readRequest(request.postId))?.predecessorsClear!==true)continue;

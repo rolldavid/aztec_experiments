@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import {runPrivateBokRequest,startEscrowService,reconcileHostedBilling,isHostedTerminalWithoutReply} from '../escrow-service.mjs';
 import {validateVeniceBilling} from '../venice-metered.mjs';
 import {validateDescriptor,API_VERSION,unpackText} from '../protocol.mjs';
-import {publishAcceptedRevision,recoverAcceptedHostedRevision,hostedRecoveryScanner,runHostedBillingReconciliation,acquireHostedLease,serializeHostedEscrow,hostedTerminalNode} from '../main.mjs';
+import {publishAcceptedRevision,recoverAcceptedHostedRevision,hostedRecoveryScanner,runHostedBillingReconciliation,acquireHostedLease,serializeHostedEscrow,hostedTerminalNode,hostedRequestDispatchable} from '../main.mjs';
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
@@ -572,4 +572,18 @@ test('existing entered agent intent stays fenced without re-admission even if po
 for(const stage of ['initial-history','after-allocation','request'])test('thread admission rejects changed canonical '+stage+' before durable run or paid work',async()=>{
  const x=fixture();let checks=0,allocations=0;x.args.conversation={load:async()=>({threadId:f(9),canonical:true,complete:true,assertCurrent:async()=>{checks++;if(stage==='initial-history'||stage==='after-allocation'&&checks===2)throw Error('History changed');}})};
  x.args.admitThread=async()=>{allocations++;if(stage==='request')x.current.target=f(99);};await assert.rejects(x.run());assert.equal(x.store.read().hostedPrivateBok,undefined);assert.deepEqual(x.events,[]);assert.equal(allocations,stage==='initial-history'?0:1);
+});
+
+test('durable dispatch hint skips fenced billing before escrow construction and observes accepted recovery changes',{timeout:3000},async t=>{
+ const x=await acceptedInterruptionFixture(),directory=await fs.mkdtemp(path.join(os.tmpdir(),'bok-dispatch-'));t.after(()=>fs.rm(directory,{recursive:true,force:true}));
+ const scope={chainId:'31337',rollupVersion:'1',rollupAddress:'public',receiver:f(5)},request={...x.args.request,threadId:f(9)},id=createHash('sha256').update(JSON.stringify({scope,requestId:request.requestId,target:request.target})).digest('hex'),file=path.join(directory,id+'.json');
+ let candidate=false,hints=0,held=true;const options={request,directory,scope,pluginId:request.pluginId,lease:{assertHeld:async()=>assert(held)},repository:'owner/project',repositories:{hasAcceptedRecovery:async input=>{hints++;assert.deepEqual(input,{threadId:f(9),invocationId:request.requestId,repository:'owner/project'});return candidate;}}};
+ const save=()=>fs.writeFile(file,JSON.stringify(x.store.read()),{mode:0o600});
+ assert.equal(await hostedRequestDispatchable(options),true,'fresh request remains eligible');await save();const events=[...x.events];
+ for(let i=0;i<3;i++)assert.equal(await hostedRequestDispatchable(options),false);assert.equal(hints,3);assert.deepEqual(x.events,events);
+ candidate=true;assert.equal(await hostedRequestDispatchable(options),true,'actual retained acceptance enables normal recovery');
+ const saved=x.store.read(),call=saved.privateBok.calls[0];call.phase='possibly-sent';await save();assert.equal(await hostedRequestDispatchable(options),false);assert.equal(hints,4);call.phase='settled';
+ for(const phase of ['accounting-recovery','accounted-without-reply','finished']){saved.hostedPrivateBok.phase=phase;await save();assert.equal(await hostedRequestDispatchable(options),false);}
+ for(const phase of ['reply-intent','reply-confirmed']){saved.hostedPrivateBok.phase=phase;await save();assert.equal(await hostedRequestDispatchable(options),true);}
+ saved.hostedPrivateBok.phase='running';saved.hostedPrivateBok.binding.target=f(99);await save();await assert.rejects(hostedRequestDispatchable(options));held=false;await assert.rejects(hostedRequestDispatchable(options));assert.deepEqual(x.events,events);
 });

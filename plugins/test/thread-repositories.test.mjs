@@ -209,3 +209,13 @@ test('connected thread never consumes an empty-thread pool slot',async t=>{
  const manager=threadRepositories({...h.options,connections:{connectionFor:()=>connection,readConnected:async()=>assert.fail('No source read requested')},ensureThread:async()=>assert.fail('Connected repository is not a pool slot')});
  const opened=await h.open(1,1,manager);assert.deepEqual(opened.connection,connection);await opened.close();
 });
+
+test('accepted recovery hint reads actual durable acceptance without publication or execution and survives restart',async t=>{
+ const h=await fixture(t),input={threadId:id(1),invocationId:id(1),repository:'owner/project'};let publications=0,validations=0;
+ const options={...h.options,validateRevision:async({revision})=>{validations++;return {passed:true,revision,testsPassed:true,buildPassed:true,sourceDigest:'a'.repeat(64),sourceArchiveSha256:'b'.repeat(64),artifactArchiveSha256:'c'.repeat(64)};},onAccepted:async()=>{publications++;return {published:true};}},manager=threadRepositories(options);
+ assert.equal(await manager.hasAcceptedRecovery(input),false);
+ const first=await h.open(1,1,manager);await h.checkout(first);assert.equal(await manager.hasAcceptedRecovery(input),false);await fs.writeFile(path.join(first.work,'file.txt'),'accepted recovery');const accepted=await first.accept();await first.close();
+ assert.equal(await manager.hasAcceptedRecovery(input),true);assert.equal(await threadRepositories(options).hasAcceptedRecovery(input),true);assert.equal(await manager.hasAcceptedRecovery({...input,invocationId:id(2)}),false);assert.equal(publications,1);assert.equal(validations,1);
+ const file=path.join(path.dirname(first.repositoryPath),'revisions.json'),state=JSON.parse(await fs.readFile(file,'utf8'));state.operations[id(1)].status='prepared';state.acceptedRevision=null;await fs.writeFile(file,JSON.stringify(state));assert.equal(await manager.hasAcceptedRecovery(input),true,'lost acceptance acknowledgement remains eligible for exact recovery');
+ state.operations[id(1)].validation.passed=false;await fs.writeFile(file,JSON.stringify(state));assert.equal(await manager.hasAcceptedRecovery(input),false);state.operations[id(1)].validation.passed=true;state.operations[id(1)].invocationId=id(2);await fs.writeFile(file,JSON.stringify(state));await assert.rejects(manager.hasAcceptedRecovery(input));assert.equal(publications,1);assert.equal(validations,1);assert.match(accepted.acceptedRevision,/^[0-9a-f]{40}$/);
+});
