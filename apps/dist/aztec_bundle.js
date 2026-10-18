@@ -378544,6 +378544,11 @@ ${val.stack}`;
       return confirmed(after, saved.value);
     }
     return {
+      // Authenticated detached request for an explicit recovery review. It confers
+      // no send authority; callers must reconcile and bind their later confirmation.
+      async inspectRequest() {
+        return structuredClone((await load()).value);
+      },
       async inspectSummary() {
         const saved = await load();
         if (!saved.value) return null;
