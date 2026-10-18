@@ -408,6 +408,17 @@ class htb 1:20 parent 1:1 prio 0 rate 25Mbit ceil 50Mbit burst 4725b cburst 7850
         ns['verify_controls']=lambda:(_ for _ in ()).throw(ValueError('control loss'))
         with self.assertRaises(ValueError):ns['attest']()
 
+    def test_application_observer_skips_live_install_or_receipt_writer(self):
+        import fcntl
+        with tempfile.TemporaryDirectory() as t:
+            ns=host();ns['BASE']=pathlib.Path(t);ns['PRIVATE']=pathlib.Path(t)/'private';ns['PRIVATE'].mkdir();events=[]
+            ns['application_observation']=lambda:events.append('observe')
+            for path in (ns['BASE']/'lock',ns['PRIVATE']/'receipt-lock'):
+                with path.open('a') as writer:
+                    fcntl.flock(writer,fcntl.LOCK_EX|fcntl.LOCK_NB)
+                    self.assertFalse(ns['application_attest']());self.assertEqual(events,[])
+            self.assertTrue(ns['application_attest']());self.assertEqual(events,['observe'])
+
     def test_application_failure_retains_node_only_after_verified_containment(self):
         for failure in (None,'unallocated','controls','containment'):
             with self.subTest(failure=failure),tempfile.TemporaryDirectory() as t:
@@ -2259,7 +2270,7 @@ class QueryHost(unittest.TestCase):
                 def support(operation):events.append(('support',operation));raise b.Invalid('labelled lost state')
                 def run(args,**kw):events.append(tuple(args));return 'masked'
                 ns.update(BASE=base,PRIVATE=private,verify_controls=lambda:1,run=run,activation_support=support,
-                          open=lambda *a,**kw:io.StringIO(),write=lambda p,v,*a:pathlib.Path(p).write_text(v))
+                          open=lambda p,*a,**kw:io.StringIO() if p=='/dev/console' else open(p,*a,**kw),write=lambda p,v,*a:pathlib.Path(p).write_text(v))
                 ns['application_failure']=lambda:events.append(('application-contained',))
                 ns['application_attest']()
                 self.assertIn(('support','query-observe'),events)
@@ -2505,7 +2516,7 @@ class ActivationDelivery(unittest.TestCase):
                 (base/'stage').write_text(stage);(base/'deadline.json').write_text(json.dumps({'budgetStop':config()['budgetStop'],'runtimeArchiveSha256':'a'*64,'manifestSha256':'b'*64}))
                 ns['PINS']['activationDelivery']='d'*64
                 def support(operation):events.append(operation);raise b.Invalid('controlled missing request')
-                ns.update(BASE=base,PRIVATE=private,verify_controls=lambda:1,run=lambda args,**kw:events.append(args) or 'masked',activation_support=support,open=lambda *a,**kw:io.StringIO(),write=lambda p,v,*a:pathlib.Path(p).write_text(v))
+                ns.update(BASE=base,PRIVATE=private,verify_controls=lambda:1,run=lambda args,**kw:events.append(args) or 'masked',activation_support=support,open=lambda p,*a,**kw:io.StringIO() if p=='/dev/console' else open(p,*a,**kw),write=lambda p,v,*a:pathlib.Path(p).write_text(v))
                 ns['application_failure']=lambda:events.append(('application-contained',))
                 ns['application_attest']()
                 self.assertEqual('delivery' in events,stage=='installed')

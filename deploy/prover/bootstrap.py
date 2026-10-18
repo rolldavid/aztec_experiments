@@ -770,7 +770,20 @@ def attest(check=False):
     verify_controls()
     if check and digest(RELEASE/'deploy/prover/bootstrap.py')!=PINS['startup']:raise ValueError('Control verification failed')
 
+def application_work(callback):
+    # Reuse install/update and receipt writers' locks. A live writer is not an
+    # application failure, and its partial records are not an observation.
+    with open(BASE/'lock','a') as writer, open(PRIVATE/'receipt-lock','a') as receipt:
+        try:
+            fcntl.flock(writer,fcntl.LOCK_EX|fcntl.LOCK_NB)
+            fcntl.flock(receipt,fcntl.LOCK_EX|fcntl.LOCK_NB)
+        except BlockingIOError:return False
+        callback();return True
+
 def application_attest():
+    return application_work(application_observation)
+
+def application_observation():
     if (BASE/'application-failure.json').exists():application_failure();return
     good=False;count=0
     try: count=verify_controls();good=True
@@ -782,14 +795,15 @@ def application_attest():
             'egressBytes':count if type(count)==int and count>=0 else 0,
             'runtimeArchiveSha256':record['runtimeArchiveSha256'],'manifestSha256':record['manifestSha256'],
             'proverPolicy':'masked-pending-qualification','linuxQueryQualified':False}
+    application_good=True
     if (PRIVATE/'prover-activation-intent.json').exists():
         try: output.update(activation_support('observe'))
-        except Exception: good=False;output['controlsVerified']=False;output['proverPolicy']='activation-unverified'
+        except Exception: application_good=False;output['proverPolicy']='activation-unverified'
     else:
         try:
             for service in ('board-prover.service','board-prover-proxy.service'):
                 if run(['systemctl','show',service,'--property=LoadState','--value'],capture=True,timeout=5)!='masked': raise ValueError('Unexpected prover state')
-        except Exception: good=False;output['controlsVerified']=False;output['proverPolicy']='activation-unverified'
+        except Exception: application_good=False;output['proverPolicy']='activation-unverified'
     exercise=BASE/'egress-exercise.json'
     if exercise.exists():
         e=json.loads(exercise.read_text())
@@ -804,19 +818,20 @@ def application_attest():
         except Exception: output['qualification']=qualification_failure('interrupted-unknown')
     if (PINS.get('queryHost') and status=='installed') or any((PRIVATE/('query-host-'+n+'.json')).exists() for n in ('request','intent','result')):
         try: output.update(activation_support('query-observe'))
-        except Exception: good=False;output['controlsVerified']=False;output['queryHostPolicy']='unverified'
+        except Exception: application_good=False;output['queryHostPolicy']='unverified'
     if (PINS.get('activationDelivery') and status=='installed') or any(PRIVATE.glob('activation-delivery-*.json')):
         try: output.update(activation_support('delivery'))
-        except Exception: good=False;output['activationDelivery']='failed-reconcile-only'
+        except Exception: application_good=False;output['activationDelivery']='failed-reconcile-only'
+    output['applicationVerified']=application_good
     minute=str(int(dt.datetime.now(dt.timezone.utc).timestamp())//60)
     last=BASE/'last-attestation'
-    marker=minute+':'+status+':'+str(good)+':'+str(output.get('qualification',{}).get('stage','pending'))
+    marker=minute+':'+status+':'+str(good)+':'+str(application_good)+':'+str(output.get('qualification',{}).get('stage','pending'))
     try:
         if not last.exists() or last.read_text()!=marker:
             with open('/dev/console','w') as f: f.write('ROLLING_BOOTSTRAP '+json.dumps(output,separators=(',',':'))+'\n')
             write(last,marker)
     finally:
-        if not good:application_failure()
+        if not good or not application_good:application_failure()
 
 def activation_support(operation, expected=None):
     # Only the immutable packaged source may interpret root-owned activation data.
@@ -1856,7 +1871,7 @@ def generate(config, now=None):
     if 'queryHost' in config:pins['queryHost']=hashlib.sha256(json.dumps(config['queryHost'],sort_keys=True,separators=(',',':')).encode()).hexdigest()
     if 'activationDelivery' in config:pins['activationDelivery']=activation_delivery_digest(config['activationDelivery'])
     prefix = 'PINS = '+repr(pins)+'\nNETWORK = '+repr(NETWORK)+'\nQUALIFICATION = '+repr(QUALIFICATION)+'\n'
-    dispatch = "\ntry:\n    if sys.argv[1:2]==['--activate-prover']:\n        if len(sys.argv)!=3: raise ValueError('Activation arguments')\n        activation_support('activate',sys.argv[2])\n    elif '--application-attest' in sys.argv: application_attest()\n    elif '--application-stop' in sys.argv: application_failure()\n    elif '--monitor-stop' in sys.argv:\n        if os.environ.get('SERVICE_RESULT')!='success': isolate_network()\n    elif '--qualify' in sys.argv: qualify()\n    elif '--qualification-stop' in sys.argv:\n        qualify(aborted=True);run(['systemctl','start','rolling-qualification-receipt.service'],timeout=40)\n    elif '--qualification-receipt' in sys.argv: final_receipt()\n    else: attest('--check' in sys.argv)\nexcept Exception as error:\n    if sys.argv[1:2] in (['--application-attest'],['--activate-prover']):\n        application_failure();raise SystemExit(1) from None\n    if sys.argv[1:] in (['--qualify'],['--qualification-stop'],['--qualification-receipt']): qualification_error(error)\n    shutdown_failure(error)\n"
+    dispatch = "\ntry:\n    if sys.argv[1:2]==['--activate-prover']:\n        if len(sys.argv)!=3: raise ValueError('Activation arguments')\n        if not application_work(lambda:activation_support('activate',sys.argv[2])):raise SystemExit(75)\n    elif '--application-attest' in sys.argv: application_attest()\n    elif '--application-stop' in sys.argv: application_failure()\n    elif '--monitor-stop' in sys.argv:\n        if os.environ.get('SERVICE_RESULT')!='success': isolate_network()\n    elif '--qualify' in sys.argv: qualify()\n    elif '--qualification-stop' in sys.argv:\n        qualify(aborted=True);run(['systemctl','start','rolling-qualification-receipt.service'],timeout=40)\n    elif '--qualification-receipt' in sys.argv: final_receipt()\n    else: attest('--check' in sys.argv)\nexcept Exception as error:\n    if sys.argv[1:2] in (['--application-attest'],['--activate-prover']):\n        application_failure();raise SystemExit(1) from None\n    if sys.argv[1:] in (['--qualify'],['--qualification-stop'],['--qualification-receipt']): qualification_error(error)\n    shutdown_failure(error)\n"
     # A raw multiline literal avoids doubling runtime backslashes/newlines in
     # the compressed envelope. Verify its decoded value before emitting bytes;
     # runtime code, attestation content and their hashes remain unchanged.

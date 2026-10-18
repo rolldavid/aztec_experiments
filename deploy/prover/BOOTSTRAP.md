@@ -1142,3 +1142,7 @@ intents/journals while repairing the specific admission defect. After explicit
 operator reconciliation, remove only that failure marker and start the approved
 services/observer; never delete an ambiguous financial or activation intent.
 The native node, data and original absolute budget/Fleet deadlines are retained.
+Application observations and explicit activation reuse the install/update writer
+lock and final-receipt lock. A busy writer skips observation; it is not reported
+as a failure, and the independent controls watchdog continues. Explicit activation
+returns exit75 when busy, without issuing an activation or touching its journal.
