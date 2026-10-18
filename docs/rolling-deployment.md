@@ -111,6 +111,40 @@ Use `applicationProfile: "rolling"`. Repeat commands reconcile original intents;
 they do not authorize replacement transactions. Preserve uncertain/preparing
 records and locks until the owning process and canonical outcome are resolved.
 
+## Transfer Rolling moderator authority
+
+The current onchain moderator can transfer authority to a different, nonzero
+Aztec address. Confirm that the successor controls that account and can pay its
+future transaction fees before transferring. The deployment's initial moderator
+is not a permanent administrator: the wallet reads canonical current authority
+and checks it again before sending.
+
+1. Open the connected application with the current moderator account unlocked.
+   Select **Transfer moderator authority** and enter **Successor Aztec address**.
+2. Select **Check action and review fee**. Verify the exact successor, current
+   parent rules and maximum fee. Select **Confirm and send** only after review.
+3. Observe the confirmed transaction and `ModeratorTransferred` event. Refresh
+   the wallet with the successor account; it now has the moderator actions.
+   The former key is rejected for moderation and cannot transfer authority back.
+
+The exported application interface uses
+`session.application.readModeratorStatus()` to report `{ authorized }`,
+`session.application.prepare({ type: 'transfer-moderator', successor })` to
+prepare the reviewed action, and
+`session.application.submitPrepared(prepared.intentId)` to submit it. These use
+the existing wallet, fee and saved-intent flow; there is no separate transfer CLI.
+If the outcome is uncertain, use **Check existing transaction** or
+`session.application.reconcile(prepared.intentId)` for that original intent.
+Do not create a replacement merely because a response is missing.
+
+The contract's `current_moderator()` view exposes the current authority.
+`transfer_moderator(successor)` changes only that authority; policy and users'
+collateral remain unchanged. Any return to the previous moderator is another
+transfer signed by the successor (or whoever subsequently holds authority),
+with its own fee review. The former key, original deployer and website operator
+have no override. Record the confirmed transaction and successor in the public
+installation handover, without including signing material.
+
 ## Reader, wallet and services
 
 [The connected reader guide](../apps/rolling/README.md) defines the exact public
@@ -288,7 +322,9 @@ hashes, nonces and remote Git objects; never assume a missing response means no
 action occurred. Publication's local idempotent recovery does not authorize
 replaying a paid provider call. Inspect storage integrity before serving it.
 
-For rotation, use only the contract's actual authority mechanism. PrivateBok's
+For Rolling moderator rotation, follow
+[Transfer Rolling moderator authority](#transfer-rolling-moderator-authority).
+This does not rotate Bok's operator. PrivateBok's
 operator/board binding is immutable; replacement requires a new adapter and
 explicit registration/funding/recovery transition. Preserve old contracts and
 withdrawal records. A website rollback cannot move collateral or change onchain
