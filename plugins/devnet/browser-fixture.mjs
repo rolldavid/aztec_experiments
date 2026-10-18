@@ -21,7 +21,7 @@ export async function prepareBrowserAuthor({fixture,directory,onProgress=console
  await requirePublishedPrivateFee(net.node,instance);
  const funded=await bridgePrivateFeeCredit({node:net.node,l1Client:net.deployment.l1Client,wallet,owner:author.address,
   walletSecret:author.secret,walletSalt:author.salt,payer:instance.address,privateFeeArtifact:artifact,directory,rpcUrl:net.rpcUrl,
-  mineL1:()=>new Promise(resolve=>setTimeout(resolve,1000)),mark:onProgress});
+  mark:onProgress});
  await drainDevnetCheckpoints(net);
  await wallet.pxe.sync();
  const gas=(await wallet.completeFeeOptions({from:author.address,feePayer:instance.address})).gasSettings.clone();

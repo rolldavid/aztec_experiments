@@ -1,13 +1,35 @@
-# Test hierarchy
+# Development testing
 
-Use the pinned Node24, Forge and project-local Anvil versions in BUILDING.md. Run serially, in this order:
+Read and apply [aztec-app-development](/Users/zac/.codex/skills/aztec-app-development/SKILL.md).
+Use the pinned compatible toolchain in BUILDING.md.
 
-1. `npm run test:harness` checks the supervisor with tiny real processes, strict scenario selection, command IO and browser handoff contracts. No blockchain or prover starts.
-2. `npm run test:components` checks application boundaries, setup verification and client behavior. `npm run test:application:unit` additionally executes Noir/TXE and Solidity constraints. These do not establish genuine transaction acceptance.
-3. Build the release assets, then run the actual offline CLI initialization check: `node scripts/test-cli-prover-offline.mjs`. Package checks must pass before testing packaged commands.
-4. `npm run test:e2e -- SCENARIO` runs one explicit scenario. Start with `node`, then `included-board`, then `activated-board` before exercising complete journeys.
+Start with the changed component's existing unit test, for example:
 
-Preserve a failed harness check's stage, command outcome and cleanup outcome. Diagnose and fix the underlying cause, then verify the repair; the user has authorized autonomous continuation. Delegate an independent structural review whenever changing the harness. No alternate backend, fee payer, data source or test scenario may stand in for a failed path.
+```sh
+node --test --test-name-pattern='saved refund' apps/rolling/wallet-session.test.mjs
+node --test scripts/test-private-pxe-browser.mjs
+```
+
+Do not run a prerequisite ladder of harness tests, builds, onboarding, funding and
+end-to-end journeys for a small change. Run affected tests immediately; batch the
+application change and its test repairs for independent review before integration.
+Build only changed assets when the running application needs them. Use a native
+local network for changes that actually require contracts or SDK integration.
+
+Progress is established by receipts and observable state. Drive missing local
+state with native block/settlement operations; never sleep, synchronize clocks,
+or advance because time elapsed. A watchdog may report failure, never success or
+authorize a retry. Reproduce a setup failure at its smallest boundary before
+repeating a costly run. Keep one concise failure and next action, not a new harness.
+
+Reuse healthy state while it helps. An old disposable chain is not a migration
+obligation: preserve it separately and use a fresh coherent fixture when history
+is irrelevant. Real wallet recovery, privacy, proof and final acceptance checks
+remain required at their acceptance boundaries, not on every edit.
+
+The scenario catalogue below records existing acceptance coverage. It is not an
+ordered development checklist. Historical results keep their original meaning;
+legacy clock-driven fixtures must not be used as the ordinary development loop.
 
 ## Development proof configuration
 
@@ -93,7 +115,7 @@ Development transactions use the native proofs-disabled devnet and PXE flags. Re
 
 Fixture-only budgets are 60 seconds for node startup, 120 seconds for board inclusion and 180 seconds for activation. Full journeys retain 540 seconds. All expensive runs are serial, below ten minutes, and use disposable identities. Native contention uses two client threads; other profiles use one. Resource limits do not establish production capacity. No automatic retries or threshold increases are allowed. Rerun affected checks after diagnosing and repairing the underlying failure.
 
-Historical results remain bound to their original source snapshots. The new harness must be qualified from the bottom up before it can replace those results. A passing application suite is neither deployment clearance nor independent review. Browser coverage, load, audit, soak and target-network clearance remain separate graph requirements.
+Historical results remain bound to their original source snapshots. Affected integration boundaries require evidence before release. A passing application suite is neither deployment clearance nor independent review. Browser coverage, load, audit, soak and target-network clearance remain separate graph requirements.
 
 ## Public feed persistence checks
 

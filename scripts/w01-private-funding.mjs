@@ -1,3 +1,4 @@
+import {ensureDevelopmentMessageReady} from '../plugins/devnet/network.mjs';
 import {createPrivateFeeRecoveryEvidence} from './private-fee-evidence.mjs';
 import {createFileJournalStorage} from '../apps/src/billboard/user/transaction-journal-store.mjs';
 // TEST ONLY: independent disposable L1 identity uses the production funding/recovery helpers.
@@ -11,7 +12,7 @@ import {Fr} from '@aztec-labs/foundation/curves/bn254';
 import {parseEventLogs} from 'viem';
 import {fundPrivateFees,recoverPrivateFeeClaim} from '../shared/private-fee-funding.mjs';
 const silent=Object.fromEntries(['trace','debug','verbose','info','warn','error','fatal'].map(k=>[k,()=>{}]));silent.getBindings=()=>({});
-export async function bridgePrivateFeeCredit({node,l1Client,wallet,owner,walletSecret,walletSalt,payer,privateFeeArtifact,directory,rpcUrl,mineL1,mark}){
+export async function bridgePrivateFeeCredit({node,l1Client,wallet,owner,walletSecret,walletSalt,payer,privateFeeArtifact,directory,rpcUrl,mark}){
   assert.equal(await l1Client.getChainId(),31337);
   const info=await node.getNodeInfo(),portal=info.l1ContractAddresses.feeJuicePortalAddress.toString();
   const endpoint=new URL(rpcUrl);assert(['127.0.0.1','localhost','[::1]'].includes(endpoint.hostname),'Disposable local L1 only');
@@ -55,13 +56,13 @@ export async function bridgePrivateFeeCredit({node,l1Client,wallet,owner,walletS
     const receipt=await l1Client.getTransactionReceipt({hash:record.txHash});assert.equal(receipt.status,'success');assert.equal(receipt.from.toLowerCase(),sender.toLowerCase());
     const logs=parseEventLogs({abi:FeeJuicePortalAbi,eventName:'DepositToAztecPublic',logs:receipt.logs.filter(l=>l.address.toLowerCase()===portal.toLowerCase()),strict:true});assert.equal(logs.length,1);
     const event=logs[0].args;assert.equal(event.to.toLowerCase(),payer.toString());assert.equal(event.amount,amount);assert.equal(event.index,claim.leafIndex.toBigInt());
-    const sequencer=node.getSequencer(),cfg=sequencer.getSequencer().getConfig(),saved={minTxsPerBlock:cfg.minTxsPerBlock,buildCheckpointIfEmpty:cfg.buildCheckpointIfEmpty};
-    sequencer.updateConfig({minTxsPerBlock:0,buildCheckpointIfEmpty:true});
-    try{
-      mark('private-fee:wait-inbox');let witness;const deadline=Date.now()+120000;
-      do{await wallet.pxe.sync();const anchor=await wallet.pxe.getSyncedBlockHeader();witness=await node.getL1ToL2MessageMembershipWitness(anchor.getBlockNumber(),Fr.fromString(event.key));if(witness)break;await mineL1();}while(Date.now()<deadline);
-      assert(witness,'Private fee Inbox membership timeout');assert.equal(witness[0],event.index);
-    }finally{sequencer.updateConfig(saved);}
+    mark('private-fee:include-inbox-message');
+    await ensureDevelopmentMessageReady(node,Fr.fromString(event.key));
+    await wallet.pxe.sync();
+    const anchor=await wallet.pxe.getSyncedBlockHeader();
+    const witness=await node.getL1ToL2MessageMembershipWitness(anchor.getBlockNumber(),Fr.fromString(event.key));
+    assert(witness,'Private fee message must be available at the consuming PXE anchor');
+    assert.equal(witness[0],event.index);
     const result={claim,observation:{...recovery.snapshot(),passed:true,outcome:'complete',realL1Deposit:true,amount:String(amount),l1TxHash:record.txHash,recipient:payer.toString(),
       independentL1Sender:true,testFaucetFunding:true,productionFundingHelper:true,productionRecoveryHelper:true,
       publicRecoveryPersistedBeforeDeposit:true,depositSends:1,privateSecretsStored:false}};

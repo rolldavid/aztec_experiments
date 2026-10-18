@@ -107,3 +107,19 @@ Planning graph checks belong at coordination boundaries, not inside application 
 ## Current owner workflow override — 13 October 2026
 
 Component owners may implement, debug and run focused local tests immediately in their assigned isolated checkout. Independent review is required before integration, not before each test, setup step or fixture repair. Batch coherent application and test changes. Run the existing integration gate; repeat its negative self-tests only after gate changes. Reuse development environments where isolation permits. Use native devnet and PXE proof flags disabled; preserve targeted real-proof testnet and final release requirements. This supersedes older per-step review and root-only implementation restrictions above. See execution/specification-clarifications.md.
+
+## Current development loop — 18 October 2026
+
+The owner's latest direction supersedes older test ladders and preservation rules.
+Use the linked Aztec skill thoroughly: native local-network and PXE proof flags
+false, state-driven completion, and targeted unit/boundary tests first. Do not
+implement disabled proving with custom proof adapters. Do not replay onboarding
+or a complete journey to verify a small component change. No sleeps, clock
+synchronization or elapsed-time success conditions. SDK state waiters and native
+block/settlement controls own progress; watchdogs only report failures.
+
+Disposable development state needs no migration or backward compatibility. Leave
+old data untouched when replacing it with a fresh coherent fixture. Keep concise
+work/review records at change boundaries, not per-operation evidence ceremonies.
+Independent review and the normal integration gate remain; acceptance-only checks
+run at their actual boundary. Continue feature delivery after the focused check.

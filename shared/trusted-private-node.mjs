@@ -127,7 +127,11 @@ export async function inspectTrustedNode(node, options) {
     const suppliedNow=options.nowSeconds,now=suppliedNow===undefined ? Math.floor(Date.now()/1000) : suppliedNow;
     if(!natural(now))throw fail('CONFIG');
     const lag=now-Number(stamp);
-    if(lag<0 || lag>p.maxLagSeconds)throw fail('STALE');
+    // Native local automine advances its own chain clock and may stay idle.
+    // Canonical tips and synchronized world state above establish readiness;
+    // wall time is only a public-network freshness policy. Identity and the
+    // actual node proof mode have already been checked before this branch.
+    if(p.proofsEnabled && (lag<0 || lag>p.maxLagSeconds))throw fail('STALE');
     // Recheck the selected canonical anchor after synchronization reads. A reorg
     // invalidates this readiness snapshot; never manufacture missing state.
     if(historical)await readTogether([()=>canonical(node,selected,unsynced,'final-selected'),()=>canonical(node,world,unsynced,'final-world')]);

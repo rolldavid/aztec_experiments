@@ -308,3 +308,21 @@ for(const stage of ['selected','world','final-selected','final-world'])test('exp
  assert.equal(getTrustedNodeFailureDiagnostic(failure).canonical.stage,stage);
 });
 test('historical readiness accepts only explicit closed tiers',async()=>{await rejects(()=>inspectTrustedNode(fixture().node,{...options,readinessTier:'latest'}),'CONFIG');});
+
+
+test('native local readiness uses canonical synchronized state despite idle or advanced chain clock',async()=>{
+ for(const stamp of [1n,100000n]){
+  const f=fixture();f.info.realProofs=false;f.node.getSyncedL1Timestamp=async()=>stamp;
+  const result=await inspectTrustedNode(f.node,{...options,proofsEnabled:false});
+  assert.equal(result.ready,true);assert.equal(result.proofsEnabled,false);
+  f.state.treesAreSynched=false;
+  await rejects(()=>inspectTrustedNode(f.node,{...options,proofsEnabled:false}),'UNSYNCED');
+ }
+});
+test('native local clock policy cannot excuse a different network or canonical fork',async()=>{
+ const f=fixture();f.info.realProofs=false;f.node.getSyncedL1Timestamp=async()=>100000n;
+ f.info.l1ChainId=11155111;
+ await rejects(()=>inspectTrustedNode(f.node,{...options,proofsEnabled:false}),'IDENTITY');
+ f.info.l1ChainId=31337;f.state.latestBlockHash=h(99);
+ await rejects(()=>inspectTrustedNode(f.node,{...options,proofsEnabled:false}),'UNSYNCED');
+});
