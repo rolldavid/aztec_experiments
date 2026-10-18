@@ -153,7 +153,7 @@ export function createIsolatedExecution({workspaceRoot,outputRoot,docker='/usr/l
  };
  return Object.freeze({async assertAvailable(){try{return await available(invoke);}catch{throw finiteError('STATIC_UNAVAILABLE');}},async execute({sourceDirectory,revision}){
   if(poisoned)throw finiteError('STATIC_UNAVAILABLE');assert(!active,'One isolated execution at a time');active=true;
-  const name='bok-static-'+randomUUID(),end=Date.now()+workMs+15000;let cid,created=false,output,closed=false,cleaning=false;const failureResult={passed:false,revision:typeof revision==='string'&&/^[0-9a-f]{40}$/.test(revision)?revision:null,phase:'input',log:''};
+  const name='bok-static-'+randomUUID(),end=Date.now()+workMs+15000;let cid,created=false,createRejected=false,output,closed=false,cleaning=false;const failureResult={passed:false,revision:typeof revision==='string'&&/^[0-9a-f]{40}$/.test(revision)?revision:null,phase:'input',log:''};
   let operation=null,exitCode=null;
   const command=async(args,options={})=>{operation=args[0]==='container'?'container-inspect':args[0];exitCode=null;const result=await invoke(args,{...options,deadline:end-(cleaning?0:8000)});exitCode=result.code;return result;};
   // Keep finite host diagnostics, never arbitrary daemon/source output or paths.
@@ -176,6 +176,9 @@ export function createIsolatedExecution({workspaceRoot,outputRoot,docker='/usr/l
     '--tmpfs','/tmp:rw,noexec,nosuid,nodev,size=16777216,uid=0,gid=1000,mode=0770',
     '--ulimit','nofile=256:256','--ulimit','fsize=8388608:8388608','--log-driver','none','--no-healthcheck','--restart','no',
     '-i','--entrypoint','/usr/bin/env',STATIC_IMAGE,'-i','PATH=/usr/local/bin:/usr/bin:/bin','HOME=/work/home','TMPDIR=/tmp','node','--disable-sigusr1','-e',guest.replace(JSON.stringify(STATIC_LIMITS),JSON.stringify({...STATIC_LIMITS,workMs}))]);
+   // Only an acknowledged daemon rejection makes absence conclusive. Killing
+   // the CLI after timeout/transport failure cannot cancel a daemon-side create.
+   createRejected=result.code!==0&&result.stdout.trim()===''&&/^Error response from daemon: [^\r\n]+\r?\n?$/.test(result.stderr);
    assert.equal(result.code,0);const candidate=result.stdout.trim();assert(/^[0-9a-f]{64}$/.test(candidate));
    const c=await inspect(candidate);assert.equal(c.Id,candidate);assert.equal(c.Name,'/'+name);assert.equal(c.Config.Labels['bok.static.owner'],name);assert.equal(c.Image,STATIC_IMAGE);cid=candidate;
    assert(c.HostConfig.ReadonlyRootfs&&!c.HostConfig.Privileged&&c.HostConfig.NetworkMode==='none'&&c.Config.User==='0:1000');
@@ -215,7 +218,7 @@ export function createIsolatedExecution({workspaceRoot,outputRoot,docker='/usr/l
      // start again; only remove the positively owned immutable container ID.
      if(!cid){
       const observed=await command(['container','inspect',name,'--format','{{json .}}'],{max:65536});
-      if(isStaticContainerAbsent(observed,name))closed=true;
+      if(isStaticContainerAbsent(observed,name)){assert(createRejected,'Ambiguous container creation requires reconciliation');closed=true;}
       else{assert.equal(observed.code,0);const c=JSON.parse(observed.stdout);assert.equal(c.Name,'/'+name);assert.equal(c.Config.Labels['bok.static.owner'],name);assert.equal(c.Image,STATIC_IMAGE);assert(/^[0-9a-f]{64}$/.test(c.Id));cid=c.Id;}
      }
      if(cid){const r=await command(['rm','-f',cid]);assert.equal(r.code,0);

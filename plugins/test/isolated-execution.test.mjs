@@ -150,7 +150,7 @@ test('actual failed cleanup record poisons capability and blocks reopen until re
 
 // Labelled local CLI double exercises actual process/error/cleanup boundaries;
 // it neither starts Docker nor executes generated source.
-for(const mode of ['absent','owned','unavailable','foreign'])test('failed create preserves cause and reconciles '+mode+' container',async()=>{
+for(const mode of ['absent','owned','unavailable','foreign','transport','timeout'])test('failed create preserves cause and reconciles '+mode+' container',async()=>{
  const f=await fixture();try{
   const script=path.join(f.root,'docker.cjs'),docker=path.join(f.root,'docker'),marker=path.join(f.root,'create.json'),removed=path.join(f.root,'removed');
   await fs.writeFile(script,`const fs=require('node:fs'),a=require('node:assert/strict');
@@ -159,9 +159,13 @@ const image='sha256:44479404b67dde931cf8f202a3ce34703876e709ce124924251da8435d5d
 a.equal(args.shift(),'--host');args.shift();
 const absent=target=>{process.stderr.write('Error response from daemon: No such container: '+target+'\\n');process.exitCode=1;};
 if(args[0]==='image')console.log(JSON.stringify({id:image,os:'linux',architecture:'amd64'}));
-else if(args[0]==='create'){a(!fs.existsSync(marker),'Create must not replay');fs.writeFileSync(marker,JSON.stringify({name:args[args.indexOf('--name')+1]}));process.stderr.write('SYNTHETIC_PRIVATE_DAEMON_DETAIL');process.exitCode=125;}
+else if(args[0]==='create'){
+ a(!fs.existsSync(marker),'Create must not replay');fs.writeFileSync(marker,JSON.stringify({name:args[args.indexOf('--name')+1]}));
+ if(mode==='timeout')setTimeout(()=>{},10000);
+ else{process.stderr.write(mode==='transport'?'SYNTHETIC_PRIVATE_CONNECTION_FAILURE':'Error response from daemon: SYNTHETIC_PRIVATE_REJECTION');process.exitCode=125;}
+}
 else if(args[0]==='container'&&args[1]==='inspect'){
- const target=args[2];if(!fs.existsSync(marker)||fs.existsSync(removed)||mode==='absent')absent(target);
+ const target=args[2];if(!fs.existsSync(marker)||fs.existsSync(removed)||['absent','transport','timeout'].includes(mode))absent(target);
  else if(mode==='unavailable'){process.stderr.write('SYNTHETIC_PRIVATE_DAEMON_UNAVAILABLE');process.exitCode=1;}
  else{const {name}=JSON.parse(fs.readFileSync(marker));console.log(JSON.stringify({Id:id,Name:'/'+name,Image:image,Config:{Labels:{'bok.static.owner':mode==='owned'?name:'another-owner'}}}));}
 }else if(args[0]==='rm'){a.equal(mode,'owned');a.equal(args[2],id);fs.writeFileSync(removed,'removed');console.log(id);}
@@ -173,7 +177,7 @@ else throw Error('Unexpected CLI operation');
   const clean=['absent','owned'].includes(mode);let observed;
   await assert.rejects(runner.execute({sourceDirectory:f.source,revision}),error=>{
    observed=error;assert.equal(error.code,clean?'STATIC_FAILED':'STATIC_CLEANUP_REQUIRED');
-   assert.deepEqual(error.result.failure,{phase:'setup',operation:'create',exitCode:125,kind:'command-failed'});
+   assert.deepEqual(error.result.failure,{phase:'setup',operation:'create',exitCode:mode==='timeout'?null:125,kind:mode==='timeout'?'timeout':'command-failed'});
    assert(!JSON.stringify(error.result).includes('SYNTHETIC_PRIVATE'));assert(!JSON.stringify(error.result).includes(f.root));return true;
   });
   const [dir]=await fs.readdir(f.output),record=JSON.parse(await fs.readFile(path.join(f.output,dir,'failure.json')));
