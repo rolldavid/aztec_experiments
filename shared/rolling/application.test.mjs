@@ -1694,3 +1694,9 @@ test('funding prepare preserves the state needed by the session waiter without s
   assert.equal(f.state.sends,0);assert.equal(f.values.size,0);
  }
 });
+
+ test('empty recovery journal rejects a missing intent without dereferencing null or writing state',async()=>{
+  const f=fixture();
+  for(const id of [undefined,null,'',hex(999)])await assert.rejects(f.app.inspectRecovery(id),{code:'ROLLING_INTENT_NOT_FOUND'});
+  assert.equal(f.values.size,0);assert.equal(f.state.sends,0);
+ });
