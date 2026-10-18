@@ -28,22 +28,14 @@ Use one curated main board for this installation. User-created subboards belong
 to that board; a separately operated main board uses its own hosting and is not
 automatically indexed or promoted by another installation.
 
-Local development admits 1,800 compact reads per minute per IP using the existing
-bounded rate option. The retained 1,222-block acceptance corpus needs over 1,200
-reads, so the production default of 600 would force a third minute before recovery
-could finish. This localhost setting preserves request size, concurrency and time
-limits; the production default remains 600. Cold recovery must still meet the
-predeclared 120-second target.
-
-The retained native development runner also mounts the existing compact-history
-adapter and starts the existing trusted query service on an ephemeral loopback
-port. Browser configuration points to that service's `/v1/node`; cold recovery
-uses its `/v1/compact-block` route and authenticates the returned blocks in the
-PXE. Native and PXE proof flags remain disabled. Startup rewrites the generated
-public wallet configuration; reload existing browser sessions after restarting
-this runner. Shutdown drains the query service and native compact requests before
-stopping/checkpointing the same retained chain. No fresh deployment or funding is
-needed to add these development services.
+The native development runner starts the existing trusted query service on an
+ephemeral loopback port. Generated browser configuration points to its `/v1/node`;
+cold recovery uses `/v1/compact-block` and authenticates returned blocks in the PXE.
+`developmentQueryServiceConfig` currently sets `compactRequestsPerMinute: 1800`;
+the server default remains 600. This is a bounded admission setting, not a recovery
+performance result. Avoid duplicate reads and retain valid progress; do not use
+rate-limit waits to advance a development flow. Cold recovery still has to meet
+the predeclared 120-second target with its required evidence.
 
 ## Reproducible build
 
@@ -297,10 +289,11 @@ commands, exact accounting and evidence. Agent review, mock ports, proof-disable
 development and old testnet results do not satisfy independent expert audit,
 current network clearance or the full14-day qualification period.
 
-## Retained local Rolling development
+## Native local Rolling development
 
-The current development entry is the existing plugin devnet command, now with an
-explicit Rolling profile. It does not require a model-provider key for the reader,
+The development entry is the existing plugin devnet command. Rolling is its
+default profile; each new invocation defaults to a fresh disposable directory.
+It does not require a model-provider key for the reader,
 private wallet or local chain. Finish the normal pinned builds above first; do not
 repin generated manifests by hand. In particular, run the existing
 `experiments/private-bok/build.mjs` after `scripts/build-contracts.mjs` so the Bok
@@ -309,27 +302,37 @@ artifact provenance matches that builder before the wallet asset build. From the
 ```sh
 NODE_BACKEND=js .build/A02-node/node-v24.21.0-darwin-arm64/bin/node \
   plugins/devnet/start.mjs --profile rolling \
-  --directory /absolute/private/rolling-devnet \
   --app-port 8080 --node-port 18080 --ethereum-port 18545
 ```
 
-Use a dedicated canonical mode-0700 directory owned by the current user, with no
-symlinked parents. The existing inode-bound hosted lease owns this local process.
-Missing network metadata beside retained snapshots, node data or journals requires
-explicit recovery; it never creates another chain. Miner or checkpoint failure
-retains the lease and reports unsuccessful cleanup. The three ports must be distinct and unused;
-all listeners bind to `127.0.0.1`. Do not stop or repurpose another project's node.
-The existing port4317 design preview is unrelated. Local node proof generation and
-PXE proving are both disabled; `PLUGIN_PROOFS=true` is rejected. The local SDK's
-existing limited-Inbox development profile is explicit, not a production capacity
-claim. `NODE_BACKEND=js` selects the already-supported bcrypto backend used by the
-local application fixtures; it does not change application proof implementation.
+Without `--directory`, the command creates `.build/rolling-devnet-<UUID>`. To
+choose a location, add `--directory /absolute/private/new-rolling-devnet` with a
+fresh, canonical mode-0700 directory owned by the current user and no symlinked
+parents. The existing inode-bound hosted lease owns the local process. Startup
+rejects prior network, deployment, cache or journal contents; it does not reopen
+an old chain or migrate its data. Preserve old directories and unresolved owner
+records rather than deleting them to bypass admission.
 
-Startup reuses the schema-2 deployment CLI, retained transaction journals, current
-Rolling artifact and real canonical ownerless PrivateFPC. The original board
-creation receipt is retained separately from portal binding and supplies the public
-index's initial anchor. The local portal's Ready step uses the existing explicitly
-test-controlled settlement helper; it is not an L1 proof or testnet qualification.
+The three ports must be distinct and unused; listeners bind to `127.0.0.1`.
+Choose another free set when an existing development environment owns them.
+Do not stop or repurpose another project's node. Native node `realProofs:false`
+and PXE `proverEnabled:false` are configuration flags; `PLUGIN_PROOFS=true` is
+rejected. `NODE_BACKEND=js` selects the supported bcrypto backend used by the local
+application fixtures; it does not change application proof implementation.
+
+Keep a healthy live environment running for ordinary application iteration.
+Reload changed frontend source and reuse matching artifacts, funded disposable
+accounts and current contracts where the check permits. A new runner invocation
+creates a new network/deployment scope: use its generated public configuration
+and matching development wallet state. An old browser recovery file remains
+valuable evidence, but cannot restore a stopped disposable chain.
+
+Startup uses the schema-2 deployment CLI, current Rolling artifact and real
+canonical ownerless PrivateFPC, retaining signed-once journals for that run. The
+original board creation receipt is retained separately from portal binding and
+supplies the public index's initial anchor. The local portal's Ready step uses
+native SDK settlement and canonical finality checks; it is not an L1 proof or
+testnet qualification.
 The public reader/wallet configs are generated from these actual results, then
 served by the existing `apps/rolling/start.mjs` components. Only the local public
 operator receives disposable genesis fee funds. This is not a free token exchange
@@ -394,15 +397,21 @@ belong in public wallet configuration or process arguments. A fresh app user
 receives no local deployment privileges. Actual initial funding, authenticated
 hosted replies and zero-ETH USDC conversion remain separate acceptance checks.
 
-Stop with Ctrl-C and wait for cleanup. A clean stop retains the original Anvil
-snapshot, validator/genesis identities, Aztec databases, deployment journals and
-public SQLite cache. Run the **same command and directory** to reopen; the original
-transactions are reconciled, never automatically retransmitted. Changed ports,
-genesis identities, pinned toolchain, a missing snapshot, or an unclean owner record
-fail closed. Do not delete a lock, journal or snapshot to force a restart: preserve
-the directory and diagnose the interrupted operation. This is clean-stop recovery;
-automated crash repair is deliberately not claimed. Back up the complete private
-directory only while stopped, and export browser wallet recovery separately.
+Stop with Ctrl-C or SIGTERM and wait for cleanup to finish. The owner closes
+Bok (if configured), the reader/index and relay, then the query service, wallet,
+native RPC, SDK network and Anvil, and finally releases its lease. Successful
+native teardown records `network.json` as `mode: "native-disposable"`,
+`phase: "stopped"`. A cleanup failure exits unsuccessfully, retains ownership
+for reconciliation and reports `shutdown-failure.json` when it can write it.
+Verify that the owned processes/listeners are gone; a terminal closing, laptop
+sleep or saved journal is not proof of shutdown or autonomous recovery.
+
+This runner has no persistent snapshot or same-chain restart operation. Preserve
+its original private directory, deployment/transaction journals, browser recovery
+and any service/user state needed for investigation. Do not reset, sweep or reuse
+that directory. A later development run needs a fresh directory and its own
+network scope; never replay uncertain old operations into the new chain. This
+local teardown does not qualify production backup/restore or archive recovery.
 
 The existing small configuration/recovery and deployment-engine checks are:
 
@@ -415,69 +424,29 @@ NODE_BACKEND=js .build/A02-node/node-v24.21.0-darwin-arm64/bin/node \
 Node's test context always selects the non-operational startup checks. The old
 legacy contract lifecycle remains available only through explicit direct execution
 of `plugins/devnet/operator-test.mjs`; it is not current Rolling acceptance.
-Fresh deployment, stop/reopen and an included wallet action require actual local
-runtime verification after the focused checks and normal build closure.
+Fresh deployment, graceful cleanup and an included wallet action require actual
+local runtime evidence. Focused checks do not prove same-chain restart support.
 
-Local finality uses Anvil's supported `--slots-in-an-epoch 1`, matching the
-installed Aztec SDK's test-node default. This affects only the retained loopback
-31337 development chain; the original snapshot and transaction identities remain
-unchanged. After explicit local Ready settlement, bootstrap waits up to 120 seconds
-using read-only canonical receipt/block and finalized-tip checks before one CLI
-resume. It neither replays settlement/transactions while waiting nor relaxes the
-deployment engine's finalized-chain guard. The original private startup cause is
-retained through cleanup, while the public CLI error remains generic.
+### Native progress and finality
 
-### Persistent local checkpoint ownership
+`network.mjs` composes the pinned SDK's `startAnvil` and `createLocalNetwork` with
+native automining and proofs disabled. The SDK owns block production and local
+settlement; no application idle clock, custom consensus loop, Anvil dump schedule
+or persistent checkpoint rotation is involved. The configured 6-second block
+geometry supplies the SDK's documented class-publication capacity; it is not an
+application sleep or polling schedule.
 
-The persistent Rolling profile uses the installed SDK's native local-network
-AutomineSequencer with `realProofs:false`, `useAutomineSequencer:true` and
-`automineEnableProveEpoch:true`. A fresh local rollup has committee size zero;
-startup checks that actual on-chain setting. Older committee-one campaigns are
-incompatible and remain retained for reconciliation, never reset or silently
-converted. A distinct new local campaign uses a distinct state directory and
-new identities; no transaction from the old campaign is replayed.
-
-The SDK serial queue owns both block production and synthetic local epoch/Outbox
-settlement. Idle clock advancement uses that same queue. Bootstrap Ready handling
-checks the original effect and canonical Outbox witness, and the existing finality
-gate still applies. Clean shutdown pauses new work, drains and settles every
-checkpoint before saving the original-chain snapshot. A failed settlement does
-not produce a clean restart record. This is development-only synthetic settlement,
-not real testnet proof acceptance; the legacy disposable profile is unchanged.
-
-Persistent Anvil uses an explicit `--state-interval 86400` with `--dump-state`.
-This is a 24-hour interval, not disabled persistence: pinned Anvil defaults to
-60 seconds when omitted and rejects zero. Normal bounded development sessions
-checkpoint on graceful exit, avoiding multi-gigabyte snapshots every 30 seconds.
-An abrupt stop can lose progress since the last dump; an unclean record still
-requires reconciliation, and historical effects must never be replayed blindly.
-
-Native snapshots retain a bounded streamed 7 GiB ceiling and complete
-historical state. Startup requires at least 9 GiB free before changing the saved
-phase. This is admission headroom, not a reservation or an ongoing disk quota.
-After a clean stop, the runner streams and fsyncs the new snapshot before
-publishing its stopped record, which retains the exact predecessor filename,
-hash and canonical head. A zero Anvil exit code is not proof of dump completeness:
-Anvil can log a dump error and still exit zero. The next normal startup must load
-the new file and verify its exact canonical head and protocol checkpoint numbers
-before removing the predecessor. A truncated dump therefore fails startup while
-the good predecessor remains available for explicit owner recovery; there is no
-automatic rollback or replay. Normal operation retains two full snapshots at
-most (current plus candidate, or predecessor plus newly stopped candidate); the
-next startup briefly allocates its empty candidate before validating that load.
-Failed or interrupted runs preserve recovery candidates; older orphan files
-require explicit operator reconciliation, never a directory sweep. The legacy
-128 MiB RPC import limit remains separate.
-
-Anvil's supported `--cache-path` points to a new private `anvil-cache-*` directory
-owned by that run. Its path and directory identity remain in the stopped record.
-The cache is removed only after the next normal startup successfully loads and
-verifies that dump. A failed shutdown or failed load retains it. Cleanup verifies
-directory identity and never sweeps `~/.foundry`, other runs, journals or original
-Aztec databases. Complete historical-state retention remains enabled; neither
-cache pruning nor reduced history is used to pass recovery acceptance. Long
-sessions must monitor free space and stop gracefully
-before consuming checkpoint headroom.
+When a development check needs missing state, use the native node controls
+`mineBlock()` and `prove()` (also exposed by `createAztecNodeDebugClient` on the
+loopback node RPC). Read the actual message, receipt or witness before advancing.
+`ensureDevelopmentMessageReady` mines only while the Inbox message is not
+consumable. Ready handling verifies the original effect and canonical Outbox
+witness. `waitDevelopmentFinality` accepts an already finalized receipt, otherwise
+proves a successful checkpointed transaction or mines native blocks while it is
+proven, rechecking the original canonical anchor each time. Its 120-second bound
+reports failure; elapsed time never establishes readiness or permits a resend.
+These controls are exclusively for the disposable native chain. Testnet acceptance
+still requires real proofs, settlement and the existing release gates.
 
 The relay initialization marker lives beside `relay-state`, not inside it. Once
 that marker exists, loss of its original directory or `funding-budget.json` is a
