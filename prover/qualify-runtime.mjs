@@ -109,49 +109,42 @@ export async function verifyQueryOnlyService(service,url){
   return {passed:true,proofEndpointsDisabled:true,queueAllocated:false,workerAllocated:false};
 }
 
-/** Production uses the native pause/resume control and SDK state waiter. A paused
- * archiver can still receive P2P proposals, so stale state may fail canonical
- * consistency before the inspector reaches its timestamp check. */
-export async function exerciseFreshness({node,admin,inspect,health,rejectedQuery,maxLagSeconds,recoveryTimeoutMs,waitUntil=retryUntil,observation={}}){
-  const {getTrustedNodeFailureDiagnostic}=await import('../shared/trusted-private-node.mjs');
-  const result=Object.assign(observation,{paused:false,stale:false,queriesRejected:false,resumed:false,recovered:false});
-  let phase='healthy',pauseAttempted=false;
+/** Exercises the real node through a stricter, isolated query policy. This does
+ * not pause synchronization or claim an actual 120-second outage/recovery. */
+export async function exerciseFreshness({inspectNormal,normalHealth,startStrictService,maxLagSeconds,recoveryTimeoutMs,waitUntil=retryUntil,observation={}}){
+  const result=Object.assign(observation,{coverage:'stricter-policy-real-state',normalMaxLagSeconds:maxLagSeconds,strictMaxLagSeconds:1,
+    normalHealthyBefore:false,stale:false,queriesRejected:false,strictServiceClosed:false,normalHealthyAfter:false});
+  let phase='normal-before',strict;
   const safeCode=error=>['BB_TRUSTED_NODE_STALE','BB_TRUSTED_NODE_UNSYNCED','BB_TRUSTED_NODE_UNAVAILABLE','BB_TRUSTED_NODE_IDENTITY','BB_TRUSTED_NODE_CONFIG','ERR_ASSERTION'].includes(error?.code)?error.code:'QUALIFICATION_FAILED';
   try{
-    const before=await inspect();requireCondition(before.ready);
+    requireCondition(maxLagSeconds>1);
+    requireCondition((await inspectNormal()).ready&&(await normalHealth()).query.ready===true);result.normalHealthyBefore=true;
     try{
-      phase='pause';pauseAttempted=true;await admin.pauseSync();result.paused=true;
-      phase='frozen-state';const frozen=await node.getSyncedL1Timestamp();
-      requireCondition(typeof frozen==='bigint'&&frozen>=0n&&frozen<=BigInt(Number.MAX_SAFE_INTEGER));result.frozenL1Timestamp=String(frozen);
-      phase='stale-rejection';
+      phase='strict-service';strict=await startStrictService(1);
+      phase='strict-stale-rejection';
       await waitUntil(async()=>{
-        requireCondition(await node.getSyncedL1Timestamp()===frozen);
-        try{await inspect();return false;}catch(error){
-          if(!['BB_TRUSTED_NODE_STALE','BB_TRUSTED_NODE_UNSYNCED'].includes(error?.code))throw error;
-          // Observe actual node staleness; never advance clocks or assume a delay
-          // made the node stale. A consistency rejection alone is insufficient.
-          const lag=Math.floor(Date.now()/1000)-Number(frozen);
-          if(lag<=maxLagSeconds)return false;
-          requireCondition(await node.getSyncedL1Timestamp()===frozen);
-          result.staleLagSeconds=lag;result.rejectionCode=error.code;
-          const reason=getTrustedNodeFailureDiagnostic(error)?.reason;
-          if(['TIP_ORDER','STATE_NOT_SYNCED','CHECKPOINT_PRUNED','IMPOSSIBLE_FINALITY','SAME_HEIGHT_HASH','METADATA_MISMATCH','CANONICAL_ANCHOR'].includes(reason))result.rejectionReason=reason;
+        try{await strict.inspect();return false;}catch(error){
+          if(error?.code!=='BB_TRUSTED_NODE_STALE')throw error;
+          // Corroborate staleness against an actual authenticated native snapshot,
+          // under the unchanged normal policy. Future timestamps do not qualify.
+          const snapshot=await inspectNormal();
+          requireCondition(snapshot.ready);
+          if(snapshot.lagSeconds<=1)return false;
+          requireCondition(snapshot.lagSeconds<=maxLagSeconds);
+          result.observedL1Timestamp=snapshot.syncedL1Timestamp;
+          result.observedLagSeconds=snapshot.lagSeconds;result.rejectionCode=error.code;
           return true;
         }
-      },'paused node stale rejection',maxLagSeconds+10);
-      result.stale=true;phase='query-rejection';
-      const unavailable=await health();requireCondition(unavailable.query.enabled===true&&unavailable.query.ready===false);
-      await rejectedQuery();result.queriesRejected=true;
+      },'real node exceeds strict query freshness policy',recoveryTimeoutMs/1000);
+      result.stale=true;phase='strict-query-rejection';
+      const unavailable=await strict.health();requireCondition(unavailable.query.enabled===true&&unavailable.query.ready===false);
+      await strict.rejectedQuery();result.queriesRejected=true;
     }finally{
-      if(pauseAttempted){const prior=phase;phase='resume';await admin.resumeSync();result.resumed=true;phase=prior;}
+      if(strict){const prior=phase;phase='strict-service-cleanup';await strict.close();result.strictServiceClosed=true;phase=prior;}
     }
-    phase='recovery';
-    await waitUntil(async()=>{
-      let after;
-      try{after=await inspect();}catch(error){if(['BB_TRUSTED_NODE_STALE','BB_TRUSTED_NODE_UNSYNCED'].includes(error?.code))return false;throw error;}
-      const h=await health();return after.ready&&BigInt(after.syncedL1Timestamp)>BigInt(before.syncedL1Timestamp)&&h.query.ready===true;
-    },'resumed node ready',recoveryTimeoutMs/1000);
-    result.recovered=true;return result;
+    phase='normal-after';
+    requireCondition((await inspectNormal()).ready&&(await normalHealth()).query.ready===true);result.normalHealthyAfter=true;
+    return result;
   }catch(error){result.failureStage=phase;result.failureCode=safeCode(error);throw error;}
 }
 
@@ -276,15 +269,22 @@ export async function qualifyRuntime(config,digest,output){
     const input={url:url+'/v1/node',scope:scopeOf(config.service),maxLagSeconds:bounds.maxLagSeconds};
     report.checks.healthy=await child({...input,case:'healthy'});
     for(const name of ['wrong-chain','wrong-version','wrong-rollup','proof-config-floor']){report.stage=name;report.checks[name]=await child({...input,case:name});}
-    report.stage='stale-and-recovery';
+    report.stage='stricter-policy-freshness';
     const {AztecNodeApiSchema}=await import('@aztec-labs/stdlib/interfaces/client');
     const node=await publicRpc(config.service.queryNode.url,AztecNodeApiSchema,'aztec');
-    const admin=await adminRpc(config.adminUrl,config.adminKeyFile);
     const {inspectTrustedNode}=await import('../shared/trusted-private-node.mjs');
     report.checks.freshness={};
-    await exerciseFreshness({observation:report.checks.freshness,node,admin,inspect:()=>inspectTrustedNode(node,{expectedNetworkScope:input.scope,proofsEnabled:true,maxLagSeconds:bounds.maxLagSeconds}),health,
-      rejectedQuery:async()=>{requireCondition((await child({...input,case:'stale'})).rejected);},...bounds});
-    report.checks.recovered=await child({...input,case:'healthy'});
+    await exerciseFreshness({observation:report.checks.freshness,
+      inspectNormal:()=>inspectTrustedNode(node,{expectedNetworkScope:input.scope,proofsEnabled:true,maxLagSeconds:bounds.maxLagSeconds}),normalHealth:health,
+      startStrictService:async maxLagSeconds=>{
+        const strict=await startProverService({...config.service,queryNode:{...config.service.queryNode,maxLagSeconds}});
+        const strictUrl='http://127.0.0.1:'+strict.address.port;
+        return {inspect:()=>inspectTrustedNode(node,{expectedNetworkScope:input.scope,proofsEnabled:true,maxLagSeconds}),
+          health:async()=>{const r=await fetch(strictUrl+'/healthz',{redirect:'error',signal:AbortSignal.timeout(30000)});requireCondition(r.ok);return r.json();},
+          rejectedQuery:async()=>{requireCondition((await child({...input,url:strictUrl+'/v1/node',maxLagSeconds,case:'stale'})).rejected);},
+          close:async()=>{const port=strict.address.port;await strict.close();await assertPortClosed(port);}};
+      },...bounds});
+    report.checks.normalHealthyAfter=await child({...input,case:'healthy'});
     report.stage='missing-helper';
     const copy=path.join(directory,'missing-helper-release');await fs.cp(ROOT,copy,{recursive:true,dereference:false,verbatimSymlinks:true,errorOnExist:true,force:false});
     await verifyRelease(copy,digest);

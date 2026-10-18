@@ -43,46 +43,41 @@ test('missing-helper child: actual entrypoint retains controlled rejection when 
   const child=spawnSync(process.execPath,[path.join(root,'prover/qualify-runtime.mjs'),'--client'],{input:JSON.stringify({case:'missing-helper',service:config().service}),encoding:'utf8',env:{PATH:process.env.PATH,LOG_LEVEL:'silent'},timeout:10000,maxBuffer:16384});
   assert.equal(child.status,0,child.stderr);assert.equal(child.signal,null);assert.deepEqual(JSON.parse(child.stdout),{missingHelperRejected:true});
 });
-function fakeFreshness({pauseError,staleCode='BB_TRUSTED_NODE_STALE',resumeError,neverRecover=false,rejectError,freshTimestamp=false}={}){
-  const frozen=BigInt(Math.floor(Date.now()/1000)-(freshTimestamp?0:10));let paused=false,resumed=false;
-  const events=[],observation={};
-  const stamp=()=>resumed&&!neverRecover?frozen+1n:frozen;
-  // Finite scripted observations, not a timer or a replacement runtime waiter.
-  const args={observation,maxLagSeconds:2,recoveryTimeoutMs:3000,
-    waitUntil:async(check,name,timeout)=>{events.push(['state',name,timeout]);if(await check())return true;if(await check())return true;throw Error('State not reached');},
-    node:{getSyncedL1Timestamp:async()=>stamp()},admin:{pauseSync:async()=>{events.push('pause');paused=true;if(pauseError)throw pauseError;},resumeSync:async()=>{events.push('resume');if(resumeError)throw resumeError;paused=false;resumed=true;}},
-    inspect:async()=>{if(paused)throw Object.assign(Error('PRIVATE_SENTINEL'),{code:staleCode});return {ready:true,syncedL1Timestamp:String(stamp())};},
-    health:async()=>({query:{enabled:true,ready:!paused}}),rejectedQuery:async()=>{events.push('rejected');if(rejectError)throw rejectError;assert(paused);}};
-  return {args,events,observation,frozen};
+function fakeFreshness({staleCode='BB_TRUSTED_NODE_STALE',lag=10,rejectError,closeError,unhealthyAfter=false}={}){
+  const events=[],observation={};let closed=false;
+  const args={observation,maxLagSeconds:120,recoveryTimeoutMs:3000,
+    waitUntil:async(check,name,timeout)=>{events.push(['state',name,timeout]);if(await check())return true;throw Error('State not reached');},
+    inspectNormal:async()=>({ready:!closed||!unhealthyAfter,syncedL1Timestamp:'1792363752',lagSeconds:lag}),
+    normalHealth:async()=>({query:{enabled:true,ready:!closed||!unhealthyAfter}}),
+    startStrictService:async bound=>{events.push(['strict',bound]);return {
+      inspect:async()=>{throw Object.assign(Error('PRIVATE_SENTINEL'),{code:staleCode});},
+      health:async()=>({query:{enabled:true,ready:false}}),
+      rejectedQuery:async()=>{events.push('rejected');if(rejectError)throw rejectError;},
+      close:async()=>{events.push('close');if(closeError)throw closeError;closed=true;}};}};
+  return {args,events,observation};
 }
-test('pure fake freshness: state waiter observes actual stale timestamp, query rejection and advanced recovery',async()=>{
-  const f=fakeFreshness();const result=await exerciseFreshness(f.args);
-  for(const key of ['paused','stale','queriesRejected','resumed','recovered'])assert.equal(result[key],true);
-  assert.equal(result.frozenL1Timestamp,String(f.frozen));assert(result.staleLagSeconds>2);assert.equal(result.rejectionCode,'BB_TRUSTED_NODE_STALE');
-  assert.deepEqual(f.events,['pause',['state','paused node stale rejection',12],'rejected','resume',['state','resumed node ready',3]]);
+test('pure fake freshness: strict policy observes native stale rejection without pausing normal service',async()=>{
+  const f=fakeFreshness(),result=await exerciseFreshness(f.args);
+  assert.deepEqual(result,{coverage:'stricter-policy-real-state',normalMaxLagSeconds:120,strictMaxLagSeconds:1,
+    normalHealthyBefore:true,stale:true,queriesRejected:true,strictServiceClosed:true,normalHealthyAfter:true,
+    observedL1Timestamp:'1792363752',observedLagSeconds:10,rejectionCode:'BB_TRUSTED_NODE_STALE'});
+  assert.deepEqual(f.events,[['strict',1],['state','real node exceeds strict query freshness policy',3],'rejected','close']);
+  for(const key of ['paused','resumed','recovered'])assert(!Object.hasOwn(result,key));
 });
-test('pure fake freshness: stale frozen node may reject inconsistent tips; transport and identity never substitute',async()=>{
-  const f=fakeFreshness({staleCode:'BB_TRUSTED_NODE_UNSYNCED'});await exerciseFreshness(f.args);assert(f.observation.stale);assert.equal(f.observation.rejectionCode,'BB_TRUSTED_NODE_UNSYNCED');
-  for(const staleCode of ['BB_TRUSTED_NODE_UNAVAILABLE','BB_TRUSTED_NODE_IDENTITY','BB_TRUSTED_NODE_CONFIG',undefined]){
-    const bad=fakeFreshness({staleCode:staleCode??'UNKNOWN'});await assert.rejects(exerciseFreshness(bad.args));assert(bad.observation.resumed);assert(!bad.observation.stale);assert.equal(bad.observation.failureStage,'stale-rejection');assert(!JSON.stringify(bad.observation).includes('PRIVATE_SENTINEL'));
+test('pure fake freshness: consistency, transport and identity errors cannot substitute for actual stale rejection',async()=>{
+  for(const staleCode of ['BB_TRUSTED_NODE_UNSYNCED','BB_TRUSTED_NODE_UNAVAILABLE','BB_TRUSTED_NODE_IDENTITY','BB_TRUSTED_NODE_CONFIG','UNKNOWN']){
+    const f=fakeFreshness({staleCode});await assert.rejects(exerciseFreshness(f.args));assert(f.observation.strictServiceClosed);assert(!f.observation.stale);assert.equal(f.observation.failureStage,'strict-stale-rejection');assert(!JSON.stringify(f.observation).includes('PRIVATE_SENTINEL'));
   }
 });
-test('pure fake freshness: consistency rejection with fresh timestamp never establishes staleness',async()=>{
-  const f=fakeFreshness({staleCode:'BB_TRUSTED_NODE_UNSYNCED',freshTimestamp:true});await assert.rejects(exerciseFreshness(f.args));assert(!f.observation.stale);assert(f.observation.resumed);
+test('pure fake freshness: actual fresh or future timestamp cannot establish strict staleness',async()=>{
+  for(const lag of [-1,0,1]){const f=fakeFreshness({lag});await assert.rejects(exerciseFreshness(f.args));assert(!f.observation.stale);assert(f.observation.strictServiceClosed);}
 });
-test('pure fake freshness: changing paused timestamp fails before query acceptance',async()=>{
-  const f=fakeFreshness();let reads=0;f.args.node.getSyncedL1Timestamp=async()=>f.frozen+(reads++?1n:0n);
-  await assert.rejects(exerciseFreshness(f.args));assert(!f.observation.stale);assert(f.observation.resumed);assert.equal(f.observation.failureCode,'ERR_ASSERTION');
+test('pure fake freshness: failed query or unhealthy normal service cannot pass; owned service closes',async()=>{
+  const f=fakeFreshness({rejectError:Error('PRIVATE_SENTINEL')});await assert.rejects(exerciseFreshness(f.args));assert(f.observation.strictServiceClosed);assert(!f.observation.queriesRejected);assert.equal(f.observation.failureStage,'strict-query-rejection');
+  const bad=fakeFreshness({unhealthyAfter:true});await assert.rejects(exerciseFreshness(bad.args));assert(bad.observation.strictServiceClosed);assert(!bad.observation.normalHealthyAfter);assert.equal(bad.observation.failureStage,'normal-after');
 });
-test('pure fake freshness: failed pause still attempts resume exactly once',async()=>{
-  const error=Error('PRIVATE_SENTINEL'),f=fakeFreshness({pauseError:error});await assert.rejects(exerciseFreshness(f.args),e=>e===error);assert.deepEqual(f.events,['pause','resume']);assert(f.observation.resumed);assert.equal(f.observation.failureStage,'pause');assert(!JSON.stringify(f.observation).includes(error.message));
-});
-test('pure fake freshness: failed query rejection or recovery cannot pass',async()=>{
-  const f=fakeFreshness({rejectError:Error('PRIVATE_SENTINEL')});await assert.rejects(exerciseFreshness(f.args));assert(f.observation.resumed);assert(!f.observation.queriesRejected);assert.equal(f.observation.failureStage,'query-rejection');
-  const stalled=fakeFreshness({neverRecover:true});await assert.rejects(exerciseFreshness(stalled.args));assert(!stalled.observation.recovered);assert(stalled.observation.resumed);assert.equal(stalled.observation.failureStage,'recovery');
-});
-test('pure fake freshness: failed resume remains failure with bounded safe observation',async()=>{
-  const error=Error('PRIVATE_SENTINEL'),f=fakeFreshness({resumeError:error});await assert.rejects(exerciseFreshness(f.args),e=>e===error);assert(!f.observation.resumed);assert(!f.observation.recovered);assert.equal(f.observation.failureStage,'resume');assert(!JSON.stringify(f.observation).includes(error.message));
+test('pure fake freshness: failed close remains failure with bounded safe observation',async()=>{
+  const error=Error('PRIVATE_SENTINEL'),f=fakeFreshness({closeError:error});await assert.rejects(exerciseFreshness(f.args),e=>e===error);assert(!f.observation.strictServiceClosed);assert(!f.observation.normalHealthyAfter);assert.equal(f.observation.failureStage,'strict-service-cleanup');assert(!JSON.stringify(f.observation).includes(error.message));
 });
 
 test('fake package: official-style internal symlink remains hash-bound within release',async t=>{
@@ -158,16 +153,12 @@ test('SDK fake transport: ordinary query has no admin header; target/redirect/er
   }});assert.equal(await query.getEncodedEnr(),'public-enr');
 });
 
-test('SDK fake transport: missing admin header rejected; freshness recovery uses authenticated calls and safe observations',async t=>{
+test('SDK fake transport: missing admin header is rejected without capability leakage',async t=>{
   const c=await capability(t),calls=[];
   const fetchImpl=await authTransport(c.key,calls);
   const {AztecNodeAdminApiSchema}=await import('@aztec-labs/stdlib/interfaces/client');
   const missing=await publicRpc(ADMIN_URL,AztecNodeAdminApiSchema,'aztecAdmin',{fetchImpl});
-  await assert.rejects(missing.pauseSync());assert.equal(calls.length,1);assert.equal(calls[0].hasKey,false);
-  const admin=await adminRpc(ADMIN_URL,c.file,{fetchImpl}),f=fakeFreshness(),original=f.args.admin;
-  f.args.admin={pauseSync:async()=>{await admin.pauseSync();return original.pauseSync();},resumeSync:async()=>{await admin.resumeSync();return original.resumeSync();}};
-  await exerciseFreshness(f.args);assert(f.observation.recovered);assert(f.observation.resumed);
-  assert(!JSON.stringify(f.observation).includes(c.key));assert.deepEqual(calls.slice(1).map(x=>x.method),['aztecAdmin_pauseSync','aztecAdmin_resumeSync']);
+  await assert.rejects(missing.pauseSync());assert.equal(calls.length,1);assert.equal(calls[0].hasKey,false);assert(!JSON.stringify(calls).includes(c.key));
 });
 
 test('pure qualification scope contains no fabricated deployment or proof-service claim',()=>{
