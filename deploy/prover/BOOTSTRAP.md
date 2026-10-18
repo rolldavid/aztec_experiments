@@ -215,16 +215,26 @@ packaged Node 24.21.0 and reviewed qualifier. Its cgroup allows loopback network
 only; node P2P/L1 synchronization runs in the separate node service. The job has a
 private temporary directory, read-only system/release, empty capabilities,
 `LOG_LEVEL=silent`, no `NODE_PATH`, `NODE_OPTIONS`, `BB`, Docker socket, host IAM
-role or wallet. The process group is terminated at 105minutes at the latest;
-readiness is additionally bounded by creation+90minutes and the complete job by
-budgetStop−60seconds. The original 30minute timer protects installation; it is
+role or wallet. The service watchdog is derived from the actual remaining host
+budgetStop−60seconds. Readiness reserves the existing 15-minute qualifier allowance
+inside that deadline; there is no separate 90/105-minute startup cap. The original 30-minute timer protects
+installation; it is
 retired only after installation and verified controls, never extended for sync.
 
-The direct node readiness probe uses installed `createAztecNodeClient` with a
-bounded, no-redirect/no-retry transport and `inspectTrustedNode`; it does not
-mistake raw node RPC for the trusted service `/healthz` interface. Each poll
-checks actual network/proof identity, coherent canonical anchors, world-state
-synchronization and ≤120second L1 lag. Only public readiness data is queried.
+One packaged Node process retains one installed `createAztecNodeClient` and uses
+SDK `waitForNode` until the native CLI exposes node RPC. The installed rc3 CLI
+awaits `startNode`, whose factory blocks on archiver initial synchronization and
+`worldStateSynchronizer.start()` before RPC handler registration and listening.
+The compatibility standby server does not expose `getNodeInfo`. After this native
+startup wait, `inspectTrustedNode` runs exactly once to verify actual network/proof
+identity, coherent canonical anchors, world-state synchronization and ≤120-second
+L1 lag. Any failed inspection, including stale or unsynchronized state, fails the
+attempt; no application readiness predicate is polled or rescheduled. Only fixed
+public result categories are retained. The parent process enforces the absolute
+remaining deadline, and a late ready result cannot authorize qualification.
+The existing independent controls monitor remains active, and controls are
+rechecked before the single actual qualifier. Its report and activation fences
+are unchanged.
 The loopback addresses are RPC8082 and admin8882.
 
 Scope is the reviewed rc3 snapshot: Sepolia11155111, rollupVersion3409706519,

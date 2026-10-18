@@ -372,7 +372,7 @@ class htb 1:20 parent 1:1 prio 0 rate 25Mbit ceil 50Mbit burst 4725b cburst 7850
             ns=self.qualification_environment(t);calls=[]
             def run(args,**kwargs):
                 calls.append((args,kwargs))
-                if '--eval' in args:return json.dumps(ready_fixture())
+                if '--eval' in args:return json.dumps({'attempts':1,'ready':True,'snapshot':ready_fixture()})
                 # Intent must be on disk before executing the sole qualifier.
                 self.assertTrue((ns['BASE']/'qualification/intent.json').is_file())
                 report=qualifier_fixture();report['PRIVATE_SENTINEL']='PRIVATE_SENTINEL'
@@ -385,12 +385,54 @@ class htb 1:20 parent 1:1 prio 0 rate 25Mbit ceil 50Mbit burst 4725b cburst 7850
             self.assertNotIn('createTrustedPrivateNode',calls[0][0][-1])
             self.assertEqual(calls[0][1]['cwd'],ns['RELEASE'])
             # Actual JS syntax check only; imports/network never execute here.
-            subprocess.run(['node','--input-type=module','--check'],input=calls[0][0][-1],text=True,check=True)
+            subprocess.run([os.environ.get('PROVER_VALIDATION_NODE','node'),'--input-type=module','--check'],input=calls[0][0][-1],text=True,check=True)
             result=json.loads((ns['BASE']/'qualification/result.json').read_text())
             self.assertTrue(result['passed']);self.assertTrue(all(result['checks'].values()))
             self.assertEqual(result['readiness'],ready_fixture());self.assertNotIn('PRIVATE_SENTINEL',json.dumps(result))
             self.assertEqual(result['reportSha256'],hashlib.sha256((ns['BASE']/'qualification/report.json').read_bytes()).hexdigest())
             self.assertEqual((ns['BASE']/'qualification/intent.json').stat().st_mode&0o777,0o600)
+
+    def test_readiness_uses_installed_sdk_waiter_for_real_state_outcomes(self):
+        ns=host();ns['RELEASE']=ROOT
+        # Actual installed waitForNode; labelled RPC/inspector doubles, no services.
+        program=ns['readiness_program']({},NOW.timestamp(),pathlib.Path('/unused')).split('\nconst options=')[0]
+        script=program+"""
+import assert from 'node:assert/strict';
+const ready=JSON.parse(process.env.READY_FIXTURE);
+let contacts=0,inspections=0;
+const node={getNodeInfo:async()=>{if(++contacts<3)throw new Error('Not listening yet');return {};}};
+const result=await waitForReadiness(async actual=>{
+  assert.equal(actual,node);inspections++;assert.equal(contacts,3);return ready;
+},node,{},Date.now()+5000,0);
+assert.equal(inspections,1);assert.deepEqual(result,{attempts:1,ready:true,snapshot:ready});
+for(const code of ['CONFIG','IDENTITY','UNAVAILABLE','UNSYNCED','STALE','UNEXPECTED']) {
+  let attempts=0;
+  await assert.rejects(waitForReadiness(async()=>{attempts++;throw Object.assign(new Error('PRIVATE_SENTINEL'),{code:'BB_TRUSTED_NODE_'+code});},node,{},Date.now()+5000,0));
+  assert.equal(attempts,1);
+}
+let expiredReads=0;
+await assert.rejects(waitForReadiness(async()=>{expiredReads++;return ready;},node,{},Date.now()-1,0),{code:'TIMEOUT'});
+assert.equal(expiredReads,0);
+await assert.rejects(waitForReadiness(async()=>({ready:false}),node,{},Date.now()+5000,0));
+"""
+        env={**os.environ,'LOG_LEVEL':'silent','READY_FIXTURE':json.dumps(ready_fixture())}
+        subprocess.run([os.environ.get('PROVER_VALIDATION_NODE','node'),'--input-type=module','--eval',script],cwd=ROOT,env=env,check=True,timeout=20)
+
+    def test_six_hour_host_waits_past_old_cap_and_reserves_qualifier_time(self):
+        with tempfile.TemporaryDirectory() as t:
+            ns=self.qualification_environment(t);calls=[]
+            settings=config();settings['budgetStop']='2026-10-12T00:00:00Z'
+            (ns['BASE']/'deadline.json').write_text(json.dumps(settings))
+            def run(args,**kw):
+                calls.append((args,kw))
+                if '--eval' in args:return json.dumps({'attempts':1,'ready':True,'snapshot':ready_fixture()})
+                pathlib.Path(args[-1]).write_text(json.dumps(qualifier_fixture()))
+            ns['run']=run
+            with patch.object(ns['time'],'time',return_value=NOW.timestamp()+3*3600):ns['qualify']()
+            self.assertTrue(json.loads((ns['BASE']/'qualification/result.json').read_text())['passed'])
+            self.assertEqual(len(calls),2)
+            self.assertEqual(calls[0][1]['timeout'],3*3600-60-900)
+            self.assertEqual(calls[1][1]['timeout'],900)
 
     def test_qualification_interrupt_or_fsync_failure_never_replays(self):
         for boundary in ('existing-intent','fsync-after-intent','systemd-abort'):
@@ -408,16 +450,20 @@ class htb 1:20 parent 1:1 prio 0 rate 25Mbit ceil 50Mbit burst 4725b cburst 7850
                 self.assertNotIn('PRIVATE_SENTINEL',json.dumps(result))
 
     def test_qualification_failures_and_deadline_are_never_retried(self):
-        for boundary in ('readiness-deadline','identity','qualifier-timeout','missing-report','failed-check','wrong-scope','nonzero-with-passed-report'):
+        for boundary in ('readiness-deadline','readiness-timeout','readiness-exit','identity','qualifier-timeout','late-ready','late-qualifier','missing-report','failed-check','wrong-scope','nonzero-with-passed-report'):
             with self.subTest(boundary=boundary),tempfile.TemporaryDirectory() as t:
-                ns=self.qualification_environment(t);calls=[]
+                ns=self.qualification_environment(t);calls=[];now=[NOW.timestamp()+(8*3600 if boundary=='readiness-deadline' else 0)]
                 def run(args,**kwargs):
                     calls.append(args)
                     if '--eval' in args:
+                        if boundary=='readiness-timeout':raise subprocess.TimeoutExpired('PRIVATE_SENTINEL',1)
+                        if boundary=='readiness-exit':raise subprocess.CalledProcessError(1,args)
+                        if boundary=='late-ready':now[0]=NOW.timestamp()+8*3600
                         r=ready_fixture()
                         if boundary=='identity':r['rollupVersion']='1'
-                        return json.dumps(r)
+                        return json.dumps({'attempts':1,'ready':True,'snapshot':r})
                     if boundary=='qualifier-timeout':raise subprocess.TimeoutExpired('PRIVATE_SENTINEL',900)
+                    if boundary=='late-qualifier':now[0]=NOW.timestamp()+8*3600
                     if boundary=='missing-report':return
                     r=qualifier_fixture()
                     if boundary=='failed-check':r['checks']['freshness']['recovered']=False
@@ -425,8 +471,7 @@ class htb 1:20 parent 1:1 prio 0 rate 25Mbit ceil 50Mbit burst 4725b cburst 7850
                     pathlib.Path(args[-1]).write_text(json.dumps(r))
                     if boundary=='nonzero-with-passed-report':raise subprocess.CalledProcessError(1,args)
                 ns['run']=run
-                now=NOW.timestamp()+(91*60 if boundary=='readiness-deadline' else 0)
-                with patch.object(ns['time'],'time',return_value=now):ns['qualify']();ns['qualify']()
+                with patch.object(ns['time'],'time',side_effect=lambda:now[0]):ns['qualify']();ns['qualify']()
                 result=json.loads((ns['BASE']/'qualification/result.json').read_text())
                 self.assertFalse(result['passed']);self.assertLessEqual(len(calls),2)
                 if boundary=='readiness-deadline':self.assertEqual(calls,[])
@@ -508,9 +553,11 @@ for(const key of ['origins','queryNode']){
     def test_qualification_unit_enforces_process_and_network_boundary(self):
         ns=host();written={};calls=[]
         ns['write']=lambda p,s,*_:written.update({str(p):s});ns['run']=lambda a,**k:calls.append(a)
-        ns['install_qualification']()
+        with tempfile.TemporaryDirectory() as t:
+            ns['BASE']=pathlib.Path(t);(ns['BASE']/'deadline.json').write_text(json.dumps(config()))
+            with patch.object(ns['time'],'time',return_value=NOW.timestamp()+2*3600):ns['install_qualification']()
         unit=written['/etc/systemd/system/rolling-qualification.service']
-        for line in ('TimeoutStartSec=6300','KillMode=control-group','Restart=no','IPAddressDeny=any','IPAddressAllow=localhost','PrivateTmp=yes','ProtectSystem=strict','ReadWritePaths=/var/lib/rolling-bootstrap','UnsetEnvironment=NODE_PATH NODE_OPTIONS BB','Environment=LOG_LEVEL=silent'):
+        for line in ('TimeoutStartSec=21540','KillMode=control-group','Restart=no','IPAddressDeny=any','IPAddressAllow=localhost','PrivateTmp=yes','ProtectSystem=strict','ReadWritePaths=/var/lib/rolling-bootstrap','UnsetEnvironment=NODE_PATH NODE_OPTIONS BB','Environment=LOG_LEVEL=silent'):
             self.assertIn(line+'\n',unit)
         self.assertIn('--qualification-stop',unit)
         self.assertNotIn('docker.sock',unit)
@@ -820,15 +867,17 @@ class FinalReceipt(unittest.TestCase):
         value={'ready':True,'snapshot':ready_fixture(),'attempts':9}
         self.assertEqual(ns['readiness_observation'](value),value)
 
-    def test_failed_poll_retains_fixed_category_before_deadline(self):
+    def test_failed_waiter_retains_fixed_category_and_never_restarts(self):
         with tempfile.TemporaryDirectory() as t:
-            ns=Bootstrap().qualification_environment(t)
-            ns['run']=lambda *a,**k:json.dumps({'ready':False,'category':'UNSYNCED'})
-            times=iter([NOW.timestamp(),NOW.timestamp(),NOW.timestamp()+91*60,NOW.timestamp()+91*60])
-            with patch.object(ns['time'],'time',side_effect=lambda:next(times)),patch.object(ns['time'],'sleep'):
-                ns['qualify']()
+            ns=Bootstrap().qualification_environment(t);calls=[]
+            def run(*a,**k):
+                calls.append(a);return json.dumps({'attempts':1,'ready':False,'category':'UNSYNCED'})
+            ns['run']=run
+            with patch.object(ns['time'],'time',return_value=NOW.timestamp()+3*3600):
+                ns['qualify']();ns['qualify']()
             value=json.loads((ns['BASE']/'qualification/readiness-observation.json').read_text())
             self.assertEqual(value,{'ready':False,'category':'UNSYNCED','attempts':1})
+            self.assertEqual(len(calls),1)
             self.assertFalse(json.loads((ns['BASE']/'qualification/result.json').read_text())['passed'])
 
     def test_final_receipt_durable_emit_upload_shutdown_order(self):

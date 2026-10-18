@@ -604,6 +604,47 @@ def readiness_projection(value):
 def qualification_failure(stage):
     return {'schemaVersion':1,'passed':False,'stage':stage,'scope':'current-network-query-only','manifestSha256':PINS['manifest']}
 
+def readiness_program(options, deadline, observation_path):
+    # Native CLI sync completes before node RPC registration. Wait for that RPC,
+    # then inspect full production readiness exactly once; do not reschedule it.
+    return (
+        "import {createAztecNodeClient} from '@aztec-labs/stdlib/interfaces/client';\n"
+        "import {jsonStringify} from '@aztec-labs/foundation/json-rpc';\n"
+        "import {waitForNode} from '@aztec-labs/aztec.js/node';\n"
+        "import {openSync,writeFileSync,fsyncSync,closeSync,constants} from 'node:fs';\n"
+        'import {inspectTrustedNode} from INSPECTOR;\n'
+        'async function waitForReadiness(inspect,node,options,deadline,interval=15) {\n'
+        "  const remaining=()=>{const value=deadline-Date.now();if(value<=0)throw Object.assign(new Error('Readiness deadline'),{code:'TIMEOUT'});return value;};\n"
+        '  await waitForNode(node,undefined,{timeout:remaining()/1000,interval});\n'
+        '  remaining();\n'
+        '  const snapshot=await inspect(node,options);\n'
+        '  remaining();\n'
+        "  if(snapshot?.ready!==true)throw new Error('Invalid readiness result');\n"
+        '  return {attempts:1,ready:true,snapshot};\n'
+        '}\n'
+        'const options=OPTIONS, deadline=DEADLINE, observationPath=OBSERVATION;\n'
+        'const publish=value=>{\n'
+        '  const fd=openSync(observationPath,constants.O_WRONLY|constants.O_CREAT|constants.O_TRUNC|constants.O_NOFOLLOW,0o600);\n'
+        '  try {writeFileSync(fd,JSON.stringify(value));fsyncSync(fd);}finally{closeSync(fd);}\n'
+        '};\n'
+        'try {\n'
+        '  const node=createAztecNodeClient(options.url,{maxBatchSize:1,fetch:async(host,body)=>{\n'
+        "    const remaining=deadline-Date.now();if(remaining<=0)throw new Error('Readiness deadline');\n"
+        "    const r=await fetch(host,{method:'POST',headers:{'content-type':'application/json'},body:jsonStringify(body),redirect:'error',signal:AbortSignal.timeout(Math.min(10000,remaining))});\n"
+        "    if(!r.ok)throw new Error('Node unavailable');\n"
+        "    let n=0;const c=[];for await(const b of r.body){n+=b.length;if(n>33554432)throw new Error('Response limit');c.push(b);}\n"
+        "    return {response:JSON.parse(Buffer.concat(c).toString('utf8')),headers:r.headers};\n"
+        '  }});\n'
+        "  publish({attempts:1,ready:false,category:'UNAVAILABLE'});\n"
+        '  const result=await waitForReadiness(inspectTrustedNode,node,options,deadline);\n'
+        '  publish(result);process.stdout.write(JSON.stringify(result));\n'
+        '} catch(error) {\n'
+        "  const category=['CONFIG','IDENTITY','UNAVAILABLE','UNSYNCED','STALE'].find(c=>error?.code==='BB_TRUSTED_NODE_'+c);\n"
+        "  const result={attempts:1,ready:false,category:Date.now()>=deadline?'TIMEOUT':category??'UNAVAILABLE'};\n"
+        '  publish(result);process.stdout.write(JSON.stringify(result));\n'
+        '}\n'
+    ).replace('INSPECTOR',json.dumps((RELEASE/'shared/trusted-private-node.mjs').as_uri())).replace('OPTIONS',json.dumps(options)).replace('DEADLINE',str(int(deadline*1000))).replace('OBSERVATION',json.dumps(str(observation_path)))
+
 def qualify(aborted=False):
     directory=BASE/'qualification';directory.mkdir(mode=0o700,exist_ok=True)
     result_path=directory/'result.json';intent=directory/'intent.json'
@@ -614,7 +655,7 @@ def qualify(aborted=False):
             exclusive_record(result_path,qualification_failure('interrupted-unknown'));return
         deadline_record=json.loads((BASE/'deadline.json').read_text())
         epoch=lambda key:dt.datetime.fromisoformat(deadline_record[key].replace('Z','+00:00')).timestamp()
-        deadline=min(epoch('budgetStop')-60,epoch('createdAt')+105*60)
+        deadline=epoch('budgetStop')-60
         exclusive_record(intent,{'schemaVersion':1,'manifestSha256':PINS['manifest'],'deadline':int(deadline),'attempts':1})
         stage='readiness';result=qualification_failure(stage)
         try:
@@ -623,33 +664,33 @@ def qualify(aborted=False):
             config=directory/'config.json';exclusive_record(config,QUALIFICATION)
             scope=QUALIFICATION['service']
             options={'url':scope['queryNode']['url'],'expectedNetworkScope':{'chainId':scope['chainId'],'version':scope['rollupVersion'],'rollup':scope['queryNode']['rollupAddress']},'proofsEnabled':True,'allowLocalDev':True,'maxLagSeconds':120}
-            readiness="import {createAztecNodeClient} from '@aztec-labs/stdlib/interfaces/client';import {jsonStringify} from '@aztec-labs/foundation/json-rpc';import {inspectTrustedNode} from '"+(RELEASE/'shared/trusted-private-node.mjs').as_uri()+"';try {const opts="+json.dumps(options)+";const node=createAztecNodeClient(opts.url,{maxBatchSize:1,fetch:async(host,body)=>{const r=await fetch(host,{method:'POST',headers:{'content-type':'application/json'},body:jsonStringify(body),redirect:'error',signal:AbortSignal.timeout(10000)});if(!r.ok)throw Error();let n=0;const c=[];for await(const b of r.body){n+=b.length;if(n>33554432)throw Error();c.push(b);}return {response:JSON.parse(Buffer.concat(c).toString('utf8')),headers:r.headers};}});process.stdout.write(JSON.stringify(await inspectTrustedNode(node,opts)));} catch(e) {const codes=['CONFIG','IDENTITY','UNAVAILABLE','UNSYNCED','STALE'];const category=codes.find(x=>e?.code==='BB_TRUSTED_NODE_'+x)||'UNAVAILABLE';process.stdout.write(JSON.stringify({ready:false,category}));}"
-            attempts=0;ready=False;poll_deadline=min(deadline-900,epoch('createdAt')+90*60)
-            while time.time()<poll_deadline:
-                verify_controls();attempts+=1
-                try:
-                    raw=run([str(RELEASE/'node/bin/node'),'--input-type=module','--eval',readiness],timeout=min(60,max(1,poll_deadline-time.time())),capture=True,cwd=RELEASE)
-                    if len(raw)>16384: raise ValueError('Readiness output limit')
-                    observed=json.loads(raw)
-                    if observed.get('ready') is False:
-                        observation=readiness_observation({'attempts':attempts,**observed})
-                        write(directory/'readiness-observation.json',json.dumps(observation))
-                    else:
-                        snapshot=readiness_projection(observed)
-                        write(directory/'readiness-observation.json',json.dumps({'attempts':attempts,'ready':True,'snapshot':snapshot}))
-                        ready=True;break
-                except (subprocess.CalledProcessError,subprocess.TimeoutExpired) as error:
-                    write(directory/'readiness-observation.json',json.dumps({'attempts':attempts,'ready':False,'category':'TIMEOUT' if type(error) is subprocess.TimeoutExpired else 'PROCESS_EXIT'}))
-                time.sleep(min(15,max(0,poll_deadline-time.time())))
-            if not ready: raise ValueError('Readiness deadline')
+            readiness_deadline=deadline-900 # Preserve the sole qualifier's existing 15-minute bound.
+            remaining=readiness_deadline-time.time()
+            if remaining<=0: raise ValueError('Readiness deadline')
+            observation_path=directory/'readiness-observation.json'
+            readiness=readiness_program(options,readiness_deadline,observation_path)
+            try:
+                raw=run([str(RELEASE/'node/bin/node'),'--input-type=module','--eval',readiness],timeout=remaining,capture=True,cwd=RELEASE)
+            except (subprocess.CalledProcessError,subprocess.TimeoutExpired) as error:
+                write(observation_path,json.dumps({'attempts':1,'ready':False,'category':'TIMEOUT' if type(error) is subprocess.TimeoutExpired else 'PROCESS_EXIT'}))
+                raise
+            if len(raw)>16384: raise ValueError('Readiness output limit')
+            observed=readiness_observation(json.loads(raw))
+            write(observation_path,json.dumps(observed))
+            if observed.get('ready') is not True: raise ValueError('Readiness failed')
+            if time.time()>=readiness_deadline: raise ValueError('Readiness deadline')
+            snapshot=readiness_projection(observed['snapshot'])
             exclusive_record(directory/'ready.json',snapshot)
             stage='qualifier';verify_controls()
             output=directory/'report.json'
             # Exactly one attempt. The qualifier's nonzero result can still contain
             # useful fixed checks; timeout is unknown and never resumes or repeats it.
             process_exited=False
+            qualifier_remaining=deadline-time.time()
+            if qualifier_remaining<=0: raise ValueError('Qualification deadline')
             try:
-                run([str(RELEASE/'node/bin/node'),str(RELEASE/'prover/qualify-runtime.mjs'),str(config),PINS['manifest'],str(output)],timeout=min(900,max(1,deadline-time.time())))
+                run([str(RELEASE/'node/bin/node'),str(RELEASE/'prover/qualify-runtime.mjs'),str(config),PINS['manifest'],str(output)],timeout=min(900,qualifier_remaining))
+                if time.time()>=deadline: raise ValueError('Qualification deadline')
                 process_exited=True
             except subprocess.CalledProcessError: pass
             if output.is_symlink() or not output.is_file() or output.stat().st_size>16384: raise ValueError('Missing bounded result')
@@ -663,7 +704,11 @@ def qualify(aborted=False):
         exclusive_record(result_path,result)
 
 def install_qualification():
-    unit='[Unit]\nDescription=One bounded Linux query qualification\nRequires=rolling-node.service rolling-egress.service\nAfter=rolling-node.service rolling-egress.service\n[Service]\nType=oneshot\nExecStart=/usr/bin/python3 /usr/local/lib/rolling-attest.py --qualify\nExecStopPost=/usr/bin/python3 /usr/local/lib/rolling-attest.py --qualification-stop\nTimeoutStartSec=6300\nTimeoutStopSec=45\nKillMode=control-group\nRestart=no\nUMask=0077\nEnvironment=LOG_LEVEL=silent\nUnsetEnvironment=NODE_PATH NODE_OPTIONS BB\nPrivateTmp=yes\nPrivateDevices=yes\nNoNewPrivileges=yes\nCapabilityBoundingSet=\nProtectSystem=strict\nProtectHome=yes\nReadWritePaths=/var/lib/rolling-bootstrap\nReadOnlyPaths=/var/lib/rolling-admin/qualification-key\nInaccessiblePaths=-/var/lib/rolling-bootstrap-private -/var/lib/cloud\nIPAddressDeny=any\nIPAddressAllow=localhost\nRestrictAddressFamilies=AF_UNIX AF_INET AF_INET6 AF_NETLINK\nStandardOutput=null\nStandardError=null\n[Install]\nWantedBy=multi-user.target\n'
+    record=json.loads((BASE/'deadline.json').read_text())
+    remaining=int(dt.datetime.fromisoformat(record['budgetStop'].replace('Z','+00:00')).timestamp()-time.time()-60)
+    if remaining<=0: raise ValueError('Qualification deadline')
+    unit='[Unit]\nDescription=One bounded Linux query qualification\nRequires=rolling-node.service rolling-egress.service\nAfter=rolling-node.service rolling-egress.service\n[Service]\nType=oneshot\nExecStart=/usr/bin/python3 /usr/local/lib/rolling-attest.py --qualify\nExecStopPost=/usr/bin/python3 /usr/local/lib/rolling-attest.py --qualification-stop\nTimeoutStartSec=HOST_REMAINING\nTimeoutStopSec=45\nKillMode=control-group\nRestart=no\nUMask=0077\nEnvironment=LOG_LEVEL=silent\nUnsetEnvironment=NODE_PATH NODE_OPTIONS BB\nPrivateTmp=yes\nPrivateDevices=yes\nNoNewPrivileges=yes\nCapabilityBoundingSet=\nProtectSystem=strict\nProtectHome=yes\nReadWritePaths=/var/lib/rolling-bootstrap\nReadOnlyPaths=/var/lib/rolling-admin/qualification-key\nInaccessiblePaths=-/var/lib/rolling-bootstrap-private -/var/lib/cloud\nIPAddressDeny=any\nIPAddressAllow=localhost\nRestrictAddressFamilies=AF_UNIX AF_INET AF_INET6 AF_NETLINK\nStandardOutput=null\nStandardError=null\n[Install]\nWantedBy=multi-user.target\n'
+    unit=unit.replace('HOST_REMAINING',str(remaining))
     write('/etc/systemd/system/rolling-qualification.service',unit,0o644)
     write('/etc/systemd/system/rolling-qualification-receipt.service','[Unit]\nDescription=Trusted bounded final receipt publisher\n[Service]\nType=oneshot\nExecStart=/usr/bin/python3 /usr/local/lib/rolling-attest.py --qualification-receipt\nTimeoutStartSec=35\nTimeoutStopSec=3\nRestart=no\nUMask=0077\nStandardOutput=null\nStandardError=null\n',0o644)
     run(['systemctl','daemon-reload']);run(['systemctl','enable','rolling-qualification.service'])
