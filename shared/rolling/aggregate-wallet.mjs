@@ -11,7 +11,7 @@ export const AGGREGATE_USDC_SCOPE_KEYS=Object.freeze([...AGGREGATE_SCOPE_KEYS,'u
 export function aggregateWalletScope(scope,network,board,owner){
  return JSON.stringify(['ROLLING_AGGREGATE_FUNDING_V1',network.chainId,network.version,network.rollup,board,scope.router,owner,1]);
 }
-export async function createAggregateWallet({sdk,ethers,scope,network,board,bok,owner,walletSecret,walletSalt,storage,provider,captureWallet,contextGuard,verifyScope,reconcileClaim,claimStore,relay,nowSeconds}){
+export async function createAggregateWallet({sdk,ethers,scope,network,board,bok,owner,walletSecret,walletSalt,storage,provider,captureWallet,contextGuard,verifyScope,reconcileClaim,claimStore,relay}){
  const captured=freeze(clone(scope)),n=freeze(clone(network));
  const usdc=captured?.usdcRelayAddress!==undefined;
  check(captured&&Object.keys(captured).sort().join()===Array.from(usdc?AGGREGATE_USDC_SCOPE_KEYS:AGGREGATE_SCOPE_KEYS).sort().join());
@@ -97,7 +97,7 @@ export async function createAggregateWallet({sdk,ethers,scope,network,board,bok,
   const bokCommitment=(await read(()=>sdk.poseidon2HashWithSeparator([new sdk.Fr(BigInt(n.chainId)),new sdk.Fr(BigInt(s.bokPortal)),sdk.Fr.fromString(bok),new sdk.Fr(BigInt(n.version)),sdk.Fr.fromString(owner),sdk.Fr.fromString(recipientSalt)],0x424b4301))).toString();
   const {privateFeeCap,...amounts}=values;
   const quote=await read(()=>sdk.prepareAggregateUsdcFunding({scope:usdcScope,allocation:{...amounts,collateralSecretHash,feeSecretHash,bokCommitment,bokSecretHash,authorizationSalt:sdk.Fr.random().toString()},wallet:{address:wallet.address,chainId:n.chainId,canSignTypedData:true},relay:{address:terms.relayer,feeUsdc:terms.feeUsdc,gasBudgetWei:terms.gasBudgetWei}},
-   {provider:{request:({method,params})=>read(()=>provider.send(method,params))},...(nowSeconds?{nowSeconds}:{})}));
+   {provider:{request:({method,params})=>read(()=>provider.send(method,params))}}));
   await read(wallet.guard);
   // Random collateral custody is persisted using the original beneficiary
   // scope. No relayer or collateral-consent nonce derives any user secret.
@@ -111,7 +111,7 @@ export async function createAggregateWallet({sdk,ethers,scope,network,board,bok,
   await read(verifyScope);await read(wallet.guard);await predecessor(saved.value);
   const sign=async typed=>{const signature=await read(()=>wallet.signer.signTypedData(typed.domain,typed.types,typed.value));check(ethers.verifyTypedData(typed.domain,typed.types,typed.value,signature).toLowerCase()===wallet.address,'CONSENT');await read(wallet.guard);return signature;};
   const consent=await sign(quote.consent),authorization=await sign(quote.authorization);
-  const tx=sdk.aggregateUsdcFundingTransaction(quote,consent,authorization,nowSeconds?{nowSeconds:nowSeconds()}:undefined);
+  const tx=await read(()=>sdk.aggregateUsdcFundingTransaction(quote,consent,authorization));
   const request={from:tx.from,to:tx.to,chainId:tx.chainId,data:tx.data.toLowerCase(),value:tx.value,expected:{kind:'aggregate-usdc-funding',routerCodeHash:s.routerCodeHash,collateralPortal:s.collateralPortal,feePortal:s.feePortal,bokPortal:s.bokPortal,privateFpc:s.privateFpc,planHash:tx.planHash}};
   sdk.validateAggregateFundingIntent(request);await read(wallet.guard);await predecessor(saved.value);
   // This checkpoint is deliberately before the sole POST. Even a crash before
@@ -175,7 +175,7 @@ export async function createAggregateWallet({sdk,ethers,scope,network,board,bok,
    const {gasBudgetWei,privateFeeCap,...amounts}=values;check(typeof privateFeeCap==='string'&&/^[1-9][0-9]{0,76}$/.test(privateFeeCap));
    const quote=await read(()=>sdk.prepareAggregateFunding({scope:s,allocation:{...amounts,collateralSecretHash:collateral.secretHash,feeSecretHash:fee.secretHash.toString(),bokCommitment,bokSecretHash},
     wallet:{address:depositor,chainId:n.chainId,canSendTransaction:true,canSignTypedData:true,gasBudgetWei}},
-    {provider:{request:({method,params})=>read(()=>provider.send(method,params))},...(nowSeconds?{nowSeconds}:{})}));
+    {provider:{request:({method,params})=>read(()=>provider.send(method,params))}}));
    await read(wallet.guard);
    const bokScope={...n,portal:s.bokPortal,recipient:bok,token:s.bokToken};
    const saved=await read(()=>slot.write(previous,{schemaVersion:1,depositor,nonce,recipientSalt,bridgeSecret,bokScope,intent:null,privateFeeCap,claim:null,previousTxHash:existing?.txHash??null}));
@@ -193,7 +193,7 @@ export async function createAggregateWallet({sdk,ethers,scope,network,board,bok,
    const consent=await read(()=>wallet.signer.signTypedData(quote.consent.domain,quote.consent.types,quote.consent.value));
    check(ethers.verifyTypedData(quote.consent.domain,quote.consent.types,quote.consent.value,consent).toLowerCase()===wallet.address,'CONSENT');
    await read(wallet.guard);
-   const tx=sdk.aggregateFundingTransaction(quote,consent,nowSeconds?{nowSeconds:nowSeconds()}:undefined);
+   const tx=await read(()=>sdk.aggregateFundingTransaction(quote,consent));
    const expected={kind:'aggregate-funding',routerCodeHash:s.routerCodeHash,collateralPortal:s.collateralPortal,feePortal:s.feePortal,bokPortal:s.bokPortal,privateFpc:s.privateFpc,planHash:tx.planHash};
    const gasRequest={from:tx.from,to:tx.to,data:tx.data,value:BigInt(tx.value),nonce,chainId:BigInt(tx.chainId)};
    const gas=await read(()=>provider.estimateGas(gasRequest)),fees=await read(()=>provider.getFeeData()),price=fees.maxFeePerGas??fees.gasPrice;
@@ -209,7 +209,7 @@ export async function createAggregateWallet({sdk,ethers,scope,network,board,bok,
     await wallet.guard();check(ethereumNonce===nonce,'NONCE_CHANGED');await predecessor(current.saved.value);
     // Validate deadline again after any wallet consent interaction, before both
     // encrypted intent writes and the journal's one broadcast.
-    sdk.aggregateFundingTransaction(quote,consent,nowSeconds?{nowSeconds:nowSeconds()}:undefined);
+    await read(()=>sdk.aggregateFundingTransaction(quote,consent));
     const intent={from:tx.from,to:tx.to,chainId:tx.chainId,nonce:ethereumNonce,data:tx.data.toLowerCase(),value:tx.value,expected};
     sdk.validateAggregateFundingIntent(intent);
     await slot.write(current.saved,{...current.saved.value,intent});await contextGuard();await wallet.guard();

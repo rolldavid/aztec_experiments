@@ -21,7 +21,7 @@ const quoter=new ethers.Interface(['function quoteExactOutputSingle((address tok
 function fixture({chainId='31337'}={}){
  const scope={chainId,router:a(1),routerCodeHash:ethers.keccak256('0x6000'),collateralPortal:a(2),feePortal:a(3),bokPortal:a(4),weth:a(5),swapRouter:a(6),feeToken:a(7),bokToken:a(8),privateFpc:h(9),quoter:a(10),quoterCodeHash:ethers.keccak256('0x6000')};
  const signer=new ethers.Wallet(h(99)),address=signer.address.toLowerCase(),records=new Map();
- const state={sends:0,signatures:0,nonce:7,clock:1000,connected:true,invalid:false,unknown:false,landed:false,reads:0};
+ const state={sends:0,signatures:0,nonce:7,pendingTime:1000,connected:true,invalid:false,unknown:false,landed:false,reads:0};
  const allocation={asset:'ETH',collateralWei:'100',feeAmount:'200',bokAmount:'300',feePoolFee:3000,bokPoolFee:500,slippageBps:100,gasBudgetWei:'10000',privateFeeCap:'1000'};
  const storage={read:async key=>records.get(key)??null,compareAndSwap:async(key,old,value)=>{assert.equal(records.get(key)??null,old);records.set(key,value);}};
  let tx,receipt;
@@ -30,9 +30,10 @@ function fixture({chainId='31337'}={}){
   getFeeData:async()=>({maxFeePerGas:2n,maxPriorityFeePerGas:1n}),estimateGas:async()=>100n,getCode:async()=> '0x6000',getTransaction:async()=>tx,getTransactionReceipt:async()=>state.landed?receipt:null,
   async send(method,params){state.reads++;
    if(method==='eth_chainId')return '0x'+BigInt(chainId).toString(16);
+   if(method==='eth_getBlockByNumber'&&params[0]==='pending')return {number:null,hash:null,timestamp:'0x'+state.pendingTime.toString(16)};
    if(method==='eth_getBlockByNumber')return {number:'0x10',hash:h(16),timestamp:'0x3e8'};
    if(method==='eth_getCode')return '0x6000';if(method==='eth_getBalance')return '0xffffff';
-   assert.equal(method,'eth_call');const {to,data}=params[0];
+   assert.equal(method,'eth_call');if(params[1]==='pending'){assert(['fund','fundUsdc'].includes(router.parseTransaction(params[0]).name));if(state.simulationFails)throw Error('PRIVATE_SENTINEL');return '0x';}const {to,data}=params[0];
    if(to===scope.router){const call=router.parseTransaction({data});return router.encodeFunctionResult(call.name,[scope[call.name]]);}
    if(to===scope.collateralPortal){const call=portal.parseTransaction({data});return portal.encodeFunctionResult(call.name,[{depositNonces:2n,depositsEnabled:true,getDeposit:0n,MIN_DEPOSIT:1n,MAX_DEPOSIT:200n}[call.name]]);}
    if(to===scope.bokPortal)return bok.encodeFunctionResult('active',[true]);
@@ -52,7 +53,7 @@ function fixture({chainId='31337'}={}){
   }}};
  const options={sdk:{Fr,computeSecretHash,poseidon2HashWithSeparator,deriveBoardDepositSecret,claimSecrets,createEncryptedJournalSlot,createEthereumJournal,verifyEthereumIntentReceipt,prepareAggregateFunding,aggregateFundingTransaction,validateAggregateFundingIntent},ethers,scope,
   network:{chainId,version:'1',rollup:a(11)},board:h(12),bok:h(13),owner:h(14),walletSecret:h(15),walletSalt:'0',storage,provider,
-  captureWallet:async()=>{if(!state.connected)throw Error('No wallet');return wallet;},contextGuard:async()=>{if(state.invalid)throw Error('Context changed');},verifyScope:async()=>{},nowSeconds:()=>state.clock};
+  captureWallet:async()=>{if(!state.connected)throw Error('No wallet');return wallet;},contextGuard:async()=>{if(state.invalid)throw Error('Context changed');},verifyScope:async()=>{}};
  return {options,state,allocation,records,wallet,open:()=>createAggregateWallet(options)};
 }
 test('aggregate review never signs/sends; explicit confirm uses Ethereum nonce, distinct consent nonce, and authenticates three receipts',async()=>{
@@ -74,9 +75,9 @@ test('lost send reply retains original context; recovery never rebroadcasts',asy
  const reopened=await f.open();await assert.rejects(reopened.recover());assert.equal(f.state.sends,1);
  f.state.landed=true;f.state.nonce=8;assert.equal((await reopened.recover()).receipt.txHash,h(20));assert.equal(f.state.sends,1);
 });
-for(const mode of ['expired','account','signature'])test('aggregate confirmation fails closed for '+mode,async()=>{
+for(const mode of ['expired','account','signature','pending-state'])test('aggregate confirmation fails closed for '+mode,async()=>{
  const f=fixture(),app=await f.open();await app.prepare(f.allocation);
- if(mode==='expired')f.state.clock=1121;if(mode==='account')f.state.invalid=true;if(mode==='signature')f.wallet.signer.signTypedData=(...args)=>new ethers.Wallet(h(98)).signTypedData(...args);
+ if(mode==='expired')f.state.pendingTime=1121;if(mode==='pending-state')f.state.simulationFails=true;if(mode==='account')f.state.invalid=true;if(mode==='signature')f.wallet.signer.signTypedData=(...args)=>new ethers.Wallet(h(98)).signTypedData(...args);
  await assert.rejects(app.confirm());assert.equal(f.state.sends,0);
 });
 test('unrelated tx hash cannot load retained secret context',async()=>{const f=fixture(),app=await f.open();await app.prepare(f.allocation);await app.confirm();assert.equal(await app.loadAggregate(h(21)),null);});

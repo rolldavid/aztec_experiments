@@ -37,9 +37,23 @@ function nameFailure(failure){
  }catch{return null;}
 }
 function aggregateFundingFailure(failure){
- try{const code=Object.getOwnPropertyDescriptor(failure,'code');if(code&&Object.hasOwn(code,'value')&&code.value==='ROLLING_FUNDING_GAS_CHANGED')return 'Ethereum gas costs exceed your approved maximum. Change Maximum Ethereum gas cost (ETH) if you want to approve more, then get a fresh quote and confirm again. Your recovery records are preserved.';}catch{}
+ try{const code=Object.getOwnPropertyDescriptor(failure,'code');if(code&&Object.hasOwn(code,'value')){
+  const messages={
+   ROLLING_FUNDING_GAS_CHANGED:'Ethereum gas costs exceed your approved maximum. Change Maximum Ethereum gas cost (ETH) if you want to approve more, then get a fresh quote and confirm again. Your recovery records are preserved.',
+   AGGREGATE_STALE_QUOTE:'This quote has expired on Ethereum. Get a fresh quote and review the amounts before confirming again.',
+   AGGREGATE_QUOTE_REORG:'Ethereum changed the block used for this quote. Get a fresh quote before confirming again.',
+   AGGREGATE_PUBLIC_READ_FAILED:'The funding quote could not be verified against current Ethereum state. Check your Ethereum connection, then get a fresh quote. Your recovery records are preserved.',
+   AGGREGATE_INSUFFICIENT_USER_FUNDS:'Your Ethereum wallet does not have enough funds for these allocations and the approved costs. Reduce the amounts or add funds, then get a fresh quote.',
+   AGGREGATE_PORTAL_NOT_READY:'The funding bridge is not accepting deposits. Try again when the service is available.',
+   AGGREGATE_EXISTING_DEPOSIT:'This Ethereum wallet already has a posting deposit. Recover the existing deposit before preparing another.',
+   AGGREGATE_RELAY_GAS_REQUIRED:'The USDC funding relay currently lacks Ethereum gas. Try again when the relay is funded.',
+   AGGREGATE_COLLATERAL_BOUNDS:'The posting deposit is outside the supported amount range. Change the amount and get a fresh quote.'
+  };
+  if(Object.hasOwn(messages,code.value))return messages[code.value];
+ }}catch{}
  return nameFailure(failure);
 }
+
 const message='This operation could not be completed. Recovery records were preserved. Check the existing transaction before preparing another.';
 const plaintextRecoveryWarning='This imported file contains an unencrypted key. Create an encrypted recovery file and protect the original.';
 const recoveryLimits='Keep your recovery file and its password safe. A lost password cannot be reset. Losing your private account key can make funds and saved choices unrecoverable.';
@@ -756,7 +770,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
     const slippageBps=Math.round(Number(values.slippage)*100);
     fundingQuote=await session.funding.prepare({asset:values.asset,collateralWei:units(values.collateral,18),feeAmount:units(values.fee,18),bokAmount:units(values.bok,6),
      ...(values.asset==='USDC'?{collateralPoolFee:3000}:{gasBudgetWei:units(values.gas,18),bokPoolFee:3000}),feePoolFee:3000,slippageBps,privateFeeCap:session.funding.defaultPrivateFeeCap});checkAccount(epoch);
-   }),true));
+   },aggregateFundingFailure),true));
   }
   content.append(fundingControl(fundingAutomatic?'Pause bridge checks':'Resume saved funding',()=>{
    if(fundingAutomatic){stopFunding();notice=busy?'Pause requested. Waiting for the current funding operation to settle.':'Funding checks paused. Your encrypted payment and claim records are preserved.';render();}
