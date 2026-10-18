@@ -323,7 +323,7 @@ if(focused){
   try{
    const runtime=await startDevnet({directory:dir,fundingAddresses:[Fr.ONE]}, {
     startEthereum:async config=>{assert.deepEqual(config,{port:0});calls.push('ethereum');return {rpcUrl:'http://127.0.0.1:18545',stop:async()=>calls.push('stop-ethereum')};},
-    createNetwork:async config=>{assert.equal(config.realProofs,false);assert.equal(config.testAccounts,false);assert.deepEqual(config.prefundAddresses,[String(Fr.ONE)]);assert.equal(config.useAutomineSequencer,undefined,'SDK coherent default owns sequencer');assert.equal(config.ethereumSlotDuration,undefined);assert.equal(config.dateProvider,undefined);
+    createNetwork:async config=>{assert.equal(config.realProofs,false);assert.equal(config.automineEnableProveEpoch,true);assert.equal(config.testAccounts,false);assert.deepEqual(config.prefundAddresses,[String(Fr.ONE)]);assert.equal(config.useAutomineSequencer,undefined,'SDK coherent default owns sequencer');assert.equal(config.ethereumSlotDuration,undefined);assert.equal(config.dateProvider,undefined);
      const limits=getNetworkTxGasLimits(config,l1Constants);
      assert(limits.daGas>=publicationDA,'normal padded class publication must fit the native network admission limit');
      assert(limits.daGas<=MAX_TX_DA_GAS,'native protocol maximum stays enforced');
@@ -334,6 +334,24 @@ if(focused){
    assert.deepEqual(calls,['ethereum','network','rpc','prove','stop-rpc','stop-network','stop-ethereum']);
    assert.equal((await readDevnetRecord(path.join(dir,'network.json'))).phase,'stopped');
    await assert.rejects(startDevnet({directory:dir}),/fresh directory/);assert.equal(calls.length,7);
+  }finally{await fs.rm(dir,{recursive:true,force:true});}
+ });
+ test('native reorg mode disables only automatic settlement and rejects nonboolean settings before startup',async()=>{
+  const {startDevnet}=await import('./network.mjs'),{bootstrapRollingDevnet}=await import('./bootstrap.mjs');
+  const dir=await fs.mkdtemp(path.join(os.tmpdir(),'native-reorg-'));let creates=0,settlements=0;
+  try{
+   for(const value of [null,0,1,'false',{}]){
+    await assert.rejects(startDevnet({directory:dir,automineEnableProveEpoch:value}),/automatic settlement/);
+    await assert.rejects(bootstrapRollingDevnet({directory:dir,automineEnableProveEpoch:value}),/automatic settlement/);
+   }
+   assert.deepEqual(await fs.readdir(dir),[]);
+   const runtime=await startDevnet({directory:dir,automineEnableProveEpoch:false},{
+    startEthereum:async()=>({rpcUrl:'http://127.0.0.1:18545',stop:async()=>{}}),
+    createNetwork:async config=>{creates++;assert.equal(config.automineEnableProveEpoch,false);assert.equal(config.realProofs,false);
+     return {node:{getNodeInfo:async()=>({realProofs:false,l1ChainId:31337,rollupVersion:7,l1ContractAddresses:{rollupAddress:'0x'+'1'.repeat(40)}}),prove:async()=>++settlements},stop:async()=>{}};},
+    startRpc:async()=>({url:'http://127.0.0.1:18080',close:async()=>{}}),
+   });
+   try{assert.equal(creates,1);assert.equal(settlements,0);assert.equal(await runtime.settleCheckpoints(),1);}finally{await runtime.close();}
   }finally{await fs.rm(dir,{recursive:true,force:true});}
  });
  test('native setup failure stops its owned Ethereum and preserves the exact original cause',async()=>{

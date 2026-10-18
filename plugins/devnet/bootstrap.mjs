@@ -190,7 +190,10 @@ export function developmentQueryServiceConfig({directory,appPort,nodeUrl,rollupA
 }
 // Current local profile. Production deployment/transaction implementations are
 // reused; only the disposable chain's explicitly labelled settlement is local.
-export async function bootstrapRollingDevnet({directory,ports,onProgress=console.log,onOwned=()=>{}}) {
+// Isolated reorg acceptance may disable automatic settlement; explicit native
+// Ready/bridge settlement remains available and both node/PXE proofs stay false.
+export async function bootstrapRollingDevnet({directory,ports,automineEnableProveEpoch=true,onProgress=console.log,onOwned=()=>{}}) {
+ if(typeof automineEnableProveEpoch!=='boolean')throw Error('Invalid native automatic settlement setting');
  const {readLiquidityArtifacts,readFundingRouterArtifact,deployCircleInventory,deployDevelopmentLiquidity}=await import('./liquidity.mjs');
  // Complete all public artifact preparation before starting retained services.
  const liquidityArtifacts=await readLiquidityArtifacts(),fundingRouterArtifact=await readFundingRouterArtifact();
@@ -219,7 +222,7 @@ export async function bootstrapRollingDevnet({directory,ports,onProgress=console
  const secret=Fr.fromString(actor.secret),salt=Fr.fromString(actor.salt),signingKey=GrumpkinScalar.fromString(actor.signingKey);
  const address=await getSchnorrInitializerlessAccountContractAddress(signingKey,salt,secret);
  if(String(address)!==actor.address||!signingKey.equals(deriveMasterMessageSigningSecretKey(secret)))throw Error('Original local actor identity differs');
- const net=await startDevnet({directory,fundingAddresses:[address],proofs:false,ports:selected,onProgress,onOwned});
+ const net=await startDevnet({directory,fundingAddresses:[address],proofs:false,automineEnableProveEpoch,ports:selected,onProgress,onOwned});
  let wallet,tokenProvider,closing,activeChild,activeExit,queryService;
  function close(){return closing??=(async()=>{let error;if(activeChild){activeChild.kill('SIGTERM');const timer=setTimeout(()=>activeChild?.kill('SIGKILL'),5000);try{await activeExit;}finally{clearTimeout(timer);}}try{await queryService?.close();}catch(e){error=e;}try{await wallet?.stop();}catch(e){error??=e;}try{tokenProvider?.destroy();}catch(e){error??=e;}try{await net.close();}catch(e){error??=e;}if(error)throw Error('Current development cleanup incomplete',{cause:error});})();}
  onOwned({close});

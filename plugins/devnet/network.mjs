@@ -80,9 +80,10 @@ export async function startDevelopmentNodeRpc({node,config,port=0,origins=[],onP
 // and Anvil. It never grants access to a user wallet or a public network.
 const localMnemonic='test test test test test test test test test test test junk';
 
-export async function startDevnet({directory,fundingAddresses=[],proofs=false,ports:requestedPorts,onProgress=()=>{},onOwned=()=>{}},
+export async function startDevnet({directory,fundingAddresses=[],proofs=false,automineEnableProveEpoch=true,ports:requestedPorts,onProgress=()=>{},onOwned=()=>{}},
  {startEthereum=startAnvil,createNetwork=createLocalNetwork,startRpc=startDevelopmentNodeRpc}={}) {
  if(proofs!==false)throw Error('Local development requires native proofs disabled');
+ if(typeof automineEnableProveEpoch!=='boolean')throw Error('Invalid native automatic settlement setting');
  await fs.mkdir(directory,{recursive:true,mode:0o700});
  await assertFreshDevnetDirectory(directory);
  const ports=devnetPorts(requestedPorts);
@@ -111,7 +112,7 @@ export async function startDevnet({directory,fundingAddresses=[],proofs=false,po
   const identity=Wallet.fromPhrase(localMnemonic);
   onProgress('Starting native Aztec local network with proofs disabled');
   pending=createNetwork({l1RpcUrls:[ethereum.rpcUrl],l1Mnemonic:localMnemonic,testAccounts:false,
-   prefundAddresses:fundingAddresses.map(String),realProofs:false,p2pEnabled:false,
+   prefundAddresses:fundingAddresses.map(String),realProofs:false,p2pEnabled:false,automineEnableProveEpoch,
    // SDK stdlib/gas/tx_gas_limits documents 72s slots / 6s blocks for class
    // publication capacity. Native automine still owns all on-demand progress.
    blockDurationMs:6000,
