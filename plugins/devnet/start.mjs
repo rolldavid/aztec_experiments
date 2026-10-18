@@ -2,7 +2,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import {randomUUID} from 'node:crypto';
 import {pathToFileURL} from 'node:url';
-import {devnetPorts,readDevnetRecord,writeDevnetRecord,developmentCleanupFailure,developmentShutdownSummary} from './network.mjs';
+import {devnetPorts,readDevnetRecord,writeDevnetRecord,developmentCleanupFailure,developmentShutdownSummary,startDevelopmentBridgeProgress} from './network.mjs';
 
 export function developmentOptions(args=[],env={}) {
  const options={};for(let i=0;i<args.length;i+=2){const key=args[i];if(!['--profile','--directory','--app-port','--node-port','--ethereum-port','--hosted-config'].includes(key)||Object.hasOwn(options,key)||!args[i+1])throw Error('Invalid development option');options[key]=args[i+1];}
@@ -44,10 +44,10 @@ export async function startDevelopment(options) {
  const {Barretenberg,BarretenbergSync}=await import('@aztec-foundation/bb.js');
  const {bootstrapPluginDevnet,bootstrapRollingDevnet}=await import('./bootstrap.mjs');
  const {directory}=options,lease=await acquireDevelopmentLease(directory);
- let fixture,server,service,fundingRelay,closing;
+ let fixture,server,service,fundingRelay,bridgeProgress,closing;
  const shutdown=()=>close().then(()=>process.exit(0),error=>{console.error(JSON.stringify(developmentShutdownSummary(error)));process.exit(1);});
  if(options.handleSignals){process.once('SIGINT',shutdown);process.once('SIGTERM',shutdown);}
- function close(){return closing??=(async()=>{process.removeListener('SIGINT',shutdown);process.removeListener('SIGTERM',shutdown);const errors=[];for(const [stage,stop] of [['service',()=>service?.close()],['server',()=>server?.close()],['relay',()=>fundingRelay?.close()],['fixture',()=>fixture?.close()],['barretenberg',()=>Barretenberg.destroySingleton()],['barretenberg-sync',()=>BarretenbergSync.destroySingleton()]])try{await stop();}catch(error){errors.push(developmentCleanupFailure(stage,error));}
+ function close(){return closing??=(async()=>{process.removeListener('SIGINT',shutdown);process.removeListener('SIGTERM',shutdown);const errors=[];for(const [stage,stop] of [['service',()=>service?.close()],['server',()=>server?.close()],['relay',()=>fundingRelay?.close()],['bridge-progress',()=>bridgeProgress?.close()],['fixture',()=>fixture?.close()],['barretenberg',()=>Barretenberg.destroySingleton()],['barretenberg-sync',()=>BarretenbergSync.destroySingleton()]])try{await stop();}catch(error){errors.push(developmentCleanupFailure(stage,error));}
   if(!errors.length)try{await lease.close();}catch(error){errors.push(developmentCleanupFailure('lease',error));}if(errors.length){const error=new AggregateError(errors,'Development cleanup requires reconciliation');try{await writeDevnetRecord(path.join(directory,'shutdown-failure.json'),developmentShutdownSummary(error));}catch(recordError){throw new AggregateError([error,recordError],'Development cleanup diagnostic could not be retained',{cause:error});}throw error;}
  })();}
  try{
@@ -58,6 +58,8 @@ export async function startDevelopment(options) {
    const {loadRollingWalletAssets}=await import('../../scripts/rolling-wallet-assets.mjs');
    const {createRollingPublicIndexFromConfig}=await import('../../scripts/rolling-public-server.mjs');
    const {startRollingReader}=await import('../../apps/rolling/start.mjs');
+   bridgeProgress=await startDevelopmentBridgeProgress({node:fixture.net.node,client:fixture.net.deployment.l1Client,inboxAddress:fixture.net.config.inboxAddress,
+    onFailure:()=>console.error('Development bridge progress failed. Funding cannot finish; stop and inspect this development session.')});
    const wallet=await loadRollingWalletAssets(fixture.walletConfig,fixture.readerConfig.scope);
    fundingRelay=await openDevelopmentFundingRelay({fixture,directory});
    const index=await createRollingPublicIndexFromConfig(fixture.readerConfig);

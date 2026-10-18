@@ -9,6 +9,8 @@ import {foundry} from 'viem/chains';
 import {createLocalNetwork} from '@aztec-labs/aztec';
 import {startAnvil} from '@aztec-labs/ethereum/test';
 import {createExtendedL1Client} from '@aztec-labs/ethereum/client';
+import {Fr} from '@aztec-labs/foundation/curves/bn254';
+import {InboxAbi} from '@aztec-foundation/l1-artifacts/InboxAbi';
 import {isL1ToL2MessageReady} from '@aztec-labs/aztec.js/messaging';
 import {createNamespacedSafeJsonRpcServer} from '@aztec-labs/foundation/json-rpc/server';
 import {AztecNodeApiSchema,AztecNodeDebugApiSchema} from '@aztec-labs/stdlib/interfaces/client';
@@ -39,7 +41,7 @@ export async function assertFreshDevnetDirectory(directory) {
   const allowed=new Set(['operator.json','hosted.lock']);
   if((await fs.readdir(directory)).some(name=>!allowed.has(name)))throw Error('Development requires a fresh directory; existing state is preserved');
 }
-const cleanupStages=new Set(['node-rpc','node-stop','anvil-stop','service','server','relay','fixture','barretenberg','barretenberg-sync','lease']);
+const cleanupStages=new Set(['bridge-progress','node-rpc','node-stop','anvil-stop','service','server','relay','fixture','barretenberg','barretenberg-sync','lease']);
 export function developmentCleanupFailure(stage,cause) {
  if(!cleanupStages.has(stage))throw Error('Invalid development cleanup stage');
  return Object.assign(Error('Development cleanup failed at '+stage,{cause}),{developmentStage:stage});
@@ -135,6 +137,36 @@ export async function startDevnet({directory,fundingAddresses=[],proofs=false,po
   try{await close();}catch(cleanup){throw new AggregateError([error,cleanup],'Native development startup and cleanup failed',{cause:error});}
   throw error;
  }
+}
+
+// Native automine builds for pending L2 transactions, but a new account must
+// consume its funding messages before it can submit one. The SDK subscription
+// observes actual Inbox deposits; the existing native control produces only the
+// missing state. This owner is installed before the reader accepts browser work.
+export async function startDevelopmentBridgeProgress({node,client,inboxAddress,onFailure=()=>{}}) {
+ const info=await node.getNodeInfo();
+ if(info.l1ChainId!==31337||info.realProofs!==false||String(info.l1ContractAddresses.inboxAddress).toLowerCase()!==String(inboxAddress).toLowerCase())throw Error('Bridge progress requires the native development Inbox');
+ // Include the captured block: a deposit between this read and subscription
+ // registration must still be observed. Already consumed messages do no work.
+ const fromBlock=await client.getBlockNumber({cacheTime:0});
+ let stopped=false,hasFailure=false,unwatch,closing,failure,pending=Promise.resolve();
+ const unsubscribe=()=>{const stop=unwatch;unwatch=undefined;stop?.();};
+ const failed=error=>{
+  if(hasFailure)return;hasFailure=true;failure=error;stopped=true;
+  try{unsubscribe();}catch(cleanup){failure=new AggregateError([error,cleanup],'Development bridge subscription cleanup failed');}
+  try{onFailure(error);}catch{/* Reporting cannot replace the original failure. */}
+ };
+ unwatch=client.watchContractEvent({address:String(inboxAddress),abi:InboxAbi,eventName:'MessageSent',strict:true,fromBlock,
+  onLogs:logs=>{
+   if(stopped)return;
+   pending=pending.then(async()=>{for(const log of logs){
+    if(stopped)return;
+    if(log.removed)continue;
+    await ensureDevelopmentMessageReady(node,Fr.fromString(log.args.hash));
+   }}).catch(failed);
+  },onError:failed});
+ if(stopped)unsubscribe();
+ return {close:()=>closing??=(async()=>{stopped=true;try{unsubscribe();}catch(error){failed(error);}await pending;if(hasFailure)throw failure;})()};
 }
 
 // Native automine owns the build/settlement queue. Only missing message state

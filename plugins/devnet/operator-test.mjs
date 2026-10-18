@@ -337,6 +337,56 @@ if(focused){
   await assert.rejects(waitDevelopmentFinality({node,txHash:hash}),e=>e===failure);
  });
 
+ // Controlled SDK event delivery; real Inbox ABI decoding and native SDK
+ // message readiness checks. No deployment, live service or payment is created.
+ async function bridgeProgressFixture(){
+  const {startDevelopmentBridgeProgress}=await import('./network.mjs');
+  const {InboxAbi}=await import('@aztec-foundation/l1-artifacts/InboxAbi');
+  const {Interface}=await import('ethers');const {decodeEventLog}=await import('viem');
+  const address='0x'+'1'.repeat(40),state={blocks:0,unsubscribes:0,failures:[],options:null};
+  const node={getNodeInfo:async()=>({l1ChainId:31337,realProofs:false,l1ContractAddresses:{inboxAddress:address}}),
+   getL1ToL2MessageIndex:async()=>2n,getBlockData:async tip=>{assert.equal(tip,'checkpointed');return {header:{state:{l1ToL2MessageTree:{nextAvailableLeafIndex:state.blocks?3:0}}}};},
+   mineBlock:async()=>{state.blocks++;}};
+  const client={getBlockNumber:async options=>{assert.deepEqual(options,{cacheTime:0});return 12n;},watchContractEvent:options=>{state.options=options;return ()=>{state.unsubscribes++;};}};
+  const start=()=>startDevelopmentBridgeProgress({node,client,inboxAddress:address,onFailure:error=>state.failures.push(error)});
+  const abi=new Interface(InboxAbi),encoded=abi.encodeEventLog(abi.getEvent('MessageSent'),[Fr.ONE.toString(),Fr.ONE.toString(),0n,[[address,31337n],[Fr.ONE.toString(),1n],Fr.ONE.toString(),Fr.ONE.toString(),2n]]);
+  const log={...decodeEventLog({abi:InboxAbi,...encoded,strict:true}),address,removed:false};
+  return {node,client,state,start,log};
+ }
+ test('development Inbox subscription drives browser funding only when its message needs a native block',async()=>{
+  const f=await bridgeProgressFixture(),progress=await f.start();let resolved,reads=0;const ready=new Promise(resolve=>resolved=resolve),original=f.node.getBlockData;
+  f.node.getBlockData=async tip=>{const value=await original(tip);if(++reads===3)resolved();return value;};
+  assert.equal(f.state.options.eventName,'MessageSent');assert.equal(f.state.options.strict,true);assert.equal(f.state.options.fromBlock,12n);
+  assert.equal(f.state.blocks,0);f.state.options.onLogs([f.log,f.log]);await ready;
+  await progress.close();assert.equal(f.state.blocks,1);assert.equal(f.state.unsubscribes,1);assert.deepEqual(f.state.failures,[]);
+ });
+ test('development bridge owner drains active mining and stops queued or late events before node shutdown',async()=>{
+  const f=await bridgeProgressFixture();let entered,release;const active=new Promise(resolve=>entered=resolve),held=new Promise(resolve=>release=resolve);
+  f.node.mineBlock=async()=>{entered();await held;f.state.blocks++;};const progress=await f.start();
+  f.state.options.onLogs([f.log]);await active;f.state.options.onLogs([f.log]);
+  let closed=false;const closing=progress.close().then(()=>closed=true);assert.equal(f.state.unsubscribes,1);assert.equal(closed,false);
+  f.state.options.onLogs([f.log]);release();await closing;await progress.close();assert.equal(f.state.blocks,1);assert.equal(f.state.unsubscribes,1);
+ });
+ test('development bridge reports original mining/subscription failures and never retries a failed event',async()=>{
+  for(const kind of ['mining','subscription']){
+   const f=await bridgeProgressFixture(),failure=Error('controlled '+kind);let reported;const observed=new Promise(resolve=>reported=resolve);
+   f.state.failures.push=error=>{assert.equal(error,failure);reported();};f.node.mineBlock=async()=>{f.state.blocks++;throw failure;};
+   const progress=await f.start();if(kind==='mining')f.state.options.onLogs([f.log]);else f.state.options.onError(failure);
+   await observed;f.state.options.onLogs([f.log]);await assert.rejects(progress.close(),error=>error===failure);
+   assert.equal(f.state.blocks,kind==='mining'?1:0);assert.equal(f.state.unsubscribes,1);
+  }
+ });
+ test('development bridge rejects wrong native scope before subscribing and ignores removed Inbox logs',async()=>{
+  const f=await bridgeProgressFixture(),original=f.node.getNodeInfo;
+  for(const bad of [{l1ChainId:1},{realProofs:true},{l1ContractAddresses:{inboxAddress:'0x'+'2'.repeat(40)}}]){
+   f.node.getNodeInfo=async()=>({...await original(),...bad});await assert.rejects(f.start(),/native development Inbox/);assert.equal(f.state.options,null);
+  }
+  f.node.getNodeInfo=original;f.state.blocks=1;let checked;const ready=new Promise(resolve=>checked=resolve),read=f.node.getBlockData;
+  f.node.getBlockData=async tip=>{const value=await read(tip);checked();return value;};
+  const progress=await f.start();f.state.options.onLogs([{...f.log,args:{hash:'removed log is never decoded'},removed:true},f.log]);await ready;
+  await progress.close();assert.equal(f.state.blocks,1);assert.deepEqual(f.state.failures,[]);
+ });
+
  test('development query gateway pins existing disabled service and canonical compact tier',async()=>{
   const {developmentQueryServiceConfig}=await import('./bootstrap.mjs');
   const config=developmentQueryServiceConfig({directory:'/private/tmp/development',appPort:8081,nodeUrl:'http://127.0.0.1:18081',rollupAddress:'0x'+'1'.repeat(40),rollupVersion:1,board:'0x'+'2'.repeat(64),privateFeeAddress:'0x'+'3'.repeat(64),privateBokAddress:'0x'+'4'.repeat(64)});
