@@ -37,9 +37,9 @@ def qualifier_fixture():
     scope=b.QUALIFICATION['service']
     anchor={'ready':True,'blockNumber':99,'blockHash':'0x'+'b'*64}
     checks={k:{'rejected':True} for k in ('wrong-chain','wrong-version','wrong-rollup','proof-config-floor')}
-    checks.update(healthy=anchor,recovered=anchor,nativeAndRollingCatalog={'passed':True,'circuitCount':16},missingHelper={'missingHelperRejected':True},manifestUnchanged=True,
+    checks.update(healthy=anchor,normalHealthyAfter=anchor,nativeAndRollingCatalog={'passed':True,'circuitCount':16},missingHelper={'missingHelperRejected':True},manifestUnchanged=True,
                   noProofLifecycle={'passed':True,'proofEndpointsDisabled':True,'queueAllocated':False,'workerAllocated':False},
-                  freshness={k:True for k in ('paused','stale','queriesRejected','resumed','recovered')})
+                  freshness={**{k:True for k in ('normalHealthyBefore','stale','queriesRejected','strictServiceClosed','normalHealthyAfter')},'coverage':'stricter-policy-real-state','strictMaxLagSeconds':1,'normalMaxLagSeconds':120,'observedLagSeconds':10,'observedL1Timestamp':'1792363752','rejectionCode':'BB_TRUSTED_NODE_STALE'})
     return {'schemaVersion':1,'passed':True,'stage':'complete','checks':checks,'cleanup':{k:True for k in ('serviceClosed','temporaryFilesRemoved','childProcessesExited')},
             'release':{'manifestSha256':'b'*64},'proofJobs':0,
             'publicScope':{'chainId':scope['chainId'],'version':scope['rollupVersion'],'rollup':scope['queryNode']['rollupAddress'],'serviceMode':'query-only','nodeProofs':'real','maxLagSeconds':120}}
@@ -71,6 +71,9 @@ class Bootstrap(unittest.TestCase):
             self.assertFalse(ns['qualification_projection'](report,True)['noProofLifecycle'])
         report=qualifier_fixture();report['publicScope']['board']='0x'+'1'*64
         self.assertFalse(ns['qualification_projection'](report,True)['scope'])
+        for field,value in [('coverage','paused-node'),('strictMaxLagSeconds',True),('strictMaxLagSeconds',120),('normalMaxLagSeconds',1),('observedLagSeconds',0),('observedLagSeconds',121),('rejectionCode','BB_TRUSTED_NODE_UNAVAILABLE')]:
+            report=qualifier_fixture();report['checks']['freshness'][field]=value
+            self.assertFalse(ns['qualification_projection'](report,True)['freshness-policy'])
         self.assertEqual(b.QUALIFICATION['service']['serviceMode'],'query-only')
         self.assertFalse({'board','applicationProfile','privateFeeAddress','queueDirectory','threads'} & set(b.QUALIFICATION['service']))
 
@@ -84,7 +87,7 @@ class Bootstrap(unittest.TestCase):
                 with self.assertRaises(FileNotFoundError):call()
             source.write_bytes(exact)
             self.assertTrue(all(calls[0]().values()))
-            self.assertEqual(calls[1](),{k:{'blockNumber':99,'blockHash':'0x'+'b'*64} for k in ('healthy','recovered')})
+            self.assertEqual(calls[1](),{k:{'blockNumber':99,'blockHash':'0x'+'b'*64} for k in ('healthy','normalHealthyAfter')})
             for value in (True,-1,2**53,'99'):
                 invalid=qualifier_fixture()['checks'];invalid['healthy']={**invalid['healthy'],'blockNumber':value}
                 with self.assertRaisesRegex(ValueError,'Invalid qualification anchor'):ns['qualification_anchors'](invalid)
@@ -523,7 +526,7 @@ await assert.rejects(waitForReadiness(async()=>({ready:false}),node,{},Date.now(
                     if boundary=='late-qualifier':now[0]=NOW.timestamp()+8*3600
                     if boundary=='missing-report':return
                     r=qualifier_fixture()
-                    if boundary=='failed-check':r['checks']['freshness']['recovered']=False
+                    if boundary=='failed-check':r['checks']['freshness']['normalHealthyAfter']=False
                     if boundary=='wrong-scope':r['publicScope']['board']='0x'+'0'*64
                     pathlib.Path(args[-1]).write_text(json.dumps(r))
                     if boundary=='nonzero-with-passed-report':raise subprocess.CalledProcessError(1,args)
@@ -2028,6 +2031,12 @@ class QueryHost(unittest.TestCase):
         unit=b.query_host_unit(pathlib.Path('/opt/board-prover/releases/rolling-'+'b'*16))
         for item in ['User=rolling-query','Group=rolling-query','SupplementaryGroups=rolling-runtime','Restart=no','KillMode=control-group','TimeoutStopSec=30','MemoryMax=2G','ProtectSystem=strict','/var/lib/rolling-bootstrap-private /var/lib/cloud /var/lib/rolling-admin','StandardOutput=null','prover/start.mjs /etc/rolling-query/config.json']:self.assertIn(item,unit)
         for item in ['--prover','AZTEC_API_KEY','PRIVATE_SENTINEL','ReadWritePaths=','board-prover.service']:self.assertNotIn(item,unit)
+        import ipaddress
+        allow=next(line.removeprefix('IPAddressAllow=') for line in unit.splitlines() if line.startswith('IPAddressAllow='))
+        networks=[ipaddress.ip_network(n) for n in allow.split() if n!='localhost']
+        self.assertIn('IPAddressDeny=any',unit)
+        self.assertTrue(any(ipaddress.ip_address('130.176.113.6') in n for n in networks)) # actual VPC-origin SYN
+        self.assertFalse(any(ipaddress.ip_address('8.8.8.8') in n for n in networks))
         with self.assertRaises(b.Invalid):b.query_host_unit(pathlib.Path('/tmp/other'))
 
     def test_public_runtime_real_modes_preserve_file_links_and_private_sentinel(self):

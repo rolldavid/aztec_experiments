@@ -260,16 +260,28 @@ says `serviceMode: query-only`, `proofs: real`, loopback port0 and empty `origin
 There is no board or proof-worker configuration. No proof job, model call or wallet
 action is submitted; the API's unchanged `sendTx` method is not advertised read-only.
 
-An exclusive fsynced intent is recorded before readiness polling. Then exactly
-one qualifier invocation has at most 15minutes. It tests actual healthy client
-composition, wrong chain/version/rollup rejection, proof configuration floor,
-elapsed staleness after supported pauseSync, rejected stale queries, resumeSync
-and recovered canonical queries, removed-helper startup rejection, unchanged
-manifest and child/service/file cleanup. No second attempt follows a failure,
-reboot, timeout, lost receipt or incomplete journal. The systemd post-stop action
-turns an interrupted attempt into `interrupted-unknown`; qualification failure
-requests the existing budget shutdown. If killed during pauseSync, there is no
-claim that the node recovered: the host shuts down and remains unqualified.
+An exclusive fsynced intent is recorded before readiness. One qualifier invocation
+uses actual healthy client composition, wrong chain/version/rollup rejection,
+proof configuration floor, and an isolated query service with a stricter one-second
+freshness policy. It requires real native lag above that policy, actual STALE/query
+rejection, closure of the temporary service, and continued health of the unchanged
+normal120-second service. This is stricter-policy coverage on real native state,
+not a120-second outage or sync-recovery claim. Native pauseSync does not freeze P2P
+immediate archiver synchronization, so that invalid fixture is retired.
+Removed-helper startup rejection, unchanged manifest and child/service/file cleanup
+remain. An interrupted attempt stays unqualified. Ordinary failed acceptance keeps
+the node available under independent budget and safety controls; full proof-service
+activation still requires passing acceptance. Authenticated operator admission has
+its separate current readiness and prerequisite checks described below.
+
+The query unit admits AWS's source-pinned CloudFront origin-facing IPv4 ranges in
+addition to localhost/private addresses. VPC-origin connections retain those public
+source addresses (observed130.176.113.6), so RFC1918-only systemd filtering drops them.
+The snapshot comes from AWS-managed prefix list pl-3b927c52 on18October2026; AWS does
+not expose a Version for this managed list. IPAddressDeny=any, private listener,
+CloudFront-service-security-group-only ingress and operator authentication remain.
+Systemd filters both directions: only these additional edge ranges are admitted,
+not arbitrary Internet egress. Refresh the source snapshot if AWS changes its list.
 
 Durable owner-only records live under `/var/lib/rolling-bootstrap/qualification`:
 intent, fixed config, canonical readiness, original bounded qualifier report and

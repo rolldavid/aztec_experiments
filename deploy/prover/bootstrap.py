@@ -716,7 +716,7 @@ def qualify(aborted=False):
             report=json.loads(output.read_text());checks=qualification_projection(report,process_exited)
             result={'schemaVersion':1,'passed':all(checks.values()),'stage':'complete' if all(checks.values()) else 'qualification-failed',
                     'scope':'current-network-query-only','manifestSha256':PINS['manifest'],'reportSha256':digest(output),'checks':checks,'readiness':snapshot}
-            if checks['healthy'] and checks['recovered']: result['anchors']=qualification_anchors(report['checks'])
+            if checks['healthy'] and checks['normalHealthyAfter']: result['anchors']=qualification_anchors(report['checks'])
             # Preserve the actual bounded report durably before acknowledging result.
             with open(output,'rb') as f: os.fsync(f.fileno())
         except Exception: result=qualification_failure(stage+'-failed')
@@ -1109,13 +1109,18 @@ def query_host_config(record):
     return {**QUALIFICATION['service'],'queryNode':dict(QUALIFICATION['service']['queryNode']),
             'host':record['privateAddress'],'port':8083,'operatorAuthSha256':record['operatorAuthSha256']}
 
+# AWS-managed com.amazonaws.global.cloudfront.origin-facing (pl-3b927c52),
+# captured 2026-10-18. AWS omits Version for this managed list. VPC origins
+# preserve these public source addresses; systemd filters both directions.
+QUERY_ORIGIN_FACING_CIDRS = ('13.124.199.0/24', '130.176.0.0/18', '130.176.128.0/21', '130.176.136.0/23', '130.176.140.0/22', '130.176.144.0/20', '130.176.160.0/19', '130.176.192.0/19', '130.176.64.0/21', '130.176.72.0/22', '130.176.76.0/24', '130.176.78.0/23', '130.176.80.0/22', '130.176.86.0/23', '130.176.88.0/21', '130.176.96.0/19', '15.158.0.0/16', '18.68.0.0/16', '204.246.166.0/24', '205.251.218.0/24', '24.110.128.0/17', '3.172.0.0/18', '3.172.64.0/18', '3.29.57.0/26', '51.74.20.0/24', '51.74.21.0/24', '51.74.22.0/24', '52.46.0.0/18', '52.82.128.0/23', '52.82.134.0/23', '54.182.128.0/20', '54.182.144.0/21', '54.182.154.0/23', '54.182.156.0/22', '54.182.160.0/21', '54.182.172.0/22', '54.182.176.0/21', '54.182.184.0/22', '54.182.188.0/23', '54.182.224.0/21', '54.182.240.0/21', '54.182.248.0/22', '54.239.134.0/23', '54.239.170.0/23', '54.239.204.0/22', '54.239.208.0/21', '64.252.128.0/18', '64.252.64.0/18', '70.132.0.0/18')
+
 def query_host_unit(release):
     # release is derived solely from the already checked manifest digest.
     if not re.fullmatch('/opt/board-prover/releases/rolling-[a-f0-9]{16}',str(release)):raise Invalid('Query release path')
     return ('[Unit]\nDescription=Authenticated operator query only\nRequires=rolling-node.service rolling-egress.service\nAfter=rolling-node.service rolling-egress.service\n'
       '[Service]\nType=simple\nUser=rolling-query\nGroup=rolling-query\nSupplementaryGroups=rolling-runtime\nWorkingDirectory='+str(release)+'\nExecStart='+str(release)+'/node/bin/node prover/start.mjs /etc/rolling-query/config.json\n'
       'Restart=no\nTimeoutStopSec=30\nKillMode=control-group\nUMask=0077\nNoNewPrivileges=yes\nPrivateTmp=yes\nPrivateDevices=yes\nProtectSystem=strict\nProtectHome=yes\nCapabilityBoundingSet=\nRestrictAddressFamilies=AF_UNIX AF_INET AF_INET6\n'
-      'IPAddressDeny=any\nIPAddressAllow=localhost 10.0.0.0/8 172.16.0.0/12 192.168.0.0/16\nInaccessiblePaths=/var/lib/rolling-bootstrap-private /var/lib/cloud /var/lib/rolling-admin\nMemoryMax=2G\nTasksMax=128\nLimitCORE=0\nEnvironment=NODE_BACKEND=js HARDWARE_CONCURRENCY=1 LOG_LEVEL=silent\nUnsetEnvironment=NODE_PATH NODE_OPTIONS BB\nStandardOutput=null\nStandardError=null\n')
+      'IPAddressDeny=any\nIPAddressAllow=localhost 10.0.0.0/8 172.16.0.0/12 192.168.0.0/16 '+' '.join(QUERY_ORIGIN_FACING_CIDRS)+'\nInaccessiblePaths=/var/lib/rolling-bootstrap-private /var/lib/cloud /var/lib/rolling-admin\nMemoryMax=2G\nTasksMax=128\nLimitCORE=0\nEnvironment=NODE_BACKEND=js HARDWARE_CONCURRENCY=1 LOG_LEVEL=silent\nUnsetEnvironment=NODE_PATH NODE_OPTIONS BB\nStandardOutput=null\nStandardError=null\n')
 
 def query_public_plan(release):
     if not release.is_absolute() or release.resolve()!=release:raise Invalid('Query release')
@@ -1709,14 +1714,16 @@ def qualification_projection(h, report, process_exited=False):
     result={'processExitVerified':process_exited is True}
     for name in ('wrong-chain','wrong-version','wrong-rollup','proof-config-floor'):
         result[name]=checks.get(name,{}).get('rejected') is True
-    for name in ('healthy','recovered'):
+    for name in ('healthy','normalHealthyAfter'):
         r=checks.get(name,{})
         result[name]=r.get('ready') is True and type(r.get('blockNumber')) is int and r['blockNumber']>=0 and bool(re.fullmatch('0x[a-f0-9]{64}',str(r.get('blockHash'))))
     result['nativeAndRollingCatalog']=checks.get('nativeAndRollingCatalog',{}).get('passed') is True
     result['missingHelper']=checks.get('missingHelper',{}).get('missingHelperRejected') is True
     result['manifestUnchanged']=checks.get('manifestUnchanged') is True
-    for name in ('paused','stale','queriesRejected','resumed','recovered'):
+    for name in ('normalHealthyBefore','stale','queriesRejected','strictServiceClosed','normalHealthyAfter'):
         result['freshness-'+name]=checks.get('freshness',{}).get(name) is True
+    freshness=checks.get('freshness',{})
+    result['freshness-policy']=freshness.get('coverage')=='stricter-policy-real-state' and type(freshness.get('strictMaxLagSeconds')) is int and freshness['strictMaxLagSeconds']==1 and type(freshness.get('normalMaxLagSeconds')) is int and freshness['normalMaxLagSeconds']==120 and type(freshness.get('observedLagSeconds')) is int and 1<freshness['observedLagSeconds']<=120 and bool(re.fullmatch('[0-9]+',str(freshness.get('observedL1Timestamp')))) and freshness.get('rejectionCode')=='BB_TRUSTED_NODE_STALE'
     for name in ('serviceClosed','temporaryFilesRemoved','childProcessesExited'):
         result['cleanup-'+name]=cleanup.get(name) is True
     scope=h['QUALIFICATION']['service'];expected={'chainId':scope['chainId'],'rollupVersion':scope['rollupVersion']}
@@ -1732,7 +1739,7 @@ def qualification_projection(h, report, process_exited=False):
 
 def qualification_anchors(checks):
     anchors={}
-    for name in ('healthy','recovered'):
+    for name in ('healthy','normalHealthyAfter'):
         value=checks[name]
         if type(value.get('blockNumber')) is not int or not 0<=value['blockNumber']<=2**53-1 or type(value.get('blockHash')) is not str or not re.fullmatch('0x[a-f0-9]{64}',value['blockHash']): raise ValueError('Invalid qualification anchor')
         anchors[name]={'blockNumber':value['blockNumber'],'blockHash':value['blockHash']}
