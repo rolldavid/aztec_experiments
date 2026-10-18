@@ -373,6 +373,10 @@ class htb 1:20 parent 1:1 prio 0 rate 25Mbit ceil 50Mbit burst 4725b cburst 7850
             unit=written['/etc/systemd/system/rolling-attest.service']
             for expected in ('TimeoutStartSec=100','TimeoutStopSec=5','KillMode=control-group','ExecStopPost=/usr/bin/python3 /usr/local/lib/rolling-attest.py --monitor-stop'):
                 self.assertIn(expected,unit)
+            app=written['/etc/systemd/system/rolling-application-attest.service']
+            self.assertNotIn('rolling-budget.service',app);self.assertIn('OnFailure=rolling-application-stop.service',app)
+            stop=written['/etc/systemd/system/rolling-application-stop.service']
+            self.assertIn('OnFailure=rolling-budget.service',stop);self.assertIn('TimeoutStartSec=90',stop);self.assertIn('--monitor-stop',stop)
             timer=written['/etc/systemd/system/rolling-attest.timer']
             for expected in ('OnUnitInactiveSec=5s','AccuracySec=1s','RandomizedDelaySec=0'):
                 self.assertIn(expected,timer)
@@ -384,12 +388,46 @@ class htb 1:20 parent 1:1 prio 0 rate 25Mbit ceil 50Mbit burst 4725b cburst 7850
                 events.clear()
                 with patch.object(ns['sys'],'argv',['rolling-attest.py','--monitor-stop']),patch.dict(os.environ,{'SERVICE_RESULT':result}):exec(dispatch,ns)
                 self.assertEqual(events,[] if result=='success' else [(['/usr/sbin/ip','link','set','dev','ens5','down'],{'timeout':2})])
+            for mode in ('--application-attest','--activate-prover'):
+                events.clear();ns['application_attest']=lambda:(_ for _ in ()).throw(ValueError('PRIVATE_SENTINEL'))
+                ns['application_failure']=lambda:events.append(('contained',))
+                argv=['rolling-attest.py',mode] # activate-prover deliberately lacks its required argument
+                with patch.object(ns['sys'],'argv',argv),self.assertRaises(SystemExit):exec(dispatch,ns)
+                self.assertEqual(events,[('contained',)])
             events.clear()
             with self.assertRaises(SystemExit):ns['shutdown_failure'](ValueError('control loss'))
             self.assertEqual(events[0],(['/usr/sbin/ip','link','set','dev','ens5','down'],{'timeout':2}))
             self.assertEqual(events[1][0],['systemctl','start','rolling-budget.service'])
             (ns['BASE']/'interface').write_text('ens5; invalid')
             with self.assertRaises(ValueError):ns['isolate_network']()
+
+    def test_fast_monitor_never_runs_application_observation(self):
+        ns=host();events=[];ns['verify_controls']=lambda:events.append('controls')
+        ns['activation_support']=lambda *a:(_ for _ in ()).throw(AssertionError('Slow application work'))
+        ns['attest']();self.assertEqual(events,['controls'])
+        ns['verify_controls']=lambda:(_ for _ in ()).throw(ValueError('control loss'))
+        with self.assertRaises(ValueError):ns['attest']()
+
+    def test_application_failure_retains_node_only_after_verified_containment(self):
+        for failure in (None,'unallocated','controls','containment'):
+            with self.subTest(failure=failure),tempfile.TemporaryDirectory() as t:
+                ns=host();ns['BASE']=pathlib.Path(t);(ns['BASE']/'interface').write_text('ens5');events=[]
+                def controls():
+                    events.append('controls')
+                    if failure=='controls':raise ValueError('lost controls')
+                def run(args,**kw):
+                    events.append(args)
+                    return 'LoadState=loaded\nActiveState=active\nMainPID=55' if failure=='containment' else ('LoadState=not-found' if failure=='unallocated' else 'LoadState=loaded')+'\nActiveState=inactive\nMainPID=0'
+                ns.update(verify_controls=controls,run=run,diagnostic=lambda *a,**k:None)
+                if failure in ('controls','containment'):
+                    with self.assertRaises(SystemExit):ns['application_failure']()
+                    self.assertIn(['systemctl','start','rolling-budget.service'],events)
+                else:
+                    ns['application_failure']()
+                    self.assertNotIn(['systemctl','start','rolling-budget.service'],events)
+                    self.assertFalse(any(isinstance(e,list) and 'rolling-node.service' in e for e in events))
+                    self.assertEqual(json.loads((ns['BASE']/'application-failure.json').read_text())['category'],'APPLICATION_OBSERVATION_FAILED')
+                    self.assertEqual(events.count('controls'),2)
 
     def test_qualification_dispatch_retains_state_unless_controls_are_lost(self):
         import ast
@@ -573,7 +611,7 @@ await assert.rejects(waitForReadiness(async()=>({ready:false}),node,{},Date.now(
                 if mode=='bad-boolean':sample['passed']='PRIVATE_SENTINEL'
                 (directory/'result.json').write_text(json.dumps(sample))
                 (ns['BASE']/'last-attestation').unlink(missing_ok=True)
-                calls.clear();ns['attest']()
+                calls.clear();ns['application_attest']()
                 self.assertEqual(calls,expected)
                 output=json.loads(captured[-1].removeprefix('ROLLING_BOOTSTRAP '))
                 self.assertEqual(output['linuxQueryQualified'],mode=='valid')
@@ -1820,7 +1858,7 @@ class ProverActivation(unittest.TestCase):
                 self.assertTrue((h['PRIVATE']/'prover-activation-intent.json').exists())
                 self.assertEqual(pe,[]);self.assertFalse(any(e and e[0]=='useradd' for e in events))
                 self.assertNotIn(('systemctl','unmask','board-prover.service'),events)
-                self.assertEqual(events[-1],('systemctl','start','--no-block','rolling-budget.service'))
+                self.assertEqual(events[-1],('application-contained',))
                 before=list(events)
                 with self.assertRaisesRegex(b.Invalid,'already attempted'):b.prover_activation(h,'activate','a'*64)
                 self.assertEqual(events,before)
@@ -1924,7 +1962,7 @@ class ProverActivation(unittest.TestCase):
             events.append(('identity',))
             if fail=='identity':raise b.Invalid('scope failed')
             return ready_fixture()
-        h={'PRIVATE':private,'BASE':root,'RELEASE':release,'PINS':{'manifest':'b'*64,'bootstrap':'d'*64},'run':run,'exclusive_record':record,
+        h={'application_failure':lambda:events.append(('application-contained',)),'PRIVATE':private,'BASE':root,'RELEASE':release,'PINS':{'manifest':'b'*64,'bootstrap':'d'*64},'run':run,'exclusive_record':record,
            'verify_release':lambda r:events.append(('verify-release',)),'verify_controls':lambda:events.append(('controls',)),
            'validated_qualification':lambda r:r,'read_bounded_json':lambda p:{'budgetStop':'2099-01-01T00:00:00Z','hostResources':{'dataVolumeGiB':1024,'egressMbps':50}},
            'digest':lambda p:b.PROVER_UNIT_SHA if str(p).endswith('.service') else 'c'*64,'write':lambda *a:events.append(('write-unit',))}
@@ -1950,14 +1988,14 @@ class ProverActivation(unittest.TestCase):
             with self.assertRaisesRegex(b.Invalid,'already attempted'):b.prover_activation(h,'activate','a'*64)
             self.assertEqual(before,events)
 
-    def test_scope_failure_never_unmasks_and_ambiguous_start_never_retries_but_shuts_down(self):
+    def test_scope_failure_never_unmasks_and_ambiguous_start_never_retries_but_contains(self):
         from contextlib import ExitStack
         for failure in ('identity','start'):
             with self.subTest(failure=failure),tempfile.TemporaryDirectory() as t,ExitStack() as stack:
                 h,events,patches=self.exercise(pathlib.Path(t),failure)
                 for p in patches:stack.enter_context(p)
                 with self.assertRaises((b.Invalid,OSError)):b.prover_activation(h,'activate','a'*64)
-                self.assertEqual(events[-1],('systemctl','start','--no-block','rolling-budget.service'))
+                self.assertEqual(events[-1],('application-contained',))
                 starts=events.count(('systemctl','start','board-prover.service'));self.assertEqual(starts,1 if failure=='start' else 0)
                 self.assertFalse((h['PRIVATE']/'prover-activation-result.json').exists())
 
@@ -1985,7 +2023,7 @@ class ProverActivation(unittest.TestCase):
         h['run']=lambda *a,**kw:json.dumps({**result,'ready':old})
         with self.assertRaisesRegex(b.Invalid,'Stale'):b.activation_identity(h,s)
 
-    def test_intent_persistence_failure_cannot_allocate_or_unmask_and_still_shuts_down(self):
+    def test_intent_persistence_failure_cannot_allocate_or_unmask_and_still_contains(self):
         from contextlib import ExitStack
         with tempfile.TemporaryDirectory() as t,ExitStack() as stack:
             h,events,patches=self.exercise(pathlib.Path(t))
@@ -1994,7 +2032,7 @@ class ProverActivation(unittest.TestCase):
             h['exclusive_record']=no_disk
             with self.assertRaises(OSError):b.prover_activation(h,'activate','a'*64)
             self.assertNotIn(('paths',),events);self.assertNotIn(('systemctl','unmask','board-prover.service'),events)
-            self.assertEqual(events[-1],('systemctl','start','--no-block','rolling-budget.service'))
+            self.assertEqual(events[-1],('application-contained',))
 
     def test_pending_attestation_is_not_active_and_expired_intent_fails_closed(self):
         with tempfile.TemporaryDirectory() as t:
@@ -2107,6 +2145,8 @@ class QueryHost(unittest.TestCase):
             Path=pathlib.Path;original_stat=Path.stat;original_lstat=Path.lstat;original_fstat=os.fstat;original_lexists=os.path.lexists
             release=root/'opt/board-prover/releases'/('rolling-'+'b'*16);release.mkdir(parents=True)
             (release/'public').write_text('public');(release/'link').symlink_to('public')
+            (release/'node/bin').mkdir(parents=True);(release/'node/bin/node').write_text('fixture executable');(release/'node/bin/node').chmod(0o550)
+            (release/'prover').mkdir();(release/'prover/start.mjs').write_text('fixture entrypoint')
             private=root/'private';private.mkdir(mode=0o700);base=root/'base';base.mkdir()
             (root/'etc/systemd/system').mkdir(parents=True);proc=root/'proc/123';proc.mkdir(parents=True)
             state={'created':False,'groups':'998 997','uid':999,'gid':998,'members':['rolling-query'],'show':{'User':'rolling-query','Group':'rolling-query','SupplementaryGroups':'rolling-runtime','Restart':'no','ActiveState':'active','MainPID':'123','DropInPaths':'','MemoryMax':str(2*1024**3)}}
@@ -2146,7 +2186,7 @@ class QueryHost(unittest.TestCase):
             save(private/'query-host-request.json',q)
             save(private/'final-receipt.json',{'manifestSha256':'b'*64,'bootstrapSourceSha256':'c'*64,'qualification':{'passed':True,'stage':'complete','checks':{'fixture':True},'anchors':{},'readiness':{}}})
             write(base/'deadline.json',json.dumps({'budgetStop':(dt.datetime.now(dt.timezone.utc)+dt.timedelta(hours=1)).strftime('%Y-%m-%dT%H:%M:%SZ')}))
-            h={'PRIVATE':private,'BASE':base,'RELEASE':release,'PINS':{'manifest':'b'*64,'bootstrap':'c'*64,'queryHost':hashlib.sha256(json.dumps(q,sort_keys=True,separators=(',',':')).encode()).hexdigest()},
+            h={'application_failure':lambda:events.append(('application-contained',)),'PRIVATE':private,'BASE':base,'RELEASE':release,'PINS':{'manifest':'b'*64,'bootstrap':'c'*64,'queryHost':hashlib.sha256(json.dumps(q,sort_keys=True,separators=(',',':')).encode()).hexdigest()},
                'run':run,'exclusive_record':save,'write':write,'digest':lambda p:hashlib.sha256(mapped(p).read_bytes()).hexdigest(),
                'read_bounded_json':lambda p:json.loads(mapped(p).read_text()),'validated_qualification':lambda q:q,'verify_release':lambda p:events.append(('verify-release',)), 'verify_controls':lambda:events.append(('controls',))}
             with ExitStack() as stack:
@@ -2169,7 +2209,8 @@ class QueryHost(unittest.TestCase):
             self.assertEqual(b.query_host(h),expected);self.assertEqual(b.query_host(h),expected)
             self.assertEqual(events.count(('systemctl','start','rolling-query.service')),1)
             self.assertLess(events.index(('record','query-host-intent.json')),next(i for i,e in enumerate(events) if e[0]=='groupadd'))
-            self.assertEqual(b.query_host_readback(h)['publicGid'],997)
+            with patch.object(b,'query_public_plan',side_effect=AssertionError('Full scan during observation')):
+                self.assertEqual(b.query_host_readback(h)['publicGid'],997)
             self.assertEqual((root/'etc/rolling-query/config.json').stat().st_mode&0o777,0o640)
             self.assertEqual(h['RELEASE'].stat().st_mode&0o777,0o550)
             self.assertEqual(h['PRIVATE'].stat().st_mode&0o777,0o700)
@@ -2183,6 +2224,9 @@ class QueryHost(unittest.TestCase):
                     state['groups']=groups
                     with self.assertRaisesRegex(b.Invalid,'Query public group'):b.query_host_readback(h)
             state['groups']='997';self.assertEqual(b.query_host_readback(h)['uid'],999)
+            entry=h['RELEASE']/'prover/start.mjs';entry.chmod(0o640)
+            with self.assertRaisesRegex(b.Invalid,'Query public permissions'):b.query_host_readback(h)
+            entry.chmod(0o440)
             state['uid']=1000
             with self.assertRaisesRegex(b.Invalid,'Query identity'):b.query_host_readback(h)
             state['uid']=999;state['show']['User']='root'
@@ -2203,7 +2247,7 @@ class QueryHost(unittest.TestCase):
             p=h['PRIVATE']/'final-receipt.json';p.unlink()
             with self.assertRaises(OSError):b.query_host(h)
             self.assertEqual(events.count(('systemctl','start','rolling-query.service')),1)
-            self.assertEqual(events.count(('systemctl','start','--no-block','rolling-budget.service')),4)
+            self.assertEqual(events.count(('application-contained',)),4)
 
     def test_attestor_bound_opt_in_or_retained_records_cannot_disappear_silently(self):
         for bound,retained in ((True,False),(False,True)):
@@ -2216,10 +2260,11 @@ class QueryHost(unittest.TestCase):
                 def run(args,**kw):events.append(tuple(args));return 'masked'
                 ns.update(BASE=base,PRIVATE=private,verify_controls=lambda:1,run=run,activation_support=support,
                           open=lambda *a,**kw:io.StringIO(),write=lambda p,v,*a:pathlib.Path(p).write_text(v))
-                ns['attest']()
+                ns['application_failure']=lambda:events.append(('application-contained',))
+                ns['application_attest']()
                 self.assertIn(('support','query-observe'),events)
-                self.assertIn(('systemctl','start','rolling-budget.service'),events)
-                self.assertTrue(any(e[:2]==('systemctl','stop') and 'rolling-query.service' in e for e in events))
+                self.assertIn(('application-contained',),events)
+                self.assertNotIn(('systemctl','start','rolling-budget.service'),events)
 
     def test_query_payload_existing_compressed_limit_and_bound_opt_in(self):
         text=fixture_generate({**config(),'queryHost':self.record()},NOW)
@@ -2234,12 +2279,12 @@ class QueryHost(unittest.TestCase):
 
     def test_pending_or_existing_intent_never_allocates_or_restarts(self):
         with tempfile.TemporaryDirectory() as t:
-            private=pathlib.Path(t);events=[];h={'PRIVATE':private,'run':lambda *a,**k:events.append(a)}
+            private=pathlib.Path(t);events=[];h={'application_failure':lambda:events.append(('application-contained',)),'PRIVATE':private,'run':lambda *a,**k:events.append(a)}
             with patch.object(b.os,'geteuid',return_value=0),patch.object(b,'query_host_request',return_value=self.record()):
                 self.assertEqual(b.query_host(h)['queryHostPolicy'],'pending-qualification')
                 (private/'query-host-intent.json').write_text('{}')
                 with self.assertRaisesRegex(b.Invalid,'reconcile only'):b.query_host(h)
-            self.assertEqual(events,[(['systemctl','stop','rolling-query.service'],),(['systemctl','start','--no-block','rolling-budget.service'],)])
+            self.assertEqual(events,[('application-contained',)])
 
     def test_failed_qualification_retains_node_without_allocating_query(self):
         with tempfile.TemporaryDirectory() as t:
@@ -2273,13 +2318,13 @@ class QueryHost(unittest.TestCase):
             self.assertFalse(state['created'])
             self.assertNotIn(('systemctl','start','--no-block','rolling-budget.service'),events)
 
-    def test_query_failure_stops_owned_unit_and_shutdown_even_without_result_write(self):
+    def test_query_failure_contains_even_without_result_write(self):
         with tempfile.TemporaryDirectory() as t:
             private=pathlib.Path(t);(private/'final-receipt.json').write_text('{}');events=[]
-            h={'PRIVATE':private,'run':lambda args,**kw:events.append(args)}
+            h={'application_failure':lambda:events.append(('application-contained',)),'PRIVATE':private,'run':lambda args,**kw:events.append(args)}
             with patch.object(b.os,'geteuid',return_value=0),patch.object(b,'activation_private',side_effect=OSError('labelled private read failure')):
                 with self.assertRaises(OSError):b.query_host(h)
-            self.assertEqual(events,[['systemctl','stop','rolling-query.service'],['systemctl','start','--no-block','rolling-budget.service']])
+            self.assertEqual(events,[('application-contained',)])
 
 class ActivationDelivery(unittest.TestCase):
     def request(self,scope=None):
@@ -2453,7 +2498,7 @@ class ActivationDelivery(unittest.TestCase):
         self.assertEqual(pins['activationDelivery'],b.activation_delivery_digest(self.request()))
         subprocess.run(['/bin/sh','-n'],input=text,text=True,check=True)
 
-    def test_delivery_attestor_defers_install_then_missing_bound_request_fails_shutdown(self):
+    def test_delivery_attestor_defers_install_then_missing_bound_request_contains(self):
         for stage in ('node','installed'):
             with self.subTest(stage=stage),tempfile.TemporaryDirectory() as t:
                 ns=host();base=pathlib.Path(t);private=base/'private';private.mkdir();events=[]
@@ -2461,9 +2506,11 @@ class ActivationDelivery(unittest.TestCase):
                 ns['PINS']['activationDelivery']='d'*64
                 def support(operation):events.append(operation);raise b.Invalid('controlled missing request')
                 ns.update(BASE=base,PRIVATE=private,verify_controls=lambda:1,run=lambda args,**kw:events.append(args) or 'masked',activation_support=support,open=lambda *a,**kw:io.StringIO(),write=lambda p,v,*a:pathlib.Path(p).write_text(v))
-                ns['attest']()
+                ns['application_failure']=lambda:events.append(('application-contained',))
+                ns['application_attest']()
                 self.assertEqual('delivery' in events,stage=='installed')
-                self.assertEqual(['systemctl','start','rolling-budget.service'] in events,stage=='installed')
+                self.assertEqual(('application-contained',) in events,stage=='installed')
+                self.assertNotIn(['systemctl','start','rolling-budget.service'],events)
 
 class BoundedHostResources(unittest.TestCase):
     def test_explicit_development_resources_are_validated_and_immutable(self):

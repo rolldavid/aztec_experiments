@@ -891,11 +891,11 @@ Unexpected existing mangle policy fails closed. The proxy remains masked, the
 service listens only on127.0.0.1:8081, and origins are empty.
 
 The operation has a 300-second alarm, bounded subprocesses and a bounded health
-wait. Failure attempts service termination and the existing host shutdown even
-when persistence fails. An ambiguous start is not replayed. The attestor verifies
+wait. Failure stops exposed application services and verifies zero process IDs.
+The node and journals remain available while budget and shaper controls are intact. An ambiguous start is not replayed. The attestor verifies
 the active unit, live UID/GID, configuration owner/modes/hash, traffic controls and
 fresh query health. It reports activation in progress or active-loopback truthfully
-instead of continuing to claim the service is masked. Drift shuts down the host.
+instead of continuing to claim the service is masked. Drift contains the exposed services; failed containment still isolates and shuts down the host.
 
 An active loopback service is **not** application-proof qualification, public
 routing authorization or permission to submit a proof job. Bok is explicitly
@@ -942,10 +942,11 @@ own account to the public reader group and preserves that group on the release;
 private config/capability paths keep their separate groups and0700/0600 boundary.
 Existing identity/link/traversal prevalidation and activation once-only gates stay.
 
-Every observation checks actual unit/config/process identities, shared-reader
-permissions and fresh upstream readiness. Missing result after an intent is
-reconcile-only; drift or setup failure stops the query unit and invokes the
-existing shutdown owner. Attestor timeout also triggers that owner. Neither the
+Every application observation checks bounded unit/config/process identities,
+entrypoint permissions and listener authentication. Full release ownership/link
+inspection runs at admission and update, not on each observation. Missing result
+after an intent is reconciliation-only. Drift, setup failure or observation timeout
+stops exposed services and verifies containment while preserving the node. Neither the
 host nor Fleet deadline is extended. This slice does not implement the separately
 reviewed finite S3 activation delivery, current contract deployments, public proof
 routing or proof-job acceptance. Complete package and compressed user-data size
@@ -999,7 +1000,7 @@ or `budgetStop` minus 15 minutes. There are at most 60 GET attempts, spaced at l
 30 seconds apart; each read has an 8-second wall deadline and 16 KiB byte cap. A 404 is
 pending only within that window. Redirects, other HTTP errors, missing version
 identity, malformed/duplicate fields, mismatched scope or lost attempt records
-fail closed. Existing attestor cadence, 100-second service timeout, independent
+fail closed. The separate application observer has a 100-second deadline. Independent
 host/Fleet shutdown and all qualification/control checks remain unchanged.
 Consequently an activation that cannot finish within that existing outer owner
 fails closed; the delivery mechanism never extends the activation budget.
@@ -1016,7 +1017,8 @@ before recording activation intent and starting the service. An interrupted
 read, consumption, staging or activation is reconciliation-only. A subsequent
 visit observes a completed activation; it never fetches or activates again.
 Missing request/qualification/consumption records cannot silently opt out of
-monitoring. Failure still stops the owned units and requests the budget shutdown.
+monitoring. Failure stops and verifies the exposed units. Only lost controls or unverified
+containment requests host shutdown; an admission failure alone does not.
 
 The fixed record readers and packaged source interpret this envelope; no URL,
 command, executable, wallet key or administrator credential comes from it.
@@ -1033,8 +1035,8 @@ preparation steps and the fresh forecast are ready.
 
 The controls monitor now uses a five-second inactive interval, one-second timer
 accuracy, a 100-second start deadline and five-second stop phases. Local control
-commands are bounded to two seconds. A successful attestation rechecks controls
-at completion; detected failure lowers the recorded physical interface before
+commands are bounded to two seconds. This watchdog runs only budget/shaper
+checks; application work cannot delay it. Detected failure lowers the recorded physical interface before
 requesting service shutdown. A failure-only `ExecStopPost` also lowers it when the
 monitor times out or exits abnormally. Successful monitor runs leave networking
 untouched. Isolation deliberately removes SSM/network access; the independent
@@ -1128,3 +1130,15 @@ process isolation and per-request identity/synchronization/freshness checks rema
 Ordinary node unavailability before admission leaves the listener unallocated;
 a later sync transition is rejected by the request boundary without destroying
 the synchronized host through the structural control monitor.
+
+Application observation runs in `rolling-application-attest.service` with its own
+30-second inactive timer. A failed or timed-out observation invokes the separate
+`rolling-application-stop.service`, which stops query/prover/proxy services and
+verifies inactive state and zero PIDs under intact host controls. Its own bounded
+failure still isolates and shuts down the host. Successful containment writes
+`/var/lib/rolling-bootstrap/application-failure.json`; no automatic application
+restart or activation replay occurs. Preserve that record and the original
+intents/journals while repairing the specific admission defect. After explicit
+operator reconciliation, remove only that failure marker and start the approved
+services/observer; never delete an ambiguous financial or activation intent.
+The native node, data and original absolute budget/Fleet deadlines are retained.

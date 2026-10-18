@@ -744,13 +744,37 @@ def validated_qualification(q):
     if 'anchors' in q: q['anchors']=qualification_anchors(q['anchors'])
     return q
 
+def application_failure():
+    # Application admission is not a budget failure. Contain listeners and retain
+    # the node/journals; loss of controls or failed containment remains terminal.
+    try:
+        verify_controls()
+        services=('rolling-query.service','board-prover.service','board-prover-proxy.service')
+        def state(service):
+            raw=run(['systemctl','show',service,'--property=LoadState,ActiveState,MainPID'],capture=True,timeout=3)
+            lines=raw.splitlines();fields=dict(line.split('=',1) for line in lines)
+            if len(raw)>512 or len(lines)!=3 or set(fields)!={'LoadState','ActiveState','MainPID'} or fields['LoadState'] not in ('loaded','masked','not-found'):raise ValueError('Application state unreadable')
+            return fields
+        existing=[service for service in services if state(service)['LoadState']!='not-found']
+        if existing:run(['systemctl','stop',*existing],timeout=35)
+        for service in services:
+            fields=state(service)
+            if fields['ActiveState'] not in ('inactive','failed') or fields['MainPID']!='0':raise ValueError('Application containment failed')
+        marker=BASE/'application-failure.json'
+        if not marker.exists():exclusive_record(marker,{'schemaVersion':1,'category':'APPLICATION_OBSERVATION_FAILED','manifestSha256':PINS['manifest']})
+        verify_controls()
+    except Exception as error:shutdown_failure(error)
+
 def attest(check=False):
+    # This watchdog never imports application admission or walks the release.
+    verify_controls()
+    if check and digest(RELEASE/'deploy/prover/bootstrap.py')!=PINS['startup']:raise ValueError('Control verification failed')
+
+def application_attest():
+    if (BASE/'application-failure.json').exists():application_failure();return
     good=False;count=0
     try: count=verify_controls();good=True
     except Exception: pass
-    if check:
-        if not good or digest(RELEASE/'deploy/prover/bootstrap.py')!=PINS['startup']: raise ValueError('Control verification failed')
-        return
     record=json.loads((BASE/'deadline.json').read_text())
     status=(BASE/'stage').read_text() if (BASE/'stage').exists() else 'initial'
     if status not in ('controls','package','node','installed','failed'): status='initial'
@@ -792,19 +816,11 @@ def attest(check=False):
             with open('/dev/console','w') as f: f.write('ROLLING_BOOTSTRAP '+json.dumps(output,separators=(',',':'))+'\n')
             write(last,marker)
     finally:
-        # A successful slow attestation must not leave an old control observation
-        # valid until the next run. Recheck at completion before allowing success.
-        if good:
-            try:verify_controls()
-            except Exception:good=False
-        if not good:
-            try:isolate_network()
-            finally:
-                try: run(['systemctl','stop','rolling-query.service','rolling-node.service','board-prover.service','board-prover-proxy.service'])
-                finally: run(['systemctl','start','rolling-budget.service'])
+        if not good:application_failure()
 
 def activation_support(operation, expected=None):
     # Only the immutable packaged source may interpret root-owned activation data.
+    if operation in ('activate','query-observe','delivery') and (BASE/'application-failure.json').exists():raise ValueError('Application reconciliation required')
     source=RELEASE/'deploy/prover/bootstrap.py'
     if digest(source)!=PINS['startup']: raise ValueError('Activation source changed')
     namespace={'__name__':'rolling_activation','__file__':str(source)}
@@ -815,7 +831,10 @@ def install_attestation(source):
     write('/usr/local/lib/rolling-attest.py',source,0o700)
     write('/etc/systemd/system/rolling-attest.service','[Unit]\nDescription=Bounded public bootstrap attestation\nOnFailure=rolling-budget.service\n[Service]\nType=oneshot\nTimeoutStartSec=100\nTimeoutStopSec=5\nKillMode=control-group\nExecStart=/usr/bin/python3 /usr/local/lib/rolling-attest.py\nExecStopPost=/usr/bin/python3 /usr/local/lib/rolling-attest.py --monitor-stop\nStandardOutput=null\nStandardError=null\n',0o644)
     write('/etc/systemd/system/rolling-attest.timer','[Unit]\nDescription=Bootstrap controls monitor\n[Timer]\nOnBootSec=5s\nOnUnitInactiveSec=5s\nAccuracySec=1s\nRandomizedDelaySec=0\n[Install]\nWantedBy=timers.target\n',0o644)
-    run(['systemctl','daemon-reload']);run(['systemctl','enable','--now','rolling-attest.timer'])
+    write('/etc/systemd/system/rolling-application-attest.service','[Unit]\nDescription=Bounded application admission observation\nOnFailure=rolling-application-stop.service\n[Service]\nType=oneshot\nTimeoutStartSec=100\nTimeoutStopSec=5\nKillMode=control-group\nExecStart=/usr/bin/python3 /usr/local/lib/rolling-attest.py --application-attest\nStandardOutput=null\nStandardError=null\n',0o644)
+    write('/etc/systemd/system/rolling-application-stop.service','[Unit]\nDescription=Contain failed application admission\nOnFailure=rolling-budget.service\n[Service]\nType=oneshot\nTimeoutStartSec=90\nTimeoutStopSec=5\nKillMode=control-group\nExecStart=/usr/bin/python3 /usr/local/lib/rolling-attest.py --application-stop\nExecStopPost=/usr/bin/python3 /usr/local/lib/rolling-attest.py --monitor-stop\nStandardOutput=null\nStandardError=null\n',0o644)
+    write('/etc/systemd/system/rolling-application-attest.timer','[Unit]\nDescription=Application admission observation\n[Timer]\nOnBootSec=5s\nOnUnitInactiveSec=30s\nAccuracySec=1s\nRandomizedDelaySec=0\n[Install]\nWantedBy=timers.target\n',0o644)
+    run(['systemctl','daemon-reload']);run(['systemctl','enable','--now','rolling-attest.timer','rolling-application-attest.timer'])
 
 def execute(config, attestation_source):
     global DIAGNOSTICS_ACTIVE
@@ -1192,8 +1211,12 @@ def query_host_readback(h):
         if [line.split()[1:] for line in data.splitlines() if line.startswith(key)]!=[[str(number).encode()]*4]:raise Invalid('Query process identity')
     groups=[line.split()[1:] for line in data.splitlines() if line.startswith(b'Groups:')]
     if len(groups)!=1 or len(groups[0])!=len(set(groups[0])) or any(not re.fullmatch(rb'[1-9][0-9]{0,9}',v) or int(v)>=2**31 for v in groups[0]) or not {str(r['publicGid']).encode()}<=set(groups[0])<={str(r['gid']).encode(),str(r['publicGid']).encode()}:raise Invalid('Query public group')
-    for p,i in query_public_plan(h['RELEASE']):
-        if i.st_gid!=r['publicGid'] or (not stat.S_ISLNK(i.st_mode) and stat.S_IMODE(i.st_mode)!=(0o550 if stat.S_ISDIR(i.st_mode) or i.st_mode&0o111 else 0o440)):raise Invalid('Query public permissions')
+    # Full ownership/link scan runs before admission/update. The runtime is
+    # root-owned and read-only to service users; monitor its bounded entry paths.
+    release=h['RELEASE']
+    for p in (release,release/'node',release/'node/bin',release/'node/bin/node',release/'prover',release/'prover/start.mjs'):
+        i=p.lstat()
+        if i.st_uid!=0 or i.st_gid!=r['publicGid'] or not (stat.S_ISDIR(i.st_mode) or stat.S_ISREG(i.st_mode)) or stat.S_IMODE(i.st_mode)!=(0o550 if stat.S_ISDIR(i.st_mode) or i.st_mode&0o111 else 0o440):raise Invalid('Query public permissions')
     query_listener_denials(record['privateAddress'])
     # Availability is checked on every authenticated request by the service.
     # A normal sync transition must not terminate the host via this control audit.
@@ -1256,8 +1279,7 @@ def query_host(h):
                     h['verify_controls']();time.sleep(1)
             return {'queryHostPolicy':'active-private-authenticated','queryProofJobsEnabled':False}
         except BaseException:
-            try:h['run'](['systemctl','stop','rolling-query.service'],timeout=35)
-            finally:h['run'](['systemctl','start','--no-block','rolling-budget.service'],timeout=5)
+            h['application_failure']()
             raise
 
 def activation_delivery_digest(value):
@@ -1819,8 +1841,7 @@ def prover_activation(h, operation, expected=None):
             proxy_host_activate(h)
             return result
         except BaseException:
-            try:h['run'](['systemctl','stop','board-prover-proxy.service','board-prover.service'],timeout=35)
-            finally:h['run'](['systemctl','start','--no-block','rolling-budget.service'],timeout=5)
+            h['application_failure']()
             raise
         finally:signal.alarm(0);signal.signal(signal.SIGALRM,previous)
 
@@ -1835,7 +1856,7 @@ def generate(config, now=None):
     if 'queryHost' in config:pins['queryHost']=hashlib.sha256(json.dumps(config['queryHost'],sort_keys=True,separators=(',',':')).encode()).hexdigest()
     if 'activationDelivery' in config:pins['activationDelivery']=activation_delivery_digest(config['activationDelivery'])
     prefix = 'PINS = '+repr(pins)+'\nNETWORK = '+repr(NETWORK)+'\nQUALIFICATION = '+repr(QUALIFICATION)+'\n'
-    dispatch = "\ntry:\n    if sys.argv[1:2]==['--activate-prover']:\n        if len(sys.argv)!=3: raise ValueError('Activation arguments')\n        activation_support('activate',sys.argv[2])\n    elif '--monitor-stop' in sys.argv:\n        if os.environ.get('SERVICE_RESULT')!='success': isolate_network()\n    elif '--qualify' in sys.argv: qualify()\n    elif '--qualification-stop' in sys.argv:\n        qualify(aborted=True);run(['systemctl','start','rolling-qualification-receipt.service'],timeout=40)\n    elif '--qualification-receipt' in sys.argv: final_receipt()\n    else: attest('--check' in sys.argv)\nexcept Exception as error:\n    if sys.argv[1:] in (['--qualify'],['--qualification-stop'],['--qualification-receipt']): qualification_error(error)\n    shutdown_failure(error)\n"
+    dispatch = "\ntry:\n    if sys.argv[1:2]==['--activate-prover']:\n        if len(sys.argv)!=3: raise ValueError('Activation arguments')\n        activation_support('activate',sys.argv[2])\n    elif '--application-attest' in sys.argv: application_attest()\n    elif '--application-stop' in sys.argv: application_failure()\n    elif '--monitor-stop' in sys.argv:\n        if os.environ.get('SERVICE_RESULT')!='success': isolate_network()\n    elif '--qualify' in sys.argv: qualify()\n    elif '--qualification-stop' in sys.argv:\n        qualify(aborted=True);run(['systemctl','start','rolling-qualification-receipt.service'],timeout=40)\n    elif '--qualification-receipt' in sys.argv: final_receipt()\n    else: attest('--check' in sys.argv)\nexcept Exception as error:\n    if sys.argv[1:2] in (['--application-attest'],['--activate-prover']):\n        application_failure();raise SystemExit(1) from None\n    if sys.argv[1:] in (['--qualify'],['--qualification-stop'],['--qualification-receipt']): qualification_error(error)\n    shutdown_failure(error)\n"
     # A raw multiline literal avoids doubling runtime backslashes/newlines in
     # the compressed envelope. Verify its decoded value before emitting bytes;
     # runtime code, attestation content and their hashes remain unchanged.
