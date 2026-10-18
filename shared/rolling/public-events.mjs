@@ -8,7 +8,7 @@ import {DomainSeparator, FLAT_PUBLIC_LOGS_PAYLOAD_LENGTH} from '@aztec-labs/cons
 import {AztecAddress} from '@aztec-labs/stdlib/aztec-address';
 import {TxHash, TxStatus, TxExecutionResult} from '@aztec-labs/stdlib/tx';
 import {nameRegistration, NAME_DOMAIN} from './name-policy.mjs';
-export const ROLLING_EVENTS = Object.freeze(['NameRegistered','MainPolicyPublished','SubboardCreated','SubboardRejected',
+export const ROLLING_EVENTS = Object.freeze(['ModeratorTransferred','NameRegistered','MainPolicyPublished','SubboardCreated','SubboardRejected',
   'PostPublished','PostRemoved','PluginConfigured','PluginInvoked','PluginReplyPublished','LikeChanged','BioPublished','AvatarPublished','AvatarRemoved']);
 const verified = new WeakSet();
 export const isRollingEvent = event => verified.has(event);
@@ -36,7 +36,7 @@ export function unpackRollingAvatar(fields,length) {
   fields.forEach((field,i)=>{let n=scalar(field);check(n<1n<<248n);for(let j=30;j>=0;j--){bytes[i*31+j]=Number(n&255n);n>>=8n;}});
   check(bytes.subarray(count).every(v=>v===0));return bytes.slice(0,count);
 }
-const shapes={NameRegistered:['schema','name_id','first_length','first','last_length','last'],MainPolicyPublished:['schema','version','digest','length','rules'],
+const shapes={ModeratorTransferred:['schema','previous','successor'],NameRegistered:['schema','name_id','first_length','first','last_length','last'],MainPolicyPublished:['schema','version','digest','length','rules'],
  SubboardCreated:['schema','subboard_id','slug_length','slug','name_length','name','description_length','description','local_policy_version','rules_length','rules','rules_digest','main_policy_version','metadata_digest'],
  SubboardRejected:['schema','subboard_id','main_policy_version','local_policy_version','reason_length','reason','reason_digest'],
  PostPublished:['schema','id','record','timestamp','main_policy_version','local_policy_version','length','message'],
@@ -90,6 +90,8 @@ export async function validateRollingEvent(input,expectedScope) {
   } else if(input.type==='AvatarRemoved') {
    nonzero(p.name_id);check(integer(p.avatar_version,32)>0n&&integer(p.main_policy_version,32)>0n);scalar(p.avatar_digest);
    check(p.reason_digest===(await text(p.reason,p.length,7)).digest);
+  } else if(input.type==='ModeratorTransferred') {
+   nonzero(p.previous);nonzero(p.successor);check(p.previous!==p.successor);
   } else if(input.type==='MainPolicyPublished') {
    check(integer(p.version,32)>0n);check(p.digest===(await text(p.rules,p.length,32)).digest);
   } else if(input.type==='SubboardCreated') {

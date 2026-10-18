@@ -34,7 +34,7 @@ const application={
  async readPreferenceHead(){state.headReads++;await boundary('head');return {schema:1,initialized:true,revision:state.revision,digest:'42'};},
  async readColdPreferences(){state.preferenceReads++;if(state.preferenceResults?.length)return state.preferenceResults.shift();await boundary('preferences');return {status:'complete',complete:true,preferences:state.preferences};},
  async readProfile({name}){state.profileCalls++;await boundary('profile');return {name:'0x'+BigInt(name).toString(16).padStart(64,'0'),bioVersion:state.bioVersion,avatarVersion:state.avatarVersion};},
- async prepare(action){state.prepares++;if(action.type==='name'&&state.nameFailure)throw Object.assign(Error('PRIVATE_SENTINEL'),{code:state.nameFailure});if(['bio','avatar'].includes(action.type)&&action.expectedVersion!==state[action.type+'Version'])error();write({intentId:'42',action,maximumFee:'123',status:'prepared',...(action.type==='name'?{nameAvailability:{id:'55',anchor:{blockNumber:1,blockHash:'0x'+'1'.repeat(64),timestamp:'1'}}}:{}),...(['moderate-post','moderate-avatar','reject-subboard','set-main-policy'].includes(action.type)?{moderation:{mainVersion:3,...(action.type==='moderate-avatar'?{avatarVersion:2}:{})}}:{}),...(action.type==='withdraw'?{withdrawal:{amount:'100000000000000000',eligible:true,depositor:'0x'+'3'.repeat(40)}}:{}),...(action.type==='withdraw-bok'?{withdrawal:{kind:'bok',amount:action.amount,eligible:true,depositor:action.recipient}}:{}),...(action.type==='bok'?{bok:{phase:'authorize',budget:action.budget,availableCredit:state.bokCredit}}:{})});await boundary('prepare');return read();},
+ async prepare(action){state.prepares++;if(action.type==='name'&&state.nameFailure)throw Object.assign(Error('PRIVATE_SENTINEL'),{code:state.nameFailure});if(['bio','avatar'].includes(action.type)&&action.expectedVersion!==state[action.type+'Version'])error();write({intentId:'42',action,maximumFee:'123',status:'prepared',...(action.type==='name'?{nameAvailability:{id:'55',anchor:{blockNumber:1,blockHash:'0x'+'1'.repeat(64),timestamp:'1'}}}:{}),...(['moderate-post','moderate-avatar','reject-subboard','set-main-policy','transfer-moderator'].includes(action.type)?{moderation:{mainVersion:3,...(action.type==='moderate-avatar'?{avatarVersion:2}:{})}}:{}),...(action.type==='withdraw'?{withdrawal:{amount:'100000000000000000',eligible:true,depositor:'0x'+'3'.repeat(40)}}:{}),...(action.type==='withdraw-bok'?{withdrawal:{kind:'bok',amount:action.amount,eligible:true,depositor:action.recipient}}:{}),...(action.type==='bok'?{bok:{phase:'authorize',budget:action.budget,availableCredit:state.bokCredit}}:{})});await boundary('prepare');return read();},
  async submitPrepared(id){state.submitCalls++;state.sends++;write({...read(),status:'submitting'});await boundary('submit');const intent={...read(),status:state.submitOutcome??(read().bok?.phase==='authorize'?'authorized':'confirmed')};write(intent);return intent;},
  async cancelPrepared(){state.cancels++;write(read().releasePrior??{...read(),status:'cancelled'});return read();},
  async reconcile(){state.reconciles++;await boundary('reconcile');const intent=read();if(state.resolveOutcome){intent.status=state.resolveOutcome;write(intent);}return intent;}
@@ -1272,4 +1272,15 @@ test('Effective rules are shared in flight and recovered publication cannot send
  await page.evaluate(()=>test.rules={'3':{unavailable:true}});await page.getByRole('button',{name:'Confirm and send',exact:true}).click();
  await rules.getByText(/Current board rules are unavailable/).waitFor();assert.equal((await counts(page)).sends,0);
  assert(await page.getByRole('button',{name:'Confirm and send',exact:true}).isDisabled());
+});
+
+test('Moderator transfer reviews successor and loss of authority before sending',async t=>{
+ const {page}=await browserFixture(t);await page.evaluate(()=>test.moderator=true);await open(page);await unlock(page);
+ await page.getByLabel('Action',{exact:true}).selectOption('transfer-moderator');
+ const address=page.getByLabel('Successor Aztec address',{exact:true}),review=page.getByRole('button',{name:'Check action and review fee',exact:true});
+ await address.fill('0');assert(await review.isDisabled());
+ const successor='0x'+'0'.repeat(62)+'63';await address.fill(successor);await review.click();
+ await page.getByText(`Transfer moderator authority to ${successor}. Your current key loses authority immediately. Only the successor can transfer it back.`,{exact:true}).waitFor();
+ assert.equal((await counts(page)).sends,0);assert.deepEqual(await page.evaluate(()=>JSON.parse(sessionStorage.getItem('labelled-ui-intent')).action),{type:'transfer-moderator',successor});
+ await page.getByRole('button',{name:'Confirm and send',exact:true}).click();await page.getByText('Transaction confirmed on the verified chain.',{exact:true}).waitFor();assert.equal((await counts(page)).sends,1);
 });

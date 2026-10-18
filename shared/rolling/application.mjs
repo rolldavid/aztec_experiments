@@ -78,11 +78,11 @@ function component(fields,length){
   const bytes=Array.from({length:31},(_,i)=>Number((words[0]>>BigInt((30-i)*8))&255n));bytes.push(Number(words[1]>>240n));
   check(bytes.slice(length).every(n=>n===0),'ROLLING_INVALID_RESPONSE');return String.fromCharCode(...bytes.slice(0,length));
 }
-const moderationTypes=new Set(['moderate-post','moderate-avatar','reject-subboard','set-main-policy']);
-const keys={'moderate-post':['post','reason'],'moderate-avatar':['name','reason'],'reject-subboard':['subboard','reason'],'set-main-policy':['rules'],'claim-deposit':['receipt','feeReceipt','bokReceipt'],'claim-private-fee':['receipt'],'claim-bok':['receipt','feeReceipt'],preference:['expectedRevision','kind','target','enabled'],'read-marker':['expectedRevision','thread','throughBlock'],bio:['name','expectedVersion','content'],avatar:['name','expectedVersion','width','height','data'],name:['first','last'],subboard:['slug','name','description','rules'],like:['post'],unlike:['post'],'withdraw-bok':['amount','recipient'],'cancel-bok-request':['requestId'],'expire-bok-request':['requestId'],withdraw:['deposit'],screen:['deposit'],
+const moderationTypes=new Set(['moderate-post','moderate-avatar','reject-subboard','set-main-policy','transfer-moderator']);
+const keys={'transfer-moderator':['successor'],'moderate-post':['post','reason'],'moderate-avatar':['name','reason'],'reject-subboard':['subboard','reason'],'set-main-policy':['rules'],'claim-deposit':['receipt','feeReceipt','bokReceipt'],'claim-private-fee':['receipt'],'claim-bok':['receipt','feeReceipt'],preference:['expectedRevision','kind','target','enabled'],'read-marker':['expectedRevision','thread','throughBlock'],bio:['name','expectedVersion','content'],avatar:['name','expectedVersion','width','height','data'],name:['first','last'],subboard:['slug','name','description','rules'],like:['post'],unlike:['post'],'withdraw-bok':['amount','recipient'],'cancel-bok-request':['requestId'],'expire-bok-request':['requestId'],withdraw:['deposit'],screen:['deposit'],
   bok:['deposit','content','name','subboard','budget','parent','root'],post:['deposit','content','name','subboard'],reply:['deposit','content','name','subboard','parent','root'],
   quote:['deposit','content','name','subboard','reference'],repost:['deposit','content','name','subboard','reference']};
-const methods={'moderate-post':'remove_post','moderate-avatar':'remove_avatar','reject-subboard':'reject_subboard','set-main-policy':'set_main_policy',bok:'authorize_request','claim-deposit':'claim_deposit','claim-private-fee':'claim-private-fee','claim-bok':'claim',preference:'set_preference','read-marker':'mark_thread_read',bio:'set_bio',avatar:'set_avatar',name:'register_name',subboard:'create_subboard',like:'set_like',unlike:'set_like','withdraw-bok':'withdraw','cancel-bok-request':'cancel','expire-bok-request':'expire',withdraw:'withdraw',screen:'screen',post:'post',reply:'post',quote:'post',repost:'post'};
+const methods={'transfer-moderator':'transfer_moderator','moderate-post':'remove_post','moderate-avatar':'remove_avatar','reject-subboard':'reject_subboard','set-main-policy':'set_main_policy',bok:'authorize_request','claim-deposit':'claim_deposit','claim-private-fee':'claim-private-fee','claim-bok':'claim',preference:'set_preference','read-marker':'mark_thread_read',bio:'set_bio',avatar:'set_avatar',name:'register_name',subboard:'create_subboard',like:'set_like',unlike:'set_like','withdraw-bok':'withdraw','cancel-bok-request':'cancel','expire-bok-request':'expire',withdraw:'withdraw',screen:'screen',post:'post',reply:'post',quote:'post',repost:'post'};
 
 /** Wallet-only port; import after unlock. No SDK, network or public-reader work at import.
  * deployment: {board:{address,artifact}, network:{chainId,version,rollup},portal,
@@ -534,7 +534,8 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
     const policy=await utility(board,'main_policy',[]);check(Array.isArray(policy)&&policy.length===2,'ROLLING_POLICY_UNAVAILABLE');
     const mainVersion=version(String(BigInt(policy[0]))),mainDigest=field(policy[1]);
     const review={mainVersion,mainDigest};let args;
-    if(action.type==='set-main-policy')args=text(action.rules,32);
+    if(action.type==='transfer-moderator'){const successor=field(action.successor,true);check(successor!==field(owner,true),'ROLLING_INVALID_ACTION');args=[new sdk.AztecAddress(new sdk.Fr(BigInt(successor)))];review.successor=successor;}
+    else if(action.type==='set-main-policy')args=text(action.rules,32);
     else{
       const reason=text(action.reason,7);
       if(action.type==='moderate-post'){

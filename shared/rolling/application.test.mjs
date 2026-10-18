@@ -1092,13 +1092,13 @@ function moderatorFixture(){
  const original=f.options.accountSession.wallet.sendTx;f.options.accountSession.wallet.sendTx=async(payload,opts)=>{if(f.state.beforeModeratorSubmit)await f.state.beforeModeratorSubmit();if(opts.beforeSubmit)await opts.beforeSubmit(hex(77));return original(payload,opts);};
  return {...f,decode};
 }
-const moderatorActions=[{type:'moderate-post',post:'8',reason:'Spam removal'},{type:'moderate-avatar',name:'7',reason:'Unsafe image'},{type:'reject-subboard',subboard:'9',reason:'Violates parent rules'},{type:'set-main-policy',rules:'Keep discussion civil.'}];
+const moderatorActions=[{type:'moderate-post',post:'8',reason:'Spam removal'},{type:'moderate-avatar',name:'7',reason:'Unsafe image'},{type:'reject-subboard',subboard:'9',reason:'Violates parent rules'},{type:'set-main-policy',rules:'Keep discussion civil.'},{type:'transfer-moderator',successor:hex(99)}];
 test('Moderator actions bind actual public ABI, canonical authority and separately confirmed fees without collateral',async()=>{
  for(const action of moderatorActions){
   const f=moderatorFixture();assert.deepEqual(await f.app.readModeratorStatus(),{authorized:true});const prepared=await f.app.prepare(action);
   assert.equal(prepared.moderation.mainVersion,1);assert.equal(f.state.sends,0);assert.equal(prepared.maximumFee,'10');
   assert(f.state.storageReads.every(row=>row.ref.hash===hex(42)&&row.address===hex(1)));
-  assert(!f.state.privateReads.some(row=>row.name==='get_screen_hints'));const expected=({ 'moderate-post':'remove_post','moderate-avatar':'remove_avatar','reject-subboard':'reject_subboard','set-main-policy':'set_main_policy'})[action.type];
+  assert(!f.state.privateReads.some(row=>row.name==='get_screen_hints'));const expected=({ 'moderate-post':'remove_post','moderate-avatar':'remove_avatar','reject-subboard':'reject_subboard','set-main-policy':'set_main_policy','transfer-moderator':'transfer_moderator'})[action.type];
   assert.equal(f.state.calls.at(-1).name,expected);const sent=await f.restart().submitPrepared(prepared.intentId);assert.equal(sent.status,'confirmed');assert.equal(f.state.sends,1);assert.equal(f.state.sent.payload.name,expected);
   assert.equal((await f.restart().reconcile(prepared.intentId)).status,'confirmed');assert.equal(f.state.sends,1);
  }
@@ -1700,3 +1700,10 @@ test('funding prepare preserves the state needed by the session waiter without s
   for(const id of [undefined,null,'',hex(999)])await assert.rejects(f.app.inspectRecovery(id),{code:'ROLLING_INTENT_NOT_FOUND'});
   assert.equal(f.values.size,0);assert.equal(f.state.sends,0);
  });
+
+test('moderator transfer rejects zero/self and authority changes before submission',async()=>{
+ for(const successor of ['0',hex(3)]){const f=moderatorFixture();await assert.rejects(f.app.prepare({type:'transfer-moderator',successor}));assert.equal(f.state.sends,0);}
+ const f=moderatorFixture(),p=await f.app.prepare({type:'transfer-moderator',successor:hex(99)});
+ assert.equal(p.moderation.successor,hex(99));f.state.moderator=99n;
+ assert.deepEqual(await f.app.readModeratorStatus(),{authorized:false});await assert.rejects(f.app.submitPrepared(p.intentId),{code:'ROLLING_MODERATOR_REQUIRED'});assert.equal(f.state.sends,0);
+});

@@ -44,6 +44,9 @@ export function stageRollingPublicReduction(events,{isValidatedEvent,read,scalar
     const old=next.bok.get(p.request_id);
     check(old?old.budget===p.budget:p.state==='1'&&p.sequence==='0'&&p.available===p.budget&&p.reserved==='0'&&p.charged==='0'&&p.refunded==='0');
     next.bok.set(p.request_id,{requestId:p.request_id,state:p.state,sequence:p.sequence,budget:p.budget,available:p.available,reserved:p.reserved,charged:p.charged,refunded:p.refunded,position:copy(e.position)});
+   } else if(e.type==='ModeratorTransferred'){
+    // Keep the authenticated event/cursor without changing content or policy.
+    // Authorization always reads current canonical contract storage.
    } else if(e.type==='MainPolicyPublished'){check(BigInt(p.version)===BigInt(next.version)+1n);next.policies.set(p.version,{...p,text:text(p,'rules','length')});next.version=p.version;}
    else if(e.type==='NameRegistered'){check(!next.names.has(p.name_id));next.names.set(p.name_id,{id:p.name_id,first:text(p,'first','first_length'),last:text(p,'last','last_length'),profile:emptyProfile()});}
    else if(e.type==='BioPublished'||e.type==='AvatarPublished'){

@@ -280,7 +280,7 @@ pub contract RollingBoard {
         post_records: Map<Field, PublicMutable<PostRecord, Context>, Context>,
         post_reason: Map<Field, PublicMutable<Field, Context>, Context>,
         plugins: Map<Field, PublicMutable<PluginRecord, Context>, Context>,
-        moderator: PublicImmutable<AztecAddress, Context>,
+        moderator: PublicMutable<AztecAddress, Context>,
         main_version: PublicMutable<u32, Context>,
         main_rules: PublicMutable<Field, Context>,
         registered_names: Map<Field, PublicMutable<bool, Context>, Context>,
@@ -354,7 +354,7 @@ pub contract RollingBoard {
         validate_text(rules, length, true);
         let moderator = self.msg_sender();
         assert(moderator.to_field() != 0, "Moderator required");
-        self.storage.moderator.initialize(moderator);
+        self.storage.moderator.write(moderator);
         self.storage.main_version.write(1);
         let digest = text_hash(rules, length);
         self.storage.main_rules.write(digest);
@@ -587,6 +587,27 @@ pub contract RollingBoard {
             name_length, name, description_length, description, local_policy_version: 1,
             rules_length, rules, rules_digest, main_policy_version, metadata_digest });
     }
+
+    #[event]
+    struct ModeratorTransferred {
+        schema: u32,
+        previous: AztecAddress,
+        successor: AztecAddress,
+    }
+
+    #[external("public")]
+    fn transfer_moderator(successor: AztecAddress) {
+        let previous = self.storage.moderator.read();
+        assert(self.msg_sender() == previous, "Only moderator");
+        assert(successor.to_field() != 0, "Moderator required");
+        assert(successor != previous, "Moderator unchanged");
+        self.storage.moderator.write(successor);
+        self.emit(ModeratorTransferred { schema: 1, previous, successor });
+    }
+
+    #[external("public")]
+    #[view]
+    fn current_moderator() -> pub AztecAddress { self.storage.moderator.read() }
 
     #[external("public")]
     fn set_main_policy(rules: [Field; 32], length: u16) {

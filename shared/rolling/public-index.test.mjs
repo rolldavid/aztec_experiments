@@ -593,3 +593,14 @@ test('persistent predecessor admission requires ready ownership and exact guarde
  const db=new DatabaseSync(real.filename);try{db.exec("UPDATE projection SET value='{}' WHERE kind='posts'");}finally{db.close();}
  assert.throws(()=>a.index.scanPendingPredecessors('10'),{code:'ROLLING_PUBLIC_STORAGE_CONFLICT'});
 });
+
+for(const persistent of [false,true])test(`moderator transfer is ingested from actual ABI without changing content or policy (${persistent?'persistent':'legacy'})`,async t=>{
+ const f=await (persistent?persistentFixture(t):fixture(t)),index=persistent?(await f.open()).index:await f.create();
+ const sync=async()=>{await index.sync();if(persistent)await f.drain(index);assert.equal(index.status().complete,true);};
+ await sync();const before=index.query('feed'),directory=index.query('directory');
+ f.put(4,[await log('ModeratorTransferred',{schema:1,previous:AztecAddress.fromBigIntUnsafe(3n),successor:AztecAddress.fromBigIntUnsafe(4n)})]);f.setHead(4);
+ await sync();const after=index.query('feed');
+ for(const key of ['posts','names','boards'])assert.deepEqual(after[key],before[key]);
+ assert.deepEqual(index.query('directory').boards,directory.boards);assert.equal(String((persistent?index.publication():index.status()).checkpoint.number),'4');assert.notEqual(after.revision,before.revision);
+ f.put(5,[await log('MainPolicyPublished',{schema:1,version:2,digest:await digest('Changed',32),length:7,rules:pack('Changed',32)})]);f.setHead(5);await sync();assert.equal(index.query('directory').boards[0].mainRules,'Changed');
+});

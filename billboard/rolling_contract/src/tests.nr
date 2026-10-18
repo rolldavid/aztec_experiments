@@ -221,3 +221,37 @@ unconstrained fn rejection_cannot_silently_overwrite_reason() {
 unconstrained fn unknown_subboard_has_no_effective_policy() {
     let (env, board, _, _, _) = setup(); let _ = env.view_public(RollingBoard::at(board).effective_policy(42));
 }
+
+#[test]
+unconstrained fn moderator_rotation_preserves_policy_and_successor_can_transfer_back() {
+    let (env, board, moderator, alice, _) = setup();
+    let original = env.view_public(RollingBoard::at(board).main_policy());
+    env.call_public(moderator, RollingBoard::at(board).transfer_moderator(alice));
+    assert_eq(env.view_public(RollingBoard::at(board).current_moderator()), alice);
+    assert_eq(env.view_public(RollingBoard::at(board).main_policy()), original);
+    env.call_public(alice, RollingBoard::at(board).set_main_policy(text("Be civil"), 8));
+    assert_eq(env.view_public(RollingBoard::at(board).main_policy()).0, original.0 + 1);
+    env.call_public(alice, RollingBoard::at(board).transfer_moderator(moderator));
+    assert_eq(env.view_public(RollingBoard::at(board).current_moderator()), moderator);
+}
+#[test(should_fail_with="Only moderator")]
+unconstrained fn moderator_rotation_rejects_unrelated_account() {
+    let (env, board, _, alice, bob) = setup();
+    env.call_public(alice, RollingBoard::at(board).transfer_moderator(bob));
+}
+#[test(should_fail_with="Moderator required")]
+unconstrained fn moderator_rotation_rejects_zero_successor() {
+    let (env, board, moderator, _, _) = setup();
+    env.call_public(moderator, RollingBoard::at(board).transfer_moderator(AztecAddress::from_field(0)));
+}
+#[test(should_fail_with="Moderator unchanged")]
+unconstrained fn moderator_rotation_rejects_same_successor() {
+    let (env, board, moderator, _, _) = setup();
+    env.call_public(moderator, RollingBoard::at(board).transfer_moderator(moderator));
+}
+#[test(should_fail_with="Only moderator")]
+unconstrained fn moderator_rotation_revokes_old_authority() {
+    let (env, board, moderator, alice, _) = setup();
+    env.call_public(moderator, RollingBoard::at(board).transfer_moderator(alice));
+    env.call_public(moderator, RollingBoard::at(board).set_main_policy(text("Old key"), 7));
+}

@@ -23,8 +23,8 @@ export function projectRollingInitialization(value){
   return Object.freeze(out);
  }catch{return null;}
 }
-const MODERATOR_TYPES=new Set(['moderate-post','moderate-avatar','reject-subboard','set-main-policy']);
-const TYPES={'withdraw-bok':'Withdraw Bok credit','cancel-bok-request':'Release an unused Bok request','expire-bok-request':'Expire a Bok request',withdraw:'Withdraw posting collateral',screen:'Screen posting history','moderate-post':'Remove a post','moderate-avatar':'Remove an avatar','reject-subboard':'Reject a subboard','set-main-policy':'Update parent rules',bok:'Ask Bok with a post',preference:'Private preference','read-marker':'Mark thread read',bio:'Edit bio',avatar:'Edit avatar',post:'Write a post',reply:'Reply',quote:'Quote a post',repost:'Repost',like:'Like a post',unlike:'Remove a like',name:'Register a name',subboard:'Create a subboard'};
+const MODERATOR_TYPES=new Set(['moderate-post','moderate-avatar','reject-subboard','set-main-policy','transfer-moderator']);
+const TYPES={'transfer-moderator':'Transfer moderator authority','withdraw-bok':'Withdraw Bok credit','cancel-bok-request':'Release an unused Bok request','expire-bok-request':'Expire a Bok request',withdraw:'Withdraw posting collateral',screen:'Screen posting history','moderate-post':'Remove a post','moderate-avatar':'Remove an avatar','reject-subboard':'Reject a subboard','set-main-policy':'Update parent rules',bok:'Ask Bok with a post',preference:'Private preference','read-marker':'Mark thread read',bio:'Edit bio',avatar:'Edit avatar',post:'Write a post',reply:'Reply',quote:'Quote a post',repost:'Repost',like:'Like a post',unlike:'Remove a like',name:'Register a name',subboard:'Create a subboard'};
 const IDS=['subboard','parent','root','reference','post'];
 const field=value=>typeof value==='string'&&/^(?:0x[0-9a-f]{64}|0|[1-9][0-9]{0,76})$/.test(value);
 const el=(tag,attrs={},...children)=>{const node=document.createElement(tag);for(const [key,value]of Object.entries(attrs))node.setAttribute(key,value);for(const child of children.flat())if(child!==null&&child!==undefined)node.append(child instanceof Node?child:document.createTextNode(String(child)));return node;};
@@ -466,6 +466,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
    content.append(avatarArea);
    if(intent.action.data==='')avatarArea.append(paragraph('Clear avatar. No image bytes will be published.'));
   }
+  if(intent.action?.type==='transfer-moderator')content.append(paragraph(`Transfer moderator authority to ${intent.action.successor}. Your current key loses authority immediately. Only the successor can transfer it back.`));
   if(intent.moderation){content.append(paragraph('Moderator action: your authority and the exact target will be checked again before sending. This does not edit the original post or reveal its private owner.'),paragraph(`Reviewed parent rules version: ${intent.moderation.mainVersion}.`));if(intent.moderation.avatarVersion!==undefined)content.append(paragraph(`Reviewed avatar version: ${intent.moderation.avatarVersion}.`));}
   if(intent.bok){
    content.append(paragraph(`Maximum Bok request cost: ${decimal(intent.bok.budget,6)} USDC. This ceiling is separate from network fees; the actual charge may be lower.`),paragraph(`Private Bok balance checked for this authorization: ${decimal(intent.bok.availableCredit,6)} USDC.`));
@@ -567,7 +568,8 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   const kind=draft.type;
   if(MODERATOR_TYPES.has(kind)){
    content.append(paragraph('Moderator controls. Removal keeps the stable link and a visible reason. It cannot edit or delete the underlying chain history.'));
-   if(kind==='set-main-policy')input('rules','New parent rules',{area:true});
+   if(kind==='transfer-moderator'){input('successor','Successor Aztec address');content.append(el('p',{class:'quiet'},'The successor takes control immediately. Only the successor can transfer authority back. Policy and account funds stay unchanged.'));}
+   else if(kind==='set-main-policy')input('rules','New parent rules',{area:true});
    else{input(kind==='moderate-post'?'post':kind==='moderate-avatar'?'name':'subboard',kind==='moderate-post'?'Post ID':kind==='moderate-avatar'?'Profile name ID':'Subboard ID');input('reason','Public moderation reason',{area:true});}
   }else if(kind==='preference'||kind==='read-marker'){
    if(kind==='preference'){
@@ -655,7 +657,8 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
     counter.className=`counter${a.remaining<0?' invalid':''}`;
     valid=valid&&a.remaining>=0&&text.isWellFormed()&&!text.includes('\0')&&(kind==='bio'||!!draft.deposit);
    }
-   if(MODERATOR_TYPES.has(kind)){valid=valid&&moderatorStatus?.authorized===true;const key=kind==='set-main-policy'?'rules':'reason',value=fields.get(key).value;valid=valid&&value.isWellFormed()&&!value.includes('\0')&&new TextEncoder().encode(value).length<=(key==='rules'?992:217);if(kind!=='set-main-policy'){const id=fields.get(kind==='moderate-post'?'post':kind==='moderate-avatar'?'name':'subboard').value;valid=valid&&field(id)&&BigInt(id)>0n;}}
+   if(kind==='transfer-moderator'){const successor=fields.get('successor').value;valid=valid&&moderatorStatus?.authorized===true&&field(successor)&&BigInt(successor)>0n;}
+   else if(MODERATOR_TYPES.has(kind)){valid=valid&&moderatorStatus?.authorized===true;const key=kind==='set-main-policy'?'rules':'reason',value=fields.get(key).value;valid=valid&&value.isWellFormed()&&!value.includes('\0')&&new TextEncoder().encode(value).length<=(key==='rules'?992:217);if(kind!=='set-main-policy'){const id=fields.get(kind==='moderate-post'?'post':kind==='moderate-avatar'?'name':'subboard').value;valid=valid&&field(id)&&BigInt(id)>0n;}}
    if(kind==='reply')valid=valid&&replyContext(draft);
    if(kind==='bok'){const {parent,root,subboard}=draft;valid=valid&&field(subboard)&&field(parent)&&field(root)&&((BigInt(parent)===0n)===(BigInt(root)===0n));try{const v=BigInt(units(fields.get('budget').value,6));valid=valid&&v<(1n<<128n)&&v<=BigInt(bokStatus?.availableCredit??'0');}catch{valid=false;}}
    if(kind==='bio'||kind==='avatar')valid=valid&&!!profileSnapshot&&identities.includes(draft.name)&&BigInt(profileSnapshot.name)===BigInt(draft.name)&&(kind!=='avatar'||!!avatarDraft);
