@@ -6,7 +6,7 @@ import path from 'node:path';
 import {randomBytes} from 'node:crypto';
 import {chromium} from 'playwright';
 import {ROOT} from './toolchain.mjs';
-import {MinedTxReceipt,TxHash} from '@aztec-labs/stdlib/tx';
+import {MinedTxReceipt,DroppedTxReceipt,TxHash} from '@aztec-labs/stdlib/tx';
 import {BlockHash} from '@aztec-labs/stdlib/block';
 import {jsonStringify} from '@aztec-labs/foundation/json-rpc';
 const password=randomBytes(32).toString('hex');
@@ -124,18 +124,24 @@ try {
     const journal=await a.createL2Journal({storage:a.createBrowserJournalStorage(),walletSecret:w.secretKey,walletSalt:w.salt,scope,Tx:a.Tx,node:{}});
     await journal.prepare(tx,await journal.assertCanStart());return tx.getTxHash().toString();
   });
+  const savedReceipt=JSON.parse(jsonStringify(MinedTxReceipt.from({txHash:TxHash.fromString(savedHash),status:'checkpointed',executionResult:'success',transactionFee:0n,blockNumber:1,blockHash:BlockHash.ZERO,slotNumber:1,txIndexInBlock:0,epochNumber:0})));
+  const droppedReceipt=JSON.parse(jsonStringify(new DroppedTxReceipt(TxHash.fromString(savedHash))));
   stage='journal-reload-and-wallet-restore';
   await first.page.reload();await readyUser(first.page);
   await first.page.locator('#wbRestorePassword').fill(password);await first.page.locator('#wbAztecFile').setInputFiles({name:'recovery.json',mimeType:'application/json',buffer:encrypted});
   await first.page.waitForFunction(()=>window.walletState.aztec?.address);
-  const recovery=await first.page.evaluate(async txHash=>{
-    const a=window.__aztec,w=window.walletState.aztec;let submissions=0,status='dropped',blocked=false;
+  const recovery=await first.page.evaluate(async({minedReceipt,droppedReceipt})=>{
+    const a=window.__aztec,w=window.walletState.aztec,txHash=minedReceipt.txHash;let submissions=0,observed=droppedReceipt,blocked=false;
     const scope={account:w.address.toString(),chainId:'31337',rollup:'0x'+'11'.repeat(20),version:'5',board:'0x'+'0'.repeat(63)+'2',portal:'0x'+'22'.repeat(20)};
-    const node={getTxReceipt:async()=>({txHash,status,executionResult:'success',blockNumber:1,blockHash:'canonical'}),getBlock:async()=>({hash:'canonical'}),isValidTx:async()=>({result:'valid'}),sendTx:async tx=>{if(tx.getTxHash().toString()!==txHash)throw new Error('identity');submissions++;status='checkpointed';}};
+    const receiptClient=a.createAztecNodeClient('http://receipt.fixture',{fetch:async(_url,calls)=>({headers:new Headers(),response:calls.map(call=>{
+      if(call.method!=='aztec_getTxReceipt'||call.params[0].toString()!==txHash)throw Error('Unexpected recovery request');
+      return {jsonrpc:'2.0',id:call.id,result:observed};
+    })})});
+    const node={getTxReceipt:hash=>receiptClient.getTxReceipt(hash),getBlock:async()=>({hash:minedReceipt.blockHash}),isValidTx:async()=>({result:'valid'}),sendTx:async tx=>{if(tx.getTxHash().toString()!==txHash)throw new Error('identity');submissions++;observed=minedReceipt;}};
     const journal=await a.createL2Journal({storage:a.createBrowserJournalStorage(),walletSecret:w.secretKey,walletSalt:w.salt,scope,Tx:a.Tx,node});
     try{await journal.assertCanStart();}catch(e){blocked=e.code==='BB_RECOVERY_REQUIRED';}
     const receipt=await journal.recover();return {blocked,submissions,sameHash:receipt.txHash.toString()===txHash};
-  },savedHash);
+  },{minedReceipt:savedReceipt,droppedReceipt});
   assert.deepEqual(recovery,{blocked:true,submissions:1,sameHash:true});
 
   stage='ethereum-intent-before-reload';
@@ -176,7 +182,6 @@ try {
   stage='restore-journals-fresh-profile';const third=await open('censor.html');
   await third.page.locator('#wbRestorePassword').fill(password);await third.page.locator('#wbAztecFile').setInputFiles({name:'recovery.json',mimeType:'application/json',buffer:portable});
   await third.page.waitForFunction(()=>window.walletState.aztec?.address);
-  const savedReceipt=JSON.parse(jsonStringify(MinedTxReceipt.from({txHash:TxHash.fromString(savedHash),status:'checkpointed',executionResult:'success',transactionFee:0n,blockNumber:1,blockHash:BlockHash.ZERO,slotNumber:1,txIndexInBlock:0,epochNumber:0})));
   const portableResult=await third.page.evaluate(async receipt=>{
     const a=window.__aztec,w=window.walletState.aztec,storage=a.createBrowserJournalStorage();
     const records=await (await a.createJournalBackup({storage,walletSecret:w.secretKey,walletSalt:w.salt})).exportRecords();
