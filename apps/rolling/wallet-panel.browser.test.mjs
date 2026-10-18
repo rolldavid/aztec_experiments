@@ -93,6 +93,12 @@ async function browserFixture(t){
 async function open(page,defaults){if(defaults)await page.evaluate(value=>window.defaults=value,defaults);await page.getByRole('button',{name:'Open account',exact:true}).click();}
 async function unlock(page){await page.getByRole('button',{name:'Unlock',exact:true}).click();await page.getByRole('button',{name:'Check action and review fee',exact:true}).waitFor();}
 async function prepare(page){await page.getByLabel('Message',{exact:true}).fill('Hello from the labelled UI double.');await page.getByRole('button',{name:'Check action and review fee',exact:true}).click();await page.getByRole('button',{name:'Confirm and send',exact:true}).waitFor();}
+async function rulesBeforePrimary(page){
+ assert(await page.getByRole('region',{name:'Current effective rules'}).evaluate(section=>{
+  const primary=section.parentElement.querySelector(':scope > button.primary');
+  return !!primary&&!!(section.compareDocumentPosition(primary)&Node.DOCUMENT_POSITION_FOLLOWING)&&section.getBoundingClientRect().bottom<=primary.getBoundingClientRect().top;
+ }));
+}
 const counts=page=>page.evaluate(()=>({loads:test.loads,sessions:test.sessions,prepares:test.prepares,sends:test.sends,reconciles:test.reconciles,effects:test.effects}));
 
 test('public opening is SDK-free; dialog survives reader changes, traps focus and restores it',async t=>{
@@ -1140,13 +1146,14 @@ test('dialog selections and view changes retain a meaningful keyboard position',
 
 for(const replacement of [false,true])test(`ordinary saved post ${replacement?'replacement review':'exact-byte recovery'} is explicit and preserves its draft`,async t=>{
  const {page}=await browserFixture(t),action={type:'post',deposit:'9',content:'Retained original draft',name:'0',subboard:'0'};
+ await page.evaluate(()=>test.rules={'0':{parent:'Policy sentence. '.repeat(50)}});
  if(replacement)await seedReplacement(page,{action});else await seedSavedResume(page,{action});
  assert.equal(await page.evaluate(()=>test.sends+test.replacementPrepares+test.resumes),0);
  await page.getByRole('button',{name:'Check recovery options',exact:true}).click();
- if(replacement){await page.getByRole('button',{name:'Review replacement',exact:true}).click();await page.getByRole('button',{name:'Confirm replacement and send',exact:true}).waitFor();
+ if(replacement){await rulesBeforePrimary(page);await page.getByRole('button',{name:'Review replacement',exact:true}).click();await page.getByRole('button',{name:'Confirm replacement and send',exact:true}).waitFor();await rulesBeforePrimary(page);
   assert.deepEqual(await page.evaluate(()=>test.replacementInput),{expectedTxHash:'0x'+(77).toString(16).padStart(64,'0')});assert(await page.getByText(/New maximum network fee: 456/).isVisible());
   assert.equal(await page.evaluate(()=>test.sends),0);await page.getByRole('button',{name:'Confirm replacement and send',exact:true}).click();
- }else{await page.getByRole('button',{name:'Confirm saved transaction and send',exact:true}).waitFor();assert(await page.getByText(/Previously approved maximum fee: 123/).isVisible());
+ }else{await page.getByRole('button',{name:'Confirm saved transaction and send',exact:true}).waitFor();await rulesBeforePrimary(page);assert(await page.getByText(/Previously approved maximum fee: 123/).isVisible());
   assert.equal(await page.evaluate(()=>test.sends),0);await page.getByRole('button',{name:'Confirm saved transaction and send',exact:true}).click();}
  await page.getByText('Transaction confirmed on the verified chain.',{exact:true}).waitFor();
  assert.equal(await page.evaluate(()=>test.sends),1);assert.equal(await page.evaluate(()=>JSON.parse(sessionStorage.getItem('labelled-ui-intent')).action.content),action.content);
@@ -1203,22 +1210,23 @@ test('funding pause fences the next stage while a held operation retains the bus
 });
 
 for(const type of ['post','reply','quote','repost','bok'])test('Effective rules are shown for '+type+' and refreshed before publication',async t=>{
- const {page}=await browserFixture(t);await page.evaluate(()=>{test.bokCredit='1000000';test.rules={'3':{parent:'<img src=x onerror=alert(1)> Parent policy',local:'[Local](javascript:alert(1))'}};});
+ const {page}=await browserFixture(t);await page.evaluate(()=>{test.bokCredit='1000000';test.rules={'3':{parent:'<img src=x onerror=alert(1)> Parent policy',local:'[Local](javascript:alert(1)) '+ 'Policy sentence. '.repeat(50)}};});
  await open(page,{type,subboard:'3',parent:'12',root:'11',reference:'10',content:'A useful message'});await unlock(page);
  const rules=page.getByRole('region',{name:'Current effective rules'});
  await rules.getByText('Current parent rules · v2',{exact:true}).waitFor();
  assert.equal(await rules.locator('img,script,a').count(),0);assert.match(await rules.textContent(),/Immutable local rules · v1/);
  assert.match(await rules.textContent(),/Parent policy/);assert.match(await rules.textContent(),/javascript:alert/);
- assert.deepEqual(await page.evaluate(()=>test.ruleReads),[{id:'3',limit:'1'}]);
+ assert.deepEqual(await page.evaluate(()=>test.ruleReads),[{id:'3',limit:'1'}]);await rulesBeforePrimary(page);
  await page.getByRole('button',{name:'Check action and review fee',exact:true}).click();
  await page.getByRole('button',{name:'Confirm and send',exact:true}).waitFor();
- assert.equal(await page.evaluate(()=>test.ruleReads.length),2);
+ assert.equal(await page.evaluate(()=>test.ruleReads.length),2);await rulesBeforePrimary(page);
  await page.evaluate(()=>test.rules['3'].version='3');
  await page.getByRole('button',{name:'Confirm and send',exact:true}).click();
  await rules.getByText('Current parent rules · v3',{exact:true}).waitFor();
  assert.equal((await counts(page)).sends,0);
  await page.getByRole('button',{name:'Confirm and send',exact:true}).click();
  await page.waitForFunction(()=>test.sends===1);
+ if(type==='bok'){await page.getByRole('button',{name:'Review saved Bok post',exact:true}).waitFor();await rulesBeforePrimary(page);}
 });
 
 test('Effective rules follow destination changes without reads per keystroke or stale response overwrite',async t=>{

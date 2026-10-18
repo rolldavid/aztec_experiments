@@ -391,7 +391,9 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
  }
  function rulesView(action,changed=()=>{}){
   if(!postingTypes.has(action?.type))return;
-  const epoch=renderEpoch,section=el('section',{'aria-label':'Current effective rules'});content.append(section);
+  const epoch=renderEpoch,section=el('section',{'aria-label':'Current effective rules'});
+  // Read the rules before reaching review, publication or saved-send controls.
+  content.insertBefore(section,content.querySelector(':scope > button.primary'));
   updateRules=()=>{
    if(epoch!==renderEpoch)return;
    const id=rulesId(action),state=postingRules?.id===id?postingRules:null;
