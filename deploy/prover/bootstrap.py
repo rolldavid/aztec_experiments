@@ -744,7 +744,20 @@ def validated_qualification(q):
     if 'anchors' in q: q['anchors']=qualification_anchors(q['anchors'])
     return q
 
+APPLICATION_WRITER=False
+
 def application_failure():
+    global APPLICATION_WRITER
+    if APPLICATION_WRITER:return contain_application()
+    # Timeout containment is a separate process. Hold the same writer lock until
+    # the durable marker prevents a later activation from racing listener stops.
+    with open(BASE/'lock','a') as writer:
+        fcntl.flock(writer,fcntl.LOCK_EX)
+        APPLICATION_WRITER=True
+        try:return contain_application()
+        finally:APPLICATION_WRITER=False
+
+def contain_application():
     # Application admission is not a budget failure. Contain listeners and retain
     # the node/journals; loss of controls or failed containment remains terminal.
     try:
@@ -771,6 +784,7 @@ def attest(check=False):
     if check and digest(RELEASE/'deploy/prover/bootstrap.py')!=PINS['startup']:raise ValueError('Control verification failed')
 
 def application_work(callback):
+    global APPLICATION_WRITER
     # Reuse install/update and receipt writers' locks. A live writer is not an
     # application failure, and its partial records are not an observation.
     with open(BASE/'lock','a') as writer, open(PRIVATE/'receipt-lock','a') as receipt:
@@ -778,7 +792,14 @@ def application_work(callback):
             fcntl.flock(writer,fcntl.LOCK_EX|fcntl.LOCK_NB)
             fcntl.flock(receipt,fcntl.LOCK_EX|fcntl.LOCK_NB)
         except BlockingIOError:return False
-        callback();return True
+        APPLICATION_WRITER=True
+        try:
+            callback();return True
+        except Exception:
+            # Persist containment before releasing the writer, so a subsequent
+            # activation cannot enter between a failed operation and its marker.
+            application_failure();raise
+        finally:APPLICATION_WRITER=False
 
 def application_attest():
     return application_work(application_observation)

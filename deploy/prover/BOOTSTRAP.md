@@ -1146,3 +1146,10 @@ Application observations and explicit activation reuse the install/update writer
 lock and final-receipt lock. A busy writer skips observation; it is not reported
 as a failure, and the independent controls watchdog continues. Explicit activation
 returns exit75 when busy, without issuing an activation or touching its journal.
+Containment holds the same writer lock through listener shutdown and durable
+failure-marker creation. A failed observer or activation contains while still
+holding its lock; the separate timeout handler acquires that lock after the killed
+observer exits. Keep deliberate installation, activation and manual containment
+operations serialized: the containment service's watchdog bounds an uncompleted
+containment operation, including a blocked writer, while the independent controls
+watchdog and absolute budget deadline continue unchanged.

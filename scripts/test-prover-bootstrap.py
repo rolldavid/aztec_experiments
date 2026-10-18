@@ -419,6 +419,28 @@ class htb 1:20 parent 1:1 prio 0 rate 25Mbit ceil 50Mbit burst 4725b cburst 7850
                     self.assertFalse(ns['application_attest']());self.assertEqual(events,[])
             self.assertTrue(ns['application_attest']());self.assertEqual(events,['observe'])
 
+    def test_application_containment_holds_writer_through_failure_marker(self):
+        import fcntl
+        with tempfile.TemporaryDirectory() as t:
+            ns=host();ns['BASE']=pathlib.Path(t);ns['PRIVATE']=pathlib.Path(t)/'private';ns['PRIVATE'].mkdir();events=[]
+            def contain():
+                with (ns['BASE']/'lock').open('a') as contender:
+                    with self.assertRaises(BlockingIOError):fcntl.flock(contender,fcntl.LOCK_EX|fcntl.LOCK_NB)
+                self.assertTrue(ns['APPLICATION_WRITER'])
+                (ns['BASE']/'application-failure.json').write_text('contained')
+                events.append('contained')
+            ns['contain_application']=contain
+            # Both the independent timeout handler and a callback already owning
+            # the lock contain without a reentrant deadlock or unlocked gap.
+            ns['application_failure']()
+            self.assertFalse(ns['APPLICATION_WRITER'])
+            def failed():raise ValueError('operation failed')
+            with self.assertRaisesRegex(ValueError,'operation failed'):ns['application_work'](failed)
+            self.assertFalse(ns['APPLICATION_WRITER']);self.assertEqual(events,['contained','contained'])
+            def later_activation():
+                self.assertEqual((ns['BASE']/'application-failure.json').read_text(),'contained')
+            self.assertTrue(ns['application_work'](later_activation))
+
     def test_application_failure_retains_node_only_after_verified_containment(self):
         for failure in (None,'unallocated','controls','containment'):
             with self.subTest(failure=failure),tempfile.TemporaryDirectory() as t:
