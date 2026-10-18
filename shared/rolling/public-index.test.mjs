@@ -522,7 +522,7 @@ async function bokIndexFixture(t){
  const bok={address:instance.address.toString(),classId:instance.originalContractClassId.toString(),operatorAddress:operatorAddress.toString(),deployer:deployer.toString(),salt:salt.toString(),deployment:{blockNumber:2,blockHash:hex(1002),txHash:hex(102)}};
  const capturedScope={...scope,bok},original=f.node.getContract;f.node.getContract=async target=>target.equals(instance.address)?instance:original(target);
  const values={board:scope.boardAddress,operator:bok.operatorAddress,owner:bok.deployer,l1_chain:new Fr(31337n).toString(),version:new Fr(1n).toString()},bySlot=new Map(Object.entries(values).map(([k,v])=>[String(bokArtifact.storageLayout[k].slot),v]));
- f.node.getPublicStorageAt=async(anchor,target,slot)=>{assert.deepEqual(anchor,{number:2,hash:hex(1002)});assert(target.equals(instance.address));return Fr.fromString(bySlot.get(String(slot)));};
+ f.node.getPublicStorageAt=async(anchor,target,slot)=>{assert(anchor.number>=2);assert.equal(anchor.hash,f.blocks.get(anchor.number).hash.toString());assert(target.equals(instance.address));return Fr.fromString(bySlot.get(String(slot)));};
  const getEffect=f.node.getTxEffect;f.node.getTxEffect=async tx=>{const e=await getEffect(tx);e.data.revertCode={isOK:()=>true};return e;};
  const abi=bokArtifact.outputs.structs.events.find(e=>e.path==='PrivateBok::AccountingChanged'),tag=await computeLogTag((await EventSelector.fromSignature(decodeFunctionSignature('AccountingChanged',abi.fields))).toField(),DomainSeparator.EVENT_LOG_TAG);
  const accounting=(id,patch={})=>{const p={request_id:BigInt(id),state:1,sequence:0,budget:100,available:100,reserved:0,charged:0,refunded:0,trailer:1,...patch};return new PublicLog(instance.address,[tag,...encodeArguments({parameters:abi.fields},abi.fields.map(k=>p[k.name]))]);};
@@ -530,6 +530,13 @@ async function bokIndexFixture(t){
  const open=async()=>{const storage=createRollingPublicSqliteStore(directory,{scope:capturedScope});resources.push(storage);return {storage,index:await createRollingPersistentPublicIndex({node:f.node,artifact,bokArtifact,scope:capturedScope,deployment:f.options.deployment,storage})};};
  return {...f,open,accounting,capturedScope,bokArtifact,directory};
 }
+test('Bok cold SQLite rebuild uses retained immutable state after deployment snapshot pruning',async t=>{
+ const f=await bokIndexFixture(t);f.put(3,[f.accounting(7)]);f.setHead(3);
+ const storage=f.node.getPublicStorageAt;let reads=0;
+ f.node.getPublicStorageAt=async(anchor,...args)=>{if(anchor.number<3)throw Error('Deployment snapshot pruned');reads++;return storage(anchor,...args);};
+ const {index}=await f.open();await f.drain(index);
+ assert.equal(index.status().state,'ready');assert.equal(index.query('bok-accounting').requests[0].requestId,'7');assert.equal(reads,5);
+});
 test('Bok full-block acquisition covers unrelated/empty blocks, absolute snapshots, uniform pages and canonical reopen',async t=>{
  const f=await bokIndexFixture(t);f.put(3,[f.accounting(7),f.accounting(8),f.accounting(7,{state:2,available:60,reserved:40})]);
  f.put(4,[]);f.blocks.get(4).body.txEffects=[];f.put(5,[f.accounting(9),f.accounting(7,{state:4,sequence:1,available:0,charged:25,refunded:75})]);f.setHead(5);

@@ -149,7 +149,14 @@ export async function createRollingEventDecoder({artifact,scope,bokArtifact}) {
     check(receipt.txHash.equals(tx)&&[TxStatus.CHECKPOINTED,TxStatus.PROVEN,TxStatus.FINALIZED].includes(receipt.status)&&receipt.executionResult===TxExecutionResult.SUCCESS&&receipt.blockNumber===d.blockNumber&&receipt.blockHash.toString()===d.blockHash);
     check(effect?.l2BlockNumber===d.blockNumber&&effect.l2BlockHash.toString()===d.blockHash&&effect.data.txHash.equals(tx)&&effect.data.revertCode.isOK());
     const values={board:scope.boardAddress,operator:b.operatorAddress,owner:b.deployer,l1_chain:new Fr(BigInt(scope.chainId)).toString(),version:new Fr(BigInt(scope.rollupVersion)).toString()};
-    for(const [k,value] of Object.entries(values))check((await read(()=>node.getPublicStorageAt(anchor,address,bokSlots[k]))).toString()===value);
+    // These five slots are PublicImmutable, initialized only by this pinned
+    // class's constructor. Authenticate their values at retained canonical state;
+    // the deployment receipt/instance remain anchored to the original archive.
+    const retained=await read(()=>node.getBlockData('checkpointed'));
+    const stateAnchor={number:retained?.header?.globalVariables?.blockNumber,hash:retained?.blockHash?.toString()};
+    check(Number.isSafeInteger(stateAnchor.number)&&stateAnchor.number>=d.blockNumber&&hex(stateAnchor.hash,32));
+    for(const [k,value] of Object.entries(values))check((await read(()=>node.getPublicStorageAt(stateAnchor,address,bokSlots[k]))).toString()===value);
+    const finalState=await read(()=>node.getBlockData(stateAnchor.number));check(finalState?.blockHash?.toString()===stateAnchor.hash);
    }
    // These reads are fresh on EVERY verification, including the existing
    // pre/post-commit checks. A reorg or current-instance change invalidates reuse.

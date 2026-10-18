@@ -10,7 +10,8 @@ import {getContractClassFromArtifact} from '@aztec-labs/stdlib/contract';
 import {computeLogTag} from '@aztec-labs/stdlib/hash';
 import {PublicLog} from '@aztec-labs/stdlib/logs';
 import {AztecAddress} from '@aztec-labs/stdlib/aztec-address';
-import {TxHash,TxStatus,TxExecutionResult} from '@aztec-labs/stdlib/tx';
+import {TxHash,TxStatus,TxExecutionResult,BlockHeader,GlobalVariables} from '@aztec-labs/stdlib/tx';
+import {BlockHash} from '@aztec-labs/stdlib/block';
 import {DomainSeparator} from '@aztec-labs/constants';
 import {createRollingEventDecoder,validateRollingEvent,unpackRollingText} from './public-events.mjs';
 const artifact=loadContractArtifact(JSON.parse(fs.readFileSync(process.env.ROLLING_TEST_ARTIFACT??new URL('../../billboard/target/rolling_contract-RollingBoard.json',import.meta.url))));
@@ -28,7 +29,7 @@ function nodeFixture(){const blockHash={equals:v=>v.toString()===hash,toString:(
  const instance={currentContractClassId:{toString:()=>classId},originalContractClassId:{toString:()=>classId}};
  return {getNodeInfo:async()=>({l1ChainId:31337,rollupVersion:1,l1ContractAddresses:{rollupAddress:{toString:()=>scope.rollupAddress}}}),getContract:async()=>instance,
  getTxReceipt:async()=>receipt,getTxEffect:async()=>({data:effect,l2BlockNumber:1,l2BlockHash:blockHash}),
- getBlock:async()=>({hash:blockHash,body:{txEffects:[effect]},header:{globalVariables:{timestamp:1n,blockNumber:1}}}),getBlockData:async()=>({blockHash})};}
+ getBlock:async()=>({hash:blockHash,body:{txEffects:[effect]},header:{globalVariables:{timestamp:1n,blockNumber:1}}}),getBlockData:async()=>({blockHash,header:BlockHeader.empty({globalVariables:GlobalVariables.empty({blockNumber:1})})})};}
 test('labelled fixture: real SDK ABI policy decode and canonical transaction adapter',async()=>{
  const decoded=await decoder.decodeLog(log(),position);assert.equal(decoded.payload.digest,digest.toBigInt().toString());
  const result=await decoder.decodeTransaction(nodeFixture(),txHash.toString());assert.deepEqual(result,[decoded]);
@@ -162,7 +163,7 @@ test('Bok accounting descriptor binds constructor, salt, class and original cano
  for(const key of ['address','operatorAddress','deployer','salt','classId'])await assert.rejects(createRollingEventDecoder({artifact,bokArtifact,scope:{...bokScope,bok:{...bokScope.bok,[key]:new Fr(900n).toString()}}}));
  const values={board:scope.boardAddress,operator:bokScope.bok.operatorAddress,owner:bokScope.bok.deployer,l1_chain:new Fr(31337n).toString(),version:new Fr(1n).toString()};
  const bySlot=new Map(Object.entries(values).map(([k,v])=>[String(bokArtifact.storageLayout[k].slot),v]));
- const node={getContract:async()=>bokInstance,getTxReceipt:async()=>({txHash,status:'checkpointed',executionResult:'success',blockNumber:1,blockHash:{toString:()=>hash}}),getTxEffect:async()=>({l2BlockNumber:1,l2BlockHash:{toString:()=>hash},data:{txHash,revertCode:{isOK:()=>true}}}),getPublicStorageAt:async(_a,_b,slot)=>({toString:()=>bySlot.get(String(slot))}),getBlockData:async()=>({blockHash:{toString:()=>hash}})};
+ const node={getContract:async()=>bokInstance,getTxReceipt:async()=>({txHash,status:'checkpointed',executionResult:'success',blockNumber:1,blockHash:{toString:()=>hash}}),getTxEffect:async()=>({l2BlockNumber:1,l2BlockHash:{toString:()=>hash},data:{txHash,revertCode:{isOK:()=>true}}}),getPublicStorageAt:async(_a,_b,slot)=>({toString:()=>bySlot.get(String(slot))}),getBlockData:async()=>({blockHash:BlockHash.fromString(hash),header:BlockHeader.empty({globalVariables:GlobalVariables.empty({blockNumber:1})})})};
  await bokDecoder.verifyBok(node,fn=>fn());
  for(const change of [{getPublicStorageAt:async()=>Fr.ZERO},{getBlockData:async()=>({blockHash:Fr.ZERO})},{getTxEffect:async()=>null},{getContract:async()=>({...bokInstance,currentContractClassId:Fr.ZERO})}])await assert.rejects(bokDecoder.verifyBok({...node,...change},fn=>fn()));
 });
@@ -175,13 +176,35 @@ function countedBokNode(){
   getTxReceipt:async()=>{calls.receipt++;return {txHash,status:'checkpointed',executionResult:'success',blockNumber:1,blockHash:{toString:()=>hash}};},
   getTxEffect:async()=>{calls.effect++;return {l2BlockNumber:1,l2BlockHash:{toString:()=>hash},data:{txHash,revertCode:{isOK:()=>true}}};},
   getPublicStorageAt:async(_a,_b,slot)=>{calls.storage++;return {toString:()=>state.badStorage?Fr.ZERO.toString():bySlot.get(String(slot))};},
-  getBlockData:async()=>{calls.anchor++;if(state.failAnchor)throw Error('controlled anchor read failure');return {blockHash:{toString:()=>state.hash}};}};
+  getBlockData:async()=>{calls.anchor++;if(state.failAnchor)throw Error('controlled anchor read failure');return {blockHash:BlockHash.fromString(state.hash),header:BlockHeader.empty({globalVariables:GlobalVariables.empty({blockNumber:1})})};}};
  return {node,calls,state};
 }
+test('Bok immutable attestation survives pruned deployment state at a canonical retained checkpoint',async()=>{
+ const local=await createRollingEventDecoder({artifact,bokArtifact,scope:bokScope}),f=countedBokNode(),storage=f.node.getPublicStorageAt;
+ const retainedHash=BlockHash.fromString('0x'+'03'.repeat(32)),selectors=[];
+ f.node.getBlockData=async selector=>selector==='checkpointed'||selector===3
+  ?{blockHash:retainedHash,header:BlockHeader.empty({globalVariables:GlobalVariables.empty({blockNumber:3})})}
+  :{blockHash:BlockHash.fromString(hash),header:BlockHeader.empty({globalVariables:GlobalVariables.empty({blockNumber:1})})};
+ f.node.getPublicStorageAt=async(anchor,...args)=>{selectors.push(anchor);if(anchor.number<3)throw Error('world-state history pruned');return storage(anchor,...args);};
+ await local.verifyBok(f.node,fn=>fn());
+ assert.equal(selectors.length,5);assert(selectors.every(a=>a.number===3&&a.hash===retainedHash.toString()));
+});
+for(const fault of ['checkpoint-before-deployment','changed-state-anchor','storage-unavailable'])test('Bok retained-state attestation rejects '+fault,async()=>{
+ const local=await createRollingEventDecoder({artifact,bokArtifact,scope:bokScope}),f=countedBokNode();
+ const canonical=BlockHash.fromString('0x'+'03'.repeat(32));
+ f.node.getBlockData=async selector=>{
+  const number=selector==='checkpointed'?(fault==='checkpoint-before-deployment'?0:3):selector;
+  return {blockHash:fault==='changed-state-anchor'&&selector===3?BlockHash.fromString('0x'+'04'.repeat(32)):number===1?BlockHash.fromString(hash):canonical,
+   header:BlockHeader.empty({globalVariables:GlobalVariables.empty({blockNumber:number})})};
+ };
+ if(fault==='storage-unavailable')f.node.getPublicStorageAt=async()=>{throw Error('state pruned during read');};
+ await assert.rejects(local.verifyBok(f.node,fn=>fn()));
+ assert.equal(f.calls.receipt,1,'Original deployment remains required');
+});
 test('Bok immutable attestation reuses only original reads while current instance and anchor remain fresh',async()=>{
  const local=await createRollingEventDecoder({artifact,bokArtifact,scope:bokScope}),f=countedBokNode();
- await local.verifyBok(f.node,fn=>fn());assert.deepEqual(f.calls,{original:1,current:1,receipt:1,effect:1,storage:5,anchor:1});
- await local.verifyBok(f.node,fn=>fn());assert.deepEqual(f.calls,{original:1,current:2,receipt:1,effect:1,storage:5,anchor:2});
+ await local.verifyBok(f.node,fn=>fn());assert.deepEqual(f.calls,{original:1,current:1,receipt:1,effect:1,storage:5,anchor:3});
+ await local.verifyBok(f.node,fn=>fn());assert.deepEqual(f.calls,{original:1,current:2,receipt:1,effect:1,storage:5,anchor:4});
  const other=countedBokNode();await local.verifyBok(other.node,fn=>fn());assert.equal(other.calls.original,1,'node identity cannot inherit another attestation');
  const reopened=await createRollingEventDecoder({artifact,bokArtifact,scope:bokScope});await reopened.verifyBok(f.node,fn=>fn());assert.equal(f.calls.original,2,'new decoder reauthenticates immutable facts');
 });
