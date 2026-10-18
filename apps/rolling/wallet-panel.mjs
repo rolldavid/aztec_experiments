@@ -619,7 +619,15 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
  async function advanceFunding(){
   const epoch=accountEpoch;checkAccount(epoch);
   const result=await fundingCapability().advanceClaim();checkAccount(epoch);
-  if(result.state==='complete'){stopFunding();notice=view==='topup'?'Top-up and private claim confirmed. Your posting collateral is unchanged.':'Funding and the private claim are confirmed. Your posting deposit, network fees and Bok credit are ready.';await refresh();}
+  if(result.state==='complete'){
+   stopFunding();await refresh();checkAccount(epoch);
+   if(view==='topup')notice='Top-up and private claim confirmed. Your posting collateral is unchanged.';
+   else{
+    const account=status?.status==='fee-ready'?'Posting collateral and network fee credit were found.':status?.status==='fee-needed'?'Network fee credit is still needed.':status?.status==='collateral-pending'?'Network fee credit was found; posting collateral is not yet available.':'The account still needs a recovery check.';
+    const credit=bokStatus?.available&&/^(0|[1-9][0-9]*)$/.test(bokStatus.availableCredit)?'Bok credit: '+decimal(bokStatus.availableCredit,6)+' USDC.':'Bok credit could not be verified.';
+    notice='Funding and the private claim are confirmed. '+account+' '+credit+' Each action is checked again before sending.';
+   }
+  }
   else if(result.state==='review-payment'){stopFunding();topupQuote=null;notice='Token approval confirmed. Review the separate top-up payment; no deposit is sent automatically.';}
   else if(['review','review-saved','reverted','cancelled'].includes(result.state)){
    stopFunding();intent=result.intent;
@@ -730,7 +738,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
     const messages={'fee-needed':'Funds for transaction fees are needed.','collateral-pending':'No posting deposit was found.','fee-ready':'A posting deposit was found. We’ll check whether it can be used when you review an action.'};
     content.append(paragraph(messages[status?.status]??'The private account has not been verified.'));
     if(status?.privateFeeCredit&&/^[0-9]+$/.test(status.privateFeeCredit))content.append(paragraph(status.privateFeeCredit==='0'?'No funds for transaction fees are available.':'Funds for transaction fees are available.'));
-    content.append(button('Recover funding',()=>{topupQuote=null;selectView('funding');}));if(session.topup)content.append(button('Top up fees or Bok',()=>{fundingQuote=null;selectView('topup');}));
+    content.append(button(session.funding?'Fund your account':'Recover funding',()=>{topupQuote=null;selectView('funding');}));if(session.topup)content.append(button('Top up fees or Bok',()=>{fundingQuote=null;selectView('topup');}));
     if(status?.privateFeeCredit&&/^[0-9]+$/.test(status.privateFeeCredit))content.append(paragraph('Private network fee balance: '+decimal(status.privateFeeCredit,18)+' fee tokens.'));
     if(bokStatus?.available&&/^[0-9]+$/.test(bokStatus.availableCredit))content.append(paragraph('Private Bok balance: '+decimal(bokStatus.availableCredit,6)+' USDC-backed credits.'));
     if(status?.status!=='locked'){

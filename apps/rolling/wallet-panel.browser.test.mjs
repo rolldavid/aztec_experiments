@@ -809,7 +809,7 @@ test('rejected funding connection retains recovery and sends nothing',async t=>{
  assert.equal(await page.evaluate(()=>test.sends),0);
 });
 async function aggregateQuote(page,slippage){
- await page.getByRole('button',{name:'Recover funding',exact:true}).click();
+ await page.getByRole('button',{name:'Fund your account',exact:true}).click();
  await page.getByLabel('Posting deposit (ETH)',{exact:true}).fill('0.1');await page.getByLabel('Network fee credit (fee tokens)',{exact:true}).fill('2');
  await page.getByLabel('Bok credit (USDC)',{exact:true}).fill('3.25');await page.getByLabel('Maximum Ethereum gas cost (ETH)',{exact:true}).fill('0.003');
  if(slippage!==undefined)await page.getByLabel('Slippage limit (%)',{exact:true}).fill(slippage);
@@ -822,6 +822,29 @@ test('aggregate funding UI reviews exact allocations and consent before one paym
  assert(await page.getByText(/scoped collateral consent signature/).isVisible());
  await page.getByRole('button',{name:'Confirm funding and private claim',exact:true}).click();await page.getByText('Funding and the private claim are confirmed.',{exact:false}).waitFor();
  assert.equal(await page.evaluate(()=>test.fundingPayments),1);assert.equal((await counts(page)).sends,1);assert.equal(await page.evaluate(()=>test.fundingClaim.attempted),true);
+});
+test('initial funding entry exposes allocations without a recovery receipt or payment',async t=>{
+ const {page}=await browserFixture(t);await page.evaluate(()=>{test.aggregateEnabled=true;test.fee='fee-needed';});await open(page);await unlock(page);
+ await page.getByRole('button',{name:'Fund your account',exact:true}).click();
+ assert(await page.getByLabel('Posting deposit (ETH)',{exact:true}).isVisible());
+ assert(await page.getByRole('button',{name:'Resume saved funding',exact:true}).isVisible());
+ assert.equal(await page.evaluate(()=>test.fundingPrepares??0),0);assert.equal(await page.evaluate(()=>test.fundingPayments??0),0);assert.equal((await counts(page)).sends,0);
+});
+for(const [account,bok,expected] of [['fee-ready','3250000','Posting collateral and network fee credit were found.'],['fee-needed','0','Network fee credit is still needed.'],['collateral-pending',undefined,'Network fee credit was found; posting collateral is not yet available.']])test('funding completion reports refreshed '+account+' and Bok credit without claiming readiness',async t=>{
+ const {page}=await browserFixture(t);await page.evaluate(()=>test.aggregateEnabled=true);await open(page);await unlock(page);await aggregateQuote(page);
+ await page.evaluate(({account,bok})=>{test.fee=account;test.bokCredit=bok;test.hold='submit';},{account,bok});
+ await page.getByRole('button',{name:'Confirm funding and private claim',exact:true}).click();
+ await page.waitForFunction(()=>typeof test.release==='function');
+ // Hold the refresh after the transaction confirms, rather than the account
+ // status read used to prepare the claim. Confirmation alone is not readiness.
+ await page.evaluate(()=>{test.hold='status';const release=test.release;test.release=null;release();});
+ await page.waitForFunction(()=>typeof test.release==='function');
+ assert.equal(await page.evaluate(()=>JSON.parse(sessionStorage.getItem('labelled-ui-intent')).status),'confirmed');
+ assert.equal(await page.getByText('Funding and the private claim are confirmed.',{exact:false}).count(),0);
+ await page.evaluate(()=>{test.hold=null;test.release();});
+ await page.getByText('Funding and the private claim are confirmed.',{exact:false}).waitFor();
+ const text=await page.getByRole('dialog').innerText();assert(text.includes(expected));assert(text.includes(bok===undefined?'Bok credit could not be verified.':'Bok credit: '+(bok==='0'?'0':'3.25')+' USDC.'));
+ assert(!text.includes('Bok credit are ready'));assert.equal(await page.evaluate(()=>test.fundingPayments),1);assert.equal((await counts(page)).sends,1);
 });
 test('aggregate gas refusal explains explicit changed maximum and requires a fresh quote and confirmation',async t=>{
  const {page}=await browserFixture(t);await page.evaluate(()=>{test.aggregateEnabled=true;test.fundingGasChanged=true;});await open(page);await unlock(page);await aggregateQuote(page);
@@ -858,14 +881,14 @@ test('aggregate funding UI reconciles an unknown claim without repeat payment or
 });
 test('aggregate funding UI links an exact prepared claim after checkpoint interruption without preparing twice',async t=>{
  const {page}=await browserFixture(t);await page.evaluate(()=>test.aggregateEnabled=true);await open(page);await unlock(page);
- await page.getByRole('button',{name:'Recover funding',exact:true}).click();await page.evaluate(()=>{
+ await page.getByRole('button',{name:'Fund your account',exact:true}).click();await page.evaluate(()=>{
   test.paymentSaved=true;const r={txHash:'0x'+'1'.repeat(64)};sessionStorage.setItem('labelled-ui-intent',JSON.stringify({intentId:'42',action:{type:'claim-deposit',receipt:r,feeReceipt:r,bokReceipt:r},maximumFee:'123',status:'prepared'}));
  });
  await page.getByRole('button',{name:'Resume saved funding',exact:true}).click();await page.getByText('Funding and the private claim are confirmed.',{exact:false}).waitFor();
  assert.equal((await counts(page)).prepares,0);assert.equal((await counts(page)).sends,1);assert.equal(await page.evaluate(()=>test.fundingPayments??0),0);
 });
 test('aggregate funding UI exposes explicit saved review after attempt checkpoint precedes submission',async t=>{
- const {page}=await browserFixture(t);await page.evaluate(()=>test.aggregateEnabled=true);await open(page);await unlock(page);await page.getByRole('button',{name:'Recover funding',exact:true}).click();
+ const {page}=await browserFixture(t);await page.evaluate(()=>test.aggregateEnabled=true);await open(page);await unlock(page);await page.getByRole('button',{name:'Fund your account',exact:true}).click();
  await page.evaluate(()=>{test.paymentSaved=true;test.fundingClaim={intentId:'42',attempted:true};sessionStorage.setItem('labelled-ui-intent',JSON.stringify({intentId:'42',action:{type:'claim-deposit',receipt:{}},maximumFee:'123',status:'prepared'}));});
  await page.getByRole('button',{name:'Resume saved funding',exact:true}).click();await page.getByText('This saved claim has not been submitted.',{exact:false}).waitFor();
  assert.equal((await counts(page)).sends,0);assert(await page.getByRole('button',{name:'Confirm and send',exact:true}).isVisible());assert.equal(await page.getByRole('button',{name:'Pause bridge checks',exact:true}).count(),0);
@@ -877,7 +900,7 @@ test('aggregate funding UI preserves fractional slippage as exact basis points b
 });
 
 test('USDC funding UI reviews two signatures and total relay reimbursement without asking the user for ETH gas',async t=>{
- const {page}=await browserFixture(t);await page.evaluate(()=>{test.aggregateEnabled=true;test.usdcEnabled=true;});await open(page);await unlock(page);await page.getByRole('button',{name:'Recover funding',exact:true}).click();
+ const {page}=await browserFixture(t);await page.evaluate(()=>{test.aggregateEnabled=true;test.usdcEnabled=true;});await open(page);await unlock(page);await page.getByRole('button',{name:'Fund your account',exact:true}).click();
  await page.getByLabel('Pay with',{exact:true}).selectOption('USDC');assert.equal(await page.getByLabel('Maximum Ethereum gas cost (ETH)',{exact:true}).count(),0);
  await page.getByLabel('Posting deposit (ETH)',{exact:true}).fill('0.1');await page.getByLabel('Network fee credit (fee tokens)',{exact:true}).fill('2');await page.getByLabel('Bok credit (USDC)',{exact:true}).fill('3.25');
  await page.getByRole('button',{name:'Get fresh quote',exact:true}).click();await page.getByRole('button',{name:'Confirm funding and private claim',exact:true}).waitFor();
@@ -887,7 +910,7 @@ test('USDC funding UI reviews two signatures and total relay reimbursement witho
 });
 
 for(const status of ['reverted','cancelled'])test(`canonical ${status} funding claim requires explicit renewed review and never repeats the original payment`,async t=>{
- const {page}=await browserFixture(t);await page.evaluate(()=>test.aggregateEnabled=true);await open(page);await unlock(page);await page.getByRole('button',{name:'Recover funding',exact:true}).click();
+ const {page}=await browserFixture(t);await page.evaluate(()=>test.aggregateEnabled=true);await open(page);await unlock(page);await page.getByRole('button',{name:'Fund your account',exact:true}).click();
  await page.evaluate(status=>{test.paymentSaved=true;test.fundingClaim={intentId:'42',attempted:true};sessionStorage.setItem('labelled-ui-intent',JSON.stringify({intentId:'42',action:{type:'claim-deposit',receipt:{amount:'100'}},maximumFee:'123',status}));},status);
  await page.getByRole('button',{name:'Resume saved funding',exact:true}).click();await page.getByRole('button',{name:'Review private claim again',exact:true}).click();
  await page.getByText('The private claim needs a new review.',{exact:false}).waitFor();assert.equal((await counts(page)).sends,0);assert.equal(await page.evaluate(()=>test.fundingPayments??0),0);
@@ -954,7 +977,7 @@ test('claim progress distinguishes saved records, preparation and confirmation w
 });
 
 test('claim progress exposes only fixed preparation failure in DOM and clears it after account invalidation',async t=>{
- const {page}=await browserFixture(t);await page.evaluate(()=>{test.aggregateEnabled=true;test.paymentSaved=true;});await open(page);await unlock(page);await page.getByRole('button',{name:'Recover funding',exact:true}).click();
+ const {page}=await browserFixture(t);await page.evaluate(()=>{test.aggregateEnabled=true;test.paymentSaved=true;});await open(page);await unlock(page);await page.getByRole('button',{name:'Fund your account',exact:true}).click();
  await page.evaluate(()=>test.failure='prepare');await page.getByRole('button',{name:'Resume saved funding',exact:true}).click();await page.getByRole('alert').waitFor();
  const dialog=page.getByRole('dialog');assert.deepEqual(JSON.parse(await dialog.getAttribute('data-rolling-initialization')),{stage:'funding-claim',step:'prepare',deploymentStep:null,state:'failed',code:'unknown'});
  assert(!await dialog.innerText().then(s=>s.includes('PRIVATE_SENTINEL')||s.includes('GETTER_SENTINEL')||s.includes('funding-claim')));assert.equal(await page.evaluate(()=>test.fundingPayments??0),0);assert.equal((await counts(page)).sends,0);

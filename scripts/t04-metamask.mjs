@@ -308,7 +308,7 @@ export async function driveMetaMaskAggregateFunding({context,page,walletPage,con
    const [initial]=await Promise.all([page.waitForEvent('download'),initialDialog.getByRole('button',{name:'Create account and download recovery',exact:true}).click()]);
    await saveEncryptedDownload(initial,path.join(c.recoveryDirectory,'initial-recovery.json'));mark('aggregate-initial-recovery-saved');
   }
-  const dialog=page.getByRole('dialog');await dialog.getByRole('button',{name:'Recover funding',exact:true}).click({timeout:remaining()});
+  const dialog=page.getByRole('dialog');await dialog.getByRole('button',{name:'Fund your account',exact:true}).click({timeout:remaining()});
   mark('aggregate-connect-wallet');await dialog.getByRole('button',{name:'Connect MetaMask',exact:true}).click();
   report.accountSelection=await confirmMetaMaskRecoveryAccountSelection(walletPage,{page,account,chainId:'31337',permission,observe:state=>{report.accountSelectionState=state;}});
   await dialog.getByText('Funding wallet connected. No payment has been sent.',{exact:true}).waitFor();
@@ -457,7 +457,7 @@ export async function inspectMetaMaskAggregateReadiness({page,control,mark,allow
  await dialog.getByLabel('Recovery file',{exact:true}).setInputFiles(recoveryFile??path.join(control.recoveryDirectory,'initial-recovery.json'));
  await dialog.getByRole('button',{name:'Import recovery',exact:true}).click();
  if(refundOnly){assert(keysOnly&&!allowPrepared);const refund=dialog.getByRole('button',{name:'Review Ethereum refund',exact:true}),recovery=dialog.getByRole('button',{name:'Check account recovery',exact:true}),failure=dialog.getByRole('alert');await refund.or(recovery).or(failure).first().waitFor(remaining?{timeout:remaining()}:undefined);return await refund.isVisible()?'refund':await recovery.isVisible()?'recovery':'initialization-failed';}
- const recover=dialog.getByRole('button',{name:'Recover funding',exact:true});
+ const recover=dialog.getByRole('button',{name:control.walletConfig?.config?.aggregateFunding?'Fund your account':'Recover funding',exact:true});
  if(!allowPrepared){await recover.waitFor(remaining?{timeout:remaining()}:undefined);return 'funding';}
  const confirm=dialog.getByRole('button',{name:'Confirm and send',exact:true});
  await recover.or(confirm).first().waitFor();
@@ -719,7 +719,7 @@ export async function driveMetaMaskPaidRecovery({page,walletPage,control:c,provi
  report.paidRecoveryBefore=await page.evaluate(inspectMetaMaskPaidBinding,binding);assert.equal(report.paidRecoveryBefore.paymentMatches,true,'Retained payment differs from the canonical payment');
  const dialog=page.getByRole('dialog');
  const openFunding=async()=>{
-  await dialog.getByRole('button',{name:'Recover funding',exact:true}).click();
+  await dialog.getByRole('button',{name:'Fund your account',exact:true}).click();
   mark('aggregate-paid-recovery-connect');await dialog.getByRole('button',{name:'Connect MetaMask',exact:true}).click();
   report.accountSelection=await confirmMetaMaskRecoveryAccountSelection(walletPage,{page,account,chainId:'31337',permission,observe:state=>{report.accountSelectionState=state;}});
   await dialog.getByText('Funding wallet connected. No payment has been sent.',{exact:true}).waitFor();
@@ -741,7 +741,7 @@ export async function driveMetaMaskPaidRecovery({page,walletPage,control:c,provi
   // This existing action now only reconciles the confirmed saved claim. It does
   // not prepare another claim, alter the original cap or repeat Ethereum payment.
   if(readiness==='prepared')await openFunding();
-  else await dialog.getByRole('button',{name:'Recover funding',exact:true}).click();
+  else await dialog.getByRole('button',{name:'Fund your account',exact:true}).click();
   await dialog.getByRole('button',{name:'Resume saved funding',exact:true}).click();
   recovery=await observeMetaMaskPaidRecovery({page,dialog,binding,report,timeout:remaining()});
  }
