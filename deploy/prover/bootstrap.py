@@ -864,6 +864,8 @@ def activation_support(operation, expected=None):
     return namespace['prover_activation'](globals(),operation,expected)
 
 def install_attestation(source):
+    # The observer may run before any receipt or activation has allocated state.
+    PRIVATE.mkdir(mode=0o700,parents=True,exist_ok=True)
     write('/usr/local/lib/rolling-attest.py',source,0o700)
     write('/etc/systemd/system/rolling-attest.service','[Unit]\nDescription=Bounded public bootstrap attestation\nOnFailure=rolling-budget.service\n[Service]\nType=oneshot\nTimeoutStartSec=100\nTimeoutStopSec=5\nKillMode=control-group\nExecStart=/usr/bin/python3 /usr/local/lib/rolling-attest.py\nExecStopPost=/usr/bin/python3 /usr/local/lib/rolling-attest.py --monitor-stop\nStandardOutput=null\nStandardError=null\n',0o644)
     write('/etc/systemd/system/rolling-attest.timer','[Unit]\nDescription=Bootstrap controls monitor\n[Timer]\nOnBootSec=5s\nOnUnitInactiveSec=5s\nAccuracySec=1s\nRandomizedDelaySec=0\n[Install]\nWantedBy=timers.target\n',0o644)

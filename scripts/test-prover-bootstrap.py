@@ -366,10 +366,11 @@ class htb 1:20 parent 1:1 prio 0 rate 25Mbit ceil 50Mbit burst 4725b cburst 7850
         import ast
         ns=host();events=[];written={}
         with tempfile.TemporaryDirectory() as t:
-            ns['BASE']=pathlib.Path(t);(ns['BASE']/'interface').write_text('ens5')
+            ns['BASE']=pathlib.Path(t);ns['PRIVATE']=pathlib.Path(t)/'private';(ns['BASE']/'interface').write_text('ens5')
             ns['run']=lambda args,**kw:events.append((args,kw))
             ns['write']=lambda path,value,*args:written.update({str(path):value})
             ns['install_attestation']('pinned source')
+            self.assertTrue(ns['PRIVATE'].is_dir());self.assertEqual(ns['PRIVATE'].stat().st_mode&0o777,0o700)
             unit=written['/etc/systemd/system/rolling-attest.service']
             for expected in ('TimeoutStartSec=100','TimeoutStopSec=5','KillMode=control-group','ExecStopPost=/usr/bin/python3 /usr/local/lib/rolling-attest.py --monitor-stop'):
                 self.assertIn(expected,unit)
