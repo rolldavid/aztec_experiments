@@ -10,6 +10,7 @@ export const phantomPackage=Object.freeze({archive:'.build/phantom-20261014-acqu
 export function walletExtensionMode(args){
  if(args.length===0)return 'metamask';
  if(args.length===2&&args[0]==='--wallet=metamask'&&['--aggregate-devnet=ETH','--aggregate-devnet=USDC'].includes(args[1]))return 'metamask-aggregate-'+args[1].split('=')[1];
+ if(args.length===2&&args[0]==='--wallet=metamask'&&['--aggregate-testnet=ETH','--aggregate-testnet=USDC'].includes(args[1]))return 'metamask-aggregate-testnet-'+args[1].split('=')[1];
  if(args.length===2&&args[0]==='--wallet=phantom'&&args[1]==='--onboarding-only')return 'phantom-onboarding';
  assert.deepEqual(args,['--wallet=phantom','--signatures-only']);return 'phantom';
 }

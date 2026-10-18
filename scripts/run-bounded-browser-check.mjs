@@ -9,7 +9,7 @@ import {walletExtensionMode,phantomPackage} from './t04-phantom.mjs';
 import {Supervisor,describeFailure} from './testing/supervisor.mjs';
 // Keep the existing wallet cap unless the operator explicitly selects the full
 // aggregate/Bok application journey. One owner deadline covers every phase.
-export function browserCheckDeadline({passkey,walletExtension,aggregate,retainedBok,networkOnly,exportOnly,refundReadOnly}){
+export function browserCheckDeadline({passkey,walletExtension,aggregate,retainedBok,networkOnly,exportOnly,refundReadOnly,testnet=false}){
  if(refundReadOnly!==undefined&&!['true','false'].includes(refundReadOnly))throw Error('Invalid readonly refund flag');
  if(refundReadOnly==='true'){assert(walletExtension&&aggregate&&retainedBok==='true'&&networkOnly!=='true'&&exportOnly!=='true');return 120000;}
  if(exportOnly!==undefined&&!['true','false'].includes(exportOnly))throw Error('Invalid export-only flag');
@@ -18,6 +18,7 @@ export function browserCheckDeadline({passkey,walletExtension,aggregate,retained
  if(networkOnly==='true'){assert(walletExtension&&aggregate&&retainedBok!=='true');return 60000;}
  if(retainedBok!==undefined&&!['true','false'].includes(retainedBok))throw Error('Invalid retained Bok flag');
  if(retainedBok==='true'&&!(walletExtension&&aggregate))throw Error('Bok continuation requires aggregate wallet mode');
+ if(testnet){if(!walletExtension||!aggregate||retainedBok==='true')throw Error('Real proofs require the explicit testnet aggregate mode');return 3600000;}
  return passkey?60000:walletExtension?(retainedBok==='true'?540000:120000):540000;
 }
 assertNodeVersion();
@@ -28,7 +29,7 @@ const walletExtension=script==='scripts/test-wallet-extension-browser.mjs';
 const extensionMode=walletExtension?walletExtensionMode(args):null;
 const phantom=extensionMode?.startsWith('phantom');
 const aggregate=extensionMode?.startsWith('metamask-aggregate-');
-const deadlineMs=browserCheckDeadline({passkey,walletExtension,aggregate,retainedBok:process.env.T04_RETAINED_BOK,networkOnly:process.env.T04_AGGREGATE_NETWORK_ONLY,exportOnly:process.env.T04_AGGREGATE_EXPORT_ONLY,refundReadOnly:process.env.T04_RETAINED_BOK_REFUND_READONLY});
+const deadlineMs=browserCheckDeadline({passkey,walletExtension,aggregate,testnet:extensionMode?.startsWith('metamask-aggregate-testnet-'),retainedBok:process.env.T04_RETAINED_BOK,networkOnly:process.env.T04_AGGREGATE_NETWORK_ONLY,exportOnly:process.env.T04_AGGREGATE_EXPORT_ONLY,refundReadOnly:process.env.T04_RETAINED_BOK_REFUND_READONLY});
 assert(['scripts/test-w02-browser.mjs','scripts/test-passkey-browser.mjs','scripts/test-wallet-extension-browser.mjs','scripts/test-public-feed-browser.mjs','scripts/test-u01-hosting-browser.mjs','scripts/test-u01-config-browser.mjs','scripts/test-u01-keyboard-browser.mjs','scripts/test-u01-journey-browser.mjs','scripts/test-u01-fee-deploy-ui.mjs'].includes(script),'Choose a UI component test; run application scenarios directly');
 const reportPath=path.resolve(ROOT,output);
 assert(reportPath.startsWith(path.join(ROOT,'execution/evidence',(passkey||publicFeed||walletExtension)?'T04':'U01')+path.sep));

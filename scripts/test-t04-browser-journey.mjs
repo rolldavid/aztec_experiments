@@ -223,6 +223,8 @@ test('MetaMask aggregate admission binds one exact local ETH payment and its gas
  const tx={from:intent.from,to:intent.to,chainId:'0x7a69',nonce:'0x2',data:intent.data,value:'0x96',gas:'0x64',maxFeePerGas:'0xa',maxPriorityFeePerGas:'0x1'};
  const input={asset:'ETH',request:[tx],account:intent.from,chainId:'31337',intent,maximumGasWei:'1000'};
  assert.deepEqual(assertMetaMaskAggregatePayment(input),{planHash:expected.planHash,collateral:'100',feeAmount:'200',bokAmount:'300'});
+ const publicPayment={...input,chainId:'11155111',intent:{...intent,chainId:'11155111'},request:[{...tx,chainId:'0xaa36a7'}]};assert.throws(()=>assertMetaMaskAggregatePayment(publicPayment));assert.equal(assertMetaMaskAggregatePayment({...publicPayment,expectedChainId:'11155111'}).planHash,expected.planHash);assert.throws(()=>assertMetaMaskAggregatePayment({...input,expectedChainId:'11155111'}));
+
  for(const mutation of [{from:address(9)},{to:address(9)},{chainId:'0x1'},{nonce:'0x7'},{data:tx.data+'00'},{value:'0x97'},{gas:'0x65'},{gas:undefined},{maxPriorityFeePerGas:'0xb'},{gasPrice:'0xa'},{authorizationList:[]}])assert.throws(()=>assertMetaMaskAggregatePayment({...input,request:[{...tx,...mutation}]}));
  for(const mutation of [{asset:'USDC'},{chainId:'1'},{request:[tx,tx]},{maximumGasWei:'999'},{intent:{...intent,expected:{...expected,kind:'aggregate-usdc-funding'}}}])assert.throws(()=>assertMetaMaskAggregatePayment({...input,...mutation}));
 });
@@ -230,7 +232,7 @@ test('MetaMask aggregate admission binds one exact local ETH payment and its gas
 
 test('MetaMask aggregate modes require an explicit asset and do not change legacy or Phantom modes',async()=>{
  const {walletExtensionMode}=await import('./t04-phantom.mjs');
- for(const asset of ['ETH','USDC'])assert.equal(walletExtensionMode(['--wallet=metamask','--aggregate-devnet='+asset]),'metamask-aggregate-'+asset);
+ for(const asset of ['ETH','USDC']){assert.equal(walletExtensionMode(['--wallet=metamask','--aggregate-devnet='+asset]),'metamask-aggregate-'+asset);assert.equal(walletExtensionMode(['--wallet=metamask','--aggregate-testnet='+asset]),'metamask-aggregate-testnet-'+asset);}
  for(const args of [['--wallet=metamask'],['--wallet=metamask','--aggregate-devnet=DAI'],['--wallet=metamask','--aggregate-devnet=ETH','--retry'],['--aggregate-devnet=ETH','--wallet=metamask']])assert.throws(()=>walletExtensionMode(args));
  assert.equal(walletExtensionMode([]),'metamask');assert.equal(walletExtensionMode(['--wallet=phantom','--signatures-only']),'phantom');
 });
@@ -242,6 +244,10 @@ test('MetaMask aggregate launch rejects absent, nonlocal or unpinned deployment 
  const scope={chainId:'31337',router:a(1),routerCodeHash:h(1),collateralPortal:a(2),feePortal:a(3),bokPortal:a(4),weth:a(5),swapRouter:a(6),feeToken:a(7),bokToken:a(8),privateFpc:h(9),quoter:a(10),quoterCodeHash:h(2),usdcRelayAddress:a(11),usdcCodeHash:h(3),usdcImplementation:a(12),usdcImplementationCodeHash:h(4),usdcDomain:{name:'Local USD Coin',version:'2'}};
  const c={schemaVersion:1,asset:'USDC',origin:'http://127.0.0.1:8080',ethereumUrl:'http://127.0.0.1:8545',walletConfig:{proofsEnabled:false,config:{network:{chainId:'31337',ethRpcUrl:'http://127.0.0.1:8545'},board:{portalAddress:a(2)},aggregateFunding:scope}},mnemonic:Wallet.createRandom().mnemonic.phrase,password:'disposable-test-password',recoveryDirectory:directory,runtimeSha256:'a'.repeat(64),allocation:{collateralWei:'1',feeAmount:'2',bokAmount:'3',gasBudgetWei:'4',maximumPaymentWei:'5',maximumUsdc:'6',slippageBps:100}};
  assert.deepEqual(validateMetaMaskAggregateControl(c,'USDC'),c);
+ const publicControl=structuredClone(c);publicControl.ethereumUrl='https://ethereum.example/';publicControl.walletConfig.proofsEnabled=true;Object.assign(publicControl.walletConfig.config.network,{chainId:'11155111',ethRpcUrl:publicControl.ethereumUrl});publicControl.walletConfig.config.aggregateFunding.chainId='11155111';publicControl.walletConfig.config.aggregateFunding.usdcDomain.name='USDC';publicControl.walletConfig.trustedQuery={url:'https://app.example/v1/node'};publicControl.walletConfig.remoteProver={url:'https://app.example/prover'};
+ assert.deepEqual(validateMetaMaskAggregateControl(publicControl,'USDC',{testnet:true}),publicControl);assert.throws(()=>validateMetaMaskAggregateControl(publicControl,'USDC'));assert.throws(()=>validateMetaMaskAggregateControl(c,'USDC',{testnet:true}));
+ for(const change of [x=>x.walletConfig.proofsEnabled=false,x=>x.walletConfig.config.network.chainId='31337',x=>x.walletConfig.config.aggregateFunding.chainId='31337',x=>x.walletConfig.trustedQuery.url='http://public.example/v1/node',x=>x.walletConfig.remoteProver=null,x=>x.ethereumUrl='https://secret@ethereum.example/',x=>x.walletConfig.config.aggregateFunding.usdcDomain.name='Local USD Coin']){const bad=structuredClone(publicControl);change(bad);assert.throws(()=>validateMetaMaskAggregateControl(bad,'USDC',{testnet:true}));}
+
  for(const change of [x=>delete x.walletConfig.config.aggregateFunding,x=>x.walletConfig.proofsEnabled=true,x=>x.origin='https://public.example',x=>x.walletConfig.config.network.chainId='1',x=>x.walletConfig.config.aggregateFunding.usdcRelayAddress=undefined,x=>x.walletConfig.config.aggregateFunding.usdcDomain.version='1',x=>x.runtimeSha256='unknown',x=>x.allocation.slippageBps=501,x=>x.allocation.maximumUsdc='0',x=>x.password='short',x=>x.extra=true]){const bad=structuredClone(c);change(bad);assert.throws(()=>validateMetaMaskAggregateControl(bad,'USDC'));}
  assert.throws(()=>readMetaMaskAggregateControl(undefined,'USDC'));
  const file=path.join(directory,'control.json');await fs.writeFile(file,JSON.stringify(c),{mode:0o600});assert.deepEqual(readMetaMaskAggregateControl(file,'USDC'),c);
@@ -262,6 +268,7 @@ test('MetaMask aggregate typed consent binds exact local scope, allocation, nonc
  const consent={domain:{name:'RollingCollateral',version:'1',chainId:'31337',verifyingContract:a(3)},types:collateralConsentTypes,primaryType:'DepositFor',message:{beneficiary:account,executor:a(2),amount:'100',secretHash:h,nonce:'7',deadline:'1100'}};
  const input={data:consent,account,scope,allocation,index:0,asset:'ETH',consentNonce:7n,nowSeconds:1000};assert.equal(assertMetaMaskAggregateTypedData(input).value.nonce,'7');
  const {TypedDataEncoder}=await import('ethers');const wire=TypedDataEncoder.getPayload(consent.domain,consent.types,consent.message);assert.equal(assertMetaMaskAggregateTypedData({...input,data:wire}).value.nonce,'7');
+ const publicConsent=structuredClone(consent);publicConsent.domain.chainId='11155111';assert.throws(()=>assertMetaMaskAggregateTypedData({...input,data:publicConsent}));assert.equal(assertMetaMaskAggregateTypedData({...input,data:publicConsent,expectedChainId:'11155111'}).domain.chainId,'11155111');
  const invalidDomain=structuredClone(wire);invalidDomain.types.EIP712Domain=[];assert.throws(()=>assertMetaMaskAggregateTypedData({...input,data:invalidDomain}));
  for(const change of [d=>d.domain.chainId='1',d=>d.domain.verifyingContract=a(9),d=>d.message.beneficiary=a(9),d=>d.message.executor=a(9),d=>d.message.amount='101',d=>d.message.nonce='0',d=>d.message.deadline='999',d=>d.message.deadline='1121',d=>d.message.extra='secret',d=>d.primaryType='Permit']){const data=structuredClone(consent);change(data);assert.throws(()=>assertMetaMaskAggregateTypedData({...input,data}));}
  const authorization={domain:{name:'Local USD Coin',version:'2',chainId:'31337',verifyingContract:a(4)},types:usdcAuthorizationTypes,primaryType:'ReceiveWithAuthorization',message:{from:account,to:a(2),value:'200',validAfter:'999',validBefore:'1100',nonce:h}};
@@ -287,6 +294,7 @@ test('MetaMask retained readiness denies all payment/proof requests without subs
  for(const method of ['eth_chainId','eth_call','eth_getCode','eth_getTransactionReceipt'])check({url:endpoint,method:'POST',body:JSON.stringify({method})},endpoint);
  for(const method of ['eth_sendTransaction','eth_sendRawTransaction','eth_signTypedData_v4','anvil_setBalance','personal_sign'])assert.throws(()=>check({url:endpoint,method:'POST',body:JSON.stringify([{method:'eth_chainId'},{method}])},endpoint));
  for(const suffix of ['/api/funding/usdc','/v1/jobs'])assert.throws(()=>check({url:'http://127.0.0.1:8080'+suffix,method:'POST',body:'{}'},endpoint));
+ const proofUrl='https://app.example/prover/v1/jobs';check({url:proofUrl,method:'POST',body:'binary'},endpoint,{proofUrl});for(const url of ['https://other.example/prover/v1/jobs',proofUrl+'?elsewhere=1','https://app.example/api/funding/usdc'])assert.throws(()=>check({url,method:'POST',body:'{}'},endpoint,{proofUrl}));
  for(const body of ['[]','null','{}','[null]','not json'])assert.throws(()=>check({url:endpoint,method:'POST',body},endpoint));
 });
 
@@ -554,6 +562,7 @@ test('restored prepared confirmation still requires explicit mode and original-r
 test('existing browser owner grants application budget only to explicit aggregate Bok continuation',async()=>{
  const {runInNewContext}=await import('node:vm'),source=await fs.readFile(new URL('./run-bounded-browser-check.mjs',import.meta.url),'utf8');
  const body=source.match(/export function browserCheckDeadline\([\s\S]*?\n}/)[0].replace('export ','');const choose=runInNewContext('('+body+')');
+ assert.equal(choose({walletExtension:true,aggregate:true,testnet:true}),3600000);for(const bad of [{testnet:true},{walletExtension:true,testnet:true},{walletExtension:true,aggregate:true,testnet:true,retainedBok:'true'}])assert.throws(()=>choose(bad));
  assert.equal(choose({walletExtension:true,aggregate:true}),120000);assert.equal(choose({walletExtension:true,aggregate:true,retainedBok:'false'}),120000);
  assert.equal(choose({walletExtension:true,aggregate:true,retainedBok:'true'}),540000);assert.equal(choose({passkey:true}),60000);assert.equal(choose({}),540000);
  for(const input of [{retainedBok:'true'},{walletExtension:true,retainedBok:'true'},{walletExtension:true,aggregate:true,retainedBok:'1'}])assert.throws(()=>choose(input));
@@ -1015,8 +1024,8 @@ test('retained Bok reply saved review binds approved thread before any authoriza
 
 test('paid recovery forwards owner deadline and records original private binding before resume',async()=>{
  const {runInNewContext}=await import('node:vm'),source=await fs.readFile(new URL('./test-wallet-extension-browser.mjs',import.meta.url),'utf8');const paid=source.slice(source.indexOf('else if(paidRecovery){report.scope='));const call=paid.match(/await driveMetaMaskPaidRecovery\(.*?\);/)[0];let observed;
- await runInNewContext('(async()=>{'+call+'})()',{page:{},walletPage:{},control:{},provider:{},reviewPrepared:false,markAggregate(){},report:{},process:{env:{T04_BROWSER_DEADLINE_AT:'120000',T04_AGGREGATE_PAID_HASH:hash}},driveMetaMaskPaidRecovery:async options=>{observed=options.deadlineAt;}});assert.equal(observed,120000);
- const helper=await fs.readFile(new URL('./t04-metamask.mjs',import.meta.url),'utf8'),start=helper.indexOf('export async function driveMetaMaskPaidRecovery'),end=helper.indexOf('export function retainedPreparedClaimFlag',start),body=helper.slice(start,end);assert(body.indexOf('report.paidRecoveryBefore=')<body.indexOf("mark('aggregate-paid-private-claim')"));assert(body.includes('remaining:deadlineAt===undefined?undefined:retainedBokRemaining(deadlineAt)'));
+ await runInNewContext('(async()=>{'+call+'})()',{page:{},walletPage:{},control:{},provider:{},reviewPrepared:false,interruptAt:null,markAggregate(){},report:{},process:{env:{T04_BROWSER_DEADLINE_AT:'120000',T04_AGGREGATE_PAID_HASH:hash}},driveMetaMaskPaidRecovery:async options=>{observed=options.deadlineAt;}});assert.equal(observed,120000);
+ const helper=await fs.readFile(new URL('./t04-metamask.mjs',import.meta.url),'utf8'),start=helper.indexOf('export async function driveMetaMaskPaidRecovery'),end=helper.indexOf('export function retainedPreparedClaimFlag',start),body=helper.slice(start,end);assert(body.indexOf('report.paidRecoveryBefore=')<body.indexOf("mark('aggregate-paid-private-claim')"));assert(body.includes('remaining:deadlineAt===undefined?undefined:retainedBokRemaining(deadlineAt,Date.now,c.walletConfig.proofsEnabled?3600000:525000)'));
 });
 
 test('post-only approval binds a fresh private observer file and rejects financial reuse',async t=>{
@@ -1097,4 +1106,16 @@ for(const failedPhase of ['authorize','post'])test('Bok '+failedPhase+' confirma
  const dialog={getByRole:(_,{name})=>node(name),getByLabel:node,getByText:node},inspections=[];
  await assert.rejects(driveRetainedBokConfirmations({dialog,approval:{},report:{retainedBok:{}},mark:()=>{},inspect:async(p,s)=>{inspections.push(p+'-'+s);return{};}}),failedPhase==='authorize'?/Bok authorization did not complete/:/Bok publication did not complete/);
  assert.equal(failedWaits,1);assert.equal(sends,failedPhase==='authorize'?1:2);assert(!inspections.includes(failedPhase+'-confirmed'));
+});
+
+
+test('retained withdrawal connection uses its supplied control in readonly and sending paths',async()=>{
+ const {driveRetainedBokWithdrawal}=await import('./t04-metamask.mjs'),{runInNewContext}=await import('node:vm');
+ const account='0x'+'11'.repeat(20),stop=Error('STOP_AFTER_CONNECTION'),control={mnemonic:'synthetic fixture',walletConfig:{config:{network:{chainId:'31337'}}}};
+ for(const readOnly of [true,false]){
+  let selected=0;const install=()=>{},inspect=()=>{},element={isVisible:async()=>true,click:async()=>{},waitFor:async()=>{}},dialog={getByRole:()=>element,getByText:()=>element};
+  const page={getByRole:()=>dialog,exposeFunction:async()=>{},evaluate:async fn=>{if(fn===install)return;if(fn===inspect)throw stop;return account;}};
+  const run=runInNewContext('('+driveRetainedBokWithdrawal.toString()+')',{assert,Wallet:{fromPhrase:()=>({address:account})},retainedBokRemaining:()=>()=>1000,bindRetainedRefundObservation:async()=>{},installMetaMaskBokRefundGuard:install,inspectMetaMaskAggregateReadiness:async()=> 'refund',confirmMetaMaskRecoveryAccountSelection:async(_wallet,input)=>{selected++;assert.equal(input.chainId,'31337');assert.equal(input.account,account);},inspectRetainedBokRecovery:inspect});
+  await assert.rejects(run({page,walletPage:{},control,approval:{journey:'refund',refundGasCap:'1'},provider:{getBalance:async()=>1n,getTransactionCount:async()=>0},refundAdmission:{},mark(){},report:{},deadlineAt:1000,readOnly}),error=>error===stop);assert.equal(selected,1);
+ }
 });

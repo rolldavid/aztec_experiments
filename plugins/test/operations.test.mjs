@@ -878,3 +878,33 @@ test('Forward seed rechecks current approval allowances and immutable sources be
  }
 });
 test('Forward seed copied campaign cannot create a second forward journal',async()=>{const {seedTestnetLiquidity}=await import('../operator.mjs');await assert.rejects(seedTestnetLiquidity({plan:null,statePath:'/private/tmp/copied/state.json',stage:'seed-usdc-fee',recovery:{kind:'forward'}}),/Original approval state path required/);});
+
+test('testnet router authority preserves exact network, dependencies, endpoints and one irreversible dispatch',async()=>{
+ const {captureTestnetRouterPlan,runTestnetRouterDeployment}=await import('../operations.mjs');
+ const address=n=>'0x'+n.toString(16).padStart(40,'0');
+ const plan={schemaVersion:1,chainId:'11155111',rollupVersion:'3409706519',rollupAddress:address(1),nodeUrl:'https://app.example/v1/node',ethereumUrl:'https://read.example/',broadcastUrl:'https://send.example/',owner:address(2),nonce:20,expiresAt:2000,gasLimit:'2000000',maxFeePerGas:'2000000000',maxPriorityFeePerGas:'1000000',boardAddress:field(1),bokAddress:field(2),collateralPortal:address(3),feePortal:address(4),bokPortal:address(5),weth:address(6),swapRouter:address(7),feeToken:address(8),bokToken:address(9),privateFpc:field(3),codeHashes:Object.fromEntries(['collateralPortal','feePortal','bokPortal','weth','swapRouter','feeToken','bokToken'].map(k=>[k,field(4)]))};
+ assert.deepEqual(captureTestnetRouterPlan(plan),plan);
+ for(const mutate of [p=>p.chainId='31337',p=>p.ethereumUrl='http://read.example/',p=>p.broadcastUrl+='?token=secret',p=>p.nodeUrl='https://app.example/other',p=>p.nonce=-1,p=>p.expiresAt=0,p=>p.privateFpc=field(0),p=>delete p.codeHashes.feeToken,p=>p.codeHashes.feeToken=field(0),p=>p.maxPriorityFeePerGas='3000000000',p=>p.extra=true]){const bad=structuredClone(plan);mutate(bad);assert.throws(()=>captureTestnetRouterPlan(bad));}
+ const store=memory(),events=[];let now=1000;
+ const args={plan,store,artifactSha256:'a'.repeat(64),now:()=>now,checkScope:async()=>events.push('scope'),prepare:async()=>{events.push('prepare');return {metadata:{address:address(10)}};},sign:async()=>{assert.equal(store.read().operations['deploy-funding-router'].phase,'preparing');events.push('sign');return signed;},broadcast:async bytes=>{assert.equal(store.read().operations['deploy-funding-router'].raw,bytes.raw);assert.equal(store.read().operations['deploy-funding-router'].broadcastAttempt.state,'prepared');events.push('send');throw Object.assign(Error('lost response'),{httpStatus:429});},reconcile:async saved=>{events.push('reconcile');assert.equal(saved.hash,signed.hash);return {status:'unresolved',canonical:false};}};
+ assert.equal((await runTestnetRouterDeployment(args)).status,'unresolved');assert.deepEqual(events,['scope','prepare','scope','sign','send']);
+ now=3000;assert.equal((await runTestnetRouterDeployment(args)).status,'unresolved');assert.deepEqual(events,['scope','prepare','scope','sign','send','reconcile']);
+ assert.equal(store.read().operations['deploy-funding-router'].broadcastAttempt.state,'rejected');
+ for(const change of [{nonce:21},{broadcastUrl:'https://elsewhere.example/'},{codeHashes:{...plan.codeHashes,feeToken:field(5)}}])await assert.rejects(runTestnetRouterDeployment({...args,plan:{...plan,...change}}),/scope changed/);
+ await assert.rejects(runTestnetRouterDeployment({...args,store:memory()}),/expired/);
+ assert.equal((await runTestnetRouterDeployment({...args,store:memory(),observeOnly:true})).status,'absent');
+ const failed=memory();await assert.rejects(runTestnetRouterDeployment({...args,store:failed,now:()=>1000,checkScope:async()=>{throw Error('wrong current network');}}),/wrong current network/);assert.deepEqual(failed.read(),{operations:{}});
+ const interrupted=memory();await runTestnetRouterDeployment({...args,store:interrupted,now:()=>1000,sign:async()=>{throw Error('interruption before signing');}});
+ let resigned=false;await runTestnetRouterDeployment({...args,store:interrupted,now:()=>1000,sign:async()=>{resigned=true;},reconcile:async r=>{assert.equal(r.phase,'preparing');return {status:'unresolved'};}});assert.equal(resigned,false);
+});
+
+
+test('router reconciliation authenticates signed gas caps and finalized exact receipt without another dispatch',async()=>{
+ const {Wallet,Transaction}=await import('ethers'),{matchTestnetRouterSigned,reconcileRollingEthereum}=await import('../operations.mjs');
+ const wallet=Wallet.createRandom(),plan={chainId:'11155111',owner:wallet.address.toLowerCase(),nonce:20,gasLimit:'2000000',maxFeePerGas:'2000000000',maxPriorityFeePerGas:'1000000'},creation='0x60006000';
+ const transaction={chainId:11155111n,nonce:20,type:2,to:null,value:0n,data:creation,gasLimit:2000000n,maxFeePerGas:2000000000n,maxPriorityFeePerGas:1000000n},raw=await wallet.signTransaction(transaction),record={phase:'submission-unknown',hash:Transaction.from(raw).hash,raw:raw.slice(2)};
+ const match=r=>matchTestnetRouterSigned({record:r,plan,creation,parse:Transaction.from});assert.equal(match(record),true);
+ for(const change of [{gasLimit:2000001n},{maxFeePerGas:2000000001n},{maxPriorityFeePerGas:1000001n},{nonce:21},{chainId:31337n},{data:'0x6001'},{value:1n},{accessList:[{address:wallet.address,storageKeys:[]}]}]){const changed=await wallet.signTransaction({...transaction,...change});assert.equal(match({phase:'submission-unknown',hash:Transaction.from(changed).hash,raw:changed.slice(2)}),false);}
+ let head=49,effect=true,effects=0;const blockHash=field(25),reads={signed:async r=>match(r),receipt:async()=>({hash:record.hash,status:1,blockNumber:50,blockHash}),block:async()=>({hash:blockHash}),head:async tag=>{assert.equal(tag,'finalized');return {number:head};},effect:async()=>{effects++;return effect;}};
+ const run=()=>reconcileRollingEthereum({record,development:false,scope:'funding-router',reads});assert.equal((await run()).status,'unresolved');assert.equal(effects,0);head=50;assert.equal((await run()).status,'succeeded');effect=false;assert.equal((await run()).status,'unresolved');effect=true;reads.block=async()=>({hash:field(26)});assert.equal((await run()).status,'unresolved');
+});

@@ -20,11 +20,12 @@ import {Tx,TxHash,TxStatus} from '@aztec-labs/stdlib/tx';
 import {JsonRpcProvider,FetchRequest,Wallet,Transaction,Contract as EthereumContract,ContractFactory,getCreateAddress,keccak256,parseUnits,formatUnits,sha256,toUtf8Bytes,Interface} from 'ethers';
 import {API_VERSION,packText,handleField,validateDescriptor} from './protocol.mjs';
 import {provingEnabledForNode} from '../shared/proving-policy.mjs';
-import {fileState,recordedTransaction,outboxArguments,operatorApplicationProfile,rollingOperatorConfig,operatorNodeFetch,onceAztecOperation,reconcileRollingOperation,rollingPxeOptions,bindRollingJournal,readOperatorActor,projectRollingReceipt,rollingLifecycleConfig,rollingOperatorCommandScope,verifyPluginPortalRuntime,reconcileRollingEthereum,operatorEthereumRequest,matchRollingEthereumSigned,requireRollingReadyEffect,readHostedPrivateFile,captureSepoliaLiquidityPlan,sepoliaLiquidityContracts,sepoliaLiquidityTransactions,sepoliaLiquidityDeadline,runSepoliaLiquidityStage,captureSepoliaSeedResolution,captureSepoliaSeedSuccessor,runSepoliaLiquiditySuccessor,runSepoliaLiquidityCancellation,runSepoliaLiquidityContinuation,resolveSepoliaSeedNonce,captureSepoliaSeedContinuationPlan,captureSepoliaExactDispatch,exactCancellationFiles,requireAuthorizedExactCancellation,runSepoliaExactCancellation,broadcastExactSepoliaCancellation,captureSepoliaNonceIntent,runSepoliaNonceCancellation,createSepoliaScopeCheck,captureSepoliaSeedTransport,captureSepoliaApprovalDispatch,runSepoliaExactApproval,captureSepoliaSeedForward,runSepoliaLiquidityForward} from './operations.mjs';
+import {fileState,recordedTransaction,outboxArguments,operatorApplicationProfile,rollingOperatorConfig,operatorNodeFetch,onceAztecOperation,reconcileRollingOperation,rollingPxeOptions,bindRollingJournal,readOperatorActor,projectRollingReceipt,rollingLifecycleConfig,rollingOperatorCommandScope,verifyPluginPortalRuntime,reconcileRollingEthereum,operatorEthereumRequest,matchRollingEthereumSigned,requireRollingReadyEffect,readHostedPrivateFile,captureSepoliaLiquidityPlan,sepoliaLiquidityContracts,sepoliaLiquidityTransactions,sepoliaLiquidityDeadline,runSepoliaLiquidityStage,captureSepoliaSeedResolution,captureSepoliaSeedSuccessor,runSepoliaLiquiditySuccessor,runSepoliaLiquidityCancellation,runSepoliaLiquidityContinuation,resolveSepoliaSeedNonce,captureSepoliaSeedContinuationPlan,captureSepoliaExactDispatch,exactCancellationFiles,requireAuthorizedExactCancellation,runSepoliaExactCancellation,broadcastExactSepoliaCancellation,captureSepoliaNonceIntent,runSepoliaNonceCancellation,createSepoliaScopeCheck,captureSepoliaSeedTransport,captureSepoliaApprovalDispatch,runSepoliaExactApproval,captureSepoliaSeedForward,runSepoliaLiquidityForward,captureTestnetRouterPlan,runTestnetRouterDeployment,matchTestnetRouterSigned} from './operations.mjs';
 import {deriveStorageSlotInMap,computeL2ToL1MessageHash} from '@aztec-labs/stdlib/hash';
 import {sha256ToField} from '@aztec-labs/foundation/crypto/sha256';
 import {contractInputs,sha as artifactSha} from '../scripts/artifact-provenance.mjs';
 import {loadRollingArtifacts} from '../prover/rolling-artifacts.mjs';
+import {derivePrivateFeeInstance} from '../shared/private-fee-client.mjs';
 import {jsonStringify} from '@aztec-labs/foundation/json-rpc';
 const read=async p=>JSON.parse(await fs.readFile(p,'utf8'));
 
@@ -434,6 +435,64 @@ export async function readSepoliaNonceSources({statePath,plan,resolution,success
  return {sourceHashes,dispatchEntrySha256:sha256(bytes).slice(2)};
 }
 /** Trusted local CLI only; no provider, model or generated-code capability. */
+// Trusted local operator only. The current public node authenticates deployment
+// scope; the two fixed L1 endpoints are explicit read and broadcast authorities.
+export async function deployTestnetFundingRouter({plan:input,statePath,keyFile,queryApiKey,observeOnly=false}){
+ const plan=captureTestnetRouterPlan(input);let provider,broadcaster,lock,lockIdentity;
+ const lockPath=statePath+'.lock';
+ try{
+  if(typeof queryApiKey!=='string'||!queryApiKey)throw Error('Operator query authentication required');
+  provider=new JsonRpcProvider(operatorEthereumRequest(FetchRequest,plan.ethereumUrl),undefined,{batchMaxCount:1,cacheTimeout:-1});
+  broadcaster=new JsonRpcProvider(operatorEthereumRequest(FetchRequest,plan.broadcastUrl),undefined,{batchMaxCount:1,cacheTimeout:-1});
+  const node=createAztecNodeClient(plan.nodeUrl,{fetch:operatorNodeFetch({endpoint:plan.nodeUrl,key:queryApiKey,serialize:jsonStringify})});
+  const root=new URL('../',import.meta.url),bytes=await fs.readFile(new URL('billboard/portal/out/RollingFundingRouter.sol/RollingFundingRouter.json',root)),artifact=JSON.parse(bytes),manifest=await read(new URL('.build/contracts-manifest.json',root));
+  if(manifest.fundingRouter!==artifactSha(bytes)||JSON.stringify(manifest.inputs)!==JSON.stringify(contractInputs(fileURLToPath(root))))throw Error('Normal funding router build provenance required');
+  const [boardRaw,bokRaw]=loadRollingArtifacts(),boardClass=String((await getContractClassFromArtifact(loadContractArtifact(boardRaw))).id),bokClass=String((await getContractClassFromArtifact(loadContractArtifact(bokRaw))).id);
+  const feeInstance=await derivePrivateFeeInstance(await read(new URL('apps/src/billboard/private_fee_artifact.json',root)));
+  if(String(feeInstance.address)!==plan.privateFpc)throw Error('Canonical FPC mismatch');
+  const factory=new ContractFactory(artifact.abi,artifact.bytecode.object),creation=(await factory.getDeployTransaction(plan.collateralPortal,plan.feePortal,plan.bokPortal,plan.weth,plan.swapRouter,plan.privateFpc)).data.toLowerCase();
+  const expectedAddress=getCreateAddress({from:plan.owner,nonce:plan.nonce}).toLowerCase();
+  const checkScope=async()=>{
+   const [info,chain,broadcastChain,h,l2]=await Promise.all([node.getNodeInfo(),provider.getNetwork(),broadcaster.getNetwork(),provider.getBlock('finalized'),node.getBlock('finalized')]);
+   if(chain.chainId!==11155111n||broadcastChain.chainId!==11155111n||info.realProofs!==true||String(info.l1ChainId)!==plan.chainId||String(info.rollupVersion)!==plan.rollupVersion||String(info.l1ContractAddresses.rollupAddress).toLowerCase()!==plan.rollupAddress||String(info.l1ContractAddresses.feeJuicePortalAddress).toLowerCase()!==plan.feePortal||String(info.l1ContractAddresses.feeJuiceAddress).toLowerCase()!==plan.feeToken||!h?.hash||!l2?.hash)throw Error('Current network identity unavailable');
+   for(const [address,classId]of [[plan.boardAddress,boardClass],[plan.bokAddress,bokClass],[plan.privateFpc,String(feeInstance.currentContractClassId)]]){
+    const instance=await node.getContract(AztecAddress.fromStringUnsafe(address),{number:l2.number,hash:String(l2.hash)});
+    if(String(instance?.originalContractClassId)!==classId||String(instance?.currentContractClassId)!==classId||String(await computeContractAddressFromInstance(instance))!==address)throw Error('Current application class mismatch');
+   }
+   for(const [key,hash]of Object.entries(plan.codeHashes))if(keccak256(await provider.getCode(plan[key],h.number))!==hash)throw Error('Dependency code changed');
+   const collateral=new EthereumContract(plan.collateralPortal,['function L2_CONTRACT() view returns(bytes32)','function ROLLUP() view returns(address)','function VERSION() view returns(uint256)','function depositsEnabled() view returns(bool)'],provider);
+   const bok=new EthereumContract(plan.bokPortal,['function escrow() view returns(bytes32)','function version() view returns(uint256)','function token() view returns(address)','function active() view returns(bool)'],provider),tag={blockTag:h.number};
+   if(await collateral.L2_CONTRACT(tag)!==plan.boardAddress||(await collateral.ROLLUP(tag)).toLowerCase()!==plan.rollupAddress||String(await collateral.VERSION(tag))!==plan.rollupVersion||await collateral.depositsEnabled(tag)!==true||await bok.escrow(tag)!==plan.bokAddress||String(await bok.version(tag))!==plan.rollupVersion||(await bok.token(tag)).toLowerCase()!==plan.bokToken||await bok.active(tag)!==true)throw Error('Active portal identity unavailable');
+   if((await provider.getBlock(h.number))?.hash!==h.hash||String((await node.getBlock(l2.number))?.hash)!==String(l2.hash))throw Error('Prerequisite anchor changed');
+  };
+  const reconcile=async record=>reconcileRollingEthereum({record,development:false,scope:'funding-router',reads:{
+   signed:async r=>matchTestnetRouterSigned({parse:raw=>Transaction.from(raw),record:r,plan,creation})&&r.deployment?.address===expectedAddress,
+   receipt:h=>provider.getTransactionReceipt(h),block:n=>provider.getBlock(n),head:tag=>provider.getBlock(tag),
+   effect:async(_r,anchor,receipt)=>{
+    if(receipt.contractAddress?.toLowerCase()!==expectedAddress)return false;
+    verifyPluginPortalRuntime((await provider.getCode(expectedAddress,anchor.number)).toLowerCase(),artifact.deployedBytecode,9);
+    const router=new EthereumContract(expectedAddress,artifact.abi,provider);
+    for(const key of ['collateralPortal','feePortal','bokPortal','weth','swapRouter','feeToken','bokToken','privateFpc','chainId'])if(String(await router[key]({blockTag:anchor.number})).toLowerCase()!==plan[key])return false;
+    await checkScope();return true;
+   },
+  }});
+  await fs.mkdir(path.dirname(path.resolve(statePath)),{recursive:true,mode:0o700});lock=await fs.open(lockPath,'wx',0o600);lockIdentity=await lock.stat();await lock.writeFile(String(process.pid));await lock.sync();
+  const store=await fileState(statePath);let signer;
+  const result=await runTestnetRouterDeployment({plan,artifactSha256:artifactSha(bytes),store,checkScope,reconcile,observeOnly,
+   prepare:async()=>{
+    const key=JSON.parse((await readHostedPrivateFile(path.resolve(keyFile),65536)).toString('utf8'));signer=new Wallet(key.privateKey,provider);
+    if(signer.address.toLowerCase()!==plan.owner||await provider.getTransactionCount(plan.owner,'latest')!==plan.nonce||await provider.getTransactionCount(plan.owner,'pending')!==plan.nonce||await broadcaster.getTransactionCount(plan.owner,'latest')!==plan.nonce||await broadcaster.getTransactionCount(plan.owner,'pending')!==plan.nonce)throw Error('Original deployer nonce changed');
+    const transaction={chainId:11155111n,type:2,nonce:plan.nonce,data:creation,value:0n,gasLimit:BigInt(plan.gasLimit),maxFeePerGas:BigInt(plan.maxFeePerGas),maxPriorityFeePerGas:BigInt(plan.maxPriorityFeePerGas)};
+    if(await provider.estimateGas({...transaction,from:plan.owner})>transaction.gasLimit||await provider.getBalance(plan.owner)<transaction.gasLimit*transaction.maxFeePerGas)throw Error('Deployment gas capacity unavailable');
+    return {transaction,metadata:{from:plan.owner,nonce:plan.nonce,address:expectedAddress}};
+   },
+   sign:async prepared=>{for(const rpc of [provider,broadcaster])for(const tag of ['latest','pending'])if(await rpc.getTransactionCount(plan.owner,tag)!==plan.nonce)throw Error('Original deployer nonce changed');const raw=await signer.signTransaction(prepared.transaction);return {hash:keccak256(raw),raw:raw.slice(2)};},
+   broadcast:async signed=>broadcaster.broadcastTransaction('0x'+signed.raw),
+  });
+  return {...result,...(result.status==='succeeded'?{router:expectedAddress,routerCodeHash:keccak256(await provider.getCode(expectedAddress,result.blockNumber))}:{})};
+ }finally{provider?.destroy();broadcaster?.destroy();if(lock){await lock.close();const current=await fs.lstat(lockPath);if(current.dev!==lockIdentity.dev||current.ino!==lockIdentity.ino)throw Error('Router owner lock changed');await fs.unlink(lockPath);}}
+}
+
 export async function seedTestnetLiquidity({plan:input,statePath,stage,keyFile,recovery}){
  if((recovery?.approvalDispatch||recovery?.kind==='forward')&&statePath!==authorizedExactCancellationStatePath)throw Error('Original approval state path required');
  if(recovery?.kind==='exact-dispatch'&&statePath!==authorizedExactCancellationStatePath)throw Error('Original exact cancellation state path required');
@@ -605,6 +664,11 @@ if(process.argv[1]&&import.meta.url===pathToFileURL(process.argv[1]).href){
   if(command==='recover-exact-seed-cancellation'){
    if(args.length!==2||args[0]!=='--dispatch-intent')throw Error();
    console.log(JSON.stringify(await recoverExactSepoliaCancellation({planPath:configPath,statePath,intentPath:args[1]})));
+  }else if(['deploy-testnet-funding-router','testnet-funding-router-status'].includes(command)){
+   const observeOnly=command==='testnet-funding-router-status';
+   if(observeOnly?args.length!==0:args.length!==2||args[0]!=='--key-file')throw Error();
+   const plan=JSON.parse((await readHostedPrivateFile(path.resolve(configPath),65536)).toString('utf8'));
+   console.log(JSON.stringify(await deployTestnetFundingRouter({plan,statePath:path.resolve(statePath),keyFile:args[1],queryApiKey:process.env.PLUGIN_QUERY_API_KEY,observeOnly})));
   }else if(['seed-testnet-liquidity','cancel-seed-testnet-liquidity','successor-seed-testnet-cancellation','resolve-seed-testnet-nonce','continue-seed-testnet-liquidity','recover-exact-seed-approval','forward-seed-testnet-liquidity'].includes(command)){
    const load=async file=>JSON.parse((await readHostedPrivateFile(path.resolve(file),65536)).toString('utf8'));
    const plan=await load(configPath);let stage,keyFile,recovery;

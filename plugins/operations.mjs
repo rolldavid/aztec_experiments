@@ -166,7 +166,7 @@ export function seedBroadcastFailure(error) {
  * the sole send. Every retained record is read-only reconciliation, even dropped.
  * execute uses the normal SDK send pipeline through the supplied once callback. */
 export async function onceAztecOperation({store,name,identity,journalIdentity=identity,scope='constructor-only',execute,reconcile,observeBroadcast=false}) {
- if(!['deploy-escrow','claim-fees','deploy-portal','bind','activate','register','relay-funding'].includes(name)||typeof identity!=='string'||typeof journalIdentity!=='string')throw rejected();
+ if(!['deploy-escrow','claim-fees','deploy-portal','deploy-funding-router','bind','activate','register','relay-funding'].includes(name)||typeof identity!=='string'||typeof journalIdentity!=='string')throw rejected();
  const old=store.read().operations[name];
  if(old){
   if(old.schemaVersion!==1||old.policy!=='reconcile-only'||old.identity!==identity||(old.journalIdentity??old.identity)!==journalIdentity||!['preparing','submission-unknown'].includes(old.phase))throw Error('Saved operation scope mismatch');
@@ -278,10 +278,10 @@ export function rollingOperatorCommandScope(command,config) {
 }
 /** Compare every executable byte, allowing only compiler-declared immutable
  * words. Exact getter values at the same canonical block are checked by caller. */
-export function verifyPluginPortalRuntime(actual,deployed) {
+export function verifyPluginPortalRuntime(actual,deployed,immutableCount=6) {
  if(typeof actual!=='string'||!/^0x(?:[0-9a-f]{2})+$/.test(actual)||typeof deployed?.object!=='string'||actual.length!==deployed.object.length)throw rejected();
  const template=Buffer.from(deployed.object.slice(2),'hex'),observed=Buffer.from(actual.slice(2),'hex'),seen=new Set();
- const groups=Object.values(deployed.immutableReferences??{});if(groups.length!==6)throw rejected();
+ const groups=Object.values(deployed.immutableReferences??{});if(groups.length!==immutableCount)throw rejected();
  for(const refs of groups){if(!Array.isArray(refs)||!refs.length)throw rejected();let word;
   for(const r of refs){if(!Number.isSafeInteger(r.start)||r.start<0||r.length!==32||r.start+32>template.length)throw rejected();
    const current=observed.subarray(r.start,r.start+32).toString('hex');if(word!==undefined&&word!==current)throw rejected();word=current;
@@ -293,7 +293,7 @@ export function verifyPluginPortalRuntime(actual,deployed) {
 /** No send path: authenticate retained signed L1 bytes, receipt, original block
  * and required finality before checking the operation's exact on-chain effect. */
 export async function reconcileRollingEthereum({record,development,reads,scope='portal-registration'}) {
- if(!['portal-registration','aggregate-funding','liquidity-seed'].includes(scope))throw rejected();
+ if(!['portal-registration','aggregate-funding','liquidity-seed','funding-router'].includes(scope))throw rejected();
  const unknown=()=>({status:'unresolved',scope,canonical:false,...(typeof record?.hash==='string'?{transactionHash:record.hash}:{})});
  try{
   if(record?.phase!=='submission-unknown'||!/^0x[0-9a-f]{64}$/.test(record.hash)||typeof record.raw!=='string'||!/^(?:[0-9a-f]{2})+$/.test(record.raw)||!await reads.signed(record))return unknown();
@@ -354,6 +354,44 @@ export const sepoliaLiquidityContracts=Object.freeze({
  factory:'0x0227628f3f023bb0b980b67d528571c95c6dac1c',positions:'0x1238536071e1c677a632429e3655c799b22cda52',
  fee:'0x762c132040fda6183066fa3b14d985ee55aa3c18',usdc:'0x1c7d4b196cb0c7b01d743fbc6116a902379c7238',weth:'0xfff9976782d46cc05630d1f6ebab18b2324d6b14',
 });
+
+// Separate one-router authority: no inventory transfer, pool deployment or
+// development-chain privileges. Endpoint selection is fixed before signing.
+export function captureTestnetRouterPlan(input){
+ const p=seedObject(input,['schemaVersion','chainId','rollupVersion','rollupAddress','nodeUrl','ethereumUrl','broadcastUrl','owner','nonce','expiresAt','gasLimit','maxFeePerGas','maxPriorityFeePerGas','boardAddress','bokAddress','collateralPortal','feePortal','bokPortal','weth','swapRouter','feeToken','bokToken','privateFpc','codeHashes']);
+ if(p.schemaVersion!==1||p.chainId!=='11155111'||!Number.isSafeInteger(p.nonce)||p.nonce<0||!Number.isSafeInteger(p.expiresAt)||p.expiresAt<1)throw rejected();
+ seedUint(p.rollupVersion,(1n<<32n)-1n);for(const k of ['gasLimit','maxFeePerGas','maxPriorityFeePerGas'])seedUint(p[k],(1n<<128n)-1n,k==='maxPriorityFeePerGas');
+ if(BigInt(p.maxPriorityFeePerGas)>BigInt(p.maxFeePerGas))throw rejected();
+ for(const k of ['rollupAddress','owner','collateralPortal','feePortal','bokPortal','weth','swapRouter','feeToken','bokToken'])seedAddress(p[k]);
+ for(const k of ['boardAddress','bokAddress','privateFpc'])if(typeof p[k]!=='string'||!/^0x[0-9a-f]{64}$/.test(p[k])||BigInt(p[k])<=0n||BigInt(p[k])>=21888242871839275222246405745257275088548364400416034343698204186575808495617n)throw rejected();
+ for(const k of ['nodeUrl','ethereumUrl','broadcastUrl']){const u=new URL(p[k]);if(u.protocol!=='https:'||u.href!==p[k]||u.username||u.password||u.search||u.hash||k==='nodeUrl'&&u.pathname!=='/v1/node')throw rejected();}
+ const dependencies=['collateralPortal','feePortal','bokPortal','weth','swapRouter','feeToken','bokToken'];p.codeHashes=seedObject(p.codeHashes,dependencies);
+ for(const h of Object.values(p.codeHashes))if(typeof h!=='string'||!/^0x[0-9a-f]{64}$/.test(h)||BigInt(h)===0n)throw rejected();
+ return Object.freeze({...p,codeHashes:Object.freeze(p.codeHashes)});
+}
+
+export function matchTestnetRouterSigned({record,plan,creation,parse}){
+ if(!matchRollingEthereumSigned({parse,record,chainId:plan.chainId,to:null,data:creation,from:plan.owner,nonce:plan.nonce}))return false;
+ try{const tx=parse('0x'+record.raw);return tx.type===2&&tx.gasLimit===BigInt(plan.gasLimit)&&tx.maxFeePerGas===BigInt(plan.maxFeePerGas)&&tx.maxPriorityFeePerGas===BigInt(plan.maxPriorityFeePerGas)&&(tx.accessList?.length??0)===0&&(tx.authorizationList?.length??0)===0;}catch{return false;}
+}
+
+export async function runTestnetRouterDeployment({plan:input,artifactSha256,store,prepare,checkScope,reconcile,sign,broadcast,now=()=>Math.floor(Date.now()/1000),observeOnly=false}){
+ const plan=captureTestnetRouterPlan(input);if(!/^[a-f0-9]{64}$/.test(artifactSha256))throw rejected();
+ const identity=JSON.stringify({profile:'rolling-testnet-router/v1',plan,artifactSha256}),name='deploy-funding-router';
+ if(store.read().identity!==undefined&&store.read().identity!==identity)throw Error('Router journal scope changed');
+ if(Object.keys(store.read().operations??{}).some(k=>k!==name))throw rejected();
+ if(store.read().operations?.[name])return onceAztecOperation({store,name,identity,scope:'funding-router',reconcile});
+ if(observeOnly)return {status:'absent',scope:'funding-router',canonical:false};
+ if(now()>=plan.expiresAt)throw Error('Router signing authority expired');
+ await checkScope();const transaction=await prepare(plan);
+ if(store.read().identity===undefined)await store.write({...store.read(),identity});
+ return onceAztecOperation({store,name,identity,scope:'funding-router',observeBroadcast:true,reconcile,execute:async({bindDeployment,submit})=>{
+  if(now()>=plan.expiresAt)throw Error('Router signing authority expired');
+  await bindDeployment(transaction.metadata);await checkScope();
+  const signed=await sign(transaction);if(now()>=plan.expiresAt)throw Error('Router signing authority expired');
+  await submit(signed,()=>broadcast(signed));
+ }});
+}
 function seedObject(value,keys){
  if(!value||Object.getPrototypeOf(value)!==Object.prototype||Reflect.ownKeys(value).length!==keys.length)throw rejected();
  const copy={};for(const key of keys){const d=Object.getOwnPropertyDescriptor(value,key);if(!d||!('value'in d)||!d.enumerable)throw rejected();copy[key]=d.value;}return copy;
