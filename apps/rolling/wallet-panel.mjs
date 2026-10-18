@@ -532,7 +532,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
    if(kind==='bok'){
     content.append(paragraph(`Available private Bok credit: ${decimal(bokStatus.availableCredit,6)} USDC.`),paragraph('Bok receives this post only after you confirm its credit authorization and then confirm publication. Each action has its own network fee.'));
     // Reversible suggested budget; authorization and publication each need consent.
-    input('budget','Maximum Bok cost (USDC)',{initial:'0.10'}).inputMode='decimal';
+    input('budget','Maximum Bok cost (USDC)',{initial:'0.25'}).inputMode='decimal';
    }
   }
   const counter=el('p',{class:'counter','aria-live':'polite'}),preview=el('div',{class:'preview-body','aria-label':'Message preview'});

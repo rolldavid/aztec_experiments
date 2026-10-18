@@ -692,7 +692,7 @@ test('initialization projection ignores accessors and account invalidation clear
 test('Bok composer reviews credit and both fees, restores authorized draft and never auto-publishes',async t=>{
  const {page}=await browserFixture(t);await page.evaluate(()=>{test.bokCredit='1000000';test.refreshRecords={submit:[{stage:'submitting'}]};});await open(page);await unlock(page);
  await page.getByLabel('Action',{exact:true}).selectOption('bok');await page.getByText('Available private Bok credit: 1 USDC.',{exact:true}).waitFor();
- assert.equal(await page.getByLabel('Maximum Bok cost (USDC)',{exact:true}).inputValue(),'0.10');
+ assert.equal(await page.getByLabel('Maximum Bok cost (USDC)',{exact:true}).inputValue(),'0.25');
  await page.getByText('New conversation',{exact:true}).waitFor();assert.equal(await page.getByRole('link',{name:'Main board',exact:true}).getAttribute('href'),'#/board/0');assert.equal(await page.getByLabel('Reply to post ID').count(),0);
  await page.getByLabel('Message',{exact:true}).fill('Ask Bok with the exact saved draft');await page.getByLabel('Maximum Bok cost (USDC)',{exact:true}).fill('0.10');
  await page.getByRole('button',{name:'Check action and review fee',exact:true}).click();await page.getByRole('button',{name:'Confirm and send',exact:true}).waitFor();
