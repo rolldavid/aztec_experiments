@@ -358589,6 +358589,7 @@ pub contract MultiCallEntrypoint {
     verifyDeploymentInputs: () => verifyDeploymentInputs,
     verifyEthereumIntentReceipt: () => verifyEthereumIntentReceipt,
     verifyPortalRuntime: () => verifyPortalRuntime,
+    waitForL1ToL2MessageReady: () => waitForL1ToL2MessageReady,
     waitForNode: () => waitForNode,
     waitForSuccessfulReceipt: () => waitForSuccessfulReceipt,
     waitForTx: () => waitForTx
@@ -364477,7 +364478,7 @@ pub contract MultiCallEntrypoint {
   var bok = new Interface(["function active() view returns(bool)"]);
   var quoter = new Interface(["function quoteExactOutputSingle((address tokenIn,address tokenOut,uint256 amount,uint24 fee,uint160 sqrtPriceLimitX96)) returns(uint256 amountIn,uint160 sqrtPriceX96After,uint32 initializedTicksCrossed,uint256 gasEstimate)"]);
   var P = 21888242871839275222246405745257275088548364400416034343698204186575808495617n;
-  var prepared = /* @__PURE__ */ new WeakSet();
+  var prepared = /* @__PURE__ */ new WeakMap();
   function fail2(code) {
     throw Object.assign(new Error("Aggregate funding is unavailable."), { code: `AGGREGATE_${code}` });
   }
@@ -364524,6 +364525,28 @@ pub contract MultiCallEntrypoint {
     hex8(out.hash);
     return out;
   }
+  async function pendingTime(request, anchor2) {
+    const block2 = await request("eth_getBlockByNumber", ["pending", false]);
+    const d = block2 && Object.getPrototypeOf(block2) === Object.prototype ? Object.getOwnPropertyDescriptor(block2, "timestamp") : null;
+    check4(d && "value" in d, "PUBLIC_READ_FAILED");
+    const time13 = quantity(d.value);
+    check4(time13 >= BigInt(anchor2.timestamp), "PUBLIC_READ_FAILED");
+    return time13;
+  }
+  async function validState(request, preparation, strict2) {
+    check4(quantity(await request("eth_chainId", [])) === BigInt(preparation.scope.chainId), "CHAIN");
+    const anchor2 = preparation.quoteAnchor, current = blockSnapshot(await request("eth_getBlockByNumber", [anchor2.number, false]));
+    check4(current.number === anchor2.number && current.hash === anchor2.hash && current.timestamp === anchor2.timestamp, "QUOTE_REORG");
+    const time13 = await pendingTime(request, anchor2), deadline = BigInt(preparation.plan.deadline);
+    check4(strict2 ? time13 > BigInt(preparation.plan.validAfter) && time13 < deadline : time13 <= deadline, "STALE_QUOTE");
+  }
+  async function simulate(request, preparation, transaction, strict2) {
+    await validState(request, preparation, strict2);
+    const result = await request("eth_call", [{ from: transaction.from, to: transaction.to, data: transaction.data, value: "0x" + BigInt(transaction.value).toString(16) }, "pending"]);
+    check4(result === "0x", "PUBLIC_READ_FAILED");
+    await validState(request, preparation, strict2);
+    return freeze(transaction);
+  }
   function freeze(x) {
     if (x && typeof x === "object") {
       Object.values(x).forEach(freeze);
@@ -364532,7 +364555,7 @@ pub contract MultiCallEntrypoint {
     return x;
   }
   var collateralConsentTypes = freeze({ DepositFor: [{ name: "beneficiary", type: "address" }, { name: "executor", type: "address" }, { name: "amount", type: "uint256" }, { name: "secretHash", type: "bytes32" }, { name: "nonce", type: "uint256" }, { name: "deadline", type: "uint256" }] });
-  async function prepareAggregateFunding(input2, { provider, nowSeconds = () => Math.floor(Date.now() / 1e3) } = {}) {
+  async function prepareAggregateFunding(input2, { provider } = {}) {
     const x = record4(input2, ["scope", "allocation", "wallet"]);
     const s = record4(x.scope, ["chainId", "router", "routerCodeHash", "collateralPortal", "feePortal", "bokPortal", "weth", "swapRouter", "feeToken", "bokToken", "privateFpc", "quoter", "quoterCodeHash"]);
     uint(s.chainId, 64);
@@ -364561,8 +364584,6 @@ pub contract MultiCallEntrypoint {
     };
     check4(quantity(await request("eth_chainId", [])) === BigInt(s.chainId), "CHAIN");
     const block2 = blockSnapshot(await request("eth_getBlockByNumber", ["latest", false]));
-    const now = nowSeconds();
-    check4(Number.isSafeInteger(now) && now >= 0 && BigInt(block2.timestamp) <= BigInt(now) && BigInt(now) - BigInt(block2.timestamp) <= 60n, "STALE_QUOTE");
     const tag = block2.number;
     for (const [address6, expected] of [[s.router, s.routerCodeHash], [s.quoter, s.quoterCodeHash]]) {
       const code = await request("eth_getCode", [address6, tag]);
@@ -364590,7 +364611,7 @@ pub contract MultiCallEntrypoint {
     const fee2 = await quote(s.feeToken, a.feeAmount, a.feePoolFee), credit = await quote(s.bokToken, a.bokAmount, a.bokPoolFee);
     const current = blockSnapshot(await request("eth_getBlockByNumber", [tag, false]));
     check4(current.hash === block2.hash && current.timestamp === block2.timestamp, "QUOTE_REORG");
-    const deadline = (BigInt(block2.timestamp) + 120n).toString();
+    const deadline = (await pendingTime(request, block2) + 120n).toString();
     const plan = {
       beneficiary: w.address,
       collateral: a.collateralWei,
@@ -364606,8 +364627,6 @@ pub contract MultiCallEntrypoint {
     const value = (BigInt(plan.collateral) + BigInt(fee2.maxEth) + BigInt(credit.maxEth)).toString();
     const balance = await request("eth_getBalance", [w.address, "latest"]);
     check4(quantity(balance) >= BigInt(value) + BigInt(w.gasBudgetWei), "INSUFFICIENT_USER_FUNDS");
-    const finished = nowSeconds();
-    check4(Number.isSafeInteger(finished) && finished >= now && finished - now <= 30 && BigInt(finished) <= BigInt(deadline), "STALE_QUOTE");
     const consent = {
       domain: { name: "RollingCollateral", version: "1", chainId: s.chainId, verifyingContract: s.collateralPortal },
       types: collateralConsentTypes,
@@ -364626,14 +364645,14 @@ pub contract MultiCallEntrypoint {
       ready: false,
       requiredClaims: ["collateral", "private-fee", "bok"]
     });
-    prepared.add(result);
+    await validState(request, result, false);
+    prepared.set(result, request);
     return result;
   }
-  function aggregateFundingTransaction(preparation, consent, { nowSeconds = Math.floor(Date.now() / 1e3) } = {}) {
+  async function aggregateFundingTransaction(preparation, consent) {
     check4(prepared.has(preparation), "UNVERIFIED_QUOTE");
-    check4(Number.isSafeInteger(nowSeconds) && BigInt(nowSeconds) <= BigInt(preparation.plan.deadline), "STALE_QUOTE");
     check4(typeof consent === "string" && /^0x(?:[0-9a-fA-F]{2}){1,4096}$/.test(consent), "CONSENT");
-    return freeze({
+    return simulate(prepared.get(preparation), preparation, {
       from: preparation.plan.beneficiary,
       to: preparation.scope.router,
       chainId: preparation.scope.chainId,
@@ -364641,12 +364660,12 @@ pub contract MultiCallEntrypoint {
       data: router.encodeFunctionData("fund", [preparation.plan, consent]),
       planHash: preparation.planHash,
       recovery: "reconcile-only"
-    });
+    }, false);
   }
   var usdcAbi = new Interface(["function implementation() view returns(address)", "function DOMAIN_SEPARATOR() view returns(bytes32)", "function balanceOf(address) view returns(uint256)", "function authorizationState(address,bytes32) view returns(bool)"]);
-  var preparedUsdc = /* @__PURE__ */ new WeakSet();
+  var preparedUsdc = /* @__PURE__ */ new WeakMap();
   var usdcAuthorizationTypes = freeze({ ReceiveWithAuthorization: [{ name: "from", type: "address" }, { name: "to", type: "address" }, { name: "value", type: "uint256" }, { name: "validAfter", type: "uint256" }, { name: "validBefore", type: "uint256" }, { name: "nonce", type: "bytes32" }] });
-  async function prepareAggregateUsdcFunding(input2, { provider, nowSeconds = () => Math.floor(Date.now() / 1e3) } = {}) {
+  async function prepareAggregateUsdcFunding(input2, { provider } = {}) {
     const x = record4(input2, ["scope", "allocation", "wallet", "relay"]);
     const s = record4(x.scope, ["chainId", "router", "routerCodeHash", "collateralPortal", "feePortal", "bokPortal", "weth", "swapRouter", "feeToken", "bokToken", "privateFpc", "quoter", "quoterCodeHash", "usdcCodeHash", "usdcImplementation", "usdcImplementationCodeHash", "usdcDomain"]);
     check4(uint(s.chainId, 64) > 0n);
@@ -364678,8 +364697,7 @@ pub contract MultiCallEntrypoint {
       }
     };
     check4(quantity(await request("eth_chainId", [])) === BigInt(s.chainId), "CHAIN");
-    const block2 = blockSnapshot(await request("eth_getBlockByNumber", ["latest", false])), tag = block2.number, now = nowSeconds();
-    check4(Number.isSafeInteger(now) && now >= 0 && BigInt(block2.timestamp) <= BigInt(now) && BigInt(now) - BigInt(block2.timestamp) <= 60n, "STALE_QUOTE");
+    const block2 = blockSnapshot(await request("eth_getBlockByNumber", ["latest", false])), tag = block2.number;
     for (const [address6, expected] of [[s.router, s.routerCodeHash], [s.quoter, s.quoterCodeHash], [s.bokToken, s.usdcCodeHash], [s.usdcImplementation, s.usdcImplementationCodeHash]]) {
       const code = await request("eth_getCode", [address6, tag]);
       check4(typeof code === "string" && /^0x(?:[0-9a-f]{2})+$/.test(code) && keccak2563(code) === expected, "RUNTIME");
@@ -364706,7 +364724,7 @@ pub contract MultiCallEntrypoint {
       return { amount, maxUsdc: ((quoted * BigInt(1e4 + a.slippageBps) + 9999n) / 10000n).toString(), poolFee, quotedUsdc: quoted.toString() };
     };
     const collateral = await quote(s.weth, a.collateralWei, a.collateralPoolFee), fee2 = await quote(s.feeToken, a.feeAmount, a.feePoolFee);
-    const deadline = (BigInt(block2.timestamp) + 120n).toString(), validAfter = "0";
+    const deadline = (await pendingTime(request, block2) + 120n).toString(), validAfter = "0";
     const plan = {
       beneficiary: w.address,
       relayer: relay.address,
@@ -364732,8 +364750,6 @@ pub contract MultiCallEntrypoint {
     check4(quantity(await request("eth_getBalance", [relay.address, "latest"])) >= BigInt(relay.gasBudgetWei), "RELAY_GAS_REQUIRED");
     const current = blockSnapshot(await request("eth_getBlockByNumber", [tag, false]));
     check4(current.hash === block2.hash && current.timestamp === block2.timestamp, "QUOTE_REORG");
-    const finished = nowSeconds();
-    check4(Number.isSafeInteger(finished) && finished >= now && finished - now <= 30 && BigInt(finished) < BigInt(deadline), "STALE_QUOTE");
     const consent = { domain: { name: "RollingCollateral", version: "1", chainId: s.chainId, verifyingContract: s.collateralPortal }, types: collateralConsentTypes, value: { beneficiary: w.address, executor: s.router, amount: a.collateralWei, secretHash: a.collateralSecretHash, nonce, deadline } };
     const authorization = { domain: domain10, types: usdcAuthorizationTypes, value: { from: w.address, to: s.router, value: maximumUsdc, validAfter, validBefore: deadline, nonce: authorizationNonce } };
     const result = freeze({
@@ -364756,14 +364772,14 @@ pub contract MultiCallEntrypoint {
       relayPreflightRequired: true,
       failureGasRisk: "relayer-unreimbursed-on-revert"
     });
-    preparedUsdc.add(result);
+    await validState(request, result, true);
+    preparedUsdc.set(result, request);
     return result;
   }
-  function aggregateUsdcFundingTransaction(preparation, collateralConsent, authorization, { nowSeconds = Math.floor(Date.now() / 1e3) } = {}) {
+  async function aggregateUsdcFundingTransaction(preparation, collateralConsent, authorization) {
     check4(preparedUsdc.has(preparation), "UNVERIFIED_QUOTE");
-    check4(Number.isSafeInteger(nowSeconds) && BigInt(nowSeconds) > BigInt(preparation.plan.validAfter) && BigInt(nowSeconds) < BigInt(preparation.plan.deadline), "STALE_QUOTE");
     for (const signature of [collateralConsent, authorization]) check4(typeof signature === "string" && /^0x(?:[0-9a-fA-F]{2}){1,4096}$/.test(signature), "CONSENT");
-    return freeze({
+    return simulate(preparedUsdc.get(preparation), preparation, {
       from: preparation.plan.relayer,
       to: preparation.scope.router,
       chainId: preparation.scope.chainId,
@@ -364773,7 +364789,7 @@ pub contract MultiCallEntrypoint {
       planHash: preparation.planHash,
       authorizationNonce: preparation.authorizationNonce,
       recovery: "reconcile-only"
-    });
+    }, true);
   }
 
   // shared/rolling/aggregate-recovery.mjs
@@ -391112,6 +391128,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
   var trusted = /* @__PURE__ */ new WeakSet();
   var failures = /* @__PURE__ */ new WeakSet();
   var diagnostics = /* @__PURE__ */ new WeakMap();
+  var canonicalBlocks = /* @__PURE__ */ new WeakMap();
   function snapshotDiagnostic(tips, state, stamp) {
     const tip = (value) => Object.freeze({ number: value.number, hash: value.hash });
     return Object.freeze({
@@ -391181,6 +391198,15 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     if (!data || number20 !== expected.number) throw unsynced("CANONICAL_ANCHOR", detail(null));
     const hash12 = hex12(data.blockHash, 32);
     if (hash12 !== expected.hash) throw unsynced("CANONICAL_ANCHOR", detail(hash12));
+    return { ...expected, data };
+  }
+  async function canonicalPhase(node2, anchors, unsynced) {
+    const unique = /* @__PURE__ */ new Map();
+    for (const [expected, stage] of anchors) {
+      const key = expected.number + ":" + expected.hash;
+      if (!unique.has(key)) unique.set(key, () => canonical(node2, expected, unsynced, stage));
+    }
+    return readTogether([...unique.values()]);
   }
   async function inspectTrustedNode(node2, options) {
     const p = policy(options), snapshots = [];
@@ -391239,16 +391265,13 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
           throw unsynced("METADATA_MISMATCH");
         }
         const world = { number: latest, hash: latestHash };
-        if (historical) await readTogether([() => canonical(node2, selected, unsynced, "selected"), () => canonical(node2, world, unsynced, "world")]);
-        else if (checkpointed.number !== proposed.number) await readTogether([() => canonical(node2, checkpointed, unsynced, "checkpointed"), () => canonical(node2, proposed, unsynced, "proposed")]);
-        else await canonical(node2, proposed, unsynced, "proposed");
+        await canonicalPhase(node2, historical ? [[selected, "selected"], [world, "world"]] : checkpointed.number === proposed.number ? [[proposed, "proposed"]] : [[checkpointed, "checkpointed"], [proposed, "proposed"]], unsynced);
         const suppliedNow = options.nowSeconds, now = suppliedNow === void 0 ? Math.floor(Date.now() / 1e3) : suppliedNow;
         if (!natural(now)) throw fail4("CONFIG");
         const lag = now - Number(stamp);
         if (p.proofsEnabled && (lag < 0 || lag > p.maxLagSeconds)) throw fail4("STALE");
-        if (historical) await readTogether([() => canonical(node2, selected, unsynced, "final-selected"), () => canonical(node2, world, unsynced, "final-world")]);
-        else await canonical(node2, proposed, unsynced, "final");
-        return Object.freeze({
+        const finalBlocks = await canonicalPhase(node2, historical ? [[selected, "final-selected"], [world, "final-world"]] : [[proposed, "final"]], unsynced);
+        const result = Object.freeze({
           ready: true,
           chainId: p.chainId,
           rollupVersion: p.version,
@@ -391264,6 +391287,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
           checkedAtSeconds: now,
           lagSeconds: lag
         });
+        canonicalBlocks.set(result, finalBlocks);
+        return result;
       }
     } catch (error312) {
       throw failures.has(error312) ? error312 : fail4("UNAVAILABLE");
@@ -408270,12 +408295,12 @@ ${context.join("\n")}`;
     * @param profile - Set true to profile the gate count for each circuit
     * @returns A Promise that resolves to a KernelProverOutput object containing proof, public inputs, and output notes.
     */
-    async proveWithKernels(txRequest, executionResult, { simulate, skipFeeEnforcement, profileMode } = {
+    async proveWithKernels(txRequest, executionResult, { simulate: simulate2, skipFeeEnforcement, profileMode } = {
       simulate: false,
       skipFeeEnforcement: false,
       profileMode: "none"
     }) {
-      const skipProofGeneration = this.fakeProofs || simulate;
+      const skipProofGeneration = this.fakeProofs || simulate2;
       const generateWitnesses = !skipProofGeneration || profileMode !== "none";
       const timer = new Timer();
       const isPrivateOnlyTx = executionResult.publicFunctionCalldata.length === 0;
@@ -480626,6 +480651,28 @@ mod tests {
   async function sendPrivateFeeTransaction(input2) {
     const estimated = await estimatePrivateFeeTransaction(input2);
     return input2.wallet.sendTx(estimated.payload, { from: input2.from, fee: { gasSettings: estimated.gasSettings } });
+  }
+
+  // node_modules/@aztec-labs/aztec.js/dest/api/messaging.js
+  init_dirname();
+  init_buffer2();
+  init_process2();
+
+  // node_modules/@aztec-labs/aztec.js/dest/utils/cross_chain.js
+  init_dirname();
+  init_buffer2();
+  init_process2();
+  init_retry();
+  function waitForL1ToL2MessageReady(node2, l1ToL2MessageHash, opts) {
+    return retryUntil(() => isL1ToL2MessageReady(node2, l1ToL2MessageHash, opts.chainTip), `L1 to L2 message ${l1ToL2MessageHash.toString()} ready`, opts.timeoutSeconds, 1);
+  }
+  async function isL1ToL2MessageReady(node2, l1ToL2MessageHash, chainTip = "latest") {
+    const messageIndex = await node2.getL1ToL2MessageIndex(l1ToL2MessageHash);
+    if (messageIndex === void 0) {
+      return false;
+    }
+    const block2 = await node2.getBlockData(chainTip);
+    return block2 !== void 0 && messageIndex < BigInt(block2.header.state.l1ToL2MessageTree.nextAvailableLeafIndex);
   }
 
   // shared/sdk-entry.mjs
