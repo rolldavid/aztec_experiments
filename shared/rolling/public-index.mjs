@@ -359,7 +359,7 @@ export async function createRollingPersistentPublicIndex({node,artifact,bokArtif
       let events=[],txHash=null;
       if(index<effects.length){const tx=effects[index];txHash=tx.hash;
         if(tx.hasBoard){
-          events=await read(()=>decoder.decodeTransaction(node,txHash,{timeoutMs:Math.max(1,Math.min(20000,deadline-Date.now()))}));
+          events=await read(()=>decoder.decodeTransaction(node,txHash,{block:raw,timeoutMs:Math.max(1,Math.min(20000,deadline-Date.now()))}));
           check(events.every(e=>e.position.blockNumber===block.number&&e.position.blockHash===block.hash&&e.position.txHash===txHash&&e.position.txIndexWithinBlock===String(index)));
         }
         if(number===deployment.blockNumber&&txHash===deployment.txHash)check(events.some(e=>e.type==='MainPolicyPublished'&&e.payload.version==='1'));

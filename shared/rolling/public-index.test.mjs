@@ -325,6 +325,7 @@ test('persistent ingestion owns one transaction or completion per step with orig
  const f=await persistentFixture(t),{storage:s,index}=await f.open();assert.throws(()=>index.publication());
  let count=0;while(!index.status().complete){const before=s.inspect().control;await index.step();const after=s.inspect().control;
   if(before)assert.ok(BigInt(after.segmentCount)-BigInt(before.segmentCount)<=1n);count++;}
+ assert.equal(f.calls.length,6,'one full block read per transaction/completion step; decoder reuses it');
  assert.equal(count,7);assert.equal(f.projection(s,'posts','10').text,'Hello');assert.equal(s.inspect().control.segmentCount,'6');
  assert.equal(index.publication().checkpoint.number,'3');assert.equal(f.calls.every(([, ,opts])=>opts.includeTransactions===true),true);
 });
@@ -402,14 +403,15 @@ test('persistent append retains authenticated generation and invalidates prior p
  f.put(4,[await f.post(20,4)]);f.setHead(4);await a.index.step();assert.throws(()=>a.index.publication());await f.drain(a.index);
  const after=a.index.publication();assert.equal(after.authenticationEpoch,before.authenticationEpoch);assert.notEqual(after.revision,before.revision);assert.equal(f.projection(a.storage,'posts','20').text,'Hello');
 });
-for(const defect of ['missing-body','duplicate-transaction','missing-deployment-policy','wrong-ordinal','bad-log-digest'])
+for(const defect of ['missing-body','duplicate-transaction','missing-deployment-policy','receipt-block-mismatch','reorg-during-decode','bad-log-digest'])
  test(`persistent original decoder/physical boundary rejects ${defect}`,async t=>{
   const f=await persistentFixture(t);
   if(defect==='missing-body')f.blocks.get(1).body=undefined;
   if(defect==='duplicate-transaction')f.blocks.get(1).body.txEffects.push(f.blocks.get(1).body.txEffects[0]);
   if(defect==='missing-deployment-policy')f.blocks.get(1).body.txEffects[0].publicLogs=[];
   if(defect==='bad-log-digest')f.blocks.get(1).body.txEffects[0].publicLogs[0].fields[3]=Fr.ZERO;
-  if(defect==='wrong-ordinal'){const original=f.node.getBlock;let seen=0;f.node.getBlock=async(...args)=>{const b=await original(...args);if(args[0]===1&&++seen===2)return {...b,body:{txEffects:[{txHash:TxHash.fromString(hex(777)),publicLogs:[],toBuffer:()=>Buffer.alloc(0)},...b.body.txEffects]}};return b;};}
+  if(defect==='receipt-block-mismatch'){const original=f.node.getTxReceipt;f.node.getTxReceipt=async(...args)=>({...await original(...args),blockNumber:2});}
+  if(defect==='reorg-during-decode'){const original=f.node.getTxEffect;f.node.getTxEffect=async(...args)=>{const effect=await original(...args);f.put(1,[],77);return effect;};}
   const a=await f.open();await assert.rejects(a.index.step());assert.throws(()=>a.index.publication());assert.equal(a.storage.inspect().control.segmentCount,'0');
  });
 test('persistent source operations cannot emit private RPC or subscription parameters',async t=>{

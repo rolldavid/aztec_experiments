@@ -174,7 +174,7 @@ export async function createRollingEventDecoder({artifact,scope,bokArtifact}) {
  }
  // The caller retains range-level anchor rechecks/reorg handling. This verifies
  // one entire successful transaction against the actual SDK block/effect APIs.
- async function decodeTransaction(node,hashValue,{timeoutMs=20000}={}) {
+ async function decodeTransaction(node,hashValue,{timeoutMs=20000,block:suppliedBlock}={}) {
   try {
    check(Number.isSafeInteger(timeoutMs)&&timeoutMs>0&&timeoutMs<=20000);
    const deadline=Date.now()+timeoutMs;
@@ -185,7 +185,9 @@ export async function createRollingEventDecoder({artifact,scope,bokArtifact}) {
    check(String(info.l1ChainId)===scope.chainId&&String(info.rollupVersion)===scope.rollupVersion&&info.l1ContractAddresses.rollupAddress.toString()===scope.rollupAddress);
    check(instance?.currentContractClassId.toString()===scope.classId&&instance?.originalContractClassId.toString()===scope.classId);
    const receipt=await read(()=>node.getTxReceipt(txHash));check([TxStatus.CHECKPOINTED,TxStatus.PROVEN,TxStatus.FINALIZED].includes(receipt.status)&&receipt.executionResult===TxExecutionResult.SUCCESS&&receipt.txHash.equals(txHash));
-   const block=await read(()=>node.getBlock(receipt.blockNumber,{includeTransactions:true})),found=await read(()=>node.getTxEffect(txHash));check(block&&found&&Number(block.header.globalVariables.blockNumber)===Number(receipt.blockNumber)&&block.hash.equals(receipt.blockHash)&&found.l2BlockHash.equals(receipt.blockHash)&&Number(found.l2BlockNumber)===Number(receipt.blockNumber)&&found.data.txHash.equals(txHash));
+   // An ingestion caller may already own this full block. Receipt, effect and
+   // block identity checks below are identical for supplied and fetched bodies.
+   const block=suppliedBlock??await read(()=>node.getBlock(receipt.blockNumber,{includeTransactions:true})),found=await read(()=>node.getTxEffect(txHash));check(block&&found&&Number(block.header.globalVariables.blockNumber)===Number(receipt.blockNumber)&&block.hash.equals(receipt.blockHash)&&found.l2BlockHash.equals(receipt.blockHash)&&Number(found.l2BlockNumber)===Number(receipt.blockNumber)&&found.data.txHash.equals(txHash));
    const matches=block.body.txEffects.map((effect,index)=>({effect,index})).filter(({effect})=>effect.txHash.equals(txHash));check(matches.length===1&&matches[0].effect.toBuffer().equals(found.data.toBuffer()));
    check(found.data.publicLogs.length<=4096&&found.data.publicLogs.reduce((sum,log)=>sum+log.sizeInFields(),0)<=FLAT_PUBLIC_LOGS_PAYLOAD_LENGTH);const events=[];
    const completions=[];
