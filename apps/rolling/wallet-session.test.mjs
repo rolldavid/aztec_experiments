@@ -489,7 +489,7 @@ for(const kind of ['private-fee','bok'])for(const defect of ['none','token','por
 
 import {verifyRollingTopupClaim} from './wallet-session.mjs';
 import {requireSuccessfulReceipt} from '../../shared/transaction-outcomes.mjs';
-for(const defect of ['none','hash','status','execution','canonical','account'])test(`retained top-up claim canonical check ${defect}`,async()=>{
+for(const defect of ['none','hash','status','execution','canonical','account'])test(`retained aggregate/top-up claim canonical check ${defect}`,async()=>{
  const hash='0x'+'11'.repeat(32),blockHash='0x'+'22'.repeat(32),receipt={txHash:hash,status:'checkpointed',executionResult:'success',blockNumber:3,blockHash};let reads=0;
  if(defect==='hash')receipt.txHash='0x'+'33'.repeat(32);if(defect==='status')receipt.status='pending';if(defect==='execution')receipt.executionResult='reverted';
  const input={sdk:{TxHash:{fromString:value=>value},boundedTransactionRead:fn=>fn(),requireSuccessfulReceipt},node:{getTxReceipt:async()=>{reads++;return receipt;},getBlock:async number=>{assert.equal(number,3);reads++;return {hash:defect==='canonical'?'0x'+'44'.repeat(32):blockHash};}},txHash:hash,contextGuard:()=>{if(defect==='account')throw Error('account changed');}};

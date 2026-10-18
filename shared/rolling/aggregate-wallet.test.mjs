@@ -13,6 +13,8 @@ import {createEthereumJournal,verifyEthereumIntentReceipt} from '../ethereum-jou
 import {prepareAggregateFunding,aggregateFundingTransaction,prepareAggregateUsdcFunding,aggregateUsdcFundingTransaction,aggregateFundingAbi} from './aggregate-funding.mjs';
 import {validateAggregateFundingIntent} from './aggregate-recovery.mjs';
 import {createAggregateWallet} from './aggregate-wallet.mjs';
+import {verifyRollingTopupClaim} from '../../apps/rolling/wallet-session.mjs';
+import {requireSuccessfulReceipt} from '../transaction-outcomes.mjs';
 const a=n=>'0x'+BigInt(n).toString(16).padStart(40,'0'),h=n=>'0x'+BigInt(n).toString(16).padStart(64,'0');
 const router=new ethers.Interface(aggregateFundingAbi),portal=new ethers.Interface(['function depositNonces(address) view returns(uint256)','function depositsEnabled() view returns(bool)','function getDeposit(address) view returns(uint128)','function MIN_DEPOSIT() view returns(uint256)','function MAX_DEPOSIT() view returns(uint256)','event Deposited(address indexed depositor,uint128 amount,bytes32 secretHash,bytes32 key,uint256 index)']);
 const bok=new ethers.Interface(['function active() view returns(bool)','event Deposited(bytes32 indexed account,uint128 amount,bytes32 key,uint256 index)']);
@@ -53,6 +55,7 @@ function fixture({chainId='31337'}={}){
   }}};
  const options={sdk:{Fr,computeSecretHash,poseidon2HashWithSeparator,deriveBoardDepositSecret,claimSecrets,createEncryptedJournalSlot,createEthereumJournal,verifyEthereumIntentReceipt,prepareAggregateFunding,aggregateFundingTransaction,validateAggregateFundingIntent},ethers,scope,
   network:{chainId,version:'1',rollup:a(11)},board:h(12),bok:h(13),owner:h(14),walletSecret:h(15),walletSalt:'0',storage,provider,
+  reconcileClaim:id=>state.workflow.open().reconcile(id),verifyClaim:async hash=>assert.equal(hash,h(70)),
   captureWallet:async()=>{if(!state.connected)throw Error('No wallet');return wallet;},contextGuard:async()=>{if(state.invalid)throw Error('Context changed');},verifyScope:async()=>{}};
  return {options,state,allocation,records,wallet,open:()=>createAggregateWallet(options)};
 }
@@ -101,14 +104,14 @@ test('matching aggregate pending or corrupted context is never treated as an unr
  const key=[...f.records.keys()][0];const envelope=JSON.parse(f.records.get(key));envelope.data='00'+envelope.data.slice(2);f.records.set(key,JSON.stringify(envelope));await assert.rejects(app.loadAggregate(h(81)));
 });
 test('archive is durable before a successor quote; active collateral prevents overwrite and original secrets survive later draft',async()=>{
- const f=fixture();f.options.reconcileClaim=async()=>({status:'confirmed'});const app=await f.open();await app.prepare(f.allocation);await app.confirm();
- await app.checkpointClaim({intentId:h(100),attempted:true});const original=await app.loadAggregate(h(20));
+ const f=fixture(),app=await f.open();await app.prepare(f.allocation);await app.confirm();
+ const workflow=durableClaimApplication(f,app);await advanceAggregateClaim({application:workflow.open(),funding:app});const original=await app.loadAggregate(h(20));
  const send=f.options.provider.send;f.options.provider.send=async(method,params)=>{
   if(method==='eth_call'&&params[0].to===f.options.scope.collateralPortal&&portal.parseTransaction({data:params[0].data}).name==='getDeposit')return portal.encodeFunctionResult('getDeposit',[100]);
   return send(method,params);
  };
  await assert.rejects(app.prepare(f.allocation),{code:'AGGREGATE_EXISTING_DEPOSIT'});
- assert.equal(f.records.size,3);assert.equal((await app.inspect()).paymentSaved,true);
+ assert.equal((await app.inspect()).paymentSaved,true);
  f.options.provider.send=send;const reopened=await f.open();await reopened.prepare(f.allocation);assert.equal((await reopened.inspect()).paymentSaved,false);
  assert.deepEqual(await reopened.loadAggregate(h(20)),original);assert.equal(f.state.sends,1);
  const foreign=await createAggregateWallet({...f.options,owner:h(77)});assert.equal(await foreign.loadAggregate(h(20)),null);
@@ -138,7 +141,7 @@ function durableClaimApplication(f,funding){
  const options={sdk,deployment:{board:{address:f.options.board,artifact:boardArtifact},network:f.options.network,portal:f.options.scope.collateralPortal,
   privateFee:{address:f.options.scope.privateFpc,artifact:{},gasSettings:{}},bok:{address:f.options.bok,operator:h(16),pluginId:h(17),artifact:bokArtifact}},
   accountSession:{owner,wallet,node,journal,walletSecret:f.options.walletSecret,walletSalt:f.options.walletSalt},privateStore:f.options.storage,contextGuard:async()=>{},funding:{provider:f.options.provider,loadAggregate:hash=>funding.loadAggregate(hash)}};
- return {state,open:()=>createRollingApplication(options)};
+ const workflow={state,open:()=>createRollingApplication(options)};f.state.workflow=workflow;return workflow;
 }
 test('original encrypted application workflow relinks after prepare-before-checkpoint interruption and sends once',async()=>{
  const f=fixture(),funding=await f.open();await funding.prepare(f.allocation);const receipts=await funding.confirm();
@@ -146,6 +149,59 @@ test('original encrypted application workflow relinks after prepare-before-check
  const next=await advanceAggregateClaim({application:workflow.open(),funding:await f.open()});assert.equal(next.state,'complete');assert.equal(next.intent.intentId,prepared.intentId);assert.equal(workflow.state.sends,1);assert.equal(f.state.sends,1);
  assert.equal((await advanceAggregateClaim({application:workflow.open(),funding:await f.open()})).state,'complete');assert.equal(workflow.state.sends,1);
 });
+test('aggregate confirmed claim permits a fresh quote after the current application intent is replaced',async()=>{
+ const f=fixture();let workflow;f.options.reconcileClaim=id=>workflow.open().reconcile(id);f.options.verifyClaim=async hash=>assert.equal(hash,h(70));
+ const funding=await f.open();await funding.prepare(f.allocation);await funding.confirm();workflow=durableClaimApplication(f,funding);
+ const complete=await advanceAggregateClaim({application:workflow.open(),funding});assert.equal(complete.state,'complete');
+ const original=await funding.loadAggregate(h(20));
+ f.options.reconcileClaim=async()=>{throw Object.assign(Error('The later post/preferences intent replaced the funding intent'),{code:'ROLLING_INTENT_NOT_FOUND'});};
+ const reopened=await f.open();await reopened.prepare(f.allocation);
+ assert.deepEqual(await reopened.loadAggregate(h(20)),original);assert.equal(f.state.sends,1);assert.equal(workflow.state.sends,1);
+});
+test('aggregate retained completion rechecks canonical L2 receipt before preparation and again before payment',async()=>{
+ const f=fixture();let canonical=true;
+ f.options.verifyClaim=async txHash=>verifyRollingTopupClaim({sdk:{TxHash:{fromString:value=>value},boundedTransactionRead:fn=>fn(),requireSuccessfulReceipt},
+  node:{getTxReceipt:async()=>({txHash:h(70),status:'checkpointed',executionResult:'success',blockNumber:3,blockHash:h(60)}),getBlock:async()=>({hash:canonical?h(60):h(61)})},txHash,contextGuard:f.options.contextGuard});
+ const funding=await f.open();await funding.prepare(f.allocation);await funding.confirm();const workflow=durableClaimApplication(f,funding);
+ await advanceAggregateClaim({application:workflow.open(),funding});f.options.reconcileClaim=async()=>{throw Error('later unrelated workflow');};
+ canonical=false;await assert.rejects((await f.open()).prepare(f.allocation),{code:'ROLLING_SESSION_CONFIG'});
+ canonical=true;const next=await f.open();await next.prepare(f.allocation);canonical=false;
+ await assert.rejects(next.confirm(),{code:'ROLLING_SESSION_CONFIG'});await assert.rejects((await f.open()).prepare(f.allocation),{code:'ROLLING_SESSION_CONFIG'});
+ assert.equal(f.state.sends,1);assert.equal(workflow.state.sends,1);
+});
+
+test('aggregate completion rejects substituted intent hash and receipts, unknown or reverted outcomes, and incomplete old records',async()=>{
+ const f=fixture(),funding=await f.open();await funding.prepare(f.allocation);const receipts=await funding.confirm();const workflow=durableClaimApplication(f,funding);
+ const app=workflow.open(),prepared=await app.prepare({type:'claim-deposit',...receipts});await funding.checkpointClaim({intentId:prepared.intentId,attempted:true});
+ const done=await app.submitPrepared(prepared.intentId);
+ await assert.rejects(funding.prepare(f.allocation),{code:'ROLLING_FUNDING_RECOVERY_REQUIRED'});
+ await assert.rejects(funding.recordConfirmedClaim({...done,txHash:h(71)}),{code:'ROLLING_FUNDING_MISMATCH'});
+ for(const key of ['receipt','feeReceipt','bokReceipt'])await assert.rejects(funding.recordConfirmedClaim({...done,action:{...done.action,[key]:{...done.action[key],amount:'999'}}}),{code:'ROLLING_FUNDING_MISMATCH'});
+ for(const status of ['unknown','reverted']){
+  await funding.recordConfirmedClaim({...done,status});await assert.rejects(funding.prepare(f.allocation),{code:'ROLLING_FUNDING_RECOVERY_REQUIRED'});
+ }
+ const outcome=workflow.state.outcome;workflow.state.outcome={...outcome,outcome:'reverted'};
+ await assert.rejects(funding.recordConfirmedClaim(done),{code:'ROLLING_FUNDING_MISMATCH'});workflow.state.outcome=outcome;
+ await funding.recordConfirmedClaim(done);await (await f.open()).prepare(f.allocation);assert.equal(f.state.sends,1);assert.equal(workflow.state.sends,1);
+});
+
+test('aggregate manual over-cap confirmation checkpoints before send and retains completion for the next quote',async()=>{
+ const f=fixture(),funding=await f.open();await funding.prepare({...f.allocation,privateFeeCap:'1'});await funding.confirm();const workflow=durableClaimApplication(f,funding);
+ const review=await advanceAggregateClaim({application:workflow.open(),funding});assert.equal(review.state,'review');assert.equal((await funding.inspect()).claim.attempted,false);
+ const app=workflow.open(),application={...app,submitPrepared:async id=>{assert.equal((await funding.inspect()).claim.attempted,true);return app.submitPrepared(id);}};
+ const tampered={...application,reconcile:async id=>{const current=await app.reconcile(id);return {...current,action:{...current.action,bokReceipt:{...current.action.bokReceipt,amount:'999'}}};}};
+ await assert.rejects(submitWithFundingCheckpoint({application:tampered,aggregate:funding,intentId:review.intent.intentId}),{code:'ROLLING_FUNDING_MISMATCH'});assert.equal(workflow.state.sends,0);
+ const done=await submitWithFundingCheckpoint({application,aggregate:funding,intentId:review.intent.intentId});assert.equal(done.status,'confirmed');
+ f.options.reconcileClaim=async()=>{throw Error('later post/preferences workflow');};await (await f.open()).prepare(f.allocation);assert.equal(f.state.sends,1);assert.equal(workflow.state.sends,1);
+});
+
+test('USDC aggregate confirmed completion survives later workflow without another relay POST',async()=>{
+ const f=usdcWalletFixture(),funding=await f.open();await funding.prepare(f.allocation);await funding.confirm();const workflow=durableClaimApplication(f,funding);
+ const done=await advanceAggregateClaim({application:workflow.open(),funding});assert.equal(done.state,'complete');const original=await funding.loadAggregate(h(200));
+ f.options.reconcileClaim=async()=>{throw Error('later post/preferences workflow');};const next=await f.open();await next.prepare(f.allocation);
+ assert.deepEqual(await next.loadAggregate(h(200)),original);assert.equal(f.state.posts,1);assert.equal(workflow.state.sends,1);
+});
+
 test('original encrypted application exposes prepared recovery after attempted checkpoint before submission',async()=>{
  const f=fixture(),funding=await f.open();await funding.prepare(f.allocation);const receipts=await funding.confirm();const workflow=durableClaimApplication(f,funding);
  const prepared=await workflow.open().prepare({type:'claim-deposit',...receipts});await funding.checkpointClaim({intentId:prepared.intentId,attempted:true});
@@ -356,20 +412,20 @@ for(const kind of ['private-fee','bok'])test(`direct ${kind} confirmed claim sur
  f.options.verifyClaim=async()=>{};let canonical=true;f.options.verifyClaim=async()=>{if(!canonical)throw Error('claim changed after review');};const race=await f.open();await race.prepare(f.allocation);canonical=false;await assert.rejects(race.confirm(),/claim changed after review/);assert.equal(f.state.sends,1);
 });
 
-import {submitWithStandaloneTopupCheckpoint} from './aggregate-wallet.mjs';
+import {submitWithFundingCheckpoint} from './aggregate-wallet.mjs';
 for(const kind of ['private-fee','bok'])test(`direct ${kind} manual over-cap claim checkpoints before send and retains confirmed successor`,async()=>{
  const f=topupFixture(kind);f.state.allowance=1000n;let workflow;f.options.reconcileClaim=id=>workflow.open().reconcile(id);const funding=await f.open();await funding.prepare({...f.allocation,privateFeeCap:'1'});await funding.confirm();workflow=durableClaimApplication(f,funding);
  const review=await advanceAggregateClaim({application:workflow.open(),funding});assert.equal(review.state,'review');assert.equal((await funding.inspect()).claim.attempted,false);assert.equal(workflow.state.sends,0);
  const original=workflow.open(),application={...original,submitPrepared:async id=>{assert.equal((await funding.inspect()).claim.attempted,true);return original.submitPrepared(id);}};
- const done=await submitWithStandaloneTopupCheckpoint({application,topups:{[kind]:funding},intentId:review.intent.intentId});assert.equal(done.status,'confirmed');assert.equal(workflow.state.sends,1);
+ const done=await submitWithFundingCheckpoint({application,topups:{[kind]:funding},intentId:review.intent.intentId});assert.equal(done.status,'confirmed');assert.equal(workflow.state.sends,1);
  f.options.reconcileClaim=async()=>{throw Error('later unrelated workflow');};await (await f.open()).prepare(f.allocation);assert.equal(f.state.sends,1);
 });
 
 test('direct top-up manual checkpoint rejects substituted receipt and leaves unrelated imported claim alone',async()=>{
  const f=topupFixture(),funding=await f.open();f.state.allowance=1000n;await funding.prepare(f.allocation);const {receipt}=await funding.confirm();await funding.checkpointClaim({intentId:h(901),attempted:false});let sends=0;
  const app=id=>({reconcile:async()=>({intentId:id,status:'prepared',action:{type:'claim-bok',receipt:{...receipt,amount:'999'}}}),submitPrepared:async()=>{sends++;return {status:'unknown'};}});
- await assert.rejects(submitWithStandaloneTopupCheckpoint({application:app(h(901)),topups:{bok:funding},intentId:h(901)}),{code:'ROLLING_FUNDING_MISMATCH'});assert.equal(sends,0);assert.equal((await funding.inspect()).claim.attempted,false);
- await submitWithStandaloneTopupCheckpoint({application:app(h(902)),topups:{bok:funding},intentId:h(902)});assert.equal(sends,1);assert.equal((await funding.inspect()).claim.attempted,false);
+ await assert.rejects(submitWithFundingCheckpoint({application:app(h(901)),topups:{bok:funding},intentId:h(901)}),{code:'ROLLING_FUNDING_MISMATCH'});assert.equal(sends,0);assert.equal((await funding.inspect()).claim.attempted,false);
+ await submitWithFundingCheckpoint({application:app(h(902)),topups:{bok:funding},intentId:h(902)});assert.equal(sends,1);assert.equal((await funding.inspect()).claim.attempted,false);
 });
 
 function claimProgressFixture(failureStep,original){
