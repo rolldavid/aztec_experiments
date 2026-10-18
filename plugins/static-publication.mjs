@@ -60,7 +60,7 @@ async function retained(target,metadata){
 
 /** Trusted post-acceptance capability. One host owns the private directory.
  * No HTTP route can publish/moderate; only this explicit local capability can. */
-export async function createStaticPublication({directory:root,artifactRoot,origin,boardOrigin,development=false,maxBytes=256*1024*1024,maxThreads=128,maxRevisions=20}){
+export async function createStaticPublication({directory:root,artifactRoot,origin,boardOrigin,development=false,maxBytes=256*1024*1024,maxThreads=128,maxRevisions=20,artifactApi=null}){
  await directory(root);await directory(artifactRoot);
  const url=new URL(origin),board=new URL(boardOrigin);assert(url.origin===origin&&board.origin===boardOrigin&&origin!==boardOrigin&&!url.username&&!url.password&&!board.username&&!board.password);
  for(const u of [url,board])assert(u.protocol==='https:'||(development&&u.protocol==='http:'&&['127.0.0.1','[::1]'].includes(u.hostname)));
@@ -124,10 +124,24 @@ export async function createStaticPublication({directory:root,artifactRoot,origi
    if(requests>=8){res.writeHead(503,{'Cache-Control':'no-store'});res.end();return;}requests++;
    try{
     const headers={'Cache-Control':'no-store','X-Content-Type-Options':'nosniff','Referrer-Policy':'no-referrer','Access-Control-Allow-Origin':'*','Cross-Origin-Resource-Policy':'cross-origin',
-     'Content-Security-Policy':"default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data: https:; connect-src https:; worker-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors "+boardOrigin+"; sandbox allow-scripts"};
+     'Content-Security-Policy':"default-src 'none'; script-src 'self' 'unsafe-inline' https:; style-src 'self' 'unsafe-inline' https:; img-src 'self' data: https:; font-src 'self' data: https:; connect-src https: "+origin+"; worker-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors "+boardOrigin+"; sandbox allow-scripts"};
     const deny=(status=404)=>{res.writeHead(status,headers);res.end();};
     if(poisoned)return deny(503);if(!['GET','HEAD'].includes(req.method))return deny(405);
     if(req.headers.host!==url.host||req.headers.authorization||req.headers.cookie||typeof req.url!=='string'||req.url.length>1024||/[?#%\\]/.test(req.url))return deny(400);
+    const apiRoute=/^\/t\/([0-9a-f]{64})\/api(?:\/([a-z][a-z0-9-]{0,47}))?$/.exec(req.url);
+    if(apiRoute){
+     const [,id,alias]=apiRoute,thread=state.threads[id];if(!thread||thread.disabled)return deny();
+     if(req.headers['transfer-encoding']||req.headers['content-length']&&req.headers['content-length']!=='0')return deny(400);
+     const guard=()=>{if(poisoned||state.threads[id]!==thread||thread.disabled)throw reject();};
+     let value;
+     if(alias){
+      if(req.method!=='GET')return deny(405);if(!artifactApi)return deny();
+      try{value=await artifactApi.invoke({repositoryId:thread.repositoryId,threadId:thread.threadId},alias,guard);}
+      catch(error){return deny([404,429,503].includes(error?.status)?error.status:503);}
+     }else value={aliases:(artifactApi?.describe({repositoryId:thread.repositoryId,threadId:thread.threadId})??[]).map(entry=>({...entry,endpoint:'/t/'+id+'/api/'+entry.alias}))};
+     guard();const body=Buffer.from(JSON.stringify(value));
+     res.writeHead(200,{...headers,'Content-Type':'application/json','Content-Length':body.length,'X-Source-Revision':thread.latest});res.end(req.method==='HEAD'?undefined:body);return;
+    }
     const match=/^\/t\/([0-9a-f]{64})\/(?:latest\/(.*)|r\/([0-9a-f]{40})\/(source\.json|files\/(.*))|(source\.json))$/.exec(req.url);if(!match)return deny();
     const [,id,latest,revision,kind,file,latestSource]=match,thread=state.threads[id];if(!thread||thread.disabled||(revision&&revision!==thread.latest))return deny();
     const current=thread.latest,meta=thread.revisions[current],base=path.join(root,id,current);await directory(base);let body,type;

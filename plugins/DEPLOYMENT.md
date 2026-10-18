@@ -366,6 +366,90 @@ remains untrusted. `setDisabled({repositoryId,threadId,disabled})` is a trusted
 host-only moderation capability; it hides both current artifacts and source,
 persists across restarts and revision changes, and also fences in-flight reads.
 
+### Optional scoped APIs for published pages
+
+`staticPublication.api` defaults to disabled (`{"enabled":false,"endpoints":[]}`).
+To expose a credentialed **public-data** GET endpoint, an operator can explicitly
+configure an alias for an exact published repository and thread:
+
+```json
+{
+  "enabled": true,
+  "endpoints": [{
+    "repositoryId": "REPLACE_WITH_64_HEX_REPOSITORY_ID",
+    "threadId": "REPLACE_WITH_0x_PREFIXED_64_HEX_THREAD_ID",
+    "alias": "forecast",
+    "url": "https://YOUR_APPROVED_API/forecast",
+    "credentialEnv": "ARTIFACT_FORECAST_TOKEN",
+    "totalRequests": 100
+  }]
+}
+```
+
+The repository/thread binding comes from the trusted publication receipt, not
+an HTTP caller. Resolve `ARTIFACT_FORECAST_TOKEN` only in the trusted service
+environment, using a dedicated restricted provider credential separate from model,
+wallet, GitHub and generated-build credentials.
+The facility sends it as a fixed `Authorization: Bearer …` header. Do not put it
+in the URL, source, build environment or downloadable files. HTTPS URLs must be
+fixed and contain no user info, query or fragment. Calls cannot supply a URL,
+headers, query parameters or body, and redirects and retries are disabled.
+
+Every visitor can use an exposed alias. Opaque sandbox origins and wildcard
+CORS allow generated pages to call it; **neither CORS nor a thread URL authenticates
+a visitor**. The configured upstream must return data intended for the public,
+not user-specific or administrative data. Only JSON responses are returned, with
+no upstream headers or cookies. Literal credential echoes (including JSON string
+escapes) are rejected; this does not make an endpoint returning arbitrary encoded
+secrets safe to expose.
+
+Active published pages discover aliases at `GET /t/<publicationId>/api`. Only
+public alias, method and relative endpoint metadata is returned. The upstream
+URL and environment reference stay private. Bok's built-in authoring guidance
+describes discovery without passing operator configuration into model context:
+
+```js
+const prefix = '/t/' + location.pathname.split('/')[2];
+const response = await fetch(prefix + '/api', { credentials: 'omit' });
+if (!response.ok) throw new Error('App APIs are unavailable');
+const { aliases } = await response.json();
+const forecast = aliases.find(entry => entry.alias === 'forecast');
+if (forecast) {
+  const result = await fetch(forecast.endpoint, { credentials: 'omit' });
+  if (result.ok) renderForecast(await result.json());
+  else showUnavailable(); // Includes exhausted allowance; do not retry automatically.
+}
+```
+
+The discovery route is available only for a current, non-disabled publication;
+unconfigured threads return an empty alias list. API calls are GET only (HEAD
+does not spend). Disabling a publication hides its discovery and API routes and
+discards in-flight results. Replacing the current publication also fences an
+in-flight result. CSP retains `sandbox allow-scripts` without same-origin access;
+it permits public HTTPS connections plus the exact artifact origin, including
+the configured local development origin.
+
+Each alias has one **lifetime allowance shared by all visitors and revisions**.
+The host durably reserves a request before dispatch; errors, timeouts, redirects,
+oversized responses and lost results count and are never automatically refunded.
+There is one upstream request at a time across the facility, a 20-second failure
+watchdog and a 64-KiB decoded response limit. Shutdown aborts and drains the owned
+request before releasing the hosted lease. No model budget or user Bok credit is
+charged by this facility; the operator is responsible for upstream charges and
+must authorize the endpoint’s per-call cost within the applicable separate budget.
+Request counts do not independently measure or limit dollar spend; also configure
+a provider-side spending limit. This is not a proxy for private user data.
+
+The private hosted state directory retains `artifact-api.json` and
+`artifact-api.initialized.json`, outside the static publication/source trees.
+Keep both with the service's durable state. Missing initialized allowance state
+fails closed. Restarting, removing/re-adding an alias or rotating its environment
+value does not replenish its allowance. Changing an existing alias's URL,
+credential reference or total allowance is rejected. A different alias is a new
+explicit operator allocation, not a way for generated code to extend a budget.
+No HTTP endpoint configures aliases or resets counters. Preserve exhausted state;
+do not delete it to resume service.
+
 Default retention bounds are 128 threads, 20 revisions per thread, 256 MiB of
 source/archive/artifact content, 8,192 stored content files and an 8 MiB catalog.
 Eight simultaneous HTTP reads are admitted. Metadata and filesystem allocation

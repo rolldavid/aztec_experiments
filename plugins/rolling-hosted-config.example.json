@@ -37,7 +37,8 @@
     "origin": "https://YOUR_ARTIFACT_ORIGIN",
     "boardOrigin": "https://YOUR_BOARD_ORIGIN",
     "host": "127.0.0.1",
-    "port": 8788
+    "port": 8788,
+    "api": {"enabled": false, "endpoints": []}
   },
   "connectedRepositories": [],
   "githubApp": {

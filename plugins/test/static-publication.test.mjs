@@ -6,6 +6,7 @@ import path from 'node:path';
 import http from 'node:http';
 import {createHash,randomUUID} from 'node:crypto';
 import {createStaticPublication} from '../static-publication.mjs';
+import {createArtifactApi} from '../artifact-api.mjs';
 import {publishAcceptedRevision} from '../main.mjs';
 const sha=b=>createHash('sha256').update(b).digest('hex'),revision=n=>String(n).repeat(40),repositoryId='a'.repeat(64),threadId='0x'+'b'.repeat(64);
 // Labelled validated-executor receipt fixture; these tests qualify publication,
@@ -138,21 +139,44 @@ test('moderation change during an in-flight disk read prevents stale response',a
  }finally{unblock?.();t.mock.restoreAll();await f.close();}
 });
 
-test('actual browser runs generated static JS with isolated storage and labelled public API',{skip:process.env.BOK_PUBLICATION_BROWSER_TESTS!=='1',timeout:30000},async()=>{
- const f=await fixture();let browser;
+test('actual browser runs generated static JS with isolated storage and labelled public and scoped APIs',{skip:process.env.BOK_PUBLICATION_BROWSER_TESTS!=='1',timeout:30000},async()=>{
+ const f=await fixture();let browser,artifactApi,scopedCalls=0;
  try{
-  const html=`<!doctype html><title>Generated sandbox</title><p id="status">starting</p><script>
+  artifactApi=await createArtifactApi({directory:f.root,config:{enabled:true,endpoints:[{repositoryId,threadId,alias:'forecast',url:'https://scoped-fixture.invalid/forecast',credentialEnv:'SCOPED_TOKEN',totalRequests:2}]},env:{SCOPED_TOKEN:'SYNTHETIC_SCOPED_TOKEN'},lease:{assertHeld:async()=>{}},fetch:async(_url,options)=>{assert.equal(options.headers.Authorization,'Bearer SYNTHETIC_SCOPED_TOKEN');scopedCalls++;return new Response('{"label":"scoped fixture"}',{headers:{'content-type':'application/json'}});}});
+  f.config.artifactApi=artifactApi;f.publisher=await f.reopen();
+  const html=`<!doctype html><title>Generated sandbox</title><link rel="stylesheet" href="https://public-static-fixture.invalid/style.css"><script src="https://public-static-fixture.invalid/script.js"></script><p id="status">starting</p><script>
   (async()=>{let isolated=false;try{localStorage.setItem('untrusted','x')}catch{isolated=true}
   const publicData=await (await fetch('https://public-static-fixture.invalid/data',{credentials:'omit'})).json();
-  document.querySelector('#status').textContent=isolated&&publicData.label==='inert public fixture'?'isolated JS works':'failed';})();
+  const discovery=await (await fetch('/t/'+location.pathname.split('/')[2]+'/api',{credentials:'omit'})).json();
+  const scopedData=await (await fetch(discovery.aliases[0].endpoint,{credentials:'omit'})).json();
+  document.querySelector('#status').textContent=isolated&&window.externalAssetLoaded===true&&publicData.label==='inert public fixture'&&scopedData.label==='scoped fixture'?'isolated JS works':'failed';})();
   </script>`;
   const p=await f.publisher.publish(await receipt(f.artifactRoot,1,null,{html}));
-  const {chromium}=await import('playwright');browser=await chromium.launch({headless:true});const context=await browser.newContext();let publicCalls=0;
-  await context.route('**/*',async route=>{const url=route.request().url();if(url.startsWith(f.origin+'/'))return route.continue();if(url==='https://public-static-fixture.invalid/data'){publicCalls++;return route.fulfill({status:200,contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:'{"label":"inert public fixture"}'});}return route.abort();});
-  const page=await context.newPage();await page.goto(p.latestUrl);await page.locator('#status').filter({hasText:'isolated JS works'}).waitFor({timeout:5000});assert.equal(publicCalls,1);
+  const {chromium}=await import('playwright');browser=await chromium.launch({headless:true});const context=await browser.newContext();let publicCalls=0,assetCalls=0;
+  await context.route('**/*',async route=>{const url=route.request().url();if(url.startsWith(f.origin+'/'))return route.continue();if(url==='https://public-static-fixture.invalid/script.js'){assetCalls++;return route.fulfill({status:200,contentType:'application/javascript',body:'window.externalAssetLoaded=true;'});}if(url==='https://public-static-fixture.invalid/style.css'){assetCalls++;return route.fulfill({status:200,contentType:'text/css',body:'#status { color: rgb(12, 34, 56); }'});}if(url==='https://public-static-fixture.invalid/data'){publicCalls++;return route.fulfill({status:200,contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:'{"label":"inert public fixture"}'});}return route.abort();});
+  const page=await context.newPage();await page.goto(p.latestUrl);await page.locator('#status').filter({hasText:'isolated JS works'}).waitFor({timeout:5000});assert.equal(publicCalls,1);assert.equal(scopedCalls,1);assert.equal(assetCalls,2);assert.equal(await page.locator('#status').evaluate(el=>getComputedStyle(el).color),'rgb(12, 34, 56)');assert.equal(await page.evaluate(()=>window.origin),'null');
   assert.equal(await page.evaluate(()=>{try{document.cookie='x=y';return document.cookie}catch{return 'blocked'}}),'blocked');
   assert.deepEqual(await context.cookies(),[]);await context.close();
- }finally{await browser?.close();await f.close();}
+ }finally{await browser?.close();await artifactApi?.close();await f.close();}
+});
+
+test('published thread API discovery and GET preserve moderation, public isolation and original allowance',async()=>{
+ const f=await fixture();let artifactApi,release;const secret='SYNTHETIC_SCOPED_SECRET';let calls=0,enter;
+ const entered=new Promise(r=>enter=r),hold=new Promise(r=>release=r);
+ try{
+  artifactApi=await createArtifactApi({directory:f.root,config:{enabled:true,endpoints:[{repositoryId,threadId,alias:'forecast',url:'https://scoped-fixture.invalid/forecast',credentialEnv:'SCOPED_TOKEN',totalRequests:2}]},env:{SCOPED_TOKEN:secret},lease:{assertHeld:async()=>{}},fetch:async(url,options)=>{assert.equal(url,'https://scoped-fixture.invalid/forecast');assert.deepEqual(options.headers,{Accept:'application/json',Authorization:'Bearer '+secret});calls++;if(calls===2){enter();await hold;}return new Response('{"forecast":"sunny"}',{headers:{'content-type':'application/json','set-cookie':'never=forward','x-upstream':'private'}});}});
+  f.config.artifactApi=artifactApi;f.publisher=await f.reopen();
+  const p=await f.publisher.publish(await receipt(f.artifactRoot)),prefix=f.origin+'/t/'+p.publicationId+'/api',endpoint=prefix+'/forecast';
+  const discovery=await fetch(prefix,{headers:{origin:'null'}});assert.equal(discovery.status,200);assert.equal(discovery.headers.get('access-control-allow-origin'),'*');assert.deepEqual(await discovery.json(),{aliases:[{alias:'forecast',method:'GET',endpoint:'/t/'+p.publicationId+'/api/forecast'}]});
+  for(const url of [p.latestUrl,p.sourceUrl,p.latestSourceUrl,prefix]){const text=await(await fetch(url)).text();assert(!text.includes(secret)&&!text.includes('SCOPED_TOKEN')&&!text.includes('scoped-fixture.invalid'));}
+  assert.equal((await fetch(endpoint,{method:'HEAD'})).status,405);assert.equal((await fetch(endpoint+'?url=https://other.invalid')).status,400);assert.equal((await fetch(endpoint,{method:'POST',body:'caller data'})).status,405);
+  const other=await f.publisher.publish({...await receipt(f.artifactRoot,2),threadId:'0x'+'c'.repeat(64)});
+  assert.deepEqual(await(await fetch(f.origin+'/t/'+other.publicationId+'/api')).json(),{aliases:[]});assert.equal((await fetch(f.origin+'/t/'+other.publicationId+'/api/forecast')).status,404);assert.equal(calls,0);
+  const result=await fetch(endpoint,{headers:{origin:'null','x-caller':'not forwarded'}});assert.equal(result.status,200);assert.deepEqual(await result.json(),{forecast:'sunny'});assert.equal(result.headers.get('set-cookie'),null);assert.equal(result.headers.get('x-upstream'),null);
+  const pending=fetch(endpoint);await entered;await f.publisher.setDisabled({repositoryId,threadId,disabled:true});release();assert.equal((await pending).status,503);
+  assert.equal((await fetch(prefix)).status,404);assert.equal((await fetch(endpoint)).status,404);assert.equal((await fetch(p.sourceUrl)).status,404);assert.equal(calls,2);
+  await f.publisher.setDisabled({repositoryId,threadId,disabled:false});assert.equal((await fetch(endpoint)).status,429);assert.equal(calls,2);
+ }finally{release?.();await artifactApi?.close();await f.close();}
 });
 
 for(const kind of ['unfinished directory','corrupt pointer'])test('reopen rejects '+kind+' until operator reconciliation',async()=>{

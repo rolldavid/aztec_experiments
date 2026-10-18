@@ -27,6 +27,7 @@ import {githubApi,githubToolbox} from './github-tools.mjs';
 import {threadRepositories} from './thread-repositories.mjs';
 import {createIsolatedExecution} from './isolated-execution.mjs';
 import {createStaticPublication} from './static-publication.mjs';
+import {createArtifactApi,ARTIFACT_API_GUIDANCE} from './artifact-api.mjs';
 import {createGitHubAppBroker} from './github-app-broker.mjs';
 import {provingEnabledForNode} from '../shared/proving-policy.mjs';
 
@@ -276,8 +277,8 @@ export async function runRollingHostedService({config,env=process.env,onError=()
  await fs.mkdir(config.stateDirectory,{recursive:true,mode:0o700});
  assert.equal(await fs.realpath(config.stateDirectory),config.stateDirectory);const directory=await fs.lstat(config.stateDirectory);
  assert(directory.isDirectory()&&!directory.isSymbolicLink()&&(directory.mode&0o777)===0o700);
- const lease=await acquireHostedLease(config.stateDirectory);let wallet,index,server,artifactsServer,recoverPending,rawBoard,closing;
- function close(){return closing??=(async()=>{const errors=[];for(const fn of [()=>server?.close(),()=>recoverPending?.close(),()=>rawBoard?.close(),()=>artifactsServer?new Promise(resolve=>{artifactsServer.close(resolve);artifactsServer.closeAllConnections();}):undefined,()=>wallet?.stop(),()=>index?.close(),()=>lease.close()])try{await fn();}catch(error){errors.push(error);}if(errors.length)throw new AggregateError(errors,'Rolling hosted cleanup failed');})();}
+ const lease=await acquireHostedLease(config.stateDirectory);let wallet,index,server,artifactsServer,artifactApi,recoverPending,rawBoard,closing;
+ function close(){return closing??=(async()=>{const errors=[];for(const fn of [()=>server?.close(),()=>recoverPending?.close(),()=>rawBoard?.close(),()=>artifactApi?.close(),()=>artifactsServer?new Promise(resolve=>{artifactsServer.close(resolve);artifactsServer.closeAllConnections();}):undefined,()=>wallet?.stop(),()=>index?.close(),()=>lease.close()])try{await fn();}catch(error){errors.push(error);}if(errors.length)throw new AggregateError(errors,'Rolling hosted cleanup failed');})();}
 
  try{
   const key=env.PLUGIN_QUERY_API_KEY;if(!config.development)assert(typeof key==='string','Operator query capability required');
@@ -326,7 +327,8 @@ export async function runRollingHostedService({config,env=process.env,onError=()
   await execution.assertAvailable();
   const publicationRoot=path.join(config.stateDirectory,'static-publication');await fs.mkdir(publicationRoot,{recursive:true,mode:0o700});
   assert(config.staticPublication&&typeof config.staticPublication.origin==='string'&&typeof config.staticPublication.boardOrigin==='string','Separate artifact origin required');
-  const publication=await createStaticPublication({directory:publicationRoot,artifactRoot:outputRoot,origin:config.staticPublication.origin,boardOrigin:config.staticPublication.boardOrigin,development:config.development});
+  artifactApi=await createArtifactApi({config:config.staticPublication.api,directory:config.stateDirectory,lease,env});
+  const publication=await createStaticPublication({directory:publicationRoot,artifactRoot:outputRoot,origin:config.staticPublication.origin,boardOrigin:config.staticPublication.boardOrigin,development:config.development,artifactApi});
   assert(config.development||config.githubApp?.enabled===true,'Dedicated GitHub App installation required');
   let mirror;
   if(config.githubApp?.enabled===true){
@@ -350,7 +352,7 @@ export async function runRollingHostedService({config,env=process.env,onError=()
      requestId:request.requestId,target:request.target,store,lease,development:config.development,proofMode:config.development?'disabled':'real'}));
     const escrow=serializeHostedEscrow(rawEscrow,walletOperation);
     return runPrivateBokRequest({request,board,escrow,store,provider,conversation,admitThread:mirror?async({threadId,invocationId})=>{const admission=await repositories.open({threadId,invocationId,repository});await admission.close();}:undefined,limits:config.limits,recoverAccepted:current=>recoverAcceptedHostedRevision({repositories,repository,request:current}),runAgent:async({model,conversation,...input})=>
-     bokRunner({runner:createAgent({model,toolbox,conversation,summaryModelId,maxCalls:config.limits?.maxCalls??8,maxTokens:config.limits?.maxTokens??1500,instructions:'You are bok, the board development assistant. Answer the explicit request. Each thread has its own persistent source repository. For static applications, provide package.json with a build script, explicit Node tests, and dist output. Use check_workspace to run isolated tests and builds and repair failures before answering. The isolated build/test runner has Node, no network, and no dependency installation. Published dist code runs in a browser, where CommonJS module, exports, require and Node globals are unavailable. Test browser entry scripts and registered handlers without supplying those globals. Preserve the explicit expected states and activation sequences in the latest request; never change expected values to match incorrect behavior. Node test success alone does not verify browser behavior. Host validation saves accepted revisions; tools cannot alter permissions or deploy.'})}).run(input)});
+     bokRunner({runner:createAgent({model,toolbox,conversation,summaryModelId,maxCalls:config.limits?.maxCalls??8,maxTokens:config.limits?.maxTokens??1500,instructions:'You are bok, the board development assistant. Answer the explicit request. Each thread has its own persistent source repository. For static applications, provide package.json with a build script, explicit Node tests, and dist output. Use check_workspace to run isolated tests and builds and repair failures before answering. The isolated build/test runner has Node, no network, and no dependency installation. Published dist code runs in a browser, where CommonJS module, exports, require and Node globals are unavailable. Test browser entry scripts and registered handlers without supplying those globals. Preserve the explicit expected states and activation sequences in the latest request; never change expected values to match incorrect behavior. Node test success alone does not verify browser behavior. Host validation saves accepted revisions; tools cannot alter permissions or deploy. '+ARTIFACT_API_GUIDANCE})}).run(input)});
    }});
   return {address:server.address,artifactAddress:artifactsServer.address(),close,
    setPublicationDisabled:input=>publicationOperation(async()=>{await lease.assertHeld();return publication.setDisabled(input);})};
