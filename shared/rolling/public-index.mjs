@@ -346,8 +346,10 @@ export async function createRollingPersistentPublicIndex({node,artifact,bokArtif
         check(Array.isArray(tx.publicLogs)&&tx.publicLogs.length<=FLAT_PUBLIC_LOGS_PAYLOAD_LENGTH);
         let fields=0,hasBoard=false;for(const log of tx.publicLogs){const size=log.sizeInFields();check(Number.isSafeInteger(size)&&size>0);fields+=size;check(fields<=FLAT_PUBLIC_LOGS_PAYLOAD_LENGTH);if(textHash(log.contractAddress)===scope.boardAddress||textHash(log.contractAddress)===scope.bok?.address)hasBoard=true;}
         return {hash:h,hasBoard};});
+      if(number===deployment.blockNumber)check(effects.some(tx=>tx.hash===deployment.txHash));
       if(number===scope.bok?.deployment.blockNumber)check(effects.some(tx=>tx.hash===scope.bok.deployment.txHash));
       const block={number:String(number),hash:textHash(raw.hash),parentHash:control.checkpoint.hash,transactionCount:String(effects.length)};
+      const checkCompletion=()=>{if(number===deployment.blockNumber)check(effects.some(tx=>tx.hash===deployment.txHash)&&control.scalars.version!=='0');};
       check((await anchor(number)).hash===block.hash);
       if(control.cursor.block)check(same(control.cursor.block,block));
       // Bind the retained prefix to canonical block identity before comparing
@@ -376,7 +378,7 @@ export async function createRollingPersistentPublicIndex({node,artifact,bokArtif
       }else if(number===deployment.blockNumber){
         // Policy validation must have been performed by the original decoder,
         // even when the deployment block also contains unrelated transactions.
-        check(effects.some(tx=>tx.hash===deployment.txHash)&&control.scalars.version!=='0');
+        checkCompletion();
       }
       await recheck(block);compareBefore(events,block,index===effects.length);
       control=index===effects.length?storage.completeBlock({expectedControl:control,block}):storage.commitTransaction({expectedControl:control,block,txIndex:String(index),txHash,events});
@@ -386,6 +388,7 @@ export async function createRollingPersistentPublicIndex({node,artifact,bokArtif
       // turn or refetch. Keep both original durable segments and CAS checks;
       // the transaction's post-check also guards the completion's admission.
       if(index<effects.length&&index+1===effects.length){
+        checkCompletion();
         compareBefore([],block,true);control=storage.completeBlock({expectedControl:control,block});
         if(previous&&!comparisonDone&&oldSequence===BigInt(previous.segmentCount))finishComparison();
         await recheck(block);

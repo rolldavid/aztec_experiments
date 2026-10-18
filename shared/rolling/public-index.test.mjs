@@ -413,11 +413,12 @@ test('persistent append retains authenticated generation and invalidates prior p
  f.put(4,[await f.post(20,4)]);f.setHead(4);await a.index.step();assert.throws(()=>a.index.publication());await f.drain(a.index);
  const after=a.index.publication();assert.equal(after.authenticationEpoch,before.authenticationEpoch);assert.notEqual(after.revision,before.revision);assert.equal(f.projection(a.storage,'posts','20').text,'Hello');
 });
-for(const defect of ['missing-body','duplicate-transaction','missing-deployment-policy','receipt-block-mismatch','reorg-during-decode','bad-log-digest'])
+for(const defect of ['missing-body','duplicate-transaction','missing-deployment-transaction','missing-deployment-policy','receipt-block-mismatch','reorg-during-decode','bad-log-digest'])
  test(`persistent original decoder/physical boundary rejects ${defect}`,async t=>{
   const f=await persistentFixture(t);
   if(defect==='missing-body')f.blocks.get(1).body=undefined;
   if(defect==='duplicate-transaction')f.blocks.get(1).body.txEffects.push(f.blocks.get(1).body.txEffects[0]);
+  if(defect==='missing-deployment-transaction')f.blocks.get(1).body.txEffects=[{txHash:TxHash.fromString(hex(777)),publicLogs:[],toBuffer:()=>Buffer.alloc(0)}];
   if(defect==='missing-deployment-policy')f.blocks.get(1).body.txEffects[0].publicLogs=[];
   if(defect==='bad-log-digest')f.blocks.get(1).body.txEffects[0].publicLogs[0].fields[3]=Fr.ZERO;
   if(defect==='receipt-block-mismatch'){const original=f.node.getTxReceipt;f.node.getTxReceipt=async(...args)=>({...await original(...args),blockNumber:2});}
