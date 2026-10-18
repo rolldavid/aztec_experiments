@@ -11,7 +11,7 @@ import {startAnvil} from '@aztec-labs/ethereum/test';
 import {createExtendedL1Client} from '@aztec-labs/ethereum/client';
 import {isL1ToL2MessageReady} from '@aztec-labs/aztec.js/messaging';
 import {createNamespacedSafeJsonRpcServer} from '@aztec-labs/foundation/json-rpc/server';
-import {AztecNodeApiSchema} from '@aztec-labs/stdlib/interfaces/client';
+import {AztecNodeApiSchema,AztecNodeDebugApiSchema} from '@aztec-labs/stdlib/interfaces/client';
 import {createCompactBlockNativeAdapter,COMPACT_BLOCK_NATIVE_ROUTE} from '../../prover/compact-block-native.mjs';
 import {bbBinary} from '../../scripts/toolchain.mjs';
 
@@ -55,8 +55,9 @@ export function developmentShutdownSummary(error) {
 // Reuse the native compact encoder beside the existing development RPC. The
 // owner drains pending native requests before the SDK stops the node.
 export async function startDevelopmentNodeRpc({node,config,port=0,origins=[],onProgress=()=>{}}) {
+ if(String(config?.l1ChainId)!=='31337'||config?.realProofs!==false)throw Error('Native operator RPC requires the proof-disabled development chain');
  const compact=createCompactBlockNativeAdapter({node,expectedNetworkScope:{chainId:config.l1ChainId,version:config.rollupVersion,rollup:String(config.rollupAddress)},proofsEnabled:config.realProofs,tier:'checkpointed',onFailure:observation=>onProgress(JSON.stringify({event:'development-compact-unavailable',at:Date.now(),...observation}))});
- const rpc=createNamespacedSafeJsonRpcServer({node:[node,AztecNodeApiSchema],aztec:[node,AztecNodeApiSchema]},{maxBatchSize:100,maxBodySizeBytes:10*1024*1024,corsAllowedOrigins:origins});
+ const rpc=createNamespacedSafeJsonRpcServer({node:[node,AztecNodeApiSchema],aztec:[node,AztecNodeApiSchema],aztecDebug:[node,AztecNodeDebugApiSchema]},{maxBatchSize:100,maxBodySizeBytes:10*1024*1024,corsAllowedOrigins:origins});
  const callback=rpc.getApp().callback(),pending=new Set(),failures=[];let closing,closed=false;
  const server=http.createServer((req,res)=>{
   if(closed){res.writeHead(503);res.end();return;}

@@ -347,18 +347,32 @@ if(focused){
   assert.equal(Object.hasOwn(config,'onQueryFailure'),false);
   assert(source.indexOf('await queryService?.close()')<source.indexOf('await net.close()',source.indexOf('await queryService?.close()')));
  });
- test('development native RPC mounts original compact route and retains ordinary node RPC',async()=>{
+ test('development native RPC retains ordinary and compact APIs and delegates standard SDK operator controls',async()=>{
   const {startDevelopmentNodeRpc}=await import('./network.mjs');
-  const events=[];const unused=async()=>{throw Error('Unexpected native read');};
-  const node={getNodeInfo:unused,getChainTips:unused,getWorldStateSyncStatus:unused,getSyncedL1Timestamp:unused,getBlockData:unused,getBlock:unused,getBlockNumber:async()=>7};
+  const {createAztecNodeDebugClient}=await import('@aztec-labs/stdlib/interfaces/client');
+  const events=[],nativeCalls=[];const unused=async()=>{throw Error('Unexpected native read');};
+  const node={getNodeInfo:unused,getChainTips:unused,getWorldStateSyncStatus:unused,getSyncedL1Timestamp:unused,getBlockData:unused,getBlock:unused,getBlockNumber:async()=>7,
+   // Labelled native delegate: verifies SDK transport, not chain execution.
+   mineBlock:async()=>{nativeCalls.push(['mineBlock']);},prove:async checkpoint=>{nativeCalls.push(['prove',checkpoint]);return checkpoint??4;}};
   const service=await startDevelopmentNodeRpc({node,config:{l1ChainId:31337,rollupVersion:1,rollupAddress:'0x'+'1'.repeat(40),realProofs:false},onProgress:value=>{events.push(JSON.parse(value));return new Promise(()=>{});}});
   try{
+   assert.equal(new URL(service.url).hostname,'127.0.0.1');
+   const debug=createAztecNodeDebugClient(service.url);
+   await debug.mineBlock();assert.equal(await debug.prove(),4);assert.equal(await debug.prove(3),3);
+   assert.deepEqual(nativeCalls,[['mineBlock'],['prove',undefined],['prove',3]]);
    const wrongMethod=await fetch(service.url+'/rolling/compact-block-v1');assert.equal(wrongMethod.status,405);await wrongMethod.body.cancel();
    const origin=await fetch(service.url+'/rolling/compact-block-v1',{method:'POST',headers:{origin:'http://127.0.0.1:8081','content-type':'application/json'},body:'{}'});assert.equal(origin.status,415);await origin.body.cancel();
    const malformed=await fetch(service.url+'/rolling/compact-block-v1',{method:'POST',headers:{'content-type':'application/json'},body:'{}'});assert.equal(malformed.status,400);await malformed.body.cancel();assert.deepEqual({...events[0],at:0},{event:'development-compact-unavailable',at:0,stage:'request',status:400,diagnostic:null});
    const ordinary=await fetch(service.url,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:1,method:'aztec_getBlockNumber',params:[]})});assert.equal(ordinary.status,200);assert.equal((await ordinary.json()).result,7);
   }finally{await service.close();}
   await assert.rejects(fetch(service.url,{signal:AbortSignal.timeout(1000)}));
+ });
+ test('development operator RPC rejects public chains and enabled or unspecified proofs before native access',async()=>{
+  const {startDevelopmentNodeRpc}=await import('./network.mjs');
+  const node=new Proxy({},{get(){assert.fail('Rejected configuration must not access native node');}});
+  for(const config of [{l1ChainId:1,realProofs:false},{l1ChainId:11155111,realProofs:false},{l1ChainId:31337,realProofs:true},{l1ChainId:31337},{}]){
+   await assert.rejects(startDevelopmentNodeRpc({node,config}),/proof-disabled development chain/);
+  }
  });
  test('development compact shutdown waits for its original pending native request',async()=>{
   const {startDevelopmentNodeRpc}=await import('./network.mjs');let release,started;
