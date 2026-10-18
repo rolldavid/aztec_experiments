@@ -269,11 +269,22 @@ if(focused){
  });
  test('native network adapter delegates coherent setup and owns shutdown exactly once',async()=>{
   const {startDevnet}=await import('./network.mjs'),dir=await fs.mkdtemp(path.join(os.tmpdir(),'native-devnet-'));
+  const {getNetworkTxGasLimits}=await import('@aztec-labs/stdlib/gas');
+  const {EmptyL1RollupConstants}=await import('@aztec-labs/stdlib/epoch-helpers');
+  const {MAX_TX_DA_GAS}=await import('@aztec-labs/constants');
+  const {default:defaults}=await import('@aztec-foundation/l1-artifacts/network-defaults.json',{with:{type:'json'}});
+  const l1Constants={...EmptyL1RollupConstants,slotDuration:defaults.AZTEC_SLOT_DURATION,ethereumSlotDuration:defaults.ETHEREUM_SLOT_DURATION};
+  // Reproduce the admission failure without deploying a chain or estimating the class again.
+  const publicationDA=92049;assert.equal(getNetworkTxGasLimits({},l1Constants).daGas,55836);
   const calls=[],node={getNodeInfo:async()=>({realProofs:false,l1ChainId:31337,rollupVersion:7,l1ContractAddresses:{rollupAddress:'0x'+'1'.repeat(40)}}),prove:async()=>{calls.push('prove');return 4;}};
   try{
    const runtime=await startDevnet({directory:dir,fundingAddresses:[Fr.ONE]}, {
     startEthereum:async config=>{assert.deepEqual(config,{port:0});calls.push('ethereum');return {rpcUrl:'http://127.0.0.1:18545',stop:async()=>calls.push('stop-ethereum')};},
-    createNetwork:async config=>{assert.equal(config.realProofs,false);assert.equal(config.testAccounts,false);assert.deepEqual(config.prefundAddresses,[String(Fr.ONE)]);assert.equal(config.useAutomineSequencer,undefined,'SDK coherent default owns sequencer');assert.equal(config.ethereumSlotDuration,undefined);assert.equal(config.dateProvider,undefined);calls.push('network');return{node,stop:async()=>calls.push('stop-network')};},
+    createNetwork:async config=>{assert.equal(config.realProofs,false);assert.equal(config.testAccounts,false);assert.deepEqual(config.prefundAddresses,[String(Fr.ONE)]);assert.equal(config.useAutomineSequencer,undefined,'SDK coherent default owns sequencer');assert.equal(config.ethereumSlotDuration,undefined);assert.equal(config.dateProvider,undefined);
+     const limits=getNetworkTxGasLimits(config,l1Constants);
+     assert(limits.daGas>=publicationDA,'normal padded class publication must fit the native network admission limit');
+     assert(limits.daGas<=MAX_TX_DA_GAS,'native protocol maximum stays enforced');
+     calls.push('network');return{node,stop:async()=>calls.push('stop-network')};},
     startRpc:async({node:actual,config})=>{assert.equal(actual,node);assert.equal(config.realProofs,false);calls.push('rpc');return{url:'http://127.0.0.1:18080',close:async()=>calls.push('stop-rpc')};},
    });
    assert.equal(await runtime.settleCheckpoints(),4);await Promise.all([runtime.close(),runtime.close()]);

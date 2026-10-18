@@ -109,6 +109,9 @@ export async function startDevnet({directory,fundingAddresses=[],proofs=false,po
   onProgress('Starting native Aztec local network with proofs disabled');
   pending=createNetwork({l1RpcUrls:[ethereum.rpcUrl],l1Mnemonic:localMnemonic,testAccounts:false,
    prefundAddresses:fundingAddresses.map(String),realProofs:false,p2pEnabled:false,
+   // SDK stdlib/gas/tx_gas_limits documents 72s slots / 6s blocks for class
+   // publication capacity. Native automine still owns all on-demand progress.
+   blockDurationMs:6000,
    bbBinaryPath:bbBinary(),bbWorkingDirectory:path.join(directory,'bb-work'),
    bbIVCConcurrency:1,bbChonkVerifyConcurrency:1,numConcurrentIVCVerifiers:1},onProgress).then(value=>network=value);await pending;
   if(stopping)throw Error('Native development startup cancelled');
