@@ -219,6 +219,7 @@ test('actual SDK board projection gates canonical plugin, moderation, anchor and
  const {rollingBoardPort}=await import('../aztec.mjs');
  const {BarretenbergSync,BackendType}=await import('@aztec-foundation/bb.js');
  const {Fr}=await import('@aztec-labs/foundation/curves/bn254');
+ const {BlockHash}=await import('@aztec-labs/stdlib/block');
  const {loadContractArtifact}=await import('@aztec-labs/stdlib/abi');
  const {getContractClassFromArtifact}=await import('@aztec-labs/stdlib/contract');
  const {deriveStorageSlotInMap}=await import('@aztec-labs/stdlib/hash');
@@ -233,12 +234,14 @@ test('actual SDK board projection gates canonical plugin, moderation, anchor and
   const state={realProofs:false,anchor:f(99),currentClass:classId};
   const post={id:'1',text:'@bok hello',record:{subboard:'0',root:'1'},order:'1',position:{blockNumber:3},removal:null,invocation:{adapter:'9',pluginId:'4',requestId:'2',target:'3',reply:null}};
   const node={getNodeInfo:async()=>({l1ChainId:31337,rollupVersion:3409706519,realProofs:state.realProofs,l1ContractAddresses:{rollupAddress:scope.rollupAddress}}),
-   getBlock:async tag=>({number:5,hash:tag==='checkpointed'?f(99):state.anchor}),getContract:async()=>({originalContractClassId:classId,currentContractClassId:state.currentClass}),
+   getBlock:async tag=>({number:5,hash:BlockHash.fromString(tag==='checkpointed'?f(99):state.anchor)}),getContract:async()=>({originalContractClassId:classId,currentContractClassId:state.currentClass}),
    getPublicStorageAt:async(anchor,address,slot)=>{assert.deepEqual(anchor,{number:5,hash:f(99)});assert.equal(String(address),scope.boardAddress);return new Fr(storage.get(slot.toBigInt()));}};
   const index={scanPendingPredecessors:()=>({rows:[],nextAfter:null,revision:'one'}),sync:async()=>{},status:()=>({state:'ready'}),query:()=>({post}),scanPosts:()=>({complete:true,posts:[post],nextAfter:null,checkpoint:{number:5,hash:f(99)}})};
-  const port=await rollingBoardPort({node,index,scope,boardArtifact:artifact,pluginId,development:true});
+  let terminal=false;
+  const port=await rollingBoardPort({node,index,scope,boardArtifact:artifact,pluginId,development:true,isTerminalWithoutReply:async(_request,anchor)=>{assert.deepEqual(anchor,{number:5,hash:f(99)});const captured=await hostedTerminalNode(node,anchor,true).getBlock('checkpointed');assert(captured.hash instanceof BlockHash);return terminal;}});
   assert.equal((await port.pending(null)).requests[0].target,f(3));assert.equal((await port.readRequest(f(1))).usable,true);
   index.scanPendingPredecessors=id=>{assert.equal(id,'1');return {rows:[{postId:'7',threadId:'1',order:'0',requestId:'7',target:'8',pluginId:'4',adapter:'9'}],nextAfter:null,revision:'one'};};assert.equal((await port.readRequest(f(1))).usable,false);assert.equal((await port.pending(null)).requests.length,0);
+  terminal=true;assert.equal((await port.readRequest(f(1))).usable,true,'actual SDK hash admits a canonically terminal predecessor');terminal=false;
   post.invocation.reply={postId:'2'};assert.equal((await port.readRequest(f(1))).usable,false,'replied recovery still respects an earlier unresolved invocation');index.scanPendingPredecessors=()=>({rows:[],nextAfter:null,revision:'one'});assert.equal((await port.readRequest(f(1))).usable,true);post.invocation.reply=null;
   const originalScan=index.scanPosts;let scans=0;
   index.scanPosts=({after,limit})=>{scans++;assert.equal(limit,64);if(after===null)return {complete:true,posts:[{...post,text:null}],nextAfter:'1',checkpoint:{number:5,hash:f(99)}};assert.equal(after,'1');return {complete:true,posts:[post],nextAfter:null,checkpoint:{number:5,hash:f(99)}};};
