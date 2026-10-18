@@ -1,7 +1,10 @@
 // TEST ONLY. Serialized fetch-request observations, not a universal network tap.
 // Install before client factories capture fetch. Parent owns installation/restore,
 // actual listener ingress reconciliation, frozen transport inventory and lifecycle.
-import {createHmac, randomBytes} from 'node:crypto';
+import {createHmac, randomBytes, createHash} from 'node:crypto';
+import assert from 'node:assert/strict';
+import {Tx,TxEffect} from '@aztec-labs/stdlib/tx';
+import {classifyT03PublicFootprint,T03_PUBLIC_ROLES} from '../t03-public-footprint.mjs';
 import {AztecNodeApiSchema} from '@aztec-labs/stdlib/interfaces/client';
 
 export const WIRE_LABELS=Object.freeze(['trusted-query','trusted-proof','trusted-upstream','ordinary-node','public-reader','public-l1']);
@@ -215,4 +218,72 @@ export function createRollingWireTrace({roles,limits={}}={}){
    relationships:{...repeated,meaning:'Whole scalar equality aggregates only; constants/content may repeat. No ownership or anonymity inference.'},
    rows:[...rows.values()].map(row=>({...row,methods:[...row.methods],roles:[...row.roles]}))};
  }});
+}
+
+
+// The browser's EXISTING route hook calls this only for its configured query/L1
+// endpoints. No fetch wrapper, retry, proving transport or wallet/control input.
+export function createRollingPublicTxCapture({queryUrl,l1Url}) {
+ const endpoints=new Map([[new URL(queryUrl).href,'query'],[new URL(l1Url).href,'l1']]);
+ assert.equal(endpoints.size,2);
+ for(const value of endpoints.keys()){const u=new URL(value);assert(['http:','https:'].includes(u.protocol)&&!u.username&&!u.password&&!u.hash);}
+ const methods={},transactions=new Map();let requests=0,completed=0,failed=0,errors=0,truncated=0,unrecognized=0,storedBytes=0;
+ const known=new Set([...nodeMethods,...l1Methods,...diagnosticMethods]);
+ const digest=bytes=>createHash('sha256').update(bytes).digest('hex');
+ return Object.freeze({
+  async observe({url,method,body}) {
+   const endpoint=endpoints.get(url);if(!endpoint||method!=='POST')return;
+   if(++requests>30000){truncated++;return;}
+   try {
+    if(typeof body!=='string'||Buffer.byteLength(body)>8*1024*1024){truncated++;return;}
+    const parsed=JSON.parse(body),batch=Array.isArray(parsed)?parsed:[parsed];
+    if(batch.length<1||batch.length>32){truncated++;return;}
+    for(const rpc of batch){
+     if(!object(rpc)||rpc.jsonrpc!=='2.0'||typeof rpc.method!=='string'||Object.keys(rpc).some(k=>!['jsonrpc','id','method','params'].includes(k))){errors++;continue;}
+     const name=known.has(rpc.method)?rpc.method:'unrecognized';
+     methods[endpoint+':'+name]=(methods[endpoint+':'+name]??0)+1;
+     if(name==='unrecognized')unrecognized++;
+     if(endpoint!=='query'||!txMethods.has(rpc.method))continue;
+     const raw=rpc.params?.[0];
+     if(!object(raw)||Object.keys(raw).some(k=>!['txHash','data','chonkProof','contractClassLogFields','publicFunctionCalldata'].includes(k))){errors++;continue;}
+     const decoded=await Tx.schema.parseAsync(raw),tx=decoded.withoutProof(),hash=tx.getTxHash().toString(),bytes=tx.toBuffer();
+     let entry=transactions.get(hash);
+     if(!entry){
+      if(transactions.size>=64||storedBytes+bytes.length>32*1024*1024){truncated++;continue;}
+      storedBytes+=bytes.length;entry={tx,bytes,methods:{},proofs:new Map(),canonical:null};transactions.set(hash,entry);
+     }else if(!entry.bytes.equals(bytes)){errors++;continue;}
+     entry.methods[rpc.method]=(entry.methods[rpc.method]??0)+1;
+     const proof=decoded.chonkProof.toBuffer(),key=digest(proof);
+     if(entry.proofs.has(key))entry.proofs.get(key).count++;
+     else if(entry.proofs.size<4)entry.proofs.set(key,{sha256:key,bytes:proof.length,count:1});else truncated++;
+    }
+   } catch { errors++; } // Never retain exception text or original request data.
+  },
+  complete(status){completed++;if(!Number.isInteger(status)||status<200||status>=300)failed++;},
+  qualify(hash,{receipt,effect,block,roles}) {
+   const entry=transactions.get(hash);assert(entry,'Canonical transaction was not captured');
+   assert((entry.methods.node_sendTx??0)+(entry.methods.aztec_sendTx??0)>0,'No captured submission');
+   assert.equal(receipt.txHash.toString(),hash);assert(['checkpointed','proven','finalized'].includes(receipt.status)&&receipt.executionResult==='success');
+   assert(Number.isSafeInteger(receipt.blockNumber)&&receipt.blockNumber>0);
+   const blockHash=receipt.blockHash?.toString();assert.match(blockHash??'',/^0x[0-9a-f]{64}$/);
+   assert.equal(block?.blockHash?.toString(),blockHash);assert.equal(block.header.getBlockNumber(),receipt.blockNumber);
+   assert(effect?.data instanceof TxEffect);assert.equal(effect.data.txHash.toString(),hash);
+   assert.equal(effect.l2BlockHash?.toString(),blockHash);assert.equal(effect.l2BlockNumber,receipt.blockNumber);
+   const bytes=effect.data.toBuffer();assert(bytes.length<=8*1024*1024);
+   const previous=entry.canonical?Buffer.byteLength(entry.canonical.effectBase64,'base64'):0;
+   assert(storedBytes-previous+bytes.length<=32*1024*1024);storedBytes=storedBytes-previous+bytes.length;
+   const footprint=roles?.author&&roles?.sharedPayer?classifyT03PublicFootprint({tx:entry.tx,effect:effect.data,roles}):null;
+   entry.canonical={blockNumber:receipt.blockNumber,blockHash,status:receipt.status,effectBase64:bytes.toString('base64'),effectSha256:digest(bytes),footprint,
+    missingRoles:T03_PUBLIC_ROLES.filter(role=>roles?.[role]==null)};
+  },
+  snapshot(){return {schemaVersion:1,scope:'Application browser route requests at configured query/L1 endpoints only; extension/serviceworker, remote receiver and other processes excluded',
+   requests,completed,pending:requests-completed,failed,errors,truncated,unrecognized,methods:{...methods},privacyAcceptance:'not-evaluated',
+   transactions:[...transactions].map(([hash,e])=>({hash,methods:{...e.methods},proofStrippedTxBase64:e.bytes.toString('base64'),proofStrippedTxSha256:digest(e.bytes),proofs:[...e.proofs.values()].map(p=>({...p})),canonical:e.canonical?structuredClone(e.canonical):null})),
+   limits:'Only pinned method names retained; unknown names redacted and counted. Public kernel outputs and encrypted effect logs remain public data, not witnesses or plaintext notes. Equality checks do not establish unlinkability.'};},
+ });
+}
+export function validateRollingPublicRoles(value){
+ assert(object(value)&&Object.keys(value).length<=T03_PUBLIC_ROLES.length);
+ for(const [role,address]of Object.entries(value))assert(T03_PUBLIC_ROLES.includes(role)&&typeof address==='string'&&/^0x(?:[a-fA-F0-9]{40}|[a-fA-F0-9]{64})$/.test(address)&&BigInt(address)>0n);
+ return {...value};
 }

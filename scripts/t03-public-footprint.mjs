@@ -3,7 +3,8 @@
 import assert from 'node:assert/strict';
 import {Tx,TxEffect} from '@aztec-labs/stdlib/tx';
 
-const ROLES=['author','otherAuthor','sharedPayer','board','moderator','funder','collateralFunder','otherCollateralFunder','feeFunder','otherFeeFunder','coinbase'];
+export const T03_PUBLIC_ROLES=Object.freeze(['author','otherAuthor','sharedPayer','board','moderator','funder','collateralFunder','otherCollateralFunder','feeFunder','otherFeeFunder','coinbase']);
+const ROLES=T03_PUBLIC_ROLES;
 function scalar(value){
  const text=value?.toString();
  assert(typeof text==='string'&&/^0x[0-9a-fA-F]{1,64}$/.test(text),'Expected public field/address');

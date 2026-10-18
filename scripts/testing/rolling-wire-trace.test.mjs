@@ -397,3 +397,38 @@ test('synthetic board navigation observes IDs and rejects unknown or duplicate p
   assert(!JSON.stringify(s).includes(a));
  }
 });
+
+
+test('public Tx capture uses actual SDK decoding, strips proof and binds canonical effect',async()=>{
+ const {createRollingPublicTxCapture,validateRollingPublicRoles}=await import('./rolling-wire-trace.mjs');
+ const {Tx,TxEffect,BlockHeader}=await import('@aztec-labs/stdlib/tx');
+ const {AztecAddress}=await import('@aztec-labs/stdlib/aztec-address');
+ const tx=Tx.random({randomProof:true});tx.data.feePayer=AztecAddress.fromStringUnsafe(b);
+ const {jsonStringify}=await import('@aztec-labs/foundation/json-rpc');
+ const raw=JSON.parse(jsonStringify(tx)),capture=createRollingPublicTxCapture({queryUrl:origin+'/v1/node',l1Url:origin+'/l1'});
+ for(const method of ['node_simulatePublicCalls','node_isValidTx','node_sendTx']){
+  await capture.observe({url:origin+'/v1/node',method:'POST',body:rpc(method,[raw])});capture.complete(200);
+ }
+ const seen=capture.snapshot();assert.equal(seen.errors,0);assert.equal(seen.transactions.length,1);assert.equal(seen.requests,3);assert.equal(seen.pending,0);
+ const row=seen.transactions[0],stripped=Tx.fromBuffer(Buffer.from(row.proofStrippedTxBase64,'base64'));
+ assert(stripped.chonkProof.toBuffer().equals(Tx.random().chonkProof.toBuffer()));assert(row.proofs[0].bytes>stripped.chonkProof.toBuffer().length);
+ assert.equal(row.methods.node_sendTx,1);assert(!JSON.stringify(seen).includes(raw.chonkProof));assert.equal(await stripped.validateTxHash(),true);
+ const effect=TxEffect.empty();effect.txHash=stripped.getTxHash();
+ const receipt={txHash:effect.txHash,status:'proven',executionResult:'success',blockNumber:3,blockHash:tag};
+ const wrapped={data:effect,l2BlockHash:tag,l2BlockNumber:3},block={header:BlockHeader.random({blockNumber:3}),blockHash:tag},roles=validateRollingPublicRoles({author:a,sharedPayer:b});
+ assert.throws(()=>capture.qualify(row.hash,{receipt,effect:wrapped,block:{...block,blockHash:a},roles}));
+ assert.throws(()=>capture.qualify(row.hash,{receipt,effect:{...wrapped,l2BlockNumber:4},block,roles}));
+ capture.qualify(row.hash,{receipt,effect:wrapped,block,roles});const final=capture.snapshot().transactions[0];
+ assert.equal(final.canonical.footprint.sharedFeePayer,true);assert(final.canonical.missingRoles.includes('otherAuthor'));
+ assert(TxEffect.fromBuffer(Buffer.from(final.canonical.effectBase64,'base64')).txHash.equals(effect.txHash));
+});
+test('public Tx capture excludes other endpoints, proof jobs, controls and arbitrary method text',async()=>{
+ const {createRollingPublicTxCapture,validateRollingPublicRoles}=await import('./rolling-wire-trace.mjs');
+ const capture=createRollingPublicTxCapture({queryUrl:origin+'/v1/node',l1Url:origin+'/l1'});
+ for(const url of [origin+'/v1/jobs',origin+'/other'])await capture.observe({url,method:'POST',body:'PRIVATE_SENTINEL'});
+ await capture.observe({url:origin+'/l1',method:'POST',body:rpc('eth_getProof',[a])});capture.complete(200);
+ await capture.observe({url:origin+'/v1/node',method:'POST',body:rpc('node_PRIVATE_SENTINEL',[]) });capture.complete(null);
+ await capture.observe({url:origin+'/v1/node',method:'POST',body:rpc('node_sendTx',[{data:'PRIVATE_SENTINEL',witness:'PRIVATE_SENTINEL'}])});capture.complete(200);
+ const seen=capture.snapshot();assert.equal(seen.requests,3);assert.equal(seen.unrecognized,1);assert.equal(seen.failed,1);assert.equal(seen.errors,1);assert.equal(seen.transactions.length,0);assert.equal(seen.methods['l1:eth_getProof'],1);assert(!JSON.stringify(seen).includes('PRIVATE_SENTINEL'));
+ for(const roles of [{mnemonic:'PRIVATE_SENTINEL'},{author:'PRIVATE_SENTINEL'},{author:'0x'+'00'.repeat(32)}])assert.throws(()=>validateRollingPublicRoles(roles));
+});

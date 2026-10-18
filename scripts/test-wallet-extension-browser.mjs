@@ -26,6 +26,7 @@ import {BarretenbergSync} from '@aztec-foundation/bb.js';
 import {derivePrivateFeeAddress,derivePrivateFeeInstance} from '../shared/private-fee-client.mjs';
 import {generateHosting} from '../deploy/hosting-config.mjs';
 import {discoverTestMetaMask,onboardMetaMask,unpackMetaMask,addMetaMaskNetwork,configureMetaMaskLocalNetwork,configureMetaMaskTestnetNetwork,guardBrowserRequest,readMetaMaskAggregateControl,driveMetaMaskAggregateFunding,countMetaMaskAggregateNodeSubmissions,inspectMetaMaskAggregateReadiness,assertMetaMaskReadinessRequest,isMetaMaskStartupFrameRequest,isMetaMaskStartupWorkerRequest,driveMetaMaskPaidRecovery,retainedPreparedClaimFlag,readRetainedBokApproval,driveRetainedBokJourney,readRetainedBokObservation,observeRetainedBokJourney,retainedBokRemaining,installWalletFatalObservation,recordMetaMaskStage,exportMetaMaskUnsignedRecovery,walletChromiumLaunch,readMetaMaskUnsignedContinuation,verifyRetainedBokRecoveryFiles,driveRetainedBokRelease,driveRetainedBokWithdrawal,createRetainedBokRefundAdmission,exportMetaMaskReadyRecovery,verifyRetainedClaimReceipt,readRetainedReadyExport,driveMetaMaskReadyContinuation} from './t04-metamask.mjs';
+import {createRollingPublicTxCapture,validateRollingPublicRoles} from './testing/rolling-wire-trace.mjs';
 import {projectRollingInitialization} from '../apps/rolling/wallet-panel.mjs';
 import {verifyExtensionCollateral} from './t04-extension-collateral.mjs';
 import {ROOT,assertNodeVersion,anvilBinary} from './toolchain.mjs';
@@ -34,7 +35,7 @@ assert.equal(process.env.U01_BOUNDED_BROWSER,'true');
 assert(path.isAbsolute(process.env.BILLBOARD_TEST_TMPDIR));
 const directory=await fs.mkdtemp(path.join(process.env.BILLBOARD_TEST_TMPDIR,'extension-'));
 const mode=walletExtensionMode(process.argv.slice(2));
-const children=[];let context,provider,walletPage,page,readFundingState,httpServer,finalizeAggregate,stage='preflight';
+const children=[];let context,provider,walletPage,page,readFundingState,httpServer,finalizeAggregate,finalizePublicCapture,stage='preflight';
 const report={passed:false,scope:'Real MetaMask onboarding, custom local network and application connection only; fee signing not yet qualified'};
 installWalletFatalObservation(process,value=>console.log(JSON.stringify(value)),()=>stage);
 const port=async()=>{const server=net.createServer();await new Promise(r=>server.listen(0,'127.0.0.1',r));const value=server.address().port;await new Promise(r=>server.close(r));return value;};
@@ -152,6 +153,43 @@ try{
   let blocked=0,proofRequests=0,l2Submissions=0,extensionStartupDocuments=0;const blockedDetails=[];
   const recordBlocked=(url,reason,frame)=>{blocked++;if(blockedDetails.length<8)blockedDetails.push({origin:url.origin,path:url.pathname.replace(/0x[0-9a-fA-F]{16,}/g,'[hex]').slice(0,160),reason,extensionParent:frame?.parentFrame()?.url().startsWith('chrome-extension:')===true,startupFrame:frame?.url().endsWith('#extensionStartup')===true,topLevel:frame?.parentFrame()===null});};
   finalizeAggregate=()=>{Object.assign(report,{blockedRequests:blocked,blockedDetails,proofRequests,l2Submissions,extensionStartupDocuments});assert.equal(blocked,0);if(!testnet)assert.equal(proofRequests,0);};
+  let publicCaptureRequests;
+  // Counts/methods and public Tx only. Never pass control, headers, proof jobs or
+  // private wallet state to this observer. These files stay in private custody.
+  const publicCapture=testnet?createRollingPublicTxCapture({queryUrl:control.walletConfig.trustedQuery.url,l1Url:control.ethereumUrl}):null;
+  if(publicCapture){
+   let extraRoles={};const roleFile=process.env.T04_PUBLIC_FOOTPRINT_ROLES;
+   if(roleFile){assert(path.isAbsolute(roleFile));const stat=await fs.lstat(roleFile);assert(stat.isFile()&&!stat.isSymbolicLink()&&stat.size<=4096&&(stat.mode&0o077)===0);extraRoles=validateRollingPublicRoles(JSON.parse(await fs.readFile(roleFile,'utf8')));}
+   const fixedRoles={board:control.walletConfig.config.board.contractAddress,sharedPayer:control.walletConfig.config.privateFee.contractAddress,funder:Wallet.fromPhrase(control.mnemonic).address};
+   for(const [role,value]of Object.entries(fixedRoles))if(extraRoles[role])assert.equal(extraRoles[role].toLowerCase(),value.toLowerCase());
+   const roles=validateRollingPublicRoles({...extraRoles,...fixedRoles}),observed=new WeakSet(),completed=new WeakSet();
+   publicCaptureRequests=request=>observed.add(request);
+   const complete=(request,status)=>{if(observed.has(request)&&!completed.has(request)){completed.add(request);publicCapture.complete(status);}};
+   context.on('response',response=>complete(response.request(),response.status()));context.on('requestfailed',request=>complete(request,null));
+   const source={runtimeSha256:control.runtimeSha256,sdk:JSON.parse(await fs.readFile(path.join(ROOT,'node_modules/@aztec-labs/stdlib/package.json'),'utf8')).version,files:{}};
+   for(const file of ['scripts/test-wallet-extension-browser.mjs','scripts/testing/rolling-wire-trace.mjs','scripts/t03-public-footprint.mjs','package-lock.json'])source.files[file]=createHash('sha256').update(await fs.readFile(path.join(ROOT,file))).digest('hex');
+   const target=path.join(control.recoveryDirectory,'public-observation-'+randomBytes(8).toString('hex')+'.json');
+   finalizePublicCapture=async()=>{
+    let canonicalError=false;
+    try{
+     const hash=report.aggregate?.claimTransactionHash??report.paidRecovery?.claimTransactionHash;
+     if(hash){
+      const {createAztecNodeClient}=await import('@aztec-labs/aztec.js/node'),{TxHash}=await import('@aztec-labs/stdlib/tx');
+      const node=createAztecNodeClient(control.walletConfig.trustedQuery.url),txHash=TxHash.fromString(hash);
+      const [receipt,effect]=await Promise.all([node.getTxReceipt(txHash),node.getTxEffect(txHash)]);
+      const block=await node.getBlockData(receipt.blockNumber);
+      assert.equal((await node.getBlockData(receipt.blockNumber))?.blockHash?.toString(),receipt.blockHash.toString());
+      publicCapture.qualify(hash,{receipt,effect,block,roles});
+     }
+    }catch{canonicalError=true;}
+    const evidence=publicCapture.snapshot();evidence.canonicalObservationError=canonicalError;
+    evidence.source=source;evidence.sourceUnchanged=true;
+    for(const [file,hash]of Object.entries(source.files))if(createHash('sha256').update(await fs.readFile(path.join(ROOT,file))).digest('hex')!==hash)evidence.sourceUnchanged=false;
+    await fs.writeFile(target,JSON.stringify(evidence,null,2)+'\n',{flag:'wx',mode:0o600});
+    report.publicObservation={file:target,requests:evidence.requests,completed:evidence.completed,errors:evidence.errors,canonicalObservationError:canonicalError,transactions:evidence.transactions.length,scope:evidence.scope};
+   };
+  }
+
   await context.route('**/*',async route=>{
    const request=route.request(),worker=request.serviceWorker(),frame=worker?null:request.frame(),url=new URL(request.url());
    if(worker?worker.url().startsWith('chrome-extension:'):frame.url().startsWith('chrome-extension:'))return route.continue();
@@ -162,6 +200,9 @@ try{
    if(['http:','https:'].includes(url.protocol)&&!allowed.has(url.origin)){recordBlocked(url,'origin',frame);return route.abort();}
    if(request.method()==='POST'&&url.pathname.endsWith('/v1/jobs')){proofRequests++;if(!testnet||request.url()!==proofEndpoint)return route.abort();}
    try{const observed={url:request.url(),method:request.method(),body:request.postData()},sends=countMetaMaskAggregateNodeSubmissions(observed,control.walletConfig.trustedQuery.url);l2Submissions+=sends;if(readinessOnly||observationOnly||networkOnly||bokApproval?.journey==='refund')assert.equal(sends,0);if(readinessOnly||paidRecovery||observationOnly||networkOnly)(refundAdmission&&!refundReadOnly?refundAdmission.assertRequest(observed,control.ethereumUrl):assertMetaMaskReadinessRequest(observed,control.ethereumUrl,{proofUrl:testnet&&paidRecovery?proofEndpoint:null}));}catch{recordBlocked(url,'rpc-or-readiness',frame);return route.abort();}
+   if(publicCapture&&request.method()==='POST'&&[control.walletConfig.trustedQuery.url,control.ethereumUrl].includes(request.url())){
+    publicCaptureRequests(request);await publicCapture.observe({url:request.url(),method:'POST',body:request.postData()});
+   }
    return route.continue();
   });
   const extensionId=new URL(await extensionIdentity).host;
@@ -336,7 +377,7 @@ try{
 }
 finally{
  try {
- await context?.close();if(httpServer)await new Promise((resolve,reject)=>httpServer.close(error=>error?reject(error):resolve()));await BarretenbergSync.destroySingleton();provider?.destroy();
+ await context?.close();await finalizePublicCapture?.();if(httpServer)await new Promise((resolve,reject)=>httpServer.close(error=>error?reject(error):resolve()));await BarretenbergSync.destroySingleton();provider?.destroy();
  for(const child of children){if(child.exitCode===null&&child.signalCode===null){const closed=once(child,'close');child.kill('SIGTERM');const timer=setTimeout(()=>child.kill('SIGKILL'),1500);await closed;clearTimeout(timer);}}
  await fs.rm(directory,{recursive:true});report.cleanupComplete=true;
  try{finalizeAggregate?.();}catch(error){report.passed=false;throw error;}
