@@ -17,11 +17,12 @@ export const repositoryGit=(args,options={})=>exec('/usr/bin/git',['-c','core.ho
  * This stores source revisions only; the paid-call journal remains authoritative
  * for provider recovery and must never be replayed because a draft exists.
  */
-export function threadRepositories({directory,namespace,lease,git=repositoryGit,validateRevision,maxBytes=64*1024*1024,maxRevisions=1000,startEmpty=false,onAccepted,connections}){
+export function threadRepositories({directory,namespace,lease,git=repositoryGit,validateRevision,maxBytes=64*1024*1024,maxRevisions=1000,startEmpty=false,onAccepted,connections,ensureThread}){
  assert(path.isAbsolute(directory)&&typeof namespace==='string'&&namespace.length>0&&typeof lease?.assertHeld==='function');
  assert(Number.isSafeInteger(maxBytes)&&maxBytes>=1024&&Number.isSafeInteger(maxRevisions)&&maxRevisions>0);
  assert(validateRevision===undefined||typeof validateRevision==='function');
  assert(connections===undefined||(typeof connections.connectionFor==='function'&&typeof connections.readConnected==='function'));assert.equal(typeof startEmpty,'boolean');assert(onAccepted===undefined||typeof onAccepted==='function');
+ assert(ensureThread===undefined||typeof ensureThread==='function');
  const queues=new Map();
  async function size(directory){let total=0;for(const entry of await fs.readdir(directory)){const file=path.join(directory,entry),stat=await fs.lstat(file);assert(!stat.isSymbolicLink(),'Repository symlink rejected');if(stat.isDirectory())total+=await size(file);else{assert(stat.isFile());total+=stat.size;}assert(total<=maxBytes,'Thread storage limit reached');}return total;}
  async function open({threadId,invocationId,repository},recoverAccepted=false){
@@ -40,6 +41,8 @@ export function threadRepositories({directory,namespace,lease,git=repositoryGit,
    const connection=connections?.connectionFor(threadId)??null;
    if(connection)repository=connection.fullName;
    const identity={namespace,threadId,repository,startEmpty,...(connection?{connection}:{})};
+   if(state.identity)assert.deepEqual(state.identity,identity);
+   if(!recoverAccepted&&!connection&&ensureThread)await ensureThread({repositoryId:key,threadId});
    if(!state.identity){
     assert(!recoverAccepted,'No accepted repository identity');
     await git(['init','--bare',repo]);await store.write({identity,acceptedRevision:null,operations:{}});state=store.read();
@@ -68,6 +71,8 @@ export function threadRepositories({directory,namespace,lease,git=repositoryGit,
     await git(['cat-file','-e',record.producedRevision+'^{commit}'],{cwd:repo});
     assert.equal((await git(['rev-parse','--verify',`refs/invocations/${invocationId.slice(2)}`],{cwd:repo})).stdout.trim(),record.producedRevision,'Accepted invocation ref changed');
     assert(typeof onAccepted==='function','Accepted publication required');
+    // Validate the exact retained invocation before admitting its mirror slot.
+    if(!connection&&ensureThread)await ensureThread({repositoryId:key,threadId});
     const publication=await publish(record,true);
     await lease.assertHeld();assert.equal(await head(),record.producedRevision,'Accepted repository ref changed');
     const recovered=Object.freeze({...receipt(record),publication});release();return recovered;

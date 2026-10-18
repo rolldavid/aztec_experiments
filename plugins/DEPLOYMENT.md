@@ -794,3 +794,77 @@ approval at the next nonce. The successor never modifies the original/first
 cancellation journals or silently extends the expired funding plan. Controlled
 real-signature tests establish these recovery semantics; an actual finalized
 Sepolia winner and real-proof application acceptance remain separate evidence.
+
+### Preprovisioned private thread repository pool
+
+A selected personal App can assign dedicated repositories from a trusted operator
+pool when GitHub API creation is unavailable. This is automatic assignment before
+paid work, with operator replenishment of finite capacity. It does not prove API
+repository creation. Set `githubApp.repositoryPool` to an ordered array (maximum128)
+of these exact fields for each new dedicated repository:
+
+```json
+{
+  "repositoryId": 123456789,
+  "fullName": "zac-williamson/rolling-chat-bok-pool-EXAMPLE",
+  "ownerId": 1476668,
+  "marker": "Bok thread pool 11111111-1111-1111-1111-111111111111",
+  "defaultBranch": "main",
+  "genesisCommit": "REPLACE_WITH_EXACT_40_HEX_COMMIT",
+  "genesisTree": "REPLACE_WITH_EXACT_40_HEX_TREE"
+}
+```
+
+Provision each slot outside the application with the trusted operator setup:
+private, nonfork, nonarchived, sole broker writer, selected in the dedicated App,
+Actions disabled, description exactly `marker`, and one root commit with no
+parents. Its tree must contain only regular mode100644 `README.md` with the exact
+UTF-8 bytes `# Bok thread repository\n\nAwaiting assignment.\n`. Capture its numeric
+ID, default branch and exact commit/tree SHA after setup. Do not include an
+existing application, connected repository, legacy mirror or creation template.
+Pool operations mint only tokens scoped to the one slot ID: Administration read
+plus Contents read for identity/Actions/genesis, then Contents write for source.
+They never call repository creation, settings mutation, or developer credentials.
+The existing App identity and explicit permission-profile checks still apply.
+
+Startup remotely validates and durably admits new slots in manifest order.
+The admitted prefix is immutable: append new slots only; never delete, reorder,
+replace or edit admitted entries, including unused ones. Preserve the existing
+broker journal and any `creationTemplate` binding; legacy owned mirrors continue
+through their original journal and are never relabelled as pool allocations.
+An explicit empty pool enables exhaustion; after admission, omitting the pool is
+rejected. Existing connected mappings bypass allocation and retain their own
+scope. Every local thread identity is checked before reserving a slot.
+
+The host captures and authenticates the canonical conversation, then opens and
+closes the existing trusted repository session before writing the agent-running
+intent. This calls `ensureThread({repositoryId,threadId})` through the existing
+serialized publication lane before either summary or main model work. The agent
+reuses that captured history and revalidates the same allocation at thread open. Allocation is saved before acknowledgement and is
+immutable for that thread across participants, crashes and restarts. Lost
+acknowledgement does not release a slot. A pool slot has its own allocation record,
+never a fabricated successful creation record. If no slot remains,
+`GITHUB_BROKER_POOL_EXHAUSTED` stops before paid provider work and before the
+agent-running intent. Append verified new slots and restart the existing host
+under its lease: the same unentered request can then be admitted. Requests whose
+agent-running intent already exists remain fenced; never clear their records or
+replay an uncertain paid request to recover capacity.
+
+Allocation requires the pinned genesis head. Subsequent opens require the exact
+journalled accepted remote head or an explicitly pending intended ref. Each
+publication revalidates private identity, marker, pinned genesis and Actions;
+each new Git mutation also requires Actions still disabled. Enabling Actions
+blocks publication; the broker never repairs settings automatically. Uncertain
+writes only reconcile existing exact objects/ref, with no repeated mutation.
+Source SHA, predecessor checks, nonforced ref updates and local accepted revision
+remain unchanged. Up to512 source files are supported: pool sessions have a
+1064-request ceiling (two requests per blob plus40 fixed-overhead requests), with
+the existing120s overall and8s per-call deadlines and byte bounds. Other modes
+retain their existing540-request ceiling. Actual network latency/rate limits may
+leave a publication unresolved; the journal remains authoritative.
+
+Controlled pool tests prove protocol behavior and ordering, not real GitHub
+transport acceptance. Qualify the selected App with separate dedicated test
+slots, verify unique thread allocations and exact accepted source/history, then
+preserve those assignments. Pool repositories remain private; operator URLs are
+not reader-facing publication links.

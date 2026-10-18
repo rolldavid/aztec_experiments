@@ -164,8 +164,8 @@ for(const changedAfterCheck of [false,true])test('agent terminal acceptance refu
 
 
 test('accepted recovery reuses exact Git objects and validation, requires publication, creates no draft',async t=>{
- const h=await fixture(t);let validations=0,publications=0,blocked=true,original;
- const options={...h.options,validateRevision:async({revision})=>{validations++;return {passed:true,revision,testsPassed:true,buildPassed:true,sourceDigest:'a'.repeat(64),sourceArchiveSha256:'b'.repeat(64),artifactArchiveSha256:'c'.repeat(64)};},onAccepted:async receipt=>{
+ const h=await fixture(t);let validations=0,publications=0,admissions=0,blocked=true,original;
+ const options={...h.options,ensureThread:async()=>{admissions++;},validateRevision:async({revision})=>{validations++;return {passed:true,revision,testsPassed:true,buildPassed:true,sourceDigest:'a'.repeat(64),sourceArchiveSha256:'b'.repeat(64),artifactArchiveSha256:'c'.repeat(64)};},onAccepted:async receipt=>{
   publications++;if(!original)original=structuredClone(receipt);else assert.deepEqual(receipt,original);
   if(blocked)throw Error('Mirror remains unresolved');return {artifactUrl:'https://apps.example/exact/index.html',sourceUrl:'https://apps.example/exact/source.json'};
  }};
@@ -174,16 +174,38 @@ test('accepted recovery reuses exact Git objects and validation, requires public
  await assert.rejects(manager.recoverAccepted(input),/Mirror/);assert.equal(validations,1);assert.equal(publications,2);
  blocked=false;const receipt=await threadRepositories(options).recoverAccepted(input);assert.equal(receipt.acceptedRevision,original.acceptedRevision);assert.equal(validations,1);assert.equal(publications,3);assert.equal(receipt.publication.sourceUrl,'https://apps.example/exact/source.json');assert(!(await fs.readdir(root)).some(name=>name.startsWith('draft-')));
  await manager.recoverAccepted(input);assert.equal(publications,4,'recovery rechecks required publication');assert.equal(validations,1);
- await assert.rejects(manager.recoverAccepted({...input,invocationId:id(99)}),/Exact accepted/);assert.equal(publications,4);
- await assert.rejects(manager.recoverAccepted({...input,repository:'changed/project'}));assert.equal(publications,4);
+ await assert.rejects(manager.recoverAccepted({...input,invocationId:id(99)}),/Exact accepted/);assert.equal(publications,4);assert.equal(admissions,4);
+ await assert.rejects(manager.recoverAccepted({...input,repository:'changed/project'}));assert.equal(publications,4);assert.equal(admissions,4);
  const file=path.join(root,'revisions.json'),state=JSON.parse(await fs.readFile(file));
  for(const change of [s=>s.operations[id(1)].validation.revision='d'.repeat(40),s=>s.operations[id(1)].validation.sourceDigest='invalid',s=>s.operations[id(1)].validation.testsPassed=false,s=>s.operations[id(1)].threadId=id(88)]){
-  const altered=structuredClone(state);change(altered);await fs.writeFile(file,JSON.stringify(altered));await assert.rejects(manager.recoverAccepted(input));assert.equal(publications,4);
+  const altered=structuredClone(state);change(altered);await fs.writeFile(file,JSON.stringify(altered));await assert.rejects(manager.recoverAccepted(input));assert.equal(publications,4);assert.equal(admissions,4);
  }
- await fs.writeFile(file,JSON.stringify(state));await repositoryGit(['update-ref','refs/invocations/'+id(1).slice(2),receipt.acceptedRevision+'^'],{cwd:first.repositoryPath});await assert.rejects(manager.recoverAccepted(input),/invocation ref changed/);assert.equal(publications,4);
+ await fs.writeFile(file,JSON.stringify(state));await repositoryGit(['update-ref','refs/invocations/'+id(1).slice(2),receipt.acceptedRevision+'^'],{cwd:first.repositoryPath});await assert.rejects(manager.recoverAccepted(input),/invocation ref changed/);assert.equal(publications,4);assert.equal(admissions,4);
 });
 test('accepted recovery refuses absent and unaccepted source without executing validation or creating storage',async t=>{
  const h=await fixture(t),manager=threadRepositories({...h.options,validateRevision:()=>assert.fail('No execution'),onAccepted:()=>assert.fail('No publication')});
  await assert.rejects(manager.recoverAccepted({threadId:id(1),invocationId:id(1),repository:'owner/project'}));await assert.rejects(fs.stat(h.options.directory),{code:'ENOENT'});
  const session=await h.open(1,1,manager);await h.checkout(session);await session.close();await assert.rejects(manager.recoverAccepted({threadId:id(1),invocationId:id(1),repository:'owner/project'}),/Exact accepted/);
+});
+
+for(const hasHistory of [false,true])test('trusted allocation precedes every paid call, including summary='+hasHistory,async t=>{
+ const {createAgent}=await import('../agent.mjs'),{githubToolbox}=await import('../github-tools.mjs'),h=await fixture(t),events=[];let unavailable=true;
+ const manager=threadRepositories({...h.options,startEmpty:true,ensureThread:async input=>{events.push('allocate');assert.match(input.repositoryId,/^[0-9a-f]{64}$/);assert.equal(input.threadId,id(9));if(unavailable)throw Object.assign(Error('Pool exhausted'),{code:'GITHUB_BROKER_POOL_EXHAUSTED'});}});
+ const toolbox=githubToolbox({repository:'owner/project',repositories:manager,api:async()=>assert.fail('No external GitHub API')});
+ const conversation={load:async()=>({canonical:true,complete:true,threadId:id(9),assertCurrent:async()=>{},messages:[...(hasHistory?[{id:id(2),role:'user',text:'Earlier request'}]:[]),{id:id(3),role:'user',text:'@bok Build'}]})};
+ const model={complete:async input=>{events.push(input.modelId==='cheap'?'summary':'main');assert(!input.tools.some(tool=>tool.function?.name==='ensureThread'));return {message:{role:'assistant',content:'Done'}};}};
+ const agent=createAgent({model,toolbox,instructions:'Build',conversation,summaryModelId:'cheap'}),request={id:id(1),postId:id(3),text:'@bok Build',modelId:'main'};
+ await assert.rejects(agent.run(request),{code:'GITHUB_BROKER_POOL_EXHAUSTED'});assert.deepEqual(events,['allocate']);
+ unavailable=false;await agent.run(request);assert.deepEqual(events,['allocate','allocate',...(hasHistory?['summary']:[]),'main']);
+});
+test('invalid or changed local identity cannot consume a remote pool slot',async t=>{
+ const h=await fixture(t);let allocations=0;const manager=threadRepositories({...h.options,ensureThread:async()=>{allocations++;}});
+ for(const input of [{threadId:'invalid',invocationId:id(1),repository:'owner/project'},{threadId:id(1),invocationId:'invalid',repository:'owner/project'},{threadId:id(1),invocationId:id(1),repository:'../invalid/path'}])await assert.rejects(manager.open(input));assert.equal(allocations,0);
+ const first=await h.open(1,1,manager);await first.close();assert.equal(allocations,1);
+ await assert.rejects(manager.open({threadId:id(1),invocationId:id(2),repository:'changed/project'}));assert.equal(allocations,1);
+});
+test('connected thread never consumes an empty-thread pool slot',async t=>{
+ const h=await fixture(t),connection={fullName:'owner/connected',threadId:id(1)};
+ const manager=threadRepositories({...h.options,connections:{connectionFor:()=>connection,readConnected:async()=>assert.fail('No source read requested')},ensureThread:async()=>assert.fail('Connected repository is not a pool slot')});
+ const opened=await h.open(1,1,manager);assert.deepEqual(opened.connection,connection);await opened.close();
 });

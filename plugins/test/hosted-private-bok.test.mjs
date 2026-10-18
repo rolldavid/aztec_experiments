@@ -554,3 +554,22 @@ test('recovered reply absent or reverted receipts never permit another reply sen
   await assert.rejects(x.run(),/Reply transaction unresolved/);await assert.rejects(x.run(),/Reply transaction unresolved/);assert.deepEqual(x.events,['reserve','paid','settle','publish_reply']);assert.equal(x.row.refunded,0n);
  }
 });
+
+test('thread pool exhaustion before running permits replenishment and the same original request once',async()=>{
+ const {createAgent}=await import('../agent.mjs'),x=fixture();let allocations=0,loads=0,guards=0,available=false,opened=0;
+ const history={threadId:f(9),canonical:true,complete:true,messages:[{id:x.args.request.postId,role:'user',text:x.current.text}],assertCurrent:async()=>{guards++;}};
+ x.args.conversation={load:async input=>{assert.equal(input.postId,x.args.request.postId);loads++;return history;}};
+ x.args.admitThread=async input=>{allocations++;assert.deepEqual(input,{threadId:f(9),invocationId:x.args.request.requestId});assert.equal(x.store.read().hostedPrivateBok,undefined);if(!available)throw Object.assign(Error('Pool exhausted'),{code:'GITHUB_BROKER_POOL_EXHAUSTED'});};
+ const toolbox={open:async input=>{opened++;assert.equal(input.threadId,f(9));return {definitions:[],accept:async()=>null,close:async()=>{}};}};
+ x.args.runAgent=async input=>createAgent({model:input.model,toolbox,conversation:input.conversation,summaryModelId:'cheap',instructions:'Build'}).run(input);
+ await assert.rejects(x.run(),{code:'GITHUB_BROKER_POOL_EXHAUSTED'});assert.deepEqual(x.events,[]);assert.equal(x.row.reserved,0n);assert.equal(x.row.charged,0n);assert.equal(x.store.read().hostedPrivateBok,undefined);assert.equal(opened,0);
+ available=true;assert.equal((await x.run()).status,'finished');assert.equal(allocations,2);assert.equal(loads,2,'One canonical load per attempt, reused by the agent');assert.equal(opened,1);assert(guards>=4);assert.deepEqual(x.events,['reserve','paid','settle','publish_reply','finish']);
+ assert.equal((await x.run()).status,'finished');assert.equal(allocations,2);assert.equal(loads,2);assert.equal(x.events.filter(v=>v==='paid').length,1);
+});
+test('existing entered agent intent stays fenced without re-admission even if pool capacity returns',async()=>{
+ const x=fixture();x.args.runAgent=async()=>{throw Error('Entered agent failed before known result');};await assert.rejects(x.run(),/Entered agent/);assert.equal(x.store.read().hostedPrivateBok.phase,'running');x.args.admitThread=async()=>assert.fail('Must not re-admit saved running request');await assert.rejects(x.run(),/Hosted request unresolved/);assert.deepEqual(x.events,[]);
+});
+for(const stage of ['initial-history','after-allocation','request'])test('thread admission rejects changed canonical '+stage+' before durable run or paid work',async()=>{
+ const x=fixture();let checks=0,allocations=0;x.args.conversation={load:async()=>({threadId:f(9),canonical:true,complete:true,assertCurrent:async()=>{checks++;if(stage==='initial-history'||stage==='after-allocation'&&checks===2)throw Error('History changed');}})};
+ x.args.admitThread=async()=>{allocations++;if(stage==='request')x.current.target=f(99);};await assert.rejects(x.run());assert.equal(x.store.read().hostedPrivateBok,undefined);assert.deepEqual(x.events,[]);assert.equal(allocations,stage==='initial-history'?0:1);
+});

@@ -143,7 +143,7 @@ export async function startEscrowService({descriptor,escrow,board,run,host='127.
  * reruns an agent whose run intent exists; only its exact reply/finish may be
  * reconciled, or an exact already-accepted source revision recovered after all
  * billing settles. Ports are dependency seams, not client-supplied authority. */
-export async function runPrivateBokRequest({request,board,escrow,store,provider,runAgent,recoverAccepted,limits,conversation}){
+export async function runPrivateBokRequest({request,board,escrow,store,provider,runAgent,recoverAccepted,limits,conversation,admitThread}){
  const identity={...escrow.identity,requestId:request.requestId,target:request.target};
  const binding={...identity,postId:request.postId,pluginId:request.pluginId};
  const digest=value=>createHash('sha256').update(JSON.stringify(value)).digest('hex');
@@ -152,10 +152,10 @@ export async function runPrivateBokRequest({request,board,escrow,store,provider,
  if(saved)assert.deepEqual(saved.binding,binding,'Hosted request identity changed');
  const current=await board.readRequest(request.postId);
  assert(current&&current.postId===request.postId&&current.requestId===request.requestId&&current.target===request.target&&current.pluginId===request.pluginId&&current.predecessorsClear===true,'Canonical invocation changed');
- let historyGuard;
+ let historyGuard,admittedHistory;
  const requestConversation=conversation?Object.freeze({async load(input){
   assert(!historyGuard,'Conversation already captured');assert.equal(input.postId,request.postId);
-  const history=await conversation.load(input);assert.equal(typeof history?.assertCurrent,'function');
+  const history=admittedHistory??await conversation.load(input);assert.equal(typeof history?.assertCurrent,'function');
   historyGuard=history.assertCurrent;return history;
  }}):undefined;
  const guardedProvider={quote:(...args)=>provider.quote(...args),execute:async(...args)=>{
@@ -193,6 +193,18 @@ export async function runPrivateBokRequest({request,board,escrow,store,provider,
  if(!saved){
   assert(!current.replied&&current.usable,'Invocation no longer usable');
   const row=await escrow.request(request.requestId);assert(row.canonical&&row.request.state===2&&row.request.reserved===0n,'Active canonical request required');
+  if(admitThread!==undefined){
+   assert(typeof admitThread==='function'&&typeof conversation?.load==='function','Trusted thread admission unavailable');
+   const history=await conversation.load({postId:request.postId});
+   assert(history?.canonical===true&&history.complete===true&&/^0x[0-9a-f]{64}$/.test(history.threadId)&&typeof history.assertCurrent==='function','Canonical thread admission unavailable');
+   await history.assertCurrent();
+   // A finite pool can be replenished before entering an agent. Do not record
+   // running until this trusted preflight succeeds; saved runs never replay it.
+   await admitThread({threadId:history.threadId,invocationId:request.requestId});
+   await history.assertCurrent();const fresh=await board.readRequest(request.postId);
+   assert(fresh?.postId===request.postId&&fresh.usable&&!fresh.replied&&fresh.predecessorsClear===true&&fresh.requestId===request.requestId&&fresh.target===request.target&&fresh.pluginId===request.pluginId,'Invocation changed during thread admission');
+   admittedHistory=history;
+  }
   saved={binding,phase:'running'};await save(saved);
   let call=0;
   result=await runAgent({conversation:requestConversation,text:current.text,id:request.requestId,postId:request.postId,model:{complete:async input=>{
