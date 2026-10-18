@@ -5,6 +5,8 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import {createHash} from 'node:crypto';
+import {spawnSync} from 'node:child_process';
+import {fileURLToPath} from 'node:url';
 import {verifyRelease,validateQualification,loopback,exerciseFreshness,expectedClientRejection,queryQualificationScope,verifyQueryOnlyService,adminRpc,publicRpc,readAdminKey,ADMIN_URL,ADMIN_KEY_FILE} from './qualify-runtime.mjs';
 const sha=x=>createHash('sha256').update(x).digest('hex');
 const config=()=>({service:{serviceMode:'query-only',proofs:'real',host:'127.0.0.1',port:0,chainId:'11155111',rollupVersion:'3409706519',origins:[],queryNode:{url:'http://127.0.0.1:8080',rollupAddress:'0x'+'02'.repeat(20),maxLagSeconds:2}},adminUrl:ADMIN_URL,adminKeyFile:ADMIN_KEY_FILE});
@@ -31,6 +33,15 @@ test('fake package: missing helper, path traversal and external symlink cannot q
   const f=await packageFixture(t);delete f.manifest.files['shared/trusted-private-node.mjs'];await assert.rejects(verifyRelease(f.root,await f.write()));
   f.manifest.files['shared/trusted-private-node.mjs']=sha('FAKE shared/trusted-private-node.mjs');f.manifest.files['../outside']=sha('x');await assert.rejects(verifyRelease(f.root,await f.write()));delete f.manifest.files['../outside'];
   await fs.unlink(path.join(f.root,'shared/trusted-private-node.mjs'));const outside=path.join(f.root,'..',path.basename(f.root)+'-outside');await fs.writeFile(outside,'FAKE shared/trusted-private-node.mjs');t.after(()=>fs.rm(outside,{force:true}));await fs.symlink(outside,path.join(f.root,'shared/trusted-private-node.mjs'));await assert.rejects(verifyRelease(f.root,await f.write()));
+});
+test('missing-helper child: actual entrypoint retains controlled rejection when helper is absent',async t=>{
+  const source=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
+  const root=await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(),'qualification-missing-helper-')));t.after(()=>fs.rm(root,{recursive:true,force:true}));
+  for(const directory of ['prover','shared'])await fs.cp(path.join(source,directory),path.join(root,directory),{recursive:true,filter:async entry=>(await fs.stat(entry)).isDirectory()||entry.endsWith('.mjs')});
+  await fs.symlink(await fs.realpath(path.join(source,'node_modules')),path.join(root,'node_modules'),'dir');
+  await fs.unlink(path.join(root,'shared/trusted-private-node.mjs'));
+  const child=spawnSync(process.execPath,[path.join(root,'prover/qualify-runtime.mjs'),'--client'],{input:JSON.stringify({case:'missing-helper',service:config().service}),encoding:'utf8',env:{PATH:process.env.PATH,LOG_LEVEL:'silent'},timeout:10000,maxBuffer:16384});
+  assert.equal(child.status,0,child.stderr);assert.equal(child.signal,null);assert.deepEqual(JSON.parse(child.stdout),{missingHelperRejected:true});
 });
 function fakeFreshness({pauseError,staleCode='BB_TRUSTED_NODE_STALE',resumeError,neverRecover=false,rejectError,freshTimestamp=false}={}){
   const frozen=BigInt(Math.floor(Date.now()/1000)-(freshTimestamp?0:10));let paused=false,resumed=false;

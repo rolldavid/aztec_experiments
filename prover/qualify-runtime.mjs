@@ -9,7 +9,6 @@ import {createHash} from 'node:crypto';
 import {spawn} from 'node:child_process';
 import {createConnection} from 'node:net';
 import {retryUntil} from '@aztec-labs/foundation/retry';
-import {getTrustedNodeFailureDiagnostic} from '../shared/trusted-private-node.mjs';
 const ROOT=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
 const sha=bytes=>createHash('sha256').update(bytes).digest('hex');
 const silent=Object.fromEntries(['trace','debug','verbose','info','warn','error','fatal'].map(k=>[k,()=>{}]));
@@ -114,6 +113,7 @@ export async function verifyQueryOnlyService(service,url){
  * archiver can still receive P2P proposals, so stale state may fail canonical
  * consistency before the inspector reaches its timestamp check. */
 export async function exerciseFreshness({node,admin,inspect,health,rejectedQuery,maxLagSeconds,recoveryTimeoutMs,waitUntil=retryUntil,observation={}}){
+  const {getTrustedNodeFailureDiagnostic}=await import('../shared/trusted-private-node.mjs');
   const result=Object.assign(observation,{paused:false,stale:false,queriesRejected:false,resumed:false,recovered:false});
   let phase='healthy',pauseAttempted=false;
   const safeCode=error=>['BB_TRUSTED_NODE_STALE','BB_TRUSTED_NODE_UNSYNCED','BB_TRUSTED_NODE_UNAVAILABLE','BB_TRUSTED_NODE_IDENTITY','BB_TRUSTED_NODE_CONFIG','ERR_ASSERTION'].includes(error?.code)?error.code:'QUALIFICATION_FAILED';
