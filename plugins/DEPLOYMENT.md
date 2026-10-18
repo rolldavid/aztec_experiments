@@ -450,6 +450,16 @@ explicit operator allocation, not a way for generated code to extend a budget.
 No HTTP endpoint configures aliases or resets counters. Preserve exhausted state;
 do not delete it to resume service.
 
+Back up the ledger and initialization marker in the same stopped-service recovery
+set as the rest of Bok. A restored counter is spending authority: never replace
+newer durable counts with an older backup, merge by taking a lower count, or
+restore the marker alone. The marker detects missing state; it cannot detect an
+older valid ledger. Retain the latest durable reservation high-water state outside
+the restore target and compare it before enabling any alias. If freshness or an
+uncertain reservation cannot be established, keep the facility disabled and
+reconcile with the operator's original allocation and provider records. Do not
+reissue an alias or increase a limit merely to make restoration succeed.
+
 Default retention bounds are 128 threads, 20 revisions per thread, 256 MiB of
 source/archive/artifact content, 8,192 stored content files and an 8 MiB catalog.
 Eight simultaneous HTTP reads are admitted. Metadata and filesystem allocation
@@ -468,6 +478,40 @@ and inspect the corresponding accepted receipt before removing incomplete owned
 staging or applying any retention cleanup. Retained immutable revision directories
 from a completed rename can be verified and reused by the exact pending receipt.
 Do not prune history or alter recorded quotas while the publisher is running.
+
+For final handover, restore one quiescent whole-service copy into an isolated
+private directory (0700 directories, 0600 files), with no service startup or
+outbound provider/GitHub/chain calls during integrity inspection:
+
+1. Record the source revision, original process/lease ownership, total size and
+   archive/file hashes. Confirm the original writer is stopped and drained. Keep
+   the original unchanged; a stale lock alone does not establish that it is safe
+   to replace a writer. Do not carry a copied lock into service startup without
+   explicit ownership reconciliation.
+2. Restore all hosted state together: repositories and accepted refs,
+   invocation/payment journals, summaries, execution snapshots, static publication
+   catalog/history, GitHub broker journals, and both optional API allowance files.
+   Preserve separately configured wallet/PXE state and encrypted configuration/key
+   references with their original network, deployment and namespace identities.
+3. Compare every restored file hash and each request journal with the stopped
+   source. Check accepted Git objects and refs against `revisions.json`; match
+   current publication revision, source archive and each artifact's recorded
+   digest. The existing repository recovery reader and static publisher validate
+   retained accepted receipts without rerunning generated tests, builds or models.
+   A recovery hint alone is not full billing or canonical-chain reconciliation.
+4. Establish the latest API allowance counters as described above. An old backup
+   with a plausible ledger is insufficient. Missing initialized state must remain
+   closed; a service that never enabled the facility has no allowance to restore.
+5. Before an authorized restart, reconcile original transaction/provider identities
+   and any pending publication or uncertain call using the existing recovery
+   procedure. A missing response never authorizes resubmission. Retained execution
+   receipts may contain absolute private paths; preserve their original layout or
+   use an explicitly reviewed relocation procedure, never rewrite journal hashes
+   to make a moved snapshot pass. Enable service only after these checks succeed.
+
+An offline restoration of completed requests proves local retained-state
+integrity. It does not prove recovery during an active paid call, current testnet
+acceptance, full operator migration, or an independently supervised deployment.
 
 Publication recovery blocks unrelated writes while a renamed immutable revision is
 absent from the catalog. Only its exact accepted receipt may reconcile it; multiple

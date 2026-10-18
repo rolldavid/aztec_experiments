@@ -261,10 +261,24 @@ Its focused tests use labelled chain/model doubles. Actual native-wallet removal
 real model evaluation under the new prompt identity, targeted real-proof testnet
 acceptance, specialist review and elapsed qualification remain separate gates.
 
-Stop and drain the owning service before consistent private backup. Back up Bok's
-accepted Git repositories, invocation/payment journals, summaries, execution
-snapshots, publication catalog/history and GitHub broker journals together.
-Keep private keys separately encrypted with documented restore ownership.
+Stop admission and drain the owning service, including any artifact API fetch,
+before taking a consistent private backup. Verify process and hosted-lease
+ownership; never copy over a live writer. Back up Bok's whole private state
+rather than selecting only published files: accepted Git repositories and refs,
+invocation/payment and pending-publication journals, summaries, execution
+snapshots, publication catalog/history, GitHub broker journals, and the optional
+`artifact-api.json` allowance ledger with `artifact-api.initialized.json`.
+Keep matching configuration, deployment/namespace identity and separately stored
+wallet/PXE recovery material in the encrypted operator recovery set. Keep private
+keys separately encrypted with documented restore ownership. The detailed local
+restoration procedure is in `plugins/DEPLOYMENT.md`.
+
+An older API allowance backup must never become new spending authority. Preserve
+the latest durable counters, including failed or uncertain reservations; the
+initialization marker detects a missing ledger, not rollback to an older valid
+ledger. If the latest counters cannot be established, leave the affected API
+aliases disabled until explicitly reconciled. Restoring an artifact or Git
+revision does not reset its thread's lifetime allowance.
 Core recovery must succeed without Bok backups: rebuild authenticated board state
 from the complete chain/archive and restore encrypted preferences with user keys.
 
