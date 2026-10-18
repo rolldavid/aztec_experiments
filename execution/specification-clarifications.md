@@ -22,3 +22,9 @@ the conjunction of every mapped component and the integrated final-candidate
 scenario; no partial component result closes a whole requirement. This repairs
 execution ordering without waiving preferences, privacy, publication or any other
 product behavior. No task was marked complete as part of this correction.
+
+## 18 October 2026 — feature delivery first; final acceptance at the end
+
+The owner retains the full requirement: “Delete the core database and rebuild from chain records and retained archive data. Restore private bookmarks, follows and preferences with user keys. Repeat across a simulated reorg.” Implement any remaining support and run this scenario only after all other application functionality is implemented. It is not removed and is not a routine per-change check.
+
+Core/Bok recovery runbooks and repository/artifact backups remain final handover work. Backup/restore, outage/restart, clean independent deployment, full privacy traces, large-workload qualification, complete wallet/funding interruption matrix and real-proof testnet journeys belong to the final application acceptance stage. Preserve historical results. Re-run only an affected failed check after a relevant repair; do not repeat these exercises for unrelated edits. Development uses focused checks and one independent review of each coherent change before the normal integration gate.

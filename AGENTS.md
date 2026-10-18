@@ -123,3 +123,9 @@ old data untouched when replacing it with a fresh coherent fixture. Keep concise
 work/review records at change boundaries, not per-operation evidence ceremonies.
 Independent review and the normal integration gate remain; acceptance-only checks
 run at their actual boundary. Continue feature delivery after the focused check.
+
+## Owner sequencing correction — 18 October 2026
+
+Measure progress by functional application features. Implement and connect the full application before final qualification. The database deletion/archive rebuild/private-preference key restoration/simulated-reorg requirement remains intact, but is implemented/completed and exercised at the end, after all other application functionality. Core/Bok backup runbooks and backup checks also belong at final handover.
+
+Do not routinely run backup/restore, outage/restart, clean independent deployment, full privacy tracing, large-workload qualification, complete wallet/funding interruption matrices or real-proof testnet journeys during feature edits. Use focused component checks and independent review of coherent changes before normal integration. After final qualification finds a defect, repeat only the affected check after repair. Gate negative self-tests run only when the gate changes. If repeated setup failures obstruct progress, correct the responsible architecture rather than extending retries or adding a new harness.
