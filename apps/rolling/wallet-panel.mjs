@@ -97,7 +97,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   const stop=button('Stop private recovery',()=>{recoveryAbort?.abort();clearPreferences();note('Recovery stop requested. Waiting for the private operation to settle.');});stop.dataset.recoveryStop='true';content.append(stop);
   content.append(button(preferences?'Refresh private views':preferenceProgress?'Continue private recovery':'Recover private views',()=>void work(recoverPreferences),true));
  }
- function choosePreference(value){if(busy||intent)return;view='action';draft={...value};render();}
+ function choosePreference(value){if(busy||intent)return;clearOperationFeedback();view='action';draft={...value};render();}
  function ownedLabel(id){const record=identityRecords.find(r=>r.id===id);return record?`${record.first} ${record.last}`:'Selected owned name';}
  function acceptNames(page,append=false){
   if(!Array.isArray(page.identities)||!Array.isArray(page.records)||page.identities.length!==page.records.length)throw Error('Private name records unavailable');
@@ -131,8 +131,10 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
  }
  function controlsBusy(value){dialog.setAttribute('aria-busy',String(value));for(const node of dialog.querySelectorAll('button,input,select,textarea'))node.disabled=node.dataset.recoveryStop==='true'?!recoveryAbort:value||node.dataset.unavailable==='true';}
  function note(text){live.textContent=text;}
+ function clearOperationFeedback(){error='';notice='';note('');for(const node of content.querySelectorAll('[data-operation-feedback]'))node.remove();}
+ function selectView(next){clearOperationFeedback();view=next;render();}
  async function work(fn,failureMessage=nameFailure){
-  if(busy)return;const operationFocus=document.activeElement;busy=true;error='';controlsBusy(true);
+  if(busy)return;const operationFocus=document.activeElement;busy=true;clearOperationFeedback();controlsBusy(true);
   try{await fn();}catch(failure){stopFunding();recoveryInspection=null;clearPreferences();note('');error=failure===connectionFailure?'The private connection is unavailable. Your encrypted recovery is preserved. Reconnect when the service returns.':failure===avatarFailure?'This image could not be prepared. Choose a still PNG, JPEG or WebP under 8 MiB. It must fit 8192 encoded bytes after cropping and compression. No transaction was prepared.':failureMessage(failure)??message;}finally{
    if(invalidated||reloadRequired)clearPrivateView();busy=false;render(document.activeElement===document.body?operationFocus:document.activeElement);
    // Failed actions must expose their feedback even when the form was scrolled.
@@ -151,7 +153,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
    moderatorStatus=typeof session.application.readModeratorStatus==='function'?await session.application.readModeratorStatus():null;checkAccount(epoch);
    bokStatus=typeof session.application.readBokStatus==='function'?await session.application.readBokStatus():null;checkAccount(epoch);
   }
-  blocked=false;onPrivateChange();
+  blocked=false;note('');onPrivateChange();
  }
  async function connect(){
   const epoch=accountEpoch,attempt=++initializationAttempt;
@@ -201,7 +203,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   const restore=button('Import recovery',()=>{
    if(!file.files?.[0]){error='Choose your recovery file.';render();return;}
    const selected=file.files[0],value=password.value;password.value='';file.value='';
-   void work(async()=>{await runtime.account.importRecovery(selected,value);notice='Recovery imported. Checking retained transactions…';await connect();});
+   void work(async()=>{await runtime.account.importRecovery(selected,value);notice='Recovery imported.';note('Checking retained transactions…');await connect();});
   });
   content.append(paragraph('Create a private account or restore an existing one. Creating an account does not fund it.'),paragraph(recoveryLimits),label('Recovery password (at least 12 characters for a new backup)',password),create,label('Encrypted backup or unencrypted account file',file),paragraph('An unencrypted account file contains a private key. Import only on a trusted device, then download an encrypted backup.'),restore);
  }
@@ -434,7 +436,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
  }
  function chooseAction(type,name){
   if(busy||!unlocked()||intent||blocked)return;
-  view='action';clearProfileDraft();draft={type,subboard:'0',content:'',...(name?{name}:{})};
+  clearOperationFeedback();view='action';clearProfileDraft();draft={type,subboard:'0',content:'',...(name?{name}:{})};
   if(name)void work(()=>checkProfile(name));else render();
  }
  function namesView(){
@@ -453,7 +455,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
  function form(){
   if(MODERATOR_TYPES.has(draft.type)&&moderatorStatus?.authorized!==true)draft={type:'post',subboard:'0',content:''};
   const type=el('select',{'aria-label':'Action'});for(const [value,text]of Object.entries(TYPES)){if(['withdraw','withdraw-bok','cancel-bok-request','expire-bok-request','screen'].includes(value)||value==='bok'&&bokStatus?.available!==true||MODERATOR_TYPES.has(value)&&moderatorStatus?.authorized!==true)continue;const option=el('option',{value},text);option.selected=draft.type===value;type.append(option);}
-  type.addEventListener('change',()=>{clearProfileDraft();const continuation=['reply','bok'].includes(draft.type)&&['reply','bok'].includes(type.value);draft=continuation?{...draft,type:type.value}:{type:type.value,subboard:'0',content:''};render();});content.append(label('Action',type));
+  type.addEventListener('change',()=>{clearOperationFeedback();clearProfileDraft();const continuation=['reply','bok'].includes(draft.type)&&['reply','bok'].includes(type.value);draft=continuation?{...draft,type:type.value}:{type:type.value,subboard:'0',content:''};render();});content.append(label('Action',type));
   const fields=new Map();
   function input(name,text,{area=false,initial='',required=true}={}){
    const node=el(area?'textarea':'input',area?{rows:'5'}:{type:'text'});node.value=draft[name]??initial;if(required)node.required=true;
@@ -611,7 +613,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   if(topupQuote){const q=topupQuote;content.append(paragraph(q.phase==='approval'?'Approve only the displayed token amount for the verified bridge. This does not deposit or claim the top-up.':'Deposit the reviewed tokens to the verified bridge. Then claim the credit privately; no posting deposit is changed.'),paragraph('Amount: '+decimal(q.amount,topupKind==='bok'?6:18)+(topupKind==='bok'?' USDC for Bok.':' fee tokens.')),paragraph('Ethereum gas maximum for this step: '+decimal(q.gasBudgetWei,18)+' ETH.'),paragraph('Private claim fee maximum: '+decimal(q.privateFeeCap,18)+' fee tokens ('+q.privateFeeCap+' base units).'),paragraph('Wallet: '+q.walletName+'.'));
    content.append(button(q.phase==='approval'?'Confirm token approval':'Confirm top-up and private claim',()=>void work(async()=>{const epoch=accountEpoch;checkAccount(epoch);topupQuote=null;const result=await cap.confirm();checkAccount(epoch);if(result.approved){stopFunding();notice='Token approval confirmed. Review the separate top-up payment; no deposit is sent automatically.';}else{fundingAutomatic=true;await advanceFunding();}}),true),button('Change top-up review',()=>{topupQuote=null;render();}));
   }else if(!fundingAutomatic){
-   const select=el('select',{'aria-label':'Top-up credit'});for(const kind of choices)select.append(el('option',{value:kind},kind==='bok'?'Bok credit (USDC)':'Network fee credit'));select.value=topupKind;select.addEventListener('change',()=>{topupKind=select.value;topupInputs.amount='';render();});content.append(label('Top-up credit',select));
+   const select=el('select',{'aria-label':'Top-up credit'});for(const kind of choices)select.append(el('option',{value:kind},kind==='bok'?'Bok credit (USDC)':'Network fee credit'));select.value=topupKind;select.addEventListener('change',()=>{clearOperationFeedback();topupKind=select.value;topupInputs.amount='';render();});content.append(label('Top-up credit',select));
    for(const [key,name]of [['amount',topupKind==='bok'?'USDC top-up amount':'Fee token top-up amount'],['gas','Top-up Ethereum gas maximum (ETH)']]){const input=el('input',{type:'text',inputmode:'decimal','aria-label':name});input.value=topupInputs[key];input.addEventListener('input',()=>topupInputs[key]=input.value);content.append(label(name,input));}
    content.append(button('Review top-up',()=>void work(async()=>{const epoch=accountEpoch;checkAccount(epoch);topupQuote=await cap.prepare({amount:units(topupInputs.amount,topupKind==='bok'?6:18),gasBudgetWei:units(topupInputs.gas,18),privateFeeCap:cap.defaultPrivateFeeCap});checkAccount(epoch);}),true));
   }
@@ -686,8 +688,8 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   const controls=()=>[...content.querySelectorAll('button,input,select,textarea,summary,a[href]')];
   const key=hadFocus?focusKey(previousFocus):null,index=key?controls().filter(n=>focusKey(n)===key).indexOf(previousFocus):-1;
   releasePreviews();content.replaceChildren();
-  if(error)content.append(el('p',{role:'alert',tabindex:'-1',class:'notice error'},error));
-  if(notice)content.append(el('p',{class:'notice'},notice));
+  if(error)content.append(el('p',{role:'alert',tabindex:'-1',class:'notice error','data-operation-feedback':''},error));
+  if(notice)content.append(el('p',{class:'notice','data-operation-feedback':''},notice));
   if(plaintextRecovery)content.append(el('p',{role:'status',class:'notice'},plaintextRecoveryWarning));
   if(invalidated||reloadRequired){content.append(paragraph('This account session has ended. Existing recovery records remain encrypted on this device.'),button('Reload to unlock',()=>location.reload()));}
   else if(!runtime)content.append(paragraph('Browsing needs no wallet. Unlock only when you want to manage your account or publish.'),button('Unlock',()=>void unlock(),true));
@@ -704,11 +706,11 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
     const messages={'fee-needed':'Funds for transaction fees are needed.','collateral-pending':'No posting deposit was found.','fee-ready':'A posting deposit was found. We’ll check whether it can be used when you review an action.'};
     content.append(paragraph(messages[status?.status]??'The private account has not been verified.'));
     if(status?.privateFeeCredit&&/^[0-9]+$/.test(status.privateFeeCredit))content.append(paragraph(status.privateFeeCredit==='0'?'No funds for transaction fees are available.':'Funds for transaction fees are available.'));
-    content.append(button('Recover funding',()=>{view='funding';topupQuote=null;render();}));if(session.topup)content.append(button('Top up fees or Bok',()=>{view='topup';fundingQuote=null;render();}));
+    content.append(button('Recover funding',()=>{topupQuote=null;selectView('funding');}));if(session.topup)content.append(button('Top up fees or Bok',()=>{fundingQuote=null;selectView('topup');}));
     if(status?.privateFeeCredit&&/^[0-9]+$/.test(status.privateFeeCredit))content.append(paragraph('Private network fee balance: '+decimal(status.privateFeeCredit,18)+' fee tokens.'));
     if(bokStatus?.available&&/^[0-9]+$/.test(bokStatus.availableCredit))content.append(paragraph('Private Bok balance: '+decimal(bokStatus.availableCredit,6)+' USDC-backed credits.'));
     if(status?.status!=='locked'){
-     content.append(el('nav',{'aria-label':'Private account views'},button('Actions',()=>{view='action';render();}),button('Your names',()=>{view='names';render();}),...(typeof session.application.readBalances==='function'?[button('Balances and withdrawals',()=>{view='balances';balances=null;bokAccounting=null;render();})]:[]),button('Private views',()=>{view='preferences';render();})));
+     content.append(el('nav',{'aria-label':'Private account views'},button('Actions',()=>selectView('action')),button('Your names',()=>selectView('names')),...(typeof session.application.readBalances==='function'?[button('Balances and withdrawals',()=>{balances=null;bokAccounting=null;selectView('balances');})]:[]),button('Private views',()=>selectView('preferences'))));
      if(view==='balances')balancesView();else if(view==='names')namesView();else if(view==='preferences')preferencesView();else if(view==='funding')fundingView();else if(view==='topup')topupView();else form();
     }
     content.append(button('Refresh private account',()=>void work(refresh)));

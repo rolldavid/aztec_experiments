@@ -514,6 +514,38 @@ for(const prepared of [false,true])test(`retained ${prepared?'replacement-ready'
  assert.equal((await counts(page)).sends,0);assert.equal(await page.evaluate(()=>test.replacementPrepares+test.recoveryChecks),0);
 });
 
+test('new actions clear previous confirmation during preparation and submission',async t=>{
+ const {page}=await browserFixture(t);await open(page);await unlock(page);await prepare(page);
+ await page.getByRole('button',{name:'Confirm and send',exact:true}).click();await page.getByText('Transaction confirmed on the verified chain.',{exact:true}).waitFor();
+ await page.evaluate(()=>test.hold='prepare');await page.getByRole('button',{name:'Check action and review fee',exact:true}).click();await page.waitForFunction(()=>typeof test.release==='function');
+ assert.equal(await page.getByText('Transaction confirmed on the verified chain.',{exact:true}).count(),0,'Old confirmation must disappear before the next preparation finishes');
+ await page.evaluate(()=>{test.hold=null;test.release();test.release=null;});await page.getByRole('button',{name:'Confirm and send',exact:true}).waitFor();
+ assert.equal(await page.getByText('Transaction confirmed on the verified chain.',{exact:true}).count(),0);
+ await page.evaluate(()=>{test.hold='submit';test.submitOutcome='unknown';});await page.getByRole('button',{name:'Confirm and send',exact:true}).click();await page.waitForFunction(()=>typeof test.release==='function');
+ assert.equal(await page.getByText('Transaction confirmed on the verified chain.',{exact:true}).count(),0);
+ assert.equal(await page.getByText('Review the saved action and maximum fee before sending.',{exact:true}).count(),0);
+ await page.evaluate(()=>{test.hold=null;test.release();});await page.getByRole('button',{name:'Check existing transaction',exact:true}).waitFor();
+ assert(await page.getByText('The transaction is still unconfirmed or unknown. Check later; do not resend.',{exact:true}).isVisible());assert.equal((await counts(page)).sends,2);
+});
+test('completed refresh and import clear temporary checking messages',async t=>{
+ const {page}=await browserFixture(t);await page.evaluate(()=>{test.unlocked=false;test.refreshRecords={status:[{stage:'private-refresh',step:'account-status/method',deploymentStep:null,state:'complete',code:null}]};});
+ await open(page);await page.getByRole('button',{name:'Unlock',exact:true}).click();await page.getByLabel('Recovery file',{exact:true}).setInputFiles({name:'test-account.json',mimeType:'application/json',buffer:Buffer.from('{}')});
+ await page.getByRole('button',{name:'Import recovery',exact:true}).click();await page.getByRole('button',{name:'Check action and review fee',exact:true}).waitFor();
+ assert.equal(await page.getByText('Recovery imported. Checking retained transactions…',{exact:true}).count(),0);assert(await page.getByText('Recovery imported.',{exact:true}).isVisible());
+ await page.getByRole('button',{name:'Refresh private account',exact:true}).click();await page.waitForFunction(()=>document.querySelector('dialog').getAttribute('aria-busy')==='false');
+ assert.equal(await page.getByText('Checking the private account…',{exact:true}).count(),0);
+ await prepare(page);await page.getByRole('button',{name:'Confirm and send',exact:true}).click();await page.getByText('Transaction confirmed on the verified chain.',{exact:true}).waitFor();
+ assert.equal(await page.getByText('Checking the private account…',{exact:true}).count(),0);assert.equal((await counts(page)).sends,1);
+});
+test('changing action or account view clears old validation feedback and keeps the draft on view changes',async t=>{
+ const {page}=await browserFixture(t);await page.evaluate(()=>test.topupEnabled=true);await open(page);await unlock(page);await page.getByLabel('Action',{exact:true}).selectOption('name');
+ await page.getByLabel('First name',{exact:true}).fill('Bok');await page.getByLabel('Last name',{exact:true}).fill('Draft');await page.evaluate(()=>test.nameFailure='ROLLING_NAME_INVALID');
+ await page.getByRole('button',{name:'Check action and review fee',exact:true}).click();await page.getByRole('alert').waitFor();
+ await page.getByRole('button',{name:'Top up fees or Bok',exact:true}).click();assert.equal(await page.getByRole('alert').count(),0);
+ await page.getByRole('button',{name:'Actions',exact:true}).click();assert.equal(await page.getByLabel('First name',{exact:true}).inputValue(),'Bok');assert.equal(await page.getByLabel('Last name',{exact:true}).inputValue(),'Draft');
+ await page.getByRole('button',{name:'Check action and review fee',exact:true}).click();await page.getByRole('alert').waitFor();await page.getByLabel('Action',{exact:true}).selectOption('subboard');assert.equal(await page.getByRole('alert').count(),0);assert.equal((await counts(page)).sends,0);
+});
+
 test('settled connection message cleanup preserves custody guidance and failed connection alert',async t=>{
  const {page}=await browserFixture(t);await page.evaluate(()=>test.unlocked=false);await open(page);await page.getByRole('button',{name:'Unlock',exact:true}).click();
  await page.waitForFunction(()=>document.querySelector('dialog').getAttribute('aria-busy')==='false');
