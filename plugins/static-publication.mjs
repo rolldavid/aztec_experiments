@@ -49,6 +49,15 @@ async function archives(receipt,artifactRoot,b){
  return {source,artifacts,manifest:output,files:checked.artifacts,bytes:source.length+artifacts.length+checked.artifacts.reduce((n,f)=>n+f.bytes.length,0)};
 }
 
+// Reconciliation and repeated publication must verify the retained bytes, not
+// merely trust the catalog entry that was written when publication first passed.
+async function retained(target,metadata){
+ const b=metadata.binding;await directory(target);assert.deepEqual(JSON.parse(await read(path.join(target,'publication.json'),262144)),metadata);
+ assert.equal(sha(await read(path.join(target,'source.json'),SOURCE_ARCHIVE_MAX)),b.sourceArchiveSha256);
+ assert.equal(sha(await read(path.join(target,'artifacts.json'),ARTIFACT_ARCHIVE_MAX)),b.artifactArchiveSha256);
+ for(const f of metadata.manifest){let dir=target;for(const part of ['files',...f.path.split('/').slice(0,-1)]){dir=path.join(dir,part);await directory(dir);}const bytes=await read(path.join(dir,path.basename(f.path)),STATIC_LIMITS.fileBytes);assert(bytes.length===f.bytes&&sha(bytes)===f.sha256);}
+}
+
 /** Trusted post-acceptance capability. One host owns the private directory.
  * No HTTP route can publish/moderate; only this explicit local capability can. */
 export async function createStaticPublication({directory:root,artifactRoot,origin,boardOrigin,development=false,maxBytes=256*1024*1024,maxThreads=128,maxRevisions=20}){
@@ -90,15 +99,13 @@ export async function createStaticPublication({directory:root,artifactRoot,origi
   async publish(receipt){return exclusive(async()=>{
    const b=binding(receipt),old=state.threads[b.id],pending=b.id+'/'+b.revision;
    assert(orphans.size===0||(orphans.size===1&&orphans.has(pending)),'Retained publication must be reconciled first');
-   if(old){assert(old.repositoryId===b.repositoryId&&old.threadId===b.threadId);const same=old.revisions[b.revision];if(same){assert.deepEqual(same.binding,b);return urls(b);}assert.equal(old.latest,b.readRevision);assert(Object.keys(old.revisions).length<maxRevisions);assert(!Object.values(old.revisions).some(m=>m.binding.invocationId===b.invocationId));}
+   if(old){assert(old.repositoryId===b.repositoryId&&old.threadId===b.threadId);const same=old.revisions[b.revision];if(same){assert.deepEqual(same.binding,b);await retained(path.join(root,b.id,b.revision),same);return urls(b);}assert.equal(old.latest,b.readRevision);assert(Object.keys(old.revisions).length<maxRevisions);assert(!Object.values(old.revisions).some(m=>m.binding.invocationId===b.invocationId));}
    else{assert.equal(b.readRevision,null);assert(Object.keys(state.threads).length<maxThreads);}
    const data=await archives(receipt,artifactRoot,b),fileCount=data.files.length+3;assert(state.bytes+data.bytes<=maxBytes&&state.files+fileCount<=8192);
    const parent=path.join(root,b.id);await fs.mkdir(parent,{mode:0o700,recursive:true});await directory(parent);
    const target=path.join(parent,b.revision),metadata={schema:1,binding:b,manifest:data.manifest,bytes:data.bytes};
    let exists=false;try{await fs.lstat(target);exists=true;}catch(e){if(e.code!=='ENOENT')throw e;}
-   if(exists){await directory(target);assert.deepEqual(JSON.parse(await read(path.join(target,'publication.json'),262144)),metadata);assert.equal(sha(await read(path.join(target,'source.json'),SOURCE_ARCHIVE_MAX)),b.sourceArchiveSha256);assert.equal(sha(await read(path.join(target,'artifacts.json'),ARTIFACT_ARCHIVE_MAX)),b.artifactArchiveSha256);
-    for(const f of data.manifest){let dir=target;for(const part of ['files',...f.path.split('/').slice(0,-1)]){dir=path.join(dir,part);await directory(dir);}const bytes=await read(path.join(dir,path.basename(f.path)),STATIC_LIMITS.fileBytes);assert(bytes.length===f.bytes&&sha(bytes)===f.sha256);}
-   }
+   if(exists)await retained(target,metadata);
    else{
     const staging=path.join(parent,'.pending-'+randomUUID());await fs.mkdir(staging,{mode:0o700});let renamed=false;
     try{

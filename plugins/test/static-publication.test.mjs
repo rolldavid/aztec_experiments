@@ -6,6 +6,7 @@ import path from 'node:path';
 import http from 'node:http';
 import {createHash,randomUUID} from 'node:crypto';
 import {createStaticPublication} from '../static-publication.mjs';
+import {publishAcceptedRevision} from '../main.mjs';
 const sha=b=>createHash('sha256').update(b).digest('hex'),revision=n=>String(n).repeat(40),repositoryId='a'.repeat(64),threadId='0x'+'b'.repeat(64);
 // Labelled validated-executor receipt fixture; these tests qualify publication,
 // not a second execution run or a real accepted Git reference.
@@ -84,6 +85,17 @@ test('post-publication file mutation or symlink is never served',async()=>{
   const p=await f.publisher.publish(await receipt(f.artifactRoot)),file=path.join(f.directory,p.publicationId,revision(1),'files','index.html');
   await fs.writeFile(file,'SYNTHETIC_CHANGED');const response=await fetch(p.latestUrl);assert.equal(response.status,503);assert(!String(await response.text()).includes('SYNTHETIC'));
   await fs.rm(file);await fs.symlink('/etc/passwd',file);assert.equal((await fetch(p.latestUrl)).status,503);
+ }finally{await f.close();}
+});
+for(const file of ['files/index.html','source.json','artifacts.json'])for(const mutation of ['missing','changed'])test('accepted recovery rejects '+mutation+' retained '+file,async()=>{
+ const f=await fixture();try{
+  const r=await receipt(f.artifactRoot),first=await f.publisher.publish(r),target=path.join(f.directory,first.publicationId,r.acceptedRevision,file);
+  assert.equal((await fetch(first.artifactUrl)).status,200);assert.equal((await fetch(first.sourceUrl)).status,200);
+  const catalog=await fs.readFile(path.join(f.directory,'catalog.json'));let mirrors=0;
+  if(mutation==='missing')await fs.unlink(target);else await fs.writeFile(target,'SYNTHETIC_CHANGED');
+  await assert.rejects(publishAcceptedRevision({publication:f.publisher,mirror:{sync:async()=>{mirrors++;return {mirrored:true};}},receipt:r}),{code:'STATIC_PUBLICATION_REJECTED'});
+  assert.equal(mirrors,0);assert.deepEqual(await fs.readFile(path.join(f.directory,'catalog.json')),catalog);
+  if(file!=='artifacts.json')assert.equal((await fetch(file==='source.json'?first.sourceUrl:first.artifactUrl)).status,503);
  }finally{await f.close();}
 });
 test('failed catalog update preserves immutable revision and safely resumes exact pending publication',async t=>{
