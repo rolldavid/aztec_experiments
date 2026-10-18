@@ -334,12 +334,13 @@ class htb 1:20 parent 1:1 prio 0 rate 25Mbit ceil 50Mbit burst 4725b cburst 7850
         self.assertNotIn('/var/run/docker.sock',command)
         self.assertNotIn('--privileged',args)
         # Labelled generated-unit test: ordinary/history and debug are explicit,
-        # single endpoints. No automatic fallback or permissive validation.
+        # the operational provider list and debug checks remain native CLI inputs.
         environment=[args[i+1] for i,arg in enumerate(args) if arg=='-e']
         keys=[item.split('=',1)[0] for item in environment]
         self.assertEqual(len(keys),len(set(keys)))
         env=dict(item.split('=',1) for item in environment)
-        self.assertEqual(env['ETHEREUM_HOSTS'],'https://sepolia.gateway.tenderly.co')
+        self.assertEqual(env['ETHEREUM_HOSTS'],'https://ethereum-sepolia-rpc.publicnode.com,https://sepolia.gateway.tenderly.co')
+        self.assertEqual(env['ARCHIVER_SKIP_HISTORICAL_LOGS_CHECK'],'true')
         self.assertEqual(env['ETHEREUM_DEBUG_HOSTS'],'https://ethereum-sepolia-rpc.publicnode.com')
         self.assertEqual(env['L1_CONSENSUS_HOST_URLS'],'https://ethereum-sepolia-beacon-api.publicnode.com')
         self.assertEqual(env['ETHEREUM_ALLOW_NO_DEBUG_HOSTS'],'false')
@@ -386,6 +387,33 @@ class htb 1:20 parent 1:1 prio 0 rate 25Mbit ceil 50Mbit burst 4725b cburst 7850
             self.assertEqual(events[1][0],['systemctl','start','rolling-budget.service'])
             (ns['BASE']/'interface').write_text('ens5; invalid')
             with self.assertRaises(ValueError):ns['isolate_network']()
+
+    def test_qualification_dispatch_retains_state_unless_controls_are_lost(self):
+        import ast
+        generated=fixture_generate(config(),NOW)
+        encoded=generated.split("base64.b64decode('")[1].split("')")[0]
+        dispatch=ast.parse(lzma.decompress(base64.b64decode(encoded)).decode()).body[2].value.right.value
+        for mode in ('--qualify','--qualification-stop','--qualification-receipt'):
+            for failure in ('ordinary','budget','monitor','listener'):
+                with self.subTest(mode=mode,failure=failure),tempfile.TemporaryDirectory() as t:
+                    ns=host();ns['BASE']=pathlib.Path(t);(ns['BASE']/'interface').write_text('ens5');events=[];output=[]
+                    def failed(*a,**k):raise OSError('PRIVATE_SENTINEL')
+                    def controls():
+                        events.append('controls')
+                        if failure=='budget':raise ValueError('lost control')
+                    def run(args,**kwargs):
+                        events.append(args)
+                        if 'rolling-attest.timer' in args and failure=='monitor':raise ValueError('lost monitor')
+                        return 'loaded' if failure=='listener' else 'masked'
+                    ns.update(qualify=failed,final_receipt=failed,verify_controls=controls,run=run,emit_diagnostic=output.append)
+                    with patch.object(ns['sys'],'argv',['rolling-attest.py',mode]),self.assertRaises(SystemExit):exec(dispatch,ns)
+                    shutdown=['systemctl','start','rolling-budget.service'];isolate=['/usr/sbin/ip','link','set','dev','ens5','down']
+                    if failure=='ordinary':
+                        self.assertNotIn(shutdown,events);self.assertNotIn(isolate,events)
+                        self.assertIn(b'ATTEMPT_FAILED',b''.join(output))
+                    else:
+                        self.assertIn(shutdown,events);self.assertLess(events.index(isolate),events.index(shutdown))
+                    self.assertNotIn(b'PRIVATE_SENTINEL',b''.join(output))
 
     def qualification_environment(self,directory):
         ns=host();ns['BASE']=pathlib.Path(directory);ns['RELEASE']=pathlib.Path(directory)/'release'
@@ -817,11 +845,12 @@ class FinalReceipt(unittest.TestCase):
         args=shlex.split(command.removeprefix('ExecStart='))
         environment=[args[i+1] for i,arg in enumerate(args) if arg=='-e']
         self.assertEqual([v for v in environment if v.startswith('ETHEREUM_HOSTS=')],
-                         ['ETHEREUM_HOSTS=https://sepolia.gateway.tenderly.co'])
+                         ['ETHEREUM_HOSTS=https://ethereum-sepolia-rpc.publicnode.com,https://sepolia.gateway.tenderly.co'])
         self.assertEqual([v for v in environment if v.startswith('ETHEREUM_DEBUG_HOSTS=')],
                          ['ETHEREUM_DEBUG_HOSTS=https://ethereum-sepolia-rpc.publicnode.com'])
         self.assertIn('ETHEREUM_ALLOW_NO_DEBUG_HOSTS=false',environment)
         self.assertIn('BLOB_ALLOW_EMPTY_SOURCES=false',environment)
+        self.assertIn('ARCHIVER_SKIP_HISTORICAL_LOGS_CHECK=true',environment)
         # Worst-case permitted URL lengths can exceed AWS storage; no truncation.
         c['runtimeUrl']+=''.join(rng.choice(string.ascii_letters+string.digits) for _ in range(4096-len(c['runtimeUrl'])))
         c['receiptPutUrl']+=''.join(rng.choice(string.ascii_letters+string.digits) for _ in range(4096-len(c['receiptPutUrl'])))
@@ -859,7 +888,7 @@ class FinalReceipt(unittest.TestCase):
                 if boundary=='disk-failure':
                     with patch.object(ns['os'],'fsync',side_effect=OSError('PRIVATE_SENTINEL')):
                         with self.assertRaises(OSError):ns['final_receipt']()
-                    self.assertNotIn('upload',events);self.assertEqual(events[-1],'shutdown')
+                    self.assertNotIn('upload',events);self.assertNotIn('shutdown',events)
                     self.assertIn(b'FINALIZATION_FAILED',events[0]);self.assertNotIn('PRIVATE_SENTINEL',str(events))
                 else:
                     ns['final_receipt']();ns['final_receipt']()
@@ -909,7 +938,7 @@ class FinalReceipt(unittest.TestCase):
             self.assertEqual(len(calls),1)
             self.assertFalse(json.loads((ns['BASE']/'qualification/result.json').read_text())['passed'])
 
-    def test_final_receipt_durable_emit_upload_shutdown_order(self):
+    def test_final_receipt_durable_emit_upload_retains_node(self):
         with tempfile.TemporaryDirectory() as t:
             ns=self.environment(t);events=[]
             ns['exclusive_record'](ns['BASE']/'qualification/result.json',ns['qualification_failure']('readiness-failed'))
@@ -920,9 +949,9 @@ class FinalReceipt(unittest.TestCase):
             ns['emit_diagnostic']=emit
             ns['upload_receipt']=lambda data:events.append('upload')
             ns['run']=lambda args,**kw:events.append('shutdown')
-            ns['final_receipt']();self.assertEqual(events,['emit','upload','shutdown'])
+            ns['final_receipt']();self.assertEqual(events,['emit','upload'])
             frozen=(ns['PRIVATE']/'final-receipt.json').read_bytes()
-            ns['final_receipt']();self.assertEqual(events,['emit','upload','shutdown','shutdown'])
+            ns['final_receipt']();self.assertEqual(events,['emit','upload'])
             self.assertEqual((ns['PRIVATE']/'final-receipt.json').read_bytes(),frozen)
             self.assertEqual((ns['PRIVATE']/'final-receipt.json').stat().st_mode&0o777,0o600)
 
@@ -977,7 +1006,12 @@ class FinalReceipt(unittest.TestCase):
 
     def test_qualifier_cannot_read_capabilities_and_publisher_is_separate(self):
         ns=host();files={};ns['write']=lambda path,data,*mode:files.update({str(path):data});ns['run']=lambda *a,**k:None
-        ns['install_qualification']();unit=files['/etc/systemd/system/rolling-qualification.service']
+        with tempfile.TemporaryDirectory() as t:
+            ns['BASE']=pathlib.Path(t);(ns['BASE']/'deadline.json').write_text(json.dumps(config()))
+            with patch.object(ns['time'],'time',return_value=NOW.timestamp()):ns['install_qualification']()
+        unit=files['/etc/systemd/system/rolling-qualification.service']
+        self.assertIn('Wants=rolling-node.service\nRequires=rolling-egress.service',unit)
+        self.assertNotIn('Requires=rolling-node.service',unit)
         self.assertIn('IPAddressDeny=any\nIPAddressAllow=localhost',unit)
         self.assertIn('InaccessiblePaths=-/var/lib/rolling-bootstrap-private -/var/lib/cloud',unit)
         self.assertIn('TimeoutStopSec=45',unit)
@@ -2198,6 +2232,15 @@ class QueryHost(unittest.TestCase):
                 with self.assertRaisesRegex(b.Invalid,'reconcile only'):b.query_host(h)
             self.assertEqual(events,[(['systemctl','stop','rolling-query.service'],),(['systemctl','start','--no-block','rolling-budget.service'],)])
 
+    def test_failed_qualification_retains_node_without_allocating_query(self):
+        with tempfile.TemporaryDirectory() as t:
+            private=pathlib.Path(t);(private/'final-receipt.json').write_text('{}');events=[];ns=host()
+            final={'manifestSha256':'b'*64,'bootstrapSourceSha256':'d'*64,'qualification':ns['qualification_failure']('qualifier-failed')}
+            h={'PRIVATE':private,'PINS':{'manifest':'b'*64,'bootstrap':'d'*64},'validated_qualification':ns['validated_qualification'],'run':lambda *a,**k:events.append(a)}
+            with patch.object(b.os,'geteuid',return_value=0),patch.object(b,'query_host_request',return_value=self.record()),patch.object(b,'activation_private',return_value=final):
+                for _ in range(2):self.assertEqual(b.query_host(h),{'queryHostPolicy':'qualification-failed','queryProofJobsEnabled':False})
+            self.assertEqual(events,[]);self.assertFalse((private/'query-host-intent.json').exists())
+
     def test_query_failure_stops_owned_unit_and_shutdown_even_without_result_write(self):
         with tempfile.TemporaryDirectory() as t:
             private=pathlib.Path(t);(private/'final-receipt.json').write_text('{}');events=[]
@@ -2251,6 +2294,17 @@ class ActivationDelivery(unittest.TestCase):
                 self.assertEqual(fetch.call_count,2)
                 (private/'final-receipt.json').unlink()
                 with self.assertRaisesRegex(b.Invalid,'disappeared'):b.activation_delivery(h)
+
+    def test_failed_qualification_never_opens_delivery_window(self):
+        with tempfile.TemporaryDirectory() as t:
+            h,events,e,clock,raw,read=self.fixture(pathlib.Path(t));private=h['PRIVATE'];final=read(private/'final-receipt.json')
+            final['qualification']=host()['qualification_failure']('qualifier-failed')
+            h['write'](private/'final-receipt.json',json.dumps(final));frozen=(private/'final-receipt.json').read_bytes()
+            with patch.object(b.os,'geteuid',return_value=0),patch.object(b,'activation_private',side_effect=read),patch.object(b,'activation_delivery_fetch') as fetch:
+                for _ in range(2):self.assertEqual(b.activation_delivery(h),{'activationDelivery':'qualification-failed'})
+                fetch.assert_not_called()
+            self.assertEqual((private/'final-receipt.json').read_bytes(),frozen)
+            self.assertFalse((private/'activation-delivery-window.json').exists());self.assertFalse((private/'prover-activation-intent.json').exists())
 
     def test_delivery_consumes_exact_version_and_bytes_before_existing_once_activation(self):
         with tempfile.TemporaryDirectory() as t:

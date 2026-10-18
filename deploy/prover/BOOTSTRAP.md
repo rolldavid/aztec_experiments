@@ -30,6 +30,16 @@ the exact version output. This change does not add or promote a toolchain pin.
 A reviewed, successful actual Linux qualification and explicit pin update are
 prerequisites for packaging, payload measurement and deployment.
 
+A failed qualification is a failed acceptance result, not a host shutdown request.
+The immutable failed receipt and once-only intent remain available for diagnosis;
+there is no automatic qualification replay. The synchronized node remains within
+the original host/Fleet budget deadline, with prover/proxy masked and query/prover
+activation refused. Receipt-finalization errors exit nonzero and emit only a fixed
+failure category. They retain the host only after checking budget/egress controls,
+the active monitor and masked listeners. Missing controls still isolate the network
+and shut down immediately. The qualifier wants the node but requires the egress
+control; an ordinary node failure does not propagate a stop into qualification.
+
 Qualification uses the real existing query service, inspector and trusted client.
 Its report must include exact `current-network-query-only` scope and
 `noProofLifecycle` checks: proof routes disabled, no queue, no worker. Ordinary
@@ -123,7 +133,13 @@ The image is `azteclabs/aztec@sha256:44479404b67dde931cf8f202a3ce34703876e709ce1
 The generator embeds the inspected11October network configuration: registry,
 bootnodes, snapshot URLs and read-only blob/transaction stores. It never fetches
 mutable network defaults at boot. The node receives this via NETWORK_CONFIG_LOCATION.
-Trace and blob-source bypasses remain false and proofs remain real.
+Ordinary L1 reads use the native CLI provider list PublicNode, then Tenderly;
+trace reads remain on PublicNode. `ARCHIVER_SKIP_HISTORICAL_LOGS_CHECK=true`
+skips the native provider-history availability heuristic that rejected this
+working configuration. It does not skip authenticated chain, archive, world-state
+or protocol validation. Trace and empty-blob-source bypasses remain false and
+proofs remain real. This is the configuration observed to synchronize the node;
+it does not itself establish final qualification.
 
 RPC is mapped only at127.0.0.1:8082. Admin8880 is mapped only at127.0.0.1:8882
 for trusted host qualification pauseSync/resumeSync calls; its exact URL is

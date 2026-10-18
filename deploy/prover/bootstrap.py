@@ -452,7 +452,7 @@ def install_node():
           '-p','127.0.0.1:8082:8080','-p','127.0.0.1:8882:8880','-p','40400:40400/tcp','-p','40400:40400/udp',
           '-v','/var/lib/rolling-node/data:/var/lib/data','-v','/etc/rolling-node/network.json:/etc/aztec/network.json:ro',
           '-e','DATA_DIRECTORY=/var/lib/data','-e','NETWORK_CONFIG_LOCATION=/etc/aztec/network.json',
-          '-e','ETHEREUM_HOSTS=https://sepolia.gateway.tenderly.co','-e','ETHEREUM_DEBUG_HOSTS=https://ethereum-sepolia-rpc.publicnode.com',
+          '-e','ETHEREUM_HOSTS=https://ethereum-sepolia-rpc.publicnode.com,https://sepolia.gateway.tenderly.co','-e','ARCHIVER_SKIP_HISTORICAL_LOGS_CHECK=true','-e','ETHEREUM_DEBUG_HOSTS=https://ethereum-sepolia-rpc.publicnode.com',
           '-e','L1_CONSENSUS_HOST_URLS=https://ethereum-sepolia-beacon-api.publicnode.com','-e','ETHEREUM_ALLOW_NO_DEBUG_HOSTS=false','-e','BLOB_ALLOW_EMPTY_SOURCES=false',
           '-e','PROVER_REAL_PROOFS=true','-e','SYNC_MODE=snapshot','-e','P2P_IP='+ip,'-e','P2P_PORT=40400','-e','AZTEC_PORT=8080','-e','AZTEC_ADMIN_PORT=8880','-e','AZTEC_ADMIN_API_KEY_HASH='+admin_hash,
           '--entrypoint','node',PINS['image'],'--no-warnings','/usr/src/yarn-project/aztec/dest/bin/index.js','start','--node','--network','testnet']
@@ -556,7 +556,6 @@ def upload_receipt(data):
 def final_receipt():
     # Runs in a separate trusted root unit, never inside the qualifier's
     # loopback-only cgroup. Public receipt survives a lost/unknown upload.
-    passed=False
     try:
         PRIVATE.mkdir(mode=0o700,parents=True,exist_ok=True)
         with open(PRIVATE/'receipt-lock','a') as lock:
@@ -566,7 +565,6 @@ def final_receipt():
                 # Previously sealed bytes are immutable, not a new attempt.
                 receipt=read_bounded_json(path)
                 q=validated_qualification(receipt.get('qualification',{}))
-                passed=q.get('passed') is True and q.get('stage')=='complete' and bool(q.get('checks')) and all(q['checks'].values()) and 'readiness' in q and 'anchors' in q
                 return
             else:
                 try: q=validated_qualification(read_bounded_json(BASE/'qualification/result.json'))
@@ -580,7 +578,6 @@ def final_receipt():
             data=json.dumps(receipt,separators=(',',':')).encode()
             if len(data)>16384: raise ValueError('Receipt limit')
             q=receipt['qualification']
-            passed=q.get('passed') is True and q.get('stage')=='complete' and bool(q.get('checks')) and all(q['checks'].values()) and 'readiness' in q and 'anchors' in q
             emit_diagnostic(b'ROLLING_QUALIFICATION_RECEIPT '+data+b'\n')
             upload_receipt(data)
     except Exception:
@@ -588,8 +585,18 @@ def final_receipt():
         # This diagnostic is explicitly not a durable qualification receipt.
         emit_diagnostic(b'ROLLING_QUALIFICATION_RECEIPT_ERROR {"schemaVersion":1,"category":"FINALIZATION_FAILED"}\n')
         raise
-    finally:
-        if not passed: run(['systemctl','start','--no-block','rolling-budget.service'],timeout=5)
+
+def qualification_error(error):
+    # A failed acceptance attempt does not own the node's lifetime. Retain its
+    # state only while independent controls and unqualified listener gates hold.
+    try:
+        verify_controls()
+        run(['systemctl','is-active','--quiet','rolling-attest.timer'],timeout=2)
+        for service in ('board-prover.service','board-prover-proxy.service'):
+            if run(['systemctl','show',service,'--property=LoadState','--value'],capture=True,timeout=5)!='masked': raise ValueError('Unexpected prover state')
+    except Exception as control_error: shutdown_failure(control_error)
+    emit_diagnostic(b'ROLLING_QUALIFICATION_ERROR {"schemaVersion":1,"category":"ATTEMPT_FAILED"}\n')
+    raise SystemExit(1) from None
 
 def qualification_projection(report, process_exited=False):
     return activation_support('qualification-projection',(report,process_exited))
@@ -719,7 +726,7 @@ def install_qualification():
     record=json.loads((BASE/'deadline.json').read_text())
     remaining=int(dt.datetime.fromisoformat(record['budgetStop'].replace('Z','+00:00')).timestamp()-time.time()-60)
     if remaining<=0: raise ValueError('Qualification deadline')
-    unit='[Unit]\nDescription=One bounded Linux query qualification\nRequires=rolling-node.service rolling-egress.service\nAfter=rolling-node.service rolling-egress.service\n[Service]\nType=oneshot\nExecStart=/usr/bin/python3 /usr/local/lib/rolling-attest.py --qualify\nExecStopPost=/usr/bin/python3 /usr/local/lib/rolling-attest.py --qualification-stop\nTimeoutStartSec=HOST_REMAINING\nTimeoutStopSec=45\nKillMode=control-group\nRestart=no\nUMask=0077\nEnvironment=LOG_LEVEL=silent\nUnsetEnvironment=NODE_PATH NODE_OPTIONS BB\nPrivateTmp=yes\nPrivateDevices=yes\nNoNewPrivileges=yes\nCapabilityBoundingSet=\nProtectSystem=strict\nProtectHome=yes\nReadWritePaths=/var/lib/rolling-bootstrap\nReadOnlyPaths=/var/lib/rolling-admin/qualification-key\nInaccessiblePaths=-/var/lib/rolling-bootstrap-private -/var/lib/cloud\nIPAddressDeny=any\nIPAddressAllow=localhost\nRestrictAddressFamilies=AF_UNIX AF_INET AF_INET6 AF_NETLINK\nStandardOutput=null\nStandardError=null\n[Install]\nWantedBy=multi-user.target\n'
+    unit='[Unit]\nDescription=One bounded Linux query qualification\nWants=rolling-node.service\nRequires=rolling-egress.service\nAfter=rolling-node.service rolling-egress.service\n[Service]\nType=oneshot\nExecStart=/usr/bin/python3 /usr/local/lib/rolling-attest.py --qualify\nExecStopPost=/usr/bin/python3 /usr/local/lib/rolling-attest.py --qualification-stop\nTimeoutStartSec=HOST_REMAINING\nTimeoutStopSec=45\nKillMode=control-group\nRestart=no\nUMask=0077\nEnvironment=LOG_LEVEL=silent\nUnsetEnvironment=NODE_PATH NODE_OPTIONS BB\nPrivateTmp=yes\nPrivateDevices=yes\nNoNewPrivileges=yes\nCapabilityBoundingSet=\nProtectSystem=strict\nProtectHome=yes\nReadWritePaths=/var/lib/rolling-bootstrap\nReadOnlyPaths=/var/lib/rolling-admin/qualification-key\nInaccessiblePaths=-/var/lib/rolling-bootstrap-private -/var/lib/cloud\nIPAddressDeny=any\nIPAddressAllow=localhost\nRestrictAddressFamilies=AF_UNIX AF_INET AF_INET6 AF_NETLINK\nStandardOutput=null\nStandardError=null\n[Install]\nWantedBy=multi-user.target\n'
     unit=unit.replace('HOST_REMAINING',str(remaining))
     write('/etc/systemd/system/rolling-qualification.service',unit,0o644)
     write('/etc/systemd/system/rolling-qualification-receipt.service','[Unit]\nDescription=Trusted bounded final receipt publisher\n[Service]\nType=oneshot\nExecStart=/usr/bin/python3 /usr/local/lib/rolling-attest.py --qualification-receipt\nTimeoutStartSec=35\nTimeoutStopSec=3\nRestart=no\nUMask=0077\nStandardOutput=null\nStandardError=null\n',0o644)
@@ -1199,7 +1206,9 @@ def query_host(h):
             if result.exists():raise Invalid('Query result without intent')
             if not (private/'final-receipt.json').exists():return {'queryHostPolicy':'pending-qualification','queryProofJobsEnabled':False}
             final=activation_private(private/'final-receipt.json');q=h['validated_qualification'](final.get('qualification',{}))
-            if final.get('manifestSha256')!=h['PINS']['manifest'] or final.get('bootstrapSourceSha256')!=h['PINS']['bootstrap'] or q.get('passed') is not True or q.get('stage')!='complete' or not q.get('checks') or not all(q['checks'].values()) or not {'anchors','readiness'}<=set(q):raise Invalid('Query qualification')
+            if final.get('manifestSha256')!=h['PINS']['manifest'] or final.get('bootstrapSourceSha256')!=h['PINS']['bootstrap']:raise Invalid('Query qualification binding')
+            if q['passed'] is False:return {'queryHostPolicy':'qualification-failed','queryProofJobsEnabled':False}
+            if q.get('stage')!='complete' or not q.get('checks') or not all(q['checks'].values()) or not {'anchors','readiness'}<=set(q):raise Invalid('Query qualification')
             if timestamp(h['read_bounded_json'](h['BASE']/'deadline.json')['budgetStop']).timestamp()-time.time()<900:raise Invalid('Query budget reserve')
             h['verify_release'](h['RELEASE']);h['verify_controls']();activation_proxy_masked(h)
             if h['run'](['systemctl','show','board-prover.service','--property=LoadState','--value'],capture=True,timeout=5)!='masked':raise Invalid('Proof service must be masked')
@@ -1307,7 +1316,11 @@ def activation_delivery(h):
             if window.exists():raise Invalid('Delivery qualification disappeared')
             return {'activationDelivery':'pending-query-qualification'}
         final=activation_private(final_path);q=h['validated_qualification'](final.get('qualification',{}))
-        if final.get('manifestSha256')!=h['PINS']['manifest'] or final.get('bootstrapSourceSha256')!=h['PINS']['bootstrap'] or q.get('passed') is not True or q.get('stage')!='complete' or not q.get('checks') or not all(q['checks'].values()) or not {'anchors','readiness'}<=set(q):raise Invalid('Delivery qualification')
+        if final.get('manifestSha256')!=h['PINS']['manifest'] or final.get('bootstrapSourceSha256')!=h['PINS']['bootstrap']:raise Invalid('Delivery qualification binding')
+        if q['passed'] is False:
+            if window.exists():raise Invalid('Delivery qualification changed')
+            return {'activationDelivery':'qualification-failed'}
+        if q.get('stage')!='complete' or not q.get('checks') or not all(q['checks'].values()) or not {'anchors','readiness'}<=set(q):raise Invalid('Delivery qualification')
         now=int(time.time());stop=int(timestamp(deadline['budgetStop']).timestamp())-900
         paths=list(private.glob(prefix+'attempt-*.json'))
         if not window.exists():
@@ -1805,7 +1818,7 @@ def generate(config, now=None):
     if 'queryHost' in config:pins['queryHost']=hashlib.sha256(json.dumps(config['queryHost'],sort_keys=True,separators=(',',':')).encode()).hexdigest()
     if 'activationDelivery' in config:pins['activationDelivery']=activation_delivery_digest(config['activationDelivery'])
     prefix = 'PINS = '+repr(pins)+'\nNETWORK = '+repr(NETWORK)+'\nQUALIFICATION = '+repr(QUALIFICATION)+'\n'
-    dispatch = "\ntry:\n    if sys.argv[1:2]==['--activate-prover']:\n        if len(sys.argv)!=3: raise ValueError('Activation arguments')\n        activation_support('activate',sys.argv[2])\n    elif '--monitor-stop' in sys.argv:\n        if os.environ.get('SERVICE_RESULT')!='success': isolate_network()\n    elif '--qualify' in sys.argv: qualify()\n    elif '--qualification-stop' in sys.argv:\n        qualify(aborted=True);run(['systemctl','start','rolling-qualification-receipt.service'],timeout=40)\n    elif '--qualification-receipt' in sys.argv: final_receipt()\n    else: attest('--check' in sys.argv)\nexcept Exception as error:\n    shutdown_failure(error)\n"
+    dispatch = "\ntry:\n    if sys.argv[1:2]==['--activate-prover']:\n        if len(sys.argv)!=3: raise ValueError('Activation arguments')\n        activation_support('activate',sys.argv[2])\n    elif '--monitor-stop' in sys.argv:\n        if os.environ.get('SERVICE_RESULT')!='success': isolate_network()\n    elif '--qualify' in sys.argv: qualify()\n    elif '--qualification-stop' in sys.argv:\n        qualify(aborted=True);run(['systemctl','start','rolling-qualification-receipt.service'],timeout=40)\n    elif '--qualification-receipt' in sys.argv: final_receipt()\n    else: attest('--check' in sys.argv)\nexcept Exception as error:\n    if sys.argv[1:] in (['--qualify'],['--qualification-stop'],['--qualification-receipt']): qualification_error(error)\n    shutdown_failure(error)\n"
     # A raw multiline literal avoids doubling runtime backslashes/newlines in
     # the compressed envelope. Verify its decoded value before emitting bytes;
     # runtime code, attestation content and their hashes remain unchanged.
