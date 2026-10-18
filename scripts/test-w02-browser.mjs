@@ -6,6 +6,9 @@ import path from 'node:path';
 import {randomBytes} from 'node:crypto';
 import {chromium} from 'playwright';
 import {ROOT} from './toolchain.mjs';
+import {MinedTxReceipt,TxHash} from '@aztec-labs/stdlib/tx';
+import {BlockHash} from '@aztec-labs/stdlib/block';
+import {jsonStringify} from '@aztec-labs/foundation/json-rpc';
 const password=randomBytes(32).toString('hex');
 let browser,stage='server',externalRequests=0;
 const server=http.createServer(async(req,res)=>{
@@ -173,15 +176,21 @@ try {
   stage='restore-journals-fresh-profile';const third=await open('censor.html');
   await third.page.locator('#wbRestorePassword').fill(password);await third.page.locator('#wbAztecFile').setInputFiles({name:'recovery.json',mimeType:'application/json',buffer:portable});
   await third.page.waitForFunction(()=>window.walletState.aztec?.address);
-  const portableResult=await third.page.evaluate(async txHash=>{
+  const savedReceipt=JSON.parse(jsonStringify(MinedTxReceipt.from({txHash:TxHash.fromString(savedHash),status:'checkpointed',executionResult:'success',transactionFee:0n,blockNumber:1,blockHash:BlockHash.ZERO,slotNumber:1,txIndexInBlock:0,epochNumber:0})));
+  const portableResult=await third.page.evaluate(async receipt=>{
     const a=window.__aztec,w=window.walletState.aztec,storage=a.createBrowserJournalStorage();
     const records=await (await a.createJournalBackup({storage,walletSecret:w.secretKey,walletSalt:w.salt})).exportRecords();
     const scope={account:w.address.toString(),chainId:'31337',rollup:'0x'+'11'.repeat(20),version:'5',board:'0x'+'0'.repeat(63)+'2',portal:'0x'+'22'.repeat(20)};
-    const node={getTxReceipt:async()=>({txHash,status:'checkpointed',executionResult:'success',blockNumber:1,blockHash:'canonical'}),getBlock:async()=>({hash:'canonical'})};
+    // Decode actual SDK wire data; this component fixture never makes a network request.
+    const receiptClient=a.createAztecNodeClient('http://receipt.fixture',{fetch:async(_url,calls)=>({headers:new Headers(),response:calls.map(call=>{
+      if(call.method!=='aztec_getTxReceipt'||call.params[0].toString()!==receipt.txHash)throw Error('Unexpected recovery request');
+      return {jsonrpc:'2.0',id:call.id,result:receipt};
+    })})});
+    const node={getTxReceipt:hash=>receiptClient.getTxReceipt(hash),getBlock:async()=>({hash:receipt.blockHash})};
     const journal=await a.createL2Journal({storage,walletSecret:w.secretKey,walletSalt:w.salt,scope,Tx:a.Tx,node});
     let blocked=false;try{await journal.assertCanStart();}catch(e){blocked=e.code==='BB_RECOVERY_REQUIRED';}
     return {count:records.length,claims:(await BillboardClaimBackup.exportRecords(w)).length,blocked,hash:(await journal.recover()).txHash.toString()};
-  },savedHash);
+  },savedReceipt);
   assert.deepEqual(portableResult,{count:2,claims:1,blocked:true,hash:savedHash});
   assert.equal(await third.page.getByRole('button',{name:'Check saved action',includeHidden:true}).count(),1);
   await third.context.close();

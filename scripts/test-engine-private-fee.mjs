@@ -5,7 +5,7 @@ import {BlockResponseSchema} from '@aztec-labs/stdlib/interfaces/client';
 import {BlockHeader} from '@aztec-labs/stdlib/tx';
 import {BlockHash} from '@aztec-labs/stdlib/block';
 import {AppendOnlyTreeSnapshot} from '@aztec-labs/stdlib/trees';
-import {Tx,TxHash,TxSimulationResult} from '@aztec-labs/stdlib/tx';
+import {Tx,TxHash,TxSimulationResult,MinedTxReceipt,DroppedTxReceipt} from '@aztec-labs/stdlib/tx';
 import {createL2Journal} from '../shared/l2-journal.mjs';
 import {provingEnabledForNode} from '../shared/proving-policy.mjs';
 import * as transactionOutcomes from '../shared/transaction-outcomes.mjs';
@@ -22,6 +22,8 @@ import {NO_FROM} from '@aztec-labs/aztec.js/account';
 const source=await readFile(new URL('../apps/src/billboard/user/engine.js',import.meta.url),'utf8');
 const policySource=await readFile(new URL('../shared/moderation-policy.js',import.meta.url),'utf8');
 function context(){const c=vm.createContext({URL,performance,console,Buffer,TextEncoder,TextDecoder,Uint8Array,setTimeout,clearTimeout});vm.runInContext(policySource,c);vm.runInContext(source,c);return c;}
+const canonicalBlockHash=BlockHash.ZERO;
+const minedReceipt=txHash=>MinedTxReceipt.from({txHash,status:'checkpointed',executionResult:'success',transactionFee:0n,blockHash:canonicalBlockHash,blockNumber:1,slotNumber:1,txIndexInBlock:0,epochNumber:0});
 const gas=()=>new GasSettings(new Gas(100,200),new Gas(1,2),new GasFees(3n,4n),new GasFees(0n,0n));
 function fixture(failure,pluginHandle){
  const c=context(),prepared=[],sends=[],owner={toString:()=> 'owner'};
@@ -52,9 +54,9 @@ test('missing private fee configuration fails before account work for every priv
 });
 const owner={toString:()=> 'owner'};
 test('actual wallet preserves a fixed fee budget and account scope/tag',async()=>{
-  const c=context(),calls=[],initialLogs=[],currentLogs=[],settings=gas(),expectedSettings=gas(),txHash={toString:()=>new Fr(4).toString()},payload={authWitnesses:['exact-auth']};
-  const receipt={txHash,status:'checkpointed',executionResult:'success',blockNumber:1,blockHash:'block'};
-  const node={sendTx:async()=>calls.push('submit'),getTxReceipt:async()=>receipt,getBlock:async()=>({hash:'block'})};
+  const c=context(),calls=[],initialLogs=[],currentLogs=[],settings=gas(),expectedSettings=gas(),txHash=TxHash.fromBigInt(4n),payload={authWitnesses:['exact-auth']};
+  const receipt=minedReceipt(txHash);
+  const node={sendTx:async()=>calls.push('submit'),getTxReceipt:async()=>receipt,getBlock:async()=>({hash:canonicalBlockHash})};
   class BaseWallet {
     constructor(pxe){this.pxe=pxe;}
     async completeFeeOptions(opts){calls.push(['fees',opts]);return {gasSettings:opts.gasSettings};}
@@ -314,8 +316,8 @@ for(const kind of ['dummy','withdraw'])for(const changed of [false,true])test(`s
 });
 
 test('actual wallet passes attributed application spend to the durable journal before submission',async()=>{
- const c=context(),calls=[],txHash=new Fr(91),appNullifier=new Fr(92);let tx={getTxHash:()=>txHash};
- const receipt={txHash,status:'checkpointed',executionResult:'success',blockNumber:1,blockHash:'block'};
+ const c=context(),calls=[],txHash=TxHash.fromBigInt(91n),appNullifier=new Fr(92);let tx={getTxHash:()=>txHash};
+ let receipt=minedReceipt(txHash);
  class BaseWallet {
   constructor(pxe){this.pxe=pxe;}
   async completeFeeOptions(opts){return {gasSettings:opts.gasSettings};}
@@ -324,7 +326,7 @@ test('actual wallet passes attributed application spend to the durable journal b
   scopesFrom(){return [];} senderForTagsFrom(){return owner;}
  }
  const proven={toTx:async()=>tx},pxe={proveTx:async()=>proven};
- const node={sendTx:async()=>calls.push('submit'),getTxReceipt:async()=>receipt,getBlock:async()=>({hash:'block'})};
+ const node={sendTx:async()=>calls.push('submit'),getTxReceipt:async()=>receipt,getBlock:async()=>({hash:canonicalBlockHash})};
  const journal={assertCanStart:async()=>null,prepare:async(value,previous,binding)=>{assert.equal(value,tx);assert.equal(binding.applicationNullifier,appNullifier.toString());calls.push('saved');},confirmed:()=>{}};
  const a={provingEnabledForNode,...transactionOutcomes,BaseWallet,GasSettings,extractApplicationNullifier:async(result,value,board)=>{assert.equal(result,proven);assert.equal(value,tx);assert.equal(board,'board');calls.push('attributed');return appNullifier;}};
  const wallet=c.BillboardPrivateFeeRouting.createAztecWallet(a,pxe,node,node,()=>{},Fr.ONE,{transactionJournal:journal});wallet._applicationNullifierBoard='board';
@@ -339,7 +341,7 @@ test('actual wallet passes attributed application spend to the durable journal b
  assert.equal(calls.filter(x=>x==='submit').length,1);
  // Exercise the actual encrypted journal at the wallet's confirmation boundary.
  // The SDK transaction/prover and chain responses remain explicit fixtures.
- tx=Tx.random({randomProof:true});receipt.txHash=tx.getTxHash();
+ tx=Tx.random({randomProof:true});receipt=minedReceipt(tx.getTxHash());
  const nullifier=tx.data.getNonEmptyNullifiers()[0].toString(),records=new Map();
  const storage={read:async key=>records.get(key)??null,compareAndSwap:async(key,previous,next)=>{assert.equal(records.get(key)??null,previous);records.set(key,next);}};
  const options={storage,walletSecret:Fr.ONE.toString(),walletSalt:Fr.ZERO.toString(),Tx,node,
@@ -571,11 +573,12 @@ test('confirmed claim with failed sync reports confirmation and prevents further
 
 for(const kind of ['claim','dummy'])test(`accepted ${kind} survives engine restart and changed UI intent through the real encrypted journal`,async()=>{
  const h=mainHarness(kind==='claim'?'claim':'post',kind==='dummy'),tx=Tx.random({randomProof:true}),records=new Map();
- const receipt={txHash:tx.getTxHash(),status:'checkpointed',executionResult:'success',blockNumber:1,blockHash:'block'};
+ const receipt=minedReceipt(tx.getTxHash());
+ const getBlock=h.node.getBlock;h.node.getBlock=async number=>({...await getBlock(number),hash:canonicalBlockHash});
  const storage={read:async key=>records.get(key)??null,compareAndSwap:async(key,previous,next)=>{assert.equal(records.get(key)??null,previous);records.set(key,next);}};
  let journal,included=false,failSync=true,acceptedActions=0;
  h.env.createTransactionJournal=async options=>journal=await createL2Journal({...options,storage,Tx,node:h.node});
- h.node.getTxReceipt=async hash=>{assert.equal(hash.toString(),tx.getTxHash().toString());return {...receipt,status:included?'checkpointed':'dropped'};};
+ h.node.getTxReceipt=async hash=>{assert.equal(hash.toString(),tx.getTxHash().toString());return included?receipt:new DroppedTxReceipt(tx.getTxHash());};
  h.node.sendTx=async()=>assert.fail('Accepted operation must not be resubmitted');
  h.setActionReceipt(receipt);
  if(kind==='dummy')h.setNoteState({headSequence:1n,lastRealPostIndex:1n,lastScreenedIndex:0n});
@@ -784,9 +787,9 @@ test('plugin posting preserves private fee routing and leaves dummy posts unchan
 });
 
 test('plugin metadata persists after the proof journal and context changes stop broadcast',async()=>{
- const c=context(),calls=[],hash=new Fr(90),tx={getTxHash:()=>hash},receipt={txHash:hash,status:'checkpointed',executionResult:'success',blockNumber:1,blockHash:'block'};let changed=false;
+ const c=context(),calls=[],hash=TxHash.fromBigInt(90n),tx={getTxHash:()=>hash},receipt=minedReceipt(hash);let changed=false;
  class BaseWallet {constructor(pxe){this.pxe=pxe;}async completeFeeOptions(opts){return {gasSettings:opts.gasSettings};}async simulateViaEntrypoint(){return {publicInputs:{forPublic:{}},publicOutput:{txEffect:{revertCode:{isOK:()=>true}}},gasUsed:{totalGas:new Gas(1,1),teardownGas:new Gas(0,0)}};}async createTxExecutionRequestFromPayloadAndFee(){return 'request';}scopesFrom(){return [];}senderForTagsFrom(){return owner;}}
- const a={...transactionOutcomes,BaseWallet,GasSettings},pxe={proveTx:async()=>({toTx:async()=>tx})},node={sendTx:async()=>calls.push('send'),getTxReceipt:async()=>receipt,getBlock:async()=>({hash:'block'})};
+ const a={...transactionOutcomes,BaseWallet,GasSettings},pxe={proveTx:async()=>({toTx:async()=>tx})},node={sendTx:async()=>calls.push('send'),getTxReceipt:async()=>receipt,getBlock:async()=>({hash:canonicalBlockHash})};
  const journal={setOperation:()=>calls.push('intent'),assertCanStart:async()=>null,prepare:async()=>calls.push('proof-saved'),confirmed:()=>calls.push('confirmed')};
  const wallet=c.BillboardPrivateFeeRouting.createAztecWallet(a,pxe,node,node,()=>{},Fr.ONE,{contextGuard:async()=>{if(changed)throw {code:'BB_WALLET_NOT_READY'};}});
  const opts={from:owner,fee:{gasSettings:gas()},transactionJournal:journal,journalOperation:JSON.stringify({kind:'extension'}),beforeSubmit:async()=>calls.push('plugin-saved')};

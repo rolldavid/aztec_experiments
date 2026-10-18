@@ -5,7 +5,8 @@ import os from 'node:os';
 import path from 'node:path';
 import {randomBytes} from 'node:crypto';
 import {IDBFactory} from 'fake-indexeddb';
-import {Tx} from '@aztec-labs/stdlib/tx';
+import {Tx,MinedTxReceipt} from '@aztec-labs/stdlib/tx';
+import {BlockHash} from '@aztec-labs/stdlib/block';
 import {createL2Journal} from '../shared/l2-journal.mjs';
 import {createJournalBackup} from '../shared/journal-backup.mjs';
 import {createBrowserJournalStorage} from '../shared/journal-indexeddb.mjs';
@@ -17,7 +18,7 @@ async function fixture(fn){
  try {
   const browser=createBrowserJournalStorage(new IDBFactory()),file=createFileJournalStorage(directory);
   const options={walletSecret:field(),walletSalt:field(),scope:{account:field(),board:field(),portal:'0x'+'11'.repeat(20),rollup:'0x'+'22'.repeat(20),chainId:'31337',version:'5'}};
-  const tx=Tx.random({randomProof:true}),node={getTxReceipt:async()=>({txHash:tx.getTxHash(),status:'checkpointed',executionResult:'success',blockNumber:2,blockHash:'canonical'}),getBlock:async()=>({hash:'canonical'})};
+  const tx=Tx.random({randomProof:true}),node={getTxReceipt:async()=>MinedTxReceipt.from({txHash:tx.getTxHash(),status:'checkpointed',executionResult:'success',transactionFee:0n,blockNumber:2,blockHash:BlockHash.ZERO,slotNumber:2,txIndexInBlock:0,epochNumber:0}),getBlock:async()=>({hash:BlockHash.ZERO})};
   const journal=await createL2Journal({...options,storage:browser,Tx,node});await journal.prepare(tx,await journal.assertCanStart());
   await fn({browser,file,options,tx,node,backup:storage=>createJournalBackup({...options,storage})});
  }finally{fs.rmSync(directory,{recursive:true,force:true});}
