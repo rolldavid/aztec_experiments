@@ -724,3 +724,9 @@ test('Nonce lineage requires both fee fields at the exact ceiling20percent bound
  }
  await f.ops.runSepoliaNonceCancellation({...f.args,intent:next});assert.equal(f.signedSteps.length,4);assert.equal(f.broadcasts.length,4);
 });
+test('Sepolia trusted programmatic failure retains original cause while its public message stays fixed',async()=>{
+ const {seedTestnetLiquidity}=await import('../operator.mjs'),f=await nonceLineageFixture();
+ await assert.rejects(seedTestnetLiquidity({plan:f.args.plan,statePath:'/unavailable-rolling-cause-fixture/state.json',stage:'approve-usdc',keyFile:'/not-opened'}),error=>{
+  assert.equal(error.message,'Sepolia seed unavailable; preserve original plan and journals, reconcile before another operation');assert.equal(error.cause?.code,'ENOENT');assert(!error.message.includes('unavailable-rolling-cause-fixture'));return true;
+ });
+});
