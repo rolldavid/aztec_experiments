@@ -120,6 +120,25 @@ export async function publishAcceptedRevision({publication,mirror,receipt}){
  return result;
 }
 
+/** Trusted accepted-source recovery. No agent/tool session or source execution
+ * is opened; required mirror publication remains part of recoverAccepted. */
+export async function recoverAcceptedHostedRevision({repositories,repository,request}){
+ const receipt=await repositories.recoverAccepted({threadId:request.threadId,invocationId:request.requestId,repository});
+ assert(receipt.threadId===request.threadId&&receipt.invocationId===request.requestId);
+ assert(/^[0-9a-f]{64}$/.test(receipt.repositoryId)&&/^[0-9a-f]{40}$/.test(receipt.acceptedRevision));
+ assert(receipt.validation?.passed===true&&receipt.validation.revision===receipt.acceptedRevision&&/^[0-9a-f]{64}$/.test(receipt.validation.sourceDigest));
+ const p=receipt.publication;let replyText;
+ if(receipt.connection){
+  assert(p?.connected===true&&typeof p.url==='string'&&/^https:\/\/github\.com\/[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+\/pull\/[1-9][0-9]*$/.test(p.url),'Connected publication required');
+  replyText='Recovered repository changes are ready for operator review: '+p.url;
+ }else{
+  for(const url of [p?.artifactUrl,p?.sourceUrl])assert(typeof url==='string'&&url.length<=320&&/^https?:\/\//.test(url)&&!/[\s\x00-\x1f]/.test(url),'Exact accepted publication links required');
+  replyText=`Recovered accepted application revision ${receipt.acceptedRevision}.\nApp: ${p.artifactUrl}\nSource: ${p.sourceUrl}`;
+ }
+ assert(Buffer.byteLength(replyText)<=992);
+ return {replyText,recoveredRevision:{repositoryId:receipt.repositoryId,acceptedRevision:receipt.acceptedRevision,sourceDigest:receipt.validation.sourceDigest}};
+}
+
 /** Discover interrupted reply/finish work from the existing private journals.
  * The public pending feed deliberately excludes replied posts. This bounded
  * directory cursor is only a hint: original scope and fresh chain state bind
@@ -308,7 +327,7 @@ export async function runRollingHostedService({config,env=process.env,onError=()
     const rawEscrow=await walletOperation(()=>createPrivateBokEscrow({node,wallet,artifact,address:scope.receiver,operator:account.address.toString(),board:scope.boardAddress,network:scope,
      requestId:request.requestId,target:request.target,store,lease,development:config.development,proofMode:config.development?'disabled':'real'}));
     const escrow=serializeHostedEscrow(rawEscrow,walletOperation);
-    return runPrivateBokRequest({request,board,escrow,store,provider,conversation,limits:config.limits,runAgent:async({model,conversation,...input})=>
+    return runPrivateBokRequest({request,board,escrow,store,provider,conversation,limits:config.limits,recoverAccepted:current=>recoverAcceptedHostedRevision({repositories,repository,request:current}),runAgent:async({model,conversation,...input})=>
      bokRunner({runner:createAgent({model,toolbox,conversation,summaryModelId,maxCalls:config.limits?.maxCalls??8,maxTokens:config.limits?.maxTokens??1500,instructions:'You are bok, the board development assistant. Answer the explicit request. Each thread has its own persistent source repository. For static applications, provide package.json with a build script, explicit Node tests, and dist output. Use check_workspace to run isolated tests and builds and repair failures before answering. The isolated build/test runner has Node, no network, and no dependency installation. Published dist code runs in a browser, where CommonJS module, exports, require and Node globals are unavailable. Test browser entry scripts and registered handlers without supplying those globals. Preserve the explicit expected states and activation sequences in the latest request; never change expected values to match incorrect behavior. Node test success alone does not verify browser behavior. Host validation saves accepted revisions; tools cannot alter permissions or deploy.'})}).run(input)});
    }});
   return {address:server.address,artifactAddress:artifactsServer.address(),close,

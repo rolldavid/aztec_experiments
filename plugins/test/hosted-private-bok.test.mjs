@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import {runPrivateBokRequest,startEscrowService,reconcileHostedBilling,isHostedTerminalWithoutReply} from '../escrow-service.mjs';
 import {validateVeniceBilling} from '../venice-metered.mjs';
 import {validateDescriptor,API_VERSION,unpackText} from '../protocol.mjs';
-import {publishAcceptedRevision,hostedRecoveryScanner,runHostedBillingReconciliation,acquireHostedLease,serializeHostedEscrow,hostedTerminalNode} from '../main.mjs';
+import {publishAcceptedRevision,recoverAcceptedHostedRevision,hostedRecoveryScanner,runHostedBillingReconciliation,acquireHostedLease,serializeHostedEscrow,hostedTerminalNode} from '../main.mjs';
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
@@ -514,4 +514,43 @@ test('terminal accounting from a different checkpoint cannot exempt a predecesso
  const x=await unknownBillingFixture();await x.recover();const before=structuredClone(x.store.read());
  await assert.rejects(isHostedTerminalWithoutReply({request:x.args.request,store:x.store,escrow:x.args.escrow,anchor:{number:8,hash:f(88)}}),/checkpoint changed/);
  assert.deepEqual(x.store.read(),before);
+});
+
+
+async function acceptedInterruptionFixture(){
+ const x=fixture();x.current.threadId=f(9);const run=x.args.runAgent;
+ x.args.runAgent=async input=>{await run(input);throw Error('accepted publication interrupted');};
+ await assert.rejects(x.run(),/publication interrupted/);assert.equal(x.store.read().hostedPrivateBok.phase,'running');
+ x.args.runAgent=()=>assert.fail('Recovery must not enter agent');x.args.provider={quote:()=>assert.fail('No quote'),execute:()=>assert.fail('No model')};
+ x.args.recoverAccepted=async request=>{assert.equal(request.threadId,f(9));return {replyText:'Recovered accepted application revision.',recoveredRevision:{repositoryId:'a'.repeat(64),acceptedRevision:'b'.repeat(40),sourceDigest:'c'.repeat(64)}};};return x;
+}
+test('accepted hosted recovery publishes once and finishes with settled original billing and no model replay',async()=>{
+ const x=await acceptedInterruptionFixture(),calls=structuredClone(x.store.read().privateBok.calls);
+ assert.deepEqual(await x.run(),{status:'finished',replayed:false});assert.deepEqual(x.events,['reserve','paid','settle','publish_reply','finish']);assert.equal(x.row.charged,6n);assert.equal(x.row.refunded,994n);assert.deepEqual(x.store.read().privateBok.calls,calls);assert.equal(x.store.read().hostedPrivateBok.recoveredRevision.acceptedRevision,'b'.repeat(40));
+ x.args.recoverAccepted=()=>assert.fail('Terminal revision cannot revive');await x.run();assert.deepEqual(x.events,['reserve','paid','settle','publish_reply','finish']);
+});
+test('accepted recovery fences mirror failures, unknown billing and canonical identity/accounting changes',async()=>{
+ for(const change of [x=>x.args.recoverAccepted=async()=>{throw Error('Mirror pending');},x=>x.store.read().privateBok.calls[0].phase='possibly-sent',x=>x.store.read().privateBok.calls[0].billing.charge='0',x=>x.store.read().privateBok.identity.target=f(99),x=>x.row.state=4,x=>x.row.reserved=1n,x=>x.current.predecessorsClear=false,x=>x.current.pluginId=f(99),x=>x.current.target=f(99),x=>x.current.postId=f(99),x=>x.current.usable=false,x=>x.store.read().hostedPrivateBok.phase='accounting-recovery',x=>x.args.escrow.inspectOperation=async()=>({status:'pending'}),x=>{const operations=x.store.read().privateBok.operations;for(const [id,op]of Object.entries(operations))if(op.method==='settle')delete operations[id];}]){
+  const x=await acceptedInterruptionFixture();change(x);const saved=structuredClone(x.store.read());await assert.rejects(x.run());assert.deepEqual(x.store.read(),saved);assert.deepEqual(x.events,['reserve','paid','settle']);
+ }
+ const x=await unknownBillingFixture();await x.recover();x.args.recoverAccepted=()=>assert.fail('Accounted request cannot revive');assert.equal((await x.run()).status,'accounted-without-reply');
+});
+test('accepted recovery rechecks canonical invocation after publication and never resends ambiguous reply',async()=>{
+ const changed=await acceptedInterruptionFixture(),recover=changed.args.recoverAccepted;changed.args.recoverAccepted=async input=>{const result=await recover(input);changed.current.predecessorsClear=false;return result;};await assert.rejects(changed.run(),/Invocation changed/);assert.deepEqual(changed.events,['reserve','paid','settle']);
+ const x=await acceptedInterruptionFixture();let recoveries=0;const original=x.args.recoverAccepted;x.args.recoverAccepted=async input=>{recoveries++;return original(input);};x.control.unknownReply=true;await assert.rejects(x.run(),/Reply transaction unresolved/);await assert.rejects(x.run(),/Reply transaction unresolved/);assert.equal(recoveries,1);assert.equal(x.events.filter(e=>e==='publish_reply').length,1);x.control.unknownReply=false;await x.run();assert.equal(recoveries,1);assert.deepEqual(x.events,['reserve','paid','settle','publish_reply','finish']);
+});
+test('trusted accepted reply binds exact publication links and never exposes connected source',async()=>{
+ const request={threadId:f(9),requestId:f(2)},receipt={threadId:f(9),invocationId:f(2),repositoryId:'a'.repeat(64),acceptedRevision:'b'.repeat(40),validation:{passed:true,revision:'b'.repeat(40),sourceDigest:'c'.repeat(64)},publication:{artifactUrl:'https://apps.example/exact/index.html',sourceUrl:'https://apps.example/exact/source.json'}};
+ const repositories={recoverAccepted:async input=>{assert.deepEqual(input,{threadId:f(9),invocationId:f(2),repository:'owner/project'});return structuredClone(receipt);}};
+ const run=()=>recoverAcceptedHostedRevision({repositories,repository:'owner/project',request});const output=await run();assert.match(output.replyText,/Recovered accepted application revision/);assert(output.replyText.includes(receipt.publication.artifactUrl));assert.equal(output.recoveredRevision.acceptedRevision,receipt.acceptedRevision);
+ for(const changed of [{...receipt,invocationId:f(99)},{...receipt,validation:{...receipt.validation,revision:'d'.repeat(40)}},{...receipt,publication:null},{...receipt,publication:{...receipt.publication,sourceUrl:'javascript:bad'}}])await assert.rejects(recoverAcceptedHostedRevision({repositories:{recoverAccepted:async()=>changed},repository:'owner/project',request}));
+ receipt.connection={fullName:'owner/private'};receipt.publication={connected:true,url:'https://github.com/owner/private/pull/1',artifactUrl:'https://must-not-publish.example/secret'};const connected=await run();assert.equal(connected.replyText,'Recovered repository changes are ready for operator review: https://github.com/owner/private/pull/1');
+});
+
+test('recovered reply absent or reverted receipts never permit another reply send or finish',async()=>{
+ for(const status of ['absent','failed']){
+  const x=await acceptedInterruptionFixture(),inspect=x.args.escrow.inspectOperation;
+  x.args.escrow.inspectOperation=async id=>{const result=await inspect(id);return result.method==='publish_reply'?{...result,status}:result;};
+  await assert.rejects(x.run(),/Reply transaction unresolved/);await assert.rejects(x.run(),/Reply transaction unresolved/);assert.deepEqual(x.events,['reserve','paid','settle','publish_reply']);assert.equal(x.row.refunded,0n);
+ }
 });

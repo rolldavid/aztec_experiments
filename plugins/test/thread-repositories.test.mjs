@@ -161,3 +161,29 @@ for(const changedAfterCheck of [false,true])test('agent terminal acceptance refu
  await assert.rejects(createAgent({model,toolbox,instructions:'Build',maxCalls:changedAfterCheck?2:1}).run({id:id(1),postId:id(9),text:'Build'}),/Invalid generated output/);assert.equal(published,0);assert.equal(validations,2);assert.equal(calls,changedAfterCheck?2:1);
  const next=await manager.open({threadId:id(9),invocationId:id(2),repository:'owner/project'});try{assert.equal(next.readRevision,null);}finally{await next.close();}
 });
+
+
+test('accepted recovery reuses exact Git objects and validation, requires publication, creates no draft',async t=>{
+ const h=await fixture(t);let validations=0,publications=0,blocked=true,original;
+ const options={...h.options,validateRevision:async({revision})=>{validations++;return {passed:true,revision,testsPassed:true,buildPassed:true,sourceDigest:'a'.repeat(64),sourceArchiveSha256:'b'.repeat(64),artifactArchiveSha256:'c'.repeat(64)};},onAccepted:async receipt=>{
+  publications++;if(!original)original=structuredClone(receipt);else assert.deepEqual(receipt,original);
+  if(blocked)throw Error('Mirror remains unresolved');return {artifactUrl:'https://apps.example/exact/index.html',sourceUrl:'https://apps.example/exact/source.json'};
+ }};
+ const manager=threadRepositories(options),first=await h.open(1,1,manager);await h.checkout(first);await fs.writeFile(path.join(first.work,'file.txt'),'accepted source');await assert.rejects(first.accept(),/Mirror/);const root=path.dirname(first.repositoryPath);await first.close();
+ const input={threadId:id(1),invocationId:id(1),repository:'owner/project'};
+ await assert.rejects(manager.recoverAccepted(input),/Mirror/);assert.equal(validations,1);assert.equal(publications,2);
+ blocked=false;const receipt=await threadRepositories(options).recoverAccepted(input);assert.equal(receipt.acceptedRevision,original.acceptedRevision);assert.equal(validations,1);assert.equal(publications,3);assert.equal(receipt.publication.sourceUrl,'https://apps.example/exact/source.json');assert(!(await fs.readdir(root)).some(name=>name.startsWith('draft-')));
+ await manager.recoverAccepted(input);assert.equal(publications,4,'recovery rechecks required publication');assert.equal(validations,1);
+ await assert.rejects(manager.recoverAccepted({...input,invocationId:id(99)}),/Exact accepted/);assert.equal(publications,4);
+ await assert.rejects(manager.recoverAccepted({...input,repository:'changed/project'}));assert.equal(publications,4);
+ const file=path.join(root,'revisions.json'),state=JSON.parse(await fs.readFile(file));
+ for(const change of [s=>s.operations[id(1)].validation.revision='d'.repeat(40),s=>s.operations[id(1)].validation.sourceDigest='invalid',s=>s.operations[id(1)].validation.testsPassed=false,s=>s.operations[id(1)].threadId=id(88)]){
+  const altered=structuredClone(state);change(altered);await fs.writeFile(file,JSON.stringify(altered));await assert.rejects(manager.recoverAccepted(input));assert.equal(publications,4);
+ }
+ await fs.writeFile(file,JSON.stringify(state));await repositoryGit(['update-ref','refs/invocations/'+id(1).slice(2),receipt.acceptedRevision+'^'],{cwd:first.repositoryPath});await assert.rejects(manager.recoverAccepted(input),/invocation ref changed/);assert.equal(publications,4);
+});
+test('accepted recovery refuses absent and unaccepted source without executing validation or creating storage',async t=>{
+ const h=await fixture(t),manager=threadRepositories({...h.options,validateRevision:()=>assert.fail('No execution'),onAccepted:()=>assert.fail('No publication')});
+ await assert.rejects(manager.recoverAccepted({threadId:id(1),invocationId:id(1),repository:'owner/project'}));await assert.rejects(fs.stat(h.options.directory),{code:'ENOENT'});
+ const session=await h.open(1,1,manager);await h.checkout(session);await session.close();await assert.rejects(manager.recoverAccepted({threadId:id(1),invocationId:id(1),repository:'owner/project'}),/Exact accepted/);
+});

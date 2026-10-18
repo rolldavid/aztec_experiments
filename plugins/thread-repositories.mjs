@@ -24,7 +24,7 @@ export function threadRepositories({directory,namespace,lease,git=repositoryGit,
  assert(connections===undefined||(typeof connections.connectionFor==='function'&&typeof connections.readConnected==='function'));assert.equal(typeof startEmpty,'boolean');assert(onAccepted===undefined||typeof onAccepted==='function');
  const queues=new Map();
  async function size(directory){let total=0;for(const entry of await fs.readdir(directory)){const file=path.join(directory,entry),stat=await fs.lstat(file);assert(!stat.isSymbolicLink(),'Repository symlink rejected');if(stat.isDirectory())total+=await size(file);else{assert(stat.isFile());total+=stat.size;}assert(total<=maxBytes,'Thread storage limit reached');}return total;}
- return Object.freeze({async open({threadId,invocationId,repository}){
+ async function open({threadId,invocationId,repository},recoverAccepted=false){
   assert(/^0x[0-9a-f]{64}$/.test(threadId)&&/^0x[0-9a-f]{64}$/.test(invocationId));
   assert(/^[\w.-]+\/[\w.-]+$/.test(repository));
   const key=sha(namespace+'\0'+threadId),previous=queues.get(key)||Promise.resolve();let unlock;
@@ -32,13 +32,16 @@ export function threadRepositories({directory,namespace,lease,git=repositoryGit,
   let draft,closed=false;
   const release=()=>{if(queues.get(key)===turn)queues.delete(key);unlock();};
   try{
-   await lease.assertHeld();await fs.mkdir(directory,{recursive:true,mode:0o700});assert.equal(await fs.realpath(directory),directory);assert.equal((await fs.stat(directory)).mode&0o777,0o700);
+   await lease.assertHeld();
+   if(recoverAccepted)await fs.access(path.join(directory,key,'revisions.json'));
+   await fs.mkdir(directory,{recursive:true,mode:0o700});assert.equal(await fs.realpath(directory),directory);assert.equal((await fs.stat(directory)).mode&0o777,0o700);
    const root=path.join(directory,key);await fs.mkdir(root,{mode:0o700,recursive:true});assert.equal(await fs.realpath(root),root);
    const store=await fileState(path.join(root,'revisions.json')),repo=path.join(root,'repository.git');let state=store.read();
    const connection=connections?.connectionFor(threadId)??null;
    if(connection)repository=connection.fullName;
    const identity={namespace,threadId,repository,startEmpty,...(connection?{connection}:{})};
    if(!state.identity){
+    assert(!recoverAccepted,'No accepted repository identity');
     await git(['init','--bare',repo]);await store.write({identity,acceptedRevision:null,operations:{}});state=store.read();
    }
    assert.deepEqual(state.identity,identity);assert.equal(await fs.realpath(repo),repo);
@@ -52,10 +55,22 @@ export function threadRepositories({directory,namespace,lease,git=repositoryGit,
    }
    assert.equal(await head(),state.acceptedRevision,'Accepted repository ref changed');
    const receipt=record=>({repositoryId:key,threadId,invocationId:record.invocationId,readRevision:record.readRevision,acceptedRevision:record.producedRevision,validation:record.validation,...(connection?{connection:structuredClone(connection)}:{})});
-   async function publish(record){
-    if(!onAccepted||record.publication?.status==='complete')return record.publication?.result;
+   async function publish(record,verify=false){
+    if(!onAccepted||record.publication?.status==='complete'&&!verify)return record.publication?.result;
     await lease.assertHeld();const result=await onAccepted(receipt(record));
     await store.write({...state,operations:{...state.operations,[record.invocationId]:{...record,publication:{status:'complete',result}}}});state=store.read();return result;
+   }
+   if(recoverAccepted){
+    const record=state.operations[invocationId];
+    assert(record?.status==='accepted'&&record.threadId===threadId&&record.invocationId===invocationId&&record.producedRevision===state.acceptedRevision,'Exact accepted invocation required');
+    assert(record.validation?.passed===true&&record.validation.revision===record.producedRevision&&record.validation.testsPassed===true&&record.validation.buildPassed===true,'Accepted validation required');
+    for(const name of ['sourceDigest','sourceArchiveSha256','artifactArchiveSha256'])assert(/^[0-9a-f]{64}$/.test(record.validation[name]),'Accepted validation digest required');
+    await git(['cat-file','-e',record.producedRevision+'^{commit}'],{cwd:repo});
+    assert.equal((await git(['rev-parse','--verify',`refs/invocations/${invocationId.slice(2)}`],{cwd:repo})).stdout.trim(),record.producedRevision,'Accepted invocation ref changed');
+    assert(typeof onAccepted==='function','Accepted publication required');
+    const publication=await publish(record,true);
+    await lease.assertHeld();assert.equal(await head(),record.producedRevision,'Accepted repository ref changed');
+    const recovered=Object.freeze({...receipt(record),publication});release();return recovered;
    }
    // Trusted publication/mirror capabilities reconcile their durable intents;
    // never re-enter provider work or retransmit an uncertain external write.
@@ -99,5 +114,6 @@ export function threadRepositories({directory,namespace,lease,git=repositoryGit,
     async close(){if(closed)return;closed=true;try{await fs.rm(draft,{recursive:true,force:true});}finally{release();}}
    });
   }catch(error){release();throw error;}
- }});
+ }
+ return Object.freeze({open:input=>open(input),recoverAccepted:input=>open(input,true)});
 }
