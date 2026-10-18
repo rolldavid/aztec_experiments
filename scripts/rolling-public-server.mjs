@@ -16,15 +16,39 @@ export async function startRollingPublicServer({index,host='127.0.0.1',port=0,st
     const failures=[error];for(const cleanup of [()=>index.close?.(),()=>fundingRelay?.close()])try{await cleanup();}catch(failure){failures.push(failure);}
     if(failures.length>1)throw new AggregateError(failures,'Public reader configuration and cleanup failed');throw error;
   }
-  let closed=false,timer,active,closing;const requests=new Set();let fundingWindow=0,fundingRequests=0;
-  const loop=()=>{active=(async()=>{let catchup=false;try{
+  let closed=false,timer,turn,active,queued,closing;const requests=new Set();let fundingWindow=0,fundingRequests=0;
+  // Polls and admitted reads share one serial owner. A read reserves the next
+  // cycle, rather than reusing a snapshot whose acquisition already completed.
+  const begin=()=>{
+    turn=undefined;if(closed||active||!queued)return;
+    clearTimeout(timer);const cycle=queued;queued=null;active=cycle;
+    void (async()=>{let catchup=false,failed=false;try{
       const before=index.status?.().revision;await index.sync();const after=index.status?.();
-      // A changed durable revision while still syncing is known bounded work,
-      // including reorg rollback. Yield to HTTP/timers before the next step;
-      // readiness, no progress, and failures retain the ordinary poll interval.
       catchup=after?.state==='syncing'&&typeof after.revision==='string'&&after.revision!==before;
-    }catch{/* status remains unavailable; no raw upstream error logging */}
-    finally{if(!closed)timer=setTimeout(loop,catchup?0:pollMs);}})();};
+    }catch{failed=true;/* no stale fallback or raw upstream error logging */}
+    active=null;cycle.resolve({catchup,failed});
+    if(closed)return;
+    if(queued||catchup){nextCycle();}else timer=setTimeout(nextCycle,pollMs);
+    })();
+  };
+  const nextCycle=()=>{
+    if(closed)return Promise.resolve({closed:true});
+    clearTimeout(timer);
+    if(!queued){let resolve;const promise=new Promise(r=>resolve=r);queued={promise,resolve};}
+    // Yield between bounded durable steps, including catch-up. This is an event
+    // loop handoff, not elapsed time used to establish canonical readiness.
+    if(!active&&!turn)turn=setImmediate(begin);
+    return queued.promise;
+  };
+  const freshRead=async()=>{
+    let expired=false,deadline;
+    const progress=(async()=>{let result=await nextCycle();
+      while(!expired&&!closed&&!result.failed&&result.catchup)result=await nextCycle();
+      return result;
+    })();
+    try{return await Promise.race([progress,new Promise(resolve=>{deadline=setTimeout(()=>{expired=true;resolve({failed:true});},20000);})]);}
+    finally{clearTimeout(deadline);}
+  };
   const handle=async(req,res)=>{
     const reply=(status,body)=>{let text=JSON.stringify(body);if(Buffer.byteLength(text)>1048576){status=503;text='{"schemaVersion":1,"error":"unavailable"}';}
       res.writeHead(status,headers);res.end(text);};
@@ -62,9 +86,10 @@ export async function startRollingPublicServer({index,host='127.0.0.1',port=0,st
       if(params.query!==undefined&&(params.query.length>120||params.query.includes('\0')))return reply(400,{schemaVersion:1,error:'invalid-request'});
       const idKey={board:'id',thread:'root',profile:'nameId',post:'id'}[view];if(idKey&&!field(params[idKey]))return reply(400,{schemaVersion:1,error:'invalid-request'});
       if(view==='status')return reply(200,index.status());
-      // Join the current canonical read only; never start a request-owned sync.
-      await active;
-      if(index.status().state!=='ready')return reply(503,{schemaVersion:1,error:'not-ready'});
+      // No request owns index mutation; concurrent reads join the shared next
+      // cycle and its bounded state-driven catch-up before publication.
+      const refreshed=await freshRead();
+      if(refreshed.failed||refreshed.closed||closed||index.status().state!=='ready')return reply(503,{schemaVersion:1,error:'not-ready'});
       try{return reply(200,index.query(view,params));}
       catch(error){const unsupported=error?.code==='ROLLING_PUBLIC_ACCOUNTING_UNSUPPORTED',stale=error?.code==='ROLLING_PUBLIC_CURSOR_STALE',missing=error?.code==='ROLLING_PUBLIC_NOT_FOUND';return reply(unsupported?501:stale?409:missing?404:400,{schemaVersion:1,error:unsupported?'accounting-unsupported':stale?'cursor-stale':missing?'not-found':'invalid-request'});}
     }catch(error){
@@ -81,10 +106,10 @@ export async function startRollingPublicServer({index,host='127.0.0.1',port=0,st
   });
   server.requestTimeout=10000;server.headersTimeout=10000;server.maxHeadersCount=32;
   const close=()=>closing??=(async()=>{
-    closed=true;clearTimeout(timer);const failures=[],pending=Promise.allSettled([...requests]);
+    closed=true;clearTimeout(timer);clearImmediate(turn);queued?.resolve({closed:true});queued=null;const failures=[],pending=Promise.allSettled([...requests]);
     // Stop admission first; existing handlers may still be joining active sync.
     const listener=server.listening?new Promise(resolve=>server.close(error=>{if(error)failures.push(error);resolve();})):Promise.resolve();
-    try{await active;}catch(error){failures.push(error);}
+    try{await active?.promise;}catch(error){failures.push(error);}
     await listener;
     for(const result of await pending)if(result.status==='rejected')failures.push(result.reason);
     try{await index.close?.();}catch(error){failures.push(error);}
@@ -93,7 +118,7 @@ export async function startRollingPublicServer({index,host='127.0.0.1',port=0,st
   })();
   try{await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(port,host,resolve);});}
   catch(error){try{await close();}catch(cleanup){throw new AggregateError([error,cleanup],'Public reader startup and cleanup failed');}throw error;}
-  loop();return {url:`http://${host}:${server.address().port}`,close};
+  nextCycle();return {url:`http://${host}:${server.address().port}`,close};
 }
 
 // This facade owns exactly one persistent index/store. Internal schema3/control

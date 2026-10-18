@@ -39,7 +39,7 @@ test('sync has one owner, close joins current update, no externally bound host',
  await assert.rejects(startRollingPublicServer({index:f.index,host:'0.0.0.0'}));
 });
 
-for(const succeeds of [true,false])test(`data HTTP joins one delayed ${succeeds?'successful':'failed'} canonical sync; status stays immediate`,async t=>{
+for(const succeeds of [true,false])test(`data HTTP waits for pre-existing work then a fresh ${succeeds?'successful':'failed'} canonical sync; status stays immediate`,async t=>{
  let release,started,queries=0,syncs=0,state='syncing';
  const begun=new Promise(resolve=>{started=resolve;}),gate=new Promise(resolve=>{release=resolve;});
  const index={status:()=>({schemaVersion:1,state}),sync:async()=>{syncs++;started();await gate;
@@ -50,7 +50,7 @@ for(const succeeds of [true,false])test(`data HTTP joins one delayed ${succeeds?
  const status=await fetch(server.url+'/api/status');assert.equal(status.status,200);assert.equal((await status.json()).state,'syncing');
  await new Promise(resolve=>setTimeout(resolve,30));assert.equal(completed,false);assert.equal(queries,0);assert.equal(syncs,1);
  release();const response=await request;assert.equal(response.status,succeeds?200:503);
- assert.equal(queries,succeeds?1:0);assert.equal(syncs,1);assert.ok(!(await response.text()).includes('PRIVATE_SENTINEL'));
+ assert.equal(queries,succeeds?1:0);assert.equal(syncs,2);assert.ok(!(await response.text()).includes('PRIVATE_SENTINEL'));
 });
 test('shared config factory rejects invalid port/extras/private URL before artifact or storage I/O',async()=>{
  const config={nodeUrl:'http://127.0.0.1:1',get artifactPath(){throw Error('UNEXPECTED_ARTIFACT_ACCESS');},scope:{},deployment:{},
@@ -247,18 +247,18 @@ test('Bok HTTP acquisition is uniform limit/cursor only and distinguishes unsupp
 
 
 test('cold catch-up yields between 420 bounded steps without normal polling delays', {timeout:5000}, async t=>{
- let steps=0,inflight=0,peak=0,ready=false,resolveReady,timerTicks=0;
+ let steps=0,inflight=0,peak=0,ready=false,resolveReady,yielded=false;
  const completed=new Promise(resolve=>{resolveReady=resolve;});
  const index={status:()=>({state:ready?'ready':'syncing',revision:'epoch:1:'+steps}),sync:async()=>{
   inflight++;peak=Math.max(peak,inflight);await Promise.resolve();steps++;inflight--;
   if(steps===421){ready=true;resolveReady();}
  },query:()=>({complete:true,posts:[]})};
- const tick=setInterval(()=>timerTicks++,5);t.after(()=>clearInterval(tick));
+ const tick=setImmediate(()=>{yielded=true;});t.after(()=>clearImmediate(tick));
  const server=await startRollingPublicServer({index,pollMs:30000});t.after(()=>server.close());
  const status=await fetch(server.url+'/api/status');assert.equal(status.status,200);assert.equal((await status.json()).state,'syncing');
- assert.equal((await fetch(server.url+'/api/feed')).status,503,'partial catch-up remains unavailable');
- await completed;assert.equal(steps,421);assert.equal(peak,1);assert(timerTicks>1,'scheduled work yields to timers and HTTP');
- assert.equal((await fetch(server.url+'/api/feed')).status,200);await new Promise(r=>setTimeout(r,20));assert.equal(steps,421,'ready state returns to normal polling');
+ assert.equal((await fetch(server.url+'/api/feed')).status,200,'read joins actual advancing catch-up, never a partial publication');
+ await completed;assert.equal(steps,421);assert.equal(peak,1);assert(yielded,'scheduled work yields to another event-loop turn; the earlier status response also proves HTTP remains responsive');
+ assert.equal((await fetch(server.url+'/api/feed')).status,200);await new Promise(r=>setTimeout(r,20));assert.equal(steps,422,'one fresh read cycle then ready state returns to normal polling');
 });
 for(const condition of ['no-progress','ready','error','unknown-revision'])test('catch-up preserves normal polling on '+condition,async t=>{
  let steps=0,revision='epoch:1:0';
@@ -274,4 +274,70 @@ test('close owns an in-flight catch-up step and cancels its next immediate turn'
  const index={status:()=>({state:'syncing',revision:'epoch:1:'+steps}),sync:async()=>{steps++;if(steps===2){entered();await gate;}},close:async()=>{disposed=true;}};
  const server=await startRollingPublicServer({index,pollMs:30000});
  try{await begun;const closing=server.close();await Promise.resolve();assert.equal(disposed,false);release();await closing;assert.equal(disposed,true);await new Promise(r=>setTimeout(r,20));assert.equal(steps,2);}finally{release();await server.close();}
+});
+
+test('a new board read observes a policy confirmed after the completed sync',async t=>{
+ let canonical={number:95,version:'1'},cached=null,syncs=0;
+ const index={status:()=>({schemaVersion:1,state:cached?'ready':'syncing',revision:String(cached?.number??0)}),
+  async sync(){syncs++;cached={...canonical};},
+  query:()=>({schemaVersion:1,complete:true,checkpoint:{number:cached.number},mainPolicy:{version:cached.version,text:'Rules'}})};
+ const server=await startRollingPublicServer({index,pollMs:30000});t.after(()=>server.close());
+ // The status response establishes that the first ordinary sync has completed;
+ // advancing the controlled canonical source is a state transition, not a wait.
+ assert.equal((await (await fetch(server.url+'/api/status')).json()).revision,'95');
+ canonical={number:96,version:'2'};
+ const response=await fetch(server.url+'/api/board?id=0');assert.equal(response.status,200);
+ const data=await response.json();assert.equal(data.checkpoint.number,96);assert.equal(data.mainPolicy.version,'2');assert.equal(syncs,2);
+});
+
+test('concurrent reads coalesce one next cycle and close drains existing work without another cycle',async t=>{
+ const {connect}=await import('node:net');let release,admitted,started,cycles=0,inflight=0,peak=0,closes=0;
+ const gate=new Promise(r=>release=r),seen=new Promise(r=>admitted=r),begun=new Promise(r=>started=r);
+ const index={status(){if(cycles===1&&inflight)admitted();return {schemaVersion:1,state:'ready',revision:String(cycles)};},
+  async sync(){cycles++;inflight++;peak=Math.max(peak,inflight);if(cycles===1){started();await gate;}inflight--;},
+  query:()=>({schemaVersion:1,complete:true,checkpoint:{number:96},mainPolicy:{version:'2'}}),close(){closes++;}};
+ const server=await startRollingPublicServer({index,pollMs:30000});t.after(async()=>{release();await server.close();});await begun;
+ const socket=connect(new URL(server.url).port,'127.0.0.1');t.after(()=>socket.destroy());let bytes='';socket.setEncoding('utf8');socket.on('data',chunk=>bytes+=chunk);
+ const ended=new Promise((resolve,reject)=>{socket.on('end',resolve);socket.on('error',reject);});
+ await new Promise(resolve=>socket.once('connect',resolve));
+ // One pipeline makes admission ordering observable without sleeps: the final
+ // status callback follows all three admitted data requests on this connection.
+ socket.write(['/api/board?id=0','/api/feed','/api/thread?root=1','/api/status'].map((route,i)=>`GET ${route} HTTP/1.1\r\nHost: 127.0.0.1\r\nConnection: ${i===3?'close':'keep-alive'}\r\n\r\n`).join(''));
+ await seen;assert.equal(cycles,1);release();await ended;
+ assert.equal((bytes.match(/HTTP\/1.1 200 OK/g)??[]).length,4);assert.equal((bytes.match(/"version":"2"/g)??[]).length,3);assert.equal(cycles,2);assert.equal(peak,1);
+ await server.close();assert.equal(closes,1);assert.equal(cycles,2);
+});
+
+test('a failed fresh sync never serves an older ready policy',async t=>{
+ let cycles=0,queries=0;
+ const index={status:()=>({schemaVersion:1,state:'ready',revision:'95'}),async sync(){if(++cycles===2)throw Error('PRIVATE_SENTINEL');},query(){queries++;return {mainPolicy:{version:'1'}};}};
+ const server=await startRollingPublicServer({index,pollMs:30000});t.after(()=>server.close());await fetch(server.url+'/api/status');
+ const response=await fetch(server.url+'/api/board?id=0');assert.equal(response.status,503);assert.equal(queries,0);assert.equal(cycles,2);assert(!(await response.text()).includes('PRIVATE_SENTINEL'));
+});
+
+test('fresh read joins bounded durable policy catch-up but stops on no progress',async t=>{
+ let cycles=0,version='1',revision='95',state='ready',mode='progress';
+ const index={status:()=>({schemaVersion:1,state,revision}),async sync(){cycles++;if(cycles===1)return;
+  if(mode==='stalled'){state='syncing';return;}revision=String(Number(revision)+1);state=cycles<4?'syncing':'ready';if(state==='ready')version='2';},
+  query:()=>({schemaVersion:1,complete:true,mainPolicy:{version}})};
+ const server=await startRollingPublicServer({index,pollMs:30000});t.after(()=>server.close());await fetch(server.url+'/api/status');
+ const response=await fetch(server.url+'/api/board?id=0');assert.equal(response.status,200);assert.equal((await response.json()).mainPolicy.version,'2');assert.equal(cycles,4);
+ mode='stalled';assert.equal((await fetch(server.url+'/api/board?id=0')).status,503);assert.equal(cycles,5);
+});
+
+test('close cancels one queued read cycle and drains its active predecessor',async()=>{
+ let release,started,admitted,cycles=0,closes=0;
+ const gate=new Promise(r=>release=r),begun=new Promise(r=>started=r),seen=new Promise(r=>admitted=r);
+ const index={status(){if(cycles===1)admitted();return {schemaVersion:1,state:'ready'};},async sync(){cycles++;started();await gate;},query:()=>({schemaVersion:1}),close(){closes++;}};
+ const server=await startRollingPublicServer({index,pollMs:30000});await begun;
+ const request=fetch(server.url+'/api/board?id=0');await fetch(server.url+'/api/status');await seen;
+ const closing=server.close();assert.equal(closes,0);release();assert.equal((await request).status,503);await closing;assert.equal(closes,1);assert.equal(cycles,1);
+});
+
+test('status static and invalid requests do not request a new canonical cycle',async t=>{
+ let cycles=0;const index={status:()=>({schemaVersion:1,state:'ready'}),async sync(){cycles++;},query:()=>assert.fail('No data query expected')};
+ const server=await startRollingPublicServer({index,pollMs:30000,staticHandler:async(req,res)=>{res.writeHead(200);res.end('Static');}});t.after(()=>server.close());
+ assert.equal((await fetch(server.url+'/api/status')).status,200);assert.equal(cycles,1);
+ for(const [route,status] of [['/api/status',200],['/',200],['/api/owned_names',404],['/api/board',400],['/api/feed?limit=101',400]])assert.equal((await fetch(server.url+route)).status,status);
+ assert.equal(cycles,1);
 });
