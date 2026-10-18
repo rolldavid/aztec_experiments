@@ -1,12 +1,21 @@
-# Billboard — Anonymous Message Board on Aztec
+# Rolling Chat — anonymous message board on Aztec
 
-Based on [Vitalik Buterin’s message board](https://github.com/vbuterin/aztec_experiments).
-This application targets Aztec v6.0.0-rc.1 testnet and is not yet a production release.
+The current application is Rolling Chat (Draft 3), based on
+[Vitalik’s message board](https://github.com/vbuterin/aztec_experiments).
+It is a proof of concept with connected development functionality; final
+real-proof testnet and privacy acceptance are not yet complete.
 
-The [hosted V6 testnet board](https://d30njln0kead8n.cloudfront.net) uses the
-[current deployment](deploy/prover/live-deployment.json). See the
-[V6 operator handover](deploy/V6-TESTNET.md) for service locations, recovery
-archives and the remote prover's spending deadline.
+Open the current local application at [Rolling Chat](http://127.0.0.1:8080/#/home)
+while its development runner is active. Browse without connecting a wallet;
+use the account panel for funding, posting, private views and balances.
+The local node and PXE use their native proofs-disabled configuration. The
+[operator runbook](docs/rolling-deployment.md#access-and-resume-the-local-application)
+explains startup, frontend reload, shutdown and recovery boundaries.
+
+The historical [Billboard V6 deployment](deploy/V6-TESTNET.md) uses different
+contracts and is not the current Rolling Chat preview. Exact installed toolchain
+versions are in [BUILDING.md](BUILDING.md); do not reuse historical deployment
+addresses or funded accounts as a new installation.
 
 ## How it works
 
@@ -60,6 +69,7 @@ contract tests; they do not prove cryptographic security or anonymity.
 
 ## Deploy and operate
 
+- [Current Rolling Chat deployment and operation](docs/rolling-deployment.md)
 - [AWS deployment](deploy/aws/README.md)
 - [Moderation daemon configuration](censor-daemon/README.md)
 - [Moderation queue operations](docs/moderation-queue.md)

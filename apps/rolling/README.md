@@ -170,17 +170,17 @@ recovery remains in the user's browser and must be exported before storage clean
 
 ### Start the current local app
 
-For a new current native devnet, use the retained Rolling profile documented in
-[the deployment guide](../../docs/rolling-deployment.md#retained-local-rolling-development):
+For a new disposable native devnet, use the Rolling profile documented in
+[the deployment guide](../../docs/rolling-deployment.md#native-local-rolling-development):
 
-```sh
-NODE_BACKEND=js .build/A02-node/node-v24.21.0-darwin-arm64/bin/node \
-  plugins/devnet/start.mjs --profile rolling --directory /absolute/private/rolling-devnet
-```
+Use the complete startup command in that guide: it selects the pinned Anvil and
+Solidity compiler and uses short private paths required by native Unix sockets.
+If the current instance is healthy, reuse it instead of starting another chain.
 
 After the normal pinned builds, this composes the existing current deployment CLI,
-canonical public index and private wallet at `http://127.0.0.1:8080`. It uses separate
-loopback RPC ports18080/18545 and requires no provider key for core app startup.
+canonical public index and private wallet. Defaults are `http://127.0.0.1:8080`
+and loopback RPC ports18080/18545; the guide’s explicit alternate ports avoid
+colliding with an existing instance. Core app startup needs no provider key.
 It does not replace the fixture preview on4317 or reuse unrelated older devnets.
 Local proofs are disabled through the native node/PXE configuration. Readiness
 reports distinguish the usable core and canonically registered PrivateBok portal
@@ -196,26 +196,24 @@ user swap, credit or subsidy. Only canonical Bok lifecycle status exposes
 `config.bok`; only verified router/pool identity and quotes expose aggregate
 funding configuration. Actual user funding and hosted provider credentials remain
 separate requirements. No app user receives deployment keys or mint authority.
-Keep the selected private state directory and wait for clean shutdown
-before reopening it. Wallet recovery remains separately encrypted in the browser.
+Keep the selected private state directory for reconciliation. The current runner
+does not reopen a stopped chain. Wallet recovery remains separately encrypted in
+the browser and cannot recreate a deleted development chain.
 
-### Persistent local checkpoint ownership
+### Native development lifecycle
 
-The persistent Rolling profile uses the installed SDK's native local-network
-AutomineSequencer with `realProofs:false`, `useAutomineSequencer:true` and
-`automineEnableProveEpoch:true`. A fresh local rollup has committee size zero;
-startup checks that actual on-chain setting. Older committee-one campaigns are
-incompatible and remain retained for reconciliation, never reset or silently
-converted. A distinct new local campaign uses a distinct state directory and
-new identities; no transaction from the old campaign is replayed.
+The current runner uses the installed SDK’s native local network with
+`realProofs:false` and PXE `proverEnabled:false`. Native automining, `mineBlock()`
+and `prove()` supply local block/settlement progress; this is not real-proof
+qualification. The [operator lifecycle instructions](../../docs/rolling-deployment.md#native-progress-and-finality)
+cover these controls and cleanup.
 
-The SDK serial queue owns both block production and synthetic local epoch/Outbox
-settlement. Idle clock advancement uses that same queue. Bootstrap Ready handling
-checks the original effect and canonical Outbox witness, and the existing finality
-gate still applies. Clean shutdown pauses new work, drains and settles every
-checkpoint before saving the original-chain snapshot. A failed settlement does
-not produce a clean restart record. This is development-only synthetic settlement,
-not real testnet proof acceptance; the legacy disposable profile is unchanged.
+There is no persistent snapshot or same-chain restart operation. After the owning
+runner stops, preserve its directory and unresolved operations; start any new
+development instance in a fresh directory with its matching wallet/network
+configuration. Never transplant old funded-account or Bok journals to that new
+chain. Browser reload and wallet-asset reload on a healthy running instance do
+not require a chain restart.
 
 The relay initialization marker lives beside `relay-state`, not inside it. Once
 that marker exists, loss of its original directory or `funding-budget.json` is a

@@ -3,8 +3,40 @@
 This runbook covers the Draft 3 Rolling application. The legacy deployment in
 `deploy/V6-TESTNET.md` is historical evidence for different contracts. Its endpoint,
 accounts, funds, archive references and dates are not independent-installation
-defaults. The current implementation still needs a complete Rolling deployment
-and recovery rehearsal before this runbook qualifies RC36–RC38.
+defaults. Recorded development/recovery exercises retain their exact source and network
+scope. This runbook does not itself establish complete RC36–RC38 acceptance.
+
+## Access and resume the local application
+
+The current development preview is `http://127.0.0.1:8080/#/home` while its runner
+is alive. Core public reading needs no account. Open the account panel to create
+or unlock the matching local account, review funding, post, or use private views.
+The default native node/Ethereum ports are `18080`/`18545`; generated wallet
+configuration supplies the actual trusted query endpoint. Local balances and
+transactions belong to this disposable chain, not Sepolia. Port `4317` is the
+separate fixture design preview, not evidence of connected functionality.
+
+Before resuming after a laptop close or usage interruption, confirm the existing
+runner still owns its recorded state directory and ports. Reuse a healthy
+instance; do not start a second writer. If only frontend code changed, run the
+normal affected SDK/wallet asset build, then send `SIGHUP` to the **verified owning
+`plugins/devnet/start.mjs` process** and reload the browser. The runner admits a
+complete asset inventory before swapping it; the chain and funded accounts stay
+live. Do not signal unrelated processes or repeat funding to refresh the UI.
+
+If the runner died, preserve its private directory, browser recovery files and
+Bok/payment journals. This native disposable runner has no same-chain restart.
+Follow [Native local Rolling development](#native-local-rolling-development) with
+a fresh short private directory and new coherent network configuration. Keep old
+uncertain transactions as reconciliation records; never replay them on the new
+chain. Hosted Bok must be separately configured for the new board with separate
+state; opening the reader alone does not establish hosted-reply readiness.
+
+For implementation resumption, use the coordinator checkout's
+`execution/feature-status.md`, `execution/release/final-requirement-disposition.json`
+and current session handoff. The lead reconciles its lease and live workers before
+continuing the recorded next task. These files are not a background supervisor;
+closing the app or sleeping this Mac does not guarantee autonomous continuation.
 
 ## Operator inputs and roles
 
@@ -110,6 +142,34 @@ file and private journal, as documented in [plugin deployment](../plugins/DEPLOY
 Use `applicationProfile: "rolling"`. Repeat commands reconcile original intents;
 they do not authorize replacement transactions. Preserve uncertain/preparing
 records and locks until the owning process and canonical outcome are resolved.
+
+### Final testnet admission
+
+Use the current Rolling installation manifest, not a historical V6 endpoint.
+Before the remaining genuine-wallet run, establish synchronized canonical
+node/archive reads, matching network/contract identities, working private query
+routing and the actual native prover's readiness. An imported package or running
+container is insufficient. Both the node and browser PXE must use real proofs
+for this testnet acceptance; the development flags remain false locally.
+
+Keep the funded test accounts, original transaction hashes and private continuation
+files under the existing operator procedure. Reconcile any pending payment before
+sending; do not repeat accepted funding or model calls to obtain a missing report.
+The existing bounded wallet entrypoint in [TESTING.md](../TESTING.md) owns the
+remaining wallet/asset and interruption cases. Its testnet public capture uses
+the same configured query route and records proof-stripped public transactions,
+canonical effects and explicit coverage gaps. Optional `T04_PUBLIC_FOOTPRINT_ROLES`
+points to an owner-only JSON file of known public role addresses; missing roles
+remain unqualified, not anonymous by assumption.
+
+The remaining acceptance and external gates are tracked in the coordinator's
+requirement disposition. Specialist privacy/security review and current network
+clearance remain separate from agent checks. There is no fixed 14-day soak;
+[bounded final qualification](#recovery-monitoring-and-costs) follows the owner's
+72-hour amendment. Accessibility qualification was removed for this proof of
+concept on 19 October 2026; do not run assistive-technology audits or change this
+Mac's accessibility settings. Normal navigation and visible failure states remain
+application behavior.
 
 ## Transfer Rolling moderator authority
 
@@ -308,7 +368,8 @@ already operates Rolling rules. The explicit `--rolling-config` profile in
 canonical public index; see `censor-daemon/README.md` for its operator configuration.
 Its focused tests use labelled chain/model doubles. Actual native-wallet removal,
 real model evaluation under the new prompt identity, targeted real-proof testnet
-acceptance, specialist review and elapsed qualification remain separate gates.
+acceptance, specialist review and bounded final reliability qualification remain
+separate gates.
 
 Stop admission and drain the owning service, including any artifact API fetch,
 before taking a consistent private backup. Verify process and hosted-lease
