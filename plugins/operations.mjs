@@ -166,7 +166,7 @@ export function seedBroadcastFailure(error) {
  * the sole send. Every retained record is read-only reconciliation, even dropped.
  * execute uses the normal SDK send pipeline through the supplied once callback. */
 export async function onceAztecOperation({store,name,identity,journalIdentity=identity,scope='constructor-only',execute,reconcile,observeBroadcast=false}) {
- if(!['deploy-escrow','claim-fees','deploy-portal','deploy-funding-router','bind','activate','register','relay-funding'].includes(name)||typeof identity!=='string'||typeof journalIdentity!=='string')throw rejected();
+ if(!['deploy-escrow','claim-fees','bootstrap-private-fee','deploy-portal','deploy-funding-router','bind','activate','register','relay-funding'].includes(name)||typeof identity!=='string'||typeof journalIdentity!=='string')throw rejected();
  const old=store.read().operations[name];
  if(old){
   if(old.schemaVersion!==1||old.policy!=='reconcile-only'||old.identity!==identity||(old.journalIdentity??old.identity)!==journalIdentity||!['preparing','submission-unknown'].includes(old.phase))throw Error('Saved operation scope mismatch');
@@ -392,6 +392,37 @@ export async function runTestnetRouterDeployment({plan:input,artifactSha256,stor
   await submit(signed,()=>broadcast(signed));
  }});
 }
+/** One fresh, public-network claim. This authority has no board dependency and
+ * cannot perform an L1 payment. The private claim secret is a separate input. */
+export function captureTestnetBootstrapPlan(input){
+ const p=seedObject(input,['schemaVersion','chainId','rollupVersion','rollupAddress','nodeUrl','ethereumUrl','actor','privateFpc','feePortal','feeToken','expiresAt','depositFrom','depositNonce','depositTxHash','claimAmount','claimSecretHash','messageHash','messageLeafIndex']);
+ if(p.schemaVersion!==1||p.chainId!=='11155111'||!Number.isSafeInteger(p.expiresAt)||p.expiresAt<1||!Number.isSafeInteger(p.depositNonce)||p.depositNonce<0)throw rejected();
+ seedUint(p.rollupVersion,(1n<<32n)-1n);seedUint(p.claimAmount);seedUint(p.messageLeafIndex,(1n<<254n)-1n,true);
+ for(const k of ['rollupAddress','feePortal','feeToken','depositFrom'])seedAddress(p[k]);
+ for(const k of ['actor','privateFpc','claimSecretHash','messageHash'])if(typeof p[k]!=='string'||!/^0x[0-9a-f]{64}$/.test(p[k])||BigInt(p[k])<=0n||BigInt(p[k])>=21888242871839275222246405745257275088548364400416034343698204186575808495617n)throw rejected();
+ if(typeof p.depositTxHash!=='string'||!/^0x[0-9a-f]{64}$/.test(p.depositTxHash)||BigInt(p.depositTxHash)===0n)throw rejected();
+ for(const k of ['nodeUrl','ethereumUrl']){const u=new URL(p[k]);if(u.protocol!=='https:'||u.href!==p[k]||u.username||u.password||u.search||u.hash||k==='nodeUrl'&&u.pathname!=='/v1/node')throw rejected();}
+ return Object.freeze(p);
+}
+export async function runTestnetBootstrap({plan:input,sourceBinding,store,preflight,execute,reconcile,observeOnly=false,now=()=>Math.floor(Date.now()/1000)}){
+ const plan=captureTestnetBootstrapPlan(input);
+ if(typeof sourceBinding!=='string'||!/^0x[0-9a-f]{64}$/.test(sourceBinding))throw rejected();
+ const identity=JSON.stringify({profile:'rolling-testnet-bootstrap/v1',plan,sourceBinding}),name='bootstrap-private-fee',scope='operator-bootstrap';
+ if(store.read().identity!==undefined&&store.read().identity!==identity)throw Error('Bootstrap journal scope changed');
+ if(Object.keys(store.read().operations??{}).some(k=>k!==name))throw rejected();
+ if(store.read().operations?.[name])return onceAztecOperation({store,name,identity,scope,reconcile});
+ if(observeOnly)return {status:'absent',scope,canonical:false};
+ const admit=()=>{if(now()>=plan.expiresAt)throw Error('Bootstrap authority expired');};admit();
+ // Read-only readiness failure leaves no operation; retained intents never reopen
+ // keys, prove, or retry, including an interrupted preparation without a hash.
+ const prepared=await preflight();admit();
+ if(store.read().identity===undefined)await store.write({...store.read(),identity});
+ return onceAztecOperation({store,name,identity,scope,observeBroadcast:true,reconcile,execute:async ports=>{
+  admit();await ports.bindDeployment(prepared.metadata);
+  await execute(prepared,{submit:async(signed,broadcast)=>{admit();return ports.submit(signed,broadcast);}});
+ }});
+}
+
 function seedObject(value,keys){
  if(!value||Object.getPrototypeOf(value)!==Object.prototype||Reflect.ownKeys(value).length!==keys.length)throw rejected();
  const copy={};for(const key of keys){const d=Object.getOwnPropertyDescriptor(value,key);if(!d||!('value'in d)||!d.enumerable)throw rejected();copy[key]=d.value;}return copy;

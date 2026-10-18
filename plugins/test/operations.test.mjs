@@ -908,3 +908,45 @@ test('router reconciliation authenticates signed gas caps and finalized exact re
  let head=49,effect=true,effects=0;const blockHash=field(25),reads={signed:async r=>match(r),receipt:async()=>({hash:record.hash,status:1,blockNumber:50,blockHash}),block:async()=>({hash:blockHash}),head:async tag=>{assert.equal(tag,'finalized');return {number:head};},effect:async()=>{effects++;return effect;}};
  const run=()=>reconcileRollingEthereum({record,development:false,scope:'funding-router',reads});assert.equal((await run()).status,'unresolved');assert.equal(effects,0);head=50;assert.equal((await run()).status,'succeeded');effect=false;assert.equal((await run()).status,'unresolved');effect=true;reads.block=async()=>({hash:field(26)});assert.equal((await run()).status,'unresolved');
 });
+
+const bootstrapPlan=()=>({schemaVersion:1,chainId:'11155111',rollupVersion:'3409706519',rollupAddress:'0x'+'11'.repeat(20),nodeUrl:'https://app.example/v1/node',ethereumUrl:'https://read.example/',actor:field(1),privateFpc:field(2),feePortal:'0x'+'22'.repeat(20),feeToken:'0x'+'33'.repeat(20),expiresAt:2000,depositFrom:'0x'+'44'.repeat(20),depositNonce:20,depositTxHash:field(3),claimAmount:'10000000000000000000',claimSecretHash:field(4),messageHash:field(5),messageLeafIndex:'12'});
+test('bootstrap binds only a current testnet claim, never a board or L1 spending authority',async()=>{
+ const {captureTestnetBootstrapPlan}=await import('../operations.mjs');const plan=bootstrapPlan();assert.deepEqual(captureTestnetBootstrapPlan(plan),plan);
+ for(const mutate of [p=>p.chainId='31337',p=>p.claimAmount='0',p=>p.messageLeafIndex='-1',p=>p.depositNonce=-1,p=>p.claimSecret='PRIVATE',p=>p.boardAddress=field(5),p=>p.nodeUrl='https://app.example/other',p=>p.ethereumUrl='https://read.example/?secret=x',p=>p.privateFpc=field(0)]){const bad=structuredClone(plan);mutate(bad);assert.throws(()=>captureTestnetBootstrapPlan(bad));}
+});
+test('bootstrap persists before proof and dispatch; every retained intent is keyless reconciliation',async()=>{
+ const {runTestnetBootstrap}=await import('../operations.mjs');const store=memory(),events=[];let now=1000;
+ const args={plan:bootstrapPlan(),store,sourceBinding:field(99),now:()=>now,preflight:async()=>{events.push('read-claim');return {metadata:{actor:field(1),privateFpc:field(2),claimNullifier:field(6)}};},execute:async(prepared,{submit})=>{events.push('prove');assert.equal(store.read().operations['bootstrap-private-fee'].phase,'preparing');assert.deepEqual(store.read().operations['bootstrap-private-fee'].deployment,prepared.metadata);await submit(signed,async()=>{events.push('send');assert.equal(store.read().operations['bootstrap-private-fee'].raw,signed.raw);throw Error('lost acknowledgement');});},reconcile:async record=>{events.push('reconcile');assert.equal(record.hash,signed.hash);return {status:'unresolved'};}};
+ assert.equal((await runTestnetBootstrap(args)).status,'unresolved');assert.deepEqual(events,['read-claim','prove','send']);now=3000;
+ await runTestnetBootstrap(args);assert.deepEqual(events,['read-claim','prove','send','reconcile']);
+ await assert.rejects(runTestnetBootstrap({...args,sourceBinding:field(98)}),/scope changed/);
+ await assert.rejects(runTestnetBootstrap({...args,plan:{...args.plan,messageHash:field(9)}}),/scope changed/);
+ await assert.rejects(runTestnetBootstrap({...args,store:memory()}),/expired/);
+ assert.equal((await runTestnetBootstrap({...args,store:memory(),observeOnly:true})).status,'absent');
+});
+test('bootstrap readiness is retryable without intent, but interrupted proof and expired proof cannot send',async()=>{
+ const {runTestnetBootstrap}=await import('../operations.mjs');let now=1000,calls=0;const store=memory(),args={plan:bootstrapPlan(),store,sourceBinding:field(99),now:()=>now,preflight:async()=>{throw Error('message not available');},execute:async()=>calls++,reconcile:async()=>({status:'unresolved'})};
+ await assert.rejects(runTestnetBootstrap(args),/message not available/);assert.deepEqual(store.read(),{operations:{}});
+ args.preflight=async()=>({metadata:{claimNullifier:field(6)}});args.execute=async(_,{submit})=>{calls++;now=3000;await submit(signed,async()=>assert.fail('expired proof sent'));};
+ assert.equal((await runTestnetBootstrap(args)).status,'unresolved');assert.equal(store.read().operations['bootstrap-private-fee'].phase,'preparing');
+ await runTestnetBootstrap({...args,preflight:()=>assert.fail('reopened secret')});assert.equal(calls,1);
+});
+test('bootstrap deposit uses the installed portal ABI and rejects wrong leaf, unfinalized deposit and wrong rollup',async()=>{
+ const {verifyTestnetBootstrapDeposit}=await import('../operator.mjs'),{Interface}=await import('ethers'),{FeeJuicePortalAbi}=await import('@aztec-foundation/l1-artifacts'),{ProtocolContractAddress}=await import('@aztec-labs/protocol-contracts');
+ const plan=bootstrapPlan(),iface=new Interface(FeeJuicePortalAbi),event=iface.encodeEventLog(iface.getEvent('DepositToAztecPublic'),[plan.actor,plan.claimAmount,plan.claimSecretHash,plan.messageHash,plan.messageLeafIndex]);
+ const tx={hash:plan.depositTxHash,from:plan.depositFrom,to:plan.feePortal,nonce:plan.depositNonce,chainId:11155111n,value:0n,data:iface.encodeFunctionData('depositToAztecPublic',[plan.actor,plan.claimAmount,plan.claimSecretHash])},receipt={hash:tx.hash,from:tx.from,to:tx.to,status:1,blockNumber:50,blockHash:field(30),logs:[{address:plan.feePortal,...event}]};
+ let finalized=50,rollup=plan.rollupAddress;const provider={getTransactionReceipt:async()=>receipt,getTransaction:async()=>tx,getBlock:async n=>({number:n==='finalized'?finalized:n,hash:field(30)})},portal={interface:iface,ROLLUP:async()=>rollup,UNDERLYING:async()=>plan.feeToken,VERSION:async()=>plan.rollupVersion,L2_TOKEN_ADDRESS:async()=>ProtocolContractAddress.FeeJuice.toString()};
+ assert.equal((await verifyTestnetBootstrapDeposit({plan,provider,portal})).outcome,'success');
+ finalized=49;await assert.rejects(verifyTestnetBootstrapDeposit({plan,provider,portal}),/finalized/);finalized=50;
+ await assert.rejects(verifyTestnetBootstrapDeposit({plan:{...plan,messageLeafIndex:'13'},provider,portal}),/finalized/);
+ rollup='0x'+'ff'.repeat(20);await assert.rejects(verifyTestnetBootstrapDeposit({plan,provider,portal}),/network/);rollup=plan.rollupAddress;
+ receipt.logs.push({...receipt.logs[0]});await assert.rejects(verifyTestnetBootstrapDeposit({plan,provider,portal}));
+});
+test('bootstrap SDK claim and witness preserve exact payer, amount, secret and leaf without proving',async()=>{
+ const {Fr}=await import('@aztec-labs/foundation/curves/bn254'),{AztecAddress}=await import('@aztec-labs/stdlib/aztec-address'),{FeeJuicePaymentMethodWithClaim}=await import('@aztec-labs/aztec.js/fee'),{ProtocolContractAddress}=await import('@aztec-labs/protocol-contracts'),{getL1ToL2MessageWitness}=await import('@aztec-labs/stdlib/messaging');
+ const owner=AztecAddress.fromStringUnsafe(field(1)),secret=new Fr(7),payment=new FeeJuicePaymentMethodWithClaim(owner,{claimAmount:100n,claimSecret:secret,messageLeafIndex:12n}),payload=await payment.getExecutionPayload();
+ assert.equal(String(payload.feePayer),String(owner));assert.equal(payload.calls.length,1);assert.equal(String(payload.calls[0].to),String(ProtocolContractAddress.FeeJuice));assert.deepEqual(payload.calls[0].args.map(String),[field(1),field(100),field(7),field(12)]);
+ let reads=0;const node={getL1ToL2MessageMembershipWitness:async(tag,hash)=>{reads++;assert.equal(tag,'latest');assert.equal(hash.toString(),field(5));return [12n,{}];}};
+ assert.equal((await getL1ToL2MessageWitness(node,new Fr(5)))[0],12n);assert.equal(reads,1);
+ node.getL1ToL2MessageMembershipWitness=async()=>undefined;await assert.rejects(getL1ToL2MessageWitness(node,new Fr(5)),/No L1 to L2 message/);
+});

@@ -20,13 +20,17 @@ import {Tx,TxHash,TxStatus} from '@aztec-labs/stdlib/tx';
 import {JsonRpcProvider,FetchRequest,Wallet,Transaction,Contract as EthereumContract,ContractFactory,getCreateAddress,keccak256,parseUnits,formatUnits,sha256,toUtf8Bytes,Interface} from 'ethers';
 import {API_VERSION,packText,handleField,validateDescriptor} from './protocol.mjs';
 import {provingEnabledForNode} from '../shared/proving-policy.mjs';
-import {fileState,recordedTransaction,outboxArguments,operatorApplicationProfile,rollingOperatorConfig,operatorNodeFetch,onceAztecOperation,reconcileRollingOperation,rollingPxeOptions,bindRollingJournal,readOperatorActor,projectRollingReceipt,rollingLifecycleConfig,rollingOperatorCommandScope,verifyPluginPortalRuntime,reconcileRollingEthereum,operatorEthereumRequest,matchRollingEthereumSigned,requireRollingReadyEffect,readHostedPrivateFile,captureSepoliaLiquidityPlan,sepoliaLiquidityContracts,sepoliaLiquidityTransactions,sepoliaLiquidityDeadline,runSepoliaLiquidityStage,captureSepoliaSeedResolution,captureSepoliaSeedSuccessor,runSepoliaLiquiditySuccessor,runSepoliaLiquidityCancellation,runSepoliaLiquidityContinuation,resolveSepoliaSeedNonce,captureSepoliaSeedContinuationPlan,captureSepoliaExactDispatch,exactCancellationFiles,requireAuthorizedExactCancellation,runSepoliaExactCancellation,broadcastExactSepoliaCancellation,captureSepoliaNonceIntent,runSepoliaNonceCancellation,createSepoliaScopeCheck,captureSepoliaSeedTransport,captureSepoliaApprovalDispatch,runSepoliaExactApproval,captureSepoliaSeedForward,runSepoliaLiquidityForward,captureTestnetRouterPlan,runTestnetRouterDeployment,matchTestnetRouterSigned} from './operations.mjs';
-import {deriveStorageSlotInMap,computeL2ToL1MessageHash} from '@aztec-labs/stdlib/hash';
+import {fileState,recordedTransaction,outboxArguments,operatorApplicationProfile,rollingOperatorConfig,operatorNodeFetch,onceAztecOperation,reconcileRollingOperation,rollingPxeOptions,bindRollingJournal,readOperatorActor,projectRollingReceipt,rollingLifecycleConfig,rollingOperatorCommandScope,verifyPluginPortalRuntime,reconcileRollingEthereum,operatorEthereumRequest,matchRollingEthereumSigned,requireRollingReadyEffect,readHostedPrivateFile,captureSepoliaLiquidityPlan,sepoliaLiquidityContracts,sepoliaLiquidityTransactions,sepoliaLiquidityDeadline,runSepoliaLiquidityStage,captureSepoliaSeedResolution,captureSepoliaSeedSuccessor,runSepoliaLiquiditySuccessor,runSepoliaLiquidityCancellation,runSepoliaLiquidityContinuation,resolveSepoliaSeedNonce,captureSepoliaSeedContinuationPlan,captureSepoliaExactDispatch,exactCancellationFiles,requireAuthorizedExactCancellation,runSepoliaExactCancellation,broadcastExactSepoliaCancellation,captureSepoliaNonceIntent,runSepoliaNonceCancellation,createSepoliaScopeCheck,captureSepoliaSeedTransport,captureSepoliaApprovalDispatch,runSepoliaExactApproval,captureSepoliaSeedForward,runSepoliaLiquidityForward,captureTestnetRouterPlan,runTestnetRouterDeployment,matchTestnetRouterSigned,captureTestnetBootstrapPlan,runTestnetBootstrap} from './operations.mjs';
+import {deriveStorageSlotInMap,computeL2ToL1MessageHash,computeSecretHash,siloNullifier} from '@aztec-labs/stdlib/hash';
 import {sha256ToField} from '@aztec-labs/foundation/crypto/sha256';
 import {contractInputs,sha as artifactSha} from '../scripts/artifact-provenance.mjs';
 import {loadRollingArtifacts} from '../prover/rolling-artifacts.mjs';
-import {derivePrivateFeeInstance} from '../shared/private-fee-client.mjs';
+import {derivePrivateFeeInstance,createPrivateFeeDeployment,requirePublishedPrivateFee} from '../shared/private-fee-client.mjs';
 import {jsonStringify} from '@aztec-labs/foundation/json-rpc';
+import {FeeJuicePortalAbi} from '@aztec-foundation/l1-artifacts';
+import {ProtocolContractAddress} from '@aztec-labs/protocol-contracts';
+import {computeFeeJuiceMessageNullifier,getL1ToL2MessageWitness} from '@aztec-labs/stdlib/messaging';
+import {verifyEthereumIntentReceipt} from '../shared/ethereum-journal.mjs';
 const read=async p=>JSON.parse(await fs.readFile(p,'utf8'));
 
 /** Each command performs one reviewable operation; state contains exact tx hashes.
@@ -435,6 +439,78 @@ export async function readSepoliaNonceSources({statePath,plan,resolution,success
  return {sourceHashes,dispatchEntrySha256:sha256(bytes).slice(2)};
 }
 /** Trusted local CLI only; no provider, model or generated-code capability. */
+// An initial public FeeJuice claim pays for publication of the canonical private
+// fee contract. No board, user wallet journey, L1 signer or synthetic funds exist here.
+export async function verifyTestnetBootstrapDeposit({plan,provider,portal}){
+ const intent={from:plan.depositFrom,to:plan.feePortal,nonce:plan.depositNonce,chainId:plan.chainId,value:'0',data:portal.interface.encodeFunctionData('depositToAztecPublic',[plan.actor,plan.claimAmount,plan.claimSecretHash]).toLowerCase(),expected:{kind:'fee-deposit',recipient:plan.actor,amount:plan.claimAmount,secretHash:plan.claimSecretHash}};
+ const result=await verifyEthereumIntentReceipt(provider,intent,plan.depositTxHash);
+ const head=await provider.getBlock('finalized');
+ if(result?.outcome!=='success'||!head?.hash||head.number<result.receipt.blockNumber||String(result.event.key)!==plan.messageHash||String(result.event.index)!==plan.messageLeafIndex)throw Error('Current finalized FeeJuice deposit required');
+ const tag={blockTag:result.receipt.blockNumber};
+ if((await portal.ROLLUP(tag)).toLowerCase()!==plan.rollupAddress||(await portal.UNDERLYING(tag)).toLowerCase()!==plan.feeToken||String(await portal.VERSION(tag))!==plan.rollupVersion||String(await portal.L2_TOKEN_ADDRESS(tag))!==ProtocolContractAddress.FeeJuice.toString()||(await provider.getBlock(result.receipt.blockNumber))?.hash!==result.receipt.blockHash)throw Error('FeeJuice deposit network mismatch');
+ return result;
+}
+export async function bootstrapTestnetPrivateFee({plan:input,statePath,actorFile,claimFile,queryApiKey,observeOnly=false}){
+ const plan=captureTestnetBootstrapPlan(input);let provider,wallet,lock,lockIdentity;const lockPath=statePath+'.lock';
+ try{
+  if(typeof queryApiKey!=='string'||!queryApiKey)throw Error('Operator query authentication required');
+  const node=createAztecNodeClient(plan.nodeUrl,{fetch:operatorNodeFetch({endpoint:plan.nodeUrl,key:queryApiKey,serialize:jsonStringify})});
+  provider=new JsonRpcProvider(operatorEthereumRequest(FetchRequest,plan.ethereumUrl),undefined,{batchMaxCount:1,cacheTimeout:-1});
+  const portal=new EthereumContract(plan.feePortal,FeeJuicePortalAbi,provider),from=AztecAddress.fromStringUnsafe(plan.actor);
+  // Normal artifact provenance binds the current source and canonical FPC; no
+  // deployed board is read or required by this cold-start operation.
+  loadRollingArtifacts();const bytes=await fs.readFile(new URL('../apps/src/billboard/private_fee_artifact.json',import.meta.url)),raw=JSON.parse(bytes),canonical=await derivePrivateFeeInstance(raw);
+  if(canonical.address.toString()!==plan.privateFpc)throw Error('Canonical FPC mismatch');
+  const sourceBinding=sha256(Buffer.concat([bytes,await fs.readFile(new URL('./operator.mjs',import.meta.url)),await fs.readFile(new URL('./operations.mjs',import.meta.url))]));
+  const checkScope=async()=>{
+   const [info,chain]=await Promise.all([node.getNodeInfo(),provider.getNetwork()]);
+   if(chain.chainId!==11155111n||info.realProofs!==true||String(info.l1ChainId)!==plan.chainId||String(info.rollupVersion)!==plan.rollupVersion||String(info.l1ContractAddresses.rollupAddress).toLowerCase()!==plan.rollupAddress||String(info.l1ContractAddresses.feeJuicePortalAddress).toLowerCase()!==plan.feePortal||String(info.l1ContractAddresses.feeJuiceAddress).toLowerCase()!==plan.feeToken)throw Error('Current proof-enabled testnet required');
+  };
+  const matchesTx=tx=>String(tx.data.constants.txContext.chainId)===new Fr(BigInt(plan.chainId)).toString()&&String(tx.data.constants.txContext.version)===new Fr(BigInt(plan.rollupVersion)).toString()&&String(tx.data.feePayer)===plan.actor;
+  const reconcile=async record=>{
+   await checkScope();
+   const result=await reconcileRollingOperation({record,development:false,reads:{signed:async(raw,hash)=>{const tx=Tx.fromBuffer(Buffer.from(raw,'hex'));return tx.getTxHash().toString()===hash&&matchesTx(tx);},receipt:async hash=>projectRollingReceipt(await node.getTxReceipt(TxHash.fromString(hash))),block:n=>node.getBlock(n),effect:hash=>node.getTxEffect(TxHash.fromString(hash))}});
+   const projected={...result,scope:'operator-bootstrap'};
+   if(result.status!=='succeeded')return projected;
+   try{
+    await verifyTestnetBootstrapDeposit({plan,provider,portal});
+    const anchor={number:result.blockNumber,hash:result.blockHash},instance=await node.getContract(canonical.address,anchor),effect=await node.getTxEffect(TxHash.fromString(record.hash));
+    if(record.deployment?.privateFpc!==plan.privateFpc||record.deployment?.actor!==plan.actor||!/^0x[0-9a-f]{64}$/.test(record.deployment?.claimNullifier)||!effect.data.nullifiers.some(n=>String(n)===record.deployment.claimNullifier)||String(instance?.originalContractClassId)!==String(canonical.originalContractClassId)||String(instance?.currentContractClassId)!==String(canonical.currentContractClassId)||String(await computeContractAddressFromInstance(instance))!==plan.privateFpc||String((await node.getBlock(anchor.number))?.hash)!==anchor.hash)throw Error('Bootstrap effect unavailable');
+    return {...projected,actor:plan.actor,privateFpc:plan.privateFpc,claimConsumed:true,publicFeeJuice:String(await getFeeJuiceBalance(from,node))};
+   }catch{return {status:'unresolved',scope:'operator-bootstrap',canonical:false,transactionHash:record.hash};}
+  };
+  await fs.mkdir(path.dirname(path.resolve(statePath)),{recursive:true,mode:0o700});lock=await fs.open(lockPath,'wx',0o600);lockIdentity=await lock.stat();await lock.writeFile(String(process.pid));await lock.sync();
+  const store=await fileState(statePath);
+  return await runTestnetBootstrap({plan,sourceBinding,store,observeOnly,reconcile,
+   preflight:async()=>{
+    await checkScope();await verifyTestnetBootstrapDeposit({plan,provider,portal});
+    const claim=JSON.parse((await readHostedPrivateFile(path.resolve(claimFile),65536)).toString('utf8')),secret=Fr.fromString(claim.claimSecret);
+    if(String(claim.claimAmount)!==plan.claimAmount||String(claim.messageLeafIndex)!==plan.messageLeafIndex||String(claim.messageHash)!==plan.messageHash||String(await computeSecretHash(secret))!==plan.claimSecretHash)throw Error('Private claim does not match current deposit');
+    const inner=await computeFeeJuiceMessageNullifier(Fr.fromString(plan.messageHash),secret),nullifier=await siloNullifier(ProtocolContractAddress.FeeJuice,inner);
+    const [index]=await getL1ToL2MessageWitness(node,Fr.fromString(plan.messageHash),{contractAddress:ProtocolContractAddress.FeeJuice,nullifier:inner});
+    if(String(index)!==plan.messageLeafIndex)throw Error('Current claim leaf mismatch');
+    const published=await node.getContract(canonical.address,'latest');if(published)await requirePublishedPrivateFee(node,canonical);
+    return {secret,publish:!published,metadata:{actor:plan.actor,privateFpc:plan.privateFpc,claimNullifier:nullifier.toString()}};
+   },
+   execute:async(prepared,{submit})=>{
+    const actor=JSON.parse((await readHostedPrivateFile(path.resolve(actorFile),65536)).toString('utf8'));
+    if(actor.address!==plan.actor)throw Error('Current actor alias required');
+    const recordedNode=new Proxy(node,{get(target,key){if(key!=='sendTx')return Reflect.get(target,key);return async tx=>{
+     if(!matchesTx(tx))throw Error('Bootstrap transaction scope mismatch');await checkScope();
+     return submit({hash:tx.getTxHash().toString(),raw:tx.toBuffer().toString('hex')},()=>node.sendTx(tx));
+    };}});
+    const pxe=await rollingPxeOptions(false,async()=>({backend:BackendType.NativeUnixSocket,...await prepareNativeRuntime({}),threads:1}));
+    wallet=await EmbeddedWallet.create(recordedNode,{ephemeral:true,pxe});
+    const account=await wallet.createSchnorrInitializerlessAccount(Fr.fromString(actor.secret),Fr.fromString(actor.salt),GrumpkinScalar.fromString(actor.signingKey),'current testnet operator');
+    if(!account.address.equals(from))throw Error('Current actor key mismatch');
+    const paymentMethod=new FeeJuicePaymentMethodWithClaim(from,{claimAmount:BigInt(plan.claimAmount),claimSecret:prepared.secret,messageLeafIndex:BigInt(plan.messageLeafIndex)});
+    const call=prepared.publish?createPrivateFeeDeployment(wallet,raw):new BatchCall(wallet,[]);
+    await call.send({from,wait:NO_WAIT,fee:{paymentMethod}});
+   },
+  });
+ }finally{try{await wallet?.stop();}finally{provider?.destroy();if(lock){await lock.close();const current=await fs.lstat(lockPath);if(current.dev!==lockIdentity.dev||current.ino!==lockIdentity.ino)throw Error('Bootstrap owner lock changed');await fs.unlink(lockPath);}}}
+}
+
 // Trusted local operator only. The current public node authenticates deployment
 // scope; the two fixed L1 endpoints are explicit read and broadcast authorities.
 export async function deployTestnetFundingRouter({plan:input,statePath,keyFile,queryApiKey,observeOnly=false}){
@@ -664,6 +740,11 @@ if(process.argv[1]&&import.meta.url===pathToFileURL(process.argv[1]).href){
   if(command==='recover-exact-seed-cancellation'){
    if(args.length!==2||args[0]!=='--dispatch-intent')throw Error();
    console.log(JSON.stringify(await recoverExactSepoliaCancellation({planPath:configPath,statePath,intentPath:args[1]})));
+  }else if(['bootstrap-testnet-private-fee','testnet-private-fee-status'].includes(command)){
+   const observeOnly=command==='testnet-private-fee-status';
+   if(observeOnly?args.length!==0:args.length!==4||args[0]!=='--actor-file'||args[2]!=='--claim')throw Error();
+   const plan=JSON.parse((await readHostedPrivateFile(path.resolve(configPath),65536)).toString('utf8'));
+   console.log(JSON.stringify(await bootstrapTestnetPrivateFee({plan,statePath:path.resolve(statePath),actorFile:args[1],claimFile:args[3],queryApiKey:process.env.PLUGIN_QUERY_API_KEY,observeOnly})));
   }else if(['deploy-testnet-funding-router','testnet-funding-router-status'].includes(command)){
    const observeOnly=command==='testnet-funding-router-status';
    if(observeOnly?args.length!==0:args.length!==2||args[0]!=='--key-file')throw Error();
