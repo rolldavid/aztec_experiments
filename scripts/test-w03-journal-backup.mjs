@@ -46,7 +46,9 @@ test('older authenticated backup never replaces newer local transaction',()=>fix
 test('foreign wallet, moved key, descriptor damage and duplicated records fail before restore writes',()=>fixture(async f=>{
  const records=await (await f.backup(f.browser)).exportRecords();
  const wrong=await createJournalBackup({...f.options,walletSalt:field(),storage:f.file});await assert.rejects(wrong.restoreRecords(records),{code:'BB_JOURNAL_INVALID'});
- const damaged=JSON.parse(records[0].encoded);damaged.recovery.data='00'+damaged.recovery.data.slice(2);
+ const damaged=JSON.parse(records[0].encoded),original=damaged.recovery.data;
+ damaged.recovery.data=(parseInt(original.slice(0,2),16)^1).toString(16).padStart(2,'0')+original.slice(2);
+ assert.notEqual(damaged.recovery.data,original);
  for(const value of [[{...records[0],key:'00'.repeat(32)}],[{...records[0],encoded:JSON.stringify(damaged)}],[...records,...records]]) {
   await assert.rejects((await f.backup(f.file)).restoreRecords(value),{code:'BB_JOURNAL_INVALID'});assert.deepEqual(await f.file.keys(),[]);
  }
