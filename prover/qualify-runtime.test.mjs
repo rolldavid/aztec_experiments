@@ -32,30 +32,46 @@ test('fake package: missing helper, path traversal and external symlink cannot q
   f.manifest.files['shared/trusted-private-node.mjs']=sha('FAKE shared/trusted-private-node.mjs');f.manifest.files['../outside']=sha('x');await assert.rejects(verifyRelease(f.root,await f.write()));delete f.manifest.files['../outside'];
   await fs.unlink(path.join(f.root,'shared/trusted-private-node.mjs'));const outside=path.join(f.root,'..',path.basename(f.root)+'-outside');await fs.writeFile(outside,'FAKE shared/trusted-private-node.mjs');t.after(()=>fs.rm(outside,{force:true}));await fs.symlink(outside,path.join(f.root,'shared/trusted-private-node.mjs'));await assert.rejects(verifyRelease(f.root,await f.write()));
 });
-function fakeFreshness({pauseError,staleCode='BB_TRUSTED_NODE_STALE',resumeError,neverRecover=false,rejectError}={}){
-  let clock=100000,paused=false,resumed=false;const events=[],observation={};
-  const stamp=()=>paused||!resumed?100n:neverRecover?100n:BigInt(Math.floor(clock/1000));
-  const args={observation,maxLagSeconds:2,recoveryTimeoutMs:3000,now:()=>clock,wait:async ms=>{events.push(['wait',ms]);clock+=ms;},
+function fakeFreshness({pauseError,staleCode='BB_TRUSTED_NODE_STALE',resumeError,neverRecover=false,rejectError,freshTimestamp=false}={}){
+  const frozen=BigInt(Math.floor(Date.now()/1000)-(freshTimestamp?0:10));let paused=false,resumed=false;
+  const events=[],observation={};
+  const stamp=()=>resumed&&!neverRecover?frozen+1n:frozen;
+  // Finite scripted observations, not a timer or a replacement runtime waiter.
+  const args={observation,maxLagSeconds:2,recoveryTimeoutMs:3000,
+    waitUntil:async(check,name,timeout)=>{events.push(['state',name,timeout]);if(await check())return true;if(await check())return true;throw Error('State not reached');},
     node:{getSyncedL1Timestamp:async()=>stamp()},admin:{pauseSync:async()=>{events.push('pause');paused=true;if(pauseError)throw pauseError;},resumeSync:async()=>{events.push('resume');if(resumeError)throw resumeError;paused=false;resumed=true;}},
     inspect:async()=>{if(paused)throw Object.assign(Error('PRIVATE_SENTINEL'),{code:staleCode});return {ready:true,syncedL1Timestamp:String(stamp())};},
     health:async()=>({query:{enabled:true,ready:!paused}}),rejectedQuery:async()=>{events.push('rejected');if(rejectError)throw rejectError;assert(paused);}};
-  return {args,events,observation};
+  return {args,events,observation,frozen};
 }
-test('pure fake freshness: genuine elapsed wait, stale rejection, supported resume and advanced timestamp',async()=>{
-  const f=fakeFreshness();assert.deepEqual(await exerciseFreshness(f.args),{paused:true,stale:true,queriesRejected:true,resumed:true,recovered:true});assert.deepEqual(f.events,['pause',['wait',3000],'rejected','resume']);
+test('pure fake freshness: state waiter observes actual stale timestamp, query rejection and advanced recovery',async()=>{
+  const f=fakeFreshness();const result=await exerciseFreshness(f.args);
+  for(const key of ['paused','stale','queriesRejected','resumed','recovered'])assert.equal(result[key],true);
+  assert.equal(result.frozenL1Timestamp,String(f.frozen));assert(result.staleLagSeconds>2);assert.equal(result.rejectionCode,'BB_TRUSTED_NODE_STALE');
+  assert.deepEqual(f.events,['pause',['state','paused node stale rejection',12],'rejected','resume',['state','resumed node ready',3]]);
 });
-test('pure fake freshness: other unready categories cannot substitute for stale; resume retained on failure',async()=>{
-  const f=fakeFreshness({staleCode:'BB_TRUSTED_NODE_UNSYNCED'});await assert.rejects(exerciseFreshness(f.args));assert(f.observation.resumed);assert(!f.observation.stale);assert(!JSON.stringify(f.observation).includes('PRIVATE_SENTINEL'));
+test('pure fake freshness: stale frozen node may reject inconsistent tips; transport and identity never substitute',async()=>{
+  const f=fakeFreshness({staleCode:'BB_TRUSTED_NODE_UNSYNCED'});await exerciseFreshness(f.args);assert(f.observation.stale);assert.equal(f.observation.rejectionCode,'BB_TRUSTED_NODE_UNSYNCED');
+  for(const staleCode of ['BB_TRUSTED_NODE_UNAVAILABLE','BB_TRUSTED_NODE_IDENTITY','BB_TRUSTED_NODE_CONFIG',undefined]){
+    const bad=fakeFreshness({staleCode:staleCode??'UNKNOWN'});await assert.rejects(exerciseFreshness(bad.args));assert(bad.observation.resumed);assert(!bad.observation.stale);assert.equal(bad.observation.failureStage,'stale-rejection');assert(!JSON.stringify(bad.observation).includes('PRIVATE_SENTINEL'));
+  }
+});
+test('pure fake freshness: consistency rejection with fresh timestamp never establishes staleness',async()=>{
+  const f=fakeFreshness({staleCode:'BB_TRUSTED_NODE_UNSYNCED',freshTimestamp:true});await assert.rejects(exerciseFreshness(f.args));assert(!f.observation.stale);assert(f.observation.resumed);
+});
+test('pure fake freshness: changing paused timestamp fails before query acceptance',async()=>{
+  const f=fakeFreshness();let reads=0;f.args.node.getSyncedL1Timestamp=async()=>f.frozen+(reads++?1n:0n);
+  await assert.rejects(exerciseFreshness(f.args));assert(!f.observation.stale);assert(f.observation.resumed);assert.equal(f.observation.failureCode,'ERR_ASSERTION');
 });
 test('pure fake freshness: failed pause still attempts resume exactly once',async()=>{
-  const error=Error('PRIVATE_SENTINEL'),f=fakeFreshness({pauseError:error});await assert.rejects(exerciseFreshness(f.args),e=>e===error);assert.deepEqual(f.events,['pause','resume']);assert(f.observation.resumed);assert(!JSON.stringify(f.observation).includes(error.message));
+  const error=Error('PRIVATE_SENTINEL'),f=fakeFreshness({pauseError:error});await assert.rejects(exerciseFreshness(f.args),e=>e===error);assert.deepEqual(f.events,['pause','resume']);assert(f.observation.resumed);assert.equal(f.observation.failureStage,'pause');assert(!JSON.stringify(f.observation).includes(error.message));
 });
 test('pure fake freshness: failed query rejection or recovery cannot pass',async()=>{
-  const f=fakeFreshness({rejectError:Error('PRIVATE_SENTINEL')});await assert.rejects(exerciseFreshness(f.args));assert(f.observation.resumed);assert(!f.observation.queriesRejected);
-  const stalled=fakeFreshness({neverRecover:true});await assert.rejects(exerciseFreshness(stalled.args));assert(!stalled.observation.recovered);assert(stalled.observation.resumed);
+  const f=fakeFreshness({rejectError:Error('PRIVATE_SENTINEL')});await assert.rejects(exerciseFreshness(f.args));assert(f.observation.resumed);assert(!f.observation.queriesRejected);assert.equal(f.observation.failureStage,'query-rejection');
+  const stalled=fakeFreshness({neverRecover:true});await assert.rejects(exerciseFreshness(stalled.args));assert(!stalled.observation.recovered);assert(stalled.observation.resumed);assert.equal(stalled.observation.failureStage,'recovery');
 });
 test('pure fake freshness: failed resume remains failure with bounded safe observation',async()=>{
-  const error=Error('PRIVATE_SENTINEL'),f=fakeFreshness({resumeError:error});await assert.rejects(exerciseFreshness(f.args),e=>e===error);assert(!f.observation.resumed);assert(!f.observation.recovered);assert(!JSON.stringify(f.observation).includes(error.message));
+  const error=Error('PRIVATE_SENTINEL'),f=fakeFreshness({resumeError:error});await assert.rejects(exerciseFreshness(f.args),e=>e===error);assert(!f.observation.resumed);assert(!f.observation.recovered);assert.equal(f.observation.failureStage,'resume');assert(!JSON.stringify(f.observation).includes(error.message));
 });
 
 test('fake package: official-style internal symlink remains hash-bound within release',async t=>{

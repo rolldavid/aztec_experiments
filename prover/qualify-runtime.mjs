@@ -8,7 +8,8 @@ import {fileURLToPath} from 'node:url';
 import {createHash} from 'node:crypto';
 import {spawn} from 'node:child_process';
 import {createConnection} from 'node:net';
-import {setTimeout as sleep} from 'node:timers/promises';
+import {retryUntil} from '@aztec-labs/foundation/retry';
+import {getTrustedNodeFailureDiagnostic} from '../shared/trusted-private-node.mjs';
 const ROOT=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
 const sha=bytes=>createHash('sha256').update(bytes).digest('hex');
 const silent=Object.fromEntries(['trace','debug','verbose','info','warn','error','fatal'].map(k=>[k,()=>{}]));
@@ -109,33 +110,49 @@ export async function verifyQueryOnlyService(service,url){
   return {passed:true,proofEndpointsDisabled:true,queueAllocated:false,workerAllocated:false};
 }
 
-/** Labelled pure-fake unit tests exercise scheduling/cleanup here. Production
- * supplies only the actual SDK inspector, HTTP health and supported admin APIs. */
-export async function exerciseFreshness({node,admin,inspect,health,rejectedQuery,maxLagSeconds,recoveryTimeoutMs,now=Date.now,wait=sleep,observation={}}){
+/** Production uses the native pause/resume control and SDK state waiter. A paused
+ * archiver can still receive P2P proposals, so stale state may fail canonical
+ * consistency before the inspector reaches its timestamp check. */
+export async function exerciseFreshness({node,admin,inspect,health,rejectedQuery,maxLagSeconds,recoveryTimeoutMs,waitUntil=retryUntil,observation={}}){
   const result=Object.assign(observation,{paused:false,stale:false,queriesRejected:false,resumed:false,recovered:false});
-  const before=await inspect();requireCondition(before.ready);
-  let pauseAttempted=false;
+  let phase='healthy',pauseAttempted=false;
+  const safeCode=error=>['BB_TRUSTED_NODE_STALE','BB_TRUSTED_NODE_UNSYNCED','BB_TRUSTED_NODE_UNAVAILABLE','BB_TRUSTED_NODE_IDENTITY','BB_TRUSTED_NODE_CONFIG','ERR_ASSERTION'].includes(error?.code)?error.code:'QUALIFICATION_FAILED';
   try{
-    pauseAttempted=true;await admin.pauseSync();result.paused=true;
-    const frozen=await node.getSyncedL1Timestamp();requireCondition(typeof frozen==='bigint');
-    // Genuine elapsed time; no observed timestamp edits or wall-clock override.
-    const delay=Math.max(0,(Number(frozen)+maxLagSeconds+1)*1000-now());
-    requireCondition(Number.isSafeInteger(delay)&&delay<= (maxLagSeconds+2)*1000);
-    await wait(delay);
-    requireCondition(await node.getSyncedL1Timestamp()===frozen);
-    await assert.rejects(inspect,e=>e.code==='BB_TRUSTED_NODE_STALE');result.stale=true;
-    const unavailable=await health();requireCondition(unavailable.query.enabled===true&&unavailable.query.ready===false);
-    await rejectedQuery();result.queriesRejected=true;
-  }finally{if(pauseAttempted){await admin.resumeSync();result.resumed=true;}}
-  const deadline=now()+recoveryTimeoutMs;
-  while(now()<deadline){
+    const before=await inspect();requireCondition(before.ready);
     try{
-      const after=await inspect(),h=await health();
-      if(after.ready&&BigInt(after.syncedL1Timestamp)>BigInt(before.syncedL1Timestamp)&&h.query.ready===true){result.recovered=true;break;}
-    }catch{/* Public readiness can be transient during supported resynchronization. */}
-    await wait(1000);
-  }
-  requireCondition(result.recovered);return result;
+      phase='pause';pauseAttempted=true;await admin.pauseSync();result.paused=true;
+      phase='frozen-state';const frozen=await node.getSyncedL1Timestamp();
+      requireCondition(typeof frozen==='bigint'&&frozen>=0n&&frozen<=BigInt(Number.MAX_SAFE_INTEGER));result.frozenL1Timestamp=String(frozen);
+      phase='stale-rejection';
+      await waitUntil(async()=>{
+        requireCondition(await node.getSyncedL1Timestamp()===frozen);
+        try{await inspect();return false;}catch(error){
+          if(!['BB_TRUSTED_NODE_STALE','BB_TRUSTED_NODE_UNSYNCED'].includes(error?.code))throw error;
+          // Observe actual node staleness; never advance clocks or assume a delay
+          // made the node stale. A consistency rejection alone is insufficient.
+          const lag=Math.floor(Date.now()/1000)-Number(frozen);
+          if(lag<=maxLagSeconds)return false;
+          requireCondition(await node.getSyncedL1Timestamp()===frozen);
+          result.staleLagSeconds=lag;result.rejectionCode=error.code;
+          const reason=getTrustedNodeFailureDiagnostic(error)?.reason;
+          if(['TIP_ORDER','STATE_NOT_SYNCED','CHECKPOINT_PRUNED','IMPOSSIBLE_FINALITY','SAME_HEIGHT_HASH','METADATA_MISMATCH','CANONICAL_ANCHOR'].includes(reason))result.rejectionReason=reason;
+          return true;
+        }
+      },'paused node stale rejection',maxLagSeconds+10);
+      result.stale=true;phase='query-rejection';
+      const unavailable=await health();requireCondition(unavailable.query.enabled===true&&unavailable.query.ready===false);
+      await rejectedQuery();result.queriesRejected=true;
+    }finally{
+      if(pauseAttempted){const prior=phase;phase='resume';await admin.resumeSync();result.resumed=true;phase=prior;}
+    }
+    phase='recovery';
+    await waitUntil(async()=>{
+      let after;
+      try{after=await inspect();}catch(error){if(['BB_TRUSTED_NODE_STALE','BB_TRUSTED_NODE_UNSYNCED'].includes(error?.code))return false;throw error;}
+      const h=await health();return after.ready&&BigInt(after.syncedL1Timestamp)>BigInt(before.syncedL1Timestamp)&&h.query.ready===true;
+    },'resumed node ready',recoveryTimeoutMs/1000);
+    result.recovered=true;return result;
+  }catch(error){result.failureStage=phase;result.failureCode=safeCode(error);throw error;}
 }
 
 // The capability never enters service config, child input, logs or observations.
