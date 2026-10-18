@@ -24,9 +24,15 @@ test('remote transport switches on the same PXE without reopening the wallet sto
  await pxe.setRemoteProver(undefined);assert.equal(prover.transport,null);
  await pxe.setRemoteProver({url:'https://board.example/prover',board:'board'});assert.equal(prover.transport.id,2);assert.equal(f.calls.length,1);
 });
-test('devnet toggle-off uses disabled transport and non-devnet cannot disable proofs',async()=>{
- const f=fixture();await f.ctx.createPXE({getNodeInfo:async()=>({realProofs:false,l1ChainId:31337})},{proverEnabled:true});
- const prover=f.calls[0][2].proverOrOptions;assert.equal(prover.proofsEnabled,false);assert.equal((await prover.transport.prove()).mode,'disabled');
+test('local devnet uses native disabled PXE configuration without custom proof or remote transport',async()=>{
+ for(const browser of [true,false])for(const proverEnabled of [undefined,true,false]){
+  const f=fixture({browser});f.ctx.createRemoteProverClient=()=>{throw Error('Disabled mode must not contact a prover');};
+  const config={proverEnabled,dataDirectory:'retained'},custom={createChonkProof(){throw Error('Custom disabled proof must not run');}};
+  const pxe=await f.ctx.createPXE({getNodeInfo:async()=>({realProofs:false,l1ChainId:31337})},config,{proverOrOptions:custom,remoteProver:{url:'https://unused.invalid'}});
+  assert.equal(f.calls[0][1].proverEnabled,false);assert.equal(f.calls[0][1].dataDirectory,'retained');assert.equal(config.proverEnabled,proverEnabled);
+  assert.equal(f.calls[0][2].proverOrOptions,undefined);assert.equal(f.calls[0][2].remoteProver,undefined);assert.equal(pxe.setRemoteProver,undefined);
+  assert.equal(f.initializations.length,0);assert.equal(f.crsCalls.length,0);
+ }
  const g=fixture();await assert.rejects(g.ctx.createPXE({getNodeInfo:async()=>({realProofs:false,l1ChainId:1})},{}),/local devnet/);assert.equal(g.calls.length,0);
 });
 

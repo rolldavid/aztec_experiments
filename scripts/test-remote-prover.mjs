@@ -126,3 +126,25 @@ test('actual CLI auth helper with real HTTP still denies its credential-free byp
  assert.equal((await rpcFetch(new Request(url,{...init,credentials:'omit',referrerPolicy:'no-referrer'}))).status,401);
  assert.equal((await rpcFetch(url+'/',init)).status,404);assert.equal(entered,1);
 });
+
+test('routed prover is real-proof only and preserves the SDK local route',async()=>{
+ const {routedKernelProverClass}=await import('../shared/routed-kernel-prover.mjs');
+ let localCalls=0,remoteCalls=0;class Local{async createChonkProof(steps){localCalls++;return steps;}}
+ const Prover=routedKernelProverClass(Local),steps=[];
+ assert.throws(()=>new Prover({}, {},{proofsEnabled:false,transport:{prove(){remoteCalls++;}}}),/native PXE configuration/);
+ const prover=new Prover({}, {},{transport:null});assert.equal(await prover.createChonkProof(steps),steps);assert.equal(localCalls,1);
+ prover.setTransport({async prove(){remoteCalls++;return {mode:'disabled'};}});
+ await assert.rejects(prover.createChonkProof(steps),/Invalid remote proof/);assert.equal(localCalls,1);assert.equal(remoteCalls,1);
+});
+
+test('development application prover selection leaves native proof configuration in control',async()=>{
+ const {applicationProver}=await import('./testing/proof-policy.mjs');const prior=process.env.BOARD_TEST_PROOFS;
+ const options={threads:1},remote={get url(){throw Error('Disabled mode must not construct a transport');}};
+ try{
+  delete process.env.BOARD_TEST_PROOFS;assert.equal(applicationProver(options,remote),options);
+  process.env.BOARD_TEST_PROOFS='disabled';assert.equal(applicationProver(options,remote),options);
+  process.env.BOARD_TEST_PROOFS='real';assert.equal(applicationProver(options),options);
+  const prover=applicationProver(options,{url:'https://prover.example',board:'1',chainId:11155111,rollupVersion:1});assert.equal(typeof prover.transport.prove,'function');
+  process.env.BOARD_TEST_PROOFS='invalid';assert.throws(()=>applicationProver(options),/Invalid BOARD_TEST_PROOFS/);
+ }finally{if(prior===undefined)delete process.env.BOARD_TEST_PROOFS;else process.env.BOARD_TEST_PROOFS=prior;}
+});

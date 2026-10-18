@@ -78,7 +78,7 @@ export async function initializeBrowserProver(supplied) {
 // input lifetime changes: each circuit is consumed before expanding the next.
 class BrowserPrivateKernelProver extends RoutedKernelProver {
   async createChonkProof(executionSteps) {
-    if(this.transport||!this.proofsEnabled)return super.createChonkProof(executionSteps);
+    if(this.transport)return super.createChonkProof(executionSteps);
     const bb=await Barretenberg.initSingleton({...this.options,logger:discard});
     const result=await proveBrowserChonk(executionSteps,bb);
     const proof=ChonkProofWithPublicInputs.fromBufferArray(result.proofFields);
@@ -93,14 +93,19 @@ export async function createPXE(node,config,options={}) {
   const info=await node.getNodeInfo();
   const proofsEnabled=provingEnabledForNode(info);
   if(info.realProofs===false && Number(info.l1ChainId)!==31337)throw Error('Disabled proofs require local devnet');
-  const transport=()=>remote?createRemoteProverClient({...remote,chainId:info.l1ChainId,rollupVersion:info.rollupVersion,proofsEnabled}):proofsEnabled?null:{prove:async()=>({mode:'disabled'})};
+  const transport=()=>remote?createRemoteProverClient({...remote,chainId:info.l1ChainId,rollupVersion:info.rollupVersion,proofsEnabled:true}):null;
   const route=(simulator,proverOptions)=>new RoutedKernelProver(simulator,proverOptions,{proofsEnabled,transport:transport()});
   if(config?.proverEnabled===false && proofsEnabled && !readOnly)throw new Error('Proofs may only be disabled on the disposable local devnet');
-  if(!readOnly && typeof window !== 'undefined' && proofsEnabled) {
+  if(!proofsEnabled){
+    // The SDK skips kernel witness generation and proving in its native disabled
+    // mode. Do not install an application prover or contact a remote service.
+    config={...config,proverEnabled:false};
+    selected={...options};delete selected.proverOrOptions;delete selected.remoteProver;
+  }else if(!readOnly && typeof window !== 'undefined') {
     const proverOrOptions=await initializeBrowserProver(options.proverOrOptions);
     const simulator=options.simulator??new WASMSimulator();
     selected={...options,simulator,proverOrOptions:new BrowserPrivateKernelProver(simulator,{...proverOrOptions,logger:privateLogger},{proofsEnabled,transport:transport()})};
-  }else if(!readOnly && (remote||!proofsEnabled)){
+  }else if(!readOnly && remote){
     const simulator=options.simulator??new WASMSimulator();selected={...options,simulator,proverOrOptions:route(simulator,options.proverOrOptions??{})};
   }else if(!readOnly && config?.proverEnabled===true){
     if(['proverOrOptions','backend','threads','skipSrsInit','bbPath'].some(key=>options[key]!==undefined||config[key]!==undefined)||options.simulator!==undefined||!cliProverInitialization)throw cliFailure();
