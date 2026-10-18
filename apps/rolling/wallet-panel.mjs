@@ -133,7 +133,11 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
  function note(text){live.textContent=text;}
  async function work(fn,failureMessage=nameFailure){
   if(busy)return;const operationFocus=document.activeElement;busy=true;error='';controlsBusy(true);
-  try{await fn();}catch(failure){stopFunding();recoveryInspection=null;clearPreferences();note('');error=failure===connectionFailure?'The private connection is unavailable. Your encrypted recovery is preserved. Reconnect when the service returns.':failure===avatarFailure?'This image could not be prepared. Choose a still PNG, JPEG or WebP under 8 MiB. It must fit 8192 encoded bytes after cropping and compression. No transaction was prepared.':failureMessage(failure)??message;}finally{if(invalidated||reloadRequired)clearPrivateView();busy=false;render(document.activeElement===document.body?operationFocus:document.activeElement);}
+  try{await fn();}catch(failure){stopFunding();recoveryInspection=null;clearPreferences();note('');error=failure===connectionFailure?'The private connection is unavailable. Your encrypted recovery is preserved. Reconnect when the service returns.':failure===avatarFailure?'This image could not be prepared. Choose a still PNG, JPEG or WebP under 8 MiB. It must fit 8192 encoded bytes after cropping and compression. No transaction was prepared.':failureMessage(failure)??message;}finally{
+   if(invalidated||reloadRequired)clearPrivateView();busy=false;render(document.activeElement===document.body?operationFocus:document.activeElement);
+   // Failed actions must expose their feedback even when the form was scrolled.
+   if(error&&dialog.open){const alert=content.querySelector('[role=alert]');alert.focus({preventScroll:true});alert.scrollIntoView({block:'nearest'});}
+  }
  }
  function unlocked(){if(invalidated||reloadRequired)return false;const current=runtime?runtime.getAccount():null;if(accountIdentity&&current!==accountIdentity){invalidated=true;clearPrivateView();note('The account changed. Reload before continuing.');return false;}return !!current;}
  async function refresh(){
@@ -682,7 +686,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   const controls=()=>[...content.querySelectorAll('button,input,select,textarea,summary,a[href]')];
   const key=hadFocus?focusKey(previousFocus):null,index=key?controls().filter(n=>focusKey(n)===key).indexOf(previousFocus):-1;
   releasePreviews();content.replaceChildren();
-  if(error)content.append(el('p',{role:'alert',class:'notice error'},error));
+  if(error)content.append(el('p',{role:'alert',tabindex:'-1',class:'notice error'},error));
   if(notice)content.append(el('p',{class:'notice'},notice));
   if(plaintextRecovery)content.append(el('p',{role:'status',class:'notice'},plaintextRecoveryWarning));
   if(invalidated||reloadRequired){content.append(paragraph('This account session has ended. Existing recovery records remain encrypted on this device.'),button('Reload to unlock',()=>location.reload()));}
