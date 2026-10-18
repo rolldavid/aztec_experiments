@@ -1,5 +1,6 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import {randomUUID} from 'node:crypto';
 import {pathToFileURL} from 'node:url';
 import {devnetPorts,readDevnetRecord,writeDevnetRecord,developmentCleanupFailure,developmentShutdownSummary} from './network.mjs';
 
@@ -8,7 +9,7 @@ export function developmentOptions(args=[],env={}) {
  if(env.PLUGIN_PROOFS!==undefined&&env.PLUGIN_PROOFS!=='false')throw Error('Development requires proofs disabled');
  const profile=options['--profile']??'rolling';if(!['rolling','legacy'].includes(profile))throw Error('Unknown development profile');
  const ports=devnetPorts(Object.fromEntries([['appPort','--app-port'],['nodePort','--node-port'],['ethereumPort','--ethereum-port']].filter(([,k])=>options[k]!==undefined).map(([k,v])=>[k,/^[1-9][0-9]*$/.test(options[v])?Number(options[v]):NaN])));
- return {profile,directory:path.resolve(options['--directory']??'.build/rolling-devnet'),ports,...(options['--hosted-config']?{hostedConfig:path.resolve(options['--hosted-config'])}:{})};
+ return {profile,directory:path.resolve(options['--directory']??'.build/rolling-devnet-'+randomUUID()),ports,...(options['--hosted-config']?{hostedConfig:path.resolve(options['--hosted-config'])}:{})};
 }
 
 export async function acquireDevelopmentLease(directory) {

@@ -5,7 +5,7 @@ import {loadContractArtifact} from '@aztec-labs/stdlib/abi';
 import {aztecBoardPort} from '../aztec.mjs';
 import {aztecEscrowPort} from '../escrow.mjs';
 import {startEscrowService} from '../escrow-service.mjs';
-import {retainPreviewCheckpoint} from './web.mjs';
+import {retryUntil} from '@aztec-labs/foundation/retry';
 import {drainDevnetCheckpoints} from './network.mjs';
 
 export async function startInterruptionService({fixture}) {
@@ -23,7 +23,7 @@ export async function startInterruptionService({fixture}) {
  service=await startEscrowService({...options,onError:error=>{if(error===interruption)interrupted=true;else failure=error;},run:async post=>{
   started++;await escrow.reserve(post,await escrow.available(post));throw interruption;
  }});
- const until=async check=>{const end=Date.now()+120000;while(!await check()){if(Date.now()>end)throw Error('Interruption observation timed out');await new Promise(r=>setTimeout(r,100));}};
+ const until=check=>retryUntil(async()=>{if(failure)throw failure;return check();},'interruption observation',120,0.1);
  return {address:service.address,close,async restartAndExpire(post){
   await until(()=>interrupted);assert.equal(started,1);
   await close();const reserved=await escrow.invocation(post);assert.equal(reserved.state,2);assert.equal(reserved.reserved,1000000n);assert.equal(await escrow.available(post),0n);
@@ -32,25 +32,12 @@ export async function startInterruptionService({fixture}) {
   service=await startEscrowService({...options,escrow:observedEscrow,onError:error=>{failure=error;},run:async()=>{replayed=true;}});
   await until(()=>observed);await close();assert.equal(failure,null);assert.equal(replayed,false);assert.equal((await escrow.invocation(post)).reserved,reserved.reserved);
   await drainDevnetCheckpoints(net);
-  const sequencer=net.node.getSequencer();await sequencer.pause();
-  try{
-   // Match the maintained wallet-absence fixture: no new checkpoint may appear
-   // between retention and a jump beyond the protocol's proof window.
-   const retained=await retainPreviewCheckpoint(fixture.serviceConfig);
-   // Marking storage proven does not finalize its L1 block. Mine and wait for
-   // the real archiver frontier before aging private logs by a whole day.
-   await until(async()=>{
-    await net.deployment.l1Client.request({method:'evm_mine',params:[]});
-    const tips=await net.node.getChainTips();
-    return Number(tips.finalized.checkpoint.number)>=retained;
-   });
-   await net.deployment.l1Client.request({method:'evm_setNextBlockTimestamp',params:[reserved.deadline+1]});
-   await net.deployment.l1Client.request({method:'evm_mine',params:[]});
-   const block=await net.deployment.l1Client.getBlock({blockTag:'latest'});net.dateProvider.setTime(Number(block.timestamp)*1000);
-   sequencer.updateConfig({minTxsPerBlock:0,buildCheckpointIfEmpty:true});
-  }finally{await sequencer.start();}
-  try{await until(async()=>Number((await net.node.getBlock(await net.node.getBlockNumber())).header.globalVariables.timestamp)>reserved.deadline);}
-  finally{net.node.getSequencer().updateConfig({minTxsPerBlock:1,buildCheckpointIfEmpty:false});}
+  // Expiry is the contract state being exercised. The SDK owns the local
+  // timestamp transition and serialized block; no manual L1/consensus clock.
+  await net.node.warpL2TimeAtLeastTo(reserved.deadline+1);
+  await net.node.mineBlock();
+  const block=await net.node.getBlock(await net.node.getBlockNumber());
+  assert(Number(block.header.globalVariables.timestamp)>reserved.deadline);
   await drainDevnetCheckpoints(net);
   return {replayed:false,reservedMicroUSDC:String(reserved.reserved),providerCalls:0,simulatedInterruption:true};
  }};

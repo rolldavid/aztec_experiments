@@ -11,8 +11,8 @@ import {onboardMetaMask,unpackMetaMask,addMetaMaskNetwork,observeMetaMaskTransac
 import {unpackText} from '../protocol.mjs';
 import {veniceClient} from '../venice.mjs';
 import {githubApi} from '../github-tools.mjs';
-import {drainDevnetCheckpoints} from './network.mjs';
-import {settleC01ApplicationMessage} from '../../scripts/c01-settle-application-message.mjs';
+import {ensureDevelopmentMessageReady} from './network.mjs';
+import {settleRollingDevelopmentMessage} from './bootstrap.mjs';
 const pause=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 
 
@@ -119,10 +119,8 @@ export async function runWalletHarness({fixture,author,directory,origin,onProgre
   assert.equal(BigInt(await escrowRead('balance',fixture.author.address)),0n);
   mark('wait-for-plugin-inbox');
   const depositEvent=(await fixture.escrowPortal.queryFilter(fixture.escrowPortal.filters.Deposited()))[0].args;
-  fixture.net.node.getSequencer().updateConfig({minTxsPerBlock:0,buildCheckpointIfEmpty:true});
-  const inboxDeadline=Date.now()+90000;let witness;
-  while(Date.now()<inboxDeadline){await fixture.wallet.pxe.sync();const header=await fixture.wallet.pxe.getSyncedBlockHeader();witness=await fixture.net.node.getL1ToL2MessageMembershipWitness(header.getBlockNumber(),Fr.fromString(depositEvent.key));if(witness)break;await pause(1000);}
-  assert(witness,'Inbox message unavailable');fixture.net.node.getSequencer().updateConfig({minTxsPerBlock:1,buildCheckpointIfEmpty:false});await drainDevnetCheckpoints(fixture.net);
+  await ensureDevelopmentMessageReady(fixture.net.node,Fr.fromString(depositEvent.key));
+  await fixture.wallet.pxe.sync();
   mark('claim-plugin-deposit-through-ui');await action('#pluginClaim');await success();
   assert.equal(BigInt(await escrowRead('balance',fixture.author.address)),1000000n);
   report.deposit={amount:'1000000',asset:'USDC',claimedThroughBrowser:true};
@@ -192,8 +190,8 @@ export async function runWalletHarness({fixture,author,directory,origin,onProgre
   const withdrawal=await page.evaluate(receiver=>Object.keys(localStorage).filter(k=>k.startsWith('plugin-account:'+receiver+':')).map(k=>JSON.parse(localStorage[k]).withdrawal)[0],fixture.descriptor.scope.receiver);
   const hash=(await import('@aztec-labs/stdlib/tx')).TxHash.fromString(withdrawal.txHash);
   const effect=await fixture.net.node.getTxEffect(hash),leaf=effect.data.l2ToL1Msgs.find(x=>!x.isZero());
-  const settledExit=await settleC01ApplicationMessage({node:fixture.net.node,config:fixture.net.config,dateProvider:fixture.net.dateProvider,l1Client:fixture.net.deployment.l1Client,directory,rollupAddress:(await fixture.net.node.getNodeInfo()).l1ContractAddresses.rollupAddress,txHash:hash,expectedLeaf:leaf,kind:'exit',applicationProofs:report.applicationProofs});
-  const exitWitness=settledExit.witness,exitArgs=[withdrawal.recipient,BigInt(withdrawal.amount),withdrawal.nonce,BigInt(exitWitness.epochNumber),BigInt(exitWitness.numCheckpointsInEpoch),exitWitness.leafIndex,exitWitness.siblingPath.toBufferArray().map(b=>'0x'+b.toString('hex'))];
+  const exitWitness=await settleRollingDevelopmentMessage({net:fixture.net,txHash:hash,expectedLeaf:leaf});
+  const exitArgs=[withdrawal.recipient,BigInt(withdrawal.amount),withdrawal.nonce,BigInt(exitWitness.epochNumber),BigInt(exitWitness.numCheckpointsInEpoch),exitWitness.leafIndex,exitWitness.siblingPath.toBufferArray().map(b=>'0x'+b.toString('hex'))];
   await assert.rejects(fixture.escrowPortal.withdraw.staticCall('0x'+'55'.repeat(20),...exitArgs.slice(1)),'Outbox proof must bind recipient');
   mark('redeem-plugin-usdc-through-wallet');await action('#pluginRedeem');await approve('withdraw',await fixture.escrowPortal.getAddress());await success();
   assert.equal(await fixture.token.balanceOf(fixture.signer.address),initialTokens-charged);

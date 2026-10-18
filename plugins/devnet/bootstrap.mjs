@@ -13,12 +13,13 @@ import {computeSecretHash} from '@aztec-labs/stdlib/hash';
 import {poseidon2HashWithSeparator} from '@aztec-labs/foundation/crypto/poseidon';
 import {sha256ToField} from '@aztec-labs/foundation/crypto/sha256';
 import {encodeEscrowCommitment} from '../../shared/protocol-commitments.mjs';
-import {settleC01ApplicationMessage} from '../../scripts/c01-settle-application-message.mjs';
-import {startDevnet,drainDevnetCheckpoints} from './network.mjs';
+import {waitForTx} from '@aztec-labs/aztec.js/node';
+import {retryUntil} from '@aztec-labs/foundation/retry';
+import {TEST_FEE_PADDING} from '@aztec-labs/aztec/testing';
+import {startDevnet,ensureDevelopmentMessageReady} from './network.mjs';
 import {API_VERSION,packText,handleField} from '../protocol.mjs';
 import {restoreApplicationAuthor} from '../../scripts/w02-wallet-restore.mjs';
 const read=async file=>JSON.parse(await fs.readFile(file,'utf8'));
-const pause=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 export async function bootstrapPluginDevnet({directory,port=8787,host='127.0.0.1',proofs=false,browserAuthor=false,onProgress=console.log}){
   const [generated,operator]=await generateSchnorrAccounts(2,'schnorr_initializerless');
   const author=browserAuthor?(await restoreApplicationAuthor(generated)).author:generated;
@@ -31,6 +32,7 @@ export async function bootstrapPluginDevnet({directory,port=8787,host='127.0.0.1
   }
   try{
     wallet=await EmbeddedWallet.create(net.node,{ephemeral:true,pxe:{proverEnabled:proofs,proverOrOptions:{backend:BackendType.NativeUnixSocket,threads:1}}});
+    wallet.setMinFeePadding(TEST_FEE_PADDING);
     await wallet.createSchnorrInitializerlessAccount(author.secret,author.salt,author.signingKey,'developer');
     const from=author.address,send={from,wait:{timeout:120,waitForStatus:TxStatus.CHECKPOINTED}};
     const artifact=loadContractArtifact(await read('apps/src/billboard/billboard_artifact.json'));
@@ -51,7 +53,7 @@ export async function bootstrapPluginDevnet({directory,port=8787,host='127.0.0.1
     const escrowPortal=await new ContractFactory(escrowPortalArtifact.abi,escrowPortalArtifact.bytecode.object,signer).deploy(rollup.toString(),adapter.address.toString(),BigInt(info.rollupVersion),await token.getAddress());await escrowPortal.waitForDeployment();
     const escrowReady=await adapter.methods.set_portal(EthAddress.fromString(await escrowPortal.getAddress())).send(send);
     const escrowEffect=await net.node.getTxEffect(escrowReady.receipt.txHash),escrowLeaf=escrowEffect.data.l2ToL1Msgs.find(x=>!x.isZero());
-    const escrowSettled=await settleC01ApplicationMessage({node:net.node,config:net.config,dateProvider:net.dateProvider,l1Client:net.deployment.l1Client,directory,rollupAddress:rollup,txHash:escrowReady.receipt.txHash,expectedLeaf:escrowLeaf,kind:'ready',applicationProofs:proofs});
+    const escrowSettled={witness:await settleRollingDevelopmentMessage({net,txHash:escrowReady.receipt.txHash,expectedLeaf:escrowLeaf})};
     const ew=escrowSettled.witness;await (await escrowPortal.activate(BigInt(ew.epochNumber),BigInt(ew.numCheckpointsInEpoch),ew.leafIndex,ew.siblingPath.toBufferArray().map(b=>'0x'+b.toString('hex')))).wait();
     const descriptor={protocol:API_VERSION,scope,description:'bok development assistant',funding:{protocol:'aztec-escrow-usdc/v1',portalAddress:(await escrowPortal.getAddress()).toLowerCase(),tokenAddress:(await token.getAddress()).toLowerCase()}};
     const descriptorUrl=`http://${host}:${port}/v1/descriptor#sha256=${sha256(toUtf8Bytes(JSON.stringify(descriptor)))}`;
@@ -64,7 +66,7 @@ export async function bootstrapPluginDevnet({directory,port=8787,host='127.0.0.1
     const portalAddress=(await portal.getAddress()).toLowerCase();
     const {receipt}=await board.methods.update_portal(EthAddress.fromString(portalAddress)).send(send);
     const effect=await net.node.getTxEffect(receipt.txHash),leaf=effect.data.l2ToL1Msgs.find(x=>!x.isZero());
-    const settled=await settleC01ApplicationMessage({node:net.node,config:net.config,dateProvider:net.dateProvider,l1Client:net.deployment.l1Client,directory,rollupAddress:rollup,txHash:receipt.txHash,expectedLeaf:leaf,kind:'ready',applicationProofs:proofs});
+    const settled={witness:await settleRollingDevelopmentMessage({net,txHash:receipt.txHash,expectedLeaf:leaf})};
     const w=settled.witness;await (await portal.activate(BigInt(w.epochNumber),BigInt(w.numCheckpointsInEpoch),w.leafIndex,w.siblingPath.toBufferArray().map(b=>'0x'+b.toString('hex')))).wait();
     onProgress('Depositing Ethereum collateral and claiming through Inbox');
     const secret=Fr.random(),secretHash=await computeSecretHash(secret),amount=1000000000000000n;
@@ -73,12 +75,7 @@ export async function bootstrapPluginDevnet({directory,port=8787,host='127.0.0.1
     const commitmentScope={l1ChainId:'31337',rollupAddress:scope.rollupAddress,rollupVersion:scope.rollupVersion,boardAddress:scope.boardAddress,portalAddress};
     const content=sha256ToField([Buffer.from(encodeEscrowCommitment('claim',commitmentScope,{depositor:signer.address.toLowerCase(),amount:String(amount)}))]);
     const chain=await poseidon2HashWithSeparator([Fr.ONE,board.address,from,content,secret,new Fr(event.index)],0x42420101);
-    net.node.getSequencer().updateConfig({minTxsPerBlock:0,buildCheckpointIfEmpty:true});
-    const deadline=Date.now()+120000;let witness;
-    while(Date.now()<deadline){await wallet.pxe.sync();const anchor=await wallet.pxe.getSyncedBlockHeader();witness=await net.node.getL1ToL2MessageMembershipWitness(anchor.getBlockNumber(),Fr.fromString(event.key));if(witness)break;await pause(1000);}
-    if(!witness)throw Error('Deposit Inbox membership timed out');
-    net.node.getSequencer().updateConfig({minTxsPerBlock:1,buildCheckpointIfEmpty:false});
-    await drainDevnetCheckpoints(net);
+    await ensureDevelopmentMessageReady(net.node,Fr.fromString(event.key));
     await wallet.pxe.sync();
     await board.methods.claim_deposit(EthAddress.fromString(signer.address),amount,secret,new Fr(event.index)).send(send);
     const serviceConfig={descriptor,nodeUrl:net.nodeUrl,ethereumUrl:net.rpcUrl,development:true,host:'0.0.0.0',port,repository:'zac-williamson/aztec_experiments',operator:{secret:operator.secret.toString(),salt:operator.salt.toString(),signingKey:operator.signingKey.toString()}};
@@ -96,13 +93,12 @@ export function requireDevelopmentCircleScope({lifecycle,operations,circleScope,
 
 export async function completeDevelopmentOperation({run,command,timeoutMs=120000,pollMs=1000}) {
  if(!['deploy-escrow','deploy-portal','bind','activate','register','status'].includes(command)||!Number.isSafeInteger(timeoutMs)||timeoutMs<1||timeoutMs>120000||!Number.isSafeInteger(pollMs)||pollMs<0||pollMs>1000)throw Error('Invalid local lifecycle deadline');
- const deadline=Date.now()+timeoutMs;
- for(;;){
+ return retryUntil(async()=>{
   const result=await run(command);
   if(result?.status==='succeeded'&&result.canonical===true)return result;
-  if(result?.status!=='unresolved'||Date.now()>=deadline)throw Error('Original Bok operation requires reconciliation');
-  await pause(Math.min(pollMs,Math.max(0,deadline-Date.now())));
- }
+  if(result?.status!=='unresolved')throw Error('Original Bok operation requires reconciliation');
+  return undefined;
+ },'Original Bok operation requires reconciliation',timeoutMs/1000,pollMs/1000);
 }
 export async function activateDevelopmentBok({run,settle,expected,waitMs=120000,pollMs=1000}) {
  const complete=command=>completeDevelopmentOperation({run,command,timeoutMs:waitMs,pollMs});
@@ -113,33 +109,15 @@ export async function activateDevelopmentBok({run,settle,expected,waitMs=120000,
  return {status,walletBok:{contractAddress:status.escrow,operatorAddress:expected.operatorAddress,pluginId:status.pluginId}};
 }
 
-// The local settlement helper updates proven state/Outbox, but the installed
-// archiver derives finalized L2 from proven state at L1's finalized block. Let the
-// already-owned ordinary miner advance; do not repeat settlement or the CLI.
+// The SDK receipt waiter observes the finality established by native settlement.
 export async function waitDevelopmentFinality({node,txHash,timeoutMs=120000,pollMs=1000}) {
- const {boundedTransactionRead}=await import('../../shared/transaction-outcomes.mjs');
  if(!Number.isSafeInteger(timeoutMs)||timeoutMs<1||timeoutMs>120000||!Number.isSafeInteger(pollMs)||pollMs<0||pollMs>1000)throw Error('Invalid development finality deadline');
- const deadline=Date.now()+timeoutMs,hash=String(txHash);let original;
- const read=fn=>boundedTransactionRead(fn,Math.min(20000,Math.max(1,deadline-Date.now())));
- for(;;){
-  if(Date.now()>=deadline)throw Error('Original Ready awaits finality; retain deployment state');
-  const receipt=await read(()=>node.getTxReceipt(txHash));
-  if(String(receipt?.txHash)!==hash||!['checkpointed','proven','finalized'].includes(receipt?.status)||receipt.executionResult!=='success'||!Number.isSafeInteger(receipt.blockNumber)||receipt.blockNumber<1||!/^0x[0-9a-f]{64}$/i.test(String(receipt.blockHash)))throw Error('Original Ready receipt unavailable');
-  const anchor={number:receipt.blockNumber,hash:String(receipt.blockHash)};
-  if(original&&(original.number!==anchor.number||original.hash!==anchor.hash))throw Error('Original Ready anchor changed');
-  original??=anchor;
-  if(String((await read(()=>node.getBlock(anchor.number)))?.hash)!==anchor.hash)throw Error('Original Ready anchor changed');
-  const tips=await read(()=>node.getChainTips()),number=tips?.finalized?.block?.number;
-  if(!Number.isSafeInteger(number)||number<0)throw Error('Invalid finalized chain tip');
-  if(number>=anchor.number){
-   if(String((await read(()=>node.getBlock(anchor.number)))?.hash)!==anchor.hash)throw Error('Original Ready anchor changed');
-   return anchor;
-  }
-  await pause(Math.min(pollMs,Math.max(0,deadline-Date.now())));
- }
+ const receipt=await waitForTx(node,txHash,{waitForStatus:TxStatus.FINALIZED,timeout:timeoutMs/1000,interval:pollMs/1000,ignoreDroppedReceiptsFor:0});
+ if(String(receipt.txHash)!==String(txHash)||!Number.isSafeInteger(receipt.blockNumber)||receipt.blockNumber<1||String((await node.getBlock(receipt.blockNumber))?.hash)!==String(receipt.blockHash))throw Error('Original Ready anchor changed');
+ return {number:receipt.blockNumber,hash:String(receipt.blockHash)};
 }
 
-// Persistent native local mode uses the SDK's one serialized build/settlement
+// Native local mode uses the SDK's one serialized build/settlement
 // owner. The application still consumes the canonical Ready witness normally.
 export async function settleRollingDevelopmentMessage({net,txHash,expectedLeaf}) {
  await net.settleCheckpoints();
@@ -189,6 +167,7 @@ export async function developmentAccountingReaderConfig({readerConfig,operatorCo
 // Explicitly synchronize fresh autoSync:false PXEs before constructor simulation.
 // The caller retains ownership of the wallet for cleanup if either step fails.
 export async function initializeDevelopmentDeployer(wallet,secret,salt,signingKey) {
+ wallet.setMinFeePadding(TEST_FEE_PADDING);
  await wallet.pxe.sync();
  return wallet.createSchnorrInitializerlessAccount(secret,salt,signingKey,'local public deployer');
 }
@@ -231,7 +210,7 @@ export async function bootstrapRollingDevnet({directory,ports,onProgress=console
  const secret=Fr.fromString(actor.secret),salt=Fr.fromString(actor.salt),signingKey=GrumpkinScalar.fromString(actor.signingKey);
  const address=await getSchnorrInitializerlessAccountContractAddress(signingKey,salt,secret);
  if(String(address)!==actor.address||!signingKey.equals(deriveMasterMessageSigningSecretKey(secret)))throw Error('Original local actor identity differs');
- const net=await startDevnet({directory,fundingAddresses:[address],proofs:false,persistent:true,ports:selected,onProgress,onOwned});
+ const net=await startDevnet({directory,fundingAddresses:[address],proofs:false,ports:selected,onProgress,onOwned});
  let wallet,tokenProvider,closing,activeChild,activeExit,queryService;
  function close(){return closing??=(async()=>{let error;if(activeChild){activeChild.kill('SIGTERM');const timer=setTimeout(()=>activeChild?.kill('SIGKILL'),5000);try{await activeExit;}finally{clearTimeout(timer);}}try{await queryService?.close();}catch(e){error=e;}try{await wallet?.stop();}catch(e){error??=e;}try{tokenProvider?.destroy();}catch(e){error??=e;}try{await net.close();}catch(e){error??=e;}if(error)throw Error('Current development cleanup incomplete',{cause:error});})();}
  onOwned({close});
@@ -326,7 +305,6 @@ export async function bootstrapRollingDevnet({directory,ports,onProgress=console
   const {fundingRelayConfig,...liquidity}=await deployDevelopmentLiquidity({directory:path.join(directory,'exchange-liquidity'),provider:tokenProvider,signer:new Wallet(net.identity.privateKey,tokenProvider),artifacts:liquidityArtifacts,fundingRouterArtifact,circle:token,
    scope:{...localScope,collateralPortal:report.portalAddr.toLowerCase(),feePortal:String(info.l1ContractAddresses.feeJuicePortalAddress).toLowerCase(),bokPortal:activated.status.portal,feeToken:String(info.l1ContractAddresses.feeJuiceAddress).toLowerCase(),bokToken:token.tokenAddress,feeAssetHandler:String(net.deployment.l1ContractAddresses.feeAssetHandlerAddress).toLowerCase(),privateFpc:String(feeInstance.address)}});
   await writeDevnetRecord(path.join(directory,'liquidity-public.json'),{...liquidity,circle:token});
-  await net.useWallClock();
 
   const {startProverService}=await import('../../prover/service.mjs');
   queryService=await startProverService(developmentQueryServiceConfig({directory,appPort:selected.appPort,nodeUrl:net.nodeUrl,rollupAddress:operatorConfig.rollupAddress,rollupVersion:info.rollupVersion,board:report.l2Addr,privateFeeAddress:String(feeInstance.address),privateBokAddress:bok.escrow}),{onQueryFailure:(code,diagnostic)=>onProgress(JSON.stringify({event:'development-query-unavailable',code,at:Date.now(),...(diagnostic?{diagnostic}:{})}))});
