@@ -690,18 +690,24 @@ test('initialization projection ignores accessors and account invalidation clear
 
 
 test('Bok composer reviews credit and both fees, restores authorized draft and never auto-publishes',async t=>{
- const {page}=await browserFixture(t);await page.evaluate(()=>test.bokCredit='1000');await open(page);await unlock(page);
- await page.getByLabel('Action',{exact:true}).selectOption('bok');await page.getByText('Available private Bok credit: 1000.',{exact:true}).waitFor();
+ const {page}=await browserFixture(t);await page.evaluate(()=>{test.bokCredit='1000000';test.refreshRecords={submit:[{stage:'submitting'}]};});await open(page);await unlock(page);
+ await page.getByLabel('Action',{exact:true}).selectOption('bok');await page.getByText('Available private Bok credit: 1 USDC.',{exact:true}).waitFor();
+ assert.equal(await page.getByLabel('Maximum Bok cost (USDC)',{exact:true}).inputValue(),'0.10');
  await page.getByText('New conversation',{exact:true}).waitFor();assert.equal(await page.getByRole('link',{name:'Main board',exact:true}).getAttribute('href'),'#/board/0');assert.equal(await page.getByLabel('Reply to post ID').count(),0);
- await page.getByLabel('Message',{exact:true}).fill('Ask Bok with the exact saved draft');await page.getByLabel('Maximum Bok credits',{exact:true}).fill('400');
+ await page.getByLabel('Message',{exact:true}).fill('Ask Bok with the exact saved draft');await page.getByLabel('Maximum Bok cost (USDC)',{exact:true}).fill('0.10');
  await page.getByRole('button',{name:'Check action and review fee',exact:true}).click();await page.getByRole('button',{name:'Confirm and send',exact:true}).waitFor();
- assert.equal((await counts(page)).sends,0);await page.getByText('Bok request budget: 400 credits. This is separate from the network fee.',{exact:true}).waitFor();
+ assert.equal((await counts(page)).sends,0);await page.getByText('Maximum Bok request cost: 0.1 USDC. This ceiling is separate from network fees; the actual charge may be lower.',{exact:true}).waitFor();
+ assert(await page.getByText('Private Bok balance checked for this authorization: 1 USDC.',{exact:true}).isVisible());assert.equal(await page.evaluate(()=>JSON.parse(sessionStorage.getItem('labelled-ui-intent')).action.budget),'100000');
+ assert(await page.getByText('This step authorizes the saved Bok budget privately and charges a network fee. Your post is not published yet; publication needs separate confirmation.',{exact:true}).isVisible());assert.equal(await page.getByText('Your exact action is saved. Sending publishes it onchain and cannot be undone.',{exact:true}).count(),0);
  await page.getByRole('button',{name:'Confirm and send',exact:true}).click();await page.getByRole('button',{name:'Review saved Bok post',exact:true}).waitFor();
- assert.equal((await counts(page)).sends,1);assert.equal(await page.getByRole('button',{name:'Confirm and send',exact:true}).count(),0);
+ assert.equal((await counts(page)).sends,1);assert.equal(await page.getByRole('button',{name:'Confirm and send',exact:true}).count(),0);assert.equal(await page.getByText('Proving and submitting. Keep this page open; do not send again.',{exact:true}).count(),0);
  await page.reload();await page.waitForFunction(()=>window.ready);await open(page);await page.getByRole('button',{name:'Unlock',exact:true}).click();
  await page.getByRole('button',{name:'Review saved Bok post',exact:true}).waitFor();assert.equal((await counts(page)).sends,0);
+ assert.equal(await page.evaluate(()=>JSON.parse(sessionStorage.getItem('labelled-ui-intent')).action.budget),'100000');await page.getByText('Maximum Bok request cost: 0.1 USDC. This ceiling is separate from network fees; the actual charge may be lower.',{exact:true}).waitFor();
  await page.getByText('content: Ask Bok with the exact saved draft',{exact:true}).waitFor();
- await page.getByRole('button',{name:'Review saved Bok post',exact:true}).click();await page.getByRole('button',{name:'Confirm and send',exact:true}).waitFor();
+ await page.evaluate(()=>{test.refreshRecords={'bok-continue':[{stage:'estimating'}]};test.hold='bok-continue';});await page.getByRole('button',{name:'Review saved Bok post',exact:true}).click();await page.waitForFunction(()=>test.release);
+ assert(await page.getByText('Checking the action and its maximum fee…',{exact:true}).isVisible());assert.equal(await page.getByRole('dialog').getAttribute('aria-busy'),'true');
+ await page.evaluate(()=>{test.hold=null;test.release();});await page.getByRole('button',{name:'Confirm and send',exact:true}).waitFor();assert.equal(await page.getByText('Checking the action and its maximum fee…',{exact:true}).count(),0);
  await page.getByText('Maximum network fee: 234 fee-juice units. This is a maximum, not a guaranteed final charge.',{exact:true}).waitFor();
  assert.equal((await counts(page)).sends,0);assert.equal(await page.getByRole('button',{name:'Cancel prepared action',exact:true}).count(),0);
  await page.getByRole('button',{name:'Confirm and send',exact:true}).click();await page.getByText('Transaction confirmed on the verified chain.',{exact:true}).waitFor();assert.equal((await counts(page)).sends,1);
@@ -710,9 +716,21 @@ test('Bok composer hides unavailable capability and rejects unaffordable budgets
  const {page}=await browserFixture(t);await open(page);await unlock(page);assert.equal(await page.locator('option[value="bok"]').count(),0);
  await page.reload();await page.waitForFunction(()=>window.ready);await page.evaluate(()=>test.bokCredit='20');await open(page);await unlock(page);
  await page.getByLabel('Action',{exact:true}).selectOption('bok');await page.getByLabel('Message',{exact:true}).fill('Bok draft');
- for(const budget of ['0','21','-1','1e2']){await page.getByLabel('Maximum Bok credits',{exact:true}).fill(budget);assert.equal(await page.getByRole('button',{name:'Check action and review fee',exact:true}).isDisabled(),true);}
+ for(const budget of ['0','0.000021','-1','1e2','0.0000011','0.0000010',' 0.000001','0.000001 ','01']){await page.getByLabel('Maximum Bok cost (USDC)',{exact:true}).fill(budget);assert.equal(await page.getByRole('button',{name:'Check action and review fee',exact:true}).isDisabled(),true);}
  assert.equal((await counts(page)).prepares,0);
 });
+
+test('Bok budget converts exact six-decimal amounts to raw units without Number rounding',async t=>{
+ const {page}=await browserFixture(t);await page.evaluate(()=>test.bokCredit='9007199254740993');await open(page);await unlock(page);await page.getByLabel('Action',{exact:true}).selectOption('bok');await page.getByLabel('Message',{exact:true}).fill('Exact budget');
+ assert(await page.getByText('Available private Bok credit: 9007199254.740993 USDC.',{exact:true}).isVisible());
+ for(const [amount,raw]of [['0.000001','1'],['1.000001','1000001'],['9007199254.740993','9007199254740993']]){
+  await page.getByLabel('Maximum Bok cost (USDC)',{exact:true}).fill(amount);await page.getByRole('button',{name:'Check action and review fee',exact:true}).click();await page.getByRole('button',{name:'Confirm and send',exact:true}).waitFor();
+  assert.equal(await page.evaluate(()=>JSON.parse(sessionStorage.getItem('labelled-ui-intent')).action.budget),raw);assert(await page.getByText('Maximum Bok request cost: '+amount+' USDC. This ceiling is separate from network fees; the actual charge may be lower.',{exact:true}).isVisible());
+  await page.getByRole('button',{name:'Cancel prepared action',exact:true}).click();await page.getByLabel('Maximum Bok cost (USDC)',{exact:true}).waitFor();
+ }
+ assert.equal((await counts(page)).sends,0);
+});
+
 test('Bok continuation failure preserves authorized recovery without another credit authorization',async t=>{
  const {page}=await browserFixture(t);await page.evaluate(()=>{test.bokCredit='1000';sessionStorage.setItem('labelled-ui-intent',JSON.stringify({intentId:'42',status:'authorized',action:{type:'bok',content:'Saved Bok draft',budget:'400'},maximumFee:'123',bok:{phase:'authorize',budget:'400',availableCredit:'1000'}}));test.failure='bok-continue';});
  await open(page);await page.getByRole('button',{name:'Unlock',exact:true}).click();await page.getByRole('button',{name:'Review saved Bok post',exact:true}).click();
@@ -723,10 +741,11 @@ test('Bok continuation failure preserves authorized recovery without another cre
 test('Bok reverted post stays in explicit saved-request recovery after reopen without a new authorization',async t=>{
  const {page}=await browserFixture(t);await page.evaluate(()=>{test.bokCredit='600';sessionStorage.setItem('labelled-ui-intent',JSON.stringify({intentId:'43',status:'bok-post-reverted',action:{type:'bok',content:'Saved funded Bok draft',budget:'400'},maximumFee:'123',bok:{phase:'post',budget:'400',availableCredit:'1000',authorizationTxHash:'confirmed-authorize'}}));});
  await open(page);await page.getByRole('button',{name:'Unlock',exact:true}).click();await page.getByRole('button',{name:'Review saved Bok post',exact:true}).waitFor();
- await page.getByText(/The post reverted. Its paid network fee is not refunded/).waitFor();assert.equal(await page.getByLabel('Action',{exact:true}).count(),0);
+ await page.getByText(/The post reverted. Its paid network fee is not refunded/).waitFor();assert(await page.getByText('Maximum Bok request cost: 0.0004 USDC. This ceiling is separate from network fees; the actual charge may be lower.',{exact:true}).isVisible());assert.equal(await page.evaluate(()=>JSON.parse(sessionStorage.getItem('labelled-ui-intent')).action.budget),'400');assert.equal(await page.getByLabel('Action',{exact:true}).count(),0);
  assert.equal((await counts(page)).sends,0);assert.equal((await counts(page)).prepares,0);
  await page.getByRole('button',{name:'Review saved Bok post',exact:true}).click();await page.getByRole('button',{name:'Confirm and send',exact:true}).waitFor();
  assert.equal((await counts(page)).sends,0);assert.equal((await counts(page)).prepares,0);assert.equal(await page.getByRole('button',{name:'Cancel prepared action',exact:true}).count(),0);
+ await page.evaluate(()=>{test.submitOutcome='bok-post-reverted';test.refreshRecords={submit:[{stage:'submitting'}]};});await page.getByRole('button',{name:'Confirm and send',exact:true}).click();await page.getByRole('button',{name:'Review saved Bok post',exact:true}).waitFor();assert(await page.getByText('The Bok post reverted. A network fee may have been charged. The funded request remains saved; no action is retried automatically.',{exact:true}).isVisible());assert.equal(await page.getByText('The transaction is still unconfirmed or unknown. Check later; do not resend.',{exact:true}).count(),0);assert.equal(await page.getByText('Proving and submitting. Keep this page open; do not send again.',{exact:true}).count(),0);
 });
 
 test('Moderator controls stay hidden from ordinary authors including forged action defaults',async t=>{
@@ -981,9 +1000,9 @@ test('RC22 expiry panel preserves unknown transaction on reopen and reports cano
 });
 
 for(const [kind,label]of [['cancel-bok-request','Review release of this saved request'],['expire-bok-request','Review expiry of this saved request']])test('Interrupted Bok '+kind+' explicitly reviews one saved request and cancellation restores draft',async t=>{
- const {page}=await browserFixture(t);await page.evaluate(()=>{test.bokCredit='600';sessionStorage.setItem('labelled-ui-intent',JSON.stringify({intentId:'42',status:'authorized',action:{type:'bok',content:'Saved funded draft',budget:'400'},maximumFee:'123',bok:{phase:'authorize',budget:'400',availableCredit:'1000'}}));});
+ const {page}=await browserFixture(t);await page.evaluate(()=>{test.bokCredit='600';test.refreshRecords={'bok-release':[{stage:'estimating'}]};sessionStorage.setItem('labelled-ui-intent',JSON.stringify({intentId:'42',status:'authorized',action:{type:'bok',content:'Saved funded draft',budget:'400'},maximumFee:'123',bok:{phase:'authorize',budget:'400',availableCredit:'1000'}}));});
  await open(page);await page.getByRole('button',{name:'Unlock',exact:true}).click();await page.getByRole('button',{name:label,exact:true}).click();await page.getByRole('button',{name:'Confirm and send',exact:true}).waitFor();
- assert.deepEqual(await page.evaluate(()=>test.releaseInput),{id:'42',type:kind});assert.equal((await counts(page)).sends,0);
+ assert.equal(await page.getByText('Checking the action and its maximum fee…',{exact:true}).count(),0);assert.deepEqual(await page.evaluate(()=>test.releaseInput),{id:'42',type:kind});assert.equal((await counts(page)).sends,0);
  await page.getByRole('button',{name:'Cancel prepared action',exact:true}).click();await page.getByRole('button',{name:'Review saved Bok post',exact:true}).waitFor();
  assert.equal(await page.evaluate(()=>JSON.parse(sessionStorage.getItem('labelled-ui-intent')).action.content),'Saved funded draft');assert.equal((await counts(page)).sends,0);
  await page.getByRole('button',{name:label,exact:true}).click();await page.getByRole('button',{name:'Confirm and send',exact:true}).click();await page.getByText(kind==='expire-bok-request'?/Expiry transaction confirmed/:/Transaction confirmed/).waitFor();assert.equal((await counts(page)).sends,1);
@@ -1004,7 +1023,7 @@ test('Bok reply selection retains reader thread context through both saved confi
  assert.equal(await page.getByRole('link',{name:'View conversation',exact:true}).getAttribute('href'),'#/thread/11/12');for(const name of ['Reply to post ID','Root thread ID','Subboard ID (0 for main board)'])assert.equal(await page.getByLabel(name,{exact:true}).count(),0);
  await page.getByLabel('Action',{exact:true}).selectOption('reply');await page.getByLabel('Action',{exact:true}).selectOption('bok');
  assert.equal(await page.getByLabel('Message',{exact:true}).inputValue(),'Continue this workspace');
- await page.getByLabel('Maximum Bok credits').fill('400');
+ await page.getByLabel('Maximum Bok cost (USDC)').fill('0.0004');
  await page.getByRole('button',{name:'Check action and review fee',exact:true}).click();await page.getByRole('button',{name:'Confirm and send',exact:true}).waitFor();
  const action=await page.evaluate(()=>JSON.parse(sessionStorage.getItem('labelled-ui-intent')).action);assert.equal(action.parent,'12');assert.equal(action.root,'11');assert.equal(action.subboard,'3');assert.equal(action.type,'bok');
  await page.getByRole('button',{name:'Confirm and send',exact:true}).click();await page.getByRole('button',{name:'Review saved Bok post',exact:true}).waitFor();
@@ -1018,9 +1037,9 @@ test('Bok reply selection retains reader thread context through both saved confi
 
 test('Conversation context starts a new Bok thread only by explicit choice and preserves message and board',async t=>{
  const {page}=await browserFixture(t);await page.evaluate(()=>test.bokCredit='1000');await open(page,{type:'reply',parent:'12',root:'11',subboard:'3',content:'Keep this draft'});await unlock(page);
- await page.getByLabel('Action',{exact:true}).selectOption('bok');await page.getByLabel('Maximum Bok credits').fill('400');
+ await page.getByLabel('Action',{exact:true}).selectOption('bok');await page.getByLabel('Maximum Bok cost (USDC)').fill('0.0004');
  await page.getByRole('button',{name:'Start new conversation',exact:true}).click();await page.getByText('New conversation',{exact:true}).waitFor();
- assert.equal(await page.getByRole('link',{name:'View board',exact:true}).getAttribute('href'),'#/board/3');assert.equal(await page.getByLabel('Message',{exact:true}).inputValue(),'Keep this draft');assert.equal(await page.getByLabel('Maximum Bok credits').inputValue(),'400');assert.equal((await counts(page)).prepares,0);
+ assert.equal(await page.getByRole('link',{name:'View board',exact:true}).getAttribute('href'),'#/board/3');assert.equal(await page.getByLabel('Message',{exact:true}).inputValue(),'Keep this draft');assert.equal(await page.getByLabel('Maximum Bok cost (USDC)').inputValue(),'0.0004');assert.equal((await counts(page)).prepares,0);
  await page.getByRole('button',{name:'Check action and review fee',exact:true}).click();await page.getByRole('button',{name:'Confirm and send',exact:true}).waitFor();
  const action=await page.evaluate(()=>JSON.parse(sessionStorage.getItem('labelled-ui-intent')).action);assert.deepEqual({parent:action.parent,root:action.root,subboard:action.subboard},{parent:'0',root:'0',subboard:'3'});assert.equal(action.content,'Keep this draft');assert.equal(action.budget,'400');assert.equal((await counts(page)).sends,0);
 });
@@ -1029,7 +1048,7 @@ test('Conversation context rejects missing or incomplete reply selection without
  const {page}=await browserFixture(t);await page.evaluate(()=>test.bokCredit='1000');await open(page,{type:'reply'});await unlock(page);
  await page.getByText('Choose a post in the reader and select Reply to join its conversation.',{exact:true}).waitFor();await page.getByLabel('Message',{exact:true}).fill('Need a selected post');assert(await page.getByRole('button',{name:'Check action and review fee',exact:true}).isDisabled());
  await page.getByRole('button',{name:'Choose a post',exact:true}).click();assert.equal(await page.getByRole('dialog').isVisible(),false);
- await open(page,{type:'reply',parent:'12',root:'0',subboard:'3',content:'Invalid pair'});await page.getByLabel('Action',{exact:true}).waitFor();await page.getByLabel('Action',{exact:true}).selectOption('bok');await page.getByLabel('Maximum Bok credits').fill('400');assert(await page.getByRole('button',{name:'Check action and review fee',exact:true}).isDisabled());assert.equal((await counts(page)).prepares,0);
+ await open(page,{type:'reply',parent:'12',root:'0',subboard:'3',content:'Invalid pair'});await page.getByLabel('Action',{exact:true}).waitFor();await page.getByLabel('Action',{exact:true}).selectOption('bok');await page.getByLabel('Maximum Bok cost (USDC)').fill('0.0004');assert(await page.getByRole('button',{name:'Check action and review fee',exact:true}).isDisabled());assert.equal((await counts(page)).prepares,0);
 });
 
 test('dialog selections and view changes retain a meaningful keyboard position',async t=>{

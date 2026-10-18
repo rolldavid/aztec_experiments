@@ -383,7 +383,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   }
   if(intent.moderation){content.append(paragraph('Moderator action: your authority and the exact target will be checked again before sending. This does not edit the original post or reveal its private owner.'),paragraph(`Reviewed parent rules version: ${intent.moderation.mainVersion}.`));if(intent.moderation.avatarVersion!==undefined)content.append(paragraph(`Reviewed avatar version: ${intent.moderation.avatarVersion}.`));}
   if(intent.bok){
-   content.append(paragraph(`Bok request budget: ${intent.bok.budget} credits. This is separate from the network fee.`));
+   content.append(paragraph(`Maximum Bok request cost: ${decimal(intent.bok.budget,6)} USDC. This ceiling is separate from network fees; the actual charge may be lower.`),paragraph(`Private Bok balance checked for this authorization: ${decimal(intent.bok.availableCredit,6)} USDC.`));
    if(intent.bok.phase==='authorize')content.append(paragraph('First authorize this exact request privately. Publishing the saved post requires a separate review and network fee.'));
    else {content.append(paragraph('The request is already authorized. This publishes its exact saved post; the Bok budget is not authorized again.'));if(Number.isSafeInteger(intent.bok.mainPolicyVersion)&&Number.isSafeInteger(intent.bok.localPolicyVersion))content.append(paragraph(`Reviewed policy versions: parent ${intent.bok.mainPolicyVersion}, local ${intent.bok.localPolicyVersion}.`));}
   }
@@ -395,10 +395,10 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
    content.append(paragraph('Your funded request and original draft remain saved. Continuing the post, releasing unused credit, or requesting expiry each needs a separate fee review. Expiry requires the contract deadline; unresolved reservations remain fenced.'));
    if(intent.status!=='bok-release-reverted')content.append(button('Review saved Bok post',()=>void work(async()=>{
     const epoch=accountEpoch,id=intent.intentId;checkAccount(epoch);blocked=true;
-    const result=await session.application.prepareBokPost(id);checkAccount(epoch);intent=result;blocked=false;notice='Review the saved post and its separate network fee before sending.';
+    const result=await session.application.prepareBokPost(id);checkAccount(epoch);intent=result;blocked=false;note('');notice='Review the saved post and its separate network fee before sending.';
    }),true));
    for(const [type,label]of [['cancel-bok-request','Review release of this saved request'],['expire-bok-request','Review expiry of this saved request']])content.append(button(label,()=>void work(async()=>{
-    const epoch=accountEpoch,id=intent.intentId;checkAccount(epoch);const result=await session.application.prepareBokRelease(id,{type});checkAccount(epoch);intent=result;blocked=false;notice='Review the private transaction fee. No release or expiry has been sent.';
+    const epoch=accountEpoch,id=intent.intentId;checkAccount(epoch);const result=await session.application.prepareBokRelease(id,{type});checkAccount(epoch);intent=result;blocked=false;note('');notice='Review the private transaction fee. No release or expiry has been sent.';
    })));
    return;
   }
@@ -413,7 +413,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
     const id=intent.intentId;intent={...intent,status:'unknown'};blocked=true;
     try{const result=await session.application.submitPrepared(id);checkAccount(epoch);await receive(result);}catch{note('Submission outcome is unknown. Check this transaction; do not submit again.');throw Error('Unknown outcome');}
    }),true);confirm.dataset.unavailable=String(!avatarReady||!feeReady);
-   content.append(paragraph(['withdraw','withdraw-bok'].includes(intent.action?.type)?'This private exit starts withdrawal. It does not send the Ethereum refund or publish a post.':expiryAction?'This private expiry attempt charges a network fee. It never releases an unresolved reserved charge.':fundingAction?'Your saved funding receipt will be checked again before sending this private claim.':privateAction?'Your exact private setting is saved. Sending records an encrypted onchain update and charges a network fee.':'Your exact action is saved. Sending publishes it onchain and cannot be undone.'),confirm);
+   content.append(paragraph(['withdraw','withdraw-bok'].includes(intent.action?.type)?'This private exit starts withdrawal. It does not send the Ethereum refund or publish a post.':expiryAction?'This private expiry attempt charges a network fee. It never releases an unresolved reserved charge.':fundingAction?'Your saved funding receipt will be checked again before sending this private claim.':intent.bok?.phase==='authorize'?'This step authorizes the saved Bok budget privately and charges a network fee. Your post is not published yet; publication needs separate confirmation.':privateAction?'Your exact private setting is saved. Sending records an encrypted onchain update and charges a network fee.':'Your exact action is saved. Sending publishes it onchain and cannot be undone.'),confirm);
    if(!replacement&&intent.bok?.phase!=='post')content.append(button('Cancel prepared action',()=>void work(async()=>{await session.application.cancelPrepared(intent.intentId);intent=null;await refresh();notice='Prepared action cancelled. No new transaction was sent.';})));
   }else{
    content.append(paragraph('No automatic resend is allowed. A missing receipt does not mean the transaction failed.'),button('Check existing transaction',()=>void work(async()=>{await receive(await session.application.reconcile(intent.intentId));})));
@@ -431,7 +431,8 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   recoveryInspection=null;intent=result;blocked=false;
   if(['confirmed','reverted'].includes(result.status)&&['preference','read-marker'].includes(result.action?.type))clearPreferences();
   if(['confirmed','reverted'].includes(result.status)&&['bio','avatar'].includes(result.action?.type))profileSnapshot=null;
-  if(result.status==='authorized'){notice='Bok request authorized. Review the saved post when ready; it has not been published.';return;}
+  if(result.status==='authorized'){note('');notice='Bok request authorized. Review the saved post when ready; it has not been published.';return;}
+  if(['bok-post-reverted','bok-release-reverted'].includes(result.status)){note('');notice=(result.status==='bok-post-reverted'?'The Bok post reverted.':'The Bok release or expiry reverted.')+' A network fee may have been charged. The funded request remains saved; no action is retried automatically.';return;}
   if(result.status==='confirmed'){
    notice=result.action?.type==='expire-bok-request'?'Expiry transaction confirmed. Only unreserved credit can return; refresh private balances and complete request accounting to see refunded and still-reserved amounts.':'Transaction confirmed on the verified chain.';
    try{await onPublicEffect();}catch{notice+=' Public feed refresh is unavailable; the transaction remains confirmed.';}
@@ -529,8 +530,9 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
    if(kind==='quote'||kind==='repost')input('reference','Referenced post ID');
    input('content',kind==='repost'?'Optional repost comment':'Message',{area:true,required:kind!=='repost'});
    if(kind==='bok'){
-    content.append(paragraph(`Available private Bok credit: ${bokStatus.availableCredit}.`),paragraph('Bok receives this post only after you confirm its credit authorization and then confirm publication. Each action has its own network fee.'));
-    input('budget','Maximum Bok credits',{initial:'1'});
+    content.append(paragraph(`Available private Bok credit: ${decimal(bokStatus.availableCredit,6)} USDC.`),paragraph('Bok receives this post only after you confirm its credit authorization and then confirm publication. Each action has its own network fee.'));
+    // Reversible suggested budget; authorization and publication each need consent.
+    input('budget','Maximum Bok cost (USDC)',{initial:'0.10'}).inputMode='decimal';
    }
   }
   const counter=el('p',{class:'counter','aria-live':'polite'}),preview=el('div',{class:'preview-body','aria-label':'Message preview'});
@@ -542,6 +544,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
    else if(fields.has('content'))Object.assign(action,{name:draft.name,deposit:draft.deposit});
    if(kind==='preference')Object.assign(action,{kind:draft.kind,target:draft.kind===5?'0':action.target,enabled:draft.enabled});
    if(kind==='reply'||kind==='bok')Object.assign(action,{subboard:draft.subboard,parent:draft.parent,root:draft.root});
+   if(kind==='bok')action.budget=units(action.budget,6);
    const selectedAvatar=avatarDraft;
    void work(async()=>{if(kind==='avatar')Object.assign(action,selectedAvatar?.clear?{width:0,height:0,data:''}:{width:100,height:100,data:await blobData(selectedAvatar.blob)});
     blocked=true;try{if(kind==='preference'||kind==='read-marker'){const epoch=accountEpoch;checkAccount(epoch);const head=await session.application.readPreferenceHead();checkAccount(epoch);if(typeof head?.revision!=='string'||!/^(0|[1-9][0-9]{0,19})$/.test(head.revision))throw connectionFailure;action.expectedRevision=head.revision;}intent=await session.application.prepare(action);}catch(failure){if(kind==='bio'||kind==='avatar')profileSnapshot=null;if(kind==='name'&&nameFailure(failure))blocked=false;throw failure;}blocked=false;note('Review the saved action and maximum fee before sending.');});
@@ -558,7 +561,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
    }
    if(MODERATOR_TYPES.has(kind)){valid=valid&&moderatorStatus?.authorized===true;const key=kind==='set-main-policy'?'rules':'reason',value=fields.get(key).value;valid=valid&&value.isWellFormed()&&!value.includes('\0')&&new TextEncoder().encode(value).length<=(key==='rules'?992:217);if(kind!=='set-main-policy'){const id=fields.get(kind==='moderate-post'?'post':kind==='moderate-avatar'?'name':'subboard').value;valid=valid&&field(id)&&BigInt(id)>0n;}}
    if(kind==='reply')valid=valid&&replyContext(draft);
-   if(kind==='bok'){const {parent,root,subboard}=draft;valid=valid&&field(subboard)&&field(parent)&&field(root)&&((BigInt(parent)===0n)===(BigInt(root)===0n));const v=fields.get('budget').value;valid=valid&&/^[1-9][0-9]{0,38}$/.test(v)&&BigInt(v)<(1n<<128n)&&BigInt(v)<=BigInt(bokStatus?.availableCredit??'0');}
+   if(kind==='bok'){const {parent,root,subboard}=draft;valid=valid&&field(subboard)&&field(parent)&&field(root)&&((BigInt(parent)===0n)===(BigInt(root)===0n));try{const v=BigInt(units(fields.get('budget').value,6));valid=valid&&v<(1n<<128n)&&v<=BigInt(bokStatus?.availableCredit??'0');}catch{valid=false;}}
    if(kind==='bio'||kind==='avatar')valid=valid&&!!profileSnapshot&&identities.includes(draft.name)&&BigInt(profileSnapshot.name)===BigInt(draft.name)&&(kind!=='avatar'||!!avatarDraft);
    if(kind==='preference')valid=valid&&field(draft.kind===5?'0':fields.get('target').value)&&(draft.kind===2||draft.kind===5||BigInt(fields.get('target').value||'0')!==0n);
    if(kind==='read-marker')valid=valid&&field(fields.get('thread').value)&&BigInt(fields.get('thread').value||'0')!==0n&&/^(0|[1-9][0-9]{0,9})$/.test(fields.get('throughBlock').value)&&BigInt(fields.get('throughBlock').value)<=0xffffffffn;
