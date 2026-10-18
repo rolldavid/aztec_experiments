@@ -698,3 +698,34 @@ export async function runSepoliaLiquidityContinuation({plan:input,resolution,ori
  }};
  return runSepoliaSeedSteps({plan,steps,identity,stage,store,ports:wrapped,now});
 }
+
+// Explicit transport selection does not change transaction authority or reopen
+// any entered stage. The original remaining plan stays immutable.
+export function captureSepoliaSeedTransport(input,remainingPlan){
+ const t=seedObject(input,['schemaVersion','remainingPlanSha256','readUrl','broadcastUrl']);
+ if(t.schemaVersion!==1||t.remainingPlanSha256!==seedDigest(JSON.stringify(captureSepoliaLiquidityPlan(remainingPlan))))throw rejected();
+ for(const name of ['readUrl','broadcastUrl']){if(typeof t[name]!=='string')throw rejected();const u=new URL(t[name]);if(u.protocol!=='https:'||u.username||u.password||u.search||u.hash)throw rejected();}
+ if(t.readUrl!==remainingPlan.ethereumUrl)throw rejected();return Object.freeze(t);
+}
+export function captureSepoliaApprovalDispatch(input){
+ const d=seedObject(input,['schemaVersion','transactionHash','rawSha256','identitySha256','sourcesSha256','transportSha256','expiresAt']);
+ if(d.schemaVersion!==1||!/^0x[0-9a-f]{64}$/.test(d.transactionHash)||!Number.isSafeInteger(d.expiresAt)||d.expiresAt<1)throw rejected();
+ for(const k of ['rawSha256','identitySha256','sourcesSha256','transportSha256'])if(typeof d[k]!=='string'||!/^[0-9a-f]{64}$/.test(d[k]))throw rejected();return Object.freeze(d);
+}
+/** One explicitly admitted transport recovery of a known HTTP429 rejection.
+ * Ordinary continuation remains reconciliation-only for this saved operation. */
+export async function runSepoliaExactApproval({plan:input,record,transport:transportInput,dispatchIntent:dispatchInput,sourcesSha256,assertSourceFiles,recoveryStore,reconcile,ports,now=()=>Date.now()}){
+ const plan=captureSepoliaLiquidityPlan(input),transport=captureSepoliaSeedTransport(transportInput,plan),intent=captureSepoliaApprovalDispatch(dispatchInput);
+ const generated=(await sepoliaLiquidityTransactions(plan)).find(s=>s.name==='approve-usdc'),step={...generated,nonce:plan.ownerNonce};
+ if(!generated||record?.schemaVersion!==1||record.policy!=='reconcile-only'||record.phase!=='submission-unknown'||record.broadcastAttempt?.state!=='rejected'||record.broadcastAttempt.httpStatus!==429||record.hash!==intent.transactionHash||seedDigest(Buffer.from(record.raw,'hex'))!==intent.rawSha256||seedDigest(record.identity)!==intent.identitySha256||sourcesSha256!==intent.sourcesSha256||seedDigest(JSON.stringify(transport))!==intent.transportSha256||!await matchSepoliaLiquiditySigned(record,step))throw rejected();
+ const identity=JSON.stringify(['SEPOLIA_EXACT_APPROVAL_DISPATCH_V1',intent,transport,step]),existing=recoveryStore.read();
+ if(existing!==null){if(existing?.schemaVersion!==1||existing.identity!==identity||existing.phase!=='entered')throw rejected();return reconcile();}
+ const deadline=()=>{const t=now(),end=Math.min(plan.expiresAt,intent.expiresAt)*1000;if(t>=end||intent.expiresAt*1000-t>86400000)throw Error('Remaining approval dispatch window unavailable');};
+ const current=await reconcile();if(current.canonical)return current;
+ deadline();await assertSourceFiles();await ports.assertApprovalAbsent(step,record.hash);await ports.preflightApproval(step);deadline();
+ await recoveryStore.enter({schemaVersion:1,identity,phase:'entered'});
+ await assertSourceFiles();await ports.assertApprovalAbsent(step,record.hash);await ports.preflightApproval(step);
+ const final=await reconcile();if(final.canonical)return final;await assertSourceFiles();deadline();
+ let observation;try{if(await ports.broadcastExact('0x'+record.raw,record.hash)!==record.hash)throw Object.assign(Error('Exact approval acknowledgement differs'),{code:'BAD_DATA'});observation={state:'returned'};}catch(error){observation=seedBroadcastFailure(error);}
+ await recoveryStore.observe(observation);return {...await reconcile(),dispatchAttempt:observation};
+}

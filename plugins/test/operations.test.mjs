@@ -762,3 +762,61 @@ test('Explicit continuation HTTPS endpoint can restore required history without 
  assert.equal(JSON.stringify([f.args.plan,f.args.successor,f.ledger]),original);
  await assert.rejects(f.ops.runSepoliaLiquidityContinuation({...next,remainingPlan:{...captured,usdcAmount:'1'},stage:'approve-usdc'}));assert.equal(f.signedSteps.length,4);
 });
+
+async function approvalDispatchFixture(){
+ const f=await seedResolutionFixture();await f.ops.runSepoliaLiquidityCancellation(f.args);f.confirm(f.saved.operations['relay-funding'].hash);
+ const next=f.continuation();next.ports={...next.ports,broadcast:async()=>{throw Object.assign(Error('known rejection'),{httpStatus:429});}};
+ await f.ops.runSepoliaLiquidityContinuation({...next,stage:'approve-usdc'});
+ const record=f.remaining.operations['approve-usdc'],plan=f.ops.captureSepoliaLiquidityPlan(next.remainingPlan),{createHash}=await import('node:crypto'),digest=v=>createHash('sha256').update(v).digest('hex');
+ const transport={schemaVersion:1,remainingPlanSha256:digest(JSON.stringify(plan)),readUrl:plan.ethereumUrl,broadcastUrl:'https://broadcast.example'},sourcesSha256=digest(JSON.stringify(f.remaining));
+ const dispatchIntent={schemaVersion:1,transactionHash:record.hash,rawSha256:digest(Buffer.from(record.raw,'hex')),identitySha256:digest(record.identity),sourcesSha256,transportSha256:digest(JSON.stringify(transport)),expiresAt:plan.expiresAt};
+ let entry=null,observed=null,checks=0,absences=0,preflights=0;const sends=[];
+ const args={plan,record,transport,dispatchIntent,sourcesSha256,now:next.now,assertSourceFiles:async()=>{checks++;},recoveryStore:{read:()=>entry,enter:async v=>{assert.equal(entry,null);entry=structuredClone(v);},observe:async v=>{observed=v;}},reconcile:()=>f.ops.runSepoliaLiquidityContinuation({...next,stage:'approve-usdc'}),ports:{assertApprovalAbsent:async()=>{absences++;assert(!f.receipts.has(record.hash));},preflightApproval:async()=>{preflights++;},broadcastExact:async(raw,hash)=>{assert.equal(entry.phase,'entered');sends.push(raw);assert.equal(raw,'0x'+record.raw);return hash;}}};
+ return {...f,args,sends,get entry(){return entry;},get observed(){return observed;},get absences(){return absences;},get checks(){return checks;},get preflights(){return preflights;}};
+}
+test('Explicit approval HTTP429 recovery sends exact saved bytes once and keeps ordinary continuation reconciliation-only',async()=>{
+ const f=await approvalDispatchFixture(),original=JSON.stringify(f.remaining),signs=f.signedSteps.length;
+ const r=await f.ops.runSepoliaExactApproval(f.args);assert.equal(r.status,'unresolved');assert.equal(r.dispatchAttempt.state,'returned');assert.equal(f.sends.length,1);assert.equal(f.absences,2);assert.equal(f.preflights,2);assert.equal(f.checks,3);
+ await f.ops.runSepoliaExactApproval({...f.args,now:()=>Number.MAX_SAFE_INTEGER});assert.equal(f.sends.length,1);assert.equal(f.signedSteps.length,signs);assert.equal(JSON.stringify(f.remaining),original);
+ f.confirm(f.args.record.hash);assert.equal((await f.ops.runSepoliaExactApproval(f.args)).status,'succeeded');assert.equal(f.sends.length,1);
+});
+test('Exact approval recovery rejects missing429, changed bytes/sources/transport and original expired window without admission',async()=>{
+ for(const change of ['unknown','returned','otherHttp','raw','sources','transport','expired','intentExpiry']){
+  const f=await approvalDispatchFixture();
+  if(change==='unknown')delete f.args.record.broadcastAttempt;
+  if(change==='returned')f.args.record.broadcastAttempt={state:'returned'};
+  if(change==='otherHttp')f.args.record.broadcastAttempt.httpStatus=503;
+  if(change==='raw')f.args.record.raw='00';
+  if(change==='sources')f.args.sourcesSha256='b'.repeat(64);
+  if(change==='transport')f.args.transport.broadcastUrl='https://changed.example';
+  if(change==='expired')f.args.now=()=>f.args.plan.expiresAt*1000;
+  if(change==='intentExpiry')f.args.dispatchIntent.expiresAt=f.args.now()/1000;
+  await assert.rejects(f.ops.runSepoliaExactApproval(f.args));assert.equal(f.entry,null);assert.equal(f.sends.length,0);
+ }
+});
+test('Exact approval consumed admission survives uncertain send and pre-send failures without replay',async()=>{
+ for(const point of ['enter','after-enter','broadcast','observation']){
+  const f=await approvalDispatchFixture();
+  if(point==='enter'){const enter=f.args.recoveryStore.enter;f.args.recoveryStore.enter=async v=>{await enter(v);throw Error('lost fsync response');};}
+  if(point==='after-enter'){const check=f.args.assertSourceFiles;f.args.assertSourceFiles=async()=>{await check();if(f.entry)throw Error('changed after admission');};}
+  if(point==='broadcast')f.args.ports.broadcastExact=async(raw)=>{f.sends.push(raw);throw Object.assign(Error('unknown'),{code:'TIMEOUT'});};
+  if(point==='observation')f.args.recoveryStore.observe=async()=>{throw Error('lost write');};
+  try{await f.ops.runSepoliaExactApproval(f.args);}catch{}
+  assert(f.entry);const sent=f.sends.length;await f.ops.runSepoliaExactApproval({...f.args,now:()=>Number.MAX_SAFE_INTEGER});assert.equal(f.sends.length,sent);
+ }
+});
+test('Explicit remaining transport binds HTTPS authorities durably without editing remaining plan or journal',async()=>{
+ const f=await approvalDispatchFixture(),{bindSepoliaSeedTransport}=await import('../operator.mjs'),fs=await import('node:fs/promises'),os=await import('node:os'),path=await import('node:path');
+ const directory=await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(),'seed-transport-'))),statePath=path.join(directory,'state.json');
+ try{
+  const before=JSON.stringify(f.args.plan);await fs.writeFile(statePath+'.remaining.json',JSON.stringify(f.remaining),{mode:0o600});const bytes=await fs.readFile(statePath+'.remaining.json');
+  assert.equal(await bindSepoliaSeedTransport(statePath,null,f.args.plan),null);
+  assert.deepEqual(await bindSepoliaSeedTransport(statePath,f.args.transport,f.args.plan),f.args.transport);
+  assert.deepEqual(await bindSepoliaSeedTransport(statePath,f.args.transport,f.args.plan),f.args.transport);
+  await assert.rejects(bindSepoliaSeedTransport(statePath,null,f.args.plan));await assert.rejects(bindSepoliaSeedTransport(statePath,{...f.args.transport,broadcastUrl:'https://changed.example'},f.args.plan));
+  for(const broadcastUrl of ['http://example.com','https://user@example.com','https://example.com/?key=x'])assert.throws(()=>f.ops.captureSepoliaSeedTransport({...f.args.transport,broadcastUrl},f.args.plan));
+  assert.equal(JSON.stringify(f.args.plan),before);assert((await fs.readFile(statePath+'.remaining.json')).equals(bytes));
+ }finally{await fs.rm(directory,{recursive:true,force:true});}
+});
+
+test('Exact approval copied campaign cannot relocate its one-use admission',async()=>{const {seedTestnetLiquidity}=await import('../operator.mjs');await assert.rejects(seedTestnetLiquidity({plan:null,statePath:'/private/tmp/copied/state.json',stage:'approve-usdc',recovery:{kind:'continue',approvalDispatch:{}}}),/Original approval state path required/);});
