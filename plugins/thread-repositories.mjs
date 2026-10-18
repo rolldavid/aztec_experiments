@@ -25,7 +25,8 @@ export function threadRepositories({directory,namespace,lease,git=repositoryGit,
  assert(ensureThread===undefined||typeof ensureThread==='function');
  const queues=new Map();
  async function size(directory){let total=0;for(const entry of await fs.readdir(directory)){const file=path.join(directory,entry),stat=await fs.lstat(file);assert(!stat.isSymbolicLink(),'Repository symlink rejected');if(stat.isDirectory())total+=await size(file);else{assert(stat.isFile());total+=stat.size;}assert(total<=maxBytes,'Thread storage limit reached');}return total;}
- async function open({threadId,invocationId,repository},recoverAccepted=false){
+ async function open({threadId,invocationId,repository,revision:expectedRevision},recovery=false){
+  let recoverAccepted=recovery==='accepted';
   assert(/^0x[0-9a-f]{64}$/.test(threadId)&&/^0x[0-9a-f]{64}$/.test(invocationId));
   assert(/^[\w.-]+\/[\w.-]+$/.test(repository));
   const key=sha(namespace+'\0'+threadId),previous=queues.get(key)||Promise.resolve();let unlock;
@@ -34,7 +35,7 @@ export function threadRepositories({directory,namespace,lease,git=repositoryGit,
   const release=()=>{if(queues.get(key)===turn)queues.delete(key);unlock();};
   try{
    await lease.assertHeld();
-   if(recoverAccepted)await fs.access(path.join(directory,key,'revisions.json'));
+   if(recovery)await fs.access(path.join(directory,key,'revisions.json'));
    await fs.mkdir(directory,{recursive:true,mode:0o700});assert.equal(await fs.realpath(directory),directory);assert.equal((await fs.stat(directory)).mode&0o777,0o700);
    const root=path.join(directory,key);await fs.mkdir(root,{mode:0o700,recursive:true});assert.equal(await fs.realpath(root),root);
    const store=await fileState(path.join(root,'revisions.json')),repo=path.join(root,'repository.git');let state=store.read();
@@ -42,9 +43,9 @@ export function threadRepositories({directory,namespace,lease,git=repositoryGit,
    if(connection)repository=connection.fullName;
    const identity={namespace,threadId,repository,startEmpty,...(connection?{connection}:{})};
    if(state.identity)assert.deepEqual(state.identity,identity);
-   if(!recoverAccepted&&!connection&&ensureThread)await ensureThread({repositoryId:key,threadId});
+   if(!recovery&&!connection&&ensureThread)await ensureThread({repositoryId:key,threadId});
    if(!state.identity){
-    assert(!recoverAccepted,'No accepted repository identity');
+    assert(!recovery,'No accepted repository identity');
     await git(['init','--bare',repo]);await store.write({identity,acceptedRevision:null,operations:{}});state=store.read();
    }
    assert.deepEqual(state.identity,identity);assert.equal(await fs.realpath(repo),repo);
@@ -62,6 +63,48 @@ export function threadRepositories({directory,namespace,lease,git=repositoryGit,
     if(!onAccepted||record.publication?.status==='complete'&&!verify)return record.publication?.result;
     await lease.assertHeld();const result=await onAccepted(receipt(record));
     await store.write({...state,operations:{...state.operations,[record.invocationId]:{...record,publication:{status:'complete',result}}}});state=store.read();return result;
+   }
+   async function acceptRecord({produced,validation,readRevision}){
+    const record={threadId,invocationId,readRevision,producedRevision:produced,validation,status:'prepared',...(onAccepted?{publication:{status:'pending'}}:{})};
+    await store.write({...state,operations:{...state.operations,[invocationId]:record}});state=store.read();
+    await lease.assertHeld();await git(['update-ref','refs/heads/accepted',produced,readRevision||'0'.repeat(40)],{cwd:repo});
+    await store.write({...state,acceptedRevision:produced,operations:{...state.operations,[invocationId]:{...record,status:'accepted'}}});state=store.read();
+    const publication=await publish(state.operations[invocationId]);
+    return Object.freeze({...receipt(record),...(publication?{publication}:{})});
+   }
+   if(recovery==='candidate'){
+    assert(revision(expectedRevision),'Exact candidate revision required');
+    if(state.operations[invocationId]?.status==='accepted'){
+     assert.equal(state.operations[invocationId].producedRevision,expectedRevision,'Candidate revision changed');recoverAccepted=true;
+    }else{
+     assert(!state.operations[invocationId],'Acceptance requires reconciliation');
+     const candidate=state.candidates?.[invocationId];
+     assert(candidate&&candidate.threadId===threadId&&candidate.invocationId===invocationId&&candidate.producedRevision===expectedRevision,'Exact retained candidate required');
+     assert.equal(candidate.readRevision,state.acceptedRevision,'Accepted base changed');
+     assert(typeof validateRevision==='function'&&typeof onAccepted==='function','Trusted validation and publication required');
+     const ref=`refs/candidates/${invocationId.slice(2)}/${expectedRevision}`;
+     assert.equal((await git(['rev-parse','--verify',ref],{cwd:repo})).stdout.trim(),expectedRevision,'Retained candidate ref changed');
+     assert.equal((await git(['rev-parse',expectedRevision+'^{tree}'],{cwd:repo})).stdout.trim(),candidate.tree,'Retained candidate tree changed');
+     assert.equal((await git(['rev-list','--parents','-n','1',expectedRevision],{cwd:repo})).stdout.trim(),expectedRevision+' '+candidate.parent,'Retained candidate parent changed');
+     draft=await fs.mkdtemp(path.join(root,'draft-'));const work=path.join(draft,'repository');let recovered;
+     try{
+      await git(['init',work]);await git(['fetch','--no-tags',repo,ref],{cwd:work});await git(['checkout','--detach',expectedRevision],{cwd:work});await size(root);
+      // Explicit operator continuation performs one normal isolated validation.
+      // Merely retaining a candidate never makes it an automatic recovery hint.
+      const validation=await validateRevision({sourceDirectory:work,revision:expectedRevision});
+      assert(validation?.passed===true&&validation.revision===expectedRevision&&validation.testsPassed===true&&validation.buildPassed===true,'Candidate validation required');
+      for(const name of ['sourceDigest','sourceArchiveSha256','artifactArchiveSha256'])assert(/^[0-9a-f]{64}$/.test(validation[name]),'Candidate validation digest required');
+      assert.equal((await git(['status','--porcelain','--untracked-files=all'],{cwd:work})).stdout,'','Validated candidate source changed');
+      await lease.assertHeld();assert.equal(await head(),candidate.readRevision,'Accepted base changed during validation');
+      if(!connection&&ensureThread)await ensureThread({repositoryId:key,threadId});
+      const importedRef=`refs/invocations/${invocationId.slice(2)}`,imported=(await git(['for-each-ref','--format=%(objectname)',importedRef],{cwd:repo})).stdout.trim();
+      assert(!imported||imported===expectedRevision,'Candidate invocation ref changed');
+      if(!imported)await git(['update-ref',importedRef,expectedRevision,'0'.repeat(40)],{cwd:repo});
+      await git(['fsck','--connectivity-only','--no-dangling'],{cwd:repo});
+      recovered=await acceptRecord({produced:expectedRevision,validation,readRevision:candidate.readRevision});
+     }finally{await fs.rm(draft,{recursive:true,force:true});}
+     release();return recovered;
+    }
    }
    if(recoverAccepted){
     const record=state.operations[invocationId];
@@ -81,7 +124,7 @@ export function threadRepositories({directory,namespace,lease,git=repositoryGit,
    // never re-enter provider work or retransmit an uncertain external write.
    for(const record of Object.values(state.operations))if(record.status==='accepted'&&record.publication?.status==='pending')await publish(record);
    if(state.operations[invocationId])throw Error('Invocation already has an accepted revision');
-   assert(Object.keys(state.operations).length<maxRevisions,'Thread revision limit reached');
+   assert(new Set([...Object.keys(state.operations),...Object.keys(state.candidates??{})]).size<maxRevisions,'Thread revision limit reached');
    const readRevision=state.acceptedRevision;draft=await fs.mkdtemp(path.join(root,'draft-'));const work=path.join(draft,'repository');let accepted=null,acceptStarted=false;
    let checked=null;
    const prepare=async(forceCheck=false)=>{
@@ -92,6 +135,16 @@ export function threadRepositories({directory,namespace,lease,git=repositoryGit,
     if(checked?.tree===tree&&checked.parent===parent&&(!forceCheck||checked.validation))return checked;
     checked=null;const produced=(await git(['commit-tree',tree,'-p',parent,'-m',`Bok thread invocation ${invocationId}`],{cwd:work})).stdout.trim();assert(revision(produced));
     const unchanged=(startEmpty||connection)&&tree===(await git(['rev-parse',parent+'^{tree}'],{cwd:work})).stdout.trim();
+    if((!unchanged||forceCheck)&&validateRevision){
+     // Import immutable source before validation can fail or the draft closes.
+     // Keep it distinct from accepted refs and ordinary recovery operations.
+     const candidateRef=`refs/candidates/${invocationId.slice(2)}/${produced}`;
+     await git(['fetch','--no-tags','--update-shallow',work,`${produced}:${candidateRef}`],{cwd:repo});
+     assert.equal((await git(['rev-parse','--verify',candidateRef],{cwd:repo})).stdout.trim(),produced,'Candidate source was not retained');
+     await size(root);
+     const candidate={threadId,invocationId,readRevision,producedRevision:produced,parent,tree};
+     await store.write({...state,candidates:{...state.candidates,[invocationId]:candidate}});state=store.read();
+    }
     const validation=(!unchanged||forceCheck)&&validateRevision?await validateRevision({sourceDirectory:work,revision:produced}):null;
     if((!unchanged||forceCheck)&&validateRevision){assert(validation?.passed===true&&validation.revision===produced&&/^[0-9a-f]{64}$/.test(validation.sourceDigest),'Isolated revision validation failed');await git(['diff','--quiet',produced,'--'],{cwd:work});}
     checked={tree,parent,produced,validation,unchanged};return checked;
@@ -109,12 +162,7 @@ export function threadRepositories({directory,namespace,lease,git=repositoryGit,
      await git(['fetch','--no-tags','--update-shallow',work,`${produced}:${importedRef}`],{cwd:repo});
      assert.equal((await git(['rev-parse','--verify',importedRef],{cwd:repo})).stdout.trim(),produced,'Produced revision was not imported');
      await git(['fsck','--connectivity-only','--no-dangling'],{cwd:repo});
-     const record={threadId,invocationId,readRevision,producedRevision:produced,validation,status:'prepared',...(onAccepted?{publication:{status:'pending'}}:{})};
-     await store.write({...state,operations:{...state.operations,[invocationId]:record}});state=store.read();
-     await lease.assertHeld();await git(['update-ref','refs/heads/accepted',produced,readRevision||'0'.repeat(40)],{cwd:repo});
-     await store.write({...state,acceptedRevision:produced,operations:{...state.operations,[invocationId]:{...record,status:'accepted'}}});state=store.read();
-     const publication=await publish(state.operations[invocationId]);
-     accepted=Object.freeze({...receipt(record),...(publication?{publication}:{})});return accepted;
+     accepted=await acceptRecord({produced,validation,readRevision});return accepted;
     },
     async close(){if(closed)return;closed=true;try{await fs.rm(draft,{recursive:true,force:true});}finally{release();}}
    });
@@ -137,5 +185,5 @@ export function threadRepositories({directory,namespace,lease,git=repositoryGit,
   const v=record.validation;
   return v?.passed===true&&v.revision===record.producedRevision&&v.testsPassed===true&&v.buildPassed===true&&['sourceDigest','sourceArchiveSha256','artifactArchiveSha256'].every(name=>/^[0-9a-f]{64}$/.test(v[name]));
  }
- return Object.freeze({open:input=>open(input),recoverAccepted:input=>open(input,true),hasAcceptedRecovery});
+ return Object.freeze({open:input=>open(input),recoverAccepted:input=>open(input,'accepted'),recoverCandidate:input=>open(input,'candidate'),hasAcceptedRecovery});
 }
