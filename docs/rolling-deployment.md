@@ -53,24 +53,23 @@ npm ci --ignore-scripts --no-audit --no-fund
 npm ci --prefix billboard/portal --ignore-scripts --no-audit --no-fund
 npm run bootstrap:dependencies
 npm run bootstrap:noir
-node scripts/build-contracts.mjs
-node billboard/rolling_contract/build.mjs
-node experiments/avatar/build.mjs
-node experiments/private-bok/build.mjs
-node prover/pin-rolling-artifacts.mjs
-npm run build:sdk
-npm run build:crs
-npm run build:apps
+npm run build
 node scripts/rolling-wallet-assets.mjs
+npm run check:artifacts
 ```
 
-Run serially. The first build can replace workspace targets with raw artifacts;
-therefore the processed Rolling/Avatar/Bok builds follow it. Review changed
-artifact catalog entries and run existing provenance checks; never edit hashes
-to admit stale output. Preserve compiler diagnostics for specialist review.
+Run serially. The canonical build compiles and processes RollingBoard, including
+its profile/avatar functions, then PrivateBok, the SDK, CRS and browser apps.
+It forces regeneration of all private-function verification keys. The separate
+wallet asset build verifies those contract and SDK inputs. A fresh operator build
+must match the checked-in Rolling artifact catalog; intentional catalog updates
+belong to reviewed release preparation. Never edit hashes to admit stale output.
+Preserve compiler diagnostics for specialist review.
 The final clean-build rehearsal must record commands, versions and observed
-outputs. A developer's cached artifacts are useful during iteration but do not
-qualify that rehearsal.
+outputs. Official compiler download caches may be reused after checking the
+documented version and archive checksum. Preserve that provenance separately
+from generated application outputs; copying another deployment's generated
+outputs or mutable state does not qualify a clean rehearsal.
 
 ## Network and deployment
 
@@ -295,15 +294,47 @@ The development entry is the existing plugin devnet command. Rolling is its
 default profile; each new invocation defaults to a fresh disposable directory.
 It does not require a model-provider key for the reader,
 private wallet or local chain. Finish the normal pinned builds above first; do not
-repin generated manifests by hand. In particular, run the existing
-`experiments/private-bok/build.mjs` after `scripts/build-contracts.mjs` so the Bok
-artifact provenance matches that builder before the wallet asset build. From the repository root:
+repin generated manifests by hand. The canonical build already orders RollingBoard
+before PrivateBok and the final wallet asset build.
+
+Prepare the pinned Anvil binary and local liquidity artifacts before startup:
 
 ```sh
-NODE_BACKEND=js .build/A02-node/node-v24.21.0-darwin-arm64/bin/node \
-  plugins/devnet/start.mjs --profile rolling \
-  --app-port 8080 --node-port 18080 --ethereum-port 18545
+node scripts/bootstrap-anvil.mjs
+node plugins/devnet/liquidity.mjs --prepare-artifacts
 ```
+
+The installed native SDK also compiles its L1 deployment with Solidity **0.8.30**
+(`0.8.30+commit.73712a01`), as specified in its packaged `l1-contracts/foundry.toml`.
+Foundry can download that compiler, or use an existing official compiler cache.
+The macOS example below references the standard Foundry cache; verify that path
+and version first, or supply your installation's verified compiler path. If no
+cached compiler exists, omit its version-check line and `FOUNDRY_SOLC` assignment
+so Foundry downloads the version selected by the SDK. Scope
+`FOUNDRY_SOLC` to native startup: the application's portal build uses **0.8.27**.
+Keep the pinned Node first on PATH and leave the host's HOME and CODEX_HOME unchanged.
+
+On macOS, use short canonical paths for **both** temporary files and development
+state. The native SDK uses Unix sockets, and the deployment child uses the state
+directory for its temporary files. A long checkout path can truncate a socket
+name and stall native account derivation. This example creates fresh owned
+mode-0700 directories without changing another development instance:
+
+```sh
+"$HOME/Library/Application Support/svm/0.8.30/solc-0.8.30" --version
+ROLLING_DEV_ROOT="$(mktemp -d /private/tmp/rolling-dev.XXXXXX)"
+mkdir -m 700 "$ROLLING_DEV_ROOT/state"
+NODE_BACKEND=js TMPDIR="$ROLLING_DEV_ROOT" \
+  ANVIL_BIN="$PWD/.build/anvil-1.7.0/anvil" \
+  FOUNDRY_SOLC="$HOME/Library/Application Support/svm/0.8.30/solc-0.8.30" \
+  node plugins/devnet/start.mjs --profile rolling \
+  --directory "$ROLLING_DEV_ROOT/state" \
+  --app-port 4318 --node-port 8082 --ethereum-port 8546
+```
+
+On Linux, choose an equivalent short canonical temporary/state location and the
+verified compiler cache path for that host. `ANVIL_BIN` explicitly selects the
+checksum-verified repository pin rather than relying on SDK executable discovery.
 
 Without `--directory`, the command creates `.build/rolling-devnet-<UUID>`. To
 choose a location, add `--directory /absolute/private/new-rolling-devnet` with a
@@ -338,13 +369,8 @@ served by the existing `apps/rolling/start.mjs` components. Only the local publi
 operator receives disposable genesis fee funds. This is not a free token exchange
 or evidence of router liquidity.
 
-Before startup, prepare the genuine local liquidity artifacts:
-
-```sh
-node plugins/devnet/liquidity.mjs --prepare-artifacts
-```
-
-This checks locked Uniswap package versions and artifact hashes, verifies Circle
+The liquidity preparation above checks locked Uniswap package versions and
+artifact hashes, verifies Circle
 commit `fc85788bc7c23cefe3df1a757133048bfddadeaa` and all compiler source inputs,
 and compiles that official source with pinned solc 0.6.12 and OpenZeppelin 3.4.2.
 The bounded compiler writes `.build/local-liquidity/`; it does not deploy anything.
