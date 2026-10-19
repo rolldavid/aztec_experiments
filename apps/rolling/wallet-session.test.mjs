@@ -954,3 +954,14 @@ test('normal private account restores a finalized refund through native provider
  try{assert.equal((await session.application.readAccountStatus()).status,'fee-ready');assert.equal(subscriptions,1);assert.equal(w.state.finalityListener,null);assert.equal(w.state.sends,1);assert.equal((await workflow.read()).value.txHash,w.record.txHash);}
  finally{await session.close();}
 });
+
+import {verifyRollingAggregateScope} from './wallet-session.mjs';
+for(const defect of ['none','native-reorg','l1-reorg','token-decimals','context'])test(`aggregate quote scope reuses immutable native anchor and rejects ${defect}`,async()=>{
+ const scope={feePortal:eth(1),bokPortal:eth(2),feeToken:eth(3),bokToken:eth(4)},counts={native:0,storage:0,inspection:0,l1:0},abi=new Interface(['function UNDERLYING() view returns(address)','function token() view returns(address)','function decimals() view returns(uint8)']);let changed=false;
+ const node={getL1ContractAddresses:async()=>{counts.native++;return {feeJuicePortalAddress:scope.feePortal};},getBlockData:async()=>{counts.native++;return {header:{globalVariables:{blockNumber:10}},blockHash:changed&&defect==='native-reorg'?hex(99):hex(10)};},getPublicStorageAt:async()=>{counts.storage++;return new Fr(BigInt(scope.bokPortal));}};
+ const provider={getBlock:async tag=>({number:20,hash:changed&&defect==='l1-reorg'&&tag===20?hex(99):hex(20)}),call:async request=>{counts.l1++;assert.equal(request.blockTag,20);const name=abi.parseTransaction(request).name;return abi.encodeFunctionResult(name,[name==='UNDERLYING'?scope.feeToken:name==='token'?scope.bokToken:request.to===scope.feeToken?18:changed&&defect==='token-decimals'?18:6]);}};
+ const recheck=await verifyRollingAggregateScope({sdk:{Fr,inspectTrustedNode:async()=>{counts.inspection++;}},ethers:{Interface},node,provider,scope,bok:{address:hex(3)},bokArtifact:{storageLayout:{portal:{slot:1}}},network:{},proofsEnabled:false,contextGuard:async()=>{if(changed&&defect==='context')throw Error('Account changed');}});
+ const before={...counts};changed=true;
+ if(defect==='none'){await recheck();assert.equal(counts.native-before.native,1);assert.equal(counts.l1-before.l1,4);}else await assert.rejects(recheck());
+ assert.equal(counts.inspection,1);assert.equal(counts.storage,1);
+});

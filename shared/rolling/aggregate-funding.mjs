@@ -106,6 +106,13 @@ export async function prepareAggregateFunding(input,{provider}={}) {
     consentDigest:TypedDataEncoder.hash(consent.domain,consent.types,consent.value),planHash:keccak256(AbiCoder.defaultAbiCoder().encode([router.getFunction('fund').inputs[0]],[plan])),
     ready:false,requiredClaims:['collateral','private-fee','bok']});await validState(request,result,false);prepared.set(result,request);return result;
 }
+/** Recheck the original quote before opening a wallet signature prompt. This
+ * reads canonical/pending Ethereum state; browser clocks are not authority. */
+export async function validateAggregateFundingQuote(preparation){
+ const eth=prepared.get(preparation),usdc=preparedUsdc.get(preparation);
+ check(eth||usdc,'UNVERIFIED_QUOTE');
+ await validState(eth??usdc,preparation,!!usdc);
+}
 /** Encode only a locally prepared immutable plan. Revalidate deadline/account/scope before
  * wallet invocation. Ambiguous, dropped or reorged sends are read-only reconciliation, never replay.
  */

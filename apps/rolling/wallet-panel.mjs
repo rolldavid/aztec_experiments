@@ -39,6 +39,7 @@ function nameFailure(failure){
 function aggregateFundingFailure(failure){
  try{const code=Object.getOwnPropertyDescriptor(failure,'code');if(code&&Object.hasOwn(code,'value')){
   const messages={
+   ROLLING_FUNDING_SIGNATURE_CANCELLED:'Signature cancelled. No funding payment was sent. Your account remains unlocked; get a fresh quote when you are ready.',
    ROLLING_FUNDING_GAS_CHANGED:'Ethereum gas costs exceed your approved maximum. Change Maximum Ethereum gas cost (ETH) if you want to approve more, then get a fresh quote and confirm again. Your recovery records are preserved.',
    AGGREGATE_STALE_QUOTE:'This quote has expired on Ethereum. Get a fresh quote and review the amounts before confirming again.',
    AGGREGATE_QUOTE_REORG:'Ethereum changed the block used for this quote. Get a fresh quote before confirming again.',
@@ -776,8 +777,9 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
     const epoch=accountEpoch;checkAccount(epoch);const values={...fundingInputs};
     if(!/^(?:[0-4](?:\.[0-9]{1,2})?|5(?:\.0{1,2})?)$/.test(values.slippage))throw connectionFailure;
     const slippageBps=Math.round(Number(values.slippage)*100);
+    note('Checking funding amounts and current bridge state…');
     fundingQuote=await session.funding.prepare({asset:values.asset,collateralWei:units(values.collateral,18),feeAmount:units(values.fee,18),bokAmount:units(values.bok,6),
-     ...(values.asset==='USDC'?{collateralPoolFee:3000}:{gasBudgetWei:units(values.gas,18),bokPoolFee:3000}),feePoolFee:3000,slippageBps,privateFeeCap:session.funding.defaultPrivateFeeCap});checkAccount(epoch);
+     ...(values.asset==='USDC'?{collateralPoolFee:3000}:{gasBudgetWei:units(values.gas,18),bokPoolFee:3000}),feePoolFee:3000,slippageBps,privateFeeCap:session.funding.defaultPrivateFeeCap});checkAccount(epoch);note('');
    },aggregateFundingFailure),true));
   }
   content.append(fundingControl(fundingAutomatic?'Pause bridge checks':'Resume saved funding',()=>{

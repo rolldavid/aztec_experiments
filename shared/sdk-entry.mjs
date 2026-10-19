@@ -1,5 +1,5 @@
 export {createEncryptedJournalSlot} from './journal-record.mjs';
-export {prepareAggregateFunding, aggregateFundingTransaction, prepareAggregateUsdcFunding, aggregateUsdcFundingTransaction} from './rolling/aggregate-funding.mjs';
+export {prepareAggregateFunding, validateAggregateFundingQuote, aggregateFundingTransaction, prepareAggregateUsdcFunding, aggregateUsdcFundingTransaction} from './rolling/aggregate-funding.mjs';
 export {validateAggregateFundingIntent, verifyAggregateFundingEffects} from './rolling/aggregate-recovery.mjs';
 import './browser-runtime-policy.mjs';
 export {prepareFundingClaim} from './rolling/funding-receipts.mjs';

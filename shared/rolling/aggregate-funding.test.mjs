@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {Interface,keccak256,TypedDataEncoder,AbiCoder,encodeBytes32String} from 'ethers';
-import {prepareAggregateFunding,aggregateFundingTransaction,aggregateFundingAbi,prepareAggregateUsdcFunding,aggregateUsdcFundingTransaction} from './aggregate-funding.mjs';
+import {prepareAggregateFunding,validateAggregateFundingQuote,aggregateFundingTransaction,aggregateFundingAbi,prepareAggregateUsdcFunding,aggregateUsdcFundingTransaction} from './aggregate-funding.mjs';
 const address=n=>'0x'+n.toString(16).padStart(40,'0'),field=n=>'0x'+n.toString(16).padStart(64,'0');
 const r=new Interface(aggregateFundingAbi), p=new Interface(['function depositNonces(address) view returns(uint256)','function depositsEnabled() view returns(bool)','function getDeposit(address) view returns(uint128)','function MIN_DEPOSIT() view returns(uint256)','function MAX_DEPOSIT() view returns(uint256)']);
 const b=new Interface(['function active() view returns(bool)']);
@@ -89,3 +89,9 @@ test('USDC authorization nonce binds allocations, fee, beneficiary, executor, ex
 });
 test('USDC deadline is strict and forged plans cannot encode relay calls',async()=>{const options={},f=usdcFixture(options),result=await f.prepare();options.pendingTime=1120;await assert.rejects(aggregateUsdcFundingTransaction(result,'0x12','0x34'),{code:'AGGREGATE_STALE_QUOTE'});await assert.rejects(aggregateUsdcFundingTransaction(structuredClone(result),'0x12','0x34'),{code:'AGGREGATE_UNVERIFIED_QUOTE'});await assert.rejects(aggregateFundingTransaction(result,'0x12'),{code:'AGGREGATE_UNVERIFIED_QUOTE'});});
 test('USDC absent wallet typed signing or relay budget fails before public calls',async()=>{for(const alter of [f=>{f.input.wallet.canSignTypedData=false;},f=>{f.input.relay.feeUsdc='0';},f=>{f.input.relay.gasBudgetWei='0';}]){const f=usdcFixture();alter(f);await assert.rejects(f.prepare());assert.equal(f.calls.length,0);}});
+
+for(const [asset,make]of [['ETH',fixture],['USDC',usdcFixture]])test(`${asset} signature preflight rejects expired or forged quotes before consent`,async()=>{
+ const options={},f=make(options),quote=await f.prepare();await validateAggregateFundingQuote(quote);
+ await assert.rejects(validateAggregateFundingQuote(structuredClone(quote)),{code:'AGGREGATE_UNVERIFIED_QUOTE'});
+ options.pendingTime=1121;await assert.rejects(validateAggregateFundingQuote(quote),{code:'AGGREGATE_STALE_QUOTE'});
+});

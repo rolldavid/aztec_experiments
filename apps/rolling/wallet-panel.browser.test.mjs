@@ -41,7 +41,7 @@ const application={
 };
 const funding={get usdcAvailable(){return state.usdcEnabled===true;},defaultPrivateFeeCap:'1000',pauseClaim:()=>{state.fundingPaused=true;},advanceClaim:()=>{state.fundingPaused=false;return advanceAggregateClaim({application,funding,onProgress:row=>state.sessionProgress(row),paused:()=>state.fundingPaused});},
  async prepare(input){state.fundingPrepares=(state.fundingPrepares??0)+1;state.fundingAllocation=input;await boundary('funding-quote');if(state.fundingQuoteFailure)throw Object.assign(Error('PRIVATE_SENTINEL'),{code:state.fundingQuoteFailure});if(input.asset==='USDC')return {kind:'rolling-aggregate-usdc-v1',walletName:'MetaMask',privateFeeCap:input.privateFeeCap,slippageBps:input.slippageBps,relayGasBudgetWei:'1000000000000000',breakdown:{collateral:{amount:input.collateralWei,maxUsdc:'5000000'},fee:{amount:input.feeAmount,maxUsdc:'1000000'},bokAmount:input.bokAmount,relayFeeUsdc:'100000',maximumUsdc:'9350000'}};return {walletName:'MetaMask',privateFeeCap:input.privateFeeCap,slippageBps:input.slippageBps,breakdown:{collateralWei:input.collateralWei,fee:{amount:input.feeAmount,maxEth:'1000'},bok:{amount:input.bokAmount,maxEth:'2000'},gasBudgetWei:input.gasBudgetWei,maximumTotalWei:(BigInt(input.collateralWei)+3000n+BigInt(input.gasBudgetWei)).toString()}};},
- async confirm(){state.fundingConfirms=(state.fundingConfirms??0)+1;if(state.fundingGasChanged)throw Object.assign(Error('PRIVATE_SENTINEL'),{code:'ROLLING_FUNDING_GAS_CHANGED'});state.fundingPayments=(state.fundingPayments??0)+1;await boundary('funding-payment');state.paymentSaved=true;return this.recover();},
+ async confirm(){state.fundingConfirms=(state.fundingConfirms??0)+1;if(state.fundingSignatureCancelled)throw Object.assign(Error('PRIVATE_SENTINEL'),{code:'ROLLING_FUNDING_SIGNATURE_CANCELLED'});if(state.fundingGasChanged)throw Object.assign(Error('PRIVATE_SENTINEL'),{code:'ROLLING_FUNDING_GAS_CHANGED'});state.fundingPayments=(state.fundingPayments??0)+1;await boundary('funding-payment');state.paymentSaved=true;return this.recover();},
  async inspect(){return {paymentSaved:state.paymentSaved,privateFeeCap:state.fundingCap??'1000',claim:state.fundingClaim??null,explicitClaimReview:state.explicitClaimReview===true};},
  async checkpointClaim(value){state.fundingClaim=value;},
  async reviewRevertedClaim(){if(!['reverted','cancelled'].includes(read()?.status))error();state.fundingClaim=null;state.explicitClaimReview=true;},
@@ -1330,4 +1330,20 @@ for(const outcome of ['confirmed','failure'])test(`funding confirmation shows ap
  await page.evaluate(()=>{test.hold=null;test.release();});
  if(outcome==='confirmed')await page.getByText('Funding and the private claim are confirmed.',{exact:false}).waitFor();else await page.getByRole('alert').waitFor();
  assert.equal(await pending.count(),0);assert.equal(await page.evaluate(()=>test.fundingConfirms),1);assert.equal((await counts(page)).sends,outcome==='confirmed'?1:0);
+});
+
+test('fresh funding quote shows progress and cancelled signature keeps the account unlocked',async t=>{
+ const {page}=await browserFixture(t);await page.evaluate(()=>{test.aggregateEnabled=true;test.hold='funding-quote';});await open(page);await unlock(page);
+ await page.getByRole('button',{name:'Fund your account',exact:true}).click();
+ for(const [name,value]of [['Posting deposit (ETH)','0.1'],['Network fee credit (fee tokens)','2'],['Bok credit (USDC)','3.25'],['Maximum Ethereum gas cost (ETH)','0.003']])await page.getByLabel(name,{exact:true}).fill(value);
+ await page.getByRole('button',{name:'Get fresh quote',exact:true}).click();
+ const pending=page.getByText('Checking funding amounts and current bridge state…',{exact:true});await pending.waitFor();
+ assert(await page.getByRole('button',{name:'Get fresh quote',exact:true}).isDisabled());
+ await page.evaluate(()=>{test.hold=null;test.release();test.fundingSignatureCancelled=true;});
+ await page.getByRole('button',{name:'Confirm funding and private claim',exact:true}).click();await page.getByRole('alert').waitFor();
+ assert.match(await page.getByRole('alert').innerText(),/Signature cancelled. No funding payment was sent/);
+ assert.equal(await page.getByRole('button',{name:'Reload to unlock',exact:true}).count(),0);assert.equal(await pending.count(),0);
+ assert.equal(await page.evaluate(()=>test.fundingPayments??0),0);assert.equal(await page.evaluate(()=>test.sessions),1);
+ await page.evaluate(()=>test.fundingSignatureCancelled=false);await page.getByRole('button',{name:'Get fresh quote',exact:true}).click();await page.getByRole('button',{name:'Confirm funding and private claim',exact:true}).waitFor();
+ assert.equal(await page.evaluate(()=>test.sessions),1);assert.equal(await page.evaluate(()=>test.fundingPayments??0),0);
 });

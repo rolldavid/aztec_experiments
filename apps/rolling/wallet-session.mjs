@@ -364,24 +364,7 @@ export async function createRollingWalletSession({sdk,routing,ethers,config,boar
      await guardRoute();fundingProvider??=new ethers.JsonRpcProvider(selected.network.ethRpcUrl);
      const result=await fundingProvider[name](...args);await guardRoute();return result;
     }]));
-    const verifyScope=async()=>{
-     await guardRoute();const contracts=await node.getL1ContractAddresses();await guardRoute();
-     if(contracts.feeJuicePortalAddress?.toString().toLowerCase()!==scope.feePortal)throw fail('ROLLING_SESSION_CONFIG');
-     const head=await node.getBlockData('checkpointed');await guardRoute();
-     const number=Number(head?.header?.globalVariables?.blockNumber),hash=head?.blockHash?.toString(),slot=bokArtifact.storageLayout?.portal?.slot;
-     if(!Number.isSafeInteger(number)||number<1||!/^0x[0-9a-f]{64}$/.test(hash)||slot===undefined)throw fail('ROLLING_SESSION_CONFIG');
-     const portal=await node.getPublicStorageAt({hash},bok.address,new sdk.Fr(BigInt(slot)));await guardRoute();
-     if(BigInt(portal.toString())!==BigInt(scope.bokPortal))throw fail('ROLLING_SESSION_CONFIG');
-     const again=await node.getBlockData(number);await guardRoute();if(again?.blockHash?.toString()!==hash)throw fail('ROLLING_CONTEXT_CHANGED');
-     const l1=await provider.getBlock('latest');
-     if(!Number.isSafeInteger(l1?.number)||!/^0x[0-9a-f]{64}$/.test(l1?.hash))throw fail('ROLLING_SESSION_CONFIG');
-     const abi=new ethers.Interface(['function UNDERLYING() view returns(address)','function token() view returns(address)','function decimals() view returns(uint8)']);
-     const call=async(address,name)=>{const raw=await provider.call({to:address,data:abi.encodeFunctionData(name),blockTag:l1.number});return abi.decodeFunctionResult(name,raw)[0];};
-     if(String(await call(scope.feePortal,'UNDERLYING')).toLowerCase()!==scope.feeToken||String(await call(scope.bokPortal,'token')).toLowerCase()!==scope.bokToken||
-      BigInt(await call(scope.feeToken,'decimals'))!==18n||BigInt(await call(scope.bokToken,'decimals'))!==6n)throw fail('ROLLING_SESSION_CONFIG');
-     if((await provider.getBlock(l1.number))?.hash!==l1.hash)throw fail('ROLLING_CONTEXT_CHANGED');
-     await sdk.inspectTrustedNode(node,{expectedNetworkScope:network,proofsEnabled});await guardRoute();
-    };
+    const verifyScope=()=>verifyRollingAggregateScope({sdk,ethers,node,provider,scope,bok,bokArtifact,network,proofsEnabled,contextGuard:guardRoute});
     aggregate=await createAggregateWallet({sdk,ethers,scope,network,board:deployment.board.address.toString(),bok:bok.address.toString(),owner:captured.address,
      walletSecret:captured.secretKey,walletSalt:captured.salt,storage:privateStore,provider,captureWallet:captureFundingWallet,contextGuard:guardRoute,verifyScope,claimStore,relay:fundingRelay,verifyClaim:txHash=>verifyRollingTopupClaim({sdk,node,txHash,contextGuard:guardRoute}),reconcileClaim:async id=>{await pxe.sync();await initializeAccount();return app.reconcile(id);}});
     funding.loadAggregate=txHash=>aggregate.loadAggregate(txHash);
@@ -456,6 +439,36 @@ export async function createRollingWalletSession({sdk,routing,ethers,config,boar
    if(!lock)throw fail('ROLLING_OTHER_TAB');await dispose();
   })).finally(()=>{busy=false;closing=undefined;});return closing;
  }});
+}
+
+/** Bind immutable native portal storage once per quote, retaining its canonical
+ * block for confirmation. Every native read still traverses the admitted query
+ * service; repeat only the mutable L1 observations before a payment. */
+export async function verifyRollingAggregateScope({sdk,ethers,node,provider,scope,bok,bokArtifact,network,proofsEnabled,contextGuard}){
+ const read=async fn=>{await contextGuard();const value=await fn();await contextGuard();return value;};
+ const contracts=await read(()=>node.getL1ContractAddresses());
+ if(contracts.feeJuicePortalAddress?.toString().toLowerCase()!==scope.feePortal)throw fail('ROLLING_SESSION_CONFIG');
+ const head=await read(()=>node.getBlockData('checkpointed'));
+ const number=Number(head?.header?.globalVariables?.blockNumber),hash=head?.blockHash?.toString(),slot=bokArtifact.storageLayout?.portal?.slot;
+ if(!Number.isSafeInteger(number)||number<1||!/^0x[0-9a-f]{64}$/.test(hash)||slot===undefined)throw fail('ROLLING_SESSION_CONFIG');
+ const portal=await read(()=>node.getPublicStorageAt({hash},bok.address,new sdk.Fr(BigInt(slot))));
+ if(BigInt(portal.toString())!==BigInt(scope.bokPortal))throw fail('ROLLING_SESSION_CONFIG');
+ const canonical=async()=>{const again=await read(()=>node.getBlockData(number));if(again?.blockHash?.toString()!==hash||Number(again?.header?.globalVariables?.blockNumber)!==number)throw fail('ROLLING_CONTEXT_CHANGED');};
+ const l1Scope=async()=>{
+  const l1=await read(()=>provider.getBlock('latest'));
+  if(!Number.isSafeInteger(l1?.number)||!/^0x[0-9a-f]{64}$/.test(l1?.hash))throw fail('ROLLING_SESSION_CONFIG');
+  const abi=new ethers.Interface(['function UNDERLYING() view returns(address)','function token() view returns(address)','function decimals() view returns(uint8)']);
+  const call=async(address,name)=>abi.decodeFunctionResult(name,await read(()=>provider.call({to:address,data:abi.encodeFunctionData(name),blockTag:l1.number})))[0];
+  // These four calls share a pinned block, not an ordering dependency. Settle
+  // every read before releasing the owning wallet operation on failure.
+  const values=await Promise.allSettled([call(scope.feePortal,'UNDERLYING'),call(scope.bokPortal,'token'),call(scope.feeToken,'decimals'),call(scope.bokToken,'decimals')]);
+  const rejected=values.find(value=>value.status==='rejected');if(rejected)throw rejected.reason;
+  const [feeToken,bokToken,feeDecimals,bokDecimals]=values.map(value=>value.value);
+  if(String(feeToken).toLowerCase()!==scope.feeToken||String(bokToken).toLowerCase()!==scope.bokToken||BigInt(feeDecimals)!==18n||BigInt(bokDecimals)!==6n)throw fail('ROLLING_SESSION_CONFIG');
+  if((await read(()=>provider.getBlock(l1.number)))?.hash!==l1.hash)throw fail('ROLLING_CONTEXT_CHANGED');
+ };
+ await canonical();await l1Scope();await read(()=>sdk.inspectTrustedNode(node,{expectedNetworkScope:network,proofsEnabled}));
+ return async()=>{await canonical();await l1Scope();};
 }
 
 /** Discover direct funding endpoints from the authenticated node and Bok

@@ -24,6 +24,18 @@ export async function createAggregateWallet({sdk,ethers,scope,network,board,bok,
  const archiveSlot=txHash=>{check(typeof txHash==='string'&&/^0x[0-9a-f]{64}$/.test(txHash));const frame=JSON.parse(scopeText);frame.splice(-1,0,txHash);return openSlot(JSON.stringify(frame));};
  let prepared=null;
  const read=async fn=>{await contextGuard();const result=await fn();await contextGuard();return result;};
+ // A refused signature has no broadcast ambiguity. Normalize it only at
+ // this signing boundary; transaction/relay failures keep their journal fences.
+ async function signConsent(wallet,typed){
+  let signature;
+  try{signature=await read(()=>wallet.signer.signTypedData(typed.domain,typed.types,typed.value));}
+  catch(error){
+   if([4001,'ACTION_REJECTED'].includes(errorValue(error,'code'))){await read(wallet.guard);throw fail('SIGNATURE_CANCELLED');}
+   throw error;
+  }
+  check(ethers.verifyTypedData(typed.domain,typed.types,typed.value,signature).toLowerCase()===wallet.address,'CONSENT');
+  await read(wallet.guard);return signature;
+ }
  const journal=depositor=>sdk.createEthereumJournal({storage,walletSecret,walletSalt,
   scope:{account:owner,...n,board,portal:s.router,depositor},provider,contextGuard});
  async function stored(){const saved=await read(()=>slot.read());if(saved.value){check(saved.value.schemaVersion===1&&typeof saved.value.depositor==='string');check(saved.value.bokScope.recipient===bok&&saved.value.bokScope.portal===s.bokPortal);}return saved;}
@@ -92,7 +104,7 @@ export async function createAggregateWallet({sdk,ethers,scope,network,board,bok,
   else check(JSON.stringify(old.value.intent)===JSON.stringify(retained.intent),'MISMATCH');
   return result;
  }
- async function prepareUsdc(values){
+ async function prepareUsdc(values,recheckScope){
   check(usdc&&relay&&claimStore&&typeof claimStore.save==='function','UNAVAILABLE');
   check(Object.keys(values).sort().join()==='asset,bokAmount,collateralPoolFee,collateralWei,feeAmount,feePoolFee,privateFeeCap,slippageBps');
   const previous=await stored(),priorPayment=await archivePrevious(previous);
@@ -116,13 +128,13 @@ export async function createAggregateWallet({sdk,ethers,scope,network,board,bok,
   await read(()=>claimStore.save({l1ChainId:n.chainId,rollupVersion:n.version,rollupAddress:n.rollup,boardAddress:board,portalAddress:s.collateralPortal,depositor:wallet.address},{schemaVersion:1,secret:collateralSecret.toString(),secretHash:collateralSecretHash}));
   const saved=await read(()=>slot.write(previous,{schemaVersion:1,kind:'usdc',depositor:wallet.address,recipientSalt,bridgeSecret,bokScope:{...n,portal:s.bokPortal,recipient:bok,token:s.bokToken},privateFeeCap,claim:null,intent:null,previousTxHash:priorPayment?.txHash??null,
    aggregateCustody:{kind:'aggregate-usdc-custody-v1',planHash:quote.planHash,beneficiary:wallet.address,privateFeeSalt:privateFeeSalt.toString()},relay:{planHash:quote.planHash,submitted:false,request:null}}));
-  prepared={kind:'usdc',wallet,quote,saved};
+  prepared={kind:'usdc',wallet,quote,saved,recheckScope};
   return freeze({kind:quote.kind,breakdown:clone(quote.breakdown),deadline:quote.plan.deadline,beneficiary:wallet.address,router:s.router,walletName:wallet.name,privateFeeCap,slippageBps:values.slippageBps,relayer:terms.relayer,relayGasBudgetWei:terms.gasBudgetWei});
  }
- async function confirmUsdc({wallet,quote,saved}){
-  await read(verifyScope);await read(wallet.guard);await predecessor(saved.value);
-  const sign=async typed=>{const signature=await read(()=>wallet.signer.signTypedData(typed.domain,typed.types,typed.value));check(ethers.verifyTypedData(typed.domain,typed.types,typed.value,signature).toLowerCase()===wallet.address,'CONSENT');await read(wallet.guard);return signature;};
-  const consent=await sign(quote.consent),authorization=await sign(quote.authorization);
+ async function confirmUsdc({wallet,quote,saved,recheckScope}){
+  await read(wallet.guard);await read(()=>sdk.validateAggregateFundingQuote(quote));
+  const consent=await signConsent(wallet,quote.consent),authorization=await signConsent(wallet,quote.authorization);
+  await read(recheckScope);
   const tx=await read(()=>sdk.aggregateUsdcFundingTransaction(quote,consent,authorization));
   const request={from:tx.from,to:tx.to,chainId:tx.chainId,data:tx.data.toLowerCase(),value:tx.value,expected:{kind:'aggregate-usdc-funding',routerCodeHash:s.routerCodeHash,collateralPortal:s.collateralPortal,feePortal:s.feePortal,bokPortal:s.bokPortal,privateFpc:s.privateFpc,planHash:tx.planHash}};
   sdk.validateAggregateFundingIntent(request);await read(wallet.guard);await predecessor(saved.value);
@@ -170,8 +182,8 @@ export async function createAggregateWallet({sdk,ethers,scope,network,board,bok,
  }
  return Object.freeze({
   async prepare(allocation){
-   const values=clone(allocation);prepared=null;await read(verifyScope);
-   if(values.asset==='USDC')return prepareUsdc(values);
+   const values=clone(allocation);prepared=null;const recheckScope=await read(verifyScope);check(typeof recheckScope==='function');
+   if(values.asset==='USDC')return prepareUsdc(values,recheckScope);
    const previous=await stored(),priorPayment=await archivePrevious(previous);
    const wallet=await read(captureWallet);await read(wallet.guard);
    const depositor=wallet.address;
@@ -191,7 +203,7 @@ export async function createAggregateWallet({sdk,ethers,scope,network,board,bok,
    await read(wallet.guard);
    const bokScope={...n,portal:s.bokPortal,recipient:bok,token:s.bokToken};
    const saved=await read(()=>slot.write(previous,{schemaVersion:1,depositor,nonce,recipientSalt,bridgeSecret,bokScope,intent:null,privateFeeCap,claim:null,previousTxHash:existing?.txHash??null}));
-   prepared={wallet,quote,saved,nonce};
+   prepared={wallet,quote,saved,nonce,recheckScope};
    // Never return the original secrets or calldata to the renderer.
    return freeze({kind:quote.kind,breakdown:clone(quote.breakdown),deadline:quote.plan.deadline,beneficiary:depositor,router:s.router,
     walletName:wallet.name,privateFeeCap,slippageBps:values.slippageBps,consentNonce:quote.plan.nonce,ethereumNonce:nonce});
@@ -199,12 +211,14 @@ export async function createAggregateWallet({sdk,ethers,scope,network,board,bok,
   async confirm(){
    const current=prepared;prepared=null;check(current,'QUOTE_REQUIRED');
    if(current.kind==='usdc')return confirmUsdc(current);
-   const {wallet,quote,nonce}=current;await read(verifyScope);await read(wallet.guard);await predecessor(current.saved.value);
+   const {wallet,quote,nonce}=current;await read(wallet.guard);await read(()=>sdk.validateAggregateFundingQuote(quote));
    // Signature is requested only after explicit review. It is narrowly bound to
    // the captured portal consent nonce, which is NOT the derivation nonce.
-   const consent=await read(()=>wallet.signer.signTypedData(quote.consent.domain,quote.consent.types,quote.consent.value));
-   check(ethers.verifyTypedData(quote.consent.domain,quote.consent.types,quote.consent.value,consent).toLowerCase()===wallet.address,'CONSENT');
-   await read(wallet.guard);
+   const consent=await signConsent(wallet,quote.consent);
+   // The reviewed quote already authenticated the deployment. Recheck mutable
+   // scope after consent, before any payment intent, rather than consuming the
+   // short quote lifetime with native reads before the wallet even opens.
+   await read(current.recheckScope);
    const tx=await read(()=>sdk.aggregateFundingTransaction(quote,consent));
    const expected={kind:'aggregate-funding',routerCodeHash:s.routerCodeHash,collateralPortal:s.collateralPortal,feePortal:s.feePortal,bokPortal:s.bokPortal,privateFpc:s.privateFpc,planHash:tx.planHash};
    const gasRequest={from:tx.from,to:tx.to,data:tx.data,value:BigInt(tx.value),nonce,chainId:BigInt(tx.chainId)};

@@ -10,7 +10,7 @@ import {claimSecrets} from '../private-fee-funding.mjs';
 import {derivePrivateFeeBridgeSecret} from '../private-fee-client.mjs';
 import {createEncryptedJournalSlot} from '../journal-record.mjs';
 import {createEthereumJournal,verifyEthereumIntentReceipt} from '../ethereum-journal.mjs';
-import {prepareAggregateFunding,aggregateFundingTransaction,prepareAggregateUsdcFunding,aggregateUsdcFundingTransaction,aggregateFundingAbi} from './aggregate-funding.mjs';
+import {prepareAggregateFunding,validateAggregateFundingQuote,aggregateFundingTransaction,prepareAggregateUsdcFunding,aggregateUsdcFundingTransaction,aggregateFundingAbi} from './aggregate-funding.mjs';
 import {validateAggregateFundingIntent} from './aggregate-recovery.mjs';
 import {createAggregateWallet} from './aggregate-wallet.mjs';
 import {verifyRollingTopupClaim} from '../../apps/rolling/wallet-session.mjs';
@@ -53,10 +53,10 @@ function fixture({chainId='31337'}={}){
     log(scope.bokPortal,bok,'Deposited',[p.bokCommitment,p.bok.amount,h(32),3])
    ]};if(state.unknown)throw Error('Lost acknowledgement');state.landed=true;return {hash:h(20)};
   }}};
- const options={sdk:{Fr,computeSecretHash,poseidon2HashWithSeparator,deriveBoardDepositSecret,claimSecrets,createEncryptedJournalSlot,createEthereumJournal,verifyEthereumIntentReceipt,prepareAggregateFunding,aggregateFundingTransaction,validateAggregateFundingIntent},ethers,scope,
+ const options={sdk:{Fr,computeSecretHash,poseidon2HashWithSeparator,deriveBoardDepositSecret,claimSecrets,createEncryptedJournalSlot,createEthereumJournal,verifyEthereumIntentReceipt,prepareAggregateFunding,validateAggregateFundingQuote,aggregateFundingTransaction,validateAggregateFundingIntent},ethers,scope,
   network:{chainId,version:'1',rollup:a(11)},board:h(12),bok:h(13),owner:h(14),walletSecret:h(15),walletSalt:'0',storage,provider,
   reconcileClaim:id=>state.workflow.open().reconcile(id),verifyClaim:async hash=>assert.equal(hash,h(70)),
-  captureWallet:async()=>{if(!state.connected)throw Error('No wallet');return wallet;},contextGuard:async()=>{if(state.invalid)throw Error('Context changed');},verifyScope:async()=>{}};
+  captureWallet:async()=>{if(!state.connected)throw Error('No wallet');return wallet;},contextGuard:async()=>{if(state.invalid)throw Error('Context changed');},verifyScope:async()=>async()=>{}};
  return {options,state,allocation,records,wallet,open:()=>createAggregateWallet(options)};
 }
 test('aggregate review never signs/sends; explicit confirm uses Ethereum nonce, distinct consent nonce, and authenticates three receipts',async()=>{
@@ -81,7 +81,7 @@ test('lost send reply retains original context; recovery never rebroadcasts',asy
 for(const mode of ['expired','account','signature','pending-state'])test('aggregate confirmation fails closed for '+mode,async()=>{
  const f=fixture(),app=await f.open();await app.prepare(f.allocation);
  if(mode==='expired')f.state.pendingTime=1121;if(mode==='pending-state')f.state.simulationFails=true;if(mode==='account')f.state.invalid=true;if(mode==='signature')f.wallet.signer.signTypedData=(...args)=>new ethers.Wallet(h(98)).signTypedData(...args);
- await assert.rejects(app.confirm());assert.equal(f.state.sends,0);
+ await assert.rejects(app.confirm());assert.equal(f.state.sends,0);if(mode==='expired')assert.equal(f.state.signatures,0);
 });
 test('unrelated tx hash cannot load retained secret context',async()=>{const f=fixture(),app=await f.open();await app.prepare(f.allocation);await app.confirm();assert.equal(await app.loadAggregate(h(21)),null);});
 test('gas increase stops before the original payment intent is written',async()=>{
@@ -470,4 +470,24 @@ test('known original ETH hash waits for receipt then rechecks canonical effects 
  const f=fixture(),app=await f.open();await app.prepare(f.allocation);await app.confirm();f.state.landed=false;let waits=0;
  f.options.provider.waitForTransaction=async hash=>{assert.equal(hash,h(20));waits++;f.state.landed=true;return {};};
  assert.equal((await app.recover({wait:true})).receipt.txHash,h(20));assert.equal(waits,1);assert.equal(f.state.sends,1);
+});
+
+for(const [asset,make] of [['ETH',fixture],['USDC',usdcWalletFixture]])for(const code of [4001,'ACTION_REJECTED'])test(`${asset} rejected consent preserves custody and permits only a fresh reviewed quote (${code})`,async()=>{
+ const f=make(),funding=await f.open();await funding.prepare(f.allocation);const original=f.wallet.signer.signTypedData;
+ f.wallet.signer.signTypedData=async()=>{throw Object.assign(Error('PRIVATE_SENTINEL'),{code});};
+ await assert.rejects(funding.confirm(),{code:'ROLLING_FUNDING_SIGNATURE_CANCELLED'});
+ assert.equal((await funding.inspect()).paymentSaved,false);assert.equal(f.state.invalid,false);assert.equal(f.state.sends,0);assert.equal(f.state.posts??0,0);
+ await assert.rejects(funding.confirm(),{code:'ROLLING_FUNDING_QUOTE_REQUIRED'});
+ f.wallet.signer.signTypedData=original;await funding.prepare(f.allocation);await funding.confirm();
+ assert.equal(asset==='ETH'?f.state.sends:f.state.posts,1);
+});
+test('consent opens before repeated scope reads, but a changed scope prevents payment and durable intent',async()=>{
+ const f=fixture();let checks=0;f.options.verifyScope=async()=>{checks++;return async()=>{checks++;assert.equal(f.state.signatures,1);throw Error('Changed scope');};};
+ const funding=await f.open();await funding.prepare(f.allocation);await assert.rejects(funding.confirm(),/Changed scope/);
+ assert.equal(checks,2);assert.equal(f.state.sends,0);assert.equal((await funding.inspect()).paymentSaved,false);
+});
+test('rejected consent does not hide an actual changed account',async()=>{
+ const f=fixture(),funding=await f.open();await funding.prepare(f.allocation);
+ f.wallet.signer.signTypedData=async()=>{f.state.invalid=true;throw Object.assign(Error('Cancelled'),{code:4001});};
+ await assert.rejects(funding.confirm(),/Context changed/);assert.equal(f.state.sends,0);
 });
