@@ -245,3 +245,40 @@ test('retained candidate refuses failed tests, source mutation, stale base and c
  const before=validations,file=path.join(path.dirname(session.repositoryPath),'revisions.json'),state=JSON.parse(await fs.readFile(file,'utf8'));state.candidates[id(1)].readRevision='b'.repeat(40);await fs.writeFile(file,JSON.stringify(state));await assert.rejects(manager.recoverCandidate(input),/Accepted base changed/);state.candidates[id(1)].readRevision=null;await fs.writeFile(file,JSON.stringify(state));
  await repositoryGit(['update-ref',`refs/candidates/${id(1).slice(2)}/${candidate.producedRevision}`,candidate.parent],{cwd:session.repositoryPath});await assert.rejects(manager.recoverCandidate(input),/candidate ref changed/);assert.equal(validations,before);
 });
+
+
+test('workspace listing reflects staged, untracked, ignored and deleted files without adopting HEAD',async t=>{
+ const {githubToolbox}=await import('../github-tools.mjs');const h=await fixture(t);let workspace;
+ const manager=threadRepositories({...h.options,startEmpty:true});
+ const toolbox=githubToolbox({repository:'owner/project',repositories:{open:async input=>(workspace=await manager.open(input))},api:async()=>assert.fail('No API')});
+ const session=await toolbox.open({threadId:id(1),id:id(1),postId:id(9)});t.after(()=>session.close());
+ await session.call('write_file',{path:'index.html',content:'<!doctype html><title>Current draft</title>'});
+ assert.deepEqual(await session.call('list_files',{prefix:''}),{files:['index.html'],truncated:false});
+ await repositoryGit(['add','index.html'],{cwd:workspace.work});
+ assert.deepEqual((await session.call('list_files',{prefix:''})).files,['index.html']);
+ await session.call('write_file',{path:'new.js',content:'// new'});
+ await session.call('write_file',{path:'.gitignore',content:'ignored.txt\n'});
+ await session.call('write_file',{path:'ignored.txt',content:'intentional tool output'});
+ await session.call('write_file',{path:'deleted.txt',content:'gone'});
+ await repositoryGit(['add','deleted.txt'],{cwd:workspace.work});await repositoryGit(['commit','-m','listing baseline'],{cwd:workspace.work});await fs.rm(path.join(workspace.work,'deleted.txt'));
+ assert.deepEqual((await session.call('list_files',{prefix:''})).files,['.gitignore','ignored.txt','index.html','new.js']);
+ assert.deepEqual((await session.call('list_files',{prefix:'index'})).files,['index.html']);
+ await fs.symlink('/etc/passwd',path.join(workspace.work,'unsafe.txt'));
+ await assert.rejects(session.call('list_files',{prefix:'unsafe'}),/Symlink/);
+ await fs.rm(path.join(workspace.work,'unsafe.txt'));
+ await Promise.all(Array.from({length:501},(_,n)=>fs.writeFile(path.join(workspace.work,`bounded-${String(n).padStart(3,'0')}.txt`),'')));
+ const bounded=await session.call('list_files',{prefix:'bounded-'});assert.equal(bounded.files.length,500);assert.equal(bounded.truncated,true);
+});
+
+test('workspace prerequisite feedback identifies repair without leaking arbitrary source errors',async t=>{
+ const {githubToolbox}=await import('../github-tools.mjs');const {createIsolatedExecution}=await import('../isolated-execution.mjs');
+ const h=await fixture(t),output=path.join(h.root,'output');await fs.mkdir(output);
+ const execution=createIsolatedExecution({workspaceRoot:h.options.directory,outputRoot:output,docker:path.join(h.root,'must-not-run-docker')});
+ const manager=threadRepositories({...h.options,startEmpty:true,validateRevision:input=>execution.execute(input)});
+ const session=await githubToolbox({repository:'owner/project',repositories:manager,api:async()=>assert.fail('No API')}).open({threadId:id(1),id:id(1),postId:id(9)});t.after(()=>session.close());
+ await session.call('write_file',{path:'index.html',content:'<!doctype html><title>Standalone</title>'});
+ for(const [content,code,expected] of [[undefined,'STATIC_PACKAGE_REQUIRED',/package.json/],['PRIVATE_PARSE_SENTINEL','STATIC_PACKAGE_INVALID',/valid JSON/],['{}','STATIC_BUILD_REQUIRED',/scripts.build/],[JSON.stringify({scripts:{build:'node build.cjs'}}),'STATIC_TEST_REQUIRED',/test file/]]){
+  if(content!==undefined)await session.call('write_file',{path:'package.json',content});
+  const result=await session.call('check_workspace',{});assert.equal(result.passed,false);assert.equal(result.phase,'input');assert.equal(result.requirement.code,code);assert.match(result.requirement.message,expected);assert(!JSON.stringify(result).includes('PRIVATE_PARSE_SENTINEL'));
+ }
+});

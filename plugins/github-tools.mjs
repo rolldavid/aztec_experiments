@@ -1,6 +1,7 @@
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
+import {STATIC_SOURCE_REQUIREMENTS} from './isolated-execution.mjs';
 import {repositoryGit} from './thread-repositories.mjs';
 const trustedCommand=(command,args,options)=>{if(command!=='git')throw Error('Unsupported repository command');return repositoryGit(args,options);};
 const definition=(name,description,properties,required=Object.keys(properties))=>({type:'function',function:{name,description,parameters:{type:'object',properties,required,additionalProperties:false}}});
@@ -78,7 +79,7 @@ export function githubToolbox({repository,api,allowWrites=false,draftPr=false,ru
       return target;
     };
     const definitions=[
-      definition('list_files','List tracked repository files',{prefix:string}),
+      definition('list_files','List current workspace files, including uncommitted edits',{prefix:string}),
       definition('read_file','Read a UTF-8 repository file',{path:string}),
       definition('write_file','Write a UTF-8 file in the isolated checkout',{path:string,content:string}),
       definition('read_pr','Read a PR in this repository',{number:{type:'integer',minimum:1}}),
@@ -91,9 +92,24 @@ export function githubToolbox({repository,api,allowWrites=false,draftPr=false,ru
       async call(name,args){
         if(name==='check_workspace'&&workspace){
           await ensureFiles();let result;try{result=await workspace.check();}catch(error){if(error.code!=='STATIC_FAILED'||!error.result)throw error;result=error.result;}
-          return {passed:result.passed,revision:result.revision,sourceDigest:result.sourceDigest,phase:result.phase,log:result.log?.slice(-12000),logTruncated:(result.log?.length??0)>12000};
+          return {passed:result.passed,revision:result.revision,sourceDigest:result.sourceDigest,phase:result.phase,log:result.log?.slice(-12000),logTruncated:(result.log?.length??0)>12000,...(Object.hasOwn(STATIC_SOURCE_REQUIREMENTS,result.requirement)?{requirement:{code:result.requirement,message:STATIC_SOURCE_REQUIREMENTS[result.requirement]}}:{})};
         }
-        if(name==='list_files'){if(typeof args.prefix!=='string')throw Error('Prefix required');await ensureCheckout();const listed=await runCommand('git',['ls-tree','-r','--name-only','-z','HEAD'],{cwd:work,maxBuffer:4*1024*1024});const files=listed.stdout.split('\0').filter(x=>x&&x.startsWith(args.prefix));return {files:files.slice(0,500),truncated:files.length>500};}
+        if(name==='list_files'){
+          if(typeof args.prefix!=='string'||args.prefix.length>240||/[\0\r\n]/.test(args.prefix))throw Error('Invalid file prefix');
+          await ensureFiles();
+          // Read the index plus untracked files, not HEAD. Ignored files can be
+          // deliberate tool writes too; sparse omitted/deleted files are absent.
+          const listed=await runCommand('git',['ls-files','--cached','--others','-z'],{cwd:work,maxBuffer:4*1024*1024});
+          const current=[];
+          for(const name of [...new Set(listed.stdout.split('\0').filter(Boolean))].sort()){
+            if(!name.startsWith(args.prefix))continue;
+            if(name.length>240||/[\0\r\n]/.test(name)||name.startsWith('/')||name.split('/').some(p=>!p||p==='.'||p==='..'))throw Error('Unsupported repository path');
+            const file=await safe(name);let stat;try{stat=await fs.lstat(file);}catch(error){if(error.code==='ENOENT')continue;throw error;}
+            if(!stat.isFile())throw Error('Unsupported repository entry');
+            current.push(name);if(current.length>500)break;
+          }
+          return {files:current.slice(0,500),truncated:current.length>500};
+        }
         if(name==='read_file'){const oversized=await ensureFiles(),file=await safe(args.path);if(oversized.has(pathKey(path.relative(work,file)))||(await fs.stat(file)).size>100000)throw Error('File too large');return {text:await fs.readFile(file,'utf8')};}
         if(name==='write_file'){if(typeof args.content!=='string'||Buffer.byteLength(args.content)>100000)throw Error('File too large');const oversized=await ensureFiles(),file=await safe(args.path);if(oversized.has(pathKey(path.relative(work,file))))throw Error('File too large');await fs.mkdir(path.dirname(file),{recursive:true});await fs.writeFile(file,args.content);return {written:args.path};}
         if(name==='read_pr'){

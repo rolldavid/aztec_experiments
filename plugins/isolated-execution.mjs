@@ -10,6 +10,13 @@ export const STATIC_IMAGE='sha256:44479404b67dde931cf8f202a3ce34703876e709ce1249
 export const STATIC_NODE_VERSION='v24.21.0';
 export const STATIC_LIMITS=Object.freeze({sourceBytes:8*1024*1024,fileBytes:1024*1024,files:512,
  artifactBytes:1024*1024,logBytes:65536,workMs:45000,totalMs:60000,memory:268435456,pids:64});
+export const STATIC_SOURCE_REQUIREMENTS=Object.freeze({
+ STATIC_PACKAGE_REQUIRED:'Add package.json with a dependency-free build script that writes the published files to dist/.',
+ STATIC_PACKAGE_INVALID:'Repair package.json so it is a valid JSON object.',
+ STATIC_BUILD_REQUIRED:'Add a nonempty scripts.build command to package.json; it must write the published files to dist/.',
+ STATIC_TEST_REQUIRED:'Add an explicit Node test file (for example main.test.cjs) that checks the requested behavior.',
+});
+const sourceRequirement=code=>Object.assign(Error(STATIC_SOURCE_REQUIREMENTS[code]),{code});
 const sha=b=>createHash('sha256').update(b).digest('hex');
 const safeName=n=>typeof n==='string'&&n.length<=240&&n.split('/').every(p=>/^[A-Za-z0-9.][A-Za-z0-9_.-]*$/.test(p)&&!['.','..','.git','.github','.aws','.ssh','.npmrc','node_modules','credentials','secrets'].includes(p.toLowerCase())&&!/^\.(?:env|yarnrc)(?:[.-]|$)/i.test(p));
 const extension=/\.(?:html|css|js|mjs|cjs|json|svg|png|jpe?g|webp|woff2?|txt|map)$/i;
@@ -45,10 +52,12 @@ export async function captureStaticSource(directory){
    files.push({path:relative,sha256:sha(data),bytes:data.length,data:data.toString('base64')});
   }
  }
- await walk(directory);assert(files.some(f=>f.path==='package.json'),'Static package required');
- const pkg=JSON.parse(Buffer.from(files.find(f=>f.path==='package.json').data,'base64'));
- assert(typeof pkg.scripts?.build==='string'&&pkg.scripts.build.length>0,'Build script required');
- assert(files.some(f=>/(?:^|\/)(?:test[^/]*|[^/]*[.-]test)\.[cm]?js$/.test(f.path)),'Explicit Node test file required');
+ await walk(directory);const packageFile=files.find(f=>f.path==='package.json');
+ if(!packageFile)throw sourceRequirement('STATIC_PACKAGE_REQUIRED');
+ let pkg;try{pkg=JSON.parse(Buffer.from(packageFile.data,'base64'));}catch{throw sourceRequirement('STATIC_PACKAGE_INVALID');}
+ if(!pkg||typeof pkg!=='object'||Array.isArray(pkg))throw sourceRequirement('STATIC_PACKAGE_INVALID');
+ if(typeof pkg.scripts?.build!=='string'||!pkg.scripts.build.trim())throw sourceRequirement('STATIC_BUILD_REQUIRED');
+ if(!files.some(f=>/(?:^|\/)(?:test[^/]*|[^/]*[.-]test)\.[cm]?js$/.test(f.path)))throw sourceRequirement('STATIC_TEST_REQUIRED');
  const manifest=files.map(({data,...f})=>f);return {files,manifest,sha256:sha(JSON.stringify(manifest)),bytes};
 }
 
@@ -209,7 +218,7 @@ export function createIsolatedExecution({workspaceRoot,outputRoot,docker='/usr/l
     limits:{...STATIC_LIMITS,workMs,totalMs:workMs+15000},publication:'untrusted static output; separate origin required; no publication performed'};
    await fs.writeFile(path.join(output,'result.json'),JSON.stringify(receipt,null,2)+'\n',{flag:'wx',mode:0o600});
    return receipt;
-  }catch(cause){failureResult.failure=diagnosis(cause);if(['timeout','output-limit','transport'].includes(cause?.code))failureResult.transport=cause.code;const error=finiteError(failureResult.phase==='availability'?'STATIC_UNAVAILABLE':'STATIC_FAILED');error.result=Object.freeze({...failureResult});throw error;
+  }catch(cause){if(Object.hasOwn(STATIC_SOURCE_REQUIREMENTS,cause?.code))failureResult.requirement=cause.code;failureResult.failure=diagnosis(cause);if(['timeout','output-limit','transport'].includes(cause?.code))failureResult.transport=cause.code;const error=finiteError(failureResult.phase==='availability'?'STATIC_UNAVAILABLE':'STATIC_FAILED');error.result=Object.freeze({...failureResult});throw error;
   }finally{
    cleaning=true;
    try{

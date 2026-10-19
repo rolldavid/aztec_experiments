@@ -202,3 +202,11 @@ test('exact JSON Docker absence preserves target and rejects appended or foreign
  assert(isStaticContainerAbsent(result,name));
  for(const change of [{code:0},{stdout:'id'},{stderr:result.stderr+'trailing'},{stderr:result.stderr.replace(name,'bok-static-22222222-2222-2222-2222-222222222222')},{stderr:'Error response from daemon: '+JSON.stringify({message:'No such container: '+name,error:'extra'})+'\n'}])assert.equal(isStaticContainerAbsent({...result,...change},name),false);
 });
+
+
+for(const [label,content,code] of [['missing package',undefined,'STATIC_PACKAGE_REQUIRED'],['invalid package','SENSITIVE_INVALID_JSON','STATIC_PACKAGE_INVALID'],['null package','null','STATIC_PACKAGE_INVALID'],['array package','[]','STATIC_PACKAGE_INVALID'],['blank build','{"scripts":{"build":"  "}}','STATIC_BUILD_REQUIRED']])test('finite source prerequisite '+label,async()=>{
+ const f=await fixture();try{
+  if(content===undefined)await fs.rm(path.join(f.source,'package.json'));else await fs.writeFile(path.join(f.source,'package.json'),content);
+  await assert.rejects(captureStaticSource(f.source),error=>error.code===code&&!error.message.includes('SENSITIVE_INVALID_JSON'));
+ }finally{await f.close();}
+});
