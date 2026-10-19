@@ -491,3 +491,9 @@ test('rejected consent does not hide an actual changed account',async()=>{
  f.wallet.signer.signTypedData=async()=>{f.state.invalid=true;throw Object.assign(Error('Cancelled'),{code:4001});};
  await assert.rejects(funding.confirm(),/Context changed/);assert.equal(f.state.sends,0);
 });
+
+test('USDC consent delay cannot open an already expired authorization prompt',async()=>{
+ const f=usdcWalletFixture(),funding=await f.open();await funding.prepare(f.allocation);const sign=f.wallet.signer.signTypedData;
+ f.wallet.signer.signTypedData=async(...args)=>{const value=await sign(...args);f.state.pendingTime=1121;return value;};
+ await assert.rejects(funding.confirm(),{code:'AGGREGATE_STALE_QUOTE'});assert.equal(f.state.signatures,1);assert.equal(f.state.posts,0);assert.equal((await funding.inspect()).paymentSaved,false);
+});

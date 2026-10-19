@@ -133,7 +133,9 @@ export async function createAggregateWallet({sdk,ethers,scope,network,board,bok,
  }
  async function confirmUsdc({wallet,quote,saved,recheckScope}){
   await read(wallet.guard);await read(()=>sdk.validateAggregateFundingQuote(quote));
-  const consent=await signConsent(wallet,quote.consent),authorization=await signConsent(wallet,quote.authorization);
+  const consent=await signConsent(wallet,quote.consent);
+  await read(()=>sdk.validateAggregateFundingQuote(quote));
+  const authorization=await signConsent(wallet,quote.authorization);
   await read(recheckScope);
   const tx=await read(()=>sdk.aggregateUsdcFundingTransaction(quote,consent,authorization));
   const request={from:tx.from,to:tx.to,chainId:tx.chainId,data:tx.data.toLowerCase(),value:tx.value,expected:{kind:'aggregate-usdc-funding',routerCodeHash:s.routerCodeHash,collateralPortal:s.collateralPortal,feePortal:s.feePortal,bokPortal:s.bokPortal,privateFpc:s.privateFpc,planHash:tx.planHash}};
