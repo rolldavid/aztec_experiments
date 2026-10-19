@@ -35,26 +35,26 @@ export async function aztecBoardPort({node,wallet,scope,boardArtifact,adapterArt
 
 
 // Read-only predecessor admission shares the index owner's current snapshot.
-// A long terminal prefix has a visible bounded timeout, never an inferred pass.
-export async function rollingPredecessorsClear({index,request,isTerminal=async()=>false,timeoutMs=20000,admission={}}){
- assert(Number.isSafeInteger(timeoutMs)&&timeoutMs>0&&timeoutMs<=20000);
+// The caller owns each bounded-page scan until its canonical reads settle.
+export async function rollingPredecessorsClear({index,request,isTerminal=async()=>false,admission={}}){
  assert(!admission.closed,'Canonical predecessor admission closed');
  assert(!admission.pending,'Canonical predecessor admission unavailable: prior read pending');
- let timer,expired=false;const timeout=new Promise((_,reject)=>{timer=setTimeout(()=>{expired=true;reject(Error('Canonical predecessor admission unavailable: deadline'));},timeoutMs);});
  const scan=async()=>{
   let after=null,revision;
   for(;;){
-   assert(!expired,'Canonical predecessor admission unavailable: deadline');
+   assert(!admission.closed,'Canonical predecessor admission closed');
    const page=index.scanPendingPredecessors(BigInt(request.postId).toString(),{after,limit:64});
    assert(Array.isArray(page.rows)&&page.rows.length<=64&&typeof page.revision==='string');
    if(revision===undefined)revision=page.revision;else assert.equal(page.revision,revision,'Predecessor publication changed');
    let prior=after===null?-1n:BigInt(after);
    for(const row of page.rows){
-    assert(!expired,'Canonical predecessor admission unavailable: deadline');
+    assert(!admission.closed,'Canonical predecessor admission closed');
     assert(BigInt(row.order)>prior&&BigInt(row.order)<BigInt(request.order),'Predecessor order changed');prior=BigInt(row.order);
     assert.equal(BigInt(row.threadId),BigInt(request.threadId));assert.equal(BigInt(row.pluginId),BigInt(request.pluginId));assert.equal(BigInt(row.adapter),BigInt(request.adapter));
     const field=x=>'0x'+BigInt(x).toString(16).padStart(64,'0');
-    if(!await isTerminal({...row,postId:field(row.postId),threadId:field(row.threadId),requestId:field(row.requestId),target:field(row.target),pluginId:field(row.pluginId),adapter:field(row.adapter)}))return false;
+    const terminal=await isTerminal({...row,postId:field(row.postId),threadId:field(row.threadId),requestId:field(row.requestId),target:field(row.target),pluginId:field(row.pluginId),adapter:field(row.adapter)});
+    assert(!admission.closed,'Canonical predecessor admission closed');
+    if(!terminal)return false;
    }
    // Recheck ownership/revision after this bounded page of accounting reads.
    assert.equal(index.scanPendingPredecessors(BigInt(request.postId).toString(),{after,limit:1}).revision,revision,'Predecessor publication changed');
@@ -62,11 +62,10 @@ export async function rollingPredecessorsClear({index,request,isTerminal=async()
    assert(page.rows.length===64&&page.nextAfter===page.rows.at(-1).order&&(after===null||BigInt(page.nextAfter)>BigInt(after)),'Invalid predecessor cursor');after=page.nextAfter;
   }
  };
- // The timeout releases the caller, not ownership of a hung read. Subsequent
- // admissions fail visibly until that same read settles; none are queued.
+ // Retain both the caller and sole scan ownership across queued wallet reads.
+ // No later poll can abandon or duplicate this still-owned canonical work.
  const pending=Promise.resolve().then(scan);admission.pending=pending;
- const owned=pending.finally(()=>{if(admission.pending===pending)admission.pending=null;});
- try{return await Promise.race([owned,timeout]);}finally{clearTimeout(timer);}
+ try{return await pending;}finally{if(admission.pending===pending)admission.pending=null;}
 }
 /** Rolling request identity comes from the authenticated public projection.
  * Human ownership/private tags never enter this port. Current on-chain plugin,

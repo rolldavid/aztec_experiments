@@ -488,20 +488,29 @@ test('bounded predecessor pages skip authenticated terminal history but stop at 
  assert.equal(await rollingPredecessorsClear({index,request,isTerminal}),false);assert.equal(calls,70);
  barrier=-1;calls=0;assert.equal(await rollingPredecessorsClear({index,request,isTerminal}),true);assert.equal(calls,70);
  await assert.rejects(rollingPredecessorsClear({index,request,isTerminal:async()=>{revision='changed';return true;}}),/publication changed/);
- revision='one';calls=0;await assert.rejects(rollingPredecessorsClear({index,request,timeoutMs:5,isTerminal:async()=>{calls++;await new Promise(r=>setTimeout(r,15));return true;}}),/unavailable: deadline/);
- await new Promise(r=>setTimeout(r,20));assert.equal(calls,1,'timed-out read cannot start further predecessor work');
+ revision='one';
  rows[0].pluginId='5';await assert.rejects(rollingPredecessorsClear({index,request,isTerminal}));
 });
 
-test('timed-out predecessor read retains sole ownership until it settles',async()=>{
- const {rollingPredecessorsClear}=await import('../aztec.mjs');let release,calls=0;const admission={};
+test('queued predecessor read retains its caller and sole ownership until it settles',async()=>{
+ const {rollingPredecessorsClear}=await import('../aztec.mjs');const entered=Promise.withResolvers(),terminal=Promise.withResolvers();let calls=0,settled=false;const admission={};
  const row={postId:'1',threadId:'1',order:'0',requestId:'1',target:'8',pluginId:'4',adapter:'9'},request={postId:f(99),threadId:f(1),order:'100',pluginId:f(4),adapter:f(9)};
  const index={scanPendingPredecessors:()=>({rows:[row],nextAfter:null,revision:'one'})};
- const isTerminal=()=>{calls++;return new Promise(resolve=>{release=resolve;});};
- await assert.rejects(rollingPredecessorsClear({index,request,isTerminal,admission,timeoutMs:5}),/deadline/);
- for(let n=0;n<3;n++)await assert.rejects(rollingPredecessorsClear({index,request,isTerminal,admission,timeoutMs:5}),/prior read pending/);
- assert.equal(calls,1);release(true);await new Promise(r=>setImmediate(r));assert.equal(admission.pending,null);
+ const pending=rollingPredecessorsClear({index,request,admission,isTerminal:()=>{calls++;entered.resolve();return terminal.promise;}}).then(value=>{settled=true;return value;});
+ await entered.promise;const owner=admission.pending;
+ for(let n=0;n<3;n++)await assert.rejects(rollingPredecessorsClear({index,request,admission}),/prior read pending/);
+ assert.equal(calls,1);assert.equal(settled,false);assert.equal(admission.pending,owner);
+ terminal.resolve(true);assert.equal(await pending,true);assert.equal(admission.pending,null);
  assert.equal(await rollingPredecessorsClear({index,request,isTerminal:async()=>true,admission}),true);
+});
+test('closing predecessor admission drains its owned read without admitting or scanning another row',async()=>{
+ const {rollingPredecessorsClear}=await import('../aztec.mjs');const entered=Promise.withResolvers(),terminal=Promise.withResolvers(),admission={};let calls=0,reads=0;
+ const rows=[0,1].map(order=>({postId:String(order+1),threadId:'1',order:String(order),requestId:String(order+1),target:'8',pluginId:'4',adapter:'9'}));
+ const request={postId:f(99),threadId:f(1),order:'100',pluginId:f(4),adapter:f(9)},index={scanPendingPredecessors:()=>{reads++;return {rows,nextAfter:null,revision:'one'};}};
+ const pending=rollingPredecessorsClear({index,request,admission,isTerminal:()=>{calls++;entered.resolve();return terminal.promise;}});
+ const rejected=assert.rejects(pending,/admission closed/);await entered.promise;admission.closed=true;
+ await assert.rejects(rollingPredecessorsClear({index,request,admission}),/admission closed/);
+ terminal.resolve(true);await rejected;assert.equal(calls,1);assert.equal(reads,1);assert.equal(admission.pending,null);
 });
 
 test('saved reply recovery remains dispatchable after moderation or plugin disable',async()=>{
@@ -511,15 +520,15 @@ test('saved reply recovery remains dispatchable after moderation or plugin disab
  const server=await startEscrowService({descriptor:{},profile:'rolling',board:x.args.board,recoverPending:async()=>x.store.read().hostedPrivateBok.phase==='finished'?[]:[{...x.args.request,threadId:f(9)}],run:()=>x.run(),port:0,pollMs:5,onError:e=>assert.fail(e)});
  try{const end=Date.now()+300;while(x.store.read().hostedPrivateBok.phase!=='finished'&&Date.now()<end)await new Promise(r=>setTimeout(r,5));assert.equal(x.store.read().hostedPrivateBok.phase,'finished');assert.deepEqual(x.events,[...events,'finish']);assert.equal(x.row.refunded,994n);}finally{await server.close();}
 });
-test('service shutdown drains timed-out owned predecessor reads before closing',async()=>{
- const {rollingPredecessorsClear}=await import('../aztec.mjs');const admission={};let release,failed=0,reads=0,closed=false;
+test('service shutdown drains the owned predecessor scan before closing resources',async()=>{
+ const {rollingPredecessorsClear}=await import('../aztec.mjs');const entered=Promise.withResolvers(),terminal=Promise.withResolvers(),admission={},events=[];let reads=0;
  const row={postId:'1',threadId:'1',order:'0',requestId:'1',target:'8',pluginId:'4',adapter:'9'},request={postId:f(99),threadId:f(1),order:'100',pluginId:f(4),adapter:f(9)};
  const index={scanPendingPredecessors:()=>{reads++;return {rows:[row],nextAfter:null,revision:'one'};}};
- const board={pending:async()=>{await rollingPredecessorsClear({index,request,admission,timeoutMs:5,isTerminal:()=>new Promise(r=>release=r)});return {requests:[],nextCursor:null};},close:async()=>{await admission.pending?.catch(()=>{});}};
- const server=await startEscrowService({descriptor:{},profile:'rolling',board,run:async()=>assert.fail('No dispatch'),port:0,pollMs:50,onError:()=>failed++});
- while(!failed)await new Promise(r=>setTimeout(r,2));const closing=server.close().then(()=>closed=true);
- try{await new Promise(r=>setTimeout(r,10));assert.equal(closed,false,'Shutdown retains resources until owned read ends');}finally{release(true);await closing;}
- const count=reads;await new Promise(r=>setTimeout(r,10));assert.equal(reads,count);
+ const board={pending:async()=>{await rollingPredecessorsClear({index,request,admission,isTerminal:async()=>{entered.resolve();const result=await terminal.promise;events.push('terminal');return result;}});return {requests:[],nextCursor:null};},close:async()=>{await admission.pending?.catch(()=>{});events.push('board closed');}};
+ const server=await startEscrowService({descriptor:{},profile:'rolling',board,run:async()=>assert.fail('No dispatch'),port:0,onError:e=>assert.fail(e)});
+ await entered.promise;const closing=server.close().then(()=>events.push('service closed'));
+ assert.deepEqual(events,[]);assert.equal(reads,1);terminal.resolve(true);await closing;
+ assert.deepEqual(events,['terminal','board closed','service closed']);assert.equal(reads,2);assert.equal(admission.pending,null);
 });
 
 for(const development of [true,false])test('terminal node pins '+(development?'checkpointed':'finalized')+' reads and retains original canonical rechecks',async()=>{
