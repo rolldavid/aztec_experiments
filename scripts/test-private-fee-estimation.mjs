@@ -105,3 +105,37 @@ for(const lateRevert of [false,true])test('actual wallet preserves the measured 
  await sendPrivateFeeTransaction(h.input);assert.equal(proved.length,1);assert.equal(journaled.length,1);assert.equal(submitted.length,1);assert.equal(journaled[0],submitted[0]);
  const enforced=h.calls.filter(c=>c.enforce);assert.equal(enforced.length,3);for(const c of enforced){assert.deepEqual(c.gas,proved[0].gasSettings);assert.equal(c.payload,proved[0].payload);}assert.equal(proved[0].payload.calls[0].args[0].toBigInt(),proved[0].gasSettings.getFeeLimit().toBigInt());
 });
+
+
+test('adequate credit uses one strict native simulation at the configured fee maximum',async()=>{
+ const h=fixture({available:3200n});const result=await estimatePrivateFeeTransaction(h.input);
+ assert.equal(h.calls.length,1);assert.equal(h.calls[0].phase,'public');assert.equal(h.calls[0].enforce,true);
+ assert.equal(result.payload,h.calls[0].payload);assert.deepEqual(result.gasSettings,h.input.prepared.gasSettings);
+ assert.equal(result.maximumFee,3200n);assert.equal(result.reservation,3200n);assert.equal(result.payload.calls[0].args[0].toBigInt(),3200n);
+ assert(result.maximumFee<=h.input.prepared.availableCredit);assert.equal(h.sends.length,0);
+ // The quoted maximum reserves credit; only measured execution is charged.
+ const measured=new Gas(13,35),actual=BigInt(measured.daGas)*2n+BigInt(measured.l2Gas)*3n;
+ assert(actual<result.reservation);assert.equal(result.reservation-actual,3069n);
+});
+test('adequate-credit maximum and teardown stay inside current native gas caps',async()=>{
+ const h=fixture({available:3200n});h.input.node.getNodeInfo=async()=>({txsLimits:{gas:new Gas(90,900)}});
+ const result=await estimatePrivateFeeTransaction(h.input);
+ assert.equal(h.calls.length,1);assert.deepEqual(result.gasSettings.gasLimits,new Gas(90,900));assert.deepEqual(result.gasSettings.teardownGasLimits,new Gas(50,500));
+ assert.equal(result.maximumFee,2880n);assert(result.maximumFee<=h.input.prepared.gasSettings.getFeeLimit().toBigInt());
+});
+for(const kind of ['gas','contract','transport'])test('adequate-credit '+kind+' failure propagates without another simulation or send',async()=>{
+ const h=fixture({available:3200n}),error=kind==='gas'?h.error():Object.assign(Error(kind),{code:kind});let calls=0;
+ h.input.simulator.public=async()=>{calls++;throw error;};await assert.rejects(sendPrivateFeeTransaction(h.input),e=>e===error);
+ assert.equal(calls,1);assert.equal(h.calls.length,0);assert.equal(h.sends.length,0);
+});
+test('adequate-credit strict result must fit its declared limits and remain successful',async()=>{
+ for(const failure of ['total','teardown','revert']){
+  const h=fixture({available:3200n}),simulate=h.input.simulator.public;
+  h.input.simulator.public=async(...args)=>{const result=await simulate(...args);if(failure==='total')result.gasUsed.totalGas.l2Gas=1001;else if(failure==='teardown')result.gasUsed.teardownGas.l2Gas=501;else result.publicOutput.txEffect.revertCode=RevertCode.REVERTED;return result;};
+  await assert.rejects(sendPrivateFeeTransaction(h.input),{code:failure==='revert'?'BB_SIMULATION_FAILED':'BB_GAS_LIMIT_EXCEEDED'});assert.equal(h.calls.length,1);assert.equal(h.sends.length,0);
+ }
+});
+test('adequate-credit bridge payload retains its claim and positive reservation at zero fees',async()=>{
+ const h=fixture({available:500n,prices:GasFees.empty()});h.input.prepared.paymentMethod=new PrivateMintAndPayFeePaymentMethod(h.payer,{amount:500n,salt:new Fr(2),leafIndex:new Fr(3),secret:new Fr(4)},1n);
+ const result=await estimatePrivateFeeTransaction(h.input);assert.equal(h.calls.length,1);assert.equal(result.maximumFee,0n);assert.equal(result.reservation,1n);assert.equal(result.payload.calls[1].name,'mint_and_pay_fee');assert.equal(result.payload.calls[1].args[0].toBigInt(),500n);assert.equal(result.payload.calls[1].args[3].toBigInt(),1n);
+});

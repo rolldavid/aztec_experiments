@@ -34,6 +34,17 @@ export async function estimatePrivateFeeTransaction({wallet,node,interaction,pre
  const maximum=min(available,cost(caps,ceiling.maxFeesPerGas)+1n),application=await interaction.request();
  if(available<=0n)throw fail('PRIVATE_FEE_BALANCE_INSUFFICIENT');
  const payloadFor=async reservation=>mergeExecutionPayloads([await prepared.paymentMethod.withReservation(reservation).getExecutionPayload(),application]);
+ // Adequate credit needs no reservation search. Validate the configured maximum
+ // once with native fee enforcement; the FPC returns unused credit in teardown.
+ const bounded=settings(caps,new Gas(...dimensions.map(k=>Math.min(ceiling.teardownGasLimits[k],caps[k]))));
+ const boundedFee=bounded.getFeeLimit().toBigInt();
+ if(boundedFee<=available){
+  const reservation=boundedFee||1n;await guard();const payload=await payloadFor(reservation);
+  const result=await simulator.public(payload,from,bounded,true);
+  if(!successful(result))throw result.publicOutput?.revertReason??fail('BB_SIMULATION_FAILED');
+  if(dimensions.some(k=>result.gasUsed.totalGas[k]>bounded.gasLimits[k]||result.gasUsed.teardownGas[k]>bounded.teardownGasLimits[k]))throw fail('BB_GAS_LIMIT_EXCEEDED');
+  await guard();return {payload,gasSettings:bounded,reservation,maximumFee:boundedFee,passes:1};
+ }
  // Zero prices are legal ONLY in private-only simulation. They never reach the node.
  const privateSettings=GasSettings.forEstimation({maxFeesPerGas:GasFees.empty(),maxPriorityFeesPerGas:GasFees.empty()});privateSettings.teardownGasLimits=Gas.empty();
  await guard();const initial=await simulator.private(await payloadFor(1n),from,privateSettings);
