@@ -105,7 +105,7 @@ for(const kind of ['collateral','private-fee','bok'])test(`labelled RPC ${kind}:
  assert(f.state.guardCalls>10);assert(f.state.reads.filter(x=>Array.isArray(x)&&x[1]===6).length>=4);
 });
 test('custody-store record is verified against public secret commitment',async()=>{const f=await fixture();let count=0;f.input.claimStore={load:async(scope,hash)=>{count++;assert.equal(scope.depositor,f.input.receipt.sender);return {schemaVersion:1,secret:f.secret,secretHash:hash};}};assert.equal((await prepareFundingClaim(f.input)).status,'claim-ready');assert.equal(count,1);f.input.claimStore.load=async()=>({secret:h(7),secretHash:f.input.receipt.secretHash});await assert.rejects(()=>prepareFundingClaim(f.input),{code:'ROLLING_FUNDING_MISMATCH'});});
-test('absence and not-yet-finalized never prepare or retry claims',async()=>{const f=await fixture();f.state.receipt=null;assert.deepEqual(await prepareFundingClaim(f.input),{status:'absent'});const g=await fixture();g.state.finalized.number=5;assert.deepEqual(await prepareFundingClaim(g.input),{status:'waiting',reason:'l1-finality'});assert(!g.state.reads.includes('witness'));});
+test('absent payment stays unknown while canonical mined payment uses native witness without finalized head',async()=>{const f=await fixture();f.state.receipt=null;assert.deepEqual(await prepareFundingClaim(f.input),{status:'absent'});const g=await fixture(),get=g.input.ethProvider.getBlock;g.input.ethProvider.getBlock=async n=>{assert.notEqual(n,'finalized');return get(n);};g.state.finalized.number=0;assert.equal((await prepareFundingClaim(g.input)).status,'claim-ready');assert(g.state.reads.includes('witness'));});
 test('L2 delivery pending differs from reverted L1',async()=>{const f=await fixture();f.state.witness=undefined;assert.deepEqual(await prepareFundingClaim(f.input),{status:'waiting',reason:'l2-delivery'});const g=await fixture();g.state.receipt.status=0;assert.deepEqual(await prepareFundingClaim(g.input),{status:'reverted'});});
 for(const [label,change,code] of [
  ['L1 reorg',f=>{f.state.blockHash=h(500);},'REORG'],
@@ -132,7 +132,7 @@ test('FPC recovery rejects foreign owner, token and altered public amount',async
 test('reorg after witness invalidates ready result',async()=>{const f=await fixture();const original=f.backend.getL1ToL2MessageMembershipWitness;f.backend.getL1ToL2MessageMembershipWitness=async(...args)=>{const result=await original(...args);f.state.blockHash=h(999);return result;};await assert.rejects(()=>prepareFundingClaim(f.input),{code:'ROLLING_FUNDING_REORG'});});
 test('input descriptors reject accessors and snapshots resist changes during awaits',async()=>{const f=await fixture();Object.defineProperty(f.input.receipt,'amount',{get:()=>{throw Error('PRIVATE_SENTINEL');},enumerable:true});await assert.rejects(()=>prepareFundingClaim(f.input),{code:'ROLLING_FUNDING_INVALID'});
  const g=await fixture();const old=g.input.ethProvider.getNetwork;g.input.ethProvider.getNetwork=async()=>{g.input.receipt.amount='1';g.input.secrets.walletSecret=h(99);return old();};assert.equal((await prepareFundingClaim(g.input)).claim.args[1],'5000');});
-test('canonical finalized block changing during verification is not accepted',async()=>{const f=await fixture();const original=f.input.ethProvider.getBlock;f.input.ethProvider.getBlock=async n=>n===8?{number:8,hash:h(400)}:original(n);await assert.rejects(()=>prepareFundingClaim(f.input),{code:'ROLLING_FUNDING_REORG'});});
+test('canonical mined block changing during verification is not accepted',async()=>{const f=await fixture();const original=f.input.ethProvider.getBlock;let reads=0;f.input.ethProvider.getBlock=async n=>n===6&&++reads>1?{number:6,hash:h(400)}:original(n);await assert.rejects(()=>prepareFundingClaim(f.input),{code:'ROLLING_FUNDING_MISMATCH'});});
 
 test('unknown provider error with hostile getters is safely projected',async()=>{const f=await fixture();const error=new Proxy({}, {getPrototypeOf(){throw Error('PRIVATE_SENTINEL');},get(){throw Error('PRIVATE_SENTINEL');}});f.input.ethProvider.getBlock=async()=>{throw error;};await assert.rejects(()=>prepareFundingClaim(f.input),e=>e.code==='ROLLING_FUNDING_UNKNOWN'&&!e.message.includes('PRIVATE_SENTINEL'));});
 test('missing token and changed network are rejected',async()=>{const f=await fixture('bok');f.input.scope.token=undefined;await assert.rejects(()=>prepareFundingClaim(f.input),{code:'ROLLING_FUNDING_INVALID'});const g=await fixture();g.input.ethProvider.getNetwork=async()=>({chainId:1n});await assert.rejects(()=>prepareFundingClaim(g.input),{code:'ROLLING_FUNDING_MISMATCH'});});
@@ -229,7 +229,7 @@ test('aggregate expected getters are not invoked and captured intent survives aw
  const g=await aggregateFixture('private-fee'),original=g.input.contextGuard;g.input.contextGuard=async()=>{g.input.aggregateIntent.expected.feePortal=addr(99);g.input.aggregateIntent.data='0x';await original();};assert.equal((await prepareFundingClaim(g.input)).status,'claim-ready');
 });
 test('aggregate Bok preserves private recipient binding and FPC preserves deterministic owner binding',async()=>{for(const kind of ['bok','private-fee']){const f=await aggregateFixture(kind);f.input.owner=h(99);await assert.rejects(prepareFundingClaim(f.input));}});
-test('aggregate claim still rejects post-witness reorg and waits for L1 finality',async()=>{const f=await aggregateFixture('bok');f.state.finalized.number=5;assert.deepEqual(await prepareFundingClaim(f.input),{status:'waiting',reason:'l1-finality'});const g=await aggregateFixture('private-fee'),original=g.backend.getL1ToL2MessageMembershipWitness;g.backend.getL1ToL2MessageMembershipWitness=async(...a)=>{const value=await original(...a);g.state.blockHash=h(999);return value;};await assert.rejects(prepareFundingClaim(g.input),{code:'ROLLING_FUNDING_REORG'});});
+test('aggregate claim uses native witness before L1 finality and rejects post-witness reorg',async()=>{const f=await aggregateFixture('bok');f.state.finalized.number=5;assert.equal((await prepareFundingClaim(f.input)).status,'claim-ready');const g=await aggregateFixture('private-fee'),original=g.backend.getL1ToL2MessageMembershipWitness;g.backend.getL1ToL2MessageMembershipWitness=async(...a)=>{const value=await original(...a);g.state.blockHash=h(999);return value;};await assert.rejects(prepareFundingClaim(g.input),{code:'ROLLING_FUNDING_REORG'});});
 
 test('aggregate context property accessor cannot execute during claim preparation',async()=>{const f=await aggregateFixture();let touched=0;Object.defineProperty(f.input,'aggregateIntent',{get(){touched++;throw Error('PRIVATE_SENTINEL');}});await assert.rejects(prepareFundingClaim(f.input),{code:'ROLLING_FUNDING_INVALID'});assert.equal(touched,0);});
 
@@ -278,8 +278,8 @@ test('USDC custody rejects getters/imported public context and snapshots before 
  const g=await usdcAggregateFixture('private-fee');g.input.contextGuard=async()=>{g.input.aggregateCustody.privateFeeSalt=h(999);g.input.aggregateCustody.beneficiary=addr(99);};assert.equal((await prepareFundingClaim(g.input)).status,'claim-ready');
  const k=await usdcAggregateFixture('bok');k.input.receipt.aggregateCustody=k.input.aggregateCustody;await assert.rejects(prepareFundingClaim(k.input),{code:'ROLLING_FUNDING_INVALID'});
 });
-test('USDC claims retain finality and post-witness canonical checks',async()=>{
- const f=await usdcAggregateFixture('private-fee');f.state.finalized.number=5;assert.deepEqual(await prepareFundingClaim(f.input),{status:'waiting',reason:'l1-finality'});
+test('USDC claims use native consumability and post-witness canonical checks',async()=>{
+ const f=await usdcAggregateFixture('private-fee');f.state.finalized.number=5;assert.equal((await prepareFundingClaim(f.input)).status,'claim-ready');
  const g=await usdcAggregateFixture('bok'),original=g.backend.getL1ToL2MessageMembershipWitness;g.backend.getL1ToL2MessageMembershipWitness=async(...args)=>{const value=await original(...args);g.state.blockHash=h(999);return value;};await assert.rejects(prepareFundingClaim(g.input),{code:'ROLLING_FUNDING_REORG'});
 });
 
@@ -287,5 +287,5 @@ for(const kind of ['collateral','private-fee','bok'])test('aggregate '+kind+' sh
  const f=await usdcAggregateFixture(kind),counts={};
  for(const name of ['getTransactionReceipt','getTransaction','getCode','getBlock']){const original=f.input.ethProvider[name];f.input.ethProvider[name]=async(...args)=>{counts[name]=(counts[name]??0)+1;return original(...args);};}
  assert.equal((await prepareFundingClaim(f.input)).status,'claim-ready');
- assert.equal(counts.getTransactionReceipt,1);assert.equal(counts.getTransaction,1);assert.equal(counts.getCode,1);assert(counts.getBlock>=4);
+ assert.equal(counts.getTransactionReceipt,1);assert.equal(counts.getTransaction,1);assert.equal(counts.getCode,1);assert(counts.getBlock>=2);
 });

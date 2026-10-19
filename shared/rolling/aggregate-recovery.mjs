@@ -54,7 +54,7 @@ export async function verifyAggregateFundingEffects(provider,record,receipt,read
  check(privateFee.to===e.privateFpc&&privateFee.amount===p.fee.amount&&privateFee.secretHash===p.feeSecretHash);
  check(credit.account===p.bokCommitment&&credit.amount===(usdc?p.bokAmount:p.bok.amount));
  for(const event of [collateral,privateFee,credit])check(field(lower(event.key))&&event.index>=0n);
- // Each claim verifier still checks canonical L1 finality and its L1→L2 witness.
+ // Each claim verifier still checks the canonical mined L1 receipt and its native L1→L2 witness.
  return {planHash:e.planHash,beneficiary:lower(p.beneficiary),refund:funded.refund.toString(),...(usdc?{collateralUsdc:String(funded.collateralUsdc),feeUsdc:String(funded.feeUsdc),relayFeeUsdc:String(funded.relayFeeUsdc)}:{feeEth:String(funded.feeEth),bokEth:String(funded.bokEth)}),
   collateral:{amount:String(collateral.amount),secretHash:collateral.secretHash,messageKey:collateral.key,leafIndex:String(collateral.index)},
   privateFee:{amount:String(privateFee.amount),secretHash:privateFee.secretHash,messageKey:privateFee.key,leafIndex:String(privateFee.index)},

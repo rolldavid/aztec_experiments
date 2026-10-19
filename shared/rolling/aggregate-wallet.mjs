@@ -62,10 +62,6 @@ export async function createAggregateWallet({sdk,ethers,scope,network,board,bok,
   check(result&&['success','reverted'].includes(result.outcome),'RECOVERY_REQUIRED');
   if(result.outcome==='reverted'){
    const network=await read(()=>provider.getNetwork());check(String(network.chainId)===n.chainId,'MISMATCH');
-   if(n.chainId!=='31337'){
-    const finalized=await read(()=>provider.getBlock('finalized'));
-    check(Number.isSafeInteger(finalized?.number)&&finalized.number>=result.receipt.blockNumber,'PENDING');
-   }
   }
   const current=await read(()=>provider.getBlock(result.receipt.blockNumber));
   check(current?.hash?.toLowerCase()===result.receipt.blockHash.toLowerCase(),'MISMATCH');
@@ -360,7 +356,7 @@ export async function advanceAggregateClaim({application,funding,contextGuard=as
     }else{
      try{next=await read('prepare',()=>application.prepare({type:claimAction,...receipts}));}
      catch(error){
-      if(errorValue(error,'code')!=='ROLLING_FUNDING_NOT_READY'||!waits||!['l1-finality','l2-delivery'].includes(errorValue(error,'reason')))throw error;
+      if(errorValue(error,'code')!=='ROLLING_FUNDING_NOT_READY'||!waits||errorValue(error,'reason')!=='l2-delivery')throw error;
       await read('prepare',()=>waits.bridge(receipts,errorValue(error,'reason')));
       next=await read('prepare',()=>application.prepare({type:claimAction,...receipts}));
      }
@@ -419,7 +415,6 @@ export async function createStandaloneTopupWallet({sdk,ethers,kind,network,board
   for(const key of ['from','to','chainId','nonce','data','value'])check(result.request[key]===value.intent[key],'MISMATCH');
   check(JSON.stringify(result.request.expected)===JSON.stringify(value.intent.expected),'MISMATCH');
   check(['success','reverted'].includes(result.outcome),'RECOVERY_REQUIRED');
-  if(result.outcome==='reverted'&&n.chainId!=='31337'){const finalized=await read(()=>provider.getBlock('finalized'));check(Number.isSafeInteger(finalized?.number)&&finalized.number>=result.receipt.blockNumber,'PENDING');}
   const block=await read(()=>provider.getBlock(result.receipt.blockNumber));check(block?.hash?.toLowerCase()===result.receipt.blockHash.toLowerCase(),'MISMATCH');return result;
  }
  async function completedClaim(value){
