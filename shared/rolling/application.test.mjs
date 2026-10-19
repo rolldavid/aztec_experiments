@@ -1707,3 +1707,16 @@ test('moderator transfer rejects zero/self and authority changes before submissi
  assert.equal(p.moderation.successor,hex(99));f.state.moderator=99n;
  assert.deepEqual(await f.app.readModeratorStatus(),{authorized:false});await assert.rejects(f.app.submitPrepared(p.intentId),{code:'ROLLING_MODERATOR_REQUIRED'});assert.equal(f.state.sends,0);
 });
+
+test('funding receipt fences check local identity without repeating network attestation per read',async()=>{
+ const f=fundingFixture(),counts={node:0,chain:0,accounts:0};
+ for(const [object,name,key]of [[f.options.sdk,'inspectTrustedNode','node'],[f.options.accountSession.wallet,'getChainInfo','chain'],[f.options.accountSession.wallet,'getAccounts','accounts']]){const original=object[name];object[name]=async(...args)=>{counts[key]++;return original(...args);};}
+ const original=f.options.sdk.prepareFundingClaim;
+ f.options.sdk.prepareFundingClaim=async input=>{const before={...counts};for(let i=0;i<20;i++)await input.contextGuard();assert.deepEqual(counts,before);return original(input);};
+ f.app=f.restart();await f.app.prepare({type:'claim-deposit',receipt:f.receipt});assert(counts.node>1);assert.equal(f.state.sends,0);
+});
+for(const change of ['local-owner','network-chain'])test('funding verification refuses '+change+' changes before using a derived claim',async()=>{
+ const f=fundingFixture(),original=f.options.sdk.prepareFundingClaim;
+ f.options.sdk.prepareFundingClaim=async input=>{const result=await original(input);if(change==='local-owner'){f.options.accountSession.owner=AztecAddress.fromBigIntUnsafe(99n);await input.contextGuard();}else f.options.accountSession.wallet.getChainInfo=async()=>({chainId:1,version:1});return result;};
+ f.app=f.restart();await assert.rejects(f.app.prepare({type:'claim-deposit',receipt:f.receipt}),{code:'ROLLING_CONTEXT_CHANGED'});assert.equal(f.state.estimates,0);assert.equal(f.state.sends,0);assert.equal(f.values.size,0);
+});

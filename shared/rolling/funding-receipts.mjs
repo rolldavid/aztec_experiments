@@ -103,17 +103,24 @@ export async function prepareFundingClaim(input) {
     const providerReads=capture(suppliedProvider,providerMethods);
     const loadClaim=suppliedStore===undefined ? null : capture(suppliedStore,['load']).load;
     if(aggregateCustody && kind==='collateral')requireThat(loadClaim,'INVALID');
-    const deadline=Date.now()+20000;
+    // Each captured transport owns its request failure bound. A valid sequence
+    // of reads and local verification does not expire on a whole-flow clock.
     const read=async fn=>{
-      let timer;try {
-        requireThat(Date.now()<deadline,'UNKNOWN');
-        return await Promise.race([(async()=>{await guard();requireThat(Date.now()<deadline,'UNKNOWN');const value=await fn();await guard();requireThat(Date.now()<deadline,'UNKNOWN');return value;})(),
-          new Promise((_,reject)=>{timer=setTimeout(()=>reject(fail('UNKNOWN')),Math.max(1,deadline-Date.now()));})]);
-      } catch {readFailed=true;throw fail('UNKNOWN');} finally {clearTimeout(timer);}
+      try {await guard();const value=await fn();await guard();return value;}
+      catch {readFailed=true;throw fail('UNKNOWN');}
     };
-    // Guarded capabilities expose reads only, including when an existing recovery
-    // helper calls them internally. No signer or send method is ever passed through.
-    const provider=Object.fromEntries(providerMethods.map(name=>[name,(...args)=>read(()=>providerReads[name](...args))]));
+    // Recovery helpers share exact immutable transaction/receipt/code reads in
+    // this invocation only. Canonical block and finalized-anchor checks stay
+    // fresh, including the explicit rechecks after the witness verification.
+    const immutable=new Map();
+    const provider=Object.fromEntries(providerMethods.map(name=>[name,(...args)=>read(()=>{
+      const reusable=(name==='getTransaction'||name==='getTransactionReceipt')&&args[0]===r.txHash ||
+        name==='getCode'&&args[1]===r.blockNumber;
+      if(!reusable)return providerReads[name](...args);
+      const key=JSON.stringify([name,args]);
+      if(!immutable.has(key))immutable.set(key,Promise.resolve().then(()=>providerReads[name](...args)));
+      return immutable.get(key);
+    })]));
     const node=Object.fromEntries(['getNodeInfo','getContract'].map(name=>[name,(...args)=>read(()=>nodeReads[name](...args))]));
     const info=await node.getNodeInfo(), network=await provider.getNetwork();
     requireThat(String(info.l1ChainId)===s.chainId && String(info.rollupVersion)===s.version && equal(info.l1ContractAddresses?.rollupAddress,s.rollup) && String(network.chainId)===s.chainId);

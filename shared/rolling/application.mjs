@@ -181,12 +181,15 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
       check(typeof value==='bigint'&&value>=0n&&value<FIELD_MODULUS,'ROLLING_CONTEXT_CHANGED');return value;
     }catch{throw fail('ROLLING_CONTEXT_CHANGED');}
   }
-  async function guard(){
+  async function localGuard(){
     check(session&&typeof contextGuard==='function','ROLLING_LOCKED');await contextGuard();
     check(owner===session.owner.toString()&&sdk.isTrustedPrivateNode(session.node)&&
       session.wallet.aztecNode===session.node&&sdk.isPrivateWalletForNode(session.wallet,session.node)&&sdk.isPrivatePXEForNode(session.wallet.pxe,session.node)&&fixed.board===deployment.board.address.toString()&&fixed.fee===deployment.privateFee.address.toString()&&
       JSON.stringify(fixed.network)===JSON.stringify(deployment.network)&&fixed.portal===deployment.portal&&
       (!bok||deployment.bok?.address.toString()===bok.address&&deployment.bok?.operator.toString()===bok.operator&&field(deployment.bok?.pluginId,true)===bok.pluginId),'ROLLING_CONTEXT_CHANGED');
+  }
+  async function guard(){
+    await localGuard();
     await sdk.inspectTrustedNode(session.node,{expectedNetworkScope:fixed.network,proofsEnabled:fixed.proofsEnabled});
     const chain=await session.wallet.getChainInfo();check(chainValue(chain?.chainId)===chainValue(scope.chainId)&&chainValue(chain?.version)===chainValue(scope.version),'ROLLING_CONTEXT_CHANGED');
     const accounts=await session.wallet.getAccounts();check(accounts.some(a=>(a.address??a).toString()===owner),'ROLLING_CONTEXT_CHANGED');
@@ -204,9 +207,9 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
   async function fundingClaim(kind,metadata){
     check(fundingProvider&&typeof sdk.prepareFundingClaim==='function','ROLLING_FUNDING_UNAVAILABLE');
     const receipt=exactData(metadata,['txHash','blockHash','blockNumber','sender','nonce','amount','leafIndex','messageKey','secretHash']);
-    await guard();const header=await session.wallet.pxe.getSyncedBlockHeader();await guard();
+    await guard();const header=await session.wallet.pxe.getSyncedBlockHeader();await localGuard();
     const anchor={number:Number(header.globalVariables.blockNumber),hash:(await header.hash()).toString(),root:header.state.l1ToL2MessageTree.root.toString()};
-    const aggregate=loadAggregate?await loadAggregate(receipt.txHash):null;await guard();
+    const aggregate=loadAggregate?await loadAggregate(receipt.txHash):null;await localGuard();
     let claimScope={...fixed.network,portal:fixed.portal,recipient:fixed.board};
     let secrets={walletSecret:session.walletSecret,...(kind==='collateral'?{walletSalt:field(String(session.walletSalt))}:{})};
     if(kind==='bok'){
@@ -216,13 +219,15 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
       secrets={recipientSalt:field(aggregate.recipientSalt,true),bridgeSecret:field(aggregate.bridgeSecret,true)};
     }
     if(kind==='private-fee'){
-      const info=await session.node.getNodeInfo();await guard();
+      const info=await session.node.getNodeInfo();await localGuard();
       claimScope={...fixed.network,portal:info.l1ContractAddresses.feeJuicePortalAddress.toString().toLowerCase(),
         token:info.l1ContractAddresses.feeJuiceAddress.toString().toLowerCase(),recipient:fixed.fee};
     }
+    // Full network/account attestation brackets verification. Per-read fences
+    // check local session identity without multiplying those network queries.
     const verified=await sdk.prepareFundingClaim({kind,scope:claimScope,receipt,anchor,owner,
       secrets,...(aggregate?{aggregateIntent:aggregate.intent,...(aggregate.aggregateCustody?{aggregateCustody:aggregate.aggregateCustody}:{})}:{}),
-      privateFeeArtifact:deployment.privateFee.artifact,ethProvider:fundingProvider,node:session.node,claimStore,contextGuard:guard});
+      privateFeeArtifact:deployment.privateFee.artifact,ethProvider:fundingProvider,node:session.node,claimStore,contextGuard:localGuard});
     await guard();if(verified.status!=='claim-ready')throw Object.assign(Error('Funding is not ready to claim.'),{code:'ROLLING_FUNDING_NOT_READY',reason:verified.reason});return verified.claim;
   }
   async function payment(action,record){

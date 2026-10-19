@@ -138,12 +138,21 @@ test('unknown provider error with hostile getters is safely projected',async()=>
 test('missing token and changed network are rejected',async()=>{const f=await fixture('bok');f.input.scope.token=undefined;await assert.rejects(()=>prepareFundingClaim(f.input),{code:'ROLLING_FUNDING_INVALID'});const g=await fixture();g.input.ethProvider.getNetwork=async()=>({chainId:1n});await assert.rejects(()=>prepareFundingClaim(g.input),{code:'ROLLING_FUNDING_MISMATCH'});});
 test('malformed event, amount, content/key or leaf never reaches claim preparation',async()=>{for(const mutate of [f=>{f.state.receipt.logs[0].data='0x1234';},f=>{f.eventArgs[1]='5001';f.state.receipt.logs[0]={address:f.input.scope.portal,...f.abi.encodeEventLog(f.abi.getEvent(f.eventName),f.eventArgs)};},f=>{f.input.receipt.messageKey=h(2);},f=>{f.input.receipt.leafIndex='8';}]){const f=await fixture();mutate(f);await assert.rejects(()=>prepareFundingClaim(f.input),{code:'ROLLING_FUNDING_MISMATCH'});}});
 
-test('20-second whole-operation deadline prevents a delayed guard starting an RPC afterwards',async t=>{
- const f=await fixture();let release,calls=0;const gate=new Promise(resolve=>{release=resolve;});f.input.contextGuard=()=>gate;f.backend.getNodeInfo=async()=>{calls++;throw Error('Should not run');};
- t.mock.timers.enable({apis:['setTimeout','Date']});const pending=prepareFundingClaim(f.input);const rejected=assert.rejects(pending,{code:'ROLLING_FUNDING_UNKNOWN'});t.mock.timers.tick(20001);await rejected;release();await Promise.resolve();await Promise.resolve();assert.equal(calls,0);t.mock.timers.reset();
+test('valid claim reads are not expired by elapsed time while a context guard is pending',async t=>{
+ const f=await fixture();let release,entered;const gate=new Promise(resolve=>release=resolve),started=new Promise(resolve=>entered=resolve);let first=true;
+ f.input.contextGuard=async()=>{if(first){first=false;entered();await gate;}};
+ t.mock.timers.enable({apis:['Date']});const pending=prepareFundingClaim(f.input);await started;t.mock.timers.tick(20001);release();
+ assert.equal((await pending).status,'claim-ready');t.mock.timers.reset();
 });
-test('FPC helper RPC uncertainty is not relabelled a receipt mismatch',async()=>{
- const f=await fixture('private-fee');let calls=0;const original=f.input.ethProvider.getTransaction;f.input.ethProvider.getTransaction=async(...args)=>{if(++calls>1)throw Error('PRIVATE_SENTINEL');return original(...args);};await assert.rejects(()=>prepareFundingClaim(f.input),{code:'ROLLING_FUNDING_UNKNOWN'});
+test('FPC helper reuses exact transaction reads within one verification and rereads on the next invocation',async()=>{
+ const f=await fixture('private-fee');let calls=0;const original=f.input.ethProvider.getTransaction;
+ f.input.ethProvider.getTransaction=async(...args)=>{calls++;return original(...args);};
+ assert.equal((await prepareFundingClaim(f.input)).status,'claim-ready');assert.equal(calls,1);
+ f.state.tx.from=addr(99);await assert.rejects(()=>prepareFundingClaim(f.input),{code:'ROLLING_FUNDING_MISMATCH'});assert.equal(calls,2);
+});
+test('FPC helper transport failure remains unknown rather than receipt mismatch',async()=>{
+ const f=await fixture('private-fee');f.input.ethProvider.getTransaction=async()=>{throw Error('PRIVATE_SENTINEL');};
+ await assert.rejects(()=>prepareFundingClaim(f.input),{code:'ROLLING_FUNDING_UNKNOWN'});
 });
 
 test('unbranded node is rejected before guard or membership, even if it copies trusted methods',async()=>{
@@ -272,4 +281,11 @@ test('USDC custody rejects getters/imported public context and snapshots before 
 test('USDC claims retain finality and post-witness canonical checks',async()=>{
  const f=await usdcAggregateFixture('private-fee');f.state.finalized.number=5;assert.deepEqual(await prepareFundingClaim(f.input),{status:'waiting',reason:'l1-finality'});
  const g=await usdcAggregateFixture('bok'),original=g.backend.getL1ToL2MessageMembershipWitness;g.backend.getL1ToL2MessageMembershipWitness=async(...args)=>{const value=await original(...args);g.state.blockHash=h(999);return value;};await assert.rejects(prepareFundingClaim(g.input),{code:'ROLLING_FUNDING_REORG'});
+});
+
+for(const kind of ['collateral','private-fee','bok'])test('aggregate '+kind+' shares immutable reads but keeps canonical rechecks fresh',async()=>{
+ const f=await usdcAggregateFixture(kind),counts={};
+ for(const name of ['getTransactionReceipt','getTransaction','getCode','getBlock']){const original=f.input.ethProvider[name];f.input.ethProvider[name]=async(...args)=>{counts[name]=(counts[name]??0)+1;return original(...args);};}
+ assert.equal((await prepareFundingClaim(f.input)).status,'claim-ready');
+ assert.equal(counts.getTransactionReceipt,1);assert.equal(counts.getTransaction,1);assert.equal(counts.getCode,1);assert(counts.getBlock>=4);
 });
