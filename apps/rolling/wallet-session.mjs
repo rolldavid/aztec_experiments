@@ -139,7 +139,14 @@ export function createCollateralWithdrawal({sdk,ethers,provider,node,application
  }
  const cost=result=>{const r=result.receipt,price=r?.gasPrice??r?.effectiveGasPrice;return typeof r?.gasUsed==='bigint'&&r.gasUsed>=0n&&typeof price==='bigint'&&price>=0n?String(r.gasUsed*price):null;};
  async function finalized(result){
-  if(fixed.chainId!=='31337'){const final=await read(()=>provider.getBlock('finalized'));check(Number.isSafeInteger(final?.number)&&final.number>=result.receipt.blockNumber);const again=await read(()=>provider.getBlock(result.receipt.blockNumber));check(hash(again.hash)===hash(result.receipt.blockHash));}
+  if(fixed.chainId!=='31337'){
+   await contextGuard();
+   // A mined refund remains owned while the provider observes finality. Do not
+   // turn ordinary network progress into a failed or repeatable payment.
+   await own(()=>waitForFundingFinality(originalProvider,result.receipt.blockNumber));
+   await contextGuard();
+   const again=await read(()=>provider.getBlock(result.receipt.blockNumber));check(hash(again.hash)===hash(result.receipt.blockHash));
+  }
  }
  async function verified(r,search=false){
   const j=await journal(r),saved=await read(()=>j.inspectSummary());if(!saved||saved.kind!==(isBok(r)?'bok-withdraw':'withdraw'))return null;if(saved.outcome==='unknown'&&!search)return null;

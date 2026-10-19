@@ -510,7 +510,7 @@ async function withdrawalFixture({chainId='31337',bok=false,scopeOverride={}}={}
  const leaf=computeL2ToL1MessageHash({l2Sender:new AztecAddress(new Fr(BigInt(scope.board))),l1Recipient:EthAddress.fromString(scope.portal),content,chainId:new Fr(BigInt(chainId)),rollupVersion:new Fr(1)});
  const state={sends:0,calls:0,guard:true,connected:eth(33),price:2n,settled:true,unknown:false,head:10,tx:null,receipt:null,fork:false};const values=new Map();
  const storage={read:async key=>values.get(key)??null,compareAndSwap:async(key,previous,next)=>{assert.equal(values.get(key)??null,previous);if(next===null)values.delete(key);else values.set(key,next);}};
- const provider={getNetwork:async()=>({chainId:BigInt(state.chainId??chainId)}),getBlockNumber:async()=>state.head,getBlock:async n=>n==='finalized'?{number:state.finalized??state.head,hash:hex(state.finalized??state.head)}:({number:n==='latest'?state.head:n,hash:state.fork?hex(999):hex(n==='latest'?state.head:n),parentHash:hex(Number(n==='latest'?state.head:n)-1),prefetchedTransactions:state.tx?[state.tx]:[]}),getTransactionCount:async(_address,tag)=>tag==='pending'&&state.pendingNonce!==undefined?state.pendingNonce:state.tx?1:0,getTransaction:async h=>state.tx?.hash===h?state.tx:null,getTransactionReceipt:async h=>state.receipt?.hash===h?state.receipt:null,waitForTransaction:async()=>state.receipt,estimateGas:async()=>100n,getFeeData:async()=>{state.onFees?.();return {gasPrice:state.price};},call:async()=>{state.calls++;if(!state.settled)throw Error('Outbox not settled');return '0x';}};
+ const provider={on:async(event,listener)=>{assert.equal(event,'finalized');state.finalityListener=listener;},off:async(event,listener)=>{assert.equal(event,'finalized');assert.equal(state.finalityListener,listener);state.finalityListener=null;},getNetwork:async()=>({chainId:BigInt(state.chainId??chainId)}),getBlockNumber:async()=>state.head,getBlock:async n=>n==='finalized'?(state.onFinalityRead?.(),{number:state.finalized??state.head,hash:hex(state.finalized??state.head)}):({number:n==='latest'?state.head:n,hash:state.fork?hex(999):hex(n==='latest'?state.head:n),parentHash:hex(Number(n==='latest'?state.head:n)-1),prefetchedTransactions:state.tx?[state.tx]:[]}),getTransactionCount:async(_address,tag)=>tag==='pending'&&state.pendingNonce!==undefined?state.pendingNonce:state.tx?1:0,getTransaction:async h=>state.tx?.hash===h?state.tx:null,getTransactionReceipt:async h=>state.receipt?.hash===h?state.receipt:null,waitForTransaction:async()=>state.receipt,estimateGas:async()=>100n,getFeeData:async()=>{state.onFees?.();return {gasPrice:state.price};},call:async()=>{state.calls++;if(!state.settled)throw Error('Outbox not settled');return '0x';}};
  const node={getTxReceipt:async()=>({txHash:record.txHash,status:'checkpointed',executionResult:'success',blockNumber:1,blockHash:hex(42)}),getTxEffect:async()=>({l2BlockNumber:1,l2BlockHash:hex(42),data:{l2ToL1Msgs:[leaf]}}),getBlockData:async()=>({header:{globalVariables:{blockNumber:1}},blockHash:state.l2Fork?hex(99):hex(42)}),getL2ToL1MembershipWitness:async()=>({epochNumber:1,numCheckpointsInEpoch:1,leafIndex:0n,siblingPath:{toBufferArray:()=>[]}})};
  const abi=new Interface([bok?'event Withdrawn(address indexed recipient,uint128 amount,bytes32 nonce)':'event Withdrawn(address indexed depositor,uint128 amount)']);
  const signer={getAddress:async()=>state.connected,sendTransaction:async request=>{state.sends++;state.head++;state.tx={...request,hash:hex(88)};state.receipt={hash:hex(88),from:eth(33),to:scope.portal,status:1,gasUsed:100n,gasPrice:2n,blockNumber:state.head,blockHash:hex(state.head),logs:[{address:scope.portal,...abi.encodeEventLog(abi.getEvent('Withdrawn'),[eth(33),100n,...(bok?[hex(55)]:[])])}]};if(state.unknown)throw Error('lost response');return state.tx;}};
@@ -597,11 +597,17 @@ test('RC22 timeout retains ownership of the original provider read before return
  let settled=false;const result=f.restart().prepare({maximumGasWei:'1000'}).catch(error=>{assert.equal(error,original);settled=true;});
  await began;await new Promise(resolve=>setImmediate(resolve));assert.equal(settled,false);release();await result;assert.equal(settled,true);assert.equal(f.state.sends,0);
 });
-test('RC22 testnet refund waits for finalized Ethereum inclusion and resumes without another send',async()=>{
+for(const outcome of ['finalized','reorg','context'])test(`RC22 testnet refund native finality event preserves original send: ${outcome}`,async()=>{
  const f=await withdrawalFixture({chainId:'11155111'});await f.cap.prepare({maximumGasWei:'1000'});f.state.finalized=9;
- await assert.rejects(f.cap.confirm(),{code:'ROLLING_WITHDRAWAL_RECOVERY_REQUIRED'});assert.equal(f.state.sends,1);
- await assert.rejects(f.restart().verify(f.record),{code:'ROLLING_WITHDRAWAL_RECOVERY_REQUIRED'});
- f.state.finalized=f.state.head;assert.equal((await f.restart().recover()).status,'refunded');assert.equal(f.state.sends,1);
+ let observed;const read=new Promise(resolve=>observed=resolve);f.state.onFinalityRead=observed;
+ let completed=false;const pending=f.cap.confirm();pending.then(()=>completed=true,()=>{});
+ await read;assert.equal(completed,false);assert.equal(f.state.sends,1);assert.equal(typeof f.state.finalityListener,'function');
+ f.state.finalityListener(f.state.head-1);assert.equal(completed,false);
+ if(outcome==='reorg')f.state.fork=true;if(outcome==='context')f.state.guard=false;
+ f.state.finalized=f.state.head;f.state.finalityListener(f.state.head);
+ if(outcome==='finalized'){assert.equal((await pending).status,'refunded');assert.equal((await f.restart().recover()).status,'refunded');}
+ else await assert.rejects(pending,outcome==='reorg'?{code:'ROLLING_WITHDRAWAL_RECOVERY_REQUIRED'}:undefined);
+ assert.equal(f.state.finalityListener,null);assert.equal(f.state.sends,1);
 });
 
 for(const phase of ['lock','context','pxe-sync','account-initialize','method'])test('refresh diagnostic preserves exact failure at '+phase,async()=>{
@@ -678,8 +684,10 @@ for(const change of ['wallet','scope','kind','nonce','l2-fork','gas','settlement
  await assert.rejects(f.cap.confirm());assert.equal(f.state.sends,0);
 });
 test('RC22 Bok refund finalized receipt remains necessary after an explicit send',async()=>{
- const f=await withdrawalFixture({bok:true,chainId:'11155111'});await f.cap.prepare({maximumGasWei:'1000'});f.state.finalized=9;await assert.rejects(f.cap.confirm());assert.equal(f.state.sends,1);
- f.state.finalized=f.state.head;assert.equal(await f.restart().verify(f.record),true);f.state.fork=true;await assert.rejects(f.restart().recover());assert.equal(f.state.sends,1);
+ const f=await withdrawalFixture({bok:true,chainId:'11155111'});await f.cap.prepare({maximumGasWei:'1000'});f.state.finalized=9;
+ let observed;const read=new Promise(resolve=>observed=resolve);f.state.onFinalityRead=observed;const pending=f.cap.confirm();await read;assert.equal(f.state.sends,1);
+ f.state.finalized=f.state.head;f.state.finalityListener(f.state.head);assert.equal((await pending).status,'refunded');
+ assert.equal(await f.restart().verify(f.record),true);f.state.fork=true;await assert.rejects(f.restart().recover());assert.equal(f.state.sends,1);
 });
 
 test('RC22 expiry selection passes through existing session synchronization and refuses absent owned accounting before send',async()=>{
