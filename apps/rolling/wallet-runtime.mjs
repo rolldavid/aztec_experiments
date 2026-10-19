@@ -2,17 +2,20 @@ import {selectPrivateViews} from '../../shared/rolling/private-views.mjs';
 // This module is imported only after an explicit Unlock action. Public reading
 // never imports the SDK, opens private storage or makes personalized node calls.
 import {createRollingWalletSession} from './wallet-session.mjs';
-// Public asset delivery may take longer than the small configuration response.
-// This per-asset bound does not extend any recovery/action acceptance budget.
-const ASSET_LOAD_MS=60000,METADATA_LOAD_MS=30000;
+// Fresh metadata/API requests retain a transport failure bound. Immutable asset
+// delivery ends on native completion/error or page cancellation, never elapsed time.
+const METADATA_LOAD_MS=30000;
+const assetURL=asset=>asset.url+'?sha256='+asset.sha256;
 const failed=()=>Object.assign(Error('Private account setup is unavailable. Reload before trying again.'),{code:'ROLLING_RUNTIME_UNAVAILABLE'});
 const digest=async bytes=>Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes)),x=>x.toString(16).padStart(2,'0')).join('');
 async function boundedJSON(url,limit,expected,request={}){
- const response=await fetch(url,{...request,credentials:'omit',redirect:'error',cache:'no-store',referrerPolicy:'no-referrer',signal:AbortSignal.timeout(expected?ASSET_LOAD_MS:METADATA_LOAD_MS)});
- if(!response.ok||!response.body)throw failed();
+ const signal=expected?request.signal:request.signal?AbortSignal.any([request.signal,AbortSignal.timeout(METADATA_LOAD_MS)]):AbortSignal.timeout(METADATA_LOAD_MS);
+ const response=await fetch(expected?assetURL(expected):url,{...request,credentials:'omit',redirect:'error',cache:expected?'default':'no-store',referrerPolicy:'no-referrer',signal});
+ if(!response.ok||!response.body){await response.body?.cancel().catch(()=>{});throw failed();}
  const reader=response.body.getReader(),chunks=[];let size=0;
  try{for(;;){const {done,value}=await reader.read();if(done)break;size+=value.length;if(size>limit)throw failed();chunks.push(value);}}
  catch(error){await reader.cancel().catch(()=>{});throw error;}
+ finally{reader.releaseLock();}
  const bytes=new Uint8Array(size);let offset=0;for(const chunk of chunks){bytes.set(chunk,offset);offset+=chunk.length;}
  if(expected&&(size!==expected.bytes||await digest(bytes)!==expected.sha256))throw failed();
  return JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(bytes));
@@ -22,25 +25,34 @@ function descriptor(value){
   !/^[a-f0-9]{64}$/.test(value.sha256)||typeof value.url!=='string'||!/^\/(?:wallet|crs)\/[a-zA-Z0-9_.-]+$/.test(value.url))throw failed();
  return value;
 }
-function script(asset){
+function script(asset,signal){
  descriptor(asset);
  return new Promise((resolve,reject)=>{
-  const element=document.createElement('script');element.src=asset.url;
+  const element=document.createElement('script');element.src=assetURL(asset);
   element.integrity='sha256-'+btoa(String.fromCharCode(...asset.sha256.match(/../g).map(x=>parseInt(x,16))));
   element.crossOrigin='anonymous';element.referrerPolicy='no-referrer';
-  const timer=setTimeout(()=>{element.remove();reject(failed());},ASSET_LOAD_MS);
-  element.onload=()=>{clearTimeout(timer);resolve();};element.onerror=()=>{clearTimeout(timer);element.remove();reject(failed());};document.head.append(element);
+  const cleanup=()=>{element.onload=null;element.onerror=null;signal.removeEventListener('abort',cancel);};
+  const cancel=()=>{cleanup();element.remove();reject(failed());};
+  element.onload=()=>{cleanup();resolve();};element.onerror=cancel;
+  signal.addEventListener('abort',cancel,{once:true});
+  if(signal.aborted){cancel();return;}
+  document.head.append(element);
  });
 }
 let loading;
 /** A failed load remains failed for this page: no automatic script replay or
  * account reinitialization after a partially executed custody bundle. */
 export function loadRollingWalletRuntime(){
- return loading??=load().catch(()=>{throw failed();});
+ if(!loading){
+  const controller=new AbortController(),cancel=()=>controller.abort();
+  globalThis.addEventListener('pagehide',cancel,{once:true});
+  loading=load(controller.signal).catch(()=>{throw failed();}).finally(()=>globalThis.removeEventListener('pagehide',cancel));
+ }
+ return loading;
 }
-async function load(){
+async function load(signal){
  if(!isSecureContext||!navigator.locks?.request||!crossOriginIsolated)throw failed();
- const metadata=await boundedJSON('/wallet/runtime.json',65536);
+ const metadata=await boundedJSON('/wallet/runtime.json',65536,undefined,{signal});
  if(metadata?.schemaVersion!==1||!Array.isArray(metadata.scripts)||metadata.scripts.length!==9||
   Object.keys(metadata).sort().join()!=='artifacts,config,crs,proofsEnabled,remoteProver,schemaVersion,scripts,trustedQuery')throw failed();
  const config=structuredClone(metadata.config),query=structuredClone(metadata.trustedQuery),remote=metadata.remoteProver?structuredClone(metadata.remoteProver):undefined;
@@ -50,15 +62,15 @@ async function load(){
  const names=['ethers.js','aztec_bundle.js','crs-client.js','wallet-providers.js','passkey-wallet.js','wallet-backup.js','claim-secret-store.js','account.js','engine.js'];
  if(metadata.scripts.some((a,i)=>descriptor(a).url!=='/wallet/'+names[i]))throw failed();
  if(Object.keys(metadata.artifacts??{}).sort().join()!==(config.bok?'board,bok,privateFee':'board,privateFee'))throw failed();
- const crs=await boundedJSON(descriptor(metadata.crs).url,65536,metadata.crs);
- const boardRaw=await boundedJSON(descriptor(metadata.artifacts?.board).url,32*1024*1024,metadata.artifacts.board);
- const feeRaw=await boundedJSON(descriptor(metadata.artifacts?.privateFee).url,32*1024*1024,metadata.artifacts.privateFee);
- const bokRaw=config.bok?await boundedJSON(descriptor(metadata.artifacts?.bok).url,32*1024*1024,metadata.artifacts.bok):undefined;
+ const crs=await boundedJSON(descriptor(metadata.crs).url,65536,metadata.crs,{signal});
+ const boardRaw=await boundedJSON(descriptor(metadata.artifacts?.board).url,32*1024*1024,metadata.artifacts.board,{signal});
+ const feeRaw=await boundedJSON(descriptor(metadata.artifacts?.privateFee).url,32*1024*1024,metadata.artifacts.privateFee,{signal});
+ const bokRaw=config.bok?await boundedJSON(descriptor(metadata.artifacts?.bok).url,32*1024*1024,metadata.artifacts.bok,{signal}):undefined;
  if(!config.bok&&metadata.artifacts?.bok!==undefined)throw failed();
  globalThis.BILLBOARD_CRS_MANIFEST=crs;
  // Custody's optional Ethereum connection reads only a detached public scope.
  globalThis._getPublicConfig=()=>structuredClone(config);
- for(const asset of metadata.scripts)await script(asset);
+ for(const asset of metadata.scripts)await script(asset,signal);
  const sdk=globalThis.__aztec,account=globalThis.BillboardAccount,routing=globalThis.BillboardPrivateFeeRouting;
  if(!sdk?.createTrustedPrivateNode||!account?.configure||!routing?.isPrivateWalletForNode||!globalThis.ethers)throw failed();
  globalThis.BillboardCRS.validateManifest(crs);

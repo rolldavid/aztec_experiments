@@ -82,17 +82,16 @@ class HeldAssetResponse extends EventEmitter {
  destroy(){this.destroyed=true;this.emit('close');}
  finish(){this.emit('finish');}
 }
-test('wallet response byte ownership and 60s deadline cannot pin read/compression admission',async t=>{
+test('wallet response byte ownership lasts through native completion or cancellation',async t=>{
  t.mock.timers.enable({apis:['setTimeout']});
  const big=Buffer.alloc(64*1024*1024),small=Buffer.from('worker');let reads=0;
  const handler=createRollingReaderAssetHandler({connectOrigins:[],read:async p=>{reads++;return {body:p==='/wallet/large.wasm'?big:small,type:'application/wasm'};}});
  const request=url=>({url,method:'GET',headers:{'accept-encoding':'identity'}});
  const first=new HeldAssetResponse(),second=new HeldAssetResponse();const one=handler(request('/wallet/large.wasm'),first);await first.started;const two=handler(request('/wallet/large.wasm'),second);await second.started;
  const refused=new HeldAssetResponse();await handler(request('/wallet/worker.js'),refused);assert.equal(refused.status,503);assert.equal(reads,3);
- // Neither large outgoing response owns the read/compressor. Advancing exactly
- // its fixed deadline closes both, drains the handlers and releases all bytes.
- t.mock.timers.tick(59999);assert.equal(first.destroyed,false);assert.equal(second.destroyed,false);
- t.mock.timers.tick(1);await Promise.all([one,two]);assert.equal(first.destroyed,true);assert.equal(second.destroyed,true);
+ // Slow transfers retain their byte budget, but never the compressor slot.
+ t.mock.timers.tick(120000);assert.equal(first.destroyed,false);assert.equal(second.destroyed,false);
+ first.finish();second.destroy();await Promise.all([one,two]);
  const next=new HeldAssetResponse();const nextResult=handler(request('/wallet/worker.js'),next);await next.started;assert.equal(next.status,200);next.finish();await nextResult;
 });
 test('slow identity reader does not block unrelated worker delivery and 31-worker burst succeeds',async t=>{
@@ -103,4 +102,15 @@ test('slow identity reader does not block unrelated worker delivery and 31-worke
  const workers=await Promise.all(Array.from({length:31},()=>wire(server.url+'/wallet/bb-thread.worker.js',{encoding:'gzip'})));
  assert.equal(workers.length,31);assert.equal(reads,32);for(const r of workers){assert.equal(r.status,200);assert.deepEqual(gunzipSync(r.body),worker);}
  assert.equal(slowResponse.complete,false,'slow original remains unread while worker fanout completes');slow.destroy();
+});
+
+test('immutable wallet URLs bind exact decoded bytes and keep metadata and invalid queries fresh',async t=>{
+ let body=Buffer.from('pinned asset'),reads=0;
+ const server=await startRollingReader({index:readyIndex(),wallet:{connectOrigins:[],read:async()=>{reads++;return {body,type:'application/json'};}}});t.after(()=>server.close());
+ const hash=createHash('sha256').update(body).digest('hex'),url=server.url+'/wallet/board.json?sha256='+hash;
+ for(const encoding of ['identity','gzip']){const r=await wire(url,{encoding});assert.equal(r.status,200);assert.equal(r.headers['cache-control'],'private, max-age=31536000, immutable');assert.deepEqual(encoding==='gzip'?gunzipSync(r.body):r.body,body);assert.equal(r.headers.vary,'Accept-Encoding');}
+ for(const query of ['?sha256='+hash+'&x=1','?sha256='+hash+'&sha256='+hash,'?sha256='+hash.toUpperCase(),'?sha256=wrong']){const before=reads;const r=await wire(server.url+'/wallet/board.json'+query);assert.equal(r.status,404);assert.equal(r.headers['cache-control'],'no-store');assert.equal(reads,before);}
+ const metadata=await wire(server.url+'/wallet/runtime.json?sha256='+hash);assert.equal(metadata.status,404);assert.equal(metadata.headers['cache-control'],'no-store');
+ assert.equal((await wire(server.url+'/wallet/runtime.json')).headers['cache-control'],'no-store');
+ body=Buffer.from('changed asset');const changed=await wire(url);assert.equal(changed.status,404);assert.equal(changed.headers['cache-control'],'no-store');
 });

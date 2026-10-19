@@ -27,8 +27,8 @@ test('real browser SDK unlock and encrypted recovery survive unavailable private
  assert.equal(requests.some(r=>/\/wallet\//.test(r.url)),false);
  await page.getByRole('button',{name:'Unlock',exact:true}).click();
  await page.getByRole('button',{name:'Create account and download recovery',exact:true}).waitFor({timeout:30000});
- assert.equal(requests.filter(r=>r.url.endsWith('/wallet/aztec_bundle.js')).length,1);
- assert.equal(requests.filter(r=>r.url.endsWith('/wallet/bok.json')).length,1);
+ assert.equal(requests.filter(r=>new URL(r.url).pathname==='/wallet/aztec_bundle.js').length,1);
+ assert.equal(requests.filter(r=>new URL(r.url).pathname==='/wallet/bok.json').length,1);
  const bokServed=await wallet.read('/wallet/bok.json');assert.equal(JSON.parse(bokServed.body).name,'PrivateBok');assert.equal(createHash('sha256').update(bokServed.body).digest('hex'),wallet.runtime.artifacts.bok.sha256);
  assert.equal(requests.some(r=>r.method==='POST'),false);
  const facade=await page.evaluate(async()=>{const {loadRollingWalletRuntime}=await import('/wallet/runtime.mjs');const runtime=await loadRollingWalletRuntime();return {selector:typeof runtime.selectPrivateViews,keys:Object.keys(runtime).sort()};});
@@ -87,7 +87,7 @@ test('real browser SDK unlock and encrypted recovery survive unavailable private
  await page.screenshot({path:'execution/evidence/G05/wallet-unavailable-mobile.png',fullPage:true});
  await page.getByRole('button',{name:'Close account panel',exact:true}).click();
  await page.getByRole('button',{name:'Your account',exact:true}).click();
- assert.equal(requests.filter(r=>r.url.endsWith('/wallet/aztec_bundle.js')).length,1);
+ assert.equal(requests.filter(r=>new URL(r.url).pathname==='/wallet/aztec_bundle.js').length,1);
  assert.equal(await page.locator('dialog').evaluate(el=>el.getBoundingClientRect().right<=innerWidth),true);
 });
 
@@ -222,9 +222,9 @@ test('funding relay caps response bytes and rejects a late account change before
  }finally{globalThis.fetch=old;}
 });
 
-// Deadline composition against the real loader, with explicit DOM/transport
-// doubles and virtual time. These do not qualify remote browser delivery.
-async function assetDeadlineFixture(t,{holdArtifact=false}={}){
+// Asset lifecycle against the real loader, with explicit DOM/transport doubles
+// and virtual time. These do not qualify remote browser delivery.
+async function assetDeadlineFixture(t,{holdArtifact=false,corrupt=false}={}){
  t.mock.timers.enable({apis:['setTimeout']});
  for(const [name,value] of Object.entries({isSecureContext:true,crossOriginIsolated:true,navigator:{locks:{request(){}}}})){
   const before=Object.getOwnPropertyDescriptor(globalThis,name);Object.defineProperty(globalThis,name,{configurable:true,value});
@@ -235,7 +235,9 @@ async function assetDeadlineFixture(t,{holdArtifact=false}={}){
  const scripts=['ethers.js','aztec_bundle.js','crs-client.js','wallet-providers.js','passkey-wallet.js','wallet-backup.js','claim-secret-store.js','account.js','engine.js'].map(name=>asset('/wallet/'+name));
  const metadata={schemaVersion:1,config:{network:{chainId:'31337'}},trustedQuery:{},remoteProver:null,proofsEnabled:false,scripts,
   artifacts:{board:asset('/wallet/board.json'),privateFee:asset('/wallet/private-fee.json')},crs:asset('/crs/manifest.json')};
- const requests=[],timeouts=[],elements=[];let cancelled=0,ready;const reached=new Promise(resolve=>ready=resolve);
+ const lifecycle=new EventTarget();
+ for(const name of ['addEventListener','removeEventListener']){const before=Object.getOwnPropertyDescriptor(globalThis,name);Object.defineProperty(globalThis,name,{configurable:true,value:lifecycle[name].bind(lifecycle)});t.after(()=>before?Object.defineProperty(globalThis,name,before):delete globalThis[name]);}
+ const requests=[],optionsSeen=[],timeouts=[],elements=[];let cancelled=0,ready;const reached=new Promise(resolve=>ready=resolve);
  const savedDocument=Object.getOwnPropertyDescriptor(globalThis,'document');
  Object.defineProperty(globalThis,'document',{configurable:true,value:{createElement:()=>({remove(){this.removed=true;}}),head:{append(element){elements.push(element);ready();}}}});
  t.after(()=>savedDocument?Object.defineProperty(globalThis,'document',savedDocument):delete globalThis.document);
@@ -243,32 +245,57 @@ async function assetDeadlineFixture(t,{holdArtifact=false}={}){
  t.after(()=>{for(const [key,before] of [['BILLBOARD_CRS_MANIFEST',oldCrs],['_getPublicConfig',oldConfig]])before?Object.defineProperty(globalThis,key,before):delete globalThis[key];});
  t.mock.method(AbortSignal,'timeout',ms=>{timeouts.push(ms);const controller=new AbortController();setTimeout(()=>controller.abort(),ms);return controller.signal;});
  t.mock.method(globalThis,'fetch',async(url,options)=>{
-  requests.push(url);
+  requests.push(url);optionsSeen.push(options);
   if(url==='/wallet/runtime.json')return new Response(JSON.stringify(metadata));
-  if(holdArtifact)return {ok:true,body:{getReader:()=>({read:()=>new Promise((resolve,reject)=>{ready();options.signal.addEventListener('abort',()=>reject(Error('controlled asset deadline')),{once:true});}),cancel:async()=>{cancelled++;}})}};
-  return new Response(bytes);
+  if(holdArtifact)return {ok:true,body:{getReader:()=>({read:()=>new Promise((resolve,reject)=>{ready();options.signal.addEventListener('abort',()=>reject(Error('controlled asset deadline')),{once:true});}),cancel:async()=>{cancelled++;},releaseLock(){}})}};
+  return new Response(corrupt?Buffer.from('[]'):bytes);
  });
  const {loadRollingWalletRuntime}=await import('./wallet-runtime.mjs?deadline='+encodeURIComponent(t.name));
  const promise=loadRollingWalletRuntime();let settled=false;
  const result=promise.then(()=>{settled=true;return 'unexpected-success';},error=>{settled=true;return error.code;});
- const flush=()=>new Promise(resolve=>setImmediate(resolve));await Promise.race([reached,result.then(code=>{throw Error(code);})]);await flush();
- return {promise,result,loadRollingWalletRuntime,requests,timeouts,elements,flush,get settled(){return settled;},get cancelled(){return cancelled;}};
+ const flush=()=>new Promise(resolve=>setImmediate(resolve));await Promise.race([reached,result.then(code=>{if(!corrupt)throw Error(code);})]);await flush();
+ return {promise,result,loadRollingWalletRuntime,requests,optionsSeen,timeouts,elements,flush,cancel:()=>lifecycle.dispatchEvent(new Event('pagehide')),get settled(){return settled;},get cancelled(){return cancelled;}};
 }
-test('public asset loader permits slow scripts within 60s and fences timeout without replay',async t=>{
+test('public asset loader uses pinned native cache and waits for load/error without replay',async t=>{
  const f=await assetDeadlineFixture(t);
- assert.deepEqual(f.timeouts,[30000,60000,60000,60000]);assert.equal(f.elements.length,1);
+ assert.deepEqual(f.timeouts,[30000]);assert.equal(f.elements.length,1);
+ const hash=createHash('sha256').update('{}').digest('hex');
+ assert.equal(f.elements[0].src,'/wallet/ethers.js?sha256='+hash);
  assert.equal(f.elements[0].integrity,'sha256-'+createHash('sha256').update('{}').digest('base64'));
  assert.equal(f.elements[0].crossOrigin,'anonymous');assert.equal(f.elements[0].referrerPolicy,'no-referrer');
- t.mock.timers.tick(45000);await f.flush();assert.equal(f.settled,false);assert.equal(f.elements[0].removed,undefined);
+ assert.equal(f.optionsSeen[0].cache,'no-store');assert(f.optionsSeen.slice(1).every(o=>o.cache==='default'));
+ assert(f.requests.slice(1).every(url=>url.endsWith('?sha256='+hash)));
+ t.mock.timers.tick(120000);await f.flush();assert.equal(f.settled,false);assert.equal(f.elements[0].removed,undefined);
  f.elements[0].onload();await f.flush();assert.equal(f.elements.length,2);
- t.mock.timers.tick(59999);await f.flush();assert.equal(f.settled,false);
- t.mock.timers.tick(1);assert.equal(await f.result,'ROLLING_RUNTIME_UNAVAILABLE');assert.equal(f.elements[1].removed,true);
+ f.elements[1].onerror();assert.equal(await f.result,'ROLLING_RUNTIME_UNAVAILABLE');assert.equal(f.elements[1].removed,true);
  const before=[f.requests.length,f.elements.length];assert.equal(f.loadRollingWalletRuntime(),f.promise);
  await assert.rejects(f.loadRollingWalletRuntime(),{code:'ROLLING_RUNTIME_UNAVAILABLE'});assert.deepEqual([f.requests.length,f.elements.length],before);
 });
-test('public artifact loader aborts and cancels a stalled body at 60s without script or replay',async t=>{
- const f=await assetDeadlineFixture(t,{holdArtifact:true});assert.deepEqual(f.timeouts,[30000,60000]);
- t.mock.timers.tick(59999);await f.flush();assert.equal(f.settled,false);
- t.mock.timers.tick(1);assert.equal(await f.result,'ROLLING_RUNTIME_UNAVAILABLE');assert.equal(f.cancelled,1);assert.equal(f.elements.length,0);
- assert.equal(f.loadRollingWalletRuntime(),f.promise);assert.deepEqual(f.requests,['/wallet/runtime.json','/crs/manifest.json']);
+test('public artifact loading cancels on page exit rather than elapsed transfer time',async t=>{
+ const f=await assetDeadlineFixture(t,{holdArtifact:true});assert.deepEqual(f.timeouts,[30000]);
+ t.mock.timers.tick(120000);await f.flush();assert.equal(f.settled,false);
+ f.cancel();assert.equal(await f.result,'ROLLING_RUNTIME_UNAVAILABLE');assert.equal(f.cancelled,1);assert.equal(f.elements.length,0);
+ assert.equal(f.loadRollingWalletRuntime(),f.promise);assert.equal(f.requests.length,2);
+});
+test('public script loading cancels on page exit without replay',async t=>{
+ const f=await assetDeadlineFixture(t);f.cancel();assert.equal(await f.result,'ROLLING_RUNTIME_UNAVAILABLE');assert.equal(f.elements[0].removed,true);assert.equal(f.loadRollingWalletRuntime(),f.promise);
+});
+test('public artifact digest mismatch fails before any script executes',async t=>{
+ const f=await assetDeadlineFixture(t,{corrupt:true});assert.equal(await f.result,'ROLLING_RUNTIME_UNAVAILABLE');assert.equal(f.elements.length,0);
+});
+test('native browser reuses immutable hash-addressed bytes while runtime metadata stays fresh',async t=>{
+ const body=Buffer.from('{"public":"artifact"}'),hash=createHash('sha256').update(body).digest('hex');let assets=0,metadata=0;
+ const server=await startRollingReader({index:{sync:async()=>{},status:()=>({state:'ready'}),query:()=>({posts:[]})},wallet:{connectOrigins:[],read:async path=>{
+  if(path==='/wallet/board.json'){assets++;return {body,type:'application/json'};}
+  if(path==='/wallet/runtime.json'){metadata++;return {body:Buffer.from('{}'),type:'application/json'};}return null;
+ }}});t.after(()=>server.close());
+ const browser=await chromium.launch({headless:true});t.after(()=>browser.close());const page=await browser.newPage();
+ const read=()=>page.evaluate(async hash=>{
+  const response=await fetch('/wallet/board.json?sha256='+hash,{cache:'default',credentials:'omit'}),bytes=await response.arrayBuffer();
+  await fetch('/wallet/runtime.json',{cache:'no-store',credentials:'omit'});
+  return {cache:response.headers.get('cache-control'),sha256:Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes)),x=>x.toString(16).padStart(2,'0')).join('')};
+ },hash);
+ await page.goto(server.url);assert.deepEqual(await read(),{cache:'private, max-age=31536000, immutable',sha256:hash});
+ await page.reload();assert.deepEqual(await read(),{cache:'private, max-age=31536000, immutable',sha256:hash});
+ assert.equal(assets,1,'second document uses native browser cache');assert.equal(metadata,2,'runtime configuration is fetched again');
 });

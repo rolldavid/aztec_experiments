@@ -44,9 +44,8 @@ function walletAdmission(){
 async function sendAsset(res,status,headers,body){
  if(res.destroyed)return;
  await new Promise((resolve,reject)=>{
-  const done=()=>{clearTimeout(timer);res.off('finish',done);res.off('close',done);res.off('error',failed);resolve();};
-  const failed=error=>{clearTimeout(timer);res.off('finish',done);res.off('close',done);res.off('error',failed);reject(error);};
-  const timer=setTimeout(()=>res.destroy(),60000);timer.unref?.();
+  const done=()=>{res.off('finish',done);res.off('close',done);res.off('error',failed);resolve();};
+  const failed=error=>{res.off('finish',done);res.off('close',done);res.off('error',failed);reject(error);};
   res.once('finish',done);res.once('close',done);res.once('error',failed);
   try{res.writeHead(status,headers);res.end(body);}catch(error){failed(error);}
  });
@@ -59,7 +58,8 @@ export function createRollingReaderAssetHandler(wallet){
  const reply=(status,body='')=>{res.writeHead(status,selectedHeaders);res.end(body);};
  if(!['GET','HEAD'].includes(req.method)){res.setHeader('Allow','GET, HEAD');reply(405);return;}
  const url=new URL(req.url,'http://127.0.0.1'),file=files.get(url.pathname);
- if(!url.search&&wallet&&(url.pathname.startsWith('/wallet/')||url.pathname.startsWith('/crs/'))){
+ const pinned=/^\?sha256=([a-f0-9]{64})$/.exec(url.search)?.[1];
+ if(wallet&&(!url.search||pinned&&url.pathname!=='/wallet/runtime.json')&&(url.pathname.startsWith('/wallet/')||url.pathname.startsWith('/crs/'))){
   const encoding=walletEncoding(req.headers['accept-encoding']);
   if(!encoding){res.setHeader('Vary','Accept-Encoding');reply(406);return;}
   const release=await admit(res);if(!release){if(!res.destroyed){res.setHeader('Retry-After','1');reply(503);}return;}
@@ -69,10 +69,11 @@ export function createRollingReaderAssetHandler(wallet){
    if(!asset){reply(404);return;}
    if(!Buffer.isBuffer(asset.body)||asset.body.length>MAX_ASSET_BYTES)throw Error('Invalid wallet asset size');
    let body=asset.body;
+   const key=createHash('sha256').update(body).digest('hex');
+   if(pinned&&pinned!==key){reply(404);return;}
    if(encoding==='gzip'){
     // Validate the current decoded file on every read; cache keys bind bytes,
     // not only URL, so changed artifacts cannot reuse a stale representation.
-    const key=createHash('sha256').update(body).digest('hex');
     const saved=cache.get(key);
     if(saved){cache.delete(key);cache.set(key,saved);body=saved;}
     else{
@@ -86,9 +87,9 @@ export function createRollingReaderAssetHandler(wallet){
    const outgoing=req.method==='HEAD'?0:body.length;
    if(responseBytes+outgoing>MAX_RESPONSE_BYTES){res.setHeader('Retry-After','1');reply(503);return;}
    responseBytes+=outgoing;
-   const response=sendAsset(res,200,{...selectedHeaders,'Content-Type':asset.type,'Vary':'Accept-Encoding','Content-Length':String(body.length),...(encoding==='gzip'?{'Content-Encoding':'gzip'}:{})},req.method==='HEAD'?undefined:body).finally(()=>{responseBytes-=outgoing;});
+   const response=sendAsset(res,200,{...selectedHeaders,...(pinned?{'Cache-Control':'private, max-age=31536000, immutable'}:{}),'Content-Type':asset.type,'Vary':'Accept-Encoding','Content-Length':String(body.length),...(encoding==='gzip'?{'Content-Encoding':'gzip'}:{})},req.method==='HEAD'?undefined:body).finally(()=>{responseBytes-=outgoing;});
    // The read/compressor has finished. Response bytes remain owned until the
-   // socket finishes/closes or the bounded 60s asset delivery deadline expires.
+   // socket finishes/closes/errors; elapsed transfer time does not truncate assets.
    release();released=true;await response;return;
   }finally{if(!released)release();}
  }
