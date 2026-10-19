@@ -919,3 +919,10 @@ test('refund-only rejects wrong canonical portal runtime without changing the or
  const f=await publicRefundFixture();f.input.sdk.verifyPortalRuntime=()=>false;
  await assert.rejects(createRollingRefundSession(f.input),{code:'ROLLING_WITHDRAWAL_RECOVERY_REQUIRED'});assert.equal(f.state.sends,0);assert.deepEqual((await f.slot.read()).value,f.record);
 });
+
+test('refund-only accepts native AztecAddress custody and rejects changed native address',async()=>{
+ const f=await publicRefundFixture();f.input.account.address=new AztecAddress(Fr.fromHexString(f.input.account.address));
+ const session=await createRollingRefundSession(f.input);assert.equal((await session.application.readAccountStatus()).intent.txHash,f.record.txHash);
+ f.input.account.address=new AztecAddress(new Fr(999));
+ await assert.rejects(session.withdrawal.prepare({maximumGasWei:'1000'}),{code:'ROLLING_CONTEXT_CHANGED'});assert.equal(f.state.sends,0);await session.close();
+});

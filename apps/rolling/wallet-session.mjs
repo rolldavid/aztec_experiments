@@ -219,7 +219,7 @@ export async function createRollingRefundSession({sdk,ethers,config,boardArtifac
  const scopeText=l2JournalScopeText(scope),url=new URL(selected.publicRefundRpcUrl);
  if(url.username||url.password||url.search||url.hash||!(url.protocol==='https:'||network.chainId==='31337'&&url.protocol==='http:'&&['localhost','127.0.0.1','[::1]'].includes(url.hostname)))throw fail('ROLLING_SESSION_CONFIG');
  let busy=false,closed=false,provider,node,withdrawal;
- const guard=async()=>{if(closed||account.address!==captured.address||account.secretKey!==captured.secretKey||String(account.salt)!==captured.salt)throw fail('ROLLING_CONTEXT_CHANGED');await contextGuard();};
+ const guard=async()=>{if(closed||String(account.address)!==captured.address||account.secretKey!==captured.secretKey||String(account.salt)!==captured.salt)throw fail('ROLLING_CONTEXT_CHANGED');await contextGuard();};
  const locked=async fn=>{if(busy)throw fail('ROLLING_BUSY');busy=true;try{return await locks.request('billboard-wallet:'+captured.address,{ifAvailable:true},async lock=>{if(!lock)throw fail('ROLLING_OTHER_TAB');await guard();return fn();});}finally{busy=false;}};
  try{await locked(async()=>{
   const check=ok=>{if(!ok)throw fail('ROLLING_WITHDRAWAL_RECOVERY_REQUIRED');};
