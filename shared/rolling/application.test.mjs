@@ -358,14 +358,13 @@ test('actual journal pending transaction arriving after prepare blocks before pr
   await assert.rejects(f.app.submitPrepared(p.intentId),{code:'BB_RECOVERY_REQUIRED'});
   assert.equal(f.state.estimates,estimates);assert.equal(f.state.sends,0);
 });
-test('actual restarted reverted journal still requires finality, and reorg prevents acknowledgement',async()=>{
+test('actual restarted checkpointed revert permits the next action, and reorg prevents acknowledgement',async()=>{
   const f=await realJournalFixture(),p=await f.app.prepare({type:'like',post:'5'});
   f.options.accountSession.wallet.sendTx=async(_,opts)=>{await f.install(opts.journalOperation,'checkpointed','reverted');throw Error('reverted');};
   await assert.rejects(f.app.submitPrepared(p.intentId));let replacement=await f.restartJournal();
   assert.equal((await replacement.reconcile(p.intentId)).status,'reverted');
-  await assert.rejects(replacement.prepare({type:'unlike',post:'5'}),{code:'BB_TRANSACTION_FINALITY_PENDING'});
-  const receipt=[...f.receipts.values()][0];receipt.status='finalized';
-  replacement=await f.restartJournal();assert.equal((await replacement.prepare({type:'unlike',post:'5'})).status,'prepared');
+  assert.equal((await replacement.prepare({type:'unlike',post:'5'})).status,'prepared');
+  assert.equal([...f.receipts.values()][0].status,'checkpointed');
   const g=await realJournalFixture(),q=await g.app.prepare({type:'like',post:'5'});await g.app.submitPrepared(q.intentId);
   g.options.accountSession.node.getBlock=async()=>({hash:{toString:()=>hex(999)}});
   await assert.rejects((await g.restartJournal()).reconcile(q.intentId),{code:'BB_SUBMISSION_UNKNOWN'});
@@ -382,12 +381,19 @@ test('unverified captured wallet submission route is rejected before personalize
   await assert.rejects(f.app.prepare({type:'like',post:'5'}),{code:'ROLLING_CONTEXT_CHANGED'});
   assert.equal(f.state.estimates,0);assert.equal(f.state.sends,0);
 });
-test('newly acknowledged but non-final reverted transaction blocks pre-estimation too',async()=>{
+for(const reorg of [false,true])test(`acknowledged checkpointed revert rechecks its canonical anchor before estimation: ${reorg}`,async()=>{
   const f=await realJournalFixture(),p=await f.app.prepare({type:'like',post:'5'});
   const receipt=await f.install('OTHER_OPERATION','checkpointed','reverted');f.options.accountSession.journal.confirmed(receipt);
   const estimates=f.state.estimates;
-  await assert.rejects(f.app.submitPrepared(p.intentId),{code:'BB_TRANSACTION_FINALITY_PENDING'});
-  assert.equal(f.state.estimates,estimates);assert.equal(f.state.sends,0);
+  if(reorg){
+    f.options.accountSession.node.getBlock=async()=>({hash:{toString:()=>hex(999)}});
+    await assert.rejects(f.app.submitPrepared(p.intentId),{code:'BB_SUBMISSION_UNKNOWN'});
+    assert.equal(f.state.estimates,estimates);assert.equal(f.state.sends,0);
+  }else{
+    assert.equal((await f.app.submitPrepared(p.intentId)).status,'confirmed');
+    assert(f.state.estimates>estimates);assert.equal(f.state.sends,1);
+    assert.equal(receipt.status,'checkpointed');
+  }
 });
 
 // Actual SDK chain conversion, with only getNodeInfo replaced by a local value source.
@@ -1300,7 +1306,7 @@ test('RC22 real persistent-index cursor crosses both wallet accounting boundarie
  const {getContractClassFromArtifact}=await import('@aztec-labs/stdlib/contract'),{EventSelector,decodeFunctionSignature}=await import('@aztec-labs/stdlib/abi');
  const {computeLogTag}=await import('@aztec-labs/stdlib/hash'),{PublicLog}=await import('@aztec-labs/stdlib/logs'),{DomainSeparator}=await import('@aztec-labs/constants');
  const {mkdtempSync,rmSync}=await import('node:fs'),{tmpdir}=await import('node:os'),{join}=await import('node:path');
- const directory=mkdtempSync(join(tmpdir(),'bok-cursor-')),scope={chainId:'31337',rollupVersion:'1',rollupAddress:'0x'+'11'.repeat(20),boardAddress:hex(42),classId:(await getContractClassFromArtifact(artifact)).id.toString()};
+ const directory=fs.realpathSync(mkdtempSync(join(tmpdir(),'bok-cursor-'))),scope={chainId:'31337',rollupVersion:'1',rollupAddress:'0x'+'11'.repeat(20),boardAddress:hex(42),classId:(await getContractClassFromArtifact(artifact)).id.toString()};
  const store=createRollingPublicSqliteStore(directory,{scope});t.after(()=>{try{store.close();}finally{rmSync(directory,{recursive:true,force:true});}});
  const pack=text=>{const b=Buffer.alloc(32*31);Buffer.from(text).copy(b);return Array.from({length:32},(_,i)=>BigInt('0x'+b.subarray(i*31,i*31+31).toString('hex')));};
  const digest=text=>poseidon2HashWithSeparator([BigInt(Buffer.byteLength(text)),...pack(text)],0x52435431);

@@ -42,12 +42,12 @@ function fixture({rolling=false,lostBinding=false,lostDeploy=false,existing=true
  const boardInstance={...instance,address:board,deployer:actor},deploymentCalls=[];
  const policy=packPolicy('Be kind.'),policyDigest=rolling?poseidon2HashWithSeparator([BigInt(policy.len),...policy.fields.slice(0,32)],0x52435431):null;
  const storage=createBrowserJournalStorage(new IDBFactory()),receipts=new Map(),invalids=new Set();let proofId=0;
- let bound=null,stops=0,deploys=0,bindings=0,finalized=0;
+ let bound=null,stops=0,deploys=0,bindings=0;
  const wordHash=(label,words)=>'0x'+(BigInt(ethers.sha256(ethers.AbiCoder.defaultAbiCoder().encode(['bytes32',...words.map(()=> 'uint256')],[ethers.encodeBytes32String(label),...words])))>>8n).toString(16).padStart(64,'0');
  const configHash=wordHash('AZTEC_BB_CONFIG_V1',[1n,31337n,BigInt(rollup),2n,5n,1n,100n,10n,64n,10n,16n]);
  const node={getNodeInfo:async()=>({realProofs:false,l1ChainId:31337,rollupVersion:5}),getL1ContractAddresses:async()=>({rollupAddress:rollup,inboxAddress:inbox,outboxAddress:outbox}),
   getBlockNumber:async()=>1,getPublicStorageAt:async()=>new Fr(0),getContract:async()=>existing?(rolling?boardInstance:instance):undefined,
-  getTxReceipt:async hash=>{const value=receipts.get(String(hash));if(!value)return value;const txHash=TxHash.fromString(String(value.txHash));return value.status==='pending'?new PendingTxReceipt(txHash):value.status==='dropped'?new DroppedTxReceipt(txHash):new MinedTxReceipt(txHash,value.status,value.executionResult,0n,BlockHash.fromString(value.blockHash),value.blockNumber,1,0,1);},getBlock:async()=>({hash:blockHash}),getChainTips:async()=>({finalized:{block:{number:finalized}}}),
+  getTxReceipt:async hash=>{const value=receipts.get(String(hash));if(!value)return value;const txHash=TxHash.fromString(String(value.txHash));return value.status==='pending'?new PendingTxReceipt(txHash):value.status==='dropped'?new DroppedTxReceipt(txHash):new MinedTxReceipt(txHash,value.status,value.executionResult,0n,BlockHash.fromString(value.blockHash),value.blockNumber,1,0,1);},getBlock:async()=>({hash:blockHash}),getL2ToL1MembershipWitness:async(hash,leaf)=>{assert(receipts.has(String(hash)));assert.equal(leaf.toString(),new Fr(7).toString());return undefined;},
   sendTx:async tx=>{if(tx.kind==='deploy'){existing=true;}else {bound=tx.kind.slice(5);}
    receipts.set(tx.getTxHash(),{txHash:tx.getTxHash(),status:'checkpointed',executionResult:'success',blockNumber:1,blockHash});},
   isValidTx:async tx=>invalids.has(tx.getTxHash())?{result:'invalid',reason:['Block header not found']}:{result:'valid'}};

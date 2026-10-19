@@ -140,7 +140,7 @@ for (const [label, code, accepted] of [['missing','0x',false],['unrecognized','0
     }
     const aztec={
       verifyDeploymentInputs(){return {manifest:{}};},createAztecNodeClient(){return {};},
-      async preflightDeploymentNetwork(){calls.push('network');return {};},
+      async preflightDeploymentNetwork(){calls.push('network');return {proofsEnabled:false};},
       async boundedTransactionRead(read){return read();},
       loadContractArtifact(){calls.push('artifact');throw stop;},
     };

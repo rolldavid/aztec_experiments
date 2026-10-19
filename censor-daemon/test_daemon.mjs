@@ -487,7 +487,7 @@ async function main() {
         '--model', path.join(__dirname, 'test_dummy_model.gguf'),
       ]);
 
-      assertTrue(result.stdout.includes('flag finalized'),
+      assertTrue(result.stdout.includes('flag canonically included'),
         'should flag post in non-dry-run mode');
       assertTrue(result.stdout.includes('\"confirmed-flag\":1'),
         'should confirm flagging');
@@ -735,19 +735,19 @@ async function main() {
     const stateDir=fs.mkdtempSync(path.join(TEST_ROOT,'restart-'));
     const args=['--portal-address',SCOPE.portalAddress,'--censor-wallet',MOCK_WALLET,'--cli',MOCK_CLI,'--llama-port',String(server.port),'--once'];
     try{
-      const first=await runDaemon(args,30000,{stateDir});assertEqual(first.exitCode,0,first.stdout+first.stderr);
-      const second=await runDaemon(args,30000,{stateDir});assertEqual(second.exitCode,0,second.stdout+second.stderr);
+      const first=await runDaemon(args,30000,{stateDir,nodeStatus:'checkpointed'});assertEqual(first.exitCode,0,first.stdout+first.stderr);
+      const second=await runDaemon(args,30000,{stateDir,nodeStatus:'proven'});assertEqual(second.exitCode,0,second.stdout+second.stderr);
       assertEqual(server.requests.length,1,'completed durable decision survives restart');
       assertEqual(mockCli.calls().filter(a=>a[0]==='declare-immoral'&&!a.includes('--inspect-only')).length,1,'restart must not resend');
     }finally{await server.stop();mockCli.cleanup();}
   });
-  await test('submitted receipt without finality remains durable and restart does not resend',async()=>{
+  await test('pending receipt remains durable and restart does not resend',async()=>{
     const mockCli=new MockCli(MOCK_CLI,{posts:[{index:0,text:'Pending spam',flagged:false}]});
     const server=new MockLlamaServer(0,()=>({content: JSON.stringify({"isViolation": true, "reason": "Spam"})}));await server.start();
     const stateDir=fs.mkdtempSync(path.join(TEST_ROOT,'pending-'));
     const args=['--portal-address',SCOPE.portalAddress,'--censor-wallet',MOCK_WALLET,'--cli',MOCK_CLI,'--llama-port',String(server.port),'--once'];
     try{
-      for(let i=0;i<2;i++){const result=await runDaemon(args,30000,{stateDir,nodeStatus:'proven'});assertTrue(result.exitCode!==0,'nonfinal inclusion is not completion');assertFalse(result.stdout.includes('flag finalized'),'no false finality');}
+      for(let i=0;i<2;i++){const result=await runDaemon(args,30000,{stateDir,nodeStatus:'pending'});assertTrue(result.exitCode!==0,'pending receipt is not completion');assertFalse(result.stdout.includes('flag canonically included'),'no false inclusion');}
       assertEqual(server.requests.length,1,'saved verdict reused');assertEqual(mockCli.calls().filter(a=>a[0]==='declare-immoral'&&!a.includes('--inspect-only')).length,1,'pending submission never resent');
     }finally{await server.stop();mockCli.cleanup();}
   });
